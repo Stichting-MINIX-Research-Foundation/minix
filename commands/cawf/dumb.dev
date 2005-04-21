@@ -1,0 +1,158 @@
+.\" Device-dependent but not macro-set-dependent definitions.
+.\" --------------------------------
+.\" overall formatting initialization
+.\" 12 cpi horizontal exploits 80-column terminal well (6.5i@12 = 78)
+.^r cpi 12 6
+.\" call margin adjustment device-dependent for sake of some unusual cases
+.ad
+.\" page parameters
+.pl 10i
+.ll 6.5i
+.po 0
+.\" --------------------------------
+.\" fonts, and their hyphens, last font change doubled to set up \fP
+.^f R
+.ft R
+.^c hy 1 -
+.^f I
+.ft I
+.^c hy 1 -
+.^f B
+.ft B
+.^c hy 1 -\b-\b-
+.^f C
+.ft C
+.^c hy 1 -\b-\b-
+.ft R
+.ft R
+.\" --------------------------------
+.\" definitions of nroff special characters
+.\" The character definitions here operate on the "better ugly than invisible"
+.\" principle, and try to approximate the character *somehow*.  They were
+.\" tuned for a Teletype 40 line printer, but should give vaguely plausible
+.\" results on any overprinting ASCII device.
+.\"
+.\" first, things that nroff considered builtins
+.^c \ 1 \\
+.^c e 1 \\
+.^c ' 1 '
+.^c ` 1 `
+.^c - 1 -
+.\" some things seem to assume that \+ is like \-
+.^c + 1 +
+.\" we do not do backslash-space here, it can't be done with .^c, but the
+.\" other forms of space we can do
+.^c 0 1 " 
+.^c | 0
+.^c ^ 0
+.^c & 0
+.\"
+.\" and more normal characters
+.\" note, the hyphenation logic knows about em
+.^c em 2 --
+.^c en 1 -
+.\" hy is a special case, see above
+.^c bu 1 +\bo
+.^c sq 2 []
+.^c ru 1 _
+.^c 12 3 1/2
+.^c 14 3 1/4
+.^c 34 3 3/4
+.^c de 1 '\b`
+.^c dg 1 -\b!
+.^c fm 1 '
+.^c ct 1 /\bc
+.^c rg 3 (R)
+.^c co 3 (c)
+.^c pl 1 +
+.^c mi 1 -
+.^c eq 1 =
+.^c ** 1 *
+.^c sc 1 j\bf
+.^c aa 1 '
+.^c ga 1 `
+.^c ul 1 _
+.^c sl 1 /
+.^c *a 1 <\ba
+.^c *b 1 ,\bB
+.^c *g 1 ,\by
+.^c *d 1 S\bo
+.^c *e 1 -\bc
+.^c *z 1 ,\bL
+.^c *y 1 ,\bn
+.^c *h 1 -\b0
+.^c *i 1 ,\bi
+.^c *k 1 <\bK
+.^c *l 1 \\\b>
+.^c *m 1 ,\bu
+.^c *n 1 ,\bv
+.^c *c 1 ,\b3
+.^c *o 1 o
+.^c *p 1 -\bn
+.^c *r 1 p
+.^c *s 1 -\bo
+.^c ts 1 s
+.^c *t 1 ~\bt
+.^c *u 1 u
+.^c *f 1 /\bo
+.^c *x 1 /\b\\
+.^c *q 1 |\bu
+.^c *w 1 u\bw
+.^c *G 2 ~\b|~
+.^c *D 2 _\b/_\b\\
+.^c *H 1 -\bO
+.^c *L 2 /\\
+.^c *C 1 _\b-\b~
+.^c *P 2 ~\b|~\b|
+.^c *S 1 ~\b_\b>
+.^c *U 1 Y
+.^c *F 1 |\bO
+.^c *Q 1 |\bU
+.^c *W 2 _\b(_\b)
+.^c sr 2 \\/
+.^c rn 1 ~
+.^c >= 1 _\b>
+.^c <= 1 _\b<
+.^c == 1 _\b=
+.^c ~= 1 ~\b=
+.^c ap 1 ~
+.^c != 1 /\b=
+.^c -> 2 ->
+.^c <- 2 <-
+.^c ua 1 |\b^
+.^c da 1 |\bv
+.^c mu 1 x
+.^c di 1 -\b:
+.^c +- 1 _\b+
+.^c cu 1 U
+.^c ca 3 (^)
+.^c sb 2 (_\b~
+.^c sp 2 _\b~)
+.^c ib 2 (~\b_\b=
+.^c ip 2 ~\b_\b=)
+.^c if 2 oo
+.^c pd 1 3\bo
+.^c gr 1 ~\bV
+.^c no 1 -
+.^c is 1 '\b,\bI
+.^c pt 2 oc
+.^c es 1 /\bO
+.^c mo 1 -\bC
+.^c br 1 |
+.^c dd 1 I\b|
+.^c rh 1 =\b>
+.^c lh 1 =\b<
+.^c bs 4 (:-)
+.^c or 1 |
+.^c ci 1 O
+.^c lt 1 ~\b(
+.^c lb 1 _\b(
+.^c rt 1 ~\b)
+.^c rb 1 _\b)
+.^c lk 1 -\b(
+.^c rk 1 -\b)
+.^c bv 1 |
+.^c lf 1 _\b[
+.^c rf 1 _\b]
+.^c lc 1 ~\b[
+.^c rc 1 ~\b]

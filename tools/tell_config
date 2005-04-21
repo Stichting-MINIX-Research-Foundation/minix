@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+#	tellconfig - Tell the value of a <minix/config.h> parameter
+#						Author: Kees J. Bot
+
+echo "
+#include <minix/config.h>
+$*
+" >/tmp/tell.$$
+exec </tmp/tell.$$
+rm /tmp/tell.$$
+
+exec cc -P -E -

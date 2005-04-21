@@ -1,0 +1,137 @@
+.\" -mnx macros for the Minix "Book manual pages".	Author: Kees J. Bot
+.\"								19 Nov 1994
+.\" Uses -ms:
+.so /usr/lib/cawf/ms.mac
+.tr ~
+.ds OQ \&'
+.ds CQ \&'
+.ds SQ \&'
+.ds M0 MINIX
+.ds M1 \\s-1MINIX\\s+1
+.ds M2 \\s-2MINIX\\s+2
+.ds M9 \\s-1MINIX\\s+1
+.ds m0 minix
+.de MX
+\s-2MINIX\s+2\\$1
+..
+.de Ux
+\s-2UNIX\s+2\\$1
+..
+.ds Mx \\s-1MINIX\\s0
+.ds Mp \\s-1MINIX-PC\\s0
+.ds Ms \\s-1MINIX-ST\\s0
+.ds M0 MINIX
+.ds M1 MINIX
+.ds M2 MINIX
+.ds M9 MINIX
+.ds Mx MINIX
+.ds Mp MINIX-PC
+.ds Ms MINIX-ST
+.de CD
+.LP
+.ne 2
+.ta 11m 15m 36m
+.ds SX Syntax:
+.ds FL Flags:
+.ds EX Examples:
+.ds EY Example:
+.in +16m
+.ti -16m
+\\fBCommand:\&	\\$1\\fR
+.in -16m
+.br
+..
+.de SX
+.in +16m
+.ti -16m
+\\fB\*(SX\&	\\$1
+.in -16m
+.ds SX
+.br
+..
+.de FL
+.in +15m
+.ti -15m
+\\fB\*(FL\&	\\fB\\$1	\\fR\\$2
+.in -15m
+.ds FL
+.br
+..
+.de EX
+.br
+.in +38m
+.ti -38m
+\\fB\*(EX\&	\\fR\\$1		\\fR# \\$2
+.in -38m
+.ds EX
+.ds EY
+.br
+..
+.de EY
+.br
+.in +38m
+.ti -38m
+\\fB\*(EY\&	\\fR\\$1		\\fR# \\$2
+.in -38m
+.ds EX
+.ds EY
+.br
+..
+.de Cx
+.in +8
+.ft B
+\&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.ft R
+.in -8
+..
+.de DI
+.ft B
+\&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.ft R
+..
+.de SY
+\\$3\\$1\\$2
+..
+.de HS
+.sp 0.5
+..
+.de SP
+.sp
+..
+.\"	Major section (normally numbered)
+.de SE
+.sp 1
+\fB\\$1\fP
+.sp 1
+..
+.\"	Subsection (normally numbered)
+.de SS
+.sp 1
+\fB\\$1\fP
+..
+.de UU
+.SH
+\\$1
+.sp 1
+..
+.\"	Start list
+.de LI
+.in +0.25i
+.ll -0.25i
+.HS
+..
+.\"	End list
+.de LX
+.sp 1
+.in -0.25i
+.ll +0.25i
+.LP
+..
+.\"	List item
+.de IT
+.HS
+..
+.\"Short unnumbered lines
+.de UN
+.HS
+..

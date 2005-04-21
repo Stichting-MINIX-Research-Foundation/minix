@@ -1,0 +1,1068 @@
+#1
+Somewhere nearby is Colossal Cave, where others have found fortunes in
+treasure and gold, though it is rumored that some who enter are never
+seen again.  Magic is said to work in the cave.  I will be your eyes
+and hands.  Direct me with natural English commands.  I should warn
+you that I look at all the letters of each word. Also you
+should enter "Northeast" as "NE" to distinguish it from "North".
+(Should you get stuck, type "HELP" or "?" for some general hints.)
+Good Luck!
+- - - -
+#2
+A little dwarf with a big knife blocks your way.
+#3
+A little dwarf just walked around a corner, saw you, threw a little
+axe at you which missed, cursed, and ran away.
+#4
+There is a threatening little dwarf in the room with you!
+#5
+One sharp nasty knife is thrown at you!
+#6
+None of them hit you!
+#7
+One of them gets you!
+#8
+A hollow voice says "Plugh".
+#9
+There is no way to go that direction.
+#10
+I am unsure how you are facing.  Use compass points or nearby objects.
+#11
+I don't know in from out here.  Use compass points or name something
+in the general direction you want to go.
+#12
+I don't know how to apply that word here.
+#13
+I don't understand that!
+#14
+I'm game.  Would you care to explain how?
+#15
+Sorry, but I am not allowed to give more detail.  I will repeat the
+long description of your location.
+#16
+It is now pitch dark.  If you proceed you will likely fall into a pit.
+#17
+If you prefer, simply type "W" rather than "West".
+#18
+Are you trying to catch the bird?
+#19
+The bird is frightened right now and you cannot catch it no matter
+what you try.  Perhaps you might try later.
+#20
+Are you trying to somehow deal with the snake?
+#21
+You can't kill the snake, or drive it away, or avoid it, or anything
+like that.  There is a way to get by, but you don't have the necessary
+resources right now.
+#22
+Do you really want to quit now?
+#23
+You fell into a pit and broke every bone in your body!
+#24
+You are already carrying it!
+#25
+You can't be serious!
+#26
+The bird was unafraid when you entered, but as you approach it becomes
+disturbed and you cannot catch it.
+#27
+You can catch the bird, but you cannot carry it.
+#28
+There is nothing here with a lock!
+#29
+You aren't carrying it!
+#30
+The little bird attacks the green snake, and in an astounding flurry
+drives the snake away.
+#31
+You have no keys!
+#32
+It has no lock.
+#33
+I don't know how to lock or unlock such a thing.
+#34
+It was already locked.
+#35
+The grate is now locked.
+#36
+The grate is now unlocked.
+#37
+It was already unlocked.
+#38
+You have no source of light.
+#39
+Your lamp is now on.
+#40
+Your lamp is now off.
+#41
+There is no way to get past the bear to unlock the chain, which is
+probably just as well.
+#42
+Nothing happens.
+#43
+Where?
+#44
+There is nothing here to attack.
+#45
+The little bird is now dead.  Its body disappears.
+#46
+Attacking the snake both doesn't work and is very dangerous.
+#47
+You killed a little dwarf.
+#48
+You attack a little dwarf, but he dodges out of the way.
+#49
+With what?  Your bare hands?
+#50
+Good try, but that is an old worn-out magic word.
+#51
+To move, try words like FOREST, BUILDING, DOWNSTREAM, IN, EAST, NORTH,
+UP, OR DOWN. Saying a place name may take you there, as may some
+magic words. You can say TAKE LAMP or DROP LAMP or PUT LAMP IN SACK.
+Some objects have side effects; for instance, the rod scares the bird.
+You can take or drop multiple objects by saying TAKE BOOK AND LAMP,
+etc. To list what you are currently holding, say INVENTORY, or just I.
+To reprint the detailed description of where you are, say LOOK
+or L. You can also LOOK IN or LOOK AT appropriate objects. Other
+useful commands are HEALTH, QUIT, SCORE, BRIEF, TERSE, UNBRIEF,
+UNTERSE, SAVE, and RESTORE. The latter two save or restore your
+current position. To get full credit for a treasure, you must have
+left it **safely** in the building. Some non-treasure items are best
+left near where you find them. There are clues for various problems
+lying about the cave: look and listen. If you seem to have found
+all the treasures, keep looking around a while, something else
+may happen to you (for a bonus!)
+(The word "give" doesn't exist, but you can say FEED BONE TO DOG or
+THROW BONE AT DOG. Also, you can use conveyances or animals(!)
+by TAKEing and DROPing them.)
+#52
+It misses!
+#53
+It gets you!
+#54
+Ok
+#55
+You can't unlock the keys.
+#56
+You have crawled around in some little holes and wound up back in the
+main passage.
+#57
+I don't know where the cave is, but hereabouts no stream can run on
+the surface for long.  I would try the stream.
+#58
+I need more detailed instructions to do that.
+#59
+I can only tell you what you see as you move about and manipulate
+things.  I cannot tell you where remote things are.
+#60
+I can't make any sense out of that.
+#61
+What?
+#62
+Are you trying to get into the cave?
+#63
+The grate is very solid and has a hardened steel lock.  You cannot
+enter without a key, and there are no keys nearby.  I would recommend
+looking elsewhere for the keys.
+#64
+The trees of the forest are large hardwood oak and maple, with an
+occasional grove of pine or spruce.  There is quite a bit of under-
+growth, largely birch and ash saplings plus nondescript bushes of
+various sorts.  This time of year visibility is quite restricted by
+all the leaves, but travel is quite easy if you detour around the
+spruce and berry bushes.
+#65
+
+
+		Welcome to ADVENTURE!
+
+
+	Original development by Willie Crowther.
+
+	Conversion to BDS  C by J. R. Jaeger
+
+	Unix standardization by Jerry D. Pohl.
+
+	Upgraded to version 6.6 by Robert R. Hall.
+
+
+		Would you like instructions?
+
+#66
+Digging without a shovel is quite impractical.  Even with a shovel
+progress is unlikely.
+#67
+Blasting requires dynamite.
+#68
+I'm as confused as you are.
+#69
+Mist is a white vapor, usually water, seen from time to time in
+caverns.  It can be found anywhere but is frequently a sign of a deep
+pit leading down to water.
+#70
+Your feet are now wet.
+#71
+I think I just lost my appetite.
+#72
+Thank you, it was delicious!
+#73
+You have taken a drink from the stream.  The water tastes strongly of
+minerals, but is not unpleasant.  It is extremely cold.
+#74
+The bottle is now empty.
+#75
+Rubbing the electric lamp is not particularly rewarding.  Anyway,
+nothing exciting happens.
+#76
+Peculiar.  Nothing unexpected happens.
+#77
+Your bottle is empty and the ground is wet.
+#78
+You can't pour that.
+#79
+Watch it!
+#80
+Which way?
+#81
+Oh dear, you seem to have gotten yourself killed.  I might be able to
+help you out, but I've never really done this before.  Do you want me
+to try to reincarnate you?
+#82
+All right.  But don't blame me if something goes wr......
+*                    --- POOF!! ---                    *
+You are engulfed in a cloud of orange smoke.  Coughing and gasping,
+you emerge from the smoke and find....
+
+#83
+You clumsy oaf, you've done it again!  I don't know how long I can
+keep this up.  Do you want me to try reincarnating you again?
+#84
+Okay, now where did I put my orange smoke?....  >POOF!<
+Everything disappears in a dense cloud of orange smoke.
+
+#85
+Now you've really done it!  I'm out of orange smoke!  You don't expect
+me to do a decent reincarnation without any orange smoke, do you?
+#86
+Okay, if you're so smart, do it yourself!  I'm leaving!
+#87
+#88
+#89
+#90
+>>> Messages 81 thru 90 are reserved for "Obituaries". <<<
+#91
+Sorry, but I no longer seem to remember how it was you got here.
+#92
+It's too heavy.  You'll have to drop something first.
+#93
+You can't go through a locked steel grate!
+#94
+I believe what you want is right here with you.
+#95
+You don't fit through a two-inch slit!
+#96
+I respectfully suggest you go across the bridge instead of jumping.
+#97
+There is no way across the fissure.
+#98
+You're not carrying anything.
+#99
+You are currently holding the following:
+#100
+It's not hungry (it's merely pining' for the fjords).  Besides, you
+have no bird seed.
+#101
+The snake has now devoured your bird.
+#102
+There's nothing here it wants to eat (except perhaps you).
+#103
+You fool, dwarves eat only coal!  Now you've made him *REALLY* mad!!
+#104
+Your cask is empty and the ground is soaked.
+#105
+You aren't carrying them!
+#106
+I don't need to, thank you.
+#107
+The ground is wet and the air is smelly.
+#108
+Your lamp is now on, but the glare from the walls is absolutely
+blinding.  If you proceed you are likely to fall into a pit.
+#109
+You haven't any matches.
+#110
+Don't be ridiculous!
+#111
+The door is extremely rusty and refuses to open.
+#112
+The plant indignantly shakes dry its leaves and asks, "Water?"
+#113
+The hinges are quite thoroughly rusted now and won't budge.
+#114
+The oil has freed up the hinges so that the door will now move,
+although it requires some effort.
+#115
+The plant has exceptionally deep roots and cannot be pulled free.
+#116
+The dwarves' knives vanish as they strike the walls of the cave.
+#117
+Something you're carrying won't fit through the tunnel with you.
+You'd best take inventory and drop something.
+#118
+You can't fit this five-foot clam through that little passage!
+#119
+You can't fit this five-foot oyster through that little passage!
+#120
+I advise you to put down the clam before opening it.  >Strain!<
+#121
+I advise you to put down the oyster before opening it.  >Wrench!<
+#122
+You don't have anything strong enough to open the clam.
+#123
+You don't have anything strong enough to open the oyster.
+#124
+A glistening pearl falls out of the clam and rolls away.  Goodness,
+this must really be an oyster.  (I never was very good at identifying
+bivalves.)  Whatever it is, it has now snapped shut again.
+#125
+The oyster creaks open, revealing nothing but oyster inside.  It
+promptly snaps shut again.
+#126
+You have crawled around in some little holes and found your way
+blocked by a recent cave-in.  You are now back in the main passage.
+#127
+There are faint rustling noises from the darkness behind you.
+#128
+Out from the shadows behind you pounces a bearded pirate!  "Har, har,"
+he chortles, "I'll just take all this booty and hide it away with me
+chest deep in the maze!"  He snatches your treasure and vanishes into
+the gloom.
+#129
+A sepulchral voice reverberating through the cave, says, "Cave closing
+soon.  All adventurers exit immediately through Main Office."
+#130
+A mysterious recorded voice groans into life and announces:
+   "This exit is closed.  Please leave via Main Office."
+
+#131
+It looks as though you're dead.  Well, seeing as how it's so close to
+closing time anyway, I think we'll just call it a day.
+
+#132
+The sepulchral voice intones, "The cave is now closed."  As the echoes
+fade, there is a blinding flash of light (and a small puff of orange
+smoke). . . .    As your eyes refocus, you look around and find...
+
+#133
+There is a loud explosion, and a twenty-foot hole appears in the far
+wall, burying the dwarves in the rubble.  You march through the hole
+and find yourself in the Main Office, where a cheering band of
+friendly elves carry the conquering adventurer off into the sunset.
+
+#134
+There is a loud explosion, and a twenty-foot hole appears in the far
+wall, burying the snakes in the rubble.  A river of molten lava pours
+in through the hole, destroying everything in its path, including you!
+
+#135
+There is a loud explosion, and you are suddenly splashed across the
+walls of the room.
+
+#136
+The resulting ruckus has awakened the dwarves.  There are now several
+threatening little dwarves in the room with you!  Most of them throw
+knives at you!  All of them get you!
+
+#137
+Oh, leave the poor unhappy bird alone.
+#138
+I dare say whatever you want is around here somewhere.
+#139
+I'm not sure what you mean by "Stop".  Use "Quit" if you want to give
+up.
+#140
+You can't get there from here.
+#141
+You are being followed by a very large, tame bear.
+#142
+-          *** THE HISTORY OF ADVENTURE (ABRIDGED) ***          -
+-                    ** By Ima Wimp **                          -
+ADVENTURE was originally developed by William Crowther, and later
+substantially rewritten and expanded by Don Woods at Stanford Univ.
+According to legend, Crowther's original version was modelled on an
+a real cavern, called Colossal Cave, which is a part of Kentucky's
+Mammoth Caverns.  That version of the game included the main maze
+and a portion of the third-level (Complex Junction - Bedquilt -
+Swiss Cheese rooms, etc.), but not much more.
+Don Woods and some others at Stanford later rewrote portions of
+the original program, and greatly expanded the cave.  That version
+of the game is recognizable by the maximum score of 350 points.
+Some major additions were done by David Long while at the University
+of Chicago, Graduate School of Business. Long's additions include the
+seaside entrance and all of the cave on the "far side" of Lost River
+(Rainbow Room - Crystal Palace - Blue Grotto, etc.).
+The castle problem was added in late 1984 by an anonymous writer.
+Thanks are owed to Roger Matus and David Feldman, both of U. of C.,
+for several suggestions, including the Rainbow Room, the telephone
+booth and the fearsome Wumpus. Most thanks (and apologies)
+go to Thomas Malory, Charles Dodgson, the Grimm Brothers, Dante,
+Homer, Frank Baum and especially Anon., the real authors of ADVENTURE.
+#143
+Do you indeed wish to quit now?
+#144
+There is nothing here with which to fill the vase.
+#145
+The sudden change in temperature has delicately shattered the vase.
+#146
+It is beyond your power to do that.
+#147
+I don't know how.
+#148
+It is too far up for you to reach.
+#149
+You killed a little dwarf.  The body vanishes in a cloud of greasy
+black smoke.
+#150
+The shell is very strong and is impervious to attack.
+#151
+What's the matter, can't you read?  Now you'd best start over.
+#152
+The axe bounces harmlessly off the dragon's thick scales.
+#153
+The dragon looks rather nasty.  You'd best not try to get by.
+#154
+The little bird attacks the green dragon, and in an astounding flurry
+gets burnt to a cinder.  The ashes blow away.
+#155
+On what?
+#156
+Okay, from now on I'll only describe a place in full the first time
+you come to it.  To get the full description, say "LOOK".
+#157
+Trolls are close relatives with the rocks and have skin as tough as
+that of a rhinoceros.  The troll fends off your blows effortlessly.
+#158
+The troll deftly catches the axe, examines it carefully, and tosses it
+back, declaring, "Good workmanship, but it's not valuable enough."
+#159
+The troll catches your treasure and scurries away out of sight.
+#160
+The troll refuses to let you cross.
+#161
+There is no longer any way across the chasm.
+#162
+Just as you reach the other side, the bridge buckles beneath the
+weight of the bear, which was still following you around.  You
+scrabble desperately for support, but as the bridge collapses you
+stumble back and fall into the chasm.
+#163
+The bear lumbers toward the troll, who lets out a startled shriek and
+scurries away.  The bear soon gives up the pursuit and wanders back.
+#164
+The axe misses and lands near the bear where you can't get at it.
+#165
+With what?  Your bare hands?  Against *HIS* bear hands??
+#166
+The bear is confused; he only wants to be your friend.
+#167
+For crying out loud, the poor thing is already dead!
+#168
+The bear eagerly licks up the honeycomb, after which he seems to calm
+down considerably and even becomes rather friendly.
+#169
+The bear is still chained to the wall.
+#170
+The chain is still locked.
+#171
+The chain is now unlocked.
+#172
+The chain is now locked.
+#173
+There is nothing here to which the chain can be locked.
+#174
+There is nothing here to eat.
+#175
+Do you want the hint?
+#176
+Do you need help getting out of the maze?
+#177
+You can make the passages look less alike by dropping things.
+#178
+Are you trying to explore beyond the Plover Room?
+#179
+There is a way to explore that region without having to worry about
+falling into a pit.  None of the objects available is immediately
+useful in discovering the secret.
+#180
+Do you need help getting out of here?
+#181
+Don't go west.
+#182
+Gluttony is not one of the troll's vices.  Avarice, however, is.
+#183
+Your lamp is getting dim.  You'd best start wrapping this up, unless
+you can find some fresh batteries.  I seem to recall there's a vending
+machine in the maze.  Bring some coins with you.
+#184
+Your lamp has run out of power.
+#185
+There's not much point in wandering around out here, and you can't
+explore the cave without a lamp.  So let's just call it a day.
+#186
+There are faint rustling noises from the darkness behind you.  As you
+turn toward them, the beam of your lamp falls across a bearded pirate.
+He is carrying a large chest.  "Shiver me timbers!", he cries, "I've
+been spotted!  I'd best hie meself off to the maze to hide me chest!"
+With that, he vanishes into the gloom.
+#187
+Your lamp is getting dim.  You'd best replace those batteries.
+#188
+Your lamp is now shining with renewed strength.
+#189
+Your lamp is getting dim, and you haven't any more coins.  You'd
+best start wrapping this up.
+#190
+I'm afraid the magazine is written in dwarvish.
+#191
+"This is not the maze where the pirate leaves his treasure chest."
+#192
+Hmmm, this looks like a clue, which means it'll cost you 10 points to
+read it.  Should I go ahead and read it anyway?
+#193
+It says, "Not all black rods are magic wands. Some are useful for
+other cave construction purposes. There might be some around here."
+#194
+It says the same thing it did before.
+#195
+I'm afraid I don't understand.
+#196
+"Congratulations on bringing light into the dark-room!"
+#197
+You strike the mirror a resounding blow, whereupon it shatters into a
+myriad tiny fragments.
+#198
+You have taken the vase and hurled it delicately to the ground.
+#199
+You prod the nearest dwarf, who wakes up grumpily, takes one look at
+you, curses, and grabs for his axe.
+#200
+Is this acceptable?
+#201
+There's no point in suspending a demonstration game.
+#202
+You managed to climb about halfway up before losing your hold and
+sliding back.
+#203
+You were only a few yards from the top when you slipped and tumbled
+all the way back down.
+#204
+Ok, ok.  No need to be grabby.
+#205
+Pulling an angry bear around is a good way to get your arm ripped off.
+#206
+The sword is now very clean.
+#207
+The sword is now covered with oil.
+#208
+The handle is now too slippery to grasp.
+#209
+You have no scabbard!
+#210
+You are already wearing it!
+#211
+Do you want to extract the sword from the anvil?
+#212
+If you could convince me of your royal blood, you might get somewhere.
+#213
+Are you trying to go up the slide?
+#214
+Maybe you'd better look for another way into the cave.
+#215
+You grasp the sword's handle and pull, but the sword won't budge.
+Do you want to try yanking it out?
+#216
+A tiny elf runs straight at you, shouts "Phuce!", and
+disappears into the forest.
+#217
+You can't swim.  You'd best go by boat.
+#218
+The boat's oars were stolen by the dwarves to play bing-bong.
+(That's dwarvish ping-pong -- with rocks!).  You have no way
+to propel the boat.
+#219
+You are still in the boat.  It is too heavy to carry.
+#220
+You had better leave the boat first.
+#221
+You are now sitting in a small boat.
+#222
+You couldn't possibly cross this sea without a large ship.
+#223
+The cliff is unscalable.
+#224
+Your keys are all too large for the lock.
+#225
+The wall is too smooth to climb.
+#226
+The shelf is beyond your reach.
+#227
+You are already wearing them!
+#228
+You thought maybe these were peyote??  You feel a little dizzy,
+but nothing happens.
+#229
+You are growing taller, expanding like a telescope!  Just before
+your head strikes the top of the chamber, the mysterious process
+stops as suddenly as it began.
+#230
+You are closing up like an accordion....shrinking..shrinking.  You
+are now your normal size.
+#231
+You have smashed your bottle all over the ground.
+#232
+You are now too big to leave the way you came in.
+#233
+This is obviously an elfin entrance.  Unless you can squeeze
+yourself through a six-inch door, you'll have to find another
+way into the cave.
+#234
+The wrought-iron door is now locked.
+#235
+The tiny door is now locked.
+#236
+The wrought-iron door is now unlocked.
+#237
+The tiny door is now unlocked.
+#238
+You are blocked by the wrought-iron door.
+#239
+<$$<
+#240
+The Wumpus looks at the food with distaste.  He looks at *YOU* with
+relish!
+#241
+You have jerked the cloak free of the rocks.  However, in doing
+so you have caused a small rock slide, blocking the entrance
+and making an unholy din.
+#242
+The cloak is stuck tight under the rocks.  You'll probably have to
+yank it out.
+#243
+The Wumpus grabs the axe, stops and picks his teeth with it for a few
+moments while looking thoughtfully at you.  When he finishes picking
+his teeth, he eats the axe, belches, farts... and starts after
+you again!
+#244
+As the bridge disappears, the Wumpus scrambles frantically to reach
+your side of the fissure.  He misses by inches, and with a horrible
+shriek plunges to his death in the depths of the fissure!
+#245
+You can't even hit a sleeping Wumpus!  The axe is now lying too near
+the Wumpus for you to retrieve it.
+#246
+The Wumpus is between you and the axe.  You can't reach it.
+#247
+You can't fit through a six-inch door!
+#248
+The dog easily dodges the axe, which lands beyond him where you can't
+get at it.
+#249
+The dog woofs (natch) down the food and looks around hungrily for
+more.  However, he does not appear to be any better disposed towards
+your presence.
+#250
+You've got to be kidding!
+#251
+It's attached to the wall!
+#252
+You can't put a thing into itself!
+#253
+The gnome firmly blocks the door of the booth.  You can't enter.
+#254
+The constant ringing has awakened the dwarves!
+There are now several threatening little dwarves in the room with
+you!  Most of them throw knives at you!  All of them get you!
+#255
+The telephone is out of order.
+#256
+The telephone is out of order and your hand is sore.
+#257
+A couple of lead slugs drop from the coin box.  (Gnomes are
+notoriously cheap....)  But you've broken the phone beyond
+all hope.
+#258
+He wants treasure, not gab.
+#259
+He didn't say anything!
+#260
+It isn't a parrot.  He didn't say anything.
+#261
+No one replies.  The line goes dead with a faint "Click".
+#262
+I think you are a little confused!
+#263
+As you move towards the phone booth, a gnome suddenly streaks
+around the corner, jumps into the booth and rudely slams the door
+in your face.  You can't get in.
+#264
+He isn't hungry.
+#265
+As the blast of the horn reverberates through the chamber, the
+seemingly solid rock wall crumbles away, revealing another room just
+beyond.  The wall was most likely worn thin by an ancient watercourse
+which dried up just before completely wearing away the rock.
+#266
+The chamber reverberates to the blast of the horn.
+(Satchmo you ain't!)
+#267
+The bees swarm over the fresh flowers, leaving the hive unguarded
+and revealing a sweet honeycomb.
+#268
+You are now out of breath.
+#269
+It isn't ringing!
+#270
+A hairy paw reaches out of the darkness and....
+#271
+You don't have the correct change.
+#272
+You go a short way down the bright passage, but the light
+grows to blinding intensity.  You can't continue.
+#273
+You know, if you type "BRIEF", I won't have to keep repeating these
+long descriptions of each room.
+#274
+Are you trying to reach the natural bridge?
+#275
+You can't get to it by climbing the walls or jumping or anything
+like that.  You could always put in a telephone call to the local
+spelunking club for advice, if you could find a phone.
+#276
+You turkey!!!  Now you've done it!  It took some effort, but you
+woke up the Wumpus.  He slowly opens one red eye, and then another,
+and then one more (!!), and looks at you sleepily.  He had been
+dreaming of a late snack.  If you don't act quickly, you'll
+be a *late* adventurer!
+#277
+The blast of your horn echoes throughout hill and dale.
+#278
+All you have are watercress sandwiches.  The bear is less than
+interested.
+#279
+You have smashed your sword to smithereens against a rock.
+#280
+Setting yourself adrift in the boat with no way to propel it would
+not be very smart.  Best to keep the pole.
+#281
+You're already in it!
+#282
+You've hit the jackpot!!  Hundreds of coins and slugs cascade from
+the telephone's coin return slot and spill all over the floor of
+the booth.
+#283
+Whoops!  The floor has opened out from under you!  It seems you
+have fallen into a bottomless pit.  As a matter of fact, you're
+still falling!  Well, I have better things to do than wait around
+for you to strike bottom, so let's just assume you're dead.
+Sorry about that, Chief.
+#284
+The telephone in the booth has begun to ring.
+#285
+I don't understand what you are trying to do!
+#286
+How do you propose to cross the river?
+#287
+The air is filled with beautiful music.
+#288
+The air fills with beautiful music.  The dog gradually becomes
+less fierce, and after a short while he lies down by the side of
+the cavern and falls into a deep sleep.
+#289
+Are you trying to get past the dog?
+#290
+The only person I can remember who managed to get past the dog
+was that singer, ummm, what's his name... Eurydice's friend....
+#291
+That wouldn't be wise.  It is best to let sleeping dogs lie.
+#292
+The stream flows out of one very small crack and into another.
+You can't go that way.
+#293
+The river is too wide and deep to cross.
+#294
+The glare is absolutely blinding.  If you proceed you are likely
+to fall into a pit.
+#295
+The hum of the bees rises to an angry buzz as you move towards
+the hive.
+#296
+The sticks and branches are all in a tangle and are stuck in the
+mud.  You'd need a shovel to dig them out.
+#297
+You're already carrying them!
+#298
+The chalice is slightly cracked.  It won't hold any liquids.
+#299
+The cask is now empty.
+#300
+The wine goes right to your head.  You reel around in a drunken
+stupor and finally pass out.  You awaken with a splitting headache,
+and try to focus your eyes....
+#301
+Yeeeecchhh!!
+#302
+Your bottle is already full.
+#303
+The cask is already full.
+#304
+There is nothing here with which to fill the bottle.
+#305
+There is nothing here which you would want to put into the cask.
+#306
+Your bottle is now full of water.
+#307
+The cask is now full of water.
+#308
+Your bottle is now full of oil.
+#309
+The cask is now full of oil.
+#310
+The bottle is now full of wine.
+#311
+The cask is now full of wine.
+#312
+You have nothing in which to carry it.
+#313
+You can't fill that.
+#314
+Do you want it in the bottle or the cask?
+#315
+Your containers are both full.
+#316
+It's empty.
+#317
+Hmmm, I see you have already gone through an extra set of batteries.
+I'll get rid of the trash for you.
+#318
+The bridge shakes as you cross.  Large hunks of clay and rock near
+the edge break off and hurtle far down into the chasm.  Several of
+the cracks on the bridge surface widen perceptibly.
+#319
+The load is too much for the bridge!  With a roar, the entire
+structure gives way, plunging you headlong into the raging river at
+the bottom of the chasm and scattering all your holdings.  As the
+icy waters close over your head, you flail and thrash with all your
+might, and with your last ounce of strength pull yourself onto the
+south bank of the river.
+#320
+You can't get at him.  He is inside the phone booth.
+#321
+Your lamp is already on.
+#322
+Your lamp is already off.
+#323
+Your lamp is again growing dim.  You'd better get some more batteries.
+#324
+You know, you are wasting your batteries by wandering around out
+here with your light on.
+#325
+<Generic Adventure -- Version:7.0, July 1994>
+#326
+Dead wumpi, as a rule, are light eaters.  Nothing happens.
+#327
+How do expect to feed a sleeping Wumpus?
+#328
+You aren't holding it!
+#329
+It won't fit!
+#330
+The coin drops into the slot with a dull "clunk".  There is no
+dial tone.
+#331
+It's already there.
+#332
+Please read the supplied documentation files to find out where to
+send complaints, suggestions, and bug reports.
+#333
+The chest is now unlocked.
+#334
+The chest is now locked.
+#335
+You can't get at it.
+#336
+It's already open.
+#337
+It's locked.
+#338
+It's already closed.
+#339
+You can't fill that.  It would leak all over the place.
+#340
+It's not inside anything.
+#341
+It isn't there!
+#342
+How?
+#343
+Taken.
+#344
+Dropped.
+#345
+I don't think I can.
+#346
+Interesting.  How?
+#347
+Huh?
+#348
+You are in perfect health.
+#349
+You are fit as a fiddle.
+#350
+Only wizards can do that!
+#351
+Are you kidding?  Do you want to suffocate the poor thing?
+#352
+Thrown.
+#353
+Left.
+#354
+You can't get close enough for a clean thrust.
+#355
+As you move in for the kill, the dwarf neatly slips a knife
+between your ribs.
+#356
+As you approach, the dwarf slashes out with his knife!
+#357
+It's too dark to see anything!
+#358
+It's not open.
+#359
+There's nothing inside.
+#360
+It contains:
+#361
+The billboard reads:
+"Visit Beautiful Colossal Cave.  Open Year Around.  Fun for
+the entire family, or at least for those who survive."
+Below the headline is an impossibly complicated map showing how
+to find Colossal Cave.  Not that it matters, because all the
+directions are written in Elvish.
+#362
+Hidden behind the poster is a steel safe, embedded in the wall.
+#363
+Brushing the dust from one of the larger rocks reveals some carved
+characters.
+#364
+Enough dusting, already!  You're making me sneeze.
+#365
+The safe door smoothly swings open.
+#366
+Maybe if you rubbed your fingertips with sandpaper....
+#367
+The safe's door clicks shut.
+#368
+This is a combination safe.  The keys won't help.
+#369
+I certainly can't read in this light.
+#370
+The poster has a picture of a thin man with a long white beard.
+He is wearing a high pointed cap embroidered with strange symbols,
+and he is pointing a finger at you.  Below the picture are the words:
+"I want you!--To report all good ideas for extensions to this game
+to me without delay.  Remember: ask not what ADVENTURE can do to
+you; ask what you can do for ADVENTURE."
+-                       *  *  *                              -
+"A public service of the John Dillinger Died for You Society."
+#371
+"Click."
+#372
+In the rock is carved the message "7-22-34".
+#373
+You can't get at them.
+#374
+Ok, I'll give you the full description whenever you enter a room
+for the first time.
+#375
+You don't have the right key.
+#376
+That's not strong enough to open the clam.
+#377
+That's not strong enough to open the oyster.
+#378
+Game suspension is no longer permitted!
+#379
+** Unused **
+#380
+>>> Messages 381 thru 389 are reserved for "Diagnoses". <<<
+#381
+You are a bit off top form, but nothing to worry about.
+#382
+You are weaker than usual.  Better avoid fights.
+#383
+You really ought to take a break.  You're in tough shape.
+#384
+You are on the edge of collapse.  Lots of sun and fresh air will
+speed your recovery.
+#385
+Your strength is nearly gone.  Only a miracle can save you now.
+#386
+** Unused **
+#387
+** Unused **
+#388
+** Unused **
+#389
+** Unused **
+#390
+>>> Messages 391 thru 399 are reserved for Radium Poisoning. <<<
+#391
+Is it hot in here?  You are flushed and sweating.
+#392
+You are feeling definitely peculiar, weak....
+#393
+You're dizzy, nauseous.  You can barely stand.
+#394
+You are really ill.  If you don't find an antidote soon, it's
+curtains.
+#395
+You are a walking wound.  You are very weak.  You'd better find out
+what's wrong before it's too late.
+#396
+Sheeesh!  What a mess!  Your hair has fallen out and your skin is
+covered with blisters.  And not an aspirin in sight!
+#397
+Well, you tried, but your strength is gone.  The agony is finally
+over.
+#398
+** Unused **
+#399
+** Unused **
+#400
+You feel rather disembodied, as if you were suddenly somewhere
+else entirely.
+#401
+You sense that you are in a dark place. The only thing in sight
+appears to be a companion to the crystal ball which holds your
+gaze. It seems to be searching the gloom for something to
+show you, but all it can see is itself: a brilliant blue
+six-pointed star suspended in space.
+#402
+Your gaze withdraws from the crystal ball, and you are now back
+in your normal senses.
+#403
+A large, stately elf walks up the rise, says the word
+"Saint-Michel", and is instantly transported to the castle.
+#404
+Are you trying to get to the castle?
+#405
+It's easy to get there if you know how. The elves cross over
+from here so perhaps you might watch an elf to see how.
+Of course they are a bit shy, so keep a good way off while you
+watch.
+#406
+You get a tingling feeling as you walk through the gate, and ...
+#407
+Fiddling with the bird in its cage is not useful.
+If you had it in your hand it would make a mess.
+#408
+Would you like a map?

@@ -1,0 +1,115 @@
+# /etc/rc - System startup script run by init before going multiuser.
+
+umask 022
+TERM="${TERM-minix}"
+PATH=/usr/local/bin:/bin:/usr/bin
+export TERM PATH
+
+usage()
+{
+    echo >&2 "Usage: $0 [-saf] start|stop|down"
+    exec intr sh
+}
+
+while getopts 'saf' opt
+do
+    case $opt in
+    s)	sflag=t ;;	# Single user
+    a)	aflag=t ;;	# Ask for /usr
+    f)	fflag=t ;;	# Force a full file system check
+    *)	usage
+    esac
+done
+shift `expr $OPTIND - 1`
+
+case "$#:$1" in
+1:start|1:stop|1:down)
+    action=$1
+    ;;
+*)  usage
+esac
+
+case $action in
+start)
+    # National keyboard?
+    test -f /etc/keymap && loadkeys /etc/keymap
+
+    # Set timezone.
+    . /etc/profile
+
+    # Try to read the hardware real-time clock, otherwise do it manually.
+    readclock || intr date -q
+
+    # Initialize files.
+    printroot >/etc/mtab		# /etc/mtab keeps track of mounts
+    >/etc/utmp				# /etc/utmp keeps track of logins
+
+    # /etc/fstab lists the root, tmp and usr devices.
+    . /etc/fstab
+
+    # Any swapspace on a device?
+    test "$swap" : '/dev/' && mount -s $swap
+
+    # Mount the /usr partition unless this is a single floppy Minix.
+    if [ ! -d /usr/bin ]
+    then
+	if [ "$aflag" -o "$usr" = unknown ]
+	then
+	    # We need to ask what the /usr du jour is.
+	    intr sh -c '
+		echo -n "Finish the name of device to mount as /usr: /dev/"
+		read usr
+		echo "usr=/dev/$usr" >/tmp/usr'
+	    . /tmp/usr
+	fi
+	mount $usr /usr || {
+	    echo "\
+Please try to mount something else as /usr, then hit CTRL-D to continue startup.
+Mount $usr /usr failed -- Single user."
+	    intr sh
+	}
+	rm -f /tmp/usr
+    fi
+
+    # Check if the system crashed.
+    if shutdown -C
+    then
+	echo
+	echo "The system was not properly shut down.  Checking file systems."
+	fflag=t
+    fi
+
+    if [ "$fflag" ]
+    then
+	umount $usr
+	intr fsck -r $root
+	intr fsck -r $usr
+	mount $usr /usr
+    fi
+
+    if [ "$sflag" ]
+    then
+	echo "Single user."
+	intr sh
+    fi
+
+    # Any swapspace on a file?
+    test -n "$swap" -a ! "$swap" : '/dev/' && mount -s $swap
+
+    case "`printroot -r`" in
+    /dev/ram)
+	# Remove boot-only things to make space.
+	rm -rf /boot /minix
+    esac
+
+    # Things should be alright now.
+    echo;echo "Multiuser startup in progress."
+esac
+
+# Further initialization.
+test -f /usr/etc/rc && sh /usr/etc/rc $action
+test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
+
+# Any messages?
+test "$action" = start -a -f /etc/issue && cat /etc/issue
+exit 0

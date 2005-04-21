@@ -1,0 +1,33 @@
+   File Name		Archive #	Description
+-----------------------------------------------------------
+ ACKNOWLEDGEMENTS           1	
+ CSU.diffs                  1	
+ MANIFEST                   1	This shipping list
+ Makefile                   1	
+ NEW_FEATURES               1	
+ NOTES                      1	
+ NO_WARRANTY                1	
+ README                     1	
+ closure.c                  1	
+ defs.h                     1	
+ error.c                    1	
+ lalr.c                     1	
+ lr0.c                      1	
+ main.c                     1	
+ mkpar.c                    1	
+ output.c                   2	
+ reader.c                   3	
+ skeleton.c                 1	
+ symtab.c                   1	
+ test                       1	
+ test/error.output          1	
+ test/error.tab.c           1	
+ test/error.tab.h           1	
+ test/error.y               1	
+ test/ftp.output            2	
+ test/ftp.tab.c             3	
+ test/ftp.tab.h             1	
+ test/ftp.y                 2	
+ verbose.c                  1	
+ warshall.c                 1	
+ yacc.1                     1	

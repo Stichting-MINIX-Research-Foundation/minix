@@ -1,0 +1,52 @@
+/* sysconf.c						POSIX 4.8.1
+ *	long int sysconf(int name);
+ *
+ *	POSIX allows some of the values in <limits.h> to be increased at
+ *	run time.  The sysconf() function allows such values to be checked
+ *	at run time.  MINIX does not use this facility - the run time
+ *	limits are those given in <limits.h>.
+ */
+
+#include <lib.h>
+#include <unistd.h>
+#include <time.h>
+
+PUBLIC long int sysconf(name)
+int name;			/* property being inspected */
+{
+  switch(name) {
+	case _SC_ARG_MAX:
+		return (long) ARG_MAX;
+
+	case _SC_CHILD_MAX:
+		return (long) CHILD_MAX;
+
+	case _SC_CLK_TCK:
+		return (long) CLOCKS_PER_SEC;
+
+	case _SC_NGROUPS_MAX:
+		return (long) NGROUPS_MAX;
+
+	case _SC_OPEN_MAX:
+		return (long) OPEN_MAX;
+
+	case _SC_JOB_CONTROL:
+		return -1L;			/* no job control */
+
+	case _SC_SAVED_IDS:
+		return -1L;			/* no saved uid/gid */
+
+	case _SC_VERSION:
+		return (long) _POSIX_VERSION;
+
+	case _SC_STREAM_MAX:
+		return (long) STREAM_MAX;
+
+	case _SC_TZNAME_MAX:
+		return (long) TZNAME_MAX;
+
+	default:
+		errno = EINVAL;
+		return -1L;
+  }
+}

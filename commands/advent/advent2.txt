@@ -1,0 +1,514 @@
+#1
+You're at end of road again.
+#2
+You're at hill in road.
+#3
+You're inside building.
+#4
+You're in valley.
+#5
+You're in forest.
+#6
+You're in forest.
+#7
+You're at slit in streambed.
+#8
+You're outside grate.
+#9
+You're below the grate.
+#10
+You're in cobble crawl.
+#11
+You're in Debris Room.
+#12
+You are in an awkward sloping east/west canyon.
+#13
+You're in Bird Chamber.
+#14
+You're at top of small pit.
+#15
+You're in Hall of Mists.
+#16
+The crack is far too small for you to follow.
+#17
+You're on east bank of fissure.
+#18
+You're in Nugget of Gold Room.
+#19
+You're in Hall of Mt King.
+#20
+You are at the bottom of the pit with a broken neck.
+#21
+You didn't make it.
+#22
+The dome is unclimbable.
+#23
+You're at west end of Twopit Room.
+#24
+You're in east pit.
+#25
+You're in west pit.
+#26
+You clamber up the plant and scurry through the hole at the top.
+#27
+You are on the west side of the fissure in the Hall of Mists.
+#28
+You are in a low N/S passage at a hole in the floor.  The hole goes
+down to an E/W passage.
+#29
+You are in the South Side Chamber.
+#30
+You are in the West Side Chamber of the Hall of the Mountain King.
+#31
+<$$<
+#32
+You can't get by the snake.
+#33
+You're at "Y2".
+#34
+You are in a jumble of rock, with cracks everywhere.
+#35
+You're at window on pit.
+#36
+You're in dirty passage.
+#37
+You are on the brink of a small clean climbable pit.
+#38
+You are in the bottom of a small pit with a little stream.
+#39
+You're in dusty rock room.
+#40
+You have crawled through a very low wide passage parallel.
+#41
+You're at west end of Hall of Mists.
+#42
+You are in a maze of twisty little passages, all alike.
+#43
+You are in a maze of twisty little passages, all alike.
+#44
+You are in a maze of twisty little passages, all alike.
+#45
+You are in a maze of twisty little passages, all alike.
+#46
+Dead end.
+#47
+Dead end.
+#48
+Dead end.
+#49
+You are in a maze of twisty little passages, all alike.
+#50
+You are in a maze of twisty little passages, all alike.
+#51
+You are in a maze of twisty little passages, all alike.
+#52
+You are in a maze of twisty little passages, all alike.
+#53
+You are in a maze of twisty little passages, all alike.
+#54
+Dead end.
+#55
+You are in a maze of twisty little passages, all alike.
+#56
+Dead end.
+#57
+You're at brink of pit.
+#58
+Dead end.
+#59
+You have crawled through a very low wide passage.
+#60
+You're at east end of Long Hall.
+#61
+You're at west end of Long Hall.
+#62
+You are at a crossover of a high N/S passage and a low E/W one.
+#63
+Dead end.
+#64
+You're at Complex Junction.
+#65
+You are in Bedquilt.
+#66
+You're in Swiss Cheese Room.
+#67
+You're at east end of Twopit Room.
+#68
+You're in Slab Room.
+#69
+You are in a secret N/S canyon above a large room.
+#70
+You are in a secret N/S canyon above a sizable passage.
+#71
+You're at junction of three secret canyons.
+#72
+You are in a large low room.  Crawls lead north, NE, and SW.
+#73
+Dead end crawl.
+#74
+You're in secret E/W canyon above tight canyon.
+#75
+You are at a wide place in a very tight N/S canyon.
+#76
+The canyon here becomes too tight to go further south.
+#77
+You are in a tall E/W canyon.
+#78
+The canyon runs into a mass of boulders -- dead end.
+#79
+The stream flows out through a pair of 1 foot diameter sewer pipes.
+#80
+You are in a maze of twisty little passages, all alike.
+#81
+Dead end.
+#82
+Dead end.
+#83
+You are in a maze of twisty little passages, all alike.
+#84
+You are in a maze of twisty little passages, all alike.
+#85
+Dead end.
+#86
+Dead end.
+#87
+You are in a maze of twisty little passages, all alike.
+#88
+You're in narrow corridor.
+#89
+There is nothing here to climb.  Use "up" or "out" to leave the pit.
+#90
+You have climbed up the plant and out of the pit.
+#91
+You're at steep incline above large room.
+#92
+You're in Giant Room.
+#93
+The passage here is blocked by a recent cave-in.
+#94
+You are at one end of an immense north/south passage.
+#95
+You're in cavern with waterfall.
+#96
+You're in Soft Room.
+#97
+You're in Oriental Room.
+#98
+You're in Misty Cavern.
+#99
+You're in Alcove.
+#100
+You're in Plover Room.
+#101
+You're in Dark-Room.
+#102
+You're in Arched Hall.
+#103
+You're in Shell Room.
+#104
+You are in a long sloping corridor with ragged sharp walls.
+#105
+You are in a cul-de-sac about eight feet across.
+#106
+You're in Anteroom.
+#107
+You are in a maze of twisty little passages, all different.
+#108
+You're at Witt's End.
+#109
+You're in Mirror Canyon.
+#110
+You're at window on pit.
+#111
+You're at top of stalactite.
+#112
+You are in a little maze of twisting passages, all different.
+#113
+You're at Reservoir.
+#114
+Dead end.
+#115
+You're at NE end.
+#116
+You're at SW end.
+#117
+You're on SW side of chasm.
+#118
+You're in sloping corridor.
+#119
+You are in a secret canyon which exits to the north and east.
+#120
+You are in a secret canyon which exits to the north and east.
+#121
+You are in a secret canyon which exits to the north and east.
+#122
+You're on NE side of chasm.
+#123
+You're in corridor.
+#124
+You're at fork in path.
+#125
+You're at junction with warm walls.
+#126
+You're at breath-taking view.
+#127
+You're in Chamber of Boulders.
+#128
+You're in Limestone Passage.
+#129
+You're in front of Barren Room.
+#130
+You're in Barren Room.
+#131
+You are in a maze of twisting little passages, all different.
+#132
+You are in a little maze of twisty passages, all different.
+#133
+You are in a twisting maze of little passages, all different.
+#134
+You are in a twisting little maze of passages, all different.
+#135
+You are in a twisty little maze of passages, all different.
+#136
+You are in a twisty maze of little passages, all different.
+#137
+You are in a little twisty maze of passages, all different.
+#138
+You are in a maze of little twisting passages, all different.
+#139
+You are in a maze of little twisty passages, all different.
+#140
+Dead end.
+#141
+You're at Sword Point.
+#142
+You're at top of slide.
+#143
+You're at entrance to Throne Room.
+#144
+You're on east side of Throne Room.
+#145
+<$$<
+#146
+You're in forest.
+#147
+You're on grassy knoll.
+#148
+You are at the edge of a trackless salt marsh.  Tall reeds obscure
+the view.
+#149
+You're in salt marsh.
+#150
+You're in salty marsh.
+#151
+You are in salt marsh.
+#152
+Dead end.
+#153
+You're on sandy beach.
+#154
+You're at broken rocks.
+#155
+You're at Ocean Vista.
+#156
+You're at the bottom of the cliff.
+#157
+You're at Thunder Hole.
+#158
+You're at top of steps in back of Thunder Hole.
+#159
+You're in cramped chamber.
+#160
+You're at ledge by wrought-iron door.
+#161
+You feel dizzy...Everything around you is spinning, expanding,
+growing larger....  Dear me!  Is the cave bigger or are you smaller?
+#162
+You are again overcome by a sickening vertigo, but this time
+everything around you is shrinking...Shrinking...
+#163
+You are again overcome by a sickening vertigo, but this time
+everything is shrinking... I mean, you are growing.  This is
+terribly confusing!
+#164
+You feel dizzy...Everything around you is spinning, expanding,
+growing larger....
+#165
+You're at the bottom of the cliff with a broken neck.
+#166
+You're at west wall of Blue Grotto.
+#167
+You're at underground sea.
+#168
+You're on east side of the Blue Grotto.
+#169
+You're in Bubble Chamber.
+#170
+You are in a windy tunnel between two large rooms.
+#171
+You're in Bat Cave.
+#172
+You are in a very tight N/S crack.
+#173
+You are in a very tight N/S crack.
+#174
+You're in the Cloakroom.
+#175
+You're in a room containing several small climbable pits.
+#176
+You are at the bottom of a small featureless pit.
+#177
+You are at a high hole in a rock wall.
+#178
+The NE passage is blocked by a recent cave-in.
+#179
+You are in a sloping muddy defile, next to a tumbling brook.
+#180
+You're at Tongue of Rock.
+#181
+The dog won't let you pass.
+#182
+You're in the Upper Passage, a long level E/W tunnel.
+#183
+You're in Star Chamber.
+#184
+You are at an elbow in a winding E/W passage.
+#185
+Dead end.
+#186
+You're at the intersection of two long tunnels.
+#187
+You're in a long narrow east-west passage.
+#188
+You're in Rotunda.
+#189
+You're in phone booth.
+#190
+You're at Devil's Chair.
+#191
+You're in a dead-end crack.
+#192
+You're on gravel beach.
+#193
+You're in Flower Room.
+#194
+You are at east end of short E/W corridor.
+#195
+You are at east end of short E/W corridor.
+#196
+You're in Arched Hall.
+#197
+You're in the Vestibule, a short east-west passage between two rooms.
+#198
+You're in the Fairy Grotto.
+#199
+You have approached the lower end of a steep passage.
+#200
+You're in the Crystal Palace.
+#201
+You are following a yellow sandstone path.
+#202
+You're in the Rainbow Room.
+#203
+You're in a steeply sloping passage.  It is very cold here.
+#204
+You're in the Hall of Ice.
+#205
+You are over the Rainbow (Room).
+#206
+You're in Green Lake Room.
+#207
+You're in red rock crawl.
+#208
+You're on south side of Lost River Canyon.
+#209
+You're at end of Lost River Canyon.
+#210
+You're at niche in ledge above Lost River.
+#211
+A very narrow and treacherous ledge.
+#212
+You're in phone booth.
+#213
+You're at the east end of a level passage at a hole in the floor.
+#214
+You're in dark cove.
+#215
+You're in dry basin.
+#216
+You're in old spillway.
+#217
+You're in the Winery.
+#218
+You're at limestone pinnacles.
+#219
+You're in Gothic Cathedral.
+#220
+You're at the east portal of the Gothic Cathedral.
+#221
+You're at the west portal of the Gothic Cathedral.
+#222
+You are at the foot of the Altar, an immense, broad stalagmite.
+#223
+You're on top of stalagmite.
+#224
+You're in the Crypt.
+#225
+You're in Gothic Chapel.
+#226
+You are on the floor of the Rainbow Room.
+#227
+You are at approach to River Styx.
+#228
+You're at the River Styx.
+#229
+You're on the east side of the river's sticks.
+#230
+You're on ledge above limestone pinnacles.
+#231
+You are very neatly skewered on the point of a sharp rock.
+#232
+You have poled your boat across the calm water.
+#233
+You have poled your boat across the dark water.
+#234
+You have poled your boat across the Blue Grotto.
+#235
+You're at Dante's Rest.
+#236
+You're at east end of Lost River Canyon.
+#237
+The staircase is now unclimbable.
+#238
+You're in the caretaker's pantry.
+#239
+You're on a small rise over the bay.
+#240
+You are on the highest pinnacle of the castle in the bay.
+Steps lead down into the garden.
+#241
+You are in the outer courtyard of the elves.
+#242
+You are in the living maze. There are red berries here.
+#243
+You are surrounded by a tall hedge with sharp iridescent leaves
+and metallic orange flowers.
+#244
+You are in the center of the living maze. The plants here are
+dormant this season, but still carry brilliant yellow leaves.
+#245
+Unlike the other areas of the hedge system, this area seems to 
+have no metallic gleam; nevertheless it is still breathtaking.
+The trees and bushes are all variegated shades of green, the
+evergreens being a rich dark shade while the seasonal bushes
+are a lighter yellowish green, making a startling contrast.
+#246
+You are near the edge of the maze. You sample the blueberries
+on the bushes. They are delicious.
+#247
+You are at the western end of the living maze. Beside the
+shrubs forming the walls are tastefully planted beds of
+violets and brilliant purple pansies.
+To the west is the inner garden.
+#248
+You're in the inner courtyard of the elves.

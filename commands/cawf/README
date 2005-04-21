@@ -1,0 +1,264 @@
+Cawf - nroff-like text formatter
+
+Cawf is a C version of awf, Henry Spencer's Amazingly Workable (text)
+Formatter.  (Awf is written in awk and appears in comp.sources.unix,
+Volume 23, Issue 27.)  Cawf and awf provide a usable subset of raw nroff
+capabilities and the styles of the man(7), me(7) and ms(7) macro sets.
+One of cawf's virtues is that it will run on PC clones under MS-DOS.  It
+is also, like awf, totally independent of any licensed Unix source code.
+
+This distribution contains complete source, make files for Unix and
+MS-DOS, documentation (raw and formatted) and MS-DOS executables for cawf
+and a companion output filters, bsfilt.
+
+This is the fourth distribution of cawf.  Changes include:
+
+	*  Some rudimentary output device support has been added, via a device
+	   configuration file.
+
+	*  The code has been converted to use unsigned characters.
+
+	*  An attempt has been made to make the code ANSI C compliant.
+
+	*  The following bugs have been fixed:
+
+		A bug in the locating of the device file has been corrected,
+		so that the code performs as documented.
+
+		Null macro arguments are ignored.
+
+		Some unused arguments to local functions have been more
+		carefully type cast to avoid portability problems.
+
+	*  The .fl and .rn requests are now supported.
+
+	*  Limited support has been added for the non-break request control
+	   character, the acute accent (').
+
+	*  Argument count conditionals -- operating on \n(.$ -- may now use
+	   the >= and <= operators in addition to [<=>].
+
+	*  Macros may be terminated with "..", ".", "''" or "'".
+
+	*  String interpolation is performed if it is specified at the start
+	   of the .ds request argument.
+
+	*  The .tr request has been enhanced to handle named characters and
+	   string interpolation.
+
+	*  The SS macro is now included in man.mac.
+
+	*  The cawf version number is now displayed in the help output.
+
+	*  A limited -me macro set is included in me.mac.
+
+Changes to cawf to run under Minix:
+
+	*  The DOS binaries and make files have been removed.
+ 
+	*  Tabs stops changed from per 5 to per 8.
+
+	*  Bold and underline as it should be in device.cf.
+
+	*  Added .SB and .TA to man.mac.
+
+	*  Numerous prototypes added.
+
+
+CONTENTS
+--------
+
+This Minix distribution of cawf includes:
+
+	README		    this file
+	*.c and *.h	    source files to build cawf and bsfilt (bsfilt
+			    removes Backspaces from cawf output)
+	bsfilt.1	    nroff source for the bsfilt manual page
+	cawf.1		    nroff source for the cawf manual page
+	common		    initialization file for CAWFLIB library
+	device.cf	    output device configuration file for CAWFLIB
+			    library
+	dumb.dev	    device description file for CAWFLIB library
+	Makefile	    Unix-style make file
+	man.mac		    man(7) macros for CAWFLIB library
+	me.mac		    me(7) macros for CAWFLIB library
+	ms.mac		    ms(7) macros for CAWFLIB library
+	diffs		    Minix patches
+#ifdef PUTTING_IT_ON_THE_NET
+	cawf
+	bsfilt		    binaries compiled under Minix-PC 1.5 using the ACK
+			    ANSI C compiler using software floating point
+#endif
+
+
+LIBRARY
+-------
+
+To use cawf, you must select a location for the CAWFLIB library files.  The
+distributed cawf binary expects to find them in /usr/local/lib/cawf but you
+can alter that with the CAWFLIB environment variable, or you can change the
+CAWFLIB #define in cawf.h and rebuild cawf from the sources.
+
+CAWFLIB contains a minimum of six files:
+
+	common		common raw nroff commands to get cawf started
+	dumb.dev	a set of character definitions for a plain, "dumb"
+			ASCII device - e. g., the console display, a CRT or
+			a basic line printer
+	device.cf	the output device configuration file
+	man.mac		the man(7) macros
+	me.mac		the me(7) macros
+	ms.mac		the ms(7) macros
+
+You may want to add your own macro files to the library.  Just name them
+"m[your-name].mac", following the usual nroff naming convention for macro
+files.
+
+If you have fancy output devices with special character specifications, you
+may want to generate new *.dev files for them.  Follow the format of dumb.dev
+in making new character specifications.  To define characters for a new
+device, select a name prefix for it and create a file in CAWFLIB with the
+name "<prefix>.dev".  To use the new file, set the TERM environment variable
+to <prefix> - e. g., when I test cawf on Unix, I need a vt100.dev, because
+my TERM environment variable value is usually vt100.  All I do is make
+vt100.dev a symbolic link to dumb.dev.  Even that isn't even necessary,
+because cawf will use dumb.dev if it can't find TERM.dev.
+
+In addition to the character specifications possible through the *.dev files,
+cawf provides one-time font selection and bold or italic face support for
+output devices via its -d and -f options.  Cawf can be directed to issue
+specific device codes for bold and italic characters, and one font can be
+specified for the entire document.  Cawf has some built-in output device
+support, and addition support is contained in the device configuration file,
+device.cf.  Additional devices may be defined in device.cf.
+
+It is not necessary to generate a new *.dev file for each output device
+definition.  Only when you need special character definitions do you need to
+create a *.dev file.  The dumb.dev file is adequate for most devices you 
+define in device.cf.
+
+
+SOURCES
+-------
+
+The Unix make file has some definitions that help tune it to the local
+Unix environment:
+
+	CAWFLIB		is a string that can be used in lieu of changes
+			to cawf.h's CWFLIB #define.
+
+	MALLOCH		is a string that should be defined when a UNIX
+			environment has a <malloc.h>, unless it also has a
+			<stdlib.h> with protoypes for malloc() and its
+			relatives.  In the latter case, you should define
+			STDLIB, but you don't need to define MALLOCH.
+
+	STDLIB		indicates that standard library function prototype
+			definitions may be found in <stdlib.h>.
+
+			STDLIB must be defined for MS-DOS Quick C.
+
+			If STDLIB is not defined, the cawf sources try to
+			define their own library function return values.
+
+	__STR__		The definition of this string must be deleted when
+			using the xlc 1.2 compiler on the RISC/System 6000
+			under AIX 3.2.  Put
+
+				-U__STR__
+
+			in the Makefile DEFS string.  This must be done
+			because the xlc 1.2 compiler does not correctly inline
+			string functions when compiling pass3.c.
+
+	UNIX		switches the build environment to Unix.  You may also
+			have to decide about MALLOCH, STDLIB, __STR__ and USG
+			when you define UNIX.
+
+			Do not define UNIX for MS-DOS Quick-C; do define
+			STDLIB.
+
+	USG		adjusts for System V.  (UNIX must also be defined.)
+
+			You may also need to define USG to select the proper
+			header file for string function prototypes.  If UNIX
+			and USG are defined, "proto.h" selects <string.h>;
+			if only UNIX, <strings.h>.  Cawf needs the more
+			complete set of definitions, including strchr() and
+			strrchr().  If <string.h> #includes <strings.h>, as
+			is sometimes the case, define only UNIX.
+
+I have built and tested cawf in the UNIX context under AIX 3.2 (see the
+note above on __STR__), BSD4.3-Tahoe, Sequent DYNIX, ETAV (SYSV 3.0),
+NeXTStep 3.0, SunOS 4.1.1 and Ultrix 2.2.  If you build under another Unix
+variant, you may have to adjust the source code, header files and Makefile
+to fit.  Check the Makefile first for hints.
+
+
+ANSI C COMPLIANCE
+-----------------
+
+Some effort has been devoted to making the cawf sources ANSI C compliant.
+The header file proto.h contains function prototypes that enable ANSI C
+argument checking.  The state of definition of the __STDC__ symbol is used
+to select options that depend on strict adherence to the ANSI C standard --
+e.g., the need for the isascii() test before islower() or isupper().  If
+your ANSI compiler doesn't define this variable when it's acting in strict
+ANSI C mode, you may have to define it in the Makefile.
+
+
+MS-DOS CONSIDERATIONS
+---------------------
+
+The MS-DOS version of cawf was created to run under the KornShell of the
+Mortis Kern Systems Toolkit.  One ramification of using MKS' ksh is that it
+supports the separate standard error and standard output streams.  Hence,
+cawf blithely distributes its error messages to the standard error file, and
+assumes the user's shell is capable of separating them from standard output.
+
+If you don't use the MKS KornShell, but do want to separate the output
+streams, you'll have to modify the cawf source code.  As a rudimentary aid,
+cawf uses a separate stream pointer, Efs, for writing error output, but sets
+it to stderr.  You can change that process to open a separate error file and
+set Efs to point to it.
+
+
+COPYRIGHTS AND CREDITS
+----------------------
+
+The sources are copyrighted, but freely distributable under usual terms -
+retention of credit, etc.
+
+Please acknowledge:
+
+	AT&T for their public-domain release of getopt(3) at the 1985
+	UNIFORUM conference;
+
+	Chet Creider, Bob Hardy and Ted Campbell for their contributions
+	to font filtering;
+
+	Henry Spencer for awf and his regular expression package;
+
+	Andy Tanenbaum for his help in ANSI C compliance, including his
+	ansi.h header file from Minix.
+
+Henry says about awf, "I can't believe I really wrote this."  Those are
+my sentiments exactly about cawf, but I also understand that necessity
+sometimes forces us to do what we would prefer to avoid.
+
+
+BUGS AND ENHANCEMENTS
+---------------------
+
+I'll be glad to hear about bugs and needs for enhancements, but make no
+promises about delivering fixes or upgrades in response.
+
+Vic Abell <abe@cc.purdue.edu>
+24 November 1992
+
+
+MINIX SPECIFIC TINKERING
+------------------------
+
+Kees J. Bot <kjb@cs.vu.nl>
+26 November 1992

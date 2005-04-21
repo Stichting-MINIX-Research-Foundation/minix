@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+#	a.out2com - Minix a.out to DOS .COM		Author: Kees J. Bot
+#								17 Jun 1995
+# Transform a Minix a.out to the COM format of MS-DOS,
+# the executable must be common I&D with 256 scratch bytes at the start of
+# the text segment to make space for the Program Segment Prefix.  The Minix
+# a.out header and these 256 bytes are removed to make a COM file.
+
+case $# in
+2)	aout="$1"
+	com="$2"
+	;;
+*)	echo "Usage: $0 <a.out> <dos.com>" >&2
+	exit 1
+esac
+
+size "$aout" >/dev/null || exit
+set `size "$aout" | sed 1d`
+count=`expr \( $1 + $2 - 256 + 31 \) / 32`
+
+exec dd if="$aout" of="$com" bs=32 skip=9 count=$count conv=silent
+
+#
+# $PchId: a.out2com,v 1.3 1998/08/01 09:13:01 philip Exp $

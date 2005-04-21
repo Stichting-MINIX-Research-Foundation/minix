@@ -1,0 +1,13 @@
+A small AWK clone for the 16-bit Minix
+
+	We have written this program for the Minix 1.2 to fit into 64K+64K
+memory.  When compiling this program, you need the Peter S. Housel's 
+Floating Math Package with corrected the atan() function.  Original atan()
+function has incorrect argument sequence.
+
+	This program supports Japanese Shift-JIS KANJI code and passes
+all the test program of the "AWK programming language" written by original
+AWK authors except some programs relied upon the way of regular expression 
+evaluation.
+
+Kouichi Hirabayashi (kh@mogami-wire.co.jp)

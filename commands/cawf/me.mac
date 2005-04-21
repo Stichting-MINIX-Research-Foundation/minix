@@ -1,0 +1,199 @@
+.^b HF 1
+.^b fh 0
+.^b NH
+.\"-----------------
+.de r
+.ie \\n(.$=0 .ft R
+.el \\fR\\$1\\fP\\$2
+..
+.\"-----------------
+.de i
+.ie \\n(.$=0 .ft I
+.el \\fI\\$1\\fP\\$2
+..
+.\"-----------------
+.de b
+.ie \\n(.$=0 .ft B
+.el \\fB\\$1\\fP\\$2
+..
+.\"-----------------
+.de UX
+\\$2UNIX\\$1
+..
+.\"-----------------
+.de DA
+.ds DY "\\$1 \\$2 \\$3
+.\" keep trailing spaces out of CF
+.if \\n(.$=1 .ds CF "\\$1
+.if \\n(.$=2 .ds CF "\\$1 \\$2
+.if \\n(.$>2 .ds CF "\\$1 \\$2 \\$3
+..
+.\"-----------------
+.de ND
+.\" it's our default, ignore it
+..
+.\"-----------------
+.de TL
+.rs
+.sp 5
+.ft B
+.ce 9999
+..
+.\"-----------------
+.de AU
+.sp 2
+.ft R
+..
+.\"-----------------
+.de AI
+.sp
+.ft R
+..
+.\"-----------------
+.de AB
+.sp 2
+.ce 0
+.ll -7n
+.in +7n
+..
+.\"-----------------
+.de AE
+.sp
+.ll
+.in
+..
+.\" common initialization for headers and paragraphs:  .In need extraspace
+.de In
+.ne \\$1
+.sp \\n(Tsu
+.nr Ts 0
+.ie \\n(.$>1 .nr iN \\$2v
+.el .nr iN 0
+.sp \\n(psu+\\n(iNu
+.ce 0
+.ft R
+.in 0
+.ti 0
+.in \\n(inu
+.ll \\n(LLu
+.ns
+.fi
+..
+.\"-----------------
+.de uh
+.\" unnumbered section head
+.nr in 0
+.In 6 1
+.ie \\n(.$=0 .ft B
+.el \\fB\\$1\\fP\\$2
+..
+.\"-----------------
+.de sh
+.\" numbered section head
+.nr in 0
+.In 6 1
+.ft B
+.\" punt to awk code to get the header numbering right
+.nH \\$1
+.\" and pick up the result
+\&\\*(Nh \\$2
+.ft R
+..
+.\"-----------------
+.de lp
+.\" left-blocked paragraph
+.In 4
+..
+.\"-----------------
+.de pp
+.\" paragraph, first line indented
+.In 4
+.ti \\n(piu
+..
+.\"-----------------
+.de tp
+.In 4
+.if \\n(.$>0 .nr tp \\$1n
+.in \\n(inu+\\n(tpu
+.ti 0-\\n(tpu
+.\" .it 1 tP
+..
+.\"-----------------
+.de ip
+.\" indented paragraph
+.ie \\n(.$>1 .tp "\\$2"
+.el .tp 4n
+\&\\$1
+..
+.\"-----------------
+.de np
+.\" numbered paragraph
+.nr $p +1			\" increment paragraph number
+.ip (\n($p)
+..
+.\"-----------------
+.de bu
+.\" bulleted paragraph
+.ip \(bu
+..
+.\"-----------------
+.de (q
+.\" begin major quote
+.nr in +5n
+.nr LL -5n
+.In 4
+..
+.\"-----------------
+.de )q
+.\" end major quote
+.sp
+.nr in -5n
+.nr LL +5n
+.In 4
+..
+.\"-----------------
+.de (l
+.\" begin list
+.In 5
+.if '\\$1'C' .ce 9999
+.if '\\$1'' .in +5n
+.if '\\$1'L' .in 0
+.nf
+..
+.\"-----------------
+.de )l
+.\" end list
+.In 3
+.sp
+.rs
+..
+.\"-----------------
+.de u
+\&\\fI$1\\fP
+..
+.\"-----------------
+.de sm
+..
+.\"-----------------
+.\" exdented paragraph macro borrowed from Berkeley -ms
+.de XP	
+.lp
+.in \\n(piu
+.ti
+..
+.\"-----------------
+.\" the -ms accent strings
+.ds ' "'\b
+.ds ` "`\b
+.ds : ":\b
+.ds ^ "^\b
+.ds ~ "~\b
+.ds C "v\b
+.ds , ",\b
+.\" post-title spacing (set to 4v if using .TL macro)
+.nr Ts 0v
+.\" and parameter setup
+.nr LL 6i
+.ll \n(LLu
+.nr ps 0.3v
+.nr pi 5n

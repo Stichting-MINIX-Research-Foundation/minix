@@ -1,0 +1,41 @@
+$Header$
+
+This directory contains the sources of YAP, Yet Another Pager.
+It can do most of the things more(1) can, and much much more.
+
+Yap has been tested on the following systems:
+
+- DEC PDP 11/44 running V7
+- DEC PDP 11/60 running V7
+- DEC VAX 11/750 running 4.1BSD
+- IBM PC/XT running PC/IX
+- NCR Minitower running a System V
+- Several 68k systems
+- SUN-3 and SUN-4
+
+On other systems, you might have some problems getting yap to run, but then
+again, you might not. You can always ask me for help, and maybe even get it.
+If you make any changes, please
+ - tell me about them
+ - mark them clearly, preferably through conditional compilation.
+
+What you need to run yap:
+
+- you need termlib/termcap.
+  It probably is'nt too hard to adapt yap to terminfo.
+  It might even work unchanged, but I don't know about that. We don't have
+  terminfo or the system V curses.
+  If you adapt yap to terminfo, I would sure like to get the changes you made,
+  so please send them to me (email address at the bottom of this note);
+- you also need regex(III) (Either Berkeley style or USG will do).
+  If you do not have it, you should define NOREGEX, which gives you
+  simpleminded searches without meta-characters.
+
+How to install yap:
+
+- edit Makefile (easy)
+- edit in_all.h (easy)
+- type "make install"
+
+			Ceriel Jacobs, Vrije Universiteit Amsterdam
+			ceriel@cs.vu.nl

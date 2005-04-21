@@ -1,0 +1,239 @@
+                                     dis88
+                                  Beta Release
+                                    87/09/01
+                                      ---
+                                 G. M. HARDING
+                                    POB 4142
+                           Santa Clara CA  95054-0142
+
+
+             "Dis88" is a symbolic disassembler for the Intel 8088 CPU,
+        designed to run under the PC/IX  operating  system on an IBM XT
+        or fully-compatible clone.  Its output is in the format of, and
+        is completely compatible with, the PC/IX assembler,  "as".  The
+        program is copyrighted by its author, but may be copied and re-
+        distributed freely provided that complete source code, with all
+        copyright notices, accompanies any distribution. This provision
+        also applies to any  modifications you may make.  You are urged
+        to comment such changes,  giving,  as a miminum,  your name and
+        complete address.
+
+             This release of the program is a beta release, which means
+        that it has been  extensively,  but not  exhaustively,  tested.
+        User comments, recommendations, and bug fixes are welcome.  The
+        principal features of the current release are:
+
+             (a)  The ability to  disassemble  any file in PC/IX object
+        format, making full use of symbol and relocation information if
+        it is present,  regardless of whether the file is executable or
+        linkable,  and regardless of whether it has continuous or split
+        I/D space;
+
+             (b)  Automatic generation of synthetic labels when no sym-
+        bol table is available; and
+
+             (c)  Optional  output of address and object-code  informa-
+        tion as assembler comment text.
+
+             Limitations of the current release are:
+
+             (a)  Numeric co-processor  (i.e., 8087)  mnemonics are not
+        supported.  Instructions  for the co-processor are disassembled
+        as CPU escape  sequences,  or as  interrupts,  depending on how
+        they were assembled in the first place. This limitation will be
+        addressed in a future release.
+
+             (b)  Symbolic  references  within the object  file's  data
+        segment are not supported. Thus, for example, if a data segment
+        location is initialized to point to a text segment address,  no
+        reference to a text segment symbol will be detected. This limi-
+        tation is likely to remain in future  releases,  because object
+        code does not, in most cases, contain sufficient information to
+        allow meaningful interpretation of pure data.  (Note,  however,
+        that  symbolic  references  to the data segment from within the
+        text segment are always supported.)
+
+             As a final caveat,  be aware that the PC/IX assembler does
+        not recognize the  "esc"  mnemonic,  even though it refers to a
+        completely  valid CPU operation  which is documented in all the
+        Intel literature. Thus, the corresponding opcodes (0xd8 through
+        0xdf) are disassembled as .byte directives. For reference, how-
+        ever,  the syntactically-correct "esc" instruction is output as
+        a comment.
+
+             To build the disassembler program, transfer all the source
+        files,  together with the Makefile,  to a suitable  (preferably
+        empty) PC/IX directory. Then, simply type "make".
+
+             To use dis88,  place it in a  directory  which  appears in
+        your $PATH list.  It may then be invoked by name from  whatever
+        directory you happen to be in.  As a minimum,  the program must
+        be invoked with one command-line argument:  the name of the ob-
+        ject file to be disassembled.  (Dis88 will complain if the file
+        specified is not an object file.)  Optionally,  you may specify
+        an output file; stdout is the default.  One command-line switch
+        is available:  "-o",  which makes the program display addresses
+        and object code along with its mnemonic disassembly.
+
+             The "-o" option is useful primarily for verifying the cor-
+        rectness of the program's output. In particular, it may be used
+        to check the accuracy of local  relative  jump  opcodes.  These
+        jumps often  target  local  labels,  which are lost at assembly
+        time;  thus,  the disassembly may contain cryptic  instructions
+        like "jnz .+39".  As a user convenience,  all relative jump and
+        call  opcodes are output with a comment  which  identifies  the
+        physical target address.
+
+             By convention, the release level of the program as a whole
+        is the SID of the file disrel.c, and this SID string appears in
+        each disassembly.  Release 2.1 of the program is the first beta
+        release to be distributed on Usenet.
+
+
+.TH dis88 1 LOCAL
+.SH "NAME"
+dis88 \- 8088 symbolic disassembler
+.SH "SYNOPSIS"
+\fBdis88\fP [ -o ] ifile [ ofile ]
+.SH "DESCRIPTION"
+Dis88 reads ifile, which must be in PC/IX a.out format.
+It interprets the binary opcodes and data locations, and
+writes corresponding assembler source code to stdout, or
+to ofile if specified.  The program's output is in the
+format of, and fully compatible with, the PC/IX assembler,
+as(1).  If a symbol table is present in ifile, labels and
+references will be symbolic in the output.  If the input
+file lacks a symbol table, the fact will be noted, and the
+disassembly will proceed, with the disassembler generating
+synthetic labels as needed.  If the input file has split
+I/D space, or if it is executable, the disassembler will
+make all necessary adjustments in address-reference calculations.
+.PP
+If the "-o" option appears, object code will be included
+in comments during disassembly of the text segment.  This
+feature is used primarily for debugging the disassembler
+itself, but may provide information of passing interest
+to users.
+.PP
+The program always outputs the current machine address
+before disassembling an opcode.  If a symbol table is
+present, this address is output as an assembler comment;
+otherwise, it is incorporated into the synthetic label
+which is generated internally.  Since relative jumps,
+especially short ones, may target unlabelled locations,
+the program always outputs the physical target address
+as a comment, to assist the user in following the code.
+.PP
+The text segment of an object file is always padded to
+an even machine address.  In addition, if the file has
+split I/D space, the text segment will be padded to a
+paragraph boundary (i.e., an address divisible by 16).
+As a result of this padding, the disassembler may produce
+a few spurious, but harmless, instructions at the
+end of the text segment.
+.PP
+Disassembly of the data segment is a difficult matter.
+The information to which initialized data refers cannot
+be inferred from context, except in the special case
+of an external data or address reference, which will be
+reflected in the relocation table.  Internal data and
+address references will already be resolved in the object file,
+and cannot be recreated.  Therefore, the data
+segment is disassembled as a byte stream, with long
+stretches of null data represented by an appropriate
+".zerow" pseudo-op.  This limitation notwithstanding,
+labels (as opposed to symbolic references) are always
+output at appropriate points within the data segment.
+.PP
+If disassembly of the data segment is difficult, disassembly of the
+bss segment is quite easy, because uninitialized data is all
+zero by definition.  No data
+is output in the bss segment, but symbolic labels are
+output as appropriate.
+.PP
+For each opcode which takes an operand, a particular
+symbol type (text, data, or bss) is appropriate.  This
+tidy correspondence is complicated somewhat, however,
+by the existence of assembler symbolic constants and
+segment override opcodes.  Therefore, the disassembler's
+symbol lookup routine attempts to apply a certain amount
+of intelligence when it is asked to find a symbol.  If
+it cannot match on a symbol of the preferred type, it
+may return a symbol of some other type, depending on
+preassigned (and somewhat arbitrary) rankings within
+each type.  Finally, if all else fails, it returns a
+string containing the address sought as a hex constant;
+this behavior allows calling routines to use the output
+of the lookup function regardless of the success of its
+search.
+.PP
+It is worth noting, at this point, that the symbol lookup
+routine operates linearly, and has not been optimized in
+any way.  Execution time is thus likely to increase
+geometrically with input file size.  The disassembler is
+internally limited to 1500 symbol table entries and 1500
+relocation table entries; while these limits are generous
+(/unix, itself, has fewer than 800 symbols), they are not
+guaranteed to be adequate in all cases.  If the symbol
+table or the relocation table overflows, the disassembly
+aborts.
+.PP
+Finally, users should be aware of a bug in the assembler,
+which causes it not to parse the "esc" mnemonic, even
+though "esc" is a completely legitimate opcode which is
+documented in all the Intel literature.  To accommodate
+this deficiency, the disassembler translates opcodes of
+the "esc" family to .byte directives, but notes the
+correct mnemonic in a comment for reference.
+.PP
+In all cases, it should be possible to submit the output
+of the disassembler program to the assembler, and assemble
+it without error.  In most cases, the resulting object
+code will be identical to the original; in any event, it
+will be functionally equivalent.
+.SH "SEE ALSO"
+adb(1), as(1), cc(1), ld(1).
+.br
+"Assembler Reference Manual" in the PC/IX Programmer's
+Guide.
+.SH "DIAGNOSTICS"
+"can't access input file" if the input file cannot be
+found, opened, or read.
+.sp
+"can't open output file" if the output file cannot be
+created.
+.sp
+"warning: host/cpu clash" if the program is run on a
+machine with a different CPU.
+.sp
+"input file not in object format" if the magic number
+does not correspond to that of a PC/IX object file.
+.sp
+"not an 8086/8088 object file" if the CPU ID of the
+file header is incorrect.
+.sp
+"reloc table overflow" if there are more than 1500
+entries in the relocation table.
+.sp
+"symbol table overflow" if there are more than 1500
+entries in the symbol table.
+.sp
+"lseek error" if the input file is corrupted (should
+never happen).
+.sp
+"warning: no symbols" if the symbol table is missing.
+.sp
+"can't reopen input file" if the input file is removed
+or altered during program execution (should never happen).
+.SH "BUGS"
+Numeric co-processor (i.e., 8087) mnemonics are not currently supported.
+Instructions for the co-processor are
+disassembled as CPU escape sequences, or as interrupts,
+depending on how they were assembled in the first place.
+.sp
+Despite the program's best efforts, a symbol retrieved
+from the symbol table may sometimes be different from
+the symbol used in the original assembly.
+.sp
+The disassembler's internal tables are of fixed size,
+and the program aborts if they overflow.

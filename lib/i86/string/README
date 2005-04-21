@@ -1,0 +1,5 @@
+Notes on i8086 string assembly routines.		Author: Kees J. Bot
+								27 Jan 1994
+
+These routines are simply translations of the 386 code, so all comments
+to that code apply here.

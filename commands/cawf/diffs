@@ -1,0 +1,211 @@
+diff -c1 ../4.0.2.dist/Makefile ./Makefile
+*** ../4.0.2.dist/Makefile	Thu Nov 26 09:06:28 1992
+--- ./Makefile	Thu Nov 26 09:17:08 1992
+***************
+*** 36,40 ****
+  
+! DEFS = -DUNIX -DSTDLIB -ansi -pedantic
+  
+! CFLAGS = -O ${DEFS}
+  
+--- 36,40 ----
+  
+! DEFS = -DUNIX -DUSG -DSTDLIB
+  
+! CFLAGS = -i -s -f -O ${DEFS}
+  
+diff -c1 ../4.0.2.dist/README ./README
+*** ../4.0.2.dist/README	Thu Nov 26 09:06:28 1992
+--- ./README	Thu Nov 26 09:19:26 1992
+***************
+*** 54,56 ****
+--- 54,68 ----
+  
++ Changes to cawf to run under Minix:
+  
++ 	*  The DOS binaries and make files have been removed.
++  
++ 	*  Tabs stops changed from per 5 to per 8.
++ 
++ 	*  Bold and underline as it should be in device.cf.
++ 
++ 	*  Added .SB and .TA to man.mac.
++ 
++ 	*  Numerous prototypes added.
++ 
++ 
+  CONTENTS
+***************
+*** 58,62 ****
+  
+! This Unix distribution of cawf includes:
+  
+! 	00readme	    this file
+  	*.c and *.h	    source files to build cawf and bsfilt (bsfilt
+--- 70,74 ----
+  
+! This Minix distribution of cawf includes:
+  
+! 	README		    this file
+  	*.c and *.h	    source files to build cawf and bsfilt (bsfilt
+***************
+*** 64,70 ****
+  	bsfilt.1	    nroff source for the bsfilt manual page
+- 	bsfilt.exe.uue	    uuencoded MS-DOS bsfilt executable
+- 	bsfilt.mak	    MS-DOS Quick-C make file for bsfilt
+  	cawf.1		    nroff source for the cawf manual page
+- 	cawf.exe.uue	    uuencoded MS-DOS cawf executable
+- 	cawf.mak	    MS-DOS Quick-C make file for cawf
+  	common		    initialization file for CAWFLIB library
+--- 76,78 ----
+***************
+*** 77,86 ****
+  	ms.mac		    ms(7) macros for CAWFLIB library
+  
+- Hint: to generate an MS-DOS executable, uudecode the *.exe.uue file -- e.g.
+  
+- 	$ uudecode cawf.exe.uue
+- 
+- yields a cawf.exe file.
+- 
+- 
+  LIBRARY
+--- 85,94 ----
+  	ms.mac		    ms(7) macros for CAWFLIB library
++ 	diffs		    Minix patches
++ #ifdef PUTTING_IT_ON_THE_NET
++ 	cawf
++ 	bsfilt		    binaries compiled under Minix-PC 1.5 using the ACK
++ 			    ANSI C compiler using software floating point
++ #endif
+  
+  
+  LIBRARY
+***************
+*** 89,92 ****
+  To use cawf, you must select a location for the CAWFLIB library files.  The
+! distributed cawf.exe expects to find them in c:\sys\lib\cawf, but you can
+! alter that with the CAWFLIB environment variable, or you can change the
+  CAWFLIB #define in cawf.h and rebuild cawf from the sources.
+--- 97,100 ----
+  To use cawf, you must select a location for the CAWFLIB library files.  The
+! distributed cawf binary expects to find them in /usr/local/lib/cawf but you
+! can alter that with the CAWFLIB environment variable, or you can change the
+  CAWFLIB #define in cawf.h and rebuild cawf from the sources.
+***************
+*** 135,139 ****
+  
+! A Unix make file and a cawf.mak file for version 2.5 of Microsoft MS-DOS
+! Quick-C are included.  The Unix make file has some definitions that help
+! tune it to the local Unix environment:
+  
+--- 143,146 ----
+  
+! The Unix make file has some definitions that help tune it to the local
+! Unix environment:
+  
+***************
+*** 251 ****
+--- 258,264 ----
+  
++ 
++ MINIX SPECIFIC TINKERING
++ ------------------------
++ 
++ Kees J. Bot <kjb@cs.vu.nl>
++ 26 November 1992
+diff -c1 ../4.0.2.dist/cawflib.h ./cawflib.h
+*** ../4.0.2.dist/cawflib.h	Thu Nov 26 09:06:35 1992
+--- ./cawflib.h	Thu Nov 26 09:17:10 1992
+***************
+*** 32,34 ****
+  #ifdef  UNIX
+! #define CAWFLIB         "/Homes/abe/lib/cawf"	/* UNIX library location */
+  #else
+--- 32,34 ----
+  #ifdef  UNIX
+! #define CAWFLIB         "/usr/local/lib/cawf"	/* UNIX library location */
+  #else
+diff -c1 ../4.0.2.dist/common ./common
+*** ../4.0.2.dist/common	Thu Nov 26 09:06:36 1992
+--- ./common	Thu Nov 26 09:17:10 1992
+***************
+*** 4,6 ****
+  .ce 0
+! .ta +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5
+  .in 0
+--- 4,6 ----
+  .ce 0
+! .ta +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8
+  .in 0
+diff -c1 ../4.0.2.dist/device.c ./device.c
+*** ../4.0.2.dist/device.c	Thu Nov 26 09:06:36 1992
+--- ./device.c	Thu Nov 26 09:34:09 1992
+***************
+*** 229,231 ****
+  	if (strcasecmp(Device, "ansi") == 0) {
+! 		Fstr.b = Newstr((unsigned char *)"x[7m");
+  		Fstr.it = Newstr((unsigned char *)"x[4m");
+--- 229,231 ----
+  	if (strcasecmp(Device, "ansi") == 0) {
+! 		Fstr.b = Newstr((unsigned char *)"x[1m");
+  		Fstr.it = Newstr((unsigned char *)"x[4m");
+diff -c1 ../4.0.2.dist/device.cf ./device.cf
+*** ../4.0.2.dist/device.cf	Thu Nov 26 09:06:37 1992
+--- ./device.cf	Thu Nov 26 09:21:17 1992
+***************
+*** 13,15 ****
+  # VGA monochrome monitors
+! #	italic = reverse video
+  
+--- 13,15 ----
+  # VGA monochrome monitors
+! #	italic = underline
+  
+***************
+*** 17,19 ****
+  	b=\033[1m
+! 	i=\033[7m
+  	r=\033[0m
+--- 17,19 ----
+  	b=\033[1m
+! 	i=\033[4m
+  	r=\033[0m
+Only in .: diffs
+diff -c1 ../4.0.2.dist/man.mac ./man.mac
+*** ../4.0.2.dist/man.mac	Thu Nov 26 09:06:42 1992
+--- ./man.mac	Thu Nov 26 09:17:12 1992
+***************
+*** 5,7 ****
+  .ds LH "\\$1(\\$2)
+! .ds CH "Unix Programmer's Manual
+  .ds RH "\\$1(\\$2)
+--- 5,7 ----
+  .ds LH "\\$1(\\$2)
+! .ds CH "Minix Programmer's Manual
+  .ds RH "\\$1(\\$2)
+***************
+*** 120,121 ****
+--- 120,128 ----
+  .\"-----------------
++ .de SB
++ .\" Can't reduce size, just do bold
++ .ft B
++ .it 1 fP
++ .if \\n(.$>0 \&\\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
++ ..
++ .\"-----------------
+  .de IR
+***************
+*** 150,152 ****
+  .de DT
+! .ta +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5 +5
+  ..
+--- 157,163 ----
+  .de DT
+! .ta +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8 +8
+! ..
+! .\"-----------------
+! .de TA
+! .ta \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+  ..

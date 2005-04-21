@@ -1,0 +1,52 @@
+This a new implementation of a shutdown procedure. It allows 
+the system to go down graciously with informing the
+users. This package contains 3 programs:
+
+- halt = Immediately stop the system, no info to users
+- shutdown = Inform users, close down the system properly
+- wall = Vincent Archer's implementation of wall (Write all)
+
+Installing
+
+Shutdown and halt use a new systemcall, which I've added to
+MM. Therefor there are several diff's which should be applied:
+
+callnr.hd - New callnr for reboot(2)
+	   Diff against /usr/include/minix/callnr.h.
+	   Those of you using a symlink package should
+	   change the number and mm/table.c into a free
+	   number. I used 54, LSTAT.
+param.hd - Defines reboot_flag as a part of the messages
+proto.hd - Add's prototype for do_reboot()
+table.cd - Interpretation of the systemcall to MM
+mm.cd -	   I have added the do_reboot code to mm/getset.c but
+	   I couldn't find a getset.c to create a useable diff :-(
+	   So you can add where you want it. It is pure code, no diff.
+
+Now edit log.c and search for ``host''. Change this into your
+systemname or make it empty.
+
+Shutdown and halt log their actions in /usr/adm/log, edit the
+makefile and undefine -DLOG if you don't want this (this at the end of
+the makefile). You can change SHUT_LOG in shutdown.c and log.c if you
+want it in another file.
+
+Then type a `make'. This will take a minute or so (13 sec. with bcc :-).
+Remember to build a new image and update the ps_database.
+
+Type `make install' to place the program's where I've got them.
+Use them, try them and let me now if you've got problems running
+something.
+
+I have tested to sources both on 16-bits and 32-bits MINIX. I have compiled
+it with gcc, bcc and ACK, so that shouldn't really give a problem. Maybe
+the standard MINIX-make chokes on the makefile, atleast mine did.
+
+NOTE:
+	Make install does not place the man-pages somewhere. You should
+	do this yourself.
+
+--
+Edvard Tuinder        ed@pulstar.NL.mugnet.org    v892231@si.hhs.NL
+Student Computer Science
+Haagse Hogeschool, The Hague, The Netherlands

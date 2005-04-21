@@ -1,0 +1,32 @@
+This code *is* PD. You (public) have all the rights to the code.  [But
+this also means you (singular) do not have any *extra* rights to the code,
+hence it is impossible for you to restrict the use and distribution of
+this code (original) in any way.]
+
+Dedication:
+
+This posting is a dedication to an old 750 that started out running 4.1BSD
+and had 1.5 meg, 1 dz11, and 2 Rk07 drives.  It was named yetti [sic] by
+accident, and was managed by the author until its retirement two years
+ago. [the name yetti now identifies a different machine]
+
+If you have any important fixes and/or speed improvements, I am much
+interested. I am also interested in hearing about any unique applica-
+tions of M4. I am NOT interested in gratuitous hacks or "neat"
+kitchen-sink features. 
+
+Author:
+	Usenet: uunet!utai!yunexus!oz || oz@nexus.yorku.ca
+	Bitnet: oz@yulibra.BITNET
+	Phonet: [416] 736-5257 x 3976
+
+
+enjoy.	oz
+
+Testing: 
+
+This directory contains a test file called test.m4.  To use it, type
+
+	m4 <Test.m4 >out
+
+The output file, out, should be identical to M4.out

@@ -1,0 +1,11 @@
+operator:*:0:
+daemon:*:1:
+bin:*:2:
+other:*:3:
+tty:*:4:
+uucp:*:5:
+news:*:6:
+ftp:*:7:
+kmem:*:8:
+www:*:9:
+nogroup:*:99:

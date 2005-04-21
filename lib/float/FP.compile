@@ -1,0 +1,20 @@
+#!/bin/sh
+#							Author: Kees J. Bot
+# Compile one soft FP source file.
+# (These files shouldn't be optimized normally, but the 16-bit C compiler
+# only optimizes scratch register allocation a bit with -O.  To the 32-bit
+# compiler -O is a no-op.)
+
+case $#:$1 in
+1:*.c)	;;
+*)	echo "$0: $1: not a C file" >&2; exit 1
+esac
+
+base="`basename "$1" .c`"
+trap 'rm -f tmp.s "$base.s"; exit 1' 2
+
+cc -O -I. -D_MINIX -D_POSIX_SOURCE -S "$1" &&
+mv "$base.s" tmp.s &&
+sed -f FP.script tmp.s > "$base.s" &&
+cc -c "$base.s" &&
+rm tmp.s "$base.s"

@@ -1,0 +1,3 @@
+# Set timezone.
+
+TZ='GMT0'	export TZ

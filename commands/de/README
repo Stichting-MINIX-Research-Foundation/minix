@@ -1,0 +1,156 @@
+		de - A Minix Disk Editor
+
+	      Terrence W. Holm, Jan. 1989
+
+
+INTRODUCTION
+
+    The de(1) disk editor allows a system administrator to
+    look at and modify a Minix file system device. Commands
+    allow movement throughout a file system device, displaying
+    information in a couple of formats, writing blocks from
+    the device onto another file, and rewriting words on the
+    disk.
+
+    A few changes to the Minix file system aid recovering files.
+    I-node numbers are retained in directory entries now (they
+    get moved to the end). And all the i-node information is not
+    zeroed-out when a file is unlinked. So, after a file is
+    accidently rm(1)'ed, you can find the old i-node, and then
+    manually (or automatically) go to each of the freed blocks
+    and write them to a new file.
+
+
+USES FOR THE DISK EDITOR
+
+    1)	EDUCATION. Students can look at a file system in
+        a painless manner. For example you don't have to
+	use od(1) to look at the zone numbers in i-nodes.
+
+	A simple assignment is to change the size of an un-mounted
+	floppy disk file system from 360 to 300 blocks. (A more
+	difficult assignment is to explain why this works, even
+	though fsck(1) and df(1) do not report the correct number
+	of free blocks. :-)
+
+    2)  ADMINISTRATION. You can visually check inconsistencies
+	reported by fsck(1) before letting fsck(1) fix them.
+	You can change any word on the disk, this greatly simplifies
+	editing file system information. For example, changing the
+	size of a block special device is actually fun, no more
+	"blind" writing to your partitions.
+
+	Bit maps can be displayed with 2048 "bits" per screen,
+	(on the IBM/PC console), see how your zones are allocated!
+
+    3)  RECOVERING LOST FILES. You can search a disk for an ASCII
+	string, once found, the block can be written out to a file.
+
+	A one line change to fs/path.c allows users to get the i-node
+	number for a file after it has been removed from a directory.
+
+	Another couple lines changed in the file system keep the
+	i-node information available until the i-node is reused
+	(normally this information is zeroed out when an i-node is
+	released.) This allows a de(1) user to go to a released
+	i-node, get all the block numbers, go to these blocks and
+	write them back to a new file.
+
+	The whole recovery process is automated by running "de -r file".
+	So, IF a file is unlink(2)'ed (eg. "rm file"), AND IF no one
+	allocates a new i-node or block in the mean-time, THEN you
+	can recover the file.
+
+
+RECOVERY SECURITY
+
+    Normally Minix hard disk partitions are r/w only by the super-user,
+    and floppy disks are r/w by anyone. This means that only "root"
+    can look at hard disk partitions, but others can use de(1) to play
+    with their floppy disks.
+
+    When recovering files ("de -r file"), a user requires access to
+    the major file system partitions. This can be done by:
+
+	(a) Give everyone access to the hard disks. DON'T DO THIS, it
+	    defeats all the file system protection we already have.
+
+	(b) Make de(1) set-uid "root". This is the way to go, IF you
+	    are running a Minix system that has NO ACCESS from the
+	    outside. This allows anyone to execute "de -r file", but only
+	    root to use "de /dev/hd3". De(1) does some checking when
+	    retrieving lost blocks, eg. making sure they really are
+	    free blocks and making sure the user owned the i-node.
+	    BUT, file system information has been lost when the file
+	    was unlink(2)'ed, so de(1) can not be 100% sure that a
+	    recovered block really belonged to the user. THIS IS A
+	    SECURITY HOLE. [Since the only access to my machine is from
+	    observable terminals and their associated humans, I run
+	    de(1) as set-uid root.]
+
+	(c) Keep the disks rw-------, and don't set-uid de(1). This
+	    means that only the super-user can recover lost files.
+	    So, if you accidently "rm", you must tell the system
+	    administrator to "su" and recover your file, (be sure to
+	    inform the other users to stop whatever they are doing
+	    until the file is restored).
+
+
+INSTALLATION
+
+	- Install de.1 in /usr/man/cat1.
+
+	- Install the files: Makefile, README, de.h, de.c, de_stdin.c,
+	  de_stdout.c, de_diskio.c and de_recover.c in commands/de.
+	  Add -F and -T. to the Makefile, if necessary.
+
+	- "make" de(1). If a header file is not found, don't worry:
+	  You probably have it somewhere, just link it to what de(1)
+	  is looking for. This program also requires the subroutine
+	  tolower(3), see EFTH MINIX report #50, if you don't have it.
+
+	- Do you really want set-uid root on de?
+
+	- Patch the files fs/path.c, fs/link.c and fs/open.c. If
+	  you don't patch the file system then the recover option
+	  "-r" and associated commands ('x' and 'X') will not work,
+	  but de(1) is still functional and useful.
+
+	- "make" a new fs, using -DRECOVER. Rebuild a boot diskette.
+
+
+USING DE(1) FOR THE FIRST TIME
+
+    De(1) starts up in "word" mode at block 0 of the specified
+    device. Hit the PGDN (or space bar) a few times, observing
+    all the information on the screen. Each PGUP/PGDN moves to
+    the next 1024 byte block, (de(1) only knows about 1 block per
+    zone file systems). Note that "word" mode only displays 32
+    bytes at a time, so you are only observing the first 32 bytes
+    in the first few blocks when you skip using PGDN.
+
+    Now go back to block 3, (zone bit map), using "g 3 ENTER".
+    Change to "map" mode "v m", and then use the down arrow key
+    to check each 2 Megs in the zone bit map.
+
+    Now change to "block" mode using "v b". And go to some data
+    block, eg. "g 1000 ENTER". Use PGUP/PGDN to see what data
+    is in each nearby block.
+
+    Remember 'h' gives you a help page.
+
+    Try some more commands, for example: 'END', 'I', '/'.
+    (Note: searching through a whole disk under Minix takes a
+    long time: 30-60 seconds per megabyte, depending on your
+    machine, drive and controller, [Minix is embarrassingly slow].)
+
+    Don't worry about looking at a mounted device, you must specify
+    the "-w" option before the 's' command is operational, and
+    this command is the only one which will try to modify the
+    contents of the device.
+
+
+MINIX-ST
+
+    Please contact me if you are interesting in attempting a port
+    to MINIX-ST.

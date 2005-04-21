@@ -1,0 +1,53 @@
+Compilation
+-----------
+
+ Type 'make install'.
+
+ This package has been heavily modified for Minix, and then minimized to
+only those files needed for Minix.  Don't use this as a basis for anything
+else, get the original package instead.  -- kjb
+
+Doc
+---
+
+ The most uptodate doc of this package is the texinfo doc. Type 'make
+info' to get online info doc, and 'make dvi ; dvips mtools.dvi' to get
+a printed copy.  The info doc has a concept index.  Make use of it.
+ You may get an info copy using the following command 'make info'.
+This can then be viewed using emacs' info mode, or using a standalone
+info viewer.
+ Man pages are still present, but contain less information, and are
+less uptodate than the texinfo documentation.
+ If you do not have the necessary tools to view the texinfo doc, you
+may also find it on the Workd Wide Web at the following locations:
+  http://mtools.linux.lu/mtools_toc.html
+  http://www.tux.org/pub/knaff/mtools/mtools_toc.html
+
+Compiler
+--------
+
+ Mtools should be compiled with an Ansi compiler, preferably gcc
+
+Authors
+-------
+
+Original code (versions through 2.0.7?) by Emmet P. Gray (Texas, USA), who
+no longer appears to be reachable by Internet e-mail.  Viktor Dukhovni (at
+Princeton, USA) had major input into v2.0.
+
+Since 2.0.7: maintained primarily and until now informally by Alain
+Knaff (Luxembourg) and David Niemi (Reston, Virginia, USA).
+
+Please report bugs to the mtools mailing list at mtools@www.tux.org.
+Before reporting any problems, check whether they have already been
+fixed in the Alpha patches at http://mtools.linux.lu and
+http://www.tux.org/pub/knaff
+
+You may subscribe to the mtools mailing list by sending a message
+containing 'subscribe mtools' in its body to majordomo@www.tux.org
+
+
+Current Status
+--------------
+
+Stable release 3.3.

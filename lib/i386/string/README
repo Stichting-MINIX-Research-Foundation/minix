@@ -1,0 +1,52 @@
+Notes on i80386 string assembly routines.		Author: Kees J. Bot
+								2 Jan 1994
+
+Remarks.
+    All routines set up proper stack frames, so that stack traces can be
+    derived from core dumps.  String routines are often the ones that
+    get the bad pointer.
+
+    Flags are often not right in boundary cases (zero string length) on
+    repeated string scanning or comparing instructions.  This has been
+    handled in sometimes nonobvious ways.
+
+    Only the eax, edx, and ecx registers are not preserved, all other
+    registers are.  This is what GCC expects.  (ACK sees ebx as scratch
+    too.)  The direction byte is assumed to be wrong, and left clear on
+    exit.
+
+Assumptions.
+    The average string is short, so short strings should not suffer from
+    smart tricks to copy, compare, or search large strings fast.  This
+    means that the routines are fast on average, but not optimal for
+    long strings.
+
+    It doesn't pay to use word or longword operations on strings, the
+    setup time hurts the average case.
+
+    Memory blocks are probably large and on word or longword boundaries.
+
+    No unaligned word moves are done.  Again the setup time may hurt the
+    average case.  Furthermore, the author likes to enable the alignment
+    check on a 486.
+
+String routines.
+    They have been implemented using byte string instructions.  The
+    length of a string it usually determined first, followed by the
+    actual operation.
+
+Strcmp.
+    This is the only string routine that uses a loop, and not
+    instructions with a repeat prefix.  Problem is that we don't know
+    how long the string is.  Scanning for the end costs if the strings
+    are unequal in the first few bytes.
+
+Strchr.
+    The character we look for is often not there, or at some distance
+    from the start.  The string is scanned twice, for the terminating
+    zero and the character searched, in chunks of increasing length.
+
+Memory routines.
+    Memmove, memcpy, and memset use word or longword instructions if the
+    address(es) are at word or longword boundaries.  No tricks to get
+    alignment after doing a few bytes.  No unaligned operations.

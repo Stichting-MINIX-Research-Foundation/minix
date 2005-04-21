@@ -1,0 +1,89 @@
+# cawf(1) device configuration file
+#
+# device
+# \tb=bold_control_sequence
+# \ti=italic_control_sequence
+# \tr=roman_control_sequence
+# \tf=font_name=font_initialization
+#
+# The first font name is the default for the device.
+#
+# sorted in reverse alphabetical order by device name
+
+# VGA monochrome monitors
+#	italic = underline
+
+vgamono
+	b=\033[1m
+	i=\033[4m
+	r=\033[0m
+
+
+# HP LaserJet III
+
+lj3
+	b=\x1b(s7B
+	i=\x1b(s1S
+	r=\x1b(s0B\x1b(s0S
+	f=c10=\x1b&l0O\x1b(8U\x1b(s0p12h10v0s0b3T
+	f=c12ibm=\x1b&l0O\x1b(10U\x1b(s0p10.00h12.0v0s0b3T
+	f=lg12=\x1b&l0O\x1b(8U\x1b(s12h12v0s0b6T
+
+# Panasonic KX-P1180
+#	bold = Emphasized
+#
+#	all fonts are Near Letter Quality (NLQ)
+
+kxp1180
+	b=\033E
+	i=\0334
+	r=\0335\033F
+	f=c10=\033x1\033k0\033P
+	f=bps10=\033x1\033k6\033P
+	f=bps12=\033x1\033k6\033M
+	f=c12=\033x1\033k0\033M
+	f=p10=\033x1\033k3\033P
+	f=p12=\033x1\033k3\033M
+	f=ss10=\033x1\033k1\033P
+	f=ss12=\033x1\033k1\033M
+
+# Panasonic KX-P1124 (from Bob Hardy <hardy@lucid.com>)
+#       bold = Emphasized
+#
+#       all fonts are Near Letter Quality (NLQ)
+#
+#       The s10 and s12 fonts are Script, which is only available on the more
+#       deluxe models of the Panasonic KX-P1100 series -- e.g., Script is not
+#       supported on the KX-P1180, but is supported on the KX-P1124.
+
+kxp1124
+	b=\033E
+	i=\0334
+	r=\0335\033F
+	f=c10=\033x1\033k0\033P
+	f=bps10=\033x1\033k6\033P
+	f=bps12=\033x1\033k6\033M
+	f=c12=\033x1\033k0\033M
+	f=p10=\033x1\033k3\033P
+	f=p12=\033x1\033k3\033M
+	f=s10=\033x1\033k4\033P
+	f=s12=\033x1\033k4\033M
+	f=ss10=\033x1\033k1\033P
+	f=ss12=\033x1\033k1\033M
+
+# IBM Personal Printer Data Stream (PPDS) protocol
+#	bold = Double-strike
+#	italic = Underline
+
+ibmppds
+	b=\033G
+	i=\033-\001
+	r=\033-\000\033H
+
+# Epson FX-86e/FX-800
+#	bold = double strike
+
+epson
+	b=\033G
+	i=\0334
+	r=\0335\033H

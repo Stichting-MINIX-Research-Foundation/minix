@@ -1,0 +1,234 @@
+/* The system call implemented in this file:
+ *   m_type:	SYS_TIMES
+ *
+ * The parameters for this system call are:
+ *    m4_l1:	T_PROC_NR		(get info for this process)	
+ *    m4_l1:	T_USER_TIME		(return values ...)	
+ *    m4_l2:	T_SYSTEM_TIME	
+ *    m4_l3:	T_CHILD_UTIME	
+ *    m4_l4:	T_CHILD_STIME	
+ *    m4_l5:	T_BOOT_TICKS	
+ */
+
+#include "../kernel.h"
+#include "../system.h"
+#include <unistd.h>
+INIT_ASSERT
+
+/*===========================================================================*
+ *				do_times				     *
+ *===========================================================================*/
+PUBLIC int do_times(m_ptr)
+register message *m_ptr;	/* pointer to request message */
+{
+/* Handle sys_times().  Retrieve the accounting information. */
+
+  register struct proc *rp;
+  int proc_nr;
+
+  /* Insert the times needed by the SYS_TIMES system call in the message. */
+  proc_nr = (m_ptr->T_PROC_NR == SELF) ? m_ptr->m_source : m_ptr->T_PROC_NR;
+  if (isokprocn(proc_nr)) {
+      rp = proc_addr(m_ptr->T_PROC_NR);
+
+      lock();			/* halt the volatile time counters in rp */
+      m_ptr->T_USER_TIME   = rp->user_time;
+      m_ptr->T_SYSTEM_TIME = rp->sys_time;
+      unlock();
+      m_ptr->T_CHILD_UTIME = rp->child_utime;
+      m_ptr->T_CHILD_STIME = rp->child_stime;
+  }
+  m_ptr->T_BOOT_TICKS = get_uptime();  
+  return(OK);
+}
+
+
+/*===========================================================================*
+ *			          do_unused				     *
+ *===========================================================================*/
+PUBLIC int do_unused(m)
+message *m;				/* pointer to request message */
+{
+  kprintf("SYS task got illegal request from %d.", m->m_source);
+  return(EBADREQUEST);		/* illegal message type */
+}
+
+
+/* The system call implemented in this file:
+ *   m_type:	SYS_ABORT
+ *
+ * The parameters for this system call are:
+ *    m1_i1:	ABRT_HOW 	(how to abort, possibly fetch monitor params)	
+ *    m1_i2:	ABRT_MON_PROC 	(proc nr to get monitor params from)	
+ *    m1_i3:	ABRT_MON_LEN	(length of monitor params)
+ *    m1_p1:	ABRT_MON_ADDR 	(virtual address of params)	
+ */
+
+/*===========================================================================*
+ *				do_abort				     *
+ *===========================================================================*/
+PUBLIC int do_abort(m_ptr)
+message *m_ptr;			/* pointer to request message */
+{
+/* Handle sys_abort. MINIX is unable to continue. This can originate in the
+ * MM (normal abort or panic) or FS (panic), or TTY (a CTRL-ALT-DEL or ESC
+ * after debugging dumps).
+ */
+  register struct proc *rp;
+  phys_bytes src_phys;
+  vir_bytes len;
+  int how = m_ptr->ABRT_HOW;
+  
+  rp = proc_addr(m_ptr->m_source);
+
+  if (how == RBT_MONITOR) {
+	/* The monitor is to run user specified instructions. */
+	len = m_ptr->ABRT_MON_LEN + 1;
+	assert(len <= mon_parmsize);
+	src_phys = numap_local(m_ptr->ABRT_MON_PROC, 
+		(vir_bytes) m_ptr->ABRT_MON_ADDR, len);
+	assert(src_phys != 0);
+	phys_copy(src_phys, mon_params, (phys_bytes) len);
+  }
+  prepare_shutdown(how);
+  return(OK);				/* pro-forma (really EDISASTER) */
+}
+
+/* The system call implemented in this file:
+ *   m_type:	SYS_GETINFO
+ *
+ * The parameters for this system call are:
+ *    m1_i3:	I_REQUEST	(what info to get)	
+ *    m1_i4:	I_PROC_NR	(process to store value at)	
+ *    m1_p1:	I_VAL_PTR 	(where to put it)	
+ *    m1_i1:	I_VAL_LEN 	(maximum length expected, optional)	
+ *    m1_p2:	I_KEY_PTR	(environment variable key)	
+ *    m1_i2:	I_KEY_LEN	(lenght of environment variable key)	
+ * 
+ * Author:
+ *    Jorrit N. Herder <jnherder@cs.vu.nl>
+ */
+
+
+
+/*===========================================================================*
+ *			        do_getinfo				     *
+ *===========================================================================*/
+PUBLIC int do_getinfo(m_ptr)
+register message *m_ptr;	/* pointer to request message */
+{
+/* Request system information to be copied to caller's address space. */
+  size_t length;
+  phys_bytes src_phys; 
+  phys_bytes dst_phys; 
+  int proc_nr, nr;
+
+  /* Set source address and length based on request type. */      
+  switch (m_ptr->I_REQUEST) {	
+    case GET_KENVIRON: {
+  	struct kenviron kenv;
+  	extern int end;
+
+    	kenv.pc_at = pc_at; 		kenv.ps_mca = ps_mca;
+    	kenv.processor = processor; 	kenv.protected = protected_mode;
+    	kenv.ega = ega; 		kenv.vga = vga;
+
+        kenv.proc_addr = (vir_bytes) proc;
+    	kenv.params_base = mon_params; 
+    	kenv.params_size = mon_parmsize; 
+        kenv.kmem_base = vir2phys(0);
+        kenv.kmem_size = vir2phys(&end) - vir2phys(0) + 1;
+        kenv.bootfs_base = proc_addr(MEMORY)->p_farmem[0].mem_phys;
+        kenv.bootfs_size = proc_addr(MEMORY)->p_farmem[0].mem_len;
+    	length = sizeof(struct kenviron);
+    	src_phys = vir2phys(&kenv);
+    	break;
+    }
+    case GET_IMAGE: {
+    	length = sizeof(struct system_image) * IMAGE_SIZE;
+    	src_phys = vir2phys(image);
+        break;
+    }
+    case GET_IRQTAB: {
+    	length = sizeof(struct irqtab) * NR_IRQ_VECTORS;
+    	src_phys = vir2phys(irqtab);
+        break;
+    }
+    case GET_MEMCHUNKS: {
+        length = sizeof(struct memory) * NR_MEMS;
+        src_phys = vir2phys(mem);
+        break;
+    }
+    case GET_SCHEDINFO: {
+        /* This is slightly complicated because we need two data structures
+         * at once, otherwise the scheduling information may be incorrect.
+         * Copy the queue heads and fall through to copy the process table. 
+         */
+        length = sizeof(struct proc *) * NR_SCHED_QUEUES;
+        src_phys = vir2phys(rdy_head);
+        dst_phys = numap_local(m_ptr->m_source, (vir_bytes) m_ptr->I_KEY_PTR,
+        	 length); 
+        if (src_phys == 0 || dst_phys == 0) return(EFAULT);
+        phys_copy(src_phys, dst_phys, length);
+    }
+    case GET_PROCTAB: {
+    	length = sizeof(struct proc) * (NR_PROCS + NR_TASKS);
+    	src_phys = vir2phys(proc);
+        break;
+    }
+    case GET_PROC: {
+    	nr = (m_ptr->I_KEY_LEN == SELF) ? m_ptr->m_source : m_ptr->I_KEY_LEN;
+    	if (! isokprocn(nr)) return(EINVAL);
+    	length = sizeof(struct proc);
+    	src_phys = vir2phys(proc_addr(nr));
+        break;
+    }
+    case GET_MONPARAMS: {
+    	src_phys = mon_params;	/* already is a physical address! */
+    	length = mon_parmsize;
+    	break;
+    }
+    case GET_PROCNR: {
+        length = sizeof(int);
+        if (m_ptr->I_KEY_LEN == 0) {		/* get own process nr */
+        kprintf("GET_PROCNR (own) from %d\n", m_ptr->m_source);
+            src_phys = vir2phys(&proc_nr);	
+        } else {				/* lookup nr by name */
+  	    int proc_found = FALSE;
+  	    struct proc *pp;
+  	    char key[8];	/* storage for process name to lookup */
+        kprintf("GET_PROCNR (others) from %d\n", m_ptr->m_source);
+  proc_nr = m_ptr->m_source;	/* only caller can request copy */
+    	    if (m_ptr->I_KEY_LEN > sizeof(key)) return(EINVAL);
+    	    if (vir_copy(proc_nr, (vir_bytes) m_ptr->I_KEY_PTR, SYSTASK,
+    	        (vir_bytes) key, m_ptr->I_KEY_LEN) != OK) return(EFAULT);
+  	    for (pp=BEG_PROC_ADDR; pp<END_PROC_ADDR; pp++) {
+		if (kstrncmp(pp->p_name, key, m_ptr->I_KEY_LEN) == 0) {
+			src_phys = vir2phys(&(pp->p_nr));
+			proc_found = TRUE;
+			break;
+		}
+	    }
+	    if (! proc_found) return(ESRCH);
+        }
+        break;
+    }
+    case GET_KMESSAGES: {
+        length = sizeof(struct kmessages);
+        src_phys = vir2phys(&kmess);
+        break;
+    }
+    default:
+        return(EINVAL);
+  }
+
+  /* Try to make the actual copy for the requested data. */
+  if (m_ptr->I_VAL_LEN > 0 && length > m_ptr->I_VAL_LEN) return (E2BIG);
+  proc_nr = m_ptr->m_source;	/* only caller can request copy */
+  dst_phys = numap_local(proc_nr, (vir_bytes) m_ptr->I_VAL_PTR, length); 
+  if (src_phys == 0 || dst_phys == 0) return(EFAULT);
+  phys_copy(src_phys, dst_phys, length);
+  return(OK);
+}
+
+

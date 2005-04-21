@@ -1,0 +1,827 @@
+#1
+You are standing at the end of a road before a small brick building.
+Around you is a forest.  A small stream flows out of the building and
+down a gully.
+#2
+You have walked up a hill, still in the forest.  The road slopes back
+down the other side of the hill.  There is a building in the distance.
+#3
+You are inside a building, a well house for a large spring.  Off
+to one side is a small pantry.
+#4
+You are in a valley in the forest beside a stream tumbling along a
+rocky bed.
+#5
+You are in open forest, with a deep valley to one side.  Not far
+is a large billboard.
+#6
+You are in open forest near both a valley and a road.
+#7
+At your feet all the water of the stream splashes into a 2-inch slit
+in the rock.  Downstream the stream bed is bare rock.
+#8
+You are in a 20-foot depression floored with bare dirt.  Set into the
+dirt is a strong steel grate mounted in concrete.  A dry stream bed
+leads into the depression.
+#9
+You are in a small chamber beneath a 3x3 steel grate to the surface.
+A low crawl over cobbles leads inward to the west.
+#10
+You are crawling over cobbles in a low passage.  There is a dim light
+at the east end of the passage.
+#11
+You are in a debris room filled with stuff washed in from the surface.
+A low wide passage with cobbles becomes plugged with mud and debris
+here, but an awkward canyon leads upward and west.  A note on the wall
+says "Magic Word XYZZY".
+#12
+You are in an awkward sloping east/west canyon.
+#13
+You are in a splendid chamber thirty feet high.  The walls are frozen
+rivers of orange stone.  An awkward canyon and a good passage exit
+from east and west sides of the chamber.
+#14
+At your feet is a small pit breathing traces of white mist.  An east
+passage ends here except for a small crack leading on.
+#15
+You are at one end of a vast hall stretching forward out of sight to
+the west.  There are openings to either side.  Nearby, a wide stone
+staircase leads downward.  The hall is filled with wisps of white mist
+swaying to and fro almost as if alive.  A cold wind blows up the
+staircase.  There is a passage at the top of a dome behind you.
+#16
+The crack is far too small for you to follow.
+#17
+You are on the east bank of a fissure slicing clear across the hall.
+The mist is quite thick here, and the fissure is too wide to jump.
+#18
+This is a low room with a crude note on the wall.  The note says,
+"You won't get it up the steps".
+#19
+You are in the Hall of the Mountain King, with passages off in all
+directions.
+#20
+You are at the bottom of the pit with a broken neck.
+#21
+You didn't make it.
+#22
+The dome is unclimbable.
+#23
+You are at the west end of the Twopit Room.  There is a large hole in
+the wall above the pit at this end of the room.
+#24
+You are at the bottom of the eastern pit in the Twopit Room.  There is
+a small pool of oil in one corner of the pit.
+#25
+You are at the bottom of the western pit in the Twopit Room.  There is
+a large hole in the wall about 25 feet above you.
+#26
+You clamber up the plant and scurry through the hole at the top.
+#27
+You are on the west side of the fissure in the Hall of Mists.
+#28
+You are in a low N/S passage at a hole in the floor.  The hole goes
+down to an E/W passage.
+#29
+You are in the South Side Chamber.
+#30
+You are in the West Side Chamber of the Hall of the Mountain King.
+A passage continues west and up here.
+#31
+<$$<
+#32
+You can't get by the snake.
+#33
+You are in a large room, with a passage to the south, a passage to the
+west, and a wall of broken rock to the east.  There is a large "Y2" on
+a rock in the room's center.
+#34
+You are in a jumble of rock, with cracks everywhere.
+#35
+You're at a low window overlooking a huge pit, which extends up out of
+sight.  A floor is indistinctly visible over 50 feet below.  Traces of
+white mist cover the floor of the pit, becoming thicker to the right.
+Marks in the dust around the window would seem to indicate that
+someone has been here recently.  Directly across the pit from you and
+25 feet away there is a similar window looking into a lighted room.  A
+shadowy figure can be seen there peering back at you.
+#36
+You are in a dirty broken passage.  To the east is a crawl.  To the
+west is a large passage.  Above you is a hole to another passage.
+#37
+You are on the brink of a small clean climbable pit.  A crawl leads
+west.
+#38
+You are in the bottom of a small pit with a little stream, which
+enters and exits through tiny slits.
+#39
+You are in a large room full of dusty rocks.  There is a big hole in
+the floor.  There are cracks everywhere, and a passage leading east.
+#40
+You have crawled through a very low wide passage parallel to and north
+of the Hall of Mists.
+#41
+You are at the west end of Hall of Mists.  A low wide crawl continues
+west and another goes north.  To the south is a little passage 6 feet
+off the floor.
+#42
+You are in a maze of twisty little passages, all alike.
+#43
+You are in a maze of twisty little passages, all alike.
+#44
+You are in a maze of twisty little passages, all alike.
+#45
+You are in a maze of twisty little passages, all alike.
+#46
+Dead end.
+#47
+Dead end.
+#48
+Dead end.
+#49
+You are in a maze of twisty little passages, all alike.
+#50
+You are in a maze of twisty little passages, all alike.
+#51
+You are in a maze of twisty little passages, all alike.
+#52
+You are in a maze of twisty little passages, all alike.
+#53
+You are in a maze of twisty little passages, all alike.
+#54
+Dead end.
+#55
+You are in a maze of twisty little passages, all alike.
+#56
+Dead end.
+#57
+You are on the brink of a thirty foot pit with a massive orange column
+down one wall.  You could climb down here but you could not get back
+up.  The maze continues at this level.
+#58
+Dead end.
+#59
+You have crawled through a very low wide passage parallel to and north
+of the Hall of Mists.
+#60
+You are at the east end of a very long hall apparently without side
+chambers.  In the south wall are several wide cracks and a high
+hole, but the hole is far above your head.  To the east a wide
+crawl slants up.  To the north a round two foot hole slants down.
+#61
+You are at the west end of a very long featureless hall.  The hall
+joins up with a narrow north/south passage.
+#62
+You are at a crossover of a high N/S passage and a low E/W one.
+#63
+Dead end.
+#64
+You are at a complex junction.  A low hands and knees passage from the
+north joins a higher crawl from the east to make a walking passage
+going west.  There is also a large room above.  The air is damp here.
+#65
+You are in Bedquilt, a long east/west passage with holes everywhere.
+To explore at random select north, south, up, or down.
+#66
+You are in a room whose walls resemble swiss cheese.  Obvious passages
+go west, east, NE, and NW.  Part of the room is occupied by a large
+bedrock block.
+#67
+You are at the east end of the Twopit Room.  The floor here is
+littered with thin rock slabs, which make it easy to descend the pits.
+There is a path here bypassing the pits to connect passages from east
+and west.  There are holes all over, but the only big one is on the
+wall directly over the west pit where you can't get to it.
+#68
+You are in a large low circular chamber whose floor is an immense slab
+fallen from the ceiling (Slab Room).  East and west there once were
+large passages, but they are now filled with boulders.  Low small
+passages go north and south, and the south one quickly bends west
+around the boulders.
+#69
+You are in a secret N/S canyon above a large room.
+#70
+You are in a secret N/S canyon above a sizable passage.
+#71
+You are in a secret canyon at a junction of three canyons, bearing
+north, south, and SE.  The north one is as tall as the other two
+combined.
+#72
+You are in a large low room.  Crawls lead north, NE, and SW.
+#73
+Dead end crawl.
+#74
+You are in a secret canyon which here runs E/W.  It crosses over a
+very tight canyon 15 feet below.  If you go down you may not be able
+to get back up.
+#75
+You are at a wide place in a very tight N/S canyon.
+#76
+The canyon here becomes too tight to go further south.
+#77
+You are in a tall E/W canyon.  A low tight crawl goes 3 feet north and
+seems to open up.
+#78
+The canyon runs into a mass of boulders -- dead end.
+#79
+The stream flows out through a pair of 1 foot diameter sewer pipes.
+It would be advisable to use the exit.
+#80
+You are in a maze of twisty little passages, all alike.
+#81
+Dead end.
+#82
+Dead end.
+#83
+You are in a maze of twisty little passages, all alike.
+#84
+You are in a maze of twisty little passages, all alike.
+#85
+Dead end.
+#86
+Dead end.
+#87
+You are in a maze of twisty little passages, all alike.
+#88
+You are in a long, narrow corridor stretching out of sight to the
+west.  At the eastern end is a hole through which you can see a
+profusion of leaves.
+#89
+There is nothing here to climb.  Use "up" or "out" to leave the pit.
+#90
+You have climbed up the plant and out of the pit.
+#91
+You are at the top of a steep incline above a large room.  You could
+climb down here, but you would not be able to climb up.  There is a
+passage leading back to the north.
+#92
+You are in the Giant Room.  The ceiling here is too high up for your
+lamp to show it.  Cavernous passages lead east, north, and south.  On
+the west wall is scrawled the inscription, "FEE FIE FOE FOO" [sic].
+#93
+The passage here is blocked by a recent cave-in.
+#94
+You are at one end of an immense north/south passage.
+#95
+You are in a magnificent cavern with a rushing stream, which cascades
+over a sparkling waterfall into a roaring whirlpool which disappears
+through a hole in the floor.  Passages exit to the south and west.
+#96
+You are in the Soft Room.  The walls are covered with heavy curtains,
+the floor with a thick pile carpet.  Moss covers the ceiling.
+#97
+This is the Oriental Room.  Ancient oriental cave drawings cover the
+walls.  A gently sloping passage leads upward to the north, another
+passage leads SE, and a hands and knees crawl leads east.
+#98
+You are following a wide path around the outer edge of a large cavern.
+Far below, through a heavy white mist, strange splashing noises can be
+heard.  The mist rises up through a fissure in the ceiling.  The path
+hugs the cavern's rim to the NE and south, while another branch forks
+west.  A round chute with extremely smooth walls angles sharply up
+to the southwest.
+#99
+You are in an alcove.  A small NW path seems to widen after a short
+distance.  An extremely tight tunnel leads east.  It looks like a very
+tight squeeze.  An eerie light can be seen at the other end.
+#100
+You're in a small chamber lit by an eerie green light.  An extremely
+narrow tunnel exits to the west, and a dark corridor leads NE.
+#101
+You're in the Dark-Room.  A corridor leading south is the only exit.
+#102
+You are in an arched hall.  A coral passage once continued up and east
+from here, but is now blocked by debris.  The air smells of sea water.
+#103
+You're in a large room carved out of sedimentary rock.  The floor and
+walls are littered with bits of shells imbedded in the stone.  A
+shallow passage proceeds downward, and a somewhat steeper one leads
+up.  A low hands and knees passage enters from the south.
+#104
+You are in a long sloping corridor with ragged sharp walls.
+#105
+You are in a cul-de-sac about eight feet across.
+#106
+You are in an anteroom leading to a large passage to the east.  Small
+passages go west and up.  The remnants of recent digging are evident.
+A sign in midair here says "Cave under construction beyond this point.
+Proceed at own risk.  [Witt Construction Company]".
+#107
+You are in a maze of twisty little passages, all different.
+#108
+You are at Witt's End.  Passages lead off in *ALL* directions.
+#109
+You are in a north/south canyon about 25 feet across.  The floor is
+covered by white mist seeping in from the north.  The walls extend
+upward for well over 100 feet.  Suspended from some unseen point far
+above you, an enormous two-sided mirror is hanging parallel to and
+midway between the canyon walls.  (The mirror is obviously provided
+for the use of the dwarves, who as you know, are extremely vain.)  A
+small window can be seen in either wall, some fifty feet up.
+#110
+You're at a low window overlooking a huge pit, which extends up out of
+sight.  A floor is indistinctly visible over 50 feet below.  Traces of
+white mist cover the floor of the pit, becoming thicker to the left.
+Marks in the dust around the window would seem to indicate that
+someone has been here recently.  Directly across the pit from you and
+25 feet away there is a similar window looking into a lighted room.  A
+shadowy figure can be seen there peering back at you.
+#111
+A large stalactite extends from the roof and almost reaches the floor
+below.  You could climb down it, and jump from it to the floor, but
+having done so you would be unable to reach it to climb back up.
+#112
+You are in a little maze of twisting passages, all different.
+#113
+You are at the edge of a large underground reservoir.  An opaque cloud
+of white mist fills the room and rises rapidly upward.  The lake is
+fed by a stream, which tumbles out of a hole in the wall about 10 feet
+overhead and splashes noisily into the water somewhere within the
+mist.  The indistinct shape of the opposite shore can be dimly seen
+through the mist.  The only passage goes back toward the south.
+#114
+Dead end.
+#115
+You are at the northeast end of an immense room, even larger than the
+Giant Room.  It appears to be a repository for the "ADVENTURE"
+program.  Massive torches far overhead bathe the room with smoky
+yellow light.  Scattered about you can be seen a pile of bottles (all
+of them empty), a nursery of young beanstalks murmuring quietly, a bed
+of oysters, a bundle of black rods with rusty stars on their ends, and
+a collection of brass lanterns.  Off to one side a great many dwarves
+are sleeping on the floor, snoring loudly.  A sign nearby reads: "Do
+not disturb the dwarves!"  An immense mirror is hanging against one
+wall, and stretches to the other end of the room, where various other
+sundry objects can be glimpsed dimly in the distance.  An unoccupied
+telephone booth stands against the north wall.
+#116
+You are at the southwest end of the repository.  To one side is a pit
+full of fierce green snakes.  On the other side is a row of small
+wicker cages, each of which contains a little sulking bird.  In one
+corner is a bundle of black rods with rusty marks on their ends.  A
+large number of velvet pillows are scattered about on the floor. 
+Beside one of the pillows is a large, dusty, leather-bound volume
+with the title "History of Adventure" embossed in pure gold.
+A vast mirror stretches off to the northeast, almost reaching the
+phone booth.  At your feet is a large steel grate, next to which is
+a sign which reads, "Treasure Vault. Keys in Main Office."
+#117
+You are on one side of a large, deep chasm.  A heavy white mist rising
+up from below obscures all view of the far side.  A SW path leads away
+from the chasm into a winding corridor.
+#118
+You are in a long winding corridor sloping out of sight in both
+directions.
+#119
+You are in a secret canyon which exits to the north and east.
+#120
+You are in a secret canyon which exits to the north and east.
+#121
+You are in a secret canyon which exits to the north and east.
+#122
+You are on the northeast side of a deep chasm.  A NE path leads away
+from the chasm on this side.
+#123
+You're in a long east/west corridor.  A faint rumbling noise can be
+heard in the distance.
+#124
+The path forks here.  The left fork leads northeast.  A dull rumbling
+seems to get louder in that direction.  The right fork leads southeast
+down a gentle slope.  The main corridor enters from the west.
+#125
+The walls are quite warm here.  From the north can be heard a steady
+roar, so loud that the entire cave seems to be trembling.  Another
+passage leads south, and a low crawl goes east.
+#126
+You are on the edge of a breathtaking view.  Far below you is an
+active volcano, from which great gouts of molten lava come surging
+out, cascading back down into the depths.  The glowing rock fills the
+farthest reaches of the cavern with a blood-red glare, giving every-
+thing an eerie, macabre appearance.  The air is filled with flickering
+sparks of ash and a heavy smell of brimstone.  The walls are hot to
+the touch, and the thundering of the volcano drowns out all other
+sounds.  Embedded in the jagged roof far overhead are myriad twisted
+formations composed of pure white alabaster, which scatter the murky
+light into sinister apparitions upon the walls.  To one side is a deep
+gorge, filled with a bizarre chaos of tortured rock which seems to
+have been crafted by the devil himself.  An immense river of fire
+crashes out from the depths of the volcano, burns its way through the
+gorge, and plummets into a bottomless pit far off to your left.  To
+the right, an immense geyser of blistering steam erupts continuously
+from a barren island in the center of a sulfurous lake, which bubbles
+ominously.  The far right wall is aflame with an incandescence of its
+own, which lends an additional infernal splendor to the already
+hellish scene.  A dark, foreboding passage exits to the south.
+#127
+You are in a small chamber filled with large boulders.  The walls are
+very warm, causing the air in the room to be almost stifling from the
+heat.  The only exit is a crawl heading west, through which is coming
+a low rumbling.
+#128
+You are walking along a gently sloping north/south passage lined with
+oddly shaped limestone formations.
+#129
+You are standing at the entrance to a large, barren room.  A sign
+posted above the entrance reads:  "Caution!  Bear in room!"
+#130
+You are inside a barren room.  The center of the room is completely
+empty except for some dust.  Marks in the dust lead away toward the
+far end of the room.  The only exit is the way you came in.
+#131
+You are in a maze of twisting little passages, all different.
+#132
+You are in a little maze of twisty passages, all different.
+#133
+You are in a twisting maze of little passages, all different.
+#134
+You are in a twisting little maze of passages, all different.
+#135
+You are in a twisty little maze of passages, all different.
+#136
+You are in a twisty maze of little passages, all different.
+#137
+You are in a little twisty maze of passages, all different.
+#138
+You are in a maze of little twisting passages, all different.
+#139
+You are in a maze of little twisty passages, all different.
+#140
+Dead end.
+#141
+You are on a narrow promontory at the foot of a waterfall, which
+spurts from an overhead hole in the rock wall and splashes into a
+large reservoir, sending up clouds of mist and spray.
+Through the thick white mist looms a polished marble slab, to
+which is affixed an enormous rusty iron anvil.  In golden letters
+are written the words: "Whoso Pulleth Out This Sword of This
+Stone and Anvil, is Right wise King-Born of All This Mountain."
+There is a narrow chimney on the east side of the promontory.
+#142
+You are on a narrow shelf above and east of the top of a very steep
+chimney.  A long smooth granite slide curves down out of sight
+to the east.  If you go down the slide, you may not be able to
+climb back up.
+#143
+You are in the private chamber of the Mountain King.  Hewn into the
+solid rock of the east wall of the chamber is an intricately-wrought
+throne of elvish design.  There is an exit to the west.
+#144
+You are on the east side of the throne room.  On the arm of the throne
+has been hung a sign which reads "Gone for the day: visiting
+sick snake. --M.K."
+#145
+You are dragged down, down, into the depths of the whirlpool.
+Just as you can no longer hold your breath, you are shot out over
+a waterfall into the shallow end of a large reservoir.  Gasping
+and sputtering, you crawl weakly towards the shore....
+#146
+You are in dense forest, with a hill to one side.  The trees appear
+to thin out towards the north and east.
+#147
+You are at the high point of a wide grassy knoll, partially surrounded
+by dense forest.  The land rises to the south and east, and drops off
+sharply to the north and west.  The air smells of sea water.
+#148
+You are at the edge of a trackless salt marsh.  Tall reeds obscure
+the view.
+#149
+You're in salt marsh.
+#150
+You're in salty marsh.
+#151
+You are in salt marsh.
+#152
+Dead end.
+#153
+You're on a sandy beach at the edge of the open sea.  The beach
+ends a short distance south and the land rises to a point. To
+the north, the beach ends cliffs and broken rocks.
+#154
+You are at a jumble of large broken rocks.  A gentle path leads up
+to the top of the nearby cliffs.  A narrow treacherous path
+disappears among the rocks at the foot of the cliff.
+#155
+You are on a high cliff overlooking the sea.  Far below the
+rolling breakers smash into a jumble of large broken rocks.
+The thunder of the surf is deafening.
+#156
+You're at the bottom of the cliff, smashed to smithereens by the
+pounding surf.
+#157
+You are at Thunder Hole, a funnel shaped cavern opening onto the sea.
+The noise of the surf pounding against the outer rocks of the cave is
+amplified by the peculiar shape of the cave, causing a thunder-like
+booming sound to reverberate throughout the cave.  Outside, a narrow
+path leads south towards some large rocks.
+#158
+You are at the top of some arched steps.  On one side is a blank wall
+with a tiny door at the base and a shelf overhead.  On the other side
+a westward passage leads to the sea.
+#159
+You are in a low cramped chamber at the back of a small cave.
+There is a shelf in the rock wall at about the height of your
+shoulder.
+#160
+You are on a wide ledge, bounded on one side by a rock wall,
+and on the other by a sheer cliff.  The only way past is through
+a large wrought-iron door.
+#161
+You feel dizzy...Everything around you is spinning, expanding,
+growing larger....  Dear me!  Is the cave bigger or are you smaller?
+#162
+You are again overcome by a sickening vertigo, but this time
+everything around you is shrinking...Shrinking...
+#163
+You are again overcome by a sickening vertigo, but this time
+everything is shrinking... I mean, you are growing.  This is
+terribly confusing!
+#164
+You feel dizzy...Everything around you is spinning, expanding,
+growing larger....
+#165
+You're at the bottom of the cliff with a broken neck.
+#166
+You are at the western tip of the Blue Grotto.  A large lake almost
+covers the cavern floor, except for where you are standing.  Small
+holes high in the rock wall to the east admit a dim light.  The
+reflection of the light from the water suffuses the cavern with
+a hazy bluish glow.
+#167
+You are on the shore of an underground sea.  A high wooden
+structure of vast proportions extends out into the water to the
+east.  The way west is through a wrought-iron door.
+#168
+You are on the eastern shore of the Blue Grotto.  An ascending
+tunnel disappears into the darkness to the SE.
+#169
+You are at a high rock on the NE side of a watery chamber at the mouth
+of a small brook.  An unknown gas bubbles up through the water from
+the chamber floor.  A bluish light can be seen to the southwest.
+#170
+You are in a windy tunnel between two large rooms.
+#171
+You are in the Bat Cave.  The walls and ceiling are covered with
+sleeping bats.  The floor is buried by a mass of dry, foul-smelling
+guano.  The stench is overpowering.  Exits to the NW and east.
+#172
+You are in a very tight N/S crack.  The passage seems to widen to
+the south.
+#173
+You are in a very tight N/S crack.  The passage south is blocked
+by a recent cave-in.
+#174
+You're in the Cloakroom.  This is where the dreaded Wumpus repairs
+to sleep off heavy meals.  (Adventurers are his favorite dinner!)
+Two very narrow passages exit NW and NE.
+#175
+You're in a room containing several small climbable pits.  Passages
+exit to the east and north.
+#176
+You are at the bottom of a small featureless pit.
+#177
+You are at a high hole in a rock wall.
+#178
+The NE passage is blocked by a recent cave-in.
+#179
+You are in a sloping muddy defile, next to a tumbling brook.
+#180
+You are in a level E/W passage partially blocked by an overhanging
+tongue of rock.  A steep scramble would take you up over the tongue,
+whence continues an upward crawl.
+#181
+The dog won't let you pass.
+#182
+You're in the Upper Passage, a long level E/W tunnel.
+#183
+You are in a star-shaped chamber.  Passages exit north, east, south,
+and west.
+#184
+You are at an elbow in a winding E/W passage.
+#185
+Dead end.
+#186
+You're at the intersection of two long tunnels.  One goes NW,
+the other NE.
+#187
+You're in a long narrow east-west passage which curves out of sight
+at both ends.
+#188
+You're in the Rotunda.  Corridors radiate in all directions.
+There is a telephone booth standing against the north wall.
+#189
+You are standing in a telephone booth at the side of a large chamber.
+Hung on the wall is a banged-up pay telephone of ancient design.
+#190
+You're at the Devil's Chair, a large crystallization shaped like a
+seat, at the edge of a black abyss.  You can't see the bottom.
+An upward path leads away from the abyss.
+#191
+You're in a dead-end crack.
+#192
+You're on a small gravel beach at the south wall of the Blue Grotto.
+A gravelly path leads east.
+#193
+You are in the Flower Room.  The walls are covered with colorful,
+intricate, flowerlike patterns of crystallized gypsum. A hole leads
+to the west.
+#194
+You are at the end of a short E/W corridor.
+#195
+You are looking west from the end of a short E/W corridor.  At your
+feet is a pile of loose rubble.  On your left is a hole into another
+chamber.
+#196
+You are in an arched hall.  The remnants of a now-plugged coral
+passage lie to the east.  The north wall has partially crumbled,
+exposing a large connecting hole to another room.
+#197
+You're in the Vestibule, a short east-west passage between two rooms.
+#198
+You are in the Fairy Grotto.  All around you innumerable stalactites,
+arranged in immense colonnades, form elegant arches.  On every side
+you hear the dripping of water, like the footsteps of a thousand
+fairies.  A small stream runs from the SW corner.  A bright glow
+emanates from the south side of the grotto, and a steep passage
+descends to the east.
+#199
+You have approached the lower end of a steep passage, but it is
+just too cold here to hang around, and you aren't properly equipped
+to continue.  With teeth chattering, you climb back up....
+#200
+You are in the Crystal Palace.  An overhead vein of phosphorescent
+quartz casts a luminous glow which is reflected by countless chips of
+mica embedded in both walls, which consist of some sort of highly
+reflective glass, apparently of volcanic origin.  A winding path
+of yellow sandstone leads west and rises steeply to the east.
+#201
+You are following a yellow sandstone path.  There is a glow
+to the west.
+#202
+You are in a very tall chamber whose walls are comprised of many
+different rock strata.  Layers of red and yellow sandstone
+intertwine with bright bands of calcareous limestone in a rainbow-
+like profusion of color.  The rainbow effect is so real, you
+are almost tempted to look for a pot of gold!  Poised far over
+your head, a gigantic slab, wedged tightly between the north and
+south walls, forms a natural bridge across the roof of the chamber.
+A trail leads east and west.
+#203
+You're in a steeply sloping passage.  It is very cold here.
+#204
+You are in the Hall of Ice, in the deepest part of the caverns.
+During winter, frigid outside air settles here, making this room
+extremely cold all year round.  The walls and ceilings are covered
+with a thick coating of ice.  An upward passage exits to the west.
+#205
+You are standing on a natural bridge far above the floor of a circular
+chamber whose walls are a rainbow of multicolored rock.  The bridge
+was formed eons ago by a huge slab which fell from the ceiling and
+is now jammed between the north and south walls of the chamber.
+#206
+You are in a low, wide room below another chamber.  A small green
+pond fills the center of the room.  The lake is apparently spring
+fed.  A small stream exits through a narrow passage to the north.
+A larger passage continues west.
+#207
+You are in a tight north/south crawl through a stratum of red
+colored rock.  The air is damp with mist.
+#208
+You are in a tall canyon on the south side of a swift, wide river.
+Written in the mud in crude letters are the words: "You Have Found
+Lost River."  A wide path leads east and west along the bank.  A tight
+crawl way would take you south out of the canyon.
+#209
+You are standing on a large flat rock table at the western end of
+Lost River Canyon.  Beneath your feet, the river disappears amidst
+foam and spray into a large sinkhole.  A gentle path leads east
+along the river's south shore.  Another leads sharply upward along
+the river's north side.
+#210
+You are at a niche in the canyon wall, far above a raging river.
+The air is filled with mist and spray, making it difficult to see
+ahead.  A downward sloping ledge narrows to the east. The path
+to the west is easier.
+#211
+The ledge is growing very narrow and treacherous, and falls off almost
+vertically.  You could go down, but you won't be able to climb back.
+#212
+You are standing in a telephone booth at the side of the Repository.
+#213
+You're at the east end of a level passage at a hole in the floor.
+#214
+You're at the north edge of a dark cove.
+#215
+You are in a dry granite basin, worn smooth eons ago by water
+swirling down from a now-dry spillway.
+#216
+You're in a dry spillway east of and above a smooth rock basin.
+#217
+You are in the Winery, a cool dark room which extends some
+distance off to the east.
+#218
+You are to the east of the Winery, where the room ends in a thicket
+of high, sharp, pointed, climbable limestone pinnacles.  There is a
+narrow ledge just above the top of the spires.  If you go up, it
+might be difficult to get back down.
+#219
+You are in a high-vaulted cavern whose roof rises over fifty
+meters to culminate in a series of pointed arches directly over
+your head.  There are also two low arches to either side, forming
+side portals.  The whole effect is that of a gothic cathedral.
+You can proceed north, south, east, or west.
+#220
+You're at the east portal of the Gothic Cathedral. The path leads
+east and west.
+#221
+You're at the west portal of the Gothic Cathedral.
+#222
+You are at the foot of the Altar, an immense, broad stalagmite.
+An opening leads south.
+#223
+You're on top of an enormous, broad stalagmite.  There is a hole
+in the ceiling overhead.
+#224
+You are in a room the size and shape of a small crypt.  A narrow
+cut exits east.  There is a hole in the floor.
+#225
+You are in the Gothic Chapel, a small chamber adjoining the Gothic
+Cathedral. A path leads west.
+#226
+You are on the floor of the Rainbow Room.  In fact, you are spread
+*ALL OVER* the floor of the Rainbow Room.
+#227
+You are in a dimly lit passage behind Thunder Hole.  Etched into
+the rock wall are the ominous words:
+*       "You are approaching the River Styx.      *
+*        Laciate Ogni Speranza Voi Ch'Entrate."   *
+#228
+You are at the River Styx, a narrow little stream cutting directly
+across the passageway.  The edge of the stream is littered with sticks
+and other debris washed in by a recent rainfall.  On the far side
+of the river, the passage continues east.
+#229
+You're on the east side of the river's sticks.
+#230
+You are on a ledge at the northern end of a long N/S crawl.  The
+ledge is above a large number of sharp vertical limestone spires.
+An attempt to climb down could be dangerous, if you get my *point*!
+#231
+You are very neatly skewered on the point of a sharp rock.
+#232
+You have poled your boat across the calm water.
+#233
+You have poled your boat across the dark water.
+#234
+You have poled your boat across the Blue Grotto.
+#235
+You're at Dante's Rest, on the north side of a yawning dark chasm.
+A passage continues west along the chasm's edge.
+#236
+You are at the east end of a river bank path in Lost River Canyon.
+#237
+The staircase is now unclimbable.
+#238
+You're in the caretaker's pantry.
+#239
+You are on a small rise overlooking a beautiful bay. In the center
+of the bay is the castle of the elves.
+#240
+You are on the highest pinnacle of the castle in the bay.
+Steps lead down into the garden.
+#241
+You are in the outer courtyard of the garden of the elves.
+Steps lead up to the tower, and to the west, separating you
+from the inner courtyard, is a maze of hedges, living things,
+but almost crystalline in their multicolored splendor.
+#242
+From the inside the maze looks like a kaleidoscope, with
+swatches of color dancing as you move. In this part the colors
+are produced by shining red berries on the branches.
+#243
+You are surrounded by a tall hedge with sharp iridescent leaves
+and metallic orange flowers.
+#244
+You are in the center of the living maze. The plants here are
+dormant this season, but still carry brilliant yellow leaves.
+#245
+Unlike the other areas of the hedge system, this area seems to 
+have no metallic gleam; nevertheless it is still breathtaking.
+The trees and bushes are all variegated shades of green, the
+evergreens being a rich dark shade while the seasonal bushes
+are a lighter yellowish green, making a startling contrast.
+#246
+You are near the edge of the maze. You sample the blueberries
+on the bushes. They are delicious.
+#247
+You are at the western end of the living maze. Beside the
+shrubs forming the walls are tastefully planted beds of
+violets and brilliant purple pansies.
+To the west is the inner garden.
+#248
+You are in the inner garden of the elves. In the center is
+a living tree, with shimmering silvery bark, glistening metallic
+green leaves, and flowers ripe with nectar. As the nectar falls
+to the ground it forms droplets of silver. Around the tree is
+a hedge of briars which cannot be crossed. Unfortunately for
+adventurers such as you, most of the nectar falls inside the hedge.
+The exit is to the east.
