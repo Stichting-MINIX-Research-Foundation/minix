@@ -1,0 +1,27 @@
+# Ash initialization.
+
+test -z "$EDITOR" && {  # Don't repeat in subshells.
+
+umask 022
+
+# Favourite editor and pager, search path for binaries, etc.
+export EDITOR=vi
+export PAGER=more
+export PATH=$HOME/bin:/usr/local/bin:/bin:/usr/bin
+
+} # End of no-repeat.
+
+# Let cd display the current directory on the status line.
+if [ "$-" : '.*i.*' -a -t 0 -a -f /usr/bin/tget ] && tget -flag hs
+then
+	hostname=$(expr $(uname -n) : '\([^.]*\)')
+	eval "cd()
+	{
+		chdir \"\$@\" &&
+		echo -n '$(tget -str ts \
+				"$USER@$hostname:'\"\`pwd\`\"'" \
+				-str fs)'
+	}"
+	unset hostname
+	cd .
+fi
