@@ -311,7 +311,7 @@ echo "
 Copying $fdroot to /dev/$root
 "
 
-mkfs /dev/$root || exit
+mkfs -B 1024 /dev/$root || exit
 mount /dev/$root /mnt || exit
 if [ $thisroot = /dev/ram ]
 then
