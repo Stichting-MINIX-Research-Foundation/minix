@@ -20,12 +20,15 @@
 #include <ibm/int86.h>
 #endif
 
-#define NR_DEVS            5		/* number of RAM-type devices */
+#define NR_DEVS            6		/* number of RAM-type devices */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each RAM disk */
 PRIVATE int m_device;			/* current device */
 PRIVATE struct kenviron kenv;		/* need protected_mode */
 PRIVATE struct psinfo psinfo = { NR_TASKS, NR_PROCS, 0, 0, 0 };
+
+#define RANDOM_BUFFER_SIZE	(1024*32)
+PRIVATE char random_state[RANDOM_BUFFER_SIZE];
 
 FORWARD _PROTOTYPE( struct device *m_prepare, (int device) );
 FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, off_t position,
@@ -98,7 +101,9 @@ off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 {
-/* Read or write /dev/null, /dev/mem, /dev/kmem, /dev/ram, or /dev/boot. */
+/* Read or write /dev/null, /dev/mem, /dev/kmem, /dev/ram, /dev/boot,
+ * /dev/random, or /dev/urandom
+ */
 
   int device;
   phys_bytes mem_phys, user_phys;
@@ -121,6 +126,9 @@ unsigned nr_req;		/* length of request vector */
 	case NULL_DEV:
 	    if (opcode == DEV_GATHER) return(OK);	/* always at EOF */
 	    break;
+	case RANDOM_DEV:
+		return OK;
+		break;
 
 	default:
 	    /* /dev/mem, /dev/kmem, /dev/ram, /dev/boot: check for EOF */
@@ -188,6 +196,11 @@ PRIVATE void m_init()
   m_geom[KMEM_DEV].dv_size = cvul64(kenv.kmem_size);
   m_geom[BOOT_DEV].dv_base = cvul64(kenv.bootfs_base);
   m_geom[BOOT_DEV].dv_size = cvul64(kenv.bootfs_size);
+
+  /* dv_base isn't used for the random device */
+  m_geom[RANDOM_DEV].dv_base = cvul64(NULL);
+  m_geom[RANDOM_DEV].dv_size = cvul64(RANDOM_BUFFER_SIZE);
+
   psinfo.proc = kenv.proc_addr;
 
 #if (CHIP == INTEL)
