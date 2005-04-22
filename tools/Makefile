@@ -66,6 +66,7 @@ hdboot:	image
 fdboot:	image
 	exec su root mkboot $@
 
+install: hdboot
 
 # clean up compile results
 clean:
