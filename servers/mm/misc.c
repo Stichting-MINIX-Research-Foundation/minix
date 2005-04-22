@@ -85,7 +85,6 @@ PUBLIC int do_svrctl()
 
   /* Binary compatibility check. */
   if (req == SYSGETENV) {
-  	printf("SYSGETENV used by %d\n", who);
   	req = MMGETPARAM;
   }
 
