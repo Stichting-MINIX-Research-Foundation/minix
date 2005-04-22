@@ -77,16 +77,11 @@ off_t r_super(int *bs)
 
 	memcpy(&super, scratch, sizeof(super));
 
-	printf("super: %lx\n", super.s_magic);
-
 	/* Is it really a MINIX file system ? */
 	if (super.s_magic == SUPER_V2 || super.s_magic == SUPER_V3) {
 		if(super.s_magic == SUPER_V2)
 			super.s_block_size = 1024;
 		*bs = block_size = super.s_block_size;
-		printf("max_size: %d zones: %d imap_blocks: %d zones: %d\n",
-			super.s_max_size, super.s_imap_blocks,
-			super.s_zmap_blocks, super.s_nzones);
 		if(block_size < MIN_BLOCK_SIZE ||
 			block_size > RAWFS_MAX_BLOCK_SIZE) {
 			printf("bogus block size %d\n", block_size);
@@ -95,8 +90,6 @@ off_t r_super(int *bs)
 		nr_dzones= V2_NR_DZONES;
 		nr_indirects= V2_INDIRECTS(block_size);
 		inodes_per_block= V2_INODES_PER_BLOCK(block_size);
-		printf("v2/v3 %d ok\n", block_size);
-		printf("ipb %d\n", inodes_per_block);
 		return (off_t) super.s_zones << zone_shift;
 	} else
 	if (super.s_magic == SUPER_V1) {
@@ -104,11 +97,9 @@ off_t r_super(int *bs)
 		nr_dzones= V1_NR_DZONES;
 		nr_indirects= V1_INDIRECTS;
 		inodes_per_block= V1_INODES_PER_BLOCK;
-		printf("v1 ok\n");
 		return (off_t) super.s_nzones << zone_shift;
 	} else {
 		/* Filesystem not recognized as Minix. */
-		printf("not minix\n");
 		return 0;
 	}
 }
@@ -123,19 +114,13 @@ void r_stat(Ino_t inum, struct stat *stp)
 	/* Calculate start of i-list */
 	block = START_BLOCK + super.s_imap_blocks + super.s_zmap_blocks;
 
-	printf("r_stat: start of i-list: %d (ipb %d)\n",
-		block, inodes_per_block);
-
 	/* Calculate block with inode inum */
 	ino_block = ((inum - 1) / inodes_per_block);
 	ino_offset = ((inum - 1) % inodes_per_block);
 	block += ino_block;
 
-	printf("r_stat: block with inode: %d - readblock %d..\n", block, block_size);
-
 	/* Fetch the block */
 	readblock(block, scratch, block_size);
-	printf("r_stat: readblock done..\n", block);
 
 	if (super.s_magic == SUPER_V2 || super.s_magic == SUPER_V3) {
 		d2_inode *dip;
@@ -312,7 +297,6 @@ ino_t r_lookup(Ino_t cwd, char *path)
 	ino= path[0] == '/' ? ROOT_INO : cwd;
 
 	for (;;) {
-		printf("ino %d..\n", ino);
 		if (ino == 0) {
 			errno= ENOENT;
 			return 0;
@@ -322,9 +306,7 @@ ino_t r_lookup(Ino_t cwd, char *path)
 
 		if (*path == 0) return ino;
 
-		printf("r_stat..\n");
 		r_stat(ino, &st);
-		printf("r_stat done..\n");
 
 		if (!S_ISDIR(st.st_mode)) {
 			errno= ENOTDIR;
@@ -336,12 +318,9 @@ ino_t r_lookup(Ino_t cwd, char *path)
 			if (n < name + NAME_MAX) *n++ = *path++;
 		*n= 0;
 
-		printf("r_readdir..\n");
 		while ((ino= r_readdir(r_name)) != 0
 					&& strcmp(name, r_name) != 0) {
-			printf("r_readdir %s isn't it..\n", r_name);
 		}
-		printf("after readdir loop: %s %s\n", name, r_name);
 	}
 }
 
