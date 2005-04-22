@@ -30,7 +30,7 @@ commands:
 	@echo "Are the libraries up to date?"; sleep 2
 	test ! -f commands/Makefile || { cd commands && $(MAKE); }
 
-install: 
+install::
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 
 clean::
@@ -47,5 +47,5 @@ all install clean::
 	cd boot && $(MAKE) $@
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 	cd tools && $(MAKE) $@
-	cd man && $(MAKE) $@
+	#cd man && $(MAKE) $@
 
