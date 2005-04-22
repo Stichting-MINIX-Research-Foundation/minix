@@ -224,7 +224,7 @@ register struct super_block *sp; /* pointer to a superblock */
   	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0);
   if(r != MIN_BLOCK_SIZE) {
   	printf("dev_io failed for super block (%d)\n", r);
-  	return r;
+  	return EINVAL;
   }
   memcpy(sp, sbbuf, sizeof(*sp));
   sp->s_dev = NO_DEV;		/* restore later */
