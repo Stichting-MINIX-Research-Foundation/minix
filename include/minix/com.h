@@ -129,9 +129,13 @@
 #  define KMEM_DEV    2		/* minor device for /dev/kmem */
 #  define NULL_DEV    3		/* minor device for /dev/null */
 #  define BOOT_DEV    4		/* minor device for /dev/boot */
+#  define RANDOM_DEV  5		/* minor device for /dev/random */
+#  define URANDOM_DEV 6		/* minor device for /dev/urandom */
 
 #  define DEV_RAM	0x0100	/* device number of /dev/ram */
 #  define DEV_BOOT	0x0104	/* device number of /dev/boot */
+#  define DEV_RANDOM	0x0105	/* device number of /dev/random */
+#  define DEV_URANDOM	0x0106	/* device number of /dev/urandom */
 
 
 /*===========================================================================*
