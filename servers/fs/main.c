@@ -252,7 +252,6 @@ PRIVATE void load_ram(void)
  * disk with the same size as the image.
  * If the root device is not set, the RAM disk will be used as root instead. 
  */
-
   register struct buf *bp, *bp1;
   u32_t lcount, ram_size_kb;
   zone_t zones;
@@ -261,6 +260,7 @@ PRIVATE void load_ram(void)
   Dev_t image_dev;
   int r;
   static char sbbuf[MIN_BLOCK_SIZE];
+  int block_size_image, block_size_ram, ramfs_block_size;
 
   /* Get some boot environment variables. */
   root_dev = igetenv("rootdev");
@@ -316,10 +316,8 @@ PRIVATE void load_ram(void)
 #endif
 
   /* See if we must load the RAM disk image, otherwise return. */
-  if (root_dev != DEV_RAM && root_dev == image_dev) {
-  	printf("Created empty RAM disk of %u kb.\n", ram_size_kb); 
+  if (root_dev != DEV_RAM && root_dev == image_dev)
   	return;
-  }
 
   /* Copy the blocks one at a time from the image to the RAM disk. */
   printf("Loading RAM disk.\33[23CLoaded:    0K ");
@@ -329,17 +327,23 @@ PRIVATE void load_ram(void)
   inode[0].i_dev = image_dev;
   inode[0].i_zone[0] = image_dev;
 
-  panic("RAM disk loading doesn't work yet.", NO_NUM);
+  block_size_ram = get_block_size(DEV_RAM);
+  block_size_image = get_block_size(image_dev);
 
-#if 0
+  if(block_size_ram != block_size_image) {
+  	printf("ram block size: %d image block size: %d\n", 
+  		block_size_ram, block_size_image);
+  	panic("Sorry, ram disk and image disk block sizes have to be the same.", NO_NUM);
+  }
+
   for (b = 0; b < (block_t) lcount; b++) {
-	bp = rahead(&inode[0], b, (off_t)io_block_size * b, io_block_size);
+	bp = rahead(&inode[0], b, (off_t)block_size_image * b, block_size_image);
 	bp1 = get_block(root_dev, b, NO_READ);
-	memcpy(bp1->b_data, bp->b_data, (size_t) io_block_size);
+	memcpy(bp1->b_data, bp->b_data, (size_t) block_size_image);
 	bp1->b_dirt = DIRTY;
 	put_block(bp, FULL_DATA_BLOCK);
 	put_block(bp1, FULL_DATA_BLOCK);
-	printf("\b\b\b\b\b\b\b%5ldK ", ((long) b * io_block_size)/1024L);
+	printf("\b\b\b\b\b\b\b%5ldK ", ((long) b * block_size_image)/1024L);
   }
 
   printf("\rRAM disk of %u kb loaded.\33[K", ram_size_kb);
@@ -357,10 +361,10 @@ PRIVATE void load_ram(void)
   }
   dsp = (struct super_block *) sbbuf;
   if(dsp->s_magic == SUPER_V3)
-  	ram_block_size = dsp->s_block_size;
+  	ramfs_block_size = dsp->s_block_size;
   else
-  	ram_block_size = STATIC_BLOCK_SIZE;
-  zones = (ram_size_kb * 1024 / ram_block_size) >> sp->s_log_zone_size;
+  	ramfs_block_size = STATIC_BLOCK_SIZE;
+  zones = (ram_size_kb * 1024 / ramfs_block_size) >> sp->s_log_zone_size;
 
   dsp->s_nzones = conv2(sp->s_native, (u16_t) zones);
   dsp->s_zones = conv4(sp->s_native, zones);
@@ -368,7 +372,6 @@ PRIVATE void load_ram(void)
   	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0) != MIN_BLOCK_SIZE) {
   	printf("WARNING: ramdisk write for resizing failed\n");
   }
-#endif
 }
 
 
