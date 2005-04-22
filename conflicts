@@ -1,8 +1,0 @@
-./Makefile
-./commands/ash/test/malloc.c
-./servers/fs/const.h
-./servers/fs/main.c
-./servers/fs/mount.c
-./servers/fs/protect.c
-./servers/fs/read.c
-./servers/mm/misc.c
