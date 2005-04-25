@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# daily - daily cleanup of the system.
+
+case "$#:$1" in
+1:cron|1:boot)
+    caller=$1
+    ;;
+*)  echo >&2 "Usage: $0 cron|boot"
+    exit 1
+esac
+
+test -d /usr/adm || exit
+cd /usr/adm || exit
+
+# Last run must have been on a previous day.
+timestamp=daily.lasttime
+if test -f $timestamp
+then
+    set -- `ls -lT $timestamp`
+    test "$6 $7 $9" = "$(date '+%b %d %Y')" && exit
+fi
+>$timestamp
+
+# Remove three day old files from various tmp dirs.
+cleantmp -3 /tmp /usr/tmp /usr/preserve /usr/spool/lpd /usr/spool/at/past
+
+# Truncate log files in /usr/adm.
+test -d old || mkdir old || exit
+
+cycle()
+{
+    # Cycle a log file if larger than a size in kilobytes.
+    local size="`expr "$1" + "$1"`"
+    local log="$2"
+
+    if test -f "$log" && test -n "$(find "$log" -size +"$size")"
+    then
+	test -f "old/$log.2" && cp -p "old/$log.2" "old/$log.3"
+	test -f "old/$log.1" && cp -p "old/$log.1" "old/$log.2"
+	cp -p "$log" "old/$log.1"
+	: > "$log"
+    fi
+}
+
+cycle 100 wtmp 
+cycle 100 log 
+cycle  20 ftplog
+cycle 200 aftplog
+
+# Make copies of /etc/passwd and /etc/shadow if they have been changed.
+for file in passwd shadow
+do
+    if cmp -s /etc/$file old/$file.1
+    then
+	# Fine.
+    else
+	test -f old/$file.2 && cp -p old/$file.2 old/$file.3
+	test -f old/$file.1 && cp -p old/$file.1 old/$file.2
+	test -f /etc/$file && cp -p /etc/$file old/$file.1
+    fi
+done
+
+# Continue with a local script if present.
+test -f /usr/local/etc/daily && sh /usr/local/etc/daily $caller
+exit 0

@@ -1,0 +1,103 @@
+# /usr/etc/rc - continued system initialization.
+
+case "$#:$1" in
+1:start|1:stop|1:down)
+    action=$1
+    ;;
+*)  echo >&2 "Usage: $0 start|stop|down"
+    exit 1
+esac
+
+daemonize()
+{
+    # Function to start a daemon, if it exists.
+    local IFS=':'
+    local name="$1"
+    test "$1" = tcpd && name="$2"
+
+    for dir in $PATH
+    do
+	if [ -f "$dir/$1" ]
+	then
+	    echo -n " $name"
+	    "$@" &
+	    return
+	fi
+    done
+}
+
+case $action in
+start)
+    # Select console font.
+    test -f /etc/font && loadfont /etc/font </dev/console
+
+    # Cleanup.
+    rm -rf /tmp/. /usr/run/. /usr/spool/lpd/. /usr/spool/locks/.
+
+    # Start servers.
+    ifs="$IFS"; IFS=,
+    for server in `sysenv servers`; do $server; done
+    IFS="$ifs"; unset ifs
+    sleep 1
+
+    # Network initialization.
+    (: </dev/tcp) 2>/dev/null && net=t	# Is there a TCP/IP server?
+
+    echo -n "Starting daemons:"
+    daemonize update
+    daemonize cron
+
+    if [ "$net" ]
+    then
+	if [ -f /etc/rc.net ]
+	then
+	    # Let a customized TCP/IP initialization script figure it out.
+	    . /etc/rc.net
+	else
+	    # Standard network daemons.
+	    daemonize dhcpd
+	    daemonize nonamed
+	    daemonize talkd
+	    daemonize tcpd shell in.rshd
+	    daemonize tcpd login in.rlogind
+	    daemonize tcpd telnet in.telnetd
+	    daemonize tcpd ftp in.ftpd
+	fi
+    fi
+
+    # The last daemon has been started, so close the list:
+    echo .
+
+    if [ "$net" ]
+    then
+	# Get the nodename from the DNS and set it.
+	t='-t 10'
+	trap '' 2
+	while :;
+	do
+	    intr $t hostaddr -h
+
+	    case $? in
+	    142)
+		echo "\
+Unable to obtain an IP address after 10 seconds.  Hit DEL to get a root
+prompt to investigate, otherwise just wait until an address is received..."
+		t=
+		;;
+	    130)
+		echo "Single user."
+		intr sh
+		echo "Continue waiting for an address..."
+		;;
+	    *)	break
+	    esac
+	done
+	trap 2
+    fi
+
+    # Recover files being edited when the system crashed.
+    test -f /usr/bin/elvprsv && elvprsv /usr/tmp/elv*
+
+    # Run the daily cleanup on systems that are not on at night.
+    test -f /usr/etc/daily && sh /usr/etc/daily boot &
+esac
