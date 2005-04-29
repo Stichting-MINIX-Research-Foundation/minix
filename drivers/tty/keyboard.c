@@ -296,7 +296,7 @@ PRIVATE void set_leds()
 {
 /* Set the LEDs on the caps, num, and scroll lock keys */
   int s;
-  if (!kenv.pc_at) return;	/* PC/XT doesn't have LEDs */
+  if (! machine.pc_at) return;	/* PC/XT doesn't have LEDs */
 
   kb_wait();			/* wait for buffer empty  */
   if ((s=sys_outb(KEYBD, LED_CODE)) != OK)

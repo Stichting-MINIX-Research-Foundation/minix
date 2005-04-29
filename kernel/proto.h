@@ -46,10 +46,6 @@ _PROTOTYPE( void prepare_shutdown, (int how)					);
 _PROTOTYPE( void stop_sequence, (struct timer *tp)				);
 _PROTOTYPE( void shutdown, (struct timer *tp)				);
 
-/* memory.c */
-_PROTOTYPE( void mem_init, (void)					);
-_PROTOTYPE( void alloc_segments, (struct proc *rp)			);
-
 /* misc.c */
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
 
@@ -145,6 +141,7 @@ _PROTOTYPE( void phys_outsw, (Port_t port, phys_bytes buf, size_t count));
 _PROTOTYPE( void reset, (void)						);
 _PROTOTYPE( void level0, (void (*func)(void))				);
 _PROTOTYPE( void monitor, (void)					);
+_PROTOTYPE( void read_tsc, (unsigned long *low, unsigned long *high)	);
 
 /* mpx*.s */
 _PROTOTYPE( void idle_task, (void)					);
@@ -202,6 +199,7 @@ _PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
 _PROTOTYPE( phys_bytes seg2phys, (U16_t seg)				);
 _PROTOTYPE( void phys2seg, (u16_t *seg, vir_bytes *off, phys_bytes phys));
 _PROTOTYPE( void enable_iop, (struct proc *pp)				);
+_PROTOTYPE( void alloc_segments, (struct proc *rp)			);
 
 
 #endif /* (CHIP == INTEL) */

@@ -4,7 +4,7 @@
 #define GDT_SIZE (FIRST_LDT_INDEX + NR_TASKS + NR_PROCS) 
 					/* spec. and LDT's */
 #define IDT_SIZE (IRQ8_VECTOR + 8)	/* only up to the highest vector */
-#define LDT_SIZE         4	/* contains CS, DS and two extras */
+#define LDT_SIZE (2 + NR_REMOTE_SEGS) 	/* CS, DS and remote segments */
 
 /* Fixed global descriptors.  1 to 7 are prescribed by the BIOS. */
 #define GDT_INDEX        1	/* GDT descriptor */

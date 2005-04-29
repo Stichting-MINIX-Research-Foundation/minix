@@ -38,7 +38,7 @@
 #endif
 
 #if (MACHINE == IBM_PC && _WORD_SIZE == 4)
-#define NR_BUFS          128	/* # blocks in the buffer cache */
+#define NR_BUFS         1024	/* # blocks in the buffer cache */
 #define NR_BUF_HASH     1024	/* size of buf hash table; MUST BE POWER OF 2*/
 #endif
 
@@ -52,7 +52,7 @@
 #define LINEWRAP           1	/* console.c - wrap lines at column 80 */
 #define ALLOW_GAP_MESSAGES 1	/* proc.c - allow messages in the gap between
 				 * the end of bss and lowest stack address */
-#define KMESS_BUF_SIZE   512   	/* size in B for kernel messages */
+#define KMESS_BUF_SIZE   512   	/* size in bytes for kernel messages */
 
 /* Number of controller tasks (/dev/cN device classes). */
 #define NR_CTRLRS          2
@@ -65,7 +65,10 @@
 
 /* Enable or disable kernel calls (allows for minimal kernel). */
 #define ENABLE_K_TRACING   1	/* process tracing can be disabled */
-#define ENABLE_K_DEBUGGING 1	/* kernel debugging calls */
+#define ENABLE_K_DEBUGGING 0	/* kernel debugging calls */
+
+/* Include or exclude an image of /dev/boot in the boot image. */
+#define ENABLE_BOOTDEV	1
 
 /* Include or exclude device drivers.  Set to 1 to include, 0 to exclude. */
 #define ENABLE_BIOS_WINI   0	/* enable BIOS winchester driver */
@@ -110,8 +113,7 @@
  * ENABLE_USERPRIV must be set to 1 to allow the features anyway. 
  */
 #define ENABLE_USERBIOS    0	/* enable user mode BIOS calls */
-#define ENABLE_LOOSELDT    0	/* allow imprecise, page based LDT entries */
-#define ENABLE_USERIOPL    1	/* enable CPU's IOPL bits for /dev/(k)mem */
+#define ENABLE_USERIOPL    0	/* enable CPU's IOPL bits for /dev/(k)mem */
 
 /* NR_CONS, NR_RS_LINES, and NR_PTYS determine the number of terminals the
  * system can handle.

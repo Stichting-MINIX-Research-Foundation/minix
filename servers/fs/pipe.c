@@ -267,7 +267,7 @@ PUBLIC int do_unpause()
   dev_t dev;
   message mess;
 
-  if (who > MM_PROC_NR) return(EPERM);
+  if (who > PM_PROC_NR) return(EPERM);
   proc_nr = m_in.pro;
   if (proc_nr < 0 || proc_nr >= NR_PROCS) panic("unpause err 1", proc_nr);
   rfp = &fproc[proc_nr];

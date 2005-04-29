@@ -247,9 +247,12 @@ PUBLIC void main()
 /* Register function key for debugging dumps. */
   fkey_enable(SF8);
 
-/* Set special disk parameters then call the generic main loop. */
+#if DEAD_CODE
   if ((s=get_own_proc_nr(&win_tasknr)) != OK)
   	server_panic(w_name(),"Couldn't get own process number",s);
+#endif
+  printf("AT wini task started.\n");
+/* Set special disk parameters then call the generic main loop. */
   init_params();
   driver_task(&w_dtab);
 }
@@ -270,17 +273,17 @@ PRIVATE void init_params()
   int s;
 
   /* Get the number of drives from the BIOS data area */
-  if ((s=sys_vircopy(SELF, BIOS_SEG, ADR_WINI_PARAMS, 
- 	 	SELF, D, (vir_bytes) params, LEN_WINI_PARAMS)) != OK)
+  if ((s=sys_vircopy(SELF, BIOS_SEG, NR_HD_DRIVES_ADDR, 
+ 	 	SELF, D, (vir_bytes) params, NR_HD_DRIVES_SIZE)) != OK)
   	server_panic(w_name(), "Couldn't read BIOS", s);
   if ((nr_drives = params[0]) > 2) nr_drives = 2;
 
   for (drive = 0, wn = wini; drive < MAX_DRIVES; drive++, wn++) {
 	if (drive < nr_drives) {
-		/* Copy the BIOS parameter vector */
-		vector = drive == 0 ? ADR_WINI_0_PARM_VEC:ADR_WINI_1_PARM_VEC;
-		size = drive == 0 ? LEN_WINI_0_PARM_VEC:LEN_WINI_1_PARM_VEC;
-		if ((s=sys_vircopy(SELF, BIOS_SEG, vector,
+	    /* Copy the BIOS parameter vector */
+	    vector = (drive == 0) ? BIOS_HD0_PARAMS_ADDR:BIOS_HD1_PARAMS_ADDR;
+	    size = (drive == 0) ? BIOS_HD0_PARAMS_SIZE:BIOS_HD1_PARAMS_SIZE;
+	    if ((s=sys_vircopy(SELF, BIOS_SEG, vector,
 				SELF, D, (vir_bytes) parv, size)) != OK)
   			server_panic(w_name(), "Couldn't read BIOS", s);
 
@@ -460,7 +463,7 @@ PRIVATE int w_identify()
 
   if (w_specify() != OK && w_specify() != OK) return(ERR);
 
-  printf("%s: user-level AT Winchester driver detected ", w_name());
+  printf("%s: user-space AT Winchester driver detected ", w_name());
   if (wn->state & (SMART|ATAPI)) {
 	printf("%.40s\n", id_string);
   } else {
@@ -469,8 +472,12 @@ PRIVATE int w_identify()
 
   /* Everything looks OK; register IRQ so we can stop polling. */
   wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
+#if DEAD_CODE
   sys_irqsetpolicy(w_wn->irq, (IRQ_READ_PORT | IRQ_BYTE | IRQ_REENABLE), SELF,
 		(w_wn->base + REG_STATUS), &w_byteval, 0);
+#else
+  sys_irqsetpolicy(w_wn->irq, IRQ_REENABLE, SELF, 0, 0, 0);
+#endif
   sys_irqenable(wn->irq);
   return(OK);
 }
@@ -834,7 +841,11 @@ PRIVATE void w_intr_wait()
 		if (m.m_type == SYN_ALARM) { 	/* but check for timeout */
 		    w_timeout();		/* a.o. set w_status */
 		} else if (m.m_type == HARD_INT) {
+#if DEAD_CODE
 		    w_status = w_byteval;	/* read by generic handler */
+#else
+		    sys_inb((w_wn->base + REG_STATUS), &w_status);
+#endif
 	        }
 	}
   } else {

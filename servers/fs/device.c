@@ -206,7 +206,7 @@ PUBLIC int do_setsid()
   register struct fproc *rfp;
 
   /* Only MM may do the SETSID call directly. */
-  if (who != MM_PROC_NR) return(ENOSYS);
+  if (who != PM_PROC_NR) return(ENOSYS);
 
   /* Make the process a session leader with no controlling tty. */
   rfp = &fproc[m_in.slot1];

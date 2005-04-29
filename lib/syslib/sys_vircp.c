@@ -11,8 +11,8 @@ vir_bytes dst_vir;		/* destination virtual address */
 phys_bytes bytes;		/* how many bytes */
 {
 /* Transfer a block of data.  The source and destination can each either be a
- * process number or SELF (to set own process number). The virtual address is
- * in the data segment (D). 
+ * process number or SELF (to indicate own process number). Virtual addresses 
+ * are offsets within LOCAL_SEG (text, stack, data), REMOTE_SEG, or BIOS_SEG. 
  */
 
   message copy_mess;

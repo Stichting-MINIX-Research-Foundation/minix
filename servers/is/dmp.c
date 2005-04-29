@@ -35,7 +35,7 @@ FORWARD _PROTOTYPE( void kmessages_dmp, (void)			);
 FORWARD _PROTOTYPE( void diagnostics_dmp, (void)		);
 FORWARD _PROTOTYPE( void sched_dmp, (void)			);
 FORWARD _PROTOTYPE( void monparams_dmp, (void)			);
-FORWARD _PROTOTYPE( void kenviron_dmp, (void)			);
+FORWARD _PROTOTYPE( void kenv_dmp, (void)			);
 FORWARD _PROTOTYPE( void memchunks_dmp, (void)			);
 
 /* Some global data that is shared among several dumping procedures. 
@@ -62,7 +62,7 @@ PUBLIC int do_fkey_pressed(message *m)
             case  F6:	irqtab_dmp();		break;
             case  F7:	kmessages_dmp();	break;
             case  F9:	diagnostics_dmp();	break;
-            case F10:	kenviron_dmp();		break;
+            case F10:	kenv_dmp();		break;
             case F11:	memchunks_dmp();	break;
             case F12:	sched_dmp();		break;
             default: 
@@ -253,7 +253,7 @@ PRIVATE void sched_dmp()
 {
   struct proc *rdy_head[NR_SCHED_QUEUES];
   char *types[] = {"task","higher","high","normal","low","lower","user","idle"};
-  struct kenviron kenviron;
+  struct kinfo kinfo;
   register struct proc *rp;
   vir_bytes ptr_diff;
   int r;
@@ -264,13 +264,13 @@ PRIVATE void sched_dmp()
       return;
   }
   /* Then obtain kernel addresses to correct pointer information. */
-  if ((r = sys_getkenviron(&kenviron)) != OK) {
+  if ((r = sys_getkinfo(&kinfo)) != OK) {
       report("warning: couldn't get kernel addresses", r);
       return;
   }
 
   /* Update all pointers. Nasty pointer algorithmic ... */
-  ptr_diff = (vir_bytes) proc - (vir_bytes) kenviron.proc_addr;
+  ptr_diff = (vir_bytes) proc - (vir_bytes) kinfo.proc_addr;
   for (r=0;r<NR_SCHED_QUEUES; r++)
       if (rdy_head[r] != NIL_PROC)
           rdy_head[r] = 
@@ -296,30 +296,43 @@ PRIVATE void sched_dmp()
 }
 
 /*===========================================================================*
- *				kenviron_dmp				     *
+ *				kenv_dmp				     *
  *===========================================================================*/
-PRIVATE void kenviron_dmp()
+PRIVATE void kenv_dmp()
 {
-    struct kenviron kenv;
+    struct kinfo kinfo;
+    struct machine machine;
     int r;
-    if ((r = sys_getkenviron(&kenv)) != OK) {
-    	report("warning: couldn't get copy of kernel env", r);
+    if ((r = sys_getkinfo(&kinfo)) != OK) {
+    	report("warning: couldn't get copy of kernel info struct", r);
+    	return;
+    }
+    if ((r = sys_getmachine(&machine)) != OK) {
+    	report("warning: couldn't get copy of kernel machine struct", r);
     	return;
     }
 
-    printf("Dump of kernel variables based on the environment set by the boot loader.\n");
-    printf("- pc_at:      %3d\n", kenv.pc_at); 
-    printf("- ps_mca:     %3d\n", kenv.ps_mca); 
-    printf("- processor:  %3d\n", kenv.processor); 
-    printf("- protected:  %3d\n", kenv.protected); 
-    printf("- ega:        %3d\n", kenv.ega); 
-    printf("- vga:        %3d\n", kenv.vga); 
-    printf("- params_base:%5u\n", kenv.params_base); 
-    printf("- params_size:%5u\n", kenv.params_size); 
-    printf("- kmem_base:%5u\n", kenv.kmem_base); 
-    printf("- kmem_size:%5u\n", kenv.kmem_size); 
-    printf("- bootfs_base:%5u\n", kenv.bootfs_base); 
-    printf("- bootfs_size:%5u\n", kenv.bootfs_size); 
+    printf("Dump of kinfo and machine structures.\n\n");
+    printf("Machine structure:\n");
+    printf("- pc_at:      %3d\n", machine.pc_at); 
+    printf("- ps_mca:     %3d\n", machine.ps_mca); 
+    printf("- processor:  %3d\n", machine.processor); 
+    printf("- protected:  %3d\n", machine.protected); 
+    printf("- vdu_ega:    %3d\n", machine.vdu_ega); 
+    printf("- vdu_vga:    %3d\n\n", machine.vdu_vga); 
+    printf("Kernel info structure:\n");
+    printf("- code_base:  %5u\n", kinfo.code_base); 
+    printf("- code_size:  %5u\n", kinfo.code_size); 
+    printf("- data_base:  %5u\n", kinfo.data_base); 
+    printf("- data_size:  %5u\n", kinfo.data_size); 
+    printf("- proc_addr:  %5u\n", kinfo.proc_addr); 
+    printf("- kmem_base:  %5u\n", kinfo.kmem_base); 
+    printf("- kmem_size:  %5u\n", kinfo.kmem_size); 
+    printf("- bootdev_base:  %5u\n", kinfo.bootdev_base); 
+    printf("- bootdev_size:  %5u\n", kinfo.bootdev_size); 
+    printf("- params_base:   %5u\n", kinfo.params_base); 
+    printf("- params_size:   %5u\n", kinfo.params_size); 
+    printf("- version:      %.6s\n", kinfo.version); 
     printf("\n");
 }
 

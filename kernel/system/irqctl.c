@@ -27,11 +27,13 @@ register message *m_ptr;	/* pointer to request message */
   /* Dismember the request message. */
   int irq = m_ptr->IRQ_VECTOR;        	/* which IRQ vector */
   int policy = m_ptr->IRQ_POLICY;      	/* policy field with flags */
+  int proc_nr = m_ptr->IRQ_PROC_NR;   	/* process number to forward to */
+#if DEAD_CODE
   long port = m_ptr->IRQ_PORT;        	/* port to read or write */
   vir_bytes vir_addr = m_ptr->IRQ_VIR_ADDR; 	/* address at caller */
   phys_bytes phys_addr = 0;		/* calculate physical address */
   long mask_val = m_ptr->IRQ_MASK_VAL;	/* mask or value to be written */
-  int proc_nr = m_ptr->IRQ_PROC_NR;   	/* process number to forward to */
+#endif
 
   /* Check if IRQ line is acceptable. */
   if ((unsigned) irq >= NR_IRQ_VECTORS) {
@@ -76,6 +78,7 @@ register message *m_ptr;	/* pointer to request message */
             kprintf("ST: notify: invalid proc_nr: %d\n", proc_nr);
             return(EINVAL);
         }
+#if DEAD_CODE
         if (policy & IRQ_READ_PORT) {	/* get phys_addr at caller */
             switch(policy & (IRQ_BYTE|IRQ_WORD|IRQ_LONG)) {
             case IRQ_BYTE: phys_addr=numap_local(proc_nr,vir_addr,sizeof( u8_t));
@@ -88,12 +91,15 @@ register message *m_ptr;	/* pointer to request message */
             }
             if (phys_addr==0) return(EFAULT);	/* invalid address */
         }
+#endif
         /* Arguments seem to be OK, register them in the IRQ table. */
         irqtab[irq].policy = policy;		/* policy for interrupts */
         irqtab[irq].proc_nr = proc_nr;		/* process number to notify */
+#if DEAD_CODE
         irqtab[irq].port = port;		/* port to read or write */
         irqtab[irq].addr = phys_addr;		/* address to store status */
         irqtab[irq].mask_val = mask_val;	/* strobe mask or value */
+#endif
         put_irq_handler(&irqtab[irq].hook, irq, generic_handler);
       }
       break;

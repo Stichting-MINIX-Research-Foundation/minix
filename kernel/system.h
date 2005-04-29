@@ -19,22 +19,23 @@ _PROTOTYPE( int do_fork, (message *m_ptr) );
 _PROTOTYPE( int do_newmap, (message *m_ptr) );
 _PROTOTYPE( int do_xit, (message *m_ptr) );
 
-_PROTOTYPE( int do_vircopy, (message *m_ptr) );		/* copying */
-_PROTOTYPE( int do_physcopy, (message *m_ptr) );
+_PROTOTYPE( int do_copy, (message *m_ptr) );		/* copying */
+#define do_vircopy 	do_copy
+#define do_physcopy 	do_copy
+_PROTOTYPE( int do_vcopy, (message *m_ptr) );		
+#define do_virvcopy 	do_vcopy
 _PROTOTYPE( int do_umap, (message *m_ptr) );
-_PROTOTYPE( int do_vcopy, (message *m_ptr) );
-_PROTOTYPE( int do_copy, (message *m_ptr) );
 
 _PROTOTYPE( int do_unused, (message *m_ptr) );		/* miscellaneous */
 _PROTOTYPE( int do_abort, (message *m_ptr) );
-_PROTOTYPE( int do_times, (message *m_ptr) );
 _PROTOTYPE( int do_getinfo, (message *m_ptr) );
+_PROTOTYPE( int do_random, (message *m_ptr) );
 
 _PROTOTYPE( int do_exit, (message *m_ptr) );		/* server control */
 _PROTOTYPE( int do_svrctl, (message *m_ptr) );
 _PROTOTYPE( int do_kmalloc, (message *m_ptr) );
 _PROTOTYPE( int do_iopenable, (message *m_ptr) );
-_PROTOTYPE( int do_phys2seg, (message *m_ptr) );
+_PROTOTYPE( int do_segctl, (message *m_ptr) );
 
 _PROTOTYPE( int do_devio, (message *m_ptr) );		/* device I/O */
 _PROTOTYPE( int do_vdevio, (message *m_ptr) );
@@ -43,9 +44,13 @@ _PROTOTYPE( int do_sdevio, (message *m_ptr) );
 _PROTOTYPE( int do_irqctl, (message *m_ptr) );		/* interrupt control */
 
 _PROTOTYPE( int do_kill, (message *m_ptr) );		/* signal handling */
-_PROTOTYPE( int do_sigctl, (message *m_ptr) );
+_PROTOTYPE( int do_getsig, (message *m_ptr) );
+_PROTOTYPE( int do_endsig, (message *m_ptr) );
+_PROTOTYPE( int do_sigsend, (message *m_ptr) );
+_PROTOTYPE( int do_sigreturn, (message *m_ptr) );
 
-_PROTOTYPE( int do_setalarm, (message *m_ptr) );	/* alarm functions */
+_PROTOTYPE( int do_times, (message *m_ptr) );		/* clock functions */
+_PROTOTYPE( int do_setalarm, (message *m_ptr) );	
 #define         do_flagalrm 	do_setalarm
 #define         do_signalrm 	do_setalarm
 #define         do_syncalrm 	do_setalarm
@@ -57,6 +62,7 @@ _PROTOTYPE( int do_trace, (message *m_ptr) );		/* process tracing */
 #endif
 
 #if ENABLE_K_DEBUGGING 					/* debugging */
+#error Kernel debugging routines are not implemented.
 #else
 #endif
 

@@ -5,13 +5,6 @@ typedef _PROTOTYPE( void task_t, (void) );
 typedef _PROTOTYPE( int (*rdwt_t), (message *m_ptr) );
 typedef _PROTOTYPE( void (*watchdog_t), (void) );
 
-/* This is used within the kernel to handle virtual copying. */
-struct vir_addr {
-  int proc_nr;
-  int segment;
-  vir_bytes offset;
-};
-
 /* Type accepted by kprintf(). This is a hack to accept both integers and
  * char pointers in the same argument. 
  */

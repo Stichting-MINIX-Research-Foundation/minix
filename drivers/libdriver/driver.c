@@ -118,7 +118,6 @@ struct driver *dp;	/* Device dependent entry points. */
 		r = do_vrdwt(dp, &mess);	break;
 
 	case HARD_INT:		/* leftover interrupt or expired timer. */
-				/* printf("Driver.c: Left-over interrupt!\n"); */
 				continue;
 	case HARD_STOP:		(*dp->dr_stop)(dp);
 				continue;	/* don't reply */

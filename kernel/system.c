@@ -18,16 +18,16 @@
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
  *   numap_local:	umap_local D segment from proc nr instead of pointer
  *   virtual_copy:	copy bytes from one virtual address to another 
- *   vir_copy: 		copy bytes from one process to another
  *   generic_handler:	interrupt handler for user-level device drivers
  *
  * Changes:
+ *   Apr 25, 2005   made mapping of call vector explicit  (Jorrit N. Herder)
  *   Oct 29, 2004   new clear_proc() function  (Jorrit N. Herder)
  *   Oct 17, 2004   generic handler and IRQ policies  (Jorrit N. Herder)
  *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  *   Sep 10, 2004   system call functions in library  (Jorrit N. Herder)
- *      2003/2004   various new syscalls (see syslib.h)  (Jorrit N. Herder)
+ *   2004 to 2005   various new syscalls (see syslib.h)  (Jorrit N. Herder)
  */
 
 #include "kernel.h"
@@ -40,58 +40,23 @@
 #include <minix/callnr.h>
 #include "sendmask.h"
 #if (CHIP == INTEL)
+#include <ibm/memory.h>
 #include "protect.h"
 #endif
 
+/* Declaration of the call vector that defines the mapping of system calls 
+ * to handler functions. The vector is initialized in sys_init() with map(), 
+ * which makes sure the system call numbers are ok. No space is allocated, 
+ * because the dummy is declared extern. If an illegal call is given, the 
+ * array size will be negative and this won't compile. 
+ */
+PUBLIC int (*call_vec[NR_SYS_CALLS])(message *m_ptr);
+
+#define map(call_nr, handler) \
+	{extern int dummy[NR_SYS_CALLS > (unsigned) (call_nr) ? 1 : -1];} \
+	call_vec[(call_nr)] = (handler)
+
 FORWARD _PROTOTYPE( void initialize, (void));
-
-/* Declaration of the call vector that defines the mapping of system calls to
- * handler functions. The order of the do_call handler functions must match 
- * the SYS_CALL numbering defined in <minix/com.h>.
- */
-PUBLIC _PROTOTYPE (int (*call_vec[]), (message *m_ptr) ) = {
-  do_times,	/*  0: get uptime and process CPU time consumption */
-  do_xit,	/*  1: informs kernel that a process has exited */
-  do_unused,    /*  2: unused */
-  do_sigctl,	/*  3: MM signal control (incl. POSIX style handling) */
-  do_fork, 	/*  4: informs kernel that a process has forked */
-  do_newmap,	/*  5: allows MM to set up a process memory map */
-  do_copy,	/*  6: copy a block of data between processes */
-  do_exec,	/*  7: sets program counter and stack pointer after EXEC */
-  do_unused,	/*  8: unused */
-  do_abort,	/*  9: MM or FS cannot go on; abort MINIX */
-  do_kill, 	/* 10: cause a signal to be sent via MM */
-  do_umap,	/* 11: compute the physical address for a virtual address */
-  do_unused,	/* 12: returns the next free chunk of physical memory */
-  do_trace,	/* 13: request a trace operation */
-  do_vcopy, 	/* 14: request a series of data blocks to be copied */ 
-  do_signalrm, 	/* 15: schedule an alarm that causes an alarm signal */
-  do_syncalrm,	/* 16: schedule an alarm that sends a notification message */
-  do_flagalrm,	/* 17: schedule an alarm that sets a timeout flag to 1 */
-  do_unused,	/* 18: unused */
-  do_svrctl,	/* 19: handles miscelleneous kernel control functions */
-  do_sdevio,	/* 20: device I/O: phys_insb, _insw, _outsb, _outsw */
-  do_unused, 	/* 21: unused */
-  do_getinfo, 	/* 22: request some kind of system information */ 
-  do_devio,   	/* 23: device I/O: inb, inw, inl, outb, outw, outl */ 
-  do_vdevio,  	/* 24: device I/O: vector with in[b|w|l], out[b|w|l] */ 
-  do_irqctl,  	/* 25: request an interrupt control operation */ 
-  do_kmalloc, 	/* 26: request allocation of (DMA) buffer in mem chunk */ 
-  do_iopenable,	/* 27: allow a user process to use I/O instructions */
-  do_phys2seg,	/* 28: do a phys addr to segment selector/ offset conversion */
-  do_exit, 	/* 29: an server or driver requests to be aborted */
-  do_vircopy, 	/* 30: copy from process to process (virtual addressing) */
-  do_physcopy, 	/* 31: copy from anywhere to anywhere (physical addressing) */
-};
-
-/* Check if system call table is correct. This should not fail. No space is
- * allocated here, because the dummy is declared extern. If the call vector
- * is unbalanced, the array size will be negative and this won't compile. 
- */
-extern int dummy[sizeof(call_vec)==NR_SYS_CALLS*sizeof(call_vec[0]) ? 1 : -1];
-
-/* Some system task variables. */
-PRIVATE message m;				/* used to receive requests */
 
 
 /*===========================================================================*
@@ -100,7 +65,7 @@ PRIVATE message m;				/* used to receive requests */
 PUBLIC void sys_task()
 {
 /* Main entry point of sys_task.  Get the message and dispatch on type. */
-
+  static message m;
   register int result;
 
   /* Initialize the system task. */
@@ -145,6 +110,59 @@ PRIVATE void initialize(void)
     tmr_inittimer(&(rp->p_syncalrm));
     tmr_inittimer(&(rp->p_flagalrm));
   }
+
+  /* Initialize the call vector to a safe default handler. Some system calls 
+   * may be disabled or nonexistant. Then explicitely map known calls to their
+   * handler functions. This is done with a macro that gives a compile error
+   * if an illegal call number is used. The ordering is not important here.
+   */
+  for (i=0; i<NR_SYS_CALLS; i++) {
+      call_vec[i] = do_unused;
+  }
+
+  /* Process management. */
+  map(SYS_FORK, do_fork); 	/* informs kernel that a process has forked */
+  map(SYS_XIT, do_xit);		/* informs kernel that a process has exited */
+  map(SYS_NEWMAP, do_newmap);	/* allows PM to set up a process memory map */
+  map(SYS_EXEC, do_exec);	/* sets program counter and stack pointer after EXEC */
+  map(SYS_TRACE, do_trace);	/* request a trace operation */
+
+  /* Signal handling. */
+  map(SYS_KILL, do_kill); 		/* cause a process to be signaled */
+  map(SYS_GETSIG, do_getsig);		/* PM checks for pending signals */
+  map(SYS_ENDSIG, do_endsig);		/* PM finished processing signal */
+  map(SYS_SIGSEND, do_sigsend);		/* start POSIX-style signal */
+  map(SYS_SIGRETURN, do_sigreturn);	/* return from POSIX-style signal */
+
+  /* Clock functionality. */
+  map(SYS_TIMES, do_times);		/* get uptime and process times */
+  map(SYS_SIGNALRM, do_signalrm); 	/* causes an alarm signal */
+  map(SYS_SYNCALRM, do_syncalrm);	/* send a notification message */
+  map(SYS_FLAGALRM, do_flagalrm);	/* set a timeout flag to 1 */
+
+  /* Device I/O. */
+  map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */ 
+  map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */ 
+  map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
+  map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
+
+  /* Server and driver control. */
+  map(SYS_KMALLOC, do_kmalloc); 	/* request chunk of free memory */ 
+  map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
+  map(SYS_IOPENABLE, do_iopenable);	/* enable CPU I/O protection bits */
+  map(SYS_SVRCTL, do_svrctl);		/* kernel control functions */
+  map(SYS_EXIT, do_exit); 		/* exit a system process*/
+
+  /* Copying. */
+  map(SYS_UMAP, do_umap);		/* map virtual to physical address */
+  map(SYS_VIRCOPY, do_vircopy); 	/* use virtual addressing */
+  map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
+  map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
+
+  /* Miscellaneous. */
+  map(SYS_ABORT, do_abort);		/* abort MINIX */
+  map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
+  map(SYS_RANDOM, do_random); 		/* request kernel random data */
 }
 
 /*===========================================================================*
@@ -216,6 +234,14 @@ int proc_nr;				/* slot of process to clean up */
 PUBLIC int generic_handler(hook)
 irq_hook_t *hook;	
 {
+/* This function handles hardware interrupt in a simpel and generic way. All
+ * interrupts are transformed into messages to a driver. The IRQ line will be
+ * reenabled if the policy says so.
+ */
+  irq_policy_t policy = irqtab[hook->irq].policy;
+  int proc_nr = irqtab[hook->irq].proc_nr;
+
+#if DEAD_CODE
 /* This function handles hardware interrupt in a generic way, according to 
  * the policy set with SYS_IRQCTL. This is rather complicated since different
  * devices require different actions. Options are (1) do nothing, (2a) read a
@@ -223,8 +249,6 @@ irq_hook_t *hook;
  * read, or (3) write a value to a port. Finally, the policy may or may not
  * reenable IRQs. A notification is sent in all cases.
  */ 
-  irq_policy_t policy = irqtab[hook->irq].policy;
-  int proc_nr = irqtab[hook->irq].proc_nr;
   long port = irqtab[hook->irq].port;
   phys_bytes addr = irqtab[hook->irq].addr;
   long mask_val = irqtab[hook->irq].mask_val;
@@ -270,6 +294,7 @@ irq_hook_t *hook;
       default: /* do nothing */ ;		/* wrong type flags */
       }
   }
+#endif /* DEAD_CODE */
 
   /* Almost done, send a HARD_INT notification to allow further processing 
    * and possibly reenable interrupts - this depends on the policy given.
@@ -290,12 +315,12 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  *   TTY wanting to cause SIGINT upon getting a DEL
  *   CLOCK wanting to cause SIGALRM when timer expires
  * FS also uses this to send a signal, via the SYS_KILL message. Signals are
- * handled by sending a message to MM.  This central function handles the 
- * signals and makes sure the MM gets them by sending a notification. The 
- * process being signaled is blocked while MM has not finished all signals 
+ * handled by sending a message to PM.  This central function handles the 
+ * signals and makes sure the PM gets them by sending a notification. The 
+ * process being signaled is blocked while PM has not finished all signals 
  * for it.  These signals are counted in p_pendcount, and the  SIG_PENDING 
  * flag is kept nonzero while there are some.  It is not sufficient to ready 
- * the process when MM is informed, because MM can block waiting for FS to
+ * the process when PM is informed, because PM can block waiting for FS to
  * do a core dump.
  */
   register struct proc *rp, *mmp;
@@ -309,7 +334,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
 	return;			/* another signal already pending */
   if (rp->p_flags == 0) lock_unready(rp);
   rp->p_flags |= PENDING | SIG_PENDING;
-  notify(MM_PROC_NR, KSIG_PENDING);
+  notify(PM_PROC_NR, KSIG_PENDING);
 }
 
 
@@ -321,12 +346,22 @@ register struct proc *rp;	/* pointer to proc table entry for process */
 vir_bytes vir_addr;		/* virtual address in BIOS segment */
 vir_bytes bytes;		/* # of bytes to be copied */
 {
-/* Calculate the physical memory address at the BIOS. */
+/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
+ * address zero (the first BIOS interrupt vector) is not considered, as an 
+ * error here, but since the physical address will be zero as well, the 
+ * calling function will think an error occurred. This is not a problem,
+ * since no one uses the first BIOS interrupt vector.  
+ */
   phys_bytes phys_addr;
 
-  phys_addr = (phys_bytes) vir_addr;		/* no check currently! */
+  /* Check all acceptable ranges. */
+  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
+  	return (phys_bytes) vir_addr;
+  else if (vir_addr >= UPPER_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
+  	return (phys_bytes) vir_addr;
 
-  return phys_addr;
+  kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
+  return 0;
 }
 
 /*===========================================================================*
@@ -438,11 +473,16 @@ vir_bytes vir_addr;		/* virtual address in bytes within the seg */
 vir_bytes bytes;		/* # of bytes to be copied */
 {
 /* Calculate the physical memory address for a given virtual address. */
-  phys_bytes phys_addr;
+  struct far_mem *fm;
 
-  phys_addr = (phys_bytes) 0;		/* no yet supported currently! */
+  if (bytes <= 0) return( (phys_bytes) 0);
+  if (seg < 0 || seg >= NR_REMOTE_SEGS) return( (phys_bytes) 0);
 
-  return phys_addr;
+  fm = &rp->p_farmem[seg];
+  if (! fm->in_use) return( (phys_bytes) 0);
+  if (vir_addr + bytes > fm->mem_len) return( (phys_bytes) 0);
+
+  return(fm->mem_phys + (phys_bytes) vir_addr); 
 }
 
 /*==========================================================================*
@@ -454,7 +494,7 @@ struct vir_addr *dst_addr;	/* destination virtual address */
 vir_bytes bytes;		/* # of bytes to copy  */
 {
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. 
- * Virtual addresses can be in LOCAL_SEG, REMOTE_SEG, or BIOS_SEG.
+ * Virtual addresses can be in ABS, LOCAL_SEG, REMOTE_SEG, or BIOS_SEG.
  */
   struct vir_addr *vir_addr[2];	/* virtual source and destination address */ 
   phys_bytes phys_addr[2];	/* absolute source and destination */ 
@@ -488,6 +528,9 @@ vir_bytes bytes;		/* # of bytes to copy  */
           phys_addr[i] = umap_bios( proc_addr(vir_addr[i]->proc_nr),
               vir_addr[i]->offset, bytes );
           break;
+      case PHYS_SEG:
+          phys_addr[i] = vir_addr[i]->offset;
+          break;
       default:
           kprintf("v_cp: Unknown segment type: %d\n", 
               vir_addr[i]->segment & SEGMENT_TYPE);
@@ -495,7 +538,7 @@ vir_bytes bytes;		/* # of bytes to copy  */
       }
 
       /* Check if mapping succeeded. */
-      if (phys_addr[i] <= 0) {
+      if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG) {
           kprintf("v_cp: Mapping failed ... phys <= 0\n", NO_ARG);
           return(EFAULT);
       }

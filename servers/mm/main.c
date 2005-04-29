@@ -91,7 +91,7 @@ PRIVATE void get_work()
   /* Process slot of caller. Misuse MM's own process slot if the kernel is
    * calling. The can happen in case of pending kernel signals.
    */
-  mp = &mproc[who < 0 ? MM_PROC_NR : who];
+  mp = &mproc[who < 0 ? PM_PROC_NR : who];
 }
 
 

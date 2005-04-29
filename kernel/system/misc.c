@@ -54,6 +54,16 @@ message *m;				/* pointer to request message */
 }
 
 
+/*===========================================================================*
+ *			          do_random				     *
+ *===========================================================================*/
+PUBLIC int do_random(m)
+message *m;				/* pointer to request message */
+{
+  return(ENOSYS);			/* no yet implemented */
+}
+
+
 /* The system call implemented in this file:
  *   m_type:	SYS_ABORT
  *
@@ -71,7 +81,7 @@ PUBLIC int do_abort(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
 /* Handle sys_abort. MINIX is unable to continue. This can originate in the
- * MM (normal abort or panic) or FS (panic), or TTY (a CTRL-ALT-DEL or ESC
+ * PM (normal abort or panic) or FS (panic), or TTY (a CTRL-ALT-DEL or ESC
  * after debugging dumps).
  */
   register struct proc *rp;
@@ -84,11 +94,11 @@ message *m_ptr;			/* pointer to request message */
   if (how == RBT_MONITOR) {
 	/* The monitor is to run user specified instructions. */
 	len = m_ptr->ABRT_MON_LEN + 1;
-	assert(len <= mon_parmsize);
+	assert(len <= kinfo.params_size);
 	src_phys = numap_local(m_ptr->ABRT_MON_PROC, 
 		(vir_bytes) m_ptr->ABRT_MON_ADDR, len);
 	assert(src_phys != 0);
-	phys_copy(src_phys, mon_params, (phys_bytes) len);
+	phys_copy(src_phys, kinfo.params_base, (phys_bytes) len);
   }
   prepare_shutdown(how);
   return(OK);				/* pro-forma (really EDISASTER) */
@@ -125,23 +135,14 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Set source address and length based on request type. */      
   switch (m_ptr->I_REQUEST) {	
-    case GET_KENVIRON: {
-  	struct kenviron kenv;
-  	extern int end;
-
-    	kenv.pc_at = pc_at; 		kenv.ps_mca = ps_mca;
-    	kenv.processor = processor; 	kenv.protected = protected_mode;
-    	kenv.ega = ega; 		kenv.vga = vga;
-
-        kenv.proc_addr = (vir_bytes) proc;
-    	kenv.params_base = mon_params; 
-    	kenv.params_size = mon_parmsize; 
-        kenv.kmem_base = vir2phys(0);
-        kenv.kmem_size = vir2phys(&end) - vir2phys(0) + 1;
-        kenv.bootfs_base = proc_addr(MEMORY)->p_farmem[0].mem_phys;
-        kenv.bootfs_size = proc_addr(MEMORY)->p_farmem[0].mem_len;
-    	length = sizeof(struct kenviron);
-    	src_phys = vir2phys(&kenv);
+    case GET_MACHINE: {
+    	length = sizeof(struct machine);
+    	src_phys = vir2phys(&machine);
+    	break;
+    }
+    case GET_KINFO: {
+    	length = sizeof(struct kinfo);
+    	src_phys = vir2phys(&kinfo);
     	break;
     }
     case GET_IMAGE: {
@@ -184,20 +185,26 @@ register message *m_ptr;	/* pointer to request message */
         break;
     }
     case GET_MONPARAMS: {
-    	src_phys = mon_params;	/* already is a physical address! */
-    	length = mon_parmsize;
+    	src_phys = kinfo.params_base;	/* already is a physical address! */
+    	length = kinfo.params_size;
     	break;
     }
     case GET_PROCNR: {
-        length = sizeof(int);
         if (m_ptr->I_KEY_LEN == 0) {		/* get own process nr */
+#if DEAD_CODE
+	/* GET_PROCNR functionality will be moved to the Process Manager! */
         kprintf("GET_PROCNR (own) from %d\n", m_ptr->m_source);
+#endif
             src_phys = vir2phys(&proc_nr);	
+            length = sizeof(int);
         } else {				/* lookup nr by name */
   	    int proc_found = FALSE;
   	    struct proc *pp;
   	    char key[8];	/* storage for process name to lookup */
-        kprintf("GET_PROCNR (others) from %d\n", m_ptr->m_source);
+#if DEAD_CODE
+	/* GET_PROCNR functionality will be moved to the Process Manager! */
+        kprintf("GET_PROCNR (by name) from %d\n", m_ptr->m_source);
+#endif
   proc_nr = m_ptr->m_source;	/* only caller can request copy */
     	    if (m_ptr->I_KEY_LEN > sizeof(key)) return(EINVAL);
     	    if (vir_copy(proc_nr, (vir_bytes) m_ptr->I_KEY_PTR, SYSTASK,
@@ -205,6 +212,7 @@ register message *m_ptr;	/* pointer to request message */
   	    for (pp=BEG_PROC_ADDR; pp<END_PROC_ADDR; pp++) {
 		if (kstrncmp(pp->p_name, key, m_ptr->I_KEY_LEN) == 0) {
 			src_phys = vir2phys(&(pp->p_nr));
+            		length = sizeof(int);
 			proc_found = TRUE;
 			break;
 		}

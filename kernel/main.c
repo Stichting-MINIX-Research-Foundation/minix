@@ -14,7 +14,6 @@
  * Changes:
  *   Nov 24, 2004   simplified main() with system image  (Jorrit N. Herder)
  *   Oct 21, 2004   moved copyright to announce()  (Jorrit N. Herder) 
- *   Sep 30, 2004   moved mem_init() to this file  (Jorrit N. Herder) 
  *   Sep 04, 2004   created stop_sequence() to cleanup  (Jorrit N. Herder)
  *   Aug 20, 2004   split wreboot() and shutdown()  (Jorrit N. Herder)
  *   Jun 15, 2004   moved wreboot() to this file  (Jorrit N. Herder)
@@ -42,8 +41,8 @@ PUBLIC void main()
   register struct proc *rp;
   register int i;
   int hdrindex;			/* index to array of a.out headers */
-  phys_clicks text_base;
-  vir_clicks text_clicks;
+  phys_clicks text_base, bootdev_base;
+  vir_clicks text_clicks, bootdev_clicks;
   vir_clicks data_clicks;
   reg_t ktsb;			/* kernel task stack base */
   struct memory *memp;
@@ -52,9 +51,6 @@ PUBLIC void main()
 
   /* Initialize the interrupt controller. */
   intr_init(1);
-
-  /* Make free memory list from memory sizes passed by boot monitor. */
-  mem_init();
 
   /* Clear the process table. Anounce each slot as empty and
    * set up mappings for proc_addr() and proc_number() macros.
@@ -90,7 +86,7 @@ PUBLIC void main()
 		}
 		ktsb += ttp->stksize;	/* point to high end of stack */
 		rp->p_reg.sp = ktsb;	/* this task's initial stack ptr */
-		text_base = code_base >> CLICK_SHIFT;
+		text_base = kinfo.code_base >> CLICK_SHIFT;
 					/* processes that are in the kernel */
 		hdrindex = 0;		/* all use the first a.out header */
 	} else {
@@ -150,44 +146,37 @@ PUBLIC void main()
 	/* Code and data segments must be allocated in protected mode. */
 	alloc_segments(rp);
   }
-  bill_ptr = proc_addr(IDLE);		/* it has to point somewhere */
 
-  /* This actually is not needed, because ready() already set 'proc_ptr' to 
-   * first task that was announced ready. 
-   */
-  lock_pick_proc();
-
-  /* Expect an image of the root FS to be loaded into memory as well. The
-   * root FS image is located directly after the programs.
+#if ENABLE_BOOTDEV
+  /* Expect an image of the boot device to be loaded into memory as well. 
+   * The boot device is the last module that is loaded into memory, and, 
+   * for example, can contain the root FS (useful for embedded systems). 
    */
   hdrindex ++;
-  phys_copy(aout+hdrindex * A_MINHDR, vir2phys(&e_hdr), (phys_bytes) A_MINHDR);
-  kprintf("Root FS image found: %s\n", (e_hdr.a_flags&A_IMG)? "yes" : "no");
+  phys_copy(aout + hdrindex * A_MINHDR,vir2phys(&e_hdr),(phys_bytes) A_MINHDR);
   if (e_hdr.a_flags & A_IMG) {
-  	kprintf("Size of root FS: %u, ", e_hdr.a_data);
-  	kprintf("base : %u, ", e_hdr.a_syms);
-  	kprintf("header size : %u, ", e_hdr.a_hdrlen);
-  	rp = proc_addr(MEMORY);
-  	rp->p_farmem[0].mem_phys = e_hdr.a_syms; 
-  	rp->p_farmem[0].mem_len = e_hdr.a_data; 
+
+  	kinfo.bootdev_base = e_hdr.a_syms; 
+  	kinfo.bootdev_size = e_hdr.a_data; 
 
   	/* Remove from free list, to prevent being overwritten. */
-	text_base = e_hdr.a_syms >> CLICK_SHIFT;
-	text_clicks = (e_hdr.a_text + CLICK_SIZE-1) >> CLICK_SHIFT;
-	if (!(e_hdr.a_flags & A_SEP)) text_clicks = 0;	/* Common I&D */
-	data_clicks = (e_hdr.a_total + CLICK_SIZE-1) >> CLICK_SHIFT;
+	bootdev_base = e_hdr.a_syms >> CLICK_SHIFT;
+	bootdev_clicks = (e_hdr.a_total + CLICK_SIZE-1) >> CLICK_SHIFT;
 	for (memp = mem; memp < &mem[NR_MEMS]; memp++) {
-		if (memp->base == text_base) {
-			kprintf("Memory removed from free list.\n", NO_ARG);
-			memp->base += text_clicks + data_clicks;
-			memp->size -= text_clicks + data_clicks;
+		if (memp->base == bootdev_base) {
+			memp->base += bootdev_clicks;
+			memp->size -= bootdev_clicks;
 		}
 	}
   }
-  
+#endif
 
-  /* MINIX and all system services have been loaded. Announce to the user.
-   * Then go to the assembly code to start running the current process. 
+  /* This actually is not needed, because ready() already set 'proc_ptr.' */
+  lock_pick_proc();
+  bill_ptr = proc_addr(IDLE);		/* it has to point somewhere */
+
+  /* MINIX is now ready. Display the startup banner to the user and return 
+   * to the assembly code to start running the current process. 
    */
   announce();
   restart();
@@ -201,14 +190,18 @@ PUBLIC void main()
 PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
-  kprintf("MINIX %s  Copyright 2001 Prentice-Hall, Inc.\n", 
-  	 karg(OS_RELEASE "." OS_VERSION));
+  kprintf("MINIX %s.  Copyright 2001 Prentice-Hall, Inc.\n", 
+      karg(kinfo.version));
 
 #if (CHIP == INTEL)
   /* Real mode, or 16/32-bit protected mode? */
   kprintf("Executing in %s mode\n\n",
-      protected_mode ? karg("32-bit protected") : karg("real"));
+      machine.protected ? karg("32-bit protected") : karg("real"));
 #endif
+
+  /* Check if boot device was loaded with the kernel. */
+  if (kinfo.bootdev_base > 0)
+      kprintf("Image of /dev/boot loaded. Size: %u KB.\n", kinfo.bootdev_size);
 }
 
 
@@ -274,7 +267,7 @@ timer_t *tp;
 
   /* See if the last process' shutdown was successfull. Else, force exit. */
   if (p != NIL_PROC) { 
-      kprintf("[%s]\n", isalivep(p) ? "FAILED" : "OK");
+      kprintf("[%s]\n", isalivep(p) ? karg("FAILED") : karg("OK"));
       if (isalivep(p))
           clear_proc(p->p_nr);		/* now force process to exit */ 
   }
@@ -289,8 +282,8 @@ timer_t *tp;
   if (p == NIL_PROC) p = BEG_PROC_ADDR; 
   while (TRUE) {
       if (isalivep(p) && p->p_type == level) {	/* found a process */
-          kprintf("- Stopping %s ", p->p_name);
-          kprintf("%s ... ", types[p->p_type]);
+          kprintf("- Stopping %s ", karg(p->p_name));
+          kprintf("%s ... ", karg(types[p->p_type]));
           shutdown_process = p;		/* directly continue if exited */
           notify(proc_number(p), HARD_STOP);
           set_timer(tp, get_uptime()+STOP_TICKS, stop_sequence);
@@ -336,15 +329,15 @@ timer_t *tp;
 	 * For RBT_MONITOR, the MM has provided the program.
 	 */
 	if (how == RBT_HALT) {
-		phys_copy(vir2phys(" "), mon_params, 2); 
+		phys_copy(vir2phys("delay;"), kinfo.params_base, 7); 
 	} else if (how == RBT_REBOOT) {
-		phys_copy(vir2phys("delay;boot"), mon_params, 11);
+		phys_copy(vir2phys("delay;boot"), kinfo.params_base, 11);
 	}
 	level0(monitor);
   }
 
   /* Stop BIOS memory test. */
-  phys_copy(vir2phys(&magic), (phys_bytes) ADR_MEM_CHECK, LEN_MEM_CHECK);
+  phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR, SOFT_RESET_FLAG_SIZE);
 
   /* Reset the system by jumping to the reset address (real mode), or by
    * forcing a processor shutdown (protected mode).

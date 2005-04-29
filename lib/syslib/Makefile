@@ -13,12 +13,14 @@ OBJECTS	= \
 	$(LIBSYS)(sys_times.o) \
 	$(LIBSYS)(sys_getuptm.o) \
 	$(LIBSYS)(sys_abort.o) \
-	$(LIBSYS)(sys_copy.o) \
 	$(LIBSYS)(sys_exec.o) \
 	$(LIBSYS)(sys_fork.o) \
 	$(LIBSYS)(sys_kill.o) \
 	$(LIBSYS)(sys_newmap.o) \
-	$(LIBSYS)(sys_sigctl.o) \
+	$(LIBSYS)(sys_sigsend.o) \
+	$(LIBSYS)(sys_sigret.o) \
+	$(LIBSYS)(sys_endsig.o) \
+	$(LIBSYS)(sys_getsig.o) \
 	$(LIBSYS)(sys_svrctl.o) \
 	$(LIBSYS)(sys_trace.o) \
 	$(LIBSYS)(sys_xit.o) \
@@ -27,7 +29,7 @@ OBJECTS	= \
 	$(LIBSYS)(sys_kmalloc.o) \
 	$(LIBSYS)(sys_irqctl.o) \
 	$(LIBSYS)(sys_eniop.o) \
-	$(LIBSYS)(sys_ph2sg.o) \
+	$(LIBSYS)(sys_segctl.o) \
 	$(LIBSYS)(sys_umap.o) \
 	$(LIBSYS)(sys_exit.o) \
 	$(LIBSYS)(sys_physcp.o) \
@@ -67,9 +69,6 @@ $(LIBSYS)(sys_getuptm.o): sys_getuptm.c
 $(LIBSYS)(sys_abort.o):	sys_abort.c
 	$(CC1) sys_abort.c
 
-$(LIBSYS)(sys_copy.o):	sys_copy.c
-	$(CC1) sys_copy.c
-
 $(LIBSYS)(sys_exec.o):	sys_exec.c
 	$(CC1) sys_exec.c
 
@@ -106,8 +105,8 @@ $(LIBSYS)(sys_irqctl.o):	sys_irqctl.c
 $(LIBSYS)(sys_eniop.o):	sys_eniop.c
 	$(CC1) sys_eniop.c
 
-$(LIBSYS)(sys_ph2sg.o):	sys_ph2sg.c
-	$(CC1) sys_ph2sg.c
+$(LIBSYS)(sys_segctl.o):	sys_segctl.c
+	$(CC1) sys_segctl.c
 
 $(LIBSYS)(sys_umap.o):	sys_umap.c
 	$(CC1) sys_umap.c
@@ -115,8 +114,17 @@ $(LIBSYS)(sys_umap.o):	sys_umap.c
 $(LIBSYS)(sys_exit.o):	sys_exit.c
 	$(CC1) sys_exit.c
 
-$(LIBSYS)(sys_sigctl.o):	sys_sigctl.c
-	$(CC1) sys_sigctl.c
+$(LIBSYS)(sys_getsig.o):	sys_getsig.c
+	$(CC1) sys_getsig.c
+
+$(LIBSYS)(sys_endsig.o):	sys_endsig.c
+	$(CC1) sys_endsig.c
+
+$(LIBSYS)(sys_sigsend.o):	sys_sigsend.c
+	$(CC1) sys_sigsend.c
+
+$(LIBSYS)(sys_sigret.o):	sys_sigret.c
+	$(CC1) sys_sigret.c
 
 $(LIBSYS)(sys_physcp.o):	sys_physcp.c
 	$(CC1) sys_physcp.c

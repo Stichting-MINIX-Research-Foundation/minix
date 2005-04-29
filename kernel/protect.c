@@ -82,10 +82,6 @@ PUBLIC void prot_init()
 /* Set up tables for protected mode.
  * All GDT slots are allocated at compile time.
  */
-
-  extern int etext, end;
-#define code_bytes ((vir_bytes) &etext)		/* Size of code segment. */
-#define data_bytes ((vir_bytes) &end)		/* Size of data segment. */
   struct gate_table_s *gtp;
   struct desctableptr_s *dtp;
   unsigned ldt_index;
@@ -149,8 +145,8 @@ PUBLIC void prot_init()
   * (u32_t *) dtp->base = vir2phys(idt);
 
   /* Build segment descriptors for tasks and interrupt handlers. */
-  init_codeseg(&gdt[CS_INDEX], code_base, code_bytes, INTR_PRIVILEGE);
-  init_dataseg(&gdt[DS_INDEX], data_base, data_bytes, INTR_PRIVILEGE);
+  init_codeseg(&gdt[CS_INDEX], kinfo.code_base, kinfo.code_size, INTR_PRIVILEGE);
+  init_dataseg(&gdt[DS_INDEX], kinfo.data_base, kinfo.data_size, INTR_PRIVILEGE);
   init_dataseg(&gdt[ES_INDEX], 0L, 0, TASK_PRIVILEGE);
 
   /* Build scratch descriptors for functions in klib88. */
@@ -268,7 +264,7 @@ U16_t seg;
   phys_bytes base;
   struct segdesc_s *segdp;
 
-  if (!protected_mode) {
+  if (! machine.protected) {
 	base = hclick_to_physb(seg);
   } else {
 	segdp = &gdt[seg >> 3];
@@ -292,7 +288,7 @@ phys_bytes phys;
  * address, for use by a driver doing memory I/O in the A0000 - DFFFF range.
  */
 #if _WORD_SIZE == 2
-  if (!protected_mode) {
+  if (! machine.protected) {
 	*seg = phys / HCLICK_SIZE;
 	*off = phys % HCLICK_SIZE;
   } else {
@@ -342,3 +338,51 @@ struct proc *pp;
  */
   pp->p_reg.psw |= 0x3000;
 }
+
+
+/*==========================================================================*
+ *				alloc_segments				    *
+ *==========================================================================*/
+PUBLIC void alloc_segments(rp)
+register struct proc *rp;
+{
+/* This is called at system initialization from main() and by do_newmap(). 
+ * The code has a separate function because of all hardware-dependencies.
+ * Note that IDLE is part of the kernel and gets TASK_PRIVILEGE here.
+ */
+  phys_bytes code_bytes;
+  phys_bytes data_bytes;
+  int privilege;
+
+  if (machine.protected) {
+      data_bytes = (phys_bytes) (rp->p_memmap[S].mem_vir + 
+          rp->p_memmap[S].mem_len) << CLICK_SHIFT;
+      if (rp->p_memmap[T].mem_len == 0)
+          code_bytes = data_bytes;	/* common I&D, poor protect */
+      else
+          code_bytes = (phys_bytes) rp->p_memmap[T].mem_len << CLICK_SHIFT;
+      privilege = (isidlep(rp) || istaskp(rp)) ? 
+          TASK_PRIVILEGE : USER_PRIVILEGE;
+      init_codeseg(&rp->p_ldt[CS_LDT_INDEX],
+          (phys_bytes) rp->p_memmap[T].mem_phys << CLICK_SHIFT,
+          code_bytes, privilege);
+      init_dataseg(&rp->p_ldt[DS_LDT_INDEX],
+          (phys_bytes) rp->p_memmap[D].mem_phys << CLICK_SHIFT,
+          data_bytes, privilege);
+      rp->p_reg.cs = (CS_LDT_INDEX * DESC_SIZE) | TI | privilege;
+#if _WORD_SIZE == 4
+      rp->p_reg.gs =
+      rp->p_reg.fs =
+#endif
+      rp->p_reg.ss =
+      rp->p_reg.es =
+      rp->p_reg.ds = (DS_LDT_INDEX*DESC_SIZE) | TI | privilege;
+  } else {
+      rp->p_reg.cs = click_to_hclick(rp->p_memmap[T].mem_phys);
+      rp->p_reg.ss =
+      rp->p_reg.es =
+      rp->p_reg.ds = click_to_hclick(rp->p_memmap[D].mem_phys);
+  }
+}
+
+

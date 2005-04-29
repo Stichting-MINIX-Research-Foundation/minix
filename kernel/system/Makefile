@@ -20,8 +20,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 
 SYS = 	alarms.o copying.o debugging.o devio.o irqctl.o proctl.o \
-	srvrctl.o misc.o sigctl.o tracing.o \
-	do_copy.o do_vcopy.o 
+	sysctl.o misc.o sigctl.o tracing.o \
 
 # What to make.
 all build: $(SYS)
@@ -48,11 +47,8 @@ irqctl.o:	$a $b
 misc.o: 	$a $b $i/unistd.h
 proctl.o:	$a $b $k/sendmask.h $k/protect.h $i/signal.h  
 sigctl.o:	$a $b $i/signal.h $s/sigcontext.h 
-srvrctl.o:	$a $b $s/svrctl.h $k/sendmask.h 
+sysctl.o:	$a $b $s/svrctl.h $k/sendmask.h 
 tracing.o:	$a $b $s/ptrace.h
-
-do_copy.o:	$a $b
-do_vcopy.o:	$a $b 
 
 
 

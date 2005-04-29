@@ -45,18 +45,18 @@ int mine;
   int i;
 
   lock();
-  if (protected_mode) {
+  if (machine.protected) {
 	/* The AT and newer PS/2 have two interrupt controllers, one master,
 	 * one slaved at IRQ 2.  (We don't have to deal with the PC that
 	 * has just one controller, because it must run in real mode.)
 	 */
-	outb(INT_CTL, ps_mca ? ICW1_PS : ICW1_AT);
+	outb(INT_CTL, machine.ps_mca ? ICW1_PS : ICW1_AT);
 	outb(INT_CTLMASK, mine ? IRQ0_VECTOR : BIOS_IRQ0_VEC);
 							/* ICW2 for master */
 	outb(INT_CTLMASK, (1 << CASCADE_IRQ));		/* ICW3 tells slaves */
 	outb(INT_CTLMASK, ICW4_AT);
 	outb(INT_CTLMASK, ~(1 << CASCADE_IRQ));		/* IRQ 0-7 mask */
-	outb(INT2_CTL, ps_mca ? ICW1_PS : ICW1_AT);
+	outb(INT2_CTL, machine.ps_mca ? ICW1_PS : ICW1_AT);
 	outb(INT2_CTLMASK, mine ? IRQ8_VECTOR : BIOS_IRQ8_VEC);
 							/* ICW2 for slave */
 	outb(INT2_CTLMASK, CASCADE_IRQ);		/* ICW3 is slave nr */

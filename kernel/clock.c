@@ -222,7 +222,7 @@ irq_hook_t *hook;
   clock_t now;
 
   /* Acknowledge the PS/2 clock interrupt. */
-  if (ps_mca) outb(PORT_B, inb(PORT_B) | CLOCK_ACK_BIT);
+  if (machine.ps_mca) outb(PORT_B, inb(PORT_B) | CLOCK_ACK_BIT);
 
   /* Update user and system accounting times. Charge the current process for
    * user time. If the current process is not billable, that is, if a non-user

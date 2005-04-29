@@ -75,14 +75,14 @@ PUBLIC int do_exec()
   src = (vir_bytes) m_in.exec_name;
   dst = (vir_bytes) name_buf;
   r = sys_datacopy(who, (vir_bytes) src,
-		MM_PROC_NR, (vir_bytes) dst, (phys_bytes) m_in.exec_len);
+		PM_PROC_NR, (vir_bytes) dst, (phys_bytes) m_in.exec_len);
   if (r != OK) return(r);	/* file name not in user data segment */
 
   /* Fetch the stack from the user before destroying the old core image. */
   src = (vir_bytes) m_in.stack_ptr;
   dst = (vir_bytes) mbuf;
   r = sys_datacopy(who, (vir_bytes) src,
-  			MM_PROC_NR, (vir_bytes) dst, (phys_bytes)stk_bytes);
+  			PM_PROC_NR, (vir_bytes) dst, (phys_bytes)stk_bytes);
 
   if (r != OK) return(EACCES);	/* can't fetch stack (e.g. bad virtual addr) */
 
@@ -128,7 +128,7 @@ PUBLIC int do_exec()
   vsp -= stk_bytes;
   patch_ptr(mbuf, vsp);
   src = (vir_bytes) mbuf;
-  r = sys_datacopy(MM_PROC_NR, (vir_bytes) src,
+  r = sys_datacopy(PM_PROC_NR, (vir_bytes) src,
   			who, (vir_bytes) vsp, (phys_bytes)stk_bytes);
   if (r != OK) panic("do_exec stack copy err on", who);
 
@@ -374,8 +374,8 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
 
   while (bytes > 0) {
 	count = MIN(bytes, (phys_bytes) sizeof(zero));
-	if (sys_copy(MM_PROC_NR, D, (phys_bytes) zero,
-						ABS, 0, base, count) != OK) {
+	if (sys_physcopy(PM_PROC_NR, D, (phys_bytes) zero,
+				NONE, PHYS_SEG, base, count) != OK) {
 		panic("new_mem can't zero", NO_NUM);
 	}
 	base += count;

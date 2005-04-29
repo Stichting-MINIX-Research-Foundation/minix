@@ -4,10 +4,14 @@
  *     /dev/mem		- absolute memory
  *     /dev/kmem	- kernel virtual memory
  *     /dev/null	- null device (data sink)
- *     /dev/boot	- boot FS loaded from boot image 
+ *     /dev/boot	- boot device loaded from boot image 
+ *     /dev/random	- random number generator
+ *     /dev/zero	- null byte stream generator
  *
  *  Changes:
- *	Apr 09, 2005	added support for boot FS  (Jorrit N. Herder)
+ *	Apr 29, 2005	added null byte generator  (Jorrit N. Herder)
+ *	Apr 27, 2005	added random device handling  (Jorrit N. Herder)
+ *	Apr 09, 2005	added support for boot device  (Jorrit N. Herder)
  *	Sep 03, 2004	secured code with ENABLE_USERPRIV  (Jorrit N. Herder)
  *	Jul 26, 2004	moved RAM driver to user-space  (Jorrit N. Herder)
  *	Apr 20, 1992	device dependent/independent split  (Kees J. Bot)
@@ -16,19 +20,15 @@
 #include "../drivers.h"
 #include "../libdriver/driver.h"
 #include <sys/ioc_memory.h>
-#if (CHIP == INTEL) && ENABLE_USERBIOS
-#include <ibm/int86.h>
-#endif
 
-#define NR_DEVS            6		/* number of RAM-type devices */
+#define NR_DEVS            7		/* number of minor devices */
 
-PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each RAM disk */
+PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
+PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
 PRIVATE int m_device;			/* current device */
-PRIVATE struct kenviron kenv;		/* need protected_mode */
+PRIVATE struct kinfo kinfo;		/* need kernel info */ 
+PRIVATE struct machine machine;		/* need machine info */ 
 PRIVATE struct psinfo psinfo = { NR_TASKS, NR_PROCS, 0, 0, 0 };
-
-#define RANDOM_BUFFER_SIZE	(1024*32)
-PRIVATE char random_state[RANDOM_BUFFER_SIZE];
 
 FORWARD _PROTOTYPE( struct device *m_prepare, (int device) );
 FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, off_t position,
@@ -53,6 +53,14 @@ PRIVATE struct driver m_dtab = {
   nop_stop,	/* no need to clean up on shutdown */
   nop_alarm,	/* ignore leftover alarms */
 };
+
+/* Buffer for the /dev/zero null byte feed. */
+#define ZERO_BUF_SIZE 			1024
+PRIVATE char zero[ZERO_BUF_SIZE];
+
+/* Buffer for the /dev/random number generator. */
+#define RANDOM_BUF_SIZE 		1024
+PRIVATE char random[RANDOM_BUF_SIZE];
 
 
 /*===========================================================================*
@@ -101,53 +109,105 @@ off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 {
-/* Read or write /dev/null, /dev/mem, /dev/kmem, /dev/ram, /dev/boot,
- * /dev/random, or /dev/urandom
- */
-
+/* Read or write /dev/null, /dev/mem, /dev/kmem, /dev/ram, or /dev/boot. */
   int device;
   phys_bytes mem_phys, user_phys;
-  unsigned count;
+  int seg;
+  unsigned count, left, chunk;
   vir_bytes user_vir;
   struct device *dv;
   unsigned long dv_size;
+  int s;
 
   /* Get minor device number and check for /dev/null. */
   device = m_device;
   dv = &m_geom[device];
   dv_size = cv64ul(dv->dv_size);
 
-
   while (nr_req > 0) {
+
+	/* How much to transfer and where to / from. */
 	count = iov->iov_size;
 	user_vir = iov->iov_addr;
 
 	switch (device) {
+
+	/* No copying; ignore request. */
 	case NULL_DEV:
 	    if (opcode == DEV_GATHER) return(OK);	/* always at EOF */
 	    break;
-	case RANDOM_DEV:
-		return OK;
-		break;
 
-	default:
-	    /* /dev/mem, /dev/kmem, /dev/ram, /dev/boot: check for EOF */
-	    if (position >= dv_size) return(OK);
+	/* Virtual copying. For boot device. */
+	case RAM_DEV:
+	case KMEM_DEV:
+	case BOOT_DEV:
+	    if (position >= dv_size) return(OK); 	/* check for EOF */
+	    if (position + count > dv_size) count = dv_size - position;
+	    seg = m_seg[device];
+
+	    if (opcode == DEV_GATHER) {			/* copy actual data */
+	        sys_vircopy(SELF,seg,position, proc_nr,D,user_vir, count);
+	    } else {
+	        sys_vircopy(proc_nr,D,user_vir, SELF,seg,position, count);
+	    }
+	    break;
+
+	/* Physical copying. Only used to access entire memory. */
+	case MEM_DEV:
+	    if (position >= dv_size) return(OK); 	/* check for EOF */
 	    if (position + count > dv_size) count = dv_size - position;
 	    mem_phys = cv64ul(dv->dv_base) + position;
 
-	    /* Copy the data. */
-	    if (opcode == DEV_GATHER) {
-	        sys_copy(ABS, D, mem_phys, proc_nr, D, user_vir, count);
+	    if (opcode == DEV_GATHER) {			/* copy data */
+	        sys_physcopy(NONE, PHYS_SEG, mem_phys, 
+	        	proc_nr, D, user_vir, count);
 	    } else {
-	        sys_copy(proc_nr, D, user_vir, ABS, D, mem_phys, count);
+	        sys_physcopy(proc_nr, D, user_vir, 
+	        	NONE, PHYS_SEG, mem_phys, count);
 	    }
+	    break;
+
+	/* Random number generator. Character instead of block device. */
+	case RANDOM_DEV:
+	    printf("MEMORY: please note /dev/random is NOT yet random!\n"); 
+	    left = count;
+	    while (left > 0) {
+	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
+ 	        if (opcode == DEV_GATHER) {
+	    	    sys_vircopy(SELF, D, (vir_bytes) random, 
+	    	        proc_nr, D, user_vir, chunk);
+ 	        } else if (opcode == DEV_SCATTER) {
+	    	    sys_vircopy(proc_nr, D, user_vir, 
+	    	        SELF, D, (vir_bytes) random, chunk);
+ 	        }
+	    	left -= chunk;
+	    }
+	    break;
+
+	/* Null byte stream generator. */
+	case ZERO_DEV:
+	    if (opcode == DEV_GATHER) {
+	        left = count;
+	    	while (left > 0) {
+	    	    chunk = (left > ZERO_BUF_SIZE) ? ZERO_BUF_SIZE : left;
+	    	    if (OK != (s=sys_vircopy(SELF, D, (vir_bytes) zero, 
+	    	            proc_nr, D, user_vir, chunk)))
+	    	        printf("MEMORY: sys_vircopy failed: %d\n", s);
+	    	    left -= chunk;
+	    	}
+	    }
+	    break;
+
+	/* Unknown (illegal) minor device. */
+	default:
+	    return(EINVAL);
 	}
 
 	/* Book the number of bytes transferred. */
 	position += count;
 	iov->iov_addr += count;
   	if ((iov->iov_size -= count) == 0) { iov++; nr_req--; }
+
   }
   return(OK);
 }
@@ -161,7 +221,7 @@ struct driver *dp;
 message *m_ptr;
 {
 /* Check device number on open.  Give I/O privileges to a process opening
- * /dev/mem or /dev/kmem. This is needed for systems with memory mapped I/O.
+ * /dev/mem or /dev/kmem. This may be needed in case of memory mapped I/O.
  */
   if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
 
@@ -181,30 +241,51 @@ message *m_ptr;
  *===========================================================================*/
 PRIVATE void m_init()
 {
-  /* Initialize this task. */
-  extern int end;
-  int s;
+  /* Initialize this task. All minor devices are initialized one by one. */
+  int i,s;
 
   /* Print welcome message. */
-  printf("MEMORY: user-level memory (RAM) driver is alive");
+  printf("MEMORY: user-level memory (RAM, etc.) driver is alive\n");
 
-  /* Get kernel environment (protected_mode and addresses). */
-  if (OK != (s=sys_getkenviron(&kenv))) {
-      server_panic("MEM","Couldn't get kernel environment.",s);
+  /* Get kernel info for memory addresses of kernel and boot device. */
+  if (OK != (s=sys_getkinfo(&kinfo))) {
+      server_panic("MEM","Couldn't get kernel information.",s);
   }
-  m_geom[KMEM_DEV].dv_base = cvul64(kenv.kmem_base);
-  m_geom[KMEM_DEV].dv_size = cvul64(kenv.kmem_size);
-  m_geom[BOOT_DEV].dv_base = cvul64(kenv.bootfs_base);
-  m_geom[BOOT_DEV].dv_size = cvul64(kenv.bootfs_size);
 
-  /* dv_base isn't used for the random device */
-  m_geom[RANDOM_DEV].dv_base = cvul64(NULL);
-  m_geom[RANDOM_DEV].dv_size = cvul64(RANDOM_BUFFER_SIZE);
+  /* Install remote segment for /dev/kmem memory. */
+  m_geom[KMEM_DEV].dv_base = cvul64(kinfo.kmem_base);
+  m_geom[KMEM_DEV].dv_size = cvul64(kinfo.kmem_size);
+  if (OK != (s=sys_segctl(&m_seg[KMEM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
+  		kinfo.kmem_base, kinfo.kmem_size))) {
+      server_panic("MEM","Couldn't install remote segment.",s);
+  }
 
-  psinfo.proc = kenv.proc_addr;
+  /* Install remote segment for /dev/boot memory, if enabled. */
+  m_geom[BOOT_DEV].dv_base = cvul64(kinfo.bootdev_base);
+  m_geom[BOOT_DEV].dv_size = cvul64(kinfo.bootdev_size);
+  if (kinfo.bootdev_base > 0) {
+      if (OK != (s=sys_segctl(&m_seg[BOOT_DEV], (u16_t *) &s, (vir_bytes *) &s, 
+              kinfo.bootdev_base, kinfo.bootdev_size))) {
+          server_panic("MEM","Couldn't install remote segment.",s);
+      }
+  }
 
+  psinfo.proc = kinfo.proc_addr;
+
+  /* Initialize /dev/random and /dev/zero. */
+  for (i=0; i<ZERO_BUF_SIZE; i++) {
+       zero[i] = '\0';
+  }
+  for (i=0; i<RANDOM_BUF_SIZE; i++) {
+       random[i] = 'a' + i % 256;
+  }
+
+  /* Set up memory ranges for /dev/mem. */
 #if (CHIP == INTEL)
-  if (!kenv.protected) {
+  if (OK != (s=sys_getmachine(&machine))) {
+      server_panic("MEM","Couldn't get machine information.",s);
+  }
+  if (! machine.protected) {
 	m_geom[MEM_DEV].dv_size =   cvul64(0x100000); /* 1M for 8086 systems */
   } else {
 #if _WORD_SIZE == 2
@@ -239,18 +320,23 @@ message *m_ptr;			/* pointer to read or write message */
   switch (m_ptr->REQUEST) {
     case MIOCRAMSIZE: {
 	/* FS wants to create a new RAM disk with the given size. */
-	unsigned long bytesize;
-	phys_bytes base;
+	unsigned long ramdev_size;
+	phys_bytes ramdev_base;
 	int s;
 
 	if (m_ptr->PROC_NR != FS_PROC_NR) return(EPERM);
 
-	/* Try to allocate a piece of kernel memory for the RAM disk. */
-	bytesize = m_ptr->POSITION;
-	if (OK != (s = sys_kmalloc(bytesize, &base)))
+	/* Try to allocate a piece of memory for the RAM disk. */
+	ramdev_size = m_ptr->POSITION;
+	if (OK != (s=sys_kmalloc(ramdev_size, &ramdev_base)))
 	    server_panic("MEM","Couldn't allocate kernel memory", s);
-	dv->dv_base = cvul64(base);
-	dv->dv_size = cvul64(bytesize);
+	dv->dv_base = cvul64(ramdev_base);
+	dv->dv_size = cvul64(ramdev_size);
+  	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
+  		ramdev_base, ramdev_size))) {
+      		server_panic("MEM","Couldn't install remote segment.",s);
+  	}
+	
 	break;
     }
     /* Perhaps it is cleaner to move all code relating to psinfo to the info
@@ -261,10 +347,9 @@ message *m_ptr;			/* pointer to read or write message */
 	/* MM or FS set the address of their process table. */
 	phys_bytes psinfo_phys;
 
-	if (m_ptr->PROC_NR == MM_PROC_NR) {
+	if (m_ptr->PROC_NR == PM_PROC_NR) {
 		psinfo.mproc = (vir_bytes) m_ptr->ADDRESS;
-	} else
-	if (m_ptr->PROC_NR == FS_PROC_NR) {
+	} else if (m_ptr->PROC_NR == FS_PROC_NR) {
 		psinfo.fproc = (vir_bytes) m_ptr->ADDRESS;
 	} else {
 		return(EPERM);

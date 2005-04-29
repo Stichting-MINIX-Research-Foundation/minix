@@ -54,7 +54,7 @@ int rw_flag;			/* READING or WRITING */
   int block_size;
 
   /* MM loads segments by putting funny things in upper 10 bits of 'fd'. */
-  if (who == MM_PROC_NR && (m_in.fd & (~BYTE)) ) {
+  if (who == PM_PROC_NR && (m_in.fd & (~BYTE)) ) {
 	usr = m_in.fd >> 7;
 	seg = (m_in.fd >> 5) & 03;
 	m_in.fd &= 037;		/* get rid of user and segment bits */

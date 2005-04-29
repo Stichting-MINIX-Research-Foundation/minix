@@ -104,8 +104,7 @@ extern clock_t tty_next_timeout;	/* next TTY timeout */
 #define bufend(buf)	((buf) + buflen(buf))
 
 /* Memory allocated in tty.c, so extern here. */
-extern struct kenviron kenv;	/* kernel environment (a.o.: pc_at, ega) */
-
+extern struct machine machine;	/* machine information (a.o.: pc_at, ega) */
 
 /* Function prototypes for TTY driver. */
 /* tty.c */

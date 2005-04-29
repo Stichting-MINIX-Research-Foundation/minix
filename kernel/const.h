@@ -9,7 +9,7 @@
 /* To translate an address in kernel space to a physical address.  This is
  * the same as umap_local(proc_ptr, D, vir, sizeof(*vir)), but less costly.
  */
-#define vir2phys(vir)	(data_base + (vir_bytes) (vir))
+#define vir2phys(vir)	(kinfo.data_base + (vir_bytes) (vir))
 
 /* Constants used in virtual_copy(). Values must be 0 and 1, respectively! */
 #define _SRC_	0
@@ -26,6 +26,9 @@
 
 /* How many bytes for (port,value)-pairs vector to copy in. */
 #define VDEVIO_BUF_SIZE  128
+
+/* How many elements in vector of virtual copy requests. */
+#define VCOPY_VEC_SIZE    16
 
 /* Program stack words and masks. */
 #define INIT_PSW      0x0200	/* initial psw */

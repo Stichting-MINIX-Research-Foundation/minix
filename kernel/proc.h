@@ -14,6 +14,7 @@
  *   May 01, 2004   new p_sendmask to protect syscalls  (Jorrit N. Herder)
  */
 #include <minix/com.h>
+#include "protect.h"
 #include "const.h"
  
 struct proc {
@@ -21,8 +22,7 @@ struct proc {
 
 #if (CHIP == INTEL)
   reg_t p_ldt_sel;		/* selector in gdt giving ldt base and limit*/
-  struct segdesc_s p_ldt[4];	/* local descriptors for code and data */
-				/* 4 is LDT_SIZE - avoid include protect.h */
+  struct segdesc_s p_ldt[2+NR_REMOTE_SEGS]; /* CS, DS and remote segments */
 #endif /* (CHIP == INTEL) */
 
 #if (CHIP == M68000)
@@ -123,7 +123,7 @@ struct proc {
 #define isalivep(p)	  ((p)->p_type > P_NONE)
 #define isrxhardware(n)   ((n) == ANY || (n) == HARDWARE)
 #define iskernel(n)	  ((n) == CLOCK || (n) == SYSTASK)
-#define issysentn(n)      ((n) == FS_PROC_NR || (n) == MM_PROC_NR)
+#define issysentn(n)      ((n) == FS_PROC_NR || (n) == PM_PROC_NR)
 #define issysentp(p)      (issysentn((p)->p_nr))
 #define isreservedp(p)    ((p)->p_type == P_RESERVED)
 #define isemptyp(p)       ((p)->p_type == P_NONE)

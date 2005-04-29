@@ -11,7 +11,7 @@
  *   Sep 02, 2004   added sys_exit  (Jorrit N. Herder)
  *   Aug 15, 2004   added sys_getinfo  (Jorrit N. Herder)
  *   Jul 23, 2004   added sys_umap  (Jorrit N. Herder)
- *   Jul 13, 2004   added sys_enable_iop, sys_phys2seg  (Jorrit N. Herder)
+ *   Jul 13, 2004   added sys_enable_iop, sys_segctl  (Jorrit N. Herder)
  *   Mar 20, 2004   added sys_devio, sys_vdevio  (Jorrit N. Herder)
  */
 
@@ -41,8 +41,6 @@ _PROTOTYPE( int _taskcall, (int who, int syscallnr, message *msgptr)	);
 _PROTOTYPE( int sys_abort, (int how, ...)				);
 _PROTOTYPE( int sys_adjmap, (int proc, struct mem_map *ptr, 
 			vir_clicks data_clicks, vir_clicks sp)		);
-_PROTOTYPE( int sys_copy, (int src_proc, int src_seg, phys_bytes src_vir, 
-	int dst_proc, int dst_seg, phys_bytes dst_vir, phys_bytes bytes));
 _PROTOTYPE( int sys_exec, (int proc, char *ptr, int traced, 
 				char *aout, vir_bytes initpc)		);
 _PROTOTYPE( int sys_execmap, (int proc, struct mem_map *ptr)		);
@@ -54,13 +52,8 @@ _PROTOTYPE( int sys_times, (int proc_nr, clock_t *ptr)			);
 _PROTOTYPE( int sys_getuptime, (clock_t *ticks)				);
 _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p)	);
 _PROTOTYPE( int sys_xit, (int parent, int proc)				);
-_PROTOTYPE( int sys_kill, (int proc, int sig)				);
 _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
 
-
-/*==========================================================================* 
- * New prototypes since MINIX release 2		         (Jorrit N. Herder) * 
- *==========================================================================*/ 
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_nr, buffer, count) \
@@ -89,7 +82,7 @@ _PROTOTYPE(int sys_syncalrm, (int proc_nr, clock_t exp_time, int abs_time) );
 _PROTOTYPE ( int sys_irqctl, (int request, int irq_vec, int policy,
     int proc_nr, long port, void *val_ptr, long mask_val) );
 
-/* Shorthands for sys_vircopy() system call. */
+/* Shorthands for sys_vircopy() and sys_physcopy() system calls. */
 #define sys_biosin(bios_vir, dst_vir, bytes) \
 	sys_vircopy(SELF, BIOS_SEG, bios_vir, SELF, D, dst_vir, bytes)
 #define sys_biosout(src_vir, bios_vir, bytes) \
@@ -103,17 +96,22 @@ _PROTOTYPE ( int sys_irqctl, (int request, int irq_vec, int policy,
 _PROTOTYPE(int sys_vircopy, (int src_proc, int src_seg, vir_bytes src_vir,
 	int dst_proc, int dst_seg, vir_bytes dst_vir, phys_bytes bytes)	);
 
-_PROTOTYPE(int sys_physcopy, (phys_bytes src_phys, phys_bytes dst_phys,
-	 phys_bytes bytes)						);
+#define sys_abscopy(src_phys, dst_phys, bytes) \
+	sys_physcopy(NONE, PHYS_SEG, src_phys, NONE, PHYS_SEG, dst_phys, bytes)
+_PROTOTYPE(int sys_physcopy, (int src_proc, int src_seg, vir_bytes src_vir,
+	int dst_proc, int dst_seg, vir_bytes dst_vir, phys_bytes bytes)	);
+
 _PROTOTYPE(int sys_umap, (int proc_nr, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr) 			);
-_PROTOTYPE(int sys_phys2seg, (u16_t *seg,vir_bytes *off,phys_bytes phys, vir_bytes size));
+_PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
+	phys_bytes phys, vir_bytes size));
 _PROTOTYPE(int sys_enable_iop, (int proc_nr)				);
 _PROTOTYPE(int sys_kmalloc, (size_t size, phys_bytes *phys_base)		);
 
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkmessages(dst)	sys_getinfo(GET_KMESSAGES, dst, 0,0,0)
-#define sys_getkenviron(dst)	sys_getinfo(GET_KENVIRON, dst, 0,0,0)
+#define sys_getkinfo(dst)	sys_getinfo(GET_KINFO, dst, 0,0,0)
+#define sys_getmachine(dst)	sys_getinfo(GET_MACHINE, dst, 0,0,0)
 #define sys_getproctab(dst)	sys_getinfo(GET_PROCTAB, dst, 0,0,0)
 #define sys_getproc(dst,nr)	sys_getinfo(GET_PROC, dst, 0,0, nr)
 #define sys_getprocnr(dst,k,kl)	sys_getinfo(GET_PROCNR, dst, 0,k,kl)
@@ -129,17 +127,12 @@ _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 _PROTOTYPE(int sys_exit, (int status)					);
 
 
-/* Shorthands for sys_sigctl() system call. */
-#define sys_getsig(proc_nr, sig_map) \
-	sys_sigctl(S_GETSIG, 0,0,0, proc_nr, sig_map)
-#define sys_endsig(proc_nr) \
-	sys_sigctl(S_ENDSIG, proc_nr, 0,0,0,0)
-#define sys_sendsig(proc_nr, sig_ctxt) \
-	sys_sigctl(S_SENDSIG, proc_nr, sig_ctxt, 0,0,0)
-#define sys_sigreturn(proc_nr, sig_ctxt, flags) \
-	sys_sigctl(S_SIGRETURN, proc_nr, sig_ctxt, flags, 0,0)
-_PROTOTYPE(int sys_sigctl, (int request, int proc_nr, struct sigmsg *sig_ctxt,
-	int flags, int *k_proc_nr, sigset_t *k_sig_map)		);
+/* Signal control. */
+_PROTOTYPE(int sys_kill, (int proc, int sig) );
+_PROTOTYPE(int sys_sigsend, (int proc_nr, struct sigmsg *sig_ctxt) ); 
+_PROTOTYPE(int sys_sigreturn, (int proc_nr, struct sigmsg *sig_ctxt, int flags) );
+_PROTOTYPE(int sys_getsig, (int *k_proc_nr, sigset_t *k_sig_map) ); 
+_PROTOTYPE(int sys_endsig, (int proc_nr) );
 
 /* NOTE: two different approaches were used to distinguish the device I/O
  * types 'byte', 'word', 'long': the latter uses #define and results in a

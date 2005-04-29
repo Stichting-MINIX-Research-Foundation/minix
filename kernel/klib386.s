@@ -30,6 +30,7 @@
 .define	_reset		! reset the system
 .define	_idle_task	! task executed when there is no work
 .define	_level0		! call a function at level 0
+.define	_read_tsc	! read the cycle counter (Pentium and up)
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -495,3 +496,22 @@ _level0:
 	mov	(_level0_func), eax
 	int	LEVEL0_VECTOR
 	ret
+
+
+!*===========================================================================*
+!*			      read_tsc					     *
+!*===========================================================================*
+! PUBLIC void read_tsc(unsigned long *low, unsigned long *high);
+! Read the cycle counter of the CPU. Pentium and up. 
+.align 16
+_read_tsc:
+.data1 0x0f		! this is the RDTSC instruction 
+.data1 0x31		! it places the TSC in EDX:EAX
+	push ebp
+	mov ebp, 8(esp)
+	mov (ebp), edx
+	mov ebp, 12(esp)
+	mov (ebp), eax
+	pop ebp
+	ret
+

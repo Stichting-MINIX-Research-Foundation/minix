@@ -53,7 +53,7 @@ PUBLIC int do_sigaction()
   if (m_in.sig_nr < 1 || m_in.sig_nr > _NSIG) return (EINVAL);
   svp = &mp->mp_sigact[m_in.sig_nr];
   if ((struct sigaction *) m_in.sig_osa != (struct sigaction *) NULL) {
-	r = sys_datacopy(MM_PROC_NR,(vir_bytes) svp,
+	r = sys_datacopy(PM_PROC_NR,(vir_bytes) svp,
 		who, (vir_bytes) m_in.sig_osa, (phys_bytes) sizeof(svec));
 	if (r != OK) return(r);
   }
@@ -63,7 +63,7 @@ PUBLIC int do_sigaction()
 
   /* Read in the sigaction structure. */
   r = sys_datacopy(who, (vir_bytes) m_in.sig_nsa,
-		MM_PROC_NR, (vir_bytes) &svec, (phys_bytes) sizeof(svec));
+		PM_PROC_NR, (vir_bytes) &svec, (phys_bytes) sizeof(svec));
   if (r != OK) return(r);
 
   if (svec.sa_handler == SIG_IGN) {
@@ -433,7 +433,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		rmp->mp_sigact[signo].sa_handler = SIG_DFL;
 	}
 
-	sys_sendsig(slot, &sm);
+	sys_sigsend(slot, &sm);
 	sigdelset(&rmp->mp_sigpending, signo);
 	/* If process is hanging on PAUSE, WAIT, SIGSUSPEND, tty, pipe, etc.,
 	 * release it.

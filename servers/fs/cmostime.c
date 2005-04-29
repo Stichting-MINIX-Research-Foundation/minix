@@ -33,8 +33,8 @@ PUBLIC int do_cmostime(void)
   /* First obtain the machine ID to see if we can read the CMOS clock. Only
    * for PS_386 and PC_AT this is possible. Otherwise, return an error.  
    */
-  sys_vircopy(SELF, BIOS_SEG, (vir_bytes) ADR_MACHINE_ID, 
-  	SELF, D, (vir_bytes) &mach_id, LEN_MACHINE_ID);
+  sys_vircopy(SELF, BIOS_SEG, (vir_bytes) MACHINE_ID_ADDR, 
+  	SELF, D, (vir_bytes) &mach_id, MACHINE_ID_SIZE);
   if (mach_id != PS_386_MACHINE && mach_id != PC_AT_MACHINE) {
 	printf("IS: Machine ID unknown. ID byte = %02x.\n", mach_id);
 	return(EFAULT);

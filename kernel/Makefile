@@ -21,7 +21,7 @@ LIBS = -lsys -lutils -ltimers
 HEAD =	mpx.o
 
 OBJS =	start.o protect.o klibc.o klib.o table.o main.o proc.o \
-	i8259.o exception.o system.o clock.o memory.o misc.o \
+	i8259.o exception.o system.o clock.o misc.o \
 	dummy.o \
 	rtl8139.o pci.o pci_table.o  
 
@@ -90,10 +90,6 @@ main.o:	$h/callnr.h
 main.o:	$h/com.h
 main.o:	proc.h
 main.o:	sendmask.h
-
-memory.o:	$a
-memory.o:	proc.h
-memory.o:	protect.h
 
 misc.o:	$a
 misc.o:	$i/stdlib.h
@@ -175,9 +171,7 @@ system/system.a:	system/irqctl.c
 system/system.a:	system/misc.c
 system/system.a:	system/proctl.c
 system/system.a:	system/sigctl.c
-system/system.a:	system/srvrctl.c
+system/system.a:	system/sysctl.c
 system/system.a:	system/tracing.c
 system/system.a:	system/debugging.c
-system/system.a:	system/do_copy.c
-system/system.a:	system/do_vcopy.c
 

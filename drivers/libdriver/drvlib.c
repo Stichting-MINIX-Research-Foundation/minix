@@ -161,9 +161,9 @@ struct part_entry *table;	/* four entries */
 
   /* Read the partition table at 'offset'. */
   if (proc_nr == NONE) {
-  	if ((s=get_proc_nr(&proc_nr,NULL)) != OK) {
+  	if ((s=sys_getprocnr(&proc_nr,0,0)) != OK) {
 		printf("%s: can't get own proc nr: %d\n", (*dp->dr_name)(), s);
-		return 0;
+		return(0);
 	}
   }
   position = offset << SECTOR_SHIFT;

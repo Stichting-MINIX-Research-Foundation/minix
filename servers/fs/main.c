@@ -305,10 +305,10 @@ PRIVATE void load_ram(void)
   if (sendrec(MEMORY, &m_out) != OK || m_out.REP_STATUS != OK)
 	panic("Can't set RAM disk size", NO_NUM);
 
-  /* Tell MM the RAM disk size, and wait for it to come "on-line". */
+  /* Tell PM the RAM disk size, and wait for it to come "on-line". */
   m_out.MEM_CHUNK_SIZE = ((long) ram_size_kb * 1024) >> CLICK_SHIFT;
-  if (sendrec(MM_PROC_NR, &m_out) != OK)
-	panic("FS can't sync up with MM", NO_NUM);
+  if (sendrec(PM_PROC_NR, &m_out) != OK)
+	panic("FS can't sync up with PM", NO_NUM);
 
 #if ENABLE_CACHE2
   /* The RAM disk is a second level block cache while not otherwise used. */

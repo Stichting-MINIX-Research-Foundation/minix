@@ -4,7 +4,7 @@
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR	(child's process table slot)	
  *    m1_i2:	PR_PPROC_NR	(parent, process that forked)	
- *    m1_i3:	PR_PID	 	(child pid received from MM)
+ *    m1_i3:	PR_PID	 	(child pid received from PM)
  */
 
 #include "../kernel.h"
@@ -81,23 +81,23 @@ register message *m_ptr;	/* pointer to request message */
 PUBLIC int do_newmap(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-/* Handle sys_newmap().  Fetch the memory map from MM. */
+/* Handle sys_newmap().  Fetch the memory map from PM. */
 
   register struct proc *rp;
   phys_bytes src_phys;
-  int caller;			/* whose space has the new map (usually MM) */
+  int caller;			/* whose space has the new map (usually PM) */
   int k;			/* process whose map is to be loaded */
   int old_flags;		/* value of flags before modification */
-  struct mem_map *map_ptr;	/* virtual address of map inside caller (MM) */
+  struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
 
-  /* Extract message parameters and copy new memory map from MM. */
+  /* Extract message parameters and copy new memory map from PM. */
   caller = m_ptr->m_source;
   k = m_ptr->PR_PROC_NR;
   map_ptr = (struct mem_map *) m_ptr->PR_MEM_PTR;
   if (!isokprocn(k)) return(EINVAL);
   rp = proc_addr(k);		/* ptr to entry of user getting new map */
 
-  /* Copy the map from MM. */
+  /* Copy the map from PM. */
   src_phys = umap_local(proc_addr(caller), D, (vir_bytes) map_ptr, 
   	sizeof(rp->p_memmap));
   assert(src_phys != 0);
@@ -158,7 +158,7 @@ register message *m_ptr;	/* pointer to request message */
 	(LDT_SIZE - EXTRA_LDT_INDEX) * sizeof(rp->p_ldt[0]));
 #endif
   rp->p_reg.pc = (reg_t) m_ptr->PR_IP_PTR;	/* set pc */
-  rp->p_flags &= ~RECEIVING;	/* MM does not reply to EXEC call */
+  rp->p_flags &= ~RECEIVING;	/* PM does not reply to EXEC call */
   if (rp->p_flags == 0) lock_ready(rp);
 
   /* Save command name for debugging, ps(1) output, etc. */
@@ -189,7 +189,7 @@ register message *m_ptr;	/* pointer to request message */
 PUBLIC int do_xit(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-/* Handle sys_exit. A user process has exited (the MM sent the request).
+/* Handle sys_exit. A user process has exited (the PM sent the request).
  */
   register struct proc *rp, *rc;
   struct proc *np, *xp;
@@ -201,7 +201,7 @@ message *m_ptr;			/* pointer to request message */
   if (! isokprocn(exit_proc_nr)) return(EINVAL);
   rc = proc_addr(exit_proc_nr);
 
-  /* If this is a user process and the MM passed in a valid parent process, 
+  /* If this is a user process and the PM passed in a valid parent process, 
    * accumulate the child times at the parent. 
    */
   if (isuserp(rc) && isokprocn(m_ptr->PR_PPROC_NR)) {
@@ -217,7 +217,7 @@ message *m_ptr;			/* pointer to request message */
    * and resets important process table fields.
    */
   clear_proc(exit_proc_nr);
-  return(OK);				/* tell MM that cleanup succeeded */
+  return(OK);				/* tell PM that cleanup succeeded */
 }
 
 

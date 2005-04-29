@@ -141,7 +141,7 @@ PUBLIC tty_t tty_table[NR_CONS+NR_RS_LINES+NR_PTYS];
 PUBLIC int ccurrent;			/* currently active console */
 PUBLIC timer_t *tty_timers;		/* queue of TTY timers */
 PUBLIC clock_t tty_next_timeout;	/* time that the next alarm is due */
-PUBLIC struct kenviron kenv;		/* kernel environment variables */
+PUBLIC struct machine machine;		/* kernel environment variables */
 
 
 /*===========================================================================*
@@ -165,7 +165,7 @@ PUBLIC void main(void)
   }
 
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
-  if (OK != (s=sys_getkenviron(&kenv))) {
+  if (OK != (s=sys_getmachine(&machine))) {
     server_panic("TTY","Couldn't obtain kernel environment.", s);
   }
 

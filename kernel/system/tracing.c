@@ -36,7 +36,7 @@ register message *m_ptr;
  * T_EXIT	exit
  * T_STEP	set trace bit
  *
- * The T_OK and T_EXIT commands are handled completely by the memory manager,
+ * The T_OK and T_EXIT commands are handled completely by the process manager,
  * all others come here.
  */
 

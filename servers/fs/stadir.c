@@ -36,7 +36,7 @@ PUBLIC int do_chdir()
   int r;
   register struct fproc *rfp;
 
-  if (who == MM_PROC_NR) {
+  if (who == PM_PROC_NR) {
 	rfp = &fproc[m_in.slot1];
 	put_inode(fp->fp_rootdir);
 	dup_inode(fp->fp_rootdir = rfp->fp_rootdir);

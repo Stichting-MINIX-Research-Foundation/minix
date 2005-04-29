@@ -23,67 +23,54 @@
 #include <sys/sigcontext.h>
 INIT_ASSERT
 
-/*===========================================================================*
- *			      do_sigctl					     *
- *===========================================================================*/
-PUBLIC int do_sigctl(m_ptr)
+/* PM is ready to accept signals and repeatedly does a system call to get 
+ * one. Find a process with pending signals. If no signals are available, 
+ * return NONE in the process number field.
+ */
+PUBLIC int do_getsig(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-  /* Only the MM and FS are allowed to use signal control operations. */
-  if (m_ptr->m_source != MM_PROC_NR && m_ptr->m_source != FS_PROC_NR)
-  	return(EPERM);
+  register struct proc *rp;
 
-  /* Now see what request we got. The supported requests are S_GETSIG, 
-   * S_ENDSIG, S_SENDSIG, S_SIGRETURN, and S_KILL. Unsupported requests 
-   * result in an EINVAL error.
-   */
-  switch(m_ptr->SIG_REQUEST) {
-
-  /* MM is ready to accept signals and repeatedly does a system call to get 
-   * one. Find a process with pending signals. If no signals are available, 
-   * return NONE in the process number field.
-   */
-  case S_GETSIG: {
-
-  	register struct proc *rp;
-
-  	/* Find the next process with pending signals. */
-  	for (rp = BEG_USER_ADDR; rp < END_PROC_ADDR; rp++) {
-	    if (rp->p_flags & PENDING) {
-		m_ptr->SIG_PROC = proc_number(rp);
-		m_ptr->SIG_MAP = rp->p_pending;
-		sigemptyset(&rp->p_pending); 	/* ball is in MM's court */
-		rp->p_flags &= ~PENDING;	/* blocked by SIG_PENDING */
-		return(OK);
-	    }
-  	}
-
-  	/* No process with pending signals was found. */
-  	m_ptr->SIG_PROC = NONE; 
-  	return(OK);
+  /* Find the next process with pending signals. */
+  for (rp = BEG_USER_ADDR; rp < END_PROC_ADDR; rp++) {
+      if (rp->p_flags & PENDING) {
+          m_ptr->SIG_PROC = proc_number(rp);
+          m_ptr->SIG_MAP = rp->p_pending;
+          sigemptyset(&rp->p_pending); 	/* ball is in PM's court */
+          rp->p_flags &= ~PENDING;	/* blocked by SIG_PENDING */
+          return(OK);
+      }
   }
 
-  /* Finish up after a KSIG-type signal, caused by a SYS_KILL message or a 
-   * call to cause_sig by a task
-   */
-  case S_ENDSIG: { 
+  /* No process with pending signals was found. */
+  m_ptr->SIG_PROC = NONE; 
+  return(OK);
+}
 
-  	register struct proc *rp;
+PUBLIC int do_endsig(m_ptr)
+message *m_ptr;			/* pointer to request message */
+{
+/* Finish up after a kernel type signal, caused by a SYS_KILL message or a 
+ * call to cause_sig by a task. This is called by the PM after processing a
+ * signal it got with SYS_GETSIG.
+ */
+  register struct proc *rp;
 
-  	rp = proc_addr(m_ptr->SIG_PROC);
-  	if (isemptyp(rp)) return(EINVAL);	/* process already dead? */
-  	assert(isuserp(rp));
+  rp = proc_addr(m_ptr->SIG_PROC);
+  if (isemptyp(rp)) return(EINVAL);	/* process already dead? */
 
-  	/* MM has finished one KSIG. Perhaps process is ready now? */
-  	if (rp->p_pendcount != 0 && --rp->p_pendcount == 0
-      		&& (rp->p_flags &= ~SIG_PENDING) == 0)
-	    lock_ready(rp);
-  	return(OK);
-  }
+  /* PM has finished one kernel signal. Perhaps process is ready now? */
+  if (rp->p_pendcount != 0 && --rp->p_pendcount == 0
+          && (rp->p_flags &= ~SIG_PENDING) == 0)
+      lock_ready(rp);
+  return(OK);
+}
 
-  /* Handle sys_sendsig, POSIX-style signal handling.
-   */
-  case S_SENDSIG: { 	
+PUBLIC int do_sigsend(m_ptr)
+message *m_ptr;			/* pointer to request message */
+{
+/* Handle sys_sigsend, POSIX-style signal handling. */
 
   	struct sigmsg smsg;
   	register struct proc *rp;
@@ -95,7 +82,7 @@ message *m_ptr;			/* pointer to request message */
   	assert(isuserp(rp));
 
   	/* Get the sigmsg structure into our address space.  */
-  	src_phys = umap_local(proc_addr(MM_PROC_NR), D, (vir_bytes) 
+  	src_phys = umap_local(proc_addr(PM_PROC_NR), D, (vir_bytes) 
   		m_ptr->SIG_CTXT_PTR, (vir_bytes) sizeof(struct sigmsg));
   	assert(src_phys != 0);
   	phys_copy(src_phys,vir2phys(&smsg),(phys_bytes) sizeof(struct sigmsg));
@@ -140,13 +127,14 @@ message *m_ptr;			/* pointer to request message */
   	rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
 
   	return(OK);
-  }
+}
 
-  /* POSIX style signals require sys_sigreturn to put things in order before 
-   * the signalled process can resume execution
-   */
-  case S_SIGRETURN: {
-
+PUBLIC int do_sigreturn(m_ptr)
+message *m_ptr;			/* pointer to request message */
+{
+/* POSIX style signals require sys_sigreturn to put things in order before 
+ * the signalled process can resume execution
+ */
   	struct sigcontext sc;
   	register struct proc *rp;
   	phys_bytes src_phys;
@@ -193,30 +181,18 @@ message *m_ptr;			/* pointer to request message */
 
   	/* Restore the registers. */
   	kmemcpy(&rp->p_reg, (char *)&sc.sc_regs, sizeof(struct sigregs));
-
   	return(OK);
-  }
-  
-  /* Handle sys_kill(). Cause a signal to be sent to a process via MM.
-   * Note that this has nothing to do with the kill(2) system call, this
-   * is how the FS (and possibly other servers) get access to cause_sig. 
-   */
-  case S_KILL: {
-      cause_sig(m_ptr->SIG_PROC, m_ptr->SIG_NUMBER);
-      return(OK);
-  }
 
-  default:
-  	return(EINVAL);
-  }
 }
 
-
+/*===========================================================================*
+ *			      do_sigctl					     *
+ *===========================================================================*/
 
 PUBLIC int do_kill(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-/* Handle sys_kill(). Cause a signal to be sent to a process via MM.
+/* Handle sys_kill(). Cause a signal to be sent to a process via PM.
  * Note that this has nothing to do with the kill (2) system call, this
  * is how the FS (and possibly other servers) get access to cause_sig. 
  */

@@ -107,6 +107,7 @@ FORWARD _PROTOTYPE ( int cp_b2u, (acc_t *acc_ptr, int proc, char *dest) );
 PRIVATE sr_fd_t sr_fd_table[FD_NR];
 PRIVATE mq_t *repl_queue, *repl_queue_tail;
 PRIVATE cpvec_t cpvec[CPVEC_NR];
+PRIVATE struct vir_cp_req vir_cp_req[CPVEC_NR];
 
 PUBLIC void sr_init()
 {
@@ -650,9 +651,13 @@ int size;
 	{
 		size= (vir_bytes)acc->acc_length;
 
-		cpvec[i].cpv_src= (vir_bytes)src;
-		cpvec[i].cpv_dst= (vir_bytes)ptr2acc_data(acc);
-		cpvec[i].cpv_size= size;
+		vir_cp_req[i].count= size;
+		vir_cp_req[i].src.proc_nr = proc;
+		vir_cp_req[i].src.segment = D;
+		vir_cp_req[i].src.offset = (vir_bytes) src;
+		vir_cp_req[i].dst.proc_nr = this_proc;
+		vir_cp_req[i].dst.segment = D;
+		vir_cp_req[i].dst.offset = (vir_bytes) ptr2acc_data(acc);
 
 		src += size;
 		acc= acc->acc_next;
@@ -660,11 +665,9 @@ int size;
 
 		if (i == CPVEC_NR || acc == NULL)
 		{
-			mess.m_type= SYS_VCOPY;
-			mess.m1_i1= proc;
-			mess.m1_i2= this_proc;
-			mess.m1_i3= i;
-			mess.m1_p1= (char *)cpvec;
+			mess.m_type= SYS_VIRVCOPY;
+			mess.VCP_VEC_SIZE = i;
+			mess.VCP_VEC_ADDR = (char *) vir_cp_req;
 			if (sendrec(SYSTASK, &mess) <0)
 				ip_panic(("unable to sendrec"));
 			if (mess.m_type <0)
@@ -697,9 +700,13 @@ char *dest;
 
 		if (size)
 		{
-			cpvec[i].cpv_src= (vir_bytes)ptr2acc_data(acc);
-			cpvec[i].cpv_dst= (vir_bytes)dest;
-			cpvec[i].cpv_size= size;
+			vir_cp_req[i].src.proc_nr = this_proc;
+			vir_cp_req[i].src.segment = D;
+			vir_cp_req[i].src.offset= (vir_bytes)ptr2acc_data(acc);
+			vir_cp_req[i].dst.proc_nr = proc;
+			vir_cp_req[i].dst.segment = D;
+			vir_cp_req[i].dst.offset= (vir_bytes)dest;
+			vir_cp_req[i].count= size;
 			i++;
 		}
 
@@ -708,11 +715,9 @@ char *dest;
 
 		if (i == CPVEC_NR || acc == NULL)
 		{
-			mess.m_type= SYS_VCOPY;
-			mess.m1_i1= this_proc;
-			mess.m1_i2= proc;
-			mess.m1_i3= i;
-			mess.m1_p1= (char *)cpvec;
+			mess.m_type= SYS_VIRVCOPY;
+			mess.VCP_VEC_SIZE = i;
+			mess.VCP_VEC_ADDR = (char *) vir_cp_req;
 			if (sendrec(SYSTASK, &mess) <0)
 				ip_panic(("unable to sendrec"));
 			if (mess.m_type <0)
@@ -746,7 +751,7 @@ assert(!m_cancel);
 			m= m->mq_next;
 			continue;
 		}
-assert(m->mq_mess.m_source != MM_PROC_NR);
+assert(m->mq_mess.m_source != PM_PROC_NR);
 assert(m->mq_mess.m_type == REVIVE);
 		result= send(m->mq_mess.m_source, &m->mq_mess);
 		if (result != OK)
@@ -758,7 +763,7 @@ assert(m->mq_mess.m_type == REVIVE);
 	repl_queue= NULL;
 	if (m_cancel)
 	{
-assert(m_cancel->mq_mess.m_source != MM_PROC_NR);
+assert(m_cancel->mq_mess.m_source != PM_PROC_NR);
 assert(m_cancel->mq_mess.m_type == REVIVE);
 		result= send(m_cancel->mq_mess.m_source, &m_cancel->mq_mess);
 		if (result != OK)

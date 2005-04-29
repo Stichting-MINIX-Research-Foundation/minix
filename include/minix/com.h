@@ -45,7 +45,7 @@
 #define CTRLR(n)	(NONE + (n))
 
 /* User-level processes, that is, device drivers, servers, and INIT. */
-#define MM_PROC_NR	 0	/* memory manager */
+#define PM_PROC_NR	 0	/* process manager */
 #define FS_PROC_NR 	 1	/* file system */
 #define IS_PROC_NR	 5 	/* information server */
 #define TTY		 6	/* terminal (TTY) driver */
@@ -130,12 +130,11 @@
 #  define NULL_DEV    3		/* minor device for /dev/null */
 #  define BOOT_DEV    4		/* minor device for /dev/boot */
 #  define RANDOM_DEV  5		/* minor device for /dev/random */
-#  define URANDOM_DEV 6		/* minor device for /dev/urandom */
+#  define ZERO_DEV    6		/* minor device for /dev/zero */
 
+/* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	0x0100	/* device number of /dev/ram */
 #  define DEV_BOOT	0x0104	/* device number of /dev/boot */
-#  define DEV_RANDOM	0x0105	/* device number of /dev/random */
-#  define DEV_URANDOM	0x0106	/* device number of /dev/urandom */
 
 
 /*===========================================================================*
@@ -204,40 +203,40 @@
  * modifying the system call numbers. The numbers here determine which call
  * is made from the call vector.
  */ 
-#define NR_SYS_CALLS	32	/* number of system calls */ 
+#define NR_SYS_CALLS	33	/* number of system calls */ 
 #  define SYS_TIMES	 0	/* sys_times(proc_nr, bufptr) */
 #  define SYS_XIT	 1	/* sys_xit(parent, proc) */
+#  define SYS_GETSIG     2	/* sys_getsig(proc_nr, sig_map) */
 
-#  define SYS_SIGCTL     3	/* sys_sigctl(req,pnr,sig,ctxt,flag,pnr,map) */
 #  define SYS_FORK       4	/* sys_fork(parent, child, pid) */
 #  define SYS_NEWMAP     5	/* sys_newmap(proc_nr, map_ptr) */
-#  define SYS_COPY       6	/* sys_copy(ptr) */
+#  define SYS_ENDSIG     6	/* sys_endsig(proc_nr) */
 #  define SYS_EXEC       7	/* sys_exec(proc_nr, new_sp) */
-
+#  define SYS_SIGSEND    8	/* sys_sigsend(proc_nr, ctxt_ptr) */
 #  define SYS_ABORT      9	/* sys_abort() */
 #  define SYS_KILL      10	/* sys_kill(proc_nr, sig) */
 #  define SYS_UMAP      11	/* sys_umap(proc_nr, etc) */
-
+#  define SYS_RANDOM    12	/* sys_random(...) */
 #  define SYS_TRACE     13	/* sys_trace(req,pid,addr,data) */
-#  define SYS_VCOPY     14	/* sys_vcopy(src_p, dst_p, vcpy_s, vcpy_ptr) */
+
 #  define SYS_SIGNALRM	15	/* sys_signalrm(proc_nr, ticks) */
 #  define SYS_SYNCALRM	16	/* sys_syncalrm(proc_nr,exp_time,abs_time) */
 #  define SYS_FLAGALRM	17	/* sys_flagalrm(ticks, flag_ptr) */
 
 #  define SYS_SVRCTL    19	/* sys_svrctl(proc_nr, req, argp) */
 #  define SYS_SDEVIO    20	/* sys_sdevio(port, proc_nr, buf, count) */
-
+#  define SYS_SIGRETURN 21	/* sys_sigreturn(proc_nr, ctxt_ptr, flags) */
 #  define SYS_GETINFO   22 	/* sys_getinfo(what, whereto) */
 #  define SYS_DEVIO     23	/* sys_devio(port, value) */
 #  define SYS_VDEVIO    24	/* sys_vdevio(buf_ptr, nr_ports) */
 #  define SYS_IRQCTL    25	/* sys_irqctl() */
 #  define SYS_KMALLOC   26	/* sys_kmalloc(size, phys_base) */
 #  define SYS_IOPENABLE 27	/* sys_enable_iop() */
-#  define SYS_PHYS2SEG  28	/* sys_phys2seg(*seg, *off, phys) */
+#  define SYS_SEGCTL    28	/* sys_segctl(*idx, *seg, *off, phys, size) */
 #  define SYS_EXIT      29	/* sys_exit(status) */
 #  define SYS_VIRCOPY   30	/* sys_vircopy(src,seg,addr,dst,seg,addr,cnt) */
 #  define SYS_PHYSCOPY  31 	/* sys_physcopy(src_addr,dst_addr,count) */
-#  define SYS_MSTATS    32
+#  define SYS_VIRVCOPY  32	/* sys_virvcopy(vec_ptr, vec_size) */
 
 /* Field names for SYS_MEM, SYS_KMALLOC. */
 #define MEM_CHUNK_BASE	m4_l1	/* physical base address */
@@ -289,11 +288,12 @@
 /* Names of message field and paramaters for SYS_EXIT request. */
 #define EXIT_STATUS	m2_i1	/* zero for normal exit, non-zero else */
 
-/* Field names for SYS_PHYS2SEG. */
+/* Field names for SYS_SEGCTL. */
 #define SEG_SELECT	m4_l1   /* segment selector returned */ 
 #define SEG_OFFSET	m4_l2	/* offset in segment returned */
 #define SEG_PHYS	m4_l3	/* physical address of segment */
 #define SEG_SIZE	m4_l4	/* segment size */
+#define SEG_INDEX	m4_l5	/* segment index in remote map */
 
 /* Field names for SYS_VIDCOPY. */
 #define VID_REQUEST	m4_l1	/* what to do? */
@@ -310,7 +310,7 @@
 #define ABRT_MON_LEN	m1_i3	/* length of monitor params */
 #define ABRT_MON_ADDR   m1_p1	/* virtual address of monitor params */
 
-/* Field names for SYS_COPY, _UMAP, _VIRCOPY, _PHYSCOPY. */
+/* Field names for _UMAP, _VIRCOPY, _PHYSCOPY. */
 #define CP_SRC_SPACE 	m5_c1	/* T or D space (stack is also D) */
 #define CP_SRC_PROC_NR	m5_i1	/* process to copy from */
 #define CP_SRC_ADDR	m5_l1	/* address where data come from */
@@ -327,7 +327,7 @@
 
 /* Field names for SYS_GETINFO. */
 #define I_REQUEST      m7_i3	/* what info to get */
-#   define GET_KENVIRON	   0	/* get kernel environment variables */
+#   define GET_KINFO	   0	/* get kernel information structure */
 #   define GET_IMAGE	   1	/* get system image table */
 #   define GET_PROCTAB	   2	/* get (kernel) process table */
 #   define GET_PROCNR	   3	/* find nr of process with name */
@@ -339,6 +339,7 @@
 #   define GET_KADDRESSES  9	/* get various kernel addresses */
 #   define GET_SCHEDINFO  10	/* get scheduling queues */
 #   define GET_PROC 	  11	/* get process slot if given process */
+#   define GET_MACHINE 	  12	/* get machine information */
 #define I_PROC_NR      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */

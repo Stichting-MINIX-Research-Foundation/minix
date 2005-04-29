@@ -82,7 +82,7 @@ message *m_ptr;			/* pointer to request message */
   argp = (vir_bytes) m_ptr->CTL_ARG_PTR;
   rp = proc_addr(proc_nr);
 
-  /* Check if the MM privileges are super user. */
+  /* Check if the PM privileges are super user. */
   if (!priv || !isuserp(rp)) 
       return(EPERM);
 
@@ -99,7 +99,7 @@ message *m_ptr;			/* pointer to request message */
 	rp->p_type = P_SERVER;
 	rp->p_sendmask = ALLOW_ALL_MASK;
 	send_mask_allow(proc_addr(RTL8139)->p_sendmask, proc_nr);
-	send_mask_allow(proc_addr(MM_PROC_NR)->p_sendmask, proc_nr);
+	send_mask_allow(proc_addr(PM_PROC_NR)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(FS_PROC_NR)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(IS_PROC_NR)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(CLOCK)->p_sendmask, proc_nr);
@@ -112,7 +112,7 @@ message *m_ptr;			/* pointer to request message */
 }
 
 /* The system call implemented in this file:
- *   m_type:	SYS_MEMCTL
+ *   m_type:	SYS_SEGCTL
  *
  * The parameters for this system call are:
  *    m4_l3:	SEG_PHYS	(physical base address)
@@ -127,9 +127,9 @@ message *m_ptr;			/* pointer to request message */
 
 
 /*===========================================================================*
- *			        do_phys2seg				     *
+ *			        do_segctl				     *
  *===========================================================================*/
-PUBLIC int do_phys2seg(m_ptr)
+PUBLIC int do_segctl(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
 /* Return a segment selector and offset that can be used to reach a physical
@@ -137,14 +137,28 @@ register message *m_ptr;	/* pointer to request message */
  */
   u16_t selector;
   vir_bytes offset;
+  int i, index;
   register struct proc *rp;
   phys_bytes phys = (phys_bytes) m_ptr->SEG_PHYS;
   vir_bytes size = (vir_bytes) m_ptr->SEG_SIZE;
   int result;
 
-  kprintf("Using Experimental LDT selector for video memory\n", NO_ARG);
+  /* First check if there is a slot available for this segment. */
+  rp = proc_addr(m_ptr->m_source);
+  index = -1;
+  for (i=0; i < NR_REMOTE_SEGS; i++) {
+  	if (! rp->p_farmem[i].in_use) {
+  		index = i; 
+  		rp->p_farmem[i].in_use = TRUE;
+  		rp->p_farmem[i].mem_phys = phys;
+  		rp->p_farmem[i].mem_len = size;
+  		break;
+  	}
+  }
+  if (index < 0) return(ENOSPC);
 
-  if (!protected_mode) {
+
+  if (! machine.protected) {
       selector = phys / HCLICK_SIZE;
       offset = phys % HCLICK_SIZE;
       result = OK;
@@ -155,26 +169,22 @@ register message *m_ptr;	/* pointer to request message */
        * instead of bytes are used.
        */
       if (size < BYTE_GRAN_MAX) {
-          rp = proc_addr(m_ptr->m_source);
-          init_dataseg(&rp->p_ldt[EXTRA_LDT_INDEX], phys, size, 
+          init_dataseg(&rp->p_ldt[EXTRA_LDT_INDEX+i], phys, size, 
           	USER_PRIVILEGE);
-          selector = (EXTRA_LDT_INDEX * 0x08) | (1 * 0x04) | USER_PRIVILEGE;
+          selector = ((EXTRA_LDT_INDEX+i)*0x08) | (1*0x04) | USER_PRIVILEGE;
           offset = 0;
           result = OK;			
       } else {
-#if ENABLE_USERPRIV && ENABLE_LOOSELDT
-          rp = proc_addr(m_ptr->m_source);
-          init_dataseg(&rp->p_ldt[EXTRA_LDT_INDEX], phys & ~0xFFFF, 0, 
+          init_dataseg(&rp->p_ldt[EXTRA_LDT_INDEX+i], phys & ~0xFFFF, 0, 
           	USER_PRIVILEGE);
-          selector = (EXTRA_LDT_INDEX * 0x08) | (1 * 0x04) | USER_PRIVILEGE;
+          selector = ((EXTRA_LDT_INDEX+i)*0x08) | (1*0x04) | USER_PRIVILEGE;
           offset = phys & 0xFFFF;
           result = OK;
-#else
-      	  result = E2BIG;		/* allow settings only */
-#endif
       }
   }
 
+  /* Request successfully done. Now return the result. */
+  m_ptr->SEG_INDEX = index | REMOTE_SEG;
   m_ptr->SEG_SELECT = selector;
   m_ptr->SEG_OFFSET = offset;
   return(result);

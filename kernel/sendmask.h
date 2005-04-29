@@ -88,7 +88,7 @@
     allow_all_mask \
     deny(1, USER_PROC_NR) 
 
-#define MM_SENDMASK \
+#define PM_SENDMASK \
     deny_all_mask \
     allow(1, IS_PROC_NR)	/* output diagnostics */ \
     allow(1, SYSTASK) \
@@ -120,7 +120,7 @@
     allow((NR_CTRLRS >= 3), CTRLR(2)) \
     allow((NR_CTRLRS >= 4), CTRLR(3)) \
     allow(1, INIT_PROC_NR) \
-    allow(1, MM_PROC_NR) 	/* cooperates with memory manager */ \
+    allow(1, PM_PROC_NR) 	/* cooperates with process manager */ \
     allow(1, USER_PROC_NR)	/* reply to system calls */ 
 #endif
 
@@ -154,12 +154,12 @@
 #define INIT_SENDMASK \
     deny_all_mask \
     allow(1, FS_PROC_NR)	/* init makes system calls to FS and MM */ \
-    allow(1, MM_PROC_NR)	
+    allow(1, PM_PROC_NR)	
 
 #define USER_PROC_SENDMASK \
     deny_all_mask \
     allow(1, FS_PROC_NR) 	/* users can only make system calls */ \
-    allow(1, MM_PROC_NR) \
+    allow(1, PM_PROC_NR) \
     allow(1, IS_PROC_NR) \
     allow(ENABLE_TASKSERVER, TS_PROC_NR) 
 

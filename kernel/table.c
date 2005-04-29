@@ -70,7 +70,7 @@ PUBLIC struct system_image image[] = {
  { CLOCK, clock_task,   P_TASK,   PPRI_TASK, CLOCK_STACK,   CLOCK_SENDMASK,   "CLOCK"   },
  { SYSTASK, sys_task,     P_TASK,   PPRI_TASK, SYS_STACK,     SYSTEM_SENDMASK,  "SYS"     },
  { HARDWARE, 0,            P_TASK,   PPRI_TASK, HARDWARE_STACK,HARDWARE_SENDMASK,"HARDWAR" },
- { MM_PROC_NR, 0,            P_SERVER, PPRI_NORMAL, 0,             MM_SENDMASK,      "MM"      },
+ { PM_PROC_NR, 0,            P_SERVER, PPRI_NORMAL, 0,             PM_SENDMASK,      "PM"      },
  { FS_PROC_NR, 0,            P_SERVER, PPRI_NORMAL, 0,             FS_SENDMASK,      "FS"      },
  { IS_PROC_NR, 0,            P_SYSTEM, PPRI_HIGHER, 0,             IS_SENDMASK,      "IS"      },
  { TTY, 0,            P_SYSTEM, PPRI_HIGHER, 0,             TTY_SENDMASK,      "TTY"      },

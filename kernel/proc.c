@@ -19,7 +19,7 @@
  *   Oct 10, 2004     require BOTH for kernel sys_call()  (Jorrit N. Herder)
  *		      (to protect kernel tasks from being blocked)
  *   Sep 25, 2004     generalized notify() function  (Jorrit N. Herder)
- *   Sep 23, 2004     removed MM sig check in mini_rec()  (Jorrit N. Herder)
+ *   Sep 23, 2004     removed PM sig check in mini_rec()  (Jorrit N. Herder)
  *   Aug 19, 2004     generalized ready()/unready()  (Jorrit N. Herder)
  *   Aug 18, 2004     added notify() function  (Jorrit N. Herder) 
  *   May 01, 2004     check p_sendmask in mini_send()  (Jorrit N. Herder) 
@@ -163,7 +163,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
 
   /* Calls directed to the kernel may only be sendrec(), because tasks always
    * reply and may not block if the caller doesn't do receive(). Users also
-   * may only use sendrec() to protect the MM and FS.  
+   * may only use sendrec() to protect the process manager and file system.  
    */
   if ((iskernel(src_dst) || isuserp(caller_ptr)) && function != BOTH) {
       result = ECALLDENIED;			/* BOTH was required */

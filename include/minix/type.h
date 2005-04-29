@@ -22,15 +22,31 @@ typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
 typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
 #endif
 
+/* Memory map for local text, stack, data segments. */
 struct mem_map {
   vir_clicks mem_vir;		/* virtual address */
   phys_clicks mem_phys;		/* physical address */
   vir_clicks mem_len;		/* length */
 };
 
+/* Memory map for remote memory areas, e.g., for the RAM disk. */
 struct far_mem {
+  int in_use;			/* entry in use, unless zero */
   phys_clicks mem_phys;		/* physical address */
   vir_clicks mem_len;		/* length */
+};
+
+/* Structure for virtual copying by means of a vector with requests. */
+struct vir_addr {
+  int proc_nr;
+  int segment;
+  vir_bytes offset;
+};
+
+struct vir_cp_req {
+  struct vir_addr src;
+  struct vir_addr dst;
+  phys_bytes count;
 };
 
 typedef struct {
@@ -74,20 +90,28 @@ struct psinfo {			/* information for the ps(1) program */
 };
 
 /* This is used to obtain system information through SYS_GETINFO. */
-struct kenviron {
+struct kinfo {
+  phys_bytes code_base;		/* base of kernel code */
+  phys_bytes code_size;		
+  phys_bytes data_base;		/* base of kernel data */
+  phys_bytes data_size;
+  vir_bytes proc_addr;		/* virtual address of process table */
+  phys_bytes kmem_base;		/* kernel memory layout (/dev/kmem) */
+  phys_bytes kmem_size;
+  phys_bytes bootdev_base;	/* boot device from boot image (/dev/boot) */
+  phys_bytes bootdev_size;
+  phys_bytes params_base;	/* parameters passed by boot monitor */
+  phys_bytes params_size;
+  char version[8];		/* kernel version number */
+};
+
+struct machine {
   int pc_at;
   int ps_mca;
   int processor;
   int protected;
-  int ega;
-  int vga;
-  vir_bytes proc_addr;		/* virtual address of process table */
-  phys_bytes kmem_base;		/* kernel memory layout (/dev/kmem) */
-  phys_bytes kmem_size;
-  phys_bytes bootfs_base;	/* FS image from boot image (/dev/boot) */
-  phys_bytes bootfs_size;
-  phys_bytes params_base;	/* parameters passed by boot monitor */
-  phys_bytes params_size;
+  int vdu_ega;
+  int vdu_vga;
 };
 
 /* The kernel outputs messages in a local buffer, which can be requested and

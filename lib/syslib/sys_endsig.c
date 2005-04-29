@@ -1,10 +1,16 @@
 #include "syslib.h"
 
-PUBLIC int sys_endsig(proc)
-int proc;
+/*===========================================================================*
+ *                                sys_endsig				     *
+ *===========================================================================*/
+PUBLIC int sys_endsig(proc_nr)
+int proc_nr;				/* process number */
 {
-  message m;
+    message m;
+    int result;
 
-  m.m1_i1 = proc;
-  return(_taskcall(SYSTASK, SYS_ENDSIG, &m));
+    m.SIG_PROC = proc_nr;
+    result = _taskcall(SYSTASK, SYS_ENDSIG, &m);
+    return(result);
 }
+

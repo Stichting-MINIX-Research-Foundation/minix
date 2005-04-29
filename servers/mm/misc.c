@@ -49,7 +49,7 @@ PUBLIC int do_reboot()
   case RBT_MONITOR:
 	if (m_in.reboot_size >= sizeof(monitor_code)) return(EINVAL);
 	if (sys_datacopy(who, (vir_bytes) m_in.reboot_code,
-		MM_PROC_NR, (vir_bytes) monitor_code,
+		PM_PROC_NR, (vir_bytes) monitor_code,
 		(phys_bytes) (m_in.reboot_size+1)) != OK) return(EFAULT);
 	if (monitor_code[m_in.reboot_size] != 0) return(EINVAL);
 	break;
@@ -60,7 +60,7 @@ PUBLIC int do_reboot()
   check_sig(-1, SIGKILL); 		/* kill all processes except init */
   tell_fs(REBOOT,0,0,0);		/* tell FS to prepare for shutdown */
 
-  sys_abort(m_in.reboot_flag, MM_PROC_NR, monitor_code, m_in.reboot_size);
+  sys_abort(m_in.reboot_flag, PM_PROC_NR, monitor_code, m_in.reboot_size);
   sys_exit(0);
 }
 
@@ -85,6 +85,9 @@ PUBLIC int do_svrctl()
 
   /* Binary compatibility check. */
   if (req == SYSGETENV) {
+#if DEAD_CODE
+	printf("SYSGETENV by %d (fix!)\n", who);
+#endif
   	req = MMGETPARAM;
   }
 
@@ -179,7 +182,7 @@ PUBLIC int do_svrctl()
 	if (mp->mp_effuid != SUPER_USER) return(EPERM);
 
 	if (sys_datacopy(who, (phys_bytes) ptr,
-		MM_PROC_NR, (phys_bytes) &swapon,
+		PM_PROC_NR, (phys_bytes) &swapon,
 		(phys_bytes) sizeof(swapon)) != OK) return(EFAULT);
 
 	return(swap_on(swapon.file, swapon.offset, swapon.size)); }

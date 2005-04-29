@@ -56,6 +56,7 @@
 #define GA_FONT_SIZE		8192
 
 /* Global variables used by the console driver and assembly support. */
+PUBLIC int vid_index;		/* index of video segment in remote mem map */
 PUBLIC u16_t vid_seg;
 PUBLIC vir_bytes vid_off;	/* video ram is found at vid_seg:vid_off */
 PUBLIC unsigned vid_size;	/* 0x2000 for color or 0x0800 for mono */
@@ -793,19 +794,19 @@ tty_t *tp;
   if (! vdu_initialized++) {
 
 	/* How about error checking? What to do on failure??? */
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) 0x44AL,
-  		SELF, D, (vir_bytes) &bios_columns, 2L);
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) 0x463L, 
-  		SELF, D, (vir_bytes) &bios_crtbase, 2L);
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) 0x484L, 
-  		SELF, D, (vir_bytes) &bios_rows, 1L);
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) 0x485L, 
-  		SELF, D, (vir_bytes) &bios_fontlines, 2L);
+  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_SCREEN_COLS_ADDR,
+  		SELF, D, (vir_bytes) &bios_columns, VDU_SCREEN_COLS_SIZE);
+  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_CRT_BASE_ADDR, 
+  		SELF, D, (vir_bytes) &bios_crtbase, VDU_CRT_BASE_SIZE);
+  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_SCREEN_ROWS_ADDR, 
+  		SELF, D, (vir_bytes) &bios_rows, VDU_SCREEN_ROWS_SIZE);
+  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_FONTLINES_ADDR, 
+  		SELF, D, (vir_bytes) &bios_fontlines, VDU_FONTLINES_SIZE);
 
   	vid_port = bios_crtbase;
   	scr_width = bios_columns;
   	font_lines = bios_fontlines;
-  	scr_lines = kenv.ega ? bios_rows+1 : 25;
+  	scr_lines = machine.vdu_ega ? bios_rows+1 : 25;
 
   	if (color) {
 		vid_base = COLOR_BASE;
@@ -814,10 +815,10 @@ tty_t *tp;
 		vid_base = MONO_BASE;
 		vid_size = MONO_SIZE;
   	}
-  	if (kenv.ega) vid_size = EGA_SIZE;
-  	wrap = !kenv.ega;
+  	if (machine.vdu_ega) vid_size = EGA_SIZE;
+  	wrap = ! machine.vdu_ega;
 
-  	s = sys_phys2seg(&vid_seg, &vid_off, vid_base, vid_size);
+  	s = sys_segctl(&vid_index, &vid_seg, &vid_off, vid_base, vid_size);
 
   	vid_size >>= 1;		/* word count */
   	vid_mask = vid_size - 1;
@@ -1039,11 +1040,11 @@ message *m;
 
   seq2[6].value= color ? 0x0E : 0x0A;
 
-  if (!kenv.ega) return(ENOTTY);
+  if (!machine.vdu_ega) return(ENOTTY);
   result = ga_program(seq1);	/* bring font memory into view */
 
-  result = sys_copy(m->PROC_NR, D, (vir_bytes) m->ADDRESS, 
-  	ABS, 0, (phys_bytes) GA_VIDEO_ADDRESS, (phys_bytes)GA_FONT_SIZE);
+  result = sys_physcopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS, 
+  	NONE, PHYS_SEG, (phys_bytes) GA_VIDEO_ADDRESS, (phys_bytes)GA_FONT_SIZE);
 
   result = ga_program(seq2);	/* restore */
 

@@ -171,8 +171,8 @@ PUBLIC int do_reboot()
   struct super_block *sp;
   struct inode dummy;
 
-  /* Only MM may make this call directly. */
-  if (who != MM_PROC_NR) return(EGENERIC);
+  /* Only PM may make this call directly. */
+  if (who != PM_PROC_NR) return(EGENERIC);
 
   /* Do exit processing for all leftover processes and servers. */
   for (i = 0; i < NR_PROCS; i++) { m_in.slot1 = i; do_exit(); }
@@ -212,8 +212,8 @@ PUBLIC int do_fork()
   register struct fproc *cp;
   int i;
 
-  /* Only MM may make this call directly. */
-  if (who != MM_PROC_NR) return(EGENERIC);
+  /* Only PM may make this call directly. */
+  if (who != PM_PROC_NR) return(EGENERIC);
 
   /* Copy the parent's fproc struct to the child. */
   fproc[m_in.child] = fproc[m_in.parent];
@@ -248,8 +248,8 @@ PUBLIC int do_exec()
   register int i;
   long bitmap;
 
-  /* Only MM may make this call directly. */
-  if (who != MM_PROC_NR) return(EGENERIC);
+  /* Only PM may make this call directly. */
+  if (who != PM_PROC_NR) return(EGENERIC);
 
   /* The array of FD_CLOEXEC bits is in the fp_cloexec bit map. */
   fp = &fproc[m_in.slot1];		/* get_filp() needs 'fp' */
@@ -279,8 +279,8 @@ PUBLIC int do_exit()
   register struct inode *rip;
   dev_t dev;
 
-  /* Only MM may do the EXIT call directly. */
-  if (who != MM_PROC_NR) return(EGENERIC);
+  /* Only PM may do the EXIT call directly. */
+  if (who != PM_PROC_NR) return(EGENERIC);
 
   /* Nevertheless, pretend that the call came from the user. */
   fp = &fproc[m_in.slot1];		/* get_filp() needs 'fp' */
@@ -343,8 +343,8 @@ PUBLIC int do_set()
 
   register struct fproc *tfp;
 
-  /* Only MM may make this call directly. */
-  if (who != MM_PROC_NR) return(EGENERIC);
+  /* Only PM may make this call directly. */
+  if (who != PM_PROC_NR) return(EGENERIC);
 
   tfp = &fproc[m_in.slot1];
   if (call_nr == SETUID) {
