@@ -1,0 +1,164 @@
+.TH LS 1
+.SH NAME
+ls \- list the contents of a directory
+.SH SYNOPSIS
+\fBls\fP [\fB\-acdfghilpqrstu1ACDFLMRTX\fP] [\fIname\fP...]
+.SH DESCRIPTION
+For each file argument, list it.  For each directory argument, list its
+contents.  The current working directory is listed when no files are named.
+Information is printed multicolumn on terminals, single column if the output
+is redirected.  The options control what information is shown and how.
+.PP
+.B Ls
+has two sources other then the command line to draw options from, one is
+the environment variable
+.B LSOPTS
+that is scanned for option letters when the output of
+.B ls
+is displayed on a terminal.  The other is the name of
+.B ls
+itself.  If
+.B ls
+is linked to another name, then all the characters after the l are used as
+flags too, except that d, f, r, t and x are translated to D, F, R, T and X.
+Useful links are
+.BR ll ,
+.BR lf ,
+.B lm
+and
+.BR lx .
+.PP
+Files whose names start with a dot are by default not listed.
+.PP
+Note that standard Minix doesn't have symbolic links or sockets and
+.B \-u
+and
+.B \-c
+are no-ops on a V1 file system, since only modified times are stored in V1
+inodes.
+.SH OPTIONS
+.TP
+.B \-a
+All entries are listed, even
+.B .
+and
+.B ..
+.TP
+.B \-c
+Use inode changed time for sorting, listing or searching.
+.TP
+.B \-d
+Do not list contents of directories, but list the directory itself.
+.TP
+.B \-f
+Do not sort (should also be: treat a file as a directory, but that
+can't be implemented portably).
+.TP
+.B \-g
+Suppress the owner name on a long listing (implies
+.BR \-l ).
+.TP
+.B \-h
+Show file sizes in kilo, mega or gigabytes.
+.TP
+.B \-i
+I-node number printed in the first column.
+.TP
+.B \-l
+Long listing: mode, links, owner, group, size and time.
+.RB ( "ls \-lC"
+uses columns in a wide enough window!)
+.TP
+.B \-n
+Print numerical user and group id's.
+.TP
+.B \-p
+Mark directories with a '\fB/\fP'.
+.TP
+.B \-q
+Print nongraphic characters as '\fB?\fP' (default on terminals).
+.TP
+.B \-r
+Reverse the sort order.
+.TP
+.B \-s
+Give the size in kilobytes in the first
+.RB ( \-s )
+or second column
+.RB ( \-is ).
+.TP
+.B \-t
+Sort by time (modified time default), latest first.
+.TP
+.B \-u
+Use last accessed time for sorting, listing or searching.
+.TP
+.B \-1
+Print in one column.
+.TP
+.B \-A
+List all entries, but not
+.B .
+and
+.B ..
+(This is the default for privileged users.)
+.TP
+.B \-C
+Print multicolumn (default on terminals).
+.TP
+.B \-D
+Distinguish files by type, i.e. regular files together, directories
+together, etc.
+.TP
+.B \-F
+Mark directories with a '\fB/\fP', executables with a '\fB*\fP', \s-2UNIX\s+2
+domain sockets with a '\fB=\fP', named pipes with a '\fB|\fP' and symbolic
+links with a '\fB@\fP' behind the name.
+.TP
+.B \-L
+Print the file referenced by a symbolic link instead of the link.
+.TP
+.B \-M
+List mode before name (implies
+.BR \-C ).
+.TP
+.B \-R
+List directory trees recursively.
+.TP
+.B \-T
+Print file times in a long format, e.g. "Oct 24 21:37:41 1996".
+.TP
+.B \-X
+Print crunched mode and size before name (implies
+.BR \-C ).
+Only the rwx permissions that its caller has on the file are shown, but they
+are in upper case if the caller owns the file and has given the permission
+to the callers group or other users.  The size is listed in bytes (<= 5K),
+or rounded up kilo, mega or gigabytes.
+.SH "SEE ALSO"
+.BR du (1),
+.BR stat (1),
+.BR stat (2).
+.SH BUGS
+Having to type
+.B ls \-C
+when viewing files through
+.BR more (1).
+.PP
+Is only portable to systems with the same
+.B st_mode
+(see
+.BR stat (2)).
+.PP
+The
+.B LSOPTS
+variable and the
+.BR -D ,
+.B -M
+and
+.B -X
+flags are not found on other
+.B ls
+implementations.  (They have their own nonstandard flags.)
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

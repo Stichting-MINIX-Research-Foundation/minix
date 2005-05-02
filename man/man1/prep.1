@@ -1,0 +1,27 @@
+.TH PREP 1
+.SH NAME
+prep \- prepare a text file for statistical analysis
+.SH SYNOPSIS
+\fBprep\fR [\fIfile\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "prep infile >outfile" "Prepare \fIinfile\fR"
+.SH DESCRIPTION
+.PP
+\fIPrep\fR strips off most of the troff commands from a text file and then
+outputs all the words, one word per line, in the order they occur in the file.
+This file can then be sorted and compared to a dictionary (as a spelling
+checker), or used for statistical analyses.
+.SH "SEE ALSO"
+.BR nroff (1),
+.BR spell (1).

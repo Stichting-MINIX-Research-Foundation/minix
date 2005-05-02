@@ -1,0 +1,71 @@
+.TH INTR 8
+.SH NAME
+intr \- run a command with interrupts enabled
+.SH SYNOPSIS
+.B intr
+.RB [ \-d ]
+.RB [ \-t
+.IR seconds ]
+.I command
+.RI [arg "...]"
+.SH DESCRIPTION
+.B Intr
+executes a command with keyboard interrupts enabled, and standard input,
+output and error redirected to the terminal or the console.  It may also
+be used for the opposite: to detach a process from the terminal.
+.PP
+There are three situations where intr may be used:  From a process that has
+no controlling tty, like the shell running
+.B /etc/rc
+at boot time, from a script that runs in the background, or by the System
+Administrator to restart a daemon.
+.PP
+In the first case
+.B intr
+will use
+.B /dev/console
+as a controlling tty and as standard input, output and error.  In the
+second case
+.B intr
+will use
+.B /dev/tty
+to connect the command to the controlling tty.  In the third case the
+process will be removed from the process group, and will have I/O redirected
+to
+.B /dev/null
+as input, and
+.B /dev/log
+for output.
+.SH OPTIONS
+.TP
+.B \-d
+Daemonize a process instead of bringing it to the foreground.  Don't forget
+to use '&' to make the shell not wait for the process, because you won't be
+able to kill it with the interrupt key.
+.TP
+.BI \-t " seconds"
+Schedule an alarm to kill the process in the given number of seconds.
+Use it for a process that may wait indefinitely for a service that may
+not be available.
+.SH FILES
+.TP 20
+.B /dev/console
+Main computer console.
+.TP
+.B /dev/log
+Message logging device.
+.TP
+.B /dev/tty
+Name for the controlling tty.
+.SH "SEE ALSO"
+.BR boot (8),
+.BR tty (4),
+.BR setsid (2),
+.BR alarm (2).
+.SH BUGS
+Maybe
+.B intr \-d
+should fork to daemonize a process, but the author likes it if the process
+stays in the jobs list of his shell.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

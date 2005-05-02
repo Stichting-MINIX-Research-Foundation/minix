@@ -1,0 +1,34 @@
+.TH CKSUM 1
+.SH NAME
+cksum \- display file checksum and size
+.SH SYNOPSIS
+\fBcksum \fR[\fIfile\fR ...]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "cksum" "Display CRC and size of \fIstdin\fR"
+.EX "cksum *.c" "Display CRC and size of \fI.c\fP files"
+.SH DESCRIPTION
+.PP
+.I Cksum
+calculates and writes to standard output the 32-bits CRC of the input
+.I files ,
+or of stdin if no
+.I files
+were specified. The size in bytes of each
+.I file
+will be displayed after a space. The name of each
+.I file
+will be displayed after another space.
+.SH "SEE ALSO"
+.BR crc (1),
+.BR sum (1).

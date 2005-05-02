@@ -1,0 +1,28 @@
+.TH HEAD 1
+.SH NAME
+head \- print the first few lines of a file
+.SH SYNOPSIS
+\fBhead\fR [\fB\-\fIn\fR]\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-\fIn\fR" "How many lines to print"
+.SH EXAMPLES
+.EX "head \-6" "Print first 6 lines of \fIstdin\fR"
+.EX "head \-1 file1 file2" "Print first line of two files"
+.SH DESCRIPTION
+.PP
+The first few lines of one or more files are printed.
+The default count is 10 lines.
+The default file is \fIstdin\fR.
+.SH "SEE ALSO"
+.BR tail (1).

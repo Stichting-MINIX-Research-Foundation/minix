@@ -1,0 +1,35 @@
+.TH KILL 1
+.SH NAME
+kill \- send a signal to a process
+.SH SYNOPSIS
+\fBkill\fR [\fB\-\fIn\fR] \fIprocess\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-\fIn\fR" "Signal number to send"
+.FL "\-\fINAME\fR" "Named signal to send"
+.SH EXAMPLES
+.EX "kill 35" "Send signal 15 to process 35"
+.EX "kill \-9 40" "Send signal 9 to process 40"
+.EX "kill \-2 0" "Send signal 2 to whole terminal process group"
+.EX "kill \-HUP -123" "Send a hangup to process group 123"
+.SH DESCRIPTION
+.PP
+A signal is sent to a given process.
+By default signal 15 (SIGTERM) is sent.
+Process 0 means all the processes in the sender's process group.
+A process group can be signalled by the negative value of the process
+group ID.
+Signals may be numerical, or the name of the signal without \fBSIG\fP.
+.SH "SEE ALSO"
+.BR kill (2),
+.BR sigaction (2).

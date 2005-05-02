@@ -1,0 +1,169 @@
+.TH RGET 1
+.SH NAME
+rget, rput \- network pipe
+.SH SYNOPSIS
+.B rget
+.RB [ \-lcio ]
+.RB [ \-h
+.IR host ]
+.I key
+.RI [ command
+.RI [ arg " ...]]"
+.br
+.B rput
+.RB [ \-lcio ]
+.RB [ \-h
+.IR host ]
+.I key
+.RI [ command
+.RI [ arg " ...]]"
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.de XS	\" Example start
+.SP
+.in +4m
+.nf
+..
+.de XE	\" Example end
+.fi
+.in -4m
+.SP
+..
+.B Rput
+and
+.B rget
+set up a TCP/IP channel to connect two processes together.  They can looked
+upon as a remote pipe.  Consider the well known method of copying a
+directory tree with
+.BR tar :
+.XS
+(cd src && tar cf \- .) | (cd dst && tar xfp \-)
+.XE
+If the directory tree is to be copied to another machine then one can
+use the following command on the source machine:
+.XS
+cd src && rput foo tar cf \- .
+.XE
+And on the destination machine:
+.XS
+cd dst && rget \-h \fIsource-machine\fP foo tar xfp \-
+.XE
+The
+.I key
+is either a port number in C style decimal, octal or hex, or a random string
+that is hashed to a port number.
+.B Rput
+uses this port number to open a TCP socket that
+.B rget
+using the same
+.I key
+can connect to.
+It is customary to start
+.B rput
+first, although
+.B rget
+will retry for 2 minutes trying to connect to the remote
+.BR rput.
+.PP
+After the connection is established either utility will execute
+.I command
+with the given arguments with the TCP channel as either standard output
+(rput) or standard input (rget).
+.B Rput
+and
+.B rget
+do not stay around for the command to finish, they simply overlay themselves
+with the command.  If no command is given then they will themselves copy
+standard input into the TCP channel (rput), or output from the TCP channel
+to standard output (rget).  So these two commands have the same effect:
+.XS
+rput foo tar cf \- .
+tar cf \- . | rput foo
+.XE
+The second form has two processes copying data instead of just
+.B tar
+directly writing its output into the TCP channel.  There is a better way to
+waste processor cycles, namely to save bandwidth:
+.XS
+cd src && tar cf \- . | rput foo compress
+.SP
+cd dst && rget \-h \fIsource-machine\fP foo uncompress | tar xfp \-
+.XE
+.B Rput
+and
+.B rget
+can be very useful in the windowed environments we use these days.  The
+.B rput
+can be typed into the window that has a shell running on one machine, and
+the
+.B rget
+is then typed into the window that has a shell running on another machine.
+This is easier than one of the two well known forms that use
+.BR rsh :
+.XS
+cd src && tar cf \- . | rsh dest-machine "cd dst && tar xfp \-"
+.SP
+cd dst && rsh source-machine "cd src && tar cf \- ." | tar xfp \-
+.XE
+Especially since these forms require that one must be able to use
+.B rsh
+without a password, which may not always be the case.
+.PP
+The
+.I key
+can be any string of characters of any length.  If its a number then it is
+used directly as the port number.  Otherwise the characters binary values
+are multiplied together, bit 15 is set and the result is truncated to 16
+bits to make it a port number in the anonymous port space (32768 \- 65535).
+The port may be in-use on the source machine, but there is a small chance
+of this happening, and if so simply choose another key.  (So if you use
+.B rput
+and
+.B rget
+in an unattended script then you should reserve a port number, otherwise
+a connection can't be guaranteed.)
+.SH OPTIONS
+.TP
+.B \-lcio
+These flags allow one to reverse the default connect/listen or input/output
+direction of
+.BR rput
+and
+.BR rget .
+Reversing the connection may be necessary if one of the two systems filters
+out connections to unknown ports.  For example:
+.XS
+rput \-c \-h \fIdestination-machine\fP foo tar cf \- .
+.SP
+rget \-l foo tar xfp \-
+.XE
+The
+.B \-io
+options can be used to choose which of standard input or output should be
+tied to the socket.  It's even possible to tie both input and output to the
+socket with
+.BR \-io,
+but only when executing a command.  This is probably the only use for these
+options, because one usually chooses the direction with the mnemonic put/get
+names.
+.TP
+.BI \-h " host"
+The name of the remote host that a connection must be made to.  It must be
+used with the program that is doing the connect, usually
+.BR rget .
+This option is currently mandatory.  The author is planning to increase
+ease of use by letting the programs find each other with UDP broadcasts
+or multicasts.
+.SH "SEE ALSO"
+.BR rsh (1).
+.SH DIAGNOSTICS
+.TP 5
+rput: Address in use
+If the port computed out of
+.I key
+is already in use.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

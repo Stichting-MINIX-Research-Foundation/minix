@@ -1,0 +1,20 @@
+.TH RDATE 8
+.SH NAME
+rdate \- set time and date from a remote host
+.SH SYNOPSIS
+.B rdate
+.IR host " ..."
+.SH DESCRIPTION
+.B Rdate
+obtains the current time from a remote time server.  If run by the
+super-user then local time is set to that time.  The time of the remote host
+is printed on standard output.
+.PP
+More than one host name may be specified.  They are tried one by one until
+one responds.
+.SH "SEE ALSO"
+.BR date (1),
+.BR readclock (8),
+.BR inet (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

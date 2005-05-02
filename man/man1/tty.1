@@ -1,0 +1,26 @@
+.TH TTY 1
+.SH NAME
+tty \- print the device name of this tty
+.SH SYNOPSIS
+\fBtty \fR[\fB\-s\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-s" "Silent mode, only the exit status is affected."
+.SH EXAMPLES
+.EX "tty   " "Print the tty name"
+.SH DESCRIPTION
+.PP
+Print the name of the controlling tty. If the flag \fB\-s\fR is given,
+\fItty\fR is equivalent to the call \fBtest \-t 0\fR.
+.SH "SEE ALSO"
+.BR ttyname (3).

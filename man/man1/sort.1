@@ -1,0 +1,50 @@
+.TH SORT 1
+.SH NAME
+sort \- sort a file of ASCII lines
+.SH SYNOPSIS
+\fBsort\fR [\fB\-bcdf\&imnru\fR]\fR [\fB\-t\fIc\fR]  [\fB\-o \fIname\fR] [\fB+\fIpos1\fR] [\fB\-\fIpos2\fR] \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-b" "Skip leading blanks when making comparisons"
+.FL "\-c" "Check to see if a file is sorted"
+.FL "\-d" "Dictionary order: ignore punctuation"
+.FL "\-f" "Fold upper case onto lower case"
+.FL "\-i" "Ignore nonASCII characters"
+.FL "\-m" "Merge presorted files"
+.FL "\-n" "Numeric sort order"
+.FL "\-o" "Next argument is output file"
+.FL "\-r" "Reverse the sort order"
+.FL "\-t" "Following character is field separator"
+.FL "\-u" "Unique mode (delete duplicate lines)"
+.SH EXAMPLES
+.EX "sort \-nr file" "Sort keys numerically, reversed"
+.EX "sort +2 \-4 file" "Sort using fields 2 and 3 as key"
+.EX "sort +2 \-t: \-o out" "Field separator is \fI:\fP"
+.EX "sort +.3 \-.6" "Characters 3 through 5 form the key"
+.SH DESCRIPTION
+.PP
+.I Sort
+sorts one or more files.
+If no files are specified, \fIstdin\fR is sorted.
+Output is written on standard output, unless \fB\-o\fP is specified.
+The options \fB+\fIpos1 \fB\-\fIpos2\fR use only fields \fIpos1\fR
+up to but not including \fIpos2\fR as the sort key, where a field is a
+string of characters delimited by spaces and tabs, unless a different field
+delimiter is specified with \fB\-t\fR.
+Both \fIpos1\fR and \fIpos2\fR have the form \fIm.n\fR where \fIm\fR tells
+the number of fields and \fIn\fR tells the number of characters.
+Either \fIm\fR or \fIn\fR may be omitted.
+.SH "SEE ALSO"
+.BR comm (1),
+.BR grep (1),
+.BR uniq (1).

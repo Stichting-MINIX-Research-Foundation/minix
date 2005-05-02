@@ -1,0 +1,68 @@
+.TH PS 1
+.SH NAME
+ps \- process status
+.SH SYNOPSIS
+\fBps \fR[\fB\-alxU\fR] [\fBkernel mm fs\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "Print all processes with controlling terminals"
+.FL "\-l" "Give long listing"
+.FL "\-x" "Include processes without a terminal"
+.SH EXAMPLES
+.EX "ps \-axl" "Print all processes and tasks in long format"
+.SH DESCRIPTION
+.PP
+\fIPs\fR prints the status of active processes.  Normally only the caller's own
+processes are listed in short format (the PID, TTY, TIME and CMD fields as
+explained below).  The long listing contains:
+.PP
+.ta 0.5i 1.0i
+  F	Kernel flags:
+		001: free slot
+		002: no memory map
+		004: sending;
+		010: receiving
+		020: inform on pending signals
+		040: pending signals
+		100: being traced.
+.PP
+  S
+	State:
+		R: runnable
+		W: waiting (on a message)
+		S: sleeping (i.e.,suspended on MM or FS)
+		Z: zombie
+		T: stopped
+.PP
+  UID, PID, PPID, PGRP
+	The user, process, parent process and process group ID's.
+.PP
+  SZ
+	Size of the process in kilobytes.
+.PP
+  RECV
+	Process/task on which a receiving process is waiting or sleeping.
+.PP
+  TTY	
+	Controlling tty for the process.
+.PP
+  TIME
+	Process' cumulative (user + system) execution time.
+.PP
+  CMD	Command line arguments of the process.
+.PP
+.PP
+The files \fI/dev/{mem,kmem}\fR are used to read the system tables and command
+line arguments from.  Terminal names in \fI/dev\fR are used to generate the 
+mnemonic names in the TTY column, so \fIps\fR is independent of terminal naming
+conventions.

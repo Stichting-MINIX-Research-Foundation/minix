@@ -1,0 +1,84 @@
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)bstring.3	6.1 (Berkeley) 5/15/85
+.\"
+.TH BSTRING 3  "May 15, 1985"
+.UC 5
+.SH NAME
+bstring, bcopy, bcmp, bzero, ffs \- bit and byte string operations
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <string.h>
+#include <unistd.h>
+
+void bcopy(const void *\fIsrc\fP, void *\fIdst\fP, size_t \fIlength\fP)
+int bcmp(const void *\fIb1\fP, const void *\fIb2\fP, size_t \fIlength\fP)
+void bzero(void *\fIdst\fP, size_t \fIlength\fP)
+int ffs(int \fIi\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+The functions
+.BR bcopy ,
+.BR bcmp ,
+and
+.B bzero
+operate on variable length strings of bytes.
+They do not check for null bytes as the routines in
+.BR string (3)
+do.
+.PP
+.B Bcopy
+copies 
+.I length
+bytes from string
+.I src
+to the string
+.IR dst .
+.PP
+.B Bcmp
+compares byte string
+.I b1
+against byte string
+.IR b2 ,
+returning zero if they are identical,
+non-zero otherwise.  Both strings are
+assumed to be
+.I length
+bytes long.
+.PP
+.B Bzero
+places
+.I length
+0 bytes in the string
+.IR b1 .
+.PP
+.B Ffs
+find the first bit set in the argument passed it and
+returns the index of that bit.  Bits are numbered
+starting at 1.  A return value of 0 indicates the
+value passed is zero.
+.SH BUGS
+The
+.BR bcopy ,
+.BR bcmp ,
+and
+.BR bzero
+functions are obsolete; new code should use
+.BR memmove ,
+.BR memcmp ,
+and
+.BR memset
+respectively.
+.PP
+The
+.B bcopy
+routine takes parameters backwards from
+.BR memcpy ,
+.BR memmove ,
+and
+.BR strcpy .

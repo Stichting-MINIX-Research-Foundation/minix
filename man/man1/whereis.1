@@ -1,0 +1,26 @@
+.TH WHEREIS 1
+.SH NAME
+whereis \- examine system directories for a given file
+.SH SYNOPSIS
+\fBwhereis \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "whereis stat.h" "Prints: \fI/usr/include/sys/stat.h\fR"
+.SH DESCRIPTION
+.PP
+\fIWhereis\fR searches a fixed set of system 
+directories, \fI/bin\fR, \fI/lib\fR, \fI/usr/bin\fR,
+and others, and prints all occurrences of the argument name in any of them.
+.SH "SEE ALSO"
+.BR man (1),
+.BR which (1).

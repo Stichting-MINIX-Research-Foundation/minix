@@ -1,0 +1,61 @@
+.TH READCLOCK 8
+.SH NAME
+readclock \- read the AT's real time clock
+.SH SYNOPSIS
+\fBreadclock\fP [\fB\-nwW2\fP]
+.SH DESCRIPTION
+.B Readclock
+reads the AT's real time clock and sets the machine's time.  It is usually
+the second thing done in
+.BR /etc/rc ,
+the first thing is setting the time zone by sourcing
+.BR /etc/profile .
+This means that the clock is assumed to tell the wall clock time.  If you
+want to run the clock in GMT then you can put
+.B "TZ=GMT"
+(or any other TZ value) in front of the readclock command.
+.SH OPTIONS
+.TP
+.B \-n
+Play-act, don't set the time nor change the calibration data, just show what
+would be done.
+.TP
+.B \-w
+Write the current time to the CMOS clock.  Dangerous, see
+.BR BUGS .
+Don't forget to use
+.B "TZ=GMT"
+in front of readclock if the clock should run in GMT.
+.TP
+.B \-W
+Like
+.BR \-w ,
+but also sets the status registers of the CMOS clock to their proper values.
+(For if the clock suddenly runs at an odd pace or has stopped and the BIOS
+doesn't repair it.)
+.TP
+.BR \-2 ,
+Add 20 to any year before 2000.  If your CMOS clock year can't run past 2000,
+then you can set it to 1980 and use
+.B \-2
+to correct the year.  Together with
+.B \-w
+the year minus 20 is written to the clock.
+.SH FILES
+.TP 20n
+/etc/profile
+Timezone and other shell initialization code.
+.SH "SEE ALSO"
+.BR date (1),
+.BR utime (1).
+.SH BUGS
+Reported to not work on some AT's.
+.PP
+May mess up the clock royally when setting it
+.RB ( \-w ).
+Only if you have a very standard AT and you are not afraid of having your
+CMOS setup reset to the default with a "checksum error" should you use
+.BR readclock
+to set the time of the CMOS clock.  You have been warned.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

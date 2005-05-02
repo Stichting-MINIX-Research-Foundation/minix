@@ -1,0 +1,33 @@
+.TH HALT 8
+.SH NAME
+halt \- abruptly stop the system
+.SH SYNOPSIS
+\fBhalt\fP [\fB\-f\fP]
+.SH DESCRIPTION
+.B Halt
+stops the system almost immediately.  The users are not informed about
+the things to come.
+.B Halt
+is logged in
+.B /usr/adm/wtmp
+and in 
+.BR /usr/adm/log ,
+if these files exist.
+.B Halt
+should only be run by the super-user, any other caller will be refused.
+.PP
+.B Halt
+is a rather rude program.
+.BR Shutdown (8)
+is preferred for it performs a more gentle halt routine.
+.PP
+.B Halt \-f
+is even worse, it omits the terminate signals that are normally
+sent first to all processes to give them a chance to die peacefully.
+.SH "SEE ALSO"
+.BR reboot (2),
+.BR shutdown (8),
+.BR reboot (8),
+.BR boot (8).
+.SH AUTHOR
+Edvard Tuinder (v892231@si.hhs.NL)

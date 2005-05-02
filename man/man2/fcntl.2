@@ -1,0 +1,262 @@
+.TH FCNTL 2
+.SH NAME
+fcntl \- miscellaneous file descriptor control functions
+.SH SYNOPSIS
+.nf
+.ft B
+#include <fcntl.h>
+
+int fcntl(int \fIfd\fP, int \fIcmd\fP, \fR[\fP\fIdata\fP\fR]\fP)
+.ft P
+.fi
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Fcntl()
+performs several file descriptor related functions, like duplicating a file
+descriptor, setting the "close on exec" attribute, etc.  The
+.I fd
+argument is the file descriptor to operate on,
+.I cmd
+is the command code of the operation to perform, and
+.I data
+is an optional argument to give or receive parameters.  The command
+codes and other symbols and types are declared in <fcntl.h>.  The commands
+are:
+.SP
+.BI "fcntl(" fd ", F_DUPFD, int " fd2 ")"
+.RS
+Returns a new file descriptor that is a duplicate of file descriptor
+.IR fd .
+It shares the same file pointer and the same file status flags, but has
+separate file descriptor flags that are initially off.  The value of the
+duplicate file descriptor is the first free file descriptor greater than
+or equal to
+.IR fd2 .
+.RE
+.SP
+.BI "fcntl(" fd ", F_GETFD)"
+.RS
+Returns the file descriptor flags associated with file descriptor
+.IR fd .
+The flags are the "close on exec" flag
+.B FD_CLOEXEC
+that, when set, causes the file descriptor to be closed when the process
+executes another program.  The Minix-vmd specific
+.B FD_ASYNCHIO
+flag marks a file descriptor for asynchronous I/O operation.
+.RE
+.SP
+.BI "fcntl(" fd ", F_SETFD, int " flags ")"
+.RS
+Set the file descriptor flags of
+.I fd
+to
+.IR flags .
+.RE
+.SP
+.BI "fcntl(" fd ", F_GETFL)"
+.RS
+Return the file status flags and file access modes associated with the file
+associated with file descriptor
+.IR fd .
+The file status flags are
+.B O_NONBLOCK
+(non blocking I/O) and
+.B O_APPEND
+(append mode).  The file access modes are
+.B O_RDONLY
+(read-only),
+.B O_WRONLY
+(write-only) and
+.B O_RDWR
+(read-write).  These flags are also used in the second argument of
+.BR open (2).
+.RE
+.SP
+.BI "fcntl(" fd ", F_SETFL, int " flags ")"
+.RS
+Set the file status flags of the file referenced by
+.I fd
+to
+.IR flags .
+Only
+.B O_NONBLOCK
+and
+.B O_APPEND
+may be changed.  Access mode flags are ignored.
+.RE
+.SP
+The next four commands use a parameter of type
+.B struct flock
+that is defined in <fcntl.h> as:
+.SP
+.RS
+.nf
+.ta +4n +8n +12n
+struct flock {
+	short	l_type;	/* F_RDLCK, F_WRLCK, or F_UNLCK */
+	short	l_whence;	/* SEEK_SET, SEEK_CUR, or SEEK_END */
+	off_t	l_start;	/* byte offset to start of segment */
+	off_t	l_len;	/* length of segment */
+	pid_t	l_pid;	/* process id of the locks' owner */
+};
+.fi
+.RE
+.SP
+This structure describes a segment of a file.
+.B L_type
+is the lock operation performed on the file segment:
+.B F_RDLCK
+to set a read lock,
+.B F_WRLCK
+to set a write lock, and
+.B F_UNLCK
+to remove a lock.  Several processes may have a read lock on a segment, but
+only one process can have a write lock.
+.B L_whence
+tells if the
+.B l_start
+offset must be interpreted from the start of the file
+.RB ( SEEK_SET ),
+the current file position
+.RB ( SEEK_CUR ),
+or the end of the file
+.RB ( SEEK_END ).
+This is analogous to the third parameter of
+.BR lseek (2).
+These
+.B SEEK_*
+symbols are declared in <unistd.h>.
+.B L_start
+is the starting offset of the segment of the file.
+.B L_end
+is the length of the segment.  If zero then the segment extends until end of
+file.
+.B L_pid
+is the process-id of the process currently holding a lock on the segment.
+It is returned by
+.BR F_GETLK .
+.SP
+.BI "fcntl(" fd ", F_GETLK, struct flock *" lkp ")"
+.RS
+Find out if some other process has a lock on a segment of the file
+associated by file descriptor
+.I fd
+that overlaps with the segment described by the
+.B flock
+structure pointed to by
+.IR lkp .
+If the segment is not locked then
+.B l_type
+is set to
+.BR F_UNLCK .
+Otherwise an
+.B flock
+structure is returned through
+.I lkp
+that describes the lock held by the other process.
+.B L_start
+is set relative to the start of the file.
+.RE
+.SP
+.BI "fcntl(" fd ", F_SETLK, struct flock *" lkp ")"
+.RS
+Register a lock on a segment of the file associated with file descriptor
+.IR fd .
+The file segment is described by the
+.B struct flock
+pointed to by
+.IR lkp .
+This call returns an error if any part of the segment is already locked.
+.RE
+.SP
+.BI "fcntl(" fd ", F_SETLKW, struct flock *" lkp ")"
+.RS
+Register a lock on a segment of the file associated with file descriptor
+.IR fd .
+The file segment is described by the
+.B struct flock
+pointed to by
+.IR lkp .
+This call blocks waiting for the lock to be released if any part of the
+segment is already locked.
+.RE
+.SP
+.BI "fcntl(" fd ", F_FREESP, struct flock *" lkp ")"
+.RS
+This Minix-vmd specific call frees a segment of disk space occupied by the
+file associated with file descriptor
+.IR fd .
+The segment is described by the
+.B struct flock
+pointed to by
+.IR lkp .
+The file is truncated in length to the byte position indicated by
+.B l_start
+if
+.B l_len
+is zero.  If
+.B l_len
+is nonzero then the file keeps its size, but the freed bytes now read as
+zeros.  (Other than sharing the flock structure, this call has nothing to do
+with locking.)  (This call is common among UNIX(-like) systems.)
+.RE
+.SP
+.BI "fcntl(" fd ", F_SEEK, u64_t " pos ")"
+.RS
+This Minix-vmd specific call sets the file position of the file associated
+with file descriptor
+.I fd
+to the byte offset indicated by the 64-bit number
+.IR pos .
+This is analogous to the call
+.SP
+.RS
+.BI "lseek(" fd ", " pos ", SEEK_SET)"
+.RE
+.SP
+except that
+.B F_SEEK
+can be used on devices larger than 4 gigabyte.
+.RE
+.SH "SEE ALSO"
+.BR open (2),
+.BR dup (2),
+.BR lseek (2),
+.BR ftruncate (3),
+.BR int64 (3).
+.SH DIAGNOSTICS
+.B Fcntl
+returns a file descriptor, flags, or
+.B 0
+to indicate success.  On error
+.B \-1
+is returned, with
+.B errno
+set to the appropriate error code.  The most notable errors are:
+.TP 5
+.B EINTR
+If a blocked
+.B F_SETLKW
+operation is interrupted by a signal that is caught.
+.TP
+.B EAGAIN
+By
+.B F_SETLK
+if a segment cannot be locked.
+.TP
+.B EBADF
+A bad file descriptor in general, or an attempt to place a write lock on a
+file that is not open for writing, etc.
+.TP
+.B ENOLCK
+No locks available, the file system code has run out of internal table
+space.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>
+
+.\"
+.\" $PchId: fcntl.2,v 1.2 2000/08/11 19:39:51 philip Exp $

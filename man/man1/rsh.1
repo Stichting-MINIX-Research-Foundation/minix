@@ -1,0 +1,94 @@
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)rsh.1c	6.1 (Berkeley) 4/29/85
+.\"
+.TH RSH 1 "April 29, 1985"
+.UC 5
+.SH NAME
+rsh \- remote shell
+.SH SYNOPSIS
+.B rsh
+.RB [ \-n ]
+.RB [ \-l
+.IR username ]
+.I host
+.RI [ command ]
+.br
+.I host
+.RB [ \-n ]
+.RB [ \-l
+.IR username ]
+.RI [ command ]
+.SH DESCRIPTION
+.B Rsh
+connects to the specified
+.IR host ,
+and executes the specified \fIcommand\fR.
+.B Rsh
+copies its standard input to the remote command, the standard
+output of the remote command to its standard output, and the
+standard error of the remote command to its standard error.
+Interrupt, quit and terminate signals are propagated to the remote
+command; \fBrsh\fP normally terminates when the remote command does.
+.PP
+The remote username used is the same as your local username,
+unless you specify a different remote name with the
+.B \-l
+option.
+This remote name must be equivalent (in the sense of
+.BR rlogin (1))
+to the originating account; no provision
+is made for specifying a password with a command.
+.PP
+If you omit
+.IR command ,
+then instead of executing a single command, you will be logged in
+on the remote host using
+.BR rlogin (1).
+.PP
+Shell metacharacters which are not quoted are interpreted
+on local machine, while quoted metacharacters are interpreted on
+the remote machine.
+Thus the command
+.PP
+.RS
+rsh otherhost cat remotefile >> localfile
+.RE
+.PP
+appends the remote file
+.I remotefile
+to the localfile
+.IR localfile ,
+while
+.PP
+.RS
+rsh otherhost cat remotefile ">>" otherremotefile
+.RE
+.PP
+appends
+.I remotefile
+to
+.IR otherremotefile .
+.SH OPTIONS
+.TP
+.BI \-l " username"
+Specify the remote user name.
+.TP
+.B \-n
+Connect standard input of the remote command to /dev/null.  Do this if
+.B rsh
+should not inadvertently read from standard input.
+.SH SEE ALSO
+.BR rcp (1),
+.BR rlogin (1),
+.BR rhosts (5).
+.SH BUGS
+You cannot run an interactive command
+(like
+.BR rogue (6)
+or
+.BR vi (1));
+use
+.BR rlogin (1).

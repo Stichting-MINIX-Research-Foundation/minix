@@ -1,0 +1,86 @@
+.\"	manual page for bsfilt(1)
+.\"
+.\"
+.\"	Copyright (c) 1991 Purdue University Research Foundation,
+.\"	West Lafayette, Indiana 47907.  All rights reserved.
+.\"
+.\"	Written by Victor A. Abell <abe@mace.cc.purdue.edu>,  Purdue
+.\"	University Computing Center.  Not derived from licensed software;
+.\"	derived from awf(1) by Henry Spencer of the University of Toronto.
+.\"
+.\"	Permission is granted to anyone to use this software for any
+.\"	purpose on any computer system, and to alter it and redistribute
+.\"	it freely, subject to the following restrictions:
+.\"
+.\"	1. The author is not responsible for any consequences of use of
+.\"	   this software, even if they arise from flaws in it.
+.\"
+.\"	2. The origin of this software must not be misrepresented, either
+.\"	   by explicit claim or by omission.  Credits must appear in the
+.\"	   documentation.
+.\"
+.\"	3. Altered versions must be plainly marked as such, and must not
+.\"	   be misrepresented as being the original software.  Credits must
+.\"	   appear in the documentation.
+.\"
+.\"	4. This notice may not be removed or altered.
+.\"
+.TH BSFILT 1 "February, 1991"
+.BY "Purdue University"
+.SH NAME
+bsfilt, colcrt \- a colcrt-like backspace filter
+.SH SYNOPSIS
+.B bsfilt
+[
+.B -
+] [
+.B -U
+] [ file ... ]
+.SH DESCRIPTION
+.I Bsfilt
+filters backspace sequences from the input \fIfile\fR(s)
+(standard input if none)
+in an approximation of
+.IR colcrt (1).
+Both the backspace and the character it returns to are removed,
+unless they form an underline sequence.
+Underline sequences are treated according to the settings of
+the
+.B \-
+and
+.B \-U
+options.
+.SH OPTIONS
+.TP
+.B \-
+specifies that no underlining of any kind is to be propagated.
+Without this option or the
+.B \-U
+option,
+.I bsfilt
+approximates underlining with minus signs (`-') in following lines.
+.TP
+.B \-U
+specifies that underlining with underscore (`_') and backspace (`\b')
+character sequences is permitted.
+.SH SEE ALSO
+cawf(1), colcrt(1) and nroff(1).
+.SH DIAGNOSTICS
+Diagnostic messages are delivered to the standard error file.
+.SH HISTORY
+Vic Abell of Purdue University wrote
+.I bsfilt
+to have a backspace filter for
+.IR cawf (1)
+that is independent of licensed source code.
+.SH BUGS
+The maximum length of a line that can be underlined with minus signs is
+fixed.
+.LP
+.I Bsfilt
+does not examine the characters that are being overprinted via backspace
+operations.
+Thus, overprinting that is intended to form a new character from several
+different ones is ineffective and only the last character of the
+sequence is propagated \- e. g., ``o^H+'', intended to look like
+a bullet, is reduced to `+'.

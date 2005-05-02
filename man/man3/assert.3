@@ -1,0 +1,42 @@
+.\"	@(#)assert.3	6.2 (Berkeley) 5/12/86
+.\"
+.TH ASSERT 3 "May 12, 1986"
+.AT 3
+.SH NAME
+assert \- program verification
+.SH SYNOPSIS
+.nf
+.ft B
+#include <assert.h>
+
+void assert(int \fIexpression\fP)
+.fi
+.SH DESCRIPTION
+.B Assert
+is a macro that indicates
+.I expression
+is expected to be true at this point in the program.
+It causes an
+.BR abort (3)
+with a diagnostic comment on the standard output when
+.I expression
+is false (0).
+Compiling with the 
+.BR cc (1)
+option
+.SM
+.B \-DNDEBUG
+effectively deletes
+.B assert
+from the program.
+.SH DIAGNOSTICS
+`Assertion "\fIexpression\fR" failed: file
+.I f
+line
+.IR n .'
+.I F
+is the source file and
+.I n
+the source line number of the
+.B assert
+statement.

@@ -1,0 +1,162 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)wait.2	6.2 (Berkeley) 6/30/85
+.\"
+.TH WAIT 2 "June 30, 1985"
+.UC 4
+.SH NAME
+wait, waitpid \- wait for process to terminate
+.SH SYNOPSIS
+.ft B
+.nf
+#include <sys/types.h>
+#include <sys/wait.h>
+
+pid_t wait(int *\fIstatus\fP)
+pid_t waitpid(pid_t \fIpid\fP, int *\fIstatus\fP, int \fIoptions\fP)
+.fi
+.SH DESCRIPTION
+.B Wait
+causes its caller to delay until a signal is received or
+one of its child
+processes terminates.
+If any child has died since the last
+.BR wait ,
+return is immediate, returning the process id and
+exit status of one of the terminated
+children.
+If there are no children, return is immediate with
+the value \-1 returned.
+.PP
+On return from a successful 
+.B wait
+call, 
+.I status
+is nonzero, and the high byte of 
+.I status
+contains the low byte of the argument to
+.B exit
+supplied by the child process;
+the low byte of 
+.I status
+contains the termination status of the process.
+A more precise definition of the
+.I status
+word is given in
+.RI < sys/wait.h >.
+.B Wait
+can be called with a null pointer argument to indicate that no status need
+be returned.
+.PP
+.B Waitpid
+provides an alternate interface for programs
+that must not block when collecting the status
+of child processes, or that wish to wait for
+one particular child.  The pid parameter is
+the process ID of the child to wait for, \-1
+for any child.  The
+.I status
+parameter is defined as above.  The
+.I options
+parameter is used to indicate the call should not block if
+there are no processes that wish to report status (WNOHANG),
+and/or that children of the current process that are stopped
+due to a SIGTTIN, SIGTTOU, SIGTSTP, or SIGSTOP signal should also have
+their status reported (WUNTRACED).  (Job control is not implemented for
+Minix, but these symbols and signals are.)
+.PP
+When the WNOHANG option is specified and no processes
+wish to report status, 
+.B waitpid
+either returns 0 under some implementations, or \-1 with
+.B errno
+set to
+.B EAGAIN
+under others.
+(Under Minix it returns 0.)
+The WNOHANG and WUNTRACED options may be combined by 
+.IR or 'ing
+the two values.
+.SH NOTES
+The call
+.BI "wait(&" status ")"
+is equivalent to
+.BI "waitpid(\-1, &" status ", 0)\fR."
+.PP
+See
+.BR sigaction (2)
+for a list of termination statuses (signals);
+0 status indicates normal termination.
+A special status (0177) is returned for a stopped process
+that has not terminated and can be restarted;
+see
+.BR ptrace (2).
+If the 0200 bit of the termination status
+is set,
+a core image of the process was produced
+by the system.
+.PP
+If the parent process terminates without
+waiting on its children,
+the initialization process
+(process ID = 1)
+inherits the children.
+.PP
+.I <sys/wait.h>
+defines a number of macros that operate on a status word:
+.TP 5
+.BI "WIFEXITED(" status ")"
+True if normal exit.
+.TP 5
+.BI "WEXITSTATUS(" status ")"
+Exit status if the process returned by a normal exit, zero otherwise.
+.TP 5
+.BI "WTERMSIG(" status ")"
+Signal number if the process died by a signal, zero otherwise.
+.TP 5
+.BI "WIFSIGNALED(" status ")"
+True if the process died by a signal.
+.TP 5
+.BI "WIFSTOPPED(" status ")"
+True if the process is stopped.  (Never true under Minix.)
+.TP 5
+.BI "WSTOPSIG(" status ")"
+Signal number of the signal that stopped the process.
+.SH "RETURN VALUE
+If \fBwait\fP returns due to a stopped
+or terminated child process, the process ID of the child
+is returned to the calling process.  Otherwise, a value of \-1
+is returned and \fBerrno\fP is set to indicate the error.
+.PP
+.B Waitpid
+returns \-1 if there are no children not previously waited for or if
+the process that it wants to wait for doesn't exist.
+.PP
+.B Waitpid
+returns 0 if WNOHANG is specified and there are no stopped or exited
+children.  (Under other implementations it may return \-1 instead.  Portable
+code should test for both possibilities.)
+.SH ERRORS
+.B Wait
+will fail and return immediately if one or more of the following
+are true:
+.TP 15
+[ECHILD]
+The calling process has no existing unwaited-for
+child processes.
+.TP 15
+[EFAULT]
+The \fIstatus\fP argument points to an illegal address.
+.TP 15
+[EAGAIN]
+.B Waitpid
+is called with the WNOHANG option and no child has exited yet.  (Not under
+Minix, it'll return 0 in this case and leave
+.B errno
+alone.)
+.SH "SEE ALSO"
+.BR execve (2),
+.BR exit (2),
+.BR sigaction (2).

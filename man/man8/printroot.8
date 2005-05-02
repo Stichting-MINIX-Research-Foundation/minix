@@ -1,0 +1,29 @@
+.TH PRINTROOT 8
+.SH NAME
+printroot \- print the name of the root device on standard output
+.SH SYNOPSIS
+\fBprintroot\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-r" "Print only the root device, not a full mtab line"
+.SH EXAMPLES
+.EX "printroot" "Print the name of the root device"
+.SH DESCRIPTION
+.PP
+.I Printroot 
+is useful for initializing the \fI/etc/mtab\fR when the system is booted.
+It figures out what the root device is by searching \fI/dev\fR until it
+finds a block special file with the right major/minor device numbers.
+.SH "SEE ALSO"
+.BR fstab (5),
+.BR boot (8).

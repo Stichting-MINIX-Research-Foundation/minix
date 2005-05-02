@@ -1,0 +1,33 @@
+.TH BASENAME 1
+.SH NAME
+basename, dirname \- strip off file prefixes and suffixes
+.SH SYNOPSIS
+\fBbasename \fIfile\fR [\fIsuffix\fR]\fR
+.br
+\fBdirname \fIfile\fR
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "basename /user/ast/file.c" "Strips path to yield \fIfile.c\fP"
+.EX "basename /user/file.c .c" "Strips path and \fI.c\fP to yield \fIfile\fP"
+.EX "dirname /user/file.c" "Strips basename to yield \fI/user\fP"
+.SH DESCRIPTION
+.PP
+.I Basename
+removes the initial directory names (if any) yielding the name of the
+file itself.
+If a second argument is present, it is interpreted as a suffix and is
+also stripped, if present.
+.PP
+.I Dirname
+removes the final component of a path, yielding the directory a file is in.
+.PP
+These programs are primarily used in shell scripts.

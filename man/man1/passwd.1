@@ -1,0 +1,44 @@
+.TH PASSWD 1
+.SH NAME
+passwd, chfn, chsh \- change a login password, full name or shell
+.SH SYNOPSIS
+\fBpasswd\fR [\fIuser\fR]\fR
+.br
+\fBchfn\fR [\fIuser\fR] \fIfullname\fR\fR
+.br
+\fBchsh\fR [\fIuser\fR] \fIshell\fR\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "passwd" "Change current user's password"
+.EX "passwd ast" "Change ast's password (super\-user only)"
+.EX "chsh /usr/bin/mail" "For those who only read mail"
+.EX "chfn 'Jane Doe'" "Current user is Jane Doe"
+.SH DESCRIPTION
+.PP
+.I Passwd
+is used to change your password.
+It prompts for the old and new passwords.
+It asks for the new password twice, to reduce the effect of a typing error.
+.I Chfn
+changes the full name (GECOS field) in the password file.
+.I Chsh
+changes your login shell.
+Do not forget to copy the modified password file back to the root file system,
+or the changes will be lost when the system is rebooted.
+.SH "SEE ALSO"
+.BR login (1),
+.BR su (1),
+.BR crypt (3),
+.BR getpwent (3),
+.BR passwd (5),
+.BR adduser (8).

@@ -1,0 +1,232 @@
+.TH SERIAL-IP 8
+.SH NAME
+serial-ip \- Serial IP (SLIP or PPP) setup
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+\-\-\-\-\-\-\-
+.br
+.B Note:
+This text and the serial IP code is not finished.  Code needs to be added to
+.B nonamed
+to allow it to be used both with and without a connection to the Internet,
+and by now there is a PPP program for standard Minix "out there" that will
+change everything that is said in this text.  So much to do, so little
+time...
+.br
+\-\-\-\-\-\-\-
+.PP
+This manual page describes the Minix network setup to use serial line IP.
+The serial IP protocol used can either be the older SLIP by means of the
+.BR slip (8)
+program, or PPP (Point-to-Point Protocol), the newer and better serial IP
+protocol implemented by the
+.BR ppp (8)
+program.  Alas standard Minix only supports SLIP.
+.PP
+In the following text all descriptions and examples will name SLIP or the
+.BR slip
+program, but one may just as well read PPP or
+.BR ppp .
+Where necessary the differences will be noted.
+.PP
+A typical use of the
+.B slip
+program is like this:
+.PP
+.RS
+.B "slip /dev/psip2 </dev/tty01 >/dev/tty01"
+.RE
+.PP
+The argument of the program, the
+.B /dev/psip2
+device, is one of the so-called "Pseudo IP" devices that the Minix TCP/IP
+driver
+.BR inet (8)
+offers to implement a virtual network on.  On an ethernet IP packets are
+received or transmitted by the ethernet card, but packets on a pseudo IP
+network are channeled back to or received from a program running in user
+space, such as
+.BR slip .
+Standard input and output are used by
+.B slip
+to exchange packets with another SLIP implementation.  This is normally
+through an RS-232 serial line like the second serial line
+.B /dev/tty01
+as used in the example above.
+.PP
+If we look at the flow of data over normal ethernet then this is what a TCP
+connection between two Minix machines,
+.B telnet
+for instance, looks like:
+.PP
+.in 0
+.ce 13
+[telnet]
+|
+/dev/tcp0
+|
+inet
+|
+[ethernet]
+|
+inet
+|
+/dev/tcp0
+|
+[in.telnetd]
+.PP
+One-half (!) of a SLIP connection would look like this:
+.PP
+.in 0
+.ce 12
+[telnet]
+|
+/dev/tcp2
+|
+inet
+|
+/dev/psip2
+|
+slip
+|
+[serial line]
+\&...
+.SS "Configuration for a SLIP network only"
+It is important to know that as far as
+.B inet
+is concerned the pseudo IP network is just another network, nothing special.
+So you have to convince
+.B inet
+that it has to send packets out over that network.  One does this by
+setting a default route that makes
+.B inet
+believe that there is a router somewhere on the pseudo-IP network.
+.PP
+Assume your machine has been given the IP address
+.B 192.168.0.13
+by your service provider.  Let's choose another address on that network,
+.B 192.168.0.1
+for instance.  (You can use the address of the SLIP gateway if you want
+to make it look pretty, but it doesn't really matter, anything "out there"
+is ok.)
+To make Minix aware of the situation you have to configure the pseudo IP
+network.  For Minix-vmd you need to look for the
+.B if-then-else-fi
+code in
+.B /usr/etc/rc
+that tests if
+.B /etc/rc.net
+should be run.  Copy the lines in the
+.B else
+clause that starts network daemons to
+.B /etc/rc.net
+and add the following lines to make it look like this:
+.PP
+.RS
+.nf
+# My SLIP interface address.
+ifconfig -h 192.168.0.13 -n 255.255.255.0
+.SP
+# Standard network daemons.
+daemonize rarpd $named irdpd rip inetd
+.SP
+# Default route to the outside world.
+add_route -g 192.168.0.1
+.fi
+.RE
+.PP
+For standard Minix one has to edit
+.B /etc/rc
+instead at the point of the XXX comments.  The
+.B ifconfig
+goes at the first XXX, the
+.B add_route
+at the second XXX.  The result is conceptually the same as the example
+above.  The important thing is the order: Configuration, Daemons, Routes.
+(First give addresses to the networks, let the daemons meditate over the
+results and possibly configure more networks (rarpd), then add routes to
+the configured networks.)
+.PP
+Just one thing left to do.  The system uses the first ethernet network
+.RB ( eth0 ,
+.BR ip0 ,
+.BR tcp0 ,
+and
+.BR udp0 )
+as the default network.  With the program
+.BR netdefault (8)
+you have to change the links to the default devices
+.RB ( eth / psip ,
+.BR ip ,
+.BR tcp ,
+and
+.BR udp )
+to point to the first pseudo IP network
+.RB ( psip2 ,
+.BR ip2 ,
+.BR tcp2 ,
+and
+.BR udp2 ):
+.PP
+.RS
+.B "netdefault psip2"
+.RE
+.PP
+In
+.B /etc/hosts
+list at least
+.B localhost
+and the name of your machine with its SLIP address.  This way your machine
+will boot and know its own name.  Now you need to find a way to let your
+system know the addresses of other machines.  There are three ways:
+.PP
+.RS
+List the names and addresses of any other machine you wish to talk
+to in
+.BR /etc/hosts .
+Drawback: This will quickly become a pretty long list.
+.SP
+Create an
+.B /etc/resolv.conf
+that lists a nameserver at your ISP and
+.B 127.0.0.1
+(localhost).  Drawback:  With the SLIP link down it takes 5 to 10 seconds for
+a name lookup to time out on the remote name server before the local name
+server is tried.
+.SP
+Install the above
+.B /etc/resolv.conf
+when
+.B slip
+is started, and remove it when
+.B slip
+exits.  Drawback: Long running programs only read
+.B /etc/resolv.conf
+at startup, so they don't notice it changing.
+.SP
+Run a real Internet name daemon from the
+.B named
+package.  Drawback: Nontrivial to set up.
+.SS "Configuration for a SLIP - Ethernet router (simple case)"
+XXX
+.SS "Configuration for a SLIP - Ethernet router (complex case)"
+XXX
+.SH FILES
+.TP \w'/dev/psip*'u+5n
+.B /dev/psip*
+Pseudo-IP devices for use by
+.BR slip
+and
+.BR ppp .
+.SH "SEE ALSO"
+.BR boot (8),
+.BR inet (8),
+.BR netdefault (8),
+.BR term (1),
+.BR chat (1).
+.SH BUGS
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

@@ -1,0 +1,24 @@
+.TH STRIP 1
+.SH NAME
+strip \- remove symbol table from executable file
+.SH SYNOPSIS
+\fBstrip\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "strip a.out" "Remove symbols from \fIa.out\fR"
+.SH DESCRIPTION
+.PP
+For each file argument, \fIstrip\fR removes the symbol table.  
+Strip makes a copy of the file being stripped, so links are lost.
+.SH "SEE ALSO"
+.BR install (1).

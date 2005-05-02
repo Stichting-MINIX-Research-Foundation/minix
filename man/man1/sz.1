@@ -1,0 +1,235 @@
+.TH SZ 1
+.SH NAME
+sz \- send a file using the zmodem protocol
+.SH SYNOPSIS
+\fBsz\fR [\fB\-LNbdefnopqruvy+\fR]\fR [\fB\-ci \fIcommand\fR] [\fB\-Ll\fR n\fR] [\fB\-t \fItimeout\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-L" "Use \fIn\fR-byte packets"
+.FL "\-N" "Overwrite if source is newer/longer"
+.FL "\-b" "Binary file"
+.FL "\-c" "Send command for execution"
+.FL "\-d" "Convert dot to slash in names"
+.FL "\-e" "Escape for all control characters"
+.FL "\-f" "Send full path name"
+.FL "\-i" "Send command and return immediately"
+.FL "\-l" "Flow control every \fIn\fR packets"
+.FL "\-n" "Overwrite destination if source is newer"
+.FL "\-o" "Use old (16-bit) checksum"
+.FL "\-p" "Protect file if it already exists"
+.FL "\-q" "Quiet; opposite of verbose"
+.FL "\-r" "Resume interrupt file transfer"
+.FL "\-t" "Set \fItimeout\fR in tenths of a second"
+.FL "\-u" "Unlink file after successful transmission"
+.FL "\-v" "Verbose; opposite of quiet"
+.FL "\-y" "Yes, clobber existing files"
+.FL "\-+" "Append to an existing file"
+.SH EXAMPLES
+.EX "sz file </dev/tty01 >/dev/tty01" "Send \fIfile\fR"
+.SH DESCRIPTION
+.PP
+XMODEM, YMODEM, and ZMODEM are a family of protocols that are widely used
+is the \s-2MS-DOS\s0 world for transferring information reliably from one
+computer to another.  In all of these protocols, a series of bytes are sent
+from one computer to the other, and then an acknowledgement is sent back
+to confirm correct reception.  Checksums are used to detect errors so that
+transmission is reliable even in the face of noisy telephone lines.
+\fISz\fR is a program that sends a file sent from another computer using the
+zmodem protocol.
+The file can be received using \fIrz\fR.
+.PP
+\fISz\fR uses the ZMODEM error correcting
+protocol to send one or more files over a dial-in serial
+port to a variety of programs running under
+\s-2MINIX\s+2,
+\s-2UNIX\s+2, 
+\s-2MS-DOS\s0, \s-2CP/M\s0, \s-2VMS\s0, and other operating systems.
+It is the successor to XMODEM and YMODEM.
+.PP
+ZMODEM greatly simplifies file transfers compared to XMODEM.
+In addition to a friendly user interface, ZMODEM provides
+Personal Computer and other users an efficient, accurate,
+and robust file transfer method.
+.PP
+ZMODEM provides complete end-to-end data integrity between
+application programs.  ZMODEM's 32 bit CRC catches errors
+that sneak into even the most advanced networks.
+.PP
+Output from another program may be piped to \fIsz\fR for
+transmission by denoting standard input with \-:
+.PP
+.B "	""ls \-l | sz \-"
+.PP
+The program output is transmitted with the filename \fIsPID.sz\fR
+where PID is the process ID of the \fIsz\fR program.  If the
+environment variable \fIONAME\fR is set, that is used instead.  In
+this case, the command:
+.PP
+.B "	""ls \-l | ONAME=con sz \-ay \-"
+.PP
+will send a \&'file\&' to the PC-DOS console display.  
+The \fB\-y\fR option instructs the receiver to open the file for writing
+unconditionally.  
+The \fB\-a\fR option causes the receiver to
+convert 
+\s-2UNIX\s+2
+newlines to PC-DOS carriage returns and linefeeds.
+On
+\s-2UNIX\s+2
+systems, additional information about the file is
+transmitted.  If the receiving program uses this
+information, the transmitted file length controls the exact
+number of bytes written to the output dataset, and the
+modify time and file mode are set accordingly.
+.PP
+If \fIsz\fR is invoked with $SHELL set and if that variable
+contains the string \fIrsh\fR or \fIrksh\fR (restricted shell), \fIsz\fR
+operates in restricted mode.  Restricted mode restricts
+pathnames to the current directory and \fIPUBDIR\fR (usually
+\fI/usr/spool/uucppublic\fR) and/or subdirectories thereof.
+.PP
+The options and flags available are:
+.in +0.25i
+.ti -0.25i
+.B \-+
+.br
+Instruct the receiver to append transmitted data to an existing file.
+.ti -0.25i
+.B \-a
+.br
+Convert NL characters in the transmitted file to CR/LF.
+This is done by the sender for XMODEM and YMODEM, by the receiver for ZMODEM.
+.ti -0.25i
+.B \-b
+.br
+Binary override: transfer file without any translation.
+.ti -0.25i
+.B \-c
+.br
+Send COMMAND (follows \fIc\fR) to the receiver for execution, return with
+COMMAND's exit status.
+.ti -0.25i
+.B \-d
+.br
+Change all instances of \&'.\&' to \&'/\&' in the transmitted
+pathname.  Thus, C.omenB0000 (which is unacceptable to
+\s-2MS-DOS\s0 or CP/M) is transmitted as C/omenB0000.  If the
+resultant filename has more than 8 characters in the
+stem, a \&'.\&' is inserted to allow a total of eleven.
+.ti -0.25i
+.B \-e
+.br
+Escape all control characters; normally XON, XOFF, DLE,
+CR-@-CR, and Ctrl-X are escaped.
+.ti -0.25i
+.B \-f
+.br
+Send Full pathname.  Normally directory prefixes are stripped from 
+the transmitted filename.
+.ti -0.25i
+.B \-i
+.br
+Send COMMAND (follows \fIi\fR) to the receiver for execution, return
+Immediately upon the receiving program's successful reception of the command.
+.ti -0.25i
+.B \-L
+.br
+Use ZMODEM sub-packets of length \fIn\fR (follows \fIL\fR).  
+A larger \fIn\fR (32 <= \fIn\fR <= 1024) gives slightly higher throughput, a 
+smaller one speeds error recovery.  The default is 128 below 300
+baud, 256 above 300 baud, or 1024 above 2400 baud.
+.ti -0.25i
+.B \-l 
+.br
+Wait for the receiver to acknowledge correct data every
+\fIn\fR (32 <= \fIn\fR <= 1024) characters.  
+This may be used to avoid network overrun when XOFF flow control is lacking.
+.ti -0.25i
+.B \-n
+.br
+Send each file if destination file does not exist.  
+Overwrite destination file if source file is newer than the destination file.
+.ti -0.25i
+.B \-N
+.br
+ Send each file if destination file does not exist.  Overwrite destination 
+file if source file is newer or longer than the destination file.
+.ti -0.25i
+.B \-o
+.br
+Disable automatic selection of 32 bit CRC.
+.ti -0.25i
+.B \-p
+.br
+Protect existing destination files by skipping transfer if the destination 
+file exists.
+.ti -0.25i
+.B \-q
+.br
+Quiet suppresses verbosity.
+.ti -0.25i
+.B \-r
+.br
+Resume interrupted file transfer.  If the source file is longer than the 
+destination file, the transfer commences at the offset in the source file
+that equals the length of the destination file.
+.ti -0.25i
+.B \-t
+.br
+Change timeout.
+The timeout, in tenths of seconds, follows, the \fB\-t\fR flag.
+.ti -0.25i
+.B \-u
+.br
+Unlink the file after successful transmission.
+.ti -0.25i
+.B \-w
+.br
+Limit the transmit window size to \fIn\fR bytes (\fIn follows \fB(enw\fR).
+.ti -0.25i
+.B \-v
+.br
+Verbose causes a list of file names to be appended to \fI/tmp/szlog\fR.
+.ti -0.25i
+.B \-y
+.br
+Instruct a ZMODEM receiving program to overwrite any existing file with the 
+same name.
+.ti -0.25i
+.B \-Y
+.br
+Instruct a ZMODEM receiving program to overwrite any existing file with the 
+same name, and to skip any source files that do have a file with the same 
+pathname on the destination system.
+.in -0.25i
+.SS "Examples"
+.PP
+Below are some examples of the use of \fIsz\fR.
+.PP
+.B "	""sz \-a \d\s+2*\s0\u.c"
+.PP
+This single command transfers all .c files in the current
+directory with conversion (\fB\-a\fR) to end-of-line
+conventions appropriate to the receiving environment.
+.sp
+.B "	""sz \-Yan \d\s+2*\s0\u.c \d\s+2*\s0\u.h"
+.PP
+.LP
+Send only the \fI.c\fR and \fI.h\fR files that exist on both systems,
+and are newer on the sending system than the corresponding
+version on the receiving system, converting 
+\s-2MINIX\s+2
+to \s-2MS-DOS\s0 text format.
+.SH "SEE ALSO"
+.BR rz (1),
+.BR term (1).

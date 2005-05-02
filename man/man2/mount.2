@@ -1,0 +1,51 @@
+.TH MOUNT 2
+.SH NAME
+mount, umount \- mount or umount a file system
+.SH SYNOPSIS
+.ft B
+.nf
+#include <unistd.h>
+#include <sys/mount.h>
+
+int mount(char *\fIspecial\fP, char *\fIname\fP, int \fIflag\fP)
+int umount(char *\fIname\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+.B Mount()
+tells the system that the file system
+.I special
+is to be mounted on the file
+.IR name ,
+effectively overlaying
+.I name
+with the file tree on
+.IR special .
+.I Name
+may of any type, except that if the root of
+.I special
+is a directory, then
+.I name
+must also be a directory.
+.I Special
+must be a block special file, except for loopback mounts.  For loopback
+mounts a normal file or directory is used for
+.IR special ,
+which must be seen as the root of a virtual device.
+.I Flag
+is 0 for a read-write mount, 1 for read-only.
+.PP
+.B Umount()
+removes the connection between a device and a mount point,
+.I name
+may refer to either of them.  If more than one device is mounted on the
+same mount point then unmounting at the mount point removes the last mounted
+device, unmounting a device removes precisely that device.  The unmount will
+only succeed if none of the files on the device are in use.
+.PP
+Both calls may only be executed by the super-user.
+.SH "SEE ALSO"
+.BR mount (1),
+.BR umount (1).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

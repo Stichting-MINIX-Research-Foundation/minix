@@ -1,0 +1,45 @@
+.\"	@(#)getlogin.3	6.2 (Berkeley) 5/9/86
+.\"
+.TH GETLOGIN 3  "May 9, 1986"
+.AT 3
+.SH NAME
+getlogin \- get login name
+.SH SYNOPSIS
+.nf
+.ft B
+#include <unistd.h>
+
+char *getlogin(void)
+.fi
+.SH DESCRIPTION
+.B Getlogin
+returns a pointer to the login name as found in
+.BR /etc/utmp .
+It may be used in conjunction with
+.B getpwnam
+to locate the correct password file entry when the same user ID
+is shared by several login names.
+.PP
+If
+.B getlogin
+is called within a process that is not attached to a
+terminal, or if there is no entry in
+.B /etc/utmp
+for the process's terminal,
+.B getlogin
+returns a null pointer.
+A reasonable procedure for determining the login name is to first call
+.B getlogin
+and if it fails, to call
+.BR getpwuid ( getuid ()).
+.SH FILES
+/etc/utmp
+.SH "SEE ALSO"
+.BR getpwent (3),
+.BR utmp (5),
+.BR ttyslot (3)
+.SH DIAGNOSTICS
+Returns a null pointer if the name cannot be found.
+.SH BUGS
+The return values point to static data
+whose content is overwritten by each call.

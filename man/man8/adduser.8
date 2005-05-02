@@ -1,0 +1,43 @@
+.TH ADDUSER 8
+.SH NAME
+adduser \- add a new user to the system
+.SH SYNOPSIS
+\fBadduser \fIuser group home-dir\fR\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "adduser ast other /usr/ast" "How user ast could be added"
+.EX "adduser bin operator /usr/src" "How user bin could be added"
+.SH DESCRIPTION
+.PP
+.I Adduser
+adds a new user to the system by making new entries in
+.B /etc/passwd
+and
+.B /etc/shadow
+for the new user, creating a new home directory, and copying the contents
+of the template home directory
+.B /usr/ast
+into it.  The user-id of this new user will be the first free number not less
+than 10.  The password is initially empty, the full name must be set, and
+the shell is the Bourne Shell,
+.B /bin/sh .
+Use
+.I passwd ,
+.I chfn ,
+and
+.I chsh
+to change.
+.SH "SEE ALSO"
+.BR login (1),
+.BR passwd (1),
+.BR passwd (5).

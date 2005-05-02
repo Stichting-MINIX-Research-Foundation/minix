@@ -1,0 +1,28 @@
+.TH EXPAND 1
+.SH NAME
+expand \- convert tabs to spaces
+.SH SYNOPSIS
+\fBexpand\fR [\fB\-\fIt1,t2, ...\fR]\fR [\fIfile\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-\fIt\fR" "Tab stop positions"
+.SH EXAMPLES
+.EX "expand \-16,32,48,64" "Expand \fIstdin\fR with tabs every 16 columns"
+.SH DESCRIPTION
+.PP
+\fIExpand\fR replaces tabs in the named files with the equivalent numbers
+of spaces.  If no files are listed, \fIstdin\fR is given.  If only one
+tab is given, the rest are multiples of it.  The default is a tab every 8
+spaces.
+.SH "SEE ALSO"
+.BR unexpand (1).

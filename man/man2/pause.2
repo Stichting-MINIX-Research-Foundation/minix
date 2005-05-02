@@ -1,0 +1,43 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)pause.3c	6.1 (Berkeley) 5/9/85
+.\"
+.TH PAUSE 2 "May 9, 1985"
+.UC 4
+.SH NAME
+pause \- stop until signal
+.SH SYNOPSIS
+.nf
+.ft B
+#include <unistd.h>
+
+int pause(void)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Pause
+never returns normally.
+It is used to give up control while waiting for
+a signal from
+.BR kill (2)
+or the alarm timer, see
+.BR alarm (2).
+Upon termination of a signal handler started during a
+.B pause,
+the
+.B pause
+call will return.
+.SH "RETURN VALUE
+Always returns \-1.
+.SH ERRORS
+.B Pause
+always returns:
+.TP 15
+[EINTR]
+The call was interrupted.
+.SH "SEE ALSO
+.BR alarm (2),
+.BR kill (2),
+.BR sigsuspend (2).

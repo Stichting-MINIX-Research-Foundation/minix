@@ -1,0 +1,24 @@
+.TH FILE 1
+.SH NAME
+file \- make a guess as to a file's type based on contents
+.SH SYNOPSIS
+\fBfile \fIname ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "file a.out ar.h" "Guess at types"
+.SH DESCRIPTION
+.PP
+\fIFile\fR reads the first block of a file and tries to make an 
+intelligent guess about what kind of file it is.  
+It understands about archives, C
+source programs, executable binaries, shell scripts, and English text.

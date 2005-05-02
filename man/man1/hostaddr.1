@@ -1,0 +1,43 @@
+.TH HOSTADDR 1
+.SH NAME
+hostaddr \- show ethernet address, IP address or hostname
+.SH SYNOPSIS
+.B hostaddr
+.RB [ \-eiah ]
+.RB [ \-E
+.IR eth-device ]
+.RB [ \-I
+.IR ip-device ]
+.SH DESCRIPTION
+Without any of the
+.B \-eia
+options,
+.B hostaddr
+shows the ethernet address, IP address and hostname of the local host on one
+line in the given order.  With options only the wanted fields are shown,
+still in the same order, not in option order.
+.SH OPTIONS
+.TP
+.B \-e
+Show the ethernet address.
+.TP
+.B \-i
+Show the IP address.
+.TP
+.B \-a
+Show the fully qualified hostname.  The IP address is shown if it
+can't be translated to a host name.  This usually indicates that the
+DNS reverse address translation tables are incomplete or that
+the name daemon couldn't be contacted.
+.TP
+.B \-h
+Set the hostname of the machine if the caller is the superuser.  (Used at
+boot time by the network initialization scripts.)
+.SH "SEE ALSO"
+.BR ifconfig (8),
+.BR dhcpd (8),
+.BR nonamed (8),
+.BR inet (8),
+.BR boot (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

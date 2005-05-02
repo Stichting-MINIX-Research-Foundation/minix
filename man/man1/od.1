@@ -1,0 +1,38 @@
+.TH OD 1
+.SH NAME
+od \- octal dump
+.SH SYNOPSIS
+\fBod\fR [\fB\-bcdhox\fR]\fR [\fIfile\fR] [ [\fB+\fR] \fIoffset\fR [\fB.\fR][\fBb\fR]\fR ]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-b" "Dump bytes in octal"
+.FL "\-c" "Dump bytes as ASCII characters"
+.FL "\-d" "Dump words in decimal"
+.FL "\-h" "Print addresses in hex (default is octal)"
+.FL "\-o" "Dump words in octal (default)"
+.FL "\-v" "Verbose (list duplicate lines)"
+.FL "\-x" "Dump words in hex"
+.SH EXAMPLES
+.EX "od \-ox file" "Dump \fIfile\fP in octal and hex"
+.EX "od \-d file +1000" "Dump \fIfile\fP starting at byte 01000"
+.EX "od \-c file +10.b" "Dump \fIfile\fP starting at block 10"
+.SH DESCRIPTION
+.PP
+.I Od
+dumps a file in one or more formats.
+If \fIfile\fP is missing, \fIstdin\fR is dumped.
+The \fIoffset\fP argument tells
+.I od
+to skip a certain number of bytes or blocks before starting.
+The offset is in octal bytes, unless it is followed by a 
+\&'.\&' for decimal or \fBb\fP for blocks or both.

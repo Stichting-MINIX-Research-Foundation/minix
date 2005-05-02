@@ -1,0 +1,30 @@
+.TH DOSREAD 1
+.SH NAME
+dosread \- read a file from an MS-DOS diskette [IBM]
+.SH SYNOPSIS
+\fBdosread\fR [\fB\-a\fR] \fIdrive \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "ASCII file"
+.SH EXAMPLES
+.EX "dosread C g/adv >adv" "Read file \fIg/adv\fR from hard disk"
+.EX "dosread \-a A prog.c >x" "Read ASCII file \fIprog.c\fR from drive A"
+.SH DESCRIPTION
+.PP
+.I Dosread
+reads one \s-2MS-DOS\s+2 file and writes it on standard output.
+The file name must use slash, not backslash as a separator.
+ASCII files have the final CTRL-Z stripped, and carriage return plus
+line feed are mapped to line feed only, the usual
+\s-2MINIX\s+2
+convention.  See \fBdosdir\fR on the use of single letter drive codes.

@@ -1,0 +1,33 @@
+.TH MKNOD 8
+.SH NAME
+mknod \- create a special file
+.SH SYNOPSIS
+\fBmknod \fIfile\fR [\fBb\fR] [\fBc\fR] \fImajor \fIminor\fR
+.br
+\fBmknod \fIfile\fR \fBp\fR\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "mknod /dev/plotter c 7 0" "Create special file for a plotter"
+.EX "mknod /dev/fd3 b 2 3" "Create a device for diskette drive 3"
+.EX "mknod /tmp/stream p" "Create a named pipe"
+.SH DESCRIPTION
+.PP
+.I Mknod
+creates a special file named
+.I file ,
+with the indicated major and minor device numbers.
+The second argument specifies a block special, a character special, or a
+named pipe.  Named pipes do not have device numbers so they are omitted.
+.SH "SEE ALSO"
+.BR mkfifo (1),
+.BR mknod (2).

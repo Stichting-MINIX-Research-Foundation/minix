@@ -1,0 +1,98 @@
+.TH MTIO 4
+.SH NAME
+mtio \- magnetic tape commands
+.SH SYNOPSIS
+.B "#include <sys/types.h>"
+.br
+.B "#include <sys/mtio.h>"
+.br
+.B "#include <sys/ioctl.h>"
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The magnetic tape devices described in
+.BR sd (4)
+may be sent commands or queried for their status using the following ioctl
+calls:
+.PP
+.RS
+.BR ioctl ( \fIfd ,
+.BR MTIOCTOP ,
+.RB & "struct mtop" )
+.br
+.BR ioctl ( \fIfd ,
+.BR MTIOCGET ,
+.RB & "struct mtget" )
+.RE
+.PP
+The struct mtop, struct mtget and associated definitions are defined in
+<sys/mtio.h> as follows:
+.PP
+.nf
+
+/* Tape operations: ioctl(fd, MTIOCTOP, &struct mtop) */
+
+.ta +4n +7n +15n
+struct mtop {
+	short	mt_op;	/* Operation (MTWEOF, etc.) */
+	int	mt_count;	/* Repeat count. */
+};
+
+.ta +17n +5n
+#define MTWEOF	0	/* Write End-Of-File Marker */
+#define MTFSF	1	/* Forward Space File mark */
+#define MTBSF	2	/* Backward Space File mark */
+#define MTFSR	3	/* Forward Space Record */
+#define MTBSR	4	/* Backward Space Record */
+#define MTREW	5	/* Rewind tape */
+#define MTOFFL	6	/* Rewind and take Offline */
+#define MTNOP	7	/* No-Operation, set status only */
+#define MTRETEN	8	/* Retension (completely wind and rewind) */
+#define MTERASE	9	/* Erase the tape and rewind */
+#define MTEOM	10	/* Position at End-Of-Media */
+#define MTMODE	11	/* Select tape density */
+#define MTBLKZ	12	/* Select tape block size */
+
+/* Tape status: ioctl(fd, MTIOCGET, &struct mtget) */
+
+.ta +4n +7n +15n
+struct mtget {
+	short	mt_type;	/* Type of tape device. */
+
+	/* Device dependent "registers". */
+	short	mt_dsreg;	/* Drive status register. */
+	short	mt_erreg;	/* Error register. */
+
+	/* Misc info. */
+	off_t	mt_resid;	/* Residual count. */
+	off_t	mt_fileno;	/* Current File Number. */
+	off_t	mt_blkno;	/* Current Block Number within file. */
+	off_t	mt_blksize;	/* Current block size. */
+};
+
+.fi
+.PP
+See
+.BR mt (1)
+for a detailed description on what each operation does.  The mt_type field
+is always zero, there is no use for it yet.  Mt_dsreg is 0 (OK), 1 (Error),
+or 2 (EOF encountered.)  Mt_erreg holds the SCSI sense key of the last
+operation.  Mt_blksize is the current tape block size in bytes, zero if the
+block size is variable.
+.PP
+Note that one can issue these commands on a file descriptor that is in use
+to read or write data, something that
+.B mt
+can't do.  So you can add eof markers in the middle of an output stream,
+or get the status of a device before a rewind-on-close tape rewinds.
+.PP
+The driver will automatically add an end of file marker to a tape that is
+written to if you execute a space command.  If you write eof markers
+yourself then the driver will not add one extra on close.
+.SH "SEE ALSO"
+.BR mt (1),
+.BR sd (4).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

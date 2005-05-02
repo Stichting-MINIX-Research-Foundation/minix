@@ -1,0 +1,26 @@
+.TH WHOAMI 1
+.SH NAME
+whoami \- print current user name
+.SH SYNOPSIS
+\fBwhoami\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "whoami" "Print user name"
+.SH DESCRIPTION
+.PP
+In case you forget who you are logged in as, \fIwhoami\fR will tell you.  If
+you use \fIsu\fR to become somebody else, 
+\fIwhoami\fR will give the current effective user.
+.SH "SEE ALSO"
+.BR id (1),
+.BR who (1).

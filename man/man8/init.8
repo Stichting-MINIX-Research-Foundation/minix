@@ -1,0 +1,141 @@
+.TH INIT 8
+.SH NAME
+init \- grandparent of all processes
+.SH DESCRIPTION
+The first program started by Minix is
+.BR init .
+The actions performed by
+.B init
+can be summarized by this pseudo shell program:
+.RS
+.nf
+.if t .ft C
+
+# Open 0, 1, 2.
+exec </dev/null >/dev/log 2>&1
+
+# Run the system initialization script.
+sh /etc/rc $bootopts
+
+>/etc/utmp
+echo reboot >>/usr/adm/wtmp
+
+while :; do
+	# Wait for a process to exit, but don't always block.
+	wait
+
+	# Record logout.  (Not in this dumb way, of course.)
+	if "pid is in my tables" $pid
+	then
+		echo "logout $pid" >/etc/utmp
+		echo "logout $pid" >>/usr/adm/wtmp
+	fi
+
+	# Start a new session.
+	while read line type getty init
+	do
+		if idle $line
+		then
+			$init ... <$tty >$tty
+			$getty <$tty >$tty 2>&1 &
+			pid=$!
+			"add pid to tables" $pid
+			echo "login $line $pid" >/etc/utmp
+			echo "login $line $pid" >>/usr/adm/wtmp
+		fi
+	done < /dev/ttytab
+done
+
+.if t .ft R
+.fi
+.RE
+The first action of
+.B init
+is to run
+.B /etc/rc
+to initialize the system as described in
+.BR boot (8).
+.B Init
+then enters its main loop where it waits for processes to exit, and starts
+processes on each enabled terminal line.  The file
+.B /etc/ttytab
+contains a list of terminal devices, their terminal types, the program to
+execute on them to allow one to login (usually
+.BR getty (8)),
+and the program to execute first to initialize the line (usually
+.BR stty (1)).
+These fields may be left out to indicate that a line is disabled or that
+initialization is not necessary.  The commands are searched using the path
+.BR /sbin:/bin:/usr/sbin:/usr/bin .
+.PP
+.B Init
+accepts several signals that must be sent to process id 1.  (It is the first
+process, so natually its process id is 1.)  The signals are:
+.TP
+.B SIGHUP
+When receiving a hangup signal,
+.B init
+will forget about errors and rescan
+.B ttytab
+for processes to execute.
+.B Init
+normally rescans
+.B ttytab
+each time it feels the need to respawn a process, so the hangup signal is only
+needed if a line has been shut down, or after a terminate signal.  Note
+that after turning a line off you will have to kill the process running on
+that line manually,
+.B init
+doesn't do that for you.
+.TP
+.B SIGTERM
+Normally sent by programs that halt or reboot Minix.  Causes
+.B init
+to stop spawning new processes.
+.TP
+.B SIGABRT
+Sent by the keyboard driver when the
+.B CTRL-ALT-DEL
+key combination is typed.  Causes
+.B init
+to run the
+.B shutdown
+command.  A second abort signal makes
+.B init
+halt the system directly with a system call.  The keyboard driver halts the
+system, without a sync, after the third CTRL-ALT-DEL.
+.SS "Minix vs. Minix-vmd"
+There are a few differences between standard Minix and Minix-vmd on how
+.B init
+is run.  The
+.B /etc/rc
+file is executed under standard Minix with input connected to
+.BR /dev/console ,
+but under Minix-vmd this is still
+.BR /dev/null .
+This means that under Minix-vmd processes must be reconnected to
+.B /dev/console
+with the
+.BR intr (8)
+program if they need user interaction.
+Minix-vmd passes the value of the
+.B bootopts
+boot variable to /etc/rc.  Standard Minix does not.
+.SH FILES
+.TP 25n
+.B /etc/ttytab
+List of terminals devices.
+.TP
+.B /etc/utmp
+List of currently logged in users.
+.TP
+.B /usr/adm/wtmp
+Login/logout history.
+.SH "SEE ALSO"
+.BR ttytab (5),
+.BR utmp (5),
+.BR getty (8),
+.BR stty (1),
+.BR boot (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

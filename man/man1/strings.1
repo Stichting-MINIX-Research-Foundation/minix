@@ -1,0 +1,29 @@
+.TH STRINGS 1
+.SH NAME
+strings \- print all the strings in a binary file
+.SH SYNOPSIS
+\fBstrings\fR [\fB\-\fR] [\fB\-o\fR]\fR [\fB\-\fIn\fR] \fIfile ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-" "search whole file, not just data seg"
+.FL "\-o" "Print octal offset of each string"
+.FL "\-\fIn" "\fIn\fR is minimum length string (default = 4)"
+.SH EXAMPLES
+.EX "strings \-5 a.out" "Print the strings > 4 chars in \fIa.out\fR"
+.EX "strings \- /bin/sh" "Search entire shell file (text and data)"
+.SH DESCRIPTION
+.PP
+\fIStrings\fR looks for sequences of ASCII characters followed by a zero 
+byte.
+These are usually strings.  This program is typically used to help identify
+unknown binary programs

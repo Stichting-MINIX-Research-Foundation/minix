@@ -1,0 +1,334 @@
+.TH CONFIG 8
+.SH NAME
+config \- configuring Minix tasks and servers
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+Minix has a number of configuration files containing parameters that can
+be changed to enable or disable a device driver, to change the number of
+times a resource can be used, or to tune the performance of the system.
+We will name the file that contains the parameter, the name of the
+parameter, and the values it can be set to.  Some comments are prefixed by
+"8086" for Minix running in 16-bit real mode, "286" for 16-bit protected
+mode, and "386" for 32-bit protected mode.
+Configuration file names can be
+.RI < file.h >
+for a file in
+.BR /usr/include/ ,
+or a simple file name for a file in
+.BR /usr/src/ .
+.PP
+There may be several definitions for a parameter with only one that is
+active.  Which one this is is easy to find if you know that
+.B "(\s-2CPU\s+2\ ==\ \s-2INTEL\s+2)"
+is true, and
+.SB _WORD_SIZE
+equals
+.B 2
+in 16-bit mode, and
+.B 4
+in 32-bit mode.
+.PP
+.ti 2m
+.RB < minix/config.h >
+.br
+This is the main configuration file for the Minix.  It contains lots of
+boolean variables to enable or disable drivers and a number of parameters
+that specify the sizes of system data structures:
+.TP
+.SB NR_PROCS
+The number of slots in the process table, and thus the maximum number of
+processes that can be run concurrently.  Should be increased from the
+default
+.B 32
+if networking is enabled (add
+.B 8
+for deamons), and if more users are using the system (add
+.B 4
+for each active session).  There are a lot of
+loops in the kernel scanning the process table, so setting
+.SB NR_PROCS
+too high will slow things down a little bit, so don't overdo it.
+.TP
+.SB NR_BUFS
+The number of disk buffers in the file system server.  It is used to keep
+frequently used disk blocks in memory.
+.BR 8086 " & " 286 :
+The default is
+.BR 40 ,
+and that's about as high as it can be set.
+.BR 386 :
+The default is
+.BR 80 ,
+which is best increased to
+.B 1024
+if you can spare the memory.  More will help, but the effect won't be as
+pronounced as
+.B 1024
+is more than enough to contain the working set of one active user.
+.TP
+.SB NR_CTRLRS
+Number of tasks used for disk or tape controllers.  By default 2, maximum 4.
+You need a controller task for each device class to be handled through a
+.BI /dev/c n "*"
+set of devices.
+.TP
+.SB ENABLE_CACHE2
+If set to 1 allows the RAM disk to be used as a second level file system
+cache.  Any block that is evicted from the normal cache is both written to
+disk (if dirty), and copied to the second level cache.  If it is needed
+again then the block is reloaded from the RAM disk if it is still there.
+.BR 8086 :
+Forget it, you don't have any memory for it.
+.BR 286 :
+Turn it on and set the boot environment variable
+.B ramsize
+to
+.B 512
+if you have the memory.  That's enough to contain the working set of
+one active user, and is also the maximum FS can handle.
+.BR 386 :
+The installation scripts sets
+.B ramsize
+to
+.B 1024
+if there is enough memory.  Your first point of call is to compile a
+new kernel with
+.SB ENABLE_CACHE2
+off,
+.SB NR_BUFS
+set to a large value, and
+.B ramsize
+set back to zero.  A normal block cache works much better than a two level
+arrangement.
+.TP
+.SB ENABLE_AT_WINI
+Enables the AT or IDE disk driver.  (The IDE interface grew out of the old
+AT disk interface.)  Any run of the mill PC needs this driver.  You need to
+assign a driver like this one to a controller task using one of the
+.BI c n
+boot variables.  See
+.BR boot (8).
+.TP
+.SB ENABLE_BIOS_WINI
+Enables the BIOS disk driver.  The BIOS driver uses the system BIOS to read
+or write disk blocks.
+.BR 8086 :
+The preferred disk driver for XT class machines.
+.BR 286 " & " 386 :
+Use a native driver if possible to avoid switching back to real mode to make
+BIOS calls.  Especially on the 286 this is a painful affair.
+.TP
+.SB ENABLE_ESDI_WINI
+Enables the ESDI disk driver.  Some PS/2 models have this disk.
+.TP
+.SB ENABLE_XT_WINI
+Enables the XT disk driver.  Useful for early IBM/AT machines that have XT
+disks.  In real mode it is best to use the BIOS driver.
+.TP
+.SB ENABLE_AHA1540_SCSI
+Enables the Adaptec 1540 series SCSI driver.
+.TP
+.SB ENABLE_DOSFILE
+Enable the "DOS file as disk" driver that is used when Minix is run from
+MS-DOS to access a large file as a disk.
+.TP
+.SB ENABLE_FATFILE
+Enable the "FAT file as disk" driver that interprets a FAT file system
+to find a large file to use as a disk.  This driver combined with a fast
+native Minix disk driver is a better choice then the previous driver.  (And
+it works when Minix is not started from MS-DOS.)  This is the last driver
+that needs to be assigned to a controller task.
+.TP
+.SB ENABLE_SB16
+Enable the Soundblaster-16 audio driver.
+.TP
+.SB ENABLE_PRINTER
+Enable the Printer driver.
+.TP
+.SB DMA_SECTORS
+The size of the DMA buffer for drivers that use DMA or other drivers that
+can only do I/O to a single chunk of memory.  (BIOS, ESDI, XT, DOSFILE.)
+Choose a number between
+.B 1
+and
+.B 128
+for the sector size of this buffer.  The memory cost is twice this amount,
+because of trouble getting it aligned in memory properly.  A value of
+.B 16
+is the minimum to work well, choose
+.B 64
+if you have enough memory.
+.TP
+.SB NR_CONSOLES
+Number of virtual consoles.  By default
+.BR 2 ,
+so you can have two login sessions that can be switched to by ALT-F1,
+ALT-F2 or ALT-left/rightarrow.  If you have an EGA screen then you can
+specify up to
+.B 4
+virtual consoles, for VGA you can have
+.BR 8 .
+It is best to choose one less to leave some video memory to keep text
+scrolling fast.  You really should read
+.BR console (4)
+on this.  Note also the
+.B console
+boot variable, you can use it to put more characters on the screen, at
+the cost of video memory.
+.TP
+.SB ENABLE_DP8390
+Master switch to enable the network drivers.  They are required by the
+network server,
+.BR inet .
+See
+.BR boot (8)
+for information on configuring network support.
+.TP
+.SB ENABLE_WDETH
+Enable code for the WD8003 and WD8013 cards in the network driver.
+.TP
+.SB ENABLE_NE2000
+Enable code for the NE1000 and NE2000 cards.
+.TP
+.SB ENABLE_3C503
+Enable code for the 3Com Etherlink II (3C503).
+.TP
+.SB NR_PTYS
+Number of pseudo terminals supported, by default
+.BR 0 ,
+which disables the driver.  Pseudo terminals are used for incoming network
+logins by telnet or rlogin.  One pty is needed per session.
+.TP
+.SB NR_RS_LINES
+Number of RS-232 lines supported.  By default
+.B 2
+for a normal kernel, but
+.B 0
+for a tiny kernel used for XT installation.  You can save a bit of memory by
+setting this parameter to zero if you don't need serial lines.
+.PP
+.ti 2m
+.BR fs/const.h
+.br
+This file contains most of the parameters used by the file system code.
+Most of these cannot be changed, with the exception of these four:
+.TP
+.SB NR_FILPS
+Maximum number of open file descriptors for all processes combined.  A "File
+table overflow" error might indicate that this number must be increased.
+.TP
+.SB NR_INODES
+Maximum number of in-use files for all processes combined.  Like above a
+"File table overflow" error may also indicate that this number should be
+increased.  In cases like these one usually doubles both parameters.  (If
+one table runs out then the other one is likely to run out also anyway.)
+.TP
+.SB NR_SUPERS
+Number of file systems that can be mounted.  Again a "file table overflow"
+error is given if this table is full, but it will be produced by the
+.B mount
+command, so you know what's wrong in this case.
+.TP
+.SB NR_LOCKS
+Number of active file locks by
+.BR fcntl (2).
+These locks are often used by programs that update a shared file, like mail
+programs do with mail boxes.  A "no locks available" error indicates that
+this table has run out.
+.PP
+.ti 2m
+.B kernel/bios_wini.c
+.ti 2m
+.B kernel/dosfile.c
+.ti 2m
+.B kernel/fatfile.c
+.br
+The number of disks each of these drivers can handle is specified by:
+.TP
+.B MAX_DRIVES
+This parameter is set to
+.B 4
+for the BIOS and "DOS file" drivers, and to
+.B 2
+for the "FAT file" driver.  It can be set as high as you need to allow for
+more disks, or files as disks.  (The "FAT" driver needs quite some memory per
+disk, which is why it by default only allows 2 disks.)  You will need to run
+.BR MAKEDEV (8)
+to create the extra disk devices in
+.BR /dev/ .
+.PP
+.ti 2m
+.B inet/inet_config.h
+.br
+The maximum number of TCP/IP networks is:
+.TP
+.B IP_PORT_MAX
+Sets the maximum number of networks that can be defined in
+.BR /etc/inet.conf .
+.BR 8086 ,
+.BR 286 :
+By default 2.
+.BR 386 :
+By default 4.
+.PP
+.ti 2m
+.B inet/buf.c
+.br
+The number of 512 byte buffers allocated for data within the TCP/IP server is:
+.TP
+.B BUF512_NR
+These buffers are a shared resource used by the server for any data it wants
+to play with.  For incoming data this number of buffers determines the time
+packets are kept around, with each new packet evicting an old packet.  It's
+no big deal if packets get lost before a user process reads them, packets
+get lost all the time.  The only real problem is outgoing TCP data.  The
+default setting for
+.SB BUF512_NR
+allows up to four backlogged TCP streams, i.e. when data is output faster
+then it is read.  If more buffers are needed then one of the TCP connections
+is shut down.  When this happens you will see a "not enough buffers left"
+error.  This could happen for instance if a Minix web server is assaulted by
+a browser that likes to open several connections to the server
+simultaneously.  The fix is to increase
+.SB BUF512_NR
+to allow more slow outgoing TCP streams.
+.BR 86 :
+The default of
+.B 32
+buffers can be increased up to
+.BR 64 .
+(The "TCP window size" has been limited in 16-bit mode to keep the buffer
+use by TCP down.)
+.BR 386 :
+The default of
+.B 128
+can be increased to any value you like, but
+.B 512
+seems to be more than enough.  Minix-vmd uses 512 by default, and it seems
+happy that way.
+.SH "SEE ALSO"
+.BR controller (4),
+.BR usage (8),
+.BR boot (8),
+.BR MAKEDEV (8).
+.SH NOTES
+Associated with drivers there are device files to access the devices
+controlled by the drivers that may have to be created.  Let's simplify this
+sentence:  Type
+.BR "ls /dev" ,
+note that there are only
+.B c0*
+and
+.B c1*
+devices, and only for two disks each.  Some devices, like the audio devices,
+are not even present.  So if you enable a driver, or increase some limits, you
+also need to use
+.BR MAKEDEV (8)
+in
+.B /dev
+to allow programs to talk to the drivers.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

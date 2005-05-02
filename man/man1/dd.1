@@ -1,0 +1,62 @@
+.TH DD 1
+.SH NAME
+dd \- convert and copy a file
+.SH SYNOPSIS
+\fBdd\fR [\fIoption = value\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "dd if=/dev/fd0 of=/dev/fd1" "Copy disk 0 to disk 1"
+.EX "dd if=x of=y bs=1w skip=4" "Copy \fIx\fP to \fIy\fP, skipping 4 words"
+.EX "dd if=x of=y count=3" "Copy three 512\-byte blocks"
+.SH DESCRIPTION
+.PP
+This command is intended for copying partial files.
+The block size, skip count, and number of blocks to copy can be specified.
+The options are:
+.PP
+.ta 0.25i 1.5i
+	\fBif\fR = file	\- Input file (default is \fIstdin\fR)
+.br
+	\fBof\fR = file	\- Output file (default is standard output)
+.br
+	\fBibs\fR = n	\- Input block size (default 512 bytes)
+.br
+	\fBobs\fR = n	\- Output block size (default is 512 bytes)
+.br
+	\fBbs\fR = n	\- Block size; sets \fIibs\fP and \fIobs\fP (default is 512 bytes)
+.br
+	\fBskip\fR = n	\- Skip \fIn\fP input blocks before reading
+.br
+	\fBseek\fR = n	\- Skip \fIn\fP output blocks before writing
+.br
+	\fBcount\fR = n	\- Copy only \fIn\fP input blocks
+.br
+	\fBconv = lcase\fR	\- Convert upper case letters to lower case
+.br
+	\fBconv = ucase\fR	\- Convert lower case letters to upper case
+.br
+	\fBconv = swab\fR	\- Swap every pair of bytes
+.br
+	\fBconv = noerror\fR	\- Ignore errors and just keep going
+.br
+	\fBconv = silent\fR	\- Suppress statistics (Minix specific flag)
+.PP
+Where sizes are expected, they are in bytes.
+However, the letters \fBw\fR, \fBb\fR, or \fBk\fR may be appended to the
+number to indicate words (2 bytes), blocks (512 bytes), or K
+(1024 bytes), respectively.
+When
+.I dd
+is finished, it reports the number of full and partial blocks read and written.
+.SH "SEE ALSO"
+.BR vol (1).

@@ -1,0 +1,50 @@
+.TH IFCONFIG 8
+.SH NAME
+ifconfig \- configure a TCP/IP device
+.SH SYNOPSIS
+.B ifconfig
+.RB [ \-I
+.IR ip-device ]
+.RB [ \-h
+.IR ipaddr ]
+.RB [ \-n
+.IR netmask ]
+.RB [ \-m
+.IR mtu ]
+.RB [ \-iva ]
+.SH DESCRIPTION
+.B Ifconfig
+initializes a TCP/IP device setting the IP address and/or netmask.  It will
+report the address and netmask set.  This command may be used if the system
+has not been configured properly yet.  It is only used at boot time to set a
+fixed address for a system without a physical ethernet.  Normally the
+.B inet
+task will find it out by itself from the RARP server.
+.SH OPTIONS
+.TP
+.B \-h
+The decimal TCP/IP address to set.
+.TP
+.B \-n
+The netmask to set.
+.TP
+.B \-m
+The mtu to set.  (Minix-vmd only.)
+.TP
+.B \-i
+Don't set the IP address or netmask if already set.  This way ifconfig cannot
+interfere if the numbers have been found out by RARP.
+.TP
+.B \-v
+Report IP address and netmask.  This is the default action if there are no
+other options.
+.TP
+.B \-a
+Report the IP addresses and netmasks of all configured interfaces.
+.SH "SEE ALSO"
+.BR hostaddr (1),
+.BR rarpd (8),
+.BR inet (8),
+.BR boot (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

@@ -1,0 +1,138 @@
+.TH TZ 5
+.SH NAME
+TZ \- Time zone environment variable
+.SH SYNOPSIS
+\fBTZ=\fIzone\fR[\fB\-\fR]\fIoffset\fR[\fIdst\fR[\fIoffset\fR][\fB,\fIstart\fR[\fB/\fItime\fR]\fB,\fIend\fR[\fB/\fItime\fR]]]
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The
+.B TZ
+environment variable tells functions such as the
+.BR ctime (3)
+family and programs like
+.B date
+what the time zone and daylight saving rule is.  The value of
+.B TZ
+has the \s-2POSIX\s+2 standardized form shown in the synopsis.  This form
+specifies the zone names, offsets from GMT, and daylight saving changeover
+times for at least the current year.
+.TP
+.I zone
+A three or more letter name for the time zone in normal (winter) time.
+.TP
+.BI [\-] offset
+A signed time telling the offset of the time zone westwards from Greenwich.
+The time has the form
+.I hh[:mm[:ss]]
+with a one of two digit hour, and optional two digit minutes and seconds.
+.TP
+.I dst
+The name of the time zone when daylight saving is in effect.  It may
+be followed by an offset telling how big the clock correction is other than
+the default of 1 hour.
+.TP
+\fIstart\fR/\fItime\fR,\fIend\fR/\fItime\fR
+Specifies the start and end of the daylight saving period.  The
+.I start
+and
+.I end
+fields indicate on what day the changeover occurs.  They must be in one of
+the following formats:
+.SP
+.ta +5
+.in +5
+.ti -5
+\fBJ\fIn\fR	The Julian day
+.I n
+(1 <=
+.I n
+<= 365) ignoring leap days, i.e. there is no February 29.
+.SP
+.ti -5
+\fIn\fR	The zero-based Julian day
+(0 <=
+.I n
+<= 365).  Leap days are not ignored.
+.SP
+.ti -5
+.BI M m . n . d
+.br
+This indicates month
+.IR m ,
+the
+.IR n -th
+occurrence of day
+.I d
+(1 <=
+.I m
+<= 12, 1 <=
+.I n
+<= 5, 0 <=
+.I d
+<= 6, 0=Sunday).  The 5-th occurrence means the last occurrence of that day
+in a month.  So
+.B M4.1.0
+is the first Sunday in April,
+.B M9.5.0
+is the last Sunday in September.
+.in -5
+.SP
+The
+.I time
+field indicates the time the changeover occurs on the given day.
+.SH EXAMPLES
+Greenwich Mean Time:
+.PP
+.RS
+.B TZ=GMT0
+.RE
+.PP
+Central European Time, 1 hour east from Greenwich, daylight saving starts on
+the last Sunday in March at 2 AM and ends on the last Sunday in October
+at 3 AM:
+.PP
+.RS
+.B TZ='CET\-1CEST,M3.5.0/2,M10.5.0/3'
+.RE
+.PP
+British time, daylight saving starts and ends at the same moment as CET,
+but in an earlier time zone:
+.PP
+.RS
+.B TZ=GMT0BST,M3.5.0/1,M10.5.0/2
+.RE
+.PP
+The eastern european time zones also have the changeovers at the same
+absolute time as British time and CET.
+.PP
+U.S. Eastern Standard Time, 5 hours west from Greenwich, daylight saving
+starts on the first Sunday in April at 2 AM and ends on the last Sunday in
+October at 2 AM:
+.PP
+.RS
+.B TZ=EST5EDT,M4.1.0/2,M10.5.0/2
+.RE
+.PP
+It shouldn't surprise you that daylight saving in New Zealand is observed
+in the months opposite from the previous examples.  It starts on the first
+Sunday in October at 2 AM and ends on the third Sunday in March at 3 AM:
+.PP
+.RS
+.B TZ=NZST\-12NZDT,M10.1.0/2,M3.3.0/3
+.RE
+.SH "SEE ALSO"
+.BR readclock (8),
+.BR date (1).
+.SH BUGS
+You may have noticed that many fields are optional.  Do no omit them,
+because the defaults are bogus.  If you need daylight saving then fully
+specify the changeovers.
+.PP
+West is negative, east is positive, ask any sailor.
+.PP
+Next year's time zone and daylight saving time are determined by politicians.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

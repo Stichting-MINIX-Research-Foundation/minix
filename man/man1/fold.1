@@ -1,0 +1,29 @@
+.TH FOLD 1
+.SH NAME
+fold \- fold long lines
+.SH SYNOPSIS
+\fBfold\fR [\fB\-\fIn\fR]\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-\fIn\fR" "How long should the output lines be"
+.SH EXAMPLES
+.EX "fold \-60" "Fold \fIstdin\fR to 60 characters"
+.EX "fold file" "Fold \fIfile\fP to 80 characters"
+.SH DESCRIPTION
+.PP
+\fIFold\fR takes copies its input from the named file (or \fIstdin\fR,
+if none is specified) to standard output.
+However, lines longer than the given maximum (default 80) are broken
+into multiple lines of the maximum length by inserting new line characters.
+.SH "SEE ALSO"
+.BR width (1).

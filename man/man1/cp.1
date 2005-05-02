@@ -1,0 +1,223 @@
+.TH CP 1
+.SH NAME
+cp, mv, rm, ln, cpdir, clone \- copy, move, remove, link
+.SH SYNOPSIS
+.B cp
+.RB [ \-pifsmrRvx ]
+.I file1 file2
+.br
+.B cp
+.RB [ \-pifsrRvx ]
+.IR file " ... " dir
+.PP
+.B mv
+.RB [ \-ifsmvx ]
+.I file1 file2
+.br
+.B mv
+.RB [ \-ifsvx ]
+.IR file " ... " dir
+.PP
+.B rm
+.RB [ \-ifrRvx ]
+.IR file " ..."
+.PP
+.B ln
+.RB [ \-ifsSmrRvx ]
+.I file1 file2
+.br
+.B ln
+.RB [ \-ifsSrRvx ]
+.IR file " ... " dir
+.PP
+.B cpdir
+.RB [ \-ifvx ]
+.I file1 file2
+.PP
+.B clone
+.RB [ \-ifsSvx ]
+.I file1 file2
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The utilities
+.BR cp ,
+.BR mv ,
+.BR rm ,
+and
+.B ln
+do basic file management: copying, renaming or moving, deletion, and
+creating links.  (The
+.B cpdir
+and
+.B clone
+utilities are easy to use aliases for copying or linking whole trees.
+They are the same as
+.B cp \-psmr
+and
+.BR "ln \-fmr" )
+.PP
+The first synopsis form of the utilities
+.BR cp ,
+.BR mv ,
+and
+.B ln
+is used if only two arguments are given, and the second argument is not a
+directory.  The source and target file are then the two files given.
+.PP
+If the second synopsis form is used then the last argument must be a
+directory.  Each of the files is copied, moved or linked into this directory.
+.PP
+A file is by default copied by
+.B cp
+without looking at its type, so symlinks are followed and devices are opened
+and read from or written to.  Links between files are ignored.  This
+behavior can be changed by using the proper options.
+.PP
+The
+.B mv
+utility uses the
+.BR rename (2)
+call to rename or move files.  If source and target are on different devices
+however, then
+.B mv
+will use
+.B cp \-pr
+to copy the files or directory trees.
+.PP
+Each utility continues with the next file on errors, except on I/O errors.
+.SH OPTIONS
+.TP
+.B \-p
+Copy the file attributes like mode, owner, group and time of last
+modification.  Normally only the mode is copied to a new file with the file
+creation mask applied.  Setuid bits are cleared if setting the ownership
+fails.
+.TP
+.B \-i
+Ask if ok to overwrite, replace or remove.
+.B Mv
+and
+.B rm
+will ask this automatically if interactive and the target file is writable.
+.B Cp
+will fail if the target cannot be written,
+.B ln
+will always fail if the target exists.
+.TP
+.B \-f
+Makes
+.B cp
+remove a target file before copying if it is not writable,
+.B mv
+removes an existing target without asking,
+.B rm
+does not report any errors, and
+.B ln
+removes an existing target file before linking.  The last of
+.B \-i
+and
+.B \-f
+wins for
+.B mv
+if both flags are set, the other utilities do something sensible, like asking
+before forcefully removing.
+.TP
+.B \-s
+Make a symlink instead of a normal link.  For utilities other than
+.B ln
+this flag means "copy similar".  The modified time is always copied for
+.B cp \-s
+and the other attributes are copied if a new file is created.  The normal
+\s-2POSIX\s+2 required patronizing like applying the file creation mask or
+clearing setuid bits is not done.
+.TP
+.B \-S
+Make a symlink if a normal link cannot be made because source and target are
+on different devices.  The symlink is required to really refer back to the
+source, meaning that a/b must exist in the call
+.BR "ln \-S a/b c/d" ,
+and that the symlink from c/d must lead back to a/b.  So the symlink will be
+created as if
+.B "ln \-s ../a/b c/d"
+was called.  If the target is a full path, but the source is not then an
+error will be given saying that this is "too difficult."
+.TP
+.B \-m
+Merge trees.  The first synopsis form is assumed, and the files from one
+tree are merged into the other.  There is no "if it's a directory the put
+it into that directory" trickery here.
+.TP
+.BR \-r ", " \-R
+Recursively copy, remove, or link.  If the source is a directory then the
+files in this directory are copied to similarly named files in the target
+directory.  Special files are copied as new special files, they are not read
+or written.  Symlinks are still expanded and the link structure ignored with
+.BR \-R .
+The
+.B \-r
+flag does copy symlinks as symlinks and keeps the link structure intact.
+(Note that
+.B \-R
+is invented by \s-2POSIX\s+2 as a replacement for the classic
+.B \-r
+option of older copy commands that did read special files.  The standard
+says that
+.B \-r
+is implementation defined, so that's why this flag is better than
+.B \-R
+in this implementation of
+.BR cp .)
+For
+.B rm
+and
+.B ln
+both flags mean the same.
+.B Ln
+will recursively link the files in the trees, except symlinks, they are
+copied.  If symlinks are created with
+.B ln \-rs
+or
+.B ln \-rS
+then they are required "to work" as described with the
+.B \-S
+flag.
+.TP
+.B \-v
+Verbose.  Show what is done on standard output.
+.TP
+.B \-x
+Do not cross mount points.  Empty directories will be created if the source
+directory is a mount point on a copy, move or link.  A mount point will not
+be removed or traversed recursively.  This flag allows one to copy the root
+device, e.g.
+.BR "cpdir \-x / /mnt" .
+.SH "SEE ALSO"
+.BR cat (1),
+.BR mkdir (1),
+.BR rmdir (1),
+.BR mkdir (2),
+.BR rmdir (2),
+.BR link (2),
+.BR unlink (2),
+.BR rename (2),
+.BR open (2),
+.BR read (2),
+.BR write (2),
+.BR opendir (3).
+.SH NOTES
+All the utilities described are links to the same program.
+.SH BUGS
+.B Mv
+should first copy a tree across devices and then remove the source tree if
+there was no error.  Instead, each file in the tree is copied and
+immediately removed.  On error you may be left with two half-filled trees,
+together containing all of the files.  You may have to restart the move with
+.BR "mv \-m" .
+.PP
+.B Rm
+should be able to remove arbitrarily deep trees.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

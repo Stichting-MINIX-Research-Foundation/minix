@@ -1,0 +1,123 @@
+.\"	@(#)varargs.3	6.3 (Berkeley) 5/15/86
+.\"
+.TH STDARG 3  "May 15, 1986"
+.AT 3
+.SH NAME
+stdarg \- variable argument list
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdarg.h>
+
+void va_start(va_list \fIap\fP, \fIargtypeN\fP \fIparmN\fP)
+\fItype\fP va_arg(va_list \fIap\fP, \fItype\fP)
+void va_end(va_list \fIap\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+This set of macros provides a means of writing portable procedures that
+accept variable argument lists.
+Routines having variable argument lists (such as
+.BR printf (3))
+that do not use
+.B stdarg
+are inherently nonportable, since different
+machines use different argument passing conventions.
+.PP
+A function that accepts a variable argument list is declared with "..." at
+the end of its parameter list.  It must have at least one normal argument
+before the "...".  For example:
+.PP
+.RS
+.nf
+int printf(const char *format, ...) { /* code */ }
+int fprintf(FILE *stream, const char *format, ...) { /* code */ }
+.fi
+.RE
+.PP
+.B va_list
+is a type which is used for the variable
+.I ap
+within the body of a variable argument function which is used to traverse
+the list.
+.PP
+.B va_start\c
+.RI ( ap ,
+.IR parmN )
+is called to initialize
+.I ap
+to the beginning of the list.  The last true parameter of the function,
+.IR parmN ,
+must be supplied to allow
+.B va_start
+to compute the address of the first variable parameter.
+.PP
+.B va_arg\c
+.RI ( ap ,
+.IR type )
+will return the next argument in the list pointed to by
+.IR ap .
+.I Type
+is the type to which the expected argument will be converted
+when passed as an argument.
+.PP
+Different types can be mixed, but it is up
+to the routine to know what type of argument is
+expected, since it cannot be determined at runtime.
+.PP
+.B va_end\c
+.RI ( ap )
+must be used to finish up.
+.PP
+Multiple traversals, each bracketed by
+.B va_start
+\&...
+.B va_end,
+are possible.
+.SH EXAMPLE
+.nf
+.ta +4n +4n +4n +4n
+	\fB#include\fP <stdarg.h>
+.sp 0.4
+	execl(\fBconst char\fP *path, \fB...\fP)
+	{
+		\fBva_list\fP ap;
+		\fBchar\fP *args[100];
+		\fBint\fP argno = 0;
+
+		\fBva_start\fP(ap, path);
+		\fBwhile\fP ((args[argno++] = \fBva_arg\fP(ap, \fBchar\fP *)) != NULL) {}
+		\fBva_end\fP(ap);
+		\fBreturn\fP execv(path, args);
+	}
+.DT
+.fi
+.SH NOTES
+It is up to the calling routine to determine how many arguments
+there are, since it is not possible to determine this from the
+stack frame.  For example,
+.B execl
+passes a null pointer to signal the end of the list.
+.B Printf
+can tell how many arguments are supposed to be there by the format.
+.PP
+The macros
+.B va_start
+and
+.B va_end
+may be arbitrarily complex;
+for example,
+.B va_start
+might contain an opening brace,
+which is closed by a matching brace in
+.BR va_end .
+Thus, they should only be used where they could
+be placed within a single complex statement.
+.SH BUGS
+It is impossible to properly show the macros as C declarations as is
+done in the synopsis.  They can never be coded as C functions, because
+all three macros use their arguments by address, and the
+.I type
+field is certainly impossible.
+Just look at them as being part of the C language, like
+.BR sizeof .

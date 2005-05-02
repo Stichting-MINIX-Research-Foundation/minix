@@ -1,0 +1,40 @@
+.TH SHAR 1
+.SH NAME
+shar \- shell archiver
+.SH SYNOPSIS
+\fBshar \fIfile ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "shar *.c >s" "Collect C programs in shell archive"
+.EX "sh <s" "Extract files from a shell archive"
+.SH DESCRIPTION
+.PP
+The named files are collected together into a shell archive written onto
+standard output.
+The individual files can be extracted by redirecting the shell archive into
+the shell.
+The advantage of
+.I shar
+over
+.I ar
+is that \fIshar\fP archives can be read on almost any 
+\s-2UNIX\s+2
+system, whereas numerous, incompatible versions of
+.I ar
+are in widespread use.
+Extracting the files from a shell archive requires that 
+.I sed
+be accessible.
+.SH "SEE ALSO"
+.BR sh (1),
+.BR unshar (1).

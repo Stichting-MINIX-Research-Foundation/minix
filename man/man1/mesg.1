@@ -1,0 +1,38 @@
+.\"	@(#)mesg.1	6.1 (Berkeley) 4/29/85
+.\"
+.TH MESG 1 "April 29, 1985"
+.AT 3
+.SH NAME
+mesg \- permit or deny messages
+.SH SYNOPSIS
+.B mesg
+[
+.B n
+] [
+.B y
+]
+.SH DESCRIPTION
+.B Mesg
+with argument
+.B n
+forbids messages via
+.B write
+and
+.BR talk (1)
+by revoking non-user
+write permission on the user's terminal.
+.B Mesg
+with argument
+.B y
+reinstates permission.
+All by itself,
+.B mesg
+reports the current state without changing it.
+.SH FILES
+/dev/tty*
+.SH "SEE ALSO"
+.BR write (1),
+.BR talk (1).
+.SH DIAGNOSTICS
+Exit status is 0 if messages are receivable,
+1 if not, 2 on error.

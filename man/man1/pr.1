@@ -1,0 +1,37 @@
+.TH PR 1
+.SH NAME
+pr \- print a file
+.SH SYNOPSIS
+\fBpr\fR [\fB\-Mfnt\fR]\fR [\fB\-h \fIn\fR]  [\fB\-l \fIn\fR]  [\fB\-w \fIn\fR] [\fB\-\fRcolumns\fR] [\fB+\fIpage\fR] [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-M" "Use MINIX style line number"
+.FL "\-f" "Do not fold long lines"
+.FL "\-h" "Take next argument as page header"
+.FL "\-l" "Sets page length in lines"
+.FL "\-n" "Number the output lines"
+.FL "\-t" "Do not print page header or trailer"
+.FL "\-w" "Sets line length in characters"
+.SH EXAMPLES
+.EX "pr \-w85 \-l60 file" "Use 85 character line, 60 line page"
+.EX "pr \-3 file" "List \fIfile\fP three columns to a page"
+.EX "pr +4 file" "Start printing with page 4"
+.SH DESCRIPTION
+.PP
+.I Pr
+formats one or more files for printing.
+If no files are specified, \fIstdin\fR is printed.
+Options are provided for setting the width and height of the page, the
+number of columns to use (default 1), and the page to start with, among others.
+.SH "SEE ALSO"
+.BR lp (1).

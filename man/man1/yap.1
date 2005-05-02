@@ -1,0 +1,391 @@
+.\" $Header$
+.\" nroff -man yap.1
+.tr ~
+.TH YAP 1 local
+.SH NAME
+yap, more \- yet another pager
+.SH SYNOPSIS
+.B yap
+.RB [ \-cnuq ]
+.RB [ \-\fIn\fP ]
+.RB [ +\fIcommand\fP ]
+.RI [ file " ...]"
+.SH DESCRIPTION
+.B Yap
+is a program allowing the user to examine a continuous text one screenful at
+a time on a video display terminal.
+It does so by
+pausing after each screenful, waiting for the user to type a command.
+The commands are enumerated later.
+.BR Yap 's
+main feature is, that it can page both forwards and backwards,
+even when reading from standard input.
+.PP
+The command line options are:
+.TP
+.I \-n
+An integer which is the size (in lines) of a page (the initial
+.IR page-size .
+.TP
+.B \-c
+Normally,
+.B yap
+will display each page by beginning at the top of the screen and erasing 
+each line just before it displays on it. If your terminal cannot erase a line,
+.B yap
+will clear the screen before it displays a page.
+.br
+This avoids scrolling the screen, making it easier to read while 
+.B yap 
+is writing.
+The
+.B -c
+option causes
+.B yap
+to scroll the screen instead of beginning at the top of the screen.
+This is also done if your terminal cannot either erase a line or clear the
+screen.
+.TP
+.B \-u
+Normally,
+.B yap
+handles underlining such as produced by nroff in a manner appropriate
+to the particular terminal: if the terminal can perform underlining well
+(t.i., the escape sequences for underlining do not occupy space on the
+screen),
+.B yap
+will underline underlined information in the input. The
+.B -u
+option supresses this underlining.
+.TP
+.B \-n
+Normally,
+.B yap
+also recognises escape sequences for stand-out mode or underlining mode
+in the input, and knows how much space these escape sequences will
+occupy on the screen, so that
+.B yap
+will not fold lines erroneously.
+The
+.B -n
+option supresses this pattern matching.
+.TP
+.B \-q
+This option will cause
+.B yap
+to exit only on the "quit" command.
+.TP
+.BI + command
+\fIcommand\fP is taken to be an initial command to
+.BR yap .
+.PP
+.B Yap
+looks in the
+.B YAP
+environment variable
+to pre-set flags.
+For instance, if you prefer the
+.B -c
+mode of operation, just set the
+.B YAP
+environment variable to
+.BR -c .
+.PP
+The commands of
+.B yap
+can be bound to sequences of keystrokes.
+The environment variable
+.B YAPKEYS
+may contain the bindings in the
+form of a list of colon-separated `name=sequence' pairs.
+The
+.I name
+is a short mnemonic for the command, the
+.I sequence
+is the sequence of keystrokes to be typed to invoke the command.
+This sequence may contain a ^X escape, which means control-X,
+and a \\X escape, which means X. The latter can be used to get
+the characters `^', `\\' and `:' in the sequence.
+There are two keymaps available, the default one and a user-defined one.
+You can switch between one and the other with the
+.I change keymap
+command.
+.PP
+The
+.B yap
+commands are described below.
+The mnemonics for the commands are given in parentheses. The default
+key sequences (if any) are given after the mnemonic.
+Every command takes an optional integer argument, which may be typed
+before the command. Some commands just ignore it. The integer argument
+is referred to as
+.IR i .
+Usually, if
+.I i
+is not given, it defaults to 1.
+.de Nc
+.PP
+\&\\$1
+.RI ( \\$2 )
+.BR \\$3
+.br
+.RS
+..
+.de Ec
+.RE
+..
+.Nc "visit previous file" bf P
+Visit the
+.IR i -th
+previous file given in the command line.
+.Ec
+.Nc "scroll one line up or go to line" bl "^K ~or~ k"
+If
+.I i
+is not given, scroll one line up. Otherwise,
+.I i
+will be interpreted as a line number. A page starting with the line
+indicated will then be displayed.
+.Ec
+.Nc "bottom" bot "l ~or~ $"
+Go to the last line of the input.
+.Ec
+.Nc "display previous page" bp -
+Display the previous page, consisting of
+.I i
+lines, (or
+.I page-size
+lines if no argument is given).
+.Ec
+.Nc "display previous page and set pagesize" bps Z
+Display the previous page, consisting of
+.I i
+lines, (or
+.I page-size
+lines if no argument is given).
+If
+.I i
+is given, the
+.I page-size
+is set to
+.IR i .
+.Ec
+.Nc "scroll up" bs ^B
+Scroll up
+.I i
+lines (or
+.I scroll-size
+lines if
+.I i
+is not given. Initially, the
+.I scroll-size
+is 11).
+.Ec
+.Nc "search backwards for pattern" bse ?
+Search backwards for the
+.IR i -th
+occurrence of a regular expression which will be prompted for.
+If there are less than
+.I i
+occurrences of the expression, the position in the file remains unchanged.
+Otherwise, a page is displayed, starting two lines before the place where the
+expression was found. The user's erase and kill characters may be used
+to edit the expression.
+Erasing back past the first character cancels the search command.
+.br
+Note: Some systems do not have
+.BR regex (3).
+On those systems, searches are still supported, but regular expressions
+are not.
+.Ec
+.Nc "skip lines backwards" bsl S
+Skip
+.I i
+lines backwards and display a page.
+.Ec
+.Nc "skip pages backwards" bsp F
+Skip
+.I i
+pages backwards and display a page.
+.Ec
+.Nc "scroll up and set scrollsize" bss b
+Scroll up
+.I i
+lines (or
+.I scroll-size
+lines if
+.I i
+is not given.
+If
+.I i
+is given, the
+.I scroll-size
+is set to
+.IR i .
+.Ec
+.Nc "change key map" chm X
+Change from the current key map to the other (if there is one).
+.Ec
+.Nc "exchange current page and mark" exg x
+Set the mark to the current page, and display the previously marked
+page.
+.Ec
+.Nc "visit next file" ff N
+Visit the
+.IR i -th
+next file given in the command line.
+.Ec
+.Nc "scroll one line down or go to line" fl "^J ~or~ ^M ~or~ j"
+If
+.I i
+is not given, scroll one line down. Otherwise,
+.I i
+will be interpreted as a line number. A page starting with the line
+indicated will then be displayed.
+.Ec
+.Nc "display next page" fp <space>
+Display the next page, consisting of
+.I i
+lines, (or
+.I page-size
+lines if no argument is given).
+.Ec
+.Nc "display next page and set pagesize" fps z
+Display the next page, consisting of
+.I i
+lines, (or
+.I page-size
+lines if no argument is given).
+If
+.I i
+is given, the
+.I page-size
+is set to
+.IR i .
+.Ec
+.Nc "scroll down" fs ^D
+Scroll down 
+.I i
+lines (or
+.I scroll-size
+lines if no argument is given).
+.Ec
+.Nc "search forwards for pattern" fse /
+Search forwards for the
+.IR i -th
+occurrence of a regular expression which will be prompted for.
+If there are less than
+.I i
+occurrences of the expression, the position in the file remains unchanged.
+Otherwise, a page is displayed, starting two lines before the place where the
+expression was found. The user's erase and kill characters may be used
+to edit the expression.
+Erasing back past the first character cancels the search command.
+.br
+Note: Some systems do not have
+.BR regex (3).
+On those systems, searches are still supported, but regular expressions
+are not.
+.Ec
+.Nc "skip lines forwards" fsl s
+Skip
+.I i
+lines and display a page.
+.Ec
+.Nc "skip pages forwards" fsp f
+Skip
+.I i
+pages and display a page.
+.Ec
+.Nc "scroll down and set scrollsize" fss d
+Scroll down
+.I i
+lines (or
+.I scroll-size
+lines if
+.I i
+is not given.
+If
+.I i
+is given, the
+.I scroll-size
+is set to
+.IR i .
+.Ec
+.Nc "help" hlp h
+Give a short description of all commands that are bound to a key sequence.
+.Ec
+.Nc "set a mark" mar m
+Set a mark on the current page.
+.Ec
+.Nc "repeat last search" nse n
+Search for the 
+.IR i -th
+occurrence of the last regular expression entered, in the direction of the
+last search.
+.Ec
+.Nc "repeat last search in other direction" nsr r
+Search for the
+.IR i -th
+occurrence of the last regular expression entered, but in the other direction.
+.Ec
+.Nc "quit" qui "Q ~or~ q"
+Exit from
+.BR yap .
+.Ec
+.Nc "redraw" red ^L
+Redraw the current page.
+.Ec
+.Nc "repeat" rep .
+Repeat the last command. This does not always make sense, so not all
+commands can be repeated.
+.Ec
+.Nc "shell escape" shl !
+Invoke the shell with a command that will be prompted for.
+In the command, the characters `%' and `!' are replaced with the
+current file name and the previous shell command respectively.
+The sequences `\\%' and `\\!' are replaced by `%' and `!' respectively.
+The user's erase and kill characters can be used to edit the command.
+Erasing back past the first character cancels the command.
+.Ec
+.Nc "pipe to shell command" pip |
+Pipe the current input file into a shell command that will be prompted for.
+The comments given in the description of the shell escape command apply here
+too.
+.Ec
+.Nc "go to mark" tom '
+Display the marked page.
+.Ec
+.Nc "top" top ^^
+Display a page starting with the first line of the input.
+.Ec
+.Nc "visit file" vis e
+Visit a new file. The filename will be prompted for. If you just
+type a return, the current file is revisited.
+.Ec
+.Nc "write input to a file" wrf w
+Write the input to a file, whose name will be prompted for.
+.Ec
+.PP
+The commands take effect immediately, i.e., it is not necessary to
+type a carriage return.
+Up to the time when the command sequence itself is given,
+the user may give an interrupt to cancel the command
+being formed.
+.SH AUTHOR
+Ceriel J.H. Jacobs
+.SH SEE ALSO
+.BR regex (3).
+.SH BUGS
+.B Yap
+will find your terminal very stupid and act like it,
+if it has no way of placing the
+cursor on the home position, or cannot either
+erase a line or
+insert one.
+.PP
+In lines longer than about 2000 characters, a linefeed is silently inserted.
+.PP
+The percentage, given in the prompt when
+.B yap
+reads from a file (and knows it), is not always very accurate.

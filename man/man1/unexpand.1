@@ -1,0 +1,28 @@
+.TH UNEXPAND 1
+.SH NAME
+unexpand \- convert spaces to tabs
+.SH SYNOPSIS
+\fBunexpand\fR [\fB\-a\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "All spaces are unexpanded"
+.SH EXAMPLES
+.EX "unexpand oldfile >newfile" "Convert leading spaces to tabs"
+.SH DESCRIPTION
+.PP
+\fIUnexpand\fR replaces spaces in the named files with tabs.
+If no files are listed, \fIstdin\fR is given.
+The \fB\-a\fR flag is used to force all sequences of spaces to be
+expanded, instead of just leading spaces (the default).
+.SH "SEE ALSO"
+.BR expand (1).

@@ -1,0 +1,34 @@
+.TH BADBLOCKS 8
+.SH NAME
+badblocks \- put a list of bad blocks in a file
+.SH SYNOPSIS
+\fBbadblocks \fIblock_special\fR [\fIblock\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "badblocks /dev/hd1       " "Handle bad blocks on \fI/dev/hd1\fP"
+.EX "badblocks /dev/hd3 310 570 1680 " "Three bad blocks on \fI/dev/hd3\fP"
+.SH DESCRIPTION
+.PP
+If a device contains bad sectors, it is important to not have them
+allocated to important files.  This program makes it possible to collect
+up to 7 bad blocks into a dummy file, so they will not be allocated for a 
+\&'real\&' file.  
+When the program starts up, it asks for a list of bad blocks, unless
+they are provided as arguments.
+Then it creates a file whose name is of the
+form \fI.Bad_xxxxx\fR, where \fIxxxxx\fR is a pid.
+.SH "SEE ALSO"
+.BR readall (1).
+
+.\"
+.\" $PchId: badblocks.8,v 1.2 1998/07/27 19:47:04 philip Exp $

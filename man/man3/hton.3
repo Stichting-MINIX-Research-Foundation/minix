@@ -1,0 +1,60 @@
+.TH HTON 3
+.SH NAME
+hton, htons, htonl, ntohs, ntohl \- host to network byte order conversion
+.SH SYNOPSIS
+.ft B
+.nf
+#define _MINIX_SOURCE 1
+#include <stddef.h>
+#include <sys/types.h>
+
+#include <net/hton.h>
+
+u16_t htons(u16_t \fIhost_word\fP)
+u32_t htonl(u32_t \fIhost_dword\fP)
+u16_t ntohs(u16_t \fInetwork_word\fP)
+u32_t ntohl(u32_t \fInetwork_dword\fP)
+u16_t HTONS(u16_t \fIhost_word\fP)
+u32_t HTONL(u32_t \fIhost_dword\fP)
+u16_t NTOHS(u16_t \fInetwork_word\fP)
+u32_t NTOHL(u32_t \fInetwork_dword\fP)
+.fi
+.ft R
+.SH DESCRIPTION
+These macros convert 16-bit and 32-bit quantities to and from the network
+byte order used by the TCP/IP protocols.
+The function of the macros is encoded in their name.
+.B H
+means host byte order,
+.B n
+means network byte order,
+.B s
+means a 16-bit quantity and
+.B l
+means a 32-bit quantity.
+Thus
+.B htons
+converts a 16-bit quantity from host byte order to network byte order.
+The difference between the lower case and upper case variants is that
+the lower case variants evaluate the argument at most once and the
+upper case variants can be used for constant folding.
+That is,
+.PP
+.RS
+htonl(f(x))
+.RE
+.PP
+will call f(x) at most once and
+.PP
+.RS
+HTONS(0x10)
+.RE
+.PP
+will be equivalent to 0x10 on a big-endian machine and 0x1000 on a
+little-endian machine.
+.SH "SEE ALSO"
+.BR ip (4).
+.SH AUTHOR
+Philip Homburg (philip@cs.vu.nl)
+.\"
+.\" $PchId: hton.3,v 1.3 1996/02/22 21:10:01 philip Exp $

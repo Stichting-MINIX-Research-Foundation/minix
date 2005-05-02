@@ -1,0 +1,88 @@
+.TH FD 4
+.SH NAME
+fd \- floppy disk
+.SH DESCRIPTION
+The
+.B fd*
+devices refer to the Floppy disk driver using the NEC PD765 floppy disk
+controller.  These diskettes are arrays of 512 byte sectors, although Minix
+always works with two sectors at a time due to its 1024 byte block size.  You
+can read or write any number of bytes however, Minix takes care of cutting
+and pasting incomplete blocks together.
+.PP
+The driver is normally configured for two floppy disk devices
+.B fd0
+and
+.BR fd1 .
+It can handle two more, but it is unlikely that the average PC can.
+.PP
+On the first access to an
+.B fd
+device (by
+.BR open (2)
+or
+.BR mount (2)),
+the driver will execute a series of read tests to determine the floppy type.
+This works ok for all floppy types except the true 360k type, because it
+is indistinguishable from the 720k type.  This only means that the size of
+the floppy is not estimated right.
+.PP
+Bits 2\-6 of the minor device number may be set to the floppy disk type
+to make it known to the driver what type of diskette it is reading or
+writing.  The non-auto devices should be used for formatting, or when one wants to
+be absolutely sure that the device is accessed right.  These devices exist for
+drive 0:
+.sp
+.nf
+.ta +4n +7n +9n +8n
+	type	device	minor	media
+.ta +5n +7n +9n +7n
+	0	fd0	0	autodetect
+	1	pc0	4	360k, 5.25"
+	2	at0	8	1.2M, 5.25"
+	3	qd0	12	360k in a 720k, 5.25" drive
+	4	ps0	16	720k, 3.5"
+	5	pat0	20	360k in a 1.2M, 5.25" drive
+	6	qh0	24	720k in a 1.2M, 5.25" drive
+	7	PS0	28	1.44M, 3.5"
+.fi
+.DT
+.PP
+Type 4 may also be used for the rarely seen 720k, 5.25" floppies (type 2 made
+them obsolete fast.)  Note that these "types" only describe the floppies from
+a software point of view, type 1 and 4 drives use the same parameters.
+.PP
+If the format bit (bit 7) is set, then the driver interprets write commands
+as track formatting requests.  This is used by the
+.BR format (1)
+command.
+.PP
+If the type bits are set to 28, 29, 30, or 31, then the driver uses a
+partition table found in sector 0 to partition the floppy.  The partitions
+of
+.B fd0
+may be accessed as
+.B fd0p0
+through
+.BR fd0p3 .
+See
+.BR controller (4)
+for a description of the partition table, and associated ioctl commands.
+.SH FILES
+/dev/fd[0\-3], /dev/pc[0\-3], /dev/at[0\-3], /dev/qd[0\-3], /dev/ps[0\-3],
+/dev/pat[0\-3], /dev/qh[0\-3], /dev/PS[0\-3], /dev/fd[0\-3]p[0\-3]
+.SH "SEE ALSO"
+.BR format (1),
+.BR controller (4),
+.BR part (8).
+.SH BUGS
+The driver does not know the size of a 360k diskette in a 360k 5.25"
+drive, because it uses the 720k parameters for it.  So it will happily try
+to read past the end making all kinds of interesting noises.  It's a good
+thing these drives are practically obsolete.
+.PP
+The partition table is only read when the drive motor is off and only for
+an auto or partition device.  The driver assumes that a floppy in a drive
+with a running motor can't have been replaced all of a sudden.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

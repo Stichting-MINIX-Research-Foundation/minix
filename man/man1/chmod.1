@@ -1,0 +1,62 @@
+.TH CHMOD 1
+.SH NAME
+chmod \- change access mode for files
+.SH SYNOPSIS
+\fBchmod [\fB\-R\fR] \fImode \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-R" "Change hierarchies recursively"
+.SH EXAMPLES
+.EX "chmod 755 file" "Owner: rwx Group: r\-x Others: r\-x"
+.EX "chmod +x file1 file2" "Make \fIfile1\fR and \fIfile2\fR executable"
+.EX "chmod a\-w file" "Make \fIfile\fR read only"
+.EX "chmod u+s file" "Turn on SETUID for \fIfile\fR"
+.EX "chmod \-R o+w dir" "Allow writing for all files in dir"
+.SH DESCRIPTION
+.PP
+The given mode is applied to each file in the file list. If the \fB\-R\fR
+flag is present, the files in a directory will be changed as well.
+The mode can be either absolute or symbolic. Absolute modes are given as an
+octal number that represents the new file mode. The mode bits are defined as
+follows: 
+.ta 0.25i
+.nf
+.PP
+	4000    Set effective user id on execution to file's owner id
+	2000    Set effective group id on execution to file's group id
+	0400    file is readable by the owner of the file
+	0200    writeable by owner
+	0100    executable by owner
+	0070    same as above, for other users in the same group
+	0007    same as above, for all other users
+.PP
+.fi
+Symbolic modes modify the current file mode in a specified way. The form is:
+.PP
+	[who] op permissions { op permissions ...} {, [who] op ... }
+.PP
+The possibilities for \fIwho\fR are \fIu\fR, \fIg\fR, \fIo\fR, and \fIa\fR,
+standing for user, group, other and all, respectively.  
+If \fIwho\fR is omitted, \fIa\fR is assumed, but the current umask is used.  
+The op can be \fI+\fR, \fI-\fR, or \fI=\fR;  \fI+\fR turns on the 
+given permissions, \fI\- \fRturns them off; \fI=\fR sets the permissions 
+exclusively for the given \fIwho\fR.  
+For example \fIg=x\fR sets the group permissions to \fI--x\fR. 
+.PP
+The possible permissions are \fIr\fR, \fIw\fR, \fIx\fR; which stand for read, 
+write, and execute;  \fIs\fR turns on the set effective user/group id bits.  
+\fIs\fR only makes sense with \fIu\fR and \fIg\fR;\fR o+s\fR is 
+harmless.
+.SH "SEE ALSO"
+.BR ls (1),
+.BR chmod (2).

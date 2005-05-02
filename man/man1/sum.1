@@ -1,0 +1,29 @@
+.TH SUM 1
+.SH NAME
+sum \- compute the checksum and block count of a file
+.SH SYNOPSIS
+\fBsum \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "sum /user/ast/xyz" "Checksum \fI/user/ast/xyz"
+.SH DESCRIPTION
+.PP
+.I Sum
+computes the checksum of one or more files.
+It is most often used to see if a file copied from another machine has
+been correctly received.
+This program works best when both machines use the same checksum algorithm.
+See also \fIcrc\fR.
+.SH "SEE ALSO"
+.BR cksum (1),
+.BR crc (1).

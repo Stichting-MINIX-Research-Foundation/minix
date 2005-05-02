@@ -1,0 +1,34 @@
+.TH TAIL 1
+.SH NAME
+tail \- print the last few lines of a file
+.SH SYNOPSIS
+\fBtail\fR [\fB\-c \fIn\fR] [\fB\-f] [\fB\-n \fIn\fR] [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "The count refers to characters"
+.FL "\-f" "On FIFO or special file, keep reading after EOF"
+.FL "\-n" "The count refers to lines"
+.SH EXAMPLES
+.EX "tail \-n 6" "Print last 6 lines of \fIstdin\fR"
+.EX "tail \-c 20 file" "Print the last 20 characters of \fIfile\fR"
+.EX "tail \-n 1 file1 file2" "Print last line of two files"
+.EX "tail \-n +8 file" "Print the tail starting with line 8"
+.SH DESCRIPTION
+.PP
+The last few lines of one or more files are printed.
+The default count is 10 lines.
+The default file is \fIstdin\fR.
+If the value of \fIn\fR for the \fB\-c\fR or \fB\-n\fR flags starts with
+a + sign, counting starts at the beginning, rather than the end of the file.
+.SH "SEE ALSO"
+.BR head (1).

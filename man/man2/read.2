@@ -1,0 +1,83 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)read.2	6.6 (Berkeley) 5/23/86
+.\"
+.TH READ 2 "May 23, 1986"
+.UC 4
+.SH NAME
+read \- read input
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <unistd.h>
+
+ssize_t read(int \fId\fP, void *\fIbuf\fP, size_t \fInbytes\fP)
+.fi
+.SH DESCRIPTION
+.B Read
+attempts to read
+.I nbytes
+of data from the object referenced by the descriptor
+.I d
+into the buffer pointed to by
+.IR buf .
+.PP
+On objects capable of seeking, the
+.B read
+starts at a position
+given by the pointer associated with
+.IR d 
+(see
+.BR lseek (2)).
+Upon return from
+.BR read ,
+the pointer is incremented by the number of bytes actually read.
+.PP
+Objects that are not capable of seeking always read from the current
+position.  The value of the pointer associated with such an
+object is undefined.
+.PP
+Upon successful completion,
+.B read
+return the number of bytes actually read and placed in the buffer.
+The system guarantees to read the number of bytes requested if
+the descriptor references a normal file that has that many bytes left
+before the end-of-file, but in no other case.
+.PP
+If the returned value is 0, then
+end-of-file has been reached.
+.SH "RETURN VALUE
+If successful, the
+number of bytes actually read is returned.
+Otherwise, a \-1 is returned and the global variable
+.B errno
+is set to indicate the error.
+.SH "ERRORS
+.B Read
+will fail if one or more of the following are true:
+.TP 15
+[EBADF]
+\fID\fP is not a valid descriptor open for reading.
+.TP 15
+[EFAULT]
+\fIBuf\fP points outside the allocated address space.
+.TP 15
+[EIO]
+An I/O error occurred while reading from the file system.
+.TP 15
+[EINTR]
+A read from a slow device was interrupted before
+any data arrived by the delivery of a signal.
+.TP 15
+[EAGAIN]
+The file was marked for non-blocking I/O,
+and no data were ready to be read.
+.SH "SEE ALSO"
+.BR dup (2),
+.BR fcntl (2),
+.BR open (2),
+.BR pipe (2),
+.BR write (2).

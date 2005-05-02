@@ -1,0 +1,71 @@
+.TH CRYPT 3
+.SH NAME
+crypt \- one-way password encryption function
+.SH SYNOPSIS
+.ft B
+.nf
+#define _MINIX_SOURCE 1
+#include <unistd.h>
+
+char *crypt(const char *\fIkey\fP, const char *\fIsalt\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+The first use of
+.B crypt()
+is to encrypt a password.  Its second use is to authenticate a shadow
+password.  In both cases
+.B crypt()
+calls
+.BR pwdauth (8)
+to do the real work.
+.PP
+.B Crypt()
+encrypts a password if called with a user typed key, and a salt
+whose first two characters are in the set [./0-9A-Za-z].  The result is a
+character string in the [./0-9A-Za-z] alphabet of which the first two
+characters are equal to the salt, and the rest is the result of encrypting
+the key and the salt.
+.PP
+If
+.B crypt()
+is called with a salt that has the form
+.BI "##" user
+then the key is encrypted and compared to the encrypted password of
+.I user
+in the shadow password file.  If they are equal then
+.B crypt()
+returns the
+.BI "##" user
+argument, if not then some other string is returned.  This trick assures
+that the normal way to authenticate a password still works:
+.PP
+.RS
+.nf
+if (strcmp(pw->pw_passwd, crypt(key, pw->pw_passwd))) ...
+.fi
+.RE
+.PP
+If
+.I key
+is a null string, and the shadow password is a null string or the salt is a
+null string then the result equals
+.IR salt .
+(This is because the caller can't tell if a password field is empty in the
+shadow password file.)
+.PP
+The key and salt are limited to 1024 bytes total including the null bytes.
+.SH FILES
+.TP 25
+/usr/lib/pwdauth
+The password authentication program
+.SH "SEE ALSO"
+.BR getpass (3),
+.BR getpwent (3),
+.BR passwd (5),
+.BR pwdauth (8).
+.SH NOTES
+The result of an encryption is returned in a static array that is
+overwritten by each call.  The return value should not be modified.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

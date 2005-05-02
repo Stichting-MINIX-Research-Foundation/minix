@@ -1,0 +1,34 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)getuid.2	6.3 (Berkeley) 1/7/86
+.\"
+.TH GETUID 2 "January 7, 1986"
+.UC 4
+.SH NAME
+getuid, geteuid \- get user identity
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <unistd.h>
+
+uid_t getuid(void)
+uid_t geteuid(void)
+.fi
+.SH DESCRIPTION
+.B Getuid
+returns the real user ID of the current process,
+.B geteuid
+the effective user ID.
+.PP
+The real user ID identifies the person who is logged in.
+The effective user ID
+gives the process additional permissions during
+execution of \*(lqset-user-ID\*(rq mode processes, which use
+\fBgetuid\fP to determine the real-user-id of the process that
+invoked them.
+.SH "SEE ALSO"
+.BR getgid (2),
+.BR setuid (2).

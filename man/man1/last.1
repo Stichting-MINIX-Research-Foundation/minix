@@ -1,0 +1,44 @@
+.TH LAST 1
+.SH NAME
+last, uptime \- display recent on-line session records, show uptime
+.SH SYNOPSIS
+\fBlast\fR [\fB\-f \fIfile\fR]\fR [\fB\-r\fR] [\fB\-\fIn\fR] [\fIname\fR] [\fItty\fR] ...\fR
+.br
+\fBuptime\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-f" "Use \fIfile\fR instead of /usr/adm/wtmp"
+.FL "\-r" "Search backwards only to last reboot"
+.FL "\-u" "Print uptime since last reboot"
+.FL "\-\fIn\fP" "Print a maximum of \fIn\fR lines"
+.SH EXAMPLES
+.EX "last reboot" "When was the system last rebooted?"
+.EX "last ast" "When was the last login for ast?"
+.EX "last \-10 tty00 tty01" "Display last 10 logins on tty00 or tty01"
+.EX "uptime" "Display uptime (likewise \fBlast \-u\fR)"
+.SH DESCRIPTION
+.PP
+.I Last
+Searches backward through the login administration file (default is
+\fI/usr/adm/wtmp\fR), printing information about previous logins and
+reboots.
+During a long search, the SIGQUIT signal (CTRL-\\) causes \fIlast\fR to 
+display how far back it has gone; it then continues. 
+.PP
+.IR Uptime ,
+an alias for
+.IR "last \-u" ,
+displays the time the system is running since the last reboot.
+.SH "SEE ALSO"
+.BR who (1),
+.BR utmp (5).

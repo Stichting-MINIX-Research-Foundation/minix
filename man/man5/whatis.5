@@ -1,0 +1,57 @@
+.TH WHATIS 5
+.SH NAME
+whatis \- database of online manual pages
+.SH SYNOPSIS
+.B /usr/man/*/whatis
+.br
+.B /usr/man/whatis
+.SH DESCRIPTION
+The
+.B whatis
+file in each manual page directory is a database of titles for manual pages.
+This database is used by
+.BR man (1)
+to map titles to manual pages names.  The database is created by
+.BR makewhatis (1)
+from the NAME sections of the manual pages.
+.PP
+The NAME secions must be simple lines with no troff fluff but one
+backslash like these two:
+.PP
+.RS
+whatis \e\- database of online manual pages
+.br
+cawf, nroff \e\- C version of the nroff-like, Amazingly Workable (text)
+Formatter
+.RE
+.PP
+These lines are transformed by
+.B makewhatis
+to these two lines for the database:
+.PP
+.RS
+cawf, nroff (1) \- C version of the nroff-like, Amazingly Workable (text)
+Formatter
+.br
+whatis (5) \- database of online manual pages
+.RE
+.PP
+As you can see they are in section number order, so that
+.B man
+searches them in section order.
+.PP
+Each entry is just a single line, restricting the NAME section to a single
+line too with just one dash, and commas and spaces before the dash as you
+see above.
+.SH "SEE ALSO"
+.BR man (1),
+.BR whatis (1),
+.BR makewhatis (1),
+.BR man (7).
+.SH BUGS
+It seems to be impossible for many manual page writers to keep the NAME
+section simple.  They also like to use every font available in their
+documents.  My simple scripts can't read their NAME sections, my simple
+me can't read their texts.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

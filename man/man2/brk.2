@@ -1,0 +1,86 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)brk.2	6.3 (Berkeley) 5/22/86
+.\"
+.TH BRK 2 "May 22, 1986"
+.UC 4
+.SH NAME
+brk, sbrk \- change data segment size
+.SH SYNOPSIS
+.nf
+#include <unistd.h>
+.PP
+.ft B
+int brk(char *\fIaddr\fP)
+.PP
+.ft B
+char *sbrk(int \fIincr\fP)
+.fi
+.SH DESCRIPTION
+.B Brk
+sets the system's idea of the lowest data segment 
+location not used by the program (called the break)
+to
+.IR addr .
+Locations greater than
+.I addr
+and below the stack pointer
+are not in the address space and will thus
+cause a memory violation if accessed.
+.PP
+In the alternate function
+.BR sbrk ,
+.I incr
+more bytes are added to the
+program's data space and a pointer to the
+start of the new area is returned.
+.PP
+When a program begins execution via
+.B execve
+the break is set at the
+highest location defined by the program
+and data storage areas.
+Ordinarily, therefore, only programs with growing
+data areas need to use
+.BR sbrk .
+.SH "RETURN VALUE
+The address of the new break is returned if
+.B brk
+succeeds;
+.B \-1
+if the program requests more
+memory than the system limit.
+.B Sbrk
+returns
+.B \-1
+if the break could not be set.
+.SH ERRORS
+.B Sbrk
+will fail and no additional memory will be allocated if
+one of the following are true:
+.TP 15
+[ENOMEM]
+The maximum possible size of a data segment (as set by
+.BR chmem (1))
+was exceeded.
+.TP 15
+[ENOMEM]
+Insufficient virtual memory space existed
+to support the expansion.  (Minix-vmd)
+.SH "SEE ALSO"
+.BR chmem (1),
+.BR execve (2),
+.BR malloc (3),
+.BR end (3).
+.SH NOTES
+Minix-vmd rounds a small data segment limit up to 3 megabytes.
+.SH BUGS
+Setting the break may fail due to a temporary lack of
+virtual memory under Minix-vmd.  It is not possible to distinguish this
+from a failure caused by exceeding the maximum size of
+the data segment.
+
+.\"
+.\" $PchId: brk.2,v 1.2 2000/08/11 20:05:51 philip Exp $

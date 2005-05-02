@@ -1,0 +1,49 @@
+.TH REBOOT 8
+.SH NAME
+reboot \- reboot the system immediately
+.SH SYNOPSIS
+\fBreboot\fP [\fB\-f\fP]
+.SH DESCRIPTION
+.B Reboot
+can be used to reboot the system after installing a new kernel.  It does
+not inform the users, but does log it's actions in
+.B /usr/adm/wtmp
+and
+.BR /usr/adm/log .
+The system is then rebooted with the
+.BR reboot (2)
+systemcall.
+.PP
+If the
+.B \-f
+flag is not given then all processes are sent terminate
+signals to give them a chance to die peacefully before the
+.B reboot()
+call.
+.PP
+If the wtmp file exists,
+.B reboot
+logs itself as if it were a shutdown.  This is done to prevent
+.BR last (1)
+from talking about system-crashes.
+.B Reboot
+is registered as is in the log file.
+.PP
+.B Reboot
+can only be executed by the super-user.  Any other caller will be
+refused, either by
+.BR reboot (8)
+or by
+.BR reboot (2).
+.SH "SEE ALSO"
+.BR reboot (2),
+.BR shutdown (8),
+.BR halt(8),
+.BR boot (8).
+.SH BUGS
+The error message's given by
+.B reboot
+are not always useful.  There are several routines that can fail, but which
+are not fatal for the program. 
+.SH AUTHOR
+Edvard Tuinder (v892231@si.hhs.NL)

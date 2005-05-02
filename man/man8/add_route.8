@@ -1,0 +1,47 @@
+.TH ADD_ROUTE 8
+.SH NAME
+add_route \- configure IP routing.
+.SH SYNOPSIS
+.B add_route
+.RB \-g 
+.RI gateway
+.RB [ \-d 
+.RI destination 
+.RB [ \-n
+.RI netmask " ]]"
+.RB [ \-i 
+.RI "ip device]"
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Add_route
+is used for manual entry of routes in the IP routing table.
+.SH OPTIONS
+.TP
+.B \-g 
+.I gateway 
+specifies the gateway IP address to use.
+.TP
+.B \-d
+.I destination
+specifies the destination(s) reached via this gateway.
+.TP
+.B \-n
+.I netmask
+specifies a netmask when the destination is a net.
+.TP
+.B \-i
+.I "ip device"
+specifies the ip device. 
+.SH "SEE ALSO"
+.BR irdp (8),
+.BR pr_routes (8).
+.SH AUTHOR
+.I Add_route.c 
+was created August 7, 1991 by Philip Homburg. 
+This manual page by A. S. Woodhull, last revised 13.02.96.
+
+
+

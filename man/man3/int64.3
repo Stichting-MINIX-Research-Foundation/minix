@@ -1,0 +1,193 @@
+.TH INT64 3
+.SH NAME
+int64, add64, add64u, add64ul, sub64, sub64u, sub64ul, diff64, cvu64, cvul64, cv64u, cv64ul, div64u, rem64u, mul64u, cmp64, cmp64u, cmp64ul, ex64lo, ex64hi, make64 \- 64 bit disk offset computations
+.SH SYNOPSIS
+.ft B
+.nf
+#include <minix/u64.h>
+
+u64_t add64(u64_t \fIi\fP, u64_t \fIj\fP)
+u64_t add64u(u64_t \fIi\fP, unsigned \fIj\fP)
+u64_t add64ul(u64_t \fIi\fP, unsigned long \fIj\fP)
+u64_t sub64(u64_t \fIi\fP, u64_t \fIj\fP)
+u64_t sub64u(u64_t \fIi\fP, unsigned \fIj\fP)
+u64_t sub64ul(u64_t \fIi\fP, unsigned long \fIj\fP)
+unsigned diff64(u64_t \fIi\fP, u64_t \fIj\fP)
+u64_t cvu64(unsigned \fIi\fP)
+u64_t cvul64(unsigned long \fIi\fP)
+unsigned cv64u(u64_t \fIi\fP)
+unsigned long cv64ul(u64_t \fIi\fP)
+unsigned long div64u(u64_t \fIi\fP, unsigned \fIj\fP)
+unsigned rem64u(u64_t \fIi\fP, unsigned \fIj\fP)
+u64_t mul64u(unsigned long \fIi\fP, unsigned \fIj\fP)
+int cmp64(u64_t \fIi\fP, u64_t \fIj\fP)
+int cmp64u(u64_t \fIi\fP, unsigned \fIj\fP)
+int cmp64ul(u64_t \fIi\fP, unsigned long \fIj\fP)
+unsigned long ex64lo(u64_t \fIi\fP)
+unsigned long ex64hi(u64_t \fIi\fP)
+u64_t make64(unsigned long \fIlo\fP, unsigned long \fIhi\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The
+.B int64
+family of functions allow Minix to handle disks of up to 4 terabytes using
+32 bit sector numbers and 64 bit byte offsets on a machine where the C type
+.B long
+is 32 bits.  The <minix/u64.h> include file defines a 64 bit data
+type,
+.BR u64_t ,
+and a number of functions to operate on them.  Note that these functions are
+geared towards common disk offset and block computations, and do not provide
+a full set of 64 bit operations.  They are:
+.PP
+.TP
+.B "u64_t add64(u64_t \fIi\fP, u64_t \fIj\fP)"
+Add the 64 bit numbers
+.I i
+and
+.I j
+forming a 64 bit result.
+.TP
+.B "u64_t add64u(u64_t \fIi\fP, unsigned \fIj\fP)"
+Add an unsigned
+.I j
+to a 64 bit number
+.I i
+forming a 64 bit result.
+.TP
+.B "u64_t add64ul(u64_t \fIi\fP, unsigned long \fIj\fP)"
+Add an unsigned long
+.I j
+to a 64 bit number
+.I i
+forming a 64 bit result.
+.TP
+.B "u64_t sub64(u64_t \fIi\fP, u64_t \fIj\fP)"
+Subtract the 64 bit number
+.I j
+from the 64 bit number
+.I i
+forming a 64 bit result.
+.TP
+.B "u64_t sub64u(u64_t \fIi\fP, unsigned \fIj\fP)"
+Subtract the unsigned
+.I j
+from the 64 bit number
+.I i
+forming a 64 bit result.
+.TP
+.B "u64_t sub64ul(u64_t \fIi\fP, unsigned long \fIj\fP)"
+Subtract the unsigned long
+.I j
+from the 64 bit number
+.I i
+forming a 64 bit result.
+.TP
+.B "unsigned diff64(u64_t \fIi\fP, u64_t \fIj\fP)"
+Subtract the 64 bit number
+.I j
+from the 64 bit number
+.I i
+forming an unsigned.  Overflow is not checked.
+.TP
+.B "u64_t cvu64(unsigned \fIi\fP)"
+Convert an unsigned to a 64 bit number.
+.TP
+.B "u64_t cvul64(unsigned long \fIi\fP)"
+Convert an unsigned long to a 64 bit number.
+.TP
+.B "unsigned cv64u(u64_t \fIi\fP)"
+Convert a 64 bit number to an unsigned if it fits, otherwise return
+.BR UINT_MAX .
+.TP
+.B "unsigned long cv64ul(u64_t \fIi\fP)"
+Convert a 64 bit number to an unsigned long if it fits, otherwise return
+.BR ULONG_MAX .
+.TP
+.B "unsigned long div64u(u64_t \fIi\fP, unsigned \fIj\fP)"
+Divide the 64 bit number
+.I i
+by the unsigned
+.I j
+giving an unsigned long.  Overflow is not checked.  (Typical "byte offset to
+block number" conversion.)
+.TP
+.B "unsigned rem64u(u64_t \fIi\fP, unsigned \fIj\fP)"
+Compute the remainder of the division of the 64 bit number
+.I i
+by the unsigned
+.I j
+as an unsigned.  (Typical "byte offset within a block" computation.)
+.TP
+.B "u64_t mul64u(unsigned long \fIi\fP, unsigned \fIj\fP)"
+Multiply the unsigned long
+.I i
+by the unsigned
+.I j
+giving a 64 bit number.  (Typical "block number to byte offset" conversion.)
+.TP
+.B "int cmp64(u64_t \fIi\fP, u64_t \fIj\fP)"
+Compare two 64 bit numbers.
+Returns
+.B -1
+if
+.I i
+<
+.IR j ,
+.B 0
+if
+.I i
+==
+.IR j ,
+and
+.B 1
+if
+.I i
+>
+.IR j .
+.TP
+.B "int cmp64u(u64_t \fIi\fP, unsigned \fIj\fP)"
+Likewise compare a 64 bit number with an unsigned.
+.TP
+.B "int cmp64ul(u64_t \fIi\fP, unsigned long \fIj\fP)"
+Likewise compare a 64 bit number with an unsigned long.
+.TP
+.B "unsigned long ex64lo(u64_t \fIi\fP)"
+Extract the low 32 bits of a 64 bit number.
+.TP
+.B "unsigned long ex64hi(u64_t \fIi\fP)"
+Extract the high 32 bits of a 64 bit number.
+.TP
+.B "u64_t make64(unsigned long \fIlo\fP, unsigned long \fIhi\fP)"
+Combine the low and high parts of a 64 bit number to a 64 bit number.  (The
+last three functions are used to pass 64 bit numbers in messages within the
+kernel.  They should not be used for anything else.)
+.SH "SEE ALSO"
+.BR fcntl (2),
+.BR controller (4).
+.SH NOTES
+With the usual disk block size of 512 bytes the maximum disk size is 512
+\(** 4 gigabytes = 2 terabytes.
+.PP
+Standard Minix only uses 64 bit computations within the disk drivers, so
+individual partitions are still limited to 4 gigabytes.  Minix-vmd has 64
+bit computations also in the file system code.
+.PP
+Special care must be taken when accessing disk devices.  For Minix one may
+have to temporarily change the start of the partition to go beyond 4 G.
+Minix-vmd can go beyond 4 G, but the
+.B lseek
+system call is still limited to a 32 bit offset.  One needs to use
+.PP
+.RS
+.BI "fcntl(" fd ", F_SEEK, u64_t " offset ")"
+.RE
+.PP
+to seek to a 64 bit position.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

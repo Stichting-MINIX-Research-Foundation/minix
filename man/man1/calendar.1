@@ -1,0 +1,44 @@
+.TH CALENDAR 1
+.SH NAME
+calendar \- reminder service
+.SH SYNOPSIS
+\fBcalendar [\fB\-\fR] [\fB\-r\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-" "Work for every user and send mail to him"
+.FL "\-r" "Restrict multiple execution on the same day"
+.SH EXAMPLES
+.EX "calendar" "Check \fIcalendar\fR file in current directory"
+.EX "calendar" "Normary used under the control of cron(8)"
+.EX "calendar \-r" " Normary used in /etc/rc file"
+.SH DESCRIPTION
+.PP
+Basically \fIcalendar\fR program consults the file \fIcalendar\fR in the 
+current directory and display lines which contain today's or tomorrow's date.
+Month-day formats such
+as '12/25', 'Dec. 25', 'december 25', '*/25', '12/*', '*/*' are
+recognized.  The asterisk
+means 'all' days or 'all' months.  On weekends 'tomorrow' extends through 
+next Monday without any consideration about holidays.
+To prevent ambiguity, the formats '25 Dec.' and '25/12' are not recognized.
+.PP
+When an argument \fB\-\fR is present, \fIcalendar\fR works for all users
+with a file \fIcalendar\fR in their login directories and sends them mail.
+Normally this is done daily under the control of \fIcron\fR.
+.PP
+The \fB\-r\fR option does its the same job as \fB\-\fR option, but touches
+the \fIcalendar\fR to prevents further access on the same day.
+Normally this is done in the \fI/etc/rc\fR file on a machine  which may be
+booted several times in one day.
+.SH "SEE ALSO"
+.BR cron (8).

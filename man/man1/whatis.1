@@ -1,0 +1,32 @@
+.TH WHATIS 1
+.SH NAME
+whatis, apropos \- give single line descriptions for manual pages
+.SH SYNOPSIS
+.B whatis
+.RB [ \-a ]
+.I title
+.br
+.B apropos
+.I keyword
+.SH DESCRIPTION
+.B Whatis
+lists the one line description from the
+.BR whatis (5)
+database describing the title given.  It displays all the lines with
+the title from the first whatis file that has those titles.  It uses the
+same search path as
+.BR man (1).
+.PP
+.B Apropos
+searches through all whatis files for the given keywords.  It lists any
+line that has the keyword anywhere on the line.
+.SH OPTIONS
+.TP
+.B \-a
+Search all whatis files.
+.SH "SEE ALSO"
+.BR man (1),
+.BR grep (1),
+.BR whatis (5).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

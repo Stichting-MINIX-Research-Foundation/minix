@@ -1,0 +1,35 @@
+.TH FGREP 1
+.SH NAME
+fgrep \- fixed grep
+.SH SYNOPSIS
+\fBfgrep\fR [\fB\-cfhlnsv\fR]\fR [\fIstring_file\fR] [\fIstring\fR] [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Count matching lines and only print count, not the lines"
+.FL "\-f" "Take strings from file named in following argument"
+.FL "\-h" "Omit file headers from printout"
+.FL "\-l" "List file names once only"
+.FL "\-n" "Each line is preceded by its line number"
+.FL "\-s" "Status only, no output"
+.FL "\-v" "Print only lines not matching"
+.SH EXAMPLES
+.EX "fgrep % prog.c" "Print lines containing % sign"
+.EX "fgrep \-f pattern prog.c" "Take strings from \fIpattern\fR"
+.SH DESCRIPTION
+.PP
+\fIFgrep\fR is essentially the same as grep, except that it only searches
+for lines containing literal strings (no wildcard characters).  The pattern
+may consist of several lines with one string to search on each line.
+.SH "SEE ALSO"
+.BR cgrep (1),
+.BR grep (1).

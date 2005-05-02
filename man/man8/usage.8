@@ -1,0 +1,969 @@
+.TH USAGE 8
+.SH NAME
+usage \- installing and using MINIX
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.de XB	\" An example in bold print.
+.RS
+.nf
+.ft B
+\&\\$1
+.ft R
+.fi
+.RE
+..
+.de 3A	\" Three Letter Acronym at 1 point size smaller.
+\&\\$3\s-1\\$1\s+1\\$2
+..
+.de 3B	\" TLA in bold.
+\&\\$3\fB\s-1\\$1\s+1\fR\\$2
+..
+This manual page describes the installation and use of MINIX from a
+System Administrators point of view.  It contains an installation guide,
+instructions on how to do the initial configuration and some other info.
+Please read this document entirely before attempting to install MINIX.
+The installation steps are in the proper order, but not all the
+information you may need is presented at the right moment.
+Other detailed information that may be useful can be found in
+.BR boot (8),
+.BR hier (7),
+and in
+.BR dosminix (8)
+if you run MINIX under DOS.
+.SS "1. MINIX UNDER DOS"
+Installation of MINIX to run under DOS is a nonevent.  Chances are, you are
+reading this manual page from an already running MINIX system, but if not
+then the setup goes like this:
+.PP
+Unpack the DOSMINIX.ZIP file using one of the popular ZIP utilities, such as
+PKZIP or WinZIP.  Next reboot Windows and hit F8 just when you see the
+"Booting Windows" message.  From the menu that appears choose "Command
+prompt only", or if that doesn't work "Safe mode command prompt only".  Under
+Windows Me you can use a startup disk to boot the PC into DOS.  Move
+to the directory containing the MINIX files and type:
+.PP
+.XB "boot minix.mnx"
+.PP
+Type '=' and presto, you are running MINIX.  Most of the rest of this manual,
+which deals mainly with running MINIX in a true hard disk partition, does
+not apply to you.  Your system is already installed completely, with all
+binaries and sources present, so all the talk about getting MINIX on your
+disk can be skimmed over.  Pay attention again when the focus shifts to the
+configuration of the system.  Section 9 is where this happens first.  (The
+main challange to a DOS installation is to figure out which parts of the
+installation manual do not apply.)
+.SS "2. REQUIREMENTS"
+The minimum system MINIX can be installed on comfortably is an IBM PC/AT
+or PS/2 with a 286 processor, 2 MB memory, a 720 kb diskette drive, and 35
+MB free space on an AT,
+ESDI, or SCSI hard disk (the latter controlled by an Adaptec 1540.)  MINIX
+for the 386 (MINIX-386 for short) can be installed on a machine with at
+least a 386sx processor, 3 MB memory and at least 35 MB of disk space.
+.PP
+The minimum system MINIX can be installed on
+.BR un comfortably
+is an IBM PC/XT with 640 kb memory.  MINIX-386 can more or less run in 2
+MB memory.  See sections 16 and 17 on "low memory" issues.
+.SS "3. MINIX INSTALLATION BACKGROUND"
+The objective of the installation is to create a partition on your disk
+and to put MINIX into it.  MINIX really requires at least two partitions
+however, so the single "primary" partition is split into two or three
+subpartitions.
+The
+.B s0
+subpartition will contain the root file system, the
+.B s1
+subpartition may optionally contain swapspace, and the
+.B s2
+subpartition will contain the
+.B /usr
+file system.  What Windows calls
+"drives", i.e C:, D:, E:, MINIX calls "file systems".  MINIX does not use
+drive letters, but requires that one file system is made a part of another
+file system by "mounting" one on the other.  The "root" file system is
+always present and starts with the directory "/", the root of the directory
+tree.  The root file system contains a few programs in
+.BR /bin ,
+device files in
+.BR /dev ,
+and configuration files in
+.BR /etc .
+This is just enough to get the system started.  MINIX will soon extend
+its directory tree by mounting a file system on the
+.B /usr
+directory.  What is henceforth known as the /usr file system contains all
+MINIX programs in
+.BR /usr/bin ,
+file system sources in
+.BR /usr/src ,
+etc, etc.
+The \s-2ROOT.MNX\s+2 image contains the complete MINIX root file system, but
+\s-2USR\s+2 contains just a small subset of the /usr file system, with just
+enough utilities to install MINIX.  The complete /usr file system is
+split up into the \s-2USR.TAZ\s+2, \s-2SYS.TAZ\s+2 and \s-2CMD.TAZ\s+2
+archives that are installed later to fill /usr.
+.PP
+Let's suppose your first hard disk, which has
+device name
+.BR /dev/c0d0 ,
+has Windows already present in the first primary partition
+.RB ( /dev/c0d0p0 ),
+and some free space left after that.  After MINIX is installed in that
+free space the disk will look like this:
+.PP
+.nf
+.in +4n
+.ta +\w'/dev/c0d0p1s0mmmm'u
+/dev/c0d0	Whole hard disk #0
+/dev/c0d0p0	Windows C: drive
+/dev/c0d0p1	MINIX primary partition
+/dev/c0d0p1s0	MINIX root partition
+/dev/c0d0p1s1	MINIX swap partition (optional)
+/dev/c0d0p1s2	MINIX /usr partition
+.in -8n
+.fi
+.PP
+/dev/c0d0 is the sum of a partition table, /dev/c0d0p0 and /dev/c0d0p1.
+Likewise is /dev/c0d0p1 the sum of a subpartition table, /dev/c0d0p1s0 and
+/dev/c0d0p1s2.  Read the "DEVICES" sections for more information on MINIX
+devices.
+.SS "4. INSTALLATION"
+.ig \" Only relevant when on CD-ROM.
+If you have not already copied MINIX to floppy disks, please read
+the README.TXT file in the MINIX directory now, for it tells how to do this.
+You should also print out EXAMPLE.TXT and read it in parallel with this
+document.  This one tells you what to do; that one shows you what the
+screen is supposed to look like at each step, so you can see if everything
+is OK.
+.PP
+..
+You can install MINIX automatically or manually as described in the sections
+below.  The end result is the same, but manual installation allows
+one to deviate from the preconfigured choices.  You may wish to read the
+manual pages of the programs used below before you start.  You may especially
+want to read
+.BR boot (8)
+if your machine is different from what the majority buys, because you
+may need to set a few boot parameters to configure drivers.  To do this type
+.B ESC
+to get to the Boot Monitor prompt, set the appropriate variables, use
+.B save
+to store the settings and
+.B menu
+to continue where you left off.
+.PP
+To install the system you need two diskettes: a bootable root diskette and a
+diskette full of binaries to use as
+.BR /usr .
+These diskettes are named
+.B \s-2ROOT\s+2
+and
+.BR \s-2USR\s+2 .
+These two diskettes may also be combined on a single high density diskette.
+In that case the \s-2USR\s+2 part is on the
+.B p2
+partition.
+.PP
+Insert the \s-2ROOT\s+2 diskette, boot the machine and type '=' to the menu.
+The MINIX kernel is loaded and takes control when you see the copyright
+banner.  After loading the root diskette into the RAM disk you will be asked
+to finish the name of the device to mount on
+.BR /usr .
+Type
+.BR fd0p2
+for a diskette that contains both \s-2ROOT\s+2 and \s-2USR\s+2, otherwise
+replace \s-2ROOT\s+2 by \s-2USR\s+2 and type
+.BR fd0 .
+Login as
+.BR root .
+.SS "5. AUTOMATIC INSTALLATION"
+Before starting the installation, you must either have a free partition
+available or have at least 35 MB not in any partition so you can create
+a MINIX partition.
+.PP
+Type
+.B setup
+to start the installation script.  First it offers to install a national
+keyboard map.  The names should be clear, except for
+.BR us-swap ,
+which swaps the CTRL and CAPS LOCK keys of a standard US style keyboard
+for people who believe that the natural place of CTRL is next to A.
+The default suggested between [ and ] is the US standard keyboard.
+.PP
+The next thing to do is to make a partition, for this you are placed in a
+partition table editor named
+.BR part .
+This partition table editor is very easy to use (in the author's opinion),
+but you will probably hate it.  You can move all over the place with the
+arrow keys, change values, and make a mess of your partition table real quick.
+So if you get into trouble, type 'q' to quit, 'n' to not write the table,
+and RETURN to start over.  Use the '?' key to get help.
+.PP
+With the '+' and '\-' keys you can select the disk device to install on,
+probably
+.BR /dev/c0d0 ,
+the first hard disk.  Type 'r' to load the partition table of the selected
+disk.  Either create one new partition by modifying a partition marked
+"None", or reuse an existing partition by changing its type to "MINIX" (hex
+code 81).  DO NOT use part to shrink an existing partition!  It will destroy
+all data in that partition.  MINIX needs a partition of at least 20 MB, but
+not larger than 128 MB (MINIX-86) or 1 GB (MINIX-386).  The system needs 35
+MB in compiled state.
+.PP
+The script then wants to know the name of the partition you've created.  The
+partition name is probably still visible on the screen.  Combined with the
+drive name you have to type c0d0p1, c0d2p0 or something.
+.PP
+The next question is the amount of swapspace you want to give MINIX.  There
+will be a suggested value based on the amount of memory your system has.
+If you have more then enough memory then don't bother with swap.  MINIX
+doesn't handle it very well yet, or ever, only memory starved systems need it
+so that
+.B "make world"
+can run.
+.PP
+The new partition table is reloaded into the disk driver, and the
+new MINIX partition is carved up into two or three subpartitions, a 1440 kb
+root, maybe some amount of swap, and the rest for /usr.
+.PP
+After making /usr, it is immediately put to use to replace the installation
+/usr file system so that you can remove the \s-2USR\s+2 diskette and insert
+the \s-2ROOT\s+2 diskette (unless they are one and the same).  The root file
+system is filled with the contents of the \s-2ROOT\s+2 diskette and slightly
+patched up to work on the hard disk (/etc/fstab.)
+.PP
+You can now skip the next section and move to "TESTING", but it may be
+instructive to read it anyway.
+.SS "6. MANUAL INSTALLATION"
+The instructions that follow are at a very low level and require you to be
+very careful.  The big advantage is that you know precisely what
+tools have been used and how everything works.  The disadvantage is that
+you may easily make a mistake that either forces you to start over if you
+are lucky, or wipes out the contents of your hard disk if you are not.
+Only if you really want to do something different should you use a manual
+installation.  Slavishly following the steps shown below will only make
+you end up with the same result as an automatic installation.
+.PP
+Run
+.B part
+to make partitions to load the system into.  The best thing to do is to make
+one large primary partition of type "MINIX" and to carve this partition up
+into three subpartitions for root, swap and /usr.  The assumption is that you
+will use the second partition on the first hard disk,
+.BR /dev/c0d0p1 ,
+and that
+.B c0d0p1s0
+is the root subpartition,
+.B c0d0p1s1
+is swap and
+.B c0d0p1s2
+is /usr.  If you want to use the first partition on
+the second hard disk for instance, then substitute c0d1p0 and c0d1p0s[012] for
+the above.  See the section on devices below, and the manual
+pages of
+.BR part (8)
+and
+.BR controller (4).
+Start
+.B part
+and select the disk that you
+want to install MINIX onto.  In our example it will be
+.BR /dev/c0d0 .
+.PP
+Use
+.B part
+to make a single partition in the primary partition table of type "MINIX",
+then hit '>' on this new partition to make a subpartition table.
+.PP
+For the root subpartition you are advised to use 1440 kb exactly.  You can
+make it larger if you want to, but it is advisable never to let the contents
+outgrow a floppy.  (The \s-2ROOT\s+2 diskette is a copy of a root file
+system, and will be used to fill your root subpartition.)
+.PP
+The second subpartition is for swapspace.  You can use it to enlarge the
+amount of total memory (real + swap) if your system has less than 2M
+(16-bit mode) or 4M (32-bit mode).  Note that only one MINIX swap partition
+is needed on your system, so if you have another MINIX partition then you can
+use its swap partition instead.
+.PP
+Use the rest of the partition for
+.BR s2 ,
+the /usr subpartition.
+.PP
+When you are done check that /dev/c0d0p1s0 is active (the * after the partition
+number) so you can boot from it later.
+.PP
+If your disk has bad blocks then don't put the root or swap subpartition
+on top of them.  Make sure the inode tables in the other partitions don't
+have bad blocks either.  You can put the subpartitions out of order on the
+disk if that helps.  Subpartition tables, unlike the main partition
+table, are not sorted by the driver.
+.PP
+After making the partitions you do not have to reboot.  The disk driver
+reloads the partition tables on the next access if the disk is not in use.
+(Open or mounted.)
+.PP
+To be able to boot from /dev/c0d0p1s0 you must place a master bootstrap in
+/dev/c0d0p1.  It has been placed there by
+.B part
+if it told you that it was creating a new partition table, but
+.PP
+.XB "installboot\0\-m\0/dev/c0d0p1\0/usr/mdec/masterboot"
+.RE
+.PP
+will put it there for sure.
+.PP
+Let's start by initializing the swap partition first, if you allocated one.
+We may need it already, so mount it.
+.PP
+.XB "mkswap\0/dev/c0d0p1s1"
+.XB "mount\0\-s\0/dev/c0d0p1s1"
+.PP
+Next make a file system for on-disk /usr and copy the floppy /usr on to it.
+.PP
+.XB "mkfs\0/dev/c0d0p1s2"
+.XB "readall\0\-b\0/dev/c0d0p1s2 | sh"
+.XB "mount\0/dev/c0d0p1s2\0/mnt"
+.XB "cpdir\0\-v\0/usr\0/mnt"
+.PP
+This will create a file system on /dev/c0d0p1s2, mount it on /mnt, and copy the
+contents of the \s-2USR\s+2 floppy onto it.  The call to
+.B readall
+marks bad blocks on the file system as unusable, you can omit this on a
+drive known to be spotless (\s-2IDE\s+2 or \s-2SCSI\s+2.)
+.PP
+You can now use the new /usr in place of the \s-2USR\s+2 floppy:
+.PP
+.XB "umount\0/dev/c0d0p1s2"
+.XB "umount\0/dev/fd0\0\0\0\0\0\0\0\0\0# fd0p2 if combined"
+.XB "mount\0/dev/c0d0p1s2\0/usr"
+.PP
+This little dance has freed up your floppy drive, so please remove the
+\s-2USR\s+2 diskette and replace it by the \s-2ROOT\s+2 diskette.  Make a
+file system for the root with at least 512 inodes (files), and
+fill it from the floppy:
+.PP
+.XB "mkfs\0\-i\0512\0/dev/c0d0p1s0"
+.XB "mount\0/dev/fd0\0/fd0"
+.XB "mount\0/dev/c0d0p1s0\0/mnt"
+.XB "cpdir\0\-v\0/fd0\0/mnt"
+.XB "umount\0/dev/fd0"
+.PP
+Remove
+.B /mnt/etc/issue
+to get rid of the "use setup" message that greets you when you boot, and
+edit the file
+.B /mnt/etc/fstab
+to name the devices MINIX has been installed on.  In our example it
+should look like this:
+.PP
+.XB "root=/dev/c0d0p1s0"
+.XB "swap=/dev/c0d0p1s1"
+.XB "usr=/dev/c0d0p1s2"
+.PP
+Unmount the new root:
+.PP
+.XB "umount\0/dev/c0d0p1s0"
+.PP
+Make it bootable:
+.PP
+.XB "installboot\0\-d\0/dev/c0d0p1s0\0/usr/mdec/bootblock\0boot"
+.PP
+The automatic script would now set the
+.B rootdev
+and
+.B ramimagedev
+boot variables.  You can do this now using the
+.B edparams
+command, but it is easier to postpone it until the testing phase.  The
+settings should be:
+.PP
+.XB "rootdev=c0d0p1s0"
+.XB "ramimagedev=c0d0p1s0"
+.SS "7. TESTING"
+By now a new MINIX system is present on your hard disk.  Time to see if
+it works.  Leave the \s-2ROOT\s+2 diskette in the drive and type
+.BR halt .
+You are now going to use the power of the Boot Monitor on the diskette to
+boot the MINIX partition on the hard disk.  Use the monitor command
+.B boot c0d0p1
+to boot the primary partition MINIX has been installed in.  (It is "c0d0p1" in
+our example.)
+.PP
+The hard disk bootstrap is now showing the menu again.  You can type '='
+to start MINIX, but you probably want to change the boot parameters.
+Hit
+.B ESC
+once more to get to the command prompt.  The command
+.B set
+shows what the current parameters are.  Here is an example that shows how
+to make a menu to either start MINIX or boot Windows:
+.PP
+.XB "minix(=,Minix)\0boot"
+.XB "win(w,Windows)\0boot\0c0d0p0"
+.XB "save"
+.PP
+Windows is assumed to be in the first partition in the example above (c0d0p0).
+When finished type
+.B menu
+to see if the menu looks right.  If so hit '=' to start MINIX.  Log in as
+root.
+.SS "8. ADDING PROGRAMS AND SOURCES TO /usr"
+The
+.B setup
+command can also be used to add files from floppy sets to the system.  The
+.B \s-2USR.TAZ\s+2
+(programs and stuff),
+.B \s-2SYS.TAZ\s+2
+(system sources), and
+.B \s-2CMD.TAZ\s+2
+(commands sources)
+are all installed relative to the
+.B /usr
+directory, so the command to use three times is
+.PP
+.XB setup\0/usr
+.PP
+.B Setup
+will ask for the size of data on the floppies, which is by default simply
+the entire floppy.  You will see some "Cannot make directory" errors
+while extracting, as some directories already exist.  Ignore these messages.
+You need the
+.B \s-2USR.TAZ\s+2
+set if you want a working MINIX system,
+.B \s-2SYS.TAZ\s+2
+if you want recompile the system or study it, and
+.B \s-2CMD.TAZ\s+2
+if you also want the sources of the commands.  On a disk space
+starved machine you could opt to do without the commands sources, as they
+are not absolutely necessary to understand MINIX.
+.PP
+If your machine does not have enough memory to run
+.B setup\0/usr
+then type these commands manually:
+.PP
+.XB "cd\0/usr"
+.XB "vol\0/dev/fd0 | zcat | tar\0xvfp\0\-"
+.PP
+If
+.3B USR.TAZ
+is already present on the hard disk in an
+.3A DOS
+or Windows partition, then this command can be used under MINIX-386 to
+extract it to avoid the floppy detour:
+.PP
+.XB "cd\0/usr"
+.XB "mtools\0copy\0c0d0p0:USR.TAZ\0\- | setup\0/usr"
+.PP
+In 16-bit mode you don't have mtools, but maybe dosread will work:
+.PP
+.XB "cd\0/usr"
+.XB "dosread\0c0d0p0\0USR.TAZ | setup\0/usr"
+.PP
+The file doesn't have to be in the root directory of
+.BR c0d0p0 ,
+of course,
+.B "c0d1p0:/TMP/USR.TAZ"
+would name a file on the first partition of the second hard disk in the
+directory
+.BR \eTMP .
+.PP
+The /usr file system can also be filled through a network from a remote host
+if MINIX if you can get networking going with the NET.TAZ supplement.  Use
+.B "setup\0/"
+to install NET.TAZ (note that it goes into / instead of /usr), then
+follow the instructions in
+.BR boot (8)
+to configure TCP/IP and boot MINIX.  There are now two ways to fill
+/usr.  One is to add the host name and login name of a remote host and a
+remote user to
+.BR /.rhosts ,
+as root, and to use the following command on the remote host:
+.PP
+.XB "rsh\0\-l\0root\0\fIminix-box\fP\0setup\0/usr\0< USR.TAZ"
+.PP
+Two is to use
+.B urlget
+to copy the data directly from a Web or FTP site by using these
+commands under MINIX:
+.PP
+.XB "cd\0/usr"
+.XB "urlget\0\fIurl\fP.../USR.TAZ | setup\0/usr"
+.PP
+The sources may be installed using exactly the same commands, but with
+.3B USR.TAZ
+replaced by
+.3B SRC.TAZ .
+Note that this means that the sources must also be extracted relative to
+.BR /usr .
+.SS "9. NAMES"
+A standalone machine will have to be given a name.  As
+.B root
+type
+.PP
+.XB "echo\0\fIname\fB\0>/etc/hostname.file"
+.PP
+to change the host name of your machine to
+.IR name .
+.SS "10. ACTIVE ON BOOT"
+You may want to make the MINIX partition active so that it is automatically
+booted.  With Windows
+.B fdisk
+or MINIX
+.BR part ,
+mark the primary partition that contains MINIX active.  Using the menu you
+made earlier you can boot either MINIX or Windows at a keypress.  You can even
+set timeouts.  To boot MINIX automatically after 5 seconds:
+.PP
+.XB "main()\0{trap\05000\0minix;\0menu}"
+.PP
+See
+.BR monitor (8)
+for all the details on the monitor.
+.PP
+If you don't trust this then you can rig up a diskette that boots the MINIX
+partition when left in the drive:
+.PP
+.XB "installboot\0\-m\0/dev/fd0\0/usr/mdec/jumpboot\0010"
+.PP
+The numbers 010 indicate the device (disk or partition) that must be booted,
+i.e.
+.B /dev/c0d0p1s0
+in this example.  Take the name of the device, and use the disk, partition
+and subpartition numbers, or less.  So c0d1p2s0 -> 120, c0d3 -> 3,
+c0d2p0 -> 20.)
+.SS "11. DEVICES"
+A crash course on the MINIX devices in
+.BR /dev :
+The first two hard disks are named
+.BR c0d0
+and
+.BR c0d1 .
+These devices address the entire hard disk, from the
+first to the last byte.  Each disk has four partitions, for disk 0 they are
+.BR c0d0p0 ,
+.BR c0d0p1 ,
+.BR c0d0p2 ,
+and
+.BR c0d0p3 .
+And for disk 1 they are named
+.BR c0d1p0
+to
+.BR c0d1p3 .
+These partitions may contain file systems,
+.B c0d0p0
+often contains the
+.3A MS-DOS
+or Windows "C:" file system.  MINIX can use these partitions
+for file systems too, but you can also partition one of these "primary
+partitions" into four so-called "subpartitions".  The subpartitions of
+.B c0d0p0
+are named
+.BR c0d0p0s0 ,
+.BR c0d0p0s1 ,
+.BR c0d0p0s2 ,
+and
+.BR c0d0p0s3 .
+The other partitions may have four subpartitions that are named in the same
+way.  See
+.BR controller (4)
+for an elaborate description.
+.PP
+You may need to add devices to
+.BR /dev ,
+because not all devices are present to keep down the clutter.
+The command
+.3B MAKEDEV
+knows how to make devices, and
+.3B DESCRIBE
+can tell you what an unknown device may be, or even what all devices in
+.B /dev
+may be if called without arguments.  Devices are described in
+.BR dev (4),
+with pointers to more specific pages.
+.SS "12. EDITORS"
+The editors available are
+.B elvis
+(a
+.B vi
+clone),
+.B elle
+(a simple
+.B emacs
+clone),
+and the old MINIX
+.B mined
+editor.  Of these editors only elvis can recover your file after a system
+crash.  Only
+.B mined
+is available at installation time.  (All you need to know about mined right
+now is that CTRL-X gets you out of it.)
+.SS "13. BOOT MONITOR VS. MINIX"
+The Boot Monitor uses the
+.3A BIOS
+to address disks, so it has no idea of controllers, it just lumps everything
+together and ignores controller numbers.  So what the monitor thinks are
+.BR d0 ,
+.BR d1 ,
+and
+.BR d2 ,
+may be
+.BR c0d0
+(IDE primary master),
+.BR c0d2
+(IDE secondary master), and
+.BR c1d3
+(SCSI disk at target 3).
+One must keep this in mind when MINIX is installed on a disk other than the
+very first.  So if MINIX is installed in the third partition of the SCSI disk,
+then
+.B "boot d2p2"
+will boot it, and
+.B "rootdev=c1d3p2s0"
+will tell MINIX where its root file system is.
+.SS "14. NATIONAL KEYBOARDS"
+The directory
+.B /usr/lib/keymaps
+contains keymap tables for several national keyboards.  If you have a German
+keyboard for instance, then
+.PP
+.XB "loadkeys\0/usr/lib/keymaps/german.map"
+.PP
+will load the German key translation table into the keyboard driver.  Copy
+the map to
+.B /etc/keymap
+once MINIX is installed on the hard disk, because having to type a key
+sequence like one of these:
+.PP
+.XB "loadkezs\0\-usr\-lib\-kezmaps\-german.map"
+.XB "loqdkeys\0=usr=lib=key,qps=french.,qp"
+.PP
+on a reboot gets a bit annoying after a while.  Send corrections and new
+keymaps to the person named below.  (Do not send a Dutch keymap, buy
+yourself a real keyboard instead.)
+.SH SUGGESTIONS
+Below are a few useful suggestions.  Some of the information can be of use
+in other situations than described here.
+.SS "15. VIRTUAL CONSOLES"
+Hold down the ALT key and press the left or right arrow key, F1, or F2.
+This switches the console between two login sessions.  (Unless you have
+an old mono adapter, because virtual consoles sit in video memory, and
+a mono adapter only has memory for one.)
+.PP
+Note that kernel messages, including function key output, only appear on
+the first console.  This may be confusing, but it keeps the other consoles
+clean.
+.SS "16. LOW ON MEMORY"
+The normal installation requires that you have enough memory for a large RAM
+disk.  You can still install MINIX normally if you either have a high density
+diskette drive for a combined root+usr floppy, or you have two floppy drives
+of at least 720 kb.  Before booting you have to set the variable
+.B rootdev
+to the same value as
+.BR ramimagedev .
+This is slower then a RAM disk, but saves a lot of memory.
+.PP
+The automatic installation script knows how to handle this new situation.
+If you install manually then you have to use
+.PP
+.XB "cpdir\0\-vx\0/\0/mnt"
+.PP
+to copy the root device to disk.  When it is time to fill /usr and you only
+have one floppy drive then hit DEL to get out of the installation script and
+reboot as described in "TESTING".  You can then finish the installation
+manually.
+.ig
+See the XT640K.TXT file for more advice on small machines.
+..
+.SS "17. LOW ON MEMORY AND ONLY ONE 720 KB FLOPPY DRIVE"
+If you only have one 720 kb floppy drive and your system is low on memory
+then you can use the \s-2TINYROOT.MNX\s+2 boot image.  This image contains a
+small kernel with only the BIOS disk driver, and a small root file system.
+You can use this disk to boot your machine.  Use the normal \s-2ROOT.MNX\s+2 to
+install the root file system.  Keep booting your machine with
+\s-2TINYROOT\s+2 until you have compiled a small kernel for your system.
+Use the
+.B rootdev
+boot variable to select the hard disk root file system.  Do
+.B not
+use \s-2TINYROOT\s+2 for anything other than booting, always use
+\s-2ROOT\s+2 when mentioned.
+.SS "18. FLOPPY DRIVE 1 IS A HIGH DENSITY DRIVE"
+If you would like to install from floppy drive 1 then you need to copy at
+least one sector from the \s-2USR\s+2 image onto a diskette for drive 0.
+The \s-2USR\s+2 bootstrap has been rigged to boot the other drive.
+.SS "19. INSTALLING ON A SECOND HARD DISK"
+MINIX doesn't care if it is installed on the second disk of a system with
+two disks.  The only problem is to get it booted.  You can either rig up
+a diskette to boot MINIX as shown earlier, or you can use the same trick
+on the first disk.  The command
+.PP
+.XB "installboot\0\-m\0/dev/c0d0\0/usr/mdec/jumpboot\01"
+.PP
+will lock the first disk into booting the second disk.  Note that this
+command modifies the disk outside a MINIX partition, overwriting a bit of
+code that has likely been put there by Windows fdisk.  First verify that the
+Boot Monitor can boot a Windows partition, because then the MINIX master
+bootstrap can do it too.
+.SS "20. LOTS OF MEMORY ON A 286"
+You will have a hard time making MINIX use up 3 MB memory.  Memory you
+can spare can be used for a "second level block cache" on the RAM disk.  The
+File System uses the second level cache to store copies of disk blocks that
+are pushed out of the normal (primary) block cache.  The size of the primary
+cache is compiled into the FS server, but the size of the second level cache
+can be set with the
+.B ramsize
+boot variable.  Set it to a number between 0 and 512.  512 kilobytes is
+enough to keep most of the compiler cached.
+.SS "21. LOTS OF MEMORY ON A 386+"
+Processes can be as big as you would like on a 386, but in practice 4 MB is
+a lot, and 8 MB is infinite.
+The installation script sets up a second level cache for MINIX-386
+of up to 1024 kilobytes.  This is because the default file system cache
+is only 80 kb.  Your first point of call is to get rid of the poorly
+performing second level cache by setting
+.B ENABLE_CACHE2
+to 0 and to assign the memory used by it to the
+normal block cache by enlarging the appropriate
+.B NR_BUFS
+and
+.B NR_BUF_HASH
+constants in <minix/config.h> with as much as you can spare.  (1024 for
+NR_BUFS is the minimum to keep
+.B "cc \-c"
+cached.  2048 is then a nice value for NR_BUF_HASH.)
+Disable the second level cache, compile a new kernel, reboot and set
+.B ramsize
+to 0.
+.SS "22. LOTS OF DISK SPACE"
+The maximum file system size is 1 GB for MINIX-386 and 128 MB for
+MINIX-86.  (MINIX-86 can handle larger file systems, but
+.B fsck
+can't check them.)  Note that a MINIX file system can only contain 65535
+inodes (files), so the average file should be 16 kb to completely fill it.
+It may be better to make two smaller file systems.  Besides, fsck takes
+forever on a large file system.
+.SH SYSTEM ADMINISTRATION
+The system has been set up with the idea that working as root is a bad thing
+to do.  As root you are in no way protected from doing stupid things.  So
+don't do development as root, but work as
+.BR bin !
+Only in exceptional cases do you want to become root.  Being root is fun for
+wannabe hackers; administrators know better.
+.PP
+To make life easier for bin, some programs like
+.BR su (1),
+.BR install (1)
+and
+.BR shutdown (8)
+treat bin and other members of the operator group as special and allow them
+the privileges of root.  (One is an operator if one's
+group id is zero.)  Operators should share the shadow password of root by
+having
+.B ##root
+in their password field.  This way they all have one face (password)
+to the outside world, forming no greater security risk than root alone.
+.PP
+The home directory of bin contains one important Makefile.  You can use it
+to recompile all the commands and libraries of the system.  Type
+.B make
+to see the usage message.  If you want to compile just one command then you
+can simply type
+.B make
+to do so.  To put it in its proper place you have to type
+.BR "make install" .
+Read the Makefiles in the
+.B commands
+and
+.B lib
+subdirectories to understand how everything is put together.  If you are
+tight on memory then
+.B make
+may fail to traverse down the source tree and also compile things.  You will
+have to type
+.B make
+in each subdirectory.  You can run make in /usr/src at the end to see if
+you've missed something or not.
+.PP
+The shell used by MINIX is a minimal version of
+.BR ash ,
+the BSD shell.  It has been modified to offer simple line editing using the
+.BR editline (3)
+library.
+.PP
+The kernel is not compiled from the master Makefile.  To make a new kernel
+you have to step into the
+.B tools
+directory.  There you can run four different make commands:
+.PP
+.TP
+.B make
+This makes all the different kernel parts and combines them in the file
+named
+.BR image .
+.TP
+.B make fdboot
+As above and then makes a boot floppy that you can use to restart your
+system with.  You are prompted for the floppy device name.
+.TP
+.B make hdboot
+First makes the image file and then copies it into the directory
+.BR /minix .
+If there are already two images in that directory then the newest image will
+be removed to make space for this newer image.  It is assumed that the
+oldest image is the most stable system image, one that always works, and
+that the newest image is experimental.  Check beforehand what
+.B /minix
+contains before you run
+.BR "make hdboot" .
+Remove the oldest image if you want another image to become the stable
+image.  The Boot Monitor chooses the newest image in
+.B /minix
+to boot.  You can use the monitor command
+.B ls minix
+to view the images present, and set the
+.B image
+variable to the full name of the image you want to use instead if the newest
+doesn't work.  The images in
+.B /minix
+are named using the MINIX release and version numbers with an extra revision
+number added to distinguish the images.
+.PP
+The first new kernel you would like to make is one configured for your
+system.  The kernel you are running now contains several drivers
+you don't need, or may be missing drivers that you might want.
+In <minix/config.h> you can find a number of
+.BI ENABLE_ XXX
+variables that can be set to
+.B 0
+to exclude, or
+.B 1
+to include a particular driver.  The full list of configurable parameters
+and what they do are described in
+.BR config (8).
+It is invaluable in figuring out what to change and how in <minix/config.h>.
+.PP
+Configuring a new kernel is sometimes not enough to enable new devices, you
+sometimes need to use the
+.B MAKEDEV
+command to make new device files in
+.BR /dev .
+For pseudo-ttys you also have to check if
+.B /etc/ttytab
+mentiones the new devices.
+.PP
+New additions to the system can be made in the
+.B /usr/local
+tree.  An empty directory tree has been set up for you and binaries and
+manual pages are already in the search paths.  You can make a new user entry
+with the
+.B adduser
+command.
+.PP
+The
+.B TZ
+variable in
+.B /etc/profile
+tells the time zone offset from the wall clock time to GMT.  You have to
+change it for your time zone.  (See
+.BR TZ (5).)
+.PP
+The function keys produce debug dumps, showing various interesting data
+about the system.  F1 lists processes and F5 shows ethernet stats, which
+may be of use now.  Read
+.BR console (4)
+to know all the details of the screen and keyboard.
+.SS "23. SYSTEM SHUTDOWN"
+You can't just turn a MINIX system off.  MINIX must be told to flush the
+modified data in the file system cache first.  The following
+commands/keystrokes can be used to exit MINIX properly:
+.TP
+.B shutdown
+First alert all users and then all processes of the impending shutdown
+then halt or reboot the system in one of various ways.  See
+.BR shutdown (8).
+.TP
+.B reboot / halt
+Alert all processes of the system shutdown then reboot or halt.
+.TP
+.B \s-2CTRL\-ALT\-DEL\s+2
+Halt the system by running
+.BR "shutdown \-h now" .
+.PP
+MINIX halts by returning to the Boot Monitor, MINIX reboots by instructing
+the monitor to reboot MINIX.  (MINIX is just a subprocess to the monitor.)
+Either halt MINIX and use monitor commands to escape MINIX, or use
+.B shutdown \-R
+to reset the system.
+.PP
+When exiting MINIX running under DOS the Boot Monitor's
+.B exit
+command will return you to the DOS prompt.  The Boot Monitor and MINIX
+are together just a pretty big DOS program as far DOS is concerned.
+.SH FILES
+.TP 12
+.B /usr/ast
+Honorary home directory of Andrew S. Tanenbaum.  Doubles as the place where
+the default setup for a new user is found.
+.SH "SEE ALSO"
+.BR dosminix (8),
+.BR monitor (8),
+.BR boot (8),
+.BR part (8),
+.BR mkfs (1),
+.BR mount (8),
+.BR M (8),
+.BR fstab (5),
+.BR hier (7),
+.BR config (8),
+.BR console (4),
+.BR dev (4),
+.BR adduser (8),
+.BR TZ (5),
+.BR mkdist (8),
+.BR shutdown (8).
+.br
+"Operating Systems \- Design and Implementation 2/e" by Andrew S. Tanenbaum
+and Albert S. Woodhull.
+.SH NOTES
+The notation
+.BI < file .h>
+refers to a C language include file in /usr/include.
+.PP
+.B Root
+and
+.B bin
+do not have the current directory in their program search path to avoid
+executing programs left around by malicious people.  This means that to run
+.B foo
+from the current directory,
+.B ./foo
+must be typed.
+.SH BUGS
+There are many PS/2 models, all different.  Some will run MINIX, some won't,
+some crippled if you lie to MINIX by setting
+.B processor
+to
+.BR 86 .
+Almost no PS/2 has a standard disk, so setting
+.B c0
+to
+.B esdi
+or
+.B bios
+will be necessary.
+.PP
+Except for the floppy driver, none of the DMA based drivers know about DMA
+being limited to a 24 bits address, i.e. the first 16 MB.  So under MINIX-386
+you run a slight risk that a
+.B tar
+or
+.B dd
+command may use a buffer above 16 MB for reading or writing to a character
+device.  This only happens if the low 16 MB is taken by some huge processes,
+and you have more than 16 MB, of course.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

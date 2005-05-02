@@ -1,0 +1,70 @@
+.\"	@(#)putc.3s	6.2 (Berkeley) 11/6/85
+.\"
+.TH PUTC 3  "November 6, 1985"
+.AT 3
+.SH NAME
+putc, putchar, fputc, putw \- put character or word on a stream
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdio.h>
+
+int putc(int \fIc\fP, FILE *\fIstream\fP)
+int putchar(int \fIc\fP)
+int fputc(int \fIc\fP, FILE *\fIstream\fP)
+int putw(int \fIw\fP, FILE *\fIstream\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Putc
+appends the character
+.I c
+to the named output
+.IR stream .
+It returns the character written.
+.PP
+.BI Putchar( c )
+is defined as 
+.BI putc( c ", stdout)\fR."
+.PP
+.B Fputc
+behaves like 
+.BR putc ,
+but is a genuine function rather than a macro.
+.PP
+.B Putw
+appends word (that is,
+.BR int )
+.I w
+to the output
+.IR stream .
+It returns the word written.
+.B Putw
+neither assumes nor causes special alignment in the file.
+.SH "SEE ALSO"
+.BR fopen (3),
+.BR fclose (3),
+.BR getc (3),
+.BR puts (3),
+.BR printf (3),
+.BR fread (3).
+.SH DIAGNOSTICS
+These functions return the constant
+.SM
+.B EOF
+upon error.  Since this is a good integer,
+.BR ferror (3)
+should be used to detect 
+.B putw
+errors.
+.SH BUGS
+Because it is implemented as a macro,
+.B putc
+treats a
+.I stream
+argument with side effects improperly.  In particular
+`putc(c,\ *f++);'
+doesn't work sensibly.
+.PP
+Errors can occur long after the call to
+.BR putc .

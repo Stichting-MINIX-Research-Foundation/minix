@@ -1,0 +1,58 @@
+.TH SU 1
+.SH NAME
+su \- temporary become superuser or another user
+.SH SYNOPSIS
+.B su
+.RB [ \- [ e ]]
+.RI [ user
+.RI [ shell-arguments " ...]]"
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Su
+can be used to temporarily run a shell under the identity of the superuser
+or another user.  Unless the caller is a member of the operator group, one
+is prompted for the password of the user-to-be.  Calls that need a password
+are logged, whether they succeed or not.  The default user is
+.BR root .
+Further arguments are handed to the shell.  By default the shell started is
+the shell of the invoker, and the environment is passed on as is.
+.PP
+The activities of
+.B su
+are logged through
+.BR syslog (3)
+under Minix-vmd.
+.SH OPTIONS
+.TP
+.B \-
+Constructs a new environment consisting of the
+.BR PATH ,
+.BR USER ,
+.BR LOGNAME ,
+.BR HOME ,
+.BR SHELL ,
+.BR TERM ,
+.BR TERMCAP ,
+and
+.BR TZ
+variables.  The environment is the same as on a normal login, except that
+.BR TERM ,
+.B TERMCAP
+and
+.B TZ
+are copied from the current environment if set.  The current working
+directory is changed to the user home directory, the shell of the user-to-be
+is run, and it is started as a login shell, with the first character a minus
+sign.
+.TP
+.B \-e
+Like above, but the shell is started normally, not as a login shell.
+.SH "SEE ALSO"
+.BR sh (1),
+.BR login (1),
+.BR syslog (3).
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

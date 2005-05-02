@@ -1,0 +1,42 @@
+.TH COMPRESS 1
+.SH NAME
+compress, uncompress, zcat \- compress a file using modified Lempel-Ziv coding
+.SH SYNOPSIS
+\fBcompress\fR [\fB\-cdfv\fR]\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Put output on \fIstdout\fR instead of on \fIfile.Z\fR"
+.FL "\-d" "Decompress instead of compress"
+.FL "\-f" "Force output even if there is no saving"
+.FL "\-v" "Verbose mode"
+.SH EXAMPLES
+.EX "compress <infile >outfile" "Compress 1 file"
+.EX "compress x y z" "Compress 3 files to \fIx.Z\fR, \fIy.Z\fR, and \fIz.Z\fR"
+.EX "compress \-d file.Z" "Decompress \fIfile.Z\fR to \fIfile\fR"
+.SH DESCRIPTION
+.PP
+The listed files (or \fIstdin\fR, if none are given) are compressed
+using the Ziv-Lempel algorithm.  If the output is smaller than the input,
+the output is put on \fIfile.Z\fR or \fIstdout\fR if no files are listed.  
+If \fIcompress\fR is linked to \fIuncompress\fR, the latter is the same 
+as giving the \fB\-d\fP flag.
+Similarly, a link to \fIzcat\fR decompresses to \fIstdout\fR.
+The
+\s-2MINIX\s+2
+version of \fIcompress\fR uses 13-bit compression.
+This means that when compressing files on other systems for transmission to
+\s-2MINIX\s+2,
+be sure that only 13-bit compression is used.
+On many systems, the default is 16-bit (too big).
+.SH "SEE ALSO"
+.BR tar (1).

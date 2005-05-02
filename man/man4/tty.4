@@ -1,0 +1,736 @@
+.TH TTY 4
+.SH NAME
+tty, termios \- terminals
+.SH DESCRIPTION
+The
+.B tty
+driver family takes care of all user input and output.  It governs the
+keyboard, the console, the serial lines, and pseudo ttys.  Input on any of
+these devices undergoes "input processing", and output undergoes "output
+processing" according to the standard termios terminal interface.
+.SS "Input processing"
+Each terminal device has an input queue.  This queue is used to store
+preprocessed input characters, and to perform the backspacing and erase
+functions.  Some special characters like a newline make the contents of the
+queue available to a process reading from the terminal.  Characters up to
+and including the newline, or another so-called "line break", may be read by
+a process.  The process need not read all characters at once.  An input line
+may be read byte by byte if one wants to.  A line break just makes
+characters available for reading, thats all.
+.PP
+When data is made available depends on whether the tty is in canonical mode
+or not.  In canonical mode the terminal processes input line by line.  A
+line ends with a newline
+.RB ( NL ),
+end-of-file
+.RB ( EOF ),
+or end-of-line
+.RB ( EOL ).
+Characters that have not been delimited by such a line break may be erased
+one by one with the
+.B ERASE
+character or all at once with the
+.B KILL
+character.  Once a line break is typed the characters become available to a
+reading process and can no longer be erased.  Once read they are removed
+from the input queue.  Several lines may be gathered in the input queue if
+no reader is present to read them, but a new reader will only receive one
+line.  Two line breaks are never returned in one read call.  The input queue
+has a maximum length of
+.B MAX_CANON
+characters.  Any more characters are discarded.  One must use
+.B ERASE
+or
+.B KILL
+to make the terminal functioning again if the input queue fills up.  If
+nonblocking I/O is set then \-1 is returned with
+.B errno
+set to
+.B EAGAIN
+if the reader would otherwise be blocked.
+.PP
+In non-canonical mode (raw mode for short) all characters are immediately
+available to the reader in principle.  One may however tune the terminal to
+bursty input with the
+.B MIN
+and
+.B TIME
+parameters, see the raw I/O parameters section below.  In raw mode no
+characters are discarded if the input queue threatens to overflow if the
+device supports flow control.
+.SS "Output processing"
+Characters written to a terminal device may undergo output processing, which
+is usually just inserting a carriage returns before newlines.  A writer
+may return before all characters are output if the characters can be stored
+in the output buffers.  If not then the writer may be blocked until space is
+available.  If non-blocking I/O is set then only the count of the number of
+bytes that can be processed immediately is returned.  If no characters can
+be written at all then \-1 is returned with
+.B errno
+set to
+.BR EAGAIN .
+.SS "Special characters"
+Some characters have special functions in some of the terminal modes.  These
+characters are as follows, with the Minix defaults shown in parentheses:
+.TP 5
+.BR INTR " (^?)"
+Special input character that is recognized if
+.B ISIG
+is set.  (For
+.B ISIG
+and other flags see the various modes sections below.)  It causes a
+.B SIGINT
+signal to be sent to all processes in the terminal process group.  (See the
+section on session leaders below.)
+.TP
+.BR QUIT " (^\e)"
+Special input character if
+.B ISIG
+is set.  Causes a
+.B SIGQUIT
+signal to be sent to the terminal process group.
+.TP
+.BR ERASE " (^H)"
+Special input character if
+.B ICANON
+is set.  Erases the last character in the current line.
+.TP
+.BR KILL " (^U)"
+Special input character if
+.B ICANON
+is set.  Erases the entire line.
+.TP
+.BR EOF " (^D)"
+Special input character if
+.B ICANON
+is set.  It is a line break character that is not itself returned to a
+reader.  If EOF is typed with no input present then the read returns zero,
+which normally causes the reader to assume that end-of-file is reached.
+.TP
+.BR CR " (^M)"
+Special input character if
+.B IGNCR
+or
+.B ICRNL
+is set.  It is a carriage return ('\er').  If
+.B IGNCR
+is set then
+.B CR
+is discarded.  If
+.B ICRNL
+is set and
+.B IGNCR
+is not set then
+.B CR
+is changed into an
+.B NL
+and has the same function as
+.BR NL.
+.TP
+.BR NL " (^J)"
+Special input character if
+.B ICANON
+is set.  It is both a newline ('\en') and a line break.
+.br
+Special output character if
+.B OPOST
+and
+.B ONLCR
+are set.  A
+.B CR NL
+sequence is output instead of just
+.BR NL .
+(Minix specific, but almost mandatory on any UNIX-like system.)
+.TP
+.BR TAB " (^I)"
+Special character on output if
+.B OPOST
+and
+.B XTABS
+are set.  It is transformed into the number of spaces necessary to reach a
+column position that is a multiple of eight.  (Only needed for terminals
+without hardware tabs.)
+.TP
+.BR EOL " (undefined)"
+Special input character if
+.B ICANON
+is set.  It is an additional line break.
+.TP
+.BR SUSP " (^Z)"
+Special input character if job control is implemented and
+.B ISIG
+is set.  It causes a
+.B SIGTSTP
+signal to be send to the terminal process group.  (Minix does not have job
+control.)
+.TP
+.BR STOP " (^S)"
+Special input character if
+.B IXON
+is set.  It suspends terminal output and is then discarded.
+.TP
+.BR START " (^Q)"
+Special output character if
+.B IXON
+is set.  It starts terminal output if suspended and is then discarded.  If
+.B IXANY
+is also set then any other character also starts terminal output, but they
+are not discarded.
+.TP
+.BR REPRINT " (^R)"
+Special input character if
+.B IEXTEN
+and
+.B ECHO
+are set.  Reprints the input queue from the last line break onwards.  A
+reprint also happens automatically if the echoed input has been messed up by
+other output and
+.B ERASE
+is typed.
+.TP
+.BR LNEXT " (^V)"
+Special input character if
+.B IEXTEN
+is set.  It is the "literal next" character that causes the next character
+to be input without any special processing.
+.TP
+.BR DISCARD " (^O)"
+Special input character if
+.B IEXTEN
+is set.  Causes output to be discarded until it is typed again.  (Implemented
+only under Minix-vmd.)
+.PP
+All of these characters except
+.BR CR ,
+.B NL
+and
+.B TAB
+may be changed or disabled under Minix.  (Changes to
+.B START
+and
+.B STOP
+may be ignored under other termios implementations.)  The
+.B REPRINT
+and
+.B LNEXT
+characters are Minix extensions that are commonly present in other
+implementations.  \s-2POSIX\s+2 is unclear on whether
+.BR IEXTEN,
+.BR IGNCR
+and
+.BR ICRNL
+should be active in non-canonical mode, but under Minix they are.
+.SS "Terminal attributes"
+The attributes of a terminal, such as whether the mode should be canonical or
+non-canonical, are controlled by routines that use the
+.B termios
+structure as defined in
+.BR <termios.h> :
+.PP
+.RS
+.nf
+.ta +4n +10n +15n
+struct termios {
+	tcflag_t	c_iflag;	/* input modes */
+	tcflag_t	c_oflag;	/* output modes */
+	tcflag_t	c_cflag;	/* control modes */
+	tcflag_t	c_lflag;	/* local modes */
+	speed_t	c_ispeed;	/* input speed */
+	speed_t	c_ospeed;	/* output speed */
+	cc_t	c_cc[NCCS];	/* control characters */
+};
+.fi
+.RE
+.PP
+The types
+.BR tcflag ,
+.B speed_t
+and
+.B cc_t
+are defined in
+.B <termios.h>
+as unsigned integral types.
+.SS "Input Modes"
+The
+.B c_iflag
+field contains the following single bit flags that control input processing:
+.TP 5
+.B ICRNL
+Map
+.B CR
+to
+.B NL
+on input.
+.TP
+.B IGNCR
+Ignore
+.B CR
+on input.  This flag overrides
+.BR ICRNL .
+.TP
+.B INLCR
+Map
+.B NL
+to
+.B CR
+on input.  This is done after the
+.B IGNCR
+check.
+.TP
+.B IXON
+Enable start/stop output control.
+.TP
+.B IXOFF
+Enable start/stop input control.  (Not implemented.)
+.TP
+.B IXANY
+Allow any character to restart output.  (Minix specific.)
+.TP
+.B ISTRIP
+Strip characters to seven bits.
+.TP
+.B IGNPAR
+Ignore characters with parity errors.  (Not implemented.)
+.TP
+.B INPCK
+Enable input parity checking.  (Not implemented.)
+.TP
+.B PARMRK
+Mark parity errors by preceding the faulty character with '\e377', '\e0'.
+The character '\e377' is preceded by another '\e377' to avoid ambiguity.
+(Not implemented.)
+.TP
+.B BRKINT
+Send the signal
+.B SIGINT
+to the terminal process group when receiving a break condition.  (Not
+implemented.)
+.TP
+.B IGNBRK
+Ignore break condition.  If neither
+.B BRKINT
+or
+.B IGNBRK
+is set a break is input as a single '\e0', or if
+.B PARMRK
+is set as '\e377', '\e0', '\e0'.
+(Breaks are always ignored.)
+.SS "Output Modes"
+The
+.B c_oflag
+field contains the following single bit flags that control output processing:
+.TP
+.B OPOST
+Perform output processing.  This flag is the "main switch" on output
+processing.  All other flags are Minix specific.
+.TP
+.B ONLCR
+Transform an
+.B NL
+to a
+.B CR NL
+sequence on output.  Note that a key labeled "RETURN" or "ENTER" usually
+sends a
+.BR CR .
+In line oriented mode this is normally transformed into
+.B NL
+by
+.BR ICRNL .
+.B NL
+is the normal UNIX line delimiter ('\en').  On output an
+.B NL
+is transformed into the
+.B CR NL
+sequence that is necessary to reach the first column of the next line.
+(This is a common output processing function for UNIX-like systems, but not
+always separately switchable by an
+.B ONLCR
+flag.)
+.TP
+.B XTABS
+Transform a
+.B TAB
+into the number of spaces necessary to reach a column position that is a
+multiple of eight.
+.TP
+.B ONOEOT
+Discard
+.B EOT
+(^D) characters.  (Minix-vmd only.)
+.SS "Control Modes"
+The
+.B c_cflag
+field contains the following single bit flags and bit field for basic
+hardware control:
+.TP
+.B CLOCAL
+Ignore modem status lines.
+.TP
+.B CREAD
+Enable receiver.  (The receiver is always enabled.)
+.TP
+.B CSIZE
+Number of bits per byte.
+.B CSIZE
+masks off the values
+.BR CS5 ,
+.BR CS6 ,
+.BR CS7
+and
+.BR CS8
+that indicate that 5, 6, 7 or 8 bits are used.
+.TP
+.B CSTOPB
+Send two stop bits instead of one.  Two stop bits are normally used at 110
+baud or less.
+.TP
+.B PARENB
+Enable parity generation.
+.TP
+.B PARODD
+Generate odd parity if parity is generated, otherwise even parity.
+.TP
+.B HUPCL
+Drop the modem control lines on the last close of the terminal line.  (Not
+implemented.)
+.SS "Local Modes"
+The
+.B c_lflag
+field contains the following single bit flags that control various functions:
+.TP
+.B ECHO
+Enable echoing of input characters.  Most input characters are echoed as
+they are.  Control characters are echoed as 
+.BI "^" X
+where
+.I X
+is the letter used to say that the control character is
+.BI CTRL\- X\fR.
+The
+.BR CR ,
+.BR NL
+and
+.BR TAB
+characters are echoed with their normal effect unless they are escaped by
+.BR LNEXT .
+.TP
+.B ECHOE
+If
+.B ICANON
+and
+.B ECHO
+are set then echo
+.B ERASE
+and
+.B KILL
+as one or more backspace-space-backspace sequences to wipe out the last
+character or the entire line, otherwise they are echoed as they are.
+.TP
+.B ECHOK
+If
+.B ICANON
+and
+.B ECHO
+are set and
+.B ECHOE
+is not set then output an
+.B NL
+after the
+.B KILL
+character.  (For hardcopy terminals it is best to unset
+.B ECHOE
+and to set
+.BR ECHOK .)
+.TP
+.B ECHONL
+Echo
+.B NL
+even if
+.B ECHO
+is not set, but
+.B ICANON
+is set.
+.TP
+.B ICANON
+Canonical input.  This enables line oriented input and erase and kill
+processing.
+.TP
+.B IEXTEN
+Enable implementation defined input extensions.
+.TP
+.B ISIG
+Enable the signal characters
+.BR INTR ,
+.BR QUIT
+and
+.BR SUSP .
+.TP
+.B NOFLSH
+Disable the flushing of the input and output queues that is normally done if
+a signal is sent.
+.TP
+.B TOSTOP
+Send a
+.B SIGTTOU
+signal if job control is implemented and a background process tries to
+write.  (Minix has no job control.)
+.SS "Input and output speed"
+The input and output speed are encoded into the
+.B c_ispeed
+and
+.B c_ospeed
+fields.
+.B <termios.h>
+defines the symbols
+.BR B0 ,
+.BR B50 ,
+.BR B75 ,
+.BR B110 ,
+.BR B134 ,
+.BR B150 ,
+.BR B200 ,
+.BR B300 ,
+.BR B600 ,
+.BR B1200 ,
+.BR B1800 ,
+.BR B2400 ,
+.BR B4800 ,
+.BR B9600 ,
+.BR B19200 ,
+.BR B38400 ,
+.BR B57600
+and
+.BR B115200
+as values used to indicate the given baud rates.  The zero baud rate,
+.BR B0 ,
+if used for the input speed causes the input speed to be equal to the
+output speed.  Setting the output speed to zero hangs up the line.  One
+should use the functions
+.BR cfgetispeed() ,
+.BR cfgetospeed() ,
+.BR cfsetispeed()
+and
+.BR cfsetospeed()
+to get or set a speed, because the
+.B c_ispeed
+and
+.B c_ospeed
+fields may not be visible under other implementations.  (The
+.B c_ispeed
+and
+.B c_ospeed
+fields and the
+.B B57600
+and
+.B B115200
+symbols are Minix specific.)
+.SS "Special characters"
+The
+.B c_cc
+array contains the special characters that can be modified.  The array has
+length
+.B NCCS
+and is subscripted by the symbols
+.BR VEOF ,
+.BR VEOL ,
+.BR VERASE ,
+.BR VINTR ,
+.BR VKILL ,
+.BR VMIN ,
+.BR VQUIT ,
+.BR VTIME ,
+.BR VSUSP ,
+.BR VSTART ,
+.BR VSTOP ,
+.BR VREPRINT ,
+.BR VLNEXT
+and
+.BR VDISCARD .
+All these symbols are defined in
+.BR <termios.h> .
+Some implementations may give the same values to the
+.B VMIN
+and
+.B VTIME
+subscripts and the
+.B VEOF
+and
+.B VEOL
+subscripts respectively, and may ignore changes to
+.B START
+and
+.BR STOP .
+(Under Minix all special characters have their own
+.I c_cc
+slot and can all be modified.)
+.SS "Raw I/O Parameters"
+The
+.B MIN
+and
+.B TIME
+parameters can be used to adjust a raw connection to bursty input.
+.B MIN
+represents a minimum number of bytes that must be received before a read
+call returns.
+.B TIME
+is a timer of 0.1 second granularity that can be used to time out a read.
+Setting either of these parameters to zero has special meaning, which leads
+to the following four possibilities:
+.TP 5
+.B "MIN > 0, TIME > 0"
+.B TIME
+is an inter-byte timer that is started (and restarted) when a byte is
+received.  A read succeeds when either the minimum number of characters
+is received or the timer expires.  Note that the timer starts
+.B after
+the first character, so the read returns at least one byte.
+.TP
+.B "MIN > 0, TIME = 0"
+Now the timer is disabled, and a reader blocks indefinitely until at least
+.B MIN
+characters are received.
+.TP
+.B "MIN = 0, TIME > 0"
+.B TIME
+is now a read timer that is started when a read is executed.  The read will
+return if the read timer expires or if at least one byte is input.  (Note
+that a value of zero may be returned to the reader.)
+.TP
+.B "MIN = 0, TIME = 0"
+The bytes currently available are returned.  Zero is returned if no bytes
+are available.
+.SS "User Level Functions"
+Termios attributes are set or examined, and special functions can be
+performed by using the functions described in
+.BR termios (3).
+.SS "Session Leaders and Process Groups"
+With the use of the
+.B setsid()
+function can a process become a session leader.  A session leader forms a
+process group with a process group id equal to the process id of the session
+leader.  If a session leader opens a terminal device file then this terminal
+becomes the controlling tty of the session leader.  Unless the terminal is
+already the controlling tty of another process, or unless the
+.B O_NOCTTY
+flag is used to prevent the allocation of a controlling tty.  The process
+group of the session leader is now remembered as the terminal process group
+for signals sent by the terminal driver.  All the children and grandchildren
+of the session leader inherit the controlling terminal and process group
+until they themselves use
+.BR setsid() .
+.PP
+The controlling tty becomes inaccessible to the children of the session
+leader when the session leader exits, and a hangup signal is sent to all
+the members of the process group.  The input and output queues are flushed
+on the last close of a terminal and all attributes are reset to the default
+state.
+.PP
+A special device
+.B /dev/tty
+is a synonym for the controlling tty of a process.  It allows a process to
+reach the terminal even when standard input, output and error are
+redirected.  Opening this device can also be used as a test to see if a
+process has a controlling tty or not.
+.PP
+For Minix a special write-only device
+.B /dev/log
+exists for processes that want to write messages to the system console.
+Unlike the console this device is still accessible when a session leader
+exits.
+.PP
+Minix-vmd also has a
+.B /dev/log
+device, but this device is read-write.  All messages written to the log
+device or to the console when X11 is active can be read from
+.BR /dev/log .
+The system tries to preserve the log buffer over a reboot so that panic
+messages reappear in the log if the system happens to crash.
+.SS "Pseudo Terminals"
+Pseudo ttys allow a process such as a remote login daemon to set up a
+terminal for a remote login session.  The login session uses a device like
+.B /dev/ttyp0
+for input and output, and the remote login daemon uses the device
+.B /dev/ptyp0
+to supply input to or take output from the login session and transfer this
+to or from the originating system.  So the character flow may be:  Local
+user input sent to the remote system is written to
+.B /dev/ptyp0
+by the remote login daemon, undergoes input processing and appears on
+.B /dev/ttyp0
+as input to the login session.  Output from the login session to
+.B /dev/ttyp0
+undergoes output processing, is read from
+.B /dev/ptyp0
+by the remote login daemon and is send over to the local system to be
+displayed for the user.  (So there are only four data streams to worry about
+in a pseudo terminal.)
+.PP
+A pseudo terminal can be allocated by trying to open all the controlling
+devices
+.BI /dev/pty nn
+one by one until it succeeds.  Further opens will fail once a pty is open.
+The process should now fork, the child should become session leader, open
+the tty side of the pty and start a login session.
+.PP
+If the tty side is eventually closed down then reads from the pty side will
+return zero and writes return \-1 with
+.B errno
+set to
+.BR EIO .
+If the pty side is closed first then a
+.B SIGHUP
+signal is sent to the session leader and further reads from the tty side
+return zero and writes return \-1 with
+.B errno
+set to
+.BR EIO .
+(Special note:  A line erase may cause up to three times the size of the
+tty input queue to be sent to the pty reader as backspace overstrikes.  Some
+of this output may get lost if the pty reader cannot accept it all at once
+in a single read call.)
+.SS "Backwards compatibility"
+The
+.BR TIOCGETP ,
+.BR TIOCSETP ,
+.BR TIOCGETC
+and
+.BR TIOCSETC
+ioctl functions that are used by the old
+.B sgtty
+terminal interface are still supported by the terminal driver by emulation.
+Note that these old functions cannot control all termios attributes, so the
+terminal must be in a relatively sane state to avoid problems.
+.SH FILES
+The list below shows all devices that Minix and Minix-vmd have.  Not all of
+these devices are configured in by default, as indicated by the numbers
+(i/j/k, l/m/n) that tell the minimum, default and maximum possible number of
+these devices for Minix (i/j/k) and Minix-vmd (l/m/n).
+.TP 20
+.B /dev/console
+System console.
+.TP
+.B /dev/ttyc[1-7]
+Virtual consoles.  (0/1/7, 0/1/7)
+.TP
+.BR /dev/log
+Console log device.
+.TP
+.B /dev/tty0[0-3]
+Serial lines.  (0/2/2, 4/4/4)
+.TP
+.B /dev/tty[p-w][0-f]
+Pseudo ttys.  (0/0/64, 1/32/128)
+.TP
+.B /dev/pty[p-w][0-f]
+Associated pseudo tty controllers.
+.SH "SEE ALSO"
+.BR stty (1),
+.BR termios (3),
+.BR setsid (2),
+.BR read (2),
+.BR write (2).
+.SH BUGS
+A fair number of flags are not implemented under Minix (yet).  Luckily they
+are very limited utility and only apply to RS-232, not to the user interface.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

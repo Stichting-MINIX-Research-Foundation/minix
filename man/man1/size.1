@@ -1,0 +1,39 @@
+.TH SIZE 1
+.SH NAME
+size \- print text, data, and bss size of a program
+.SH SYNOPSIS
+\fBsize\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "size file" "Print the size of \fIfile\fP"
+.SH DESCRIPTION
+.PP
+The text, data, bss, and total sizes for each argument are printed.
+If no arguments are present, 
+.I a.out
+is assumed.
+The amount of memory available for combined stack and data segment growth
+is printed in the column \&'stack.\&'
+This is the value manipulated by the 
+.I chmem
+command.
+The total amount of memory allocated to the program when it is loaded is
+listed under \&'memory.\&'
+This value is just the sum of the other four columns.
+.SH "SEE ALSO"
+.BR anm (1),
+.BR asize (1),
+.BR ar (1),
+.BR chmem (1),
+.BR install (1),
+.BR nm (1).

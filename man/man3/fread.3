@@ -1,0 +1,66 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)fread.3s	6.1 (Berkeley) 5/15/85
+.\"
+.TH FREAD 3  "May 15, 1985"
+.UC 4
+.SH NAME
+fread, fwrite \- buffered binary input/output
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <stdio.h>
+
+size_t fread(void *\fIptr\fP, size_t \fIitemsize\fP, size_t \fInitems\fP, FILE *\fIstream\fP)
+size_t fwrite(void *\fIptr\fP, size_t \fIitemsize\fP, size_t \fInitems\fP, FILE *\fIstream\fP)
+.SH DESCRIPTION
+.B Fread
+reads, into a block beginning at
+.IR ptr ,
+.I nitems
+of data of the type of
+.I *ptr
+from the named input
+.IR stream .
+It returns the number of items actually read.
+.PP
+If
+.I stream
+is
+.B stdin
+and the standard output is line buffered, then any partial output line
+will be flushed before any call to
+.BR read (2)
+to satisfy the
+.BR fread .
+.PP
+.B Fwrite
+appends at most
+.I nitems
+of data of the type of
+.I *ptr
+beginning at
+.I ptr
+to the named output
+.IR stream .
+It returns the number of items actually written.
+.SH "SEE ALSO"
+.BR read (2),
+.BR write (2),
+.BR fopen (3),
+.BR getc (3),
+.BR putc (3),
+.BR gets (3),
+.BR puts (3),
+.BR printf (3),
+.BR scanf (3).
+.SH DIAGNOSTICS
+.B Fread
+and
+.B fwrite
+return
+0
+upon end of file or error.

@@ -1,0 +1,390 @@
+.TH sed 1 "November 19, 1995"
+.SH NAME
+sed \- the stream editor
+.SH SYNOPSIS
+.B sed
+.RB [ \-n ]
+.RB [ \-g ]
+.RB [ \-e
+.IR script ]
+.RB [ \-f
+.IR sfile ]
+.RI [ file " ...]"
+.SH DESCRIPTION
+Sed copies the named files (standard input default) to the standard
+output, edited according to a script of commands. 
+.P
+An
+.B \-e
+option supplies a single edit command from the next argument;
+if there are several of these they are executed in the order in which
+they appear. If there is just one
+.B \-e
+option and no
+.BR \-f "'s,"
+the
+.B \-e
+flag may be omitted.
+.P
+An
+.B \-f
+option causes commands to be taken from the file "sfile"; if
+there are several of these they are executed in the order in which
+they appear;
+.B \-e
+and
+.B \-f
+commands may be mixed.
+.P
+The
+.B \-g
+option causes
+.B sed
+to act as though every substitute command
+in the script has a
+.B g
+suffix.
+.P
+The
+.B \-n
+option suppresses the default output.
+.P
+A script consists of commands, one per line, of the following form:
+.PP
+	[address [, address] ] function [arguments]
+.PP
+Normally
+.B sed
+cyclically copies a line of input into a current text
+buffer, then applies all commands whose addresses select the buffer in
+sequence, then copies the buffer to standard output and clears it.
+.P
+The
+.B \-n
+option suppresses normal output (so that only
+.B p
+and
+.B w
+output is done).  Also, some commands
+.RB ( n ,
+.BR N )
+do their own line reads, and some others
+.RB ( d ,
+.BR D )
+cause all commands following in the script to be skipped (the
+.B D
+command also suppresses the clearing of the current text
+buffer that would normally occur before the next cycle).
+.P
+It is also helpful to know that there's a second buffer (called the `hold
+space' that can be copied or appended to or from or swapped with
+the current text buffer.
+.P
+An address is: a decimal numeral (which matches the line it numbers where line
+numbers start at 1 and run cumulatively across files), or a `$' that addresses
+the last line of input, or a context address, which is a `/regular
+expression/', in the style of
+.BR ed (1)
+modified thus:
+.P
+.TP 5
+(1)
+The escape sequence `\en' matches a newline embedded in the buffer,
+and `\et' matches a tab.
+.TP 5
+(2)
+A command line with no addresses selects every buffer.
+.TP 5
+(3)
+A command line with one address selects every buffer that matches
+that address.
+.TP 5
+(4)
+A command line with two addresses selects the inclusive range from
+the first input buffer that matches the first address through the
+next input buffer that matches the second.  (If the second address
+is a number less than or equal to the line number first selected,
+only one line is selected.)  Once the second address is matched
+.B sed
+starts looking for the first one again; thus, any number of these 
+ranges will be matched.
+.P
+The negation operator '!' can prefix a command to apply it to every
+line not selected by the address(es).
+.P
+In the following list of functions, the maximum number of addresses
+permitted for each function is indicated in parentheses.
+.P
+An argument denoted "text" consists of one or more lines, with all
+but the last ending with `\e' to hide the newline.
+.P
+Backslashes in text are treated like backslashes in the replacement
+string of an
+.B s
+command and may be used to protect initial whitespace (blanks and tabs)
+against the stripping that is done on every line of the script.
+.P
+An argument denoted "rfile" or "wfile" must be last on the command
+line.  Each wfile is created before processing begins.  There can be at
+most 10 distinct wfile arguments.
+.ta +\w'nm'u +\w'"command"m'u
+.TP 5
+a	"text"	(1)
+Append.  Place text on output before reading the next input line.
+.TP 5
+b	"label"	(2)
+Branch to the `:' command bearing the label.  If no label is  given,
+branch to the end of the script.
+.TP 5
+c	"text"	(2)
+Change.  Delete the current text buffer.  With 0 or 1 address, or at
+the end of a 2-address range, place text on the output.  Start the next
+cycle.
+.TP 5
+d		(2)
+Delete the current text buffer.  Start the next cycle.
+.TP 5
+D		(2)
+Delete the first line of the current text buffer (all chars up to the
+first newline).  Start the next cycle.
+.TP 5
+g		(2)
+Replace the contents of the current text buffer with the contents of
+the hold space.
+.TP 5
+G		(2)
+Append the contents of the hold space to the current text buffer.
+.TP 5
+h		(2)
+Copy the current text buffer into the hold space.
+.TP 5
+H		(2)
+Append a copy of the current text buffer to the hold space.
+.TP 5
+i	"text"	(1)
+Insert.  Place text on the standard output.
+.TP 5
+l		(2)
+List.  Sends the pattern space to standard output.  A "w" option may
+follow as in the
+.B s
+command below.  Non-printable characters expand to:
+.sp .4v
+.in +3
+.nf
+.ta +\w'xxxn'u +\w'nnnn'u +\w'backspace 'u
+\eb	\-\-	backspace	(ASCII 08)
+\et	\-\-	tab	(ASCII 09)
+\en	\-\-	newline	(ASCII 10)
+\er	\-\-	return	(ASCII 13)
+\ee	\-\-	escape	(ASCII 27)
+\exx	\-\-	the ASCII character corresponding to 2 hex digits xx.
+.fi
+.in -3
+.ta +\w'nm'u +\w'"command"m'u
+.TP 5
+n		(2)
+Copy the current text buffer to standard output.  Read the next line
+of input into it.
+.TP 5
+N		(2)
+Append the next line of input to the current text buffer, inserting
+an embedded newline between the two.  The current line number changes.
+.TP 5
+p		(2)
+Print.  Copy the current text buffer to the standard output.
+.TP 5
+P		(2)
+Copy the first line of the current text buffer (all chars up to the
+first newline) to standard output.
+.TP 5
+q		(1)
+Quit.  Branch to the end of the script.  Do not start a new cycle.
+.TP 5
+r	"rfile"	(1)
+Read the contents of rfile.  Place them on the output before reading
+the next input line.
+.TP 5
+s	/regular-expression/replacement/flags\0\0\0\0\0\0(2)
+Substitute the replacement for instances of the regular expression
+in the current text buffer.  Any character may be used instead of `/'.
+For a fuller description see ed (1).
+Flags is zero or more of the following:
+.sp .4v
+.ta +\w'gm'u +\w'nnm'u
+.in +\w'gmnnm'u
+.ti -\w'gmnnm'u
+g	\-\-	Global.  Substitute for all nonoverlapping instances of
+the string rather than just the first one.
+.sp .4v
+.ti -\w'gmnnm'u
+p	\-\-	Print the pattern space if a replacement was made.
+.sp .4v
+.ti -\w'gmnnm'u
+w	\-\-	Write.  Append the current text buffer to a file argument
+as in a w command if a replacement is made.  Standard output is used if no
+file argument is given
+.in -\w'gmnnm'u
+.ta +\w'nm'u +\w'"command"m'u
+.TP 5
+t	"label"	(2)
+Branch-if-test.  Branch to the
+.B :
+command with the given label if any
+substitutes have been made since the most recent read of an input line
+or execution of a
+.B t
+or
+.BR T .
+If no label is given, branch to the end of the script.
+.TP 5
+T	"label"	(2)
+Branch-on-error.  Branch to the
+.B :
+command with the given label if no substitutes have succeeded since the
+last input line or
+.B t
+or
+.B T
+command.  Branch to the end of the script if no label is given.
+.TP 5
+w	"wfile"	(2)
+Write.  Append the current text buffer to wfile.
+.TP 5
+W	"wfile"	(2)
+Write first line.  Append first line of the current text buffer
+to wfile.
+.TP 5
+x		(2)
+Exchange the contents of the current text buffer and hold space.
+.TP 5
+y	/string1/string2/\0\0\0\0\0\0(2)
+Translate.  Replace each occurrence of a character in string1 with
+the corresponding character in string2.  The lengths of these strings
+must be equal.
+.TP 5
+!	"command"	(2)
+All-but.  Apply the function (or group, if function is
+.BR { )
+only to lines not selected by the address(es).
+.TP 5
+:	"label"	(0)
+This command does nothing but hold a label for
+.B b
+and
+.B t
+commands to branch to.
+.TP 5
+=		(1)
+Place the current line number on the standard output as a line.
+.TP 5
+{		(2)
+Execute the following commands through a matching `}' only when the
+current line matches the address or address range given.
+.P
+An empty command is ignored.
+.P
+.SH PORTABILITY
+This tool was reverse-engineered from BSD 4.1 UNIX
+.BR sed ,
+and (as far
+as the author's knowledge and tests can determine) is compatible with
+it.  All documented features of BSD 4.1 sed are supported.
+.P
+One undocumented feature (a leading 'n' in the first comment having
+the same effect as an
+.B \-n
+command-line option) has been omitted.
+.P
+The following bugs and limitations have been fixed:
+.TP 5
+\(bu
+There is no hidden length limit (40 in BSD sed) on
+.B w
+file names.
+.TP 5
+\(bu
+There is no limit (8 in BSD sed) on the length of labels.
+.TP 5
+\(bu
+The exchange command now works for long pattern and hold spaces.
+.P
+The following enhancements to existing commands have been made:
+.TP 5
+\(bu
+.BR a ,
+.B i
+commands don't insist on a leading backslash-\en in the text.
+.TP 5
+\(bu
+.BR r ,
+.B w
+commands don't insist on whitespace before the filename.
+.TP 5
+\(bu
+The
+.BR g ,
+.B p
+and
+.B P
+options on
+.B s
+commands may be given in any order.
+.P
+Some enhancements to regular-expression syntax have been made:
+.TP 5
+\(bu
+\et is recognized in REs (and elsewhere) as an escape for tab.
+.TP 5
+\(bu
+In an RE, + calls for 1..n repeats of the previous pattern.
+.P
+The following are completely new features:
+.TP 5
+\(bu
+The
+.B l
+command (list, undocumented and weaker in BSD)
+.TP 5
+\(bu
+The
+.B W
+command (write first line of pattern space to file).
+.TP 5
+\(bu
+The
+.B T
+command (branch on last substitute failed).
+.TP 5
+\(bu
+Trailing comments are now allowed on command lines.
+.P
+In addition,
+.BR sed "'s"
+error messages have been made more specific and informative.
+.P
+The implementation is also significantly smaller and faster than 
+BSD 4.1 sed.  It uses only the standard I/O library and exit(3).
+.P
+.SH NOTE
+.P
+This is a freeware component of the GNU and MINIX operating systems.
+The user is hereby granted permission to use, modify, reproduce and
+distribute it subject to the following conditions:
+.P
+1. The authorship notice appearing in each source file may not be
+altered or deleted.
+.P
+2. The object form may not be distributed without source.
+.P
+.SH SEE ALSO
+.P
+.BR cgrep (1),
+.BR fgrep (1),
+.BR grep (1),
+.BR lex (1),
+.BR regexp (5),
+.BR awk (9).
+.P
+.SH AUTHOR
+Eric S. Raymond <esr@snark.thyrsus.com>

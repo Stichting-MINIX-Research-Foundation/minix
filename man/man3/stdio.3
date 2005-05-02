@@ -1,0 +1,199 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)stdio.3s	6.2 (Berkeley) 5/13/86
+.\"
+.TH STDIO 3 "May 13, 1986"
+.UC 4
+.SH NAME
+stdio \- standard buffered input/output package
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdio.h>
+
+FILE *stdin;
+FILE *stdout;
+FILE *stderr;
+.ft R
+.fi
+.SH DESCRIPTION
+The functions in the standard I/O library constitute a user-level buffering
+scheme.  The in-line macros
+.B getc
+and
+.BR  putc (3)
+handle characters quickly.  The higher level routines
+.BR gets ,
+.BR fgets ,
+.BR scanf ,
+.BR fscanf ,
+.BR fread ,
+.BR puts ,
+.BR fputs ,
+.BR printf ,
+.BR fprintf ,
+.BR fwrite
+all use
+.B getc
+and
+.BR putc ;
+they can be freely intermixed.
+.PP
+A file with associated buffering is called a
+.IR stream ,
+and is declared to be a pointer to a defined type
+.SM
+.BR FILE .
+.BR  Fopen (3)
+creates certain descriptive data for a stream
+and returns a pointer to designate the stream in all further transactions.
+There are three normally open streams with constant pointers declared in
+the include file and associated with the standard open files:
+.TP 10n
+.B stdin
+standard input file
+.br
+.ns
+.TP
+.B stdout
+standard output file
+.br
+.ns
+.TP
+.B stderr
+standard error file
+.PP
+A constant `pointer'
+.SM
+.B NULL
+(0)
+designates no stream at all.
+.PP
+An integer constant
+.SM
+.B EOF
+(\-1) is returned upon end of file or error by integer functions that
+deal with streams.
+.PP
+Any routine that uses the standard input/output package
+must include the header file
+.RI < stdio.h >
+of pertinent macro definitions.
+The functions and constants mentioned in the standard I/O manual pages
+are declared in the include file and need no further declaration.
+The constants, and the following `functions' are
+implemented as macros; redeclaration of these names is perilous:
+.BR clearerr ,
+.BR getc ,
+.BR getchar ,
+.BR putc ,
+.BR putchar ,
+.BR feof ,
+.BR ferror ,
+.BR fileno .
+.SH "SEE ALSO"
+.BR open (2),
+.BR close (2),
+.BR read (2),
+.BR write (2),
+.BR fclose (3),
+.BR ferror (3),
+.BR fopen (3),
+.BR fread (3),
+.BR fseek (3),
+.BR getc (3),
+.BR gets (3),
+.BR printf (3),
+.BR putc (3),
+.BR puts (3),
+.BR scanf (3),
+.BR setbuf (3),
+.BR ungetc (3).
+.SH DIAGNOSTICS
+The value
+.SM
+.B EOF
+is returned uniformly to indicate that a
+.SM
+.B FILE
+pointer has not been initialized with
+.BR fopen ,
+input (output) has been attempted on an output (input) stream, or a
+.SM
+.B FILE
+pointer designates corrupt or otherwise unintelligible
+.SM
+.B FILE
+data.
+.PP
+For purposes of efficiency, this implementation of the standard library
+has been changed to line buffer output to a terminal by default and attempts
+to do this transparently by flushing the output whenever a 
+.BR read (2)
+from the standard input is necessary.  This is almost always transparent,
+but may cause confusion or malfunctioning of programs which use
+standard i/o routines but use
+.BR read (2)
+themselves to read from the standard input.
+.PP
+In cases where a large amount of computation is done after printing
+part of a line on an output terminal, it is necessary to
+.BR fflush (3)
+the standard output before going off and computing so that the output
+will appear.
+.SH BUGS
+The standard buffered functions do not interact well with certain other
+library and system functions, especially \fBfork\fP and \fBabort\fP.
+.SH "LIST OF FUNCTIONS"
+.sp 2
+.nf
+.ta \w'setlinebuf'u+2n +\w'setbuf(3)'u+10n
+\fBName\fP	\fBAppears on Page\fP	\fBDescription\fP
+.ta \w'setlinebuf'u+4n +\w'setbuf(3)'u+4n
+.sp 5p
+clearerr	ferror(3)	stream status inquiries
+fclose	fclose(3)	close or flush a stream
+fdopen	fopen(3)	open a stream
+feof	ferror(3)	stream status inquiries
+ferror	ferror(3)	stream status inquiries
+fflush	fclose(3)	close or flush a stream
+fgetc	getc(3)	get character or word from stream
+fgets	gets(3)	get a string from a stream
+fileno	ferror(3)	stream status inquiries
+fopen	fopen(3)	open a stream
+fprintf	printf(3)	formatted output conversion
+fputc	putc(3)	put character or word on a stream
+fputs	puts(3)	put a string on a stream
+fread	fread(3)	buffered binary input/output
+freopen	fopen(3)	open a stream
+fscanf	scanf(3)	formatted input conversion
+fseek	fseek(3)	reposition a stream
+ftell	fseek(3)	reposition a stream
+fwrite	fread(3)	buffered binary input/output
+getc	getc(3)	get character or word from stream
+getchar	getc(3)	get character or word from stream
+gets	gets(3)	get a string from a stream
+getw	getc(3)	get character or word from stream
+printf	printf(3)	formatted output conversion
+putc	putc(3)	put character or word on a stream
+putchar	putc(3)	put character or word on a stream
+puts	puts(3)	put a string on a stream
+putw	putc(3)	put character or word on a stream
+rewind	fseek(3)	reposition a stream
+scanf	scanf(3)	formatted input conversion
+setbuf	setbuf(3)	assign buffering to a stream
+setvbuf	setbuf(3)	assign buffering to a stream
+snprintf	printf(3)	formatted output conversion
+sprintf	printf(3)	formatted output conversion
+sscanf	scanf(3)	formatted input conversion
+ungetc	ungetc(3)	push character back into input stream
+vfprintf	printf(3)	formatted output conversion
+vfscanf	scanf(3)	formatted input conversion
+vprintf	printf(3)	formatted output conversion
+vscanf	scanf(3)	formatted input conversion
+vsnprintf	printf(3)	formatted output conversion
+vsprintf	printf(3)	formatted output conversion
+vsscanf	scanf(3)	formatted input conversion
+.fi

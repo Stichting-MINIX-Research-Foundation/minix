@@ -1,0 +1,49 @@
+.TH TAR 1
+.SH NAME
+tar \- tape archiver
+.SH SYNOPSIS
+\fBtar\fR [\fBFcotvxp\fR]\fR [\fBf\fR] \fItarfile \fIfile ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "F" "Force tar to continue after an error"
+.FL "c" "Create a new archive; add named files"
+.FL "o" "Set uid/gid to original values on extraction"
+.FL "f" "Next argument is name of tarfile"
+.FL "t" "Print a table listing the archive's contents"
+.FL "v" "Verbose mode-tell what is going on as it happens"
+.FL "x" "The named files are extracted from the archive"
+.FL "p" "Restore file modes, ignore creation mask"
+.FL "D" "Directory only, do not recurse"
+.SH EXAMPLES
+.EX "tar c /dev/fd1 ." "Back up current directory to \fI/dev/fd1\fR"
+.EX "tar xv /dev/fd1 file1 file2" "Extract two files from the archive"
+.EX "tar cf \- | (cd dest; tar xf \-)" "Copy current directory to \fIdest\fR"
+.SH DESCRIPTION
+.PP
+\fITar\fR is a POSIX-compatible archiver, except that it does not use tape.
+It's primary advantage over
+.I ar
+is that the 
+.I tar
+format is somewhat more standardized than the
+.I ar 
+format, making it theoretically possible to transport 
+\s-2MINIX\s+2
+files to another computer, but do not bet on it.
+If the target machine runs
+\&MS-DOS ,
+try
+.I doswrite .
+.SH "SEE ALSO"
+.BR compress (1),
+.BR vol (1).

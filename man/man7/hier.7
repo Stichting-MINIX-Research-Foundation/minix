@@ -1,0 +1,195 @@
+.TH HIER 7
+.SH NAME
+hier \- file system hierarchy
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+A tour through the Minix directory hierarchy.
+.nf
+.SP
+/	root
+.SP
+/bin/	Utility programs, cf /usr/bin/ (1)
+	cat	Show files, \fBcat\fP(1)
+	sh	Shell, \fBsh\fP(1)
+	mount	Mount file systems, \fBmount\fP(8)
+	...
+.SP
+/boot	Boot Monitor, \fBmonitor\fP(8)
+.SP
+/dev/	devices (4)
+	console
+		Main console, \fBtty\fP(4)
+	tty*	Terminals, \fBtty\fP(4)
+	hd*	Hard disk, \fBhd\fP(4)
+	fd*	Floppy disk, \fBfd\fP(4)
+	...
+.SP
+/etc/	System configuration and data files, cf /usr/etc/ (1,5,8)
+	ethers	Ethernet addresses database, \fBethers\fP(5)
+	fstab	File system table, \fBfstab\fP(5)
+	group	Groups database, \fBgroup\fP(5)
+	hostname.file
+		Name of the local system, \fBusage\fP(5)
+	hosts	TCP/IP hosts database, \fBhosts\fP(5)
+	hosts.equiv
+		Network equivalent hosts, \fBhosts.equiv\fP(5)
+	inet.conf
+		Inet server config file, \fBinet\fP(8)
+	keymap	Keymap for custom keyboard, \fBloadkeys\fP(8)
+	motd	Message of the day, \fBlogin\fP(1)
+	mtab	Mounted file system table, \fBfstab\fP(5)
+	passwd	User database, \fBpasswd\fP(5)
+	profile
+		System wide shell profile, \fBsh\fP(1)
+	rc	System startup script, \fBboot\fP(8)
+	resolv.conf
+		TCP/IP domain name system, \fBresolv.conf\fP(5)
+	services
+		TCP/IP names to services, \fBservices\fP(5)
+	serv.access
+		Internet service access control, \fBserv.access\fP(5)
+	shadow	Shadow password database, \fBpasswd\fP(5)
+	termcap
+		Terminal type descriptions, \fBtermcap\fP(5)
+	ttytab	Terminals device table, \fBttytab\fP(5)
+	utmp	User login database, \fBlogin\fP(1)
+	...
+.SP
+/minix
+	Minix kernel image, \fBmonitor\fP(8)
+.SP
+/tmp/	Small, short-lived temporary files, cf /usr/tmp/
+.SP
+/usr/	Home directories and more system files
+.SP
+	adm/	System administration files (1,5,8)
+		lastlog
+			Last logins, \fBlogin\fP(1)
+		log
+			Default log file
+		old
+			Last weeks log files
+		wtmp
+			User logins and logouts, \fBlogin\fP(1)
+		*.cache
+			Cached data of some programs
+		...
+.SP
+	ast/	Honorary home directory of Andrew S. Tanenbaum
+		Also new user initial files
+.SP
+	\fIuser\fP/	Home directory of \fIuser\fP
+		.ashrc	Ash (shell) startup, \fBash\fP(1)
+		.ellepro.b1
+			Elle (editor) startup (compiled), \fBelle\fP(1)
+		.ellepro.e
+			Elle (editor) startup (text), \fBelle\fP(1)
+		.exrc	Ex/vi (editor) startup, \fBex\fP(1)
+		.profile
+			Custom user shell profile, \fBsh\fP(1)
+		.rhosts	Remote user permission file, \fBrhosts\fP(5)
+		...
+.SP
+	bin/	User programs
+		cc	C compiler, \fBcc\fP(1)
+		cp	Copy files, \fBcp\fP(1)
+		ls	List files, \fBls\fP(1)
+		man	Show manual pages, \fBman\fP(1)
+		...
+.SP
+	etc/	More system data files, cf /etc (8)
+		rc	Continued system startup, \fBboot\fP(8)
+		daily
+			Daily system cleanup
+		...
+.SP
+	include/
+		C-compiler include files
+		minix/	Minix kernel include files
+			...
+		...
+.SP
+	lib/	Compiler libraries and other support stuff
+		cawf/	Text formatter support files, \fBcawf\fP(1)
+		crontab
+			Cron jobs, \fBcron\fP(8)
+		dict/	Word lists
+			words	American English word list, \fBlook\fP(1)
+			...
+		libc.a	C library (Minix-8086 only), \fBcc\fP(1)
+		\fIarch\fP	Per architecture compiler binaries and
+			libaries, \fBcc\fP(1)
+		...
+.SP
+	local/	Local software, cf /usr/
+		bin/	Local utilities
+		etc/	Local data files
+			rc	Local system startup
+			...
+		man/	Local manual pages
+		src/	Local sources
+		...
+.SP
+	man/	Manual pages, \fBman\fP(1)
+		cat*/	Preformatted manual pages
+		man0/	Section 0, Book style user commands
+		man1/	User commands
+		man2/	System calls
+		man3/	Library routines
+		man4/	Device files
+		man5/	File formats
+		man6/	Games
+		man7/	Miscellaneous
+		man8/	System utilities
+		whatis	Table of manual pages, \fBwhatis\fP(5)
+		...
+.SP
+	mdec/
+		boot	Bootstrap code, \fBinstallboot\fP(8)
+		...
+.SP
+	preserve/
+		Saved elvis editor buffers, \fBelvprsv\fP(8), \fBelvrec\fP(1)
+.SP
+	spool/	Mail and command spooling
+		at/	At jobs, \fBat\fP(1)
+			past/	Completed at jobs
+		mail/	Mail drops, \fBmail\fP(1)
+			\fIuser\fP	Mailbox of \fIuser\fP
+			...
+		...
+.SP
+	src/	System and command sources (home of bin)
+		LICENSE
+			Minix license to use
+		commands/
+			Utility sources
+		crclist
+			CRC checksums of the source tree, \fBsrccrc\fP(8)
+		lib/	Library sources
+		fs/	File system
+		inet/	TCP/IP task
+		kernel/
+			Kernel
+		mm/	Memory manager
+		boot/	Boot Monitor
+		tools/	Kernel image making tools, \fBtools\fP(8)
+.SP
+	tmp/	Large temporary files
+.fi
+.SH "SEE ALSO"
+.BR ls (1),
+.BR man (1),
+.BR find (1),
+.BR grep (1),
+.BR checkhier (8).
+.SH NOTES
+Not all of the directories and files shown are present.  They must be
+created as needed.
+.SH BUGS
+Many of the listed manual references do not yet exist.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

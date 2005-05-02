@@ -1,0 +1,109 @@
+.TH MT 1
+.SH NAME
+mt \- magnetic tape control
+.SH SYNOPSIS
+.B mt
+.RB [ \-f
+.IR device ]
+.RI [ count ]
+.SH DESCRIPTION
+.B Mt
+is a user interface to the magnetic tape commands described in
+.BR mtio (4).
+It allows one to space a tape forwards or backwards, write end of file
+markers, etc.
+.PP
+With the
+.B \-f
+option a tape device can be named, otherwise the environment variable
+.B TAPE
+is used if set.  Standard input is used if the tape name is a dash (\-).  The
+.I count
+argument is used to tell how many blocks or files to space or how many file
+markers to write.  It may be a C-style decimal, octal or hexadecimal constant,
+by default "1".
+.PP
+.I Command
+is the action to perform, it may be one of the following, or any
+unambiguous prefix (like
+.B st
+for
+.BR status ):
+.TP 15
+.B eof, weof
+Write
+.I count
+end-of-file markers.
+.TP
+.B fsf
+Forward space
+.I count
+file markers.
+.TP
+.B fsr
+Forward space
+.I count
+records.  (The size of a record depends on the tape, and may even be
+variable, depending on the size of the writes.)
+.TP
+.B bsf
+Backwards space
+.I count
+files.  The count may be zero to backspace to the start of the current file.
+(A tape device need not support backwards movement, or may be very slow
+doing it.  Rewinding and forward spacing may be better.)
+.TP
+.B bsr
+Backwards space
+.I count
+records.  The tape is positioned after the last block of the previous file
+if you hit a filemark when spacing backwards.  The block count is set to -1
+to indicate that the driver has no idea where it is on the previous file.
+.TP
+.B eom
+Forward space to the end of media.
+.TP
+.B rewind
+Rewind the tape.
+.TP
+.B offline, rewoffl
+Rewind and take offline.  This may cause some drives to eject the tape.
+.TP
+.B status
+Shows the status of the drive, the sense key of the last SCSI error,
+current file number, current record number, residual count if the last
+command that encountered end-of-file, and the current block size.
+.TP
+.B retension
+Removes tape tension by winding and rewinding the tape completely.
+.TP
+.B erase
+Erases the tape completely and rewinds it.
+.TP
+.B density
+Sets the density code to read or write the tape to
+.IR count .
+Density codes supported depend on the drive.  This command need not be
+used if the drive senses the proper density on read and can only write
+one density.
+.TP
+.B blksize, blocksize
+Sets the block size used to read or write the tape to
+.IR count .
+This command may be used to select a fixed block size for a variable block
+size tape.  This will speed up I/O for small block sizes.  Use a zero
+.I count
+to use variable sized blocks again.
+.SH ENVIRONMENT
+.TP 15n
+.B TAPE
+Tape drive to use if set.
+.SH FILES
+.TP 15n
+.B /dev/nrst4
+Default tape device.
+.SH "SEE ALSO"
+.BR mtio (4),
+.BR st (4).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

@@ -1,0 +1,98 @@
+.TH MAIL 1
+.SH NAME
+mail \- send and receive electronic mail
+.SH SYNOPSIS
+\fBmail\fR [\fB\-epqr\fR] [\fB\-f\fR \fIfile\fR] 
+.br
+\fBmail\fR [\fB\-dtv\fR] [\fB\-s\fR \fIsubject\fR] \fIuser\fR [...]
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS 
+.FL "\-e" "Exit with status TRUE or FALSE to indicate if there is mail in mailbox"
+.FL "\-p" "Print all mail and then exit"
+.FL "\-q" "Quit program if SIGINT received"
+.FL "\-r" "Reverse print order, i.e., print oldest first"
+.FL "\-f" "Use \fIfile\fR instead of \fI/usr/spool/mail/user\fR as mailbox"
+.PP
+.FL "\-d" "Force use of the shell variable \fIMAILER\fR"
+.FL "\-t" "Show distribution list as Dist: header in message"
+.FL "\-v" "Verbose mode (passed on to \fIMAILER\fR)"
+.FL "\-s" "Use Subject: \fIsubject\fR"
+.SH EXAMPLES
+.EX "mail ast" "Send a message to \fIast\fR"
+.EX "mail" "Read your mail"
+.EX "cat mail.cdiff | mail -s ''Here's the diff!'' asw " "Pipe program output to mail with a subject line"
+.EX "mail -f /usr/spool/mail/asw" "How root can read asw's mail"
+.SH DESCRIPTION
+.PP
+\fIMail\fR is an extremely simple electronic mail program.  It can be used
+to send or receive email on a single 
+\s-2MINIX\s+2
+system, in which case it functions
+as user agent and local delivery agent.  
+If the flag \fIMAILER\fR is defined in \fImail.c\fR,
+it can also call a trans\%port agent to handle remote mail as well.
+No such agent is supplied with
+\s-2MINIX\s+2.
+.PP
+When called by \fIuser\fR with no arguments, it examines the mailbox
+\fI/usr/spool/mail/user\fR, prints one message (depending on the \fB\-r\fR
+flag), and waits for one of the following commands:
+.PP
+.nf
+.ta 0.25i 1.25i
+	<newline>	Go to the next message
+	\-	Print the previous message
+	!command	Fork off a shell and execute \fIcommand\fR
+	CTRL-D	Update the mailbox and quit (same as q)
+	d	Delete the current message and go to the next one
+	q	Update the mailbox and quit (same as CTRL-D)
+	p	Print the current message again
+	s [\fIfile\fR]	Save message in the named file
+	x	Exit without updating the mailbox
+.PP
+.PP
+To send mail, the program is called with the name of one or more recipients as
+arguments.  The mail is sent, along with a postmark line containing the date.
+For local delivery, a file named after each recipient in the directory
+\fI/usr/spool/mail\fR must be writable. If a spool file does not exist for
+a recipient it will be created.
+.PP
+If the directory \fI/usr/spool/mail\fR does not exist then the mail is
+dumped on the console, so that system programs have a way to notify
+a user on a system that does not have a mail spool.
+.PP
+The received mail contains a To: header showing the recipient. If there
+are multiple recipients and the \fB\-t\fR option is specified each recipient 
+will also see a Dist: header line showing the other recipients.
+.PP
+The \fB\-s\fR option allows a subject to be specified. The subject must be 
+quoted if it contains spaces. If no subject is specified the mail
+will be delivered with Subject: No subject.
+.SH NOTES
+The \fB\-s\fR option was added to make this simple mail program
+consistent with mail programs found in other *nix variants.  Many
+programs, including the version of cron distributed with Minix releases
+2.0.3 and later, report their outcome by piping output to the mail
+program in order to send a mail message to root in lieu of writing a
+log file.  Such programs often expect the mail program to accept a
+subject line using this option.
+.SH BUGS
+If an external \fIMAILER\fR is used it is likely the conditional code 
+supporting this will need some editing to be made to work correctly.
+.SH AUTHOR
+The original mail program for Minix was written by Peter B. Housel.
+The -e and -t options were added by C. W. Rose. The -s option was added
+by A. S. Woodhull. This man page revised by ASW 2003-07-18.
+
+
+

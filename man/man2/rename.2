@@ -1,0 +1,135 @@
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)rename.2	6.4 (Berkeley) 5/22/86
+.\"
+.TH RENAME 2 "May 22, 1986"
+.UC 5
+.SH NAME
+rename \- change the name of a file
+.SH SYNOPSIS
+.ft B
+.nf
+#include <stdio.h>
+
+int rename(const char *\fIfrom\fP, const char *\fIto\fP)
+.fi
+.ft R
+.SH DESCRIPTION
+.B Rename
+causes the link named
+.I from
+to be renamed as
+.IR to .
+If 
+.I to
+exists, then it is first removed.
+Both 
+.I from
+and
+.I to
+must be of the same type (that is, both directories or both
+non-directories), and must reside on the same file system.
+.PP
+.B Rename
+guarantees that an instance of
+.I to
+will always exist, even if the system should crash in
+the middle of the operation.
+.PP
+If the final component of
+.I from
+is a symbolic link,
+the symbolic link is renamed,
+not the file or directory to which it points.
+.SH "RETURN VALUE"
+A 0 value is returned if the operation succeeds, otherwise
+.B rename
+returns \-1 and the global variable 
+.B errno
+indicates the reason for the failure.
+.SH "ERRORS
+.B Rename
+will fail and neither of the argument files will be
+affected if any of the following are true:
+.TP 15
+[ENAMETOOLONG]
+A path name exceeds PATH_MAX characters.
+.TP 15
+[ENOENT]
+A component of the \fIfrom\fP path does not exist,
+or a path prefix of \fIto\fP does not exist.
+.TP 15
+[EACCES]
+A component of either path prefix denies search permission.
+.TP 15
+[EACCES]
+The requested link requires writing in a directory with a mode
+that denies write permission.
+.TP 15
+[EPERM]
+The directory containing \fIfrom\fP is marked sticky,
+and neither the containing directory nor \fIfrom\fP
+are owned by the effective user ID.
+.TP 15
+[EPERM]
+The \fIto\fP file exists,
+the directory containing \fIto\fP is marked sticky,
+and neither the containing directory nor \fIto\fP
+are owned by the effective user ID.
+.TP 15
+[ELOOP]
+Too many symbolic links were encountered in translating either pathname.
+(Minix-vmd)
+.TP 15
+[ENOTDIR]
+A component of either path prefix is not a directory.
+.TP 15
+[ENOTDIR]
+.I From
+is a directory, but \fIto\fP is not a directory.
+.TP 15
+[EISDIR]
+.I To
+is a directory, but \fIfrom\fP is not a directory.
+.TP 15
+[EXDEV]
+The link named by \fIto\fP and the file named by \fIfrom\fP
+are on different logical devices (file systems).
+.TP 15
+[ENOSPC]
+The directory in which the entry for the new name is being placed
+cannot be extended because there is no space left on the file
+system containing the directory.
+.ig
+.TP 15
+[EDQUOT]
+The directory in which the entry for the new name
+is being placed cannot be extended because the
+user's quota of disk blocks on the file system
+containing the directory has been exhausted.
+..
+.TP 15
+[EIO]
+An I/O error occurred while making or updating a directory entry.
+.TP 15
+[EROFS]
+The requested link requires writing in a directory on a read-only file
+system.
+.TP 15
+[EFAULT]
+.I Path
+points outside the process's allocated address space.
+.TP 15
+[EINVAL]
+.I From
+is a parent directory of
+.IR to ,
+or an attempt is made to rename ``.'' or ``..''.
+.TP 15
+[ENOTEMPTY]
+.I To
+is a directory and is not empty.
+.SH "SEE ALSO"
+.BR open (2)

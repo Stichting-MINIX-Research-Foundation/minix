@@ -1,0 +1,26 @@
+.TH TIME 1
+.SH NAME
+time \- report how long a command takes
+.SH SYNOPSIS
+\fBtime \fIcommand\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "time a.out" "Report how long \fIa.out\fR takes"
+.EX "time ls \-l *.c" "Report how long \fIls\fR takes"
+.SH DESCRIPTION
+.PP
+The command is executed and the real time, user time, and system time (in
+hours, minutes, and seconds) are printed.
+Shell scripts cannot be timed.
+.SH "SEE ALSO"
+.BR times (2).

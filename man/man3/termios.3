@@ -1,0 +1,155 @@
+.TH TERMIOS 3
+.SH NAME
+termios, tcgetattr, tcsetattr, cfgetispeed, cfgetospeed, cfsetispeed, cfsetospeed, tcsendbreak, tcdrain, tcflush, tcflow \- change terminal attributes
+.SH SYNOPSIS
+.ft B
+.nf
+#include <termios.h>
+
+int tcgetattr(int \fIfd\fP, struct termios *\fItp\fP)
+int tcsetattr(int \fIfd\fP, int \fIaction\fP, const struct termios *\fItp\fP)
+
+speed_t cfgetispeed(const struct termios *\fItp\fP)
+speed_t cfgetospeed(const struct termios *\fItp\fP)
+int cfsetispeed(struct termios *\fItp\fP, speed_t \fIspeed\fP)
+int cfsetospeed(struct termios *\fItp\fP, speed_t \fIspeed\fP)
+
+int tcsendbreak(int \fIfd\fP, int \fIduration\fP)
+int tcdrain(int \fIfd\fP)
+int tcflush(int \fIfd\fP, int \fIqueue_selector\fP)
+int tcflow(int \fIfd\fP, int \fIaction\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+These are the user functions that modify the tty attributes mentioned in
+.BR tty (4).
+In the following,
+.I fd
+refers to an open terminal device file,
+.I tp
+is the address of a
+.BR "struct termios" ,
+and
+.I speed
+and values of type
+.B speed_t
+are equal to one of the
+.BR B0 ,
+.BR B50 ,
+etc. baud rate symbols.  All functions, symbols, and types are declared in
+.BR <termios.h> .
+.PP
+The effects of the tty functions are:
+.TP
+.B tcgetattr(\fIfd\fP, \fItp\fP)
+Get the current settings of the tty attributes.
+.TP
+.B tcsetattr(\fIfd\fP, TCSANOW, \fItp\fP)
+Set the terminal attributes.  The change occurs immediately.
+.TP
+.B tcsetattr(\fIfd\fP, TCSADRAIN, \fItp\fP)
+Set the terminal attributes.  The change occurs once all the output waiting
+in the output queues has been transmitted.  This should be used when options
+affecting output are changed.
+.TP
+.B tcsetattr(\fIfd\fP, TCSAFLUSH, \fItp\fP)
+Set the terminal attributes.  But first wait until all the output waiting
+in the output queues has been transmitted.  All input waiting in the input
+queues is then discarded and the change is made.  This should be used when
+switching from canonical to non-canonical mode or vice-versa.  (Oddly
+enough, this is seldom what you want, because it discards typeahead.  An
+editing shell does the Right Thing if it uses
+.B TCSANOW
+instead.  \s-2POSIX\s+2 may not guarantee good results, but in practice most
+systems make the canonical input available in raw mode.)
+.TP
+.B cfgetispeed(\fItp\fP)
+Return the input baud rate encoded in the termios structure.
+.TP
+.B cfgetospeed(\fItp\fP)
+Return the output baud rate encoded in the termios structure.
+.TP
+.B cfsetispeed(\fItp\fP, \fIspeed\fP)
+Encode the new input baud rate into the termios structure.
+.TP
+.B cfsetospeed(\fItp\fP, \fIspeed\fP)
+Encode the new output baud rate into the termios structure.
+.TP
+.B tcsendbreak(\fIfd\fP, \fIduration\fP)
+Emit a break condition on a serial line for a time indicated by
+.IR duration .
+(Always 0.4 seconds under Minix,
+.I duration
+is ignored.)
+.TP
+.B tcdrain(\fIfd\fP)
+Wait until all output waiting in the output queues has been transmitted.
+.TP
+.B tcflush(\fIfd\fP, TCIFLUSH)
+Flush the input queue.  (I.e. discard it.)
+.TP
+.B tcflush(\fIfd\fP, TCOFLUSH)
+Flush the output queue.
+.TP
+.B tcflush(\fIfd\fP, TCIOFLUSH)
+Flush the input and output queues.
+.TP
+.B tcflow(\fIfd\fP, TCOOFF)
+Suspend output.  (Like the effect of
+.BR STOP .)
+.TP
+.B tcflow(\fIfd\fP, TCOON)
+Restart output.  (Like the effect of
+.BR START .)
+.TP
+.B tcflow(\fIfd\fP, TCIOFF)
+Transmit a
+.B STOP
+character intended to make the remote device stop transmitting data.
+.TP
+.B tcflow(\fIfd\fP, TCION)
+Transmit a
+.B START
+character to restart the remote device.
+.SH "SEE ALSO"
+.BR stty (1),
+.BR tty (4).
+.SH DIAGNOSTICS
+All functions return 0 unless otherwise specified, and \-1 on error with
+.B errno
+set to indicate the type of error.  The most notable errors are
+.B ENOTTY
+if
+.I fd
+does not refer to a terminal device, and
+.B EINTR
+if one of the functions waiting for output to drain is interrupted.
+.SH NOTES
+It may be interesting to know that the functions operating on the tty are
+directly translated into the following Minix
+.B ioctl
+requests:
+.BR TCGETS ,
+.BR TCSETS
+(now),
+.BR TCSETSW
+(drain),
+.BR TCSETSF ,
+(flush),
+.BR TCSBRK ,
+.BR TCDRAIN ,
+.BR TCFLSH ,
+and
+.BR TCFLOW .
+You should only use this knowledge when trying to understand the tty driver
+code, of course.
+.SH BUGS
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: termios.3,v 1.2 1996/04/11 06:41:24 philip Exp $

@@ -1,0 +1,36 @@
+.TH ETHERS 5
+.SH NAME
+ethers \- ethernet address to hostname database
+.SH SYNOPSIS
+.B /etc/ethers
+.SH DESCRIPTION
+The ethers database translates ethernet addresses to hostnames for use by
+the RARP daemon (see
+.BR rarpd (8).)
+.B /etc/ethers
+may look like this:
+.PP
+.RS
+.ta +20n +10n
+0:0:c0:a:77:23	flotsam
+.br
+0:0:c0:a:68:ce	jetsam
+.RE
+.PP
+The six octet ethernet numbers must be entered as shown above, the hex
+constants must use lowercase letters and may not have leading zeros.
+Comments are marked with '#'.
+.PP
+See
+.BR rarpd (8)
+on why you shouldn't list Sun hosts in this file.
+.SH FILES
+.TP 15n
+/etc/ethers
+Ethernet addresses database.
+.SH "SEE ALSO"
+.BR hosts (5),
+.BR rarpd (8),
+.BR boot (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

@@ -1,0 +1,200 @@
+.TH PASSWD 5
+.SH NAME
+passwd, group, shadow \- user and group databases, shadow passwords
+.SH SYNOPSIS
+.B /etc/passwd
+.br
+.B /etc/group
+.br
+.B /etc/shadow
+.SH DESCRIPTION
+.B /etc/passwd
+lists all the users of the system, and
+.B /etc/group
+lists all the groups the users may belong to.  Both files also contain
+encrypted passwords, numeric ID's etc.  Encrypted passwords may be hidden
+in the file
+.B /etc/shadow
+if extra protection is warranted.
+.PP
+Each file is an text file containing one line per user or group.  The data
+fields on a line are separated by colons.  Each line in the password file
+has the following form:
+.PP
+.RS
+.I name:passwd:uid:gid:gecos:dir:shell
+.RE
+.PP
+The
+.I name
+field is the login name of a user, it is up to 8 letters or numbers long
+starting with a letter.  The login name must be unique.
+The
+.I password
+field is either empty (no password), a 13 character encrypted password as
+returned by
+.BR crypt (3),
+or a login name preceded by two number signs (#) to index the shadow
+password file.  Anything else (usually \(**) is invalid.
+The
+.I uid
+and
+.I gid
+fields are two numbers indicating the users user-id and group-id.  These
+id's do not have to be unique, there may be more than one name with the same
+id's.
+The
+.I gecos
+field can be set by the user.  It is expected to be a comma separated list
+of personal data where the first item is the full name of the user.
+The
+.I dir
+field
+is the path name of the users home directory.
+Lastly the
+.I shell
+field is the path name of the users login shell, it may be empty to indicate
+.BR /bin/sh .
+A Minix specific extension allows the shell field to contain extra space
+separated arguments for the shell.
+.PP
+Lines in the group file consist of four fields:
+.PP
+.RS
+.I name:passwd:gid:mem
+.RE
+.PP
+The
+.I name
+field is the name of the group, same restrictions as a login name.
+The
+.I passwd
+field may be used to let users change groups.
+The
+.I gid
+field is a number telling the group-id.  The group-id is unique for a group.
+The
+.I mem
+field is a comma separated list of login names that are special members of
+the group.  If a system supports supplementary group id's then a user's set
+of supplementary group id's is set to all the groups they are a member of.
+If a system allows one to change groups then one can change to a group one
+is a member of without using the group's password.
+.PP
+The shadow password file has precisely the same form as the password file,
+except that only the
+.I name
+or
+.I passwd
+fields are used as yet.  The other fields are zero or empty.  A password in
+the password file may have the form
+.BI "##" user
+to indicate the entry
+.I user
+in the shadow password file.  The password in this entry is then used for
+authentication of the user.  The shadow file can only be read by the
+privileged utility
+.BR pwdauth (8),
+so that the encrypted passwords in the shadow file are kept secret, and thus
+safe from a dictionary attack.
+.SS "Special password and group file entries"
+There are several entries in the password and group files that are
+preallocated for current or future use.  All id's less than 10 are reserved.
+The special password file entries are:
+.PP
+.RS
+.nf
+root:##root:0:0:Big Brother:/usr/src:
+daemon:*:1:1:The Deuce:/etc:
+bin:##root:2:0:Binaries:/usr/src:
+uucp:*:5:5:UNIX to UNIX copy:/usr/spool/uucp:/usr/sbin/uucico
+news:*:6:6:Usenet news:/usr/spool/news:
+ftp:*:7:7:Anonymous FTP:/usr/ftp:
+nobody:*:9999:99::/tmp:
+ast:*:8:3:Andrew S. Tanenbaum:/usr/ast:
+.fi
+.RE
+.PP
+The
+.B root
+id is of course the super user.
+The
+.B daemon
+id is used by some daemons.  Some devices are protected so that only those
+daemons can access them.
+The
+.B bin
+id owns all sources and most binaries.
+The
+.BR uucp ,
+.BR news
+and
+.BR ftp
+id's are for serial line data transfer, usenet news, or ftp if so needed.
+The
+.B nobody
+id is used in those cases that a program may not have any privileges at all.
+The
+.B ast
+id is the honorary home directory for Andrew S. Tanenbaum, the creator of
+Minix.  You can also find the initial contents for a new home directory
+there.
+.PP
+The special group file entries are:
+.PP
+.RS
+.nf
+operator:*:0:
+daemon:*:1:
+bin:*:2:
+other:*:3:
+tty:*:4:
+uucp:*:5:
+news:*:6:
+ftp:*:7:
+kmem:*:8:
+nogroup:*:99:
+.fi
+.RE
+.PP
+Groups with the same name as special user id are used with those id's.
+The
+.B operator
+group is for the administrators of the system.  Users in this group are
+granted special privileges.
+The
+.B other
+group is for ordinary users.
+The
+.B tty
+group is for terminal devices, and associated set-gid commands.
+Same thing with the
+.B kmem
+group and memory devices.
+.SH FILES
+.TP 15n
+.B /etc/passwd
+The user database.
+.TP
+.B /etc/group
+The group database.
+.TP
+.B /etc/shadow
+The shadow password file.
+.SH "SEE ALSO"
+.BR login (1),
+.BR passwd (1),
+.BR su (1),
+.BR crypt (3),
+.BR getpwent (3),
+.BR getgrent (3),
+.BR pwdauth (8).
+.SH NOTES
+The
+.B nobody
+and
+.B nogroup
+id's are likely to be renumbered to the highest possible id's once it is
+figured out what they are.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

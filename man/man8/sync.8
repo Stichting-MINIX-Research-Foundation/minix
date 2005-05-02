@@ -1,0 +1,33 @@
+.TH SYNC 8
+.SH NAME
+sync \- flush the cache to disk
+.SH SYNOPSIS
+\fBsync\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "sync" "Write out all modified cache blocks"
+.SH DESCRIPTION
+.PP
+\s-2MINIX\s+2
+maintains a cache of recently used disk blocks.
+The 
+.I sync
+command writes any modified cache blocks back to the disk.
+This is essential before stopping the system, and should be done before
+running any
+.I a.out
+program that might crash.
+.SH "SEE ALSO"
+.BR sync (2),
+.BR update (8),
+.BR shutdown (8).

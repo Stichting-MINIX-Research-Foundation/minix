@@ -1,0 +1,184 @@
+.TH REMSYNC 1
+.SH NAME
+remsync - remotely synchronize file trees
+.SH SYNOPSIS
+.B remsync
+.B \-sxv
+.I tree
+.RI [ state-file ]
+.br
+.B remsync
+.B \-duxvD
+.I tree
+.RI [ state-file
+.RI [ diff-file ]]
+.br
+.B remsync
+.RB [ \-xv ]
+.I tree
+.RI [ diff-file ]
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Remsync
+synchronizes file trees of distant machines, i.e. machines that do not have
+a fast network between them.  It accomplishes this in three steps:
+.PP
+.RS
+Create a state file containing a description of the machine to be updated.
+.RE
+.PP
+.RS
+Compute a file of differences on the source machine using the state file to
+compare the two file trees.
+.RE
+.PP
+.RS
+Update the target machine using the data in the differences file.
+.RE
+.PP
+This process requires that you move two files, a state file from the target
+machine to the source machine, and a differences file from the source
+machine to the target machine.  The state file is an ASCII file that may be
+edited, usually to make
+.B remsync
+ignore some files or file trees.
+.PP
+The argument
+.I tree
+may be a single file or a directory.  A directory is traversed recursively.
+The
+.I state-file
+and
+.I diff-file
+arguments may be of any file type.  The differences file contains an end
+marker, so it may be followed by trailing junk.  Standard input or
+output is used if these arguments are omitted or replaced by a minus
+sign.
+.SS "State file format"
+A state file has a line for each file in a tree.  A line looks like this
+formally for a simple file:
+.PP
+.RS
+.I "name mode owner group length date"
+.RI [ link-number
+.RB [ last ]]
+.RE
+.PP
+The best way to show how each type of file is represented is by example:
+.PP
+.RS
+.nf
+.ta +10 +8 +4 +4 +6 +12 +4
+/	d755	0	0
+bin	d755	2	0
+.in +2
+[	644	2	0	233	759160857	1
+cat	755	2	0	3772	768742021
+test	755	2	0	233	759160857	1	last
+.in -2
+dev	d755	0	0
+.in +2
+fd0	b666	0	0	200
+console	c600	10	0	400
+sd2	b600	0	0	a02
+fifo	p700	2	0
+.in -2
+opt	->	usr/opt
+usr	ignore (Cross-device link)
+.fi
+.RE
+.PP
+The root of the tree is always represented by a /, no matter what type of
+file it may be.  Directory entries of the root follow at the same level.
+Files in subdirectories are indented by two spaces.  (Eight spaces are
+replaced by a TAB.)  Normal files have their length and modified time in the
+state file, devices have their device number in hex, etc.  If files are hard
+linked to each other then they all get an extra "link number" to bind them
+together.  The last link is marked with the word
+.BR last .
+.PP
+One usually only modifies a state file to ignore differences between two
+files.  One does this by replacing the file attributes with the word
+.BR ignore .
+.RB ( Remsync
+generates this keyword too, with the reason why added in parentheses.)
+.SH OPTIONS
+.TP
+.B \-s
+Generate a state file.
+.TP
+.B \-d
+Generate a differences file.  (The default is to apply a differences file.)
+.TP
+.B \-u
+Only add new files or update files with newer versions.
+.TP
+.B \-x
+Do not cross device boundaries.  This allows one to operate on the root file
+system for instance ignoring the
+.B /usr
+file system.
+.TP
+.B \-D
+Debug differences file generation.  With this flag no file contents are
+added to the differences file.  The result is then human readable.
+.TP
+.B \-v
+Lists the commands added to the differences file, or the actions done
+applying a differences file.  The output looks like \s-2UNIX\s+2 commands
+except for the words "add", "restore" and "update" indicating addition of a
+new file, replacing a file with an older version, or replacement by a newer
+version.
+.SH EXAMPLES
+Actions taken by the author to update his notebook "finiah" from his main
+machine "darask":
+.PP
+.RS
+.nf
+finiah# remsync -s /usr /tmp/finiah.state
+.SP
+Edit the state file to ignore .Xauthority files and /usr/var.
+.SP
+finiah# tar cvf /dev/fd0 /tmp/finiah.state
+.SP
+darask# tar xvf /dev/fd0
+.br
+darask# remsync -dv /usr /tmp/finiah.state | vol 1440 /dev/fd0
+.SP
+finiah# vol 1440 /dev/fd0 | remsync -v /usr
+.fi
+.RE
+.PP
+One could add a file compression/decompression program between
+.B remsync
+and
+.BR vol ,
+to reduce the number of floppies to move about, but that actually slows
+things down!  (Note that one only needs to shuffle two floppies about if the
+two machines are adjacent.  To update a remote machine it does make sense to
+use compression to reduce the number of floppies to carry.)
+.SH "SEE ALSO"
+.BR synctree (1),
+.BR vol (1),
+.BR tar (1).
+.SH NOTES
+Nothing stops you from using
+.B remsync
+over a fast network of course.
+.B Synctree
+can be a bit tedious if you only want to ignore a few files.  Editing a
+state file is then easier.
+.SH BUGS
+Files are overwritten, not removed, when they are updated.  This means
+that links outside the tree are also updated.  The less desirable
+alternative to this is to break the link before the update.
+.PP
+The verbose option may say that a link is to be created when making a
+differences file.  The link is often already there when the update takes
+place, so no action is taken, and thus no talk about it.  So you may miss a
+few mutterings about links if you compare the messages.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

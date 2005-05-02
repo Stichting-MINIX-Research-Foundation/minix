@@ -1,0 +1,34 @@
+.TH AT 1
+.SH NAME
+at \- execute commands at a later time
+.SH SYNOPSIS
+\fBat \fItime\fR [\fImonth day\fR] [\fIfile\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "at 2315 Jan 31 myfile" "Myfile executed Jan 31 at 11:15 pm"
+.EX "at 0900" "Job input read from \fIstdin\fR"
+.EX "at 0711 4 29 " "Read from \fIstdin\fR, exec on April 29"
+.SH DESCRIPTION
+.PP
+\fBAt\fR prepares a file to be executed later at the specified time by 
+creating a special entry in \fB/usr/spool/at\fR.  The \fBcron\fR daemon
+takes care of executing these jobs.  It checks to see if any
+files in \fB/usr/spool/at\fR should now be run, and if so, it runs them 
+and then puts them in \fB/usr/spool/at/past\fR.
+The name of the file created in \fB/usr/spool/at\fR by \fBat\fR is
+YY.DDD.HHMM.UU (where YY, DDD, HH, and MM give the time to execute and 
+UU is a unique number).  Note that when the command runs, it will not be able 
+to use standard input unless specifically redirected.  Standard output
+will be mailed to the owner of the job.
+.SH "SEE ALSO"
+.BR cron (8).

@@ -1,0 +1,40 @@
+.TH SETSID 2
+.SH NAME
+setsid, getpgrp \- create process group, get process group id
+.SH SYNOPSIS
+.ft B
+.nf
+#include <sys/types.h>
+#include <unistd.h>
+
+pid_t setsid(void)
+pid_t getpgrp(void)
+.fi
+.ft P
+.SH DESCRIPTION
+.B Setsid()
+creates a new session if the calling process is not already a session
+leader.  The calling process becomes the session leader of a new process
+group and the process group ID of this new process group will be equal to
+the process ID of the new session leader.  The process group ID is inherited
+on a
+.BR fork (2).
+.PP
+.B Getpgrp()
+returns the process group ID of the calling process.
+.SH "SEE ALSO"
+.BR kill (2),
+.BR termios (3),
+.BR tty (4).
+.SH DIAGNOSTICS
+.B Setsid()
+returns the new process group ID on success, or \-1 with
+.B errno
+set to
+.B EPERM
+if the process is already a session leader.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: setsid.2,v 1.2 1996/04/11 06:06:36 philip Exp $

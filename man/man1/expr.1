@@ -1,0 +1,243 @@
+.TH EXPR 1
+.SH NAME \"	Copyright (C) 1989 by Kenneth Almquist.
+expr, test, [ \- evaluate expressions
+.SH SYNOPSIS
+.B expr
+.I expression
+.br
+.B test
+.I expression
+.br
+.B [
+.I expression
+.B ]
+.SH DESCRIPTION
+.B Expr
+evaluates the expression and prints the result.
+.B Test
+evaluates the expression without printing the result.
+The ``[''
+command is a synonym for
+.BR test ;
+when invoked under this name
+the last argument to
+.B expr
+must be a ``]'', which is deleted and not considered part of the expression.
+.PP
+Three data types may occur in the
+.IR expression :
+string, integer, and boolean.
+The rules for conversion are as follows:
+.sp
+.nr i 2
+.ta \nii
+.in +\nii
+.ti -\nii
+\fIstring\fR\->\fIinteger\fR	Done via
+.BR atoi (3).
+.ti -\nii
+\fIinteger\fR\->\fIstring\fR	Convert to decimal representation.
+.ti -\nii
+\fIstring\fR\->\fIboolean\fR	"" \-> false, everything else to true.
+.ti -\nii
+\fIboolean\fR\->\fIstring\fR	false \-> "", true \-> "true".
+.ti -\nii
+\fIinteger\fR\->\fIboolean\fR	0 \-> false, everything else to true.
+.ti -\nii
+\fIboolean\fR\->\fIinteger\fR	false \-> 0, true \-> 1.
+.in -\nii
+.PP
+Any argument to
+.B expr
+which is not a legal operator is treated as a string operand of type
+.BR string .
+.PP
+As a special case, if
+.I expression
+is omitted, the result is false.
+.PP
+We now list the operators.  The syntax
+.sp
+.ti +8
+\fIinteger\fB op \fIinteger\fR \-> \fIboolean\fB (3)\fR
+.sp
+means that \fBop\fR is a binary operator which takes operands of type
+\fIinteger\fR and produces a result of type \fIboolean\fR.
+The ``(3)'' means that the priority of \fBop\fR is 3.
+Operands are automatically converted to the appropriate type.  The type
+\fIany\fR is used for operator that take operands of any type.
+.nr p 1
+.de b
+.TP 0.5i
+\fI\\$1\fB \\$2 \fI\\$3\fR \-> \\fI\\$4\\fR  (\\np)
+..
+.de u
+.TP 0.5i
+\\$1 \fI\\$2\fR \-> \\fI\\$3\\fR  (\\np)
+..
+.b any \-o any any
+Returns the value of the left hand operand if the left hand operand
+would yield
+.B true
+if converted to type
+.BR boolean ,
+and the value of the right hand operand otherwise.
+The right hand operand is evaluated only if necessary.
+``|'' is a synonym for ``\-o''.
+.nr p \np+1
+.b any -a any any
+Returns the value of the left hand operand if the left hand operand
+would yield
+.B false
+if converted to type
+.BR boolean ,
+and the value of the right hand operand otherwise.
+The right hand operand is evaluated only if necessary.
+``&'' is a synonym for ``\-a''.
+.nr p \np+1
+.u ! boolean boolean
+Returns true if the operand is false, and false if the operand is true.
+.nr p \np+1
+.b string = string boolean
+True if the two strings are equal.
+.b string != string boolean
+True if the two strings are not equal.
+.b integer \-eq integer boolean
+True if the two operands are equal.
+.b integer \-ne integer boolean
+True if the two operands are not equal.
+.b integer \-gt integer boolean
+True if the first operand is greater than the second one.
+.b integer \-lt integer boolean
+True if the first operand is less than the second one.
+.b integer \-ge integer boolean
+True if the first operand is greater than or equal to the second one.
+.b integer \-le integer boolean
+True if the first operand is less than or equal to the second one.
+.nr p \np+1
+.b integer + integer integer
+Add two integers.
+.b integer \- integer integer
+Subtract two integers.
+.nr p \np+1
+.b integer * integer integer
+Multiply two integers.  ``*'' is special to the shell, so you generally
+have to write this operator as ``\e*''.
+.b integer / integer integer
+Divide two integers.
+.b integer % integer integer
+Returns the remainder when the first operand is divided by the second one.
+.nr p \np+1
+.b string : string "integer or string"
+The second operand is interpreted as a regular expression (as in the
+System V
+.B ed
+program).
+This operator attempts to match part (or all) of the first operand
+with the regular expression.  The match must start at the beginning of
+the first operand.
+If the regular expression contains \e( \e) pairs, then the result
+of this operator is the string which is matched by the regular expression
+between these pairs, or the null string if no match occurred.  Otherwise,
+the result is the number of characters matched by the regular expression,
+or zero if no no match occurred.
+.nr p \np+1
+.u \-n string integer
+Returns the number of characters in the string.
+.u \-z string boolean
+Returns true if the string contains zero characters.
+.u \-t integer boolean
+Returns true if the specified file descriptor is associated with a tty.
+.PP
+The remaining operators all deal with files.  Except as noted, they return
+false if the
+specified file does not exist.  The ones dealing with permission use
+the effective user and group ids of the shell.
+.u \-r string boolean
+True if you have read permission on the file.
+.u \-w string boolean
+True if you have write permission on the file.
+.u \-x string boolean
+True if you have execute permission on the file.
+.u \-f string boolean
+True if the file is a regular file.
+.u \-d string boolean
+True if the file is a directory.
+.u \-c string boolean
+True if the file is a character special file.
+.u \-b string boolean
+True if the file is a block special file.
+.u \-p string boolean
+True if the file is a named pipe (i.e. a fifo).
+.u \-u string boolean
+True if the file is setuid.
+.u \-g string boolean
+True if the file is setgid.
+.u \-k string boolean
+True if the file has the sticky bit set.
+.u \-s string "integer or boolean"
+Returns the size of the file, or 0 if the file does not exist.
+.u \-h string boolean
+True if the file is a symlink.  This is the only file test operator that
+does not follow symlinks, all others do.  So ``\-d'' and ``\-h''
+are both true on a symlink pointing to a directory.
+``\-L'' is a synonym for ``\-h''.
+.SH "EXIT CODE"
+0 if the result of 
+.I expression
+would be
+.B true
+if the result were converted to
+.BR boolean .
+.br
+1 if the result of 
+.I expression
+would be
+.B false
+if the result were converted to
+.BR boolean .
+.br
+2 if
+.I expression
+is syntactically incorrect.
+.SH EXAMPLES
+.TP 0.5i
+filesize=`expr \-s file`
+Sets the shell variable
+.I filesize
+to the size of
+.IR file .
+.TP 0.5i
+if [ \-s file ]; then command; fi
+Execute
+.I command
+if
+.I file
+exists and is not empty.
+.TP 0.5i
+x=`expr "$x" : '.\\{4\\}\\(.\\{0,3\\}\\)'`
+Sets
+.I x
+to the substring of
+.I x
+beginning after the fourth character of
+.I x
+and continuing for three characters or until the end of the string,
+whichever comes first.
+.TP 0.5i
+x=`expr X"$x" : X'.\\{4\\}\\(.\\{0,3\\}\\)'`
+This example is the same as the previous one, but it uses a leading
+``X'' to make things work when the value of
+.I x
+looks like an operator.
+.SH BUGS
+The relational operators of the System V
+.B expr
+command are not implemented.
+.PP
+Certain features of this version of
+.B expr
+are not present in System V, so care should be used when writing
+portable code.
+.SH COPYRIGHT
+Kenneth Almquist.

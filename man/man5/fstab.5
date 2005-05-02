@@ -1,0 +1,87 @@
+.TH FSTAB 5
+.SH NAME
+fstab, mtab \- list of file systems to mount, mounted file system table.
+.SH SYNOPSIS
+.B /etc/fstab
+.sp
+.B /etc/mtab
+.SH DESCRIPTION
+.B /etc/fstab
+is a table of file system to mount at boot time,
+.B /etc/mtab
+is a table of currently mounted file systems as maintained by
+.B mount
+and
+.BR umount .
+.PP
+.B /etc/fstab
+is not read by
+.B mount
+as it should be.  It is instead a simple shell script listing the two or
+three devices that Minix needs to operate:  The device names of the root
+file system, the swap file system (optional), and the file system for
+.BR /usr .
+.PP
+.B /etc/mtab
+contains lines of four fields.  The layout is:
+.sp
+.RS
+.nf
+.ft B
+.ta +10n +13n +8n
+device	directory	type	options
+.ft P
+.fi
+.RE
+.PP
+These fields may be explained as follows:
+.sp
+.B device
+.br
+.RS
+A block special device.
+.RE
+.sp
+.B directory
+.br
+.RS
+Mount point.
+.RE
+.sp
+.B type
+.br
+.RS
+Either
+.BR 1 ,
+.BR 2 ,
+or
+.BR swap ,
+indicating a V1 or a V2 file system, or swap space.
+.RE
+.sp
+.B options
+.br
+.RS
+Either
+.BR ro ,
+or
+.BR rw ,
+indicating a read-only or read-write mounted file system.
+.RE
+.SH FILES
+.TP 15n
+.B /etc/fstab
+Shell script naming three important file systems.
+.TP
+.B /etc/mtab
+List of mounted file systems.
+.SH "SEE ALSO"
+.BR printroot (8),
+.BR mount (1),
+.BR fsck (1),
+.BR mkfs (1).
+.SH BUGS
+.B /etc/fstab
+is a joke.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

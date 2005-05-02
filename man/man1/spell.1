@@ -1,0 +1,33 @@
+.TH SPELL 1
+.SH NAME
+spell \- print all words in a file not present in the dictionary
+.SH SYNOPSIS
+\fBspell \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "spell document" "Print the spelling errors on \fIstdout\fR"
+.SH DESCRIPTION
+.PP
+\fISpell\fR is the 
+\s-2MINIX\s+2
+spelling checker.  
+It is actually a short shell script.
+First, the program \fIprep\fR strips off the \fIroff\fR, 
+\fInroff\fR, and \fItroff\fR control lines,
+and the punctuation, and lists each word on a separate line.  These words are
+then sorted.  The resulting output is then compared to the dictionary.  Words
+present in the file but not present in the dictionary are listed.  The
+dictionary must be located in \fI/usr/lib/dict/words\fR.
+.SH "SEE ALSO"
+.BR nroff (1),
+.BR prep (1).

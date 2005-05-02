@@ -1,0 +1,860 @@
+.TH ACD 1
+.SH NAME
+acd \- a compiler driver
+.SH SYNOPSIS
+.B acd
+\fB\-v\fR[\fIn\fR]
+\fB\-vn\fR[\fIn\fR]
+.BI \-name " name"
+.BI \-descr " descr"
+.BI \-T " dir"
+.RI [ arg " ...]"
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Acd
+is a compiler driver, a program that calls the several passes that are needed
+to compile a source file.  It keeps track of all the temporary files used
+between the passes.  It also defines the interface of the compiler, the
+options the user gets to see.
+.PP
+This text only describes
+.B acd
+itself, it says nothing about the different options the C-compiler accepts.
+(It has nothing to do with any language, other than being a tool to give
+a compiler a user interface.)
+.SH OPTIONS
+.B Acd
+itself takes five options:
+.TP
+\fB\-v\fR[\fIn\fR]
+Sets the diagnostic level to
+.I n
+(by default
+.BR 2 ).
+The higher
+.I n
+is, the more output
+.B acd
+generates:
+.B \-v0
+does not produce any output.
+.B \-v1
+prints the basenames of the programs called.
+.B \-v2
+prints names and arguments of the programs called.
+.B \-v3
+shows the commands executed from the description file too.
+.B \-v4
+shows the program read from the description file too.  Levels 3 and 4 use
+backspace overstrikes that look good when viewing the output with a smart
+pager.
+.TP
+\fB\-vn\fR[\fIn\fR]
+Like
+.B \-v
+except that no command is executed.  The driver is just play-acting.
+.TP
+.BI \-name " name"
+.B Acd
+is normally linked to the name the compiler is to be called with by the
+user.  The basename of this, say
+.BR cc ,
+is the call name of the driver.  It plays a role in selecting the proper
+description file.  With the
+.B \-name
+option one can change this.
+.B Acd \-name cc
+has the same effect as calling the program as
+.BR cc .
+.TP
+.BI \-descr " descr"
+Allows one to choose the pass description file of the driver.  By default
+.I descr
+is the same as
+.IR name ,
+the call name of the program.  If
+.I descr
+doesn't start with
+.BR / ,
+.BR ./ ,
+or
+.BR ../
+then the file
+.BI /usr/lib/ descr /descr
+will be used for the description, otherwise
+.I descr
+itself.  Thus
+.B cc \-descr newcc
+calls the C-compiler with a different description file without changing the
+call name.  Finally, if
+.I descr
+is \fB"\-"\fP, standard input is read.  (The default lib directory
+.BR /usr/lib ,
+may be changed to
+.I dir
+at compile time by \fB\-DLIB=\e"\fP\fIdir\fP\fB\e"\fP.  The default
+.I descr
+may be set with \fB\-DDESCR=\e"\fP\fIdescr\fP\fB\e"\fP for simple
+installations on a system without symlinks.)
+.TP
+.BI \-T " dir"
+Temporary files are made in
+.B /tmp
+by default, which may be overridden by the environment variable
+.BR TMPDIR ,
+which may be overridden by the
+.B \-T
+option.
+.SH "THE DESCRIPTION FILE"
+The description file is a program interpreted by the driver.  It has variables,
+lists of files, argument parsing commands, and rules for transforming input
+files.
+.SS Syntax
+There are four simple objects:
+.PP
+.RS
+Words, Substitutions, Letters, and Operators.
+.RE
+.PP
+And there are two ways to group objects:
+.PP
+.RS
+Lists, forming sequences of anything but letters,
+.SP
+Strings, forming sequences of anything but Words and Operators.
+.RE
+.PP
+Each object has the following syntax:
+.IP Words
+They are sequences of characters, like
+.BR cc ,
+.BR \-I/usr/include ,
+.BR /lib/cpp .
+No whitespace and no special characters.  The backslash character
+.RB ( \e )
+may be used to make special characters common, except whitespace.  A backslash
+followed by whitespace is completely removed from the input.  The sequence
+.B \en
+is changed to a newline.
+.IP Substitutions
+A substitution (henceforth called 'subst') is formed with a
+.BR $ ,
+e.g.
+.BR $opt ,
+.BR $PATH ,
+.BR ${lib} ,
+.BR $\(** .
+The variable name after the
+.B $
+is made of letters, digits and underscores, or any sequence of characters
+between parentheses or braces, or a single other character.  A subst indicates
+that the value of the named variable must be substituted in the list or string
+when fully evaluated.
+.IP Letters
+Letters are the single characters that would make up a word.
+.IP Operators
+The characters
+.BR = ,
+.BR + ,
+.BR \- ,
+.BR \(** ,
+.BR < ,
+and
+.B >
+are the operators.  The first four must be surrounded by whitespace if they
+are to be seen as special (they are often used in arguments).  The last two
+are always special.
+.IP Lists
+One line of objects in the description file forms a list.  Put parentheses
+around it and you have a sublist.  The values of variables are lists.
+.IP Strings
+Anything that is not yet a word is a string.  All it needs is that the substs
+in it are evaluated, e.g.
+.BR $LIBPATH/lib$key.a .
+A single subst doesn't make a string, it expands to a list.  You need at
+least one letter or other subst next to it.  Strings (and words) may also
+be formed by enclosing them in double quotes.  Only
+.B \e
+and
+.B $
+keep their special meaning within quotes.
+.SS Evaluation
+One thing has to be carefully understood: Substitutions are delayed until
+the last possible moment, and description files make heavy use of this.
+Only if a subst is tainted, either because its variable is declared local, or
+because a subst in its variable's value is tainted, is it immediately
+substituted.  So if a list is assigned to a variable then this list is only
+checked for tainted substs.  Those substs are replaced by the value
+of their variable.  This is called partial evaluation.
+.PP
+Full evaluation expands all substs, the list is flattened, i.e. all
+parentheses are removed from sublists.
+.PP
+Implosive evaluation is the last that has to be done to a list before it
+can be used as a command to execute.  The substs within a string have been
+evaluated to lists after full expansion, but a string must be turned into
+a single word, not a list.  To make this happen, a string is first exploded
+to all possible combinations of words choosing one member of the lists within
+the string.  These words are tried one by one to see if they exist as a
+file.  The first one that exists is taken, if none exists than the first
+choice is used.  As an example, assume
+.B LIBPATH
+equals
+.BR "(/lib /usr/lib)" ,
+.B key
+is
+.B (c)
+and
+.B key
+happens to be local.  Then we have:
+.PP
+.RS
+\fB"$LIBPATH/lib$key.a"\fP
+.RE
+.PP
+before evaluation,
+.PP
+.RS
+\fB"$LIBPATH/lib(c).a"\fP
+.RE
+.PP
+after partial evaluation,
+.PP
+.RS
+\fB"(/lib/libc.a /usr/lib/libc.a)"\fP
+.RE
+.PP
+after full evaluation, and finally
+.PP
+.RS
+.B /usr/lib/libc.a
+.RE
+.PP
+after implosion, if the file exists.
+.SS Operators
+The operators modify the way evaluation is done and perform a special
+function on a list:
+.TP
+.B \(**
+Forces full evaluation on all the list elements following it.  Use it to
+force substitution of the current value of a variable.  This is the only
+operator that forces immediate evaluation.
+.TP
+.B +
+When a
+.B +
+exists in a list that is fully evaluated, then all the elements before the
+.B +
+are imploded and all elements after the
+.B +
+are imploded and added to the list if they are not already in the list.  So
+this operator can be used either for set addition, or to force implosive
+expansion within a sublist.
+.TP
+.B \-
+Like
+.BR + ,
+except that elements after the
+.B \-
+are removed from the list.
+.PP
+The set operators can be used to gather options that exclude each other
+or for their side effect of implosive expansion.  You may want to write:
+.PP
+.RS
+\fBcpp \-I$LIBPATH/include\fP
+.RE
+.PP
+to call cpp with an extra include directory, but
+.B $LIBPATH
+is expanded using a filename starting with
+.B \-I
+so this won't work.  Given that any problem in Computer Science can be solved
+with an extra level of indirection, use this instead:
+.PP
+.RS
+.ft B
+cpp \-I$INCLUDE
+.br
+INCLUDE = $LIBPATH/include +
+.ft P
+.RE
+.SS "Special Variables"
+There are three special variables used in a description file:
+.BR $\(** ,
+.BR $< ,
+and
+.BR $> .
+These variables are always local and mostly read-only.  They will be
+explained later.
+.SS "A Program"
+The lists in a description file form a program that is executed from the
+first to the last list.  The first word in a list may be recognized as a
+builtin command (only if the first list element is indeed simply a word.)
+If it is not a builtin command then the list is imploded and used as a
+\s-2UNIX\s+2 command with arguments.
+.PP
+Indentation (by tabs or spaces) is not just makeup for a program, but are
+used to group lines together.  Some builtin commands need a body.  These
+bodies are simply lines at a deeper indentation.
+.PP
+Empty lines are not ignored either, they have the same indentation level as
+the line before it.  Comments (starting with a
+.B #
+and ending at end of line) have an indentation of their own and can be used
+as null commands.
+.PP
+.B Acd
+will complain about unexpected indentation shifts and empty bodies.  Commands
+can share the same body by placing them at the same indentation level before
+the indented body.  They are then "guards" to the same body, and are tried
+one by one until one succeeds, after which the body is executed.
+.PP
+Semicolons may be used to separate commands instead of newlines.  The commands
+are then all at the indentation level of the first.
+.SS "Execution phases"
+The driver runs in three phases: Initialization, Argument scanning, and
+Compilation.  Not all commands work in all phases.  This is further explained
+below.
+.SS "The Commands"
+The commands accept arguments that are usually generic expressions that
+implode to a word or a list of words.  When
+.I var
+is specified, then a single word or subst needs to be given, so
+an assignment can be either
+.I name
+.B =
+.IR value ,
+or
+.BI $ name
+.B =
+.IR value .
+.TP
+.IB "var " = " expr ..."
+The partially evaluated list of expressions is assigned to
+.IR var .
+During the evaluation is
+.I var
+marked as local, and after the assignment set from undefined to defined.
+.TP
+.BI unset " var"
+.I Var
+is set to null and is marked as undefined.
+.TP
+.BI import " var"
+If
+.I var
+is defined in the environment of
+.B acd
+then it is assigned to
+.IR var .
+The environment variable is split into words at whitespace and colons.  Empty
+space between two colons
+.RB ( :: )
+is changed to a dot.
+.TP
+.BI mktemp " var " [ suffix ]
+Assigns to
+.I var
+the name of a new temporary file, usually something like /tmp/acd12345x.  If
+.I suffix
+is present then it will be added to the temporary file's name.  (Use it
+because some programs require it, or just because it looks good.)
+.B Acd
+remembers this file, and will delete it as soon as you stop referencing it.
+.TP
+.BI temporary " word"
+Mark the file named by
+.I word
+as a temporary file.  You have to make sure that the name is stored in some
+list in imploded form, and not just temporarily created when
+.I word
+is evaluated, because then it will be immediately removed and forgotten.
+.TP
+.BI stop " suffix"
+Sets the target suffix for the compilation phase.  Something like
+.B stop .o
+means that the source files must be compiled to object files.  At least one
+.B stop
+command must be executed before the compilation phase begins.  It may not be
+changed during the compilation phase.  (Note: There is no restriction on
+.IR suffix ,
+it need not start with a dot.)
+.TP
+.BI treat " file suffix"
+Marks the file as having the given suffix for the compile phase.  Useful
+for sending a
+.B \-l
+option directly to the loader by treating it as having the
+.B .a
+suffix.
+.TP
+.BI numeric " arg"
+Checks if
+.I arg
+is a number.  If not then
+.B acd
+will exit with a nice error message.
+.TP
+.BI error " expr ..."
+Makes the driver print the error message
+.I "expr ..."
+and exit.
+.TP
+.BI if " expr " = " expr"
+.B If
+tests if the two expressions are equal using set comparison, i.e. each
+expression should contain all the words in the other expression.  If the
+test succeeds then the if-body is executed.
+.TP
+.BI ifdef " var"
+Executes the ifdef-body if
+.I var
+is defined.
+.TP
+.BI ifndef " var"
+Executes the ifndef-body if
+.I var
+is undefined.
+.TP
+.BI iftemp " arg"
+Executes the iftemp-body if
+.I arg
+is a temporary file.  Use it when a command has the same file as input and
+output and you don't want to clobber the source file:
+.SP
+.RS
+.nf
+.ft B
+transform .o .o
+	iftemp $\(**
+		$> = $\(**
+	else
+		cp $\(** $>
+	optimize $>
+.ft P
+.fi
+.RE
+.TP
+.BI ifhash " arg"
+Executes the ifhash-body if
+.I arg
+is an existing file with a '\fB#\fP' as the very first character.  This
+usually indicates that the file must be pre-processed:
+.SP
+.RS
+.nf
+.ft B
+transform .s .o
+	ifhash $\(**
+		mktemp ASM .s
+		$CPP $\(** > $ASM
+	else
+		ASM = $\(**
+	$AS \-o $> $ASM
+	unset ASM
+.ft P
+.fi
+.RE
+.TP
+.B else
+Executes the else-body if the last executed
+.BR if ,
+.BR ifdef ,
+.BR ifndef ,
+.BR iftemp ,
+or
+.B ifhash
+was unsuccessful.  Note that
+.B else
+need not immediately follow an if, but you are advised not to make use of
+this.  It is a "feature" that may not last.
+.TP
+.BI apply " suffix1 suffix2"
+Executed inside a transform rule body to transform the input file according
+to another transform rule that has the given input and output suffixes.  The
+file under
+.B $\(**
+will be replaced by the new file.  So if there is a
+.B .c .i
+preprocessor rule then the example of
+.B ifhash
+can be replaced by:
+.SP
+.RS
+.nf
+.ft B
+transform .s .o
+	ifhash $\(**
+		apply .c .i
+	$AS \-o $> $*
+.ft P
+.fi
+.RE
+.TP
+.BI include " descr"
+Reads another description file and replaces the
+.B include
+with it.  Execution continues with the first list in the new program.  The
+search for
+.I descr
+is the same as used for the
+.B \-descr
+option.  Use
+.B include
+to switch in different front ends or back ends, or to call a shared
+description file with a different initialization.  Note that
+.I descr
+is only evaluated the first time the
+.B include
+is called.  After that the
+.B include
+has been replaced with the included program, so changing its argument won't
+get you a different file.
+.TP
+.BI arg " string ..."
+.B Arg
+may be executed in the initialization and scanning phase to post an argument
+scanning rule, that's all the command itself does.  Like an
+.B if
+that fails it allows more guards to share the same body.
+.TP
+.BI transform " suffix1 suffix2"
+.BR Transform ,
+like
+.BR arg ,
+only posts a rule to transform a file with the suffix
+.I suffix1
+into a file with the suffix
+.IR suffix2 .
+.TP
+.BI prefer " suffix1 suffix2"
+Tells that the transformation rule from
+.I suffix1
+to
+.I suffix2
+is to be preferred when looking for a transformation path to the stop suffix.
+Normally the shortest route to the stop suffix is used.
+.B Prefer
+is ignored on a
+.BR combine ,
+because the special nature of combines does not allow ambiguity.
+.SP
+The two suffixes on a
+.B transform
+or
+.B prefer
+may be the same, giving a rule that is only executed when preferred.
+.TP
+.BI combine " suffix-list suffix"
+.B Combine
+is like
+.B transform
+except that it allows a list of input suffixes to match several types of
+input files that must be combined into one.
+.TP
+.B scan
+The scanning phase may be run early from the initialization phase with the
+.B scan
+command.  Use it if you need to make choices based on the arguments before
+posting the transformation rules.  After running this,
+.B scan
+and
+.B arg
+become no-ops.
+.TP
+.B compile
+Move on to the compilation phase early, so that you have a chance to run
+a few extra commands before exiting.  This command implies a
+.BR scan .
+.PP
+Any other command is seen as a \s-2UNIX\s+2 command.  This is where the
+.B <
+and
+.B >
+operators come into play.  They redirect standard input and standard output
+to the file mentioned after them, just like the shell.
+.B Acd
+will stop with an error if the command is not successful.
+.SS The Initialization Phase
+The driver starts by executing the program once from top to bottom to
+initialize variables and post argument scanning and transformation rules.
+.SS The Scanning Phase
+In this phase the driver makes a pass over the command line arguments to
+process options.  Each
+.B arg
+rule is tried one by one in the order they were posted against the front of
+the argument list.  If a match is made then the matched arguments are removed
+from the argument list and the arg-body is executed.  If no match can be made
+then the first argument is moved to the list of files waiting to be
+transformed and the scan is restarted.
+.PP
+The match is done as follows: Each of the strings after
+.B arg
+must match one argument at the front of the argument list.  A character
+in a string must match a character in an argument word, a subst in a string
+may match 1 to all remaining characters in the argument, preferring the
+shortest possible match.  The hyphen in a argument starting with a hyphen
+cannot be matched by a subst.  Therefore:
+.PP
+.RS
+.B arg \-i
+.RE
+.PP
+matches only the argument
+.BR \-i .
+.PP
+.RS
+.B arg \-O$n
+.RE
+.PP
+matches any argument that starts with
+.B \-O
+and is at least three characters long.  Lastly,
+.PP
+.RS
+.B arg \-o $out
+.RE
+.PP
+matches
+.B \-o
+and the argument following it, unless that argument starts with a hyphen.
+.PP
+The variable
+.B $\(**
+is set to all the matched arguments before the arg-body is executed.  All
+the substs in the arg strings are set to the characters they match.  The
+variable
+.B $>
+is set to null.  All the values of the variables are saved and the variables
+marked local.  All variables except
+.B $>
+are marked read-only.  After the arg-body is executed is the value of
+.B $>
+concatenated to the file list.  This allows one to stuff new files into the
+transformation phase.  These added names are not evaluated until the start
+of the next phase.
+.SS The Compilation Phase
+The files gathered in the file list in the scanning phase are now transformed
+one by one using the transformation rules.  The shortest, or preferred route
+is computed for each file all the way to the stop suffix.  Each file is
+transformed until it lands at the stop suffix, or at a combine rule.  After
+a while all files are either fully transformed or at a combine rule.
+.PP
+The driver chooses a combine rule that is not on a path from another combine
+rule and executes it.  The file that results is then transformed until it
+again lands at a combine rule or the stop suffix.  This continues until all
+files are at the stop suffix and the program exits.
+.PP
+The paths through transform rules may be ambiguous and have cycles, they will
+be resolved.  But paths through combines must be unambiguous, because of
+the many paths from the different files that meet there.  A description file
+will usually have only one combine rule for the loader.  However if you do
+have a combine conflict then put a no-op transform rule in front of one to
+resolve the problem.
+.PP
+If a file matches a long and a short suffix then the long suffix is preferred.
+By putting a null input suffix (\fB""\fP) in a rule one can match any file
+that no other rule matches.  You can send unknown files to the loader this
+way.
+.PP
+The variable
+.B $\(**
+is set to the file to be transformed or the files to be combined before the
+transform or combine-body is executed.
+.B $>
+is set to the output file name, it may again be modified.
+.B $<
+is set to the original name of the first file of
+.B $\(**
+with the leading directories and the suffix removed.
+.B $\(**
+will be made up of temporary files after the first rule.
+.B $>
+will be another temporary file or the name of the target file
+.RB ( $<
+plus the stop suffix), if the stop suffix is reached.
+.PP
+.B $>
+is passed to the next rule; it is imploded and checked to be a single word.
+This driver does not store intermediate object files in the current directory
+like most other compilers, but keeps them in
+.B /tmp
+too.  (Who knows if the current directory can have files created in?)  As an
+example, here is how you can express the "normal" method:
+.PP
+.RS
+.nf
+.ft B
+transform .s .o
+	if $> = $<.o
+		# Stop suffix is .o
+	else
+		$> = $<.o
+		temporary $>
+	$AS \-o $> $\(**
+.ft P
+.fi
+.RE
+.PP
+Note that
+.B temporary
+is not called if the target is already the object file, or you would lose
+the intended result!
+.B $>
+is known to be a word, because
+.B $<
+is local.  (Any string whose substs are all expanded changes to a word.)
+.SS "Predefined Variables"
+The driver has three variables predefined:
+.BR PROGRAM ,
+set to the call name of the driver,
+.BR VERSION ,
+the driver's version number, and
+.BR ARCH ,
+set to the name of the default output architecture.  The latter is optional,
+and only defined if
+.B acd
+was compiled with \fB\-DARCH=\e"\fP\fIarch-name\fP\fB\e"\fP.
+.SH EXAMPLE
+As an example a description file for a C compiler is given.  It has a
+front end (ccom), an intermediate code optimizer (opt), a code generator (cg),
+an assembler (as), and a loader (ld).  The compiler can pre-process, but
+there is also a separate cpp.  If the
+.B \-D
+and options like it are changed to look like
+.B \-o
+then this example is even as required by \s-2POSIX\s+2.
+.RS
+.nf
+
+# The compiler support search path.
+C =	/lib /usr/lib /usr/local/lib
+
+# Compiler passes.
+CPP =	$C/cpp $CPP_F
+CCOM =	$C/ccom $CPP_F
+OPT =	$C/opt
+CG =	$C/cg
+AS =	$C/as
+LD =	$C/ld
+
+# Predefined symbols.
+CPP_F =	\-D__EXAMPLE_CC__
+
+# Library path.
+LIBPATH = $USERLIBPATH $C
+
+# Default transformation target.
+stop .out
+
+# Preprocessor directives.
+arg \-D$name
+arg \-U$name
+arg \-I$dir
+	CPP_F = $CPP_F $\(**
+
+# Stop suffix.
+arg \-c
+	stop .o
+
+arg \-E
+	stop .E
+
+# Optimization.
+arg \-O
+	prefer .m .m
+	OPT = $OPT -O1
+
+arg \-O$n
+	numeric $n
+	prefer .m .m
+	OPT = $OPT $\(**
+
+# Add debug info to the executable.
+arg \-g
+	CCOM = $CCOM -g
+
+# Add directories to the library path.
+arg \-L$dir
+	USERLIBPATH = $USERLIBPATH $dir
+
+# \-llib must be searched in $LIBPATH later.
+arg \-l$lib
+	$> = $LIBPATH/lib$lib.a
+
+# Change output file.
+arg \-o$out
+arg \-o $out
+	OUT = $out
+
+# Complain about a missing argument.
+arg \-o
+	error "argument expected after '$\(**'"
+
+# Any other option (like \-s) are for the loader.
+arg \-$any
+	LD = $LD $\(**
+
+# Preprocess C-source.
+transform .c .i
+	$CPP $\(** > $>
+
+# Preprocess C-source and send it to standard output or $OUT.
+transform .c .E
+	ifndef OUT
+		$CPP $\(**
+	else
+		$CPP $\(** > $OUT
+
+# Compile C-source to intermediate code.
+transform .c .m
+transform .i .m
+	$CCOM $\(** $>
+
+# Intermediate code optimizer.
+transform .m .m
+	$OPT $\(** > $>
+
+# Intermediate to assembly.
+transform .m .s
+	$CG $\(** > $>
+
+# Assembler to object code.
+transform .s .o
+	if $> = $<.o
+		ifdef OUT
+			$> = $OUT
+	$AS \-o $> $\(**
+
+# Combine object files and libraries to an executable.
+combine (.o .a) .out
+	ifndef OUT
+		OUT = a.out
+	$LD \-o $OUT $C/crtso.o $\(** $C/libc.a
+.fi
+.RE
+.SH FILES
+.TP 25n
+.RI /usr/lib/ descr /descr
+\- compiler driver description file.
+.SH "SEE ALSO"
+.BR cc (1).
+.SH ACKNOWLEDGEMENTS
+Even though the end result doesn't look much like it, many ideas were
+nevertheless derived from the ACK compiler driver by Ed Keizer.
+.SH BUGS
+\s-2POSIX\s+2 requires that if compiling one source file to an object file
+fails then the compiler should continue with the next source file.  There is
+no way
+.B acd
+can do this, it always stops after error.  It doesn't even know what an
+object file is!  (The requirement is stupid anyhow.)
+.PP
+If you don't think that tabs are 8 spaces wide, then don't mix them with
+spaces for indentation.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

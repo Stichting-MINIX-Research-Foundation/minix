@@ -1,0 +1,76 @@
+.TH SYNCTREE 1
+.SH NAME
+synctree \- synchronize directory trees.
+.SH SYNOPSIS
+.nf
+\fBsynctree\fP [\fB\-iuf\fP] [[\fIuser1\fP@]\fImachine1\fP:]\fIdir1\fP [[\fIuser2\fP@]\fImachine2\fP:]\fIdir2\fP
+.fi
+.SH DESCRIPTION
+.B Synctree
+synchronizes the directory tree rooted at \fIdir2\fP with \fIdir1\fP. It
+walks recursively through both trees, and deletes and adds files in
+\fIdir2\fP to make it equal to \fIdir1\fP. Mode, owner and group are set for
+each file unless the \fB\-u\fP flag is given. In its normal mode of operation,
+synctree will ask if it may delete or add directories assuming that you don't
+want to. Non-directories are simply deleted or added, but synctree will ask if
+it needs to update a normal file with a default answer of 'y'. Simply typing
+return will choose the default answer, typing end-of-file is like typing
+return to this question and all other questions.
+.PP
+You can specify a hostname and user-id to be used to access \fIdir1\fP or
+\fIdir2\fP.  Synctree will use \fBrsh\fP(1) to run a copy of itself on
+the remote machine.  The call interface mimics that of \fBrcp\fP(1), but
+you can use more than one user@machine prefix if you want to make things
+really interesting.
+.PP
+Hard links are enforced, an update is done by first deleting the old file
+so that links to unknown files are broken.  Links to files within \fIdir2\fP
+will be restored.
+.PP
+If either directory contains the file \fB.backup\fP, then this file will
+be used as an alternate inode table.  This allows one to make a backup copy
+of a file tree full of special files and differing user-ids on a remote
+machine under an unpriviledged user-id.
+.PP
+.SH OPTIONS
+.TP 5
+.B \-i
+Ask for permission (with default answer 'n') to delete or
+add any file or directory.
+.TP 5
+.B \-u
+Only install newer files, i.e. merge the directory trees.
+.TP 5
+.B \-f
+Don't ask, think 'yes' on any question.
+.SH "SEE ALSO"
+.BR remsync (1),
+.BR cpdir (1),
+.BR rsh (1),
+.BR rcp (1),
+.BR perror (3).
+.SH DIAGNOSTICS
+Messages may come from three different processes.  One named "Slave" running
+in \fIdir1\fP, one named "Master" running in \fIdir2\fP, and synctree itself
+in a mediator role.  The mediator will also perform the task of either the
+master or the slave if one of them is running locally.  You need to know this
+to interpret the error messages coming from one of these processes.  The
+messages are normally based on \fBperror\fP(3).  Failure to contact a remote
+machine will be reported by \fBrsh\fP.  \fBSynctree\fP should have a zero
+exit status if no errors have been encountered.
+.SH BUGS
+Directory \fIdir2\fP will be created without asking.
+.PP
+The master and slave processes get their error output mixed up sometimes
+(nice puzzle).
+.PP
+The local and remote machine must use the same file type encoding.
+.PP
+The link replacement strategy may lead to lack of space on a small device.
+Let \fBsynctree\fP run to completion and then rerun it to pick up the pieces.
+.PP
+Letting the local process keep its "synctree" name may be a mistake.
+.PP
+It talks too much.
+.SH AUTHOR
+Kees J. Bot, (kjb@cs.vu.nl)

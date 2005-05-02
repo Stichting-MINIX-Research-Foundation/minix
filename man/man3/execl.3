@@ -1,0 +1,196 @@
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)execl.3	6.2 (Berkeley) 4/25/86
+.\"
+.TH EXECL 3 "April 25, 1986"
+.UC 5
+.SH NAME
+execl, execv, execle, execlp, execvp, exec, environ \- execute a file
+.SH SYNOPSIS
+.ft B
+#include <unistd.h>
+
+.in +.5i
+.ti -.5i
+int execl(const char *\fIname\fP, const char *\fIarg0\fP, ..., (char *) NULL)
+.ti -.5i
+int execv(const char *\fIname\fP, char *const \fIargv\fP[])
+.ti -.5i
+int execle(const char *\fIname\fP, const char *\fIarg0\fP, ..., (char *) NULL, char *const \fIenvp\fP[])
+.ti -.5i
+int execlp(const char *\fIname\fP, const char *\fIarg0\fP, ..., (char *) NULL)
+.ti -.5i
+int execvp(const char *\fIname\fP, char *const \fIargv\fP[])
+.in -.5i
+
+extern char *const *environ;
+.fi
+.SH DESCRIPTION
+These routines provide various interfaces to the
+.B execve 
+system call.  Refer to 
+.BR  execve (2)
+for a description of their properties; only
+brief descriptions are provided here.
+.PP
+.B Exec
+in all its forms
+overlays the calling process with the named file, then
+transfers to the
+entry point of the core image of the file.
+There can be no return from a successful exec; the calling
+core image is lost.
+.PP
+The
+.I name
+argument
+is a pointer to the name of the file
+to be executed.
+The pointers
+.IR arg [ 0 ],
+.IR arg [ 1 "] ..."
+address null-terminated strings.
+Conventionally
+.IR arg [ 0 ]
+is the name of the
+file.
+.PP
+Two interfaces are available.
+.B execl
+is useful when a known file with known arguments is
+being called;
+the arguments to
+.B execl
+are the character strings
+constituting the file and the arguments;
+the first argument is conventionally
+the same as the file name (or its last component).
+A null pointer argument must end the argument list.
+(Note that the
+.B execl*
+functions are variable argument functions.  This means that the type
+of the arguments beyond
+.I arg0
+is not checked.  So the null pointer requires an explicit cast to type
+.B "(char *)"
+if not of that type already.)
+.PP
+The
+.B execv
+version is useful when the number of arguments is unknown
+in advance;
+the arguments to
+.B execv
+are the name of the file to be
+executed and a vector of strings containing
+the arguments.
+The last argument string must be followed
+by a null pointer.
+.PP
+When a C program is executed,
+it is called as follows:
+.PP
+.RS
+.ft B
+.nf
+int main(int \fIargc\fP, char *const \fIargv\fP[], char *const \fIenvp\fP[]);
+
+exit(main(\fIargc\fP, \fIargv\fP, \fIenvp\fP));
+.fi
+.ft R
+.RE
+.PP
+where
+.I argc
+is the argument count
+and
+.I argv 
+is an array of character pointers
+to the arguments themselves.
+As indicated,
+.I argc
+is conventionally at least one
+and the first member of the array points to a
+string containing the name of the file.
+.PP
+.I Argv
+is directly usable in another
+.B execv
+because
+.IR argv [ argc ]
+is 0.
+.PP
+.I Envp
+is a pointer to an array of strings that constitute
+the
+.I environment
+of the process.
+Each string consists of a name, an \*(lq=\*(rq, and a null-terminated value.
+The array of pointers is terminated by a null pointer.
+The shell
+.BR sh (1)
+passes an environment entry for each global shell variable
+defined when the program is called.
+See
+.BR environ (7)
+for some conventionally
+used names.
+The C run-time start-off routine places a copy of
+.I envp
+in the global cell
+.BR environ ,
+which is used
+by
+.B execv
+and
+.B execl
+to pass the environment to any subprograms executed by the
+current program.
+.PP
+.B Execlp
+and
+.B execvp
+are called with the same arguments as
+.B execl
+and
+.BR execv ,
+but duplicate the shell's actions in searching for an executable
+file in a list of directories.
+The directory list is obtained from the environment variable
+.BR PATH .
+Under standard Minix, if a file is found that is executable, but does
+not have the proper executable header then it is assumed to be
+a shell script.
+.B Execlp
+and
+.B execvp
+execute
+.B /bin/sh
+to interpret the script.
+Under Minix-vmd this does not happen, a script must begin with
+.B #!
+and the full path name of the interpreter if it is to be an
+executable script.
+.SH "SEE ALSO"
+.BR execve (2),
+.BR fork (2),
+.BR environ (7),
+.BR sh (1).
+.SH DIAGNOSTICS
+If the file cannot be found,
+if it is not executable,
+if it does not start with a valid magic number (see
+.BR a.out (5)),
+if maximum memory is exceeded,
+or if the arguments require too much space,
+a return
+constitutes the diagnostic;
+the return value is \-1 and
+.B errno
+is set as for
+.BR execve .
+Even for the super-user,
+at least one of the execute-permission bits must be set for
+a file to be executed.

@@ -1,0 +1,41 @@
+.TH UNAME 1
+.SH NAME
+uname, arch \- system info
+.SH SYNOPSIS
+\fBuname\fR [\fB\-snrvmpa\fR]\fR
+.br
+\fBarch\fR [\fB\-snrvmpa\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-s" "System name"
+.FL "\-n" "Node/network name"
+.FL "\-r" "Operating system release"
+.FL "\-v" "Operating system version"
+.FL "\-m" "Machine type"
+.FL "\-p" "Processor family"
+.FL "\-a" "Short for \fB\-snrvm\fR"
+.SH EXAMPLES
+.EX "uname -n" "Print the name of the system"
+.EX "arch" "Print the name of the system architecture"
+.SH DESCRIPTION
+.PP
+\fIUname\fP and \fIarch\fP give information about the system.  The options
+indicate which information strings must be printed.  These strings are always
+in the same order.  \fIUname\fP and \fIarch\fP only differ w.r.t. the default
+string to print, \fB\-s\fP and \fB\-p\fP respectively.
+.PP
+The strings are compiled into the commands except for the node name, it is
+obtained from the file \fI/etc/hostname.file\fP.  \fBUname \-m\fP should
+return the actual machine type, not the same string as with \fB\-p\fP.
+.SH "SEE ALSO"
+.BR uname (3).

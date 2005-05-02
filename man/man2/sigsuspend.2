@@ -1,0 +1,39 @@
+.TH SIGSUSPEND 2
+.SH NAME
+sigsuspend \- suspend until signalled
+.SH SYNOPSIS
+.ft B
+#include <signal.h>
+
+int sigsuspend(const sigset_t *\fIset\fP)
+.ft P
+.SH DESCRIPTION
+.B Sigsuspend()
+installs the signal mask referenced by
+.I set
+and suspends the process until signalled.  The signal is handled, the signal
+mask is restored to the value it had before the
+.B sigsuspend()
+call and call returns.
+.SH "SEE ALSO"
+.BR pause (2),
+.BR sigaction (2),
+.BR sigpending (2),
+.BR sigprocmask (2),
+.BR sigset (3).
+.SH DIAGNOSTICS
+.B Sigsuspend()
+never returns normally, so it always returns
+.BR \-1 .
+The error code is either
+.B EINTR
+indicating that a signal has arrived, or
+.B EFAULT
+for a bad
+.I set
+address.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: sigsuspend.2,v 1.2 1996/04/11 06:02:41 philip Exp $

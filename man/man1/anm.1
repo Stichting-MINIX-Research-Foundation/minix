@@ -1,0 +1,63 @@
+.TH ANM 1
+.SH NAME
+anm \- print name list
+.SH SYNOPSIS
+\fBanm \fR[\fB\-gnoprus\fR] \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-g" "Global symbols only"
+.FL "\-n" "Sort numerically"
+.FL "\-o" "Prepend the filename to each line"
+.FL "\-p" "No sorting\(emuse symbol table order"
+.FL "\-r" "Sort in reverse order"
+.FL "\-u" "List undefined symbols only"
+.FL "\-s" "Sort in section order"
+.SH EXAMPLES
+.EX "anm  \-gn  test.o" "Print global symbols in numerical order"
+.SH DESCRIPTION
+.PP
+.I Anm
+prints the name list (symbol table) of each ACK format object
+.I file
+in the argument list.
+If no file name is given, \fIa.out\fR is used.
+Each symbol name is preceded by its value, a section indicator
+and a type indicator.
+The section indicators are:
+.PP
+.ta 0.25i 0.50i
+.nf
+	\fBU\fR	Undefined symbol
+	\fBA\fR	Absolute symbol
+	\fB\-\fR	Other symbol
+.sp
+The type indicators are:
+.PP
+	\fBF\fR	Filename
+	\fBM\fR	Module name
+	\fBS\fR	Section name
+	\fBE\fR	External (global) symbol
+	\fB\-\fR	Local symbol
+.fi
+.PP
+The output is sorted alphabetically, unless otherwise specified.
+Notice that \fIanm\fR can only be used on ACK format object files 
+(that is: \fI.o\fR and \fI.out\fR files). 
+If you want to get the name list of an executable program use 
+.I nm
+instead.
+.SH "SEE ALSO"
+.BR asize (1),
+.BR nm (1),
+.BR ar (1),
+.BR size (1).

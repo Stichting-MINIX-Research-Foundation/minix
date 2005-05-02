@@ -1,0 +1,311 @@
+.CD "de \(en disk editor"
+.SX "de\fR [\fB\(enw\fR] \fIblock_device"
+.SX "de \(enr \fIfile
+.FL "\(enr" "Recover a file that has been removed"
+.FL "\(enw" "Enable writing, so device can be modified"
+.EX "de \(enr /usr/ast/prog.c" "Undo the effects of: \fIrm /usr/ast/prog.c\fR"
+.EX "de \(enw /dev/fd0" "Edit \fI/dev/fd0\fR for writing"
+.PP
+The \fIde\fR program allows a system administrator to examine and modify
+a \s-2MINIX\s0 file system device. 
+Commands are available to move to any address on the disk
+and display the disk block contents. This information may
+be presented in one of three visual modes: as two-byte words,
+as ASCII characters or as a bit map. The disk may be searched
+for a string of characters. If the \fB\(enw\fR option is given,
+\fIde\fR will open the device for writing and words may be
+modified.
+Without this flag, writing is prohibited.
+Lost blocks and files can be recovered using a variety of
+commands. The \fB\(enr\fR option supports automated recovery of
+files removed by \fIunlink\fR.
+.SS "Positioning"
+.PP
+Disks are divided into blocks (also called \*(OQzones\*(CQ) of 1024
+bytes. \fIDe\fR keeps a current address on the disk as a
+block number and a byte offset within the block. In some
+visual modes the offset is rounded off, for example, in
+\*(OQword\*(CQ mode the offset must be even.
+.PP
+There are different types of blocks on a file system device,
+including a super block, bit maps, i-nodes and data blocks.
+\fIDe\fR knows the type of the current block, but will allow
+most positioning commands and visual modes to function
+anywhere on the disk.
+.PP
+The \fIf\fR command (or PGDN on the keypad) moves forward to the
+next block, similarly \fIb\fR (PGUP) moves backwards one block.
+\fIF\fR (END) moves to the last block and \fIB\fR (HOME) moves to the
+first block.
+.PP
+The arrow keys (or 
+\fIu\fR, \fId\fR, \fIl\fR, and \fIr\fR) change the current
+address by small increments. The size of the increment
+depends on the current display mode, as shown below. The
+various sizes suit each display and pointers move on the
+screen to follow each press of an arrow key.
+.HS
+.if t .ta .75iR 1.5iR 2.25iR 3.0iR 3.75iR
+.if n .ta .75i 1.5i 2.25i 3.0i 3.75i
+.nf
+\fB	Mode	Up	Down	Left	Right\fR
+	Word	\(mi2	+2	\(mi32	+32
+	Block	\(mi64	+64	\(mi1	+1
+	Map	\(mi256	+256	\(mi4	+4
+.fi
+.HS
+The \fIg\fR command allows movement to any specified block.
+Like all commands that take arguments, a prompt and
+subsequent input are written to the bottom line of the
+screen. Numerical entry may be decimal, octal or
+hexadecimal, for example 234, \(mi1, 070, 0xf3, \(miX3C.
+.PP
+While checking an i-node one may want to move to a block
+listed as a zone of the file. The \fIG\fR command takes the
+contents at the current address in the device as a block
+number and indirectly jumps to that block.
+.PP
+The address may be set to the start of any i-node using
+the \fI\fR command and supplying an i-node number. The \fII\fR
+command maps a given file name into an i-node address.
+The file must exist on the current device and this
+device must be mounted.
+.SS "The Display"
+.PP
+The first line of the display contains the device name,
+the name of the current output file (if one is open) and
+the current search string. If \fIde\fR is being run with
+the \fB\(enw\fR option then the device name is flagged with \*(OQ(w).\*(CQ
+If a string is too long to fit on the line it is marked with \*(OQ...\*(CQ.
+.PP
+The second line contains the current block number, the
+total number of blocks, and the type of the current block.
+The types are: boot, super, i-node bit map, zone bit map,
+i-nodes and data block.
+If the current address is
+within a data block then the string \*(OQin use\*(CQ is displayed
+if the block corresponds to a set in the zone bit map.
+.PP
+The third line shows the offset in the current block. If
+the current address is within either the i-node or zone bit
+maps then the i-node or block number corresponding to the
+current bit is shown. If the current address is within an
+i-node then the i-node number and \*(OQin use\*(CQ status is displayed.
+If the address is within a bit map or i-node block, but past
+the last usable entry, then the string \*(OQpadding\*(CQ is shown.
+.PP
+The rest of the screen is used to display data from the
+current block. There are three visual display modes:
+\*(OQword,\*(CQ \*(OQblock,\*(CQ and \*(OQmap.\*(CQ 
+The \fIv\fR command followed by
+\fIw\fR, \fIb\fR, or \fIm\fR sets the current display mode.
+.PP
+In \*(OQword\*(CQ mode 16 words, of two bytes each, are shown in
+either base 2, 8, 10 or 16. The current base is displayed
+to the far right of the screen. It can be changed using the
+\fIo\fR command followed by either an \fIh\fR (hexadecimal), \fId\fR
+(decimal), \fIo\fR (octal) or \fIb\fR (binary).
+.PP
+\fIDe\fR knows where i-nodes are, and will display the
+contents in a readable format, including the \fIrwx\fR bits,
+the user name and the time field. If the current page
+is at the beginning of the super block, or an executable
+file or an \fIar\fR archive, then \fIde\fR will also inform
+the user. In all other cases the contents of the 16
+words are shown to the right as equivalent ASCII
+characters.
+.PP
+In \*(OQblock\*(CQ mode a whole block of 1024 bytes is displayed
+as ASCII characters, 64 columns by 16 lines. Control codes
+are shown as highlighted characters. If the high order bit
+is set in any of the 1024 bytes then an \*(OQMSB\*(CQ flag is shown
+on the far right of the screen, but these bytes are not
+individually marked.
+.PP
+In \*(OQmap\*(CQ mode 2048 bits (256 bytes) are displayed from the
+top to the bottom (32 bits) and from the left to the right
+of the screen. Bit zero of a byte is towards the top of the
+screen. This visual mode is generally used to observe
+the bit map blocks. The number of set bits displayed is
+written on the far right of the screen.
+.SS "Searching"
+.PP
+A search for an ASCII string is initiated by the \fI/\fR command.
+Control characters not used for other purposes may be
+entered in the search string, for example CTRL-J is an end-of-line 
+character. The search is from the current position to
+the end of the current device.
+.PP
+Once a search string has been defined by a use of \fI/\fR, the
+next search may be initiated with the \fIn\fR command, (a \fI/\fR
+followed immediately by an ENTER is equivalent to an \fIn\fR).
+.PP
+Whenever a search is in progress \fIde\fR will append
+one \fI.\fR to the prompt line for every 500 blocks searched. If the
+string is found between the end of the file system and the
+actual end of the device, then the current address is set to
+the end of the file system.
+.PP
+Some of the positioning commands push the current address
+and visual mode in a stack before going to a new address.
+These commands are 
+\fIB\fR, \fIF\fR, \fIg\fR, \fIG\fR, \fIi\fR, \fII\fR, \fIn\fR, \fIx\fR and 
+\fI/\fR. 
+The \fIp\fR
+(previous) command pops the last address and visual mode
+from the stack. This stack is eight entries deep.
+.SS "Modifying the File System"
+.PP
+The \fIs\fR command will prompt for a data word and store it at
+the current address on the disk. This is used to change
+information that can not be easily changed by any other
+means.
+.PP
+The data word is 16 bits wide, it may be entered in decimal,
+octal or hexadecimal. Remember that the \fB\(enw\fR option must
+be specified for the \fIs\fR command to operate. Be careful
+when modifying a mounted file system.
+.SS "Recovering Files"
+.PP
+Any block on the disk may be written to an output file.
+This is used to recover blocks marked as free on the
+disk. A write command will request a file name the first
+time it is used, on subsequent writes the data is appended
+to the current output file.
+.PP
+The name of the current output file is changed using the
+\fIc\fR command. This file should be on a different file system,
+to avoid overwriting an i-node or block before it is
+recovered.
+.PP
+An ASCII block is usually recovered using the \fIw\fR command.
+All bytes will have their most significant bit cleared before
+being written to the output file. Bytes containing '\\0'
+or '\\177' are not copied. The \fIW\fR command writes the current
+block (1024 bytes exactly) to the output file.
+.PP
+When a file is deleted using \fIunlink\fR the i-node number
+in the directory is zeroed, but before its removal, it is
+copied into the end of the file name field. This allows
+the i-node of a deleted file to be found by searching
+through a directory. The \fIx\fR command asks for the path
+name of a lost file, extracts the old i-node number and
+changes the current disk address to the start of the
+i-node.
+.PP
+Once an i-node is found, all of the freed blocks may be
+recovered by checking the i-node zone fields, using 'G'
+to go to a block, writing it back out using 'w', going
+back to the i-node with \fIp\fR and advancing to the next
+block. This file extraction process is automated by using
+the \fIX\fR command, which goes through the i-node, indirect
+and double indirect blocks finding all the block pointers
+and recovering all the blocks of the file.
+.PP
+The \fIX\fR command closes the current output file and asks
+for the name of a new output file. All of the disk blocks
+must be marked as free, if they are not the command stops
+and the file must be recovered manually.
+.PP
+When extracting lost blocks \fIde\fR will maintain \*(OQholes\*(CQ in
+the file. Thus, a recovered sparse file does not allocate
+unused blocks and will keep its efficient storage scheme.
+This property of the \fIX\fR command may be used to move a sparse
+file from one device to another.
+.PP
+Automatic recovery may be initiated by the \fB\(enr\fR option on
+the command line. Also specified is the path name of a
+file just removed by \fIunlink\fR. \fIDe\fR determines which
+mounted file system device held the file and opens it for
+reading. The lost i-node is found and the file extracted by
+automatically performing an \fIx\fR and an \fIX\fR command.
+.PP
+The recovered file will be written to \fI/tmp\fR. \fIDe\fR will
+refuse to automatically recover a file on the same file
+system as \fI/tmp\fR. The lost file must have belonged to the
+user. If automatic recovery will not complete, then manual
+recovery may be performed.
+.SS "Miscellaneous"
+.PP
+The user can terminate a session with \fIde\fR by typing
+\fIq\fR, CTRL-D, or the key associated with SIGQUIT.
+.PP
+The \fIm\fR command invokes the \s-2MINIX\s0 \fIsh\fR shell as a subprocess.
+.PP
+For help while using \fIde\fR use \fIh\fR.
+.SS "Command Summary"
+.LP
+.ta 0.25i 1.0i 1.5i
+.nf
+.sp
+	PGUP	b	Back one block
+	PGDN	f	Forward one block
+	HOME	B	Goto first block
+	END	F	Goto last block
+	UP	u	Move back 2/64/256 bytes
+	DOWN	d	Move forward 2/64/256 bytes
+	LEFT	l	Move back 32/1/4 bytes
+	RIGHT	r	Move forward 32/1/4 bytes
+		g	Goto specified block
+		G	Goto block indirectly
+		i	Goto specified i-node
+		I	Filename to i-node
+		/	Search
+		n	Next occurrence
+		p	Previous address
+		h	Help
+	EOF	q	Quit
+		m	\s-2MINIX\s0 shell
+		v	Visual mode (w b m)
+		o	Output base (h d o b)
+		c	Change file name
+		w	Write ASCII block
+		W	Write block exactly
+		x	Extract lost directory entry
+		X	Extract lost file blocks
+		s	Store word
+.fi
+.sp
+NOTES:
+When entering a line in response to a prompt from \fIde\fR
+there are a couple of editing characters available. The
+previous character may be erased by typing CTRL-H and the
+whole line may be erased by typing CTRL-U. ENTER terminates
+the input. If DELETE or a non-ASCII character is typed
+then the command requesting the input is aborted.
+.PP
+The commands \fIG\fR, \fIs\fR and \fIX\fR will only function if
+the current visual display mode is \*(OQword.\*(CQ 
+The commands
+\fIi\fR, \fII\fR and \fIx\fR change the mode to \*(OQword\*(CQ on
+completion. The commands \fIG\fR and \fI/\fR change the mode
+to \*(OQblock\*(CQ. These restrictions and automatic mode
+conversions are intended to aid the user.
+.PP
+The \*(OQmap\*(CQ mode uses special graphic characters, and
+only functions if the user is at the console.
+.PP
+\fIDe\fR generates warnings for illegal user input or if
+erroneous data is found on the disk, for example a
+corrupted magic number. Warnings appear in the middle
+of the screen for two seconds, then the current page
+is redrawn. Some minor errors, for example, setting
+an unknown visual mode, simply ring the bell. Major
+errors, for example I/O problems on the file system
+device cause an immediate exit from \fIde\fR.
+.PP
+The i-node and zone bit maps are read from the device
+when \fIde\fR starts up. These determine whether \*(OQin use\*(CQ
+or \*(OQnot in use\*(CQ is displayed in the status field at
+the top of the screen. The bit maps are not re-read
+while using \fIde\fR and will become out-of-date if
+observing a mounted file system.
+.PP
+\fIDe\fR requires termcap definitions for \*(OQcm\*(CQ and \*(OQcl\*(CQ.
+Furthermore, \*(OQso\*(CQ and \*(OQse\*(CQ will also be used if available. 
+The ANSI strings generated by the keypad arrows are recognized,
+as well as any single character codes defined by \*(OQku\*(CQ,
+\*(OQkd\*(CQ, \*(OQkl\*(CQ and \*(OQkr\*(CQ.
+.SS "Author"
+.PP
+The \fIde\fR program was written by Terrence Holm.

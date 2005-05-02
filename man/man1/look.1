@@ -1,0 +1,38 @@
+.TH LOOK 1
+.SH NAME
+look \- find lines in a sorted list
+.SH SYNOPSIS
+.B look
+.RB [ \-df ]
+.I string
+.RI [ file ]
+.SH DESCRIPTION
+.B Look
+consults a sorted file and prints all lines that begin with
+.IR string .
+It uses binary search.  The options
+.B \-d
+and
+.B \-f
+affect comparisons as in
+.BR sort (1).
+If no file is specified,
+.B /usr/lib/dict/words
+is assumed with collating sequence
+.BR \-df .
+.SH OPTIONS
+.TP 5
+.B \-d
+Dictionary order: compare letters, digits and whitespace.
+.TP 5
+.B \-f
+Fold. Upper case letters compare equal to lower case.
+.SH FILES
+.TP 25
+.B /usr/lib/dict/words
+Sorted list of English words.
+.SH "SEE ALSO"
+.BR sort (1),
+.BR spell (1).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

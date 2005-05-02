@@ -1,0 +1,28 @@
+.TH DOSWRITE 1
+.SH NAME
+doswrite \- write a file onto an MS-DOS diskette [IBM]
+.SH SYNOPSIS
+\fBdoswrite\fR [\fB\-a\fR] \fIdrive \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "ASCII file"
+.SH EXAMPLES
+.EX "doswrite A x/y <z" "Write file \fIz\fR to disk as \fIx/y\fR"
+.EX "doswrite \-a B f" "Copy \fIstdin\fR to \s-2MS-DOS\s+2 file \fIf\fR"
+.SH DESCRIPTION
+.PP
+.I Doswrite
+writes its \fIstdin\fR to an \s-2MS-DOS\s+2 file.
+The diskette or partition must be formatted and have an \s-2MS-DOS\s+2 file 
+system already in place, including all the directories leading up to the file.
+See \fBdosdir\fR on the use of single letter drive codes.

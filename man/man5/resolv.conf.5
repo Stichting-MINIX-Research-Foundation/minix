@@ -1,0 +1,48 @@
+.TH RESOLV.CONF 5
+.SH NAME
+resolv.conf \- Domain Name System resolver configuration
+.SH SYNOPSIS
+.B /etc/resolv.conf
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The
+.B /etc/resolv.conf
+is used to configure how the host will use the Domain Name System to resolve
+hostnames to IP addresses.  It may contain these two lines:
+.PP
+.RS
+.ta +15n
+nameserver	\fIIP-address\fP
+.br
+domain	\fIdomain-name\fP
+.RE
+.PP
+The nameserver entry tells the IP address of the host to use for DNS
+queries.  If it is set to 127.0.0.1 (which is the default) then the local
+name daemon is used that may use the
+.B /etc/hosts
+database to translate host names.  You normally only need a nameserver entry
+if the name server is at the other side of a router.  The default
+.B nonamed
+name server can't look beyond the local network.
+.PP
+The domain entry tells the default domain to use for unqualified hostnames.
+This entry is usually not given in which case the domain of the local host
+is used.
+.PP
+The long version of this story can be found in
+.BR resolver (5).
+.SH FILES
+.TP 20n
+/etc/resolv.conf
+DNS resolver configuration file.
+.SH "SEE ALSO"
+.BR resolver (5),
+.BR hosts (5),
+.BR nonamed (8),
+.BR boot (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

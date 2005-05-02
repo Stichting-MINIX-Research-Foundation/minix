@@ -1,0 +1,31 @@
+.TH READFS 1
+.SH NAME
+readfs \- read a MINIX file system
+.SH SYNOPSIS
+\fBreadfs\fR [\fB\-il\fR] \fIblock_special\fR [\fIdir\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-i" "Give information about the file, but do not extract files"
+.FL "\-l" "List the files extracted on standard output"
+.SH EXAMPLES
+.EX "readfs \-l /dev/fd0" "List contents of diskette"
+.SH DESCRIPTION
+.PP
+\fIReadfs\fR reads a diskette containing a 
+\s-2MINIX\s+2
+file system.  It can
+extract all the files from it, give a listing of them, or both.  The files
+extracted can be put in a user-specified directory (default: current
+directory).  If subdirectories are needed, they will be created automatically.
+.SH "SEE ALSO"
+.BR mkproto (1).

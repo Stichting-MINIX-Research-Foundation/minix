@@ -1,0 +1,278 @@
+.\" man(7) manpage by rosenkra@hall.cray.com (Bill Rosenkranz)
+.\" Modified a bit for Minix by Kees J. Bot (kjb@cs.vu.nl)
+.\"
+.TH MAN 7
+.SH NAME
+man - nroff macro package for manual pages
+.SH SYNOPSIS
+.B nroff \-man
+.IR file " ..."
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+These macros are used to lay out reference pages for manuals.
+.PP
+Any text argument
+.I t
+may be zero to six words.  Quotes may be used to include blanks in a 'word'.
+.I Text
+can be empty, but unlike normal \s-2UNIX\s+2 macros, the next line is not used.
+.PP
+A prevailing indent distance is remembered between successive
+indented paragraphs, and is reset to default value upon
+reaching a non-indented paragraph (i.e. at .SH or .SS).
+.SH FILES
+.TP 25n
+/usr/lib/tmac/tmac.an
+For standard Minix nroff.
+.TP
+/usr/lib/cawf/man.mac
+For cawf.
+.SH SEE ALSO
+.BR nroff (1),
+.BR man (1).
+.SH "REQUEST SUMMARY"
+.nf
+.ta +15n +9n
+Request	Cause	Explanation
+	Break? 
+
+\&.B t	no	Text t is bold. Quote to imbed blanks.
+\&.I t	no	Text t is italic. Quote to imbed blanks.
+\&.IP x	yes	Set prevailing indent to 5. Begin
+		indented paragraph with hanging tag
+		given by first argument.	Tag x is
+		always placed on a separate line.
+\&.LP	yes	Same as .PP.
+\&.PP	yes	Begin paragraph.	Set prevailing
+		indent to 5.
+\&.RE	yes	End of relative indent.	Set prevailing
+		indent to amount of starting .RS.
+\&.RS	yes	Start relative indent, move left margin
+		in distance 5.
+\&.SH t	yes	Subhead. Quote to imbed blanks.
+\&.SS t	yes	Subsection. Quote to imbed blanks. No
+		indent for t.
+\&.TH n s c v d	yes	Begin page named n of chapter s; c is
+		the chapter name; d is the date of the
+		most recent change; v is version number.
+		Sets prevailing indent and tabs to 5.
+.fi
+.SH EXAMPLE
+The following illustrates some of the requests available
+with this macro package:
+.RS
+.nf
+\&.\e" this is a comment
+\&.TH DEMO 1
+\&.SH NAME
+demo \e- show how to use \e-man package
+\&.SH SYNOPSIS
+\&.B demo
+\&.RI [ options ]
+\&.IR file " ..."
+\&.SH DESCRIPTION
+This is a test for showing how to use the
+\&.BR nroff (1)
+man package. It shows how to use .TH, .SH, .PP, .B, .I, and .IP
+commands.
+\&.PP
+This will be a new paragraph. You can also use normal
+\&.BR nroff (1)
+commands in the text.
+\&.SS Nroff Commands
+\&.IP '\ee"'
+This is the comment command.  \e" You won't see this.
+\&.IP nf
+No fill mode (the normal mode is fill mode where things
+get justified right and left).
+\&.IP fi
+Re-enter fill mode.
+\&.IP br
+Break line here no matter what.
+\&.IP sp
+Vertical space (also causes a break to occur).
+\&.sp
+Note that to continue an indent and make a new paragraph (as
+is the case here), just put in a space (.sp).
+\&.PP
+Now we should be at a new paragraph.
+.fi
+.RE
+.PP
+Executing
+.B nroff \-man demo.man
+results in the following output:  (Ignoring page headers and footers)
+.PP
+.RS
+.B NAME
+.RS
+demo \e- show how to use \e-man package
+.RE
+.SP
+.B SYNOPSIS
+.RS
+.B demo
+.RI [ options ]
+.IR file " ..."
+.RE
+.SP
+.B DESCRIPTION
+.RS
+This is a test for showing how to use the
+.BR nroff (1)
+man package. It shows how to use .TH, .SH, .PP, .B, .I, and .IP
+commands.
+.SP
+This will be a new paragraph. You can also use normal
+.BR nroff (1)
+commands in the text.
+.RE
+.SP
+.ti +2n
+.B Nroff Commands
+.RS
+.RS
+.ta +5n
+.SP
+.ti -5n
+\&'\e"'	This is the comment command.
+.SP
+.ti -5n
+nf	No fill mode (the normal mode is fill mode where things
+get justified right and left).
+.SP
+.ti -5n
+fi	Re-enter fill mode.
+.SP
+.ti -5n
+br	Break line here no matter what.
+.SP
+.ti -5n
+sp	Vertical space (also causes a break to occur).
+.sp
+Note that to continue an indent and make a new paragraph (as
+is the case here), just put in a space (.sp).
+.RE
+.SP
+Now we should be at a new paragraph.
+.RE
+.RE
+.SH CONVENTIONS
+A typical manual page for a command or function is laid out as follows:
+.nf
+
+     .TH TITLE [1-8]
+          The name of the command or function in upper-case,
+          which serves as the title of the manual page. This is
+          followed by the number of the section in which it
+          appears.
+
+     .SH NAME
+          name - one-line summary
+
+          The name, or list of names, by which the command is
+          called, followed by a dash and then a one-line summary
+          of the action performed.  All in roman font, this sec-
+          tion contains no troff(1) commands or escapes, and no
+          macro requests.  It is used to generate the whatis(1)
+          database.
+
+     .SH SYNOPSIS
+
+          Commands:
+
+               The syntax of the command and its arguments as
+               typed on the command line.  When in boldface, a
+               word must be typed exactly as printed.  When in
+               italics, a word can be replaced with text that you
+               supply.  Syntactic symbols appear in roman face:
+
+               [ ]  An argument, when surrounded by brackets is
+                    optional.
+
+               |    Arguments separated by a vertical bar are
+                    exclusive.  You can supply only item from
+                    such a list.
+
+               ...  Arguments followed by an elipsis can be
+                    repeated.  When an elipsis follows a brack-
+                    eted set, the expression within the brackets
+                    can be repeated.
+
+          Functions:
+
+               If required, the data declaration, or #include
+               directive, is shown first, followed by the  func-
+               tion declaration. Otherwise, the function declara-
+               tion is shown.
+
+     .SH DESCRIPTION
+          A narrative description of the command or function in
+          detail, including how it interacts with files or data,
+          and how it handles the standard input, standard output
+          and standard error.
+
+          Filenames, and references to commands or functions
+          described elswhere in the manual, are italicised.  The
+          names of options, variables and other literal terms are
+          in boldface.
+
+     .SH OPTIONS
+          The list of options along with a description of how
+          each affects the commands operation.
+
+     .SH ENVIRONMENT
+          Environment variables used.
+
+     .SH FILES
+          A list of files associated with the command or func-
+          tion.
+
+     .SH "SEE ALSO"
+          A comma-separated list of related manual pages,
+          followed by references to other published materials.
+          This section contains no troff(1) escapes or commands,
+          and no macro requests.
+
+     .SH DIAGNOSTICS
+          A list of diagnostic messages and an explanation of
+          each.
+
+     .SH NOTES
+          Any additional notes such as installation-dependent
+          functionality.
+
+     .SH BUGS
+          A description of limitations, known defects, and possi-
+          ble problems associated with the command or function.
+
+     .SH AUTHOR
+          The program's author and any pertinent release info.
+
+     .SH VERSION
+          The program's current version number and release date.
+.fi
+.SH BUGS
+Even though
+.BR cawf (1)
+has a better chance at formatting a random manual page then the standard
+Minix nroff, it has two annoying bugs in its macro set.  Both .PP and .IP 
+reset the indentation level to the level set by .SH.  This means that
+you can't use them in a piece of text indented by .RS.  For .IP this is
+troublesome, you can see why in the unformatted source of this text.  .PP
+can simply be replaced by .sp, or better yet, by .SP with the following
+macro defined somewhere in your text:
+.PP
+.RS
+.nf
+\&.de SP
+\&.if t .sp 0.4
+\&.if n .sp
+\&..
+.fi
+.RE
+.PP
+This will make .SP use 4/10 of a line if formatted by troff, just like .PP.

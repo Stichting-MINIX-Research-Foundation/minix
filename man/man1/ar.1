@@ -1,0 +1,56 @@
+.TH AR 1
+.SH NAME
+ar, aal \- archivers
+.SH SYNOPSIS
+\fBar\fR [\fBdmpqrtx\fR][\fBabciluv\fR]\fR [\fIposname\fR] \fIarchive\fR [\fIfile \fR...]\fR
+.br
+\fBaal\fR [\fBdpqrtx\fR][\fBclv\fR]\fR \fIarchive\fR [\fIfile \fR...]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "ar r libc.a sort.s" "Replace \fIsort\fR.s in \fIlibc.a\fR"
+.EX "ar rb a.s libc.a b.s" "Insert \fIb.s\fR before \fIa.s\fR in \fIlibc.a\fR"
+.SH DESCRIPTION
+.PP
+\fIAr\fR allows groups of files to be put together into a single archive.
+It is normally used for libraries of compiled procedures.  \fIAal\fR is like
+\fIar\fP, but is to be used with the ACK compiler.  The following keys
+are allowed:
+.PP
+.ta 0.25i 0.50i
+.nf
+	\fBd\fR:	Delete. \fIAr\fR will delete the named members.
+	\fBm\fR:	Move named files. \fIAr\fR expects \fIa\fR, \fIb\fR, or \fIi\fR to be specified.
+	\fBp\fR:	Print the named files (list them on \fIstdout\fR)
+	\fBq\fR:	Quickly append to the end of the archive file.
+	\fBr\fR:	Replace (append when not in archive).
+	\fBt\fR:	Print the archive's table of contents.
+	\fBx\fR:	Extract
+.fi
+.PP
+\fBThe keys may optionally concatencated with one or more of the following\fR:
+.nf
+.PP
+	\fBa\fR:	After \fIposname\fR
+	\fBb\fR:	Before \fIposname\fR
+	\fBc\fR:	Create  (suppresses creation message)
+	\fBi\fR:	Before \fIposname\fR
+	\fBl\fR:	Local temporary file for work instead of \fI/tmp/ar.$$$$$\fR
+	\fBu\fR:	Replace only if dated later than member in archive
+	\fBv\fR:	Verbose
+.PP
+.fi
+.SH "SEE ALSO"
+.BR anm (1),
+.BR asize (1),
+.BR nm (1),
+.BR size (1).

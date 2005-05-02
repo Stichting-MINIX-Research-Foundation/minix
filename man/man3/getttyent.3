@@ -1,0 +1,107 @@
+.TH GETTTYENT 3
+.SH NAME
+getttyent, getttynam, setttyent, endttyent \- interface to /etc/ttytab
+.SH SYNOPSIS
+.ft B
+.nf
+#include <ttyent.h>
+
+struct ttyent *getttyent(void)
+struct ttyent *getttynam(const char *\fIname\fP)
+int setttyent(void)
+void endttyent(void)
+.fi
+.ft P
+.SH DESCRIPTION
+The
+.B getttyent
+functions provide an interface to the /etc/ttytab.  (See
+.BR ttytab (5)).
+.PP
+To read one of these files one calls
+.B getttyent()
+several times to read the entries in the table until NULL is returned for
+end-of-file.
+.PP
+.B Getttyname()
+searches the
+.B ttytab
+file for the given terminal device.  It is equivalent to a call to
+.BR setttyent(),
+several calls to
+.B getttyent()
+to locate the entry, and a final
+.B endttyent()
+to close the file.
+.PP
+.B Setttyent()
+opens or rewinds the ttytab database, and
+.B endttyent() closes it.
+.B Getttyent()
+opens the database if not already open, but does not close it.
+.PP
+The struct ttyent is defined by <ttyent.h> as follows:
+.sp
+.nf
+.ta +4n +6n +15n
+struct ttyent {
+	char	*ty_name;	/* Name of the terminal device. */
+	char	*ty_type;	/* Terminal type name (termcap(3)). */
+	char	**ty_getty;	/* Program to run, normally getty. */
+	char	**ty_init;	/* Initialization command, normally stty. */
+};
+.fi
+.PP
+A valid entry has at least two strings, so both
+.B ty_name
+and
+.B ty_type
+are filled in.  The optional
+.B ty_getty
+and
+.B ty_init
+may be NULL (field omitted), point to a pointer that is NULL (null lenght
+field, i.e. ""), or an array of strings terminated by a NULL (field
+present).  For now no useful distinction can be made between a omitted field
+and an empty field, so treat both cases as an omission.
+.SH FILES
+.TP 15
+.B /etc/ttytab
+The terminal device database
+.SH "SEE ALSO"
+.BR ttyname (3),
+.BR ttyslot (3),
+.BR ttytab (5),
+.BR init (8).
+.SH DIAGNOSTICS
+.B Setttyent()
+has the same return value and error codes as the
+.BR open (2)
+call it uses to open the ttytab file.  The
+.BI get xxx ()
+functions return NULL on end of file, entry not found, or error.  You can
+set
+.B errno
+to zero before the call and check it after.
+.SH NOTES
+.B Getttyent()
+and
+.B getttynam()
+return a pointer to static storage that is overwritten in each call.
+.PP
+The Minix
+.B struct ttyent
+has only the
+.B ty_name
+and
+.B ty_type
+fields in common with the BSD implementation.  This does not seem to be a
+problem, because most third party software that need to know about terminals
+only look at the
+.B ty_name
+field.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: getttyent.3,v 1.2 1996/04/11 06:57:26 philip Exp $

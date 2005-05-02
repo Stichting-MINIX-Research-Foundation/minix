@@ -1,0 +1,27 @@
+.TH MAKEWHATIS 1
+.SH NAME
+makewhatis \- build the whatis(5) database
+.SH SYNOPSIS
+.B makewhatis
+.I directory
+.SH DESCRIPTION
+.B Makewhatis
+makes the
+.BR whatis (5)
+database in the given manual page directory.  This database is used by
+.BR man (1)
+to map titles to manual page names and by
+.BR whatis (1)
+to give one line descriptions.  See
+.BR whatis (5)
+for a desciption of what a whatis database should look like and the
+restrictions that are placed on the NAME sections so that
+.B makewhatis
+can make whatis lines out of the manual pages.
+.SH "SEE ALSO"
+.BR whatis (5).
+.SH BUGS
+Removing only font and size changes from the NAME section is often not
+enough.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

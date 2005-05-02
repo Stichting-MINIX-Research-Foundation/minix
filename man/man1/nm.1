@@ -1,0 +1,40 @@
+.TH NM 1
+.SH NAME
+nm \- print name list
+.SH SYNOPSIS
+\fBnm\fR [\fB\-dgnopru\fR]\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-d" "Print the offsets in decimal instead of in hex"
+.FL "\-g" "Print only external symbols"
+.FL "\-n" "Sort numerically rather than alphabetically"
+.FL "\-o" "Prepend file name to each line rather than only once"
+.FL "\-p" "Do not sort, print in symbol-table order"
+.FL "\-r" "Sort in reverse order"
+.FL "\-u" "Print only undefined symbols"
+.SH EXAMPLES
+.EX "nm \-n a.out" "Print all symbols in numerical order"
+.EX "nm \-dg a.out" "Print globals alphabetically in decimal"
+.SH DESCRIPTION
+.PP
+\fINm\fR prints the symbol table of executable files when it is available.
+If no file is given, the symbols in \fIa.out\fR are used.  
+The format of the table 
+is somewhat compatible with the one produced  by \fIasld\fR when used with 
+the \fB\-s\fR option. The symbol table can be added with \fIast\fR.  
+Assembly language files do not have symbol tables.
+.SH "SEE ALSO"
+.BR anm (1),
+.BR asize (1),
+.BR ar (1),
+.BR size (1).

@@ -1,0 +1,26 @@
+.TH LEAVE 1
+.SH NAME
+leave \- warn when it is time to go home
+.SH SYNOPSIS
+\fBleave\fR [\fR [\fB+\fR] \fIhh\fR[\fB:\fR]\fImm\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "leave 1500" "Issue a warning at 2:55 p.m."
+.EX "leave 10:00" "Issue a warning at 9:55 a.m."
+.EX "leave + 30" "Issue a warning in 25 minutes"
+.SH DESCRIPTION
+.PP
+\fILeave\fR sets an alarm clock to a specified time and issues a warning
+5 minutes before, 1 minute before, and at the time to leave.
+It then keeps issuing warnings every minute for 10 minutes, then quits.
+If no time is provided, the program prompts for one.

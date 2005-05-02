@@ -1,0 +1,68 @@
+.TH ECHO 1
+.SH NAME \"	Copyright (C) 1989 by Kenneth Almquist.
+echo \- produce message in a shell script
+.SH SYNOPSIS
+.B echo
+[
+.B -n
+|
+.B -e
+]
+.I args...
+.SH DESCRIPTION
+.I Echo
+prints its arguments on the standard output, separated by spaces.
+Unless the
+.B -n
+option is present, a newline is output following the arguments.
+The
+.B -e
+option causes
+.I echo
+to treat the escape sequences specially, as described in the following
+paragraph.
+Only one of the options
+.B -n
+and
+.B -e
+may be given.
+.PP
+If any of the following sequences of characters is encountered during
+output, the sequence is not output.  Instead, the specified action is
+performed:
+.de i
+.IP "\\fB\\$1\\fR" 5
+..
+.i \eb
+A backspace character is output.
+.i \ec
+Subsequent output is suppressed.  This is normally used at the end of the
+last argument to suppress the trailing newline that
+.I echo
+would otherwise output.
+.i \ef
+Output a form feed.
+.i \en
+Output a newline character.
+.i \er
+Output a carriage return.
+.i \et
+Output a (horizontal) tab character.
+.i \ev
+Output a vertical tab.
+.i \e0\fIdigits\fR
+Output the character whose value is given by zero to three digits.
+If there are zero digits, a nul character is output.
+.i \e\e
+Output a backslash.
+.SH HINTS
+Remember that backslash is special to the shell and needs to be escaped.
+To output a message to standard error, say
+.sp
+.ti +1i
+echo message >&2
+.SH BUGS
+The octal character escape mechanism (\e0\fIdigits\fR) differs from the
+C language mechanism.
+.SH AUTHOR
+Kenneth Almquist.

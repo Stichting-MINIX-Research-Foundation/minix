@@ -1,0 +1,36 @@
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)getwd.3	6.2 (Berkeley) 5/12/86
+.\"
+.TH GETCWD 3 "May 12, 1986"
+.UC 5
+.SH NAME
+getcwd \- get current working directory pathname
+.SH SYNOPSIS
+.nf
+.ft B
+#include <unistd.h>
+
+char *getcwd(char *\fIpathname\fP, size_t \fIlen\fP)
+.fi
+.SH DESCRIPTION
+.B Getcwd
+copies the absolute pathname of the current working directory to
+.I pathname
+and returns a pointer to the result.
+.I Pathname
+is a character array of length
+.IR len .
+.SH DIAGNOSTICS
+.B Getcwd
+returns a null pointer and sets
+.B errno
+if an error occurs.  The error will reflect the system call errors that
+may occur if the path to the current directory is searched upwards to
+the root directory.  The error
+.B ERANGE
+is returned if the result does not fit within
+.I len
+bytes.

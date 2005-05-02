@@ -1,0 +1,555 @@
+.CD "elle \(en ELLE Looks Like Emacs"
+.SX "elle \fIfile\fR [\fIfile2\fR]"
+.FL "\fR(none)"
+.EY "elle file.c" "Start the editor"
+.PP
+\fIELLE\fR (ELLE Looks Like Emacs) is an Emacs clone for 
+.MX .  
+ELLE is not full Emacs but it has about 80 commands and is quite fast.
+.SP 0.5
+.SS "Key bindings"
+.SP 0.5
+.PP
+\fIMined\fR only has a small number of commands.  All of them are either of
+the form CTRL-x or are on the numeric keypad.  Emacs, in contrast, has so
+many commands, that not only are all the CTRL-x commands used up, but so
+are all the ESC x (escape followed by x; escape is not a shift character,
+like CTRL).  Even this is not enough, so CTRL-X is used as a prefix for
+additional commands.  Thus CTRL-X CTRL-L is a command, and so is CTRL-X K.
+Note that what is conventionally written as CTRL-X K really means CTRL-X k.
+In some contexts it is traditional to write CTRL-X as ^X.
+Please note that they mean the same thing.
+.PP
+As a result, many Emacs commands need three or four key strokes to 
+execute.  Some people think 3-4 key strokes is too many.
+For this reason, Emacs and ELLE allow users to assign their own key bindings.
+In ELLE this is done with \*(OQuser profiles.\*(CQ  A user profile is a file listing
+which function is invoked by which key stroke.  The user profile is then
+compiled by a program called ellec into binary form.  When ELLE starts up
+it checks to see if a file .ellepro.b1 exists in $HOME.  If it does, this
+file is read in and overrides the default bindings.  
+.PP
+A user profile that simulates the \fImined\fR commands fairly
+well is provided.  
+Its installation is described later.  If you have never used Emacs, 
+it is suggested that you use the \fImined\fR profile.  
+If you normally use Emacs, then
+do not install the \fImined\fR profile.  You can also make your own using
+\fIellec\fR.
+There is no Mock Lisp.
+.PP
+ELLE has a character-oriented view of the world, not a line oriented
+view, like \fIed\fR.  
+It does not have magic characters for searching.
+However, you can use line feed in search patterns.  
+For example, to find a line consisting of the three characters
+\*(OQfoo\*(CQ all by themselves on a line, using the mined
+bindings (see below), use the pattern: CTRL-\\ CTRL-J f o o CTRL-\\ CTRL-J.
+The CTRL-\ means to interpret the next character literally, in this case it
+is CTRL-J, which is line feed.  You can also search for patterns involving 
+multiple lines.  For example, to find a line ending in an \*(OQx\*(CQ followed by a
+line beginning with a \*(OQy\*(CQ, use as pattern: x CTRL-\ CTRL-J y.
+.SS "Mined Key Bindings"
+.PP
+These are the key bindings if the binary user profile, \fI.ellepro.b1\fR,
+is installed in $HOME.  The ESCAPE key followed by a number followed by a
+command causes that command to be executed \*(OQnumber\*(CQ times.  This applies
+both to control characters and insertable characters.  CTRL-X refers to a
+\*(OQcontrol character.\*(CQ  ESC x refers to an escape character 
+followed by x.
+In other words, ^X is a synonym for CTRL-X.
+^X Y refers to CTRL-X followed by y.  To abort the current command and go
+back to the main loop of the editor, type CTRL-G, rather than CTRL-\\.
+.PP
+Only a few commands are of the form CTRL-X Y.  All of these are also
+bound to CTRL-X CTRL-Y, so you can hold down CTRL and then hit X Y, or
+release control after the X, as you prefer.
+.PP
+The key bindings that are not listed should not be used.
+Some of them actually do things.
+For example, the ANSI escape codes ESC [ x are bound 
+to ^X Y for a variety of y.
+.PP
+Some commands work on regions.
+A region is defined as the text between the most recently set mark 
+and the cursor.
+.SP 0.5
+.SS "Mined Commands"
+.SP 0.5
+.PP
+If the \fImined\fR profile,
+.I .ellepro.b1 
+is installed in your home directory, the following commands will work.
+.sp
+.in +1.75i
+.ta +1.25i
+.ti -1.5i
+\fBCURSOR MOTION\fR
+.ti -1.25i
+arrows	Move the cursor in the indicated direction
+.ti -1.25i
+CTRL-A	Move cursor to start of current line
+.ti -1.25i
+CTRL-Z	Move cursor to end of current line
+.ti -1.25i
+CTRL-F	Move cursor forward word 
+.ti -1.25i
+CTRL-B	Move cursor backward to start of previous word 
+.sp
+.ti -1.5i
+\fBSCREEN MOTION\fR
+.ti -1.25i
+Home key	Move to first character of the file
+.ti -1.25i
+End key	Move to last character of the file
+.ti -1.25i
+PgUp key	Scroll window up 22 lines (closer to start of the file)
+.ti -1.25i
+PgDn key	Scroll window down 22 lines (closer to end of the file)
+.ti -1.25i
+CTRL-U	Scroll window up 1 line
+.ti -1.25i
+CTRL-D	Scroll window down 1 line
+.ti -1.25i
+ESC ,	Move to top of screen
+.ti -1.25i
+CTRL-_	Move to bottom of screen
+.sp
+.ti -1.5i
+\fBMODIFYING TEXT\fR
+.ti -1.25i
+DEL key	Delete the character under the cursor
+.ti -1.25i
+Backsp	Delete the character to left of the cursor
+.ti -1.25i
+CTRL-N	Delete the next word
+.ti -1.25i
+CTRL-P	Delete the previous word
+.ti -1.25i
+CTRL-T	Delete tail of line (all characters from cursor to end of line)
+.ti -1.25i
+CTRL-O	Open up the line (insert line feed and back up)
+.ti -1.25i
+ESC G	Get and insert a file at the cursor position (CTRL-G in mined)
+.sp
+.ti -1.5i
+\fBREGIONS\fR
+.ti -1.25i
+CTRL-^	Set mark at current position for use with CTRL-C and CTRL-K
+.ti -1.25i
+CTRL-C	Copy the text between the mark and the cursor into the buffer
+.ti -1.25i
+CTRL-K	Delete text between mark and cursor; also copy it to the buffer
+.ti -1.25i
+CTRL-Y	Yank contents of the buffer out and insert it at the cursor
+.sp
+.ti -1.5i
+\fBMISCELLANEOUS\fR
+.ti -1.25i
+numeric +	Search forward (prompts for expression)
+.ti -1.25i
+numeric \(mi	Search backward (prompts for expression)
+.ti -1.25i
+CTRL-]	ESC n CTRL-[ goes to line n (slightly different syntax than mined)
+.ti -1.25i
+CTRL-R	Global replace pattern with string (from cursor to end)
+.ti -1.25i
+CTRL-L	Replace pattern with string within the current line only
+.ti -1.25i
+CTRL-W	Write the edited file back to the disk
+.ti -1.25i
+CTRL-S	Fork off a shell (use CTRL-D to get back to the editor)
+.ti -1.25i
+CTRL-G	Abort whatever the editor was doing and wait for command (CTRL-\)
+.ti -1.25i
+CTRL-E	Redraw screen with cursor line positioned in the middle
+.ti -1.25i
+CTRL-V	Visit (edit) a new file
+.ti -1.25i
+CTRL-Q	Write buffer to a file
+.ti -1.25i
+ESC X	Exit the editor
+.SP 0.5
+.in -1.75i
+.SS "Non-Mined Commands"
+.LP
+.SP 0.5
+.in +1.75i
+.ta +1.25i
+.ti -1.5i
+\fBCURSOR MOTION\fR
+.ti -1.25i
+ESC P	Forward paragraph (a paragraph is a line beginning with a dot)
+.ti -1.25i
+ESC ]	Backward paragraph
+.ti -1.25i
+ESC .	Indent this line as much as the previous one
+.sp
+.ti -1.5i
+\fBMODIFYING TEXT\fR
+.ti -1.25i
+CTRL-\\	Insert the next character (used for inserting control characters)
+.ti -1.25i
+ESC T	Transpose characters
+.ti -1.25i
+ESC W	Transpose words
+.ti -1.25i
+ESC =	Delete white space (horizontal space)
+.ti -1.25i
+ESC |	Delete blank lines (vertical space)
+.sp
+.ti -1.5i
+\fBREGIONS\fR
+.ti -1.25i
+ESC M	Mark current paragraph
+.ti -1.25i
+ESC ^	Exchange cursor and mark
+.ti -1.25i
+ESC Y	Yank back the next-to-the-last kill (CTRL-Y yanks the last one)
+.ti -1.25i
+ESC A	Append next kill to kill buffer
+.sp
+.ti -1.5i
+\fBKEYBOARD MACROS\fR
+.ti -1.25i
+ESC /	Start Keyboard Macro
+.ti -1.25i
+ESC \\	End Keyboard Macro
+.ti -1.25i
+ESC *	View Keyboard Macro (the PrtSc key on the numeric pad is also a *)
+.ti -1.25i
+ESC E	Execute Keyboard Macro
+.sp
+.ti -1.5i
+\fBWINDOW MANAGEMENT\fR
+.ti -1.25i
+^X 1	Enter one window mode
+.ti -1.25i
+^X 2	Enter two window mode
+.ti -1.25i
+^X L	Make the current window larger
+.ti -1.25i
+^X P	Make the window more petit/petite (Yes, Virginia, they are English)
+.ti -1.25i
+^X N	Next window
+.ti -1.25i
+^X W	New window
+.sp
+.ti -1.5i
+\fBBUFFER MANAGEMENT\fR
+.ti -1.25i
+numeric 5	Display the list of current files and buffers
+.ti -1.25i
+ESC B	Select a buffer
+.ti -1.25i
+ESC S	Select an existing buffer
+.ti -1.25i
+ESC N	Mark a buffer as NOT modified (even if it really is)
+.sp
+.ti -1.5i
+\fBUPPER AND LOW CASE MANIPULATION\fR
+.ti -1.25i
+ESC I	Set first character of word to upper case
+.ti -1.25i
+ESC C	Capitalize current word
+.ti -1.25i
+ESC O	Make current word ordinary (i.e., lower case)
+.ti -1.25i
+ESC U	Set entire region between mark and cursor to upper case
+.ti -1.25i
+ESC L	Set entire region between mark and cursor to lower case
+.sp
+.ti -1.5i
+\fBMISCELLANEOUS\fR
+.ti -1.25i
+ESC F	Find file and read it into its own buffer
+.ti -1.25i
+ESC Z	Incremental search
+.ti -1.25i
+ESC Q	Like CTRL-R, but queries at each occurrence (type ? for options)
+.ti -1.25i
+ESC R	Reset the user profile from a file
+.ti -1.25i
+ESC H	Help (ELLE prompts for the 1 or 2 character command to describe)
+.ti -1.25i
+ESC ;	Insert a comment in a C program (generates /* */ for you)
+.ti -1.25i
+^X X	Exit the editor (same as ESC X and CTRL-X CTRL-X)
+.in -1.75i
+.fi
+.sp
+The major differences between ELLE 
+with the \fImined\fR profile and \fImined\fR itself are:
+.sp
+.nf
+.in +0.25i
+1. The definition of a \*(OQword\*(CQ is different for forward and backward word
+2. The mark is set with CTRL-^ instead of CTRL-@
+3. Use CTRL-G to abort a command instead of CTRL-\\
+4. Use CTRL-\ to literally insert the next character, instead of ALT
+5. CTRL-E adjusts the window to put the cursor in the middle of it
+6. To get and insert a file, use ESC G instead of CTRL-G
+7. To go to line n, type ESC n CTRL-[ instead of CTRL-[ n
+8. You exit with CTRL-X CTRL-X and then answer the question with \*(OQy\*(CQ.
+9. There are many new commands, windows, larger files, etc.
+.fi
+.in -0.25i
+.sp
+.SS "Emacs Key Bindings"
+.PP
+If you do not have the \fImined\fR profile installed, you get the standard
+Emacs key bindings.
+These are listed below. 
+Commands not listed are not implemented.
+.sp
+.in +1.75i
+.ta +1.25i
+.ti -1.5i
+\fBCURSOR MOVEMENT\fR
+.ti -1.25i
+CTRL-F	Forward one character.
+.ti -1.25i
+CTRL-B	Backward one character.
+.ti -1.25i
+CTRL-H	Same as CTRL-B: move backward one character.
+.ti -1.25i
+ESC F	Forward one word.
+.ti -1.25i
+ESC B	Backward one word.
+.ti -1.25i
+CTRL-A	Beginning of current line.
+.ti -1.25i
+CTRL-E	End of current line.
+.ti -1.25i
+CTRL-N	Next line (goes to the next line).
+.ti -1.25i
+CTRL-P	Previous line (goes to the previous line).
+.ti -1.25i
+CTRL-V	Beginning of next screenful.
+.ti -1.25i
+ESC V	Beginning of previous screenful.
+.ti -1.25i
+ESC ]~	Forward Paragraph.
+.ti -1.25i
+ESC [~	Backward Paragraph.
+.ti -1.25i
+ESC <	Beginning of whole buffer.
+.ti -1.25i
+ESC >	End of whole buffer.
+.sp
+.ti -1.5i
+\fBDELETING\fR
+.ti -1.25i
+CTRL-D	Deletes forward one character (the one the cursor is under).
+.ti -1.25i
+DELETE	Deletes backward one character (the one to left of cursor).
+.ti -1.25i
+ESC D	Kills forward one word.
+.ti -1.25i
+ESC DEL	Kills backward one word.
+.ti -1.25i
+CTRL-K	Kills the rest of the line (to the right of the cursor).
+.ti -1.25i
+ESC \\	Deletes spaces around the cursor.
+.ti -1.25i
+^X CTRL-O	Deletes blank lines around the cursor.
+.sp
+.ti -1.5i
+\fBCASE CHANGE\fR
+.ti -1.25i
+ESC C	Capitalizes word : first letter becomes uppercase; rest lower
+.ti -1.25i
+ESC L	Makes the whole next word lowercase.
+.ti -1.25i
+ESC U	Makes the whole next word uppercase.
+.ti -1.25i
+^X CTRL-L	Makes whole region lowercase.
+.ti -1.25i
+^X CTRL-U	Makes whole region uppercase.
+.sp
+.ti -1.5i
+\fBSEARCHING\fR (If no string is given, previous string is used)
+.ti -1.25i
+CTRL-S	Incremental Search forward; prompts \*(OQI-search:\*(CQ
+.ti -1.25i
+CTRL-R	Reverse Incremental Search; prompts \*(OQR-search:\*(CQ
+.HS
+During an incremental search, the following characters have special effects:
+.HS
+.in +1.2i
+.ta +1.0i +0.2i
+.ti -1.2i
+\*(OQnormal\*(CQ 	-	Begin searching immediately.
+.ti -1.2i
+^G	-	Cancel I-search, return to start.
+.ti -1.2i
+DEL	-	Erase last char, return to last match.
+.ti -1.2i
+^S, ^R	-	Repeat search (or change direction).
+.ti -1.2i
+ESC or CR	-	Exit I-search at current point.
+.sp
+.in -1.2i
+.ta +1.25i
+.ti -1.25i
+ESC %	Query Replace. Interactive replace. Type \*(OQ?\*(CQ to see options.
+.ti -1.25i
+^X %	Replace String.	Like Query Replace, but not interactive
+.sp
+.ti -1.5i
+\fBMARKING AREAS\fR
+.ti -1.25i
+CTRL-^	Set mark
+.ti -1.25i
+^X CTRL-X	Exchange cursor and mark.
+.ti -1.25i
+ESC H	Mark Paragraph. Sets mark and cursor to surround a para.
+.ti -1.25i
+CTRL-W	Wipe-out -- kills a \*(OQregion\*(CQ:
+.ti -1.25i
+ESC W	Copy region. Like CTRL-W then CTRL-Y but modifies buffer
+.ti -1.25i
+CTRL-Y	Yanks-back (un-kills) whatever you have most recently killed.
+.ti -1.25i
+ESC Y	Yanks-back (un-kills) the next most recently killed text.
+.ti -1.25i
+ESC CTRL-W	Append Next Kill. Accumulates stuff from several kills
+.sp
+.ti -1.5i
+\fBFILLING TEXT\fR
+.ti -1.25i
+ESC Q	Fill the paragraph to the size of the Fill Column.
+.ti -1.25i
+ESC G	Fill the region.
+.ti -1.25i
+^X F	Set Fill Column. ESC Q will use this line size.
+.ti -1.25i
+^X .	Set Fill Prefix. Asks for prefix string 
+.ti -1.25i
+^X T	Toggles Auto Fill Mode.
+.sp
+.ti -1.5i
+\fBWINDOWS\fR
+.ti -1.25i
+^X 2	Make two windows (split screen).
+.ti -1.25i
+^X 1	Make one window (delete window) (make one screen).
+.ti -1.25i
+^X O	Go to Other window.
+.ti -1.25i
+^X ^	Grow window: makes current window bigger.
+.sp
+.ti -1.5i
+\fBBUFFERS\fR
+.ti -1.25i
+^X CTRL-F	Find a file and make a buffer for it.
+.ti -1.25i
+^X B	Select Buffer: goes to specified buffer or makes new one
+.ti -1.25i
+^X CTRL-B	Show the names of the buffers used in this editing session.
+.ti -1.25i
+^X K	Kill Buffer.
+.ti -1.25i
+ESC tilde	Say buffer is not modified.
+.ti -1.25i
+^X CTRL-M	Toggle EOL mode (per-buffer flag).
+.sp
+.ti -1.5i
+\fBKEYBOARD MACRO\fR
+.ti -1.25i
+^X (	Start collecting a keyboard macro.
+.ti -1.25i
+^X )	Stop collecting.
+.ti -1.25i
+^X E	Execute the collected macro.
+.ti -1.25i
+^X *	Display the collected macro.
+.sp
+.ti -1.5i
+\fBFILES\fR
+.ti -1.25i
+^X CTRL-I	Insert a file where cursor is.
+.ti -1.25i
+^X CTRL-R	Read a new file into current buffer.
+.ti -1.25i
+^X CTRL-V	Same as ^X ^R above (reads a file).
+.ti -1.25i
+^X CTRL-W	Write buffer out to new file name.
+.ti -1.25i
+^X CTRL-S	Save file: write out buffer to its file name.
+.ti -1.25i
+^X CTRL-E	Write region out to new file name.
+.sp
+.ti -1.5i
+\fBMISCELLANEOUS\fR
+.ti -1.25i
+^X CTRL-Z	Exit from ELLE.  
+.ti -1.25i
+^X !	Escape to shell (CTRL-D to return)
+.ti -1.25i
+CTRL-O	Open up line	
+.ti -1.25i
+LINEFEED	Same as typing RETURN and TAB.
+.ti -1.25i
+CTRL-T	Transposes characters.
+.ti -1.25i
+ESC T	Transposes words.
+.ti -1.25i
+CTRL-U	Makes the next command happen four times.
+.ti -1.25i
+CTRL-U number	Makes the next command happen \*(OQnumber\*(CQ times.  
+.ti -1.25i
+ESC number	Same as CTRL-U number.
+.ti -1.25i
+CTRL-L	Refreshes screen.
+.ti -1.25i
+CTRL-U CTRL-L	Refresh only the line cursor is on.
+.ti -1.25i
+CTRL-U n CTRL-L Change window so the cursor is on line n
+.ti -1.25i
+CTRL-Q	Quote: insert the next character no matter what it is.
+.ti -1.25i
+CTRL-G	Quit: use to avoid answering a question.
+.ti -1.25i
+ESC ;	Inserts comment (for writing C programs).
+.ti -1.25i
+ESC I	Inserts indentation equal to previous line.
+.ti -1.25i
+ESC M	Move to end of this line's indentation.
+.ti -1.25i
+CTRL-_	Describe a command (if the command database is online)
+.sp
+.ti -1.5i
+\fBUNUSED CONTROLS\fR
+.ti -1.25i
+CTRL-C	Not used.
+.ti -1.25i
+CTRL-Z	Not used.
+.ti -1.25i
+CTRL-]	Not used.
+.fi
+.in -1.75i
+.sp	
+.SP 0.5
+.SS "ELLE profile"
+.PP
+It is possible to create your own user profile.
+The mechanism is different from Emacs, since ELLE does not have Mock Lisp.
+Proceed as follows.
+.LI
+.IT
+Modify \fI.ellepro.e\fR to suit your taste.
+.IT
+Install \fI.ellepro.e\fR in your home directory.
+.IT
+Type:
+.HS
+.Cx "ellec \(enProfile"
+.HS
+.IT
+Check to see if \fI.ellepro.b1\fR has been created.
+If it has, you are ready to go.
+.LX
+.SS "Author"
+.PP
+ELLE was written by Ken Harrenstien of SRI (klh@sri.com).

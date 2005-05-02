@@ -1,0 +1,89 @@
+.TH DIRECTORY 3
+.SH NAME
+directory, opendir, readdir, rewinddir, closedir, telldir, seekdir \- directory routines
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <dirent.h>
+
+DIR *opendir(const char *\fIdirname\fP)
+struct dirent *readdir(DIR *\fIdirp\fP)
+void rewinddir(DIR *\fIdirp\fP)
+int closedir(DIR *\fIdirp\fP)
+
+#define _MINIX  1
+#include <sys/types.h>
+#include <dirent.h>
+
+long telldir(DIR *\fIdirp\fP)
+int seekdir(DIR *\fIdirp\fP, long \fIpos\fP)
+.SH DESCRIPTION
+These routines form a system independent interface to access directories.
+.PP
+.B Opendir()
+opens the directory
+.I dirname
+and returns a pointer to this open directory stream.
+.PP
+.B Readdir()
+reads one entry from the directory as a pointer to a structure containing
+the field
+.BR d_name ,
+a character array containing the null-terminated name of the entry.
+.PP
+.B Rewinddir()
+allows the directory to be read again from the beginning.
+.PP
+.B Closedir()
+closes the directory and releases administrative data.
+.PP
+The Minix specific functions
+.B telldir()
+and
+.B seekdir()
+allow one to get the current position in the directory file and to return
+there later.
+.B Seekdir()
+may only be called with a position returned by
+.B telldir()
+or 0 (rewind).  These functions should not be used in portable programs.
+.SH "SEE ALSO"
+.BR dir (5).
+.SH DIAGNOSTICS
+.B Opendir()
+returns a null pointer if
+.I dirname
+can't be opened, or if it can't allocate enough memory for the
+.B DIR
+structure.
+.PP
+.B Readdir()
+returns null if there are no more directory entries or on error.
+.PP
+.B Closedir()
+and
+.B seekdir()
+returns 0 on success, -1 on error.
+.PP
+.B Telldir()
+returns -1 on error.
+.PP
+All of them set
+.B errno
+appropriately.
+.B Readdir()
+will only set
+.B errno
+on error, not on end-of-dir, so you should set
+.B errno
+to zero beforehand, and check its value if
+.B readdir()
+returns null.
+.SH NOTES
+The return value of
+.B readdir()
+needs to be copied before the next operation on the same directory if it is
+to be saved.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

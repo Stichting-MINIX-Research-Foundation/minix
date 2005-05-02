@@ -1,0 +1,33 @@
+.TH SRCCRC 8
+.SH NAME
+srccrc \- compute CRC checksums of the entire source tree
+.SH SYNOPSIS
+\fBsrccrc\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.SH EXAMPLES
+.SH DESCRIPTION
+.PP
+\fISrccrc\fP traverses the entire /usr/include and /usr/src tree to run
+the crc command on all files found.  The result is a long list of
+filenames with their checksums.  The filenames are relative to /usr.
+.PP
+The command makes an effort to remove most junk files such as .o, .bak
+and files in bin directories.  It cannot find single binaries however, so
+you will have to run \fBmake clean\fP in /usr/src to be able to make a crc
+list that contains only source files.
+.PP
+Two crc files can be compared easily with the \fIdiff\fP command.  A crc
+list of the original source tree can be found in /usr/src/crclist.
+.SH "SEE ALSO"
+.BR crc (1).

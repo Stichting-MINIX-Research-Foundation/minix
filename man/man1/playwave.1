@@ -1,0 +1,16 @@
+.TH PLAYWAVE 1
+.SH NAME
+playwave \- play an audio file in MicroSoft PCM wave format
+.SH SYNOPSIS
+\fBplaywave\fP [\-\fBi\fP] file 
+.SH DESCRIPTION
+\fBPlaywave\fP writes the samples in a wave file to \fI/dev/audio\fP.
+The wave file must be in Microsoft PCM format.
+.SH OPTIONS
+.IP \-i 
+display information about wave file
+.SH BUGS
+The highest sample rate that can be used depends on the speed of the system 
+and the size of the DMA buffer used in the driver. (/usr/src/kernel/sb16.h)
+.SH AUTHOR
+Michel R. Prevenier (mrpreve@cs.vu.nl)

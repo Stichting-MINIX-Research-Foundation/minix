@@ -1,0 +1,250 @@
+.TH STTY 1
+.SH NAME
+stty \- set terminal parameters
+.SH SYNOPSIS
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.in +4n
+.ti -4n
+.B stty
+.RB [ \-ag]
+.SP
+.ti -4n
+.B stty
+.I encoded-form
+.SP
+.ti -4n
+.B stty
+.I speed
+.B ispeed
+.I speed
+.B ospeed
+.I speed
+.B "cs5 cs6 cs7 cs8"
+.RB [ \- ] parenb
+.RB [ \- ] parodd
+.RB [ \- ] hupcl
+.RB [ \- ] cstopb
+.RB [ \- ] cread
+.RB [ \- ] clocal
+.RB [ \- ] ignbrk
+.RB [ \- ] brkint
+.RB [ \- ] ignpar
+.RB [ \- ] parmrk
+.RB [ \- ] inpck
+.RB [ \- ] istrip
+.RB [ \- ] inlcr
+.RB [ \- ] igncr
+.RB [ \- ] icrnl
+.RB [ \- ] ixon
+.RB [ \- ] ixoff
+.RB [ \- ] ixany
+.RB [ \- ] opost
+.RB [ \- ] onlcr
+.RB [ \- ] xtabs
+.RB [ \- ] onoeot
+.RB [ \- ] isig
+.RB [ \- ] icanon
+.RB [ \- ] iexten
+.RB [ \- ] echo
+.RB [ \- ] echoe
+.RB [ \- ] echok
+.RB [ \- ] echonl
+.RB [ \- ] noflsh
+.RB [ \- ] tostop
+.RB [ \- ] lflusho
+.BR eof =\fIc
+.BR eol =\fIc
+.BR erase =\fIc
+.BR erase =\fIc
+.BR intr =\fIc
+.BR kill =\fIc
+.BR quit =\fIc
+.BR susp =\fIc
+.BR start =\fIc
+.BR stop =\fIc
+.BR rprnt =\fIc
+.BR lnext =\fIc
+.BR flush =\fIc
+.BR min =\fIn
+.BR time =\fIn
+.B rows
+.I n
+.B cols
+.I n
+.B xpixels
+.I n
+.B ypixels
+.I n
+.B cooked
+.B raw
+.RB [ \- ] evenp
+.RB [ \- ] parity
+.RB [ \- ] oddp
+.RB [ \- ] nl
+.B ek
+.B sane
+.in -4n
+.SH DESCRIPTION
+.B Stty
+shows or changes the parameters of the terminal connected to standard input.
+.B Stty
+takes a myriad of arguments most of which are mapped directly to
+the flags and special characters described in
+.BR tty (4),
+so we won't describe them here.
+.PP
+.B Stty
+has three forms of operation.  First, without any arguments
+.B stty
+shows all terminal attributes that are different from the default state.
+Option
+.B \-a
+makes
+.B stty
+print all terminal attributes, and
+.B \-g
+lets
+.B stty
+print the attributes in a special encoded form, a simple row of colon separated
+hexadecimal numbers.
+.PP
+In the second form of operation
+.B stty
+takes an encoded form as produced by the
+.B \-g
+option and sets the terminals attributes to its decoded value.
+.PP
+In the third form
+.B stty
+interprets a series of flags and parameters settings and modifies the
+terminal attributes accordingly.  Flags can be given as
+.B icanon
+or
+.B \-icanon
+for instance, either setting or clearing the
+.B ICANON
+flag.
+Special character values can by set like
+.B "intr=^C"
+for example, which sets the interrupt character to CTRL-C.  You can either
+use a real CTRL-C, or the two characters `^' and `C'.  In any case
+it is probably necessary to use quotes to guard it from the shell:
+.BR "intr='^C'" .
+.PP
+A number alone is interpreted as a baud rate setting for both the input and
+output rate.  The input or the output rate can be set separately with use
+of the
+.B ispeed
+and
+.B ospeed
+prefixes to the number.  The character size can be set with
+.BR cs5 ,
+.BR cs6 ,
+.BR cs7
+or
+.BR cs8 .
+.PP
+The
+.B MIN
+and
+.B TIME
+value, the number of rows and columns, and the xpixels and ypixels of the
+window can also be set using one of the keywords
+.BR min ,
+.BR time ,
+.BR rows ,
+.BR cols ,
+.BR xpixels
+or
+.BR ypixels ,
+followed by a decimal number that is the value of the setting.
+.PP
+.B Stty
+accepts several keywords that are not named by corresponding flags or
+parameters in
+.BR tty (4).
+They set several attributes at once:
+.TP
+.B cooked
+Same as
+.BR "icrnl ixon opost onlcr isig icanon iexten echo" ,
+setting all the attributes that are needed for line oriented mode.
+.TP
+.B raw
+Same as
+.BR "\-icrnl \-ixon \-opost \-onlcr \-isig \-icanon \-iexten \-echo" ,
+setting all the attributes for a raw data channel.
+.TP
+.B evenp parity
+These synonyms are equal to
+.BR "cs7 parenb \-parodd" ,
+setting the line to 7 bits even parity.
+.TP
+.B oddp
+Same as
+.BR "cs7 parenb parodd" ,
+setting the line to 7 bits odd parity.
+.TP
+.B "\-parity \-evenp \-oddp"
+All synonyms for
+.BR "cs8 \-parenb" ,
+setting the line to 8 bits, no parity.
+.TP
+.B nl
+Same as
+.BR icrnl ,
+setting carriage return to line feed input translation.
+.TP
+.B \-nl
+Same as
+.BR "\-icrnl \-inlcr \-igncr" ,
+disabling any carriage return or line feed handling.
+.TP
+.B ek
+Set the
+.B ERASE
+and
+.B KILL
+special characters back to the default.
+.TP
+.B sane
+Set all attributes to the default except things like the line speed and
+parity, because their "sane" value is probably what it is right now.
+The default values are compiled into
+.B stty
+from the <termios.h> include file.  Use
+.B "stty sane; stty -a"
+to know what they are.
+.SH FILES
+.TP 15n
+.B /etc/ttytab
+The
+.B init
+field of this file may contain an
+.B stty
+command to set the attributes to match an attached RS232 terminal or modem.
+.SH "SEE ALSO"
+.BR tty (4),
+.BR ttytab (5).
+.SH NOTES
+The
+.BR cooked ,
+.BR raw ,
+.BR rows ,
+.BR cols ,
+.BR xpixels
+and
+.BR ypixels
+keywords are Minix additions beyond the keywords defined by POSIX.
+.B Rows
+and
+.B cols
+are common UNIX extensions, however.
+There are more Minix specific flags that match the Minix specific attributes
+described in
+.BR tty (4).
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

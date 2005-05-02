@@ -1,0 +1,177 @@
+.TH INSTALL 1
+.SH NAME
+install \- install files
+.SH SYNOPSIS
+.in +5
+.ti -5
+.B install
+.RB [ \-lcsz\fIN\fP "] [" \-o
+.IR owner ]
+.RB [ \-g
+.IR group ]
+.RB [ \-m
+.IR mode ]
+.RB [ \-S
+.IR stack ]
+.RI [ file1 ]
+.I file2
+.br
+.ti -5
+.B install
+.RB [ \-lcsz\fIN\fP "] [" \-o
+.IR owner ]
+.RB [ \-g
+.IR group ]
+.RB [ \-m
+.IR mode ]
+.RB [ \-S
+.IR stack ]
+.IR file " ... " dir
+.br
+.ti -5
+.B install \-d
+.RB [ \-o
+.IR owner ]
+.RB [ \-g
+.IR group ]
+.RB [ \-m
+.IR mode ]
+.I directory
+.in -5
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Install
+puts executables, manual pages, and library files in their proper place
+in the bin, man, and lib directories.  The first two forms of the
+command are like
+.BR cp (1)
+copying either one file to another or copying several files to a
+directory.  The "\fB\-d\fP" form is like
+.BR mkdir (1)
+with the
+.B \-p
+flag.
+.I File1
+may be omitted if neither
+.B \-l
+nor
+.B \-c
+is given to change the attributes of
+.IR file2 .
+.PP
+Attributes are always copied from the source file, use the options to change.
+Note that the source file's attributes are changed with the destination file
+if they are linked.  So copy the file if you change it in a way that makes
+it read-only.  You would otherwise not be able to compile a command again.
+.SH OPTIONS
+.TP
+.B \-l
+Link the destination to the source file instead of copying it.  This is done
+to either save space on a file system with both the source and the bin
+directories on it, or to install synonyms to a command.
+.TP
+.B \-c
+Copy the source file to its proper place.  This option is the default if
+.B \-l
+is not given.  With
+.BR \-l ,
+the file is copied if the link fails.
+.TP
+.B \-s
+Strip the destination file of its symbol table,
+.I if
+it is an executable, and
+.I if
+it is actually copied.  It has no effect on a link or a non-executable.
+.TP
+.B \-z
+Compress the executable using
+.BR compress (1)
+and prepend a header line that calls
+.BR zexec (1)
+to decompress and execute the binary.  This will on average save 40% disk
+space at the expense of a slower startup time.  Like
+.B \-s
+the file must be actually copied for the flag to have effect.
+.TP
+.BI \- N
+Use
+.BI "gzip \-" N
+to compress the binary.  You may see up to 60% space savings, but it will
+take much longer.
+.I N
+is a digit from 1 to 9 telling the compression effort, see
+.BR gzip (1).
+.TP
+.B \-d
+Make a directory, usually to install files in a separate directory in a
+library.  Intermediate directories in the path are created with the same
+attributes as the final directory.  Only the attributes of the final
+directory are set if the directory exists.
+.TP
+.BI \-o " owner"
+Set the owner of the target.  This only works if the invoker is the
+super-user, or if
+.B install
+is run setuid root and the invoker is a member of group zero.  If
+.B \-o
+is omitted then the ownership is copied from the source file, or set to
+the id of the invoker if a directory is made.
+.TP
+.BI \-g " group"
+Like
+.BR \-o ,
+but for the group ownership of the target.
+.TP
+.BI \-m " mode"
+.I Mode
+is an octal number that specifies the mode the target should get.  The
+default is the source file's mode with a
+.B chmod a+rX
+applied to it, or 755 for a new directory.  Implies
+.BR "\-o 0" ,
+or
+.BR "\-g 0"
+if a file is to be set-uid or set-gid and the invoker has permission to
+change ownership.  This trick allows a group 0 member to install third party
+software, even though it expects to be installed by root.
+.TP
+.BI \-S " stack"
+Sets the maximum amount of heap + stack that an executable may have when
+running.  The argument is a C-style decimal, octal or hexadecimal
+number, optionally followed by the multipliers
+.BR m ,
+.BR k ,
+.BR w ,
+and
+.B b
+for mega (1024*1024), kilo (1024), "word" (2 or 4), and byte (1).  Uppercase
+.B M
+is also accepted for those who know what S.I. means.  The compilers use
+.B \-S 32kw
+by default, that translates to 64kb for an 8086, and 128kb for other
+architectures.  This option is ignored on a non-executable.
+.SH "SEE ALSO"
+.BR ln (1),
+.BR cp (1),
+.BR strip (1),
+.BR compress (1),
+.BR gzip (1),
+.BR zexec (1),
+.BR chown (8),
+.BR chgrp (1),
+.BR chmod (1),
+.BR chmem (1),
+.BR mkdir (1).
+.SH BUGS
+Uppercase
+.BR K ,
+.BR W ,
+and
+.B B
+are also accepted for those who don't know what S.I. means.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

@@ -1,0 +1,36 @@
+.TH MKPROTO 1
+.SH NAME
+mkproto \- create a MINIX prototype file
+.SH SYNOPSIS
+\fBmkproto \fR[\fB\-b \fIn\fR] [\fB\-d \fIstr\fR] [\fB\-g \fIn\fR] [\fB\-i \fIn\fR] [\fB\-p \fInnn\fR] [\fB\-s\fR] [\fB\-t \fIroot\fR] [\fB\-u \fIn\fR] \fIsource_directory\fR [\fIprototype_file\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-b" "Number of blocks in the prototype is \fIn\fR"
+.FL "\-d" "Indent the prototype file using \fIstr\fR instead of tab"
+.FL "\-g" "Use \fIn\fR as the gid for all files and directories"
+.FL "\-i" "Number of i-nodes in the prototype is \fIn\fR"
+.FL "\-p" "Use \fInnn\fR (3 octal digits) as the protection mode"
+.FL "\-s" "Use the same uid, gid and mode as the source files have"
+.FL "\-t" "Use the string \fIroot\fR as the path prefix for every file"
+.FL "\-u" "Use \fIn\fR as the uid for all files and directories"
+.SH EXAMPLES
+.EX "mkproto \-b360" "Make a 360K prototype of this directory"
+.EX "mkproto \-u2 \-g1 \-p644" "Give all files uid 2, gid 1 and mode 644"
+.SH DESCRIPTION
+.PP
+\fIMkproto\fR creates an \fImkfs\fR prototype file for the specified
+source-directory. 
+The prototype file is either written to \fIstdout\fR or, if specified, 
+the proto-file.
+.SH "SEE ALSO"
+.BR mkfs (1).

@@ -1,0 +1,149 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)string.3	6.1 (Berkeley) 5/15/85
+.\"
+.TH STRING 3  "May 15, 1985"
+.UC 4
+.SH NAME
+string, strcat, strncat, strcmp, strncmp, strcpy, strncpy, strlen, strchr, strrchr, strerror, memcmp, memcpy, memmove, memchr, memset, index, rindex \- string operations
+.SH SYNOPSIS
+.nf
+.ft B
+#include <string.h>
+
+char *strcat(char *\fIs1\fP, const char *\fIs2\fP)
+char *strncat(char *\fIs1\fP, const char *\fIs2\fP, size_t \fIn\fP)
+int strcmp(const char *\fIs1\fP, const char *\fIs2\fP)
+int strncmp(const char *\fIs1\fP, const char *\fIs2\fP, size_t \fIn\fP)
+char *strcpy(char *\fIs1\fP, const char *\fIs2\fP)
+char *strncpy(char *\fIs1\fP, const char *\fIs2\fP, size_t \fIn\fP)
+size_t strlen(const char *\fIs\fP)
+char *strchr(const char *\fIs\fP, int \fIc\fP)
+char *strrchr(const char *\fIs\fP, int \fIc\fP)
+char *strerror(int \fIerrnum\fP)
+int memcmp(const void *\fIs1\fP, const void *\fIs2\fP, size_t \fIn\fP)
+void *memcpy(void *\fIs1\fP, const void *\fIs2\fP, size_t \fIn\fP)
+void *memmove(void *\fIs1\fP, const void *\fIs2\fP, size_t \fIn\fP)
+void *memchr(const void *\fIs\fP, int \fIc\fP, size_t \fIn\fP)
+void *memset(void *\fIs\fP, int \fIc\fP, size_t \fIn\fP)
+char *index(const char *\fIs\fP, int \fIc\fP)
+char *rindex(const char *\fIs\fP, int \fIc\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+These functions operate on null-terminated strings.
+They do not check for overflow of any receiving string.
+.PP
+.B Strcat
+appends a copy of string
+.I s2
+to the end of string
+.IR s1 .
+.B Strncat
+copies at most
+.I n
+characters.  Both return a pointer to the null-terminated result.
+.PP
+.B Strcmp
+compares its arguments and returns an integer
+greater than, equal to, or less than 0, according as
+.I s1
+is lexicographically greater than, equal to, or less than
+.IR s2 .
+.B Strncmp
+makes the same comparison but looks at at most
+.I n
+characters.
+.PP
+.B Strcpy
+copies string
+.I s2
+to
+.IR s1 ,
+stopping after the null character has been moved.
+.B Strncpy
+copies exactly
+.I n
+characters, truncating or null-padding
+.I s2;
+the target may not be null-terminated if the length of
+.I s2
+is
+.I n
+or more.  Both return
+.IR s1 .
+.PP
+.B Strlen
+returns the number of non-null characters in
+.IR s .
+.PP
+.B Strchr
+.RB ( strrchr )
+returns a pointer to the first (last) occurrence of character 
+.I c
+in string
+.I s,
+or null if
+.I c
+does not occur in the string.
+.PP
+.B Strerror
+returns the error string for the system call error
+.IR errnum .
+See
+.BR intro (2).
+.PP
+.B Memcmp
+is like
+.B strcmp
+except that the strings are memory blocks of length
+.IR n .
+Null characters are treated as ordinary characters.
+.PP
+.B Memcpy
+copies
+.I n
+bytes from the location pointed to by
+.I s2
+to
+.IR s1 .
+.B Memmove
+is like memcpy, except that it can handle overlap between the two strings.
+Both functions return
+.IR s1 .
+.PP
+.B Memchr
+returns a pointer to the first occurrence of character
+.I c
+in string
+.I s,
+or null if
+.I c
+does not occur in the string.
+.PP
+.B Memset
+sets
+.I n
+bytes to
+.I c
+starting at location
+.IR s .
+It returns
+.IR s .
+.PP
+.B Index
+and
+.B rindex
+are obsolete versions of
+.B strchr
+and
+.BR strrchr .
+New code should avoid using them.
+.SH NOTES
+Characters are compared as
+.BR "unsigned char" ,
+whether
+.B char
+itself is signed or not.

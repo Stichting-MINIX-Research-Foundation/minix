@@ -1,0 +1,31 @@
+.TH WHO 1
+.SH NAME
+who \- print list of currently logged in users
+.SH SYNOPSIS
+\fBwho\fR [\fIfile\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "who   " "Print user names, terminals and times"
+.SH DESCRIPTION
+.PP
+\fIWho\fR prints a list of currently logged in users.  For each one, 
+the user name, terminal, and login time is printed.  
+This program gets its information from the file \fI/etc/utmp\fR, which 
+is updated by init and login.  
+If the file does not exist, neither of these will create it, and 
+\fIwho\fR will not work.  Note that if you decide to create an empty  
+\fI/usr/adm/wtmp\fR to enable the login accounting, it will grow forever and 
+eventually fill up your disk unless you manually truncate it from time to time.
+If an optional file name is provided, the logins in that file will be printed.
+.SH "SEE ALSO"
+.BR utmp (5).

@@ -1,0 +1,29 @@
+.TH TEE 1
+.SH NAME
+tee \- divert stdin to a file
+.SH SYNOPSIS
+\fBtee\fR [\fB\-ai\fR] \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "Append to the files, rather than overwriting"
+.FL "\-i" "Ignore interrupts"
+.SH EXAMPLES
+.EX "cat file1 file2 | tee x" "Save and display two files"
+.EX "pr file | tee x | lp" "Save the output of \fIpr\fP on \fIx\fP"
+.SH DESCRIPTION
+.PP
+.I Tee
+copies \fIstdin\fR to standard output.
+It also makes copies on all the files listed as arguments.
+.SH "SEE ALSO"
+.BR cat (1).

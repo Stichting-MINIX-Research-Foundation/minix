@@ -1,0 +1,62 @@
+.TH REBOOT 2
+.SH NAME
+reboot \- close down the system or reboot
+.SH SYNTAX
+.ft B
+.nf
+#define _MINIX_SOURCE 1
+
+#include <unistd.h>
+
+int reboot(int \fIhow\fP, ...)
+.fi
+.ft P
+.SH DESCRIPTION
+.B Reboot()
+is used to close down the system.  It allows several ways of shutting
+down depending on
+.IR how :
+.PP
+.TP 5
+.BI "reboot(RBT_HALT)"
+Halt the system and return to the monitor prompt.
+.TP
+.BI "reboot(RBT_REBOOT)"
+Reboot the system by letting the monitor execute the "boot" command.
+.TP
+.BI "reboot(RBT_PANIC)"
+Cause a system panic.  This is not normally done from user mode, but by
+servers using the
+.B sys_abort()
+kernel call.
+.TP
+.BI "reboot(RBT_MONITOR" ", code, length" ")"
+Halt the system and let the monitor execute the given code of the given
+length.
+.RI ( code
+is of type
+.B "char *"
+and
+.I length
+of type
+.BR size_t .)
+.TP
+.BI "reboot(RBT_RESET)"
+Reboot the system with a hardware reset.
+.PP
+.B Reboot()
+may only be executed by the super-user.
+.SH DIAGNOSTICS
+If the call succeeds, it never returns.  If something went wrong,
+the return value is -1 and an error is indicated by
+.BR errno .
+.SH SEE ALSO
+.BR shutdown (8),
+.BR reboot (8),
+.BR halt (8),
+.BR sync (2).
+.SH NOTES
+Minix can not return to the monitor if running in real mode.  This means
+that most of the reboot functions will change to a system reset.
+.SH AUTHOR
+Edvard Tuinder (v892231@si.hhs.NL)

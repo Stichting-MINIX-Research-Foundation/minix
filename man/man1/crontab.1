@@ -1,0 +1,93 @@
+.TH CRONTAB 1
+.SH NAME
+crontab \- User crontab manipulation
+.SH SYNOPSIS
+.B crontab \-c
+.RI [ user ]
+.I file
+.br
+.B crontab \-l
+.RI [ user ]
+.br
+.B crontab \-r
+.RI [ user ]
+.br
+.B crontab \-p
+.SH DESCRIPTION
+The
+.B crontab
+program allows users to manipulate their personal crontab files.  These
+files are hidden in
+.BI /usr/spool/crontabs/ user
+where
+.I user
+is the login name of a given user.  The system daemon
+.B cron
+uses these crontabs, among others, to run tasks that are to be repeated at
+regular intervals.  See
+.BR crontab (5)
+on what a good crontab file should look like.
+.PP
+Only the superuser can specify a user name to manipulate the crontab of a
+given user.  Any other user can only touch their own crontab file.
+.SH OPTIONS
+.TP
+\fB\-c\fR [\fIuser\fR] \fIfile\fR
+Install
+.I file
+as the crontab file of
+.IR user .
+.TP
+\fB\-l\fR [\fIuser\fR]
+List the crontab file of
+.I user
+to standard output.
+.TP
+\fB\-r\fR [\fIuser\fR]
+Remove the crontab file of
+.IR user .
+.TP
+\fB\-p\fR
+Tell cron to reload its tables.  Useful for system administrators to signal
+a change to any of the system crontab files.  Changes made by the
+.B crontab
+program are signalled automatically.  (Mnemonic: \-p = "ping".)
+.SH FILES
+.TP \w'/usr/spool/crontabs/user'u+5n
+.BI /usr/spool/crontabs/ user
+Per user personal crontab file.
+.SH "SEE ALSO"
+.BR crontab (5),
+.BR cron (8).
+.SH DIAGNOSTICS
+.B Crontab
+preparses a new crontab and only installs it if correct.  All errors are
+sent to standard error, messages about installing a new table and telling
+.B cron
+to reload are sent to standard output.
+.SH BUGS
+.B Crontab
+misses a
+.B \-e
+option that other implementations of this command allow one to edit the
+current crontab and install the result.  Seems quite handy until you try to
+install a new crontab from an automated script.  That's why this command
+has a
+.B \-c
+option that installs a prepared crontab file.  Use
+.PP
+.RS
+.nf
+crontab \-l >/tmp/tab
+${EDITOR\-vi} /tmp/tab
+crontab \-c /tmp/tab
+.fi
+.RE
+.PP
+to get the same effect as
+.BR "crontab \-e" .
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: crontab.1,v 1.3 2000/07/17 18:51:04 philip Exp $

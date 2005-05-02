@@ -1,0 +1,20 @@
+.TH RECWAVE 1
+.SH NAME
+recwave \- record an audio file in MicroSoft PCM wave format
+.SH SYNOPSIS
+\fBrecwave\fP [\-\fBb\fP \-\fBs\fP \-\fBr\fP] file 
+.SH DESCRIPTION
+\fBRecwav\fP takes samples from \fI/dev/audio\fP and writes them to \fIfile\fP
+in Microsoft PCM wave format.
+.SH OPTIONS
+.IP \-b 
+number of bits to use for one sample. Must be 8 or 16, default is 8
+.IP \-s 
+enable stereo sampling. 0 = mono (default), 1 = stereo 
+.IP \-r 
+sample rate in samples/sec. 4000 - 44100 (default 22050) 
+.SH BUGS
+The highest sample rate that can be used depends on the speed of the system 
+and the size of the DMA buffer used in the driver. (/usr/src/kernel/sb16.h)
+.SH AUTHOR
+Michel R. Prevenier (mrpreve@cs.vu.nl)

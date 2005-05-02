@@ -1,0 +1,244 @@
+.TH SIGACTION 2
+.SH NAME
+sigaction, signal \- manage signal state and handlers
+.SH SYNOPSIS
+.ft B
+#include <signal.h>
+
+.in +5
+.ti -5
+int sigaction(int \fIsig\fP, const struct sigaction *\fIact\fP, struct sigaction *\fIoact\fP)
+.in -5
+.br
+void (*signal(int \fIsig\fP, void (*\fIhandler\fP)(int)))(int);
+.ft P
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Sigaction()
+is used to examine, set, or modify the attributes of a signal.  The argument
+.I sig
+is the signal in question.  The
+.I act
+argument points to a structure containing the new attributes of the signal,
+the structure pointed to by
+.I oact
+will receive the old attributes that were in effect before the call.
+.PP
+The
+.I act
+and
+.I oact
+arguments may be
+.B NULL
+to indicate that either no new attributes are to be set, or that the old
+attributes are not of interest.
+.PP
+The structure containing the signal attributes is defined in <signal.h> and
+looks like this:
+.PP
+.RS
+.nf
+.ft B
+.ta +4n +12n
+struct sigaction {
+	void	(*sa_handler)(int sig);
+	sigset_t	sa_mask;
+	int	sa_flags;
+};
+.ft R
+.fi
+.RE
+.PP
+The
+.B sa_handler
+field contains the address of a signal handler, a function that is called
+when the process is signalled, or one of these special constants:
+.PP
+.TP 12
+.B SIG_DFL
+Default signal handling is to be performed.  This usually means that the
+process is killed, but some signals may be ignored by default.
+.TP
+.B SIG_IGN
+Ignore the signal.
+.PP
+The
+.B sa_mask
+field indicates a set of signals that must be blocked when the signal is
+being handled.  Whether the signal
+.I sig
+itself is blocked when being handled is not controlled by this mask.  The
+mask is of a "signal set" type that is to be manipulated by the
+.BR sigset (3)
+functions.
+.PP
+How the signal is handled precisely is specified by bits in
+.BR sa_flags .
+If none of the flags is set then the handler is called when the signal
+arrives.  The signal is blocked during the call to the handler, and
+unblocked when the handler returns.  A system call that is interrupted
+returns
+.B \-1
+with
+.B errno
+set to
+.BR EINTR .
+The following bit flags can be set to modify this behaviour:
+.PP
+.TP 15
+.B SA_RESETHAND
+Reset the signal handler to
+.B SIG_DFL
+when the signal is caught.
+.TP
+.B SA_NODEFER
+Do not block the signal on entry to the handler.
+.TP
+.B SA_COMPAT
+Handle the signal in a way that is compatible with the the old
+.B signal()
+call.
+.PP
+The old
+.B signal()
+signal system call sets a signal handler for a given signal and returns the
+old signal handler.  No signals are blocked, the flags are
+.BR "SA_RESETHAND | SA_NODEFER | SA_COMPAT" .
+New code should not use
+.BR signal() .
+Note that
+.B signal()
+and all of the
+.B SA_*
+flags are Minix extensions.
+.PP
+Signal handlers are reset to
+.B SIG_DFL
+on an
+.BR execve (2).
+Signals that are ignored stay ignored.
+.SS Signals
+Minix knows about the following signals:
+.PP
+.nf
+.ta +11n +7n +8n
+signal	num	notes	description
+.SP
+SIGHUP	1	k	Hangup
+SIGINT	2	k	Interrupt (usually DEL or CTRL\-C)
+SIGQUIT	3	kc	Quit (usually CTRL\-\e)
+SIGILL	4	kc	Illegal instruction
+SIGTRAP	5	xkc	Trace trap
+SIGABRT	6	kc	Abort program
+SIGFPE	8	k	Floating point exception
+SIGKILL	9	k	Kill
+SIGUSR1	10	k	User defined signal #1
+SIGSEGV	11	kc	Segmentation fault
+SIGUSR2	12	k	User defined signal #2
+SIGPIPE	13	k	Write to a pipe with no reader
+SIGALRM	14	k	Alarm clock
+SIGTERM	15	k	Terminate (default for kill(1))
+SIGCHLD	17	pvi	Child process terminated
+SIGCONT	18	p	Continue if stopped
+SIGSTOP	19	ps	Stop signal
+SIGTSTP	20	ps	Interactive stop signal
+SIGTTIN	21	ps	Background read
+SIGTTOU	22	ps	Background write
+SIGWINCH	23	xvi	Window size change
+.ft R
+.fi
+.PP
+The letters in the notes column indicate:
+.PP
+.TP 5
+.B k
+The process is killed if the signal is not caught.
+.TP
+.B c
+The signal causes a core dump.
+.TP
+.B i
+The signal is ignored if not caught.
+.TP
+.B v
+Only Minix-vmd implements this signal.
+.TP
+.B x
+Minix extension, not defined by \s-2POSIX\s+2.
+.TP
+.B p
+These signals are not implemented, but \s-2POSIX\s+2 requires that they are
+defined.
+.TP
+.B s
+The process should be stopped, but is killed instead.
+.PP
+The
+.B SIGKILL
+signal cannot be caught or ignored.  The
+.B SIGILL
+and
+.B SIGTRAP
+signals cannot be automatically reset.  The system silently enforces these
+restrictions.  This may or may not be reflected by the attributes of these
+signals and the signal masks.
+.SS Types
+\s-2POSIX\s+2 prescribes that <sys/types.h> has the following definition:
+.PP
+.RS
+.B "typedef int (*sighandler_t)(int)"
+.RE
+.PP
+With this type the following declarations can be made:
+.PP
+.RS
+.ft B
+.nf
+sighandler_t sa_handler;
+sighandler_t signal(int \fIsig\fP, sighandler_t \fIhandler\fP);
+.fi
+.ft R
+.RE
+.PP
+This may help you to understand the earlier declarations better.  The
+.B sighandler_t
+type is also very useful in old style C code that is compiled by a compiler
+for standard C.
+.SH "SEE ALSO"
+.BR kill (1),
+.BR kill (2),
+.BR pause (2),
+.BR sigprocmask (2),
+.BR sigsuspend (2),
+.BR sigpending (2),
+.BR sigset (3).
+.SH DIAGNOSTICS
+.B Sigaction()
+returns
+.B 0
+on success or
+.B \-1
+on error.
+.B Signal()
+returns the old handler on success or
+.B SIG_ERR
+on error.  The error code may be:
+.PP
+.TP 10
+.B EINVAL
+Bad signal number.
+.TP
+.B EFAULT
+Bad
+.I act
+or
+.I oact
+addresses.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: sigaction.2,v 1.2 1996/04/11 06:00:28 philip Exp $

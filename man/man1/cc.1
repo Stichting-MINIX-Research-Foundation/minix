@@ -1,0 +1,588 @@
+.TH CC 1
+.SH NAME
+cc, pc, m2 \- Minix C, Pascal, and Modula-2 compilers
+.SH SYNOPSIS
+.in +.5i
+.ti -.5i
+.BR cc |\c
+.BR pc |\c
+.BR m2
+.RB [ "\-D \fIname\fR[\fB=\fIvalue" ]]
+\&...
+.RB [ "\-U \fIname" ]
+\&...
+.RB [ "\-I \fIdirectory" ]
+\&...
+.RB [ \-.\fIsuffix ]
+\&...
+.RB [ \-c ]
+.RB [ \-E ]
+.RB [ \-P ]
+.RB [ \-S ]
+.RB [ \-c.\fIsuffix ]
+.RB [ \-O ]
+.RB [ \-O\fIlevel ]
+.RB [ \-OS ]
+.RB [ \-OT ]
+.RB [ \-g ]
+.RB [ \-n ]
+.RB [ \-a ]
+.RB [ \-R ]
+.RB [ \-A ]
+.RB [ \-s ]
+.RB [ \-fsoft ]
+.RB [ \-fnone ]
+.RB [ \-w ]
+.RB [ \-wo ]
+.RB [ \-ws ]
+.RB [ \-wa ]
+.RB [ \-3 ]
+.RB [ \-_ ]
+.RB [ \-W\fIname\fB\-\fIoption ]
+\&...
+.RB [ \-m\fIarch ]
+.RB [ "\-o \fIoutfile" ]
+.RB [ "\-L \fIdirectory" ]
+\&...
+.RB [ \-i ]
+.RB [ \-sep ]
+.RB [ \-com ]
+.RB [ \-r ]
+.RB [ "\-stack \fIsize" ]
+.I operand
+\&...
+.sp .4v
+.ti -.5i
+(Minix-86 subset:)
+.ti -.5i
+.BR cc |\c
+.BR pc |\c
+.BR m2
+.RB [ "\-D\fIname\fR[\fB=\fIvalue" ]]
+\&...
+.RB [ "\-U\fIname" ]
+\&...
+.RB [ "\-I\fIdirectory" ]
+\&...
+.RB [ \-.o ]
+\&...
+.RB [ \-c ]
+.RB [ \-E ]
+.RB [ \-P ]
+.RB [ \-S ]
+.RB [ \-c.\fIsuffix ]
+.RB [ \-O ]
+.RB [ \-O\fIlevel ]
+.RB [ \-n ]
+.RB [ \-a ]
+.RB [ \-R ]
+.RB [ \-A ]
+.RB [ \-s ]
+.RB [ \-f ]
+.RB [ \-w ]
+.RB [ \-wo ]
+.RB [ \-ws ]
+.RB [ \-wa ]
+.RB [ \-3 ]
+.RB [ \-_ ]
+\&...
+.RB [ \-m ]
+.RB [ "\-o \fIoutfile" ]
+.RB [ "\-L\fIdirectory" ]
+\&...
+.RB [ \-i ]
+.RB [ \-sep ]
+.RB [ \-com ]
+.I operand
+\&...
+.in -.5i
+.SH DESCRIPTION
+.BR Cc ,
+.BR pc ,
+and
+.BR m2
+are the call names of the Minix C, Pascal, and Modula-2 compilers from
+the Amsterdam Compiler Kit (ACK).
+.PP
+All these call names are links to the
+.B acd
+driver program.
+.B Acd
+uses the driver description file
+.B /usr/lib/descr
+that describes the steps necessary to compile a source file.  The
+.BR acd (1)
+manual page describes a few more flags, like
+.BR \-v ,
+that may be useful for debugging compiler problems.
+.PP
+Minix-86 uses a C program as the compiler driver.  This driver is not as
+flexible as the one implemented with the
+.B acd
+driver, and offers a smaller number of options.  The second line of
+the synopsis above shows the options that the Minix-86 driver supports.  The
+rest of this manual page is geared towards the
+.B acd
+driver.  People writing software for Minix-86, or that should be
+portable to all Minix versions should stick to the options listed under
+the Minix-86 compiler.
+.SH OPTIONS
+The transformations done by the compiler are modified by the following
+options.  They are a superset of the options required by \s-2POSIX\s+2,
+with the Minix or compiler specific ones are marked as such.  Options
+for one specific compiler are ignored for others.  Read the OPTIONS section
+of
+.BR acd (1)
+for the driver specific options.
+.PP
+.TP
+.BI \-D " name\fR[\fB=\fIvalue\fR]"
+Same as if
+.BI #define " name value"
+had been given.
+.B 1
+is assumed if
+.I value
+is omitted.  This argument, like all the other double arguments, may also
+be given as a single argument.  (I.e. either as
+.BI \-D "\0name"
+or
+.BI \-D name\fR.)
+(The Minix-86 driver is not so flexible, the proper form can be seen in
+the synopsis.)
+.TP
+.BI \-U " \fIname"
+Undefine the pre-defined symbol
+.IR name .
+.TP
+.BI \-I " directory"
+Extend the include directory path with the given directory.  These
+directories are searched for include files in the given order before the
+standard places.  The standard place for the C compiler is
+.BR /usr/include ,
+and for the Modula-2 compiler it is
+.BR /usr/lib/m2 .
+.TP
+.BI \-. suffix
+Act as if a source file with the given suffix is present on the command line.
+For each language found on the command line the appropriate libraries are
+selected.  The first language mentioned selects the runtime startoff.
+The call name of the driver also chooses the language, so \fBcc\fP is an
+implicit
+.BR \-.c .
+The runtime startoff can be omitted by specifying
+.B \-.o
+for those rare cases where you want to supply your own startoff.  (Minix)
+.TP
+.B \-c
+Transform the input files to object files and stop.  The
+.B \-o
+option may be used under Minix to set the name of the object file.
+.BR Make (1)
+likes this, because
+.BI "cc \-c" " dir/file" .c
+puts
+.IB file .o
+in the current directory, but
+.BI "cc \-c" " dir/file" .c
+.BI \-o " dir/file" .o
+puts the
+.B .o
+file where
+.B make
+expects it to be by its builtin
+.B .c.o
+rule.
+(Minix-86 can only use
+.B \-o
+to name an executable.)
+.TP
+.B \-E
+Run the preprocessor over the input files and send the result to standard
+output or the file named by
+.BR \-o .
+Standard input is read if an input file is named "\fB\-\fR".
+.TP
+.B \-P
+Run the preprocessor over the input files and put the result to files
+with the suffix
+.BR .i .
+File and line number information is omitted from the output.  Use
+.B \-P \-E
+under Minix to omit this info for
+.B \-E
+too.
+.TP
+.B \-S
+Transform the input files to assembly files with suffix
+.BR .s .
+.TP
+.BI \-c. suffix
+Transform the input files to files with the given suffix.  This can only
+succeed if there is a valid transformation from the input file to the
+given suffix.  The same goes for
+.B \-c
+and other options that are just special cases of this option, except for
+.BR \-P ,
+.B \-c.i
+keeps the line number info.  The option
+.B \-c.a
+makes the driver transform the input files to object files and add them to a
+library.  (So you do not need to know how the archiver works.)  Note that you
+need to give object files as arguments if you want to replace old object
+files.  Transformed files are added under a (unique) temporary name.  With
+.B \-o
+you can name the library.  (Minix)  (Minix-86 can't do
+.BR \-c.a .)
+.TP
+.B \-O
+Optimize code.  This option is a no-op, because all the compilers already
+use the
+.BR \-O1
+optimization level to get code of reasonable quality.  Use
+.BR \-O0
+to turn off optimization to speed up compilation at debug time.
+.TP
+.BI \-O level
+Compile with the given optimization level.  (Minix)
+.PP
+.B \-OS
+.br
+.B \-OT
+.RS
+Optimize for space or for time.  (Minix)
+.RE
+.TP
+.B \-g
+Compile the C source with debugging information.  (The way
+.BR \-g ,
+.B \-s
+and
+.B \-O
+interact is left unspecified.)
+.TP
+.B \-n
+Omit the file and line number tracking that is used for runtime error reports
+from Pascal or Modula-2 programs.  The
+.B \-n
+flag is normally used to compile library modules, but may also be useful to
+make a program smaller and faster once debugged.  (Pascal & Modula-2)
+.TP
+.B \-a
+Enable assertions, i.e. statements of the form \fBassert\fI\ test\fR
+that cause a descriptive runtime error if the boolean expression
+.I test
+evaluates false.  (Pascal & Modula-2)
+.TP
+.B \-R
+Disable runtime checks like overflow checking.  (Pascal & Modula-2)
+.TP
+.B \-A
+Enable array bound checks.  (Pascal & Modula-2)
+.TP
+.B \-s
+Strip the resulting executable of its symbol table.
+.PP
+.B \-fsoft
+.br
+.B \-f
+.RS
+Use software floating point instead of hardware floating point.  This is
+a loader flag, but in general it is best to specify this flag in all
+phases of the compilation.  (Minix)
+.RE
+.TP
+.B \-fnone
+Ignored.  Used under Minix-vmd to omit floating point printing/scanning
+code.  The standard Minix compiler figures this out automatically using
+a special loader trick.  (Minix)
+.TP
+.B \-w
+Do not produce warnings about dubious C language constructs.  Normally
+the compiler is configured to do the maximum amount of checking
+without being too annoying.  (Minix)
+.TP
+.B \-wo
+Omit warnings about old (K&R) style.  (Minix)
+.TP
+.B \-ws
+Omit strict warnings.  (Minix)
+.TP
+.B \-wa
+Omit all warnings.  (Minix)
+.TP
+.B \-3
+Only accept 3rd edition Modula-2.  (Modula-2)
+.TP
+.B \-_
+Allow underscores in Pascal or Modula-2 identifiers, but not at the beginning
+of an identifier.  (Pascal & Modula-2)
+.TP
+.BI \-W name \- option
+If
+.I name
+is the name of the compiler this driver is working for, then
+.I option
+is activated for that compiler.  See below for a per-compiler list.  Any other
+.B \-W
+option is ignored.  (\fB\-W\fP is described by \s-2POSIX\s+2 as an optional
+flag to send options to the different compiler passes with a totally
+different (and nicely ignored) syntax as described here.)  (Minix-86 ignores
+any
+.B \-W
+flag.)
+.TP
+.B \-m
+Under Minix-86 this option transforms the function declarations (prototypes)
+to the old K&R form, i.e. the arguments declarations are removed.  This saves
+a lot of memory in the compiler and may allow a large program to be compiled.
+One must make sure that function arguments are properly type-cast where
+necessary.  (Minix)
+.TP
+.BI \-m arch
+Set the target architecture for a cross compiler.  Normally the compiler
+produces code for the same architecture it itself is compiled for.  The
+.B ARCH
+environment variable may also be used to set the architecture.  Architectures
+names are:
+.B i86
+(Intel 8086 and 286),
+.B i386
+(Intel 386, 486, ...),
+.B m68000
+(Motorola MC68000 & MC68010, 16-bit ints),
+.B m68010
+(Motorola MC68000 & MC68010, 32-bit ints),
+.B m68020
+(Motorola MC68020, 32-bit ints),
+.B sparc
+(Sun SPARC).  (Minix)  (Ignored under Minix-86.)
+.TP
+.BI \-o " outfile"
+Set the output file for the
+.BR \-c ,
+.BR \-c.a ,
+and
+.BR \-E
+options, or choose the executable name instead of the default
+.BR a.out .
+(Minix-86 can only choose the executable name.)
+.TP
+.BI \-L " directory"
+Extend the library search path with
+.IR directory .
+These directories are searched for libraries named by
+.B \-l
+in the given order before the standard places.  The standard places are
+.B /lib/\c
+.IR arch ,
+and
+.B /usr/lib/\c
+.IR arch .
+The search for libaries in directories added with
+.B \-L
+looks in
+.IB directory /\c
+.IR arch
+and
+.I directory
+itself.
+.RI ( Arch
+is the machine architecture name.  This is
+Minix dependent, compilers on other systems usually only look in
+.IR directory .)
+(Minix-86 only has
+.B /lib
+and
+.B /usr/lib
+as the standard places.)
+.PP
+.B \-sep
+.br
+.B \-com
+.RS
+Create a Separate I&D or a common I&D executable.  The text segment of a
+separate I&D executable is read-only and shareable.  For an
+.B i86
+binary this also means that the text and data segment can each be 64
+kilobytes large instead of just 64 kilobytes together.  Separate I&D is the
+default.  Common I&D is probably only useful for the bootstraps.  The
+.B \-i
+option has the same meaning as
+.BR \-sep ,
+but should no longer be used.
+(Minix)
+.RE
+.TP
+.B \-r
+Makes the loader produce a relocatable object file, i.e. a file that
+may be loaded again.  The runtime startoff and the default libraries are
+omitted, only the files mentioned are combined.  (Minix)
+.TP
+.BI \-stack " size"
+Allow the process
+.I size
+bytes of heap and stack.
+.I Size
+is a C-style decimal, octal, or hexadecimal number, optionally followed by
+the multipliers
+.BR m ,
+.BR k ,
+.BR w ,
+and
+.B b
+for mega (1024*1024), kilo (1024), "word" (2 or 4), and byte (1).  Uppercase
+letters are accepted too.  A size of
+.B 32kw
+is used by default, translating to 64k for
+.BR i86 ,
+and 132k for other architectures.  Too large a size is rounded down to keep
+the data segment within 64 kilobytes for the
+.BR i86 .
+(Minix)
+.SH OPERANDS
+All leftover operands are treated as files to be compiled, with one
+exception.  The construct
+.BI \-l " library"
+is used to denote a library, usually
+.BI lib library .a\fR,
+that is to be searched in the directories mentioned with
+.B \-L
+or the standard places.  These libraries keep their place among the
+(transformed) input files when presented to the loader.  (It is a common
+mistake to write
+.BR "cc\ \-lcurses\ x.c"
+instead of
+.BR "cc\ x.c\ \-lcurses" .)
+.SH IMPLEMENTATION
+The Minix compiler implementation uses the ACK compilers adapted for use
+under Minix as described below.  Read
+.BR ACK (7)
+for more detailed information on the ACK compilers themselves.
+.SS "Feature test macros"
+The preprocessors are given these arguments to define feature test macros:
+.B \-D__ACK__
+tells what compiler is used.
+.B \-D__minix
+tells that this is Minix.
+.BI \-D__ arch
+tells the architecture.
+(More macros are defined, but they are only to be used in the include files.)
+.PP
+The symbols above are predefined by the preprocessor so that your program is
+able to "sense" the environment it is in.  It is also possible for your
+program to do the opposite, to tell what kind of environment it likes to
+have.  By default,
+.B cc
+compiles a standard C program.  If you want the extensions described in
+POSIX.1 to become visible, then you have to set
+.BR _POSIX_SOURCE " to " 1
+at the start of your program.
+To enable \s-2UNIX\s+2 or Minix extensions you need to also set
+.BR _MINIX " to " 1 .
+If you don't want to clutter your source files with these symbols then you
+can use
+.B cc \-D_MINIX \-D_POSIX_SOURCE
+to get the POSIX.1 and the Minix extensions.
+.SS "Preprocessing"
+Pascal, Modula-2, EM source (see below), and Assembly source are
+preprocessed by the C preprocessor if the very first character in the file
+is a '\fB#\fP' character.
+.SS "Assembly dialects"
+No two compilers use the same assembly language.  To be able to use the same
+assembly dialect for the low level support routines an assembly converter is
+provided.  The input of this converter can be of type
+.BR ack ,
+.BR ncc ,
+or
+.BR bas ,
+and the output can be of type
+.BR ack ,
+.BR ncc ,
+or
+.BR gnu .
+The suffix of the file tells the assembly dialect (see below), or one can
+use the option
+.BI \-Was\- dialect
+to tell the driver what the dialect of a plain
+.B .s
+file is.  The assembly converter is not as smart as the assembler, the
+translation is more or less a text substitution.  It leaves a lot of
+checking to the target assembler.  You have to restrict yourself to a subset
+that is understood by both assemblers.  The ACK assembler for instance
+doesn't care if you use `ax' or `eax' for a 32 bit register, it looks at the
+instruction type.  The GNU assembler doesn't like this, so you have to use
+the proper register name in ACK assembly that is to be translated to GNU
+assembly.  Expressions are converted as is, even if the operator precedence
+rules of the two assembly languages differ.  So use parentheses.  The
+converter does promise one thing: compiler output can be properly
+translated.  (Note that under Minix-86
+.B \-W
+is ignored.  All assembly should therefore be in the "ncc" dialect.)
+.SH FILES
+.TP 10
+.B /usr/lib/descr
+The compiler description file.
+.TP
+.B .c
+Suffix of a C source file.
+.TP
+.B .mod
+Modula-2.
+.TP
+.B .p
+Pascal.
+.TP
+.B .i
+Preprocessed C source.
+.TP
+.B .k
+ACK machine independent compact EM code produced by the C, Pascal, or
+Modula-2 front end (or any other ACK front end.)  The ACK compilers are
+based on the UNCOL idea where several front ends compile to a common
+intermediate language, and several back ends transform the intermediate
+language to the target machine language.  The ACK intermediate language
+is named "EM".
+.TP
+.B .m
+Peephole optimized EM.
+.TP
+.B .gk
+Result of the (optional) EM global optimizer.
+.TP
+.B .g
+Result of the second EM peephole optimizer used after the global optimizer.
+.TP
+.B .e
+Human readable EM.  (Human created or decoded compact EM.)
+.TP
+.B .s
+Target machine assembly.  (Current compiler dialect.)
+.TP
+.B .ack.s
+ACK assembly.
+.TP
+.B .ncc.s
+ACK Xenix style assembly.  This dialect is used by the 16 bit ACK ANSI C
+compiler.
+.TP
+.B .gnu.s
+GNU assembly.
+.TP
+.B .bas.s
+BCC assembly.  (Used by the Bruce Evans' BCC compiler, for many years the
+compiler for Minix-386.)
+.TP
+.B .o
+Object code.
+.TP
+.B .a
+Object code library.
+.TP
+.B a.out
+Default output executable.
+.SH "SEE ALSO"
+.BR acd (1),
+.BR ACK (7).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

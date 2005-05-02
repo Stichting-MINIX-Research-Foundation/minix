@@ -1,0 +1,136 @@
+.TH GETGRENT 3
+.SH NAME
+getgrent, getgrnam, getgrgid, setgrent, endgrent, setgrfile \- group file routines
+.SH SYNOPSIS
+.ft B
+.nf
+#include <grp.h>
+
+struct group *getgrent(void)
+struct group *getgrnam(const char *\fIname\fP)
+struct group *getgrgid(gid_t \fIgid\fP)
+int setgrent(void)
+void endgrent(void)
+void setgrfile(const char *\fIfile\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+These functions are used to obtain information from the group file.  They
+return this information in a
+.B struct group
+as defined by <grp.h>:
+.PP
+.nf
+.ta +4n +6n +15n
+struct group {
+	char	*gr_name;	/* login name */
+	char	*gr_passwd;	/* encrypted password */
+	gid_t	gr_gid;	/* numeric group id */
+	char	**gr_mem;	/* null-terminated list of group members */
+};
+.fi
+.PP
+.B Getgrent()
+reads the group file entry by entry.
+.B Getgrnam()
+scans the entire group file for the group with the given
+.IR name .
+.B Getgrgid()
+looks for the first group with the given
+.IR gid .
+The
+.B setgrent()
+and
+.B endgrent()
+functions are used to open and later close the group file.  With
+.B setgrfile()
+one can specify the file to read other than the normal group file.  This
+only sets the name, the next
+.B setgrent()
+call will open the file.  Do not touch the file name while it is active.
+Use
+.B setgrfile(NULL)
+to revert back to the normal group file.
+.PP
+The usual way to scan the group file is (error checking omitted):
+.PP
+.RS
+.nf
+.DT
+setgrent();
+while ((gr = getgrent()) != NULL)
+	if (appropriate_test(gr)) break;
+endgrent();
+.fi
+.RE
+.PP
+The
+.B gr
+variable contains the entry that is wanted if non-NULL.  The
+.B getgrnam()
+and
+.B getgrgid()
+functions are implemented as in this example, with error checking of course.
+.PP
+.B Getgrent()
+calls
+.B setgrent()
+if this has not yet been done.
+.B Setgrent()
+first calls
+.B endgrent()
+if the group file is still open.  (Other implementations may simply
+rewind the file.)
+.SH FILES
+.TP 15
+.B /etc/group
+The group file database.
+.SH "SEE ALSO"
+.BR getgroups (2),
+.BR initgroups (3),
+.BR getpwent (3),
+.BR passwd (5).
+.SH DIAGNOSTICS
+.B Setgrent()
+has the same return value and error codes as the
+.BR open (2)
+call it uses to open the group file.  The
+.BI get xxx ()
+functions return NULL on end of file, entry not found, or error.  You can
+set
+.B errno
+to zero before the call and check it after.
+.SH NOTES
+All
+.BI get xxx ()
+routines return a pointer to static storage that is overwritten in each call.
+.PP
+Only
+.B getgrnam()
+and
+.B getgrgid()
+are defined by \s-2POSIX\s+2.  The
+.B _MINIX_SOURCE
+macro must be defined before including <grp.h> to make the other functions
+visible.  The
+.B gr_passwd
+field is also not defined by \s-2POSIX\s+2, but is always visible.
+Portable code cannot reliably detect errors by setting
+.B errno
+to zero.  Under Minix it is better to make a
+.B getgrent()
+scan if you need to look up several group-id's or names, but portable code
+had better use several
+.B getgrgid()
+or
+.B getgrnam()
+calls.  The
+.B getgrent()
+is usually available on other systems, but may be very expensive.  See
+.BR initgroups (3)
+if you are after supplementary group id's.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: getgrent.3,v 1.2 1996/04/11 06:35:01 philip Exp $

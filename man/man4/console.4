@@ -1,0 +1,268 @@
+.TH CONSOLE 4
+.SH NAME
+console, keyboard, log \- system console
+.SH DESCRIPTION
+The TTY device driver manages two devices related to the main user
+interface, the system screen and the keyboard.  These two together are
+named "the Console".
+.SS "The Screen"
+The screen of a PC can be managed by a Monochrome Display Adapter, a
+Hercules card, a Color Graphics Adapter, an Enhanced Graphics Adapter,
+or a Video Graphics Array.  To the console driver these devices are
+seen as a block of video memory into which characters can be written to
+be displayed, an I/O register that sets the video memory origin to the
+character that is to be displayed on the top-left position of the
+screen, and an I/O register that sets the position of the hardware
+cursor.  Each character within video memory is a two-byte word.  The low
+byte is the character code, and the high byte is the "attribute byte",
+a set of bits that controls the way the character is displayed,
+character and background colours for a colour card, or
+intensity/underline/reverse video for monochrome.
+.PP
+These are the characteristics of the adapters in text mode:
+.PP
+.RS
+.nf
+.ta +15n +15n
+Adapter	Usable memory	Mono/Colour
+.ta +1n +15n +15n
+	MDA	4K	M
+	Hercules	4K	M
+	CGA	16K	C
+	EGA	32K	M or C
+	VGA	32K	M or C
+.fi
+.RE
+.PP
+MDA and Hercules are the same to the console driver, because the graphics
+mode of the Hercules is of no use to Minix.  EGA and VGA are also mostly
+seen as the same in text mode.  An EGA adapter is either a monochrome or a
+colour device depending on the screen attached to it.  A VGA adapter can run
+in either monochrome or colour (grayscale) mode depending on how the Boot
+Monitor has initialized it.
+.PP
+The driver uses the video origin to avoid copying the screen contents when
+scrolling up or down.  Instead the origin is simply moved one line.  This is
+named "hardware scrolling", as opposed to copying memory: "software
+scrolling".
+.PP
+The video origin is also used to implement several virtual consoles inside
+the video memory of the adapter.  Each virtual console gets a segment of
+video memory.  The driver chooses which console to display by moving the
+video origin.  Note that an MDA or Hercules adapter can only support one
+console.  CGA can support up to four 80x25 consoles, and EGA and VGA can
+have eight.  It is best to configure one less console to leave some video
+memory free so that hardware scrolling has some space to work in.
+.PP
+Character codes are used as indices into a display font that is stored in the
+adapter.  The default font is the IBM character set, which is an ASCII
+character set in the low 128 codes, and a number of mathematical, greek,
+silly graphics, and accented characters in the upper 128 codes.  This font
+is fixed in the MDA, Hercules and CGA adapters, but can be replaced by a
+user selected font for the EGA and VGA adapters.
+.PP
+A number of control characters and escape sequences are implemented by the
+driver.  The result is upward compatible with the ANSI standard terminal.
+The
+.BR termcap (5)
+type is
+.BR minix .
+Normal characters written to the console are displayed at the cursor
+position and the cursor is advanced one column to the right.  If an entire
+line is filled then the cursor wraps to the first column of the next line
+when the next character must be displayed.  The screen is scrolled up if
+needed to start a new line.  Some characters have special effects when sent
+to the console.  Some even have arguments in the form of comma separated
+decimal numbers.  These numbers default to the lowest possible value when
+omitted.  The top-left character is at position (1, 1).  The following
+control characters and escape sequences are implemented by the console:
+.PP
+.ta +10n +20n
+Sequence	Name	Function
+.in +31n
+.ti -30n
+^@	Null	Ignored (padding character)
+.ti -30n
+^G	Bell	Produce a short tone from the speaker
+.ti -30n
+^H	Backspace	Move the cursor back one column, wrapping from the
+left edge up one line to the right edge
+.ti -30n
+^I	Horizontal Tab	Move to the next tab stop, with each tab stop at
+columns 1, 9, 25, etc.  Wrap to the next line if necessary.
+.ti -30n
+^J	Line Feed	Move one line down, scrolling the screen up if
+necessary
+.ti -30n
+^K	Vertical Tab	Same as LF
+.ti -30n
+^L	Form Feed	Same as LF
+.ti -30n
+^M	Carriage Return	Move to column 1
+.ti -30n
+^[	Escape	Start of an escape sequence
+.ti -30n
+^[M	Reverse Index	Move one line up, scrolling the screen down if
+necessary
+.ti -30n
+^[[\fIn\fPA	Cursor Up	Move the cursor up \fIn\fP lines
+.ti -30n
+^[[\fIn\fPB	Cursor Down	Move the cursor down \fIn\fP lines
+.ti -30n
+^[[\fIn\fPC	Cursor Forward	Move the cursor right \fIn\fP columns
+.ti -30n
+^[[\fIn\fPD	Cursor Backward	Move the cursor left \fIn\fP columns
+.ti -30n
+^[[\fIm\fP;\fIn\fPH	Cursor Position	Move the cursor to line \fIm\fP,
+column \fIn\fP
+.ti -30n
+^[[\fIs\fPJ	Erase in Display	Clear characters as follows:
+.br
+\fIs\fP = 0: From cursor to end of screen
+.br
+\fIs\fP = 1: From start of screen to cursor
+.br
+\fIs\fP = 2: Entire screen
+.ti -30n
+^[[\fIs\fPK	Erase in Line	Clear characters as follows:
+.br
+\fIs\fP = 0: From cursor to end of line
+.br
+\fIs\fP = 1: From start of line to cursor
+.br
+\fIs\fP = 2: Entire line
+.ti -30n
+^[[\fIn\fPL	Insert Lines	Insert \fIn\fP blank lines
+.ti -30n
+^[[\fIn\fPM	Delete Lines	Delete \fIn\fP lines
+.ti -30n
+^[[\fIn\fP@	Insert Characters	Insert \fIn\fP blank characters
+.ti -30n
+^[[\fIn\fPP	Delete Characters	Delete \fIn\fP characters
+.ti -30n
+^[[\fIn\fPm	Character Attribute	Set character attribute as follows:
+.br
+\fIn\fP = 0: Normal (default) attribute
+.br
+\fIn\fP = 1: Bold (high intensity fg colour)
+.br
+\fIn\fP = 4: Underline (mono) / Cyan (colour)
+.br
+\fIn\fP = 5: Blinking
+.br
+\fIn\fP = 7: Reverse Video
+.br
+\fIn\fP = 30: Black foreground colour
+.br
+\fIn\fP = 31: Red
+.br
+\fIn\fP = 32: Green
+.br
+\fIn\fP = 33: Brown
+.br
+\fIn\fP = 34: Blue
+.br
+\fIn\fP = 35: Magenta
+.br
+\fIn\fP = 36: Cyan
+.br
+\fIn\fP = 37: Light Gray
+.br
+\fIn\fP = 39: Default fg colour (lt gray)
+.br
+\fIn\fP = 40\-47: Same for background colour
+.br
+\fIn\fP = 49: Default bg colour (black)
+.br
+Note: The "bold" versions of black, brown and lt gray become dark gray,
+yellow and white.
+.in -31n
+.PP
+The console device implements the following ioctl to copy a font into
+font memory on EGA and VGA adapters:
+.PP
+.RS
+.BI "ioctl(" fd ", TIOCSFON, u8_t " font "[256][32]);"
+.RE
+.PP
+Font memory consists of 256 character definitions of 32 lines per character
+and 8 pixels per line.  The first line is the topmost line of the character.
+The leftmost pixel is lit if the most significant bit of a line is set, etc.
+How many lines are used depends on the current video mode.  The 80x25 video
+mode used by Minix has an 8x16 character cell, 80x28 has 8x14 characters,
+and 132x43 or 132x50 has 8x8 characters.  The boot variable
+.B console
+is used by both the Boot Monitor and the console driver to set the video
+mode, software scrolling on/off, and VGA screen blank timeout.  See
+.BR boot (8).
+.SS "The Keyboard"
+The keyboard produces key codes for each key that is pressed.  These keys
+are transformed into character codes or sequences according to the current
+keyboard translation table.  The format of this table is described in
+.BR keymap (5).
+The character codes can be read from the console device unless they map to
+special hotkeys.  The hotkeys are as follows:
+.PP
+.ta +17n
+Name	Key	Function
+.in +18n
+.ti -17n
+CTRL\-ALT\-DEL	Send an abort signal to process 1 (init).  Init then
+halts the system
+.ti -17n
+CTRL\-ALT\-KP-.	Likewise for keypad period
+.ti -17n
+F1	Process table dump
+.ti -17n
+F2	Show memory map
+.ti -17n
+F3	Toggle software/hardware scrolling
+.ti -17n
+F5	Show network statistics
+.ti -17n
+CTRL\-F7	Send a quit signal to all processes connected to the console
+.ti -17n
+CTRL\-F8	Send an interrupt signal
+.ti -17n
+CTRL\-F9	Send a kill signal.  If CTRL\-F8 or CTRL\-F7 don't get 'em,
+then this surely will.  These keys are for disaster recovery.  You would
+normally use DEL and CTRL\-\e to send interrupt and quit signals.
+.\" .ig VC
+.ti -17n
+ALT\-F1	Select virtual console 0 (/dev/console)
+.ti -17n
+ALT\-F2	Select virtual console 1 (/dev/ttyc1)
+.ti -17n
+ALT\-F(\fIn\fP+1)	Select virtual console \fIn\fP
+(/dev/ttyc\fIn\fP)
+.ti -17n
+ALT\-Left	Select previous virtual console
+.ti -17n
+ALT\-Right	Select next virtual console
+.\" ..
+.in -18n
+.PP
+.\"XXX
+The keyboard map is set with the
+.B KIOCSMAP
+ioctl whose precise details are currently hidden in the
+.B loadkeys
+utility.
+.SS "Log device"
+The
+.B log
+device can be used by processes to print debug messages onto the console.
+The console is a terminal type device, so it is taken from processes when a
+session leader exits.  This does not happen with the log device.
+.SH "SEE ALSO"
+.BR tty (4),
+.BR loadkeys (1),
+.BR keymap (5),
+.BR boot (8).
+.SH NOTES
+Output processing turns Line Feeds into CR LF sequences.  Don't let this
+surprise you.  Either turn off output processing or use one of the synonyms
+for LF.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+.\" minor editing of man page by asw 07.08.96

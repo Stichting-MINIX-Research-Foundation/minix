@@ -1,0 +1,85 @@
+.TH SIGSET 3
+.SH NAME
+sigset, sigaddset, sigdelset, sigemptyset, sigfillset, sigismember \- manipulate signal sets
+.SH SYNOPSIS
+.ft B
+#include <signal.h>
+
+.nf
+int sigaddset(sigset_t *\fIset\fP, int \fIsig\fP)
+int sigdelset(sigset_t *\fIset\fP, int \fIsig\fP)
+int sigemptyset(sigset_t *\fIset\fP)
+int sigfillset(sigset_t *\fIset\fP)
+int sigismember(const sigset_t *\fIset\fP, int \fIsig\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+The system calls that handle signals, such as
+.BR sigaction (2)
+and
+.BR sigprocmask (2)
+use sets of signals to keep a process from being interrupted by those
+signals while executing a signal handler or a critical code segment.  These
+signal sets are manipulated by the following functions:
+.TP 5
+.B "int sigaddset(sigset_t *\fIset\fP, int \fIsig\fP)"
+Add signal
+.I sig
+to the signal set referenced by
+.IR set .
+.TP
+.B "int sigdelset(sigset_t *\fIset\fP, int \fIsig\fP)"
+Remove signal
+.I sig
+from the signal set referenced by
+.IR set .
+.TP
+.B "int sigemptyset(sigset_t *\fIset\fP)"
+Initialize the signal set referenced by
+.I set
+to an empty set.
+.TP
+.B "int sigfillset(sigset_t *\fIset\fP)"
+Initialize the signal set referenced by
+.I set
+to an full set, i.e. all signals are in the set.
+.TP
+.B "int sigismember(const sigset_t *\fIset\fP, int \fIsig\fP)"
+Return
+.B 1
+if the signal
+.I sig
+is present in the set referenced by
+.IR set ,
+.B 0
+otherwise.
+.SH "SEE ALSO"
+.BR sigaction (2),
+.BR sigpending (2),
+.BR sigprocmask (2),
+.BR sigsuspend (2).
+.SH DIAGNOSTICS
+All functions except
+.B sigismember
+return
+.B 0
+on success.
+.B Sigismember
+returns
+.B 0
+or
+.B 1
+on success.  They return
+.B \-1
+with error code
+.B EINVAL
+for an invalid signal number.  (They do not use
+.B EFAULT
+for a bad
+.I set
+address, but will simply cause a segmentation violation.)
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: sigset.3,v 1.2 1996/04/11 06:39:09 philip Exp $

@@ -1,0 +1,19 @@
+.TH ISOINFO 1
+.SH NAME
+isoinfo \- list an ISO9660 or High Sierra volume descriptor
+.SH SYNOPSIS
+\fBisoinfo\fP [\fIinput_file\fP] 
+.SH DESCRIPTION
+\fBIsoinfo\fP reads the volume descriptor from an ISO9660 or High Sierra
+Group file system (usually residing on cdrom) and lists its contents on
+standard output.  \fBisodir\fP, \fBisoread\fP, and \fBisoinfo\fP are all
+links to the same program.  The program sees which function to perform by
+looking how it was called.
+.SH "BUGS"
+Only Interchange level-1 is supported. The Red Rock extensions and Interchange
+level-2 are not implemented.
+.SH "SEE ALSO"
+.BR isodir (1),
+.BR isoread (1).
+.SH AUTHOR
+Michel R. Prevenier (mrpreve@cs.vu.nl)

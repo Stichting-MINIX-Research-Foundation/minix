@@ -1,0 +1,68 @@
+.TH TGET 1
+.SH NAME
+tget \- get termcap values
+.SH SYNOPSIS
+.B tget
+.RB [ \-flag
+.IR id ]
+.RB [ \-num
+.IR id ]
+.RB [ \-str
+.IR id ]
+.RB [ \-goto
+.IR "col line" ]
+.RB [[ \-echo ]
+.IR string ]
+.SH DESCRIPTION
+.B Tget
+allows shell scripts access to the
+.BR termcap (3)
+functions.  Flags, numbers and strings can be queried from the termcap
+database under the entry denoted by the environment variable
+.BR $TERM .
+.SH OPTIONS
+.TP
+.BI \-flag " id"
+Set the exit status to zero if the flag
+.I id
+is set.  All other options except
+.B \-echo
+set the exit status to
+.I id
+being available or not.  The last option sets the final exit code.
+.TP
+.BI \-num " id"
+Print the value of the numeric variable
+.IR id .
+.TP
+.BI \-str " id"
+Print the value of the string variable
+.IR id .
+.TP
+.BI \-goto " col line"
+Generates instructions to go to the given column and line if the
+.B cm
+capability exists.
+.TP
+.BI \-echo " string"
+Prints
+.IR string .
+Any other argument that does not start with a dash is also printed.
+.SH EXAMPLE
+Try this:
+.B "tget -str so 'Reverse Video' -str se"
+.SH ENVIRONMENT
+.TP 15n
+.B TERM
+Terminal type.
+.TP
+.B TERMCAP
+Path to the termcap database, by default /etc/termcap:/usr/etc/termcap.
+.SH "SEE ALSO"
+.BR termcap (3).
+.SH DIAGNOSTICS
+.B Tget
+will fail immediately with a descriptive message if the termcap entry
+can't be found.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

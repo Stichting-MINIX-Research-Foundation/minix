@@ -1,0 +1,37 @@
+.TH LOADFONT 1
+.SH NAME
+loadfont \- load a font into the video card
+.SH SYNOPSIS
+\fBloadfont \fIfontfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "loadfont iso1.fnt" "Loads the ISO 8859-1 (Latin-1) font"
+.SH DESCRIPTION
+.PP
+.I Loadfont
+loads a custom font into the video card (EGA or VGA).  The font character
+size has to be 8x16 pixels and the font file must contain 256 characters for
+a total size of 4 kilobytes.
+.PP
+.I Loadfont
+together with
+.I loadkeys
+allow the console and keyboard to be customized to national conventions.
+.PP
+If it exists, the file
+.I /etc/font
+is loaded as a custom font by
+.B /usr/etc/rc
+at boot time.
+.SH "SEE ALSO"
+.BR console (4).

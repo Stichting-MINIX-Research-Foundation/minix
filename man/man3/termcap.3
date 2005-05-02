@@ -1,0 +1,167 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)termcap.3x	6.1 (Berkeley) 5/15/85
+.\"
+.TH TERMCAP 3 "May 15, 1985"
+.UC 4
+.SH NAME
+termcap, tgetent, tgetnum, tgetflag, tgetstr, tgoto, tputs \- terminal independent operation routines
+.SH SYNOPSIS
+.nf
+.ft B
+#include <termcap.h>
+
+int tgetent(char *\fIbp\fP, char *\fIname\fP)
+int tgetflag(char *\fIid\fP)
+int tgetnum(char *\fIid\fP)
+char *tgetstr(char *\fIid\fP, char **\fIarea\fP)
+char *tgoto(char *\fIcm\fP, int \fIdestcol\fP, int \fIdestline\fP)
+int tputs(char *\fIcp\fP, int \fIaffcnt\fP, void (*\fIoutc\fP)(int))
+.ft R
+.fi
+.SH DESCRIPTION
+These functions extract and use capabilities from the terminal capability data
+base
+.BR termcap (5).
+These are low level routines;
+see
+.BR curses (3)
+for a higher level package.
+.PP
+.B Tgetent
+extracts the entry for terminal
+.I name
+into the buffer at
+.IR bp .
+.I Bp
+should be a character buffer of size
+1024 and must be retained through all subsequent calls
+to
+.BR tgetnum ,
+.BR tgetflag ,
+and
+.BR tgetstr .
+.B Tgetent
+returns \-1 if it cannot find a termcap
+file, 0 if the terminal name given does not have an entry,
+and 1 if all goes well.
+.PP
+.B Tgetent
+uses the following recipe to find the termcap file and entry
+.IR name :
+.PP
+.in +5n
+if $TERMCAP is itself a termcap entry for
+.I name
+.br
+then
+.in +5n
+use $TERMCAP
+.in -5n
+elif $TERMCAP names a file
+.br
+then
+.in +5n
+use entry
+.I name
+found in that file
+.in -5n
+elif this is Minix-vmd
+.br
+then
+.in +5n
+if $TERMPATH is defined
+.br
+then
+.in +5n
+search the termcap files named in $TERMPATH for the first occurance of a
+.I name
+entry and use that entry
+.in -5n
+else
+.in +5n
+the path
+.B $HOME/.termcap:/etc/termcap:/usr/etc/termcap"
+is searched for entry
+.I name
+.in -5n
+fi
+.in -5n
+fi
+.in -5n
+.RE
+.PP
+.B Tgetnum
+gets the numeric value of capability
+.IR id ,
+returning \-1 if is not given for the terminal.
+.B Tgetflag
+returns 1 if the specified capability is present in
+the terminal's entry, 0 if it is not.
+.B Tgetstr
+returns the string value of the capability
+.IR id ,
+places it in the buffer at
+.IR area ,
+and advances the
+.I area
+pointer.
+It decodes the abbreviations for this field described in
+.BR termcap (5),
+except for cursor addressing and padding information.
+.B Tgetstr
+returns NULL if the capability was not found.
+.PP
+.B Tgoto
+returns a cursor addressing string decoded from
+.I cm
+to go to column
+.I destcol
+in line
+.IR destline .
+It uses the external variables
+.B UP
+(from the \fBup\fR capability)
+and
+.B BC
+(if \fBbc\fR is given rather than \fBbs\fR)
+if necessary to avoid placing \fB\en\fR, \fB^D\fR or \fB^@\fR in
+the returned string.
+(Programs which call tgoto should be sure to turn off the XTABS bit(s),
+since
+.B tgoto
+may now output a tab.
+Note that programs using termcap should in general turn off XTABS
+anyway since some terminals use CTRL-I for other functions,
+such as nondestructive space.)
+If a \fB%\fR sequence is given which is not understood, then
+.B tgoto
+returns \*(lqOOPS\*(rq.
+.PP
+.B Tputs
+decodes the leading padding information of the string
+.IR cp ;
+.I affcnt
+gives the number of lines affected by the operation, or 1 if this is
+not applicable,
+.I outc
+is a routine which is called with each character in turn.
+The external variable
+.B ospeed
+should contain the output speed of the terminal as encoded by
+.BR stty (3).
+The external variable
+.B PC
+should contain a pad character to be used (from the \fBpc\fR capability)
+if a null (\fB^@\fR) is inappropriate.
+.SH SEE ALSO
+.BR curses (3),
+.BR termcap (5).
+.SH AUTHOR
+William Joy
+.SH NOTES
+The Minix implementation does not support any of the external variables,
+only the functions calls.  The Minix-vmd termcap does support it all,
+although noone in his right mind meddles with those variables.

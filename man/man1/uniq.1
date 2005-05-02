@@ -1,0 +1,36 @@
+.TH UNIQ 1
+.SH NAME
+uniq \- delete consecutive identical lines in a file
+.SH SYNOPSIS
+\fBuniq\fR [\fB\-cdu\fR]\fR [\fB\-\fIn\fR] [\fB+\fIn\fR] [\fIinput [\fIoutput\fR]\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Give count of identical lines in the input"
+.FL "\-d" "Only duplicate lines are written to output"
+.FL "\-u" "Only unique lines are written to output"
+.FL "\-\fIn\fR" "Skip the first \fIn\fR columns when matching"
+.FL "+\fIn\fR" "Skip the first \fIn\fR fields when matching"
+.SH EXAMPLES
+.EX "uniq +2 file" "Ignore first 2 fields when comparing"
+.EX "uniq \-d inf outf" "Write duplicate lines to \fIoutf\fP"
+.SH DESCRIPTION
+.PP
+.I Uniq
+examines a file for consecutive lines that are identical.
+All but duplicate entries are deleted, and the file is written to output.
+The +\fIn\fR option skips the first \fIn\fR fields, where a field is defined
+as a run of characters separated by white space.
+The \-\fIn\fP option skips the first \fIn\fR spaces.
+Fields are skipped first.
+.SH "SEE ALSO"
+.BR sort (1).

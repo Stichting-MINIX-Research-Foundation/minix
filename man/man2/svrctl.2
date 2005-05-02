@@ -1,0 +1,59 @@
+.\" svrctl.2
+.\"
+.\" Created: July, 1994 by Philip Homburg <philip@cs.vu.nl>
+.TH svrctl 2
+.SH NAME
+svrctl \- special server control functions
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/svrctl.h>
+
+int svrctl(u32_t \fIrequest\fP, void *\fIdata\fP);
+.ft R
+.fi
+.SH DESCRIPTION
+.B Svrctl
+allows root to control the kernel in various ways, or implements some very
+Minix specific system calls that don't deserve their own system call number.
+.PP
+This system call makes it easy to add new ways of setting and getting kernel
+parameters, but at the same time, backwards compatibility is not guaranteed.
+Read the <sys/svrctl.h> include file to see what the struct's mentioned below
+look like.  Most calls are root-only, unless specified otherwise.
+.PP
+The only way to know how to properly use these calls is to study the
+associated kernel or server code, or the programs that already use these
+calls.
+.PP
+Current requests are:
+.TP 5
+.B MMSIGNON
+Inform MM that the current process wants to become a server.
+.TP
+.B MMSWAPON
+Instruct MM to mount a file or device as swapspace.
+.TP
+.B MMSWAPOFF
+Tell MM to stop using swapspace.
+.TP
+.B FSSIGNON
+Register a new device with FS.
+.ig
+.TP
+.B FSDEVMAP
+Translate a device number to a task number, minor device pair using a
+\fBstruct fsdevmap\fP
+..
+.TP
+.B SYSSIGNON
+Inform the kernel that the process want to become a server.
+The processes task number is filled-in in a \fBstruct systaskinfo\fP.
+.TP
+.B SYSGETENV
+Request the value of one or all boot parameters.  Can be used by non-root.
+.SH "RETURN VALUES"
+.B Svrctl
+returns 0 upon success and -1 upon failure.
+.SH AUTHOR
+Philip Homburg <philip@cs.vu.nl>

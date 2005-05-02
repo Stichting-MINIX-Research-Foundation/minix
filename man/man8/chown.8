@@ -1,0 +1,35 @@
+.TH CHOWN 8
+.SH NAME
+chown \- change owner
+.SH SYNOPSIS
+\fBchown [\fB\-R\fR] \fIowner\fR[:\fIgroup\fR] \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-R" "Change directory hierarchies"
+.SH EXAMPLES
+.EX "chown ast file1 file2" "Make \fIast\fR the owner of the files"
+.EX "chown \-R ast:other dir" "Change the owner and group of all files in dir"
+.SH DESCRIPTION
+.PP
+The owner field (and optionally group field) of the named files is changed
+to
+.I owner 
+(i.e., login name specified) and
+.I group .
+Alternatively, a decimal uid(gid) may be specified instead of a user name.
+Only the superuser may execute this command.
+.SH "SEE ALSO"
+.BR chgrp (1),
+.BR chmod (1),
+.BR ls (1),
+.BR chown (2).

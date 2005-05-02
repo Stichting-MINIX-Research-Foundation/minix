@@ -1,0 +1,82 @@
+.CD "dis88 \(en disassembler [IBM]"
+.SX "dis88\fR [\fB\(eno\fR] \fIinfile\fR [\fIoutfile\fR]"
+.FL "\(eno" "List the object code along with the assembly code"
+.EX "dis88 a.out >listing" "Disassemble \fIa.out\fR"
+.EX "dis88 \(eno a.out listing" "Ditto, but with object code"
+.PP
+\fIDis88\fR disassembles 8088 object code to the assembly language format
+used by 
+.MX  .
+It makes full use of
+symbol table information, supports separate 
+instruction and data space, and generates synthetic labels when needed. 
+It does not support 8087 mnemonics, symbolic data segment references, or 
+the ESC mnemonic.
+.PP
+The program is invoked by:
+.HS
+.Cx "dis88 [\(eno] infile [outfile]"
+.HS
+The \(eno flag causes object code to be listed. 
+If no outfile is given, \fIstdout\fR is used.
+.PP
+The text segment of an object file is always padded to an even address.
+In addition, if the file has split I/D space, the text segment will be padded
+to a paragraph boundary (i.e., an address divisible by 16). Due to padding, the
+disassembler may produce a few spurious, but harmless, instructions at the end
+of the text segment.
+.PP
+Because the information to which initialized data refers cannot generally
+be inferred from context, the data segment is treated literally. Byte values
+(in hexadecimal) are output, and long stretches of null data are represented by
+appropriate \fI.zerow\fR pseudo-ops. 
+Disassembly of the bss segment, on the other
+hand, is quite straightforward, because uninitialized data is all zero by 
+definition. 
+No data is output in the bss segment, but symbolic labels are output
+as appropriate.
+.PP
+The output of operands in symbolic form is complicated somewhat by the
+existence of assembler symbolic constants and segment override opcodes. Thus,
+the program's symbol lookup routine attempts to apply a certain amount of
+intelligence when it is asked to find a symbol. If it cannot match on a symbol
+of the preferred type, it may output a symbol of some other type, depending on
+preassigned (and somewhat arbitrary) rankings within each type. Finally, if
+all else fails, it will output a string containing the address sought as a hex
+constant. For user convenience, the targets of branches are also output, in
+comments, as hexadecimal constants.
+.SS "Error Messages"
+.PP
+Various error messages may be generated as a result of problems encountered
+during the disassembly.
+They are listed below
+.HS.
+.in +3.20i
+.ta +2.75i +0.2i
+.ti -2.95i
+Cannot access input file	\(en	Input file cannot be opened or read
+.ti -2.95i
+Cannot open output file	\(en	Output file cannot be created
+.ti -2.95i
+Input file not in object format	\(en	Bad magic number
+.ti -2.95i
+Not an 8086/8088 object file	\(en	CPU ID of the file header is incorrect
+.ti -2.95i
+Reloc table overflow	\(en	Relocation table exceeds 1500 entries
+.ti -2.95i
+Symbol table overflow	\(en	Symbol table exceeds 1500 entries
+.ti -2.95i
+Lseek error	\(en	Input file corrupted (should never happen)
+.ti -2.95i
+Warning: no symbols	\(en	Symbol table is missing (use ast)
+.ti -2.95i
+Cannot reopen input file	\(en	Input file was removed during execution
+.in -3.20i
+.SS "Author"
+.PP
+\fIDis88\fR  was written and
+copyrighted by G. M. Harding and is included here by permission. It may be
+freely redistributed provided that complete source code, with all copyright
+notices, accompanies any redistribution. This provision also applies to any
+modifications you may make. You are urged to comment such changes, giving,
+as a minimum, your name and complete address.

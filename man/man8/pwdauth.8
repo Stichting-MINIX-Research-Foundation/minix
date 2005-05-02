@@ -1,0 +1,58 @@
+.TH PWDAUTH
+.SH NAME
+pwdauth \- password authentication program
+.SH SYNOPSIS
+.B /usr/lib/pwdauth
+.SH DESCRIPTION
+.B Pwdauth
+is a program that is used by the
+.BR crypt (3)
+function to do the hard work.  It is a setuid root utility so that it is
+able to read the shadow password file.
+.PP
+.B Pwdauth
+expects on standard input two null terminated strings, the
+password typed by the user, and the salt.  That is, the two arguments of
+the
+.B crypt
+function.  The input read in a single read call must be 1024 characters or
+less including the nulls.
+.B Pwdauth
+takes one of two actions depending on the salt.
+.PP
+If the salt has the form "\fB##\fIuser\fR" then the
+.I user
+is used to index the shadow password file to obtain the encrypted password.
+The input password is encrypted with the one-way encryption function
+contained within
+.B pwdauth
+and compared to the encrypted password from the shadow password file.  If
+equal then
+.B pwdauth
+returns the string "\fB##\fIuser\fR" with exit code 0, otherwise exit
+code 2 to signal failure.  The string "\fB##\fIuser\fR" is also returned
+if both the shadow password and the input password are null strings to
+allow a password-less login.
+.PP
+If the salt is not of the form "\fB##\fIuser\fR" then the password is
+encrypted and the result of the encryption is returned.  If salt and
+password are null strings then a null string is returned.
+.PP
+The return value is written to standard output as a null terminated string
+of 1024 characters or less including the null.
+.PP
+The exit code is 1 on any error.
+.SH "SEE ALSO"
+.BR crypt (3),
+.BR passwd (5).
+.SH NOTES
+A password must be checked like in this example:
+.PP
+.RS
+pw_ok = (strcmp(crypt(key, pw->pw_passwd), pw->pw_passwd) == 0);
+.RE
+.PP
+The second argument of crypt must be the entire encrypted password and
+not just the two character salt.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

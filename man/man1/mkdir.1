@@ -1,0 +1,33 @@
+.TH MKDIR 1
+.SH NAME
+mkdir \- make a directory
+.SH SYNOPSIS
+\fBmkdir [\fB\-p\fR] [\fB\-m \fImode\fR] \fIdirectory ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-m" "Create directory with mode"
+.FL "\-p" "Create missing intermediate directories"
+.SH EXAMPLES
+.EX "mkdir dir" "Create \fIdir\fP in the current directory"
+.EX "mkdir \-p /user/ast/dir" "Create the \fI/user/ast\fP and \fI/user/ast/dir\fP"
+.SH DESCRIPTION
+.PP
+The specified directory or directories are created and initialized. If any
+intermediate directory is missing and \fB\-p\fR is specified, the missing
+component will be created and no error displayed if directory already
+exists. If the \fB\-m\fR flag is used, this will be equivalent to a chmod
+on the directory after its creation.
+.SH "SEE ALSO"
+.BR chmod (1),
+.BR rmdir (1),
+.BR mkdir (2).

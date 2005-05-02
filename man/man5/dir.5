@@ -1,0 +1,43 @@
+.TH DIR 5
+.SH NAME
+dir \- directory layout
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <sys/dir.h>
+.SH DESCRIPTION
+The directories of the V1 and V2 file systems are arrays of the
+following structure defined in <sys/dir.h>:
+.PP
+.nf
+.ta +5n +15n +15n
+struct direct {
+	ino_t	d_ino;	/* I-node number */
+	char	d_name[14];	/* Name of up to 14 characters */
+};
+.fi
+.DT
+.PP
+The
+.B d_ino
+field is the inode number of the file named by
+.BR d_name .
+.B D_ino
+is zero if the directory slot isn't allocated.  This number is the same as
+.B st_ino
+returned by
+.BR stat (2)
+unless the entry is mounted on.
+.B D_name
+is the name of up to 14 characters, null-terminated only if less then 14
+in length.  Any character other than null or '\fB/\fP' is allowed.
+.PP
+See
+.BR directory (3)
+for a portable way to access directories, Minix is probably the last system
+with these old V7 format directories.
+.SH "SEE ALSO"
+.BR directory (3).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

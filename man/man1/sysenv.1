@@ -1,0 +1,27 @@
+.TH SYSENV 1
+.SH NAME
+sysenv \- request system boot parameter
+.SH SYNOPSIS
+.B sysenv
+.RI [ boot-variable "] ..."
+.SH DESCRIPTION
+.B Sysenv
+requests the value of one or more boot variables.  For example
+.B "sysenv\ memory"
+returns the list of free memory at system startup.  Note that some
+parameters have undergone "device translation" from a device name to
+a decimal device number.
+.PP
+If no variable names are given then the entire boot environment is
+listed.
+.SH "SEE ALSO"
+.BR svrctl (2),
+.BR monitor (8),
+.BR boot (8).
+.SH DIAGNOSTICS
+Exit code 0 with the variable's value printed to standard output if all
+requested variables exist in the boot environment, exit code 1 on any
+weird error, exit code 2 if one of the variables is not set, and exit
+code 3 if both kind of errors occurred.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

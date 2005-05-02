@@ -1,0 +1,68 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)times.3c	6.1 (Berkeley) 5/9/85
+.\"
+.TH TIMES 2 "May 9, 1985"
+.UC 4
+.SH NAME
+times \- get process times
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <sys/times.h>
+#include <time.h>
+
+int times(struct tms *\fIbuffer\fP)
+.fi
+.SH DESCRIPTION
+.B Times
+returns time-accounting information
+for the current process
+and for the terminated child processes
+of the current process.
+All times are in 1/CLOCKS_PER_SEC seconds.
+.PP
+This is the structure returned by
+.BR times :
+.PP
+.RS
+.nf
+.ta +0.4i +0.8i +1.2i
+struct tms {
+	clock_t	tms_utime;	/* user time for this process */
+	clock_t	tms_stime;	/* system time for this process */
+	clock_t	tms_cutime;	/* children's user time */
+	clock_t	tms_cstime;	/* children's system time */
+};
+.fi
+.RE
+.PP
+The user time is the number of clock ticks used by a process on
+its own computations.  The system time is the number of clock ticks
+spent inside the kernel on behalf of a process.  This does not
+include time spent waiting for I/O to happen, only actual CPU
+instruction times.
+.PP
+The children times are the sum
+of the children's process times and
+their children's times.
+.SH RETURN
+.B Times
+returns 0 on success, otherwise \-1 with the error code stored into the
+global variable
+.BR errno .
+.SH ERRORS
+The following error code may be set in
+.BR errno :
+.TP 15
+[EFAULT]
+The address specified by the
+.I buffer
+parameter is not in a valid part of the process address space.
+.SH "SEE ALSO"
+.BR time (1),
+.BR wait (2),
+.BR time (2).

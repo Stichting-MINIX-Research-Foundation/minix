@@ -1,0 +1,51 @@
+.TH FSCK 1
+.SH NAME
+fsck, fsck1 \- perform file system consistency check
+.SH SYNOPSIS
+\fBfsck\fR [\fB\-aclmrs\fR]\fR [\fIdevice\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "Automatically repair inconsistencies"
+.FL "\-c" "Check and list only the specified i-nodes
+.FL "\-l" "List the files and directories in the filesytem
+.FL "\-r" "Prompt user for repairs if inconsistencies are found
+.FL "\-s" "List the superblock of the file system"
+.SH EXAMPLES
+.EX "fsck /dev/hd4" "Check file system on \fI/dev/hd4\fR"
+.EX "fsck \-a /dev/at0" "Automatically fix errors on \fI/dev/at0\fR"
+.EX "fsck \-l /dev/fd0" "List the contents of \fI/dev/fd0\fR"
+.EX "fsck \-c 2 3 /dev/hd3" "Check and list \fI/dev/hd3\fR i-nodes 2 & 3"
+.SH DESCRIPTION
+.PP
+\fIFsck\fR performs consistency checks on the file systems which reside 
+on the specified devices.
+\fIFsck1\fR is an alternate version for use on obsolete V1 file systems.
+When either the \fB\-a\fR or \fB\-r\fR flags are given, the file system
+will be repaired if errors are found.
+Before running \fIfsck\fR on a mounted file system, it must first be unmounted.
+Trying to repair a mounted file system is dangerous and should not be 
+attempted.
+.PP
+To repair the root file system (which cannot be unmounted), first 
+type CTRL-F9 at the console to kill any and all processes.  Log back in
+as \fBroot\fR, type \fIsync\fR to force any buffered changes to disk,
+run \fIfsck\fR on the root file system and immediately reboot the
+computer by typing \fIreboot\fR.
+.PP
+It is necessary to kill all processes before repairing the root file system
+to prevent them from modifying any disk blocks while \fIfsck\fR is running.
+This is only necessary for the root file system, any other file system can
+simply be unmounted before it is checked.
+.SH "SEE ALSO"
+.BR mkfs (1),
+.BR mount (1).

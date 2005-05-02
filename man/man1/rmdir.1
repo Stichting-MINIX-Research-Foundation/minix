@@ -1,0 +1,27 @@
+.TH RMDIR 1
+.SH NAME
+rmdir \- remove a directory
+.SH SYNOPSIS
+\fBrmdir \fIdirectory ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "rmdir /user/ast/foobar" "Remove directory \fIfoobar\fP"
+.EX "rmdir /user/ast/f*" "Remove 0 or more directories"
+.SH DESCRIPTION
+.PP
+The specified directories are removed.
+Ordinary files are not removed.
+The directories must be empty.
+.SH "SEE ALSO"
+.BR mkdir (1),
+.BR rmdir (2).

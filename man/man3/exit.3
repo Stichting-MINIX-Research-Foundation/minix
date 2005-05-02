@@ -1,0 +1,39 @@
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)exit.3	6.2 (Berkeley) 5/12/86
+.\"
+.TH EXIT 3 "May 12, 1986"
+.UC 5
+.SH NAME
+exit, atexit \- terminate a process after flushing any pending output
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdlib.h>
+
+void exit(int \fIstatus\fP)
+int atexit(void (*\fIfunc\fP)(void))
+.ft R
+.fi
+.SH DESCRIPTION
+.B Exit
+first calls all functions registered by
+.BR atexit ,
+flushes all data buffered by the Standard I/O library, and finally
+terminates the process.
+.B Exit
+never returns.
+.PP
+.B Atexit
+registers the function
+.I func
+into a table of functions to be called on exit.
+.SH "SEE ALSO"
+.BR exit (2).
+.SH DIAGNOSTICS
+.B Atexit
+returns 0 on success, \-1 if
+.B malloc
+cannot allocate more memory for the list of registered functions.

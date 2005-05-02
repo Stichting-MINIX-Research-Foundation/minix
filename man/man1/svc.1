@@ -1,0 +1,47 @@
+.TH SVC 1
+.SH NAME
+svc, ci, co, svclog \- shell version control system
+.SH SYNOPSIS
+\fBci\fR [\fB\-lu\fR]\fR \fIfile\fR
+.br
+\fBco\fR [\fB\-l\fR]\fR [\fB\-r \fIrev\fR] \fIfile\fR
+.br
+\fBsvclog \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-l" "For \fIci\fR, checkin, checkout again, and lock file"
+.FL "\-l" "For \fIco\fR, checkout file and then lock the archive"
+.FL "\-u" "After checking in, do not delete the file"
+.FL "\-r" "Check out revision \fIrev\fR instead most recent revision
+.SH EXAMPLES
+.EX "ci \-u file" "Check in \fIfile\fR"
+.EX "co \-l file" "Check out \fIfile\fR and lock archive"
+.EX "co \-r 2 file" "Check out version 2"
+.SH DESCRIPTION
+.PP
+\fISvc\fR is the Shell Version Control system, patterned on RCS.
+It maintains a sequence of versions in archive files, so that new versions
+can be checked in (added to the archive), and old versions can be checked
+out (made available).
+To create an archive for \fIfile\fR, check it in with the \fB\-u\fR flag.
+This action will prompt for a log message and then create an archive called
+\fIfile,S\fR in the current directory, or in the subdirectory \fISVC\fR if 
+it exists.  
+The file will not be deleted, but will be made unwritable.
+.PP
+To update the file, check it out with the \fB\-l\fR flag.
+Then modify it, and check it back in, giving a new message when prompted.
+After this process has been repeated many times, the archive will contain
+the entire history.
+Any version can be checked out using the \fB\-r\fR flag.
+To get a printout of the history, use \fIsvclog\fR.

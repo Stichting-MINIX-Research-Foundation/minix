@@ -1,0 +1,111 @@
+.\" Copyright (c) 1983 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)environ.7	6.1 (Berkeley) 5/20/85
+.\"
+.TH ENVIRON 7 "May 20, 1985"
+.UC 5
+.SH NAME
+environ \- user environment
+.SH SYNOPSIS
+.B "extern char *const *environ;"
+.SH DESCRIPTION
+An array of strings called the `environment' is made available by
+.BR execve (2)
+when a process begins.  By convention these strings have the form
+.RI ` name = value '.
+The following names are used by various commands:
+.TP "\w'TERMCAP 'u"
+.B PATH
+The sequence of directory prefixes that
+.BR sh ,
+.BR time ,
+.BR nice (1),
+etc., apply in searching for a file known by an incomplete path name.
+The prefixes are separated by `:'.
+Login shells set
+.BR PATH=:/bin:/usr/bin .
+Note that the empty space between the `=' and the `:' indicates the current
+directory.  Security aware people move the extra `:' to the end of their
+path or omit it.
+.TP
+.B HOME
+A user's login directory, set by
+.BR login (1)
+from the password file
+.BR passwd (5).
+.TP
+.B TERM
+The kind of terminal for which output is to be prepared.
+This information is used by programs that wish to exploit special
+terminal capabilities, a screen oriented text editor for instance.
+The terminal type is set by
+.BR login (1)
+from the tty database
+.BR ttytab (5).
+.TP
+.B SHELL
+The file name of the users login shell, set by
+.BR login (1)
+from the password file
+.BR passwd (5).
+.TP
+.B TERMCAP
+The string describing the terminal in TERM, or the name of the termcap file,
+see
+.BR termcap (5),
+.BR termcap (3).
+.TP
+.B EXINIT
+A startup list of commands read by
+.BR elvis (1).
+.TP
+.B USER
+The login name of the user, set by
+.BR login (1)
+from the password file
+.BR passwd (5).
+.TP
+.B LOGNAME
+Set to the same value as
+.BR USER .
+BSD derived systems have
+.BR USER ,
+System V has
+.BR LOGNAME ,
+so modern systems have both to avoid problems.
+.TP
+.PP
+Further names may be placed in the environment by the
+.B export
+command and
+.RI ` name = value '
+arguments in
+.BR sh (1).
+Arguments may also be placed in their environment by
+programs if they use
+.BR putenv (3).
+Or in the environment of another program by building a new environment
+for one of the exec functions that accepts an environment list, like
+.BR execle (2)
+or
+.BR execve (2).
+It is unwise to conflict with certain 
+.BR sh (1)
+variables that are frequently set and/or exported by `.profile' files:
+.BR MAIL ,
+.BR PS1 ,
+.BR PS2 ,
+.BR IFS .
+.SH SEE ALSO
+.BR elvis (1),
+.BR login (1),
+.BR sh (1),
+.BR execl (3),
+.BR execve (2),
+.BR system (3),
+.BR termcap (3),
+.BR termcap (5),
+.BR passwd (5),
+.BR ttytab (5).

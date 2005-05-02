@@ -1,0 +1,37 @@
+.TH POSTMORT 1
+.SH NAME
+postmort \- perform post-mortem on PC Minix core files
+.SH SYNOPSIS
+\fBpostmort\fR [\fB\-dpt\fR] \fB\-c \fIcorefile \fB\-s \fIsymbfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Use the named corefile"
+.FL "\-d" "Dump all text symbols and segment data"
+.FL "\-p" "Display the kernel process table"
+.FL "\-s" "Use the named symbol file"
+.FL "\-t" "Display a stack backtrace"
+.SH EXAMPLES
+.EX "postmort" "display the data from the file 'core'"
+.SH DESCRIPTION
+.PP
+.I Postmort
+does a simple static analysis of a PC Minix core file;
+By default, it looks for the
+file 'core' in the local directory and loads that for analysis; it
+also searches for the file 'symbol.out', and if that fails 'a.out',
+expecting them to contain symbol information for the core file.
+It is not a fatal error if the symbol files don't exist.
+.PP
+The stack backtrace is slightly tricky, and may go on longer
+than is really justified, since there's no easy way for it to
+know when to stop.  Treat its results with caution.

@@ -1,0 +1,47 @@
+.TH TR 1
+.SH NAME
+tr \- translate character codes
+.SH SYNOPSIS
+\fBtr\fR [\fB\-cds\fR]\fR [\fIstring1\fR] [\fIstring2\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Complement the set of characters in \fIstring1\fR"
+.FL "\-d" "Delete all characters specified in \fIstring1\fR"
+.FL "\-s" "Squeeze all runs of characters in \fIstring1\fR to one character"
+.SH EXAMPLES
+.EX "tr \(fmA\-Z\(fm \(fma\-z\(fm <x >y     " "Convert upper case to lower case"
+.EX "tr \-d \(fm0123456789\(fm <f1 >f2  " "Delete all digits from \fIf1\fR"
+.SH DESCRIPTION
+.PP
+.I Tr
+performs simple character translation.
+When no flag is specified, each character in 
+.I string1
+is mapped onto the corresponding character in
+.I string2 .
+.PP
+There are two types of
+.I tr
+out there, one that requires [ and ] for character classes, and one that does
+not.  Here is what the example above would look like for a
+.I tr
+that needs the brackets:
+.PP
+.RS
+.B "tr \(fm[A\-Z]\(fm \(fm[a\-z]\(fm <x >y"
+.RE
+.PP
+Use [ and ] if you want to be portable, because a
+.I tr
+that doesn't need them will still accept the syntax and mindlessly
+translate [ into [ and ] into ].

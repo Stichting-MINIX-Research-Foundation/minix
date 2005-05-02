@@ -1,0 +1,30 @@
+.TH LOADKEYS 1
+.SH NAME
+loadkeys \- load a keyboard map into the keyboard driver
+.SH SYNOPSIS
+\fBloadkeys \fImapfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "loadkeys spanish.map" "Load a map for a Spanish keyboard"
+.SH DESCRIPTION
+.PP
+.I Loadkeys
+changes the key number to character mapping.  This is necessary for national
+keyboards that have different symbols on the keys that the standard U.S.
+English keyboard.  The file
+.I /etc/keymap
+is the first thing loaded by
+.I /etc/rc
+at boot time if it exists.
+.SH "SEE ALSO"
+.BR console (4).

@@ -1,0 +1,95 @@
+.TH TTYTAB
+.SH NAME
+ttytab \- table of login terminals
+.SH SYNOPSIS
+.B /etc/ttytab
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The
+.B ttytab
+file lists all the terminal devices that one can login on.  It is a simple
+text file that contains lines of the form:
+.PP
+.RS
+.ft I
+.ta +\w'namennn'u +\w'typennn'u +\w'"getty"nnn'u
+name	type	"getty"	"init"
+.DT
+.ft R
+.RE
+.PP
+The
+.I name
+and
+.I type
+fields are simple words,
+.I name
+is the name of the terminal device with
+.B /dev
+stripped off, and
+.I type
+tells the type of terminal to initialize the
+.B TERM
+environment variable.
+.PP
+The
+.I getty
+and
+.I init
+fields may name commands that are run to allow one to login on the line, or
+to initialize the line.  Both these fields may be more than one word if
+the whole field is enclosed in double quotes.
+.I Getty
+is usually simply the word
+.BR getty ,
+the command that prints a system identification banner and allows on to type
+a name to log in.
+.I Init
+is usually an
+.B stty
+command to set the baud rate and parity of a serial line.
+.PP
+The
+.I init
+field may be omitted to indicate that no initialization is necessary, and the
+.I getty
+field may be left out to not start a login process.  Terminals should not be
+left out, because their place in the
+.B ttytab
+file determines their slot number as returned by
+.BR ttyslot (3).
+.PP
+Comments (introduced by #) and empty lines are ignored.
+.SH EXAMPLE
+A
+.B ttytab
+for the console, two serial lines, and a pseudo tty entry:
+.PP
+.RS
+.nf
+.ta +\w'consolennn'u +\w'networknnn'u +\w'gettynnnn'u
+console	minix	getty
+tty00	vt100	getty	"stty 9600"
+tty01	dialup	getty	"stty 38400"
+ttyp0	network
+.DT
+.fi
+.RE
+.SH ENVIRONMENT
+.TP 15n
+.B TERM
+Terminal type
+.SH NOTES
+It is customary to set the type to
+.B dialup
+for a dialin line.  One can check for that name in one's
+.BR .profile .
+.SH "SEE ALSO"
+.BR getttyent (3),
+.BR ttyslot (3),
+.BR init (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

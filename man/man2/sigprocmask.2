@@ -1,0 +1,75 @@
+.TH SIGPROCMASK 2
+.SH NAME
+sigprocmask \- manipulate the signal mask
+.SH SYNOPSIS
+.ft B
+#include <signal.h>
+
+int sigprocmask(int \fIhow\fP, const sigset_t *\fIset\fP, sigset_t *\fIoset\fP)
+.ft P
+.SH DESCRIPTION
+.B Sigprocmask()
+examines or manipulates the signal mask.  This mask is the set of signals
+that are currently blocked.  The
+.I how
+argument determines the action that must be performed.  In all cases the
+signal set referenced by
+.IR oset ,
+if not
+.BR NULL ,
+will be used to receive the old signal mask.  The
+.I set
+argument, if not
+.BR NULL ,
+will be used to set or modify the current signal mask.
+.PP
+.I How
+can be one of:
+.PP
+.TP 15
+.B SIG_BLOCK
+Add the signals referenced by
+.I set
+to the mask.
+.TP
+.B SIG_UNBLOCK
+Remove the signals referenced by
+.I set
+from the mask.
+.TP
+.B SIG_SETMASK
+Set the signal mask to the set referenced by
+.IR set .
+.PP
+The value of
+.I how
+is ignored if
+.I set
+is
+.BR NULL .
+.SH "SEE ALSO"
+.BR sigaction (2),
+.BR sigpending (2),
+.BR sigsuspend (2),
+.BR sigset (3).
+.SH DIAGNOSTICS
+Returns
+.B 0
+on success and
+.B \-1
+on error.  The error code is
+.B EFAULT
+for a bad
+.I set
+or
+.I oset
+address, or
+.B EINVAL
+for a bad
+.I how
+argument.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: sigprocmask.2,v 1.2 1996/04/11 06:02:09 philip Exp $

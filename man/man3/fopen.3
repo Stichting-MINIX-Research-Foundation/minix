@@ -1,0 +1,99 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)fopen.3s	6.3 (Berkeley) 5/27/86
+.\"
+.TH FOPEN 3  "May 27, 1986"
+.UC 4
+.SH NAME
+fopen, freopen, fdopen \- open a stream
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdio.h>
+
+FILE *fopen(const char *\fIfilename\fP, const char *\fItype\fP)
+FILE *freopen(const char *\fIfilename\fP, const char *\fItype\fP, FILE *\fIstream\fP)
+FILE *fdopen(int \fIfildes\fP, const char *\fItype\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Fopen
+opens the file named by
+.I filename
+and associates a stream with it.
+.B Fopen
+returns a pointer to be used to identify the stream in subsequent operations.
+.PP
+.I Type
+is a character string having one of the following values:
+.TP 5
+"r"
+open for reading
+.ns
+.TP 5
+"w"
+create for writing
+.ns
+.TP 5
+"a"
+append: open for writing at end of file, or create for writing
+.PP
+In addition, each
+.I type
+may be followed by a "+" to have the file opened for reading and writing.
+"r+" positions the stream at the beginning of the file, "w+" creates
+or truncates it, and "a+" positions it at the end.  Both reads and writes
+may be used on read/write streams, with the limitation that an
+.BR fseek ,
+.BR rewind ,
+or reading an end-of-file must be used between a read and a write or vice-versa.
+.PP
+.B Freopen
+substitutes the named file in place of the open
+.IR stream .
+It returns the original value of
+.IR stream .
+The original stream is closed.
+.PP
+.B Freopen
+is typically used to attach the preopened constant names,
+.B stdin, stdout, stderr,
+to specified files.
+.PP
+.B Fdopen
+associates a stream with a file descriptor obtained from
+.BR open ,
+.BR dup ,
+.BR creat ,
+or
+.BR pipe (2).
+The
+.I type
+of the stream must agree with the mode of the open file.
+.SH "SEE ALSO"
+.BR open (2),
+.BR fclose (3).
+.SH DIAGNOSTICS
+.B Fopen
+and 
+.B freopen
+return the pointer
+.SM
+.B NULL
+if
+.I filename
+cannot be accessed,
+if too many files are already open,
+or if other resources needed cannot be allocated.
+.SH BUGS
+.B Fdopen
+is not portable to systems other than UNIX.
+.PP
+The read/write 
+.I types
+do not exist on all systems.  Those systems without
+read/write modes will probably treat the 
+.I type
+as if the "+" was not present.  These are unreliable in any event.

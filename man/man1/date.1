@@ -1,0 +1,78 @@
+.TH DATE 1
+.SH NAME
+date \- print or set the date and time
+.SH SYNOPSIS
+\fBdate [\fB\-qsuS\fR] [\fB\-r\fI seconds\fR]
+[[\fIMMDDYY\fR]\fIhhmm\fR[\fIss\fR]] [\fI+format\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-q" "Read the date from \fIstdin\fR"
+.FL "\-s" "Set the time (implicit for \fB\-q\fR or a date string)"
+.FL "\-u" "Print the date as GMT"
+.FL "\-S" "Date within Eternal September"
+.FL "\-r" "Use this number of seconds instead of current time"
+.SH EXAMPLES
+.EX "date" "Print the date and time"
+.EX "date 0221921610" "Set date to Feb 21, 1992 at 4:10 p.m."
+.SH DESCRIPTION
+.PP
+With the \fB\-q\fR flag or a numeric argument,
+.I date
+sets the GMT time and date.
+.I MMDDYY
+refers to the month, day, and year;
+.I hhmmss
+refers to the hour, minute and second.
+Each of the six fields must be exactly two digits, no more and no less.
+.I date
+always display the date and time, with the default format for the system.
+The \fB\-u\fR flag request GMT time instead of local time.
+A format may be specified with a + followed by a printf-like string with
+the following options:
+.ta 0.25i
+.nf
+.PP
+	%%  % character
+	%A  Name of the day
+	%B  Name of the month
+	%D  mm/dd/yy
+	%H  Decimal hour on 2 digits
+	%I  Decimal hour modulo 12 on 2 digits
+	%M  Decimal minute on 2 digits
+	%S  Decimal seconds on 2 digits
+	%T  HH:MM:SS
+	%U  Decimal week number, Sunday being first day of week
+	%W  Decimal week number, Monday being first day of week
+	%X  Same as %T
+	%Y  Decimal year on 4 digits
+	%Z  Time Zone (if any)
+	%a  Abbreviated name of the day
+	%b  Abbreviated name of the month
+	%c  Appropriate date & time (default format)
+	%d  Decimal day of the month on 2 digits
+	%e  Same as %d, but a space replaces leading 0
+	%h  Same as %b
+	%j  Decimal dey of the year on 3 digits
+	%m  Decimal month on 2 digits
+	%n  Newline character
+	%p  AM or PM
+	%r  12-hour clock time with AM/PM
+	%s  Number of seconds since the epoch
+	%t  Tab character
+	%w  Decimal day of the week (0=Sunday)
+	%x  Same as %D
+	%y  Decimal year on 2 digits
+.SH "SEE ALSO"
+.BR time (2),
+.BR ctime (3),
+.BR readclock (8).

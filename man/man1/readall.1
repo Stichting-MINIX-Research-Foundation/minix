@@ -1,0 +1,36 @@
+.TH READALL 1
+.SH NAME
+readall \- read a device quickly to check for bad blocks
+.SH SYNOPSIS
+\fBreadall\fR [\fB\-bt\fR] \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-b" "Produce shell script on \fIstdout\fR that calls \fIbadblocks\fR"
+.FL "\-t" "Just print device size"
+.SH EXAMPLES
+.EX "readall /dev/hd0" "Read all of \fI/dev/hd0\fR"
+.EX "readall -b /dev/hd1 >s" "Generate shell script on \fIs\fR"
+.SH DESCRIPTION
+.PP
+\fIReadall\fR reads all of the named device in large chunks.  
+It reports about blocks that it cannot read.  
+Unlike \fIdiskcheck\fR, it does not attempt to write on
+the disk, making it safer to use when one is worried about a sick system.
+When the \fB\-b\fR flag is given, the output is a shell script that
+calls the \fIbadblocks\fR program to marked all the bad blocks.
+Whenever installing 
+\s-2MINIX\s+2,
+it is wise to run \fIreadall\fR with the \fB\-b\fR flag first on all
+the hard disks.
+.SH "SEE ALSO"
+.BR badblocks (8).

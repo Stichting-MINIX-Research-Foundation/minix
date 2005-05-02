@@ -1,0 +1,31 @@
+.TH CDIFF 1
+.SH NAME
+cdiff \- context diff
+.SH SYNOPSIS
+\fBcdiff\fR [\fB\-c\fIn\fR] \fIoldfile \fInewfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Provide \fIn\fR lines of context"
+.SH EXAMPLES
+.EX "cdiff old new >f" "Write context diff on \fIf\fR"
+.EX "cdiff \-c1 old new >f" "Use only 1 line of context"
+.SH DESCRIPTION
+.PP
+\fICdiff\fR produces a context diff by first running \fIdiff\fR and then 
+adding context.  
+Some update programs, like \fIpatch\fR, can use context diffs to update
+files, even in the presence of other, independent changes.
+.SH "SEE ALSO"
+.BR cmp (1),
+.BR diff (1),
+.BR patch (1).

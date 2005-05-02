@@ -1,0 +1,24 @@
+.TH MIXER 1
+.SH NAME
+mixer \- manipulate mixer settings on a sound card 
+.SH SYNOPSIS
+\fBmixer\fP [\-\fBr\fP] 
+.SH DESCRIPTION
+\fBMixer\fP, invoked without arguments, turns the screen into a sound mixer.
+Levels can be changed with the cursor-left and cursor-right keys. Input and
+output settings can be toggled with the space bar. For every sound source 
+there are two, or one when mono, sliders.   
+The input controls have only effect when recording with the Dac. These 
+settings can also be used to switch the left and right channels or, when
+both channels are enabled on both Dac channels, record in mono. 
+To exit the mixer use the 'e' key. 
+
+Mixer settings can be stored and restored with the 's' (store) and 'r' keys.
+When the store function is used \fBMixer\fP will write the settings to a file
+in the user's home directory called \fI\.mixer\fP. The restore function reads
+this file to restore saved settings.  
+.SH OPTIONS
+.IP \-r 
+restore settings saved in \fI\.mixer\fP and exit immediately
+.SH AUTHOR
+Michel R. Prevenier (mrpreve@cs.vu.nl)

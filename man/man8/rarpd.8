@@ -1,0 +1,75 @@
+.TH RARPD 8
+.SH NAME
+rarpd \- reverse address resolution protocol daemon
+.SH SYNOPSIS
+.B rarpd
+.RB [ \-d [\fIlevel\fR]]
+.I network-name
+\&...
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Rarpd
+listens on the given networks for broadcast packets asking for reverse address
+resolution.  These packets are sent by hosts at boot time to find out their
+IP address.
+.B Rarpd
+looks up the six octet ethernet number in the
+.B /etc/ethers
+file finding a host name.  This name is translated to the IP address of the
+host by a DNS lookup.  The IP address is then sent to the host.
+.PP
+Under Minix the program forks as needed to give each network its own server.
+Under Minix-vmd all networks are handled in the same program using async I/O.
+.SS "Private Ethernet Addresses"
+For VU practical work, where students have to create their own IP stack
+starting at the bottom with RARP, this implementation recognizes Ethernet
+addresses starting with octet 0x76 as special.  The next octet is used as a
+additional host number and the next and last four octets as an IP address
+that this Ethernet address is additional for.  The IP address is translated
+back to a name, and the first component of that name gets a dash and the
+additional host number added to it.  That hostname is then looked up and its
+IP address returned in a RARP reply.  Example:
+.PP
+.RS
+.ta +\w'flotsam-3.example.commmm'u
+76:3:c0:a8:e7:fa	Additional 3, IP 192.168.231.250
+.SP
+flotsam.example.com	Reverse lookup on 192.168.231.250
+.SP
+flotsam-3.example.com	Splicing in additional number
+.SP
+192.168.231.42		Forward lookup
+.RE
+.PP
+In this example a RARP query for 76:3:c0:a8:e7:fa gets 192.168.231.42 as reply.
+.SH OPTIONS
+.TP
+.BR \-d [\fIlevel\fP]
+Turns on debugging messages at the given level, by default 1.  At level 1 you
+will be shown what answers are sent, and at level 2 or higher you will be told
+about queries from unknown hosts or host on the wrong network.
+The debug level can also be increased by 1 at runtime by sending signal
+.B SIGUSR1
+or turned off (set to 0) with
+.BR SIGUSR2 .
+.SH "SEE ALSO"
+.BR ifconfig (8),
+.BR ethers (5),
+.BR hosts (5),
+.BR inet (8),
+.BR boot (8),
+.BR dhcpd (8),
+.BR irdpd (8),
+.BR inetd (8),
+.BR nonamed (8).
+.SH NOTES
+A "network name" is the device name of the IP device of a network, i.e.
+.BR ip0 ,
+.BR ip1 ", ..."
+.PP
+The RARP protocol has gone out of fashion in favour of DHCP.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

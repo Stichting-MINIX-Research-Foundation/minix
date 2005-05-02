@@ -1,0 +1,33 @@
+.TH UUD 1
+.SH NAME
+uud, uudecode \- decode a binary file encoded with uue
+.SH SYNOPSIS
+\fBuud\fR [\fB\-n\fR]\fR [\fB\-s \fIsrcdir\fR] [\fB\-t \fIdstdir/\fR] \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-n" "Do not verify checksums"
+.FL "\-s" "Name of directory where \fI.uue\fR file is"
+.FL "\-t" "Name of directory where output goes"
+.SH EXAMPLES
+.EX "uud file.uue " "Re-create the original file"
+.EX "uud \- <file.uue" "The \- means use \fIstdin\fR"
+.SH DESCRIPTION
+.PP
+\fIUud\fR decodes a file encoded with \fIuue\fR or
+\s-2UNIX\s+2
+\fIuuencode\fR.
+The decoded file is given the name that the original file had.  
+The name information is part of the encoded file.
+Mail headers and other junk before the encoded file are skipped.
+.SH "SEE ALSO"
+.BR uue (1).

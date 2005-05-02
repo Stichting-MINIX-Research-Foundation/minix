@@ -1,0 +1,1256 @@
+.CD "elvis \(en clone of the Berkeley vi editor"
+.SX "elvis \fR[\fB\(enRerv\fR] [\fB\(ent \fItag\fR] \fR[\fIfile\fR] ..."
+.FL "\(enR" "Set the read-only option"
+.FL "\(ene" "Start up emulating \fIex\fR"
+.FL "\(enr" "Tell the user to use \fIelvrec\fR instead
+.FL "\(ent" "Start editing at the given tag"
+.FL "\(env" "Start up emulating \fIvi\fR"
+.EX "elvis" "Call the editor"
+.EX "elvis prog.c" "edit \fIprog.c\fR"
+.PP
+\fIElvis\fR is a full-screen editor closely modeled on the famous Berkeley
+\fIvi\fR editor.
+It provides essentially the same interface to the user as \fIvi\fR, but the 
+code is completely new, written from scratch.
+This document provides a brief introduction to \fIvi\fR.
+It is not intended as a tutorial for beginners.
+Most books on
+.Ux
+cover \fIvi\fR.
+.PP
+Like \fIvi\fR, \fIelvis\fR can operate as a screen editor
+(\fIvi\fR mode) or as a line editor (\fIex\fR) mode.  
+It can be called either as \fIelvis\fR \fIvi\fR,or as \fIex\fR, 
+depending on which is desired.
+They are all links to the same file.
+.SS "Vi Commands"
+.PP
+Below is a list of the \fIvi\fR commands supported.
+The following symbols are used in the table:
+.HS
+.in +1.25i
+.ta +1.0i
+.ti -1.0i
+count	Integer parameter telling how many or how much
+.ti -1.0i
+key	One character parameter to the command
+.ti -1.0i
+inp	Interactive input expected
+.ti -1.0i
+mv	Indicates how much for commands like \fIdelete\fR and \fIchange\fR:
+.in +0.8i
+.ta +0.3i
+.ti -0.3i
+(	Previous sentence
+.ti -0.3i
+)	Next sentence
+.ti -0.3i
+{	Previous paragraph
+.ti -0.3i
+}	Next paragraph (delimited by blank line, \fI.PP, .LP, .IP\fR etc.)
+.ti -0.3i
+[	Previous section (delimited by \fI.SH\fR or \fI.NH\fR)
+.br
+A repeated command character means the scope is this line
+.in -0.8i
+.ta +1.0i
+.ti -1.0i
+MOVE	Indicates commands that may also be used where \fImv\fR is specified
+.ti -1.0i
+EDIT	These commands affect text and may be repeated by the \fI.\fR command
+.in -1.25i
+.HS
+In addition to the above notation, the caret (^) is used as an abbreviation
+for CTRL.
+For example, ^A means CTRL-A.
+.HS
+.in +2i
+.ta +1i +1i +3.3i
+.ti -2i
+\fBCount~~~~	Command	Description	Type\fR
+.ti -2i
+	^A	(Not defined)
+.ti -2i
+	^B	Move toward the top of the file by 1 screenful
+.ti -2i
+	^C	(Not defined)
+.ti -2i
+count	^D	Scroll down \fIcount\fR lines (default 1/2 screen)
+.ti -2i
+count	^E	Scroll up \fIcount\fR lines
+.ti -2i
+	^F	Move toward the bottom of the file by 1 screenful
+.ti -2i
+	^G	Show file status, and the current line 
+.ti -2i
+count	^H	Move left, like \fIh\fR	MOVE
+.ti -2i
+	^I	(Not defined)
+.ti -2i
+count	^J	Move down	MOVE
+.ti -2i
+	^K	(Not defined)
+.ti -2i
+	^l	Redraw the screen
+.ti -2i
+count	^M	Move to the front of the next line	MOVE
+.ti -2i
+count	^N	Move down	MOVE
+.ti -2i
+	^O	(Not defined)
+.ti -2i
+count	^P	Move up	MOVE
+.ti -2i
+	^Q	(Not defined)
+.ti -2i
+	^R	Redraw the screen
+.ti -2i
+	^S	(Not defined)
+.ti -2i
+	^T	(Not defined)
+.ti -2i
+count	^U	Scroll up \fIcount\fR lines (default 1/2 screen)
+.ti -2i
+	^V	(Not defined)
+.ti -2i
+	^W	(Not defined)
+.ti -2i
+	^X	(Not defined)
+.ti -2i
+count	^Y	Scroll down \fIcount\fR lines
+.ti -2i
+	^Z	(Not defined)
+.ti -2i
+	ESC	(Not defined)
+.ti -2i
+	^\e	(Not defined)
+.ti -2i
+	^]	If the cursor is on a tag name, go to that tag
+.ti -2i
+	^^	Save this file and edit the previous file
+.ti -2i
+	^_	(Not defined)
+.ti -2i
+count	SPACE	Move right,like \fIl\fR	MOVE
+.ti -2i
+	! mv	Run the selected lines thru an external filter program
+.ti -2i
+	" key	Select which cut buffer to use next
+.ti -2i
+	#	(Not defined)
+.ti -2i
+	$	Move to the rear of the current line	MOVE
+.ti -2i
+	%	move to the matching (){}[] character	MOVE
+.ti -2i
+	&	(Not defined)
+.ti -2i
+	' key	Move to a marked line	MOVE
+.ti -2i
+count	(	Move backward \fIcount\fR sentences	MOVE
+.ti -2i
+count	)	Move forward \fIcount\fR sentences	MOVE
+.ti -2i
+	*	(Not defined)
+.ti -2i
+count	+	Move to the front of the next line	MOVE
+.ti -2i
+count	,	Repeat the previous [\fIfFtT\fR] but the other way	MOVE
+.ti -2i
+count	\(en	Move to the front of the preceding line	MOVE
+.ti -2i
+	.	Repeat the previous \*(OQedit\*(CQ command
+.ti -2i
+	 /	Text search forward for a given regular expr	MOVE
+.ti -2i
+	0	If not part of count, move to 1st char of this line	MOVE
+.ti -2i
+	1	Part of count
+.ti -2i
+	2	Part of count
+.ti -2i
+	3	Part of count
+.ti -2i
+	4	Part of count
+.ti -2i
+	5	Part of count
+.ti -2i
+	6	Part of count
+.ti -2i
+	7	Part of count
+.ti -2i
+	8	Part of count
+.ti -2i
+	9	Part of count
+.ti -2i
+	:	Text. Run single \fIex\fR cmd
+.ti -2i
+count	;	Repeat the previous [fFtT] cmd	MOVE
+.ti -2i
+count	< mv	Shift text left	EDIT
+.ti -2i
+	=	(Not defined)
+.ti -2i
+count	> mv	Shift text right	EDIT
+.ti -2i
+	? text	Search backward for a given regular expression	MOVE
+.ti -2i
+	@	(Not defined)
+.ti -2i
+count	A inp	Append at end of the line	EDIT
+.ti -2i
+count	B	Move back Word	MOVE
+.ti -2i
+	C inp	Change text from cursor through end of line	EDIT
+.ti -2i
+	D	Delete text from  cursor through end of line	EDIT
+.ti -2i
+count	E	Move end of Word	MOVE
+.ti -2i
+count	F key	Move leftward to a given character	MOVE
+.ti -2i
+count	G	Move to line #\fIcount\fR (default is the bottom line)	MOVE
+.ti -2i
+count	H	Move to home row (the line at the top of the screen)
+.ti -2i
+count	I inp	Insert at the front of the line (after indents)	EDIT
+.ti -2i
+count	J	Join lines, to form one big line	EDIT
+.ti -2i
+	K	Look up keyword
+.ti -2i
+count	L	Move to last row (the line at the bottom of the screen)
+.ti -2i
+	M	Move to middle row (the line in the middle)
+.ti -2i
+	N	Repeat previous search, but the opposite way	MOVE
+.ti -2i
+count	O inp	Open up a new line above the current line	EDIT
+.ti -2i
+	P	Paste text before the cursor
+.ti -2i
+	Q	Quit to EX mode
+.ti -2i
+	R inp	Overtype	EDIT
+.ti -2i
+count	S inp	Change lines, like \fIcount\fRcc
+.ti -2i
+count	T key	Move leftward \fIalmost\fR to a given character	MOVE
+.ti -2i
+	U	Undo all recent changes to the current line
+.ti -2i
+	V	(Not defined)
+.ti -2i
+count	W	Move forward \fIcount\fR Words	MOVE
+.ti -2i
+count	X	Delete the character(s) to the left of the cursor	EDIT
+.ti -2i
+count	Y	Yank text line(s) (copy them into a cut buffer)
+.ti -2i
+	Z Z	Save the file & exit
+.ti -2i
+	[ [	Move back 1 section	MOVE
+.ti -2i
+	\e	(Not defined)
+.ti -2i
+	] ]	Move forward 1 section					MOVE
+.ti -2i
+	^	Move to the front of the current line (after indent)	MOVE
+.ti -2i
+	\(ul	(Not defined)
+.ti -2i
+	` key	Move to a marked character	MOVE
+.ti -2i
+count	a inp	Insert text after the cursor	EDIT
+.ti -2i
+count	b	Move back \fIcount\fR words	MOVE
+.ti -2i
+	c mv	Change text	EDIT
+.ti -2i
+	d mv	Delete text	EDIT
+.ti -2i
+count	e	Move forward to the end of the current word	MOVE
+.ti -2i
+count	f key	Move rightward to a given character	MOVE
+.ti -2i
+	g	(Not defined)
+.ti -2i
+count	h	Move left	MOVE
+.ti -2i
+count	i inp	Insert text at the cursor	EDIT
+.ti -2i
+count	j	Move down	MOVE
+.ti -2i
+count	k	Move up	MOVE
+.ti -2i
+count	l	Move right	MOVE
+.ti -2i
+	m key	Mark a line or character
+.ti -2i
+	n	Repeat the previous search	MOVE
+.ti -2i
+count	o inp	Open a new line below the current line	EDIT
+.ti -2i
+	p	Paste text after the cursor
+.ti -2i
+	q	(Not defined)
+.ti -2i
+count	r key	Replace \fIcount\fR chars by a given character	EDIT
+.ti -2i
+count	s inp	Replace \fIcount\fR chars with text from the user	EDIT
+.ti -2i
+count	t key	Move rightward \fIalmost\fR to a given character	MOVE
+.ti -2i
+	u	Undo the previous edit command
+.ti -2i
+	v	(Not defined)
+.ti -2i
+count	w	Move forward \fIcount\fR words	MOVE
+.ti -2i
+count	x	Delete the character that the cursor's on	EDIT
+.ti -2i
+	y mv	Yank text (copy it into a cut buffer)
+.ti -2i
+	z key	Scroll current line to the screen's +=top -=bottom .=middle
+.ti -2i
+count	{	Move back \fIcount\fR paragraphs	MOVE
+.ti -2i
+count	|	Move to column \fIcount\fR (the leftmost column is 1)
+.ti -2i
+count	}	Move forward \fIcount\fR paragraphs	MOVE
+.ti -2i
+.tr ~~
+count	\(ap	Switch a character between upper & lower case	EDIT
+.tr ~
+.ti -2i
+	DEL	(Not defined)
+.in -2i
+.SS "Ex Commands"
+.PP
+Below is a list of the \fIex\fR commands supported.  All can be abbreviated.
+.UU "General"
+.LP
+.nf
+.ta 1.2i 2.4i
+[line]	append
+	args	[files]
+	cd	[directory]
+	chdir	[directory]
+[line][,line]	change
+[line][,line]	copy	line
+[line][,line]	debug[!]
+[line][,line]	Delete	[\*(CQx]
+	edit[!]	[file]
+	ex[!]	[file]
+	file
+[line][,line]	global	/regexp/ command
+[line]	Insert
+[line][,line]	join
+[line][,line]	list
+	map[!]	key mapped_to
+[line]	mark	x
+	mkexrc
+[line][,line]	Move	line
+	next[!]	[files]
+	Next[!]
+	previous[!]
+[line][,line]	print
+[line]	put	[\*(CQx]
+	quit[!]
+[line]	read	file
+	rewind[!]
+	set	[options]
+[line][,line]	substitute	/regexp/replacement/[p][g]
+	tag[!]	tagname
+[line][,line]	to	line
+	Undo
+	unmap[!]	key
+	validate[!]
+	version
+[line][,line]	vglobal	/regexp/ command
+	visual
+	wq
+[line][,line]	write[!]	[[>>]file]
+	xit[!]
+[line][,line]	yank	[\*(CQx]
+[line][,line]	!	command
+[line][,line]	<
+[line][,line]	=
+[line][,line]	>
+.SP 0.25
+.UU "Text Entry"
+.SP 0.25
+.LP
+.ta 1.2i 2.4i
+.nf
+[line]	append
+[line][,line]	change [\*(CQx]
+[line]	Insert
+.fi
+
+The (a)ppend command inserts text after the specified line.
+
+The (i)nsert command inserts text before the specified line.
+
+The (c)hange command copies the range of lines into a cut buffer,
+deletes them, and inserts new text where the old text used to be.
+
+For all of these commands, you indicate the end of the text you're
+inserting by hitting ^D or by entering a line which contains only
+a period.
+.SP 0.25
+.UU "Cut & Paste"
+.SP 0.25
+.LP
+.ta 1.2i 2.4i
+.nf
+[line][,line]	Delete [\*(CQx]
+[line][,line]	yank [\*(CQx]
+[line]	put[!] [\*(CQx]
+[line][,line]	copy line
+[line][,line]	to line
+[line][,line]	Move line
+
+.fi
+The (d)elete command copies the specified range of lines into a
+cut buffer, and then deletes them.
+
+The (y)ank command copies the specified range of lines into a cut
+buffer, but does \fInot\fR delete them.
+
+The (pu)t command inserts text from a cut buffer after the specified
+line\(emor before it if the ! is present.
+
+The (co)py and (t)o commands yank the specified range of lines and then
+immediately paste them after some other line.
+
+The (m)ove command deletes the specified range of lines and then
+immediately pastes them after some other line.  If the destination
+line comes after the deleted text, then it will be adjusted
+automatically to account for the deleted lines.
+.UU "Displaying Text"
+.LP
+.ta 1.2i 2.4i
+.nf
+[line][,line]	print
+[line][,line]	list
+
+.fi
+The (p)rint command displays the specified range of lines.
+
+The (l)ist command also displays them, but it is careful to make
+control characters visible.
+.UU "Global Operations"
+.LP
+.ta 1.2i 2.4i
+.nf
+[line][,line]	global /regexp/ command
+[line][,line]	vglobal /regexp/ command
+
+.fi
+The (g)lobal command searches through the lines of the specified range
+(or through the whole file if no range is specified) for lines that
+contain a given regular expression.  It then moves the cursor to each
+of these lines and runs some other command on them.
+
+The (v)global command is similar, but it searches for lines that
+\fIdo not\fR contain the regular expression.
+.UU "Line Editing"
+.LP
+.ta 1.2i 2.4i
+.nf
+[line][,line]	join
+[line][,line]	! program
+[line][,line]	<
+[line][,line]	>
+[line][,line]	substitute /regexp/replacement/[p][g]
+
+.fi
+The (j)oin command concatenates all lines in the specified range together
+to form one big line.  If only a single line is specified, then the
+following line is catenated onto it.
+
+The ! command runs an external filter program, and feeds the specified
+range of lines to it's stdin.  The lines are then replaced by the
+output of the filter.  A typical example would be \*(OQ:'a,'z!sort -n\*(CQ to
+sort the lines 'a,'z according to their numeric values.
+
+The < and > commands shift the specified range of lines left or right,
+normally by the width of 1 tab character.  The \*(OQshiftwidth\*(CQ option
+determines the shifting amount.
+
+The (s)ubstitute command finds the regular expression in each line,
+and replaces it with the replacement text.  The \*(OQp\*(CQ option causes
+the altered lines to be printed, and the \*(OQg\*(CQ option permits all
+instances of the regular expression to be found & replaced.  (Without
+\*(OQg\*(CQ, only the first occurrence is replaced.)
+.SP 0.25
+.UU "Undo"
+.SP 0.25
+.LP
+.ta 1.2i 2.4i
+.nf
+	undo
+
+.fi
+The (u)ndo command restores the file to the state it was in before your
+most recent command which changed text.
+.SP 0.25
+.UU "Configuration & Status"
+.SP 0.25
+.LP
+.ta 1.2i 2.4i
+.nf
+	map[!] [key mapped_to]
+	unmap[!] key
+	set [options]
+	mkexrc
+[line]	mark x
+	visual
+	version
+[line][,line]	=
+	file
+
+.fi
+The (ma)p command allows you to configure \fIelvis\fR to recognize your
+function keys, and treat them as though they transmitted some other
+sequence of characters.  Normally this mapping is done only when in
+the visual command mode, but with the [!]	present it will map keys
+under all contexts.  When this command is given with no arguments,
+it prints a table showing all mappings currently in effect.  When
+called with two arguments, the first is the sequence that your
+function key really sends, and the second is the sequence that you
+want \fIelvis\fR to treat it as having sent.
+
+The (unm)ap command removes key definitions that were made via the
+map command.
+
+The (se)t command allows you examine or set various options.  With
+no arguments, it displays the values of options that have been
+changed.  With the single argument \*(OQall\*(CQ it displays the values of
+all options, regardless of whether they've been explicitly set or
+not.  Otherwise, the arguments are treated as options to be set.
+
+The (mk)exrc command saves the current configuration to a file
+called \fI.exrc\fR in the current directory.
+
+The mar(k) command defines a named mark to refer to a specific place
+in the file.  This mark may be used later to specify lines for other
+commands.
+
+The (vi)sual command puts the editor into visual mode.  Instead of
+emulating ex, \fIelvis\fR will start emulating vi.
+
+The (ve)rsion command tells you that what version of \fIelvis\fR this is.
+
+The = command tells you what line you specified, or, if you specified
+a range of lines, it will tell you both endpoints and the number of
+lines included in the range.
+
+The file command tells you the name of the file, whether it has been
+modified, the number of lines in the file, and the current line number.
+.UU "Multiple Files"
+.LP
+.ta 1.2i 2.4i
+.nf
+	args [files]
+	next[!] [files]
+	Next[!]
+	previous[!]
+	rewind[!]
+
+.fi
+When you invoke \fIelvis\fR from your shell's command line, any filenames
+that you give to \fIelvis\fR as arguments are stored in the args list.  The
+(ar)gs command will display this list, or define a new one.
+
+The (n)ext command switches from the current file to the next one in
+the args list.  You may specify a new args list here, too.
+
+The (N)ext and (pre)vious commands (they're really aliases for the same
+command) switch from the current file to the preceding file in the
+args list.
+
+The (rew)ind command switches from the current file to the first file
+in the args list.
+.SP 1
+.UU "Switching Files"
+.SP 1
+.LP
+.ta 1.2i 2.4i
+.nf
+	edit[!] [file]
+	tag[!] tagname
+
+.fi
+The (e)dit command allows to switch from the current file to some other
+file.  This has nothing to do with the args list, by the way.
+
+The (ta)g command looks up a given tagname in a file called \*(OQtags".
+This tells it which file the tag is in, and how to find it in that file.
+\fIElvis\fR then switches to the tag's file and finds the tag.
+.SP 1
+.UU "Exiting"
+.SP 1
+.LP
+.ta 1.2i 2.4i
+.nf
+	quit[!]
+	wq
+	xit
+
+.fi
+The (q)uit command exits from the editor without saving your file.
+
+The (wq) and (x)it commands (really two names for the same command)
+both write the file before exiting.
+.UU "File I/O"
+.LP
+.ta 1.2i 2.4i
+.nf
+[line]	read file
+[line][,line]	write[!][[>>]file]
+
+.fi
+The (r)ead command gets text from another file and inserts it after
+the specified line.
+
+.fi
+The (w)rite command writes the whole file, or just part of it, to
+some other file.  The !, if present, will permit the lines to be
+written even if you've set the readonly option.  If you precede the
+filename by >> then the lies will be appended to the file.
+.UU "Directory"
+.LP
+.ta 1.2i 2.4i
+.nf
+	cd [directory]
+	chdir [directory]
+	shell
+
+.fi
+The (cd) and (chd)ir commands (really two names for one command)
+switch the current working directory.
+
+The (sh)ell command starts an interactive shell.
+.SP 0.5
+.UU "Debugging"
+.SP 0.5
+.LP
+.ta 1.2i 2.4i
+.nf
+[line][,line]	debug[!]
+	validate[!]
+
+.fi
+These commands are only available if you compile \fIelvis\fR with the
+\fB-DDEBUG\fR flag.
+
+The de(b)ug command lists stats for the blocks which contain the
+specified range of lines.  If the ! is present, then the contents
+of those blocks is displayed, too.
+
+The (va)lidate command checks certain variables for internal
+consistency.  Normally it does not output anything unless it detects
+a problem.  With the !, though, it will always produce *some*
+output.
+.SP 0.5
+.SS "Extensions"
+.SP 0.5
+.PP.
+.ta 1i
+.in +0.25i
+In addition to the standard commands, a variety of extra features are
+present in \fIelvis\fR that are not present in \fIvi\fR.
+They are described below.
+
+.ti -0.25i
+.B .exrc
+.br
+\fIElvis\fR first runs a \fI.exrc\fR file (if there is one) from your $HOME
+directory. After that, it runs a \fI.exrc\fR (if there is one) from the
+current directory.  The one in the current directory may override
+settings made by the one in the $HOME directory.
+
+.ti -0.25i
+.B :mkexrc
+.ti -0.25i
+.B :mk
+.br
+This EX command saves the current :set and :map configurations in
+the \*(OQ.exrc\*(CQ file in your current directory.
+
+.ti -0.25i
+.B :args
+.ti -0.25i
+.B :ar
+.br
+You can use the :args command to define a new args list, as in:
+
+	:args *.h
+
+After you have defined a new args list, the next time you issue a
+:next command \fIelvis\fR will switch to the first file of the new list.
+
+.ti -0.25i
+.B :Next
+.ti -0.25i
+.B :previous
+.ti -0.25i
+.B :N
+.ti -0.25i
+.B :pre
+.br
+These commands move backwards through the args list.
+
+.ti -0.25i
+.B zz
+.br
+In VI, the (lowercase) \*(OQzz\*(CQ command will center the current line on
+the screen, like \*(OQz="
+
+.ti -0.25i
+.B .
+.br
+The default count value for . is the same as the previous command
+which . is meant to repeat.  However, you can supply a new count
+if you wish.  
+For example, after \*(OQ3dw\*(CQ, \*(OQ.\*(CQ will delete 3 words,
+but \*(OQ5.\*(CQ will delete 5 words.
+
+.ti -0.25i
+\fB"\fR
+.br
+The text which was most recently input (via a \*(OQcw\*(CQ command, or
+something similar) is saved in a cut buffer called ". (which is a
+pretty hard name to write in an English sentence).  You can use this
+with the \*(OQp\*(CQ or \*(OQP\*(CQ commands thusly:
+.HS
+	".p
+.HS
+.ti -0.25i
+.B K
+.br
+You can move the cursor onto a word and press shift-K to have \fIelvis\fR
+run a reference program to look that word up.  This command alone is
+worth the price of admission!  See the ctags and ref programs.
+
+.ti -0.25i
+.B input
+.br
+You can backspace back past the beginning of the line.
+If you type CTRL-A, then the text that you input last time is
+inserted.  You will remain in input mode, so you can backspace over
+part of it, or add more to it.  (This is sort of like CTRL-@ on
+the real vi, except that CTRL-A really works.)
+
+Real \fIvi\fR can only remember up to 128 characters of input, but \fIelvis\fR
+can remember any amount.
+
+.ti -0.25i
+.B :set
+charattr
+.ti -0.25i
+.B :se
+ca
+.br
+\fIElvis\fR can display \*(OQbackslash-f\*(CQ style character attributes on the
+screen as you edit.  The following example shows the recognized
+attributes:
+
+	normal \fBboldface\fR \fIitalics\fR 
+
+NOTE: you must compile \fIelvis\fR without the \(enDSET_NOCHARATTR flag for
+this to work.
+.in -0.25i
+.SS "Omissions"
+.PP
+A few \fIvi\fR features are missing.
+The replace mode is a hack.  It does not save the text that it overwrites.
+.PP
+Long lines are displayed differently\(emwhere the real vi would wrap a long
+line onto several rows of the screen, \fIelvis\fR simply displays part of the line,
+and allows you to scroll the screen sideways to see the rest of it.
+.PP
+The \*(OQ:preserve\*(CQ and \*(OQ:recover\*(CQ commands are missing, as 
+is the \fB\(enr\fR flag.
+\*(OQ:Preserve" is practically never used and since use of \*(OQ:recover\\*(CQ
+is so rare, it was decided to implement it as a separate program.  There's no
+need to load the recovery code into memory every time you edit a file.
+.PP
+LISP support is missing.
+The \*(OQ@\*(CQ and \*(OQ:@\*(CQ commands are missing.
+You cannot APPEND to a cut buffer.
+.SS "Options"
+.PP
+A variety of options can be set as described below:
+.HS
+.nf
+.in +0.25i
+.ta 0.9i 1.35i 2.1i 3.0i
+\fBName	Abbr	Type	Default	Description\fR
+autoindent	as	Bool	FALSE	autoindent during input?
+autowrite	aw	Bool	FALSE	write file for :n command?
+charattr	ca	Bool	FALSE	display bold & underline chars?
+columns	co	Number	80	width of screen, in characters
+directory	dir	String	/usr/tmp	where tmp files are kept
+errorbells	eb	Bool	TRUE	ring bell on error?
+exrefresh	er	Bool	TRUE	EX mode calls write() often?
+ignorecase	ic	Bool	FALSE	searches: upper/lowercase OK?
+keytime	kt	Number	1	allow slow receipt of ESC seq?
+keywordprg	kp	String	/usr/bin/ref	program to run for shift-K
+lines	ln	Number	25	height of screen, in lines
+list	li	Bool	FALSE	show tabs as \*(OQ^I\*(CQ?
+magic	ma	Bool	TRUE	searches: allow metacharacters?
+paragraphs	pa	String	PPppPApa	paragraphs start with .PP, etc.
+readonly	ro	Bool	FALSE	no file should be written back?
+report	re	Number	5	report changes to X lines?
+scroll	sc	Number	12	default #lines for ^U and ^D
+sections	se	String	SEseSHsh	sections start with .SE, etc.
+shell	sh	String	\fI/bin/sh\fR	shell program, from environment
+shiftwidth	sw	Number	8	width of < or > commands
+sidescroll	ss	Number	8	#chars to scroll sideways by
+sync	sy	Bool	FALSE	call sync() after each change?
+tabstop	ts	Number	8	width of a tab character
+term	te	String	"?"	terminal type, from environment
+vbell	vb	Bool	TRUE	use visible bell if possible?
+warn	wa	Bool	TRUE	warn if file not saved for :!cmd
+wrapmargin	wm	Number	0	Insert newline after which col?
+wrapscan	ws	Bool	TRUE	searches: wrap at EOF?
+
+.fi
+.ti -0.25i
+.B autoindent
+.br
+During input mode, the autoindent option will cause each added line
+to begin with the same amount of leading whitespace as the line above
+it.  Without autoindent, added lines are initially empty.
+
+.ti -0.25i
+.B autowrite
+.br
+When you're editing one file and decide to switch to another\(emvia
+the :tag command, or :next command, perhaps\(emif your current
+file has been modified, then \fIelvis\fR will normally print an error
+message and refuse to switch.
+
+However, if the autowrite option is on, then \fIelvis\fR will write the
+modified version of the current file and successfully switch to the
+new file.
+
+.ti -0.25i
+.B charattr
+.br
+Many text formatting programs allow you to designate portions of
+your text to be underlined, italicized, or boldface by embedding
+the special strings \\fU, \\fI, and \\fB in your text.  The special
+string \\fR marks the end of underlined or boldface text.
+
+\fIElvis\fR normally treats those special strings just like any other
+text.
+However, if the \fIcharattr\fR option is on, then \fIelvis\fR will interpret
+those special strings correctly, to display underlined or boldface
+text on the screen.  (This only works, of course, if your terminal
+can display underlined and boldface, and if the TERMCAP entry says
+how to do it.)
+
+.ti -0.25i
+.B columns
+.br
+This is a \*(OQread only\*(CQ option.  You cannot change its value, but you
+can have \fIelvis\fR print it.  It shows how wide your screen is.
+
+.ti -0.25i
+.B directory
+.br
+Elvis uses temporary files to store changed text.
+This option allows you to control where those temporary files will be.
+Ideally, you should store them on in fast non-volatile memory,
+such as a hard disk.
+
+This option can only be set in the ".exrc" file.
+
+.ti -0.25i
+.B errorbells
+.br
+Normally, \fIelvis\fR will ring your terminal's bell if you make an error.
+However, in noerrorbells mode, your terminal will remain silent.
+
+.ti -0.25i
+.B exrefresh
+.br
+The EX mode of \fIelvis\fR writes many lines to the screen.  You can make
+\fIelvis\fR either write each line to the screen separately, or save up
+many lines and write them all at once.
+
+The exrefresh option is normally on, so each line is written to the
+screen separately.
+
+You may wish to turn the exrefresh option off (:se noer) if the
+\*(OQwrite\*(CQ system call is costly on your machine, or if you're using a
+windowing environment.  (Windowing environments scroll text a lot
+faster when you write many lines at once.)
+
+This option has no effect in \fIvi\fR mode.
+
+.ti -0.25i
+.B ignorecase
+.br
+Normally, when \fIelvis\fR searches for text, it treats uppercase letters
+as being different for lowercase letters.
+
+When the ignorecase option is on, uppercase and lowercase are treated
+as equal.
+
+.ti -0.25i
+.B keytime
+.br
+The arrow keys of most terminals send a multi-character sequence.
+It takes a measurable amount of time for these sequences to be
+transmitted.  The keytime option allows you to control the maximum
+amount of time to allow for an arrow key (or other mapped key) to
+be received in full.
+
+The default keytime value is 2.  Because of the way 
+.Ux
+timekeeping works, the actual amount of time allowed will vary slightly, but it
+will always be between 1 and 2 seconds.
+
+If you set keytime to 1, then the actual amount of time allowed will
+be between 0 and 1 second.  This will generally make the keyboard's
+response be a little faster (mostly for the ESC key), but on those
+occasions where the time allowed happens to be closer to 0 than 1
+second, \fIelvis\fR may fail to allow enough time for an arrow key's
+sequence to be received fully.  Ugh.
+
+As a special case, you can set keytime to 0 to disable this time
+limit stuff altogether.  The big problem here is:  If your arrow
+keys' sequences start with an ESC, then every time you hit your ESC
+key \fIelvis\fR will wait... and wait... to see if maybe that ESC was
+part of an arrow key's sequence.
+
+NOTE: this option is a generalization of the timeout option of the
+real vi.
+
+.ti -0.25i
+.B keywordprg
+.br
+\fIElvis\fR has a special keyword lookup feature.  You move the cursor
+onto a word, and hit shift-K, and \fIelvis\fR uses another program to
+look up the word and display information about it.
+
+This option says which program gets run.  It should contain the full
+pathname of the program; your whole execution path is \fInot\fR checked.
+
+The default value of this option is \fI/usr/bin/ref\fR, which is a
+program that looks up the definition of a function in C.  It looks
+up the function name in a file called \*(OQrefs\*(CQ which is created by
+ctags.
+
+You can substitute other programs, such as an English dictionary
+program or the online manual.  \fIelvis\fR runs the program, using the
+keyword as its only argument.  The program should write information
+to stdout.  The program's exit status should be 0, unless you want
+\fIelvis\fR to print \*(OQ<<< failed >>>".
+
+.ti -0.25i
+.B lines
+.br
+This \*(OQread only\*(CQ option shows how many lines you screen has.
+
+.ti -0.25i
+.B list
+.br
+Normally (in \*(OQnolist" mode) \fIelvis\fR will expand tabs to the proper
+number of spaces on the screen, so that the file appears the same would it would
+be if you printed it or looked at it with \fImore\fR.
+
+Sometimes, though, it can be handy to have the tabs displayed as \*(OQ^I".
+In \*(OQlist" mode, \fIelvis\fR does this, and also displays a \*(OQ$"
+after the end of the line.
+
+.ti -0.25i
+.B magic
+.br
+The search mechanism in \fIelvis\fR can accept \*(OQregular 
+expressions\*(CQ\(emstrings in which certain characters have special meaning.
+The magic option is normally on, which causes these characters to
+be treated specially.
+If you turn the magic option off (:se noma), then all characters
+except ^ and $ are treated literally.   ^ and $ retain their special
+meanings regardless of the setting of magic.
+
+.ti -0.25i
+.B paragraphs
+.br
+The { and } commands move the cursor forward or backward in increments
+of one paragraph.  Paragraphs may be separated by blank lines, or by
+a \*(OQdot\*(CQ command of a text formatter.  Different text formatters use
+different \*(OQdot\*(CQ commands.  This option allows you to configure \fIelvis\fR
+to work with your text formatter.
+
+It is assumed that your formatter uses commands that start with a
+".\*(CQ character at the front of a line, and then have a one- or
+two-character command name.
+
+The value of the paragraphs option is a string in which each pair
+of characters is one possible form of your text formatter's paragraph
+command.
+
+.ti -0.25i
+.B readonly
+.br
+Normally, \fIelvis\fR will let you write back any file to which you have
+write permission.  If you do not have write permission, then you
+can only write the changed version of the file to a \fIdifferent\fR
+file.
+
+If you set the readonly option, then \fIelvis\fR will pretend you do not
+have write permission to \fIany\fR file you edit.  It is useful when
+you really only mean to use \fIelvis\fR to look at a file, not to change
+it.  This way you cannot change it accidentally.
+
+This option is normally off, unless you use the \*(OQview\*(CQ alias of \fIelvis\fR.
+\*(OQView\*(CQ is like \fIvi\fR except that the readonly option is on.
+
+.ti -0.25i
+.B report
+.br
+Commands in \fIelvis\fR may affect many lines.  For commands that affect
+a lot of lines, \fIelvis\fR will output a message saying what was done and
+how many lines were affected.  This option allows you to define
+what \*(OQa lot of lines\*(CQ means.  The default is 5, so any command which
+affects 5 or more lines will cause a message to be shown.
+
+.ti -0.25i
+.B scroll
+.br
+The CTRL-U and CTRL-D keys normally scroll backward or forward
+by half a screenful, but this is adjustable.  The value of this option
+says how many lines those keys should scroll by.
+
+.ti -0.25i
+.B sections
+.br
+The [[ and ]] commands move the cursor backward or forward in
+increment of 1 section.  Sections may be delimited by a { character
+in column 1 (which is useful for C source code) or by means of
+a text formatter's \*(OQdot\*(CQ commands.
+
+This option allows you to configure \fIelvis\fR to work with your text
+formatter's \*(OQsection\*(CQ command, in exactly the same way that the
+paragraphs option makes it work with the formatter's \*(OQparagraphs"
+command.
+
+.ti -0.25i
+.B shell
+.br
+When \fIelvis\fR forks a shell (perhaps for the :! or :shell commands)
+this is the program that is uses as a shell.  This is \fI/bin/sh\fR
+by default, unless you have set the SHELL environment variable,
+it which case the default value is copied from the environment.
+
+.ti -0.25i
+.B shiftwidth
+.br
+The < and > commands shift text left or right by some uniform number
+of columns.  The shiftwidth option defines that uniform number.
+The default is 8.
+
+.ti -0.25i
+.B sidescroll
+.br
+For long lines, \fIelvis\fR scrolls sideways.  (This is different from
+the real \fIvi\fR, which wraps a single long line onto several rows of
+the screen.)
+To minimize the number of scrolls needed, \fIelvis\fR moves the screen
+sideways by several characters at a time.  The value of this option
+says how many characters' widths to scroll at a time.
+Generally, the faster your screen can be redrawn, the lower the value
+you will want in this option.
+
+.ti -0.25i
+.B sync
+.br
+If the system crashes during an edit session, then most of your work
+can be recovered from the temporary file that \fIelvis\fR uses to store
+changes.  However, sometimes 
+.MX
+will not copy changes to the
+hard disk immediately, so recovery might not be possible.  The [no]sync
+option lets you control this.
+In nosync mode (which is the default), \fIelvis\fR lets the operating system
+control when data is written to the disk.  This is generally faster.
+In sync mode, \fIelvis\fR forces all changes out to disk every time you make
+a change.  This is generally safer, but slower.
+
+.ti -0.25i
+.B tabstop
+.br
+Tab characters are normally 8 characters wide, but you can change
+their widths by means of this option.
+
+.ti -0.25i
+.B term
+.br
+This \*(OQread only\*(CQ option shows the name of the termcap entry that
+\fIelvis\fR is using for your terminal.
+
+.ti -0.25i
+.B vbell
+.br
+If your termcap entry describes a visible alternative to ringing
+your terminal's bell, then this option will say whether the visible
+version gets used or not.  Normally it will be.
+
+If your termcap does NOT include a visible bell capability, then
+the vbell option will be off, and you cannot turn it on.
+
+.ti -0.25i
+.B warn
+.br
+\fIElvis\fR will normally warn you if you run a shell command without saving
+your changed version of a file.
+The \*(OQnowarn" option prevents this warning.
+
+.ti -0.25i
+.B wrapmargin
+.br
+Normally (with wrapmargin=0) \fIelvis\fR will let you type in extremely long
+lines, if you wish.
+However, with wrapmargin set to something other that 0 (wrapmargin=65
+is nice), \fIelvis\fR will automatically cause long lines to be \*(OQwrapped"
+on a word break for lines longer than wrapmargin's setting.
+
+.ti -0.25i
+.B wrapscan
+.br
+Normally, when you search for something, \fIelvis\fR will find it no matter
+where it is in the file.  \fIelvis\fR starts at the cursor position, and
+searches forward.  If \fIelvis\fR hits EOF without finding what you're
+looking for, then it wraps around to continue searching from line 1.
+
+If you turn off the wrapscan option (:se nows), then when \fIelvis\fR hits
+EOF during a search, it will stop and say so.
+.in -0.25i
+.SS "Cflags"
+.PP
+\fIElvis\fR uses many preprocessor symbols to control compilation.
+Most of these flags allow you to disable small sets of features.
+\s-2MINIX\s0-ST users will probably want all features enabled, but
+\s-2MINIX\s0-PC users will have to disable one or two feature sets
+because otherwise \fIelvis\fR would be too large to compile and run.
+
+These symbols can be defined via flags passed to the compiler.
+The best way to do this is to edit the Makefile, and append the flag
+to the \*(OQCFLAGS=\*(CQ line.
+After you do that, you must recompile elvis completely by saying
+.HS
+.Cx "make  clean"
+.br
+.Cx "make"
+.HS
+.in +0.25i
+.ti -0.25i
+.B \(enDM_SYSV
+.br
+This flag causes \fIelvis\fR to use System-V ioctl() calls for controlling
+your terminal; normally it uses v7/BSD/\s-2MINIX\s0 ioctl() calls.
+
+.ti -0.25i
+.B \(enDDATE
+.br
+The symbol DATE should be defined to look like a string constant,
+giving the date when \fIelvis\fR was compiled.
+This date is reported by the \*(OQ:version\*(CQ command.
+
+You can also leave DATE undefined, in which case \*(OQ:version\*(CQ will not
+report the compilation date.
+
+.ti -0.25i
+.B \(enDCRUNCH
+.br
+This flag causes several large often-used macros to be replaced by
+equivalent functions.
+This saves about 4K of space in the \*(OQ.text\*(CQ segment, and it does not
+cost you any features.
+
+.ti -0.25i
+.B \(enDDEBUG
+.br
+This adds many internal consistency checks and the \*(OQ:debug\*(CQ 
+and \*(OQ:validate\*(CQ
+commands.  It increases the size of \*(OQtext\*(CQ by about 5K bytes.
+
+.ti -0.25i
+.B \(enDNO_CHARATTR
+.br
+This permanenently disables the \*(OQcharattr\*(CQ option.
+It reduces the size of \*(OQ.text\*(CQ by about 850 bytes.
+
+.ti -0.25i
+.B \(enDNO_RECYCLE
+.br
+Normally, \fIelvis\fR will recycle space in the temporary file which contains
+totally obsolete text.
+The \fB\(enDNO_RECYCLE\fR option disables this, making your \*(OQ.text\*(CQ  segment 
+smaller by about 1K but also permitting the temporary file to grow very 
+quickly.
+If you have less than two megabytes of free space on your disk,
+then do not even consider using this flag.
+
+.ti -0.25i
+.B \(enDNO_SENTENCE
+.br
+This leaves out the \*(OQ(\*(CQ and \*(OQ)\*(CQ visual commands, and 
+removes the code that allows the \*(OQ[[\*(CQ, \*(OQ]]\*(CQ, \*(OQ{\*(CQ, 
+and \*(OQ}\*(CQ commands to recognize \fRnroff\fR macros.
+The \*(OQ[[\*(CQ and \*(OQ]]\*(CQ commands will still move to the start of 
+the previous/next C function source code, though, and \*(OQ{\*(CQ 
+and \*(OQ}\*(CQ will move to the previous/next blank line.
+This saves about 650 bytes from the \*(OQ.text\*(CQ segment.
+
+.ti -0.25i
+.B \(enDNO_CHARSEARCH
+.br
+This leaves out the visual commands which locate a given character in the
+current line: \*(OQf\*(CQ, \*(OQt\*(CQ, \*(OQF\*(CQ, \*(OQT\*(CQ, \*(OQ;\*(CQ, and \*(OQ,\*(CQ.
+This saves about 900 bytes.
+
+.ti -0.25i
+.B \(enDNO_EXTENSIONS
+.br
+This leaves out the \*(OQ:mkexrc\*(CQ command, and the \*(OQK\*(CQ and \*(OQ#\*(CQ visual commands.
+Other extensions are either inherent in the design of \fIelvis\fR,
+or are too tiny to be worth removing.
+This saves about 500 bytes.
+
+.ti -0.25i
+.B \(enDNO_MAGIC
+.br
+This permanently disables the \*(OQmagic\*(CQ option, so that most 
+meta-characters in a regular expression are not recognized.  
+This saves about 3K bytes from the \*(OQ.text\*(CQ segment.
+.HS
+.in -0.25i
+.SS "Termcap"
+\fIElvis\fR can use standard termcap entries,
+but it also recognizes and uses several extra capabilities, if you give them.
+All of these are optional.
+.nf
+.in +0.25i
+.ta 1.5i
+.HS
+\fBCapability	Description\fR
+:PU=:	sequence received from the <PgUp> key
+:PD=:	sequence received from the <PgDn> key
+:HM=:	sequence received from the <Home> key
+:EN=:	sequence received from the <End> key
+:VB=:	sequence sent to start bold printing
+:Vb=:	sequence sent to end bold printing
+.in -0.25i
+.SS "Author"
+.PP
+\fIElvis\fR was written by Steve Kirkendall.
+He can be reached by email at: kirkenda@cs.pdx.edu
+for comments regarding \fIelvis\fR.

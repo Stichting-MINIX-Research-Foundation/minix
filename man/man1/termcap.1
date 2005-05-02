@@ -1,0 +1,26 @@
+.TH TERMCAP 1
+.SH NAME
+termcap \- print the current termcap entry
+.SH SYNOPSIS
+\fBtermcap\fR [\fItype\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "termcap" "Print the termcap entry"
+.SH DESCRIPTION
+.PP
+\fITermcap\fR reads the /etc/termcap entry corresponding to the 
+terminal type
+supplied as the argument.  If none is given, the current $TERM is used.
+It then prints out all the parameters that apply.
+.SH "SEE ALSO"
+.BR termcap (3).

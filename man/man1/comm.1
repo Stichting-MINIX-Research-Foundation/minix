@@ -1,0 +1,39 @@
+.TH COMM 1
+.SH NAME
+comm \- print lines common to two sorted files
+.SH SYNOPSIS
+\fBcomm\fR [\fB\-123\fR] \fIfile1 file2\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-1" "Suppress column 1 (lines present only in \fIfile1\fP)" 
+.FL "\-2" "Suppress column 2 (lines present only in \fIfile2\fP)" 
+.FL "\-3" "Suppress column 3 (lines present in both files)"
+.SH EXAMPLES
+.EX "comm file1 file2" "Print all three columns"
+.EX "comm \-12 file1 file2" "Print only lines common to both files"
+.SH DESCRIPTION
+.PP
+Two sorted files are read and compared.
+A three column listing is produced.
+Files only in 
+.I file1
+are in column 1;
+files only in
+.I file2
+are in column 2;
+files common to both files are in column 3.
+The file name \- means \fIstdin\fR. 
+.SH "SEE ALSO"
+.BR cmp (1),
+.BR diff (1),
+.BR sort (1).

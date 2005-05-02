@@ -1,0 +1,760 @@
+.\"	manual page for cawf(1)
+.\"
+.\"
+.\"	Copyright (c) 1991 Purdue University Research Foundation,
+.\"	West Lafayette, Indiana 47907.  All rights reserved.
+.\"
+.\"	Written by Victor A. Abell <abe@cc.purdue.edu>,  Purdue
+.\"	University Computing Center.  Not derived from licensed software;
+.\"	derived from awf(1) by Henry Spencer of the University of Toronto.
+.\"
+.\"	Permission is granted to anyone to use this software for any
+.\"	purpose on any computer system, and to alter it and redistribute
+.\"	it freely, subject to the following restrictions:
+.\"
+.\"	1. The author is not responsible for any consequences of use of
+.\"	   this software, even if they arise from flaws in it.
+.\"
+.\"	2. The origin of this software must not be misrepresented, either
+.\"	   by explicit claim or by omission.  Credits must appear in the
+.\"	   documentation.
+.\"
+.\"	3. Altered versions must be plainly marked as such, and must not
+.\"	   be misrepresented as being the original software.  Credits must
+.\"	   appear in the documentation.
+.\"
+.\"	4. This notice may not be removed or altered.
+.\"
+.\" Some of the stuff in this file is a bit contorted, because it's also
+.\" the regression-test input.
+.nr ES 5n
+.de ES
+.PP
+.in +\\n(ESu
+.nf
+..
+.de EE
+.in -\\n(ESu
+.fi
+.PP
+..
+.de PT
+.ie \\n(.$>1 .TP "\\$2"
+.el .TP
+.ie !'\\$1'' \\$1
+.el \(bu
+..
+.ds Nr \fInroff\fR
+.TH CAWF 1 "November, 1992"
+.BY "Purdue University"
+.SH NAME
+cawf, nroff \- C version of the nroff-like, Amazingly Workable (text) Formatter
+.SH SYNOPSIS
+.B cawf
+.RB [ \-c\c
+.IR config ]
+.RB [ \-d\c
+.IR device ]
+.RB [ \-e ]
+.RB [ \-f\c
+.IR font ]
+.RB [ \-h ]
+.RB [ \-m\c
+.IR acros ]
+.RI [ file " ...]"
+.SH DESCRIPTION
+.I Cawf
+formats the text from the input \fIfile\fR(s)
+(standard input if none)
+in an approximation of \*(Nr.
+It comes closest to duplicating \*(Nr's
+.B man
+or
+.B ms
+macro package styles.
+It has some limited support for \*(Nr's
+.B me
+macros.
+.SH OPTIONS
+Options must precede file names.
+.TP
+.BI \-c config
+defines an alternate path to the device configuration file.
+Normally the device configuration file is found in
+.I device.cf
+in the
+.I cawf
+library (see the
+.B FILES
+section).
+.IP
+The device configuration file contains device character strings for
+selecting fonts and the bold or italic type faces.
+See the
+.B DEVICES
+section for more information.
+.TP
+.BI \-d device
+specifies the name of the output device.
+There are three built\-in devices \- ANSI, NONE and NORMAL \- and
+other devices may be defined in the device configuration file.
+See the
+.B DEVICES
+section for more information.
+.IP
+The NORMAL device is the default.
+.TP
+.B \-e
+directs
+.I cawf
+to issue an eject (FF or ^L) after the last page.
+.TP
+.BI \-f font
+specifies the one font for the device, declared with the
+.BI \-d device
+option, that is to be used for the
+entire document.
+.I Font
+must match a font associated with the device's stanza in the device
+configuration file.
+See the
+.B DEVICES
+section for more information.
+.IP
+No
+.I font
+may be specified for the built\-in devices ANSI, NONE or NORMAL.
+.TP
+.B \-h
+requests a help display.
+.TP
+.BI \-m acro
+specifies the macro file to be used.
+The standard
+.I cawf
+distribution supplies macro files to support ``\-man'', ``\-me'' or ``\-ms''.
+.I Cawf
+finds a macro file by constructing its name from `m',
+.I acro
+and
+.B .mac
+\- e. g.,
+.BI \-m an
+is converted to
+.BR man.mac .
+The default directory for macro files is defined when
+.I cawf
+is compiled; it's \fIC:\\SYS\\LIB\\CAWF\fP in the MS\-DOS environment;
+.I /usr/lib/cawf
+in the UNIX environment.
+.TP
+file ...
+are the names of files containing \*(Nr source text.
+.SH NROFF COMPATIBILITY
+.I Cawf
+accepts the following raw \*(Nr requests:
+.ES
+\&.\e"	.ad	.bp	.br	.ce	.de	.di	.ds
+\&.el	.fi	.fl	.ft	.i0	.ie	.if	.in
+\&.it	.lg	.li	.ll	.ls	.na	.ne	.nf
+\&.nr	.ns	.pl	.po	.ps	.rm	.rn	.rr
+\&.rs	.so	.sp	.ta	.ti	.tm	.tr
+.EE
+and the following in-text codes:
+.ES
+\e$	\e%	\e*	\e"	\ec	\ef	\eh	\ek
+\en	\es	\ew
+.EE
+plus the full list of \*(Nr/\c
+.I troff
+special characters in
+the original V7 \fItroff\fR manual.
+.PP
+Many restrictions are present; the behavior in general is a subset of
+\*(Nr's.  Of particular note are the following:
+.IP \(bu 2
+The fully supported nroff request control character is the period.
+There is limited support for the  non\-break, acute accent control
+character.
+.PT
+Point sizes do not exist;
+.B .ps
+is ignored.
+.PT
+Special vertical spacing \- the
+.B .vs
+request included \- is ignored.
+.PT
+Conditionals cover only the numeric comparisons >, =, <, >= and <= on
+.BR \en(.$ ;
+string com\%par\%isons between a macro parameter and a literal;
+.B n
+(always true);
+and
+.BR t
+(always false).
+Only single line input is accepted from conditionals;
+multi\-line input \- e.g., \\(\fIanything\fP\\) \- is not supported.
+.PT
+The handling of strings is generally primitive.
+.IP \(bu
+Horizontal motion via
+.B \eh
+must be supplied with a number register interpolation and must be
+positive - e. g.,
+.BR \ew\en(NN ,
+where the value in NN is >= 0.
+.IP \(bu
+The
+.B \ek
+function is reliable only after TAB characters, so it is useful only
+for measuring table positions.
+.IP \(bu
+The
+.B .di
+request only turns output on and off \- any macro name is ignored.
+.IP \(bu
+Expressions - e. g.,
+.B .sp
+- are reasonably general, but the
+.BR | ,
+.BR & ,
+and
+.BR :\&
+operators do not exist, there must be white space between the end of the \*(Nr
+function and the beginning of the expression, and 
+.B \ew
+requires that quote (') be used as the delimiters.
+.B \ew
+counts the characters inside the quotes and scales the result in ens,
+so that, for example, \ew'\e(bu' equals 4n, and \ew'\e(bu'/1n equals 4.
+.PT
+The only acceptable count for the
+.B .it
+request is one,
+and it is effective only with
+.BR man ,
+.B me
+or
+.B ms
+macros.
+.PT
+The default scaling factor is `v' for the
+.BR .ne ,
+.BR .sp ,
+and
+.B .pl
+raw \*(Nr requests; it is `u' for
+.BR .nr ;
+and `n' for
+.BR .in ,
+.BR .ll ,
+.BR .ls ,
+.BR .po ,
+.BR .ta
+and
+.BR .ti .
+(A different scaling factor may be specified with a trailing character.)
+.PT
+Some obsolete or meaningless requests \-
+.BR .i0 ,
+.B .lg
+and
+.B .li
+\&\- are silently ignored.
+.P
+White space at the beginning of lines,
+and embedded white space within lines is dealt with properly.
+Sentence terminators at ends of lines are understood to imply
+extra space afterward in filled lines.
+Tabs are im\%plemented crudely and not exactly, although
+usually they work as expected.
+Hyphenation is done only at explicit hyphens, em-dashes, and \*(Nr
+discretionary hyphens.
+By default bold and italic characters are emulated with backspacing and
+overprinting, but the
+.B \-d
+and
+.B \-f
+options, combined with the contents of the device configuration file,
+may be used to generate special codes for bold and italic characters.
+(See the
+.B DEVICES
+section for more information.)
+.SH "MAN MACROS"
+The
+.B man
+macro set replicates the full V7 manual macros,
+plus a few semi-random oddballs.
+The full list is:
+.ES
+\&.AT	.B	.BI	.BR	.BY	.DE	.DT	.HP
+\&.I	.IB	.IP	.IR	.IX	.LP	.NB	.P
+\&.PD	.PP	.RB	.RE	.RI	.RS	.SH	.SM
+\&.SS	.TH	.TP	.UC
+.EE
+.B .BY
+and
+.B .NB
+each take a single string argument (respectively, an indi\%cation of
+authorship and a note about the status of the manual page) and arrange
+to place it in the page footer.
+.B .AT
+and
+.B .IX
+do nothing.
+.SH "ME MACROS"
+The
+.B me
+macro subset has been derived from the
+.I cawf
+.B ms
+macros by Chet Creider <creider@csd.uwo.ca>.
+It includes:
+.ES
+\&.(l	.(q	.)l	.)q	.b	.bu	.i	.ip
+\&.lp	.np	.pp	.r	.sh	.sm	.u	.uh
+.EE
+The .(l C and .(l L options are supported.
+In addition, the .AB, .AE, .AI, .AU, .DA, .ND, .TL and .UX macros have
+been retained from the
+.B ms
+set, and the .XP macro has been borrowed from the Berkeley additions to the
+.B ms
+macro set.
+.SH "MS MACROS"
+The
+.B ms
+macro set is a substantial subset of the V7 manuscript macros.
+The macros are:
+.ES
+\&.AB	.AE	.AI	.AU	.B	.CD	.DA	.DE
+\&.DS	.I	.ID	.IP	.LD	.LG	.LP	.ND
+\&.NH	.NL	.PP	.QE	.QP	.QS	.R	.RE
+\&.RP	.RS	.SH	.SM	.TL	.TP	.UL	.UX
+.EE
+Size changes are recognized but ignored, as are
+.B .RP
+and
+.BR .ND .
+.B .UL
+just prints its argument in italics.
+.BR .DS / .DE
+does not do a keep,
+nor do any of the other macros that normally imply keeps.
+.LP
+The
+.B DY
+string variable is available.
+The
+.BR PD ,
+.BR PI ,
+and
+.BR LL
+number registers exist and can be changed.
+.SH "HEADERS AND FOOTERS"
+.I Cawf
+allows the placement of text into the five line header and
+footer sections from the
+.BR LH ,
+.BR CH ,
+.BR RF ,
+.BR LF ,
+.BR CF ,
+and
+.B RF
+string variables, via the control of the
+.B .^b
+request:
+.LP
+.ta \w'.^b HF 0'u+3n
+.nf
+\&.^b fh 1	enables header string placement on the first page
+\&.^b fh 0	disables header string placement on the first page
+\&.^b HF 1	enables header/footer string placement
+\&.^b HF 0	disables header/footer string placement
+.fi
+.LP
+There are appropriate
+.B .^b
+requests in the distribution
+.BR man ,
+.B me
+and
+.B ms
+macro files.
+(The
+.B me
+and
+.B ms
+macro files use another
+.B .^b
+request, \fB.^b NH\fP, to enable numbered header processing.)
+.SH OUTPUT
+The default output format supported by
+.IR cawf ,
+in its distributed form,
+is that appropriate to a dumb terminal,
+using overprinting for italics (via underlining) and bold.
+The \*(Nr special characters are printed as some vague approximation
+(it's sometimes extremely vague) to their correct appearance.
+.PP
+One part of
+.IR cawf 's
+knowledge of the output device, related to the formation of characters,
+is established by a device file, which is read before the user's input.
+The search for it begins in
+.IR cawf 's
+library directory, under the name \fIterm\fP.\fBdev\fP
+(where \fIterm\fR is the value of the TERM environment variable).
+Failing to find that,
+.I cawf
+searches for
+.BR dumb.dev .
+(See the
+.B FILES
+section for a description of the path to
+.IR cawf 's
+library directory.)
+The device file
+uses special internal requests
+to set up resolution, special characters 
+and more normal \*(Nr functions to set up page length, etc.
+.PP
+.I Cawf
+has limited support for fonts special forms of bold and italic characters.
+It is provided through the
+.B \-c
+.IR config ,
+.BI \-d device
+and
+.BI \-f font
+options.
+See the
+.B DEVICES
+section for more information.
+.PP
+Note the distinction between the device and the output device configuration
+files.
+The device file typically defines characters and constant output parameters.
+The output device configuration file defines font and type face codes.
+It is usually not necessary to define a separate device file for each
+device represented in the output device configuration file \- the
+.I dumb.dev
+device file will suffice for almost all representations.
+.SH DEVICES
+.I Cawf
+supports primitive output device configuration for font and type face
+control.
+One font may be selected for the entire document by directing
+.I cawf
+to issue a font selection control character string at the beginning
+of the document, and control character strings may be selected for
+switching between the bold, italic and Roman type faces.
+.PP
+The
+.B \-c
+.IR config,
+.BI \-d device
+and
+.BI \-f font
+options direct the font and type face selections.
+.PP
+The
+.BI \-d device
+option specifies the name of the device.
+.I Cawf
+has three built\-in devices \- ANSI, NONE and NORMAL.
+When the ANSI device is selected,
+.I cawf
+issues the ANSI shadow mode control codes, ``ESC [ 7 m'', to represent
+the bold face;
+the ANSI underscore control codes, ``ESC [ 4 m'', to represent the italic
+face;
+and the ANSI control codes, ``ESC [ 0 m'', to represent the ROMAN face.
+No
+.BI \-f font
+specification is permitted with the ANSI device.
+.PP
+When the NONE device is selected,
+.I cawf
+uses no special output codes to represent the type faces.
+No
+.BI \-f font
+specification is permitted with the ANSI device.
+.PP
+The NORMAL output device is the default.
+When it's selected,
+.I cawf
+overprints each bold character two times, using three issuances of each
+bold character, separated by backspace characters;
+it issues an underscore and backspace before each italic character.
+No
+.BI \-f font
+specification is permitted with the ANSI device.
+The
+.IR bsfilt (1)
+filter may be used to further process the backspace codes output for
+a NORMAL device.
+.PP
+All other devices named in the
+.BI \-d device
+option must be represented by a stanza in the device configuration file.
+The device configuration file is usually contained in
+.I device.cf
+in
+.IR cawf's
+library directory (see the
+.B FILES
+section for more information).
+An alternate device configuration file path may be specified with the
+.BI \-c config
+option.
+.PP
+The
+.B DEVICE CONFIGURATION FILE
+section describes the organization of the device configuration file.
+It is easy to add devices to the
+.I device.cf
+supplied in the
+.I cawf
+distribution.
+.PP
+The
+.BI \-f font
+option may be used with the
+.BI \-d device
+option, when the appropriate stanza in the device configuration file
+contains an entry for the named
+.IR font .
+The
+.B DEVICE CONFIGURATION FILE
+section describes how fonts are defined in device configuration file
+stanzas.
+.SH DEVICE CONFIGURATION FILE
+The device configuration file defines the special character codes
+necessary to direct output devices to select fonts and to produce
+bold, italic and Roman type faces.
+.PP
+The configuration file is usually found in
+.I device.cf
+in
+.IR cawf 's
+library directory (see the
+.B FILES
+section for more information).
+It is organized into two main parts \- comments and device stanzas.
+Comments are any lines that begin with the pound sign (`#') character.
+They are informational only and
+.I cawf
+ignores them.
+.I Cawf
+also ignores empty lines, so they may be used as vertical white space.
+.PP
+Stanzas name devices and define their font and type face control strings.
+A stanza begins with the name of the device, starting at the beginning
+of a line and occupying the entire line.
+The body of the stanza, defining fonts and type faces, is formed of
+lines beginning with white space (a TAB or space characters) that
+directly follow the device name.
+.PP
+Individual lines of the stanza body contain a key character, followed
+by a equal sign, followed by the font name (if a font key) and the
+output device control codes.
+.I Cawf
+issues the font control codes once, at the beginning of output, so
+only one font may be selected.
+The type face control codes are issued at each change of type face.
+.PP
+The key characters are:
+.ne 4
+.PP
+.RS
+.nf
+b	for bold
+f	for font definition
+i	for italic
+r	for Roman
+.fi
+.RE
+.PP
+The `b', `i' and `r' key codes are followed by an equal sign (`=') and
+their control code definition.
+The `f' key code is followed by an equal sign (`='), the font name,
+another equal sign and the font control code definition.
+.PP
+Control code definitions may contain any printable ASCII characters.
+Non\-printable characters may be encoded in octal notation with the `\\nnn'
+form or in hexadecimal with the `\\xnn' form.
+The special code, `\\E' (or `\\e') represents the ESC control
+character (\\033 or \\x1b).
+.PP
+Here's a sample showing the definition for the HP LaserJet III.
+The stanza name is ``lj3''.
+All its non\-printable characters are ESCs; the first is coded in
+octal form; the second with '\\E'; the rest, in hexadecimal form.
+TAB is used as the leading white space character for the stanza
+body lines.
+.PP
+.RS
+.nf
+# HP LaserJet III
+
+lj3
+        b=\\033(s7B
+        i=\\E(s1S
+        r=\\x1b(s0B\\x1b(s0S
+        f=c10=\x1b&l0O\x1b(8U\x1b(s0p12h10v0s0b3T
+        f=c12ibm=\x1b&l0O\x1b(10U\x1b(s0p10.00h12.0v0s0b3T
+        f=lg12=\x1b&l0O\x1b(8U\x1b(s12h12v0s0b6T
+.fi
+.RE
+.PP
+The distribution
+.I device.cf
+file defines the following devices and fonts.
+.LP
+.ta \w'kxp1180'u+3n +\w'Italic:'u+3n +\w'bps10'u+6n
+.nf
+.ne 3
+epson	dot matrix printer in Epson FX-86e/FX-800 mode
+	Bold:	Double-strike
+	Fonts:	none
+
+.ne 4
+ibmppds	IBM Personal Printer Data Stream (PPDS) protocol
+	Bold:	Double-strike
+	Italic:	Underline
+	Fonts:	none
+
+.ne 12
+kxp1124	Panasonic KX\-P1124 dot matrix printer in PGM mode
+	Bold:	Emphasized
+	Fonts:	c10	10 Characters Per Inch (CPI) Courier
+		c12	12 CPI Courier
+		bps10	10 CPI Bold PS
+		bps12	12 CPI Bold PS
+		p10	10 CPI Prestige
+		p12	12 CPI Prestige
+		s10	10 CPI Script
+		s12	12 CPI Script
+		ss10	10 CPI Sans Serif
+		ss12	12 CPI Sans Serif
+
+.ne 10
+kxp1180	Panasonic KX\-P1180 dot matrix printer in PGM mode
+	Bold:	Emphasized
+	Fonts:	c10	10 Characters Per Inch (CPI) Courier
+		c12	12 CPI Courier
+		bps10	10 CPI Bold PS
+		bps12	12 CPI Bold PS
+		p10	10 CPI Prestige
+		p12	12 CPI Prestige
+		ss10	10 CPI Sans Serif
+		ss12	12 CPI Sans Serif
+
+.ne 6
+lj3	HP LaserJet III
+	Fonts:	c10	10 point, 12 Characters Per Inch (CPI)
+			Courier
+		c12ibm	12 point, 10 CPI Courier, IBM\-PC
+			Symbol Set
+		lg12	12 point, 12 CPI Letter Gothic
+
+.ne 4
+vgamono	VGA monochrome monitor for MS\-DOS
+	(ANSI.SYS driver required for MS\-DOS)
+	Italic:	Reverse-video
+	Fonts:	none
+.SH FILES
+.I Cawf
+resource files are located in the
+.I cawf
+library directory \- \fI C:\\SYS\\LIB\\CAWF\fP, the MS\-DOS environment
+default;
+or
+.IR /usr/lib/cawf ,
+the UNIX environment default.
+These defaults can be overridden by the CAWFLIB environment variable,
+or changed in the cawflib.h header file.
+
+.ta \w'device.cf'u+3n
+.nf
+common	common device-independent initialization
+device.cf	output device configurations
+*.dev	device-specific initialization
+m*.mac	macro package files
+.SH DIAGNOSTICS
+Unlike
+.IR nroff ,
+.I cawf
+complains whenever it sees unknown requests.
+All diagnostics appear on the standard error file.
+.ad
+.SH HISTORY
+Vic Abell of Purdue University <abe@cc.purdue.edu> derived
+.I cawf
+from
+.IR awf ,
+\&``the Amazingly Workable (text) Formatter,'' 
+written by Henry Spencer of the University of Toronto.
+The Toronto work was a supplement to the C News project.
+The Purdue effort was aimed at producing a C language version that
+would run on small systems, particularly MS\-DOS ones.
+The adaptation of the
+.B me
+macros was done by Chet Creider <creider@csd.uwo.ca>.
+Chet also contributed ideas for device, font and type face support.
+.PP
+The MS\-DOS version of
+.I cawf
+has been compiled with version 2.5 of Microsoft's Quick-C compiler.
+It runs under the Mortis Kern Systems Toolkit KornShell,
+.IR ksh (1),
+and COMMAND.COM.
+.SH BUGS
+Nroff and troff mavens will have many complaints.
+Some may even represent bugs and not deliberate omissions.
+.PP
+Watch out for scaling factors - especially on requests like
+.BR \ew .
+.PP
+The overprinting required to create bold and italicized characters is
+tiresome on a slow printer.
+The
+.IR bsfilt (1)
+post\-filter from this distribution may be used to alleviate that
+nuisance by managing the backspacing codes from
+.IR cawf 's
+NORMAL device output.
+.PP
+The printing of bold and italic characters is sometimes better handled by
+special printer codes.
+Use
+.IR cawf 's
+.B \-c
+.IR config ,
+.BI \-d device
+and
+.BI \-f font
+options to produce special font and device output control codes.
+.PP
+.I Cawf
+has a small amount of built-in code for the 
+.BR man ,
+.B me
+and
+.B ms
+macro packages, but none for any others.
+.PP
+The stacking for the
+.B .so
+request is limited.
+.SH SEE ALSO
+bsfilt(1),
+colcrt(1),
+man(7),
+me(7),
+ms(7)
+and
+nroff(1).

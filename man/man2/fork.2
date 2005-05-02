@@ -1,0 +1,74 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)fork.2	6.4 (Berkeley) 5/22/86
+.\"
+.TH FORK 2 "May 22, 1986"
+.UC
+.SH NAME
+fork \- create a new process
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <unistd.h>
+
+pid_t fork(void)
+.ft R
+.fi
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Fork
+causes creation of a new process.
+The new process (child process) is an exact copy of the
+calling process except for the following:
+.RS
+.SP
+The child process has a unique process ID.
+.SP
+The child process has a different parent process ID (i.e.,
+the process ID of the parent process).
+.SP
+The child process has its own copy of the parent's descriptors.
+These descriptors reference the same underlying objects, so that,
+for instance, file pointers in file objects are shared between
+the child and the parent, so that an
+.BR lseek (2)
+on a descriptor in the child process can affect a subsequent
+.B read
+or
+.B write
+by the parent.
+This descriptor copying is also used by the shell to
+establish standard input and output for newly created processes
+as well as to set up pipes.
+.SP
+The child starts with no pending signals and an inactive alarm timer.
+.RE
+.SH "RETURN VALUE
+Upon successful completion, \fBfork\fP returns a value
+of 0 to the child process and returns the process ID of the child
+process to the parent process.  Otherwise, a value of \-1 is returned
+to the parent process, no child process is created, and the global
+variable \fBerrno\fP is set to indicate the error.
+.SH ERRORS
+.B Fork
+will fail and no child process will be created if one or more of the
+following are true:
+.TP 15
+[EAGAIN]
+The system-imposed limit on the total
+number of processes under execution would be exceeded.
+This limit is configuration-dependent.
+(The kernel variable NR_PROCS in <minix/config.h> (Minix), or
+<minix/const.h> (Minix-vmd).)
+.TP 15
+[ENOMEM]
+There is insufficient (virtual) memory for the new process.
+.SH "SEE ALSO"
+.BR execve (2),
+.BR wait (2).

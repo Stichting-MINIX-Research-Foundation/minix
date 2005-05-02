@@ -1,0 +1,65 @@
+.TH CLEANTMP 8
+.SH NAME
+cleantmp \- clean out a tmp dir
+.SH SYNOPSIS
+.B cleantmp
+.RB [ \-d "[\fIlevel\fR]]"
+.RB [ \-i
+.IR file "] ..."
+.BR \-\fIdays\fB | \-f
+.RI [ directory " ...]"
+.SH DESCRIPTION
+.B Cleantmp
+removes all files in each of the given directories and their subdirectories
+that have not been accessed for at least
+.I 'days'
+days.  Empty subdirectories are removed if their modified times are more
+than
+.I 'days'
+days old.
+.B Cleantmp
+looks at days as humans do, i.e. they last from midnight to midnight.
+Meaning that
+.B cleantmp -1 /tmp
+removes all files that were not touched after midnight last night. This may
+be very helpful, because in many cases that big file that clogs up
+.B /tmp
+was created yesterday, but less than 24 hours ago.
+.PP
+The 'days' flag may be replaced by
+.B \-f
+causing
+.B cleantmp
+to remove all files in the directory no matter what age.  Specifying zero
+days doesn't work, because it is assumed to be a mistake.
+.PP
+.B Cleantmp
+knows that files and directories that have a name starting with a '.' are
+special and will not delete them or files within them if they are not at
+least 14 days old.
+.SH OPTIONS
+.TP 5
+.BR \-d "[\fIlevel\fR]]"
+Set the debug level to
+.I level
+(by default 1).  Normally only errors are reported.  Debug level 1 lists the
+actions taken on standard error, level 2 also prints the file times used,
+and level 3 makes
+.B cleantmp
+playact, i.e. nothing is really removed.
+.TP
+.BI \-i " file "
+One or more
+.B \-i
+options name files to be ignored.  Files are not removed if they are in the
+list of ignored files by either a directory entry match, or a full pathname
+match.  This option is useful to keep things like named pipes that some
+longlived programs foolishly put in temporary directories.
+.SH "SEE ALSO"
+.BR find (1).
+.SH BUGS
+Don't use '\fBcleantmp -1\fP' shortly after midnight.
+.PP
+It would be nice if one could delete files that are, say, 2 hours old.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

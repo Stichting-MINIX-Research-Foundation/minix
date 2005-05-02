@@ -1,0 +1,38 @@
+.TH CHGRP 1
+.SH NAME
+chgrp \- change group
+.SH SYNOPSIS
+\fBchgrp [\fB\-R\fR] [\fIowner:\fR]\fIgroup \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-R" "Change directory hierarchies"
+.SH EXAMPLES
+.EX "chgrp system file1 file2" "Make \fIsystem\fR the group of the files"
+.EX "chrgp \-R other dir1" "Make \fIother\fR the group of all files below dir1"
+.SH DESCRIPTION
+.PP
+The group field (and optionally owner field) of the named files is changed to 
+.I group
+and
+.I owner .
+Alternatively, a decimal gid (uid) may be specified instead of a group name.
+If the \fB\-R\fR flag is used, the changes will be applied recursively to
+all files in named directories. Only the superuser may execute this command
+to set arbitrary groups. Normal users can only change the group if they own
+the file, and the group is their own group (Minix), or one of their
+supplementary groups (Minix-vmd).
+.SH "SEE ALSO"
+.BR chown (8),
+.BR chmod (1),
+.BR ls (1),
+.BR chown (2).

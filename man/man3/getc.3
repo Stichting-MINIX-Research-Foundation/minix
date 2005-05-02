@@ -1,0 +1,79 @@
+.\"	@(#)getc.3s	6.2 (Berkeley) 5/14/86
+.\"
+.TH GETC 3  "May 14, 1986"
+.AT 3
+.SH NAME
+getc, getchar, fgetc, getw \- get character or word from stream
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdio.h>
+
+int getc(FILE *\fIstream\fP)
+int getchar(void)
+int fgetc(FILE *\fIstream\fP)
+int getw(FILE *\fIstream\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Getc
+returns the next character from the named input
+.IR stream .
+.PP
+.BR Getchar ()
+is identical to 
+.BR getc ( stdin ).
+.PP
+.B Fgetc
+behaves like 
+.BR getc ,
+but is a genuine function, not a macro;
+it may be used to save object text.
+.PP
+.B Getw
+returns the next
+.B int
+from the named input
+.IR stream .
+It returns the constant
+.SM
+.B EOF
+upon end of file or error, but since that is a good
+integer value,
+.B feof
+and
+.BR ferror (3)
+should be used to check the success of
+.BR getw .
+.B Getw
+assumes no special alignment in the file.
+.SH "SEE ALSO"
+.BR clearerr (3),
+.BR fopen (3),
+.BR putc (3),
+.BR gets (3),
+.BR scanf (3),
+.BR fread (3),
+.BR ungetc (3).
+.SH DIAGNOSTICS
+These functions return the integer constant
+.SM
+.B EOF
+at end of file, upon read error,
+or if an attempt is made to read a file not opened by
+.BR fopen .
+The end-of-file condition is remembered,
+even on a terminal,
+and all subsequent attempts to read will return
+.B EOF
+until the condition is cleared with
+.BR clearerr (3).
+.SH BUGS
+Because it is implemented as a macro,
+.B getc
+treats a
+.I stream
+argument with side effects incorrectly.
+In particular,
+`getc(*f++);'
+doesn't work sensibly.

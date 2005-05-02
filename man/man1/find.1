@@ -1,0 +1,84 @@
+.TH FIND 1
+.SH NAME
+find \- find files meeting a given condition
+.SH SYNOPSIS
+\fBfind \fIdirectory \fIexpression\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "find /  \-name a.out \-print" "Print all \fIa.out\fR paths"
+.EX "find /usr/ast ! \-newer f \-ok rm {} \e;" "Ask before removing"
+.EX "find /usr \-size +20 \-exec mv {} /big \e^;" "move files > 10k"
+.EX "find / \e( \-name a.out \-o \-name \(fm*.o\(fm \e) \-exec rm {} \e;" "2 conds"
+.SH DESCRIPTION
+.PP
+\fIFind\fR descends the file tree starting at the given directory checking
+each file in that directory and its subdirectories against a predicate.
+If the predicate is true, an action is taken.  The predicates may be
+connected by \fB\-a\fR (Boolean and), \fB\-o\fR (Boolean or) and !
+(Boolean negation).
+Each predicate is true under the conditions specified below.  The integer 
+\fIn\fR may also be +\fIn\fR to mean any value greater than \fIn\fR, 
+\fI\-n\fR to mean any value less than
+\fIn\fR, or just \fIn\fR for exactly \fIn\fR.
+.PP
+.RS
+.ta +\w'\-mtime nmm'u
+.in +\w'\-mtime nmm'u
+.ti -\w'\-mtime nmm'u
+\-name s	true if current filename is \fIs\fR (include shell wild cards)
+.ti -\w'\-mtime nmm'u
+\-size n	true if file size is \fIn\fR blocks
+.ti -\w'\-mtime nmm'u
+\-inum n	true if the current file's i-node number is \fIn\fR
+.ti -\w'\-mtime nmm'u
+\-mtime n	true if modification time relative to today (in days) is \fIn\fR
+.ti -\w'\-mtime nmm'u
+\-links n	true if the number of links to the file is \fIn\fR
+.ti -\w'\-mtime nmm'u
+\-newer f	true if the file is newer than \fIf\fR
+.ti -\w'\-mtime nmm'u
+\-perm n	true if the file's permission bits = \fIn\fR (\fIn\fR is in octal)
+.ti -\w'\-mtime nmm'u
+\-user u	true if the uid = \fIu\fR (a numerical value, not a login name)
+.ti -\w'\-mtime nmm'u
+\-group g	true if the gid = \fIg\fR (a numerical value, not a group name)
+.ti -\w'\-mtime nmm'u
+\-type x	where \fIx\fR is \fBbcdfug\fR (block, char, dir, regular file, setuid, setgid)
+.ti -\w'\-mtime nmm'u
+\-xdev	do not cross devices to search mounted file systems
+.in -\w'\-mtime nmm'u
+.fi
+.RE
+.PP
+Following the expression can be one of the following, telling what to do
+when a file is found:
+.PP
+.RS
+.ta +\w'\-mtime nmm'u
+.in +\w'\-mtime nmm'u
+.ti -\w'\-mtime nmm'u
+\-print	print the file name on standard output
+.ti -\w'\-mtime nmm'u
+\-print0	print the file name terminated by a null character, to be
+used with
+.BR "xargs \-0" .
+(Minix extension).
+.ti -\w'\-mtime nmm'u
+\-exec	execute a command, {} stands for the file name
+.ti -\w'\-mtime nmm'u
+\-ok	prompts before executing the command
+.in -\w'\-mtime nmm'u
+.RE
+.SH "SEE ALSO"
+.BR test (1),
+.BR xargs (1).

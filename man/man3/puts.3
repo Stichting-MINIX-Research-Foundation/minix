@@ -1,0 +1,43 @@
+.\"	@(#)puts.3s	6.1 (Berkeley) 5/15/85
+.\"
+.TH PUTS 3  "May 15, 1985"
+.AT 3
+.SH NAME
+puts, fputs \- put a string on a stream
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdio.h>
+
+int puts(char *\fIs\fP)
+int fputs(char *\fIs\fP, FILE *\fIstream\fP)
+.ft P
+.fi
+.SH DESCRIPTION
+.B Puts
+copies the null-terminated string
+.I s
+to the standard output stream
+.B stdout
+and appends a
+newline character.
+.PP
+.B Fputs
+copies the null-terminated string
+.I s
+to the named output
+.IR stream .
+.PP
+Neither routine copies the terminal null character.
+.SH "SEE ALSO"
+.BR fopen (3),
+.BR gets (3),
+.BR putc (3),
+.BR printf (3),
+.BR ferror (3),
+.BR fread (3).
+.SH BUGS
+.B Puts
+appends a newline,
+.B fputs
+does not, all in the name of backward compatibility.

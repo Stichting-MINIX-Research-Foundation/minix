@@ -1,0 +1,24 @@
+.\"	@(#)abs.3	6.1 (Berkeley) 5/15/85
+.\"
+.TH ABS 3 "May 15, 1985"
+.AT 3
+.SH NAME
+abs \- integer absolute value
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdlib.h>
+
+int abs(int \fIi\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Abs
+returns the absolute value of its integer operand.
+.SH SEE ALSO
+.BR floor (3).
+.SH BUGS
+Applying the \fIabs\fP function to the most negative integer generates a
+result which is the most negative integer.  That is, abs(0x80000000)
+returns 0x80000000 as a result on a machine with 32-bit ints.  Using the
+result in unsigned computations is sound however.

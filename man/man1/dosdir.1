@@ -1,0 +1,44 @@
+.TH DOSDIR 1
+.SH NAME
+dosdir \- list an MS-DOS directory [IBM]
+.SH SYNOPSIS
+\fBdosdir\fR [\fB\-lr\fR] \fIdrive\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-l" "Long listing"
+.FL "\-r" "Recursively descend and print subdirectories"
+.SH EXAMPLES
+.EX "dosdir \-l A" "List root directory on drive A"
+.EX "dosdir \-r C x/y" "Recursively list directory \fIx/y\fR"
+.EX "dosdir \-r fd1" "List device \fI/dev/fd1\fR"
+.SH DESCRIPTION
+.PP
+.I Dosdir
+reads standard IBM PC diskettes or hard disk partitions in
+\s-2MS-DOS\s+2 format and lists their contents on standard output.
+Directory names should contain slashes to separate components, even though
+\s-2MS-DOS\s+2 uses backslashes.
+The names
+.I dosdir ,
+.I dosread ,
+and 
+.I doswrite
+are all links to the same program.
+The program sees which function to perform by seeing how it was called.
+A drive code of
+.I A
+causes the program to use \fI/dev/dosA\fR, for example, 
+a link to \fI/dev/fd0\fR.
+Similarly, to have hard disk partition 1 be DOS drive C, \fI/dev/dosC\fR 
+could be a link to \fI/dev/hd1\fR, and so on for other drive codes.
+A normal device name may also be used instead of a drive code.

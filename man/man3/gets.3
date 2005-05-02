@@ -1,0 +1,68 @@
+.\"	@(#)gets.3s	6.1 (Berkeley) 5/15/85
+.\"
+.TH GETS 3  "May 15, 1985"
+.AT 3
+.SH NAME
+gets, fgets \- get a string from a stream
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdio.h>
+
+char *gets(char *\fIs\fP)
+char *fgets(char *\fIs\fP, int \fIn\fP, FILE *\fIstream\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Gets
+reads a string into
+.I s
+from the standard input stream
+.BR stdin .
+The string is terminated by a newline
+character, which is replaced in
+.I s
+by a null character.
+.B Gets
+returns its argument.
+.PP
+.B Fgets
+reads 
+.IR n \-1
+characters, or up through a newline
+character, whichever comes first,
+from the
+.I stream
+into the string
+.IR s .
+The last character read into
+.I s
+is followed by a null character.
+.B Fgets
+returns its first argument.
+.SH "SEE ALSO"
+.BR puts (3),
+.BR getc (3),
+.BR scanf (3),
+.BR fread (3),
+.BR ferror (3).
+.SH DIAGNOSTICS
+.B Gets
+and
+.B fgets
+return the constant pointer 
+.SM
+.B NULL
+upon end of file or error.
+.SH BUGS
+.B Gets
+deletes a newline,
+.B fgets
+keeps it,
+all in the name of backward compatibility.
+.PP
+.B Gets
+is not present in the Minix-vmd C library for reasons that should be obvious.
+Use
+.B fgets
+instead.

@@ -1,0 +1,39 @@
+.TH MODEM 1
+.SH NAME
+modem \- switch the modem and getty state
+.SH SYNOPSIS
+\fBmodem \fR[\fB\-o\fR] [\fB\-i \fInum\fR] \fBtty\fIn\fR\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-o" "Turn getty off and set modem to dialout"
+.FL "\-i" "Set line to dialin"
+.SH EXAMPLES
+.EX "modem \-o tty00" "Set tty00 to dialout"
+.EX "modem \-i2 tty00" "Set tty00 to dialin (2 rings)"
+.SH DESCRIPTION
+.PP
+The \fIgetty\fR program allows a terminal port to be used for both dialin and
+dialout. 
+This little program switches the getty state, and also sends
+some commands to the modem attached to the specified line.
+If the \fB\-o\fR flag is presnt, \fImodem\fR will put the 
+getty process (if any) connected to the specified line into 
+SUSPEND state, which means that it
+will not pay attention to that line until it is reset to RESTART state.
+Also, \fImodem\fR will send some (Hayes) 
+commands to the attached modem to disable the auto-nanswer mode. 
+The \fB\-i\fR flag specifies the number of times the telephone has to 
+ring before the modem may answer the call (to give the operator a chance).
+.SH "SEE ALSO"
+.BR term (1),
+.BR getty (8).

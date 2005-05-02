@@ -1,0 +1,30 @@
+.TH SPLIT 1
+.SH NAME
+split \- split a large file into several smaller files
+.SH SYNOPSIS
+\fBsplit\fR [\fB\-\fIn\fR]\fR [\fIfile \fR[\fIprefix\fR]\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-\fIn\fP" "Number of lines per piece (default: 1000)"
+.SH EXAMPLES
+.EX "split \-200 file" "Split \fIfile\fP into pieces of 200 lines each"
+.EX "split file z" "Split \fIfile\fP into \fIzaa\fP, \fIzab\fP, etc."
+.SH DESCRIPTION
+.PP
+.I Split 
+reads \fIfile\fP and writes it out in \fIn\fP-line pieces.
+By default, the pieces are called \fIxaa\fP, \fIxab\fP, etc.
+The optional second argument can be used to provide an alternative
+prefix for the output file names.
+.SH "SEE ALSO"
+.BR cat (1).

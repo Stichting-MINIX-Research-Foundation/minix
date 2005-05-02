@@ -1,0 +1,37 @@
+.TH ASIZE 1
+.SH NAME
+asize \- report the size of an object file
+.SH SYNOPSIS
+\fBasize \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "asize test.o" "Give the size of \fItest.o\fR"
+.SH DESCRIPTION
+.PP
+.I Asize
+prints for each argument
+the (decimal) number of bytes used by the different sections,
+as well as their sum in decimal and hexadecimal.
+If no
+.I file
+is given \fIa.out\fR is used.
+.I Asize
+can only be used to obtain the size of a \(M2 \fI.o\fR or \fI.out\fR file. 
+To obtain the size of an executable, use
+.I size
+instead.
+.SH "SEE ALSO"
+.BR anm (1),
+.BR nm (1),
+.BR ar (1),
+.BR size (1).

@@ -1,0 +1,30 @@
+.TH MKFIFO 1
+.SH NAME
+mkfifo \- make a named pipe
+.SH SYNOPSIS
+\fBmkfifo [\fB\-m \fImode\fR] \fIfifo ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-m" "Create fifo with specified mode"
+.SH EXAMPLES
+.EX "mkfifo pipe" "Create \fIpipe\fP in the current directory"
+.EX "mkfifo -m a+w systatus" "Create the \fIsystatus\fP writable by all"
+.SH DESCRIPTION
+.PP
+The specified fifo special files are created.
+If the \fB\-m\fR flag is used, this will be equivalent to a chmod
+on the fifo special file after its creation.
+.SH "SEE ALSO"
+.BR chmod (1),
+.BR mknod (2),
+.BR mknod (8).

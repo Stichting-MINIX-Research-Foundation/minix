@@ -1,0 +1,67 @@
+.TH FORMAT 1
+.SH NAME
+format \- format a PC floppy diskette
+.SH SYNOPSIS
+.B format
+.RB [ \-v ]
+.I device
+.RI [ media-size
+.RI [ drive-size ]]
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Format
+allows a user with read-write permission to
+.I device
+to format a floppy.  Either one of the special floppy devices must be used,
+see
+.BR fd (4),
+or an automatic device may be used with the size of the floppy specified on
+the command line.  Two sizes must be given when formatting a low density
+diskette in a high density drive.  For example:
+.PP
+.RS
+.ft B
+.nf
+format /dev/at1
+format /dev/fd1 1200
+format /dev/fd1 360 1200
+.fi
+.ft P
+.RE
+.PP
+The first two commands format a 1.2M diskette, the last formats a 360k
+diskette in a 1.2M drive.  A 1.44M drive knows when it's dealing with a low
+density floppy, so all these commands format a 720k diskette:
+.PP
+.RS
+.ft B
+.nf
+format /dev/fd0 720
+format /dev/fd0 720 1440
+format /dev/ps0
+.fi
+.ft P
+.RE
+.PP
+No sizes may be specified when using a special floppy device, a size must be
+specified when using an automatic device.
+.SH OPTIONS
+.TP
+.B \-v
+Verify the process by reading each track after formatting it.  Formatting is
+normally blind, the controller has no idea whether it succeeds or not.  Use
+.B \-v
+on a new box of cheap diskettes, or on a diskette that may have gone bad.
+Verifying will increase formatting time by 50%.
+.SH "SEE ALSO"
+.BR mkfs (1),
+.BR fd (4).
+.SH DIAGNOSTICS
+Numbers will be printed on standard output to show that it is busy.  The
+locations of bad sectors are printed on standard error when verifying.  The
+exit code is zero unless there are too many bad spots.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

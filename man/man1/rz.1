@@ -1,0 +1,95 @@
+.TH RZ 1
+.SH NAME
+rz \- receive a file using the zmodem protocol
+.SH SYNOPSIS
+\fBrz\fR [\-\fBabepqvy\fR]\fR [\fB\-t \fItimeout\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "CP/M to UNIX conventions"
+.FL "\-b" "Binary file"
+.FL "\-e" "Escape for all control characters"
+.FL "\-p" "Protect file if it already exists"
+.FL "\-q" "Quiet; opposite of verbose"
+.FL "\-t" "Set \fItimeout\fR in tenths of a second"
+.FL "\-v" "Verbose; opposite of quiet"
+.FL "\-y" "Yes, clobber existing files"
+.SH EXAMPLES
+.EX "rz </dev/tty01 >/dev/tty01" "Receive a file"
+.SH DESCRIPTION
+.PP
+The XMODEM, YMODEM, and ZMODEM family of file transfer programs are widely
+used on personal computers.
+\s-2MINIX\s+2
+supports ZMODEM, the most advanced of the set.
+The programs \fIsz\fR and \fIrz\fR are used for sending and receiving,
+respectively.
+.PP
+\fIRz\fR and \fIsz\fR are programs that uses an error correcting protocol to 
+transfer files over a dial-in serial port from a variety of programs 
+running under various operating systems.
+\fIRz\fR (Receive ZMODEM) receives files with the ZMODEM batch
+protocol.  Pathnames are supplied by the sending program,
+and directories are made if necessary (and possible).
+The meanings of the available options are:
+.in +0.25i
+.ti -0.25i
+.B \-a
+.br
+Convert files to
+\s-2UNIX\s+2
+conventions by stripping carriage
+returns and all characters beginning with the first
+Control Z (CP/M end of file).
+.ti -0.25i
+.B \-b
+.br
+Binary (tell it like it is) file transfer override.
+.ti -0.25i
+.B \-c
+.br
+Request 16 bit CRC.  XMODEM file transfers default to 8
+bit checksum.  YMODEM and ZMODEM normally use 16 bit CRC.
+.ti -0.25i
+.B \-D
+.br
+Output file data to /dev/null; for testing. 
+.ti -0.25i
+.B \-e
+.br
+Force sender to escape all control characters; normally
+XON, XOFF, DLE, CR-@-CR, and Ctrl-X are escaped.
+.ti -0.25i
+.B \-p
+.br
+Protect: skip file if destination file exists.
+.ti -0.25i
+.B \-q
+.br
+Quiet suppresses verbosity.
+.ti -0.25i
+.B \-t
+.br
+Change timeout tenths of seconds (timeout follows flag).
+.ti -0.25i
+.B \-v 
+.br
+Verbose causes a list of file names to be appended to \fI/tmp/rzlog\fR. 
+More v's generate more output.
+.ti -0.25i
+.B \-y
+.br
+Yes, clobber any existing files with the same name.
+.in -0.25i
+.SH "SEE ALSO"
+.BR sz (1),
+.BR term (1).

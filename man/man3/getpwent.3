@@ -1,0 +1,139 @@
+.TH GETPWENT 3
+.SH NAME
+getpwent, getpwnam, getpwuid, setpwent, endpwent, setpwfile \- password file routines
+.SH SYNOPSIS
+.ft B
+.nf
+#include <pwd.h>
+
+struct passwd *getpwent(void)
+struct passwd *getpwnam(const char *\fIname\fP)
+struct passwd *getpwuid(uid_t \fIuid\fP)
+int setpwent(void)
+void endpwent(void)
+void setpwfile(const char *\fIfile\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+These functions are used to obtain information from the password file.  They
+return this information in a
+.B struct passwd
+as defined by <pwd.h>:
+.PP
+.nf
+.ta +4n +6n +15n
+struct passwd {
+	char	*pw_name;	/* login name */
+	char	*pw_passwd;	/* encrypted password */
+	uid_t	pw_uid;	/* numeric user id */
+	gid_t	pw_gid;	/* numeric group id */
+	char	*pw_gecos;	/* user full name and other info */
+	char	*pw_dir;	/* user's home directory */
+	char	*pw_shell;	/* name of the user's shell */
+};
+.fi
+.PP
+.B Getpwent()
+reads the password file entry by entry.
+.B Getpwnam()
+scans the entire password file for the user with the given
+.IR name .
+.B Getpwuid()
+looks for the first user with the given
+.IR uid .
+The
+.B setpwent()
+and
+.B endpwent()
+functions are used to open and later close the password file.  With
+.B setpwfile()
+one can specify the file to read other than the normal password file.  This
+only sets the name, the next
+.B setpwent()
+call will open the file.  Do not touch the file name while it is active.
+Use
+.B setpwfile(NULL)
+to revert back to the normal password file.
+.PP
+The usual way to scan the password file is (error checking omitted):
+.PP
+.RS
+.nf
+.DT
+setpwent();
+while ((pw = getpwent()) != NULL)
+	if (appropriate_test(pw)) break;
+endpwent();
+.fi
+.RE
+.PP
+The
+.B pw
+variable contains the entry that is wanted if non-NULL.  The
+.B getpwnam()
+and
+.B getpwuid()
+functions are implemented as in this example, with error checking of course.
+.PP
+.B Getpwent()
+calls
+.B setpwent()
+if this has not yet been done.
+.B Setpwent()
+first calls
+.B endpwent()
+if the password file is still open.  (Other implementations may simply
+rewind the file.)
+.SH FILES
+.TP 15
+.B /etc/passwd
+The password file database.
+.SH "SEE ALSO"
+.BR cuserid (3),
+.BR getlogin (3),
+.BR getgrent (3),
+.BR passwd (5).
+.SH DIAGNOSTICS
+.B Setpwent()
+has the same return value and error codes as the
+.BR open (2)
+call it uses to open the password file.  The
+.BI get xxx ()
+functions return NULL on end of file, entry not found, or error.  You can
+set
+.B errno
+to zero before the call and check it after.
+.SH NOTES
+All
+.BI get xxx ()
+routines return a pointer to static storage that is overwritten in each call.
+.PP
+Only
+.B getpwnam()
+and
+.B getpwuid()
+are defined by \s-2POSIX\s+2.  The
+.B _MINIX_SOURCE
+macro must be defined before including <pwd.h> to make the other functions
+visible.  The
+.B pw_passwd
+and
+.B pw_gecos
+fields are also not defined by \s-2POSIX\s+2, but are always visible.
+Portable code cannot reliably detect errors by setting
+.B errno
+to zero.  Under Minix it is better to make a
+.B getpwent()
+scan if you need to look up several user-id's or names, but portable code
+had better use several
+.B getpwuid()
+or
+.B getpwnam()
+calls.  The
+.B getpwent()
+is usually available on other systems, but may be very expensive.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: getpwent.3,v 1.2 1996/04/11 06:37:43 philip Exp $

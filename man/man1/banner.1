@@ -1,0 +1,22 @@
+.TH BANNER 1
+.SH NAME
+banner \- print a banner
+.SH SYNOPSIS
+\fBbanner \fIarg ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "banner happy birthday" "Print a banner saying happy birthday"
+.SH DESCRIPTION
+.PP
+\fIBanner\fR prints its arguments on \fIstdout\fR using a matrix 
+of 6 x 6 pixels per character.

@@ -1,0 +1,30 @@
+.TH MKDIST 8
+.SH NAME
+mkdist \- make a Minix distribution
+.SH SYNOPSIS
+.B mkdist
+.SH DESCRIPTION
+.B Mkdist
+makes a Minix distribution on floppies.  Run the command as
+.B root
+and follow the instructions.  It will make one or two bootable installation
+floppies and a compressed tar file of
+.B /usr
+on several floppies using
+.BR vol (1).
+.PP
+The result can be installed on another system as described in
+.BR usage (8),
+except that all of
+.B /usr
+is saved on one set of floppies instead of being nicely split in binary
+and source packages.
+.SH "SEE ALSO"
+.BR tar (1),
+.BR compress (1),
+.BR vol (1),
+.BR usage (8).
+.SH NOTES
+Also very useful for making backups.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

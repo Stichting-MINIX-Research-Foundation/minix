@@ -1,0 +1,201 @@
+.TH MAN 1
+.SH NAME
+man \- display online manual pages
+.SH SYNOPSIS
+.B man
+.RB [ \-antkfq ]
+.RB [ \-M
+.IR path ]
+.RB [ \-s
+.IR section ]
+.IR title " ..."
+.SH DESCRIPTION
+.B Man
+displays the online manual pages for the specified titles in the specified
+sections.  The sections are as follows:
+.PP
+.TP
+.B 1
+User Commands
+.br
+Generic commands such as
+.BR ls ,
+.BR cp ,
+.BR grep .
+.TP
+.B 2
+System Calls
+.br
+Low level routines that directly interface with the kernel.
+.TP
+.B 3
+Library Routines
+.br
+Higher level C language subroutines.
+.TP
+.B 4
+Device Files
+.br
+Describes devices in
+.BR /dev .
+.TP
+.B 5
+File Formats
+.br
+Formats of files handled by various utilities and subroutines.
+.TP
+.B 6
+Games
+.br
+It's not \s-2UNIX\s+2 without an adventure game.
+.TP
+.B 7
+Miscellaneous
+.br
+Macro packages, miscellaneous tidbits.
+.TP
+.B 8
+System Utilities
+.br
+Commands for the System Administrator.
+.TP
+.B 9
+Documents
+.br
+Larger manuals explaining some commands in more detail.
+.PP
+(If you are new to Minix then try
+.BR "man hier" ,
+it will show you around the file system and give you many pointers to other
+manual pages.)
+.PP
+By default,
+.B man
+will try the following files in a manual page directory for the command
+.BR "man \-s 1 ls" :
+.PP
+.RS
+.ft B
+.nf
+cat1/ls.1
+cat1/ls.1.Z
+man1/ls.1
+man1/ls.1.Z
+.fi
+.ft P
+.RE
+.PP
+Files in the man[1\-8] directories are formatted with
+.BR "nroff \-man" .
+Those in man9 are formatted with
+.BR "nroff \-mnx" .
+Files in the cat? directories are preformatted.  Files with names ending in
+.B .Z
+are decompressed first with
+.B zcat
+(see
+.BR compress (1)).
+The end result is presented to the user using a pager if displaying on
+the screen.
+.PP
+For each manual page directory in its search path,
+.B man
+will first try all the subdirectories of the manual page directory for
+the files above, and then the directory itself.  The directory
+.B /usr/man
+contains the standard manual pages, with manual pages for optional
+packages installed in a subdirectory of /usr/man, with the same
+structure as /usr/man.  The directory
+.B /usr/local/man
+contains manual pages for locally added software.  By default
+/usr/local/man is searched first, then /usr/man.
+.PP
+A title is not simply used as a filename, because several titles may
+refer to the same manual page.  Each manual page directory contains a
+database of titles in the
+.BR whatis (5)
+file that is created by
+.BR makewhatis (1)
+from the NAME sections of all the manual pages.  A title is searched in
+this database and the first title on a whatis line is used as a filename.
+.SH OPTIONS
+The options may be interspersed with the titles to search, and take effect
+for the titles after them.
+.TP
+.B \-a
+Show all the manual pages or one line descriptions with the given title in
+all the specified sections in all the manual directories in the search path.
+Normally only the first page found is shown.
+.TP
+.B \-n
+Use
+.B nroff \-man
+to format manual pages (default).
+.TP
+.B \-t
+Use
+.B troff \-man
+to format manual pages.
+.TP
+.B \-f
+Use
+.BR whatis (1)
+to show a one line description of the title from the
+.BR whatis (5)
+file.
+.TP
+.B \-k
+Use
+.BR apropos (1)
+to show all the one line descriptions of the title anywhere in the
+.BR whatis (5)
+files (implies
+.BR \-a ).
+.TP
+.B \-q
+Quietly check if all requested manual pages exist.  No output, no errors,
+just an exit code.
+.TP
+.BI \-M " path"
+Use
+.I path
+as the search path for manual directories.
+.TP
+.BI \-s " section"
+.I Section
+is the section number the page is to be found in, or a comma separated
+list of sections to use.  Normally all sections are searched.  The
+search is always in numerical order no matter what your section list looks
+like.  A single digit is treated as a section number without the
+.B \-s
+for compatibility with BSD-style
+.B man
+commands.
+.SH ENVIRONMENT
+.TP 15n
+.B MANPATH
+This is a colon separated list of directories to search for manual
+pages, by default
+.BR /usr/local/man:/usr/man .
+.TP
+.B PAGER
+The program to use to display the manual page or one line descriptions on
+the screen page by page.  By default
+.BR more .
+.SH FILES
+.TP 25n
+/usr/man/whatis
+One of the
+.BR whatis (5)
+databases.
+.SH "SEE ALSO"
+.BR nroff (1),
+.BR troff (1),
+.BR more (1),
+.BR whatis (1),
+.BR makewhatis (1),
+.BR catman (1),
+.BR whatis (5),
+.BR man (7).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

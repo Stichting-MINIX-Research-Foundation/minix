@@ -1,0 +1,29 @@
+.TH ISODIR 1
+.SH NAME
+isodir \- list ISO9660 or High Sierra directories
+.SH SYNOPSIS
+\fBisodir\fP \-[\fBlr\fP] \fIinput_file\fP [\fIdir\fP]
+.SH DESCRIPTION
+\fBIsodir\fP reads directories on a file system in ISO9660 or High Sierra
+Group format (usually residing on cdrom) and lists their contents on
+standard output.  Directory names should contain slashes to separate
+components. The names \fBisodir\fP, \fBisoread\fP, and \fBisoinfo\fP are all
+links to the same program.  The program sees which function to perform by
+looking how it was called.
+.PP
+.IP \-l 
+Lists all info on files and directories (size, date, time)
+.IP \-r 
+Recursively descend and print subdirectories
+.IP \-B
+List the byte offset and size of a file or directory.  (Useful in scripts that
+want to operate on an ISO image file.  To add a Minix partition table, for
+instance.)
+.SH "BUGS"
+Only Interchange level-1 is supported. The Red Rock extensions and Interchange
+level-2 are not implemented.
+.SH "SEE ALSO"
+.BR isoread (1),
+.BR isoinfo (1).
+.SH AUTHOR
+Michel R. Prevenier (mrpreve@cs.vu.nl)

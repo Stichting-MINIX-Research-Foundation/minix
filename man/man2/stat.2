@@ -1,0 +1,181 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)stat.2	6.5 (Berkeley) 5/12/86
+.\"
+.TH STAT 2 "May 12, 1986"
+.UC 4
+.SH NAME
+stat, lstat, fstat \- get file status
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <sys/stat.h>
+
+.ta +54n
+int stat(const char *\fIpath\fP, struct stat *\fIbuf\fP)
+int lstat(const char *\fIpath\fP, struct stat *\fIbuf\fP)	(Minix-vmd)
+int fstat(int \fIfd\fP, struct stat *\fIbuf\fP)
+.fi
+.ft R
+.SH DESCRIPTION
+.B Stat
+obtains information about the file
+.IR path .
+Read, write or execute
+permission of the named file is not required, but all directories
+listed in the path name leading to the file must be reachable.
+.PP
+.B Lstat
+is like \fBstat\fP except in the case where the named file is a symbolic link,
+in which case
+.B lstat
+returns information about the link,
+while
+.B stat
+returns information about the file the link references.
+(Minix-vmd)
+.PP
+.B Fstat
+obtains the same information about an open file
+referenced by the argument descriptor, such as would
+be obtained by an \fBopen\fP call.  Pipe descriptors
+look like named pipes with a link count of zero.  The
+st_size field of pipes or named pipes shows the amount of
+bytes currently buffered in the pipe.
+.PP
+.I Buf
+is a pointer to a
+.B stat
+structure into which information is placed concerning the file.
+The contents of the structure pointed to by
+.I buf
+is as follows:
+.PP
+.if t .RS
+.nf
+.ta +0.4i +0.8i +1i
+struct stat {
+	dev_t	st_dev;	/* device inode resides on */
+	ino_t	st_ino;	/* this inode's number */
+	mode_t	st_mode;	/* file mode, protection bits, etc. */
+	nlink_t	st_nlink;	/* number or hard links to the file */
+	uid_t	st_uid;	/* user-id of the file's owner */
+	gid_t	st_gid;	/* group-id of the file's owner */
+	dev_t	st_rdev;	/* the device type, for inode that is device */
+	off_t	st_size;	/* total size of file */
+	time_t	st_atime;	/* time of last access */
+	time_t	st_mtime;	/* time of last data modification */
+	time_t	st_ctime;	/* time of last file status change */
+};
+.fi
+.if t .RE
+.DT
+.PP
+.TP 12
+st_atime
+Time when file data was last read or modified.  Changed by the following system
+calls:
+.BR mknod (2),
+.BR utime (2),
+.BR read (2),
+and
+.BR write (2).
+For reasons of efficiency, 
+st_atime is not set when a directory
+is searched, although this would be more logical.
+.TP 12
+st_mtime
+Time when data was last modified.
+It is not set by changes of owner, group, link count, or mode.
+Changed by the following system calls:
+.BR mknod (2),
+.BR utime (2),
+.BR write (2).
+.TP 12
+st_ctime
+Time when file status was last changed.
+It is set both both by writing and changing the i-node.
+Changed by the following system calls:
+.BR chmod (2)
+.BR chown (2),
+.BR link (2),
+.BR mknod (2),
+.BR rename (2),
+.BR unlink (2),
+.BR utime (2),
+.BR write (2).
+.PP
+The file type information in \fBst_mode\fP has bits:
+.PP
+.nf
+.in +5n
+.ta 1.6i 2.5i 3i
+#define S_IFMT	0170000	/* type of file */
+#define\ \ \ \ S_IFIFO	0010000	/* named pipe */
+#define\ \ \ \ S_IFCHR	0020000	/* character special */
+#define\ \ \ \ S_IFDIR	0040000	/* directory */
+#define\ \ \ \ S_IFBLK	0060000	/* block special */
+#define\ \ \ \ S_IFREG	0100000	/* regular */
+#define\ \ \ \ S_IFLNK	0120000	/* symbolic link (Minix-vmd) */
+.fi
+.in -5n
+.PP
+The mode bits 0007777 encode set-uid/gid bits and
+permission bits (see
+.BR chmod (2)).
+.SH "RETURN VALUE
+Upon successful completion a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+.B errno
+is set to indicate the error.
+.SH "ERRORS
+.B Stat
+and
+.B lstat
+will fail if one or more of the following are true:
+.TP 15
+[ENOTDIR]
+A component of the path prefix is not a directory.
+.TP 15
+[ENAMETOOLONG]
+The path name exceeds PATH_MAX characters.
+.TP 15
+[ENOENT]
+The named file does not exist.
+.TP 15
+[EACCES]
+Search permission is denied for a component of the path prefix.
+.TP 15
+[ELOOP]
+Too many symbolic links were encountered in translating the pathname.
+(Minix-vmd)
+.TP 15
+[EFAULT]
+.I Buf
+or
+.I name
+points to an invalid address.
+.TP 15
+[EIO]
+An I/O error occurred while reading from or writing to the file system.
+.PP
+.B Fstat
+will fail if one or both of the following are true:
+.TP 15
+[EBADF]
+.I Fildes
+is not a valid open file descriptor.
+.TP 15
+[EFAULT]
+.I Buf
+points to an invalid address.
+.TP 15
+[EIO]
+An I/O error occurred while reading from or writing to the file system.
+.SH "SEE ALSO"
+.BR chmod (2),
+.BR chown (2),
+.BR utime (2).

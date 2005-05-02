@@ -1,0 +1,28 @@
+.TH LOGIN 1
+.SH NAME
+login \- log into the computer
+.SH SYNOPSIS
+\fBlogin\fR [\fIuser\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "login ast" "Login as ast"
+.SH DESCRIPTION
+.PP
+\fILogin\fR allows a logged in user to login as someone else without first
+logging out.
+If a password is needed, \fIlogin\fR will prompt for it.
+.SH "SEE ALSO"
+.BR su (1),
+.BR init (8),
+.BR getty (8),
+.BR rlogin (1).

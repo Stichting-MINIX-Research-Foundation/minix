@@ -1,0 +1,120 @@
+.TH SERVXCHECK 3
+.SH NAME
+servxcheck \- Internet service access check
+.SH SYNOPSIS
+.ft B
+.nf
+#define _MINIX_SOURCE 1
+#include </net/gen/netdb.h>
+
+int servxcheck(ipaddr_t \fIpeer\fP, const char *\fIservice\fP,
+	void (*\fIlogf\fP)(int \fIpass\fP, const char *\fIname\fP));
+char *servxfile(const char *\fIfile\fP);
+.fi
+.ft R
+.SH DESCRIPTION
+.B Servxcheck()
+is used by programs like
+.B inetd
+to perform an access check on the host connected to the other end of the TCP
+channel that has IP address
+.IR peer .
+.PP
+.B Servxcheck()
+translates the IP address to the
+associated host name if necessary, and checks if the host is granted access
+as guided by the file
+.BR /etc/serv.access .
+(See
+.BR serv.access (5).)
+The service name used to search the access file is passed by the caller as
+.IR service .
+These names should be the same as the service names in
+.BR /etc/services .
+.PP
+The caller should use the NWIOGTCPCONF ioctl() call to find out what the
+IP address of the remote end is.  It is wise to bypass the
+.B servxcheck()
+call if the remote end happens to be the local machine (remaddr == locaddr),
+so that local connections aren't impeded by slow checks.
+.B Servxcheck()
+will itself allow connections from 127.0.0.1/8 immediately, so you
+don't have to check for that.  Example of use:
+.PP
+.RS
+.nf
+.ta +4n +4n +4n
+if (ioctl(fd, NWIOGTCPCONF, &tcpconf) < 0
+	|| tcpconf.nwtc_remaddr == tcpconf.nwtc_locaddr
+	|| servxcheck(tcpconf.nwtc_remaddr, service_name, NULL)
+) {
+	serve();
+}
+.fi
+.RE
+.PP
+An attempt to connect to a service is logged if the access is denied.  You
+can use the special checkword "\fBlog\fP" to also log if access is granted.
+Logging will be done with
+.B syslog()
+at the
+.B warning
+level.
+A syntax error in the access file may be logged under the
+.B err
+level.
+The caller must use
+.B openlog()
+to set the appropriate logging facility.  One may do one's own logging by
+supplying a
+.I logf
+function that will be called by
+.B servxcheck
+with a first argument that is true if access is granted, false if
+denied, and a second argument that is the name of the remote host whose
+access has been checked.
+.PP
+The default is to fail the check unless the access file says otherwise.
+Strange errors make the check succeed.  (We do not want
+remote access to fail because of some system error.)  Note that this
+function is not meant to check access to the system, that's what
+passwords and such are for, but only to limit access to those who are
+allowed to use the services the system offers.
+.PP
+Connections from a machine to itself are accepted immediately.  No further
+checks, no logging.
+.PP
+.B Servxfile()
+may be used to specify a file other than the default
+.BR /etc/serv.access .
+This is useful for programs started from
+.B inetd
+that want to handle the access check themselves, using a private access file.
+The return value of
+.B servxfile()
+is the pathname of the old access file.  Only a pointer to the new path is
+saved, the caller must keep the string it points to intact.
+.SH FILES
+.TP 25n
+.B /etc/serv.access
+Default access check file.
+.SH "SEE ALSO"
+.BR syslog (3),
+.BR serv.access (5),
+.BR services (5),
+.BR inetd (8).
+.SH DIAGNOSTICS
+.B Servxcheck()
+returns 0 if the access is denied, 1 if granted.
+.PP
+Typical syslog message:
+.PP
+.RS
+Jan 10 20:27:20 flotsam inetd[174]: service 'shell' granted to jetsam.cs.vu.nl
+.RE
+.SH BUGS
+IP and DNS based access checks will stop most crackers, but not the really
+determined ones.  Luckily Minix is sufficiently strange to thwart the well
+known cracking schemes.  But don't ever allow yourself to feel secure.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

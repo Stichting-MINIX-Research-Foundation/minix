@@ -1,0 +1,46 @@
+.TH CUT 1
+.SH NAME
+cut \- select out columns of a file
+.SH SYNOPSIS
+\fBcut [ \fB \-b \fR|\fB \-c\fR] \fIlist\fR [\fIfile...\fR]\fR
+.br
+\fBcut \-f \fIlist\fR [\fB\-d \fIdelim\fR] [\fB \-s\fR]\fR [\fIfile...\fR]" 
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-b" "Cut specified bytes"
+.FL "\-c" "Select out specific characters"
+.FL "\-d" "Change the column delimiter to \fIdelim\fR"
+.FL "\-f" "Select out specific fields that are separated by the delimiter character ( see \fIdelim\fR)"
+.FL "\-i" "Runs of delimiters count as one"
+.FL "\-s" "Suppres lines with no delimiter characters, when used with the \-f option. Lines with no delimiters are passwd through untouched"
+.SH EXAMPLES
+.EX "cut \-f 2 file" "Extract field 2"
+.EX "cut \-c 1\-2,5 file" "Extract character columns 1, 2, and 5"
+.EX "cut \-c 1\-5,7\- file" "Extract all columns except 6"
+.SH DESCRIPTION
+.PP
+\fICut\fR extracts one or more fields or columns from a file and writes them on
+standard output.
+If the \fB\-f\fR flag is used, the fields are separated by a delimiter 
+character, normally a tab, but can be changed using the \fB\-d\fR flag.
+If the \fB\-c\fR flag is used, specific columns can be specified.
+The list can be comma or BLANK separated. The \fB\-f\fR and
+\fB\-c\fR flags  are mutually exclusive.
+Note: The POSIX1003.2 standard requires the option \-b to cut out
+specific bytes in a file. It is intended for systems with multi byte
+characters (e.g. kanji), since MINIX uses only one byte characters,
+this option is equivalent to \-c. For the same reason, the option
+\-n has no effect and is not listed in this manual page.
+.SH "SEE ALSO"
+.BR sed (1),
+.BR awk (9).

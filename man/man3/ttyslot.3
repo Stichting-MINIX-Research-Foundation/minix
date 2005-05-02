@@ -1,0 +1,56 @@
+.TH TTYSLOT 3
+.SH NAME
+ttyslot, fttyslot \- utmp slot number
+.SH SYNOPSIS
+.nf
+.ft B
+#define _MINIX_SOURCE 1
+#include <unistd.h>
+
+int ttyslot(void)
+int fttyslot(int \fIfd\fP)
+.fi
+.ft P
+.SH DESCRIPTION
+.B Ttyslot()
+returns the index of the login terminal in the
+.B utmp
+file.  It tries
+.B fttyslot()
+on file descriptors
+.BR 0,
+.BR 1,
+and
+.BR 2
+to find the index.
+.PP
+.B Fttyslot()
+returns the utmp index of the terminal associated with file descriptor
+.IR fd .
+First it tries to map
+.I fd
+to a terminal name with
+.BR ttyname (3),
+then it searches the
+.BR ttytab (5)
+database with the
+.BR getttyent (3)
+function for this terminal.  This means that the utmp slot number is the
+same as the ttytab entry number counting from 1.  The value 0 is returned if
+no slot number can be found for a file descriptor.
+.SH "SEE ALSO"
+.BR ttyname (3),
+.BR getttyent (3),
+.BR utmp (5),
+.BR ttytab (5),
+.BR init (8).
+.SH NOTES
+Since 0 is used as an error return this means that the first entry in the
+utmp file is not used.
+.PP
+.B Ttyslot()
+is often found in a UNIX implementation,
+.B fttyslot()
+is Minix specific.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

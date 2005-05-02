@@ -1,0 +1,24 @@
+.TH EJECT 1
+.SH NAME
+eject \- eject removable media
+.SH SYNOPSIS
+.B eject
+.I device
+.SH DESCRIPTION
+.B Eject
+tells a device to eject removable media, usually a floppy or CD-ROM.
+.B Eject
+invokes the
+.B DIOCEJECT
+ioctl on the device.  The media will then be ejected, or allowed to be
+removed.  The call will fail if the device is still in use.
+.PP
+Tapes can't be unloaded with this command, use
+.B mt offline
+instead.
+.SH "SEE ALSO"
+.BR mt (1),
+.BR hd (4),
+.BR sd (4).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

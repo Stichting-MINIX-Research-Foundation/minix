@@ -1,0 +1,95 @@
+.\"	@(#)ctype.3	6.4 (Berkeley) 5/12/86
+.\"
+.TH CTYPE 3  "May 12, 1986"
+.AT 3
+.SH NAME
+ctype, isalpha, isupper, islower, isdigit, isxdigit, isalnum, isspace, ispunct, isprint, isgraph, iscntrl, isascii, toupper, tolower, toascii \- character classification macros
+.SH SYNOPSIS
+.nf
+.ft B
+#include <ctype.h>
+
+int isalpha(int \fIc\fP)
+\&...
+.fi
+.SH DESCRIPTION
+These macros classify characters
+by table lookup.
+Each is a predicate returning nonzero for true,
+zero for false.
+.B Isascii
+and
+.B toascii
+are defined on all integer values; the rest
+are defined only on the range of
+.B "unsigned char"
+and on the special value
+EOF (see
+.BR stdio (3)).
+.TP 15n
+.B isalpha
+.I c
+is a letter
+.TP
+.B isupper
+.I c
+is an upper case letter
+.TP
+.B islower 
+.I c
+is a lower case letter
+.TP
+.B isdigit
+.I c
+is a digit
+.TP
+.B isxdigit
+.I c
+is a hex digit
+.TP
+.B isalnum
+.I c
+is an alphanumeric character
+.TP
+.B isspace
+.I c
+is a space, tab, carriage return, newline, vertical tab, or formfeed
+.TP
+.B ispunct
+.I c
+is a punctuation character (neither control nor alphanumeric)
+.TP
+.B isprint
+.I c
+is a printing character, code 040(8) (space) through 0176 (tilde)
+.TP
+.B isgraph
+.I c
+is a printing character, similar to
+.B isprint
+except false for space.
+.TP
+.B iscntrl
+.I c
+is a delete character (0177) or ordinary control character
+(less than 040).
+.TP
+.B isascii
+.I c
+is an ASCII character, code less than 0200
+.TP
+.B tolower
+.I c
+is converted to lower case.  Return value is undefined if not 
+.BR isupper (\fIc\fR).
+.TP
+.B toupper
+.I c
+is converted to upper case.  Return value is undefined if not 
+.BR islower (\fIc\fR).
+.TP
+.B toascii
+.I c
+is converted to be a valid ascii character.
+.SH "SEE ALSO"
+.BR ascii (7)

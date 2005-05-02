@@ -1,0 +1,29 @@
+.TH CRC 1
+.SH NAME
+crc \- print the checksum of the file data
+.SH SYNOPSIS
+\fBcrc \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "crc *.c" "Print checksums of all the C programs"
+.SH DESCRIPTION
+.PP
+The checksum of each argument is computed and printed, along with the file
+length and its name, one file per line.
+This program is useful for seeing if a file transmitted to another machine
+has arrived correctly.
+It is conceptually similar to \fIsum\fR, except that it uses a stronger 
+checksum algorithm and also prints the length.
+.SH "SEE ALSO"
+.BR cksum (1),
+.BR sum (1).

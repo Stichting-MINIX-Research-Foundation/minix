@@ -1,0 +1,57 @@
+.TH HOSTS 5
+.SH NAME
+hosts \- hostname to IP address database
+.SH SYNOPSIS
+.B /etc/hosts
+.SH DESCRIPTION
+The hosts database lists the IP addresses and the hostnames that translate
+to these IP addresses.  It is used by
+.BR nonamed (8)
+in a network without name servers.  A simple
+.B /etc/hosts
+may look like this:
+.PP
+.RS
+.ta +15n
+.nf
+10.0.0.1	flotsam
+10.0.0.2	jetsam
+.fi
+.RE
+.PP
+These two entries give names to two IP addresses.  The file may contain
+comments marked with '#'.
+.PP
+You can have aliases (more hostnames on the same line) to give a machine
+more than one name, like
+.BR www ,
+if you run a web server on one.
+.PP
+If your PC is Internet connected then you can specify the name server(s)
+to get more information from with %nameserver entries:
+.PP
+.RS
+.ta +\w'172.16.24.3'u+4m +\w'%nameserver'u+4m
+.nf
+172.16.24.3	%nameserver	# dns1.example.com
+172.16.24.6	%nameserver	# dns2.example.com
+.fi
+.RE
+.PP
+Read
+.BR nonamed (8)
+for all the details on special host file entries that configure
+.B nonamed
+for use on the Internet, and on home machines that are occasionally
+connected to the Internet.
+.SH FILES
+.TP 15n
+/etc/hosts
+Hosts database.
+.SH "SEE ALSO"
+.BR ethers (5),
+.BR nonamed (8),
+.BR dhcpd (8),
+.BR boot (8).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

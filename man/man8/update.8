@@ -1,0 +1,29 @@
+.TH UPDATE 8
+.SH NAME
+update \- periodically write the buffer cache to disk
+.SH SYNOPSIS
+\fBupdate\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "update &" "Start a process that flushes the cache"
+.SH DESCRIPTION
+.PP
+When the system is booted,
+.I update
+is started up in the background from 
+.I /etc/rc
+to issue a 
+\&SYNC
+system call every 30 sec.
+.SH "SEE ALSO"
+.BR boot (8).

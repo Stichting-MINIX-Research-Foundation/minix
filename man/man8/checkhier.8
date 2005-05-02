@@ -1,0 +1,29 @@
+.TH CHECKHIER 8
+.SH NAME
+checkhier \- check the directory hierarchy
+.SH SYNOPSIS
+.B checkhier
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Checkhier
+checks a number of files and directories that make up the top level file
+system hierarchy.  The output of the command is a script that could be
+applied to fix things like bad mode, wrong owner or group, etc.
+.PP
+The script should never be executed without checking.  I might be better to
+examine the differences oneself and to fix any problems by hand.
+.PP
+.B Checkhier
+must be run by the superuser.
+.SH "SEE ALSO"
+.BR chmod (1),
+.BR chown (8),
+.BR hier (7).
+.SH DIAGNOSTICS
+The exit code is 0 if all checks out right, otherwise a script is output and
+the exit code is 1.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

@@ -1,0 +1,85 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)utimes.2	6.4 (Berkeley) 8/26/85
+.\"
+.TH UTIME 2 "August 26, 1985"
+.UC 4
+.SH NAME
+utime \- set file times
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <utime.h>
+
+int utime(const char *\fIfile\fP, struct utimbuf *\fItimes\fP)
+.fi
+.SH DESCRIPTION
+The
+.B utime
+call
+uses the
+\*(lqaccessed\*(rq and \*(lqupdated\*(rq times
+from the utimbuf structure pointed to by
+.I times
+to set the corresponding recorded times for
+.I file.
+.PP
+Struct utimbuf is defined in <utime.h> as follows:
+.PP
+.RS
+.nf
+.ta +0.4i +0.8i +1.0i
+struct utimbuf {
+	time_t	actime;	/* access time */
+	time_t	modtime;	/* modification time */
+};
+.fi
+.RE
+.PP
+The caller must be the owner of the file or the super-user.
+The \*(lqinode-changed\*(rq time of the file is set to the current time.
+.SH "RETURN VALUE
+Upon successful completion, a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+.B errno
+is set to indicate the error.
+.SH "ERRORS
+.B Utime
+will fail if one or more of the following are true:
+.TP 15
+[ENOTDIR]
+A component of the path prefix is not a directory.
+.TP 15
+[EINVAL]
+The pathname contains a character with the high-order bit set.
+.TP 15
+[ENAMETOOLONG]
+The path name exceeds PATH_MAX characters.
+.TP 15
+[ENOENT]
+The named file does not exist.
+.TP 15
+[ELOOP]
+Too many symbolic links were encountered in translating the pathname.
+(Minix-vmd)
+.TP 15
+[EPERM]
+The process is not super-user and not the owner of the file.
+.TP 15
+[EACCES]
+Search permission is denied for a component of the path prefix.
+.TP 15
+[EROFS]
+The file system containing the file is mounted read-only.
+.TP 15
+[EFAULT]
+.I File
+or \fItimes\fP points outside the process's allocated address space.
+.TP 15
+[EIO]
+An I/O error occurred while reading or writing the affected inode.
+.SH SEE ALSO
+.BR stat (2).

@@ -1,0 +1,33 @@
+.TH WRITE 1
+.SH NAME
+write \- send a message to a logged-in user
+.SH SYNOPSIS
+\fBwrite\fR [\fB\-cv\fR] \fIuser\fR [\fItty\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Use cbreak mode"
+.FL "\-v" "Verbose mode"
+.SH EXAMPLES
+.EX "write ast" "Send a message to ast"
+.EX "write ast tty00" "Send a message to ast on tty00"
+.SH DESCRIPTION
+.PP
+\fIWrite\fR lets a user send messages to another logged-in user.  
+Lines typed by the user appear on the other user's screen a line at a time 
+(a character at a time in the case of cbreak mode).  
+The file \fI/usr/adm/wtmp\fR is searched to determine which tty to send to. 
+If the user is logged onto more than one terminal, the \fItty\fR argument
+selects the terminal.  Type CTRL- D to terminate the command.
+Use ! as a shell escape.
+.SH "SEE ALSO"
+.BR mail (1).

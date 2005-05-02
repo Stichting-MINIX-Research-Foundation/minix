@@ -1,0 +1,112 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)setbuf.3s	6.2 (Berkeley) 5/12/86
+.\"
+.TH SETBUF 3  "May 12, 1986"
+.UC 4
+.SH NAME
+setbuf, setvbuf \- assign buffering to a stream
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdio.h>
+
+int setbuf(FILE *\fIstream\fP, char *\fIbuf\fP)
+int setvbuf(FILE *\fIstream\fP, char *\fIbuf\fP, int \fItype\fP, size_t \fIsize\fP)
+.SH DESCRIPTION
+The three types of buffering available are unbuffered, block buffered,
+and line buffered.
+When an output stream is unbuffered, information appears on the
+destination file or terminal as soon as written;
+when it is block buffered many characters are saved up and written as a block;
+when it is line buffered characters are saved up until a newline is
+encountered or input is read from stdin.
+.B Fflush
+(see 
+.BR fclose (3))
+may be used to force the block out early.
+Normally all files are block buffered.
+A buffer is obtained from
+.BR  malloc (3)
+upon the first
+.B getc
+or
+.BR  putc (3)
+on the file.
+If the standard stream
+.B stdout
+refers to a terminal it is line buffered.
+The standard stream
+.B stderr
+is always unbuffered.
+.PP
+.B Setbuf
+is used after a stream has been opened but before it is read or written.
+The character array
+.I buf
+is used instead of an automatically allocated buffer.  If
+.I buf
+is the constant pointer
+.SM
+.BR NULL ,
+input/output will be completely unbuffered.
+A manifest constant 
+.SM
+.B BUFSIZ
+tells how big an array is needed:
+.IP
+.B char
+buf[BUFSIZ];
+.PP
+.BR Setvbuf ,
+an alternate form of 
+.BR setbuf ,
+is used after a stream has been opened but before it is read or written.
+It has three uses, depending on the value of the
+.IR type
+argument:
+.TP 5
+.B "setvbuf(\fIstream\fP, \fIbuf\fP, _IOFBF, \fIsize\fP)"
+Causes input/output to be fully buffered using the character array
+.I buf
+whose size is determined by the 
+.I size
+argument.
+If
+.I buf
+is the constant pointer
+.SM
+.BR NULL ,
+then an automatically allocated buffer will be used.
+.TP 5
+.B "setvbuf(\fIstream\fP, \fIbuf\fP, _IOLBF, \fIsize\fP)"
+Like above, except that output will be line buffered, i.e. the buffer will
+be flushed when a newline is written, the buffer is full, or input is
+requested.
+.TP 5
+.B "setvbuf(\fIstream\fP, \fIbuf\fP, _IONBF, \fIsize\fP)"
+Causes input/output to be completely unbuffered.
+.I Buf
+and
+.I size
+are ignored.
+.PP
+A file can be changed between unbuffered, line buffered, or block buffered
+by using
+.B freopen
+(see
+.BR fopen (3))
+followed by the appropriate
+.B setvbuf
+call.
+.SH "SEE ALSO"
+.BR fopen (3),
+.BR getc (3),
+.BR putc (3),
+.BR malloc (3),
+.BR fclose (3),
+.BR puts (3),
+.BR printf (3),
+.BR fread (3).

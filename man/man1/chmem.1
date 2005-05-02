@@ -1,0 +1,65 @@
+.TH CHMEM 1
+.SH NAME
+chmem \- change memory allocation
+.SH SYNOPSIS
+\fBchmem\fR [\fB+\fR]\fR [\fB\-\fR] [\fB=\fR] \fIamount file\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "chmem =50000 a.out" "Give \fIa.out\fP 50K of stack space"
+.EX "chmem \-4000 a.out" "Reduce the stack space by 4000 bytes"
+.EX "chmem +1000 file1" "Increase each stack by 1000 bytes"
+.SH DESCRIPTION
+.PP
+When a program is loaded into memory, it is allocated enough memory
+for the text and data+bss segments, plus
+an area for the stack.
+Data segment growth using 
+.I malloc ,
+.I brk ,
+or
+.I sbrk 
+eats up stack space from the low end.
+The amount of stack space to allocate is derived
+from a field in the executable program's file header.
+If the combined stack and data segment growth exceeds the stack space
+allocated, the program will be terminated.
+.PP
+It is therefore important to set the amount of stack space carefully.
+If too little is provided, the program may crash.
+If too much is provided, memory will be wasted, and fewer programs will be able
+to fit in memory and run simultaneously.
+\s-2MINIX\s+2
+does not swap, so that when memory is full, subsequent attempts to fork will
+fail.
+The compiler sets the stack space
+to the largest possible value (for the Intel CPUs, 64K \- text \- data).
+For many programs, this value is far too large.
+Nonrecursive programs that do not call
+.I brk ,
+.I sbrk ,
+or
+.I malloc ,
+and do not have any local arrays usually do not need more than 8K of stack
+space.
+.PP
+The
+.I chmem
+command changes the value of the header field that determines the stack allocation, and
+thus indirectly the total memory required to run the program.
+The = option sets the stack size
+to a specific value; the + and \- options increment and decrement the
+current value by the indicated amount.
+The old and new stack sizes are printed.
+.SH "SEE ALSO"
+.BR install (1),
+.BR brk (2).

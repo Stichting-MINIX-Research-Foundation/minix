@@ -1,0 +1,45 @@
+.TH ONEC_SUM 3
+.SH NAME
+oneC_sum \- One's complement internet checksum
+.SH SYNOPSIS
+.ft B
+.nf
+#define _MINIX_SOURCE 1
+#include <stddef.h>
+#include <sys/types.h>
+
+#include <net/gen/oneCsum.h>
+
+u16_t oneC_sum(u16_t \fIprev\fP, void *\fIdata\fP, size_t \fIsize\fP)
+.fi
+.ft R
+.SH DESCRIPTION
+.B OneC_sum
+is used to calculate the one's complement checksum needed for IP network
+packets.
+A good document about the Internet Checksum is RFC-1071 (Computing the
+Internet checksum).
+.PP
+.B OneC_sum
+expects three parameters:
+.TP 10
+.I prev
+The checksum of previous blocks of data that are to be included in the
+checksum.
+The value of prev in first call to oneC_sum should be 0.
+.TP
+.I data
+A pointer to the block of data.
+The data is interpreted as a series of 16 bit numbers in network byte order, but
+an odd number of bytes is also allowed.
+.TP
+.I size
+The size of the data in bytes.
+.SH "SEE ALSO"
+.BR ip (4).
+.br
+.B RFC-1071
+.SH AUTHOR
+Philip Homburg (philip@cs.vu.nl)
+.\"
+.\" $PchId: oneC_sum.3,v 1.3 1996/02/22 21:05:31 philip Exp $

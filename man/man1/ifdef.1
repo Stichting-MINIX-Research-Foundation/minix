@@ -1,0 +1,44 @@
+.TH IFDEF 1
+.SH NAME
+ifdef \- remove #ifdefs from a file
+.SH SYNOPSIS
+\fBifdef \fR[\fB\-t\fR] [\fB\-d\fIsymbol\fR] [\fB\-D\fIsymbol\fR] [\fB\-U\fIsymbol\fR] [\fB\-I\fIsymbol\fR] [file]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-D" "Define symbol permanently"
+.FL "\-I" "Ignore symbol"
+.FL "\-U" "Undefine symbol permanently"
+.FL "\-d" "Define symbol. It may be #undef'ed later"
+.FL "\-t" "Produce a table of the symbols on \fIstdout\fR"
+.SH EXAMPLES
+.EX "ifdef \-DUNIX file.c >newfile.c" "Define \fIUNIX\fR"
+.EX "ifdef \-D_MINIX \-UDOS <x.c >y.c "Define \fI_MINIX\fR, undefine \fIDOS\fR"
+.SH DESCRIPTION
+.PP
+\fIIfdef\fR
+allows conditional code [ #ifdef ... #endif ]
+to be selectively removed from C files, but at the same time leaving
+all other C preprocessor commands intact such as #define, #include etc.
+Input to
+.I ifdef
+is either the file named as the last argument, or \fIstdin\fR if no file
+is named.
+Output goes to \fIstdout\fR.
+.PP
+Symbols may be defined with the \fB\-d\fR or \fB\-D\fR flags just like
+\fIcpp\fR, except that the latter option ignores subsequent \fI#undefs\fR.
+It is not permitted to give values to symbols.
+Similarly, \fB\-U\fR undefines a symbol and ignores subsequent 
+\fI#defines\fRs.
+Symbols defined with \fB\-I\fR are ignored; any \fI#ifdef\fR using an
+ignored symbol will be left intact.

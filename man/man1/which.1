@@ -1,0 +1,32 @@
+.TH WHICH 1
+.SH NAME
+which \- examine $PATH to see which file will be executed
+.SH SYNOPSIS
+\fBwhich \fIname\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "which a.out" "Tells which \fIa.out\fR will be executed"
+.SH DESCRIPTION
+.PP
+The $PATH shell variable controls the 
+\s-2MINIX\s+2
+search rules. 
+If a command \fIa.out\fR is given, the shell first tries to find an 
+executable file in the working directory.  
+If that fails, it looks in various system directories, such as 
+\fI/bin\fR and \fI/usr/bin\fR.  
+The\fR which\fR command makes the same search and gives the absolute
+path of the program that will be chosen, followed by other occurrences
+of the file name along the path.
+.SH "SEE ALSO"
+.BR man (1).

@@ -1,0 +1,36 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)qsort.3	6.1 (Berkeley) 5/15/85
+.\"
+.TH QSORT 3  "May 15, 1985"
+.UC 4
+.SH NAME
+qsort \- quicker sort
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <stdlib.h>
+
+.fi
+.in +.5i
+.ti -.5i
+void qsort(void *\fIbase\fP, size_t \fInel\fP, size_t \fIwidth\fP, int (*\fIcompar\fP)(const void *, const void *))
+.in -.5i
+.ft R
+.SH DESCRIPTION
+.B Qsort
+is an implementation of the quicker-sort algorithm.
+The first argument is a pointer to the base of the data;
+the second is the number of elements;
+the third is the width of an element in bytes;
+the last is the name of the comparison routine
+to be called with two arguments which are pointers
+to the elements being compared.
+The routine must return an integer less than, equal to, or greater than 0
+according as the first argument is to be considered
+less than, equal to, or greater than the second.
+.SH "SEE ALSO"
+.BR sort (1).

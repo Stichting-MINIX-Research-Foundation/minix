@@ -1,0 +1,33 @@
+.TH CAT 1
+.SH NAME
+cat \- concatenate files and write them to stdout
+.SH SYNOPSIS
+\fBcat\fR [\fB\-u\fR]\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-u" "Unbuffered output"
+.SH EXAMPLES
+.EX "cat file" "Display file on the terminal"
+.EX "cat file1 file2 | lp" "Concatenate 2 files and print result"
+.SH DESCRIPTION
+.PP
+.I Cat
+concatenates its input files and copies the result to \fIstdout\fR.
+If no input file is named, or \- is encountered as a file name, standard
+input is used.
+Output is buffered in 512 byte blocks unless the 
+.B \-u
+flag is given.
+If you just want to copy a file, \fIcp\fR should be used since it is faster.
+.SH "SEE ALSO"
+.BR cp (1).

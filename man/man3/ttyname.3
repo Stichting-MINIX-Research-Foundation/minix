@@ -1,0 +1,28 @@
+.TH TTYNAME 3
+.SH NAME
+ttyname \- file descriptor to terminal device name
+.SH SYNOPSIS
+.nf
+.ft B
+#define _POSIX_SOURCE	1
+#include <unistd.h>
+
+char *ttyname(int \fIfd\fP)
+.ft P
+.fi
+.SH DESCRIPTION
+.B Ttyname
+searches through the
+.B /dev
+directory for the terminal device file that is associated with file
+descriptor
+.IR fd .
+It returns the full path name of the terminal file if found, NULL is
+returned otherwise.
+.SH "SEE ALSO"
+.BR ttyslot (3).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: ttyname.3,v 1.2 1996/04/11 06:42:17 philip Exp $

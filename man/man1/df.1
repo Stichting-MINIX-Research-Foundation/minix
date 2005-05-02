@@ -1,0 +1,75 @@
+.TH DF 1
+.SH NAME
+df \- report on free disk space
+.SH SYNOPSIS
+\fBdf\fP [\fB\-ikP\fP] [\fB\-t\fP \fItype\fP] [\fIfile\fP ...]
+.SH DESCRIPTION
+.B Df
+lists the amount of free space on the currently mounted devices (no arguments),
+or the devices given as arguments.  If the argument is not a device then the
+device it resides on is listed.
+.SH OPTIONS
+Without options,
+.B df
+will give a listing like this:
+.sp
+.nf
+.if t .ft C
+Filesystem    1k-Blocks     free     used    %  FUsed%  Mounted on
+/dev/c0d0p1s0      1440      635      805  56%    26%   /
+/dev/c0d0p1s1     32768    32390      378   2%     1%   /tmp
+/dev/c0d0p1s2    784657   517809   266848  35%    29%   /usr
+.if t .ft R
+.fi
+.PP
+The
+.B \-i
+option shifts the focus to the files:
+.sp
+.nf
+.if t .ft C
+Filesystem        Files     free     used    %  BUsed%  Mounted on
+/dev/c0d0p1s0      1024      759      265  26%    56%   /
+/dev/c0d0p1s1      5472     5468        4   1%     2%   /tmp
+/dev/c0d0p1s2     65535    46734    18801  29%    35%   /usr
+.if t .ft R
+.fi
+.PP
+Option
+.B \-P
+makes
+.B df
+use \s-2POSIX\s+2 defined output in 512 byte units:
+.sp
+.nf
+.if t .ft C
+Filesystem     512-blocks    Used  Available  Capacity  Mounted on
+/dev/c0d0p1s0      2880      1628     1252       57%    /
+/dev/c0d0p1s1     65536       756    64780        2%    /tmp
+/dev/c0d0p1s2   1569314    533748  1035566       35%    /usr
+.if t .ft R
+.fi
+.PP
+With
+.B \-k
+1024 byte units would be used.
+.PP
+The
+.B \-t
+option limits
+.BR df 's
+output to file systems of the given
+.IR type .
+.SH FILES
+.TP 15n
+.B /etc/mtab
+List of mounted file systems.
+.SH "SEE ALSO"
+.BR du (1),
+.BR fstab (5).
+.SH BUGS
+Default output should also be in 512 byte units says \s-2POSIX\s+2.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+.\"
+.\" $PchId: df.1,v 1.5 1998/07/27 19:48:47 philip Exp $

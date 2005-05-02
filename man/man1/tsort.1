@@ -1,0 +1,23 @@
+.TH TSORT 1
+.SH NAME
+tsort \- topological sort [IBM]
+.SH SYNOPSIS
+\fBtsort \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "lorder *.s | tsort" "Give library ordering"
+.EX "ar cr libc.a \`lorder *.s | tsort\`" "Build library"
+.SH DESCRIPTION
+.PP
+\fITsort\fR accepts a file of lines containing ordered pairs and builds a
+total ordering from the partial orderings.

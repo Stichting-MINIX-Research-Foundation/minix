@@ -1,0 +1,42 @@
+.\"	@(#)end.3	6.2 (Berkeley) 5/12/86
+.\"
+.TH END 3  "May 12, 1986"
+.AT 3
+.SH NAME
+end, etext, edata \- last locations in program
+.SH SYNOPSIS
+.nf
+.ft B
+extern int etext;
+extern int edata;
+extern int end, _end;
+.ft R
+.fi
+.SH DESCRIPTION
+These names refer neither to routines nor to locations with interesting
+contents.  The address of
+.B etext
+is the first address above the program text,
+.B edata
+above the initialized data region, and
+.B end
+above the uninitialized data region.
+.B _end
+is the same as
+.BR end ,
+but in the implementers name space, i.e. for use in libraries.
+.PP
+When execution begins, the program break coincides with
+.BR end ,
+but it is reset by the routines
+.BR brk (2),
+.BR malloc (3), 
+standard input/output
+.RB ( stdio (3)),
+etc.
+The current value of the program break is reliably returned by `sbrk(0)',
+see
+.BR brk (2).
+.SH "SEE ALSO"
+.BR brk (2),
+.BR malloc (3).

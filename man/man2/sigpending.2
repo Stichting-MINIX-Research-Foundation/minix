@@ -1,0 +1,33 @@
+.TH SIGPENDING 2
+.SH NAME
+sigpending \- report pending signals
+.SH SYNOPSIS
+.ft B
+#include <signal.h>
+
+int sigpending(sigset_t *\fIset\fP)
+.ft P
+.SH DESCRIPTION
+.B Sigpending()
+returns the set of signals that are waiting to be delivered.  They are
+currently blocked by the signal mask.
+.SH "SEE ALSO"
+.BR sigaction (2),
+.BR sigprocmask (2),
+.BR sigsuspend (2),
+.BR sigset (3).
+.SH DIAGNOSTICS
+Returns
+.B 0
+on success and
+.B \-1
+on error.  The only possible error code is
+.B EFAULT
+for a bad
+.I set
+address.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)
+
+.\"
+.\" $PchId: sigpending.2,v 1.2 1996/04/11 06:01:22 philip Exp $

@@ -1,0 +1,70 @@
+.TH TERM 1
+.SH NAME
+term \- turn PC into a dumb terminal [IBM]
+.SH SYNOPSIS
+.in +.5i
+.ti -.5i
+\fBterm\fR [\fIbaudrate\fR]\fR [\fIparity\fR] [\fIbits_per_character\fR]
+[\fB\-\fIdial_string\fR] [\fB\-c\fIkcmd\fR] [\fIdevice\fR]\fR
+.in -.5i
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "term 2400" "Talk to modem at 2400 baud"
+.EX "term 1200 7 even" "1200 baud, 7 bits/char, even parity"
+.EX "term 8 9600 /dev/tty01" "9600 baud, 8 bits/char, no parity, use tty01"
+.EX "term -atdt12345 /dev/tty01" "Start with a command to dial out"
+.EX "term -cH'echo Hello World!' ..." "Bind a shell command to the 'H' key"
+.SH DESCRIPTION
+.PP
+\fITerm\fR allows 
+\s-2MINIX\s+2
+to talk to a terminal or modem over RS232 
+port 1.  The program first sets the baudrate, parity and character length, 
+and then forks.
+The parent sits in a loop copying from \fIstdin\fR (usually the console's
+keyboard), to the terminal or modem (\fI/dev/tty00\fR).  
+The child sits in a loop
+copying from the terminal or modem (\fI/dev/tty00\fR) to standard output.  
+Thus when
+RS232 port 1 is connected to a modem, every keystroke typed on the keyboard
+is sent to the modem, and every character arriving from the modem is displayed.
+Standard input and output may be redirected, to provide a primitive file
+transfer program, with no checking.  Any argument that starts with
+.B \-at
+is sent out to the modem, usually to dial out.  \fITerm\fP accepts
+several commands that are formed by typing the escape character, CTRL-],
+and a letter.  Type CTRL-]? to see a list of commands.  The subshell command
+is very important, it allows you to type in a ZMODEM command to transfer
+data.  Do not quit \fIterm\fR to do this, or your modem line will be reset!
+\fITerm\fP keeps the modem line open on file descriptor 9 while running the
+subshell, so you can type
+.PP
+.in +.5i
+<&9 >&9
+.in -.5i
+.PP
+at the end of your ZMODEM command to connect it to the modem.  With
+.BI \-c kcmd
+arguments you can bind shell commands to keys.  The character just after
+.BR \-c
+is the key to use, the rest of the characters form the command to bind to the
+key.  This command also has the modem open on file descriptor 9.
+.LP
+Important note: to use \fIterm\fR, it is essential that 
+\fI/etc/ttytab\fR is configured so
+that there is no login session started on the modem line.
+If there is, both the login session and
+term will try to read from the modem, and nothing will work.
+.SH "SEE ALSO"
+.BR rz (1),
+.BR sz (1).

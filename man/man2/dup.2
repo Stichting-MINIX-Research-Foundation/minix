@@ -1,0 +1,86 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)dup.2	6.3 (Berkeley) 5/13/86
+.\"
+.TH DUP 2 "May 13, 1986"
+.UC 4
+.SH NAME
+dup, dup2 \- duplicate a descriptor
+.SH SYNOPSIS
+.nf
+.ft B
+#include <unistd.h>
+
+int dup(int \fIoldd\fP)
+int dup2(int \fIoldd\fP, int \fInewd\fP)
+.SH DESCRIPTION
+.B Dup
+duplicates an existing descriptor.
+The argument \fIoldd\fP is a small non-negative integer index in
+the per-process descriptor table.  The value must be less
+than OPEN_MAX, the size of the table.
+The new descriptor returned by the call, let's name it
+.I newd,
+is the lowest numbered descriptor that is
+not currently in use by the process.
+.PP
+The object referenced by the descriptor does not distinguish
+between references using \fIoldd\fP and \fInewd\fP in any way.
+Thus if \fInewd\fP and \fIoldd\fP are duplicate references to an open
+file,
+.BR read (2),
+.BR write (2)
+and
+.BR lseek (2)
+calls all move a single pointer into the file,
+and append mode, non-blocking I/O and asynchronous I/O options
+are shared between the references.
+If a separate pointer into the file is desired, a different
+object reference to the file must be obtained by issuing an
+additional
+.BR open (2)
+call.
+The close-on-exec flag on the new file descriptor is unset.
+.PP
+In the second form of the call, the value of
+.IR newd
+desired is specified.  If this descriptor is already
+in use, the descriptor is first deallocated as if a
+.BR close (2)
+call had been done first.
+.I Newd
+is not closed if it equals
+.IR oldd .
+.SH "RETURN VALUE
+The value \-1 is returned if an error occurs in either call.
+The external variable
+.B errno
+indicates the cause of the error.
+.SH "ERRORS
+.B Dup
+and
+.B dup2
+fail if:
+.TP 15
+[EBADF]
+\fIOldd\fP or
+\fInewd\fP is not a valid active descriptor
+.TP 15
+[EMFILE]
+Too many descriptors are active.
+.SH NOTES
+.B Dup
+and
+.B dup2
+are now implemented using the
+.B F_DUPFD
+function of
+.BR fcntl (2),
+although the old system call interfaces still exist to support old programs.
+.SH "SEE ALSO"
+.BR open (2),
+.BR close (2),
+.BR fcntl (2),
+.BR pipe (2).

@@ -1,0 +1,52 @@
+.TH BACKUP 8
+.SH NAME
+backup \- backup files
+.SH SYNOPSIS
+\fBbackup\fR [\fB\-djmnorstvz\fR] \fIdir1 dir2\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-d" "At top level, only directories are backed up"
+.FL "\-j" "Do not copy junk: \fI *.Z, *.bak, a.out, core\fR, etc"
+.FL "\-m" "If device full, prompt for new diskette"
+.FL "\-n" "Do not backup top-level directories"
+.FL "\-o" "Do not copy \fI*.o\fR files"
+.FL "\-r" "Restore files"
+.FL "\-s" "Do not copy \fI*.s\fR files"
+.FL "\-t" "Preserve creation times"
+.FL "\-v" "Verbose; list files being backed up"
+.FL "\-z" "Compress the files on the backup medium"
+.SH EXAMPLES
+.EX "backup \-mz . /f0" "Backup current directory compressed"
+.EX "backup /bin /usr/bin" "Backup bin from RAM disk to hard disk"
+.SH DESCRIPTION
+.PP
+\fIBackup\fR (recursively) backs up the contents of a given directory and its
+subdirectories to another part of the file system.
+It has two typical uses.
+First, some portion of the file system can be backed up onto 1 or more
+diskettes.
+When a diskette fills up, the user is prompted for a new one.
+The backups are in the form of mountable file systems.
+Second, a directory on RAM disk can be backed up onto hard disk.
+If the target directory is empty, the entire source directory is copied
+there, optionally compressed to save space.
+If the target directory is an old backup, only those files in the target
+directory that are older than similar names in the source directory are
+replaced.
+\fIBackup\fR uses times for this purpose, like \fImake\fR.
+Calling \fIBackup\fR as \fIRestore\fR is equivalent to using the -r option; 
+this replaces newer files in the target directory with older files from the
+source directory, uncompressing them if necessary.  The target directory
+contents are thus returned to some previous state.
+.SH "SEE ALSO"
+.BR tar (1).

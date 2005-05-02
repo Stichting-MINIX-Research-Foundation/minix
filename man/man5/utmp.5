@@ -1,0 +1,70 @@
+.TH UTMP 5
+.SH NAME
+utmp, wtmp \- logged in users, login and logout history
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <utmp.h>
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The files
+.B /etc/utmp
+and
+.B /usr/adm/wtmp
+respectively contain the currently logged in users, and the history of
+logins and logouts.
+.PP
+Each file is an array of the following structure defined in <utmp.h>:
+.PP
+.nf
+.ta +5n +15n +15n
+struct utmp {
+	char	ut_user[8];	/* user name */
+	char	ut_line[12];	/* terminal name */
+	char	ut_host[16];	/* host name, when remote */
+	time_t	ut_time;	/* login/logout time */
+};
+.SP
+.ta +15n
+#define ut_name ut_user	/* for compatibility with other systems */
+.fi
+.DT
+.PP
+The structure contains more fields than those listed, but they are only of
+interest to
+.B init
+and
+.BR login .
+Note that the
+.B ut_name
+field is a compatibility alias for
+.BR ut_user ,
+it is actually better to use it.
+.PP
+A login entry is completely specified.  A logout entry has a null string for
+.BR ut_name .
+A shutdown or reboot entry has an
+.B ut_line
+field containing a "~" (tilde).  The
+.B ut_name
+field is usually the name of the program that did the shutdown, or "reboot"
+at reboot.  This is a bit confusing, but note that there should always be
+two such entries.  If you see just one entry then the system has crashed, if
+you see two entries then the system was properly shut down and later
+rebooted.
+.SH FILES
+.TP 25n
+.B /etc/utmp
+Currently logged in users.
+.TP
+.B /usr/adm/wtmp
+History of logins and logouts.
+.SH "SEE ALSO"
+.BR who (1),
+.BR ttyslot (3).
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

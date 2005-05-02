@@ -1,0 +1,47 @@
+.TH DIFF 1
+.SH NAME
+diff \- print differences between two files
+.SH SYNOPSIS
+\fBdiff  \fR [\fB\-c \fR|\fB \-e \fR|\fB \-C \fIn\fR\] [\fB\-br\fR]\fIfile1 file2\fR\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-C \fIn" "Produce output that contains \fIn\fR lines of context"
+.FL "\-b" "Ignore white space when comparing"
+.FL "\-c" "Produce output that contains three lines of context"
+.FL "\-e" "Produce an \fIed\fR-script to convert \fIfile1\fR into \fIfile2\fR"
+.FL "\-r" "Apply \fIdiff\fR recursively to files and directories of the same name, when \fIfile1\fR and \fIfile2\fR are both directories"
+.SH EXAMPLES
+.EX "diff file1 file2" "Print differences between 2 files"
+.EX "diff -C 0 file1 file2" "Same as above"
+.EX "diff -C 3 file1 file2" "Output three lines of context with every difference encountered"
+.EX "diff -c file1 file2" Same as above"
+.EX "diff /etc /dev" "Compares recursively the directories \fI/etc\fR and \fI/dev\fR"
+.EX "diff passwd /etc" "Compares \fI./passwd\fR to \fI/etc/passwd"
+.SH DESCRIPTION
+.PP
+\fIDiff\fR compares two files and generates a list of lines telling how
+the two files differ.  Lines may not be longer than 128 characters.
+If the two  arguments on the command line are both directories,
+\fIdiff\fR recursively steps through all subdirectories comparing
+files of the same name. If a file name is found only in one directory,
+a diagnostic message is written to \fIstdout\fR. A file that is of
+either block special, character special or FIFO special type, cannot
+be compared to any other file.
+On the other hand, if there is one directory and one file given on the
+command line, \fIdiff\fR tries to compare the file with the same name
+as \fIfile\fR in the directory \fIdirectory\fR.
+.SH "SEE ALSO"
+.BR cdiff (1),
+.BR cmp (1),
+.BR comm (1),
+.BR patch (1).

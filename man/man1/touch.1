@@ -1,0 +1,31 @@
+.TH TOUCH 1
+.SH NAME
+touch \- update a file's time of last modification
+.SH SYNOPSIS
+\fBtouch\fR [\fB\-c\fR] \fIfile\fR ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-c" "Do not create the file"
+.SH EXAMPLES
+.EX "touch *.h" "Make the \fI.h\fP files look recent"
+.SH DESCRIPTION
+############ NEXT ENTRY HAS NOT BEEN CHECKED #############
+.PP
+The time of last modification is set to the current time.
+This command is mostly used to trick
+.I make
+into thinking that a file is more recent than it really is.
+If the file being touched does not exist, it is created, unless the \fB\-c\fR
+flag is present.
+.SH "SEE ALSO"
+.BR utime (2).

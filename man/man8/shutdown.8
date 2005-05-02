@@ -1,0 +1,88 @@
+.TH SHUTDOWN 8
+.SH NAME
+shutdown \- graciously close the system down
+.SH SYNOPSIS
+.B shutdown
+.RB [ \-hrRmk ]
+.RB [ \-x
+.IR code ]
+.RI [ time-specification
+.RI [ message ]]
+.SH DESCRIPTION
+.B Shutdown
+is a program which allows a system operator to close down the system
+in an nice way. 
+.B Shutdown
+informs the users why and when the system is going down.  This warning
+is issued 10 minutes before shutdown time and every minute in the last
+5 minutes.  At this time (5 minutes),
+.B shutdown
+creates a file
+.B /etc/nologin
+to prevent new users from logging in.
+.PP
+.B Shutdown
+keeps a logfile of shutdowns.  Every shutdown is registered in 
+.BR /usr/adm/wtmp ,
+if this file exists, and by
+.BR syslog (3)
+(level
+.BR auth . notice ).
+After these actions, a call is done to
+.BR reboot (2)
+which actually brings the system down.
+.PP
+.I Time-specification
+may be something like
+.BR 15:00 ,
+.BR 15.00 ,
+.BR +15 ,
+or
+.B now
+for a shutdown at 3pm (twice), 15 minutes from now, or immediately.
+.PP
+The message may be used to describe why the system is going down, it may
+also be typed on standard input with the
+.B \-m
+option.
+.SH OPTIONS
+.TP
+.B \-h
+This flag prevents the system from rebooting after the shutdown.  The
+system can now be powered off.  This is the default.
+.TP
+.B \-r
+This flag indicates that the system should reboot after shutting down.
+.TP
+.B \-R
+Reboot the system by resetting it.  Normally the kernel will try to return
+to the Boot Monitor.  With
+.B \-R
+the system will receive a hardware reset.
+.TP
+.BI \-x " code"
+Halt the system and let the Monitor execute the given code as if typed at
+the monitor prompt.  You can for instance use
+.B "\-x 'boot hd0'"
+as a very fast way to reboot "from the top."
+.TP
+.B \-m
+Allows the operator to type a shutdown message on standard input, that will
+be added to the messages displayed on all terminals.
+.TP
+.B \-k
+This option gives the possibility of terminating an already started
+shutdown.  This is only possible if shutdown time has not yet arrived.
+.TP
+.B \-C
+Check if the system crashed.  This option is not used at shutdown time,
+but at reboot time.  It tells if the file systems should be checked by
+testing if the last entry in the wtmp file is a shutdown entry.  (A
+crude replacement for a file system clean flag.)
+.SH "SEE ALSO"
+.BR reboot (2),
+.BR syslog (3),
+.BR halt (8),
+.BR boot (8).
+.SH AUTHOR
+Edvard Tuinder (v892231@si.hhs.NL)

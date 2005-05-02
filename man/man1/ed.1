@@ -1,0 +1,69 @@
+.TH ED 1
+.SH NAME
+ed \- editor
+.SH SYNOPSIS
+\fBed \fIfile\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-" "Suppress line/byte count messages (for in scripts)"
+.SH EXAMPLES
+.EX "ed prog.c" "Edit \fIprog.c\fR"
+.EX "echo '1,$p' | ed - file" "Odd way to write 'cat file'"
+.SH DESCRIPTION
+.PP
+\fIEd\fR is functionally equivalent to the standard V7 editor, ed.  
+It supports the following commands:
+.PP
+.nf
+.ta 0.5i 0.95i	
+	(.)	a: append
+	(.,.)	c: change
+	(.,.)	d: delete
+		e: edit new file"
+		f: print name of edited file"
+	(1,$)	g: global command
+	(.)	i: insert
+	(.,.+1)	j: join lines together
+	(.)	k: mark
+	(.)	l: print with special characters in octal
+	(.,.)	m: move
+	(.,.)	p: print
+		q: quit editor"
+	(.)	r: read in new file
+	(.,.)	s: substitute
+	(1,$)	v: like g, except select lines that do not match
+	(1,$)	w: write out edited file
+.fi
+Many of the commands can take one or two addresses, as indicated above.  The
+defaults are shown in parentheses.  Thus \fIa\fR appends to the current 
+line, and \fIg\fR works on the whole file as default.  
+The dot refers to the current line.
+Below is a sample editing session with comments given following the # symbol.
+.PP
+.nf
+.ta 0.5i 2.5i
+	ed prog.c	# Edit prog.c
+	3,20p	# Print lines 3 through 20
+	/whole/	# Find next occurence of \fIwhole\fR
+	s/whole/while/	# Replace \fIwhole\fR by \fIwhile\fR
+	g/Buf/s//BUF/g	# Replace \fIBuf\fR by \fIBUF\fR everywhere
+	w	# Write the file back
+	q	# Exit the editor
+.fi
+\fIEd\fR is provided for its sentimental value.
+If you want a line-oriented editor, try \fIex\fR.
+If you want a good editor, use \fIelle\fR, \fIelvis\fR, or \fImined\fR.
+.SH "SEE ALSO"
+.BR elvis (1),
+.BR elle (9),
+.BR mined (9).

@@ -1,0 +1,82 @@
+.TH SLIP 8
+.SH NAME
+slip \- Serial Line IP
+.SH SYNOPSIS
+.B slip
+.I pseudo-ip-device
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The
+.B slip
+program implements an Internet network connection over a bidirectional 8-bit
+transport, usually a serial line.  The protocol used for this connection is
+the Serial Line Internet Protocol, SLIP for short.
+.PP
+The
+.I pseudo-ip-device
+argument names one of the
+.B /dev/psip*
+devices that is offered by the Minix TCP/IP driver
+.BR inet (8).
+The
+.B slip
+program reads IP packets from standard input and writes them to the pseudo
+IP device, and reads packets from the pseudo IP device and writes them to
+standard output.  A typical use is like this:
+.PP
+.RS
+.nf
+.ft B
+{
+	stty raw 115200
+	slip /dev/psip2 &
+} </dev/tty01 >/dev/tty01
+.ft P
+.fi
+.RE
+.PP
+The SLIP protocol is just a very simple packet framing protocol.  It defines
+two characters as markers on a byte stream to frame packets.  SLIP does
+not implement any higher level addressing, error detection, or compression.
+Thanks to its simplicity it can be used under Minix, any other system would
+prefer to use the Point-to-Point protocol: PPP.
+.PP
+The SLIP packet framing protocol as defined in RFC-1055 is as follows:
+.IP "\-"
+Packets are delimited by an END character, octal 300.  END is often send at
+the start of a packet too to reset the logic of the receiver, so that random
+noise isn't added to the beginning of a packet.
+.IP "\-"
+An ESC character (octal 333) is used to escape any END or ESC characters
+that may occur in an IP packet.  END and ESC are changed to ESC 334 and ESC
+335 in the data stream.  (Note that END doesn't occur within the data stream
+at all by escaping it this way, making finding the framing END easier.)
+.ig
+.PP
+The manual page
+.BR serial-ip (8)
+describes how to configure the Minix network devices to be used with a
+serial IP connection.
+..
+.SH FILES
+.TP \w'/dev/psip*'u+5n
+.B /dev/psip*
+Pseudo-IP devices for use by
+.BR slip .
+.SH "SEE ALSO"
+.ig
+.BR ppp (8).
+.br
+..
+.BR RFC-1055 .
+.SH NOTES
+Under Minix
+.B slip
+forks in two to handle the two data streams in or out of the serial line.
+Under Minix-vmd it uses asynchronous I/O to handle the two streams within
+one program.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

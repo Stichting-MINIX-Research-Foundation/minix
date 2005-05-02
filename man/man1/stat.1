@@ -1,0 +1,106 @@
+.TH STAT 1
+.SH NAME
+stat, lstat \- provide a shell interface to the stat(2) system call
+.SH SYNOPSIS
+.B stat
+.RB [ - ]
+.RB [ -\fIfd ]
+.RB [ -all ]
+.RB [ -s ]
+.RB [ -\fIfield " ...]"
+.RI [ file1 " ...]"
+.SH DESCRIPTION
+.B Stat
+does little more than provide access to the fields in the
+.B struct stat
+as defined in the
+.BR stat (2)
+manual page.  Each field that is to be listed
+is specified as the field name without the leading
+.BR st_ .
+This and the other two options are described below.  All options are then
+applied to the files listed.  If
+.B stat
+is called as
+.B lstat
+then the
+.BR lstat (2)
+system call is used, otherwise symbolic links are expanded with
+.BR stat (2).
+.PP
+If no fields are named then all fields are printed.  If no files are listed
+then all open filedescriptors are printed.
+.SH OPTIONS
+.TP 
+.B \-
+If the first argument is ``\-'', the list of files is assumed to come from stdin.
+This is useful for things like ``ls | stat \-uid \-mtime.''
+.B \-\fIfd
+If an argument is a ``\-'' followed by a number then that number is used as
+a file descriptor whose information is to be printed.
+.TP 
+.B \-all
+List all fields for each file.
+.TP
+.B \-s
+Use
+.BR lstat (2).
+.TP
+.B \-mode
+List the
+.B mode
+field.  Similarly for
+.BR ino ,
+.BR dev ,
+.BR rdev ,
+.BR nlink ,
+.BR uid , 
+.BR gid ,
+.BR size ,
+.BR atime ,
+.BR mtime ,
+and
+.BR ctime .
+Under BSD derived systems you also have 
+.B blksize
+and
+.BR blocks .
+.PP 
+.B \-Atime
+.br
+.B \-Mtime
+.br
+.B \-Ctime
+.RS
+The lower case versions of these three options display the time as an integer
+that is the ``seconds since 00:00 Jan 1. 1970.''
+Listing the fields with the first letter
+in caps causes the times to be printed in
+.BR ctime (3)
+format (i.e., human readable).
+.RE
+.SH EXAMPLES
+.LP 
+# Find out the number of links to each file
+.br
+$ stat \-nlink *.c
+.LP
+# sort files by age (much like ls \-t)
+.br
+$ stat \-atime * | sort +1
+.LP
+# Find out which file is older in sh(1)
+.br
+if test `stat -mtime $1` -lt `stat -mtime $2`; then
+.br
+	echo $1 is older than $2
+.br
+else
+.br
+	echo $2 is older than $1
+.br
+fi
+.SH "SEE ALSO"
+.BR stat (2).
+.SH AUTHOR
+Larry McVoy (mcvoy@rsch.wisc.edu)

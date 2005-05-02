@@ -1,0 +1,40 @@
+.TH GETTY 8
+.SH NAME
+getty \- system login banner
+.SH SYNOPSIS
+.B getty
+.RI [ banner " ...]"
+.SH DESCRIPTION
+.B Getty
+displays a system identification banner, reads a user name from standard
+input and executes
+.B login
+with that name as argument.
+.PP
+.B Getty
+uses its arguments separated by spaces as a login banner.  The character
+sequences
+.BR \en ,
+.BR \es
+and
+.BR \et
+are printed as newline, space and tab.  Any other
+.BI \e x
+prints that
+.IR x .
+The character sequences
+.BR %s ,
+.BR %n ,
+etc. produce the same output as
+.BR "uname \-s" ,
+.BR "uname \-n" ,
+etc.  The default banner is
+.PP
+.RS
+%s\es\esRelease\es%r\esVersion\es%v\en\en%n\eslogin:\es
+.RE
+.SH "SEE ALSO"
+.BR ttytab (5),
+.BR init (8).
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

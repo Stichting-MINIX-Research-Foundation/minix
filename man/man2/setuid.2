@@ -1,0 +1,48 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)setreuid.2	6.1 (Berkeley) 5/9/85
+.\"
+.TH SETUID 2 "May 9, 1985"
+.UC 4
+.SH NAME
+setuid, setgid \- set user or group ID's
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+
+int setuid(uid_t \fIuid\fP)
+int setgid(gid_t \fIgid\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Setuid
+sets the real and effective user ID's of the
+current process to
+.IR uid .
+Unprivileged users may only change both user ID's
+to the real user ID; only the super-user may
+make other changes.
+.B Setgid
+does the same for the real and effective group ID's.
+.PP
+Minix-vmd
+allows an unprivileged user to change ID's to the original real or effective
+ID as they were at the time the process was executed.
+.B Setgid
+may also set the group ID's to any of the additional group ID's.
+If one of the
+remembered user ID's was 0 then any user or group ID may be chosen.
+.SH "RETURN VALUE
+Upon successful completion, a value of 0 is returned.  Otherwise,
+a value of \-1 is returned and \fBerrno\fP is set to indicate the error.
+.SH "ERRORS
+.TP 15
+[EPERM]
+The current process is not the super-user and a change
+other than one of the allowed changes was attempted.
+.SH "SEE ALSO"
+.BR getuid (2),
+.BR getgid (2).

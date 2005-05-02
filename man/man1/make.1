@@ -1,0 +1,76 @@
+.TH MAKE 1
+.SH NAME
+make \- a program for maintaining large programs
+.SH SYNOPSIS
+\fBmake\fR [\fB\-f \fIfile\fR]\fR [\fB\-adeiknpqrst\fR] [\fIoption\fR] ... [\fItarget\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-f" "Use \fIfile\fP as the makefile"
+.FL "\-d" "Print debugging information"
+.FL "\-e" "Environment overrides makefile macros"
+.FL "\-i" "Ignore status returned by commands"
+.FL "\-k" "On error, skip to next command"
+.FL "\-n" "Report, but do not execute"
+.FL "\-p" "Print macros and targets"
+.FL "\-q" "Question up-to-dateness of target"
+.FL "\-r" "Rule inhibit; do not use default rules"
+.FL "\-s" "Silent mode"
+.FL "\-t" "Touch files instead of making them"
+.SH EXAMPLES
+.EX "make kernel" "Make \fIkernel\fP up to date"
+.EX "make \-n \-f mfile" "Tell what needs to be done"
+.SH DESCRIPTION
+.PP
+.I Make
+is a program that is normally used for developing large programs consisting of
+multiple files.
+It keeps track of which object files depend on which source and header files.
+When called, it does the minimum amount of recompilation to bring the target
+file up to date.
+.PP
+The file dependencies are expected in 
+.I makefile
+or
+.I Makefile ,
+unless another file is specified with \fB\-f\fR.
+.I Make
+has some default rules built in, for example, it knows how to make 
+.I .o
+files
+from 
+.I .c
+files.
+Here is a sample 
+.I makefile .
+.PP
+.nf
+.ta +0.2i +\w'program:'u+1m +\w'cc \-o program head.o tail.o'u+2m
+	d=/user/ast		# \fId\fP is a macro
+	program:	head.o tail.o	# \fIprogram\fR depends on these
+		cc \-o program head.o tail.o	# tells how to make \fIprogram\fP 
+		echo Program done.	# announce completion
+	head.o:	$d/def.h head.c	# \fIhead.o\fP depends on these
+.br
+	tail.o:	$d/var.h tail.c	# \fItail.o\fP depends on these
+.PP
+.fi
+A complete description of \fImake\fR would require too much space here.
+Many books on
+\s-2UNIX\s+2
+discuss
+.I make .
+Study the numerous \fIMakefiles\fR in the 
+\s-2MINIX\s+2
+source tree for examples.
+.SH "SEE ALSO"
+.BR cc (1).

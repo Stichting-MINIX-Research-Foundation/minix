@@ -1,0 +1,50 @@
+.TH GREP 1
+.SH NAME
+grep \- search a file for lines containing a given pattern
+.SH SYNOPSIS
+\fBgrep\fR [\fB\-elnsv\fR] \fIpattern\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-e" "\fB\-e \fIpattern\fR is the same as \fIpattern\fP
+.FL "\-c" "Print a count of lines matched"
+.FL "\-i" "Ignore case"
+.FL "\-l" "Print file names, no lines"
+.FL "\-n" "Print line numbers"
+.FL "\-s" "Status only, no printed output"
+.FL "\-v" "Select lines that do not match"
+.SH EXAMPLES
+.EX "grep mouse file " "Find lines in \fIfile\fP containing \fImouse\fP"
+.EX "grep [0\-9] file" "Print lines containing a digit"
+.SH DESCRIPTION
+.PP
+.I Grep
+searches one or more files (by default, \fIstdin\fR) and selects out
+all the lines that match the pattern.
+All the regular expressions accepted by
+.I ed
+and
+.I mined 
+are allowed.
+In addition, + can be used instead of \(** to mean 1 or more occurrences,
+? can be used to mean 0 or 1 occurrences, and
+| can be used between two regular expressions to mean either
+one of them.
+Parentheses can be used for grouping.
+If a match is found, exit status 0 is returned.
+If no match is found, exit status 1 is returned.
+If an error is detected, exit status 2 is returned.
+.SH "SEE ALSO"
+.BR cgrep (1),
+.BR fgrep (1),
+.BR sed (1),
+.BR awk (9).

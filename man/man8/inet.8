@@ -1,0 +1,147 @@
+.TH INET 8
+.SH NAME
+inet \- TCP/IP server
+.SH SYNOPSIS
+.B inet
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Inet
+is the TCP/IP server.  It is a device driver that interfaces between the
+file server and the low level ethernet device driver.  The interface to this
+server is described in
+.BR ip (4).
+.PP
+.B Inet
+starts as a normal process, reads a the configuration file
+.B /etc/inet.conf
+to see what it should do, and uses a few special low level system calls 
+to turn itself into a server.  The format of the configuration file is as
+follows:
+.SS Configuration
+The inet configuration file is fairly simple, here is an example:
+.PP
+.RS
+.ft C
+.nf
+eth0 DP8390 0 { default; };
+psip1;
+.fi
+.ft P
+.RS
+.PP
+It tells that network 0 (the one containing devices
+.BR eth0 ,
+.BR ip0 ,
+.BR tcp0
+and
+.BR udp0 )
+uses the ethernet device driver handled
+by task "DP8390" at port 0.  This network is marked as the default
+network, so most programs use it through the unnumbered devices like
+.B /dev/tcp
+or
+.BR /dev/udp .
+Network 1 is a Pseudo IP network that can be used for
+a serial IP over a modem for instance.
+.PP
+The configuration file may look like a common configuration file as
+described by
+.BR configfile (5),
+but it is currently just a simple subset allowing only what you see here.
+The following network definitions are possible:
+.PP
+.BI eth N
+.I task port
+.RI { options };
+.RS
+This sets up an ethernet with device name
+.BI /dev/eth N\fR,
+built on the given ethernet device driver at the given port at that driver.
+(If a network driver manages two network
+cards then they are at port 0 and 1.)
+.br
+.RE
+.PP
+.BI eth N
+.B vlan
+.I id
+.BI eth M
+.RI { options };
+\0\0\0\0(Minix-vmd only)
+.RS
+The ethernet
+.BI eth N
+uses VLAN number
+.I id
+and is built on ethernet
+.BI eth M\fR.
+A packet given to this network has a VLAN tag prefixed to it and is then
+handed over to another ethernet for transmission.  Likewise a packet on
+that ethernet carrying the appropriate VLAN tag has this tag removed and is
+sent on to this network.  The VLAN ethernet behaves like an ordinary ethernet
+as far as applications are concerned.
+.RE
+.PP
+.BI psip N
+.RI { options };
+.RS
+Creates pseudo IP network
+.BI /dev/psip N\fR,
+usable for IP over serial lines, tunnels and whatnot.
+.RE
+.SH OPTIONS
+Some options can be given between braces.  Minix only understands one of these
+options, "default".  Minix-vmd does them all, of course.
+.PP
+.BR default ;
+.RS
+Mark this network as the default network.  Exactly one of the networks must
+be so marked.
+When
+.B inet
+is started it will check and create all the necessary network devices before
+becoming a server.  To know what major device number to use it checks
+.BR /dev/ip ,
+so that device must already exist.  It can be created by
+.B MAKEDEV
+if need be.
+.RE
+.PP
+.BR "no ip" ;
+.br
+.BR "no tcp" ;
+.br
+.BR "no udp" ;
+.RS
+These options turn the IP, TCP, or UDP layer off.  Inet will not enable the
+devices for these layers, and will deactivate code for these layers.
+Disabling IP will also disable TCP or UDP, because they need IP to function.
+An ethernet without an IP layer can be used as for stealth listening.  An IP
+network without TCP or UDP can be used to pester students into creating the
+missing functionality.  Keeps them off the streets, and maybe they'll learn
+something.
+.RE
+.SH "SEE ALSO"
+.BR ip (4),
+.BR boot (8).
+.SH NOTES
+The number of networks that can be defined are 2 (Minix-86), 4 (Minix-386)
+or 16 (Minix-vmd).  This limits both the total number and the highest
+device number you can use.
+.PP
+Getting a network administrator to give you a trunk or multi-VLAN port to
+run multiple networks on can be a challenge.  It questions their idea that
+VLANs are separate networks, while in reality it is just one big ethernet.
+.SH ACKNOWLEDGMENTS
+Cindy Crawford, for providing invaluable help debugging this server.
+.SH AUTHOR
+.ta \w'Manual:'u+2n
+Code:	Philip Homburg <philip@cs.vu.nl>
+.br
+Manual:	Kees J. Bot <kjb@cs.vu.nl>
+
+.\"
+.\" $PchId: inet.8,v 1.6 2001/10/08 19:01:35 philip Exp $

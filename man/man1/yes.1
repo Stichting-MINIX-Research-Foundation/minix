@@ -1,0 +1,25 @@
+.TH YES 1
+.SH NAME
+yes \- an endless stream of the same word
+.SH SYNOPSIS
+\fByes\fR [\fIanswer\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "yes | script" "Answer yes to all questions from the script"
+.SH DESCRIPTION
+.PP
+\fIYes\fP sends out an endless stream of y's, each on one line.  One
+uses it to automatically say "yes" to all questions a command may ask.
+This is useful for commands that ask too many "Are you sure?" questions.
+The optional argument makes \fIyes\fP use \fIanswer\fP as the word to
+print instead of a single y character.

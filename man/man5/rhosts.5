@@ -1,0 +1,59 @@
+.TH RHOSTS 5
+.SH NAME
+rhosts, hosts.equiv \- trusted remote users or hosts
+.SH SYNOPSIS
+.BI ~ user /.rhosts
+.br
+.B /etc/hosts.equiv
+.SH DESCRIPTION
+The per user
+.B .rhosts
+and the per system
+.B hosts.equiv
+files can be used to allow users to use
+.B rlogin
+or
+.B rsh
+without a password.  The remote login services first check the system wide
+.B /etc/hosts.equiv
+file and then the
+.BI ~ user /.rhosts
+of the intended user.  Both files contain lines of one of two forms:
+.PP
+.RS
+.I host
+.br
+.I host ruser
+.RE
+.PP
+The first form tells that any user from
+.I host
+is allowed to login to this system under the same name.  The second form
+allows
+.I ruser
+from
+.I host
+to login.
+.PP
+Under Minix
+.I host
+may be a pattern using
+.B "*"
+as a wildcard.  One can use this, carefully one may hope, to allow an
+entire domain to log in.
+.I Host
+may also be an IP address, or a network specification in CIDR form, e.g.
+172.16.102.64/27.
+.SH "SEE ALSO"
+.BR rlogin (1),
+.BR rsh (1).
+.SH NOTES
+Minix has no restrictions on becoming super-user remotely.  Other systems
+usually require one to log in as a user and then use
+.BR su
+to become root.
+.PP
+You must use fully qualified hostnames, it is not possible to
+omit the domain part.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>

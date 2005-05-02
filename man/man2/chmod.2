@@ -1,0 +1,132 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)chmod.2	6.5 (Berkeley) 5/13/86
+.\"
+.TH CHMOD 2 "May 13, 1986"
+.UC 4
+.SH NAME
+chmod \- change mode of file
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <sys/stat.h>
+
+int chmod(const char *\fIpath\fP, mode_t \fImode\fP)
+.ig \" You never know
+.PP
+.ft B
+int fchmod(int \fIfd\fP, mode_t \fImode\fP)
+..
+.fi
+.SH DESCRIPTION
+The file whose name
+is given by \fIpath\fP
+.ig
+or referenced by the descriptor
+.I fd
+..
+has its mode changed to
+.IR mode .
+Modes are constructed by
+.IR or 'ing
+together some
+combination of the following, defined in
+.IR <sys/stat.h> :
+.PP
+.RS
+.nf
+.ta \w'S_ISUID\ \ 'u +\w'04000\ \ \ 'u
+S_ISUID	04000	set user ID on execution
+S_ISGID	02000	set group ID on execution
+S_ISVTX	01000	`sticky bit' (see below)
+S_IRWXU	00700	read, write, execute by owner
+S_IRUSR	00400	read by owner
+S_IWUSR	00200	write by owner
+S_IXUSR	00100	execute (search on directory) by owner
+S_IRWXG	00070	read, write, execute by group
+S_IRGRP	00040	read by group
+S_IWGRP	00020	write by group
+S_IXGRP	00010	execute (search on directory) by group
+S_IRWXO	00007	read, write, execute by others
+S_IROTH	00004	read by others
+S_IWOTH	00002	write by others
+S_IXOTH	00001	execute (search on directory) by others
+.fi
+.RE
+.PP
+If mode ISVTX (the `sticky bit') is set on a directory,
+an unprivileged user may not delete or rename
+files of other users in that directory.  (Minix-vmd)
+.PP
+Only the owner of a file (or the super-user) may change the mode.
+.PP
+Writing or changing the owner of a file
+turns off the set-user-id and set-group-id bits
+unless the user is the super-user.
+This makes the system somewhat more secure
+by protecting set-user-id (set-group-id) files
+from remaining set-user-id (set-group-id) if they are modified,
+at the expense of a degree of compatibility.
+.SH "RETURN VALUE
+Upon successful completion, a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
+.B errno
+is set to indicate the error.
+.SH "ERRORS
+.B Chmod
+will fail and the file mode will be unchanged if:
+.TP 15
+[ENOTDIR]
+A component of the path prefix is not a directory.
+.TP 15
+[ENAMETOOLONG]
+The path name exceeds PATH_MAX characters.
+.TP 15
+[ENOENT]
+The named file does not exist.
+.TP 15
+[EACCES]
+Search permission is denied for a component of the path prefix.
+.TP 15
+[ELOOP]
+Too many symbolic links were encountered in translating the pathname.
+(Minix-vmd)
+.TP 15
+[EPERM]
+The effective user ID does not match the owner of the file and
+the effective user ID is not the super-user.
+.TP 15
+[EROFS]
+The named file resides on a read-only file system.
+.TP 15
+[EFAULT]
+.I Path
+points outside the process's allocated address space.
+.TP 15
+[EIO]
+An I/O error occurred while reading from or writing to the file system.
+.ig
+.PP
+.I Fchmod
+will fail if:
+.TP 15
+[EBADF]
+The descriptor is not valid.
+.TP 15
+[EROFS]
+The file resides on a read-only file system.
+.TP 15
+[EIO]
+An I/O error occurred while reading from or writing to the file system.
+..
+.SH "SEE ALSO"
+.BR chmod (1),
+.BR open (2),
+.BR chown (2),
+.BR stat (2).
+.SH NOTES
+The sticky bit was historically used to lock important executables into
+memory.

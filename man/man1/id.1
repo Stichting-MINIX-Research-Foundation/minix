@@ -1,0 +1,29 @@
+.TH ID 1
+.SH NAME
+id \- print the uid and gid
+.SH SYNOPSIS
+\fBid\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "id" "Print the uid and gid"
+.SH DESCRIPTION
+.PP
+\fIId\fR prints the current uid and gid, both numerically and symbolically.
+If the effective uid and gid are different from the real ones, all of them
+are printed.
+.PP
+Under Minix-vmd the supplementary group IDs are also printed.
+.SH "SEE ALSO"
+.BR getuid (2),
+.BR getgid (2),
+.BR getgroups (2).

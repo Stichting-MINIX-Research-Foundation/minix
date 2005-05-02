@@ -1,0 +1,29 @@
+.TH DHRYSTONE 1
+.SH NAME
+dhrystone \- integer benchmark
+.SH SYNOPSIS
+\fBdhrystone\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "dhrystone" "Run the dhrystone benchmark"
+.SH DESCRIPTION
+.PP
+Many years ago, a floating-point benchmark called \fIwhetstone\fR was
+popular for benchmarking FORTRAN programs.
+Nowadays, an integer benchmark called \fIdhrystone\fR is widely used
+for benchmarking UNIX systems.
+This is it.
+Be warned, however, that \fIdhrystone\fR is entirely CPU bound, and
+goes blindingly fast on machines with high-speed caches.
+Although this is a good measure for programs that spend most of their
+time in some inner loop, it is a poor benchmark for I/O bound applications.

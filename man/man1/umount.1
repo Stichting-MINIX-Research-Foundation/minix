@@ -1,0 +1,35 @@
+.TH UMOUNT 1
+.SH NAME
+umount \- unmount a mounted file system
+.SH SYNOPSIS
+\fBumount \fR[\fB\-s\fR] \fIspecial\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-s" "Unmount swapspace instead of a file system"
+.SH EXAMPLES
+.EX "umount /dev/fd1" "Unmount diskette 1"
+.SH DESCRIPTION
+.PP
+A mounted file system is unmounted after the cache has been flushed to disk.
+A diskette should never be removed while it is mounted.
+If this happens, and is discovered before another diskette is inserted, the
+original one can be replaced without harm.
+Attempts to unmount a file system holding working directories or open files
+will be rejected with a \&'device busy\&' message.
+.PP
+With the
+.B \-s
+flag one can unmount swap space.
+.SH "SEE ALSO"
+.BR mount (1),
+.BR umount (2).

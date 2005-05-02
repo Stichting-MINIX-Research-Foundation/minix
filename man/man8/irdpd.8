@@ -1,0 +1,74 @@
+.TH IRDPD 8
+.SH NAME
+irdpd \- internet router discovery protocol daemon
+.SH SYNOPSIS
+.B irdpd
+.RB [ \-bd ]
+.RB [ \-U
+.IR udp-device ]
+.RB [ \-I
+.IR ip-device ]
+.RB [ \-o
+.IR priority-offset ]
+.SH DESCRIPTION
+.B Irdpd
+looks for routers.  This should be a simple task, but some routers are hard
+to find because they do not implement the router discovery protocol.  This
+daemon collects information that routers do send out and makes it available.
+.PP
+At startup
+.B irdpd
+sends out several router solicitation broadcasts.  A good router should
+respond to this with a router advertisement.
+.PP
+If a router advertisement arrives then no more solicitations are sent.  The
+TCP/IP server has filled its routing table with the info from the
+advertisement, so it now has at least one router.  If the advertisement is
+sent by a genuine router (the sender is in the table) then the
+.B irdpd
+daemon goes dormant for the time the advert is valid.  Routers send new
+adverts periodically, keeping the daemon silent.
+.PP
+Otherwise
+.B irdpd
+will listen for RIP (Router Information Protocol) packets.  These packets
+are sent between routers to exchange routing information.
+.B Irdpd
+uses this information to build a routing table.
+.PP
+Every now and then a router advertisement is sent to the local host to give
+it router information build from the RIP packets.
+.SH OPTIONS
+.TP
+.B \-b
+Broadcast advertisements instead of sending them to the local host only.
+This may be used to keep (non-Minix) hosts alive on a net without adverts.
+.TP
+.B \-d
+Debug mode, tell where info is coming from and where it is sent.  Debugging
+can also be turned on at runtime by sending signal
+.B SIGUSR1
+or turned off with
+.BR SIGUSR2 .
+.TP
+.BI \-o " priority-offset
+Offset used to make the gateway's preferences collected from RIP packets look
+worse than those found in genuine router adverts.  By default
+.BR -1024 .
+.SH "SEE ALSO"
+.BR inet (8),
+.BR boot (8),
+.BR dhcpd (8),
+.BR inetd (8),
+.BR nonamed (8).
+.SH BUGS
+This daemon has gone out of favour thanks to
+.BR dhcpd ,
+that also does router solicitations among other things.
+.PP
+Under standard Minix this daemon can't listen to both IRDP and RIP
+at the same time, so it starts out with IRDP.  It switches over to RIP
+if it can't find a router, or if it threatens to lose its router.  It
+does not switch back.
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

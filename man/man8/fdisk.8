@@ -1,0 +1,58 @@
+.TH FDISK 8
+.SH NAME
+fdisk \- partition a hard disk [IBM]
+.SH SYNOPSIS
+\fBfdisk\fR [\fB\-h\fIm\fR]\fR [\fB\-s\fIn\fR]\fR [\fIfile\fR]\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\fB\-h" "Number of disk heads is \fIm\fR"
+.FL "\fB\-s" "Number of sectors per track is \fIn\fR"
+.SH EXAMPLES
+.EX "fdisk /dev/hd0" "Examine disk partitions"
+.EX "fdisk \-h9 /dev/hd0" "Examine disk with 9 heads"
+.SH DESCRIPTION
+.PP
+When \fIfdisk\fR starts up, it reads in the partition table and displays 
+it.
+It then presents a menu to allow the user to modify partitions, store the
+partition table on a file, or load it from a file.  Partitions can be marked
+as 
+\s-2MINIX\s+2,
+DOS or other, as well as active or not.
+Using \fIfdisk\fR is self-explanatory.  
+However, be aware that
+repartitioning a disk will cause information on it to be lost.  
+Rebooting the system \fIimmediately\fR 
+is mandatory after changing partition sizes and parameters.
+\s-2MINIX\s+2, 
+\&\s-2XENIX\s0, \s-2PC-IX\s0, and \s-2MS-DOS\s0 all have different 
+partition numbering schemes.
+Thus when using multiple systems on the same disk, be careful.
+.PP
+Note that
+\s-2MINIX\s+2,
+unlike
+\&MS-DOS ,
+cannot access the last sector in a partition with an odd number of sectors.
+The reason that odd partition sizes do not cause a problem with
+\s-2MS-DOS\s0 is that \s-2MS-DOS\s0 allocates disk space in units of
+512-byte sectors, whereas 
+\s-2MINIX\s+2
+uses 1K blocks.
+\fIFdisk\fR has a variety of other features that can be seen by typing \fIh\fR.
+.PP
+.I Fdisk
+normally knows the geometry of the device by asking the driver.  You can use
+the \fB\-h\fP and \fB\-s\fP options to override the numbers found.
+.SH "SEE ALSO"
+.BR part (8).

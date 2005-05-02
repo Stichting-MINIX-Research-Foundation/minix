@@ -1,0 +1,83 @@
+.TH CONFIGFILE 5
+.SH NAME
+configfile \- generic configuration file format
+.SH SYNOPSIS
+.B */etc/*.conf
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+The syntax of the generic configuration file format is as follows:
+.PP
+.RS
+.nf
+.ta +16n
+configfile:	empty
+.ta +8n +8n
+	|	configline configfile
+	;
+
+.ta +16n
+configline:	wordlist '\fB;\fR'
+.ta +8n +8n
+	|	\fBinclude\fR string '\fB;\fR'
+	;
+
+.ta +16n
+wordlist:	empty
+.ta +8n +8n
+	|	word wordlist
+	|	string wordlist
+	|	'\fB{\fR' configfile '\fB}\fR' wordlist
+	;
+
+empty:	;
+.fi
+.RE
+.PP
+A word is a sequence of letters, numbers, and characters from the set
+.BR "!#$%&*+-./<=>?[\e]^_|~" .
+A backslash
+.RB ( \e )
+may be followed by a character in the set
+.B abefnrstv
+to form a BEL, BS, ESC, FF, NL, CR, SP, TAB, or VT character.  Followed by
+up to three octal digits a character of that value is formed, and likewise
+for an
+.B x
+followed by up to two hexadecimal digits.  Any other character is left
+as-is.  A backslash followed by whitespace is completely removed from the
+input.  (This includes comments.)
+.PP
+A string is started by a single or double quote, a series of characters, and
+ended by the same type of quote it started with.  Any character or
+escape with
+.B \e
+may be found in a string.  Strings may not span lines.
+.PP
+Tokens are separated by whitespace, being the usual whitespace characters
+and comments.  A comment starts with the
+.B #
+character, and ends at a newline.
+.PP
+The special word
+.B include
+tells that the file mentioned in the following string must be read and
+included at that point.  The file is found relative to the directory the
+current configuration file is found in, unless its name starts with a
+.BR / .
+A file that doesn't exist is seen as empty.
+.PP
+A generic configuration file can be read with the functions described in
+.BR configfile (3).
+.SH EXAMPLES
+Have a look at
+.BR /etc/dhcp.conf .
+.SH "SEE ALSO"
+.BR configfile (3).
+.SH NOTES
+Inspired by the configuration file of Paul Vixie's
+.BR bind .
+.SH AUTHOR
+Kees J. Bot (kjb@cs.vu.nl)

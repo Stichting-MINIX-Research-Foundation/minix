@@ -1,0 +1,117 @@
+.\" Copyright (c) 1980 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)malloc.3	6.3 (Berkeley) 5/14/86
+.\"
+.TH MALLOC 3  "May 14, 1986"
+.UC 4
+.SH NAME
+malloc, free, realloc, calloc, alloca \- memory allocator
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/types.h>
+#include <stdlib.h>
+#include <alloca.h>
+
+void *malloc(size_t \fIsize\fP)
+void free(void *\fIptr\fP)
+void *realloc(void *\fIptr\fP, size_t \fIsize\fP)
+void *calloc(size_t \fInelem\fP, size_t \fIelsize\fP)
+void *alloca(size_t \fIsize\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Malloc
+and
+.B free
+provide a general-purpose memory allocation package.
+.B Malloc
+returns a pointer to a block of at least
+.I size
+bytes beginning on a word boundary.
+.PP
+The argument to
+.B free
+is a pointer to a block previously allocated by
+.BR malloc ;
+this space is made available for further allocation,
+but its contents are left undisturbed.
+A call with a null
+.I ptr
+is legal and does nothing.
+.PP
+Needless to say, grave disorder will result if the space assigned by
+.B malloc
+is overrun or if some random number is handed to
+.BR free .
+.PP
+.B Malloc
+maintains multiple lists of free blocks according to size,
+allocating space from the appropriate list.
+It calls
+.B sbrk
+(see
+.BR brk (2))
+to get more memory from the system when there is no
+suitable space already free.
+.PP
+.B Realloc
+changes the size of the block pointed to by
+.I ptr
+to
+.I size
+bytes and returns a pointer to the (possibly moved) block.
+The contents will be unchanged up to the lesser of the new and old sizes.
+A call with a null
+.I ptr
+is legal and has the same result as
+.BI malloc( size )\fR.
+.PP
+.B Calloc
+allocates space for an array of
+.I nelem
+elements of size
+.I elsize.
+The space is initialized to zeros.
+.PP
+.B Alloca
+allocates 
+.I size
+bytes of space in the stack frame of the caller.
+This temporary space is automatically freed on
+return.
+.PP
+Each of the allocation routines returns a pointer
+to space suitably aligned (after possible pointer coercion)
+for storage of any type of object.
+.SH SEE ALSO
+.BR brk (2).
+.SH DIAGNOSTICS
+.BR Malloc ,
+.BR realloc
+and
+.B calloc
+return a null pointer if there is no available memory or if the arena
+has been detectably corrupted by storing outside the bounds of a block.
+.SH NOTES
+Other implementations of
+.BR malloc ,
+.BR realloc
+or
+.BR calloc
+may return a null pointer if the size of the requested block is zero.  This
+implementation will always return a zero length block at a unique address,
+but you should keep in mind that a null return is possible if the program
+is run to another system and that this should not be mistakenly seen as
+an error.
+.SH BUGS
+When
+.B realloc
+returns a null pointer, the block pointed to by
+.I ptr
+may be destroyed.
+.PP
+.B Alloca
+is machine dependent; its use is discouraged.

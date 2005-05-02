@@ -1,0 +1,33 @@
+.TH CGREP 1
+.SH NAME
+cgrep \- grep and display context
+.SH SYNOPSIS
+\fBcgrep\fR [\fB\-a \fIn\fR]\fR [\fB\-b \fIn\fR] [\fB\-f\fR] [\fB\-l \fIn\fR]  [\fB\-n\fR] [\fB\-w \fIn\fR] \fIpattern\fR [\fIfile\fR] ...\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-a" "How many lines to display after the matching line"
+.FL "\-b" "How many lines to display before the matching line"
+.FL "\-f" "Suppress file name in the output"
+.FL "\-l" "Lines are truncated to this length before comparison"
+.FL "\-n" "Suppress line numbers in the output"
+.FL "\-w" "Sets window size (same as \fB\-a\fR n \fB\-b\fR n)"
+.SH EXAMPLES
+.EX "cgrep \-w 3 hello file1" "Print 3 lines of context each way"
+.SH DESCRIPTION
+.PP
+\fICgrep\fR is a program like \fIgrep\fR, except that it also can print
+a few lines above and/or below the matching lines.
+It also prints the line numbers of the output.
+.SH "SEE ALSO"
+.BR grep (1),
+.BR fgrep (1).
