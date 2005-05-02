@@ -46,11 +46,11 @@ a = 	$d/drivers.h $b/interrupt.h $b/bios.h \
 	$m/syslib.h $s/types.h \
 	$m/utils.h $m/serverassert.h $m/devio.h
 
-tty.o:	$a 	
-console.o: $a
+tty.o:	tty.h $a 	
+console.o: tty.h $a
 vidcopy.o: 	# nothing
-keyboard.o: $a
-rs232.o: $a $i/termios.h $i/signal.h 
+keyboard.o: tty.h $a
+rs232.o: tty.h $a $i/termios.h $i/signal.h 
 
 
 

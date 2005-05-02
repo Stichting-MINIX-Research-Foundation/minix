@@ -97,6 +97,7 @@ PRIVATE int proc_nr;		/* user requesting the printing */
 PRIVATE int user_left;		/* bytes of output left in user buf */
 PRIVATE vir_bytes user_vir;	/* address of remainder of user buf */
 PRIVATE int writing;		/* nonzero while write is in progress */
+PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
 
 FORWARD _PROTOTYPE( void do_cancel, (message *m_ptr) );
 FORWARD _PROTOTYPE( void output_done, (void) );
@@ -278,21 +279,15 @@ PRIVATE void do_initialize()
   if (initialized) return;
   initialized = TRUE;
   
-#if DEAD_CODE
-  /* Get the base port for first printer. This used to be done from the 
-   * BIOS with phys_copy(0x408L, vir2phys(&port_base), 2L); but currently
-   * a magic number is put in place. 
-   */
-  port_base = 0x378;		
-#endif
+  /* Get the base port for first printer.  */
   sys_vircopy(SELF, BIOS_SEG, LPT1_IO_PORT_ADDR, 
   	SELF, D, (vir_bytes) &port_base, LPT1_IO_PORT_SIZE);
   sys_outb(port_base + 2, INIT_PRINTER);
   tick_delay(1);		/* easily satisfies Centronics minimum */
   				/* was 2 millisecs; now is ~17 millisecs */
   sys_outb(port_base + 2, SELECT);
-  sys_irqsetpolicy(PRINTER_IRQ, SELF, 0, 0, 0, 0);
-  sys_irqenable(PRINTER_IRQ);
+  sys_irqsetpolicy(PRINTER_IRQ, 0, &irq_hook_id);
+  sys_irqenable(&irq_hook_id);
 
 }
 
@@ -338,7 +333,7 @@ PRIVATE void do_printer_output()
 	 * interrupt status does not affect the printer.
 	 */
 	sys_outb(port_base + 2, SELECT);
-	sys_irqenable(PRINTER_IRQ);
+	sys_irqenable(&irq_hook_id);
 	return;
   }
 
@@ -354,7 +349,7 @@ PRIVATE void do_printer_output()
 		 * pr_restart, since they are not synchronized with printer
 		 * interrupts.  It may happen after a spurious interrupt.
 		 */
-		sys_irqenable(PRINTER_IRQ);
+		sys_irqenable(&irq_hook_id);
 		return;
 	}
 	if ((status & STATUS_MASK) == NORMAL_STATUS) {
@@ -370,7 +365,7 @@ PRIVATE void do_printer_output()
 		/* Error.  This would be better ignored (treat as busy). */
 		done_status = status;
 		output_done();
-		sys_irqenable(PRINTER_IRQ);
+		sys_irqenable(&irq_hook_id);
 		return;
 	}
   }
@@ -379,7 +374,7 @@ PRIVATE void do_printer_output()
   /* Finished printing chunk OK. */
   done_status = OK;
   output_done();
-  sys_irqenable(PRINTER_IRQ);
+  sys_irqenable(&irq_hook_id);
 }
 
 

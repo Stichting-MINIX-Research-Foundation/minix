@@ -491,7 +491,6 @@ PRIVATE void sched()
 PUBLIC void lock_pick_proc()
 {
 /* Safe gateway to pick_proc() for tasks. */
-
   switching = TRUE;
   pick_proc();
   switching = FALSE;
@@ -504,7 +503,6 @@ PUBLIC void lock_ready(rp)
 struct proc *rp;		/* this process is now runnable */
 {
 /* Safe gateway to ready() for tasks. */
-
   switching = TRUE;
   ready(rp);
   switching = FALSE;
@@ -517,7 +515,6 @@ PUBLIC void lock_unready(rp)
 struct proc *rp;		/* this process is no longer runnable */
 {
 /* Safe gateway to unready() for tasks. */
-
   switching = TRUE;
   unready(rp);
   switching = FALSE;
@@ -529,7 +526,6 @@ struct proc *rp;		/* this process is no longer runnable */
 PUBLIC void lock_sched()
 {
 /* Safe gateway to sched() for tasks. */
-
   switching = TRUE;
   sched();
   switching = FALSE;
@@ -565,31 +561,4 @@ PUBLIC void unhold()
   while ( (rp = held_head) != NIL_PROC);
 }
 
-#if (CHIP == M68000)
-/*==========================================================================*
- *				cp_mess					    *
- *==========================================================================*/
-PRIVATE void cp_mess(src, src_p, src_m, dst_p, dst_m)
-int src;			/* sender process */
-register struct proc *src_p;	/* source proc entry */
-message *src_m;			/* source message */
-register struct proc *dst_p;	/* destination proc entry */
-message *dst_m;			/* destination buffer */
-{
-  /* convert virtual address to physical address */
-  /* The caller has already checked if all addresses are within bounds */
-  
-  src_m = (message *)((char *)src_m + (((phys_bytes)src_p->p_map[D].mem_phys
-				- src_p->p_map[D].mem_vir) << CLICK_SHIFT));
-  dst_m = (message *)((char *)dst_m + (((phys_bytes)dst_p->p_map[D].mem_phys
-				- dst_p->p_map[D].mem_vir) << CLICK_SHIFT));
-
-#ifdef NEEDFSTRUCOPY
-  phys_copy(src_m,dst_m,(phys_bytes) sizeof(message));
-#else
-  *dst_m = *src_m;
-#endif
-  dst_m->m_source = src;
-}
-#endif
 

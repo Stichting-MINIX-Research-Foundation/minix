@@ -34,8 +34,6 @@ _PROTOTYPE( char *kstrncpy,
 	(char *s1, register const char *s2, register const size_t n));
 _PROTOTYPE( unsigned long kstrtoul,
 	(const char *string, char ** const end, int base)		);
-
-/* kprintf.c */
 #define NO_ARG 0
 #define karg(arg) (karg_t) (arg)
 _PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
@@ -44,7 +42,6 @@ _PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
 _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)					);
 _PROTOTYPE( void stop_sequence, (struct timer *tp)				);
-_PROTOTYPE( void shutdown, (struct timer *tp)				);
 
 /* misc.c */
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
@@ -84,10 +81,6 @@ _PROTOTYPE( void lock_ready, (struct proc *rp)				);
 _PROTOTYPE( void lock_sched, (void)					);
 _PROTOTYPE( void lock_unready, (struct proc *rp)			);
 
-/* sb16_dsp.c, sb16_mixer.c */
-_PROTOTYPE( void sb16dsp_task, (void)					);
-_PROTOTYPE( void sb16mix_task, (void)					);
-
 /* start.c */
 _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 				U16_t parmoff, U16_t parmsize)		);
@@ -107,10 +100,7 @@ _PROTOTYPE( phys_bytes umap_remote, (struct proc *rp, int seg,
 		vir_bytes vir_addr, vir_bytes bytes)			);
 _PROTOTYPE( phys_bytes umap_bios, (struct proc *rp, vir_bytes vir_addr,
 		vir_bytes bytes)					);
-_PROTOTYPE( int vir_copy, (int src_proc, vir_bytes src_vir,
-		int dst_proc, vir_bytes dst_vir, vir_bytes bytes)	);
 _PROTOTYPE( int generic_handler, (irq_hook_t *hook)			);
-_PROTOTYPE( void timed_interrupt, (struct timer *tp)			);
 
 /* table.c */
 _PROTOTYPE( void mapdrivers, (void)					);

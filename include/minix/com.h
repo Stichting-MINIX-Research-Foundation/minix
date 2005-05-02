@@ -74,7 +74,7 @@
  * blocking notifications are delivered. The lowest numbers go first. The
  * offset are used for the per-process notification bit maps. 
  */
-#define NR_NOTIFICATIONS 	  5	/* max. is # bits in notify_mask_t */
+#define NR_NOTIFICATIONS 	  5	/* number of bits in notify_mask_t */
 #	define NOTIFICATION 	333 	/* offset for notification types */
 #	define HARD_INT	    NOTIFICATION + 0	/* hardware interrupt */
 #	define SYN_ALARM    NOTIFICATION + 1  	/* synchronous alarm */
@@ -129,7 +129,8 @@
 #  define KMEM_DEV    2		/* minor device for /dev/kmem */
 #  define NULL_DEV    3		/* minor device for /dev/null */
 #  define BOOT_DEV    4		/* minor device for /dev/boot */
-#  define RANDOM_DEV  5		/* minor device for /dev/random */
+#  define RANDOM_DEV  5		/* minor device for /dev/(u)random */
+#  define URANDOM_DEV RANDOM_DEV 
 #  define ZERO_DEV    6		/* minor device for /dev/zero */
 
 /* Full device numbers that are special to the boot monitor and FS. */
@@ -272,18 +273,12 @@
 #  define IRQ_DISABLE       3	/* disable interrupts */
 #define IRQ_VECTOR	m5_c2   /* irq vector */
 #define IRQ_POLICY	m5_i1   /* options for IRQCTL request */
-#  define IRQ_READ_PORT    0x001    /* read port and return value */
-#  define IRQ_WRITE_PORT   0x002    /* write given value to port */
-#  define IRQ_STROBE	   0x010    /* write masked value back to port */
-#  define IRQ_ECHO_VAL     0x020    /* write value read back to port */
-#  define IRQ_REENABLE     0x040    /* reenable IRQ line after interrupt */
+#  define IRQ_REENABLE     0x001    /* reenable IRQ line after interrupt */
 #  define IRQ_BYTE         0x100    /* byte values */      
 #  define IRQ_WORD         0x200    /* word values */
 #  define IRQ_LONG         0x400    /* long values */
 #define IRQ_PROC_NR	m5_i2   /* process number, SELF, NONE */
-#define IRQ_PORT	m5_l1   /* port to read or write */
-#define IRQ_VIR_ADDR	m5_l2   /* address to store value read */
-#define IRQ_MASK_VAL	m5_l3   /* value or strobe mask */
+#define IRQ_HOOK_ID	m5_l3   /* id of irq hook at kernel */
 
 /* Names of message field and paramaters for SYS_EXIT request. */
 #define EXIT_STATUS	m2_i1	/* zero for normal exit, non-zero else */
@@ -333,7 +328,7 @@
 #   define GET_PROCNR	   3	/* find nr of process with name */
 #   define GET_MONPARAMS   4	/* get monitor parameters */
 #   define GET_KENV	   5	/* get kernel environment string */
-#   define GET_IRQTAB	   6	/* get the IRQ table */
+#   define GET_IRQHOOKS	   6	/* get the IRQ table */
 #   define GET_KMESSAGES   7	/* get kernel messages */
 #   define GET_MEMCHUNKS   8	/* get base+size of mem chunks */
 #   define GET_KADDRESSES  9	/* get various kernel addresses */

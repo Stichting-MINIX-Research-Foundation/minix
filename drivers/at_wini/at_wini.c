@@ -173,6 +173,7 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
   unsigned state;		/* drive state: deaf, initialized, dead */
   unsigned base;		/* base register of the register file */
   unsigned irq;			/* interrupt request line */
+  int irq_hook_id;		/* id of irq hook at the kernel */
   unsigned lcylinders;		/* logical number of cylinders (BIOS) */
   unsigned lheads;		/* logical number of heads */
   unsigned lsectors;		/* logical number of sectors per track */
@@ -247,11 +248,6 @@ PUBLIC void main()
 /* Register function key for debugging dumps. */
   fkey_enable(SF8);
 
-#if DEAD_CODE
-  if ((s=get_own_proc_nr(&win_tasknr)) != OK)
-  	server_panic(w_name(),"Couldn't get own process number",s);
-#endif
-  printf("AT wini task started.\n");
 /* Set special disk parameters then call the generic main loop. */
   init_params();
   driver_task(&w_dtab);
@@ -472,13 +468,10 @@ PRIVATE int w_identify()
 
   /* Everything looks OK; register IRQ so we can stop polling. */
   wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
-#if DEAD_CODE
-  sys_irqsetpolicy(w_wn->irq, (IRQ_READ_PORT | IRQ_BYTE | IRQ_REENABLE), SELF,
-		(w_wn->base + REG_STATUS), &w_byteval, 0);
-#else
-  sys_irqsetpolicy(w_wn->irq, IRQ_REENABLE, SELF, 0, 0, 0);
-#endif
-  sys_irqenable(wn->irq);
+  if ((s=sys_irqsetpolicy(wn->irq, IRQ_REENABLE, &wn->irq_hook_id)) != OK) 
+  	server_panic("AT", "coudn't set IRQ policy", s);
+  if ((s=sys_irqenable(&wn->irq_hook_id)) != OK)
+  	server_panic("AT", "coudn't enable IRQ line", s);
   return(OK);
 }
 
@@ -841,11 +834,7 @@ PRIVATE void w_intr_wait()
 		if (m.m_type == SYN_ALARM) { 	/* but check for timeout */
 		    w_timeout();		/* a.o. set w_status */
 		} else if (m.m_type == HARD_INT) {
-#if DEAD_CODE
-		    w_status = w_byteval;	/* read by generic handler */
-#else
 		    sys_inb((w_wn->base + REG_STATUS), &w_status);
-#endif
 	        }
 	}
   } else {

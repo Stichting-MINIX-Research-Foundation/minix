@@ -30,6 +30,9 @@
 /* How many elements in vector of virtual copy requests. */
 #define VCOPY_VEC_SIZE    16
 
+/* How many IRQ hooks are there in total. */
+#define NR_IRQ_HOOKS	  16
+
 /* Program stack words and masks. */
 #define INIT_PSW      0x0200	/* initial psw */
 #define INIT_TASK_PSW 0x1200	/* initial psw for tasks (with IOPL 1) */

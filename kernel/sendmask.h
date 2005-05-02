@@ -4,7 +4,8 @@
  * (LOW_USER+1) + 1. This means that there are bits for each task, driver, and
  * server process, INIT, and one bit to represent all ordinary user processes. 
  *
- * NOTE: the send masks definitions must be updated!!!
+ * PLEASE NOTE: the send masks definitions are a mess and must be updated!!!
+ *		this will be done when dynamic driver loading is implemented
  *
  * Changes:
  *   May 01, 2004	created and sendmask definitions  (Jorrit N. Herder)

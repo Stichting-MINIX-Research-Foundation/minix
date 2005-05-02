@@ -213,6 +213,7 @@ PRIVATE struct floppy {		/* main drive struct, one entry per drive */
   struct device fl_part[NR_PARTITIONS];  /* partition's base & size */
 } floppy[NR_DRIVES];
 
+PRIVATE int irq_hook_id;	/* id of irq hook at the kernel */
 PRIVATE int motor_status;	/* bitmap of current motor status */
 PRIVATE int need_reset;		/* set to 1 when controller must be reset */
 PRIVATE unsigned f_drive;	/* selected drive */
@@ -222,9 +223,6 @@ PRIVATE struct density *f_dp;	/* current density parameters */
 PRIVATE struct density *prev_dp;/* previous density parameters */
 PRIVATE unsigned f_sectors;	/* equal to f_dp->secpt (needed a lot) */
 PRIVATE u16_t f_busy;		/* BSY_IDLE, BSY_IO, BSY_WAKEN */
-#if DEAD_CODE
-PRIVATE irq_hook_t f_hook;	/* interrupt hook */
-#endif
 PRIVATE struct device *f_dv;	/* device's base and size */
 PRIVATE struct disk_parameter_s fmt_param; /* parameters for format */
 PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
@@ -253,9 +251,6 @@ FORWARD _PROTOTYPE( void start_motor, (void) );
 FORWARD _PROTOTYPE( int seek, (void) );
 FORWARD _PROTOTYPE( int fdc_transfer, (int opcode) );
 FORWARD _PROTOTYPE( int fdc_results, (void) );
-#if DEAD_CODE
-FORWARD _PROTOTYPE( int f_handler, (irq_hook_t *hook) );
-#endif
 FORWARD _PROTOTYPE( int fdc_command, (u8_t *cmd, int len) );
 FORWARD _PROTOTYPE( void fdc_out, (int val) );
 FORWARD _PROTOTYPE( int recalibrate, (void) );
@@ -291,7 +286,7 @@ PUBLIC void main()
 /* Initialize the floppy structure and the timers. */
 
   struct floppy *fp;
-  int irqs;
+  int s;
 
   f_next_timeout = TMR_NEVER;
   tmr_inittimer(&f_tmr_timeout);
@@ -304,10 +299,10 @@ PUBLIC void main()
   }
 
   /* Set IRQ policy, only request notifications. */
-  if ((irqs=sys_irqsetpolicy(FLOPPY_IRQ, 0, SELF, 0, 0, 0 )) != OK)
-  	server_panic("FLOPPY", "Couldn't set IRQ policy", irqs);
-  if ((irqs=sys_irqenable(FLOPPY_IRQ)) != OK)
-  	server_panic("FLOPPY", "Couldn't enable IRQs", irqs);
+  if ((s=sys_irqsetpolicy(FLOPPY_IRQ, 0, &irq_hook_id )) != OK)
+  	server_panic("FLOPPY", "Couldn't set IRQ policy", s);
+  if ((s=sys_irqenable(&irq_hook_id)) != OK)
+  	server_panic("FLOPPY", "Couldn't enable IRQs", s);
 
   printf("FLOPPY: user-level floppy disk driver initialized\n");
   driver_task(&f_dtab);
@@ -878,7 +873,6 @@ PRIVATE int fdc_results()
 
   int s, result_nr, status;
   static int timeout;		/* must be static if not cancelled */
-  int irqs;
 
   /* Extract bytes from FDC until it says it has no more.  The loop is
    * really an outer loop on result_nr and an inner loop on status. 
@@ -903,8 +897,8 @@ PRIVATE int fdc_results()
 		continue;
 	}
 	if (status == MASTER) {			/* all read */
-		if ((irqs=sys_irqenable(FLOPPY_IRQ)) != OK)
-			server_panic("FLOPPY", "Couldn't enable IRQs", irqs);
+		if ((s=sys_irqenable(&irq_hook_id)) != OK)
+			server_panic("FLOPPY", "Couldn't enable IRQs", s);
 
 		/* Disabling the alarm is not needed, because a static flag
 		 * is used and a leftover timeout cannot do any harm. It is
@@ -916,27 +910,11 @@ PRIVATE int fdc_results()
   } while (! timeout);
   need_reset = TRUE;		/* controller chip must be reset */
 
-  if ((irqs=sys_irqenable(FLOPPY_IRQ)) != OK)
-	server_panic("FLOPPY", "Couldn't enable IRQs", irqs);
+  if ((s=sys_irqenable(&irq_hook_id)) != OK)
+	server_panic("FLOPPY", "Couldn't enable IRQs", s);
   return(ERR_STATUS);
 }
 
-
-#if DEAD_CODE
-/*==========================================================================*
- *				f_handler				    *
- *==========================================================================*/
-PRIVATE int f_handler(hook)
-irq_hook_t *hook;
-{
-/* FDC interrupt, send message to floppy task. */
-#if DEAD_CODE
-  f_busy = BSY_IDLE;
-#endif
-  notify(FLOPPY, HARD_INT);
-  return 0;
-}
-#endif
 
 
 /*===========================================================================*

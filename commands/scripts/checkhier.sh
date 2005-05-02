@@ -34,8 +34,6 @@ drwxr-xr-x	root	operator	/etc
 -rw-r--r--	root	operator	/etc/termcap
 -rw-r--r--	root	operator	/etc/ttytab
 -rw-r--r--	root	operator	/etc/utmp
-dr-xr-xr-x	root	operator	/fd0
-dr-xr-xr-x	root	operator	/fd1
 dr-xr-xr-x	root	operator	/mnt
 dr-xr-xr-x	root	operator	/root
 drwxrwxrwx	root	operator	/tmp

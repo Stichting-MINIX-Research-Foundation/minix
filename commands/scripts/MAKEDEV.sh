@@ -18,7 +18,7 @@ case $#:$1 in
     cat >&2 <<EOF
 Usage:	$0 [-n] key ...
 Where key is one of the following:
-  ram mem kmem null	  # One of these makes all these memory devices
+  ram mem kmem null boot random zero	  # One of these makes all these memory devices
   fd0 fd1 ...		  # Floppy devices for drive 0, 1, ...
   fd0p0 fd1p0 ...	  # Make floppy partitions fd0p[0-3], fd1p[0-3], ...
   c0d0 c0d1 ...		  # Make disks c0d0, c0d1, ...
@@ -50,7 +50,7 @@ do
     esac
 
     case $dev in
-    ram|mem|kmem|null)
+    ram|mem|kmem|null|boot|random|urandom|zero)
 	# Memory devices.
 	#
 	$e mknod ram b 1 0;	$e chmod 600 ram
@@ -60,7 +60,8 @@ do
 	$e mknod boot b 1 4;	$e chmod 600 ram
 	$e mknod random c 1 5;	$e chmod 644 random
 	$e mknod urandom c 1 5;	$e chmod 644 urandom
-	$e chgrp kmem ram mem kmem null boot random urandom
+	$e mknod zero c 1 6;	$e chmod 644 zero
+	$e chgrp kmem ram mem kmem null boot random urandom zero
 	;;
     fd[0-3])
 	# Floppy disk drive n.

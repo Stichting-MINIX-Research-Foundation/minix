@@ -125,16 +125,34 @@ register message *m_ptr;	/* pointer to request message */
 PUBLIC int do_umap(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-/* Same as umap_local(), for non-kernel processes. */
+/* Map virtual address to physical, for non-kernel processes. */
+  int seg_type = m_ptr->CP_SRC_SPACE & SEGMENT_TYPE;
+  int seg_index = m_ptr->CP_SRC_SPACE & SEGMENT_INDEX;
+  vir_bytes offset = m_ptr->CP_SRC_ADDR;
+  int count = m_ptr->CP_NR_BYTES;
   int proc_nr = (int) m_ptr->CP_SRC_PROC_NR;
+  phys_bytes phys_addr;
+
+  /* Verify process number. */
   if (proc_nr == SELF) proc_nr = m_ptr->m_source;
   if (! isokprocn(proc_nr)) return(EINVAL);
 
-  m_ptr->CP_DST_ADDR = umap_local(proc_addr(proc_nr),
-                           (int) m_ptr->CP_SRC_SPACE,
-                           (vir_bytes) m_ptr->CP_SRC_ADDR,
-                           (vir_bytes) m_ptr->CP_NR_BYTES);
-  return(OK);
+  /* See which mapping should be made. */
+  switch(seg_type) {
+  case LOCAL_SEG:
+      phys_addr = umap_local(proc_addr(proc_nr), seg_index, offset, count); 
+      break;
+  case REMOTE_SEG:
+      phys_addr = umap_remote(proc_addr(proc_nr), seg_index, offset, count); 
+      break;
+  case BIOS_SEG:
+      phys_addr = umap_bios(proc_addr(proc_nr), offset, count); 
+      break;
+  default:
+      return(EINVAL);
+  }
+  m_ptr->CP_DST_ADDR = phys_addr;
+  return (phys_addr == 0) ? EFAULT: OK;
 }
 
 

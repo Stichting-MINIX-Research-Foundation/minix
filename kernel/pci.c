@@ -25,6 +25,9 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define irq_mode_pci(irq) ((void)0)
 #endif
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <minix/utils.h>
 INIT_SERVER_ASSERT
 

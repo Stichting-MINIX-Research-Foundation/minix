@@ -19,7 +19,7 @@ LD =	$(CC) -.o
 CFLAGS = -I$i
 LDFLAGS = -i
 
-SYS = 	alarms.o copying.o debugging.o devio.o irqctl.o proctl.o \
+SYS = 	clock.o copying.o debugging.o devio.o irqctl.o proctl.o \
 	sysctl.o misc.o sigctl.o tracing.o \
 
 # What to make.
@@ -39,7 +39,7 @@ a =	$h/config.h $h/const.h $h/type.h $h/ipc.h \
 # Dependencies from src/kernel/system.h
 b = 	$k/system.h $h/com.h $k/proc.h $k/assert.h  
 
-alarms.o:	$a $b 
+clock.o:	$a $b 
 copying.o:	$a $b 
 debugging.o:	$a $b 
 devio.o:	$a $b $h/devio.h 

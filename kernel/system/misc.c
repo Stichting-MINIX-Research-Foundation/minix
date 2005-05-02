@@ -1,46 +1,7 @@
-/* The system call implemented in this file:
- *   m_type:	SYS_TIMES
- *
- * The parameters for this system call are:
- *    m4_l1:	T_PROC_NR		(get info for this process)	
- *    m4_l1:	T_USER_TIME		(return values ...)	
- *    m4_l2:	T_SYSTEM_TIME	
- *    m4_l3:	T_CHILD_UTIME	
- *    m4_l4:	T_CHILD_STIME	
- *    m4_l5:	T_BOOT_TICKS	
- */
-
 #include "../kernel.h"
 #include "../system.h"
 #include <unistd.h>
 INIT_ASSERT
-
-/*===========================================================================*
- *				do_times				     *
- *===========================================================================*/
-PUBLIC int do_times(m_ptr)
-register message *m_ptr;	/* pointer to request message */
-{
-/* Handle sys_times().  Retrieve the accounting information. */
-
-  register struct proc *rp;
-  int proc_nr;
-
-  /* Insert the times needed by the SYS_TIMES system call in the message. */
-  proc_nr = (m_ptr->T_PROC_NR == SELF) ? m_ptr->m_source : m_ptr->T_PROC_NR;
-  if (isokprocn(proc_nr)) {
-      rp = proc_addr(m_ptr->T_PROC_NR);
-
-      lock();			/* halt the volatile time counters in rp */
-      m_ptr->T_USER_TIME   = rp->user_time;
-      m_ptr->T_SYSTEM_TIME = rp->sys_time;
-      unlock();
-      m_ptr->T_CHILD_UTIME = rp->child_utime;
-      m_ptr->T_CHILD_STIME = rp->child_stime;
-  }
-  m_ptr->T_BOOT_TICKS = get_uptime();  
-  return(OK);
-}
 
 
 /*===========================================================================*
@@ -119,8 +80,6 @@ message *m_ptr;			/* pointer to request message */
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 
-
-
 /*===========================================================================*
  *			        do_getinfo				     *
  *===========================================================================*/
@@ -150,9 +109,9 @@ register message *m_ptr;	/* pointer to request message */
     	src_phys = vir2phys(image);
         break;
     }
-    case GET_IRQTAB: {
-    	length = sizeof(struct irqtab) * NR_IRQ_VECTORS;
-    	src_phys = vir2phys(irqtab);
+    case GET_IRQHOOKS: {
+    	length = sizeof(struct irq_hook) * NR_IRQ_HOOKS;
+    	src_phys = vir2phys(irq_hooks);
         break;
     }
     case GET_MEMCHUNKS: {
@@ -200,6 +159,7 @@ register message *m_ptr;	/* pointer to request message */
         } else {				/* lookup nr by name */
   	    int proc_found = FALSE;
   	    struct proc *pp;
+	    struct vir_addr vsrc, vdst;
   	    char key[8];	/* storage for process name to lookup */
 #if DEAD_CODE
 	/* GET_PROCNR functionality will be moved to the Process Manager! */
@@ -207,8 +167,13 @@ register message *m_ptr;	/* pointer to request message */
 #endif
   proc_nr = m_ptr->m_source;	/* only caller can request copy */
     	    if (m_ptr->I_KEY_LEN > sizeof(key)) return(EINVAL);
+	    vsrc.proc_nr = proc_nr; vsrc.segment = D; vsrc.offset = (vir_bytes) m_ptr->I_KEY_PTR;
+	    vdst.proc_nr = SYSTASK, vdst.segment = D; vdst.offset = (vir_bytes) key;
+	    if (virtual_copy(&vsrc, &vdst, m_ptr->I_KEY_LEN) != OK) return(EFAULT);
+#if DEAD_CODE
     	    if (vir_copy(proc_nr, (vir_bytes) m_ptr->I_KEY_PTR, SYSTASK,
     	        (vir_bytes) key, m_ptr->I_KEY_LEN) != OK) return(EFAULT);
+#endif
   	    for (pp=BEG_PROC_ADDR; pp<END_PROC_ADDR; pp++) {
 		if (kstrncmp(pp->p_name, key, m_ptr->I_KEY_LEN) == 0) {
 			src_phys = vir2phys(&(pp->p_nr));

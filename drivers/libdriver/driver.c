@@ -96,14 +96,6 @@ struct driver *dp;	/* Device dependent entry points. */
 	caller = mess.m_source;
 	proc_nr = mess.PROC_NR;
 
-#if DEAD_CODE	/* drivers, like TTY can have any number */
-	/* Check if legitimate caller: FS or a task. */
-	if (caller != FS_PROC_NR && caller >= 0) {
-		printf("%s: got message from %d\n", (*dp->dr_name)(), caller);
-		continue;
-	}
-#endif
-
 	/* Now carry out the work. */
 	switch(mess.m_type) {
 	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;
@@ -234,14 +226,6 @@ message *mp;		/* pointer to read or write message */
     if (OK != sys_datacopy(mp->m_source, (vir_bytes) mp->ADDRESS, 
     		SELF, (vir_bytes) iovec, iovec_size))
         server_panic((*dp->dr_name)(),"bad I/O vector by", mp->m_source);
-#if DEAD_CODE
-    sys_umap(mp->m_source, (vir_bytes) mp->ADDRESS,
-    	  iovec_size, &user_iovec_phys);
-    if (user_iovec_phys == 0)
-        server_panic((*dp->dr_name)(),"bad I/O vector by", mp->m_source);
-    iovec_phys = vir2phys(iovec);
-    phys_copy(user_iovec_phys, iovec_phys, (phys_bytes) iovec_size);
-#endif
     iov = iovec;
   }
 
@@ -255,9 +239,6 @@ message *mp;		/* pointer to read or write message */
   if (mp->m_source >= 0) {
     sys_datacopy(SELF, (vir_bytes) iovec, 
     	mp->m_source, (vir_bytes) mp->ADDRESS, iovec_size);
-#if DEAD_CODE
-    phys_copy(iovec_phys, user_iovec_phys, (phys_bytes) iovec_size); 
-#endif
   }
   return(r);
 }
@@ -387,17 +368,8 @@ message *mp;			/* pointer to ioctl request */
   /* Decode the message parameters. */
   if ((dv = (*dp->dr_prepare)(mp->DEVICE)) == NIL_DEV) return(ENXIO);
 
-#if DEAD_CODE
-  sys_umap(mp->PROC_NR, D, (vir_bytes) mp->ADDRESS, sizeof(entry), &user_phys);
-  if (user_phys == 0) return(EFAULT);
-  entry_phys = vir2phys(&entry);
-#endif
-
   if (mp->REQUEST == DIOCSETP) {
 	/* Copy just this one partition table entry. */
-#if DEAD_CODE
-	phys_copy(user_phys, entry_phys, (phys_bytes) sizeof(entry));
-#endif
 	if (OK != (s=sys_datacopy(mp->PROC_NR, (vir_bytes) mp->ADDRESS,
 		SELF, (vir_bytes) &entry, sizeof(entry))))
 	    return s;
@@ -408,9 +380,6 @@ message *mp;			/* pointer to ioctl request */
 	entry.base = dv->dv_base;
 	entry.size = dv->dv_size;
 	(*dp->dr_geometry)(&entry);
-#if DEAD_CODE
-	phys_copy(entry_phys, user_phys, (phys_bytes) sizeof(entry));
-#endif
 	if (OK != (s=sys_datacopy(SELF, (vir_bytes) &entry,
 		mp->PROC_NR, (vir_bytes) mp->ADDRESS, sizeof(entry))))
 	    return s;

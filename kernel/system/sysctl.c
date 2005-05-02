@@ -60,6 +60,7 @@ message *m_ptr;			/* pointer to request message */
  *    m2_p1:	CTL_ARG_PTR 	(argument pointer)
  */
 
+/* NOTE: this call will radically change! */
 
 /*===========================================================================*
  *				do_svrctl				     *
@@ -124,7 +125,6 @@ message *m_ptr;			/* pointer to request message */
  * Author:
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
-
 
 /*===========================================================================*
  *			        do_segctl				     *

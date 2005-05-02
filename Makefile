@@ -7,6 +7,7 @@ usage:
 	@echo "Master Makefile for MINIX commands and utilities." >&2
 	@echo "Usage:" >&2
 	@echo "	make world      # Compile everything (libraries & commands)" >&2
+	@echo "	make includes   # Install include files from src/" >&2
 	@echo "	make libraries  # Compile and install libraries" >&2
 	@echo "	make commands   # Compile commands, but don't install" >&2
 	@echo "	make install    # Compile and install commands" >&2
@@ -22,6 +23,9 @@ usage:
 # etcfiles also creates a directory hierarchy in its
 # 'make install' target.
 world:	etcfiles includes libraries commands install
+
+includes:
+	cd include && $(MAKE) install
 
 libraries:
 	cd lib && $(MAKE) install
@@ -39,9 +43,6 @@ clean::
 
 etcfiles::
 	cd etc && $(MAKE) install
-
-includes::
-	cd include && $(MAKE) install
 
 all install clean::
 	cd boot && $(MAKE) $@

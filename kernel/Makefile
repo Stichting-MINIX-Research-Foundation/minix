@@ -30,7 +30,7 @@ SYS =	system/system.a
 
 # What to make.
 kernel build: $(HEAD) $(OBJS) $(SYS) 
-	$(LD) $(LDFLAGS) -o $@ $(HEAD) $(OBJS) $(SYS) $(CLOCK) $(LIBS)
+	$(LD) $(LDFLAGS) -o kernel $(HEAD) $(OBJS) $(SYS) $(CLOCK) $(LIBS)
 	install -S 0 $@
 
 $(SYS):
@@ -164,7 +164,7 @@ system/system.a:	$a $h/devio.h $h/com.h
 system/system.a:	proc.h protect.h system.h sendmask.h 
 system/system.a:	$s/ptrace.h $s/sigcontext.h
 system/system.a:	$i/signal.h $i/unistd.h
-system/system.a:	system/alarms.c
+system/system.a:	system/clock.c
 system/system.a:	system/copying.c
 system/system.a:	system/devio.c
 system/system.a:	system/irqctl.c

@@ -97,7 +97,7 @@ irq_handler_t handler;
   if ((unsigned) irq >= NR_IRQ_VECTORS)
 	panic("invalid call to put_irq_handler", irq);
 
-  line = &irq_hooks[irq];
+  line = &irq_handlers[irq];
   id = 1;
   while (*line != NULL) {
 	if (hook == *line) return;	/* extra initialization */

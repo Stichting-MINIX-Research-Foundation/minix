@@ -363,6 +363,7 @@ tty_t *tp;
 {
 /* Initialize the keyboard driver. */
   static int count = 0;
+  int irq_hook_id;
   int i;
 
   tp->tty_devread = kb_read;	/* input function */
@@ -379,9 +380,9 @@ tty_t *tp;
       }
 
       /* Set interrupt handler and enable keyboard IRQ. */
-      if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, SELF, 0, 0, 0)) != OK)
+      if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &irq_hook_id)) != OK)
           server_panic("TTY", "Couldn't set keyboard IRQ policy", i);
-      if ((i=sys_irqenable(KEYBOARD_IRQ)) != OK)
+      if ((i=sys_irqenable(&irq_hook_id)) != OK)
           server_panic("TTY", "Couldn't enable keyboard IRQs", i);
   }
 }

@@ -21,7 +21,9 @@ PROGRAMS=	../kernel/kernel \
 
 usage:	
 	@echo " " >&2
-	@echo "Master Makefile to create new MINIX configuration. Root privileges required." >&2
+	@echo "Master Makefile to create new MINIX configuration." >& 2
+	@echo "Root privileges are required." >&2
+	@echo " " >&2
 	@echo "Usage:" >&2
 	@echo "	make libraries  # Make system libraries" >&2
 	@echo "	make programs   # Compile and install all programs" >&2

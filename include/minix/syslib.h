@@ -73,14 +73,14 @@ _PROTOTYPE(int sys_signalrm, (int proc_nr, clock_t *ticks)		);
 _PROTOTYPE(int sys_syncalrm, (int proc_nr, clock_t exp_time, int abs_time) );
 
 /* Shorthands for sys_irqctl() system call. */
-#define sys_irqdisable(irq_vec) \
-    sys_irqctl(IRQ_DISABLE, irq_vec, 0, 0, 0, 0, 0) 
-#define sys_irqenable(irq_vec) \
-    sys_irqctl(IRQ_ENABLE, irq_vec, 0, 0, 0, 0, 0) 
-#define sys_irqsetpolicy(irq_vec, policy, proc_nr, port, val_ptr, mask_val) \
-    sys_irqctl(IRQ_SETPOLICY, irq_vec, policy, proc_nr, port, val_ptr, mask_val)
+#define sys_irqdisable(hook_id) \
+    sys_irqctl(IRQ_DISABLE, 0, 0, hook_id) 
+#define sys_irqenable(hook_id) \
+    sys_irqctl(IRQ_ENABLE, 0, 0, hook_id) 
+#define sys_irqsetpolicy(irq_vec, policy, hook_id) \
+    sys_irqctl(IRQ_SETPOLICY, irq_vec, policy, hook_id)
 _PROTOTYPE ( int sys_irqctl, (int request, int irq_vec, int policy,
-    int proc_nr, long port, void *val_ptr, long mask_val) );
+    int *irq_hook_id) );
 
 /* Shorthands for sys_vircopy() and sys_physcopy() system calls. */
 #define sys_biosin(bios_vir, dst_vir, bytes) \
@@ -116,7 +116,7 @@ _PROTOTYPE(int sys_kmalloc, (size_t size, phys_bytes *phys_base)		);
 #define sys_getproc(dst,nr)	sys_getinfo(GET_PROC, dst, 0,0, nr)
 #define sys_getprocnr(dst,k,kl)	sys_getinfo(GET_PROCNR, dst, 0,k,kl)
 #define sys_getimage(dst)	sys_getinfo(GET_IMAGE, dst, 0,0,0)
-#define sys_getirqtab(dst)	sys_getinfo(GET_IRQTAB, dst, 0,0,0)
+#define sys_getirqhooks(dst)	sys_getinfo(GET_IRQHOOKS, dst, 0,0,0)
 #define sys_getmemchunks(dst)	sys_getinfo(GET_MEMCHUNKS, dst, 0,0,0)
 #define sys_getmonparams(v,vl)	sys_getinfo(GET_MONPARAMS, v,vl, 0,0)
 #define sys_getkenv(k,kl,v,vl)	sys_getinfo(GET_KENV, v,vl, k,kl)

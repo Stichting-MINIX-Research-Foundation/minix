@@ -100,9 +100,10 @@ PRIVATE void initialize(void)
   register struct proc *rp;
   int i;
 
-  /* Initialize IRQ table. */
-  for (i=0; i<NR_IRQ_VECTORS; i++)
-      irqtab[i].proc_nr = NONE;
+  /* Initialize IRQ handler hooks. Mark all hooks available. */
+  for (i=0; i<NR_IRQ_HOOKS; i++) {
+      irq_hooks[i].proc_nr = NONE;
+  }
 
   /* Initialize all alarm timers for all processes. */
   for (rp=BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
@@ -155,7 +156,7 @@ PRIVATE void initialize(void)
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
-  map(SYS_VIRCOPY, do_vircopy); 	/* use virtual addressing */
+  map(SYS_VIRCOPY, do_vircopy); 	/* use pure virtual addressing */
   map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
 
@@ -238,69 +239,8 @@ irq_hook_t *hook;
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
  */
-  irq_policy_t policy = irqtab[hook->irq].policy;
-  int proc_nr = irqtab[hook->irq].proc_nr;
-
-#if DEAD_CODE
-/* This function handles hardware interrupt in a generic way, according to 
- * the policy set with SYS_IRQCTL. This is rather complicated since different
- * devices require different actions. Options are (1) do nothing, (2a) read a
- * port and optionally (2b) strobe the port high or (2c) low with the value
- * read, or (3) write a value to a port. Finally, the policy may or may not
- * reenable IRQs. A notification is sent in all cases.
- */ 
-  long port = irqtab[hook->irq].port;
-  phys_bytes addr = irqtab[hook->irq].addr;
-  long mask_val = irqtab[hook->irq].mask_val;
-
-  /* Read a value from the given port. Possibly also strobe the port with the
-   * read value. Strobe it high by using the mask provided by the caller;
-   * strobe it low by writing back the value we read.
-   */
-  if (policy & (IRQ_READ_PORT|IRQ_STROBE|IRQ_ECHO_VAL)) {
-      switch(policy & (IRQ_BYTE|IRQ_WORD|IRQ_LONG)) {
-      case IRQ_BYTE: {				/* byte values */
-          u8_t byteval = inb(port);			
-          if (policy & IRQ_STROBE) outb(port, byteval | mask_val); 
-          if (policy & IRQ_ECHO_VAL) outb(port, byteval); 
-          if (policy & IRQ_READ_PORT) 
-          	phys_copy(vir2phys(&byteval), addr, sizeof(u8_t));
-          break;
-      } case IRQ_WORD: {			/* word values */
-          u16_t wordval = inw(port); 
-          if (policy & IRQ_STROBE) outw(port, wordval | mask_val); 
-          if (policy & IRQ_ECHO_VAL) outw(port, wordval); 
-          if (policy & IRQ_READ_PORT)		
-          	phys_copy(vir2phys(&wordval), addr, sizeof(u16_t));
-          break;
-      } case IRQ_LONG: { 				/* long values */
-          u32_t longval = inl(port); 
-          if (policy & IRQ_STROBE) outl(port, longval | mask_val); 
-          if (policy & IRQ_ECHO_VAL) outl(port, longval); 
-          if (policy & IRQ_READ_PORT)	
-          	phys_copy(vir2phys(&longval), addr, sizeof(u32_t));
-          break;
-      } default: /* do nothing */ ;		/* wrong type flags */
-      }
-  }
-  /* Write a value to some port. This is straightforward. Note that both
-   * reading and writing is not possible, hence 'else if' instead of 'if'.
-   */
-  else if (policy & (IRQ_WRITE_PORT)) {
-      switch(policy & (IRQ_BYTE|IRQ_WORD|IRQ_LONG)) {
-      case IRQ_BYTE: outb(port,  (u8_t) mask_val); break;
-      case IRQ_WORD: outw(port, (u16_t) mask_val); break;
-      case IRQ_LONG: outl(port, (u32_t) mask_val); break;
-      default: /* do nothing */ ;		/* wrong type flags */
-      }
-  }
-#endif /* DEAD_CODE */
-
-  /* Almost done, send a HARD_INT notification to allow further processing 
-   * and possibly reenable interrupts - this depends on the policy given.
-   */
-  notify(proc_nr, HARD_INT);
-  return(policy & IRQ_REENABLE);
+  notify(hook->proc_nr, HARD_INT);
+  return(hook->policy & IRQ_REENABLE);
 }
 
 
@@ -436,33 +376,6 @@ vir_bytes bytes;		/* # of bytes required in segment  */
 }
 
 
-#if ENABLE_MESSAGE_STATS
-
-/*===========================================================================*
- *				do_mstats				     *
- *===========================================================================*/
-PRIVATE int do_mstats(m_ptr)
-message *m_ptr;			/* pointer to request message */
-{
-	int r = 0;
-
-	if(m_ptr->m1_i1 > 0) {
-		struct message_statentry *dest;
-		struct proc *p;
-		p = proc_addr(m_ptr->m1_i3);
-		dest = proc_vir2phys(p, m_ptr->m1_p1);
-		r = mstat_copy(dest, m_ptr->m1_i1);
-	}
-
-	if(m_ptr->m1_i2) {
-		mstat_reset();
-	}
-
-	return r;
-}
-
-#endif /* ENABLE_MESSAGE_STATS */
-
 /*===========================================================================*
  *				umap_remote				     *
  *===========================================================================*/
@@ -548,28 +461,5 @@ vir_bytes bytes;		/* # of bytes to copy  */
   phys_copy(phys_addr[_SRC_], phys_addr[_DST_], (phys_bytes) bytes);
   return(OK);
 }
-
-/*==========================================================================*
- *				vir_copy					    *
- *==========================================================================*/
-PUBLIC int vir_copy(src_proc, src_vir, dst_proc, dst_vir, bytes)
-int src_proc;			/* source process */
-vir_bytes src_vir;		/* source virtual address within D seg */
-int dst_proc;			/* destination process */
-vir_bytes dst_vir;		/* destination virtual address within D seg */
-vir_bytes bytes;		/* # of bytes to copy  */
-{
-/* Copy bytes from one process to another.  Meant for the easy cases, where
- * speed isn't required.  (One can normally do without one of the umaps.)
- */
-  phys_bytes src_phys, dst_phys;
-
-  src_phys = umap_local(proc_addr(src_proc), D, src_vir, bytes);
-  dst_phys = umap_local(proc_addr(dst_proc), D, dst_vir, bytes);
-  if (src_phys == 0 || dst_phys == 0) return(EFAULT);
-  phys_copy(src_phys, dst_phys, (phys_bytes) bytes);
-  return(OK);
-}
-
 
 

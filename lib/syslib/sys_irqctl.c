@@ -3,14 +3,11 @@
 /*===========================================================================*
  *                               sys_irqctl				     *
  *===========================================================================*/
-PUBLIC int sys_irqctl(req, irq_vec, policy, proc_nr, port, val_ptr, mask_val)
+PUBLIC int sys_irqctl(req, irq_vec, policy, hook_id)
 int req;				/* IRQ control request */
 int irq_vec;				/* IRQ vector to control */
 int policy;				/* bit mask for policy flags */
-int proc_nr;				/* process number to notify */
-long port;				/* port to read or write */
-void *val_ptr;				/* address store value read */
-long mask_val;				/* strobe mask or value to write */
+int *hook_id;				/* ID of IRQ hook at kernel */
 {
     message m_irq;
     int s;
@@ -19,12 +16,11 @@ long mask_val;				/* strobe mask or value to write */
     m_irq.IRQ_REQUEST = req;
     m_irq.IRQ_VECTOR = irq_vec;
     m_irq.IRQ_POLICY = policy;
-    m_irq.IRQ_PROC_NR = proc_nr;
-    m_irq.IRQ_PORT = port;
-    m_irq.IRQ_VIR_ADDR = (vir_bytes) val_ptr;
-    m_irq.IRQ_MASK_VAL = mask_val;
+    m_irq.IRQ_HOOK_ID = *hook_id;
     
-    return _taskcall(SYSTASK, SYS_IRQCTL, &m_irq);
+    s = _taskcall(SYSTASK, SYS_IRQCTL, &m_irq);
+    if (req == IRQ_SETPOLICY) *hook_id = m_irq.IRQ_HOOK_ID;
+    return(s);
 }
 
 

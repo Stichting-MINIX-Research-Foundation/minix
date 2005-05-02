@@ -27,8 +27,10 @@
 #include "proc.h"
 #include "sendmask.h"
 
-/* Prototype declarations for PRIVATE function. */
-FORWARD _PROTOTYPE( void announce, (void));	/* display user message */
+/* Prototype declarations for PRIVATE functions. */
+FORWARD _PROTOTYPE( void announce, (void));	
+FORWARD _PROTOTYPE( void shutdown, (struct timer *tp));
+
 #define STOP_TICKS	(5*HZ)			/* time allowed to stop */
 
 /*===========================================================================*
@@ -244,6 +246,7 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
       shutdown(&shutdown_timer);		/* TTY isn't scheduled */
   } else {
       kprintf("\nNotifying system services about MINIX shutdown.\n", NO_ARG); 
+      kprintf("Known bug: hitting a key before done will hang the monitor.\n", NO_ARG); 
       stop_sequence(&shutdown_timer);
   }
 }
@@ -304,14 +307,13 @@ timer_t *tp;
 /*==========================================================================*
  *				   shutdown 				    *
  *==========================================================================*/
-PUBLIC void shutdown(tp)
+PRIVATE void shutdown(tp)
 timer_t *tp;
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX. How to shutdown is in the argument: RBT_REBOOT, RBT_HALT, 
  * RBT_RESET. 
  */
-  int quiet, code;
   static u16_t magic = STOP_MEM_CHECK;
   int how = tmr_arg(tp)->ta_int;
 

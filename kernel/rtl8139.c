@@ -49,6 +49,8 @@
 #include "kernel.h"
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <stddef.h>
 #include <minix/com.h>
 #include <minix/keymap.h>

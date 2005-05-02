@@ -224,9 +224,9 @@ csinit:
 	outb	INT_CTLMASK		/* disable the irq		  */;\
 	movb	al, ENABLE						    ;\
 	outb	INT_CTL			/* reenable master 8259		  */;\
-	push	(_irq_hooks+4*irq)	/* irq_hooks[irq]		  */;\
+	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
 	sti				/* enable interrupts		  */;\
-	call	_intr_handle		/* intr_handle(irq_hooks[irq])	  */;\
+	call	_intr_handle		/* intr_handle(irq_handlers[irq])	  */;\
 	cli				/* disable interrupts		  */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
@@ -280,10 +280,10 @@ _hwint07:		! Interrupt routine for irq 7 (printer)
 	outb	INT2_CTLMASK		/* disable the irq		  */;\
 	movb	al, ENABLE						    ;\
 	outb	INT_CTL			/* reenable master 8259		  */;\
-	push	(_irq_hooks+4*irq)	/* irq_hooks[irq]		  */;\
+	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
 	outb	INT2_CTL		/* reenable slave 8259		  */;\
 	sti				/* enable interrupts		  */;\
-	call	_intr_handle		/* intr_handle(irq_hooks[irq])	  */;\
+	call	_intr_handle		/* intr_handle(irq_handlers[irq])	  */;\
 	cli				/* disable interrupts		  */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\

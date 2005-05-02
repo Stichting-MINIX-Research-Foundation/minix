@@ -51,14 +51,12 @@ typedef struct tty {
   vir_bytes tty_in_vir;		/* virtual address where data is to go */
   int tty_inleft;		/* how many chars are still needed */
   int tty_incum;		/* # chars input so far */
-  int tty_instatus;		/* status of last sys_vircopy() action */
   char tty_outrepcode;		/* reply code, TASK_REPLY or REVIVE */
   char tty_outcaller;		/* process that made the call (usually FS) */
   char tty_outproc;		/* process that wants to write to tty */
   vir_bytes tty_out_vir;	/* virtual address where data comes from */
   int tty_outleft;		/* # chars yet to be output */
   int tty_outcum;		/* # chars output so far */
-  int tty_outstatus;		/* status of last sys_vircopy() action */
   char tty_iocaller;		/* process that made the call (usually FS) */
   char tty_ioproc;		/* process that wants to do an ioctl */
   int tty_ioreq;		/* ioctl request code */

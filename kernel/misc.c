@@ -2,10 +2,6 @@
  *   panic	    abort MINIX due to a fatal error
  *   bad_assertion  for debugging
  *   bad_compare    for debugging
- * 
- * Changes:
- *   Oct 04, 2004   moved panic() to this file  (Jorrit N. Herder)
- *   Sep 30, 2004   removed mem_init(), env_parse to lib  (Jorrit N. Herder)
  */
 
 #include "kernel.h"

@@ -168,8 +168,8 @@ PRIVATE void monparams_dmp()
 PRIVATE void irqtab_dmp()
 {
   int i,j,r;
-  struct irqtab irqtab[NR_IRQ_VECTORS];
-  struct irqtab *e;	/* irq tab entry */
+  struct irq_hook irqhooks[NR_IRQ_HOOKS];
+  struct irq_hook *e;	/* irq tab entry */
   int p;		/* policy */
   char *irq[] = {
   	"clock",	/* 00 */
@@ -190,12 +190,13 @@ PRIVATE void irqtab_dmp()
   	"at_wini_1",	/* 15 */
   };
 
-  if ((r = sys_getirqtab(irqtab)) != OK) {
-      report("warning: couldn't get copy of irqtab", r);
+  if ((r = sys_getirqhooks(irqhooks)) != OK) {
+      report("warning: couldn't get copy of irq hooks", r);
       return;
   }
 
   printf("IRQ table dump showing hardware interrupt policies for each IRQ vector.\n");
+#if 0
   printf("-irq name/nr- -pnr- --port-- msk_val --addr-- -type-rdp-str-ech-wrp-ena- \n");
   for (i=0; i<NR_IRQ_VECTORS; i++) {
   	e = &irqtab[i];
@@ -203,16 +204,13 @@ PRIVATE void irqtab_dmp()
   	printf("%9s %2d ", irq[i], i); 
   	if (e->proc_nr!=NONE)	printf("%4d  ", e->proc_nr); 
   	else 		 	printf("      ");
-  	printf(" 0x%06x 0x%05x 0x%06x  %c%c%c   %d   %d   %d   %d   %d\n",
+  	printf(" 0x%06x 0x%05x 0x%06x  %c%c%c   %d\n",
   		e->port, e->mask_val, e->addr, 
   		(p&IRQ_BYTE)?'B':'-', (p&IRQ_WORD)?'W':'-', (p&IRQ_LONG)?'L':'-',
-  		((p&IRQ_READ_PORT) != 0),
-  		((p&IRQ_STROBE) != 0),
-  		((p&IRQ_ECHO_VAL) != 0),
-  		((p&IRQ_WRITE_PORT) != 0),
   		((p&IRQ_REENABLE) != 0)
   	);
   }
+#endif
   printf("\n");
 }
 

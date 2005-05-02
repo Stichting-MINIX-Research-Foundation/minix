@@ -64,9 +64,6 @@ struct proc {
   unsigned p_pendcount;		/* count of pending and unfinished signals */
 
   char p_name[PROC_NAME_LEN];	/* name of the process, including \0 */
-#if ENABLE_MESSAGE_STATS
-  int msg_unreplied[NR_TASKS+NR_PROCS];
-#endif
 };
 
 /* Guard word for task stacks. */

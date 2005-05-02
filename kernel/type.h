@@ -2,8 +2,6 @@
 #define TYPE_H
 
 typedef _PROTOTYPE( void task_t, (void) );
-typedef _PROTOTYPE( int (*rdwt_t), (message *m_ptr) );
-typedef _PROTOTYPE( void (*watchdog_t), (void) );
 
 /* Type accepted by kprintf(). This is a hack to accept both integers and
  * char pointers in the same argument. 
@@ -26,11 +24,6 @@ struct system_image {
 struct memory {
   phys_clicks base;			/* start address of chunk */
   phys_clicks size;			/* size of memory chunk */
-};
-
-struct bios {
-  phys_bytes bios_addr;			/* physical address at BIOS */
-  size_t bios_length;			/* size of value */
 };
 
 
@@ -79,29 +72,18 @@ struct segdesc_s {		/* segment descriptor for protected mode */
   u8_t base_high;
 };
 
+typedef unsigned long irq_policy_t;	
+
 typedef struct irq_hook {
-  struct irq_hook *next;
-  int (*handler)(struct irq_hook *);
-  int irq;
-  int id;
+  struct irq_hook *next;		/* next hook in chain */
+  int (*handler)(struct irq_hook *);	/* interrupt handler */
+  int irq;				/* IRQ vector number */ 
+  int id;				/* id of this hook */
+  int proc_nr;				/* NONE if not in use */
+  irq_policy_t policy;			/* bit mask for policy */
 } irq_hook_t;
 
 typedef int (*irq_handler_t)(struct irq_hook *);
-
-/* The IRQ table is used to handle harware interrupts based on a policy set
- * by a device driver. The policy is stored with a SYS_IRQCTL system call and
- * used by a generic function to handle hardware interrupts in an appropriate
- * way for the device. 
- */
-typedef unsigned long irq_policy_t;	
-struct irqtab {
-  irq_hook_t hook;	/* its irq hook */
-  irq_policy_t policy;	/* bit mask for the policy */
-  int proc_nr;		/* process number to be notified */
-  long port;		/* port to be read or written */
-  phys_bytes addr;	/* absolute address to store or get value */
-  long mask_val;	/* mask for strobing or value to be written */
-};
 
 #endif /* (CHIP == INTEL) */
 

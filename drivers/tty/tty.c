@@ -277,6 +277,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 {
 /* A process wants to read from a terminal. */
   int r, status;
+  phys_bytes phys_addr;
 
   /* Check if there is already a process hanging in a read, check if the
    * parameters are correct, do I/O.
@@ -286,11 +287,10 @@ register message *m_ptr;	/* pointer to message sent to the task */
   } else
   if (m_ptr->COUNT <= 0) {
 	r = EINVAL;
-#if DEAD_CODE	/* to be replaced by check on tp->tty_instatus !!! */
   } else
-  if (numap_local(m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS, m_ptr->COUNT) == 0) {
+  if (sys_umap(m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS, m_ptr->COUNT,
+		&phys_addr) != OK) {
 	r = EFAULT;
-#endif
   } else {
 	/* Copy information from the message to the tty struct. */
 	tp->tty_inrepcode = TASK_REPLY;
@@ -319,21 +319,15 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	}
 
 	/* Anything waiting in the input buffer? Clear it out... */
-	tp->tty_instatus = OK;		/* start with OK, check later */
 	in_transfer(tp);
 	/* ...then go back for more. */
-	if (tp->tty_instatus == OK)
-		handle_events(tp);
+	handle_events(tp);
 	if (tp->tty_inleft == 0) 
 		return;			/* already done */
 
 	/* There were no bytes in the input queue available, so either suspend
 	 * the caller or break off the read if nonblocking.
 	 */
-	if (tp->tty_instatus != OK) {			/* error occurred */
-		r = tp->tty_instatus;
-		tp->tty_inleft = tp->tty_incum = 0;	/* cancel the read */
-	}
 	if (m_ptr->TTY_FLAGS & O_NONBLOCK) {
 		r = EAGAIN;				/* cancel the read */
 		tp->tty_inleft = tp->tty_incum = 0;
@@ -355,6 +349,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 {
 /* A process wants to write on a terminal. */
   int r;
+  phys_bytes phys_addr;
 
   /* Check if there is already a process hanging in a write, check if the
    * parameters are correct, do I/O.
@@ -364,11 +359,10 @@ register message *m_ptr;	/* pointer to message sent to the task */
   } else
   if (m_ptr->COUNT <= 0) {
 	r = EINVAL;
-#if DEAD_CODE	/* to be replaced by check on tp->tty_outstatus (!!!) */
   } else
-  if (numap_local(m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS, m_ptr->COUNT) == 0) {
+  if (sys_umap(m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS, m_ptr->COUNT,
+		&phys_addr) != OK) {
 	r = EFAULT;
-#endif
   } else {
 	/* Copy message parameters to the tty structure. */
 	tp->tty_outrepcode = TASK_REPLY;
@@ -378,18 +372,13 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	tp->tty_outleft = m_ptr->COUNT;
 
 	/* Try to write. */
-	tp->tty_outstatus = OK;		/* start with OK, check later */
 	handle_events(tp);
 	if (tp->tty_outleft == 0) return;		/* already done */
 
 	/* None or not all the bytes could be written, so either suspend the
 	 * caller or break off the write if nonblocking.
 	 */
-	if (tp->tty_outstatus != OK) {			/* error occurred */
-		r = tp->tty_outstatus;
-		tp->tty_outleft = tp->tty_outcum = 0;	/* cancel the write */
-	}
-	else if (m_ptr->TTY_FLAGS & O_NONBLOCK) {	/* cancel the write */
+	if (m_ptr->TTY_FLAGS & O_NONBLOCK) {		/* cancel the write */
 		r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 		tp->tty_outleft = tp->tty_outcum = 0;
 	} else {
