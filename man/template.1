@@ -1,0 +1,46 @@
+.TH TEMPLATE 1
+.SH NAME
+template, blueprint \- a blueprint for making manual pages
+.SH SYNOPSIS
+.B template
+.RB [ \-az ]
+.RI [ arguments " ...]"
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Template
+shows what a manual page should look like.  Options for instance:
+.SH OPTIONS
+.TP
+.B \-a
+Use boldface for characters that have to be typed as is.
+.TP
+.B \-z
+Italics for variable
+.IR arguments .
+.SH ENVIRONMENT
+.TP 15n
+.B MANPATH
+The path to knowledge.
+.SH FILES
+.TP 25n
+.B /usr/man/template.1
+This file.
+.SH "SEE ALSO"
+.BR man (7).
+.SH DIAGNOSTICS
+man: No manual on template.
+.SH NOTES
+Use at your own risk.
+.SH BUGS
+A lot.  The
+.BR whatis (5)
+database is usually generated automatically on most
+systems.  This fails if the "NAME" section has more n/troff fluff than just
+an "\e" before the '\-', or is more than one line.  Apply the KISS
+principle, try to use a minimum of smart macros, match your .RS and .RE's,
+etc.
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>
