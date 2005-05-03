@@ -52,7 +52,6 @@ start)
 
     # Are we booting from CD?
     bootcd="`/bin/sysenv bootcd`"
-    ramname="`/bin/sysenv ramname`"
 
     # If booting from CD, /usr has to be mounted readonly.
     # Also, $usr won't be specified correctly in the
@@ -60,8 +59,9 @@ start)
     # where it is.
     if [ "$bootcd" = 1 ]
     then	
+    		ramname="`/bin/sysenv ramimagedev_n`"
     		usr_roflag="-r"
-    		usr="/dev/${ramname}p2"
+    		usr="/dev/c0`echo $ramname | sed 's/.*\(d.\).*/\1/'`p2"
     		echo "Setting /usr to mount readonly from cd: $ramname -> $usr"
     fi
  

@@ -2,6 +2,11 @@
 #
 # daily - daily cleanup of the system.
 
+# Doesn't make sense when running from CD
+if [ -f /CD ]
+then	exit
+fi
+
 case "$#:$1" in
 1:cron|1:boot)
     caller=$1
@@ -20,7 +25,7 @@ then
     set -- `ls -lT $timestamp`
     test "$6 $7 $9" = "$(date '+%b %d %Y')" && exit
 fi
->$timestamp 2>/dev/null # Makes for errors when booting from CD
+>$timestamp
 
 # Remove three day old files from various tmp dirs.
 cleantmp -3 /tmp /usr/tmp /usr/preserve /usr/spool/lpd /usr/spool/at/past

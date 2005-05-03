@@ -12,10 +12,12 @@ clean::
 install::
 	@echo "Installing /etc and /usr/etc.."
 	mkdir -p $(ETC)
-	for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then echo $$f exists; else cp $$f $(ETC); chmod 755 $(ETC)/$$f; fi; done
-	for f in $(FILES2); do if [ -f $(ETC)/$$f ]; then echo $$f exists; else cp $$f $(ETC); chmod 600 $(ETC)/$$f; fi; done
+	@for f in $(FILES1); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 755 $(ETC)/$$f; fi; done
+	@for f in $(FILES2); do if [ -f $(ETC)/$$f ]; then :; else cp $$f $(ETC)/$$f; chmod 600 $(ETC)/$$f; fi; done
 	@echo "Making hierarchy.."
-	./mtree.sh mtree/minix.tree
-	for f in $(FILES3); do if [ -f $(USRETC)/$$f ]; then echo $$f exists; else cp usr/$$f $(USRETC); chmod 755 $(USRETC)/$$f; fi; done
-	cd /dev && /usr/src/commands/scripts/MAKEDEV.sh std
-	(cd ast && tar cf - .* ) | (cd /usr/ast && tar xf - )
+	sh mtree.sh mtree/minix.tree
+	@for f in $(FILES3); do if [ -f $(USRETC)/$$f ]; then :; else cp usr/$$f $(USRETC); chmod 755 $(USRETC)/$$f; fi; done
+	@echo "Making devices.."
+	cd /dev && sh /usr/src/commands/scripts/MAKEDEV.sh std 2>/dev/null
+	@echo "Making user homedirs.."
+	for u in bin ast; do (cd ast && tar cf - .[a-z]* ) | (cd ~$u && tar xf - ); done
