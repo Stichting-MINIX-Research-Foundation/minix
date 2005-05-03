@@ -19,4 +19,5 @@ all install clean:
 	cd ./at_wini && $(MAKE) $@
 	cd ./floppy && $(MAKE) $@
 	cd ./printer && $(MAKE) $@
+	cd ./libdriver && $(MAKE) $@
 
