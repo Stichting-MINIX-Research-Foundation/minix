@@ -959,6 +959,7 @@ install:	\
 	/usr/bin/sync \
 	/usr/bin/synctree \
 	/usr/bin/sysenv \
+	/bin/sysenv \
 	/usr/bin/tail \
 	/usr/bin/tar \
 	/usr/bin/tcpd \
@@ -1407,6 +1408,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/synctree:	synctree
+	install -cs -o bin $? $@
+
+/bin/sysenv:	sysenv
 	install -cs -o bin $? $@
 
 /usr/bin/sysenv:	sysenv

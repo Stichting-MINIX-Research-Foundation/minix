@@ -223,7 +223,7 @@ struct pstat *bufp;
   if (bufp->ps_state != S_STATE) return task;
 
   blkstr = "?";
-  if (bufp->ps_recv == MM_PROC_NR) {
+  if (bufp->ps_recv == PM_PROC_NR) {
 	if (bufp->ps_mflags & PAUSED)
 		blkstr = "pause";
 	else if (bufp->ps_mflags & WAITING)
@@ -318,7 +318,7 @@ char *argv[];
 	err("Can't get kernel proc table from /dev/kmem");
 
   /* Get mm/fs process tables */
-  if (addrread(memfd, ps_proc[nr_tasks + MM_PROC_NR].p_memmap[D].mem_phys,
+  if (addrread(memfd, ps_proc[nr_tasks + PM_PROC_NR].p_memmap[D].mem_phys,
 		psinfo.mproc, (char *) ps_mproc,
 		nr_procs * sizeof(ps_mproc[0]))
 			!= nr_procs * sizeof(ps_mproc[0]))

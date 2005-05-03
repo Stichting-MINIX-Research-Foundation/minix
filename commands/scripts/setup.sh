@@ -261,7 +261,7 @@ else
 fi
 
 echo "
-Migrating from floppy to disk...
+Migrating to disk...
 "
 
 mkfs /dev/$usr
@@ -313,17 +313,17 @@ Copying $fdroot to /dev/$root
 
 mkfs -B 1024 /dev/$root || exit
 mount /dev/$root /mnt || exit
-if [ $thisroot = /dev/ram ]
+if [ -d /boot ]
 then
+    # Running from the floppy itself (or installation CD).
+    cpdir -vx / /mnt || exit
+    chmod 555 /mnt/usr
+else
     # Running from the RAM disk, root image is on a floppy.
     mount $fdroot /root || exit
     cpdir -v /root /mnt || exit
     umount $fdroot || exit
     cpdir -f /dev /mnt/dev		# Copy any extra MAKEDEV'd devices
-else
-    # Running from the floppy itself.
-    cpdir -vx / /mnt || exit
-    chmod 555 /mnt/usr
 fi
 
 					# Change /etc/fstab.
@@ -333,10 +333,6 @@ echo >/mnt/etc/fstab "\
 root=/dev/$root
 ${swap:+swap=/dev/$swap}
 usr=/dev/$usr"
-
-					# How to install further?
-echo >/mnt/etc/issue "\
-Login as root and run 'setup /usr' to install floppy sets."
 
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
@@ -359,10 +355,12 @@ echo "Second level file system block cache set to $cache kb."
 if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
-installboot -d /dev/$root /usr/mdec/bootblock /boot >/dev/null || exit
+installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
 edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; save" || exit
+sync
 
 echo "
-Please insert the installation ROOT floppy and type 'halt' to exit Minix.
+Please type 'halt' to exit Minix.
 You can type 'boot $primary' to try the newly installed Minix system.  See
 \"TESTING\" in the usage manual."
+
