@@ -499,7 +499,9 @@ PRIVATE int w_specify()
   struct wini *wn = w_wn;
   struct command cmd;
 
-  if ((wn->state & DEAF) && w_reset() != OK) return(ERR);
+  if ((wn->state & DEAF) && w_reset() != OK) {
+  	return(ERR);
+  }
 
   if (!(wn->state & ATAPI)) {
 	/* Specify parameters: precompensation, number of heads and sectors. */
@@ -675,7 +677,7 @@ struct command *cmd;		/* Command block */
   	server_panic(w_name(),"Couldn't write register to select drive",s);
 
   if (!w_waitfor(STATUS_BSY, 0)) {
-	printf("%s: drive not ready\n", w_name());
+	printf("%s: com_out: drive not ready\n", w_name());
 	return(ERR);
   }
 
@@ -884,6 +886,7 @@ int value;			/* required status */
  */
   static int timeout_flag = 0;		/* must be static, not cancelled */		
   int s;
+  timeout_flag = 0;
   sys_flagalrm(TIMEOUT_TICKS, &timeout_flag);
   do {
 	if ((s=sys_inb(w_wn->base + REG_STATUS, &w_status)) != OK)
@@ -1088,7 +1091,7 @@ unsigned cnt;
   	server_panic("AT_WINI","Couldn't select master/ slave drive",s);
 
   if (!w_waitfor(STATUS_BSY | STATUS_DRQ, 0)) {
-	printf("%s: drive not ready\n", w_name());
+	printf("%s: atapi_sendpacket: drive not ready\n", w_name());
 	return(ERR);
   }
 
