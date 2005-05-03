@@ -49,6 +49,13 @@ int fsok= -1;		/* File system state.  Initially unknown. */
 static int block_size;
 
 #if BIOS
+
+/* this data is reserved for BIOS int 0x13 to put the 'specification packet'
+ * in. It has a structure of course, but we don't define a struct because
+ * of compiler padding. We fiddle out the bytes ourselves later.
+ */
+unsigned char boot_spec[24];
+
 char *bios_err(int err)
 /* Translate BIOS error code to a readable string.  (This is a rare trait
  * known as error checking and reporting.  Take a good look at it, you won't
@@ -491,9 +498,11 @@ void initialize(void)
 #if !DOS
 	u32_t dma64k= (memend - 1) & ~0x0FFFFL;
 
+
 	/* Check if data segment crosses a 64K boundary. */
 	if (newaddr + (daddr - caddr) < dma64k) newaddr= dma64k - runsize;
 #endif
+
 	/* Set the new caddr for relocate. */
 	caddr= newaddr;
 
@@ -1828,18 +1837,105 @@ void monitor(void)
 
 #if BIOS
 
+unsigned char cdspec[25];
+void bootcdinfo(u32_t, int *, int drive);
+
+void fixcdroot(void)
+{
+	int i, d;
+	int ret;
+	char name[20];
+	u32_t addr;
+	char *bootcd;
+	/* Booting from CD? If so, add the cdroot in.. */
+	int driveno, termno;
+	char *drive, *term, *rid;
+
+	if((rid = b_value("ramimagedev"))) {
+		static int f = 0;
+		int i, j;
+		char ram[15];
+		ram[0] = 'c';
+		ram[1] = '0';
+		if(rid[0] == 'c' || rid[0] == 'C') j = 2;
+		else j = 0;
+		f++;
+		for(i = 2; i < sizeof(ram)-1; i++, j++) {
+			ram[i] = rid[j];
+			if(ram[i] == 'p')	ram[i] = '\0';
+			if(ram[i] == '\0')	break;
+		}
+		ram[sizeof(ram)-1] = '\0';
+
+		b_setvar(E_SPECIAL|E_VAR, "ramname", ram);
+	}
+
+	/* the rest of this code is.. not finished */
+	return;
+
+	if(!(bootcd = b_value("bootcd")) || bootcd[0] != '1') return;
+	if(!(drive = b_value("drive"))) return;
+	if(!(term = b_value("term"))) termno = 0;
+	else termno = term[0] - '0';
+	driveno = 100 * (drive[0] - '0') + 10 * (drive[1] - '0') + drive[2] - '0';
+
+	/* cdroot has to be derived from what the BIOS
+	 * says the actual CD was.
+	 */
+	memset(cdspec, 0, sizeof(cdspec));
+
+	addr = mon2abs(cdspec);
+	ret = 0x38;
+	printf("bootcdinfo (%lx, drive %d, term %d)..\n", addr, driveno, termno);
+	bootcdinfo(addr, &ret, (termno << 8) | driveno);
+
+	i = 0;
+	printf("drive %02x: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+		driveno, 
+		cdspec[i],   cdspec[i+1], cdspec[i+2], cdspec[i+3],
+		cdspec[i+4], cdspec[i+5], cdspec[i+6], cdspec[i+7],
+		cdspec[i+8], cdspec[i+9], cdspec[i+10], cdspec[i+11]);
+
+	/* CD's are faked to be booting from partition 1
+	 * (more to the point, that is their appropriate
+	 * root partition to mount).
+	 */
+	strcpy(bootdev.name, "d0p1");
+
+	/* boot_spec[3] is the controller number (0 or 1),
+	 * boot_spec[8] is the device specification. The
+	 * below only works for IDE CD drives. boot_spec is
+	 * filled in by BIOS after an int 0x13 call in boothead.s.
+	 */
+	bootdev.name[1] += boot_spec[3] * 2 + boot_spec[8];
+	bootdev.primary = 1;	/* p1 */
+	b_setvar(E_SPECIAL|E_VAR, "cdroot", bootdev.name); /* dXp1 */
+	strcpy(name, "c0");
+	strcat(name, bootdev.name);
+	name[4] = '\0';
+	b_setvar(E_SPECIAL|E_VAR, "cddrive", name);	/* c0dX */
+
+	return;
+}
+
 void boot(void)
 /* Load Minix and start it, among other things. */
 {
+
 	/* Initialize tables. */
 	initialize();
 
 	/* Get environment variables from the parameter sector. */
 	get_parameters();
 
+	fixcdroot();
+
 	while (1) {
 		/* While there are commands, execute them! */
+
 		while (cmds != nil) execute();
+
+		fixcdroot();
 
 		/* The "monitor" is just a "read one command" thing. */
 		monitor();

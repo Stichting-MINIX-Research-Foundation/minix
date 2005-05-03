@@ -11,7 +11,7 @@ LD86	= $(CC86) -.o
 BIN	= /usr/bin
 MDEC	= /usr/mdec
 
-all:	bootblock boot edparams masterboot jumpboot installboot addaout
+all:	bootblock boot edparams masterboot jumpboot installboot addaout bootcd
 dos:	boot.com mkfile.com
 
 bootblock:	bootblock.s
@@ -39,6 +39,11 @@ boot:	boothead.s boot.o bootimage.o rawfs86.o
 	$(LD86) -o $@ \
 		boothead.s boot.o bootimage.o rawfs86.o $(LIBS)
 	install -S 16kb boot
+
+bootcd:	bootcdhead.s boot.o bootimage.o rawfs86.o
+	$(LD86) -o $@ \
+		boothead.s boot.o bootimage.o rawfs86.o $(LIBS)
+	install -S 16kb bootcd
 
 edparams.o:	boot.c
 	ln -f boot.c edparams.c
@@ -112,5 +117,5 @@ $(BIN)/edparams:	edparams
 
 clean:
 	rm -f *.bak *.o
-	rm -f bootblock addaout installboot boot masterboot jumpboot edparams
+	rm -f bootblock addaout installboot boot masterboot jumpboot edparams bootcd
 	rm -f dosboot boot.com mkfile mkfile.com
