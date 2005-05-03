@@ -250,11 +250,6 @@ utility.o:	file.h
 utility.o:	fproc.h
 utility.o:	inode.h
 utility.o:	param.h
-utility.o:	symtab.h
-
-
-symtab.h: 
-	sh makenmtab.sh $@
 
 
 write.o:	$a

@@ -10,12 +10,6 @@
  *   conv4:	  do byte swapping on a 32-bit long
  */
 
-#define STACKINFO 1
-
-#if STACKINFO
-#include "symtab.h"
-#endif
-
 #include "fs.h"
 #include <minix/com.h>
 #include <unistd.h>
@@ -24,40 +18,6 @@
 #include "fproc.h"
 #include "inode.h"
 #include "param.h"
-
-#if STACKINFO
-
-struct i386_frame {
-	struct i386_frame *next;
-	int retaddr;
-	int arg0;
-};
-
-PUBLIC void
-show_stack(void)
-{
-	unsigned long *s;
-	int i, t, p = 0;
-	s = (unsigned long *) &i; 
-	for(i = 0; i < 120; i++, s++) {
-		char *symname = NULL;
-		if(!*s) continue;
-#define ELEMENTS (sizeof(fs_sym_entries)/sizeof(struct fs_sym_entry))
-		for(t = 0; t < ELEMENTS-1; t++) {
-			if(*s >= fs_sym_entries[t].symoffset &&
-			   *s <  fs_sym_entries[t+1].symoffset) {
-			   	symname = fs_sym_entries[t].symname;
-			   	break;
-			}
-		}
-		if(!symname) continue;
-		if(!(p%7)) printf("\n");
-		p++;
-		printf("%-9s ", symname);
-	}
-	printf("\n");
-}
-#endif
 
 PRIVATE int panicking;		/* inhibits recursive panics during sync */
 
@@ -147,10 +107,6 @@ int num;			/* number to go with format string */
 
   if (panicking) return;	/* do not panic during a sync */
   panicking = TRUE;		/* prevent another panic during the sync */
-   
-#if STACKINFO
-  show_stack();
-#endif
 
   printf("File system panic: %s ", format);
   if (num != NO_NUM) printf("%d",num); 

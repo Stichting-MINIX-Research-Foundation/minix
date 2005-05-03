@@ -774,13 +774,17 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 	if (!broadcast_dst(ip_port, ip_hdr->ih_dst))
 	{
 #if !CRAMPED
-		printf(
-		"ip[%d]: broadcast packet for ip-nonbroadcast addr, src=",
+		/* this message isn't very useful, but is quite annoying on
+		 * the console
+		 */
+		/*
+		printf("ip[%d]: broadcast packet for ip-nonbroadcast addr, src=",
 			ip_port->ip_port);
 		writeIpAddr(ip_hdr->ih_src);
 		printf(" dst=");
 		writeIpAddr(ip_hdr->ih_dst);
 		printf("\n");
+		*/
 #endif
 		bf_afree(pack);
 		return;

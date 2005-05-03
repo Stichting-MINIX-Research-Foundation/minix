@@ -41,7 +41,7 @@ install:	/usr/sbin/servers/$(SERVER)
 	install -o root -cs $? $@
 
 clean:
-	rm -f $(SERVER) *.a *.o *.bak .all
+	rm -f $(SERVER) *.a *.o */*.o */*.a *.bak .all
 
 # depencencies
 .all:	$h/com.h
