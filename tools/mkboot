@@ -61,7 +61,7 @@ hdboot)
 		    "exec mv $rootdir/M $rootdir/boot/image/`uname -r`.`uname -v`"
 	fi
 
-	./tell_config OS_RELEASE . OS_VERSION >/tmp/mkb.$$
+	sh tell_config OS_RELEASE . OS_VERSION >/tmp/mkb.$$
 	version=`sed 's/[" 	]//g;/^$/d' </tmp/mkb.$$`
 
 	revision=`cat revision 2>/dev/null`
@@ -160,7 +160,7 @@ cdfdboot)
 	cp -p ../boot/boot /mnt/boot/boot || exit 1
 	umount $dev || exit 1
 	installboot -d $dev ../boot/bootblock boot/boot || exit 1
-	edparams $dev 'unset bootopts; unset servers; unset image; ramimagedev=c0d2p1; unset rootdev; unset leader; leader() { echo If the system cannot find root, please hit ESC and set your\nramimagedev to the CD device, partition 1. e.g.\nramimagedev=c0d2p1 .. then boot to start.\n }; bootcd=1; main(){delay 10000;boot}; save' || exit
+	edparams $dev 'unset bootopts; unset servers; unset image; ramimagedev=c0d2p1; unset rootdev; unset leader; leader() { echo If the system cannot find root, please hit ESC and set your\nramimagedev to the CD device, partition 1. e.g.\nramimagedev=c0d2p1 .. then boot to start.\n\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; bootcd=1; main(){delay 10000;boot}; save' || exit
 
 	# copy image
 	dd if=$dev of=cdfdimage bs=8192 count=180

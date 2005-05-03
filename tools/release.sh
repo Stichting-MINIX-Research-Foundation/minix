@@ -55,10 +55,12 @@ mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
+date >$RELEASEDIR/CD
 ( cd $RELEASEDIR && find . -name CVS | xargs rm -rf )
 echo " * Chroot build"
 chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
 echo " * Chroot build done"
+cp issue.install $RELEASEDIR/etc/issue
 umount $TMPDISK || exit
 umount $TMPTMPDISK || exit
 umount $RAM || exit
@@ -66,7 +68,7 @@ cp $RAM $ROOTIMAGE
 make programs image
 (cd ../boot && make)
 make image || exit 1
-./mkboot cdfdboot
+sh mkboot cdfdboot
 writeisofs -l MINIX -b $IMAGE /tmp $ISO || exit 1
 echo "Appending Minix root filesystem"
 cat >>$ISO $ROOTIMAGE || exit 1

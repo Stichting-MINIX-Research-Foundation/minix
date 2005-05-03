@@ -8,7 +8,7 @@ MAKE=	exec make -$(MAKEFLAGS)
 
 # specify the programs that are part of the system image
 PROGRAMS=	../kernel/kernel \
-	../servers/mm/mm \
+	../servers/pm/pm \
 	../servers/fs/fs \
 	../servers/is/is \
 	../drivers/tty/tty \
