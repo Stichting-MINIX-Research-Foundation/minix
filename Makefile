@@ -48,5 +48,6 @@ all install clean::
 	cd boot && $(MAKE) $@
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 	cd tools && $(MAKE) $@
-	#cd man && $(MAKE) $@
+	cd servers && $(MAKE) $@
+	cd man && $(MAKE) $@
 
