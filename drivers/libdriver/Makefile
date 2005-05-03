@@ -22,6 +22,8 @@ all build: $(OBJECTS)
 clean:
 	rm -f *.o *.bak 
 
+install:
+
 # Dependencies
 a = $m/config.h $i/ansi.h $m/type.h $m/com.h $m/callnr.h $s/types.h \
 	$m/const.h $m/syslib.h $m/utils.h \
