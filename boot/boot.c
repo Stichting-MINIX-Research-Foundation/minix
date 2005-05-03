@@ -741,13 +741,28 @@ int b_setenv(int flags, char *name, char *arg, char *value)
 	}
 	e->arg= copystr(arg);
 	e->value= copystr(value);
+
+	if(e->flags & E_DEV) {
+		char newname[30];
+		strncpy(newname, name, sizeof(newname)-3);
+		newname[sizeof(newname)-4] = '\0';
+		strcat(newname, "_n");
+		b_setenv(E_VAR, newname, arg, value);
+	}
+
 	return 0;
 }
 
 int b_setvar(int flags, char *name, char *value)
 /* Set variable or simple function. */
 {
-	return b_setenv(flags, name, null, value);
+	int r;
+
+	if((r=b_setenv(flags, name, null, value))) {
+		return r;
+	}
+
+	return r;
 }
 
 void b_unset(char *name)
