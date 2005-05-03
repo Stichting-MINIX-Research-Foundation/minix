@@ -14,7 +14,7 @@ usage:
 
 build: all
 all install clean:
-	cd ./mm && $(MAKE) $@
+	cd ./pm && $(MAKE) $@
 	cd ./fs && $(MAKE) $@
 	cd ./is && $(MAKE) $@
 	cd ./init && $(MAKE) $@
