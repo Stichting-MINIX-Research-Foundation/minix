@@ -235,13 +235,14 @@ struct part_entry *table;	/* four entries */
   table[1].lowsec = table[0].size;
   table[1].size = ROOT_IMAGE_SECTORS;
 
-  /* XXX figure out real size */
+  /* XXX figure out real size - give it 400MB for now */
   table[2].lowsec = table[1].lowsec + table[1].size;
-  table[2].size = 500*1024*1024/SECTOR_SIZE;
+  table[2].size = 400*1024*1024/SECTOR_SIZE;
 
   table[0].sysind = table[1].sysind = table[2].sysind = MINIX_PART;
   table[3].sysind = NO_PART;
 
+  /* Read the partition table at 'offset'. */
   return 1;
 }
 
