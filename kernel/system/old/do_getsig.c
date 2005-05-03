@@ -25,7 +25,7 @@ message *m_ptr;			/* pointer to the request message */
   register struct proc *rp;
 
   /* Only the MM is allowed to request pending signals. */
-  if (m_ptr->m_source != MM_PROC_NR)
+  if (m_ptr->m_source != PM_PROC_NR)
   	return(EPERM);
 
   /* Find the next process with pending signals. */
