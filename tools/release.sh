@@ -3,6 +3,7 @@
 COPYITEMS="usr/src usr/bin bin usr/lib"
 RELEASEDIR=/usr/r/release
 IMAGE=cdfdimage
+ROOTIMAGE=rootimage
 ISO=minix.iso
 RAM=/dev/ram
 if [ `wc -c $RAM | awk '{ print $1 }'` -ne 1474560 ]
@@ -17,22 +18,35 @@ echo -n "Device: /dev/"
 read dev || exit 1
 TMPDISK=/dev/$dev
 
+echo "Temporary (sub)partition to use for storage in /tmp?"
+echo -n "Device: /dev/"
+read tmpdev || exit 1
+TMPTMPDISK=/dev/$tmpdev
+
 if [ -b $TMPDISK ]
 then :
 else	echo "$TMPDISK is not a block device.."
 	exit 1
 fi
 
+if [ -b $TMPTMPDISK ]
+then :
+else	echo "$TMPDISK is not a block device.."
+	exit 1
+fi
+
 umount $TMPDISK
+umount $TMPTMPDISK
 umount $RAM
 
 ( cd .. && make clean )
-rm -rf $RELEASEDIR $ISO $IMAGE 
+rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE
 mkdir -p $RELEASEDIR
 mkfs -b 1440 -B 1024 $RAM || exit
 echo " * mounting $RAM as $RELEASEDIR"
 mount $RAM $RELEASEDIR || exit
-mkdir $RELEASEDIR/usr
+mkdir $RELEASEDIR/usr $RELEASEDIR/tmp
+mount $TMPTMPDISK $RELEASEDIR/tmp || exit 1
 
 mkfs -B 1024 $TMPDISK
 echo " * mounting $TMPDISK as $RELEASEDIR/usr"
@@ -41,19 +55,21 @@ mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
+( cd $RELEASEDIR && find . -name CVS | xargs rm -rf )
 echo " * Chroot build"
 chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
 echo " * Chroot build done"
 umount $TMPDISK || exit
+umount $TMPTMPDISK || exit
 umount $RAM || exit
-cp $RAM rootimage
+cp $RAM $ROOTIMAGE
 make programs image
 (cd ../boot && make)
 make image || exit 1
 ./mkboot cdfdboot
 writeisofs -l MINIX -b $IMAGE /tmp $ISO || exit 1
 echo "Appending Minix root filesystem"
-cat >>$ISO rootimage || exit 1
+cat >>$ISO $ROOTIMAGE || exit 1
 echo "Appending Minix usr filesystem"
 cat >>$ISO $TMPDISK || exit 1
 ls -al $ISO
