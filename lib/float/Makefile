@@ -1,6 +1,6 @@
 # Makefile for lib/float.
 
-CC1	= ./FP.compile
+CC1	= /bin/sh ./FP.compile
 
 LIBRARY	= ../libfp.a
 all:	$(LIBRARY)
