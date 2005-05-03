@@ -942,6 +942,7 @@ install:	\
 	/usr/bin/rmdir \
 	/usr/bin/rsh \
 	/usr/bin/sed \
+	/bin/sed \
 	/usr/bin/shar \
 	/usr/bin/size \
 	/usr/bin/sleep \
@@ -1360,6 +1361,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/sed:	sed
+	install -cs -o bin $? $@
+
+/bin/sed:	sed
 	install -cs -o bin $? $@
 
 /usr/bin/shar:	shar

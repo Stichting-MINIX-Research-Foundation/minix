@@ -112,20 +112,25 @@ case $thisroot:$fdusr in
 /dev/fd*:/dev/fd*)	fdroot=$thisroot	# ROOT is mounted directly
 			;;
 *)			fdroot=$thisroot	# ?
-    echo -n "\
+    if [ -f /CD ]
+    then
+    	:
+    else
+	    echo -n "\
 It looks like Minix has been installed on disk already.  Are you sure you
 know what you are doing? [n] "
-    read yn
-    case "$yn" in
-    [yY]*|sure)	;;
-    *)	exit
-    esac
+	    read yn
+	    case "$yn" in
+	    [yY]*|sure)	;;
+	    *)	exit
+	    esac
+     fi
 esac
 
 echo -n "\
 This is the Minix installation script.
 
-Note 1: If the screen blanks suddenly then hit F3 to select \"software
+Note 1: If the screen blanks suddenly then hit control+F3 to select \"software
 	scrolling\".
 
 Note 2: If things go wrong then hit DEL and start over.
@@ -326,6 +331,8 @@ else
     cpdir -f /dev /mnt/dev		# Copy any extra MAKEDEV'd devices
 fi
 
+# CD remnants that aren't for the installed system
+rm /mnt/etc/issue /mnt/CD 2>/dev/null
 					# Change /etc/fstab.
 echo >/mnt/etc/fstab "\
 # Poor man's File System Table.
