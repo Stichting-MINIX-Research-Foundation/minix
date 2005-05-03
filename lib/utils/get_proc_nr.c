@@ -22,6 +22,7 @@ char *proc_name;			/* lookup process by name */
   	m.I_REQUEST = GET_PROC;
   	m.I_PROC_NR = SELF;
   	m.I_KEY_LEN = SELF;
+  	m.I_VAL_LEN = 0;
   	m.I_VAL_PTR = (char *) &proc;
   	m.I_VAL_LEN = 0;
   	if ((s=_taskcall(SYSTASK, SYS_GETINFO, &m)) != OK)
