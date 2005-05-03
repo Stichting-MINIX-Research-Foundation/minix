@@ -20,7 +20,7 @@ then
     set -- `ls -lT $timestamp`
     test "$6 $7 $9" = "$(date '+%b %d %Y')" && exit
 fi
->$timestamp
+>$timestamp 2>/dev/null # Makes for errors when booting from CD
 
 # Remove three day old files from various tmp dirs.
 cleantmp -3 /tmp /usr/tmp /usr/preserve /usr/spool/lpd /usr/spool/at/past

@@ -50,6 +50,21 @@ start)
     # Any swapspace on a device?
     test "$swap" : '/dev/' && mount -s $swap
 
+    # Are we booting from CD?
+    bootcd="`/bin/sysenv bootcd`"
+    ramname="`/bin/sysenv ramname`"
+
+    # If booting from CD, /usr has to be mounted readonly.
+    # Also, $usr won't be specified correctly in the
+    # fstab (the CD could be anywhere), so we decide
+    # where it is.
+    if [ "$bootcd" = 1 ]
+    then	
+    		usr_roflag="-r"
+    		usr="/dev/${ramname}p2"
+    		echo "Setting /usr to mount readonly from cd: $ramname -> $usr"
+    fi
+ 
     # Mount the /usr partition unless this is a single floppy Minix.
     if [ ! -d /usr/bin ]
     then
@@ -62,7 +77,7 @@ start)
 		echo "usr=/dev/$usr" >/tmp/usr'
 	    . /tmp/usr
 	fi
-	mount $usr /usr || {
+	mount $usr_roflag $usr /usr || {
 	    echo "\
 Please try to mount something else as /usr, then hit CTRL-D to continue startup.
 Mount $usr /usr failed -- Single user."
@@ -96,10 +111,12 @@ Mount $usr /usr failed -- Single user."
     # Any swapspace on a file?
     test -n "$swap" -a ! "$swap" : '/dev/' && mount -s $swap
 
-    case "`printroot -r`" in
-    /dev/ram)
-	# Remove boot-only things to make space.
-	rm -rf /boot /minix
+
+    case "`printroot -r`":$bootcd in
+    /dev/ram:)
+	# Remove boot-only things to make space,
+	# unless booting from CD, in which case we need them.
+	rm -rf /boot
     esac
 
     # Things should be alright now.
