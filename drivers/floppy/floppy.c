@@ -645,7 +645,7 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
   pv_set(byte_out[3], DMA_ADDR, (unsigned) tmp_phys >>  0);
   pv_set(byte_out[4], DMA_ADDR, (unsigned) tmp_phys >>  8);
   pv_set(byte_out[5], DMA_TOP, (unsigned) (tmp_phys >> 16));
-  pv_set(byte_out[6], DMA_COUNT, (SECTOR_SIZE - 1) >> 0);
+  pv_set(byte_out[6], DMA_COUNT, (((SECTOR_SIZE - 1) >> 0) & 0xff));
   pv_set(byte_out[7], DMA_COUNT, (SECTOR_SIZE - 1) >> 8);
   pv_set(byte_out[8], DMA_INIT, 2);		/* some sort of enable */
 
