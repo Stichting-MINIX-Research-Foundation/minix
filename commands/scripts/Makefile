@@ -60,73 +60,73 @@ root:	\
 clean:
 
 /usr/bin/DESCRIBE:	DESCRIBE.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/M:	M.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/U:	/usr/bin/M
-	install -l $? $@
+	install -m 755 -l $? $@
 
 /usr/bin/MAKEDEV:	MAKEDEV.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/adduser:	adduser.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/cd:	cd.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/[ /usr/bin/command /usr/bin/echo /usr/bin/expr /usr/bin/false \
 /usr/bin/getopts /usr/bin/read /usr/bin/test /usr/bin/true /usr/bin/umask \
 /usr/bin/wait:	/usr/bin/cd
-	install -l $? $@
+	install -m 755 -l $? $@
 
 /usr/bin/checkhier:	checkhier.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/clear:	clear.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/clr:	/usr/bin/clear
-	install -l $? $@
+	install -m 755 -l $? $@
 
 /usr/bin/makewhatis:	makewhatis.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/mkdist:	mkdist.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/setup:	setup.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/spell:	spell.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/srccrc:	srccrc.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/svclog:	svclog.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/whatis:	whatis.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/apropos:	/usr/bin/whatis
-	install -l $? $@
+	install -m 755 -l $? $@
 
 /usr/bin/whereis:	whereis.sh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /bin/M:	/usr/bin/M
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 /bin/U:	/bin/M
-	install -l $? $@
+	install -m 755 -l $? $@
 
 /bin/cd:	/usr/bin/cd
-	install -lc $? $@
+	install -m 755 -lc $? $@
 
 /bin/[ /bin/command /bin/echo /bin/expr /bin/false /bin/getopts \
 /bin/read /bin/test /bin/true /bin/umask /bin/wait:	/bin/cd
-	install -l $? $@
+	install -m 755 -l $? $@
