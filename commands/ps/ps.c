@@ -12,7 +12,7 @@
  * processes without a terminal.
  *
  * VERY IMPORTANT NOTE:
- *	To compile ps, the kernel/, fs/ and mm/ source directories must be in
+ *	To compile ps, the kernel/, fs/ and pm/ source directories must be in
  *	../ relative to the directory where ps is compiled (normally the
  *	tools source directory).
  *
@@ -77,7 +77,7 @@
 #include "../../kernel/proc.h"
 #undef printf			/* kernel's const.h defined this */
 
-#include "../../servers/mm/mproc.h"
+#include "../../servers/pm/mproc.h"
 #include "../../servers/fs/fproc.h"
 #include "../../servers/fs/const.h"
 #undef printf			/* fs's const.h defined this */
@@ -116,7 +116,7 @@ int init_proc_nr;
 #define low_user init_proc_nr
 
 #define	KMEM_PATH	"/dev/kmem"	/* opened for kernel proc table */
-#define	MEM_PATH	"/dev/mem"	/* opened for mm/fs + user processes */
+#define	MEM_PATH	"/dev/mem"	/* opened for pm/fs + user processes */
 
 int kmemfd, memfd;		/* file descriptors of [k]mem */
 
@@ -256,7 +256,7 @@ int sig;
 }
 
 /* Main interprets arguments, gets system addresses, opens [k]mem, reads in
- * process tables from kernel/mm/fs and calls pstat() for relevant entries.
+ * process tables from kernel/pm/fs and calls pstat() for relevant entries.
  */
 int main(argc, argv)
 int argc;
