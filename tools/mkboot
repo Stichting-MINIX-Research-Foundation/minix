@@ -98,8 +98,8 @@ hdboot)
 	esac
 
 	# Install the new image.
-	echo "cp image $root:/boot/image/$target"
-	cp -p image $rootdir/boot/image/$target || exit
+	echo "install image $root:/boot/image/$target"
+	install -o root -m 600 image $rootdir/boot/image/$target || exit
 
 	# Save the revision number.
 	test "$revision" != "$oldrev" && echo $revision >revision

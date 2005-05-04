@@ -45,7 +45,8 @@ mkdir -p $RELEASEDIR
 mkfs -b 1440 -B 1024 $RAM || exit
 echo " * mounting $RAM as $RELEASEDIR"
 mount $RAM $RELEASEDIR || exit
-mkdir $RELEASEDIR/usr $RELEASEDIR/tmp
+mkdir -m 755 $RELEASEDIR/usr
+mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPTMPDISK $RELEASEDIR/tmp || exit 1
 
 mkfs -B 1024 $TMPDISK
