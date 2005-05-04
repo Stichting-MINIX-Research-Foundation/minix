@@ -8,11 +8,11 @@ boot \- from power on to the login prompt
 ..
 At power on the machine reads the first sector of the boot device into memory
 and executes it.  This bootstrap code loads
-.BR /boot ,
+.BR /boot/boot ,
 the Minix Boot Monitor.  The monitor loads the kernel binaries from
-.BR /minix ,
+.BR /boot/image ,
 or the newest file in
-.B /minix
+.B /boot/image
 if it is a directory.
 .PP
 The Minix system is now running, the different tasks initialize themselves
