@@ -29,13 +29,14 @@ usage:
 	@echo "	make programs   # Compile and install all programs" >&2
 	@echo "	make fresh      # Make clean, libraries, and programs" >&2
 	@echo "	make image      # Make programs and create system image" >&2
+	@echo "	make install    # Make image, and install to hard disk" >&2
 	@echo "	make hdboot     # Make image, and install to hard disk" >&2
 	@echo "	make fdboot     # Make image, and install to floppy disk" >&2
 	@echo "	make bootable   # Make hard disk bootable" >&2
 	@echo "	make clean      # Remove all compiler results, except libs" >&2
 	@echo " " >&2
 	@echo "To create a fresh MINIX configuration, try:" >&2
-	@echo "	make fresh hdboot" >&2
+	@echo "	make fresh install" >&2
 	@echo " " >&2
 
 # create a fresh configuration or system image
