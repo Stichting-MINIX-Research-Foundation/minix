@@ -5,6 +5,8 @@ MAKE	= exec make -$(MAKEFLAGS)
 usage:
 	@echo "" >&2
 	@echo "Master Makefile for MINIX commands and utilities." >&2
+	@echo "Root privileges are required for some actions." >&2
+	@echo "" >&2
 	@echo "Usage:" >&2
 	@echo "	make world      # Compile everything (libraries & commands)" >&2
 	@echo "	make includes   # Install include files from src/" >&2
