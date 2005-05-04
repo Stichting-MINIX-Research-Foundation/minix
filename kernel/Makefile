@@ -31,7 +31,7 @@ SYS =	system/system.a
 # What to make.
 kernel build: $(HEAD) $(OBJS) $(SYS) 
 	$(LD) $(LDFLAGS) -o kernel $(HEAD) $(OBJS) $(SYS) $(CLOCK) $(LIBS)
-	install -S 0 $@
+	install -S 0 kernel
 
 $(SYS):
 	cd system && $(MAKE)
