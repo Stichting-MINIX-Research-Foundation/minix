@@ -843,12 +843,17 @@ install:	\
 	/usr/bin/compress \
 		/usr/bin/uncompress \
 		/usr/bin/zcat \
+	/bin/cp \
+	/bin/rm \
+	/bin/mv \
+	/bin/ln \
 	/usr/bin/cp \
 		/usr/bin/clone \
 		/usr/bin/cpdir \
 		/usr/bin/ln \
 		/usr/bin/mv \
 		/usr/bin/rm \
+		/bin/rm \
 	/usr/bin/crc \
 	/usr/bin/cut \
 	/usr/bin/date \
@@ -873,6 +878,7 @@ install:	\
 	/usr/bin/fortune \
 	/usr/bin/fsck \
 	/usr/bin/fsck1 \
+	/bin/getty \
 	/usr/bin/getty \
 	/usr/bin/gomoku \
 	/usr/bin/grep \
@@ -1083,11 +1089,17 @@ install:	\
 /usr/bin/uncompress /usr/bin/zcat:	/usr/bin/compress
 	install -l $? $@
 
+/bin/cp:	cp
+	install -cs -o bin $? $@
+
 /usr/bin/cp:	cp
 	install -cs -o bin $? $@
 
 /usr/bin/clone /usr/bin/cpdir \
 /usr/bin/ln /usr/bin/mv /usr/bin/rm:	/usr/bin/cp
+	install -l $? $@
+
+/bin/ln /bin/mv /bin/rm:	/bin/cp
 	install -l $? $@
 
 /usr/bin/crc:	crc
@@ -1162,6 +1174,9 @@ install:	\
 /usr/bin/fsck1:	fsck1
 	install -cs -o bin $? $@
 
+/bin/getty:	getty
+	install -cs -o bin $? $@
+
 /usr/bin/getty:	getty
 	install -cs -o bin $? $@
 
@@ -1197,6 +1212,9 @@ install:	\
 
 /usr/bin/in.rshd:	in.rshd
 	install -cs -o bin $? $@
+
+/bin/install:	installx
+	install -cs -o root -m 4755 $? $@
 
 /usr/bin/install:	installx
 	install -cs -o root -m 4755 $? $@
