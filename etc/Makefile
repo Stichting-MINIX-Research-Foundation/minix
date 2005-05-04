@@ -20,4 +20,4 @@ install::
 	@echo "Making devices.."
 	cd /dev && sh /usr/src/commands/scripts/MAKEDEV.sh std 2>/dev/null
 	@echo "Making user homedirs.."
-	for u in bin ast; do (cd ast && tar cf - .[a-z]* ) | (cd ~$u && tar xf - ); done
+	for u in bin ast; do (cd ast && tar cf - .[a-z]* ) | (cd ~$$u && tar xf - ); done
