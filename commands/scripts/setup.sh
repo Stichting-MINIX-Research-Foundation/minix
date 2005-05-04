@@ -130,7 +130,7 @@ esac
 echo -n "\
 This is the Minix installation script.
 
-Note 1: If the screen blanks suddenly then hit control+F3 to select \"software
+Note 1: If the screen blanks suddenly then hit CTRL+F3 to select \"software
 	scrolling\".
 
 Note 2: If things go wrong then hit DEL and start over.

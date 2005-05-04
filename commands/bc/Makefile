@@ -39,7 +39,7 @@ sbc: sbc.o $(OFILES) global.o
 math.h: libmath.b
 	$(MAKE) -$(MAKEFLAGS) fbc
 	./fbc -c libmath.b </dev/null >math.h
-	./fix_math.h
+	/bin/sh ./fix_math.h
 	rm -f ./fbc
 
 fbc: $(OFILES) bc.o

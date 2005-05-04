@@ -37,7 +37,7 @@
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 #undef printf			/* kernel's const.h defined this */
-#include "../../servers/mm/mproc.h"
+#include "../../servers/pm/mproc.h"
 
 #include <a.out.h>
 #include <ctype.h>

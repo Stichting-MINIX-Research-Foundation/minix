@@ -10,9 +10,9 @@
 
 #undef EXTERN
 #define EXTERN
-#include "../../servers/mm/const.h"
-#include "../../servers/mm/type.h"
-#include "../../servers/mm/mproc.h"
+#include "../../servers/pm/const.h"
+#include "../../servers/pm/type.h"
+#include "../../servers/pm/mproc.h"
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
