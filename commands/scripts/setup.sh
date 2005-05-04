@@ -154,9 +154,9 @@ Keyboard type? [us-std] "; read keymap
 test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 
 echo -n "
-Minix needs one primary partition of at least 35 Mb.  (It fits in 25 Mb, but
-it needs 35 Mb if fully recompiled.  Add more space to taste, but don't
-overdo it, there are limits to the size of a file system.)
+Minix needs one primary partition of at least 64 MB for a full install
+with sources.  (The full install also fits in 48 MB, but it needs more
+if fully recompiled.  Add more space to taste.)
 
 If there is no free space on your disk then you have to back up one of the
 other partitions, shrink, and reinstall.  See the appropriate manuals of the
@@ -271,7 +271,7 @@ Migrating to disk...
 
 mkfs /dev/$usr
 echo "\
-Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if are
+Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are
 absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
 trap ': nothing' 2
 readall -b /dev/$usr | sh
