@@ -199,607 +199,607 @@ all:	$(ALL)
 
 add_route:	add_route.c
 	$(CCLD) -o $@ add_route.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 at:	at.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 backup:	backup.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 badblocks:	badblocks.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 banner:	banner.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 basename:	basename.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 cal:	cal.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 calendar:	calendar.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 cat:	cat.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 cdiff:	cdiff.c
 	$(CCLD) -o $@ $?
-	install -S 28kw $@
+	@install -S 28kw $@
 
 cgrep:	cgrep.c
 	$(CCLD) -o $@ $?
-	install -S 5kw $@
+	@install -S 5kw $@
 
 chmem:	chmem.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 chmod:	chmod.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 chown:	chown.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 chroot:	chroot.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 ci:	ci.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 cksum:	cksum.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 cleantmp:	cleantmp.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 cmp:	cmp.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 co:	co.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 comm:	comm.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 compress:	compress.c
 	$(CCLD) -o $@ $?
-	install -S 450k $@
+	@install -S 450k $@
 
 cp:    cp.c
 	$(CCLD) -o $@ $?
-	install -S 16kw $@
+	@install -S 16kw $@
 
 crc:	crc.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 cut:	cut.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 date:	date.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 dd:	dd.c
 	$(CCLD) -o $@ $?
-	install -S 20kw $@
+	@install -S 20kw $@
 
 decomp16:	decomp16.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 df:	df.c
 	$(CCLD) -I$(SYS) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 dhrystone:	dhrystone.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 diff:	diff.c
 	$(CCLD) -o $@ $?
-	install -S 40kw $@
+	@install -S 40kw $@
 
 dirname:	dirname.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 du:	du.c
 	$(CCLD) -o $@ $?
-	install -S 16kw $@
+	@install -S 16kw $@
 
 ed:	ed.c
 	$(CCLD) -o $@ $?
-	install -S 32kw $@
+	@install -S 32kw $@
 
 eject:	eject.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 env:	env.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 expand:	expand.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 factor:	factor.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 fgrep:	fgrep.c
 	$(CCLD) -o $@ $?
-	install -S 10kw $@
+	@install -S 10kw $@
 
 file:	file.c
 	$(CCLD) -o $@ $?
-	install -S 25kw $@
+	@install -S 25kw $@
 
 find:	find.c
 	$(CCLD) -o $@ $?
-	install -S 25kw $@
+	@install -S 25kw $@
 
 finger:	finger.c
 	$(CCLD) -o $@ finger.c
-	install -S 8kw $@
+	@install -S 8kw $@
 
 fix:	fix.c
 	$(CCLD) -o $@ fix.c
-	install -S 32kw $@
+	@install -S 32kw $@
 
 fold:	fold.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 fortune:	fortune.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 fsck:	fsck.c
 	$(CCLD) -o $@ $?
-	install -S 1024k $@
+	@install -S 1024k $@
 
 fsck1:	fsck1.c
 	$(CCLD) -o $@ $?
-	install -S 32kw $@
+	@install -S 32kw $@
 
 getty:	getty.c /usr/include/minix/config.h
 	$(CCLD) -o $@ getty.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 gomoku:	gomoku.c
 	$(CCLD) -o $@ $? -lcurses
-	install -S 8kw $@
+	@install -S 8kw $@
 
 grep:	grep.c
 	$(CCLD) -o $@ $?
-	install -S 32kw $@
+	@install -S 32kw $@
 
 head:	head.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 host:	host.c
 	$(CCLD) -wo -o $@ host.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 hostaddr:	hostaddr.c
 	$(CCLD) -o $@ hostaddr.c
-	install -S 8kw $@
+	@install -S 8kw $@
 
 id:	id.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 ifconfig:	ifconfig.c
 	$(CCLD) -o $@ ifconfig.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 ifdef:	ifdef.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 in.fingerd:	in.fingerd.c
 	$(CCLD) -o $@ in.fingerd.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 in.rshd:	in.rshd.c
 	$(CCLD) -o $@ in.rshd.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 installx:	install.c	# Note: avoided confict with 'install' rule.
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 intr:	intr.c
 	$(CCLD) -o $@ intr.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 irdpd:	irdpd.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 isoread:	isoread.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 join:	join.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 kill:	kill.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 last:	last.c
 	$(CCLD) -o $@ $?
-	install -S 5kw $@
+	@install -S 5kw $@
 
 leave:	leave.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 life:	life.c
 	$(CCLD) -o $@ $? -lcurses
-	install -S 15kw $@
+	@install -S 15kw $@
 
 login:	login.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 look:	look.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 lp:	lp.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 lpd:	lpd.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 ls:	ls.c
 	$(CCLD) -o $@ $?
-	install -S 20kw $@
+	@install -S 20kw $@
 
 mail:	mail.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 man:	man.c
 	$(CCLD) -o $@ $?
-	install -S 10kw $@
+	@install -S 10kw $@
 
 mesg:	mesg.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 mkdir:	mkdir.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 mkfifo:	mkfifo.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 mkfs:	mkfs.c
 	$(CCLD) -o $@ $?
-	install -S 20kw $@
+	@install -S 20kw $@
 
 mknod:	mknod.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 mkproto:	mkproto.c
 	$(CCLD) -o $@ $?
-	install -S 20kw $@
+	@install -S 20kw $@
 
 mkswap:	mkswap.c
 	$(CCLD) -I$(SYS) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 modem:	modem.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 mount:	mount.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 mt:	mt.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 nm:	nm.c
 	$(CCLD) -o $@ $?
-	install -S 32kw $@
+	@install -S 32kw $@
 
 nonamed:	nonamed.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 od:	od.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 passwd:	passwd.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 paste:	paste.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 ping:	ping.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 pr:	pr.c
 	$(CCLD) -o $@ $?
-	install -S 16kw $@
+	@install -S 16kw $@
 
 pr_routes:	pr_routes.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 prep:	prep.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 printf:	printf.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 printroot:	printroot.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 proto:	proto.c
 	$(CCLD) -o $@ $?
-	install -S 15kw $@
+	@install -S 15kw $@
 
 pwd:	pwd.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 pwdauth:	pwdauth.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 rarpd:	rarpd.c
 	$(CCLD) -o $@ rarpd.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 rcp:	rcp.c
 	$(CCLD) -o $@ rcp.c
-	install -S 8kw $@
+	@install -S 8kw $@
 
 rdate:	rdate.c
 	$(CCLD) -o $@ rdate.c
-	install -S 8kw $@
+	@install -S 8kw $@
 
 readall:	readall.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 readfs:	readfs.c
 	$(CCLD) -o $@ $?
-	install -S 25kw $@
+	@install -S 25kw $@
 
 remsync:	remsync.c
 	$(CCLD) -o $@ $?
-	install -S 256k $@
+	@install -S 256k $@
 
 rget:	rget.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 rlogin:	rlogin.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 rmdir:	rmdir.c
 	$(CCLD) -o $@ $?
-	install -S 15kw $@
+	@install -S 15kw $@
 
 rsh:	rsh.c
 	$(CCLD) -o $@ rsh.c
-	install -S 8kw $@
+	@install -S 8kw $@
 
 sed:	sed.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 shar:	shar.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 size:	size.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 sleep:	sleep.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 slip:	slip.c
 	$(CCLD) -o $@ $?
-	install -S 20k $@
+	@install -S 20k $@
 
 sort:	sort.c
 	$(CCLD) -o $@ $?
-	install -S 30kw $@
+	@install -S 30kw $@
 
 split:	split.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 stat:	stat.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 strings:	strings.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 strip:	strip.c
 	$(CCLD) -o $@ $?
-	install -S 8kw $@
+	@install -S 8kw $@
 
 stty:	stty.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 su:	su.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 sum:	sum.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 swapfs:	swapfs.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 sync:	sync.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 synctree:	synctree.c
 	$(CCLD) -o $@ -wo $?
-	install -S 32kw $@
+	@install -S 32kw $@
 
 sysenv:	sysenv.c
 	$(CCLD) -o $@ -wo $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 tail:	tail.c
 	$(CCLD) -o $@ $?
-	install -S 16kw $@
+	@install -S 16kw $@
 
 tar:	tar.c
 	$(CCLD) -o $@ $?
-	install -S 30kw $@
+	@install -S 30kw $@
 
 tcpd:	tcpd.c
 	$(CCLD) -o $@ -DPARANOID=0 tcpd.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 tcpdp:	tcpd.c
 	$(CCLD) -o $@ -DPARANOID=1 tcpd.c
-	install -S 8kw $@
+	@install -S 8kw $@
 
 tee:	tee.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 term:	term.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 termcap:	termcap.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 tget:	tget.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 time:	time.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 touch:	touch.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 tr:	tr.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 tsort:	tsort.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 ttt:	ttt.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 tty:	tty.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 umount:	umount.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 uname:	uname.c /usr/include/minix/config.h
 	$(CCLD) -o $@ uname.c
-	install -S 4kw $@
+	@install -S 4kw $@
 
 unexpand:	unexpand.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 uniq:	uniq.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 update:	update.c
 	$(CCLD) -o $@ $?
-	install -S 1kw $@
+	@install -S 1kw $@
 
 uud:	uud.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 uue:	uue.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 vol:	vol.c
 	$(CCLD) -o $@ $?
-	install -S 80k $@	# note: '-S' is upper limit to 'vol -m'
+	@install -S 80k $@	# note: '-S' is upper limit to 'vol -m'
 
 wc:	wc.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 which:	which.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 who:	who.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 whoami:	whoami.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 write:	write.c
 	$(CCLD) -o $@ $?
@@ -809,11 +809,11 @@ writeisofs:	writeisofs.c
 
 xargs:	xargs.c
 	$(CCLD) -o $@ $?
-	install -S 16kw $@
+	@install -S 16kw $@
 
 yes:	yes.c
 	$(CCLD) -o $@ $?
-	install -S 4kw $@
+	@install -S 4kw $@
 
 install:	\
 	/usr/bin/add_route \
