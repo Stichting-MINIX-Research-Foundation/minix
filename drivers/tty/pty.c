@@ -22,7 +22,6 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include "tty.h"
-#include "proc.h"
 
 #if NR_PTYS > 0
 
@@ -80,6 +79,7 @@ message *m_ptr;
 /* Perform an open/close/read/write call on a /dev/ptypX device. */
   pty_t *pp = tp->tty_priv;
   int r;
+  phys_bytes p;
 
   switch (m_ptr->m_type) {
     case DEV_READ:
@@ -96,9 +96,13 @@ message *m_ptr;
 		r = EINVAL;
 		break;
 	}
+#if DEAD_CODE
 	if (numap_local(m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS,
 							m_ptr->COUNT) == 0) {
-		r = EFAULT;
+#else
+	if ((r = sys_umap(m_ptr->PROC_NR, D, m_ptr->ADDRESS,
+		m_ptr->COUNT, &p)) != OK) {
+#endif
 		break;
 	}
 	pp->rdrepcode = TASK_REPLY;
@@ -133,9 +137,14 @@ message *m_ptr;
 		r = EINVAL;
 		break;
 	}
+#if DEAD_CODE
 	if (numap_local(m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS,
 							m_ptr->COUNT) == 0) {
 		r = EFAULT;
+#else
+	if ((r = sys_umap(m_ptr->PROC_NR, D, m_ptr->ADDRESS,
+		m_ptr->COUNT, &p)) != OK) {
+#endif
 		break;
 	}
 	pp->wrrepcode = TASK_REPLY;
@@ -199,7 +208,7 @@ tty_t *tp;
  * /dev/ttypX to the output buffer.
  */
   pty_t *pp = tp->tty_priv;
-  int count, ocount;
+  int count, ocount, s;
   phys_bytes user_phys;
 
   /* PTY closed down? */
@@ -221,8 +230,16 @@ tty_t *tp;
 	if (count == 0 || tp->tty_inhibited) break;
 
 	/* Copy from user space to the PTY output buffer. */
+#if DEAD_CODE
 	user_phys = proc_vir2phys(proc_addr(tp->tty_outproc), tp->tty_out_vir);
 	phys_copy(user_phys, vir2phys(pp->ohead), (phys_bytes) count);
+#else
+	if((s = sys_vircopy(tp->tty_outproc, D, tp->tty_out_vir,
+		SELF, D, pp->ohead, (phys_bytes) count)) != OK) {
+		printf("pty tty%d: copy failed (error %d)\n",  s);
+		break;
+	}
+#endif
 
 	/* Perform output processing on the output buffer. */
 	out_process(tp, pp->obuf, pp->ohead, bufend(pp->obuf), &count, &ocount);
@@ -283,18 +300,25 @@ pty_t *pp;
 {
 /* Transfer bytes written to the output buffer to the PTY reader. */
   int count;
-  phys_bytes user_phys;
 
   /* While there are things to do. */
   for (;;) {
+  	int s;
 	count = bufend(pp->obuf) - pp->otail;
 	if (count > pp->ocount) count = pp->ocount;
 	if (count > pp->rdleft) count = pp->rdleft;
 	if (count == 0) break;
 
 	/* Copy from the output buffer to the readers address space. */
+#if DEAD_CODE
 	user_phys = proc_vir2phys(proc_addr(pp->rdproc), pp->rdvir);
 	phys_copy(vir2phys(pp->otail), user_phys, (phys_bytes) count);
+#endif
+	if((s = sys_vircopy(SELF, D, pp->otail,
+		pp->rdproc, D, pp->rdvir, (phys_bytes) count)) != OK) {
+		printf("pty tty%d: copy failed (error %d)\n",  s);
+		break;
+	}
 
 	/* Bookkeeping. */
 	pp->ocount -= count;
@@ -333,7 +357,6 @@ tty_t *tp;
  * a time, 99% of the writes will be for one byte, so no sense in being smart.)
  */
   pty_t *pp = tp->tty_priv;
-  phys_bytes user_phys;
   char c;
 
   if (pp->state & PTY_CLOSED) {
@@ -346,9 +369,18 @@ tty_t *tp;
   }
 
   while (pp->wrleft > 0) {
+  	int s;
+
 	/* Transfer one character to 'c'. */
+#if DEAD_CODE
 	user_phys = proc_vir2phys(proc_addr(pp->wrproc), pp->wrvir);
 	phys_copy(user_phys, vir2phys(&c), 1L);
+#endif
+	if((s = sys_vircopy(pp->wrproc, D, pp->wrvir,
+		SELF, D, &c, (phys_bytes) 1)) != OK) {
+		printf("pty: copy failed (error %d)\n", s);
+		break;
+	}
 
 	/* Input processing. */
 	if (in_process(tp, &c, 1) == 0) break;
