@@ -16,6 +16,10 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioc_disk.h>
+#include <minix/partition.h>
+#include <minix/u64.h>
+#include <time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -24,7 +28,7 @@
 #define CHUNK    25		/* max number of blocks read at once */
 #define BLOCK_SIZE	1024	/* size of a block */
 #define RESUME  200		/* # good reads before going back to CHUNK */
-#define DIVISOR	 50		/* how often to print statistics */
+#define DIVISOR	 1000		/* how often to print statistics */
 #define STORE  4096		/* save this many bad blocks for summary */
 
 int chunk = CHUNK;		/* current number of blocks being read */
@@ -40,13 +44,49 @@ long rotten[STORE];		/* list of bad blocks */
 _PROTOTYPE(int main, (int argc, char **argv));
 static _PROTOTYPE(void output, (long blocks_read));
 
+/* print pretty progress meter with remaining no. of blocks and ETA on
+ * stderr
+ */
+void
+prettyprogress(long b, long nblocks, time_t starttime)
+{
+  /* print progress indication */
+  time_t spent, now;
+  long bpsec;
+  time(&now);
+  spent = now - starttime;
+  if(spent > 0 && (bpsec = b / spent) > 0) {
+  	int len, i;
+  	long secremain, minremain, hremain;
+	  secremain = (nblocks - b) / bpsec;
+	  minremain = (secremain / 60) % 60;
+	  hremain = secremain / 3600;
+  	len = fprintf(stderr, "remain %ld blocks. ETA: %d:%02d:%02d  [",
+  		nblocks - b,
+  		hremain, minremain, secremain % 60);
+#define WIDTH 77
+  	len = WIDTH - len;
+  	for(i = 0; i < (b * (len-1) / nblocks); i++) 
+  		fprintf(stderr, "=");
+ 	fprintf(stderr, "|");
+  	for(; i < len-2; i++) 
+  		fprintf(stderr, "-");
+  	fprintf(stderr, "]\r");
+  	fflush(stderr);
+  }
+
+  return;
+}
+
 int main(argc, argv)
 int argc;
 char *argv[];
 {
+  struct partition entry;
   int fd, s, i, badprinted;
-  long b = 0;
+  long b = 0, nblocks;
   char *p;
+  time_t starttime;
 
   if (argc != 2 && argc != 3) {
 	fprintf(stderr, "Usage: readall [-b | -t] file\n");
@@ -68,14 +108,26 @@ char *argv[];
   }
   fd = open(argv[i], O_RDONLY);
   if (fd < 0) {
+  	perror(argv[i]);
 	fprintf(stderr, "%s is not readable\n", argv[i]);
 	exit(1);
   }
 
+  /* Get size of file */
+  if(ioctl(fd, DIOCGETP, &entry) < 0) {
+  	perror("ioctl DIOCGETP");
+  	return 1;
+  }
+  nblocks = div64u(entry.size, BLOCK_SIZE);
+
+  time(&starttime);
   /* Read the entire file. Try it in large chunks, but if an error
    * occurs, go to single reads for a while. */
   while (1) {
-	lseek(fd, BLOCK_SIZE * b, SEEK_SET);
+	if(lseek(fd, BLOCK_SIZE * b, SEEK_SET) < 0) {
+		perror("lseek");
+		return 1;
+	}
 	s = read(fd, a, BLOCK_SIZE * chunk);
 	if (s == BLOCK_SIZE * chunk) {
 		/* Normal read, no errors. */
@@ -85,6 +137,9 @@ char *argv[];
 			if (goodies >= RESUME && b % DIVISOR == 0)
 				chunk = CHUNK;
 		}
+  		if(b % DIVISOR == 0 && !normal) {
+  			prettyprogress(b, nblocks, starttime);
+  		}
 	} else if (s < 0) {
 		/* I/O error. */
 		if (chunk != 1) {
@@ -106,7 +161,7 @@ char *argv[];
 		if (normal) {
 			output(b);
 			fprintf(stderr, "\n");
-		}
+		} else fprintf(stderr, "\r%*s\n", -WIDTH, "Done.");
 		if (total) printf("%8ld\n", b);
 		if ((errors == 0) || total) exit(0);
 		badprinted = 0;
