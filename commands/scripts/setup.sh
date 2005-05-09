@@ -253,7 +253,7 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
 p3=0:0
 test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
-partition /dev/$primary 1 81:32768* $p3 81:0+ >/dev/null || exit
+partition /dev/$primary 1 81:32768* $p3 81:0+ || exit
 
 if [ "$swapsize" -gt 0 ]
 then
