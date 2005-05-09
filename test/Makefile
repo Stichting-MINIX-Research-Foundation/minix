@@ -16,15 +16,15 @@ all:	$(OBJ) $(BIGOBJ) $(ROOTOBJ)
 
 $(OBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
-	install -S 10kw $@
+	@install -S 10kw $@
 
 $(BIGOBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
-	install -S 32kw $@
+	@install -S 32kw $@
 
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c
-	install -c -S 10kw -o root -m 4755 a.out $@
+	@install -c -S 10kw -o root -m 4755 a.out $@
 	rm a.out
 
 clean:	
