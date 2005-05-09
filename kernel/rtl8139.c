@@ -614,11 +614,11 @@ re_t *rep;
 	dname= pci_dev_name(vid, did);
 	if (!dname)
 		dname= "unknown device";
-	kprintf("%s: ", rep->re_name);
-	kprintf("%s ", dname);
-	kprintf("(%x/", vid);
-	kprintf("%x) ", did);
-	kprintf("at %s\n", pci_slot_name(devind));
+	kprintf("%s: ", (karg_t) rep->re_name);
+	kprintf("%s ", (karg_t) dname);
+	kprintf("(%x/", (karg_t) vid);
+	kprintf("%x) ", (karg_t) did);
+	kprintf("at %s\n", (karg_t) pci_slot_name(devind));
 	pci_reserve(devind);
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
@@ -725,8 +725,8 @@ re_t *rep;
 	enable_irq(&rep->re_hook);
 
 	if (rep->re_mode) {
-		kprintf("%s: ", rep->re_name);
-		kprintf("model %s\n", rep->re_model);
+		kprintf("%s: ", (karg_t) rep->re_name);
+		kprintf("model %s\n", (karg_t) rep->re_model);
 	} else
 	{
 		printf("%s: unknown model 0x%08x\n",
@@ -1422,7 +1422,7 @@ re_t *rep;
 	rep->re_link_up= link_up;
 	if (!link_up)
 	{
-		kprintf("%s: link down\n", rep->re_name);
+		kprintf("%s: link down\n", (karg_t) rep->re_name);
 		return;
 	}
 
@@ -1491,7 +1491,7 @@ re_t *rep;
 			rep->re_name);
 	}
 	if (!(mii_status & MII_STATUS_LS))
-		kprintf("%s: link down\n", rep->re_name);
+		kprintf("%s: link down\n", (karg_t) rep->re_name);
 	if (mii_status & MII_STATUS_JD)
 		printf("%s: jabber condition detected\n", rep->re_name);
 	if (!(mii_status & MII_STATUS_EC))
@@ -1520,9 +1520,9 @@ re_t *rep;
 	printf("\n");
 
 resspeed:
-	kprintf("%s: ", rep->re_name);
+	kprintf("%s: ", (karg_t) rep->re_name);
 	kprintf("link up at %d Mbps, ", (msr & RL_MSR_SPEED_10) ? 10 : 100);
-	kprintf("%s duplex\n", (mii_ctrl & MII_CTRL_DM) ? "full" : "half");
+	kprintf("%s duplex\n", (karg_t) ((mii_ctrl & MII_CTRL_DM) ? "full" : "half"));
 
 }
 
