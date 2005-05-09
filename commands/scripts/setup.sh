@@ -154,8 +154,8 @@ Keyboard type? [us-std] "; read keymap
 test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 
 echo -n "
-Minix needs one primary partition of at least 64 MB for a full install
-with sources.  (The full install also fits in 48 MB, but it needs more
+Minix needs one primary partition of at least 80 MB for a full install
+with sources.  (The full install also fits in 64 MB, but it needs more
 if fully recompiled.  Add more space to taste.)
 
 If there is no free space on your disk then you have to back up one of the
@@ -239,7 +239,7 @@ echo -n "
 You have created a partition named:	/dev/$primary
 The following subpartitions are about to be created on /dev/$primary:
 
-    Root subpartition:	/dev/$root	1440 kb
+    Root subpartition:	/dev/$root	16 MB
     Swap subpartition:	/dev/$swap	$swapsize kb
     /usr subpartition:	/dev/$usr	rest of $primary
 
@@ -253,7 +253,7 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
 p3=0:0
 test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
-partition /dev/$primary 1 81:2880* $p3 81:0+ >/dev/null || exit
+partition /dev/$primary 1 81:32768* $p3 81:0+ >/dev/null || exit
 
 if [ "$swapsize" -gt 0 ]
 then
