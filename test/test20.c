@@ -452,7 +452,7 @@ void test20g()
 /* Test link and unlink. */
   int i, fd;
   struct stat stbuf;
-  char name[4];
+  char name[20];
 
   subtest = 9;
 
@@ -522,27 +522,19 @@ void test20g()
   if (unlink("L3") != 0) e(49);
 
   /* L1 exists at this point. Test creating too many links. */
-if (LINK_MAX > 127) {
-  printf("[skip] ");		/* takes too many resources */
-} else {
-  name[0] = 'L';
-  name[1] = 'x';
-  name[2] = 1;
-  name[3] = 0;
   for (i = 2; i <= LINK_MAX; i++) {
+	sprintf(name, "Lx%d", i);
 	if (link("L1", name) != 0) e(50);
-	name[2]++;
   }
   if (stat("L1", &stbuf) != 0) e(51);
   if (stbuf.st_nlink != LINK_MAX) e(52);
   if (link("L1", "L2") != -1) e(53);
   if (errno != EMLINK) e(54);
-  name[2] = 1;
   for (i = 2; i <= LINK_MAX; i++) {
+	sprintf(name, "Lx%d", i);
 	if (unlink(name) != 0) e(55);
-	name[2]++;
   }
-}
+
   if (stat("L1", &stbuf) != 0) e(56);
   if (stbuf.st_nlink != 1) e(57);
 

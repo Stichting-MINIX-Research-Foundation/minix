@@ -119,7 +119,7 @@ void test26a()
 void test26b()
 {
   register int nlink;
-  char *bar = "bar.xxxxx"; 	/* xxxxx will hold a number up to 99999 */
+  char bar[30];
   struct stat st, st2;
 
   subtest = 2;
@@ -129,16 +129,8 @@ void test26b()
 
   /* Test what happens if we make LINK_MAX number of links. */
   System("touch foo");
-if (LINK_MAX > 127) {
-  printf("[skip] ");		/* takes too many resources */
-} else {
-  if (LINK_MAX >= 99999) e(1);	/* check "xxxxx" are enough */
   for (nlink = 2; nlink <= LINK_MAX; nlink++) {
-	bar[4] = (char) ((nlink / 10000) % 10) + '0';
-	bar[5] = (char) ((nlink / 1000) % 10) + '0';
-	bar[6] = (char) ((nlink / 100) % 10) + '0';
-	bar[7] = (char) ((nlink / 10) % 10) + '0';
-	bar[8] = (char) (nlink % 10) + '0';
+  	sprintf(bar, "bar.%d", nlink);
 	if (link("foo", bar) != 0) e(2);
 	Stat(bar, &st);
 	if (st.st_nlink != nlink) e(3);
@@ -150,11 +142,7 @@ if (LINK_MAX > 127) {
   Stat("foo", &st);
   if (st.st_nlink != LINK_MAX) e(5);
   for (nlink = 2; nlink <= LINK_MAX; nlink++) {
-	bar[4] = (char) ((nlink / 10000) % 10) + '0';
-	bar[5] = (char) ((nlink / 1000) % 10) + '0';
-	bar[6] = (char) ((nlink / 100) % 10) + '0';
-	bar[7] = (char) ((nlink / 10) % 10) + '0';
-	bar[8] = (char) (nlink % 10) + '0';
+  	sprintf(bar, "bar.%d", nlink);
 	Stat(bar, &st2);
 	if (!stateq(&st, &st2)) e(6);
   }
@@ -167,16 +155,13 @@ if (LINK_MAX > 127) {
 
   /* Now unlink() the bar.### files */
   for (nlink = LINK_MAX; nlink >= 2; nlink--) {
-	bar[4] = (char) ((nlink / 100) % 10) + '0';
-	bar[5] = (char) ((nlink / 10) % 10) + '0';
-	bar[6] = (char) (nlink % 10) + '0';
+  	sprintf(bar, "bar.%d", nlink);
 	Stat(bar, &st);
 	if (st.st_nlink != nlink) e(10);
 	Stat("foo", &st2);
 	if (!stateq(&st, &st2)) e(11);
 	if (unlink(bar) != 0) e(12);
   }
-}
   Stat("foo", &st);
   if (st.st_nlink != 1) e(13);	/* number of links back to 1 */
 

@@ -174,7 +174,7 @@ void test28b()
   int other = 0, dot = 0, dotdot = 0;	/* dirent counters */
   int rmdir_result;		/* tmp var */
   nlink_t nlink;
-  static char bar[] = "foo/bar.xxxxx";
+  static char bar[20];
   int stat_loc;
 
   subtest = 2;
@@ -189,8 +189,6 @@ void test28b()
   if (rmdir("/tmp/foo/foobar//") != 0) e(5);
   if (rmdir("/.././/././/tmp/foo///////////////") != 0) e(6);
   if (rmdir("/tmp/foo") != -1) e(7);	/* try again */
-
-  if (LINK_MAX >= 99999) e(8);	/* "xxxxx" in filename not long inough */
 
   /* Test max path ed. */
   if (mkdir(MaxName, 0777) != 0) e(9);	/* make dir MaxName */
@@ -211,31 +209,21 @@ void test28b()
   if (errno != ENAMETOOLONG) e(22);
 
   /* Test what happens if the parent link count > LINK_MAX. */
-  if (mkdir("foo", 0777) != 0) e(23);	/* make foo */
-if (LINK_MAX > 127) {
-  printf("[skip] ");			/* takes to many resources */
-} else {
-  for (nlink = 2; nlink < LINK_MAX; nlink++) {	/* make all */
-	bar[8] = (char) ((nlink / 10000) % 10) + '0';
-	bar[9] = (char) ((nlink / 1000) % 10) + '0';
-	bar[10] = (char) ((nlink / 100) % 10) + '0';
-	bar[11] = (char) ((nlink / 10) % 10) + '0';
-	bar[12] = (char) (nlink % 10) + '0';
-	if (mkdir(bar, 0777) != 0) { 
-		printf("nlink=%u\n", nlink);
-		e(24);
-	}
+  if (mkdir("foo", 0777) != 0) e(23);
+  System("touch foo/xyzzy");
+  for (nlink = 1; nlink < LINK_MAX; nlink++) {	/* make all */
+  	sprintf(bar, "foo/bar.%d", nlink);
+	if (link("foo/xyzzy", bar) != 0) e(24);
   }
-  if (stat("foo", &st) != 0) e(25);	/* foo now */
+  if (stat("foo/xyzzy", &st) != 0) e(25);	/* foo now */
   if (st.st_nlink != LINK_MAX) e(26);	/* is full */
-  if (mkdir("foo/nono", 0777) != -1) e(27);	/* no more */
+  if (link("foo/xyzzy", "nono") != -1) e(27);	/* no more */
   if (errno != EMLINK) e(28);	/* entrys. */
   System("rm -rf foo/nono");	/* Just in case. */
 
   /* Test if rmdir removes only empty dirs */
   if (rmdir("foo") != -1) e(29);/* not empty */
   if (errno != EEXIST && errno != ENOTEMPTY) e(30);
-}
   /* Test if rmdir removes a dir with an empty file (it shouldn't.) */
   System("rm -rf foo");		/* cleanup */
   if (mkdir("foo", 0777) != 0) e(31);
@@ -262,9 +250,12 @@ if (LINK_MAX > 127) {
 #endif
 
   /* See if ".." and "." are removed from the dir, and if it is
-   * unwriteable * Note, we can not remove any files in the PARENT
-   * process, because this * will make readdir unpredicatble. (see
-   * 1003.1 page 84 line 30.) However * removal of the directory is
+   * unwriteable
+   * Note, we can not remove any files in the PARENT
+   * process, because this
+   * will make readdir unpredicatble. (see
+   * 1003.1 page 84 line 30.) However
+   * removal of the directory is
    * not specified in the standard.
    */
   System("rm -rf /tmp/sema[12].07");
