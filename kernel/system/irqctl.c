@@ -30,23 +30,22 @@ register message *m_ptr;	/* pointer to request message */
   switch(m_ptr->IRQ_REQUEST) {
 
   /* Enable or disable IRQs. This is straightforward. */
-  case IRQ_ENABLE: {          
+  case IRQ_ENABLE:           
+  case IRQ_DISABLE: 
       irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID;
       if (irq_hook_id >= NR_IRQ_HOOKS) return(EINVAL);
-      enable_irq(&irq_hooks[irq_hook_id]);	
+      if (irq_hooks[irq_hook_id].proc_nr != m_ptr->m_source) return(EPERM);
+      if (m_ptr->IRQ_REQUEST == IRQ_ENABLE)
+          enable_irq(&irq_hooks[irq_hook_id]);	
+      else 
+          disable_irq(&irq_hooks[irq_hook_id]);	
       break;
-  }
-  case IRQ_DISABLE: {
-      irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID;
-      if (irq_hook_id >= NR_IRQ_HOOKS) return(EINVAL);
-      disable_irq(&irq_hooks[irq_hook_id]);	
-      break;
-  }
+  
 
   /* Control IRQ policies. Set a policy and needed details in the IRQ table.
    * This policy is used by a generic function to handle hardware interrupts. 
    */
-  case IRQ_SETPOLICY: { 
+  case IRQ_SETPOLICY:  
 
       /* Check if IRQ line is acceptable. */
       irq_vec = (unsigned) m_ptr->IRQ_VECTOR; 
@@ -73,7 +72,7 @@ register message *m_ptr;	/* pointer to request message */
       /* Return index of the IRQ hook in use. */
       m_ptr->IRQ_HOOK_ID = irq_hook_id;
       break;
-  }
+
   default:
       return(EINVAL);				/* invalid IRQ_REQUEST */
   }

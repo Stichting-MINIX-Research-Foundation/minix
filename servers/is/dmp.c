@@ -46,7 +46,6 @@ struct proc proc[NR_TASKS + NR_PROCS];
 struct system_image image[IMAGE_SIZE];
 
 
-
 /*===========================================================================*
  *				handle_fkey				     *
  *===========================================================================*/
@@ -168,9 +167,8 @@ PRIVATE void monparams_dmp()
 PRIVATE void irqtab_dmp()
 {
   int i,j,r;
-  struct irq_hook irqhooks[NR_IRQ_HOOKS];
+  struct irq_hook irq_hooks[NR_IRQ_HOOKS];
   struct irq_hook *e;	/* irq tab entry */
-  int p;		/* policy */
   char *irq[] = {
   	"clock",	/* 00 */
   	"keyboard",	/* 01 */
@@ -190,27 +188,24 @@ PRIVATE void irqtab_dmp()
   	"at_wini_1",	/* 15 */
   };
 
-  if ((r = sys_getirqhooks(irqhooks)) != OK) {
+  if ((r = sys_getirqhooks(irq_hooks)) != OK) {
       report("warning: couldn't get copy of irq hooks", r);
       return;
   }
 
-  printf("IRQ table dump showing hardware interrupt policies for each IRQ vector.\n");
-#if 0
-  printf("-irq name/nr- -pnr- --port-- msk_val --addr-- -type-rdp-str-ech-wrp-ena- \n");
-  for (i=0; i<NR_IRQ_VECTORS; i++) {
-  	e = &irqtab[i];
-  	p = e->policy;
-  	printf("%9s %2d ", irq[i], i); 
-  	if (e->proc_nr!=NONE)	printf("%4d  ", e->proc_nr); 
-  	else 		 	printf("      ");
-  	printf(" 0x%06x 0x%05x 0x%06x  %c%c%c   %d\n",
-  		e->port, e->mask_val, e->addr, 
-  		(p&IRQ_BYTE)?'B':'-', (p&IRQ_WORD)?'W':'-', (p&IRQ_LONG)?'L':'-',
-  		((p&IRQ_REENABLE) != 0)
-  	);
+  printf("IRQ policies dump shows use of kernel's IRQ hooks.\n");
+  printf("-h.id- -proc.nr- -IRQ vector (nr.)- -policy- \n");
+  for (i=0; i<NR_IRQ_HOOKS; i++) {
+  	e = &irq_hooks[i];
+  	printf("%3d", i);
+  	if (e->proc_nr==NONE) {
+  	    printf("    <unused>\n");
+  	    continue;
+  	}
+  	printf("%10d  ", e->proc_nr); 
+  	printf("    %9.9s (%02d) ", irq[i], i); 
+  	printf("  %s\n", (e->policy & IRQ_REENABLE) ? "reenable" : "-");
   }
-#endif
   printf("\n");
 }
 

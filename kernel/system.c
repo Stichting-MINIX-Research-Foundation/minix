@@ -159,6 +159,7 @@ PRIVATE void initialize(void)
   map(SYS_VIRCOPY, do_vircopy); 	/* use pure virtual addressing */
   map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
+  map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
 
   /* Miscellaneous. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */

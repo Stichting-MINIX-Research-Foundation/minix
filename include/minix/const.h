@@ -42,7 +42,7 @@
 #define BIOS_SEG      0x0200	/* flags indicating BIOS memory segment */
 #define NR_BIOS_SEGS       3    /* # BIOS memory regions (variable) */
 
-#define PHYS_SEG      0x0300	/* flag indicating entire physical memory */
+#define PHYS_SEG      0x0400	/* flag indicating entire physical memory */
 
 /* Labels used to disable code sections for different reasons. */
 #define DEAD_CODE	   0	/* unused code in normal configuration */

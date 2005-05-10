@@ -223,7 +223,7 @@
 #  define SYS_SIGNALRM	15	/* sys_signalrm(proc_nr, ticks) */
 #  define SYS_SYNCALRM	16	/* sys_syncalrm(proc_nr,exp_time,abs_time) */
 #  define SYS_FLAGALRM	17	/* sys_flagalrm(ticks, flag_ptr) */
-
+#  define SYS_PHYSVCOPY 18	/* sys_physvcopy(vec_ptr, vec_size) */
 #  define SYS_SVRCTL    19	/* sys_svrctl(proc_nr, req, argp) */
 #  define SYS_SDEVIO    20	/* sys_sdevio(port, proc_nr, buf, count) */
 #  define SYS_SIGRETURN 21	/* sys_sigreturn(proc_nr, ctxt_ptr, flags) */

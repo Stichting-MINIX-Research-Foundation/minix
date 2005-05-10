@@ -50,7 +50,7 @@ register message *m_ptr;	/* pointer to request message */
       }
 
       /* Check if physical addressing is used without SYS_PHYSCOPY. */
-      if ((vir_addr[i].segment & SEGMENT_TYPE) == PHYS_SEG &&
+      if ((vir_addr[i].segment & PHYS_SEG) &&
           m_ptr->m_type != SYS_PHYSCOPY) return(EPERM);
   }
 
@@ -84,6 +84,7 @@ register message *m_ptr;	/* pointer to request message */
   phys_bytes kernel_phys;
   phys_bytes bytes;
   int i,s;
+  struct vir_cp_req *req;
 
   /* Check if request vector size is ok. */
   nr_req = (unsigned) m_ptr->VCP_VEC_SIZE;
@@ -100,11 +101,17 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Assume vector with requests is correct. Try to copy everything. */
   for (i=0; i<nr_req; i++) {
-  	s = virtual_copy(&vir_cp_req[i].src, &vir_cp_req[i].dst, 
-  		vir_cp_req[i].count);
-  	if (s != OK) break;
+
+      req = &vir_cp_req[i];
+
+      /* Check if physical addressing is used without SYS_PHYSVCOPY. */
+      if (((req->src.segment | req->dst.segment) & PHYS_SEG) &&
+              m_ptr->m_type != SYS_PHYSVCOPY) 
+          return(EPERM);
+      if ((s=virtual_copy(&req->src, &req->dst, req->count)) != OK) 
+          return(s);
   }
-  return(s);
+  return(OK);
 }
 
 
