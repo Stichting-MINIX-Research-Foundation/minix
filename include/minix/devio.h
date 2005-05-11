@@ -12,6 +12,9 @@
 #include <minix/config.h>     /* needed to include <minix/type.h> */
 #include <sys/types.h>        /* u8_t, u16_t, u32_t needed */
 
+typedef u16_t port_t;
+typedef U16_t Port_t;
+
 /* We have different granularities of port I/O: 8, 16, 32 bits.
  * Also see <ibm/portio.h>, which has functions for bytes, words,  
  * and longs. Hence, we need different (port,value)-pair types. 

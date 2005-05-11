@@ -47,11 +47,9 @@
 #define	HARDWARE_STACK	NO_STACK	/* dummy task, uses kernel stack */
 #define	SYS_STACK	SMALL_STACK
 #define	CLOCK_STACK	SMALL_STACK
-#define RTL8139_STACK	(2 * SMALL_STACK * ENABLE_RTL8139)
 
 /* Stack space for all the task stacks.  Declared as (char *) to align it. */
-#define	TOT_STACK_SPACE	(IDLE_STACK + HARDWARE_STACK + CLOCK_STACK + SYS_STACK \
-		+ RTL8139_STACK )
+#define	TOT_STACK_SPACE	(IDLE_STACK+HARDWARE_STACK+CLOCK_STACK+SYS_STACK )
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 	
 
@@ -63,9 +61,6 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * routine and stack size is also provided.
  */
 PUBLIC struct system_image image[] = {
-#if ENABLE_RTL8139
- { RTL8139, rtl8139_task, P_TASK,   PPRI_TASK, RTL8139_STACK, RTL8139_SENDMASK, "RTL8139" },
-#endif
  { IDLE, idle_task,    P_IDLE,   PPRI_IDLE,  IDLE_STACK,    IDLE_SENDMASK,    "IDLE"    },
  { CLOCK, clock_task,   P_TASK,   PPRI_TASK, CLOCK_STACK,   CLOCK_SENDMASK,   "CLOCK"   },
  { SYSTASK, sys_task,     P_TASK,   PPRI_TASK, SYS_STACK,     SYSTEM_SENDMASK,  "SYS"     },
@@ -83,6 +78,9 @@ PUBLIC struct system_image image[] = {
 #endif
 #if ENABLE_PRINTER
  { PRINTER, 0,            P_DRIVER, PPRI_NORMAL, 0,           PRN_SENDMASK,     "PRINTER" },
+#endif
+#if ENABLE_RTL8139
+ { USR8139, 0,            P_DRIVER, PPRI_HIGH, 0,             RTL8139_SENDMASK,  "RTL8139" },
 #endif
  { INIT_PROC_NR, 0,            P_USER,   PPRI_USER, 0,             INIT_SENDMASK,    "INIT"    },
 };

@@ -14,10 +14,12 @@ usage:
 
 build: all
 all install clean:
+	cd ./libdriver && $(MAKE) $@
+	cd ./libpci && $(MAKE) $@
 	cd ./tty && $(MAKE) $@
 	cd ./memory && $(MAKE) $@
 	cd ./at_wini && $(MAKE) $@
 	cd ./floppy && $(MAKE) $@
 	cd ./printer && $(MAKE) $@
-	cd ./libdriver && $(MAKE) $@
+	cd ./rtl8139 && $(MAKE) $@
 

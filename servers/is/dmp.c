@@ -203,7 +203,7 @@ PRIVATE void irqtab_dmp()
   	    continue;
   	}
   	printf("%10d  ", e->proc_nr); 
-  	printf("    %9.9s (%02d) ", irq[i], i); 
+  	printf("    %9.9s (%02d) ", irq[e->irq], e->irq); 
   	printf("  %s\n", (e->policy & IRQ_REENABLE) ? "reenable" : "-");
   }
   printf("\n");

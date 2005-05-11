@@ -32,14 +32,13 @@
  */
 
 /* Kernel tasks. These all run in the same address space. */
-#define RTL8139    	 IDLE - ENABLE_RTL8139 		/* networking */
 #define IDLE             -4	/* runs when no one else can run */
 #define CLOCK  		 -3	/* alarms and other clock functions */
 #define SYSTASK          -2	/* request system functionality */
 #define HARDWARE         -1	/* used as source on notify() messages */
 
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
-#define NR_TASKS	(4 + ENABLE_RTL8139)
+#define NR_TASKS	4 
 
 /* Magic numbers for controllers. Device driver mapping is dynamic. */
 #define CTRLR(n)	(NONE + (n))
@@ -53,15 +52,16 @@
 #define AT_WINI		(MEMORY + ENABLE_AT_WINI)   /* AT Winchester */
 #define FLOPPY		(AT_WINI + ENABLE_FLOPPY)   /* floppy disk */
 #define PRINTER		(FLOPPY + ENABLE_PRINTER)    /* Centronics */
-#define INIT_PROC_NR	(PRINTER + 1)   	/* init -- goes multiuser */
+#define USR8139		(PRINTER + ENABLE_RTL8139)    /* Realtek RTL8139 */
+#define INIT_PROC_NR	(USR8139 + 1)   	/* init -- goes multiuser */
 
 /* Number of first user process not part of the operating system. */ 
 #define LOW_USER  	INIT_PROC_NR  
 
-/* The number of processes that are contained in the system image. */
+/* Number of processes contained in the system image. */
 #define IMAGE_SIZE 	(NR_TASKS + \
 			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
-			ENABLE_PRINTER + 1 )	
+			ENABLE_PRINTER + ENABLE_RTL8139 + 1 )	
 
 
 /*===========================================================================*

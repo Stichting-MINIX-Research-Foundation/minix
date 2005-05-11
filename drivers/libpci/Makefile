@@ -1,4 +1,4 @@
-# Makefile for driver library
+# Makefile for PCI bus library
 
 # Directories
 u = /usr
@@ -13,7 +13,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lutils
 
-OBJECTS = driver.o drvlib.o
+OBJECTS = pci.o pci_table.o 
 
 all build install: $(OBJECTS)	
 
@@ -29,9 +29,7 @@ a = $m/config.h $i/ansi.h $m/type.h $m/com.h $m/callnr.h $s/types.h \
 	$i/string.h $i/limits.h $i/stddef.h $i/errno.h \
 	$m/partition.h $m/u64.h
 
-driver.o:	driver.h $a
-driver.o:	$s/ioc_disk.h
-
-drvlib.o:	driver.h $a
-drvlib.o:	drvlib.h $b/partition.h
+pci.o:	$a
+pci.o:	pci.h 
+pci.o:	pci_amd.h pci_intel.h pci_via.h pci_sis.h 
 

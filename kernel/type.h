@@ -28,8 +28,6 @@ struct memory {
 
 
 #if (CHIP == INTEL)
-typedef u16_t port_t;
-typedef U16_t Port_t;
 typedef unsigned reg_t;		/* machine register */
 
 /* The stack frame layout is determined by the software, but for efficiency

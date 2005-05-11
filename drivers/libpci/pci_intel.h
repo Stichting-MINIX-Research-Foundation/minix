@@ -25,8 +25,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define PCII_UNSEL 	(0)
 
 #define PCII_RREG8_(bus, dev, func, reg) \
-	(outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
-	inb(PCII_CONFDATA+((reg)&3)))
+	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
+	pci_inb(PCII_CONFDATA+((reg)&3)))
 #define PCII_RREG16_(bus, dev, func, reg) \
 	(PCII_RREG8_(bus, dev, func, reg) | \
 	(PCII_RREG8_(bus, dev, func, reg+1) << 8))
@@ -35,8 +35,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 	(PCII_RREG16_(bus, dev, func, reg+2) << 16))
 
 #define PCII_WREG8_(bus, dev, func, reg, val) \
-	(outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
-	outb(PCII_CONFDATA+((reg)&3), (val)))
+	(pci_outl(PCII_CONFADD, PCII_SELREG_(bus, dev, func, reg)), \
+	pci_outb(PCII_CONFDATA+((reg)&3), (val)))
 #define PCII_WREG16_(bus, dev, func, reg, val) \
 	(PCII_WREG8_(bus, dev, func, reg, (val)), \
 	(PCII_WREG8_(bus, dev, func, reg+1, (val) >> 8)))

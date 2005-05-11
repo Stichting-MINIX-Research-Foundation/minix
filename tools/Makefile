@@ -16,6 +16,7 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/at_wini/at_wini \
 	../drivers/floppy/floppy \
 	../drivers/printer/printer \
+	../drivers/rtl8139/rtl8139 \
 	../servers/init/init \
 	#bootfs.img
 

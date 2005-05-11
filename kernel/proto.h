@@ -4,9 +4,6 @@
 #define PROTO_H
 
 /* Struct declarations. */
-#if TEMP_CODE
-struct dpeth;
-#endif
 struct proc;
 struct time_info;
 struct timer;
@@ -46,32 +43,6 @@ _PROTOTYPE( void stop_sequence, (struct timer *tp)				);
 /* misc.c */
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
 
-#if TEMP_CODE
-#if ENABLE_PCI
-/* pci.c */
-_PROTOTYPE( void pci_init, (void)					);
-_PROTOTYPE( int pci_find_dev, (U8_t bus, U8_t dev, U8_t func,
-							int *devindp)	);
-_PROTOTYPE( int pci_first_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( int pci_next_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( void pci_reserve, (int devind)				);
-_PROTOTYPE( void pci_ids, (int devind, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( char *pci_slot_name, (int devind)				);
-_PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
-_PROTOTYPE( u8_t pci_attr_r8, (int devind, int port)			);
-_PROTOTYPE( u16_t pci_attr_r16, (int devind, int port)			);
-_PROTOTYPE( u32_t pci_attr_r32, (int devind, int port)			);
-_PROTOTYPE( void pci_attr_w16, (int devind, int port, U16_t value)	);
-_PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
-
-/* rtl8029.c */
-_PROTOTYPE( int rtl_probe, (struct dpeth *dep)				);
-#endif /* ENABLE_PCI */
-/* rtl8139.c */
-_PROTOTYPE( void rtl8139_task, (void)					);
-#endif /* TEMP_CODE */
-
-
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
 _PROTOTYPE( void notify, (int proc_nr, int notify_type)			);
@@ -102,9 +73,6 @@ _PROTOTYPE( phys_bytes umap_bios, (struct proc *rp, vir_bytes vir_addr,
 		vir_bytes bytes)					);
 _PROTOTYPE( int generic_handler, (irq_hook_t *hook)			);
 
-/* table.c */
-_PROTOTYPE( void mapdrivers, (void)					);
-
 #if (CHIP == INTEL)
 
 /* exception.c */
@@ -124,10 +92,10 @@ _PROTOTYPE( int disable_irq, (irq_hook_t *hook)				);
 _PROTOTYPE( u16_t mem_rdw, (U16_t segm, vir_bytes offset)		);
 _PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
 		phys_bytes count)					);
-_PROTOTYPE( void phys_insb, (Port_t port, phys_bytes buf, size_t count)	);
-_PROTOTYPE( void phys_insw, (Port_t port, phys_bytes buf, size_t count)	);
-_PROTOTYPE( void phys_outsb, (Port_t port, phys_bytes buf, size_t count));
-_PROTOTYPE( void phys_outsw, (Port_t port, phys_bytes buf, size_t count));
+_PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)	);
+_PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)	);
+_PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count));
+_PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count));
 _PROTOTYPE( void reset, (void)						);
 _PROTOTYPE( void level0, (void (*func)(void))				);
 _PROTOTYPE( void monitor, (void)					);

@@ -99,7 +99,7 @@ message *m_ptr;			/* pointer to request message */
   case SYSSENDMASK: {
 	rp->p_type = P_SERVER;
 	rp->p_sendmask = ALLOW_ALL_MASK;
-	send_mask_allow(proc_addr(RTL8139)->p_sendmask, proc_nr);
+	send_mask_allow(proc_addr(USR8139)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(PM_PROC_NR)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(FS_PROC_NR)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(IS_PROC_NR)->p_sendmask, proc_nr);

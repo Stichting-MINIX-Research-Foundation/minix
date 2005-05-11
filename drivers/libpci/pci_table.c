@@ -8,10 +8,15 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 See the Linux PCI ID Repository <http://pciids.sourceforge.net/>.
 */
 
-#include "../../kernel/kernel.h"
+/* Changes from original Minix 2.0.4 version (2003-09-05):
+ * 2003-11-30 (kjb) Minix 2.0.4 FIX.TAZ add D-Link RTL8139 (0x1186, 0x1300)
+ * 2004-08-08 (asw) add Intel 82371AB (0x8086, 0x7100) 
+ */
+
+#include "../drivers.h"
 #include "pci.h"
 #if __minix_vmd
-#include "../../kernel/config.h"
+#include "config.h"
 #endif
 
 #if ENABLE_PCI
@@ -104,6 +109,7 @@ struct pci_device pci_device_table[]=
 	{ 0x8086, 0x7000, "Intel 82371SB" },
 	{ 0x8086, 0x7010, "Intel 82371SB (IDE)" },
 	{ 0x8086, 0x7020, "Intel 82371SB (USB)" },
+	{ 0x8086, 0x7100, "Intel 82371AB" },
 	{ 0x8086, 0x7110, "Intel 82371AB (PIIX4)" },
 	{ 0x8086, 0x7111, "Intel 82371AB (IDE)" },
 	{ 0x8086, 0x7112, "Intel 82371AB (USB)" },
@@ -205,9 +211,12 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
 	{ 0x10B9, 0x1541, },	/* ALI M1541 */
 	{ 0x1106, 0x0305, },	/* VIA VT8363/8365 */
 	{ 0x1106, 0x3099, },	/* VIA VT8367 [KT266] */
+	{ 0x1106, 0x3188, },	/* VIA */
+	{ 0x1106, 0x0204, },	/* VIA VT8367 [KT266] */
 	{ 0x8086, 0x122D, },	/* Intel 82437FX */
 	{ 0x8086, 0x1237, }, 	/* Intel 82441FX */
 	{ 0x8086, 0x1250, },	/* Intel 82439HX */
+	{ 0x8086, 0x7100, },    /* Intel 82371AB */
 	{ 0x8086, 0x7190, },	/* Intel 82443BX */
 	{ 0x0000, 0x0000, },
 };
@@ -219,8 +228,10 @@ struct pci_isabridge pci_isabridge[]=
 	{ 0x10B9, 0x1533, 1, PCI_IB_PIIX,	},	/* ALI M1533 */
 	{ 0x1106, 0x0686, 1, PCI_IB_VIA,	},	/* VIA VT82C686 */
 	{ 0x1106, 0x3074, 1, PCI_IB_VIA,	},	/* VIA VT8233 */
+	{ 0x1106, 0x3227, 1, PCI_IB_VIA,	},	/* VIA */
 	{ 0x8086, 0x122E, 1, PCI_IB_PIIX,	},	/* Intel 82371FB */
 	{ 0x8086, 0x7000, 1, PCI_IB_PIIX,	},	/* Intel 82371SB */
+	{ 0x8086, 0x7100, 1, PCI_IB_PIIX,	},	/* Intel 82371AB */
 	{ 0x8086, 0x7110, 1, PCI_IB_PIIX,	},	/* Intel PIIX4 */
 	{ 0x0000, 0x0000, 0, 0, 		},
 };

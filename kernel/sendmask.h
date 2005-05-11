@@ -54,11 +54,7 @@
     allow_all_mask 
  
 #define RTL8139_SENDMASK \
-    deny_all_mask \
-    allow(1, USER_PROC_NR) 	/* inet server starts as user process */ \
-    allow(1, TTY) 		/* need to register function key */ \
-    allow(1, SYSTASK) 		/* need system functionality */	 \
-    allow(1, CLOCK)	  	/* need clock functionality */   
+    allow_all_mask 
 
 #define	IDLE_SENDMASK \
     deny_all_mask 

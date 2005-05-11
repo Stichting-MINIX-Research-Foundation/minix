@@ -22,8 +22,7 @@ HEAD =	mpx.o
 
 OBJS =	start.o protect.o klibc.o klib.o table.o main.o proc.o \
 	i8259.o exception.o system.o clock.o misc.o \
-	dummy.o \
-	rtl8139.o pci.o pci_table.o  
+	dummy.o 
 
 SYS =	system/system.a 
 
@@ -135,28 +134,6 @@ table.o:	$h/com.h
 table.o:	proc.h
 table.o:	sendmask.h
 table.o:	$b/int86.h
-
-rtl8139.o:	$a
-rtl8139.o:	$h/com.h
-rtl8139.o:	$n/hton.h
-rtl8139.o:	$g/ether.h
-rtl8139.o:	$g/eth_io.h
-rtl8139.o:	$i/stddef.h
-rtl8139.o:	assert.h
-rtl8139.o:	pci.h
-rtl8139.o:	proc.h
-rtl8139.o:	rtl8139.h
-
-pci.o:		$a
-pci.o:		assert.h
-pci.o:		pci.h
-pci.o:		pci_amd.h
-pci.o:		pci_intel.h
-pci.o:		pci_via.h
-pci.o:		pci_sis.h
-
-pci_table.o:	$a
-pci_table.o:	pci.h
 
 dummy.o:	$a
 

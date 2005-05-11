@@ -1,3 +1,4 @@
+#define USER_SPACE 1
 /*
 pci.c
 
@@ -6,16 +7,17 @@ Configure devices on the PCI bus
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
-#include "../../kernel/kernel.h"
+#include "../drivers.h"
+#include <minix/com.h>
+#include <minix/syslib.h>
 
-#include "../../kernel/assert.h"
 #include "pci.h"
 #include "pci_amd.h"
 #include "pci_intel.h"
 #include "pci_sis.h"
 #include "pci_via.h"
 #if __minix_vmd
-#include "../../kernel/config.h"
+#include "config.h"
 #endif
 
 #if ENABLE_PCI
@@ -25,10 +27,14 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define irq_mode_pci(irq) ((void)0)
 #endif
 
-INIT_ASSERT
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <minix/utils.h>
+INIT_SERVER_ASSERT
 
 #define NR_PCIBUS	 2
-#define NR_PCIDEV	20
+#define NR_PCIDEV	40
 
 #define PBT_INTEL	 1
 #define PBT_PCIBRIDGE	 2
@@ -97,6 +103,47 @@ FORWARD _PROTOTYPE( u16_t pcii_rsts, (int busind)			);
 FORWARD _PROTOTYPE( void pcii_wsts, (int busind, U16_t value)		);
 
 /*===========================================================================*
+ *			helper functions for I/O			     *
+ *===========================================================================*/
+PUBLIC unsigned pci_inb(U16_t port) {
+	U8_t value;
+	int s;
+	if ((s=sys_inb(port, &value)) !=OK)
+		printf("PCI: warning, sys_inb failed: %d\n", s);
+	return value;
+}
+PUBLIC unsigned pci_inw(U16_t port) {
+	U16_t value;
+	int s;
+	if ((s=sys_inw(port, &value)) !=OK)
+		printf("PCI: warning, sys_inw failed: %d\n", s);
+	return value;
+}
+PUBLIC unsigned pci_inl(U16_t port) {
+	U32_t value;
+	int s;
+	if ((s=sys_inl(port, &value)) !=OK)
+		printf("PCI: warning, sys_inl failed: %d\n", s);
+	return value;
+}
+PUBLIC void pci_outb(U16_t port, U8_t value) {
+	int s;
+	if ((s=sys_outb(port, value)) !=OK)
+		printf("PCI: warning, sys_outb failed: %d\n", s);
+}
+PUBLIC void pci_outw(U16_t port, U16_t value) {
+	int s;
+	if ((s=sys_outw(port, value)) !=OK)
+		printf("PCI: warning, sys_outw failed: %d\n", s);
+}
+PUBLIC void pci_outl(U16_t port, U32_t value) {
+	int s;
+	if ((s=sys_outl(port, value)) !=OK)
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+}
+
+
+/*===========================================================================*
  *				pci_init				     *
  *===========================================================================*/
 PUBLIC void pci_init()
@@ -107,7 +154,7 @@ PUBLIC void pci_init()
 		return;
 
 	/* We don't expect to interrupted */
-	assert(first_time == 1);
+	server_assert(first_time == 1);
 	first_time= -1;
 
 	/* Only Intel (compatible) PCI controllers are supported at the
@@ -201,8 +248,8 @@ u16_t *didp;
 PUBLIC void pci_reserve(devind)
 int devind;
 {
-	assert(devind <= nr_pcidev);
-	assert(!pcidev[devind].pd_inuse);
+	server_assert(devind <= nr_pcidev);
+	server_assert(!pcidev[devind].pd_inuse);
 	pcidev[devind].pd_inuse= 1;
 }
 
@@ -215,7 +262,7 @@ int devind;
 u16_t *vidp;
 u16_t *didp;
 {
-	assert(devind <= nr_pcidev);
+	server_assert(devind <= nr_pcidev);
 	*vidp= pcidev[devind].pd_vid;
 	*didp= pcidev[devind].pd_did;
 }
@@ -351,7 +398,7 @@ PRIVATE void pci_intel_init()
 	 */
 	u32_t bus, dev, func;
 	u16_t vid, did;
-	int i, r, busind;
+	int s, i, r, busind;
 	char *dstr;
 
 	bus= 0;
@@ -360,7 +407,12 @@ PRIVATE void pci_intel_init()
 
 	vid= PCII_RREG16_(bus, dev, func, PCI_VID);
 	did= PCII_RREG16_(bus, dev, func, PCI_DID);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 
 	if (vid == 0xffff && did == 0xffff)
 		return;	/* Nothing here */
@@ -383,7 +435,7 @@ PRIVATE void pci_intel_init()
 	}
 
 	if (nr_pcibus >= NR_PCIBUS)
-		panic("too many PCI busses", nr_pcibus);
+		server_panic("PCI","too many PCI busses", nr_pcibus);
 	busind= nr_pcibus;
 	nr_pcibus++;
 	pcibus[busind].pb_type= PBT_INTEL;
@@ -445,7 +497,7 @@ int busind;
 printf("probe_bus(%d)\n", busind);
 #endif
 	if (nr_pcidev >= NR_PCIDEV)
-		panic("too many PCI devices", nr_pcidev);
+		server_panic("PCI","too many PCI devices", nr_pcidev);
 	devind= nr_pcidev;
 
 	for (dev= 0; dev<32; dev++)
@@ -519,7 +571,7 @@ printf("probe_bus(%d)\n", busind);
 			pcidev[devind].pd_inuse= 0;
 
 			if (nr_pcidev >= NR_PCIDEV)
-				panic("too many PCI devices", nr_pcidev);
+			  server_panic("PCI","too many PCI devices", nr_pcidev);
 			devind= nr_pcidev;
 
 			if (func == 0 && !(headt & PHT_MULTIFUNC))
@@ -610,7 +662,7 @@ int busind;
 			r= do_sis_isabr(bridge_dev);
 			break;
 		default:
-			panic("unknown ISA bridge type", type);
+			server_panic("PCI","unknown ISA bridge type", type);
 		}
 		return r;
 	}
@@ -671,7 +723,7 @@ int busind;
 #endif
 
 		if (nr_pcibus >= NR_PCIBUS)
-			panic("too many PCI busses", nr_pcibus);
+			server_panic("PCI","too many PCI busses", nr_pcibus);
 		ind= nr_pcibus;
 		nr_pcibus++;
 		pcibus[ind].pb_type= PBT_PCIBRIDGE;
@@ -695,7 +747,7 @@ int busind;
 			pcibus[ind].pb_wsts= pcibr_via_wsts;
 			break;
 		default:
-			panic("unknown PCI-PCI bridge type", type);
+		    server_panic("PCI","unknown PCI-PCI bridge type", type);
 		}
 
 		probe_bus(ind);
@@ -709,7 +761,7 @@ int busind;
 PRIVATE int do_piix(devind)
 int devind;
 {
-	int i, dev, func, irqrc, irq;
+	int i, s, dev, func, irqrc, irq;
 	u16_t elcr1, elcr2, elcr;
 
 #if DEBUG
@@ -717,8 +769,15 @@ int devind;
 #endif
 	dev= pcidev[devind].pd_dev;
 	func= pcidev[devind].pd_func;
+#if USER_SPACE
+	if (OK != (s=sys_inb(PIIX_ELCR1, &elcr1)))
+		printf("Warning, sys_inb failed: %d\n", s);
+	if (OK != (s=sys_inb(PIIX_ELCR2, &elcr2)))
+		printf("Warning, sys_inb failed: %d\n", s);
+#else
 	elcr1= inb(PIIX_ELCR1);
 	elcr2= inb(PIIX_ELCR2);
+#endif
 	elcr= elcr1 | (elcr2 << 8);
 	for (i= 0; i<4; i++)
 	{
@@ -737,7 +796,7 @@ int devind;
 			{
 				printf("IRQ %d is not level triggered\n",
 					irq);
-				panic(NULL, NO_NUM);
+				server_panic(NULL,NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}
@@ -762,7 +821,7 @@ int devind;
 
 	/* Fake a device with the required function */
 	if (nr_pcidev >= NR_PCIDEV)
-		panic("too many PCI devices", nr_pcidev);
+		server_panic("PCI","too many PCI devices", nr_pcidev);
 	xdevind= nr_pcidev;
 	pcidev[xdevind].pd_busind= bus;
 	pcidev[xdevind].pd_dev= dev;
@@ -789,7 +848,7 @@ int devind;
 			{
 				printf("IRQ %d is not level triggered\n",
 					irq);
-				panic(NULL, NO_NUM);
+				server_panic(NULL, NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}
@@ -865,7 +924,7 @@ int devind;
 			irq= pci_attr_r8(devind, VIA_ISABR_IRQ_R1) >> 4;
 			break;
 		default:
-			assert(0);
+			server_assert(0);
 		}
 		irq &= 0xf;
 		if (!irq)
@@ -881,7 +940,7 @@ int devind;
 			{
 				printf("IRQ %d is not level triggered\n",
 					irq);
-				panic(NULL, NO_NUM);
+				server_panic(NULL, NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}
@@ -1085,12 +1144,17 @@ int devind;
 int port;
 {
 	u8_t v;
-
+	int s;
 
 	v= PCII_RREG8_(pcibus[busind].pb_bus, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 #if 0
 	printf("pcii_rreg8(%d, %d, 0x%X): %d.%d.%d= 0x%X\n",
 		busind, devind, port,
@@ -1110,11 +1174,17 @@ int devind;
 int port;
 {
 	u16_t v;
+	int s;
 
 	v= PCII_RREG16_(pcibus[busind].pb_bus, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n");
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 #if 0
 	printf("pcii_rreg16(%d, %d, 0x%X): %d.%d.%d= 0x%X\n",
 		busind, devind, port,
@@ -1134,11 +1204,17 @@ int devind;
 int port;
 {
 	u32_t v;
+	int s;
 
 	v= PCII_RREG32_(pcibus[busind].pb_bus, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 #if 0
 	printf("pcii_rreg32(%d, %d, 0x%X): %d.%d.%d= 0x%X\n",
 		busind, devind, port,
@@ -1158,6 +1234,7 @@ int devind;
 int port;
 u16_t value;
 {
+	int s;
 #if 0
 	printf("pcii_wreg16(%d, %d, 0x%X, 0x%X): %d.%d.%d\n",
 		busind, devind, port, value,
@@ -1167,7 +1244,12 @@ u16_t value;
 	PCII_WREG16_(pcibus[busind].pb_bus, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port, value);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 }
 
 
@@ -1180,6 +1262,7 @@ int devind;
 int port;
 u32_t value;
 {
+	int s;
 #if 0
 	printf("pcii_wreg32(%d, %d, 0x%X, 0x%X): %d.%d.%d\n",
 		busind, devind, port, value,
@@ -1189,7 +1272,12 @@ u32_t value;
 	PCII_WREG32_(pcibus[busind].pb_bus, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port, value);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n");
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 }
 
 
@@ -1200,8 +1288,15 @@ PRIVATE u16_t pcii_rsts(busind)
 int busind;
 {
 	u16_t v;
+	int s;
+
 	v= PCII_RREG16_(pcibus[busind].pb_bus, 0, 0, PCI_PCISTS);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 	return v;
 }
 
@@ -1213,8 +1308,14 @@ PRIVATE void pcii_wsts(busind, value)
 int busind;
 u16_t value;
 {
+	int s;
 	PCII_WREG16_(pcibus[busind].pb_bus, 0, 0, PCI_PCISTS, value);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+#else
 	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
 }
 #endif /* ENABLE_PCI */
 
