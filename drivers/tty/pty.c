@@ -100,7 +100,7 @@ message *m_ptr;
 	if (numap_local(m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS,
 							m_ptr->COUNT) == 0) {
 #else
-	if ((r = sys_umap(m_ptr->PROC_NR, D, m_ptr->ADDRESS,
+	if ((r = sys_umap(m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS,
 		m_ptr->COUNT, &p)) != OK) {
 #endif
 		break;
@@ -142,7 +142,7 @@ message *m_ptr;
 							m_ptr->COUNT) == 0) {
 		r = EFAULT;
 #else
-	if ((r = sys_umap(m_ptr->PROC_NR, D, m_ptr->ADDRESS,
+	if ((r = sys_umap(m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS,
 		m_ptr->COUNT, &p)) != OK) {
 #endif
 		break;
@@ -234,8 +234,8 @@ tty_t *tp;
 	user_phys = proc_vir2phys(proc_addr(tp->tty_outproc), tp->tty_out_vir);
 	phys_copy(user_phys, vir2phys(pp->ohead), (phys_bytes) count);
 #else
-	if((s = sys_vircopy(tp->tty_outproc, D, tp->tty_out_vir,
-		SELF, D, pp->ohead, (phys_bytes) count)) != OK) {
+	if((s = sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir,
+		SELF, D, (vir_bytes) pp->ohead, (phys_bytes) count)) != OK) {
 		printf("pty tty%d: copy failed (error %d)\n",  s);
 		break;
 	}
@@ -314,8 +314,8 @@ pty_t *pp;
 	user_phys = proc_vir2phys(proc_addr(pp->rdproc), pp->rdvir);
 	phys_copy(vir2phys(pp->otail), user_phys, (phys_bytes) count);
 #endif
-	if((s = sys_vircopy(SELF, D, pp->otail,
-		pp->rdproc, D, pp->rdvir, (phys_bytes) count)) != OK) {
+	if((s = sys_vircopy(SELF, D, (vir_bytes)pp->otail,
+		(vir_bytes) pp->rdproc, D, (vir_bytes) pp->rdvir, (phys_bytes) count)) != OK) {
 		printf("pty tty%d: copy failed (error %d)\n",  s);
 		break;
 	}
@@ -376,8 +376,8 @@ tty_t *tp;
 	user_phys = proc_vir2phys(proc_addr(pp->wrproc), pp->wrvir);
 	phys_copy(user_phys, vir2phys(&c), 1L);
 #endif
-	if((s = sys_vircopy(pp->wrproc, D, pp->wrvir,
-		SELF, D, &c, (phys_bytes) 1)) != OK) {
+	if((s = sys_vircopy(pp->wrproc, D, (vir_bytes) pp->wrvir,
+		SELF, D, (vir_bytes) &c, (phys_bytes) 1)) != OK) {
 		printf("pty: copy failed (error %d)\n", s);
 		break;
 	}

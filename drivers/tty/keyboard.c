@@ -18,6 +18,8 @@
 #include "../../kernel/kernel.h"
 #include "../../kernel/proc.h"
 
+int irq_hook_id = -1;
+
 /* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
 #define KEYBD		0x60	/* I/O port for keyboard data */
 
@@ -363,7 +365,6 @@ tty_t *tp;
 {
 /* Initialize the keyboard driver. */
   static int count = 0;
-  int irq_hook_id;
   int i;
 
   tp->tty_devread = kb_read;	/* input function */
@@ -381,7 +382,7 @@ tty_t *tp;
 
       /* Set interrupt handler and enable keyboard IRQ. */
       if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &irq_hook_id)) != OK)
-          server_panic("TTY", "Couldn't set keyboard IRQ policy", i);
+          server_panic("TTY",  "Couldn't set keyboard IRQ policy", i);
       if ((i=sys_irqenable(&irq_hook_id)) != OK)
           server_panic("TTY", "Couldn't enable keyboard IRQs", i);
   }

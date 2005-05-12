@@ -66,6 +66,8 @@
 #endif
 #include "tty.h"
 
+extern int irq_hook_id;
+
 /* Address of a tty structure. */
 #define tty_addr(line)	(&tty_table[line])
 
@@ -204,6 +206,11 @@ PUBLIC void main(void)
 		if (! stop++) {
 			cons_stop();	/* first switch to primary console */
 		} else {
+			if(irq_hook_id != -1) {
+				int r;
+				r = sys_irqdisable(&irq_hook_id);
+				r = sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
+			}
 			printf("[DONE]\n");
 			printf("MINIX will now be shutdown.\n");
 			sys_exit(0);	/* then exit TTY */
