@@ -130,8 +130,7 @@ fdboot)
 
 	# Install /dev, /boot/boot and /boot/image.
 	mount $dev /mnt || exit
-	mkdir /mnt/boot || exit
-	mkdir /mnt/image || exit
+	mkdir -p /mnt/boot/image || exit
 	cpdir /dev /mnt/dev || exit
 	cp -p $mdec/boot /mnt/boot/boot || exit
 	cp -p image /mnt/boot/image/ || exit
