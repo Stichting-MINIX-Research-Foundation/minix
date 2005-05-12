@@ -79,6 +79,8 @@ _PROTOTYPE(int sys_syncalrm, (int proc_nr, clock_t exp_time, int abs_time) );
     sys_irqctl(IRQ_ENABLE, 0, 0, hook_id) 
 #define sys_irqsetpolicy(irq_vec, policy, hook_id) \
     sys_irqctl(IRQ_SETPOLICY, irq_vec, policy, hook_id)
+#define sys_irqrmpolicy(irq_vec, hook_id) \
+    sys_irqctl(IRQ_RMPOLICY, irq_vec, 0, hook_id)
 _PROTOTYPE ( int sys_irqctl, (int request, int irq_vec, int policy,
     int *irq_hook_id) );
 

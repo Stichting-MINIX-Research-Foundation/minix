@@ -269,8 +269,9 @@
 /* Field names for SYS_IRQCTL. */
 #define IRQ_REQUEST     m5_c1	/* what to do? */
 #  define IRQ_SETPOLICY     1	/* manage a slot of the IRQ table */
-#  define IRQ_ENABLE        2	/* enable interrupts */
-#  define IRQ_DISABLE       3	/* disable interrupts */
+#  define IRQ_RMPOLICY      2	/* remove a slot of the IRQ table */
+#  define IRQ_ENABLE        3	/* enable interrupts */
+#  define IRQ_DISABLE       4	/* disable interrupts */
 #define IRQ_VECTOR	m5_c2   /* irq vector */
 #define IRQ_POLICY	m5_i1   /* options for IRQCTL request */
 #  define IRQ_REENABLE     0x001    /* reenable IRQ line after interrupt */
