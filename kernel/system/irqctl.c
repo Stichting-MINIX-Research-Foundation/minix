@@ -24,7 +24,11 @@ register message *m_ptr;	/* pointer to request message */
   int irq_vec;
   int irq_hook_id;
   int proc_nr;  
+  int r = OK;
   irq_hook_t *hook_ptr;
+
+  irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID;
+  irq_vec = (unsigned) m_ptr->IRQ_VECTOR; 
 
   /* See what is requested and take needed actions. */
   switch(m_ptr->IRQ_REQUEST) {
@@ -32,7 +36,6 @@ register message *m_ptr;	/* pointer to request message */
   /* Enable or disable IRQs. This is straightforward. */
   case IRQ_ENABLE:           
   case IRQ_DISABLE: 
-      irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID;
       if (irq_hook_id >= NR_IRQ_HOOKS) return(EINVAL);
       if (irq_hooks[irq_hook_id].proc_nr != m_ptr->m_source) return(EPERM);
       if (m_ptr->IRQ_REQUEST == IRQ_ENABLE)
@@ -48,8 +51,7 @@ register message *m_ptr;	/* pointer to request message */
   case IRQ_SETPOLICY:  
 
       /* Check if IRQ line is acceptable. */
-      irq_vec = (unsigned) m_ptr->IRQ_VECTOR; 
-      if ((unsigned) irq_vec >= NR_IRQ_VECTORS) {
+      if (irq_vec < 0 || irq_vec >= NR_IRQ_VECTORS) {
  	  kprintf("ST: irq line %d is not acceptable!\n", irq_vec);
           return(EINVAL);
       }
@@ -73,9 +75,22 @@ register message *m_ptr;	/* pointer to request message */
       m_ptr->IRQ_HOOK_ID = irq_hook_id;
       break;
 
+  case IRQ_RMPOLICY:  
+  	if(irq_hook_id < 0 || irq_hook_id >= NR_IRQ_HOOKS ||
+	   irq_hooks[irq_hook_id].proc_nr == NONE) {
+  		r = EINVAL;
+  	} else {
+	 	if(m_ptr->m_source != irq_hooks[irq_hook_id].proc_nr) {
+	  		r = EPERM;
+	  	} else {
+	        	r = rm_irq_handler(irq_vec, irq_hooks[irq_hook_id].id);
+	        }
+        }
+  	break;
+
   default:
-      return(EINVAL);				/* invalid IRQ_REQUEST */
+      r = EINVAL;				/* invalid IRQ_REQUEST */
   }
-  return(OK);
+  return(r);
 }
 

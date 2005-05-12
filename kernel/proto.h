@@ -37,7 +37,7 @@ _PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
-_PROTOTYPE( void prepare_shutdown, (int how)					);
+_PROTOTYPE( void prepare_shutdown, (int)					);
 _PROTOTYPE( void stop_sequence, (struct timer *tp)				);
 
 /* misc.c */
@@ -83,6 +83,7 @@ _PROTOTYPE( void intr_init, (int mine)					);
 _PROTOTYPE( void intr_handle, (irq_hook_t *hook)			);
 _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
 						irq_handler_t handler)	);
+_PROTOTYPE( int rm_irq_handler, (int irq, int id)			);
 /* klib*.s */
 _PROTOTYPE( void int86, (void)						);
 _PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,vir_bytes src_offset,

@@ -236,7 +236,7 @@ int proc_nr;				/* slot of process to clean up */
 PUBLIC int generic_handler(hook)
 irq_hook_t *hook;	
 {
-/* This function handles hardware interrupt in a simpel and generic way. All
+/* This function handles hardware interrupt in a simple and generic way. All
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
  */

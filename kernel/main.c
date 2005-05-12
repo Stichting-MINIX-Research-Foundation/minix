@@ -29,7 +29,7 @@
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
-FORWARD _PROTOTYPE( void shutdown, (struct timer *tp));
+FORWARD _PROTOTYPE( void shutdown, (int how));
 
 #define STOP_TICKS	(5*HZ)			/* time allowed to stop */
 
@@ -243,7 +243,7 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
   if (skip_stop_sequence) {			/* set in exception() */
       kprintf("\nAn exception occured; skipping stop sequence.\n", NO_ARG);
-      shutdown(&shutdown_timer);		/* TTY isn't scheduled */
+      shutdown(how);		/* TTY isn't scheduled */
   } else {
       kprintf("\nNotifying system services about MINIX shutdown.\n", NO_ARG); 
       kprintf("Known bug: hitting a key before done will hang the monitor.\n", NO_ARG); 
@@ -268,7 +268,7 @@ timer_t *tp;
   static struct proc *p = NIL_PROC;	/* next process to stop */
   static char *types[] = {"task","system","driver","server","user"}; 
 
-  /* See if the last process' shutdown was successfull. Else, force exit. */
+  /* See if the last process' shutdown was successful. Else, force exit. */
   if (p != NIL_PROC) { 
       kprintf("[%s]\n", isalivep(p) ? karg("FAILED") : karg("OK"));
       if (isalivep(p))
@@ -285,6 +285,7 @@ timer_t *tp;
   if (p == NIL_PROC) p = BEG_PROC_ADDR; 
   while (TRUE) {
       if (isalivep(p) && p->p_type == level) {	/* found a process */
+      	int w;
           kprintf("- Stopping %s ", karg(p->p_name));
           kprintf("%s ... ", karg(types[p->p_type]));
           shutdown_process = p;		/* directly continue if exited */
@@ -297,8 +298,9 @@ timer_t *tp;
       	  p = BEG_PROC_ADDR;		
        	  level = level - 1;		
           if (level == P_TASK) {	/* done; tasks must remain alive */
-              set_timer(tp, get_uptime()+HZ, shutdown);	/* shutdown MINIX */
-              return;			/* user can inspect output */
+          	shutdown(tmr_arg(tp)->ta_int);
+          	/* no return */
+		return;
           }
       }
   }
@@ -307,15 +309,13 @@ timer_t *tp;
 /*==========================================================================*
  *				   shutdown 				    *
  *==========================================================================*/
-PRIVATE void shutdown(tp)
-timer_t *tp;
+PRIVATE void shutdown(int how)
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX. How to shutdown is in the argument: RBT_REBOOT, RBT_HALT, 
  * RBT_RESET. 
  */
   static u16_t magic = STOP_MEM_CHECK;
-  int how = tmr_arg(tp)->ta_int;
 
   /* Now mask all interrupts, including the clock, and stop the clock. */
   outb(INT_CTLMASK, ~0); 

@@ -1,5 +1,6 @@
 /* This file contains routines for initializing the 8259 interrupt controller:
  *	put_irq_handler: register an interrupt handler
+ *	rm_irq_handler: deregister an interrupt handler
  *	intr_handle:	handle a hardware interrupt
  *	intr_init:	initialize the interrupt controller(s)
  */
@@ -94,7 +95,7 @@ irq_handler_t handler;
   int id;
   irq_hook_t **line;
 
-  if ((unsigned) irq >= NR_IRQ_VECTORS)
+  if (irq < 0 || irq >= NR_IRQ_VECTORS)
 	panic("invalid call to put_irq_handler", irq);
 
   line = &irq_handlers[irq];
@@ -113,6 +114,34 @@ irq_handler_t handler;
   *line = hook;
 
   irq_use |= 1 << irq;
+}
+
+/*=========================================================================*
+ *				rm_irq_handler				   *
+ *=========================================================================*/
+PUBLIC int rm_irq_handler(irq, id)
+int irq;
+int id;
+{
+/* Unregister an interrupt handler. */
+  irq_hook_t **line;
+
+  if (irq < 0 || irq >= NR_IRQ_VECTORS) {
+  	return EINVAL;
+  }
+
+  line = &irq_handlers[irq];
+  while (*line != NULL) {
+  	if((*line)->id == id) {
+		(*line) = (*line)->next;
+		if(!irq_handlers[irq])
+			irq_use &= ~(1 << irq);
+  		return OK;
+  	}
+	line = &(*line)->next;
+  }
+
+  return ENOENT;
 }
 
 /*==========================================================================*
