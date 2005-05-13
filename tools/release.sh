@@ -44,7 +44,7 @@ umount $TMPTMPDISK
 umount $RAM
 
 ( cd .. && make clean )
-rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE
+rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE ${IMAGE}.z
 mkdir -p $RELEASEDIR
 mkfs -b 1440 -B 1024 $RAM || exit
 echo " * mounting $RAM as $RELEASEDIR"
