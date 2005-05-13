@@ -47,7 +47,6 @@ OBJECTS	= \
 	$(LIBRARY)(popen.o) \
 	$(LIBRARY)(putenv.o) \
 	$(LIBRARY)(putw.o) \
-	$(LIBRARY)(setcache.o) \
 	$(LIBRARY)(stderr.o) \
 	$(LIBRARY)(swab.o) \
 	$(LIBRARY)(syscall.o) \
@@ -188,9 +187,6 @@ $(LIBRARY)(putw.o):	putw.c
 
 $(LIBRARY)(rindex.o):	rindex.c
 	$(CC1) rindex.c
-
-$(LIBRARY)(setcache.o):	setcache.c
-	$(CC1) setcache.c
 
 $(LIBRARY)(stderr.o):	stderr.c
 	$(CC1) stderr.c

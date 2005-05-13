@@ -6,8 +6,11 @@ IMAGE=cdfdimage
 ROOTIMAGE=rootimage
 ISO=minix.iso
 RAM=/dev/ram
-if [ `wc -c $RAM | awk '{ print $1 }'` -ne 1474560 ]
-then	echo "$RAM should be exactly 1440k."
+rootmb=16
+rootkb=`expr $rootmb \* 1024`
+rootbytes=`expr $rootkb \* 1024`
+if [ `wc -c $RAM | awk '{ print $1 }'` -ne $rootbytes ]
+then	echo "$RAM should be exactly ${rootkb}k."
 	exit 1
 fi
 echo "Warning: I'm going to mkfs $RAM!"
@@ -19,6 +22,7 @@ read dev || exit 1
 TMPDISK=/dev/$dev
 
 echo "Temporary (sub)partition to use for storage in /tmp?"
+echo "It will be mkfsed!"
 echo -n "Device: /dev/"
 read tmpdev || exit 1
 TMPTMPDISK=/dev/$tmpdev
@@ -47,9 +51,11 @@ echo " * mounting $RAM as $RELEASEDIR"
 mount $RAM $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
+umount $TMPTMPDISK 
+mkfs $TMPTMPDISK || exit
 mount $TMPTMPDISK $RELEASEDIR/tmp || exit 1
 
-mkfs -B 1024 $TMPDISK
+mkfs -B 1024 $TMPDISK || exit
 echo " * mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
