@@ -52,6 +52,7 @@ image: programs
 
 # rebuild the program or system libraries
 programs: 
+	cd ../include && $(MAKE) install
 	cd ../kernel && $(MAKE) 
 	cd ../servers && $(MAKE) install
 	cd ../drivers && $(MAKE) install
