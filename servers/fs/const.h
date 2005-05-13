@@ -54,7 +54,6 @@
 #define MTIME            010	/* set if mtime field needs updating */
 
 #define BYTE_SWAP          0	/* tells conv2/conv4 to swap bytes */
-#define DONT_SWAP          1	/* tells conv2/conv4 not to swap bytes */
 
 #define END_OF_FILE   (-104)	/* eof detected */
 
