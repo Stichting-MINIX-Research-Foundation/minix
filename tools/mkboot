@@ -138,9 +138,15 @@ fdboot)
 
 	# Make bootable and copy the boot parameters.
 	installboot -d $dev $mdec/bootblock /boot/boot || exit
-	dd if=$root of=$dev skip=1 seek=1 count=1 conv=silent || exit
+	pfile=fdbootparams
+	if [ -f $pfile ]
+	then	echo "Using floppy boot parameters from file $pfile."
+		edparams $dev "`cat $pfile`" || exit
+	else	echo "Copying floppy boot parameters from $root."
+		dd if=$root of=$dev skip=1 seek=1 count=1 conv=silent || exit
+	fi
 	edparams $dev 'main(){delay 2000;boot}; save' || exit
-	echo "Test kernel installed on $dev with boot parameters from $root"
+	echo "Test kernel installed on $dev"
 	;;
 
 cdfdboot)
