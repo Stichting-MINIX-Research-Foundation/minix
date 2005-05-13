@@ -230,16 +230,11 @@ tty_t *tp;
 	if (count == 0 || tp->tty_inhibited) break;
 
 	/* Copy from user space to the PTY output buffer. */
-#if DEAD_CODE
-	user_phys = proc_vir2phys(proc_addr(tp->tty_outproc), tp->tty_out_vir);
-	phys_copy(user_phys, vir2phys(pp->ohead), (phys_bytes) count);
-#else
 	if((s = sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir,
 		SELF, D, (vir_bytes) pp->ohead, (phys_bytes) count)) != OK) {
 		printf("pty tty%d: copy failed (error %d)\n",  s);
 		break;
 	}
-#endif
 
 	/* Perform output processing on the output buffer. */
 	out_process(tp, pp->obuf, pp->ohead, bufend(pp->obuf), &count, &ocount);
@@ -310,10 +305,6 @@ pty_t *pp;
 	if (count == 0) break;
 
 	/* Copy from the output buffer to the readers address space. */
-#if DEAD_CODE
-	user_phys = proc_vir2phys(proc_addr(pp->rdproc), pp->rdvir);
-	phys_copy(vir2phys(pp->otail), user_phys, (phys_bytes) count);
-#endif
 	if((s = sys_vircopy(SELF, D, (vir_bytes)pp->otail,
 		(vir_bytes) pp->rdproc, D, (vir_bytes) pp->rdvir, (phys_bytes) count)) != OK) {
 		printf("pty tty%d: copy failed (error %d)\n",  s);
@@ -372,10 +363,6 @@ tty_t *tp;
   	int s;
 
 	/* Transfer one character to 'c'. */
-#if DEAD_CODE
-	user_phys = proc_vir2phys(proc_addr(pp->wrproc), pp->wrvir);
-	phys_copy(user_phys, vir2phys(&c), 1L);
-#endif
 	if((s = sys_vircopy(pp->wrproc, D, (vir_bytes) pp->wrvir,
 		SELF, D, (vir_bytes) &c, (phys_bytes) 1)) != OK) {
 		printf("pty: copy failed (error %d)\n", s);
