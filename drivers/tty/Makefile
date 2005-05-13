@@ -16,8 +16,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lutils -ltimers
 
-OBJ = tty.o console.o vidcopy.o keyboard.o pty.o
-# rs232.o 
+OBJ = tty.o console.o vidcopy.o keyboard.o pty.o rs232.o 
 
 # build local binary 
 all build:	$(DRIVER)
