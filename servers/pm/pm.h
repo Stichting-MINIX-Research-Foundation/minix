@@ -1,4 +1,4 @@
-/* This is the master header for mm.  It includes some other files
+/* This is the master header for PM.  It includes some other files
  * and defines the principal constants.
  */
 #define _POSIX_SOURCE      1	/* tell headers to include POSIX stuff */
