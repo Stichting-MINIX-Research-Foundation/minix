@@ -147,7 +147,7 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
    * it on the front of the LRU chain where it will be the first one to be
    * taken when a free buffer is needed later.
    */
-  if (block_type & ONE_SHOT) {
+  if (bp->b_dev == DEV_RAM || block_type & ONE_SHOT) {
 	/* Block probably won't be needed quickly. Put it on front of chain.
   	 * It will be the next block to be evicted from the cache.
   	 */
