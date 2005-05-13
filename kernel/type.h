@@ -18,7 +18,7 @@ struct system_image {
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
   send_mask_t sendmask;			/* send mask protection */
-  char name[PROC_NAME_LEN];		/* name in process table */
+  char proc_name[PROC_NAME_LEN];	/* name in process table */
 };
 
 struct memory {

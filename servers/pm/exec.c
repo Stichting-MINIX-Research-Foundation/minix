@@ -3,7 +3,7 @@
  *    - read the header and extract the sizes
  *    - fetch the initial args and environment from the user space
  *    - allocate the memory for the new process
- *    - copy the initial stack from MM to the process
+ *    - copy the initial stack from PM to the process
  *    - read in the text and data segments and copy to the process
  *    - take care of setuid and setgid bits
  *    - fix up 'mproc' table
@@ -16,7 +16,7 @@
  *   find_share: find a process whose text segment can be shared
  */
 
-#include "mm.h"
+#include "pm.h"
 #include <sys/stat.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -49,9 +49,8 @@ PUBLIC int do_exec()
 {
 /* Perform the execve(name, argv, envp) call.  The user library builds a
  * complete stack image, including pointers, args, environ, etc.  The stack
- * is copied to a buffer inside MM, and then to the new core image.
+ * is copied to a buffer inside PM, and then to the new core image.
  */
-
   register struct mproc *rmp;
   struct mproc *sh_mp;
   int m, r, fd, ft, sn;
@@ -122,7 +121,7 @@ PUBLIC int do_exec()
   rmp->mp_dev = s_p->st_dev;
   rmp->mp_ctime = s_p->st_ctime;
 
-  /* Patch up stack and copy it from MM to new core image. */
+  /* Patch up stack and copy it from PM to new core image. */
   vsp = (vir_bytes) rmp->mp_seg[S].mem_vir << CLICK_SHIFT;
   vsp += (vir_bytes) rmp->mp_seg[S].mem_len << CLICK_SHIFT;
   vsp -= stk_bytes;
@@ -389,7 +388,7 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
  *				patch_ptr				     *
  *===========================================================================*/
 PRIVATE void patch_ptr(stack, base)
-char stack[ARG_MAX];	/* pointer to stack image within MM */
+char stack[ARG_MAX];	/* pointer to stack image within PM */
 vir_bytes base;			/* virtual address of stack base inside user */
 {
 /* When doing an exec(name, argv, envp) call, the user builds up a stack
@@ -422,7 +421,7 @@ vir_bytes base;			/* virtual address of stack base inside user */
  *				insert_arg				     *
  *===========================================================================*/
 PRIVATE int insert_arg(stack, stk_bytes, arg, replace)
-char stack[ARG_MAX];		/* pointer to stack image within MM */
+char stack[ARG_MAX];		/* pointer to stack image within PM */
 vir_bytes *stk_bytes;		/* size of initial stack */
 char *arg;			/* argument to prepend/replace as new argv[0] */
 int replace;
@@ -480,7 +479,7 @@ int replace;
  *===========================================================================*/
 PRIVATE char *patch_stack(fd, stack, stk_bytes, script)
 int fd;				/* file descriptor to open script file */
-char stack[ARG_MAX];		/* pointer to stack image within MM */
+char stack[ARG_MAX];		/* pointer to stack image within PM */
 vir_bytes *stk_bytes;		/* size of initial stack */
 char *script;			/* name of script to interpret */
 {
@@ -538,10 +537,10 @@ phys_bytes seg_bytes0;		/* how much is to be transferred? */
  * space one at a time.  This is too slow, so we do something dirty here,
  * namely send the user space and virtual address to the file system in the
  * upper 10 bits of the file descriptor, and pass it the user virtual address
- * instead of a MM address.  The file system extracts these parameters when 
- * gets a read or write call from the memory manager, which is the only process
- * that is permitted to use this trick.  The file system then copies the whole 
- * segment directly to/from user space, bypassing MM completely.
+ * instead of a PM address.  The file system extracts these parameters when 
+ * gets a read or write call from the process manager, which is the only 
+ * process that is permitted to use this trick.  The file system then copies 
+ * the whole segment directly to/from user space, bypassing PM completely.
  *
  * The byte count on read is usually smaller than the segment count, because
  * a segment is padded out to a click multiple, and the data segment is only
@@ -557,8 +556,8 @@ phys_bytes seg_bytes0;		/* how much is to be transferred? */
   ubuf_ptr = (char *) ((vir_bytes) sp->mem_vir << CLICK_SHIFT);
 
   while (seg_bytes != 0) {
-#define MM_CHUNK_SIZE 8192
-	bytes = MIN((INT_MAX / MM_CHUNK_SIZE) * MM_CHUNK_SIZE, seg_bytes);
+#define PM_CHUNK_SIZE 8192
+	bytes = MIN((INT_MAX / PM_CHUNK_SIZE) * PM_CHUNK_SIZE, seg_bytes);
 	if (rw == 0) {
 		r = read(new_fd, ubuf_ptr, bytes);
 	} else {
@@ -585,8 +584,8 @@ time_t ctime;
  * call is made.
  */
   struct mproc *sh_mp;
+  for (sh_mp = &mproc[0]; sh_mp < &mproc[NR_PROCS]; sh_mp++) {
 
-  for (sh_mp = &mproc[INIT_PROC_NR]; sh_mp < &mproc[NR_PROCS]; sh_mp++) {
 	if (!(sh_mp->mp_flags & SEPARATE)) continue;
 	if (sh_mp == mp_ign) continue;
 	if (sh_mp->mp_ino != ino) continue;

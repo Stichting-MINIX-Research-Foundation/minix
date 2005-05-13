@@ -229,11 +229,11 @@ PRIVATE void image_dmp()
   printf("---name-- -nr- --type- -priority- ----pc- -stack- ------sendmask-------\n");
   for (i=0; i<IMAGE_SIZE; i++) { 
       ip = &image[i];
-      for (j=-NR_TASKS; j<LOW_USER+2; j++) 
+      for (j=-NR_TASKS; j<INIT_PROC_NR+2; j++) 
          maskstr[j+NR_TASKS] = (isallowed(ip->sendmask, j)) ? '1' : '0';
       maskstr[j+NR_TASKS] = '\0';
       printf("%8s %4d %7s %10s %7lu %7lu   %s\n",
-          ip->name, ip->proc_nr, types[ip->type], priorities[ip->priority], 
+          ip->proc_name, ip->proc_nr, types[ip->type], priorities[ip->priority], 
           (long)ip->initial_pc, ip->stksize, maskstr); 
   }
   printf("\n");
@@ -373,7 +373,7 @@ PRIVATE void sendmask_dmp()
   printf("\n\n");
 
   printf("              ");
-  for (j=proc_number(BEG_PROC_ADDR); j< LOW_USER+1; j++) {
+  for (j=proc_number(BEG_PROC_ADDR); j< INIT_PROC_NR+1; j++) {
      printf("%3d", j);
   }
   printf("  *\n");
@@ -393,7 +393,7 @@ PRIVATE void sendmask_dmp()
 	    default: 		printf(" %3d  ", proc_number(rp));
 	}
 
-    	for (j=proc_number(BEG_PROC_ADDR); j<LOW_USER+2; j++) {
+    	for (j=proc_number(BEG_PROC_ADDR); j<INIT_PROC_NR+2; j++) {
     	    if (isallowed(rp->p_sendmask, j))	printf(" 1 ");
     	    else 				printf(" 0 ");
     	}

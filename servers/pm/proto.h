@@ -29,6 +29,9 @@ _PROTOTYPE( int size_ok, (int file_type, vir_clicks tc, vir_clicks dc,
 _PROTOTYPE( int do_dev_io, (void) );
 _PROTOTYPE( int do_dev_io, (void) );
 
+/* dmp.c */
+_PROTOTYPE( int do_fkey_pressed, (void)						);
+
 /* exec.c */
 _PROTOTYPE( int do_exec, (void)						);
 _PROTOTYPE( void rw_seg, (int rw, int fd, int proc, int seg,
@@ -64,7 +67,6 @@ _PROTOTYPE( void setreply, (int proc_nr, int result)			);
 _PROTOTYPE( int do_alarm, (void)					);
 _PROTOTYPE( int do_kill, (void)						);
 _PROTOTYPE( int ksig_pending, (void)						);
-_PROTOTYPE( int do_ksig, (void)						);
 _PROTOTYPE( int do_pause, (void)					);
 _PROTOTYPE( int set_alarm, (int proc_nr, int sec)			);
 _PROTOTYPE( int check_sig, (pid_t proc_id, int signo)			);
@@ -81,11 +83,11 @@ _PROTOTYPE( int do_trace, (void)					);
 _PROTOTYPE( void stop_proc, (struct mproc *rmp, int sig_nr)		);
 
 /* utility.c */
+_PROTOTYPE( pid_t get_free_pid, (void)					);
 _PROTOTYPE( int allowed, (char *name_buf, struct stat *s_buf, int mask)	);
 _PROTOTYPE( int no_sys, (void)						);
 _PROTOTYPE( void panic, (char *format, int num)				);
 _PROTOTYPE( void tell_fs, (int what, int p1, int p2, int p3)		);
+_PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)			);
+_PROTOTYPE( int get_mem_map, (int proc_nr, struct mem_map *mem_map)	);
 
-/* procutils.c */
-_PROTOTYPE( int p_getsp, (int proc_nr, vir_bytes *sp)			);
-_PROTOTYPE( int p_getmap, (int proc_nr, struct mem_map *mem_map)	);

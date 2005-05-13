@@ -1,8 +1,6 @@
 /* Definition of the 'p_sendmask' bit mask used in the process table. The bit
  * mask of process is checked in mini_send() to see if the caller is allowed
- * to send to the destination. The bit masks accomodate bits for NR_TASKS + 
- * (LOW_USER+1) + 1. This means that there are bits for each task, driver, and
- * server process, INIT, and one bit to represent all ordinary user processes. 
+ * to send to the destination. 
  *
  * PLEASE NOTE: the send masks definitions are a mess and must be updated!!!
  *		this will be done when dynamic driver loading is implemented
@@ -19,8 +17,8 @@
 
 /* Constants to support the bitmask operations. */
 #define BIT_0		(send_mask_t) 1
-#define MASK_ENTRIES	NR_TASKS + (LOW_USER+1) + 1
-#define USER_PROC_NR	LOW_USER+1 	/* used to set bit for user procs */
+#define MASK_ENTRIES	NR_TASKS + (INIT_PROC_NR+1) + 1
+#define USER_PROC_NR	INIT_PROC_NR+1 	/* used to set bit for user procs */
 #define ALLOW_ALL_MASK	(send_mask_t) -1
 #define DENY_ALL_MASK	(send_mask_t) 0
 

@@ -1,13 +1,16 @@
-/* This file contains some utility routines for MM.
+/* This file contains some utility routines for PM.
  *
  * The entry points are:
- *   allowed:	see if an access is permitted
- *   no_sys:	this routine is called for invalid system call numbers
- *   panic:	MM has run aground of a fatal error and cannot continue
- *   tell_fs:	interface to FS
+ *   get_free_pid:	get a free process or group id
+ *   allowed:		see if an access is permitted
+ *   no_sys:		called for invalid system call numbers
+ *   panic:		PM has run aground of a fatal error 
+ *   tell_fs:		interface to FS
+ *   get_mem_map:	get memory map of given process
+ *   get_stack_ptr:	get stack pointer of given process	
  */
 
-#include "mm.h"
+#include "pm.h"
 #include <sys/stat.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -15,6 +18,36 @@
 #include <signal.h>		/* needed only because mproc.h needs it */
 #include "mproc.h"
 #include "param.h"
+
+#include <minix/config.h>
+#include <timers.h>
+#include <string.h>
+#include "../../kernel/const.h"
+#include "../../kernel/type.h"
+#include "../../kernel/proc.h"
+
+/*===========================================================================*
+ *				get_free_pid				     *
+ *===========================================================================*/
+PUBLIC pid_t get_free_pid()
+{
+  static pid_t next_pid = INIT_PID + 1;		/* next pid to be assigned */
+  register struct mproc *rmp;			/* check process table */
+  int t;					/* zero if pid still free */
+
+  /* Find a free pid for the child and put it in the table. */
+  do {
+	t = 0;			
+	next_pid = (next_pid < 30000 ? next_pid + 1 : INIT_PID + 1);
+	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
+		if (rmp->mp_pid == next_pid || rmp->mp_procgrp == next_pid) {
+			t = 1;
+			break;
+		}
+  } while (t);					/* 't' = 0 means pid free */
+  return(next_pid);
+}
+
 
 /*===========================================================================*
  *				allowed					     *
@@ -27,13 +60,12 @@ int mask;			/* R_BIT, W_BIT, or X_BIT */
 /* Check to see if file can be accessed.  Return EACCES or ENOENT if the access
  * is prohibited.  If it is legal open the file and return a file descriptor.
  */
-
   int fd;
   int save_errno;
 
   /* Use the fact that mask for access() is the same as the permissions mask.
    * E.g., X_BIT in <minix/const.h> is the same as X_OK in <unistd.h> and
-   * S_IXOTH in <sys/stat.h>.  tell_fs(DO_CHDIR, ...) has set MM's real ids
+   * S_IXOTH in <sys/stat.h>.  tell_fs(DO_CHDIR, ...) has set PM's real ids
    * to the user's effective ids, so access() works right for setuid programs.
    */
   if (access(name_buf, mask) < 0) return(-errno);
@@ -62,7 +94,7 @@ int mask;			/* R_BIT, W_BIT, or X_BIT */
  *===========================================================================*/
 PUBLIC int no_sys()
 {
-/* A system call number not implemented by MM has been requested. */
+/* A system call number not implemented by PM has been requested. */
 
   return(EINVAL);
 }
@@ -75,15 +107,14 @@ PUBLIC void panic(format, num)
 char *format;			/* format string */
 int num;			/* number to go with format string */
 {
-/* Something awful has happened.  Panics are caused when an internal
+/* An unrecoverable error has occurred.  Panics are caused when an internal
  * inconsistency is detected, e.g., a programming error or illegal value of a
- * defined constant.
+ * defined constant. The process manager decides to shut down. This results 
+ * in a HARD_STOP notification to all system processes to allow local cleanup.
  */
-
-  printf("Memory manager panic: %s ", format);
-  if (num != NO_NUM) printf("%d",num);
+  printf("Process manager panic: %s", format);
+  if (num != NO_NUM) printf(": %d",num);
   printf("\n");
-  tell_fs(SYNC, 0, 0, 0);	/* flush the cache to the disk */
   sys_abort(RBT_PANIC);
 }
 
@@ -94,7 +125,7 @@ int num;			/* number to go with format string */
 PUBLIC void tell_fs(what, p1, p2, p3)
 int what, p1, p2, p3;
 {
-/* This routine is only used by MM to inform FS of certain events:
+/* This routine is only used by PM to inform FS of certain events:
  *      tell_fs(CHDIR, slot, dir, 0)
  *      tell_fs(EXEC, proc, 0, 0)
  *      tell_fs(EXIT, proc, 0, 0)
@@ -102,7 +133,6 @@ int what, p1, p2, p3;
  *      tell_fs(SETGID, proc, realgid, effgid)
  *      tell_fs(SETSID, proc, 0, 0)
  *      tell_fs(SETUID, proc, realuid, effuid)
- *      tell_fs(SYNC, 0, 0, 0)
  *      tell_fs(UNPAUSE, proc, signr, 0)
  */
   message m;
@@ -112,3 +142,37 @@ int what, p1, p2, p3;
   m.tell_fs_arg3 = p3;
   _taskcall(FS_PROC_NR, what, &m);
 }
+
+
+/*===========================================================================*
+ *				get_mem_map					     *
+ *===========================================================================*/
+PUBLIC int get_mem_map(proc_nr, mem_map)
+int proc_nr;					/* process to get map of */
+struct mem_map *mem_map;			/* put memory map here */
+{
+  struct proc p;
+  int s;
+
+  if ((s=sys_getproc(&p, proc_nr)) != OK)
+  	return(s);
+  memcpy(mem_map, p.p_memmap, sizeof(p.p_memmap));
+  return(OK);
+}
+
+/*===========================================================================*
+ *				get_stack_ptr					     *
+ *===========================================================================*/
+PUBLIC int get_stack_ptr(proc_nr, sp)
+int proc_nr;					/* process to get sp of */
+vir_bytes *sp;					/* put stack pointer here */
+{
+  struct proc p;
+  int s;
+
+  if ((s=sys_getproc(&p, proc_nr)) != OK)
+  	return(s);
+  *sp = p.p_reg.sp;
+  return(OK);
+}
+

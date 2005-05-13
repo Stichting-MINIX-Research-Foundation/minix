@@ -235,7 +235,6 @@ PRIVATE struct driver w_dtab = {
   w_geometry,		/* tell the geometry of the disk */
   nop_stop,		/* no cleanup needed on shutdown */
   nop_alarm,		/* ignore leftover alarms */
-  nop_stats,		/* drivers statistics */
 };
 
 
@@ -244,10 +243,6 @@ PRIVATE struct driver w_dtab = {
  *===========================================================================*/
 PUBLIC void main()
 {
-  int s;
-/* Register function key for debugging dumps. */
-  fkey_enable(SF8);
-
 /* Set special disk parameters then call the generic main loop. */
   init_params();
   driver_task(&w_dtab);

@@ -55,9 +55,6 @@
 #define USR8139		(PRINTER + ENABLE_RTL8139)    /* Realtek RTL8139 */
 #define INIT_PROC_NR	(USR8139 + 1)   	/* init -- goes multiuser */
 
-/* Number of first user process not part of the operating system. */ 
-#define LOW_USER  	INIT_PROC_NR  
-
 /* Number of processes contained in the system image. */
 #define IMAGE_SIZE 	(NR_TASKS + \
 			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
@@ -353,13 +350,13 @@
 /* Field names for SYS_TRACE, SYS_SVRCTL. */
 #define CTL_PROC_NR	m2_i1	/* process number of the caller */
 #define CTL_REQUEST	m2_i2	/* server control request */
-#define CTL_MM_PRIV	m2_i3	/* privilege as seen by MM */
+#define CTL_MM_PRIV	m2_i3	/* privilege as seen by PM */
 #define CTL_ARG_PTR	m2_p1	/* pointer to argument */
 #define CTL_ADDRESS	m2_l1	/* address at traced process' space */
 #define CTL_DATA	m2_l2	/* data field for tracing */
 
 /* Field names for SYS_KILL, SYS_SIGCTL */
-#define SIG_REQUEST	m2_l2	/* MM signal control request */
+#define SIG_REQUEST	m2_l2	/* PM signal control request */
 #define S_GETSIG 	 0	/* get pending kernel signal */
 #define S_ENDSIG 	 1	/* finish a kernel signal */
 #define S_SENDSIG   	 2	/* POSIX style signal handling */
@@ -374,11 +371,11 @@
 /* Field names for SYS_FORK, _EXEC, _XIT, _GETSP, _GETMAP, _NEWMAP */
 #define PR_PROC_NR	m1_i1	/* indicates a (child) process */
 #define PR_PPROC_NR	m1_i2	/* indicates a (parent) process */
+#define PR_PID		m1_i3	/* process id at process manager */
 #define PR_STACK_PTR	m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
 #define PR_TRACING	m1_i3	/* flag to indicate tracing is on/ off */
 #define PR_NAME_PTR	m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
-#define PR_PID		m1_i3	/* process id passed from MM to kernel */
 #define PR_MEM_PTR	m1_p1	/* tells where memory map is for sys_newmap */
 
 

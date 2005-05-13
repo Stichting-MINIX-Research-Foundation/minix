@@ -1,4 +1,4 @@
-/* This table has one slot per process.  It contains all the memory management
+/* This table has one slot per process.  It contains all the process management
  * information for each process.  Among other things, it defines the text, data
  * and stack segments, uids and gids, and various flags.  The kernel and file
  * systems have tables that are also indexed by process, with the contents
@@ -30,7 +30,7 @@ EXTERN struct mproc {
   sigset_t mp_catch;		/* 1 means catch the signal, 0 means don't */
   sigset_t mp_sigmask;		/* signals to be blocked */
   sigset_t mp_sigmask2;		/* saved copy of mp_sigmask */
-  sigset_t mp_sigpending;	/* signals being blocked */
+  sigset_t mp_sigpending;	/* pending signals to be handled */
   struct sigaction mp_sigact[_NSIG + 1]; /* as in sigaction(2) */
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
 
@@ -58,5 +58,6 @@ EXTERN struct mproc {
 #define REPLY	 	0x200	/* set if a reply message is pending */
 #define ONSWAP	 	0x400	/* set if data segment is swapped out */
 #define SWAPIN	 	0x800	/* set if on the "swap this in" queue */
+#define DONT_SWAP      0x1000   /* never swap out this process */
 
 #define NIL_MPROC ((struct mproc *) 0)

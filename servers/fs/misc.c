@@ -314,7 +314,7 @@ PUBLIC int do_exit()
   if (fp->fp_tty == 0) return(OK);		/* no controlling tty */
   dev = fp->fp_tty;
 
-  for (rfp = &fproc[LOW_USER]; rfp < &fproc[NR_PROCS]; rfp++) {
+  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	if (rfp->fp_tty == dev) rfp->fp_tty = 0;
 
 	for (i = 0; i < OPEN_MAX; i++) {
@@ -364,17 +364,15 @@ PUBLIC int do_set()
  *===========================================================================*/
 PUBLIC int do_revive()
 {
-/* A task, typically TTY, has now gotten the characters that were needed for a
- * previous read.  The process did not get a reply when it made the call.
+/* A driver, typically TTY, has now gotten the characters that were needed for 
+ * a previous read.  The process did not get a reply when it made the call.
  * Instead it was suspended.  Now we can send the reply to wake it up.  This
  * business has to be done carefully, since the incoming message is from
- * a task (to which no reply can be sent), and the reply must go to a process
+ * a driver (to which no reply can be sent), and the reply must go to a process
  * that blocked earlier.  The reply to the caller is inhibited by returning the
  * 'SUSPEND' pseudo error, and the reply to the blocked process is done
  * explicitly in revive().
  */
-
-  if (who >= LOW_USER && fp->fp_pid != PID_SERVER) return(EPERM);
 
   revive(m_in.REP_PROC_NR, m_in.REP_STATUS);
   return(SUSPEND);		/* don't reply to the TTY task */
@@ -402,9 +400,12 @@ PUBLIC int do_svrctl()
 
 	/* Try to update device mapping. */
 	major = (device.dev >> MAJOR) & BYTE;
+	r=map_driver(major, who, device.style);
+	return(r);
+#if DEAD_CODE
 	if ((r=map_driver(major, who, device.style)) == OK)
 		fp->fp_pid = PID_SERVER;
-	return(r); 
+#endif
   }
   default:
 	return(EINVAL);

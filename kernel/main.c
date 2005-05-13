@@ -77,7 +77,7 @@ PUBLIC void main()
   for (i=0; i < IMAGE_SIZE; ++i) {
 	ttp = &image[i];			/* t's task attributes */
 	rp = proc_addr(ttp->proc_nr);		/* t's process slot */
-	kstrncpy(rp->p_name, ttp->name, PROC_NAME_LEN);	 /* set name */
+	kstrncpy(rp->p_name, ttp->proc_name, PROC_NAME_LEN);	 /* set name */
 	rp->p_type = ttp->type;			/* type of process */
 	rp->p_priority = ttp->priority;		/* scheduling priority */
 	rp->p_sendmask = ttp->sendmask;		/* sendmask protection */

@@ -1,4 +1,4 @@
-/* Constants used by the Memory Manager. */
+/* Constants used by the Process Manager. */
 
 #define NO_MEM ((phys_clicks) 0)  /* returned by alloc_mem() with mem is up */
 

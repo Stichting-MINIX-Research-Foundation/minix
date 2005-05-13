@@ -15,7 +15,7 @@
  *   size_ok:	  see if the segment sizes are feasible
  */
 
-#include "mm.h"
+#include "pm.h"
 #include <signal.h>
 #include "mproc.h"
 #include "param.h"
@@ -49,8 +49,8 @@ PUBLIC int do_brk()
 	return(ENOMEM);
   }
   new_clicks -= rmp->mp_seg[D].mem_vir;
-  if ((r=p_getsp(who, &new_sp)) != OK)	/* ask kernel for current sp value */
-  	panic("MM couldn't get stack pointer", r);
+  if ((r=get_stack_ptr(who, &new_sp)) != OK)	/* ask kernel for sp value */
+  	panic("PM couldn't get stack pointer", r);
   r = adjust(rmp, new_clicks, new_sp);
   rmp->mp_reply.reply_ptr = (r == OK ? m_in.addr : (char *) -1);
   return(r);			/* return new address or -1 */

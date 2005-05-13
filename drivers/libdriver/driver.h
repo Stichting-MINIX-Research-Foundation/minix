@@ -66,7 +66,6 @@ _PROTOTYPE( void nop_cleanup, (void) );
 _PROTOTYPE( void nop_task, (void) );
 _PROTOTYPE( void nop_stop, (struct driver *dp) );
 _PROTOTYPE( void nop_alarm, (struct driver *dp) );
-_PROTOTYPE( void nop_stats, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr) );
 
 /* Parameters for the disk drive. */

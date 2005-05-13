@@ -23,6 +23,7 @@ struct super_block;		/* proto.h needs to know this */
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/keymap.h>
+#include <minix/const.h>
 #include "buf.h"
 #include "dmap.h"
 #include "file.h"
@@ -30,6 +31,8 @@ struct super_block;		/* proto.h needs to know this */
 #include "inode.h"
 #include "param.h"
 #include "super.h"
+
+
 
 FORWARD _PROTOTYPE( void fs_init, (void)				);
 FORWARD _PROTOTYPE( int igetenv, (char *var)				);
@@ -168,10 +171,18 @@ int result;			/* result of the call (usually OK or error #) */
 PRIVATE void fs_init()
 {
 /* Initialize global variables, tables, etc. */
-
   register struct inode *rip;
-  int key, i;
+  int key, s, i;
   message mess;
+
+  /* Certain relations must hold for the file system to work at all. Some 
+   * extra block_size requirements are checked at super-block-read-in time.
+   */
+  if (OPEN_MAX > 127) panic("OPEN_MAX > 127", NO_NUM);
+  if (NR_BUFS < 6) panic("NR_BUFS < 6", NO_NUM);
+  if (V1_INODE_SIZE != 32) panic("V1 inode size != 32", NO_NUM);
+  if (V2_INODE_SIZE != 64) panic("V2 inode size != 64", NO_NUM);
+  if (OPEN_MAX > 8 * sizeof(long)) panic("Too few bits in fp_cloexec", NO_NUM);
 
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;
@@ -182,45 +193,38 @@ PRIVATE void fs_init()
   load_ram();			/* init RAM disk, load if it is root */
   load_super(root_dev);		/* load super block for root device */
 
-  /* Initialize the 'fproc' fields for process 0 .. INIT. */
-  for (i = 0; i <= LOW_USER; i+= 1) {
-	if (i == FS_PROC_NR) continue;	/* do not initialize FS */
-	fp = &fproc[i];
+
+  /* Initialize the process table with help of the process manager messages. 
+   * Expect one message for each system process with its slot number and pid. 
+   * When no more processes follow, the magic process number NONE is sent. 
+   * Then, stop and synchronize with the PM.
+   */
+  do {
+  	if (OK != (s=receive(PM_PROC_NR, &mess)))
+  		panic("FS couldn't receive from PM", s);
+  	if (NONE == mess.PR_PROC_NR) break; 
+
+	fp = &fproc[mess.PR_PROC_NR];
+	fp->fp_pid = mess.PR_PID;
 	rip = get_inode(root_dev, ROOT_INODE);
-	fp->fp_rootdir = rip;
 	dup_inode(rip);
+	fp->fp_rootdir = rip;
 	fp->fp_workdir = rip;
 	fp->fp_realuid = (uid_t) SYS_UID;
 	fp->fp_effuid = (uid_t) SYS_UID;
 	fp->fp_realgid = (gid_t) SYS_GID;
 	fp->fp_effgid = (gid_t) SYS_GID;
 	fp->fp_umask = ~0;
-	fp->fp_pid = i < LOW_USER ? PID_SERVER : 1;
-  }
-
-  /* Certain relations must hold for the file system to work at all.
-   * (Some extra block_size requirements are checked at super-block-read-in
-   * time.)
-   */
-  if (OPEN_MAX > 127) panic("OPEN_MAX > 127", NO_NUM);
-  if (NR_BUFS < 6) panic("NR_BUFS < 6", NO_NUM);
-  if (V1_INODE_SIZE != 32) panic("V1 inode size != 32", NO_NUM);
-  if (V2_INODE_SIZE != 64) panic("V2 inode size != 64", NO_NUM);
-  if (OPEN_MAX > 8 * sizeof(long)) panic("Too few bits in fp_cloexec", NO_NUM);
-
-  /* Tell the memory task where my process table is for the sake of ps(1). */
-  mess.m_type = DEV_IOCTL;
-  mess.PROC_NR = FS_PROC_NR;
-  mess.DEVICE = RAM_DEV;
-  mess.REQUEST = MIOCSPSINFO;
-  mess.ADDRESS = (void *) fproc;
-  (void) sendrec(MEMORY, &mess);
+   
+  } while (TRUE);			/* continue until process NONE */
+  mess.m_type = OK;			/* tell PM that we succeeded */
+  s=send(PM_PROC_NR, &mess);		/* send synchronization message */
 
   /* Register function keys with TTY. */
   for (key=SF5; key<=SF6; key++) {
   	if ((i=fkey_enable(key))!=OK) {
   		printf("Warning: FS couldn't register Shift+F%d key: %d\n",
-  			SF1-key+1, i);
+  			key-SF1+1, i);
   	}
   }
 }
@@ -305,10 +309,6 @@ PRIVATE void load_ram(void)
   if (sendrec(MEMORY, &m_out) != OK || m_out.REP_STATUS != OK)
 	panic("Can't set RAM disk size", NO_NUM);
 
-  /* Tell PM the RAM disk size, and wait for it to come "on-line". */
-  m_out.MEM_CHUNK_SIZE = ((long) ram_size_kb * 1024) >> CLICK_SHIFT;
-  if (sendrec(PM_PROC_NR, &m_out) != OK)
-	panic("FS can't sync up with PM", NO_NUM);
 
 #if ENABLE_CACHE2
   /* The RAM disk is a second level block cache while not otherwise used. */

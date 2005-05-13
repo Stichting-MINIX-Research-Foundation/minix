@@ -11,7 +11,6 @@
  *   do_sigreturn:   perform the SIGRETURN system call
  *   do_sigsuspend:  perform the SIGSUSPEND system call
  *   do_kill:	perform the KILL system call
- *   do_ksig:	accept a signal originating in the kernel (e.g., SIGINT)
  *   do_alarm:	perform the ALARM system call by calling set_alarm()
  *   set_alarm:	tell the clock task to start or stop a timer
  *   do_pause:	perform the PAUSE system call
@@ -21,7 +20,7 @@
  *   check_pending:  check if a pending signal can now be delivered
  */
 
-#include "mm.h"
+#include "pm.h"
 #include <minix/utils.h>
 #include <sys/stat.h>
 #include <minix/callnr.h>
@@ -189,11 +188,17 @@ PUBLIC int do_kill()
 }
 
 /*===========================================================================*
- *				do_ksig_pending				     *
+ *				ksig_pending				     *
  *===========================================================================*/
 PUBLIC int ksig_pending()
 {
-/* The kernel has notified the MM about pending signals. Request pending
+/* Certain signals, such as segmentation violations and DEL, originate in the
+ * kernel.  When the kernel detects such signals, it sets bits in a bit map.
+ * As soon as PM is awaiting new work, the kernel sends PM a message containing
+ * the process slot and bit map.  That message comes here.  The File System
+ * also uses this mechanism to signal writing on broken pipes (SIGPIPE).
+ *
+ * The kernel has notified the PM about pending signals. Request pending
  * signals until all signals are handled. If there are no more signals,
  * NONE is returned in the process number field.
  */ 
@@ -211,27 +216,6 @@ PUBLIC int ksig_pending()
  return(SUSPEND);			/* prevents sending reply */
 }
 
-/*===========================================================================*
- *				do_ksig					     *
- *===========================================================================*/
-PUBLIC int do_ksig()
-{
-/* Certain signals, such as segmentation violations and DEL, originate in the
- * kernel.  When the kernel detects such signals, it sets bits in a bit map.
- * As soon as MM is awaiting new work, the kernel sends MM a message containing
- * the process slot and bit map.  That message comes here.  The File System
- * also uses this mechanism to signal writing on broken pipes (SIGPIPE).
- */
-  int proc_nr;
-  sigset_t sig_map;
-
-  /* Only kernel may make this call. */
-  if (who != HARDWARE) return(EPERM);
-  proc_nr = m_in.SIG_PROC;
-  sig_map = (sigset_t) m_in.SIG_MAP;
-  handle_ksig(proc_nr, sig_map);
-  return(SUSPEND);
-}
 
 /*===========================================================================*
  *				handle_ksig					     *
@@ -247,12 +231,12 @@ sigset_t sig_map;
   rmp = &mproc[proc_nr];
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) return;
   proc_id = rmp->mp_pid;
-  mp = &mproc[0];		/* pretend kernel signals are from MM */
+  mp = &mproc[0];		/* pretend kernel signals are from PM */
   mp->mp_procgrp = rmp->mp_procgrp;	/* get process group right */
 
   /* Check each bit in turn to see if a signal is to be sent.  Unlike
    * kill(), the kernel may collect several unrelated signals for a
-   * process and pass them to MM in one blow.  Thus loop on the bit
+   * process and pass them to PM in one blow.  Thus loop on the bit
    * map. For SIGINT and SIGQUIT, use proc_id 0 to indicate a broadcast
    * to the recipient's process group.  For SIGKILL, use proc_id -1 to
    * indicate a systemwide broadcast.
@@ -331,7 +315,7 @@ int sec;			/* how many seconds delay before the signal */
 	ticks = LONG_MAX;	/* eternity (really TMR_NEVER) */
 
   if ((s=sys_signalrm(proc_nr, &ticks)) != OK) 
-  	panic("MM couldn't set signal alarm", s);
+  	panic("PM couldn't set signal alarm", s);
 
   remaining = (int) ((ticks + (HZ-1))/HZ);
   if (remaining < 0) remaining = INT_MAX;	/* true value is too large */
@@ -378,7 +362,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
-	printf("MM: signal %d sent to %s process %d\n",
+	printf("PM: signal %d sent to %s process %d\n",
 		(rmp->mp_flags & ZOMBIE) ? "zombie" : "dead", signo, slot);
 	panic("", NO_NUM);
   }
@@ -411,8 +395,8 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	sm.sm_signo = signo;
 	sm.sm_sighandler = (vir_bytes) rmp->mp_sigact[signo].sa_handler;
 	sm.sm_sigreturn = rmp->mp_sigreturn;
-	if ((s=p_getsp(slot, &new_sp)) != OK)
-		panic("MM couldn't get new stack pointer",s);
+	if ((s=get_stack_ptr(slot, &new_sp)) != OK)
+		panic("PM couldn't get new stack pointer",s);
 	sm.sm_stkptr = new_sp;
 
 	/* Make room for the sigcontext and sigframe struct. */
@@ -487,7 +471,7 @@ int signo;			/* signal to send to process (0 to _NSIG) */
    */
   count = 0;
   error_code = ESRCH;
-  for (rmp = &mproc[INIT_PROC_NR]; rmp < &mproc[NR_PROCS]; rmp++) {
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 	if (!(rmp->mp_flags & IN_USE)) continue;
 	if ((rmp->mp_flags & ZOMBIE) && signo != 0) continue;
 
@@ -564,7 +548,7 @@ int pro;			/* which process number */
 /* A signal is to be sent to a process.  If that process is hanging on a
  * system call, the system call must be terminated with EINTR.  Possible
  * calls are PAUSE, WAIT, READ and WRITE, the latter two for pipes and ttys.
- * First check if the process is hanging on an MM call.  If not, tell FS,
+ * First check if the process is hanging on an PM call.  If not, tell FS,
  * so it can check for READs and WRITEs from pipes, ttys and the like.
  */
 
@@ -579,7 +563,7 @@ int pro;			/* which process number */
 	return;
   }
 
-  /* Process is not hanging on an MM call.  Ask FS to take a look. */
+  /* Process is not hanging on an PM call.  Ask FS to take a look. */
   tell_fs(UNPAUSE, pro, 0, 0);
 }
 
@@ -615,8 +599,8 @@ register struct mproc *rmp;	/* whose core is to be dumped */
    * the adjust() for sending a signal to fail due to safety checking.  
    * Maybe make SAFETY_BYTES a parameter.
    */
-  if ((s=p_getsp(slot, &current_sp)) != OK)
-	panic("MM couldn't get new stack pointer",s);
+  if ((s=get_stack_ptr(slot, &current_sp)) != OK)
+	panic("PM couldn't get new stack pointer",s);
   adjust(rmp, rmp->mp_seg[D].mem_len, current_sp);
 
   /* Write the memory map of all segments to begin the core file. */

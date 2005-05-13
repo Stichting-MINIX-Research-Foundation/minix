@@ -1,4 +1,4 @@
-/* This file handles the memory manager's part of debugging, using the 
+/* This file handles the process manager's part of debugging, using the 
  * ptrace system call. Most of the commands are passed on to the system
  * task for completion.
  *
@@ -20,7 +20,7 @@
  * task. The rest are handled entirely by the system task. 
  */
 
-#include "mm.h"
+#include "pm.h"
 #include <minix/com.h>
 #include <sys/ptrace.h>
 #include <signal.h>
@@ -82,7 +82,7 @@ pid_t lpid;
 {
   register struct mproc *rmp;
 
-  for (rmp = &mproc[INIT_PROC_NR + 1]; rmp < &mproc[NR_PROCS]; rmp++)
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
 	if (rmp->mp_flags & IN_USE && rmp->mp_pid == lpid) return(rmp);
   return(NIL_MPROC);
 }

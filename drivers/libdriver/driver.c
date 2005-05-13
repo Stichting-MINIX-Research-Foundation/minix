@@ -65,10 +65,6 @@ FORWARD _PROTOTYPE( void init_buffer, (void) );
 FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp) );
 FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp) );
 
-PRIVATE unsigned long dev_read_count;
-PRIVATE unsigned long dev_write_count;
-PRIVATE unsigned long dev_gather_count;
-PRIVATE unsigned long dev_scatter_count;
 
 /*===========================================================================*
  *				driver_task				     *
@@ -102,12 +98,10 @@ struct driver *dp;	/* Device dependent entry points. */
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
 	case DEV_IOCTL:		r = (*dp->dr_ioctl)(dp, &mess);	break;
 
-	case DEV_READ:	dev_read_count ++;
-	case DEV_WRITE:	dev_write_count ++;
-		r = do_rdwt(dp, &mess);		break;
-	case DEV_GATHER: dev_gather_count ++;
-	case DEV_SCATTER: dev_scatter_count ++;	
-		r = do_vrdwt(dp, &mess);	break;
+	case DEV_READ:	
+	case DEV_WRITE:	  r = do_rdwt(dp, &mess);		break;
+	case DEV_GATHER: 
+	case DEV_SCATTER: r = do_vrdwt(dp, &mess);	break;
 
 	case HARD_INT:		/* leftover interrupt or expired timer. */
 				continue;
@@ -313,20 +307,6 @@ PUBLIC void nop_cleanup()
 /* Nothing to clean up. */
 }
 
-/*===========================================================================*
- *				nop_stats				     *
- *===========================================================================*/
-PUBLIC void nop_stats(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
-{
-/* Dump message counts. */
-   printf("Driver shared code statistics for %s\n", (*dp->dr_name)());
-   printf("DEV_READ      %10u\n", dev_read_count);
-   printf("DEV_WRITE     %10u\n", dev_write_count);
-   printf("DEV_GATHER    %10u\n", dev_gather_count);
-   printf("DEV_SCATTER   %10u\n", dev_scatter_count);
-}
 
 /*===========================================================================*
  *				nop_task				     *

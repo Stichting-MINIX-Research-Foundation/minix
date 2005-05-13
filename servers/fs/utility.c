@@ -51,7 +51,6 @@ int flag;			/* M3 means path may be in message */
  * If 'flag' = M3 and 'len' <= M3_STRING, the path is present in 'message'.
  * If it is not, go copy it from user space.
  */
-
   register char *rpu, *rpm;
   int r;
 
@@ -87,7 +86,6 @@ int flag;			/* M3 means path may be in message */
 PUBLIC int no_sys()
 {
 /* Somebody has used an illegal system call number */
-
   return(EINVAL);
 }
 
@@ -125,7 +123,6 @@ int norm;			/* TRUE if no swap, FALSE for byte swap */
 int w;				/* promotion of 16-bit word to be swapped */
 {
 /* Possibly swap a 16-bit word between 8086 and 68000 byte order. */
-
   if (norm) return( (unsigned) w & 0xFFFF);
   return( ((w&BYTE) << 8) | ( (w>>8) & BYTE));
 }
@@ -139,7 +136,6 @@ int norm;			/* TRUE if no swap, FALSE for byte swap */
 long x;				/* 32-bit long to be byte swapped */
 {
 /* Possibly swap a 32-bit long between 8086 and 68000 byte order. */
-
   unsigned lo, hi;
   long l;
   
@@ -149,3 +145,4 @@ long x;				/* 32-bit long to be byte swapped */
   l = ( (long) lo <<16) | hi;
   return(l);
 }
+

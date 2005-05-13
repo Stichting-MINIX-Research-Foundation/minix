@@ -2,11 +2,11 @@
  *								31 Mar 2000
  * The entry points into this file are:
  *   do_reboot: kill all processes, then reboot system
- *   do_svrctl: memory manager control
- *   do_getsysinfo: request copy of MM data structure
+ *   do_svrctl: process manager control
+ *   do_getsysinfo: request copy of PM data structure
  */
 
-#include "mm.h"
+#include "pm.h"
 #include <minix/callnr.h>
 #include <signal.h>
 #include <sys/svrctl.h>
@@ -18,7 +18,7 @@
 
 FORWARD _PROTOTYPE( char *find_key, (const char *params, const char *key));
 
-/* MM gets a copy of all boot monitor parameters. */
+/* PM gets a copy of all boot monitor parameters. */
 PRIVATE char monitor_params[128*sizeof(char *)];
 
 /*=====================================================================*
@@ -57,8 +57,8 @@ PUBLIC int do_reboot()
 	return(EINVAL);
   }
 
-  check_sig(-1, SIGKILL); 		/* kill all processes except init */
   tell_fs(REBOOT,0,0,0);		/* tell FS to prepare for shutdown */
+  check_sig(-1, SIGKILL); 		/* kill all processes except init */
 
   sys_abort(m_in.reboot_flag, PM_PROC_NR, monitor_code, m_in.reboot_size);
   sys_exit(0);
@@ -78,7 +78,7 @@ PUBLIC int do_svrctl()
   /* Initialize private copy of monitor parameters on first call. */
   if (! initialized) {
       if ((s=sys_getmonparams(monitor_params, sizeof(monitor_params))) != OK)
-          printf("MM: Warning couldn't get copy of monitor params: %d\n",s);
+          printf("PM: Warning couldn't get copy of monitor params: %d\n",s);
       else
           initialized = 1;
   }
@@ -98,7 +98,7 @@ PUBLIC int do_svrctl()
       return(sys_svrctl(who, req, mp->mp_effuid == SUPER_USER, ptr));
   }
 
-  /* Control operations local to the MM. */
+  /* Control operations local to the PM. */
   switch(req) {
   case MMGETPARAM: {
       struct sysgetenv sysgetenv;
@@ -110,7 +110,7 @@ PUBLIC int do_svrctl()
       /* Check if boot monitor parameters are in place. */
       if (! initialized) return(EAGAIN);
 
-      /* Copy sysgetenv structure to MM. */
+      /* Copy sysgetenv structure to PM. */
       if (sys_datacopy(who, ptr, SELF, (vir_bytes) &sysgetenv, 
               sizeof(sysgetenv)) != OK) return(EFAULT);  
 
@@ -170,7 +170,7 @@ PUBLIC int do_svrctl()
 		}
 	}
 
-	/* Become like MM and FS. */
+	/* Become like PM and FS. */
 	mp->mp_pid = mp->mp_procgrp = 0;
 	mp->mp_parent = 0;
 	return(OK); }

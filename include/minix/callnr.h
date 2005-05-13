@@ -69,9 +69,4 @@
 #define CMOSTIME	  78
 #define GETSYSINFO	  79	/* to MM or FS */
 
-#if ENABLE_MESSAGE_STATS
-#define	MSTATS		  80
-#endif
-
-#define SETCACHE	 81
-#define FSTATFS		 82
+#define FSTATFS	 	  82

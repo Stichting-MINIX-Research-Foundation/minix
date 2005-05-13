@@ -159,10 +159,7 @@ int flags;			/* mode bits and flags */
   if (!fp->fp_sesldr || fp->fp_tty != 0) {
 	flags |= O_NOCTTY;
   } else {
-	for (rfp = &fproc[LOW_USER]; rfp < &fproc[NR_PROCS]; rfp++) {
-#if FUTURE_CODE	/* check for all processes later */
 	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-#endif
 		if (rfp->fp_tty == dev) flags |= O_NOCTTY;
 	}
   }

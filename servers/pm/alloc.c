@@ -3,19 +3,19 @@
  * structure used is the hole table, which maintains a list of holes in memory.
  * It is kept sorted in order of increasing memory address. The addresses
  * it contains refers to physical memory, starting at absolute address 0
- * (i.e., they are not relative to the start of MM).  During system
+ * (i.e., they are not relative to the start of PM).  During system
  * initialization, that part of memory containing the interrupt vectors,
- * kernel, and MM are "allocated" to mark them as not available and to
+ * kernel, and PM are "allocated" to mark them as not available and to
  * remove them from the hole list.
  *
  * The entry points into this file are:
  *   alloc_mem:	allocate a given sized chunk of memory
  *   free_mem:	release a previously allocated chunk of memory
- *   mem_init:	initialize the tables when MM start up
+ *   mem_init:	initialize the tables when PM start up
  *   max_hole:	returns the largest hole currently available
  */
 
-#include "mm.h"
+#include "pm.h"
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <signal.h>
@@ -40,7 +40,7 @@ PRIVATE u32_t swap_offset;	/* offset to start of swap area on swap file */
 PRIVATE phys_clicks swap_base;	/* memory offset chosen as swap base */
 PRIVATE phys_clicks swap_maxsize;/* maximum amount of swap "memory" possible */
 PRIVATE struct mproc *in_queue;	/* queue of processes wanting to swap in */
-PRIVATE struct mproc *outswap = &mproc[LOW_USER];  /* outswap candidate? */
+PRIVATE struct mproc *outswap = &mproc[0]; 	 /* outswap candidate? */
 #else /* !SWAP */
 #define swap_base ((phys_clicks) -1)
 #endif /* !SWAP */
@@ -219,7 +219,7 @@ phys_clicks *free;		/* memory size summaries */
 
   /* Get a copy of the physical memory chunks found at the kernel. */
   if ((i=sys_getmemchunks(mem)) != OK)
-  	panic("MM couldn't get mem chunks",i);
+  	panic("PM couldn't get mem chunks",i);
 
   /* Put all holes on the free list. */
   for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) hp->h_next = hp + 1;
@@ -281,13 +281,13 @@ PUBLIC int swap_off()
   if (swap_fd == -1) return(OK);	/* can't turn off what isn't on */
 
   /* Put all swapped out processes on the inswap queue and swap in. */
-  for (rmp = &mproc[LOW_USER]; rmp < &mproc[NR_PROCS]; rmp++) {
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 	if (rmp->mp_flags & ONSWAP) swap_inqueue(rmp);
   }
   swap_in();
 
   /* All in memory? */
-  for (rmp = &mproc[LOW_USER]; rmp < &mproc[NR_PROCS]; rmp++) {
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 	if (rmp->mp_flags & ONSWAP) return(ENOMEM);
   }
 
@@ -375,7 +375,7 @@ PUBLIC void swap_in()
 PRIVATE int swap_out()
 {
 /* Try to find a process that can be swapped out.  Candidates are those blocked
- * on a system call that MM handles, like wait(), pause() or sigsuspend().
+ * on a system call that PM handles, like wait(), pause() or sigsuspend().
  */
   struct mproc *rmp;
   struct hole *hp, *prev_ptr;
@@ -385,13 +385,13 @@ PRIVATE int swap_out()
 
   rmp = outswap;
   do {
-	if (++rmp == &mproc[NR_PROCS]) rmp = &mproc[LOW_USER];
+	if (++rmp == &mproc[NR_PROCS]) rmp = &mproc[0];
 
 	/* A candidate? */
 	if (!(rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED))) continue;
 
 	/* Already on swap or otherwise to be avoided? */
-	if (rmp->mp_flags & (TRACED | REPLY | ONSWAP)) continue;
+	if (rmp->mp_flags & (DONT_SWAP | TRACED | REPLY | ONSWAP)) continue;
 
 	/* Got one, find a swap hole and swap it out. */
 	proc_nr = (rmp - mproc);

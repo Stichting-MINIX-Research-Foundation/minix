@@ -14,7 +14,7 @@
  */
 
 
-#include "mm.h"
+#include "pm.h"
 #include <sys/wait.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -25,7 +25,6 @@
 
 #define LAST_FEW            2	/* last few slots reserved for superuser */
 
-PRIVATE pid_t next_pid = INIT_PID+1;	/* next pid to be assigned */
 
 FORWARD _PROTOTYPE (void cleanup, (register struct mproc *child) );
 
@@ -35,12 +34,12 @@ FORWARD _PROTOTYPE (void cleanup, (register struct mproc *child) );
 PUBLIC int do_fork()
 {
 /* The process pointed to by 'mp' has forked.  Create a child process. */
-
   register struct mproc *rmp;	/* pointer to parent */
   register struct mproc *rmc;	/* pointer to child */
   int i, child_nr, t;
   phys_clicks prog_clicks, child_base;
   phys_bytes prog_bytes, parent_abs, child_abs;	/* Intel only */
+  pid_t new_pid;
 
  /* If tables might fill up during FORK, don't even start since recovery half
   * way through is such a nuisance.
@@ -49,7 +48,7 @@ PUBLIC int do_fork()
   if ((procs_in_use == NR_PROCS) || 
   		(procs_in_use >= NR_PROCS-LAST_FEW && rmp->mp_effuid != 0))
   {
-  	printf("MM: proc table full!\n");
+  	printf("PM: proc table full!\n");
   	return(EAGAIN);
   }
 
@@ -90,16 +89,8 @@ PUBLIC int do_fork()
   rmc->mp_sigstatus = 0;
 
   /* Find a free pid for the child and put it in the table. */
-  do {
-	t = 0;			/* 't' = 0 means pid still free */
-	next_pid = (next_pid < 30000 ? next_pid + 1 : INIT_PID + 1);
-	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
-		if (rmp->mp_pid == next_pid || rmp->mp_procgrp == next_pid) {
-			t = 1;
-			break;
-		}
-	rmc->mp_pid = next_pid;	/* assign pid to child */
-  } while (t);
+  new_pid = get_free_pid();
+  rmc->mp_pid = new_pid;	/* assign pid to child */
 
   /* Tell kernel and file system about the (now successful) FORK. */
   sys_fork(who, child_nr, rmc->mp_pid);
@@ -110,7 +101,7 @@ PUBLIC int do_fork()
 
   /* Reply to child to wake it up. */
   setreply(child_nr, 0);
-  return(next_pid);		 /* child's pid */
+  return(new_pid);		 /* child's pid */
 }
 
 
@@ -122,7 +113,6 @@ PUBLIC int do_mm_exit()
 /* Perform the exit(status) system call. The real work is done by mm_exit(),
  * which is also called when a process is killed by a signal.
  */
-
   mm_exit(mp, m_in.status);
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
@@ -139,7 +129,6 @@ int exit_status;		/* the process' exit status (for parent) */
  * parent is waiting, release the rest, else keep the process slot and
  * become a zombie.
  */
-
   register int proc_nr;
   int parent_waiting, right_child;
   pid_t pidarg, procgrp;
@@ -203,19 +192,17 @@ int exit_status;		/* the process' exit status (for parent) */
  *===========================================================================*/
 PUBLIC int do_waitpid()
 {
-/* A process wants to wait for a child to terminate. If one is already waiting,
- * go clean it up and let this WAIT call terminate.  Otherwise, really wait.
+/* A process wants to wait for a child to terminate. If a child is already 
+ * waiting, go clean it up and let this WAIT call terminate.  Otherwise, 
+ * really wait. 
+ * A process calling WAIT never gets a reply in the usual way at the end
+ * of the main loop (unless WNOHANG is set or no qualifying child exists).
+ * If a child has already exited, the routine cleanup() sends the reply
+ * to awaken the caller.
  * Both WAIT and WAITPID are handled by this code.
  */
-
   register struct mproc *rp;
   int pidarg, options, children;
-
-  /* A process calling WAIT never gets a reply in the usual way at the end
-   * of the main loop (unless WNOHANG is set or no qualifying child exists).
-   * If a child has already exited, the routine cleanup() sends the reply
-   * to awaken the caller.
-   */
 
   /* Set internal variables, depending on whether this is WAIT or WAITPID. */
   pidarg  = (call_nr == WAIT ? -1 : m_in.pid);	   /* 1st param of waitpid */
@@ -272,11 +259,10 @@ register struct mproc *child;	/* tells which process is exiting */
 /* Finish off the exit of a process.  The process has exited or been killed
  * by a signal, and its parent is waiting.
  */
-
   struct mproc *parent = &mproc[child->mp_parent];
   int exitstatus;
 
-  /* Wake up the parent. */
+  /* Wake up the parent by sending the reply message. */
   exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
   parent->mp_reply.reply_res2 = exitstatus;
   setreply(child->mp_parent, child->mp_pid);
@@ -286,3 +272,4 @@ register struct mproc *child;	/* tells which process is exiting */
   child->mp_flags = 0;
   procs_in_use--;
 }
+

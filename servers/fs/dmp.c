@@ -47,13 +47,13 @@ PRIVATE void fproc_dmp()
   static int prev_i;
   printf("PROCESS TABLE (beta)\n");
 
-  printf("-pid- -tty- -umask- --uid-- --gid-- -ldr- -sus-rev-proc- -cloexec-\n");
+  printf("-nr- -pid- -tty- -umask- --uid-- --gid-- -ldr- -sus-rev-proc- -cloexec-\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	fp = &fproc[i];
   	if (fp->fp_pid <= 0) continue;
   	if (++n > 22) break;
-  	printf("%4d  %2d/%d  0x%05x %2d (%d)  %2d (%d)  %3d   %3d %3d %4d    0x%05x\n",
-  		fp->fp_pid, 
+  	printf("%3d  %4d  %2d/%d  0x%05x %2d (%d)  %2d (%d)  %3d   %3d %3d %4d    0x%05x\n",
+  		i, fp->fp_pid, 
   		((fp->fp_tty>>MAJOR)&BYTE), ((fp->fp_tty>>MINOR)&BYTE), 
   		fp->fp_umask,
   		fp->fp_realuid, fp->fp_effuid, fp->fp_realgid, fp->fp_effgid,

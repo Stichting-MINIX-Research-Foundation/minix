@@ -13,7 +13,7 @@ CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
 
-OBJ = 	main.o forkexit.o break.o exec.o procutils.o \
+OBJ = 	main.o forkexit.o break.o exec.o dmp.o \
 	signal.o alloc.o utility.o table.o trace.o getset.o misc.o
 
 # build local binary
@@ -32,7 +32,7 @@ clean:
 	rm -f $(SERVER) *.o *.bak 
 
 # dependencies
-a =	mm.h $h/config.h $s/types.h $h/const.h $h/type.h \
+a =	pm.h $h/config.h $s/types.h $h/const.h $h/type.h \
 	$i/ansi.h $i/fcntl.h $i/unistd.h $h/syslib.h \
 	$i/limits.h $i/errno.h const.h type.h proto.h glo.h
 
@@ -94,12 +94,7 @@ misc.o:	$s/svrctl.h
 misc.o:	mproc.h
 misc.o:	param.h
 
-procutils.o:	$a
-procutils.o:	$i/timers.h
-procutils.o:	$i/string.h
-procutils.o:	$k/const.h
-procutils.o:	$k/type.h
-procutils.o:	$k/proc.h
+dmp.o:	$a
 
 signal.o:	$a
 signal.o:	$s/stat.h
@@ -132,3 +127,9 @@ utility.o:	$h/com.h
 utility.o:	$i/fcntl.h
 utility.o:	$i/signal.h
 utility.o:	mproc.h
+utility.o:	$i/timers.h
+utility.o:	$i/string.h
+utility.o:	$k/const.h
+utility.o:	$k/type.h
+utility.o:	$k/proc.h
+
