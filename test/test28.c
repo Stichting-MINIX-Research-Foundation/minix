@@ -208,9 +208,11 @@ void test28b()
   if (rmdir(ToLongPath) != -1) e(21);
   if (errno != ENAMETOOLONG) e(22);
 
-  /* Test what happens if the parent link count > LINK_MAX. */
   if (mkdir("foo", 0777) != 0) e(23);
   System("touch foo/xyzzy");
+#if 0
+  /* Test what happens if the parent link count > LINK_MAX. */
+  /* This takes too long. */
   for (nlink = 1; nlink < LINK_MAX; nlink++) {	/* make all */
   	sprintf(bar, "foo/bar.%d", nlink);
 	if (link("foo/xyzzy", bar) != 0) e(24);
@@ -220,6 +222,7 @@ void test28b()
   if (link("foo/xyzzy", "nono") != -1) e(27);	/* no more */
   if (errno != EMLINK) e(28);	/* entrys. */
   System("rm -rf foo/nono");	/* Just in case. */
+#endif
 
   /* Test if rmdir removes only empty dirs */
   if (rmdir("foo") != -1) e(29);/* not empty */
