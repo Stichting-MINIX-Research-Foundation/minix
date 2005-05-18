@@ -57,6 +57,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   phys_copy(kinfo.params_base, vir2phys(k_environ), kinfo.params_size);
 
   /* Record miscellaneous information for user-space servers. */
+  kinfo.nr_procs = NR_PROCS;
+  kinfo.nr_tasks = NR_TASKS;
   kstrncpy(kinfo.version, OS_RELEASE "." OS_VERSION, 6);
   kinfo.proc_addr = (vir_bytes) proc;
   kinfo.kmem_base = vir2phys(0);

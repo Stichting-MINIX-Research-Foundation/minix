@@ -49,7 +49,7 @@
 #define	CLOCK_STACK	SMALL_STACK
 
 /* Stack space for all the task stacks.  Declared as (char *) to align it. */
-#define	TOT_STACK_SPACE	(IDLE_STACK+HARDWARE_STACK+CLOCK_STACK+SYS_STACK )
+#define	TOT_STACK_SPACE	(IDLE_STACK+HARDWARE_STACK+CLOCK_STACK+SYS_STACK)
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 	
 

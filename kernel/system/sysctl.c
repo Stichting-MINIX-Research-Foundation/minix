@@ -236,6 +236,8 @@ register message *m_ptr;	/* pointer to request message */
 /* Request a (DMA) buffer to be allocated in one of the memory chunks. */
   phys_clicks tot_clicks;
   struct memory *memp;
+
+  kprintf("SYS_KMALLOC called by %d\n", m_ptr->m_source);
   
   tot_clicks = (m_ptr->MEM_CHUNK_SIZE + CLICK_SIZE-1) >> CLICK_SHIFT;
   memp = &mem[NR_MEMS];

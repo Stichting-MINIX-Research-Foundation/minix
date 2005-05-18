@@ -1,11 +1,12 @@
 /* This file contains essentially all of the process and message handling.
  * It has two main entry points from the outside:
  *
- *   sys_call:  a system call, that is, the kernel is trapped with an INT 
- *   notify:    notify process of a system event (notifications aren't queued)
+ *   sys_call: 	     a system call, that is, the kernel is trapped with an INT 
+ *   lock_notify:    send a notification to inform a process of a system event
  *
- * It also has several minor entry points:
+ * It also has several minor entry points to be used from the task level:
  *
+ *   lock_send:	      send a message to a process
  *   lock_ready:      put a process on one of the ready queues so it can be run
  *   lock_unready:    remove a process from the ready queues
  *   lock_sched:      a process has run too long; schedule another one
@@ -31,12 +32,13 @@
 #include "proc.h"
 #include "sendmask.h"
 
-PRIVATE unsigned char switching;	/* nonzero to inhibit notify() */
 
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dest,
 		message *m_ptr, int may_block) );
 FORWARD _PROTOTYPE( int mini_rec, (struct proc *caller_ptr, int src,
 		message *m_ptr, int may_block) );
+FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dest,
+		message *m_ptr ) );
 FORWARD _PROTOTYPE( void ready, (struct proc *rp) );
 FORWARD _PROTOTYPE( void sched, (void) );
 FORWARD _PROTOTYPE( void unready, (struct proc *rp) );
@@ -66,9 +68,9 @@ FORWARD _PROTOTYPE( void cp_mess, (int src, struct proc *src_p, message *src_m,
 
 
 /*===========================================================================*
- *				    notify				     * 
+ *				    lock_notify				     * 
  *===========================================================================*/
-PUBLIC void notify(proc_nr, notify_type)
+PUBLIC void lock_notify(proc_nr, notify_type)
 int proc_nr;			/* number of process to be started */
 int notify_type;		/* notification to be sent */
 {
@@ -104,8 +106,19 @@ int notify_type;		/* notification to be sent */
    *	 handler might call notify() and pass the 'k_reenter' test.
    */
   if (k_reenter != 0 || switching) {
-	lock();
-	if (! rp->p_ntf_held) {			/* already on held queue? */
+  	kinfo.notify_held ++;
+  	if (switching) kinfo.notify_switching ++;
+  	if (k_reenter > 0) kinfo.notify_reenter ++;
+	switch(notify_type) {
+	case HARD_INT: kinfo.notify_int ++; break;
+	case HARD_STOP: kinfo.notify_stop ++; break;
+	case SYN_ALARM: kinfo.notify_alarm ++; break;
+	case KSIG_PENDING: kinfo.notify_sig ++; break;
+	case NEW_KMESS: kinfo.notify_kmess ++; break;
+	}
+	lock();	
+				/* already on held queue? */
+	if (! isset_bit(rp->p_ntf_held, notify_bit)) {
 		if (held_head != NIL_PROC)
 			held_tail->p_ntf_nextheld = rp;
 		else
@@ -117,31 +130,34 @@ int notify_type;		/* notification to be sent */
  	unlock();
 	return;
   }
+
+  /* If process is not waiting for a notification, record the blockage. Else, 
+   * send it a message with source HARDWARE and type 'notify_type'. No more 
+   * information can be reliably provided since notifications are not queued.
+   */
   switching = TRUE;
 
-  /* If process is not waiting for a notification, record the blockage. */
   if ( (rp->p_flags & (RECEIVING | SENDING)) != RECEIVING ||
       !isrxhardware(rp->p_getfrom)) {
-	set_bit(rp->p_ntf_blocked, notify_bit);	/* add bit to blocked mask */
-	switching = FALSE;
-	return;
+  	kinfo.notify_blocked ++;
+	set_bit(rp->p_ntf_blocked, notify_bit);	    /* update blocked mask */
+  } else {
+
+      /* Assemble notification message and send it. */
+      m.m_source = HARDWARE;     	
+      m.m_type = notify_type;
+      CopyMess(HARDWARE, proc_addr(HARDWARE), &m, rp, rp->p_messbuf);
+      clear_bit(rp->p_ntf_blocked, notify_bit);
+      rp->p_flags &= ~RECEIVING;
+      kinfo.notify_ok ++;
+
+      /* Announce the process ready and select a fresh process to run. */
+      ready(rp);			
+      pick_proc();
   }
-
-  /* Destination is waiting for a notification. Send it a message with source
-   * HARDWARE and type 'notify_type'. No more information can be reliably 
-   * provided since notifications are not queued.
-   */
-  m.m_source = HARDWARE;     	/* direct copy does not work for servers */
-  m.m_type = notify_type;
-  CopyMess(HARDWARE, proc_addr(HARDWARE), &m, rp, rp->p_messbuf);
-  rp->p_flags &= ~RECEIVING;
-  clear_bit(rp->p_ntf_blocked, notify_bit);
-
-  /* Announce the process ready and select a fresh process to run. */
-  ready(rp);			
-  pick_proc();
   switching = FALSE;
 }
+
 
 /*===========================================================================*
  *				sys_call				     * 
@@ -202,6 +218,9 @@ message *m_ptr;			/* pointer to message in the caller's space */
           }					/* fall through for BOTH */
       case RECEIVE:			
           result = mini_rec(caller_ptr, src_dst, m_ptr, may_block);
+          break;
+      case NOTIFY:
+          result = mini_notify(caller_ptr, src_dst, m_ptr);
           break;
       default:
           result = EBADCALL;			/* illegal system call */
@@ -367,6 +386,20 @@ int may_block;				/* (dis)allow blocking */
 }
 
 /*===========================================================================*
+ *				mini_notify				     * 
+ *===========================================================================*/
+PRIVATE int mini_notify(caller_ptr, dst, m_ptr)
+register struct proc *caller_ptr;	/* process trying to get message */
+int dst;				/* which process to notify */
+message *m_ptr;				/* pointer to message buffer */
+{
+  kprintf("Kernel notify from %d", caller_ptr->p_nr);
+  kprintf("for %d\n", dst);
+  return(OK);
+}
+
+
+/*===========================================================================*
  *				pick_proc				     * 
  *===========================================================================*/
 PRIVATE void pick_proc()
@@ -496,6 +529,24 @@ PUBLIC void lock_pick_proc()
   switching = FALSE;
 }
 
+
+/*==========================================================================*
+ *				lock_send				    *
+ *==========================================================================*/
+PUBLIC int lock_send(caller_ptr, dest, m_ptr)
+register struct proc *caller_ptr;	/* who is trying to send a message? */
+int dest;				/* to whom is message being sent? */
+message *m_ptr;				/* pointer to message buffer */
+{
+/* Safe gateway to mini_send() for tasks. */
+  int result;
+  switching = TRUE;
+  result = mini_send(caller_ptr, dest, m_ptr, FALSE);
+  switching = FALSE;
+  return(result);
+}
+
+
 /*==========================================================================*
  *				lock_ready				    *
  *==========================================================================*/
@@ -543,6 +594,8 @@ PUBLIC void unhold()
   register struct proc *rp;	/* current head of held queue */
   int i;
 
+  kinfo.notify_unhold ++;
+
   if (switching) return;
   rp = held_head;
   do {
@@ -552,9 +605,13 @@ PUBLIC void unhold()
               if (! rp->p_ntf_held)	/* proceed to next in queue? */
                   if ( (held_head = rp->p_ntf_nextheld) == NIL_PROC)
                       held_tail = NIL_PROC;
+#if DEAD_CODE
               unlock();		/* reduce latency; held queue may change! */
-              notify(proc_number(rp), NOTIFICATION + i);
+#endif
+              lock_notify(proc_number(rp), NOTIFICATION + i);
+#if DEAD_CODE
               lock();		/* protect the held queue again */
+#endif
           }
       }
   }

@@ -83,10 +83,13 @@ PUBLIC void sys_task()
 	  result = EBADREQUEST;			/* illegal message type */
       }
 
-      /* Send a reply, unless inhibited by a handler function. */
+      /* Send a reply, unless inhibited by a handler function. Use the kernel
+       * function lock_send() to prevent a system call trap. The destination
+       * is known to be blocked waiting for a message.
+       */
       if (result != EDONTREPLY) {
   	  m.m_type = result;	/* report status of call */
-	  send(m.m_source, &m);	/* send reply to caller */
+          lock_send(proc_addr(SYSTASK), m.m_source, &m);
       }
   }
 }
@@ -240,7 +243,7 @@ irq_hook_t *hook;
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
  */
-  notify(hook->proc_nr, HARD_INT);
+  lock_notify(hook->proc_nr, HARD_INT); 
   return(hook->policy & IRQ_REENABLE);
 }
 
@@ -275,7 +278,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
 	return;			/* another signal already pending */
   if (rp->p_flags == 0) lock_unready(rp);
   rp->p_flags |= PENDING | SIG_PENDING;
-  notify(PM_PROC_NR, KSIG_PENDING);
+  lock_notify(PM_PROC_NR, KSIG_PENDING);
 }
 
 

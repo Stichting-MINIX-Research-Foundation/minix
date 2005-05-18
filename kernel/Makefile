@@ -22,7 +22,6 @@ HEAD =	mpx.o
 
 OBJS =	start.o protect.o klibc.o klib.o table.o main.o proc.o \
 	i8259.o exception.o system.o clock.o misc.o \
-	dummy.o 
 
 SYS =	system/system.a 
 
@@ -134,8 +133,6 @@ table.o:	$h/com.h
 table.o:	proc.h
 table.o:	sendmask.h
 table.o:	$b/int86.h
-
-dummy.o:	$a
 
 system/system.a:	$a $h/devio.h $h/com.h
 system/system.a:	proc.h protect.h system.h sendmask.h 

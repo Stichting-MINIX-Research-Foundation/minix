@@ -164,7 +164,7 @@ timer_t *tp;
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that
  * process given with a SYN_ALARM message.
  */
-  notify(tmr_arg(tp)->ta_int, SYN_ALARM);
+  lock_notify(tmr_arg(tp)->ta_int, SYN_ALARM);
 }
 
 

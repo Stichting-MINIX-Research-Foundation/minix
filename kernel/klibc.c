@@ -160,7 +160,7 @@ int c;					/* character to append */
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
-      notify(TTY, NEW_KMESS);	/* let TTY display the message */
+      lock_notify(TTY, NEW_KMESS);	/* let TTY display the message */
   }
 }
 

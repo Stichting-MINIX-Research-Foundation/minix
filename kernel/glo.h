@@ -27,6 +27,7 @@ EXTERN struct memory mem[NR_MEMS];	/* base and size of chunks of memory */
 EXTERN struct proc *held_head;	/* head of queue of held-up interrupts */
 EXTERN struct proc *held_tail;	/* tail of queue of held-up interrupts */
 EXTERN unsigned char k_reenter;	/* kernel reentry count (entry count less 1)*/
+EXTERN unsigned char switching;	/* nonzero if process switching in progress */
 
 /* Process table.  Here to stop too many things having to include proc.h. */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */

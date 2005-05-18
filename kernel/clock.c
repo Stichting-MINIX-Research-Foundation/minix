@@ -42,6 +42,7 @@ FORWARD _PROTOTYPE( void init_clock, (void) );
 FORWARD _PROTOTYPE( int clock_handler, (irq_hook_t *hook) );
 FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
 
+
 /* Constant definitions. */
 #define SCHED_RATE (MILLISEC*HZ/1000)	/* number of ticks per schedule */
 #define MILLISEC         100		/* how often to call the scheduler */
@@ -80,7 +81,8 @@ PRIVATE clock_t next_timeout;		/* realtime that next timer expires */
  */
 PRIVATE clock_t realtime;		/* real time clock */
 
-/* Variables changed by interrupt handler. */
+/* Variables for and changed by the CLOCK's interrupt handler. */
+PRIVATE irq_hook_t clock_hook;
 PRIVATE clock_t pending_ticks;		/* ticks seen by low level only */
 PRIVATE int sched_ticks = SCHED_RATE;	/* counter: when 0, call scheduler */
 PRIVATE struct proc *prev_ptr;		/* last user process run by clock */
@@ -120,10 +122,13 @@ PUBLIC void clock_task()
               result = EBADREQUEST;			
       }
 
-      /* Send reply, unless inhibited, e.g. by do_clocktick(). */
+      /* Send reply, unless inhibited, e.g. by do_clocktick(). Use the kernel 
+       * function lock_send() to prevent a system call trap. The destination
+       * is known to be blocked waiting for a message.  
+       */
       if (result != EDONTREPLY) {
           m.m_type = result;
-          send(m.m_source, &m);
+          lock_send(proc_addr(CLOCK), m.m_source, &m);
       }
   }
 }
@@ -138,7 +143,6 @@ message *m_ptr;				/* pointer to request message */
 /* Despite its name, this routine is not called on every clock tick. It
  * is called on those clock ticks when a lot of work needs to be done.
  */
-
   register struct proc *rp;
   register int proc_nr;
   timer_t *tp;
@@ -216,7 +220,6 @@ irq_hook_t *hook;
  * faster on a 5MHz 8088, and make task debugging much easier since there are
  * no task switches on an inactive system.
  */
-
   register struct proc *rp;
   register unsigned ticks;
   clock_t now;
@@ -244,13 +247,13 @@ irq_hook_t *hook;
   if (next_timeout <= now || (sched_ticks == 1 && bill_ptr == prev_ptr
           && rdy_head[PPRI_USER] != NIL_PROC))
   {  
-      notify(CLOCK, HARD_INT);
+      lock_notify(CLOCK, HARD_INT);
   } 
   else if (--sched_ticks == 0) {
       sched_ticks = SCHED_RATE;	/* reset quantum */
       prev_ptr = bill_ptr;		/* new previous process */
   }
-  return 1;				/* reenable clock interrupts */
+  return(1);				/* reenable clock interrupts */
 }
 
 
@@ -310,9 +313,10 @@ struct timer *tp;		/* pointer to timer structure */
  *===========================================================================*/
 PRIVATE void init_clock()
 {
-/* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz. */
-  static irq_hook_t clock_hook;
+  /* Initialize the CLOCK's interrupt hook. */
+  clock_hook.proc_nr = CLOCK;
 
+  /* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz. */
   outb(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */
   outb(TIMER0, TIMER_COUNT);		/* load timer low byte */
   outb(TIMER0, TIMER_COUNT >> 8);	/* load timer high byte */

@@ -5,11 +5,7 @@
 
 /* Struct declarations. */
 struct proc;
-struct time_info;
 struct timer;
-
-/* dummy.c */
-_PROTOTYPE( void dummy_task, (void)					);
 
 /* clock.c */
 _PROTOTYPE( void clock_task, (void)					);
@@ -37,20 +33,21 @@ _PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
-_PROTOTYPE( void prepare_shutdown, (int)					);
-_PROTOTYPE( void stop_sequence, (struct timer *tp)				);
+_PROTOTYPE( void prepare_shutdown, (int)				);
+_PROTOTYPE( void stop_sequence, (struct timer *tp)			);
 
 /* misc.c */
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
 
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
-_PROTOTYPE( void notify, (int proc_nr, int notify_type)			);
 _PROTOTYPE( void unhold, (void)						);
 _PROTOTYPE( void lock_pick_proc, (void)					);
 _PROTOTYPE( void lock_ready, (struct proc *rp)				);
 _PROTOTYPE( void lock_sched, (void)					);
 _PROTOTYPE( void lock_unready, (struct proc *rp)			);
+_PROTOTYPE( void lock_notify, (int proc_nr, int notify_type)		);
+_PROTOTYPE( int lock_send, (struct proc *rp, int to, message *m_ptr)		);
 
 /* start.c */
 _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,

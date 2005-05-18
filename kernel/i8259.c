@@ -42,7 +42,6 @@ int mine;
  * use the BIOS locations instead.  The flag "mine" is set if the 8259s are
  * to be programmed for Minix, or to be reset to what the BIOS expects.
  */
-
   int i;
 
   lock();

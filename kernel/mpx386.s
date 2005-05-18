@@ -1,24 +1,19 @@
 # 
 ! This file, mpx386.s, is included by mpx.s when Minix is compiled for 
 ! 32-bit Intel CPUs. The alternative mpx88.s is compiled for 16-bit CPUs.
-! 
-! This contains the assembler startup code for Minix and the 32-bit
-! interrupt handlers.  It cooperates with start.c to set up a good
-! environment for main().
 
-! This file is part of the lowest layer of the MINIX kernel.  The other part
-! is "proc.c".  The lowest layer does process switching and message handling.
+! This file is part of the lowest layer of the MINIX kernel.  (The other part
+! is "proc.c".)  The lowest layer does process switching and message handling.
+! Furthermore it contains the assembler startup code for Minix and the 32-bit
+! interrupt handlers.  It cooperates with the code in "start.c" to set up a 
+! good environment for main().
 
-! Every transition to the kernel goes through this file.  Transitions are
-! caused by sending/receiving messages and by most interrupts.  (RS232
-! interrupts may be handled in the file "rs2.s" and then they rarely enter
-! the kernel.)
-
-! Transitions to the kernel may be nested.  The initial entry may be with a
-! system call, exception or hardware interrupt; reentries may only be made
-! by hardware interrupts.  The count of reentries is kept in "k_reenter".
-! It is important for deciding whether to switch to the kernel stack and
-! for protecting the message passing code in "proc.c".
+! Every transition to the kernel goes through this file.  Transitions to the 
+! kernel may be nested.  The initial entry may be with a system call (i.e., 
+! send or receive a message), an exception or a hardware interrupt;  kernel 
+! reentries may only be made by hardware interrupts.  The count of reentries 
+! is kept in "k_reenter". It is important for deciding whether to switch to 
+! the kernel stack and for protecting the message passing code in "proc.c".
 
 ! For the message passing trap, most of the machine state is saved in the
 ! proc table.  (Some of the registers need not be saved.)  Then the stack is
@@ -226,7 +221,7 @@ csinit:
 	outb	INT_CTL			/* reenable master 8259		  */;\
 	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
 	sti				/* enable interrupts		  */;\
-	call	_intr_handle		/* intr_handle(irq_handlers[irq])	  */;\
+	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
 	cli				/* disable interrupts		  */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
@@ -397,13 +392,15 @@ _p_s_call:
 !*===========================================================================*
 _restart:
 
-! Flush any held-up interrupts.
+! Flush any held-up notifications.
 ! This reenables interrupts, so the current interrupt handler may reenter.
 ! This does not matter, because the current handler is about to exit and no
 ! other handlers can reenter since flushing is only done when k_reenter == 0.
 
 	cmp	(_held_head), 0	! do fast test to usually avoid function call
 	jz	over_call_unhold
+	cmp	(_switching), 0	! do fast test to usually avoid function call
+	jnz	over_call_unhold
 	call	_unhold		! this is rare so overhead acceptable
 over_call_unhold:
 	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0

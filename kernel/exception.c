@@ -55,7 +55,7 @@ unsigned vec_nr;
 	return;
   }
 
-  if (k_reenter == 0 && isuserp(saved_proc)) {
+  if (k_reenter == 0 && ! istaskp(saved_proc)) {
 	unlock();		/* this is protected like sys_call() */
 	cause_sig(proc_number(saved_proc), ep->signum);
 	return;

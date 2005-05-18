@@ -234,7 +234,7 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   /* The TTY expects two HARD_STOP notifications. One to switch to the 
    * primary console for stop sequence output, and one to actually exit.
    */
-  notify(TTY, HARD_STOP);		/* let TTY switch to console 0 */
+  lock_notify(TTY, HARD_STOP);		/* let TTY switch to console 0 */
 
   /* Run the stop sequence. The timer argument passes the shutdown status.
    * The stop sequence is skipped for fatal CPU exceptions.
@@ -289,7 +289,7 @@ timer_t *tp;
           kprintf("- Stopping %s ", karg(p->p_name));
           kprintf("%s ... ", karg(types[p->p_type]));
           shutdown_process = p;		/* directly continue if exited */
-          notify(proc_number(p), HARD_STOP);
+          lock_notify(proc_number(p), HARD_STOP);
           set_timer(tp, get_uptime()+STOP_TICKS, stop_sequence);
           return;			/* allow the process to shut down */ 
       } 
