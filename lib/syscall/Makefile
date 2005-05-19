@@ -43,6 +43,7 @@ OBJECTS	= \
 	$(LIBRARY)(getpid.o) \
 	$(LIBRARY)(getppid.o) \
 	$(LIBRARY)(getuid.o) \
+	$(LIBRARY)(getprocnr.o) \
 	$(LIBRARY)(ioctl.o) \
 	$(LIBRARY)(isatty.o) \
 	$(LIBRARY)(kill.o) \
@@ -213,6 +214,9 @@ $(LIBRARY)(getpid.o):	getpid.s
 
 $(LIBRARY)(getppid.o):	getppid.s
 	$(CC1) getppid.s
+
+$(LIBRARY)(getprocnr.o):	getprocnr.s
+	$(CC1) getprocnr.s
 
 $(LIBRARY)(getuid.o):	getuid.s
 	$(CC1) getuid.s

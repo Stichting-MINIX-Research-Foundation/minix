@@ -143,9 +143,7 @@ _PROTOTYPE( int ttyslot, (void)						);
 _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
 _PROTOTYPE( int getsysinfo, (int who, int what, void *where)		);
-#if ENABLE_MESSAGE_STATS
-_PROTOTYPE( int mstats, (struct message_statentry *ms, int entries, int reset) );
-#endif
+_PROTOTYPE( int getprocnr, (int *proc_nr)				);
 #endif
 
 _PROTOTYPE( int setcache, (int kb));

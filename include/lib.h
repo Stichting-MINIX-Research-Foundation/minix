@@ -31,9 +31,6 @@ _PROTOTYPE( int _syscall, (int _who, int _syscallnr, message *_msgptr)	);
 _PROTOTYPE( void _loadname, (const char *_name, message *_msgptr)	);
 _PROTOTYPE( int _len, (const char *_s)					);
 _PROTOTYPE( void panic, (const char *_message, int _errnum)		);
-#if 0
-_PROTOTYPE( int _sendrec, (int _src_dest, message *_m_ptr)		);
-#endif
 _PROTOTYPE( void _begsig, (int _dummy)					);
 
 #endif /* _LIB_H */

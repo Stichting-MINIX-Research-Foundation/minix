@@ -37,7 +37,7 @@ struct proc {
   notify_mask_t p_ntf_held;	/* bit mask for held up notify() calls */
   struct proc *p_ntf_nextheld;	/* next in chain of held-up int processes */
 
-  struct notification *p_ntfq;	/* queue of pending notifications */
+  struct notification *p_ntf_q;	/* queue of pending notifications */
 
   int p_flags;			/* SENDING, RECEIVING, etc. */
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
@@ -55,7 +55,7 @@ struct proc {
   timer_t p_syncalrm;		/* synchronous alarm timer */ 
 
   send_mask_t p_sendmask;	/* mask indicating to whom proc may send */
-  struct proc *p_callerq;	/* head of list of procs wishing to send */
+  struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_sendlink;	/* link to next proc wishing to send */
   message *p_messbuf;		/* pointer to message buffer */
   int p_getfrom;		/* from whom does process want to receive? */

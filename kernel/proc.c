@@ -14,7 +14,6 @@
  *   unhold:          repeat all held-up notifications
  *
  * Changes:
- *   Nov 05, 2004     removed lock_mini_send()  (Jorrit N. Herder)
  *   Oct 28, 2004     non-blocking SEND and RECEIVE  (Jorrit N. Herder)
  *   Oct 28, 2004     rewrite of sys_call()  (Jorrit N. Herder)
  *   Oct 10, 2004     require BOTH for kernel sys_call()  (Jorrit N. Herder)
@@ -23,7 +22,6 @@
  *   Sep 23, 2004     removed PM sig check in mini_rec()  (Jorrit N. Herder)
  *   Aug 19, 2004     generalized ready()/unready()  (Jorrit N. Herder)
  *   Aug 18, 2004     added notify() function  (Jorrit N. Herder) 
- *   May 01, 2004     check p_sendmask in mini_send()  (Jorrit N. Herder) 
  */
 
 #include "kernel.h"
@@ -43,6 +41,8 @@ FORWARD _PROTOTYPE( void ready, (struct proc *rp) );
 FORWARD _PROTOTYPE( void sched, (void) );
 FORWARD _PROTOTYPE( void unready, (struct proc *rp) );
 FORWARD _PROTOTYPE( void pick_proc, (void) );
+FORWARD _PROTOTYPE( int alloc_notify_buf, (void) ); 
+FORWARD _PROTOTYPE( void free_notify_buf, (int index) ); 
 
 #if (CHIP == M68000)
 FORWARD _PROTOTYPE( void cp_mess, (int src, struct proc *src_p, message *src_m,
@@ -66,8 +66,65 @@ FORWARD _PROTOTYPE( void cp_mess, (int src, struct proc *src_p, message *src_m,
 #define clear_bit(mask, n)	((mask) &= ~(1 << (n)))
 #define isset_bit(mask, n)	((mask) & (1 << (n)))
 
-/* Declare buffer space for notifications. */
-PRIVATE struct notification notify_buf[NR_NOTIFY_BUFS];
+/* Constants and macros for the notification bit map. */
+#define BITCHUNK_BITS   (sizeof(bitchunk_t) * CHAR_BIT)
+#define BITMAP_CHUNKS   ((NR_NOTIFY_BUFS + BITCHUNK_BITS - 1)/BITCHUNK_BITS)  
+
+#define MAP_CHUNK(map,bit) (map)[((bit)/BITCHUNK_BITS)]
+#define CHUNK_OFFSET(bit) ((bit)%BITCHUNK_BITS))
+
+#define GET_BIT(map,bit) ( MAP_CHUNK(map,bit) & (1 << CHUNK_OFFSET(bit) )
+#define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) )
+#define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) )
+
+/* Declare buffer space for notifications and bit map for administration. */
+PRIVATE struct notification notify_buffer[NR_NOTIFY_BUFS];
+PRIVATE bitchunk_t notify_bitmap[BITMAP_CHUNKS];     
+
+
+/*===========================================================================*
+ *			   free_notify_buf				     * 
+ *===========================================================================*/
+PRIVATE void free_notify_buf(buf_index) 
+int buf_index;				/* buffer to release */
+{
+  bitchunk_t *chunk;
+  if (buf_index >= NR_NOTIFY_BUFS) return;
+  chunk = &notify_bitmap[(buf_index/BITCHUNK_BITS)];
+  *chunk &= ~(buf_index % BITCHUNK_BITS);
+}
+
+/*===========================================================================*
+ *			   alloc_notify_buf				     * 
+ *===========================================================================*/
+PRIVATE int alloc_notify_buf() 
+{
+    bitchunk_t *chunk;
+    int i, bit_nr;
+    
+    /* Iterate over the words in block. */
+    for (chunk = &notify_bitmap[0]; 
+            chunk < &notify_bitmap[BITMAP_CHUNKS]; chunk++) {
+
+        /* Does this chunk contain a free bit? */
+        if (*chunk == (bitchunk_t) ~0) continue;
+        
+        /* Get bit number from the start of the bit map. */
+        for (i = 0; (*chunk & (1 << i)) != 0; ++i) {}
+        bit_nr = (chunk - &notify_bitmap[0]) * BITCHUNK_BITS + i;
+        
+        /* Don't allocate bits beyond the end of the map. */
+        if (bit_nr >= NR_NOTIFY_BUFS) break;
+
+        *chunk |= 1 << bit_nr % BITCHUNK_BITS;
+        kprintf("Allocated bit %d\n", bit_nr);
+        return(bit_nr);        
+        
+    }
+    return(-1);    
+}
+
+
 
 /*===========================================================================*
  *				    lock_notify				     * 
@@ -307,8 +364,8 @@ int may_block;				/* (dis)allow blocking */
 	caller_ptr->p_sendto= dest;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
-	if ( (next_ptr = dest_ptr->p_callerq) == NIL_PROC)
-		dest_ptr->p_callerq = caller_ptr;
+	if ( (next_ptr = dest_ptr->p_caller_q) == NIL_PROC)
+		dest_ptr->p_caller_q = caller_ptr;
 	else {
 		while (next_ptr->p_sendlink != NIL_PROC)
 			next_ptr = next_ptr->p_sendlink;
@@ -336,27 +393,48 @@ int may_block;				/* (dis)allow blocking */
  */
   register struct proc *sender_ptr;
   register struct proc *previous_ptr;
+  register struct notification **ntf_q_pp;
   message m;
-  int i;
+  int bit_nr, i;
 
   /* Check to see if a message from desired source is already available. */
   if (!(caller_ptr->p_flags & SENDING)) {
 
     /* Check caller queue. */
-    for (sender_ptr = caller_ptr->p_callerq; sender_ptr != NIL_PROC;
+    for (sender_ptr = caller_ptr->p_caller_q; sender_ptr != NIL_PROC;
 	 previous_ptr = sender_ptr, sender_ptr = sender_ptr->p_sendlink) {
 	if (src == ANY || src == proc_number(sender_ptr)) {
 		/* An acceptable message has been found. */
 		CopyMess(proc_number(sender_ptr), sender_ptr,
 			 sender_ptr->p_messbuf, caller_ptr, m_ptr);
-		if (sender_ptr == caller_ptr->p_callerq)
-			caller_ptr->p_callerq = sender_ptr->p_sendlink;
+		if (sender_ptr == caller_ptr->p_caller_q)
+			caller_ptr->p_caller_q = sender_ptr->p_sendlink;
 		else
 			previous_ptr->p_sendlink = sender_ptr->p_sendlink;
 		if ((sender_ptr->p_flags &= ~SENDING) == 0)
 			ready(sender_ptr);	/* deblock sender */
 		return(OK);
 	}
+    }
+
+    /* Check if there are pending notifications. */
+    ntf_q_pp = &caller_ptr->p_ntf_q;		/* get pointer pointer */
+    while (*ntf_q_pp) {
+	if (src == ANY || src == (*ntf_q_pp)->n_source) {
+		/* Found notification. Assemble and copy message. */
+		m.NOTIFY_TYPE = (*ntf_q_pp)->n_type;
+		m.NOTIFY_FLAGS = (*ntf_q_pp)->n_flags;
+		m.NOTIFY_ARG = (*ntf_q_pp)->n_arg;
+                CopyMess((*ntf_q_pp)->n_source, proc_addr(HARDWARE), &m, 
+                	caller_ptr, m_ptr);
+                /* Remove notification from queue and return. */
+                bit_nr = ((long)(*ntf_q_pp) - (long) &notify_buffer[0]) / 
+                	 sizeof(struct notification);
+                *ntf_q_pp = (*ntf_q_pp)->n_next;/* remove from queue */
+                free_notify_buf(bit_nr);	/* afterwards: prevent race */
+                return(OK);			/* report success */
+	}
+	ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
     }
 
     /* Check bit mask for blocked notifications. If multiple bits are set, 
@@ -395,12 +473,49 @@ int may_block;				/* (dis)allow blocking */
  *				mini_notify				     * 
  *===========================================================================*/
 PRIVATE int mini_notify(caller_ptr, dst, m_ptr)
-register struct proc *caller_ptr;	/* process trying to get message */
+register struct proc *caller_ptr;	/* process trying to notify */
 int dst;				/* which process to notify */
 message *m_ptr;				/* pointer to message buffer */
 {
-  kprintf("Kernel notify from %d", caller_ptr->p_nr);
-  kprintf("for %d\n", dst);
+  register struct proc *dest_ptr = proc_addr(dst);
+  register struct notification *ntf_p ;
+  register struct notification **ntf_q_pp;
+  int ntf_index;
+  message ntf_mess;
+
+  /* Check to see if target is blocked waiting for this message. */
+  if ( (dest_ptr->p_flags & (RECEIVING | SENDING)) == RECEIVING &&
+       (dest_ptr->p_getfrom == ANY ||
+        dest_ptr->p_getfrom == proc_number(caller_ptr))) {
+	/* Destination is indeed waiting for this message. */
+	CopyMess(proc_number(caller_ptr), caller_ptr, m_ptr, dest_ptr,
+		 dest_ptr->p_messbuf);
+	dest_ptr->p_flags &= ~RECEIVING;	/* deblock destination */
+	if (dest_ptr->p_flags == 0) ready(dest_ptr);
+  } else {
+
+  	/* See if there is a free notification buffer. */
+  	if ((ntf_index = alloc_notify_buf()) < 0) 
+  		return(ENOSPC);		 	/* should be atomic! */
+
+	/* Copy details from notification message. */
+	CopyMess(proc_number(caller_ptr), caller_ptr, m_ptr, 
+		 proc_addr(HARDWARE), &ntf_mess);
+	ntf_p = &notify_buffer[ntf_index];
+	ntf_p->n_source = proc_number(caller_ptr);
+	ntf_p->n_type = ntf_mess.NOTIFY_TYPE;
+	ntf_p->n_flags = ntf_mess.NOTIFY_FLAGS;
+	ntf_p->n_arg = ntf_mess.NOTIFY_ARG;
+
+	/* Enqueue the notification message for later. New notifications
+	 * are added to the end of the list. First find the NULL pointer, 
+	 * then add the new pointer to the end.
+	 */
+	ntf_q_pp = &dest_ptr->p_ntf_q;
+	while (*ntf_q_pp) ntf_q_pp = &(*ntf_q_pp)->n_next;
+	*ntf_q_pp = ntf_p;
+	ntf_p->n_next = NULL;
+  }
   return(OK);
 }
 

@@ -36,6 +36,7 @@ PUBLIC int do_getsysinfo()
  *=====================================================================*/
 PUBLIC int do_getprocnr()
 {
+  mp->mp_reply.procnr = who;
   return(OK);
 }
 

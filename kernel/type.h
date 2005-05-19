@@ -40,7 +40,7 @@ struct notification {
   proc_nr_t 	 n_source;		/* sender of notification */
   notify_type_t	 n_type;		/* notification type */
   notify_arg_t 	 n_arg;			/* notification argument */
-  notify_flags_t n_fags;		/* notification flags */
+  notify_flags_t n_flags;		/* notification flags */
   struct notification* n_next;		/* pointer to next notification */
 };
 

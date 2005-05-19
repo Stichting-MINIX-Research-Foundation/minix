@@ -1,6 +1,5 @@
 #include <lib.h>
 #define getsysinfo	_getsysinfo
-#define getsysinfo	_getsysinfo
 #include <unistd.h>
 
 

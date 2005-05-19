@@ -47,8 +47,8 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_ldt_sel = old_ldt_sel;
 #endif
   rpc->p_nr = m_ptr->PR_PROC_NR;	/* this was obliterated by copy */
-
-  rpc->p_flags |= NO_MAP;	/* inhibit the process from running */
+  rpc->p_ntf_q = NULL;			/* remove pending notifications */
+  rpc->p_flags |= NO_MAP;		/* inhibit process from running */
 
   rpc->p_flags &= ~(PENDING | SIG_PENDING | P_STOP);
 

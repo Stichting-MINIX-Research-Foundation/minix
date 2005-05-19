@@ -198,14 +198,14 @@ int proc_nr;				/* slot of process to clean up */
   if (rc->p_flags & SENDING) {
       /* Check all proc slots to see if the exiting process is queued. */
       for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
-          if (rp->p_callerq == NIL_PROC) continue;
-          if (rp->p_callerq == rc) {
+          if (rp->p_caller_q == NIL_PROC) continue;
+          if (rp->p_caller_q == rc) {
               /* Exiting process is on front of this queue. */
-              rp->p_callerq = rc->p_sendlink;
+              rp->p_caller_q = rc->p_sendlink;
               break;
           } else {
               /* See if exiting process is in middle of queue. */
-              np = rp->p_callerq;
+              np = rp->p_caller_q;
               while ( ( xp = np->p_sendlink) != NIL_PROC) {
                   if (xp == rc) {
                       np->p_sendlink = xp->p_sendlink;
