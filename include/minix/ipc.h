@@ -94,12 +94,14 @@ typedef struct {
 #define sendrec		_sendrec
 #define receive		_receive
 #define send		_send
+#define notify		_notify
 #define nb_receive	_nb_receive
 #define nb_send		_nb_send
 
 _PROTOTYPE( int sendrec, (int src_dest, message *m_ptr)			);
 _PROTOTYPE( int receive, (int src, message *m_ptr)			);
 _PROTOTYPE( int send, (int dest, message *m_ptr)			);
+_PROTOTYPE( int notify, (int dest, message *m_ptr)			);
 _PROTOTYPE( int nb_receive, (int src, message *m_ptr)			);
 _PROTOTYPE( int nb_send, (int dest, message *m_ptr)			);
 

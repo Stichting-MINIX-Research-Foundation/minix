@@ -4,6 +4,7 @@
  *   do_reboot: kill all processes, then reboot system
  *   do_svrctl: process manager control
  *   do_getsysinfo: request copy of PM data structure
+ *   do_getprocnr: get process slot number (like getpid)
  */
 
 #include "pm.h"
@@ -25,6 +26,15 @@ PRIVATE char monitor_params[128*sizeof(char *)];
  *			    do_getsysinfo			       *
  *=====================================================================*/
 PUBLIC int do_getsysinfo()
+{
+  return(OK);
+}
+
+
+/*=====================================================================*
+ *			    do_getprocnr			       *
+ *=====================================================================*/
+PUBLIC int do_getprocnr()
 {
   return(OK);
 }

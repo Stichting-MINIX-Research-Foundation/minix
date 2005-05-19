@@ -11,6 +11,7 @@
 #define SEND		 1	/* function code for sending messages */
 #define RECEIVE		 2	/* function code for receiving messages */
 #define BOTH		 3	/* function code for SEND + RECEIVE */
+#define NOTIFY		 4	/* function code for notifications */
 #define NB_SEND 	(SEND | NON_BLOCKING)	  /* non-blocking SEND */
 #define NB_RECEIVE	(RECEIVE | NON_BLOCKING)  /* non-blocking RECEIVE */
 
@@ -71,13 +72,16 @@
  * blocking notifications are delivered. The lowest numbers go first. The
  * offset are used for the per-process notification bit maps. 
  */
-#define NR_NOTIFICATIONS 	  5	/* number of bits in notify_mask_t */
-#	define NOTIFICATION 	333 	/* offset for notification types */
-#	define HARD_INT	    NOTIFICATION + 0	/* hardware interrupt */
-#	define SYN_ALARM    NOTIFICATION + 1  	/* synchronous alarm */
-#	define KSIG_PENDING NOTIFICATION + 2  	/* signal(s) pending */
-#	define NEW_KMESS    NOTIFICATION + 3  	/* new kernel message */
-#	define HARD_STOP    NOTIFICATION + 4  	/* system shutdown */
+#define NOTIFICATION  		  0x0800 	/* flag for notifications */
+#  define HARD_INT     (NOTIFICATION | 0)	/* hardware interrupt */
+#  define SYN_ALARM    (NOTIFICATION | 1)  	/* synchronous alarm */
+#  define KSIG_PENDING (NOTIFICATION | 2)  	/* signal(s) pending */
+#  define NEW_KMESS    (NOTIFICATION | 3)  	/* new kernel message */
+#  define HARD_STOP    (NOTIFICATION | 4)  	/* system shutdown */
+#define NR_NOTIFY_TYPES    	       5	/* nr of bits in mask */
+
+/* Shorthands for message parameters passed with notifications. */
+#define NOTIFY_ARG	m2_l1			/* passed for some types */
 
 
 /*===========================================================================*

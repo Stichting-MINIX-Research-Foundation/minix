@@ -102,6 +102,19 @@ struct kinfo {
   phys_bytes bootdev_size;
   phys_bytes params_base;	/* parameters passed by boot monitor */
   phys_bytes params_size;
+  long notify_held;
+  long notify_blocked;
+  long notify_switching;
+  long notify_reenter;
+  long notify_ok;
+  long notify_unhold;
+  long notify_int;
+  long notify_alarm;
+  long notify_sig;
+  long notify_kmess;
+  long notify_stop;
+  int nr_procs;			/* number of user processes */
+  int nr_tasks;			/* number of kernel tasks */
   char version[8];		/* kernel version number */
 };
 

@@ -64,9 +64,10 @@
 
 #define REBOOT		  76
 
-/* MINIX specific calls to support system services. */
+/* MINIX specific calls, e.g., to support system services. */
 #define SVRCTL		  77
 #define CMOSTIME	  78
 #define GETSYSINFO	  79	/* to MM or FS */
+#define GETPROCNR         80    /* to MM */
 
 #define FSTATFS	 	  82
