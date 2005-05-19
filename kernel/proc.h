@@ -31,17 +31,19 @@ struct proc {
 
   reg_t *p_stguard;		/* stack guard word */
 
-  int p_nr;			/* number of this process (for fast access) */
+  proc_nr_t p_nr;		/* number of this process (for fast access) */
 
   notify_mask_t p_ntf_blocked;	/* bit mask for blocked notifications */
   notify_mask_t p_ntf_held;	/* bit mask for held up notify() calls */
   struct proc *p_ntf_nextheld;	/* next in chain of held-up int processes */
 
+  struct notification *p_ntfq;	/* queue of pending notifications */
+
   int p_flags;			/* SENDING, RECEIVING, etc. */
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
   struct far_mem p_farmem[NR_REMOTE_SEGS];  /* remote memory map */
-  short p_type;			/* task, system, driver, server, user, idle */
-  short p_priority;		/* scheduling priority */
+  char p_type;			/* task, system, driver, server, user, idle */
+  char p_priority;		/* scheduling priority */
 
   clock_t user_time;		/* user time in ticks */
   clock_t sys_time;		/* sys time in ticks */

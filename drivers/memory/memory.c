@@ -19,6 +19,8 @@
 
 #include "../drivers.h"
 #include "../libdriver/driver.h"
+#include "../../kernel/const.h"
+#include "../../kernel/type.h"
 #include <sys/ioc_memory.h>
 
 #define NR_DEVS            7		/* number of minor devices */
@@ -28,8 +30,10 @@ PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
 PRIVATE int m_device;			/* current device */
 PRIVATE struct kinfo kinfo;		/* need kernel info */ 
 PRIVATE struct machine machine;		/* need machine info */ 
-PRIVATE struct psinfo psinfo = { NR_TASKS, NR_PROCS, 0, 0, 0 };
+PRIVATE struct memory mem[NR_MEMS];	/* physical memory chunks */
 
+FORWARD _PROTOTYPE( int alloc_mem, (phys_bytes size, phys_bytes *base) );
+FORWARD _PROTOTYPE( char *m_name, (void) );
 FORWARD _PROTOTYPE( struct device *m_prepare, (int device) );
 FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, off_t position,
 					iovec_t *iov, unsigned nr_req) );
@@ -37,8 +41,6 @@ FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_init, (void) );
 FORWARD _PROTOTYPE( int m_ioctl, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) );
-FORWARD _PROTOTYPE( char *m_name, (void) );
-
 
 /* Entry points to this driver. */
 PRIVATE struct driver m_dtab = {
@@ -63,13 +65,17 @@ PRIVATE char zero[ZERO_BUF_SIZE];
 PRIVATE char random[RANDOM_BUF_SIZE];
 
 
+#define click_to_round_k(n) \
+	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
+
+
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
 PUBLIC void main(void)
 {
-  m_init();
-  driver_task(&m_dtab);
+  m_init();			/* initialize the memory driver */
+  driver_task(&m_dtab);		/* start driver's main loop */
 }
 
 
@@ -109,8 +115,7 @@ off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 {
-/* Read or write /dev/null, /dev/mem, /dev/kmem, /dev/ram, or /dev/boot. */
-  int device;
+/* Read or write one the driver's minor devices. */
   phys_bytes mem_phys, user_phys;
   int seg;
   unsigned count, left, chunk;
@@ -120,8 +125,7 @@ unsigned nr_req;		/* length of request vector */
   int s;
 
   /* Get minor device number and check for /dev/null. */
-  device = m_device;
-  dv = &m_geom[device];
+  dv = &m_geom[m_device];
   dv_size = cv64ul(dv->dv_size);
 
   while (nr_req > 0) {
@@ -130,7 +134,7 @@ unsigned nr_req;		/* length of request vector */
 	count = iov->iov_size;
 	user_vir = iov->iov_addr;
 
-	switch (device) {
+	switch (m_device) {
 
 	/* No copying; ignore request. */
 	case NULL_DEV:
@@ -143,7 +147,7 @@ unsigned nr_req;		/* length of request vector */
 	case BOOT_DEV:
 	    if (position >= dv_size) return(OK); 	/* check for EOF */
 	    if (position + count > dv_size) count = dv_size - position;
-	    seg = m_seg[device];
+	    seg = m_seg[m_device];
 
 	    if (opcode == DEV_GATHER) {			/* copy actual data */
 	        sys_vircopy(SELF,seg,position, proc_nr,D,user_vir, count);
@@ -242,12 +246,12 @@ message *m_ptr;
 PRIVATE void m_init()
 {
   /* Initialize this task. All minor devices are initialized one by one. */
-  int i,s;
+  int i, s;
 
-  /* Print welcome message. */
-  printf("MEMORY: user-level memory (RAM, etc.) driver is alive\n");
-
-  /* Get kernel info for memory addresses of kernel and boot device. */
+  /* Get memory addresses from the kernel. */
+  if (OK != (s=sys_getmemchunks(&mem))) {
+      server_panic("MEM","Couldn't get memory chunks.",s);
+  }
   if (OK != (s=sys_getkinfo(&kinfo))) {
       server_panic("MEM","Couldn't get kernel information.",s);
   }
@@ -269,8 +273,6 @@ PRIVATE void m_init()
           server_panic("MEM","Couldn't install remote segment.",s);
       }
   }
-
-  psinfo.proc = kinfo.proc_addr;
 
   /* Initialize /dev/random and /dev/zero. */
   for (i=0; i<ZERO_BUF_SIZE; i++) {
@@ -301,6 +303,9 @@ PRIVATE void m_init()
 #error /* memory limit not set up */
 #endif /* !(CHIP == M68000) */
 #endif /* !(CHIP == INTEL) */
+
+  /* Initialization succeeded. Print welcome message. */
+  printf("User-space memory driver (RAM disk, etc.) has been initialized.\n");
 }
 
 
@@ -308,19 +313,19 @@ PRIVATE void m_init()
  *				m_ioctl					     *
  *===========================================================================*/
 PRIVATE int m_ioctl(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;			/* pointer to read or write message */
+struct driver *dp;			/* pointer to driver structure */
+message *m_ptr;				/* pointer to control message */
 {
-/* Set parameters for the RAM disk. */
-
+/* I/O controls for the memory driver. Currently there is one I/O control:
+ * - MIOCRAMSIZE: to set the size of the RAM disk.
+ */
   struct device *dv;
-
   if ((dv = m_prepare(m_ptr->DEVICE)) == NIL_DEV) return(ENXIO);
 
   switch (m_ptr->REQUEST) {
     case MIOCRAMSIZE: {
 	/* FS wants to create a new RAM disk with the given size. */
-	unsigned long ramdev_size;
+	phys_bytes ramdev_size;
 	phys_bytes ramdev_base;
 	int s;
 
@@ -328,39 +333,21 @@ message *m_ptr;			/* pointer to read or write message */
 
 	/* Try to allocate a piece of memory for the RAM disk. */
 	ramdev_size = m_ptr->POSITION;
+	if (OK != (s=alloc_mem(ramdev_size, &ramdev_base)))
+	    server_panic("MEM","Couldn't allocate kernel memory", s);
+	dv->dv_base = cvul64(ramdev_base);
+	dv->dv_size = cvul64(ramdev_size);
+	printf("Test MEM: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
+
 	if (OK != (s=sys_kmalloc(ramdev_size, &ramdev_base)))
 	    server_panic("MEM","Couldn't allocate kernel memory", s);
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
+	printf("Real MEM: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
   	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
   		ramdev_base, ramdev_size))) {
       		server_panic("MEM","Couldn't install remote segment.",s);
   	}
-	
-	break;
-    }
-    /* Perhaps it is cleaner to move all code relating to psinfo to the info
-     * server??? (Note that psinfo is global; psinfo.proc is set in m_init.)
-     * This requires changes to ioctl as well. 
-     */
-    case MIOCSPSINFO: {		
-	/* MM or FS set the address of their process table. */
-	phys_bytes psinfo_phys;
-
-	if (m_ptr->PROC_NR == PM_PROC_NR) {
-		psinfo.mproc = (vir_bytes) m_ptr->ADDRESS;
-	} else if (m_ptr->PROC_NR == FS_PROC_NR) {
-		psinfo.fproc = (vir_bytes) m_ptr->ADDRESS;
-	} else {
-		return(EPERM);
-	}
-	break;
-    }
-    case MIOCGPSINFO: {
-	/* The ps program wants the process table addresses. */
-	if (sys_datacopy(SELF, (vir_bytes) &psinfo,
-		m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS,
-		sizeof(psinfo)) != OK) return(EFAULT);
 	break;
     }
 
@@ -382,3 +369,27 @@ struct partition *entry;
   entry->heads = 64;
   entry->sectors = 32;
 }
+
+/*===========================================================================*
+ *			        malloc_mem				     *
+ *===========================================================================*/
+PRIVATE int alloc_mem(chunk_size, chunk_base)
+phys_bytes chunk_size;			/* number of bytes requested */
+phys_bytes *chunk_base;			/* base of memory area found */
+{
+/* Request a piece of memory from one of the free memory chunks. */
+  phys_clicks tot_clicks;
+  struct memory *memp;
+  
+  tot_clicks = (chunk_size+ CLICK_SIZE-1) >> CLICK_SHIFT;
+  memp = &mem[NR_MEMS];
+  while ((--memp)->size < tot_clicks) {
+      if (memp == mem) {
+          return(ENOMEM);
+      }
+  }
+  memp->size -= tot_clicks;
+  *chunk_base = (memp->base + memp->size) << CLICK_SHIFT; 
+  return(OK);
+}
+

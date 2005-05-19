@@ -1,10 +1,11 @@
 .sect .text; .sect .rom; .sect .data; .sect .bss
-.define __send, __receive, __sendrec
+.define __send, __nb_send, __receive, __nb_receive, __sendrec, __notify
 
 ! See ../h/com.h for C definitions
 SEND = 1
 RECEIVE = 2
 BOTH = 3
+NOTIFY = 4
 NB_SEND = 1 + 16 		! SEND | 0xF0
 NB_RECEIVE = 2 + 16		! RECEIVE | 0xF0
 SYSVEC = 33
@@ -17,7 +18,7 @@ MESSAGE = 12
 !*========================================================================*
 ! _send(), _nb_send(), _receive(), _nb_receive(), and _sendrec() all 
 ! save ebp, but destroy eax and ecx.
-.define __send, __nb_send, __receive, __nb_receive, __sendrec
+.define __send, __nb_send, __receive, __nb_receive, __sendrec, __notify
 .sect .text
 __send:
 	push	ebp
@@ -78,3 +79,16 @@ __sendrec:
 	pop	ebx
 	pop	ebp
 	ret
+
+__notify:
+	push	ebp
+	mov	ebp, esp
+	push	ebx
+	mov	eax, SRCDEST(ebp)	! eax = dest-src
+	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
+	mov	ecx, NOTIFY		! _notify(srcdest, ptr)
+	int	SYSVEC			! trap to the kernel
+	pop	ebx
+	pop	ebp
+	ret
+

@@ -33,10 +33,13 @@
 /* How many IRQ hooks are there in total. */
 #define NR_IRQ_HOOKS	  16
 
+/* How many notification buffers (12B each) should there be? */
+#define NR_NOTIFY_BUFS	 128
+
 /* Program stack words and masks. */
 #define INIT_PSW      0x0200	/* initial psw */
 #define INIT_TASK_PSW 0x1200	/* initial psw for tasks (with IOPL 1) */
-#define TRACEBIT       0x100	/* OR this with psw in proc[] for tracing */
+#define TRACEBIT      0x0100	/* OR this with psw in proc[] for tracing */
 #define SETPSW(rp, new)	/* permits only certain bits to be set */ \
 	((rp)->p_reg.psw = (rp)->p_reg.psw & ~0xCD5 | (new) & 0xCD5)
 #define IF_MASK 0x00000200

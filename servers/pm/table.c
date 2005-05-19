@@ -96,11 +96,7 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 
 	no_sys,		/* 78 = cmostime */
 	do_getsysinfo,	/* 79 = getsysinfo */
-#if ENABLE_MESSAGE_STATS
-	do_mstats,	/* 80 = mstats */
-#else
-	no_sys,
-#endif
+	do_getprocnr,	/* 80 = getprocnr */
 	no_sys, 	/* 81 = unused */
 	no_sys, 	/* 82 = unused */
 };

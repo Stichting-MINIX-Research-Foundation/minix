@@ -879,7 +879,7 @@ int value;			/* required status */
  * ticks. Disabling the alarm is not needed, because a static flag is used
  * and a leftover timeout cannot do any harm.
  */
-  static int timeout_flag = 0;		/* must be static, not cancelled */		
+  static int timeout_flag;	/* must be static, not cancelled */		
   int s;
   timeout_flag = 0;
   sys_flagalrm(TIMEOUT_TICKS, &timeout_flag);

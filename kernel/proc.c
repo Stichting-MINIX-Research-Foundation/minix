@@ -66,6 +66,8 @@ FORWARD _PROTOTYPE( void cp_mess, (int src, struct proc *src_p, message *src_m,
 #define clear_bit(mask, n)	((mask) &= ~(1 << (n)))
 #define isset_bit(mask, n)	((mask) & (1 << (n)))
 
+/* Declare buffer space for notifications. */
+PRIVATE struct notification notify_buf[NR_NOTIFY_BUFS];
 
 /*===========================================================================*
  *				    lock_notify				     * 
@@ -87,7 +89,7 @@ int notify_type;		/* notification to be sent */
   unsigned int notify_bit;	/* bit for this notification */
 
   /* Get notify bit and process pointer. */
-  notify_bit = (unsigned int) (notify_type - NOTIFICATION);
+  notify_bit = (unsigned int) (notify_type  & ~NOTIFICATION);
   rp = proc_addr(proc_nr);
 
   /* If this call would compete with other process-switching functions, put
@@ -181,7 +183,11 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * reply and may not block if the caller doesn't do receive(). Users also
    * may only use sendrec() to protect the process manager and file system.  
    */
+#if DEAD_CODE
   if ((iskernel(src_dst) || isuserp(caller_ptr)) && function != BOTH) {
+#else
+  if (iskernel(src_dst) && function != BOTH) {
+#endif
       result = ECALLDENIED;			/* BOTH was required */
   }
   
@@ -359,10 +365,10 @@ int may_block;				/* (dis)allow blocking */
      * priority of other messages. 
      */
     if (caller_ptr->p_ntf_blocked && isrxhardware(src)) {
-        for (i=0; i<NR_NOTIFICATIONS; i++) {
+        for (i=0; i<NR_NOTIFY_TYPES; i++) {
             if (isset_bit(caller_ptr->p_ntf_blocked, i)) {
                 m.m_source = HARDWARE;  
-                m.m_type = NOTIFICATION + i;
+                m.m_type = NOTIFICATION | i;
                 CopyMess(HARDWARE, proc_addr(HARDWARE), &m, caller_ptr, m_ptr);
 	        clear_bit(caller_ptr->p_ntf_blocked, i);
 	        return(OK);
@@ -599,7 +605,7 @@ PUBLIC void unhold()
   if (switching) return;
   rp = held_head;
   do {
-      for (i=0; i<NR_NOTIFICATIONS; i++) {
+      for (i=0; i<NR_NOTIFY_TYPES; i++) {
           if (isset_bit(rp->p_ntf_held,i)) {
               clear_bit(rp->p_ntf_held,i);
               if (! rp->p_ntf_held)	/* proceed to next in queue? */
@@ -608,7 +614,7 @@ PUBLIC void unhold()
 #if DEAD_CODE
               unlock();		/* reduce latency; held queue may change! */
 #endif
-              lock_notify(proc_number(rp), NOTIFICATION + i);
+              lock_notify(proc_number(rp), NOTIFICATION | i);
 #if DEAD_CODE
               lock();		/* protect the held queue again */
 #endif

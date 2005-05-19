@@ -26,6 +26,7 @@ usage:
 	@echo "Root privileges are required." >&2
 	@echo " " >&2
 	@echo "Usage:" >&2
+	@echo "	make includes   # Install include files" >&2
 	@echo "	make libraries  # Make system libraries" >&2
 	@echo "	make programs   # Compile and install all programs" >&2
 	@echo "	make fresh      # Make clean, libraries, and programs" >&2
@@ -51,13 +52,15 @@ image: programs
 
 
 # rebuild the program or system libraries
-programs: 
+includes:
 	cd ../include && $(MAKE) install
+
+programs: includes
 	cd ../kernel && $(MAKE) 
 	cd ../servers && $(MAKE) install
 	cd ../drivers && $(MAKE) install
 
-libraries:
+libraries: includes
 	cd ../lib && $(MAKE) install
 
 

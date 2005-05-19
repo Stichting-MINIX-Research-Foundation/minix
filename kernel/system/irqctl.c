@@ -27,7 +27,8 @@ register message *m_ptr;	/* pointer to request message */
   int r = OK;
   irq_hook_t *hook_ptr;
 
-  irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID;
+  /* Hook identifiers start at 1 and end at NR_IRQ_HOOKS. */
+  irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID - 1;
   irq_vec = (unsigned) m_ptr->IRQ_VECTOR; 
 
   /* See what is requested and take needed actions. */
@@ -36,7 +37,8 @@ register message *m_ptr;	/* pointer to request message */
   /* Enable or disable IRQs. This is straightforward. */
   case IRQ_ENABLE:           
   case IRQ_DISABLE: 
-      if (irq_hook_id >= NR_IRQ_HOOKS) return(EINVAL);
+      if (irq_hook_id >= NR_IRQ_HOOKS || 
+	   irq_hooks[irq_hook_id].proc_nr == NONE) return(EINVAL);
       if (irq_hooks[irq_hook_id].proc_nr != m_ptr->m_source) return(EPERM);
       if (m_ptr->IRQ_REQUEST == IRQ_ENABLE)
           enable_irq(&irq_hooks[irq_hook_id]);	
@@ -72,15 +74,15 @@ register message *m_ptr;	/* pointer to request message */
       put_irq_handler(hook_ptr, irq_vec, generic_handler);
 
       /* Return index of the IRQ hook in use. */
-      m_ptr->IRQ_HOOK_ID = irq_hook_id;
+      m_ptr->IRQ_HOOK_ID = irq_hook_id + 1;
       break;
 
   case IRQ_RMPOLICY:  
-  	if(irq_hook_id < 0 || irq_hook_id >= NR_IRQ_HOOKS ||
+  	if (irq_hook_id >= NR_IRQ_HOOKS ||
 	   irq_hooks[irq_hook_id].proc_nr == NONE) {
   		r = EINVAL;
   	} else {
-	 	if(m_ptr->m_source != irq_hooks[irq_hook_id].proc_nr) {
+	 	if (m_ptr->m_source != irq_hooks[irq_hook_id].proc_nr) {
 	  		r = EPERM;
 	  	} else {
 	        	r = rm_irq_handler(irq_vec, irq_hooks[irq_hook_id].id);

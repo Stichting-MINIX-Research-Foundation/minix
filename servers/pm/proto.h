@@ -54,6 +54,7 @@ _PROTOTYPE( void main, (void)						);
 /* misc.c */
 _PROTOTYPE( int do_reboot, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
+_PROTOTYPE( int do_getprocnr, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_mstats, (void)					);
 

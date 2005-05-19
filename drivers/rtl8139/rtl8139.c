@@ -63,6 +63,12 @@
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioc_memory.h>
+#include "../../kernel/type.h"
+
 #if __minix_vmd
 #include "config.h"
 #include "timer.h"
@@ -731,7 +737,8 @@ re_t *rep;
 {
 	size_t rx_bufsize, tx_bufsize, tot_bufsize;
 	phys_bytes buf;
-	int i;
+	static struct memory chunk;
+	int fd, s, i;
 
 	/* Allocate receive and transmit buffers */
 	tx_bufsize= ETH_MAX_PACK_SIZE_TAGGED;
@@ -742,9 +749,26 @@ re_t *rep;
 #if __minix_vmd
 	buf= (phys_bytes)kalloc_dma_128K(tot_bufsize, FALSE /* not low */);
 #else
+
 	/* Now try to allocate a kernel memory buffer. */
+	chunk.size = tot_bufsize;
+#if DEAD_CODE
+	fd = open("/dev/mem", O_RDONLY);
+	if (fd <0) {
+		printf("RTL8139: warning, couldn't open: %d\n", fd);
+	} else {
+		if (OK != (s=ioctl(fd, MIOCGETCHUNK, &chunk)))
+			printf("RTL8139: ioctl failed: %d\n", s);
+		else 
+			printf("RTL8139: %uK buffer from mem at 0x06%x\n", 
+				chunk.size, chunk.base);
+	}
+	close(fd);
+#endif
+
 	if (OK != (i=sys_kmalloc(tot_bufsize, &buf)))
 	    server_panic("RTL8139","Couldn't allocate kernel buffer",i);
+	printf("RTL8139: real %uK buffer at 0x%06x\n", tot_bufsize, buf);
 #endif
 	for (i= 0; i<N_TX_BUF; i++)
 	{
@@ -824,7 +848,7 @@ re_t *rep;
 		if (!(rl_inb(port, RL_BMCR) & MII_CTRL_RST))
 			break;
 	} while (! timeout);
-	sys_flagalrm(0, &timeout);	
+	sys_flagalrm(0, &timeout);	/* for correctness */	
 	if (rl_inb(port, RL_BMCR) & MII_CTRL_RST)
 		server_panic("rtl8139","reset PHY failed to complete", NO_NUM);
 #endif
@@ -837,7 +861,7 @@ re_t *rep;
 		if (!(rl_inb(port, RL_CR) & RL_CR_RST))
 			break;
 	} while (! timeout);
-	sys_flagalrm(0, &timeout);	
+	sys_flagalrm(0, &timeout);	/* for correctness */	
 	if (rl_inb(port, RL_CR) & RL_CR_RST)
 		server_panic("rtl8139","reset failed to complete", NO_NUM);
 
@@ -1779,7 +1803,7 @@ re_t *rep;
 		if (!(rl_inb(port, RL_CR) & RL_CR_RE))
 			break;
 	} while (! timeout);
-	sys_flagalrm(0, &timeout);	
+	sys_flagalrm(0, &timeout);	/* for correctness */	
 	if (rl_inb(port, RL_CR) & RL_CR_RE)
 		server_panic("rtl8139","cannot disable receiver", NO_NUM);
 
@@ -2141,7 +2165,7 @@ re_t *rep;
 				if (!(rl_inb(port, RL_CR) & RL_CR_TE))
 					break;
 			} while (! timeout);
-			sys_flagalrm(0, &timeout);	
+			sys_flagalrm(0, &timeout);	/* for correctness */	
 			if (rl_inb(port, RL_CR) & RL_CR_TE)
 			{
 			  server_panic("rtl8139","cannot disable transmitter",
@@ -2583,7 +2607,7 @@ u16_t w;
 		if (inb_reg3(dep, 1) & 1)
 			break;
 	} while (! timeout);
-	sys_flagalrm(0, &timeout);
+	sys_flagalrm(0, &timeout);	/* for correctness */
 	if (!(inb_reg3(dep, 1) & 1))
 		server_panic("set_ee_word","device remains busy", NO_NUM);
 }

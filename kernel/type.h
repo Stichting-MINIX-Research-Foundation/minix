@@ -8,11 +8,16 @@ typedef _PROTOTYPE( void task_t, (void) );
  */
 typedef long karg_t;			/* use largest type here */
 
-typedef unsigned int notify_mask_t;	/* bit mask for notifications */
+/* Process related types. 
+ * A process number defines the index into the process table. With a signed
+ * short we can support up to 256 user processes and more kernel tasks than
+ * one can ever create.
+ */ 
+typedef int proc_nr_t;			/* process table entry number */
 typedef unsigned long send_mask_t;	/* bit mask for sender */
 
 struct system_image {
-  int proc_nr;				/* process number to use */
+  proc_nr_t proc_nr;			/* process number to use */
   task_t *initial_pc;			/* start function for tasks */
   int type;				/* type of process */
   int priority;				/* scheduling priority */
@@ -26,6 +31,18 @@ struct memory {
   phys_clicks size;			/* size of memory chunk */
 };
 
+typedef unsigned long notify_mask_t;	/* bit mask for notifications */
+typedef char notify_type_t;		/* notification type */
+typedef char notify_flags_t;		/* notification flags */
+typedef int notify_arg_t;		/* notification argument */
+
+struct notification {
+  proc_nr_t 	 n_source;		/* sender of notification */
+  notify_type_t	 n_type;		/* notification type */
+  notify_arg_t 	 n_arg;			/* notification argument */
+  notify_flags_t n_fags;		/* notification flags */
+  struct notification* n_next;		/* pointer to next notification */
+};
 
 #if (CHIP == INTEL)
 typedef unsigned reg_t;		/* machine register */
