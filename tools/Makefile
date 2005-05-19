@@ -17,6 +17,7 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/floppy/floppy \
 	../drivers/printer/printer \
 	../drivers/rtl8139/rtl8139 \
+	../drivers/fxp/fxp \
 	../servers/init/init \
 	#bootfs.img
 

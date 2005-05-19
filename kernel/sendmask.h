@@ -146,6 +146,9 @@
     allow(1, CLOCK) 		/* need small delays */ \
     allow(1, FS_PROC_NR)	/* FS is interface to the driver */ 
 
+#define FXP_SENDMASK \
+    allow_all_mask 
+
 #define INIT_SENDMASK \
     deny_all_mask \
     allow(1, FS_PROC_NR)	/* init makes system calls to FS and MM */ \

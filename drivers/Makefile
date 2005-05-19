@@ -22,4 +22,5 @@ all install clean:
 	cd ./floppy && $(MAKE) $@
 	cd ./printer && $(MAKE) $@
 	cd ./rtl8139 && $(MAKE) $@
+	cd ./fxp && $(MAKE) $@
 

@@ -95,6 +95,7 @@
 #define   ENABLE_NE2000    0	/*   add Novell NE1000/NE2000 */
 #define   ENABLE_3C503     0	/*   add 3Com Etherlink II (3c503) */
 #define ENABLE_RTL8139	 1	/* enable Realtek 8139 (rtl8139) */
+#define ENABLE_FXP	 1	/* enable Intel Pro/100 (fxp) */
 
 /* Include or exclude backwards compatibility code. */
 #define ENABLE_BINCOMPAT   0	/* for binaries using obsolete calls */

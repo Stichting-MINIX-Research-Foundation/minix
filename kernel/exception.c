@@ -66,9 +66,9 @@ unsigned vec_nr;
 	kprintf("\nIntel-reserved exception %d\n", vec_nr);
   else
 	kprintf("\n%s\n", karg(ep->msg));
-  kprintf("process number %d", proc_number(saved_proc));
+  kprintf("process number %d, ", proc_number(saved_proc));
   kprintf("pc = %d:",  (unsigned) saved_proc->p_reg.cs);
-  kprintf("%d\n", (unsigned) saved_proc->p_reg.pc);
+  kprintf("0x%x\n", (unsigned) saved_proc->p_reg.pc);
 
   /* If the exception originates in the kernel, shut down MINIX. Otherwise,
    * kill the process that caused it. If MINIX is shut down and the stop 

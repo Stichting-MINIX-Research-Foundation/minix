@@ -40,12 +40,14 @@ _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 #define		 PSR_SSE	0x4000	/* Signaled System Error */
 #define		 PSR_RMAS	0x2000	/* Received Master Abort Status */
 #define		 PSR_RTAS	0x1000	/* Received Target Abort Status */
+#define PCI_REV		0x08	/* Revision ID */
 #define PCI_PIFR	0x09	/* Prog. Interface Register */
 #define PCI_SCR		0x0A	/* Sub-Class Register */
 #define PCI_BCR		0x0B	/* Base-Class Register */
 #define PCI_HEADT	0x0E	/* Header type, 8-bit */
 #define		PHT_MULTIFUNC	0x80	/* Multiple functions */
 #define PCI_BAR		0x10	/* Base Address Register */
+#define PCI_BAR_2	0x14	/* Second Base Address Register */
 #define PCI_ILR		0x3C	/* Interrupt Line Register */
 #define PCI_IPR		0x3D	/* Interrupt Pin Register */
 

@@ -82,6 +82,9 @@ PUBLIC struct system_image image[] = {
 #if ENABLE_RTL8139
  { USR8139, 0,            P_DRIVER, PPRI_HIGH, 0,             RTL8139_SENDMASK,  "RTL8139" },
 #endif
+#if ENABLE_FXP
+ { FXP, 0,                P_DRIVER, PPRI_HIGH, 0,             FXP_SENDMASK,  "FXP" },
+#endif
  { INIT_PROC_NR, 0,            P_USER,   PPRI_USER, 0,             INIT_SENDMASK,    "INIT"    },
 };
 
