@@ -52,12 +52,10 @@ static struct super_block super;	/* Superblock of file system */
 #define SUPER_V1 SUPER_MAGIC		/* V1 magic has a weird name. */
 #endif
 
-#define RAWFS_MAX_BLOCK_SIZE	1024
-
 static struct inode curfil;		/* Inode of file under examination */
-static char indir[RAWFS_MAX_BLOCK_SIZE];	/* Single indirect block. */
-static char dindir[RAWFS_MAX_BLOCK_SIZE];	/* Double indirect block. */
-static char dirbuf[RAWFS_MAX_BLOCK_SIZE];	/* Scratch/Directory block. */
+static char indir[MAX_BLOCK_SIZE];	/* Single indirect block. */
+static char dindir[MAX_BLOCK_SIZE];	/* Double indirect block. */
+static char dirbuf[MAX_BLOCK_SIZE];	/* Scratch/Directory block. */
 #define scratch dirbuf
 
 static block_t a_indir, a_dindir;	/* Addresses of the indirects. */
@@ -72,7 +70,10 @@ off_t r_super(int *bs)
  * (zero on error).
  */
 {
-	/* Read superblock. */
+	/* Read superblock. (The superblock is always at 1kB offset,
+	 * that's why we lie to readblock and say the block size is 1024
+	 * and we want block number 1 (the 'second block', at offset 1kB).)
+	 */
 	readblock(1, scratch, 1024);
 
 	memcpy(&super, scratch, sizeof(super));
@@ -83,7 +84,7 @@ off_t r_super(int *bs)
 			super.s_block_size = 1024;
 		*bs = block_size = super.s_block_size;
 		if(block_size < MIN_BLOCK_SIZE ||
-			block_size > RAWFS_MAX_BLOCK_SIZE) {
+			block_size > MAX_BLOCK_SIZE) {
 			printf("bogus block size %d\n", block_size);
 			return 0;
 		}

@@ -38,7 +38,7 @@ rawfs86.o:	rawfs.c rawfs.o
 boot:	boothead.s boot.o bootimage.o rawfs86.o
 	$(LD86) -o $@ \
 		boothead.s boot.o bootimage.o rawfs86.o $(LIBS)
-	install -S 16kb boot
+	install -S 8kb boot
 
 bootcd:	bootcdhead.s boot.o bootimage.o rawfs86.o
 	$(LD86) -o $@ \
