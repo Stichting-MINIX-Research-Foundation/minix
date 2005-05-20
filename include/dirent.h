@@ -41,6 +41,12 @@ struct _v7_direct {
  * the superblock (at 1024 bytes) overlaps with other filesystem data.
  */
 #define MIN_BLOCK_SIZE		 1024
+
+/* The below is allocated in some parts of the system as the largest
+ * a filesystem block can be. For instance, the boot monitor allocates
+ * 3 of these blocks and has to fit within 64kB, so this can't be
+ * increased without taking that into account.
+ */
 #define MAX_BLOCK_SIZE		 8192
 
 /* This is the block size for the fixed versions of the filesystem (V1/V2) */
