@@ -246,7 +246,6 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
       shutdown(how);		/* TTY isn't scheduled */
   } else {
       kprintf("\nNotifying system services about MINIX shutdown.\n", NO_ARG); 
-      kprintf("Known bug: hitting a key before done will hang the monitor.\n", NO_ARG); 
       stop_sequence(&shutdown_timer);
   }
 }

@@ -105,6 +105,7 @@ message *m_ptr;			/* pointer to request message */
 	send_mask_allow(proc_addr(IS_PROC_NR)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(CLOCK)->p_sendmask, proc_nr);
 	send_mask_allow(proc_addr(SYSTASK)->p_sendmask, proc_nr);
+	send_mask_allow(proc_addr(FXP)->p_sendmask, proc_nr);
 	return(OK); 
   }
   default:
