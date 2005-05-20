@@ -268,18 +268,18 @@ char *argv[];
 	if (i == 0) {
 		int kb;
 		kb = blocks * (min(block_size,1024) / 1024);
-		/* The default for inodes is 3 blocks per inode, rounded up
+		/* The default for inodes is 2 blocks per kb, rounded up
 		 * to fill an inode block.  Above 20M, the average files are
 		 * sure to be larger because it is hard to fill up 20M with
 		 * tiny files, so reduce the default number of inodes.  This
 		 * default can always be overridden by using the '-i option.
 		 */
-		i = kb / 3;
-		if (kb >= 20000) i = kb / 4;
-		if (kb >= 40000) i = kb / 5;
-		if (kb >= 60000) i = kb / 6;
-		if (kb >= 80000) i = kb / 7;
-		if (kb >= 100000) i = kb / 8;
+		i = kb / 2;
+		if (kb >= 20000) i = kb / 3;
+		if (kb >= 40000) i = kb / 4;
+		if (kb >= 60000) i = kb / 5;
+		if (kb >= 80000) i = kb / 6;
+		if (kb >= 100000) i = kb / 7;
 		i += inodes_per_block - 1;
 		i = i / inodes_per_block * inodes_per_block;
 		if (i > INODE_MAX) i = INODE_MAX;
