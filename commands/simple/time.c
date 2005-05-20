@@ -39,7 +39,8 @@ char *argv[];
 #if _VMD_EXT
   struct timeval start_time, end_time;
 #else
-  time_t start_time, end_time;
+  struct tms dummy;
+  int start_time, end_time;
 #endif
   clock_t real_time;
 
@@ -52,7 +53,7 @@ char *argv[];
 #if _VMD_EXT
   (void) sysutime(UTIME_TIMEOFDAY, &start_time);
 #else
-  (void) time(&start_time);
+  start_time = times(&dummy);
 #endif
 
   /* Fork off child. */
@@ -74,8 +75,8 @@ char *argv[];
   real_time = (end_time.tv_sec - start_time.tv_sec) * CLOCKS_PER_SEC
 	+ (end_time.tv_usec - start_time.tv_usec) * CLOCKS_PER_SEC / 1000000;
 #else
-  (void) time(&end_time);
-  real_time = (end_time - start_time) * CLOCKS_PER_SEC;
+  end_time = times(&dummy);
+  real_time = (end_time - start_time);
 #endif
 
   if ((status & 0377) != 0) std_err("Command terminated abnormally.\n");
