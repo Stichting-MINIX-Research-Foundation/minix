@@ -24,6 +24,8 @@
 #include "param.h"
 #include "super.h"
 
+#define offset m2_l1
+
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 FORWARD _PROTOTYPE( int common_open, (int oflags, Mode_t omode)		);

@@ -25,7 +25,6 @@
 #define name1_length  m1_i1
 #define name2_length  m1_i2
 #define nbytes        m1_i2
-#define offset	      m2_l1
 #define owner	      m1_i2
 #define parent	      m1_i1
 #define pathname      m3_ca1
