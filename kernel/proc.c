@@ -575,7 +575,7 @@ register struct proc *rp;	/* this process is now runnable */
   }
 
   /* Run 'rp' next if it has a higher priority than 'proc_ptr'. This actually
-   * should be done via pick_proc(), but mini_send() and mini_rec() rely
+   * should be done via pick_proc(), but the message passing functions rely
    * on this side-effect.
    */
   if (rp->p_priority < proc_ptr->p_priority) proc_ptr = rp;
@@ -590,8 +590,8 @@ register struct proc *rp;	/* this process is no longer runnable */
 /* A process has blocked. See ready for a description of the queues. */
 
   register struct proc *xp;
-  register struct proc **qtail; /* queue's rdy_tail */
-  int q = rp->p_priority;	/* queue to use */
+  register struct proc **qtail; 	/* queue's rdy_tail */
+  int q = rp->p_priority;		/* queue to use */
 
   /* Side-effect for tasks: check if the task's stack still is ok? */
   if (istaskp(rp)) { 				
@@ -600,24 +600,34 @@ register struct proc *rp;	/* this process is no longer runnable */
   }
 
   /* Now make sure that the process is not in its ready queue. Remove the 
-   * process if it is found. The easy part is to check the front of the queue. 
+   * process if it is found. A process can be made unready even if it is not 
+   * running by being sent a signal that kills it.
    */
-  if ( (xp = rdy_head[q]) == NIL_PROC) return;
-  if (xp == rp) {
-	rdy_head[q] = xp->p_nextready;		/* remove head of queue */
-	if (rp == proc_ptr) 			/* current process removed */
-		pick_proc();			/* pick new process to run */
-	return;
+  if ( (xp = rdy_head[q]) != NIL_PROC) {	/* ready queue is empty */
+      if (xp == rp) {				/* check head of queue */
+          rdy_head[q] = xp->p_nextready;	/* new head of queue */
+          if (rp == proc_ptr) 			/* current process removed */
+              pick_proc();			/* pick new process to run */
+      } 
+      else {					/* check body of queue */
+          while (xp->p_nextready != rp)		/* stop if process is next */
+              if ( (xp = xp->p_nextready) == NIL_PROC) 
+                  return;	
+          xp->p_nextready = xp->p_nextready->p_nextready;
+          if (rdy_tail[q] == rp) 		/* possibly update tail */
+              rdy_tail[q] = rp;
+      }
   }
 
-  /* No match yet. Search body of queue. A process can be made unready even 
-   * if it is not running by being sent a signal that kills it.
-   */
-  while (xp->p_nextready != rp)
-	if ( (xp = xp->p_nextready) == NIL_PROC) return;
+  
+#if DEAD_CODE
+  while (xp->p_nextready != rp)			/* find rp */
+	if ( (xp = xp->p_nextready) == NIL_PROC) 
+		return;
   xp->p_nextready = xp->p_nextready->p_nextready;
   qtail = &rdy_tail[q];
   if (*qtail == rp) *qtail = xp;
+#endif
 }
 
 /*===========================================================================*
