@@ -352,7 +352,7 @@ void test19e()
 	if (write(n, a, 255) != 255) e(38);
 	read(n1, b, 20);
 	if (lseek(n, 0L, SEEK_SET) != 0L) e(39);
-	if ((j = read(n1, b, 1024)) != 255) e(40);
+	if ((j = read(n1, b, 512)) != 255) e(40);
 	if (unlink("T3b") < 0) e(41);
 	if (close(n) < 0) e(42);
 	if (close(n1) < 0) e(43);
