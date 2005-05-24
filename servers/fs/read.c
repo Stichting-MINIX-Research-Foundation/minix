@@ -24,7 +24,9 @@
 
 FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, off_t position,
 			unsigned off, int chunk, unsigned left, int rw_flag,
-			char *buff, int seg, int usr, int block_size)			);
+			char *buff, int seg, int usr, int block_size, int *completed)			);
+
+FORWARD _PROTOTYPE( int rw_chunk_finish, (int *)			);
 
 /*===========================================================================*
  *				do_read					     *
@@ -34,6 +36,24 @@ PUBLIC int do_read()
   return(read_write(READING));
 }
 
+/* The following data is shared between rw_chunk() and rw_chunk_finish().
+ * It saves up the copying operations that have to be done between user
+ * space and the file system. After every (set of) rw_chunk()s,
+ * rw_chunk_finish() has to be called immediately (before the FS call returns)
+ * so the actual data copying is done.
+ *
+ * The point of this is to save on the number of copy system calls.
+ */
+#define COPY_QUEUE_LEN CPVEC_NR 
+PRIVATE struct copy_queue_entry {
+	struct buf *bp;			/* buf to put_block after copying */
+	int user_seg, user_proc;	/* user space data */
+	phys_bytes user_offset, fs_offset;
+	int blocktype;
+	int chunk;
+	int op;
+} copy_queue[COPY_QUEUE_LEN];
+PRIVATE int copy_queue_used = 0;
 
 /*===========================================================================*
  *				read_write				     *
@@ -52,6 +72,16 @@ int rw_flag;			/* READING or WRITING */
   mode_t mode_word;
   struct filp *wf;
   int block_size;
+  int completed, r2 = OK;
+  phys_bytes p;
+
+  /* left unfinished rw_chunk()s from previous call! this can't happen.
+   * it means something has gone wrong we can't repair now.
+   */
+  if(copy_queue_used != 0) {
+  	panic("copy queue size nonzero when entering read_write().",
+  		copy_queue_used);
+  }
 
   /* MM loads segments by putting funny things in upper 10 bits of 'fd'. */
   if (who == PM_PROC_NR && (m_in.fd & (~BYTE)) ) {
@@ -70,6 +100,13 @@ int rw_flag;			/* READING or WRITING */
 	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
   }
   if (m_in.nbytes == 0) return(0);	/* so char special files need not check for 0*/
+
+  /* check if user process has the memory it needs.
+   * if not, copying will fail later.
+   * do this after 0-check above because umap doesn't want to map 0 bytes.
+   */
+  if ((r = sys_umap(usr, seg, (vir_bytes) m_in.buffer, m_in.nbytes, &p)) != OK)
+	return r;
   position = f->filp_pos;
   oflags = f->filp_flags;
   rip = f->filp_ino;
@@ -139,6 +176,7 @@ int rw_flag;			/* READING or WRITING */
 
 	/* Split the transfer into chunks that don't span two blocks. */
 	while (m_in.nbytes != 0) {
+
 		off = (unsigned int) (position % block_size);/* offset in blk*/
 		if (partial_pipe) {  /* pipes only */
 			chunk = MIN(partial_cnt, block_size - off);
@@ -154,7 +192,8 @@ int rw_flag;			/* READING or WRITING */
 
 		/* Read or write 'chunk' bytes. */
 		r = rw_chunk(rip, position, off, chunk, (unsigned) m_in.nbytes,
-			     rw_flag, m_in.buffer, seg, usr, block_size);
+			     rw_flag, m_in.buffer, seg, usr, block_size, &completed);
+
 		if (r != OK) break;	/* EOF reached */
 		if (rdwt_err < 0) break;
 
@@ -170,6 +209,9 @@ int rw_flag;			/* READING or WRITING */
 		}
 	}
   }
+
+  /* do copying to/from user space */
+  r2 = rw_chunk_finish(&completed);
 
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
@@ -196,6 +238,11 @@ int rw_flag;			/* READING or WRITING */
 
   if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
+
+  /* if user-space copying failed, read/write failed. */
+  if (r == OK && r2 != OK) {
+	r = r2;
+  }
   if (r == OK) {
 	if (rw_flag == READING) rip->i_update |= ATIME;
 	if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
@@ -203,7 +250,7 @@ int rw_flag;			/* READING or WRITING */
 	if (partial_pipe) {
 		partial_pipe = 0;
 			/* partial write on pipe with */
-			/* O_NONBLOCK, return write count */
+		/* O_NONBLOCK, return write count */
 		if (!(oflags & O_NONBLOCK)) {
 			fp->fp_cum_io_partial = cum_io;
 			suspend(XPIPE);   /* partial write on pipe with */
@@ -212,16 +259,14 @@ int rw_flag;			/* READING or WRITING */
 	}
 	fp->fp_cum_io_partial = 0;
 	return(cum_io);
-  } else {
-	return(r);
   }
+  return(r);
 }
-
 
 /*===========================================================================*
  *				rw_chunk				     *
  *===========================================================================*/
-PRIVATE int rw_chunk(rip, position, off, chunk, left, rw_flag, buff, seg, usr, block_size)
+PRIVATE int rw_chunk(rip, position, off, chunk, left, rw_flag, buff, seg, usr, block_size, completed)
 register struct inode *rip;	/* pointer to inode for file to be rd/wr */
 off_t position;			/* position within file to read or write */
 unsigned off;			/* off within the current block */
@@ -231,15 +276,19 @@ int rw_flag;			/* READING or WRITING */
 char *buff;			/* virtual address of the user buffer */
 int seg;			/* T or D segment in user space */
 int usr;			/* which user process */
-int block_size;
+int block_size;			/* block size of FS operating on */
+int *completed;			/* number of bytes copied */
 {
 /* Read or write (part of) a block. */
 
   register struct buf *bp;
-  register int r;
+  register int r = OK;
   int n, block_spec;
   block_t b;
   dev_t dev;
+  int entry;
+
+  *completed = 0;
 
   block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
   if (block_spec) {
@@ -273,10 +322,15 @@ int block_size;
   }
 
   /* In all cases, bp now points to a valid buffer. */
+  if(bp == NIL_BUF) {
+  	panic("bp not valid in rw_chunk, this can't happen", NO_NUM);
+  }
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&
 					position >= rip->i_size && off == 0) {
 	zero_block(bp);
   }
+
+#if 0
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_vircopy(FS_PROC_NR, D, (phys_bytes) (bp->b_data+off),
@@ -291,9 +345,93 @@ int block_size;
   }
   n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
   put_block(bp, n);
+#else
+  /* have to copy a buffer now. remember to do it. */
+  if(copy_queue_used < 0 || copy_queue_used > COPY_QUEUE_LEN) {
+  	panic("copy_queue_used illegal size", copy_queue_used);
+  }
+
+  if(copy_queue_used == COPY_QUEUE_LEN) {
+  	r = rw_chunk_finish(completed);
+	if(copy_queue_used != 0) {
+	  	panic("copy_queue_used nonzero", copy_queue_used);
+  	}
+  }
+
+  entry = copy_queue_used++;
+
+  if(entry < 0 || entry >= COPY_QUEUE_LEN) {
+  	panic("entry illegal slot", entry);
+  }
+
+  copy_queue[entry].bp = bp;
+  copy_queue[entry].op = rw_flag;
+  copy_queue[entry].user_seg = seg;
+  copy_queue[entry].user_proc = usr;
+  copy_queue[entry].fs_offset = (phys_bytes) bp->b_data+off;
+  copy_queue[entry].user_offset = (phys_bytes) buff;
+  copy_queue[entry].chunk = chunk;
+  copy_queue[entry].blocktype = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
+
+  if(rw_flag == WRITING)  {
+	bp->b_dirt = DIRTY;
+  }
+#endif
+
   return(r);
 }
 
+/*===========================================================================*
+ *				rw_chunk_finish				     *
+ *===========================================================================*/
+PRIVATE int rw_chunk_finish(int *completed)
+{
+	int i, total = 0, r;
+	static struct vir_cp_req vir_cp_req[CPVEC_NR];
+	message m;
+
+	*completed = 0;
+	if(copy_queue_used < 1) {
+		return OK;
+	}
+
+	for(i = 0; i < copy_queue_used; i++) {
+		struct vir_addr *fs, *user;
+
+		if(copy_queue[i].op == READING) {
+			fs = &vir_cp_req[i].src;
+			user = &vir_cp_req[i].dst;
+		} else {
+			fs = &vir_cp_req[i].dst;
+			user = &vir_cp_req[i].src;
+		}
+
+		vir_cp_req[i].count = copy_queue[i].chunk;
+		fs->proc_nr = FS_PROC_NR;
+		fs->segment = D;
+		fs->offset = copy_queue[i].fs_offset;
+		user->proc_nr = copy_queue[i].user_proc;
+		user->segment = copy_queue[i].user_seg;
+		user->offset = copy_queue[i].user_offset;
+		total += copy_queue[i].chunk;
+		put_block(copy_queue[i].bp, copy_queue[i].blocktype);
+	}
+
+	m.m_type = SYS_VIRVCOPY;
+	m.VCP_VEC_SIZE = i;
+	m.VCP_VEC_ADDR = (char *) vir_cp_req;
+
+	if((r=sendrec(SYSTASK, &m)) < 0) {
+		panic("rw_chunk_finish: virvcopy sendrec failed", r);
+	}
+
+	*completed = total;
+
+  	copy_queue_used = 0;
+
+	/* return VIRVCOPY return code */
+	return m.m_type;
+}
 
 /*===========================================================================*
  *				read_map				     *
