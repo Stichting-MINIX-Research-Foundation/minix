@@ -62,6 +62,10 @@ struct proc {
   unsigned p_pendcount;		/* count of pending and unfinished signals */
 
   char p_name[PROC_NAME_LEN];	/* name of the process, including \0 */
+
+#if ENABLE_K_DEBUGGING
+  int p_ready, p_found;
+#endif
 };
 
 /* Guard word for task stacks. */

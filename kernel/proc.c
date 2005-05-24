@@ -415,6 +415,13 @@ register struct proc *rp;	/* this process is now runnable */
 /* Add 'rp' to one of the queues of runnable processes.  */
   int q = rp->p_priority;	/* scheduling queue to use */
 
+#if ENABLE_K_DEBUGGING
+  if(rp->p_ready) {
+	kprintf("ready() already ready process\n", NO_NUM);
+  }
+  rp->p_ready = 1;
+#endif
+
   /* Processes, in principle, are added to the end of the queue. However, 
    * user processes are added in front of the queue, because this is a bit 
    * fairer to I/O bound processes. 
@@ -453,6 +460,13 @@ register struct proc *rp;	/* this process is no longer runnable */
   register struct proc **qtail; 	/* queue's rdy_tail */
   int q = rp->p_priority;		/* queue to use */
 
+#if ENABLE_K_DEBUGGING
+  if(!rp->p_ready) {
+	kprintf("unready() already unready process\n", NO_NUM);
+  }
+  rp->p_ready = 0;
+#endif
+
   /* Side-effect for tasks: check if the task's stack still is ok? */
   if (istaskp(rp)) { 				
 	if (*rp->p_stguard != STACK_GUARD)
@@ -468,16 +482,19 @@ register struct proc *rp;	/* this process is no longer runnable */
           rdy_head[q] = xp->p_nextready;	/* new head of queue */
           if (rp == proc_ptr) 			/* current process removed */
               pick_proc();			/* pick new process to run */
-      } 
+	if(rp == rdy_tail[q])
+		rdy_tail[q] = NIL_PROC;
+      }
       else {					/* check body of queue */
           while (xp->p_nextready != rp)		/* stop if process is next */
               if ( (xp = xp->p_nextready) == NIL_PROC) 
                   return;	
           xp->p_nextready = xp->p_nextready->p_nextready;
           if (rdy_tail[q] == rp) 		/* possibly update tail */
-              rdy_tail[q] = rp;
+              rdy_tail[q] = xp;
       }
   }
+
 }
 
 /*===========================================================================*
