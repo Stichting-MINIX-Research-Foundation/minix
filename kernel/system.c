@@ -315,6 +315,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
   return 0;
 }
 
+
 /*===========================================================================*
  *				umap_local				     *
  *===========================================================================*/
@@ -341,6 +342,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
    */
 
   if (bytes <= 0) return( (phys_bytes) 0);
+  if (vir_addr + bytes <= vir_addr) return 0;	/* overflow */
   vc = (vir_addr + bytes - 1) >> CLICK_SHIFT;	/* last click of data */
 
 #if (CHIP == INTEL) || (CHIP == M68000)
@@ -353,6 +355,10 @@ vir_bytes bytes;		/* # of bytes to be copied */
 
   if((vir_addr>>CLICK_SHIFT) >= rp->p_memmap[seg].mem_vir + 
   	rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
+
+  if(vc >= rp->p_memmap[seg].mem_vir + 
+  	rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
+
 #if (CHIP == INTEL)
   seg_base = (phys_bytes) rp->p_memmap[seg].mem_phys;
   seg_base = seg_base << CLICK_SHIFT;	/* segment origin in bytes */
@@ -368,7 +374,6 @@ vir_bytes bytes;		/* # of bytes to be copied */
   return(pa);
 #endif
 }
-
 
 /*==========================================================================*
  *				numap_local				    *
