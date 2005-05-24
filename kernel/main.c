@@ -142,6 +142,11 @@ PUBLIC void main()
 	}
 	
 	/* Set ready. The HARDWARE task is never ready. */
+
+#if ENABLE_K_DEBUGGING
+	rp->p_ready = 0;
+#endif
+
 	if (rp->p_nr != HARDWARE) lock_ready(rp);	
 	rp->p_flags = 0;
 
