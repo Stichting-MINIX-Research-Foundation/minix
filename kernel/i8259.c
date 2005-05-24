@@ -10,8 +10,10 @@
 #define ICW1_AT         0x11	/* edge triggered, cascade, need ICW4 */
 #define ICW1_PC         0x13	/* edge triggered, no cascade, need ICW4 */
 #define ICW1_PS         0x19	/* level triggered, cascade, need ICW4 */
-#define ICW4_AT         0x01	/* not SFNM, not buffered, normal EOI, 8086 */
-#define ICW4_PC         0x09	/* not SFNM, buffered, normal EOI, 8086 */
+#define ICW4_AT_SLAVE   0x01	/* not SFNM, not buffered, normal EOI, 8086 */
+#define ICW4_AT_MASTER  0x05	/* not SFNM, not buffered, normal EOI, 8086 */
+#define ICW4_PC_SLAVE   0x09	/* not SFNM, buffered, normal EOI, 8086 */
+#define ICW4_PC_MASTER  0x0D	/* not SFNM, buffered, normal EOI, 8086 */
 
 #if _WORD_SIZE == 2
 typedef _PROTOTYPE( void (*vecaddr_t), (void) );
@@ -54,13 +56,13 @@ int mine;
 	outb(INT_CTLMASK, mine ? IRQ0_VECTOR : BIOS_IRQ0_VEC);
 							/* ICW2 for master */
 	outb(INT_CTLMASK, (1 << CASCADE_IRQ));		/* ICW3 tells slaves */
-	outb(INT_CTLMASK, ICW4_AT);
+	outb(INT_CTLMASK, ICW4_AT_MASTER);
 	outb(INT_CTLMASK, ~(1 << CASCADE_IRQ));		/* IRQ 0-7 mask */
 	outb(INT2_CTL, machine.ps_mca ? ICW1_PS : ICW1_AT);
 	outb(INT2_CTLMASK, mine ? IRQ8_VECTOR : BIOS_IRQ8_VEC);
 							/* ICW2 for slave */
 	outb(INT2_CTLMASK, CASCADE_IRQ);		/* ICW3 is slave nr */
-	outb(INT2_CTLMASK, ICW4_AT);
+	outb(INT2_CTLMASK, ICW4_AT_SLAVE);
 	outb(INT2_CTLMASK, ~0);				/* IRQ 8-15 mask */
 
 	/* Copy the BIOS vectors from the BIOS to the Minix location, so we

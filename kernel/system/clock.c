@@ -164,7 +164,12 @@ timer_t *tp;
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that
  * process given with a SYN_ALARM message.
  */
-  lock_notify(tmr_arg(tp)->ta_int, SYN_ALARM);
+  message m;
+  m.NOTIFY_SOURCE = HARDWARE;
+  m.NOTIFY_TYPE = SYN_ALARM;
+  m.NOTIFY_ARG = get_uptime();
+  m.NOTIFY_FLAGS = 0;
+  lock_notify(HARDWARE, tmr_arg(tp)->ta_int, &m);
 }
 
 

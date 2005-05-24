@@ -106,6 +106,7 @@ struct kinfo {
   long notify_blocked;
   long notify_switching;
   long notify_reenter;
+  long notify_taskcall;
   long notify_ok;
   long notify_unhold;
   long notify_int;

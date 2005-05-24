@@ -128,7 +128,7 @@ PUBLIC void clock_task()
        */
       if (result != EDONTREPLY) {
           m.m_type = result;
-          lock_send(proc_addr(CLOCK), m.m_source, &m);
+          lock_send(CLOCK, m.m_source, &m);
       }
   }
 }
@@ -222,6 +222,7 @@ irq_hook_t *hook;
  */
   register struct proc *rp;
   register unsigned ticks;
+  message m;
   clock_t now;
 
   /* Acknowledge the PS/2 clock interrupt. */
@@ -247,7 +248,8 @@ irq_hook_t *hook;
   if (next_timeout <= now || (sched_ticks == 1 && bill_ptr == prev_ptr
           && rdy_head[PPRI_USER] != NIL_PROC))
   {  
-      lock_notify(CLOCK, HARD_INT);
+      m.NOTIFY_TYPE = HARD_INT;
+      lock_notify(HARDWARE, CLOCK, &m);
   } 
   else if (--sched_ticks == 0) {
       sched_ticks = SCHED_RATE;	/* reset quantum */

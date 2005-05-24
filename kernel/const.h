@@ -33,8 +33,17 @@
 /* How many IRQ hooks are there in total. */
 #define NR_IRQ_HOOKS	  16
 
-/* How many notification buffers (12B each) should there be? */
-#define NR_NOTIFY_BUFS	 128
+/* How many buffers for notification messages should there be? */
+#define NR_NOTIFY_BUFS	  64
+
+/* Constants and macros for bit map manipulation. */
+#define BITCHUNK_BITS   (sizeof(bitchunk_t) * CHAR_BIT)
+#define BITMAP_CHUNKS(nr_bits) (((nr_bits)+BITCHUNK_BITS-1)/BITCHUNK_BITS)  
+#define MAP_CHUNK(map,bit) (map)[((bit)/BITCHUNK_BITS)]
+#define CHUNK_OFFSET(bit) ((bit)%BITCHUNK_BITS))
+#define GET_BIT(map,bit) ( MAP_CHUNK(map,bit) & (1 << CHUNK_OFFSET(bit) )
+#define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) )
+#define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) )
 
 /* Program stack words and masks. */
 #define INIT_PSW      0x0200	/* initial psw */

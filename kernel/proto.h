@@ -38,16 +38,18 @@ _PROTOTYPE( void stop_sequence, (struct timer *tp)			);
 
 /* misc.c */
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
+_PROTOTYPE( int alloc_bit, (bitchunk_t *map, bit_t nr_bits) 		); 
+_PROTOTYPE( void free_bit, (bit_t nr, bitchunk_t *map, bit_t nr_bits) 	); 
+_PROTOTYPE( void print_bitmap, (bitchunk_t *map, bit_t nr_bits) 	);
 
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
-_PROTOTYPE( void unhold, (void)						);
+_PROTOTYPE( int lock_notify, (int src, int dst, message *m_ptr)		);
+_PROTOTYPE( int lock_send, (int src, int dst, message *m_ptr)		);
 _PROTOTYPE( void lock_pick_proc, (void)					);
 _PROTOTYPE( void lock_ready, (struct proc *rp)				);
 _PROTOTYPE( void lock_sched, (void)					);
 _PROTOTYPE( void lock_unready, (struct proc *rp)			);
-_PROTOTYPE( void lock_notify, (int proc_nr, int notify_type)		);
-_PROTOTYPE( int lock_send, (struct proc *rp, int to, message *m_ptr)		);
 
 /* start.c */
 _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,

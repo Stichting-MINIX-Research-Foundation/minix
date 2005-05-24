@@ -28,7 +28,7 @@ $(ROOTOBJ):
 	rm a.out
 
 clean:	
-	@rm -f *.o *.s *.bak test? test?? t10a t11a t11b DIR*
+	rm -rf *.o *.s *.bak test? test?? t10a t11a t11b DIR*
 
 test1:	test1.c
 test2:	test2.c

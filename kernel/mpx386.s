@@ -55,6 +55,7 @@ begbss:
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/com.h>
+#include <ibm/interrupt.h>
 #include "const.h"
 #include "protect.h"
 #include "sconst.h"
@@ -212,24 +213,48 @@ csinit:
 !*				hwint00 - 07				     *
 !*===========================================================================*
 ! Note this is a macro, it just looks like a subroutine.
+#define hwint_master_slave_fail(irq)	\
+	call	save			/* save interrupted process state */;\
+	cli				;\
+	inb	INT2_CTLMASK		/* get current mask */		    ;\
+	movb	ah, al			;\
+	inb	INT_CTLMASK		/* get current mask */		    ;\
+	push 	eax			;\
+	cli				;\
+	movb    al, ~[0]		;\
+	outb	INT_CTLMASK		/* mask all */;\
+	outb	INT2_CTLMASK		/* */;\
+	cli				;\
+	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
+	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
+	pop	ecx							    ;\
+	pop	eax							    ;\
+	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
+	jz	0f							    ;\
+	or	eax, [1<<irq]		/* mask irq */			    ;\
+0:	outb	INT_CTLMASK		/* restore master irq mask */;\
+	movb	al, ah			;\
+	outb	INT2_CTLMASK		/* restore slave irq mask */;\
+	movb	al, END_OF_INT						    ;\
+	outb	INT_CTL			/* reenable master 8259		  */;\
+	cmp     (irq), 8		;\
+	jb	1f			;\
+	outb	INT2_CTL		/* reenable slave 8259		  */;\
+1:	ret				/* restart (another) process      */
+
 #define hwint_master(irq)	\
 	call	save			/* save interrupted process state */;\
-	inb	INT_CTLMASK						    ;\
-	orb	al, [1<<irq]						    ;\
-	outb	INT_CTLMASK		/* disable the irq		  */;\
-	movb	al, ENABLE						    ;\
-	outb	INT_CTL			/* reenable master 8259		  */;\
 	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
-	sti				/* enable interrupts		  */;\
 	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
-	cli				/* disable interrupts		  */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
-	jnz	0f							    ;\
-	inb	INT_CTLMASK						    ;\
-	andb	al, ~[1<<irq]						    ;\
-	outb	INT_CTLMASK		/* enable the irq		  */;\
-0:	ret				/* restart (another) process      */
+	jz	0f							    ;\
+	inb	INT_CTLMASK		/* get current mask */		    ;\
+	orb	al, [1<<irq]		/* mask irq */			    ;\
+	outb	INT_CTLMASK		/* disable the irq		  */;\
+0:	movb	al, END_OF_INT						    ;\
+	outb	INT_CTL			/* reenable master 8259		  */;\
+	ret				/* restart (another) process      */
 
 ! Each of these entry points is an expansion of the hwint_master macro
 	.align	16
@@ -270,23 +295,18 @@ _hwint07:		! Interrupt routine for irq 7 (printer)
 ! Note this is a macro, it just looks like a subroutine.
 #define hwint_slave(irq)	\
 	call	save			/* save interrupted process state */;\
+	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
+	call	_intr_handle		/* intr_handle(irq_handlers[irq])	  */;\
+	pop	ecx							    ;\
+	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
+	jz	0f							    ;\
 	inb	INT2_CTLMASK						    ;\
 	orb	al, [1<<[irq-8]]					    ;\
 	outb	INT2_CTLMASK		/* disable the irq		  */;\
-	movb	al, ENABLE						    ;\
+0:	movb	al, END_OF_INT						    ;\
 	outb	INT_CTL			/* reenable master 8259		  */;\
-	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
 	outb	INT2_CTL		/* reenable slave 8259		  */;\
-	sti				/* enable interrupts		  */;\
-	call	_intr_handle		/* intr_handle(irq_handlers[irq])	  */;\
-	cli				/* disable interrupts		  */;\
-	pop	ecx							    ;\
-	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
-	jnz	0f							    ;\
-	inb	INT2_CTLMASK						    ;\
-	andb	al, ~[1<<[irq-8]]					    ;\
-	outb	INT2_CTLMASK		/* enable the irq		  */;\
-0:	ret				/* restart (another) process      */
+	ret				/* restart (another) process      */
 
 ! Each of these entry points is an expansion of the hwint_slave macro
 	.align	16
@@ -375,7 +395,6 @@ _p_s_call:
 	mov	esp, k_stktop
 	xor	ebp, ebp	! for stacktrace
 				! end of inline save
-	sti			! allow SWITCHER to be interrupted
 				! now set up parameters for sys_call()
 	push	ebx		! pointer to user message
 	push	eax		! src/dest
@@ -383,7 +402,6 @@ _p_s_call:
 	call	_sys_call	! sys_call(function, src_dest, m_ptr)
 				! caller is now explicitly in proc_ptr
 	mov	AXREG(esi), eax	! sys_call MUST PRESERVE si
-	cli			! disable interrupts 
 
 ! Fall into code to restart proc/task running.
 
@@ -392,17 +410,8 @@ _p_s_call:
 !*===========================================================================*
 _restart:
 
-! Flush any held-up notifications.
-! This reenables interrupts, so the current interrupt handler may reenter.
-! This does not matter, because the current handler is about to exit and no
-! other handlers can reenter since flushing is only done when k_reenter == 0.
+! Restart the current process or the next process if it is set. 
 
-	cmp	(_held_head), 0	! do fast test to usually avoid function call
-	jz	over_call_unhold
-	cmp	(_switching), 0	! do fast test to usually avoid function call
-	jnz	over_call_unhold
-	call	_unhold		! this is rare so overhead acceptable
-over_call_unhold:
 	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
 	lldt	P_LDT_SEL(esp)		! enable segment descriptors for task
 	lea	eax, P_STACKTOP(esp)	! arrange for next interrupt
@@ -522,7 +531,6 @@ exception1:				! Common for all exceptions.
 	call	_exception		! (ex_number, trap_errno, old_eip,
 					!	old_cs, old_eflags)
 	add	esp, 5*4
-	cli
 	ret
 
 !*===========================================================================*

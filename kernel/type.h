@@ -13,7 +13,7 @@ typedef long karg_t;			/* use largest type here */
  * short we can support up to 256 user processes and more kernel tasks than
  * one can ever create.
  */ 
-typedef int proc_nr_t;			/* process table entry number */
+typedef short proc_nr_t;		/* process table entry number */
 typedef unsigned long send_mask_t;	/* bit mask for sender */
 
 struct system_image {
@@ -32,8 +32,8 @@ struct memory {
 };
 
 typedef unsigned long notify_mask_t;	/* bit mask for notifications */
-typedef char notify_type_t;		/* notification type */
-typedef char notify_flags_t;		/* notification flags */
+typedef short notify_type_t;		/* notification type */
+typedef short notify_flags_t;		/* notification flags */
 typedef int notify_arg_t;		/* notification argument */
 
 struct notification {

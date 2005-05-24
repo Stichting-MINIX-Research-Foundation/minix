@@ -23,17 +23,12 @@ EXTERN struct machine machine;	/* machine information for users */
 EXTERN struct kmessages kmess;  /* diagnostic messages in kernel */
 EXTERN struct memory mem[NR_MEMS];	/* base and size of chunks of memory */
 
-/* Low level notifications may be put on the 'held' queue to prevent races. */
-EXTERN struct proc *held_head;	/* head of queue of held-up interrupts */
-EXTERN struct proc *held_tail;	/* tail of queue of held-up interrupts */
-EXTERN unsigned char k_reenter;	/* kernel reentry count (entry count less 1)*/
-EXTERN unsigned char switching;	/* nonzero if process switching in progress */
-
 /* Process table.  Here to stop too many things having to include proc.h. */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
 
 /* Miscellaneous. */
-EXTERN unsigned lost_ticks;	/* clock ticks counted outside the clock task */
+EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
+EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
 #if (CHIP == INTEL)
 

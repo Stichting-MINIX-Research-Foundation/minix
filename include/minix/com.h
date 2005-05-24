@@ -82,9 +82,10 @@
 #define NR_NOTIFY_TYPES    	       5	/* nr of bits in mask */
 
 /* Shorthands for message parameters passed with notifications. */
-#define NOTIFY_TYPE	m2_i1
-#define NOTIFY_FLAGS	m2_i2
-#define NOTIFY_ARG	m2_i3
+#define NOTIFY_SOURCE	m_source
+#define NOTIFY_TYPE	m_type
+#define NOTIFY_FLAGS	m2_i1
+#define NOTIFY_ARG	m2_l1
 
 
 /*===========================================================================*

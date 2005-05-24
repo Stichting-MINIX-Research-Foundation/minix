@@ -154,13 +154,15 @@ int c;					/* character to append */
 /* Accumulate a single character for a kernel message. Send a notification
  * the to TTY driver if the buffer if a END_OF_KMESS is encountered. 
  */
+  message m;
   if (c != END_OF_KMESS) {
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
       if (kmess.km_size < KMESS_BUF_SIZE)
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
-      lock_notify(TTY, NEW_KMESS);	/* let TTY display the message */
+      m.NOTIFY_TYPE = NEW_KMESS;
+      lock_notify(HARDWARE, TTY, &m);
   }
 }
 

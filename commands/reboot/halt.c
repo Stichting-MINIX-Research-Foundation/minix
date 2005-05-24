@@ -127,7 +127,7 @@ char **argv;
     /* Give everybody a chance to die peacefully. */
     printf("Sending SIGTERM to all processes ...\n");
     kill(-1, SIGTERM);
-    sleep(3);
+    sleep(2);
   }
 
   reboot(flag, monitor_code, strlen(monitor_code));

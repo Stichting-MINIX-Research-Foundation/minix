@@ -89,7 +89,7 @@ PUBLIC void sys_task()
        */
       if (result != EDONTREPLY) {
   	  m.m_type = result;	/* report status of call */
-          lock_send(proc_addr(SYSTASK), m.m_source, &m);
+          lock_send(SYSTASK, m.m_source, &m);
       }
   }
 }
@@ -243,7 +243,10 @@ irq_hook_t *hook;
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
  */
-  lock_notify(hook->proc_nr, HARD_INT); 
+  message m;
+  m.NOTIFY_TYPE = HARD_INT;
+  m.NOTIFY_ARG = hook->irq;
+  lock_notify(HARDWARE, hook->proc_nr, &m);
   return(hook->policy & IRQ_REENABLE);
 }
 
@@ -268,6 +271,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * do a core dump.
  */
   register struct proc *rp, *mmp;
+  message m;
 
   rp = proc_addr(proc_nr);
   if (sigismember(&rp->p_pending, sig_nr))
@@ -278,12 +282,15 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
 	return;			/* another signal already pending */
   if (rp->p_flags == 0) lock_unready(rp);
   rp->p_flags |= PENDING | SIG_PENDING;
-  lock_notify(PM_PROC_NR, KSIG_PENDING);
+  m.NOTIFY_TYPE = KSIG_PENDING;
+  m.NOTIFY_ARG = 0;
+  m.NOTIFY_FLAGS = 0;
+  lock_notify(HARDWARE, PM_PROC_NR, &m);
 }
 
 
 /*===========================================================================*
- *				umap_bios					     *
+ *				umap_bios				     *
  *===========================================================================*/
 PUBLIC phys_bytes umap_bios(rp, vir_addr, bytes)
 register struct proc *rp;	/* pointer to proc table entry for process */

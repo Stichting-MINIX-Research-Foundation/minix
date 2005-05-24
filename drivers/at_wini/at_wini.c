@@ -833,6 +833,10 @@ PRIVATE void w_intr_wait()
 		} else if (m.m_type == HARD_INT) {
 		    sys_inb((w_wn->base + REG_STATUS), &w_status);
 	        }
+	        else {
+	        	printf("AT_WINI got unexpected message %d from %d\n",
+	        		m.m_type, m.m_source);
+	        }
 	}
   } else {
 	/* Interrupt not yet allocated; use polling. */

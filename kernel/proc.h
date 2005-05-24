@@ -33,12 +33,6 @@ struct proc {
 
   proc_nr_t p_nr;		/* number of this process (for fast access) */
 
-  notify_mask_t p_ntf_blocked;	/* bit mask for blocked notifications */
-  notify_mask_t p_ntf_held;	/* bit mask for held up notify() calls */
-  struct proc *p_ntf_nextheld;	/* next in chain of held-up int processes */
-
-  struct notification *p_ntf_q;	/* queue of pending notifications */
-
   int p_flags;			/* SENDING, RECEIVING, etc. */
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
   struct far_mem p_farmem[NR_REMOTE_SEGS];  /* remote memory map */
@@ -60,6 +54,8 @@ struct proc {
   message *p_messbuf;		/* pointer to message buffer */
   int p_getfrom;		/* from whom does process want to receive? */
   int p_sendto;			/* to whom does process want to send? */
+
+  struct notification *p_ntf_q;	/* queue of pending notifications */
 
   struct proc *p_nextready;	/* pointer to next ready process */
   sigset_t p_pending;		/* bit map for pending signals */

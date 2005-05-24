@@ -217,6 +217,7 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
  * sure it is only executed once. Unless a CPU exception occurred, the 
  * stop_sequence() is started. 
  */
+  message m;
   if (shutting_down)
   	return;
 
@@ -225,7 +226,6 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
    * We rely on TTY to call sys_abort() when it is done with the dumps.
    */
   if (how == RBT_PANIC) {
-      message m;
       m.m_type = PANIC_DUMPS;
       if (nb_send(TTY, &m) == OK)	/* don't block if TTY isn't ready */
           return;			/* await sys_abort() from TTY */
@@ -234,7 +234,8 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   /* The TTY expects two HARD_STOP notifications. One to switch to the 
    * primary console for stop sequence output, and one to actually exit.
    */
-  lock_notify(TTY, HARD_STOP);		/* let TTY switch to console 0 */
+  m.NOTIFY_TYPE = HARD_STOP;
+  lock_notify(HARDWARE, TTY, &m);
 
   /* Run the stop sequence. The timer argument passes the shutdown status.
    * The stop sequence is skipped for fatal CPU exceptions.
@@ -266,6 +267,7 @@ timer_t *tp;
   static int level = P_SERVER;		/* start at the highest level */
   static struct proc *p = NIL_PROC;	/* next process to stop */
   static char *types[] = {"task","system","driver","server","user"}; 
+  static message m;
 
   /* See if the last process' shutdown was successful. Else, force exit. */
   if (p != NIL_PROC) { 
@@ -288,7 +290,9 @@ timer_t *tp;
           kprintf("- Stopping %s ", karg(p->p_name));
           kprintf("%s ... ", karg(types[p->p_type]));
           shutdown_process = p;		/* directly continue if exited */
-          lock_notify(proc_number(p), HARD_STOP);
+          m.NOTIFY_TYPE = HARD_STOP;
+          m.NOTIFY_ARG = tmr_arg(tp)->ta_int;		/* how */
+          lock_notify(HARDWARE, proc_number(p), &m);
           set_timer(tp, get_uptime()+STOP_TICKS, stop_sequence);
           return;			/* allow the process to shut down */ 
       } 
@@ -330,7 +334,7 @@ PRIVATE void shutdown(int how)
 	 * For RBT_MONITOR, the MM has provided the program.
 	 */
 	if (how == RBT_HALT) {
-		phys_copy(vir2phys("delay;"), kinfo.params_base, 7); 
+		phys_copy(vir2phys("delay;menu"), kinfo.params_base, 11); 
 	} else if (how == RBT_REBOOT) {
 		phys_copy(vir2phys("delay;boot"), kinfo.params_base, 11);
 	}

@@ -325,11 +325,12 @@ PRIVATE void kenv_dmp()
     printf("- bootdev_size:  %5u\n", kinfo.bootdev_size); 
     printf("- params_base:   %5u\n", kinfo.params_base); 
     printf("- params_size:   %5u\n", kinfo.params_size); 
-    printf("- notify_held:   %8u\n", kinfo.notify_held); 
     printf("- notify_blocked:%8u\n", kinfo.notify_blocked); 
-    printf("- notify_switch: %8u\n", kinfo.notify_switching); 
-    printf("- notify_reenter:%8u\n", kinfo.notify_reenter); 
     printf("- notify_ok:     %8u\n", kinfo.notify_ok); 
+    printf("- notify_held:   %8u\n", kinfo.notify_held); 
+    printf("-   notify_switch: %8u\n", kinfo.notify_switching); 
+    printf("-   notify_reenter:%8u\n", kinfo.notify_reenter); 
+    printf("-   notify_taskcall:%7u\n", kinfo.notify_taskcall); 
     printf("- notify_unhold: %8u\n", kinfo.notify_unhold); 
     printf("- hard_int:      %8u\n", kinfo.notify_int); 
     printf("- hard_stop:     %8u\n", kinfo.notify_stop); 
