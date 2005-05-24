@@ -62,8 +62,7 @@ _PROTOTYPE( int do_trace, (message *m_ptr) );		/* process tracing */
 #endif
 
 #if ENABLE_K_DEBUGGING 					/* debugging */
-#error Kernel debugging routines are not implemented.
-#else
+_PROTOTYPE( void check_runqueues, (char *when) );
 #endif
 
 _PROTOTYPE( int do_vircopy, (message *m_ptr) );
