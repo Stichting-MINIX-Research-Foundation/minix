@@ -233,9 +233,9 @@ struct proc *pt;
   printf("Descriptors for code and data:	0x%04.4x\n", pt->p_ldt[2]);	/* struct segdesc_s */
 #endif
   printf("Number of this process:			0x%04.4x\n", pt->p_nr);	/* int */
+#if 0
   printf("Nonzero if blocked by busy task:	0x%04.4x\n", pt->p_ntf_blocked);	/* int */
   printf("Nonzero if held by busy syscall:	0x%04.4x\n", pt->p_ntf_held);	/* int */
-#if 0
   printf("Next in chain of held-up processes:	0x%04.4x\n", pt->p_ntf_nextheld);	/* struct proc * */
 #endif
   printf("SENDING, RECEIVING, etc.:		0x%04.4x\n", pt->p_flags);	/* int */
