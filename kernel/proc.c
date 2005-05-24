@@ -103,9 +103,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
 
   /* Now check if the call is known and try to perform the request. The only
    * system calls that exist in MINIX are sending and receiving messages.
-   * Receiving is straightforward. Sending requires checks to see if sending
-   * is allowed by the caller's send mask and to see if the destination is
-   * alive.  
+   * Receiving is straightforward. Sending requires to check caller's send
+   * mask and whether the destination is alive.  
    */
   else {
       switch(function) {
@@ -281,6 +280,7 @@ int may_block;				/* (dis)allow blocking */
                 	 sizeof(struct notification);
                 *ntf_q_pp = (*ntf_q_pp)->n_next;/* remove from queue */
                 free_bit(bit_nr, notify_bitmap, NR_NOTIFY_BUFS);
+  kinfo.nr_ntf_pending --;
                 return(OK);			/* report success */
 	}
 	ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
@@ -354,6 +354,7 @@ message *m_ptr;				/* pointer to message buffer */
   	/* Add to end of queue. Get a free notification buffer. */
   	if ((ntf_index = alloc_bit(notify_bitmap, NR_NOTIFY_BUFS)) < 0) 
   		return(ENOSPC);		 	/* should be atomic! */
+  kinfo.nr_ntf_pending ++;
 	ntf_p = &notify_buffer[ntf_index];
 	ntf_p->n_source = proc_number(caller_ptr);
 	ntf_p->n_type = m_ptr->NOTIFY_TYPE;
@@ -367,15 +368,23 @@ message *m_ptr;				/* pointer to message buffer */
 /*==========================================================================*
  *				lock_notify				    *
  *==========================================================================*/
-PUBLIC int lock_notify(src, dst, m_ptr)
-int src;			/* who is trying to send a message? */
+PUBLIC int lock_notify(dst, m_ptr)
 int dst;			/* to whom is message being sent? */
 message *m_ptr;			/* pointer to message buffer */
 {
-/* Safe gateway to mini_notify() for tasks. */
+/* Safe gateway to mini_notify() for tasks and interrupt handlers. This 
+ * function checks if it is called from an interrupt handler and makes sure
+ * that the correct message source is put on the notification. All kernel 
+ * generated notifications share the same pseudo-process number, to prevent
+ * conflicts with SENDREC calls to the kernel task.  
+ */
   int result;
+  struct proc *caller_ptr;
+
   lock();
-  result = mini_notify(proc_addr(src), dst, m_ptr); 
+  caller_ptr = (k_reenter >= 0 || istaskp(proc_ptr)) ?
+  	proc_addr(KERNEL) : proc_ptr;
+  result = mini_notify(caller_ptr, dst, m_ptr); 
   unlock();
   return(result);
 }
@@ -385,7 +394,7 @@ message *m_ptr;			/* pointer to message buffer */
  *===========================================================================*/
 PRIVATE void pick_proc()
 {
-/* Decide who to run now.  A new process is selected by setting 'proc_ptr'.
+/* Decide who to run now.  A new process is selected by setting 'next_ptr'.
  * When a fresh user (or idle) process is selected, record it in 'bill_ptr',
  * so the clock task can tell who to bill for system time.
  */
@@ -398,7 +407,7 @@ PRIVATE void pick_proc()
    */
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
     if ( (rp = rdy_head[q]) != NIL_PROC) {
-	proc_ptr = rp;				/* run process 'rp' next */
+	next_ptr = rp;				/* run process 'rp' next */
 	if (isuserp(rp) || isidlep(rp)) 	/* possible bill 'rp' */
 		bill_ptr = rp;
 	return;
@@ -413,7 +422,7 @@ PRIVATE void ready(rp)
 register struct proc *rp;	/* this process is now runnable */
 {
 /* Add 'rp' to one of the queues of runnable processes.  */
-  int q = rp->p_priority;	/* scheduling queue to use */
+  register int q = rp->p_priority;	/* scheduling queue to use */
 
 #if ENABLE_K_DEBUGGING
   if(rp->p_ready) {
@@ -441,11 +450,16 @@ register struct proc *rp;	/* this process is now runnable */
       rp->p_nextready = NIL_PROC;
   }
 
-  /* Run 'rp' next if it has a higher priority than 'proc_ptr'. This actually
-   * should be done via pick_proc(), but the message passing functions rely
-   * on this side-effect.
+  /* Run 'rp' next if it has a higher priority than 'proc_ptr' or 'next_ptr'. 
+   * This actually should be done via pick_proc(), but the message passing 
+   * functions rely on this side-effect. High priorities have a lower number.
    */
+  if (next_ptr && next_ptr->p_priority > rp->p_priority) next_ptr = rp;
+  else if (proc_ptr->p_priority > rp->p_priority) next_ptr = rp;
+
+#if DEAD_CODE
   if (rp->p_priority < proc_ptr->p_priority) proc_ptr = rp;
+#endif
 }
 
 /*===========================================================================*
@@ -458,7 +472,7 @@ register struct proc *rp;	/* this process is no longer runnable */
 
   register struct proc *xp;
   register struct proc **qtail; 	/* queue's rdy_tail */
-  int q = rp->p_priority;		/* queue to use */
+  register int q = rp->p_priority;	/* queue to use */
 
 #if ENABLE_K_DEBUGGING
   if(!rp->p_ready) {
@@ -480,7 +494,7 @@ register struct proc *rp;	/* this process is no longer runnable */
   if ( (xp = rdy_head[q]) != NIL_PROC) {	/* ready queue is empty */
       if (xp == rp) {				/* check head of queue */
           rdy_head[q] = xp->p_nextready;	/* new head of queue */
-          if (rp == proc_ptr) 			/* current process removed */
+          if (rp == proc_ptr || rp == next_ptr)	/* current process removed */
               pick_proc();			/* pick new process to run */
 	if(rp == rdy_tail[q])
 		rdy_tail[q] = NIL_PROC;
@@ -531,15 +545,14 @@ PUBLIC void lock_pick_proc()
 /*==========================================================================*
  *				lock_send				    *
  *==========================================================================*/
-PUBLIC int lock_send(src, dst, m_ptr)
-int src;			/* who is trying to send a message? */
+PUBLIC int lock_send(dst, m_ptr)
 int dst;			/* to whom is message being sent? */
 message *m_ptr;			/* pointer to message buffer */
 {
 /* Safe gateway to mini_send() for tasks. */
   int result;
   lock();
-  result = mini_send(proc_addr(src), dst, m_ptr, FALSE);
+  result = mini_send(proc_ptr, dst, m_ptr, FALSE);
   unlock();
   return(result);
 }

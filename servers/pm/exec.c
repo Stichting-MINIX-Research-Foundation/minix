@@ -299,6 +299,7 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
   phys_clicks new_base;
   static char zero[1024];		/* used to zero bss */
   phys_bytes bytes, base, count, bss_offset;
+  int s;
 
   /* No need to allocate text if it can be shared. */
   if (sh_mp != NULL) text_bytes = 0;
@@ -373,9 +374,9 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
 
   while (bytes > 0) {
 	count = MIN(bytes, (phys_bytes) sizeof(zero));
-	if (sys_physcopy(PM_PROC_NR, D, (phys_bytes) zero,
-				NONE, PHYS_SEG, base, count) != OK) {
-		panic("new_mem can't zero", NO_NUM);
+	if ((s=sys_physcopy(PM_PROC_NR, D, (phys_bytes) zero,
+				NONE, PHYS_SEG, base, count)) != OK) {
+		panic("new_mem can't zero", s);
 	}
 	base += count;
 	bytes -= count;

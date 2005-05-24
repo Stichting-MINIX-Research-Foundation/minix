@@ -44,8 +44,8 @@ _PROTOTYPE( void print_bitmap, (bitchunk_t *map, bit_t nr_bits) 	);
 
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
-_PROTOTYPE( int lock_notify, (int src, int dst, message *m_ptr)		);
-_PROTOTYPE( int lock_send, (int src, int dst, message *m_ptr)		);
+_PROTOTYPE( int lock_notify, (int dst, message *m_ptr)			);
+_PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_pick_proc, (void)					);
 _PROTOTYPE( void lock_ready, (struct proc *rp)				);
 _PROTOTYPE( void lock_sched, (void)					);
@@ -83,6 +83,7 @@ _PROTOTYPE( void intr_handle, (irq_hook_t *hook)			);
 _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
 						irq_handler_t handler)	);
 _PROTOTYPE( int rm_irq_handler, (int irq, int id)			);
+
 /* klib*.s */
 _PROTOTYPE( void int86, (void)						);
 _PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,vir_bytes src_offset,

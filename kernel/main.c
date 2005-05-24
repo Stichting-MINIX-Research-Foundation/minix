@@ -240,7 +240,7 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
    * primary console for stop sequence output, and one to actually exit.
    */
   m.NOTIFY_TYPE = HARD_STOP;
-  lock_notify(HARDWARE, TTY, &m);
+  lock_notify(TTY, &m);
 
   /* Run the stop sequence. The timer argument passes the shutdown status.
    * The stop sequence is skipped for fatal CPU exceptions.
@@ -297,7 +297,7 @@ timer_t *tp;
           shutdown_process = p;		/* directly continue if exited */
           m.NOTIFY_TYPE = HARD_STOP;
           m.NOTIFY_ARG = tmr_arg(tp)->ta_int;		/* how */
-          lock_notify(HARDWARE, proc_number(p), &m);
+          lock_notify(proc_number(p), &m);
           set_timer(tp, get_uptime()+STOP_TICKS, stop_sequence);
           return;			/* allow the process to shut down */ 
       } 

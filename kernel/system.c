@@ -89,7 +89,7 @@ PUBLIC void sys_task()
        */
       if (result != EDONTREPLY) {
   	  m.m_type = result;	/* report status of call */
-          lock_send(SYSTASK, m.m_source, &m);
+          lock_send(m.m_source, &m);
       }
   }
 }
@@ -246,7 +246,7 @@ irq_hook_t *hook;
   message m;
   m.NOTIFY_TYPE = HARD_INT;
   m.NOTIFY_ARG = hook->irq;
-  lock_notify(HARDWARE, hook->proc_nr, &m);
+  lock_notify(hook->proc_nr, &m);
   return(hook->policy & IRQ_REENABLE);
 }
 
@@ -285,7 +285,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   m.NOTIFY_TYPE = KSIG_PENDING;
   m.NOTIFY_ARG = 0;
   m.NOTIFY_FLAGS = 0;
-  lock_notify(HARDWARE, PM_PROC_NR, &m);
+  lock_notify(PM_PROC_NR, &m);
 }
 
 

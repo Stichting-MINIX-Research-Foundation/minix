@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "drvlib.h"
+#include <unistd.h>
 
 /* Extended partition? */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
@@ -161,6 +162,9 @@ struct part_entry *table;	/* four entries */
 
   /* Read the partition table at 'offset'. */
   if (proc_nr == NONE) {
+#if DEAD_CODE
+  	if ((s=getprocnr(&proc_nr)) != OK) {
+#endif
   	if ((s=sys_getprocnr(&proc_nr,0,0)) != OK) {
 		printf("%s: can't get own proc nr: %d\n", (*dp->dr_name)(), s);
 		return(0);

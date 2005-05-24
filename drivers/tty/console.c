@@ -869,8 +869,9 @@ message *m;
   int r;
 
   /* Try to get a fresh copy of the buffer with kernel messages. */
+  r=0;
   if ((r=sys_getkmessages(&kmess)) != OK) {
-  	printf("TTY: couldn't get copy of kmessages: %d\n", r);
+  	printf("TTY: couldn't get copy of kmessages: %d, 0x%x\n", r,r);
   	return;
   }
 

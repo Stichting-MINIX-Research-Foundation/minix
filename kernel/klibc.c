@@ -162,7 +162,7 @@ int c;					/* character to append */
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
       m.NOTIFY_TYPE = NEW_KMESS;
-      lock_notify(HARDWARE, TTY, &m);
+      lock_notify(TTY, &m);
   }
 }
 

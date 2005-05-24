@@ -6,6 +6,8 @@
  */
 
 #include "kernel.h"
+#include "proc.h"
+#include <minix/com.h>
 
 #define ICW1_AT         0x11	/* edge triggered, cascade, need ICW4 */
 #define ICW1_PC         0x13	/* edge triggered, no cascade, need ICW4 */

@@ -8,8 +8,8 @@
  * 'proc', be sure to change sconst.h to match.
  *
  * Changes:
+ *   May 24, 2005   new field for pending notifications  (Jorrit N. Herder) 
  *   Nov 10, 2004   separated process types/ priorities  (Jorrit N. Herder)
- *   Sep 30, 2004   bit masks for notifications  (Jorrit N. Herder) 
  *   Sep 24, 2004   one timer per type of alarm  (Jorrit N. Herder)
  *   May 01, 2004   new p_sendmask to protect syscalls  (Jorrit N. Herder)
  */
@@ -21,7 +21,7 @@ struct proc {
   struct stackframe_s p_reg;	/* process' registers saved in stack frame */
 
 #if (CHIP == INTEL)
-  reg_t p_ldt_sel;		/* selector in gdt giving ldt base and limit*/
+  reg_t p_ldt_sel;		/* selector in gdt with ldt base and limit */
   struct segdesc_s p_ldt[2+NR_REMOTE_SEGS]; /* CS, DS and remote segments */
 #endif /* (CHIP == INTEL) */
 
@@ -32,10 +32,10 @@ struct proc {
   reg_t *p_stguard;		/* stack guard word */
 
   proc_nr_t p_nr;		/* number of this process (for fast access) */
-
-  int p_flags;			/* SENDING, RECEIVING, etc. */
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
   struct far_mem p_farmem[NR_REMOTE_SEGS];  /* remote memory map */
+
+  short p_flags;		/* SENDING, RECEIVING, etc. */
   char p_type;			/* task, system, driver, server, user, idle */
   char p_priority;		/* scheduling priority */
 
@@ -48,16 +48,15 @@ struct proc {
   timer_t p_flagalrm;		/* flag alarm timer */ 
   timer_t p_syncalrm;		/* synchronous alarm timer */ 
 
-  send_mask_t p_sendmask;	/* mask indicating to whom proc may send */
+  struct proc *p_nextready;	/* pointer to next ready process */
+  struct notification *p_ntf_q;	/* queue of pending notifications */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_sendlink;	/* link to next proc wishing to send */
   message *p_messbuf;		/* pointer to message buffer */
-  int p_getfrom;		/* from whom does process want to receive? */
-  int p_sendto;			/* to whom does process want to send? */
+  proc_nr_t p_getfrom;		/* from whom does process want to receive? */
+  proc_nr_t p_sendto;		/* to whom does process want to send? */
+  send_mask_t p_sendmask;	/* mask indicating to whom proc may send */
 
-  struct notification *p_ntf_q;	/* queue of pending notifications */
-
-  struct proc *p_nextready;	/* pointer to next ready process */
   sigset_t p_pending;		/* bit map for pending signals */
   unsigned p_pendcount;		/* count of pending and unfinished signals */
 

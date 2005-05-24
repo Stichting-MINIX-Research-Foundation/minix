@@ -150,10 +150,8 @@ register message *m_ptr;	/* pointer to request message */
     }
     case GET_PROCNR: {
         if (m_ptr->I_KEY_LEN == 0) {		/* get own process nr */
-#if DEAD_CODE
 	/* GET_PROCNR functionality will be moved to the Process Manager! */
         kprintf("GET_PROCNR (own) from %d\n", m_ptr->m_source);
-#endif
             src_phys = vir2phys(&proc_nr);	
             length = sizeof(int);
         } else {				/* lookup nr by name */
@@ -161,10 +159,8 @@ register message *m_ptr;	/* pointer to request message */
   	    struct proc *pp;
 	    struct vir_addr vsrc, vdst;
   	    char key[8];	/* storage for process name to lookup */
-#if DEAD_CODE
 	/* GET_PROCNR functionality will be moved to the Process Manager! */
         kprintf("GET_PROCNR (by name) from %d\n", m_ptr->m_source);
-#endif
   proc_nr = m_ptr->m_source;	/* only caller can request copy */
     	    if (m_ptr->I_KEY_LEN > sizeof(key)) return(EINVAL);
 	    vsrc.proc_nr = proc_nr; vsrc.segment = D; vsrc.offset = (vir_bytes) m_ptr->I_KEY_PTR;

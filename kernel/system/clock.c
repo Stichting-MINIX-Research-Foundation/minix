@@ -165,11 +165,11 @@ timer_t *tp;
  * process given with a SYN_ALARM message.
  */
   message m;
-  m.NOTIFY_SOURCE = HARDWARE;
+  m.NOTIFY_SOURCE = SYSTASK;
   m.NOTIFY_TYPE = SYN_ALARM;
   m.NOTIFY_ARG = get_uptime();
   m.NOTIFY_FLAGS = 0;
-  lock_notify(HARDWARE, tmr_arg(tp)->ta_int, &m);
+  lock_notify(tmr_arg(tp)->ta_int, &m);
 }
 
 

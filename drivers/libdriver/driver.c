@@ -148,8 +148,6 @@ PRIVATE void init_buffer()
 	tmp_buf += left;
 	tmp_phys += left;
   }
-#else /* CHIP != INTEL */
-  tmp_phys = vir2phys(tmp_buf);
 #endif /* CHIP != INTEL */
 }
 

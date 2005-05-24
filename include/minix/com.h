@@ -36,7 +36,8 @@
 #define IDLE             -4	/* runs when no one else can run */
 #define CLOCK  		 -3	/* alarms and other clock functions */
 #define SYSTASK          -2	/* request system functionality */
-#define HARDWARE         -1	/* used as source on notify() messages */
+#define KERNEL           -1	/* used as source on notify() messages */
+#define HARDWARE     KERNEL	/* for hardware interrupt handlers */
 
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
 #define NR_TASKS	4 

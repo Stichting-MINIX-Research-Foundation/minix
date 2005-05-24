@@ -133,7 +133,7 @@ PUBLIC void main()
 		source= mq->mq_mess.m_source;
 		if (source == FS_PROC_NR) {
 			sr_rec(mq);
-		} else if (source == HARDWARE) 	/* a notification! */
+		} else if (mq->mq_mess.m_type & NOTIFICATION ) 
 		{
 			if (mq->mq_mess.m_type == SYN_ALARM) {
 				clck_tick(&mq->mq_mess);

@@ -213,35 +213,6 @@ csinit:
 !*				hwint00 - 07				     *
 !*===========================================================================*
 ! Note this is a macro, it just looks like a subroutine.
-#define hwint_master_slave_fail(irq)	\
-	call	save			/* save interrupted process state */;\
-	cli				;\
-	inb	INT2_CTLMASK		/* get current mask */		    ;\
-	movb	ah, al			;\
-	inb	INT_CTLMASK		/* get current mask */		    ;\
-	push 	eax			;\
-	cli				;\
-	movb    al, ~[0]		;\
-	outb	INT_CTLMASK		/* mask all */;\
-	outb	INT2_CTLMASK		/* */;\
-	cli				;\
-	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
-	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
-	pop	ecx							    ;\
-	pop	eax							    ;\
-	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
-	jz	0f							    ;\
-	or	eax, [1<<irq]		/* mask irq */			    ;\
-0:	outb	INT_CTLMASK		/* restore master irq mask */;\
-	movb	al, ah			;\
-	outb	INT2_CTLMASK		/* restore slave irq mask */;\
-	movb	al, END_OF_INT						    ;\
-	outb	INT_CTL			/* reenable master 8259		  */;\
-	cmp     (irq), 8		;\
-	jb	1f			;\
-	outb	INT2_CTL		/* reenable slave 8259		  */;\
-1:	ret				/* restart (another) process      */
-
 #define hwint_master(irq)	\
 	call	save			/* save interrupted process state */;\
 	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
@@ -412,8 +383,13 @@ _restart:
 
 ! Restart the current process or the next process if it is set. 
 
-	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
-	lldt	P_LDT_SEL(esp)		! enable segment descriptors for task
+	cmp	(_next_ptr), 0		! see if another process is scheduled
+	jz	0f
+	mov 	eax, (_next_ptr)
+	mov	(_proc_ptr), eax
+	mov	(_next_ptr), 0
+0:	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
+	lldt	P_LDT_SEL(esp)		! enable process' segment descriptors 
 	lea	eax, P_STACKTOP(esp)	! arrange for next interrupt
 	mov	(_tss+TSS3_S_SP0), eax	! to save state in process table
 restart1:

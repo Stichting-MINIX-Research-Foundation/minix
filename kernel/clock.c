@@ -128,7 +128,7 @@ PUBLIC void clock_task()
        */
       if (result != EDONTREPLY) {
           m.m_type = result;
-          lock_send(CLOCK, m.m_source, &m);
+          lock_send(m.m_source, &m);
       }
   }
 }
@@ -186,8 +186,6 @@ irq_hook_t *hook;
  *
  * Many global global and static variables are accessed here.  The safety
  * of this must be justified.  Most of them are not changed here:
- *	k_reenter:
- *		This safely tells if the clock interrupt is nested.
  *	proc_ptr, bill_ptr:
  *		These are used for accounting.  It does not matter if proc.c
  *		is changing them, provided they are always valid pointers,
@@ -238,9 +236,9 @@ irq_hook_t *hook;
   pending_ticks += ticks;
   now = realtime + pending_ticks;
 
-  rp = (k_reenter == 0) ? proc_ptr : proc_addr(HARDWARE);
-  rp->user_time += ticks;
-  if (rp != bill_ptr && rp != proc_addr(IDLE)) bill_ptr->sys_time += ticks;
+  /* Update administration. */
+  proc_ptr->user_time += ticks;
+  if (proc_ptr != bill_ptr) bill_ptr->sys_time += ticks;
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * If bill_ptr == prev_ptr, there are no ready users so don't need sched(). 
@@ -249,10 +247,10 @@ irq_hook_t *hook;
           && rdy_head[PPRI_USER] != NIL_PROC))
   {  
       m.NOTIFY_TYPE = HARD_INT;
-      lock_notify(HARDWARE, CLOCK, &m);
+      lock_notify(CLOCK, &m);
   } 
   else if (--sched_ticks == 0) {
-      sched_ticks = SCHED_RATE;	/* reset quantum */
+      sched_ticks = SCHED_RATE;		/* reset the quantum */
       prev_ptr = bill_ptr;		/* new previous process */
   }
   return(1);				/* reenable clock interrupts */

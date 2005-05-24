@@ -11,8 +11,8 @@
  * flag shutting_down must be initialized to FALSE. We rely on the compiler's 
  * default initialization (0) of global variables here.
  */
-EXTERN int skip_stop_sequence;	/* set to TRUE in case of an exception() */
-EXTERN int shutting_down;	/* TRUE if the system is shutting down */
+EXTERN char skip_stop_sequence;	/* set to TRUE in case of an exception() */
+EXTERN char shutting_down;	/* TRUE if the system is shutting down */
 EXTERN struct proc *shutdown_process;	/* process awaiting shutdown of */
 EXTERN timer_t shutdown_timer;  /* watchdog function called after timeout */ 
 
@@ -23,10 +23,9 @@ EXTERN struct machine machine;	/* machine information for users */
 EXTERN struct kmessages kmess;  /* diagnostic messages in kernel */
 EXTERN struct memory mem[NR_MEMS];	/* base and size of chunks of memory */
 
-/* Process table.  Here to stop too many things having to include proc.h. */
+/* Process scheduling info and kernel entry count. */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
-
-/* Miscellaneous. */
+EXTERN struct proc *next_ptr;	/* pointer to next process to run */
 EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
