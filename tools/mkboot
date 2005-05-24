@@ -171,4 +171,5 @@ cdfdboot)
 	# copy image
 	dd if=$dev of=cdfdimage bs=8192 count=180
 esac
+sync
 exit 0
