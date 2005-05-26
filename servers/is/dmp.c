@@ -51,8 +51,13 @@ struct system_image image[IMAGE_SIZE];
  *===========================================================================*/
 PUBLIC int do_fkey_pressed(message *m)
 {
+#if DEAD_CODE
     if (F1 <= m->FKEY_CODE && m->FKEY_CODE <= F12) {
         switch(m->FKEY_CODE) {
+#else
+    if (F1 <= m->NOTIFY_ARG && m->NOTIFY_ARG <= F12) {
+        switch(m->NOTIFY_ARG) {
+#endif
             case  F1:	proctab_dmp();		break;
             case  F2:	memmap_dmp();		break;
             case  F3:	image_dmp();		break;
@@ -65,7 +70,12 @@ PUBLIC int do_fkey_pressed(message *m)
             case F11:	memchunks_dmp();	break;
             case F12:	sched_dmp();		break;
             default: 
+#if DEAD_CODE
             	printf("IS: unhandled notification for F%d\n", m->FKEY_NUM);
+#else
+            	printf("IS: unhandled notify for F%d (code %d)\n", 
+            		m->NOTIFY_ARG, m->NOTIFY_FLAGS);
+#endif
         }
     }
     return(EDONTREPLY);
@@ -376,7 +386,7 @@ PRIVATE void sendmask_dmp()
   printf("\n\n");
 
   printf("              ");
-  for (j=proc_number(BEG_PROC_ADDR); j< INIT_PROC_NR+1; j++) {
+  for (j=proc_nr(BEG_PROC_ADDR); j< INIT_PROC_NR+1; j++) {
      printf("%3d", j);
   }
   printf("  *\n");
@@ -386,17 +396,17 @@ PRIVATE void sendmask_dmp()
         if (++n > 20) break;
 
     	printf("%8s ", rp->p_name);
-    	j = proc_number(rp);
+    	j = proc_nr(rp);
 	switch(rp->p_type) {
-	    case P_IDLE:	printf("/%3d/ ", proc_number(rp));  break;
-	    case P_TASK:	printf("[%3d] ", proc_number(rp));  break;
-	    case P_SYSTEM:	printf("<%3d> ", proc_number(rp));  break;
-	    case P_DRIVER:	printf("{%3d} ", proc_number(rp));  break;
-	    case P_SERVER:	printf("(%3d) ", proc_number(rp));  break;
-	    default: 		printf(" %3d  ", proc_number(rp));
+	    case P_IDLE:	printf("/%3d/ ", proc_nr(rp));  break;
+	    case P_TASK:	printf("[%3d] ", proc_nr(rp));  break;
+	    case P_SYSTEM:	printf("<%3d> ", proc_nr(rp));  break;
+	    case P_DRIVER:	printf("{%3d} ", proc_nr(rp));  break;
+	    case P_SERVER:	printf("(%3d) ", proc_nr(rp));  break;
+	    default: 		printf(" %3d  ", proc_nr(rp));
 	}
 
-    	for (j=proc_number(BEG_PROC_ADDR); j<INIT_PROC_NR+2; j++) {
+    	for (j=proc_nr(BEG_PROC_ADDR); j<INIT_PROC_NR+2; j++) {
     	    if (isallowed(rp->p_sendmask, j))	printf(" 1 ");
     	    else 				printf(" 0 ");
     	}
@@ -438,12 +448,12 @@ PRIVATE void proctab_dmp()
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
 	switch(rp->p_type) {
-	    case P_IDLE:	printf("/%3d/ ", proc_number(rp));  break;
-	    case P_TASK:	printf("[%3d] ", proc_number(rp));  break;
-	    case P_SYSTEM:	printf("<%3d> ", proc_number(rp));  break;
-	    case P_DRIVER:	printf("{%3d} ", proc_number(rp));  break;
-	    case P_SERVER:	printf("(%3d) ", proc_number(rp));  break;
-	    default: 		printf(" %3d  ", proc_number(rp));
+	    case P_IDLE:	printf("/%3d/ ", proc_nr(rp));  break;
+	    case P_TASK:	printf("[%3d] ", proc_nr(rp));  break;
+	    case P_SYSTEM:	printf("<%3d> ", proc_nr(rp));  break;
+	    case P_DRIVER:	printf("{%3d} ", proc_nr(rp));  break;
+	    case P_SERVER:	printf("(%3d) ", proc_nr(rp));  break;
+	    default: 		printf(" %3d  ", proc_nr(rp));
 	}
 	printf("%3u %7lx%7lx %6lu%6lu%6uK%6uK%6uK %3x",
 	       rp->p_priority,
@@ -493,7 +503,7 @@ PRIVATE void memmap_dmp()
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len)
 						- rp->p_memmap[D].mem_phys);
 	printf("%3d %-7.7s  %4x %4x %4x  %4x %4x %4x  %4x %4x %4x  %5uK\n",
-	       proc_number(rp),
+	       proc_nr(rp),
 	       rp->p_name,
 	       rp->p_memmap[T].mem_vir, rp->p_memmap[T].mem_phys, rp->p_memmap[T].mem_len,
 	       rp->p_memmap[D].mem_vir, rp->p_memmap[D].mem_phys, rp->p_memmap[D].mem_len,

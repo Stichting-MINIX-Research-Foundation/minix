@@ -35,7 +35,7 @@ message *m_ptr;			/* pointer to request message */
   /* Find the next process with pending signals. */
   for (rp = BEG_USER_ADDR; rp < END_PROC_ADDR; rp++) {
       if (rp->p_flags & PENDING) {
-          m_ptr->SIG_PROC = proc_number(rp);
+          m_ptr->SIG_PROC = rp->p_nr;
           m_ptr->SIG_MAP = rp->p_pending;
           sigemptyset(&rp->p_pending); 	/* ball is in PM's court */
           rp->p_flags &= ~PENDING;	/* blocked by SIG_PENDING */

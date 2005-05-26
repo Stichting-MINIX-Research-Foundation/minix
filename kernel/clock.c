@@ -118,7 +118,7 @@ PUBLIC void clock_task()
               result = do_clocktick(&m);	/* handle clock tick */
               break;
           default:				/* illegal message type */
-              kprintf("CLOCK got illegal request from %d.\n", m.m_source);
+              kprintf("Warning, illegal CLOCK request from %d.\n", m.m_source);
               result = EBADREQUEST;			
       }
 
@@ -128,7 +128,8 @@ PUBLIC void clock_task()
        */
       if (result != EDONTREPLY) {
           m.m_type = result;
-          lock_send(m.m_source, &m);
+          if (OK != lock_send(m.m_source, &m))
+              kprintf("Warning, CLOCK couldn't reply to %d.\n", m.m_source);
       }
   }
 }
@@ -155,9 +156,10 @@ message *m_ptr;				/* pointer to request message */
 		TMR_NEVER : clock_timers->tmr_exp_time;
   }
 
-  /* If a user process has been running too long, pick another one. */
-  if (--sched_ticks == 0) {
-	if (bill_ptr == prev_ptr) lock_sched();	/* process has run too long */
+  /* If a process has been running too long, pick another one. */
+  if (--sched_ticks <= 0) {
+	if (bill_ptr == prev_ptr) 
+		lock_sched(PPRI_USER);		/* process has run too long */
 	sched_ticks = SCHED_RATE;		/* reset quantum */
 	prev_ptr = bill_ptr;			/* new previous process */
   }
@@ -249,7 +251,7 @@ irq_hook_t *hook;
       m.NOTIFY_TYPE = HARD_INT;
       lock_notify(CLOCK, &m);
   } 
-  else if (--sched_ticks == 0) {
+  else if (--sched_ticks <= 0) {
       sched_ticks = SCHED_RATE;		/* reset the quantum */
       prev_ptr = bill_ptr;		/* new previous process */
   }

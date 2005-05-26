@@ -35,7 +35,7 @@ struct proc {
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
   struct far_mem p_farmem[NR_REMOTE_SEGS];  /* remote memory map */
 
-  short p_flags;		/* SENDING, RECEIVING, etc. */
+  char p_flags;			/* SENDING, RECEIVING, etc. */
   char p_type;			/* task, system, driver, server, user, idle */
   char p_priority;		/* scheduling priority */
 
@@ -51,7 +51,7 @@ struct proc {
   struct proc *p_nextready;	/* pointer to next ready process */
   struct notification *p_ntf_q;	/* queue of pending notifications */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
-  struct proc *p_sendlink;	/* link to next proc wishing to send */
+  struct proc *p_q_link;	/* link to next proc wishing to send */
   message *p_messbuf;		/* pointer to message buffer */
   proc_nr_t p_getfrom;		/* from whom does process want to receive? */
   proc_nr_t p_sendto;		/* to whom does process want to send? */
@@ -74,9 +74,9 @@ struct proc {
 #define NO_MAP		0x01	/* keeps unmapped forked child from running */
 #define SENDING		0x02	/* set when process blocked trying to send */
 #define RECEIVING	0x04	/* set when process blocked trying to recv */
-#define PENDING		0x08	/* set when inform() of signal pending */
-#define SIG_PENDING	0x10	/* keeps to-be-signalled proc from running */
-#define P_STOP		0x20	/* set when process is being traced */
+#define PENDING		0x10	/* set when inform() of signal pending */
+#define SIG_PENDING	0x20	/* keeps to-be-signalled proc from running */
+#define P_STOP		0x40	/* set when process is being traced */
 
 /* Values for p_type. Non-negative values represent active process types. 
  * Process types are important to model inter-process relationships. When 
@@ -120,9 +120,6 @@ struct proc {
 #define isalive(n)	  (proc_addr(n)->p_type > P_NONE)
 #define isalivep(p)	  ((p)->p_type > P_NONE)
 #define isrxhardware(n)   ((n) == ANY || (n) == HARDWARE)
-#define iskernel(n)	  ((n) == CLOCK || (n) == SYSTASK)
-#define issysentn(n)      ((n) == FS_PROC_NR || (n) == PM_PROC_NR)
-#define issysentp(p)      (issysentn((p)->p_nr))
 #define isreservedp(p)    ((p)->p_type == P_RESERVED)
 #define isemptyp(p)       ((p)->p_type == P_NONE)
 #define istaskp(p)        ((p)->p_type == P_TASK)
@@ -131,12 +128,11 @@ struct proc {
 #define isuserp(p)        ((p)->p_type == P_USER)
 #define isuser(n)	  (proc_addr(n)->p_type == P_USER)
 #define isidlep(p)        ((p)->p_type == P_IDLE)
-#define proc_addr(n)      (pproc_addr + NR_TASKS)[(n)]
 #define cproc_addr(n)     (&(proc + NR_TASKS)[(n)])
-#define proc_number(p)    ((p)->p_nr)
-#define proc_vir2phys(p, vir) \
-			  (((phys_bytes)(p)->p_map[D].mem_phys << CLICK_SHIFT) \
-							+ (vir_bytes) (vir))
+#define proc_addr(n)      (pproc_addr + NR_TASKS)[(n)]
+#define proc_nr(p) 	  ((p)->p_nr)
+#define iskernelp(p)      ((p)->p_nr < 0)
+#define iskernel(n)	  ((n) == CLOCK || (n) == SYSTASK)
 
 /* The process table and pointers to process table slots. The pointers allow
  * faster access because now a process entry can be found by indexing the

@@ -104,7 +104,6 @@ bit_t nr_bits;
         return(bit_nr);        
         
     }
-    kprintf("Warning, all %d bits in map busy\n", nr_bits);
     return(-1);    
 }
 

@@ -67,11 +67,11 @@ PUBLIC struct system_image image[] = {
  { HARDWARE, 0,            P_TASK,   PPRI_TASK, HARDWARE_STACK,HARDWARE_SENDMASK,"HARDWAR" },
  { PM_PROC_NR, 0,            P_SERVER, PPRI_NORMAL, 0,             PM_SENDMASK,      "PM"      },
  { FS_PROC_NR, 0,            P_SERVER, PPRI_NORMAL, 0,             FS_SENDMASK,      "FS"      },
- { IS_PROC_NR, 0,            P_SYSTEM, PPRI_HIGHER, 0,             IS_SENDMASK,      "IS"      },
+ { IS_PROC_NR, 0,            P_SYSTEM, PPRI_HIGH, 0,             IS_SENDMASK,      "IS"      },
  { TTY, 0,            P_SYSTEM, PPRI_HIGHER, 0,             TTY_SENDMASK,      "TTY"      },
  { MEMORY, 0,            P_DRIVER, PPRI_HIGH, 0,             MEM_SENDMASK,     "MEMORY" },
 #if ENABLE_AT_WINI
- { AT_WINI, 0,            P_DRIVER, PPRI_HIGHER, 0,           AT_SENDMASK,      "AT_WINI" },
+ { AT_WINI, 0,            P_DRIVER, PPRI_HIGH, 0,           AT_SENDMASK,      "AT_WINI" },
 #endif
 #if ENABLE_FLOPPY
  { FLOPPY, 0,            P_DRIVER, PPRI_HIGH, 0,             FLOPPY_SENDMASK,  "FLOPPY" },

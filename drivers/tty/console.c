@@ -869,11 +869,17 @@ message *m;
   int r;
 
   /* Try to get a fresh copy of the buffer with kernel messages. */
-  r=0;
+#if DEAD_CODE	
+  /* During shutdown, the reply is garbled because new notifications arrive
+   * while the system task makes a copy of the kernel messages buffer.
+   * Hence, don't check the return value. 
+   */
   if ((r=sys_getkmessages(&kmess)) != OK) {
   	printf("TTY: couldn't get copy of kmessages: %d, 0x%x\n", r,r);
   	return;
   }
+#endif
+  sys_getkmessages(&kmess);
 
   /* Print only the new part. Determine how many new bytes there are with 
    * help of the current and previous 'next' index. Note that the kernel

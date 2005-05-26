@@ -55,7 +55,7 @@ PUBLIC void main()
   intr_init(1);
 
   /* Clear the process table. Anounce each slot as empty and
-   * set up mappings for proc_addr() and proc_number() macros.
+   * set up mappings for proc_addr() and proc_nr() macros.
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
   	rp->p_type = P_NONE;			/* isemptyp() tests on this */
@@ -146,7 +146,6 @@ PUBLIC void main()
 #if ENABLE_K_DEBUGGING
 	rp->p_ready = 0;
 #endif
-
 	if (rp->p_nr != HARDWARE) lock_ready(rp);	
 	rp->p_flags = 0;
 
@@ -271,7 +270,6 @@ timer_t *tp;
  */
   static int level = P_SERVER;		/* start at the highest level */
   static struct proc *p = NIL_PROC;	/* next process to stop */
-  static char *types[] = {"task","system","driver","server","user"}; 
   static message m;
 
   /* See if the last process' shutdown was successful. Else, force exit. */
@@ -291,13 +289,11 @@ timer_t *tp;
   if (p == NIL_PROC) p = BEG_PROC_ADDR; 
   while (TRUE) {
       if (isalivep(p) && p->p_type == level) {	/* found a process */
-      	int w;
-          kprintf("- Stopping %s ", karg(p->p_name));
-          kprintf("%s ... ", karg(types[p->p_type]));
+          kprintf("- Stopping %s ... ", karg(p->p_name));
           shutdown_process = p;		/* directly continue if exited */
           m.NOTIFY_TYPE = HARD_STOP;
           m.NOTIFY_ARG = tmr_arg(tp)->ta_int;		/* how */
-          lock_notify(proc_number(p), &m);
+          lock_notify(proc_nr(p), &m);
           set_timer(tp, get_uptime()+STOP_TICKS, stop_sequence);
           return;			/* allow the process to shut down */ 
       } 

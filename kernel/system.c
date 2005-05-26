@@ -79,7 +79,7 @@ PUBLIC void sys_task()
       if ((unsigned) m.m_type < NR_SYS_CALLS) {
           result = (*call_vec[m.m_type])(&m);	/* do system call */
       } else {
-	  kprintf("SYS task got illegal request from %d.\n", m.m_source);
+	  kprintf("Warning, illegal SYSTASK request from %d.\n", m.m_source);
 	  result = EBADREQUEST;			/* illegal message type */
       }
 
@@ -89,7 +89,8 @@ PUBLIC void sys_task()
        */
       if (result != EDONTREPLY) {
   	  m.m_type = result;	/* report status of call */
-          lock_send(m.m_source, &m);
+          if (OK != lock_send(m.m_source, &m))
+              kprintf("Warning, SYSTASK couldn't reply to %d\n", m.m_source);
       }
   }
 }
@@ -177,7 +178,11 @@ PUBLIC void clear_proc(proc_nr)
 int proc_nr;				/* slot of process to clean up */
 {
   register struct proc *rp, *rc;
+#if DEAD_CODE
   struct proc *np, *xp;
+#else
+  register struct proc **xpp;		/* iterate over caller queue */
+#endif
 
   /* Get a pointer to the process that exited. */
   rc = proc_addr(proc_nr);
@@ -199,22 +204,34 @@ int proc_nr;				/* slot of process to clean up */
       /* Check all proc slots to see if the exiting process is queued. */
       for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
           if (rp->p_caller_q == NIL_PROC) continue;
+#if DEAD_CODE
           if (rp->p_caller_q == rc) {
               /* Exiting process is on front of this queue. */
-              rp->p_caller_q = rc->p_sendlink;
+              rp->p_caller_q = rc->p_q_link;
               break;
           } else {
               /* See if exiting process is in middle of queue. */
               np = rp->p_caller_q;
-              while ( ( xp = np->p_sendlink) != NIL_PROC) {
+              while ( ( xp = np->p_q_link) != NIL_PROC) {
                   if (xp == rc) {
-                      np->p_sendlink = xp->p_sendlink;
+                      np->p_q_link = xp->p_q_link;
                       break;
                   } else {
                       np = xp;
                   }
               }
           }
+#else
+          /* Make sure that the exiting process is not on the queue. */
+          xpp = &rp->p_caller_q;
+          while (*xpp != NIL_PROC) {		/* check entire queue */
+              if (*xpp == rc) {			/* process is on the queue */
+                  *xpp = (*xpp)->p_q_link;	/* replace by next process */
+                  break;
+              }
+              xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
+          }
+#endif
       }
   }
 

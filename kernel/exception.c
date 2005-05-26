@@ -57,7 +57,7 @@ unsigned vec_nr;
 
   if (k_reenter == 0 && ! istaskp(saved_proc)) {
 	unlock();		/* this is protected like sys_call() */
-	cause_sig(proc_number(saved_proc), ep->signum);
+	cause_sig(proc_nr(saved_proc), ep->signum);
 	return;
   }
 
@@ -66,7 +66,7 @@ unsigned vec_nr;
 	kprintf("\nIntel-reserved exception %d\n", vec_nr);
   else
 	kprintf("\n%s\n", karg(ep->msg));
-  kprintf("process number %d, ", proc_number(saved_proc));
+  kprintf("process number %d, ", proc_nr(saved_proc));
   kprintf("pc = %d:",  (unsigned) saved_proc->p_reg.cs);
   kprintf("0x%x\n", (unsigned) saved_proc->p_reg.pc);
 

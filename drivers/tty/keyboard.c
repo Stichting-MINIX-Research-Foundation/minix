@@ -526,13 +526,23 @@ int scode;			/* scan code for a function key */
 
   /* See if an observer is registered and send it a message. */
   if (observers[index] != NONE) { 
+#if DEAD_CODE
       m.m_type = FKEY_PRESSED;
       m.FKEY_NUM = index+1;
       m.FKEY_CODE = fkey;
       if (OK != (s=nb_send(observers[index], &m))) {
-          printf("WARNING: F%d key notification to process %d failed: %d.\n",
+          printf("WARNING: F%d key nb_send to process %d failed: %d.\n",
           	index+1, observers[index], s);
       }
+#else
+      m.NOTIFY_TYPE = FKEY_PRESSED;
+      m.NOTIFY_ARG = fkey;
+      m.NOTIFY_FLAGS = index+1;
+      if (OK != (s=notify(observers[index], &m))) {
+          printf("WARNING: F%d key notify to process %d failed: %d.\n",
+          	index+1, observers[index], s);
+      }
+#endif
   }
   return(TRUE);
 }
