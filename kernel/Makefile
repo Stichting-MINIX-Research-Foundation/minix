@@ -103,6 +103,7 @@ proc.o:	$a
 proc.o:	$h/callnr.h
 proc.o:	$h/com.h
 proc.o:	proc.h
+proc.o:	ipc.h
 proc.o:	sendmask.h
 
 protect.o:	$a

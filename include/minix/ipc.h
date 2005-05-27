@@ -91,6 +91,7 @@ typedef struct {
  *==========================================================================*/ 
 
 /* Hide names to avoid name space pollution. */
+#define echo		_echo
 #define sendrec		_sendrec
 #define receive		_receive
 #define send		_send
@@ -98,6 +99,7 @@ typedef struct {
 #define nb_receive	_nb_receive
 #define nb_send		_nb_send
 
+_PROTOTYPE( int echo, (message *m_ptr)					);
 _PROTOTYPE( int sendrec, (int src_dest, message *m_ptr)			);
 _PROTOTYPE( int receive, (int src, message *m_ptr)			);
 _PROTOTYPE( int send, (int dest, message *m_ptr)			);

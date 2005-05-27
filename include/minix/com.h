@@ -1,23 +1,7 @@
 /*===========================================================================*
- *          	    System calls and magic process numbers		     *
+ *          	    		Magic process numbers			     *
  *===========================================================================*/
 
-/* Masks and flags for system calls. */
-#define SYSCALL_FUNC	0x0F	/* mask for system call function */
-#define SYSCALL_FLAGS   0xF0    /* mask for system call flags */
-#define NON_BLOCKING    0x10	/* prevent blocking, return error */
-#define FRESH_ANSWER    0x20	/* ignore pending notifications as answer */
-				/* default behaviour for SENDREC calls */
-
-/* System calls (numbers passed when trapping to the kernel) */
-#define SEND		 1	/* function code for sending messages */
-#define RECEIVE		 2	/* function code for receiving messages */
-#define SENDREC	 	 3  	/* function code for SEND + RECEIVE */
-#define NOTIFY		 4	/* function code for notifications */
-#define NB_SEND 	(SEND | NON_BLOCKING)	  /* non-blocking SEND */
-#define NB_RECEIVE	(RECEIVE | NON_BLOCKING)  /* non-blocking RECEIVE */
-
-/* Magic, invalid process numbers. */
 #define ANY		0x7ace	/* used to indicate 'any process' */
 #define NONE 		0x6ace  /* used to indicate 'no process at all' */
 #define SELF		0x8ace 	/* used to indicate 'own process' */

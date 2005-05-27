@@ -29,6 +29,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "proc.h"
+#include "ipc.h"
 #include "sendmask.h"
 
 
@@ -99,7 +100,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
   	return(ECALLDENIED);			/* SENDREC was required */
   
   /* Verify that requested source and/ or destination is a valid process. */
-  if (! isoksrc_dst(src_dst)) 
+  if (! isoksrc_dst(src_dst) && function != ECHO) 
   	return(EBADSRCDST);
 
   /* Check validity of message pointer. */
@@ -152,6 +153,11 @@ message *m_ptr;			/* pointer to message in the caller's space */
       break;
   case NOTIFY:
       result = mini_notify(caller_ptr, src_dst, m_ptr);
+      break;
+  case ECHO:
+      kprintf("Echo message from process %s\n", proc_nr(caller_ptr));
+      CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, caller_ptr, m_ptr);
+      result = OK;
       break;
   default:
       result = EBADCALL;			/* illegal system call */

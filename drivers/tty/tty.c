@@ -60,7 +60,6 @@
 #include <sys/ioc_tty.h>
 #include <signal.h>
 #include <minix/callnr.h>
-#include <minix/com.h>
 #if (CHIP == INTEL)
 #include <minix/keymap.h>
 #endif
@@ -107,7 +106,7 @@ FORWARD _PROTOTYPE( void do_close, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void in_transfer, (tty_t *tp)			);
-FORWARD _PROTOTYPE( int echo, (tty_t *tp, int ch)			);
+FORWARD _PROTOTYPE( int tty_echo, (tty_t *tp, int ch)			);
 FORWARD _PROTOTYPE( void rawecho, (tty_t *tp, int ch)			);
 FORWARD _PROTOTYPE( int back_over, (tty_t *tp)				);
 FORWARD _PROTOTYPE( void reprint, (tty_t *tp)				);
@@ -883,7 +882,7 @@ int count;			/* number of input characters */
 		if (ch == tp->tty_termios.c_cc[VERASE]) {
 			(void) back_over(tp);
 			if (!(tp->tty_termios.c_lflag & ECHOE)) {
-				(void) echo(tp, ch);
+				(void) tty_echo(tp, ch);
 			}
 			continue;
 		}
@@ -892,7 +891,7 @@ int count;			/* number of input characters */
 		if (ch == tp->tty_termios.c_cc[VKILL]) {
 			while (back_over(tp)) {}
 			if (!(tp->tty_termios.c_lflag & ECHOE)) {
-				(void) echo(tp, ch);
+				(void) tty_echo(tp, ch);
 				if (tp->tty_termios.c_lflag & ECHOK)
 					rawecho(tp, '\n');
 			}
@@ -938,7 +937,7 @@ int count;			/* number of input characters */
 			sig = SIGINT;
 			if (ch == tp->tty_termios.c_cc[VQUIT]) sig = SIGQUIT;
 			sigchar(tp, sig);
-			(void) echo(tp, ch);
+			(void) tty_echo(tp, ch);
 			continue;
 		}
 	}
@@ -963,7 +962,7 @@ int count;			/* number of input characters */
 	}
 
 	/* Perform the intricate function of echoing. */
-	if (tp->tty_termios.c_lflag & (ECHO|ECHONL)) ch = echo(tp, ch);
+	if (tp->tty_termios.c_lflag & (ECHO|ECHONL)) ch = tty_echo(tp, ch);
 
 	/* Save the character in the input queue. */
 	*tp->tty_inhead++ = ch;
@@ -982,7 +981,7 @@ int count;			/* number of input characters */
 /*===========================================================================*
  *				echo					     *
  *===========================================================================*/
-PRIVATE int echo(tp, ch)
+PRIVATE int tty_echo(tp, ch)
 register tty_t *tp;		/* terminal on which to echo */
 register int ch;		/* pointer to character to echo */
 {
@@ -1111,14 +1110,14 @@ register tty_t *tp;		/* pointer to tty struct */
   if (count == tp->tty_incount) return;		/* no reason to reprint */
 
   /* Show REPRINT (^R) and move to a new line. */
-  (void) echo(tp, tp->tty_termios.c_cc[VREPRINT] | IN_ESC);
+  (void) tty_echo(tp, tp->tty_termios.c_cc[VREPRINT] | IN_ESC);
   rawecho(tp, '\r');
   rawecho(tp, '\n');
 
   /* Reprint from the last break onwards. */
   do {
 	if (head == bufend(tp->tty_inbuf)) head = tp->tty_inbuf;
-	*head = echo(tp, *head);
+	*head = tty_echo(tp, *head);
 	head++;
 	count++;
   } while (count < tp->tty_incount);
