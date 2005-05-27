@@ -37,7 +37,7 @@ PUBLIC void main()
 {
 /* Main routine of the process manager. */
 
-  int result, proc_nr;
+  int result, s, proc_nr;
   struct mproc *rmp;
 
   pm_init();			/* initialize process manager tables */
@@ -74,9 +74,12 @@ PUBLIC void main()
 	 * the call just made above.  The processes must not be swapped out.
 	 */
 	for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		if ((rmp->mp_flags & (REPLY | ONSWAP)) == REPLY) {
-			if (send(proc_nr, &rmp->mp_reply) != OK)
+		if ((rmp->mp_flags & IN_USE) &&
+		    (rmp->mp_flags & (REPLY | ONSWAP)) == REPLY) {
+			if ((s=send(proc_nr, &rmp->mp_reply)) != OK) {
+				printf("Warning, PM send failed: %d, ", s);
 				panic("PM can't reply to", proc_nr);
+			}
 			rmp->mp_flags &= ~REPLY;
 		}
 	}

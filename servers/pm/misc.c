@@ -71,8 +71,10 @@ PUBLIC int do_reboot()
   tell_fs(REBOOT,0,0,0);		/* tell FS to prepare for shutdown */
   check_sig(-1, SIGKILL); 		/* kill all processes except init */
 
+  /* Ask the kernel to abort. All system services, including the PM, will 
+   * get a HARD_STOP notification. Await the notification in the main loop.
+   */
   sys_abort(m_in.reboot_flag, PM_PROC_NR, monitor_code, m_in.reboot_size);
-  sys_exit(0);
 }
 
 /*=====================================================================*
