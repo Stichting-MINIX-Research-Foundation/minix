@@ -1,6 +1,6 @@
 #define NEW_SCHED_Q 	1
-#define OLD_SEND 	1
-#define OLD_RECV 	1
+#define OLD_SEND 	0
+#define OLD_RECV 	0
 /* This file contains essentially all of the process and message handling.
  * It has one main entry point from the outside:
  *
@@ -426,6 +426,7 @@ message *m_ptr;			/* pointer to message buffer */
   struct proc *caller_ptr;
 
   lock();
+  kinfo.lock_notify ++;
   caller_ptr = (k_reenter >= 0) ? proc_addr(HARDWARE) : proc_ptr;
   result = mini_notify(caller_ptr, dst, m_ptr); 
   unlock();
@@ -637,6 +638,7 @@ message *m_ptr;			/* pointer to message buffer */
 /* Safe gateway to mini_send() for tasks. */
   int result;
   lock();
+  kinfo.lock_send ++;
   result = mini_send(proc_ptr, dst, m_ptr, NON_BLOCKING);
   unlock();
   return(result);

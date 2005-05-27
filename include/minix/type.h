@@ -103,6 +103,8 @@ struct kinfo {
   phys_bytes params_base;	/* parameters passed by boot monitor */
   phys_bytes params_size;
   long nr_ntf_pending;
+  long lock_notify;
+  long lock_send;
   int nr_procs;			/* number of user processes */
   int nr_tasks;			/* number of kernel tasks */
   char version[8];		/* kernel version number */

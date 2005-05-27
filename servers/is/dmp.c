@@ -336,6 +336,8 @@ PRIVATE void kenv_dmp()
     printf("- params_base:   %5u\n", kinfo.params_base); 
     printf("- params_size:   %5u\n", kinfo.params_size); 
     printf("- notify_pending:%8u\n", kinfo.nr_ntf_pending); 
+    printf("- lock_notify: %6u\n", kinfo.lock_notify); 
+    printf("- lock_send:   %6u\n", kinfo.lock_send); 
     printf("- nr_procs:     %3u\n", kinfo.nr_procs); 
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- version:      %.6s\n", kinfo.version); 
