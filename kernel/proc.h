@@ -72,8 +72,8 @@ struct proc {
 
 /* Bits for p_flags in proc[].  A process is runnable iff p_flags == 0. */
 #define NO_MAP		0x01	/* keeps unmapped forked child from running */
-#define SENDING		0x02	/* set when process blocked trying to send */
-#define RECEIVING	0x04	/* set when process blocked trying to recv */
+#define SENDING		0x02	/* process blocked trying to SEND */
+#define RECEIVING	0x04	/* process blocked trying to RECEIVE */
 #define PENDING		0x10	/* set when inform() of signal pending */
 #define SIG_PENDING	0x20	/* keeps to-be-signalled proc from running */
 #define P_STOP		0x40	/* set when process is being traced */

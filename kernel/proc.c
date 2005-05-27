@@ -1,4 +1,6 @@
 #define NEW_SCHED_Q 	1
+#define OLD_SEND 	1
+#define OLD_RECV 	1
 /* This file contains essentially all of the process and message handling.
  * It has one main entry point from the outside:
  *
@@ -18,7 +20,7 @@
  *   May 24, 2005     new, queued NOTIFY system call  (Jorrit N. Herder)
  *   Oct 28, 2004     non-blocking SEND and RECEIVE  (Jorrit N. Herder)
  *   Oct 28, 2004     rewrite of sys_call()  (Jorrit N. Herder)
- *   Oct 10, 2004     require BOTH for kernel sys_call()  (Jorrit N. Herder)
+ *   Oct 10, 2004     require SENDREC for kernel sys_call()  (Jorrit N. Herder)
  *		      (to protect kernel tasks from being blocked)
  *   Aug 19, 2004     generalized ready()/unready()  (Jorrit N. Herder)
  */
@@ -35,9 +37,9 @@
  * interrupts to prevent race conditions. 
  */
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst,
-		message *m_ptr, int flags) );
+		message *m_ptr, unsigned flags) );
 FORWARD _PROTOTYPE( int mini_rec, (struct proc *caller_ptr, int src,
-		message *m_ptr, int flags) );
+		message *m_ptr, unsigned flags) );
 FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst,
 		message *m_ptr ) );
 
@@ -73,7 +75,7 @@ PRIVATE bitchunk_t notify_bitmap[BITMAP_CHUNKS(NR_NOTIFY_BUFS)];
  *				sys_call				     * 
  *===========================================================================*/
 PUBLIC int sys_call(call_nr, src_dst, m_ptr)
-int call_nr;			/* (NB_)SEND, (NB_)RECEIVE, BOTH */
+int call_nr;			/* (NB_)SEND, (NB_)RECEIVE, SENDREC */
 int src_dst;			/* src to receive from or dst to send to */
 message *m_ptr;			/* pointer to message in the caller's space */
 {
@@ -83,7 +85,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
  */
   register struct proc *caller_ptr = proc_ptr;	/* get pointer to caller */
   int function = call_nr & SYSCALL_FUNC;	/* get system call function */
-  int flags = call_nr & SYSCALL_FLAGS;		/* get flags */
+  unsigned flags = call_nr & SYSCALL_FLAGS;	/* get flags */
   int mask_entry;				/* bit to check in send mask */
   int result;					/* the system call's result */
   vir_bytes vb;			/* message buffer pointer as vir_bytes */
@@ -93,8 +95,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * reply and may not block if the caller doesn't do receive(). Users also
    * may only use sendrec() to protect the process manager and file system.  
    */
-  if (iskernel(src_dst) && function != BOTH) 
-  	return(ECALLDENIED);			/* BOTH was required */
+  if (iskernel(src_dst) && function != SENDREC) 
+  	return(ECALLDENIED);			/* SENDREC was required */
   
   /* Verify that requested source and/ or destination is a valid process. */
   if (! isoksrc_dst(src_dst)) 
@@ -125,9 +127,10 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * mask and whether the destination is alive.  
    */
   switch(function) {
-  case SEND:		
-      /* fall through, SEND is done in BOTH */
-  case BOTH:			
+  case SENDREC:		
+      flags |= FRESH_ANSWER;		/* ignore pending notifications */
+      /* fall through */
+  case SEND:			
       if (! isalive(src_dst)) { 			
           result = EDEADDST;		/* cannot send to the dead */
           break;
@@ -140,14 +143,12 @@ message *m_ptr;			/* pointer to message in the caller's space */
           break;
       } 
 
-      result = mini_send(caller_ptr, src_dst, m_ptr, 
-      		! (flags & NON_BLOCKING) );
+      result = mini_send(caller_ptr, src_dst, m_ptr, flags);
       if (function == SEND || result != OK) {	
           break;				/* done, or SEND failed */
-      }					/* fall through for BOTH */
+      }						/* fall through for SENDREC */
   case RECEIVE:			
-      result = mini_rec(caller_ptr, src_dst, m_ptr, 
-      		! (flags & NON_BLOCKING) );
+      result = mini_rec(caller_ptr, src_dst, m_ptr, flags);
       break;
   case NOTIFY:
       result = mini_notify(caller_ptr, src_dst, m_ptr);
@@ -168,20 +169,22 @@ PRIVATE int mini_send(caller_ptr, dst, m_ptr, flags)
 register struct proc *caller_ptr;	/* who is trying to send a message? */
 int dst;				/* to whom is message being sent? */
 message *m_ptr;				/* pointer to message buffer */
-int flags;				/* system call flags */
+unsigned flags;				/* system call flags */
 {
 /* Send a message from 'caller_ptr' to 'dst'. If 'dst' is blocked waiting
  * for this message, copy the message to it and unblock 'dst'. If 'dst' is
  * not waiting at all, or is waiting for another source, queue 'caller_ptr'.
  */
   register struct proc *dst_ptr;
-#if DEAD_CODE
+#if OLD_SEND
   register struct proc *next_ptr;
-#endif
   register struct proc *xp;
+#else
   register struct proc **xpp;
+#endif
 
   dst_ptr = proc_addr(dst);	/* pointer to destination's proc entry */
+
 
   /* Check for deadlock by 'caller_ptr' and 'dst' sending to each other.
    * This check is rare, so overhead is acceptable.
@@ -198,16 +201,16 @@ int flags;				/* system call flags */
   }
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
-   * SENDING flag may be set when BOTH couldn't send. Await a pure RECEIVE.  
+   * SENDING flag may be set when SENDREC couldn't send. Await a pure RECEIVE.  
    */
   if ( (dst_ptr->p_flags & (RECEIVING | SENDING)) == RECEIVING &&
        (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
 	/* Destination is indeed waiting for this message. */
 	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 		 dst_ptr->p_messbuf);
-	dst_ptr->p_flags &= ~RECEIVING;	/* deblock destination */
-	if (dst_ptr->p_flags == 0) ready(dst_ptr);
-  } else if (flags) {
+	if ((dst_ptr->p_flags &= ~RECEIVING) == 0)	
+		ready(dst_ptr);
+  } else if ( ! (flags & NON_BLOCKING)) {
 	/* Destination is not waiting.  Block and queue caller. */
 	caller_ptr->p_messbuf = m_ptr;
 	if (caller_ptr->p_flags == 0) unready(caller_ptr);
@@ -215,7 +218,7 @@ int flags;				/* system call flags */
 	caller_ptr->p_sendto = dst;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
-#if DEAD_CODE
+#if OLD_SEND
 	if ( (next_ptr = dst_ptr->p_caller_q) == NIL_PROC)
 		dst_ptr->p_caller_q = caller_ptr;
 	else {
@@ -230,6 +233,7 @@ int flags;				/* system call flags */
 #endif
 	caller_ptr->p_q_link = NIL_PROC;
   } else {
+        kprintf("Didn't block... ;-), flags: 0x%x\n", flags);
 	return(ENOTREADY);
   }
   return(OK);
@@ -242,29 +246,30 @@ PRIVATE int mini_rec(caller_ptr, src, m_ptr, flags)
 register struct proc *caller_ptr;	/* process trying to get message */
 int src;				/* which message source is wanted */
 message *m_ptr;				/* pointer to message buffer */
-int flags;				/* system call flags */
+unsigned flags;				/* system call flags */
 {
 /* A process or task wants to get a message.  If one is already queued,
  * acquire it and deblock the sender.  If no message from the desired source
  * is available, block the caller.  
  */
-#if DEAD_CODE
+#if OLD_RECV
   register struct proc *sender_ptr;
   register struct proc *previous_ptr;
-#endif
+#else
   register struct proc **xpp;
+#endif
   register struct notification **ntf_q_pp;
   message m;
   int bit_nr;
 
   /* Check to see if a message from desired source is already available.
-   * The caller's SENDING flag may be set if BOTH couldn't send. If it is
+   * The caller's SENDING flag may be set if SENDREC couldn't send. If it is
    * set, the process should be blocked.
    */
   if (!(caller_ptr->p_flags & SENDING)) {
 
     /* Check caller queue. Use pointer pointers to keep code simple. */
-#if DEAD_CODE		/* to hairy, unreadable */
+#if OLD_RECV		/* to hairy, unreadable */
     for (sender_ptr = caller_ptr->p_caller_q; sender_ptr != NIL_PROC;
 	 previous_ptr = sender_ptr, sender_ptr = sender_ptr->p_q_link) {
 	if (src == ANY || src == proc_nr(sender_ptr)) {
@@ -297,8 +302,9 @@ int flags;				/* system call flags */
     }
 #endif
 
-
     /* Check if there are pending notifications. */
+if (! (flags & FRESH_ANSWER)) {
+
     ntf_q_pp = &caller_ptr->p_ntf_q;		/* get pointer pointer */
     while (*ntf_q_pp != NULL) {
 	if (src == ANY || src == (*ntf_q_pp)->n_source) {
@@ -307,20 +313,21 @@ int flags;				/* system call flags */
                 CopyMess((*ntf_q_pp)->n_source, proc_addr(HARDWARE), &m, 
                 	caller_ptr, m_ptr);
                 /* Remove notification from queue and bit map. */
-                bit_nr = ((long)(*ntf_q_pp) - (long) &notify_buffer[0]) / 
-                	 sizeof(struct notification);
+                bit_nr = (int) (*ntf_q_pp - &notify_buffer[0]);  
                 *ntf_q_pp = (*ntf_q_pp)->n_next;/* remove from queue */
                 free_bit(bit_nr, notify_bitmap, NR_NOTIFY_BUFS);
                 return(OK);			/* report success */
 	}
 	ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
     }
+}
+
   }
 
-  /* No suitable message is available or the caller couldn't send in BOTH. 
+  /* No suitable message is available or the caller couldn't send in SENDREC. 
    * Block the process trying to receive, unless the flags tell otherwise.
    */
-  if (flags) {
+  if ( ! (flags & NON_BLOCKING)) {
       caller_ptr->p_getfrom = src;
       caller_ptr->p_messbuf = m_ptr;
       if (caller_ptr->p_flags == 0) unready(caller_ptr);
@@ -347,9 +354,9 @@ message *m_ptr;				/* pointer to message buffer */
   message ntf_mess;
 
   /* Check to see if target is blocked waiting for this message. A process 
-   * can be both sending and receiving during a BOTH system call.
+   * can be both sending and receiving during a SENDREC system call.
    */
-  if ( (dst_ptr->p_flags & (RECEIVING | SENDING)) == RECEIVING &&
+  if ( (dst_ptr->p_flags & (RECEIVING|SENDING)) == RECEIVING &&
        (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
 
 	/* Destination is indeed waiting for this message. */
@@ -357,43 +364,44 @@ message *m_ptr;				/* pointer to message buffer */
 		dst_ptr, dst_ptr->p_messbuf);
 	dst_ptr->p_flags &= ~RECEIVING;	/* deblock destination */
 	if (dst_ptr->p_flags == 0) ready(dst_ptr);
+	return(OK);
   } 
-  /* Destination is not ready. Add the notification to the pending queue. */
-  else {
-	/* Get pointer to notification message. Don't copy for kernel. */
-	if (! iskernelp(caller_ptr)) {
-	    CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, 
-		 proc_addr(HARDWARE), &ntf_mess);
-	    m_ptr = &ntf_mess;
-	}
 
-	/* Enqueue the message. Existing notifications with the same source
-	 * and type are overwritten with newer ones. New notifications that
-	 * are not yet on the list are added to the end.
-	 */
-	ntf_q_pp = &dst_ptr->p_ntf_q;
-	while (*ntf_q_pp != NULL) {
-		/* Replace notifications with same source and type. */
-		if ((*ntf_q_pp)->n_type == m_ptr->NOTIFY_TYPE && 
-		    (*ntf_q_pp)->n_source == proc_nr(caller_ptr)) {
-			(*ntf_q_pp)->n_flags = m_ptr->NOTIFY_FLAGS;
-			(*ntf_q_pp)->n_arg = m_ptr->NOTIFY_ARG;
-		    return(OK);
-		}
-		ntf_q_pp = &(*ntf_q_pp)->n_next;
-	}
-
-  	/* Add to end of queue. Get a free notification buffer. */
-  	if ((ntf_index = alloc_bit(notify_bitmap, NR_NOTIFY_BUFS)) < 0)  
-  		return(ENOSPC);
-	ntf_p = &notify_buffer[ntf_index];
-	ntf_p->n_source = proc_nr(caller_ptr);
-	ntf_p->n_type = m_ptr->NOTIFY_TYPE;
-	ntf_p->n_flags = m_ptr->NOTIFY_FLAGS;
-	ntf_p->n_arg = m_ptr->NOTIFY_ARG;
-	*ntf_q_pp = ntf_p;			/* add to end of queue */
-	ntf_p->n_next = NULL;			/* mark new end of queue */
+  /* Destination is not ready. Add the notification to the pending queue. 
+   * Get pointer to notification message. Don't copy for the kernel. 
+   */
+  if (! iskernelp(caller_ptr)) {
+      CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, 
+          proc_addr(HARDWARE), &ntf_mess);
+      m_ptr = &ntf_mess;
   }
+
+  /* Enqueue the message. Existing notifications with the same source
+   * and type are overwritten with newer ones. New notifications that
+   * are not yet on the list are added to the end.
+   */
+  ntf_q_pp = &dst_ptr->p_ntf_q;
+  while (*ntf_q_pp != NULL) {
+      /* Replace notifications with same source and type. */
+      if ((*ntf_q_pp)->n_type == m_ptr->NOTIFY_TYPE && 
+              (*ntf_q_pp)->n_source == proc_nr(caller_ptr)) {
+          (*ntf_q_pp)->n_flags = m_ptr->NOTIFY_FLAGS;
+          (*ntf_q_pp)->n_arg = m_ptr->NOTIFY_ARG;
+          return(OK);
+      }
+      ntf_q_pp = &(*ntf_q_pp)->n_next;
+  }
+
+  /* Add to end of queue (found above). Get a free notification buffer. */
+  if ((ntf_index = alloc_bit(notify_bitmap, NR_NOTIFY_BUFS)) < 0)  
+      return(ENOSPC);
+  ntf_p = &notify_buffer[ntf_index];
+  *ntf_q_pp = ntf_p;			/* add to end of queue */
+  ntf_p->n_next = NULL;			/* mark new end of queue */
+  ntf_p->n_source = proc_nr(caller_ptr);
+  ntf_p->n_type = m_ptr->NOTIFY_TYPE;
+  ntf_p->n_flags = m_ptr->NOTIFY_FLAGS;
+  ntf_p->n_arg = m_ptr->NOTIFY_ARG;
   return(OK);
 }
 
@@ -623,7 +631,7 @@ message *m_ptr;			/* pointer to message buffer */
 /* Safe gateway to mini_send() for tasks. */
   int result;
   lock();
-  result = mini_send(proc_ptr, dst, m_ptr, FALSE);
+  result = mini_send(proc_ptr, dst, m_ptr, NON_BLOCKING);
   unlock();
   return(result);
 }

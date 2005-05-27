@@ -145,7 +145,6 @@ PUBLIC timer_t *tty_timers;		/* queue of TTY timers */
 PUBLIC clock_t tty_next_timeout;	/* time that the next alarm is due */
 PUBLIC struct machine machine;		/* kernel environment variables */
 
-  static int debug = 0;
 
 /*===========================================================================*
  *				tty_task				     *
@@ -193,11 +192,6 @@ PUBLIC void main(void)
 	 * request and should be handled separately. These extra functions
 	 * do not operate on a device, in constrast to the driver requests. 
 	 */
-	if (debug) {
-		printf("TTY got request from %d, type %d\n", 
-			tty_mess.m_source, tty_mess.m_type);
-			printf("???\n");
-	}
 	switch (tty_mess.m_type) { 
 	case SYN_ALARM: 		/* fall through */
 	case HARD_INT:			/* hardware interrupt notification */
@@ -210,12 +204,8 @@ PUBLIC void main(void)
 	case HARD_STOP: {		/* MINIX is going down */
 		static int stop = 0;	/* expect two HARD_STOP messages */
 		if (! stop++) {
-			printf("TTY got first HARD_STOP message\n");
-			debug = 1;
 			cons_stop();	/* first switch to primary console */
-			printf("TTY returned from cons_stop()\n");
 		} else {
-			printf("TTY got second HARD_STOP message\n");
 			if(irq_hook_id != -1) {
 				int r;
 				r = sys_irqdisable(&irq_hook_id);
@@ -232,9 +222,7 @@ PUBLIC void main(void)
 		do_panic_dumps(&tty_mess);	
 		continue;
 	case DIAGNOSTICS: 		/* a server wants to print some */
-		if (debug) printf("TTY get DIAG\n");
 		do_diagnostics(&tty_mess);
-		if (debug) printf("TTY finished DIAG\n");
 		continue;
 	case FKEY_CONTROL:		/* (un)register a fkey observer */
 		do_fkey_ctl(&tty_mess);
@@ -267,6 +255,8 @@ PUBLIC void main(void)
 
 	/* If the device doesn't exist or is not configured return ENXIO. */
 	if (tp == NULL || ! tty_active(tp)) {
+		printf("Warning, TTY got illegal request %d from %d\n",
+			tty_mess.m_type, tty_mess.m_source);
 		tty_reply(TASK_REPLY, tty_mess.m_source,
 						tty_mess.PROC_NR, ENXIO);
 		continue;
@@ -280,7 +270,10 @@ PUBLIC void main(void)
 	    case DEV_OPEN:	do_open(tp, &tty_mess);		break;
 	    case DEV_CLOSE:	do_close(tp, &tty_mess);	break;
 	    case CANCEL:	do_cancel(tp, &tty_mess);	break;
-	    default:		tty_reply(TASK_REPLY, tty_mess.m_source,
+	    default:		
+		printf("Warning, TTY got unexpected request %d from %d\n",
+			tty_mess.m_type, tty_mess.m_source);
+	    tty_reply(TASK_REPLY, tty_mess.m_source,
 						tty_mess.PROC_NR, EINVAL);
 	}
   }
@@ -1314,9 +1307,6 @@ int status;			/* reply code */
   tty_mess.m_type = code;
   tty_mess.REP_PROC_NR = proc_nr;
   tty_mess.REP_STATUS = status;
-  if (debug)
-        printf("TTY wanted to send to %d, type %d, status %d\n",
-        	proc_nr, code, status);
   if ((status = send(replyee, &tty_mess)) != OK) {
 	server_panic("TTY","tty_reply failed, status\n", status);
   }

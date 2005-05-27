@@ -74,7 +74,7 @@ PUBLIC int do_fkey_pressed(message *m)
             	printf("IS: unhandled notification for F%d\n", m->FKEY_NUM);
 #else
             	printf("IS: unhandled notify for F%d (code %d)\n", 
-            		m->NOTIFY_ARG, m->NOTIFY_FLAGS);
+            		m->NOTIFY_FLAGS, m->NOTIFY_ARG);
 #endif
         }
     }

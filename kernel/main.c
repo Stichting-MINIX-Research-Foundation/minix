@@ -29,7 +29,7 @@
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
-FORWARD _PROTOTYPE( void shutdown, (int how));
+FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
 
 #define STOP_TICKS	(5*HZ)			/* time allowed to stop */
 
@@ -248,10 +248,10 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
   if (skip_stop_sequence) {			/* set in exception() */
       kprintf("\nAn exception occured; skipping stop sequence.\n", NO_ARG);
-      shutdown(how);		/* TTY isn't scheduled */
+      shutdown(&shutdown_timer);		/* TTY isn't scheduled */
   } else {
       kprintf("\nNotifying system services about MINIX shutdown.\n", NO_ARG); 
-      stop_sequence(&shutdown_timer);
+      set_timer(&shutdown_timer, get_uptime(), stop_sequence);
   }
 }
 
@@ -302,7 +302,7 @@ timer_t *tp;
       	  p = BEG_PROC_ADDR;		
        	  level = level - 1;		
           if (level == P_TASK) {	/* done; tasks must remain alive */
-          	shutdown(tmr_arg(tp)->ta_int);
+          	shutdown(tp);
           	/* no return */
 		return;
           }
@@ -313,13 +313,15 @@ timer_t *tp;
 /*==========================================================================*
  *				   shutdown 				    *
  *==========================================================================*/
-PRIVATE void shutdown(int how)
+PRIVATE void shutdown(tp)
+timer_t *tp;
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
  * down MINIX. How to shutdown is in the argument: RBT_REBOOT, RBT_HALT, 
  * RBT_RESET. 
  */
   static u16_t magic = STOP_MEM_CHECK;
+  int how = tmr_arg(tp)->ta_int;
 
   /* Now mask all interrupts, including the clock, and stop the clock. */
   outb(INT_CTLMASK, ~0); 

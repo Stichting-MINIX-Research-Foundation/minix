@@ -34,7 +34,7 @@
 #define NR_IRQ_HOOKS	  16
 
 /* How many buffers for notification messages should there be? */
-#define NR_NOTIFY_BUFS	  64
+#define NR_NOTIFY_BUFS	  32
 
 /* Constants and macros for bit map manipulation. */
 #define BITCHUNK_BITS   (sizeof(bitchunk_t) * CHAR_BIT)

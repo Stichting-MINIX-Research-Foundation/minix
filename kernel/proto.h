@@ -33,7 +33,7 @@ _PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
-_PROTOTYPE( void prepare_shutdown, (int)				);
+_PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void stop_sequence, (struct timer *tp)			);
 
 /* misc.c */

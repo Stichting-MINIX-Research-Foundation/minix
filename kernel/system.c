@@ -66,7 +66,7 @@ PUBLIC void sys_task()
 {
 /* Main entry point of sys_task.  Get the message and dispatch on type. */
   static message m;
-  register int result;
+  register int result, debug;
 
   /* Initialize the system task. */
   initialize();
@@ -88,9 +88,12 @@ PUBLIC void sys_task()
        * is known to be blocked waiting for a message.
        */
       if (result != EDONTREPLY) {
+          debug = m.m_type;
   	  m.m_type = result;	/* report status of call */
-          if (OK != lock_send(m.m_source, &m))
-              kprintf("Warning, SYSTASK couldn't reply to %d\n", m.m_source);
+          if (OK != lock_send(m.m_source, &m)) {
+              kprintf("Warning, SYSTASK couldn't reply to request %d", debug);
+              kprintf(" from %d\n", m.m_source);
+          }
       }
   }
 }

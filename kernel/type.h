@@ -33,7 +33,7 @@ struct memory {
 
 typedef unsigned long notify_mask_t;	/* bit mask for notifications */
 typedef short notify_type_t;		/* notification type */
-typedef short notify_flags_t;		/* notification flags */
+typedef char notify_flags_t;		/* notification flags */
 typedef int notify_arg_t;		/* notification argument */
 
 struct notification {
