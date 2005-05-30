@@ -377,6 +377,7 @@ int get_segment(u32_t *vsec, long *size, u32_t *addr, u32_t limit)
 void exec_image(char *image)
 /* Get a Minix image into core, patch it up and execute. */
 {
+	char *delayvalue;
 	int i;
 	struct image_header hdr;
 	char *buf;
@@ -454,7 +455,7 @@ void exec_image(char *image)
 		raw_copy(aout + i * A_MINHDR, mon2abs(&hdr.process), A_MINHDR);
 
 		if (!banner) {
-			printf("    cs      ds    text    data     bss");
+			printf("     cs       ds     text     data      bss");
 			if (k_flags & K_CHMEM) printf("    stack");
 			putch('\n');
 			banner= 1;
@@ -497,7 +498,7 @@ void exec_image(char *image)
 			a_data+= a_text;
 		}
 
-		printf("%06lx  %06lx %7ld %7ld %7ld",
+		printf("%07lx  %07lx %8ld %8ld %8ld",
 			procp->cs, procp->ds,
 			hdr.process.a_text, hdr.process.a_data,
 			hdr.process.a_bss
@@ -569,6 +570,11 @@ void exec_image(char *image)
 
 	/* Run the trailer function just before starting Minix. */
 	if (!run_trailer()) { errno= 0; return; }
+
+	/* Do delay if wanted. */
+	if((delayvalue = b_value("bootdelay")) != nil > 0) {
+		delay(delayvalue);
+	}
 
 	/* Translate the boot parameters to what Minix likes best. */
 	if (!params2params(params, sizeof(params))) { errno= 0; return; }

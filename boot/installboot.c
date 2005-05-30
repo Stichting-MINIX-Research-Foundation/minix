@@ -128,12 +128,12 @@ void read_header(int talk, char *proc, FILE *procf, struct image_header *ihdr)
 	}
 
 	if (talk && !banner) {
-		printf("    text    data     bss     size\n");
+		printf("     text     data      bss      size\n");
 		banner= 1;
 	}
 
 	if (talk) {
-		printf("%8ld%8ld%8ld%9ld  %s\n",
+		printf(" %8ld %8ld %8ld %9ld  %s\n",
 			phdr->a_text, phdr->a_data, phdr->a_bss,
 			phdr->a_text + phdr->a_data + phdr->a_bss, proc);
 	}
@@ -259,8 +259,8 @@ void make_image(char *image, char **procv)
 
 	if (fclose(imagef) == EOF) fatal(image);
 
-	printf("  ------  ------  ------  -------\n");
-	printf("%8ld%8ld%8ld%9ld  total\n",
+	printf("   ------   ------   ------   -------\n");
+	printf(" %8ld %8ld %8ld %9ld  total\n",
 		total_text, total_data, total_bss,
 		total_text + total_data + total_bss);
 }

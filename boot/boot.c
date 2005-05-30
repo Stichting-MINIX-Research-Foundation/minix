@@ -1549,6 +1549,7 @@ void help(void)
 		{ "ramimagedev",	"RAM disk image if root is RAM" },
 		{ "ramsize",		"RAM disk size" },
 		{ "bootdev",		"Special name for the boot device" },
+		{ "bootdelay",	        "Delay after loading, before booting (ms)" },
 		{ "fd0, d0p2, c0d0p1s0",	"Devices (as in /dev)" },
 		{ "image",		"Name of the kernel image" },
 		{ "main",		"Startup function" },
