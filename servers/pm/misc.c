@@ -75,6 +75,7 @@ PUBLIC int do_reboot()
    * get a HARD_STOP notification. Await the notification in the main loop.
    */
   sys_abort(m_in.reboot_flag, PM_PROC_NR, monitor_code, m_in.reboot_size);
+  return(SUSPEND);			/* don't reply to killed process */
 }
 
 /*=====================================================================*

@@ -48,7 +48,7 @@ PUBLIC int do_fork()
   if ((procs_in_use == NR_PROCS) || 
   		(procs_in_use >= NR_PROCS-LAST_FEW && rmp->mp_effuid != 0))
   {
-  	printf("PM: proc table full!\n");
+  	printf("PM: warning, process table is full!\n");
   	return(EAGAIN);
   }
 
@@ -146,6 +146,9 @@ int exit_status;		/* the process' exit status (for parent) */
   tell_fs(EXIT, proc_nr, 0, 0);  /* file system can free the proc slot */
   sys_xit(rmp->mp_parent, proc_nr);
 
+  /* Pending reply messages for the dead process cannot be delivered. */
+  rmp->mp_flags &= ~REPLY;
+  
   /* Release the memory occupied by the child. */
   if (find_share(rmp, rmp->mp_ino, rmp->mp_dev, rmp->mp_ctime) == NULL) {
 	/* No other process shares the text segment, so free it. */
@@ -161,7 +164,7 @@ int exit_status;		/* the process' exit status (for parent) */
   p_mp = &mproc[rmp->mp_parent];	/* process' parent */
   pidarg = p_mp->mp_wpid;		/* who's being waited for? */
   parent_waiting = p_mp->mp_flags & WAITING;
-
+  
   right_child =				/* child meets one of the 3 tests? */
 	(pidarg == -1 || pidarg == rmp->mp_pid || -pidarg == rmp->mp_procgrp);
 
