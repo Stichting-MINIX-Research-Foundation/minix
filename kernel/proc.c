@@ -148,8 +148,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    *   - ECHO:    the message directly will be echoed to the sender 
    */
   switch(function) {
-  case SENDREC:		
-      flags |= FRESH_ANSWER;		/* ignore pending notifications */
+  case SENDREC:				/* has FRESH_ANSWER flags */		
       /* fall through */
   case SEND:			
       if (! isalive(src_dst)) { 			

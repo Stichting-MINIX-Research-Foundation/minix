@@ -5,10 +5,10 @@
 ECHO = 0
 SEND = 1
 RECEIVE = 2
-BOTH = 3
+SENDREC = 3 + 32		! flags 0x20 to request fresh answer
 NOTIFY = 4
-NB_SEND = 1 + 16 		! SEND | 0xF0
-NB_RECEIVE = 2 + 16		! RECEIVE | 0xF0
+NB_SEND = 1 + 16 		! flags 0x10 to prevent blocking 
+NB_RECEIVE = 2 + 16		! flags 0x10 to prevent blocking 
 SYSVEC = 33			! trap to kernel 
 
 SRC_DST = 8			! source/ destination process 
@@ -75,7 +75,7 @@ __sendrec:
 	push	ebx
 	mov	eax, SRC_DST(ebp)	! eax = dest-src
 	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
-	mov	ecx, BOTH		! _sendrec(srcdest, ptr)
+	mov	ecx, SENDREC		! _sendrec(srcdest, ptr)
 	int	SYSVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp
