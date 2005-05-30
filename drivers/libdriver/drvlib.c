@@ -157,24 +157,13 @@ struct part_entry *table;	/* four entries */
  */
   iovec_t iovec1;
   off_t position;
-  static int proc_nr = NONE;
   int s;
 
-  /* Read the partition table at 'offset'. */
-  if (proc_nr == NONE) {
-#if DEAD_CODE
-  	if ((s=getprocnr(&proc_nr)) != OK) {
-#endif
-  	if ((s=sys_getprocnr(&proc_nr,0,0)) != OK) {
-		printf("%s: can't get own proc nr: %d\n", (*dp->dr_name)(), s);
-		return(0);
-	}
-  }
   position = offset << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) tmp_buf;
   iovec1.iov_size = SECTOR_SIZE;
   if ((*dp->dr_prepare)(device) != NIL_DEV) {
-	(void) (*dp->dr_transfer)(proc_nr, DEV_GATHER, position, &iovec1, 1);
+	(void) (*dp->dr_transfer)(SELF, DEV_GATHER, position, &iovec1, 1);
   }
   if (iovec1.iov_size != 0) {
 	printf("%s: can't read partition table\n", (*dp->dr_name)());
@@ -200,7 +189,6 @@ struct part_entry *table;	/* four entries */
   iovec_t iovec1;
   off_t position;
   off_t isosize;
-  static int proc_nr = NONE;
   int s;
 #ifndef CD_SECTOR_SIZE
 #define CD_SECTOR_SIZE 2048
@@ -208,18 +196,11 @@ struct part_entry *table;	/* four entries */
   static unsigned char pvd[CD_SECTOR_SIZE];
 
   /* Read the partition table at 'offset'. */
-  if (proc_nr == NONE) {
-  	if ((s=sys_getprocnr(&proc_nr,0,0)) != OK) {
-		printf("%s: can't get own proc nr: %d\n", (*dp->dr_name)(), s);
-		return 0;
-	}
-  }
-
   position = 16*CD_SECTOR_SIZE;
   iovec1.iov_addr = (vir_bytes) pvd;
   iovec1.iov_size = CD_SECTOR_SIZE;
   if ((*dp->dr_prepare)(device) != NIL_DEV) {
-	(void) (*dp->dr_transfer)(proc_nr, DEV_GATHER, position, &iovec1, 1);
+	(void) (*dp->dr_transfer)(SELF, DEV_GATHER, position, &iovec1, 1);
   }
   if (iovec1.iov_size != 0) {
 	return 0;
