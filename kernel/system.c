@@ -186,6 +186,7 @@ int proc_nr;				/* slot of process to clean up */
 #else
   register struct proc **xpp;		/* iterate over caller queue */
 #endif
+  int i;
 
   /* Get a pointer to the process that exited. */
   rc = proc_addr(proc_nr);
@@ -236,6 +237,19 @@ int proc_nr;				/* slot of process to clean up */
           }
 #endif
       }
+  }
+
+  /* Check the table with IRQ hooks to see if hooks should be released. */
+  for (i=0; i < NR_IRQ_HOOKS; i++) {
+      if (irq_hooks[i].proc_nr == proc_nr)
+          irq_hooks[i].proc_nr = NONE; 
+  }
+
+  /* Check if there are pending notifications. Release the buffers. */
+  while (rc->p_ntf_q != NULL) {
+      i = (int) (rc->p_ntf_q - &notify_buffer[0]);
+      free_bit(i, notify_bitmap, NR_NOTIFY_BUFS); 
+      rc->p_ntf_q = rc->p_ntf_q->n_next;
   }
 
   /* Now clean up the process table entry. Reset to defaults. */

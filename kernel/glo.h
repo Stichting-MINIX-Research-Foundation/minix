@@ -29,6 +29,11 @@ EXTERN struct proc *next_ptr;	/* pointer to next process to run */
 EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
+/* Declare buffer space and a bit map for notification messages. */
+EXTERN struct notification notify_buffer[NR_NOTIFY_BUFS];
+EXTERN bitchunk_t notify_bitmap[BITMAP_CHUNKS(NR_NOTIFY_BUFS)];     
+
+
 #if (CHIP == INTEL)
 
 /* Interrupt related variables. */

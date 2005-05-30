@@ -2,11 +2,12 @@
 #define OLD_SEND 	0
 #define OLD_RECV 	0
 /* This file contains essentially all of the process and message handling.
- * It has one main entry point from the outside:
+ * Together with "mpx.s" it forms the lowest layer of the MINIX kernel.
+ * There is one entry point from the outside:
  *
  *   sys_call: 	      a system call, i.e., the kernel is trapped with an INT 
  *
- * It also has several minor entry points to be used from the task level:
+ * As well as several entry points used from the interrupt and task level:
  *
  *   lock_notify:     send a notification to inform a process of a system event
  *   lock_send:	      send a message to a process
@@ -16,13 +17,29 @@
  *   lock_pick_proc:  pick a process to run (used by system initialization)
  *
  * Changes:
+ *         , 2005     better protection in sys_call()  (Jorrit N. Herder)
  *   May 26, 2005     optimized message passing functions  (Jorrit N. Herder)
  *   May 24, 2005     new, queued NOTIFY system call  (Jorrit N. Herder)
- *   Oct 28, 2004     non-blocking SEND and RECEIVE  (Jorrit N. Herder)
- *   Oct 28, 2004     rewrite of sys_call()  (Jorrit N. Herder)
- *   Oct 10, 2004     require SENDREC for kernel sys_call()  (Jorrit N. Herder)
- *		      (to protect kernel tasks from being blocked)
- *   Aug 19, 2004     generalized ready()/unready()  (Jorrit N. Herder)
+ *   Oct 28, 2004     new, non-blocking SEND and RECEIVE  (Jorrit N. Herder)
+ *   Oct 28, 2004     rewrite of sys_call() function  (Jorrit N. Herder)
+ *   Aug 19, 2004     generalized multilevel scheduling  (Jorrit N. Herder)
+ *
+ * The code here is critical to make everything work and is important for the
+ * overall performance of the system. A large fraction of the code deals with
+ * list manipulation. To make this both easy to understand and fast to execute 
+ * pointer pointers are used throughout the code. Pointer pointers prevent
+ * exceptions for the head or tail of a linked list. 
+ *
+ *  node_t *queue, *new_node;	// assume these as global variables
+ *  node_t **xpp = &queue; 	// get pointer pointer to head of queue 
+ *  while (*xpp != NULL) 	// find last pointer of the linked list
+ *      xpp = &(*xpp)->next;	// get pointer to next pointer 
+ *  *xpp = new_node;		// now replace the end (the NULL pointer) 
+ *  new_node->next = NULL;	// and mark the new end of the list
+ * 
+ * For example, when adding a new node to the end of the list, one normally 
+ * makes an exception for an empty list and looks up the end of the list for 
+ * nonempty lists. As shown above, this is not required with pointer pointers.
  */
 
 #include "kernel.h"
@@ -45,8 +62,8 @@ FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst,
 		message *m_ptr ) );
 
 FORWARD _PROTOTYPE( void ready, (struct proc *rp) );
-FORWARD _PROTOTYPE( void sched, (int queue) );
 FORWARD _PROTOTYPE( void unready, (struct proc *rp) );
+FORWARD _PROTOTYPE( void sched, (int queue) );
 FORWARD _PROTOTYPE( void pick_proc, (void) );
 
 #define BuildMess(m,n) \
@@ -67,16 +84,18 @@ FORWARD _PROTOTYPE( void pick_proc, (void) );
 #endif /* (CHIP == M68000) */
 
 
+#if DEAD_CODE	/* now in glo.h */
 /* Declare buffer space and a bit map for notification messages. */
 PRIVATE struct notification notify_buffer[NR_NOTIFY_BUFS];
 PRIVATE bitchunk_t notify_bitmap[BITMAP_CHUNKS(NR_NOTIFY_BUFS)];     
+#endif
 
 
 /*===========================================================================*
  *				sys_call				     * 
  *===========================================================================*/
 PUBLIC int sys_call(call_nr, src_dst, m_ptr)
-int call_nr;			/* (NB_)SEND, (NB_)RECEIVE, SENDREC */
+int call_nr;			/* system call number and flags */
 int src_dst;			/* src to receive from or dst to send to */
 message *m_ptr;			/* pointer to message in the caller's space */
 {
@@ -93,15 +112,12 @@ message *m_ptr;			/* pointer to message in the caller's space */
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
 
   /* Calls directed to the kernel may only be sendrec(), because tasks always
-   * reply and may not block if the caller doesn't do receive(). Users also
-   * may only use sendrec() to protect the process manager and file system.  
+   * reply and may not block if the caller doesn't do receive(). 
    */
-  if (iskernel(src_dst) && function != SENDREC) 
-  	return(ECALLDENIED);			/* SENDREC was required */
+  if (iskernel(src_dst) && function != SENDREC)  return(ECALLDENIED);		
   
   /* Verify that requested source and/ or destination is a valid process. */
-  if (! isoksrc_dst(src_dst) && function != ECHO) 
-  	return(EBADSRCDST);
+  if (! isoksrc_dst(src_dst) && function != ECHO)  return(EBADSRCDST);
 
   /* Check validity of message pointer. */
   vb = (vir_bytes) m_ptr;
@@ -124,8 +140,12 @@ message *m_ptr;			/* pointer to message in the caller's space */
 
   /* Now check if the call is known and try to perform the request. The only
    * system calls that exist in MINIX are sending and receiving messages.
-   * Receiving is straightforward. Sending requires to check caller's send
-   * mask and whether the destination is alive.  
+   *   - SENDREC: combines SEND and RECEIVE in a single system call
+   *   - SEND:    sender blocks until its message has been delivered
+   *   - RECEIVE: receiver blocks until an acceptable message has arrived
+   *   - NOTIFY:  sender continues; either directly deliver the message or
+   *              queue the notification message until it can be delivered  
+   *   - ECHO:    the message directly will be echoed to the sender 
    */
   switch(function) {
   case SENDREC:		
@@ -207,15 +227,14 @@ unsigned flags;				/* system call flags */
   }
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
-   * SENDING flag may be set when SENDREC couldn't send. Await a pure RECEIVE.  
+   * SENDING flag may be set when its SENDREC call blocked while sending.  
    */
   if ( (dst_ptr->p_flags & (RECEIVING | SENDING)) == RECEIVING &&
        (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
 	/* Destination is indeed waiting for this message. */
 	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 		 dst_ptr->p_messbuf);
-	if ((dst_ptr->p_flags &= ~RECEIVING) == 0)	
-		ready(dst_ptr);
+	if ((dst_ptr->p_flags &= ~RECEIVING) == 0) ready(dst_ptr);
   } else if ( ! (flags & NON_BLOCKING)) {
 	/* Destination is not waiting.  Block and queue caller. */
 	caller_ptr->p_messbuf = m_ptr;
@@ -233,13 +252,12 @@ unsigned flags;				/* system call flags */
 		next_ptr->p_q_link = caller_ptr;
 	}
 #else
-	xpp = &dst_ptr->p_caller_q;
+	xpp = &dst_ptr->p_caller_q;		/* find end of list */
 	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_q_link;
-	*xpp = caller_ptr;
+	*xpp = caller_ptr;			/* add caller to end */
 #endif
-	caller_ptr->p_q_link = NIL_PROC;
+	caller_ptr->p_q_link = NIL_PROC;	/* mark new end of list */
   } else {
-        kprintf("Didn't block... ;-), flags: 0x%x\n", flags);
 	return(ENOTREADY);
   }
   return(OK);
@@ -254,9 +272,9 @@ int src;				/* which message source is wanted */
 message *m_ptr;				/* pointer to message buffer */
 unsigned flags;				/* system call flags */
 {
-/* A process or task wants to get a message.  If one is already queued,
+/* A process or task wants to get a message.  If a message is already queued,
  * acquire it and deblock the sender.  If no message from the desired source
- * is available, block the caller.  
+ * is available block the caller, unless the flags don't allow blocking.  
  */
 #if OLD_RECV
   register struct proc *sender_ptr;
@@ -295,25 +313,22 @@ unsigned flags;				/* system call flags */
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
 	if (src == ANY || src == proc_nr(*xpp)) {
-	    /* An acceptable source has been found. Copy the message to the 
-	     * caller, update the sender's status, and remove the sender from 
-	     * the caller's queue.
-	     */
+	    /* Found acceptable message. Copy it and update status. */
 	    CopyMess((*xpp)->p_nr, *xpp, (*xpp)->p_messbuf, caller_ptr, m_ptr);
             if (((*xpp)->p_flags &= ~SENDING) == 0) ready(*xpp);
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
-            return(OK);
+            return(OK);				/* report success */
 	}
 	xpp = &(*xpp)->p_q_link;		/* proceed to next */
     }
 #endif
 
-    /* Check if there are pending notifications. */
-if (! (flags & FRESH_ANSWER)) {
+    /* Check if there are pending notifications, except for SENDREC. */
+    if (! (flags & FRESH_ANSWER)) {
 
-    ntf_q_pp = &caller_ptr->p_ntf_q;		/* get pointer pointer */
-    while (*ntf_q_pp != NULL) {
-	if (src == ANY || src == (*ntf_q_pp)->n_source) {
+        ntf_q_pp = &caller_ptr->p_ntf_q;	/* get pointer pointer */
+        while (*ntf_q_pp != NULL) {
+            if (src == ANY || src == (*ntf_q_pp)->n_source) {
 		/* Found notification. Assemble and copy message. */
 		BuildMess(m, *ntf_q_pp);
                 CopyMess((*ntf_q_pp)->n_source, proc_addr(HARDWARE), &m, 
@@ -323,21 +338,20 @@ if (! (flags & FRESH_ANSWER)) {
                 *ntf_q_pp = (*ntf_q_pp)->n_next;/* remove from queue */
                 free_bit(bit_nr, notify_bitmap, NR_NOTIFY_BUFS);
                 return(OK);			/* report success */
-	}
-	ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
+	    }
+	    ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
+        }
     }
-}
-
   }
 
   /* No suitable message is available or the caller couldn't send in SENDREC. 
    * Block the process trying to receive, unless the flags tell otherwise.
    */
   if ( ! (flags & NON_BLOCKING)) {
-      caller_ptr->p_getfrom = src;
+      caller_ptr->p_getfrom = src;		
       caller_ptr->p_messbuf = m_ptr;
       if (caller_ptr->p_flags == 0) unready(caller_ptr);
-      caller_ptr->p_flags |= RECEIVING;
+      caller_ptr->p_flags |= RECEIVING;		
       return(OK);
   } else {
       return(ENOTREADY);
@@ -374,7 +388,7 @@ message *m_ptr;				/* pointer to message buffer */
   } 
 
   /* Destination is not ready. Add the notification to the pending queue. 
-   * Get pointer to notification message. Don't copy for the kernel. 
+   * Get pointer to notification message. Don't copy if already in kernel. 
    */
   if (! iskernelp(caller_ptr)) {
       CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, 
@@ -401,13 +415,13 @@ message *m_ptr;				/* pointer to message buffer */
   /* Add to end of queue (found above). Get a free notification buffer. */
   if ((ntf_index = alloc_bit(notify_bitmap, NR_NOTIFY_BUFS)) < 0)  
       return(ENOSPC);
-  ntf_p = &notify_buffer[ntf_index];
-  *ntf_q_pp = ntf_p;			/* add to end of queue */
-  ntf_p->n_next = NULL;			/* mark new end of queue */
-  ntf_p->n_source = proc_nr(caller_ptr);
+  ntf_p = &notify_buffer[ntf_index];	/* get pointer to buffer */
+  ntf_p->n_source = proc_nr(caller_ptr);/* store notification data */
   ntf_p->n_type = m_ptr->NOTIFY_TYPE;
   ntf_p->n_flags = m_ptr->NOTIFY_FLAGS;
   ntf_p->n_arg = m_ptr->NOTIFY_ARG;
+  *ntf_q_pp = ntf_p;			/* add to end of queue */
+  ntf_p->n_next = NULL;			/* mark new end of queue */
   return(OK);
 }
 
@@ -419,7 +433,7 @@ int dst;			/* to whom is message being sent? */
 message *m_ptr;			/* pointer to message buffer */
 {
 /* Safe gateway to mini_notify() for tasks and interrupt handlers. This 
- * function checks if it is called from an interrupt handler and makes sure
+ * function checks if it is called from an interrupt handler and ensures
  * that the correct message source is put on the notification. 
  */
   int result;
@@ -466,8 +480,8 @@ PRIVATE void ready(rp)
 register struct proc *rp;	/* this process is now runnable */
 {
 /* Add 'rp' to one of the queues of runnable processes.  */
-  register int q = rp->p_priority;	/* scheduling queue to use */
-  register struct proc **xpp;		/* iterate over queue */
+  register int q = rp->p_priority;		/* scheduling queue to use */
+  register struct proc **xpp;			/* iterate over queue */
 
 #if ENABLE_K_DEBUGGING
   if(rp->p_ready) {
@@ -481,15 +495,15 @@ register struct proc *rp;	/* this process is now runnable */
    * fairer to I/O bound processes. 
    */
 #if NEW_SCHED_Q
-  if (isuserp(rp)) {			/* add to front of queue */
-  	rp->p_nextready = rdy_head[q];	/* chain current front */
-  	rdy_head[q] = rp;		/* ready process becomes front */
+  if (isuserp(rp)) {				/* add to front of queue */
+  	rp->p_nextready = rdy_head[q];		/* chain current front */
+  	rdy_head[q] = rp;			/* rp becomes new front */
   }
-  else {				/* add to end of queue */
-  	xpp = &rdy_head[q];		/* find pointer to end of queue */
+  else {					/* add to end of queue */
+  	xpp = &rdy_head[q];			/* find pointer to end */
  	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_nextready;
- 	*xpp = rp;			/* replace end with ready process */
-  	rp->p_nextready = NIL_PROC;	/* mark end of queue */
+ 	*xpp = rp;				/* replace end with rp */
+  	rp->p_nextready = NIL_PROC;		/* mark end of queue */
   }
 #else
   if (isuserp(rp)) {	/* add to front of queue */
@@ -524,11 +538,11 @@ register struct proc *rp;	/* this process is no longer runnable */
 {
 /* A process has blocked. See ready for a description of the queues. */
 
-  register int q = rp->p_priority;	/* queue to use */
+  register int q = rp->p_priority;		/* queue to use */
 #if NEW_SCHED_Q
-  register struct proc **xpp;		/* iterate over queue */
+  register struct proc **xpp;			/* iterate over queue */
 #else
-  register struct proc **qtail; 	/* queue's rdy_tail */
+  register struct proc **qtail; 		/* queue's rdy_tail */
   register struct proc *xp;
 #endif
 
@@ -600,12 +614,12 @@ int queue;
   /* One or more user processes queued. */
 #if NEW_SCHED_Q
 
-  xp = rdy_head[queue];			/* save expired process */
-  rdy_head[queue] = xp->p_nextready;	/* advance to next process */ 
+  xp = rdy_head[queue];				/* save expired process */
+  rdy_head[queue] = xp->p_nextready;		/* advance to next process */ 
   xpp = &rdy_head[queue];			/* find end of queue */
   while (*xpp != NIL_PROC) xpp = &(*xpp)->p_nextready;
   *xpp = xp;					/* add expired to end */
-  xp->p_nextready = NIL_PROC;			/* mark end of queue */
+  xp->p_nextready = NIL_PROC;			/* mark new end of queue */
 
 #else
   rdy_tail[queue]->p_nextready = rdy_head[queue];
