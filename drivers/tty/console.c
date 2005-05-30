@@ -40,6 +40,7 @@
 #define C_6845         0x3D4	/* port for 6845 color */
 #define INDEX              0	/* 6845's index register */
 #define DATA               1	/* 6845's data register */
+#define STATUS             6	/* 6845's status register */
 #define VID_ORG           12	/* 6845's origin register */
 #define CURSOR            14	/* 6845's cursor register */
 
@@ -120,6 +121,7 @@ FORWARD _PROTOTYPE( void flush, (console_t *cons)			);
 FORWARD _PROTOTYPE( void parse_escape, (console_t *cons, int c)		);
 FORWARD _PROTOTYPE( void scroll_screen, (console_t *cons, int dir)	);
 FORWARD _PROTOTYPE( void set_6845, (int reg, unsigned val)		);
+FORWARD _PROTOTYPE( void get_6845, (int reg, unsigned *val)		);
 FORWARD _PROTOTYPE( void stop_beep, (timer_t *tmrp)				);
 FORWARD _PROTOTYPE( void cons_org0, (void)				);
 FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
@@ -706,6 +708,22 @@ unsigned val;			/* 16-bit value to set it to */
   sys_voutb(char_out, 4);			/* do actual output */
 }
 
+/*===========================================================================*
+ *				get_6845				     *
+ *===========================================================================*/
+PRIVATE void get_6845(reg, val)
+int reg;			/* which register pair to set */
+unsigned *val;			/* 16-bit value to set it to */
+{
+  char v1, v2;
+/* Get a register pair inside the 6845.  */
+  sys_outb(vid_port + INDEX, reg); 
+  sys_inb(vid_port + DATA, &v1); 
+  sys_outb(vid_port + INDEX, reg+1); 
+  sys_inb(vid_port + DATA, &v2); 
+  *val = (v1 << 8) | v2;
+}
+
 
 /*===========================================================================*
  *				beep					     *
@@ -771,9 +789,9 @@ tty_t *tp;
   u16_t bios_columns, bios_crtbase, bios_fontlines;
   u8_t bios_rows;
   int line;
-  unsigned page_size;
   int s;
   static int vdu_initialized = 0;
+  unsigned page_size;
 
   /* Associate console and TTY. */
   line = tp - &tty_table[0];
@@ -838,9 +856,19 @@ tty_t *tp;
   cons->c_cur = cons->c_org = cons->c_start;
   cons->c_attr = cons->c_blank = BLANK_COLOR;
 
-  /* Clear the screen. */
-  blank_color = BLANK_COLOR;
-  mem_vid_copy(BLANK_MEM, cons->c_start, scr_size);
+  if(line != 0) {
+        /* Clear the non-console vtys. */
+  	blank_color = BLANK_COLOR;
+	mem_vid_copy(BLANK_MEM, cons->c_start, scr_size);
+  } else {
+	int i, n;
+	/* Set the cursor of the console vty at the bottom. c_cur
+	 * is updated automatically later.
+	 */
+	scroll_screen(cons, SCROLL_UP);
+	cons->c_row = scr_lines-1;
+	cons->c_column = 0;
+  }
   select_console(0);
   cons_ioctl(tp);
 }
