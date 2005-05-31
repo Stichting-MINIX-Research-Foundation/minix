@@ -1,6 +1,7 @@
 #include "fs.h"
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <minix/utils.h>
 #include <time.h>
 #include <ibm/cmos.h>
 #include <ibm/bios.h>
@@ -75,16 +76,16 @@ PRIVATE int get_cmostime(struct tm *t, int y2kflag)
  */
   int osec, n;
   unsigned long i;
-  static int timeout_flag;
+  clock_t t0,t1;
 
   /* Start a timer to keep us from getting stuck on a dead clock. */
-  timeout_flag = 0;
-  sys_flagalrm(5*HZ, &timeout_flag);
+  getuptime(&t0);
   do {
 	osec = -1;
 	n = 0;
 	do {
-		if (timeout_flag) {
+	        getuptime(&t1); 
+		if (t1-t0 > 5*HZ) {
 			printf("readclock: CMOS clock appears dead\n");
 			return(1);
 		}
@@ -117,7 +118,6 @@ PRIVATE int get_cmostime(struct tm *t, int y2kflag)
 	|| read_register(RTC_MDAY) != t->tm_mday
 	|| read_register(RTC_MONTH) != t->tm_mon
 	|| read_register(RTC_YEAR) != t->tm_year);
-  sys_flagalrm(0, &timeout_flag); /* not strictly necessarily; flag is static */
 
   if ((read_register(RTC_REG_B) & RTC_B_DM_BCD) == 0) {
 	/* Convert BCD to binary (default RTC mode). */

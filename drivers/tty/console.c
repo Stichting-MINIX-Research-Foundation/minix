@@ -22,6 +22,9 @@
 #include <minix/com.h>
 #include "tty.h"
 
+#include "../../kernel/const.h"
+#include "../../kernel/type.h"
+
 /* Definitions used by the console driver. */
 #define MONO_BASE    0xB0000L	/* base of mono video memory */
 #define COLOR_BASE   0xB8000L	/* base of color video memory */

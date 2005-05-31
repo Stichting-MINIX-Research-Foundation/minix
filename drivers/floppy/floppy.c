@@ -8,7 +8,6 @@
  * Changes:
  *   Dec 01, 2004   floppy driver moved to user-space (Jorrit N. Herder)
  *   Sep 15, 2004   sync alarms/ local timer management  (Jorrit N. Herder)
- *   May 02, 2004   sys_flagalrm() replaces micro_elapsed()  (Jorrit N. Herder)
  *   Aug 12, 2003   null seek no interrupt fix  (Mike Haertel)
  *   May 14, 2000   d-d/i rewrite  (Kees J. Bot)
  *   Apr 04, 1992   device dependent/independent split  (Kees J. Bot)
@@ -689,7 +688,7 @@ PRIVATE void start_motor()
   f_set_timer(&f_tmr_timeout, f_dp->start, f_timeout);
   f_busy = BSY_IO;
   do {
-  	receive(HARDWARE, &mess); 
+  	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) { 
   		f_expire_tmrs(NULL);
   	} else {
@@ -771,10 +770,7 @@ PRIVATE int seek()
  	f_set_timer(&f_tmr_timeout, HZ/30, f_timeout);
 	f_busy = BSY_IO;
   	do {
-  		/* printf("Wait for message from HARDWARE 0\n"); */
-  		receive(HARDWARE, &mess); 
-  		/* printf("Floppy: got message, type %d (HARD_INT %d)\n",
-  		mess.m_type, (mess.m_type == HARD_INT)); */
+  		receive(ANY, &mess); 
   		if (mess.m_type == SYN_ALARM) { 
   			f_expire_tmrs(NULL);
   		} else {
@@ -872,15 +868,14 @@ PRIVATE int fdc_results()
  */
 
   int s, result_nr, status;
-  static int timeout;		/* must be static if not cancelled */
+  clock_t t0,t1;
 
   /* Extract bytes from FDC until it says it has no more.  The loop is
    * really an outer loop on result_nr and an inner loop on status. 
    * A timeout flag alarm is set.
    */
   result_nr = 0;
-  timeout = 0;
-  sys_flagalrm(TIMEOUT_TICKS, &timeout);	
+  getuptime(&t0);
   do {
 	/* Reading one byte is almost a mirror of fdc_out() - the DIRECTION
 	 * bit must be set instead of clear, but the CTL_BUSY bit destroys
@@ -900,14 +895,10 @@ PRIVATE int fdc_results()
 		if ((s=sys_irqenable(&irq_hook_id)) != OK)
 			server_panic("FLOPPY", "Couldn't enable IRQs", s);
 
-		/* Disabling the alarm is not needed, because a static flag
-		 * is used and a leftover timeout cannot do any harm. It is
-		 * done for correctness. This can safely be removed, though. 
-		 */
-  		sys_flagalrm(0, &timeout);	/* for correctness */	
 		return(OK);			/* only good exit */
 	}
-  } while (! timeout);
+  } while ( (s=getuptime(&t1))==OK && (t1-t0) < TIMEOUT_TICKS );
+  if (OK!=s) printf("FLOPPY: warning, getuptime failed: %d\n", s); 
   need_reset = TRUE;		/* controller chip must be reset */
 
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
@@ -952,19 +943,16 @@ int val;		/* write this byte to floppy disk controller */
  * can only write to it when it is listening, and it decides when to listen.
  * If the controller refuses to listen, the FDC chip is given a hard reset.
  */
-
-  static int timeout;		/* must be static if not cancelled */ 
+  clock_t t0, t1;
   int s, status;
 
   if (need_reset) return;	/* if controller is not listening, return */
 
-  /* It may take several tries to get the FDC to accept a command. 
-   * A timeout flag alarm is set. 
-   */
-  timeout = 0;
-  sys_flagalrm(TIMEOUT_TICKS, &timeout);	
+  /* It may take several tries to get the FDC to accept a command.  */
+  getuptime(&t0);
   do {
-	if (timeout) { 			/* controller is not listening */
+  	if ( (s=getuptime(&t1))==OK && (t1-t0) > TIMEOUT_TICKS ) {
+  		if (OK!=s) printf("FLOPPY: warning, getuptime failed: %d\n", s); 
 		need_reset = TRUE;	/* hit it over the head */
 		return;
 	}
@@ -973,11 +961,6 @@ int val;		/* write this byte to floppy disk controller */
   }
   while ((status & (MASTER | DIRECTION)) != (MASTER | 0)); 
   
-  /* Disabling the alarm is not needed, because a static flag is used and a
-   * leftover timeout cannot do any harm. It is done for correctness. This
-   * can safely be removed, though. 
-   */
-  sys_flagalrm(0, &timeout);	/* for correctness */	
   if ((s=sys_outb(FDC_DATA, val)) != OK)
 	server_panic("FLOPPY","Sys_outb in fdc_out() failed", s);
 }
@@ -1062,7 +1045,7 @@ PRIVATE void f_reset()
    * SYN_ALARM message on a timeout.
    */
   do {
-  	receive(HARDWARE, &mess); 
+  	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) { 
   		f_expire_tmrs(NULL);
   	} else {			/* expect HARD_INT */
@@ -1108,10 +1091,7 @@ PRIVATE int f_intr_wait()
    * occurs, report an error.
    */
   do {
-  	/* printf("Wait for message from HARDWARE 2\n"); */
-  	receive(HARDWARE, &mess); 
-  	/* printf("Floppy: got message, type %d (HARD_INT %d) ",
-  		mess.m_type, (mess.m_type == HARD_INT)); */
+  	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) {
   		f_expire_tmrs(NULL);
   	} else { 

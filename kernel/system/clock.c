@@ -39,22 +39,19 @@ register message *m_ptr;	/* pointer to request message */
 
 
 /* The system call implemented in this file:
- *   m_type:	SYS_SIGNALRM, SYS_SYNCALRM, SYS_FLAGALRM
+ *   m_type:	SYS_SIGNALRM, SYS_SYNCALRM 
  *
  * The parameters for this system call are:
  *    m2_i1:	ALRM_PROC_NR		(set alarm for this process)	
  *    m2_l1:	ALRM_EXP_TIME		(alarm's expiration time)
  *    m2_i2:	ALRM_ABS_TIME		(expiration time is absolute?)
  *    m2_l1:	ALRM_SEC_LEFT		(return seconds left of previous)
- *    m2_p1:	ALRM_FLAG_PTR		(virtual addr of alarm flag)	
  *
  * Changes:
- *    Aug 25, 2004   fully rewritten to unite all alarms  (Jorrit N. Herder)  
- *    May 02, 2004   added new timeout flag alarm  (Jorrit N. Herder)
+ *    Aug 25, 2004   fully rewritten to clean up code  (Jorrit N. Herder)  
  */
 
 FORWARD _PROTOTYPE( void cause_syncalrm, (timer_t *tp) );
-FORWARD _PROTOTYPE( void cause_flagalrm, (timer_t *tp) );
 FORWARD _PROTOTYPE( void cause_signalrm, (timer_t *tp) );
 
 /*===========================================================================*
@@ -64,7 +61,7 @@ PUBLIC int do_setalarm(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
 /* A process requests an alarm, or wants to cancel its alarm. This function
- * is shared used for all of SYS_SIGNALRM, SYS_SYNCALRM, and SYS_FLAGALRM.
+ * is shared used for both the SYS_SIGNALRM and SYS_SYNCALRM.
  */
   int proc_nr;			/* which process wants the alarm */
   long exp_time;		/* expiration time for this alarm */
@@ -80,26 +77,12 @@ message *m_ptr;			/* pointer to request message */
   use_abs_time = m_ptr->ALRM_ABS_TIME;	/* flag for absolute time */
 
   /* Get the timer structure and set the parameters for this alarm. */
+  tp = &(proc_addr(proc_nr)->p_alarm_timer);	
+  tmr_arg(tp)->ta_int = proc_nr;	
   switch (m_ptr->m_type) {
-    case SYS_SYNCALRM:			/* notify with SYN_ALARM message */
-  	tp = &(proc_addr(proc_nr)->p_syncalrm);	
-     	tmr_arg(tp)->ta_int = proc_nr;	
-        tp->tmr_func = cause_syncalrm;
-        break;
-    case SYS_SIGNALRM:			/* send process a SIGALRM signal */
-  	tp = &(proc_addr(proc_nr)->p_signalrm);	
-     	tmr_arg(tp)->ta_int = proc_nr;
-        tp->tmr_func = cause_signalrm;
-        break;
-    case SYS_FLAGALRM:			/* set caller's timeout flag to 1 */    
-  	tp = &(proc_addr(proc_nr)->p_flagalrm);	
-        tmr_arg(tp)->ta_long = 		
-            numap_local(proc_nr,(vir_bytes) m_ptr->ALRM_FLAG_PTR,sizeof(int));
-        if (! tmr_arg(tp)->ta_long) return(EFAULT);
-      	tp->tmr_func = cause_flagalrm; 	
-        break;
-    default:				/* invalid alarm type */
-        return(EINVAL);
+  case SYS_SYNCALRM: 	tp->tmr_func = cause_syncalrm; 		break;
+  case SYS_SIGNALRM: 	tp->tmr_func = cause_signalrm; 		break;
+  default:		return(EINVAL);		/* invalid alarm type */
   }
 
   /* Return the ticks left on the previous alarm. */
@@ -134,21 +117,6 @@ timer_t *tp;
   cause_sig(tmr_arg(tp)->ta_int, SIGALRM);
 }
 
-/*===========================================================================*
- *				cause_flagalrm				     *
- *===========================================================================*/
-PRIVATE void cause_flagalrm(tp)
-timer_t *tp;
-{
-/* Routine called if a timer goes off for a process that requested a timeout 
- * flag to be set when the alarm expires. The timer argument 'ta_long' gives
- * the physical address of the timeout flag. No validity check was done when 
- * setting the alarm, so check for 0 here. 
- */
-  int timeout = 1;
-  phys_bytes timeout_flag = (phys_bytes) tmr_arg(tp)->ta_long;
-  phys_copy(vir2phys(&timeout), tmr_arg(tp)->ta_long, sizeof(int));
-}
 
 /*===========================================================================*
  *				cause_syncalrm				     *

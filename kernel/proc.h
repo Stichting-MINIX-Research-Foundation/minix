@@ -45,19 +45,16 @@ struct proc {
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
 
-  timer_t p_signalrm;		/* signal alarm timer */ 
-  timer_t p_flagalrm;		/* flag alarm timer */ 
-  timer_t p_syncalrm;		/* synchronous alarm timer */ 
-
   struct proc *p_nextready;	/* pointer to next ready process */
   struct notification *p_ntf_q;	/* queue of pending notifications */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_q_link;	/* link to next proc wishing to send */
-  message *p_messbuf;		/* pointer to message buffer */
+  message *p_messbuf;		/* pointer to passed message buffer */
   proc_nr_t p_getfrom;		/* from whom does process want to receive? */
   proc_nr_t p_sendto;		/* to whom does process want to send? */
 
-  sigset_t p_pending;		/* bit map for pending signals */
+  timer_t p_alarm_timer;	/* timer shared by different alarm types */ 
+  sigset_t p_pending;		/* bit map for pending kernel signals */
   unsigned p_pendcount;		/* count of pending and unfinished signals */
 
   char p_name[P_NAME_LEN];	/* name of the process, including \0 */

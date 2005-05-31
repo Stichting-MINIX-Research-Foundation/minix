@@ -8,6 +8,7 @@ all:	$(LIBUTILS)
 
 OBJECTS	= \
 	$(LIBUTILS)(tick_delay.o) \
+	$(LIBUTILS)(get_upt.o) \
 	$(LIBUTILS)(get_mon_prm.o) \
 	$(LIBUTILS)(env_parse.o) \
 	$(LIBUTILS)(env_panic.o) \
@@ -23,6 +24,9 @@ OBJECTS	= \
 $(LIBUTILS):	$(OBJECTS)
 	aal cr $@ *.o
 	rm *.o
+
+$(LIBUTILS)(get_upt.o):	get_upt.c
+	$(CC1) get_upt.c
 
 $(LIBUTILS)(tick_delay.o):	tick_delay.c
 	$(CC1) tick_delay.c

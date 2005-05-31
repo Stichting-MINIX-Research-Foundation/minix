@@ -47,12 +47,11 @@
 #define NR_BUF_HASH	 512	/* size of buf hash table; MUST BE POWER OF 2*/
 #endif
 
-/* Defines for kernel configuration. */
+/* Defines for driver and kernel configuration. */
 #define AUTO_BIOS          0	/* xt_wini.c - use Western's autoconfig BIOS */
 #define LINEWRAP           1	/* console.c - wrap lines at column 80 */
 #define ALLOW_GAP_MESSAGES 1	/* proc.c - allow messages in the gap between
 				 * the end of bss and lowest stack address */
-#define KMESS_BUF_SIZE   512   	/* size in bytes for kernel messages */
 
 /* Number of controller tasks (/dev/cN device classes). */
 #define NR_CTRLRS          2

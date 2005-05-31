@@ -114,9 +114,7 @@ PRIVATE void initialize(void)
 
   /* Initialize all alarm timers for all processes. */
   for (rp=BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
-    tmr_inittimer(&(rp->p_signalrm));
-    tmr_inittimer(&(rp->p_syncalrm));
-    tmr_inittimer(&(rp->p_flagalrm));
+    tmr_inittimer(&(rp->p_alarm_timer));
   }
 
   /* Initialize the call vector to a safe default handler. Some system calls 
@@ -146,7 +144,6 @@ PRIVATE void initialize(void)
   map(SYS_TIMES, do_times);		/* get uptime and process times */
   map(SYS_SIGNALRM, do_signalrm); 	/* causes an alarm signal */
   map(SYS_SYNCALRM, do_syncalrm);	/* send a notification message */
-  map(SYS_FLAGALRM, do_flagalrm);	/* set a timeout flag to 1 */
 
   /* Device I/O. */
   map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */ 
@@ -192,9 +189,7 @@ int proc_nr;				/* slot of process to clean up */
   rc = proc_addr(proc_nr);
 
   /* Turn off any alarm timers at the clock. */   
-  reset_timer(&rc->p_signalrm);
-  reset_timer(&rc->p_flagalrm);
-  reset_timer(&rc->p_syncalrm);
+  reset_timer(&rc->p_alarm_timer);
 
   /* Make sure the exiting process is no longer scheduled. */
   if (rc->p_flags == 0) lock_unready(rc);

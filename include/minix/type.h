@@ -119,14 +119,4 @@ struct machine {
   int vdu_vga;
 };
 
-/* The kernel outputs messages in a local buffer, which can be requested and
- * printed by the TTY driver. The buffer structure is defined here. 
- */
-struct kmessages {
-  int km_next;				/* next index to write */
-  int km_size;				/* current size in buffer */
-  char km_buf[KMESS_BUF_SIZE];		/* buffer for messages */
-};
-
-
 #endif /* _TYPE_H */

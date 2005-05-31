@@ -4,8 +4,6 @@
 #include <ibm/ports.h>		/* port addresses and magic numbers */
 #include <ibm/bios.h>		/* BIOS addresses, sizes and magic numbers */
 
-#if (CHIP == INTEL)
-
 /* To translate an address in kernel space to a physical address.  This is
  * the same as umap_local(proc_ptr, D, vir, sizeof(*vir)), but less costly.
  */
@@ -26,6 +24,9 @@
 
 /* How long should the process names be in the kernel? */
 #define P_NAME_LEN	8
+
+/* How many bytes should the circular buffer for kernel diagnostics. */
+#define KMESS_BUF_SIZE   256   	
 
 /* How many bytes for (port,value)-pairs vector to copy in. */
 #define VDEVIO_BUF_SIZE  128
@@ -48,6 +49,9 @@
 #define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) )
 #define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) )
 
+
+#if (CHIP == INTEL)
+
 /* Program stack words and masks. */
 #define INIT_PSW      0x0200	/* initial psw */
 #define INIT_TASK_PSW 0x1200	/* initial psw for tasks (with IOPL 1) */
@@ -66,7 +70,6 @@
  * for DOS MINIX.
  */
 #define NR_MEMS            8	/* number of chunks of memory */
-
 
 #endif /* (CHIP == INTEL) */
 

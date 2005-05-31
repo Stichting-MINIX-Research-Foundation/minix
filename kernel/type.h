@@ -45,6 +45,14 @@ struct notification {
   struct notification* n_next;		/* pointer to next notification */
 };
 
+/* The kernel outputs diagnostic messages in a circular buffer. */
+struct kmessages {
+  int km_next;				/* next index to write */
+  int km_size;				/* current size in buffer */
+  char km_buf[KMESS_BUF_SIZE];		/* buffer for messages */
+};
+
+
 #if (CHIP == INTEL)
 typedef unsigned reg_t;		/* machine register */
 

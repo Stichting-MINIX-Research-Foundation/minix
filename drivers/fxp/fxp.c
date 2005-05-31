@@ -904,8 +904,7 @@ fxp_t *fp;
 {
 	static char eakey[]= FXP_ENVVAR "#_EA";
 	static char eafmt[]= "x:x:x:x:x:x";
-	static int timeout_flag;	/* must be static */
-
+	clock_t t0,t1;
 	int i, r;
 	port_t port;
 	u32_t bus_addr;
@@ -959,13 +958,12 @@ fxp_t *fp;
 
 	fxp_cu_ptr_cmd(fp, SC_CU_START, bus_addr, TRUE /* check idle */);
 
-	timeout_flag= 0;
-	sys_flagalrm(MICROS_TO_TICKS(1000), &timeout_flag);
+	getuptime(&t0);
 	do {
 		/* Wait for CU command to complete */
 		if (ias.ias_status & CBL_F_C)
 			break;
-	} while (!timeout_flag);
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
 
 	if (!(ias.ias_status & CBL_F_C))
 		panic("fxp_confaddr: CU command failed to complete", NO_NUM);
@@ -1361,11 +1359,10 @@ suspend:
 static void fxp_do_conf(fp)
 fxp_t *fp;
 {
-	static int timeout_flag;	/* must be static */
-
 	int r;
 	u32_t bus_addr;
 	struct cbl_conf cc;
+	clock_t t0,t1;
 
 	/* Configure device */
 	cc.cc_status= 0;
@@ -1380,13 +1377,12 @@ fxp_t *fp;
 
 	fxp_cu_ptr_cmd(fp, SC_CU_START, bus_addr, TRUE /* check idle */);
 
-	timeout_flag= 0;
-	sys_flagalrm(MICROS_TO_TICKS(100000), &timeout_flag);
+	getuptime(&t0);
 	do {
 		/* Wait for CU command to complete */
 		if (cc.cc_status & CBL_F_C)
 			break;
-	} while (!timeout_flag);
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(100000));
 
 	if (!(cc.cc_status & CBL_F_C))
 		panic("fxp_do_conf: CU command failed to complete", NO_NUM);
@@ -1405,8 +1401,7 @@ int cmd;
 phys_bytes bus_addr;
 int check_idle;
 {
-	static int timeout_flag;	/* must be static */
-
+	clock_t t0,t1;
 	port_t port;
 	u8_t scb_cmd;
 
@@ -1425,14 +1420,13 @@ int check_idle;
 	/* What is a reasonable time-out? There is nothing in the
 	 * documentation. 1 ms should be enough.
 	 */
-	timeout_flag= 0;
-	sys_flagalrm(MICROS_TO_TICKS(1000), &timeout_flag);
+	getuptime(&t0);
 	do {
 		/* Wait for CU command to be accepted */
 		scb_cmd= fxp_inb(port, SCB_CMD);
 		if ((scb_cmd & SC_CUC_MASK) == SC_CU_NOP)
 			break;
-	} while (!timeout_flag);
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
 
 	if ((scb_cmd & SC_CUC_MASK) != SC_CU_NOP)
 		panic("fxp_cu_ptr_cmd: CU does not accept command", NO_NUM);
@@ -1448,8 +1442,7 @@ int cmd;
 phys_bytes bus_addr;
 int check_idle;
 {
-	static int timeout_flag;	/* must be static */
-
+	clock_t t0,t1;
 	port_t port;
 	u8_t scb_cmd;
 
@@ -1465,14 +1458,13 @@ int check_idle;
 	fxp_outl(port, SCB_POINTER, bus_addr);
 	fxp_outb(port, SCB_CMD, cmd);
 
-	timeout_flag= 0;
-	sys_flagalrm(MICROS_TO_TICKS(1000), &timeout_flag);
+	getuptime(&t0);
 	do {
 		/* Wait for RU command to be accepted */
 		scb_cmd= fxp_inb(port, SCB_CMD);
 		if ((scb_cmd & SC_RUC_MASK) == SC_RU_NOP)
 			break;
-	} while (!timeout_flag);
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
 
 	if ((scb_cmd & SC_RUC_MASK) != SC_RU_NOP)
 		panic("fxp_ru_ptr_cmd: RU does not accept command", NO_NUM);
@@ -1519,8 +1511,7 @@ fxp_t *fp;
 static void fxp_getstat(mp)
 message *mp;
 {
-	static int timeout_flag;	/* Must be static */
-
+	clock_t t0,t1;
 	int dl_port;
 	port_t port;
 	fxp_t *fp;
@@ -1546,13 +1537,12 @@ message *mp;
 	 */
 	fxp_cu_ptr_cmd(fp, SC_CU_DUMP_SC, 0, FALSE /* do not check idle */);
 
-	timeout_flag= 0;
-	sys_flagalrm(MICROS_TO_TICKS(1000), &timeout_flag);
+	getuptime(&t0);
 	do {
 		/* Wait for CU command to complete */
 		if (*p != 0)
 			break;
-	} while (!timeout_flag);
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
 
 	if (*p == 0)
 		panic("fxp_getstat: CU command failed to complete", NO_NUM);
@@ -2331,8 +2321,7 @@ PRIVATE u16_t mii_read(fp, reg)
 fxp_t *fp;
 int reg;
 {
-	static int timeout_flag;	/* must be static */
-
+	clock_t t0,t1;
 	port_t port;
 	u32_t v;
 
@@ -2346,13 +2335,12 @@ int reg;
 	fxp_outl(port, CSR_MDI_CTL, CM_READ | (1 << CM_PHYADDR_SHIFT) |
 		(reg << CM_REG_SHIFT));
 
-	timeout_flag= 0;
-	sys_flagalrm(MICROS_TO_TICKS(1000), &timeout_flag);
+	getuptime(&t0);
 	do {
 		v= fxp_inl(port, CSR_MDI_CTL);
 		if (v & CM_READY)
 			break;
-	} while (!timeout_flag);
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
 
 	if (!(v & CM_READY))
 		panic("mii_read: MDI not ready after command", NO_NUM);

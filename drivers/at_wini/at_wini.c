@@ -8,7 +8,6 @@
  * Changes:
  *   Nov 18, 2004   moved AT disk driver to user-space  (Jorrit N. Herder)
  *   Aug 20, 2004   watchdogs replaced by sync alarms  (Jorrit N. Herder)
- *   May 02, 2004   sys_flagalrm() replaces micro_elapsed()  (Jorrit N. Herder)
  *   Mar 23, 2000   added ATAPI CDROM support  (Michael Temari)
  *   May 14, 2000   d-d/i rewrite  (Kees J. Bot)
  *   Apr 13, 1992   device dependent/independent split  (Kees J. Bot)
@@ -883,17 +882,18 @@ int value;			/* required status */
  * ticks. Disabling the alarm is not needed, because a static flag is used
  * and a leftover timeout cannot do any harm.
  */
-  static int timeout_flag;	/* must be static, not cancelled */		
+  clock_t t0, t1;
   int s;
-  timeout_flag = 0;
-  sys_flagalrm(TIMEOUT_TICKS, &timeout_flag);
+  getuptime(&t0);
   do {
 	if ((s=sys_inb(w_wn->base + REG_STATUS, &w_status)) != OK)
 		server_panic(w_name(),"Couldn't read register",s);
 	if ((w_status & mask) == value) {
         	return 1;
 	}
-  } while (! timeout_flag);
+  } while ((s=getuptime(&t1)) == OK && (t1-t0) < TIMEOUT_TICKS );
+  if (OK != s) printf("AT_WINI: warning, get_uptime failed: %d\n",s);
+
   w_need_reset();			/* controller gone deaf */
   return(0);
 }

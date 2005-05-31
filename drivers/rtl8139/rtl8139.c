@@ -836,33 +836,29 @@ re_t *rep;
 	u32_t t;
 	phys_bytes bus_buf;
 	int i;
-	static int timeout;		/* must be static if not cancelled */
+	clock_t t0,t1;
 
 	port= rep->re_base_port;
 
 #if 0
 	/* Reset the PHY */
 	rl_outb(port, RL_BMCR, MII_CTRL_RST);
-	timeout=0;
-	sys_flagalrm(HZ, &timeout);	
+	getuptime(&t0);
 	do {
 		if (!(rl_inb(port, RL_BMCR) & MII_CTRL_RST))
 			break;
-	} while (! timeout);
-	sys_flagalrm(0, &timeout);	/* for correctness */	
+	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 	if (rl_inb(port, RL_BMCR) & MII_CTRL_RST)
 		server_panic("rtl8139","reset PHY failed to complete", NO_NUM);
 #endif
 
 	/* Reset the device */
 	rl_outb(port, RL_CR, RL_CR_RST);
-	timeout=0;
-	sys_flagalrm(HZ, &timeout);	
+	getuptime(&t0);
 	do {
 		if (!(rl_inb(port, RL_CR) & RL_CR_RST))
 			break;
-	} while (! timeout);
-	sys_flagalrm(0, &timeout);	/* for correctness */	
+	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 	if (rl_inb(port, RL_CR) & RL_CR_RST)
 		server_panic("rtl8139","reset failed to complete", NO_NUM);
 
@@ -1789,7 +1785,7 @@ re_t *rep;
 	port_t port;
 	u8_t cr;
 	int i;
- 	static int timeout;		/* must be static if not cancelled */	
+	clock_t t0,t1;
 
 	rep->re_clear_rx= FALSE;
 	port= rep->re_base_port;
@@ -1798,13 +1794,11 @@ re_t *rep;
 	cr= rl_inb(port, RL_CR);
 	cr &= ~RL_CR_RE;
 	rl_outb(port, RL_CR, cr);
-	timeout=0;
-	sys_flagalrm(HZ, &timeout);	
+	getuptime(&t0);
 	do {
 		if (!(rl_inb(port, RL_CR) & RL_CR_RE))
 			break;
-	} while (! timeout);
-	sys_flagalrm(0, &timeout);	/* for correctness */	
+	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 	if (rl_inb(port, RL_CR) & RL_CR_RE)
 		server_panic("rtl8139","cannot disable receiver", NO_NUM);
 
@@ -2063,8 +2057,7 @@ re_t *rep;
 #if 0
 	u8_t cr;
 #endif
-	static int timeout;		/* must be static if not cancelled */	
-
+	clock_t t0,t1;
 	int_event_check = FALSE;	/* disable check by default */
 
 	RAND_UPDATE
@@ -2160,13 +2153,11 @@ re_t *rep;
 			cr= rl_inb(port, RL_CR);
 			cr &= ~RL_CR_TE;
 			rl_outb(port, RL_CR, cr);
-			timeout=0;
-			sys_flagalrm(HZ, &timeout);	
+			getuptime(&t0);
 			do {
 				if (!(rl_inb(port, RL_CR) & RL_CR_TE))
 					break;
-			} while (! timeout);
-			sys_flagalrm(0, &timeout);	/* for correctness */	
+			} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 			if (rl_inb(port, RL_CR) & RL_CR_TE)
 			{
 			  server_panic("rtl8139","cannot disable transmitter",
@@ -2575,7 +2566,7 @@ int a;
 u16_t w;
 {
 	int b, i, cmd;
-	static int timeout;		/* must be static if not cancelled */	
+	clock_t t0, t1;
 
 	outb_reg3(dep, 1, 0x80 | 0x8);		/* Set CS */
 
@@ -2602,13 +2593,11 @@ u16_t w;
 	outb_reg3(dep, 1, 0x80);	/* Drop CS */
 	/* micro_delay(1); */			/* Is this required? */
 	outb_reg3(dep, 1, 0x80 | 0x8);		/* Set CS */
-	timeout = 0;
-	sys_flagalrm(1, &timeout);
+	getuptime(&t0);
 	do {
 		if (inb_reg3(dep, 1) & 1)
 			break;
-	} while (! timeout);
-	sys_flagalrm(0, &timeout);	/* for correctness */
+	} while (getuptime(&t1) == OK && (t1 == t0));
 	if (!(inb_reg3(dep, 1) & 1))
 		server_panic("set_ee_word","device remains busy", NO_NUM);
 }

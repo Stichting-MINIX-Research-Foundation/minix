@@ -43,9 +43,9 @@ _PROTOTYPE(int fkey_ctl, (int fkey_code, int enable_disable)		);
 _PROTOTYPE(void server_report, (char *who, char *mess, int num)		);
 _PROTOTYPE(void server_panic, (char *who, char *mess, int num)		);
 
-#define get_own_proc_nr(where) get_proc_nr((where), NULL)
 _PROTOTYPE(int get_proc_nr, (int *proc_nr, char *proc_name) );
 
+_PROTOTYPE(int getuptime, (clock_t *ticks));
 _PROTOTYPE(int tick_delay, (clock_t ticks));
 
 #endif /* _EXTRALIB_H */
