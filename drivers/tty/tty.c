@@ -193,6 +193,8 @@ PUBLIC void main(void)
 	 */
 	switch (tty_mess.m_type) { 
 	case SYN_ALARM: 		/* fall through */
+		expire_timers();	/* run watchdogs of expired timers */
+		continue;		/* contine to check for events */
 	case HARD_INT:			/* hardware interrupt notification */
 		do_interrupt(&tty_mess);/* fetch chars from keyboard */
 		expire_timers();	/* run watchdogs of expired timers */
