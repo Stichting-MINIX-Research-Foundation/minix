@@ -22,8 +22,9 @@ struct system_image {
   int type;				/* type of process */
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
+  char call_mask;			/* allowed system calls */
   send_mask_t sendmask;			/* send mask protection */
-  char proc_name[PROC_NAME_LEN];	/* name in process table */
+  char proc_name[P_NAME_LEN];		/* name in process table */
 };
 
 struct memory {

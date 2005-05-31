@@ -22,6 +22,7 @@
 #include "mproc.h"
 #include "param.h"
 
+#include "../../kernel/const.h"
 #include "../../kernel/type.h"
 
 FORWARD _PROTOTYPE( void get_work, (void)				);

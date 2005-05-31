@@ -57,10 +57,8 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_pendcount = 0;
   rpc->p_reg.retreg = 0;	/* child sees pid = 0 to know it is child */
 
-  rpc->user_time = 0;		/* set all the accounting times to 0 */
-  rpc->sys_time = 0;
-  rpc->child_utime = 0;
-  rpc->child_stime = 0;
+  rpc->p_user_time = 0;		/* set all the accounting times to 0 */
+  rpc->p_sys_time = 0;
 
   return(OK);
 }
@@ -139,7 +137,6 @@ register message *m_ptr;	/* pointer to request message */
   reg_t sp;			/* new sp */
   phys_bytes phys_name;
   char *np;
-#define NLEN (sizeof(rp->p_name)-1)
 
   rp = proc_addr(m_ptr->PR_PROC_NR);
   assert(isuserp(rp));
@@ -163,11 +160,13 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Save command name for debugging, ps(1) output, etc. */
   phys_name = numap_local(m_ptr->m_source, (vir_bytes) m_ptr->PR_NAME_PTR,
-							(vir_bytes) NLEN);
+					(vir_bytes) P_NAME_LEN - 1);
   if (phys_name != 0) {
-	phys_copy(phys_name, vir2phys(rp->p_name), (phys_bytes) NLEN);
+	phys_copy(phys_name, vir2phys(rp->p_name), (phys_bytes) P_NAME_LEN - 1);
 	for (np = rp->p_name; (*np & BYTE) >= ' '; np++) {}
-	*np = 0;
+	*np = 0;					/* mark end */
+  } else {
+  	kstrncpy(rp->p_name, "<unset>", P_NAME_LEN);
   }
   return(OK);
 }
@@ -200,17 +199,6 @@ message *m_ptr;			/* pointer to request message */
   if (exit_proc_nr == SELF) exit_proc_nr = m_ptr->m_source;
   if (! isokprocn(exit_proc_nr)) return(EINVAL);
   rc = proc_addr(exit_proc_nr);
-
-  /* If this is a user process and the PM passed in a valid parent process, 
-   * accumulate the child times at the parent. 
-   */
-  if (isuserp(rc) && isokprocn(m_ptr->PR_PPROC_NR)) {
-      rp = proc_addr(m_ptr->PR_PPROC_NR);
-      lock();
-      rp->child_utime += rc->user_time + rc->child_utime;
-      rp->child_stime += rc->sys_time + rc->child_stime;
-      unlock();
-  }
 
   /* Now call the routine to clean up of the process table slot. This cancels
    * outstanding timers, possibly removes the process from the message queues,

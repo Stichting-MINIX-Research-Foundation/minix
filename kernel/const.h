@@ -24,6 +24,9 @@
 /* How many bytes for the kernel stack. Space allocated in mpx.s. */
 #define K_STACK_BYTES   1024	
 
+/* How long should the process names be in the kernel? */
+#define P_NAME_LEN	8
+
 /* How many bytes for (port,value)-pairs vector to copy in. */
 #define VDEVIO_BUF_SIZE  128
 

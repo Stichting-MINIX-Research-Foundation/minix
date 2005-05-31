@@ -71,10 +71,12 @@ PUBLIC void main()
         }
 
 	/* Call the internal function that does the work. */
-	if (call_nr < 0 || call_nr >= NCALLS) 
+	if (call_nr < 0 || call_nr >= NCALLS) { 
 		error = ENOSYS;
-	else
+		printf("FS, warning illegal %d system call by %d\n", call_nr, who);
+	} else {
 		error = (*call_vec[call_nr])();
+	}
 
 	/* Copy the results back to the user and send reply. */
 	if (error != SUSPEND) { reply(who, error); }

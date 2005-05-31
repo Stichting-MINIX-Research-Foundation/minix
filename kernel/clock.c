@@ -199,7 +199,7 @@ irq_hook_t *hook;
  *		due to a race, since this will only delay the high-level
  *		processing by one tick, or call the high level unnecessarily.
  * The variables which are changed require more care:
- *	rp->user_time, rp->sys_time:
+ *	rp->p_user_time, rp->p_sys_time:
  *		These are protected by explicit locks in system.c.  They are
  *		not properly protected in dmp.c (the increment here is not
  *		atomic) but that hardly matters.
@@ -239,8 +239,8 @@ irq_hook_t *hook;
   now = realtime + pending_ticks;
 
   /* Update administration. */
-  proc_ptr->user_time += ticks;
-  if (proc_ptr != bill_ptr) bill_ptr->sys_time += ticks;
+  proc_ptr->p_user_time += ticks;
+  if (proc_ptr != bill_ptr) bill_ptr->p_sys_time += ticks;
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * If bill_ptr == prev_ptr, there are no ready users so don't need sched(). 

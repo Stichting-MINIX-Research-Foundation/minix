@@ -133,6 +133,7 @@ int exit_status;		/* the process' exit status (for parent) */
   int parent_waiting, right_child;
   pid_t pidarg, procgrp;
   struct mproc *p_mp;
+  clock_t t[5];
 
   proc_nr = (int) (rmp - mproc);	/* get process slot number */
 
@@ -141,6 +142,12 @@ int exit_status;		/* the process' exit status (for parent) */
 
   /* If the exited process has a timer pending, kill it. */
   if (rmp->mp_flags & ALARM_ON) set_alarm(proc_nr, (unsigned) 0);
+
+  /* Do accounting: fetch usage times and accumulate at parent. */
+  sys_times(proc_nr, t);
+  p_mp = &mproc[rmp->mp_parent];		/* process' parent */
+  p_mp->mp_child_utime = t[2];
+  p_mp->mp_child_stime = t[3];
 
   /* Tell the kernel and FS that the process is no longer runnable. */
   tell_fs(EXIT, proc_nr, 0, 0);  /* file system can free the proc slot */
@@ -161,7 +168,6 @@ int exit_status;		/* the process' exit status (for parent) */
   /* The process slot can only be freed if the parent has done a WAIT. */
   rmp->mp_exitstatus = (char) exit_status;
 
-  p_mp = &mproc[rmp->mp_parent];	/* process' parent */
   pidarg = p_mp->mp_wpid;		/* who's being waited for? */
   parent_waiting = p_mp->mp_flags & WAITING;
   
@@ -271,8 +277,10 @@ register struct mproc *child;	/* tells which process is exiting */
   setreply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
 
-  /* Release the process table entry. */
+  /* Release the process table entry and reinitialize some field. */
   child->mp_flags = 0;
+  child->mp_child_utime = 0;
+  child->mp_child_stime = 0;
   procs_in_use--;
 }
 

@@ -67,6 +67,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioc_memory.h>
+#include "../../kernel/const.h"
 #include "../../kernel/type.h"
 
 #if __minix_vmd

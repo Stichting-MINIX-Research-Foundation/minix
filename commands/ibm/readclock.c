@@ -186,7 +186,7 @@ PUBLIC int main(int argc, char **argv)
 
 void errmsg(char *s)
 {
-  static char *prompt = "settime: ";
+  static char *prompt = "readclock: ";
 
   fprintf(stderr, "%s%s\n", prompt, s);
   prompt = "";

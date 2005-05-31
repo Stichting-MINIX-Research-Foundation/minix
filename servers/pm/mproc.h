@@ -14,6 +14,10 @@ EXTERN struct mproc {
   pid_t mp_wpid;		/* pid this process is waiting for */
   int mp_parent;		/* index of parent process */
 
+  /* Child user and system times. Accounting done on child exit. */
+  clock_t mp_child_utime;	/* cumulative user time of children */
+  clock_t mp_child_stime;	/* cumulative sys time of children */
+
   /* Real and effective uids and gids. */
   uid_t mp_realuid;		/* process' real uid */
   uid_t mp_effuid;		/* process' effective uid */
@@ -61,3 +65,4 @@ EXTERN struct mproc {
 #define DONT_SWAP      0x1000   /* never swap out this process */
 
 #define NIL_MPROC ((struct mproc *) 0)
+

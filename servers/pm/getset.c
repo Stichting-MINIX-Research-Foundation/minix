@@ -64,7 +64,7 @@ PUBLIC int do_getset()
 		if (rmp->mp_procgrp == rmp->mp_pid) return(EPERM);
 		rmp->mp_procgrp = rmp->mp_pid;
 		tell_fs(SETSID, who, 0, 0);
-		/*FALL THROUGH*/
+		/* fall through */
 
 	case GETPGRP:
 		r = rmp->mp_procgrp;

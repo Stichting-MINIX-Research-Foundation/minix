@@ -111,10 +111,12 @@ message *m_ptr;			/* pointer to message in the caller's space */
   vir_bytes vb;			/* message buffer pointer as vir_bytes */
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
 
-  /* Calls directed to the kernel may only be sendrec(), because tasks always
-   * reply and may not block if the caller doesn't do receive(). 
+  /* Check if the process has privileges for the requested call. Calls to the 
+   * kernel may only be SENDREC, because tasks always reply and may not block 
+   * if the caller doesn't do receive(). 
    */
-  if (iskernel(src_dst) && function != SENDREC)  return(ECALLDENIED);		
+  if (! (caller_ptr->p_call_mask & (1 << function)) || 
+      iskernel(src_dst) && function != SENDREC) return(ECALLDENIED);		
   
   /* Verify that requested source and/ or destination is a valid process. */
   if (! isoksrc_dst(src_dst) && function != ECHO)  return(EBADSRCDST);

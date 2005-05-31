@@ -9,5 +9,5 @@ long *top;
   message m;
 
   m.m2_l1 = *top;
-  return(_syscall(FS, STIME, &m));
+  return(_syscall(MM, STIME, &m));
 }

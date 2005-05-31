@@ -49,7 +49,7 @@
 #define FUTURE_CODE	   0	/* new code to be activated + tested later */
 #define TEMP_CODE	   1	/* active code to be removed later */
 
-/* Process name length in the process table, including '\0'. */
+/* Process name length in the PM process table, including '\0'. */
 #define PROC_NAME_LEN	16
 
 /* Miscellaneous */

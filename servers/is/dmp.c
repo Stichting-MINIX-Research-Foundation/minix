@@ -400,12 +400,12 @@ PRIVATE void sendmask_dmp()
     	printf("%8s ", rp->p_name);
     	j = proc_nr(rp);
 	switch(rp->p_type) {
-	    case P_IDLE:	printf("/%3d/ ", proc_nr(rp));  break;
-	    case P_TASK:	printf("[%3d] ", proc_nr(rp));  break;
-	    case P_SYSTEM:	printf("<%3d> ", proc_nr(rp));  break;
-	    case P_DRIVER:	printf("{%3d} ", proc_nr(rp));  break;
-	    case P_SERVER:	printf("(%3d) ", proc_nr(rp));  break;
-	    default: 		printf(" %3d  ", proc_nr(rp));
+	    case P_IDLE:	printf("/%2d/ ", proc_nr(rp));  break;
+	    case P_TASK:	printf("[%2d] ", proc_nr(rp));  break;
+	    case P_SYSTEM:	printf("<%2d> ", proc_nr(rp));  break;
+	    case P_DRIVER:	printf("{%2d} ", proc_nr(rp));  break;
+	    case P_SERVER:	printf("(%2d) ", proc_nr(rp));  break;
+	    default: 		printf(" %2d  ", proc_nr(rp));
 	}
 
     	for (j=proc_nr(BEG_PROC_ADDR); j<INIT_PROC_NR+2; j++) {
@@ -440,7 +440,7 @@ PRIVATE void proctab_dmp()
       return;
   }
 
-  printf("\n-pid- -pri- --pc-- --sp-- -user- -sys- -text- -data- -size- -flags- -command-\n");
+  printf("\n--nr/name--- -q- -sc- -user- -sys- -text- -data- -size- -flags- -command-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -450,18 +450,18 @@ PRIVATE void proctab_dmp()
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
 	switch(rp->p_type) {
-	    case P_IDLE:	printf("/%3d/ ", proc_nr(rp));  break;
-	    case P_TASK:	printf("[%3d] ", proc_nr(rp));  break;
-	    case P_SYSTEM:	printf("<%3d> ", proc_nr(rp));  break;
-	    case P_DRIVER:	printf("{%3d} ", proc_nr(rp));  break;
-	    case P_SERVER:	printf("(%3d) ", proc_nr(rp));  break;
-	    default: 		printf(" %3d  ", proc_nr(rp));
+	    case P_IDLE:	printf("/%2d/ ", proc_nr(rp));  break;
+	    case P_TASK:	printf("[%2d] ", proc_nr(rp));  break;
+	    case P_SYSTEM:	printf("<%2d> ", proc_nr(rp));  break;
+	    case P_DRIVER:	printf("{%2d} ", proc_nr(rp));  break;
+	    case P_SERVER:	printf("(%2d) ", proc_nr(rp));  break;
+	    default: 		printf(" %2d  ", proc_nr(rp));
 	}
-	printf("%3u %7lx%7lx %6lu%6lu%6uK%6uK%6uK %3x",
+	printf("%-7.7s %2u   %02.2x %6lu%6lu%6uK%6uK%6uK %3x",
+	       rp->p_name,
 	       rp->p_priority,
-	       (unsigned long) rp->p_reg.pc,
-	       (unsigned long) rp->p_reg.sp,
-	       rp->user_time, rp->sys_time,
+	       (char) rp->p_call_mask,
+	       rp->p_user_time, rp->p_sys_time,
 	       click_to_round_k(text), click_to_round_k(data),
 	       click_to_round_k(size),
 	       rp->p_flags);
@@ -474,7 +474,7 @@ PRIVATE void proctab_dmp()
 	if (rp->p_flags == 0) {
 		printf("        ");
 	}
-	printf(" %s\n", rp->p_name);
+	printf("\n");
   }
   if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
   oldrp = rp;
@@ -487,7 +487,7 @@ PRIVATE void proctab_dmp()
 PRIVATE void memmap_dmp()
 {
   register struct proc *rp;
-  static struct proc *oldrp = cproc_addr(HARDWARE);
+  static struct proc *oldrp = proc;
   int r, n = 0;
   phys_clicks size;
 
@@ -497,22 +497,24 @@ PRIVATE void memmap_dmp()
       return;
   }
 
-  printf("\n--proc name-  -----text-----  -----data-----  ----stack-----  -size-\n");
+  printf("\n-nr/name--- --pc-- --sp-- -----text----- -----data----- ----stack----- --size-\n");
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
 	if (++n > 23) break;
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len)
 						- rp->p_memmap[D].mem_phys);
-	printf("%3d %-7.7s  %4x %4x %4x  %4x %4x %4x  %4x %4x %4x  %5uK\n",
+	printf("%3d %-7.7s%7lx%7lx %4x %4x %4x %4x %4x %4x %4x %4x %4x %5uK\n",
 	       proc_nr(rp),
 	       rp->p_name,
+	       (unsigned long) rp->p_reg.pc,
+	       (unsigned long) rp->p_reg.sp,
 	       rp->p_memmap[T].mem_vir, rp->p_memmap[T].mem_phys, rp->p_memmap[T].mem_len,
 	       rp->p_memmap[D].mem_vir, rp->p_memmap[D].mem_phys, rp->p_memmap[D].mem_len,
 	       rp->p_memmap[S].mem_vir, rp->p_memmap[S].mem_phys, rp->p_memmap[S].mem_len,
 	       click_to_round_k(size));
   }
-  if (rp == END_PROC_ADDR) rp = cproc_addr(HARDWARE); 
+  if (rp == END_PROC_ADDR) rp = proc; 
   else printf("--more--\r");
   oldrp = rp;
 }

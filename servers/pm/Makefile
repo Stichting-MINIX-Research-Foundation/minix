@@ -13,7 +13,7 @@ CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
 
-OBJ = 	main.o forkexit.o break.o exec.o dmp.o \
+OBJ = 	main.o forkexit.o break.o exec.o dmp.o time.o \
 	signal.o alloc.o utility.o table.o trace.o getset.o misc.o
 
 # build local binary

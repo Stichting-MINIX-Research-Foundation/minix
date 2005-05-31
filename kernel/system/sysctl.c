@@ -10,6 +10,7 @@
  */
 
 #include "../kernel.h"
+#include "../ipc.h"
 #include "../system.h"
 #include "../protect.h"
 #include <sys/svrctl.h>
@@ -97,6 +98,7 @@ message *m_ptr;			/* pointer to request message */
   	/* fall through */
   }
   case SYSSENDMASK: {
+	rp->p_call_mask = SYSTEM_CALL_MASK;
 	rp->p_type = P_SERVER;
 	rp->p_sendmask = ALLOW_ALL_MASK;
 	send_mask_allow(proc_addr(USR8139)->p_sendmask, proc_nr);

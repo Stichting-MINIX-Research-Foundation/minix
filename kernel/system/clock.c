@@ -5,8 +5,6 @@
  *    m4_l1:	T_PROC_NR		(get info for this process)	
  *    m4_l1:	T_USER_TIME		(return values ...)	
  *    m4_l2:	T_SYSTEM_TIME	
- *    m4_l3:	T_CHILD_UTIME	
- *    m4_l4:	T_CHILD_STIME	
  *    m4_l5:	T_BOOT_TICKS	
  */
 
@@ -31,11 +29,9 @@ register message *m_ptr;	/* pointer to request message */
       rp = proc_addr(m_ptr->T_PROC_NR);
 
       lock();			/* halt the volatile time counters in rp */
-      m_ptr->T_USER_TIME   = rp->user_time;
-      m_ptr->T_SYSTEM_TIME = rp->sys_time;
+      m_ptr->T_USER_TIME   = rp->p_user_time;
+      m_ptr->T_SYSTEM_TIME = rp->p_sys_time;
       unlock();
-      m_ptr->T_CHILD_UTIME = rp->child_utime;
-      m_ptr->T_CHILD_STIME = rp->child_stime;
   }
   m_ptr->T_BOOT_TICKS = get_uptime();  
   return(OK);

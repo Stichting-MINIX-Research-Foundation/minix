@@ -79,6 +79,11 @@ _PROTOTYPE( int do_sigreturn, (void)					);
 _PROTOTYPE( int do_sigsuspend, (void)					);
 _PROTOTYPE( void check_pending, (struct mproc *rmp)			);
 
+/* time.c */
+_PROTOTYPE( int do_stime, (void)					);
+_PROTOTYPE( int do_time, (void)						);
+_PROTOTYPE( int do_times, (void)						);
+
 /* trace.c */
 _PROTOTYPE( int do_trace, (void)					);
 _PROTOTYPE( void stop_proc, (struct mproc *rmp, int sig_nr)		);

@@ -2,8 +2,6 @@
  * process. Thus NR_PROCS must be the same as in the kernel. It is not 
  * possible or even necessary to tell when a slot is free here.
  */
-
-
 EXTERN struct fproc {
   mode_t fp_umask;		/* mask set by umask system call */
   struct inode *fp_workdir;	/* pointer to working directory's inode */

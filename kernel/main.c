@@ -77,9 +77,11 @@ PUBLIC void main()
   for (i=0; i < IMAGE_SIZE; ++i) {
 	ttp = &image[i];			/* t's task attributes */
 	rp = proc_addr(ttp->proc_nr);		/* t's process slot */
-	kstrncpy(rp->p_name, ttp->proc_name, PROC_NAME_LEN);	 /* set name */
+	kstrncpy(rp->p_name, ttp->proc_name, P_NAME_LEN);  /* set name */
+	rp->p_name[P_NAME_LEN-1] = '\0';	/* just for safety */
 	rp->p_type = ttp->type;			/* type of process */
 	rp->p_priority = ttp->priority;		/* scheduling priority */
+	rp->p_call_mask = ttp->call_mask;	/* allowed system calls */
 	rp->p_sendmask = ttp->sendmask;		/* sendmask protection */
 	if (i-NR_TASKS < 0) {			/* part of the kernel? */ 
 		if (ttp->stksize > 0) {		/* HARDWARE stack size is 0 */

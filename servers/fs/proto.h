@@ -153,9 +153,8 @@ _PROTOTYPE( int get_block_size, (dev_t dev)				);
 
 /* time.c */
 _PROTOTYPE( int do_stime, (void)					);
-_PROTOTYPE( int do_time, (void)						);
-_PROTOTYPE( int do_tims, (void)						);
 _PROTOTYPE( int do_utime, (void)					);
+
 /* cmostime.c */
 _PROTOTYPE( int do_cmostime, (void)					);
 

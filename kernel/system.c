@@ -253,7 +253,7 @@ int proc_nr;				/* slot of process to clean up */
   }
 
   /* Now clean up the process table entry. Reset to defaults. */
-  kstrncpy(rc->p_name, "<noname>", PROC_NAME_LEN);	/* unset name */
+  kstrncpy(rc->p_name, "<none>", P_NAME_LEN);	/* unset name */
   sigemptyset(&rc->p_pending);		/* remove pending signals */
   rc->p_pendcount = 0;			/* all signals are gone */
   rc->p_flags = 0;			/* remove all flags */

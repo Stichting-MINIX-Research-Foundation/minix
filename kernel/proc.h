@@ -38,11 +38,12 @@ struct proc {
   char p_flags;			/* SENDING, RECEIVING, etc. */
   char p_type;			/* task, system, driver, server, user, idle */
   char p_priority;		/* scheduling priority */
+  char p_call_mask;		/* bit map with allowed system call traps */
 
-  clock_t user_time;		/* user time in ticks */
-  clock_t sys_time;		/* sys time in ticks */
-  clock_t child_utime;		/* cumulative user time of children */
-  clock_t child_stime;		/* cumulative sys time of children */
+  send_mask_t p_sendmask;	/* mask indicating to whom proc may send */
+
+  clock_t p_user_time;		/* user time in ticks */
+  clock_t p_sys_time;		/* sys time in ticks */
 
   timer_t p_signalrm;		/* signal alarm timer */ 
   timer_t p_flagalrm;		/* flag alarm timer */ 
@@ -55,12 +56,11 @@ struct proc {
   message *p_messbuf;		/* pointer to message buffer */
   proc_nr_t p_getfrom;		/* from whom does process want to receive? */
   proc_nr_t p_sendto;		/* to whom does process want to send? */
-  send_mask_t p_sendmask;	/* mask indicating to whom proc may send */
 
   sigset_t p_pending;		/* bit map for pending signals */
   unsigned p_pendcount;		/* count of pending and unfinished signals */
 
-  char p_name[PROC_NAME_LEN];	/* name of the process, including \0 */
+  char p_name[P_NAME_LEN];	/* name of the process, including \0 */
 
 #if ENABLE_K_DEBUGGING
   int p_ready, p_found;

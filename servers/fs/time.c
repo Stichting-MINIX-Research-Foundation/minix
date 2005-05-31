@@ -2,9 +2,7 @@
  *
  * The entry points into this file are
  *   do_utime:		perform the UTIME system call
- *   do_time:		perform the TIME system call
- *   do_stime:		perform the STIME system call
- *   do_tims:		perform the TIMES system call
+ *   do_stime:		PM informs FS about STIME system call
  */
 
 #include "fs.h"
@@ -58,54 +56,14 @@ PUBLIC int do_utime()
 }
 
 
-
-/*===========================================================================*
- *				do_time					     *
- *===========================================================================*/
-PUBLIC int do_time()
-
-{
-/* Perform the time(tp) system call. */
-
-  m_out.reply_l1 = clock_time();	/* return time in seconds */
-  return(OK);
-}
-
-
 /*===========================================================================*
  *				do_stime				     *
  *===========================================================================*/
 PUBLIC int do_stime()
 {
-/* Perform the stime(tp) system call. Retrieve the system's uptime (ticks 
- * since boot) and store the time in seconds at system boot in the global
- * variable 'boottime'.
- */
-
-  register int k;
-  clock_t uptime;
-
-  if (!super_user) return(EPERM);
-  if ( (k=sys_getuptime(&uptime)) != OK) panic("do_stime error", k);
-  boottime = (long) m_in.tp - (uptime/HZ);
+/* Perform the stime(tp) system call. */
+  boottime = (long) m_in.pm_stime; 
   return(OK);
 }
 
 
-/*===========================================================================*
- *				do_tims					     *
- *===========================================================================*/
-PUBLIC int do_tims()
-{
-/* Perform the times(buffer) system call. */
-
-  clock_t t[5];
-
-  sys_times(who, t);
-  m_out.reply_t1 = t[0];
-  m_out.reply_t2 = t[1];
-  m_out.reply_t3 = t[2];
-  m_out.reply_t4 = t[3];
-  m_out.reply_t5 = t[4];
-  return(OK);
-}
