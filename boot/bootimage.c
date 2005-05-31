@@ -568,13 +568,13 @@ void exec_image(char *image)
 	}
 #endif
 
-	/* Run the trailer function just before starting Minix. */
-	if (!run_trailer()) { errno= 0; return; }
-
 	/* Do delay if wanted. */
 	if((delayvalue = b_value("bootdelay")) != nil > 0) {
 		delay(delayvalue);
 	}
+
+	/* Run the trailer function just before starting Minix. */
+	if (!run_trailer()) { errno= 0; return; }
 
 	/* Translate the boot parameters to what Minix likes best. */
 	if (!params2params(params, sizeof(params))) { errno= 0; return; }
