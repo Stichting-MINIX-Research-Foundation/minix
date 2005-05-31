@@ -203,6 +203,7 @@ EXTERN char *drun;	/* Initial command from DOS command line. */
 #endif
 
 void readblock(off_t, char *, int);
+void delay(char *);
 
 /*
  * $PchId: boot.h,v 1.12 2002/02/27 19:42:45 philip Exp $

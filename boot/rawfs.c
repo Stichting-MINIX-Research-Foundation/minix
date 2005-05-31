@@ -85,7 +85,6 @@ off_t r_super(int *bs)
 		*bs = block_size = super.s_block_size;
 		if(block_size < MIN_BLOCK_SIZE ||
 			block_size > MAX_BLOCK_SIZE) {
-			printf("bogus block size %d\n", block_size);
 			return 0;
 		}
 		nr_dzones= V2_NR_DZONES;
