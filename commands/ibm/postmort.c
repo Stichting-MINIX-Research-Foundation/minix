@@ -245,11 +245,11 @@ struct proc *pt;
 #if DEAD_CODE
   printf("Process id passed in from MM:		0x%04.4x\n", pt->p_pid);	/* int */
 #endif
+#if 0
   printf("User time in ticks:			%ld\n", pt->user_time);	/* time_t */
   printf("Sys time in ticks:			%ld\n", pt->sys_time);	/* time_t */
   printf("Cumulative user time of children:	%ld\n", pt->child_utime);	/* time_t */
   printf("Cumulative sys time of children:	%ld\n", pt->child_stime);	/* time_t */
-#if 0
   printf("Ticks used in current quantum:	%d\n", pt->quantum_time);	/* int */
   printf("Ticks used in last quantum:		%d\n", pt->quantum_last);	/* int */
   printf("Current priority of the process:	%d\n", pt->curr_prio);	/* int */

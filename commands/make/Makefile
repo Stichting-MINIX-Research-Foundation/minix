@@ -8,7 +8,7 @@ all:	make
 
 make :	$(OBJ)
 	$(CC) -i -o make $(OBJ)
-	install -S 96k make
+	install -S 200k make
 
 install:	/usr/bin/make
 
