@@ -9,6 +9,7 @@
 #include "kernel.h"
 #include <signal.h>
 #include "proc.h"
+#include "debug.h"
 
 /*==========================================================================*
  *				exception				    *
@@ -56,7 +57,7 @@ unsigned vec_nr;
   }
 
   if (k_reenter == 0 && ! istaskp(saved_proc)) {
-	unlock();		/* this is protected like sys_call() */
+	unlock(7);		/* this is protected like sys_call() */
 	cause_sig(proc_nr(saved_proc), ep->signum);
 	return;
   }

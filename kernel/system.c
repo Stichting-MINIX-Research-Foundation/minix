@@ -162,6 +162,7 @@ PRIVATE void initialize(void)
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
   map(SYS_VIRCOPY, do_vircopy); 	/* use pure virtual addressing */
   map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
+  map(SYS_PHYSZERO, do_physzero);	/* zero physical memory region */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
   map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
 

@@ -1,6 +1,7 @@
 #include "../kernel.h"
 #include "../system.h"
 #include <unistd.h>
+#include <minix/config.h>
 INIT_ASSERT
 
 
@@ -187,6 +188,13 @@ register message *m_ptr;	/* pointer to request message */
         src_phys = vir2phys(&kmess);
         break;
     }
+#if ENABLE_LOCK_TIMING
+    case GET_LOCKTIMING: {
+	length = sizeof(timingdata);
+	src_phys = vir2phys(timingdata);
+	break;
+    }
+#endif
     default:
         return(EINVAL);
   }

@@ -33,6 +33,7 @@
  */
 
 #include "kernel.h"
+#include "debug.h"
 #include "proc.h"
 #include <signal.h>
 #include <minix/com.h>
@@ -107,10 +108,10 @@ PUBLIC void clock_task()
       receive(ANY, &m);	
 
       /* Transfer ticks seen by the low level handler. */
-      lock();
+      lock(8, "realtime");
       realtime += pending_ticks;	
       pending_ticks = 0;		
-      unlock();
+      unlock(8);
 
       /* Handle the request. */
       switch (m.m_type) {
@@ -267,9 +268,9 @@ PUBLIC clock_t get_uptime()
  */
   clock_t uptime;
 
-  lock();
+  lock(9, "get_uptime");
   uptime = realtime + pending_ticks;
-  unlock();
+  unlock(9);
   return(uptime);
 }
 
@@ -348,11 +349,11 @@ PUBLIC unsigned long read_clock()
  */
   unsigned count;
 
-  lock();
+  lock(10, "read_clock");
   outb(TIMER_MODE, LATCH_COUNT);
   count = inb(TIMER0);
   count |= (inb(TIMER0) << 8);
-  unlock();
+  unlock(10);
   
   return count;
 }

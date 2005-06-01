@@ -26,6 +26,7 @@
 .define	_enable_irq	! enable an irq at the 8259 controller
 .define	_disable_irq	! disable an irq
 .define	_phys_copy	! copy data from anywhere to anywhere in memory
+.define	_phys_zero	! zero data anywhere in memory
 .define	_mem_rdw	! copy one word from [segment:offset]
 .define	_reset		! reset the system
 .define	_idle_task	! task executed when there is no work
@@ -437,6 +438,36 @@ pc_small:
 	pop	esi
 	ret
 
+!*===========================================================================*
+!*				phys_zero				     *
+!*===========================================================================*
+! PUBLIC void phys_zero(phys_bytes source, phys_bytes bytecount);
+! Zero a block of physical memory.
+
+	.align	16
+
+_phys_zero:
+	push	ebp
+	mov	ebp, esp
+	push	esi
+	push	ebx
+	push	ds
+	mov	esi, 8(ebp)
+	mov	eax, 12(ebp)
+	mov	ebx, FLAT_DS_SELECTOR
+	mov	ds, bx
+	shr	eax, 2
+zero_start:
+   	mov     (esi), 0
+	add	esi, 4
+	dec	eax
+	jnz	zero_start
+zero_done:
+	pop	ds
+	pop	ebx
+	pop	esi
+	pop	ebp
+	ret
 
 !*===========================================================================*
 !*				mem_rdw					     *
@@ -501,7 +532,7 @@ _level0:
 !*===========================================================================*
 !*			      read_tsc					     *
 !*===========================================================================*
-! PUBLIC void read_tsc(unsigned long *low, unsigned long *high);
+! PUBLIC void read_tsc(unsigned long *high, unsigned long *low);
 ! Read the cycle counter of the CPU. Pentium and up. 
 .align 16
 _read_tsc:

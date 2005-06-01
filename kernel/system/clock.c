@@ -10,6 +10,7 @@
 
 #include "../kernel.h"
 #include "../system.h"
+#include "../debug.h"
 #include <signal.h>
 
 /*===========================================================================*
@@ -27,11 +28,10 @@ register message *m_ptr;	/* pointer to request message */
   proc_nr = (m_ptr->T_PROC_NR == SELF) ? m_ptr->m_source : m_ptr->T_PROC_NR;
   if (isokprocn(proc_nr)) {
       rp = proc_addr(m_ptr->T_PROC_NR);
-
-      lock();			/* halt the volatile time counters in rp */
+      lock(11, "do_times");			/* halt the volatile time counters in rp */
       m_ptr->T_USER_TIME   = rp->p_user_time;
       m_ptr->T_SYSTEM_TIME = rp->p_sys_time;
-      unlock();
+      unlock(11);
   }
   m_ptr->T_BOOT_TICKS = get_uptime();  
   return(OK);

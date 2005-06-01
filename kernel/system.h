@@ -11,6 +11,7 @@
 
 /* Common includes for the system library. */
 #include <minix/com.h>
+#include <minix/config.h>
 #include "proc.h"
 #include "assert.h"
 
@@ -61,12 +62,9 @@ _PROTOTYPE( int do_trace, (message *m_ptr) );		/* process tracing */
 #define do_trace do_unused
 #endif
 
-#if ENABLE_K_DEBUGGING 					/* debugging */
-_PROTOTYPE( void check_runqueues, (char *when) );
-#endif
-
 _PROTOTYPE( int do_vircopy, (message *m_ptr) );
 _PROTOTYPE( int do_physcopy, (message *m_ptr) );
+_PROTOTYPE( int do_physzero, (message *m_ptr) );
 _PROTOTYPE( int do_biosio, (message *m_ptr) );
 
 #endif	/* SYSTEM_H */

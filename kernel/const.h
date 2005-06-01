@@ -3,6 +3,7 @@
 #include <ibm/interrupt.h>	/* interrupt numbers and hardware vectors */
 #include <ibm/ports.h>		/* port addresses and magic numbers */
 #include <ibm/bios.h>		/* BIOS addresses, sizes and magic numbers */
+#include <minix/config.h>
 
 /* To translate an address in kernel space to a physical address.  This is
  * the same as umap_local(proc_ptr, D, vir, sizeof(*vir)), but less costly.
@@ -61,9 +62,17 @@
 #define IF_MASK 0x00000200
 #define IOPL_MASK 0x003000
 
+#if ENABLE_LOCK_TIMING
+#define locktimestart(c, v) timer_start(c, v)
+#define locktimeend(c) timer_end(c)
+#else
+#define locktimestart(c, v)
+#define locktimeend(c)
+#endif
+
 /* Disable/Enable hardware interrupts. */
-#define lock()		intr_disable()
-#define unlock()	intr_enable()
+#define lock(c, v)	do { intr_disable(); locktimestart(c, v); } while(0);
+#define unlock(c)	do { locktimeend(c); intr_enable();   } while(0);
 
 /* Sizes of memory tables. The boot monitor distinguishes three memory areas, 
  * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed
@@ -77,3 +86,7 @@
 /* M68000 specific constants go here. */
 #endif /* (CHIP == M68000) */
 
+#if ENABLE_INT_TIMING
+#define INT_TIMING_BITS		12
+#define INT_TIMING_ELEMENTS	(1L << 12)
+#endif

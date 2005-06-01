@@ -7,6 +7,9 @@
 #define EXTERN
 #endif
 
+#include "const.h"
+#include <minix/config.h>
+
 /* MINIX' shutdown sequence uses watchdog timers to stop system services. The
  * flag shutting_down must be initialized to FALSE. We rely on the compiler's 
  * default initialization (0) of global variables here.
@@ -42,6 +45,11 @@ EXTERN irq_hook_t *irq_handlers[NR_IRQ_VECTORS];/* list of IRQ handlers */
 EXTERN int irq_actids[NR_IRQ_VECTORS];		/* IRQ ID bits active */
 EXTERN int irq_use;			/* bit map of all in-use irq's */
 
+/* lock() timing data. */
+#if ENABLE_LOCK_TIMING
+EXTERN struct lock_timedata timingdata[TIMING_CATEGORIES];
+#endif
+
 /* Miscellaneous. */
 EXTERN reg_t mon_ss, mon_sp;	/* monitor stack */
 EXTERN int mon_return;		/* true if return to the monitor possible */
@@ -57,5 +65,4 @@ EXTERN _PROTOTYPE( void (*level0_func), (void) );
 #if (CHIP == M68000)
 /* M68000 specific variables go here. */
 #endif
-
 

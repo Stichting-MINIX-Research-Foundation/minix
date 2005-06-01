@@ -14,6 +14,7 @@
 #if (CHIP == INTEL)
 #include "../protect.h"
 #endif
+#include "../debug.h"
 
 INIT_ASSERT
 
@@ -199,6 +200,19 @@ message *m_ptr;			/* pointer to request message */
   if (exit_proc_nr == SELF) exit_proc_nr = m_ptr->m_source;
   if (! isokprocn(exit_proc_nr)) return(EINVAL);
   rc = proc_addr(exit_proc_nr);
+
+#if DEAD_CODE
+  /* If this is a user process and the PM passed in a valid parent process, 
+   * accumulate the child times at the parent. 
+   */
+  if (isuserp(rc) && isokprocn(m_ptr->PR_PPROC_NR)) {
+      rp = proc_addr(m_ptr->PR_PPROC_NR);
+      lock(15, "do_xit");
+      rp->child_utime += rc->user_time + rc->child_utime;
+      rp->child_stime += rc->sys_time + rc->child_stime;
+      unlock(15);
+  }
+#endif
 
   /* Now call the routine to clean up of the process table slot. This cancels
    * outstanding timers, possibly removes the process from the message queues,

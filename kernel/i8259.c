@@ -7,6 +7,7 @@
 
 #include "kernel.h"
 #include "proc.h"
+#include "debug.h"
 #include <minix/com.h>
 
 #define ICW1_AT         0x11	/* edge triggered, cascade, need ICW4 */
@@ -48,7 +49,7 @@ int mine;
  */
   int i;
 
-  lock();
+  lock(6, "intr_init");
   if (machine.protected) {
 	/* The AT and newer PS/2 have two interrupt controllers, one master,
 	 * one slaved at IRQ 2.  (We don't have to deal with the PC that

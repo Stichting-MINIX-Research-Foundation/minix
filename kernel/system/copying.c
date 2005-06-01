@@ -1,5 +1,5 @@
 /* The system call implemented in this file:
- *   m_type:	SYS_VIRCOPY, SYS_PHYSCOPY
+ *   m_type:	SYS_VIRCOPY, SYS_PHYSCOPY, SYS_PHYSZERO
  *
  * The parameters for this system call are:
  *    m5_c1:	CP_SRC_SPACE
@@ -111,6 +111,17 @@ register message *m_ptr;	/* pointer to request message */
       if ((s=virtual_copy(&req->src, &req->dst, req->count)) != OK) 
           return(s);
   }
+  return(OK);
+}
+
+/*===========================================================================*
+ *				do_physzero				     *
+ *===========================================================================*/
+PUBLIC int do_physzero(m_ptr)
+register message *m_ptr;
+{
+/* Handle sys_physzero(). */
+  phys_zero((phys_bytes) m_ptr->PZ_MEM_PTR, (phys_bytes) m_ptr->PZ_COUNT);
   return(OK);
 }
 

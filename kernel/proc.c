@@ -46,6 +46,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "proc.h"
+#include "debug.h"
 #include "ipc.h"
 #include "sendmask.h"
 
@@ -440,11 +441,11 @@ message *m_ptr;			/* pointer to message buffer */
   int result;
   struct proc *caller_ptr;
 
-  lock();
+  lock(0, "notify");
   kinfo.lock_notify ++;
   caller_ptr = (k_reenter >= 0) ? proc_addr(HARDWARE) : proc_ptr;
   result = mini_notify(caller_ptr, dst, m_ptr); 
-  unlock();
+  unlock(0);
   return(result);
 }
 
@@ -637,9 +638,9 @@ int queue;
 PUBLIC void lock_pick_proc()
 {
 /* Safe gateway to pick_proc() for tasks. */
-  lock();
+  lock(1, "pick_proc");
   pick_proc();
-  unlock();
+  unlock(1);
 }
 
 
@@ -652,10 +653,10 @@ message *m_ptr;			/* pointer to message buffer */
 {
 /* Safe gateway to mini_send() for tasks. */
   int result;
-  lock();
+  lock(2, "send");
   kinfo.lock_send ++;
   result = mini_send(proc_ptr, dst, m_ptr, NON_BLOCKING);
-  unlock();
+  unlock(2);
   return(result);
 }
 
@@ -667,9 +668,9 @@ PUBLIC void lock_ready(rp)
 struct proc *rp;		/* this process is now runnable */
 {
 /* Safe gateway to ready() for tasks. */
-  lock();
+  lock(3, "ready");
   ready(rp);
-  unlock();
+  unlock(3);
 }
 
 /*==========================================================================*
@@ -679,9 +680,9 @@ PUBLIC void lock_unready(rp)
 struct proc *rp;		/* this process is no longer runnable */
 {
 /* Safe gateway to unready() for tasks. */
-  lock();
+  lock(4, "unready");
   unready(rp);
-  unlock();
+  unlock(4);
 }
 
 /*==========================================================================*
@@ -691,8 +692,8 @@ PUBLIC void lock_sched(queue)
 int queue;
 {
 /* Safe gateway to sched() for tasks. */
-  lock();
+  lock(5, "sched");
   sched(queue);
-  unlock();
+  unlock(5);
 }
 

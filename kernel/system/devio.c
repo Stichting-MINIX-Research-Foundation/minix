@@ -13,6 +13,7 @@
 
 #include "../kernel.h"
 #include "../system.h"
+#include "../debug.h"
 #include <minix/devio.h>
 
 /*===========================================================================*
@@ -171,7 +172,7 @@ register message *m_ptr;	/* pointer to request message */
     * batch from being interrupted. It may be cleaner to do this just around 
     * the for loops, but this results in rather lenghty code.
     */
-    lock();
+    lock(13, "do_vdevio");
     switch (m_ptr->DIO_TYPE) {
         case DIO_BYTE: 					 /* byte values */
             pvb_pairs = (pvb_pair_t *) vdevio_pv_buf;
@@ -204,7 +205,7 @@ register message *m_ptr;	/* pointer to request message */
                     outl(pvb_pairs[i].port, pvl_pairs[i].value); 
             }
     }
-    unlock();    
+    unlock(13);
     
     /* Almost done, copy back results for input requests. */
     if (DIO_INPUT == m_ptr->REQUEST)
