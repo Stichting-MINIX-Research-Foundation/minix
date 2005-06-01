@@ -24,8 +24,6 @@ typedef struct {
 
 #define ASYN_NONBLOCK	0x01
 
-struct timeval { long tv_sec, tv_usec; };
-
 #define EINPROGRESS	EINTR
 #define ASYN_INPROGRESS	EINPROGRESS
 
