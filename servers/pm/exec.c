@@ -297,7 +297,6 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
   register struct mproc *rmp;
   vir_clicks text_clicks, data_clicks, gap_clicks, stack_clicks, tot_clicks;
   phys_clicks new_base;
-  static char zero[1024];		/* used to zero bss */
   phys_bytes bytes, base, count, bss_offset;
   int s;
 
@@ -372,7 +371,13 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
   base += bss_offset;
   bytes -= bss_offset;
 
+  if ((s=sys_physzero(base, bytes)) != OK) {
+	panic("new_mem can't zero", s);
+  }
+
+#if DEAD_CODE
   while (bytes > 0) {
+  	static char zero[1024];		/* used to zero bss */
 	count = MIN(bytes, (phys_bytes) sizeof(zero));
 	if ((s=sys_physcopy(PM_PROC_NR, D, (phys_bytes) zero,
 				NONE, PHYS_SEG, base, count)) != OK) {
@@ -381,6 +386,8 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
 	base += count;
 	bytes -= count;
   }
+#endif
+
   return(OK);
 }
 

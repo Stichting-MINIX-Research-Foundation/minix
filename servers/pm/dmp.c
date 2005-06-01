@@ -24,12 +24,21 @@ FORWARD _PROTOTYPE( void mproc_dmp, (void));
 PUBLIC int do_fkey_pressed(void)
 {
   printf("Process Manager debug dump: ");
-  switch (m_in.FKEY_CODE) {
+#if DEAD_CODE
+  switch (m_in.FKEY_NUM) {
+#else
+  switch (m_in.NOTIFY_FLAGS) {
+#endif
     	case SF7:	mproc_dmp();		break;
 
     	default:
+#if DEAD_CODE
     		printf("PM: unhandled notification for Shift+F%d key.\n",
     			m_in.FKEY_NUM);
+#else
+    		printf("PM: unhandled notification for Shift+F%d key.\n",
+    			m_in.NOTIFY_FLAGS);
+#endif
   }
 }
 
