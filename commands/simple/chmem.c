@@ -36,7 +36,7 @@ char *argv[];
  */
 
   char *p;
-  int fd, separate;
+  int fd = -1, separate;
   size_t s;
   long lsize, olddynam, newdynam, newtot, overflow;
   struct exec exec;
@@ -59,6 +59,7 @@ char *argv[];
 
   while (--argc) {
 	++argv;
+	if(fd != -1) close(fd);
 	fd = open(*argv, O_RDWR);
 	if (fd < 0) {
 		error("can't open", *argv);
@@ -116,7 +117,6 @@ char *argv[];
 	}
 	printf("%s: Stack+malloc area changed from %ld to %ld bytes.\n",
 	       *argv, olddynam, newdynam);
-	close(fd);
   }
   return(0);
 }
