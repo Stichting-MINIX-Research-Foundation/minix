@@ -200,9 +200,7 @@ irq_hook_t *hook;
  *		processing by one tick, or call the high level unnecessarily.
  * The variables which are changed require more care:
  *	rp->p_user_time, rp->p_sys_time:
- *		These are protected by explicit locks in system.c.  They are
- *		not properly protected in dmp.c (the increment here is not
- *		atomic) but that hardly matters.
+ *		These are protected by explicit locks in system.c.
  *	pending_ticks:
  *		This is protected by explicit locks in clock.c.  Don't
  *		update realtime directly, since there are too many

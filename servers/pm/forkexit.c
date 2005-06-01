@@ -77,6 +77,8 @@ PUBLIC int do_fork()
 
   rmc->mp_parent = who;			/* record child's parent */
   rmc->mp_flags &= (IN_USE|SEPARATE);	/* inherit only these flags */
+  rmc->mp_child_utime = 0;		/* reset administration */
+  rmc->mp_child_stime = 0;		/* reset administration */
 
   /* A separate I&D child keeps the parents text segment.  The data and stack
    * segments must refer to the new copy.
@@ -145,9 +147,9 @@ int exit_status;		/* the process' exit status (for parent) */
 
   /* Do accounting: fetch usage times and accumulate at parent. */
   sys_times(proc_nr, t);
-  p_mp = &mproc[rmp->mp_parent];		/* process' parent */
-  p_mp->mp_child_utime = t[2];
-  p_mp->mp_child_stime = t[3];
+  p_mp = &mproc[rmp->mp_parent];			/* process' parent */
+  p_mp->mp_child_utime += t[0] + rmp->mp_child_utime;	/* add user time */
+  p_mp->mp_child_stime += t[1] + rmp->mp_child_stime;	/* add system time */
 
   /* Tell the kernel and FS that the process is no longer runnable. */
   tell_fs(EXIT, proc_nr, 0, 0);  /* file system can free the proc slot */
