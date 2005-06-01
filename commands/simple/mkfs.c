@@ -39,8 +39,8 @@
 #include "../../servers/fs/super.h"
 #include <minix/fslib.h>
 
-#ifndef min
-#define min(a,b) ((a) < (b) ? (a) : (b))
+#ifndef max
+#define max(a,b) ((a) > (b) ? (a) : (b))
 #endif
 
 #ifndef DOS
@@ -267,7 +267,7 @@ char *argv[];
 	}
 	if (i == 0) {
 		int kb;
-		kb = blocks * (min(block_size,1024) / 1024);
+		kb = blocks * (max(block_size,1024) / 1024);
 		/* The default for inodes is 2 blocks per kb, rounded up
 		 * to fill an inode block.  Above 20M, the average files are
 		 * sure to be larger because it is hard to fill up 20M with
@@ -280,9 +280,12 @@ char *argv[];
 		if (kb >= 60000) i = kb / 5;
 		if (kb >= 80000) i = kb / 6;
 		if (kb >= 100000) i = kb / 7;
+
+		/* round up to fill inode block */
 		i += inodes_per_block - 1;
 		i = i / inodes_per_block * inodes_per_block;
 		if (i > INODE_MAX) i = INODE_MAX;
+
 	}
 	if (blocks < 5) pexit("Block count too small");
 	if (blocks > max_nrblocks) pexit("Block count too large");
