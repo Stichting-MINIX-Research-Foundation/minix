@@ -196,7 +196,6 @@
  * modifying the system call numbers. The numbers here determine which call
  * is made from the call vector.
  */ 
-#define NR_SYS_CALLS	33	/* number of system calls */ 
 #  define SYS_TIMES	 0	/* sys_times(proc_nr, bufptr) */
 #  define SYS_XIT	 1	/* sys_xit(parent, proc) */
 #  define SYS_GETSIG     2	/* sys_getsig(proc_nr, sig_map) */
@@ -230,6 +229,8 @@
 #  define SYS_VIRCOPY   30	/* sys_vircopy(src,seg,addr,dst,seg,addr,cnt) */
 #  define SYS_PHYSCOPY  31 	/* sys_physcopy(src_addr,dst_addr,count) */
 #  define SYS_VIRVCOPY  32	/* sys_virvcopy(vec_ptr, vec_size) */
+#  define SYS_PHYSZERO  33	/* sys_physzero(addr,count) */
+#define NR_SYS_CALLS	34	/* number of system calls */ 
 
 /* Field names for SYS_MEM, SYS_KMALLOC. */
 #define MEM_CHUNK_BASE	m4_l1	/* physical base address */
@@ -328,6 +329,7 @@
 #   define GET_SCHEDINFO  10	/* get scheduling queues */
 #   define GET_PROC 	  11	/* get process slot if given process */
 #   define GET_MACHINE 	  12	/* get machine information */
+#   define GET_LOCKTIMING 13	/* get lock()/unlock() latency timing */
 #define I_PROC_NR      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */
@@ -373,6 +375,9 @@
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
 #define PR_MEM_PTR	m1_p1	/* tells where memory map is for sys_newmap */
 
+/* Field names for SYS_PHYSZERO */
+#define PZ_MEM_PTR	m1_p1	/* base */
+#define PZ_COUNT	m1_i1	/* count */
 
 /*===========================================================================*
  *                Miscellaneous messages, mainly used by IS		     *

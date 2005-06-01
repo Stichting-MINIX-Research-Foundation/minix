@@ -102,6 +102,7 @@ _PROTOTYPE(int sys_vircopy, (int src_proc, int src_seg, vir_bytes src_vir,
 	sys_physcopy(NONE, PHYS_SEG, src_phys, NONE, PHYS_SEG, dst_phys, bytes)
 _PROTOTYPE(int sys_physcopy, (int src_proc, int src_seg, vir_bytes src_vir,
 	int dst_proc, int dst_seg, vir_bytes dst_vir, phys_bytes bytes)	);
+_PROTOTYPE(int sys_physzero, (phys_bytes base, phys_bytes bytes)	);
 
 _PROTOTYPE(int sys_umap, (int proc_nr, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr) 			);
@@ -124,6 +125,7 @@ _PROTOTYPE(int sys_kmalloc, (size_t size, phys_bytes *phys_base)		);
 #define sys_getkenv(k,kl,v,vl)	sys_getinfo(GET_KENV, v,vl, k,kl)
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getkaddr(dst)	sys_getinfo(GET_KADDRESSES, dst, 0,0,0)
+#define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *key_ptr, int key_len)		);
 _PROTOTYPE(int sys_exit, (int status)					);

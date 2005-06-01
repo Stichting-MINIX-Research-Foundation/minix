@@ -122,7 +122,17 @@
 #define	NR_RS_LINES	   0	/* # rs232 terminals (0 to 4) */
 #define	NR_PTYS		   32	/* # pseudo terminals (0 to 64) */
 
-#define ENABLE_MESSAGE_STATS	0
+/* these timing functions use quite a bit more kernel memory to hold
+ * timing data.
+ */
+#define ENABLE_INT_TIMING	0
+#define ENABLE_LOCK_TIMING	0
+
+#if ENABLE_LOCK_TIMING
+#define TIMING_POINTS		20
+#define TIMING_CATEGORIES	20
+#define TIMING_NAME		10
+#endif
 
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *

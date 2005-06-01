@@ -119,4 +119,15 @@ struct machine {
   int vdu_vga;
 };
 
+/* Timing data of lock()/unlock() sequences, if selected to be compiled in. */
+
+#if ENABLE_LOCK_TIMING
+struct lock_timedata {
+	char names[TIMING_NAME];
+	unsigned long lock_timings[TIMING_POINTS];
+	unsigned long lock_timings_range[2];
+	unsigned long binsize, resets, misses, measurements;
+};
+#endif
+
 #endif /* _TYPE_H */
