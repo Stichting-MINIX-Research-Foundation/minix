@@ -14,12 +14,12 @@
 #define time	_time
 #define write	_write
 #include <lib.h>
+#include <time.h>
 #include <sys/ioctl.h>
 #include <sys/asynchio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <time.h>
 #include <signal.h>
 
 #define IDLE		0

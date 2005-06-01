@@ -45,6 +45,7 @@ OBJECTS	= \
 	$(LIBSYS)(sys_signalrm.o) \
 	$(LIBSYS)(sys_flagalrm.o) \
 	$(LIBSYS)(sys_syncalrm.o) \
+	$(LIBSYS)(sys_physzero.o) \
 	$(LIBSYS)(taskcall.o) \
 
 $(LIBSYS):	$(OBJECTS)
@@ -164,6 +165,9 @@ $(LIBSYS)(sys_flagalrm.o):	sys_flagalrm.c
 
 $(LIBSYS)(sys_syncalrm.o):	sys_syncalrm.c
 	$(CC1) sys_syncalrm.c
+
+$(LIBSYS)(sys_physzero.o):	sys_physcp.c
+	$(CC1) sys_physzero.c
 
 $(LIBSYS)(taskcall.o):	taskcall.c
 	$(CC1) taskcall.c

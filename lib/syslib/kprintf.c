@@ -17,10 +17,12 @@ int printf(fmt) char *fmt;
 /* Printf() uses kputc() to print characters. */
 void kputc(int c);
 
+#define count_kputc(c) do { charcount++; kputc(c); } while(0)
+
 int printf(const char *fmt, ...)
 #endif
 {
-	int c;
+	int c, charcount = 0;
 	enum { LEFT, RIGHT } adjust;
 	enum { LONG, INT } intsize;
 	int fill;
@@ -40,7 +42,7 @@ int printf(const char *fmt, ...)
 	while ((c= *fmt++) != 0) {
 		if (c != '%') {
 			/* Ordinary character. */
-			kputc(c);
+			count_kputc(c);
 			continue;
 		}
 
@@ -162,26 +164,26 @@ int printf(const char *fmt, ...)
 		string_print:
 			width -= len;
 			if (i < 0) width--;
-			if (fill == '0' && i < 0) kputc('-');
+			if (fill == '0' && i < 0) count_kputc('-');
 			if (adjust == RIGHT) {
-				while (width > 0) { kputc(fill); width--; }
+				while (width > 0) { count_kputc(fill); width--; }
 			}
-			if (fill == ' ' && i < 0) kputc('-');
-			while (len > 0) { kputc((unsigned char) *p++); len--; }
-			while (width > 0) { kputc(fill); width--; }
+			if (fill == ' ' && i < 0) count_kputc('-');
+			while (len > 0) { count_kputc((unsigned char) *p++); len--; }
+			while (width > 0) { count_kputc(fill); width--; }
 			break;
 
 			/* Unrecognized format key, echo it back. */
 		default:
-			kputc('%');
-			kputc(c);
+			count_kputc('%');
+			count_kputc(c);
 		}
 	}
 
 	/* Mark the end with a null (should be something else, like -1). */
 	kputc(0);
 	va_end(argp);
-	return 0;
+	return charcount;
 }
 
 /*
