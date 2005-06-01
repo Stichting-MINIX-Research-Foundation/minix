@@ -26,13 +26,22 @@ FORWARD _PROTOTYPE( void fproc_dmp, (void));
 PUBLIC int do_fkey_pressed(void)
 {
   printf("Debug dump of FS data structure: ");
+#if DEAD_CODE
   switch (m_in.FKEY_CODE) {
+#else
+  switch (m_in.NOTIFY_FLAGS) {
+#endif
     	case SF5:	fproc_dmp();		break;
     	case SF6:	dtab_dmp();		break;
 
     	default:
+#if DEAD_CODE
     		printf("FS: unhandled notification for Shift+F%d key.\n",
     			m_in.FKEY_NUM);
+#else
+    		printf("FS: unhandled notification for Shift+F%d key.\n",
+    			m_in.NOTIFY_FLAGS);
+#endif
   }
 }
 
