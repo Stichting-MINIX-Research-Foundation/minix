@@ -108,7 +108,8 @@ phys_clicks clicks;		/* number of clicks to free */
   register struct hole *hp, *new_ptr, *prev_ptr;
 
   if (clicks == 0) return;
-  if ( (new_ptr = free_slots) == NIL_HOLE) panic("Hole table full", NO_NUM);
+  if ( (new_ptr = free_slots) == NIL_HOLE) 
+  	panic(__FILE__,"hole table full", NO_NUM);
   new_ptr->h_base = base;
   new_ptr->h_len = clicks;
   free_slots = new_ptr->h_next;
@@ -219,7 +220,7 @@ phys_clicks *free;		/* memory size summaries */
 
   /* Get a copy of the physical memory chunks found at the kernel. */
   if ((i=sys_getmemchunks(mem)) != OK)
-  	panic("PM couldn't get mem chunks",i);
+  	panic(__FILE__,"couldn't get mem chunks",i);
 
   /* Put all holes on the free list. */
   for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) hp->h_next = hp + 1;

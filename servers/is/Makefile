@@ -37,7 +37,7 @@ a = 	is.h proto.h glo.h \
 	$i/unistd.h $i/stdlib.h $i/stdio.h $i/ansi.h $i/limits.h $i/errno.h \
 	$s/types.h $m/config.h $m/type.h $m/const.h $m/com.h $m/keymap.h \
 	$m/syslib.h $s/types.h \
-	$m/utils.h $m/serverassert.h $m/devio.h
+	$m/utils.h $m/devio.h
 
 main.o:		$a
 

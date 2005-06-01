@@ -77,7 +77,7 @@ PUBLIC void main()
 	for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		if ((rmp->mp_flags & (REPLY | ONSWAP)) == REPLY) {
 			if ((s=send(proc_nr, &rmp->mp_reply)) != OK) {
-				panic("PM can't reply to", proc_nr);
+				panic(__FILE__,"PM can't reply to", proc_nr);
 			}
 			rmp->mp_flags &= ~REPLY;
 		}
@@ -92,7 +92,7 @@ PUBLIC void main()
 PRIVATE void get_work()
 {
 /* Wait for the next message and extract useful information from it. */
-  if (receive(ANY, &m_in) != OK) panic("PM receive error", NO_NUM);
+  if (receive(ANY, &m_in) != OK) panic(__FILE__,"PM receive error", NO_NUM);
   who = m_in.m_source;		/* who sent the message */
   call_nr = m_in.m_type;	/* system call number */
 
@@ -156,7 +156,7 @@ PRIVATE void pm_init()
 
   /* Get the memory map of the kernel to see how much memory it uses. */
   if ((s=get_mem_map(SYSTASK, kernel_map)) != OK)
-  	panic("PM couldn't get proc entry of SYSTASK",s);
+  	panic(__FILE__,"PM couldn't get proc entry of SYSTASK",s);
   minix_clicks = (kernel_map[S].mem_phys + kernel_map[S].mem_len)
 				- kernel_map[T].mem_phys;
 
@@ -185,7 +185,7 @@ PRIVATE void pm_init()
 
   		/* Get memory map for this process from the kernel. */
 		if ((s=get_mem_map(ip->proc_nr, rmp->mp_seg)) != OK)
-  			panic("couldn't get process entry",s);
+  			panic(__FILE__,"couldn't get process entry",s);
 		if (rmp->mp_seg[T].mem_len != 0) rmp->mp_flags |= SEPARATE;
 		minix_clicks += rmp->mp_seg[S].mem_phys + 
 			rmp->mp_seg[S].mem_len - rmp->mp_seg[T].mem_phys;
@@ -194,14 +194,14 @@ PRIVATE void pm_init()
 		mess.PR_PROC_NR = ip->proc_nr;
 		mess.PR_PID = rmp->mp_pid;
   		if (OK != (s=send(FS_PROC_NR, &mess)))
-			panic("PM can't sync up with FS", s);
+			panic(__FILE__,"PM can't sync up with FS", s);
   	}
   }
 
   /* Tell FS no more SYSTEM processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;
   if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
-	panic("PM can't sync up with FS", NO_NUM);
+	panic(__FILE__,"PM can't sync up with FS", NO_NUM);
 
   /* INIT process is somewhat special. */
   sigemptyset(&mproc[INIT_PROC_NR].mp_ignore);

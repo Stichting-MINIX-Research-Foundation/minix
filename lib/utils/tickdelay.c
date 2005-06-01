@@ -1,9 +1,9 @@
 #include "utils.h"
 
 /*===========================================================================*
- *                               tick_delay			    	     *
+ *                               tickdelay			    	     *
  *===========================================================================*/
-PUBLIC int tick_delay(ticks)
+PUBLIC int tickdelay(ticks)
 long ticks;				/* number of ticks to wait */
 {
 /* This function uses the synchronous alarm to delay for a while. This works

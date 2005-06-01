@@ -22,9 +22,9 @@
 #include <string.h>
 #include <signal.h>
 
-#define IDLE		0
-#define INPROGRESS	1
-#define RESULT		2
+#define IO_IDLE		0
+#define IO_INPROGRESS	1
+#define IO_RESULT	2
 
 #define OP_NOOP		0
 #define OP_READ		1
@@ -35,7 +35,7 @@ static asynchio_t *asyn_current;
 
 void asyn_init(asynchio_t *asyn)
 {
-	asyn->state= IDLE;
+	asyn->state= IO_IDLE;
 	asyn->op= OP_NOOP;
 }
 
@@ -43,20 +43,20 @@ static ssize_t operation(int op, asynchio_t *asyn, int fd, int req,
 						void *data, ssize_t count)
 {
 	switch (asyn->state) {
-	case INPROGRESS:
+	case IO_INPROGRESS:
 		if (asyn_current != asyn && asyn->op != op) abort();
 		/*FALL THROUGH*/
-	case IDLE:
+	case IO_IDLE:
 		asyn_current= asyn;
 		asyn->op= op;
 		asyn->fd= fd;
 		asyn->req= req;
 		asyn->data= data;
 		asyn->count= count;
-		asyn->state= INPROGRESS;
+		asyn->state= IO_INPROGRESS;
 		errno= EINPROGRESS;
 		return -1;
-	case RESULT:
+	case IO_RESULT:
 		if (asyn_current != asyn && asyn->op != op) abort();
 		errno= asyn->errno;
 		return asyn->count;
@@ -92,8 +92,8 @@ int asyn_wait(asynchio_t *asyn, int flags, struct timeval *to)
 	if (asyn_current != asyn) abort();
 	if (flags & ASYN_NONBLOCK) abort();
 
-	if (asyn->state == RESULT) {
-		asyn->state= IDLE;
+	if (asyn->state == IO_RESULT) {
+		asyn->state= IO_IDLE;
 		asyn->op= OP_NOOP;
 		return 0;
 	}
@@ -139,7 +139,7 @@ int asyn_wait(asynchio_t *asyn, int flags, struct timeval *to)
 		errno= EINTR;
 		return -1;
 	} else {
-		asyn->state= RESULT;
+		asyn->state= IO_RESULT;
 		return 0;
 	}
 }

@@ -78,7 +78,7 @@ int mask;			/* R_BIT, W_BIT, or X_BIT */
   save_errno = errno;		/* open might fail, e.g. from ENFILE */
   tell_fs(SETUID, PM_PROC_NR, (int) mp->mp_effuid, (int) mp->mp_effuid);
   if (fd < 0) return(-save_errno);
-  if (fstat(fd, s_buf) < 0) panic("allowed: fstat failed", NO_NUM);
+  if (fstat(fd, s_buf) < 0) panic(__FILE__,"allowed: fstat failed", NO_NUM);
 
   /* Only regular files can be executed. */
   if (mask == X_BIT && (s_buf->st_mode & I_TYPE) != I_REGULAR) {
@@ -103,16 +103,17 @@ PUBLIC int no_sys()
 /*===========================================================================*
  *				panic					     *
  *===========================================================================*/
-PUBLIC void panic(format, num)
-char *format;			/* format string */
-int num;			/* number to go with format string */
+PUBLIC void panic(who, mess, num)
+char *who;			/* who caused the panic */
+char *mess;			/* panic message string */
+int num;			/* number to go with it */
 {
 /* An unrecoverable error has occurred.  Panics are caused when an internal
  * inconsistency is detected, e.g., a programming error or illegal value of a
  * defined constant. The process manager decides to shut down. This results 
  * in a HARD_STOP notification to all system processes to allow local cleanup.
  */
-  printf("Process manager panic: %s", format);
+  printf("PM panic (%s): %s", who, mess);
   if (num != NO_NUM) printf(": %d",num);
   printf("\n");
   sys_abort(RBT_PANIC);

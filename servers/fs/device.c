@@ -45,7 +45,7 @@ int flags;			/* mode bits and flags */
   if (major >= max_major) major = 0;
   dp = &dmap[major];
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
-  if (r == SUSPEND) panic("Suspend on open from", dp->dmap_driver);
+  if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);
   return(r);
 }
 
@@ -309,7 +309,7 @@ message *mess_ptr;		/* pointer to message for task */
   for (;;) {
 	if (r != OK) {
 		if (r == EDEADDST) return;	/* give up */
-		else panic("call_task: can't send/receive", r);
+		else panic(__FILE__,"call_task: can't send/receive", r);
 	}
 
   	/* Did the process we did the sendrec() for get a result? */

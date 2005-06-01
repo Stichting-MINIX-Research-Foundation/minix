@@ -43,7 +43,6 @@ OBJECTS	= \
 	$(LIBSYS)(sys_voutw.o) \
 	$(LIBSYS)(sys_voutl.o) \
 	$(LIBSYS)(sys_signalrm.o) \
-	$(LIBSYS)(sys_flagalrm.o) \
 	$(LIBSYS)(sys_syncalrm.o) \
 	$(LIBSYS)(sys_physzero.o) \
 	$(LIBSYS)(taskcall.o) \
@@ -159,9 +158,6 @@ $(LIBSYS)(sys_vinl.o):	sys_vinl.c
 
 $(LIBSYS)(sys_signalrm.o):	sys_signalrm.c
 	$(CC1) sys_signalrm.c
-
-$(LIBSYS)(sys_flagalrm.o):	sys_flagalrm.c
-	$(CC1) sys_flagalrm.c
 
 $(LIBSYS)(sys_syncalrm.o):	sys_syncalrm.c
 	$(CC1) sys_syncalrm.c

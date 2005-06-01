@@ -50,7 +50,7 @@ PUBLIC int do_brk()
   }
   new_clicks -= rmp->mp_seg[D].mem_vir;
   if ((r=get_stack_ptr(who, &new_sp)) != OK)	/* ask kernel for sp value */
-  	panic("PM couldn't get stack pointer", r);
+  	panic(__FILE__,"couldn't get stack pointer", r);
   r = adjust(rmp, new_clicks, new_sp);
   rmp->mp_reply.reply_ptr = (r == OK ? m_in.addr : (char *) -1);
   return(r);			/* return new address or -1 */

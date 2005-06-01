@@ -8,6 +8,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
 #include "../drivers.h"
+#define	NDEBUG			/* disable assertions */
+#include <assert.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
 
@@ -31,7 +33,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <stdio.h>
 #include <string.h>
 #include <minix/utils.h>
-INIT_SERVER_ASSERT
 
 #define NR_PCIBUS	 2
 #define NR_PCIDEV	40
@@ -154,7 +155,7 @@ PUBLIC void pci_init()
 		return;
 
 	/* We don't expect to interrupted */
-	server_assert(first_time == 1);
+	assert(first_time == 1);
 	first_time= -1;
 
 	/* Only Intel (compatible) PCI controllers are supported at the
@@ -248,8 +249,8 @@ u16_t *didp;
 PUBLIC void pci_reserve(devind)
 int devind;
 {
-	server_assert(devind <= nr_pcidev);
-	server_assert(!pcidev[devind].pd_inuse);
+	assert(devind <= nr_pcidev);
+	assert(!pcidev[devind].pd_inuse);
 	pcidev[devind].pd_inuse= 1;
 }
 
@@ -262,7 +263,7 @@ int devind;
 u16_t *vidp;
 u16_t *didp;
 {
-	server_assert(devind <= nr_pcidev);
+	assert(devind <= nr_pcidev);
 	*vidp= pcidev[devind].pd_vid;
 	*didp= pcidev[devind].pd_did;
 }
@@ -435,7 +436,7 @@ PRIVATE void pci_intel_init()
 	}
 
 	if (nr_pcibus >= NR_PCIBUS)
-		server_panic("PCI","too many PCI busses", nr_pcibus);
+		panic("PCI","too many PCI busses", nr_pcibus);
 	busind= nr_pcibus;
 	nr_pcibus++;
 	pcibus[busind].pb_type= PBT_INTEL;
@@ -497,7 +498,7 @@ int busind;
 printf("probe_bus(%d)\n", busind);
 #endif
 	if (nr_pcidev >= NR_PCIDEV)
-		server_panic("PCI","too many PCI devices", nr_pcidev);
+		panic("PCI","too many PCI devices", nr_pcidev);
 	devind= nr_pcidev;
 
 	for (dev= 0; dev<32; dev++)
@@ -571,7 +572,7 @@ printf("probe_bus(%d)\n", busind);
 			pcidev[devind].pd_inuse= 0;
 
 			if (nr_pcidev >= NR_PCIDEV)
-			  server_panic("PCI","too many PCI devices", nr_pcidev);
+			  panic("PCI","too many PCI devices", nr_pcidev);
 			devind= nr_pcidev;
 
 			if (func == 0 && !(headt & PHT_MULTIFUNC))
@@ -662,7 +663,7 @@ int busind;
 			r= do_sis_isabr(bridge_dev);
 			break;
 		default:
-			server_panic("PCI","unknown ISA bridge type", type);
+			panic("PCI","unknown ISA bridge type", type);
 		}
 		return r;
 	}
@@ -723,7 +724,7 @@ int busind;
 #endif
 
 		if (nr_pcibus >= NR_PCIBUS)
-			server_panic("PCI","too many PCI busses", nr_pcibus);
+			panic("PCI","too many PCI busses", nr_pcibus);
 		ind= nr_pcibus;
 		nr_pcibus++;
 		pcibus[ind].pb_type= PBT_PCIBRIDGE;
@@ -747,7 +748,7 @@ int busind;
 			pcibus[ind].pb_wsts= pcibr_via_wsts;
 			break;
 		default:
-		    server_panic("PCI","unknown PCI-PCI bridge type", type);
+		    panic("PCI","unknown PCI-PCI bridge type", type);
 		}
 
 		probe_bus(ind);
@@ -796,7 +797,7 @@ int devind;
 			{
 				printf("IRQ %d is not level triggered\n",
 					irq);
-				server_panic(NULL,NULL, NO_NUM);
+				panic(NULL,NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}
@@ -821,7 +822,7 @@ int devind;
 
 	/* Fake a device with the required function */
 	if (nr_pcidev >= NR_PCIDEV)
-		server_panic("PCI","too many PCI devices", nr_pcidev);
+		panic("PCI","too many PCI devices", nr_pcidev);
 	xdevind= nr_pcidev;
 	pcidev[xdevind].pd_busind= bus;
 	pcidev[xdevind].pd_dev= dev;
@@ -848,7 +849,7 @@ int devind;
 			{
 				printf("IRQ %d is not level triggered\n",
 					irq);
-				server_panic(NULL, NULL, NO_NUM);
+				panic(NULL, NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}
@@ -924,7 +925,7 @@ int devind;
 			irq= pci_attr_r8(devind, VIA_ISABR_IRQ_R1) >> 4;
 			break;
 		default:
-			server_assert(0);
+			assert(0);
 		}
 		irq &= 0xf;
 		if (!irq)
@@ -940,7 +941,7 @@ int devind;
 			{
 				printf("IRQ %d is not level triggered\n",
 					irq);
-				server_panic(NULL, NULL, NO_NUM);
+				panic(NULL, NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}

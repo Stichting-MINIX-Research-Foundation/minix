@@ -315,7 +315,7 @@ int sec;			/* how many seconds delay before the signal */
 	ticks = LONG_MAX;	/* eternity (really TMR_NEVER) */
 
   if ((s=sys_signalrm(proc_nr, &ticks)) != OK) 
-  	panic("PM couldn't set signal alarm", s);
+  	panic(__FILE__,"couldn't set signal alarm", s);
 
   remaining = (int) ((ticks + (HZ-1))/HZ);
   if (remaining < 0) remaining = INT_MAX;	/* true value is too large */
@@ -364,7 +364,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
 	printf("PM: signal %d sent to %s process %d\n",
 		(rmp->mp_flags & ZOMBIE) ? "zombie" : "dead", signo, slot);
-	panic("", NO_NUM);
+	panic(__FILE__,"", NO_NUM);
   }
   if ((rmp->mp_flags & TRACED) && signo != SIGKILL) {
 	/* A traced process has special handling. */
@@ -396,7 +396,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	sm.sm_sighandler = (vir_bytes) rmp->mp_sigact[signo].sa_handler;
 	sm.sm_sigreturn = rmp->mp_sigreturn;
 	if ((s=get_stack_ptr(slot, &new_sp)) != OK)
-		panic("PM couldn't get new stack pointer",s);
+		panic(__FILE__,"couldn't get new stack pointer",s);
 	sm.sm_stkptr = new_sp;
 
 	/* Make room for the sigcontext and sigframe struct. */
@@ -600,7 +600,7 @@ register struct mproc *rmp;	/* whose core is to be dumped */
    * Maybe make SAFETY_BYTES a parameter.
    */
   if ((s=get_stack_ptr(slot, &current_sp)) != OK)
-	panic("PM couldn't get new stack pointer",s);
+	panic(__FILE__,"couldn't get new stack pointer",s);
   adjust(rmp, rmp->mp_seg[D].mem_len, current_sp);
 
   /* Write the memory map of all segments to begin the core file. */

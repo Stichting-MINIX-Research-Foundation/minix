@@ -217,7 +217,7 @@ message *mp;		/* pointer to read or write message */
 
     if (OK != sys_datacopy(mp->m_source, (vir_bytes) mp->ADDRESS, 
     		SELF, (vir_bytes) iovec, iovec_size))
-        server_panic((*dp->dr_name)(),"bad I/O vector by", mp->m_source);
+        panic((*dp->dr_name)(),"bad I/O vector by", mp->m_source);
     iov = iovec;
   }
 

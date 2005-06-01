@@ -52,6 +52,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
+#define NDEBUG		/* disable assertions */
+#include <assert.h>
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include <minix/syslib.h>
@@ -91,7 +93,6 @@
 #include "../libpci/pci.h"
 #include "rtl8139.h"
 
-INIT_SERVER_ASSERT
 
 #define RX_BUFSIZE	RL_RCR_RBLEN_64K_SIZE
 #define RX_BUFBITS	RL_RCR_RBLEN_64K
@@ -318,7 +319,7 @@ void main(void)
 	long v;
 
 	if ((v=get_proc_nr(&rl_tasknr, NULL)) != OK)
-		server_panic("RTL8139", "Couldn't get own proc nr", v);
+		panic("RTL8139", "Couldn't get own proc nr", v);
 
 	v= 0;
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
@@ -337,7 +338,7 @@ void main(void)
 	while (TRUE)
 	{
 		if ((r= receive(ANY, &m)) != OK)
-			server_panic("rtl8139","receive failed", r);
+			panic("rtl8139","receive failed", r);
 
 		switch (m.m_type)
 		{
@@ -379,7 +380,7 @@ void main(void)
 		case FKEY_PRESSED: rtl8139_dump(&m);		break;
 		case HARD_STOP: rtl8139_stop();			break;
 		default:
-			server_panic("rtl8139","illegal message", m.m_type);
+			panic("rtl8139","illegal message", m.m_type);
 		}
 	}
 }
@@ -395,7 +396,7 @@ static void check_int_events(void)
 				if (!rep->re_got_int)
 					continue;
 				rep->re_got_int= 0;
-				server_assert(rep->re_flags & REF_ENABLED);
+				assert(rep->re_flags & REF_ENABLED);
 				rl_check_ints(rep);
 			}
 }
@@ -533,8 +534,8 @@ message *mp;
 		rl_report_link(rep);
 	}
 
-	server_assert(rep->re_mode == REM_ENABLED);
-	server_assert(rep->re_flags & REF_ENABLED);
+	assert(rep->re_mode == REM_ENABLED);
+	assert(rep->re_flags & REF_ENABLED);
 
 	rep->re_flags &= ~(REF_PROMISC | REF_MULTI | REF_BROAD);
 
@@ -650,7 +651,7 @@ re_t *rep;
 				continue;
 			if (pcitab[i].checkclass)
 			{
-			  server_panic("rtl_probe",
+			  panic("rtl_probe",
 			    "class check not implemented", NO_NUM);
 			}
 			break;
@@ -682,7 +683,7 @@ re_t *rep;
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
 	if ((bar & 0x3ff) >= 0x100-32 || bar < 0x400)
-	  server_panic("rtl_probe",
+	  panic("rtl_probe",
 	    "base address is not properly configured", NO_NUM);
 	rep->re_base_port= bar;
 
@@ -768,7 +769,7 @@ re_t *rep;
 #endif
 
 	if (OK != (i=sys_kmalloc(tot_bufsize, &buf)))
-	    server_panic("RTL8139","Couldn't allocate kernel buffer",i);
+	    panic("RTL8139","Couldn't allocate kernel buffer",i);
 	printf("RTL8139: real %uK buffer at 0x%06x\n", tot_bufsize, buf);
 #endif
 	for (i= 0; i<N_TX_BUF; i++)
@@ -849,7 +850,7 @@ re_t *rep;
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 	if (rl_inb(port, RL_BMCR) & MII_CTRL_RST)
-		server_panic("rtl8139","reset PHY failed to complete", NO_NUM);
+		panic("rtl8139","reset PHY failed to complete", NO_NUM);
 #endif
 
 	/* Reset the device */
@@ -860,7 +861,7 @@ re_t *rep;
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 	if (rl_inb(port, RL_CR) & RL_CR_RST)
-		server_panic("rtl8139","reset failed to complete", NO_NUM);
+		panic("rtl8139","reset failed to complete", NO_NUM);
 
 	t= rl_inl(port, RL_TCR);
 	switch(t & (RL_TCR_HWVER_AM | RL_TCR_HWVER_BM))
@@ -904,7 +905,7 @@ re_t *rep;
 		bus_buf= vm_1phys2bus(rep->re_tx[i].ret_buf);
 		rl_outl(port, RL_TSAD0+i*4, bus_buf);
 		t= rl_inl(port, RL_TSD0+i*4);
-		server_assert(t & RL_TSD_OWN);
+		assert(t & RL_TSD_OWN);
 	}
 
 #if 0
@@ -1028,7 +1029,7 @@ int vectored;
 	dl_port = mp->DL_PORT;
 	count = mp->DL_COUNT;
 	if (dl_port < 0 || dl_port >= RE_PORT_NR)
-		server_panic("rtl8139"," illegal port", dl_port);
+		panic("rtl8139"," illegal port", dl_port);
 	rep= &re_table[dl_port];
 	re_client= mp->DL_PROC;
 	rep->re_client= re_client;
@@ -1036,8 +1037,8 @@ int vectored;
 	if (rep->re_clear_rx)
 		goto suspend;	/* Buffer overflow */
 
-	server_assert(rep->re_mode == REM_ENABLED);
-	server_assert(rep->re_flags & REF_ENABLED);
+	assert(rep->re_mode == REM_ENABLED);
+	assert(rep->re_flags & REF_ENABLED);
 
 	port= rep->re_base_port;
 
@@ -1083,7 +1084,7 @@ int vectored;
 		printf("rxstat = 0x%08lx\n", rxstat);
 		printf("d_start: 0x%x, d_end: 0x%x, rxstat: 0x%lx\n",
 			d_start, d_end, rxstat);
-		server_panic("rtl8139","received packet not OK", NO_NUM);
+		panic("rtl8139","received packet not OK", NO_NUM);
 	}
 	totlen= (rxstat >> RL_RXS_LEN_S);
 	if (totlen < 8 || totlen > 2*ETH_MAX_PACK_SIZE)
@@ -1095,7 +1096,7 @@ int vectored;
 		printf(
 		"d_start: 0x%x, d_end: 0x%x, totlen: %d, rxstat: 0x%lx\n",
 			d_start, d_end, totlen, rxstat);
-		server_panic(NULL, NULL, NO_NUM);
+		panic(NULL, NULL, NO_NUM);
 	}
 
 #if 0
@@ -1136,22 +1137,22 @@ int vectored;
 				s= iovp->iov_size;
 				if (size + s > packlen)
 				{
-					server_assert(packlen > size);
+					assert(packlen > size);
 					s= packlen-size;
 				}
 
 				if (sys_umap(re_client, D, iovp->iov_addr, s, &dst_phys) != OK)
-				  server_panic("rtl8139","umap_local failed\n", NO_NUM);
+				  panic("rtl8139","umap_local failed\n", NO_NUM);
 
 				if (o >= RX_BUFSIZE)
 				{
 					o -= RX_BUFSIZE;
-					server_assert(o < RX_BUFSIZE);
+					assert(o < RX_BUFSIZE);
 				}
 
 				if (o+s > RX_BUFSIZE)
 				{
-					server_assert(o<RX_BUFSIZE);
+					assert(o<RX_BUFSIZE);
 					s1= RX_BUFSIZE-o;
 
 					cps = sys_abscopy(src_phys+o, dst_phys, s1);
@@ -1175,18 +1176,18 @@ int vectored;
 		}
 		if (size < packlen)
 		{
-			server_assert(0);
+			assert(0);
 		}
 	}
 	else
 	{  
-		server_assert(0);
+		assert(0);
 #if 0
 		size= mp->DL_COUNT;
 		if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
-			server_panic("rtl8139","invalid packet size", size);
+			panic("rtl8139","invalid packet size", size);
 		if (OK != sys_umap(re_client, D, (vir_bytes)mp->DL_ADDR, size, &phys_user))
-			server_panic("rtl8139","umap_local failed", NO_NUM);
+			panic("rtl8139","umap_local failed", NO_NUM);
 
 		p= rep->re_tx[tx_head].ret_buf;
 		cps = sys_abscopy(phys_user, p, size);
@@ -1217,7 +1218,7 @@ int vectored;
 		if (l >= RX_BUFSIZE)
 		{
 			l -= RX_BUFSIZE;
-			server_assert(l < RX_BUFSIZE);
+			assert(l < RX_BUFSIZE);
 		}
 		rl_outw(port, RL_CAPR, l-RL_CAPR_DATA_OFF);
 
@@ -1229,14 +1230,14 @@ int vectored;
 	suspend:
 		if (from_int)
 		{
-			server_assert(rep->re_flags & REF_READING);
+			assert(rep->re_flags & REF_READING);
 
 			/* No need to store any state */
 			return;
 		}
 
 		rep->re_rx_mess= *mp;
-		server_assert(!(rep->re_flags & REF_READING));
+		assert(!(rep->re_flags & REF_READING));
 		rep->re_flags |= REF_READING;
 
 		reply(rep, OK, FALSE);
@@ -1260,17 +1261,17 @@ int vectored;
 		port = mp->DL_PORT;
 		count = mp->DL_COUNT;
 		if (port < 0 || port >= RE_PORT_NR)
-			server_panic("rtl8139","illegal port", port);
+			panic("rtl8139","illegal port", port);
 		rep= &re_table[port];
 		re_client= mp->DL_PROC;
 		rep->re_client= re_client;
 
-		server_assert(rep->re_mode == REM_ENABLED);
-		server_assert(rep->re_flags & REF_ENABLED);
+		assert(rep->re_mode == REM_ENABLED);
+		assert(rep->re_flags & REF_ENABLED);
 
 		if (from_int)
 		{
-			server_assert(rep->re_flags & REF_SEND_AVAIL);
+			assert(rep->re_flags & REF_SEND_AVAIL);
 			rep->re_flags &= ~REF_SEND_AVAIL;
 			rep->re_send_int= FALSE;
 			rep->re_tx_alive= TRUE;
@@ -1279,7 +1280,7 @@ int vectored;
 		tx_head= rep->re_tx_head;
 		if (rep->re_tx[tx_head].ret_busy)
 		{
-			server_assert(!(rep->re_flags & REF_SEND_AVAIL));
+			assert(!(rep->re_flags & REF_SEND_AVAIL));
 			rep->re_flags |= REF_SEND_AVAIL;
 			if (rep->re_tx[tx_head].ret_busy)
 				goto suspend;
@@ -1295,15 +1296,15 @@ int vectored;
 			rep->re_send_int= FALSE;
 		}
 
-		server_assert(!(rep->re_flags & REF_SEND_AVAIL));
-		server_assert(!(rep->re_flags & REF_PACK_SENT));
+		assert(!(rep->re_flags & REF_SEND_AVAIL));
+		assert(!(rep->re_flags & REF_PACK_SENT));
 
 		if (vectored)
 		{
 
 			if (OK != sys_umap(re_client, D, (vir_bytes)mp->DL_ADDR,
 				count * sizeof(rep->re_iovec[0]), &iov_src))
-				server_panic("rtl8139","umap_local failed", NO_NUM);
+				panic("rtl8139","umap_local failed", NO_NUM);
 
 			size= 0;
 			p= rep->re_tx[tx_head].ret_buf;
@@ -1322,12 +1323,12 @@ int vectored;
 				s= iovp->iov_size;
 				if (size + s > ETH_MAX_PACK_SIZE_TAGGED)
 				{
-				  server_panic("rtl8139","invalid packet size",
+				  panic("rtl8139","invalid packet size",
 			  	    NO_NUM);
 				}
 
 				if (OK != sys_umap(re_client, D, iovp->iov_addr, s, &phys_user))
-				  server_panic("rtl8139","umap_local failed\n", NO_NUM);
+				  panic("rtl8139","umap_local failed\n", NO_NUM);
 
 				cps = sys_abscopy(phys_user, p, s);
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
@@ -1336,15 +1337,15 @@ int vectored;
 			}
 		}
 		if (size < ETH_MIN_PACK_SIZE)
-			server_panic("rtl8139","invalid packet size", size);
+			panic("rtl8139","invalid packet size", size);
 	}
 	else
 	{  
 		size= mp->DL_COUNT;
 		if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
-			server_panic("rtl8139","invalid packet size", size);
+			panic("rtl8139","invalid packet size", size);
 		if (OK != sys_umap(re_client, D, (vir_bytes)mp->DL_ADDR, size, &phys_user))
-			server_panic("rtl8139","umap_local failed\n", NO_NUM);
+			panic("rtl8139","umap_local failed\n", NO_NUM);
 
 		p= rep->re_tx[tx_head].ret_buf;
 		cps = sys_abscopy(phys_user, p, size);
@@ -1357,7 +1358,7 @@ int vectored;
 
 	if (++tx_head == N_TX_BUF)
 		tx_head= 0;
-	server_assert(tx_head < RL_N_TX);
+	assert(tx_head < RL_N_TX);
 	rep->re_tx_head= tx_head;
 
 	rep->re_flags |= REF_PACK_SENT;
@@ -1384,7 +1385,7 @@ suspend:
 #endif
 
 	if (from_int)
-		server_panic("rtl8139","should not be sending\n", NO_NUM);
+		panic("rtl8139","should not be sending\n", NO_NUM);
 
 	rep->re_tx_mess= *mp;
 	reply(rep, OK, FALSE);
@@ -1449,7 +1450,7 @@ re_t *rep;
 		}
 		else
 		{
-			server_assert(rep->re_rx_mess.m_type == DL_READ);
+			assert(rep->re_rx_mess.m_type == DL_READ);
 			rl_readv(&rep->re_rx_mess, TRUE /* from int */,
 				FALSE /* !vectored */);
 		}
@@ -1469,7 +1470,7 @@ re_t *rep;
 		}
 		else
 		{
-			server_assert(rep->re_tx_mess.m_type == DL_WRITE);
+			assert(rep->re_tx_mess.m_type == DL_WRITE);
 			rl_writev(&rep->re_tx_mess, TRUE /* from int */,
 				FALSE /* !vectored */);
 		}
@@ -1800,7 +1801,7 @@ re_t *rep;
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 	if (rl_inb(port, RL_CR) & RL_CR_RE)
-		server_panic("rtl8139","cannot disable receiver", NO_NUM);
+		panic("rtl8139","cannot disable receiver", NO_NUM);
 
 #if 0
 	printf("RBSTART = 0x%08x\n", rl_inl(port, RL_RBSTART));
@@ -1848,12 +1849,12 @@ message *mp;
 
 	port = mp->DL_PORT;
 	if (port < 0 || port >= RE_PORT_NR)
-		server_panic("rtl8139","illegal port", port);
+		panic("rtl8139","illegal port", port);
 	rep= &re_table[port];
 	rep->re_client= mp->DL_PROC;
 
-	server_assert(rep->re_mode == REM_ENABLED);
-	server_assert(rep->re_flags & REF_ENABLED);
+	assert(rep->re_mode == REM_ENABLED);
+	assert(rep->re_flags & REF_ENABLED);
 
 	stats= rep->re_stat;
 
@@ -1888,7 +1889,7 @@ int may_block;
 	reply.DL_STAT = status | ((u32_t) err << 16);
 	reply.DL_COUNT = rep->re_read_s;
 	if (OK != (r = sys_getuptime(&now)))
-		server_panic("dp8390","sys_getuptime() failed:", r);
+		panic("dp8390","sys_getuptime() failed:", r);
 	reply.DL_CLCK = now;
 
 	r= send(rep->re_client, &reply);
@@ -1900,7 +1901,7 @@ int may_block;
 	}
 
 	if (r < 0)
-		server_panic("dp8390","send failed:", r);
+		panic("dp8390","send failed:", r);
 	
 	rep->re_read_s = 0;
 	rep->re_flags &= ~(REF_PACK_SENT | REF_PACK_RECV);
@@ -1916,7 +1917,7 @@ message *req;
 message *reply_mess;
 {
 	if (send(req->m_source, reply_mess) != OK)
-		server_panic("rtl8139","unable to mess_reply", NO_NUM);
+		panic("rtl8139","unable to mess_reply", NO_NUM);
 }
 
 /*===========================================================================*
@@ -2160,7 +2161,7 @@ re_t *rep;
 			} while (getuptime(&t1)==OK && (t1-t0) < HZ);
 			if (rl_inb(port, RL_CR) & RL_CR_TE)
 			{
-			  server_panic("rtl8139","cannot disable transmitter",
+			  panic("rtl8139","cannot disable transmitter",
 					NO_NUM);
 			}
 			rl_outb(port, RL_CR, cr | RL_CR_TE);
@@ -2229,7 +2230,7 @@ re_t *rep;
 					break;
 				if (++tx_tail >= N_TX_BUF)
 					tx_tail= 0;
-				server_assert(tx_tail < RL_N_TX);
+				assert(tx_tail < RL_N_TX);
 				rep->re_tx_tail= tx_tail;
 				continue;
 			}
@@ -2247,7 +2248,7 @@ re_t *rep;
 			{
 				printf("rl_handler, TABT, TSD%d = 0x%04lx\n",
 					tx_tail, tsd);
-				server_assert(0);	/* CLRABT is not all that
+				assert(0);	/* CLRABT is not all that
 						 * effective, why not?
 						 */
 				rep->re_stat.ets_transAb++;
@@ -2296,7 +2297,7 @@ re_t *rep;
 
 			if (++tx_tail >= N_TX_BUF)
 				tx_tail= 0;
-			server_assert(tx_tail < RL_N_TX);
+			assert(tx_tail < RL_N_TX);
 			rep->re_tx_tail= tx_tail;
 
 			if (rep->re_flags & REF_SEND_AVAIL)
@@ -2312,7 +2313,7 @@ re_t *rep;
 				}
 			}
 		}
-		server_assert(i < 2*N_TX_BUF);
+		assert(i < 2*N_TX_BUF);
 	}
 	if (isr)
 	{
@@ -2340,7 +2341,7 @@ timer_t *tp;
 #if __minix_vmd
 	tmr_arg_ut t_arg;
 
-	server_assert(tp == &rl_watchdog);
+	assert(tp == &rl_watchdog);
 	t_arg.ta_int= 0;
 	tmra_settimer(&rl_watchdog, get_uptime()+HZ, rl_watchdog_f, t_arg);
 #else
@@ -2471,10 +2472,10 @@ dpeth_t *dep;
 
 		ee_wds(dep);
 
-		server_assert(get_ee_word(dep, 0x78/2) == 0x10ec);
-		server_assert(get_ee_word(dep, 0x7A/2) == 0x8029);
-		server_assert(get_ee_word(dep, 0x7C/2) == 0x10ec);
-		server_assert(get_ee_word(dep, 0x7E/2) == 0x8029);
+		assert(get_ee_word(dep, 0x78/2) == 0x10ec);
+		assert(get_ee_word(dep, 0x7A/2) == 0x8029);
+		assert(get_ee_word(dep, 0x7C/2) == 0x10ec);
+		assert(get_ee_word(dep, 0x7E/2) == 0x8029);
 	}
 
 	if (0 == sys_getkenv("RTL8029XXX",10+1, val, sizeof(val)))
@@ -2485,7 +2486,7 @@ dpeth_t *dep;
 
 		ee_wds(dep);
 
-		server_assert(get_ee_word(dep, 0x76/2) == 0x8029);
+		assert(get_ee_word(dep, 0x76/2) == 0x8029);
 	}
 }
 
@@ -2599,7 +2600,7 @@ u16_t w;
 			break;
 	} while (getuptime(&t1) == OK && (t1 == t0));
 	if (!(inb_reg3(dep, 1) & 1))
-		server_panic("set_ee_word","device remains busy", NO_NUM);
+		panic("set_ee_word","device remains busy", NO_NUM);
 }
 
 static void ee_wds(dep)

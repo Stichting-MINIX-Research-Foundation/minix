@@ -17,20 +17,20 @@
 #include <ansi.h>
 
 #include <minix/const.h>
+#include <minix/com.h>
 #include <minix/type.h>
 #include <minix/callnr.h>
 
 #include <minix/ipc.h>
 
-#define MM                 0
-#define FS                 1
+#define MM                 PM_PROC_NR
+#define FS                 FS_PROC_NR
 
 _PROTOTYPE( int __execve, (const char *_path, char *const _argv[], 
 			char *const _envp[], int _nargs, int _nenvps)	);
 _PROTOTYPE( int _syscall, (int _who, int _syscallnr, message *_msgptr)	);
 _PROTOTYPE( void _loadname, (const char *_name, message *_msgptr)	);
 _PROTOTYPE( int _len, (const char *_s)					);
-_PROTOTYPE( void panic, (const char *_message, int _errnum)		);
 _PROTOTYPE( void _begsig, (int _dummy)					);
 
 #endif /* _LIB_H */

@@ -167,7 +167,7 @@ PUBLIC void main(void)
 
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
   if (OK != (s=sys_getmachine(&machine))) {
-    server_panic("TTY","Couldn't obtain kernel environment.", s);
+    panic("TTY","Couldn't obtain kernel environment.", s);
   }
 
   printf("User-level TTY driver alive!\n");
@@ -1309,7 +1309,7 @@ int status;			/* reply code */
   tty_mess.REP_PROC_NR = proc_nr;
   tty_mess.REP_STATUS = status;
   if ((status = send(replyee, &tty_mess)) != OK) {
-	server_panic("TTY","tty_reply failed, status\n", status);
+	panic("TTY","tty_reply failed, status\n", status);
   }
 }
 
@@ -1330,7 +1330,7 @@ int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
 
   if (tp->tty_pgrp != 0) 
       if (OK != (status = sys_kill(tp->tty_pgrp, sig)))
-        server_panic("TTY","Error, call to sys_kill failed", status);
+        panic("TTY","Error, call to sys_kill failed", status);
 
   if (!(tp->tty_termios.c_lflag & NOFLSH)) {
 	tp->tty_incount = tp->tty_eotct = 0;	/* kill earlier input */
@@ -1406,7 +1406,7 @@ PRIVATE void expire_timers(void)
 
   /* Get the current time to compare the timers against. */
   if ((s=sys_getuptime(&now)) != OK)
- 	server_panic("TTY","Couldn't get uptime from clock.", s);
+ 	panic("TTY","Couldn't get uptime from clock.", s);
 
   /* Scan the queue of timers for expired timers. This dispatch the watchdog
    * functions of expired timers. Possibly a new alarm call must be scheduled.
@@ -1416,7 +1416,7 @@ PRIVATE void expire_timers(void)
   else {  					  /* set new sync alarm */
   	tty_next_timeout = tty_timers->tmr_exp_time;
   	if ((s=sys_syncalrm(SELF, tty_next_timeout, 1)) != OK)
- 		server_panic("TTY","Couldn't set synchronous alarm.", s);
+ 		panic("TTY","Couldn't set synchronous alarm.", s);
   }
 }
 
@@ -1433,7 +1433,7 @@ int enable;			/* set timer if true, otherwise unset */
 
   /* Get the current time to calculate the timeout time. */
   if ((s=sys_getuptime(&now)) != OK)
- 	server_panic("TTY","Couldn't get uptime from clock.", s);
+ 	panic("TTY","Couldn't get uptime from clock.", s);
   if (enable) {
   	exp_time = now + tty_ptr->tty_termios.c_cc[VTIME] * (HZ/10);
  	/* Set a new timer for enabling the TTY events flags. */
@@ -1452,7 +1452,7 @@ int enable;			/* set timer if true, otherwise unset */
   else if (tty_timers->tmr_exp_time != tty_next_timeout) { 
   	tty_next_timeout = tty_timers->tmr_exp_time;
   	if ((s=sys_syncalrm(SELF, tty_next_timeout, 1)) != OK)
- 		server_panic("TTY","Couldn't set synchronous alarm.", s);
+ 		panic("TTY","Couldn't set synchronous alarm.", s);
   }
 }
 

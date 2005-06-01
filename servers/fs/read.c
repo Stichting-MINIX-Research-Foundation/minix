@@ -79,7 +79,7 @@ int rw_flag;			/* READING or WRITING */
    * it means something has gone wrong we can't repair now.
    */
   if(copy_queue_used != 0) {
-  	panic("copy queue size nonzero when entering read_write().",
+  	panic(__FILE__,"copy queue size nonzero when entering read_write().",
   		copy_queue_used);
   }
 
@@ -124,13 +124,13 @@ int rw_flag;			/* READING or WRITING */
 
   if((char_spec = (mode_word == I_CHAR_SPECIAL ? 1 : 0))) {
   	if(rip->i_zone[0] == NO_DEV)
-  		panic("read_write tries to read from character device NO_DEV", NO_NUM);
+  		panic(__FILE__,"read_write tries to read from character device NO_DEV", NO_NUM);
   	block_size = get_block_size(rip->i_zone[0]);
   }
   if((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
   	f_size = LONG_MAX;
   	if(rip->i_zone[0] == NO_DEV)
-  		panic("read_write tries to read from block device NO_DEV", NO_NUM);
+  		panic(__FILE__,"read_write tries to read from block device NO_DEV", NO_NUM);
   	block_size = get_block_size(rip->i_zone[0]);
   }
 
@@ -323,7 +323,7 @@ int *completed;			/* number of bytes copied */
 
   /* In all cases, bp now points to a valid buffer. */
   if(bp == NIL_BUF) {
-  	panic("bp not valid in rw_chunk, this can't happen", NO_NUM);
+  	panic(__FILE__,"bp not valid in rw_chunk, this can't happen", NO_NUM);
   }
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&
 					position >= rip->i_size && off == 0) {
@@ -348,20 +348,20 @@ int *completed;			/* number of bytes copied */
 #else
   /* have to copy a buffer now. remember to do it. */
   if(copy_queue_used < 0 || copy_queue_used > COPY_QUEUE_LEN) {
-  	panic("copy_queue_used illegal size", copy_queue_used);
+  	panic(__FILE__,"copy_queue_used illegal size", copy_queue_used);
   }
 
   if(copy_queue_used == COPY_QUEUE_LEN) {
   	r = rw_chunk_finish(completed);
 	if(copy_queue_used != 0) {
-	  	panic("copy_queue_used nonzero", copy_queue_used);
+	  	panic(__FILE__,"copy_queue_used nonzero", copy_queue_used);
   	}
   }
 
   entry = copy_queue_used++;
 
   if(entry < 0 || entry >= COPY_QUEUE_LEN) {
-  	panic("entry illegal slot", entry);
+  	panic(__FILE__,"entry illegal slot", entry);
   }
 
   copy_queue[entry].bp = bp;
@@ -422,7 +422,7 @@ PRIVATE int rw_chunk_finish(int *completed)
 	m.VCP_VEC_ADDR = (char *) vir_cp_req;
 
 	if((r=sendrec(SYSTASK, &m)) < 0) {
-		panic("rw_chunk_finish: virvcopy sendrec failed", r);
+		panic(__FILE__,"rw_chunk_finish: virvcopy sendrec failed", r);
 	}
 
 	*completed = total;
@@ -524,7 +524,7 @@ int index;			/* index into *bp */
 		(zone < (zone_t) sp->s_firstdatazone || zone >= sp->s_zones)) {
 	printf("Illegal zone number %ld in indirect block, index %d\n",
 	       (long) zone, index);
-	panic("check file system", NO_NUM);
+	panic(__FILE__,"check file system", NO_NUM);
   }
   return(zone);
 }

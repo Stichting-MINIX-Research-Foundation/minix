@@ -166,7 +166,7 @@ PRIVATE void kmessages_dmp()
 
   /* Try to get a copy of the kernel messages. */
   if ((r = sys_getkmessages(&kmess)) != OK) {
-      report("warning: couldn't get copy of kmessages", r);
+      report("IS","warning: couldn't get copy of kmessages", r);
       return;
   }
 
@@ -198,7 +198,7 @@ PRIVATE void monparams_dmp()
 
   /* Try to get a copy of the boot monitor parameters. */
   if ((r = sys_getmonparams(val, sizeof(val))) != OK) {
-      report("warning: couldn't get copy of monitor params", r);
+      report("IS","warning: couldn't get copy of monitor params", r);
       return;
   }
 
@@ -243,7 +243,7 @@ PRIVATE void irqtab_dmp()
   };
 
   if ((r = sys_getirqhooks(irq_hooks)) != OK) {
-      report("warning: couldn't get copy of irq hooks", r);
+      report("IS","warning: couldn't get copy of irq hooks", r);
       return;
   }
 
@@ -276,7 +276,7 @@ PRIVATE void image_dmp()
   char* priorities[] = {"task", "higher","high", "normal", "low", "lower", "user","idle"};
 	
   if ((r = sys_getimage(image)) != OK) {
-      report("warning: couldn't get copy of image table", r);
+      report("IS","warning: couldn't get copy of image table", r);
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
@@ -307,12 +307,12 @@ PRIVATE void sched_dmp()
 
   /* First obtain a scheduling information. */
   if ((r = sys_getschedinfo(proc, rdy_head)) != OK) {
-      report("warning: couldn't get copy of process table", r);
+      report("IS","warning: couldn't get copy of process table", r);
       return;
   }
   /* Then obtain kernel addresses to correct pointer information. */
   if ((r = sys_getkinfo(&kinfo)) != OK) {
-      report("warning: couldn't get kernel addresses", r);
+      report("IS","warning: couldn't get kernel addresses", r);
       return;
   }
 
@@ -351,11 +351,11 @@ PRIVATE void kenv_dmp()
     struct machine machine;
     int r;
     if ((r = sys_getkinfo(&kinfo)) != OK) {
-    	report("warning: couldn't get copy of kernel info struct", r);
+    	report("IS","warning: couldn't get copy of kernel info struct", r);
     	return;
     }
     if ((r = sys_getmachine(&machine)) != OK) {
-    	report("warning: couldn't get copy of kernel machine struct", r);
+    	report("IS","warning: couldn't get copy of kernel machine struct", r);
     	return;
     }
 
@@ -396,7 +396,7 @@ PRIVATE void memchunks_dmp()
     int i,r;
     struct memory mem[NR_MEMS];
     if ((r = sys_getmemchunks(mem)) != OK) {
-    	report("warning: couldn't get copy of mem chunks", r);
+    	report("IS","warning: couldn't get copy of mem chunks", r);
     	return;
     }
 	
@@ -421,7 +421,7 @@ PRIVATE void sendmask_dmp()
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
-      report("warning: couldn't get copy of process table", r);
+      report("IS","warning: couldn't get copy of process table", r);
       return;
   }
 
@@ -480,7 +480,7 @@ PRIVATE void proctab_dmp()
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
-      report("warning: couldn't get copy of process table", r);
+      report("IS","warning: couldn't get copy of process table", r);
       return;
   }
 
@@ -537,7 +537,7 @@ PRIVATE void memmap_dmp()
 
   /* First obtain a fresh copy of the current process table. */
   if ((r = sys_getproctab(proc)) != OK) {
-      report("warning: couldn't get copy of process table", r);
+      report("IS","warning: couldn't get copy of process table", r);
       return;
   }
 

@@ -265,7 +265,7 @@ PRIVATE void init_params()
   /* Get the number of drives from the BIOS data area */
   if ((s=sys_vircopy(SELF, BIOS_SEG, NR_HD_DRIVES_ADDR, 
  	 	SELF, D, (vir_bytes) params, NR_HD_DRIVES_SIZE)) != OK)
-  	server_panic(w_name(), "Couldn't read BIOS", s);
+  	panic(w_name(), "Couldn't read BIOS", s);
   if ((nr_drives = params[0]) > 2) nr_drives = 2;
 
   for (drive = 0, wn = wini; drive < MAX_DRIVES; drive++, wn++) {
@@ -275,13 +275,13 @@ PRIVATE void init_params()
 	    size = (drive == 0) ? BIOS_HD0_PARAMS_SIZE:BIOS_HD1_PARAMS_SIZE;
 	    if ((s=sys_vircopy(SELF, BIOS_SEG, vector,
 				SELF, D, (vir_bytes) parv, size)) != OK)
-  			server_panic(w_name(), "Couldn't read BIOS", s);
+  			panic(w_name(), "Couldn't read BIOS", s);
 
 		/* Calculate the address of the parameters and copy them */
   		if ((s=sys_vircopy(
   			SELF, BIOS_SEG, hclick_to_physb(parv[1]) + parv[0],
   			SELF, D, (phys_bytes) params, 16L))!=OK)
-  		    server_panic(w_name(),"Couldn't copy parameters", s);
+  		    panic(w_name(),"Couldn't copy parameters", s);
 
 		/* Copy the parameters to the structures of the drive */
 		wn->lcylinders = bp_cylinders(params);
@@ -393,7 +393,7 @@ PRIVATE int w_identify()
 
 	/* Device information. */
 	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 
 	/* Why are the strings byte swapped??? */
 	for (i = 0; i < 40; i++) id_string[i] = id_byte(27)[i^1];
@@ -430,7 +430,7 @@ PRIVATE int w_identify()
 
 	/* Device information. */
 	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, 512)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 
 	/* Why are the strings byte swapped??? */
 	for (i = 0; i < 40; i++) id_string[i] = id_byte(27)[i^1];
@@ -463,9 +463,9 @@ PRIVATE int w_identify()
   /* Everything looks OK; register IRQ so we can stop polling. */
   wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
   if ((s=sys_irqsetpolicy(wn->irq, IRQ_REENABLE, &wn->irq_hook_id)) != OK) 
-  	server_panic("AT", "coudn't set IRQ policy", s);
+  	panic(w_name(), "coudn't set IRQ policy", s);
   if ((s=sys_irqenable(&wn->irq_hook_id)) != OK)
-  	server_panic("AT", "coudn't enable IRQ line", s);
+  	panic(w_name(), "coudn't enable IRQ line", s);
   return(OK);
 }
 
@@ -605,7 +605,7 @@ unsigned nr_req;		/* length of request vector */
 				/* An error, send data to the bit bucket. */
 				if (w_status & STATUS_DRQ) {
 	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 				}
 				break;
 			}
@@ -617,10 +617,10 @@ unsigned nr_req;		/* length of request vector */
 		/* Copy bytes to or from the device's buffer. */
 		if (opcode == DEV_GATHER) {
 	if ((s=sys_insw(wn->base + REG_DATA, proc_nr, (void *) iov->iov_addr, SECTOR_SIZE)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 		} else {
 	if ((s=sys_outsw(wn->base + REG_DATA, proc_nr, (void *) iov->iov_addr, SECTOR_SIZE)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 
 			/* Data sent, wait for an interrupt. */
 			if ((r = at_intr_wait()) != OK) break;
@@ -668,7 +668,7 @@ struct command *cmd;		/* Command block */
 
   /* Select drive. */
   if ((s=sys_outb(base + REG_LDH, cmd->ldh)) != OK)
-  	server_panic(w_name(),"Couldn't write register to select drive",s);
+  	panic(w_name(),"Couldn't write register to select drive",s);
 
   if (!w_waitfor(STATUS_BSY, 0)) {
 	printf("%s: com_out: drive not ready\n", w_name());
@@ -693,7 +693,7 @@ struct command *cmd;		/* Command block */
   pv_set(outbyte[5], base + REG_CYL_HI, cmd->cyl_hi);
   pv_set(outbyte[6], base + REG_COMMAND, cmd->command);
   if ((s=sys_voutb(outbyte,7)) != OK)
-  	server_panic("AT_WINI","Couldn't write registers with sys_voutb()",s);
+  	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
   return(OK);
 }
 
@@ -788,16 +788,15 @@ PRIVATE int w_reset()
   struct wini *wn;
 
   /* Wait for any internal drive recovery. */
-  tick_delay(RECOVERY_TICKS);
-
+  tickdelay(RECOVERY_TICKS);
 
   /* Strobe reset bit */
   if ((s=sys_outb(wn->base + REG_CTL, CTL_RESET)) != OK)
-  	server_panic("AT_WINI","Couldn't strobe reset bit",s);
-  tick_delay(DELAY_TICKS);
+  	panic(w_name(),"Couldn't strobe reset bit",s);
+  tickdelay(DELAY_TICKS);
   if ((s=sys_outb(wn->base + REG_CTL, 0)) != OK)
-  	server_panic("AT_WINI","Couldn't strobe reset bit",s);
-  tick_delay(DELAY_TICKS);
+  	panic(w_name(),"Couldn't strobe reset bit",s);
+  tickdelay(DELAY_TICKS);
 
   /* Wait for controller ready */
   if (!w_waitfor(STATUS_BSY, 0)) {
@@ -858,7 +857,7 @@ PRIVATE int at_intr_wait()
 	r = OK;
   } else {
   	if ((s=sys_inb(w_wn->base + REG_ERROR, &inbval)) != OK)
-  		server_panic(w_name(),"Couldn't read register",s);
+  		panic(w_name(),"Couldn't read register",s);
   	if ((w_status & STATUS_ERR) && (inbval & ERROR_BB)) {
   		r = ERR_BAD_SECTOR;	/* sector marked bad, retries won't help */
   	} else {
@@ -887,7 +886,7 @@ int value;			/* required status */
   getuptime(&t0);
   do {
 	if ((s=sys_inb(w_wn->base + REG_STATUS, &w_status)) != OK)
-		server_panic(w_name(),"Couldn't read register",s);
+		panic(w_name(),"Couldn't read register",s);
 	if ((w_status & mask) == value) {
         	return 1;
 	}
@@ -1027,7 +1026,7 @@ unsigned nr_req;		/* length of request vector */
 			if (chunk > count) chunk = count;
 			if (chunk > DMA_BUF_SIZE) chunk = DMA_BUF_SIZE;
 	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, chunk)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 			before -= chunk;
 			count -= chunk;
 		}
@@ -1037,7 +1036,7 @@ unsigned nr_req;		/* length of request vector */
 			if (chunk > count) chunk = count;
 			if (chunk > iov->iov_size) chunk = iov->iov_size;
 	if ((s=sys_insw(wn->base + REG_DATA, proc_nr, (void *) iov->iov_addr, chunk)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 			position += chunk;
 			nbytes -= chunk;
 			count -= chunk;
@@ -1054,7 +1053,7 @@ unsigned nr_req;		/* length of request vector */
 			chunk = count;
 			if (chunk > DMA_BUF_SIZE) chunk = DMA_BUF_SIZE;
 	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, chunk)) != OK)
-		server_panic(w_name(),"Call to sys_insw() failed", s);
+		panic(w_name(),"Call to sys_insw() failed", s);
 			count -= chunk;
 		}
 	}
@@ -1087,7 +1086,7 @@ unsigned cnt;
 
   /* Select Master/Slave drive */
   if ((s=sys_outb(wn->base + REG_DRIVE, wn->ldhpref)) != OK)
-  	server_panic("AT_WINI","Couldn't select master/ slave drive",s);
+  	panic(w_name(),"Couldn't select master/ slave drive",s);
 
   if (!w_waitfor(STATUS_BSY | STATUS_DRQ, 0)) {
 	printf("%s: atapi_sendpacket: drive not ready\n", w_name());
@@ -1114,7 +1113,7 @@ unsigned cnt;
   pv_set(outbyte[4], wn->base + REG_CNT_HI, (cnt >> 8) & 0xFF);
   pv_set(outbyte[5], wn->base + REG_COMMAND, w_command);
   if ((s=sys_voutb(outbyte,6)) != OK)
-  	server_panic("AT_WINI","Couldn't write registers with sys_voutb()",s);
+  	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
 
   if (!w_waitfor(STATUS_BSY | STATUS_DRQ, STATUS_DRQ)) {
 	printf("%s: timeout (BSY|DRQ -> DRQ)\n");
@@ -1124,7 +1123,7 @@ unsigned cnt;
 
   /* Send the command packet to the device. */
   if ((s=sys_outsw(wn->base + REG_DATA, SELF, packet, 12)) != OK)
-	server_panic(w_name(),"sys_outsw() failed", s);
+	panic(w_name(),"sys_outsw() failed", s);
   return(OK);
 }
 
@@ -1153,7 +1152,7 @@ PRIVATE int atapi_intr_wait()
   inbyte[2].port = wn->base + REG_CNT_HI;
   inbyte[3].port = wn->base + REG_IRR;
   if ((s=sys_vinb(inbyte, 4)) != OK)
-  	server_panic(w_name(),"ATAPI failed sys_vinb()", s);
+  	panic(w_name(),"ATAPI failed sys_vinb()", s);
   e = inbyte[0].value;
   len = inbyte[1].value;
   len |= inbyte[2].value << 8;

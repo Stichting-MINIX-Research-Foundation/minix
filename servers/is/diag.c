@@ -18,7 +18,7 @@ message *m;					/* notification message */
 
   /* Try to get a fresh copy of the buffer with kernel messages. */
   if ((r=sys_getkmessages(&kmess)) != OK) {
-  	report("Couldn't get copy of kmessages", r);
+  	report("IS","couldn't get copy of kmessages", r);
   	return;
   }
 

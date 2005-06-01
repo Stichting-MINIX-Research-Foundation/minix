@@ -14,6 +14,6 @@ char *key;		/* environment variable whose value is bogus */
   	printf("WARNING: sys_getkenv() failed in env_panic(): %d\n", s);
   }
   printf("Bad environment setting: '%s = %s'\n", key, value);
-  server_panic("","", NO_NUM);
+  panic("","", NO_NUM);
 }
 

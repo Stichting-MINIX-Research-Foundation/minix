@@ -113,11 +113,11 @@ PRIVATE void get_work()
 			reviving--;
 			return;
 		}
-	panic("get_work couldn't revive anyone", NO_NUM);
+	panic(__FILE__,"get_work couldn't revive anyone", NO_NUM);
   }
 
   /* Normal case.  No one to revive. */
-  if (receive(ANY, &m_in) != OK) panic("fs receive error", NO_NUM);
+  if (receive(ANY, &m_in) != OK) panic(__FILE__,"fs receive error", NO_NUM);
   who = m_in.m_source;
   call_nr = m_in.m_type;
 }
@@ -180,11 +180,11 @@ PRIVATE void fs_init()
   /* Certain relations must hold for the file system to work at all. Some 
    * extra block_size requirements are checked at super-block-read-in time.
    */
-  if (OPEN_MAX > 127) panic("OPEN_MAX > 127", NO_NUM);
-  if (NR_BUFS < 6) panic("NR_BUFS < 6", NO_NUM);
-  if (V1_INODE_SIZE != 32) panic("V1 inode size != 32", NO_NUM);
-  if (V2_INODE_SIZE != 64) panic("V2 inode size != 64", NO_NUM);
-  if (OPEN_MAX > 8 * sizeof(long)) panic("Too few bits in fp_cloexec", NO_NUM);
+  if (OPEN_MAX > 127) panic(__FILE__,"OPEN_MAX > 127", NO_NUM);
+  if (NR_BUFS < 6) panic(__FILE__,"NR_BUFS < 6", NO_NUM);
+  if (V1_INODE_SIZE != 32) panic(__FILE__,"V1 inode size != 32", NO_NUM);
+  if (V2_INODE_SIZE != 64) panic(__FILE__,"V2 inode size != 64", NO_NUM);
+  if (OPEN_MAX > 8 * sizeof(long)) panic(__FILE__,"Too few bits in fp_cloexec", NO_NUM);
 
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;
@@ -203,7 +203,7 @@ PRIVATE void fs_init()
    */
   do {
   	if (OK != (s=receive(PM_PROC_NR, &mess)))
-  		panic("FS couldn't receive from PM", s);
+  		panic(__FILE__,"FS couldn't receive from PM", s);
   	if (NONE == mess.PR_PROC_NR) break; 
 
 	fp = &fproc[mess.PR_PROC_NR];
@@ -275,19 +275,20 @@ PRIVATE void load_ram(void)
 
   /* Open the root device. */
   if (dev_open(root_dev, FS_PROC_NR, R_BIT|W_BIT) != OK) {
-	panic("Cannot open root device",NO_NUM);
+	panic(__FILE__,"Cannot open root device",NO_NUM);
   }
 
   /* If we must initialize a ram disk, get details from the image device. */
   if (root_dev == DEV_RAM || root_dev != image_dev) {
   	u32_t fsmax;
 	if (dev_open(image_dev, FS_PROC_NR, R_BIT) != OK)
-		panic("Cannot open RAM image device", NO_NUM);
+		panic(__FILE__,"Cannot open RAM image device", NO_NUM);
 
 	/* Get size of RAM disk image from the super block. */
 	sp = &super_block[0];
 	sp->s_dev = image_dev;
-	if (read_super(sp) != OK) panic("Bad RAM disk image FS", NO_NUM);
+	if (read_super(sp) != OK) 
+		panic(__FILE__,"Bad RAM disk image FS", NO_NUM);
 
 	lcount = sp->s_zones << sp->s_log_zone_size;	/* # blks on root dev*/
 
@@ -309,7 +310,7 @@ PRIVATE void load_ram(void)
   m_out.REQUEST = MIOCRAMSIZE;
   m_out.POSITION = ram_size_kb*1024;
   if (sendrec(MEMORY, &m_out) != OK || m_out.REP_STATUS != OK)
-	panic("Can't set RAM disk size", NO_NUM);
+	panic(__FILE__,"can't set RAM disk size", NO_NUM);
 
 
 #if ENABLE_CACHE2
@@ -335,7 +336,7 @@ PRIVATE void load_ram(void)
   if(block_size_ram != block_size_image) {
   	printf("ram block size: %d image block size: %d\n", 
   		block_size_ram, block_size_image);
-  	panic("Sorry, ram disk and image disk block sizes have to be the same.", NO_NUM);
+  	panic(__FILE__,"ram disk and image disk block sizes must match", NO_NUM);
   }
 
   for (b = 0; b < (block_t) lcount; b++) {
@@ -401,7 +402,7 @@ dev_t super_dev;			/* place to get superblock from */
 	rip = get_inode(super_dev, ROOT_INODE);	/* inode for root dir */
 	if ( (rip->i_mode & I_TYPE) != I_DIRECTORY || rip->i_nlinks < 3) bad++;
   }
-  if (bad) panic("Invalid root file system", NO_NUM);
+  if (bad) panic(__FILE__,"Invalid root file system", NO_NUM);
 
   sp->s_imount = rip;
   dup_inode(rip);

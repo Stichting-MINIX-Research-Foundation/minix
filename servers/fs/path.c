@@ -290,7 +290,7 @@ int flag;			/* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 	bp = get_block(ldir_ptr->i_dev, b, NORMAL);	/* get a dir block */
 
 	if(bp == NO_BLOCK)
-		panic("get_block returned NO_BLOCK", NO_NUM);
+		panic(__FILE__,"get_block returned NO_BLOCK", NO_NUM);
 
 	/* Search a directory block. */
 	for (dp = &bp->b_dir[0]; dp < &bp->b_dir[NR_DIR_ENTRIES(ldir_ptr->i_sp->s_block_size)]; dp++) {

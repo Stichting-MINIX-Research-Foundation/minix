@@ -31,9 +31,6 @@ long min, max;		/* minimum and maximum values for the parameter */
   long newpar;
   int s, i = 0, radix, r;
 
-#if DEAD_CODE
-  if ((s=sys_getkenv(env, strlen(env), value, sizeof(value))) != 0) { 
-#endif
   if ((s=get_mon_param(env, value, sizeof(value))) != 0) { 
       if (s == ESRCH) return(EP_UNSET);		/* only error allowed */ 
       printf("WARNING: sys_getkenv() failed in env_parse(): %d\n",s);

@@ -225,21 +225,21 @@ int line;
 	printf("panic at %s, %d: ", file, line);
 }
 
-PUBLIC void panic()
+PUBLIC void inet_panic()
 {
 	printf("\ninet stacktrace: ");
 	stacktrace();
-	server_panic("INET","aborted due to a panic",NO_NUM);
+	panic("INET","aborted due to a panic",NO_NUM);
 }
 
 #else /* CRAMPED */
 
-PUBLIC void panic(file, line)
+PUBLIC void inet_panic(file, line)
 char *file;
 int line;
 {
 	printf("panic at %s, %d\n", file, line);
-	server_panic("INET","aborted due to a panic",NO_NUM);
+	panic("INET","aborted due to a panic",NO_NUM);
 }
 #endif
 
@@ -251,7 +251,7 @@ char *what;
 {
 	panic0(file, line);
 	printf("assertion \"%s\" failed", what);
-	panic();
+	inet_panic();
 }
 
 
@@ -264,7 +264,7 @@ int rhs;
 {
 	panic0(file, line);
 	printf("compare (%d) %s (%d) failed", lhs, what, rhs);
-	panic();
+	inet_panic();
 }
 #endif /* !NDEBUG */
 

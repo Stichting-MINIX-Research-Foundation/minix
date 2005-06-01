@@ -7,11 +7,12 @@
  *	Mar 15, 2004 by Jorrit N. Herder
  *
  * Changes:
- *	Mar 18, 2005: added tick_delay
+ *	May 31, 2005: added getuptime
+ *	Mar 18, 2005: added tickdelay
  *	Mar 15, 2005: added get_proc_nr
  *	Oct 01, 2004: added env_parse, env_prefix, env_panic
  *	Jul 13, 2004: added fkey_ctl
- *	Apr 28, 2004: added server_report, server_panic, server_assert 
+ *	Apr 28, 2004: added report, panic 
  *	Mar 31, 2004: setup like other libraries, such as syslib
  */
 
@@ -19,8 +20,6 @@
 /*==========================================================================* 
  * Miscellaneous helper functions.
  *==========================================================================*/ 
-
-#include <minix/serverassert.h>
 
 /* Environment parsing return values. */
 #define EP_BUF_SIZE   128	/* local buffer for env value */
@@ -40,13 +39,14 @@ _PROTOTYPE(int env_parse, (char *env, char *fmt, int field, long *param,
 #define fkey_disable(fkey) fkey_ctl(fkey, 0)
 _PROTOTYPE(int fkey_ctl, (int fkey_code, int enable_disable)		);
 
-_PROTOTYPE(void server_report, (char *who, char *mess, int num)		);
-_PROTOTYPE(void server_panic, (char *who, char *mess, int num)		);
 
 _PROTOTYPE(int get_proc_nr, (int *proc_nr, char *proc_name) );
 
+_PROTOTYPE(void report, (char *who, char *mess, int num));
+_PROTOTYPE(void panic, (char *who, char *mess, int num));
+
 _PROTOTYPE(int getuptime, (clock_t *ticks));
-_PROTOTYPE(int tick_delay, (clock_t ticks));
+_PROTOTYPE(int tickdelay, (clock_t ticks));
 
 #endif /* _EXTRALIB_H */
 

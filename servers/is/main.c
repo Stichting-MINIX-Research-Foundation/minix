@@ -81,21 +81,6 @@ PUBLIC void main(void)
 
 
 /*===========================================================================*
- *				    report                                   *
- *===========================================================================*/
-PUBLIC void report(mess, num)
-char *mess;				/* message format to print */
-int num;				/* number to go with the message */
-{
-  if (num != NO_NUM) {
-      printf("IS: %s %d\n", mess, num);
-  } else {
-      printf("IS: %s\n", mess);
-  }
-}
-
-
-/*===========================================================================*
  *				 init_server                                 *
  *===========================================================================*/
 PRIVATE void init_server()
@@ -128,7 +113,7 @@ PRIVATE void get_work()
     int status = 0;
     status = receive(ANY, &m_in);   /* this blocks until message arrives */
     if (OK != status)
-        server_panic("IS","failed to receive message!", status);
+        panic("IS","failed to receive message!", status);
     who = m_in.m_source;        /* message arrived! set sender */
     callnr = m_in.m_type;       /* set function call number */
 }
@@ -145,7 +130,7 @@ int result;                           	/* report result to replyee */
     m_out.m_type = result;  		/* build reply message */
     send_status = send(who, &m_out);    /* send the message */
     if (OK != send_status)
-        server_panic("IS", "unable to send reply!", send_status);
+        panic("IS", "unable to send reply!", send_status);
 }
 
 

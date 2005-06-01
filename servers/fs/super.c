@@ -38,7 +38,7 @@ bit_t origin;			/* number of bit to start searching at */
   bit_t i, b;
 
   if (sp->s_rd_only)
-	panic("can't allocate bit on read-only filesys.", NO_NUM);
+	panic(__FILE__,"can't allocate bit on read-only filesys.", NO_NUM);
 
   if (map == IMAP) {
 	start_block = START_BLOCK;
@@ -112,7 +112,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   block_t start_block;
 
   if (sp->s_rd_only)
-	panic("can't free bit on read-only filesys.", NO_NUM);
+	panic(__FILE__,"can't free bit on read-only filesys.", NO_NUM);
 
   if (map == IMAP) {
 	start_block = START_BLOCK;
@@ -128,7 +128,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 
   k = conv2(sp->s_native, (int) bp->b_bitmap[word]);
   if (!(k & mask)) {
-	panic(map == IMAP ? "tried to free unused inode" :
+	panic(__FILE__,map == IMAP ? "tried to free unused inode" :
 	      "tried to free unused block", NO_NUM);
   }
 
@@ -151,13 +151,13 @@ dev_t dev;			/* device number whose super_block is sought */
   register struct super_block *sp;
 
   if(dev == NO_DEV)
-  	panic("request for super_block of NO_DEV in get_super()", NO_NUM);
+  	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
 
   for (sp = &super_block[0]; sp < &super_block[NR_SUPERS]; sp++)
 	if (sp->s_dev == dev) return(sp);
 
   /* Search failed.  Something wrong. */
-  panic("can't find superblock for device (in decimal)", (int) dev);
+  panic(__FILE__,"can't find superblock for device (in decimal)", (int) dev);
 
   return(NIL_SUPER);		/* to keep the compiler and lint quiet */
 }
@@ -172,7 +172,7 @@ PUBLIC int get_block_size(dev_t dev)
   register struct super_block *sp;
 
   if(dev == NO_DEV)
-  	panic("request for block size of NO_DEV in get_block_size()", NO_NUM);
+  	panic(__FILE__,"request for block size of NO_DEV", NO_NUM);
 
   for (sp = &super_block[0]; sp < &super_block[NR_SUPERS]; sp++)
 	if (sp->s_dev == dev)
@@ -219,7 +219,7 @@ register struct super_block *sp; /* pointer to a superblock */
 
   dev = sp->s_dev;		/* save device (will be overwritten by copy) */
   if(dev == NO_DEV)
-  	panic("request for super_block of NO_DEV in read_super()", NO_NUM);
+  	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
   r = dev_io(DEV_READ, dev, FS_PROC_NR,
   	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0);
   if(r != MIN_BLOCK_SIZE) {

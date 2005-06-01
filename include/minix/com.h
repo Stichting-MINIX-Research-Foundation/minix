@@ -177,18 +177,6 @@
 
 
 /*===========================================================================*
- *                    CLOCK request types and field names                    *
- *===========================================================================*/
-
-/* Clock library calls are dispatched via a call vector, so be careful when 
- * modifying the clock call numbers. The numbers here determine which call
- * is made from the call vector.
- */ 
-#  define CLK_SIGNALRM	 1	/* clk_signalrm(proc_nr, ticks) */
-#  define CLK_SYNCALRM	 6	/* clk_syncalrm(proc_nr,exp_time,abs_time) */
-#  define CLK_FLAGALRM	 7	/* clk_flagalrm(ticks, flag_ptr) */
-
-/*===========================================================================*
  *                  SYSTASK request types and field names                    *
  *===========================================================================*/
 
@@ -213,7 +201,7 @@
 
 #  define SYS_SIGNALRM	15	/* sys_signalrm(proc_nr, ticks) */
 #  define SYS_SYNCALRM	16	/* sys_syncalrm(proc_nr,exp_time,abs_time) */
-#  define SYS_FLAGALRM	17	/* sys_flagalrm(ticks, flag_ptr) */
+
 #  define SYS_PHYSVCOPY 18	/* sys_physvcopy(vec_ptr, vec_size) */
 #  define SYS_SVRCTL    19	/* sys_svrctl(proc_nr, req, argp) */
 #  define SYS_SDEVIO    20	/* sys_sdevio(port, proc_nr, buf, count) */

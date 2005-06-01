@@ -250,10 +250,10 @@ PRIVATE void m_init()
 
   /* Get memory addresses from the kernel. */
   if (OK != (s=sys_getmemchunks(&mem))) {
-      server_panic("MEM","Couldn't get memory chunks.",s);
+      panic("MEM","Couldn't get memory chunks.",s);
   }
   if (OK != (s=sys_getkinfo(&kinfo))) {
-      server_panic("MEM","Couldn't get kernel information.",s);
+      panic("MEM","Couldn't get kernel information.",s);
   }
 
   /* Install remote segment for /dev/kmem memory. */
@@ -261,7 +261,7 @@ PRIVATE void m_init()
   m_geom[KMEM_DEV].dv_size = cvul64(kinfo.kmem_size);
   if (OK != (s=sys_segctl(&m_seg[KMEM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
   		kinfo.kmem_base, kinfo.kmem_size))) {
-      server_panic("MEM","Couldn't install remote segment.",s);
+      panic("MEM","Couldn't install remote segment.",s);
   }
 
   /* Install remote segment for /dev/boot memory, if enabled. */
@@ -270,7 +270,7 @@ PRIVATE void m_init()
   if (kinfo.bootdev_base > 0) {
       if (OK != (s=sys_segctl(&m_seg[BOOT_DEV], (u16_t *) &s, (vir_bytes *) &s, 
               kinfo.bootdev_base, kinfo.bootdev_size))) {
-          server_panic("MEM","Couldn't install remote segment.",s);
+          panic("MEM","Couldn't install remote segment.",s);
       }
   }
 
@@ -285,7 +285,7 @@ PRIVATE void m_init()
   /* Set up memory ranges for /dev/mem. */
 #if (CHIP == INTEL)
   if (OK != (s=sys_getmachine(&machine))) {
-      server_panic("MEM","Couldn't get machine information.",s);
+      panic("MEM","Couldn't get machine information.",s);
   }
   if (! machine.protected) {
 	m_geom[MEM_DEV].dv_size =   cvul64(0x100000); /* 1M for 8086 systems */
@@ -334,19 +334,19 @@ message *m_ptr;				/* pointer to control message */
 	/* Try to allocate a piece of memory for the RAM disk. */
 	ramdev_size = m_ptr->POSITION;
 	if (OK != (s=alloc_mem(ramdev_size, &ramdev_base)))
-	    server_panic("MEM","Couldn't allocate kernel memory", s);
+	    panic("MEM","Couldn't allocate kernel memory", s);
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
 	printf("Test MEM: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
 
 	if (OK != (s=sys_kmalloc(ramdev_size, &ramdev_base)))
-	    server_panic("MEM","Couldn't allocate kernel memory", s);
+	    panic("MEM","Couldn't allocate kernel memory", s);
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
 	printf("Real MEM: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
   	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
   		ramdev_base, ramdev_size))) {
-      		server_panic("MEM","Couldn't install remote segment.",s);
+      		panic("MEM","Couldn't install remote segment.",s);
   	}
 	break;
     }

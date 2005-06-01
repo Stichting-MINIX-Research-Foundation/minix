@@ -15,7 +15,8 @@
 #include <minix/keymap.h>
 #include "tty.h"
 #include "keymaps/us-std.src"
-#include "../../kernel/kernel.h"
+#include "../../kernel/const.h"
+#include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 
 int irq_hook_id = -1;
@@ -382,9 +383,9 @@ tty_t *tp;
 
       /* Set interrupt handler and enable keyboard IRQ. */
       if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &irq_hook_id)) != OK)
-          server_panic("TTY",  "Couldn't set keyboard IRQ policy", i);
+          panic("TTY",  "Couldn't set keyboard IRQ policy", i);
       if ((i=sys_irqenable(&irq_hook_id)) != OK)
-          server_panic("TTY", "Couldn't enable keyboard IRQs", i);
+          panic("TTY", "Couldn't enable keyboard IRQs", i);
   }
 }
 
@@ -584,7 +585,7 @@ message *m;			/* request message to TTY */
   (void) scan_keyboard();	/* ack any old input */
   quiet = scan_keyboard();/* quiescent value (0 on PC, last code on AT)*/
   for (;;) {
-	tick_delay(10);
+	tickdelay(10);
 	/* See if there are pending request for output, but don't block. 
 	 * Diagnostics can span multiple printf()s, so do it in a loop.
 	 */
@@ -594,7 +595,7 @@ message *m;			/* request message to TTY */
 		case DIAGNOSTICS:  do_diagnostics(m);	break;
 		default:	;	/* do nothing */ 
 		}
-		tick_delay(1);		/* allow more */
+		tickdelay(1);		/* allow more */
 	}
 	code = scan_keyboard();
 	if (code != quiet) {

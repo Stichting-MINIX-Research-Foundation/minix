@@ -64,7 +64,7 @@ PUBLIC int do_fork()
   child_abs = (phys_bytes) child_base << CLICK_SHIFT;
   parent_abs = (phys_bytes) rmp->mp_seg[D].mem_phys << CLICK_SHIFT;
   i = sys_abscopy(parent_abs, child_abs, prog_bytes);
-  if (i < 0) panic("do_fork can't copy", i);
+  if (i < 0) panic(__FILE__,"do_fork can't copy", i);
 
   /* Find a slot in 'mproc' for the child process.  A slot must exist. */
   for (rmc = &mproc[0]; rmc < &mproc[NR_PROCS]; rmc++)

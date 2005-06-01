@@ -299,9 +299,9 @@ PUBLIC void main()
 
   /* Set IRQ policy, only request notifications. */
   if ((s=sys_irqsetpolicy(FLOPPY_IRQ, 0, &irq_hook_id )) != OK)
-  	server_panic("FLOPPY", "Couldn't set IRQ policy", s);
+  	panic("FLOPPY", "Couldn't set IRQ policy", s);
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
-  	server_panic("FLOPPY", "Couldn't enable IRQs", s);
+  	panic("FLOPPY", "Couldn't enable IRQs", s);
 
   printf("FLOPPY: user-level floppy disk driver initialized\n");
   driver_task(&f_dtab);
@@ -322,7 +322,7 @@ PRIVATE void f_expire_tmrs(struct driver *dp)
 
   /* Get the current time to compare the timers against. */
   if ((s=sys_getuptime(&now)) != OK)
- 	server_panic("FLOPPY","Couldn't get uptime from clock.", s);
+ 	panic("FLOPPY","Couldn't get uptime from clock.", s);
 
   /* Scan the timers queue for expired timers. Dispatch the watchdog function
    * for each expired timers. FLOPPY watchdog functions are f_tmr_timeout() 
@@ -334,7 +334,7 @@ PRIVATE void f_expire_tmrs(struct driver *dp)
   } else {  					  /* set new sync alarm */
   	f_next_timeout = f_timers->tmr_exp_time;
   	if ((s=sys_syncalrm(SELF, f_next_timeout, 1)) != OK)
- 		server_panic("FLOPPY","Couldn't set synchronous alarm.", s);
+ 		panic("FLOPPY","Couldn't set synchronous alarm.", s);
   }
 }
 
@@ -351,7 +351,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
 
   /* Get the current time. */
   if ((s=sys_getuptime(&now)) != OK)
- 	server_panic("FLOPPY","Couldn't get uptime from clock.", s);
+ 	panic("FLOPPY","Couldn't get uptime from clock.", s);
 
   /* Add the timer to the local timer queue. */
   tmrs_settimer(&f_timers, tp, now + delta, watchdog);
@@ -363,7 +363,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
   if (f_timers->tmr_exp_time != f_next_timeout) {
   	f_next_timeout = f_timers->tmr_exp_time; 
   	if ((s=sys_syncalrm(SELF, f_next_timeout, 1)) != OK)
- 		server_panic("FLOPPY","Couldn't set synchronous alarm.", s);
+ 		panic("FLOPPY","Couldn't set synchronous alarm.", s);
   }
 }
 
@@ -468,7 +468,7 @@ unsigned nr_req;		/* length of request vector */
 		if ((s=sys_datacopy(proc_nr, iov->iov_addr + SECTOR_SIZE,
 			SELF, (vir_bytes) &fmt_param, 
 			(phys_bytes) sizeof(fmt_param))) != OK)
-			server_panic("FLOPPY", "Sys_vircopy failed", s);
+			panic("FLOPPY", "Sys_vircopy failed", s);
 
 		/* Check that the number of sectors in the data is reasonable,
 		 * to avoid division by 0.  Leave checking of other data to
@@ -525,7 +525,7 @@ unsigned nr_req;		/* length of request vector */
 		cmd[2] = SPEC2;
 		(void) fdc_command(cmd, 3);
 		if ((s=sys_outb(FDC_RATE, f_dp->rate)) != OK)
-			server_panic("FLOPPY","Sys_outb failed", s);
+			panic("FLOPPY","Sys_outb failed", s);
 		prev_dp = f_dp;
 	}
 
@@ -561,7 +561,7 @@ unsigned nr_req;		/* length of request vector */
 			if((s=sys_datacopy(proc_nr, *up,  SELF, 
 				(vir_bytes) tmp_buf,
 				(phys_bytes) SECTOR_SIZE)) != OK)
-			server_panic("FLOPPY", "Sys_vircopy failed", s);
+			panic("FLOPPY", "Sys_vircopy failed", s);
 		}
 
 		/* Set up the DMA chip and perform the transfer. */
@@ -575,7 +575,7 @@ unsigned nr_req;		/* length of request vector */
 			if((s=sys_datacopy(SELF, (vir_bytes) tmp_buf, 
 				proc_nr, *up, 
 				(phys_bytes) SECTOR_SIZE)) != OK)
-			server_panic("FLOPPY", "Sys_vircopy failed", s);
+			panic("FLOPPY", "Sys_vircopy failed", s);
 		}
 
 		if (r != OK) {
@@ -649,7 +649,7 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
   pv_set(byte_out[8], DMA_INIT, 2);		/* some sort of enable */
 
   if ((s=sys_voutb(byte_out, 9)) != OK)
-  	server_panic("FLOPPY","Sys_voutb in dma_setup() failed", s);
+  	panic("FLOPPY","Sys_voutb in dma_setup() failed", s);
 }
 
 
@@ -677,7 +677,7 @@ PRIVATE void start_motor()
 
   if ((s=sys_outb(DOR,
   		(motor_status << MOTOR_SHIFT) | ENABLE_INT | f_drive)) != OK)
-	server_panic("FLOPPY","Sys_outb in start_motor() failed", s);
+	panic("FLOPPY","Sys_outb in start_motor() failed", s);
 
   /* If the motor was already running, we don't have to wait for it. */
   if (running) return;			/* motor was already running */
@@ -711,7 +711,7 @@ timer_t *tp;
   int s;
   motor_status &= ~(1 << tmr_arg(tp)->ta_int);
   if ((s=sys_outb(DOR, (motor_status << MOTOR_SHIFT) | ENABLE_INT)) != OK)
-	server_panic("FLOPPY","Sys_outb in stop_motor() failed", s);
+	panic("FLOPPY","Sys_outb in stop_motor() failed", s);
 }
 
 
@@ -723,7 +723,7 @@ PRIVATE void floppy_stop(struct driver *dp)
 /* Stop all activity and cleanly exit with the system. */
   int s;
   if ((s=sys_outb(DOR, ENABLE_INT)) != OK)
-	server_panic("FLOPPY","Sys_outb in floppy_stop() failed", s);
+	panic("FLOPPY","Sys_outb in floppy_stop() failed", s);
   sys_exit(0);	
 }
 
@@ -882,18 +882,18 @@ PRIVATE int fdc_results()
 	 * the perfection of the mirror.
 	 */
 	if ((s=sys_inb(FDC_STATUS, &status)) != OK)
-		server_panic("FLOPPY","Sys_inb in fdc_results() failed", s);
+		panic("FLOPPY","Sys_inb in fdc_results() failed", s);
 	status &= (MASTER | DIRECTION | CTL_BUSY);
 	if (status == (MASTER | DIRECTION | CTL_BUSY)) {
 		if (result_nr >= MAX_RESULTS) break;	/* too many results */
 		if ((s=sys_inb(FDC_DATA, &f_results[result_nr])) != OK)
-		   server_panic("FLOPPY","Sys_inb in fdc_results() failed", s);
+		   panic("FLOPPY","Sys_inb in fdc_results() failed", s);
 		result_nr ++;
 		continue;
 	}
 	if (status == MASTER) {			/* all read */
 		if ((s=sys_irqenable(&irq_hook_id)) != OK)
-			server_panic("FLOPPY", "Couldn't enable IRQs", s);
+			panic("FLOPPY", "Couldn't enable IRQs", s);
 
 		return(OK);			/* only good exit */
 	}
@@ -902,7 +902,7 @@ PRIVATE int fdc_results()
   need_reset = TRUE;		/* controller chip must be reset */
 
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
-	server_panic("FLOPPY", "Couldn't enable IRQs", s);
+	panic("FLOPPY", "Couldn't enable IRQs", s);
   return(ERR_STATUS);
 }
 
@@ -957,12 +957,12 @@ int val;		/* write this byte to floppy disk controller */
 		return;
 	}
   	if ((s=sys_inb(FDC_STATUS, &status)) != OK)
-  		server_panic("FLOPPY","Sys_inb in fdc_out() failed", s);
+  		panic("FLOPPY","Sys_inb in fdc_out() failed", s);
   }
   while ((status & (MASTER | DIRECTION)) != (MASTER | 0)); 
   
   if ((s=sys_outb(FDC_DATA, val)) != OK)
-	server_panic("FLOPPY","Sys_outb in fdc_out() failed", s);
+	panic("FLOPPY","Sys_outb in fdc_out() failed", s);
 }
 
 
@@ -1038,7 +1038,7 @@ PRIVATE void f_reset()
   pv_set(byte_out[0], DOR, 0);			/* strobe reset bit low */
   pv_set(byte_out[1], DOR, ENABLE_INT);		/* strobe it high again */
   if ((s=sys_voutb(byte_out, 2)) != OK)
-  	server_panic("FLOPPY", "Sys_voutb in f_reset() failed", s); 
+  	panic("FLOPPY", "Sys_voutb in f_reset() failed", s); 
 
   /* A synchronous alarm timer was set in fdc_command. Expect a HARD_INT
    * message to collect the reset interrupt, but be prepared to handle the 

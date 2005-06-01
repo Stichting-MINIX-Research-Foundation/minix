@@ -744,7 +744,7 @@ PRIVATE void beep()
   
   /* Fetch current time in advance to prevent beeping delay. */
   if ((s=sys_getuptime(&now)) != OK)
-  	server_panic("TTY","Console couldn't get clock's uptime.", s);
+  	panic("TTY","Console couldn't get clock's uptime.", s);
   if (!beeping) {
 	/* Set timer channel 2, square wave, with given frequency. */
         pv_set(char_out[0], TIMER_MODE, 0xB6);	
@@ -761,7 +761,7 @@ PRIVATE void beep()
   if (tty_timers->tmr_exp_time != tty_next_timeout) {
   	tty_next_timeout = tty_timers->tmr_exp_time;
   	if ((s=sys_syncalrm(SELF, tty_next_timeout, 1)) != OK)
-  		server_panic("TTY","Console couldn't set syn alarm.", s);
+  		panic("TTY","Console couldn't set syn alarm.", s);
   }
 }
 

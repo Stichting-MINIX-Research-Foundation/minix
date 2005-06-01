@@ -30,7 +30,7 @@ PUBLIC int do_time()
   int s;
 
   if ( (s=sys_getuptime(&uptime)) != OK) 
-  	panic("PM: warning, do_time couldn't get uptime", s);
+  	panic(__FILE__,"do_time couldn't get uptime", s);
 
   mp->mp_reply.reply_time = (time_t) (boottime + (uptime/HZ));
   return(OK);
@@ -53,7 +53,7 @@ PUBLIC int do_stime()
       return(EPERM);
   }
   if ( (s=sys_getuptime(&uptime)) != OK) 
-      panic("PM: warning, do_stime couldn't get uptime", s);
+      panic(__FILE__,"do_stime couldn't get uptime", s);
   boottime = (long) m_in.stime - (uptime/HZ);
 
   /* Also inform FS about the new system time. */
@@ -74,7 +74,7 @@ PUBLIC int do_times()
   int s;
 
   if (OK != (s=sys_times(who, t)))
-      panic("PM: warning, do_times couldn't get times", s);
+      panic(__FILE__,"do_times couldn't get times", s);
   rmp->mp_reply.reply_t1 = t[0];		/* user time */
   rmp->mp_reply.reply_t2 = t[1];		/* system time */
   rmp->mp_reply.reply_t3 = rmp->mp_child_utime;	/* child user time */

@@ -180,7 +180,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 	        do_printer_output();
 	        return;
             }
-            tick_delay(30);		/* wait before retry */
+            tickdelay(30);		/* wait before retry */
         }
         /* If we reach this point, the printer was not online in time. */
         done_status = status;
@@ -283,7 +283,7 @@ PRIVATE void do_initialize()
   sys_vircopy(SELF, BIOS_SEG, LPT1_IO_PORT_ADDR, 
   	SELF, D, (vir_bytes) &port_base, LPT1_IO_PORT_SIZE);
   sys_outb(port_base + 2, INIT_PRINTER);
-  tick_delay(1);		/* easily satisfies Centronics minimum */
+  tickdelay(1);			/* easily satisfies Centronics minimum */
   				/* was 2 millisecs; now is ~17 millisecs */
   sys_outb(port_base + 2, SELECT);
   sys_irqsetpolicy(PRINTER_IRQ, 0, &irq_hook_id);

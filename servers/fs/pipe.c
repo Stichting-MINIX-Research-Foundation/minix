@@ -60,7 +60,8 @@ PUBLIC int do_pipe()
 	return(err_code);
   }
 
-  if (read_only(rip) != OK) panic("pipe device is read only", NO_NUM);
+  if (read_only(rip) != OK) 
+  	panic(__FILE__,"pipe device is read only", NO_NUM);
  
   rip->i_pipe = I_PIPE;
   rip->i_mode &= ~I_REGULAR;
@@ -225,7 +226,7 @@ int bytes;			/* if hanging on task, how many bytes read */
   register struct fproc *rfp;
   register int task;
 
-  if (proc_nr < 0 || proc_nr >= NR_PROCS) panic("revive err", proc_nr);
+  if (proc_nr < 0 || proc_nr >= NR_PROCS) panic(__FILE__,"revive err", proc_nr);
   rfp = &fproc[proc_nr];
   if (rfp->fp_suspended == NOT_SUSPENDED || rfp->fp_revived == REVIVING)return;
 
@@ -269,7 +270,7 @@ PUBLIC int do_unpause()
 
   if (who > PM_PROC_NR) return(EPERM);
   proc_nr = m_in.pro;
-  if (proc_nr < 0 || proc_nr >= NR_PROCS) panic("unpause err 1", proc_nr);
+  if (proc_nr < 0 || proc_nr >= NR_PROCS) panic(__FILE__,"unpause err 1", proc_nr);
   rfp = &fproc[proc_nr];
   if (rfp->fp_suspended == NOT_SUSPENDED) return(OK);
   task = -rfp->fp_task;
@@ -286,7 +287,8 @@ PUBLIC int do_unpause()
 
 	default:		/* process trying to do device I/O (e.g. tty)*/
 		fild = (rfp->fp_fd >> 8) & BYTE;/* extract file descriptor */
-		if (fild < 0 || fild >= OPEN_MAX)panic("unpause err 2",NO_NUM);
+		if (fild < 0 || fild >= OPEN_MAX)
+			panic(__FILE__,"unpause err 2",NO_NUM);
 		f = rfp->fp_filp[fild];
 		dev = (dev_t) f->filp_ino->i_zone[0];	/* device hung on */
 		mess.TTY_LINE = (dev >> MINOR) & BYTE;

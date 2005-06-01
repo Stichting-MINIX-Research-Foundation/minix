@@ -129,7 +129,7 @@ PUBLIC int do_exec()
   src = (vir_bytes) mbuf;
   r = sys_datacopy(PM_PROC_NR, (vir_bytes) src,
   			who, (vir_bytes) vsp, (phys_bytes)stk_bytes);
-  if (r != OK) panic("do_exec stack copy err on", who);
+  if (r != OK) panic(__FILE__,"do_exec stack copy err on", who);
 
   /* Read in text and data segments. */
   if (sh_mp != NULL) {
@@ -381,7 +381,7 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
 	count = MIN(bytes, (phys_bytes) sizeof(zero));
 	if ((s=sys_physcopy(PM_PROC_NR, D, (phys_bytes) zero,
 				NONE, PHYS_SEG, base, count)) != OK) {
-		panic("new_mem can't zero", s);
+		panic(__FILE__,"new_mem can't zero", s);
 	}
 	base += count;
 	bytes -= count;

@@ -69,7 +69,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   }
 
   /* Desired block is not on available chain.  Take oldest block ('front'). */
-  if ((bp = front) == NIL_BUF) panic("all buffers in use", NR_BUFS);
+  if ((bp = front) == NIL_BUF) panic(__FILE__,"all buffers in use", NR_BUFS);
   rm_lru(bp);
 
   /* Remove the block that was just taken from its hash chain. */

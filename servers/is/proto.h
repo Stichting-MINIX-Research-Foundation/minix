@@ -4,7 +4,6 @@
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
-_PROTOTYPE( void report, (char *, int n)				);
 
 /* putk.c */
 _PROTOTYPE( void kputc, (int c)						);

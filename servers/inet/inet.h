@@ -63,16 +63,16 @@ typedef int ioreq_t;
 #if CRAMPED
 
 /* Minimum panic info. */
-#define ip_panic(print_list)  panic(this_file, __LINE__)
-_PROTOTYPE( void panic, (char *file, int line) );
+#define ip_panic(print_list)  inet_panic(this_file, __LINE__)
+_PROTOTYPE( void inet_panic, (char *file, int line) );
 
 #else /* !CRAMPED */
 
 /* Maximum panic info. */
 #define ip_panic(print_list)  \
-	(panic0(this_file, __LINE__), printf print_list, panic())
+	(panic0(this_file, __LINE__), printf print_list, inet_panic())
 _PROTOTYPE( void panic0, (char *file, int line) );
-_PROTOTYPE( void panic, (void) );
+_PROTOTYPE( void inet_panic, (void) );
 
 #endif /* !CRAMPED */
 

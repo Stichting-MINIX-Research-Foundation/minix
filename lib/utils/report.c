@@ -1,9 +1,9 @@
 #include "utils.h" 
 
 /*===========================================================================*
- *				server_report				     *
+ *				    report					     *
  *===========================================================================*/
-PUBLIC void server_report(who, mess, num)
+PUBLIC void report(who, mess, num)
 char *who;				/* server identification */
 char *mess;				/* message format to print */
 int num;				/* number to go with the message */
