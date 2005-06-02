@@ -16,6 +16,7 @@ OBJECTS	= \
 	$(LIBRARY)(_svrctl.o) \
 	$(LIBRARY)(_getsysinfo.o) \
 	$(LIBRARY)(_getprocnr.o) \
+	$(LIBRARY)(_findproc.o) \
 	$(LIBRARY)(asynchio.o) \
 	$(LIBRARY)(configfile.o) \
 	$(LIBRARY)(crypt.o) \
@@ -77,6 +78,9 @@ $(LIBRARY)(_svrctl.o):	_svrctl.c
 
 $(LIBRARY)(_getprocnr.o):	_getprocnr.c
 	$(CC1) _getprocnr.c
+
+$(LIBRARY)(_findproc.o):	_findproc.c
+	$(CC1) _findproc.c
 
 $(LIBRARY)(_getsysinfo.o):	_getsysinfo.c
 	$(CC1) _getsysinfo.c

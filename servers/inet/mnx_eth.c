@@ -19,6 +19,8 @@ Copyright 1995 Philip Homburg
 #include "generic/sr.h"
 
 #include <minix/syslib.h>
+#define _MINIX
+#include <unistd.h>
 
 THIS_FILE
 
@@ -39,8 +41,10 @@ PUBLIC void osdep_eth_init()
 	for (i= 0, eth_port= eth_port_table, ecp= eth_conf;
 		i<eth_conf_nr; i++, eth_port++, ecp++)
 	{
-		printf("INET: sys_getprocnr() for %s\n", ecp->ec_task);
+#if DEAD_CODE
 		r = sys_getprocnr(&tasknr, ecp->ec_task, strlen(ecp->ec_task));
+#endif
+		r = findproc(ecp->ec_task, &tasknr);
 		if (r != OK)
 		{
 			ip_panic(( "unable to find task %s: %d\n",

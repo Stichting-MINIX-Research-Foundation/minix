@@ -144,6 +144,7 @@ _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
 _PROTOTYPE( int getsysinfo, (int who, int what, void *where)		);
 _PROTOTYPE( int getprocnr, (int *proc_nr)				);
+_PROTOTYPE( int findproc, (char *proc_name, int *proc_nr)		);
 #endif
 
 _PROTOTYPE( int setcache, (int kb));

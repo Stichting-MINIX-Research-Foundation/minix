@@ -175,8 +175,11 @@ PRIVATE void nw_init()
 	if (svrctl(SYSSIGNON, (void *) NULL) == -1) pause();
 
 	/* Our new identity as a server. */
+#if DEAD_CODE
 	if (get_proc_nr(&this_proc, NULL) != OK)
-		ip_panic(( "unable to find own process nr\n"));
+#endif
+	if (getprocnr(&this_proc) != OK)
+		ip_panic(( "unable to get own process nr\n"));
 
 	/* Register the device group. */
 	device.dev= ip_dev;

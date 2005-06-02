@@ -7,6 +7,7 @@
 #include "fproc.h"
 #include "dmap.h"
 #include <string.h>
+#include <unistd.h>
 #include <minix/com.h>
 #include <minix/utils.h>
 
@@ -142,8 +143,11 @@ PUBLIC void map_controllers()
     for (dp = drivertab;
         dp < drivertab + sizeof(drivertab)/sizeof(drivertab[0]); dp++)  {
       if (strcmp(ctrlr_type, dp->wini_type) == 0) {	/* found driver name */
+#if DEAD_CODE
 	if ((s=sys_getprocnr(&proc_nr, 			/* lookup proc nr */
 	    dp->proc_name, strlen(dp->proc_name)+1)) == OK) {
+#endif
+	if ((s=findproc(dp->proc_name, &proc_nr)) == OK) {
 	  for (i=0; i< max_major; i++) {		/* find mapping */
 	    if (dmap[i].dmap_driver == CTRLR(c)) {  
 	      if (map_driver(i, proc_nr, STYLE_DEV) == OK) {

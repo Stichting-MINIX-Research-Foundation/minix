@@ -96,7 +96,6 @@ PRIVATE void get_work()
   /* Normally wait for new input.  However, if 'reviving' is
    * nonzero, a suspended process must be awakened.
    */
-
   register struct fproc *rp;
 
   if (reviving != 0) {
@@ -174,10 +173,35 @@ PRIVATE void fs_init()
 {
 /* Initialize global variables, tables, etc. */
   register struct inode *rip;
+  register struct fproc *rfp;
   int key, s, i;
   message mess;
 
-  /* Certain relations must hold for the file system to work at all. Some 
+  /* Initialize the process table with help of the process manager messages. 
+   * Expect one message for each system process with its slot number and pid. 
+   * When no more processes follow, the magic process number NONE is sent. 
+   * Then, stop and synchronize with the PM.
+   */
+  do {
+  	if (OK != (s=receive(PM_PROC_NR, &mess)))
+  		panic(__FILE__,"FS couldn't receive from PM", s);
+  	if (NONE == mess.PR_PROC_NR) break; 
+
+	rfp = &fproc[mess.PR_PROC_NR];
+	rfp->fp_pid = mess.PR_PID;
+	rfp->fp_realuid = (uid_t) SYS_UID;
+	rfp->fp_effuid = (uid_t) SYS_UID;
+	rfp->fp_realgid = (gid_t) SYS_GID;
+	rfp->fp_effgid = (gid_t) SYS_GID;
+	rfp->fp_umask = ~0;
+   
+  } while (TRUE);			/* continue until process NONE */
+  mess.m_type = OK;			/* tell PM that we succeeded */
+  s=send(PM_PROC_NR, &mess);		/* send synchronization message */
+
+
+  /* All process table entries have been set. Continue with FS initialization.
+   * Certain relations must hold for the file system to work at all. Some 
    * extra block_size requirements are checked at super-block-read-in time.
    */
   if (OPEN_MAX > 127) panic(__FILE__,"OPEN_MAX > 127", NO_NUM);
@@ -190,37 +214,21 @@ PRIVATE void fs_init()
   fp = (struct fproc *) NULL;
   who = FS_PROC_NR;
 
-  map_controllers();		/* map controller devices to drivers */
   buf_pool();			/* initialize buffer pool */
+  map_controllers();		/* map controller devices to drivers */
   load_ram();			/* init RAM disk, load if it is root */
   load_super(root_dev);		/* load super block for root device */
 
 
-  /* Initialize the process table with help of the process manager messages. 
-   * Expect one message for each system process with its slot number and pid. 
-   * When no more processes follow, the magic process number NONE is sent. 
-   * Then, stop and synchronize with the PM.
-   */
-  do {
-  	if (OK != (s=receive(PM_PROC_NR, &mess)))
-  		panic(__FILE__,"FS couldn't receive from PM", s);
-  	if (NONE == mess.PR_PROC_NR) break; 
-
-	fp = &fproc[mess.PR_PROC_NR];
-	fp->fp_pid = mess.PR_PID;
-	rip = get_inode(root_dev, ROOT_INODE);
-	dup_inode(rip);
-	fp->fp_rootdir = rip;
-	fp->fp_workdir = rip;
-	fp->fp_realuid = (uid_t) SYS_UID;
-	fp->fp_effuid = (uid_t) SYS_UID;
-	fp->fp_realgid = (gid_t) SYS_GID;
-	fp->fp_effgid = (gid_t) SYS_GID;
-	fp->fp_umask = ~0;
-   
-  } while (TRUE);			/* continue until process NONE */
-  mess.m_type = OK;			/* tell PM that we succeeded */
-  s=send(PM_PROC_NR, &mess);		/* send synchronization message */
+  /* The root device can now be accessed; set process directories. */
+  for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+  	if (rfp->fp_pid != PID_FREE) {
+		rip = get_inode(root_dev, ROOT_INODE);
+		dup_inode(rip);
+		rfp->fp_rootdir = rip;
+		rfp->fp_workdir = rip;
+  	}
+  }
 
   /* Register function keys with TTY. */
   for (key=SF5; key<=SF6; key++) {

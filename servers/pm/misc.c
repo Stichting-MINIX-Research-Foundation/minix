@@ -3,8 +3,10 @@
  * The entry points into this file are:
  *   do_reboot: kill all processes, then reboot system
  *   do_svrctl: process manager control
- *   do_getsysinfo: request copy of PM data structure
- *   do_getprocnr: get process slot number (like getpid)
+ *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
+ *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
+ *   do_memalloc: allocate a chunk of memory  (Jorrit N. Herder)
+ *   do_memfree: deallocate a chunk of memory  (Jorrit N. Herder)
  */
 
 #include "pm.h"
@@ -23,6 +25,30 @@ FORWARD _PROTOTYPE( char *find_key, (const char *params, const char *key));
 PRIVATE char monitor_params[128*sizeof(char *)];
 
 /*=====================================================================*
+ *				    do_memalloc			       *
+ *=====================================================================*/
+PUBLIC int do_memalloc()
+{
+  vir_clicks mem_clicks;
+  phys_clicks mem_base;
+  printf("PM got request to allocate %u KB\n", m_in.memsize);
+
+  mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
+  mem_base = alloc_mem(mem_clicks);
+  if (mem_base == NO_MEM) return(ENOMEM);
+  mp->mp_reply.membase =  (phys_bytes) (mem_base << CLICK_SHIFT);
+  return(OK);
+}
+
+/*=====================================================================*
+ *				    do_memfree			       *
+ *=====================================================================*/
+PUBLIC int do_memfree()
+{
+  return(OK);
+}
+
+/*=====================================================================*
  *			    do_getsysinfo			       *
  *=====================================================================*/
 PUBLIC int do_getsysinfo()
@@ -36,7 +62,29 @@ PUBLIC int do_getsysinfo()
  *=====================================================================*/
 PUBLIC int do_getprocnr()
 {
-  mp->mp_reply.procnr = who;
+  register struct mproc *rmp;
+  static char search_key[PROC_NAME_LEN];
+  int key_len;
+  int s;
+
+  if (m_in.namelen > 0) {		/* lookup process by name */
+  	key_len = MAX(m_in.namelen, PROC_NAME_LEN);
+ 	if (OK != (s=sys_datacopy(who, (vir_bytes) m_in.addr, 
+ 			SELF, (vir_bytes) search_key, key_len))) 
+ 		return(s);
+ 	search_key[key_len] = '\0';	/* terminate for safety */
+  	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+		if (rmp->mp_flags & IN_USE && 
+			strncmp(rmp->mp_name, search_key, key_len)==0) {
+  			mp->mp_reply.procnr = (int) (rmp - mproc);
+  			return(OK);
+		} 
+	}
+  	return(ESRCH);			
+  } 
+  else {				/* return own process number */
+  	mp->mp_reply.procnr = who;
+  }
   return(OK);
 }
 

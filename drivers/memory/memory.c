@@ -30,9 +30,7 @@ PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
 PRIVATE int m_device;			/* current device */
 PRIVATE struct kinfo kinfo;		/* need kernel info */ 
 PRIVATE struct machine machine;		/* need machine info */ 
-PRIVATE struct memory mem[NR_MEMS];	/* physical memory chunks */
 
-FORWARD _PROTOTYPE( int alloc_mem, (phys_bytes size, phys_bytes *base) );
 FORWARD _PROTOTYPE( char *m_name, (void) );
 FORWARD _PROTOTYPE( struct device *m_prepare, (int device) );
 FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, off_t position,
@@ -196,7 +194,7 @@ unsigned nr_req;		/* length of request vector */
 	    	    chunk = (left > ZERO_BUF_SIZE) ? ZERO_BUF_SIZE : left;
 	    	    if (OK != (s=sys_vircopy(SELF, D, (vir_bytes) zero, 
 	    	            proc_nr, D, user_vir, chunk)))
-	    	        printf("MEMORY: sys_vircopy failed: %d\n", s);
+	    	        report("MEM","sys_vircopy failed", s);
 	    	    left -= chunk;
 	    	}
 	    }
@@ -232,7 +230,7 @@ message *m_ptr;
 #if (CHIP == INTEL) && ENABLE_USERPRIV && ENABLE_USERIOPL
   if (m_device == MEM_DEV || m_device == KMEM_DEV) {
 	sys_enable_iop(m_ptr->PROC_NR);
-	printf("MEMORY: sys_enable_iop for proc nr %d.\n", m_ptr->PROC_NR);
+	report("MEM", "sys_enable_iop for proc nr", m_ptr->PROC_NR);
   }
 #endif
 
@@ -248,10 +246,6 @@ PRIVATE void m_init()
   /* Initialize this task. All minor devices are initialized one by one. */
   int i, s;
 
-  /* Get memory addresses from the kernel. */
-  if (OK != (s=sys_getmemchunks(&mem))) {
-      panic("MEM","Couldn't get memory chunks.",s);
-  }
   if (OK != (s=sys_getkinfo(&kinfo))) {
       panic("MEM","Couldn't get kernel information.",s);
   }
@@ -305,7 +299,7 @@ PRIVATE void m_init()
 #endif /* !(CHIP == INTEL) */
 
   /* Initialization succeeded. Print welcome message. */
-  printf("User-space memory driver (RAM disk, etc.) has been initialized.\n");
+  report("MEM","user-space memory driver has been initialized.", NO_NUM);
 }
 
 
@@ -327,23 +321,28 @@ message *m_ptr;				/* pointer to control message */
 	/* FS wants to create a new RAM disk with the given size. */
 	phys_bytes ramdev_size;
 	phys_bytes ramdev_base;
+	message m;
 	int s;
 
 	if (m_ptr->PROC_NR != FS_PROC_NR) return(EPERM);
 
 	/* Try to allocate a piece of memory for the RAM disk. */
 	ramdev_size = m_ptr->POSITION;
-	if (OK != (s=alloc_mem(ramdev_size, &ramdev_base)))
-	    panic("MEM","Couldn't allocate kernel memory", s);
-	dv->dv_base = cvul64(ramdev_base);
-	dv->dv_size = cvul64(ramdev_size);
-	printf("Test MEM: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
+
+	printf("MEM: about to send to PM (ramdev_size %u)\n", ramdev_size);
+	m.m_type = MEM_ALLOC;
+	m.m4_l1 = ramdev_size;
+	if (OK != (s=sendrec(PM_PROC_NR, &m)))
+		report("MEM", "Couldn't sendrec to PM", s);
+	dv->dv_size = cvul64(m.m4_l1);
+	dv->dv_base = cvul64(m.m4_l2);
+	printf("MEM: PM (s=%d) gave base 0x%06x, size 0x%06x\n", s, dv->dv_base, dv->dv_size);
 
 	if (OK != (s=sys_kmalloc(ramdev_size, &ramdev_base)))
 	    panic("MEM","Couldn't allocate kernel memory", s);
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
-	printf("Real MEM: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
+	printf("MEM allocated: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
   	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
   		ramdev_base, ramdev_size))) {
       		panic("MEM","Couldn't install remote segment.",s);
@@ -370,26 +369,4 @@ struct partition *entry;
   entry->sectors = 32;
 }
 
-/*===========================================================================*
- *			        malloc_mem				     *
- *===========================================================================*/
-PRIVATE int alloc_mem(chunk_size, chunk_base)
-phys_bytes chunk_size;			/* number of bytes requested */
-phys_bytes *chunk_base;			/* base of memory area found */
-{
-/* Request a piece of memory from one of the free memory chunks. */
-  phys_clicks tot_clicks;
-  struct memory *memp;
-  
-  tot_clicks = (chunk_size+ CLICK_SIZE-1) >> CLICK_SHIFT;
-  memp = &mem[NR_MEMS];
-  while ((--memp)->size < tot_clicks) {
-      if (memp == mem) {
-          return(ENOMEM);
-      }
-  }
-  memp->size -= tot_clicks;
-  *chunk_base = (memp->base + memp->size) << CLICK_SHIFT; 
-  return(OK);
-}
 

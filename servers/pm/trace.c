@@ -29,7 +29,7 @@
 
 #define NIL_MPROC	((struct mproc *) 0)
 
-FORWARD _PROTOTYPE( struct mproc *findproc, (pid_t lpid) );
+FORWARD _PROTOTYPE( struct mproc *find_proc, (pid_t lpid) );
 
 /*===========================================================================*
  *				do_trace  				     *
@@ -46,7 +46,7 @@ PUBLIC int do_trace()
 	mp->mp_reply.reply_trace = 0;
 	return(OK);
   }
-  if ((child=findproc(m_in.pid))==NIL_MPROC || !(child->mp_flags & STOPPED)) {
+  if ((child=find_proc(m_in.pid))==NIL_MPROC || !(child->mp_flags & STOPPED)) {
 	return(ESRCH);
   }
   /* all the other calls are made by the parent fork of the debugger to 
@@ -75,9 +75,9 @@ PUBLIC int do_trace()
 }
 
 /*===========================================================================*
- *				findproc  				     *
+ *				find_proc  				     *
  *===========================================================================*/
-PRIVATE struct mproc *findproc(lpid)
+PRIVATE struct mproc *find_proc(lpid)
 pid_t lpid;
 {
   register struct mproc *rmp;

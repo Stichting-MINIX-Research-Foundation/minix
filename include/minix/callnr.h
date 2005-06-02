@@ -1,4 +1,4 @@
-#define NCALLS		  83	/* number of system calls allowed */
+#define NCALLS		  85	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 
@@ -62,12 +62,14 @@
 #define SIGPROCMASK	  74
 #define SIGRETURN	  75
 
-#define REBOOT		  76
+#define REBOOT		  76	/* to PM */
 
 /* MINIX specific calls, e.g., to support system services. */
 #define SVRCTL		  77
-#define CMOSTIME	  78
-#define GETSYSINFO	  79	/* to MM or FS */
-#define GETPROCNR         80    /* to MM */
+#define CMOSTIME	  78	/* to FS */
+#define GETSYSINFO	  79	/* to PM or FS */
+#define GETPROCNR         80    /* to PM */
 
-#define FSTATFS	 	  82
+#define FSTATFS	 	  82	/* to FS */
+#define MEM_ALLOC	  83	/* to PM */
+#define MEM_FREE	  84	/* to PM */

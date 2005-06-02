@@ -33,6 +33,8 @@
 #define svrctl_req	m2_i1
 #define svrctl_argp	m2_p1
 #define stime      	m2_l1
+#define memsize      	m4_l1
+#define membase      	m4_l2
 
 /* The following names are synonyms for the variables in a reply message. */
 #define reply_res	m_type

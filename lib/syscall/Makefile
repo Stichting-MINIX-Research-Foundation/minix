@@ -44,6 +44,7 @@ OBJECTS	= \
 	$(LIBRARY)(getppid.o) \
 	$(LIBRARY)(getuid.o) \
 	$(LIBRARY)(getprocnr.o) \
+	$(LIBRARY)(findproc.o) \
 	$(LIBRARY)(ioctl.o) \
 	$(LIBRARY)(isatty.o) \
 	$(LIBRARY)(kill.o) \
@@ -217,6 +218,9 @@ $(LIBRARY)(getppid.o):	getppid.s
 
 $(LIBRARY)(getprocnr.o):	getprocnr.s
 	$(CC1) getprocnr.s
+
+$(LIBRARY)(findproc.o):		findproc.s
+	$(CC1) findproc.s
 
 $(LIBRARY)(getuid.o):	getuid.s
 	$(CC1) getuid.s

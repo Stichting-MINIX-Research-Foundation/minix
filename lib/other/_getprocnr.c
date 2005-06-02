@@ -7,7 +7,7 @@ PUBLIC int getprocnr(proc_nr)
 int *proc_nr;			/* return process number here */
 {
   message m;
-
+  m.m1_i1 = 0;			/* tell PM to get own process nr */
   if (_syscall(MM, GETPROCNR, &m) < 0) return(-1);
   *proc_nr = m.m1_i1;
   return(0);

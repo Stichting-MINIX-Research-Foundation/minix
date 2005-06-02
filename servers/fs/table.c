@@ -100,6 +100,8 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 80 = unused */
 	no_sys,		/* 81 = unused */
 	do_fstatfs,	/* 82 = fstatfs */
+	no_sys,		/* 83 = memalloc */
+	no_sys,		/* 84 = memfree */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

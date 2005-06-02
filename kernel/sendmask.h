@@ -88,6 +88,7 @@
     allow(1, IS_PROC_NR)	/* output diagnostics */ \
     allow(1, SYSTASK) \
     allow(1, TTY) \
+    allow(1, MEMORY) \
     allow(1, CLOCK) \
     allow(1, INIT_PROC_NR) \
     allow(1, FS_PROC_NR) \
@@ -136,6 +137,7 @@
     allow(1, SYSTASK) 		/* system functionality needed */ \
     allow(1, CLOCK) 		/* check clock alarms */ \
     allow(1, TTY) 		/* output diagnostics */ \
+    allow(1, PM_PROC_NR) 	/* PM alloc mem */ \
     allow(1, FS_PROC_NR)	/* FS is interface to the driver */ 
 
 #define PRN_SENDMASK \
