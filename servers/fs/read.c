@@ -210,8 +210,10 @@ int rw_flag;			/* READING or WRITING */
 	}
   }
 
+#if 0
   /* do copying to/from user space */
   r2 = rw_chunk_finish(&completed);
+#endif
 
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
@@ -330,7 +332,7 @@ int *completed;			/* number of bytes copied */
 	zero_block(bp);
   }
 
-#if 0
+#if 1
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_vircopy(FS_PROC_NR, D, (phys_bytes) (bp->b_data+off),
