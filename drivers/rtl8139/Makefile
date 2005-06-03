@@ -24,7 +24,7 @@ LIBPCI = $d/libpci/pci.o $d/libpci/pci_table.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) $(PCI)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBPCI) $(LIBS)
-	install -S 256w $(DRIVER)
+	install -S 50kw $(DRIVER)
 
 $(PCI): 
 	cd $d/libpci && $(MAKE) 

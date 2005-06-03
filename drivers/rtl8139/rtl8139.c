@@ -52,8 +52,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
-#define NDEBUG		/* disable assertions */
-#include <assert.h>
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include <minix/syslib.h>
@@ -67,23 +65,18 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
+#include <assert.h>
 #include <unistd.h>
 #include <sys/ioc_memory.h>
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 
-#if __minix_vmd
-#include "config.h"
-#include "timer.h"
-#else
 #define tmra_ut			timer_t
 #define tmra_inittimer(tp)	tmr_inittimer(tp)
 #define Proc_number(p)		proc_number(p)
 #define debug			0
-#define RAND_UPDATE		/**/
 #define printW()		((void)0)
 #define vm_1phys2bus(p)		(p)
-#endif
 
 #if ENABLE_RTL8139
 #if !ENABLE_PCI
@@ -93,42 +86,17 @@
 #include "../libpci/pci.h"
 #include "rtl8139.h"
 
-
 #define RX_BUFSIZE	RL_RCR_RBLEN_64K_SIZE
 #define RX_BUFBITS	RL_RCR_RBLEN_64K
 #define N_TX_BUF	RL_N_TX
 
-#if __minix_vmd
-#define RE_PORT_NR	3		/* Minix-vmd */
-#else
 #define RE_PORT_NR	1		/* Minix */
-#endif
 
 /* I/O vectors are handled IOVEC_NR entries at a time. */
 #define IOVEC_NR	16
 
 /* Configuration */
 #define RL_ENVVAR	"RTLETH"
-
-#if 0
-typedef struct rl_conf
-{
-	char *rlc_envvar;
-} rl_conf_t;
-
-rl_conf_t rl_conf[]=	/* Card addresses */
-{
-	/* Env. var. */
-	{  "RTLETH0"	},
-	{  "RTLETH1"	},
-	{  "RTLETH2"	},
-};
-
-/* Test if rl_conf has exactly RE_PORT_NR entries.  If not then you will see
- * the error: "array size is negative".
- */
-extern int ___dummy[RE_PORT_NR == sizeof(rl_conf)/sizeof(rl_conf[0]) ? 1 : -1];
-#endif
 
 PRIVATE struct pcitab
 {
@@ -161,6 +129,7 @@ typedef struct re
 
 	/* Rx */
 	phys_bytes re_rx_buf;
+	char  *v_re_rx_buf;
 	vir_bytes re_read_s;
 
 	/* Tx */
@@ -170,6 +139,7 @@ typedef struct re
 	{
 		int ret_busy;
 		phys_bytes ret_buf;
+		char * v_ret_buf;
 	} re_tx[N_TX_BUF];
 	u32_t re_ertxth;	/* Early Tx Threshold */
 
@@ -194,9 +164,6 @@ re_t;
 #define REM_DISABLED	0x0
 #define REM_ENABLED	0x1
 
-#if 0
-#define REF_STOPPED	0x400
-#endif
 #define REF_PACK_SENT	0x001
 #define REF_PACK_RECV	0x002
 #define REF_SEND_AVAIL	0x004
@@ -297,11 +264,7 @@ _PROTOTYPE( static void rtl8139_dump, (message *m)				);
 _PROTOTYPE( static void dump_phy, (re_t *rep)				);
 #endif
 _PROTOTYPE( static int rl_handler, (re_t *rep)			);
-#if __minix_vmd
-_PROTOTYPE( static void rl_watchdog_f, (tmra_ut *tp, tmr_arg_ut arg)	);
-#else
 _PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
-#endif
 
 /* The message used in the main loop is made global, so that rl_watchdog_f()
  * can change its message type to fake a HARD_INT message.
@@ -325,15 +288,13 @@ void main(void)
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
 	eth_ign_proto= htons((u16_t) v);
 
-#if !__minix_vmd
-	/* Claim buffer memory now under Minix, before MM takes it all. */
-	for (rep= &re_table[0]; rep < re_table+RE_PORT_NR; rep++)
-		rl_init_buf(rep);
-#endif
-
 	/* Observe some function key for debug dumps. */
 	if ((r=fkey_enable(SF9)) != OK) 
 	    printf("Warning: RTL8139 couldn't observe Shift+F9 key: %d\n",r);
+
+	/* Claim buffer memory now under Minix, before MM takes it all. */
+	for (rep= &re_table[0]; rep < re_table+RE_PORT_NR; rep++)
+		rl_init_buf(rep);
 
 	while (TRUE)
 	{
@@ -353,7 +314,6 @@ void main(void)
 #if 0
 		case DL_STOP:	do_stop(&m);			break;
 #endif
-#if !__minix_vmd
 		case SYN_ALARM:
 			/* Under MINIX, synchronous alarms are used instead of
 			 * watchdog functions. The approach is very different:
@@ -367,11 +327,7 @@ void main(void)
 			 * case falls through.
 			 */
 			rl_watchdog_f(NULL);     
-#if DEAD_CODE	/* now directly done */
-			if (m.m_type != HARD_INT) 
-#endif
 			break;		 
-#endif
 		case HARD_INT:
 			do_hard_int();
 			if (int_event_check)
@@ -487,9 +443,6 @@ message *mp;
 
 	int port;
 	re_t *rep;
-#if __minix_vmd
-	tmr_arg_ut t_arg;
-#endif
 	message reply_mess;
 
 	if (first_time)
@@ -498,14 +451,8 @@ message *mp;
 		rl_pci_conf(); /* Configure PCI devices. */
 
 		tmra_inittimer(&rl_watchdog);
-#if __minix_vmd
-		t_arg.ta_int= 0;
-		tmra_settimer(&rl_watchdog, get_uptime()+HZ,
-			rl_watchdog_f, t_arg);
-#else
 		/* Use a synchronous alarm instead of a watchdog timer. */
 		sys_syncalrm(SELF, HZ, 0);
-#endif
 	}
 
 	port = mp->DL_PORT;
@@ -739,8 +686,9 @@ re_t *rep;
 {
 	size_t rx_bufsize, tx_bufsize, tot_bufsize;
 	phys_bytes buf;
+	char *mallocbuf;
 	static struct memory chunk;
-	int fd, s, i;
+	int fd, s, i, off;
 
 	/* Allocate receive and transmit buffers */
 	tx_bufsize= ETH_MAX_PACK_SIZE_TAGGED;
@@ -748,36 +696,41 @@ re_t *rep;
 		tx_bufsize += 4-(tx_bufsize % 4);	/* Align */
 	rx_bufsize= RX_BUFSIZE;
 	tot_bufsize= N_TX_BUF*tx_bufsize + rx_bufsize;
-#if __minix_vmd
-	buf= (phys_bytes)kalloc_dma_128K(tot_bufsize, FALSE /* not low */);
-#else
 
 	/* Now try to allocate a kernel memory buffer. */
 	chunk.size = tot_bufsize;
-#if DEAD_CODE
-	fd = open("/dev/mem", O_RDONLY);
-	if (fd <0) {
-		printf("RTL8139: warning, couldn't open: %d\n", fd);
-	} else {
-		if (OK != (s=ioctl(fd, MIOCGETCHUNK, &chunk)))
-			printf("RTL8139: ioctl failed: %d\n", s);
-		else 
-			printf("RTL8139: %uK buffer from mem at 0x06%x\n", 
-				chunk.size, chunk.base);
-	}
-	close(fd);
-#endif
 
-	if (OK != (i=sys_kmalloc(tot_bufsize, &buf)))
-	    panic("RTL8139","Couldn't allocate kernel buffer",i);
-	printf("RTL8139: real %uK buffer at 0x%06x\n", tot_bufsize, buf);
+#define BUF_ALIGNMENT (64*1024)
+
+#if DEAD_CODE
+	if (OK != (i=sys_kmalloc(tot_bufsize, &buf))) {
+#else
+	if(!(mallocbuf = malloc(BUF_ALIGNMENT + tot_bufsize))) {
 #endif
+	    panic("RTL8139","Couldn't allocate kernel buffer",i);
+	}
+
+	if(OK != (i = sys_umap(SELF, D, (vir_bytes) mallocbuf, tot_bufsize, &buf))) {
+	    panic("RTL8139","Couldn't re-map malloced buffer",i);
+	}
+
+	/* click-align mallocced buffer. this is what we used to get
+	 * from kmalloc() too.
+	 */
+	if((off = buf % BUF_ALIGNMENT)) {
+		mallocbuf += BUF_ALIGNMENT - off;
+		buf += BUF_ALIGNMENT - off;
+	}
+
 	for (i= 0; i<N_TX_BUF; i++)
 	{
 		rep->re_tx[i].ret_buf= buf;
+		rep->re_tx[i].v_ret_buf= mallocbuf;
 		buf += tx_bufsize;
+		mallocbuf += tx_bufsize;
 	}
 	rep->re_rx_buf= buf;
+	rep->v_re_rx_buf= mallocbuf;
 }
 
 /*===========================================================================*
@@ -787,10 +740,6 @@ static void rl_init_hw(rep)
 re_t *rep;
 {
 	int s, i;
-
-#if __minix_vmd
-	rl_init_buf(rep);
-#endif
 
 	rep->re_flags = REF_EMPTY;
 	rep->re_flags |= REF_ENABLED;
@@ -1021,7 +970,7 @@ int vectored;
 	unsigned amount, totlen, packlen;
 	phys_bytes src_phys, dst_phys, iov_src;
 	u16_t d_start, d_end;
-	u32_t l, rxstat;
+	u32_t l, rxstat = 0x12345678;
 	re_t *rep;
 	iovec_t *iovp;
 	int cps;
@@ -1065,9 +1014,15 @@ int vectored;
 	else
 		amount= d_end+RX_BUFSIZE - d_start;
 
+	rxstat = *(u32_t *) (rep->v_re_rx_buf + d_start);
+
+#if DEAD_CODE
 	src_phys= rep->re_rx_buf + d_start;
-	cps = sys_physcopy(NONE, PHYS_SEG, src_phys, SELF, D, (vir_bytes) &rxstat, sizeof(rxstat));
+	cps = sys_physcopy(
+		NONE, PHYS_SEG, src_phys,
+		SELF, D, (vir_bytes) &rxstat, sizeof(rxstat));
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#endif
 
 	if (rep->re_clear_rx)
 	{
@@ -1115,22 +1070,32 @@ int vectored;
 
 	if (vectored)
 	{
+		int iov_offset = 0;
+#if 0
 		if ((cps = sys_umap(re_client, D, (vir_bytes) mp->DL_ADDR,
 			count * sizeof(rep->re_iovec[0]), &iov_src)) != OK)
 			printf("sys_umap failed: %d\n", cps);
+#endif
 
 		size= 0;
 		o= d_start+4;
 		src_phys= rep->re_rx_buf;
 		for (i= 0; i<count; i += IOVEC_NR,
-			iov_src += IOVEC_NR * sizeof(rep->re_iovec[0]))
+			iov_src += IOVEC_NR * sizeof(rep->re_iovec[0]),
+			iov_offset += IOVEC_NR * sizeof(rep->re_iovec[0]))
 		{
 			n= IOVEC_NR;
 			if (i+n > count)
 				n= count-i;
+#if 0
 			cps = sys_physcopy(NONE, PHYS_SEG, iov_src, SELF, D, (vir_bytes) rep->re_iovec, 
 				n * sizeof(rep->re_iovec[0]));
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#else
+			cps = sys_vircopy(re_client, D, (vir_bytes) mp->DL_ADDR + iov_offset,
+				SELF, D, (vir_bytes) rep->re_iovec, n * sizeof(rep->re_iovec[0]));
+	if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d (%d)\n", cps, __LINE__);
+#endif
 
 			for (j= 0, iovp= rep->re_iovec; j<n; j++, iovp++)
 			{
@@ -1141,8 +1106,10 @@ int vectored;
 					s= packlen-size;
 				}
 
+#if 0
 				if (sys_umap(re_client, D, iovp->iov_addr, s, &dst_phys) != OK)
 				  panic("rtl8139","umap_local failed\n", NO_NUM);
+#endif
 
 				if (o >= RX_BUFSIZE)
 				{
@@ -1155,15 +1122,30 @@ int vectored;
 					assert(o<RX_BUFSIZE);
 					s1= RX_BUFSIZE-o;
 
+#if 0
 					cps = sys_abscopy(src_phys+o, dst_phys, s1);
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
 					cps = sys_abscopy(src_phys, dst_phys+s1, s-s1);
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#else
+					cps = sys_vircopy(SELF, D, (vir_bytes) rep->v_re_rx_buf+o,
+					re_client, D, iovp->iov_addr, s1);
+	if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d (%d)\n", cps, __LINE__);
+					cps = sys_vircopy(SELF, D, (vir_bytes) rep->v_re_rx_buf,
+					re_client, D, iovp->iov_addr+s1, s-s1);
+	if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d (%d)\n", cps, __LINE__);
+#endif
 				}
 				else
 				{
+#if 0
 					cps = sys_abscopy(src_phys+o, dst_phys, s);
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#else
+					cps = sys_vircopy(SELF, D, (vir_bytes) rep->v_re_rx_buf+o,
+					re_client, D, iovp->iov_addr, s);
+	if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d (%d)\n", cps, __LINE__);
+#endif
 				}
 
 				size += s;
@@ -1192,7 +1174,7 @@ int vectored;
 		p= rep->re_tx[tx_head].ret_buf;
 		cps = sys_abscopy(phys_user, p, size);
 		if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
-	#endif
+#endif
 		}
 
 		if (rep->re_clear_rx)
@@ -1256,6 +1238,7 @@ int vectored;
 		int tx_head, re_client;
 		re_t *rep;
 		iovec_t *iovp;
+		char *ret;
 		int cps;
 
 		port = mp->DL_PORT;
@@ -1301,22 +1284,37 @@ int vectored;
 
 		if (vectored)
 		{
+			int iov_offset = 0;
 
+#if 0
 			if (OK != sys_umap(re_client, D, (vir_bytes)mp->DL_ADDR,
 				count * sizeof(rep->re_iovec[0]), &iov_src))
 				panic("rtl8139","umap_local failed", NO_NUM);
+#endif
 
 			size= 0;
+#if 0
 			p= rep->re_tx[tx_head].ret_buf;
+#else
+			ret = rep->re_tx[tx_head].v_ret_buf;
+#endif
 			for (i= 0; i<count; i += IOVEC_NR,
-				iov_src += IOVEC_NR * sizeof(rep->re_iovec[0]))
+				iov_src += IOVEC_NR * sizeof(rep->re_iovec[0]),
+				iov_offset += IOVEC_NR * sizeof(rep->re_iovec[0]))
 			{
 				n= IOVEC_NR;
 				if (i+n > count)
 					n= count-i;
+#if 0
 				cps = sys_physcopy(NONE, PHYS_SEG, iov_src, SELF, D, (vir_bytes) rep->re_iovec, 
 					n * sizeof(rep->re_iovec[0]));
 		if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#else
+				cps = sys_vircopy(re_client, D, ((vir_bytes) mp->DL_ADDR) + iov_offset,
+					SELF, D, (vir_bytes) rep->re_iovec, 
+					n * sizeof(rep->re_iovec[0]));
+	if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d\n", cps);
+#endif
 
 			for (j= 0, iovp= rep->re_iovec; j<n; j++, iovp++)
 			{
@@ -1330,10 +1328,19 @@ int vectored;
 				if (OK != sys_umap(re_client, D, iovp->iov_addr, s, &phys_user))
 				  panic("rtl8139","umap_local failed\n", NO_NUM);
 
+#if 0
 				cps = sys_abscopy(phys_user, p, s);
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#else
+				cps = sys_vircopy(re_client, D, iovp->iov_addr,
+					SELF, D, (vir_bytes) ret, s);
+		if (cps != OK) printf("RTL8139: warning, sys_vircopy failed: %d\n", cps);
+#endif
 				size += s;
+#if 0
 				p += s;
+#endif
+				ret += s;
 			}
 		}
 		if (size < ETH_MIN_PACK_SIZE)
@@ -1344,12 +1351,19 @@ int vectored;
 		size= mp->DL_COUNT;
 		if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE_TAGGED)
 			panic("rtl8139","invalid packet size", size);
+#if 0
 		if (OK != sys_umap(re_client, D, (vir_bytes)mp->DL_ADDR, size, &phys_user))
 			panic("rtl8139","umap_local failed\n", NO_NUM);
 
 		p= rep->re_tx[tx_head].ret_buf;
 		cps = sys_abscopy(phys_user, p, size);
 	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#else
+		ret = rep->re_tx[tx_head].v_ret_buf;
+		cps = sys_vircopy(re_client, D, (vir_bytes)mp->DL_ADDR, 
+			SELF, D, (vir_bytes) ret, size);
+	if (cps != OK) printf("RTL8139: warning, sys_abscopy failed: %d\n", cps);
+#endif
 	}
 
 	rl_outl(rep->re_base_port, RL_TSD0+tx_head*4, 
@@ -2061,9 +2075,6 @@ re_t *rep;
 	clock_t t0,t1;
 	int_event_check = FALSE;	/* disable check by default */
 
-	RAND_UPDATE
-
-
 	port= rep->re_base_port;
 
 	/* Ack interrupt */
@@ -2327,27 +2338,13 @@ re_t *rep;
 /*===========================================================================*
  *				rl_watchdog_f				     *
  *===========================================================================*/
-#if __minix_vmd
-static void rl_watchdog_f(tp, arg)
-tmra_ut *tp;
-tmr_arg_ut arg;
-#else
 static void rl_watchdog_f(tp)
 timer_t *tp;
-#endif
 {
 	int i;
 	re_t *rep;
-#if __minix_vmd
-	tmr_arg_ut t_arg;
-
-	assert(tp == &rl_watchdog);
-	t_arg.ta_int= 0;
-	tmra_settimer(&rl_watchdog, get_uptime()+HZ, rl_watchdog_f, t_arg);
-#else
 	/* Use a synchronous alarm instead of a watchdog timer. */
 	sys_syncalrm(SELF, HZ, 0);
-#endif
 
 	for (i= 0, rep = &re_table[0]; i<RE_PORT_NR; i++, rep++)
 	{
@@ -2378,13 +2375,6 @@ timer_t *tp;
 			rep->re_tx[2].ret_busy, rep->re_tx[3].ret_busy);
 		rep->re_need_reset= TRUE;
 		rep->re_got_int= TRUE;
-#if __minix_vmd
-#if DEAD_CODE
-			notify(rl_tasknr, HARD_INT);
-#else
-			check_int_events();
-#endif
-#else
 		/* Under MINIX, we got here via a synchronous alarm call. 
 		 * Change the message type to HARD_INT to fake an interrupt.
 		 * The switch in the main loop 'falls through' if it sees
@@ -2394,7 +2384,6 @@ timer_t *tp;
 		m.m_type = HARD_INT;
 #else
 			check_int_events();
-#endif
 #endif
 	}
 }
