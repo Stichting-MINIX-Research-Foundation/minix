@@ -125,6 +125,9 @@ _PROTOTYPE( int unlink, (const char *_path)				);
 _PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
 
 #ifdef _MINIX
+#ifndef _TYPE_H
+#include <minix/type.h>
+#endif
 _PROTOTYPE( int brk, (char *_addr)					);
 _PROTOTYPE( int chroot, (const char *_name)				);
 _PROTOTYPE( int mknod, (const char *_name, Mode_t _mode, Dev_t _addr)	);
@@ -145,6 +148,8 @@ _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
 _PROTOTYPE( int getsysinfo, (int who, int what, void *where)		);
 _PROTOTYPE( int getprocnr, (int *proc_nr)				);
 _PROTOTYPE( int findproc, (char *proc_name, int *proc_nr)		);
+_PROTOTYPE( int allocmem, (phys_bytes size, phys_bytes *base)		);
+_PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
 #endif
 
 _PROTOTYPE( int setcache, (int kb));

@@ -52,6 +52,11 @@ struct kmessages {
   char km_buf[KMESS_BUF_SIZE];		/* buffer for messages */
 };
 
+struct randomness {
+  int r_next;				/* next index to write */
+  int r_size;				/* number of random elements */
+  unsigned long r_buf[RANDOM_ELEMENTS]; /* buffer for random info */
+};
 
 #if (CHIP == INTEL)
 typedef unsigned reg_t;		/* machine register */

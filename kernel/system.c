@@ -18,6 +18,7 @@
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
  *   numap_local:	umap_local D segment from proc nr instead of pointer
  *   virtual_copy:	copy bytes from one virtual address to another 
+ *   get_randomness:	accumulate randomness in a buffer
  *   generic_handler:	interrupt handler for user-level device drivers
  *
  * Changes:
@@ -152,7 +153,6 @@ PRIVATE void initialize(void)
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
 
   /* Server and driver control. */
-  map(SYS_KMALLOC, do_kmalloc); 	/* request chunk of free memory */ 
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_IOPENABLE, do_iopenable);	/* enable CPU I/O protection bits */
   map(SYS_SVRCTL, do_svrctl);		/* kernel control functions */
@@ -169,7 +169,6 @@ PRIVATE void initialize(void)
   /* Miscellaneous. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
-  map(SYS_RANDOM, do_random); 		/* request kernel random data */
 }
 
 /*===========================================================================*
@@ -262,6 +261,20 @@ int proc_nr;				/* slot of process to clean up */
 }
 
 
+/*===========================================================================*
+ *			       get_randomness				     *
+ *===========================================================================*/
+PUBLIC void get_randomness()
+{
+/* Gather random information with help of the CPU's cycle counter. Only use 
+ * the lowest bytes because the highest bytes won't differ that much. 
+ */ 
+  unsigned long tsc_high;
+  read_tsc(&tsc_high, &krandom.r_buf[krandom.r_next]);
+  if (krandom.r_size < RANDOM_ELEMENTS) krandom.r_size ++;
+  krandom.r_next = (krandom.r_next + 1 ) % RANDOM_ELEMENTS;
+}
+
 
 /*===========================================================================*
  *			       generic_handler				     *
@@ -272,8 +285,15 @@ irq_hook_t *hook;
 /* This function handles hardware interrupt in a simple and generic way. All
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
+ * In addition, the interrupt handler gathers random information in a buffer
+ * by timestamping the interrupts.
  */
   message m;
+
+  /* Gather random information. */ 
+  get_randomness();
+
+  /* Build notification message and return. */
   m.NOTIFY_TYPE = HARD_INT;
   m.NOTIFY_ARG = hook->irq;
   lock_notify(hook->proc_nr, &m);

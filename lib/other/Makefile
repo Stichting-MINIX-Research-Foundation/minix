@@ -10,6 +10,8 @@ LIBRARY	= ../libc.a
 all:	$(LIBRARY)
 
 OBJECTS	= \
+	$(LIBRARY)(_allocmem.o) \
+	$(LIBRARY)(_freemem.o) \
 	$(LIBRARY)(_brk.o) \
 	$(LIBRARY)(_reboot.o) \
 	$(LIBRARY)(_seekdir.o) \
@@ -63,6 +65,12 @@ OBJECTS	= \
 $(LIBRARY):	$(OBJECTS)
 	aal cr $@ *.o
 	rm *.o
+
+$(LIBRARY)(_allocmem.o):	_allocmem.c
+	$(CC1) _allocmem.c
+
+$(LIBRARY)(_freemem.o):	_freemem.c
+	$(CC1) _freemem.c
 
 $(LIBRARY)(_brk.o):	_brk.c
 	$(CC1) _brk.c

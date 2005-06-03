@@ -29,8 +29,8 @@
 /* How many bytes should the circular buffer for kernel diagnostics. */
 #define KMESS_BUF_SIZE   256   	
 
-/* How many bytes for (port,value)-pairs vector to copy in. */
-#define VDEVIO_BUF_SIZE  128
+/* Maximum size in bytes for (port,value)-pairs vector to copy in. */
+#define VDEVIO_BUF_SIZE   64
 
 /* How many elements in vector of virtual copy requests. */
 #define VCOPY_VEC_SIZE    16
@@ -40,6 +40,9 @@
 
 /* How many buffers for notification messages should there be? */
 #define NR_NOTIFY_BUFS	  32
+
+/* Buffer to gather randomness. How many entries before wrapping? */
+#define RANDOM_ELEMENTS   32
 
 /* Constants and macros for bit map manipulation. */
 #define BITCHUNK_BITS   (sizeof(bitchunk_t) * CHAR_BIT)

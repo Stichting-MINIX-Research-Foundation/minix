@@ -503,7 +503,9 @@ int scode;			/* scan code for a function key */
       }
 
       printf("    %sShift-F%d: ", i+1<10? " ":"", i+1);
-      if (sfkey_obs[i] != NONE) {
+      if (i==0) {
+          printf("%-14.14s", "<reserved by TTY>");
+      } else if (sfkey_obs[i] != NONE) {
           if ((s=sys_getproc(&proc, sfkey_obs[i]))!=OK)
               printf("sys_getproc: %d\n", s);
           printf("%-14.14s", proc.p_name);

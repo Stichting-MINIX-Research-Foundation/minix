@@ -26,7 +26,6 @@ OBJECTS	= \
 	$(LIBSYS)(sys_xit.o) \
 	$(LIBSYS)(sys_sdevio.o) \
 	$(LIBSYS)(sys_getinfo.o) \
-	$(LIBSYS)(sys_kmalloc.o) \
 	$(LIBSYS)(sys_irqctl.o) \
 	$(LIBSYS)(sys_eniop.o) \
 	$(LIBSYS)(sys_segctl.o) \
@@ -95,9 +94,6 @@ $(LIBSYS)(sys_sdevio.o):	sys_sdevio.c
 
 $(LIBSYS)(sys_getinfo.o):	sys_getinfo.c
 	$(CC1) sys_getinfo.c
-
-$(LIBSYS)(sys_kmalloc.o):	sys_kmalloc.c
-	$(CC1) sys_kmalloc.c
 
 $(LIBSYS)(sys_irqctl.o):	sys_irqctl.c
 	$(CC1) sys_irqctl.c

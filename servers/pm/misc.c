@@ -24,14 +24,13 @@ FORWARD _PROTOTYPE( char *find_key, (const char *params, const char *key));
 /* PM gets a copy of all boot monitor parameters. */
 PRIVATE char monitor_params[128*sizeof(char *)];
 
-/*=====================================================================*
- *				    do_memalloc			       *
- *=====================================================================*/
-PUBLIC int do_memalloc()
+/*===========================================================================*
+ *				    do_allocmem				     *
+ *===========================================================================*/
+PUBLIC int do_allocmem()
 {
   vir_clicks mem_clicks;
   phys_clicks mem_base;
-  printf("PM got request to allocate %u KB\n", m_in.memsize);
 
   mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
   mem_base = alloc_mem(mem_clicks);
@@ -40,11 +39,17 @@ PUBLIC int do_memalloc()
   return(OK);
 }
 
-/*=====================================================================*
- *				    do_memfree			       *
- *=====================================================================*/
-PUBLIC int do_memfree()
+/*===========================================================================*
+ *				    do_freemem				     *
+ *===========================================================================*/
+PUBLIC int do_freemem()
 {
+  vir_clicks mem_clicks;
+  phys_clicks mem_base;
+
+  mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
+  mem_base = (m_in.membase + CLICK_SIZE -1 ) >> CLICK_SHIFT;
+  free_mem(mem_base, mem_clicks);
   return(OK);
 }
 

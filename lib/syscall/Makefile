@@ -9,6 +9,8 @@ OBJECTS	= \
 	$(LIBRARY)(_exit.o) \
 	$(LIBRARY)(access.o) \
 	$(LIBRARY)(alarm.o) \
+	$(LIBRARY)(allocmem.o) \
+	$(LIBRARY)(freemem.o) \
 	$(LIBRARY)(brk.o) \
 	$(LIBRARY)(cfgetispeed.o) \
 	$(LIBRARY)(cfgetospeed.o) \
@@ -116,6 +118,12 @@ $(LIBRARY)(access.o):	access.s
 
 $(LIBRARY)(alarm.o):	alarm.s
 	$(CC1) alarm.s
+
+$(LIBRARY)(allocmem.o):	allocmem.s
+	$(CC1) allocmem.s
+
+$(LIBRARY)(freemem.o):	freemem.s
+	$(CC1) freemem.s
 
 $(LIBRARY)(brk.o):	brk.s
 	$(CC1) brk.s

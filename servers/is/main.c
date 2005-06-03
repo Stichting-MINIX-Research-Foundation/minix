@@ -100,6 +100,12 @@ PRIVATE void init_server()
     	        (key-F1+1), r);
     	}
     }
+    for (key=SF1; key<=SF12; key++) {
+        if ((r=fkey_enable(key)) != OK) {
+    	    printf("IS: WARNING: couldn't register SF%d key: %d\n",
+    	        (key-SF1+1), r);
+    	}
+    }
 
     /* Display status message ... */
     printf("IS: information service is alive and kicking; press F1-F12 for dumps\n");

@@ -71,5 +71,5 @@
 #define GETPROCNR         80    /* to PM */
 
 #define FSTATFS	 	  82	/* to FS */
-#define MEM_ALLOC	  83	/* to PM */
-#define MEM_FREE	  84	/* to PM */
+#define ALLOCMEM	  83	/* to PM */
+#define FREEMEM		  84	/* to PM */

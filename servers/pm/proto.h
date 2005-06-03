@@ -56,8 +56,8 @@ _PROTOTYPE( int do_reboot, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
 _PROTOTYPE( int do_getprocnr, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
-_PROTOTYPE( int do_memalloc, (void)					);
-_PROTOTYPE( int do_memfree, (void)					);
+_PROTOTYPE( int do_allocmem, (void)					);
+_PROTOTYPE( int do_freemem, (void)					);
 _PROTOTYPE( int do_mstats, (void)					);
 
 #if (MACHINE == MACINTOSH)

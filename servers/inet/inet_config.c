@@ -12,7 +12,6 @@ Copyright 1995 Philip Homburg
 #define _MINIX	1
 
 #include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
@@ -21,6 +20,7 @@ Copyright 1995 Philip Homburg
 #include <minix/config.h>
 #include <minix/type.h>
 #include <minix/syslib.h>
+#include <unistd.h>
 #include "inet_config.h"
 
 #define CRAMPED (_EM_WSIZE==2)	/* 64K code and data is quite cramped. */

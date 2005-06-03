@@ -1,9 +1,6 @@
 /* This file contains a simple exception handler.  Exceptions in user
  * processes are converted to signals.  Exceptions in the kernel, MM and
  * FS cause a panic.
- *
- * Changes:
- *   Sep 28, 2004:	skip_stop_sequence on exceptions in system processes
  */
 
 #include "kernel.h"
@@ -78,7 +75,7 @@ unsigned vec_nr;
    * notification ...   
    */
   if (istaskp(saved_proc)) {			/* serious problem */
-  	skip_stop_sequence = TRUE;		/* directly shutdown */
+  	kernel_exception = TRUE;		/* directly shutdown */
   	panic("exception in a kernel task", NO_NUM);
   } else {
   	clear_proc(saved_proc->p_nr);

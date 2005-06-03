@@ -13,6 +13,7 @@
  * down.
  */
 
+#include <minix/type.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>

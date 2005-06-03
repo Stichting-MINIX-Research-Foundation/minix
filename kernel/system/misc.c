@@ -16,15 +16,6 @@ message *m;				/* pointer to request message */
 }
 
 
-/*===========================================================================*
- *			          do_random				     *
- *===========================================================================*/
-PUBLIC int do_random(m)
-message *m;				/* pointer to request message */
-{
-  return(ENOSYS);			/* no yet implemented */
-}
-
 
 /* The system call implemented in this file:
  *   m_type:	SYS_ABORT
@@ -131,6 +122,7 @@ register message *m_ptr;	/* pointer to request message */
         	 length); 
         if (src_phys == 0 || dst_phys == 0) return(EFAULT);
         phys_copy(src_phys, dst_phys, length);
+        /* fall through */
     }
     case GET_PROCTAB: {
     	length = sizeof(struct proc) * (NR_PROCS + NR_TASKS);
@@ -139,49 +131,22 @@ register message *m_ptr;	/* pointer to request message */
     }
     case GET_PROC: {
     	nr = (m_ptr->I_KEY_LEN == SELF) ? m_ptr->m_source : m_ptr->I_KEY_LEN;
-    	if (! isokprocn(nr)) return(EINVAL);
+    	if (! isokprocn(nr)) return(EINVAL);	/* validate request */
     	length = sizeof(struct proc);
     	src_phys = vir2phys(proc_addr(nr));
         break;
     }
     case GET_MONPARAMS: {
-    	src_phys = kinfo.params_base;	/* already is a physical address! */
+    	src_phys = kinfo.params_base;		/* already is a physical */
     	length = kinfo.params_size;
     	break;
     }
-    case GET_PROCNR: {
-        if (m_ptr->I_KEY_LEN == 0) {		/* get own process nr */
-	/* GET_PROCNR functionality will be moved to the Process Manager! */
-        kprintf("GET_PROCNR (own) from %d\n", m_ptr->m_source);
-            src_phys = vir2phys(&proc_nr);	
-            length = sizeof(int);
-        } else {				/* lookup nr by name */
-  	    int proc_found = FALSE;
-  	    struct proc *pp;
-	    struct vir_addr vsrc, vdst;
-  	    char key[8];	/* storage for process name to lookup */
-	/* GET_PROCNR functionality will be moved to the Process Manager! */
-        kprintf("GET_PROCNR (by name) from %d\n", m_ptr->m_source);
-  proc_nr = m_ptr->m_source;	/* only caller can request copy */
-    	    if (m_ptr->I_KEY_LEN > sizeof(key)) return(EINVAL);
-	    vsrc.proc_nr = proc_nr; vsrc.segment = D; vsrc.offset = (vir_bytes) m_ptr->I_KEY_PTR;
-	    vdst.proc_nr = SYSTASK, vdst.segment = D; vdst.offset = (vir_bytes) key;
-	    if (virtual_copy(&vsrc, &vdst, m_ptr->I_KEY_LEN) != OK) return(EFAULT);
-#if DEAD_CODE
-    	    if (vir_copy(proc_nr, (vir_bytes) m_ptr->I_KEY_PTR, SYSTASK,
-    	        (vir_bytes) key, m_ptr->I_KEY_LEN) != OK) return(EFAULT);
-#endif
-  	    for (pp=BEG_PROC_ADDR; pp<END_PROC_ADDR; pp++) {
-		if (kstrncmp(pp->p_name, key, m_ptr->I_KEY_LEN) == 0) {
-			src_phys = vir2phys(&(pp->p_nr));
-            		length = sizeof(int);
-			proc_found = TRUE;
-			break;
-		}
-	    }
-	    if (! proc_found) return(ESRCH);
-        }
-        break;
+    case GET_RANDOMNESS: {		
+        struct randomness copy = krandom;	/* copy to keep counters */
+  	krandom.r_next = krandom.r_size = 0;	/* invalidate random data */
+    	length = sizeof(struct randomness);
+    	src_phys = vir2phys(&copy);
+    	break;
     }
     case GET_KMESSAGES: {
         length = sizeof(struct kmessages);

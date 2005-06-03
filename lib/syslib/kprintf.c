@@ -1,4 +1,4 @@
-/*	printf() - kernel printf()			Author: Kees J. Bot
+/*	printf() - system services printf()		Author: Kees J. Bot
  *								15 Jan 1994
  */
 #define nil 0

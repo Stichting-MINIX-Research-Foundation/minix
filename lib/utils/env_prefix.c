@@ -17,9 +17,9 @@ char *prefix;		/* prefix to test for */
   int s;
   size_t n;
 
-  if ((s = sys_getkenv(env, strlen(env), value, sizeof(value))) != 0) {
+  if ((s = get_mon_param(env, value, sizeof(value))) != 0) {
   	if (s != ESRCH)		/* only error allowed */
-  	printf("WARNING: sys_getkenv() failed in env_prefix(): %d\n", s);	
+  	printf("WARNING: get_mon_param() failed in env_prefix(): %d\n", s);	
   }
   n = strlen(prefix);
   return(value != NULL

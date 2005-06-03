@@ -19,17 +19,21 @@
 
 #include "../drivers.h"
 #include "../libdriver/driver.h"
+#include <sys/ioc_memory.h>
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
-#include <sys/ioc_memory.h>
 
 #define NR_DEVS            7		/* number of minor devices */
+#define KRANDOM_PERIOD    10 		/* ticks between krandom calls */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
 PRIVATE int m_device;			/* current device */
-PRIVATE struct kinfo kinfo;		/* need kernel info */ 
-PRIVATE struct machine machine;		/* need machine info */ 
+PRIVATE struct kinfo kinfo;		/* kernel information */ 
+PRIVATE struct machine machine;		/* machine information */ 
+PRIVATE struct randomness krandom;	/* randomness from the kernel */ 
+
+extern int errno;			/* error number for PM calls */
 
 FORWARD _PROTOTYPE( char *m_name, (void) );
 FORWARD _PROTOTYPE( struct device *m_prepare, (int device) );
@@ -39,6 +43,7 @@ FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_init, (void) );
 FORWARD _PROTOTYPE( int m_ioctl, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) );
+FORWARD _PROTOTYPE( void m_random, (struct driver *dp) );
 
 /* Entry points to this driver. */
 PRIVATE struct driver m_dtab = {
@@ -51,16 +56,16 @@ PRIVATE struct driver m_dtab = {
   nop_cleanup,	/* no need to clean up */
   m_geometry,	/* memory device "geometry" */
   nop_stop,	/* no need to clean up on shutdown */
-  nop_alarm,	/* ignore leftover alarms */
+  m_random, 	/* get randomness from kernel */
 };
 
 /* Buffer for the /dev/zero null byte feed. */
 #define ZERO_BUF_SIZE 			1024
-PRIVATE char zero[ZERO_BUF_SIZE];
+PRIVATE char dev_zero[ZERO_BUF_SIZE];
 
 /* Buffer for the /dev/random number generator. */
 #define RANDOM_BUF_SIZE 		1024
-PRIVATE char random[RANDOM_BUF_SIZE];
+PRIVATE char dev_random[RANDOM_BUF_SIZE];
 
 
 #define click_to_round_k(n) \
@@ -171,16 +176,15 @@ unsigned nr_req;		/* length of request vector */
 
 	/* Random number generator. Character instead of block device. */
 	case RANDOM_DEV:
-	    printf("MEMORY: please note /dev/random is NOT yet random!\n"); 
 	    left = count;
 	    while (left > 0) {
 	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
  	        if (opcode == DEV_GATHER) {
-	    	    sys_vircopy(SELF, D, (vir_bytes) random, 
+	    	    sys_vircopy(SELF, D, (vir_bytes) dev_random, 
 	    	        proc_nr, D, user_vir, chunk);
  	        } else if (opcode == DEV_SCATTER) {
 	    	    sys_vircopy(proc_nr, D, user_vir, 
-	    	        SELF, D, (vir_bytes) random, chunk);
+	    	        SELF, D, (vir_bytes) dev_random, chunk);
  	        }
 	    	left -= chunk;
 	    }
@@ -192,7 +196,7 @@ unsigned nr_req;		/* length of request vector */
 	        left = count;
 	    	while (left > 0) {
 	    	    chunk = (left > ZERO_BUF_SIZE) ? ZERO_BUF_SIZE : left;
-	    	    if (OK != (s=sys_vircopy(SELF, D, (vir_bytes) zero, 
+	    	    if (OK != (s=sys_vircopy(SELF, D, (vir_bytes) dev_zero, 
 	    	            proc_nr, D, user_vir, chunk)))
 	    	        report("MEM","sys_vircopy failed", s);
 	    	    left -= chunk;
@@ -268,13 +272,16 @@ PRIVATE void m_init()
       }
   }
 
-  /* Initialize /dev/random and /dev/zero. */
+  /* Initialize /dev/zero. Simply write zeros into the buffer. */
   for (i=0; i<ZERO_BUF_SIZE; i++) {
-       zero[i] = '\0';
+       dev_zero[i] = '\0';
   }
-  for (i=0; i<RANDOM_BUF_SIZE; i++) {
-       random[i] = 'a' + i % 256;
-  }
+
+  /* Initialize /dev/random. Seed the buffer and get kernel randomness. */
+  for (i=0; i<RANDOM_BUF_SIZE; i++) {		
+       dev_random[i] = 'a' + i % 256;		/* from file in future !!! */
+  }		
+  m_random(NULL);				/* also set periodic timer */
 
   /* Set up memory ranges for /dev/mem. */
 #if (CHIP == INTEL)
@@ -328,21 +335,10 @@ message *m_ptr;				/* pointer to control message */
 
 	/* Try to allocate a piece of memory for the RAM disk. */
 	ramdev_size = m_ptr->POSITION;
-
-	printf("MEM: about to send to PM (ramdev_size %u)\n", ramdev_size);
-	m.m_type = MEM_ALLOC;
-	m.m4_l1 = ramdev_size;
-	if (OK != (s=sendrec(PM_PROC_NR, &m)))
-		report("MEM", "Couldn't sendrec to PM", s);
-	dv->dv_size = cvul64(m.m4_l1);
-	dv->dv_base = cvul64(m.m4_l2);
-	printf("MEM: PM (s=%d) gave base 0x%06x, size 0x%06x\n", s, dv->dv_base, dv->dv_size);
-
-	if (OK != (s=sys_kmalloc(ramdev_size, &ramdev_base)))
-	    panic("MEM","Couldn't allocate kernel memory", s);
+        if (allocmem(ramdev_size, &ramdev_base) < 0) return(ENOMEM);
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
-	printf("MEM allocated: base 0x%06x, size 0x%06x\n", dv->dv_base, dv->dv_size);
+
   	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
   		ramdev_base, ramdev_size))) {
       		panic("MEM","Couldn't install remote segment.",s);
@@ -356,6 +352,33 @@ message *m_ptr;				/* pointer to control message */
   return(OK);
 }
 
+
+/*============================================================================*
+ *				m_random				      *
+ *============================================================================*/
+PRIVATE void m_random(dp)
+struct driver *dp;			/* pointer to driver structure */
+{
+  /* Fetch random information from the kernel to update /dev/random. */
+  struct randomness krandom;
+  static unsigned long *next_ptr = (unsigned long *) &dev_random[0];
+  int i,s;
+  if (OK != (s=sys_getrandomness(&krandom)))
+  	report("MEM", "sys_getrandomness failed", s);
+
+  i= (krandom.r_next + RANDOM_ELEMENTS -1) % RANDOM_ELEMENTS;
+  while (krandom.r_size -- > 0) {
+      *next_ptr = krandom.r_buf[i];		/* set dev_random data */
+      next_ptr ++;				/* proceed to next */
+      if ((next_ptr - (unsigned long *) &dev_random[RANDOM_BUF_SIZE-1]) >= 
+      	RANDOM_ELEMENTS) next_ptr = (unsigned long *) &dev_random[0];
+      i = (i + 1) % RANDOM_ELEMENTS;		/* next kernel random data */
+  }
+
+  /* Schedule new alarm for next m_random call. */
+  if (OK != (s=sys_syncalrm(SELF, KRANDOM_PERIOD, 0)))
+  	report("MEM", "sys_syncalarm failed", s);
+}
 
 /*============================================================================*
  *				m_geometry				      *

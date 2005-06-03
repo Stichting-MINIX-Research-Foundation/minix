@@ -55,13 +55,8 @@ struct system_image image[IMAGE_SIZE];
  *===========================================================================*/
 PUBLIC int do_fkey_pressed(message *m)
 {
-#if DEAD_CODE
-    if (F1 <= m->FKEY_CODE && m->FKEY_CODE <= F12) {
-        switch(m->FKEY_CODE) {
-#else
     if (F1 <= m->NOTIFY_ARG && m->NOTIFY_ARG <= F12) {
         switch(m->NOTIFY_ARG) {
-#endif
             case  F1:	proctab_dmp();		break;
             case  F2:	memmap_dmp();		break;
             case  F3:	image_dmp();		break;
@@ -77,12 +72,15 @@ PUBLIC int do_fkey_pressed(message *m)
             case F11:	memchunks_dmp();	break;
             case F12:	sched_dmp();		break;
             default: 
-#if DEAD_CODE
-            	printf("IS: unhandled notification for F%d\n", m->FKEY_NUM);
-#else
             	printf("IS: unhandled notify for F%d (code %d)\n", 
             		m->NOTIFY_FLAGS, m->NOTIFY_ARG);
-#endif
+        }
+    }
+    if (SF1 <= m->NOTIFY_ARG && m->NOTIFY_ARG <= SF12) {
+        switch(m->NOTIFY_ARG) {
+            default: 
+            	printf("IS: unhandled notify for Shift-F%d (code %d)\n", 
+            		m->NOTIFY_FLAGS, m->NOTIFY_ARG);
         }
     }
     return(EDONTREPLY);
@@ -379,9 +377,6 @@ PRIVATE void kenv_dmp()
     printf("- bootdev_size:  %5u\n", kinfo.bootdev_size); 
     printf("- params_base:   %5u\n", kinfo.params_base); 
     printf("- params_size:   %5u\n", kinfo.params_size); 
-    printf("- notify_pending:%8u\n", kinfo.nr_ntf_pending); 
-    printf("- lock_notify: %6u\n", kinfo.lock_notify); 
-    printf("- lock_send:   %6u\n", kinfo.lock_send); 
     printf("- nr_procs:     %3u\n", kinfo.nr_procs); 
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- version:      %.6s\n", kinfo.version); 

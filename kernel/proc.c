@@ -442,7 +442,6 @@ message *m_ptr;			/* pointer to message buffer */
   struct proc *caller_ptr;
 
   lock(0, "notify");
-  kinfo.lock_notify ++;
   caller_ptr = (k_reenter >= 0) ? proc_addr(HARDWARE) : proc_ptr;
   result = mini_notify(caller_ptr, dst, m_ptr); 
   unlock(0);
@@ -654,7 +653,6 @@ message *m_ptr;			/* pointer to message buffer */
 /* Safe gateway to mini_send() for tasks. */
   int result;
   lock(2, "send");
-  kinfo.lock_send ++;
   result = mini_send(proc_ptr, dst, m_ptr, NON_BLOCKING);
   unlock(2);
   return(result);

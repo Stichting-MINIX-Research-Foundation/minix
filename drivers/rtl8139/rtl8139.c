@@ -522,7 +522,11 @@ static void rl_pci_conf()
 		rep->re_name[8] += i;
 		rep->re_seen= FALSE;
 		envvar[sizeof(RL_ENVVAR)-1]= '0'+i;
+#if DEAD_CODE
 		if (0 == sys_getkenv(envvar, strlen(envvar), val, sizeof(val)) && 
+#else
+		if (0 == get_mon_param(envvar, val, sizeof(val)) && 
+#endif
 				! env_prefix(envvar, "pci")) {
 			env_panic(envvar);
 		}

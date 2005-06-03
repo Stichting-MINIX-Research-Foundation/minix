@@ -196,7 +196,7 @@
 #  define SYS_ABORT      9	/* sys_abort() */
 #  define SYS_KILL      10	/* sys_kill(proc_nr, sig) */
 #  define SYS_UMAP      11	/* sys_umap(proc_nr, etc) */
-#  define SYS_RANDOM    12	/* sys_random(...) */
+
 #  define SYS_TRACE     13	/* sys_trace(req,pid,addr,data) */
 
 #  define SYS_SIGNALRM	15	/* sys_signalrm(proc_nr, ticks) */
@@ -210,7 +210,7 @@
 #  define SYS_DEVIO     23	/* sys_devio(port, value) */
 #  define SYS_VDEVIO    24	/* sys_vdevio(buf_ptr, nr_ports) */
 #  define SYS_IRQCTL    25	/* sys_irqctl() */
-#  define SYS_KMALLOC   26	/* sys_kmalloc(size, phys_base) */
+
 #  define SYS_IOPENABLE 27	/* sys_enable_iop() */
 #  define SYS_SEGCTL    28	/* sys_segctl(*idx, *seg, *off, phys, size) */
 #  define SYS_EXIT      29	/* sys_exit(status) */
@@ -220,7 +220,7 @@
 #  define SYS_PHYSZERO  33	/* sys_physzero(addr,count) */
 #define NR_SYS_CALLS	34	/* number of system calls */ 
 
-/* Field names for SYS_MEM, SYS_KMALLOC. */
+/* Field names for SYS_SEGCTL. */
 #define MEM_CHUNK_BASE	m4_l1	/* physical base address */
 #define MEM_CHUNK_SIZE	m4_l2	/* size of mem chunk */
 #define MEM_TOT_SIZE	m4_l3	/* total memory size */
@@ -306,8 +306,8 @@
 #define I_REQUEST      m7_i3	/* what info to get */
 #   define GET_KINFO	   0	/* get kernel information structure */
 #   define GET_IMAGE	   1	/* get system image table */
-#   define GET_PROCTAB	   2	/* get (kernel) process table */
-#   define GET_PROCNR	   3	/* find nr of process with name */
+#   define GET_PROCTAB	   2	/* get kernel process table */
+#   define GET_RANDOMNESS  3	/* get randomness buffer */
 #   define GET_MONPARAMS   4	/* get monitor parameters */
 #   define GET_KENV	   5	/* get kernel environment string */
 #   define GET_IRQHOOKS	   6	/* get the IRQ table */

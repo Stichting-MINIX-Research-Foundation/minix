@@ -31,11 +31,9 @@ _PROTOTYPE( int do_umap, (message *m_ptr) );
 _PROTOTYPE( int do_unused, (message *m_ptr) );		/* miscellaneous */
 _PROTOTYPE( int do_abort, (message *m_ptr) );
 _PROTOTYPE( int do_getinfo, (message *m_ptr) );
-_PROTOTYPE( int do_random, (message *m_ptr) );
 
 _PROTOTYPE( int do_exit, (message *m_ptr) );		/* system control */
 _PROTOTYPE( int do_svrctl, (message *m_ptr) );
-_PROTOTYPE( int do_kmalloc, (message *m_ptr) );
 _PROTOTYPE( int do_iopenable, (message *m_ptr) );
 _PROTOTYPE( int do_segctl, (message *m_ptr) );
 

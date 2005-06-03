@@ -8,7 +8,6 @@
  *
  * Changes:
  *   Mar 23, 2005   allow arbitrary partitions as RAM disk  (Jorrit N. Herder)
- *   Jan 10, 2005   register fkeys with TTY for debug dumps  (Jorrit N. Herder)
  */
 
 struct super_block;		/* proto.h needs to know this */
@@ -65,9 +64,6 @@ PUBLIC void main()
         if (call_nr == HARD_STOP) { 
         	do_sync();
         	sys_exit(0);  		/* never returns */
-        } else if (call_nr == FKEY_PRESSED) {
-        	do_fkey_pressed();
-        	continue;		/* get work again */
         }
 
 	/* Call the internal function that does the work. */
@@ -227,14 +223,6 @@ PRIVATE void fs_init()
 		dup_inode(rip);
 		rfp->fp_rootdir = rip;
 		rfp->fp_workdir = rip;
-  	}
-  }
-
-  /* Register function keys with TTY. */
-  for (key=SF5; key<=SF6; key++) {
-  	if ((i=fkey_enable(key))!=OK) {
-  		printf("Warning: FS couldn't register Shift+F%d key: %d\n",
-  			key-SF1+1, i);
   	}
   }
 }

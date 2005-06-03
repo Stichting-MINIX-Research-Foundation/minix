@@ -17,6 +17,7 @@ Copyright 1995 Philip Homburg
 #define ZERO 0	/* Used to comment out initialization code that does nothing. */
 
 #include <sys/types.h>
+#include <minix/type.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>

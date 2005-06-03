@@ -52,9 +52,6 @@ PUBLIC void main()
 		check_sig(-1, SIGKILL);		/* kill all processes */
 		sys_exit(0);
 		/* never reached */
-	} else if (call_nr == FKEY_PRESSED) {	/* create debug dump */
-		(void) do_fkey_pressed();
-		result = SUSPEND;		/* don't reply */
 	} else if (call_nr == KSIG_PENDING) {	/* signals pending */
 		(void) ksig_pending();
 		result = SUSPEND;		/* don't reply */
@@ -217,11 +214,4 @@ PRIVATE void pm_init()
   printf("System services=%uK   ", click_to_round_k(minix_clicks));
   printf("Available=%uK\n\n", click_to_round_k(free_clicks));
 
-  /* Register function keys with TTY for debug dumps. */
-  for (key=SF7; key<=SF8; key++) {
-  	if ((i=fkey_enable(key))!=OK) {
-  		printf("Warning: PM couldn't register Shift+F%d key: %d\n",
-  			key-SF1+1, i);
-  	}
-  }
 }

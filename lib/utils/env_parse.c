@@ -33,7 +33,7 @@ long min, max;		/* minimum and maximum values for the parameter */
 
   if ((s=get_mon_param(env, value, sizeof(value))) != 0) { 
       if (s == ESRCH) return(EP_UNSET);		/* only error allowed */ 
-      printf("WARNING: sys_getkenv() failed in env_parse(): %d\n",s);
+      printf("WARNING: get_mon_param() failed in env_parse(): %d\n",s);
       return(EP_EGETKENV);
   }
   val = value;

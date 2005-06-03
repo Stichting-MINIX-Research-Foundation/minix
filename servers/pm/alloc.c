@@ -41,9 +41,9 @@ PRIVATE phys_clicks swap_base;	/* memory offset chosen as swap base */
 PRIVATE phys_clicks swap_maxsize;/* maximum amount of swap "memory" possible */
 PRIVATE struct mproc *in_queue;	/* queue of processes wanting to swap in */
 PRIVATE struct mproc *outswap = &mproc[0]; 	 /* outswap candidate? */
-#else /* !SWAP */
+#else /* ! ENABLE_SWAP */
 #define swap_base ((phys_clicks) -1)
-#endif /* !SWAP */
+#endif /* ENABLE_SWAP */
 
 FORWARD _PROTOTYPE( void del_slot, (struct hole *prev_ptr, struct hole *hp) );
 FORWARD _PROTOTYPE( void merge, (struct hole *hp)			    );
@@ -65,7 +65,6 @@ phys_clicks clicks;		/* amount of memory requested */
  * always on a click boundary.  This procedure is called when memory is
  * needed for FORK or EXEC.  Swap other processes out if needed.
  */
-
   register struct hole *hp, *prev_ptr;
   phys_clicks old_base;
 
@@ -104,7 +103,6 @@ phys_clicks clicks;		/* number of clicks to free */
  * to the hole list.  If it is contiguous with an existing hole on either end,
  * it is merged with the hole or holes.
  */
-
   register struct hole *hp, *new_ptr, *prev_ptr;
 
   if (clicks == 0) return;
@@ -151,7 +149,6 @@ register struct hole *hp;	/* pointer to hole entry to be removed */
  * the numbers of holes in memory, and requiring the elimination of one
  * entry in the hole list.
  */
-
   if (hp == hole_head)
 	hole_head = hp->h_next;
   else
@@ -172,7 +169,6 @@ register struct hole *hp;	/* ptr to hole to merge with its successors */
  * either or both ends.  The pointer 'hp' points to the first of a series of
  * three holes that can potentially all be merged together.
  */
-
   register struct hole *next_ptr;
 
   /* If 'hp' points to the last hole, no merging is possible.  If it does not,
@@ -230,7 +226,7 @@ phys_clicks *free;		/* memory size summaries */
 
   /* Ask the kernel for chunks of physical memory and allocate holes. */
   *free = 0;
-  for (i=0; i<NR_MEMS; i++) {
+  for (i=NR_MEMS-1; i>=0; i--) {
   	if (mem[i].size > 0) {
 		free_mem(mem[i].base, mem[i].size);
 		*free += mem[i].size;

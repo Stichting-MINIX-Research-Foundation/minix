@@ -248,7 +248,7 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
    */
   shutting_down = TRUE;				/* flag for sys_exit() */
   tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
-  if (skip_stop_sequence) {			/* set in exception() */
+  if (kernel_exception) {			/* set in exception() */
       kprintf("\nAn exception occured; skipping stop sequence.\n", NO_ARG);
       shutdown(&shutdown_timer);		/* TTY isn't scheduled */
   } else {

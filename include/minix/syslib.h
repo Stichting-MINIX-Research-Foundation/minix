@@ -109,7 +109,6 @@ _PROTOTYPE(int sys_umap, (int proc_nr, int seg, vir_bytes vir_addr,
 _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 	phys_bytes phys, vir_bytes size));
 _PROTOTYPE(int sys_enable_iop, (int proc_nr)				);
-_PROTOTYPE(int sys_kmalloc, (size_t size, phys_bytes *phys_base)		);
 
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkmessages(dst)	sys_getinfo(GET_KMESSAGES, dst, 0,0,0)
@@ -117,14 +116,12 @@ _PROTOTYPE(int sys_kmalloc, (size_t size, phys_bytes *phys_base)		);
 #define sys_getmachine(dst)	sys_getinfo(GET_MACHINE, dst, 0,0,0)
 #define sys_getproctab(dst)	sys_getinfo(GET_PROCTAB, dst, 0,0,0)
 #define sys_getproc(dst,nr)	sys_getinfo(GET_PROC, dst, 0,0, nr)
-#define sys_getprocnr(dst,k,kl)	sys_getinfo(GET_PROCNR, dst, 0,k,kl)
+#define sys_getrandomness(dst)	sys_getinfo(GET_RANDOMNESS, dst, 0,0,0)
 #define sys_getimage(dst)	sys_getinfo(GET_IMAGE, dst, 0,0,0)
 #define sys_getirqhooks(dst)	sys_getinfo(GET_IRQHOOKS, dst, 0,0,0)
 #define sys_getmemchunks(dst)	sys_getinfo(GET_MEMCHUNKS, dst, 0,0,0)
 #define sys_getmonparams(v,vl)	sys_getinfo(GET_MONPARAMS, v,vl, 0,0)
-#define sys_getkenv(k,kl,v,vl)	sys_getinfo(GET_KENV, v,vl, k,kl)
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
-#define sys_getkaddr(dst)	sys_getinfo(GET_KADDRESSES, dst, 0,0,0)
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *key_ptr, int key_len)		);
