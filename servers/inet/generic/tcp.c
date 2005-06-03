@@ -1115,7 +1115,8 @@ tcpport_t port;
 	return TRUE;
 }
 
-PRIVATE int reply_thr_put(tcp_fd, reply, for_ioctl)
+PRIVATE int
+reply_thr_put(tcp_fd, reply, for_ioctl)
 tcp_fd_t *tcp_fd;
 int reply;
 int for_ioctl;

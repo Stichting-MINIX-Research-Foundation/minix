@@ -92,6 +92,7 @@
     allow(1, CLOCK) \
     allow(1, INIT_PROC_NR) \
     allow(1, FS_PROC_NR) \
+    allow(1, USR8139) \
     allow(1, USER_PROC_NR)	/* reply to system calls */ 
 
 #define AT_SENDMASK \
