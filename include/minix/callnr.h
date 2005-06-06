@@ -1,4 +1,4 @@
-#define NCALLS		  85	/* number of system calls allowed */
+#define NCALLS		  86	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 
@@ -73,3 +73,4 @@
 #define FSTATFS	 	  82	/* to FS */
 #define ALLOCMEM	  83	/* to PM */
 #define FREEMEM		  84	/* to PM */
+#define SELECT            85	/* to FS */

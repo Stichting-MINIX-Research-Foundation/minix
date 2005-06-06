@@ -64,6 +64,7 @@ OBJECTS	= \
 	$(LIBRARY)(_rename.o) \
 	$(LIBRARY)(_rewinddir.o) \
 	$(LIBRARY)(_rmdir.o) \
+	$(LIBRARY)(_select.o) \
 	$(LIBRARY)(_setgid.o) \
 	$(LIBRARY)(_setsid.o) \
 	$(LIBRARY)(_setuid.o) \
@@ -269,6 +270,9 @@ $(LIBRARY)(_rewinddir.o):	_rewinddir.c
 
 $(LIBRARY)(_rmdir.o):	_rmdir.c
 	$(CC1) _rmdir.c
+
+$(LIBRARY)(_select.o):	_select.c
+	$(CC1) _select.c
 
 $(LIBRARY)(_setgid.o):	_setgid.c
 	$(CC1) _setgid.c

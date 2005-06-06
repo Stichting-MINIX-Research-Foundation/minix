@@ -24,7 +24,7 @@
 #define NODENAME ((unsigned) 0x02)
 #define RELEASE  ((unsigned) 0x04)
 #define VERSION  ((unsigned) 0x08)
-#define MACHINE  ((unsigned) 0x10)
+#define U_MACHINE  ((unsigned) 0x10)
 #define ARCH     ((unsigned) 0x20)
 
 _PROTOTYPE(int main, (int argc, char **argv ));
@@ -75,7 +75,7 @@ char **argv;
   		for (p = &argv[1][1]; *p; p++) {
   			switch (*p) {
 				case 'a': info |= ALL;      break;
-				case 'm': info |= MACHINE;  break;
+				case 'm': info |= U_MACHINE;  break;
 				case 'n': info |= NODENAME; break;
 				case 'r': info |= RELEASE;  break;
 				case 's': info |= SYSNAME;  break;
@@ -113,13 +113,13 @@ char **argv;
 		print(STDOUT_FILENO, " ", (char *) NULL);
 	print(STDOUT_FILENO, un.version, (char *) NULL);
   }
-  if ((info & MACHINE) != 0) {
+  if ((info & U_MACHINE) != 0) {
 	if ((info & (SYSNAME|NODENAME|RELEASE|VERSION)) != 0)
 		print(STDOUT_FILENO, " ", (char *) NULL);
 	print(STDOUT_FILENO, un.machine, (char *) NULL);
   }
   if ((info & ARCH) != 0) {
-	if ((info & (SYSNAME|NODENAME|RELEASE|VERSION|MACHINE)) != 0)
+	if ((info & (SYSNAME|NODENAME|RELEASE|VERSION|U_MACHINE)) != 0)
 		print(STDOUT_FILENO, " ", (char *) NULL);
 	print(STDOUT_FILENO, un.arch, (char *) NULL);
   }

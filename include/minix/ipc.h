@@ -19,6 +19,7 @@ typedef struct {short m5c1, m5c2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
 typedef struct {int m6i1, m6i2, m6i3; long m6l1; char *m6c1;} mess_6;
 #endif
 typedef struct {int m7i1, m7i2, m7i3, m7i4; char *m7p1, *m7p2;} mess_7;
+typedef struct {int m8i1, m8i2; char *m8p1, *m8p2, *m8p3, *m8p4;} mess_8;
 
 typedef struct {
   int m_source;			/* who sent the message */
@@ -33,6 +34,7 @@ typedef struct {
 	mess_6 m_m6;
 #endif
 	mess_7 m_m7;
+	mess_8 m_m8;
   } m_u;
 } message;
 
@@ -84,6 +86,13 @@ typedef struct {
 #define m7_i4  m_u.m_m7.m7i4
 #define m7_p1  m_u.m_m7.m7p1
 #define m7_p2  m_u.m_m7.m7p2
+
+#define m8_i1  m_u.m_m8.m8i1
+#define m8_i2  m_u.m_m8.m8i2
+#define m8_p1  m_u.m_m8.m8p1
+#define m8_p2  m_u.m_m8.m8p2
+#define m8_p3  m_u.m_m8.m8p3
+#define m8_p4  m_u.m_m8.m8p4
 
 
 /*==========================================================================* 

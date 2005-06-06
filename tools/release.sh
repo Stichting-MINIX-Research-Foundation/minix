@@ -21,26 +21,13 @@ echo -n "Device: /dev/"
 read dev || exit 1
 TMPDISK=/dev/$dev
 
-echo "Temporary (sub)partition to use for storage in /tmp?"
-echo "It will be mkfsed!"
-echo -n "Device: /dev/"
-read tmpdev || exit 1
-TMPTMPDISK=/dev/$tmpdev
-
 if [ -b $TMPDISK ]
 then :
 else	echo "$TMPDISK is not a block device.."
 	exit 1
 fi
 
-if [ -b $TMPTMPDISK ]
-then :
-else	echo "$TMPDISK is not a block device.."
-	exit 1
-fi
-
 umount $TMPDISK
-umount $TMPTMPDISK
 umount $RAM
 
 ( cd .. && make clean )
@@ -51,9 +38,6 @@ echo " * mounting $RAM as $RELEASEDIR"
 mount $RAM $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
-umount $TMPTMPDISK 
-mkfs $TMPTMPDISK || exit
-mount $TMPTMPDISK $RELEASEDIR/tmp || exit 1
 
 mkfs -B 1024 $TMPDISK || exit
 echo " * mounting $TMPDISK as $RELEASEDIR/usr"
@@ -69,7 +53,6 @@ chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
 echo " * Chroot build done"
 cp issue.install $RELEASEDIR/etc/issue
 umount $TMPDISK || exit
-umount $TMPTMPDISK || exit
 umount $RAM || exit
 cp $RAM $ROOTIMAGE
 make programs image

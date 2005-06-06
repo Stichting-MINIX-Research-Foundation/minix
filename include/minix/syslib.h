@@ -34,6 +34,8 @@
 /*==========================================================================* 
  * Minix system library. 						    *
  *==========================================================================*/ 
+_PROTOTYPE( int printf, (const char *fmt, ...)				);
+_PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( int _taskcall, (int who, int syscallnr, message *msgptr)	);
 
 _PROTOTYPE( int sys_abort, (int how, ...)				);

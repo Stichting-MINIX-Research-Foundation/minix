@@ -171,3 +171,7 @@ _PROTOTYPE( void clear_zone, (struct inode *rip, off_t pos, int flag)	);
 _PROTOTYPE( int do_write, (void)					);
 _PROTOTYPE( struct buf *new_block, (struct inode *rip, off_t position)	);
 _PROTOTYPE( void zero_block, (struct buf *bp)				);
+
+/* select.c */
+_PROTOTYPE( int do_select, (void)					);
+

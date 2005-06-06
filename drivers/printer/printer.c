@@ -55,7 +55,7 @@
  */
 #define ASSERT_STROBE   0x1D	/* strobe a character to the interface */
 #define NEGATE_STROBE   0x1C	/* enable interrupt on interface */
-#define SELECT          0x0C	/* select printer bit */
+#define PR_SELECT          0x0C	/* select printer bit */
 #define INIT_PRINTER    0x08	/* init printer bits */
 
 /* Status bits (in port_base + 2).
@@ -285,7 +285,7 @@ PRIVATE void do_initialize()
   sys_outb(port_base + 2, INIT_PRINTER);
   tickdelay(1);			/* easily satisfies Centronics minimum */
   				/* was 2 millisecs; now is ~17 millisecs */
-  sys_outb(port_base + 2, SELECT);
+  sys_outb(port_base + 2, PR_SELECT);
   sys_irqsetpolicy(PRINTER_IRQ, 0, &irq_hook_id);
   sys_irqenable(&irq_hook_id);
 
@@ -332,7 +332,7 @@ PRIVATE void do_printer_output()
 	 * when the printer is busy with a previous character, because the
 	 * interrupt status does not affect the printer.
 	 */
-	sys_outb(port_base + 2, SELECT);
+	sys_outb(port_base + 2, PR_SELECT);
 	sys_irqenable(&irq_hook_id);
 	return;
   }

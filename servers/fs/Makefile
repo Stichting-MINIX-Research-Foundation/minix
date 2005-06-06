@@ -16,7 +16,7 @@ LIBS = -lsys -lutils
 OBJ =	main.o open.o read.o write.o pipe.o dmap.o dmp.o \
 	device.o path.o mount.o link.o super.o inode.o \
 	cache.o cache2.o filedes.o stadir.o protect.o time.o \
-	cmostime.o lock.o misc.o utility.o table.o 
+	cmostime.o lock.o misc.o utility.o select.o table.o 
 
 # build local binary 
 all build:	$(SERVER)
@@ -35,7 +35,7 @@ clean:
 
 # dependencies
 a=	fs.h $h/config.h $s/types.h $h/const.h $h/type.h \
-	$i/limits.h $i/errno.h $i/ansi.h $h/syslib.h $h/utils.h \
+	$i/limits.h $i/errno.h $i/ansi.h $h/syslib.h \
 	const.h type.h proto.h glo.h $s/dir.h
 
 cache.o:	$a
