@@ -29,7 +29,6 @@ long ticks;				/* number of ticks to wait */
 
     /* Check if we must reschedule the current alarm. */
     if (m.ALRM_TIME_LEFT > 0) {
-    	printf("tick_delay: reschedule alarm\n");
     	m.ALRM_EXP_TIME = m.ALRM_TIME_LEFT - ticks;
     	if (m.ALRM_EXP_TIME <= 0) 
     		m.ALRM_EXP_TIME = 1;
