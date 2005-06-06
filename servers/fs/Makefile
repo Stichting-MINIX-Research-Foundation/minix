@@ -35,7 +35,7 @@ clean:
 
 # dependencies
 a=	fs.h $h/config.h $s/types.h $h/const.h $h/type.h \
-	$i/limits.h $i/errno.h $i/ansi.h $h/syslib.h \
+	$i/limits.h $i/errno.h $i/ansi.h $h/syslib.h $h/utils.h \
 	const.h type.h proto.h glo.h $s/dir.h
 
 cache.o:	$a

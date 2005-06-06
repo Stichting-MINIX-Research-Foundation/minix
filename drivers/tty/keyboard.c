@@ -83,6 +83,7 @@ FORWARD _PROTOTYPE( int func_key, (int scode) );
 FORWARD _PROTOTYPE( int scan_keyboard, (void) );
 FORWARD _PROTOTYPE( unsigned make_break, (int scode) );
 FORWARD _PROTOTYPE( void set_leds, (void) );
+FORWARD _PROTOTYPE( void show_key_mappings, (void) );
 FORWARD _PROTOTYPE( void kb_read, (struct tty *tp) );
 FORWARD _PROTOTYPE( unsigned map_key, (int scode) );
 
@@ -204,6 +205,7 @@ tty_t *tp;
 	} else
 	if (CF1 <= ch && ch <= CF12) {
 	    switch(ch) {
+  		case CF1: show_key_mappings(); break; 
   		case CF3: toggle_scroll(); break; /* hardware <-> software */	
   		case CF7: sigchar(&tty_table[CONSOLE], SIGQUIT); break;
   		case CF8: sigchar(&tty_table[CONSOLE], SIGINT); break;
@@ -421,11 +423,10 @@ message *m_ptr;			/* pointer to the request message */
   int result;
 
   /* See if this key can be observed; get the observers array and index. */ 
-  if (SF1 == fkey) result = EINVAL;		/* Shift-F1 is TTY reserved */
   if (F1 <= fkey && fkey <= F12) { 		/* F1-F12 */
       observers = fkey_obs; 
       index = fkey - F1;
-  } else if (SF2 <= fkey && fkey <= SF12) {   	/* Shift F1-F12 */
+  } else if (SF1 <= fkey && fkey <= SF12) {   	/* Shift F1-F12 */
       observers = sfkey_obs; 
       index = fkey - SF1;
   }
@@ -473,7 +474,6 @@ int scode;			/* scan code for a function key */
   unsigned fkey;
   int index = -1;
   int i,s;
-  struct proc proc;
 
   /* Ignore key releases. If this is a key press, get full key code. */
   if (scode & KEY_RELEASE) return(FALSE);	/* key release */
@@ -487,38 +487,7 @@ int scode;			/* scan code for a function key */
    * Other combinations are not in use. Note that Alt+Shift+F1-F12 is yet
    * defined in <minix/keymap.h>, but other modifier combinations are not. 
    */
-  if (SF1 == fkey) {
-    printf("\n");
-    printf("System information.   Known function key mappings to request debug dumps:\n");
-    printf("-------------------------------------------------------------------------\n");
-    for (i=0; i<12; i++) {
-
-      printf(" %sF%d: ", i+1<10? " ":"", i+1);
-      if (fkey_obs[i] != NONE) {
-          if ((s=sys_getproc(&proc, fkey_obs[i]))!=OK)
-              printf("sys_getproc: %d\n", s);
-          printf("%-14.14s", proc.p_name);
-      } else {
-          printf("%-14.14s", "<none>");
-      }
-
-      printf("    %sShift-F%d: ", i+1<10? " ":"", i+1);
-      if (i==0) {
-          printf("%-14.14s", "<reserved by TTY>");
-      } else if (sfkey_obs[i] != NONE) {
-          if ((s=sys_getproc(&proc, sfkey_obs[i]))!=OK)
-              printf("sys_getproc: %d\n", s);
-          printf("%-14.14s", proc.p_name);
-      } else {
-          printf("%-14.14s", "<none>");
-      }
-      printf("\n");
-    }
-    printf("\n");
-    printf("Press one of the registered function keys to trigger a debug dump.\n");
-    printf("\n");
-  }
-  else if (F1 <= fkey && fkey <= F12) {		/* F1-F12 */
+  if (F1 <= fkey && fkey <= F12) {		/* F1-F12 */
       observers = &fkey_obs[0];	
       index = fkey - F1;
   } else if (SF2 <= fkey && fkey <= SF12) {	/* Shift F2-F12 */
@@ -548,6 +517,46 @@ int scode;			/* scan code for a function key */
 #endif
   }
   return(TRUE);
+}
+
+
+/*==========================================================================*
+ *				show_key_mappings			    *
+ *==========================================================================*/
+PRIVATE void show_key_mappings()
+{
+    int i,s;
+  struct proc proc;
+
+    printf("\n");
+    printf("System information.   Known function key mappings to request debug dumps:\n");
+    printf("-------------------------------------------------------------------------\n");
+    for (i=0; i<12; i++) {
+
+      printf(" %sF%d: ", i+1<10? " ":"", i+1);
+      if (fkey_obs[i] != NONE) {
+          if ((s=sys_getproc(&proc, fkey_obs[i]))!=OK)
+              printf("sys_getproc: %d\n", s);
+          printf("%-14.14s", proc.p_name);
+      } else {
+          printf("%-14.14s", "<none>");
+      }
+
+      printf("    %sShift-F%d: ", i+1<10? " ":"", i+1);
+      if (i==0) {
+          printf("%-14.14s", "<reserved by TTY>");
+      } else if (sfkey_obs[i] != NONE) {
+          if ((s=sys_getproc(&proc, sfkey_obs[i]))!=OK)
+              printf("sys_getproc: %d\n", s);
+          printf("%-14.14s", proc.p_name);
+      } else {
+          printf("%-14.14s", "<none>");
+      }
+      printf("\n");
+    }
+    printf("\n");
+    printf("Press one of the registered function keys to trigger a debug dump.\n");
+    printf("\n");
 }
 
 

@@ -10,9 +10,7 @@
  * to pollute the kernel message buffer with its debug dumps. 
  */
 
-#include "syslib.h"
-#include <minix/callnr.h>
-#include <minix/minlib.h>
+#include "utils.h"
 
 /*===========================================================================*
  *				kputc					     *

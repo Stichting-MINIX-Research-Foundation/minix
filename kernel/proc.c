@@ -85,12 +85,6 @@ FORWARD _PROTOTYPE( void pick_proc, (void) );
 #endif /* (CHIP == M68000) */
 
 
-#if DEAD_CODE	/* now in glo.h */
-/* Declare buffer space and a bit map for notification messages. */
-PRIVATE struct notification notify_buffer[NR_NOTIFY_BUFS];
-PRIVATE bitchunk_t notify_bitmap[BITMAP_CHUNKS(NR_NOTIFY_BUFS)];     
-#endif
-
 
 /*===========================================================================*
  *				sys_call				     * 
@@ -152,6 +146,20 @@ message *m_ptr;			/* pointer to message in the caller's space */
    */
   switch(function) {
   case SENDREC:				/* has FRESH_ANSWER flags */		
+#if DEAD_CODE
+      { message m;
+        if (caller_ptr->p_nr == MEMORY && src_dst == FS_PROC_NR) {
+	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, proc_addr(HARDWARE), &m);
+      	kprintf("MEMORY sendrec FS, m.m_type %d", m.m_type);
+      	kprintf("TTY_LINE %d", m.TTY_LINE);
+      	kprintf("TTY_REQ %d\n", m.TTY_REQUEST);
+	}
+        if (caller_ptr->p_nr == FS_PROC_NR && src_dst == MEMORY) {
+	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, proc_addr(HARDWARE), &m);
+      	kprintf("FS sendrec MEMORY, m.m_type %d\n", m.m_type);
+	}
+      }
+#endif
       /* fall through */
   case SEND:			
       if (! isalive(src_dst)) { 			
@@ -214,9 +222,7 @@ unsigned flags;				/* system call flags */
   dst_ptr = proc_addr(dst);	/* pointer to destination's proc entry */
 
 
-  /* Check for deadlock by 'caller_ptr' and 'dst' sending to each other.
-   * This check is rare, so overhead is acceptable.
-   */
+  /* Check for deadlock by 'caller_ptr' and 'dst' sending to each other. */
   if (dst_ptr->p_flags & SENDING) {
 	next_ptr = proc_addr(dst_ptr->p_sendto);
 	while (TRUE) {

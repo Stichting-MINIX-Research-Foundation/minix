@@ -28,6 +28,7 @@ Copyright 1995 Philip Homburg
 #include <minix/const.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
+#include <minix/utils.h>
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_hdr.h>

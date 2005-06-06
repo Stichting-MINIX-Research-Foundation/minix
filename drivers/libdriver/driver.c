@@ -99,7 +99,7 @@ struct driver *dp;	/* Device dependent entry points. */
 	case DEV_IOCTL:		r = (*dp->dr_ioctl)(dp, &mess);	break;
 
 	case DEV_READ:	
-	case DEV_WRITE:	  r = do_rdwt(dp, &mess);		break;
+	case DEV_WRITE:	  r = do_rdwt(dp, &mess);	break;
 	case DEV_GATHER: 
 	case DEV_SCATTER: r = do_vrdwt(dp, &mess);	break;
 

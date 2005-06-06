@@ -93,14 +93,14 @@ PRIVATE void init_server()
     /* Set own process number. */
     is_proc_nr = IS_PROC_NR;
 
-    /* Set key mappings. IS takes all of F2-F12. F1 is TTY reserved. */
+    /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6 . */
     for (key=F1; key<=F12; key++) {
         if ((r=fkey_enable(key)) != OK) {
     	    printf("IS: WARNING: couldn't register F%d key: %d\n",
     	        (key-F1+1), r);
     	}
     }
-    for (key=SF1; key<=SF12; key++) {
+    for (key=SF1; key<=SF6; key++) {
         if ((r=fkey_enable(key)) != OK) {
     	    printf("IS: WARNING: couldn't register SF%d key: %d\n",
     	        (key-SF1+1), r);

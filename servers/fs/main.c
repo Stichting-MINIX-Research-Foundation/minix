@@ -260,7 +260,7 @@ PRIVATE void load_ram(void)
   struct super_block *sp, *dsp;
   block_t b;
   Dev_t image_dev;
-  int r;
+  int s,r;
   static char sbbuf[MIN_BLOCK_SIZE];
   int block_size_image, block_size_ram, ramfs_block_size;
 
@@ -303,10 +303,19 @@ PRIVATE void load_ram(void)
   m_out.m_type = DEV_IOCTL;
   m_out.PROC_NR = FS_PROC_NR;
   m_out.DEVICE = RAM_DEV;
-  m_out.REQUEST = MIOCRAMSIZE;
-  m_out.POSITION = ram_size_kb*1024;
-  if (sendrec(MEMORY, &m_out) != OK || m_out.REP_STATUS != OK)
-	panic(__FILE__,"can't set RAM disk size", NO_NUM);
+  m_out.REQUEST = MIOCRAMSIZE;			/* I/O control to use */
+  m_out.POSITION = (ram_size_kb * 1024);	/* request in bytes */
+  if ((s=sendrec(MEMORY, &m_out)) != OK)
+  	panic("FS","sendrec from MEM failed", s);
+  else if (m_out.REP_STATUS != OK) {
+  	/* Report and continue, unless RAM disk is required as root FS. */
+  	if (root_dev != DEV_RAM) {
+  		report("FS","can't set RAM disk size", m_out.REP_STATUS);
+  		return;
+  	} else {
+		panic(__FILE__,"can't set RAM disk size", m_out.REP_STATUS);
+  	}
+  }
 
 
 #if ENABLE_CACHE2

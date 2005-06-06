@@ -7,9 +7,6 @@ LIBSYS	= ../libsys.a
 all:	$(LIBSYS)
 
 OBJECTS	= \
-	$(LIBSYS)(kmalloc.o) \
-	$(LIBSYS)(kprintf.o) \
-	$(LIBSYS)(kputc.o) \
 	$(LIBSYS)(sys_times.o) \
 	$(LIBSYS)(sys_getuptm.o) \
 	$(LIBSYS)(sys_abort.o) \
@@ -49,15 +46,6 @@ OBJECTS	= \
 $(LIBSYS):	$(OBJECTS)
 	aal cr $@ *.o
 	rm *.o
-
-$(LIBSYS)(kmalloc.o):	kmalloc.c
-	$(CC1) kmalloc.c
-
-$(LIBSYS)(kprintf.o):	kprintf.c
-	$(CC1) kprintf.c
-
-$(LIBSYS)(kputc.o):	kputc.c
-	$(CC1) kputc.c
 
 $(LIBSYS)(sys_times.o):	sys_times.c
 	$(CC1) sys_times.c

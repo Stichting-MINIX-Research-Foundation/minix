@@ -272,6 +272,8 @@ _PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
 PRIVATE message m;
 PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 
+extern int errno;
+
 /*===========================================================================*
  *				rtl8139_task				     *
  *===========================================================================*/
@@ -281,8 +283,8 @@ void main(void)
 	re_t *rep;
 	long v;
 
-	if ((v=get_proc_nr(&rl_tasknr, NULL)) != OK)
-		panic("RTL8139", "Couldn't get own proc nr", v);
+	if (getprocnr(&rl_tasknr) != OK)
+		panic("RTL8139", "getprocnr failed", errno);
 
 	v= 0;
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
@@ -522,11 +524,7 @@ static void rl_pci_conf()
 		rep->re_name[8] += i;
 		rep->re_seen= FALSE;
 		envvar[sizeof(RL_ENVVAR)-1]= '0'+i;
-#if DEAD_CODE
-		if (0 == sys_getkenv(envvar, strlen(envvar), val, sizeof(val)) && 
-#else
 		if (0 == get_mon_param(envvar, val, sizeof(val)) && 
-#endif
 				! env_prefix(envvar, "pci")) {
 			env_panic(envvar);
 		}
@@ -706,11 +704,7 @@ re_t *rep;
 
 #define BUF_ALIGNMENT (64*1024)
 
-#if DEAD_CODE
-	if (OK != (i=sys_kmalloc(tot_bufsize, &buf))) {
-#else
 	if(!(mallocbuf = malloc(BUF_ALIGNMENT + tot_bufsize))) {
-#endif
 	    panic("RTL8139","Couldn't allocate kernel buffer",i);
 	}
 
@@ -2379,16 +2373,8 @@ timer_t *tp;
 			rep->re_tx[2].ret_busy, rep->re_tx[3].ret_busy);
 		rep->re_need_reset= TRUE;
 		rep->re_got_int= TRUE;
-		/* Under MINIX, we got here via a synchronous alarm call. 
-		 * Change the message type to HARD_INT to fake an interrupt.
-		 * The switch in the main loop 'falls through' if it sees
-		 * the HARD_INT message type.
-		 */
-#if DEAD_CODE
-		m.m_type = HARD_INT;
-#else
-			check_int_events();
-#endif
+			
+		check_int_events();
 	}
 }
 

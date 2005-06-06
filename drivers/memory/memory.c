@@ -331,11 +331,17 @@ message *m_ptr;				/* pointer to control message */
 	message m;
 	int s;
 
-	if (m_ptr->PROC_NR != FS_PROC_NR) return(EPERM);
+	if (m_ptr->PROC_NR != FS_PROC_NR) {
+	    report("MEM", "warning, MIOCRAMSIZE called by", m_ptr->PROC_NR);
+	    return(EPERM);
+	}
 
 	/* Try to allocate a piece of memory for the RAM disk. */
 	ramdev_size = m_ptr->POSITION;
-        if (allocmem(ramdev_size, &ramdev_base) < 0) return(ENOMEM);
+        if (allocmem(ramdev_size, &ramdev_base) < 0) {
+            report("MEM", "warning, allocmem failed", errno);
+            return(ENOMEM);
+        }
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
 

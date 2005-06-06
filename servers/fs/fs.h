@@ -16,6 +16,7 @@
 #include <errno.h>
 
 #include <minix/syslib.h>
+#include <minix/utils.h>
 
 #include "const.h"
 #include "type.h"

@@ -7,6 +7,9 @@ LIBUTILS	= ../libutils.a
 all:	$(LIBUTILS)
 
 OBJECTS	= \
+	$(LIBSYS)(kmalloc.o) \
+	$(LIBSYS)(kprintf.o) \
+	$(LIBSYS)(kputc.o) \
 	$(LIBUTILS)(tickdelay.o) \
 	$(LIBUTILS)(getuptime.o) \
 	$(LIBUTILS)(get_mon_prm.o) \
@@ -14,7 +17,6 @@ OBJECTS	= \
 	$(LIBUTILS)(env_panic.o) \
 	$(LIBUTILS)(env_prefix.o) \
 	$(LIBUTILS)(fkey_ctl.o) \
-	$(LIBUTILS)(get_proc_nr.o) \
 	$(LIBUTILS)(panic.o) \
 	$(LIBUTILS)(report.o) \
 	$(LIBUTILS)(taskcall.o) \
@@ -23,6 +25,15 @@ OBJECTS	= \
 $(LIBUTILS):	$(OBJECTS)
 	aal cr $@ *.o
 	rm *.o
+
+$(LIBSYS)(kmalloc.o):	kmalloc.c
+	$(CC1) kmalloc.c
+
+$(LIBSYS)(kprintf.o):	kprintf.c
+	$(CC1) kprintf.c
+
+$(LIBSYS)(kputc.o):	kputc.c
+	$(CC1) kputc.c
 
 $(LIBUTILS)(getuptime.o):	getuptime.c
 	$(CC1) getuptime.c
@@ -44,9 +55,6 @@ $(LIBUTILS)(env_panic.o):	env_panic.c
 
 $(LIBUTILS)(fkey_ctl.o):	fkey_ctl.c
 	$(CC1) fkey_ctl.c
-
-$(LIBUTILS)(get_proc_nr.o):	get_proc_nr.c
-	$(CC1) get_proc_nr.c
 
 $(LIBUTILS)(panic.o):		panic.c
 	$(CC1) panic.c

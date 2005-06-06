@@ -20,6 +20,7 @@ Copyright 1995 Philip Homburg
 #include <minix/config.h>
 #include <minix/type.h>
 #include <minix/syslib.h>
+#include <minix/utils.h>
 #include <unistd.h>
 #include "inet_config.h"
 

@@ -33,7 +33,7 @@ clean:
 
 # dependencies
 a =	pm.h $h/config.h $s/types.h $h/const.h $h/type.h \
-	$i/ansi.h $i/fcntl.h $i/unistd.h $h/syslib.h \
+	$i/ansi.h $i/fcntl.h $i/unistd.h $h/syslib.h $h/utils.h \
 	$i/limits.h $i/errno.h const.h type.h proto.h glo.h
 
 alloc.o:	$a
