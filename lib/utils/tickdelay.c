@@ -25,7 +25,7 @@ long ticks;				/* number of ticks to wait */
     s = _taskcall(SYSTASK, SYS_SYNCALRM, &m);
     if (s != OK) return(s);
 
-    receive(HARDWARE,&m_alarm);		/* await synchronous alarm */
+    receive(CLOCK,&m_alarm);		/* await synchronous alarm */
 
     /* Check if we must reschedule the current alarm. */
     if (m.ALRM_TIME_LEFT > 0) {
