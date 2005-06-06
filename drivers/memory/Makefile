@@ -7,7 +7,7 @@ i = $u/include
 s = $i/sys
 m = $i/minix
 b = $i/ibm
-d = $u/src/drivers
+d = ..
 
 # programs, flags, etc.
 MAKE = exec make
