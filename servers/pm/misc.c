@@ -53,18 +53,42 @@ PUBLIC int do_freemem()
   return(OK);
 }
 
-/*=====================================================================*
- *			    do_getsysinfo			       *
- *=====================================================================*/
+/*===========================================================================*
+ *				  do_getsysinfo			       	     *
+ *===========================================================================*/
 PUBLIC int do_getsysinfo()
 {
+  struct mproc *proc_addr;
+  vir_bytes src_addr, dst_addr;
+  struct kinfo kinfo;
+  size_t len;
+  int s;
+
+  switch(m_in.info_what) {
+  case SI_KINFO:			/* kernel info is obtained via PM */
+        sys_getkinfo(&kinfo);
+        src_addr = (vir_bytes) &kinfo;
+        len = sizeof(struct kinfo);
+        break;
+  case SI_PROC_ADDR:			/* get address of PM process table */
+  	proc_addr = &mproc[0];
+  	src_addr = (vir_bytes) &proc_addr;
+  	len = sizeof(struct mproc *);
+  	break; 
+  default:
+  	return(EINVAL);
+  }
+
+  dst_addr = (vir_bytes) m_in.info_where;
+  if (OK != (s=sys_datacopy(SELF, src_addr, who, dst_addr, len)))
+  	return(s);
   return(OK);
 }
 
 
-/*=====================================================================*
- *			    do_getprocnr			       *
- *=====================================================================*/
+/*===========================================================================*
+ *				 do_getprocnr			             *
+ *===========================================================================*/
 PUBLIC int do_getprocnr()
 {
   register struct mproc *rmp;

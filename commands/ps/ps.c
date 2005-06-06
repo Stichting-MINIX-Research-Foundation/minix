@@ -13,7 +13,7 @@
  *
  * VERY IMPORTANT NOTE:
  *	To compile ps, the kernel/, fs/ and pm/ source directories must be in
- *	../ relative to the directory where ps is compiled (normally the
+ *	../../ relative to the directory where ps is compiled (normally the
  *	tools source directory).
  *
  *	If you want your ps to be useable by anyone, you can arrange the
@@ -75,12 +75,10 @@
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
-#undef printf			/* kernel's const.h defined this */
 
 #include "../../servers/pm/mproc.h"
 #include "../../servers/fs/fproc.h"
 #include "../../servers/fs/const.h"
-#undef printf			/* fs's const.h defined this */
 
 
 /*----- ps's local stuff below this line ------*/
@@ -103,8 +101,11 @@ size_t n_ttyinfo;		/* Number of tty info slots */
 /* Macro to convert memory offsets to rounded kilo-units */
 #define	off_to_k(off)	((unsigned) (((off) + 512) / 1024))
 
-/* Number of tasks and processes. */
-int nr_tasks, nr_procs;
+
+/* Number of tasks and processes and addresses of the main process tables. */
+int nr_tasks, nr_procs;		
+vir_bytes proc_addr, mproc_addr, fproc_addr;	
+extern int errno;
 
 /* Process tables of the kernel, MM, and FS. */
 struct proc *ps_proc;
@@ -132,6 +133,7 @@ int kmemfd, memfd;		/* file descriptors of [k]mem */
 #define S_FORMAT "%5s %3s %s %s\n"
 #define L_HEADER "  F S UID   PID  PPID  PGRP   SZ       RECV TTY  TIME CMD\n"
 #define L_FORMAT "%3o %c %3d %5s %5d %5d %4d %10s %3s %s %s\n"
+
 
 struct pstat {			/* structure filled by pstat() */
   dev_t ps_dev;			/* major/minor of controlling tty */
@@ -273,10 +275,11 @@ char *argv[];
   char *ke_path;		/* paths of kernel, */
   char *mm_path;		/* mm, */
   char *fs_path;		/* and fs used in ps -U */
-  struct psinfo psinfo;
   char pid[2 + sizeof(pid_t) * 3];
   unsigned long ustime;
   char cpu[sizeof(clock_t) * 3 + 1 + 2];
+  struct kinfo kinfo;
+  int s;
 
   (void) signal(SIGSEGV, disaster);	/* catch a common crash */
 
@@ -298,10 +301,13 @@ char *argv[];
   if ((kmemfd = open(KMEM_PATH, O_RDONLY)) == -1) err(KMEM_PATH);
   if ((memfd = open(MEM_PATH, O_RDONLY)) == -1) err(MEM_PATH);
   if (gettynames() == -1) err("Can't get tty names");
-  if (ioctl(memfd, MIOCGPSINFO, (void *) &psinfo) == -1)
-	err("can't get PS info from kernel");
-  nr_tasks = psinfo.nr_tasks;
-  nr_procs = psinfo.nr_procs;
+
+  getsysinfo(PM_PROC_NR, SI_PROC_ADDR, &mproc_addr);
+  getsysinfo(FS_PROC_NR, SI_PROC_ADDR, &fproc_addr);
+  getsysinfo(PM_PROC_NR, SI_KINFO, &kinfo);
+  proc_addr = kinfo.proc_addr;
+  nr_tasks = kinfo.nr_tasks;	
+  nr_procs = kinfo.nr_procs;
 
   /* Allocate memory for process tables */
   ps_proc = (struct proc *) malloc((nr_tasks + nr_procs) * sizeof(ps_proc[0]));
@@ -312,19 +318,19 @@ char *argv[];
 
   /* Get kernel process table */
   if (addrread(kmemfd, (phys_clicks) 0,
-		psinfo.proc, (char *) ps_proc,
+		proc_addr, (char *) ps_proc,
 		(nr_tasks + nr_procs) * sizeof(ps_proc[0]))
 			!= (nr_tasks + nr_procs) * sizeof(ps_proc[0]))
 	err("Can't get kernel proc table from /dev/kmem");
 
   /* Get mm/fs process tables */
   if (addrread(memfd, ps_proc[nr_tasks + PM_PROC_NR].p_memmap[D].mem_phys,
-		psinfo.mproc, (char *) ps_mproc,
+		mproc_addr, (char *) ps_mproc,
 		nr_procs * sizeof(ps_mproc[0]))
 			!= nr_procs * sizeof(ps_mproc[0]))
 	err("Can't get mm proc table from /dev/mem");
   if (addrread(memfd, ps_proc[nr_tasks + FS_PROC_NR].p_memmap[D].mem_phys,
-		psinfo.fproc, (char *) ps_fproc,
+		fproc_addr, (char *) ps_fproc,
 		nr_procs * sizeof(ps_fproc[0]))
 			!= nr_procs * sizeof(ps_fproc[0]))
 	err("Can't get fs proc table from /dev/mem");
@@ -360,7 +366,7 @@ char *argv[];
 
 		if (opt_long) printf(L_FORMAT,
 			       buf.ps_flags, buf.ps_state,
-			       buf.ps_euid, pid, buf.ps_ppid,
+			       buf.ps_euid, pid, buf.ps_ppid, 
 			       buf.ps_pgrp,
 			       off_to_k((buf.ps_tsize
 					 + buf.ps_stack - buf.ps_data
@@ -513,8 +519,8 @@ struct pstat *bufp;
 
   bufp->ps_recv = ps_proc[p_ki].p_getfrom;
 
-  bufp->ps_utime = ps_proc[p_ki].user_time;
-  bufp->ps_stime = ps_proc[p_ki].sys_time;
+  bufp->ps_utime = ps_proc[p_ki].p_user_time;
+  bufp->ps_stime = ps_proc[p_ki].p_sys_time;
 
   bufp->ps_procargs = ps_mproc[p_nr].mp_procargs;
 

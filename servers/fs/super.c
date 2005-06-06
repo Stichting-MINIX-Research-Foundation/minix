@@ -54,14 +54,14 @@ bit_t origin;			/* number of bit to start searching at */
   if (origin >= map_bits) origin = 0;	/* for robustness */
 
   /* Locate the starting place. */
-  block = origin / BITS_PER_BLOCK(sp->s_block_size);
-  word = (origin % BITS_PER_BLOCK(sp->s_block_size)) / BITCHUNK_BITS;
+  block = origin / FS_BITS_PER_BLOCK(sp->s_block_size);
+  word = (origin % FS_BITS_PER_BLOCK(sp->s_block_size)) / FS_BITCHUNK_BITS;
 
   /* Iterate over all blocks plus one, because we start in the middle. */
   bcount = bit_blocks + 1;
   do {
 	bp = get_block(sp->s_dev, start_block + block, NORMAL);
-	wlim = &bp->b_bitmap[BITMAP_CHUNKS(sp->s_block_size)];
+	wlim = &bp->b_bitmap[FS_BITMAP_CHUNKS(sp->s_block_size)];
 
 	/* Iterate over the words in block. */
 	for (wptr = &bp->b_bitmap[word]; wptr < wlim; wptr++) {
@@ -74,8 +74,8 @@ bit_t origin;			/* number of bit to start searching at */
 		for (i = 0; (k & (1 << i)) != 0; ++i) {}
 
 		/* Bit number from the start of the bit map. */
-		b = ((bit_t) block * BITS_PER_BLOCK(sp->s_block_size))
-		    + (wptr - &bp->b_bitmap[0]) * BITCHUNK_BITS
+		b = ((bit_t) block * FS_BITS_PER_BLOCK(sp->s_block_size))
+		    + (wptr - &bp->b_bitmap[0]) * FS_BITCHUNK_BITS
 		    + i;
 
 		/* Don't allocate bits beyond the end of the map. */
@@ -119,9 +119,9 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   } else {
 	start_block = START_BLOCK + sp->s_imap_blocks;
   }
-  block = bit_returned / BITS_PER_BLOCK(sp->s_block_size);
-  word = (bit_returned % BITS_PER_BLOCK(sp->s_block_size)) / BITCHUNK_BITS;
-  bit = bit_returned % BITCHUNK_BITS;
+  block = bit_returned / FS_BITS_PER_BLOCK(sp->s_block_size);
+  word = (bit_returned % FS_BITS_PER_BLOCK(sp->s_block_size)) / FS_BITCHUNK_BITS;
+  bit = bit_returned % FS_BITCHUNK_BITS;
   mask = 1 << bit;
 
   bp = get_block(sp->s_dev, start_block + block, NORMAL);

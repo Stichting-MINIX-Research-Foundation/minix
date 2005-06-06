@@ -35,7 +35,26 @@
  *===========================================================================*/
 PUBLIC int do_getsysinfo()
 {
+  struct fproc *proc_addr;
+  vir_bytes src_addr, dst_addr;
+  size_t len;
+  int s;
+
+  switch(m_in.info_what) {
+  case SI_PROC_ADDR:
+  	proc_addr = &fproc[0];
+  	src_addr = (vir_bytes) &proc_addr;
+  	len = sizeof(struct fproc *);
+  	break; 
+  default:
+  	return(EINVAL);
+  }
+
+  dst_addr = (vir_bytes) m_in.info_where;
+  if (OK != (s=sys_datacopy(SELF, src_addr, who, dst_addr, len)))
+  	return(s);
   return(OK);
+
 }
 
 

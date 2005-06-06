@@ -35,6 +35,11 @@
 #define RBT_RESET	   4	/* hard reset the system */
 #endif
 
+/* What system info to retrieve with sysgetinfo(). */
+#define SI_KINFO		0	/* get kernel info via PM */
+#define SI_PROC_ADDR		1	/* address of process table */
+#define SI_PROC_TAB		2	/* copy of entire process table */
+
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #define NULL    ((void *)0)
 

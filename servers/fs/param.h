@@ -45,6 +45,8 @@
 #define svrctl_req    m2_i1
 #define svrctl_argp   m2_p1
 #define pm_stime      m1_i1
+#define info_what     m1_i1
+#define info_where    m1_p1
 
 /* The following names are synonyms for the variables in the output message. */
 #define reply_type    m_type

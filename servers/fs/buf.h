@@ -23,7 +23,7 @@ EXTERN struct buf {
     zone_t  b__v2_ind[V2_INDIRECTS(MAX_BLOCK_SIZE)];	     /* V2 indirect block */
     d1_inode b__v1_ino[V1_INODES_PER_BLOCK]; /* V1 inode block */
     d2_inode b__v2_ino[V2_INODES_PER_BLOCK(MAX_BLOCK_SIZE)]; /* V2 inode block */
-    bitchunk_t b__bitmap[BITMAP_CHUNKS(MAX_BLOCK_SIZE)];     /* bit map block */
+    bitchunk_t b__bitmap[FS_BITMAP_CHUNKS(MAX_BLOCK_SIZE)];  /* bit map block */
   } b;
 
   /* Header portion of the buffer. */

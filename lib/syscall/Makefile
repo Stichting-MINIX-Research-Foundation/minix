@@ -46,6 +46,7 @@ OBJECTS	= \
 	$(LIBRARY)(getppid.o) \
 	$(LIBRARY)(getuid.o) \
 	$(LIBRARY)(getprocnr.o) \
+	$(LIBRARY)(getsysinfo.o) \
 	$(LIBRARY)(findproc.o) \
 	$(LIBRARY)(ioctl.o) \
 	$(LIBRARY)(isatty.o) \
@@ -223,6 +224,9 @@ $(LIBRARY)(getpid.o):	getpid.s
 
 $(LIBRARY)(getppid.o):	getppid.s
 	$(CC1) getppid.s
+
+$(LIBRARY)(getsysinfo.o):	getsysinfo.s
+	$(CC1) getsysinfo.s
 
 $(LIBRARY)(getprocnr.o):	getprocnr.s
 	$(CC1) getprocnr.s

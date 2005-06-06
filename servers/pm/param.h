@@ -27,6 +27,8 @@
 #ifdef _SIGMESSAGE
 #define sig_msg		m1_i1
 #endif
+#define info_what	m1_i1
+#define info_where	m1_p1
 #define reboot_flag	m1_i1
 #define reboot_code	m1_p1
 #define reboot_size	m1_i2

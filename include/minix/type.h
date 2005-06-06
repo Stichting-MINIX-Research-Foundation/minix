@@ -88,11 +88,6 @@ struct sigmsg {
 #define MESS_SIZE (sizeof(message))	/* might need usizeof from fs here */
 #define NIL_MESS ((message *) 0)
 
-struct psinfo {			/* information for the ps(1) program */
-  u16_t nr_tasks, nr_procs;	/* NR_TASKS and NR_PROCS constants. */
-  vir_bytes proc, mproc, fproc;	/* addresses of the main process tables. */
-};
-
 /* This is used to obtain system information through SYS_GETINFO. */
 struct kinfo {
   phys_bytes code_base;		/* base of kernel code */

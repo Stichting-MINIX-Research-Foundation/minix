@@ -66,9 +66,10 @@
 #define NR_DIR_ENTRIES(b)   ((b)/DIR_ENTRY_SIZE)  /* # dir entries/blk   */
 #define SUPER_SIZE      usizeof (struct super_block)  /* super_block size    */
 #define PIPE_SIZE(b)          (V1_NR_DZONES*(b))  /* pipe size in bytes  */
-#define BITMAP_CHUNKS(b) ((b)/usizeof (bitchunk_t))/* # map chunks/blk   */
-#define BITCHUNK_BITS		(usizeof(bitchunk_t) * CHAR_BIT)
-#define BITS_PER_BLOCK(b)	(BITMAP_CHUNKS(b) * BITCHUNK_BITS)
+
+#define FS_BITMAP_CHUNKS(b) ((b)/usizeof (bitchunk_t))/* # map chunks/blk   */
+#define FS_BITCHUNK_BITS		(usizeof(bitchunk_t) * CHAR_BIT)
+#define FS_BITS_PER_BLOCK(b)	(FS_BITMAP_CHUNKS(b) * FS_BITCHUNK_BITS)
 
 /* Derived sizes pertaining to the V1 file system. */
 #define V1_ZONE_NUM_SIZE           usizeof (zone1_t)  /* # bytes in V1 zone  */
