@@ -356,10 +356,15 @@ vir_bytes bytes;		/* # of bytes to be copied */
   phys_bytes phys_addr;
 
   /* Check all acceptable ranges. */
+#if 0
   if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
   	return (phys_bytes) vir_addr;
   else if (vir_addr >= UPPER_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
   	return (phys_bytes) vir_addr;
+#else
+  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
+  	return (phys_bytes) vir_addr;
+#endif
 
   kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
   return 0;
