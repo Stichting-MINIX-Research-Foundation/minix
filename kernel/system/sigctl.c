@@ -21,7 +21,6 @@
 #include "../system.h"
 #include <signal.h>
 #include <sys/sigcontext.h>
-INIT_ASSERT
 
 /* PM is ready to accept signals and repeatedly does a system call to get 
  * one. Find a process with pending signals. If no signals are available, 
@@ -72,61 +71,58 @@ message *m_ptr;			/* pointer to request message */
 {
 /* Handle sys_sigsend, POSIX-style signal handling. */
 
-  	struct sigmsg smsg;
-  	register struct proc *rp;
-  	phys_bytes src_phys, dst_phys;
-  	struct sigcontext sc, *scp;
-  	struct sigframe fr, *frp;
+  struct sigmsg smsg;
+  register struct proc *rp;
+  phys_bytes src_phys, dst_phys;
+  struct sigcontext sc, *scp;
+  struct sigframe fr, *frp;
 
-  	rp = proc_addr(m_ptr->SIG_PROC);
-  	assert(isuserp(rp));
+  rp = proc_addr(m_ptr->SIG_PROC);
 
-  	/* Get the sigmsg structure into our address space.  */
-  	src_phys = umap_local(proc_addr(PM_PROC_NR), D, (vir_bytes) 
-  		m_ptr->SIG_CTXT_PTR, (vir_bytes) sizeof(struct sigmsg));
-  	assert(src_phys != 0);
-  	phys_copy(src_phys,vir2phys(&smsg),(phys_bytes) sizeof(struct sigmsg));
+  /* Get the sigmsg structure into our address space.  */
+  src_phys = umap_local(proc_addr(PM_PROC_NR), D, (vir_bytes) 
+      m_ptr->SIG_CTXT_PTR, (vir_bytes) sizeof(struct sigmsg));
+  if (src_phys == 0) return(EFAULT);
+  phys_copy(src_phys,vir2phys(&smsg),(phys_bytes) sizeof(struct sigmsg));
 
-  	/* Compute the user stack pointer where sigcontext will be stored. */
-  	scp = (struct sigcontext *) smsg.sm_stkptr - 1;
+  /* Compute the user stack pointer where sigcontext will be stored. */
+  scp = (struct sigcontext *) smsg.sm_stkptr - 1;
 
-  	/* Copy the registers to the sigcontext structure. */
-  	kmemcpy(&sc.sc_regs, &rp->p_reg, sizeof(struct sigregs));
+  /* Copy the registers to the sigcontext structure. */
+  kmemcpy(&sc.sc_regs, &rp->p_reg, sizeof(struct sigregs));
 
-  	/* Finish the sigcontext initialization. */
-  	sc.sc_flags = SC_SIGCONTEXT;
-  	sc.sc_mask = smsg.sm_mask;
+  /* Finish the sigcontext initialization. */
+  sc.sc_flags = SC_SIGCONTEXT;
+  sc.sc_mask = smsg.sm_mask;
 
-  	/* Copy the sigcontext structure to the user's stack. */
-  	dst_phys = umap_local(rp, D, (vir_bytes) scp,
-		  (vir_bytes) sizeof(struct sigcontext));
-  	if (dst_phys == 0) return(EFAULT);
-  	phys_copy(vir2phys(&sc), dst_phys, 
-  		(phys_bytes) sizeof(struct sigcontext));
+  /* Copy the sigcontext structure to the user's stack. */
+  dst_phys = umap_local(rp, D, (vir_bytes) scp,
+      (vir_bytes) sizeof(struct sigcontext));
+  if (dst_phys == 0) return(EFAULT);
+  phys_copy(vir2phys(&sc), dst_phys, (phys_bytes) sizeof(struct sigcontext));
 
-  	/* Initialize the sigframe structure. */
-  	frp = (struct sigframe *) scp - 1;
-  	fr.sf_scpcopy = scp;
-  	fr.sf_retadr2= (void (*)()) rp->p_reg.pc;
-  	fr.sf_fp = rp->p_reg.fp;
-  	rp->p_reg.fp = (reg_t) &frp->sf_fp;
-  	fr.sf_scp = scp;
-  	fr.sf_code = 0;	/* XXX - should be used for type of FP exception */
-  	fr.sf_signo = smsg.sm_signo;
-  	fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
+  /* Initialize the sigframe structure. */
+  frp = (struct sigframe *) scp - 1;
+  fr.sf_scpcopy = scp;
+  fr.sf_retadr2= (void (*)()) rp->p_reg.pc;
+  fr.sf_fp = rp->p_reg.fp;
+  rp->p_reg.fp = (reg_t) &frp->sf_fp;
+  fr.sf_scp = scp;
+  fr.sf_code = 0;	/* XXX - should be used for type of FP exception */
+  fr.sf_signo = smsg.sm_signo;
+  fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
 
-  	/* Copy the sigframe structure to the user's stack. */
-  	dst_phys = umap_local(rp, D, (vir_bytes) frp, 
-  		(vir_bytes) sizeof(struct sigframe));
-  	if (dst_phys == 0) return(EFAULT);
-  	phys_copy(vir2phys(&fr), dst_phys, 
-  		(phys_bytes) sizeof(struct sigframe));
+  /* Copy the sigframe structure to the user's stack. */
+  dst_phys = umap_local(rp, D, (vir_bytes) frp, 
+      (vir_bytes) sizeof(struct sigframe));
+  if (dst_phys == 0) return(EFAULT);
+  phys_copy(vir2phys(&fr), dst_phys, (phys_bytes) sizeof(struct sigframe));
 
-  	/* Reset user registers to execute the signal handler. */
-  	rp->p_reg.sp = (reg_t) frp;
-  	rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
+  /* Reset user registers to execute the signal handler. */
+  rp->p_reg.sp = (reg_t) frp;
+  rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
 
-  	return(OK);
+  return(OK);
 }
 
 PUBLIC int do_sigreturn(m_ptr)
@@ -135,54 +131,47 @@ message *m_ptr;			/* pointer to request message */
 /* POSIX style signals require sys_sigreturn to put things in order before 
  * the signalled process can resume execution
  */
-  	struct sigcontext sc;
-  	register struct proc *rp;
-  	phys_bytes src_phys;
+  struct sigcontext sc;
+  register struct proc *rp;
+  phys_bytes src_phys;
 
-  	rp = proc_addr(m_ptr->SIG_PROC);
-  	if (! isuserp(rp)) { 
-  		kprintf("S_SIGRETURN: message source: %d; ", m_ptr->m_source); 
-  		kprintf("got non-user process rp: %d\n", rp->p_nr);
-  	}
-  	assert(isuserp(rp));
+  rp = proc_addr(m_ptr->SIG_PROC);
 
-  	/* Copy in the sigcontext structure. */
-  	src_phys = umap_local(rp, D, (vir_bytes) m_ptr->SIG_CTXT_PTR,
-		  (vir_bytes) sizeof(struct sigcontext));
-  	if (src_phys == 0) return(EFAULT);
-  	phys_copy(src_phys, vir2phys(&sc), 
-  		(phys_bytes) sizeof(struct sigcontext));
+  /* Copy in the sigcontext structure. */
+  src_phys = umap_local(rp, D, (vir_bytes) m_ptr->SIG_CTXT_PTR,
+      (vir_bytes) sizeof(struct sigcontext));
+  if (src_phys == 0) return(EFAULT);
+  phys_copy(src_phys, vir2phys(&sc), (phys_bytes) sizeof(struct sigcontext));
 
-  	/* Make sure that this is not just a jmp_buf. */
-  	if ((sc.sc_flags & SC_SIGCONTEXT) == 0) return(EINVAL);
+  /* Make sure that this is not just a jmp_buf. */
+  if ((sc.sc_flags & SC_SIGCONTEXT) == 0) return(EINVAL);
 
-  	/* Fix up only certain key registers if the compiler doesn't use
-  	 * register variables within functions containing setjmp.
-  	 */
-  	if (sc.sc_flags & SC_NOREGLOCALS) {
-		rp->p_reg.retreg = sc.sc_retreg;
-		rp->p_reg.fp = sc.sc_fp;
-		rp->p_reg.pc = sc.sc_pc;
-		rp->p_reg.sp = sc.sc_sp;
-		return(OK);
-  	}
-  	sc.sc_psw  = rp->p_reg.psw;
+  /* Fix up only certain key registers if the compiler doesn't use
+   * register variables within functions containing setjmp.
+   */
+  if (sc.sc_flags & SC_NOREGLOCALS) {
+      rp->p_reg.retreg = sc.sc_retreg;
+      rp->p_reg.fp = sc.sc_fp;
+      rp->p_reg.pc = sc.sc_pc;
+      rp->p_reg.sp = sc.sc_sp;
+      return(OK);
+  }
+  sc.sc_psw  = rp->p_reg.psw;
 
 #if (CHIP == INTEL)
-  	/* Don't panic kernel if user gave bad selectors. */
-  	sc.sc_cs = rp->p_reg.cs;
-  	sc.sc_ds = rp->p_reg.ds;
-  	sc.sc_es = rp->p_reg.es;
+  /* Don't panic kernel if user gave bad selectors. */
+  sc.sc_cs = rp->p_reg.cs;
+  sc.sc_ds = rp->p_reg.ds;
+  sc.sc_es = rp->p_reg.es;
 #if _WORD_SIZE == 4
-  	sc.sc_fs = rp->p_reg.fs;
-  	sc.sc_gs = rp->p_reg.gs;
+  sc.sc_fs = rp->p_reg.fs;
+  sc.sc_gs = rp->p_reg.gs;
 #endif
 #endif
 
-  	/* Restore the registers. */
-  	kmemcpy(&rp->p_reg, (char *)&sc.sc_regs, sizeof(struct sigregs));
-  	return(OK);
-
+  /* Restore the registers. */
+  kmemcpy(&rp->p_reg, (char *)&sc.sc_regs, sizeof(struct sigregs));
+  return(OK);
 }
 
 /*===========================================================================*

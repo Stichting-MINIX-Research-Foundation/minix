@@ -13,7 +13,7 @@
 #define NOTIFY		 4	/* function code for notifications */
 
 #if 0
-/* Bit map operations used to bits of simple bit mask. */
+/* Bit map operations to manipulate bits of a simple mask variable. */
 #define set_bit(mask, n)	((mask) |= (1 << (n)))
 #define clear_bit(mask, n)	((mask) &= ~(1 << (n)))
 #define isset_bit(mask, n)	((mask) & (1 << (n)))

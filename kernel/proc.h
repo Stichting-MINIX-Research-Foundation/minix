@@ -110,26 +110,24 @@ struct proc {
 #define END_PROC_ADDR (&proc[NR_TASKS + NR_PROCS])
 
 #define NIL_PROC          ((struct proc *) 0)
+#define cproc_addr(n)     (&(proc + NR_TASKS)[(n)])
+#define proc_addr(n)      (pproc_addr + NR_TASKS)[(n)]
+#define proc_nr(p) 	  ((p)->p_nr)
+
+#define iskerneltask(n)	  ((n) == CLOCK || (n) == SYSTASK) 
 #define isidlehardware(n) ((n) == IDLE || (n) == HARDWARE)
 #define isokprocn(n)      ((unsigned) ((n) + NR_TASKS) < NR_PROCS + NR_TASKS)
 #define isokprocp(p)      ((p) >= BEG_PROC_ADDR && (p) < END_PROC_ADDR)
-#define isoksrc_dst(n)    (isokprocn(n) || (n) == ANY)
 #define isalive(n)	  (proc_addr(n)->p_type > P_NONE)
 #define isalivep(p)	  ((p)->p_type > P_NONE)
-#define isrxhardware(n)   ((n) == ANY || (n) == HARDWARE)
-#define isreservedp(p)    ((p)->p_type == P_RESERVED)
 #define isemptyp(p)       ((p)->p_type == P_NONE)
 #define istaskp(p)        ((p)->p_type == P_TASK)
 #define isdriverp(p)      ((p)->p_type == P_DRIVER)
 #define isserverp(p)      ((p)->p_type == P_SERVER)
 #define isuserp(p)        ((p)->p_type == P_USER)
-#define isuser(n)	  (proc_addr(n)->p_type == P_USER)
 #define isidlep(p)        ((p)->p_type == P_IDLE)
-#define cproc_addr(n)     (&(proc + NR_TASKS)[(n)])
-#define proc_addr(n)      (pproc_addr + NR_TASKS)[(n)]
-#define proc_nr(p) 	  ((p)->p_nr)
-#define iskernelp(p)      ((p)->p_nr < 0)
-#define iskernel(n)	  ((n) == CLOCK || (n) == SYSTASK)
+
+#define isuser(n)	  (proc_addr(n)->p_type == P_USER)
 
 /* The process table and pointers to process table slots. The pointers allow
  * faster access because now a process entry can be found by indexing the

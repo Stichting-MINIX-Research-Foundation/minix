@@ -1,6 +1,7 @@
-#define NEW_SCHED_Q 	1
-#define OLD_SEND 	0
-#define OLD_RECV 	0
+#define NEW_ELOCKED_CHECK 	1
+#define NEW_SCHED_Q 		1
+#define OLD_SEND 		0
+#define OLD_RECV 		0
 /* This file contains essentially all of the process and message handling.
  * Together with "mpx.s" it forms the lowest layer of the MINIX kernel.
  * There is one entry point from the outside:
@@ -57,7 +58,7 @@
  */
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst,
 		message *m_ptr, unsigned flags) );
-FORWARD _PROTOTYPE( int mini_rec, (struct proc *caller_ptr, int src,
+FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
 		message *m_ptr, unsigned flags) );
 FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst,
 		message *m_ptr ) );
@@ -111,10 +112,12 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * if the caller doesn't do receive(). 
    */
   if (! (caller_ptr->p_call_mask & (1 << function)) || 
-      iskernel(src_dst) && function != SENDREC) return(ECALLDENIED);		
+          (iskerneltask(src_dst) && function != SENDREC))  
+      return(ECALLDENIED);	
   
-  /* Verify that requested source and/ or destination is a valid process. */
-  if (! isoksrc_dst(src_dst) && function != ECHO)  return(EBADSRCDST);
+  /* Require a valid source and/ or destination process, unless echoing. */
+  if (! (isokprocn(src_dst) || src_dst == ANY || function == ECHO))  
+      return(EBADSRCDST);
 
   /* Check validity of message pointer. */
   vb = (vir_bytes) m_ptr;
@@ -145,21 +148,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    *   - ECHO:    the message directly will be echoed to the sender 
    */
   switch(function) {
-  case SENDREC:				/* has FRESH_ANSWER flags */		
-#if DEAD_CODE
-      { message m;
-        if (caller_ptr->p_nr == MEMORY && src_dst == FS_PROC_NR) {
-	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, proc_addr(HARDWARE), &m);
-      	kprintf("MEMORY sendrec FS, m.m_type %d", m.m_type);
-      	kprintf("TTY_LINE %d", m.TTY_LINE);
-      	kprintf("TTY_REQ %d\n", m.TTY_REQUEST);
-	}
-        if (caller_ptr->p_nr == FS_PROC_NR && src_dst == MEMORY) {
-	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, proc_addr(HARDWARE), &m);
-      	kprintf("FS sendrec MEMORY, m.m_type %d\n", m.m_type);
-	}
-      }
-#endif
+  case SENDREC:				/* has FRESH_ANSWER flag */		
       /* fall through */
   case SEND:			
       if (! isalive(src_dst)) { 			
@@ -179,7 +168,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
           break;				/* done, or SEND failed */
       }						/* fall through for SENDREC */
   case RECEIVE:			
-      result = mini_rec(caller_ptr, src_dst, m_ptr, flags);
+      result = mini_receive(caller_ptr, src_dst, m_ptr, flags);
       break;
   case NOTIFY:
       result = mini_notify(caller_ptr, src_dst, m_ptr);
@@ -217,12 +206,20 @@ unsigned flags;				/* system call flags */
   register struct proc *xp;
 #else
   register struct proc **xpp;
+  register struct proc *xp;
 #endif
 
   dst_ptr = proc_addr(dst);	/* pointer to destination's proc entry */
 
 
   /* Check for deadlock by 'caller_ptr' and 'dst' sending to each other. */
+#if NEW_ELOCKED_CHECK
+  xp = dst_ptr;
+  while (xp->p_flags & SENDING) {		/* check while sending */
+  	xp = proc_addr(xp->p_sendto);		/* get xp's destination */
+  	if (xp == caller_ptr) return(ELOCKED);	/* deadlock if cyclic */
+  }
+#else
   if (dst_ptr->p_flags & SENDING) {
 	next_ptr = proc_addr(dst_ptr->p_sendto);
 	while (TRUE) {
@@ -233,6 +230,7 @@ unsigned flags;				/* system call flags */
 			break;
 	}
   }
+#endif
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
@@ -272,9 +270,9 @@ unsigned flags;				/* system call flags */
 }
 
 /*===========================================================================*
- *				mini_rec				     * 
+ *				mini_receive				     * 
  *===========================================================================*/
-PRIVATE int mini_rec(caller_ptr, src, m_ptr, flags)
+PRIVATE int mini_receive(caller_ptr, src, m_ptr, flags)
 register struct proc *caller_ptr;	/* process trying to get message */
 int src;				/* which message source is wanted */
 message *m_ptr;				/* pointer to message buffer */
@@ -398,7 +396,7 @@ message *m_ptr;				/* pointer to message buffer */
   /* Destination is not ready. Add the notification to the pending queue. 
    * Get pointer to notification message. Don't copy if already in kernel. 
    */
-  if (! iskernelp(caller_ptr)) {
+  if (! istaskp(caller_ptr)) {
       CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, 
           proc_addr(HARDWARE), &ntf_mess);
       m_ptr = &ntf_mess;

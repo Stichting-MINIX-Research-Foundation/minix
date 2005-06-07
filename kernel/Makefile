@@ -92,7 +92,6 @@ main.o:	sendmask.h
 misc.o:	$a
 misc.o:	$i/stdlib.h
 misc.o:	$h/com.h
-misc.o:	assert.h
 
 printer.o:	$a
 printer.o:	$h/callnr.h
@@ -124,7 +123,6 @@ system.o:	$h/com.h
 system.o:	system.h
 system.o:	proc.h
 system.o:	protect.h
-system.o:	assert.h
 system.o:	sendmask.h
 
 table.o:	$a

@@ -16,7 +16,6 @@
 #endif
 #include "../debug.h"
 
-INIT_ASSERT
 
 /*===========================================================================*
  *				do_fork					     *
@@ -33,9 +32,8 @@ register message *m_ptr;	/* pointer to request message */
   struct proc *rpp;
 
   rpp = proc_addr(m_ptr->PR_PPROC_NR);
-  assert(isuserp(rpp));
   rpc = proc_addr(m_ptr->PR_PROC_NR);
-  assert(isemptyp(rpc));
+  if (! isemptyp(rpc)) return(EINVAL);
 
   /* Copy parent 'proc' struct to child. */
 #if (CHIP == INTEL)
@@ -99,7 +97,7 @@ message *m_ptr;			/* pointer to request message */
   /* Copy the map from PM. */
   src_phys = umap_local(proc_addr(caller), D, (vir_bytes) map_ptr, 
   	sizeof(rp->p_memmap));
-  assert(src_phys != 0);
+  if (src_phys == 0) return(EFAULT);
   phys_copy(src_phys,vir2phys(rp->p_memmap),(phys_bytes)sizeof(rp->p_memmap));
 
 #if (CHIP != M68000)
@@ -140,7 +138,6 @@ register message *m_ptr;	/* pointer to request message */
   char *np;
 
   rp = proc_addr(m_ptr->PR_PROC_NR);
-  assert(isuserp(rp));
   if (m_ptr->PR_TRACING) cause_sig(m_ptr->PR_PROC_NR, SIGTRAP);
   sp = (reg_t) m_ptr->PR_STACK_PTR;
   rp->p_reg.sp = sp;		/* set the stack pointer */

@@ -3,7 +3,6 @@
  *
  * This code runs in real mode for a 16 bit kernel and may have to switch
  * to protected mode for a 286.
- *
  * For a 32 bit kernel this already runs in protected mode, but the selectors
  * are still those given by the BIOS with interrupts disabled, so the
  * descriptors need to be reloaded and interrupt descriptors made.
@@ -13,10 +12,8 @@
 #include "protect.h"
 #include "proc.h"
 
-/* Environment strings passed by loader. */
-PRIVATE char k_environ[128*sizeof(char *)];
-
-FORWARD _PROTOTYPE( void mem_init, (void) );
+FORWARD _PROTOTYPE( void mem_init, (_CONST char *params));
+FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 
 /*==========================================================================*
  *				cstart					    *
@@ -29,7 +26,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 /* Perform system initializations prior to calling main(). Most settings are
  * determined with help of the environment strings passed by MINIX' loader.
  */
-  register char *envp;
+  char params[128*sizeof(char *)];		/* boot monitor parameters */
+  register char *value;				/* value in key=value pair */
   unsigned mon_start;
   extern int etext, end;
 
@@ -53,8 +51,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 
   /* Copy the boot parameters to kernel memory. */
   kinfo.params_base = seg2phys(mds) + parmoff;
-  kinfo.params_size = MAX(parmsize,sizeof(k_environ)-2);
-  phys_copy(kinfo.params_base, vir2phys(k_environ), kinfo.params_size);
+  kinfo.params_size = MAX(parmsize,sizeof(params)-2);
+  phys_copy(kinfo.params_base, vir2phys(params), kinfo.params_size);
 
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
@@ -64,8 +62,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   kinfo.kmem_base = vir2phys(0);
   kinfo.kmem_size = (phys_bytes) &end;	
 
-  /* Processor? */
-  machine.processor=katoi(getkenv("processor"));  /* 86, 186, 286, 386, ... */
+  /* Processor?  86, 186, 286, 386, ... */
+  machine.processor=katoi(get_value(params, "processor")); 
 
   /* Decide if mode is protected for older machines. */
 #if _WORD_SIZE == 2
@@ -74,20 +72,20 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   if (! machine.protected) mon_return = 0;
 
   /* XT, AT or MCA bus? */
-  envp = getkenv("bus");
-  if (envp == NIL_PTR || kstrcmp(envp, "at") == 0) {
+  value = get_value(params, "bus");
+  if (value == NIL_PTR || kstrcmp(value, "at") == 0) {
       machine.pc_at = TRUE;			/* PC-AT compatible hardware */
-  } else if (kstrcmp(envp, "mca") == 0) {
+  } else if (kstrcmp(value, "mca") == 0) {
       machine.pc_at = machine.ps_mca = TRUE;	/* PS/2 with micro channel */
   }
 
   /* Type of VDU: */
-  envp = getkenv("video");			/* EGA or VGA video unit */
-  if (kstrcmp(envp, "ega") == 0) machine.vdu_ega = TRUE;
-  if (kstrcmp(envp, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
+  value = get_value(params, "video");			/* EGA or VGA video unit */
+  if (kstrcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
+  if (kstrcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
 
   /* Initialize free memory list from size passed by boot monitor. */
-  mem_init();
+  mem_init(params);
 
   /* Return to assembler code to switch to protected mode (if 286), 
    * reload selectors and call main().
@@ -107,7 +105,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 /*=========================================================================*
  *				mem_init				   *
  *=========================================================================*/
-PRIVATE void mem_init()
+PRIVATE void mem_init(params)
+_CONST char *params;				/* boot monitor parameters */
 {
 /* Initialize the free memory list from the 'memory' boot variable.  Translate
  * the byte offsets and sizes in this list to clicks, properly truncated. Also
@@ -128,22 +127,23 @@ PRIVATE void mem_init()
    * b1:s1 is mem between 1M and 16M, b2:s2 is mem above 16M. Pairs b1:s1 
    * and b2:s2 are combined if the memory is adjacent. 
    */
-  s = getkenv("memory");		/* get memory boot variable */
+  s = get_value(params, "memory");	/* get memory boot variable */
   for (i = 0; i < NR_MEMS; i++) {
-	memp = &mem[i];			/* result is stored here */
-	base = size = 0;
-	if (*s != 0) {			/* end of boot variable */	
-	    /* Expect base to be read (end != s) and ':' as next char. */ 
+	memp = &mem[i];			/* next mem chunk is stored here */
+	base = size = 0;		/* initialize next base:size pair */
+	if (*s != 0) {			/* get fresh data, unless at end */	
+
+	    /* Read fresh base and expect colon as next char. */ 
 	    base = kstrtoul(s, &end, 0x10);		/* get number */
 	    if (end != s && *end == ':') s = ++end;	/* skip ':' */ 
-	    else *s=0;		/* fake end for next; should not happen */
-	    /* Expect size to be read and skip ',', unless at end. */ 
+	    else *s=0;			/* terminate, should not happen */
+
+	    /* Read fresh size and expect comma or assume end. */ 
 	    size = kstrtoul(s, &end, 0x10);		/* get number */
 	    if (end != s && *end == ',') s = ++end;	/* skip ',' */
-	    else if (end != s && *end == 0) s = end;	/* end found */
-	    else *s=0;		/* fake end for next; should not happen */
+	    else *s=0;					/* found end */
 	}
-	limit = base + size;
+	limit = base + size;	/* limit is used for validity check */	 
 #if _WORD_SIZE == 2
 	max_address = kinfo.protected ? MAX_16BIT : MAX_REAL;
 	if (limit > max_address) limit = max_address;
@@ -158,10 +158,11 @@ PRIVATE void mem_init()
 
 
 /*==========================================================================*
- *				getkenv					    *
+ *				get_value					    *
  *==========================================================================*/
-PUBLIC char *getkenv(name)
-_CONST char *name;
+PRIVATE char *get_value(params, name)
+_CONST char *params;				/* boot monitor parameters */
+_CONST char *name;				/* key to look up */
 {
 /* Get environment value - kernel version of getenv to avoid setting up the
  * usual environment array.
@@ -169,7 +170,7 @@ _CONST char *name;
   register _CONST char *namep;
   register char *envp;
 
-  for (envp = k_environ; *envp != 0;) {
+  for (envp = (char *) params; *envp != 0;) {
 	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
 		;
 	if (*namep == '\0' && *envp == '=') return(envp + 1);

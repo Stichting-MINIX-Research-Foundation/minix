@@ -40,7 +40,6 @@ _PROTOTYPE( void stop_sequence, (struct timer *tp)			);
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
 _PROTOTYPE( int alloc_bit, (bitchunk_t *map, bit_t nr_bits) 		); 
 _PROTOTYPE( void free_bit, (bit_t nr, bitchunk_t *map, bit_t nr_bits) 	); 
-_PROTOTYPE( void print_bitmap, (bitchunk_t *map, bit_t nr_bits) 	);
 
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
@@ -54,7 +53,6 @@ _PROTOTYPE( void lock_unready, (struct proc *rp)			);
 /* start.c */
 _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 				U16_t parmoff, U16_t parmsize)		);
-_PROTOTYPE( char *getkenv, (_CONST char *key)				);
 
 /* system.c */
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);

@@ -37,7 +37,7 @@ a =	$h/config.h $h/const.h $h/type.h $h/ipc.h \
 	$k/proc.h $k/const.h $k/type.h $k/proto.h $k/glo.h 
 
 # Dependencies from src/kernel/system.h
-b = 	$k/system.h $h/com.h $k/proc.h $k/assert.h  
+b = 	$k/system.h $h/com.h $k/proc.h 
 
 clock.o:	$a $b 
 copying.o:	$a $b 

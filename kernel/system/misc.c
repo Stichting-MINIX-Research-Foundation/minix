@@ -2,7 +2,6 @@
 #include "../system.h"
 #include <unistd.h>
 #include <minix/config.h>
-INIT_ASSERT
 
 
 /*===========================================================================*
@@ -37,25 +36,25 @@ message *m_ptr;			/* pointer to request message */
  * PM (normal abort or panic) or FS (panic), or TTY (a CTRL-ALT-DEL or ESC
  * after debugging dumps).
  */
-  register struct proc *rp;
-  phys_bytes src_phys;
-  vir_bytes len;
   int how = m_ptr->ABRT_HOW;
   
-  rp = proc_addr(m_ptr->m_source);
-
   if (how == RBT_MONITOR) {
-	/* The monitor is to run user specified instructions. */
-	len = m_ptr->ABRT_MON_LEN + 1;
-	assert(len <= kinfo.params_size);
-	src_phys = numap_local(m_ptr->ABRT_MON_PROC, 
-		(vir_bytes) m_ptr->ABRT_MON_ADDR, len);
-	assert(src_phys != 0);
-	phys_copy(src_phys, kinfo.params_base, (phys_bytes) len);
+      /* The monitor is to run user specified instructions. */
+      int proc_nr = m_ptr->ABRT_MON_PROC;
+      int length = m_ptr->ABRT_MON_LEN + 1;
+      vir_bytes src_vir = (vir_bytes) m_ptr->ABRT_MON_ADDR;
+      phys_bytes src_phys = numap_local(proc_nr, src_vir, length);
+
+      /* Validate length and address of shutdown code before copying. */
+      if (length > kinfo.params_size || src_phys == 0) 
+	  kprintf("Warning, skipping shutdown code\n", NO_NUM);
+      else
+          phys_copy(src_phys, kinfo.params_base, (phys_bytes) length);
   }
   prepare_shutdown(how);
   return(OK);				/* pro-forma (really EDISASTER) */
 }
+
 
 /* The system call implemented in this file:
  *   m_type:	SYS_GETINFO

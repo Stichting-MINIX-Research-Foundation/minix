@@ -13,7 +13,6 @@
 #include <minix/com.h>
 #include <minix/config.h>
 #include "proc.h"
-#include "assert.h"
 
 _PROTOTYPE( int do_exec, (message *m_ptr) );		/* process control */
 _PROTOTYPE( int do_fork, (message *m_ptr) );
@@ -27,6 +26,7 @@ _PROTOTYPE( int do_vcopy, (message *m_ptr) );
 #define do_virvcopy 	do_vcopy
 #define do_physvcopy 	do_vcopy
 _PROTOTYPE( int do_umap, (message *m_ptr) );
+_PROTOTYPE( int do_physzero, (message *m_ptr) );
 
 _PROTOTYPE( int do_unused, (message *m_ptr) );		/* miscellaneous */
 _PROTOTYPE( int do_abort, (message *m_ptr) );
@@ -60,9 +60,5 @@ _PROTOTYPE( int do_trace, (message *m_ptr) );		/* process tracing */
 #define do_trace do_unused
 #endif
 
-_PROTOTYPE( int do_vircopy, (message *m_ptr) );
-_PROTOTYPE( int do_physcopy, (message *m_ptr) );
-_PROTOTYPE( int do_physzero, (message *m_ptr) );
-_PROTOTYPE( int do_biosio, (message *m_ptr) );
 
 #endif	/* SYSTEM_H */
