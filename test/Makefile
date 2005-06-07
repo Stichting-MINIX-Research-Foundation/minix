@@ -25,7 +25,7 @@ $(BIGOBJ):
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c
 	@install -c -S 10kw -o root -m 4755 a.out $@
-	rm a.out
+	@rm a.out
 
 clean:	
 	rm -rf *.o *.s *.bak test? test?? t10a t11a t11b DIR*
