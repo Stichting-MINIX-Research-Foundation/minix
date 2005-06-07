@@ -13,7 +13,7 @@ CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
 
-OBJ = 	main.o forkexit.o break.o exec.o dmp.o time.o \
+OBJ = 	main.o forkexit.o break.o exec.o time.o \
 	signal.o alloc.o utility.o table.o trace.o getset.o misc.o
 
 # build local binary
@@ -93,8 +93,6 @@ misc.o:	$h/ioctl.h
 misc.o:	$s/svrctl.h
 misc.o:	mproc.h
 misc.o:	param.h
-
-dmp.o:	$a
 
 signal.o:	$a
 signal.o:	$s/stat.h

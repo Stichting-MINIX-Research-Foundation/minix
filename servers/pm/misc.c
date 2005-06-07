@@ -75,6 +75,10 @@ PUBLIC int do_getsysinfo()
   	src_addr = (vir_bytes) &proc_addr;
   	len = sizeof(struct mproc *);
   	break; 
+  case SI_PROC_TAB:			/* copy entire process table */
+        src_addr = (vir_bytes) mproc;
+        len = sizeof(struct mproc) * NR_PROCS;
+        break;
   default:
   	return(EINVAL);
   }

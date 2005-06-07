@@ -199,7 +199,6 @@ vir_bytes size;
 int privilege;
 {
 /* Build descriptor for a code segment. */
-
   sdesc(segdp, base, size);
   segdp->access = (privilege << DPL_SHIFT)
 	        | (PRESENT | SEGMENT | EXECUTABLE | READABLE);
@@ -231,7 +230,6 @@ phys_bytes base;
 vir_bytes size;
 {
 /* Fill in the size fields (base, limit and granularity) of a descriptor. */
-
   segdp->base_low = base;
   segdp->base_middle = base >> BASE_MIDDLE_SHIFT;
   segdp->base_high = base >> BASE_HIGH_SHIFT;
@@ -313,7 +311,6 @@ vir_bytes offset;
 unsigned dpl_type;
 {
 /* Build descriptor for an interrupt gate. */
-
   register struct gatedesc_s *idp;
 
   idp = &idt[vec_nr];

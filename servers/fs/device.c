@@ -42,7 +42,7 @@ int flags;			/* mode bits and flags */
    * device number for being in range.  All others can trust this check.)
    */
   major = (dev >> MAJOR) & BYTE;
-  if (major >= max_major) major = 0;
+  if (major >= NR_DEVICES) major = 0;
   dp = &dmap[major];
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);

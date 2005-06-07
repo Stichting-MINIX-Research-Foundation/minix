@@ -1,61 +1,34 @@
 /* This file contains procedures to dump to FS' data structures.
  *
  * The entry points into this file are
- *   do_fkey_pressed:	a function key was pressed	
- *   dtab_dump:   	display device<->driver table	  
+ *   dtab_dump:   	display device <-> driver mappings	  
  *   fproc_dump:   	display FS process table	  
  *
  * Created:
  *   Oct 01, 2004:	by Jorrit N. Herder
  */
 
-#include "fs.h"
-#include <minix/callnr.h>
-#include <minix/com.h>
-#include <minix/keymap.h>
-#include "dmap.h"
-#include "fproc.h"
-
-FORWARD _PROTOTYPE( void dtab_dmp, (void));
-FORWARD _PROTOTYPE( void fproc_dmp, (void));
+#include "is.h"
+#include "../fs/dmap.h"
+#include "../fs/const.h"
+#include "../fs/fproc.h"
 
 
-/*===========================================================================*
- *				do_fkey_pressed				     *
- *===========================================================================*/
-PUBLIC int do_fkey_pressed(void)
-{
-  printf("Debug dump of FS data structure: ");
-#if DEAD_CODE
-  switch (m_in.FKEY_CODE) {
-#else
-  switch (m_in.NOTIFY_FLAGS) {
-#endif
-    	case SF5:	fproc_dmp();		break;
-    	case SF6:	dtab_dmp();		break;
-
-    	default:
-#if DEAD_CODE
-    		printf("FS: unhandled notification for Shift+F%d key.\n",
-    			m_in.FKEY_NUM);
-#else
-    		printf("FS: unhandled notification for Shift+F%d key.\n",
-    			m_in.NOTIFY_FLAGS);
-#endif
-  }
-}
-
+PUBLIC struct fproc fproc[NR_PROCS];
+PUBLIC struct dmap dmap[NR_DEVICES];
 
 /*===========================================================================*
  *				fproc_dmp				     *
  *===========================================================================*/
-PRIVATE void fproc_dmp()
+PUBLIC void fproc_dmp()
 {
   struct fproc *fp;
   int i, n=0;
   static int prev_i;
-  printf("PROCESS TABLE (beta)\n");
 
+  getsysinfo(FS_PROC_NR, SI_PROC_TAB, fproc);
+
+  printf("File System (FS) process table dump\n");
   printf("-nr- -pid- -tty- -umask- --uid-- --gid-- -ldr- -sus-rev-proc- -cloexec-\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	fp = &fproc[i];
@@ -80,7 +53,7 @@ PRIVATE void fproc_dmp()
 /*===========================================================================*
  *				dtab_dmp				     *
  *===========================================================================*/
-PRIVATE void dtab_dmp()
+PUBLIC void dtab_dmp()
 {
     int i;
     char *file[] = {
@@ -88,12 +61,16 @@ PRIVATE void dtab_dmp()
         "/dev/tty  ", "/dev/lp   ", "/dev/ip   ", "/dev/c1   ", "not used  ",
         "/dev/c2   ", "not used  ", "/dev/c3   ", "/dev/audio", "/dev/mixer",
     };
-    printf("DEVICE MAP\n");
+
+    getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap);
+    
+    printf("File System (FS) device <-> driver mappings\n");
     printf("Dev  File        Open/Cls  I/O     Proc\n");
     printf("---  ----------  --------  ------  ----\n");
-    for (i=0; i<max_major; i++) {
+    for (i=0; i<NR_DEVICES; i++) {
         printf("%3d  %s  ", i, file[i] );
         
+#if DEAD_CODE
         if (dmap[i].dmap_opcl == no_dev)  		printf("  no_dev");	
         else if (dmap[i].dmap_opcl == gen_opcl)		printf("gen_opcl");
         else 				printf("%8x", dmap[i].dmap_opcl);
@@ -101,6 +78,7 @@ PRIVATE void dtab_dmp()
         if ((void *)dmap[i].dmap_io == (void *)no_dev)	printf("  no_dev");
         else if (dmap[i].dmap_io == gen_io)		printf("  gen_io");
         else 				printf("%8x", dmap[i].dmap_io);
+#endif
 
         printf("%6d\n", dmap[i].dmap_driver);
     }

@@ -28,7 +28,7 @@
   Driver enabled     Open/Cls  I/O     Driver #     Flags Device  File
   --------------     --------  ------  -----------  ----- ------  ----       
  */
-struct dmap dmap[] = {
+struct dmap dmap[NR_DEVICES] = {
   DT(1,              no_dev,   0,      0,	     0)  /* 0 = not used   */
   DT(1,		     gen_opcl, gen_io, MEMORY, 0)  /* 1 = /dev/mem   */
   DT(ENABLE_FLOPPY,  gen_opcl, gen_io, FLOPPY, 0) /* 2 = /dev/fd0   */
@@ -54,11 +54,6 @@ struct dmap dmap[] = {
 #endif /* IBM_PC */
 };
 
-/* This is the maximum major number at compile time. This may change when 
- * devices are dynamically added or removed.
- */
-int max_major = sizeof(dmap)/sizeof(struct dmap);
-
 
 /*===========================================================================*
  *				map_driver		 		     *
@@ -77,19 +72,15 @@ int dev_style;			/* style of the device */
   struct dmap *dp;
 
   /* Get pointer to device entry in the dmap table. */
-  if (major >= max_major) 		/* verify bounds */
-      return(ENODEV);
+  if (major >= NR_DEVICES) return(ENODEV);
   dp = &dmap[major];		
 	
   /* See if updating the entry is allowed. */
-  if (! (dp->dmap_flags & DMAP_MUTABLE))
-      return(EPERM);
-  if (dp->dmap_flags & DMAP_BUSY)
-      return(EBUSY);
+  if (! (dp->dmap_flags & DMAP_MUTABLE))  return(EPERM);
+  if (dp->dmap_flags & DMAP_BUSY)  return(EBUSY);
 
   /* Check process number of new driver. */
-  if (! isokprocnr(proc_nr))
-      return(EINVAL);
+  if (! isokprocnr(proc_nr))  return(EINVAL);
 
   /* Try to update the entry. */
   switch (dev_style) {
@@ -143,12 +134,8 @@ PUBLIC void map_controllers()
     for (dp = drivertab;
         dp < drivertab + sizeof(drivertab)/sizeof(drivertab[0]); dp++)  {
       if (strcmp(ctrlr_type, dp->wini_type) == 0) {	/* found driver name */
-#if DEAD_CODE
-	if ((s=sys_getprocnr(&proc_nr, 			/* lookup proc nr */
-	    dp->proc_name, strlen(dp->proc_name)+1)) == OK) {
-#endif
 	if ((s=findproc(dp->proc_name, &proc_nr)) == OK) {
-	  for (i=0; i< max_major; i++) {		/* find mapping */
+	  for (i=0; i< NR_DEVICES; i++) {		/* find mapping */
 	    if (dmap[i].dmap_driver == CTRLR(c)) {  
 	      if (map_driver(i, proc_nr, STYLE_DEV) == OK) {
 	        printf("FS: controller %s (%s) mapped to %s driver (proc. nr %d)\n",

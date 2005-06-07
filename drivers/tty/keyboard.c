@@ -490,7 +490,7 @@ int scode;			/* scan code for a function key */
   if (F1 <= fkey && fkey <= F12) {		/* F1-F12 */
       observers = &fkey_obs[0];	
       index = fkey - F1;
-  } else if (SF2 <= fkey && fkey <= SF12) {	/* Shift F2-F12 */
+  } else if (SF1 <= fkey && fkey <= SF12) {	/* Shift F2-F12 */
       observers = &sfkey_obs[0];
       index = fkey - SF1;
   }

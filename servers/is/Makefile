@@ -8,6 +8,8 @@ s = $i/sys
 m = $i/minix
 b = $i/ibm
 k = $u/src/kernel
+p = $u/src/servers/pm
+f = $u/src/servers/fs
 
 # programs, flags, etc.
 CC =	exec cc
@@ -15,7 +17,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lutils 
 
-OBJ = main.o dmp.o diag.o kputc.o
+OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o diag.o kputc.o
 
 # build local binary
 all build:	$(SERVER)
@@ -41,12 +43,21 @@ a = 	is.h proto.h glo.h \
 
 main.o:		$a
 
+dmp.o:		$a
+
 diag.o:		$a
 diag.o:		$k/type.h
 
-dmp.o:		$a
-dmp.o:		$i/timers.h $i/string.h $b/interrupt.h
-dmp.o:		$k/proc.h $k/sendmask.h $k/type.h $k/const.h
+dmp_kernel.o:		$a
+dmp_kernel.o:		$i/timers.h $i/string.h $b/interrupt.h
+dmp_kernel.o:		$k/proc.h $k/sendmask.h $k/type.h $k/const.h
+
+dmp_pm.o:		$a
+dmp_pm.o:		$p/mproc.h
+
+dmp_fs.o:		$a
+dmp_fs.o:		$f/fproc.h
+dmp_fs.o:		$f/dmap.h
 
 kputc.o:	$a
 

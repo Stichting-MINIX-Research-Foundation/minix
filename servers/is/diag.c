@@ -105,3 +105,30 @@ int c;					/* char to be added to diag buffer */
       diag_size += 1;
 }
 
+
+/*===========================================================================*
+ *				diagnostics_dmp				     *
+ *===========================================================================*/
+PUBLIC void diagnostics_dmp()
+{
+  char print_buf[DIAG_BUF_SIZE+1];	/* buffer used to print */
+  int start;				/* calculate start of messages */
+  int size, r;
+
+  /* Reprint all diagnostic messages. First determine start and copy the
+   * buffer into a print-buffer. This is done because the messages in the
+   * copy may wrap (the buffer is circular).
+   */
+  start = ((diag_next + DIAG_BUF_SIZE) - diag_size) % DIAG_BUF_SIZE;
+  r = 0;
+  size = diag_size;
+  while (size > 0) {
+  	print_buf[r] = diag_buf[(start+r) % DIAG_BUF_SIZE];
+  	r ++;
+  	size --;
+  }
+  print_buf[r] = 0;		/* make sure it terminates */
+  printf("Dump of diagnostics from device drivers and servers.\n\n"); 
+  printf(print_buf);		/* print the messages */
+}
+

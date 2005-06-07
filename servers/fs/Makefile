@@ -13,7 +13,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lutils
 
-OBJ =	main.o open.o read.o write.o pipe.o dmap.o dmp.o \
+OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 	device.o path.o mount.o link.o super.o inode.o \
 	cache.o cache2.o filedes.o stadir.o protect.o time.o \
 	cmostime.o lock.o misc.o utility.o select.o table.o 
@@ -64,12 +64,6 @@ dmap.o:	$i/string.h
 dmap.o:	$h/com.h
 dmap.o:	$h/utils.h
 dmap.o:	dmap.h
-
-dmp.o:	$a
-dmp.o:	dmap.h
-dmp.o:	$h/callnr.h
-dmp.o:	$h/com.h
-dmp.o:	$h/keymap.h
 
 filedes.o:	$a
 filedes.o:	file.h

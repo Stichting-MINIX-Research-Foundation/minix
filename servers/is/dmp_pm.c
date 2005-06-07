@@ -1,57 +1,30 @@
 /* This file contains procedures to dump to PM' data structures.
  *
  * The entry points into this file are
- *   do_fkey_pressed:	a function key was pressed	
- *   mproc_dump:   	display PM process table	  
+ *   mproc_dmp:   	display PM process table	  
  *
  * Created:
  *   May 11, 2005:	by Jorrit N. Herder
  */
 
-#include "pm.h"
-#include <minix/callnr.h>
-#include <minix/com.h>
-#include <minix/keymap.h>
-#include <signal.h>
-#include "mproc.h"
-
-FORWARD _PROTOTYPE( void mproc_dmp, (void));
+#include "is.h"
+#include "../pm/mproc.h"
 
 
-/*===========================================================================*
- *				do_fkey_pressed				     *
- *===========================================================================*/
-PUBLIC int do_fkey_pressed(void)
-{
-  printf("Process Manager debug dump: ");
-#if DEAD_CODE
-  switch (m_in.FKEY_NUM) {
-#else
-  switch (m_in.NOTIFY_FLAGS) {
-#endif
-    	case SF7:	mproc_dmp();		break;
-
-    	default:
-#if DEAD_CODE
-    		printf("PM: unhandled notification for Shift+F%d key.\n",
-    			m_in.FKEY_NUM);
-#else
-    		printf("PM: unhandled notification for Shift+F%d key.\n",
-    			m_in.NOTIFY_FLAGS);
-#endif
-  }
-}
-
+PUBLIC struct mproc mproc[NR_PROCS];
 
 /*===========================================================================*
  *				mproc_dmp				     *
  *===========================================================================*/
-PRIVATE void mproc_dmp()
+PUBLIC void mproc_dmp()
 {
   struct mproc *mp;
   int i, n=0;
-  static int prev_i;
-  printf("Process Table\n");
+  static int prev_i = 0;
+
+  printf("Process manager (PM) process table dump\n");
+
+  getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc);
 
   printf("-process- -nr-prnt- -pid/grp- --uid---gid-- -flags- --ignore--catch--block--\n");
   for (i=prev_i; i<NR_PROCS; i++) {
@@ -64,7 +37,7 @@ PRIVATE void mproc_dmp()
   		mp->mp_realuid, mp->mp_effuid, mp->mp_realgid, mp->mp_effgid);
   	printf("0x%04x  ", 
   		mp->mp_flags); 
-  	printf("0x%04x 0x%04x 0x%04x", 
+  	printf("0x%05x 0x%05x 0x%05x", 
   		mp->mp_ignore, mp->mp_catch, mp->mp_sigmask); 
   	printf("\n");
   }

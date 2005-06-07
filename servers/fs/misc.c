@@ -46,6 +46,14 @@ PUBLIC int do_getsysinfo()
   	src_addr = (vir_bytes) &proc_addr;
   	len = sizeof(struct fproc *);
   	break; 
+  case SI_PROC_TAB:
+  	src_addr = (vir_bytes) fproc;
+  	len = sizeof(struct fproc) * NR_PROCS;
+  	break; 
+  case SI_DMAP_TAB:
+  	src_addr = (vir_bytes) dmap;
+  	len = sizeof(struct dmap) * NR_DEVICES;
+  	break; 
   default:
   	return(EINVAL);
   }
@@ -421,10 +429,6 @@ PUBLIC int do_svrctl()
 	major = (device.dev >> MAJOR) & BYTE;
 	r=map_driver(major, who, device.style);
 	return(r);
-#if DEAD_CODE
-	if ((r=map_driver(major, who, device.style)) == OK)
-		fp->fp_pid = PID_SERVER;
-#endif
   }
   default:
 	return(EINVAL);

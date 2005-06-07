@@ -9,6 +9,8 @@
 #define NR_SUPERS          8	/* # slots in super block table */
 #define NR_LOCKS           8	/* # slots in the file locking table */
 
+#define NR_DEVICES	  16	/* # slots in the device <-> driver table */
+
 /* The type of sizeof may be (unsigned) long.  Use the following macro for
  * taking the sizes of small objects so that there are no surprises like
  * (small) long constants being passed to routines expecting an int.

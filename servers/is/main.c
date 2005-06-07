@@ -41,7 +41,6 @@ PUBLIC void main(void)
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
     int result;                 
-    static long count;
 
     /* Initialize the server, then go to work. */
     init_server();
@@ -67,8 +66,8 @@ PUBLIC void main(void)
             	/* never reached */
             	continue;
             default:
-            	printf("Warning %u, IS got unexpected request %d from %d\n",
-            		++count, m_in.m_type, m_in.m_source);
+            	printf("Warning, IS got unexpected request %d from %d\n",
+            		m_in.m_type, m_in.m_source);
             	result = EINVAL;
 	}
 

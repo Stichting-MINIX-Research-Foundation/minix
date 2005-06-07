@@ -21,9 +21,11 @@
 #include <minix/utils.h>
 #include <minix/keymap.h>
 
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
 
 #include "proto.h"
 #include "glo.h"
