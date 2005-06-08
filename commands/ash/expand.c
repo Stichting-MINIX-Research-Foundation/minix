@@ -672,7 +672,10 @@ expandmeta(str)
 		savelastp = exparg.lastp;
 		INTOFF;
 		if (expdir == NULL)
-			expdir = ckmalloc(1024); /* I hope this is big enough */
+		{
+			int i = strlen(str->text);
+			expdir = ckmalloc(i < 2048 ? 2048 : i); /* XXX */
+		}
 		expmeta(expdir, str->text);
 		ckfree(expdir);
 		expdir = NULL;
