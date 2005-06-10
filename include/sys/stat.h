@@ -29,6 +29,7 @@ struct stat {
  * extensions such as S_IFREG != (mode_t) S_IFREG when ints are 32 bits.
  */
 #define S_IFMT  ((mode_t) 0170000)	/* type of file */
+#define S_IFLNK ((mode_t) 0120000)	/* symbolic link, not implemented */
 #define S_IFREG ((mode_t) 0100000)	/* regular */
 #define S_IFBLK 0060000		/* block special */
 #define S_IFDIR 0040000  	/* directory */
@@ -61,7 +62,7 @@ struct stat {
 #define S_ISCHR(m)	(((m) & S_IFMT) == S_IFCHR)	/* is a char spec */
 #define S_ISBLK(m)	(((m) & S_IFMT) == S_IFBLK)	/* is a block spec */
 #define S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)	/* is a pipe/FIFO */
-
+#define S_ISLNK(m)      (((m) & S_IFMT) == S_IFLNK)     /* is a sym link */
 
 /* Function Prototypes. */
 _PROTOTYPE( int chmod, (const char *_path, Mode_t _mode)		);
@@ -70,5 +71,8 @@ _PROTOTYPE( int mkdir, (const char *_path, Mode_t _mode)		);
 _PROTOTYPE( int mkfifo, (const char *_path, Mode_t _mode)		);
 _PROTOTYPE( int stat, (const char *_path, struct stat *_buf)		);
 _PROTOTYPE( mode_t umask, (Mode_t _cmask)				);
+
+/* Open Group Base Specifications Issue 6 (not complete) */
+_PROTOTYPE( int lstat, (const char *_path, struct stat *_buf)		);
 
 #endif /* _STAT_H */

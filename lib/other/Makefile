@@ -33,6 +33,7 @@ OBJECTS	= \
 	$(LIBRARY)(getgrent.o) \
 	$(LIBRARY)(getlogin.o) \
 	$(LIBRARY)(getopt.o) \
+	$(LIBRARY)(getpagesize.o) \
 	$(LIBRARY)(getpass.o) \
 	$(LIBRARY)(getpwent.o) \
 	$(LIBRARY)(getttyent.o) \
@@ -51,6 +52,8 @@ OBJECTS	= \
 	$(LIBRARY)(popen.o) \
 	$(LIBRARY)(putenv.o) \
 	$(LIBRARY)(putw.o) \
+	$(LIBRARY)(setgroups.o) \
+	$(LIBRARY)(settimeofday.o) \
 	$(LIBRARY)(stderr.o) \
 	$(LIBRARY)(swab.o) \
 	$(LIBRARY)(syscall.o) \
@@ -144,6 +147,9 @@ $(LIBRARY)(getlogin.o):	getlogin.c
 $(LIBRARY)(getopt.o):	getopt.c
 	$(CC1) getopt.c
 
+$(LIBRARY)(getpagesize.o):	getpagesize.c
+	$(CC1) getpagesize.c
+
 $(LIBRARY)(getpass.o):	getpass.c
 	$(CC1) getpass.c
 
@@ -203,6 +209,12 @@ $(LIBRARY)(putw.o):	putw.c
 
 $(LIBRARY)(rindex.o):	rindex.c
 	$(CC1) rindex.c
+
+$(LIBRARY)(setgroups.o):	setgroups.c
+	$(CC1) setgroups.c
+
+$(LIBRARY)(settimeofday.o):	settimeofday.c
+	$(CC1) settimeofday.c
 
 $(LIBRARY)(stderr.o):	stderr.c
 	$(CC1) stderr.c

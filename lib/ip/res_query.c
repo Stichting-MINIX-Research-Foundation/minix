@@ -35,8 +35,6 @@ static char sccsid[] = "@(#)res_query.c	5.7 (Berkeley) 6/1/90";
 #include <net/gen/netdb.h>
 #include <net/gen/resolv.h>
 
-typedef u8_t u_char;
-
 #define bcopy(s,d,l) memcpy(d,s,l)
 
 #define hostalias __hostalias

@@ -95,6 +95,9 @@ OBJECTS	= \
 	$(LIBRARY)(_wait.o) \
 	$(LIBRARY)(_waitpid.o) \
 	$(LIBRARY)(_write.o) \
+	$(LIBRARY)(gettimeofday.o) \
+	$(LIBRARY)(lstat.o) \
+	$(LIBRARY)(symlink.o) \
 
 $(LIBRARY):	$(OBJECTS)
 	aal cr $@ *.o
@@ -363,3 +366,13 @@ $(LIBRARY)(_waitpid.o):	_waitpid.c
 
 $(LIBRARY)(_write.o):	_write.c
 	$(CC1) _write.c
+
+$(LIBRARY)(gettimeofday.o):	gettimeofday.c
+	$(CC1) gettimeofday.c
+
+$(LIBRARY)(lstat.o):	lstat.c
+	$(CC1) lstat.c
+
+$(LIBRARY)(symlink.o):	symlink.c
+	$(CC1) symlink.c
+

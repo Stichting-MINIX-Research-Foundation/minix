@@ -130,6 +130,9 @@ _PROTOTYPE( char *ttyname, (int _fd)					);
 _PROTOTYPE( int unlink, (const char *_path)				);
 _PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
 
+/* Open Group Base Specifications Issue 6 (not complete) */
+_PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
+
 #ifdef _MINIX
 #ifndef _TYPE_H
 #include <minix/type.h>
@@ -156,6 +159,11 @@ _PROTOTYPE( int getprocnr, (int *proc_nr)				);
 _PROTOTYPE( int findproc, (char *proc_name, int *proc_nr)		);
 _PROTOTYPE( int allocmem, (phys_bytes size, phys_bytes *base)		);
 _PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
+
+/* For compatibility with other Unix systems */
+_PROTOTYPE( int getpagesize, (void)					);
+_PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
+
 #endif
 
 _PROTOTYPE( int setcache, (int kb));

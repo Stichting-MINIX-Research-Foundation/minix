@@ -55,6 +55,9 @@
 
 #endif /* _ANSI */
 
+/* This should be defined as restrict when a C99 compiler is used. */
+#define _RESTRICT
+
 /* Setting any of _MINIX, _POSIX_C_SOURCE or _POSIX2_SOURCE implies
  * _POSIX_SOURCE.  (Seems wrong to put this here in ANSI space.)
  */

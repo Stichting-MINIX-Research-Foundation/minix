@@ -29,10 +29,6 @@ static char sccsid[] = "@(#)res_comp.c	6.18 (Berkeley) 6/27/90";
 #include <net/gen/nameser.h>
 #include <net/gen/resolv.h>
 
-typedef u8_t u_char;
-typedef u16_t u_short;
-typedef u32_t u_long;
-
 static int dn_find _ARGS(( const u_char *exp_dn, const u_char *msg,
 	u_char **dnptrs, u_char **lastdnptr ));
 int dn_skipname _ARGS(( const u_char *comp_dn, const u_char *eom ));

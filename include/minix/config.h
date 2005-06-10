@@ -26,6 +26,7 @@
 /* Word size in bytes (a constant equal to sizeof(int)). */
 #if __ACK__
 #define _WORD_SIZE	_EM_WSIZE
+#define _PTR_SIZE	_EM_WSIZE
 #endif
 
 /* Number of slots in the process table for non-kernel processes. */

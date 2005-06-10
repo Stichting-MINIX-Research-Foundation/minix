@@ -58,9 +58,6 @@ struct in_addr
 {
 	ipaddr_t s_addr;
 };
-typedef u32_t u_long;
-typedef u16_t u_short;
-typedef u8_t u_char;
 union querybuf;
 
 extern int dn_skipname _ARGS(( const u_char *comp_dn, const u_char *eom ));

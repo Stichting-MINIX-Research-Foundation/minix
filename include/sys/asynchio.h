@@ -12,6 +12,8 @@
 #include <ansi.h>
 #endif
 
+#include <sys/time.h>
+
 typedef struct {
 	char	state;
 	char	op;

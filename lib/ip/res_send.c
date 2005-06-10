@@ -80,8 +80,6 @@ static char sccsid[] = "@(#)res_send.c	6.27 (Berkeley) 2/24/91";
 #include <net/gen/udp_hdr.h>
 #include <net/gen/udp_io.h>
 
-typedef u16_t u_short;
-
 static int tcp_connect _ARGS(( ipaddr_t host, Tcpport_t port, int *terrno ));
 static int tcpip_writeall _ARGS(( int fd, const char *buf, size_t siz ));
 static int udp_connect _ARGS(( void ));

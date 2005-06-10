@@ -32,10 +32,6 @@ static char sccsid[] = "@(#)res_mkquery.c	6.12 (Berkeley) 6/1/90";
 #include <net/gen/nameser.h>
 #include <net/gen/resolv.h>
 
-typedef u16_t u_short;
-typedef unsigned u_int;
-typedef u32_t u_long;
-
 #define bzero(b,l) memset(b,0,l)
 #define bcopy(s,d,l) memcpy(d,s,l)
 

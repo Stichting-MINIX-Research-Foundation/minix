@@ -70,7 +70,6 @@ _PROTOTYPE( void tzset, (void)						);
 _PROTOTYPE( int stime, (time_t *_top)					);
 #endif
 
-struct timeval { long tv_sec, tv_usec; };
 extern long timezone;
 
 #endif /* _TIME_H */

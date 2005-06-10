@@ -43,6 +43,9 @@ typedef long clock_t;		   /* unit for system accounting */
 typedef unsigned long sigset_t;
 #endif
 
+/* Open Group Base Specifications Issue 6 (not complete) */
+typedef long useconds_t;	/* Time in microseconds */
+
 /* Types used in disk, inode, etc. data structures. */
 typedef short          dev_t;	   /* holds (major|minor) device pair */
 typedef char           gid_t;	   /* group id */
@@ -115,5 +118,11 @@ typedef int           Mode_t;
  
 /* Signal handler type, e.g. SIG_IGN */
 typedef void _PROTOTYPE( (*sighandler_t), (int) );
+
+/* Compatibility with other systems */
+typedef unsigned char	u_char;
+typedef unsigned short	u_short;
+typedef unsigned int	u_int;
+typedef unsigned long	u_long;
 
 #endif /* _TYPES_H */
