@@ -189,6 +189,9 @@ int main(int argc, char **argv)
 		pflag= 1;
 	}
 
+	/* Initialize current Time */
+	time(&now);
+
 	if (cflag) {
 		int fd1, fd2;
 

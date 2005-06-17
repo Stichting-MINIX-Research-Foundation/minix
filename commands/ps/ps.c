@@ -7,9 +7,12 @@
  * If you want to compile this for non-IBM PC architectures, the header files
  * require that you have your CHIP, MACHINE etc. defined.
  * Full syntax:
- *	ps [-][alx]
+ *	ps [-][aeflx]
  * Option `a' gives all processes, `l' for detailed info, `x' includes even
  * processes without a terminal.
+ * The `f' and `e' options were added by Kees Bot for the convenience of 
+ * Solaris users accustomed to these options. The `e' option is equivalent to 
+ * `a' and `f' is equivalent to  -l. These do not appear in the usage message.
  *
  * VERY IMPORTANT NOTE:
  *	To compile ps, the kernel/, fs/ and pm/ source directories must be in
@@ -549,7 +552,7 @@ int nbytes;
 void usage(pname)
 char *pname;
 {
-  fprintf(stderr, "Usage: %s [-][alx]\n", pname);
+  fprintf(stderr, "Usage: %s [-][aeflx]\n", pname);
   exit(1);
 }
 

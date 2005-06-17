@@ -55,6 +55,7 @@ struct pci_device pci_device_table[]=
 	{ 0x100B, 0xD001, "Nat. Semi. 87410" },
 	{ 0x1013, 0x00B8, "Cirrus Logic GD 5446" },
 	{ 0x1013, 0x6003, "Cirrus Logic CS4614/22/24 CrystalClear" },
+	{ 0x1022, 0x2000, "AMD Lance/PCI" },
 	{ 0x1022, 0x700C, "AMD-762 CPU to PCI Bridge (SMP chipset)" },
 	{ 0x1022, 0x700D, "AMD-762 CPU to PCI Bridge (AGP 4x)" },
 	{ 0x1022, 0x7410, "AMD-766 PCI to ISA/LPC Bridge" },
@@ -100,20 +101,27 @@ struct pci_device pci_device_table[]=
 	{ 0x5333, 0x88d0, "S3 Vision 964 vers 0" },
 	{ 0x5333, 0x8a01, "S3 Virge/DX or /GX" },
 	{ 0x8086, 0x1004, "Intel 82543GC Gigabit Ethernet Controller" },
-	{ 0x8086, 0x1229, "Intel 82557" },
+ 	{ 0x8086, 0x1029, "Intel EtherExpressPro100 ID1029" },
+ 	{ 0x8086, 0x1030, "Intel Corporation 82559 InBusiness 10/100" },
+ 	{ 0x8086, 0x1209, "Intel EtherExpressPro100 82559ER" },
+ 	{ 0x8086, 0x1229, "Intel EtherExpressPro100 82557/8/9" },
 	{ 0x8086, 0x122D, "Intel 82437FX" },
 	{ 0x8086, 0x122E, "Intel 82371FB (PIIX)" },
 	{ 0x8086, 0x1230, "Intel 82371FB (IDE)" },
 	{ 0x8086, 0x1237, "Intel 82441FX (440FX)" },
 	{ 0x8086, 0x1250, "Intel 82439HX" },
+ 	{ 0x8086, 0x2449, "Intel EtherExpressPro100 82562EM" },
 	{ 0x8086, 0x7000, "Intel 82371SB" },
 	{ 0x8086, 0x7010, "Intel 82371SB (IDE)" },
 	{ 0x8086, 0x7020, "Intel 82371SB (USB)" },
+ 	{ 0x8086, 0x7030, "Intel 82437VX" },	/* asw 2005-03-02 */
+ 	{ 0x8086, 0x7100, "Intel 82371AB" },  	/* asw 2004-07-31 */
 	{ 0x8086, 0x7100, "Intel 82371AB" },
 	{ 0x8086, 0x7110, "Intel 82371AB (PIIX4)" },
 	{ 0x8086, 0x7111, "Intel 82371AB (IDE)" },
 	{ 0x8086, 0x7112, "Intel 82371AB (USB)" },
 	{ 0x8086, 0x7113, "Intel 82371AB (Power)" },
+ 	{ 0x8086, 0x7124, "Intel 82801AA" },	/* asw 2004-11-09 */
 	{ 0x8086, 0x7190, "Intel 82443BX" },
 	{ 0x8086, 0x7191, "Intel 82443BX (AGP bridge)" },
 	{ 0x9004, 0x8178, "Adaptec AHA-2940U/2940UW Ultra/Ultra-Wide SCSI Ctrlr" },
@@ -216,7 +224,9 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
 	{ 0x8086, 0x122D, },	/* Intel 82437FX */
 	{ 0x8086, 0x1237, }, 	/* Intel 82441FX */
 	{ 0x8086, 0x1250, },	/* Intel 82439HX */
-	{ 0x8086, 0x7100, },    /* Intel 82371AB */
+ 	{ 0x8086, 0x7030, },	/* Intel 82437VX (asw 2005-03-02) */ 
+ 	{ 0x8086, 0x7100, },	/* Intel 82371AB (asw 2004-07-31) */
+ 	{ 0x8086, 0x7124, },	/* Intel 82801AA (asw 2004-11-09) */
 	{ 0x8086, 0x7190, },	/* Intel 82443BX */
 	{ 0x0000, 0x0000, },
 };
@@ -231,8 +241,10 @@ struct pci_isabridge pci_isabridge[]=
 	{ 0x1106, 0x3227, 1, PCI_IB_VIA,	},	/* VIA */
 	{ 0x8086, 0x122E, 1, PCI_IB_PIIX,	},	/* Intel 82371FB */
 	{ 0x8086, 0x7000, 1, PCI_IB_PIIX,	},	/* Intel 82371SB */
-	{ 0x8086, 0x7100, 1, PCI_IB_PIIX,	},	/* Intel 82371AB */
-	{ 0x8086, 0x7110, 1, PCI_IB_PIIX,	},	/* Intel PIIX4 */
+ 	{ 0x8086, 0x7030, 1, PCI_IB_PIIX,	},	/* Intel 82437VX (asw 2005-03-02) */
+ 	{ 0x8086, 0x7100, 1, PCI_IB_PIIX,	},	/* Intel 82371AB (asw 2004-07-31) */
+ 	{ 0x8086, 0x7110, 1, PCI_IB_PIIX,	},	/* Intel PIIX4 */
+ 	{ 0x8086, 0x7124, 1, PCI_IB_PIIX,	},	/* Intel 82801AA (asw 2004-11-09) */
 	{ 0x0000, 0x0000, 0, 0, 		},
 };
 

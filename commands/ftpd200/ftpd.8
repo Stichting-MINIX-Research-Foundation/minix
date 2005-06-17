@@ -1,0 +1,161 @@
+.\" Copyright (c) 1985 Regents of the University of California.
+.\" All rights reserved.  The Berkeley software License Agreement
+.\" specifies the terms and conditions for redistribution.
+.\"
+.\"	@(#)ftpd.8c	6.4 (Berkeley) 5/28/86
+.\"
+.TH FTPD 8
+.SH NAME
+ftpd, in.ftpd, ftpdsh, setup.anonftp \- DARPA Internet File Transfer Protocol server
+.SH SYNOPSIS
+.B "ftp stream tcp nowait root /usr/bin/in.ftpd in.ftpd"
+.br
+.B "tcpd ftp /usr/bin/in.ftpd"
+.SH DESCRIPTION
+.B Ftpd
+is the DARPA Internet File Transfer Prototocol
+server process.  The server uses the TCP protocol
+and listens at the port specified in the ``ftp''
+service specification; see
+.BR services (5).
+.PP
+The ftp server currently supports the following ftp
+requests;  case is not distinguished.
+.PP
+.nf
+.ta \w'Request        'u
+\fBRequest	Description\fP
+ABOR	abort previous command
+ACCT	specify account (ignored)
+ALLO	allocate storage (vacuously)
+APPE	append to a file
+CDUP	change to parent of current working directory
+CWD	change working directory
+DELE	delete a file
+HELP	give help information
+LIST	give list files in a directory (``ls -lA'')
+MKD	make a directory
+MODE	specify data transfer \fImode\fP
+NLST	give name list of files in directory (``ls'')
+NOOP	do nothing
+PASS	specify password
+PASV	prepare for server-to-server transfer
+PORT	specify data connection port
+PWD	print the current working directory
+QUIT	terminate session
+RETR	retrieve a file
+RMD	remove a directory
+RNFR	specify rename-from file name
+RNTO	specify rename-to file name
+STOR	store a file
+STOU	store a file with a unique name
+STRU	specify data transfer \fIstructure\fP
+TYPE	specify data transfer \fItype\fP
+USER	specify user name
+XCUP	change to parent of current working directory
+XCWD	change working directory
+XMKD	make a directory
+XPWD	print the current working directory
+XRMD	remove a directory
+.fi
+.PP
+The remaining ftp requests specified in Internet RFC 959 are
+recognized, but not implemented.
+.PP
+The ftp server will abort an active file transfer only when the
+ABOR command is preceded by a Telnet "Interrupt Process" (IP)
+signal and a Telnet "Synch" signal in the command Telnet stream,
+as described in Internet RFC 959.
+.PP
+.B Ftpd
+interprets file names according to the ``globbing''
+conventions used by
+.BR csh (1).
+This allows users to utilize the metacharacters ``*?[]{}~''.
+.PP
+.B Ftpd
+authenticates users according to two rules. 
+.IP 1)
+The user name must be in the password data base,
+.BR /etc/passwd ,
+and not have a null password.  In this case a password
+must be provided by the client before any file operations
+may be performed.
+.IP 2)
+If the user name is ``anonymous'' or ``ftp'', an
+anonymous ftp account must be present in the password
+file (user ``ftp'').  In this case the user is allowed
+to log in by specifying any password (by convention this
+is given as the client host's name).
+.PP
+In the last case, 
+.B ftpd
+takes special measures to restrict the client's access privileges.
+The server performs a 
+.BR chroot (2)
+command to the home directory of the ``ftp'' user.
+In order that system security is not breached, it is recommended
+that the ``ftp'' subtree be constructed with care;  the following
+rules are recommended.
+.IP ~ftp)
+Make the home directory owned by ``ftp'' and unwritable by anyone.
+.IP ~ftp/bin)
+Make this directory owned by the super-user and unwritable by
+anyone.  The program
+.BR ls (1)
+must be present to support the list commands.  
+Also, 
+.BR crc (1) 
+must be present to support generating crcs using the site command, 
+.BR tar (1)
+and 
+.BR compress (1)
+must be present to support on-the-fly generation of .tar and .tar.Z archives, 
+.BR gzip (1)
+must be present to support gzip compression, and 
+.BR sh (1)
+must be present to support 
+.BR ftpdsh (8)
+which also must be present. 
+.BR ftpdsh controls which binaries can be used.
+These programs should all have mode 111.
+.IP ~ftp/etc)
+Make this directory owned by the super-user and unwritable by
+anyone.  The files
+.BR passwd (5)
+and
+.BR group (5)
+must be present for the 
+.B ls
+command to work properly.  These files should be mode 444. They can (and 
+should) be stripped down versions so as not to reveal names of users who
+are not owners of files in the ~ftp/pub directory tree. 
+.IP ~ftp/pub)
+Make this directory mode 755 and owned by the super-user.  Create
+directories in it owned by users if those users want to manage an
+anonymous ftp directory.
+.IP ~ftp/pub/incoming)
+Optionally create this directory for anonymous uploads.  Make it mode
+777.  The FTP daemon will create files with mode 266, so remote users
+can write a file, but only local users can do something with it.
+.PP
+The script
+.B setup.anonftp
+can be used to create or check an anonymous FTP tree.
+.SH "SEE ALSO"
+.BR ftp (1).
+.SH BUGS
+The anonymous account is inherently dangerous and should
+avoided when possible.
+.ig \" Minix doesn't have privileged port numbers (yet?)
+.PP
+The server must run as the super-user
+to create sockets with privileged port numbers.  It maintains
+an effective user id of the logged in user, reverting to
+the super-user only when binding addresses to sockets.  The
+possible security holes have been extensively
+scrutinized, but are possibly incomplete.
+..
+.\" man page updated by Al Woodhull 2005-02-25
+
+

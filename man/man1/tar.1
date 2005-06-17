@@ -27,7 +27,7 @@ tar \- tape archiver
 .SH EXAMPLES
 .EX "tar c /dev/fd1 ." "Back up current directory to \fI/dev/fd1\fR"
 .EX "tar xv /dev/fd1 file1 file2" "Extract two files from the archive"
-.EX "tar cf \- | (cd dest; tar xf \-)" "Copy current directory to \fIdest\fR"
+.EX "tar cf \- . | (cd dest; tar xf \-)" "Copy current directory to \fIdest\fR"
 .SH DESCRIPTION
 .PP
 \fITar\fR is a POSIX-compatible archiver, except that it does not use tape.
@@ -47,3 +47,4 @@ try
 .SH "SEE ALSO"
 .BR compress (1),
 .BR vol (1).
+.\" minor correction ASW 2005-01-15

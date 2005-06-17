@@ -267,7 +267,7 @@ irq_hook_t *hook;
           && rdy_head[PPRI_USER] != NIL_PROC))
   {  
       m.NOTIFY_TYPE = HARD_INT;
-      int_notify(CLOCK, &m);
+      lock_notify(CLOCK, &m);
   } 
   else if (--sched_ticks <= 0) {
       sched_ticks = SCHED_RATE;		/* reset the quantum */

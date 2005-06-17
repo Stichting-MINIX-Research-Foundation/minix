@@ -21,10 +21,10 @@ fsck, fsck1 \- perform file system consistency check
 .FL "\-r" "Prompt user for repairs if inconsistencies are found
 .FL "\-s" "List the superblock of the file system"
 .SH EXAMPLES
-.EX "fsck /dev/hd4" "Check file system on \fI/dev/hd4\fR"
+.EX "fsck /dev/c0d0p3" "Check file system on \fI/dev/c0d0p3\fR"
 .EX "fsck \-a /dev/at0" "Automatically fix errors on \fI/dev/at0\fR"
 .EX "fsck \-l /dev/fd0" "List the contents of \fI/dev/fd0\fR"
-.EX "fsck \-c 2 3 /dev/hd3" "Check and list \fI/dev/hd3\fR i-nodes 2 & 3"
+.EX "fsck \-c 2 3 /dev/c0d0p2" "Check and list \fI/dev/c0d0p2\fR i-nodes 2 & 3"
 .SH DESCRIPTION
 .PP
 \fIFsck\fR performs consistency checks on the file systems which reside 
@@ -49,3 +49,4 @@ simply be unmounted before it is checked.
 .SH "SEE ALSO"
 .BR mkfs (1),
 .BR mount (1).
+.\" disk name refs corrected, i.e., old hd1 now c0d0p0 -- ASW 2005-01-15

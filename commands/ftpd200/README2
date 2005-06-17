@@ -1,0 +1,34 @@
+README2: additional notes on compiling and installing ftpd.
+
+Note that the Makefile install options will replace files in /usr/bin
+and /usr/man that were installed with the Minix distribution.  If you
+are not sure you want to do this you can either rename the original
+in.ftpd binary, the anonftp.* scripts, and the ftpd.8 man page to
+prevent them from being replaced, or you can edit the Makefile to
+change the directory values:
+  BINDIR= /usr/local/bin
+  MANDIR= /usr/local/man/man8
+ASW's practice is to rename binaries with a suffix that indicates the
+original distribution from which they were obtained, i.e., in.ftpd.203
+for the version distributed with Minix 2.0.3, or with a date code or a
+version number.
+
+If you are sure you want to replace the original ftpd provided with your
+distribution you  may want to copy the contents of the unpacked tarball
+to the main directory tree, in this case /usr/src/commands/ftpd, so that
+a new version will be compiled if you do a general recompilation of all 
+commands using "make all" or "make compile" in /usr/src. ASW's practice
+is generally to make a directory in /usr/local/src for new versions of
+major programs. 
+Also note that if you create a new man page where one did not exist
+previously you will need to run makewhatis to rebuild the whatis
+database, i.e.:
+  makewhatis /usr/man
+or
+  makewhatis /usr/local/man
+
+Important: the scripts for setting up and maintaining an anonymous ftp
+installation haven't been checked for a long time, I would appreciate 
+comments.
+
+ASW 2005-02-06

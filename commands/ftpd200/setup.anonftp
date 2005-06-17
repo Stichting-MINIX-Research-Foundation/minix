@@ -1,0 +1,75 @@
+#!/bin/sh
+# setup.anonftp - Anonymous FTP setup and maintenance.
+#
+# 01/22/96 Initial Release	Al Woodhul, <asw@hampshire.edu>
+# 01/25/96			Michael Temari, <temari@ix.netcom.com>
+#
+
+# What is needed for anon ftp
+
+# ref: Hunt TCP/IP Net Admin pp. 338++
+# ref: Nemeth et al UNIX System Admin Handbook p. 295
+# ref: mail from M. Temari 18.01.96
+
+# programs possibly used by ftpd
+PROGS="sh ls crc tar compress gzip"
+
+echo Checking /etc/passwd
+if grep '^ftp:[^:]*:[1-9][0-9]*:[1-9][0-9]*:[^:]*:/[^:]*:[^:]*$' \
+						/etc/passwd >/dev/null
+then
+  echo -n "OK, ftp entry found: "
+  grep '^ftp:' /etc/passwd
+else
+  echo "Found no entry for ftp in /etc/passwd, please add one with the"
+  echo "home directory pointing to the anonymous FTP directory"
+  exit 1
+fi
+
+# ftp directory
+FTPDIR="`sed '/^ftp:/!d; s/^.*:\\([^:]*\\):[^:]*/\\1/' /etc/passwd`"
+
+if [ `whoami` != root ]
+then
+  echo You must be root to do this
+  exit 1
+fi
+
+echo Setting up for anonymous ftp
+
+echo Making $FTPDIR and subdirectories
+install -d -m 755 -o root -g operator $FTPDIR
+install -d -m 751 -o root -g operator $FTPDIR/bin
+install -d -m 751 -o root -g operator $FTPDIR/dev
+install -d -m 751 -o root -g operator $FTPDIR/etc
+install -d -m 755 -o root -g operator $FTPDIR/pub
+incoming=
+if [ -d $FTPDIR/pub/incoming ]
+then
+	incoming=t
+elif [ -t 0 ]
+then
+	echo -n "Create \"incoming\" directory? [n] "; read yn
+	case "$yn" in
+	[yY]*|ok|sure)	incoming=t
+	esac
+fi
+test "$incoming" && install -d -m 777 -o root -g operator $FTPDIR/pub/incoming
+
+echo Copying files
+for PROG in $PROGS
+do
+  test -f /usr/bin/$PROG && install -lcs /usr/bin/$PROG $FTPDIR/bin
+done
+cp -rp /dev/tcp $FTPDIR/dev/tcp
+install -lcs ftpdsh $FTPDIR/bin
+
+echo Copying a minimum of the password and group files
+sed 's/^\([^:]*\):[^:]*:\([^:]*:[^:]*\):.*$/\1:*:\2:::/' \
+					/etc/passwd >$FTPDIR/etc/passwd
+sed 's/^\([^:]*\):[^:]*:\([^:]*\):.*$/\1:*:\2:/' \
+					/etc/group >$FTPDIR/etc/group
+chown root:operator $FTPDIR/etc/*
+chmod 444 $FTPDIR/etc/*
+
+echo "Anonymous ftp setup complete"

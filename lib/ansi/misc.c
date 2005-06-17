@@ -352,7 +352,7 @@ date_of(register struct dsttype *dst, struct tm *timep)
 	tmpday = day;
 	day += (dst->ds_date[2] - firstday + 7) % 7
 		+ 7 * (dst->ds_date[1] - 1);
-	if (day >= tmpday + _ytab[leap][month]) day -= 7;
+	if (day >= tmpday + _ytab[leap][month-1]) day -= 7;
 	return day;
 }
 

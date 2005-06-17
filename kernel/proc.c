@@ -10,10 +10,9 @@
  *
  * As well as several entry points used from the interrupt and task level:
  *
- *   lock_notify:     send a notification to inform a process of a system event
- *   int_notify:      same as above, but from an interrupt handler (no locking)
+ *   lock_notify:     notify a process of a system event
  *   lock_send:	      send a message to a process
- *   lock_ready:      put a process on one of the ready queues so it can be run
+ *   lock_ready:      put a process on one of the ready queues 
  *   lock_unready:    remove a process from the ready queues
  *   lock_sched:      a process has run too long; schedule another one
  *
@@ -438,35 +437,27 @@ PUBLIC int lock_notify(dst, m_ptr)
 int dst;			/* to whom is message being sent? */
 message *m_ptr;			/* pointer to message buffer */
 {
-/* Safe gateway to mini_notify() for tasks. Don't use this function from the
- * interrupt level, as it will reenable interrupts (because of the unlock() 
- * call). For interrupt handlers, int_notify() is available. 
+/* Safe gateway to mini_notify() for tasks and interrupt handlers. MINIX 
+ * kernel is not reentrant, which means to interrupts are disabled after 
+ * the first kernel entry (hardware interrupt, trap, or exception). Locking
+ * work is done by temporarily disabling interrupts. 
  */
   int result;
-  register struct proc *caller_ptr;
-  lock(0, "notify");
-  caller_ptr = (k_reenter >= 0) ? proc_addr(HARDWARE) : proc_ptr;
-  result = mini_notify(caller_ptr, dst, m_ptr); 
-  unlock(0);
+
+  /* Exception or interrupt occurred, thus already locked. */
+  if (k_reenter >= 0) {
+      result = mini_notify(proc_addr(HARDWARE), dst, m_ptr); 
+  }
+
+  /* Call from task level, locking is required. */
+  else {
+      lock(0, "notify");
+      result = mini_notify(proc_ptr, dst, m_ptr); 
+      unlock(0);
+  }
   return(result);
 }
 
-
-/*==========================================================================*
- *				int_notify				    *
- *==========================================================================*/
-PUBLIC int int_notify(dst, m_ptr)
-int dst;			/* to whom is message being sent? */
-message *m_ptr;			/* pointer to message buffer */
-{
-/* Gateway to mini_notify() for interrupt handlers. This function doesn't
- * use lock() and unlock() because interrupts are already disabled.
- */ 
-  int result;
-  register struct proc *caller_ptr = proc_addr(HARDWARE);
-  result = mini_notify(caller_ptr, dst, m_ptr); 
-  return(result);
-}
 
 
 /*===========================================================================*

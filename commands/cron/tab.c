@@ -158,6 +158,7 @@ void tab_reschedule(cronjob_t *job)
 			job->rtime= NEVER;
 			return;	
 		}
+		tmptm= *localtime(&job->rtime);
 		if (tmptm.tm_hour != nexttm.tm_hour ||
 			tmptm.tm_min != nexttm.tm_min)
 		{
@@ -182,6 +183,7 @@ void tab_reschedule(cronjob_t *job)
 				job->rtime= NEVER;
 				return;	
 			}
+			tmptm= *localtime(&job->rtime);
 			if (tmptm.tm_hour != nexttm.tm_hour ||
 				tmptm.tm_min != nexttm.tm_min)
 			{

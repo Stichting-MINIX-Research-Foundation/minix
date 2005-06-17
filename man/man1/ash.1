@@ -323,7 +323,7 @@ declared inside
 not to the global variable named
 .BR x .
 .PP
-The only special parameter than can be made local is ``\fB-\fR''.
+The only special parameter that can be made local is ``\fB-\fR''.
 Making ``\fB-\fR'' local any shell options that are changed via the
 .I set
 command inside the function to be restored to their original values
@@ -1103,7 +1103,7 @@ echo(1), expr(1), line(1), pwd(1), true(1).
 .SH BUGS
 When command substitution occurs inside a here document, the commands inside
 the here document are run with their standard input closed.  For example,
-the following will not word because the standard input of the
+the following will not work because the standard input of the
 .I line
 command will be closed when the command is run:
 .d
@@ -1121,3 +1121,4 @@ as well as by a line containing the terminator word which follows the ``<<''.
 What this means is that if you mistype the terminator line, the shell
 will silently swallow up the rest of your shell script and stick it
 in the here document.
+.\" several minor typos corrected -- ASW 2005-01-15

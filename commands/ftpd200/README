@@ -1,0 +1,35 @@
+ftpd200 --- FTP server program for Minix 2.0  
+written by Michael Temari <Michael@TemWare.Com> release 2.00 2005-02-25
+
+Full download: <a href="/pub/contrib/ftpd200.tar.Z">ftpd200.tar.Z</a>
+
+Ftpd is the File Transfer Protocol (FTP) server.  
+
+Important: Release 2.00 incorporates an improved mechanism to restrict
+execution of commands on the server.  This is done through use of a
+shell script, ftpdsh.  Any earlier ftpd version in use on a system
+accessible from the Internet should be upgraded at least to version 1.01,
+version 2.00 is preferable.
+
+Installation: unpack the tarball in /usr/local/src or another directory 
+of your choice:
+zcat < ftpd200.tar.Z | tar xvfp -
+
+The ftpd200 directory will be created.  Read the Makefile to see how
+the program is compiled and installed:
+
+make (or make ftpd) -- compiles the binary
+make install        -- installs /usr/bin/in.ftpd, and ftpdsh. Also installs 
+                       setup.anonftp script.  
+make installman     -- installs new ftpd.8 man page in /usr/local/man/man8
+
+The shell script setup.anonftp sets up and verifies configuration for
+anonymous ftp.  If you provide anonymous ftp you are letting anyone in
+the whole wide world execute a program on your computer.  You want to
+make sure it's set up correctly so outsiders can't mess with things
+they shouldn't.  
+
+This file is included as README in the source directory.  For more
+notes on compiling and installing, also please see the file README2.
+
+notes updated by asw 2005-02-25

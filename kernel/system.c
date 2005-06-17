@@ -296,7 +296,7 @@ irq_hook_t *hook;
   /* Build notification message and return. */
   m.NOTIFY_TYPE = HARD_INT;
   m.NOTIFY_ARG = hook->irq;
-  int_notify(hook->proc_nr, &m);
+  lock_notify(hook->proc_nr, &m);
   return(hook->policy & IRQ_REENABLE);
 }
 

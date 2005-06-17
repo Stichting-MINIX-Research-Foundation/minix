@@ -1,0 +1,14 @@
+#!/bin/sh
+
+case $1 in
+	1)	ls -A $2 ;;
+	2)	ls -la $2 ;;
+	3)	crc $2 ;;
+	12)	tar cf - $2 ;;
+	13)	tar cf - $2 | compress -q ;;
+	14)	compress -cq $2 ;;
+	15)	tar cf - $2 | gzip ;;
+	16)	tar -c $2 ;;
+	17)	compress -dcq $2 ;;
+esac
+exit
