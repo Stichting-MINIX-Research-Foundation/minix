@@ -114,19 +114,6 @@ PUBLIC void main()
 	rp->p_memmap[S].mem_phys = text_base + text_clicks + data_clicks;
 	rp->p_memmap[S].mem_vir  = data_clicks;	/* empty - stack is in data */
 
-	/* Remove server memory from the free memory list. The boot monitor
-	 * promises to put processes at the start of memory chunks. The 
-	 * tasks all use same base address, so only the first task changes
-	 * the memory lists. The servers and init have their own memory
-	 * spaces and their memory will be removed from the list. 
-	 */
-	for (memp = mem; memp < &mem[NR_MEMS]; memp++) {
-		if (memp->base == text_base) {
-			memp->base += text_clicks + data_clicks;
-			memp->size -= text_clicks + data_clicks;
-		}
-	}
-
 	/* Set initial register values.  The processor status word for tasks 
 	 * is different from that of other processes because tasks can
 	 * access I/O; this is not allowed to less-privileged processes 
@@ -144,7 +131,6 @@ PUBLIC void main()
 	}
 	
 	/* Set ready. The HARDWARE task is never ready. */
-
 #if ENABLE_K_DEBUGGING
 	rp->p_ready = 0;
 #endif
@@ -163,30 +149,16 @@ PUBLIC void main()
   hdrindex ++;
   phys_copy(aout + hdrindex * A_MINHDR,vir2phys(&e_hdr),(phys_bytes) A_MINHDR);
   if (e_hdr.a_flags & A_IMG) {
-
   	kinfo.bootdev_base = e_hdr.a_syms; 
   	kinfo.bootdev_size = e_hdr.a_data; 
-
-  	/* Remove from free list, to prevent being overwritten. */
-	bootdev_base = e_hdr.a_syms >> CLICK_SHIFT;
-	bootdev_clicks = (e_hdr.a_total + CLICK_SIZE-1) >> CLICK_SHIFT;
-	for (memp = mem; memp < &mem[NR_MEMS]; memp++) {
-		if (memp->base == bootdev_base) {
-			memp->base += bootdev_clicks;
-			memp->size -= bootdev_clicks;
-		}
-	}
   }
 #endif
 
-  /* This actually is not needed, because ready() already set 'proc_ptr.' */
-  lock_pick_proc();
-  bill_ptr = proc_addr(IDLE);		/* it has to point somewhere */
-
-  /* MINIX is now ready. Display the startup banner to the user and return 
-   * to the assembly code to start running the current process. 
+  /* MINIX is now ready. All boot image processes are on the ready queue.
+   * Return to the assembly code to start running the current process. 
    */
-  announce();
+  bill_ptr = proc_addr(IDLE);		/* it has to point somewhere */
+  announce();				/* print MINIX startup banner */
   restart();
 }
 
@@ -199,7 +171,7 @@ PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
   kprintf("MINIX %s.  Copyright 2001 Prentice-Hall, Inc.\n", 
-      karg(kinfo.version));
+      karg(OS_RELEASE "." OS_VERSION));
 
 #if (CHIP == INTEL)
   /* Real mode, or 16/32-bit protected mode? */
@@ -249,10 +221,10 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   shutting_down = TRUE;				/* flag for sys_exit() */
   tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
   if (kernel_exception) {			/* set in exception() */
-      kprintf("\nAn exception occured; skipping stop sequence.\n", NO_ARG);
+      kprintf("\nAn exception occured; skipping stop sequence.\n", NO_NUM);
       shutdown(&shutdown_timer);		/* TTY isn't scheduled */
   } else {
-      kprintf("\nNotifying system services about MINIX shutdown.\n", NO_ARG); 
+      kprintf("\nNotifying system services about MINIX shutdown.\n", NO_NUM); 
       set_timer(&shutdown_timer, get_uptime(), stop_sequence);
   }
 }

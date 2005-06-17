@@ -22,7 +22,6 @@ EXTERN struct kinfo kinfo;		/* kernel information for users */
 EXTERN struct machine machine;		/* machine information for users */
 EXTERN struct kmessages kmess;  	/* diagnostic messages in kernel */
 EXTERN struct randomness krandom;	/* gather kernel random information */
-EXTERN struct memory mem[NR_MEMS];	/* base and size of chunks of memory */
 
 /* Process scheduling information and the kernel reentry count. */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */

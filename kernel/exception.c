@@ -49,7 +49,7 @@ unsigned vec_nr;
   ep = &ex_data[vec_nr];
 
   if (vec_nr == 2) {		/* spurious NMI on some machines */
-	kprintf("got spurious NMI\n",NO_ARG);
+	kprintf("got spurious NMI\n",NO_NUM);
 	return;
   }
 
@@ -68,19 +68,7 @@ unsigned vec_nr;
   kprintf("pc = %d:",  (unsigned) saved_proc->p_reg.cs);
   kprintf("0x%x\n", (unsigned) saved_proc->p_reg.pc);
 
-  /* If the exception originates in the kernel, shut down MINIX. Otherwise,
-   * kill the process that caused it. If MINIX is shut down and the stop 
-   * sequence is skipped, the kprintf() output cannot be flushed by the TTY
-   * driver. This leaves the user with a hanging system without proper 
-   * notification ...   
-   */
-  if (istaskp(saved_proc)) {			/* serious problem */
-  	kernel_exception = TRUE;		/* directly shutdown */
-  	panic("exception in a kernel task", NO_NUM);
-  } else {
-  	clear_proc(saved_proc->p_nr);
-  	kprintf("%s was killed by MINIX due to an exception", 
-  		karg(saved_proc->p_name)); 
-  }
+  kernel_exception = TRUE;		/* directly shutdown */
+  panic("exception in a kernel task", NO_NUM);
 }
 

@@ -12,7 +12,6 @@
 #include "protect.h"
 #include "proc.h"
 
-FORWARD _PROTOTYPE( void mem_init, (_CONST char *params));
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 
 /*==========================================================================*
@@ -57,7 +56,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
   kinfo.nr_tasks = NR_TASKS;
-  kstrncpy(kinfo.version, OS_RELEASE "." OS_VERSION, 6);
+  kstrncpy(kinfo.release, OS_RELEASE, 4);
+  kstrncpy(kinfo.version, OS_VERSION, 4);
   kinfo.proc_addr = (vir_bytes) proc;
   kinfo.kmem_base = vir2phys(0);
   kinfo.kmem_size = (phys_bytes) &end;	
@@ -84,76 +84,9 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   if (kstrcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
   if (kstrcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
 
-  /* Initialize free memory list from size passed by boot monitor. */
-  mem_init(params);
-
   /* Return to assembler code to switch to protected mode (if 286), 
    * reload selectors and call main().
    */
-}
-
-
-
-/* In real mode only 1M can be addressed, and in 16-bit protected we can go
- * no further than we can count in clicks.  (The 286 is further limited by
- * its 24 bit address bus, but we can assume in that case that no more than
- * 16M memory is reported by the BIOS.)
- */
-#define MAX_REAL	0x00100000L
-#define MAX_16BIT	(0xFFF0L << CLICK_SHIFT)
-
-/*=========================================================================*
- *				mem_init				   *
- *=========================================================================*/
-PRIVATE void mem_init(params)
-_CONST char *params;				/* boot monitor parameters */
-{
-/* Initialize the free memory list from the 'memory' boot variable.  Translate
- * the byte offsets and sizes in this list to clicks, properly truncated. Also
- * make sure that we don't exceed the maximum address space of the 286 or the
- * 8086, i.e. when running in 16-bit protected mode or real mode.
- */
-  long base, size, limit;
-  char *s, *end;			/* use to parse boot variable */ 
-  int i;
-  struct memory *memp;
-#if _WORD_SIZE == 2
-  unsigned long max_address;
-#endif
-
-  /* The available memory is determined by MINIX' boot loader as a list of 
-   * (base:size)-pairs in boothead.s. The 'memory' boot variable is set in
-   * in boot.s.  The format is "b0:s0,b1:s1,b2:s2", where b0:s0 is low mem,
-   * b1:s1 is mem between 1M and 16M, b2:s2 is mem above 16M. Pairs b1:s1 
-   * and b2:s2 are combined if the memory is adjacent. 
-   */
-  s = get_value(params, "memory");	/* get memory boot variable */
-  for (i = 0; i < NR_MEMS; i++) {
-	memp = &mem[i];			/* next mem chunk is stored here */
-	base = size = 0;		/* initialize next base:size pair */
-	if (*s != 0) {			/* get fresh data, unless at end */	
-
-	    /* Read fresh base and expect colon as next char. */ 
-	    base = kstrtoul(s, &end, 0x10);		/* get number */
-	    if (end != s && *end == ':') s = ++end;	/* skip ':' */ 
-	    else *s=0;			/* terminate, should not happen */
-
-	    /* Read fresh size and expect comma or assume end. */ 
-	    size = kstrtoul(s, &end, 0x10);		/* get number */
-	    if (end != s && *end == ',') s = ++end;	/* skip ',' */
-	    else *s=0;					/* found end */
-	}
-	limit = base + size;	/* limit is used for validity check */	 
-#if _WORD_SIZE == 2
-	max_address = kinfo.protected ? MAX_16BIT : MAX_REAL;
-	if (limit > max_address) limit = max_address;
-#endif
-	base = (base + CLICK_SIZE-1) & ~(long)(CLICK_SIZE-1);
-	limit &= ~(long)(CLICK_SIZE-1);
-	if (limit <= base) continue;
-	memp->base = base >> CLICK_SHIFT;
-	memp->size = (limit - base) >> CLICK_SHIFT;
-  }
 }
 
 

@@ -45,7 +45,7 @@ int mine;
 /* Initialize the 8259s, finishing with all interrupts disabled.  This is
  * only done in protected mode, in real mode we don't touch the 8259s, but
  * use the BIOS locations instead.  The flag "mine" is set if the 8259s are
- * to be programmed for Minix, or to be reset to what the BIOS expects.
+ * to be programmed for MINIX, or to be reset to what the BIOS expects.
  */
   int i;
 

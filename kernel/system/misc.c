@@ -105,11 +105,6 @@ register message *m_ptr;	/* pointer to request message */
     	src_phys = vir2phys(irq_hooks);
         break;
     }
-    case GET_MEMCHUNKS: {
-        length = sizeof(struct memory) * NR_MEMS;
-        src_phys = vir2phys(mem);
-        break;
-    }
     case GET_SCHEDINFO: {
         /* This is slightly complicated because we need two data structures
          * at once, otherwise the scheduling information may be incorrect.

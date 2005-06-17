@@ -11,7 +11,6 @@
  *     kstrcmp:		lexicographical comparison of two strings
  *     kstrlen:		get number of non-null characters in string
  *     kstrncpy:	copy string and pad or copy up to n chars 
- *     kstrtoulb:	convert string to unsigned long value
  *
  * This file contains the routines that take care of kernel messages, i.e.,
  * diagnostic output within the kernel. Kernel messages are not directly
@@ -152,7 +151,7 @@ PRIVATE void kputc(c)
 int c;					/* character to append */
 {
 /* Accumulate a single character for a kernel message. Send a notification
- * the to TTY driver if the buffer if a END_OF_KMESS is encountered. 
+ * the to TTY driver if an END_OF_KMESS is encountered. 
  */
   message m;
   if (c != END_OF_KMESS) {
@@ -222,48 +221,6 @@ PUBLIC char *kstrncpy(char *ret, register const char *s2, register size_t n)
   while(n-- > 0)   			/* possibly pad target */
       *s1++ = '\0';
   return ret;
-}
-
-
-/*=========================================================================*
- *				kstrtoul				   *
- *=========================================================================*/
-PUBLIC unsigned long kstrtoul(strptr, endptr, base)
-const char *strptr;		/* pointer to string to be parsed */
-char ** const endptr;		/* store pointer to end here */
-int base;
-{
-/* A simplified version of strtoul() for the kernel to prevent including the
- * one in the ASNI library. No whitespaces are skipped, the numeric value is
- * expected at the start of 'string'.
- */
-  register unsigned long val = 0;
-  register int c;
-  register unsigned int v;
-  int overflow = 0;
-
-  /* Get rid of 0x or 0X for hexidecimal values. */
-  if (base==16 && *strptr=='0' && (*++strptr=='x' || *strptr=='X'))
-  	strptr++;
-
-  /* Now parse the actual unsigned long number. */
-  for (;;) {
-  	c = *strptr;
-  	if ('0' <= c && c <= '9')	v = c - '0';
-  	else if ('a' <= c && c <= 'z')  v = c - 'a' + 0xa;
-  	else if ('A' <= c && c <= 'Z')  v = c - 'A' + 0xA;
-  	else 		break;		/* end of number */
-  	if (v >= base)	break;		/* end of number */
-  	if (val > (ULONG_MAX - v) / base) overflow = 1;
-  	val = (val*base) + v;
-  	strptr++;
-  }
-
-  /* Tell caller where parsing ended unless a NULL pointer was passed. */
-  if (endptr) *endptr = (char *) strptr;
-
-  /* Done, return parsed value or maximum value on overflow. */
-  return (overflow) ? ULONG_MAX : val;
 }
 
 

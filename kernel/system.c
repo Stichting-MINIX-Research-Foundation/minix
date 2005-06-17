@@ -296,7 +296,7 @@ irq_hook_t *hook;
   /* Build notification message and return. */
   m.NOTIFY_TYPE = HARD_INT;
   m.NOTIFY_ARG = hook->irq;
-  lock_notify(hook->proc_nr, &m);
+  int_notify(hook->proc_nr, &m);
   return(hook->policy & IRQ_REENABLE);
 }
 
@@ -308,11 +308,11 @@ PUBLIC void cause_sig(proc_nr, sig_nr)
 int proc_nr;			/* process to be signalled */
 int sig_nr;			/* signal to be sent, 1 to _NSIG */
 {
-/* A task wants to send a signal to a process.   Examples of such tasks are:
+/* A system process wants to send a signal to a process.  Examples are:
  *   TTY wanting to cause SIGINT upon getting a DEL
  *   CLOCK wanting to cause SIGALRM when timer expires
- * FS also uses this to send a signal, via the SYS_KILL message. Signals are
- * handled by sending a message to PM.  This central function handles the 
+ *   FS wanting to cause SIGPIPE for a broken pipe 
+ * Signals are handled by sending a message to PM.  This function handles the 
  * signals and makes sure the PM gets them by sending a notification. The 
  * process being signaled is blocked while PM has not finished all signals 
  * for it.  These signals are counted in p_pendcount, and the  SIG_PENDING 
@@ -487,7 +487,7 @@ vir_bytes bytes;		/* # of bytes to copy  */
 
   /* Check copy count. */
   if (bytes <= 0) {
-      kprintf("v_cp: copy count problem <= 0\n", NO_ARG);
+      kprintf("v_cp: copy count problem <= 0\n", NO_NUM);
       return(EDOM);
   }
 
@@ -523,7 +523,7 @@ vir_bytes bytes;		/* # of bytes to copy  */
 
       /* Check if mapping succeeded. */
       if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG) {
-          kprintf("v_cp: Mapping failed ... phys <= 0\n", NO_ARG);
+          kprintf("v_cp: Mapping failed ... phys <= 0\n", NO_NUM);
           return(EFAULT);
       }
   }

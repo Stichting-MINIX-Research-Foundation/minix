@@ -25,9 +25,6 @@ _PROTOTYPE( int kstrncmp,
 	(register const char *s1, register const char *s2, register size_t n));
 _PROTOTYPE( char *kstrncpy, 
 	(char *s1, register const char *s2, register const size_t n));
-_PROTOTYPE( unsigned long kstrtoul,
-	(const char *string, char ** const end, int base)		);
-#define NO_ARG 0
 #define karg(arg) (karg_t) (arg)
 _PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
 
@@ -44,8 +41,8 @@ _PROTOTYPE( void free_bit, (bit_t nr, bitchunk_t *map, bit_t nr_bits) 	);
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
 _PROTOTYPE( int lock_notify, (int dst, message *m_ptr)			);
+_PROTOTYPE( int int_notify, (int dst, message *m_ptr)			);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
-_PROTOTYPE( void lock_pick_proc, (void)					);
 _PROTOTYPE( void lock_ready, (struct proc *rp)				);
 _PROTOTYPE( void lock_sched, (int queue)				);
 _PROTOTYPE( void lock_unready, (struct proc *rp)			);

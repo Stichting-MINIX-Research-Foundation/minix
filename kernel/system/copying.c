@@ -45,7 +45,7 @@ register message *m_ptr;	/* pointer to request message */
       /* Check if process number was given implictly with SELF and is valid. */
       if (vir_addr[i].proc_nr == SELF) vir_addr[i].proc_nr = m_ptr->m_source;
       if (! isokprocn(vir_addr[i].proc_nr) && vir_addr[i].segment != PHYS_SEG) {
-          kprintf("do_vircopy: illegal proc nr, while not phys addr\n",NO_ARG);
+          kprintf("do_vircopy: illegal proc nr, while not phys addr\n",NO_NUM);
           return(EINVAL); 
       }
 
@@ -58,7 +58,7 @@ register message *m_ptr;	/* pointer to request message */
    * vir_bytes. Especially copying by the PM on do_fork() is affected. 
    */
   if (bytes != (vir_bytes) bytes) {
-	kprintf("do_vircopy: overflow\n", NO_ARG);
+	kprintf("do_vircopy: overflow\n", NO_NUM);
 	return(E2BIG);
   }
 

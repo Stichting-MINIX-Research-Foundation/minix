@@ -25,7 +25,7 @@ int n;
   if (s != NULL) {
 	kprintf("\nKernel panic: %s", karg(s));
 	if (n != NO_NUM) kprintf(" %d", n);
-	kprintf("\n",NO_ARG);
+	kprintf("\n",NO_NUM);
   }
   prepare_shutdown(RBT_PANIC);
 }

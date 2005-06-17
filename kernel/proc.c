@@ -1,5 +1,5 @@
 #define NEW_ELOCKED_CHECK 	1
-#define NEW_SCHED_Q 		1
+#define NEW_SCHED_Q 		0
 #define OLD_SEND 		0
 #define OLD_RECV 		0
 /* This file contains essentially all of the process and message handling.
@@ -11,11 +11,11 @@
  * As well as several entry points used from the interrupt and task level:
  *
  *   lock_notify:     send a notification to inform a process of a system event
+ *   int_notify:      same as above, but from an interrupt handler (no locking)
  *   lock_send:	      send a message to a process
  *   lock_ready:      put a process on one of the ready queues so it can be run
  *   lock_unready:    remove a process from the ready queues
  *   lock_sched:      a process has run too long; schedule another one
- *   lock_pick_proc:  pick a process to run (used by system initialization)
  *
  * Changes:
  *         , 2005     better protection in sys_call()  (Jorrit N. Herder)
@@ -438,19 +438,36 @@ PUBLIC int lock_notify(dst, m_ptr)
 int dst;			/* to whom is message being sent? */
 message *m_ptr;			/* pointer to message buffer */
 {
-/* Safe gateway to mini_notify() for tasks and interrupt handlers. This 
- * function checks if it is called from an interrupt handler and ensures
- * that the correct message source is put on the notification. 
+/* Safe gateway to mini_notify() for tasks. Don't use this function from the
+ * interrupt level, as it will reenable interrupts (because of the unlock() 
+ * call). For interrupt handlers, int_notify() is available. 
  */
   int result;
-  struct proc *caller_ptr;
-
+  register struct proc *caller_ptr;
   lock(0, "notify");
   caller_ptr = (k_reenter >= 0) ? proc_addr(HARDWARE) : proc_ptr;
   result = mini_notify(caller_ptr, dst, m_ptr); 
   unlock(0);
   return(result);
 }
+
+
+/*==========================================================================*
+ *				int_notify				    *
+ *==========================================================================*/
+PUBLIC int int_notify(dst, m_ptr)
+int dst;			/* to whom is message being sent? */
+message *m_ptr;			/* pointer to message buffer */
+{
+/* Gateway to mini_notify() for interrupt handlers. This function doesn't
+ * use lock() and unlock() because interrupts are already disabled.
+ */ 
+  int result;
+  register struct proc *caller_ptr = proc_addr(HARDWARE);
+  result = mini_notify(caller_ptr, dst, m_ptr); 
+  return(result);
+}
+
 
 /*===========================================================================*
  *				pick_proc				     * 
@@ -627,23 +644,12 @@ int queue;
   xp->p_nextready = NIL_PROC;			/* mark new end of queue */
 
 #else
-  rdy_tail[queue]->p_nextready = rdy_head[queue];
-  rdy_tail[queue] = rdy_head[queue];
-  rdy_head[queue] = rdy_head[queue]->p_nextready;
-  rdy_tail[queue]->p_nextready = NIL_PROC;
+  rdy_tail[queue]->p_nextready = rdy_head[queue];  /* add expired to end */
+  rdy_tail[queue] = rdy_head[queue];		   /* set new tail */
+  rdy_head[queue] = rdy_head[queue]->p_nextready;  /* set new head */
+  rdy_tail[queue]->p_nextready = NIL_PROC;	   /* mark new end */
 #endif
   pick_proc();
-}
-
-/*==========================================================================*
- *				lock_pick_proc				    *
- *==========================================================================*/
-PUBLIC void lock_pick_proc()
-{
-/* Safe gateway to pick_proc() for tasks. */
-  lock(1, "pick_proc");
-  pick_proc();
-  unlock(1);
 }
 
 
