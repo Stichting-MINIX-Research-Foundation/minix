@@ -275,7 +275,6 @@ Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are
 absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
 trap ': nothing' 2
 readall -b /dev/$usr | sh
-echo "Scan done"
 sleep 2
 trap 2
 
