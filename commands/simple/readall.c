@@ -61,7 +61,7 @@ prettyprogress(long b, long nblocks, time_t starttime)
 	  secremain = (nblocks - b) / bpsec;
 	  minremain = (secremain / 60) % 60;
 	  hremain = secremain / 3600;
-  	len = fprintf(stderr, "remain %ld blocks. ETA: %d:%02d:%02d  [",
+  	len = fprintf(stderr, "Remain %ld blocks. ETA: %d:%02d:%02d  [",
   		nblocks - b,
   		hremain, minremain, secremain % 60);
 #define WIDTH 77
