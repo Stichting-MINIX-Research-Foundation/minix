@@ -123,6 +123,7 @@ PUBLIC int main(int argc, char **argv)
 	argc--;
   }
 
+#if DEAD_CODE
   /* The hardware clock may run in a different time zone, likely GMT or
    * winter time.  Select that time zone.
    */
@@ -135,6 +136,7 @@ PUBLIC int main(int argc, char **argv)
 	putenv(clocktz);
 	tzset();
   }
+#endif
 
   /* Read the CMOS real time clock. */
   for (i = 0; i < MAX_RETRIES; i++) {
