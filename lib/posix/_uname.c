@@ -16,11 +16,13 @@
 #include <string.h>
 #include <errno.h>
 #include <minix/config.h>
+#include <minix/com.h>
 #include <minix/minlib.h>
 
 int uname(name) struct utsname *name;
 {
   int hf, n, err;
+  struct kinfo kinfo;
   char *nl;
 
   /* Read the node name from /etc/hostname.file. */
@@ -38,10 +40,12 @@ int uname(name) struct utsname *name;
 		memset(nl, 0, (name->nodename + sizeof(name->nodename)) - nl);
 	}
   }
+ 
+  getsysinfo(PM_PROC_NR, SI_KINFO, &kinfo);
 
   strcpy(name->sysname, "Minix");
-  strcpy(name->release, OS_RELEASE);
-  strcpy(name->version, OS_VERSION);
+  strcpy(name->release, kinfo.release);
+  strcpy(name->version, kinfo.version);
 #if (CHIP == INTEL)
   name->machine[0] = 'i';
   strcpy(name->machine + 1, itoa(getprocessor()));
