@@ -1,0 +1,43 @@
+.TH SELECT 2 "Jun 9, 2005"
+.UC 4
+.SH NAME
+select, FD_CLR, FD_ISSET, FD_SET, FD_ZERO \- synchronous I/O multiplexing
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/select.h>
+
+int select(int \fInfds\fP, fd_set *\fIreadfds\fP, fd_set *\fIwritefds\fP, fd_set *\fIerrorfds\fP, struct timeval *\fItimeout\fP)
+
+void FD_CLR(int \fIfd\fP, fd_set *\fIfdset\fP)
+int FD_ISSET(int \fIfd\fP, fd_set *\fIfdset\fP)
+void FD_SET(int \fIfd\fP, fd_set *\fIfdset\fP)
+void FD_ZERO(fd_set *\fIfdset\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Select
+examines the file descriptors given in the sets 
+.IR readfds ,
+.IR writefds ,
+and
+.IR errorfds ,
+up to and including file descriptor
+.IR nfds -1
+, for reading, writing, or exceptional conditions, respectively.
+.B Select
+currently supports regular files, pipes, named pipes,
+and tty file descriptors. Inet and pty fd's still to be done.
+
+If the 
+.I readfds 
+argument is not a null pointer, it points to an object of type fd_set
+that on input specifies the file descriptors to be checked for being
+ready to read, and on output indicates which file descriptors are ready
+to read.
+.I Writefds 
+and
+.I errorfds
+have an analogous meaning for file descriptors to be checked for being
+ready to read, respectively have pending exceptional (error) conditions.
+
