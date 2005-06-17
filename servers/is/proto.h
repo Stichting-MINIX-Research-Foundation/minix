@@ -25,7 +25,6 @@ _PROTOTYPE( void kmessages_dmp, (void)					);
 _PROTOTYPE( void sched_dmp, (void)					);
 _PROTOTYPE( void monparams_dmp, (void)					);
 _PROTOTYPE( void kenv_dmp, (void)					);
-_PROTOTYPE( void memchunks_dmp, (void)					);
 _PROTOTYPE( void timing_dmp, (void)					);
 
 /* dmp_pm.c */

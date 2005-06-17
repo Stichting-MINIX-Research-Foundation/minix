@@ -24,10 +24,9 @@ PUBLIC int do_fkey_pressed(message *m)
             case  F5:	monparams_dmp();	break;
             case  F6:	irqtab_dmp();		break;
             case  F7:	kmessages_dmp();	break;
-            case  F8:	timing_dmp();		break;
 
             case F10:	kenv_dmp();		break;
-            case F11:	memchunks_dmp();	break;
+            case F11:	timing_dmp();		break;
             case F12:	sched_dmp();		break;
             default: 
             	printf("IS: unhandled notify for F%d (code %d)\n", 

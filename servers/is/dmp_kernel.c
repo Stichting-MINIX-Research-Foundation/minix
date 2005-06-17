@@ -288,33 +288,15 @@ PUBLIC void kenv_dmp()
     printf("- kmem_size:  %5u\n", kinfo.kmem_size); 
     printf("- bootdev_base:  %5u\n", kinfo.bootdev_base); 
     printf("- bootdev_size:  %5u\n", kinfo.bootdev_size); 
+    printf("- bootdev_mem:  %5u\n", kinfo.bootdev_mem); 
     printf("- params_base:   %5u\n", kinfo.params_base); 
     printf("- params_size:   %5u\n", kinfo.params_size); 
     printf("- nr_procs:     %3u\n", kinfo.nr_procs); 
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
+    printf("- release:      %.6s\n", kinfo.release); 
     printf("- version:      %.6s\n", kinfo.version); 
     printf("\n");
 }
-
-/*===========================================================================*
- *				memchunks_dmp				     *
- *===========================================================================*/
-PUBLIC void memchunks_dmp()
-{
-    int i,r;
-    struct memory mem[NR_MEMS];
-    if ((r = sys_getmemchunks(mem)) != OK) {
-    	report("IS","warning: couldn't get copy of mem chunks", r);
-    	return;
-    }
-	
-    printf("Memory chunks:\n");
-    for (i=0; i<NR_MEMS; i++) {
-      printf("chunk %d: base %u, size %u\n", i, mem[i].base, mem[i].size);
-    }
-    printf("\n");
-}
-
 
 
 
