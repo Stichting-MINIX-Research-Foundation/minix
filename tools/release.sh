@@ -5,6 +5,7 @@ RELEASEDIR=/usr/r/release
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
 ISO=minix.iso
+ISOGZ=minix.iso.gz
 RAM=/dev/ram
 rootmb=16
 rootkb=`expr $rootmb \* 1024`
@@ -39,7 +40,7 @@ mount $RAM $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 
-mkfs -B 1024 $TMPDISK || exit
+mkfs $TMPDISK || exit
 echo " * mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
@@ -60,8 +61,6 @@ make programs image
 make image || exit 1
 sh mkboot cdfdboot
 writeisofs -l MINIX -b $IMAGE /tmp $ISO || exit 1
-echo "Appending Minix root filesystem"
-cat >>$ISO $ROOTIMAGE || exit 1
-echo "Appending Minix usr filesystem"
-cat >>$ISO $TMPDISK || exit 1
-ls -al $ISO
+echo "Appending Minix root and usr filesystem"
+cat $ISO $ROOTIMAGE $TMPDISK | gzip >$ISOGZ || exit 1
+ls -al $ISOGZ

@@ -33,11 +33,10 @@ libraries:
 	cd lib && $(MAKE) install
 
 cmds:
-	@echo "Are the libraries up to date?"; sleep 2
-	test ! -f commands/Makefile || { cd commands && $(MAKE); }
+	cd commands && $(MAKE) all
 
 install::
-	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
+	cd commands && $(MAKE) $@
 
 clean::
 	cd lib && $(MAKE) $@
