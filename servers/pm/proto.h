@@ -3,11 +3,12 @@
 struct mproc;
 struct stat;
 struct mem_map;
+struct memory;
 
 /* alloc.c */
 _PROTOTYPE( phys_clicks alloc_mem, (phys_clicks clicks)			);
 _PROTOTYPE( void free_mem, (phys_clicks base, phys_clicks clicks)	);
-_PROTOTYPE( void mem_init, (phys_clicks *free)	);
+_PROTOTYPE( void mem_init, (struct memory *chunks, phys_clicks *free)	);
 #if ENABLE_SWAP
 _PROTOTYPE( int swap_on, (char *file, u32_t offset, u32_t size)	);
 _PROTOTYPE( int swap_off, (void)					);
@@ -98,4 +99,5 @@ _PROTOTYPE( void panic, (char *who, char *mess, int num)		);
 _PROTOTYPE( void tell_fs, (int what, int p1, int p2, int p3)		);
 _PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)		);
 _PROTOTYPE( int get_mem_map, (int proc_nr, struct mem_map *mem_map)	);
+_PROTOTYPE( char *find_param, (const char *key));
 

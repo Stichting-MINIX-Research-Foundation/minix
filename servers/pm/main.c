@@ -1,9 +1,8 @@
 /* This file contains the main program of the process manager and some related
  * procedures.  When MINIX starts up, the kernel runs for a little while,
  * initializing itself and its tasks, and then it runs PM and FS.  Both PM
- * and FS initialize themselves as far as they can.  FS then makes a call to
- * PM, because PM has to wait for FS to acquire a RAM disk.  PM asks the
- * kernel for all free memory and starts serving requests.
+ * and FS initialize themselves as far as they can. PM asks the kernel for
+ * all free memory and starts serving requests.
  *
  * The entry points into this file are:
  *   main:	starts PM running
@@ -16,6 +15,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <sys/ioc_memory.h>
 #include <string.h>
@@ -27,6 +27,9 @@
 
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void pm_init, (void)				);
+FORWARD _PROTOTYPE( void get_mem_chunks, (struct memory *mem_chunks) 	);
+FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks, 
+	struct mem_map *map_ptr) 	);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
@@ -138,8 +141,8 @@ PRIVATE void pm_init()
   register char *sig_ptr;
   phys_clicks ram_clicks, total_clicks, minix_clicks, free_clicks;
   message mess;
-  struct mem_map kernel_map[NR_LOCAL_SEGS];
-  int mem;
+  struct mem_map mem_map[NR_LOCAL_SEGS];
+  struct memory mem_chunks[NR_MEMS];
 
   /* Build the set of signals which cause core dumps, and the set of signals
    * that are by default ignored.
@@ -151,31 +154,40 @@ PRIVATE void pm_init()
   for (sig_ptr = ign_sigs; sig_ptr < ign_sigs+sizeof(ign_sigs); sig_ptr++)
 	sigaddset(&ign_sset, *sig_ptr);
 
-  /* Get the memory map of the kernel to see how much memory it uses. */
-  if ((s=get_mem_map(SYSTASK, kernel_map)) != OK)
-  	panic(__FILE__,"PM couldn't get proc entry of SYSTASK",s);
-  minix_clicks = (kernel_map[S].mem_phys + kernel_map[S].mem_len)
-				- kernel_map[T].mem_phys;
-
-  /* Initialize PM's tables. Request a copy of the system image table that
-   * is defined at the kernel level to see which slots to fill in.
+  /* Obtain a copy of the boot monitor parameters and the kernel info struct.  
+   * Parse the list of free memory chunks. This list is what the boot monitor 
+   * reported, but it must be corrected for the kernel and system processes.
    */
-  if (OK != (s=sys_getimage(&image))) {
-  	printf("PM: warning, couldn't get system image table: %d\n", s);
-  }
+  if ((s=sys_getmonparams(monitor_params, sizeof(monitor_params))) != OK)
+      panic(__FILE__,"get monitor params failed",s);
+  if ((s=sys_getkinfo(&kinfo)) != OK)
+      panic(__FILE__,"get kernel info failed",s);
+  get_mem_chunks(mem_chunks);
+
+  /* Get the memory map of the kernel to see how much memory it uses. */
+  if ((s=get_mem_map(SYSTASK, mem_map)) != OK)
+  	panic(__FILE__,"PM couldn't get memory map of SYSTASK",s);
+  minix_clicks = (mem_map[S].mem_phys+mem_map[S].mem_len)-mem_map[T].mem_phys;
+  patch_mem_chunks(mem_chunks, mem_map);
+
+  /* Initialize PM's process table. Request a copy of the system image table 
+   * that is defined at the kernel level to see which slots to fill in.
+   */
+  if (OK != (s=sys_getimage(&image))) 
+  	panic(__FILE__,"PM: warning, couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
   for (ip = &image[0]; ip < &image[IMAGE_SIZE]; ip++) {		
   	if (ip->proc_nr >= 0) {			/* task have negative nrs */
   		procs_in_use += 1;		/* found user process */
 
-		/* Set process details. */
-		rmp = &mproc[ip->proc_nr];
+		/* Set process details found in the image table. */
+		rmp = &mproc[ip->proc_nr];	
 		rmp->mp_flags |= IN_USE | DONT_SWAP; 
   		rmp->mp_pid = (ip->proc_nr == INIT_PROC_NR) ?
   			INIT_PID : get_free_pid();
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
 
-  		/* Change signal handling behaviour. */
+  		/* Change local signal handling behaviour. */
   		sigfillset(&rmp->mp_ignore);
   		sigfillset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
@@ -186,6 +198,7 @@ PRIVATE void pm_init()
 		if (rmp->mp_seg[T].mem_len != 0) rmp->mp_flags |= SEPARATE;
 		minix_clicks += rmp->mp_seg[S].mem_phys + 
 			rmp->mp_seg[S].mem_len - rmp->mp_seg[T].mem_phys;
+  		patch_mem_chunks(mem_chunks, rmp->mp_seg);
 
 		/* Tell FS about this system process. */
 		mess.PR_PROC_NR = ip->proc_nr;
@@ -195,7 +208,7 @@ PRIVATE void pm_init()
   	}
   }
 
-  /* Tell FS no more SYSTEM processes follow and synchronize. */
+  /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;
   if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic(__FILE__,"PM can't sync up with FS", NO_NUM);
@@ -205,13 +218,113 @@ PRIVATE void pm_init()
   sigemptyset(&mproc[INIT_PROC_NR].mp_sigmask);
   sigemptyset(&mproc[INIT_PROC_NR].mp_catch);
 
-  /* Initialize tables to all physical memory. */
-  mem_init(&free_clicks);
-  total_clicks = minix_clicks + free_clicks;
+  /* Possibly we must correct the memory chunks for the boot device. */
+  if (kinfo.bootdev_size > 0) {
+      mem_map[T].mem_phys = kinfo.bootdev_base >> CLICK_SHIFT;
+      mem_map[T].mem_len = 0;
+      mem_map[D].mem_len = (kinfo.bootdev_size+CLICK_SIZE-1) >> CLICK_SHIFT;
+      patch_mem_chunks(mem_chunks, mem_map);
+  }
 
-  /* Print memory information. */
+  /* Initialize tables to all physical memory and print memory information. */
+  mem_init(mem_chunks, &free_clicks);
+  total_clicks = minix_clicks + free_clicks;
   printf("Memory size=%uK   ", click_to_round_k(total_clicks));
   printf("System services=%uK   ", click_to_round_k(minix_clicks));
   printf("Available=%uK\n\n", click_to_round_k(free_clicks));
-
 }
+
+
+/* In real mode only 1M can be addressed, and in 16-bit protected we can go
+ * no further than we can count in clicks.  (The 286 is further limited by
+ * its 24 bit address bus, but we can assume in that case that no more than
+ * 16M memory is reported by the BIOS.)
+ */
+#define MAX_REAL	0x00100000L
+#define MAX_16BIT	(0xFFF0L << CLICK_SHIFT)
+
+/*=========================================================================*
+ *				get_mem_chunks				   *
+ *=========================================================================*/
+PRIVATE void get_mem_chunks(mem_chunks)
+struct memory *mem_chunks;			/* store mem chunks here */
+{
+/* Initialize the free memory list from the 'memory' boot variable.  Translate
+ * the byte offsets and sizes in this list to clicks, properly truncated. Also
+ * make sure that we don't exceed the maximum address space of the 286 or the
+ * 8086, i.e. when running in 16-bit protected mode or real mode.
+ */
+  long base, size, limit;
+  char *s, *end;			/* use to parse boot variable */ 
+  int i;
+  struct memory *memp;
+#if _WORD_SIZE == 2
+  unsigned long max_address;
+  struct machine machine;
+  if (OK != (i=sys_getmachine(&machine)))
+	panic(__FILE__, "sys_getmachine failed", i);
+#endif
+
+  /* Initialize everything to zero. */
+  for (i = 0; i < NR_MEMS; i++) {
+	memp = &mem_chunks[i];		/* next mem chunk is stored here */
+	memp->base = memp->size = 0;
+  }
+  
+  /* The available memory is determined by MINIX' boot loader as a list of 
+   * (base:size)-pairs in boothead.s. The 'memory' boot variable is set in
+   * in boot.s.  The format is "b0:s0,b1:s1,b2:s2", where b0:s0 is low mem,
+   * b1:s1 is mem between 1M and 16M, b2:s2 is mem above 16M. Pairs b1:s1 
+   * and b2:s2 are combined if the memory is adjacent. 
+   */
+  s = find_param("memory");		/* get memory boot variable */
+  for (i = 0; i < NR_MEMS; i++) {
+	memp = &mem_chunks[i];		/* next mem chunk is stored here */
+	base = size = 0;		/* initialize next base:size pair */
+	if (*s != 0) {			/* get fresh data, unless at end */	
+
+	    /* Read fresh base and expect colon as next char. */ 
+	    base = strtoul(s, &end, 0x10);		/* get number */
+	    if (end != s && *end == ':') s = ++end;	/* skip ':' */ 
+	    else *s=0;			/* terminate, should not happen */
+
+	    /* Read fresh size and expect comma or assume end. */ 
+	    size = strtoul(s, &end, 0x10);		/* get number */
+	    if (end != s && *end == ',') s = ++end;	/* skip ',' */
+	    else *s=0;					/* found end */
+	}
+	limit = base + size;	
+#if _WORD_SIZE == 2
+	max_address = machine.protected ? MAX_16BIT : MAX_REAL;
+	if (limit > max_address) limit = max_address;
+#endif
+	base = (base + CLICK_SIZE-1) & ~(long)(CLICK_SIZE-1);
+	limit &= ~(long)(CLICK_SIZE-1);
+	if (limit <= base) continue;
+	memp->base = base >> CLICK_SHIFT;
+	memp->size = (limit - base) >> CLICK_SHIFT;
+  }
+}
+
+/*=========================================================================*
+ *				patch_mem_chunks			   *
+ *=========================================================================*/
+PRIVATE void patch_mem_chunks(mem_chunks, map_ptr)
+struct memory *mem_chunks;			/* store mem chunks here */
+struct mem_map *map_ptr;			/* memory to remove */
+{
+/* Remove server memory from the free memory list. The boot monitor
+ * promises to put processes at the start of memory chunks. The 
+ * tasks all use same base address, so only the first task changes
+ * the memory lists. The servers and init have their own memory
+ * spaces and their memory will be removed from the list. 
+ */
+  struct memory *memp;
+  for (memp = mem_chunks; memp < &mem_chunks[NR_MEMS]; memp++) {
+	if (memp->base == map_ptr[T].mem_phys) {
+		memp->base += map_ptr[T].mem_len + map_ptr[D].mem_len;
+		memp->size -= map_ptr[T].mem_len + map_ptr[D].mem_len;
+	}
+  }
+}
+

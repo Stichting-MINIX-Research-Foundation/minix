@@ -19,6 +19,7 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <signal.h>
+#include <stdlib.h>
 #include "mproc.h"
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
@@ -195,7 +196,8 @@ register struct hole *hp;	/* ptr to hole to merge with its successors */
 /*===========================================================================*
  *				mem_init				     *
  *===========================================================================*/
-PUBLIC void mem_init(free)
+PUBLIC void mem_init(chunks, free)
+struct memory *chunks;		/* list of free memory chunks */
 phys_clicks *free;		/* memory size summaries */
 {
 /* Initialize hole lists.  There are two lists: 'hole_head' points to a linked
@@ -207,16 +209,11 @@ phys_clicks *free;		/* memory size summaries */
  * smaller holes), new table slots are needed to represent them.  These slots
  * are taken from the list headed by 'free_slots'.
  */
-  struct memory mem[NR_MEMS];	/* chunks of physical memory */
   int i;
   register struct hole *hp;
   phys_clicks base;		/* base address of chunk */
   phys_clicks size;		/* size of chunk */
   message mess;
-
-  /* Get a copy of the physical memory chunks found at the kernel. */
-  if ((i=sys_getmemchunks(mem)) != OK)
-  	panic(__FILE__,"couldn't get mem chunks",i);
 
   /* Put all holes on the free list. */
   for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) hp->h_next = hp + 1;
@@ -224,15 +221,15 @@ phys_clicks *free;		/* memory size summaries */
   hole_head = NIL_HOLE;
   free_slots = &hole[0];
 
-  /* Ask the kernel for chunks of physical memory and allocate holes. */
+  /* Use the chunks of physical memory to allocate holes. */
   *free = 0;
   for (i=NR_MEMS-1; i>=0; i--) {
-  	if (mem[i].size > 0) {
-		free_mem(mem[i].base, mem[i].size);
-		*free += mem[i].size;
+  	if (chunks[i].size > 0) {
+		free_mem(chunks[i].base, chunks[i].size);
+		*free += chunks[i].size;
 #if ENABLE_SWAP
-		if (swap_base < mem[i].base + mem[i].size) 
-			swap_base = mem[i].base+mem[i].size;
+		if (swap_base < chunks[i].base + chunks[i].size) 
+			swap_base = chunks[i].base + chunks[i].size;
 #endif
 	}
   }
@@ -245,6 +242,7 @@ phys_clicks *free;		/* memory size summaries */
   swap_maxsize = 0 - swap_base;		/* maximum we can possibly use */
 #endif
 }
+
 
 #if ENABLE_SWAP
 /*===========================================================================*

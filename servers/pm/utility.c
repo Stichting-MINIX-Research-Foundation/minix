@@ -1,6 +1,7 @@
 /* This file contains some utility routines for PM.
  *
  * The entry points are:
+ *   find_param:	look up a boot monitor parameter
  *   get_free_pid:	get a free process or group id
  *   allowed:		see if an access is permitted
  *   no_sys:		called for invalid system call numbers
@@ -143,6 +144,27 @@ int what, p1, p2, p3;
   m.tell_fs_arg2 = p2;
   m.tell_fs_arg3 = p3;
   _taskcall(FS_PROC_NR, what, &m);
+}
+
+
+/*==========================================================================*
+ *				find_param					    *
+ *==========================================================================*/
+PUBLIC char *find_param(name)
+const char *name;
+{
+  register const char *namep;
+  register char *envp;
+
+  for (envp = (char *) monitor_params; *envp != 0;) {
+	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
+		;
+	if (*namep == '\0' && *envp == '=') 
+		return(envp + 1);
+	while (*envp++ != 0)
+		;
+  }
+  return(NULL);
 }
 
 

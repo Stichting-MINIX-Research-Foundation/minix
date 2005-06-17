@@ -7,6 +7,8 @@
 /* Global variables. */
 EXTERN struct mproc *mp;	/* ptr to 'mproc' slot of current process */
 EXTERN int procs_in_use;	/* how many processes are marked as IN_USE */
+EXTERN char monitor_params[128*sizeof(char *)];	/* boot monitor parameters */
+EXTERN struct kinfo kinfo;			/* kernel information */
 
 /* The parameters of the call are kept here. */
 EXTERN message m_in;		/* the incoming message itself is kept here. */

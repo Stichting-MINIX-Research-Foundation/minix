@@ -19,10 +19,6 @@
 #include "mproc.h"
 #include "param.h"
 
-FORWARD _PROTOTYPE( char *find_key, (const char *params, const char *key));
-
-/* PM gets a copy of all boot monitor parameters. */
-PRIVATE char monitor_params[128*sizeof(char *)];
 
 /*===========================================================================*
  *				    do_allocmem				     *
@@ -164,30 +160,20 @@ PUBLIC int do_reboot()
  *=====================================================================*/
 PUBLIC int do_svrctl()
 {
-  static int initialized = 0;
   int s, req;
   vir_bytes ptr;
   req = m_in.svrctl_req;
   ptr = (vir_bytes) m_in.svrctl_argp;
 
-  /* Initialize private copy of monitor parameters on first call. */
-  if (! initialized) {
-      if ((s=sys_getmonparams(monitor_params, sizeof(monitor_params))) != OK)
-          printf("PM: Warning couldn't get copy of monitor params: %d\n",s);
-      else
-          initialized = 1;
-  }
-
-  /* Binary compatibility check. */
-  if (req == SYSGETENV) {
-#if DEAD_CODE
-	printf("SYSGETENV by %d (fix!)\n", who);
-#endif
-  	req = MMGETPARAM;
-  }
-
   /* Is the request for the kernel? Forward it, except for SYSGETENV. */
   if (((req >> 8) & 0xFF) == 'S') {
+
+      /* Binary compatibility check. */
+      if (req == SYSGETENV) {
+	printf("SYSGETENV by %d (fix!)\n", who);
+  	req = MMGETPARAM;
+      }
+      else 
 
       /* Simply forward call to the SYSTEM task. */
       return(sys_svrctl(who, req, mp->mp_effuid == SUPER_USER, ptr));
@@ -201,9 +187,6 @@ PUBLIC int do_svrctl()
       char *val_start;
       size_t val_len;
       size_t copy_len;
-
-      /* Check if boot monitor parameters are in place. */
-      if (! initialized) return(EAGAIN);
 
       /* Copy sysgetenv structure to PM. */
       if (sys_datacopy(who, ptr, SELF, (vir_bytes) &sysgetenv, 
@@ -222,7 +205,7 @@ PUBLIC int do_svrctl()
 
           /* Make sure key is null-terminated and lookup value. */
           search_key[sysgetenv.keylen-1]= '\0';
-          if ((val_start = find_key(monitor_params, search_key)) == NULL)
+          if ((val_start = find_param(search_key)) == NULL)
                return(ESRCH);
           val_len = strlen(val_start) + 1;
       }
@@ -291,26 +274,5 @@ PUBLIC int do_svrctl()
   default:
 	return(EINVAL);
   }
-}
-
-/*==========================================================================*
- *				find_key					    *
- *==========================================================================*/
-PRIVATE char *find_key(params,name)
-const char *params;
-const char *name;
-{
-  register const char *namep;
-  register char *envp;
-
-  for (envp = (char *) params; *envp != 0;) {
-	for (namep = name; *namep != 0 && *namep == *envp; namep++, envp++)
-		;
-	if (*namep == '\0' && *envp == '=') 
-		return(envp + 1);
-	while (*envp++ != 0)
-		;
-  }
-  return(NULL);
 }
 
