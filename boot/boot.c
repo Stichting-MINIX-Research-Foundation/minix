@@ -895,13 +895,13 @@ void get_parameters(void)
 	/* Variables boot needs: */
 	b_setvar(E_SPECIAL|E_VAR, "image", "boot/image");
 	b_setvar(E_SPECIAL|E_FUNCTION, "leader",
-		"echo Minix boot monitor \\v\\n"
+		"echo MINIX boot monitor \\v\\n"
 		"\\nPress ESC to enter the monitor");
 	b_setvar(E_SPECIAL|E_FUNCTION, "main", "menu");
-	b_setvar(E_SPECIAL|E_FUNCTION, "trailer", "echo");
+	b_setvar(E_SPECIAL|E_FUNCTION, "trailer", "");
 
 	/* Default hidden menu function: */
-	b_setenv(E_RESERVED|E_FUNCTION, null, "=,Start Minix", "boot");
+	b_setenv(E_RESERVED|E_FUNCTION, null, "=,Start MINIX", "boot");
 
 	/* Tokenize bootparams sector. */
 	if ((r= readsectors(mon2abs(params), lowsec+PARAMSEC, 1)) != 0) {
@@ -1024,7 +1024,7 @@ int numeric(char *s)
 
 #if BIOS
 
-/* Device numbers of standard Minix devices. */
+/* Device numbers of standard MINIX devices. */
 #define DEV_FD0		0x0200
 static dev_t dev_cNd0[] = { 0x0300, 0x0800, 0x0A00, 0x0C00, 0x1000 };
 #define minor_p0s0	   128
@@ -1546,27 +1546,27 @@ void help(void)
 	static struct help info[] = {
 		{ nil,	"Names:" },
 		{ "rootdev",		"Root device" },
-		{ "ramimagedev",	"RAM disk image if root is RAM" },
-		{ "ramsize",		"RAM disk size" },
+		{ "ramimagedev",	"Device to use as RAM disk image " },
+		{ "ramsize",		"RAM disk size (if no image device) " },
 		{ "bootdev",		"Special name for the boot device" },
-		{ "bootdelay",	        "Delay after loading, before booting (ms)" },
 		{ "fd0, d0p2, c0d0p1s0",	"Devices (as in /dev)" },
-		{ "image",		"Name of the kernel image" },
+		{ "image",		"Name of the boot image to use" },
 		{ "main",		"Startup function" },
+		{ "bootdelay",		"Delay in msec after loading image" },
 		{ nil,	"Commands:" },
 		{ "name = [device] value",  "Set environment variable" },
 		{ "name() { ... }",	    "Define function" },
 		{ "name(key,text) { ... }",
-			"A menu function like: minix(=,Start Minix) {boot}" },
+			"A menu option like: minix(=,Start MINIX) {boot}" },
 		{ "name",		"Call function" },
 		{ "boot [device]",	"Boot Minix or another O.S." },
 		{ "ctty [line]",	"Duplicate to serial line" },
 		{ "delay [msec]",	"Delay (500 msec default)" },
-		{ "echo word ...",	"Print the words" },
+		{ "echo word ...",	"Display the words" },
 		{ "ls [directory]",	"List contents of directory" },
-		{ "menu",		"Choose a menu function" },
+		{ "menu",		"Show menu and choose menu option" },
 		{ "save / set",		"Save or show environment" },
-		{ "trap msec command",	"Schedule command" },
+		{ "trap msec command",	"Schedule command " },
 		{ "unset name ...",	"Unset variable or set to default" },
 		{ "exit / off",		"Exit the Monitor / Power off" },
 	};
