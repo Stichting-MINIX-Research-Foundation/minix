@@ -31,6 +31,8 @@ esac
 
 case $action in
 start)
+    echo "Multiuser startup in progress ..."
+
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
 
@@ -120,7 +122,6 @@ Mount $usr /usr failed -- Single user."
     esac
 
     # Things should be alright now.
-    echo;echo "Multiuser startup in progress."
 esac
 
 # Further initialization.
