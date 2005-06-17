@@ -161,7 +161,7 @@ char *argv[];
 		if (normal) {
 			output(b);
 			fprintf(stderr, "\n");
-		} else fprintf(stderr, "\r%*s\n", -WIDTH, "Done.");
+		} else fprintf(stderr, "\r%*s\n", -WIDTH, "Done scanning.");
 		if (total) printf("%8ld\n", b);
 		if ((errors == 0) || total) exit(0);
 		badprinted = 0;
