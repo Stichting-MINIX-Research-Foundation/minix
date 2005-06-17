@@ -895,10 +895,10 @@ void get_parameters(void)
 	/* Variables boot needs: */
 	b_setvar(E_SPECIAL|E_VAR, "image", "boot/image");
 	b_setvar(E_SPECIAL|E_FUNCTION, "leader",
-		"echo \\cMinix boot monitor \\v\\n"
+		"echo Minix boot monitor \\v\\n"
 		"\\nPress ESC to enter the monitor");
 	b_setvar(E_SPECIAL|E_FUNCTION, "main", "menu");
-	b_setvar(E_SPECIAL|E_FUNCTION, "trailer", "echo \\c");
+	b_setvar(E_SPECIAL|E_FUNCTION, "trailer", "echo");
 
 	/* Default hidden menu function: */
 	b_setenv(E_RESERVED|E_FUNCTION, null, "=,Start Minix", "boot");
