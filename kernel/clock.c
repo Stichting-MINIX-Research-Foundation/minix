@@ -157,7 +157,7 @@ message *m_ptr;				/* pointer to request message */
 
   /* Check if a clock timer expired and run its watchdog function. */
   if (next_timeout <= realtime) { 
-  	tmrs_exptimers(&clock_timers, realtime);
+  	tmrs_exptimers(&clock_timers, realtime, NULL);
   	next_timeout = clock_timers == NULL ? 
 		TMR_NEVER : clock_timers->tmr_exp_time;
   }
@@ -309,7 +309,7 @@ tmr_func_t watchdog;		/* watchdog to be called */
 /* Insert the new timer in the active timers list. Always update the 
  * next timeout time by setting it to the front of the active list.
  */
-  tmrs_settimer(&clock_timers, tp, exp_time, watchdog);
+  tmrs_settimer(&clock_timers, tp, exp_time, watchdog, NULL);
   next_timeout = clock_timers->tmr_exp_time;
 }
 
@@ -324,7 +324,7 @@ struct timer *tp;		/* pointer to timer structure */
  * active and expired lists. Always update the next timeout time by setting
  * it to the front of the active list.
  */
-  tmrs_clrtimer(&clock_timers, tp);
+  tmrs_clrtimer(&clock_timers, tp, NULL);
   next_timeout = (clock_timers == NULL) ? 
 	TMR_NEVER : clock_timers->tmr_exp_time;
 }

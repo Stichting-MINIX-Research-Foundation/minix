@@ -74,8 +74,8 @@
 #endif
 
 /* Disable/Enable hardware interrupts. */
-#define lock(c, v)	do { intr_disable(); locktimestart(c, v); } while(0);
-#define unlock(c)	do { locktimeend(c); intr_enable();   } while(0);
+#define lock(c, v)	do { intr_disable(); locktimestart(c, v); } while(0)
+#define unlock(c)	do { locktimeend(c); intr_enable(); } while(0)
 
 /* Sizes of memory tables. The boot monitor distinguishes three memory areas, 
  * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed
