@@ -97,6 +97,7 @@ OBJECTS	= \
 	$(LIBRARY)(_write.o) \
 	$(LIBRARY)(gettimeofday.o) \
 	$(LIBRARY)(lstat.o) \
+	$(LIBRARY)(readlink.o) \
 	$(LIBRARY)(symlink.o) \
 
 $(LIBRARY):	$(OBJECTS)
@@ -369,6 +370,9 @@ $(LIBRARY)(_write.o):	_write.c
 
 $(LIBRARY)(gettimeofday.o):	gettimeofday.c
 	$(CC1) gettimeofday.c
+
+$(LIBRARY)(readlink.o):	readlink.c
+	$(CC1) readlink.c
 
 $(LIBRARY)(lstat.o):	lstat.c
 	$(CC1) lstat.c
