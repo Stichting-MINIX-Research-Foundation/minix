@@ -27,7 +27,7 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 /* Kernel controls. */
 #define SYSSENDMASK	_IO ('S',  4)
 #define SYSSIGNON	_IOR('S',  2, struct systaskinfo)
-#define SYSGETENV	_IOW('S',  5, struct sysgetenv)
+#define SYSGETENV	_IOW('S',  1, struct sysgetenv)
 
 struct mmswapon {
 	u32_t		offset;		/* Starting offset within file. */
@@ -35,7 +35,7 @@ struct mmswapon {
 	char		file[128];	/* Name of swap file/device. */
 };
 
-/* TEMP!!! A proper system call must be created later. */
+/* A proper system call must be created later. */
 #include "/usr/src/servers/fs/dmap.h"
 struct fssignon {
 	dev_t		dev;		/* Device to manage. */

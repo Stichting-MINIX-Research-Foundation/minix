@@ -19,7 +19,7 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/rtl8139/rtl8139 \
 	../drivers/fxp/fxp \
 	../servers/init/init \
-	#bootfs.img
+#	bootdev.img
 
 usage:	
 	@echo " " >&2

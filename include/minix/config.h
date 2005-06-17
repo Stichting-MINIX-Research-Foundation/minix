@@ -3,7 +3,7 @@
 
 /* Minix release and version numbers. */
 #define OS_RELEASE "3"
-#define OS_VERSION "0.5"
+#define OS_VERSION "0.6"
 
 /* This file sets configuration parameters for the MINIX kernel, FS, and PM.
  * It is divided up into two main sections.  The first section contains
@@ -68,7 +68,7 @@
 #define ENABLE_K_DEBUGGING 0	/* kernel debugging calls */
 
 /* Include or exclude an image of /dev/boot in the boot image. */
-#define ENABLE_BOOTDEV	1
+#define ENABLE_BOOTDEV	   0
 
 /* Include or exclude device drivers.  Set to 1 to include, 0 to exclude. */
 #define ENABLE_BIOS_WINI   0	/* enable BIOS winchester driver */

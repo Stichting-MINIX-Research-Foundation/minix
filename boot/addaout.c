@@ -119,7 +119,8 @@ int main(int argc, char **argv)
   	n -= r;
   }
 
-  printf("Prepended data file (%u bytes) with a.out header.\n", total_size);
+  printf("Prepended data file (%u bytes) with a.out header (%u bytes).\n", 
+	total_size, sizeof(aout));
   printf("Done.\n");
 
   return(0);

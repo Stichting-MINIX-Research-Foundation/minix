@@ -119,7 +119,6 @@ _PROTOTYPE(int sys_enable_iop, (int proc_nr)				);
 #define sys_getrandomness(dst)	sys_getinfo(GET_RANDOMNESS, dst, 0,0,0)
 #define sys_getimage(dst)	sys_getinfo(GET_IMAGE, dst, 0,0,0)
 #define sys_getirqhooks(dst)	sys_getinfo(GET_IRQHOOKS, dst, 0,0,0)
-#define sys_getmemchunks(dst)	sys_getinfo(GET_MEMCHUNKS, dst, 0,0,0)
 #define sys_getmonparams(v,vl)	sys_getinfo(GET_MONPARAMS, v,vl, 0,0)
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)

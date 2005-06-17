@@ -312,7 +312,7 @@
 #   define GET_KENV	   5	/* get kernel environment string */
 #   define GET_IRQHOOKS	   6	/* get the IRQ table */
 #   define GET_KMESSAGES   7	/* get kernel messages */
-#   define GET_MEMCHUNKS   8	/* get base+size of mem chunks */
+
 #   define GET_KADDRESSES  9	/* get various kernel addresses */
 #   define GET_SCHEDINFO  10	/* get scheduling queues */
 #   define GET_PROC 	  11	/* get process slot if given process */
