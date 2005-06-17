@@ -27,9 +27,16 @@ typedef struct {
 _PROTOTYPE( int select, (int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *timeout) );
 
 _PROTOTYPE( void FD_CLR, (int fd, fd_set *fdset));
-_PROTOTYPE( void FD_ISSET, (int fd, fd_set *fdset));
+_PROTOTYPE( int FD_ISSET, (int fd, fd_set *fdset));
 _PROTOTYPE( void FD_SET, (int fd, fd_set *fdset));
 _PROTOTYPE( void FD_ZERO, (fd_set *fdset));
+
+/* possible select() operation types; read, write, errors */
+/* (FS/driver internal use only) */
+#define SEL_RD		(1 << 0)
+#define SEL_WR		(1 << 1)
+#define SEL_ERR		(1 << 2)
+#define SEL_NOTIFY	(1 << 3) /* not a real select operation */
 
 #endif /* _POSIX_SOURCE */
 

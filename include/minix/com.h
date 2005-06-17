@@ -66,7 +66,8 @@
 #  define KSIG_PENDING (NOTIFICATION | 2)  	/* signal(s) pending */
 #  define NEW_KMESS    (NOTIFICATION | 3)  	/* new kernel message */
 #  define HARD_STOP    (NOTIFICATION | 4)  	/* system shutdown */
-#define NR_NOTIFY_TYPES    	       5	/* nr of bits in mask */
+#  define DEV_SELECTED (NOTIFICATION | 5)  	/* select() notification */
+#define NR_NOTIFY_TYPES    	       6	/* nr of bits in mask */
 
 /* Shorthands for message parameters passed with notifications. */
 #define NOTIFY_SOURCE	m_source
@@ -89,6 +90,7 @@
 #define DEV_GATHER   	 9	/* fcn code for reading into a vector */
 #define TTY_SETPGRP 	10	/* fcn code for setpgroup */
 #define TTY_EXIT	11	/* a process group leader has exited */	
+#define DEV_SELECT	12	/* request select() attention */
 #define SUSPEND	 	-998	/* used in interrupts when tty has no data */
 
 /* Field names for messages to block and character device drivers. */
@@ -98,6 +100,11 @@
 #define REQUEST 	m2_i3	/* ioctl request code */
 #define POSITION	m2_l1	/* file offset */
 #define ADDRESS 	m2_p1	/* core buffer address */
+
+/* Field names for DEV_SELECT messages to device drivers. */
+#define DEVICE		m2_i1	/* minor device */
+#define DEV_SEL_OPS	m2_i2	/* which select operations are requested */
+#define DEV_SEL_WATCH	m2_i3	/* request notify if no operations are ready */
 
 /* Field names used in reply messages from tasks. */
 #define REP_PROC_NR	m2_i1	/* # of proc on whose behalf I/O was done */
@@ -124,6 +131,11 @@
 #  define RANDOM_DEV  5		/* minor device for /dev/(u)random */
 #  define URANDOM_DEV RANDOM_DEV 
 #  define ZERO_DEV    6		/* minor device for /dev/zero */
+
+#define TTY_MAJOR	4	/* major device no. for ttys */
+#define CTTY_MAJOR	5	/* major device no. for /dev/tty */
+
+#define INET_MAJOR	7	/* major device no. for inet */
 
 /* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	0x0100	/* device number of /dev/ram */
@@ -366,6 +378,13 @@
 /* Field names for SYS_PHYSZERO */
 #define PZ_MEM_PTR	m1_p1	/* base */
 #define PZ_COUNT	m1_i1	/* count */
+
+/* Field names for SELECT (FS) */
+#define SEL_NFDS	m8_i1
+#define SEL_READFDS	m8_p1
+#define SEL_WRITEFDS	m8_p2
+#define SEL_ERRORFDS	m8_p3
+#define SEL_TIMEOUT	m8_p4
 
 /*===========================================================================*
  *                Miscellaneous messages, mainly used by IS		     *

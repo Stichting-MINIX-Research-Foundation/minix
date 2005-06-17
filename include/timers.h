@@ -51,10 +51,10 @@ typedef struct timer
 /* The following generic timer management functions are available. They
  * can be used to operate on the lists of timers.
  */
-_PROTOTYPE( void tmrs_clrtimer, (timer_t **tmrs, timer_t *tp)		);
-_PROTOTYPE( void tmrs_exptimers, (timer_t **tmrs, clock_t now)		);
-_PROTOTYPE( void tmrs_settimer, (timer_t **tmrs, timer_t *tp, 
-	clock_t exp_time, tmr_func_t watchdog)				);
+_PROTOTYPE( clock_t tmrs_clrtimer, (timer_t **tmrs, timer_t *tp, clock_t *new_head)		);
+_PROTOTYPE( void tmrs_exptimers, (timer_t **tmrs, clock_t now, clock_t *new_head)		);
+_PROTOTYPE( clock_t tmrs_settimer, (timer_t **tmrs, timer_t *tp, 
+	clock_t exp_time, tmr_func_t watchdog, clock_t *new_head)				);
 
 
 #endif /* _TIMERS_H */

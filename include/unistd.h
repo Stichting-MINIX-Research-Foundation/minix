@@ -166,6 +166,6 @@ _PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
 
 #endif
 
-_PROTOTYPE( int setcache, (int kb));
+_PROTOTYPE( int readlink, (const char *, char *, int));
 
 #endif /* _UNISTD_H */
