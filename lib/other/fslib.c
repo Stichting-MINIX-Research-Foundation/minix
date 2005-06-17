@@ -37,8 +37,8 @@ int block_size;
 {
   int nr_blocks;
 
-  nr_blocks = (int) (nr_bits / BITS_PER_BLOCK(block_size));
-  if (((bit_t) nr_blocks * BITS_PER_BLOCK(block_size)) < nr_bits) ++nr_blocks;
+  nr_blocks = (int) (nr_bits / FS_BITS_PER_BLOCK(block_size));
+  if (((bit_t) nr_blocks * FS_BITS_PER_BLOCK(block_size)) < nr_bits) ++nr_blocks;
   return(nr_blocks);
 }
 

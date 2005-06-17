@@ -3,11 +3,12 @@
 /*===========================================================================*
  *				tmrs_settimer				     *
  *===========================================================================*/
-void tmrs_settimer(tmrs, tp, exp_time, watchdog)
+clock_t tmrs_settimer(tmrs, tp, exp_time, watchdog, new_head)
 timer_t **tmrs;				/* pointer to timers queue */
 timer_t *tp;				/* the timer to be added */
 clock_t exp_time;			/* its expiration time */
 tmr_func_t watchdog;			/* watchdog function to be run */
+clock_t *new_head;			/* new earliest timer, if non NULL */
 {
 /* Activate a timer to run function 'fp' at time 'exp_time'. If the timer is
  * already in use it is first removed from the timers queue. Then, it is put
@@ -15,10 +16,14 @@ tmr_func_t watchdog;			/* watchdog function to be run */
  * The caller responsible for scheduling a new alarm for the timer if needed. 
  */
   timer_t **atp;
+  clock_t old_head = 0;
+
+  if(*tmrs)
+  	old_head = (*tmrs)->tmr_exp_time;
 
   /* Possibly remove an old timer. Then set the timer's variables. */
   if (tp->tmr_exp_time != TMR_NEVER)
-  	(void) tmrs_clrtimer(tmrs,tp);
+  	(void) tmrs_clrtimer(tmrs, tp, NULL);
   tp->tmr_exp_time = exp_time;
   tp->tmr_func = watchdog;
 
@@ -28,5 +33,8 @@ tmr_func_t watchdog;			/* watchdog function to be run */
   }
   tp->tmr_next = *atp;
   *atp = tp;
+  if(new_head)
+  	(*new_head) = (*tmrs)->tmr_exp_time;
+  return old_head;
 }
 

@@ -2,8 +2,6 @@
 readlink.c
 */
 
-#define readlink _readlink
-
 #include <unistd.h>
 #include <errno.h>
 
