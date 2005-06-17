@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #define DIR_NULL (DIR*) NULL
-#define ITERATIONS         5
+#define ITERATIONS         3	/* LINK_MAX is high, so time consuming */
 #define MAX_FD           100	/* must be large enough to cause error */
 #define BUF_SIZE PATH_MAX+20
 #define ERR_CODE          -1	/* error return */

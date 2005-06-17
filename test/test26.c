@@ -26,7 +26,7 @@ char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
 #define MAX_ERROR 4
-#define ITERATIONS 4
+#define ITERATIONS 2		/* LINK_MAX is high, so time consuming. */
 
 #define System(cmd)	if (system(cmd) != 0) printf("``%s'' failed\n", cmd)
 #define Chdir(dir)	if (chdir(dir) != 0) printf("Can't goto %s\n", dir)
