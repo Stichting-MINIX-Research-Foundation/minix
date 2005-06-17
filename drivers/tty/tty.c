@@ -18,14 +18,16 @@
  *
  * The valid messages and their parameters are:
  *
- *   HARD_INT:     output has been completed or input has arrived
- *   HARD_STOP:    MINIX wants to shutdown; run code to cleanly stop
- *   DEV_READ:     a process wants to read from a terminal
- *   DEV_WRITE:    a process wants to write on a terminal
- *   DEV_IOCTL:    a process wants to change a terminal's parameters
- *   DEV_OPEN:     a tty line has been opened
- *   DEV_CLOSE:    a tty line has been closed
- *   CANCEL:       terminate a previous incomplete system call immediately
+ *   HARD_INT:       output has been completed or input has arrived
+ *   HARD_STOP:      MINIX wants to shutdown; run code to cleanly stop
+ *   DEV_READ:       a process wants to read from a terminal
+ *   DEV_WRITE:      a process wants to write on a terminal
+ *   DEV_IOCTL:      a process wants to change a terminal's parameters
+ *   DEV_OPEN:       a tty line has been opened
+ *   DEV_CLOSE:      a tty line has been closed
+ *   DEV_SELECT:     start select notification request
+ *   DEV_SELECT_CAN: cancel select notification
+ *   CANCEL:         terminate a previous incomplete system call immediately
  *
  *    m_type      TTY_LINE   PROC_NR    COUNT   TTY_SPEK  TTY_FLAGS  ADDRESS
  * ---------------------------------------------------------------------------
@@ -53,6 +55,7 @@
  */
 
 #include "../drivers.h"
+#include "../drivers.h"
 #include <termios.h>
 #if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
 #include <sgtty.h>
@@ -64,6 +67,9 @@
 #include <minix/keymap.h>
 #endif
 #include "tty.h"
+
+#include <sys/time.h>
+#include <sys/select.h>
 
 extern int irq_hook_id;
 
@@ -105,6 +111,7 @@ FORWARD _PROTOTYPE( void do_open, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_close, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr)		);
+FORWARD _PROTOTYPE( void do_select, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void in_transfer, (tty_t *tp)			);
 FORWARD _PROTOTYPE( int tty_echo, (tty_t *tp, int ch)			);
 FORWARD _PROTOTYPE( void rawecho, (tty_t *tp, int ch)			);
@@ -265,12 +272,13 @@ PUBLIC void main(void)
 
 	/* Execute the requested device driver function. */
 	switch (tty_mess.m_type) {
-	    case DEV_READ:	do_read(tp, &tty_mess);		break;
-	    case DEV_WRITE:	do_write(tp, &tty_mess);	break;
-	    case DEV_IOCTL:	do_ioctl(tp, &tty_mess);	break;
-	    case DEV_OPEN:	do_open(tp, &tty_mess);		break;
-	    case DEV_CLOSE:	do_close(tp, &tty_mess);	break;
-	    case CANCEL:	do_cancel(tp, &tty_mess);	break;
+	    case DEV_READ:	 do_read(tp, &tty_mess);	  break;
+	    case DEV_WRITE:	 do_write(tp, &tty_mess);	  break;
+	    case DEV_IOCTL:	 do_ioctl(tp, &tty_mess);	  break;
+	    case DEV_OPEN:	 do_open(tp, &tty_mess);	  break;
+	    case DEV_CLOSE:	 do_close(tp, &tty_mess);	  break;
+	    case DEV_SELECT:	 do_select(tp, &tty_mess);	  break;
+	    case CANCEL:	 do_cancel(tp, &tty_mess);	  break;
 	    default:		
 		printf("Warning, TTY got unexpected request %d from %d\n",
 			tty_mess.m_type, tty_mess.m_source);
@@ -335,8 +343,11 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	in_transfer(tp);
 	/* ...then go back for more. */
 	handle_events(tp);
-	if (tp->tty_inleft == 0) 
+	if (tp->tty_inleft == 0)  {
+  		if(tp->tty_select_ops)
+  			select_retry(tp);
 		return;			/* already done */
+	}
 
 	/* There were no bytes in the input queue available, so either suspend
 	 * the caller or break off the read if nonblocking.
@@ -350,6 +361,8 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	}
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
+  if(tp->tty_select_ops)
+  	select_retry(tp);
 }
 
 
@@ -386,7 +399,11 @@ register message *m_ptr;	/* pointer to message sent to the task */
 
 	/* Try to write. */
 	handle_events(tp);
-	if (tp->tty_outleft == 0) return;		/* already done */
+	if (tp->tty_outleft == 0) {
+  		if(tp->tty_select_ops)
+		  	select_retry(tp);
+		return;		/* already done */
+	}
 
 	/* None or not all the bytes could be written, so either suspend the
 	 * caller or break off the write if nonblocking.
@@ -400,6 +417,8 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	}
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
+  if(tp->tty_select_ops)
+  	select_retry(tp);
 }
 
 
@@ -509,8 +528,8 @@ message *m_ptr;			/* pointer to message sent to task */
 	if (r != OK) break;
 	switch (param.i) {
 	    case TCIFLUSH:	tty_icancel(tp);			break;
-	    case TCOFLUSH:	(*tp->tty_ocancel)(tp);			break;
-	    case TCIOFLUSH:	tty_icancel(tp); (*tp->tty_ocancel)(tp);break;
+	    case TCOFLUSH:	(*tp->tty_ocancel)(tp, 0);			break;
+	    case TCIOFLUSH:	tty_icancel(tp); (*tp->tty_ocancel)(tp, 0);break;
 	    default:		r = EINVAL;
 	}
 	break;
@@ -537,7 +556,7 @@ message *m_ptr;			/* pointer to message sent to task */
 	break;
 
     case TCSBRK:
-	if (tp->tty_break != NULL) (*tp->tty_break)(tp);
+	if (tp->tty_break != NULL) (*tp->tty_break)(tp,0);
 	break;
 
     case TIOCGWINSZ:
@@ -658,8 +677,8 @@ message *m_ptr;			/* pointer to message sent to task */
   if (m_ptr->TTY_LINE != LOG_MINOR && --tp->tty_openct == 0) {
 	tp->tty_pgrp = 0;
 	tty_icancel(tp);
-	(*tp->tty_ocancel)(tp);
-	(*tp->tty_close)(tp);
+	(*tp->tty_ocancel)(tp, 0);
+	(*tp->tty_close)(tp, 0);
 	tp->tty_termios = termios_defaults;
 	tp->tty_winsize = winsize_defaults;
 	setattr(tp);
@@ -692,7 +711,7 @@ message *m_ptr;			/* pointer to message sent to task */
   }
   if ((mode & W_BIT) && tp->tty_outleft != 0 && proc_nr == tp->tty_outproc) {
 	/* Process was writing when killed.  Clean up output. */
-	(*tp->tty_ocancel)(tp);
+	(*tp->tty_ocancel)(tp, 0);
 	tp->tty_outleft = tp->tty_outcum = 0;
   }
   if (tp->tty_ioreq != 0 && proc_nr == tp->tty_ioproc) {
@@ -703,6 +722,60 @@ message *m_ptr;			/* pointer to message sent to task */
   tty_reply(TASK_REPLY, m_ptr->m_source, proc_nr, EINTR);
 }
 
+PUBLIC int select_try(struct tty *tp, int ops)
+{
+	int ready_ops = 0;
+
+	/* special case. if line is hung up, no operations will block.
+	 * (and it can be seen as an exceptional condition.)
+	 */
+	if (tp->tty_termios.c_ospeed == B0) {
+		printf("tty: hangup always ok\n");
+		ready_ops |= ops;
+	}
+
+	if(ops & SEL_RD) {
+		/* will i/o not block on read? */
+		if (tp->tty_inleft > 0) {
+			ready_ops |= SEL_RD;	/* EIO - no blocking */
+		} else if(tp->tty_incount > 0) {
+			/* is a regular read possible? tty_incount
+			 * says there is data. but a read will only succeed
+			 * in canonical mode if a newline has been seen.
+			 */
+			if(!(tp->tty_termios.c_lflag & ICANON) ||
+				tp->tty_eotct > 0) {
+				ready_ops |= SEL_RD;
+			}
+		}
+	}
+
+	if(ops & SEL_WR) {
+  		if (tp->tty_outleft > 0) {
+			ready_ops |= SEL_WR;	/* EIO - no blocking */
+  		}
+		if((*tp->tty_devwrite)(tp, 1)) {
+			ready_ops |= SEL_WR;	/* real write possible */
+  		}
+	}
+
+	return ready_ops;
+}
+
+PUBLIC int select_retry(struct tty *tp)
+{
+	int ops;
+	if((ops = select_try(tp, tp->tty_select_ops))) {
+		message m;
+		m.NOTIFY_TYPE = DEV_SELECTED;
+		m.NOTIFY_ARG = tp->tty_index;
+		m.NOTIFY_FLAGS = ops;
+		notify(tp->tty_select_proc, &m);
+		tp->tty_select_ops &= ~ops;
+	}
+
+	return OK;
+}
 
 /*===========================================================================*
  *				handle_events				     *
@@ -731,10 +804,10 @@ tty_t *tp;			/* TTY to check for events. */
 	tp->tty_events = 0;
 
 	/* Read input and perform input processing. */
-	(*tp->tty_devread)(tp);
+	(*tp->tty_devread)(tp, 0);
 
 	/* Perform output processing and write output. */
-	(*tp->tty_devwrite)(tp);
+	(*tp->tty_devwrite)(tp, 0);
 
 	/* Ioctl waiting for some event? */
 	if (tp->tty_ioreq != 0) dev_ioctl(tp);
@@ -1288,7 +1361,7 @@ tty_t *tp;
   if (tp->tty_termios.c_ospeed == B0) sigchar(tp, SIGHUP);
 
   /* Set new line speed, character size, etc at the device level. */
-  (*tp->tty_ioctl)(tp);
+  (*tp->tty_ioctl)(tp, 0);
 }
 
 
@@ -1335,7 +1408,7 @@ int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
   if (!(tp->tty_termios.c_lflag & NOFLSH)) {
 	tp->tty_incount = tp->tty_eotct = 0;	/* kill earlier input */
 	tp->tty_intail = tp->tty_inhead;
-	(*tp->tty_ocancel)(tp);			/* kill all output */
+	(*tp->tty_ocancel)(tp, 0);			/* kill all output */
 	tp->tty_inhibited = RUNNING;
 	tp->tty_events = 1;
   }
@@ -1352,7 +1425,7 @@ register tty_t *tp;
 
   tp->tty_incount = tp->tty_eotct = 0;
   tp->tty_intail = tp->tty_inhead;
-  (*tp->tty_icancel)(tp);
+  (*tp->tty_icancel)(tp, 0);
 }
 
 
@@ -1411,7 +1484,7 @@ PRIVATE void expire_timers(void)
   /* Scan the queue of timers for expired timers. This dispatch the watchdog
    * functions of expired timers. Possibly a new alarm call must be scheduled.
    */
-  tmrs_exptimers(&tty_timers, now);
+  tmrs_exptimers(&tty_timers, now, NULL);
   if (tty_timers == NULL) tty_next_timeout = TMR_NEVER;
   else {  					  /* set new sync alarm */
   	tty_next_timeout = tty_timers->tmr_exp_time;
@@ -1438,10 +1511,10 @@ int enable;			/* set timer if true, otherwise unset */
   	exp_time = now + tty_ptr->tty_termios.c_cc[VTIME] * (HZ/10);
  	/* Set a new timer for enabling the TTY events flags. */
  	tmrs_settimer(&tty_timers, &tty_ptr->tty_tmr, 
- 		exp_time, tty_timed_out);  
+ 		exp_time, tty_timed_out, NULL);  
   } else {
   	/* Remove the timer from the active and expired lists. */
-  	tmrs_clrtimer(&tty_timers, &tty_ptr->tty_tmr);
+  	tmrs_clrtimer(&tty_timers, &tty_ptr->tty_tmr, NULL);
   }
   
   /* Now check if a new alarm must be scheduled. This happens when the front
@@ -1460,12 +1533,39 @@ int enable;			/* set timer if true, otherwise unset */
 /*==========================================================================*
  *				tty_devnop				    *
  *==========================================================================*/
-PUBLIC void tty_devnop(tp)
+PUBLIC int tty_devnop(tp, try)
 tty_t *tp;
+int try;
 {
   /* Some functions need not be implemented at the device level. */
 }
 
+/*===========================================================================*
+ *				do_select			     *
+ *===========================================================================*/
+PRIVATE void do_select(tp, m_ptr)
+register tty_t *tp;		/* pointer to tty struct */
+register message *m_ptr;	/* pointer to message sent to the task */
+{
+	int ops, ready_ops = 0, watch;
+	printf("doing select..\n");
+
+	ops = m_ptr->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
+	watch = (m_ptr->PROC_NR & SEL_NOTIFY) ? 1 : 0;
+
+	ready_ops = select_try(tp, ops);
+
+	if(!ready_ops && ops && watch) {
+		printf("doing select.. ops %d\n", ops);
+		tp->tty_select_ops |= ops;
+		tp->tty_select_proc = m_ptr->m_source;
+	} else printf("not doing select.. ready_ops %d ops %d watch %d\n",
+		ready_ops, ops, watch);
+
+        tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, ready_ops);
+
+        return;
+}
 
 #if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
 /*===========================================================================*

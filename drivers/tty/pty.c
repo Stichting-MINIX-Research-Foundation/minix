@@ -59,14 +59,14 @@ typedef struct pty {
 PRIVATE pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
 
-FORWARD _PROTOTYPE( void pty_write, (tty_t *tp)				);
+FORWARD _PROTOTYPE( int pty_write, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void pty_echo, (tty_t *tp, int c)			);
 FORWARD _PROTOTYPE( void pty_start, (pty_t *pp)				);
 FORWARD _PROTOTYPE( void pty_finish, (pty_t *pp)			);
-FORWARD _PROTOTYPE( void pty_read, (tty_t *tp)				);
-FORWARD _PROTOTYPE( void pty_close, (tty_t *tp)				);
-FORWARD _PROTOTYPE( void pty_icancel, (tty_t *tp)			);
-FORWARD _PROTOTYPE( void pty_ocancel, (tty_t *tp)			);
+FORWARD _PROTOTYPE( int pty_read, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int pty_close, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int pty_icancel, (tty_t *tp, int try)			);
+FORWARD _PROTOTYPE( int pty_ocancel, (tty_t *tp, int try)			);
 
 
 /*==========================================================================*
@@ -201,8 +201,9 @@ message *m_ptr;
 /*==========================================================================*
  *				pty_write				    *
  *==========================================================================*/
-PRIVATE void pty_write(tp)
+PRIVATE int pty_write(tp, try)
 tty_t *tp;
+int try;
 {
 /* (*dev_write)() routine for PTYs.  Transfer bytes from the writer on
  * /dev/ttypX to the output buffer.
@@ -213,6 +214,7 @@ tty_t *tp;
 
   /* PTY closed down? */
   if (pp->state & PTY_CLOSED) {
+  	if(try) return 1;
 	if (tp->tty_outleft > 0) {
 		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
 							tp->tty_outproc, EIO);
@@ -227,7 +229,11 @@ tty_t *tp;
 	count = bufend(pp->obuf) - pp->ohead;
 	if (count > ocount) count = ocount;
 	if (count > tp->tty_outleft) count = tp->tty_outleft;
-	if (count == 0 || tp->tty_inhibited) break;
+	if (count == 0 || tp->tty_inhibited) {
+		if(try) return 0;
+		break;
+	}
+	if(try) return 1;
 
 	/* Copy from user space to the PTY output buffer. */
 	if((s = sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir,
@@ -258,8 +264,8 @@ tty_t *tp;
 	}
   }
   pty_finish(pp);
+  return 1;
 }
-
 
 /*==========================================================================*
  *				pty_echo				    *
@@ -341,8 +347,9 @@ pty_t *pp;
 /*==========================================================================*
  *				pty_read				    *
  *==========================================================================*/
-PRIVATE void pty_read(tp)
+PRIVATE int pty_read(tp, try)
 tty_t *tp;
+int try;
 {
 /* Offer bytes from the PTY writer for input on the TTY.  (Do it one byte at
  * a time, 99% of the writes will be for one byte, so no sense in being smart.)
@@ -351,12 +358,19 @@ tty_t *tp;
   char c;
 
   if (pp->state & PTY_CLOSED) {
+	if(try) return 1;
 	if (tp->tty_inleft > 0) {
 		tty_reply(tp->tty_inrepcode, tp->tty_incaller, tp->tty_inproc,
 								tp->tty_incum);
 		tp->tty_inleft = tp->tty_incum = 0;
 	}
-	return;
+	return 1;
+  }
+
+  if(try) {
+  	if(pp->wrleft > 0)
+  		return 1;
+  	return 0;
   }
 
   while (pp->wrleft > 0) {
@@ -386,8 +400,9 @@ tty_t *tp;
 /*==========================================================================*
  *				pty_close				    *
  *==========================================================================*/
-PRIVATE void pty_close(tp)
+PRIVATE int pty_close(tp, try)
 tty_t *tp;
+int try;
 {
 /* The tty side has closed, so shut down the pty side. */
   pty_t *pp = tp->tty_priv;
@@ -411,8 +426,9 @@ tty_t *tp;
 /*==========================================================================*
  *				pty_icancel				    *
  *==========================================================================*/
-PRIVATE void pty_icancel(tp)
+PRIVATE int pty_icancel(tp, try)
 tty_t *tp;
+int try;
 {
 /* Discard waiting input. */
   pty_t *pp = tp->tty_priv;
@@ -428,8 +444,9 @@ tty_t *tp;
 /*==========================================================================*
  *				pty_ocancel				    *
  *==========================================================================*/
-PRIVATE void pty_ocancel(tp)
+PRIVATE int pty_ocancel(tp, try)
 tty_t *tp;
+int try;
 {
 /* Drain the output buffer. */
   pty_t *pp = tp->tty_priv;

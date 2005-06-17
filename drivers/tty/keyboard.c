@@ -7,6 +7,8 @@
  */
 
 #include "../drivers.h"
+#include <sys/time.h>
+#include <sys/select.h>
 #include <termios.h>
 #include <signal.h>
 #include <unistd.h>
@@ -84,7 +86,7 @@ FORWARD _PROTOTYPE( int scan_keyboard, (void) );
 FORWARD _PROTOTYPE( unsigned make_break, (int scode) );
 FORWARD _PROTOTYPE( void set_leds, (void) );
 FORWARD _PROTOTYPE( void show_key_mappings, (void) );
-FORWARD _PROTOTYPE( void kb_read, (struct tty *tp) );
+FORWARD _PROTOTYPE( int kb_read, (struct tty *tp, int try) );
 FORWARD _PROTOTYPE( unsigned map_key, (int scode) );
 
 
@@ -147,6 +149,9 @@ message *m_ptr;
 	if (ihead == ibuf + KB_IN_BYTES) ihead = ibuf;
 	icount++;
 	tty_table[ccurrent].tty_events = 1;
+	if(tty_table[ccurrent].tty_select_ops & SEL_RD) {
+		select_retry(&tty_table[ccurrent]);
+	}
   }
 }
 
@@ -154,8 +159,9 @@ message *m_ptr;
 /*==========================================================================*
  *				kb_read					    *
  *==========================================================================*/
-PRIVATE void kb_read(tp)
+PRIVATE int kb_read(tp, try)
 tty_t *tp;
+int try;
 {
 /* Process characters from the circular keyboard buffer. */
 
@@ -164,6 +170,12 @@ tty_t *tp;
   unsigned ch;
 
   tp = &tty_table[ccurrent];		/* always use the current console */
+
+  if(try) {
+  	printf("tty: kb: try: %d icount: %d\n", try, icount);
+  	if(icount > 0) return 1;
+  	return 0;
+  }
 
   while (icount > 0) {
 	scode = *itail++;			/* take one key scan code */
@@ -213,6 +225,8 @@ tty_t *tp;
   	    }
 	}
   }
+
+  return 1;
 }
 
 

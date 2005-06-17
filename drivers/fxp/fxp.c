@@ -2369,7 +2369,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
 		panic("FXP","unable to get uptime from clock", r);
 
 	/* Add the timer to the local timer queue. */
-	tmrs_settimer(&fxp_timers, tp, now + delta, watchdog);
+	tmrs_settimer(&fxp_timers, tp, now + delta, watchdog, NULL);
 
 	/* Possibly reschedule an alarm call. This happens when a new timer
 	 * is added in front. 
@@ -2407,7 +2407,7 @@ PRIVATE void fxp_expire_timers()
   /* Scan the timers queue for expired timers. Dispatch the watchdog function
    * for each expired timers. Possibly a new alarm call must be scheduled.
    */
-  tmrs_exptimers(&fxp_timers, now);
+  tmrs_exptimers(&fxp_timers, now, NULL);
   if (fxp_timers == NULL)
   	fxp_next_timeout= TMR_NEVER;
   else

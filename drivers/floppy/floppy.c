@@ -328,7 +328,7 @@ PRIVATE void f_expire_tmrs(struct driver *dp)
    * for each expired timers. FLOPPY watchdog functions are f_tmr_timeout() 
    * and stop_motor(). Possibly a new alarm call must be scheduled.
    */
-  tmrs_exptimers(&f_timers, now);
+  tmrs_exptimers(&f_timers, now, NULL);
   if (f_timers == NULL) {
   	f_next_timeout = TMR_NEVER;
   } else {  					  /* set new sync alarm */
@@ -354,7 +354,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
  	panic("FLOPPY","Couldn't get uptime from clock.", s);
 
   /* Add the timer to the local timer queue. */
-  tmrs_settimer(&f_timers, tp, now + delta, watchdog);
+  tmrs_settimer(&f_timers, tp, now + delta, watchdog, NULL);
 
   /* Possibly reschedule an alarm call. This happens when the front of the 
    * timers queue was reinserted at another position, i.e., when a timer was 

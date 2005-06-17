@@ -114,7 +114,7 @@ struct sequence {
 	unsigned char value;
 };
 
-FORWARD _PROTOTYPE( void cons_write, (struct tty *tp)			);
+FORWARD _PROTOTYPE( int cons_write, (struct tty *tp, int try)			);
 FORWARD _PROTOTYPE( void cons_echo, (tty_t *tp, int c)			);
 FORWARD _PROTOTYPE( void out_char, (console_t *cons, int c)		);
 FORWARD _PROTOTYPE( void putk, (int c)					);
@@ -128,14 +128,15 @@ FORWARD _PROTOTYPE( void get_6845, (int reg, unsigned *val)		);
 FORWARD _PROTOTYPE( void stop_beep, (timer_t *tmrp)				);
 FORWARD _PROTOTYPE( void cons_org0, (void)				);
 FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
-FORWARD _PROTOTYPE( void cons_ioctl, (tty_t *tp)			);
+FORWARD _PROTOTYPE( int cons_ioctl, (tty_t *tp, int)			);
 
 
 /*===========================================================================*
  *				cons_write				     *
  *===========================================================================*/
-PRIVATE void cons_write(tp)
+PRIVATE int cons_write(tp, try)
 register struct tty *tp;	/* tells which terminal is to be used */
+int try;
 {
 /* Copy as much data as possible to the output queue, then start I/O.  On
  * memory-mapped terminals, such as the IBM console, the I/O will also be
@@ -147,6 +148,8 @@ register struct tty *tp;	/* tells which terminal is to be used */
   register char *tbuf;
   char buf[64];
   console_t *cons = tp->tty_priv;
+
+  if(try) return 1;	/* we can always write to console */
 
   /* Check quickly for nothing to do, so this can be called often without
    * unmodular tests elsewhere.
@@ -757,7 +760,7 @@ PRIVATE void beep()
         }
   }
   /* Add a timer to the timers list. Possibly reschedule the alarm. */
-  tmrs_settimer(&tty_timers, &tmr_stop_beep, now+B_TIME, stop_beep);
+  tmrs_settimer(&tty_timers, &tmr_stop_beep, now+B_TIME, stop_beep, NULL);
   if (tty_timers->tmr_exp_time != tty_next_timeout) {
   	tty_next_timeout = tty_timers->tmr_exp_time;
   	if ((s=sys_syncalrm(SELF, tty_next_timeout, 1)) != OK)
@@ -873,7 +876,7 @@ tty_t *tp;
 	cons->c_column = 0;
   }
   select_console(0);
-  cons_ioctl(tp);
+  cons_ioctl(tp, 0);
 }
 
 /*==========================================================================*
@@ -1110,8 +1113,9 @@ struct sequence *seq;
 /*===========================================================================*
  *				cons_ioctl				     *
  *===========================================================================*/
-PRIVATE void cons_ioctl(tp)
+PRIVATE int cons_ioctl(tp, try)
 tty_t *tp;
+int try;
 {
 /* Set the screen dimensions. */
 

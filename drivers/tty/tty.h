@@ -13,7 +13,7 @@
 #define O_NONBLOCK     04000
 
 struct tty;
-typedef _PROTOTYPE( void (*devfun_t), (struct tty *tp) );
+typedef _PROTOTYPE( int (*devfun_t), (struct tty *tp, int try_only) );
 typedef _PROTOTYPE( void (*devfunarg_t), (struct tty *tp, int c) );
 
 typedef struct tty {
@@ -62,6 +62,10 @@ typedef struct tty {
   int tty_ioreq;		/* ioctl request code */
   vir_bytes tty_iovir;		/* virtual address of ioctl buffer */
 
+  /* select() data */
+  int tty_select_ops;		/* which operations are interesting */
+  int tty_select_proc;		/* which process wants notification */
+
   /* Miscellaneous. */
   devfun_t tty_ioctl;		/* set line speed, etc. at the device level */
   devfun_t tty_close;		/* tell the device that the tty is closed */
@@ -70,6 +74,7 @@ typedef struct tty {
   struct winsize tty_winsize;	/* window size (#lines and #columns) */
 
   u16_t tty_inbuf[TTY_IN_BYTES];/* tty input buffer */
+
 } tty_t;
 
 /* Memory allocated in tty.c, so extern here. */
@@ -116,7 +121,8 @@ _PROTOTYPE( void out_process, (struct tty *tp, char *bstart, char *bpos,
 _PROTOTYPE( void tty_wakeup, (clock_t now)				);
 _PROTOTYPE( void tty_reply, (int code, int replyee, int proc_nr,
 							int status)	);
-_PROTOTYPE( void tty_devnop, (struct tty *tp)				);
+_PROTOTYPE( int tty_devnop, (struct tty *tp, int try)				);
+_PROTOTYPE( int select_retry, (struct tty *tp)				);
 
 /* rs232.c */
 _PROTOTYPE( void rs_init, (struct tty *tp)				);

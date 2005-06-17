@@ -253,11 +253,11 @@ FORWARD _PROTOTYPE( int rs232_handler, (message *m)			);
 FORWARD _PROTOTYPE( void in_int, (rs232_t *rs)				);
 FORWARD _PROTOTYPE( void line_int, (rs232_t *rs)			);
 FORWARD _PROTOTYPE( void modem_int, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( void rs_write, (tty_t *tp)				);
+FORWARD _PROTOTYPE( int rs_write, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void rs_echo, (tty_t *tp, int c)			);
 FORWARD _PROTOTYPE( void rs_ioctl, (tty_t *tp)				);
 FORWARD _PROTOTYPE( void rs_config, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( void rs_read, (tty_t *tp)				);
+FORWARD _PROTOTYPE( int rs_read, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void rs_icancel, (tty_t *tp)			);
 FORWARD _PROTOTYPE( void rs_ocancel, (tty_t *tp)			);
 FORWARD _PROTOTYPE( void rs_ostart, (rs232_t *rs)			);
@@ -282,8 +282,9 @@ PRIVATE int my_inb(port_t port)
 /*==========================================================================*
  *				rs_write				    *
  *==========================================================================*/
-PRIVATE void rs_write(tp)
+PRIVATE void rs_write(tp, try)
 register tty_t *tp;
+int try;
 {
 /* (*devwrite)() routine for RS232. */
 
@@ -301,7 +302,7 @@ register tty_t *tp;
 
   if (rs->drain) {
 	/* Wait for the line to drain then reconfigure and continue output. */
-	if (rs->ocount > 0) return;
+	if (rs->ocount > 0) return 0;
 	rs->drain = FALSE;
 	rs_config(rs);
   }
@@ -312,7 +313,11 @@ register tty_t *tp;
 	count = bufend(rs->obuf) - rs->ohead;
 	if (count > ocount) count = ocount;
 	if (count > tp->tty_outleft) count = tp->tty_outleft;
-	if (count == 0 || tp->tty_inhibited) break;
+	if (count == 0 || tp->tty_inhibited) {
+		if(try) return 0;
+		break;
+	}
+	if(try) return 1;
 
 	/* Copy from user space to the RS232 output buffer. */
 	sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir, 
@@ -346,6 +351,8 @@ register tty_t *tp;
 	tty_reply(tp->tty_outrepcode, tp->tty_outcaller, tp->tty_outproc, EIO);
 	tp->tty_outleft = tp->tty_outcum = 0;
   }
+
+  return 1;
 }
 
 
@@ -650,8 +657,9 @@ tty_t *tp;			/* which TTY */
 /*==========================================================================*
  *				rs_read					    *
  *==========================================================================*/
-PRIVATE void rs_read(tp)
+PRIVATE void rs_read(tp, try)
 tty_t *tp;			/* which tty */
+int try;
 {
 /* Process characters from the circular input buffer. */
 
@@ -659,6 +667,7 @@ tty_t *tp;			/* which tty */
   int icount, count, ostate;
 
   if (!(tp->tty_termios.c_cflag & CLOCAL)) {
+  	if(try) return 1;
 	/* Send a SIGHUP if hangup detected. */
 	lock();
 	ostate = rs->ostate;
@@ -669,6 +678,12 @@ tty_t *tp;			/* which tty */
 		tp->tty_termios.c_ospeed = B0;	/* Disable further I/O. */
 		return;
 	}
+  }
+
+  if(try) {
+  	if(rs->icount > 0)
+	  	return 1;
+	return 0;
   }
 
   while ((count = rs->icount) > 0) {
