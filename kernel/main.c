@@ -310,11 +310,10 @@ timer_t *tp;
 	/* Return to the boot monitor. Set the program for the boot monitor.
 	 * For RBT_MONITOR, the MM has provided the program.
 	 */
-	if (how == RBT_HALT) {
-		phys_copy(vir2phys("delay;menu"), kinfo.params_base, 11); 
-	} else if (how == RBT_REBOOT) {
+	if (how == RBT_REBOOT) 
 		phys_copy(vir2phys("delay;boot"), kinfo.params_base, 11);
-	}
+	else 
+		phys_copy(vir2phys("delay"), kinfo.params_base, 6); 
 	level0(monitor);
   }
 
