@@ -60,6 +60,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 			/* Block needed has been found. */
 			if (bp->b_count == 0) rm_lru(bp);
 			bp->b_count++;	/* record that block is in use */
+
 			return(bp);
 		} else {
 			/* This block is not the one sought. */
@@ -114,7 +115,9 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 #endif
 	if (only_search == PREFETCH) bp->b_dev = NO_DEV;
 	else
-	if (only_search == NORMAL) rw_block(bp, READING);
+	if (only_search == NORMAL) {
+		rw_block(bp, READING);
+	}
   }
   return(bp);			/* return the newly acquired block */
 }
@@ -175,8 +178,9 @@ int block_type;			/* INODE_BLOCK, DIRECTORY_BLOCK, or whatever */
    * should be written to the disk immediately to avoid messing up the file
    * system in the event of a crash.
    */
-  if ((block_type & WRITE_IMMED) && bp->b_dirt==DIRTY && bp->b_dev != NO_DEV)
-	rw_block(bp, WRITING);
+  if ((block_type & WRITE_IMMED) && bp->b_dirt==DIRTY && bp->b_dev != NO_DEV) {
+		rw_block(bp, WRITING);
+  } 
 }
 
 

@@ -47,6 +47,9 @@ struct filp **fpt;		/* place to return filp slot */
 	if (f->filp_count == 0) {
 		f->filp_mode = bits;
 		f->filp_pos = 0L;
+		f->filp_selectors = 0;
+		f->filp_select_ops = 0;
+		f->filp_pipe_select_ops = 0;
 		f->filp_flags = 0;
 		*fpt = f;
 		return(OK);

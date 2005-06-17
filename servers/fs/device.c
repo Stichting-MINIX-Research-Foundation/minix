@@ -282,14 +282,17 @@ message *mess_ptr;		/* pointer to message for task */
 	 * trying to send a REVIVE message for an earlier request.
 	 * Handle it and go try again.
 	 */
-	if ((r = receive(task_nr, &local_m)) != OK) break;
+	if ((r = receive(task_nr, &local_m)) != OK) {
+		break;
+	}
 
 	/* If we're trying to send a cancel message to a task which has just
 	 * sent a completion reply, ignore the reply and abort the cancel
 	 * request. The caller will do the revive for the process.
 	 */
-	if (mess_ptr->m_type == CANCEL && local_m.REP_PROC_NR == proc_nr)
+	if (mess_ptr->m_type == CANCEL && local_m.REP_PROC_NR == proc_nr) {
 		return;
+	}
 
 	/* Otherwise it should be a REVIVE. */
 	if (local_m.m_type != REVIVE) {
@@ -313,7 +316,9 @@ message *mess_ptr;		/* pointer to message for task */
 	}
 
   	/* Did the process we did the sendrec() for get a result? */
-  	if (mess_ptr->REP_PROC_NR == proc_nr) break;
+  	if (mess_ptr->REP_PROC_NR == proc_nr) {
+  		break;
+  	}
 
 	/* Otherwise it should be a REVIVE. */
 	if (mess_ptr->m_type != REVIVE) {

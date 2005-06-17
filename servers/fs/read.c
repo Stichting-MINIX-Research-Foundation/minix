@@ -21,6 +21,13 @@
 #include "param.h"
 #include "super.h"
 
+#define VVIRCOPY 0
+
+#if VVIRCOPY
+#define NOVVIRCOPY	0
+#else
+#define NOVVIRCOPY	1
+#endif
 
 FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, off_t position,
 			unsigned off, int chunk, unsigned left, int rw_flag,
@@ -79,8 +86,10 @@ int rw_flag;			/* READING or WRITING */
    * it means something has gone wrong we can't repair now.
    */
   if(copy_queue_used != 0) {
-  	panic(__FILE__,"copy queue size nonzero when entering read_write().",
-  		copy_queue_used);
+  	panic(__FILE__,"start - copy queue size nonzero", copy_queue_used);
+  }
+  if(bufs_in_use < 0) {
+  	panic(__FILE__,"start - bufs_in_use negative", bufs_in_use);
   }
 
   /* MM loads segments by putting funny things in upper 10 bits of 'fd'. */
@@ -167,8 +176,9 @@ int rw_flag;			/* READING or WRITING */
 
 	/* Pipes are a little different.  Check. */
 	if (rip->i_pipe == I_PIPE) {
-	       r = pipe_check(rip,rw_flag,oflags,
-	       		m_in.nbytes,position,&partial_cnt);
+		struct filp *other_end;
+	       r = pipe_check(rip, rw_flag, oflags,
+	       		m_in.nbytes, position, &partial_cnt, 0);
 	       if (r <= 0) return(r);
 	}
 
@@ -210,7 +220,7 @@ int rw_flag;			/* READING or WRITING */
 	}
   }
 
-#if 0
+#if VVIRCOPY
   /* do copying to/from user space */
   r2 = rw_chunk_finish(&completed);
 #endif
@@ -221,11 +231,14 @@ int rw_flag;			/* READING or WRITING */
 		if (position > f_size) rip->i_size = position;
 	}
   } else {
-	if (rip->i_pipe == I_PIPE && position >= rip->i_size) {
-		/* Reset pipe pointers. */
-		rip->i_size = 0;	/* no data left */
-		position = 0;		/* reset reader(s) */
-		if ( (wf = find_filp(rip, W_BIT)) != NIL_FILP) wf->filp_pos =0;
+	if (rip->i_pipe == I_PIPE) {
+		if( position >= rip->i_size) {
+			/* Reset pipe pointers. */
+			rip->i_size = 0;	/* no data left */
+			position = 0;		/* reset reader(s) */
+			wf = find_filp(rip, W_BIT);
+			if (wf != NIL_FILP) wf->filp_pos = 0;
+		}
 	}
   }
   f->filp_pos = position;
@@ -261,6 +274,12 @@ int rw_flag;			/* READING or WRITING */
 	}
 	fp->fp_cum_io_partial = 0;
 	return(cum_io);
+  }
+  if(copy_queue_used != 0) {
+  	panic(__FILE__,"end - copy queue size nonzero", copy_queue_used);
+  }
+  if(bufs_in_use < 0) {
+  	panic(__FILE__,"end - bufs_in_use negative", bufs_in_use);
   }
   return(r);
 }
@@ -332,7 +351,7 @@ int *completed;			/* number of bytes copied */
 	zero_block(bp);
   }
 
-#if 1
+#if NOVVIRCOPY
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_vircopy(FS_PROC_NR, D, (phys_bytes) (bp->b_data+off),
@@ -416,7 +435,6 @@ PRIVATE int rw_chunk_finish(int *completed)
 		user->segment = copy_queue[i].user_seg;
 		user->offset = copy_queue[i].user_offset;
 		total += copy_queue[i].chunk;
-		put_block(copy_queue[i].bp, copy_queue[i].blocktype);
 	}
 
 	m.m_type = SYS_VIRVCOPY;
@@ -425,6 +443,10 @@ PRIVATE int rw_chunk_finish(int *completed)
 
 	if((r=sendrec(SYSTASK, &m)) < 0) {
 		panic(__FILE__,"rw_chunk_finish: virvcopy sendrec failed", r);
+	}
+
+	for(i = 0; i < copy_queue_used; i++) {
+		put_block(copy_queue[i].bp, copy_queue[i].blocktype);
 	}
 
 	*completed = total;

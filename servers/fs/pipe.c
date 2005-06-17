@@ -18,12 +18,14 @@
 #include <signal.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <sys/select.h>
 #include "dmap.h"
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"
 #include "param.h"
 #include "super.h"
+#include "select.h"
 
 /*===========================================================================*
  *				do_pipe					     *
@@ -82,13 +84,14 @@ PUBLIC int do_pipe()
 /*===========================================================================*
  *				pipe_check				     *
  *===========================================================================*/
-PUBLIC int pipe_check(rip, rw_flag, oflags, bytes, position, canwrite)
+PUBLIC int pipe_check(rip, rw_flag, oflags, bytes, position, canwrite, notouch)
 register struct inode *rip;	/* the inode of the pipe */
 int rw_flag;			/* READING or WRITING */
 int oflags;			/* flags set by open or fcntl */
 register int bytes;		/* bytes to be read or written (all chunks) */
 register off_t position;	/* current file position */
 int *canwrite;			/* return: number of bytes we can write */
+int notouch;			/* check only */
 {
 /* Pipes are a little different.  If a process reads from an empty pipe for
  * which a writer still exists, suspend the reader.  If the pipe is empty
@@ -106,11 +109,13 @@ int *canwrite;			/* return: number of bytes we can write */
 			if (oflags & O_NONBLOCK) {
 				r = EAGAIN;
 			} else {
-				suspend(XPIPE);	/* block reader */
+				if(!notouch)
+					suspend(XPIPE);	/* block reader */
 				r = SUSPEND;
 			}
 			/* If need be, activate sleeping writers. */
-			if (susp_count > 0) release(rip, WRITE, susp_count);
+			if (susp_count > 0 && !notouch)
+				release(rip, WRITE, susp_count);
 		}
 		return(r);
 	}
@@ -118,7 +123,8 @@ int *canwrite;			/* return: number of bytes we can write */
 	/* Process is writing to a pipe. */
 	if (find_filp(rip, R_BIT) == NIL_FILP) {
 		/* Tell kernel to generate a SIGPIPE signal. */
-		sys_kill((int)(fp - fproc), SIGPIPE);
+		if(!notouch)
+			sys_kill((int)(fp - fproc), SIGPIPE);
 		return(EPIPE);
 	}
 
@@ -128,7 +134,8 @@ int *canwrite;			/* return: number of bytes we can write */
 		else if ((oflags & O_NONBLOCK) && bytes > PIPE_SIZE(rip->i_sp->s_block_size)) {
 			if ( (*canwrite = (PIPE_SIZE(rip->i_sp->s_block_size) - position)) > 0)  {
 				/* Do a partial write. Need to wakeup reader */
-				release(rip, READ, susp_count);
+				if(!notouch)
+					release(rip, READ, susp_count);
 				return(1);
 			} else {
 				return(EAGAIN);
@@ -143,12 +150,14 @@ int *canwrite;			/* return: number of bytes we can write */
 				return(1);
 			}
 		}
-		suspend(XPIPE);	/* stop writer -- pipe full */
+		if(!notouch)
+			suspend(XPIPE);	/* stop writer -- pipe full */
 		return(SUSPEND);
 	}
 
 	/* Writing to an empty pipe.  Search for suspended reader. */
-	if (position == 0) release(rip, READ, susp_count);
+	if (position == 0 && !notouch)
+		release(rip, READ, susp_count);
   }
 
   *canwrite = 0;
@@ -197,6 +206,25 @@ int count;			/* max number of processes to release */
  */
 
   register struct fproc *rp;
+  struct filp *f;
+
+  /* Trying to perform the call also includes SELECTing on it with that
+   * operation.
+   */
+  if(call_nr == READ || call_nr == WRITE) {
+  	  int op;
+  	  if(call_nr == READ)
+  	  	op = SEL_RD;
+  	  else
+  	  	op = SEL_WR;
+	  for(f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+  		if(f->filp_count < 1 || !(f->filp_pipe_select_ops & op) ||
+  		   f->filp_ino != ip)
+  			continue;
+  		 select_callback(f, op);
+		f->filp_pipe_select_ops &= ~op;
+  	}
+  }
 
   /* Search the proc table. */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
@@ -215,9 +243,9 @@ int count;			/* max number of processes to release */
 /*===========================================================================*
  *				revive					     *
  *===========================================================================*/
-PUBLIC void revive(proc_nr, bytes)
+PUBLIC void revive(proc_nr, returned)
 int proc_nr;			/* process to revive */
-int bytes;			/* if hanging on task, how many bytes read */
+int returned;			/* if hanging on task, how many bytes read */
 {
 /* Revive a previously blocked process. When a process hangs on tty, this
  * is the way it is eventually released.
@@ -232,8 +260,8 @@ int bytes;			/* if hanging on task, how many bytes read */
 
   /* The 'reviving' flag only applies to pipes.  Processes waiting for TTY get
    * a message right away.  The revival process is different for TTY and pipes.
-   * For TTY revival, the work is already done, for pipes it is not: the proc
-   * must be restarted so it can try again.
+   * For select and TTY revival, the work is already done, for pipes it is not:
+   *  the proc must be restarted so it can try again.
    */
   task = -rfp->fp_task;
   if (task == XPIPE || task == XLOCK) {
@@ -244,10 +272,12 @@ int bytes;			/* if hanging on task, how many bytes read */
 	rfp->fp_suspended = NOT_SUSPENDED;
 	if (task == XPOPEN) /* process blocked in open or create */
 		reply(proc_nr, rfp->fp_fd>>8);
-	else {
+	else if(task == XSELECT) {
+		reply(proc_nr, returned);
+	} else {
 		/* Revive a process suspended on TTY or other device. */
-		rfp->fp_nbytes = bytes;	/*pretend it wants only what there is*/
-		reply(proc_nr, bytes);	/* unblock the process */
+		rfp->fp_nbytes = returned;	/*pretend it wants only what there is*/
+		reply(proc_nr, returned);	/* unblock the process */
 	}
   }
 }
@@ -282,6 +312,10 @@ PUBLIC int do_unpause()
 	case XLOCK:		/* process trying to set a lock with FCNTL */
 		break;
 
+	case XSELECT:		/* process blocking on select() */
+		select_forget(proc_nr);
+		break;
+
 	case XPOPEN:		/* process trying to open a fifo */
 		break;
 
@@ -305,3 +339,46 @@ PUBLIC int do_unpause()
   reply(proc_nr, EINTR);	/* signal interrupted call */
   return(OK);
 }
+
+/*===========================================================================*
+ *				select_request_pipe			     *
+ *===========================================================================*/
+PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
+{
+	int orig_ops, r = 0, err, canwrite;
+	orig_ops = *ops;
+	if((*ops & SEL_RD)) {
+		if((err = pipe_check(f->filp_ino, READING, 0,
+			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
+			r |= SEL_RD;
+		if(err < 0 && err != SUSPEND && (*ops & SEL_ERR))
+			r |= SEL_ERR;
+	}
+	if((*ops & SEL_WR)) {
+		if((err = pipe_check(f->filp_ino, WRITING, 0,
+			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
+			r |= SEL_WR;
+		if(err < 0 && err != SUSPEND && (*ops & SEL_ERR))
+			r |= SEL_ERR;
+	}
+
+	*ops = r;
+
+	if(!r && block) {
+		f->filp_pipe_select_ops |= orig_ops;
+	}
+
+	return SEL_OK;
+}
+
+/*===========================================================================*
+ *				select_match_pipe			     *
+ *===========================================================================*/
+PUBLIC int select_match_pipe(struct filp *f)
+{
+	/* recognize either pipe or named pipe (FIFO) */
+	if(f && f->filp_ino && (f->filp_ino->i_mode & I_NAMED_PIPE))
+		return 1;
+	return 0;
+}
+

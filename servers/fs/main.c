@@ -64,22 +64,29 @@ PUBLIC void main()
         if (call_nr == HARD_STOP) { 
         	do_sync();
         	sys_exit(0);  		/* never returns */
-        }
+        } else if(call_nr == SYN_ALARM) {
+        	/* Not a user request; system has expired one of our timers,
+        	 * currently only in use for select(). Check it.
+        	 */
+        	fs_expire_timers(m_in.NOTIFY_ARG);
+        } else if(call_nr == DEV_SELECTED) {
+        	/* device notify()s us of fd that has become usable */
+        	select_notified(&m_in);
+        } else {
+		/* Call the internal function that does the work. */
+		if (call_nr < 0 || call_nr >= NCALLS) { 
+			error = ENOSYS;
+			printf("FS, warning illegal %d system call by %d\n", call_nr, who);
+		} else {
+			error = (*call_vec[call_nr])();
+		}
 
-	/* Call the internal function that does the work. */
-	if (call_nr < 0 || call_nr >= NCALLS) { 
-		error = ENOSYS;
-		printf("FS, warning illegal %d system call by %d\n", call_nr, who);
-	} else {
-		error = (*call_vec[call_nr])();
+		/* Copy the results back to the user and send reply. */
+		if (error != SUSPEND) { reply(who, error); }
+		if (rdahed_inode != NIL_INODE) {
+			read_ahead(); /* do block read ahead */
+		}
 	}
-
-	/* Copy the results back to the user and send reply. */
-	if (error != SUSPEND) { reply(who, error); }
-	if (rdahed_inode != NIL_INODE) {
-		read_ahead(); /* do block read ahead */
-	}
-
   }
 }
 
@@ -158,7 +165,7 @@ int result;			/* result of the call (usually OK or error #) */
   int s;
   m_out.reply_type = result;
   s = send(whom, &m_out);
-  if (s != OK) printf("FS: couldn't send reply: %d\n", s);
+  if (s != OK) printf("FS: couldn't send reply %d: %d\n", result, s);
 }
 
 

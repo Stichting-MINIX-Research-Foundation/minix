@@ -1,5 +1,7 @@
 /* Function prototypes. */
 
+#include "timers.h"
+
 /* Structs used in prototypes must be declared as such first. */
 struct buf;
 struct filp;		
@@ -113,10 +115,13 @@ _PROTOTYPE( struct inode *last_dir, (char *path, char string [NAME_MAX]));
 _PROTOTYPE( int do_pipe, (void)						);
 _PROTOTYPE( int do_unpause, (void)					);
 _PROTOTYPE( int pipe_check, (struct inode *rip, int rw_flag,
-			int oflags, int bytes, off_t position, int *canwrite));
+			int oflags, int bytes, off_t position, int *canwrite, int notouch));
 _PROTOTYPE( void release, (struct inode *ip, int call_nr, int count)	);
 _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);
+_PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)			);
+_PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
+_PROTOTYPE( int select_match_pipe, (struct filp *f)			);
 
 /* protect.c */
 _PROTOTYPE( int do_access, (void)					);
@@ -174,4 +179,12 @@ _PROTOTYPE( void zero_block, (struct buf *bp)				);
 
 /* select.c */
 _PROTOTYPE( int do_select, (void)					);
+_PROTOTYPE( int select_callback, (struct filp *, int ops)		);
+_PROTOTYPE( void select_forget, (int fproc)				);
+_PROTOTYPE( void select_timeout_check, (timer_t *)			);
+_PROTOTYPE( int select_notified, (message *)				);
 
+/* timers.c */
+_PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, tmr_func_t watchdog, int arg));
+_PROTOTYPE( void fs_expire_timers, (clock_t now));
+_PROTOTYPE( void fs_cancel_timer, (timer_t *tp));
