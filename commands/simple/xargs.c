@@ -56,7 +56,6 @@ static char sccsid[] = "@(#)xargs.c	5.11 (Berkeley) 6/19/91";
 #include <stdarg.h>
 #if __minix
 #define _PATH_ECHO	"/bin/echo"
-typedef unsigned u_int;
 #else
 #include "pathnames.h"
 #endif

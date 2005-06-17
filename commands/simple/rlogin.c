@@ -76,10 +76,6 @@ static char sccsid[] = "@(#)rlogin.c	5.33 (Berkeley) 3/1/91";
 #include <signal.h>
 #include <stdlib.h>
 
-#if __minix
-typedef unsigned char u_char;
-#endif
-
 #ifdef KERBEROS
 #include <kerberosIV/des.h>
 #include <kerberosIV/krb.h>

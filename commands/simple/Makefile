@@ -891,6 +891,7 @@ install:	\
 	/usr/bin/ifdef \
 	/usr/bin/in.fingerd \
 	/usr/bin/in.rshd \
+	/bin/install \
 	/usr/bin/install \
 	/usr/bin/intr \
 	/usr/bin/irdpd \

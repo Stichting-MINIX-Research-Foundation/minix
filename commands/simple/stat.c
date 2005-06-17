@@ -41,13 +41,6 @@
 #  define BSD
 # endif
 
-# ifndef BSD
-typedef unsigned char u_char;
-typedef unsigned short u_short;
-typedef unsigned int u_int;
-typedef unsigned long u_long;
-# endif
-
 # ifndef S_IREAD
 #  define S_IREAD	S_IRUSR
 #  define S_IWRITE	S_IWUSR

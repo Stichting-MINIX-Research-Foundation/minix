@@ -82,11 +82,15 @@ esac
 
 # Installing Minix on the hard disk.
 # Must be in / or we can't mount or umount.
-case "`pwd`" in
-/?*)
-    echo "Please type 'cd /' first, you are locking up `pwd`" >&2	
-    exit 1
-esac
+if [ ! -f /CD ]
+then
+	case "`pwd`" in
+	/?*)
+	    echo "Please type 'cd /' first, you are locking up `pwd`" >&2	
+	    exit 1
+	esac
+fi
+
 case "$0" in
 /tmp/*)
     rm -f "$0"

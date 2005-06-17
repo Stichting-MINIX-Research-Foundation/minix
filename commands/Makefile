@@ -8,7 +8,13 @@ usage:
 	@echo "       make clean     # Delete .o files and other junk" >&2
 	@false
 
-all install clean:
+all::
+	cd gzip-1.2.4 && ./configure --prefix=/usr && make
+
+install clean::
+	cd gzip-1.2.4 && make $@
+
+all install clean::
 	cd `arch` && $(MAKE) $@
 	cd aal && $(MAKE) $@
 	cd advent && $(MAKE) $@

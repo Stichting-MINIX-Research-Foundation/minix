@@ -38,10 +38,6 @@
 #include <net/gen/tcp.h>
 #include <net/gen/tcp_io.h>
 
-typedef u8_t u_char;
-typedef u16_t u_short;
-typedef u32_t u_long;
-
 #undef ERROR
 #else
 #include <stdio.h>

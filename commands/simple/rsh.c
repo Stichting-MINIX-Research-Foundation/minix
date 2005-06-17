@@ -68,7 +68,6 @@ void talk _ARGS(( int nflag, long omask, int pid, int rem ));
 #define _PATH_RLOGIN1	"/bin/rlogin"
 #define _PATH_RLOGIN2	"/usr/bin/rlogin"
 
-typedef unsigned u_int;
 #else
 #include <sys/types.h>
 #include <sys/signal.h>
