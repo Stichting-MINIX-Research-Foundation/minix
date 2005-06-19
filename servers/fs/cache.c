@@ -411,6 +411,14 @@ int rw_flag;			/* READING or WRITING */
 			bufqsize--;
 		}
 	}
+	if(rw_flag == WRITING && i == 0) {
+		/* We're not making progress, this means we might keep
+		 * looping. Buffers remain dirty if un-written. Buffers are
+		 * lost if invalidate()d or LRU-removed while dirty. This
+		 * is better than keeping unwritable blocks around forever..
+		 */
+		break;
+	}
   }
 }
 
