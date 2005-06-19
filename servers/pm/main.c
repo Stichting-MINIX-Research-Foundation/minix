@@ -256,7 +256,7 @@ struct memory *mem_chunks;			/* store mem chunks here */
  */
   long base, size, limit;
   char *s, *end;			/* use to parse boot variable */ 
-  int i;
+  int i, done = 0;
   struct memory *memp;
 #if _WORD_SIZE == 2
   unsigned long max_address;
@@ -278,7 +278,7 @@ struct memory *mem_chunks;			/* store mem chunks here */
    * and b2:s2 are combined if the memory is adjacent. 
    */
   s = find_param("memory");		/* get memory boot variable */
-  for (i = 0; i < NR_MEMS; i++) {
+  for (i = 0; i < NR_MEMS && !done; i++) {
 	memp = &mem_chunks[i];		/* next mem chunk is stored here */
 	base = size = 0;		/* initialize next base:size pair */
 	if (*s != 0) {			/* get fresh data, unless at end */	
@@ -291,7 +291,7 @@ struct memory *mem_chunks;			/* store mem chunks here */
 	    /* Read fresh size and expect comma or assume end. */ 
 	    size = strtoul(s, &end, 0x10);		/* get number */
 	    if (end != s && *end == ',') s = ++end;	/* skip ',' */
-	    else *s=0;					/* found end */
+	    else done = 1;
 	}
 	limit = base + size;	
 #if _WORD_SIZE == 2
