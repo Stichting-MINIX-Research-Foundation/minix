@@ -141,7 +141,7 @@ int argc;
 char *argv[];
 {
   int nread, mode, usrid, grpid, ch;
-  block_t blocks;
+  block_t blocks, maxblocks;
   block_t i;
   ino_t root_inum;
   ino_t inodes;
@@ -225,12 +225,29 @@ char *argv[];
   bzero(zero, block_size);
 
   /* Determine the size of the device if not specified as -b or proto. */
-  if (argc - optind == 1 && blocks == 0) blocks = sizeup(argv[optind]);
+  maxblocks = sizeup(argv[optind]);
+  if (argc - optind == 1 && blocks == 0) {
+  	blocks = maxblocks;
+  	/* blocks == 0 is checked later, but leads to a funny way of
+  	 * reporting a 0-sized device (displays usage).
+  	 */
+  	if(blocks < 1) {
+  		fprintf(stderr, "%s: this device can't hold a filesystem.\n",
+  			progname);
+  		return 1;
+  	}
+  }
 
   /* The remaining args must be 'special proto', or just 'special' if the
    * no. of blocks has already been specified.
    */
   if (argc - optind != 2 && (argc - optind != 1 || blocks == 0)) usage();
+
+  if (blocks > maxblocks) {
+ 	fprintf(stderr, "%s: number of blocks too large for device.\n",
+  		progname);
+  	return 1;
+  }
 
   /* Check special. */
   check_mtab(argv[optind]);
