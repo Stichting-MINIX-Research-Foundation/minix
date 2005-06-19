@@ -220,6 +220,7 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
 	{ 0x1106, 0x0305, },	/* VIA VT8363/8365 */
 	{ 0x1106, 0x3099, },	/* VIA VT8367 [KT266] */
 	{ 0x1106, 0x3188, },	/* VIA */
+	{ 0x1106, 0x0282, },	/* VIA */
 	{ 0x1106, 0x0204, },	/* VIA VT8367 [KT266] */
 	{ 0x8086, 0x122D, },	/* Intel 82437FX */
 	{ 0x8086, 0x1237, }, 	/* Intel 82441FX */
