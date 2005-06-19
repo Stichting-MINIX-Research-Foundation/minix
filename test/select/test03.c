@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <sys/time.h>
 
 void dump_fdset(fd_set *set) {
 	int i;

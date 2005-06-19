@@ -14,9 +14,11 @@
 
 #include <sys/types.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #define SECONDS 3
 #define USECONDS 3000000L
