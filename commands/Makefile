@@ -33,6 +33,7 @@ all install clean::
 	cd flex-2.3.7 && $(MAKE) $@
 	cd ftp && $(MAKE) $@
 	cd ftpd && $(MAKE) $@
+	cd ftpd200 && $(MAKE) $@
 	cd ibm && $(MAKE) $@
 	cd kermit && $(MAKE) $@
 #	cd kermit_211 && $(MAKE) $@

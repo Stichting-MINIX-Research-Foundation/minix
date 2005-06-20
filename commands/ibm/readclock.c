@@ -181,7 +181,9 @@ PUBLIC int main(int argc, char **argv)
   if (strftime(date, sizeof(date),
 			"%a %b %d %H:%M:%S %Z %Y", &tmnow) != 0) {
 	if (date[8] == '0') date[8]= ' ';
+#if 0
 	printf("%s [CMOS read via FS, see command/ibm/readclock.c]\n", date);
+#endif
   }
   exit(0);
 }
