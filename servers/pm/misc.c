@@ -92,18 +92,18 @@ PUBLIC int do_getsysinfo()
 PUBLIC int do_getprocnr()
 {
   register struct mproc *rmp;
-  static char search_key[PROC_NAME_LEN];
+  static char search_key[PROC_NAME_LEN+1];
   int key_len;
   int s;
 
   if (m_in.namelen > 0) {		/* lookup process by name */
-  	key_len = MAX(m_in.namelen, PROC_NAME_LEN);
+  	key_len = MIN(m_in.namelen, PROC_NAME_LEN);
  	if (OK != (s=sys_datacopy(who, (vir_bytes) m_in.addr, 
  			SELF, (vir_bytes) search_key, key_len))) 
  		return(s);
  	search_key[key_len] = '\0';	/* terminate for safety */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if (rmp->mp_flags & IN_USE && 
+		if ((rmp->mp_flags & IN_USE) && 
 			strncmp(rmp->mp_name, search_key, key_len)==0) {
   			mp->mp_reply.procnr = (int) (rmp - mproc);
   			return(OK);
@@ -210,14 +210,17 @@ PUBLIC int do_svrctl()
           val_len = strlen(val_start) + 1;
       }
 
+      /* See if it fits in the client's buffer. */
+      if (val_len > sysgetenv.vallen)
+      	return E2BIG;
+
       /* Value found, make the actual copy (as far as possible). */
-      copy_len = MAX(val_len, sysgetenv.vallen); 
+      copy_len = MIN(val_len, sysgetenv.vallen); 
       if ((s=sys_datacopy(SELF, (vir_bytes) val_start, 
               who, (vir_bytes) sysgetenv.val, copy_len)) != OK)
           return(s);
 
-      /* See if it fits in the client's buffer. */
-      return (copy_len > sysgetenv.vallen) ? E2BIG : OK;
+      return OK;
   }
   case MMSIGNON: {
 	/* A user process becomes a task.  Simulate an exit by
@@ -243,7 +246,7 @@ PUBLIC int do_svrctl()
 
 	/* Disinherit children. */
 	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if (rmp->mp_flags & IN_USE && rmp->mp_parent == who) {
+		if ((rmp->mp_flags & IN_USE) && rmp->mp_parent == who) {
 			rmp->mp_parent = INIT_PROC_NR;
 		}
 	}
