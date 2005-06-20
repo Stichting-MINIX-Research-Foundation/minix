@@ -1,6 +1,7 @@
 # Makefile for commands.
 
 MAKE	= exec make -$(MAKEFLAGS)
+GZIP=gzip-1.2.4
 
 usage:
 	@echo "Usage: make all       # Compile all commands" >&2
@@ -8,11 +9,11 @@ usage:
 	@echo "       make clean     # Delete .o files and other junk" >&2
 	@false
 
-all::
-	cd gzip-1.2.4 && ./configure --prefix=/usr && make
+all install::
+	cd $(GZIP) && ./configure --prefix=/usr && make $@
 
-install clean::
-	cd gzip-1.2.4 && make $@
+clean::
+	if [ -f $(GZIP)/Makefile] ; then cd $(GZIP) && make $@; fi
 
 all install clean::
 	cd `arch` && $(MAKE) $@
