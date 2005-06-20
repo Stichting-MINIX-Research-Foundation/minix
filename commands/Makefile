@@ -40,6 +40,7 @@ all install clean::
 	cd make && $(MAKE) $@
 	cd mined && $(MAKE) $@
 	cd patch && $(MAKE) $@
+	cd ps && $(MAKE) $@
 	cd reboot && $(MAKE) $@
 	cd rlogind && $(MAKE) $@
 	cd scripts && $(MAKE) $@

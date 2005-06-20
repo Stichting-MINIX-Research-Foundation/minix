@@ -5,6 +5,8 @@ CC=	exec cc
 CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 MAKE=	exec make -$(MAKEFLAGS)
 
+all: ps
+
 # process status utility
 ps:	ps.c /usr/include/minix/config.h /usr/include/minix/const.h \
 		/usr/src/kernel/const.h /usr/src/kernel/type.h \
