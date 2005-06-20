@@ -39,15 +39,13 @@ FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
 PUBLIC void main()
 {
 /* Start the ball rolling. */
-
   register struct proc *rp;
   register int i;
   int hdrindex;			/* index to array of a.out headers */
-  phys_clicks text_base, bootdev_base;
-  vir_clicks text_clicks, bootdev_clicks;
+  phys_clicks text_base;
+  vir_clicks text_clicks;
   vir_clicks data_clicks;
   reg_t ktsb;			/* kernel task stack base */
-  struct memory *memp;
   struct system_image *ttp;
   struct exec e_hdr;		/* for a copy of an a.out header */
 

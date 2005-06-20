@@ -14,21 +14,19 @@ g = $n/gen
 CC =	exec cc
 CPP =	$l/cpp
 LD =	$(CC) -.o
-CFLAGS = -I$i
+CFLAGS = -I$i 
 LDFLAGS = -i 
-LIBS = -lsys -lutils -ltimers
 
 HEAD =	mpx.o
-
 OBJS =	start.o protect.o klibc.o klib.o table.o main.o proc.o \
-	i8259.o exception.o system.o clock.o misc.o \
-
+	i8259.o exception.o system.o clock.o misc.o 
 SYS =	system/system.a 
+LIBS = -ltimers
 
 
 # What to make.
 kernel build: $(HEAD) $(OBJS) $(SYS) 
-	$(LD) $(LDFLAGS) -o kernel $(HEAD) $(OBJS) $(SYS) $(CLOCK) $(LIBS)
+	$(LD) $(CFLAGS) $(LDFLAGS) -o kernel $(HEAD) $(OBJS) $(SYS) $(LIBS)
 	install -S 0 kernel
 
 $(SYS):

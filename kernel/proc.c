@@ -1,7 +1,3 @@
-#define NEW_ELOCKED_CHECK 	1
-#define NEW_SCHED_Q 		0
-#define OLD_SEND 		0
-#define OLD_RECV 		0
 /* This file contains essentially all of the process and message handling.
  * Together with "mpx.s" it forms the lowest layer of the MINIX kernel.
  * There is one entry point from the outside:
@@ -199,37 +195,16 @@ unsigned flags;				/* system call flags */
  * for this message, copy the message to it and unblock 'dst'. If 'dst' is
  * not waiting at all, or is waiting for another source, queue 'caller_ptr'.
  */
-  register struct proc *dst_ptr;
-#if OLD_SEND
-  register struct proc *next_ptr;
-  register struct proc *xp;
-#else
+  register struct proc *dst_ptr = proc_addr(dst);
   register struct proc **xpp;
   register struct proc *xp;
-#endif
-
-  dst_ptr = proc_addr(dst);	/* pointer to destination's proc entry */
-
 
   /* Check for deadlock by 'caller_ptr' and 'dst' sending to each other. */
-#if NEW_ELOCKED_CHECK
   xp = dst_ptr;
   while (xp->p_flags & SENDING) {		/* check while sending */
   	xp = proc_addr(xp->p_sendto);		/* get xp's destination */
   	if (xp == caller_ptr) return(ELOCKED);	/* deadlock if cyclic */
   }
-#else
-  if (dst_ptr->p_flags & SENDING) {
-	next_ptr = proc_addr(dst_ptr->p_sendto);
-	while (TRUE) {
-		if (next_ptr == caller_ptr) return(ELOCKED);
-		if (next_ptr->p_flags & SENDING)
-			next_ptr = proc_addr(next_ptr->p_sendto);
-		else
-			break;
-	}
-  }
-#endif
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
@@ -248,19 +223,9 @@ unsigned flags;				/* system call flags */
 	caller_ptr->p_sendto = dst;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
-#if OLD_SEND
-	if ( (next_ptr = dst_ptr->p_caller_q) == NIL_PROC)
-		dst_ptr->p_caller_q = caller_ptr;
-	else {
-		while (next_ptr->p_q_link != NIL_PROC)
-			next_ptr = next_ptr->p_q_link;
-		next_ptr->p_q_link = caller_ptr;
-	}
-#else
 	xpp = &dst_ptr->p_caller_q;		/* find end of list */
 	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_q_link;
 	*xpp = caller_ptr;			/* add caller to end */
-#endif
 	caller_ptr->p_q_link = NIL_PROC;	/* mark new end of list */
   } else {
 	return(ENOTREADY);
@@ -281,12 +246,7 @@ unsigned flags;				/* system call flags */
  * acquire it and deblock the sender.  If no message from the desired source
  * is available block the caller, unless the flags don't allow blocking.  
  */
-#if OLD_RECV
-  register struct proc *sender_ptr;
-  register struct proc *previous_ptr;
-#else
   register struct proc **xpp;
-#endif
   register struct notification **ntf_q_pp;
   message m;
   int bit_nr;
@@ -298,23 +258,6 @@ unsigned flags;				/* system call flags */
   if (!(caller_ptr->p_flags & SENDING)) {
 
     /* Check caller queue. Use pointer pointers to keep code simple. */
-#if OLD_RECV		/* to hairy, unreadable */
-    for (sender_ptr = caller_ptr->p_caller_q; sender_ptr != NIL_PROC;
-	 previous_ptr = sender_ptr, sender_ptr = sender_ptr->p_q_link) {
-	if (src == ANY || src == proc_nr(sender_ptr)) {
-		/* An acceptable message has been found. */
-		CopyMess(sender_ptr->p_nr, sender_ptr,
-			 sender_ptr->p_messbuf, caller_ptr, m_ptr);
-		if (sender_ptr == caller_ptr->p_caller_q)
-			caller_ptr->p_caller_q = sender_ptr->p_q_link;
-		else
-			previous_ptr->p_q_link = sender_ptr->p_q_link;
-		if ((sender_ptr->p_flags &= ~SENDING) == 0)
-			ready(sender_ptr);	/* deblock sender */
-		return(OK);
-	}
-    }
-#else
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
 	if (src == ANY || src == proc_nr(*xpp)) {
@@ -326,7 +269,6 @@ unsigned flags;				/* system call flags */
 	}
 	xpp = &(*xpp)->p_q_link;		/* proceed to next */
     }
-#endif
 
     /* Check if there are pending notifications, except for SENDREC. */
     if (! (flags & FRESH_ANSWER)) {
@@ -507,33 +449,19 @@ register struct proc *rp;	/* this process is now runnable */
    * user processes are added in front of the queue, because this is a bit 
    * fairer to I/O bound processes. 
    */
-#if NEW_SCHED_Q
-  if (isuserp(rp)) {				/* add to front of queue */
-  	rp->p_nextready = rdy_head[q];		/* chain current front */
-  	rdy_head[q] = rp;			/* rp becomes new front */
-  }
-  else {					/* add to end of queue */
-  	xpp = &rdy_head[q];			/* find pointer to end */
- 	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_nextready;
- 	*xpp = rp;				/* replace end with rp */
-  	rp->p_nextready = NIL_PROC;		/* mark end of queue */
-  }
-#else
-  if (isuserp(rp)) {	/* add to front of queue */
-  	if (rdy_head[q] == NIL_PROC)
-		rdy_tail[q] = rp;
-  	rp->p_nextready = rdy_head[q];		/* add to front of queue */
-  	rdy_head[q] = rp;
+  if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
+      rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
+      rp->p_nextready = NIL_PROC;		/* mark new end */
   } 
-  else {
-      if (rdy_head[q] != NIL_PROC)
-		rdy_tail[q]->p_nextready = rp;	/* add to end of queue */
-      else 
-		rdy_head[q] = rp;		/* add to empty queue */
-      rdy_tail[q] = rp;
-      rp->p_nextready = NIL_PROC;
+  else if (isuserp(rp)) {			/* add to head of queue */
+      rp->p_nextready = rdy_head[q];		/* chain head of queue */
+      rdy_head[q] = rp;				/* set new queue head */
+  } 
+  else {					/* add to tail of queue */
+      rdy_tail[q]->p_nextready = rp;		/* chain tail of queue */	
+      rdy_tail[q] = rp;				/* set new queue tail */
+      rp->p_nextready = NIL_PROC;		/* mark new end */
   }
-#endif
 
   /* Run 'rp' next if it has a higher priority than 'proc_ptr' or 'next_ptr'. 
    * This actually should be done via pick_proc(), but the message passing 
@@ -552,12 +480,8 @@ register struct proc *rp;	/* this process is no longer runnable */
 /* A process has blocked. See ready for a description of the queues. */
 
   register int q = rp->p_priority;		/* queue to use */
-#if NEW_SCHED_Q
   register struct proc **xpp;			/* iterate over queue */
-#else
-  register struct proc **qtail; 		/* queue's rdy_tail */
-  register struct proc *xp;
-#endif
+  register struct proc *prev_xp;
 
 #if ENABLE_K_DEBUGGING
   if(!rp->p_ready) {
@@ -576,71 +500,40 @@ register struct proc *rp;	/* this process is no longer runnable */
    * process if it is found. A process can be made unready even if it is not 
    * running by being sent a signal that kills it.
    */
-#if NEW_SCHED_Q
-  xpp = &rdy_head[q];
-  while (*xpp != NIL_PROC) {			/* check entire queue */
-      if (*xpp == rp) {				/* lookup unready process */
-          *xpp = (*xpp)->p_nextready;		/* replace it with next */
-          if (rp == proc_ptr || rp == next_ptr)	/* current process removed */
+  prev_xp = NIL_PROC;				
+  for (xpp = &rdy_head[q]; *xpp != NIL_PROC; xpp = &(*xpp)->p_nextready) {
+
+      if (*xpp == rp) {				/* found process to remove */
+          *xpp = (*xpp)->p_nextready;		/* replace with next chain */
+          if (rp == rdy_tail[q])		/* queue tail removed */
+              rdy_tail[q] = prev_xp;		/* set new tail */
+          if (rp == proc_ptr || rp == next_ptr)	/* active process removed */
               pick_proc();			/* pick new process to run */
           break;
       }
-      xpp = &(*xpp)->p_nextready;		/* proceed to next */
+      prev_xp = *xpp;				/* save previous in chain */
   }
-#else
-  if ( (xp = rdy_head[q]) != NIL_PROC) {	/* ready queue is empty */
-      if (xp == rp) {				/* check head of queue */
-          rdy_head[q] = xp->p_nextready;	/* new head of queue */
-          if (rp == proc_ptr || rp == next_ptr)	/* current process removed */
-              pick_proc();			/* pick new process to run */
-	if(rp == rdy_tail[q])
-		rdy_tail[q] = NIL_PROC;
-      }
-      else {					/* check body of queue */
-          while (xp->p_nextready != rp)		/* stop if process is next */
-              if ( (xp = xp->p_nextready) == NIL_PROC) 
-                  return;	
-          xp->p_nextready = xp->p_nextready->p_nextready;
-          if (rdy_tail[q] == rp) 		/* possibly update tail */
-              rdy_tail[q] = xp;
-      }
-  }
-#endif
-
 }
 
 /*===========================================================================*
  *				sched					     * 
  *===========================================================================*/
-PRIVATE void sched(queue)
-int queue;
+PRIVATE void sched(q)
+int q;						/* scheduling queue to use */
 {
 /* The current process has run too long. If another low priority (user)
  * process is runnable, put the current process on the end of the user queue,
  * possibly promoting another user to head of the queue.
  */
-  register struct proc **xpp;
-  register struct proc *xp;
-
-  if (rdy_head[queue] == NIL_PROC) return;
+  if (rdy_head[q] == NIL_PROC) return;		/* return for empty queue */
 
   /* One or more user processes queued. */
-#if NEW_SCHED_Q
+  rdy_tail[q]->p_nextready = rdy_head[q];  	/* add expired to end */
+  rdy_tail[q] = rdy_head[q];		   	/* set new queue tail */
+  rdy_head[q] = rdy_head[q]->p_nextready;  	/* set new queue head */
+  rdy_tail[q]->p_nextready = NIL_PROC;	   	/* mark new queue end */
 
-  xp = rdy_head[queue];				/* save expired process */
-  rdy_head[queue] = xp->p_nextready;		/* advance to next process */ 
-  xpp = &rdy_head[queue];			/* find end of queue */
-  while (*xpp != NIL_PROC) xpp = &(*xpp)->p_nextready;
-  *xpp = xp;					/* add expired to end */
-  xp->p_nextready = NIL_PROC;			/* mark new end of queue */
-
-#else
-  rdy_tail[queue]->p_nextready = rdy_head[queue];  /* add expired to end */
-  rdy_tail[queue] = rdy_head[queue];		   /* set new tail */
-  rdy_head[queue] = rdy_head[queue]->p_nextready;  /* set new head */
-  rdy_tail[queue]->p_nextready = NIL_PROC;	   /* mark new end */
-#endif
-  pick_proc();
+  pick_proc();					/* select next to run */
 }
 
 
