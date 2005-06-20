@@ -67,6 +67,7 @@
 
 /* Enable or disable kernel calls (allows for minimal kernel). */
 #define ENABLE_K_DEBUGGING 0	/* kernel debugging calls */
+#define ENABLE_K_LOCKCHECK 0	/* kernel lock() sanity check */
 
 /* Include or exclude an image of /dev/boot in the boot image. */
 #define ENABLE_BOOTDEV	   0

@@ -106,6 +106,9 @@ struct kinfo {
   int nr_tasks;			/* number of kernel tasks */
   char release[4];		/* kernel release number */
   char version[4];		/* kernel version number */
+#if ENABLE_K_LOCKCHECK
+  int relocking;
+#endif
 };
 
 struct machine {
