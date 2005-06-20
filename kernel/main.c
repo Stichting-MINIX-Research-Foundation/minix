@@ -180,6 +180,7 @@ PRIVATE void announce(void)
   /* Check if boot device was loaded with the kernel. */
   if (kinfo.bootdev_base > 0)
       kprintf("Image of /dev/boot loaded. Size: %u KB.\n", kinfo.bootdev_size);
+
 }
 
 

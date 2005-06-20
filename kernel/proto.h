@@ -97,6 +97,7 @@ _PROTOTYPE( void reset, (void)						);
 _PROTOTYPE( void level0, (void (*func)(void))				);
 _PROTOTYPE( void monitor, (void)					);
 _PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)	);
+_PROTOTYPE( unsigned long read_cpu_flags, (void)			);
 
 /* mpx*.s */
 _PROTOTYPE( void idle_task, (void)					);

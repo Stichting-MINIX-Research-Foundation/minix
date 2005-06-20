@@ -32,6 +32,7 @@
 .define	_idle_task	! task executed when there is no work
 .define	_level0		! call a function at level 0
 .define	_read_tsc	! read the cycle counter (Pentium and up)
+.define	_read_cpu_flags	! read the cpu flags
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -544,5 +545,17 @@ _read_tsc:
 	mov ebp, 12(esp)
 	mov (ebp), eax
 	pop ebp
+	ret
+
+!*===========================================================================*
+!*			      read_flags					     *
+!*===========================================================================*
+! PUBLIC unsigned long read_cpu_flags(void);
+! Read the cycle counter of the CPU. Pentium and up. 
+.align 16
+_read_cpu_flags:
+	pushf
+	mov eax, (esp)
+	popf
 	ret
 

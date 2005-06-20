@@ -3,6 +3,7 @@
 #include <ibm/interrupt.h>	/* interrupt numbers and hardware vectors */
 #include <ibm/ports.h>		/* port addresses and magic numbers */
 #include <ibm/bios.h>		/* BIOS addresses, sizes and magic numbers */
+#include <ibm/cpu.h>		/* BIOS addresses, sizes and magic numbers */
 #include <minix/config.h>
 
 /* To translate an address in kernel space to a physical address.  This is
@@ -73,8 +74,14 @@
 #define locktimeend(c)
 #endif
 
+#if ENABLE_K_LOCKCHECK
+#define lockcheck if(!(read_cpu_flags() & X86_FLAG_I)) kinfo.relocking++;
+#else
+#define lockcheck
+#endif
+
 /* Disable/Enable hardware interrupts. */
-#define lock(c, v)	do { intr_disable(); locktimestart(c, v); } while(0)
+#define lock(c, v)	do { lockcheck; intr_disable(); locktimestart(c, v); } while(0)
 #define unlock(c)	do { locktimeend(c); intr_enable(); } while(0)
 
 /* Sizes of memory tables. The boot monitor distinguishes three memory areas, 
