@@ -295,6 +295,9 @@ PUBLIC void kenv_dmp()
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- release:      %.6s\n", kinfo.release); 
     printf("- version:      %.6s\n", kinfo.version); 
+#if ENABLE_K_LOCKCHECK
+    printf("- relocking:    %d\n", kinfo.relocking); 
+#endif
     printf("\n");
 }
 
