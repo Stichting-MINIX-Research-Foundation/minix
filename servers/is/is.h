@@ -20,6 +20,7 @@
 #include <minix/syslib.h>
 #include <minix/utils.h>
 #include <minix/keymap.h>
+#include <minix/bitmap.h>
 
 #include <stdlib.h>
 #include <stdio.h>

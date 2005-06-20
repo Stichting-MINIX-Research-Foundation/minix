@@ -86,28 +86,22 @@ PRIVATE void init_server()
 {
 /* Initialize the information service. */
     message m;
-    int r;
-    long key;
+    int i;
 
     /* Set own process number. */
     is_proc_nr = IS_PROC_NR;
 
     /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6 . */
-    for (key=F1; key<=F12; key++) {
-        if ((r=fkey_enable(key)) != OK) {
-    	    printf("IS: WARNING: couldn't register F%d key: %d\n",
-    	        (key-F1+1), r);
-    	}
-    }
-    for (key=SF1; key<=SF6; key++) {
-        if ((r=fkey_enable(key)) != OK) {
-    	    printf("IS: WARNING: couldn't register SF%d key: %d\n",
-    	        (key-SF1+1), r);
-    	}
-    }
+    m.FKEY_FKEYS = m.FKEY_SFKEYS = 0;
+    for (i=1; i<=12; i++) bit_set(m.FKEY_FKEYS, i);
+    for (i=1; i<= 6; i++) bit_set(m.FKEY_SFKEYS, i);
+    m.m_type = FKEY_CONTROL;
+    m.FKEY_REQUEST = FKEY_MAP;
+    if (OK != (i=sendrec(TTY, &m)))
+        report("IS", "warning, sendrec failed:", i);
 
     /* Display status message ... */
-    printf("IS: information service is alive and kicking; press F1-F12 for dumps\n");
+    report("IS", "information service is alive and kicking", NO_NUM);
 }
 
 /*===========================================================================*

@@ -279,6 +279,7 @@ extern int errno;
  *===========================================================================*/
 void main(void)
 {
+	int fkeys, sfkeys;
 	int i, r;
 	re_t *rep;
 	long v;
@@ -291,7 +292,8 @@ void main(void)
 	eth_ign_proto= htons((u16_t) v);
 
 	/* Observe some function key for debug dumps. */
-	if ((r=fkey_enable(SF9)) != OK) 
+	fkeys = sfkeys = 0; bit_set(sfkeys, 9);
+	if ((r=fkey_map(&fkeys, &sfkeys)) != OK) 
 	    printf("Warning: RTL8139 couldn't observe Shift+F9 key: %d\n",r);
 
 	/* Claim buffer memory now under Minix, before MM takes it all. */

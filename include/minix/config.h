@@ -66,7 +66,6 @@
 #define ENABLE_SWAP	   1
 
 /* Enable or disable kernel calls (allows for minimal kernel). */
-#define ENABLE_K_TRACING   1	/* process tracing can be disabled */
 #define ENABLE_K_DEBUGGING 0	/* kernel debugging calls */
 
 /* Include or exclude an image of /dev/boot in the boot image. */

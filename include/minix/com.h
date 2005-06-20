@@ -379,7 +379,7 @@
 #define PZ_MEM_PTR	m1_p1	/* base */
 #define PZ_COUNT	m1_i1	/* count */
 
-/* Field names for SELECT (FS) */
+/* Field names for SELECT (FS). */
 #define SEL_NFDS	m8_i1
 #define SEL_READFDS	m8_p1
 #define SEL_WRITEFDS	m8_p2
@@ -394,9 +394,12 @@
 #define PANIC_DUMPS  	97  	/* debug dumps at the TTY on RBT_PANIC */
 #define FKEY_CONTROL 	98  	/* control a function key at the TTY */
 #define FKEY_PRESSED 	99  	/* notify process of function key event */
-#  define FKEY_NUM		m2_l1	/* fkey number excluding modifiers */
-#  define FKEY_CODE		m2_l2	/* fkey code including modifiers */
-#  define FKEY_ENABLE		m2_i1	/* enable or disable mapping */
+#  define FKEY_REQUEST		m2_i1	/* request to perform at TTY */
+#  define    FKEY_MAP		10	/* observe function key */
+#  define    FKEY_UNMAP		11	/* stop observing function key */
+#  define    FKEY_EVENTS	12	/* request open key presses */
+#  define FKEY_FKEYS		m2_l1	/* F1-F12 keys pressed */
+#  define FKEY_SFKEYS		m2_l2	/* Shift-F1-F12 keys pressed */
 #define DIAGNOSTICS 	100 	/* output a string without FS in between */
 #  define DIAG_PRINT_BUF 	m1_p1
 #  define DIAG_BUF_COUNT 	m1_i1

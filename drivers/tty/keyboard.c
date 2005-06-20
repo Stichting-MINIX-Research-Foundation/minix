@@ -76,8 +76,9 @@ PRIVATE char numpad_map[] =
 		{'H', 'Y', 'A', 'B', 'D', 'C', 'V', 'U', 'G', 'S', 'T', '@'};
 
 /* Variables and definition for observed function keys. */
-PRIVATE int  fkey_obs[12];	/* observers for F1-F12 */
-PRIVATE int sfkey_obs[12];	/* observers for SHIFT F1-F12 */
+typedef struct observer { int proc_nr; int events; } obs_t;
+PRIVATE obs_t  fkey_obs[12];	/* observers for F1-F12 */
+PRIVATE obs_t sfkey_obs[12];	/* observers for SHIFT F1-F12 */
 
 FORWARD _PROTOTYPE( int kb_ack, (void) );
 FORWARD _PROTOTYPE( int kb_wait, (void) );
@@ -393,8 +394,10 @@ tty_t *tp;
 
       /* Clear the function key observers array. Also see func_key(). */
       for (i=0; i<12; i++) {
-          fkey_obs[i] = NONE;	/* F1-F12 observers */
-          sfkey_obs[i] = NONE;	/* Shift F1-F12 observers */
+          fkey_obs[i].proc_nr = NONE;	/* F1-F12 observers */
+          fkey_obs[i].events = 0;	/* F1-F12 observers */
+          sfkey_obs[i].proc_nr = NONE;	/* Shift F1-F12 observers */
+          sfkey_obs[i].events = 0;	/* Shift F1-F12 observers */
       }
 
       /* Set interrupt handler and enable keyboard IRQ. */
@@ -430,40 +433,61 @@ message *m_ptr;			/* pointer to the request message */
 /* This procedure allows processes to register a function key to receive
  * notifications if it is pressed. At most one binding per key can exist.
  */
-  int fkey = m_ptr->FKEY_CODE;		/* get function key code */
-  unsigned code;
-  int *observers = NULL;
-  int index = -1;
+  int i; 
   int result;
 
-  /* See if this key can be observed; get the observers array and index. */ 
-  if (F1 <= fkey && fkey <= F12) { 		/* F1-F12 */
-      observers = fkey_obs; 
-      index = fkey - F1;
-  } else if (SF1 <= fkey && fkey <= SF12) {   	/* Shift F1-F12 */
-      observers = sfkey_obs; 
-      index = fkey - SF1;
-  }
-
-  /* Handle the request if an observers array was set above. */
-  if (observers) {
-      if (m_ptr->FKEY_ENABLE) {		/* try to register an observer */
-    	  if (observers[index] == NONE) {
-    	      observers[index] = m_ptr->m_source;
-    	      result = OK;		/* done, new observer registered */
-          } else {
-    	      result = EBUSY;		/* function key already bound */
-      	  }
-      } else {				/* unregister an observer */
-          if (observers[index] == m_ptr->m_source) {
-              observers[index] = NONE; 
-    	      result = OK;		/* done, observer unregistered */
-    	  } else {
-    	      result = EPERM;		/* can only remove own binding */
+  switch (m_ptr->FKEY_REQUEST) {	/* see what we must do */
+  case FKEY_MAP:			/* request for new mapping */
+      for (i=0; i < 12; i++) {		/* check F1-F12 keys */
+          if (bit_isset(m_ptr->FKEY_FKEYS, i+1) ) {
+              if (fkey_obs[i].proc_nr == NONE) { 
+    	          fkey_obs[i].proc_nr = m_ptr->m_source;
+    	          fkey_obs[i].events = 0;
+    	          bit_unset(m_ptr->FKEY_FKEYS, i+1);
+    	      } else {
+    	          printf("WARNING, fkey_map failed F%d\n", i);
+    	          result = EBUSY;
+    	          break;
+    	      }
+    	  }
+      }
+      for (i=0; i < 12; i++) {		/* check Shift+F1-F12 keys */
+          if (bit_isset(m_ptr->FKEY_SFKEYS, i+1) ) {
+              if (sfkey_obs[i].proc_nr == NONE) { 
+    	          sfkey_obs[i].proc_nr = m_ptr->m_source;
+    	          sfkey_obs[i].events = 0;
+    	          bit_unset(m_ptr->FKEY_SFKEYS, i+1);
+    	      } else {
+    	          printf("WARNING, fkey_map failed Shift F%d\n", i);
+    	          result = EBUSY;
+    	          break;
+    	      }
+    	  }
+      }
+      result = OK;			/* done, new observer registered */
+      break;
+  case FKEY_UNMAP:
+      result = ENOSYS;			/* not yet supported (not needed) */
+      break;
+  case FKEY_EVENTS:
+      m_ptr->FKEY_FKEYS = m_ptr->FKEY_SFKEYS = 0;
+      for (i=0; i < 12; i++) {		/* check (Shift+) F1-F12 keys */
+          if (fkey_obs[i].proc_nr == m_ptr->m_source) {
+              if (fkey_obs[i].events) { 
+                  bit_set(m_ptr->FKEY_FKEYS, i+1);
+                  fkey_obs[i].events = 0;
+              }
+          }
+          if (sfkey_obs[i].proc_nr == m_ptr->m_source) {
+              if (sfkey_obs[i].events) { 
+                  bit_set(m_ptr->FKEY_SFKEYS, i+1);
+                  sfkey_obs[i].events = 0;
+              }
           }
       }
-  } else {
-    result =  EINVAL;			/* key cannot be observed */
+      break;
+  default:
+          result =  EINVAL;		/* key cannot be observed */
   }
 
   /* Almost done, return result to caller. */
@@ -484,14 +508,13 @@ int scode;			/* scan code for a function key */
  * Returns FALSE on a key release or if the key is not observable.
  */
   message m;
-  int *observers = NULL;
-  unsigned fkey;
-  int index = -1;
+  int key;
+  int proc_nr;
   int i,s;
 
   /* Ignore key releases. If this is a key press, get full key code. */
   if (scode & KEY_RELEASE) return(FALSE);	/* key release */
-  fkey = map_key(scode);		/* include modifiers */
+  key = map_key(scode);		 		/* include modifiers */
 
   /* Key pressed, now see if there is an observer for the pressed key.
    *	       F1-F12	observers are in fkey_obs array. 
@@ -499,36 +522,23 @@ int scode;			/* scan code for a function key */
    *	CTRL   F1-F12	reserved (see kb_read)
    *	ALT    F1-F12	reserved (see kb_read)
    * Other combinations are not in use. Note that Alt+Shift+F1-F12 is yet
-   * defined in <minix/keymap.h>, but other modifier combinations are not. 
+   * defined in <minix/keymap.h>, and thus is easy for future extensions.
    */
-  if (F1 <= fkey && fkey <= F12) {		/* F1-F12 */
-      observers = &fkey_obs[0];	
-      index = fkey - F1;
-  } else if (SF1 <= fkey && fkey <= SF12) {	/* Shift F2-F12 */
-      observers = &sfkey_obs[0];
-      index = fkey - SF1;
+  if (F1 <= key && key <= F12) {		/* F1-F12 */
+      proc_nr = fkey_obs[key - F1].proc_nr;	
+      fkey_obs[key - F1].events ++ ;	
+  } else if (SF1 <= key && key <= SF12) {	/* Shift F2-F12 */
+      proc_nr = sfkey_obs[key - SF1].proc_nr;	
+      sfkey_obs[key - SF1].events ++;	
   }
-  if (! observers) return(FALSE);	/* not observable */
+  else {
+      return(FALSE);				/* not observable */
+  }
 
   /* See if an observer is registered and send it a message. */
-  if (observers[index] != NONE) { 
-#if DEAD_CODE
-      m.m_type = FKEY_PRESSED;
-      m.FKEY_NUM = index+1;
-      m.FKEY_CODE = fkey;
-      if (OK != (s=nb_send(observers[index], &m))) {
-          printf("WARNING: F%d key nb_send to process %d failed: %d.\n",
-          	index+1, observers[index], s);
-      }
-#else
+  if (proc_nr != NONE) { 
       m.NOTIFY_TYPE = FKEY_PRESSED;
-      m.NOTIFY_ARG = fkey;
-      m.NOTIFY_FLAGS = index+1;
-      if (OK != (s=notify(observers[index], &m))) {
-          printf("WARNING: F%d key notify to process %d failed: %d.\n",
-          	index+1, observers[index], s);
-      }
-#endif
+      notify(proc_nr, &m);
   }
   return(TRUE);
 }
@@ -540,7 +550,7 @@ int scode;			/* scan code for a function key */
 PRIVATE void show_key_mappings()
 {
     int i,s;
-  struct proc proc;
+    struct proc proc;
 
     printf("\n");
     printf("System information.   Known function key mappings to request debug dumps:\n");
@@ -548,8 +558,8 @@ PRIVATE void show_key_mappings()
     for (i=0; i<12; i++) {
 
       printf(" %sF%d: ", i+1<10? " ":"", i+1);
-      if (fkey_obs[i] != NONE) {
-          if ((s=sys_getproc(&proc, fkey_obs[i]))!=OK)
+      if (fkey_obs[i].proc_nr != NONE) {
+          if ((s=sys_getproc(&proc, fkey_obs[i].proc_nr))!=OK)
               printf("sys_getproc: %d\n", s);
           printf("%-14.14s", proc.p_name);
       } else {
@@ -557,10 +567,8 @@ PRIVATE void show_key_mappings()
       }
 
       printf("    %sShift-F%d: ", i+1<10? " ":"", i+1);
-      if (i==0) {
-          printf("%-14.14s", "<reserved by TTY>");
-      } else if (sfkey_obs[i] != NONE) {
-          if ((s=sys_getproc(&proc, sfkey_obs[i]))!=OK)
+      if (sfkey_obs[i].proc_nr != NONE) {
+          if ((s=sys_getproc(&proc, sfkey_obs[i].proc_nr))!=OK)
               printf("sys_getproc: %d\n", s);
           printf("%-14.14s", proc.p_name);
       } else {

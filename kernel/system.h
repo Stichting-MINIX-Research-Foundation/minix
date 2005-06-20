@@ -54,11 +54,7 @@ _PROTOTYPE( int do_setalarm, (message *m_ptr) );
 #define         do_signalrm 	do_setalarm
 #define         do_syncalrm 	do_setalarm
 
-#if ENABLE_K_TRACING
 _PROTOTYPE( int do_trace, (message *m_ptr) );		/* process tracing */
-#else
-#define do_trace do_unused
-#endif
 
 
 #endif	/* SYSTEM_H */

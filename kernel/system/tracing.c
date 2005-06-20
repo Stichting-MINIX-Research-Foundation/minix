@@ -12,7 +12,6 @@
 #include "../system.h"
 #include <sys/ptrace.h>
 
-#if ENABLE_K_TRACING		/* only include code if tracing is enabled */
 
 /*==========================================================================*
  *				do_trace				    *
@@ -139,4 +138,3 @@ register message *m_ptr;
   return(OK);
 }
 
-#endif	/* ENABLE_K_TRACING */

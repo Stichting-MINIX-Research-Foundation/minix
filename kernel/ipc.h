@@ -12,15 +12,6 @@
 #define SENDREC	 	 3  	/* function code for SEND + RECEIVE */
 #define NOTIFY		 4	/* function code for notifications */
 
-#if 0
-/* Bit map operations to manipulate bits of a simple mask variable. */
-#define set_bit(mask, n)	((mask) |= (1 << (n)))
-#define clear_bit(mask, n)	((mask) &= ~(1 << (n)))
-#define isset_bit(mask, n)	((mask) & (1 << (n)))
-#define empty_mask		(0)
-#define filled_mask		(~0)
-#endif
-
 /* Call masks indicating which system calls a process can make. */
 #define EMPTY_CALL_MASK 	(0)
 #define USER_CALL_MASK	 	(1 << SENDREC)

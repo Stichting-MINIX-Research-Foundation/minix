@@ -35,10 +35,10 @@ _PROTOTYPE( void env_panic, (char *key)					);
 _PROTOTYPE( int env_parse, (char *env, char *fmt, int field, long *param,
 				long min, long max)			);
 
-#define fkey_enable(fkey) fkey_ctl(fkey, 1)
-#define fkey_disable(fkey) fkey_ctl(fkey, 0)
-_PROTOTYPE( int fkey_ctl, (int fkey_code, int enable_disable)		);
-
+#define fkey_map(fkeys, sfkeys) fkey_ctl(FKEY_MAP, (fkeys), (sfkeys))
+#define fkey_unmap(fkeys, sfkeys) fkey_ctl(FKEY_UNMAP, (fkeys), (sfkeys))
+#define fkey_events(fkeys, sfkeys) fkey_ctl(FKEY_EVENTS, (fkeys), (sfkeys))
+_PROTOTYPE( int fkey_ctl, (int req, int *fkeys, int *sfkeys)		);
 
 _PROTOTYPE( int printf, (const char *fmt, ...));
 _PROTOTYPE( void kputc, (int c));

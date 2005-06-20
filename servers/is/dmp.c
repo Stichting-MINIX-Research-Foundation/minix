@@ -13,41 +13,42 @@
 /*===========================================================================*
  *				handle_fkey				     *
  *===========================================================================*/
+#define pressed(k) ((F1<=(k) && (k)<=F12 && bit_isset(m->FKEY_FKEYS, ((k)-F1+1))) \
+  	|| (SF1<=(k) && (k)<=SF12 && bit_isset(m->FKEY_SFKEYS, ((k)-SF1+1)))) 
+
 PUBLIC int do_fkey_pressed(message *m)
 {
-    if (F1 <= m->NOTIFY_ARG && m->NOTIFY_ARG <= F12) {
-        switch(m->NOTIFY_ARG) {
-            case  F1:	proctab_dmp();		break;
-            case  F2:	memmap_dmp();		break;
-            case  F3:	image_dmp();		break;
-            case  F4:	sendmask_dmp();		break;
-            case  F5:	monparams_dmp();	break;
-            case  F6:	irqtab_dmp();		break;
-            case  F7:	kmessages_dmp();	break;
+  int s;
 
-            case F10:	kenv_dmp();		break;
-            case F11:	timing_dmp();		break;
-            case F12:	sched_dmp();		break;
-            default: 
-            	printf("IS: unhandled notify for F%d (code %d)\n", 
-            		m->NOTIFY_FLAGS, m->NOTIFY_ARG);
-        }
-    }
+  /* The notification message does not convey any information, other
+   * than that some function keys have been pressed. Ask TTY for details.
+   */
+  m->m_type = FKEY_CONTROL;
+  m->FKEY_REQUEST = FKEY_EVENTS;
+  if (OK != (s=sendrec(TTY, m)))
+      report("IS", "warning, sendrec to TTY failed", s);
 
-    if (SF1 <= m->NOTIFY_ARG && m->NOTIFY_ARG <= SF12) {
-        switch(m->NOTIFY_ARG) {
+  /* Now check which keys were pressed: F1-F12. */
+  if (pressed(F1)) 	proctab_dmp();
+  if (pressed(F2))      memmap_dmp();
+  if (pressed(F3))	image_dmp();
+  if (pressed(F4))	sendmask_dmp();
+  if (pressed(F5))	monparams_dmp();
+  if (pressed(F6))	irqtab_dmp();
+  if (pressed(F7))	kmessages_dmp();
 
-            case SF1:	mproc_dmp();		break;
+  if (pressed(F10))	kenv_dmp();
+  if (pressed(F11))	timing_dmp();
+  if (pressed(F12))	sched_dmp();
 
-            case SF3:	fproc_dmp();		break;
-            case SF4:	dtab_dmp();		break;
+  /* Also check Shift F1-F6 keys. */
+  if (pressed(SF1))	mproc_dmp();
 
-            case SF6:	diagnostics_dmp();	break;
-            default: 
-            	printf("IS: unhandled notify for Shift-F%d (code %d)\n", 
-            		m->NOTIFY_FLAGS, m->NOTIFY_ARG);
-        }
-    }
-    return(EDONTREPLY);
+  if (pressed(SF3))	fproc_dmp();
+  if (pressed(SF4))	dtab_dmp();
+  if (pressed(SF6))	diagnostics_dmp();
+
+  /* Inhibit sending a reply message. */
+  return(EDONTREPLY);
 }
 
