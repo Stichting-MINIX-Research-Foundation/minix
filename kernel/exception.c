@@ -22,23 +22,23 @@ unsigned vec_nr;
 	int minprocessor;
   };
   static struct ex_s ex_data[] = {
-	"Divide error", SIGFPE, 86,
-	"Debug exception", SIGTRAP, 86,
-	"Nonmaskable interrupt", SIGBUS, 86,
-	"Breakpoint", SIGEMT, 86,
-	"Overflow", SIGFPE, 86,
-	"Bounds check", SIGFPE, 186,
-	"Invalid opcode", SIGILL, 186,
-	"Coprocessor not available", SIGFPE, 186,
-	"Double fault", SIGBUS, 286,
-	"Copressor segment overrun", SIGSEGV, 286,
-	"Invalid TSS", SIGSEGV, 286,
-	"Segment not present", SIGSEGV, 286,
-	"Stack exception", SIGSEGV, 286,	/* STACK_FAULT already used */
-	"General protection", SIGSEGV, 286,
-	"Page fault", SIGSEGV, 386,		/* not close */
-	NIL_PTR, SIGILL, 0,			/* probably software trap */
-	"Coprocessor error", SIGFPE, 386,
+	{ "Divide error", SIGFPE, 86 },
+	{ "Debug exception", SIGTRAP, 86 },
+	{ "Nonmaskable interrupt", SIGBUS, 86 },
+	{ "Breakpoint", SIGEMT, 86 },
+	{ "Overflow", SIGFPE, 86 },
+	{ "Bounds check", SIGFPE, 186 },
+	{ "Invalid opcode", SIGILL, 186 },
+	{ "Coprocessor not available", SIGFPE, 186 },
+	{ "Double fault", SIGBUS, 286 },
+	{ "Copressor segment overrun", SIGSEGV, 286 },
+	{ "Invalid TSS", SIGSEGV, 286 },
+	{ "Segment not present", SIGSEGV, 286 },
+	{ "Stack exception", SIGSEGV, 286 },	/* STACK_FAULT already used */
+	{ "General protection", SIGSEGV, 286 },
+	{ "Page fault", SIGSEGV, 386 },		/* not close */
+	{ NIL_PTR, SIGILL, 0 },			/* probably software trap */
+	{ "Coprocessor error", SIGFPE, 386 },
   };
   register struct ex_s *ep;
   struct proc *saved_proc;

@@ -25,7 +25,6 @@ message *m_ptr;			/* pointer to request message */
 /* Handle sys_exit. A server or driver wants to exit. This may happen
  * on a panic, but also is done when MINIX is shutdown.
  */
-  register struct proc *rp;
   int proc_nr = m_ptr->m_source;	/* can only exit own process */
 
   if (m_ptr->EXIT_STATUS != 0) {

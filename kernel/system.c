@@ -320,7 +320,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * the process when PM is informed, because PM can block waiting for FS to
  * do a core dump.
  */
-  register struct proc *rp, *mmp;
+  register struct proc *rp;
   message m;
 
   rp = proc_addr(proc_nr);
@@ -353,10 +353,9 @@ vir_bytes bytes;		/* # of bytes to be copied */
  * calling function will think an error occurred. This is not a problem,
  * since no one uses the first BIOS interrupt vector.  
  */
-  phys_bytes phys_addr;
 
   /* Check all acceptable ranges. */
-#if 0
+#if DEAD_CODE
   if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
   	return (phys_bytes) vir_addr;
   else if (vir_addr >= UPPER_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)

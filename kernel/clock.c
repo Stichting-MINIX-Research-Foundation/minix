@@ -150,10 +150,6 @@ message *m_ptr;				/* pointer to request message */
 /* Despite its name, this routine is not called on every clock tick. It
  * is called on those clock ticks when a lot of work needs to be done.
  */
-  register struct proc *rp;
-  register int proc_nr;
-  timer_t *tp;
-  struct proc *p;
 
   /* Check if a clock timer expired and run its watchdog function. */
   if (next_timeout <= realtime) { 
@@ -226,7 +222,6 @@ irq_hook_t *hook;
  * faster on a 5MHz 8088, and make task debugging much easier since there are
  * no task switches on an inactive system.
  */
-  register struct proc *rp;
   register unsigned ticks;
   message m;
 #if ! NEW_TIME_COUNT

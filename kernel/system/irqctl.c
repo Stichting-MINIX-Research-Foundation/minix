@@ -23,7 +23,6 @@ register message *m_ptr;	/* pointer to request message */
   /* Dismember the request message. */
   int irq_vec;
   int irq_hook_id;
-  int proc_nr;  
   int r = OK;
   irq_hook_t *hook_ptr;
 

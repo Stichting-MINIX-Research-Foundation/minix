@@ -27,7 +27,6 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
  */
   char params[128*sizeof(char *)];		/* boot monitor parameters */
   register char *value;				/* value in key=value pair */
-  unsigned mon_start;
   extern int etext, end;
 
   /* Decide if mode is protected; 386 or higher implies protected mode.

@@ -436,7 +436,6 @@ register struct proc *rp;	/* this process is now runnable */
 {
 /* Add 'rp' to one of the queues of runnable processes.  */
   register int q = rp->p_priority;		/* scheduling queue to use */
-  register struct proc **xpp;			/* iterate over queue */
 
 #if ENABLE_K_DEBUGGING
   if(rp->p_ready) {

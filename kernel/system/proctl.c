@@ -188,8 +188,7 @@ message *m_ptr;			/* pointer to request message */
 {
 /* Handle sys_exit. A user process has exited (the PM sent the request).
  */
-  register struct proc *rp, *rc;
-  struct proc *np, *xp;
+  register struct proc *rc;
   int exit_proc_nr;				
 
   /* Get a pointer to the process that exited. */
