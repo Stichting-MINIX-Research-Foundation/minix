@@ -49,7 +49,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 
   /* Copy the boot parameters to kernel memory. */
   kinfo.params_base = seg2phys(mds) + parmoff;
-  kinfo.params_size = MAX(parmsize,sizeof(params)-2);
+  kinfo.params_size = MIN(parmsize,sizeof(params)-2);
   phys_copy(kinfo.params_base, vir2phys(params), kinfo.params_size);
 
   /* Record miscellaneous information for user-space servers. */
