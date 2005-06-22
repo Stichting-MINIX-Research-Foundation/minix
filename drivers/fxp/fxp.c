@@ -806,10 +806,10 @@ fxp_t *fp;
 		assert(first_time);
 		first_time= 0;
 
-#if 0
-		assert(tot_bufsize <= buffer);
-#endif
+#define BUFALIGN	4096
+		assert(tot_bufsize <= sizeof(buffer)-BUFALIGN); 
 		buf= (phys_bytes)buffer;
+		buf += BUFALIGN - (buf % BUFALIGN);
 	}
 
 	fp->fxp_rx_buf= (struct rfd *)buf;
