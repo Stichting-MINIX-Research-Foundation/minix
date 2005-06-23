@@ -55,7 +55,7 @@
 #endif
 
 #ifdef OS_Minix
-typedef unsigned char *caddr_t;
+/* typedef unsigned char *caddr_t; */
 #endif
 
 

@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 
 PUBLIC mode_t umask(complmode)
-Mode_t complmode;
+_mnx_Mode_t complmode;
 {
   message m;
 

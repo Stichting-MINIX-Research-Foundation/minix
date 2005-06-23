@@ -50,12 +50,12 @@ _PROTOTYPE( void map_controllers, (void)				);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style)	);
 
 /* filedes.c */
-_PROTOTYPE( struct filp *find_filp, (struct inode *rip, Mode_t bits)	);
-_PROTOTYPE( int get_fd, (int start, Mode_t bits, int *k, struct filp **fpt) );
+_PROTOTYPE( struct filp *find_filp, (struct inode *rip, mode_t bits)	);
+_PROTOTYPE( int get_fd, (int start, mode_t bits, int *k, struct filp **fpt) );
 _PROTOTYPE( struct filp *get_filp, (int fild)				);
 
 /* inode.c */
-_PROTOTYPE( struct inode *alloc_inode, (Dev_t dev, Mode_t bits)		);
+_PROTOTYPE( struct inode *alloc_inode, (dev_t dev, mode_t bits)		);
 _PROTOTYPE( void dup_inode, (struct inode *ip)				);
 _PROTOTYPE( void free_inode, (Dev_t dev, Ino_t numb)			);
 _PROTOTYPE( struct inode *get_inode, (Dev_t dev, int numb)		);
@@ -128,7 +128,7 @@ _PROTOTYPE( int do_access, (void)					);
 _PROTOTYPE( int do_chmod, (void)					);
 _PROTOTYPE( int do_chown, (void)					);
 _PROTOTYPE( int do_umask, (void)					);
-_PROTOTYPE( int forbidden, (struct inode *rip, Mode_t access_desired)	);
+_PROTOTYPE( int forbidden, (struct inode *rip, mode_t access_desired)	);
 _PROTOTYPE( int read_only, (struct inode *ip)				);
 
 /* read.c */

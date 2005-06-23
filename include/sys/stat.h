@@ -65,12 +65,12 @@ struct stat {
 #define S_ISLNK(m)      (((m) & S_IFMT) == S_IFLNK)     /* is a sym link */
 
 /* Function Prototypes. */
-_PROTOTYPE( int chmod, (const char *_path, Mode_t _mode)		);
+_PROTOTYPE( int chmod, (const char *_path, _mnx_Mode_t _mode)		);
 _PROTOTYPE( int fstat, (int _fildes, struct stat *_buf)			);
-_PROTOTYPE( int mkdir, (const char *_path, Mode_t _mode)		);
-_PROTOTYPE( int mkfifo, (const char *_path, Mode_t _mode)		);
+_PROTOTYPE( int mkdir, (const char *_path, _mnx_Mode_t _mode)		);
+_PROTOTYPE( int mkfifo, (const char *_path, _mnx_Mode_t _mode)		);
 _PROTOTYPE( int stat, (const char *_path, struct stat *_buf)		);
-_PROTOTYPE( mode_t umask, (Mode_t _cmask)				);
+_PROTOTYPE( mode_t umask, (_mnx_Mode_t _cmask)				);
 
 /* Open Group Base Specifications Issue 6 (not complete) */
 _PROTOTYPE( int lstat, (const char *_path, struct stat *_buf)		);

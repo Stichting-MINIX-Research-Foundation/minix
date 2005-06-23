@@ -81,9 +81,9 @@ typedef struct { u32_t _[2]; } u64_t;
  * is clearer.
  */
 typedef int            Dev_t;
-typedef int 	       Gid_t;
+typedef int 	       _mnx_Gid_t;
 typedef int 	     Nlink_t;
-typedef int 	       Uid_t;
+typedef int 	       _mnx_Uid_t;
 typedef int             U8_t;
 typedef unsigned long  U32_t;
 typedef int             I8_t;
@@ -105,14 +105,14 @@ typedef unsigned long     Ino_t;
 typedef unsigned int    Zone1_t;
 typedef unsigned int Bitchunk_t;
 typedef unsigned int      U16_t;
-typedef unsigned int  Mode_t;
+typedef unsigned int  _mnx_Mode_t;
 
 #else /* _EM_WSIZE == 4, or _EM_WSIZE undefined */
 /*typedef int	          Ino_t; Ino_t is now 32 bits */
 typedef int 	        Zone1_t;
 typedef int	     Bitchunk_t;
 typedef int	          U16_t;
-typedef int           Mode_t;
+typedef int           _mnx_Mode_t;
 
 #endif /* _EM_WSIZE == 2, etc */
  
@@ -124,5 +124,6 @@ typedef unsigned char	u_char;
 typedef unsigned short	u_short;
 typedef unsigned int	u_int;
 typedef unsigned long	u_long;
+typedef char		*caddr_t;
 
 #endif /* _TYPES_H */

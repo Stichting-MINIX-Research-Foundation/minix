@@ -6,7 +6,7 @@
 
 PUBLIC int mknod(name, mode, dev)
 _CONST char *name;
-Mode_t mode;
+_mnx_Mode_t mode;
 Dev_t dev;
 {
   message m;

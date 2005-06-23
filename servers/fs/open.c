@@ -28,9 +28,9 @@
 
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
-FORWARD _PROTOTYPE( int common_open, (int oflags, Mode_t omode)		);
-FORWARD _PROTOTYPE( int pipe_open, (struct inode *rip,Mode_t bits,int oflags));
-FORWARD _PROTOTYPE( struct inode *new_node, (char *path, Mode_t bits,
+FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
+FORWARD _PROTOTYPE( int pipe_open, (struct inode *rip,mode_t bits,int oflags));
+FORWARD _PROTOTYPE( struct inode *new_node, (char *path, mode_t bits,
 							zone_t z0)	);
 
 
@@ -75,9 +75,7 @@ PUBLIC int do_open()
 /*===========================================================================*
  *				common_open				     *
  *===========================================================================*/
-PRIVATE int common_open(oflags, omode)
-register int oflags;
-mode_t omode;
+PRIVATE int common_open(register int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
 
@@ -202,10 +200,7 @@ mode_t omode;
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-PRIVATE struct inode *new_node(path, bits, z0)
-char *path;			/* pointer to path name */
-mode_t bits;			/* mode of the new inode */
-zone_t z0;			/* zone number 0 for new inode */
+PRIVATE struct inode *new_node(char *path, mode_t bits,	zone_t z0)
 {
 /* New_node() is called by common_open(), do_mknod(), and do_mkdir().  
  * In all cases it allocates a new inode, makes a directory entry for it on 
@@ -267,10 +262,8 @@ zone_t z0;			/* zone number 0 for new inode */
 /*===========================================================================*
  *				pipe_open				     *
  *===========================================================================*/
-PRIVATE int pipe_open(rip, bits, oflags)
-register struct inode *rip;
-register mode_t bits;
-register int oflags;
+PRIVATE int pipe_open(register struct inode *rip, register mode_t bits,
+	register int oflags)
 {
 /*  This function is called from common_open. It checks if
  *  there is at least one reader/writer pair for the pipe, if not

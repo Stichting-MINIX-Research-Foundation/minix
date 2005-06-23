@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 PUBLIC int setuid(usr)
-Uid_t usr;
+_mnx_Uid_t usr;
 {
   message m;
 

@@ -31,6 +31,7 @@
 *-----------------------------------------------------------------------------
 */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <limits.h>		/* NAME_MAX for maximal filename length	 */
 #include <string.h>		/* string manipulation			 */
@@ -870,7 +871,8 @@ FILE *file1, *file2;		/* The corresponding file-pointers	 */
 
   inputfp = popen(buff, "r");
   if (!inputfp) {
-	fprintf(stderr, "Can't execute diff %s %s\n", old, new);
+	fprintf(stderr, "Can't execute diff %s %s, popen failed with %s\n",
+		old, new, strerror(errno));
 	exit(2);
   }
   preoldend = -1000;
@@ -993,6 +995,7 @@ FILE *file1, *file2;		/* The corresponding file-pointers	 */
 		prenewend = newend;
 	}
   }
+  fprintf(stderr, "pipe fd is %d\n", fileno(inputfp));
   status = pclose(inputfp);
   if (status != 0) diffs++;
   if (!WIFEXITED(status) || WEXITSTATUS(status) > 1) severe_error = 1;

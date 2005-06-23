@@ -140,9 +140,7 @@ PUBLIC int do_access()
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-PUBLIC int forbidden(rip, access_desired)
-register struct inode *rip;	/* pointer to inode to be checked */
-mode_t access_desired;	/* RWX bits */
+PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
 {
 /* Given a pointer to an inode, 'rip', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the

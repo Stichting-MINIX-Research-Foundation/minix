@@ -691,7 +691,7 @@ sync:	sync.c
 
 synctree:	synctree.c
 	$(CCLD) -o $@ -wo $?
-	@install -S 32kw $@
+	install -S 64kw $@
 
 sysenv:	sysenv.c
 	$(CCLD) -o $@ -wo $?

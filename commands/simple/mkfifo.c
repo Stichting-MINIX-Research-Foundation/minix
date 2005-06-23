@@ -29,13 +29,11 @@
 mode_t u_mask;
 
 _PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(mode_t parsemode, (char *symbolic, Mode_t oldmode));
+_PROTOTYPE(mode_t parsemode, (char *symbolic, mode_t oldmode));
 _PROTOTYPE(void usage, (void));
 
 /* Parse a P1003.2 4.7.7-conformant symbolic mode. */
-mode_t parsemode(symbolic, oldmode)
-char *symbolic;
-mode_t oldmode;
+mode_t parsemode(char *symbolic, mode_t oldmode)
 {
   mode_t who, mask, newmode, tmpmask;
   char action;

@@ -4,7 +4,7 @@
 
 PUBLIC int creat(name, mode)
 _CONST char *name;
-Mode_t mode;
+_mnx_Mode_t mode;
 {
   message m;
 

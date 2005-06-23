@@ -85,7 +85,7 @@ _PROTOTYPE( void _exit, (int _status)					);
 _PROTOTYPE( int access, (const char *_path, int _amode)			);
 _PROTOTYPE( unsigned int alarm, (unsigned int _seconds)			);
 _PROTOTYPE( int chdir, (const char *_path)				);
-_PROTOTYPE( int chown, (const char *_path, Uid_t _owner, Gid_t _group)	);
+_PROTOTYPE( int chown, (const char *_path, _mnx_Uid_t _owner, _mnx_Gid_t _group)	);
 _PROTOTYPE( int close, (int _fd)					);
 _PROTOTYPE( char *ctermid, (char *_s)					);
 _PROTOTYPE( char *cuserid, (char *_s)					);
@@ -118,10 +118,10 @@ _PROTOTYPE( int pause, (void)						);
 _PROTOTYPE( int pipe, (int _fildes[2])					);
 _PROTOTYPE( ssize_t read, (int _fd, void *_buf, size_t _n)		);
 _PROTOTYPE( int rmdir, (const char *_path)				);
-_PROTOTYPE( int setgid, (Gid_t _gid)					);
+_PROTOTYPE( int setgid, (_mnx_Gid_t _gid)					);
 _PROTOTYPE( int setpgid, (pid_t _pid, pid_t _pgid)			);
 _PROTOTYPE( pid_t setsid, (void)					);
-_PROTOTYPE( int setuid, (Uid_t _uid)					);
+_PROTOTYPE( int setuid, (_mnx_Uid_t _uid)					);
 _PROTOTYPE( unsigned int sleep, (unsigned int _seconds)			);
 _PROTOTYPE( long sysconf, (int _name)					);
 _PROTOTYPE( pid_t tcgetpgrp, (int _fd)					);
@@ -139,8 +139,8 @@ _PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
 #endif
 _PROTOTYPE( int brk, (char *_addr)					);
 _PROTOTYPE( int chroot, (const char *_name)				);
-_PROTOTYPE( int mknod, (const char *_name, Mode_t _mode, Dev_t _addr)	);
-_PROTOTYPE( int mknod4, (const char *_name, Mode_t _mode, Dev_t _addr,
+_PROTOTYPE( int mknod, (const char *_name, _mnx_Mode_t _mode, Dev_t _addr)	);
+_PROTOTYPE( int mknod4, (const char *_name, _mnx_Mode_t _mode, Dev_t _addr,
 	    long _size)							);
 _PROTOTYPE( char *mktemp, (char *_template)				);
 _PROTOTYPE( int mount, (char *_spec, char *_name, int _flag)		);

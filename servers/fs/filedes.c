@@ -14,11 +14,7 @@
 /*===========================================================================*
  *				get_fd					     *
  *===========================================================================*/
-PUBLIC int get_fd(start, bits, k, fpt)
-int start;			/* start of search (used for F_DUPFD) */
-mode_t bits;			/* mode of the file to be created (RWX bits) */
-int *k;				/* place to return file descriptor */
-struct filp **fpt;		/* place to return filp slot */
+PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 {
 /* Look for a free file descriptor and a free filp slot.  Fill in the mode word
  * in the latter, but don't claim either one yet, since the open() or creat()
@@ -78,9 +74,7 @@ int fild;			/* file descriptor */
 /*===========================================================================*
  *				find_filp				     *
  *===========================================================================*/
-PUBLIC struct filp *find_filp(rip, bits)
-register struct inode *rip;	/* inode referred to by the filp to be found */
-Mode_t bits;			/* mode of the filp to be found (RWX bits) */
+PUBLIC struct filp *find_filp(register struct inode *rip, mode_t bits)
 {
 /* Find a filp slot that refers to the inode 'rip' in a way as described
  * by the mode bit 'bits'. Used for determining whether somebody is still

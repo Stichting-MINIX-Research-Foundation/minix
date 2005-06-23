@@ -6,7 +6,7 @@
 
 PUBLIC int mkfifo(name, mode)
 _CONST char *name;
-Mode_t mode;
+_mnx_Mode_t mode;
 {
   return mknod(name, mode | S_IFIFO, (Dev_t) 0);
 }

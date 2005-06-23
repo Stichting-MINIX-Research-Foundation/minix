@@ -190,7 +190,7 @@ _PROTOTYPE(void getcount, (void));
 _PROTOTYPE(void counterror, (Ino_t ino));
 _PROTOTYPE(void chkcount, (void));
 _PROTOTYPE(void freecount, (void));
-_PROTOTYPE(void printperm, (Mode_t mode, int shift, int special, int overlay));
+_PROTOTYPE(void printperm, (mode_t mode, int shift, int special, int overlay));
 _PROTOTYPE(void list, (Ino_t ino, d_inode *ip));
 _PROTOTYPE(int Remove, (dir_struct *dp));
 _PROTOTYPE(void make_printable_name, (char *dst, char *src, int n));
@@ -843,11 +843,7 @@ void freecount()
 }
 
 /* Print the inode permission bits given by mode and shift. */
-void printperm(mode, shift, special, overlay)
-mode_t mode;
-int shift;
-int special;
-int overlay;
+void printperm(mode_t mode, int shift, int special, int overlay)
 {
   if (mode >> shift & R_BIT)
 	putchar('r');

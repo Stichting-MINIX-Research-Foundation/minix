@@ -102,9 +102,7 @@ register struct inode *rip;	/* pointer to inode to be released */
 /*===========================================================================*
  *				alloc_inode				     *
  *===========================================================================*/
-PUBLIC struct inode *alloc_inode(dev, bits)
-dev_t dev;			/* device on which to allocate the inode */
-mode_t bits;			/* mode of the inode */
+PUBLIC struct inode *alloc_inode(dev_t dev, mode_t bits)
 {
 /* Allocate a free inode on 'dev', and return a pointer to it. */
 

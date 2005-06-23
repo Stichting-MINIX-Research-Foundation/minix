@@ -15,7 +15,7 @@ struct	group {
 };
 
 /* Function Prototypes. */
-_PROTOTYPE( struct group *getgrgid, (Gid_t _gid)  			);
+_PROTOTYPE( struct group *getgrgid, (_mnx_Gid_t _gid)  			);
 _PROTOTYPE( struct group *getgrnam, (const char *_name)			);
 
 #ifdef _MINIX

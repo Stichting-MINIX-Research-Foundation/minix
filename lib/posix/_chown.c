@@ -5,8 +5,8 @@
 
 PUBLIC int chown(name, owner, grp)
 _CONST char *name;
-Uid_t owner;
-Gid_t grp;
+_mnx_Uid_t owner;
+_mnx_Gid_t grp;
 {
   message m;
 
