@@ -1,11 +1,11 @@
 # Makefile for commands/autil
 
-CFLAGS	= -D_MINIX -D_POSIX_SOURCE -wo
+CFLAGS	= -I. -D_MINIX -D_POSIX_SOURCE -wo
 CCLD	= $(CC) -i $(CFLAGS)
 
 all:	anm asize
 
-anm:	anm.c
+anm:	anm.c rd.c rd_arhdr.c rd_bytes.c rd_unsig2.c
 	$(CCLD) -o $@ $?
 	install -S 32kw $@
 
