@@ -3,15 +3,15 @@
 /*===========================================================================*
  *                                sys_xit			     	     *
  *===========================================================================*/
-PUBLIC int sys_xit(parent, proc)
-int parent;			/* parent of exiting process */
+PUBLIC int sys_xit(proc)
 int proc;			/* which process has exited */
 {
-/* A process has exited.  Tell the kernel. */
-
+/* A process has exited. PM tells the kernel. In addition this call can be
+ * used by system processes to directly exit without passing through the
+ * PM. This should be used with care to prevent inconsistent PM tables. 
+ */
   message m;
 
-  m.PR_PPROC_NR = parent;
   m.PR_PROC_NR = proc;
   return(_taskcall(SYSTASK, SYS_XIT, &m));
 }

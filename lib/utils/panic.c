@@ -22,9 +22,9 @@ int num;			/* number to go with format string */
       }
   }
 
-  m.m_type = SYS_EXIT;
-  m.EXIT_STATUS = 1;
-  _taskcall(SYSTASK, SYS_EXIT, &m);
+  m.m_type = SYS_XIT;
+  m.PR_PROC_NR = SELF;
+  _taskcall(SYSTASK, SYS_XIT, &m);
   /* never reached */
 }
 

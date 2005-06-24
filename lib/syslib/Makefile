@@ -27,7 +27,6 @@ OBJECTS	= \
 	$(LIBSYS)(sys_eniop.o) \
 	$(LIBSYS)(sys_segctl.o) \
 	$(LIBSYS)(sys_umap.o) \
-	$(LIBSYS)(sys_exit.o) \
 	$(LIBSYS)(sys_physcp.o) \
 	$(LIBSYS)(sys_vircp.o) \
 	$(LIBSYS)(sys_in.o) \
@@ -94,9 +93,6 @@ $(LIBSYS)(sys_segctl.o):	sys_segctl.c
 
 $(LIBSYS)(sys_umap.o):	sys_umap.c
 	$(CC1) sys_umap.c
-
-$(LIBSYS)(sys_exit.o):	sys_exit.c
-	$(CC1) sys_exit.c
 
 $(LIBSYS)(sys_getsig.o):	sys_getsig.c
 	$(CC1) sys_getsig.c
