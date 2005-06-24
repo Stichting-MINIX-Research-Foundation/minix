@@ -8,7 +8,6 @@
  *   Oct 10, 2004   removed sys_findproc  (Jorrit N. Herder)
  *   Sep 23, 2004   added sys_getsig  (Jorrit N. Herder)
  *   Sep 09, 2004   added sys_physcopy, sys_vircopy  (Jorrit N. Herder)
- *   Sep 02, 2004   added sys_exit  (Jorrit N. Herder)
  *   Aug 15, 2004   added sys_getinfo  (Jorrit N. Herder)
  *   Jul 23, 2004   added sys_umap  (Jorrit N. Herder)
  *   Jul 13, 2004   added sys_enable_iop, sys_segctl  (Jorrit N. Herder)
@@ -51,7 +50,13 @@ _PROTOTYPE( int sys_getmap, (int proc, struct mem_map *ptr)		);
 _PROTOTYPE( int sys_times, (int proc_nr, clock_t *ptr)			);
 _PROTOTYPE( int sys_getuptime, (clock_t *ticks)				);
 _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p)	);
-_PROTOTYPE( int sys_xit, (int parent, int proc)				);
+
+/* A system server can directly exit itself with the sys_xit call. The
+ * status argument is here to resemble exit(2), but not passed to kernel.
+ */
+#define sys_exit(status) sys_xit(SELF)	
+_PROTOTYPE( int sys_xit, (int proc)					);
+
 _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
 
 
@@ -124,7 +129,6 @@ _PROTOTYPE(int sys_enable_iop, (int proc_nr)				);
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *key_ptr, int key_len)		);
-_PROTOTYPE(int sys_exit, (int status)					);
 
 
 /* Signal control. */

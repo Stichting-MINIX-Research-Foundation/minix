@@ -58,19 +58,6 @@ typedef struct {
   vir_bytes iov_size;		/* sizeof an I/O buffer */
 } iovec_t;
 
-typedef struct {
-  vir_bytes cpv_src;		/* src address of data */
-  vir_bytes cpv_dst;		/* dst address of data */
-  vir_bytes cpv_size;		/* size of data */
-} cpvec_t;
-
-/* virtual copy vector */
-typedef struct {
-  int cpvv_src_seg, cpvv_dst_seg;	/* src & dst segments */
-  vir_bytes cpvv_src;			/* src address of data */
-  vir_bytes cpvv_dst;			/* dst address of data */
-  vir_bytes cpvv_size;			/* size of data */
-} cpvvec_t;
 
 /* MM passes the address of a structure of this type to KERNEL when
  * do_sendsig() is invoked as part of the signal catching mechanism.

@@ -37,6 +37,7 @@
 #define IS_PROC_NR	 5 	/* information server */
 #define TTY		 6	/* terminal (TTY) driver */
 #define MEMORY	 	 8  	/* memory driver (RAM disk, null, etc.) */
+#define SM_PROC_NR	 3 	/* system management server */
 #define AT_WINI		(MEMORY + ENABLE_AT_WINI)   /* AT Winchester */
 #define FLOPPY		(AT_WINI + ENABLE_FLOPPY)   /* floppy disk */
 #define PRINTER		(FLOPPY + ENABLE_PRINTER)    /* Centronics */
@@ -46,7 +47,7 @@
 
 /* Number of processes contained in the system image. */
 #define IMAGE_SIZE 	(NR_TASKS + \
-			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
+			6 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
 			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + 1 )	
 
 
@@ -225,7 +226,7 @@
 
 #  define SYS_IOPENABLE 27	/* sys_enable_iop() */
 #  define SYS_SEGCTL    28	/* sys_segctl(*idx, *seg, *off, phys, size) */
-#  define SYS_EXIT      29	/* sys_exit(status) */
+
 #  define SYS_VIRCOPY   30	/* sys_vircopy(src,seg,addr,dst,seg,addr,cnt) */
 #  define SYS_PHYSCOPY  31 	/* sys_physcopy(src_addr,dst_addr,count) */
 #  define SYS_VIRVCOPY  32	/* sys_virvcopy(vec_ptr, vec_size) */
@@ -273,9 +274,6 @@
 #  define IRQ_LONG         0x400    /* long values */
 #define IRQ_PROC_NR	m5_i2   /* process number, SELF, NONE */
 #define IRQ_HOOK_ID	m5_l3   /* id of irq hook at kernel */
-
-/* Names of message field and paramaters for SYS_EXIT request. */
-#define EXIT_STATUS	m2_i1	/* zero for normal exit, non-zero else */
 
 /* Field names for SYS_SEGCTL. */
 #define SEG_SELECT	m4_l1   /* segment selector returned */ 
