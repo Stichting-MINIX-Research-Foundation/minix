@@ -31,6 +31,7 @@ usr:	\
 	/usr/bin/clear \
 		/usr/bin/clr \
 	/usr/bin/makewhatis \
+	/usr/bin/mkdep \
 	/usr/bin/mkdist \
 	/usr/bin/setup \
 	/usr/bin/spell \
@@ -92,6 +93,9 @@ clean:
 	install -m 755 -l $? $@
 
 /usr/bin/makewhatis:	makewhatis.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/mkdep:	mkdep.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/mkdist:	mkdist.sh

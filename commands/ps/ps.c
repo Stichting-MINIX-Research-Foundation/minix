@@ -461,7 +461,7 @@ struct pstat *bufp;
 
   if (p_nr < -nr_tasks || p_nr >= nr_procs) return -1;
 
-  if ((ps_proc[p_ki].p_type == P_NONE)
+  if ((ps_proc[p_ki].p_flags == SLOT_FREE)
   				&& !(ps_mproc[p_nr].mp_flags & IN_USE))
 	return -1;
 
