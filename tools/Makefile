@@ -10,6 +10,7 @@ MAKE=	exec make -$(MAKEFLAGS)
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
+	../servers/sm/sm \
 	../servers/is/is \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
@@ -56,7 +57,10 @@ image: programs
 includes:
 	cd ../include && $(MAKE) install
 
-programs: includes
+depend:
+	cd ../ && $(MAKE) depend
+
+programs: includes depend
 	cd ../kernel && $(MAKE) 
 	cd ../servers && $(MAKE) install
 	cd ../drivers && $(MAKE) install

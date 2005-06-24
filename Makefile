@@ -13,6 +13,7 @@ usage:
 	@echo "	make libraries  # Compile and install libraries" >&2
 	@echo "	make cmds       # Compile commands, but don't install" >&2
 	@echo "	make install    # Compile and install commands" >&2
+	@echo "	make depend     # Generate required .depend files" >&2
 	@echo "	make clean      # Remove all compiler results" >&2
 	@echo "" >&2
 	@echo "Run 'make' in tools/ to create a new MINIX configuration." >&2; exit 0
@@ -37,6 +38,12 @@ cmds:
 
 install::
 	cd commands && $(MAKE) $@
+
+depend::
+	/usr/bin/mkdep /usr/src/kernel
+	/usr/bin/mkdep /usr/src/servers
+	/usr/bin/mkdep /usr/src/drivers
+
 
 clean::
 	cd lib && $(MAKE) $@
