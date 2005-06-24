@@ -31,7 +31,7 @@
 #define info_where	m1_p1
 #define reboot_flag	m1_i1
 #define reboot_code	m1_p1
-#define reboot_size	m1_i2
+#define reboot_strlen	m1_i2
 #define svrctl_req	m2_i1
 #define svrctl_argp	m2_p1
 #define stime      	m2_l1

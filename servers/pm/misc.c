@@ -121,25 +121,34 @@ PUBLIC int do_getprocnr()
 /*=====================================================================*
  *			    do_reboot				       *
  *=====================================================================*/
+#define REBOOT_CODE 	"delay; boot"
 PUBLIC int do_reboot()
 {
-  register struct mproc *rmp = mp;
-  char monitor_code[32*sizeof(char *)];
+  char monitor_code[32*sizeof(char *)];		
+  int code_len;
+  int abort_flag;
 
-  if (rmp->mp_effuid != SUPER_USER) return(EPERM);
+  if (mp->mp_effuid != SUPER_USER) return(EPERM);
 
   switch (m_in.reboot_flag) {
   case RBT_HALT:
-  case RBT_REBOOT:
   case RBT_PANIC:
   case RBT_RESET:
+	abort_flag = m_in.reboot_flag;
+	break;
+  case RBT_REBOOT:
+	code_len = strlen(REBOOT_CODE) + 1;
+	strncpy(monitor_code, REBOOT_CODE, code_len);        
+	abort_flag = RBT_MONITOR;
 	break;
   case RBT_MONITOR:
-	if (m_in.reboot_size >= sizeof(monitor_code)) return(EINVAL);
+	code_len = m_in.reboot_strlen + 1;
+	if (code_len > sizeof(monitor_code)) return(EINVAL);
 	if (sys_datacopy(who, (vir_bytes) m_in.reboot_code,
 		PM_PROC_NR, (vir_bytes) monitor_code,
-		(phys_bytes) (m_in.reboot_size+1)) != OK) return(EFAULT);
-	if (monitor_code[m_in.reboot_size] != 0) return(EINVAL);
+		(phys_bytes) (code_len)) != OK) return(EFAULT);
+	if (monitor_code[code_len-1] != 0) return(EINVAL);
+	abort_flag = RBT_MONITOR;
 	break;
   default:
 	return(EINVAL);
@@ -151,7 +160,7 @@ PUBLIC int do_reboot()
   /* Ask the kernel to abort. All system services, including the PM, will 
    * get a HARD_STOP notification. Await the notification in the main loop.
    */
-  sys_abort(m_in.reboot_flag, PM_PROC_NR, monitor_code, m_in.reboot_size);
+  sys_abort(abort_flag, PM_PROC_NR, monitor_code, code_len);
   return(SUSPEND);			/* don't reply to killed process */
 }
 

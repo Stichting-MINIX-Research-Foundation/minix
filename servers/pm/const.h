@@ -11,4 +11,12 @@
 #define MAX_PAGES       4096	/* how many pages in the virtual addr space */
 #endif
 
-#define INIT_PID	   1	/* init's process id number */
+#define NR_PIDS	       65536	/* process ids range from 0 to NR_PIDS-1 */
+
+#define PM_PID	           0	/* PM's process id number */
+#define PM_PARENT         -1	/* PM's parent process slot */
+
+#define INIT_PID	   1	/* INIT's process id number */
+
+
+#define DEBUG(x,y)   if ((x)) { (y); }

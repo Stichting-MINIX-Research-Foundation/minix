@@ -14,11 +14,12 @@
 #define DPRINTF		if (DEBUG_LEVEL > 0) printf
 
 /* Allocate space for the global variables. */
-int is_proc_nr;		/* own process number */
 message m_in;		/* the input message itself */
 message m_out;		/* the output message used for reply */
 int who;		/* caller's proc number */
 int callnr;		/* system call number */
+
+extern int errno;	/* error number set by system library */
 
 /* Diagnostic messages buffer. */
 char diag_buf[DIAG_BUF_SIZE];
@@ -29,7 +30,7 @@ int diag_next = 0;
 FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
-
+FORWARD _PROTOTYPE(void signal_handler, (int sig)			);
 
 /*===========================================================================*
  *                                  main                                     *
@@ -80,28 +81,50 @@ PUBLIC void main(void)
 
 
 /*===========================================================================*
+ *				 signal_handler                              *
+ *===========================================================================*/
+PRIVATE void signal_handler(sig)
+int sig;					/* signal number */
+{
+/* Expect a SIGTERM signal when this server must shutdown. */
+  if (sig == SIGTERM) {
+  	printf("Shutting down IS server.\n");
+  	exit(0);
+  } else {
+  	printf("IS got unknown signal\n");
+  }
+}
+
+
+/*===========================================================================*
  *				 init_server                                 *
  *===========================================================================*/
 PRIVATE void init_server()
 {
 /* Initialize the information service. */
-    message m;
-    int i;
+  int fkeys, sfkeys;
+  int i, s;
+  struct sigaction sigact;
 
-    /* Set own process number. */
-    is_proc_nr = IS_PROC_NR;
+#if DEAD_CODE
+  /* Install signal handler.*/
+  sigact.sa_handler = signal_handler;
+  sigact.sa_mask = ~0;			/* block all other signals */
+  sigact.sa_flags = 0;			/* default behaviour */
+  printf("IS calls sigaction()\n");
+  if (sigaction(SIGTERM, &sigact, NULL) != OK) 
+      report("IS","warning, sigaction() failed", errno);
+#endif
 
-    /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6 . */
-    m.FKEY_FKEYS = m.FKEY_SFKEYS = 0;
-    for (i=1; i<=12; i++) bit_set(m.FKEY_FKEYS, i);
-    for (i=1; i<= 6; i++) bit_set(m.FKEY_SFKEYS, i);
-    m.m_type = FKEY_CONTROL;
-    m.FKEY_REQUEST = FKEY_MAP;
-    if (OK != (i=sendrec(TTY, &m)))
-        report("IS", "warning, sendrec failed:", i);
+  /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6 . */
+  fkeys = sfkeys = 0;
+  for (i=1; i<=12; i++) bit_set(fkeys, i);
+  for (i=1; i<= 6; i++) bit_set(sfkeys, i);
+  if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
+      report("IS", "warning, sendrec failed:", s);
 
-    /* Display status message ... */
-    report("IS", "information service is alive and kicking", NO_NUM);
+  /* Display status message ... */
+  report("IS", "information service is alive and kicking", NO_NUM);
 }
 
 /*===========================================================================*

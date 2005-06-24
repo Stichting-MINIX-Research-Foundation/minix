@@ -39,7 +39,7 @@ PUBLIC pid_t get_free_pid()
   /* Find a free pid for the child and put it in the table. */
   do {
 	t = 0;			
-	next_pid = (next_pid < 30000 ? next_pid + 1 : INIT_PID + 1);
+	next_pid = (next_pid < NR_PIDS ? next_pid + 1 : INIT_PID + 1);
 	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
 		if (rmp->mp_pid == next_pid || rmp->mp_procgrp == next_pid) {
 			t = 1;

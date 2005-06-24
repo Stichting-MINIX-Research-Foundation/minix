@@ -29,7 +29,7 @@ PUBLIC void mproc_dmp()
   printf("-process- -nr-prnt- -pid/grp- --uid---gid-- -flags- --ignore--catch--block--\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	mp = &mproc[i];
-  	if (mp->mp_pid <= 0) continue;
+  	if (mp->mp_pid == 0 && i != PM_PROC_NR) continue;
   	if (++n > 22) break;
   	printf("%8.8s %4d%4d  %4d%4d    ", 
   		mp->mp_name, i, mp->mp_parent, mp->mp_pid, mp->mp_procgrp);

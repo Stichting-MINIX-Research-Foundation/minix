@@ -106,7 +106,6 @@ FORWARD _PROTOTYPE ( int cp_b2u, (acc_t *acc_ptr, int proc, char *dest) );
 
 PRIVATE sr_fd_t sr_fd_table[FD_NR];
 PRIVATE mq_t *repl_queue, *repl_queue_tail;
-PRIVATE cpvec_t cpvec[CPVEC_NR];
 PRIVATE struct vir_cp_req vir_cp_req[CPVEC_NR];
 
 PUBLIC void sr_init()

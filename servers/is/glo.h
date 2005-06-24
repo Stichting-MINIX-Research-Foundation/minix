@@ -1,5 +1,4 @@
 /* Global variables. */
-extern is_proc_nr;		/* process number of IS server */
 
 /* Parameters needed to keep diagnostics at IS. */
 #define DIAG_BUF_SIZE 1024

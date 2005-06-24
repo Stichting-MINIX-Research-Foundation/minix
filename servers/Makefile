@@ -13,9 +13,10 @@ usage:
 	@echo "" >&2
 
 build: all
-all install clean:
+all install depend clean:
 	cd ./pm && $(MAKE) $@
 	cd ./fs && $(MAKE) $@
+	cd ./sm && $(MAKE) $@
 	cd ./is && $(MAKE) $@
 	cd ./init && $(MAKE) $@
 	cd ./inet && $(MAKE) $@

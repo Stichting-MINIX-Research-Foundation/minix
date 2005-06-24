@@ -183,22 +183,20 @@ PUBLIC void image_dmp()
   int i,j,r;
   struct system_image *ip;
   char maskstr[NR_TASKS + NR_PROCS] = "mask";
-  char* types[] = {"task", "system","driver", "server", "user", "idle"};
-  char* priorities[] = {"task", "higher","high", "normal", "low", "lower", "user","idle"};
 	
   if ((r = sys_getimage(image)) != OK) {
       report("IS","warning: couldn't get copy of image table", r);
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
-  printf("---name-- -nr- --type- -priority- ----pc- -stack- ------sendmask-------\n");
+  printf("---name-- -nr- -q- ----pc- -stack- ------sendmask-------\n");
   for (i=0; i<IMAGE_SIZE; i++) { 
       ip = &image[i];
       for (j=-NR_TASKS; j<INIT_PROC_NR+2; j++) 
          maskstr[j+NR_TASKS] = (isallowed(ip->sendmask, j)) ? '1' : '0';
       maskstr[j+NR_TASKS] = '\0';
-      printf("%8s %4d %7s %10s %7lu %7lu   %s\n",
-          ip->proc_name, ip->proc_nr, types[ip->type], priorities[ip->priority], 
+      printf("%8s %4d %3d %7lu %7lu   %s\n",
+          ip->proc_name, ip->proc_nr, ip->priority, 
           (long)ip->initial_pc, ip->stksize, maskstr); 
   }
   printf("\n");
@@ -335,15 +333,9 @@ PUBLIC void sendmask_dmp()
         if (++n > 20) break;
 
     	printf("%8s ", rp->p_name);
-    	j = proc_nr(rp);
-	switch(rp->p_type) {
-	    case P_IDLE:	printf("/%2d/ ", proc_nr(rp));  break;
-	    case P_TASK:	printf("[%2d] ", proc_nr(rp));  break;
-	    case P_SYSTEM:	printf("<%2d> ", proc_nr(rp));  break;
-	    case P_DRIVER:	printf("{%2d} ", proc_nr(rp));  break;
-	    case P_SERVER:	printf("(%2d) ", proc_nr(rp));  break;
-	    default: 		printf(" %2d  ", proc_nr(rp));
-	}
+	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
+	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
+	else 				printf(" %2d  ", proc_nr(rp));
 
     	for (j=proc_nr(BEG_PROC_ADDR); j<INIT_PROC_NR+2; j++) {
     	    if (isallowed(rp->p_sendmask, j))	printf(" 1 ");
@@ -377,7 +369,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n--nr/name--- -q- -sc- -user- -sys- -text- -data- -size- -flags- -command-\n");
+  printf("\n--nr/name--- -q- -sc- -user- -sys- -text- -data- -size- -flags-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -386,14 +378,9 @@ PUBLIC void proctab_dmp()
 	data = rp->p_memmap[D].mem_phys;
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
-	switch(rp->p_type) {
-	    case P_IDLE:	printf("/%2d/ ", proc_nr(rp));  break;
-	    case P_TASK:	printf("[%2d] ", proc_nr(rp));  break;
-	    case P_SYSTEM:	printf("<%2d> ", proc_nr(rp));  break;
-	    case P_DRIVER:	printf("{%2d} ", proc_nr(rp));  break;
-	    case P_SERVER:	printf("(%2d) ", proc_nr(rp));  break;
-	    default: 		printf(" %2d  ", proc_nr(rp));
-	}
+	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
+	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
+	else 				printf(" %2d  ", proc_nr(rp));
 	printf("%-7.7s %2u   %02.2x %6lu%6lu%6uK%6uK%6uK %3x",
 	       rp->p_name,
 	       rp->p_priority,

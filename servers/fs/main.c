@@ -70,7 +70,7 @@ PUBLIC void main()
         	 */
         	fs_expire_timers(m_in.NOTIFY_ARG);
         } else if(call_nr == DEV_SELECTED) {
-        	/* device notify()s us of fd that has become usable */
+        	/* Device notify()s us of fd that has become usable. */
         	select_notified(&m_in);
         } else {
 		/* Call the internal function that does the work. */

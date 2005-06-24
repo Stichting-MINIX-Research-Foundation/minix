@@ -30,9 +30,9 @@ install:	/usr/sbin/servers/$(SERVER)
 clean:
 	rm -f $(SERVER) *.o *.bak 
 
-# dependencies
-a =	$s/types.h $s/wait.h $s/stat.h $s/svrctl.h \
-	$i/ttyent.h $i/fcntl.h $i/unistd.h $i/time.h $i/stdlib.h \
-	$i/limits.h $i/errno.h $i/signal.h $i/string.h $i/utmp.h
+depend: 
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
-init.o:	$a
+# Include generated dependencies.
+include .depend
+

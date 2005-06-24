@@ -139,7 +139,7 @@ PRIVATE void pm_init()
   register int proc_nr;
   register struct mproc *rmp;
   register char *sig_ptr;
-  phys_clicks ram_clicks, total_clicks, minix_clicks, free_clicks;
+  phys_clicks total_clicks, minix_clicks, free_clicks;
   message mess;
   struct mem_map mem_map[NR_LOCAL_SEGS];
   struct memory mem_chunks[NR_MEMS];
@@ -173,7 +173,7 @@ PRIVATE void pm_init()
   /* Initialize PM's process table. Request a copy of the system image table 
    * that is defined at the kernel level to see which slots to fill in.
    */
-  if (OK != (s=sys_getimage(&image))) 
+  if (OK != (s=sys_getimage(image))) 
   	panic(__FILE__,"PM: warning, couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
   for (ip = &image[0]; ip < &image[IMAGE_SIZE]; ip++) {		
@@ -183,12 +183,10 @@ PRIVATE void pm_init()
 		/* Set process details found in the image table. */
 		rmp = &mproc[ip->proc_nr];	
 		rmp->mp_flags |= IN_USE | DONT_SWAP; 
-  		rmp->mp_pid = (ip->proc_nr == INIT_PROC_NR) ?
-  			INIT_PID : get_free_pid();
+  		rmp->mp_pid = get_free_pid();
+		rmp->mp_parent = INIT_PROC_NR;
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
-
-  		/* Change local signal handling behaviour. */
-  		sigfillset(&rmp->mp_ignore);
+		sigfillset(&rmp->mp_ignore);
   		sigfillset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
 
@@ -208,15 +206,29 @@ PRIVATE void pm_init()
   	}
   }
 
+  /* PM and INIT are somewhat special. Override some details. Set signal
+   * handling behaviour for PM, since PM cannot call sigaction() as others.
+   */
+  mproc[INIT_PROC_NR].mp_pid = INIT_PID;
+  mproc[INIT_PROC_NR].mp_parent = PM_PROC_NR;
+  sigemptyset(&mproc[INIT_PROC_NR].mp_ignore);
+  sigemptyset(&mproc[INIT_PROC_NR].mp_sigmask);
+  sigemptyset(&mproc[INIT_PROC_NR].mp_catch);
+
+  mproc[PM_PROC_NR].mp_pid = PM_PID;
+  mproc[PM_PROC_NR].mp_parent = PM_PARENT;
+  sigfillset(&mproc[PM_PROC_NR].mp_ignore);
+  sigfillset(&mproc[PM_PROC_NR].mp_sigmask);
+  sigemptyset(&mproc[PM_PROC_NR].mp_catch);
+
+  sigfillset(&mproc[FS_PROC_NR].mp_ignore);
+  sigfillset(&mproc[FS_PROC_NR].mp_sigmask);
+  sigemptyset(&mproc[FS_PROC_NR].mp_catch);
+
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;
   if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic(__FILE__,"PM can't sync up with FS", NO_NUM);
-
-  /* INIT process is somewhat special. */
-  sigemptyset(&mproc[INIT_PROC_NR].mp_ignore);
-  sigemptyset(&mproc[INIT_PROC_NR].mp_sigmask);
-  sigemptyset(&mproc[INIT_PROC_NR].mp_catch);
 
   /* Possibly we must correct the memory chunks for the boot device. */
   if (kinfo.bootdev_size > 0) {

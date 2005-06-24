@@ -184,6 +184,8 @@ PUBLIC int do_kill()
 {
 /* Perform the kill(pid, signo) system call. */
 
+  DEBUG(m_in.pid == 11, printf("PM: detected do_kill PRINTER\n"));
+
   return check_sig(m_in.pid, m_in.sig_nr);
 }
 
@@ -192,11 +194,11 @@ PUBLIC int do_kill()
  *===========================================================================*/
 PUBLIC int ksig_pending()
 {
-/* Certain signals, such as segmentation violations and DEL, originate in the
- * kernel.  When the kernel detects such signals, it sets bits in a bit map.
- * As soon as PM is awaiting new work, the kernel sends PM a message containing
- * the process slot and bit map.  That message comes here.  The File System
- * also uses this mechanism to signal writing on broken pipes (SIGPIPE).
+/* Certain signals, such as segmentation violations originate in the kernel.
+ * When the kernel detects such signals, it notifies the PM to take further 
+ * action. The PM requests the kernel to send messages with the process
+ * slot and bit map for all signaled processes. The File System, for example,
+ * uses this mechanism to signal writing on broken pipes (SIGPIPE). 
  *
  * The kernel has notified the PM about pending signals. Request pending
  * signals until all signals are handled. If there are no more signals,
@@ -373,7 +375,10 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	return;
   }
   /* Some signals are ignored by default. */
-  if (sigismember(&rmp->mp_ignore, signo)) return; 
+  if (sigismember(&rmp->mp_ignore, signo)) { 
+  	DEBUG(m_in.pid == 11, printf("PM: sig_proc ignored sig\n"));
+  	return;
+  }
 
   if (sigismember(&rmp->mp_sigmask, signo)) {
 	/* Signal should be blocked. */
@@ -382,6 +387,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   }
   sigflags = rmp->mp_sigact[signo].sa_flags;
   if (sigismember(&rmp->mp_catch, signo)) {
+  	DEBUG(m_in.pid == 11, printf("PM: sig_proc catch sig!\n"));
 	if (rmp->mp_flags & ONSWAP) {
 		/* Process is swapped out, leave signal pending. */
 		sigaddset(&rmp->mp_sigpending, signo);
@@ -417,15 +423,20 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		rmp->mp_sigact[signo].sa_handler = SIG_DFL;
 	}
 
-	sys_sigsend(slot, &sm);
-	sigdelset(&rmp->mp_sigpending, signo);
-	/* If process is hanging on PAUSE, WAIT, SIGSUSPEND, tty, pipe, etc.,
-	 * release it.
-	 */
-	unpause(slot);
-	return;
+  	DEBUG(m_in.pid == 11, printf("PM: sig_proc about to call sys_sigsend for %d \n",slot));
+	if (OK == (s=sys_sigsend(slot, &sm))) {
+
+		sigdelset(&rmp->mp_sigpending, signo);
+		/* If process is hanging on PAUSE, WAIT, SIGSUSPEND, tty, 
+		 * pipe, etc., release it.
+		 */
+		unpause(slot);
+		return;
+	}
+  	panic(__FILE__, "warning, sys_sigsend failed", s);
   }
 doterminate:
+  	DEBUG(m_in.pid == 11, printf("PM: sig_proc doterminate\n"));
   /* Signal should not or cannot be caught.  Take default action. */
   if (sigismember(&ign_sset, signo)) return;
 
@@ -441,6 +452,7 @@ doterminate:
 	tell_fs(CHDIR, slot, FALSE, 0);
 	dump_core(rmp);
   }
+  DEBUG(m_in.pid == 11, printf("PM: about to exit proc\n"));
   mm_exit(rmp, 0);		/* terminate process */
 }
 
@@ -487,6 +499,7 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 	    && mp->mp_effuid != rmp->mp_realuid
 	    && mp->mp_realuid != rmp->mp_effuid
 	    && mp->mp_effuid != rmp->mp_effuid) {
+  DEBUG(m_in.pid == 11, printf("PM: check_sig, EPERM\n"));
 		error_code = EPERM;
 		continue;
 	}
@@ -498,6 +511,7 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 	 * signal may be caught, blocked, ignored, or cause process
 	 * termination, possibly with core dump.
 	 */
+  DEBUG(m_in.pid == 11, printf("PM: calling sig_proc with signo %d\n", signo));
 	sig_proc(rmp, signo);
 
 	if (proc_id > 0) break;	/* only one process being signaled */
