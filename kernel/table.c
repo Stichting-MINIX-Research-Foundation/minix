@@ -24,7 +24,6 @@
  * Changes:
  *    Nov 10, 2004   removed controller->driver mappings  (Jorrit N. Herder)
  *    Oct 17, 2004   updated above and tasktab comments  (Jorrit N. Herder)
- *    Aug 18, 2004   included p_type in tasktab  (Jorrit N. Herder) 
  *    May 01, 2004   included p_sendmask in tasktab  (Jorrit N. Herder)
  */
 
@@ -62,31 +61,32 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * routine and stack size is also provided.
  */
 PUBLIC struct system_image image[] = {
- { IDLE, idle_task,    P_IDLE,   PPRI_IDLE,  IDLE_STACK,    EMPTY_CALL_MASK, IDLE_SENDMASK,    "IDLE"    },
- { CLOCK, clock_task,   P_TASK,   PPRI_TASK, CLOCK_STACK,   SYSTEM_CALL_MASK, CLOCK_SENDMASK,   "CLOCK"   },
- { SYSTASK, sys_task,     P_TASK,   PPRI_TASK, SYS_STACK,     SYSTEM_CALL_MASK, SYSTEM_SENDMASK,  "SYS"     },
- { HARDWARE, 0,            P_TASK,   PPRI_TASK, HARDWARE_STACK, EMPTY_CALL_MASK, HARDWARE_SENDMASK,"HARDW." },
- { PM_PROC_NR, 0,            P_SERVER, PPRI_NORMAL, 0,          SYSTEM_CALL_MASK,   PM_SENDMASK,      "PM"      },
- { FS_PROC_NR, 0,            P_SERVER, PPRI_NORMAL, 0,          SYSTEM_CALL_MASK,   FS_SENDMASK,      "FS"      },
- { IS_PROC_NR, 0,            P_SYSTEM, PPRI_HIGH, 0,           SYSTEM_CALL_MASK,  IS_SENDMASK,      "IS"      },
- { TTY, 0,            P_SYSTEM, PPRI_HIGHER, 0,            SYSTEM_CALL_MASK, TTY_SENDMASK,      "TTY"      },
- { MEMORY, 0,            P_DRIVER, PPRI_HIGH, 0,           SYSTEM_CALL_MASK,  MEM_SENDMASK,     "MEMORY" },
+ { IDLE, idle_task,    0,   IDLE_Q,  IDLE_STACK,    EMPTY_CALL_MASK, DENY_ALL_MASK,    "IDLE"    },
+ { CLOCK, clock_task,   0,   TASK_Q, CLOCK_STACK,   SYSTEM_CALL_MASK, ALLOW_ALL_MASK,   "CLOCK"   },
+ { SYSTASK, sys_task,     0,   TASK_Q, SYS_STACK,     SYSTEM_CALL_MASK, ALLOW_ALL_MASK,  "SYS"     },
+ { HARDWARE, 0,            0,   TASK_Q, HARDWARE_STACK, EMPTY_CALL_MASK, ALLOW_ALL_MASK,"HARDW." },
+ { PM_PROC_NR, 0,            0, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "PM"      },
+ { FS_PROC_NR, 0,            0, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "FS"      },
+ { SM_PROC_NR, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,      "SM"      },
+ { IS_PROC_NR, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,      "IS"      },
+ { TTY, 0,            0, 1, 0,            SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "TTY"      },
+ { MEMORY, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "MEMORY" },
 #if ENABLE_AT_WINI
- { AT_WINI, 0,            P_DRIVER, PPRI_HIGH, 0,          SYSTEM_CALL_MASK, AT_SENDMASK,      "AT_WINI" },
+ { AT_WINI, 0,            0, 2, 0,          SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "AT_WINI" },
 #endif
 #if ENABLE_FLOPPY
- { FLOPPY, 0,            P_DRIVER, PPRI_HIGH, 0,           SYSTEM_CALL_MASK,  FLOPPY_SENDMASK,  "FLOPPY" },
+ { FLOPPY, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FLOPPY" },
 #endif
 #if ENABLE_PRINTER
- { PRINTER, 0,            P_DRIVER, PPRI_NORMAL, 0,         SYSTEM_CALL_MASK,  PRN_SENDMASK,     "PRINTER" },
+ { PRINTER, 0,            0, 3, 0,         SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "PRINTER" },
 #endif
 #if ENABLE_RTL8139
- { USR8139, 0,            P_DRIVER, PPRI_HIGH, 0,           SYSTEM_CALL_MASK,  RTL8139_SENDMASK,  "RTL8139" },
+ { USR8139, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "RTL8139" },
 #endif
 #if ENABLE_FXP
- { FXP, 0,                P_DRIVER, PPRI_HIGH, 0,           SYSTEM_CALL_MASK,  FXP_SENDMASK,  "FXP" },
+ { FXP, 0,                0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FXP" },
 #endif
- { INIT_PROC_NR, 0,            P_USER,   PPRI_USER, 0,         USER_CALL_MASK,    INIT_SENDMASK,    "INIT"    },
+ { INIT_PROC_NR, 0,            0,   USER_Q, 0,         USER_CALL_MASK,    USER_PROC_SENDMASK,    "INIT"    },
 };
 
 /* Verify the size of the system image table at compile time. If the number 

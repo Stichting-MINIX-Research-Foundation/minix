@@ -39,7 +39,7 @@ message *m_ptr;			/* pointer to request message */
   int how = m_ptr->ABRT_HOW;
   
   if (how == RBT_MONITOR) {
-      /* The monitor is to run user specified instructions. */
+      /* The monitor is to run the specified instructions. */
       int proc_nr = m_ptr->ABRT_MON_PROC;
       int length = m_ptr->ABRT_MON_LEN + 1;
       vir_bytes src_vir = (vir_bytes) m_ptr->ABRT_MON_ADDR;
@@ -47,7 +47,7 @@ message *m_ptr;			/* pointer to request message */
 
       /* Validate length and address of shutdown code before copying. */
       if (length > kinfo.params_size || src_phys == 0) 
-	  kprintf("Warning, skipping shutdown code\n", NO_NUM);
+	  phys_copy(vir2phys("delay;boot"), kinfo.params_base, 11);
       else
           phys_copy(src_phys, kinfo.params_base, (phys_bytes) length);
   }

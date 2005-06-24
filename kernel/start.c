@@ -47,7 +47,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   /* Initialize protected mode descriptors. */
   prot_init();
 
-  /* Copy the boot parameters to kernel memory. */
+  /* Copy the boot parameters to the local buffer. */
   kinfo.params_base = seg2phys(mds) + parmoff;
   kinfo.params_size = MIN(parmsize,sizeof(params)-2);
   phys_copy(kinfo.params_base, vir2phys(params), kinfo.params_size);

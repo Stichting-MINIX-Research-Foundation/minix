@@ -47,15 +47,13 @@ register message *m_ptr;	/* pointer to request message */
 #endif
   rpc->p_nr = m_ptr->PR_PROC_NR;	/* this was obliterated by copy */
   rpc->p_ntf_q = NULL;			/* remove pending notifications */
+
+  /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
   rpc->p_flags |= NO_MAP;		/* inhibit process from running */
-
-  rpc->p_flags &= ~(PENDING | SIG_PENDING | P_STOP);
-
-  /* Only 1 in group should have PENDING, child does not inherit trace status*/
+  rpc->p_flags &= ~(SIGNALED | SIG_PENDING | P_STOP);
   sigemptyset(&rpc->p_pending);
-  rpc->p_pendcount = 0;
-  rpc->p_reg.retreg = 0;	/* child sees pid = 0 to know it is child */
 
+  rpc->p_reg.retreg = 0;	/* child sees pid = 0 to know it is child */
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
   rpc->p_sys_time = 0;
 
@@ -175,7 +173,6 @@ register message *m_ptr;	/* pointer to request message */
  *
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR		(slot number of exiting process)
- *    m1_i2:	PR_PPROC_NR		(slot number of parent process)
  */
 
 
@@ -186,36 +183,27 @@ register message *m_ptr;	/* pointer to request message */
 PUBLIC int do_xit(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-/* Handle sys_exit. A user process has exited (the PM sent the request).
+/* Handle sys_exit. A user process has exited or a system process requests 
+ * to exit. Only the PM can request other process slots to be cleared.
+ * The routine to clean up a process table slot cancels outstanding timers, 
+ * possibly removes the process from the message queues, and resets certain 
+ * process table fields to the default values.
  */
-  register struct proc *rc;
   int exit_proc_nr;				
 
-  /* Get a pointer to the process that exited. */
-  exit_proc_nr = m_ptr->PR_PROC_NR;	
-  if (exit_proc_nr == SELF) exit_proc_nr = m_ptr->m_source;
-  if (! isokprocn(exit_proc_nr)) return(EINVAL);
-  rc = proc_addr(exit_proc_nr);
+  /* Determine what process exited. */
+  if (PM_PROC_NR == m_ptr->m_source) {
+      exit_proc_nr = m_ptr->PR_PROC_NR;		/* get exiting process */
+      if (exit_proc_nr != SELF) { 		/* PM tries to exit self */
+          if (! isokprocn(exit_proc_nr)) return(EINVAL);
+          clear_proc(exit_proc_nr);		/* exit a user process */
+          return(OK);				/* report back to PM */
+      }
+  } 
 
-#if DEAD_CODE
-  /* If this is a user process and the PM passed in a valid parent process, 
-   * accumulate the child times at the parent. 
-   */
-  if (isuserp(rc) && isokprocn(m_ptr->PR_PPROC_NR)) {
-      rp = proc_addr(m_ptr->PR_PPROC_NR);
-      lock(15, "do_xit");
-      rp->child_utime += rc->user_time + rc->child_utime;
-      rp->child_stime += rc->sys_time + rc->child_stime;
-      unlock(15);
-  }
-#endif
-
-  /* Now call the routine to clean up of the process table slot. This cancels
-   * outstanding timers, possibly removes the process from the message queues,
-   * and resets important process table fields.
-   */
-  clear_proc(exit_proc_nr);
-  return(OK);				/* tell PM that cleanup succeeded */
+  /* The PM or some other system process requested to be exited. */
+  clear_proc(m_ptr->m_source);
+  return(EDONTREPLY);
 }
 
 

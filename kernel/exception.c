@@ -53,7 +53,7 @@ unsigned vec_nr;
 	return;
   }
 
-  if (k_reenter == 0 && ! istaskp(saved_proc)) {
+  if (k_reenter == 0 && ! iskernelp(saved_proc)) {
 	cause_sig(proc_nr(saved_proc), ep->signum);
 	return;
   }

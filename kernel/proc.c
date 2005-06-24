@@ -146,17 +146,20 @@ message *m_ptr;			/* pointer to message in the caller's space */
   case SENDREC:				/* has FRESH_ANSWER flag */		
       /* fall through */
   case SEND:			
-      if (! isalive(src_dst)) { 			
+      if (isemptyp(proc_addr(src_dst))) { 			
           result = EDEADDST;		/* cannot send to the dead */
           break;
       }
-      mask_entry = isuser(src_dst) ? USER_PROC_NR : src_dst;
+
+#if DEAD_CODE	/* to be replaced by better mechanism */
+      mask_entry = isuserp(proc_addr(src_dst)) ? USER_PROC_NR : src_dst;
       if (! isallowed(caller_ptr->p_sendmask, mask_entry)) {
           kprintf("WARNING: sys_call denied %d ", caller_ptr->p_nr);
           kprintf("sending to %d\n", proc_addr(src_dst)->p_nr);
           result = ECALLDENIED;		/* call denied by send mask */
           break;
       } 
+#endif
 
       result = mini_send(caller_ptr, src_dst, m_ptr, flags);
       if (function == SEND || result != OK) {	
@@ -337,7 +340,7 @@ message *m_ptr;				/* pointer to message buffer */
   /* Destination is not ready. Add the notification to the pending queue. 
    * Get pointer to notification message. Don't copy if already in kernel. 
    */
-  if (! istaskp(caller_ptr)) {
+  if (! iskernelp(caller_ptr)) {
       CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, 
           proc_addr(HARDWARE), &ntf_mess);
       m_ptr = &ntf_mess;
@@ -489,8 +492,8 @@ register struct proc *rp;	/* this process is no longer runnable */
   rp->p_ready = 0;
 #endif
 
-  /* Side-effect for tasks: check if the task's stack still is ok? */
-  if (istaskp(rp)) { 				
+  /* Side-effect for kernel: check if the task's stack still is ok? */
+  if (iskernelp(rp)) { 				
 	if (*rp->p_stguard != STACK_GUARD)
 		panic("stack overrun by task", proc_nr(rp));
   }

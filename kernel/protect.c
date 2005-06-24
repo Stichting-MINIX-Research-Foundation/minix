@@ -358,8 +358,7 @@ register struct proc *rp;
           code_bytes = data_bytes;	/* common I&D, poor protect */
       else
           code_bytes = (phys_bytes) rp->p_memmap[T].mem_len << CLICK_SHIFT;
-      privilege = (isidlep(rp) || istaskp(rp)) ? 
-          TASK_PRIVILEGE : USER_PRIVILEGE;
+      privilege = (iskernelp(rp)) ? TASK_PRIVILEGE : USER_PRIVILEGE;
       init_codeseg(&rp->p_ldt[CS_LDT_INDEX],
           (phys_bytes) rp->p_memmap[T].mem_phys << CLICK_SHIFT,
           code_bytes, privilege);

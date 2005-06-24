@@ -157,7 +157,7 @@ check_runqueues(char *when)
   }	
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
-	if(isalivep(xp) && xp->p_ready && !xp->p_found) {
+	if(! isempty(xp) && xp->p_ready && ! xp->p_found) {
 		kprintf("scheduling error: ready not on queue: %s\n", (karg_t) when);
 		panic("ready proc not on scheduling queue", NO_NUM);
 		if(l++ > PROCLIMIT) { panic("loop in proc.t?", NO_NUM); }

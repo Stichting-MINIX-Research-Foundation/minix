@@ -2,21 +2,15 @@
  * The routine main() initializes the system and starts the ball rolling by
  * setting up the process table, interrupt vectors, and scheduling each task 
  * to run to initialize itself.
- * The routine prepare_shutdown() tries to cleanly shuts down MINIX by running
- * the stop_sequence() to notify all system services and allowing them some 
- * time to finalize. In case of an exception(), the stop sequence is skipped. 
+ * The routine shutdown() does the opposite and brings down MINIX. 
  *
  * The entries into this file are:
  *   main:	    	MINIX main program
  *   prepare_shutdown:	prepare to take MINIX down
- *   stop_sequence: 	take down all system services
  *
  * Changes:
  *   Nov 24, 2004   simplified main() with system image  (Jorrit N. Herder)
- *   Oct 21, 2004   moved copyright to announce()  (Jorrit N. Herder) 
- *   Sep 04, 2004   created stop_sequence() to cleanup  (Jorrit N. Herder)
- *   Aug 20, 2004   split wreboot() and shutdown()  (Jorrit N. Herder)
- *   Jun 15, 2004   moved wreboot() to this file  (Jorrit N. Herder)
+ *   Aug 20, 2004   new prepare_shutdown() and shutdown()  (Jorrit N. Herder)
  */
 #include "kernel.h"
 #include <signal.h>
@@ -31,7 +25,6 @@
 FORWARD _PROTOTYPE( void announce, (void));	
 FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
 
-#define STOP_TICKS	(5*HZ)			/* time allowed to stop */
 
 /*===========================================================================*
  *                                   main                                    *
@@ -52,11 +45,11 @@ PUBLIC void main()
   /* Initialize the interrupt controller. */
   intr_init(1);
 
-  /* Clear the process table. Anounce each slot as empty and
-   * set up mappings for proc_addr() and proc_nr() macros.
+  /* Clear the process table. Anounce each slot as empty and set up mappings 
+   * for proc_addr() and proc_nr() macros.
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
-  	rp->p_type = P_NONE;			/* isemptyp() tests on this */
+  	rp->p_flags = SLOT_FREE;		/* initialize free slot */
 	rp->p_nr = i;				/* proc number from ptr */
         (pproc_addr + NR_TASKS)[i] = rp;        /* proc ptr from number */
   }
@@ -77,7 +70,6 @@ PUBLIC void main()
 	rp = proc_addr(ttp->proc_nr);		/* t's process slot */
 	kstrncpy(rp->p_name, ttp->proc_name, P_NAME_LEN);  /* set name */
 	rp->p_name[P_NAME_LEN-1] = '\0';	/* just for safety */
-	rp->p_type = ttp->type;			/* type of process */
 	rp->p_priority = ttp->priority;		/* scheduling priority */
 	rp->p_call_mask = ttp->call_mask;	/* allowed system calls */
 	rp->p_sendmask = ttp->sendmask;		/* sendmask protection */
@@ -117,7 +109,7 @@ PUBLIC void main()
 	 * access I/O; this is not allowed to less-privileged processes 
 	 */
 	rp->p_reg.pc = (reg_t) ttp->initial_pc;
-	rp->p_reg.psw = (isidlep(rp)||istaskp(rp)) ? INIT_TASK_PSW : INIT_PSW;
+	rp->p_reg.psw = (iskernelp(rp)) ? INIT_TASK_PSW : INIT_PSW;
 
 	/* Initialize the server stack pointer. Take it down one word
 	 * to give crtso.s something to use as "argc".
@@ -176,11 +168,6 @@ PRIVATE void announce(void)
   kprintf("Executing in %s mode\n\n",
       machine.protected ? karg("32-bit protected") : karg("real"));
 #endif
-
-  /* Check if boot device was loaded with the kernel. */
-  if (kinfo.bootdev_base > 0)
-      kprintf("Image of /dev/boot loaded. Size: %u KB.\n", kinfo.bootdev_size);
-
 }
 
 
@@ -188,15 +175,13 @@ PRIVATE void announce(void)
  *			       prepare_shutdown				    *
  *==========================================================================*/
 PUBLIC void prepare_shutdown(how)
-int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
+int how;				/* reason to shut down */
 {
 /* This function prepares to shutdown MINIX. It uses a global flag to make 
  * sure it is only executed once. Unless a CPU exception occurred, the 
- * stop_sequence() is started. 
  */
+  static timer_t shutdown_timer; 	/* timer for watchdog function */ 
   message m;
-  if (shutting_down)
-  	return;
 
   /* Show debugging dumps on panics. Make sure that the TTY task is still 
    * available to handle them. This is done with help of a non-blocking send. 
@@ -214,74 +199,20 @@ int how;		/* 0 = halt, 1 = reboot, 2 = panic!, ... */
   m.NOTIFY_TYPE = HARD_STOP;
   lock_notify(TTY, &m);
 
-  /* Run the stop sequence. The timer argument passes the shutdown status.
-   * The stop sequence is skipped for fatal CPU exceptions.
+  /* Allow processes to be scheduled to clean up, unless a CPU exception 
+   * occurred. This is done by setting a timer. The timer argument passes
+   * the shutdown status.
    */
-  shutting_down = TRUE;				/* flag for sys_exit() */
   tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
   if (kernel_exception) {			/* set in exception() */
       kprintf("\nAn exception occured; skipping stop sequence.\n", NO_NUM);
       shutdown(&shutdown_timer);		/* TTY isn't scheduled */
   } else {
       kprintf("\nNotifying system services about MINIX shutdown.\n", NO_NUM); 
-      set_timer(&shutdown_timer, get_uptime(), stop_sequence);
+      set_timer(&shutdown_timer, get_uptime(), shutdown);
   }
 }
 
-/*==========================================================================*
- *			        stop_sequence 				    *
- *==========================================================================*/
-PUBLIC void stop_sequence(tp)
-timer_t *tp;
-{
-/* Try to cleanly stop all system services before shutting down. For each 
- * process type, all processes are notified and given STOP_TICKS to cleanly
- * shutdown. The notification order is servers, drivers, tasks. The variable 
- * 'shutdown_process' is set globally to indicate the process next to stop 
- * so that the stop sequence can directly continue if it has exited. Only if 
- * stop sequence has finished, MINIX is brought down. 
- */
-  static int level = P_SERVER;		/* start at the highest level */
-  static struct proc *p = NIL_PROC;	/* next process to stop */
-  static message m;
-
-  /* See if the last process' shutdown was successful. Else, force exit. */
-  if (p != NIL_PROC) { 
-      kprintf("[%s]\n", isalivep(p) ? karg("FAILED") : karg("OK"));
-      if (isalivep(p))
-          clear_proc(p->p_nr);		/* now force process to exit */ 
-  }
-
-  /* Find the next process that must be stopped. Continue where last search
-   * ended or start at begin. Possibly go to next level while searching. If
-   * the last level is completely searched, shutdown MINIX. Processes are
-   * stopped in the order of dependencies, that is, from the highest level to
-   * the lowest level so that, for example, the file system can still rely on 
-   * device drivers to cleanly shutdown.  
-   */ 
-  if (p == NIL_PROC) p = BEG_PROC_ADDR; 
-  while (TRUE) {
-      if (isalivep(p) && p->p_type == level) {	/* found a process */
-          kprintf("- Stopping %s ... ", karg(p->p_name));
-          shutdown_process = p;		/* directly continue if exited */
-          m.NOTIFY_TYPE = HARD_STOP;
-          m.NOTIFY_ARG = tmr_arg(tp)->ta_int;		/* how */
-          lock_notify(proc_nr(p), &m);
-          set_timer(tp, get_uptime()+STOP_TICKS, stop_sequence);
-          return;			/* allow the process to shut down */ 
-      } 
-      p++;				/* proceed to next process */
-      if (p >= END_PROC_ADDR) {		/* proceed to next level */
-      	  p = BEG_PROC_ADDR;		
-       	  level = level - 1;		
-          if (level == P_TASK) {	/* done; tasks must remain alive */
-          	shutdown(tp);
-          	/* no return */
-		return;
-          }
-      }
-  }
-}
 
 /*==========================================================================*
  *				   shutdown 				    *
@@ -290,11 +221,11 @@ PRIVATE void shutdown(tp)
 timer_t *tp;
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
- * down MINIX. How to shutdown is in the argument: RBT_REBOOT, RBT_HALT, 
- * RBT_RESET. 
+ * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
+ * monitor), RBT_MONITOR (execute given code), RBT_RESET (hard reset). 
  */
-  static u16_t magic = STOP_MEM_CHECK;
   int how = tmr_arg(tp)->ta_int;
+  u16_t magic; 
 
   /* Now mask all interrupts, including the clock, and stop the clock. */
   outb(INT_CTLMASK, ~0); 
@@ -306,22 +237,17 @@ timer_t *tp;
 	outb(INT_CTLMASK, 0);
 	outb(INT2_CTLMASK, 0);
 
-	/* Return to the boot monitor. Set the program for the boot monitor.
-	 * For RBT_MONITOR, the MM has provided the program.
-	 */
-	if (how == RBT_REBOOT) 
-		phys_copy(vir2phys("delay;boot"), kinfo.params_base, 11);
-	else 
-		phys_copy(vir2phys("delay"), kinfo.params_base, 6); 
+	/* Return to the boot monitor. Set the program if not already done. */
+	if (how != RBT_MONITOR) phys_copy(vir2phys(""), kinfo.params_base, 1); 
 	level0(monitor);
   }
 
-  /* Stop BIOS memory test. */
-  phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR, SOFT_RESET_FLAG_SIZE);
-
   /* Reset the system by jumping to the reset address (real mode), or by
-   * forcing a processor shutdown (protected mode).
+   * forcing a processor shutdown (protected mode). First stop the BIOS 
+   * memory test by setting a soft reset flag. 
    */
+  magic = STOP_MEM_CHECK;
+  phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR, SOFT_RESET_FLAG_SIZE);
   level0(reset);
 }
 

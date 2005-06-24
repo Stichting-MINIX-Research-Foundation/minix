@@ -33,11 +33,11 @@ message *m_ptr;			/* pointer to request message */
 
   /* Find the next process with pending signals. */
   for (rp = BEG_USER_ADDR; rp < END_PROC_ADDR; rp++) {
-      if (rp->p_flags & PENDING) {
+      if (rp->p_flags & SIGNALED) {
           m_ptr->SIG_PROC = rp->p_nr;
           m_ptr->SIG_MAP = rp->p_pending;
           sigemptyset(&rp->p_pending); 	/* ball is in PM's court */
-          rp->p_flags &= ~PENDING;	/* blocked by SIG_PENDING */
+          rp->p_flags &= ~SIGNALED;	/* blocked by SIG_PENDING */
           return(OK);
       }
   }
@@ -57,12 +57,12 @@ message *m_ptr;			/* pointer to request message */
   register struct proc *rp;
 
   rp = proc_addr(m_ptr->SIG_PROC);
-  if (isemptyp(rp)) return(EINVAL);	/* process already dead? */
+  if (isemptyp(rp)) return(EINVAL);		/* process already dead? */
 
   /* PM has finished one kernel signal. Perhaps process is ready now? */
-  if (rp->p_pendcount != 0 && --rp->p_pendcount == 0
-          && (rp->p_flags &= ~SIG_PENDING) == 0)
-      lock_ready(rp);
+  if (! (rp->p_flags & SIGNALED)) 		/* new signal arrived */
+     if ((rp->p_flags &= ~SIG_PENDING) == 0)	/* remove pending flag */
+         lock_ready(rp);			/* ready if no flags */
   return(OK);
 }
 

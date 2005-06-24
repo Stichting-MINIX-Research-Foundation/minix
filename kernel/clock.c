@@ -1,4 +1,3 @@
-#define NEW_TIME_COUNT 	1
 /* The file contais the clock task, which handles all time related functions.
  * Important events that are handled by the CLOCK include alarm timers and
  * (re)scheduling user processes. 
@@ -85,9 +84,6 @@ PRIVATE clock_t realtime;		/* real time clock */
 
 /* Variables for and changed by the CLOCK's interrupt handler. */
 PRIVATE irq_hook_t clock_hook;
-#if ! NEW_TIME_COUNT
-PRIVATE clock_t pending_ticks;		/* ticks seen by low level only */
-#endif
 PRIVATE int sched_ticks = SCHED_RATE;	/* counter: when 0, call scheduler */
 PRIVATE struct proc *prev_ptr;		/* last user process run by clock */
 
@@ -107,16 +103,9 @@ PUBLIC void clock_task()
 
   /* Main loop of the clock task.  Get work, process it, sometimes reply. */
   while (TRUE) {
+
       /* Go get a message. */
       receive(ANY, &m);	
-
-#if ! NEW_TIME_COUNT
-      /* Transfer ticks seen by the low level handler. */
-      lock(8, "realtime");
-      realtime += pending_ticks;	
-      pending_ticks = 0;		
-      unlock(8);
-#endif
 
       /* Handle the request. */
       switch (m.m_type) {
@@ -161,7 +150,7 @@ message *m_ptr;				/* pointer to request message */
   /* If a process has been running too long, pick another one. */
   if (--sched_ticks <= 0) {
 	if (bill_ptr == prev_ptr) 
-		lock_sched(PPRI_USER);		/* process has run too long */
+		lock_sched(USER_Q);		/* process has run too long */
 	sched_ticks = SCHED_RATE;		/* reset quantum */
 	prev_ptr = bill_ptr;			/* new previous process */
   }
@@ -195,7 +184,7 @@ irq_hook_t *hook;
  *		is changing them, provided they are always valid pointers,
  *		since at worst the previous process would be billed.
  *	next_timeout, realtime, sched_ticks, bill_ptr, prev_ptr
- *	rdy_head[PPRI_USER]
+ *	rdy_head[USER_Q]
  *		These are tested to decide whether to call notify().  It
  *		does not matter if the test is sometimes (rarely) backwards
  *		due to a race, since this will only delay the high-level
@@ -203,12 +192,6 @@ irq_hook_t *hook;
  * The variables which are changed require more care:
  *	rp->p_user_time, rp->p_sys_time:
  *		These are protected by explicit locks in system.c.
-#if ! NEW_TIME_COUNT
- *	pending_ticks:
- *		This is protected by explicit locks in clock.c.  Don't
- *		update realtime directly, since there are too many
- *		references to it to guard conveniently.
-#endif
  *	lost_ticks:
  *		Clock ticks counted outside the clock task.
  *	sched_ticks, prev_ptr:
@@ -224,9 +207,6 @@ irq_hook_t *hook;
  */
   register unsigned ticks;
   message m;
-#if ! NEW_TIME_COUNT
-  clock_t now;
-#endif
 
   /* Acknowledge the PS/2 clock interrupt. */
   if (machine.ps_mca) outb(PORT_B, inb(PORT_B) | CLOCK_ACK_BIT);
@@ -236,16 +216,9 @@ irq_hook_t *hook;
    * process is running, charge the billable process for system time as well.
    * Thus the unbillable process' user time is the billable user's system time.
    */
-#if NEW_TIME_COUNT
   ticks = lost_ticks + 1;
   lost_ticks = 0;
   realtime += ticks;
-#else
-  ticks = lost_ticks + 1;
-  lost_ticks = 0;
-  pending_ticks += ticks;
-  now = realtime + pending_ticks;
-#endif
 
   /* Update administration. */
   proc_ptr->p_user_time += ticks;
@@ -254,12 +227,8 @@ irq_hook_t *hook;
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * If bill_ptr == prev_ptr, there are no ready users so don't need sched(). 
    */ 
-#if NEW_TIME_COUNT
   if (next_timeout <= realtime || (sched_ticks == 1 && bill_ptr == prev_ptr
-#else
-  if (next_timeout <= now || (sched_ticks == 1 && bill_ptr == prev_ptr
-#endif
-          && rdy_head[PPRI_USER] != NIL_PROC))
+          && rdy_head[USER_Q] != NIL_PROC))
   {  
       m.NOTIFY_TYPE = HARD_INT;
       lock_notify(CLOCK, &m);
@@ -280,16 +249,7 @@ PUBLIC clock_t get_uptime()
 /* Get and return the current clock uptime in ticks.
  * Be careful about pending_ticks.
  */
-#if NEW_TIME_COUNT
   return(realtime);
-#else
-  clock_t uptime;
-
-  lock(9, "get_uptime");
-  uptime = realtime + pending_ticks;
-  unlock(9);
-  return(uptime);
-#endif
 }
 
 

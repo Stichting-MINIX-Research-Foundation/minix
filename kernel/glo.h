@@ -12,9 +12,6 @@
 
 /* Variables relating to shutting down MINIX. */
 EXTERN char kernel_exception;		/* TRUE after system exceptions */
-EXTERN char shutting_down;		/* TRUE if shutting down */
-EXTERN struct proc *shutdown_process;	/* process awaiting shutdown of */
-EXTERN timer_t shutdown_timer;  	/* timer for watchdog function */ 
 
 /* Kernel information structures. This groups vital kernel information. */
 EXTERN phys_bytes aout;			/* address of a.out headers */
@@ -25,7 +22,8 @@ EXTERN struct randomness krandom;	/* gather kernel random information */
 
 /* Process scheduling information and the kernel reentry count. */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
-EXTERN struct proc *next_ptr;	/* pointer to next process to run */
+EXTERN struct proc *next_ptr;	/* next process to run after restart() */
+EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 

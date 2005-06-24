@@ -55,7 +55,7 @@ PUBLIC int (*call_vec[NR_SYS_CALLS])(message *m_ptr);
 
 #define map(call_nr, handler) \
 	{extern int dummy[NR_SYS_CALLS > (unsigned) (call_nr) ? 1 : -1];} \
-	call_vec[(call_nr)] = (handler)
+	call_vec[(call_nr)] = (handler) 
 
 FORWARD _PROTOTYPE( void initialize, (void));
 
@@ -67,7 +67,7 @@ PUBLIC void sys_task()
 {
 /* Main entry point of sys_task.  Get the message and dispatch on type. */
   static message m;
-  register int result, debug;
+  register int result;
 
   /* Initialize the system task. */
   initialize();
@@ -89,11 +89,10 @@ PUBLIC void sys_task()
        * is known to be blocked waiting for a message.
        */
       if (result != EDONTREPLY) {
-          debug = m.m_type;
   	  m.m_type = result;	/* report status of call */
           if (OK != lock_send(m.m_source, &m)) {
-              kprintf("Warning, SYSTASK couldn't reply to request %d", debug);
-              kprintf(" from %d\n", m.m_source);
+              kprintf("Warning, SYSTASK couldn't reply to request from %d\n", 
+                   m.m_source);
           }
       }
   }
@@ -156,7 +155,6 @@ PRIVATE void initialize(void)
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_IOPENABLE, do_iopenable);	/* enable CPU I/O protection bits */
   map(SYS_SVRCTL, do_svrctl);		/* kernel control functions */
-  map(SYS_EXIT, do_exit); 		/* exit a system process*/
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
@@ -178,11 +176,7 @@ PUBLIC void clear_proc(proc_nr)
 int proc_nr;				/* slot of process to clean up */
 {
   register struct proc *rp, *rc;
-#if DEAD_CODE
-  struct proc *np, *xp;
-#else
   register struct proc **xpp;		/* iterate over caller queue */
-#endif
   int i;
 
   /* Get a pointer to the process that exited. */
@@ -203,24 +197,6 @@ int proc_nr;				/* slot of process to clean up */
       /* Check all proc slots to see if the exiting process is queued. */
       for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
           if (rp->p_caller_q == NIL_PROC) continue;
-#if DEAD_CODE
-          if (rp->p_caller_q == rc) {
-              /* Exiting process is on front of this queue. */
-              rp->p_caller_q = rc->p_q_link;
-              break;
-          } else {
-              /* See if exiting process is in middle of queue. */
-              np = rp->p_caller_q;
-              while ( ( xp = np->p_q_link) != NIL_PROC) {
-                  if (xp == rc) {
-                      np->p_q_link = xp->p_q_link;
-                      break;
-                  } else {
-                      np = xp;
-                  }
-              }
-          }
-#else
           /* Make sure that the exiting process is not on the queue. */
           xpp = &rp->p_caller_q;
           while (*xpp != NIL_PROC) {		/* check entire queue */
@@ -230,7 +206,6 @@ int proc_nr;				/* slot of process to clean up */
               }
               xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
           }
-#endif
       }
   }
 
@@ -250,9 +225,7 @@ int proc_nr;				/* slot of process to clean up */
   /* Now clean up the process table entry. Reset to defaults. */
   kstrncpy(rc->p_name, "<none>", P_NAME_LEN);	/* unset name */
   sigemptyset(&rc->p_pending);		/* remove pending signals */
-  rc->p_pendcount = 0;			/* all signals are gone */
-  rc->p_flags = 0;			/* remove all flags */
-  rc->p_type = P_NONE;			/* announce slot empty */
+  rc->p_flags = SLOT_FREE;		/* announce slot empty */
   rc->p_sendmask = DENY_ALL_MASK;	/* set most restrictive mask */
 
 #if (CHIP == M68000)
@@ -315,27 +288,25 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * Signals are handled by sending a message to PM.  This function handles the 
  * signals and makes sure the PM gets them by sending a notification. The 
  * process being signaled is blocked while PM has not finished all signals 
- * for it.  These signals are counted in p_pendcount, and the  SIG_PENDING 
- * flag is kept nonzero while there are some.  It is not sufficient to ready 
- * the process when PM is informed, because PM can block waiting for FS to
- * do a core dump.
+ * for it. 
+ * It is not sufficient to ready the process when PM is informed, because 
+ * PM can block waiting for FS to do a core dump.
  */
   register struct proc *rp;
   message m;
 
+  /* Check if the signal is already pending. Process it otherwise. */
   rp = proc_addr(proc_nr);
-  if (sigismember(&rp->p_pending, sig_nr))
-	return;			/* this signal already pending */
-  sigaddset(&rp->p_pending, sig_nr);
-  ++rp->p_pendcount;		/* count new signal pending */
-  if (rp->p_flags & PENDING)
-	return;			/* another signal already pending */
-  if (rp->p_flags == 0) lock_unready(rp);
-  rp->p_flags |= PENDING | SIG_PENDING;
-  m.NOTIFY_TYPE = KSIG_PENDING;
-  m.NOTIFY_ARG = 0;
-  m.NOTIFY_FLAGS = 0;
-  lock_notify(PM_PROC_NR, &m);
+  if (! sigismember(&rp->p_pending, sig_nr)) {
+      sigaddset(&rp->p_pending, sig_nr);
+      if (rp->p_flags & SIGNALED) return;	/* other signal pending */
+      if (rp->p_flags == 0) lock_unready(rp);	/* unready if not yet done */
+      rp->p_flags |= SIGNALED | SIG_PENDING;	/* update signal flags */
+      m.NOTIFY_TYPE = KSIG_PENDING;
+      m.NOTIFY_ARG = 0;
+      m.NOTIFY_FLAGS = 0;
+      lock_notify(PM_PROC_NR, &m);
+  }
 }
 
 
@@ -355,7 +326,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
  */
 
   /* Check all acceptable ranges. */
-#if DEAD_CODE
+#if DEAD_CODE	/* to be replaced by proper ranges, e.g. 640 - 1 KB */
   if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
   	return (phys_bytes) vir_addr;
   else if (vir_addr >= UPPER_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
