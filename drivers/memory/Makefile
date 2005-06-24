@@ -39,17 +39,9 @@ clean:
 	rm -f $(DRIVER) *.o *.bak 
 
 
-# dependencies
-a = 	$d/drivers.h $b/interrupt.h $b/bios.h \
-	$i/ansi.h $i/string.h $i/limits.h $i/stddef.h $i/errno.h \
-	$m/config.h $m/type.h $m/com.h $m/callnr.h $m/const.h $s/types.h \
-	$m/syslib.h $s/types.h \
-	$m/utils.h $m/devio.h
-l =	$d/libdriver/driver.h $d/libdriver/driver.c $m/partition.h $m/u64.h 
+depend: 
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend
 
-
-memory.o:	$a $l	
-
-$(LIBDRIVER):	$a $l
-$(LIBDRIVER):	$s/ioc_disk.h
+# Include generated dependencies.
+include .depend
 

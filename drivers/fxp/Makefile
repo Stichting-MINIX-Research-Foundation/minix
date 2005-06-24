@@ -36,12 +36,9 @@ install:	/usr/sbin/drivers/$(DRIVER)
 clean:
 	rm -f *.o *.bak $(DRIVER)
 
-# Dependencies
-a = 	$d/drivers.h $b/interrupt.h $b/bios.h \
-	$i/ansi.h $i/string.h $i/limits.h $i/stddef.h $i/errno.h \
-	$m/config.h $m/type.h $m/com.h $m/callnr.h $m/const.h $s/types.h \
-	$m/syslib.h $s/types.h \
-	$m/utils.h $m/devio.h
+depend: 
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libpci/*.c > .depend
 
-fxp.o:	$a
+# Include generated dependencies.
+include .depend
 

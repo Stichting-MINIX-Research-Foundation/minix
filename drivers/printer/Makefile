@@ -21,23 +21,21 @@ OBJ = printer.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 64w $(DRIVER)
+#	install -S 64w $(DRIVER)
 
 # install with other drivers
 install:	/usr/sbin/drivers/$(DRIVER)
 /usr/sbin/drivers/$(DRIVER):	$(DRIVER)
-	install -o root -cs $? $@
+	install -o root -c $? $@
+#	install -o root -cs $? $@
 
 # clean up local files
 clean:
 	rm -f *.o *.bak $(DRIVER)
 
-# Dependencies
-a = 	$d/drivers.h $b/interrupt.h $b/bios.h \
-	$i/ansi.h $i/string.h $i/limits.h $i/stddef.h $i/errno.h \
-	$m/config.h $m/type.h $m/com.h $m/callnr.h $m/const.h $s/types.h \
-	$m/syslib.h $s/types.h \
-	$m/utils.h $m/devio.h
+depend: 
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
-printer.o:	$a
+# Include generated dependencies.
+include .depend
 

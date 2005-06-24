@@ -23,6 +23,8 @@
 #include <ibm/ports.h>		/* Well-known ports */
 
 #include <string.h>
+#include <signal.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <stddef.h>
 #include <errno.h>

@@ -12,7 +12,7 @@
  *   DEV_CLOSE:	does nothing
  *   HARD_INT:	interrupt handler has finished current chunk of output
  *   DEV_WRITE:	a process wants to write on a terminal
- *   CANCEL:		terminate a previous incomplete system call immediately
+ *   CANCEL:	terminate a previous incomplete system call immediately
  *
  *    m_type      TTY_LINE   PROC_NR    COUNT    ADDRESS
  * |-------------+---------+---------+---------+---------|
@@ -99,6 +99,8 @@ PRIVATE vir_bytes user_vir;	/* address of remainder of user buf */
 PRIVATE int writing;		/* nonzero while write is in progress */
 PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
 
+extern int errno;		/* error number */
+
 FORWARD _PROTOTYPE( void do_cancel, (message *m_ptr) );
 FORWARD _PROTOTYPE( void output_done, (void) );
 FORWARD _PROTOTYPE( void do_write, (message *m_ptr) );
@@ -106,6 +108,25 @@ FORWARD _PROTOTYPE( void prepare_output, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
 FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
 FORWARD _PROTOTYPE( void do_printer_output, (void) );
+FORWARD _PROTOTYPE( void signal_handler, (int sig) );
+
+
+
+/*===========================================================================*
+ *				 signal_handler                              *
+ *===========================================================================*/
+PRIVATE void signal_handler(sig)
+int sig;					/* signal number */
+{
+/* Expect a SIGTERM signal when this server must shutdown. */
+  if (sig == SIGTERM) {
+  	printf("Shutting down PRINTER driver\n");
+  	exit(0);
+  } else {
+  	printf("PRINTER got unknown signal\n");
+  }
+}
+
 
 /*===========================================================================*
  *				printer_task				     *
@@ -115,9 +136,18 @@ PUBLIC void main(void)
 /* Main routine of the printer task. */
 
   message pr_mess;		/* buffer for all incoming messages */
-  
-  printf("PRN: user-level printer driver is up and running\n");
+#if DEAD_CODE
+  struct sigaction sigact;
 
+  /* Install signal handler.*/
+  sigact.sa_handler = signal_handler;
+  sigact.sa_mask = ~0;			/* block all other signals */
+  sigact.sa_flags = 0;			/* default behaviour */
+  printf("PRINTER calls sigaction()\n");
+  if (sigaction(SIGTERM, &sigact, NULL) != OK) 
+      report("PRINTER","warning, sigaction() failed", errno);
+#endif
+  
   while (TRUE) {
 	receive(ANY, &pr_mess);
 	switch(pr_mess.m_type) {

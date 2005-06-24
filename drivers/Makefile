@@ -13,7 +13,7 @@ usage:
 	@echo "" >&2
 
 build: all
-all install clean:
+all install depend clean:
 	cd ./libdriver && $(MAKE) $@
 	cd ./libpci && $(MAKE) $@
 	cd ./tty && $(MAKE) $@

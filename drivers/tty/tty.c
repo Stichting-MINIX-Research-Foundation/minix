@@ -120,7 +120,7 @@ FORWARD _PROTOTYPE( void reprint, (tty_t *tp)				);
 FORWARD _PROTOTYPE( void dev_ioctl, (tty_t *tp)				);
 FORWARD _PROTOTYPE( void setattr, (tty_t *tp)				);
 FORWARD _PROTOTYPE( void tty_icancel, (tty_t *tp)			);
-FORWARD _PROTOTYPE( void tty_init, (tty_t *tp)				);
+FORWARD _PROTOTYPE( void tty_init, (void)				);
 #if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
 FORWARD _PROTOTYPE( int compat_getp, (tty_t *tp, struct sgttyb *sg)	);
 FORWARD _PROTOTYPE( int compat_getc, (tty_t *tp, struct tchars *sg)	);
@@ -160,17 +160,14 @@ PUBLIC void main(void)
 /* Main routine of the terminal task. */
 
   message tty_mess;		/* buffer for all incoming messages */
-  register tty_t *tp;
   unsigned line;
   int s;
   char *types[] = {"task","driver","server", "user"};
   register struct proc *rp;
+  register tty_t *tp;
 
-  /* Initialize the terminal lines. */
-  for (tp = FIRST_TTY,s=0; tp < END_TTY; tp++,s++) {
-  	tp->tty_index = s;
-  	tty_init(tp);
-  }
+  /* Initialize the TTY driver. */
+  tty_init();
 
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
   if (OK != (s=sys_getmachine(&machine))) {
@@ -1432,26 +1429,45 @@ register tty_t *tp;
 /*==========================================================================*
  *				tty_init				    *
  *==========================================================================*/
-PRIVATE void tty_init(tp)
-tty_t *tp;			/* TTY line to initialize. */
+PRIVATE void tty_init()
 {
 /* Initialize tty structure and call device initialization routines. */
 
-  tmr_inittimer(&tp->tty_tmr);
+  register tty_t *tp;
+  int s;
 
-  tp->tty_intail = tp->tty_inhead = tp->tty_inbuf;
-  tp->tty_min = 1;
-  tp->tty_termios = termios_defaults;
-  tp->tty_icancel = tp->tty_ocancel = tp->tty_ioctl = tp->tty_close =
+  struct sigaction sigact;
+
+  /* Initialize the terminal lines. */
+  for (tp = FIRST_TTY,s=0; tp < END_TTY; tp++,s++) {
+
+  	tp->tty_index = s;
+
+  	tmr_inittimer(&tp->tty_tmr);
+
+  	tp->tty_intail = tp->tty_inhead = tp->tty_inbuf;
+  	tp->tty_min = 1;
+  	tp->tty_termios = termios_defaults;
+  	tp->tty_icancel = tp->tty_ocancel = tp->tty_ioctl = tp->tty_close =
 								tty_devnop;
-  if (tp < tty_addr(NR_CONS)) {
-	scr_init(tp);
-  } else
-  if (tp < tty_addr(NR_CONS+NR_RS_LINES)) {
-	rs_init(tp);
-  } else {
-	pty_init(tp);
+  	if (tp < tty_addr(NR_CONS)) {
+		scr_init(tp);
+  	} else
+  	if (tp < tty_addr(NR_CONS+NR_RS_LINES)) {
+		rs_init(tp);
+  	} else {
+		pty_init(tp);
+  	}
   }
+
+#if DEAD_CODE
+  /* Install signal handler to ignore SIGTERM. */
+  sigact.sa_handler = SIG_IGN;
+  sigact.sa_mask = ~0;			/* block all other signals */
+  sigact.sa_flags = 0;			/* default behaviour */
+  if (sigaction(SIGTERM, &sigact, NULL) != OK) 
+      report("TTY","warning, sigaction() failed", errno);
+#endif
 }
 
 /*==========================================================================*

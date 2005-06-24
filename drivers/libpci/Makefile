@@ -22,14 +22,9 @@ all build install: $(OBJECTS)
 clean:
 	rm -f *.o *.bak 
 
+depend: 
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
-# Dependencies
-a = $m/config.h $i/ansi.h $m/type.h $m/com.h $m/callnr.h $s/types.h \
-	$m/const.h $m/syslib.h $m/utils.h \
-	$i/string.h $i/limits.h $i/stddef.h $i/errno.h \
-	$m/partition.h $m/u64.h
-
-pci.o:	$a
-pci.o:	pci.h 
-pci.o:	pci_amd.h pci_intel.h pci_via.h pci_sis.h 
+# Include generated dependencies.
+include .depend
 
