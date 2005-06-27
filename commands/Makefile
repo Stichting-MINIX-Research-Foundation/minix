@@ -2,6 +2,7 @@
 
 MAKE	= exec make -$(MAKEFLAGS)
 GZIP=gzip-1.2.4
+PYTHON=python-1.5.2
 
 usage:
 	@echo "Usage: make all       # Compile all commands" >&2
@@ -11,9 +12,11 @@ usage:
 
 all install::
 	cd $(GZIP) && ./configure --prefix=/usr && make $@
+	cd $(PYTHON) && ./configure --prefix=/usr/local && make $@
 
 clean::
-	if [ -f $(GZIP)/Makefile] ; then cd $(GZIP) && make $@; fi
+	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
+	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
 
 all install clean::
 	cd `arch` && $(MAKE) $@
