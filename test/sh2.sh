@@ -236,14 +236,14 @@ the little black cat
 END
 
 cat >answer <<END
+   1 dog
+   1 sheep
    2 big
    2 black
    2 cat
-   1 dog
    2 little
-   1 sheep
-   4 the
    2 white
+   4 the
 END
 
 prep x | sort | uniq -c >y1
