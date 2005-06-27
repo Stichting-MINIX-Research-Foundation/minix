@@ -122,8 +122,8 @@ Filesystem       Inodes     IUsed    IFree    %%IUsed    Mounted on\n",
 		unitsize);
   } else {
 	printf("%s\n", !iflag ? "\
-Filesystem    1k-Blocks     free     used    %  FUsed%  Mounted on" : "\
-Filesystem        Files     free     used    %  BUsed%  Mounted on"
+Filesystem    1K-Blocks     Free     Used    % Files%   Mounted on" : "\
+Filesystem        Files     Free     Used    % BUsed%   Mounted on"
 	);
   }
 
