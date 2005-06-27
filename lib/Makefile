@@ -4,6 +4,7 @@
 # See ansi/Makefile for a further explanation.
 
 MAKE	= exec make -$(MAKEFLAGS)
+ZLIB=zlib-1.2.2
 
 usage:
 	@echo "Usage: make all" >&2	# Compile all library functions" >&2
@@ -34,9 +35,11 @@ all:
 	cd syslib && $(MAKE)
 	cd utils && $(MAKE)
 	cd timers && $(MAKE)
+	cd $(ZLIB) && $(MAKE)
 	cd `arch` && $(MAKE)
 
 install:	all
+	cd $(ZLIB) && make install
 	$(MAKE) install_`arch`
 
 # Installation rules for PC Minix.
