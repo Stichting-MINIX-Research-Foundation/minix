@@ -429,10 +429,9 @@ PRIVATE void pci_intel_init()
 
 	if (!pci_intel_ctrl[i].vid)
 	{
-		printf("pci_intel_init: unknown PCI-controller:\n"
+		printf("pci_intel_init (warning): unknown PCI-controller:\n"
 			"\tvendor %04X (%s), device %04X\n",
 			vid, pci_vid_name(vid), did);
-		return;
 	}
 
 	if (nr_pcibus >= NR_PCIBUS)
@@ -673,11 +672,11 @@ int busind;
 		printf("do_isabridge: no ISA bridge found for bus %d", busind);
 		return -1;
 	}
-	printf("Unsupported ISA bridge %04X/%04X for bus %d\n",
+	printf("(warning) unsupported ISA bridge %04X/%04X for bus %d\n",
 		pcidev[unknown_bridge].pd_vid,
 		pcidev[unknown_bridge].pd_did,
 		busind);
-	return -1;
+	return 0;
 }
 
 
