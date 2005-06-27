@@ -133,6 +133,7 @@ ALL	= \
 	prep \
 	printf \
 	printroot \
+	printenv \
 	proto \
 	pwd \
 	pwdauth \
@@ -574,6 +575,10 @@ printf:	printf.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
 
+printenv:	printenv.c
+	$(CCLD) -o $@ $?
+	@install -S 4kw $@
+
 printroot:	printroot.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
@@ -939,6 +944,7 @@ install:	\
 	/usr/bin/pr_routes \
 	/usr/bin/prep \
 	/usr/bin/printf \
+	/usr/bin/printenv \
 	/usr/bin/printroot \
 	/usr/bin/proto \
 	/usr/bin/pwd \
@@ -1338,6 +1344,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/printf:	printf
+	install -cs -o bin $? $@
+
+/usr/bin/printenv:	printenv
 	install -cs -o bin $? $@
 
 /usr/bin/printroot:	printroot
