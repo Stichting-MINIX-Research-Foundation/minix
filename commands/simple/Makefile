@@ -140,6 +140,7 @@ ALL	= \
 	rcp \
 	rdate \
 	readall \
+	rev \
 	readfs \
 	remsync \
 	rget \
@@ -601,6 +602,10 @@ rdate:	rdate.c
 	$(CCLD) -o $@ rdate.c
 	@install -S 8kw $@
 
+rev:	rev.c
+	$(CCLD) -o $@ rev.c
+	@install -S 8kw $@
+
 readall:	readall.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
@@ -820,7 +825,8 @@ install:	\
 		/usr/bin/del_route \
 	/usr/bin/at \
 	/usr/bin/backup \
-		/usr/bin/restore \
+	/usr/bin/restore \
+	/usr/bin/rev \
 	/usr/bin/badblocks \
 	/usr/bin/banner \
 	/usr/bin/basename \
@@ -1362,6 +1368,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/remsync:	remsync
+	install -cs -o bin $? $@
+
+/usr/bin/rev:	rev
 	install -cs -o bin $? $@
 
 /usr/bin/rget:	rget
