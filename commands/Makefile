@@ -37,7 +37,6 @@ all install clean::
 	cd ftpd200 && $(MAKE) $@
 	cd ibm && $(MAKE) $@
 	cd kermit && $(MAKE) $@
-#	cd kermit_211 && $(MAKE) $@
 	cd m4 && $(MAKE) $@
 	cd make && $(MAKE) $@
 	cd mined && $(MAKE) $@

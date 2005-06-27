@@ -270,7 +270,9 @@ struct proc *pt;
   printf("Pointer to next ready process:	0x%04.4x\n", pt->p_nextready);	/* struct proc * */
 #endif
   printf("Bit map for pending signals 1-16:	0x%04.4x\n", pt->p_pending);	/* int */
+#if 0
   printf("Count of pending/unfinished signals:	0x%04.4x\n", pt->p_pendcount);	/* unsigned */
+#endif
 }
 
 
