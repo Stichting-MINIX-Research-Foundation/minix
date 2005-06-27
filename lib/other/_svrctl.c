@@ -2,6 +2,7 @@
  *								24 Apr 1994
  */
 #include <lib.h>
+#include <stdio.h>
 #define svrctl _svrctl
 #include <sys/svrctl.h>
 

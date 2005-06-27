@@ -96,6 +96,7 @@ OBJECTS	= \
 	$(LIBRARY)(_waitpid.o) \
 	$(LIBRARY)(_write.o) \
 	$(LIBRARY)(gettimeofday.o) \
+	$(LIBRARY)(getopt.o) \
 	$(LIBRARY)(lstat.o) \
 	$(LIBRARY)(readlink.o) \
 	$(LIBRARY)(symlink.o) \
@@ -370,6 +371,9 @@ $(LIBRARY)(_write.o):	_write.c
 
 $(LIBRARY)(gettimeofday.o):	gettimeofday.c
 	$(CC1) gettimeofday.c
+
+$(LIBRARY)(getopt.o):	getopt.c
+	$(CC1) getopt.c
 
 $(LIBRARY)(readlink.o):	readlink.c
 	$(CC1) readlink.c
