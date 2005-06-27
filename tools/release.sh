@@ -47,6 +47,7 @@ mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
+chown -R bin $RELEASEDIR/usr/src
 date >$RELEASEDIR/CD
 ( cd $RELEASEDIR && find . -name CVS | xargs rm -rf )
 echo " * Chroot build"

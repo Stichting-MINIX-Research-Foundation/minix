@@ -207,6 +207,27 @@ hex2int()
     echo $i
 }
 
+# Ask user about networking
+echo ""
+echo "Minix currently supports the Intel Pro/100 and RealTek 8139 "
+echo "Ethernet cards. Please choose: "
+echo ""
+echo "0. No Ethernet card (no networking)"
+echo "1. An Intel Pro/100 Ethernet card is installed"
+echo "2. A Realtek 8139 Ethernet card is installed"
+echo "3. A different Ethernet card is installed (no networking)"
+echo ""
+echo "You can always change your mind after the install."
+echo ""
+echo "Choice? "
+read eth
+driver=""
+inetparams=""
+case "$eth" in
+	1)	driver=FXP;	inetparams="servers=inet;" ;;
+	2)	driver=RTL8139;	inetparams="servers=inet;" ;;
+esac
+
 # Compute the amount of memory available to Minix.
 memsize=0
 ifs="$IFS"
@@ -347,6 +368,11 @@ usr=/dev/$usr"
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
+# Set inet.conf to correct driver
+if [ -n "$driver" ]
+then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
+fi
+
 umount /dev/$root || exit		# Unmount the new root.
 
 # Compute size of the second level file block cache.
@@ -366,7 +392,7 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit

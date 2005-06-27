@@ -1,0 +1,154 @@
+.TH MDB 1
+.SH NAME
+mdb \- Minix debugger
+.SH SYNOPSIS
+.B mdb
+.RB [ \-fc ]
+.I file
+.br
+.B mdb 
+.BR [-L|-l]log\-file
+.I exec-file 
+.RI [ core\-file ]
+.RI [ @command\-file ]
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B mdb
+is the Minix debugger. 
+.SH OPTIONS
+Its command line options are:
+.TP
+.B \-f
+Just examine the specified file.
+.TP
+.B \-c
+Examine 'core' file. No exec-file will be supplied.
+.TP
+.B \-Llog\-file
+Log to file only
+.TP
+.B \-llog\-file
+Log to file.
+.SP 
+.IR exec\-file
+Unless the -c option has been specified, the exec-file is required.
+.SP
+.IR core\-file
+The core-file is optional.
+.SP
+If the core-file is supplied, 
+.B mdb
+assumes that the user wishes to examine the core file.
+Otherwise 
+.B mdb 
+assumes that the user will run the exec-file and trace it.
+.SP
+.IR @command\-file
+.B mdb 
+executes command from command-file.
+.SH OVERVIEW
+.br
+.B mdb 
+commands are of the form: 
+.I [ expression ]
+.I command
+.SP
+.I expression
+can be of the form:
+.IP
+.I address 
+which defaults to text segment
+.IP
+address 
+.I overriden
+by 
+.I T:
+for Text segment
+or 
+.I D:
+for Data segment
+or
+.I S:
+for Stack segment
+.IP
+.I symbol
+where 
+.B mdb 
+does a lookup for the symbol first as a 
+.I text 
+symbol and then as a 
+.I data 
+symbol.
+.SP
+.TP
+.I command
+.SP
+The help command is ?. 
+.SP
+For detailed help on a command type: 
+.I command ?.
+.SP
+A semi-colon can be used to separate commands on a line.
+.SP
+.SH MDB COMMANDS
+.SP
+! Shell escape
+.SP
+#  Set Variable or register
+.SP 
+Tt Current call / Backtrace all
+.SP
+/nsf Display for n size s with format f
+.SP
+Xx [n] Disasm / & display reg for n instructions
+.SP
+Rr a Run / with arguments a
+.SP
+Cc [n] Continue with current signal / no signal n times
+.SP
+Ii [n] Single step with / no signal for n instructions
+.SP
+Mm t n Trace until / Stop when modified t type for n instructions
+.SP
+k  Kill
+.SP
+Bb Display / Set Break-pt
+.SP
+Dd Delete all / one break-points
+.SP
+P Toggle Pagging
+.SP
+Ll name Log to file name / and to standard output
+.SP
+Vv Toggle debug flag / Version info
+.SP
+V Version info
+.SP
+e [t] List symbols for type t
+.SP
+y Print segment mappings
+.SP
+s [n] Dump stack for n words
+.SP
+z [a] Trace syscalls with address a
+.SP
+? Help - short help
+.SP
+@ file Execute commands from file
+.SP
+Qq Quit / and kill traced process
+.SP
+.SH "SEE ALSO"
+.SP
+trace(2).
+.SH DIAGNOSTICS
+
+.SH NOTES
+
+.SH BUGS
+
+.SH AUTHOR
+Philip Murton and others

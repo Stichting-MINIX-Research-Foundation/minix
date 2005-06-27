@@ -54,8 +54,8 @@ etcfiles::
 
 all install clean::
 	cd boot && $(MAKE) $@
+	cd man && $(MAKE) $@	# First manpages, then commands
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 	cd tools && $(MAKE) $@
 	cd servers && $(MAKE) $@
-	cd man && $(MAKE) $@
 

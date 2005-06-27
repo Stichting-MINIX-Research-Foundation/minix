@@ -19,6 +19,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <sys/select.h>
+#include <sys/time.h>
 #include "dmap.h"
 #include "file.h"
 #include "fproc.h"
