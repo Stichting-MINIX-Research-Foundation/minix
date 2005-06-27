@@ -2378,7 +2378,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
 		fxp_timers->tmr_exp_time < fxp_next_timeout)
 	{
 		fxp_next_timeout= fxp_timers->tmr_exp_time; 
-		printf("fxp_set_timer: calling sys_syncalrm for %d (now%+d)\n",
+		printf("fxp_set_timer: calling sys_syncalrm for %d (now+%d)\n",
 			fxp_next_timeout, fxp_next_timeout-now);
 		r= sys_syncalrm(SELF, fxp_next_timeout, 1);
 		if (r != OK)
