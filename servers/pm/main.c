@@ -213,17 +213,11 @@ PRIVATE void pm_init()
   mproc[INIT_PROC_NR].mp_parent = PM_PROC_NR;
   sigemptyset(&mproc[INIT_PROC_NR].mp_ignore);
   sigemptyset(&mproc[INIT_PROC_NR].mp_sigmask);
-  sigemptyset(&mproc[INIT_PROC_NR].mp_catch);
 
   mproc[PM_PROC_NR].mp_pid = PM_PID;
   mproc[PM_PROC_NR].mp_parent = PM_PARENT;
   sigfillset(&mproc[PM_PROC_NR].mp_ignore);
   sigfillset(&mproc[PM_PROC_NR].mp_sigmask);
-  sigemptyset(&mproc[PM_PROC_NR].mp_catch);
-
-  sigfillset(&mproc[FS_PROC_NR].mp_ignore);
-  sigfillset(&mproc[FS_PROC_NR].mp_sigmask);
-  sigemptyset(&mproc[FS_PROC_NR].mp_catch);
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;

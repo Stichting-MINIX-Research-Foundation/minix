@@ -67,7 +67,6 @@ PUBLIC struct system_image image[] = {
  { HARDWARE, 0,            0,   TASK_Q, HARDWARE_STACK, EMPTY_CALL_MASK, ALLOW_ALL_MASK,"HARDW." },
  { PM_PROC_NR, 0,            0, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "PM"      },
  { FS_PROC_NR, 0,            0, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "FS"      },
- { SM_PROC_NR, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,      "SM"      },
  { IS_PROC_NR, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,      "IS"      },
  { TTY, 0,            0, 1, 0,            SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "TTY"      },
  { MEMORY, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "MEMORY" },

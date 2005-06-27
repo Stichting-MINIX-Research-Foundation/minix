@@ -37,7 +37,6 @@
 #define IS_PROC_NR	 5 	/* information server */
 #define TTY		 6	/* terminal (TTY) driver */
 #define MEMORY	 	 8  	/* memory driver (RAM disk, null, etc.) */
-#define SM_PROC_NR	 3 	/* system management server */
 #define AT_WINI		(MEMORY + ENABLE_AT_WINI)   /* AT Winchester */
 #define FLOPPY		(AT_WINI + ENABLE_FLOPPY)   /* floppy disk */
 #define PRINTER		(FLOPPY + ENABLE_PRINTER)    /* Centronics */
@@ -47,7 +46,7 @@
 
 /* Number of processes contained in the system image. */
 #define IMAGE_SIZE 	(NR_TASKS + \
-			6 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
+			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
 			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + 1 )	
 
 

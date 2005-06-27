@@ -10,7 +10,6 @@ MAKE=	exec make -$(MAKEFLAGS)
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
-	../servers/sm/sm \
 	../servers/is/is \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
