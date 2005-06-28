@@ -35,6 +35,13 @@ struct mmswapon {
 	char		file[128];	/* Name of swap file/device. */
 };
 
+struct svrqueryparam {
+	char		*param;		/* Names of parameters to query. */
+	size_t		psize;		/* Length of param[]. */
+	char		*value;		/* To return values. */
+	size_t		vsize;
+};
+
 /* A proper system call must be created later. */
 #include "/usr/src/servers/fs/dmap.h"
 struct fssignon {
