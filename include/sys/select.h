@@ -2,8 +2,6 @@
 #ifndef _SYS_SELECT_H
 #define _SYS_SELECT_H 1
 
-#ifdef _POSIX_SOURCE
-
 #include <sys/time.h>
 #include <sys/types.h>
 #include <limits.h>
@@ -37,8 +35,6 @@ _PROTOTYPE( void FD_ZERO, (fd_set *fdset));
 #define SEL_WR		(1 << 1)
 #define SEL_ERR		(1 << 2)
 #define SEL_NOTIFY	(1 << 3) /* not a real select operation */
-
-#endif /* _POSIX_SOURCE */
 
 #endif /* _SYS_SELECT_H */
 
