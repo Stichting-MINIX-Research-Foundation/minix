@@ -14,14 +14,12 @@ Copyright 1995 Philip Homburg
 #endif
 
 #ifndef NDEBUG
-#define NDEBUG	(CRAMPED)
+#define NDEBUG	0
 #endif
 
 #define CLOCK_GRAN	1	/* in HZ */
 
-#if DEBUG
 #define where()	printf("%s, %d: ", __FILE__, __LINE__)
-#endif
 
 #define NW_SUSPEND	SUSPEND
 #define NW_WOULDBLOCK	EWOULDBLOCK
@@ -32,5 +30,5 @@ Copyright 1995 Philip Homburg
 #endif /* INET__CONST_H */
 
 /*
- * $PchId: const.h,v 1.6 1995/11/21 06:54:39 philip Exp $
+ * $PchId: const.h,v 1.7 2000/08/12 09:21:44 philip Exp $
  */

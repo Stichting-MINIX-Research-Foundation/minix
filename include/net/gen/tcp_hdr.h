@@ -34,12 +34,16 @@ typedef struct tcp_hdropt
 	u8_t tho_data[TCP_MAX_HDR_SIZE-TCP_MIN_HDR_SIZE];
 } tcp_hdropt_t;
 
-#define TCP_OPT_EOL	0
-#define TCP_OPT_NOP	1
-#define TCP_OPT_MSS	2
+#define TCP_OPT_EOL	 0
+#define TCP_OPT_NOP	 1
+#define TCP_OPT_MSS	 2
+#define TCP_OPT_WSOPT	 3	/* RFC-1323, window scale option */
+#define TCP_OPT_SACKOK	 4	/* RFC-2018, SACK permitted */
+#define TCP_OPT_TS	 8	/* RFC-1323, Timestamps option */
+#define TCP_OPT_CCNEW	12	/* RFC-1644, new connection count */
 
 #endif /* __SERVER__IP__GEN__TCP_HDR_H__ */
 
 /*
- * $PchId: tcp_hdr.h,v 1.3 1995/11/17 22:18:13 philip Exp $
+ * $PchId: tcp_hdr.h,v 1.4 2002/06/10 07:12:22 philip Exp $
  */

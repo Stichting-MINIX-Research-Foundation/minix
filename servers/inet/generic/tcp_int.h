@@ -7,6 +7,8 @@ Copyright 1995 Philip Homburg
 #ifndef TCP_INT_H
 #define TCP_INT_H
 
+#define IP_TCP_MIN_HDR_SIZE	(IP_MIN_HDR_SIZE+TCP_MIN_HDR_SIZE)
+
 #define TCP_CONN_HASH_SHIFT	4
 #define TCP_CONN_HASH_NR	(1 << TCP_CONN_HASH_SHIFT)
 
@@ -18,6 +20,8 @@ typedef struct tcp_port
 	int tp_ipfd;
 	acc_t *tp_pack;
 	ipaddr_t tp_ipaddr;
+	ipaddr_t tp_subnetmask;
+	u16_t tp_mtu;
 	struct tcp_conn *tp_snd_head;
 	struct tcp_conn *tp_snd_tail;
 	event_t tp_snd_event;
@@ -48,6 +52,7 @@ typedef struct tcp_fd
 	nwio_tcpopt_t tf_tcpopt;
 	get_userdata_t tf_get_userdata;
 	put_userdata_t tf_put_userdata;
+	select_res_t tf_select_res;
 	struct tcp_conn *tf_conn;
 	size_t tf_write_offset;
 	size_t tf_write_count;
@@ -57,23 +62,26 @@ typedef struct tcp_fd
 
 #define TFF_EMPTY	   0x0
 #define TFF_INUSE	   0x1
-#define TFF_IOCTL_IP	   0x2
-#define TFF_CONF_SET	   0x4
-#define TFF_IOC_INIT_SP	   0x8
-#define TFF_CONNECT	  0x20
-#define TFF_WRITE_IP	  0x80
+#define TFF_READ_IP	   0x2
+#define TFF_WRITE_IP	   0x4
+#define TFF_IOCTL_IP	   0x8
+#define TFF_CONF_SET	  0x10
+#define TFF_IOC_INIT_SP	  0x20
+#define TFF_CONNECT	  0x40
+#define TFF_CONNECTED	  0x80
 #define TFF_WR_URG	 0x100
 #define TFF_PUSH_DATA	 0x200
-#define TFF_READ_IP	 0x400
-#define TFF_RECV_URG	 0x800
-#define TFF_CONNECTED	0x1000
-#define TFF_DEL_RST	0x2000
+#define TFF_RECV_URG	 0x400
+#define TFF_DEL_RST	 0x800
+#define TFF_SEL_READ	0x1000
+#define TFF_SEL_WRITE	0x2000
+#define TFF_SEL_EXCEPT	0x4000
 
 typedef struct tcp_conn
 {
 	int tc_flags;
 	int tc_state;
-	int tc_busy;		/* do not steal buffer when a counnection is 
+	int tc_busy;		/* do not steal buffer when a connection is 
 				 * busy
 				 */
 	tcp_port_t *tc_port;
@@ -84,11 +92,9 @@ typedef struct tcp_conn
 	tcpport_t tc_remport;
 	ipaddr_t tc_remaddr;
 
-#if 1
 	int tc_connInprogress;
-#endif
 	int tc_orglisten;
-	time_t tc_senddis;
+	clock_t tc_senddis;
 
 	/* Sending side */
 	u32_t tc_ISS;		/* initial sequence number */
@@ -104,12 +110,15 @@ typedef struct tcp_conn
 	u32_t tc_snd_cthresh;	/* threshold for send window */
 	u32_t tc_snd_cinc;	/* increment for send window threshold */
 	u16_t tc_snd_wnd;	/* max send queue size */
+	u16_t tc_snd_dack;	/* # of duplicate ACKs */
 
 	/* round trip calculation. */
-	time_t tc_rt_time;
+	clock_t tc_rt_time;
 	u32_t tc_rt_seq;
 	u32_t tc_rt_threshold;
-	time_t tc_rtt;
+	clock_t tc_artt;	/* Avg. retransmission time. Scaled. */
+	clock_t tc_drtt;	/* Diviation, also scaled. */
+	clock_t tc_rtt;		/* Computed retrans time */
 
 	acc_t *tc_send_data;
 	acc_t *tc_frag2send;
@@ -127,17 +136,28 @@ typedef struct tcp_conn
 	acc_t *tc_adv_data;
 	u32_t tc_adv_seq;
 
+	/* Keep alive. Record SDN_NXT and RCV_NXT in tc_ka_snd and
+	 * tc_ka_rcv when setting the keepalive timer to detect
+	 * any activity that may have happend before the timer
+	 * expired.
+	 */
+	u32_t tc_ka_snd;
+	u32_t tc_ka_rcv;
+	clock_t tc_ka_time;
+
 	acc_t *tc_remipopt;
 	acc_t *tc_tcpopt;
 	u8_t tc_tos;
 	u8_t tc_ttl;
-	u16_t tc_mss;
+	u16_t tc_max_mtu;	/* Max. negotiated (or selected) MTU */
+	u16_t tc_mtu;		/* discovered PMTU */
+	clock_t tc_mtutim;	/* Last time MTU/TCF_PMTU flag was changed */
 
 	struct timer tc_transmit_timer;
 	u32_t tc_transmit_seq;
-	time_t tc_0wnd_to;
-	time_t tc_stt;		/* time of first send after last ack */
-	time_t tc_rt_dead;
+	clock_t tc_0wnd_to;
+	clock_t tc_stt;		/* time of first send after last ack */
+	clock_t tc_rt_dead;
 
 	int tc_error;
 	int tc_inconsistent; 
@@ -151,6 +171,9 @@ typedef struct tcp_conn
 #define TCF_SEND_ACK		0x10
 #define TCF_FIN_SENT		0x20
 #define TCF_BSD_URG		0x40
+#define TCF_NO_PUSH		0x80
+#define TCF_PUSH_NOW		0x100
+#define TCF_PMTU		0x200
 
 #if DEBUG & 0x200
 #define TCF_DEBUG		0x1000
@@ -167,13 +190,18 @@ typedef struct tcp_conn
 void tcp_frag2conn ARGS(( tcp_conn_t *tcp_conn, ip_hdr_t *ip_hdr,
 	tcp_hdr_t *tcp_hdr, acc_t *tcp_data, size_t data_len ));
 void tcp_fd_read ARGS(( tcp_conn_t *tcp_conn, int enq ));
+unsigned tcp_sel_read ARGS(( tcp_conn_t *tcp_conn ));
+void tcp_rsel_read ARGS(( tcp_conn_t *tcp_conn ));
 
 /* tcp_send.c */
 void tcp_conn_write ARGS(( tcp_conn_t *tcp_conn, int enq ));
 void tcp_release_retrans ARGS(( tcp_conn_t *tcp_conn, u32_t seg_ack,
 	U16_t new_win ));
+void tcp_fast_retrans ARGS(( tcp_conn_t *tcp_conn ));
 void tcp_set_send_timer ARGS(( tcp_conn_t *tcp_conn ));
 void tcp_fd_write ARGS(( tcp_conn_t *tcp_conn ));
+unsigned tcp_sel_write ARGS(( tcp_conn_t *tcp_conn ));
+void tcp_rsel_write ARGS(( tcp_conn_t *tcp_conn ));
 void tcp_close_connection ARGS(( tcp_conn_t *tcp_conn,
 	int error ));
 void tcp_port_write ARGS(( tcp_port_t *tcp_port ));
@@ -183,7 +211,7 @@ void tcp_shutdown ARGS(( tcp_conn_t *tcp_conn ));
 void tcp_extract_ipopt ARGS(( tcp_conn_t *tcp_conn,
 	ip_hdr_t *ip_hdr ));
 void tcp_extract_tcpopt ARGS(( tcp_conn_t *tcp_conn,
-	tcp_hdr_t *tcp_hdr ));
+	tcp_hdr_t *tcp_hdr, size_t *mssp ));
 void tcp_get_ipopt ARGS(( tcp_conn_t *tcp_conn, ip_hdropt_t
 	*ip_hdropt ));
 void tcp_get_tcpopt ARGS(( tcp_conn_t *tcp_conn, tcp_hdropt_t
@@ -207,6 +235,8 @@ void tcp_reply_ioctl ARGS(( tcp_fd_t *tcp_fd, int reply ));
 void tcp_reply_write ARGS(( tcp_fd_t *tcp_fd, size_t reply ));
 void tcp_reply_read ARGS(( tcp_fd_t *tcp_fd, size_t reply ));
 void tcp_notreach ARGS(( tcp_conn_t *tcp_conn ));
+void tcp_mtu_exceeded ARGS(( tcp_conn_t *tcp_conn ));
+void tcp_mtu_incr ARGS(( tcp_conn_t *tcp_conn ));
 
 #define TCP_FD_NR	(10*IP_PORT_MAX)
 #define TCP_CONN_NR	(2*TCP_FD_NR)
@@ -223,5 +253,5 @@ EXTERN tcp_fd_t tcp_fd_table[TCP_FD_NR];
 #endif /* TCP_INT_H */
 
 /*
- * $PchId: tcp_int.h,v 1.10 1996/05/07 20:51:59 philip Exp $
+ * $PchId: tcp_int.h,v 1.17 2005/06/28 14:21:08 philip Exp $
  */

@@ -22,11 +22,7 @@ THIS_FILE
 #endif
 
 #ifndef BUF512_NR
-#if CRAMPED
-#define BUF512_NR	32
-#else
-#define BUF512_NR	128
-#endif
+#define BUF512_NR	512
 #endif
 #ifndef BUF2K_NR
 #define BUF2K_NR	0
@@ -35,8 +31,8 @@ THIS_FILE
 #define BUF32K_NR	0
 #endif
 
-#define ACC_NR		((BUF512_NR+BUF2K_NR+BUF32K_NR)*3/2)
-#define CLIENT_NR	6
+#define ACC_NR		((BUF512_NR+BUF2K_NR+BUF32K_NR)*3)
+#define CLIENT_NR	7
 
 #define DECLARE_TYPE(Tag, Type, Size)					\
 	typedef struct Tag						\
@@ -92,6 +88,7 @@ PRIVATE size_t bf_buf_gran;
 
 PUBLIC size_t bf_free_bufsize;
 PUBLIC acc_t *bf_temporary_acc;
+PUBLIC acc_t *bf_linkcheck_acc;
 
 #ifdef BUF_CONSISTENCY_CHECK
 int inet_buf_debug;
@@ -115,7 +112,6 @@ FORWARD int report_buffer ARGS(( buf_t *buf, char *label, int i ));
 PUBLIC void bf_init()
 {
 	int i;
-	size_t size;
 	size_t buf_s;
 	acc_t *acc;
 
@@ -216,7 +212,7 @@ bf_checkreq_t checkfunc;
 			return;
 		}
 
-	ip_panic(( "buf.c: to many clients" ));
+	ip_panic(( "buf.c: too many clients" ));
 }
 
 /*
@@ -240,6 +236,7 @@ size_t size;
 	assert (size>0);
 
 	head= NULL;
+	tail= NULL;
 	while (size)
 	{
 		new_acc= NULL;
@@ -271,7 +268,7 @@ size_t size;
 #endif
 #undef ALLOC_BUF
 		{
-			DBLOCK(1, printf("freeing buffers\n"));
+			DBLOCK(2, printf("freeing buffers\n"));
 
 			bf_free_bufsize= 0;
 			for (i=0; bf_free_bufsize<size && i<MAX_BUFREQ_PRI;
@@ -282,13 +279,13 @@ size_t size;
 					if (freereq[j])
 						(*freereq[j])(i);
 				}
-#if DEBUG
+#if DEBUG && 0
  { acc_t *acc;
    j= 0; for(acc= buf512_freelist; acc; acc= acc->acc_next) j++;
    printf("# of free 512-bytes buffer is now %d\n", j); }
 #endif
 			}
-#if DEBUG
+#if DEBUG && 0
  { printf("last level was level %d\n", i-1); }
 #endif
 			if (bf_free_bufsize<size)
@@ -318,11 +315,7 @@ size_t size;
 		tail->acc_length=  count;
 		size -= count;
 	}
-	tail->acc_next= 0;
-
-#if DEBUG
-	bf_chkbuf(head);
-#endif
+	tail->acc_next= NULL;
 
 	return head;
 }
@@ -420,7 +413,6 @@ int clnt_line;
 register acc_t *acc_ptr;
 {
 	register acc_t *new_acc;
-	int i, j;
 
 	if (!acc_freelist)
 	{
@@ -497,8 +489,8 @@ acc_t *old_acc;
 	size_t size, offset_old, offset_new, block_size, block_size_old;
 
 	/* Check if old acc is good enough. */
-	if (!old_acc || !old_acc->acc_next && old_acc->acc_linkC == 1 && 
-		old_acc->acc_buffer->buf_linkC == 1)
+	if (!old_acc || (!old_acc->acc_next && old_acc->acc_linkC == 1 && 
+		old_acc->acc_buffer->buf_linkC == 1))
 	{
 		return old_acc;
 	}
@@ -556,7 +548,7 @@ register unsigned length;
 	register acc_t *head, *tail;
 
 	if (!data && !offset && !length)
-		return 0;
+		return NULL;
 #ifdef BUF_TRACK_ALLOC_FREE
 	assert(data ||
 		(printf("from %s, %d: %u, %u\n",
@@ -566,19 +558,13 @@ register unsigned length;
 #endif
 
 	assert(data);
-#if DEBUG
-	bf_chkbuf(data);
-#endif
 
 	if (!length)
 	{
 		head= bf_dupacc(data);
 		bf_afree(head->acc_next);
-		head->acc_next= 0;
+		head->acc_next= NULL;
 		head->acc_length= 0;
-#if DEBUG
-		bf_chkbuf(data);
-#endif
 		return head;
 	}
 	while (data && offset>=data->acc_length)
@@ -591,7 +577,7 @@ register unsigned length;
 
 	head= bf_dupacc(data);
 	bf_afree(head->acc_next);
-	head->acc_next= 0;
+	head->acc_next= NULL;
 	head->acc_offset += offset;
 	head->acc_length -= offset;
 	if (length >= head->acc_length)
@@ -608,7 +594,7 @@ register unsigned length;
 		tail->acc_next= bf_dupacc(data);
 		tail= tail->acc_next;
 		bf_afree(tail->acc_next);
-		tail->acc_next= 0;
+		tail->acc_next= NULL;
 		data= data->acc_next;
 		length -= tail->acc_length;
 	}
@@ -624,12 +610,9 @@ register unsigned length;
 		tail->acc_next= bf_dupacc(data);
 		tail= tail->acc_next;
 		bf_afree(tail->acc_next);
-		tail->acc_next= 0;
+		tail->acc_next= NULL;
 		tail->acc_length= length;
 	}
-#if DEBUG
-	bf_chkbuf(data);
-#endif
 	return head;
 }
 
@@ -706,7 +689,8 @@ acc_t  *data_second;
 	if (!data_second)
 		return data_first;
 
-	head= 0;
+	head= NULL;
+	tail= NULL;
 	while (data_first)
 	{
 		if (data_first->acc_linkC == 1)
@@ -720,7 +704,7 @@ acc_t  *data_second;
 		data_first= curr->acc_next;
 		if (!curr->acc_length)
 		{
-			curr->acc_next= 0;
+			curr->acc_next= NULL;
 			bf_afree(curr);
 			continue;
 		}
@@ -732,7 +716,7 @@ acc_t  *data_second;
 	}
 	if (!head)
 		return data_second;
-	tail->acc_next= 0;
+	tail->acc_next= NULL;
 
 	while (data_second && !data_second->acc_length)
 	{
@@ -877,7 +861,6 @@ acc_t *acc;
 PUBLIC int bf_consistency_check()
 {
 	acc_t *acc;
-	buf_t *buf;
 	int silent;
 	int error;
 	int i;
@@ -930,7 +913,7 @@ PUBLIC int bf_consistency_check()
 			if (!silent)
 			{
 				printf(
-"acc[%d] (0x%x) has been lost with count %d, last allocated at %s, %d\n",
+"acc[%d] (%p) has been lost with count %d, last allocated at %s, %d\n",
 	i, acc, acc->acc_linkC, acc->acc_alloc_file, acc->acc_alloc_line);
 #if 0
 				silent= 1;
@@ -1041,7 +1024,7 @@ int i;
 		assert(buf->buf_generation == buf_generation-1);
 		buf->buf_generation= buf_generation;
 		printf(
-"%s[%d] (0x%x) has been lost with count %d, last allocated at %s, %d\n",
+"%s[%d] (%p) has been lost with count %d, last allocated at %s, %d\n",
 			label, i, buf,
 			buf->buf_linkC, buf->buf_alloc_file,
 			buf->buf_alloc_line);
@@ -1101,6 +1084,15 @@ acc_t *acc;
 	}
 }
 
+PUBLIC void _bf_mark_1acc(clnt_file, clnt_line, acc)
+char *clnt_file;
+int clnt_line;
+acc_t *acc;
+{
+	acc->acc_alloc_file= clnt_file;
+	acc->acc_alloc_line= clnt_line;
+}
+
 PUBLIC void _bf_mark_acc(clnt_file, clnt_line, acc)
 char *clnt_file;
 int clnt_line;
@@ -1119,12 +1111,68 @@ acc_t *acc;
 }
 #endif
 
+PUBLIC int bf_linkcheck(acc)
+acc_t *acc;
+{
+	int i;
+
+	buf_t *buffer;
+	for (i= 0; i<ACC_NR && acc; i++, acc= acc->acc_next)
+	{
+		if (acc->acc_linkC <= 0)
+		{
+			printf("wrong acc_linkC (%d) for acc %p\n", 
+				acc->acc_linkC, acc);
+			return 0;
+		}
+		if (acc->acc_offset < 0)
+		{
+			printf("wrong acc_offset (%d) for acc %p\n",
+				acc->acc_offset, acc);
+			return 0;
+		}
+		if (acc->acc_length < 0)
+		{
+			printf("wrong acc_length (%d) for acc %p\n",
+				acc->acc_length, acc);
+			return 0;
+		}
+		buffer= acc->acc_buffer;
+		if (buffer == NULL)
+		{
+			printf("no buffer for acc %p\n", acc);
+			return 0;
+		}
+		if (buffer->buf_linkC <= 0)
+		{
+			printf(
+			"wrong buf_linkC (%d) for buffer %p, from acc %p\n",
+				buffer->buf_linkC, buffer, acc);
+			return 0;
+		}
+		if (acc->acc_offset + acc->acc_length > buffer->buf_size)
+		{
+			printf("%d + %d > %d for buffer %p, and acc %p\n",
+				acc->acc_offset, acc->acc_length, 
+				buffer->buf_size, buffer, acc);
+			return 0;
+		}
+	}
+	if (acc != NULL)
+	{
+		printf("loop\n");
+		return 0;
+	}
+	return 1;
+}
+
 PRIVATE void free_accs()
 {
 	int i, j;
 
 	DBLOCK(1, printf("free_accs\n"));
 
+assert(bf_linkcheck(bf_linkcheck_acc));
 	for (i=0; !acc_freelist && i<MAX_BUFREQ_PRI; i++)
 	{
 		for (j=0; j<CLIENT_NR; j++)
@@ -1133,6 +1181,9 @@ PRIVATE void free_accs()
 			if (freereq[j])
 			{
 				(*freereq[j])(i);
+				assert(bf_linkcheck(bf_linkcheck_acc) ||
+					(printf("just called %p\n",
+					freereq[i]),0));
 			}
 		}
 	}
@@ -1165,7 +1216,7 @@ size_t alignment;
 	}
 	buf_size= bf_bufsize(acc);
 #ifdef bf_align
-	assert(size != 0 && buf_size != 0 ||
+	assert((size != 0 && buf_size != 0) ||
 		(printf("bf_align(..., %d, %d) from %s, %d\n",
 			size, alignment, clnt_file, clnt_line),0));
 #else
@@ -1201,5 +1252,5 @@ acc_t *acc;
 #endif
 
 /*
- * $PchId: buf.c,v 1.10 1995/11/23 11:25:25 philip Exp $
+ * $PchId: buf.c,v 1.19 2003/09/10 08:54:23 philip Exp $
  */

@@ -10,6 +10,7 @@ Copyright 1995 Philip Homburg
 #include "type.h"
 
 #include "assert.h"
+#include "clock.h"
 #include "icmp.h"
 #include "icmp_lib.h"
 #include "io.h"
@@ -25,9 +26,13 @@ typedef struct icmp_port
 	int icp_state;
 	int icp_ipport;
 	int icp_ipfd;
+	unsigned icp_rate_count;
+	unsigned icp_rate_report;
+	time_t icp_rate_lasttime;
 	acc_t *icp_head_queue;
 	acc_t *icp_tail_queue;
 	acc_t *icp_write_pack;
+	event_t icp_event;
 } icmp_port_t;
 
 #define ICPF_EMPTY	0x0
@@ -71,9 +76,11 @@ FORWARD acc_t *make_repl_ip ARGS(( ip_hdr_t *ip_hdr,
 	int ip_len ));
 FORWARD void enqueue_pack ARGS(( icmp_port_t *icmp_port,
 	acc_t *reply_ip_hdr ));
-FORWARD void icmp_write ARGS(( icmp_port_t *icmp_port ));
+FORWARD int icmp_rate_limit ARGS(( icmp_port_t *icmp_port,
+	acc_t *reply_ip_hdr ));
+FORWARD void icmp_write ARGS(( event_t *ev, ev_arg_t ev_arg ));
 FORWARD void icmp_buffree ARGS(( int priority ));
-FORWARD acc_t *icmp_err_pack ARGS(( acc_t *pack, icmp_hdr_t **icmp_hdr ));
+FORWARD acc_t *icmp_err_pack ARGS(( acc_t *pack, icmp_hdr_t **icmp_hdr_pp ));
 #ifdef BUF_CONSISTENCY_CHECK
 FORWARD void icmp_bufcheck ARGS(( void ));
 #endif
@@ -92,11 +99,13 @@ PUBLIC void icmp_init()
 
 	for (i= 0, icmp_port= icmp_port_table; i<ip_conf_nr; i++, icmp_port++)
 	{
-#if ZERO
 		icmp_port->icp_flags= ICPF_EMPTY;
 		icmp_port->icp_state= ICPS_BEGIN;
-#endif
 		icmp_port->icp_ipport= i;
+		icmp_port->icp_rate_count= 0;
+		icmp_port->icp_rate_report= ICMP_MAX_RATE;
+		icmp_port->icp_rate_lasttime= 0;
+		ev_init(&icmp_port->icp_event);
 	}
 
 #ifndef BUF_CONSISTENCY_CHECK
@@ -119,8 +128,9 @@ icmp_port_t *icmp_port;
 	{
 	case ICPS_BEGIN:
 		icmp_port->icp_head_queue= 0;
-		icmp_port->icp_ipfd= ip_open (icmp_port->icp_ipport,
-			icmp_port->icp_ipport, icmp_getdata, icmp_putdata, 0);
+		icmp_port->icp_ipfd= ip_open(icmp_port->icp_ipport,
+			icmp_port->icp_ipport, icmp_getdata, icmp_putdata,
+			0 /* no put_pkt */, 0 /* no select_res */);
 		if (icmp_port->icp_ipfd<0)
 		{
 			DBLOCK(1, printf("unable to open ip_port %d\n",
@@ -159,6 +169,7 @@ int for_ioctl;
 	nwio_ipopt_t *ipopt;
 	acc_t *data;
 	int result;
+	ev_arg_t ev_arg;
 
 	icmp_port= &icmp_port_table[port];
 
@@ -177,9 +188,10 @@ int for_ioctl;
 			}
 			if (icmp_port->icp_flags & ICPF_WRITE_SP)
 			{
-				icmp_port->icp_flags &=
-					~(ICPF_WRITE_IP|ICPF_WRITE_SP);
-				icmp_write (icmp_port);
+				icmp_port->icp_flags &= ~ICPF_WRITE_SP;
+				ev_arg.ev_ptr= icmp_port;
+				ev_enqueue(&icmp_port->icp_event, icmp_write,
+					ev_arg);
 			}
 			return NW_OK;
 		}
@@ -202,9 +214,7 @@ int for_ioctl;
 			return NW_OK;
 		}
 
-assert (count == sizeof (*ipopt));
 		data= bf_memreq (sizeof (*ipopt));
-assert (data->acc_length == sizeof(*ipopt));
 		ipopt= (nwio_ipopt_t *)ptr2acc_data(data);
 		ipopt->nwio_flags= NWIO_COPY | NWIO_EN_LOC |
 			NWIO_EN_BROAD |
@@ -213,10 +223,10 @@ assert (data->acc_length == sizeof(*ipopt));
 		ipopt->nwio_proto= IPPROTO_ICMP;
 		return data;
 	default:
-		DBLOCK(1, printf("unknown state %d\n",
-			icmp_port->icp_state));
-		return 0;
+		break;
 	}
+	DBLOCK(1, printf("unknown state %d\n", icmp_port->icp_state));
+	return NULL;
 }
 
 PRIVATE int icmp_putdata(port, offset, data, for_ioctl)
@@ -232,7 +242,6 @@ int for_ioctl;
 
 	if (icmp_port->icp_flags & ICPF_READ_IP)
 	{
-assert (!for_ioctl);
 		if (!data)
 		{
 			result= (int)offset;
@@ -266,10 +275,6 @@ icmp_port_t *icmp_port;
 {
 	int result;
 
-assert (!(icmp_port->icp_flags & (ICPF_READ_IP|ICPF_READ_SP) || 
-	(icmp_port->icp_flags & (ICPF_READ_IP|ICPF_READ_SP)) ==
-	(ICPF_READ_IP|ICPF_READ_SP)));
-
 	for (;;)
 	{
 		icmp_port->icp_flags |= ICPF_READ_IP;
@@ -289,12 +294,17 @@ int port_nr;
 acc_t *pack;
 int code;
 {
-	acc_t *icmp_acc;
 	icmp_hdr_t *icmp_hdr;
 	icmp_port_t *icmp_port;
 
-	assert(0 <= port_nr && port_nr < ip_conf_nr);
-	icmp_port= &icmp_port_table[port_nr];
+	if (port_nr >= 0 && port_nr < ip_conf_nr)
+		icmp_port= &icmp_port_table[port_nr];
+	else
+	{
+		printf("icmp_snd_time_exceeded: strange port %d\n", port_nr);
+		bf_afree(pack);
+		return;
+	}
 	pack= icmp_err_pack(pack, &icmp_hdr);
 	if (pack == NULL)
 		return;
@@ -311,12 +321,17 @@ acc_t *pack;
 int code;
 ipaddr_t gw;
 {
-	acc_t *icmp_acc;
 	icmp_hdr_t *icmp_hdr;
 	icmp_port_t *icmp_port;
 
-	assert(0 <= port_nr && port_nr < ip_conf_nr);
-	icmp_port= &icmp_port_table[port_nr];
+	if (port_nr >= 0 && port_nr < ip_conf_nr)
+		icmp_port= &icmp_port_table[port_nr];
+	else
+	{
+		printf("icmp_snd_redirect: strange port %d\n", port_nr);
+		bf_afree(pack);
+		return;
+	}
 	pack= icmp_err_pack(pack, &icmp_hdr);
 	if (pack == NULL)
 		return;
@@ -335,12 +350,17 @@ int port_nr;
 acc_t *pack;
 int code;
 {
-	acc_t *icmp_acc;
 	icmp_hdr_t *icmp_hdr;
 	icmp_port_t *icmp_port;
 
-	assert(0 <= port_nr && port_nr < ip_conf_nr);
-	icmp_port= &icmp_port_table[port_nr];
+	if (port_nr >= 0 && port_nr < ip_conf_nr)
+		icmp_port= &icmp_port_table[port_nr];
+	else
+	{
+		printf("icmp_snd_unreachable: strange port %d\n", port_nr);
+		bf_afree(pack);
+		return;
+	}
 	pack= icmp_err_pack(pack, &icmp_hdr);
 	if (pack == NULL)
 		return;
@@ -348,6 +368,36 @@ int code;
 	icmp_hdr->ih_code= code;
 	icmp_hdr->ih_chksum= ~oneC_sum(~icmp_hdr->ih_chksum,
 		(u16_t *)&icmp_hdr->ih_type, 2);
+	enqueue_pack(icmp_port, pack);
+}
+
+PUBLIC void icmp_snd_mtu(port_nr, pack, mtu)
+int port_nr;
+acc_t *pack;
+u16_t mtu;
+{
+	icmp_hdr_t *icmp_hdr;
+	icmp_port_t *icmp_port;
+
+	if (port_nr >= 0 && port_nr < ip_conf_nr)
+		icmp_port= &icmp_port_table[port_nr];
+	else
+	{
+		printf("icmp_snd_mtu: strange port %d\n", port_nr);
+		bf_afree(pack);
+		return;
+	}
+
+	pack= icmp_err_pack(pack, &icmp_hdr);
+	if (pack == NULL)
+		return;
+	icmp_hdr->ih_type= ICMP_TYPE_DST_UNRCH;
+	icmp_hdr->ih_code= ICMP_FRAGM_AND_DF;
+	icmp_hdr->ih_hun.ihh_mtu.im_mtu= htons(mtu);
+	icmp_hdr->ih_chksum= ~oneC_sum(~icmp_hdr->ih_chksum,
+		(u16_t *)&icmp_hdr->ih_type, 2);
+	icmp_hdr->ih_chksum= ~oneC_sum(~icmp_hdr->ih_chksum,
+		(u16_t *)&icmp_hdr->ih_hun.ihh_mtu.im_mtu, 2);
 	enqueue_pack(icmp_port, pack);
 }
 
@@ -378,16 +428,23 @@ acc_t *data;
 
 	pack_len= bf_bufsize(data);
 	pack_len -= ip_hdr_len;
-	if (pack_len < ICMP_MIN_HDR_LEN)
+	if (pack_len < ICMP_MIN_HDR_SIZE)
 	{
-		DBLOCK(1, printf("got an incomplete icmp packet\n"));
+		if (pack_len == 0 && ip_hdr->ih_proto == 0)
+		{
+			/* IP layer reports new ip address, which can be
+			 * ignored.
+			 */
+		}
+		else
+			DBLOCK(1, printf("got an incomplete icmp packet\n"));
 		bf_afree(data);
 		return;
 	}
 
 	icmp_data= bf_cut(data, ip_hdr_len, pack_len);
 
-	icmp_data= bf_packIffLess (icmp_data, ICMP_MIN_HDR_LEN);
+	icmp_data= bf_packIffLess (icmp_data, ICMP_MIN_HDR_SIZE);
 	icmp_hdr= (icmp_hdr_t *)ptr2acc_data(icmp_data);
 
 	if ((u16_t)~icmp_pack_oneCsum(icmp_data))
@@ -450,9 +507,10 @@ ip_hdr_t *ip_hdr;
 icmp_hdr_t *icmp_hdr;
 {
 	acc_t *repl_ip_hdr, *repl_icmp;
+	ipaddr_t tmpaddr, locaddr, netmask;
 	icmp_hdr_t *repl_icmp_hdr;
 	i32_t tmp_chksum;
-	u16_t u16;
+	ip_port_t *ip_port;
 
 	if (icmp_hdr->ih_code != 0)
 	{
@@ -463,16 +521,44 @@ icmp_hdr_t *icmp_hdr;
 		bf_afree(icmp_data);
 		return;
 	}
-	if (icmp_len < ICMP_MIN_HDR_LEN + sizeof(icmp_id_seq_t))
+	if (icmp_len < ICMP_MIN_HDR_SIZE + sizeof(icmp_id_seq_t))
 	{
 		DBLOCK(1, printf("got an incomplete icmp echo request\n"));
 		bf_afree(ip_data);
 		bf_afree(icmp_data);
 		return;
 	}
+	tmpaddr= ntohl(ip_hdr->ih_dst);
+	if ((tmpaddr & 0xe0000000) == 0xe0000000 &&
+		tmpaddr != 0xffffffff)
+	{
+		/* Respond only to the all hosts multicast address until
+		 * a decent listening service has been implemented
+		 */
+		if (tmpaddr != 0xe0000001)
+		{
+			bf_afree(ip_data);
+			bf_afree(icmp_data);
+			return;
+		}
+	}
+
+	/* Limit subnet broadcasts to the local net */
+	ip_port= &ip_port_table[icmp_port->icp_ipport];
+	locaddr= ip_port->ip_ipaddr;
+	netmask= ip_port->ip_subnetmask;
+	if (ip_hdr->ih_dst == (locaddr | ~netmask) &&
+		(ip_port->ip_flags & IPF_SUBNET_BCAST) &&
+		((ip_hdr->ih_src ^ locaddr) & netmask) != 0)
+	{
+		/* Directed broadcast */
+		bf_afree(ip_data);
+		bf_afree(icmp_data);
+		return;
+	}
+
 	repl_ip_hdr= make_repl_ip(ip_hdr, ip_len);
-	repl_icmp= bf_memreq (ICMP_MIN_HDR_LEN);
-assert (repl_icmp->acc_length == ICMP_MIN_HDR_LEN);
+	repl_icmp= bf_memreq (ICMP_MIN_HDR_SIZE);
 	repl_icmp_hdr= (icmp_hdr_t *)ptr2acc_data(repl_icmp);
 	repl_icmp_hdr->ih_type= ICMP_TYPE_ECHO_REPL;
 	repl_icmp_hdr->ih_code= 0;
@@ -490,8 +576,8 @@ assert (repl_icmp->acc_length == ICMP_MIN_HDR_LEN);
 	DBLOCK(2, printf("sending chksum 0x%x\n", repl_icmp_hdr->ih_chksum));
 
 	repl_ip_hdr->acc_next= repl_icmp;
-	repl_icmp->acc_next= bf_cut (icmp_data, ICMP_MIN_HDR_LEN,
-		icmp_len - ICMP_MIN_HDR_LEN);
+	repl_icmp->acc_next= bf_cut (icmp_data, ICMP_MIN_HDR_SIZE,
+		icmp_len - ICMP_MIN_HDR_SIZE);
 
 	bf_afree(ip_data);
 	bf_afree(icmp_data);
@@ -507,8 +593,6 @@ acc_t *icmp_pack;
 	char *data_ptr;
 	int length;
 	char byte_buf[2];
-
-	assert (icmp_pack);
 
 	prev= 0;
 
@@ -560,7 +644,6 @@ int ip_len;
 	repl_hdr_len= IP_MIN_HDR_SIZE;
 
 	repl= bf_memreq(repl_hdr_len);
-assert (repl->acc_length == repl_hdr_len);
 
 	repl_ip_hdr= (ip_hdr_t *)ptr2acc_data(repl);
 
@@ -578,6 +661,25 @@ PRIVATE void enqueue_pack(icmp_port, reply_ip_hdr)
 icmp_port_t *icmp_port;
 acc_t *reply_ip_hdr;
 {
+	int r;
+	ev_arg_t ev_arg;
+
+	/* Check rate */
+	if (icmp_port->icp_rate_count >= ICMP_MAX_RATE)
+	{
+		/* Something is going wrong; check policy */
+		r= icmp_rate_limit(icmp_port, reply_ip_hdr);
+		if (r == -1)
+		{
+			bf_afree(reply_ip_hdr);
+			reply_ip_hdr= NULL;
+			return;
+		}
+
+		/* OK, continue */
+	}
+	icmp_port->icp_rate_count++;
+
 	reply_ip_hdr->acc_ext_link= 0;
 
 	if (icmp_port->icp_head_queue)
@@ -593,25 +695,116 @@ acc_t *reply_ip_hdr;
 	icmp_port->icp_tail_queue= reply_ip_hdr;
 
 	if (!(icmp_port->icp_flags & ICPF_WRITE_IP))
-		icmp_write(icmp_port);
+	{
+		icmp_port->icp_flags |= ICPF_WRITE_IP;
+		ev_arg.ev_ptr= icmp_port;
+		ev_enqueue(&icmp_port->icp_event, icmp_write, ev_arg);
+	}
 }
 
-PRIVATE void icmp_write(icmp_port)
+PRIVATE int icmp_rate_limit(icmp_port, reply_ip_hdr)
 icmp_port_t *icmp_port;
+acc_t *reply_ip_hdr;
+{
+	time_t t;
+	acc_t *pack;
+	ip_hdr_t *ip_hdr;
+	icmp_hdr_t *icmp_hdr;
+	int hdrlen, icmp_hdr_len, type;
+
+	/* Check the time first */
+	t= get_time();
+	if (t >= icmp_port->icp_rate_lasttime + ICMP_RATE_INTERVAL)
+	{
+		icmp_port->icp_rate_lasttime= t;
+		icmp_port->icp_rate_count= 0;
+		return 0;
+	}
+
+	icmp_port->icp_rate_count++;
+
+	/* Adjust report limit if necessary */
+	if (icmp_port->icp_rate_count >
+		icmp_port->icp_rate_report+ICMP_RATE_WARN)
+	{
+		icmp_port->icp_rate_report *= 2;
+		return -1;
+	}
+
+	/* Do we need to report */
+	if (icmp_port->icp_rate_count < icmp_port->icp_rate_report)
+		return -1;
+
+	pack= bf_dupacc(reply_ip_hdr);
+	pack= bf_packIffLess(pack, IP_MIN_HDR_SIZE);
+	ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
+	printf("icmp[%d]: dropping ICMP packet #%d to ",
+		icmp_port->icp_ipport, icmp_port->icp_rate_count);
+	writeIpAddr(ip_hdr->ih_dst);
+	hdrlen= (ip_hdr->ih_vers_ihl & IH_IHL_MASK)*4;
+	pack= bf_packIffLess(pack, hdrlen+ICMP_MIN_HDR_SIZE);
+	ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
+	icmp_hdr= (icmp_hdr_t *)(ptr2acc_data(pack)+hdrlen);
+	type= icmp_hdr->ih_type;
+	printf(" type %d, code %d\n", type, icmp_hdr->ih_code);
+	switch(type)
+	{
+	case ICMP_TYPE_DST_UNRCH:
+	case ICMP_TYPE_SRC_QUENCH:
+	case ICMP_TYPE_REDIRECT:
+	case ICMP_TYPE_TIME_EXCEEDED:
+	case ICMP_TYPE_PARAM_PROBLEM:
+		icmp_hdr_len= offsetof(struct icmp_hdr, ih_dun);
+		pack= bf_packIffLess(pack,
+			hdrlen+icmp_hdr_len+IP_MIN_HDR_SIZE);
+		ip_hdr= (ip_hdr_t *)(ptr2acc_data(pack)+hdrlen+icmp_hdr_len);
+		icmp_hdr= (icmp_hdr_t *)(ptr2acc_data(pack)+hdrlen);
+		printf("\tinfo %08x, original dst ",
+			ntohs(icmp_hdr->ih_hun.ihh_unused));
+		writeIpAddr(ip_hdr->ih_dst);
+		printf(", proto %d, length %u\n",
+			ip_hdr->ih_proto, ntohs(ip_hdr->ih_length));
+		break;
+	default:
+		break;
+	}
+	bf_afree(pack); pack= NULL;
+
+	return -1;
+}
+
+PRIVATE void icmp_write(ev, ev_arg)
+event_t *ev;
+ev_arg_t ev_arg;
 {
 	int result;
+	icmp_port_t *icmp_port;
+	acc_t *data;
 
-assert (!(icmp_port->icp_flags & ICPF_WRITE_IP));
+	icmp_port= ev_arg.ev_ptr;
+	assert(ev == &icmp_port->icp_event);
+
+	assert (icmp_port->icp_flags & ICPF_WRITE_IP);
+	assert (!(icmp_port->icp_flags & ICPF_WRITE_SP));
 
 	while (icmp_port->icp_head_queue != NULL)
 	{
+		data= icmp_port->icp_head_queue;
+		icmp_port->icp_head_queue= data->acc_ext_link;
+
+		result= ip_send(icmp_port->icp_ipfd, data,
+			bf_bufsize(data));
+		if (result != NW_WOULDBLOCK)
+		{
+			if (result == NW_OK)
+				continue;
+			DBLOCK(1, printf("icmp_write: error %d\n", result););
+			continue;
+		}
+
 		assert(icmp_port->icp_write_pack == NULL);
-		icmp_port->icp_write_pack= icmp_port->icp_head_queue;
-		icmp_port->icp_head_queue= icmp_port->icp_head_queue->
-			acc_ext_link;
-
-		icmp_port->icp_flags |= ICPF_WRITE_IP;
-
+		icmp_port->icp_write_pack= data;
+			
 		result= ip_write(icmp_port->icp_ipfd,
 			bf_bufsize(icmp_port->icp_write_pack));
 		if (result == NW_SUSPEND)
@@ -619,8 +812,8 @@ assert (!(icmp_port->icp_flags & ICPF_WRITE_IP));
 			icmp_port->icp_flags |= ICPF_WRITE_SP;
 			return;
 		}
-		icmp_port->icp_flags &= ~ICPF_WRITE_IP;
 	}
+	icmp_port->icp_flags &= ~ICPF_WRITE_IP;
 }
 
 PRIVATE void icmp_buffree(priority)
@@ -679,6 +872,8 @@ icmp_hdr_t *icmp_hdr;
 	ip_hdr_t *old_ip_hdr;
 	int ip_port_nr;
 	ipaddr_t dst, mask;
+	size_t old_pack_size;
+	u16_t new_mtu;
 
 	if (icmp_len < 8 + IP_MIN_HDR_SIZE)
 	{
@@ -715,6 +910,24 @@ icmp_hdr_t *icmp_hdr;
 		 * It should be handed to the appropriate transport layer.
 		 */
 		break;
+	case ICMP_FRAGM_AND_DF:
+
+		DBLOCK(1, printf("icmp_dst_unreach: got mtu icmp from ");
+			writeIpAddr(ip_hdr->ih_src);
+			printf("; original destination: ");
+			writeIpAddr(old_ip_hdr->ih_dst);
+			printf("; protocol: %d\n",
+			old_ip_hdr->ih_proto));
+		old_pack_size= ntohs(old_ip_hdr->ih_length);
+		if (!old_pack_size)
+			break;
+		new_mtu= ntohs(icmp_hdr->ih_hun.ihh_mtu.im_mtu);
+		if (!new_mtu || new_mtu > old_pack_size)
+			new_mtu= old_pack_size-1;
+		ipr_mtu(ip_port_nr, old_ip_hdr->ih_dst, new_mtu,
+			IPR_MTU_TIMEOUT);
+		break;
+
 	default:
 		DBLOCK(1, printf("icmp_dst_unreach: got strange code %d from ",
 			icmp_hdr->ih_code);
@@ -785,9 +998,12 @@ icmp_hdr_t *icmp_hdr;
 {
 	int entries;
 	int entry_size;
+	u32_t addr;
+	i32_t pref;
 	u16_t lifetime;
 	int i;
 	char *bufp;
+	ip_port_t *ip_port;
 
 	if (icmp_len < 8)
 	{
@@ -836,12 +1052,15 @@ icmp_hdr_t *icmp_hdr;
 			lifetime));
 		return;
 	}
+	ip_port= &ip_port_table[icmp_port->icp_ipport];
 	for (i= 0, bufp= (char *)&icmp_hdr->ih_dun.uhd_data[0]; i< entries; i++,
 		bufp += entry_size)
 	{
+		addr= *(ipaddr_t *)bufp;
+		pref= ntohl(*(u32_t *)(bufp+4));
 		ipr_add_oroute(icmp_port->icp_ipport, HTONL(0L), HTONL(0L), 
-			*(ipaddr_t *)bufp, lifetime * HZ, 1, 0, 
-			ntohl(*(i32_t *)(bufp+4)), NULL);
+			addr, lifetime ? lifetime * HZ : 1,
+			1, 0, 0, pref, NULL);
 	}
 }
 		
@@ -890,55 +1109,78 @@ icmp_hdr_t *icmp_hdr;
 	bf_afree(old_ip_pack);
 }
 
-PRIVATE acc_t *icmp_err_pack(pack, icmp_hdr)
+PRIVATE acc_t *icmp_err_pack(pack, icmp_hdr_pp)
 acc_t *pack;
-icmp_hdr_t **icmp_hdr;
+icmp_hdr_t **icmp_hdr_pp;
 {
 	ip_hdr_t *ip_hdr;
+	icmp_hdr_t *icmp_hdr_p;
 	acc_t *ip_pack, *icmp_pack, *tmp_pack;
-	int ip_hdr_len, icmp_hdr_len;
-	size_t size;
+	int ip_hdr_len, icmp_hdr_len, ih_type;
+	size_t size, pack_len;
 	ipaddr_t dest, netmask;
 	nettype_t nettype;
 
 	pack= bf_packIffLess(pack, IP_MIN_HDR_SIZE);
 	ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
+	ip_hdr_len= (ip_hdr->ih_vers_ihl & IH_IHL_MASK) << 2;
+	pack_len= bf_bufsize(pack);
 
-	/* If the IP protocol is ICMP or the fragment offset is non-zero,
+	/* If the IP protocol is ICMP (except echo request/reply) or the
+	 * fragment offset is non-zero,
 	 * drop the packet. Also check if the source address is valid.
 	 */
-	if (ip_hdr->ih_proto == IPPROTO_ICMP || 
-		(ntohs(ip_hdr->ih_flags_fragoff) & IH_FRAGOFF_MASK) != 0)
+	if ((ntohs(ip_hdr->ih_flags_fragoff) & IH_FRAGOFF_MASK) != 0)
 	{
 		bf_afree(pack);
 		return NULL;
 	}
+	if (ip_hdr->ih_proto == IPPROTO_ICMP)
+	{
+		if (ip_hdr_len>IP_MIN_HDR_SIZE)
+		{
+			pack= bf_packIffLess(pack, ip_hdr_len);
+			ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
+		}
+
+		if (pack_len < ip_hdr_len+ICMP_MIN_HDR_SIZE)
+		{
+			bf_afree(pack);
+			return NULL;
+		}
+		icmp_pack= bf_cut(pack, ip_hdr_len, ICMP_MIN_HDR_SIZE);
+		icmp_pack= bf_packIffLess (icmp_pack, ICMP_MIN_HDR_SIZE);
+		icmp_hdr_p= (icmp_hdr_t *)ptr2acc_data(icmp_pack);
+		ih_type= icmp_hdr_p->ih_type;
+		bf_afree(icmp_pack); icmp_pack= NULL;
+
+		if (ih_type != ICMP_TYPE_ECHO_REQ &&
+			ih_type != ICMP_TYPE_ECHO_REPL)
+		{
+			bf_afree(pack);
+			return NULL;
+		}
+	}
 	dest= ip_hdr->ih_src;
 	nettype= ip_nettype(dest);
 	netmask= ip_netmask(nettype);
-	if ((nettype != IPNT_CLASS_A && nettype != IPNT_LOCAL &&
-		nettype != IPNT_CLASS_B && nettype != IPNT_CLASS_C) ||
-		(dest & ~netmask) == 0 || (dest & ~netmask) == ~netmask)
+	if (nettype != IPNT_CLASS_A && nettype != IPNT_LOCAL &&
+		nettype != IPNT_CLASS_B && nettype != IPNT_CLASS_C)
 	{
-#if !CRAMPED
 		printf("icmp_err_pack: invalid source address: ");
 		writeIpAddr(dest);
 		printf("\n");
-#endif
 		bf_afree(pack);
 		return NULL;
 	}
 
 	/* Take the IP header and the first 64 bits of user data. */
 	size= ntohs(ip_hdr->ih_length);
-	ip_hdr_len= (ip_hdr->ih_vers_ihl & IH_IHL_MASK) << 2;
-	if (size < ip_hdr_len || bf_bufsize(pack) < size)
+	if (size < ip_hdr_len || pack_len < size)
 	{
-#if !CRAMPED
 		printf("icmp_err_pack: wrong packet size:\n");
 		printf("\thdrlen= %d, ih_length= %d, bufsize= %d\n",
-			ip_hdr_len, size, bf_bufsize(pack));
-#endif
+			ip_hdr_len, size, pack_len);
 		bf_afree(pack);
 		return NULL;
 	}
@@ -955,12 +1197,13 @@ icmp_hdr_t **icmp_hdr;
 	pack= bf_append(icmp_pack, pack);
 	size += icmp_hdr_len;
 	pack= bf_packIffLess(pack, icmp_hdr_len);
-	*icmp_hdr= (icmp_hdr_t *)ptr2acc_data(pack);
-	(*icmp_hdr)->ih_type= 0;
-	(*icmp_hdr)->ih_code= 0;
-	(*icmp_hdr)->ih_chksum= 0;
-	(*icmp_hdr)->ih_hun.ihh_unused= 0;
-	(*icmp_hdr)->ih_chksum= ~icmp_pack_oneCsum(pack);
+	icmp_hdr_p= (icmp_hdr_t *)ptr2acc_data(pack);
+	icmp_hdr_p->ih_type= 0;
+	icmp_hdr_p->ih_code= 0;
+	icmp_hdr_p->ih_chksum= 0;
+	icmp_hdr_p->ih_hun.ihh_unused= 0;
+	icmp_hdr_p->ih_chksum= ~icmp_pack_oneCsum(pack);
+	*icmp_hdr_pp= icmp_hdr_p;
 
 	/* Create an IP header */
 	ip_hdr_len= IP_MIN_HDR_SIZE;
@@ -982,5 +1225,5 @@ icmp_hdr_t **icmp_hdr;
 }
 
 /*
- * $PchId: icmp.c,v 1.8 1996/12/17 07:53:34 philip Exp $
+ * $PchId: icmp.c,v 1.23 2005/06/28 14:16:56 philip Exp $
  */

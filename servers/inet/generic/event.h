@@ -1,7 +1,7 @@
 /*
 inet/generic/event.h
 
-Created:	April 1995 by Philip Homburg <philip@cs.vu.nl>
+Created:	April 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 Header file for an event mechanism.
 
@@ -38,5 +38,5 @@ int ev_in_queue ARGS(( event_t *ev ));
 #endif /* INET__GENERIC__EVENT_H */
 
 /*
- * $PchId: event.h,v 1.4 1995/11/21 06:45:27 philip Exp $
+ * $PchId: event.h,v 1.5 2004/08/03 16:23:49 philip Exp $
  */

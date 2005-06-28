@@ -1,47 +1,40 @@
-# Makefile for Network Server (INET).
-SERVER = inet
+# Makefile for inet.
 
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-h = $i/minix
-n = $i/net
+# Directories
 g = generic
 
-# programs, flags, and libraries
+# Programs, flags, and libraries
 CC =		cc
-CPPFLAGS =	-I. -I..
-CFLAGS =	$(OPT) $(CPPFLAGS) -m
-LDFLAGS =	-i
+CPPFLAGS =	-I. -D_MINIX
+CFLAGS =	$(OPT) $(CPPFLAGS)
+LDFLAGS =
 LIBS =		-lsys -lutils
 
+.c.o:
+	$(CC) $(CFLAGS) -o $@ -c $<
+
 OBJ = 	buf.o clock.o inet.o inet_config.o \
-	mnx_eth.o mq.o sr.o stacktrace.o \
+	mnx_eth.o mq.o qp.o sr.o stacktrace.o \
 	$g/udp.o $g/arp.o $g/eth.o $g/event.o \
 	$g/icmp.o $g/io.o $g/ip.o $g/ip_ioctl.o \
 	$g/ip_lib.o $g/ip_read.o $g/ip_write.o \
-	$g/ipr.o $g/tcp.o $g/tcp_lib.o \
+	$g/ipr.o $g/rand256.o $g/tcp.o $g/tcp_lib.o \
 	$g/tcp_recv.o $g/tcp_send.o $g/ip_eth.o \
-	$g/ip_ps.o $g/psip.o
+	$g/ip_ps.o $g/psip.o \
+	minix3/queryparam.o sha2.o
 
-# build local binary
-all build:	$(SERVER)
-$(SERVER):	inet.a
-	$(CC) -o $@ $(LDFLAGS) inet.a version.c $(LIBS)
-	install -S 2kw $@
+all:	inet
 
-inet.a:	$(OBJ)
-	@rm -f $@
-	aal cr $@ $(OBJ)
+inet:	$(OBJ)
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) version.c $(LIBS)
 
-# install with other servers
-install:	/usr/sbin/servers/$(SERVER)
-/usr/sbin/servers/$(SERVER):	$(SERVER)
-	install -o root -cs $? $@
+install:	/usr/sbin/servers/inet
+
+/usr/sbin/servers/inet:	inet
+	install -c $? $@
 
 clean:
-	rm -f $(SERVER) *.a *.o */*.o */*.a *.bak 
+	rm -f $(OBJ) inet *.bak
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c generic/*.c > .depend
@@ -49,42 +42,6 @@ depend:
 # Include generated dependencies.
 include .depend
 
-$g/arp.o:	$g/arp.c
-	cd generic && $(CC) -c $(CFLAGS) arp.c
-$g/eth.o:	$g/eth.c
-	cd generic && $(CC) -c $(CFLAGS) eth.c
-$g/event.o:	$g/event.c
-	cd generic && $(CC) -c $(CFLAGS) event.c
-$g/icmp.o:	$g/icmp.c
-	cd generic && $(CC) -c $(CFLAGS) icmp.c
-$g/io.o:	$g/io.c
-	cd generic && $(CC) -c $(CFLAGS) io.c
-$g/ip.o:	$g/ip.c
-	cd generic && $(CC) -c $(CFLAGS) ip.c
-$g/ip_eth.o:	$g/ip_eth.c
-	cd generic && $(CC) -c $(CFLAGS) ip_eth.c
-$g/ip_ioctl.o:	$g/ip_ioctl.c
-	cd generic && $(CC) -c $(CFLAGS) ip_ioctl.c
-$g/ip_lib.o:	$g/ip_lib.c
-	cd generic && $(CC) -c $(CFLAGS) ip_lib.c
-$g/ip_ps.o:	$g/ip_ps.c
-	cd generic && $(CC) -c $(CFLAGS) ip_ps.c
-$g/ip_read.o:	$g/ip_read.c
-	cd generic && $(CC) -c $(CFLAGS) ip_read.c
-$g/ip_write.o:	$g/ip_write.c
-	cd generic && $(CC) -c $(CFLAGS) ip_write.c
-$g/ipr.o:	$g/ipr.c
-	cd generic && $(CC) -c $(CFLAGS) ipr.c
-$g/psip.o:	$g/psip.c
-	cd generic && $(CC) -c $(CFLAGS) psip.c
-$g/tcp.o:	$g/tcp.c
-	cd generic && $(CC) -c $(CFLAGS) tcp.c
-$g/tcp_lib.o:	$g/tcp_lib.c
-	cd generic && $(CC) -c $(CFLAGS) tcp_lib.c
-$g/tcp_recv.o:	$g/tcp_recv.c
-	cd generic && $(CC) -c $(CFLAGS) tcp_recv.c
-$g/tcp_send.o:	$g/tcp_send.c
-	cd generic && $(CC) -c $(CFLAGS) tcp_send.c
-$g/udp.o:	$g/udp.c
-	cd generic && $(CC) -c $(CFLAGS) udp.c
-
+#
+# $PchId: Makefile.mnx3,v 1.1 2005/06/28 14:28:45 philip Exp $
+#

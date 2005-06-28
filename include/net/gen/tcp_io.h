@@ -58,9 +58,12 @@ typedef struct nwio_tcpopt
 #	define NWTO_NOTBSD_URG	0x00040000L
 #define NWTO_DEL_RST_MASK	0x0008L
 #	define NWTO_DEL_RST	0x00000008L
+#define NWTO_BULK_MASK		0x0010L
+#	define NWTO_BULK	0x00000010L
+#	define NWTO_NOBULK	0x00100000L
 
 #endif /* __SERVER__IP__GEN__TCP_IO_H__ */
 
 /*
- * $PchId: tcp_io.h,v 1.4 1995/11/17 22:17:47 philip Exp $
+ * $PchId: tcp_io.h,v 1.5 2001/02/19 07:36:55 philip Exp $
  */

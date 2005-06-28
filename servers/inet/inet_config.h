@@ -12,28 +12,26 @@ Copyright 1995 Philip Homburg
 #ifndef INET__INET_CONFIG_H
 #define INET__INET_CONFIG_H
 
-#define ENABLE_ARP	1
-#define ENABLE_IP	1
-#define ENABLE_PSIP	1
-#define ENABLE_TCP	1
-#define ENABLE_UDP	1
-
 /* Inet configuration file. */
 #define PATH_INET_CONF	"/etc/inet.conf"
 
-#define IP_PORT_MAX  (1*sizeof(char*))	/* Up to this many network devices */
+#define IP_PORT_MAX	32	/* Up to this many network devices */
 extern int eth_conf_nr;		/* Number of ethernets */
 extern int psip_conf_nr;	/* Number of Pseudo IP networks */
-extern int ip_conf_nr;		/* Number of configured TCP/IP layers */
+extern int ip_conf_nr;		/* Number of configured IP layers */
+extern int tcp_conf_nr;		/* Number of configured TCP layers */
+extern int udp_conf_nr;		/* Number of configured UDP layers */
 
 extern dev_t ip_dev;		/* Device number of /dev/ip */
 
 struct eth_conf
 {
-	char *ec_task;		/* Kernel ethernet task name */
-	u8_t ec_port;		/* Task port */
+	char *ec_task;		/* Kernel ethernet task name if nonnull */
+	u8_t ec_port;		/* Task port (!vlan) or Ethernet port (vlan) */
 	u8_t ec_ifno;		/* Interface number of /dev/eth* */
+	u16_t ec_vlan;		/* VLAN number of this net if task == NULL */
 };
+#define eth_is_vlan(ecp)	((ecp)->ec_task == NULL)
 
 struct psip_conf
 {
@@ -45,6 +43,16 @@ struct ip_conf
 	u8_t ic_devtype;	/* Underlying device type: Ethernet / PSIP */
 	u8_t ic_port;		/* Port of underlying device */
 	u8_t ic_ifno;		/* Interface number of /dev/ip*, tcp*, udp* */
+};
+
+struct tcp_conf
+{
+	u8_t tc_port;		/* IP port number */
+};
+
+struct udp_conf
+{
+	u8_t uc_port;		/* IP port number */
 };
 
 /* Types of networks. */
@@ -64,12 +72,17 @@ struct ip_conf
 extern struct eth_conf eth_conf[IP_PORT_MAX];
 extern struct psip_conf psip_conf[IP_PORT_MAX];
 extern struct ip_conf ip_conf[IP_PORT_MAX];
+extern struct tcp_conf tcp_conf[IP_PORT_MAX];
+extern struct udp_conf udp_conf[IP_PORT_MAX];
 void read_conf(void);
 extern char *sbrk(int);
 void *alloc(size_t size);
 
+/* Options */
+extern int ip_forward_directed_bcast;
+
 #endif /* INET__INET_CONFIG_H */
 
 /*
- * $PchId: inet_config.h,v 1.6 1998/10/23 20:14:28 philip Exp $
+ * $PchId: inet_config.h,v 1.10 2003/08/21 09:24:33 philip Exp $
  */

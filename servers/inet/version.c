@@ -2,8 +2,10 @@
 version.c
 */
 
-char version[]= "inet 0.35K, last compiled on " __DATE__ " " __TIME__;
+#include "inet.h"
+
+char version[]= "inet 0.79, last compiled on " __DATE__ " " __TIME__;
 
 /*
- * $PchId: version.c,v 1.9 1996/12/17 08:01:39 philip Exp philip $
+ * $PchId: version.c,v 1.54 2005/06/28 14:35:01 philip Exp $
  */

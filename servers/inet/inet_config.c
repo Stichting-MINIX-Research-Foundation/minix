@@ -9,42 +9,41 @@ Modified:	Apr 07, 2001 by Kees J. Bot
 Copyright 1995 Philip Homburg
 */
 
-#define _MINIX	1
+#define _MINIX_SOURCE 1
+#define _POSIX_SOURCE 1
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <minix/config.h>
 #include <minix/type.h>
 #include <minix/syslib.h>
-#include <minix/utils.h>
-#include <unistd.h>
 #include "inet_config.h"
-
-#define CRAMPED (_EM_WSIZE==2)	/* 64K code and data is quite cramped. */
-#if CRAMPED
-#endif
 
 struct eth_conf eth_conf[IP_PORT_MAX];
 struct psip_conf psip_conf[IP_PORT_MAX];
 struct ip_conf ip_conf[IP_PORT_MAX];
+struct tcp_conf tcp_conf[IP_PORT_MAX];
+struct udp_conf udp_conf[IP_PORT_MAX];
 dev_t ip_dev;
 
 int eth_conf_nr;
-#if ENABLE_PSIP
 int psip_conf_nr;
-#endif
 int ip_conf_nr;
+int tcp_conf_nr;
+int udp_conf_nr;
+
+int ip_forward_directed_bcast= 0;	/* Default is off */
 
 static u8_t iftype[IP_PORT_MAX];	/* Interface in use as? */
 static int ifdefault= -1;		/* Default network interface. */
 
 static void fatal(char *label)
 {
-	printf("init: %s: Error %d\n", label, errno);
+	printf("init: %s: %s\n", label, strerror(errno));
 	exit(1);
 }
 
@@ -206,7 +205,7 @@ static unsigned number(char *str, unsigned max)
 
 void read_conf(void)
 {
-	int i, j, ifno, type, port;
+	int i, j, ifno, type, port, enable;
 	struct eth_conf *ecp;
 	struct psip_conf *pcp;
 	struct ip_conf *icp;
@@ -226,13 +225,25 @@ void read_conf(void)
 			type= NETTYPE_ETH;
 			port= eth_conf_nr;
 			token(1);
-			ecp->ec_task= alloc(strlen(word)+1);
-			strcpy(ecp->ec_task, word);
-			token(1);
-			ecp->ec_port= number(word, IP_PORT_MAX-1);
+			if (strcmp(word, "vlan") == 0) {
+				token(1);
+				ecp->ec_vlan= number(word, (1<<12)-1);
+				token(1);
+				if (strncmp(word, "eth", 3) != 0) {
+					printf(
+				"inet: VLAN eth%d can't be built on %s\n",
+						ifno, word);
+					exit(1);
+				}
+				ecp->ec_port= number(word+3, IP_PORT_MAX-1);
+			} else {
+				ecp->ec_task= alloc(strlen(word)+1);
+				strcpy(ecp->ec_task, word);
+				token(1);
+				ecp->ec_port= number(word, IP_PORT_MAX-1);
+			}
 			ecp++;
 			eth_conf_nr++;
-#if ENABLE_PSIP
 		} else
 		if (strncmp(word, "psip", 4) == 0) {
 			pcp->pc_ifno= ifno= number(word+4, IP_PORT_MAX-1);
@@ -240,7 +251,6 @@ void read_conf(void)
 			port= psip_conf_nr;
 			pcp++;
 			psip_conf_nr++;
-#endif
 		} else {
 			printf("inet: Unknown device '%s'\n", word);
 			error();
@@ -249,32 +259,84 @@ void read_conf(void)
 		icp->ic_ifno= ifno;
 		icp->ic_devtype= type;
 		icp->ic_port= port;
+		tcp_conf[tcp_conf_nr].tc_port= ip_conf_nr;
+		udp_conf[udp_conf_nr].uc_port= ip_conf_nr;
+
+		enable= 7;	/* 1 = IP, 2 = TCP, 4 = UDP */
 
 		token(0);
 		if (word[0] == '{') {
 			token(0);
-			if (strcmp(word, "default") == 0) {
-				if (ifdefault != -1) {
-					printf(
-			"inet: ip%d and ip%d can't both be default\n",
-						ifdefault, ifno);
-					error();
+			while (word[0] != '}') {
+				if (strcmp(word, "default") == 0) {
+					if (ifdefault != -1) {
+						printf(
+				"inet: ip%d and ip%d can't both be default\n",
+							ifdefault, ifno);
+						error();
+					}
+					ifdefault= ifno;
+					token(0);
+				} else
+				if (strcmp(word, "no") == 0) {
+					token(1);
+					if (strcmp(word, "ip") == 0) {
+						enable= 0;
+					} else
+					if (strcmp(word, "tcp") == 0) {
+						enable &= ~2;
+					} else
+					if (strcmp(word, "udp") == 0) {
+						enable &= ~4;
+					} else {
+						printf(
+						"inet: Can't do 'no %s'\n",
+							word);
+						exit(1);
+					}
+					token(0);
+				} else {
+					printf("inet: Unknown option '%s'\n",
+						word);
+					exit(1);
 				}
-				ifdefault= ifno;
-				token(0);
+				if (word[0] == ';') token(0);
+				else
+				if (word[0] != '}') error();
 			}
-			if (word[0] == ';') token(0);
-			if (word[0] != '}') error();
 			token(0);
 		}
 		if (word[0] != ';' && word[0] != 0) error();
-		icp++;
-		ip_conf_nr++;
+
+		if (enable & 1) icp++, ip_conf_nr++;
+		if (enable & 2) tcp_conf_nr++;
+		if (enable & 4) udp_conf_nr++;
 	}
 
 	if (ifdefault == -1) {
 		printf("inet: No networks or no default network defined\n");
 		exit(1);
+	}
+
+	/* Translate VLAN network references to port numbers. */
+	for (i= 0; i < eth_conf_nr; i++) {
+		ecp= &eth_conf[i];
+		if (eth_is_vlan(ecp)) {
+			for (j= 0; j < eth_conf_nr; j++) {
+				if (eth_conf[j].ec_ifno == ecp->ec_port
+					&& !eth_is_vlan(&eth_conf[j])
+				) {
+					ecp->ec_port= j;
+					break;
+				}
+			}
+			if (j == eth_conf_nr) {
+				printf(
+				"inet: VLAN eth%d can't be built on eth%d\n",
+					ecp->ec_ifno, ecp->ec_port);
+				exit(1);
+			}
+		}
 	}
 
 	/* Set umask 0 so we can creat mode 666 devices. */
@@ -300,5 +362,5 @@ void *alloc(size_t size)
 }
 
 /*
- * $PchId: inet_config.c,v 1.6 1998/10/23 20:15:27 philip Exp $
+ * $PchId: inet_config.c,v 1.10 2003/08/21 09:26:02 philip Exp $
  */

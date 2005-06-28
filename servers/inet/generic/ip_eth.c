@@ -16,6 +16,8 @@ Copyright 1995 Philip Homburg
 #include "clock.h"
 #include "eth.h"
 #include "event.h"
+#include "icmp_lib.h"
+#include "io.h"
 #include "ip.h"
 #include "ip_int.h"
 
@@ -27,8 +29,14 @@ typedef struct xmit_hdr
 	ipaddr_t xh_ipaddr;
 } xmit_hdr_t;
 
-PRIVATE ether_addr_t broadcast_ethaddr= { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-PRIVATE ipaddr_t broadcast_ipaddr= 0xFFFFFFFFL;
+PRIVATE ether_addr_t broadcast_ethaddr=
+{
+	{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
+};
+PRIVATE ether_addr_t ipmulticast_ethaddr=
+{
+	{ 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 }
+};
 
 FORWARD void do_eth_read ARGS(( ip_port_t *port ));
 FORWARD acc_t *get_eth_data ARGS(( int fd, size_t offset,
@@ -39,7 +47,7 @@ FORWARD void ipeth_main ARGS(( ip_port_t *port ));
 FORWARD void ipeth_set_ipaddr ARGS(( ip_port_t *port ));
 FORWARD void ipeth_restart_send ARGS(( ip_port_t *ip_port ));
 FORWARD int ipeth_send ARGS(( struct ip_port *ip_port, ipaddr_t dest, 
-	acc_t *pack, int broadcast ));
+	acc_t *pack, int type ));
 FORWARD void ipeth_arp_reply ARGS(( int ip_port_nr, ipaddr_t ipaddr,
 	ether_addr_t *dst_ether_ptr ));
 FORWARD int ipeth_update_ttl ARGS(( time_t enq_time, time_t now,
@@ -56,7 +64,8 @@ ip_port_t *ip_port;
 
 	ip_port->ip_dl.dl_eth.de_fd= eth_open(ip_port->
 		ip_dl.dl_eth.de_port, ip_port->ip_port,
-		get_eth_data, put_eth_data, ip_eth_arrived);
+		get_eth_data, put_eth_data, ip_eth_arrived,
+		0 /* no select_res */);
 	if (ip_port->ip_dl.dl_eth.de_fd < 0)
 	{
 		DBLOCK(1, printf("ip.c: unable to open eth port\n"));
@@ -71,15 +80,15 @@ ip_port_t *ip_port;
 	ip_port->ip_dev_main= ipeth_main;
 	ip_port->ip_dev_set_ipaddr= ipeth_set_ipaddr;
 	ip_port->ip_dev_send= ipeth_send;
-	ip_port->ip_mss= ETH_MAX_PACK_SIZE-ETH_HDR_SIZE;
+	ip_port->ip_mtu= ETH_MAX_PACK_SIZE-ETH_HDR_SIZE;
+	ip_port->ip_mtu_max= ip_port->ip_mtu;
 	return 0;
 }
 
 PRIVATE void ipeth_main(ip_port)
 ip_port_t *ip_port;
 {
-	int result, i;
-	ip_fd_t *ip_fd;
+	int result;
 
 	switch (ip_port->ip_dl.dl_eth.de_state)
 	{
@@ -91,8 +100,8 @@ ip_port_t *ip_port;
 			ip_port->ip_dl.dl_eth.de_flags |= IEF_SUSPEND;
 		if (result<0)
 		{
-			DBLOCK(1, printf("eth_ioctl(..,%lx)=%d\n",
-				NWIOSETHOPT, result));
+			DBLOCK(1, printf("eth_ioctl(..,0x%lx)=%d\n",
+				(unsigned long)NWIOSETHOPT, result));
 			return;
 		}
 		if (ip_port->ip_dl.dl_eth.de_state != IES_SETPROTO)
@@ -104,10 +113,8 @@ ip_port_t *ip_port;
 			ipeth_arp_reply);
 		if (result != NW_OK)
 		{
-#if !CRAMPED
 			printf("ipeth_main: arp_set_cb failed: %d\n",
 				result);
-#endif
 			return;
 		}
 
@@ -122,28 +129,11 @@ ip_port_t *ip_port;
 		/* fall through */
 	case IES_GETIPADDR:
 		ip_port->ip_dl.dl_eth.de_state= IES_MAIN;
-		for (i=0, ip_fd= ip_fd_table; i<IP_FD_NR; i++, ip_fd++)
-		{
-			if (!(ip_fd->if_flags & IFF_INUSE))
-			{
-				continue;
-			}
-			if (ip_fd->if_port != ip_port)
-			{
-				continue;
-			}
-			if (ip_fd->if_flags & IFF_GIPCONF_IP)
-			{
-				ip_ioctl (i, NWIOGIPCONF);
-			}
-		}
 		do_eth_read(ip_port);
 		return;
-#if !CRAMPED
 	default:
 		ip_panic(( "unknown state: %d",
 			ip_port->ip_dl.dl_eth.de_state));
-#endif
 	}
 }
 
@@ -208,11 +198,9 @@ int for_ioctl;
 		assert (data);
 		return data;
 	default:
-#if !CRAMPED
 		printf(
 		"get_eth_data(%d, 0x%d, 0x%d) called but ip_state=0x%x\n",
 			fd, offset, count, ip_port->ip_dl.dl_eth.de_state);
-#endif
 		break;
 	}
 	return 0;
@@ -225,7 +213,6 @@ acc_t *data;
 int for_ioctl;
 {
 	ip_port_t *ip_port;
-	acc_t *pack;
 	int result;
 
 	ip_port= &ip_port_table[port];
@@ -261,11 +248,9 @@ int for_ioctl;
 		ip_eth_arrived(port, data, bf_bufsize(data));
 		return NW_OK;
 	}
-#if !CRAMPED
 	printf("ip_port->ip_dl.dl_eth.de_state= 0x%x",
 		ip_port->ip_dl.dl_eth.de_state);
 	ip_panic (( "strange status" ));
-#endif
 }
 
 PRIVATE void ipeth_set_ipaddr(ip_port)
@@ -276,19 +261,20 @@ ip_port_t *ip_port;
 		ipeth_main(ip_port);
 }
 
-PRIVATE int ipeth_send(ip_port, dest, pack, broadcast)
+PRIVATE int ipeth_send(ip_port, dest, pack, type)
 struct ip_port *ip_port;
 ipaddr_t dest;
 acc_t *pack;
-int broadcast;
+int type;
 {
-	int r;
+	int i, r;
 	acc_t *eth_pack, *tail;
 	size_t pack_size;
 	eth_hdr_t *eth_hdr;
 	xmit_hdr_t *xmit_hdr;
-	ipaddr_t hostpart;
+	ipaddr_t hostpart, tmpaddr;
 	time_t t;
+	u32_t *p;
 
 	/* Start optimistic: the arp will succeed without blocking and the
 	 * ethernet packet can be sent without blocking also. Start with
@@ -301,26 +287,41 @@ int broadcast;
 	if (pack_size<ETH_MIN_PACK_SIZE)
 	{
 		tail= bf_memreq(ETH_MIN_PACK_SIZE-pack_size);
+
+		/* Clear padding */
+		for (i= (ETH_MIN_PACK_SIZE-pack_size)/sizeof(*p),
+			p= (u32_t *)ptr2acc_data(tail);
+			i >= 0; i--, p++)
+		{
+			*p= 0xdeadbeef;
+		}
+
 		eth_pack= bf_append(eth_pack, tail);
 	}
 	eth_hdr= (eth_hdr_t *)ptr2acc_data(eth_pack);
 
 	/* Lookup the ethernet address */
-	if (broadcast)
-		eth_hdr->eh_dst= broadcast_ethaddr;
+	if (type != IP_LT_NORMAL)
+	{
+		if (type == IP_LT_BROADCAST)
+			eth_hdr->eh_dst= broadcast_ethaddr;
+		else
+		{
+			tmpaddr= ntohl(dest);
+			eth_hdr->eh_dst= ipmulticast_ethaddr;
+			eth_hdr->eh_dst.ea_addr[5]= tmpaddr & 0xff;
+			eth_hdr->eh_dst.ea_addr[4]= (tmpaddr >> 8) & 0xff;
+			eth_hdr->eh_dst.ea_addr[3]= (tmpaddr >> 16) & 0x7f;
+		}
+	}
 	else
 	{
-		if ((dest & ip_port->ip_subnetmask) != 
-			(ip_port->ip_ipaddr & ip_port->ip_subnetmask))
+		if ((dest ^ ip_port->ip_ipaddr) & ip_port->ip_subnetmask)
 		{
-#if !CRAMPED
 			ip_panic(( "invalid destination" ));
-#endif
 		}
 
 		hostpart= (dest & ~ip_port->ip_subnetmask);
-
-		assert(hostpart != 0);
 		assert(dest != ip_port->ip_ipaddr);
 
 		r= arp_ip_eth(ip_port->ip_dl.dl_eth.de_port,
@@ -354,12 +355,12 @@ int broadcast;
 	}
 
 	/* If we have no write in progress, we can try to send the ethernet
-	 * packet using eth_send. If the IP packet is larger than mss,
-	 * unqueue the packet and let ipeth_restart_send deal with it. 
+	 * packet using eth_send. If the IP packet is larger than mtu,
+	 * enqueue the packet and let ipeth_restart_send deal with it. 
 	 */
 	pack_size= bf_bufsize(eth_pack);
 	if (ip_port->ip_dl.dl_eth.de_frame == NULL && pack_size <=
-		ip_port->ip_mss + sizeof(*eth_hdr))
+		ip_port->ip_mtu + sizeof(*eth_hdr))
 	{
 		r= eth_send(ip_port->ip_dl.dl_eth.de_fd,
 			eth_pack, pack_size);
@@ -383,7 +384,7 @@ int broadcast;
 	}
 
 	/* Enqueue the packet, and store the current time, in the
-	 * room for the ethernet source address.
+	 * space for the ethernet source address.
 	 */
 	t= get_time();
 	assert(sizeof(t) <= sizeof(eth_hdr->eh_src));
@@ -406,10 +407,11 @@ PRIVATE void ipeth_restart_send(ip_port)
 ip_port_t *ip_port;
 {
 	time_t now, enq_time;
-	int r;
+	int i, r;
 	acc_t *eth_pack, *ip_pack, *next_eth_pack, *next_part, *tail;
 	size_t pack_size;
 	eth_hdr_t *eth_hdr, *next_eth_hdr;
+	u32_t *p;
 
 	now= get_time();
 
@@ -422,18 +424,21 @@ ip_port_t *ip_port;
 
 		pack_size= bf_bufsize(eth_pack);
 
-		if (pack_size > ip_port->ip_mss+sizeof(*eth_hdr))
+		if (pack_size > ip_port->ip_mtu+sizeof(*eth_hdr))
 		{
 			/* Split the IP packet */
-			ip_pack= eth_pack->acc_next;
-			next_part= ip_pack;
+			assert(eth_pack->acc_linkC == 1);
+			ip_pack= eth_pack->acc_next; eth_pack->acc_next= NULL;
+			next_part= ip_pack; ip_pack= NULL;
 			ip_pack= ip_split_pack(ip_port, &next_part, 
-							ip_port->ip_mss);
+							ip_port->ip_mtu);
 			if (ip_pack == NULL)
 			{
 				bf_afree(eth_pack);
 				continue;
 			}
+
+			eth_pack->acc_next= ip_pack; ip_pack= NULL;
 
 			/* Allocate new ethernet header */
 			next_eth_pack= bf_memreq(sizeof(*next_eth_hdr));
@@ -445,11 +450,12 @@ ip_port_t *ip_port;
 			if (ip_port->ip_dl.dl_eth.de_q_head == NULL)
 				ip_port->ip_dl.dl_eth.de_q_head= next_eth_pack;
 			else
+			{
 				ip_port->ip_dl.dl_eth.de_q_tail->acc_ext_link= 
 								next_eth_pack;
+			}
 			ip_port->ip_dl.dl_eth.de_q_tail= next_eth_pack;
 
-			eth_pack->acc_next= ip_pack;
 			pack_size= bf_bufsize(eth_pack);
 		}
 
@@ -459,8 +465,10 @@ ip_port_t *ip_port;
 			r= ipeth_update_ttl(enq_time, now, eth_pack);
 			if (r == ETIMEDOUT)
 			{	
-				ip_warning(( "should send ICMP ttl exceded" ));
-				bf_afree(eth_pack);
+				ip_pack= bf_delhead(eth_pack, sizeof(*eth_hdr));
+				eth_pack= NULL;
+				icmp_snd_time_exceeded(ip_port->ip_port,
+					ip_pack, ICMP_TTL_EXC);
 				continue;
 			}
 			assert(r == NW_OK);
@@ -469,7 +477,17 @@ ip_port_t *ip_port;
 		if (pack_size<ETH_MIN_PACK_SIZE)
 		{
 			tail= bf_memreq(ETH_MIN_PACK_SIZE-pack_size);
+
+			/* Clear padding */
+			for (i= (ETH_MIN_PACK_SIZE-pack_size)/sizeof(*p),
+				p= (u32_t *)ptr2acc_data(tail);
+				i >= 0; i--, p++)
+			{
+				*p= 0xdeadbeef;
+			}
+
 			eth_pack= bf_append(eth_pack, tail);
+			pack_size= ETH_MIN_PACK_SIZE;
 		}
 
 		assert(ip_port->ip_dl.dl_eth.de_frame == NULL);
@@ -700,5 +718,5 @@ size_t pack_size;
 }
 
 /*
- * $PchId: ip_eth.c,v 1.9 1996/12/17 07:55:21 philip Exp $
+ * $PchId: ip_eth.c,v 1.25 2005/06/28 14:18:10 philip Exp $
  */

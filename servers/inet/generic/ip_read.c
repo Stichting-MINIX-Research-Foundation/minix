@@ -25,9 +25,8 @@ FORWARD acc_t *merge_frags ARGS(( acc_t *first, acc_t *second ));
 FORWARD int ip_frag_chk ARGS(( acc_t *pack ));
 FORWARD acc_t *reassemble ARGS(( ip_port_t *ip_port, acc_t *pack, 
 	ip_hdr_t *ip_hdr ));
+FORWARD void route_packets ARGS(( event_t *ev, ev_arg_t ev_arg ));
 FORWARD int broadcast_dst ARGS(( ip_port_t *ip_port, ipaddr_t dest ));
-FORWARD void packet2user ARGS(( ip_fd_t *ip_fd, acc_t *pack,
-	time_t exp_time ));
 
 PUBLIC int ip_read (fd, count)
 int fd;
@@ -38,8 +37,10 @@ size_t count;
 
 	ip_fd= &ip_fd_table[fd];
 	if (!(ip_fd->if_flags & IFF_OPTSET))
+	{
 		return (*ip_fd->if_put_userdata)(ip_fd->if_srfd, EBADMODE,
 			(acc_t *)0, FALSE);
+	}
 
 	ip_fd->if_rd_count= count;
 
@@ -50,7 +51,8 @@ size_t count;
 		{
 			pack= ip_fd->if_rdbuf_head;
 			ip_fd->if_rdbuf_head= pack->acc_ext_link;
-			packet2user (ip_fd, pack, ip_fd->if_exp_time);
+			ip_packet2user (ip_fd, pack, ip_fd->if_exp_time,
+				bf_bufsize(pack));
 			assert(!(ip_fd->if_flags & IFF_READ_IP));
 			return NW_OK;
 		}
@@ -150,8 +152,17 @@ ip_hdr_t *pack_hdr;
 		}
 		if ((ass_ent->ia_min_ttl) * HZ + first_time <
 			get_time())
+		{
+			if (broadcast_dst(ip_port, pack_hdr->ih_dst))
+			{
+				DBLOCK(1, printf(
+	"ip_read'reassemble: reassembly timeout for broadcast packet\n"););
+				bf_afree(pack); pack= NULL;
+				return NULL;
+			}
 			icmp_snd_time_exceeded(ip_port->ip_port, pack,
 				ICMP_FRAG_REASSEM);
+		}
 		else
 			return pack;
 	}
@@ -268,9 +279,9 @@ ipaddr_t dst;
 
 	if (new_ass_ent->ia_frags)
 	{
-		DBLOCK(1, printf("old frags id= %u, proto= %u, src= ",
+		DBLOCK(2, printf("old frags id= %u, proto= %u, src= ",
 			ntohs(new_ass_ent->ia_id),
-			ntohs(new_ass_ent->ia_proto));
+			new_ass_ent->ia_proto);
 			writeIpAddr(new_ass_ent->ia_srcaddr); printf(" dst= ");
 			writeIpAddr(new_ass_ent->ia_dstaddr); printf(": ");
 			ip_print_frags(new_ass_ent->ia_frags); printf("\n"));
@@ -283,8 +294,17 @@ ipaddr_t dst;
 		}
 		curr_acc= new_ass_ent->ia_frags;
 		new_ass_ent->ia_frags= 0;
-		icmp_snd_time_exceeded(ip_port->ip_port, curr_acc,
-			ICMP_FRAG_REASSEM);
+		if (broadcast_dst(ip_port, new_ass_ent->ia_dstaddr))
+		{
+			DBLOCK(1, printf(
+	"ip_read'find_ass_ent: reassembly timeout for broadcast packet\n"));
+			bf_afree(curr_acc); curr_acc= NULL;
+		}
+		else
+		{
+			icmp_snd_time_exceeded(ip_port->ip_port,
+				curr_acc, ICMP_FRAG_REASSEM);
+		}
 	}
 	new_ass_ent->ia_min_ttl= IP_MAX_TTL;
 	new_ass_ent->ia_port= ip_port;
@@ -348,15 +368,16 @@ acc_t *pack;
 	return TRUE;
 }
 
-PRIVATE void packet2user (ip_fd, pack, exp_time)
+PUBLIC void ip_packet2user (ip_fd, pack, exp_time, data_len)
 ip_fd_t *ip_fd;
 acc_t *pack;
 time_t exp_time;
+size_t data_len;
 {
 	acc_t *tmp_pack;
 	ip_hdr_t *ip_hdr;
 	int result, ip_hdr_len;
-	size_t size, transf_size;
+	size_t transf_size;
 
 	assert (ip_fd->if_flags & IFF_INUSE);
 	if (!(ip_fd->if_flags & IFF_READ_IP))
@@ -380,22 +401,19 @@ time_t exp_time;
 		return;
 	}
 
-	size= bf_bufsize (pack);
+	assert (pack->acc_length >= IP_MIN_HDR_SIZE);
+	ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
+
 	if (ip_fd->if_ipopt.nwio_flags & NWIO_RWDATONLY)
 	{
-
-		pack= bf_packIffLess (pack, IP_MIN_HDR_SIZE);
-		assert (pack->acc_length >= IP_MIN_HDR_SIZE);
-
-		ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
 		ip_hdr_len= (ip_hdr->ih_vers_ihl & IH_IHL_MASK) * 4;
 
-		assert (size >= ip_hdr_len);
-		size -= ip_hdr_len;
+		assert (data_len > ip_hdr_len);
+		data_len -= ip_hdr_len;
 		pack= bf_delhead(pack, ip_hdr_len);
 	}
 
-	if (size>ip_fd->if_rd_count)
+	if (data_len > ip_fd->if_rd_count)
 	{
 		tmp_pack= bf_cut (pack, 0, ip_fd->if_rd_count);
 		bf_afree(pack);
@@ -403,7 +421,7 @@ time_t exp_time;
 		transf_size= ip_fd->if_rd_count;
 	}
 	else
-		transf_size= size;
+		transf_size= data_len;
 
 	if (ip_fd->if_put_pkt)
 	{
@@ -414,16 +432,17 @@ time_t exp_time;
 	result= (*ip_fd->if_put_userdata)(ip_fd->if_srfd,
 		(size_t)0, pack, FALSE);
 	if (result >= 0)
-		if (size > transf_size)
+	{
+		if (data_len > transf_size)
 			result= EPACKSIZE;
 		else
 			result= transf_size;
+	}
 
 	ip_fd->if_flags &= ~IFF_READ_IP;
 	result= (*ip_fd->if_put_userdata)(ip_fd->if_srfd, result,
 			(acc_t *)0, FALSE);
 	assert (result >= 0);
-	return;
 }
 
 PUBLIC void ip_port_arrive (ip_port, pack, ip_hdr)
@@ -432,9 +451,8 @@ acc_t *pack;
 ip_hdr_t *ip_hdr;
 {
 	ip_fd_t *ip_fd, *first_fd, *share_fd;
-	ip_hdr_t *hdr;
-	int port_nr;
 	unsigned long ip_pack_stat;
+	unsigned size;
 	int i;
 	int hash, proto;
 	time_t exp_time;
@@ -451,6 +469,14 @@ ip_hdr_t *ip_hdr;
 		ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
 		assert (!(ntohs(ip_hdr->ih_flags_fragoff) &
 			(IH_FRAGOFF_MASK|IH_MORE_FRAGS)));
+	}
+	size= ntohs(ip_hdr->ih_length);
+	if (size > bf_bufsize(pack))
+	{
+		/* Should discard packet */
+		assert(0);
+		bf_afree(pack); pack= NULL;
+		return;
 	}
 
 	exp_time= get_time() + (ip_hdr->ih_ttl+1) * HZ;
@@ -499,13 +525,13 @@ ip_hdr_t *ip_hdr;
 				continue;
 			}
 			pack->acc_linkC++;
-			packet2user(ip_fd, pack, exp_time);
+			ip_packet2user(ip_fd, pack, exp_time, size);
 
 		}
 		if (share_fd)
 		{
 			pack->acc_linkC++;
-			packet2user(share_fd, pack, exp_time);
+			ip_packet2user(share_fd, pack, exp_time, size);
 		}
 	}
 	if (first_fd)
@@ -515,10 +541,10 @@ ip_hdr_t *ip_hdr;
 			!(first_fd->if_ipopt.nwio_flags & NWIO_RWDATONLY))
 		{
 			(*first_fd->if_put_pkt)(first_fd->if_srfd, pack,
-				ntohs(ip_hdr->ih_length));
+				size);
 		}
 		else
-			packet2user(first_fd, pack, exp_time);
+			ip_packet2user(first_fd, pack, exp_time, size);
 	}
 	else
 	{
@@ -541,15 +567,12 @@ PUBLIC void ip_arrived(ip_port, pack)
 ip_port_t *ip_port;
 acc_t *pack;
 {
-	ip_port_t *next_port;
 	ip_hdr_t *ip_hdr;
-	iroute_t *iroute;
 	ipaddr_t dest;
-	nettype_t nettype;
-	int ip_frag_len, ip_hdr_len;
+	int ip_frag_len, ip_hdr_len, highbyte;
 	size_t pack_size;
-	acc_t *tmp_pack;
-	int broadcast;
+	acc_t *tmp_pack, *hdr_pack;
+	ev_arg_t ev_arg;
 
 	pack_size= bf_bufsize(pack);
 
@@ -567,16 +590,24 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 	ip_hdr_len= (ip_hdr->ih_vers_ihl & IH_IHL_MASK) << 2;
 	if (ip_hdr_len>IP_MIN_HDR_SIZE)
 	{
-		pack= bf_align(pack, IP_MIN_HDR_SIZE, 4);
 		pack= bf_packIffLess(pack, ip_hdr_len);
 		ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
 	}
 	ip_frag_len= ntohs(ip_hdr->ih_length);
-	if (ip_frag_len<pack_size)
+	if (ip_frag_len != pack_size)
 	{
+		if (pack_size < ip_frag_len)
+		{
+			/* Sent ICMP? */
+			DBLOCK(1, printf("wrong acc_length\n"));
+			bf_afree(pack);
+			return;
+		}
+		assert(ip_frag_len<pack_size);
 		tmp_pack= pack;
 		pack= bf_cut(tmp_pack, 0, ip_frag_len);
 		bf_afree(tmp_pack);
+		pack_size= ip_frag_len;
 	}
 
 	if (!ip_frag_chk(pack))
@@ -605,122 +636,60 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 		return;
 	}
 
+	if (pack->acc_linkC != 1 || pack->acc_buffer->buf_linkC != 1)
+	{
+		/* Get a private copy of the IP header */
+		hdr_pack= bf_memreq(ip_hdr_len);
+		memcpy(ptr2acc_data(hdr_pack), ip_hdr, ip_hdr_len);
+		pack= bf_delhead(pack, ip_hdr_len);
+		hdr_pack->acc_next= pack;
+		pack= hdr_pack; hdr_pack= NULL;
+		ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
+	}
+	assert(pack->acc_linkC == 1);
+	assert(pack->acc_buffer->buf_linkC == 1);
+
 	/* Try to decrement the ttl field with one. */
 	if (ip_hdr->ih_ttl < 2)
 	{
-		icmp_snd_time_exceeded(ip_port->ip_port, pack, ICMP_TTL_EXC);
+		icmp_snd_time_exceeded(ip_port->ip_port, pack,
+			ICMP_TTL_EXC);
 		return;
 	}
 	ip_hdr->ih_ttl--;
 	ip_hdr_chksum(ip_hdr, ip_hdr_len);
 
 	/* Avoid routing to bad destinations. */
-	nettype= ip_nettype(dest);
-	if (nettype != IPNT_CLASS_A && nettype != IPNT_CLASS_B && nettype !=
-		IPNT_CLASS_C)
+	highbyte= ntohl(dest) >> 24;
+	if (highbyte == 0 || highbyte == 127 ||
+		(highbyte == 169 && (((ntohl(dest) >> 16) & 0xff) == 254)) ||
+		highbyte >= 0xe0)
 	{
 		/* Bogus destination address */
-		if (nettype == IPNT_CLASS_D || nettype == IPNT_CLASS_E)
-			bf_afree(pack);
-		else
-		{
-			icmp_snd_unreachable(ip_port->ip_port, pack,
-				ICMP_HOST_UNRCH);
-		}
-		return;
-	}
-	iroute= iroute_frag(ip_port->ip_port, dest);
-	if (iroute == NULL || iroute->irt_dist == IRTD_UNREACHABLE)
-	{
-		/* Also unreachable */
-		/* Finding out if we send a network unreachable is too much
-		 * trouble.
-		 */
-		icmp_snd_unreachable(ip_port->ip_port, pack,
-			ICMP_HOST_UNRCH);
-		return;
-	}
-	next_port= &ip_port_table[iroute->irt_port];
-	if (next_port != ip_port)
-	{
-		if (iroute->irt_gateway != 0)
-		{
-			/* Just send the packet to the next gateway */
-			next_port->ip_dev_send(next_port, iroute->irt_gateway,
-				pack, /* no bradcast */ 0);
-			return;
-		}
-		/* The packet is for the attached network. Special addresses
-		 * are the ip address of the interface and net.0 if
-		 * no IP_42BSD_BCAST.
-		 */
-		if (dest == next_port->ip_ipaddr)
-		{
-			ip_port_arrive (next_port, pack, ip_hdr);
-			return;
-		}
-		if (dest == iroute->irt_dest)
-		{
-#if IP_42BSD_BCAST
-			broadcast= 1;
-#else
-			/* Bogus destination address */
-			icmp_snd_dstunrch(pack);
-			return;
-#endif
-		}
-		else if (dest == (iroute->irt_dest | ~iroute->irt_subnetmask))
-			broadcast= 1;
-		else
-			broadcast= 0;
-
-		/* Just send the packet to it's destination */
-		next_port->ip_dev_send(next_port, dest, pack, broadcast);
-		return;
-	}
-
-	/* Now we know that the packet should be route over the same network
-	 * as it came from. If there is a next hop gateway, we can send
-	 * the packet to that gateway and send a redirect ICMP to the sender
-	 * if the sender is on the attached network. If there is no gateway
-	 * complain.
-	 */
-	if (iroute->irt_gateway == 0)
-	{
-#if !CRAMPED
-		printf("packet should not be here, src=");
-		writeIpAddr(ip_hdr->ih_src);
-		printf(" dst=");
-		writeIpAddr(ip_hdr->ih_dst);
-		printf("\n");
-#endif
 		bf_afree(pack);
 		return;
 	}
-	if (((ip_hdr->ih_src ^ ip_port->ip_ipaddr) &
-		ip_port->ip_subnetmask) == 0)
+
+	/* Further processing from an event handler */
+	if (pack->acc_linkC != 1)
 	{
-		/* Finding out if we can send a network redirect instead of
-		 * a host redirect is too much trouble.
-		 */
-		pack->acc_linkC++;
-		icmp_snd_redirect(ip_port->ip_port, pack,
-			ICMP_REDIRECT_HOST, iroute->irt_gateway);
-	}
-	else
-	{
-#if !CRAMPED
-		printf("packet is wrongly routed, src=");
-		writeIpAddr(ip_hdr->ih_src);
-		printf(" dst=");
-		writeIpAddr(ip_hdr->ih_dst);
-		printf("\n");
-#endif
+		tmp_pack= bf_dupacc(pack);
 		bf_afree(pack);
+		pack= tmp_pack;
+		tmp_pack= NULL;
+	}
+	pack->acc_ext_link= NULL;
+	if (ip_port->ip_routeq_head)
+	{
+		ip_port->ip_routeq_tail->acc_ext_link= pack;
+		ip_port->ip_routeq_tail= pack;
 		return;
 	}
-	ip_port->ip_dev_send(ip_port, iroute->irt_gateway, pack,
-		/* no broadcast */ 0);
+
+	ip_port->ip_routeq_head= pack;
+	ip_port->ip_routeq_tail= pack;
+	ev_arg.ev_ptr= ip_port;
+	ev_enqueue(&ip_port->ip_routeq_event, route_packets, ev_arg);
 }
 
 PUBLIC void ip_arrived_broadcast(ip_port, pack)
@@ -773,19 +742,13 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 
 	if (!broadcast_dst(ip_port, ip_hdr->ih_dst))
 	{
-#if !CRAMPED
-		/* this message isn't very useful, but is quite annoying on
-		 * the console
-		 */
-		/*
-		printf("ip[%d]: broadcast packet for ip-nonbroadcast addr, src=",
+		printf(
+		"ip[%d]: broadcast packet for ip-nonbroadcast addr, src=",
 			ip_port->ip_port);
 		writeIpAddr(ip_hdr->ih_src);
 		printf(" dst=");
 		writeIpAddr(ip_hdr->ih_dst);
 		printf("\n");
-		*/
-#endif
 		bf_afree(pack);
 		return;
 	}
@@ -793,10 +756,220 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 	ip_port_arrive (ip_port, pack, ip_hdr);
 }
 
+PRIVATE void route_packets(ev, ev_arg)
+event_t *ev;
+ev_arg_t ev_arg;
+{
+	ip_port_t *ip_port;
+	ipaddr_t dest;
+	acc_t *pack;
+	iroute_t *iroute;
+	ip_port_t *next_port;
+	int r, type;
+	ip_hdr_t *ip_hdr;
+	size_t req_mtu;
+
+	ip_port= ev_arg.ev_ptr;
+	assert(&ip_port->ip_routeq_event == ev);
+
+	while (pack= ip_port->ip_routeq_head, pack != NULL)
+	{
+		ip_port->ip_routeq_head= pack->acc_ext_link;
+
+		ip_hdr= (ip_hdr_t *)ptr2acc_data(pack);
+		dest= ip_hdr->ih_dst;
+
+		iroute= iroute_frag(ip_port->ip_port, dest);
+		if (iroute == NULL || iroute->irt_dist == IRTD_UNREACHABLE)
+		{
+			/* Also unreachable */
+			/* Finding out if we send a network unreachable is too
+			 * much trouble.
+			 */
+			if (iroute == NULL)
+			{
+				printf("ip[%d]: no route to ",
+					ip_port-ip_port_table);
+				writeIpAddr(dest);
+				printf("\n");
+			}
+			icmp_snd_unreachable(ip_port->ip_port, pack,
+				ICMP_HOST_UNRCH);
+			continue;
+		}
+		next_port= &ip_port_table[iroute->irt_port];
+
+		if (ip_hdr->ih_flags_fragoff & HTONS(IH_DONT_FRAG))
+		{
+			req_mtu= bf_bufsize(pack);
+			if (req_mtu > next_port->ip_mtu ||
+				(iroute->irt_mtu && req_mtu>iroute->irt_mtu))
+			{
+				icmp_snd_mtu(ip_port->ip_port, pack,
+					next_port->ip_mtu);
+				continue;
+			}
+		}
+
+		if (next_port != ip_port)
+		{
+			if (iroute->irt_gateway != 0)
+			{
+				/* Just send the packet to the next gateway */
+				pack->acc_linkC++; /* Extra ref for ICMP */
+				r= next_port->ip_dev_send(next_port,
+					iroute->irt_gateway,
+					pack, IP_LT_NORMAL);
+				if (r == EDSTNOTRCH)
+				{
+					printf("ip[%d]: gw ",
+						ip_port-ip_port_table);
+					writeIpAddr(iroute->irt_gateway);
+					printf(" on ip[%d] is down for dest ",
+						next_port-ip_port_table);
+					writeIpAddr(dest);
+					printf("\n");
+					icmp_snd_unreachable(next_port-
+						ip_port_table, pack,
+						ICMP_HOST_UNRCH);
+					pack= NULL;
+				}
+				else
+				{
+					assert(r == 0);
+					bf_afree(pack); pack= NULL;
+				}
+				continue;
+			}
+			/* The packet is for the attached network. Special
+			 * addresses are the ip address of the interface and
+			 * net.0 if no IP_42BSD_BCAST.
+			 */
+			if (dest == next_port->ip_ipaddr)
+			{
+				ip_port_arrive (next_port, pack, ip_hdr);
+				continue;
+			}
+			if (dest == iroute->irt_dest)
+			{
+				/* Never forward obsolete directed broadcasts */
+#if IP_42BSD_BCAST && 0
+				type= IP_LT_BROADCAST;
+#else
+				/* Bogus destination address */
+				DBLOCK(1, printf(
+			"ip[%d]: dropping old-fashioned directed broadcast ",
+						ip_port-ip_port_table);
+					writeIpAddr(dest);
+					printf("\n"););
+				icmp_snd_unreachable(next_port-ip_port_table,
+					pack, ICMP_HOST_UNRCH);
+				continue;
+#endif
+			}
+			else if (dest == (iroute->irt_dest |
+				~iroute->irt_subnetmask))
+			{
+				if (!ip_forward_directed_bcast)
+				{
+					/* Do not forward directed broadcasts */
+					DBLOCK(1, printf(
+					"ip[%d]: dropping directed broadcast ",
+							ip_port-ip_port_table);
+						writeIpAddr(dest);
+						printf("\n"););
+					icmp_snd_unreachable(next_port-
+						ip_port_table, pack,
+						ICMP_HOST_UNRCH);
+					continue;
+				}
+				else
+					type= IP_LT_BROADCAST;
+			}
+			else
+				type= IP_LT_NORMAL;
+
+			/* Just send the packet to it's destination */
+			pack->acc_linkC++; /* Extra ref for ICMP */
+			r= next_port->ip_dev_send(next_port, dest, pack, type);
+			if (r == EDSTNOTRCH)
+			{
+				DBLOCK(1, printf("ip[%d]: next hop ",
+					ip_port-ip_port_table);
+					writeIpAddr(dest);
+					printf(" on ip[%d] is down\n",
+					next_port-ip_port_table););
+				icmp_snd_unreachable(next_port-ip_port_table,
+					pack, ICMP_HOST_UNRCH);
+				pack= NULL;
+			}
+			else
+			{
+				assert(r == 0 || (printf("r = %d\n", r), 0));
+				bf_afree(pack); pack= NULL;
+			}
+			continue;
+		}
+
+		/* Now we know that the packet should be routed over the same
+		 * network as it came from. If there is a next hop gateway,
+		 * we can send the packet to that gateway and send a redirect
+		 * ICMP to the sender if the sender is on the attached
+		 * network. If there is no gateway complain.
+		 */
+		if (iroute->irt_gateway == 0)
+		{
+			printf("ip_arrived: packet should not be here, src=");
+			writeIpAddr(ip_hdr->ih_src);
+			printf(" dst=");
+			writeIpAddr(ip_hdr->ih_dst);
+			printf("\n");
+			bf_afree(pack);
+			continue;
+		}
+		if (((ip_hdr->ih_src ^ ip_port->ip_ipaddr) &
+			ip_port->ip_subnetmask) == 0)
+		{
+			/* Finding out if we can send a network redirect
+			 * instead of a host redirect is too much trouble.
+			 */
+			pack->acc_linkC++;
+			icmp_snd_redirect(ip_port->ip_port, pack,
+				ICMP_REDIRECT_HOST, iroute->irt_gateway);
+		}
+		else
+		{
+			printf("ip_arrived: packet is wrongly routed, src=");
+			writeIpAddr(ip_hdr->ih_src);
+			printf(" dst=");
+			writeIpAddr(ip_hdr->ih_dst);
+			printf("\n");
+			printf("in port %d, output %d, dest net ",
+				ip_port->ip_port, 
+				iroute->irt_port);
+			writeIpAddr(iroute->irt_dest);
+			printf("/");
+			writeIpAddr(iroute->irt_subnetmask);
+			printf(" next hop ");
+			writeIpAddr(iroute->irt_gateway);
+			printf("\n");
+			bf_afree(pack);
+			continue;
+		}
+		/* No code for unreachable ICMPs here. The sender should
+		 * process the ICMP redirect and figure it out.
+		 */
+		ip_port->ip_dev_send(ip_port, iroute->irt_gateway, pack,
+			IP_LT_NORMAL);
+	}
+}
+
 PRIVATE int broadcast_dst(ip_port, dest)
 ip_port_t *ip_port;
 ipaddr_t dest;
 {
+	ipaddr_t my_ipaddr, netmask, classmask;
+
 	/* Treat class D (multicast) address as broadcasts. */
 	if ((dest & HTONL(0xF0000000)) == HTONL(0xE0000000))
 	{
@@ -808,39 +981,45 @@ ipaddr_t dest;
 	{
 		return 1;
 	}
-
-	if (((ip_port->ip_ipaddr ^ dest) & ip_port->ip_netmask) != 0)
-	{
-		/* Two possibilities, 0 (iff IP_42BSD_BCAST) and -1 */
-		if (dest == HTONL((ipaddr_t)-1))
-			return 1;
-#if IP_42BSD_BCAST
-		if (dest == HTONL((ipaddr_t)0))
-			return 1;
-#endif
-		return 0;
-	}
-	if (((ip_port->ip_ipaddr ^ dest) & ip_port->ip_subnetmask) != 0)
-	{
-		/* Two possibilities, netwerk.0 (iff IP_42BSD_BCAST) and
-		 * netwerk.-1
-		 */
-		if ((dest & ~ip_port->ip_netmask) == ~ip_port->ip_netmask)
-			return 1;
-#if IP_42BSD_BCAST
-		if ((dest & ~ip_port->ip_netmask) == 0)
-			return 1;
-#endif
-		return 0;
-	}
-
-	/* Two possibilities, netwerk.subnet.0 (iff IP_42BSD_BCAST) and
-	 * netwerk.subnet.-1
-	 */
-	if ((dest & ~ip_port->ip_subnetmask) == ~ip_port->ip_subnetmask)
+	/* Two possibilities, 0 (iff IP_42BSD_BCAST) and -1 */
+	if (dest == HTONL((ipaddr_t)-1))
 		return 1;
 #if IP_42BSD_BCAST
-	if ((dest & ~ip_port->ip_subnetmask) == 0)
+	if (dest == HTONL((ipaddr_t)0))
+		return 1;
+#endif
+	netmask= ip_port->ip_subnetmask;
+	my_ipaddr= ip_port->ip_ipaddr;
+
+	if (((my_ipaddr ^ dest) & netmask) != 0)
+	{
+		classmask= ip_port->ip_classfulmask;
+
+		/* Not a subnet broadcast, maybe a classful broadcast */
+		if (((my_ipaddr ^ dest) & classmask) != 0)
+		{
+			return 0;
+		}
+		/* Two possibilities, net.0 (iff IP_42BSD_BCAST) and net.-1 */
+		if ((dest & ~classmask) == ~classmask)
+		{
+			return 1;
+		}
+#if IP_42BSD_BCAST
+		if ((dest & ~classmask) == 0)
+			return 1;
+#endif
+		return 0;
+	}
+
+	if (!(ip_port->ip_flags & IPF_SUBNET_BCAST))
+		return 0;	/* No subnet broadcasts on this network */
+
+	/* Two possibilities, subnet.0 (iff IP_42BSD_BCAST) and subnet.-1 */
+	if ((dest & ~netmask) == ~netmask)
+		return 1;
+#if IP_42BSD_BCAST
+	if ((dest & ~netmask) == 0)
 		return 1;
 #endif
 	return 0;
@@ -856,7 +1035,7 @@ ev_arg_t arg;
 	ip_port= arg.ev_ptr;
 	assert(ev == &ip_port->ip_loopb_event);
 
-	while(pack= ip_port->ip_loopb_head)
+	while(pack= ip_port->ip_loopb_head, pack != NULL)
 	{
 		ip_port->ip_loopb_head= pack->acc_ext_link;
 		ip_arrived(ip_port, pack);
@@ -864,5 +1043,5 @@ ev_arg_t arg;
 }
 
 /*
- * $PchId: ip_read.c,v 1.9 1997/01/31 08:51:39 philip Exp $
+ * $PchId: ip_read.c,v 1.33 2005/06/28 14:18:50 philip Exp $
  */

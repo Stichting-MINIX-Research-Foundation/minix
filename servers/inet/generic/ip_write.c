@@ -59,11 +59,12 @@ size_t data_len;
 	ip_port_t *ip_port;
 	ip_fd_t *ip_fd;
 	ip_hdr_t *ip_hdr, *tmp_hdr;
-	ipaddr_t dstaddr, netmask, nexthop, hostrep_dst;
+	ipaddr_t dstaddr, nexthop, hostrep_dst, my_ipaddr, netmask;
 	u8_t *addrInBytes;
 	acc_t *tmp_pack, *tmp_pack1;
 	int hdr_len, hdr_opt_len, r;
-	int broadcast, ttl;
+	int type, ttl;
+	size_t req_mtu;
 	ev_arg_t arg;
 
 	ip_fd= &ip_fd_table[fd];
@@ -75,9 +76,16 @@ size_t data_len;
 		return EBADMODE;
 	}
 
-	data_len= bf_bufsize(data);
+	if (!(ip_fd->if_port->ip_flags & IPF_IPADDRSET))
+	{
+		/* Interface is down. What kind of error do we want? For
+		 * the moment, we return OK.
+		 */
+		bf_afree(data);
+		return NW_OK;
+	}
 
-	assert(ip_fd->if_port->ip_flags & IPF_IPADDRSET);
+	data_len= bf_bufsize(data);
 
 	if (ip_fd->if_ipopt.nwio_flags & NWIO_RWDATONLY)
 	{
@@ -179,6 +187,9 @@ size_t data_len;
 	if (ip_fd->if_ipopt.nwio_flags & NWIO_REMSPEC)
 		ip_hdr->ih_dst= ip_fd->if_ipopt.nwio_rem;
 
+	netmask= ip_port->ip_subnetmask;
+	my_ipaddr= ip_port->ip_ipaddr;
+
 	dstaddr= ip_hdr->ih_dst;
 	hostrep_dst= ntohl(dstaddr);
 	r= 0;
@@ -188,10 +199,13 @@ size_t data_len;
 		;	/* OK, Multicast */
 	else if ((hostrep_dst & 0xf0000000l) == 0xf0000000l)
 		r= EBADDEST;	/* Bad class */
-	else if ((dstaddr ^ ip_port->ip_ipaddr) & ip_port->ip_subnetmask)
+	else if ((dstaddr ^ my_ipaddr) & netmask)
 		;	/* OK, remote destination */
-	else if (!(dstaddr & ~ip_port->ip_subnetmask))
+	else if (!(dstaddr & ~netmask) &&
+		(ip_port->ip_flags & IPF_SUBNET_BCAST))
+	{
 		r= EBADDEST;	/* Zero host part */
+	}
 	if (r<0)
 	{
 		DIFBLOCK(1, r == EBADDEST,
@@ -206,6 +220,20 @@ size_t data_len;
 	data= bf_packIffLess(data, IP_MIN_HDR_SIZE);
 	assert (data->acc_length >= IP_MIN_HDR_SIZE);
 	ip_hdr= (ip_hdr_t *)ptr2acc_data(data);
+
+	if (ip_hdr->ih_flags_fragoff & HTONS(IH_DONT_FRAG))
+	{
+		req_mtu= bf_bufsize(data);
+		if (req_mtu > ip_port->ip_mtu)
+		{
+			DBLOCK(1, printf(
+			"packet is larger than link MTU and DF is set\n"));
+			bf_afree(data);
+			return EPACKSIZE;
+		}
+	}
+	else
+		req_mtu= 0;
 
 	addrInBytes= (u8_t *)&dstaddr;
 
@@ -231,15 +259,24 @@ size_t data_len;
 		return NW_OK;
 	}
 
-	if (dstaddr == (ipaddr_t)-1)
+	if ((dstaddr & HTONL(0xe0000000)) == HTONL(0xe0000000))
 	{
-		r= (*ip_port->ip_dev_send)(ip_port, dstaddr, data,
-			/* broadcast */ 1);
-		return r;
+		if (dstaddr == (ipaddr_t)-1)
+		{
+			r= (*ip_port->ip_dev_send)(ip_port, dstaddr, data,
+				IP_LT_BROADCAST);
+			return r;
+		}
+		if (ip_nettype(dstaddr) == IPNT_CLASS_D)
+		{
+			/* Multicast, what about multicast routing? */
+			r= (*ip_port->ip_dev_send)(ip_port, dstaddr, data,
+				IP_LT_MULTICAST);
+			return r;
+		}
 	}
-	netmask= ip_get_netmask(dstaddr);
 
-	if (dstaddr == ip_port->ip_ipaddr)
+	if (dstaddr == my_ipaddr)
 	{
 		assert (data->acc_linkC == 1);
 
@@ -258,17 +295,18 @@ size_t data_len;
 		return NW_OK;
 	}
 
-	if (((dstaddr ^ ip_port->ip_ipaddr) & ip_port->ip_subnetmask) == 0)
+	if (((dstaddr ^ my_ipaddr) & netmask) == 0)
 	{
-		broadcast= (dstaddr == (ip_port->ip_ipaddr |
-			~ip_port->ip_subnetmask));
+		type= ((dstaddr == (my_ipaddr | ~netmask) &&
+			(ip_port->ip_flags & IPF_SUBNET_BCAST)) ?
+			IP_LT_BROADCAST : IP_LT_NORMAL);
 
-		r= (*ip_port->ip_dev_send)(ip_port, dstaddr, data,
-								broadcast);
+		r= (*ip_port->ip_dev_send)(ip_port, dstaddr, data, type);
 		return r;
 	}
 
-	r= oroute_frag (ip_port - ip_port_table, dstaddr, ttl, &nexthop);
+	r= oroute_frag (ip_port - ip_port_table, dstaddr, ttl, req_mtu, 
+		&nexthop);
 
 	if (r == NW_OK)
 	{
@@ -289,7 +327,7 @@ size_t data_len;
 		else
 		{
 			r= (*ip_port->ip_dev_send)(ip_port,
-				nexthop, data, /* no broadcast */ 0);
+				nexthop, data, IP_LT_NORMAL);
 		}
 	}
 	else
@@ -308,18 +346,18 @@ int ip_hdr_len;
 	ip_hdr->ih_hdr_chk= ~oneC_sum (0, (u16_t *)ip_hdr, ip_hdr_len);
 }
 
-PUBLIC acc_t *ip_split_pack (ip_port, ref_last, first_size)
+PUBLIC acc_t *ip_split_pack (ip_port, ref_last, mtu)
 ip_port_t *ip_port;
 acc_t **ref_last;
-int first_size;
+int mtu;
 {
 	int pack_siz;
 	ip_hdr_t *first_hdr, *second_hdr;
 	int first_hdr_len, second_hdr_len;
 	int first_data_len, second_data_len;
-	int new_first_data_len;
+	int data_len, max_data_len, nfrags, new_first_data_len;
 	int first_opt_size, second_opt_size;
-	acc_t *first_pack, *second_pack, *tmp_pack, *tmp_pack1;
+	acc_t *first_pack, *second_pack, *tmp_pack;
 	u8_t *first_optptr, *second_optptr;
 	int i, optlen;
 
@@ -327,26 +365,53 @@ int first_size;
 	*ref_last= 0;
 	second_pack= 0;
 
+	first_pack= bf_align(first_pack, IP_MIN_HDR_SIZE, 4);
 	first_pack= bf_packIffLess(first_pack, IP_MIN_HDR_SIZE);
 	assert (first_pack->acc_length >= IP_MIN_HDR_SIZE);
 
 	first_hdr= (ip_hdr_t *)ptr2acc_data(first_pack);
 	first_hdr_len= (first_hdr->ih_vers_ihl & IH_IHL_MASK) * 4;
-
-	pack_siz= bf_bufsize(first_pack);
-	assert(pack_siz > first_size);
-
-	if (first_hdr->ih_flags_fragoff & HTONS(IH_DONT_FRAG))
+	if (first_hdr_len>IP_MIN_HDR_SIZE)
 	{
-		icmp_snd_unreachable(ip_port->ip_port, first_pack,
-			ICMP_FRAGM_AND_DF);
-		return NULL;
+		first_pack= bf_packIffLess(first_pack, first_hdr_len);
+		first_hdr= (ip_hdr_t *)ptr2acc_data(first_pack);
 	}
 
-	first_data_len= ntohs(first_hdr->ih_length) - first_hdr_len;
-	new_first_data_len= (first_size- first_hdr_len) & ~7;
-		/* data goes in 8 byte chuncks */
-	second_data_len= first_data_len-new_first_data_len;
+	pack_siz= bf_bufsize(first_pack);
+	assert(pack_siz > mtu);
+
+	assert (!(first_hdr->ih_flags_fragoff & HTONS(IH_DONT_FRAG)));
+
+	if (first_pack->acc_linkC != 1 ||
+		first_pack->acc_buffer->buf_linkC != 1)
+	{
+		/* Get a private copy of the IP header */
+		tmp_pack= bf_memreq(first_hdr_len);
+		memcpy(ptr2acc_data(tmp_pack), first_hdr, first_hdr_len);
+		first_pack= bf_delhead(first_pack, first_hdr_len);
+		tmp_pack->acc_next= first_pack;
+		first_pack= tmp_pack; tmp_pack= NULL;
+		first_hdr= (ip_hdr_t *)ptr2acc_data(first_pack);
+	}
+
+	data_len= ntohs(first_hdr->ih_length) - first_hdr_len;
+
+	/* Try to split the packet evenly. */
+	assert(mtu > first_hdr_len);
+	max_data_len= mtu-first_hdr_len;
+	nfrags= (data_len/max_data_len)+1;
+	new_first_data_len= data_len/nfrags;
+	if (new_first_data_len < 8)
+	{
+		/* Special case for extremely small MTUs */
+		new_first_data_len= 8;
+	}
+	new_first_data_len &= ~7; /* data goes in 8 byte chuncks */
+
+	assert(new_first_data_len >= 8);
+	assert(new_first_data_len+first_hdr_len <= mtu);
+
+	second_data_len= data_len-new_first_data_len;
 	second_pack= bf_cut(first_pack, first_hdr_len+
 		new_first_data_len, second_data_len);
 	tmp_pack= first_pack;
@@ -406,7 +471,7 @@ int first_size;
 	}
 	second_hdr_len= IP_MIN_HDR_SIZE + second_opt_size;
 
-	second_hdr->ih_vers_ihl= second_hdr->ih_vers_ihl & 0xf0
+	second_hdr->ih_vers_ihl= (second_hdr->ih_vers_ihl & 0xf0)
 		+ (second_hdr_len/4);
 	second_hdr->ih_length= htons(second_data_len+
 		second_hdr_len);
@@ -421,7 +486,7 @@ int first_size;
 	assert (!(second_hdr->ih_flags_fragoff & HTONS(IH_DONT_FRAG)));
 
 	ip_hdr_chksum(first_hdr, first_hdr_len);
-	if (second_data_len+second_hdr_len <= first_size)
+	if (second_data_len+second_hdr_len <= mtu)
 	{
 		/* second_pack will not be split any further, so we have to
 		 * calculate the header checksum.
@@ -430,6 +495,7 @@ int first_size;
 	}
 
 	*ref_last= second_pack;
+
 	return first_pack;
 }
 
@@ -440,12 +506,10 @@ int error;
 	if ((*ip_fd->if_get_userdata)(ip_fd->if_srfd, (size_t)error,
 		(size_t)0, FALSE))
 	{
-#if !CRAMPED
 		ip_panic(( "can't error_reply" ));
-#endif
 	}
 }
 
 /*
- * $PchId: ip_write.c,v 1.7.1.1.1.1 2001/01/22 19:59:07 philip Exp $
+ * $PchId: ip_write.c,v 1.22 2004/08/03 11:11:04 philip Exp $
  */

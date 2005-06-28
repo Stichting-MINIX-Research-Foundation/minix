@@ -29,6 +29,7 @@ typedef struct eth_fd
 	nwio_ethopt_t ef_ethopt;
 	eth_port_t *ef_port;
 	struct eth_fd *ef_type_next;
+	struct eth_fd *ef_send_next;
 	int ef_srfd;
 	acc_t *ef_rdbuf_head;
 	acc_t *ef_rdbuf_tail;
@@ -47,6 +48,15 @@ typedef struct eth_fd
 #		define 	EFF_WRITE_IP	0x4
 #	define EFF_OPTSET       0x8
 
+/* Note that the vh_type field is normally considered part of the ethernet
+ * header.
+ */
+typedef struct 
+{
+	u16_t vh_type;
+	u16_t vh_vlan;
+} vlan_hdr_t;
+
 FORWARD int eth_checkopt ARGS(( eth_fd_t *eth_fd ));
 FORWARD void hash_fd ARGS(( eth_fd_t *eth_fd ));
 FORWARD void unhash_fd ARGS(( eth_fd_t *eth_fd ));
@@ -59,9 +69,12 @@ FORWARD void reply_thr_get ARGS(( eth_fd_t *eth_fd,
 	size_t result, int for_ioctl ));
 FORWARD void reply_thr_put ARGS(( eth_fd_t *eth_fd,
 	size_t result, int for_ioctl ));
+FORWARD void do_rec_conf ARGS(( eth_port_t *eth_port ));
 FORWARD u32_t compute_rec_conf ARGS(( eth_port_t *eth_port ));
+FORWARD acc_t *insert_vlan_hdr ARGS(( eth_port_t *eth_port, acc_t *pack ));
 
 PUBLIC eth_port_t *eth_port_table;
+PUBLIC int no_ethWritePort= 0;
 
 PRIVATE eth_fd_t eth_fd_table[ETH_FD_NR];
 PRIVATE ether_addr_t broadcast= { { 255, 255, 255, 255, 255, 255 } };
@@ -80,18 +93,21 @@ PUBLIC void eth_init()
 					   thus a good compiler doesn't
 					   generate any code for this */
 
-#if ZERO
+
 	for (i=0; i<ETH_FD_NR; i++)
 		eth_fd_table[i].ef_flags= EFF_EMPTY;
 	for (i=0; i<eth_conf_nr; i++)
 	{
 		eth_port_table[i].etp_flags= EFF_EMPTY;
+		eth_port_table[i].etp_sendq_head= NULL;
+		eth_port_table[i].etp_sendq_tail= NULL;
 		eth_port_table[i].etp_type_any= NULL;
 		ev_init(&eth_port_table[i].etp_sendev);
 		for (j= 0; j<ETH_TYPE_HASH_NR; j++)
 			eth_port_table[i].etp_type[j]= NULL;
+		for (j= 0; j<ETH_VLAN_HASH_NR; j++)
+			eth_port_table[i].etp_vlan_tab[j]= NULL;
 	}
-#endif
 
 #ifndef BUF_CONSISTENCY_CHECK
 	bf_logon(eth_buffree);
@@ -102,11 +118,13 @@ PUBLIC void eth_init()
 	osdep_eth_init();
 }
 
-PUBLIC int eth_open(port, srfd, get_userdata, put_userdata, put_pkt)
+PUBLIC int eth_open(port, srfd, get_userdata, put_userdata, put_pkt,
+	select_res)
 int port, srfd;
 get_userdata_t get_userdata;
 put_userdata_t put_userdata;
 put_pkt_t put_pkt;
+select_res_t select_res;
 {
 	int i;
 	eth_port_t *eth_port;
@@ -148,7 +166,7 @@ ioreq_t req;
 	eth_fd_t *eth_fd;
 	eth_port_t *eth_port;
 
-	DBLOCK(0x20, printf("eth_ioctl (%d, %lu)\n", fd, req));
+	DBLOCK(0x20, printf("eth_ioctl (%d, 0x%lx)\n", fd, (unsigned long)req));
 	eth_fd= &eth_fd_table[fd];
 	eth_port= eth_fd->ef_port;
 
@@ -163,7 +181,6 @@ ioreq_t req;
 			int result;
 			u32_t new_en_flags, new_di_flags,
 				old_en_flags, old_di_flags;
-			u32_t flags;
 
 			data= (*eth_fd->ef_get_userdata)(eth_fd->
 				ef_srfd, 0, sizeof(nwio_ethopt_t), TRUE);
@@ -270,8 +287,7 @@ ioreq_t req;
 				if (changes & (NWEO_BROAD_MASK |
 					NWEO_MULTI_MASK | NWEO_PROMISC_MASK))
 				{
-					flags= compute_rec_conf(eth_port);
-					eth_set_rec_conf(eth_port, flags);
+					do_rec_conf(eth_port);
 				}
 			}
 
@@ -307,7 +323,7 @@ ioreq_t req;
 			acc_t *acc;
 			int result;
 
-assert (sizeof(nwio_ethstat_t) <= BUF_S);
+			assert (sizeof(nwio_ethstat_t) <= BUF_S);
 
 			eth_port= eth_fd->ef_port;
 			if (!(eth_port->etp_flags & EPF_ENABLED))
@@ -317,15 +333,24 @@ assert (sizeof(nwio_ethstat_t) <= BUF_S);
 			}
 
 			acc= bf_memreq(sizeof(nwio_ethstat_t));
-compare (bf_bufsize(acc), ==, sizeof(*ethstat));
+			compare (bf_bufsize(acc), ==, sizeof(*ethstat));
 
 			ethstat= (nwio_ethstat_t *)ptr2acc_data(acc);
-
 			ethstat->nwes_addr= eth_port->etp_ethaddr;
 
-			result= eth_get_stat(eth_port, &ethstat->nwes_stat);
-assert (result == 0);
-compare (bf_bufsize(acc), ==, sizeof(*ethstat));
+			if (!eth_port->etp_vlan)
+			{
+				result= eth_get_stat(eth_port,
+					&ethstat->nwes_stat);
+				assert (result == 0);
+			}
+			else
+			{
+				/* No statistics */
+				memset(&ethstat->nwes_stat, '\0',
+					sizeof(ethstat->nwes_stat));
+			}
+
 			result= (*eth_fd->ef_put_userdata)(eth_fd->
 				ef_srfd, 0, acc, TRUE);
 			if (result >= 0)
@@ -344,7 +369,7 @@ int fd;
 size_t count;
 {
 	eth_fd_t *eth_fd;
-	eth_port_t *eth_port;
+	eth_port_t *eth_port, *rep;
 	acc_t *user_data;
 	int r;
 
@@ -370,9 +395,19 @@ size_t count;
 		return NW_OK;
 	}
 	eth_fd->ef_flags |= EFF_WRITE_IP;
-	if (eth_port->etp_wr_pack)
+
+	/* Enqueue at the real ethernet port */
+	rep= eth_port->etp_vlan_port;
+	if (!rep)
+		rep= eth_port;
+	if (rep->etp_wr_pack)
 	{
-		eth_port->etp_flags |= EPF_MORE2WRITE;
+		eth_fd->ef_send_next= NULL;
+		if (rep->etp_sendq_head)
+			rep->etp_sendq_tail->ef_send_next= eth_fd;
+		else
+			rep->etp_sendq_head= eth_fd;
+		rep->etp_sendq_tail= eth_fd;
 		return NW_SUSPEND;
 	}
 
@@ -398,7 +433,7 @@ acc_t *data;
 size_t data_len;
 {
 	eth_fd_t *eth_fd;
-	eth_port_t *eth_port;
+	eth_port_t *eth_port, *rep;
 	eth_hdr_t *eth_hdr;
 	acc_t *eth_pack;
 	unsigned long nweo_flags;
@@ -420,11 +455,14 @@ size_t data_len;
 		DBLOCK(1, printf("illegal packetsize (%d)\n",count));
 		return EPACKSIZE;
 	}
-	if (eth_port->etp_wr_pack)
+	rep= eth_port->etp_vlan_port;
+	if (!rep)
+		rep= eth_port;
+
+	if (rep->etp_wr_pack)
 		return NW_WOULDBLOCK;
 	
 	nweo_flags= eth_fd->ef_ethopt.nweo_flags;
-
 	if (nweo_flags & NWEO_RWDATONLY)
 	{
 		eth_pack= bf_memreq(ETH_HDR_SIZE);
@@ -450,9 +488,20 @@ size_t data_len;
 		eth_port->etp_wr_pack= eth_pack;
 		ev_arg.ev_ptr= eth_port;
 		ev_enqueue(&eth_port->etp_sendev, eth_loop_ev, ev_arg);
+		return NW_OK;
 	}
-	else
-		eth_write_port(eth_port, eth_pack);
+
+	if (rep != eth_port)
+	{
+		eth_pack= insert_vlan_hdr(eth_port, eth_pack);
+		if (!eth_pack)
+		{
+			/* Packet is silently discarded */
+			return NW_OK;
+		}
+	}
+
+	eth_write_port(rep, eth_pack);
 	return NW_OK;
 }
 
@@ -506,21 +555,27 @@ int which_operation;
 	switch (which_operation)
 	{
 	case SR_CANCEL_READ:
-assert (eth_fd->ef_flags & EFF_READ_IP);
+		assert (eth_fd->ef_flags & EFF_READ_IP);
 		eth_fd->ef_flags &= ~EFF_READ_IP;
 		reply_thr_put(eth_fd, EINTR, FALSE);
 		break;
 	case SR_CANCEL_WRITE:
-assert (eth_fd->ef_flags & EFF_WRITE_IP);
+		assert (eth_fd->ef_flags & EFF_WRITE_IP);
 		eth_fd->ef_flags &= ~EFF_WRITE_IP;
 		reply_thr_get(eth_fd, EINTR, FALSE);
 		break;
-#if !CRAMPED
 	default:
 		ip_panic(( "got unknown cancel request" ));
-#endif
 	}
 	return NW_OK;
+}
+
+PUBLIC int eth_select(fd, operations)
+int fd;
+unsigned operations;
+{
+	printf("eth_select: not implemented\n");
+	return 0;
 }
 
 PUBLIC void eth_close(fd)
@@ -528,7 +583,6 @@ int fd;
 {
 	eth_fd_t *eth_fd;
 	eth_port_t *eth_port;
-	u32_t flags;
 	acc_t *pack;
 
 	eth_fd= &eth_fd_table[fd];
@@ -547,8 +601,7 @@ int fd;
 	eth_fd->ef_flags= EFF_EMPTY;
 
 	eth_port= eth_fd->ef_port;
-	flags= compute_rec_conf(eth_port);
-	eth_set_rec_conf(eth_port, flags);
+	do_rec_conf(eth_port);
 }
 
 PUBLIC void eth_loop_ev(ev, ev_arg)
@@ -562,7 +615,13 @@ ev_arg_t ev_arg;
 	assert(ev == &eth_port->etp_sendev);
 
 	pack= eth_port->etp_wr_pack;
+
+	assert(!no_ethWritePort);
+	no_ethWritePort= 1;
 	eth_arrive(eth_port, pack, bf_bufsize(pack));
+	assert(no_ethWritePort);
+	no_ethWritePort= 0;
+
 	eth_port->etp_wr_pack= NULL;
 	eth_restart_write(eth_port);
 }
@@ -665,30 +724,14 @@ PUBLIC void eth_restart_write(eth_port)
 eth_port_t *eth_port;
 {
 	eth_fd_t *eth_fd;
-	int i, r;
+	int r;
 
-	if (eth_port->etp_wr_pack)
-		return;
-
-	if (!(eth_port->etp_flags & EPF_MORE2WRITE))
-		return;
-	eth_port->etp_flags &= ~EPF_MORE2WRITE;
-
-	for (i=0, eth_fd= eth_fd_table; i<ETH_FD_NR; i++, eth_fd++)
+	assert(eth_port->etp_wr_pack == NULL);
+	while (eth_fd= eth_port->etp_sendq_head, eth_fd != NULL)
 	{
-		if ((eth_fd->ef_flags & (EFF_INUSE|EFF_WRITE_IP)) !=
-			(EFF_INUSE|EFF_WRITE_IP))
-		{
-			continue;
-		}
-		if (eth_fd->ef_port != eth_port)
-			continue;
-
 		if (eth_port->etp_wr_pack)
-		{
-			eth_port->etp_flags |= EPF_MORE2WRITE;
 			return;
-		}
+		eth_port->etp_sendq_head= eth_fd->ef_send_next;
 
 		eth_fd->ef_flags &= ~EFF_WRITE_IP;
 		r= eth_write(eth_fd-eth_fd_table, eth_fd->ef_write_count);
@@ -708,7 +751,12 @@ size_t pack_size;
 	ether_type_t type;
 	eth_fd_t *eth_fd, *first_fd, *share_fd;
 	int hash, i;
+	u16_t vlan, temp;
 	time_t exp_time;
+	acc_t *vlan_pack, *hdr_acc, *tmp_acc;
+	eth_port_t *vp;
+	vlan_hdr_t vh;
+	u32_t *p;
 
 	exp_time= get_time() + EXPIRE_TIME;
 
@@ -740,6 +788,46 @@ size_t pack_size;
 	hash= type;
 	hash ^= (hash >> 8);
 	hash &= (ETH_TYPE_HASH_NR-1);
+
+	if (type == HTONS(ETH_VLAN_PROTO))
+	{
+		/* VLAN packet. Extract original ethernet packet */
+
+		vlan_pack= pack;
+		vlan_pack->acc_linkC++;
+		hdr_acc= bf_cut(vlan_pack, 0, 2*sizeof(ether_addr_t));
+		vlan_pack= bf_delhead(vlan_pack, 2*sizeof(ether_addr_t));
+		vlan_pack= bf_packIffLess(vlan_pack, sizeof(vh));
+		vh= *(vlan_hdr_t *)ptr2acc_data(vlan_pack);
+		vlan_pack= bf_delhead(vlan_pack, sizeof(vh));
+		hdr_acc= bf_append(hdr_acc, vlan_pack);
+		vlan_pack= hdr_acc; hdr_acc= NULL;
+		if (bf_bufsize(vlan_pack) < ETH_MIN_PACK_SIZE)
+		{
+			tmp_acc= bf_memreq(sizeof(vh));
+
+			/* Clear padding */
+			assert(sizeof(vh) <= sizeof(*p));
+			p= (u32_t *)ptr2acc_data(tmp_acc);
+			*p= 0xdeadbeef;
+
+			vlan_pack= bf_append(vlan_pack, tmp_acc);
+			tmp_acc= NULL;
+		}
+		vlan= ntohs(vh.vh_vlan);
+		if (vlan & ETH_TCI_CFI)
+		{
+			/* No support for extended address formats */
+			bf_afree(vlan_pack); vlan_pack= NULL;
+		}
+		vlan &= ETH_TCI_VLAN_MASK;
+	}
+	else
+	{
+		/* No VLAN processing */
+		vlan_pack= NULL;
+		vlan= 0;	/* lint */
+	}
 
 	first_fd= NULL;
 	for (i= 0; i<2; i++)
@@ -813,6 +901,40 @@ size_t pack_size;
 		}			
 		bf_afree(pack);
 	}
+	if (vlan_pack)
+	{
+		hash= ETH_HASH_VLAN(vlan, temp);
+		for (vp= eth_port->etp_vlan_tab[hash]; vp;
+			vp= vp->etp_vlan_next)
+		{
+			if (vp->etp_vlan == vlan)
+				break;
+		}
+		if (vp)
+		{
+			eth_arrive(vp, vlan_pack, pack_size-sizeof(vh));
+			vlan_pack= NULL;
+		}
+		else
+		{
+			/* No device for VLAN */
+			bf_afree(vlan_pack);
+			vlan_pack= NULL;
+		}
+	}
+}
+
+PUBLIC void eth_reg_vlan(eth_port, vlan_port)
+eth_port_t *eth_port;
+eth_port_t *vlan_port;
+{
+	u16_t t, vlan;
+	int h;
+
+	vlan= vlan_port->etp_vlan;
+	h= ETH_HASH_VLAN(vlan, t);
+	vlan_port->etp_vlan_next= eth_port->etp_vlan_tab[h];
+	eth_port->etp_vlan_tab[h]= vlan_port;
 }
 
 PRIVATE void packet2user (eth_fd, pack, exp_time)
@@ -923,6 +1045,27 @@ PRIVATE void eth_bufcheck()
 }
 #endif
 
+PRIVATE void do_rec_conf(eth_port)
+eth_port_t *eth_port;
+{
+	int i;
+	u32_t flags;
+	eth_port_t *vp;
+
+	if (eth_port->etp_vlan)
+	{
+		/* Configure underlying device */
+		eth_port= eth_port->etp_vlan_port;
+	}
+	flags= compute_rec_conf(eth_port);
+	for (i= 0; i<ETH_VLAN_HASH_NR; i++)
+	{
+		for (vp= eth_port->etp_vlan_tab[i]; vp; vp= vp->etp_vlan_next)
+			flags |= compute_rec_conf(vp);
+	}
+	eth_set_rec_conf(eth_port, flags);
+}
+
 PRIVATE u32_t compute_rec_conf(eth_port)
 eth_port_t *eth_port;
 {
@@ -968,6 +1111,41 @@ int for_ioctl;
 	assert(error == NW_OK);
 }
 
+PRIVATE acc_t *insert_vlan_hdr(eth_port, pack)
+eth_port_t *eth_port;
+acc_t *pack;
+{
+	acc_t *head_acc, *vh_acc;
+	u16_t type, vlan;
+	vlan_hdr_t *vp;
+
+	head_acc= bf_cut(pack, 0, 2*sizeof(ether_addr_t));
+	pack= bf_delhead(pack, 2*sizeof(ether_addr_t));
+	pack= bf_packIffLess(pack, sizeof(type));
+	type= *(u16_t *)ptr2acc_data(pack);
+	if (type == HTONS(ETH_VLAN_PROTO))
+	{
+		/* Packeted is already tagged. Should update vlan number.
+		 * For now, just discard packet.
+		 */
+		printf("insert_vlan_hdr: discarding vlan packet\n");
+		bf_afree(head_acc); head_acc= NULL;
+		bf_afree(pack); pack= NULL;
+		return NULL;
+	}
+	vlan= eth_port->etp_vlan;	/* priority and CFI are zero */
+
+	vh_acc= bf_memreq(sizeof(vlan_hdr_t));
+	vp= (vlan_hdr_t *)ptr2acc_data(vh_acc);
+	vp->vh_type= HTONS(ETH_VLAN_PROTO);
+	vp->vh_vlan= htons(vlan);
+
+	head_acc= bf_append(head_acc, vh_acc); vh_acc= NULL;
+	head_acc= bf_append(head_acc, pack); pack= NULL;
+	pack= head_acc; head_acc= NULL;
+	return pack;
+}
+
 /*
- * $PchId: eth.c,v 1.11 1996/08/02 07:04:58 philip Exp $
+ * $PchId: eth.c,v 1.23 2005/06/28 14:15:58 philip Exp $
  */

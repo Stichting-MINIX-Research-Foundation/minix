@@ -15,63 +15,9 @@ Copyright 1995 Philip Homburg
 #include "ip.h"
 #include "sr.h"
 #include "udp.h"
+#include "udp_int.h"
 
 THIS_FILE
-
-#define UDP_FD_NR		(4*IP_PORT_MAX)
-#define UDP_PORT_HASH_NR	16		/* Must be a power of 2 */
-
-typedef struct udp_port
-{
-	int up_flags;
-	int up_state;
-	int up_ipfd;
-	int up_ipdev;
-	acc_t *up_wr_pack;
-	ipaddr_t up_ipaddr;
-	struct udp_fd *up_next_fd;
-	struct udp_fd *up_write_fd;
-	struct udp_fd *up_port_any;
-	struct udp_fd *up_port_hash[UDP_PORT_HASH_NR];
-} udp_port_t;
-
-#define UPF_EMPTY	0x0
-#define UPF_WRITE_IP	0x1
-#define UPF_WRITE_SP	0x2
-#define UPF_READ_IP	0x4
-#define UPF_READ_SP	0x8
-#define UPF_SUSPEND	0x10
-#define UPF_MORE2WRITE	0x20
-
-#define UPS_EMPTY	0
-#define UPS_SETPROTO	1
-#define UPS_GETCONF	2
-#define UPS_MAIN	3
-#define UPS_ERROR	4
-
-typedef struct udp_fd
-{
-	int uf_flags;
-	udp_port_t *uf_port;
-	ioreq_t uf_ioreq;
-	int uf_srfd;
-	nwio_udpopt_t uf_udpopt;
-	get_userdata_t uf_get_userdata;
-	put_userdata_t uf_put_userdata;
-	acc_t *uf_rdbuf_head;
-	acc_t *uf_rdbuf_tail;
-	size_t uf_rd_count;
-	size_t uf_wr_count;
-	time_t uf_exp_tim;
-	struct udp_fd *uf_port_next;
-} udp_fd_t;
-
-#define UFF_EMPTY	0x0
-#define UFF_INUSE	0x1
-#define UFF_IOCTL_IP	0x2
-#define UFF_READ_IP	0x4
-#define UFF_WRITE_IP	0x8
-#define UFF_OPTSET	0x10
 
 FORWARD void read_ip_packets ARGS(( udp_port_t *udp_port ));
 FORWARD void udp_buffree ARGS(( int priority ));
@@ -79,10 +25,12 @@ FORWARD void udp_buffree ARGS(( int priority ));
 FORWARD void udp_bufcheck ARGS(( void ));
 #endif
 FORWARD void udp_main ARGS(( udp_port_t *udp_port ));
+FORWARD int udp_select ARGS(( int fd, unsigned operations ));
 FORWARD acc_t *udp_get_data ARGS(( int fd, size_t offset, size_t count, 
 	int for_ioctl ));
 FORWARD int udp_put_data ARGS(( int fd, size_t offset, acc_t *data, 	
 	int for_ioctl ));
+FORWARD int udp_peek ARGS(( udp_fd_t * ));
 FORWARD void udp_restart_write_port ARGS(( udp_port_t *udp_port ));
 FORWARD void udp_ip_arrived ARGS(( int port, acc_t *pack, size_t pack_size ));
 FORWARD void reply_thr_put ARGS(( udp_fd_t *udp_fd, int reply,
@@ -96,24 +44,23 @@ FORWARD int udp_packet2user ARGS(( udp_fd_t *udp_fd ));
 FORWARD void restart_write_fd ARGS(( udp_fd_t *udp_fd ));
 FORWARD u16_t pack_oneCsum ARGS(( acc_t *pack ));
 FORWARD void udp_rd_enqueue ARGS(( udp_fd_t *udp_fd, acc_t *pack,
-							time_t exp_tim ));
+							clock_t exp_tim ));
 FORWARD void hash_fd ARGS(( udp_fd_t *udp_fd ));
 FORWARD void unhash_fd ARGS(( udp_fd_t *udp_fd ));
 
-PRIVATE udp_port_t *udp_port_table;
-PRIVATE udp_fd_t udp_fd_table[UDP_FD_NR];
+PUBLIC udp_port_t *udp_port_table;
+PUBLIC udp_fd_t udp_fd_table[UDP_FD_NR];
 
 PUBLIC void udp_prep()
 {
-	udp_port_table= alloc(ip_conf_nr * sizeof(udp_port_table[0]));
+	udp_port_table= alloc(udp_conf_nr * sizeof(udp_port_table[0]));
 }
 
 PUBLIC void udp_init()
 {
 	udp_fd_t *udp_fd;
 	udp_port_t *udp_port;
-	struct ip_conf *icp;
-	int i, j;
+	int i, j, ifno;
 
 	assert (BUF_S >= sizeof(struct nwio_ipopt));
 	assert (BUF_S >= sizeof(struct nwio_ipconf));
@@ -122,13 +69,11 @@ PUBLIC void udp_init()
 	assert (UDP_HDR_SIZE == sizeof(udp_hdr_t));
 	assert (UDP_IO_HDR_SIZE == sizeof(udp_io_hdr_t));
 
-#if ZERO
 	for (i= 0, udp_fd= udp_fd_table; i<UDP_FD_NR; i++, udp_fd++)
 	{
 		udp_fd->uf_flags= UFF_EMPTY;
 		udp_fd->uf_rdbuf_head= NULL;
 	}
-#endif
 
 #ifndef BUF_CONSISTENCY_CHECK
 	bf_logon(udp_buffree);
@@ -136,29 +81,145 @@ PUBLIC void udp_init()
 	bf_logon(udp_buffree, udp_bufcheck);
 #endif
 
-	for (i= 0, udp_port= udp_port_table, icp= ip_conf;
-		i<ip_conf_nr; i++, udp_port++, icp++)
+	for (i= 0, udp_port= udp_port_table; i<udp_conf_nr; i++, udp_port++)
 	{
-		udp_port->up_ipdev= i;
+		udp_port->up_ipdev= udp_conf[i].uc_port;
 
-#if ZERO
 		udp_port->up_flags= UPF_EMPTY;
 		udp_port->up_state= UPS_EMPTY;
-#endif
 		udp_port->up_next_fd= udp_fd_table;
-#if ZERO
 		udp_port->up_write_fd= NULL;
 		udp_port->up_port_any= NULL;
 		for (j= 0; j<UDP_PORT_HASH_NR; j++)
 			udp_port->up_port_hash[j]= NULL;
-#endif
 
-		sr_add_minor(if2minor(icp->ic_ifno, UDP_DEV_OFF),
+		ifno= ip_conf[udp_port->up_ipdev].ic_ifno;
+		sr_add_minor(if2minor(ifno, UDP_DEV_OFF),
 			i, udp_open, udp_close, udp_read,
-			udp_write, udp_ioctl, udp_cancel);
+			udp_write, udp_ioctl, udp_cancel, udp_select);
 
 		udp_main(udp_port);
 	}
+}
+
+PUBLIC int udp_open (port, srfd, get_userdata, put_userdata, put_pkt,
+	select_res)
+int port;
+int srfd;
+get_userdata_t get_userdata;
+put_userdata_t put_userdata;
+put_pkt_t put_pkt;
+select_res_t select_res;
+{
+	int i;
+	udp_fd_t *udp_fd;
+
+	for (i= 0; i<UDP_FD_NR && (udp_fd_table[i].uf_flags & UFF_INUSE);
+		i++);
+
+	if (i>= UDP_FD_NR)
+	{
+		DBLOCK(1, printf("out of fds\n"));
+		return EAGAIN;
+	}
+
+	udp_fd= &udp_fd_table[i];
+
+	udp_fd->uf_flags= UFF_INUSE;
+	udp_fd->uf_port= &udp_port_table[port];
+	udp_fd->uf_srfd= srfd;
+	udp_fd->uf_udpopt.nwuo_flags= UDP_DEF_OPT;
+	udp_fd->uf_get_userdata= get_userdata;
+	udp_fd->uf_put_userdata= put_userdata;
+	assert(udp_fd->uf_rdbuf_head == NULL);
+	udp_fd->uf_port_next= NULL;
+
+	return i;
+
+}
+
+PUBLIC int udp_ioctl (fd, req)
+int fd;
+ioreq_t req;
+{
+	udp_fd_t *udp_fd;
+	udp_port_t *udp_port;
+	nwio_udpopt_t *udp_opt;
+	acc_t *opt_acc;
+	int result;
+
+	udp_fd= &udp_fd_table[fd];
+
+assert (udp_fd->uf_flags & UFF_INUSE);
+
+	udp_port= udp_fd->uf_port;
+	udp_fd->uf_flags |= UFF_IOCTL_IP;
+	udp_fd->uf_ioreq= req;
+
+	if (udp_port->up_state != UPS_MAIN)
+		return NW_SUSPEND;
+
+	switch(req)
+	{
+	case NWIOSUDPOPT:
+		result= udp_setopt(udp_fd);
+		break;
+	case NWIOGUDPOPT:
+		opt_acc= bf_memreq(sizeof(*udp_opt));
+assert (opt_acc->acc_length == sizeof(*udp_opt));
+		udp_opt= (nwio_udpopt_t *)ptr2acc_data(opt_acc);
+
+		*udp_opt= udp_fd->uf_udpopt;
+		udp_opt->nwuo_locaddr= udp_fd->uf_port->up_ipaddr;
+		result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd, 0, opt_acc,
+			TRUE);
+		if (result == NW_OK)
+			reply_thr_put(udp_fd, NW_OK, TRUE);
+		break;
+	case NWIOUDPPEEK:
+		result= udp_peek(udp_fd);
+		break;
+	default:
+		reply_thr_get(udp_fd, EBADIOCTL, TRUE);
+		result= NW_OK;
+		break;
+	}
+	if (result != NW_SUSPEND)
+		udp_fd->uf_flags &= ~UFF_IOCTL_IP;
+	return result;
+}
+
+PUBLIC int udp_read (fd, count)
+int fd;
+size_t count;
+{
+	udp_fd_t *udp_fd;
+	acc_t *tmp_acc, *next_acc;
+
+	udp_fd= &udp_fd_table[fd];
+	if (!(udp_fd->uf_flags & UFF_OPTSET))
+	{
+		reply_thr_put(udp_fd, EBADMODE, FALSE);
+		return NW_OK;
+	}
+
+	udp_fd->uf_rd_count= count;
+
+	if (udp_fd->uf_rdbuf_head)
+	{
+		if (get_time() <= udp_fd->uf_exp_tim)
+			return udp_packet2user (udp_fd);
+		tmp_acc= udp_fd->uf_rdbuf_head;
+		while (tmp_acc)
+		{
+			next_acc= tmp_acc->acc_ext_link;
+			bf_afree(tmp_acc);
+			tmp_acc= next_acc;
+		}
+		udp_fd->uf_rdbuf_head= NULL;
+	}
+	udp_fd->uf_flags |= UFF_READ_IP;
+	return NW_SUSPEND;
 }
 
 PRIVATE void udp_main(udp_port)
@@ -174,7 +235,7 @@ udp_port_t *udp_port;
 
 		udp_port->up_ipfd= ip_open(udp_port->up_ipdev, 
 			udp_port->up_ipdev, udp_get_data, udp_put_data,
-			udp_ip_arrived);
+			udp_ip_arrived, 0 /* no select_res */);
 		if (udp_port->up_ipfd < 0)
 		{
 			udp_port->up_state= UPS_ERROR;
@@ -220,47 +281,20 @@ udp_port_t *udp_port;
 		}
 		read_ip_packets(udp_port);
 		return;
-#if !CRAMPED
 	default:
 		DBLOCK(1, printf("udp_port_table[%d].up_state= %d\n",
 			udp_port->up_ipdev, udp_port->up_state));
 		ip_panic(( "unknown state" ));
-#endif
+		break;
 	}
 }
 
-int udp_open (port, srfd, get_userdata, put_userdata, put_pkt)
-int port;
-int srfd;
-get_userdata_t get_userdata;
-put_userdata_t put_userdata;
-put_pkt_t put_pkt;
+PRIVATE int udp_select(fd, operations)
+int fd;
+unsigned operations;
 {
-	int i;
-	udp_fd_t *udp_fd;
-
-	for (i= 0; i<UDP_FD_NR && (udp_fd_table[i].uf_flags & UFF_INUSE);
-		i++);
-
-	if (i>= UDP_FD_NR)
-	{
-		DBLOCK(1, printf("out of fds\n"));
-		return EAGAIN;
-	}
-
-	udp_fd= &udp_fd_table[i];
-
-	udp_fd->uf_flags= UFF_INUSE;
-	udp_fd->uf_port= &udp_port_table[port];
-	udp_fd->uf_srfd= srfd;
-	udp_fd->uf_udpopt.nwuo_flags= UDP_DEF_OPT;
-	udp_fd->uf_get_userdata= get_userdata;
-	udp_fd->uf_put_userdata= put_userdata;
-	assert(udp_fd->uf_rdbuf_head == NULL);
-	udp_fd->uf_port_next= NULL;
-
-	return i;
-
+	printf("udp_select: not implemented\n");
+	return 0;
 }
 
 PRIVATE acc_t *udp_get_data (port, offset, count, for_ioctl)
@@ -342,10 +376,8 @@ assert (udp_port->up_wr_pack);
 		}
 		break;
 	default:
-#if !CRAMPED
 		printf("udp_get_data(%d, 0x%x, 0x%x) called but up_state= 0x%x\n",
 			port, offset, count, udp_port->up_state);
-#endif
 		break;
 	}
 	return NULL;
@@ -412,62 +444,12 @@ assert (!offset);	/* This isn't a valid assertion but ip sends only
 			udp_ip_arrived(fd, data, bf_bufsize(data));
 		}
 		break;
-#if !CRAMPED
 	default:
 		ip_panic((
-		"udp_put_data(%d, 0x%x, 0x%x) called but up_state= 0x%x\n",
+		"udp_put_data(%d, 0x%x, %p) called but up_state= 0x%x\n",
 					fd, offset, data, udp_port->up_state ));
-#endif
 	}
 	return NW_OK;
-}
-
-int udp_ioctl (fd, req)
-int fd;
-ioreq_t req;
-{
-	udp_fd_t *udp_fd;
-	udp_port_t *udp_port;
-	nwio_udpopt_t *udp_opt;
-	acc_t *opt_acc;
-	int result;
-
-	udp_fd= &udp_fd_table[fd];
-
-assert (udp_fd->uf_flags & UFF_INUSE);
-
-	udp_port= udp_fd->uf_port;
-	udp_fd->uf_flags |= UFF_IOCTL_IP;
-	udp_fd->uf_ioreq= req;
-
-	if (udp_port->up_state != UPS_MAIN)
-		return NW_SUSPEND;
-
-	switch(req)
-	{
-	case NWIOSUDPOPT:
-		result= udp_setopt(udp_fd);
-		break;
-	case NWIOGUDPOPT:
-		opt_acc= bf_memreq(sizeof(*udp_opt));
-assert (opt_acc->acc_length == sizeof(*udp_opt));
-		udp_opt= (nwio_udpopt_t *)ptr2acc_data(opt_acc);
-
-		*udp_opt= udp_fd->uf_udpopt;
-		udp_opt->nwuo_locaddr= udp_fd->uf_port->up_ipaddr;
-		result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd, 0, opt_acc,
-			TRUE);
-		if (result == NW_OK)
-			reply_thr_put(udp_fd, NW_OK, TRUE);
-		break;
-	default:
-		reply_thr_get(udp_fd, EBADIOCTL, TRUE);
-		result= NW_OK;
-		break;
-	}
-	if (result != NW_SUSPEND)
-		udp_fd->uf_flags &= ~UFF_IOCTL_IP;
-	return result;
 }
 
 PRIVATE int udp_setopt(udp_fd)
@@ -476,8 +458,6 @@ udp_fd_t *udp_fd;
 	udp_fd_t *fd_ptr;
 	nwio_udpopt_t oldopt, newopt;
 	acc_t *data;
-	int result;
-	udpport_t port;
 	unsigned int new_en_flags, new_di_flags, old_en_flags, old_di_flags,
 		all_flags, flags;
 	unsigned long new_flags;
@@ -675,20 +655,20 @@ int fd;
 {
 	udpport_t port, nw_port;
 
-	nw_port= htons(0xC000+fd);
-	if (is_unused_port(nw_port))
-		return nw_port;
-
-	for (port= 0xC000+UDP_FD_NR; port < 0xFFFF; port++)
+	for (port= 0x8000+fd; port < 0xffff-UDP_FD_NR; port+= UDP_FD_NR)
 	{
 		nw_port= htons(port);
 		if (is_unused_port(nw_port))
 			return nw_port;
 	}
-#if !CRAMPED
+	for (port= 0x8000; port < 0xffff; port++)
+	{
+		nw_port= htons(port);
+		if (is_unused_port(nw_port))
+			return nw_port;
+	}
 	ip_panic(( "unable to find unused port (shouldn't occur)" ));
 	return 0;
-#endif
 }
 
 /*
@@ -759,26 +739,34 @@ assert(result == NW_OK);
 }
 
 
-PUBLIC int udp_read (fd, count)
-int fd;
-size_t count;
+PRIVATE int udp_peek (udp_fd)
+udp_fd_t *udp_fd;
 {
-	udp_fd_t *udp_fd;
-	acc_t *tmp_acc, *next_acc;
+	acc_t *pack, *tmp_acc, *next_acc;
+	int result;
 
-	udp_fd= &udp_fd_table[fd];
 	if (!(udp_fd->uf_flags & UFF_OPTSET))
 	{
-		reply_thr_put(udp_fd, EBADMODE, FALSE);
+		udp_fd->uf_flags &= ~UFF_IOCTL_IP;
+		reply_thr_put(udp_fd, EBADMODE, TRUE);
 		return NW_OK;
 	}
-
-	udp_fd->uf_rd_count= count;
 
 	if (udp_fd->uf_rdbuf_head)
 	{
 		if (get_time() <= udp_fd->uf_exp_tim)
-			return udp_packet2user (udp_fd);
+		{
+			pack= bf_cut(udp_fd->uf_rdbuf_head, 0,
+				sizeof(udp_io_hdr_t));
+			result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd,
+				(size_t)0, pack, TRUE);
+
+			udp_fd->uf_flags &= ~UFF_IOCTL_IP;
+			result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd,
+				result, (acc_t *)0, TRUE);
+			assert (result == 0);
+			return result;
+		}
 		tmp_acc= udp_fd->uf_rdbuf_head;
 		while (tmp_acc)
 		{
@@ -788,7 +776,7 @@ size_t count;
 		}
 		udp_fd->uf_rdbuf_head= NULL;
 	}
-	udp_fd->uf_flags |= UFF_READ_IP;
+	udp_fd->uf_flags |= UFF_PEEK_IP;
 	return NW_SUSPEND;
 }
 
@@ -847,7 +835,7 @@ udp_fd_t *udp_fd;
 	udp_fd->uf_flags &= ~UFF_READ_IP;
 	result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd, result,
 			(acc_t *)0, FALSE);
-assert (result == 0);
+	assert (result == 0);
 
 	return result;
 }
@@ -864,12 +852,12 @@ size_t pack_size;
 	udp_hdr_t *udp_hdr;
 	udp_io_hdr_t *udp_io_hdr;
 	size_t ip_hdr_size, udp_size, data_size, opt_size;
-	ipaddr_t src_addr, dst_addr;
+	ipaddr_t src_addr, dst_addr, ipaddr;
 	udpport_t src_port, dst_port;
 	u8_t u16[2];
 	u16_t chksum;
 	unsigned long dst_type, flags;
-	time_t  exp_tim;
+	clock_t exp_tim;
 	int i, delivered, hash;
 
 	udp_port= &udp_port_table[port];
@@ -886,18 +874,28 @@ size_t pack_size;
 		ip_hdr= (ip_hdr_t *)ptr2acc_data(ip_hdr_acc);
 	}
 
-	udp_acc= bf_delhead(pack, ip_hdr_size);
-	pack= NULL;
-
 	pack_size -= ip_hdr_size;
 	if (pack_size < UDP_HDR_SIZE)
 	{
-		DBLOCK(1, printf("packet too small\n"));
+		if (pack_size == 0 && ip_hdr->ih_proto == 0)
+		{
+			/* IP layer reports new IP address */
+			ipaddr= ip_hdr->ih_src;
+			udp_port->up_ipaddr= ipaddr;
+			DBLOCK(1, printf("udp_ip_arrived: using address ");
+				writeIpAddr(ipaddr); printf("\n"));
+		}
+		else
+			DBLOCK(1, printf("packet too small\n"));
 
 		bf_afree(ip_hdr_acc);
-		bf_afree(udp_acc);
+		bf_afree(pack);
 		return;
 	}
+
+	udp_acc= bf_delhead(pack, ip_hdr_size);
+	pack= NULL;
+
 
 	udp_acc= bf_packIffLess(udp_acc, UDP_HDR_SIZE);
 	udp_hdr= (udp_hdr_t *)ptr2acc_data(udp_acc);
@@ -1262,12 +1260,10 @@ assert (!udp_port->up_wr_pack);
 	ip_hdr->ih_vers_ihl= (IP_MIN_HDR_SIZE+ip_opt_size) >> 2;
 	ip_hdr->ih_tos= UDP_TOS;
 	ip_hdr->ih_flags_fragoff= HTONS(UDP_IP_FLAGS);
-	ip_hdr->ih_ttl= UDP_TTL;
+	ip_hdr->ih_ttl= IP_DEF_TTL;
 	ip_hdr->ih_proto= IPPROTO_UDP;
 	if (flags & NWUO_RA_SET)
 	{
-		DBLOCK(1, printf("NWUO_RA_SET\n"));
-
 		ip_hdr->ih_dst= udp_fd->uf_udpopt.nwuo_remaddr;
 	}
 	else
@@ -1445,12 +1441,11 @@ assert (udp_fd->uf_flags & UFF_WRITE_IP);
 	case SR_CANCEL_IOCTL:
 assert (udp_fd->uf_flags & UFF_IOCTL_IP);
 		udp_fd->uf_flags &= ~UFF_IOCTL_IP;
+		udp_fd->uf_flags &= ~UFF_PEEK_IP;
 		reply_thr_get(udp_fd, EINTR, TRUE);
 		break;
-#if !CRAMPED
 	default:
 		ip_panic(( "got unknown cancel request" ));
-#endif
 	}
 	return NW_OK;
 }
@@ -1459,9 +1454,8 @@ PRIVATE void udp_buffree (priority)
 int priority;
 {
 	int i;
-	time_t curr_tim;
 	udp_fd_t *udp_fd;
-	acc_t *tmp_acc, *next_acc;
+	acc_t *tmp_acc;
 
 	if (priority ==  UDP_PRI_FDBUFS_EXTRA)
 	{
@@ -1494,9 +1488,10 @@ int priority;
 PRIVATE void udp_rd_enqueue(udp_fd, pack, exp_tim)
 udp_fd_t *udp_fd;
 acc_t *pack;
-time_t exp_tim;
+clock_t exp_tim;
 {
 	acc_t *tmp_acc;
+	int result;
 
 	if (pack->acc_linkC != 1)
 	{
@@ -1513,6 +1508,20 @@ time_t exp_tim;
 	else
 		udp_fd->uf_rdbuf_tail->acc_ext_link= pack;
 	udp_fd->uf_rdbuf_tail= pack;
+
+	if (udp_fd->uf_flags & UFF_PEEK_IP)
+	{
+		pack= bf_cut(udp_fd->uf_rdbuf_head, 0,
+			sizeof(udp_io_hdr_t));
+		result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd,
+			(size_t)0, pack, TRUE);
+
+		udp_fd->uf_flags &= ~UFF_IOCTL_IP;
+		udp_fd->uf_flags &= ~UFF_PEEK_IP;
+		result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd,
+			result, (acc_t *)0, TRUE);
+		assert (result == 0);
+	}
 }
 
 PRIVATE void hash_fd(udp_fd)
@@ -1581,7 +1590,7 @@ PRIVATE void udp_bufcheck()
 	udp_fd_t *udp_fd;
 	acc_t *tmp_acc;
 
-	for (i= 0, udp_port= udp_port_table; i<ip_conf_nr; i++, udp_port++)
+	for (i= 0, udp_port= udp_port_table; i<udp_conf_nr; i++, udp_port++)
 	{
 		if (udp_port->up_wr_pack)
 			bf_check_acc(udp_port->up_wr_pack);
@@ -1599,5 +1608,5 @@ PRIVATE void udp_bufcheck()
 #endif
 
 /*
- * $PchId: udp.c,v 1.10 1996/08/06 06:48:05 philip Exp $
+ * $PchId: udp.c,v 1.25 2005/06/28 14:14:44 philip Exp $
  */

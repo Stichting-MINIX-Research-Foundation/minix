@@ -1,7 +1,7 @@
 /*
 inet/generic/event.c
 
-Created:	April 1995 by Philip Homburg <philip@cs.vu.nl>
+Created:	April 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 Implementation of an event queue.
 
@@ -65,5 +65,5 @@ event_t *ev;
 
 
 /*
- * $PchId: event.c,v 1.4 1995/11/21 06:45:27 philip Exp $
+ * $PchId: event.c,v 1.6 2004/08/03 16:23:32 philip Exp $
  */

@@ -54,5 +54,5 @@ mq_t *mq;
 }
 
 /*
- * $PchId: mq.c,v 1.6 1996/05/07 21:10:16 philip Exp $
+ * $PchId: mq.c,v 1.7 1998/10/23 20:10:47 philip Exp $
  */

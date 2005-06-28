@@ -30,5 +30,5 @@ ether_addr_t *addr;
 }
 
 /*
- * $PchId: io.c,v 1.5 1995/11/21 06:45:27 philip Exp $
+ * $PchId: io.c,v 1.6 1998/10/23 20:24:34 philip Exp $
  */

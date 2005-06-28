@@ -9,6 +9,7 @@ Copyright 1995 Philip Homburg
 #include "clock.h"
 #include "event.h"
 #include "type.h"
+#include "sr.h"
 
 #include "io.h"
 #include "tcp_int.h"
@@ -34,9 +35,10 @@ size_t data_len;
 	tcp_fd_t *connuser;
 	int tcp_hdr_flags;
 	int ip_hdr_len, tcp_hdr_len;
-	u32_t seg_ack, seg_seq, rcv_hi;
-	u16_t seg_wnd;
-	int acceptable_ACK, segm_acceptable;
+	u32_t seg_ack, seg_seq, rcv_hi, snd_una, snd_nxt;
+	u16_t seg_wnd, mtu;
+	size_t mss;
+	int acceptable_ACK, segm_acceptable, send_rst;
 
 	ip_hdr_len= (ip_hdr->ih_vers_ihl & IH_IHL_MASK) << 2;
 	tcp_hdr_len= (tcp_hdr->th_data_off & TH_DO_MASK) >> 2;
@@ -45,6 +47,11 @@ size_t data_len;
 	seg_ack= ntohl(tcp_hdr->th_ack_nr);
 	seg_seq= ntohl(tcp_hdr->th_seq_nr);
 	seg_wnd= ntohs(tcp_hdr->th_window);
+
+#if 0
+ { where(); tcp_print_conn(tcp_conn); printf("\n");
+	tcp_print_pack(ip_hdr, tcp_hdr); printf("\n"); }
+#endif
 
 	switch (tcp_conn->tc_state)
 	{
@@ -105,7 +112,24 @@ LISTEN:
 		if (tcp_hdr_flags & THF_SYN)
 		{
 			tcp_extract_ipopt(tcp_conn, ip_hdr);
-			tcp_extract_tcpopt(tcp_conn, tcp_hdr);
+			tcp_extract_tcpopt(tcp_conn, tcp_hdr, &mss);
+			mtu= mss+IP_TCP_MIN_HDR_SIZE;
+			if (mtu < IP_MIN_MTU)
+			{
+				/* No or unrealistic mss, use default MTU */
+				mtu= IP_DEF_MTU;
+			}
+			if (mtu < tcp_conn->tc_max_mtu)
+			{
+				tcp_conn->tc_max_mtu= mtu;
+				tcp_conn->tc_mtu= mtu;
+				DBLOCK(1, printf(
+					"tcp[%d]: conn[%d]: mtu = %d\n",
+					tcp_conn->tc_port-tcp_port_table,
+					tcp_conn-tcp_conn_table, 
+					mtu););
+			}
+
 			tcp_conn->tc_RCV_LO= seg_seq+1;
 			tcp_conn->tc_RCV_NXT= seg_seq+1;
 			tcp_conn->tc_RCV_HI= tcp_conn->tc_RCV_LO+
@@ -194,8 +218,12 @@ SYN-SENT:
 					break;
 				else
 				{
+					/* HACK: force sending a RST,
+					 * normally, RSTs are not send
+					 * if the segment is an ACK.
+					 */
 					create_RST (tcp_conn, ip_hdr,
-						tcp_hdr, data_len);
+						tcp_hdr, data_len+1);
 					tcp_conn_write(tcp_conn, 1);
 					break;
 				}
@@ -219,6 +247,24 @@ SYN-SENT:
 		}
 		if (tcp_hdr_flags & THF_SYN)
 		{
+			tcp_extract_ipopt(tcp_conn, ip_hdr);
+			tcp_extract_tcpopt(tcp_conn, tcp_hdr, &mss);
+			mtu= mss+IP_TCP_MIN_HDR_SIZE;
+			if (mtu < IP_MIN_MTU)
+			{
+				/* No or unrealistic mss, use default MTU */
+				mtu= IP_DEF_MTU;
+			}
+			if (mtu < tcp_conn->tc_max_mtu)
+			{
+				tcp_conn->tc_max_mtu= mtu;
+				tcp_conn->tc_mtu= mtu;
+				DBLOCK(1, printf(
+					"tcp[%d]: conn[%d]: mtu = %d\n",
+					tcp_conn->tc_port-tcp_port_table,
+					tcp_conn-tcp_conn_table, 
+					mtu););
+			}
 			tcp_conn->tc_RCV_LO= seg_seq+1;
 			tcp_conn->tc_RCV_NXT= seg_seq+1;
 			tcp_conn->tc_RCV_HI= tcp_conn->tc_RCV_LO +
@@ -262,6 +308,7 @@ SYN-SENT:
 /*
 SYN-RECEIVED:
 	test if segment is acceptable:
+
 	Segment	Receive	Test
 	Length	Window
 	0	0	SEG.SEQ == RCV.NXT
@@ -271,10 +318,16 @@ SYN-RECEIVED:
 			|| (RCV.NXT <= SEG.SEQ+SEG.LEN-1 &&
 			SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND)
 	for urgent data: use RCV.WND+1 for RCV.WND
+
+	Special: Send RST if SEG.SEQ < IRS or SEG.SEQ > RCV.NXT+64K (and
+		 the packet is not a RST packet itself).
 */
 		rcv_hi= tcp_conn->tc_RCV_HI;
 		if (tcp_hdr_flags & THF_URG)
 			rcv_hi++;
+		send_rst= tcp_Lmod4G(seg_seq, tcp_conn->tc_IRS) ||
+			tcp_Gmod4G(seg_seq, tcp_conn->tc_RCV_NXT+0x10000);
+
 		if (!data_len)
 		{
 			if (rcv_hi == tcp_conn->tc_RCV_NXT)
@@ -316,7 +369,15 @@ SYN-RECEIVED:
 */
 		if (!segm_acceptable)
 		{
-			if (!(tcp_hdr_flags & THF_RST))
+			if (tcp_hdr_flags & THF_RST)
+				; /* do nothing */
+			else if (send_rst)
+			{
+				create_RST(tcp_conn, ip_hdr, tcp_hdr,
+					data_len);
+				tcp_conn_write(tcp_conn, 1);
+			}
+			else
 			{
 				tcp_conn->tc_flags |= TCF_SEND_ACK;
 				tcp_conn_write(tcp_conn, 1);
@@ -343,6 +404,10 @@ SYN-RECEIVED:
 				tcp_conn->tc_fd= NULL;
 
 				tcp_close_connection (tcp_conn, ECONNREFUSED);
+
+				/* Pick a new ISS next time */
+				tcp_conn->tc_ISS= 0;
+
 				if (connuser)
 					(void)tcp_su4listen(connuser);
 				break;
@@ -510,6 +575,12 @@ TIME-WAIT:
 					{
 						tcp_fd_read(tcp_conn, 1);
 					}
+					if (tcp_conn->tc_fd &&
+						(tcp_conn->tc_fd->tf_flags &
+						TFF_SEL_READ))
+					{
+						tcp_rsel_read(tcp_conn);
+					}
 				}
 			}
 			break;
@@ -592,49 +663,61 @@ TIME-WAIT:
 		if (tcp_conn->tc_state != TCS_CLOSING)
 			tcp_conn->tc_stt= 0;
 
-		if (seg_ack == tcp_conn->tc_SND_UNA)
+		snd_una= tcp_conn->tc_SND_UNA;
+		snd_nxt= tcp_conn->tc_SND_NXT;
+		if (seg_ack == snd_una)
 		{
+			
+			if (tcp_Gmod4G(snd_nxt, snd_una))
+			{
+				/* Duplicate ACK */
+				if (++tcp_conn->tc_snd_dack ==
+					TCP_DACK_RETRANS)
+				{
+					tcp_fast_retrans(tcp_conn);
+				}
+			}
+
 			/* This ACK doesn't acknowledge any new data, this
 			 * is a likely situation if we are only receiving
 			 * data. We only update the window if we are
 			 * actually sending or if we currently have a
 			 * zero window.
 			 */
-			if (tcp_conn->tc_snd_cwnd == tcp_conn->tc_SND_UNA &&
+			if (tcp_conn->tc_snd_cwnd == snd_una &&
 				seg_wnd != 0)
 			{
 				DBLOCK(2, printf("zero window opened\n"));
 				/* The other side opened up its receive
 				 * window. */
-				if (seg_wnd > 2*tcp_conn->tc_mss)
-					seg_wnd= 2*tcp_conn->tc_mss;
-				tcp_conn->tc_snd_cwnd=
-					tcp_conn->tc_SND_UNA+seg_wnd;
+				mss= tcp_conn->tc_mtu-IP_TCP_MIN_HDR_SIZE;
+				if (seg_wnd > 2*mss)
+					seg_wnd= 2*mss;
+				tcp_conn->tc_snd_cwnd= snd_una+seg_wnd;
 				tcp_conn_write(tcp_conn, 1);
 			}
 			if (seg_wnd == 0)
 			{
 				tcp_conn->tc_snd_cwnd= tcp_conn->tc_SND_TRM=
-					tcp_conn->tc_SND_UNA;
+					snd_una;
 			}
 		}
-		else if (tcp_Lmod4G(tcp_conn->tc_SND_UNA, seg_ack)
-			&& tcp_LEmod4G(seg_ack, tcp_conn->
-			tc_SND_NXT))
+		else if (tcp_Lmod4G(snd_una, seg_ack) &&
+			tcp_LEmod4G(seg_ack, snd_nxt))
 		{
 			tcp_release_retrans(tcp_conn, seg_ack, seg_wnd);
 			if (tcp_conn->tc_state == TCS_CLOSED)
 				break;
 		}
 		else if (tcp_Gmod4G(seg_ack,
-			tcp_conn->tc_SND_NXT))
+			snd_nxt))
 		{
 			tcp_conn->tc_flags |= TCF_SEND_ACK;
 			tcp_conn_write(tcp_conn, 1);
 			DBLOCK(1, printf(
 			"got an ack of something I haven't send\n");
 				printf( "seg_ack= %lu, SND_NXT= %lu\n",
-				seg_ack, tcp_conn->tc_SND_NXT));
+				seg_ack, snd_nxt));
 			break;
 		}
 
@@ -642,7 +725,7 @@ TIME-WAIT:
 	process data...
 */
 		tcp_extract_ipopt(tcp_conn, ip_hdr);
-		tcp_extract_tcpopt(tcp_conn, tcp_hdr);
+		tcp_extract_tcpopt(tcp_conn, tcp_hdr, &mss);
 
 		if (data_len)
 		{
@@ -695,13 +778,16 @@ TIME-WAIT:
 			{
 				tcp_fd_read(tcp_conn, 1);
 			}
+			if (tcp_conn->tc_fd &&
+				(tcp_conn->tc_fd->tf_flags & TFF_SEL_READ))
+			{
+				tcp_rsel_read(tcp_conn);
+			}
 		}
 		break;
 	default:
-#if !CRAMPED
 		printf("tcp_frag2conn: unknown state ");
 		tcp_print_state(tcp_conn);
-#endif
 		break;
 	}
 	if (tcp_data != NULL)
@@ -717,7 +803,7 @@ acc_t *tcp_data;
 int data_len;
 {
 	u32_t lo_seq, hi_seq, urg_seq, seq_nr, adv_seq, nxt;
-	u16_t urgptr;
+	u32_t urgptr;
 	int tcp_hdr_flags;
 	unsigned int offset;
 	acc_t *tmp_data, *rcvd_data, *adv_data;
@@ -736,11 +822,43 @@ int data_len;
 	lo_seq= seq_nr;
 	tcp_hdr_flags= tcp_hdr->th_flags & TH_FLAGS_MASK;
 
+	if (tcp_Lmod4G(lo_seq, tcp_conn->tc_RCV_NXT))
+	{
+		DBLOCK(0x10,
+			printf("segment is a retransmission\n"));
+		offset= tcp_conn->tc_RCV_NXT-lo_seq;
+		tcp_data= bf_delhead(tcp_data, offset);
+		lo_seq += offset;
+		data_len -= offset;
+		if (tcp_hdr_flags & THF_URG)
+		{
+			printf("process_data: updating urgent pointer\n");
+			if (urgptr >= offset)
+				urgptr -= offset;
+			else
+				tcp_hdr_flags &= ~THF_URG;
+		}
+	}
+	assert (lo_seq == tcp_conn->tc_RCV_NXT);
+
+	if (tcp_hdr_flags & THF_URG)
+	{
+		if (!(tcp_conn->tc_flags & TCF_BSD_URG))
+		{
+			/* Update urgent pointer to point past the urgent
+			 * data
+			 */
+			urgptr++;
+		}
+		if (urgptr == 0)
+			tcp_hdr_flags &= ~THF_URG;
+	}
+
 	if (tcp_hdr_flags & THF_URG)
 	{
 		if (urgptr > data_len)
 			urgptr= data_len;
-		urg_seq= lo_seq+ urgptr;
+		urg_seq= lo_seq+urgptr;
 
 		if (tcp_GEmod4G(urg_seq, tcp_conn->tc_RCV_HI))
 			urg_seq= tcp_conn->tc_RCV_HI;
@@ -764,11 +882,18 @@ int data_len;
 				{
 					tcp_fd_read(tcp_conn, 1);
 				}
+				if (tcp_conn->tc_fd &&
+					(tcp_conn->tc_fd->tf_flags &
+					TFF_SEL_READ))
+				{
+					tcp_rsel_read(tcp_conn);
+				}
 				return;
 			}
 		}
 		if (tcp_Gmod4G(urg_seq, tcp_conn->tc_RCV_UP))
 			tcp_conn->tc_RCV_UP= urg_seq;
+#if 0
 		if (urgptr < data_len)
 		{
 			data_len= urgptr;
@@ -777,6 +902,7 @@ int data_len;
 			tcp_data= tmp_data;
 			tcp_hdr_flags &= ~THF_FIN;
 		}
+#endif
 		tcp_conn->tc_flags |= TCF_RCV_PUSH;
 	}
 	else
@@ -788,17 +914,6 @@ int data_len;
 	{
 		tcp_conn->tc_flags |= TCF_RCV_PUSH;
 	}
-
-	if (tcp_Lmod4G(lo_seq, tcp_conn->tc_RCV_NXT))
-	{
-		DBLOCK(0x10,
-			printf("segment is a retransmission\n"));
-		offset= tcp_conn->tc_RCV_NXT-lo_seq;
-		tcp_data= bf_delhead(tcp_data, offset);
-		lo_seq += offset;
-		data_len -= offset;
-	}
-	assert (lo_seq == tcp_conn->tc_RCV_NXT);
 
 	hi_seq= lo_seq+data_len;
 	if (tcp_Gmod4G(hi_seq, tcp_conn->tc_RCV_HI))
@@ -828,6 +943,8 @@ int data_len;
 
 	if (tcp_conn->tc_fd && (tcp_conn->tc_fd->tf_flags & TFF_READ_IP))
 		tcp_fd_read(tcp_conn, 1);
+	if (tcp_conn->tc_fd && (tcp_conn->tc_fd->tf_flags & TFF_SEL_READ))
+		tcp_rsel_read(tcp_conn);
 
 	DIFBLOCK(2, (tcp_conn->tc_RCV_NXT == tcp_conn->tc_RCV_HI),
 		printf("conn[[%d] full receive buffer\n", 
@@ -837,10 +954,8 @@ int data_len;
 		return;
 	if (tcp_hdr_flags & THF_FIN)
 	{
-#if !CRAMPED
 		printf("conn[%d]: advanced data after FIN\n",
 			tcp_conn-tcp_conn_table);
-#endif
 		tcp_data= tcp_conn->tc_adv_data;
 		tcp_conn->tc_adv_data= NULL;
 		bf_afree(tcp_data);
@@ -884,6 +999,8 @@ int data_len;
 
 	if (tcp_conn->tc_fd && (tcp_conn->tc_fd->tf_flags & TFF_READ_IP))
 		tcp_fd_read(tcp_conn, 1);
+	if (tcp_conn->tc_fd && (tcp_conn->tc_fd->tf_flags & TFF_SEL_READ))
+		tcp_rsel_read(tcp_conn);
 
 	adv_data= tcp_conn->tc_adv_data;
 	if (adv_data != NULL)
@@ -932,6 +1049,11 @@ int data_len;
 		{
 			tcp_fd_read(tcp_conn, 1);
 		}
+		if (tcp_conn->tc_fd &&
+			(tcp_conn->tc_fd->tf_flags & TFF_SEL_READ))
+		{
+			tcp_rsel_read(tcp_conn);
+		}
 	}
 }
 
@@ -956,6 +1078,7 @@ int data_len;
 
 	if (tcp_hdr->th_flags & THF_URG)
 		return;	/* Urgent data is to complicated */
+
 	if (tcp_hdr->th_flags & THF_PSH)
 		tcp_conn->tc_flags |= TCF_RCV_PUSH;
 	seq= ntohl(tcp_hdr->th_seq_nr);
@@ -1003,13 +1126,10 @@ tcp_hdr_t *tcp_hdr;
 int data_len;
 {
 	acc_t *tmp_ipopt, *tmp_tcpopt, *tcp_pack;
-	ip_hdropt_t ip_hdropt;
-	tcp_hdropt_t tcp_hdropt;
 	acc_t *RST_acc;
 	ip_hdr_t *RST_ip_hdr;
 	tcp_hdr_t *RST_tcp_hdr;
-	char *ptr2RSThdr;
-	size_t pack_size, ip_hdr_len;
+	size_t pack_size, ip_hdr_len, mss;
 
 	DBLOCK(0x10, printf("in create_RST, bad pack is:\n"); 
 		tcp_print_pack(ip_hdr, tcp_hdr); tcp_print_state(tcp_conn);
@@ -1043,7 +1163,7 @@ int data_len;
 		tmp_tcpopt->acc_linkC++;
 
 	tcp_extract_ipopt (tcp_conn, ip_hdr);
-	tcp_extract_tcpopt (tcp_conn, tcp_hdr);
+	tcp_extract_tcpopt (tcp_conn, tcp_hdr, &mss);
 
 	RST_acc= tcp_make_header (tcp_conn, &RST_ip_hdr, &RST_tcp_hdr,
 		(acc_t *)0);
@@ -1107,6 +1227,7 @@ int enq;					/* Enqueue writes. */
 	acc_t *data;
 	int fin_recv, urg, push, result;
 	i32_t old_window, new_window;
+	u16_t mss;
 
 	assert(tcp_conn->tc_busy);
 
@@ -1130,7 +1251,13 @@ int enq;					/* Enqueue writes. */
 	if (fin_recv)
 		data_size--;
 	if (urg)
+	{
+#if DEBUG
+		printf("tcp_fd_read: RCV_UP = 0x%x, RCV_LO = 0x%x\n",
+			tcp_conn->tc_RCV_UP, tcp_conn->tc_RCV_LO);
+#endif
 		read_size= tcp_conn->tc_RCV_UP-tcp_conn->tc_RCV_LO;
+	}
 	else
 		read_size= data_size;
 
@@ -1214,16 +1341,34 @@ int enq;					/* Enqueue writes. */
 		tcp_conn->tc_RCV_LO += read_size;
 		data_size -= read_size;
 	}
-	if (tcp_conn->tc_RCV_HI-tcp_conn->tc_RCV_LO <= (tcp_conn->
-		tc_rcv_wnd-tcp_conn->tc_mss))
+
+	/* Update IRS and often RCV_UP every 0.5GB */
+	if (tcp_conn->tc_RCV_LO - tcp_conn->tc_IRS > 0x40000000)
+	{
+		tcp_conn->tc_IRS += 0x20000000;
+		DBLOCK(1, printf("tcp_fd_read: updating IRS to 0x%lx\n",
+			(unsigned long)tcp_conn->tc_IRS););
+		if (tcp_Lmod4G(tcp_conn->tc_RCV_UP, tcp_conn->tc_IRS))
+		{
+			tcp_conn->tc_RCV_UP= tcp_conn->tc_IRS;
+			DBLOCK(1, printf(
+				"tcp_fd_read: updating RCV_UP to 0x%lx\n",
+				(unsigned long)tcp_conn->tc_RCV_UP););
+		}
+		DBLOCK(1, printf("tcp_fd_read: RCP_LO = 0x%lx\n",
+			(unsigned long)tcp_conn->tc_RCV_LO););
+	}
+
+	mss= tcp_conn->tc_mtu-IP_TCP_MIN_HDR_SIZE;
+	if (tcp_conn->tc_RCV_HI-tcp_conn->tc_RCV_LO <=
+		tcp_conn->tc_rcv_wnd-mss)
 	{
 		old_window= tcp_conn->tc_RCV_HI-tcp_conn->tc_RCV_NXT;
 		tcp_conn->tc_RCV_HI= tcp_conn->tc_RCV_LO + 
 			tcp_conn->tc_rcv_wnd;
 		new_window= tcp_conn->tc_RCV_HI-tcp_conn->tc_RCV_NXT;
 		assert(old_window >=0 && new_window >= old_window);
-		if (old_window < tcp_conn->tc_mss &&
-			new_window >= tcp_conn->tc_mss)
+		if (old_window < mss && new_window >= mss)
 		{
 			tcp_conn->tc_flags |= TCF_SEND_ACK;
 			DBLOCK(2, printf("opening window\n"));
@@ -1236,18 +1381,67 @@ int enq;					/* Enqueue writes. */
 		/* Out of data, clear PUSH flag and reply to a read. */
 		tcp_conn->tc_flags &= ~TCF_RCV_PUSH;
 	}
-	if (fin_recv || urg || !tcp_fd->tf_read_count)
-	{
-		tcp_reply_read (tcp_fd, tcp_fd->tf_read_offset);
-		return;
-	}
-	if (tcp_fd->tf_read_offset)
+	if (fin_recv || urg || tcp_fd->tf_read_offset ||
+		!tcp_fd->tf_read_count)
 	{
 		tcp_reply_read (tcp_fd, tcp_fd->tf_read_offset);
 		return;
 	}
 }
 
+PUBLIC unsigned
+tcp_sel_read(tcp_conn)
+tcp_conn_t *tcp_conn;
+{
+	tcp_fd_t *tcp_fd;
+	size_t data_size;
+	int fin_recv, urg, push;
+
+	tcp_fd= tcp_conn->tc_fd;
+
+	if (tcp_conn->tc_state == TCS_CLOSED)
+		return 1;
+
+	fin_recv= (tcp_conn->tc_flags & TCF_FIN_RECV);
+	if (fin_recv)
+		return 1;
+
+	data_size= tcp_conn->tc_RCV_NXT-tcp_conn->tc_RCV_LO;
+	if (data_size == 0)
+	{
+		/* No data, and no end of file. */
+		return 0;
+	}
+
+	urg= tcp_Gmod4G(tcp_conn->tc_RCV_UP, tcp_conn->tc_RCV_LO);
+	push= (tcp_conn->tc_flags & TCF_RCV_PUSH);
+
+	if (!push && !urg && data_size < TCP_MIN_RCV_WND_SIZE)
+	{
+		/* Defer until later. */
+		return 0;
+	}
+
+	return 1;
+}
+
+PUBLIC void
+tcp_rsel_read(tcp_conn)
+tcp_conn_t *tcp_conn;
+{
+	tcp_fd_t *tcp_fd;
+
+	if (tcp_sel_read(tcp_conn) == 0)
+		return;
+
+	tcp_fd= tcp_conn->tc_fd;
+	tcp_fd->tf_flags &= ~TFF_SEL_READ;
+	if (tcp_fd->tf_select_res)
+		tcp_fd->tf_select_res(tcp_fd->tf_srfd, SR_SELECT_READ);
+	else
+		printf("tcp_rsel_read: no select_res\n");
+}
+
 /*
- * $PchId: tcp_recv.c,v 1.13.2.1 2000/05/02 18:53:06 philip Exp $
+ * $PchId: tcp_recv.c,v 1.30 2005/06/28 14:21:35 philip Exp $
  */

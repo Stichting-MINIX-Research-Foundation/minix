@@ -29,6 +29,12 @@ typedef struct icmp_pp
 	u8_t	ipp_unused[3];
 } icmp_pp_t;
 
+typedef struct icmp_mtu		/* RFC 1191 */
+{
+	u16_t	im_unused;
+	u16_t	im_mtu;
+} icmp_mtu_t;
+
 typedef struct icmp_hdr
 {
 	u8_t ih_type, ih_code;
@@ -40,6 +46,7 @@ typedef struct icmp_hdr
 		ipaddr_t ihh_gateway;
 		icmp_ram_t ihh_ram;
 		icmp_pp_t ihh_pp;
+		icmp_mtu_t ihh_mtu;
 	} ih_hun;
 	union
 	{
@@ -51,5 +58,5 @@ typedef struct icmp_hdr
 #endif /* __SERVER__IP__GEN__ICMP_HDR_H__ */
 
 /*
- * $PchId: icmp_hdr.h,v 1.4 1995/11/17 22:28:58 philip Exp $
+ * $PchId: icmp_hdr.h,v 1.5 2002/06/10 07:10:48 philip Exp $
  */

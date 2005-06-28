@@ -41,82 +41,88 @@
 
 #include "inet.h"
 
+#ifndef __minix_vmd /* Minix 3 */
+#include <sys/select.h>
+#endif
+#include <sys/svrctl.h>
 #include <minix/callnr.h>
 
 #include "mq.h"
+#include "qp.h"
 #include "proto.h"
 #include "generic/type.h"
 
 #include "generic/assert.h"
 #include "generic/buf.h"
+#include "generic/event.h"
 #include "generic/sr.h"
+#include "sr_int.h"
+
+#ifndef __minix_vmd /* Minix 3 */
+#define DEV_CANCEL NW_CANCEL
+#define DEVICE_REPLY REVIVE
+#define DEV_IOCTL3 DEV_IOCTL
+#define NDEV_BUFFER ADDRESS
+#define NDEV_COUNT COUNT
+#define NDEV_IOCTL REQUEST
+#define NDEV_MINOR DEVICE
+#define NDEV_PROC PROC_NR
+#endif
 
 THIS_FILE
 
-#define FD_NR			(16*IP_PORT_MAX)
+PUBLIC sr_fd_t sr_fd_table[FD_NR];
 
-typedef struct sr_fd
-{
-	int srf_flags;
-	int srf_fd;
-	int srf_port;
-	sr_open_t srf_open;
-	sr_close_t srf_close;
-	sr_write_t srf_write;
-	sr_read_t srf_read;
-	sr_ioctl_t srf_ioctl;
-	sr_cancel_t srf_cancel;
-	mq_t *srf_ioctl_q, *srf_ioctl_q_tail;
-	mq_t *srf_read_q, *srf_read_q_tail;
-	mq_t *srf_write_q, *srf_write_q_tail;
-} sr_fd_t;
-
-#define SFF_FLAGS 	0x0F
-#	define SFF_FREE		0x00
-#	define SFF_MINOR	0x01
-#	define SFF_INUSE	0x02
-#	define SFF_BUSY		0x3C
-#		define SFF_IOCTL_IP	0x04
-#		define SFF_READ_IP	0x08
-#		define SFF_WRITE_IP	0x10
-#	define SFF_PENDING_REQ	0x30
-#	define SFF_SUSPENDED	0x1C0
-#		define SFF_IOCTL_SUSP	0x40
-#		define SFF_READ_SUSP	0x80
-#		define SFF_WRITE_SUSP	0x100
+PRIVATE mq_t *repl_queue, *repl_queue_tail;
+#ifdef __minix_vmd
+PRIVATE cpvec_t cpvec[CPVEC_NR];
+#else /* Minix 3 */
+PRIVATE struct vir_cp_req vir_cp_req[CPVEC_NR];
+#endif
 
 FORWARD _PROTOTYPE ( int sr_open, (message *m) );
 FORWARD _PROTOTYPE ( void sr_close, (message *m) );
 FORWARD _PROTOTYPE ( int sr_rwio, (mq_t *m) );
+FORWARD _PROTOTYPE ( int sr_restart_read, (sr_fd_t *fdp) );
+FORWARD _PROTOTYPE ( int sr_restart_write, (sr_fd_t *fdp) );
+FORWARD _PROTOTYPE ( int sr_restart_ioctl, (sr_fd_t *fdp) );
 FORWARD _PROTOTYPE ( int sr_cancel, (message *m) );
+#ifndef __minix_vmd /* Minix 3 */
+FORWARD _PROTOTYPE ( int sr_select, (message *m) );
+#endif
 FORWARD _PROTOTYPE ( void sr_reply, (mq_t *m, int reply, int can_enqueue) );
 FORWARD _PROTOTYPE ( sr_fd_t *sr_getchannel, (int minor));
 FORWARD _PROTOTYPE ( acc_t *sr_get_userdata, (int fd, vir_bytes offset,
 					vir_bytes count, int for_ioctl) );
 FORWARD _PROTOTYPE ( int sr_put_userdata, (int fd, vir_bytes offset,
 						acc_t *data, int for_ioctl) );
+#ifdef __minix_vmd 
+#define sr_select_res 0
+#else /* Minix 3 */
+FORWARD _PROTOTYPE (void sr_select_res, (int fd, unsigned ops) );
+#endif
 FORWARD _PROTOTYPE ( int sr_repl_queue, (int proc, int ref, int operation) );
 FORWARD _PROTOTYPE ( int walk_queue, (sr_fd_t *sr_fd, mq_t *q_head, 
 			mq_t **q_tail_ptr, int type, int proc_nr, int ref) );
 FORWARD _PROTOTYPE ( void process_req_q, (mq_t *mq, mq_t *tail, 
 							mq_t **tail_ptr) );
+FORWARD _PROTOTYPE ( void sr_event, (event_t *evp, ev_arg_t arg) );
 FORWARD _PROTOTYPE ( int cp_u2b, (int proc, char *src, acc_t **var_acc_ptr,
 								 int size) );
 FORWARD _PROTOTYPE ( int cp_b2u, (acc_t *acc_ptr, int proc, char *dest) );
 
-PRIVATE sr_fd_t sr_fd_table[FD_NR];
-PRIVATE mq_t *repl_queue, *repl_queue_tail;
-PRIVATE struct vir_cp_req vir_cp_req[CPVEC_NR];
-
 PUBLIC void sr_init()
 {
-#if ZERO
 	int i;
 
 	for (i=0; i<FD_NR; i++)
+	{
 		sr_fd_table[i].srf_flags= SFF_FREE;
+		ev_init(&sr_fd_table[i].srf_ioctl_ev);
+		ev_init(&sr_fd_table[i].srf_read_ev);
+		ev_init(&sr_fd_table[i].srf_write_ev);
+	}
 	repl_queue= NULL;
-#endif
 }
 
 PUBLIC void sr_rec(m)
@@ -127,9 +133,15 @@ mq_t *m;
 
 	if (repl_queue)
 	{
-		if (m->mq_mess.m_type == NW_CANCEL)
+		if (m->mq_mess.m_type == DEV_CANCEL)
 		{
-			result= sr_repl_queue(m->mq_mess.PROC_NR, 0,  0);
+#ifdef __minix_vmd
+			result= sr_repl_queue(m->mq_mess.NDEV_PROC,
+				m->mq_mess.NDEV_REF, 
+				m->mq_mess.NDEV_OPERATION);
+#else /* Minix 3 */
+			result= sr_repl_queue(m->mq_mess.PROC_NR, 0, 0);
+#endif
 			if (result)
 			{
 				mq_free(m);
@@ -155,24 +167,33 @@ mq_t *m;
 		break;
 	case DEV_READ:
 	case DEV_WRITE:
-	case DEV_IOCTL:
+	case DEV_IOCTL3:
 		result= sr_rwio(m);
 		assert(result == OK || result == SUSPEND);
 		send_reply= (result == SUSPEND);
 		free_mess= 0;
 		break;
-	case CANCEL:
+	case DEV_CANCEL:
 		result= sr_cancel(&m->mq_mess);
 		assert(result == OK || result == EINTR);
 		send_reply= (result == EINTR);
 		free_mess= 1;
+#ifdef __minix_vmd
+		m->mq_mess.m_type= m->mq_mess.NDEV_OPERATION;
+#else /* Minix 3 */
 		m->mq_mess.m_type= 0;
+#endif
 		break;
-#if !CRAMPED
+#ifndef __minix_vmd /* Minix 3 */
+	case DEV_SELECT:
+		result= sr_select(&m->mq_mess);
+		send_reply= 1;
+		free_mess= 1;
+		break;
+#endif
 	default:
 		ip_panic(("unknown message, from %d, type %d",
 				m->mq_mess.m_source, m->mq_mess.m_type));
-#endif
 	}
 	if (send_reply)
 	{
@@ -183,7 +204,7 @@ mq_t *m;
 }
 
 PUBLIC void sr_add_minor(minor, port, openf, closef, readf, writef,
-	ioctlf, cancelf)
+	ioctlf, cancelf, selectf)
 int minor;
 int port;
 sr_open_t openf;
@@ -192,6 +213,7 @@ sr_read_t readf;
 sr_write_t writef;
 sr_ioctl_t ioctlf;
 sr_cancel_t cancelf;
+sr_select_t selectf;
 {
 	sr_fd_t *sr_fd;
 
@@ -209,6 +231,7 @@ sr_cancel_t cancelf;
 	sr_fd->srf_read= readf;
 	sr_fd->srf_ioctl= ioctlf;
 	sr_fd->srf_cancel= cancelf;
+	sr_fd->srf_select= selectf;
 }
 
 PRIVATE int sr_open(m)
@@ -216,7 +239,7 @@ message *m;
 {
 	sr_fd_t *sr_fd;
 
-	int minor= m->DEVICE;
+	int minor= m->NDEV_MINOR;
 	int i, fd;
 
 	if (minor<0 || minor>FD_NR)
@@ -241,7 +264,7 @@ message *m;
 	*sr_fd= sr_fd_table[minor];
 	sr_fd->srf_flags= SFF_INUSE;
 	fd= (*sr_fd->srf_open)(sr_fd->srf_port, i, sr_get_userdata,
-		sr_put_userdata, 0);
+		sr_put_userdata, 0 /* no put_pkt */, sr_select_res);
 	if (fd<0)
 	{
 		sr_fd->srf_flags= SFF_FREE;
@@ -257,10 +280,11 @@ message *m;
 {
 	sr_fd_t *sr_fd;
 
-	sr_fd= sr_getchannel(m->DEVICE);
+	sr_fd= sr_getchannel(m->NDEV_MINOR);
 	assert (sr_fd);
 
-	assert (!(sr_fd->srf_flags & SFF_BUSY));
+	if (sr_fd->srf_flags & SFF_BUSY)
+		ip_panic(("close on busy channel"));
 
 	assert (!(sr_fd->srf_flags & SFF_MINOR));
 	(*sr_fd->srf_close)(sr_fd->srf_fd);
@@ -277,7 +301,7 @@ mq_t *m;
 	ioreq_t request;
 	size_t size;
 
-	sr_fd= sr_getchannel(m->mq_mess.DEVICE);
+	sr_fd= sr_getchannel(m->mq_mess.NDEV_MINOR);
 	assert (sr_fd);
 
 	switch(m->mq_mess.m_type)
@@ -294,16 +318,14 @@ mq_t *m;
 		ip_flag= SFF_WRITE_IP;
 		susp_flag= SFF_WRITE_SUSP;
 		break;
-	case DEV_IOCTL:
+	case DEV_IOCTL3:
 		q_head_ptr= &sr_fd->srf_ioctl_q;
 		q_tail_ptr= &sr_fd->srf_ioctl_q_tail;
 		ip_flag= SFF_IOCTL_IP;
 		susp_flag= SFF_IOCTL_SUSP;
 		break;
-#if !CRAMPED
 	default:
 		ip_panic(("illegal case entry"));
-#endif
 	}
 
 	if (sr_fd->srf_flags & ip_flag)
@@ -324,15 +346,26 @@ mq_t *m;
 	{
 	case DEV_READ:
 		r= (*sr_fd->srf_read)(sr_fd->srf_fd, 
-			m->mq_mess.COUNT);
+			m->mq_mess.NDEV_COUNT);
 		break;
 	case DEV_WRITE:
 		r= (*sr_fd->srf_write)(sr_fd->srf_fd, 
-			m->mq_mess.COUNT);
+			m->mq_mess.NDEV_COUNT);
 		break;
-	case DEV_IOCTL:
-		request= m->mq_mess.REQUEST;
-#ifdef _IOCPARM_MASK
+	case DEV_IOCTL3:
+		request= m->mq_mess.NDEV_IOCTL;
+
+		/* There should be a better way to do this... */
+		if (request == NWIOQUERYPARAM)
+		{
+			r= qp_query(m->mq_mess.NDEV_PROC,
+				(vir_bytes)m->mq_mess.NDEV_BUFFER);
+			r= sr_put_userdata(sr_fd-sr_fd_table, r, NULL, 1);
+			assert(r == OK);
+			return OK;
+		}
+
+		/* And now, we continue with our regular program. */
 		size= (request >> 16) & _IOCPARM_MASK;
 		if (size>MAX_IOCTL_S)
 		{
@@ -342,13 +375,10 @@ mq_t *m;
 			assert(r == OK);
 			return OK;
 		}
-#endif
 		r= (*sr_fd->srf_ioctl)(sr_fd->srf_fd, request);
 		break;
-#if !CRAMPED
 	default:
 		ip_panic(("illegal case entry"));
-#endif
 	}
 
 	assert(r == OK || r == SUSPEND || 
@@ -358,21 +388,106 @@ mq_t *m;
 	return r;
 }
 
+PRIVATE int sr_restart_read(sr_fd)
+sr_fd_t *sr_fd;
+{
+	mq_t *mp;
+	int r;
+
+	mp= sr_fd->srf_read_q;
+	assert(mp);
+
+	if (sr_fd->srf_flags & SFF_READ_IP)
+	{
+		assert(sr_fd->srf_flags & SFF_READ_SUSP);
+		return SUSPEND;
+	}
+	sr_fd->srf_flags |= SFF_READ_IP;
+
+	r= (*sr_fd->srf_read)(sr_fd->srf_fd, 
+		mp->mq_mess.NDEV_COUNT);
+
+	assert(r == OK || r == SUSPEND || 
+		(printf("r= %d\n", r), 0));
+	if (r == SUSPEND)
+		sr_fd->srf_flags |= SFF_READ_SUSP;
+	return r;
+}
+
+PRIVATE int sr_restart_write(sr_fd)
+sr_fd_t *sr_fd;
+{
+	mq_t *mp;
+	int r;
+
+	mp= sr_fd->srf_write_q;
+	assert(mp);
+
+	if (sr_fd->srf_flags & SFF_WRITE_IP)
+	{
+		assert(sr_fd->srf_flags & SFF_WRITE_SUSP);
+		return SUSPEND;
+	}
+	sr_fd->srf_flags |= SFF_WRITE_IP;
+
+	r= (*sr_fd->srf_write)(sr_fd->srf_fd, 
+		mp->mq_mess.NDEV_COUNT);
+
+	assert(r == OK || r == SUSPEND || 
+		(printf("r= %d\n", r), 0));
+	if (r == SUSPEND)
+		sr_fd->srf_flags |= SFF_WRITE_SUSP;
+	return r;
+}
+
+PRIVATE int sr_restart_ioctl(sr_fd)
+sr_fd_t *sr_fd;
+{
+	mq_t *mp;
+	int r;
+
+	mp= sr_fd->srf_ioctl_q;
+	assert(mp);
+
+	if (sr_fd->srf_flags & SFF_IOCTL_IP)
+	{
+		assert(sr_fd->srf_flags & SFF_IOCTL_SUSP);
+		return SUSPEND;
+	}
+	sr_fd->srf_flags |= SFF_IOCTL_IP;
+
+	r= (*sr_fd->srf_ioctl)(sr_fd->srf_fd, 
+		mp->mq_mess.NDEV_COUNT);
+
+	assert(r == OK || r == SUSPEND || 
+		(printf("r= %d\n", r), 0));
+	if (r == SUSPEND)
+		sr_fd->srf_flags |= SFF_IOCTL_SUSP;
+	return r;
+}
+
 PRIVATE int sr_cancel(m)
 message *m;
 {
 	sr_fd_t *sr_fd;
-	int i, result;
-	mq_t *q_ptr, *q_ptr_prv;
+	int result;
 	int proc_nr, ref, operation;
 
         result=EINTR;
-	proc_nr=  m->PROC_NR;
+	proc_nr=  m->NDEV_PROC;
+#ifdef __minix_vmd
+	ref=  m->NDEV_REF;
+	operation= m->NDEV_OPERATION;
+#else /* Minix 3 */
 	ref=  0;
 	operation= 0;
-	sr_fd= sr_getchannel(m->DEVICE);
+#endif
+	sr_fd= sr_getchannel(m->NDEV_MINOR);
 	assert (sr_fd);
 
+#ifdef __minix_vmd
+	if (operation == CANCEL_ANY || operation == DEV_IOCTL3)
+#endif
 	{
 		result= walk_queue(sr_fd, sr_fd->srf_ioctl_q, 
 			&sr_fd->srf_ioctl_q_tail, SR_CANCEL_IOCTL,
@@ -380,6 +495,9 @@ message *m;
 		if (result != EAGAIN)
 			return result;
 	}
+#ifdef __minix_vmd
+	if (operation == CANCEL_ANY || operation == DEV_READ)
+#endif
 	{
 		result= walk_queue(sr_fd, sr_fd->srf_read_q, 
 			&sr_fd->srf_read_q_tail, SR_CANCEL_READ,
@@ -387,6 +505,9 @@ message *m;
 		if (result != EAGAIN)
 			return result;
 	}
+#ifdef __minix_vmd
+	if (operation == CANCEL_ANY || operation == DEV_WRITE)
+#endif
 	{
 		result= walk_queue(sr_fd, sr_fd->srf_write_q, 
 			&sr_fd->srf_write_q_tail, SR_CANCEL_WRITE,
@@ -394,13 +515,55 @@ message *m;
 		if (result != EAGAIN)
 			return result;
 	}
-#if !CRAMPED
+#ifdef __minix_vmd
 	ip_panic((
-"request not found: from %d, type %d, MINOR= %d, PROC= %d, REF= %d OPERATION= %d",
-		m->m_source, m->m_type, m->DEVICE,
-		m->PROC_NR, 0, 0));
+"request not found: from %d, type %d, MINOR= %d, PROC= %d, REF= %d OPERATION= %ld",
+		m->m_source, m->m_type, m->NDEV_MINOR,
+		m->NDEV_PROC, m->NDEV_REF, m->NDEV_OPERATION));
+#else /* Minix 3 */
+	ip_panic((
+"request not found: from %d, type %d, MINOR= %d, PROC= %d",
+		m->m_source, m->m_type, m->NDEV_MINOR,
+		m->NDEV_PROC));
 #endif
 }
+
+#ifndef __minix_vmd /* Minix 3 */
+PRIVATE int sr_select(m)
+message *m;
+{
+	sr_fd_t *sr_fd;
+	mq_t **q_head_ptr, **q_tail_ptr;
+	int ip_flag, susp_flag;
+	int r, ops;
+	unsigned m_ops, i_ops;
+	ioreq_t request;
+	size_t size;
+
+	sr_fd= sr_getchannel(m->NDEV_MINOR);
+	assert (sr_fd);
+
+	sr_fd->srf_select_proc= m->m_source;
+
+	m_ops= m->PROC_NR;
+	i_ops= 0;
+	if (m_ops & SEL_RD) i_ops |= SR_SELECT_READ;
+	if (m_ops & SEL_WR) i_ops |= SR_SELECT_WRITE;
+	if (m_ops & SEL_ERR) i_ops |= SR_SELECT_EXCEPTION;
+	if (!(m_ops & SEL_NOTIFY)) i_ops |= SR_SELECT_POLL;
+
+	printf("should select 0%o on fd %d\n", i_ops, m->NDEV_MINOR);
+	r= (*sr_fd->srf_select)(sr_fd->srf_fd,  i_ops);
+	if (r < 0)
+		return r;
+	m_ops= 0;
+	if (r & SR_SELECT_READ) m_ops |= SEL_RD;
+	if (r & SR_SELECT_WRITE) m_ops |= SEL_WR;
+	if (r & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
+
+	return m_ops;
+}
+#endif
 
 PRIVATE int walk_queue(sr_fd, q_head, q_tail_ptr, type, proc_nr, ref)
 sr_fd_t *sr_fd;
@@ -415,8 +578,12 @@ int ref;
 	for(q_ptr_prv= NULL, q_ptr= q_head; q_ptr; 
 		q_ptr_prv= q_ptr, q_ptr= q_ptr->mq_next)
 	{
-		if (q_ptr->mq_mess.PROC_NR != proc_nr)
+		if (q_ptr->mq_mess.NDEV_PROC != proc_nr)
 			continue;
+#ifdef __minix_vmd
+		if (q_ptr->mq_mess.NDEV_REF != ref)
+			continue;
+#endif
 		if (!q_ptr_prv)
 		{
 			result= (*sr_fd->srf_cancel)(sr_fd->srf_fd, type);
@@ -456,21 +623,31 @@ int can_enqueue;
 	int result, proc, ref,operation;
 	message reply, *mp;
 
-	proc= mq->mq_mess.PROC_NR;
+	proc= mq->mq_mess.NDEV_PROC;
+#ifdef __minix_vmd
+	ref= mq->mq_mess.NDEV_REF;
+#else /* Minix 3 */
 	ref= 0;
+#endif
 	operation= mq->mq_mess.m_type;
+	assert(operation != DEV_CANCEL);
 
 	if (can_enqueue)
 		mp= &mq->mq_mess;
 	else
 		mp= &reply;
 
-	mp->m_type= REVIVE;
+	mp->m_type= DEVICE_REPLY;
 	mp->REP_PROC_NR= proc;
 	mp->REP_STATUS= status;
+#ifdef __minix_vmd
+	mp->REP_REF= ref;
+	mp->REP_OPERATION= operation;
+#endif
 	result= send(mq->mq_mess.m_source, mp);
 	if (result == ELOCKED && can_enqueue)
 	{
+		mq->mq_next= NULL;
 		if (repl_queue)
 			repl_queue_tail->mq_next= mq;
 		else
@@ -491,26 +668,28 @@ vir_bytes count;
 int for_ioctl;
 {
 	sr_fd_t *loc_fd;
-	mq_t **head_ptr, **tail_ptr, *m, *tail, *mq;
+	mq_t **head_ptr, *m, *mq;
 	int ip_flag, susp_flag;
 	int result;
 	int suspended;
 	char *src;
 	acc_t *acc;
+	event_t *evp;
+	ev_arg_t arg;
 
 	loc_fd= &sr_fd_table[fd];
 
 	if (for_ioctl)
 	{
 		head_ptr= &loc_fd->srf_ioctl_q;
-		tail_ptr= &loc_fd->srf_ioctl_q_tail;
+		evp= &loc_fd->srf_ioctl_ev;
 		ip_flag= SFF_IOCTL_IP;
 		susp_flag= SFF_IOCTL_SUSP;
 	}
 	else
 	{
 		head_ptr= &loc_fd->srf_write_q;
-		tail_ptr= &loc_fd->srf_write_q_tail;
+		evp= &loc_fd->srf_write_ev;
 		ip_flag= SFF_WRITE_IP;
 		susp_flag= SFF_WRITE_SUSP;
 	}
@@ -520,27 +699,26 @@ assert (loc_fd->srf_flags & ip_flag);
 	if (!count)
 	{
 		m= *head_ptr;
-		*head_ptr= NULL;
-		tail= *tail_ptr;
-assert(m);
 		mq= m->mq_next;
+		*head_ptr= mq;
 		result= (int)offset;
 		sr_reply (m, result, 1);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
 		{
-			process_req_q(mq, tail, tail_ptr);
-		}
-		else
-		{
-assert(!mq);
+			if (mq)
+			{
+ { where(); printf("sr_get_userdata: enqueuing event\n"); }
+				arg.ev_ptr= loc_fd;
+				ev_enqueue(evp, sr_event, arg);
+			}
 		}
 		return NULL;
 	}
 
-	src= (*head_ptr)->mq_mess.ADDRESS + offset;
-	result= cp_u2b ((*head_ptr)->mq_mess.PROC_NR, src, &acc, count);
+	src= (*head_ptr)->mq_mess.NDEV_BUFFER + offset;
+	result= cp_u2b ((*head_ptr)->mq_mess.NDEV_PROC, src, &acc, count);
 
 	return result<0 ? NULL : acc;
 }
@@ -552,25 +730,27 @@ acc_t *data;
 int for_ioctl;
 {
 	sr_fd_t *loc_fd;
-	mq_t **head_ptr, **tail_ptr, *m, *tail, *mq;
+	mq_t **head_ptr, *m, *mq;
 	int ip_flag, susp_flag;
 	int result;
 	int suspended;
 	char *dst;
+	event_t *evp;
+	ev_arg_t arg;
 
 	loc_fd= &sr_fd_table[fd];
 
 	if (for_ioctl)
 	{
 		head_ptr= &loc_fd->srf_ioctl_q;
-		tail_ptr= &loc_fd->srf_ioctl_q_tail;
+		evp= &loc_fd->srf_ioctl_ev;
 		ip_flag= SFF_IOCTL_IP;
 		susp_flag= SFF_IOCTL_SUSP;
 	}
 	else
 	{
 		head_ptr= &loc_fd->srf_read_q;
-		tail_ptr= &loc_fd->srf_read_q_tail;
+		evp= &loc_fd->srf_read_ev;
 		ip_flag= SFF_READ_IP;
 		susp_flag= SFF_READ_SUSP;
 	}
@@ -580,29 +760,54 @@ int for_ioctl;
 	if (!data)
 	{
 		m= *head_ptr;
-		assert(m);
-
-		*head_ptr= NULL;
-		tail= *tail_ptr;
 		mq= m->mq_next;
+		*head_ptr= mq;
 		result= (int)offset;
 		sr_reply (m, result, 1);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
 		{
-			process_req_q(mq, tail, tail_ptr);
-		}
-		else
-		{
-			assert(!mq);
+			if (mq)
+			{
+ { where(); printf("sr_put_userdata: enqueuing event\n"); }
+				arg.ev_ptr= loc_fd;
+				ev_enqueue(evp, sr_event, arg);
+			}
 		}
 		return OK;
 	}
 
-	dst= (*head_ptr)->mq_mess.ADDRESS + offset;
-	return cp_b2u (data, (*head_ptr)->mq_mess.PROC_NR, dst);
+	dst= (*head_ptr)->mq_mess.NDEV_BUFFER + offset;
+	return cp_b2u (data, (*head_ptr)->mq_mess.NDEV_PROC, dst);
 }
+
+#ifndef __minix_vmd /* Minix 3 */
+PRIVATE void sr_select_res(fd, ops)
+int fd;
+unsigned ops;
+{
+	unsigned m_ops;
+	sr_fd_t *sr_fd;
+	message m;
+
+	sr_fd= &sr_fd_table[fd];
+	
+	m_ops= 0;
+	if (ops & SR_SELECT_READ) m_ops |= SEL_RD;
+	if (ops & SR_SELECT_WRITE) m_ops |= SEL_WR;
+	if (ops & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
+
+	m.NOTIFY_TYPE= DEV_SELECTED;
+	m.NOTIFY_ARG= fd;
+	m.NOTIFY_FLAGS= m_ops;
+
+	printf("sr_select_res: notifying caller %d with ops 0%o\n",
+		sr_fd->srf_select_proc, m_ops);
+
+	notify(sr_fd->srf_select_proc, &m);
+}
+#endif
 
 PRIVATE void process_req_q(mq, tail, tail_ptr)
 mq_t *mq, *tail, **tail_ptr;
@@ -631,6 +836,47 @@ mq_t *mq, *tail, **tail_ptr;
 	return;
 }
 
+PRIVATE void sr_event(evp, arg)
+event_t *evp;
+ev_arg_t arg;
+{
+	sr_fd_t *sr_fd;
+	int r;
+
+	sr_fd= arg.ev_ptr;
+	if (evp == &sr_fd->srf_write_ev)
+	{
+		while(sr_fd->srf_write_q)
+		{
+			r= sr_restart_write(sr_fd);
+			if (r == SUSPEND)
+				return;
+		}
+		return;
+	}
+	if (evp == &sr_fd->srf_read_ev)
+	{
+		while(sr_fd->srf_read_q)
+		{
+			r= sr_restart_read(sr_fd);
+			if (r == SUSPEND)
+				return;
+		}
+		return;
+	}
+	if (evp == &sr_fd->srf_ioctl_ev)
+	{
+		while(sr_fd->srf_ioctl_q)
+		{
+			r= sr_restart_ioctl(sr_fd);
+			if (r == SUSPEND)
+				return;
+		}
+		return;
+	}
+	ip_panic(("sr_event: unkown event\n"));
+}
+
 PRIVATE int cp_u2b (proc, src, var_acc_ptr, size)
 int proc;
 char *src;
@@ -650,6 +896,11 @@ int size;
 	{
 		size= (vir_bytes)acc->acc_length;
 
+#ifdef __minix_vmd
+		cpvec[i].cpv_src= (vir_bytes)src;
+		cpvec[i].cpv_dst= (vir_bytes)ptr2acc_data(acc);
+		cpvec[i].cpv_size= size;
+#else /* Minix 3 */
 		vir_cp_req[i].count= size;
 		vir_cp_req[i].src.proc_nr = proc;
 		vir_cp_req[i].src.segment = D;
@@ -657,6 +908,7 @@ int size;
 		vir_cp_req[i].dst.proc_nr = this_proc;
 		vir_cp_req[i].dst.segment = D;
 		vir_cp_req[i].dst.offset = (vir_bytes) ptr2acc_data(acc);
+#endif
 
 		src += size;
 		acc= acc->acc_next;
@@ -664,9 +916,17 @@ int size;
 
 		if (i == CPVEC_NR || acc == NULL)
 		{
+#ifdef __minix_vmd
+			mess.m_type= SYS_VCOPY;
+			mess.m1_i1= proc;
+			mess.m1_i2= this_proc;
+			mess.m1_i3= i;
+			mess.m1_p1= (char *)cpvec;
+#else /* Minix 3 */
 			mess.m_type= SYS_VIRVCOPY;
-			mess.VCP_VEC_SIZE = i;
-			mess.VCP_VEC_ADDR = (char *) vir_cp_req;
+			mess.VCP_VEC_SIZE= i;
+			mess.VCP_VEC_ADDR= (char *)vir_cp_req;
+#endif
 			if (sendrec(SYSTASK, &mess) <0)
 				ip_panic(("unable to sendrec"));
 			if (mess.m_type <0)
@@ -699,6 +959,11 @@ char *dest;
 
 		if (size)
 		{
+#ifdef __minix_vmd
+			cpvec[i].cpv_src= (vir_bytes)ptr2acc_data(acc);
+			cpvec[i].cpv_dst= (vir_bytes)dest;
+			cpvec[i].cpv_size= size;
+#else /* Minix 3 */
 			vir_cp_req[i].src.proc_nr = this_proc;
 			vir_cp_req[i].src.segment = D;
 			vir_cp_req[i].src.offset= (vir_bytes)ptr2acc_data(acc);
@@ -706,6 +971,7 @@ char *dest;
 			vir_cp_req[i].dst.segment = D;
 			vir_cp_req[i].dst.offset= (vir_bytes)dest;
 			vir_cp_req[i].count= size;
+#endif
 			i++;
 		}
 
@@ -714,9 +980,17 @@ char *dest;
 
 		if (i == CPVEC_NR || acc == NULL)
 		{
+#ifdef __minix_vmd
+			mess.m_type= SYS_VCOPY;
+			mess.m1_i1= this_proc;
+			mess.m1_i2= proc;
+			mess.m1_i3= i;
+			mess.m1_p1= (char *)cpvec;
+#else /* Minix 3 */
 			mess.m_type= SYS_VIRVCOPY;
-			mess.VCP_VEC_SIZE = i;
-			mess.VCP_VEC_ADDR = (char *) vir_cp_req;
+			mess.VCP_VEC_SIZE= i;
+			mess.VCP_VEC_ADDR= (char *) vir_cp_req;
+#endif
 			if (sendrec(SYSTASK, &mess) <0)
 				ip_panic(("unable to sendrec"));
 			if (mess.m_type <0)
@@ -743,15 +1017,20 @@ int operation;
 
 	for (m= repl_queue; m;)
 	{
+#ifdef __minix_vmd
+		if (m->mq_mess.REP_PROC_NR == proc && 
+			m->mq_mess.REP_REF ==ref &&
+			(m->mq_mess.REP_OPERATION == operation ||
+				operation == CANCEL_ANY))
+#else /* Minix 3 */
 		if (m->mq_mess.REP_PROC_NR == proc)
+#endif
 		{
 assert(!m_cancel);
 			m_cancel= m;
 			m= m->mq_next;
 			continue;
 		}
-assert(m->mq_mess.m_source != PM_PROC_NR);
-assert(m->mq_mess.m_type == REVIVE);
 		result= send(m->mq_mess.m_source, &m->mq_mess);
 		if (result != OK)
 			ip_panic(("unable to send: %d", result));
@@ -762,8 +1041,6 @@ assert(m->mq_mess.m_type == REVIVE);
 	repl_queue= NULL;
 	if (m_cancel)
 	{
-assert(m_cancel->mq_mess.m_source != PM_PROC_NR);
-assert(m_cancel->mq_mess.m_type == REVIVE);
 		result= send(m_cancel->mq_mess.m_source, &m_cancel->mq_mess);
 		if (result != OK)
 			ip_panic(("unable to send: %d", result));
@@ -774,5 +1051,5 @@ assert(m_cancel->mq_mess.m_type == REVIVE);
 }
 
 /*
- * $PchId: sr.c,v 1.9 1996/05/07 21:11:14 philip Exp $
+ * $PchId: sr.c,v 1.17 2005/06/28 14:26:16 philip Exp $
  */

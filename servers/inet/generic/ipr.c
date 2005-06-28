@@ -17,7 +17,7 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-#define OROUTE_NR		32
+#define OROUTE_NR		128
 #define OROUTE_STATIC_NR	16
 #define OROUTE_HASH_ASS_NR	 4
 #define OROUTE_HASH_NR		32
@@ -40,7 +40,7 @@ PRIVATE oroute_t *oroute_head;
 PRIVATE int static_oroute_nr;
 PRIVATE oroute_hash_t oroute_hash_table[OROUTE_HASH_NR][OROUTE_HASH_ASS_NR];
 
-#define IROUTE_NR		(sizeof(int) == 2 ? 64 : 512)
+#define IROUTE_NR		512
 #define IROUTE_HASH_ASS_NR	 4
 #define IROUTE_HASH_NR		32
 #define IROUTE_HASH_MASK	(IROUTE_HASH_NR-1)
@@ -64,8 +64,8 @@ FORWARD oroute_t *oroute_find_ent ARGS(( int port_nr, ipaddr_t dest ));
 FORWARD void oroute_del ARGS(( oroute_t *oroute ));
 FORWARD oroute_t *sort_dists ARGS(( oroute_t *oroute ));
 FORWARD oroute_t *sort_gws ARGS(( oroute_t *oroute ));
-FORWARD	oroute_uncache_nw ARGS(( ipaddr_t dest, ipaddr_t netmask ));
-FORWARD	iroute_uncache_nw ARGS(( ipaddr_t dest, ipaddr_t netmask ));
+FORWARD	void oroute_uncache_nw ARGS(( ipaddr_t dest, ipaddr_t netmask ));
+FORWARD	void iroute_uncache_nw ARGS(( ipaddr_t dest, ipaddr_t netmask ));
 
 PUBLIC void ipr_init()
 {
@@ -73,17 +73,13 @@ PUBLIC void ipr_init()
 	oroute_t *oroute;
 	iroute_t *iroute;
 
-#if ZERO
 	for (i= 0, oroute= oroute_table; i<OROUTE_NR; i++, oroute++)
 		oroute->ort_flags= ORTF_EMPTY;
 	static_oroute_nr= 0;
-#endif
 	assert(OROUTE_HASH_ASS_NR == 4);
 
-#if ZERO
 	for (i= 0, iroute= iroute_table; i<IROUTE_NR; i++, iroute++)
 		iroute->irt_flags= IRTF_EMPTY;
-#endif
 	assert(IROUTE_HASH_ASS_NR == 4);
 }
 
@@ -92,14 +88,12 @@ PUBLIC iroute_t *iroute_frag(port_nr, dest)
 int port_nr;
 ipaddr_t dest;
 {
-	int hash, i, r_hash_ind;
+	int hash, i;
 	iroute_hash_t *iroute_hash;
 	iroute_hash_t tmp_hash;
 	iroute_t *iroute, *bestroute;
-	time_t currtim;
 	unsigned long hash_tmp;
-
-	currtim= get_time();
+	u32_t tmp_mask;
 
 	hash= hash_iroute(port_nr, dest, hash_tmp);
 	iroute_hash= &iroute_hash_table[hash][0];
@@ -150,11 +144,12 @@ ipaddr_t dest;
 		/* More specific netmasks are better */
 		if (iroute->irt_subnetmask != bestroute->irt_subnetmask)
 		{
-			if (ntohl(iroute->irt_subnetmask) > 
-				ntohl(bestroute->irt_subnetmask))
-			{
+			/* Using two ntohl macros in one expression
+			 * is not allowed (tmp_l is modified twice)
+			 */
+			tmp_mask= ntohl(iroute->irt_subnetmask);
+			if (tmp_mask > ntohl(bestroute->irt_subnetmask))
 				bestroute= iroute;
-			}
 			continue;
 		}
 			
@@ -189,10 +184,11 @@ ipaddr_t dest;
 	return bestroute;
 }
 
-PUBLIC int oroute_frag(port_nr, dest, ttl, nexthop)
+PUBLIC int oroute_frag(port_nr, dest, ttl, msgsize, nexthop)
 int port_nr;
 ipaddr_t dest;
 int ttl;
+size_t msgsize;
 ipaddr_t *nexthop;
 {
 	oroute_t *oroute;
@@ -200,6 +196,11 @@ ipaddr_t *nexthop;
 	oroute= oroute_find_ent(port_nr, dest);
 	if (!oroute || oroute->ort_dist > ttl)
 		return EDSTNOTRCH;
+	if (msgsize && oroute->ort_mtu && 
+		oroute->ort_mtu < msgsize)
+	{
+		return EPACKSIZE;
+	}
 
 	*nexthop= oroute->ort_gateway;
 	return NW_OK;
@@ -207,13 +208,14 @@ ipaddr_t *nexthop;
 
 
 PUBLIC int ipr_add_oroute(port_nr, dest, subnetmask, gateway, 
-	timeout, dist, static_route, preference, oroute_p)
+	timeout, dist, mtu, static_route, preference, oroute_p)
 int port_nr;
 ipaddr_t dest;
 ipaddr_t subnetmask;
 ipaddr_t gateway;
 time_t timeout;
 int dist;
+int mtu;
 int static_route;
 i32_t preference;
 oroute_t **oroute_p;
@@ -222,24 +224,30 @@ oroute_t **oroute_p;
 	ip_port_t *ip_port;
 	oroute_t *oroute, *oldest_route, *prev, *nw_route, *gw_route, 
 		*prev_route;
-	time_t currtim;
+	time_t currtim, exp_tim, exp_tim_orig;
 
 	oldest_route= 0;
 	currtim= get_time();
+	if (timeout)
+		exp_tim= timeout+currtim;
+	else
+		exp_tim= 0;
 
 	DBLOCK(0x10, 
-		printf("adding oroute to "); writeIpAddr(dest);
+		printf("ip[%d]: adding oroute to ", port_nr);
+		writeIpAddr(dest);
 		printf("["); writeIpAddr(subnetmask); printf("] through ");
 		writeIpAddr(gateway);
-		printf(" timeout: %lds, distance %d\n",
-			(long)timeout/HZ, dist));
+		printf(" timeout: %lds, distance %d, pref %ld, mtu %d\n",
+			(long)timeout/HZ, dist, (long)preference, mtu));
 
 	ip_port= &ip_port_table[port_nr];
 
 	/* Validate gateway */
 	if (((gateway ^ ip_port->ip_ipaddr) & ip_port->ip_subnetmask) != 0)
 	{
-		DBLOCK(2, printf("ipr_add_oroute: invalid gateway: "); writeIpAddr(gateway); printf("\n"));
+		DBLOCK(1, printf("ip[%d]: (ipr_add_oroute) invalid gateway: ",
+			port_nr); writeIpAddr(gateway); printf("\n"));
 		return EINVAL;
 	}
 
@@ -273,24 +281,27 @@ oroute_t **oroute_p;
 				continue;
 			if (oroute->ort_dist > dist)
 				continue;
-			if (oroute->ort_dist == dist && 
-				oroute->ort_pref == preference)
-			{
-				if (timeout)
-					oroute->ort_exp_tim= currtim + timeout;
-				else
-					oroute->ort_exp_tim= 0;
-				oroute->ort_timestamp= currtim;
-				assert(oroute->ort_port == port_nr);
-				if (oroute_p != NULL)
-					*oroute_p= oroute;
-				return NW_OK;
-			}
 			break;
 		}
 		if (oroute)
 		{
 			assert(oroute->ort_port == port_nr);
+			if (dest != 0)
+			{
+				/* The new expire should not be later
+				 * than the old expire time. Except for
+				 * default routes, where the expire time
+				 * is simple set to the new value.
+				 */
+				exp_tim_orig= oroute->ort_exp_tim;
+				if (!exp_tim)
+					exp_tim= exp_tim_orig;
+				else if (exp_tim_orig &&
+					exp_tim > exp_tim_orig)
+				{
+					exp_tim= exp_tim_orig;
+				}
+			}
 			oroute_del(oroute);
 			oroute->ort_flags= 0;
 			oldest_route= oroute;
@@ -341,12 +352,10 @@ oroute_t **oroute_p;
 	oldest_route->ort_dest= dest;
 	oldest_route->ort_gateway= gateway;
 	oldest_route->ort_subnetmask= subnetmask;
-	if (timeout)
-		oldest_route->ort_exp_tim= currtim + timeout;
-	else
-		oldest_route->ort_exp_tim= 0;
+	oldest_route->ort_exp_tim= exp_tim;
 	oldest_route->ort_timestamp= currtim;
 	oldest_route->ort_dist= dist;
+	oldest_route->ort_mtu= mtu;
 	oldest_route->ort_port= port_nr;
 	oldest_route->ort_flags= ORTF_INUSE;
 	oldest_route->ort_pref= preference;
@@ -357,12 +366,12 @@ oroute_t **oroute_p;
 	 * and insert the entry during the reconstruction.
 	 */
 	for (prev= 0, nw_route= oroute_head; nw_route; 
-				prev= nw_route, nw_route= nw_route->ort_nextnw)
+		prev= nw_route, nw_route= nw_route->ort_nextnw)
 	{
 		if (nw_route->ort_port != port_nr)
 			continue;
 		if (nw_route->ort_dest == dest &&
-					nw_route->ort_subnetmask == subnetmask)
+			nw_route->ort_subnetmask == subnetmask)
 		{
 			if (prev)
 				prev->ort_nextnw= nw_route->ort_nextnw;
@@ -373,7 +382,7 @@ oroute_t **oroute_p;
 	}
 	prev_route= nw_route;
 	for(prev= NULL, gw_route= nw_route; gw_route; 
-				prev= gw_route, gw_route= gw_route->ort_nextgw)
+		prev= gw_route, gw_route= gw_route->ort_nextgw)
 	{
 		if (gw_route->ort_gateway == gateway)
 		{
@@ -399,6 +408,92 @@ oroute_t **oroute_p;
 	return NW_OK;
 }
 
+PUBLIC int ipr_del_oroute(port_nr, dest, subnetmask, gateway, static_route)
+int port_nr;
+ipaddr_t dest;
+ipaddr_t subnetmask;
+ipaddr_t gateway;
+int static_route;
+{
+	int i;
+	oroute_t *oroute;
+
+	for(i= 0, oroute= oroute_table; i<OROUTE_NR; i++, oroute++)
+	{
+		if ((oroute->ort_flags & ORTF_INUSE) == 0)
+			continue;
+		if (oroute->ort_port != port_nr ||
+			oroute->ort_dest != dest ||
+			oroute->ort_subnetmask != subnetmask ||
+			oroute->ort_gateway != gateway)
+		{
+			continue;
+		}
+		if (!!(oroute->ort_flags & ORTF_STATIC) != static_route)
+			continue;
+		break;
+	}
+
+	if (i == OROUTE_NR)
+		return ESRCH;
+
+	if (static_route)
+		static_oroute_nr--;
+
+	oroute_del(oroute);
+	oroute->ort_flags &= ~ORTF_INUSE;
+	return NW_OK;
+}
+
+
+
+PUBLIC void ipr_chk_otab(port_nr, addr, mask)
+int port_nr;
+ipaddr_t addr;
+ipaddr_t mask;
+{
+	int i;
+	oroute_t *oroute;
+
+	DBLOCK(1,
+		printf("ip[%d] (ipr_chk_otab): addr ", port_nr);
+		writeIpAddr(addr);
+		printf(" mask ");
+		writeIpAddr(mask);
+		printf("\n");
+	);
+
+	if (addr == 0)
+	{
+		/* Special hack to flush entries for an interface that
+		 * goes down.
+		 */
+		addr= mask= HTONL(0xffffffff);
+	}
+
+	for(i= 0, oroute= oroute_table; i<OROUTE_NR; i++, oroute++)
+	{
+		if ((oroute->ort_flags & ORTF_INUSE) == 0)
+			continue;
+		if (oroute->ort_port != port_nr ||
+			((oroute->ort_gateway ^ addr) & mask) == 0)
+		{
+			continue;
+		}
+		DBLOCK(1, printf("ip[%d] (ipr_chk_otab): deleting route to ",
+				port_nr);
+			writeIpAddr(oroute->ort_dest);
+			printf(" gw ");
+			writeIpAddr(oroute->ort_gateway);
+			printf("\n"));
+
+		if (oroute->ort_flags & ORTF_STATIC)
+			static_oroute_nr--;
+		oroute_del(oroute);
+		oroute->ort_flags &= ~ORTF_INUSE;
+	}
+}
+
 
 PUBLIC void ipr_gateway_down(port_nr, gateway, timeout)
 int port_nr;
@@ -421,7 +516,8 @@ time_t timeout;
 			continue;
 		result= ipr_add_oroute(port_nr, route_ind->ort_dest, 
 			route_ind->ort_subnetmask, gateway, 
-			timeout, ORTD_UNREACHABLE, FALSE, 0, NULL);
+			timeout, ORTD_UNREACHABLE, route_ind->ort_mtu,
+			FALSE, 0, NULL);
 		assert(result == NW_OK);
 	}
 }
@@ -440,13 +536,14 @@ time_t timeout;
 
 	if (!oroute)
 	{
-		DBLOCK(1, printf("got a dest unreachable for ");
+		DBLOCK(1, printf("ip[%d]: got a dest unreachable for ",
+			port_nr);
 			writeIpAddr(dest); printf("but no route present\n"));
 
 		return;
 	}
 	result= ipr_add_oroute(port_nr, dest, netmask, oroute->ort_gateway, 
-		timeout, ORTD_UNREACHABLE, FALSE, 0, NULL);
+		timeout, ORTD_UNREACHABLE, oroute->ort_mtu, FALSE, 0, NULL);
 	assert(result == NW_OK);
 }
 
@@ -461,29 +558,41 @@ ipaddr_t new_gateway;
 time_t timeout;
 {
 	oroute_t *oroute;
+	ip_port_t *ip_port;
 	int result;
 
+	ip_port= &ip_port_table[port_nr];
 	oroute= oroute_find_ent(port_nr, dest);
 
 	if (!oroute)
 	{
-		DBLOCK(1, printf("got a redirect for ");
+		DBLOCK(1, printf("ip[%d]: got a redirect for ", port_nr);
 			writeIpAddr(dest); printf("but no route present\n"));
 		return;
 	}
 	if (oroute->ort_gateway != old_gateway)
 	{
-		DBLOCK(1, printf("got a redirect from ");
+		DBLOCK(1, printf("ip[%d]: got a redirect from ", port_nr);
 			writeIpAddr(old_gateway); printf(" for ");
 			writeIpAddr(dest); printf(" but curr gateway is ");
 			writeIpAddr(oroute->ort_gateway); printf("\n"));
+		return;
+	}
+	if ((new_gateway ^ ip_port->ip_ipaddr) & ip_port->ip_subnetmask)
+	{
+		DBLOCK(1, printf("ip[%d]: redirect from ", port_nr);
+			writeIpAddr(old_gateway); printf(" for ");
+			writeIpAddr(dest); printf(" but new gateway ");
+			writeIpAddr(new_gateway);
+			printf(" is not on local subnet\n"));
 		return;
 	}
 	if (oroute->ort_flags & ORTF_STATIC)
 	{
 		if (oroute->ort_dest == dest)
 		{
-			DBLOCK(1, printf("got a redirect for ");
+			DBLOCK(1, printf("ip[%d]: got a redirect for ",
+				port_nr);
 				writeIpAddr(dest);
 				printf("but route is fixed\n"));
 			return;
@@ -493,11 +602,11 @@ time_t timeout;
 	{
 		result= ipr_add_oroute(port_nr, dest, netmask, 
 			oroute->ort_gateway, HZ, ORTD_UNREACHABLE, 
-			FALSE, 0, NULL);
+			oroute->ort_mtu, FALSE, 0, NULL);
 		assert(result == NW_OK);
 	}
 	result= ipr_add_oroute(port_nr, dest, netmask, new_gateway,
-		timeout, 1, FALSE, 0, NULL);
+		timeout, 1, oroute->ort_mtu, FALSE, 0, NULL);
 	assert(result == NW_OK);
 }
 
@@ -516,18 +625,20 @@ time_t timeout;
 
 	if (!oroute)
 	{
-		DBLOCK(1, printf("got a ttl exceeded for ");
+		DBLOCK(1, printf("ip[%d]: got a ttl exceeded for ",
+			port_nr);
 			writeIpAddr(dest); printf("but no route present\n"));
 		return;
 	}
 
 	new_dist= oroute->ort_dist * 2;
-	if (new_dist>IP_MAX_TTL)
+	if (new_dist > IP_DEF_TTL)
 	{
 		new_dist= oroute->ort_dist+1;
-		if (new_dist>IP_MAX_TTL)
+		if (new_dist >= IP_DEF_TTL)
 		{
-			DBLOCK(1, printf("got a ttl exceeded for ");
+			DBLOCK(1, printf("ip[%d]: got a ttl exceeded for ",
+				port_nr);
 				writeIpAddr(dest);
 				printf(" but dist is %d\n",
 				oroute->ort_dist));
@@ -536,7 +647,37 @@ time_t timeout;
 	}
 
 	result= ipr_add_oroute(port_nr, dest, netmask, oroute->ort_gateway, 
-		timeout, new_dist, FALSE, 0, NULL);
+		timeout, new_dist, oroute->ort_mtu, FALSE, 0, NULL);
+	assert(result == NW_OK);
+}
+
+PUBLIC void ipr_mtu(port_nr, dest, mtu, timeout)
+int port_nr;
+ipaddr_t dest;
+u16_t mtu;
+time_t timeout;
+{
+	oroute_t *oroute;
+	int result;
+
+	oroute= oroute_find_ent(port_nr, dest);
+
+	if (!oroute)
+	{
+		DBLOCK(1, printf("ip[%d]: got a mtu exceeded for ",
+			port_nr);
+			writeIpAddr(dest); printf("but no route present\n"));
+		return;
+	}
+
+	if (mtu <  IP_MIN_MTU)
+		return;
+	if (oroute->ort_mtu && mtu >= oroute->ort_mtu)
+		return;		/* Only decrease mtu */
+
+	result= ipr_add_oroute(port_nr, dest, HTONL(0xffffffff),
+		oroute->ort_gateway, timeout, oroute->ort_dist, mtu,
+		FALSE, 0, NULL);
 	assert(result == NW_OK);
 }
 
@@ -572,6 +713,7 @@ nwio_route_t *route_ent;
 			route_ent->nwr_flags |= NWRF_STATIC;
 	}
 	route_ent->nwr_pref= oroute->ort_pref;
+	route_ent->nwr_mtu= oroute->ort_mtu;
 	route_ent->nwr_ifaddr= ip_get_ifaddr(oroute->ort_port);
 	return NW_OK;
 }
@@ -581,12 +723,13 @@ PRIVATE oroute_t *oroute_find_ent(port_nr, dest)
 int port_nr;
 ipaddr_t dest;
 {
-	int hash, i, r_hash_ind;
+	int hash;
 	oroute_hash_t *oroute_hash;
 	oroute_hash_t tmp_hash;
 	oroute_t *oroute, *bestroute;
 	time_t currtim;
 	unsigned long hash_tmp;
+	u32_t tmp_mask;
 
 	currtim= get_time();
 
@@ -645,8 +788,11 @@ ipaddr_t dest;
 			continue;
 		}
 		assert(oroute->ort_dest != bestroute->ort_dest);
-		if (ntohl(oroute->ort_subnetmask) > 
-			ntohl(bestroute->ort_subnetmask))
+		/* Using two ntohl macros in one expression
+		 * is not allowed (tmp_l is modified twice)
+		 */
+		tmp_mask= ntohl(oroute->ort_subnetmask);
+		if (tmp_mask > ntohl(bestroute->ort_subnetmask))
 		{
 			bestroute= oroute;
 			continue;
@@ -669,6 +815,19 @@ PRIVATE void oroute_del(oroute)
 oroute_t *oroute;
 {
 	oroute_t *prev, *nw_route, *gw_route, *dist_route, *prev_route;
+
+	DBLOCK(0x10, 
+		printf("ip[%d]: deleting oroute to ", oroute->ort_port);
+		writeIpAddr(oroute->ort_dest);
+		printf("["); writeIpAddr(oroute->ort_subnetmask);
+		printf("] through ");
+		writeIpAddr(oroute->ort_gateway);
+		printf(
+	" timestamp %lds, timeout: %lds, distance %d pref %ld mtu %ld ",
+			(long)oroute->ort_timestamp/HZ,
+			(long)oroute->ort_exp_tim/HZ, oroute->ort_dist,
+			(long)oroute->ort_pref, (long)oroute->ort_mtu);
+		printf("flags 0x%x\n", oroute->ort_flags));
 
 	for (prev= NULL, nw_route= oroute_head; nw_route; 
 				prev= nw_route, nw_route= nw_route->ort_nextnw)
@@ -735,6 +894,8 @@ oroute_t *oroute;
 	int best_dist, best_pref;
 
 	best= NULL;
+	best_dist= best_pref= 0;
+	best_prev= NULL;
 	for (prev= NULL, r= oroute; r; prev= r, r= r->ort_nextdist)
 	{
 		if (best == NULL)
@@ -777,6 +938,8 @@ oroute_t *oroute;
 	int best_dist, best_pref;
 
 	best= NULL;
+	best_dist= best_pref= 0;
+	best_prev= NULL;
 	for (prev= NULL, r= oroute; r; prev= r, r= r->ort_nextgw)
 	{
 		if (best == NULL)
@@ -812,7 +975,7 @@ oroute_t *oroute;
 }
 
 
-PRIVATE	oroute_uncache_nw(dest, netmask)
+PRIVATE	void oroute_uncache_nw(dest, netmask)
 ipaddr_t dest;
 ipaddr_t netmask;
 {
@@ -849,6 +1012,7 @@ nwio_route_t *route_ent;
 
 	iroute= &iroute_table[ent_no];
 
+	route_ent->nwr_ent_no= ent_no;
 	route_ent->nwr_ent_count= IROUTE_NR;
 	route_ent->nwr_dest= iroute->irt_dest;
 	route_ent->nwr_netmask= iroute->irt_subnetmask;
@@ -864,23 +1028,38 @@ nwio_route_t *route_ent;
 			route_ent->nwr_flags |= NWRF_UNREACHABLE;
 	}
 	route_ent->nwr_pref= 0;
+	route_ent->nwr_mtu= iroute->irt_mtu;
 	route_ent->nwr_ifaddr= ip_get_ifaddr(iroute->irt_port);
 	return NW_OK;
 }
 
 
 PUBLIC int ipr_add_iroute(port_nr, dest, subnetmask, gateway, 
-	dist, static_route, iroute_p)
+	dist, mtu, static_route, iroute_p)
 int port_nr;
 ipaddr_t dest;
 ipaddr_t subnetmask;
 ipaddr_t gateway;
 int dist;
+int mtu;
 int static_route;
 iroute_t **iroute_p;
 {
 	int i;
 	iroute_t *iroute, *unused_route;
+	ip_port_t *ip_port;
+
+	ip_port= &ip_port_table[port_nr];
+
+	/* Check gateway */
+	if (((gateway ^ ip_port->ip_ipaddr) & ip_port->ip_subnetmask) != 0 &&
+		gateway != 0)
+	{
+		DBLOCK(1, printf("ip[%d] (ipr_add_iroute): invalid gateway: ",
+			port_nr);
+			writeIpAddr(gateway); printf("\n"));
+		return EINVAL;
+	}
 
 	unused_route= NULL;
 	if (static_route)
@@ -932,6 +1111,7 @@ iroute_t **iroute_p;
 	iroute->irt_subnetmask= subnetmask;
 	iroute->irt_gateway= gateway;
 	iroute->irt_dist= dist;
+	iroute->irt_mtu= mtu;
 	iroute->irt_flags= IRTF_INUSE;
 	if (static_route)
 		iroute->irt_flags |= IRTF_STATIC;
@@ -943,13 +1123,11 @@ iroute_t **iroute_p;
 }
 
 
-PUBLIC int ipr_del_iroute(port_nr, dest, subnetmask, gateway, 
-	dist, static_route)
+PUBLIC int ipr_del_iroute(port_nr, dest, subnetmask, gateway, static_route)
 int port_nr;
 ipaddr_t dest;
 ipaddr_t subnetmask;
 ipaddr_t gateway;
-int dist;
 int static_route;
 {
 	int i;
@@ -983,7 +1161,63 @@ int static_route;
 }
 
 
-PRIVATE	iroute_uncache_nw(dest, netmask)
+PUBLIC void ipr_chk_itab(port_nr, addr, mask)
+int port_nr;
+ipaddr_t addr;
+ipaddr_t mask;
+{
+	int i;
+	iroute_t *iroute;
+
+	DBLOCK(1,
+		printf("ip[%d] (ipr_chk_itab): addr ", port_nr);
+		writeIpAddr(addr);
+		printf(" mask ");
+		writeIpAddr(mask);
+		printf("\n");
+	);
+
+	if (addr == 0)
+	{
+		/* Special hack to flush entries for an interface that
+		 * goes down.
+		 */
+		addr= mask= HTONL(0xffffffff);
+	}
+
+	for(i= 0, iroute= iroute_table; i<IROUTE_NR; i++, iroute++)
+	{
+		if ((iroute->irt_flags & IRTF_INUSE) == 0)
+			continue;
+		if (iroute->irt_port != port_nr)
+			continue;
+		if (iroute->irt_gateway == 0)
+		{
+			/* Special case: attached network. */
+			if (iroute->irt_subnetmask == mask &&
+				iroute->irt_dest == (addr & mask))
+			{
+				/* Nothing changed. */
+				continue;
+			}
+		}
+		if (((iroute->irt_gateway ^ addr) & mask) == 0)
+			continue;
+
+		DBLOCK(1, printf("ip[%d] (ipr_chk_itab): deleting route to ",
+				port_nr);
+		    writeIpAddr(iroute->irt_dest);
+		    printf(" gw ");
+		    writeIpAddr(iroute->irt_gateway);
+		    printf("\n"));
+
+		iroute_uncache_nw(iroute->irt_dest, iroute->irt_subnetmask);
+		iroute->irt_flags &= ~IRTF_INUSE;
+	}
+}
+
+
+PRIVATE	void iroute_uncache_nw(dest, netmask)
 ipaddr_t dest;
 ipaddr_t netmask;
 {
@@ -1008,9 +1242,5 @@ ipaddr_t netmask;
 
 
 /*
- * Debugging, management
- */
-
-/*
- * $PchId: ipr.c,v 1.9 1996/07/31 17:26:33 philip Exp $
+ * $PchId: ipr.c,v 1.23 2003/01/22 11:49:58 philip Exp $
  */

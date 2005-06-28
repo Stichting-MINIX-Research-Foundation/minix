@@ -29,14 +29,19 @@ typedef struct ip_hdr
 #define IP_OPT_COPIED	0x80
 #define IP_OPT_NUMBER	0x1f
 
-#define IP_OPT_EOL	0x00
-#define IP_OPT_NOP	0x01
-#define IP_OPT_LSRR	0x83
-#define IP_OPT_RR	0x07
+#define IP_OPT_EOL	0x00	/* End of Options List, RFC-791 */
+#define IP_OPT_NOP	0x01	/* No Operation, RFC-791 */
+#define IP_OPT_RR	0x07	/* Record Route, RFC-791 */
+#define IP_OPT_TS	0x44	/* Timestamp, RFC-791 */
+#define IP_OPT_SEC	0x82	/* Security, RFC-1108 */
+#define IP_OPT_LSRR	0x83	/* Loose Source Route, RFC-791 */
+#define IP_OPT_SSRR	0x89	/* Strict Source Route, RFC-791 */
+#define IP_OPT_RTRALT	0x94	/* Router Alert, RFC-2113 */
+
 #define IP_OPT_RR_MIN		4
 
 #endif /* __SERVER__IP__GEN__HDR_H__ */
 
 /*
- * $PchId: ip_hdr.h,v 1.4 1995/11/17 22:26:00 philip Exp $
+ * $PchId: ip_hdr.h,v 1.5 2002/06/10 07:11:46 philip Exp $
  */

@@ -22,8 +22,11 @@ void arp_set_ipaddr ARGS(( int eth_port, ipaddr_t ipaddr ));
 int arp_set_cb ARGS(( int eth_port, int ip_port, arp_func_t arp_func ));
 int arp_ip_eth ARGS(( int eth_port, ipaddr_t ipaddr, ether_addr_t *ethaddr ));
 
+int arp_ioctl ARGS(( int eth_port, int fd, ioreq_t req,
+	get_userdata_t get_userdata, put_userdata_t put_userdata ));
+
 #endif /* ARP_H */
 
 /*
- * $PchId: arp.h,v 1.5 1995/11/21 06:45:27 philip Exp $
+ * $PchId: arp.h,v 1.7 2001/04/19 18:58:17 philip Exp $
  */

@@ -9,6 +9,7 @@ Copyright 1995 Philip Homburg
 #include "clock.h"
 #include "event.h"
 #include "type.h"
+#include "sr.h"
 
 #include "assert.h"
 #include "io.h"
@@ -35,7 +36,13 @@ int enq;				/* Writes need to be enqueued. */
 	if (tcp_conn->tc_flags & TCF_MORE2WRITE)
 		return;
 
-	/* XXX - do we really have something to send here? */
+	/* Do we really have something to send here? */
+	if (tcp_conn->tc_SND_UNA == tcp_conn->tc_SND_NXT &&
+		!(tcp_conn->tc_flags & TCF_SEND_ACK) &&
+		!tcp_conn->tc_frag2send)
+	{
+		return;
+	}
 
 	tcp_conn->tc_flags |= TCF_MORE2WRITE;
 	tcp_conn->tc_send_link= NULL;
@@ -109,12 +116,17 @@ tcp_port_t *tcp_port;
 			{
 				if (r == NW_WOULDBLOCK)
 					break;
+				if (r == EPACKSIZE)
+				{
+					tcp_mtu_exceeded(tcp_conn);
+					continue;
+				}
 				if (r == EDSTNOTRCH)
 				{
 					tcp_notreach(tcp_conn);
 					continue;
 				}
-				else if (r == EBADDEST)
+				if (r == EBADDEST)
 					continue;
 			}
 			assert(r == NW_OK ||
@@ -151,21 +163,23 @@ tcp_conn_t *tcp_conn;
 	acc_t *pack2write, *tmp_pack, *tcp_pack;
 	tcp_hdr_t *tcp_hdr;
 	ip_hdr_t *ip_hdr;
-	int tot_hdr_size, ip_hdr_len;
+	int tot_hdr_size, ip_hdr_len, no_push, head, more2write;
 	u32_t seg_seq, seg_lo_data, queue_lo_data, seg_hi, seg_hi_data;
-	u16_t seg_up;
+	u16_t seg_up, mss;
 	u8_t seg_flags;
-	time_t new_dis;
 	size_t pack_size;
-	time_t curr_time;
+	clock_t curr_time, new_dis;
 	u8_t *optptr;
+
+	mss= tcp_conn->tc_mtu-IP_TCP_MIN_HDR_SIZE;
 
 	assert(tcp_conn->tc_busy);
 	curr_time= get_time();
 	switch (tcp_conn->tc_state)
 	{
 	case TCS_CLOSED:
-		return 0;
+	case TCS_LISTEN:
+		return NULL;
 	case TCS_SYN_RECEIVED:
 	case TCS_SYN_SENT:
 
@@ -177,14 +191,19 @@ tcp_conn_t *tcp_conn;
 
 		tcp_conn->tc_flags &= ~TCF_SEND_ACK;
 
+		/* Advertise a mss based on the port mtu. The current mtu may
+		 * be lower if the other side sends a smaller mss.
+		 */
+		mss= tcp_conn->tc_port->tp_mtu-IP_TCP_MIN_HDR_SIZE;
+
 		/* Include a max segment size option. */
 		assert(tcp_conn->tc_tcpopt == NULL);
 		tcp_conn->tc_tcpopt= bf_memreq(4);
 		optptr= (u8_t *)ptr2acc_data(tcp_conn->tc_tcpopt);
 		optptr[0]= TCP_OPT_MSS;
 		optptr[1]= 4;
-		optptr[2]= tcp_conn->tc_mss >> 8;
-		optptr[3]= tcp_conn->tc_mss & 0xFF;
+		optptr[2]= mss >> 8;
+		optptr[3]= mss & 0xFF;
 
 		pack2write= tcp_make_header(tcp_conn, &ip_hdr, &tcp_hdr, 
 			(acc_t *)0);
@@ -216,7 +235,7 @@ tcp_conn_t *tcp_conn;
 		tcp_hdr->th_seq_nr= htonl(seg_seq);
 		tcp_hdr->th_ack_nr= htonl(tcp_conn->tc_RCV_NXT);
 		tcp_hdr->th_flags= seg_flags;
-		tcp_hdr->th_window= htons(tcp_conn->tc_mss);
+		tcp_hdr->th_window= htons(mss);
 			/* Initially we allow one segment */
 
 		ip_hdr->ih_length= htons(tot_hdr_size);
@@ -293,20 +312,93 @@ tcp_conn_t *tcp_conn;
 			}
 
 			tot_hdr_size= bf_bufsize(pack2write);
-			if (seg_hi_data - seg_lo_data > tcp_conn->tc_mss -
-				tot_hdr_size)
+
+			no_push= (tcp_LEmod4G(tcp_conn->tc_SND_PSH, seg_seq));
+			head= (seg_seq == tcp_conn->tc_SND_UNA);
+			if (no_push)
 			{
-				seg_hi_data= seg_lo_data + tcp_conn->tc_mss -
-					tot_hdr_size;
+				/* Shutdown sets SND_PSH */
+				seg_flags &= ~THF_FIN;
+				if (seg_hi_data-seg_lo_data <= 1)
+				{
+					/* Allways keep at least one byte
+					 * for a future push.
+					 */
+					DBLOCK(0x20,
+					    printf("no data: no push\n"));
+					if (head)
+					{
+						DBLOCK(0x1, printf(
+					"no data: setting TCF_NO_PUSH\n"));
+						tcp_conn->tc_flags |=
+							TCF_NO_PUSH;
+					}
+					goto after_data;
+				}
+				seg_hi_data--;
+			}
+
+			if (tot_hdr_size != IP_TCP_MIN_HDR_SIZE)
+			{
+				printf(
+				"tcp_write`make_pack: tot_hdr_size = %d\n",
+					tot_hdr_size);
+				mss= tcp_conn->tc_mtu-tot_hdr_size;
+			}
+			if (seg_hi_data - seg_lo_data > mss)
+			{
+				/* Truncate to at most one segment */
+				seg_hi_data= seg_lo_data + mss;
 				seg_hi= seg_hi_data;
 				seg_flags &= ~THF_FIN;
 			}
+
+			if (no_push &&
+				seg_hi_data-seg_lo_data != mss)
+			{
+				DBLOCK(0x20, printf(
+				"no data: no push for partial segment\n"));
+				more2write= (tcp_conn->tc_fd &&
+					(tcp_conn->tc_fd->tf_flags &
+					TFF_WRITE_IP));
+				DIFBLOCK(2, more2write, 
+					printf(
+			"tcp_send`make_pack: more2write -> !TCF_NO_PUSH\n");
+				);
+				if (head && !more2write)
+				{
+					DBLOCK(0x1, printf(
+				"partial segment: setting TCF_NO_PUSH\n"));
+					tcp_conn->tc_flags |= TCF_NO_PUSH;
+					tcp_print_conn(tcp_conn);
+					printf("\n");
+				}
+				goto after_data;
+			}
+
 
 			if (tcp_Gmod4G(seg_hi, tcp_conn->tc_snd_cwnd))
 			{
 				seg_hi_data= tcp_conn->tc_snd_cwnd;
 				seg_hi= seg_hi_data;
 				seg_flags &= ~THF_FIN;
+			}
+
+			if (!head &&
+				seg_hi_data-seg_lo_data < mss)
+			{
+				if (tcp_conn->tc_flags & TCF_PUSH_NOW)
+				{
+					DBLOCK(0x20,
+					printf("push: no Nagle\n"));
+				}
+				else
+				{
+				DBLOCK(0x20,
+					printf("no data: partial packet\n"));
+				seg_flags &= ~THF_FIN;
+				goto after_data;
+				}
 			}
 
 			if (seg_hi-seg_seq == 0)
@@ -316,18 +408,10 @@ tcp_conn_t *tcp_conn;
 				goto after_data;
 			}
 
-			if (seg_seq != tcp_conn->tc_SND_UNA &&
-				seg_hi_data-seg_lo_data+tot_hdr_size < 
-				tcp_conn->tc_mss)
-			{
-				DBLOCK(0x20,
-					printf("no data: partial packet\n"));
-				seg_flags &= ~THF_FIN;
-				goto after_data;
-			}
-
 			if (tcp_GEmod4G(tcp_conn->tc_SND_UP, seg_lo_data))
 			{
+				extern int killer_inet;
+
 				if (tcp_GEmod4G(tcp_conn->tc_SND_UP,
 					seg_hi_data))
 				{
@@ -338,7 +422,8 @@ tcp_conn_t *tcp_conn;
 					seg_up= tcp_conn->tc_SND_UP-seg_seq;
 				}
 				seg_flags |= THF_URG;
-				if ((tcp_conn->tc_flags & TCF_BSD_URG) &&
+				if (!killer_inet &&
+					(tcp_conn->tc_flags & TCF_BSD_URG) &&
 					seg_up == 0)
 				{
 					/* A zero urgent pointer doesn't mean
@@ -432,11 +517,9 @@ after_data:
 			tcp_conn->tc_senddis= new_dis;
 
 		return pack2write;
-#if !CRAMPED
 	default:
 		DBLOCK(1, tcp_print_conn(tcp_conn); printf("\n"));
 		ip_panic(( "Illegal state" ));
-#endif
 	}
 	assert(0);
 	return NULL;
@@ -451,16 +534,23 @@ tcp_conn_t *tcp_conn;
 u32_t seg_ack;
 u16_t new_win;
 {
+	tcp_fd_t *tcp_fd;
 	size_t size, offset;
 	acc_t *pack;
-	time_t retrans_time, curr_time, rtt;
+	clock_t retrans_time, curr_time, rtt, artt, drtt, srtt;
 	u32_t queue_lo, queue_hi;
 	u16_t mss, cthresh;
 	unsigned window;
 
+	DBLOCK(0x10, printf("tcp_release_retrans, conn[%d]: ack %lu, win %u\n",
+		tcp_conn-tcp_conn_table, (unsigned long)seg_ack, new_win););
+
 	assert(tcp_conn->tc_busy);
 	assert (tcp_GEmod4G(seg_ack, tcp_conn->tc_SND_UNA));
 	assert (tcp_LEmod4G(seg_ack, tcp_conn->tc_SND_NXT));
+
+	tcp_conn->tc_snd_dack= 0;
+	mss= tcp_conn->tc_mtu-IP_TCP_MIN_HDR_SIZE;
 
 	curr_time= get_time();
 	if (tcp_conn->tc_rt_seq != 0 && 
@@ -470,11 +560,6 @@ u16_t new_win;
 		retrans_time= curr_time-tcp_conn->tc_rt_time;
 		rtt= tcp_conn->tc_rtt;
 
-		DBLOCK(0x20, printf(
-		"tcp_release_retrans, conn[%d]: retrans_time= %ld ms\n",
-			tcp_conn-tcp_conn_table, retrans_time*1000/HZ));
-
-
 		tcp_conn->tc_rt_seq= 0;
 
 		if (rtt == TCP_RTT_GRAN*CLOCK_GRAN &&
@@ -482,18 +567,25 @@ u16_t new_win;
 		{
 			/* Common in fast networks. Nothing to do. */
 		}
-		else if (rtt >= retrans_time && rtt <= 2*retrans_time)
+		else
 		{
-			/* Nothing to do. We assume that a factor 2 for
-			 * variance is enough.
-			 */
-		}
-		else if (retrans_time > rtt)
-		{
-			/* Retrans time is really too small. */
+			srtt= retrans_time * TCP_RTT_SCALE;
 
-			tcp_conn->tc_rtt= rtt*2;
-			if (tcp_conn->tc_rtt > TCP_RTT_MAX)
+			artt= tcp_conn->tc_artt;
+			artt= ((TCP_RTT_SMOOTH-1)*artt+srtt)/TCP_RTT_SMOOTH;
+
+			srtt -= artt;
+			if (srtt < 0)
+				srtt= -srtt;
+			drtt= tcp_conn->tc_drtt;
+			drtt= ((TCP_RTT_SMOOTH-1)*drtt+srtt)/TCP_RTT_SMOOTH;
+
+			rtt= (artt+TCP_DRTT_MULT*drtt-1)/TCP_RTT_SCALE+1;
+			if (rtt < TCP_RTT_GRAN*CLOCK_GRAN)
+			{
+				rtt= TCP_RTT_GRAN*CLOCK_GRAN;
+			}
+			else if (rtt > TCP_RTT_MAX)
 			{
 #if DEBUG
 				static int warned /* = 0 */;
@@ -506,50 +598,33 @@ u16_t new_win;
 					warned= 1;
 				}
 #endif
-				tcp_conn->tc_rtt= TCP_RTT_MAX;
+				rtt= TCP_RTT_MAX;
 			}
-			assert (tcp_conn->tc_rtt);
+			DBLOCK(0x10, printf(
+	"tcp_release_retrans, conn[%d]: retrans_time= %ld ms, rtt = %ld ms\n",
+				tcp_conn-tcp_conn_table,
+				retrans_time*1000/HZ,
+				rtt*1000/HZ));
 
 			DBLOCK(0x10, printf(
-"tcp_release_retrans, conn[%d]: (was too small) retrans_time= %ld ms, rtt= %ld ms\n",
-				tcp_conn-tcp_conn_table, retrans_time*1000/HZ,
-				tcp_conn->tc_rtt*1000/HZ));
+	"tcp_release_retrans: artt= %ld -> %ld, drtt= %ld -> %ld\n",
+				tcp_conn->tc_artt, artt,
+				tcp_conn->tc_drtt, drtt));
 
-
-		}
-		else if (seg_ack - tcp_conn->tc_rt_seq == tcp_conn->tc_mss)
-		{
-			/* Retrans time is really too big. */
-			rtt= (rtt*3)>>2;
-			if (rtt < TCP_RTT_GRAN*CLOCK_GRAN)
-				rtt= TCP_RTT_GRAN*CLOCK_GRAN;
+			tcp_conn->tc_artt= artt;
+			tcp_conn->tc_drtt= drtt;
 			tcp_conn->tc_rtt= rtt;
-			assert (tcp_conn->tc_rtt);
-
-			DBLOCK(0x10, printf(
-"tcp_release_retrans, conn[%d]: (was too big) retrans_time= %ld ms, rtt= %ld ms\n",
-				tcp_conn-tcp_conn_table, retrans_time*1000/HZ,
-				tcp_conn->tc_rtt*1000/HZ));
 		}
-		else
-		{
-			/* Retrans time might be too big. Try a bit smaller. */
-			rtt= (rtt*31)>>5;
-			if (rtt < TCP_RTT_GRAN*CLOCK_GRAN)
-				rtt= TCP_RTT_GRAN*CLOCK_GRAN;
-			tcp_conn->tc_rtt= rtt;
-			assert (tcp_conn->tc_rtt);
 
-			DBLOCK(0x20, printf(
-"tcp_release_retrans, conn[%d]: (maybe too big) retrans_time= %ld ms, rtt= %ld ms\n",
-				tcp_conn-tcp_conn_table, retrans_time*1000/HZ,
-				tcp_conn->tc_rtt*1000/HZ));
+		if (tcp_conn->tc_mtu != tcp_conn->tc_max_mtu &&
+			curr_time > tcp_conn->tc_mtutim+TCP_PMTU_INCR_IV)
+		{
+			tcp_mtu_incr(tcp_conn);
 		}
 	}
 
 	/* Update the current window. */
 	window= tcp_conn->tc_snd_cwnd-tcp_conn->tc_SND_UNA;
-	mss= tcp_conn->tc_mss;
 	assert(seg_ack != tcp_conn->tc_SND_UNA);
 
 	/* For every real ACK we try to increase the current window
@@ -588,6 +663,22 @@ u16_t new_win;
 	}
 	assert(tcp_GEmod4G(tcp_conn->tc_snd_cwnd, seg_ack));
 
+	/* Advance ISS every 0.5GB to avoid problem with wrap around */
+	if (tcp_conn->tc_SND_UNA - tcp_conn->tc_ISS > 0x40000000)
+	{
+		tcp_conn->tc_ISS += 0x20000000;
+		DBLOCK(1, printf(
+			"tcp_release_retrans: updating ISS to 0x%lx\n",
+			(unsigned long)tcp_conn->tc_ISS););
+		if (tcp_Lmod4G(tcp_conn->tc_SND_UP, tcp_conn->tc_ISS))
+		{
+			tcp_conn->tc_SND_UP= tcp_conn->tc_ISS;
+			DBLOCK(1, printf(
+			"tcp_release_retrans: updating SND_UP to 0x%lx\n",
+				(unsigned long)tcp_conn->tc_SND_UP););
+		}
+	}
+
 	if (queue_lo == tcp_conn->tc_ISS)
 		queue_lo++;
 
@@ -608,10 +699,6 @@ u16_t new_win;
 	if (!size)
 	{
 		bf_afree(pack);
-
-		/* Reset window if a write is completed */
-		tcp_conn->tc_snd_cwnd= tcp_conn->tc_SND_UNA +
-			2*tcp_conn->tc_mss;
 	}
 	else
 	{
@@ -622,18 +709,25 @@ u16_t new_win;
 	if (tcp_Gmod4G(tcp_conn->tc_SND_TRM, tcp_conn->tc_snd_cwnd))
 		tcp_conn->tc_SND_TRM= tcp_conn->tc_snd_cwnd;
 
-	/* Copy in new data if a write request is pending and
-	 * SND_NXT-SND_TRM is less than 1 mss.
+	/* Copy in new data if an ioctl is pending or if a write request is
+	 * pending and either the write can be completed or at least one
+	 * mss buffer space is available.
 	 */
-	if (tcp_conn->tc_fd)
+	tcp_fd= tcp_conn->tc_fd;
+	if (tcp_fd)
 	{
-		if ((tcp_conn->tc_fd->tf_flags &
-			(TFF_WRITE_IP|TFF_IOCTL_IP)) &&
-			tcp_conn->tc_SND_NXT-tcp_conn->tc_SND_TRM <
-			tcp_conn->tc_mss)
+		if (tcp_fd->tf_flags & TFF_IOCTL_IP) 
 		{
 			tcp_fd_write(tcp_conn);
 		}
+		if ((tcp_fd->tf_flags & TFF_WRITE_IP) &&
+			(size+tcp_fd->tf_write_count <= TCP_MAX_SND_WND_SIZE ||
+			size <= TCP_MAX_SND_WND_SIZE-mss))
+		{
+			tcp_fd_write(tcp_conn);
+		}
+		if (tcp_fd->tf_flags & TFF_SEL_WRITE) 
+			tcp_rsel_write(tcp_conn);
 	}
 	else
 	{
@@ -645,6 +739,12 @@ u16_t new_win;
 			tcp_close_connection(tcp_conn, ENOTCONN);
 			return;
 		}
+	}
+
+	if (!size && !tcp_conn->tc_send_data)
+	{
+		/* Reset window if a write is completed */
+		tcp_conn->tc_snd_cwnd= tcp_conn->tc_SND_UNA + mss;
 	}
 
 	DIFBLOCK(2, (tcp_conn->tc_snd_cwnd == tcp_conn->tc_SND_TRM),
@@ -659,105 +759,13 @@ u16_t new_win;
 }
 
 /*
-tcp_send_timeout
+tcp_fast_retrans
 */
 
-PRIVATE void tcp_send_timeout(conn, timer)
-int conn;
-struct timer *timer;
+PUBLIC void tcp_fast_retrans(tcp_conn)
+tcp_conn_t *tcp_conn;
 {
-	tcp_conn_t *tcp_conn;
 	u16_t mss, mss2;
-	time_t curr_time, stt, timeout;
-
-	curr_time= get_time();
-
-	tcp_conn= &tcp_conn_table[conn];
-	assert(tcp_conn->tc_flags & TCF_INUSE);
-	assert(tcp_conn->tc_state != TCS_CLOSED);
-	assert(tcp_conn->tc_state != TCS_LISTEN);
-
-	if (tcp_conn->tc_SND_NXT == tcp_conn->tc_SND_UNA)
-	{
-		/* Nothing to do */
-		assert(tcp_conn->tc_SND_TRM == tcp_conn->tc_SND_UNA);
-
-		/* A new write sets the timer if tc_transmit_seq == SND_UNA */
-		tcp_conn->tc_transmit_seq= tcp_conn->tc_SND_UNA;
-		tcp_conn->tc_stt= 0;
-		tcp_conn->tc_0wnd_to= 0;
-		assert(!tcp_conn->tc_fd ||
-			!(tcp_conn->tc_fd->tf_flags & TFF_WRITE_IP));
-		return;
-	}
-
-	if (tcp_conn->tc_transmit_seq != tcp_conn->tc_SND_UNA)
-	{
-		/* Some data has been acknowledged since the last time the
-		 * timer was set, set the timer again. */
-		tcp_conn->tc_transmit_seq= tcp_conn->tc_SND_UNA;
-		tcp_conn->tc_stt= 0;
-		tcp_conn->tc_0wnd_to= 0;
-
-		DBLOCK(0x20, printf(
-	"tcp_send_timeout: conn[%d] setting timer to %ld ms (+%ld ms)\n",
-			tcp_conn-tcp_conn_table,
-			(curr_time+tcp_conn->tc_rtt)*1000/HZ,
-			tcp_conn->tc_rtt*1000/HZ));
-
-		clck_timer(&tcp_conn->tc_transmit_timer,
-			curr_time+tcp_conn->tc_rtt,
-			tcp_send_timeout, tcp_conn-tcp_conn_table);
-		return;
-	}
-
-	if (tcp_conn->tc_stt == 0)
-	{
-		/* Some packet arrived but did not acknowledge any data.
-		 * Apparently, the other side is still alive and has a
-		 * reason to transmit. We can asume a zero window.
-		 */
-
-		DBLOCK(0x10, printf("conn[%d] setting zero window timer\n",
-			tcp_conn-tcp_conn_table));
-
-		if (tcp_conn->tc_0wnd_to < TCP_0WND_MIN)
-			tcp_conn->tc_0wnd_to= TCP_0WND_MIN;
-		else if (tcp_conn->tc_0wnd_to < tcp_conn->tc_rtt)
-			tcp_conn->tc_0wnd_to= tcp_conn->tc_rtt;
-		else
-		{
-			tcp_conn->tc_0wnd_to *= 2;
-			if (tcp_conn->tc_0wnd_to > TCP_0WND_MAX)
-				tcp_conn->tc_0wnd_to= TCP_0WND_MAX;
-		}
-		tcp_conn->tc_stt= curr_time;
-		
-		tcp_conn->tc_rt_seq= 0;
-
-		DBLOCK(0x20, printf(
-	"tcp_send_timeout: conn[%d] setting timer to %ld ms (+%ld ms)\n",
-			tcp_conn-tcp_conn_table,
-			(curr_time+tcp_conn->tc_0wnd_to)*1000/HZ,
-			tcp_conn->tc_0wnd_to*1000/HZ));
-
-		clck_timer(&tcp_conn->tc_transmit_timer,
-			curr_time+tcp_conn->tc_0wnd_to,
-			tcp_send_timeout, tcp_conn-tcp_conn_table);
-		return;
-	}
-
-	DIFBLOCK(0x10, (tcp_conn->tc_fd == 0),
-		printf("conn[%d] timeout in abondoned connection\n",
-		tcp_conn-tcp_conn_table));
-
-	/* At this point, we have do a retransmission, or send a zero window
-	 * probe, which is almost the same.
-	 */
-
-	DBLOCK(0x20, printf("tcp_send_timeout: conn[%d] una= %u, rtt= %dms\n",
-		tcp_conn-tcp_conn_table,
-		tcp_conn->tc_SND_UNA, tcp_conn->tc_rtt*1000/HZ));
 
 	/* Update threshold sequence number for retransmission calculation. */
 	if (tcp_Gmod4G(tcp_conn->tc_SND_TRM, tcp_conn->tc_rt_threshold))
@@ -765,7 +773,7 @@ struct timer *timer;
 
 	tcp_conn->tc_SND_TRM= tcp_conn->tc_SND_UNA;
 
-	mss= tcp_conn->tc_mss;
+	mss= tcp_conn->tc_mtu-IP_TCP_MIN_HDR_SIZE;
 	mss2= 2*mss;
 
 	if (tcp_conn->tc_snd_cwnd == tcp_conn->tc_SND_UNA)
@@ -781,8 +789,231 @@ struct timer *timer;
 			tcp_conn->tc_snd_cthresh= mss2;
 	}
 
+	tcp_conn_write(tcp_conn, 1);
+}
+
+#if 0
+PUBLIC void do_tcp_timeout(tcp_conn)
+tcp_conn_t *tcp_conn;
+{
+	tcp_send_timeout(tcp_conn-tcp_conn_table,
+		&tcp_conn->tc_transmit_timer);
+}
+#endif
+
+/*
+tcp_send_timeout
+*/
+
+PRIVATE void tcp_send_timeout(conn, timer)
+int conn;
+struct timer *timer;
+{
+	tcp_conn_t *tcp_conn;
+	u16_t mss, mss2;
+	u32_t snd_una, snd_nxt;
+	clock_t curr_time, rtt, stt, timeout;
+	acc_t *pkt;
+	int new_ttl, no_push;
+
+	DBLOCK(0x20, printf("tcp_send_timeout: conn[%d]\n", conn));
+
+	curr_time= get_time();
+
+	tcp_conn= &tcp_conn_table[conn];
+	assert(tcp_conn->tc_flags & TCF_INUSE);
+	assert(tcp_conn->tc_state != TCS_CLOSED);
+	assert(tcp_conn->tc_state != TCS_LISTEN);
+
+	snd_una= tcp_conn->tc_SND_UNA;
+	snd_nxt= tcp_conn->tc_SND_NXT;
+	no_push= (tcp_conn->tc_flags & TCF_NO_PUSH);
+	if (snd_nxt == snd_una || no_push)
+	{
+		/* Nothing more to send */
+		assert(tcp_conn->tc_SND_TRM == snd_una || no_push);
+
+		/* A new write sets the timer if tc_transmit_seq == SND_UNA */
+		tcp_conn->tc_transmit_seq= tcp_conn->tc_SND_UNA;
+		tcp_conn->tc_stt= 0;
+		tcp_conn->tc_0wnd_to= 0;
+		assert(!tcp_conn->tc_fd ||
+			!(tcp_conn->tc_fd->tf_flags & TFF_WRITE_IP) ||
+			(tcp_print_conn(tcp_conn), printf("\n"), 0));
+
+		if (snd_nxt != snd_una)
+		{
+			assert(no_push);
+			DBLOCK(1, printf("not setting keepalive timer\n"););
+
+			/* No point in setting the keepalive timer if we
+			 * still have to send more data.
+			 */
+			return;
+		}
+
+		assert(tcp_conn->tc_send_data == NULL);
+		DBLOCK(0x20, printf("keep alive timer\n"));
+		if (tcp_conn->tc_ka_snd != tcp_conn->tc_SND_NXT ||
+			tcp_conn->tc_ka_rcv != tcp_conn->tc_RCV_NXT)
+		{
+			tcp_conn->tc_ka_snd= tcp_conn->tc_SND_NXT;
+			tcp_conn->tc_ka_rcv= tcp_conn->tc_RCV_NXT;
+			DBLOCK(0x20, printf(
+"tcp_send_timeout: conn[%d] setting keepalive timer (+%ld ms)\n",
+				tcp_conn-tcp_conn_table,
+				tcp_conn->tc_ka_time*1000/HZ));
+			clck_timer(&tcp_conn->tc_transmit_timer,
+				curr_time+tcp_conn->tc_ka_time,
+				tcp_send_timeout,
+				tcp_conn-tcp_conn_table);
+			return;
+		}
+		DBLOCK(0x10, printf(
+		"tcp_send_timeout, conn[%d]: triggering keep alive probe\n",
+			tcp_conn-tcp_conn_table));
+		tcp_conn->tc_ka_snd--;
+		if (!(tcp_conn->tc_flags & TCF_FIN_SENT))
+		{
+			pkt= bf_memreq(1);
+			*ptr2acc_data(pkt)= '\xff';	/* a random char */
+			tcp_conn->tc_send_data= pkt; pkt= NULL;
+		}
+		tcp_conn->tc_SND_UNA--;
+		if (tcp_conn->tc_SND_UNA == tcp_conn->tc_ISS)
+		{
+			/* We didn't send anything so far. Retrying the
+			 * SYN is too hard. Decrement ISS and hope
+			 * that the other side doesn't care.
+			 */
+			tcp_conn->tc_ISS--;
+		}
+
+		/* Set tc_transmit_seq and tc_stt to trigger packet */
+		tcp_conn->tc_transmit_seq= tcp_conn->tc_SND_UNA;
+		tcp_conn->tc_stt= curr_time;
+
+		/* Set tc_rt_seq for round trip measurements */
+		tcp_conn->tc_rt_time= curr_time;
+		tcp_conn->tc_rt_seq= tcp_conn->tc_SND_UNA;
+
+		/* Set PSH to make sure that data gets sent */
+		tcp_conn->tc_SND_PSH= tcp_conn->tc_SND_NXT;
+		assert(tcp_check_conn(tcp_conn));
+
+		/* Fall through */
+	}
+
+	rtt= tcp_conn->tc_rtt;
+
+	if (tcp_conn->tc_transmit_seq != tcp_conn->tc_SND_UNA)
+	{
+		/* Some data has been acknowledged since the last time the
+		 * timer was set, set the timer again. */
+		tcp_conn->tc_transmit_seq= tcp_conn->tc_SND_UNA;
+		tcp_conn->tc_stt= 0;
+		tcp_conn->tc_0wnd_to= 0;
+
+		DBLOCK(0x20, printf(
+	"tcp_send_timeout: conn[%d] setting timer to %ld ms (+%ld ms)\n",
+			tcp_conn-tcp_conn_table,
+			(curr_time+rtt)*1000/HZ, rtt*1000/HZ));
+
+		clck_timer(&tcp_conn->tc_transmit_timer,
+			curr_time+rtt, tcp_send_timeout,
+			tcp_conn-tcp_conn_table);
+		return;
+	}
+
 	stt= tcp_conn->tc_stt;
+	if (stt == 0)
+	{
+		/* Some packet arrived but did not acknowledge any data.
+		 * Apparently, the other side is still alive and has a
+		 * reason to transmit. We can asume a zero window.
+		 */
+
+		DBLOCK(0x10, printf("conn[%d] setting zero window timer\n",
+			tcp_conn-tcp_conn_table));
+
+		if (tcp_conn->tc_0wnd_to < TCP_0WND_MIN)
+			tcp_conn->tc_0wnd_to= TCP_0WND_MIN;
+		else if (tcp_conn->tc_0wnd_to < rtt)
+			tcp_conn->tc_0wnd_to= rtt;
+		else
+		{
+			tcp_conn->tc_0wnd_to *= 2;
+			if (tcp_conn->tc_0wnd_to > TCP_0WND_MAX)
+				tcp_conn->tc_0wnd_to= TCP_0WND_MAX;
+		}
+		tcp_conn->tc_stt= curr_time;
+		tcp_conn->tc_rt_seq= 0;
+
+		DBLOCK(0x10, printf(
+	"tcp_send_timeout: conn[%d] setting timer to %ld ms (+%ld ms)\n",
+			tcp_conn-tcp_conn_table,
+			(curr_time+tcp_conn->tc_0wnd_to)*1000/HZ,
+			tcp_conn->tc_0wnd_to*1000/HZ));
+
+		clck_timer(&tcp_conn->tc_transmit_timer,
+			curr_time+tcp_conn->tc_0wnd_to,
+			tcp_send_timeout, tcp_conn-tcp_conn_table);
+		return;
+	}
 	assert(stt <= curr_time);
+
+	DIFBLOCK(0x10, (tcp_conn->tc_fd == 0),
+		printf("conn[%d] timeout in abondoned connection\n",
+		tcp_conn-tcp_conn_table));
+
+	/* At this point, we have do a retransmission, or send a zero window
+	 * probe, which is almost the same.
+	 */
+
+	DBLOCK(0x20, printf("tcp_send_timeout: conn[%d] una= %lu, rtt= %ldms\n",
+		tcp_conn-tcp_conn_table,
+		(unsigned long)tcp_conn->tc_SND_UNA, rtt*1000/HZ));
+
+	/* Update threshold sequence number for retransmission calculation. */
+	if (tcp_Gmod4G(tcp_conn->tc_SND_TRM, tcp_conn->tc_rt_threshold))
+		tcp_conn->tc_rt_threshold= tcp_conn->tc_SND_TRM;
+
+	tcp_conn->tc_SND_TRM= tcp_conn->tc_SND_UNA;
+
+	if (tcp_conn->tc_flags & TCF_PMTU &&
+		curr_time > stt+TCP_PMTU_BLACKHOLE)
+	{
+		/* We can't tell the difference between a PMTU blackhole 
+		 * and a broken link. Assume a PMTU blackhole, and switch
+		 * off PMTU discovery.
+		 */
+		DBLOCK(1, printf(
+			"tcp[%d]: PMTU blackhole (or broken link) on route to ",
+			tcp_conn-tcp_conn_table);
+			writeIpAddr(tcp_conn->tc_remaddr);
+			printf(", max mtu = %u\n", tcp_conn->tc_max_mtu););
+		tcp_conn->tc_flags &= ~TCF_PMTU;
+		tcp_conn->tc_mtutim= curr_time;
+		if (tcp_conn->tc_max_mtu > IP_DEF_MTU)
+			tcp_conn->tc_mtu= IP_DEF_MTU;
+	}
+
+	mss= tcp_conn->tc_mtu-IP_TCP_MIN_HDR_SIZE;
+	mss2= 2*mss;
+
+	if (tcp_conn->tc_snd_cwnd == tcp_conn->tc_SND_UNA)
+		tcp_conn->tc_snd_cwnd++;
+	if (tcp_Gmod4G(tcp_conn->tc_snd_cwnd, tcp_conn->tc_SND_UNA + mss2))
+	{
+		tcp_conn->tc_snd_cwnd= tcp_conn->tc_SND_UNA + mss2;
+		if (tcp_Gmod4G(tcp_conn->tc_SND_TRM, tcp_conn->tc_snd_cwnd))
+			tcp_conn->tc_SND_TRM= tcp_conn->tc_snd_cwnd;
+
+		tcp_conn->tc_snd_cthresh /= 2;
+		if (tcp_conn->tc_snd_cthresh < mss2)
+			tcp_conn->tc_snd_cthresh= mss2;
+	}
+
 	if (curr_time-stt > tcp_conn->tc_rt_dead)
 	{
 		tcp_close_connection(tcp_conn, ETIMEDOUT);
@@ -790,8 +1021,8 @@ struct timer *timer;
 	}
 
 	timeout= (curr_time-stt) >> 3;
-	if (timeout < tcp_conn->tc_rtt)
-		timeout= tcp_conn->tc_rtt;
+	if (timeout < rtt)
+		timeout= rtt;
 	timeout += curr_time;
 
 	DBLOCK(0x20, printf(
@@ -802,10 +1033,23 @@ struct timer *timer;
 	clck_timer(&tcp_conn->tc_transmit_timer, timeout,
 		tcp_send_timeout, tcp_conn-tcp_conn_table);
 
+#if 0
 	if (tcp_conn->tc_rt_seq == 0)
 	{
-		tcp_conn->tc_rt_time= curr_time-tcp_conn->tc_rtt;
+		printf("tcp_send_timeout: conn[%d]: setting tc_rt_time\n",
+			tcp_conn-tcp_conn_table);
+		tcp_conn->tc_rt_time= curr_time-rtt;
 		tcp_conn->tc_rt_seq= tcp_conn->tc_SND_UNA;
+	}
+#endif
+
+	if (tcp_conn->tc_state == TCS_SYN_SENT ||
+		(curr_time-stt >= tcp_conn->tc_ttl*HZ))
+	{
+		new_ttl= tcp_conn->tc_ttl+1;
+		if (new_ttl> IP_MAX_TTL)
+			new_ttl= IP_MAX_TTL;
+		tcp_conn->tc_ttl= new_ttl;
 	}
 
 	tcp_conn_write(tcp_conn, 0);
@@ -818,8 +1062,8 @@ tcp_conn_t *tcp_conn;
 	tcp_fd_t *tcp_fd;
 	int urg, nourg, push;
 	u32_t max_seq;
-	size_t max_count, max_trans, write_count, send_count;
-	acc_t *data, *tmp_acc, *send_data;
+	size_t max_trans, write_count;
+	acc_t *data, *send_data;
 
 	assert(tcp_conn->tc_busy);
 	tcp_fd= tcp_conn->tc_fd;
@@ -872,10 +1116,7 @@ tcp_conn_t *tcp_conn;
 	urg= (tcp_fd->tf_flags & TFF_WR_URG);
 	push= (tcp_fd->tf_flags & TFF_PUSH_DATA);
 
-	max_seq= tcp_conn->tc_SND_UNA + tcp_conn->tc_snd_wnd;
-	if (urg)
-		max_seq++;
-	max_count= max_seq - tcp_conn->tc_SND_UNA;
+	max_seq= tcp_conn->tc_SND_UNA + TCP_MAX_SND_WND_SIZE;
 	max_trans= max_seq - tcp_conn->tc_SND_NXT;
 	if (tcp_fd->tf_write_count <= max_trans)
 		write_count= tcp_fd->tf_write_count;
@@ -937,6 +1178,63 @@ tcp_conn_t *tcp_conn;
 	}
 }
 
+PUBLIC unsigned tcp_sel_write(tcp_conn)
+tcp_conn_t *tcp_conn;
+{
+	tcp_fd_t *tcp_fd;
+	int urg, nourg;
+	u32_t max_seq;
+	size_t max_trans;
+
+	tcp_fd= tcp_conn->tc_fd;
+
+	if (tcp_conn->tc_state == TCS_CLOSED)
+		return 1;
+	
+	urg= (tcp_fd->tf_flags & TFF_WR_URG);
+
+	max_seq= tcp_conn->tc_SND_UNA + TCP_MAX_SND_WND_SIZE;
+	max_trans= max_seq - tcp_conn->tc_SND_NXT;
+	if (max_trans)
+	{
+		if (tcp_conn->tc_flags & TCF_BSD_URG)
+		{
+			if (tcp_Gmod4G(tcp_conn->tc_SND_NXT,
+				tcp_conn->tc_SND_UNA))
+			{
+				nourg= tcp_LEmod4G(tcp_conn->tc_SND_UP,
+					tcp_conn->tc_SND_UNA);
+				if ((urg && nourg) || (!urg && !nourg))
+				{
+					DBLOCK(0x20,
+						printf("not sending\n"));
+					return 0;
+				}
+			}
+		}
+		return 1;
+	}
+
+	return 0;
+}
+
+PUBLIC void
+tcp_rsel_write(tcp_conn)
+tcp_conn_t *tcp_conn;
+{
+	tcp_fd_t *tcp_fd;
+
+	if (tcp_sel_write(tcp_conn) == 0)
+		return;
+
+	tcp_fd= tcp_conn->tc_fd;
+	tcp_fd->tf_flags &= ~TFF_SEL_WRITE;
+	if (tcp_fd->tf_select_res)
+		tcp_fd->tf_select_res(tcp_fd->tf_srfd, SR_SELECT_WRITE);
+	else
+		printf("tcp_rsel_write: no select_res\n");
+}
+
 /*
 tcp_shutdown
 */
@@ -957,40 +1255,39 @@ tcp_conn_t *tcp_conn;
 	if (tcp_conn->tc_flags & TCF_FIN_SENT)
 		return;
 	tcp_conn->tc_flags |= TCF_FIN_SENT;
+	tcp_conn->tc_flags &= ~TCF_NO_PUSH;
 	tcp_conn->tc_SND_NXT++;
+	tcp_conn->tc_SND_PSH= tcp_conn->tc_SND_NXT;
 
 	assert (tcp_check_conn(tcp_conn) ||
 		(tcp_print_conn(tcp_conn), printf("\n"), 0));
 
 	tcp_conn_write(tcp_conn, 1);
 
-	/* Start the timer (if necessary) */
+	/* Start the timer */
 	tcp_set_send_timer(tcp_conn);
 }
 
 PUBLIC void tcp_set_send_timer(tcp_conn)
 tcp_conn_t *tcp_conn;
 {
-	time_t curr_time;
+	clock_t curr_time;
+	clock_t rtt;
 
 	assert(tcp_conn->tc_state != TCS_CLOSED);
 	assert(tcp_conn->tc_state != TCS_LISTEN);
 
 	curr_time= get_time();
-
-	/* Start the timer */
+	rtt= tcp_conn->tc_rtt;
 
 	DBLOCK(0x20, printf(
 	"tcp_set_send_timer: conn[%d] setting timer to %ld ms (+%ld ms)\n",
 		tcp_conn-tcp_conn_table,
-		(curr_time+tcp_conn->tc_rtt)*1000/HZ,
-		tcp_conn->tc_rtt*1000/HZ));
+		(curr_time+rtt)*1000/HZ, rtt*1000/HZ));
 
+	/* Start the timer */
 	clck_timer(&tcp_conn->tc_transmit_timer,
-		curr_time+tcp_conn->tc_rtt,
-		tcp_send_timeout, tcp_conn-tcp_conn_table);
-		tcp_conn->tc_stt= curr_time;
-
+		curr_time+rtt, tcp_send_timeout, tcp_conn-tcp_conn_table);
 	tcp_conn->tc_stt= curr_time;
 }
 
@@ -1007,7 +1304,8 @@ int error;
 	tcp_fd_t *tcp_fd;
 	tcp_conn_t *tc;
 
-	assert (tcp_check_conn(tcp_conn));
+	assert (tcp_check_conn(tcp_conn) ||
+		(tcp_print_conn(tcp_conn), printf("\n"), 0));
 	assert (tcp_conn->tc_flags & TCF_INUSE);
 
 	tcp_conn->tc_error= error;
@@ -1027,6 +1325,8 @@ int error;
 		if (tcp_fd->tf_flags & TFF_READ_IP)
 			tcp_fd_read (tcp_conn, 1);
 		assert (!(tcp_fd->tf_flags & TFF_READ_IP));
+		if (tcp_fd->tf_flags & TFF_SEL_READ)
+			tcp_rsel_read (tcp_conn);
 
 		if (tcp_fd->tf_flags & TFF_WRITE_IP)
 		{
@@ -1041,12 +1341,15 @@ int error;
 		}
 		if (tcp_fd->tf_flags & TFF_IOCTL_IP)
 			assert(tcp_fd->tf_ioreq != NWIOTCPSHUTDOWN);
+		if (tcp_fd->tf_flags & TFF_SEL_WRITE) 
+			tcp_rsel_write(tcp_conn);
 
 		if (tcp_conn->tc_connInprogress)
 			tcp_restart_connect(tcp_conn->tc_fd);
 		assert (!tcp_conn->tc_connInprogress);
 		assert (!(tcp_fd->tf_flags & TFF_IOCTL_IP) ||
-			(printf("req= 0x%lx\n", tcp_fd->tf_ioreq), 0));
+			(printf("req= 0x%lx\n",
+			(unsigned long)tcp_fd->tf_ioreq), 0));
 		tcp_conn->tc_busy--;
 	}
 
@@ -1120,5 +1423,5 @@ int error;
 }
 
 /*
- * $PchId: tcp_send.c,v 1.12 1996/12/17 07:57:11 philip Exp $
+ * $PchId: tcp_send.c,v 1.32 2005/06/28 14:21:52 philip Exp $
  */

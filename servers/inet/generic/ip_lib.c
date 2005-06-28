@@ -29,21 +29,21 @@ int optlen;
 		strict_source_present= FALSE, record_route_present= FALSE,
 		timestamp_present= FALSE;
 
-assert (!(optlen & 3));
+	assert (!(optlen & 3));
 	i= 0;
 	while (i<optlen)
 	{
-		DBLOCK(1, printf("*opt= %d\n", *opt));
+		DBLOCK(2, printf("*opt= %d\n", *opt));
 
 		switch (*opt)
 		{
-		case 0x0:		/* End of Option list */
+		case IP_OPT_EOL:	/* End of Option list */
 			return NW_OK;
-		case 0x1:		/* No Operation */
+		case IP_OPT_NOP:	/* No Operation */
 			i++;
 			opt++;
 			break;
-		case 0x82:		/* Security */
+		case IP_OPT_SEC:	/* Security */
 			if (security_present)
 				return EINVAL;
 			security_present= TRUE;
@@ -52,10 +52,10 @@ assert (!(optlen & 3));
 			i += opt[1];
 			opt += opt[1];
 			break;
-		case 0x83:		/* Lose Source and Record Route */
+		case IP_OPT_LSRR:	/* Lose Source and Record Route */
 			if (lose_source_present)
 			{
-				DBLOCK(1, printf("snd lose soruce route\n"));
+				DBLOCK(1, printf("2nd lose soruce route\n"));
 				return EINVAL;
 			}
 			lose_source_present= TRUE;
@@ -68,7 +68,7 @@ assert (!(optlen & 3));
 			i += opt[1];
 			opt += opt[1];
 			break;
-		case 0x89:		/* Strict Source and Record Route */
+		case IP_OPT_SSRR:	/* Strict Source and Record Route */
 			if (strict_source_present)
 				return EINVAL;
 			strict_source_present= TRUE;
@@ -77,7 +77,7 @@ assert (!(optlen & 3));
 			i += opt[1];
 			opt += opt[1];
 			break;
-		case 0x7:		/* Record Route */
+		case IP_OPT_RR:		/* Record Route */
 			if (record_route_present)
 				return EINVAL;
 			record_route_present= TRUE;
@@ -86,7 +86,7 @@ assert (!(optlen & 3));
 			i += opt[1];
 			opt += opt[1];
 			break;
-		case 0x88:
+		case IP_OPT_TS:		/* Timestamp */
 			if (timestamp_present)
 				return EINVAL;
 			timestamp_present= TRUE;
@@ -101,6 +101,12 @@ assert (!(optlen & 3));
 			default:
 				return EINVAL;
 			}
+			i += opt[1];
+			opt += opt[1];
+			break;
+		case IP_OPT_RTRALT:
+			if (opt[1] != 4)
+				return EINVAL;
 			i += opt[1];
 			opt += opt[1];
 			break;
@@ -227,5 +233,5 @@ nettype_t nettype;
 #endif
 
 /*
- * $PchId: ip_lib.c,v 1.6 1996/12/17 07:59:36 philip Exp $
+ * $PchId: ip_lib.c,v 1.10 2002/06/08 21:35:52 philip Exp $
  */

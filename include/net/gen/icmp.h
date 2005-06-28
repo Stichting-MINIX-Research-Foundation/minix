@@ -5,7 +5,7 @@ server/ip/gen/icmp.h
 #ifndef __SERVER__IP__GEN__ICMP_H__
 #define __SERVER__IP__GEN__ICMP_H__
 
-#define ICMP_MIN_HDR_LEN	4
+#define ICMP_MIN_HDR_SIZE	4
 
 #define ICMP_TYPE_ECHO_REPL	0
 #define ICMP_TYPE_DST_UNRCH	3
@@ -33,8 +33,17 @@ server/ip/gen/icmp.h
 #define ICMP_TYPE_INFO_REQ	15
 #define ICMP_TYPE_INFO_REPL	16
 
+/* Preferences for router advertisements. A router daemon installs itself
+ * as the default router in the router's interfaces by sending router
+ * advertisements to localhost with preference ICMP_RA_LOCAL_PREF.
+ */
+#define ICMP_RA_DEFAULT_PREF	0x00000000
+#define ICMP_RA_INVAL_PREF	0x80000000
+#define ICMP_RA_MAX_PREF	0x7fffffff
+#define ICMP_RA_LOCAL_PREF	0x10000000
+
 #endif /* __SERVER__IP__GEN__ICMP_H__ */
 
 /*
- * $PchId: icmp.h,v 1.5 1995/11/17 22:38:46 philip Exp $
+ * $PchId: icmp.h,v 1.6 2002/06/10 07:10:26 philip Exp $
  */

@@ -5,17 +5,26 @@ server/ip/gen/ip_io.h
 #ifndef __SERVER__IP__GEN__IP_IO_H__
 #define __SERVER__IP__GEN__IP_IO_H__
 
+typedef struct nwio_ipconf2
+{
+	u32_t	nwic_flags;
+	ipaddr_t nwic_ipaddr;
+	ipaddr_t nwic_netmask;
+} nwio_ipconf2_t;
+
 typedef struct nwio_ipconf
 {
 	u32_t	nwic_flags;
 	ipaddr_t nwic_ipaddr;
 	ipaddr_t nwic_netmask;
+	u16_t nwic_mtu;
 } nwio_ipconf_t;
 
 #define NWIC_NOFLAGS		0x0
-#define NWIC_FLAGS		0x3
+#define NWIC_FLAGS		0x7
 #	define NWIC_IPADDR_SET		0x1
 #	define NWIC_NETMASK_SET		0x2
+#	define NWIC_MTU_SET		0x4
 
 typedef struct nwio_ipopt
 {
@@ -53,3 +62,7 @@ typedef struct nwio_ipopt
 #	define NWIO_RWDATALL	0x10000000l
 
 #endif /* __SERVER__IP__GEN__IP_IO_H__ */
+
+/*
+ * $PchId: ip_io.h,v 1.5 2001/03/12 22:17:25 philip Exp $
+ */

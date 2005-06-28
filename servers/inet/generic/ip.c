@@ -25,6 +25,7 @@ THIS_FILE
 
 FORWARD void ip_close ARGS(( int fd ));
 FORWARD int ip_cancel ARGS(( int fd, int which_operation ));
+FORWARD int ip_select ARGS(( int fd, unsigned operations ));
 
 FORWARD void ip_buffree ARGS(( int priority ));
 #ifdef BUF_CONSISTENCY_CHECK
@@ -55,7 +56,6 @@ PUBLIC void ip_init()
 	assert (BUF_S >= sizeof(nwio_ipopt_t));
 	assert (BUF_S >= sizeof(nwio_route_t));
 
-#if ZERO
 	for (i=0, ip_ass= ip_ass_table; i<IP_ASS_NR; i++, ip_ass++)
 	{
 		ip_ass->ia_frags= 0;
@@ -68,20 +68,18 @@ PUBLIC void ip_init()
 		ip_fd->if_flags= IFF_EMPTY;
 		ip_fd->if_rdbuf_head= 0;
 	}
-#endif
 
 	for (i=0, ip_port= ip_port_table, icp= ip_conf;
 		i<ip_conf_nr; i++, ip_port++, icp++)
 	{
 		ip_port->ip_port= i;
-#if ZERO
 		ip_port->ip_flags= IPF_EMPTY;
-#endif
 		ip_port->ip_dev_main= (ip_dev_t)ip_bad_callback;
 		ip_port->ip_dev_set_ipaddr= (ip_dev_t)ip_bad_callback;
 		ip_port->ip_dev_send= (ip_dev_send_t)ip_bad_callback;
 		ip_port->ip_dl_type= icp->ic_devtype;
-		ip_port->ip_mss= IP_DEF_MSS;
+		ip_port->ip_mtu= IP_DEF_MTU;
+		ip_port->ip_mtu_max= IP_MAX_PACKSIZE;
 
 		switch(ip_port->ip_dl_type)
 		{
@@ -92,7 +90,6 @@ PUBLIC void ip_init()
 				continue;
 			assert(result == NW_OK);
 			break;
-#if ENABLE_PSIP
 		case IPDL_PSIP:
 			ip_port->ip_dl.dl_ps.ps_port= icp->ic_port;
 			result= ipps_init(ip_port);
@@ -100,24 +97,21 @@ PUBLIC void ip_init()
 				continue;
 			assert(result == NW_OK);
 			break;
-#endif
-#if !CRAMPED
 		default:
 			ip_panic(( "unknown ip_dl_type %d", 
 							ip_port->ip_dl_type ));
-#endif
+			break;
 		}
-#if ZERO
 		ip_port->ip_loopb_head= NULL;
 		ip_port->ip_loopb_tail= NULL;
 		ev_init(&ip_port->ip_loopb_event);
-#endif
+		ip_port->ip_routeq_head= NULL;
+		ip_port->ip_routeq_tail= NULL;
+		ev_init(&ip_port->ip_routeq_event);
 		ip_port->ip_flags |= IPF_CONFIGURED;
-#if ZERO
 		ip_port->ip_proto_any= NULL;
 		for (j= 0; j<IP_PROTO_HASH_NR; j++)
 			ip_port->ip_proto[j]= NULL;
-#endif
 	}
 
 #ifndef BUF_CONSISTENCY_CHECK
@@ -137,7 +131,7 @@ PUBLIC void ip_init()
 
 		sr_add_minor(if2minor(ip_conf[i].ic_ifno, IP_DEV_OFF),
 			i, ip_open, ip_close, ip_read,
-			ip_write, ip_ioctl, ip_cancel);
+			ip_write, ip_ioctl, ip_cancel, ip_select);
 
 		(*ip_port->ip_dev_main)(ip_port);
 	}
@@ -156,8 +150,8 @@ int which_operation;
 	switch (which_operation)
 	{
 	case SR_CANCEL_IOCTL:
-		assert (ip_fd->if_flags & IFF_GIPCONF_IP);
-		ip_fd->if_flags &= ~IFF_GIPCONF_IP;
+		assert (ip_fd->if_flags & IFF_IOCTL_IP);
+		ip_fd->if_flags &= ~IFF_IOCTL_IP;
 		repl_res= (*ip_fd->if_get_userdata)(ip_fd->if_srfd, 
 			(size_t)EINTR, (size_t)0, TRUE);
 		assert (!repl_res);
@@ -179,21 +173,29 @@ int which_operation;
 		assert (!repl_res);
 		break;
 #endif
-#if !CRAMPED
 	default:
 		ip_panic(( "unknown cancel request" ));
-#endif
+		break;
 	}
 	return NW_OK;
 }
 
+PRIVATE int ip_select(fd, operations)
+int fd;
+unsigned operations;
+{
+	printf("ip_select: not implemented\n");
+	return 0;
+}
 
-PUBLIC int ip_open (port, srfd, get_userdata, put_userdata, put_pkt)
+PUBLIC int ip_open (port, srfd, get_userdata, put_userdata, put_pkt,
+	select_res)
 int port;
 int srfd;
 get_userdata_t get_userdata;
 put_userdata_t put_userdata;
 put_pkt_t put_pkt;
+select_res_t select_res;
 {
 	int i;
 	ip_fd_t *ip_fd;
@@ -228,6 +230,7 @@ put_pkt_t put_pkt;
 	ip_fd->if_get_userdata= get_userdata;
 	ip_fd->if_put_userdata= put_userdata;
 	ip_fd->if_put_pkt= put_pkt;
+
 	return i;
 }
 
@@ -295,7 +298,7 @@ int priority;
 			if (priority == IP_PRI_PORTBUFS)
 			{
 				next_pack= ip_port->ip_dl.dl_ps.ps_send_head;
-				while(next_pack != NULL)
+				while (next_pack != NULL)
 				{
 					pack= next_pack;
 					next_pack= pack->acc_ext_link;
@@ -317,7 +320,7 @@ int priority;
 			{
 				if (ev_in_queue(&ip_port->ip_loopb_event))
 				{
-#if !CRAMPED
+#if DEBUG
 					printf(
 "not freeing ip_loopb_head, ip_loopb_event enqueued\n");
 #endif
@@ -329,6 +332,30 @@ int priority;
 				}
 			}
 			ip_port->ip_loopb_head= next_pack;
+
+			next_pack= ip_port->ip_routeq_head;
+			while(next_pack && next_pack->acc_ext_link)
+			{
+				pack= next_pack;
+				next_pack= pack->acc_ext_link;
+				bf_afree(pack);
+			}
+			if (next_pack)
+			{
+				if (ev_in_queue(&ip_port->ip_routeq_event))
+				{
+#if DEBUG
+					printf(
+"not freeing ip_loopb_head, ip_routeq_event enqueued\n");
+#endif
+				}
+				else
+				{
+					bf_afree(next_pack);
+					next_pack= NULL;
+				}
+			}
+			ip_port->ip_routeq_head= next_pack;
 		}
 	}
 	if (priority == IP_PRI_FDBUFS_EXTRA)
@@ -410,6 +437,11 @@ PRIVATE void ip_bufcheck()
 		{
 			bf_check_acc(pack);
 		}
+		for (pack= ip_port->ip_routeq_head; pack;
+			pack= pack->acc_ext_link)
+		{
+			bf_check_acc(pack);
+		}
 	}
 	for (i= 0, ip_fd= ip_fd_table; i<IP_FD_NR; i++, ip_fd++)
 	{
@@ -430,11 +462,9 @@ PRIVATE void ip_bufcheck()
 PRIVATE void ip_bad_callback(ip_port)
 struct ip_port *ip_port;
 {
-#if !CRAMPED
 	ip_panic(( "no callback filled in for port %d", ip_port->ip_port ));
-#endif
 }
 
 /*
- * $PchId: ip.c,v 1.7 1996/12/17 07:54:47 philip Exp $
+ * $PchId: ip.c,v 1.19 2005/06/28 14:17:40 philip Exp $
  */

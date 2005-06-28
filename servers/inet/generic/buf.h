@@ -11,6 +11,9 @@ Copyright 1995 Philip Homburg
 
 #define MAX_BUFREQ_PRI	10
 
+#define ARP_PRI_REC		3
+#define ARP_PRI_SEND		3
+
 #define ETH_PRI_PORTBUFS	3
 #define ETH_PRI_FDBUFS_EXTRA	5
 #define ETH_PRI_FDBUFS		6
@@ -79,6 +82,7 @@ typedef struct acc
 } acc_t;
 
 extern acc_t *bf_temporary_acc;
+extern acc_t *bf_linkcheck_acc;
 
 /* For debugging... */
 
@@ -95,7 +99,10 @@ extern acc_t *bf_temporary_acc;
 #define bf_pack(a) _bf_pack(this_file, __LINE__, a)
 #define bf_append(a,b) _bf_append(this_file, __LINE__, a, b)
 #define bf_dupacc(a) _bf_dupacc(this_file, __LINE__, a)
+#if 0
+#define bf_mark_1acc(a) _bf_mark_1acc(this_file, __LINE__, a)
 #define bf_mark_acc(a) _bf_mark_acc(this_file, __LINE__, a)
+#endif
 #define bf_align(a,s,al) _bf_align(this_file, __LINE__, a, s, al)
 
 #else /* BUF_IMPLEMENTATION */
@@ -112,6 +119,7 @@ extern acc_t *bf_temporary_acc;
 
 #else
 
+#define bf_mark_1acc(acc)	((void)0)
 #define bf_mark_acc(acc)	((void)0)
 
 #endif /* BUF_TRACK_ALLOC_FREE */
@@ -214,22 +222,28 @@ acc_t *_bf_align ARGS(( char *clnt_file, int clnt_line,
 	Size must be less than or equal to BUF_S.
 */
 
+int bf_linkcheck ARGS(( acc_t *acc ));
+/* check if all link count are positive, and offsets and sizes are within 
+ * the underlying buffer.
+ */
+
 #define ptr2acc_data(/* acc_t * */ a) (bf_temporary_acc=(a), \
 	(&bf_temporary_acc->acc_buffer->buf_data_p[bf_temporary_acc-> \
 		acc_offset]))
 
 #define bf_chkbuf(buf) ((buf)? (compare((buf)->acc_linkC,>,0), \
 	compare((buf)->acc_buffer, !=, 0), \
-	compare((buf)->acc_buffer->buf_linkC,>,0)) : 0)
+	compare((buf)->acc_buffer->buf_linkC,>,0)) : (void)0)
 
 #ifdef BUF_CONSISTENCY_CHECK
 int bf_consistency_check ARGS(( void ));
 void bf_check_acc ARGS(( acc_t *acc ));
+void _bf_mark_1acc ARGS(( char *clnt_file, int clnt_line, acc_t *acc ));
 void _bf_mark_acc ARGS(( char *clnt_file, int clnt_line, acc_t *acc ));
 #endif
 
 #endif /* BUF_H */
 
 /*
- * $PchId: buf.h,v 1.8 1995/11/21 06:45:27 philip Exp $
+ * $PchId: buf.h,v 1.13 2003/09/10 08:52:09 philip Exp $
  */

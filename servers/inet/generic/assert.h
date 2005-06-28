@@ -8,11 +8,11 @@ Copyright 1995 Philip Homburg
 
 #if !NDEBUG
 
-void bad_assertion(char *file, int line, char *what);
-void bad_compare(char *file, int line, int lhs, char *what, int rhs);
+void bad_assertion(char *file, int line, char *what) _NORETURN;
+void bad_compare(char *file, int line, int lhs, char *what, int rhs) _NORETURN;
 
-#define assert(x)	(!(x) ? bad_assertion(this_file, __LINE__, #x) \
-								: (void) 0)
+#define assert(x)	((void)(!(x) ? bad_assertion(this_file, __LINE__, \
+			#x),0 : 0))
 #define compare(a,t,b)	(!((a) t (b)) ? bad_compare(this_file, __LINE__, \
 				(a), #a " " #t " " #b, (b)) : (void) 0)
 
@@ -27,5 +27,5 @@ void bad_compare(char *file, int line, int lhs, char *what, int rhs);
 
 
 /*
- * $PchId: assert.h,v 1.4 1995/11/21 06:45:27 philip Exp $
+ * $PchId: assert.h,v 1.8 2002/03/18 21:50:32 philip Exp $
  */

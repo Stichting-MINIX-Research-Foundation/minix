@@ -10,12 +10,11 @@ Copyright 1995 Philip Homburg
 #include "event.h"
 #include "type.h"
 
-#if !CRAMPED
 #include "io.h"
 #include "ip.h"
-#endif
 #include "sr.h"
 #include "assert.h"
+#include "rand256.h"
 #include "tcp.h"
 #include "tcp_int.h"
 
@@ -24,8 +23,10 @@ THIS_FILE
 PUBLIC tcp_port_t *tcp_port_table;
 PUBLIC tcp_fd_t tcp_fd_table[TCP_FD_NR];
 PUBLIC tcp_conn_t tcp_conn_table[TCP_CONN_NR];
+PUBLIC sr_cancel_t tcp_cancel_f;
 
 FORWARD void tcp_main ARGS(( tcp_port_t *port ));
+FORWARD int tcp_select ARGS(( int fd, unsigned operations ));
 FORWARD acc_t *tcp_get_data ARGS(( int fd, size_t offset,
 	size_t count, int for_ioctl ));
 FORWARD int tcp_put_data ARGS(( int fd, size_t offset,
@@ -49,22 +50,23 @@ FORWARD tcp_conn_t *find_best_conn ARGS(( ip_hdr_t *ip_hdr,
 	tcp_hdr_t *tcp_hdr ));
 FORWARD int maybe_listen ARGS(( ipaddr_t locaddr, Tcpport_t locport,
 				ipaddr_t remaddr, Tcpport_t remport ));
-FORWARD int conn_right4fd ARGS(( tcp_conn_t *tcp_conn, tcp_fd_t *tcp_fd ));
 FORWARD int tcp_su4connect ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD void tcp_buffree ARGS(( int priority ));
 #ifdef BUF_CONSISTENCY_CHECK
 FORWARD void tcp_bufcheck ARGS(( void ));
 #endif
-FORWARD void tcp_setup_conn ARGS(( tcp_conn_t *tcp_conn ));
+FORWARD void tcp_setup_conn ARGS(( tcp_port_t *tcp_port,
+					tcp_conn_t *tcp_conn ));
+FORWARD u32_t tcp_rand32 ARGS(( void ));
 
 PUBLIC void tcp_prep()
 {
-	tcp_port_table= alloc(ip_conf_nr * sizeof(tcp_port_table[0]));
+	tcp_port_table= alloc(tcp_conf_nr * sizeof(tcp_port_table[0]));
 }
 
 PUBLIC void tcp_init()
 {
-	int i, j, k;
+	int i, j, k, ifno;
 	tcp_fd_t *tcp_fd;
 	tcp_port_t *tcp_port;
 	tcp_conn_t *tcp_conn;
@@ -74,7 +76,6 @@ PUBLIC void tcp_init()
 	assert (BUF_S >= sizeof(struct nwio_tcpconf));
 	assert (BUF_S >= IP_MAX_HDR_SIZE + TCP_MAX_HDR_SIZE);
 
-#if ZERO
 	for (i=0, tcp_fd= tcp_fd_table; i<TCP_FD_NR; i++, tcp_fd++)
 	{
 		tcp_fd->tf_flags= TFF_EMPTY;
@@ -86,7 +87,6 @@ PUBLIC void tcp_init()
 		tcp_conn->tc_flags= TCF_EMPTY;
 		tcp_conn->tc_busy= 0;
 	}
-#endif
 
 #ifndef BUF_CONSISTENCY_CHECK
 	bf_logon(tcp_buffree);
@@ -94,17 +94,15 @@ PUBLIC void tcp_init()
 	bf_logon(tcp_buffree, tcp_bufcheck);
 #endif
 
-	for (i=0, tcp_port= tcp_port_table; i<ip_conf_nr; i++, tcp_port++)
+	for (i=0, tcp_port= tcp_port_table; i<tcp_conf_nr; i++, tcp_port++)
 	{
-		tcp_port->tp_ipdev= i;
+		tcp_port->tp_ipdev= tcp_conf[i].tc_port;
 
-#if ZERO
 		tcp_port->tp_flags= TPF_EMPTY;
 		tcp_port->tp_state= TPS_EMPTY;
 		tcp_port->tp_snd_head= NULL;
 		tcp_port->tp_snd_tail= NULL;
 		ev_init(&tcp_port->tp_snd_event);
-#endif
 		for (j= 0; j<TCP_CONN_HASH_NR; j++)
 		{
 			for (k= 0; k<4; k++)
@@ -114,12 +112,14 @@ PUBLIC void tcp_init()
 			}
 		}
 
-		sr_add_minor(if2minor(ip_conf[i].ic_ifno, TCP_DEV_OFF),
+		ifno= ip_conf[tcp_port->tp_ipdev].ic_ifno;
+		sr_add_minor(if2minor(ifno, TCP_DEV_OFF),
 			i, tcp_open, tcp_close, tcp_read,
-			tcp_write, tcp_ioctl, tcp_cancel);
+			tcp_write, tcp_ioctl, tcp_cancel, tcp_select);
 
 		tcp_main(tcp_port);
 	}
+	tcp_cancel_f= tcp_cancel;
 }
 
 PRIVATE void tcp_main(tcp_port)
@@ -135,7 +135,7 @@ tcp_port_t *tcp_port;
 		tcp_port->tp_state= TPS_SETPROTO;
 		tcp_port->tp_ipfd= ip_open(tcp_port->tp_ipdev,
 			tcp_port->tp_ipdev, tcp_get_data,
-			tcp_put_data, tcp_put_pkt);
+			tcp_put_data, tcp_put_pkt, 0 /* no select_res */);
 		if (tcp_port->tp_ipfd < 0)
 		{
 			tcp_port->tp_state= TPS_ERROR;
@@ -206,8 +206,12 @@ tcp_port_t *tcp_port;
 		tcp_conn->tc_rt_dead= TCP_DEF_RT_DEAD;
 		tcp_conn->tc_stt= 0;
 		tcp_conn->tc_0wnd_to= 0;
+		tcp_conn->tc_artt= TCP_DEF_RTT*TCP_RTT_SCALE;
+		tcp_conn->tc_drtt= 0;
 		tcp_conn->tc_rtt= TCP_DEF_RTT;
-		tcp_conn->tc_mss= TCP_DEF_MSS;
+		tcp_conn->tc_max_mtu= tcp_port->tp_mtu;
+		tcp_conn->tc_mtu= tcp_conn->tc_max_mtu;
+		tcp_conn->tc_mtutim= 0;
 		tcp_conn->tc_error= NW_OK;
 		tcp_conn->tc_snd_wnd= TCP_MAX_SND_WND_SIZE;
 		tcp_conn->tc_snd_cinc=
@@ -233,11 +237,57 @@ tcp_port_t *tcp_port;
 		read_ip_packets(tcp_port);
 		return;
 
-#if !CRAMPED
 	default:
 		ip_panic(( "unknown state" ));
-#endif
+		break;
 	}
+}
+
+PRIVATE int tcp_select(fd, operations)
+int fd;
+unsigned operations;
+{
+	unsigned resops;
+
+	tcp_fd_t *tcp_fd;
+	tcp_conn_t *tcp_conn;
+
+	tcp_fd= &tcp_fd_table[fd];
+	assert (tcp_fd->tf_flags & TFF_INUSE);
+
+	resops= 0;
+	if (operations & SR_SELECT_READ)
+	{
+		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+			return ENOTCONN;	/* Is this right? */
+
+		tcp_conn= tcp_fd->tf_conn;
+
+		if (tcp_conn->tc_state == TCS_CLOSED || tcp_sel_read(tcp_conn))
+			resops |= SR_SELECT_READ;
+		else if (!(operations & SR_SELECT_POLL))
+			tcp_fd->tf_flags |= TFF_SEL_READ;
+	}
+	if (operations & SR_SELECT_WRITE)
+	{
+		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+			return ENOTCONN;	/* Is this right? */
+		tcp_conn= tcp_fd->tf_conn;
+
+		if (tcp_conn->tc_state == TCS_CLOSED ||
+			tcp_conn->tc_flags & TCF_FIN_SENT ||
+			tcp_sel_write(tcp_conn))
+		{
+			resops |= SR_SELECT_WRITE;
+		}
+		else if (!(operations & SR_SELECT_POLL))
+			tcp_fd->tf_flags |= TFF_SEL_WRITE;
+	}
+	if (operations & SR_SELECT_EXCEPTION)
+	{
+		printf("tcp_select: not implemented for exceptions\n");
+	}
+	return resops;
 }
 
 PRIVATE acc_t *tcp_get_data (port, offset, count, for_ioctl)
@@ -325,10 +375,8 @@ assert (count == sizeof(struct nwio_ipopt));
 		}
 		break;
 	default:
-#if !CRAMPED
 		printf("tcp_get_data(%d, 0x%x, 0x%x) called but tp_state= 0x%x\n",
 			port, offset, count, tcp_port->tp_state);
-#endif
 		break;
 	}
 	return NW_OK;
@@ -368,6 +416,8 @@ int for_ioctl;
 			ipconf= (struct nwio_ipconf *)ptr2acc_data(data);
 assert (ipconf->nwic_flags & NWIC_IPADDR_SET);
 			tcp_port->tp_ipaddr= ipconf->nwic_ipaddr;
+			tcp_port->tp_subnetmask= ipconf->nwic_netmask;
+			tcp_port->tp_mtu= ipconf->nwic_mtu;
 			bf_afree(data);
 		}
 		break;
@@ -397,10 +447,9 @@ assert (ipconf->nwic_flags & NWIC_IPADDR_SET);
 		}
 		break;
 	default:
-#if !CRAMPED
-		printf("tcp_put_data(%d, 0x%x, 0x%x) called but tp_state= 0x%x\n",
-	fd, offset, data, tcp_port->tp_state);
-#endif
+		printf(
+		"tcp_put_data(%d, 0x%x, %p) called but tp_state= 0x%x\n",
+			fd, offset, data, tcp_port->tp_state);
 		break;
 	}
 	return NW_OK;
@@ -421,10 +470,10 @@ size_t datalen;
 	tcp_hdr_t *tcp_hdr;
 	acc_t *ip_pack, *tcp_pack;
 	size_t ip_datalen, tcp_datalen, ip_hdr_len, tcp_hdr_len;
-	u16_t sum;
+	u16_t sum, mtu;
 	u32_t bits;
-	int hash;
-	ipaddr_t srcaddr, dstaddr;
+	int i, hash;
+	ipaddr_t srcaddr, dstaddr, ipaddr, mask;
 	tcpport_t srcport, dstport;
 
 	tcp_port= &tcp_port_table[fd];
@@ -435,7 +484,32 @@ size_t datalen;
 	ip_datalen= datalen - ip_hdr_len;
 	if (ip_datalen == 0)
 	{
-		DBLOCK(1, printf("tcp_put_pkt: no TCP header\n"));
+		if (ip_hdr->ih_proto == 0)
+		{
+			/* IP layer reports new IP address */
+			ipaddr= ip_hdr->ih_src;
+			mask= ip_hdr->ih_dst;
+			mtu= ntohs(ip_hdr->ih_length);
+			tcp_port->tp_ipaddr= ipaddr;
+			tcp_port->tp_subnetmask= mask;
+			tcp_port->tp_mtu= mtu;
+			DBLOCK(1, printf("tcp_put_pkt: using address ");
+				writeIpAddr(ipaddr);
+				printf(", netmask ");
+				writeIpAddr(mask);
+				printf(", mtu %u\n", mtu));
+			for (i= 0, tcp_conn= tcp_conn_table+i;
+				i<TCP_CONN_NR; i++, tcp_conn++)
+			{
+				if (!(tcp_conn->tc_flags & TCF_INUSE))
+					continue;
+				if (tcp_conn->tc_port != tcp_port)
+					continue;
+				tcp_conn->tc_locaddr= ipaddr;
+			}
+		}
+		else
+			DBLOCK(1, printf("tcp_put_pkt: no TCP header\n"));
 		bf_afree(data);
 		return;
 	}
@@ -549,7 +623,7 @@ size_t datalen;
 	}
 	else
 		tcp_conn= NULL;
-	if (tcp_conn != NULL && tcp_conn->tc_state == TCS_CLOSED ||
+	if ((tcp_conn != NULL && tcp_conn->tc_state == TCS_CLOSED) ||
 		(tcp_hdr->th_flags & THF_SYN))
 	{
 		tcp_conn= NULL;
@@ -583,12 +657,14 @@ size_t datalen;
 }
 
 
-PUBLIC int tcp_open (port, srfd, get_userdata, put_userdata, put_pkt)
+PUBLIC int tcp_open (port, srfd, get_userdata, put_userdata, put_pkt,
+	select_res)
 int port;
 int srfd;
 get_userdata_t get_userdata;
 put_userdata_t put_userdata;
 put_pkt_t put_pkt;
+select_res_t select_res;
 {
 	int i;
 	tcp_fd_t *tcp_fd;
@@ -603,7 +679,7 @@ put_pkt_t put_pkt;
 	tcp_fd= &tcp_fd_table[i];
 
 	tcp_fd->tf_flags= TFF_INUSE;
-	tcp_fd->tf_flags |= TFF_PUSH_DATA;	/* XXX */
+	tcp_fd->tf_flags |= TFF_PUSH_DATA;
 
 	tcp_fd->tf_port= &tcp_port_table[port];
 	tcp_fd->tf_srfd= srfd;
@@ -613,6 +689,7 @@ put_pkt_t put_pkt;
 	tcp_fd->tf_tcpopt.nwto_flags= TCP_DEF_OPT;
 	tcp_fd->tf_get_userdata= get_userdata;
 	tcp_fd->tf_put_userdata= put_userdata;
+	tcp_fd->tf_select_res= select_res;
 	tcp_fd->tf_conn= 0;
 	return i;
 }
@@ -730,9 +807,31 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		tcp_conn->tc_busy--;
 		tcp_conn_write(tcp_conn, 0);
 		if (!(tcp_fd->tf_flags & TFF_IOCTL_IP))
-			return NW_OK;
+			result= NW_OK;
 		else
-			return NW_SUSPEND;
+			result= NW_SUSPEND;
+		break;
+	case NWIOTCPPUSH:
+		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		{
+			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
+			reply_thr_get (tcp_fd, ENOTCONN, TRUE);
+			result= NW_OK;
+			break;
+		}
+		tcp_conn= tcp_fd->tf_conn;
+		tcp_conn->tc_SND_PSH= tcp_conn->tc_SND_NXT;
+		tcp_conn->tc_flags &= ~TCF_NO_PUSH;
+		tcp_conn->tc_flags |= TCF_PUSH_NOW;
+
+		/* Start the timer (if necessary) */
+		if (tcp_conn->tc_SND_TRM == tcp_conn->tc_SND_UNA)
+			tcp_set_send_timer(tcp_conn);
+
+		tcp_conn_write(tcp_conn, 0);
+		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
+		reply_thr_get (tcp_fd, NW_OK, TRUE);
+		result= NW_OK;
 		break;
 	default:
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
@@ -754,8 +853,6 @@ tcp_fd_t *tcp_fd;
 	nwio_tcpconf_t *tcpconf;
 	nwio_tcpconf_t oldconf, newconf;
 	acc_t *data;
-	int result;
-	tcpport_t port;
 	tcp_fd_t *fd_ptr;
 	unsigned int new_en_flags, new_di_flags,
 		old_en_flags, old_di_flags, all_flags, flags;
@@ -947,12 +1044,8 @@ tcp_fd_t *tcp_fd;
 	nwio_tcpopt_t *tcpopt;
 	nwio_tcpopt_t oldopt, newopt;
 	acc_t *data;
-	int result;
-	tcpport_t port;
-	tcp_fd_t *fd_ptr;
 	unsigned int new_en_flags, new_di_flags,
-		old_en_flags, old_di_flags, all_flags, flags;
-	int i;
+		old_en_flags, old_di_flags;
 
 	data= (*tcp_fd->tf_get_userdata) (tcp_fd->tf_srfd, 0,
 		sizeof(nwio_tcpopt_t), TRUE);
@@ -968,11 +1061,9 @@ assert (data->acc_length == sizeof(nwio_tcpopt_t));
 	newopt= *tcpopt;
 
 	old_en_flags= oldopt.nwto_flags & 0xffff;
-	old_di_flags= (oldopt.nwto_flags >> 16) &
-		0xffff;
+	old_di_flags= (oldopt.nwto_flags >> 16) & 0xffff;
 	new_en_flags= newopt.nwto_flags & 0xffff;
-	new_di_flags= (newopt.nwto_flags >> 16) &
-		0xffff;
+	new_di_flags= (newopt.nwto_flags >> 16) & 0xffff;
 	if (new_en_flags & new_di_flags)
 	{
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
@@ -981,33 +1072,24 @@ assert (data->acc_length == sizeof(nwio_tcpopt_t));
 	}
 
 	/* NWTO_SND_URG_MASK */
-	if (!((new_en_flags | new_di_flags) &
-		NWTO_SND_URG_MASK))
+	if (!((new_en_flags | new_di_flags) & NWTO_SND_URG_MASK))
 	{
-		new_en_flags |= (old_en_flags &
-			NWTO_SND_URG_MASK);
-		new_di_flags |= (old_di_flags &
-			NWTO_SND_URG_MASK);
+		new_en_flags |= (old_en_flags & NWTO_SND_URG_MASK);
+		new_di_flags |= (old_di_flags & NWTO_SND_URG_MASK);
 	}
 
 	/* NWTO_RCV_URG_MASK */
-	if (!((new_en_flags | new_di_flags) &
-		NWTO_RCV_URG_MASK))
+	if (!((new_en_flags | new_di_flags) & NWTO_RCV_URG_MASK))
 	{
-		new_en_flags |= (old_en_flags &
-			NWTO_RCV_URG_MASK);
-		new_di_flags |= (old_di_flags &
-			NWTO_RCV_URG_MASK);
+		new_en_flags |= (old_en_flags & NWTO_RCV_URG_MASK);
+		new_di_flags |= (old_di_flags & NWTO_RCV_URG_MASK);
 	}
 
 	/* NWTO_BSD_URG_MASK */
-	if (!((new_en_flags | new_di_flags) &
-		NWTO_BSD_URG_MASK))
+	if (!((new_en_flags | new_di_flags) & NWTO_BSD_URG_MASK))
 	{
-		new_en_flags |= (old_en_flags &
-			NWTO_BSD_URG_MASK);
-		new_di_flags |= (old_di_flags &
-			NWTO_BSD_URG_MASK);
+		new_en_flags |= (old_en_flags & NWTO_BSD_URG_MASK);
+		new_di_flags |= (old_di_flags & NWTO_BSD_URG_MASK);
 	}
 	else
 	{
@@ -1021,17 +1103,21 @@ assert (data->acc_length == sizeof(nwio_tcpopt_t));
 	}
 
 	/* NWTO_DEL_RST_MASK */
-	if (!((new_en_flags | new_di_flags) &
-		NWTO_DEL_RST_MASK))
+	if (!((new_en_flags | new_di_flags) & NWTO_DEL_RST_MASK))
 	{
-		new_en_flags |= (old_en_flags &
-			NWTO_DEL_RST_MASK);
-		new_di_flags |= (old_di_flags &
-			NWTO_DEL_RST_MASK);
+		new_en_flags |= (old_en_flags & NWTO_DEL_RST_MASK);
+		new_di_flags |= (old_di_flags & NWTO_DEL_RST_MASK);
 	}
 
-	newopt.nwto_flags= ((unsigned long)new_di_flags
-		<< 16) | new_en_flags;
+	/* NWTO_BULK_MASK */
+	if (!((new_en_flags | new_di_flags) & NWTO_BULK_MASK))
+	{
+		new_en_flags |= (old_en_flags & NWTO_BULK_MASK);
+		new_di_flags |= (old_di_flags & NWTO_BULK_MASK);
+	}
+
+	newopt.nwto_flags= ((unsigned long)new_di_flags << 16) |
+		new_en_flags;
 	tcp_fd->tf_tcpopt= newopt;
 	if (newopt.nwto_flags & NWTO_SND_URG)
 		tcp_fd->tf_flags |= TFF_WR_URG;
@@ -1046,19 +1132,20 @@ assert (data->acc_length == sizeof(nwio_tcpopt_t));
 	if (tcp_fd->tf_conn)
 	{
 		if (newopt.nwto_flags & NWTO_BSD_URG)
-		{
 			tcp_fd->tf_conn->tc_flags |= TCF_BSD_URG;
-		}
 		else
-		{
 			tcp_fd->tf_conn->tc_flags &= ~TCF_BSD_URG;
-		}
 	}
 
 	if (newopt.nwto_flags & NWTO_DEL_RST)
 		tcp_fd->tf_flags |= TFF_DEL_RST;
 	else
 		tcp_fd->tf_flags &= ~TFF_DEL_RST;
+
+	if (newopt.nwto_flags & NWTO_BULK)
+		tcp_fd->tf_flags &= ~TFF_PUSH_DATA;
+	else
+		tcp_fd->tf_flags |= TFF_PUSH_DATA;
 
 	bf_afree(data);
 	tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
@@ -1072,20 +1159,20 @@ int fd;
 {
 	tcpport_t port, nw_port;
 
-	nw_port= htons(0xC000+fd);
-	if (is_unused_port(nw_port))
-		return nw_port;
-
-	for (port= 0xC000+TCP_FD_NR; port < 0xFFFF; port++)
+	for (port= 0x8000+fd; port < 0xffff-TCP_FD_NR; port+= TCP_FD_NR)
 	{
 		nw_port= htons(port);
 		if (is_unused_port(nw_port))
 			return nw_port;
 	}
-#if !CRAMPED
+	for (port= 0x8000; port < 0xffff; port++)
+	{
+		nw_port= htons(port);
+		if (is_unused_port(nw_port))
+			return nw_port;
+	}
 	ip_panic(( "unable to find unused port (shouldn't occur)" ));
 	return 0;
-#endif
 }
 
 PRIVATE int is_unused_port(port)
@@ -1103,9 +1190,9 @@ tcpport_t port;
 		if (tcp_fd->tf_tcpconf.nwtc_locport == port)
 			return FALSE;
 	}
-	for (i= ip_conf_nr, tcp_conn= tcp_conn_table+i;
+	for (i= tcp_conf_nr, tcp_conn= tcp_conn_table+i;
 		i<TCP_CONN_NR; i++, tcp_conn++)
-		/* the first ip_conf_nr ports are special */
+		/* the first tcp_conf_nr ports are special */
 	{
 		if (!(tcp_conn->tc_flags & TCF_INUSE))
 			continue;
@@ -1115,8 +1202,7 @@ tcpport_t port;
 	return TRUE;
 }
 
-PRIVATE int
-reply_thr_put(tcp_fd, reply, for_ioctl)
+PRIVATE int reply_thr_put(tcp_fd, reply, for_ioctl)
 tcp_fd_t *tcp_fd;
 int reply;
 int for_ioctl;
@@ -1142,7 +1228,6 @@ PUBLIC int tcp_su4listen(tcp_fd)
 tcp_fd_t *tcp_fd;
 {
 	tcp_conn_t *tcp_conn;
-	acc_t *tmp_acc;
 
 	tcp_conn= tcp_fd->tf_conn;
 
@@ -1157,8 +1242,7 @@ tcp_fd_t *tcp_fd;
 	else
 		tcp_conn->tc_remaddr= 0;
 
-	tcp_setup_conn(tcp_conn);
-	tcp_conn->tc_port= tcp_fd->tf_port;
+	tcp_setup_conn(tcp_fd->tf_port, tcp_conn);
 	tcp_conn->tc_fd= tcp_fd;
 	tcp_conn->tc_connInprogress= 1;
 	tcp_conn->tc_orglisten= TRUE;
@@ -1179,11 +1263,10 @@ PRIVATE tcp_conn_t *find_empty_conn()
 {
 	int i;
 	tcp_conn_t *tcp_conn;
-	int state;
 
-	for (i=ip_conf_nr, tcp_conn= tcp_conn_table+i;
+	for (i=tcp_conf_nr, tcp_conn= tcp_conn_table+i;
 		i<TCP_CONN_NR; i++, tcp_conn++)
-		/* the first ip_conf_nr connections are reserved for
+		/* the first tcp_conf_nr connections are reserved for
 		 * RSTs
 		 */
 	{
@@ -1227,9 +1310,9 @@ ipaddr_t remaddr;
 
 	assert(remport);
 	assert(remaddr);
-	for (i=ip_conf_nr, tcp_conn= tcp_conn_table+i; i<TCP_CONN_NR;
+	for (i=tcp_conf_nr, tcp_conn= tcp_conn_table+i; i<TCP_CONN_NR;
 		i++, tcp_conn++)
-		/* the first ip_conf_nr connections are reserved for
+		/* the first tcp_conf_nr connections are reserved for
 			RSTs */
 	{
 		if (tcp_conn->tc_flags == TCF_EMPTY)
@@ -1300,9 +1383,9 @@ tcp_hdr_t *tcp_hdr;
 	best_level= 0;
 	best_conn= NULL;
 	listen_conn= NULL;
-	for (i= ip_conf_nr, tcp_conn= tcp_conn_table+i;
+	for (i= tcp_conf_nr, tcp_conn= tcp_conn_table+i;
 		i<TCP_CONN_NR; i++, tcp_conn++)
-		/* the first ip_conf_nr connections are reserved for
+		/* the first tcp_conf_nr connections are reserved for
 			RSTs */
 	{
 		if (!(tcp_conn->tc_flags & TCF_INUSE))
@@ -1379,7 +1462,7 @@ tcp_hdr_t *tcp_hdr;
 			return NULL;
 		}
 
-		for (i=0, tcp_conn= tcp_conn_table; i<ip_conf_nr;
+		for (i=0, tcp_conn= tcp_conn_table; i<tcp_conf_nr;
 			i++, tcp_conn++)
 		{
 			/* find valid port to send RST */
@@ -1435,7 +1518,7 @@ tcpport_t remport;
 	tcp_conn_t *tcp_conn;
 	tcp_fd_t *fd;
 
-	for (i= ip_conf_nr, tcp_conn= tcp_conn_table+i;
+	for (i= tcp_conf_nr, tcp_conn= tcp_conn_table+i;
 		i<TCP_CONN_NR; i++, tcp_conn++)
 	{
 		if (!(tcp_conn->tc_flags & TCF_INUSE))
@@ -1538,14 +1621,14 @@ size_t count;
 	tcp_fd->tf_write_offset= 0;
 	tcp_fd->tf_write_count= count;
 
+	/* New data may cause a segment to be sent. Clear PUSH_NOW
+	 * from last NWIOTCPPUSH ioctl.
+	 */
+	tcp_conn->tc_flags &= ~(TCF_NO_PUSH|TCF_PUSH_NOW);
+
 	/* Start the timer (if necessary) */
-	if (tcp_conn->tc_SND_UNA == tcp_conn->tc_SND_NXT &&
-		tcp_conn->tc_transmit_seq == tcp_conn->tc_SND_UNA)
-	{
+	if (tcp_conn->tc_SND_TRM == tcp_conn->tc_SND_UNA)
 		tcp_set_send_timer(tcp_conn);
-	}
-	assert(tcp_conn->tc_transmit_timer.tim_active ||
-		(tcp_print_conn(tcp_conn), printf("\n"), 0));
 
 	assert(tcp_conn->tc_busy == 0);
 	tcp_conn->tc_busy++;
@@ -1677,7 +1760,6 @@ int which_operation;
 {
 	tcp_fd_t *tcp_fd;
 	tcp_conn_t *tcp_conn;
-	int i;
 
 	tcp_fd= &tcp_fd_table[fd];
 
@@ -1733,10 +1815,9 @@ assert (tcp_fd->tf_flags & TFF_IOCTL_IP);
 			break;
 		}
 		break;
-#if !CRAMPED
 	default:
 		ip_panic(( "unknown cancel request" ));
-#endif
+		break;
 	}
 	return NW_OK;
 }
@@ -1749,7 +1830,6 @@ PRIVATE int tcp_connect(tcp_fd)
 tcp_fd_t *tcp_fd;
 {
 	tcp_conn_t *tcp_conn;
-	int state;
 
 	if (!(tcp_fd->tf_flags & TFF_CONF_SET))
 	{
@@ -1803,7 +1883,6 @@ PRIVATE int tcp_su4connect(tcp_fd)
 tcp_fd_t *tcp_fd;
 {
 	tcp_conn_t *tcp_conn;
-	acc_t *tmp_acc;
 
 	tcp_conn= tcp_fd->tf_conn;
 
@@ -1815,10 +1894,9 @@ tcp_fd_t *tcp_fd;
 	tcp_conn->tc_remport= tcp_fd->tf_tcpconf.nwtc_remport;
 	tcp_conn->tc_remaddr= tcp_fd->tf_tcpconf.nwtc_remaddr;
 
-	tcp_setup_conn(tcp_conn);
+	tcp_setup_conn(tcp_fd->tf_port, tcp_conn);
 
 	tcp_conn->tc_fd= tcp_fd;
-	tcp_conn->tc_port= tcp_fd->tf_port;
 	tcp_conn->tc_connInprogress= 1;
 	tcp_conn->tc_orglisten= FALSE;
 	tcp_conn->tc_state= TCS_SYN_SENT;
@@ -1835,30 +1913,6 @@ tcp_fd_t *tcp_fd;
 		return NW_OK;
 }
 
-PRIVATE int conn_right4fd(tcp_conn, tcp_fd)
-tcp_fd_t *tcp_fd;
-tcp_conn_t *tcp_conn;
-{
-	unsigned long flags;
-
-	flags= tcp_fd->tf_tcpconf.nwtc_flags;
-
-	if (tcp_fd->tf_tcpconf.nwtc_locport != tcp_conn->tc_locport)
-		return FALSE;
-
-	if ((flags & NWTC_SET_RA) && tcp_fd->tf_tcpconf.nwtc_remaddr !=
-		tcp_conn->tc_remaddr)
-		return FALSE;
-
-	if ((flags & NWTC_SET_RP) && tcp_fd->tf_tcpconf.nwtc_remport !=
-		tcp_conn->tc_remport)
-		return FALSE;
-
-	if (tcp_fd->tf_port != tcp_conn->tc_port)
-		return FALSE;
-
-	return TRUE;
-}
 
 /*
 tcp_listen
@@ -1868,7 +1922,6 @@ PRIVATE int tcp_listen(tcp_fd)
 tcp_fd_t *tcp_fd;
 {
 	tcp_conn_t *tcp_conn;
-	int state;
 
 	if (!(tcp_fd->tf_flags & TFF_CONF_SET))
 	{
@@ -2005,7 +2058,7 @@ PRIVATE void tcp_bufcheck()
 	tcp_conn_t *tcp_conn;
 	tcp_port_t *tcp_port;
 
-	for (i= 0, tcp_port= tcp_port_table; i<ip_conf_nr; i++, tcp_port++)
+	for (i= 0, tcp_port= tcp_port_table; i<tcp_conf_nr; i++, tcp_port++)
 	{
 		if (tcp_port->tp_pack)
 			bf_check_acc(tcp_port->tp_pack);
@@ -2041,7 +2094,7 @@ tcp_conn_t *tcp_conn;
 			tcp_close_connection(tcp_conn, EDSTNOTRCH);
 		return;
 	}
-	else if (new_ttl == TCP_DEF_TTL)
+	else if (new_ttl < TCP_DEF_TTL_NEXT)
 		new_ttl= TCP_DEF_TTL_NEXT;
 	else
 	{
@@ -2055,14 +2108,154 @@ tcp_conn_t *tcp_conn;
 	tcp_conn_write(tcp_conn, 1);
 }
 
+FORWARD u32_t mtu_table[]=
+{	/* From RFC-1191 */
+/*	Plateau    MTU    Comments                      Reference	*/
+/*	------     ---    --------                      ---------	*/
+/*		  65535  Official maximum MTU          RFC 791		*/
+/*		  65535  Hyperchannel                  RFC 1044		*/
+	65535,
+	32000,    /*     Just in case					*/
+/*		  17914  16Mb IBM Token Ring           ref. [6]		*/
+	17914,
+/*		  8166   IEEE 802.4                    RFC 1042		*/
+	8166,
+/*		  4464   IEEE 802.5 (4Mb max)          RFC 1042		*/
+/*		  4352   FDDI (Revised)                RFC 1188		*/
+	4352, /* (1%) */
+/*		  2048   Wideband Network              RFC 907		*/
+/*		  2002   IEEE 802.5 (4Mb recommended)  RFC 1042		*/
+	2002, /* (2%) */
+/*		  1536   Exp. Ethernet Nets            RFC 895		*/
+/*		  1500   Ethernet Networks             RFC 894		*/
+/*		  1500   Point-to-Point (default)      RFC 1134		*/
+/*		  1492   IEEE 802.3                    RFC 1042		*/
+	1492, /* (3%) */
+/*		  1006   SLIP                          RFC 1055		*/
+/*		  1006   ARPANET                       BBN 1822		*/
+	1006,
+/*		  576    X.25 Networks                 RFC 877		*/
+/*		  544    DEC IP Portal                 ref. [10]	*/
+/*		  512    NETBIOS                       RFC 1088		*/
+/*		  508    IEEE 802/Source-Rt Bridge     RFC 1042		*/
+/*		  508    ARCNET                        RFC 1051		*/
+	508, /* (13%) */
+/*		  296    Point-to-Point (low delay)    RFC 1144		*/
+	296,
+	68,       /*     Official minimum MTU          RFC 791		*/
+	0,        /*     End of list					*/
+};
+
+PUBLIC void tcp_mtu_exceeded(tcp_conn)
+tcp_conn_t *tcp_conn;
+{
+	u16_t mtu;
+	int i;
+	clock_t curr_time;
+
+	if (!(tcp_conn->tc_flags & TCF_PMTU))
+	{
+		/* Strange, got MTU exceeded but DF is not set. Ignore
+		 * the error. If the problem persists, the connection will
+		 * time-out.
+		 */
+		return;
+	}
+	curr_time= get_time();
+
+	/* We get here in cases. Either were are trying to find an MTU 
+	 * that works at all, or we are trying see how far we can increase
+	 * the current MTU. If the last change to the MTU was a long time 
+	 * ago, we assume the second case. 
+	 */
+	if (curr_time >= tcp_conn->tc_mtutim + TCP_PMTU_INCR_IV)
+	{
+		mtu= tcp_conn->tc_mtu;
+		mtu -= mtu/TCP_PMTU_INCR_FRAC;
+		tcp_conn->tc_mtu= mtu;
+		tcp_conn->tc_mtutim= curr_time;
+		DBLOCK(1, printf(
+			"tcp_mtu_exceeded: new (lowered) mtu %d for conn %d\n",
+			mtu, tcp_conn-tcp_conn_table));
+		tcp_conn->tc_stt= 0;
+		tcp_conn->tc_SND_TRM= tcp_conn->tc_SND_UNA;
+		tcp_conn_write(tcp_conn, 1);
+		return;
+	}
+
+	tcp_conn->tc_mtutim= curr_time;
+	mtu= tcp_conn->tc_mtu;
+	for (i= 0; mtu_table[i] >= mtu; i++)
+		;	/* Nothing to do */
+	mtu= mtu_table[i];
+	if (mtu >= TCP_MIN_PATH_MTU)
+	{
+		tcp_conn->tc_mtu= mtu;
+	}
+	else
+	{
+		/* Small MTUs can be used for denial-of-service attacks.
+		 * Switch-off PMTU if the MTU becomes too small.
+		 */
+		tcp_conn->tc_flags &= ~TCF_PMTU;
+		tcp_conn->tc_mtu= TCP_MIN_PATH_MTU;
+		DBLOCK(1, printf(
+			"tcp_mtu_exceeded: clearing TCF_PMTU for conn %d\n",
+			tcp_conn-tcp_conn_table););
+
+	}
+	DBLOCK(1, printf("tcp_mtu_exceeded: new mtu %d for conn %d\n",
+		mtu, tcp_conn-tcp_conn_table););
+	tcp_conn->tc_stt= 0;
+	tcp_conn->tc_SND_TRM= tcp_conn->tc_SND_UNA;
+	tcp_conn_write(tcp_conn, 1);
+}
+
+PUBLIC void tcp_mtu_incr(tcp_conn)
+tcp_conn_t *tcp_conn;
+{
+	clock_t curr_time;
+	u32_t mtu;
+
+	assert(tcp_conn->tc_mtu < tcp_conn->tc_max_mtu);
+	if (!(tcp_conn->tc_flags & TCF_PMTU))
+	{
+		/* Use a much longer time-out for retrying PMTU discovery
+		 * after is has been disabled. Note that PMTU discovery
+		 * can be disabled during a short loss of connectivity.
+		 */
+		curr_time= get_time();
+		if (curr_time > tcp_conn->tc_mtutim+TCP_PMTU_EN_IV)
+		{
+			tcp_conn->tc_flags |= TCF_PMTU;
+			DBLOCK(1, printf(
+				"tcp_mtu_incr: setting TCF_PMTU for conn %d\n",
+				tcp_conn-tcp_conn_table););
+		}
+		return;
+	}
+
+	mtu= tcp_conn->tc_mtu;
+	mtu += mtu/TCP_PMTU_INCR_FRAC;
+	if (mtu > tcp_conn->tc_max_mtu)
+		mtu= tcp_conn->tc_max_mtu;
+	tcp_conn->tc_mtu= mtu;
+	DBLOCK(0x1, printf("tcp_mtu_incr: new mtu %ld for conn %d\n",
+		mtu, tcp_conn-tcp_conn_table););
+}
+
 /*
 tcp_setup_conn
 */
 
-PRIVATE void tcp_setup_conn(tcp_conn)
+PRIVATE void tcp_setup_conn(tcp_port, tcp_conn)
+tcp_port_t *tcp_port;
 tcp_conn_t *tcp_conn;
 {
+	u16_t mss;
+
 	assert(!tcp_conn->tc_connInprogress);
+	tcp_conn->tc_port= tcp_port;
 	if (tcp_conn->tc_flags & TCF_INUSE)
 	{
 		assert (tcp_conn->tc_state == TCS_CLOSED);
@@ -2082,13 +2275,13 @@ tcp_conn_t *tcp_conn;
 	}
 	if (!tcp_conn->tc_ISS)
 	{
-		tcp_conn->tc_ISS= (get_time()/HZ)*ISS_INC_FREQ;
+		tcp_conn->tc_ISS= tcp_rand32();
 	}
 	tcp_conn->tc_SND_UNA= tcp_conn->tc_ISS;
 	tcp_conn->tc_SND_TRM= tcp_conn->tc_ISS;
 	tcp_conn->tc_SND_NXT= tcp_conn->tc_ISS+1;
 	tcp_conn->tc_SND_UP= tcp_conn->tc_ISS;
-	tcp_conn->tc_SND_PSH= tcp_conn->tc_ISS;
+	tcp_conn->tc_SND_PSH= tcp_conn->tc_ISS+1;
 	tcp_conn->tc_IRS= 0;
 	tcp_conn->tc_RCV_LO= tcp_conn->tc_IRS;
 	tcp_conn->tc_RCV_NXT= tcp_conn->tc_IRS;
@@ -2098,6 +2291,9 @@ tcp_conn_t *tcp_conn;
 	assert(tcp_conn->tc_rcvd_data == NULL);
 	assert(tcp_conn->tc_adv_data == NULL);
 	assert(tcp_conn->tc_send_data == NULL);
+
+	tcp_conn->tc_ka_time= TCP_DEF_KEEPALIVE;
+
 	tcp_conn->tc_remipopt= NULL;
 	tcp_conn->tc_tcpopt= NULL;
 
@@ -2106,10 +2302,15 @@ tcp_conn_t *tcp_conn;
 	tcp_conn->tc_stt= 0;
 	tcp_conn->tc_rt_dead= TCP_DEF_RT_DEAD;
 	tcp_conn->tc_0wnd_to= 0;
+	tcp_conn->tc_artt= TCP_DEF_RTT*TCP_RTT_SCALE;
+	tcp_conn->tc_drtt= 0;
 	tcp_conn->tc_rtt= TCP_DEF_RTT;
-	tcp_conn->tc_mss= TCP_DEF_MSS;
+	tcp_conn->tc_max_mtu= tcp_conn->tc_port->tp_mtu;
+	tcp_conn->tc_mtu= tcp_conn->tc_max_mtu;
+	tcp_conn->tc_mtutim= 0;
 	tcp_conn->tc_error= NW_OK;
-	tcp_conn->tc_snd_cwnd= tcp_conn->tc_SND_UNA + 2*tcp_conn->tc_mss;
+	mss= tcp_conn->tc_mtu-IP_TCP_MIN_HDR_SIZE;
+	tcp_conn->tc_snd_cwnd= tcp_conn->tc_SND_UNA + 2*mss;
 	tcp_conn->tc_snd_cthresh= TCP_MAX_SND_WND_SIZE;
 	tcp_conn->tc_snd_cinc=
 		(long)TCP_DEF_MSS*TCP_DEF_MSS/TCP_MAX_SND_WND_SIZE+1;
@@ -2118,11 +2319,20 @@ tcp_conn_t *tcp_conn;
 	tcp_conn->tc_rt_seq= 0;
 	tcp_conn->tc_rt_threshold= tcp_conn->tc_ISS;
 	tcp_conn->tc_flags= TCF_INUSE;
+	tcp_conn->tc_flags |= TCF_PMTU;
 
 	clck_untimer(&tcp_conn->tc_transmit_timer);
 	tcp_conn->tc_transmit_seq= 0;
 }
 
+PRIVATE u32_t tcp_rand32()
+{
+	u8_t bits[32];
+
+	rand256(bits);
+	return bits[0] | (bits[1] << 8) | (bits[2] << 16) | (bits[3] << 24);
+}
+
 /*
- * $PchId: tcp.c,v 1.14.2.2 1999/11/17 22:05:27 philip Exp $
+ * $PchId: tcp.c,v 1.34 2005/06/28 14:20:27 philip Exp $
  */

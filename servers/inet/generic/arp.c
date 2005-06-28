@@ -11,20 +11,26 @@ Copyright 1995 Philip Homburg
 #include "assert.h"
 #include "buf.h"
 #include "clock.h"
+#include "event.h"
 #include "eth.h"
 #include "io.h"
 #include "sr.h"
 
 THIS_FILE
 
-#define ARP_CACHE_NR	64
+#define ARP_CACHE_NR	 256
+#define AP_REQ_NR	  32
+
+#define ARP_HASH_NR	256
+#define ARP_HASH_MASK	0xff
+#define ARP_HASH_WIDTH	4
 
 #define MAX_ARP_RETRIES		5
 #define ARP_TIMEOUT		(HZ/2+1)	/* .5 seconds */
 #ifndef ARP_EXP_TIME
 #define ARP_EXP_TIME		(20L*60L*HZ)	/* 20 minutes */
 #endif
-#define ARP_NOTRCH_EXP_TIME	(5*HZ)		/* 5 seconds */
+#define ARP_NOTRCH_EXP_TIME	(30*HZ)		/* 30 seconds */
 #define ARP_INUSE_OFFSET	(60*HZ)	/* an entry in the cache can be deleted
 					   if its not used for 1 minute */
 
@@ -66,37 +72,39 @@ typedef struct arp_port
 	int ap_eth_port;
 	int ap_ip_port;
 	int ap_eth_fd;
-	ether_addr_t ap_ethaddr;
-	ipaddr_t ap_ipaddr;
-	timer_t ap_timer;
 
-	ether_addr_t ap_write_ethaddr;
-	ipaddr_t ap_write_ipaddr;
-	int ap_write_code;
+	ether_addr_t ap_ethaddr;	/* Ethernet address of this port */
+	ipaddr_t ap_ipaddr;		/* IP address of this port */
 
-	ipaddr_t ap_req_ipaddr;
-	int ap_req_count;
+	struct arp_req
+	{
+		timer_t ar_timer;
+		int ar_entry;
+		int ar_req_count;
+	} ap_req[AP_REQ_NR];
 
 	arp_func_t ap_arp_func;
+
+	acc_t *ap_sendpkt;
+	acc_t *ap_sendlist;
+	acc_t *ap_reclist;
+	event_t ap_event;
 } arp_port_t;
 
-#define APF_EMPTY	0
-#define APF_ARP_RD_IP	0x4
-#define APF_ARP_RD_SP	0x8
-#define APF_ARP_WR_IP	0x10
-#define APF_ARP_WR_SP	0x20
-#define APF_INADDR_SET	0x100
-#define APF_MORE2WRITE	0x200
-#define APF_CLIENTREQ	0x400
-#define APF_CLIENTWRITE	0x1000
-#define APF_SUSPEND	0x2000
+#define APF_EMPTY	0x00
+#define APF_ARP_RD_IP	0x01
+#define APF_ARP_RD_SP	0x02
+#define APF_ARP_WR_IP	0x04
+#define APF_ARP_WR_SP	0x08
+#define APF_INADDR_SET	0x10
+#define APF_SUSPEND	0x20
 
-#define APS_INITIAL	0x00
-#define	APS_GETADDR	0x01
-#define	APS_ARPSTART	0x10
-#define	APS_ARPPROTO	0x20
-#define	APS_ARPMAIN	0x40
-#define	APS_ERROR	0x80
+#define APS_INITIAL	1
+#define	APS_GETADDR	2
+#define	APS_ARPSTART	3
+#define	APS_ARPPROTO	4
+#define	APS_ARPMAIN	5
+#define	APS_ERROR	6
 
 typedef struct arp_cache
 {
@@ -110,39 +118,61 @@ typedef struct arp_cache
 } arp_cache_t;
 
 #define ACF_EMPTY	0
-#define ACF_GOTREQ	1
+#define ACF_PERM	1
+#define ACF_PUB		2
 
 #define ACS_UNUSED	0
 #define ACS_INCOMPLETE	1
 #define ACS_VALID	2
 #define ACS_UNREACHABLE	3
 
+PRIVATE struct arp_hash_ent
+{
+	arp_cache_t *ahe_row[ARP_HASH_WIDTH];
+} arp_hash[ARP_HASH_NR];
+
+PRIVATE arp_port_t *arp_port_table;
+PRIVATE	arp_cache_t *arp_cache;
+PRIVATE int arp_cache_nr;
+
 FORWARD acc_t *arp_getdata ARGS(( int fd, size_t offset,
 	size_t count, int for_ioctl ));
 FORWARD int arp_putdata ARGS(( int fd, size_t offset,
 	acc_t *data, int for_ioctl ));
 FORWARD void arp_main ARGS(( arp_port_t *arp_port ));
-FORWARD void arp_timeout ARGS(( int fd, timer_t *timer ));
+FORWARD void arp_timeout ARGS(( int ref, timer_t *timer ));
 FORWARD void setup_write ARGS(( arp_port_t *arp_port ));
 FORWARD void setup_read ARGS(( arp_port_t *arp_port ));
-FORWARD void process_arp_req ARGS(( arp_port_t *arp_port, acc_t *data ));
+FORWARD void do_reclist ARGS(( event_t *ev, ev_arg_t ev_arg ));
+FORWARD void process_arp_pkt ARGS(( arp_port_t *arp_port, acc_t *data ));
 FORWARD void client_reply ARGS(( arp_port_t *arp_port,
 	ipaddr_t ipaddr, ether_addr_t *ethaddr ));
 FORWARD arp_cache_t *find_cache_ent ARGS(( arp_port_t *arp_port,
 	ipaddr_t ipaddr ));
-FORWARD arp_cache_t *alloc_cache_ent ARGS(( void ));
-
-PRIVATE arp_port_t *arp_port_table;
-PRIVATE	arp_cache_t arp_cache[ARP_CACHE_NR];
+FORWARD arp_cache_t *alloc_cache_ent ARGS(( int flags ));
+FORWARD void arp_buffree ARGS(( int priority ));
+#ifdef BUF_CONSISTENCY_CHECK
+FORWARD void arp_bufcheck ARGS(( void ));
+#endif
 
 PUBLIC void arp_prep()
 {
 	arp_port_table= alloc(eth_conf_nr * sizeof(arp_port_table[0]));
+
+	arp_cache_nr= ARP_CACHE_NR;
+	if (arp_cache_nr < (eth_conf_nr+1)*AP_REQ_NR)
+	{
+		arp_cache_nr= (eth_conf_nr+1)*AP_REQ_NR;
+		printf("arp: using %d cache entries instead of %d\n",
+			arp_cache_nr, ARP_CACHE_NR);
+	}
+	arp_cache= alloc(arp_cache_nr * sizeof(arp_cache[0]));
 }
 
 PUBLIC void arp_init()
 {
 	arp_port_t *arp_port;
+	arp_cache_t *cache;
 	int i;
 
 	assert (BUF_S >= sizeof(struct nwio_ethstat));
@@ -155,6 +185,20 @@ PUBLIC void arp_init()
 						 * unavailable */
 	}
 
+	cache= arp_cache;
+	for (i=0; i<arp_cache_nr; i++, cache++)
+	{
+		cache->ac_state= ACS_UNUSED;
+		cache->ac_flags= ACF_EMPTY;
+		cache->ac_expire= 0;
+		cache->ac_lastuse= 0;
+	}
+
+#ifndef BUF_CONSISTENCY_CHECK
+	bf_logon(arp_buffree);
+#else
+	bf_logon(arp_buffree, arp_bufcheck);
+#endif
 }
 
 PRIVATE void arp_main(arp_port)
@@ -166,11 +210,14 @@ arp_port_t *arp_port;
 	{
 	case APS_INITIAL:
 		arp_port->ap_eth_fd= eth_open(arp_port->ap_eth_port,
-			arp_port->ap_eth_port, arp_getdata, arp_putdata, 0);
+			arp_port->ap_eth_port, arp_getdata, arp_putdata,
+			0 /* no put_pkt */, 0 /* no select_res */);
 
 		if (arp_port->ap_eth_fd<0)
 		{
-			DBLOCK(1, printf("arp.c: unable to open ethernet\n"));
+			DBLOCK(1, printf("arp[%d]: unable to open eth[%d]\n",
+				arp_port-arp_port_table,
+				arp_port->ap_eth_port));
 			return;
 		}
 
@@ -195,19 +242,6 @@ arp_port_t *arp_port;
 	case APS_ARPSTART:
 		arp_port->ap_state= APS_ARPPROTO;
 
-		{
-			arp_cache_t *cache;
-			int i;
-
-			cache= arp_cache;
-			for (i=0; i<ARP_CACHE_NR; i++, cache++)
-			{
-				cache->ac_state= ACS_UNUSED;
-				cache->ac_flags= ACF_EMPTY;
-				cache->ac_expire= 0;
-				cache->ac_lastuse= 0;
-			}
-		}
 		result= eth_ioctl (arp_port->ap_eth_fd, NWIOSETHOPT);
 
 		if (result==NW_SUSPEND)
@@ -220,17 +254,14 @@ arp_port_t *arp_port;
 		/* fall through */
 	case APS_ARPPROTO:
 		arp_port->ap_state= APS_ARPMAIN;
-		if (arp_port->ap_flags & APF_MORE2WRITE)
-			setup_write(arp_port);
+		setup_write(arp_port);
 		setup_read(arp_port);
 		return;
 
-#if !CRAMPED
 	default:
 		ip_panic((
 		 "arp_main(&arp_port_table[%d]) called but ap_state=0x%x\n",
 			arp_port->ap_eth_port, arp_port->ap_state ));
-#endif
 	}
 }
 
@@ -241,7 +272,6 @@ size_t count;
 int for_ioctl;
 {
 	arp_port_t *arp_port;
-	arp46_t *arp;
 	acc_t *data;
 	int result;
 
@@ -281,13 +311,18 @@ int for_ioctl;
 		assert (arp_port->ap_flags & APF_ARP_WR_IP);
 		if (!count)
 		{
+			data= arp_port->ap_sendpkt;
+			arp_port->ap_sendpkt= NULL;
+			assert(data);
+			bf_afree(data); data= NULL;
+
 			result= (int)offset;
 			if (result<0)
 			{
 				DIFBLOCK(1, (result != NW_SUSPEND),
 					printf(
-				"arp.c: write error on port %d: error %d\n",
-					fd, result));
+				"arp[%d]: write error on port %d: error %d\n",
+					fd, arp_port->ap_eth_fd, result));
 
 				arp_port->ap_state= APS_ERROR;
 				break;
@@ -298,37 +333,14 @@ int for_ioctl;
 			return NW_OK;
 		}
 		assert (offset+count <= sizeof(arp46_t));
-		data= bf_memreq(sizeof(arp46_t));
-		arp= (arp46_t *)ptr2acc_data(data);
-		data->acc_offset += offset;
-		data->acc_length= count;
-		if (arp_port->ap_write_code == ARP_REPLY)
-			arp->a46_dstaddr= arp_port->ap_write_ethaddr;
-		else
-		{
-			arp->a46_dstaddr.ea_addr[0]= 0xff;
-			arp->a46_dstaddr.ea_addr[1]= 0xff;
-			arp->a46_dstaddr.ea_addr[2]= 0xff;
-			arp->a46_dstaddr.ea_addr[3]= 0xff;
-			arp->a46_dstaddr.ea_addr[4]= 0xff;
-			arp->a46_dstaddr.ea_addr[5]= 0xff;
-		}
-		arp->a46_hdr= HTONS(ARP_ETHERNET);
-		arp->a46_pro= HTONS(ETH_IP_PROTO);
-		arp->a46_hln= 6;
-		arp->a46_pln= 4;
-		arp->a46_op= htons(arp_port->ap_write_code);
-		arp->a46_sha= arp_port->ap_ethaddr;
-		memcpy (arp->a46_spa, &arp_port->ap_ipaddr, sizeof(ipaddr_t));
-		arp->a46_tha= arp_port->ap_write_ethaddr;
-		memcpy (arp->a46_tpa, &arp_port->ap_write_ipaddr,
-			sizeof(ipaddr_t));
+		data= arp_port->ap_sendpkt;
+		assert(data);
+		data= bf_cut(data, offset, count);
+
 		return data;
 	default:
-#if !CRAMPED
 		printf("arp_getdata(%d, 0x%d, 0x%d) called but ap_state=0x%x\n",
 			fd, offset, count, arp_port->ap_state);
-#endif
 		break;
 	}
 	return 0;
@@ -343,6 +355,8 @@ int for_ioctl;
 	arp_port_t *arp_port;
 	int result;
 	struct nwio_ethstat *ethstat;
+	ev_arg_t ev_arg;
+	acc_t *tmpacc;
 
 	arp_port= &arp_port_table[fd];
 
@@ -354,8 +368,8 @@ int for_ioctl;
 			if (result<0)
 			{
 				DIFBLOCK(1, (result != NW_SUSPEND), printf(
-				"arp.c: read error on port %d: error %d\n",
-					fd, result));
+				"arp[%d]: read error on port %d: error %d\n",
+					fd, arp_port->ap_eth_fd, result));
 
 				return NW_OK;
 			}
@@ -374,11 +388,29 @@ int for_ioctl;
 		/* Warning: the above assertion is illegal; puts and gets of
 		   data can be brokenup in any piece the server likes. However
 		   we assume that the server is eth.c and it transfers only
-		   whole packets. */
+		   whole packets.
+		   */
 		data= bf_packIffLess(data, sizeof(arp46_t));
 		if (data->acc_length >= sizeof(arp46_t))
-			process_arp_req(arp_port,data);
-		bf_afree(data);
+		{
+			if (!arp_port->ap_reclist)
+			{
+				ev_arg.ev_ptr= arp_port;
+				ev_enqueue(&arp_port->ap_event, do_reclist,
+					ev_arg);
+			}
+			if (data->acc_linkC != 1)
+			{
+				tmpacc= bf_dupacc(data);
+				bf_afree(data);
+				data= tmpacc;
+				tmpacc= NULL;
+			}
+			data->acc_ext_link= arp_port->ap_reclist;
+			arp_port->ap_reclist= data;
+		}
+		else
+			bf_afree(data);
 		return NW_OK;
 	}
 	switch (arp_port->ap_state)
@@ -407,10 +439,8 @@ int for_ioctl;
 		bf_afree(data);
 		return NW_OK;
 	default:
-#if !CRAMPED
 		printf("arp_putdata(%d, 0x%d, 0x%lx) called but ap_state=0x%x\n",
 			fd, offset, (unsigned long)data, arp_port->ap_state);
-#endif
 		break;
 	}
 	return EGENERIC;
@@ -431,74 +461,83 @@ arp_port_t *arp_port;
 			return;
 		}
 		DIFBLOCK(1, (result != NW_OK),
-			printf("arp.c: eth_read(..,%d)=%d\n",
-			ETH_MAX_PACK_SIZE, result));
+			printf("arp[%d]: eth_read(..,%d)=%d\n",
+			arp_port-arp_port_table, ETH_MAX_PACK_SIZE, result));
 	}
 }
 
 PRIVATE void setup_write(arp_port)
 arp_port_t *arp_port;
 {
-	int i, result;
+	int result;
+	acc_t *data;
 
-	while (arp_port->ap_flags & APF_MORE2WRITE)
+	for(;;)
 	{
-		if (arp_port->ap_flags & APF_CLIENTWRITE)
-		{
-			arp_port->ap_flags &= ~APF_CLIENTWRITE;
-			arp_port->ap_write_ipaddr= arp_port->ap_req_ipaddr;
-			arp_port->ap_write_code= ARP_REQUEST;
-			clck_timer(&arp_port->ap_timer,
-				get_time() + ARP_TIMEOUT,
-				arp_timeout, arp_port->ap_eth_port);
-		}
-		else
-		{
-			arp_cache_t *cache;
+		data= arp_port->ap_sendlist;
+		if (!data)
+			break;
+		arp_port->ap_sendlist= data->acc_ext_link;
 
-			cache= arp_cache;
-			for (i=0; i<ARP_CACHE_NR; i++, cache++)
-			{
-				if ((cache->ac_flags & ACF_GOTREQ) &&
-					cache->ac_port == arp_port)
-				{
-					cache->ac_flags &= ~ACF_GOTREQ;
-					arp_port->ap_write_ethaddr= cache->
-						ac_ethaddr;
-					arp_port->ap_write_ipaddr= cache->
-						ac_ipaddr;
-					arp_port->ap_write_code= ARP_REPLY;
-					break;
-				}
-			}
-			if (i>=ARP_CACHE_NR)
-			{
-				arp_port->ap_flags &= ~APF_MORE2WRITE;
-				break;
-			}
+		if (arp_port->ap_ipaddr == HTONL(0x00000000))
+		{
+			/* Interface is down */
+			printf(
+		"arp[%d]: not sending ARP packet, interface is down\n",
+				arp_port-arp_port_table);
+			bf_afree(data); data= NULL;
+			continue;
 		}
+
+		assert(!arp_port->ap_sendpkt);
+		arp_port->ap_sendpkt= data; data= NULL;
+			
 		arp_port->ap_flags= (arp_port->ap_flags & ~APF_ARP_WR_SP) |
 			APF_ARP_WR_IP;
 		result= eth_write(arp_port->ap_eth_fd, sizeof(arp46_t));
 		if (result == NW_SUSPEND)
+		{
 			arp_port->ap_flags |= APF_ARP_WR_SP;
+			break;
+		}
 		if (result<0)
 		{
 			DIFBLOCK(1, (result != NW_SUSPEND),
-				printf("arp.c: eth_write(..,%d)=%d\n",
-				sizeof(arp46_t), result));
+				printf("arp[%d]: eth_write(..,%d)=%d\n",
+				arp_port-arp_port_table, sizeof(arp46_t),
+				result));
 			return;
 		}
 	}
 }
 
-PRIVATE void process_arp_req (arp_port, data)
+PRIVATE void do_reclist(ev, ev_arg)
+event_t *ev;
+ev_arg_t ev_arg;
+{
+	arp_port_t *arp_port;
+	acc_t *data;
+
+	arp_port= ev_arg.ev_ptr;
+	assert(ev == &arp_port->ap_event);
+
+	while (data= arp_port->ap_reclist, data != NULL)
+	{
+		arp_port->ap_reclist= data->acc_ext_link;
+		process_arp_pkt(arp_port, data);
+		bf_afree(data);
+	}
+}
+
+PRIVATE void process_arp_pkt (arp_port, data)
 arp_port_t *arp_port;
 acc_t *data;
 {
+	int i, entry, do_reply;
 	arp46_t *arp;
-	arp_cache_t *ce;
-	int level;
+	u16_t *p;
+	arp_cache_t *ce, *cache;
+	struct arp_req *reqp;
 	time_t curr_time;
 	ipaddr_t spa, tpa;
 
@@ -513,23 +552,53 @@ acc_t *data;
 		arp->a46_pro != HTONS(ETH_IP_PROTO) ||
 		arp->a46_pln != 4)
 		return;
-	ce= find_cache_ent(arp_port, spa);
-	if (ce && ce->ac_expire < curr_time)
+	if (arp_port->ap_ipaddr == HTONL(0x00000000))
 	{
-		DBLOCK(0x10, printf("arp: expiring entry for ");
-			writeIpAddr(ce->ac_ipaddr); printf("\n"));
-		ce->ac_state= ACS_UNUSED;
-		ce= NULL;
+		/* Interface is down */
+#if DEBUG
+		printf("arp[%d]: dropping ARP packet, interface is down\n",
+			arp_port-arp_port_table);
+#endif
+		return;
 	}
+
+	ce= find_cache_ent(arp_port, spa);
+	cache= NULL;	/* lint */
+
+	do_reply= 0;
+	if (arp->a46_op != HTONS(ARP_REQUEST))
+		;	/* No need to reply */
+	else if (tpa == arp_port->ap_ipaddr)
+		do_reply= 1;
+	else
+	{
+		/* Look for a published entry */
+		cache= find_cache_ent(arp_port, tpa);
+		if (cache)
+		{
+			if (cache->ac_flags & ACF_PUB)
+			{
+				/* Published entry */
+				do_reply= 1;
+			}
+			else
+			{
+				/* Nothing to do */
+				cache= NULL;
+			}
+		}
+	}
+
 	if (ce == NULL)
 	{
-		if (tpa != arp_port->ap_ipaddr)
+		if (!do_reply)
 			return;
 
-		DBLOCK(0x10, printf("arp: allocating entry for ");
+		DBLOCK(0x10, printf("arp[%d]: allocating entry for ",
+			arp_port-arp_port_table);
 			writeIpAddr(spa); printf("\n"));
 
-		ce= alloc_cache_ent();
+		ce= alloc_cache_ent(ACF_EMPTY);
 		ce->ac_flags= ACF_EMPTY;
 		ce->ac_state= ACS_VALID;
 		ce->ac_ethaddr= arp->a46_sha;
@@ -544,6 +613,18 @@ acc_t *data;
 		ce->ac_ethaddr= arp->a46_sha;
 		if (ce->ac_state == ACS_INCOMPLETE)
 		{
+			/* Find request entry */
+			entry= ce-arp_cache;
+			for (i= 0, reqp= arp_port->ap_req; i<AP_REQ_NR; 
+				i++, reqp++)
+			{
+				if (reqp->ar_entry == entry)
+					break;
+			}
+			assert(i < AP_REQ_NR);
+			clck_untimer(&reqp->ar_timer);
+			reqp->ar_entry= -1;
+			
 			ce->ac_state= ACS_VALID;
 			client_reply(arp_port, spa, &arp->a46_sha);
 		}
@@ -552,11 +633,11 @@ acc_t *data;
 	}
 
 	/* Update fields in the arp cache. */
-#if !CRAMPED
 	if (memcmp(&ce->ac_ethaddr, &arp->a46_sha,
 		sizeof(ce->ac_ethaddr)) != 0)
 	{
-		printf("arp: ethernet address for IP address ");
+		printf("arp[%d]: ethernet address for IP address ",
+			arp_port-arp_port_table);
 		writeIpAddr(spa);
 		printf(" changed from ");
 		writeEtherAddr(&ce->ac_ethaddr);
@@ -565,15 +646,46 @@ acc_t *data;
 		printf("\n");
 		ce->ac_ethaddr= arp->a46_sha;
 	}
-#else
-	ce->ac_ethaddr= arp->a46_sha;
-#endif
 	ce->ac_expire= curr_time+ARP_EXP_TIME;
 
-	if (arp->a46_op == HTONS(ARP_REQUEST) && (tpa == arp_port->ap_ipaddr))
+	if (do_reply)
 	{
-		ce->ac_flags |= ACF_GOTREQ;
-		arp_port->ap_flags |= APF_MORE2WRITE;
+		data= bf_memreq(sizeof(arp46_t));
+		arp= (arp46_t *)ptr2acc_data(data);
+
+		/* Clear padding */
+		assert(sizeof(arp->a46_data.a46_dummy) % sizeof(*p) == 0);
+		for (i= 0, p= (u16_t *)arp->a46_data.a46_dummy;
+			i < sizeof(arp->a46_data.a46_dummy)/sizeof(*p);
+			i++, p++)
+		{
+			*p= 0xdead;
+		}
+
+		arp->a46_dstaddr= ce->ac_ethaddr;
+		arp->a46_hdr= HTONS(ARP_ETHERNET);
+		arp->a46_pro= HTONS(ETH_IP_PROTO);
+		arp->a46_hln= 6;
+		arp->a46_pln= 4;
+
+		arp->a46_op= htons(ARP_REPLY);
+		if (tpa == arp_port->ap_ipaddr)
+		{
+			arp->a46_sha= arp_port->ap_ethaddr;
+		}
+		else
+		{
+			assert(cache);
+			arp->a46_sha= cache->ac_ethaddr;
+		}
+		memcpy (arp->a46_spa, &tpa, sizeof(ipaddr_t));
+		arp->a46_tha= ce->ac_ethaddr;
+		memcpy (arp->a46_tpa, &ce->ac_ipaddr, sizeof(ipaddr_t));
+
+		assert(data->acc_linkC == 1);
+		data->acc_ext_link= arp_port->ap_sendlist;
+		arp_port->ap_sendlist= data; data= NULL;
+
 		if (!(arp_port->ap_flags & APF_ARP_WR_IP))
 			setup_write(arp_port);
 	}
@@ -584,12 +696,6 @@ arp_port_t *arp_port;
 ipaddr_t ipaddr;
 ether_addr_t *ethaddr;
 {
-	if ((arp_port->ap_flags & APF_CLIENTREQ) &&
-		ipaddr == arp_port->ap_req_ipaddr)
-	{
-		arp_port->ap_flags &= ~(APF_CLIENTREQ|APF_CLIENTWRITE);
-		clck_untimer(&arp_port->ap_timer);
-	}
 	(*arp_port->ap_arp_func)(arp_port->ap_ip_port, ipaddr, ethaddr);
 }
 
@@ -597,37 +703,113 @@ PRIVATE arp_cache_t *find_cache_ent (arp_port, ipaddr)
 arp_port_t *arp_port;
 ipaddr_t ipaddr;
 {
-	arp_cache_t *cache;
+	arp_cache_t *ce;
 	int i;
+	unsigned hash;
 
-	for (i=0, cache= arp_cache; i<ARP_CACHE_NR; i++, cache++)
+	hash= (ipaddr >> 24) ^ (ipaddr >> 16) ^ (ipaddr >> 8) ^ ipaddr;
+	hash &= ARP_HASH_MASK;
+
+	ce= arp_hash[hash].ahe_row[0];
+	if (ce && ce->ac_ipaddr == ipaddr && ce->ac_port == arp_port &&
+		ce->ac_state != ACS_UNUSED)
 	{
-		if (cache->ac_state != ACS_UNUSED &&
-			cache->ac_port == arp_port &&
-			cache->ac_ipaddr == ipaddr)
+		return ce;
+	}
+	for (i= 1; i<ARP_HASH_WIDTH; i++)
+	{
+		ce= arp_hash[hash].ahe_row[i];
+		if (!ce || ce->ac_ipaddr != ipaddr || ce->ac_port != arp_port
+			|| ce->ac_state == ACS_UNUSED)
 		{
-			return cache;
+			continue;
+		}
+		arp_hash[hash].ahe_row[i]= arp_hash[hash].ahe_row[0];
+		arp_hash[hash].ahe_row[0]= ce;
+		return ce;
+	}
+
+	for (i=0, ce= arp_cache; i<arp_cache_nr; i++, ce++)
+	{
+		if (ce->ac_state != ACS_UNUSED &&
+			ce->ac_port == arp_port &&
+			ce->ac_ipaddr == ipaddr)
+		{
+			for (i= ARP_HASH_WIDTH-1; i>0; i--)
+			{
+				arp_hash[hash].ahe_row[i]=
+					arp_hash[hash].ahe_row[i-1];
+			}
+			assert(i == 0);
+			arp_hash[hash].ahe_row[0]= ce;
+			return ce;
 		}
 	}
 	return NULL;
 }
 
-PRIVATE arp_cache_t *alloc_cache_ent()
+PRIVATE arp_cache_t *alloc_cache_ent(flags)
+int flags;
 {
 	arp_cache_t *cache, *old;
 	int i;
 
 	old= NULL;
-	for (i=0, cache= arp_cache; i<ARP_CACHE_NR; i++, cache++)
+	for (i=0, cache= arp_cache; i<arp_cache_nr; i++, cache++)
 	{
 		if (cache->ac_state == ACS_UNUSED)
-			return cache;
+		{
+			old= cache;
+			break;
+		}
 		if (cache->ac_state == ACS_INCOMPLETE)
+			continue;
+		if (cache->ac_flags & ACF_PERM)
 			continue;
 		if (!old || cache->ac_lastuse < old->ac_lastuse)
 			old= cache;
 	}
 	assert(old);
+
+	if (!flags)
+		return old;
+
+	/* Get next permanent entry */
+	for (i=0, cache= arp_cache; i<arp_cache_nr; i++, cache++)
+	{
+		if (cache->ac_state == ACS_UNUSED)
+			break;
+		if (cache->ac_flags & ACF_PERM)
+			continue;
+		break;
+	}
+	if (i >= arp_cache_nr/2)
+		return NULL; /* Too many entries */
+	if (cache != old)
+	{
+		assert(old > cache);
+		*old= *cache;
+		old= cache;
+	}
+
+	if (!(flags & ACF_PUB))
+		return old;
+
+	/* Get first nonpublished entry */
+	for (i=0, cache= arp_cache; i<arp_cache_nr; i++, cache++)
+	{
+		if (cache->ac_state == ACS_UNUSED)
+			break;
+		if (cache->ac_flags & ACF_PUB)
+			continue;
+		break;
+	}
+	if (cache != old)
+	{
+		assert(old > cache);
+		*old= *cache;
+		old= cache;
+	}
 	return old;
 }
 
@@ -636,7 +818,6 @@ int eth_port;
 ipaddr_t ipaddr;
 {
 	arp_port_t *arp_port;
-	int i;
 
 	if (eth_port < 0 || eth_port >= eth_conf_nr)
 		return;
@@ -654,8 +835,8 @@ int eth_port;
 int ip_port;
 arp_func_t arp_func;
 {
-	arp_port_t *arp_port;
 	int i;
+	arp_port_t *arp_port;
 
 	assert(eth_port >= 0);
 	if (eth_port >= eth_conf_nr)
@@ -667,6 +848,12 @@ arp_func_t arp_func;
 	arp_port->ap_state= APS_INITIAL;
 	arp_port->ap_flags= APF_EMPTY;
 	arp_port->ap_arp_func= arp_func;
+	arp_port->ap_sendpkt= NULL;
+	arp_port->ap_sendlist= NULL;
+	arp_port->ap_reclist= NULL;
+	for (i= 0; i<AP_REQ_NR; i++)
+		arp_port->ap_req[i].ar_entry= -1;
+	ev_init(&arp_port->ap_event);
 
 	arp_main(arp_port);
 
@@ -678,23 +865,48 @@ int eth_port;
 ipaddr_t ipaddr;
 ether_addr_t *ethaddr;
 {
+	int i, ref;
 	arp_port_t *arp_port;
-	int i;
+	struct arp_req *reqp;
 	arp_cache_t *ce;
 	time_t curr_time;
 
 	assert(eth_port >= 0 && eth_port < eth_conf_nr);
 	arp_port= &arp_port_table[eth_port];
 	assert(arp_port->ap_state == APS_ARPMAIN ||
-		(printf("ap_state= %d\n", arp_port->ap_state), 0));
+		(printf("arp[%d]: ap_state= %d\n", arp_port-arp_port_table,
+		arp_port->ap_state), 0));
 
 	curr_time= get_time();
 
 	ce= find_cache_ent (arp_port, ipaddr);
 	if (ce && ce->ac_expire < curr_time)
 	{
-		ce->ac_state= ACS_UNUSED;
-		ce= NULL;
+		assert(ce->ac_state != ACS_INCOMPLETE);
+
+		/* Check whether there is enough space for an ARP
+		 * request or not.
+		 */
+		for (i= 0, reqp= arp_port->ap_req; i<AP_REQ_NR; i++, reqp++)
+		{
+			if (reqp->ar_entry < 0)
+				break;
+		}
+		if (i < AP_REQ_NR)
+		{
+			/* Okay, expire this entry. */
+			ce->ac_state= ACS_UNUSED;
+			ce= NULL;
+		}
+		else
+		{
+			/* Continue using this entry for a while */
+			printf("arp[%d]: Overloaded! Keeping entry for ",
+				arp_port-arp_port_table);
+			writeIpAddr(ipaddr);
+			printf("\n");
+			ce->ac_expire= curr_time+ARP_NOTRCH_EXP_TIME;
+		}
 	}
 	if (ce)
 	{
@@ -710,67 +922,433 @@ ether_addr_t *ethaddr;
 		if (ce->ac_state == ACS_UNREACHABLE)
 			return EDSTNOTRCH;
 		assert(ce->ac_state == ACS_INCOMPLETE);
+
 		return NW_SUSPEND;
 	}
 
-	if (arp_port->ap_flags & APF_CLIENTREQ)
+	/* Find an empty slot for an ARP request */
+	for (i= 0, reqp= arp_port->ap_req; i<AP_REQ_NR; i++, reqp++)
 	{
-		/* We should implement something to be able to do
-		 * multiple arp lookups at the same time. At the moment
-		 * we just return SUSPEND.
+		if (reqp->ar_entry < 0)
+			break;
+	}
+	if (i >= AP_REQ_NR)
+	{
+		/* We should be able to report that this ARP request
+		 * cannot be accepted. At the moment we just return SUSPEND.
 		 */
 		return NW_SUSPEND;
 	}
-	ce= alloc_cache_ent();
+	ref= (eth_port*AP_REQ_NR + i);
+
+	ce= alloc_cache_ent(ACF_EMPTY);
 	ce->ac_flags= 0;
 	ce->ac_state= ACS_INCOMPLETE;
 	ce->ac_ipaddr= ipaddr;
 	ce->ac_port= arp_port;
 	ce->ac_expire= curr_time+ARP_EXP_TIME;
 	ce->ac_lastuse= curr_time;
-	arp_port->ap_flags |= APF_CLIENTREQ|APF_MORE2WRITE | APF_CLIENTWRITE;
-	arp_port->ap_req_ipaddr= ipaddr;
-	arp_port->ap_req_count= 0;
-	if (!(arp_port->ap_flags & APF_ARP_WR_IP))
-		setup_write(arp_port);
+
+	reqp->ar_entry= ce-arp_cache;
+	reqp->ar_req_count= -1;
+
+	/* Send the first packet by expiring the timer */
+	clck_timer(&reqp->ar_timer, 1, arp_timeout, ref);
+
 	return NW_SUSPEND;
 }
 
-PRIVATE void arp_timeout (fd, timer)
+PUBLIC int arp_ioctl (eth_port, fd, req, get_userdata, put_userdata)
+int eth_port;
 int fd;
-timer_t *timer;
+ioreq_t req;
+get_userdata_t get_userdata;
+put_userdata_t put_userdata;
 {
 	arp_port_t *arp_port;
-	arp_cache_t *ce;
-	int level;
+	arp_cache_t *ce, *cache;
+	acc_t *data;
+	nwio_arp_t *arp_iop;
+	int entno, result, ac_flags;
+	u32_t flags;
+	ipaddr_t ipaddr;
 	time_t curr_time;
 
-	arp_port= &arp_port_table[fd];
+	assert(eth_port >= 0 && eth_port < eth_conf_nr);
+	arp_port= &arp_port_table[eth_port];
+	assert(arp_port->ap_state == APS_ARPMAIN ||
+		(printf("arp[%d]: ap_state= %d\n", arp_port-arp_port_table,
+		arp_port->ap_state), 0));
 
-	assert (timer == &arp_port->ap_timer);
-
-	if (++arp_port->ap_req_count < MAX_ARP_RETRIES)
+	switch(req)
 	{
-		arp_port->ap_flags |= APF_CLIENTWRITE|APF_MORE2WRITE;
-		if (!(arp_port->ap_flags & APF_ARP_WR_IP))
-			setup_write(arp_port);
+	case NWIOARPGIP:
+		data= (*get_userdata)(fd, 0, sizeof(*arp_iop), TRUE);
+		if (data == NULL)
+			return EFAULT;
+		data= bf_packIffLess(data, sizeof(*arp_iop));
+		arp_iop= (nwio_arp_t *)ptr2acc_data(data);
+		ipaddr= arp_iop->nwa_ipaddr;
+		ce= NULL;	/* lint */
+		for (entno= 0; entno < arp_cache_nr; entno++)
+		{
+			ce= &arp_cache[entno];
+			if (ce->ac_state == ACS_UNUSED ||
+				ce->ac_port != arp_port)
+			{
+				continue;
+			}
+			if (ce->ac_ipaddr == ipaddr)
+				break;
+		}
+		if (entno == arp_cache_nr)
+		{
+			/* Also report the address of this interface */
+			if (ipaddr != arp_port->ap_ipaddr)
+			{
+				bf_afree(data);
+				return ENOENT;
+			}
+			arp_iop->nwa_entno= arp_cache_nr;
+			arp_iop->nwa_ipaddr= ipaddr;
+			arp_iop->nwa_ethaddr= arp_port->ap_ethaddr;
+			arp_iop->nwa_flags= NWAF_PERM | NWAF_PUB;
+		}
+		else
+		{
+			arp_iop->nwa_entno= entno+1;
+			arp_iop->nwa_ipaddr= ce->ac_ipaddr;
+			arp_iop->nwa_ethaddr= ce->ac_ethaddr;
+			arp_iop->nwa_flags= 0;
+			if (ce->ac_state == ACS_INCOMPLETE)
+				arp_iop->nwa_flags |= NWAF_INCOMPLETE;
+			if (ce->ac_state == ACS_UNREACHABLE)
+				arp_iop->nwa_flags |= NWAF_DEAD;
+			if (ce->ac_flags & ACF_PERM)
+				arp_iop->nwa_flags |= NWAF_PERM;
+			if (ce->ac_flags & ACF_PUB)
+				arp_iop->nwa_flags |= NWAF_PUB;
+		}
+
+		result= (*put_userdata)(fd, 0, data, TRUE);
+		return result;
+
+	case NWIOARPGNEXT:
+		data= (*get_userdata)(fd, 0, sizeof(*arp_iop), TRUE);
+		if (data == NULL)
+			return EFAULT;
+		data= bf_packIffLess(data, sizeof(*arp_iop));
+		arp_iop= (nwio_arp_t *)ptr2acc_data(data);
+		entno= arp_iop->nwa_entno;
+		if (entno < 0)
+			entno= 0;
+		ce= NULL;	/* lint */
+		for (; entno < arp_cache_nr; entno++)
+		{
+			ce= &arp_cache[entno];
+			if (ce->ac_state == ACS_UNUSED ||
+				ce->ac_port != arp_port)
+			{
+				continue;
+			}
+			break;
+		}
+		if (entno == arp_cache_nr)
+		{
+			bf_afree(data);
+			return ENOENT;
+		}
+		arp_iop->nwa_entno= entno+1;
+		arp_iop->nwa_ipaddr= ce->ac_ipaddr;
+		arp_iop->nwa_ethaddr= ce->ac_ethaddr;
+		arp_iop->nwa_flags= 0;
+		if (ce->ac_state == ACS_INCOMPLETE)
+			arp_iop->nwa_flags |= NWAF_INCOMPLETE;
+		if (ce->ac_state == ACS_UNREACHABLE)
+			arp_iop->nwa_flags |= NWAF_DEAD;
+		if (ce->ac_flags & ACF_PERM)
+			arp_iop->nwa_flags |= NWAF_PERM;
+		if (ce->ac_flags & ACF_PUB)
+			arp_iop->nwa_flags |= NWAF_PUB;
+
+		result= (*put_userdata)(fd, 0, data, TRUE);
+		return result;
+
+	case NWIOARPSIP:
+		data= (*get_userdata)(fd, 0, sizeof(*arp_iop), TRUE);
+		if (data == NULL)
+			return EFAULT;
+		data= bf_packIffLess(data, sizeof(*arp_iop));
+		arp_iop= (nwio_arp_t *)ptr2acc_data(data);
+		ipaddr= arp_iop->nwa_ipaddr;
+		if (find_cache_ent(arp_port, ipaddr))
+		{
+			bf_afree(data);
+			return EEXIST;
+		}
+
+		flags= arp_iop->nwa_flags;
+		ac_flags= ACF_EMPTY;
+		if (flags & NWAF_PERM)
+			ac_flags |= ACF_PERM;
+		if (flags & NWAF_PUB)
+			ac_flags |= ACF_PUB|ACF_PERM;
+
+		/* Allocate a cache entry */
+		ce= alloc_cache_ent(ac_flags);
+		if (ce == NULL)
+		{
+			bf_afree(data);
+			return ENOMEM;
+		}
+
+		ce->ac_flags= ac_flags;
+		ce->ac_state= ACS_VALID;
+		ce->ac_ethaddr= arp_iop->nwa_ethaddr;
+		ce->ac_ipaddr= arp_iop->nwa_ipaddr;
+		ce->ac_port= arp_port;
+
+		curr_time= get_time();
+		ce->ac_expire= curr_time+ARP_EXP_TIME;
+		ce->ac_lastuse= curr_time;
+
+		bf_afree(data);
+		return 0;
+
+	case NWIOARPDIP:
+		data= (*get_userdata)(fd, 0, sizeof(*arp_iop), TRUE);
+		if (data == NULL)
+			return EFAULT;
+		data= bf_packIffLess(data, sizeof(*arp_iop));
+		arp_iop= (nwio_arp_t *)ptr2acc_data(data);
+		ipaddr= arp_iop->nwa_ipaddr;
+		bf_afree(data); data= NULL;
+		ce= find_cache_ent(arp_port, ipaddr);
+		if (!ce)
+			return ENOENT;
+		if (ce->ac_state == ACS_INCOMPLETE)
+			return EINVAL;
+
+		ac_flags= ce->ac_flags;
+		if (ac_flags & ACF_PUB)
+		{
+			/* Make sure entry is at the end of published
+			 * entries.
+			 */
+			for (entno= 0, cache= arp_cache;
+				entno<arp_cache_nr; entno++, cache++)
+			{
+				if (cache->ac_state == ACS_UNUSED)
+					break;
+				if (cache->ac_flags & ACF_PUB)
+					continue;
+				break;
+			}
+			assert(cache > arp_cache);
+			cache--;
+			if (cache != ce)
+			{
+				assert(cache > ce);
+				*ce= *cache;
+				ce= cache;
+			}
+		}
+		if (ac_flags & ACF_PERM)
+		{
+			/* Make sure entry is at the end of permanent
+			 * entries.
+			 */
+			for (entno= 0, cache= arp_cache;
+				entno<arp_cache_nr; entno++, cache++)
+			{
+				if (cache->ac_state == ACS_UNUSED)
+					break;
+				if (cache->ac_flags & ACF_PERM)
+					continue;
+				break;
+			}
+			assert(cache > arp_cache);
+			cache--;
+			if (cache != ce)
+			{
+				assert(cache > ce);
+				*ce= *cache;
+				ce= cache;
+			}
+		}
+
+		/* Clear entry */
+		ce->ac_state= ACS_UNUSED;
+
+		return 0;
+
+	default:
+		ip_panic(("arp_ioctl: unknown request 0x%lx",
+			(unsigned long)req));
 	}
-	else
-	{
-		ce= find_cache_ent(arp_port, arp_port->ap_req_ipaddr);
-		if (ce) {
-			assert(ce->ac_state == ACS_INCOMPLETE ||
-				(printf("ce->ac_state= %d\n", ce->ac_state),0));
-			curr_time= get_time();
-			ce->ac_state= ACS_UNREACHABLE;
-			ce->ac_expire= curr_time+ ARP_NOTRCH_EXP_TIME;
-			ce->ac_lastuse= curr_time;
+	return 0;
+}
 
-			client_reply(arp_port, ce->ac_ipaddr, NULL);
+PRIVATE void arp_timeout (ref, timer)
+int ref;
+timer_t *timer;
+{
+	int i, port, reqind, acind;
+	arp_port_t *arp_port;
+	arp_cache_t *ce;
+	struct arp_req *reqp;
+	time_t curr_time;
+	acc_t *data;
+	arp46_t *arp;
+	u16_t *p;
+
+	port= ref / AP_REQ_NR;
+	reqind= ref % AP_REQ_NR;
+
+	assert(port >= 0 && port <eth_conf_nr);
+	arp_port= &arp_port_table[port];
+
+	reqp= &arp_port->ap_req[reqind];
+	assert (timer == &reqp->ar_timer);
+
+	acind= reqp->ar_entry;
+
+	assert(acind >= 0 && acind < arp_cache_nr);
+	ce= &arp_cache[acind];
+
+	assert(ce->ac_port == arp_port);
+	assert(ce->ac_state == ACS_INCOMPLETE);
+
+	if (++reqp->ar_req_count >= MAX_ARP_RETRIES)
+	{
+		curr_time= get_time();
+		ce->ac_state= ACS_UNREACHABLE;
+		ce->ac_expire= curr_time+ ARP_NOTRCH_EXP_TIME;
+		ce->ac_lastuse= curr_time;
+
+		clck_untimer(&reqp->ar_timer);
+		reqp->ar_entry= -1;
+		client_reply(arp_port, ce->ac_ipaddr, NULL);
+		return;
+	}
+
+	data= bf_memreq(sizeof(arp46_t));
+	arp= (arp46_t *)ptr2acc_data(data);
+
+	/* Clear padding */
+	assert(sizeof(arp->a46_data.a46_dummy) % sizeof(*p) == 0);
+	for (i= 0, p= (u16_t *)arp->a46_data.a46_dummy;
+		i < sizeof(arp->a46_data.a46_dummy)/sizeof(*p);
+		i++, p++)
+	{
+		*p= 0xdead;
+	}
+
+	arp->a46_dstaddr.ea_addr[0]= 0xff;
+	arp->a46_dstaddr.ea_addr[1]= 0xff;
+	arp->a46_dstaddr.ea_addr[2]= 0xff;
+	arp->a46_dstaddr.ea_addr[3]= 0xff;
+	arp->a46_dstaddr.ea_addr[4]= 0xff;
+	arp->a46_dstaddr.ea_addr[5]= 0xff;
+	arp->a46_hdr= HTONS(ARP_ETHERNET);
+	arp->a46_pro= HTONS(ETH_IP_PROTO);
+	arp->a46_hln= 6;
+	arp->a46_pln= 4;
+	arp->a46_op= HTONS(ARP_REQUEST);
+	arp->a46_sha= arp_port->ap_ethaddr;
+	memcpy (arp->a46_spa, &arp_port->ap_ipaddr, sizeof(ipaddr_t));
+	memset(&arp->a46_tha, '\0', sizeof(ether_addr_t));
+	memcpy (arp->a46_tpa, &ce->ac_ipaddr, sizeof(ipaddr_t));
+
+	assert(data->acc_linkC == 1);
+	data->acc_ext_link= arp_port->ap_sendlist;
+	arp_port->ap_sendlist= data; data= NULL;
+
+	if (!(arp_port->ap_flags & APF_ARP_WR_IP))
+		setup_write(arp_port);
+
+	clck_timer(&reqp->ar_timer, get_time() + ARP_TIMEOUT,
+		arp_timeout, ref);
+}
+
+PRIVATE void arp_buffree(priority)
+int priority;
+{
+	int i;
+	acc_t *pack, *next_pack;
+	arp_port_t *arp_port;
+
+	for (i= 0, arp_port= arp_port_table; i<eth_conf_nr; i++, arp_port++)
+	{
+		if (priority == ARP_PRI_REC)
+		{
+			next_pack= arp_port->ap_reclist;
+			while(next_pack && next_pack->acc_ext_link)
+			{
+				pack= next_pack;
+				next_pack= pack->acc_ext_link;
+				bf_afree(pack);
+			}
+			if (next_pack)
+			{
+				if (ev_in_queue(&arp_port->ap_event))
+				{
+					DBLOCK(1, printf(
+			"not freeing ap_reclist, ap_event enqueued\n"));
+				}
+				else
+				{
+					bf_afree(next_pack);
+					next_pack= NULL;
+				}
+			}
+			arp_port->ap_reclist= next_pack;
+		}
+		if (priority == ARP_PRI_SEND)
+		{
+			next_pack= arp_port->ap_sendlist;
+			while(next_pack && next_pack->acc_ext_link)
+			{
+				pack= next_pack;
+				next_pack= pack->acc_ext_link;
+				bf_afree(pack);
+			}
+			if (next_pack)
+			{
+				if (ev_in_queue(&arp_port->ap_event))
+				{
+					DBLOCK(1, printf(
+			"not freeing ap_sendlist, ap_event enqueued\n"));
+				}
+				else
+				{
+					bf_afree(next_pack);
+					next_pack= NULL;
+				}
+			}
+			arp_port->ap_sendlist= next_pack;
 		}
 	}
 }
 
+#ifdef BUF_CONSISTENCY_CHECK
+PRIVATE void arp_bufcheck()
+{
+	int i;
+	arp_port_t *arp_port;
+	acc_t *pack;
+
+	for (i= 0, arp_port= arp_port_table; i<eth_conf_nr; i++, arp_port++)
+	{
+		for (pack= arp_port->ap_reqlist; pack;
+			pack= pack->acc_ext_link)
+		{
+			bf_check_acc(pack);
+		}
+	}
+}
+#endif /* BUF_CONSISTENCY_CHECK */
+
 /*
- * $PchId: arp.c,v 1.6 1995/11/21 06:45:27 philip Exp $
+ * $PchId: arp.c,v 1.22 2005/06/28 14:15:06 philip Exp $
  */
