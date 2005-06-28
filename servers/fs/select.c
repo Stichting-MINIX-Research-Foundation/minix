@@ -146,6 +146,8 @@ PRIVATE int select_request_inet(struct filp *f, int *ops, int block)
 	rops = *ops;
 	if(block) rops |= SEL_NOTIFY;
 	*ops = dev_io(DEV_SELECT, f->filp_ino->i_zone[0], rops, NULL, 0, 0, 0);
+	printf("select_request_inet: got reply %d from inet for %d on %d\n",
+		*ops, rops, f->filp_ino->i_zone[0]);
 	if(*ops < 0)
 		return SEL_ERR;
 	return SEL_OK;
@@ -162,9 +164,11 @@ PRIVATE int select_match_inet(struct filp *file)
 		return 0;
 	major = (file->filp_ino->i_zone[0] >> MAJOR) & BYTE;
 	if(major == INET_MAJOR)
+	{
 		printf("inet minor: %d\n", 
 			(file->filp_ino->i_zone[0] & BYTE));
-		/* return 1; */
+		return 1;
+	}
 	return 0;
 }
 
@@ -296,6 +300,7 @@ PUBLIC int do_select(void)
 			continue;
 		if(!(filp = selecttab[s].filps[fd] = get_filp(fd))) {
 			select_cancel_all(&selecttab[s]);
+			printf("do_select: get_filp failed\n");
 			return EBADF;
 		}
 
@@ -321,7 +326,10 @@ PUBLIC int do_select(void)
 		 * type of file and we get to do whatever we want.
 		 */
 		if(type == -1)
+		{
+			printf("do_select: bad type\n");
 			return EBADF;
+		}
 
 		selecttab[s].type[fd] = type;
 
@@ -583,7 +591,29 @@ PUBLIC int select_notified(message *m)
 			}
 			break;
 		default:
-			printf("fs: select: unrecognized select reply\n");
+#if DEBUG_SELECT
+			printf("fs: select: default notification\n");
+#endif
+			for(s = 0; s < MAXSELECTS; s++) {
+				int line, ops;
+				if(!selecttab[s].requestor)
+					continue;
+				for(f = 0; f < selecttab[s].nfds; f++) {
+					if(!selecttab[s].filps[f] ||
+					   !select_match_inet(selecttab[s].filps[f]))
+					   	continue;
+					ops = tab2ops(f, &selecttab[s]);
+					line = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
+					if((line == m->NOTIFY_ARG) &&
+						(m->NOTIFY_FLAGS & ops)) {
+#if DEBUG_SELECT
+						printf("fs: select: inet notification matched\n");
+#endif
+						select_callback(selecttab[s].filps[f], ops);
+					}
+				}
+			}
+			break;
 	}
 	return OK;
 }
