@@ -995,7 +995,6 @@ FILE *file1, *file2;		/* The corresponding file-pointers	 */
 		prenewend = newend;
 	}
   }
-  fprintf(stderr, "pipe fd is %d\n", fileno(inputfp));
   status = pclose(inputfp);
   if (status != 0) diffs++;
   if (!WIFEXITED(status) || WEXITSTATUS(status) > 1) severe_error = 1;
