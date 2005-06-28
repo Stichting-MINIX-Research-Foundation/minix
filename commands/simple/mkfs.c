@@ -301,13 +301,13 @@ char *argv[];
 		/* round up to fill inode block */
 		i += inodes_per_block - 1;
 		i = i / inodes_per_block * inodes_per_block;
-		if (i > INODE_MAX) i = INODE_MAX;
+		if (i > INODE_MAX && fs_version < 3) i = INODE_MAX;
 
 	}
 	if (blocks < 5) pexit("Block count too small");
 	if (blocks > max_nrblocks) pexit("Block count too large");
 	if (i < 1) pexit("Inode count too small");
-	if (i > INODE_MAX) pexit("Inode count too large");
+	if (i > INODE_MAX && fs_version < 3) pexit("Inode count too large");
 	inodes = (ino_t) i;
 
 	/* Make simple file system of the given size, using defaults. */

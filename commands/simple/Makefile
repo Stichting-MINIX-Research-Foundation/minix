@@ -469,7 +469,7 @@ life:	life.c
 
 login:	login.c
 	$(CCLD) -o $@ $?
-	@install -S 4kw $@
+	install -S 4kw $@
 
 look:	look.c
 	$(CCLD) -o $@ $?
