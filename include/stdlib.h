@@ -63,6 +63,10 @@ _PROTOTYPE( void qsort, (void *_base, size_t _nmemb, size_t _size,
 _PROTOTYPE( unsigned long int strtoul,
 			(const char *_nptr, char **_endptr, int _base)	);
 
+#ifdef _POSIX_SOURCE
+_PROTOTYPE( int mkstemp, (char *_fmt)					);
+#endif
+
 #ifdef _MINIX
 _PROTOTYPE( int putenv, (const char *_name)				);
 _PROTOTYPE(int getopt, (int _argc, char **_argv, char *_opts));

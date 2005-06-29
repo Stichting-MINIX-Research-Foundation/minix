@@ -37,6 +37,7 @@ OBJECTS	= \
 	$(LIBRARY)(getchar.o) \
 	$(LIBRARY)(gets.o) \
 	$(LIBRARY)(icompute.o) \
+	$(LIBRARY)(mktemp.o) \
 	$(LIBRARY)(perror.o) \
 	$(LIBRARY)(printf.o) \
 	$(LIBRARY)(putc.o) \
@@ -151,6 +152,9 @@ $(LIBRARY)(gets.o):	gets.c
 
 $(LIBRARY)(icompute.o):	icompute.c
 	$(CC1) icompute.c
+
+$(LIBRARY)(mktemp.o):	mktemp.c
+	$(CC1) mktemp.c
 
 $(LIBRARY)(perror.o):	perror.c
 	$(CC1) perror.c
