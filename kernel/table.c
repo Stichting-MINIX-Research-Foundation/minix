@@ -85,6 +85,9 @@ PUBLIC struct system_image image[] = {
 #if ENABLE_FXP
  { FXP, 0,                0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FXP" },
 #endif
+#if ENABLE_DPETH
+ { DPETH, 0,              0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "DPETH" },
+#endif
  { INIT_PROC_NR, 0,            0,   USER_Q, 0,         USER_CALL_MASK,    USER_PROC_SENDMASK,    "INIT"    },
 };
 

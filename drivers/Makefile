@@ -23,4 +23,4 @@ all install depend clean:
 	cd ./printer && $(MAKE) $@
 	cd ./rtl8139 && $(MAKE) $@
 	cd ./fxp && $(MAKE) $@
-
+	cd ./dpeth && $(MAKE) $@

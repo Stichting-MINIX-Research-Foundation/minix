@@ -37,17 +37,19 @@
 #define IS_PROC_NR	 5 	/* information server */
 #define TTY		 6	/* terminal (TTY) driver */
 #define MEMORY	 	 8  	/* memory driver (RAM disk, null, etc.) */
-#define AT_WINI		(MEMORY + ENABLE_AT_WINI)   /* AT Winchester */
-#define FLOPPY		(AT_WINI + ENABLE_FLOPPY)   /* floppy disk */
-#define PRINTER		(FLOPPY + ENABLE_PRINTER)    /* Centronics */
-#define USR8139		(PRINTER + ENABLE_RTL8139)    /* Realtek RTL8139 */
-#define FXP		(USR8139 + ENABLE_FXP)	      /* Intel Pro/100 */
-#define INIT_PROC_NR	(FXP + 1)   	/* init -- goes multiuser */
+#define AT_WINI		(MEMORY + ENABLE_AT_WINI)	/* AT Winchester */
+#define FLOPPY		(AT_WINI + ENABLE_FLOPPY)	/* floppy disk */
+#define PRINTER		(FLOPPY + ENABLE_PRINTER)	/* Centronics */
+#define USR8139		(PRINTER + ENABLE_RTL8139)	/* Realtek RTL8139 */
+#define FXP		(USR8139 + ENABLE_FXP)	/* Intel Pro/100 */
+#define DPETH		(FXP + ENABLE_DPETH)	/* ISA Network task */
+#define INIT_PROC_NR	(DPETH + 1)   	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define IMAGE_SIZE 	(NR_TASKS + \
 			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
-			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + 1 )	
+			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + \
+			ENABLE_DPETH + 1 )	
 
 
 /*===========================================================================*

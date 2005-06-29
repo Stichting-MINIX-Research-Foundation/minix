@@ -138,9 +138,9 @@ PUBLIC void irqtab_dmp()
   	"clock",	/* 00 */
   	"keyboard",	/* 01 */
   	"cascade",	/* 02 */
-  	"eth/rs232",	/* 03 */
+  	"rs232",	/* 03 */
   	"rs232",	/* 04 */
-  	"xt_wini",	/* 05 */
+  	"NIC(eth)",	/* 05 */
   	"floppy",	/* 06 */
   	"printer",	/* 07 */
   	"",	/* 08 */

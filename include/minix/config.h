@@ -32,7 +32,7 @@
 #endif
 
 /* Number of slots in the process table for non-kernel processes. */
-#define NR_PROCS 	  64
+#define NR_PROCS 	  64 
 
 /* The buffer cache should be made as large as you can afford. */
 #if (MACHINE == IBM_PC && _WORD_SIZE == 2)
@@ -92,7 +92,7 @@
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */
 
 /* Enable or disable networking drivers. */
-#define ENABLE_DP8390	 0	/* enable DP8390 ethernet driver */
+#define ENABLE_DPETH	 1	/* enable DP8390 ethernet driver */
 #define   ENABLE_WDETH     0	/*   add Western Digital WD80x3 */
 #define   ENABLE_NE2000    0	/*   add Novell NE1000/NE2000 */
 #define   ENABLE_3C503     0	/*   add 3Com Etherlink II (3c503) */

@@ -1,0 +1,38 @@
+
+This is my implementation of a new network task 
+for the Minix kernel.  I did it initially to handle
+a 3c501 board (Etherlink), but those board are so
+unstable that it is not worth using them except for
+learning how to implement a driver.  When I got a
+3c509b board (Etherlink III) it was easier to
+write the code to handle them.  
+
+The Minix code in 'dp8390.c' is too specific for the
+National chip set, so what I did was to remove as 
+much as I needed of the code dependant from the chip
+and produce a generic task that, I hope, will be able
+to handle many more cards.
+
+$Log$
+Revision 1.1  2005/06/29 10:16:46  beng
+Import of dpeth 3c501/3c509b/.. ethernet driver by
+Giovanni Falzoni <fgalzoni@inwind.it>.
+
+Revision 1.3  2004/04/14 12:49:07  lsodgf0
+Changes for porting to Minix 2.0.4 run on BOCHS
+
+Revision 1.2  2002/03/25 14:16:09  lsodgf0
+The driver for the NEx000 has been rewritten to be
+operational with the ACCTON 18xx (an NE1000 clone)
+The I/O routines for 16 bit cards are still untested..
+
+Revision 1.1  2002/02/09 09:35:09  lsodgf0
+Initial revision
+The package is not fully tested, i.e. I had only 3Com
+boards (3c501, 3c503, 3c503/16 and 3c509b) and WD8003.
+I got also a NE1000 clone but it was not fully
+operational and I could not appreciate the results.
+For this reason the changes done to the interface
+to I/O for 8 and 16 bits are not tested.
+  
+$Id$

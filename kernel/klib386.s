@@ -256,7 +256,7 @@ _phys_insb:
 	mov	edx, 8(ebp)		! port to read from
 	mov	edi, 12(ebp)		! destination addr
 	mov	ecx, 16(ebp)		! byte count
-	shr	ecx, 1			! word count
+!	shr	ecx, 1			! word count
    rep	insb				! input many bytes
 	pop	es
 	pop	edi
