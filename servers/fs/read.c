@@ -137,7 +137,7 @@ int rw_flag;			/* READING or WRITING */
   	block_size = get_block_size(rip->i_zone[0]);
   }
   if((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
-  	f_size = LONG_MAX;
+  	f_size = ULONG_MAX;
   	if(rip->i_zone[0] == NO_DEV)
   		panic(__FILE__,"read_write tries to read from block device NO_DEV", NO_NUM);
   	block_size = get_block_size(rip->i_zone[0]);
