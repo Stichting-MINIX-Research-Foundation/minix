@@ -126,7 +126,12 @@ fdboot)
 
 	# Make a file system.
 	umount $dev 2>/dev/null
-	mkfs -B 1024 -i 512 $dev || exit
+	if mkfs -B 1024 -i 512 $dev
+	then	:
+	else
+		echo "mkfs of $dev failed."
+		exit 1;
+	fi
 
 	# Install /dev, /boot/boot and /boot/image.
 	mount $dev /mnt || exit
@@ -153,7 +158,12 @@ cdfdboot)
 	# cdfdboot: Make a boot floppy image to go on a CD for booting from.
 	dev=/dev/ram
 	umount $dev 2>/dev/null
-	mkfs -B 1024 -b 1440 -i 512 $dev || exit 1
+	if mkfs -B 1024 -b 1440 -i 512 $dev || exit 1
+	then :
+	else
+		echo "mkfs of $dev failed."
+		exit 1;
+	fi
 
 	# Install /dev, /boot
 	mount $dev /mnt || exit 1
