@@ -40,9 +40,9 @@ install::
 	cd commands && $(MAKE) $@
 
 depend::
-	/usr/bin/mkdep /usr/src/kernel
-	/usr/bin/mkdep /usr/src/servers
-	/usr/bin/mkdep /usr/src/drivers
+	/usr/bin/mkdep kernel
+	/usr/bin/mkdep servers
+	/usr/bin/mkdep drivers
 
 
 clean::
