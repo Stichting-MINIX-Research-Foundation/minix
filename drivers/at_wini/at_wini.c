@@ -825,7 +825,7 @@ PRIVATE void w_intr_wait()
   if (w_wn->irq != NO_IRQ) {
 	/* Wait for an interrupt that sets w_status to "not busy". */
 	while (w_status & (STATUS_ADMBSY|STATUS_BSY)) {
-		receive(HARDWARE, &m);		/* expect HARD_INT message */
+		receive(ANY, &m);		/* expect HARD_INT message */
 		if (m.m_type == SYN_ALARM) { 	/* but check for timeout */
 		    w_timeout();		/* a.o. set w_status */
 		} else if (m.m_type == HARD_INT) {
