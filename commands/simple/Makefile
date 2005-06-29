@@ -253,7 +253,7 @@ chmod:	chmod.c
 
 chown:	chown.c
 	$(CCLD) -o $@ $?
-	@install -S 4kw $@
+	@install -S 16kw $@
 
 chroot:	chroot.c
 	$(CCLD) -o $@ $?
