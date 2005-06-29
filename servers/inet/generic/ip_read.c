@@ -742,9 +742,11 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 
 	if (!broadcast_dst(ip_port, ip_hdr->ih_dst))
 	{
+#if 0
 		printf(
 		"ip[%d]: broadcast packet for ip-nonbroadcast addr, src=",
 			ip_port->ip_port);
+#endif
 		writeIpAddr(ip_hdr->ih_src);
 		printf(" dst=");
 		writeIpAddr(ip_hdr->ih_dst);
