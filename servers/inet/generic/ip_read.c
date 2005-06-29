@@ -746,11 +746,11 @@ assert (pack->acc_length >= IP_MIN_HDR_SIZE);
 		printf(
 		"ip[%d]: broadcast packet for ip-nonbroadcast addr, src=",
 			ip_port->ip_port);
-#endif
 		writeIpAddr(ip_hdr->ih_src);
 		printf(" dst=");
 		writeIpAddr(ip_hdr->ih_dst);
 		printf("\n");
+#endif
 		bf_afree(pack);
 		return;
 	}
