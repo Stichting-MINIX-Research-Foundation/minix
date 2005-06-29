@@ -7,18 +7,22 @@
 .TH CHDIR 2 "August 26, 1985"
 .UC 4
 .SH NAME
-chdir \- change current working directory
+chdir, fchdir \- change current working directory
 .SH SYNOPSIS
 .nf
 .ft B
 #include <unistd.h>
 
 int chdir(const char *\fIpath\fP)
+int fchdir(int \fIfd\fP)
 .ft R
 .fi
 .SH DESCRIPTION
 .I Path
 is the pathname of a directory.
+.I Fd
+is the file descriptor of a directory.
+
 .B Chdir
 causes this directory
 to become the current working directory,

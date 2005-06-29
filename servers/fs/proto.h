@@ -142,6 +142,7 @@ _PROTOTYPE( zone_t rd_indir, (struct buf *bp, int index)		);
 
 /* stadir.c */
 _PROTOTYPE( int do_chdir, (void)					);
+_PROTOTYPE( int do_fchdir, (void)					);
 _PROTOTYPE( int do_chroot, (void)					);
 _PROTOTYPE( int do_fstat, (void)					);
 _PROTOTYPE( int do_stat, (void)						);

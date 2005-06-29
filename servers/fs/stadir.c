@@ -20,8 +20,23 @@
 #include "super.h"
 
 FORWARD _PROTOTYPE( int change, (struct inode **iip, char *name_ptr, int len));
+FORWARD _PROTOTYPE( int change_into, (struct inode **iip, struct inode *ip));
 FORWARD _PROTOTYPE( int stat_inode, (struct inode *rip, struct filp *fil_ptr,
 			char *user_addr)				);
+
+/*===========================================================================*
+ *				do_fchdir				     *
+ *===========================================================================*/
+PUBLIC int do_fchdir()
+{
+	/* Change directory on already-opened fd. */
+	struct filp *rfilp;
+
+	/* Is the file descriptor valid? */
+	if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+
+	return change_into(&fp->fp_workdir, rfilp->filp_ino);
+}
 
 /*===========================================================================*
  *				do_chdir				     *
@@ -86,13 +101,22 @@ char *name_ptr;			/* pointer to the directory name to change to */
 int len;			/* length of the directory name string */
 {
 /* Do the actual work for chdir() and chroot(). */
-
   struct inode *rip;
-  register int r;
 
   /* Try to open the new directory. */
   if (fetch_name(name_ptr, len, M3) != OK) return(err_code);
   if ( (rip = eat_path(user_path)) == NIL_INODE) return(err_code);
+  return change_into(iip, rip);
+}
+
+/*===========================================================================*
+ *				change_into					     *
+ *===========================================================================*/
+PRIVATE int change_into(iip, rip)
+struct inode **iip;		/* pointer to the inode pointer for the dir */
+struct inode *rip;		/* this is what the inode has to become */
+{
+  register int r;
 
   /* It must be a directory and also be searchable. */
   if ( (rip->i_mode & I_TYPE) != I_DIRECTORY)
@@ -111,7 +135,6 @@ int len;			/* length of the directory name string */
   *iip = rip;			/* acquire the new one */
   return(OK);
 }
-
 
 /*===========================================================================*
  *				do_stat					     *

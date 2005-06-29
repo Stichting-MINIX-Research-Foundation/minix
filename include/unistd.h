@@ -85,6 +85,7 @@ _PROTOTYPE( void _exit, (int _status)					);
 _PROTOTYPE( int access, (const char *_path, int _amode)			);
 _PROTOTYPE( unsigned int alarm, (unsigned int _seconds)			);
 _PROTOTYPE( int chdir, (const char *_path)				);
+_PROTOTYPE( int fchdir, (int fd)					);
 _PROTOTYPE( int chown, (const char *_path, _mnx_Uid_t _owner, _mnx_Gid_t _group)	);
 _PROTOTYPE( int close, (int _fd)					);
 _PROTOTYPE( char *ctermid, (char *_s)					);

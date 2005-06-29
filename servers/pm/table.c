@@ -102,6 +102,7 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 	do_allocmem, 	/* 83 = memalloc */
 	do_freemem, 	/* 84 = memfree */
 	no_sys,		/* 85 = select */
+	no_sys,		/* 86 = fchdir */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
