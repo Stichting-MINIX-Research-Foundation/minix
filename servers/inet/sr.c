@@ -630,7 +630,9 @@ int can_enqueue;
 	ref= 0;
 #endif
 	operation= mq->mq_mess.m_type;
+#ifdef __minix_vmd
 	assert(operation != DEV_CANCEL);
+#endif
 
 	if (can_enqueue)
 		mp= &mq->mq_mess;
