@@ -189,14 +189,14 @@ PUBLIC void image_dmp()
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
-  printf("---name-- -nr- -q- ----pc- -stack- ------sendmask-------\n");
+  printf("---name-- -nr- -flags- -q- ----pc- -stack- ------sendmask-------\n");
   for (i=0; i<IMAGE_SIZE; i++) { 
       ip = &image[i];
       for (j=-NR_TASKS; j<INIT_PROC_NR+2; j++) 
          maskstr[j+NR_TASKS] = (isallowed(ip->sendmask, j)) ? '1' : '0';
       maskstr[j+NR_TASKS] = '\0';
-      printf("%8s %4d %3d %7lu %7lu   %s\n",
-          ip->proc_name, ip->proc_nr, ip->priority, 
+      printf("%8s %4d 0x%02x %3d %7lu %7lu   %s\n",
+          ip->proc_name, ip->proc_nr, ip->flags, ip->priority, 
           (long)ip->initial_pc, ip->stksize, maskstr); 
   }
   printf("\n");
@@ -369,7 +369,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n--nr/name--- -q- -sc- -user- -sys- -text- -data- -size- -flags-\n");
+  printf("\n--nr-name-flags--pri-quant-#--sc- -user---sys- -text---data---size- -rts flags-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -381,21 +381,24 @@ PUBLIC void proctab_dmp()
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
-	printf("%-7.7s %2u   %02.2x %6lu%6lu%6uK%6uK%6uK %3x",
+	printf("%-7.7s %2x  %u/%u %02d/%02d %u  %02.2x %6lu%6lu %6uK%6uK%6uK %3x",
 	       rp->p_name,
-	       rp->p_priority,
+	       rp->p_flags,
+	       rp->p_priority, rp->p_max_priority,
+	       rp->p_sched_ticks, rp->p_quantum_size, 
+	       rp->p_full_quantums, 
 	       (char) rp->p_call_mask,
 	       rp->p_user_time, rp->p_sys_time,
 	       click_to_round_k(text), click_to_round_k(data),
 	       click_to_round_k(size),
-	       rp->p_flags);
-	if (rp->p_flags & RECEIVING) {
+	       rp->p_rts_flags);
+	if (rp->p_rts_flags & RECEIVING) {
 		printf(" %-7.7s", proc_name(rp->p_getfrom));
 	} else
-	if (rp->p_flags & SENDING) {
+	if (rp->p_rts_flags & SENDING) {
 		printf(" S:%-5.5s", proc_name(rp->p_sendto));
 	} else
-	if (rp->p_flags == 0) {
+	if (rp->p_rts_flags == 0) {
 		printf("        ");
 	}
 	printf("\n");

@@ -41,6 +41,20 @@ PUBLIC int do_fkey_pressed(message *m)
   if (pressed(F11))	timing_dmp();
   if (pressed(F12))	sched_dmp();
 
+  if (pressed(F9)) { 
+  	printf("IS server going into infinite loop, press F9 to break\n");
+  	printf("Five times any key is fine as well ...\n");
+  	s = 0;
+	while(TRUE) {
+		if (OK == nb_receive(ANY, m)) {
+		        s ++;
+			if (pressed(F9) || s >= 5 ) break;
+			else printf("IS server in infinite loop, press F9 to break\n");
+		}
+	}
+  	printf("IS server back to normal ... \n");
+  }
+
   /* Also check Shift F1-F6 keys. */
   if (pressed(SF1))	mproc_dmp();
 
