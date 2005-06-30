@@ -309,7 +309,11 @@ unsigned nelem, elsize;
 {
   char *p;
 
-  if ((p = (char *)malloc((size_t)nelem * elsize)) == 0)fatal("out of memory");
+  if ((p = (char *)malloc((size_t)nelem * elsize)) == 0) {
+  	fprintf(stderr, "Tried to allocate %dkB\n",
+  		nelem*elsize/1024);
+  	fatal("out of memory");
+  }
   memset((void *) p, 0, (size_t)nelem * elsize);
   return(p);
 }
@@ -1438,21 +1442,21 @@ void printtotal()
   printf("blocksize = %5d        ", block_size);
   printf("zonesize  = %5d\n", ZONE_SIZE);
   printf("\n");
-  pr("%6u    Regular file%s\n", nregular, "", "s");
-  pr("%6u    Director%s\n", ndirectory, "y", "ies");
-  pr("%6u    Block special file%s\n", nblkspec, "", "s");
-  pr("%6u    Character special file%s\n", ncharspec, "", "s");
+  pr("%8u    Regular file%s\n", nregular, "", "s");
+  pr("%8u    Director%s\n", ndirectory, "y", "ies");
+  pr("%8u    Block special file%s\n", nblkspec, "", "s");
+  pr("%8u    Character special file%s\n", ncharspec, "", "s");
   if (nbadinode != 0) pr("%6u    Bad inode%s\n", nbadinode, "", "s");
-  pr("%6u    Free inode%s\n", nfreeinode, "", "s");
-  pr("%6u    Named pipe%s\n", npipe, "", "s");
-  pr("%6u    Symbolic link%s\n", nsyml, "", "s");
+  pr("%8u    Free inode%s\n", nfreeinode, "", "s");
+  pr("%8u    Named pipe%s\n", npipe, "", "s");
+  pr("%8u    Symbolic link%s\n", nsyml, "", "s");
 /* Don't print some fields.
   printf("\n");
-  pr("%6u    Data zone%s\n",		  ztype[0],	 "",   "s");
-  pr("%6u    Single indirect zone%s\n",	  ztype[1],	 "",   "s");
-  pr("%6u    Double indirect zone%s\n",	  ztype[2],	 "",   "s");
+  pr("%8u    Data zone%s\n",		  ztype[0],	 "",   "s");
+  pr("%8u    Single indirect zone%s\n",	  ztype[1],	 "",   "s");
+  pr("%8u    Double indirect zone%s\n",	  ztype[2],	 "",   "s");
 */
-  lpr("%6ld    Free zone%s\n", nfreezone, "", "s");
+  lpr("%8ld    Free zone%s\n", nfreezone, "", "s");
 }
 
 /* Check the device which name is given by `f'.  The inodes listed by `clist'

@@ -55,7 +55,7 @@
 #define BIN                  2
 #define BINGRP               2
 #define BIT_MAP_SHIFT       13
-#define N_BLOCKS         (1024L * 1024)
+#define N_BLOCKS         MAX_BLOCK_NR
 #define N_BLOCKS16	  (128L * 1024)
 #define INODE_MAX       ((unsigned) 65535)
 
@@ -323,6 +323,11 @@ char *argv[];
   special(argv[--optind]);
 
 #ifdef UNIX
+  if(ULONG_MAX / block_size <= blocks-1) {
+  	fprintf(stderr, "Warning: mkfs not testing device, it's too big.\n");
+  	donttest = 1;
+  }
+
   if (!donttest) {
 	short *testb;
 	ssize_t w;

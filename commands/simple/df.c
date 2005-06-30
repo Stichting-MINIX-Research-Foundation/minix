@@ -117,13 +117,13 @@ int main(int argc, char *argv[])
 
   if (Pflag) {
 	printf(!iflag ? "\
-Filesystem    %4d-blocks    Used  Available  Capacity  Mounted on\n" : "\
-Filesystem       Inodes     IUsed    IFree    %%IUsed    Mounted on\n",
+Filesystem    %4d-blocks      Used    Available  Capacity  Mounted on\n" : "\
+Filesystem         Inodes       IUsed      IFree    %%IUsed    Mounted on\n",
 		unitsize);
   } else {
 	printf("%s\n", !iflag ? "\
-Filesystem    1K-Blocks     Free     Used    % Files%   Mounted on" : "\
-Filesystem        Files     Free     Used    % BUsed%   Mounted on"
+Filesystem      1K-Blocks       Free       Used    % Files%   Mounted on" : "\
+Filesystem          Files       Free       Used    % BUsed%   Mounted on"
 	);
   }
 
@@ -358,7 +358,7 @@ int df(const struct mtab *mt)
   while (n < 15) { putchar(' '); n++; }
 
   if (!Pflag && !iflag) {
-	printf(" %7ld  %7ld  %7ld %3d%%   %3d%%   %s\n",
+	printf(" %9ld  %9ld  %9ld %3d%%   %3d%%   %s\n",
 		L(totblocks),				/* Blocks */
 		L(totblocks - busyblocks),		/* free */
 		L(busyblocks),				/* used */
@@ -368,7 +368,7 @@ int df(const struct mtab *mt)
 	);
   }
   if (!Pflag && iflag) {
-	printf(" %7ld  %7ld  %7ld %3d%%   %3d%%   %s\n",
+	printf(" %9ld  %9ld  %9ld %3d%%   %3d%%   %s\n",
 		L(sp->s_ninodes),			/* Files */
 		L(sp->s_ninodes - i_count),		/* free */
 		L(i_count),				/* used */
@@ -378,7 +378,7 @@ int df(const struct mtab *mt)
 	);
   }
   if (Pflag && !iflag) {
-	printf(" %7ld   %7ld  %7ld     %4d%%    %s\n",
+	printf(" %9ld   %9ld  %9ld     %4d%%    %s\n",
 		L(totblocks),				/* Blocks */
 		L(busyblocks),				/* Used */
 		totblocks - busyblocks,			/* Available */
@@ -387,7 +387,7 @@ int df(const struct mtab *mt)
 	);
   }
   if (Pflag && iflag) {
-	printf(" %7ld   %7ld  %7ld     %4d%%    %s\n",
+	printf(" %9ld   %9ld  %9ld     %4d%%    %s\n",
 		L(sp->s_ninodes),			/* Inodes */
 		L(i_count),				/* IUsed */
 		L(sp->s_ninodes - i_count),		/* IAvail */
