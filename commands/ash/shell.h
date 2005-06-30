@@ -85,6 +85,7 @@ typedef char *pointer;
 #define MKINIT	/* empty */
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
 
 extern char nullstr[1];		/* null string */
 

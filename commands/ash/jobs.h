@@ -50,7 +50,7 @@
  */
 
 struct procstat {
-	short pid;		/* process id */
+	pid_t pid;		/* process id */
 	short status;		/* status flags (defined above) */
 	char *cmd;		/* text of command being run */
 };
@@ -64,8 +64,8 @@ struct procstat {
 struct job {
 	struct procstat ps0;	/* status of process */
 	struct procstat *ps;	/* status or processes when more than one */
-	short nprocs;		/* number of processes */
-	short pgrp;		/* process group of this job */
+	pid_t nprocs;		/* number of processes */
+	pid_t pgrp;		/* process group of this job */
 	char state;		/* true if job is finished */
 	char used;		/* true if this entry is in used */
 	char changed;		/* true if status has changed */
@@ -74,7 +74,7 @@ struct job {
 #endif
 };
 
-extern short backgndpid;	/* pid of last background process */
+extern pid_t backgndpid;	/* pid of last background process */
 
 
 #ifdef __STDC__
