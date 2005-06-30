@@ -47,7 +47,7 @@ void Read_Disk( s, block_addr, buffer )
   if ( lseek( s->device_d, block_addr, SEEK_SET ) == -1 )
     Error( "Error seeking %s", s->device_name );
 
-  if ( read( s->device_d, buffer, K ) != K )
+  if ( read( s->device_d, buffer, s->block_size ) != s->block_size )
     Error( "Error reading %s", s->device_name );
   }
 
@@ -72,8 +72,9 @@ void Read_Block( s, buffer )
   char *buffer;
 
   {
-  off_t end_addr = (long) s->device_size * K - 1;
+  off_t end_addr;
   off_t block_addr;
+  end_addr = (long) s->device_size * s->block_size - 1;
 
   if ( s->address < 0 )
     s->address = 0L;
@@ -120,7 +121,8 @@ void Read_Super_Block( s )
   unsigned inodes_per_block;
   off_t size;
 
-  Read_Disk( s, (long) 1 * K, s->buffer );
+  s->block_size = K;
+  Read_Disk( s, (long) SUPER_BLOCK_BYTES, s->buffer );
 
   s->magic = super->s_magic;
   if ( s->magic == SUPER_MAGIC )
@@ -133,14 +135,19 @@ void Read_Super_Block( s )
     s->zone_num_size = V1_ZONE_NUM_SIZE;
     s->zones = super->s_nzones;
     s->ndzones = V1_NR_DZONES;
+    s->block_size = STATIC_BLOCK_SIZE;
     }
-  else if ( s->magic == SUPER_V2 )
+  else if ( s->magic == SUPER_V2 || s->magic == SUPER_V3)
     {
+    if(s->magic == SUPER_V3)
+    	s->block_size = super->s_block_size;
+    else
+    	s->block_size = STATIC_BLOCK_SIZE;
     s->is_fs = TRUE;
     s->v1 = FALSE;
     s->inode_size = V2_INODE_SIZE;
-    inodes_per_block = V2_INODES_PER_BLOCK(STATIC_BLOCK_SIZE);
-    s->nr_indirects = V2_INDIRECTS(STATIC_BLOCK_SIZE);
+    inodes_per_block = V2_INODES_PER_BLOCK(s->block_size);
+    s->nr_indirects = V2_INDIRECTS(s->block_size);
     s->zone_num_size = V2_ZONE_NUM_SIZE;
     s->zones = super->s_zones;
     s->ndzones = V2_NR_DZONES;
@@ -159,7 +166,7 @@ void Read_Super_Block( s )
     }
 
   s->inodes = super->s_ninodes;
-  s->inode_maps = bitmapsize( (bit_t) s->inodes + 1 , STATIC_BLOCK_SIZE);
+  s->inode_maps = bitmapsize( (bit_t) s->inodes + 1 , s->block_size);
   if ( s->inode_maps != super->s_imap_blocks )
     {
     if ( s->inode_maps > super->s_imap_blocks )
@@ -169,7 +176,7 @@ void Read_Super_Block( s )
     s->inode_maps = super->s_imap_blocks;
     }
 
-  s->zone_maps = bitmapsize( (bit_t) s->zones , STATIC_BLOCK_SIZE);
+  s->zone_maps = bitmapsize( (bit_t) s->zones , s->block_size);
   if ( s->zone_maps != super->s_zmap_blocks )
     {
     if ( s->zone_maps > super->s_zmap_blocks )

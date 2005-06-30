@@ -63,6 +63,7 @@
 /****************************************************************/
 #undef printf
 #include <stdio.h>
+#include <dirent.h>
 
 /*  General constants  */
 
@@ -223,6 +224,7 @@ typedef  struct  de_state		/*  State of disk ed.	*/
   unsigned inode_size;			/*  Size of disk inode	*/
   unsigned nr_indirects;		/*  # indirect blocks	*/
   unsigned zone_num_size;		/*  Size of disk z num	*/
+  int block_size;			/*  FS block size       */
 
   /* Other derived numbers */  
   
@@ -242,7 +244,7 @@ typedef  struct  de_state		/*  State of disk ed.	*/
   zone_t block;				/*  Current block (1K)	*/
   unsigned offset;			/*  Offset within block	*/
 
-  char buffer[ K ];
+  char buffer[ MAX_BLOCK_SIZE ];
 
   /*  Display state  */
 

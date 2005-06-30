@@ -383,6 +383,8 @@ void Draw_Strings( s )
 			break;
     case SUPER_V2_REV :	printf( "V2-bytes-swapped file system (?)  ");
 			break;
+    case SUPER_V3 :	printf( "V3 file system  ");
+			break;
     default :		printf( "not a Minix file system  ");
 			break;
     }

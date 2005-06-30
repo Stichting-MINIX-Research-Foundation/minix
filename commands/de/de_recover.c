@@ -453,7 +453,7 @@ int Indirect( s, block, file_size, dblind )
   union
     {
     zone1_t ind1[ V1_INDIRECTS ];
-    zone_t  ind2[ V2_INDIRECTS(STATIC_BLOCK_SIZE) ];
+    zone_t  ind2[ V2_INDIRECTS(MAX_BLOCK_SIZE) ];
     } indirect;
   int  i;
   zone_t zone;
