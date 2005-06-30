@@ -75,9 +75,11 @@ bootable:
 
 hdboot:	image
 	exec sh mkboot $@
+	@sync
 
 fdboot:	image
 	exec su root mkboot $@
+	@sync
 
 install: hdboot
 

@@ -32,8 +32,8 @@
  * Most fields are similar to V7 ps(1), except for CPU, NICE, PRI which are
  * absent, RECV which replaces WCHAN, and PGRP that is an extra.
  * The info is obtained from the following fields of proc, mproc and fproc:
- * F	- kernel status field, p_flags
- * S	- kernel status field, p_flags; mm status field, mp_flags (R if p_flags
+ * F	- kernel status field, p_rts_flags
+ * S	- kernel status field, p_rts_flags; mm status field, mp_flags (R if p_rts_flags
  *	  is 0; Z if mp_flags == ZOMBIE; T if mp_flags == STOPPED; else W).
  * UID	- mm eff uid field, mp_effuid
  * PID	- mm pid field, mp_pid
@@ -461,11 +461,11 @@ struct pstat *bufp;
 
   if (p_nr < -nr_tasks || p_nr >= nr_procs) return -1;
 
-  if ((ps_proc[p_ki].p_flags == SLOT_FREE)
+  if ((ps_proc[p_ki].p_rts_flags == SLOT_FREE)
   				&& !(ps_mproc[p_nr].mp_flags & IN_USE))
 	return -1;
 
-  bufp->ps_flags = ps_proc[p_ki].p_flags;
+  bufp->ps_flags = ps_proc[p_ki].p_rts_flags;
 
   if (p_nr >= low_user) {
 	bufp->ps_dev = ps_fproc[p_nr].fp_tty;
@@ -496,7 +496,7 @@ struct pstat *bufp;
 		bufp->ps_state = Z_STATE;	/* zombie */
 	else if (ps_mproc[p_nr].mp_flags & STOPPED)
 		bufp->ps_state = T_STATE;	/* stopped (traced) */
-	else if (ps_proc[p_ki].p_flags == 0)
+	else if (ps_proc[p_ki].p_rts_flags == 0)
 		bufp->ps_state = R_STATE;	/* in run-queue */
 	else if (ps_mproc[p_nr].mp_flags & (WAITING | PAUSED | SIGSUSPENDED) ||
 		 ps_fproc[p_nr].fp_suspended == SUSPENDED)
@@ -504,7 +504,7 @@ struct pstat *bufp;
 	else
 		bufp->ps_state = W_STATE;	/* a short wait */
   } else {			/* tasks are simple */
-	if (ps_proc[p_ki].p_flags == 0)
+	if (ps_proc[p_ki].p_rts_flags == 0)
 		bufp->ps_state = R_STATE;	/* in run-queue */
 	else
 		bufp->ps_state = W_STATE;	/* other i.e. waiting */
