@@ -44,10 +44,6 @@ FORWARD _PROTOTYPE( int clock_handler, (irq_hook_t *hook) );
 FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
 
 
-/* Constant definitions. */
-#define SCHED_RATE (MILLISEC*HZ/1000)	/* number of ticks per schedule */
-#define MILLISEC         100		/* how often to call the scheduler */
-
 /* Clock parameters. */
 #if (CHIP == INTEL)
 #define COUNTER_FREQ (2*TIMER_FREQ) /* counter frequency using square wave */
@@ -84,8 +80,6 @@ PRIVATE clock_t realtime;		/* real time clock */
 
 /* Variables for and changed by the CLOCK's interrupt handler. */
 PRIVATE irq_hook_t clock_hook;
-PRIVATE int sched_ticks = SCHED_RATE;	/* counter: when 0, call scheduler */
-PRIVATE struct proc *prev_ptr;		/* last user process run by clock */
 
 
 /*===========================================================================*
@@ -147,12 +141,11 @@ message *m_ptr;				/* pointer to request message */
 		TMR_NEVER : clock_timers->tmr_exp_time;
   }
 
-  /* If a process has been running too long, pick another one. */
-  if (--sched_ticks <= 0) {
-	if (bill_ptr == prev_ptr) 
-		lock_sched(USER_Q);		/* process has run too long */
-	sched_ticks = SCHED_RATE;		/* reset quantum */
-	prev_ptr = bill_ptr;			/* new previous process */
+  /* A process used up a full quantum. The interrupt handler stored this
+   * process in 'prev_ptr'. Reset the quantum and schedule another process. 
+   */
+  if (prev_ptr->p_sched_ticks <= 0) {
+      lock_sched(prev_ptr);  
   }
 
   /* Inhibit sending a reply. */
@@ -183,8 +176,7 @@ irq_hook_t *hook;
  *		These are used for accounting.  It does not matter if proc.c
  *		is changing them, provided they are always valid pointers,
  *		since at worst the previous process would be billed.
- *	next_timeout, realtime, sched_ticks, bill_ptr, prev_ptr
- *	rdy_head[USER_Q]
+ *	next_timeout, realtime, sched_ticks, bill_ptr, prev_ptr,
  *		These are tested to decide whether to call notify().  It
  *		does not matter if the test is sometimes (rarely) backwards
  *		due to a race, since this will only delay the high-level
@@ -211,32 +203,28 @@ irq_hook_t *hook;
   /* Acknowledge the PS/2 clock interrupt. */
   if (machine.ps_mca) outb(PORT_B, inb(PORT_B) | CLOCK_ACK_BIT);
 
+  /* Get number of ticks and update realtime. */
+  ticks = lost_ticks + 1;
+  lost_ticks = 0;
+  realtime += ticks;
+
   /* Update user and system accounting times. Charge the current process for
    * user time. If the current process is not billable, that is, if a non-user
    * process is running, charge the billable process for system time as well.
    * Thus the unbillable process' user time is the billable user's system time.
    */
-  ticks = lost_ticks + 1;
-  lost_ticks = 0;
-  realtime += ticks;
-
-  /* Update administration. */
   proc_ptr->p_user_time += ticks;
   if (proc_ptr != bill_ptr) bill_ptr->p_sys_time += ticks;
+  if (proc_ptr->p_flags & PREEMPTIBLE) proc_ptr->p_sched_ticks -= ticks;
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
-   * If bill_ptr == prev_ptr, there are no ready users so don't need sched(). 
+   * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
-  if (next_timeout <= realtime || (sched_ticks == 1 && bill_ptr == prev_ptr
-          && rdy_head[USER_Q] != NIL_PROC))
-  {  
+  if ((next_timeout <= realtime) || (proc_ptr->p_sched_ticks <= 0)) {
+      prev_ptr = proc_ptr;			/* store running process */
       m.NOTIFY_TYPE = HARD_INT;
-      lock_notify(CLOCK, &m);
+      lock_notify(CLOCK, &m);			/* send event notification */
   } 
-  else if (--sched_ticks <= 0) {
-      sched_ticks = SCHED_RATE;		/* reset the quantum */
-      prev_ptr = bill_ptr;		/* new previous process */
-  }
   return(1);				/* reenable clock interrupts */
 }
 
@@ -246,9 +234,7 @@ irq_hook_t *hook;
  *===========================================================================*/
 PUBLIC clock_t get_uptime()
 {
-/* Get and return the current clock uptime in ticks.
- * Be careful about pending_ticks.
- */
+/* Get and return the current clock uptime in ticks. */
   return(realtime);
 }
 

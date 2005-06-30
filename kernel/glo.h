@@ -21,10 +21,12 @@ EXTERN struct kmessages kmess;  	/* diagnostic messages in kernel */
 EXTERN struct randomness krandom;	/* gather kernel random information */
 
 /* Process scheduling information and the kernel reentry count. */
+EXTERN struct proc *prev_ptr;	/* previously running process */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
 EXTERN struct proc *next_ptr;	/* next process to run after restart() */
 EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
+EXTERN int sched_ticks;		/* keep track of quantum usage */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
 /* Declare buffer space and a bit map for notification messages. */

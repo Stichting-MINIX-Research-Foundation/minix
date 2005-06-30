@@ -39,17 +39,17 @@
 /* Define stack sizes for all tasks included in the system image. */
 #define NO_STACK	0
 #define SMALL_STACK	(128 * sizeof(char *))
-#if (CHIP == INTEL)
-#define	IDLE_STACK	((3+3+4) * sizeof(char *))  /* 3 intr, 3 temps, 4 db */
+#if (CHIP == INTEL)			/* 3 intr, 3 temps, 4 db */
+#define	IDLE_S		((3+3+4) * sizeof(char *))  
 #else
-#define IDLE_STACK	SMALL_STACK
+#define IDLE_S		SMALL_STACK
 #endif
-#define	HARDWARE_STACK	NO_STACK	/* dummy task, uses kernel stack */
-#define	SYS_STACK	SMALL_STACK
-#define	CLOCK_STACK	SMALL_STACK
+#define	HARDWARE_S	NO_STACK	/* dummy task, uses kernel stack */
+#define	SYSTEM_S	SMALL_STACK
+#define	CLOCK_S		SMALL_STACK
 
 /* Stack space for all the task stacks.  Declared as (char *) to align it. */
-#define	TOT_STACK_SPACE	(IDLE_STACK+HARDWARE_STACK+CLOCK_STACK+SYS_STACK)
+#define	TOT_STACK_SPACE	(IDLE_S+HARDWARE_S+CLOCK_S+SYSTEM_S)
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 	
 
@@ -60,35 +60,43 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * mask, and a name for the process table. For kernel processes, the startup 
  * routine and stack size is also provided.
  */
+#define IDLE_F		(PREEMPTIBLE | BILLABLE)
+#define USER_F		(PREEMPTIBLE | SCHED_Q_HEAD)
+#define SYS_F  		(PREEMPTIBLE)
+
+#define IDLE_T		32		/* ticks */
+#define USER_T		 8		/* ticks */
+#define SYS_T		16		/* ticks */
+
 PUBLIC struct system_image image[] = {
- { IDLE, idle_task,    0,   IDLE_Q,  IDLE_STACK,    EMPTY_CALL_MASK, DENY_ALL_MASK,    "IDLE"    },
- { CLOCK, clock_task,   0,   TASK_Q, CLOCK_STACK,   SYSTEM_CALL_MASK, ALLOW_ALL_MASK,   "CLOCK"   },
- { SYSTASK, sys_task,     0,   TASK_Q, SYS_STACK,     SYSTEM_CALL_MASK, ALLOW_ALL_MASK,  "SYS"     },
- { HARDWARE, 0,            0,   TASK_Q, HARDWARE_STACK, EMPTY_CALL_MASK, ALLOW_ALL_MASK,"HARDW." },
- { PM_PROC_NR, 0,            0, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "PM"      },
- { FS_PROC_NR, 0,            0, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "FS"      },
- { IS_PROC_NR, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,      "IS"      },
- { TTY, 0,            0, 1, 0,            SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "TTY"      },
- { MEMORY, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "MEMORY" },
+ { IDLE,    idle_task,  IDLE_F, IDLE_T,   IDLE_Q,  IDLE_S,    EMPTY_CALL_MASK, DENY_ALL_MASK,    "IDLE"    },
+ { CLOCK,   clock_task, 0, SYS_T,   TASK_Q, CLOCK_S,   SYSTEM_CALL_MASK, ALLOW_ALL_MASK,   "CLOCK"   },
+ { SYSTASK, sys_task,   0, SYS_T,   TASK_Q, SYSTEM_S,     SYSTEM_CALL_MASK, ALLOW_ALL_MASK,  "SYS"     },
+ { HARDWARE,   0,       0, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_CALL_MASK, ALLOW_ALL_MASK,"HARDW." },
+ { PM_PROC_NR, 0,       0, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "PM"      },
+ { FS_PROC_NR, 0,       0, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "FS"      },
+ { IS_PROC_NR, 0,       SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,      "IS"      },
+ { TTY, 0,              SYS_F, SYS_T, 1, 0,           SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "TTY"      },
+ { MEMORY, 0,           SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "MEMORY" },
 #if ENABLE_AT_WINI
- { AT_WINI, 0,            0, 2, 0,          SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "AT_WINI" },
+ { AT_WINI, 0,            SYS_F, SYS_T, 2, 0,          SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "AT_WINI" },
 #endif
 #if ENABLE_FLOPPY
- { FLOPPY, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FLOPPY" },
+ { FLOPPY, 0,            SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FLOPPY" },
 #endif
 #if ENABLE_PRINTER
- { PRINTER, 0,            0, 3, 0,         SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "PRINTER" },
+ { PRINTER, 0,            SYS_F, SYS_T, 3, 0,         SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "PRINTER" },
 #endif
 #if ENABLE_RTL8139
- { USR8139, 0,            0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "RTL8139" },
+ { USR8139, 0,            SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "RTL8139" },
 #endif
 #if ENABLE_FXP
- { FXP, 0,                0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FXP" },
+ { FXP, 0,                SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FXP" },
 #endif
 #if ENABLE_DPETH
- { DPETH, 0,              0, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "DPETH" },
+ { DPETH, 0,              SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "DPETH" },
 #endif
- { INIT_PROC_NR, 0,            0,   USER_Q, 0,         USER_CALL_MASK,    USER_PROC_SENDMASK,    "INIT"    },
+ { INIT_PROC_NR, 0,    USER_F, USER_T, USER_Q, 0,         USER_CALL_MASK,    USER_PROC_SENDMASK,    "INIT"    },
 };
 
 /* Verify the size of the system image table at compile time. If the number 

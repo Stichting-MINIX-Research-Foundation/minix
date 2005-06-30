@@ -42,6 +42,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "proc.h"
+#include "const.h"
 #include "debug.h"
 #include "ipc.h"
 #include "sendmask.h"
@@ -60,7 +61,7 @@ FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst,
 
 FORWARD _PROTOTYPE( void ready, (struct proc *rp) );
 FORWARD _PROTOTYPE( void unready, (struct proc *rp) );
-FORWARD _PROTOTYPE( void sched, (int queue) );
+FORWARD _PROTOTYPE( void sched, (struct proc *rp) );
 FORWARD _PROTOTYPE( void pick_proc, (void) );
 
 #define BuildMess(m,n) \
@@ -107,7 +108,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * if the caller doesn't do receive(). 
    */
   if (! (caller_ptr->p_call_mask & (1 << function)) || 
-          (iskerneltask(src_dst) && function != SENDREC))  
+          (iskerneln(src_dst) && function != SENDREC))  
       return(ECALLDENIED);	
   
   /* Require a valid source and/ or destination process, unless echoing. */
@@ -146,7 +147,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
   case SENDREC:				/* has FRESH_ANSWER flag */		
       /* fall through */
   case SEND:			
-      if (isemptyp(proc_addr(src_dst))) { 			
+      if (isemptyn(src_dst)) { 			
           result = EDEADDST;		/* cannot send to the dead */
           break;
       }
@@ -179,6 +180,16 @@ message *m_ptr;			/* pointer to message in the caller's space */
   default:
       result = EBADCALL;			/* illegal system call */
   }
+  
+  /* If the caller made a successfull, blocking system call it's priority may
+   * be raised. The priority have been lowered if a process consumed to many 
+   * full quantums in a row to prevent damage from infinite loops 
+   */
+  if ((caller_ptr->p_priority > caller_ptr->p_max_priority) && 
+         ! (flags & NON_BLOCKING) && (result == OK)) {
+      caller_ptr->p_priority = caller_ptr->p_max_priority;
+      caller_ptr->p_full_quantums = QUANTUMS(caller_ptr->p_priority);
+  }
 
   /* Now, return the result of the system call to the caller. */
   return(result);
@@ -204,7 +215,7 @@ unsigned flags;				/* system call flags */
 
   /* Check for deadlock by 'caller_ptr' and 'dst' sending to each other. */
   xp = dst_ptr;
-  while (xp->p_flags & SENDING) {		/* check while sending */
+  while (xp->p_rts_flags & SENDING) {		/* check while sending */
   	xp = proc_addr(xp->p_sendto);		/* get xp's destination */
   	if (xp == caller_ptr) return(ELOCKED);	/* deadlock if cyclic */
   }
@@ -212,17 +223,17 @@ unsigned flags;				/* system call flags */
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
    */
-  if ( (dst_ptr->p_flags & (RECEIVING | SENDING)) == RECEIVING &&
+  if ( (dst_ptr->p_rts_flags & (RECEIVING | SENDING)) == RECEIVING &&
        (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
 	/* Destination is indeed waiting for this message. */
 	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 		 dst_ptr->p_messbuf);
-	if ((dst_ptr->p_flags &= ~RECEIVING) == 0) ready(dst_ptr);
+	if ((dst_ptr->p_rts_flags &= ~RECEIVING) == 0) ready(dst_ptr);
   } else if ( ! (flags & NON_BLOCKING)) {
 	/* Destination is not waiting.  Block and queue caller. */
 	caller_ptr->p_messbuf = m_ptr;
-	if (caller_ptr->p_flags == 0) unready(caller_ptr);
-	caller_ptr->p_flags |= SENDING;
+	if (caller_ptr->p_rts_flags == 0) unready(caller_ptr);
+	caller_ptr->p_rts_flags |= SENDING;
 	caller_ptr->p_sendto = dst;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
@@ -258,7 +269,7 @@ unsigned flags;				/* system call flags */
    * The caller's SENDING flag may be set if SENDREC couldn't send. If it is
    * set, the process should be blocked.
    */
-  if (!(caller_ptr->p_flags & SENDING)) {
+  if (!(caller_ptr->p_rts_flags & SENDING)) {
 
     /* Check caller queue. Use pointer pointers to keep code simple. */
     xpp = &caller_ptr->p_caller_q;
@@ -266,7 +277,7 @@ unsigned flags;				/* system call flags */
 	if (src == ANY || src == proc_nr(*xpp)) {
 	    /* Found acceptable message. Copy it and update status. */
 	    CopyMess((*xpp)->p_nr, *xpp, (*xpp)->p_messbuf, caller_ptr, m_ptr);
-            if (((*xpp)->p_flags &= ~SENDING) == 0) ready(*xpp);
+            if (((*xpp)->p_rts_flags &= ~SENDING) == 0) ready(*xpp);
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
 	}
@@ -300,8 +311,8 @@ unsigned flags;				/* system call flags */
   if ( ! (flags & NON_BLOCKING)) {
       caller_ptr->p_getfrom = src;		
       caller_ptr->p_messbuf = m_ptr;
-      if (caller_ptr->p_flags == 0) unready(caller_ptr);
-      caller_ptr->p_flags |= RECEIVING;		
+      if (caller_ptr->p_rts_flags == 0) unready(caller_ptr);
+      caller_ptr->p_rts_flags |= RECEIVING;		
       return(OK);
   } else {
       return(ENOTREADY);
@@ -326,14 +337,14 @@ message *m_ptr;				/* pointer to message buffer */
   /* Check to see if target is blocked waiting for this message. A process 
    * can be both sending and receiving during a SENDREC system call.
    */
-  if ( (dst_ptr->p_flags & (RECEIVING|SENDING)) == RECEIVING &&
+  if ( (dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
        (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
 
 	/* Destination is indeed waiting for this message. */
 	CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, 
 		dst_ptr, dst_ptr->p_messbuf);
-	dst_ptr->p_flags &= ~RECEIVING;	/* deblock destination */
-	if (dst_ptr->p_flags == 0) ready(dst_ptr);
+	dst_ptr->p_rts_flags &= ~RECEIVING;	/* deblock destination */
+	if (dst_ptr->p_rts_flags == 0) ready(dst_ptr);
 	return(OK);
   } 
 
@@ -404,33 +415,6 @@ message *m_ptr;			/* pointer to message buffer */
 }
 
 
-
-/*===========================================================================*
- *				pick_proc				     * 
- *===========================================================================*/
-PRIVATE void pick_proc()
-{
-/* Decide who to run now.  A new process is selected by setting 'next_ptr'.
- * When a fresh user (or idle) process is selected, record it in 'bill_ptr',
- * so the clock task can tell who to bill for system time.
- */
-  register struct proc *rp;			/* process to run */
-  int q;					/* iterate over queues */
-
-  /* Check each of the scheduling queues for ready processes. The number of
-   * queues is defined in proc.h, and priorities are set in the task table.
-   * The lowest queue contains IDLE, which is always ready.
-   */
-  for (q=0; q < NR_SCHED_QUEUES; q++) {	
-    if ( (rp = rdy_head[q]) != NIL_PROC) {
-	next_ptr = rp;				/* run process 'rp' next */
-	if (isuserp(rp) || isidlep(rp)) 	/* possible bill 'rp' */
-		bill_ptr = rp;
-	return;
-    }
-  }
-}
-
 /*===========================================================================*
  *				ready					     * 
  *===========================================================================*/
@@ -455,7 +439,7 @@ register struct proc *rp;	/* this process is now runnable */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   } 
-  else if (isuserp(rp)) {			/* add to head of queue */
+  else if (rp->p_flags & SCHED_Q_HEAD) {	/* add to head of queue */
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
       rdy_head[q] = rp;				/* set new queue head */
   } 
@@ -464,13 +448,7 @@ register struct proc *rp;	/* this process is now runnable */
       rdy_tail[q] = rp;				/* set new queue tail */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   }
-
-  /* Run 'rp' next if it has a higher priority than 'proc_ptr' or 'next_ptr'. 
-   * This actually should be done via pick_proc(), but the message passing 
-   * functions rely on this side-effect. High priorities have a lower number.
-   */
-  if (next_ptr && next_ptr->p_priority > rp->p_priority) next_ptr = rp;
-  else if (proc_ptr->p_priority > rp->p_priority) next_ptr = rp;
+  pick_proc();					/* select next to run */
 }
 
 /*===========================================================================*
@@ -520,22 +498,89 @@ register struct proc *rp;	/* this process is no longer runnable */
 /*===========================================================================*
  *				sched					     * 
  *===========================================================================*/
-PRIVATE void sched(q)
-int q;						/* scheduling queue to use */
+PRIVATE void sched(sched_ptr)
+struct proc *sched_ptr;				/* quantum eating process */
 {
-/* The current process has run too long. If another low priority (user)
- * process is runnable, put the current process on the end of the user queue,
- * possibly promoting another user to head of the queue.
+  int q;
+
+  /* Check if this process is preemptible, otherwise leave it as is. */
+  if (! (sched_ptr->p_flags & PREEMPTIBLE)) { 
+      kprintf("Warning, sched for nonpreemptible proc %d\n", sched_ptr->p_nr);
+      return;
+  }
+
+  if (sched_ptr->p_nr == IS_PROC_NR) {
+      kprintf("Scheduling IS: pri: %d, ", sched_ptr->p_priority);
+      kprintf("qua %d", sched_ptr->p_full_quantums);
+  }
+
+  /* Process exceeded the maximum number of full quantums it is allowed
+   * to use in a row. Lower the process' priority, but make sure we don't 
+   * end up in the IDLE queue. This helps to limit the damage caused by 
+   * for example infinite loops in high-priority processes. 
+   * This is a rare situation, so the overhead is acceptable.  
+   */
+  if (-- sched_ptr->p_full_quantums <= 0) {	/* exceeded threshold */ 
+      if (sched_ptr->p_priority + 1 < IDLE_Q ) {
+          unready(sched_ptr);			/* remove from queues */
+          sched_ptr->p_priority ++; 		/* lower priority */
+          ready(sched_ptr);			/* add to new queue */
+kprintf("Warning, proc %d got lower priority:\n", sched_ptr->p_nr);
+kprintf("%d\n", sched_ptr->p_priority);
+      }
+      sched_ptr->p_full_quantums = QUANTUMS(sched_ptr->p_priority);
+  }
+
+  /* The current process has run too long. If another low priority (user)
+   * process is runnable, put the current process on the tail of its queue,
+   * possibly promoting another user to head of the queue. Don't do anything
+   * if the queue is empty, or the process to be scheduled is not the head.
+   */
+  q = sched_ptr->p_priority;			/* convenient shorthand */
+  if (rdy_head[q] == sched_ptr) {		  
+      rdy_tail[q]->p_nextready = rdy_head[q];  	/* add expired to end */
+      rdy_tail[q] = rdy_head[q];	   	/* set new queue tail */
+      rdy_head[q] = rdy_head[q]->p_nextready;  	/* set new queue head */
+      rdy_tail[q]->p_nextready = NIL_PROC;   	/* mark new queue end */
+  }
+
+  /* Give the expired process a new quantum and see who is next to run. */
+  sched_ptr->p_sched_ticks = sched_ptr->p_quantum_size;
+  pick_proc();					
+
+  if (sched_ptr->p_nr == IS_PROC_NR) {
+      kprintf("Next proc: %d, ", next_ptr->p_nr); 
+      kprintf("pri: %d, ", next_ptr->p_priority); 
+      kprintf("qua: %d\n", next_ptr->p_full_quantums); 
+
+  }
+}
+
+
+/*===========================================================================*
+ *				pick_proc				     * 
+ *===========================================================================*/
+PRIVATE void pick_proc()
+{
+/* Decide who to run now.  A new process is selected by setting 'next_ptr'.
+ * When a billable process is selected, record it in 'bill_ptr', so that the 
+ * clock task can tell who to bill for system time.
  */
-  if (rdy_head[q] == NIL_PROC) return;		/* return for empty queue */
+  register struct proc *rp;			/* process to run */
+  int q;					/* iterate over queues */
 
-  /* One or more user processes queued. */
-  rdy_tail[q]->p_nextready = rdy_head[q];  	/* add expired to end */
-  rdy_tail[q] = rdy_head[q];		   	/* set new queue tail */
-  rdy_head[q] = rdy_head[q]->p_nextready;  	/* set new queue head */
-  rdy_tail[q]->p_nextready = NIL_PROC;	   	/* mark new queue end */
-
-  pick_proc();					/* select next to run */
+  /* Check each of the scheduling queues for ready processes. The number of
+   * queues is defined in proc.h, and priorities are set in the task table.
+   * The lowest queue contains IDLE, which is always ready.
+   */
+  for (q=0; q < NR_SCHED_QUEUES; q++) {	
+      if ( (rp = rdy_head[q]) != NIL_PROC) {
+          next_ptr = rp;			/* run process 'rp' next */
+          if (rp->p_flags & BILLABLE)	 	
+              bill_ptr = rp;			/* bill for system time */
+          return;				 
+      }
+  }
 }
 
 
@@ -582,12 +627,12 @@ struct proc *rp;		/* this process is no longer runnable */
 /*==========================================================================*
  *				lock_sched				    *
  *==========================================================================*/
-PUBLIC void lock_sched(queue)
-int queue;
+PUBLIC void lock_sched(sched_ptr)
+struct proc *sched_ptr;
 {
 /* Safe gateway to sched() for tasks. */
   lock(5, "sched");
-  sched(queue);
+  sched(sched_ptr);
   unlock(5);
 }
 

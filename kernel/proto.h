@@ -43,7 +43,7 @@ _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
 _PROTOTYPE( int lock_notify, (int dst, message *m_ptr)			);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_ready, (struct proc *rp)				);
-_PROTOTYPE( void lock_sched, (int queue)				);
+_PROTOTYPE( void lock_sched, (struct proc *rp)				);
 _PROTOTYPE( void lock_unready, (struct proc *rp)			);
 
 /* start.c */

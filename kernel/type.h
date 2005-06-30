@@ -19,7 +19,8 @@ typedef unsigned long send_mask_t;	/* bit mask for sender */
 struct system_image {
   proc_nr_t proc_nr;			/* process number to use */
   task_t *initial_pc;			/* start function for tasks */
-  int type;				/* type of process */
+  int flags;				/* process flags */
+  char quantum;				/* quantum (tick count) */
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
   char call_mask;			/* allowed system calls */

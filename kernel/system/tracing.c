@@ -51,8 +51,8 @@ register message *m_ptr;
   if (isemptyp(rp)) return(EIO);
   switch (tr_request) {
   case T_STOP:			/* stop process */
-	if (rp->p_flags == 0) lock_unready(rp);
-	rp->p_flags |= P_STOP;
+	if (rp->p_rts_flags == 0) lock_unready(rp);
+	rp->p_rts_flags |= P_STOP;
 	rp->p_reg.psw &= ~TRACEBIT;	/* clear trace bit */
 	return(OK);
 
@@ -120,15 +120,15 @@ register message *m_ptr;
 	break;
 
   case T_RESUME:		/* resume execution */
-	rp->p_flags &= ~P_STOP;
-	if (rp->p_flags == 0) lock_ready(rp);
+	rp->p_rts_flags &= ~P_STOP;
+	if (rp->p_rts_flags == 0) lock_ready(rp);
 	tr_data = 0;
 	break;
 
   case T_STEP:			/* set trace bit */
 	rp->p_reg.psw |= TRACEBIT;
-	rp->p_flags &= ~P_STOP;
-	if (rp->p_flags == 0) lock_ready(rp);
+	rp->p_rts_flags &= ~P_STOP;
+	if (rp->p_rts_flags == 0) lock_ready(rp);
 	tr_data = 0;
 	break;
 

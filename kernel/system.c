@@ -186,14 +186,14 @@ int proc_nr;				/* slot of process to clean up */
   reset_timer(&rc->p_alarm_timer);
 
   /* Make sure the exiting process is no longer scheduled. */
-  if (rc->p_flags == 0) lock_unready(rc);
+  if (rc->p_rts_flags == 0) lock_unready(rc);
 
   /* If the process being terminated happens to be queued trying to send a
    * message (e.g., the process was killed by a signal, rather than it doing 
    * an exit or it is forcibly shutdown in the stop sequence), then it must
    * be removed from the message queues.
    */
-  if (rc->p_flags & SENDING) {
+  if (rc->p_rts_flags & SENDING) {
       /* Check all proc slots to see if the exiting process is queued. */
       for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
           if (rp->p_caller_q == NIL_PROC) continue;
@@ -225,7 +225,7 @@ int proc_nr;				/* slot of process to clean up */
   /* Now clean up the process table entry. Reset to defaults. */
   kstrncpy(rc->p_name, "<none>", P_NAME_LEN);	/* unset name */
   sigemptyset(&rc->p_pending);		/* remove pending signals */
-  rc->p_flags = SLOT_FREE;		/* announce slot empty */
+  rc->p_rts_flags = SLOT_FREE;		/* announce slot empty */
   rc->p_sendmask = DENY_ALL_MASK;	/* set most restrictive mask */
 
 #if (CHIP == M68000)
@@ -299,13 +299,12 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   rp = proc_addr(proc_nr);
   if (! sigismember(&rp->p_pending, sig_nr)) {
       sigaddset(&rp->p_pending, sig_nr);
-      if (rp->p_flags & SIGNALED) return;	/* other signal pending */
-      if (rp->p_flags == 0) lock_unready(rp);	/* unready if not yet done */
-      rp->p_flags |= SIGNALED | SIG_PENDING;	/* update signal flags */
-      m.NOTIFY_TYPE = KSIG_PENDING;
-      m.NOTIFY_ARG = 0;
-      m.NOTIFY_FLAGS = 0;
-      lock_notify(PM_PROC_NR, &m);
+      if (! (rp->p_rts_flags & SIGNALED)) {		/* other pending */
+          if (rp->p_rts_flags == 0) lock_unready(rp);	/* make not ready */
+          rp->p_rts_flags |= SIGNALED | SIG_PENDING;	/* update flags */
+          m.NOTIFY_TYPE = KSIG_PENDING;
+          lock_notify(PM_PROC_NR, &m);
+      }
   }
 }
 

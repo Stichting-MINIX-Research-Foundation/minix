@@ -38,7 +38,7 @@ clean:
 
 depend: 
 	cd system && $(MAKE) -$(MAKEFLAGS) $@
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c system/*.c > .depend
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 # Include generated dependencies.
 include .depend

@@ -386,7 +386,7 @@ _restart:
 	cmp	(_next_ptr), 0		! see if another process is scheduled
 	jz	0f
 	mov 	eax, (_next_ptr)
-	mov	(_proc_ptr), eax
+	mov	(_proc_ptr), eax	! schedule new process 
 	mov	(_next_ptr), 0
 0:	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
 	lldt	P_LDT_SEL(esp)		! enable process' segment descriptors 

@@ -49,8 +49,8 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_ntf_q = NULL;			/* remove pending notifications */
 
   /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
-  rpc->p_flags |= NO_MAP;		/* inhibit process from running */
-  rpc->p_flags &= ~(SIGNALED | SIG_PENDING | P_STOP);
+  rpc->p_rts_flags |= NO_MAP;		/* inhibit process from running */
+  rpc->p_rts_flags &= ~(SIGNALED | SIG_PENDING | P_STOP);
   sigemptyset(&rpc->p_pending);
 
   rpc->p_reg.retreg = 0;	/* child sees pid = 0 to know it is child */
@@ -103,9 +103,9 @@ message *m_ptr;			/* pointer to request message */
 #else
   pmmu_init_proc(rp);
 #endif
-  old_flags = rp->p_flags;	/* save the previous value of the flags */
-  rp->p_flags &= ~NO_MAP;
-  if (old_flags != 0 && rp->p_flags == 0) lock_ready(rp);
+  old_flags = rp->p_rts_flags;	/* save the previous value of the flags */
+  rp->p_rts_flags &= ~NO_MAP;
+  if (old_flags != 0 && rp->p_rts_flags == 0) lock_ready(rp);
 
   return(OK);
 }
@@ -151,8 +151,8 @@ register message *m_ptr;	/* pointer to request message */
 	(LDT_SIZE - EXTRA_LDT_INDEX) * sizeof(rp->p_ldt[0]));
 #endif
   rp->p_reg.pc = (reg_t) m_ptr->PR_IP_PTR;	/* set pc */
-  rp->p_flags &= ~RECEIVING;	/* PM does not reply to EXEC call */
-  if (rp->p_flags == 0) lock_ready(rp);
+  rp->p_rts_flags &= ~RECEIVING;	/* PM does not reply to EXEC call */
+  if (rp->p_rts_flags == 0) lock_ready(rp);
 
   /* Save command name for debugging, ps(1) output, etc. */
   phys_name = numap_local(m_ptr->m_source, (vir_bytes) m_ptr->PR_NAME_PTR,

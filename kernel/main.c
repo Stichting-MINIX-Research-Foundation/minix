@@ -39,7 +39,7 @@ PUBLIC void main()
   vir_clicks text_clicks;
   vir_clicks data_clicks;
   reg_t ktsb;			/* kernel task stack base */
-  struct system_image *ttp;
+  struct system_image *ip;	/* boot image pointer */
   struct exec e_hdr;		/* for a copy of an a.out header */
 
   /* Initialize the interrupt controller. */
@@ -49,7 +49,7 @@ PUBLIC void main()
    * for proc_addr() and proc_nr() macros.
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
-  	rp->p_flags = SLOT_FREE;		/* initialize free slot */
+  	rp->p_rts_flags = SLOT_FREE;		/* initialize free slot */
 	rp->p_nr = i;				/* proc number from ptr */
         (pproc_addr + NR_TASKS)[i] = rp;        /* proc ptr from number */
   }
@@ -66,19 +66,24 @@ PUBLIC void main()
   ktsb = (reg_t) t_stack;
 
   for (i=0; i < IMAGE_SIZE; ++i) {
-	ttp = &image[i];			/* t's task attributes */
-	rp = proc_addr(ttp->proc_nr);		/* t's process slot */
-	kstrncpy(rp->p_name, ttp->proc_name, P_NAME_LEN);  /* set name */
+	ip = &image[i];				/* t's task attributes */
+	rp = proc_addr(ip->proc_nr);		/* t's process slot */
+	kstrncpy(rp->p_name, ip->proc_name, P_NAME_LEN);  /* set name */
 	rp->p_name[P_NAME_LEN-1] = '\0';	/* just for safety */
-	rp->p_priority = ttp->priority;		/* scheduling priority */
-	rp->p_call_mask = ttp->call_mask;	/* allowed system calls */
-	rp->p_sendmask = ttp->sendmask;		/* sendmask protection */
+	rp->p_flags = ip->flags;		/* process flags */
+	rp->p_max_priority = ip->priority;	/* max scheduling priority */
+	rp->p_priority = ip->priority;		/* current priority */
+	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
+	rp->p_sched_ticks = ip->quantum;	/* current credit */
+	rp->p_full_quantums = QUANTUMS(ip->priority);  /* quantums left */
+	rp->p_call_mask = ip->call_mask;	/* allowed system calls */
+	rp->p_sendmask = ip->sendmask;		/* sendmask protection */
 	if (i-NR_TASKS < 0) {			/* part of the kernel? */ 
-		if (ttp->stksize > 0) {		/* HARDWARE stack size is 0 */
+		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
 			rp->p_stguard = (reg_t *) ktsb;
 			*rp->p_stguard = STACK_GUARD;
 		}
-		ktsb += ttp->stksize;	/* point to high end of stack */
+		ktsb += ip->stksize;	/* point to high end of stack */
 		rp->p_reg.sp = ktsb;	/* this task's initial stack ptr */
 		text_base = kinfo.code_base >> CLICK_SHIFT;
 					/* processes that are in the kernel */
@@ -108,7 +113,7 @@ PUBLIC void main()
 	 * is different from that of other processes because tasks can
 	 * access I/O; this is not allowed to less-privileged processes 
 	 */
-	rp->p_reg.pc = (reg_t) ttp->initial_pc;
+	rp->p_reg.pc = (reg_t) ip->initial_pc;
 	rp->p_reg.psw = (iskernelp(rp)) ? INIT_TASK_PSW : INIT_PSW;
 
 	/* Initialize the server stack pointer. Take it down one word
@@ -125,7 +130,7 @@ PUBLIC void main()
 	rp->p_ready = 0;
 #endif
 	if (rp->p_nr != HARDWARE) lock_ready(rp);	
-	rp->p_flags = 0;
+	rp->p_rts_flags = 0;
 
 	/* Code and data segments must be allocated in protected mode. */
 	alloc_segments(rp);

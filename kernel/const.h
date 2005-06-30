@@ -27,6 +27,10 @@
 /* How long should the process names be in the kernel? */
 #define P_NAME_LEN	8
 
+/* Scheduling quantum. Number of ticks before preemption. */
+#define SCHED_MILLISEC         100		/* rate to call scheduler */
+#define SCHED_TICKS  (SCHED_MILLISEC*HZ/1000)	/* ticks per schedule */
+
 /* How many bytes should the circular buffer for kernel diagnostics. */
 #define KMESS_BUF_SIZE   256   	
 

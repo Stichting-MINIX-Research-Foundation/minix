@@ -27,18 +27,20 @@ struct proc {
 
   reg_t *p_stguard;		/* stack guard word */
   proc_nr_t p_nr;		/* number of this process (for fast access) */
+  char p_flags;			/* PREEMTIBLE, BILLABLE, etc. */
+  char p_rts_flags;		/* SENDING, RECEIVING, etc. */
 
-  struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
-  struct far_mem p_farmem[NR_REMOTE_SEGS];  /* remote memory map */
-
-  char p_flags;			/* SENDING, RECEIVING, etc. */
   char p_priority;		/* current scheduling priority */
-  char p_max_priority;		/* maximum (default) scheduling priority */
-  char p_used_quantums;		/* number of full quantums used in a row */
-  char p_allowed_quantums;	/* maximum quantums allowed in a row */
+  char p_max_priority;		/* maximum scheduling priority */
+  char p_quantum_size;		/* quantum size in ticks */
+  char p_sched_ticks;		/* number of scheduling ticks left */
+  char p_full_quantums;		/* number of full quantums left */
 
   char p_call_mask;		/* bit map with allowed system call traps */
   send_mask_t p_sendmask;	/* mask indicating to whom proc may send */
+
+  struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
+  struct far_mem p_farmem[NR_REMOTE_SEGS];  /* remote memory map */
 
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
@@ -64,7 +66,7 @@ struct proc {
 /* Guard word for task stacks. */
 #define STACK_GUARD	((reg_t) (sizeof(reg_t) == 2 ? 0xBEEF : 0xDEADBEEF))
 
-/* Bits for the process flags.  A process is runnable iff p_flags == 0. */
+/* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
 #define SLOT_FREE	0x01	/* process slot is free */
 #define NO_MAP		0x02	/* keeps unmapped forked child from running */
 #define SENDING		0x04	/* process blocked trying to SEND */
@@ -73,6 +75,10 @@ struct proc {
 #define SIG_PENDING	0x20	/* unready while signal being processed */
 #define P_STOP		0x40	/* set when process is being traced */
 
+/* Bits for the other process flags. */
+#define PREEMPTIBLE	0x01	/* kernel tasks are not preemptible */
+#define SCHED_Q_HEAD    0x02	/* add to queue head instead of tail */
+#define BILLABLE	0x04	/* system services are not billable */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment. Priorities of the processes in the boot image can 
@@ -83,6 +89,8 @@ struct proc {
 #define USER_Q  	   4    /* default priority for user processes */   
 #define IDLE_Q		   7    /* lowest, only IDLE process goes here */
 
+/* Each queue has a maximum number of full quantums associated with it. */
+#define QUANTUMS(q)	(NR_SCHED_QUEUES - (q))
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])
@@ -94,14 +102,14 @@ struct proc {
 #define proc_addr(n)      (pproc_addr + NR_TASKS)[(n)]
 #define proc_nr(p) 	  ((p)->p_nr)
 
-#define iskerneltask(n)	  ((n) == CLOCK || (n) == SYSTASK) 
 #define isokprocn(n)      ((unsigned) ((n) + NR_TASKS) < NR_PROCS + NR_TASKS)
-#define isokprocp(p)      ((p) >= BEG_PROC_ADDR && (p) < END_PROC_ADDR)
+#define isemptyn(n)       isemptyp(proc_addr(n)) 
+#define isemptyp(p)       ((p)->p_rts_flags == SLOT_FREE)
+#define iskernelp(p)	  iskerneln((p)->p_nr)
+#define iskerneln(n)	  ((n) < 0)
+#define isuserp(p)        isusern((p)->p_nr)
+#define isusern(n)        ((n) >= 0)
 
-#define iskernelp(p)	  ((p)->p_nr < 0)
-#define isuserp(p)        ((p)->p_nr >= 0)
-#define isidlep(p)        ((p)->p_nr == IDLE)
-#define isemptyp(p)       ((p)->p_flags == SLOT_FREE)
 
 /* The process table and pointers to process table slots. The pointers allow
  * faster access because now a process entry can be found by indexing the
