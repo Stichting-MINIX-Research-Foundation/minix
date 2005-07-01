@@ -124,6 +124,7 @@ ALL	= \
 	mt \
 	nm \
 	nonamed \
+	nice \
 	od \
 	passwd \
 	paste \
@@ -539,6 +540,10 @@ nm:	nm.c
 	$(CCLD) -o $@ $?
 	@install -S 32kw $@
 
+nice:	nice.c
+	$(CCLD) -o $@ $?
+	@install -S 8kw $@
+
 nonamed:	nonamed.c
 	$(CCLD) -o $@ $?
 	@install -S 8kw $@
@@ -933,6 +938,7 @@ install:	\
 	/usr/bin/mount \
 	/usr/bin/mt \
 	/usr/bin/nm \
+	/usr/bin/nice \
 	/usr/bin/nonamed \
 	/usr/bin/od \
 	/usr/bin/passwd \
@@ -1314,6 +1320,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/nm:	nm
+	install -cs -o bin $? $@
+
+/usr/bin/nice:	nice
 	install -cs -o bin $? $@
 
 /usr/bin/nonamed:	nonamed
