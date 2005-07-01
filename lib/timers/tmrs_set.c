@@ -21,9 +21,8 @@ clock_t *new_head;			/* new earliest timer, if non NULL */
   if(*tmrs)
   	old_head = (*tmrs)->tmr_exp_time;
 
-  /* Possibly remove an old timer. Then set the timer's variables. */
-  if (tp->tmr_exp_time != TMR_NEVER)
-  	(void) tmrs_clrtimer(tmrs, tp, NULL);
+  /* Set the timer's variables. */
+  (void) tmrs_clrtimer(tmrs, tp, NULL);
   tp->tmr_exp_time = exp_time;
   tp->tmr_func = watchdog;
 
