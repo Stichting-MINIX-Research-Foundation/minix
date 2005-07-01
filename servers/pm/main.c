@@ -210,6 +210,7 @@ PRIVATE void pm_init()
    * handling behaviour for PM, since PM cannot call sigaction() as others.
    */
   mproc[INIT_PROC_NR].mp_pid = INIT_PID;
+  mproc[INIT_PROC_NR].mp_nice = 0;
   mproc[INIT_PROC_NR].mp_parent = PM_PROC_NR;
   sigemptyset(&mproc[INIT_PROC_NR].mp_ignore);
   sigemptyset(&mproc[INIT_PROC_NR].mp_sigmask);

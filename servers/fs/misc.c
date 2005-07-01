@@ -6,6 +6,7 @@
  *   do_dup:	  perform the DUP system call
  *   do_fcntl:	  perform the FCNTL system call
  *   do_sync:	  perform the SYNC system call
+ *   do_fsync:	  perform the FSYNC system call
  *   do_reboot:	  sync disks and prepare for shutdown
  *   do_fork:	  adjust the tables after MM has performed a FORK system call
  *   do_exec:	  handle files with FD_CLOEXEC on after MM has done an EXEC
@@ -186,6 +187,19 @@ PUBLIC int do_sync()
 
   return(OK);		/* sync() can't fail */
 }
+
+/*===========================================================================*
+ *				do_fsync					     *
+ *===========================================================================*/
+PUBLIC int do_fsync()
+{
+/* Perform the fsync() system call. For now, don't be unnecessarily smart. */
+
+  do_sync();
+
+  return(OK);
+}
+
 
 
 /*===========================================================================*

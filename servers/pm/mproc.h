@@ -46,6 +46,9 @@ EXTERN struct mproc {
   struct mproc *mp_swapq;	/* queue of procs waiting to be swapped in */
   message mp_reply;		/* reply message to be sent to one */
 
+  /* Scheduling priority. */
+  signed int mp_nice;		/* nice is PRIO_MIN..PRIO_MAX, standard 0. */
+
   char mp_name[PROC_NAME_LEN];	/* process name */
 } mproc[NR_PROCS];
 

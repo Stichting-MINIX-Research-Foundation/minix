@@ -59,7 +59,7 @@ _PROTOTYPE( int do_getprocnr, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_allocmem, (void)					);
 _PROTOTYPE( int do_freemem, (void)					);
-_PROTOTYPE( int do_mstats, (void)					);
+_PROTOTYPE( int do_getsetpriority, (void)					);
 
 #if (MACHINE == MACINTOSH)
 _PROTOTYPE( phys_clicks start_click, (void)				);
@@ -100,4 +100,5 @@ _PROTOTYPE( void tell_fs, (int what, int p1, int p2, int p3)		);
 _PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)		);
 _PROTOTYPE( int get_mem_map, (int proc_nr, struct mem_map *mem_map)	);
 _PROTOTYPE( char *find_param, (const char *key));
+_PROTOTYPE( int proc_from_pid, (pid_t p));
 

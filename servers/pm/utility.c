@@ -9,6 +9,7 @@
  *   tell_fs:		interface to FS
  *   get_mem_map:	get memory map of given process
  *   get_stack_ptr:	get stack pointer of given process	
+ *   proc_from_pid:	return process pointer from pid number
  */
 
 #include "pm.h"
@@ -198,5 +199,20 @@ vir_bytes *sp;					/* put stack pointer here */
   	return(s);
   *sp = p.p_reg.sp;
   return(OK);
+}
+
+/*===========================================================================*
+ *				proc_from_pid				     *
+ *===========================================================================*/
+PUBLIC int proc_from_pid(mp_pid)
+pid_t mp_pid;
+{
+	int rmp;
+
+	for (rmp = 0; rmp < NR_PROCS; rmp++)
+		if (mproc[rmp].mp_pid == mp_pid)
+			return rmp;
+
+	return -1;
 }
 

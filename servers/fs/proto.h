@@ -87,6 +87,7 @@ _PROTOTYPE( int do_exec, (void)						);
 _PROTOTYPE( int do_revive, (void)					);
 _PROTOTYPE( int do_set, (void)						);
 _PROTOTYPE( int do_sync, (void)						);
+_PROTOTYPE( int do_fsync, (void)						);
 _PROTOTYPE( int do_reboot, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
