@@ -50,6 +50,7 @@ _PROTOTYPE( int sys_getmap, (int proc, struct mem_map *ptr)		);
 _PROTOTYPE( int sys_times, (int proc_nr, clock_t *ptr)			);
 _PROTOTYPE( int sys_getuptime, (clock_t *ticks)				);
 _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p)	);
+_PROTOTYPE( int sys_setpriority, (int proc, int prio)			);
 
 /* A system server can directly exit itself with the sys_xit call. The
  * status argument is here to resemble exit(2), but not passed to kernel.

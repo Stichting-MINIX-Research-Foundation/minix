@@ -232,7 +232,8 @@
 #  define SYS_PHYSCOPY  31 	/* sys_physcopy(src_addr,dst_addr,count) */
 #  define SYS_VIRVCOPY  32	/* sys_virvcopy(vec_ptr, vec_size) */
 #  define SYS_PHYSZERO  33	/* sys_physzero(addr,count) */
-#define NR_SYS_CALLS	34	/* number of system calls */ 
+#  define SYS_SETPRIORITY  34	/* sys_setpriority(which,who,prio) */
+#define NR_SYS_CALLS	35	/* number of system calls */ 
 
 /* Field names for SYS_SEGCTL. */
 #define MEM_CHUNK_BASE	m4_l1	/* physical base address */

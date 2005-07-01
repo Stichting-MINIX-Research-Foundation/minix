@@ -1,4 +1,4 @@
-#define NCALLS		  87	/* number of system calls allowed */
+#define NCALLS		  90	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 
@@ -75,3 +75,6 @@
 #define FREEMEM		  84	/* to PM */
 #define SELECT            85	/* to FS */
 #define FCHDIR            86	/* to FS */
+#define FSYNC             87	/* to FS */
+#define GETPRIORITY       88	/* to PM */
+#define SETPRIORITY       89	/* to PM */
