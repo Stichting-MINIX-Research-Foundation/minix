@@ -244,8 +244,8 @@ char *argv[];
   if (argc - optind != 2 && (argc - optind != 1 || blocks == 0)) usage();
 
   if (blocks > maxblocks) {
- 	fprintf(stderr, "%s: number of blocks too large for device.\n",
-  		progname);
+ 	fprintf(stderr, "%s: %s: number of blocks too large for device.\n",
+  		progname, argv[optind]);
   	return 1;
   }
 
