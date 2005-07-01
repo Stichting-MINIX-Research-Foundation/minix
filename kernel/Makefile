@@ -17,7 +17,8 @@ HEAD =	mpx.o
 OBJS =	start.o protect.o klibc.o klib.o table.o main.o proc.o \
 	i8259.o exception.o system.o clock.o misc.o 
 SYS_OBJS = $s/proctl.o $s/copying.o $s/devio.o $s/sysctl.o $s/misc.o \
-           $s/sigctl.o $s/tracing.o $s/clock.o $s/irqctl.o $s/debugging.o
+           $s/sigctl.o $s/tracing.o $s/clock.o $s/irqctl.o $s/debugging.o \
+           $s/priority.o
 LIBS = -ltimers
 
 

@@ -98,6 +98,7 @@ OBJECTS	= \
 	$(LIBRARY)(gettimeofday.o) \
 	$(LIBRARY)(getopt.o) \
 	$(LIBRARY)(lstat.o) \
+	$(LIBRARY)(priority.o) \
 	$(LIBRARY)(readlink.o) \
 	$(LIBRARY)(symlink.o) \
 
@@ -374,6 +375,9 @@ $(LIBRARY)(gettimeofday.o):	gettimeofday.c
 
 $(LIBRARY)(getopt.o):	getopt.c
 	$(CC1) getopt.c
+
+$(LIBRARY)(priority.o):	priority.c
+	$(CC1) priority.c
 
 $(LIBRARY)(readlink.o):	readlink.c
 	$(CC1) readlink.c

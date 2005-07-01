@@ -12,7 +12,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 
 SYS = 	clock.o copying.o debugging.o devio.o irqctl.o proctl.o \
-	sysctl.o misc.o sigctl.o tracing.o 
+	sysctl.o misc.o sigctl.o tracing.o  priority.o
 
 # What to make.
 all build: $(SYS)

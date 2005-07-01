@@ -525,7 +525,7 @@ struct proc *sched_ptr;				/* quantum eating process */
           unready(sched_ptr);			/* remove from queues */
           sched_ptr->p_priority ++; 		/* lower priority */
           ready(sched_ptr);			/* add to new queue */
-kprintf("Warning, proc %d got lower priority:\n", sched_ptr->p_nr);
+kprintf("Warning, proc %d got lower priority: ", sched_ptr->p_nr);
 kprintf("%d\n", sched_ptr->p_priority);
       }
       sched_ptr->p_full_quantums = QUANTUMS(sched_ptr->p_priority);

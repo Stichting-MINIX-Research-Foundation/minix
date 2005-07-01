@@ -163,6 +163,7 @@ PRIVATE void initialize(void)
   map(SYS_PHYSZERO, do_physzero);	/* zero physical memory region */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
   map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
+  map(SYS_SETPRIORITY, do_setpriority);	/* set scheduling priority */
 
   /* Miscellaneous. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */

@@ -26,6 +26,7 @@ OBJECTS	= \
 	$(LIBSYS)(sys_irqctl.o) \
 	$(LIBSYS)(sys_eniop.o) \
 	$(LIBSYS)(sys_segctl.o) \
+	$(LIBSYS)(sys_setpriority.o) \
 	$(LIBSYS)(sys_umap.o) \
 	$(LIBSYS)(sys_physcp.o) \
 	$(LIBSYS)(sys_vircp.o) \
@@ -87,6 +88,9 @@ $(LIBSYS)(sys_irqctl.o):	sys_irqctl.c
 
 $(LIBSYS)(sys_eniop.o):	sys_eniop.c
 	$(CC1) sys_eniop.c
+
+$(LIBSYS)(sys_setpriority.o):	sys_setpriority.c
+	$(CC1) sys_setpriority.c
 
 $(LIBSYS)(sys_segctl.o):	sys_segctl.c
 	$(CC1) sys_segctl.c

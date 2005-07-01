@@ -46,6 +46,7 @@ _PROTOTYPE( int do_getsig, (message *m_ptr) );
 _PROTOTYPE( int do_endsig, (message *m_ptr) );
 _PROTOTYPE( int do_sigsend, (message *m_ptr) );
 _PROTOTYPE( int do_sigreturn, (message *m_ptr) );
+_PROTOTYPE( int do_setpriority, (message *m_ptr) );
 
 _PROTOTYPE( int do_times, (message *m_ptr) );		/* clock functions */
 _PROTOTYPE( int do_setalarm, (message *m_ptr) );	
