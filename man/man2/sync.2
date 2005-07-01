@@ -7,13 +7,14 @@
 .TH SYNC 2 "June 30, 1985"
 .UC 4
 .SH NAME
-sync \- update super-block
+sync, fsync \- update dirty buffers and super-block
 .SH SYNOPSIS
 .nf
 .ft B
 #include <unistd.h>
 
 int sync(void)
+int fsync(fd)
 .ft R
 .fi
 .SH DESCRIPTION
@@ -22,6 +23,10 @@ causes all information in the file system
 buffers that should be on disk to be written out.
 This includes modified super blocks,
 modified i-nodes, and delayed block I/O.
+.B
+Fsync
+does the same thing, but only for the blocks associated with a specific
+file descriptor. Under minix, currently the two calls do the same thing.
 .SH "SEE ALSO"
 .BR reboot (2),
 .BR sync (8).

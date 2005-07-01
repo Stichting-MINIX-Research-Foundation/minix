@@ -1,0 +1,37 @@
+.TH GETPRIORITY 2 "Jul 1, 2005"
+.UC 4
+.SH NAME
+getpriority, setpriority \- get and set scheduling priority
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/resource.h>
+
+int getpriority(int \fIwhich\fP, int \fIwho\fP)
+int setpriority(int \fIwhich\fP, int \fIwho\fP, int \fIprio\fP)
+.SH DESCRIPTION
+.B Getpriority
+returns the scheduling priority of the process, process group, or user
+referred to in \fIwho\fP. Which of the three is indicated in
+\fIwhich\fP, by PRIO_PROCESS, PRIO_PGRP and PRIO_USER, respectively.
+In Minix, currently only PRIO_PROCESS is implemented.
+
+The range of the returned value is between PRIO_MIN and PRIO_MAX,
+currently between -20 and 20, and is the so-called nice value of
+a process. The higher the nice value, the less favourable the scheduling
+priority.
+
+.B Setpriority
+sets the priority indicated by \fIwho\fP and \fIwhich\fP to \fIprio\fP.
+\fIprio\fP, which is the nice value, may only be lowered by the super-user.
+.SH RETURN VALUES
+These functions both return -1 on failure, and set errno in this case.
+Because
+.B getpriority
+can return -1 as the real nice value, the caller has to reset errno
+and check errno afterwards to distinguish between an error condition
+and a negative nice value.
+.SH SEE ALSO
+nice(1)
+.SH AUTHOR
+Ben Gras <beng@few.vu.nl>

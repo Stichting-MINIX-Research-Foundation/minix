@@ -1,0 +1,26 @@
+.TH NICE 1
+.SH NAME
+nice \- invoke command with higher or lower scheduling priority
+.SH SYNOPSIS
+\fBnice\fP [\fB\-n\fP increment] \fIutility\fP [\fIargument\fP...]
+.SH DESCRIPTION
+The
+.B nice
+utility runs \fIutility\fP at a different scheduling priority than
+the default. The nicer the process is to others (the higher the
+increment), the less favourable the scheduling is. Super-users
+can give a negative increment, meaning scheduling is more favourable
+than the default.
+.SH OPTIONS
+.TP
+.B \-n \fIincrement
+the increment value sets how nice the invoked command will be. 0 is
+the same priority as regular processes. 10 is the default.
+The range is -20 to 20.
+.SH SEE ALSO
+getpriority(2), setpriority(2)
+.SH AUTHOR
+This
+.B nice
+utility was imported from FreeBSD. This manual page was written
+Ben Gras <beng@few.vu.nl>.
