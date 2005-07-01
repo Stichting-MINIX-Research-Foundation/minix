@@ -243,7 +243,21 @@ PUBLIC void get_randomness()
  * the lowest bytes because the highest bytes won't differ that much. 
  */ 
   unsigned long tsc_high;
-  read_tsc(&tsc_high, &krandom.r_buf[krandom.r_next]);
+
+  /* On machines with the RDTSC (cycle counter read instruction - pentium
+   * and up), use that for high-resolution raw entropy gathering. Otherwise,
+   * use the realtime clock (tick resolution).
+   *
+   * Unfortunately this test is run-time - we don't want to bother with
+   * compiling different kernels for different machines..
+   *
+   * On machines without RDTSC, we use the get_uptime() - read_clock()
+   * has a higher resolution, but would involve I/O calls.
+   */
+  if(machine.processor > 486)
+	  read_tsc(&tsc_high, &krandom.r_buf[krandom.r_next]);
+  else
+  	  krandom.r_buf[krandom.r_next] = get_uptime();
   if (krandom.r_size < RANDOM_ELEMENTS) krandom.r_size ++;
   krandom.r_next = (krandom.r_next + 1 ) % RANDOM_ELEMENTS;
 }
