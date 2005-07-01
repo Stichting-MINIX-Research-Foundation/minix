@@ -84,10 +84,12 @@ struct proc {
  * priority) and increment. Priorities of the processes in the boot image can 
  * be set in table.c.
  */
-#define NR_SCHED_QUEUES    8	/* MUST equal minimum priority + 1 */
+#define NR_SCHED_QUEUES   16	/* MUST equal minimum priority + 1 */
 #define TASK_Q		   0	/* highest, reserved for kernel tasks */
-#define USER_Q  	   4    /* default priority for user processes */   
-#define IDLE_Q		   7    /* lowest, only IDLE process goes here */
+#define MAX_USER_Q  	   8    /* highest priority for user processes */   
+#define USER_Q  	  12    /* default priority for user processes */   
+#define MIN_USER_Q	  14	/* minimum priority for user processes */
+#define IDLE_Q		  15    /* lowest, only IDLE process goes here */
 
 /* Each queue has a maximum number of full quantums associated with it. */
 #define QUANTUMS(q)	(NR_SCHED_QUEUES - (q))

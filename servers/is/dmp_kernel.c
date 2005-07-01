@@ -369,7 +369,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n--nr-name-flags--pri-quant-#--sc- -user---sys- -text---data---size- -rts flags-\n");
+  printf("\n--nr-name-flags-prior-quant-##-sc- -user---sys- -text---data---size- -rts flags-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -381,7 +381,7 @@ PUBLIC void proctab_dmp()
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
-	printf("%-7.7s %2x  %u/%u %02d/%02d %u  %02.2x %6lu%6lu %6uK%6uK%6uK %3x",
+	printf("%-7.7s %2x %02u/%02u %02d/%02d %02u %02.2x %6lu%6lu %6uK%6uK%6uK %3x",
 	       rp->p_name,
 	       rp->p_flags,
 	       rp->p_priority, rp->p_max_priority,
