@@ -158,9 +158,12 @@ Keyboard type? [us-std] "; read keymap
 test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 
 echo -n "
-Minix needs one primary partition of at least 80 MB for a full install
-with sources.  (The full install also fits in 64 MB, but it needs more
-if fully recompiled.  Add more space to taste.)
+Minix needs one primary partition of at about 210 MB for a full install
+with sources.  (The full install also fits in about 180 MB, but it
+needs more if fully recompiled.  Add more space to taste.)
+
+  * Minix currently only understands filesystems up to 4GB, so don't make
+    it bigger.
 
 If there is no free space on your disk then you have to back up one of the
 other partitions, shrink, and reinstall.  See the appropriate manuals of the
