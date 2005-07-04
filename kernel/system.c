@@ -79,6 +79,11 @@ PUBLIC void sys_task()
       /* Handle the request. */
       if ((unsigned) m.m_type < NR_SYS_CALLS) {
           result = (*call_vec[m.m_type])(&m);	/* do system call */
+      } else if(m.NOTIFY_TYPE == KSIG_PENDING) {
+      	  message pmm;
+          pmm.NOTIFY_TYPE = KSIG_PENDING;
+          lock_notify(PM_PROC_NR, &pmm);
+          continue;
       } else {
 	  kprintf("Warning, illegal SYSTASK request from %d.\n", m.m_source);
 	  result = EBADREQUEST;			/* illegal message type */
@@ -318,7 +323,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
           if (rp->p_rts_flags == 0) lock_unready(rp);	/* make not ready */
           rp->p_rts_flags |= SIGNALED | SIG_PENDING;	/* update flags */
           m.NOTIFY_TYPE = KSIG_PENDING;
-          lock_notify(PM_PROC_NR, &m);
+          lock_notify(SYSTASK, &m);
       }
   }
 }

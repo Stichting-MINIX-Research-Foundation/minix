@@ -75,7 +75,13 @@ PUBLIC void main()
 	 * the call just made above.  The processes must not be swapped out.
 	 */
 	for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
-		if ((rmp->mp_flags & (REPLY | ONSWAP)) == REPLY) {
+		/* In the meantime, the process may have been killed by a
+		 * signal (e.g. if a lethal pending signal was unblocked)
+		 * without the PM realizing it. If the slot is no longer in
+		 * use or just a zombie, don't try to reply.
+		 */
+		if ((rmp->mp_flags & (REPLY | ONSWAP | IN_USE | ZOMBIE)) ==
+		   (REPLY | IN_USE)) {
 			if ((s=send(proc_nr, &rmp->mp_reply)) != OK) {
 				panic(__FILE__,"PM can't reply to", proc_nr);
 			}
