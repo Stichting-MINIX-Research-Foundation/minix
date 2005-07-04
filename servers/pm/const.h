@@ -17,7 +17,6 @@
 				 */
 
 #define PM_PID	           0	/* PM's process id number */
-#define PM_PARENT         -1	/* PM's parent process slot */
 
 #define INIT_PID	   1	/* INIT's process id number */
 

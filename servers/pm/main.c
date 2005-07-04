@@ -216,7 +216,7 @@ PRIVATE void pm_init()
   sigemptyset(&mproc[INIT_PROC_NR].mp_sigmask);
 
   mproc[PM_PROC_NR].mp_pid = PM_PID;
-  mproc[PM_PROC_NR].mp_parent = PM_PARENT;
+  mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;
   sigfillset(&mproc[PM_PROC_NR].mp_ignore);
   sigfillset(&mproc[PM_PROC_NR].mp_sigmask);
 
