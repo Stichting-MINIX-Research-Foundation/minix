@@ -324,8 +324,8 @@ char *argv[];
 
 #ifdef UNIX
   if(ULONG_MAX / block_size <= blocks-1) {
-  	fprintf(stderr, "Warning: mkfs not testing device, it's too big.\n");
-  	donttest = 1;
+  	fprintf(stderr, "Device too big for filesystem to currently run on (max 4GB).\n");
+  	return 1;
   }
 
   if (!donttest) {
