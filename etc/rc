@@ -104,6 +104,9 @@ Mount $usr /usr failed -- Single user."
 	mount $usr /usr
     fi
 
+    # This file is necessary for above 'shutdown -C' check.
+    touch /usr/adm/wtmp
+
     if [ "$sflag" ]
     then
 	echo "Single user."
