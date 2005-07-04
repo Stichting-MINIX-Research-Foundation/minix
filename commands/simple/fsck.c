@@ -248,18 +248,21 @@ int yes(question)
 char *question;
 {
   register int c, answerchar;
+  static int note = 0;
 
   if (!repair) {
 	printf("\n");
 	return(0);
   }
   printf("%s? ", question);
+  if(!note) { printf("(y=yes, n=no, q=quit, A=for yes to all) "); note = 1; }
   if (automatic) {
 	printf("yes\n");
 	return(1);
   }
   fflush(stdout);
   if ((c = answerchar = getchar()) == 'q' || c == 'Q') exit(1);
+  if(c == 'A') { automatic = 1; c = 'y'; }
   while (!eoln(c)) c = getchar();
   return !(answerchar == 'n' || answerchar == 'N');
 }
@@ -670,8 +673,6 @@ int nblk;
   register i;
   register bitchunk_t *p = bitmap;
 
-  printf("writing bitmap - %d blocks from block %d\n",
-  	nblk, bno);
   for (i = 0; i < nblk; i++, bno++, p += WORDS_PER_BLOCK)
 	devwrite(btoa(bno), (char *) p, block_size);
 }

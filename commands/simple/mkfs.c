@@ -316,6 +316,13 @@ char *argv[];
 	grpid = BINGRP;
 	simple = 1;
   }
+
+  if(ULONG_MAX / block_size <= blocks-1) {
+  	fprintf(stderr, "Warning: too big for filesystem to currently\n");
+  	fprintf(stderr, "run on (max 4GB), truncating.\n");
+  	blocks = ULONG_MAX / block_size;
+  }
+
   nrblocks = blocks;
   nrinodes = inodes;
 
@@ -323,11 +330,6 @@ char *argv[];
   special(argv[--optind]);
 
 #ifdef UNIX
-  if(ULONG_MAX / block_size <= blocks-1) {
-  	fprintf(stderr, "Device too big for filesystem to currently run on (max 4GB).\n");
-  	return 1;
-  }
-
   if (!donttest) {
 	short *testb;
 	ssize_t w;
