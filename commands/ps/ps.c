@@ -134,8 +134,8 @@ int kmemfd, memfd;		/* file descriptors of [k]mem */
  */
 #define S_HEADER "  PID TTY  TIME CMD\n"
 #define S_FORMAT "%5s %3s %s %s\n"
-#define L_HEADER "  F S UID   PID  PPID  PGRP   SZ       RECV TTY  TIME CMD\n"
-#define L_FORMAT "%3o %c %3d %5s %5d %5d %4d %10s %3s %s %s\n"
+#define L_HEADER "  F S UID   PID  PPID  PGRP     SZ       RECV TTY  TIME CMD\n"
+#define L_FORMAT "%3o %c %3d %5s %5d %5d %6d %10s %3s %s %s\n"
 
 
 struct pstat {			/* structure filled by pstat() */
@@ -350,7 +350,7 @@ char *argv[];
 	if (pstat(i, &buf) != -1 &&
 	    (opt_all || buf.ps_euid == uid || buf.ps_ruid == uid) &&
 	    (opt_notty || majdev(buf.ps_dev) == TTY_MAJ)) {
-		if (buf.ps_pid == 0) {
+		if (buf.ps_pid == 0 && i != PM_PROC_NR) {
 			sprintf(pid, "(%d)", i);
 		} else {
 			sprintf(pid, "%d", buf.ps_pid);
@@ -475,7 +475,7 @@ struct pstat *bufp;
 	bufp->ps_ftask = 0;
   }
 
-  if (p_nr >= low_user) {
+  if (p_nr >= 0) {
 	bufp->ps_ruid = ps_mproc[p_nr].mp_realuid;
 	bufp->ps_euid = ps_mproc[p_nr].mp_effuid;
 	bufp->ps_pid = ps_mproc[p_nr].mp_pid;
