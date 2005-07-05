@@ -122,7 +122,7 @@ PUBLIC void osdep_eth_init()
 		rport= eth_port->etp_osdep.etp_port;
 		assert(rport >= 0 && rport < eth_conf_nr);
 		rep= &eth_port_table[rport];
-		if (!rep->etp_flags & EPF_ENABLED)
+		if (!(rep->etp_flags & EPF_ENABLED))
 		{
 			printf(
 			"eth%d: underlying ethernet device %d not enabled",
