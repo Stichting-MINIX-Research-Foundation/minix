@@ -84,3 +84,20 @@ PUBLIC int do_times()
   return(OK);
 }
 
+/*===========================================================================*
+ *				do_gettimeofday				     *
+ *===========================================================================*/
+PUBLIC int do_gettimeofday(void)
+{
+  clock_t uptime;
+  int s;
+
+  if ( (s=sys_getuptime(&uptime)) != OK) 
+  	panic(__FILE__,"do_gettimeofday couldn't get uptime", s);
+
+  mp->mp_reply.m2_l1 = boottime + uptime/HZ;
+  mp->mp_reply.m2_l2 = (uptime%HZ)*1000000/HZ;
+
+  return(OK);
+}
+

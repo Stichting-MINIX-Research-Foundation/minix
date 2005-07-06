@@ -3,16 +3,19 @@ gettimeofday.c
 */
 
 #include <sys/time.h>
+#include <lib.h>
 #include <time.h>
 
 int gettimeofday(struct timeval *_RESTRICT tp, void *_RESTRICT tzp)
 {
-	if (time(&tp->tv_sec) == (time_t)-1)
-		return -1;
-	tp->tv_usec= 0;
+  message m;
 
-	/* tzp has to be a nul pointer according to the standard. Otherwise
-	 * behavior is undefined. We can just ignore tzp.
-	 */
-	return 0;
+  if (_syscall(MM, GETTIMEOFDAY, &m) < 0)
+  	return -1;
+
+  tp->tv_sec = m.m2_l1;
+  tp->tv_usec = m.m2_l2;
+
+  return 0;
 }
+

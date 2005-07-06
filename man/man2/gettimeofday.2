@@ -1,0 +1,22 @@
+.TH GETTIMEOFDAY 2 "July 6, 2005"
+.UC 4
+.SH NAME
+gettimeofday \- get date and time
+.SH SYNOPSIS
+.ft B
+.nf
+#include <sys/time.h>
+
+int gettimeofday(struct timeval *tp, struct timezone *tzp)
+.fi
+.ft R
+.SH DESCRIPTION
+.B Gettimeofday
+returns the time in seconds and microseconds since epoch in GMT
+(midnight, january 1st, 1970). The timezone argument tzp is expected
+to be NULL.
+.SH RETURNS
+0 on success, -1 on error. If -1 is returned, errno is set to indicate
+the error.
+.SH "SEE ALSO
+.BR ctime (3).

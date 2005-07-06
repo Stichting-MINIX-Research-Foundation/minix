@@ -86,6 +86,7 @@ _PROTOTYPE( void check_pending, (struct mproc *rmp)			);
 _PROTOTYPE( int do_stime, (void)					);
 _PROTOTYPE( int do_time, (void)						);
 _PROTOTYPE( int do_times, (void)					);
+_PROTOTYPE( int do_gettimeofday, (void)					);
 
 /* trace.c */
 _PROTOTYPE( int do_trace, (void)					);
