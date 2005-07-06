@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <limits.h>
+#include <string.h>
 
 /* Use this datatype as basic storage unit in fd_set */
 typedef u32_t _fdsetword;	
@@ -12,11 +13,17 @@ typedef u32_t _fdsetword;
 /* This many bits fit in an fd_set word. */
 #define _FDSETBITSPERWORD	(sizeof(_fdsetword)*8)
 
-/* We want to store OPEN_MAX fd bits. */
-#define _FDSETWORDS	((OPEN_MAX+_FDSETBITSPERWORD-1)/_FDSETBITSPERWORD)
+/* Bit manipulation macros */
+#define _FD_BITMASK(b)	(1L << ((b) % _FDSETBITSPERWORD))
+#define _FD_BITWORD(b)	((b)/_FDSETBITSPERWORD)
 
-/* This means we can store all of OPEN_MAX. */
+/* Default FD_SETSIZE is OPEN_MAX. */
+#ifndef FD_SETSIZE
 #define FD_SETSIZE		OPEN_MAX
+#endif
+
+/* We want to store FD_SETSIZE bits. */
+#define _FDSETWORDS	((FD_SETSIZE+_FDSETBITSPERWORD-1)/_FDSETBITSPERWORD)
 
 typedef struct {
 	_fdsetword	_fdsetval[_FDSETWORDS];
@@ -24,10 +31,10 @@ typedef struct {
 
 _PROTOTYPE( int select, (int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *timeout) );
 
-_PROTOTYPE( void FD_CLR, (int fd, fd_set *fdset));
-_PROTOTYPE( int FD_ISSET, (int fd, fd_set *fdset));
-_PROTOTYPE( void FD_SET, (int fd, fd_set *fdset));
-_PROTOTYPE( void FD_ZERO, (fd_set *fdset));
+#define FD_ZERO(s) do { memset((s), sizeof(s), 0); } while(0)
+#define FD_SET(f, s) do { (s)->_fdsetval[_FD_BITWORD(f)] |= _FD_BITMASK(f); } while(0)
+#define FD_CLR(f, s) do { (s)->_fdsetval[_FD_BITWORD(f)] &= ~(_FD_BITMASK(f)); } while(0)
+#define FD_ISSET(f, s) ((s)->_fdsetval[_FD_BITWORD(f)] & _FD_BITMASK(f))
 
 /* possible select() operation types; read, write, errors */
 /* (FS/driver internal use only) */
