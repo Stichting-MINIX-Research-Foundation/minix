@@ -31,7 +31,7 @@ typedef struct {
 
 _PROTOTYPE( int select, (int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *timeout) );
 
-#define FD_ZERO(s) do { memset((s), sizeof(s), 0); } while(0)
+#define FD_ZERO(s) do { int _i; for(_i = 0; _i < _FDSETWORDS; _i++) { (s)->_fdsetval[_i] = 0; } } while(0)
 #define FD_SET(f, s) do { (s)->_fdsetval[_FD_BITWORD(f)] |= _FD_BITMASK(f); } while(0)
 #define FD_CLR(f, s) do { (s)->_fdsetval[_FD_BITWORD(f)] &= ~(_FD_BITMASK(f)); } while(0)
 #define FD_ISSET(f, s) ((s)->_fdsetval[_FD_BITWORD(f)] & _FD_BITMASK(f))

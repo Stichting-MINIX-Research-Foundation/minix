@@ -99,6 +99,8 @@
 #define ENABLE_RTL8139	 1	/* enable Realtek 8139 (rtl8139) */
 #define ENABLE_FXP	 1	/* enable Intel Pro/100 (fxp) */
 
+#define ENABLE_LOG	1	/* /dev/klog */
+
 /* Include or exclude backwards compatibility code. */
 #define ENABLE_BINCOMPAT   0	/* for binaries using obsolete calls */
 #define ENABLE_SRCCOMPAT   0	/* for sources using obsolete calls */
@@ -117,6 +119,8 @@
  */
 #define ENABLE_USERBIOS    0	/* enable user mode BIOS calls */
 #define ENABLE_USERIOPL    0	/* enable CPU's IOPL bits for /dev/(k)mem */
+
+#define PRINTF_PROC	IS_PROC_NR
 
 /* NR_CONS, NR_RS_LINES, and NR_PTYS determine the number of terminals the
  * system can handle.

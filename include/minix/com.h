@@ -43,13 +43,14 @@
 #define USR8139		(PRINTER + ENABLE_RTL8139)	/* Realtek RTL8139 */
 #define FXP		(USR8139 + ENABLE_FXP)	/* Intel Pro/100 */
 #define DPETH		(FXP + ENABLE_DPETH)	/* ISA Network task */
-#define INIT_PROC_NR	(DPETH + 1)   	/* init -- goes multiuser */
+#define LOG_PROC_NR	(DPETH + ENABLE_LOG)	/* log device */
+#define INIT_PROC_NR	(LOG_PROC_NR + 1)   	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define IMAGE_SIZE 	(NR_TASKS + \
 			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
 			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + \
-			ENABLE_DPETH + 1 )	
+			ENABLE_DPETH + ENABLE_LOG + 1 )	
 
 
 /*===========================================================================*
@@ -138,6 +139,9 @@
 #define CTTY_MAJOR	5	/* major device no. for /dev/tty */
 
 #define INET_MAJOR	7	/* major device no. for inet */
+
+#define LOG_MAJOR	15	/* major device no. for LOG */
+#define  IS_KLOG_DEV	0	/* minor device for /dev/klog */
 
 /* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	0x0100	/* device number of /dev/ram */
