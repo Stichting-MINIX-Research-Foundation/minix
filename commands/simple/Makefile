@@ -187,6 +187,7 @@ ALL	= \
 	update \
 	uud \
 	uue \
+	usyslogd \
 	vol \
 	wc \
 	which \
@@ -792,6 +793,10 @@ uud:	uud.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
 
+usyslogd:	usyslogd.c
+	$(CCLD) -o $@ $?
+	@install -S 4kw $@
+
 uue:	uue.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
@@ -1010,6 +1015,7 @@ install:	\
 		/usr/bin/uudecode \
 	/usr/bin/uue \
 		/usr/bin/uuencode \
+	/usr/bin/usyslogd \
 	/usr/bin/vol \
 	/usr/bin/wc \
 	/usr/bin/which \
@@ -1531,6 +1537,9 @@ install:	\
 
 /usr/bin/uudecode:	/usr/bin/uud
 	install -l $? $@
+
+/usr/bin/usyslogd:	usyslogd
+	install -cs -o bin $? $@
 
 /usr/bin/uue:	uue
 	install -cs -o bin $? $@
