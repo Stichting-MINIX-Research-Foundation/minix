@@ -19,6 +19,7 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/rtl8139/rtl8139 \
 	../drivers/fxp/fxp \
 	../drivers/dpeth/dpeth \
+	../drivers/log/log \
 	../servers/init/init \
 #	bootdev.img
 

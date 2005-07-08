@@ -24,6 +24,18 @@ int main(int argc, char *argv[]) {
 
 	FD_ZERO(&fds);
 	for (i=0;i<FD_SETSIZE;i++) {
+		/* see if SET works */
+		FD_SET(i, &fds);
+		if(!FD_ISSET(i, &fds))
+			return 1;
+	}
+	FD_ZERO(&fds);
+	for (i=0;i<FD_SETSIZE;i++) {
+		/* see if ZERO works */
+		if(FD_ISSET(i, &fds))
+			return 1;
+	}
+	for (i=0;i<FD_SETSIZE;i++) {
 		FD_SET(i, &fds);
 		for(j = 0; j <= i; j++)
 			if(!FD_ISSET(j, &fds))

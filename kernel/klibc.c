@@ -14,13 +14,14 @@
  *
  * This file contains the routines that take care of kernel messages, i.e.,
  * diagnostic output within the kernel. Kernel messages are not directly
- * displayed on the console, because this must be done by the TTY driver. 
+ * displayed on the console, because this must be done by the PRINT driver. 
  * Instead, the kernel accumulates characters in a buffer and notifies the
- * TTY driver when a new message is ready. 
+ * PRINT driver when a new message is ready. 
  */
 
 #include "kernel.h"
-#include <minix/com.h>		/* need TTY process number */
+
+#include <minix/com.h>
 
 #define isdigit(c)	((unsigned) ((c) - '0') <  (unsigned) 10)
 #define END_OF_KMESS 	-1
@@ -151,7 +152,7 @@ PRIVATE void kputc(c)
 int c;					/* character to append */
 {
 /* Accumulate a single character for a kernel message. Send a notification
- * the to TTY driver if an END_OF_KMESS is encountered. 
+ * the to PRINTF_PROC driver if an END_OF_KMESS is encountered. 
  */
   message m;
   if (c != END_OF_KMESS) {
@@ -161,7 +162,7 @@ int c;					/* character to append */
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
       m.NOTIFY_TYPE = NEW_KMESS;
-      lock_notify(TTY, &m);
+      lock_notify(PRINTF_PROC, &m);
   }
 }
 

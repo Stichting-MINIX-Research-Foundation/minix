@@ -1,6 +1,29 @@
+
+#include <stdio.h>
+#include <fcntl.h>
+
 #include "is.h"
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
+
+/*==========================================================================*
+ *				log_message				    *
+ *==========================================================================*/
+PRIVATE void log_message(char *buf)
+{
+#if ENABLE_LOG
+	message m;
+
+	m.m_type = DIAGNOSTICS;
+	m.DIAG_PRINT_BUF = buf;
+	m.DIAG_BUF_COUNT = strlen(buf);
+
+	_sendrec(LOG_PROC_NR, &m);
+#endif
+
+	return;
+}
+
 
 /*==========================================================================*
  *				do_new_kmess				    *
@@ -42,6 +65,9 @@ message *m;					/* notification message */
       /* Now terminate the new message and print it. */
       print_buf[i] = 0;
       printf(print_buf);
+
+	/* Also send message to log device. */
+	log_message(print_buf);
   }
 
   /* Almost done, store 'next' so that we can determine what part of the
@@ -67,6 +93,8 @@ PUBLIC int do_diagnostics(message *m)
   vir_bytes src;
   int count;
   char c;
+  int i = 0;
+  static char diagbuf[1024];
 
   /* Forward the message to the TTY driver. Inform the TTY driver about the
    * original sender, so that it knows where the buffer to be printed is.
@@ -87,6 +115,20 @@ PUBLIC int do_diagnostics(message *m)
       diag_putc(c);		/* accumulate character */
       src ++;
       count --;
+      diagbuf[i++] = c;
+      if(i == sizeof(diagbuf) - 1) {
+      	diagbuf[i] = '\0';
+      	log_message(diagbuf);
+      	i = 0;
+      }
+  }
+
+  if(i > 0) {
+  	/* This is safe; if i were too large,
+  	 * this would have been done above.
+  	 */
+      	diagbuf[i] = '\0';
+      	log_message(diagbuf);
   }
 
   return result;

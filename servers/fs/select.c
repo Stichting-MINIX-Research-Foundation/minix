@@ -4,6 +4,9 @@
  *   do_select:	       perform the SELECT system call
  *   select_callback:  notify select system of possible fd operation 
  *   select_notified:  low-level entry for device notifying select
+ * 
+ * Changes:
+ *   6 june 2005  Created (Ben Gras)
  */
 
 
@@ -15,13 +18,14 @@
   * make select cancel disappearing fp's
   */
 
-#define DEBUG_SELECT 1
+#define DEBUG_SELECT 0
 
 #include "fs.h"
 #include "select.h"
 #include "file.h"
 #include "inode.h"
 #include "fs_timers.h"
+#include "dmap.h"
 
 #include <sys/time.h>
 #include <sys/select.h>
@@ -48,7 +52,8 @@ PRIVATE struct selectentry {
 #define SELFD_PIPE	1
 #define SELFD_TTY	2
 #define SELFD_INET	3
-#define SEL_FDS		4
+#define SELFD_LOG	4
+#define SEL_FDS		5
 
 FORWARD _PROTOTYPE(int select_reevaluate, (struct filp *fp));
 
@@ -56,10 +61,9 @@ FORWARD _PROTOTYPE(int select_request_file, (struct filp *f, int *ops, int block
 FORWARD _PROTOTYPE(int select_match_file, (struct filp *f));
 
 FORWARD _PROTOTYPE(int select_request_tty, (struct filp *f, int *ops, int block));
-FORWARD _PROTOTYPE(int select_match_tty, (struct filp *f));
-
 FORWARD _PROTOTYPE(int select_request_inet, (struct filp *f, int *ops, int block));
-FORWARD _PROTOTYPE(int select_match_inet, (struct filp *f));
+FORWARD _PROTOTYPE(int select_request_log, (struct filp *f, int *ops, int block));
+FORWARD _PROTOTYPE(int select_major_match, (int match_major, struct filp *file));
 
 FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e));
 FORWARD _PROTOTYPE(int select_wakeup, (struct selectentry *e));
@@ -73,15 +77,18 @@ FORWARD _PROTOTYPE(int select_wakeup, (struct selectentry *e));
 PRIVATE struct fdtype {
 	int (*select_request)(struct filp *, int *ops, int block);	
 	int (*select_match)(struct filp *);
+	int select_major;
 } fdtypes[SEL_FDS] = {
 		/* SELFD_FILE */
-	{ select_request_file, select_match_file },
+	{ select_request_file, select_match_file, 0 },
 		/* SELFD_TTY (also PTY) */
-	{ select_request_tty, select_match_tty },
+	{ select_request_tty, NULL, TTY_MAJOR },
 		/* SELFD_INET */
-	{ select_request_inet, select_match_inet },
+	{ select_request_inet, NULL, INET_MAJOR },
 		/* SELFD_PIPE (pipe(2) pipes and FS FIFOs) */
-	{ select_request_pipe, select_match_pipe },
+	{ select_request_pipe, select_match_pipe, 0 },
+		/* SELFD_LOG (/dev/klog) */
+	{ select_request_log, NULL, LOG_MAJOR },
 };
 
 /* Open Group:
@@ -123,21 +130,6 @@ PRIVATE int select_request_tty(struct filp *f, int *ops, int block)
 }
 
 /*===========================================================================*
- *				select_match_tty			     *
- *===========================================================================*/
-PRIVATE int select_match_tty(struct filp *file)
-{
-	int major;
-	if(!(file && file->filp_ino &&
-		(file->filp_ino->i_mode & I_TYPE) == I_CHAR_SPECIAL))
-		return 0;
-	major = (file->filp_ino->i_zone[0] >> MAJOR) & BYTE;
-	if(major == TTY_MAJOR || major == CTTY_MAJOR)
-		return 1;
-	return 0;
-}
-
-/*===========================================================================*
  *				select_request_inet			     *
  *===========================================================================*/
 PRIVATE int select_request_inet(struct filp *f, int *ops, int block)
@@ -154,24 +146,33 @@ PRIVATE int select_request_inet(struct filp *f, int *ops, int block)
 }
 
 /*===========================================================================*
- *				select_match_inet			     *
+ *				select_request_log			     *
  *===========================================================================*/
-PRIVATE int select_match_inet(struct filp *file)
+PRIVATE int select_request_log(struct filp *f, int *ops, int block)
+{
+	int r, rops;
+	rops = *ops;
+	if(block) rops |= SEL_NOTIFY;
+	*ops = dev_io(DEV_SELECT, f->filp_ino->i_zone[0], rops, NULL, 0, 0, 0);
+	if(*ops < 0)
+		return SEL_ERR;
+	return SEL_OK;
+}
+
+/*===========================================================================*
+ *				select_major_match			     *
+ *===========================================================================*/
+PRIVATE int select_major_match(int match_major, struct filp *file)
 {
 	int major;
 	if(!(file && file->filp_ino &&
 		(file->filp_ino->i_mode & I_TYPE) == I_CHAR_SPECIAL))
 		return 0;
 	major = (file->filp_ino->i_zone[0] >> MAJOR) & BYTE;
-	if(major == INET_MAJOR)
-	{
-		printf("inet minor: %d\n", 
-			(file->filp_ino->i_zone[0] & BYTE));
+	if(major == match_major)
 		return 1;
-	}
 	return 0;
 }
-
 
 PRIVATE int tab2ops(int fd, struct selectentry *e)
 {
@@ -183,7 +184,7 @@ PRIVATE int tab2ops(int fd, struct selectentry *e)
 PRIVATE void ops2tab(int ops, int fd, struct selectentry *e)
 {
 	if((ops & SEL_RD) && e->vir_readfds && FD_ISSET(fd, &e->readfds)
-		&& !FD_ISSET(fd, &e->ready_readfds)) {
+	        && !FD_ISSET(fd, &e->ready_readfds)) {
 		FD_SET(fd, &e->ready_readfds);
 		e->nreadyfds++;
 	}
@@ -249,6 +250,7 @@ PUBLIC int do_select(void)
 	FD_ZERO(&selecttab[s].ready_writefds);
 	FD_ZERO(&selecttab[s].ready_errorfds);
 
+
 	selecttab[s].vir_readfds = (fd_set *) m_in.SEL_READFDS;
 	selecttab[s].vir_writefds = (fd_set *) m_in.SEL_WRITEFDS;
 	selecttab[s].vir_errorfds = (fd_set *) m_in.SEL_ERRORFDS;
@@ -300,17 +302,20 @@ PUBLIC int do_select(void)
 			continue;
 		if(!(filp = selecttab[s].filps[fd] = get_filp(fd))) {
 			select_cancel_all(&selecttab[s]);
-			printf("do_select: get_filp failed\n");
 			return EBADF;
 		}
 
 		for(t = 0; t < SEL_FDS; t++) {
-			if(fdtypes[t].select_match(filp)) {
+			if(fdtypes[t].select_match) {
+			   if(fdtypes[t].select_match(filp)) {
 #if DEBUG_SELECT
 				printf("select: fd %d is type %d ", fd, t);
 #endif
 				if(type != -1)
 					printf("select: double match\n");
+				type = t;
+			  }
+	 		} else if(select_major_match(fdtypes[t].select_major, filp)) {
 				type = t;
 			}
 		}
@@ -327,7 +332,9 @@ PUBLIC int do_select(void)
 		 */
 		if(type == -1)
 		{
+#if DEBUG_SELECT
 			printf("do_select: bad type\n");
+#endif
 			return EBADF;
 		}
 
@@ -396,9 +403,15 @@ PUBLIC int do_select(void)
 		 * functions shall return the total number of bits
 		 * set in the bit masks."
 		 */
+#if DEBUG_SELECT
+		printf("returning\n");
+#endif
 
 		return selecttab[s].nreadyfds;
 	}
+#if DEBUG_SELECT
+		printf("not returning (%d, %d)\n", selecttab[s].nreadyfds, block);
+#endif
  
 	/* Convert timeval to ticks and set the timer. If it fails, undo
 	 * all, return error.
@@ -563,58 +576,43 @@ restart_callback:
  *===========================================================================*/
 PUBLIC int select_notified(message *m)
 {
-	int s, f;
+	int s, f, d, t;
 
-	switch(m->m_source) {
-		case TTY:
-#if DEBUG_SELECT
-			printf("fs: select: tty notification\n");
-#endif
-			for(s = 0; s < MAXSELECTS; s++) {
-				int line, ops;
-				if(!selecttab[s].requestor)
-					continue;
-				for(f = 0; f < selecttab[s].nfds; f++) {
-					if(!selecttab[s].filps[f] ||
-					   !select_match_tty(selecttab[s].filps[f]))
-					   	continue;
-					ops = tab2ops(f, &selecttab[s]);
-					line = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
-					if((line == m->NOTIFY_ARG) &&
-						(m->NOTIFY_FLAGS & ops)) {
-#if DEBUG_SELECT
-						printf("fs: select: tty notification matched\n");
-#endif
-						select_callback(selecttab[s].filps[f], ops);
-					}
-				}
-			}
+	for(d = 0; d < NR_DEVICES; d++)
+		if(dmap[d].dmap_driver == m->m_source)
 			break;
-		default:
-#if DEBUG_SELECT
-			printf("fs: select: default notification\n");
-#endif
-			for(s = 0; s < MAXSELECTS; s++) {
-				int line, ops;
-				if(!selecttab[s].requestor)
-					continue;
-				for(f = 0; f < selecttab[s].nfds; f++) {
-					if(!selecttab[s].filps[f] ||
-					   !select_match_inet(selecttab[s].filps[f]))
-					   	continue;
-					ops = tab2ops(f, &selecttab[s]);
-					line = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
-					if((line == m->NOTIFY_ARG) &&
-						(m->NOTIFY_FLAGS & ops)) {
-#if DEBUG_SELECT
-						printf("fs: select: inet notification matched\n");
-#endif
-						select_callback(selecttab[s].filps[f], ops);
-					}
-				}
+
+	if(d >= NR_DEVICES)
+		return OK;
+
+	for(t = 0; t < SEL_FDS; t++)
+		if(!fdtypes[t].select_match && fdtypes[t].select_major == d)
+		    	break;
+
+	if(t >= SEL_FDS)
+		return OK;
+
+	/* We have a select callback from major device no.
+	 * d, which corresponds to our select type t.
+	 */
+
+	for(s = 0; s < MAXSELECTS; s++) {
+		int line, ops;
+		if(!selecttab[s].requestor)
+			continue;
+		for(f = 0; f < selecttab[s].nfds; f++) {
+			if(!selecttab[s].filps[f] ||
+			   !select_major_match(d, selecttab[s].filps[f]))
+			   	continue;
+			ops = tab2ops(f, &selecttab[s]);
+			line = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
+			if((line == m->NOTIFY_ARG) &&
+				(m->NOTIFY_FLAGS & ops)) {
+				select_callback(selecttab[s].filps[f], ops);
 			}
-			break;
+		}
 	}
+
 	return OK;
 }
 
@@ -637,7 +635,9 @@ PUBLIC void select_forget(int proc)
 	}
 
 	if(s >= MAXSELECTS) {
+#if DEBUG_SELECT
 		printf("select: cancelled select() not found");
+#endif
 		return;
 	}
 
@@ -658,17 +658,23 @@ PUBLIC void select_timeout_check(timer_t *timer)
 	s = tmr_arg(timer)->ta_int;
 
 	if(s < 0 || s >= MAXSELECTS) {
+#if DEBUG_SELECT
 		printf("select: bogus slot arg to watchdog %d\n", s);
+#endif
 		return;
 	}
 
 	if(!selecttab[s].requestor) {
+#if DEBUG_SELECT
 		printf("select: no requestor in watchdog\n");
+#endif
 		return;
 	}
 
 	if(selecttab[s].expiry <= 0) {
+#if DEBUG_SELECT
 		printf("select: strange expiry value in watchdog\n", s);
+#endif
 		return;
 	}
 

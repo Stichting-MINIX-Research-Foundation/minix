@@ -51,9 +51,9 @@ struct dmap dmap[NR_DEVICES] = {
   DT(NR_CTRLRS >= 4, gen_opcl, gen_io, CTRLR(3),   DMAP_MUTABLE)     /*12 = /dev/c3    */
   DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,   0)     /*13 = /dev/audio */
   DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,   0)    /*14 = /dev/mixer */
+  DT(1,		     gen_opcl, gen_io, LOG_PROC_NR,   0)  /* 15 = /dev/klog    */
 #endif /* IBM_PC */
 };
-
 
 /*===========================================================================*
  *				map_driver		 		     *

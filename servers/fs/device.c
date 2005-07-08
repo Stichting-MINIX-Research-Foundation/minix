@@ -25,6 +25,9 @@
 #include "inode.h"
 #include "param.h"
 
+#define ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
+
+extern int dmap_size;
 
 /*===========================================================================*
  *				dev_open				     *
@@ -58,7 +61,6 @@ dev_t dev;			/* device to close */
 {
   (void) (*dmap[(dev >> MAJOR) & BYTE].dmap_opcl)(DEV_CLOSE, dev, 0, 0);
 }
-
 
 /*===========================================================================*
  *				dev_io					     *
@@ -297,7 +299,7 @@ message *mess_ptr;		/* pointer to message for task */
 	/* Otherwise it should be a REVIVE. */
 	if (local_m.m_type != REVIVE) {
 		printf(
-		"fs: strange device reply from %d, type = %d, proc = %d\n",
+		"fs: strange device reply from %d, type = %d, proc = %d (1)\n",
 			local_m.m_source,
 			local_m.m_type, local_m.REP_PROC_NR);
 		continue;
@@ -320,15 +322,19 @@ message *mess_ptr;		/* pointer to message for task */
   		break;
   	}
 
-	/* Otherwise it should be a REVIVE. */
-	if (mess_ptr->m_type != REVIVE) {
+	if(mess_ptr->m_type == DEV_SELECTED) {
+		/* select() became possible.. This can happen. */
+		select_notified(mess_ptr);
+	} else if(mess_ptr->m_type == REVIVE) {
+		/* Otherwise it should be a REVIVE. */
+		revive(mess_ptr->REP_PROC_NR, mess_ptr->REP_STATUS);
+	} else {
 		printf(
-		"fs: strange device reply from %d, type = %d, proc = %d\n",
+		"fs: strange device reply from %d, type = %d, proc = %d (2)\n",
 			mess_ptr->m_source,
 			mess_ptr->m_type, mess_ptr->REP_PROC_NR);
-		continue;
+		continue;	/* XXX should this be a continue?? */
 	}
-	revive(mess_ptr->REP_PROC_NR, mess_ptr->REP_STATUS);
 
 	r = receive(task_nr, mess_ptr);
   }

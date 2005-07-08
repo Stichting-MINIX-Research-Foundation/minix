@@ -12,7 +12,7 @@ case $#:$1 in
     set -$- mem fd0 fd1 fd0p0 fd1p0 \
 	c0d0 c0d0p0 c0d0p0s0 c0d1 c0d1p0 c0d1p0s0 \
 	c0d2 c0d2p0 c0d2p0s0 c0d3 c0d3p0 c0d3p0s0 \
-	tty ttyc1 ttyc2 ttyc3 tty00 tty01 ttyp0 ttyp1 ttyp2 ttyp3 eth
+	tty ttyc1 ttyc2 ttyc3 tty00 tty01 ttyp0 ttyp1 ttyp2 ttyp3 eth klog
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -32,6 +32,7 @@ Where key is one of the following:
   ttyp0 ... ttyq0 ...     # Make tty, pty pairs
   eth ip tcp udp	  # One of these makes some TCP/IP devices
   audio mixer		  # Make audio devices
+  klog                    # Make /dev/klog
   std			  # All standard devices
 EOF
     exit 1
@@ -216,6 +217,11 @@ do
 	$e mknod audio c 13 0
 	$e mknod mixer c 14 0
 	$e chmod 666 audio mixer
+	;;
+    klog)
+    	# IS devices.
+    	$e mknod klog c 15 0
+	$e chmod 600 klog
 	;;
     *)
 	echo "$0: don't know about $dev" >&2

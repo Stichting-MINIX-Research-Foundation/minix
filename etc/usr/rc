@@ -45,6 +45,7 @@ start)
 
     echo -n "Starting daemons:"
     daemonize update
+    daemonize usyslogd
 
     # Ugly error message when starting cron from CD.
     # (and cron unnecessary then so..)

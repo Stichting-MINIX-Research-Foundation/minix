@@ -96,6 +96,7 @@ PUBLIC struct system_image image[] = {
 #if ENABLE_DPETH
  { DPETH, 0,              SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "DPETH" },
 #endif
+ { LOG_PROC_NR, 0,     SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "LOG" },
  { INIT_PROC_NR, 0,    USER_F, USER_T, USER_Q, 0,         USER_CALL_MASK,    USER_PROC_SENDMASK,    "INIT"    },
 };
 
