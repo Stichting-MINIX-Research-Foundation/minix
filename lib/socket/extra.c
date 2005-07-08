@@ -3,8 +3,10 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <net/gen/socket.h>
 #include <net/gen/emu.h>
 #include <net/gen/tcp.h>

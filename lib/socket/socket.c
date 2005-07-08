@@ -2,6 +2,7 @@
 /* bsd-socket(2)-lookalike */
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/types.h>
