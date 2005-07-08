@@ -233,7 +233,11 @@ PRIVATE struct driver w_dtab = {
   nop_cleanup,		/* nothing to clean up */
   w_geometry,		/* tell the geometry of the disk */
   nop_stop,		/* no cleanup needed on shutdown */
-  nop_alarm,		/* ignore leftover alarms */
+  nop_alarm,		/* ignore leftover alarms, function key presses, CANCELs, SELECTs */
+  nop_fkey,		
+  nop_cancel,
+  nop_select,
+  NULL
 };
 
 

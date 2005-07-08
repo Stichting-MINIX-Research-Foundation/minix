@@ -56,7 +56,11 @@ PRIVATE struct driver m_dtab = {
   nop_cleanup,	/* no need to clean up */
   m_geometry,	/* memory device "geometry" */
   nop_stop,	/* no need to clean up on shutdown */
-  m_random, 	/* get randomness from kernel */
+  m_random, 	/* get randomness from kernel (alarm) */
+  nop_fkey,	/* ignore function key presses and CANCELs */
+  nop_cancel,
+  nop_select,
+  NULL
 };
 
 /* Buffer for the /dev/zero null byte feed. */

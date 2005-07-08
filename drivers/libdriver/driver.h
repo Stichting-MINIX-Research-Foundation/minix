@@ -39,6 +39,9 @@ struct driver {
   _PROTOTYPE( void (*dr_stop), (struct driver *dp) );
   _PROTOTYPE( void (*dr_alarm), (struct driver *dp) );
   _PROTOTYPE( void (*dr_fkey), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( int (*dr_cancel), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( int (*dr_select), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( int (*dr_other), (struct driver *dp, message *m_ptr) );
 };
 
 #if (CHIP == INTEL)
@@ -66,6 +69,9 @@ _PROTOTYPE( void nop_cleanup, (void) );
 _PROTOTYPE( void nop_task, (void) );
 _PROTOTYPE( void nop_stop, (struct driver *dp) );
 _PROTOTYPE( void nop_alarm, (struct driver *dp) );
+_PROTOTYPE( void nop_fkey, (struct driver *dp, message *m_ptr) );
+_PROTOTYPE( int nop_cancel, (struct driver *dp, message *m_ptr) );
+_PROTOTYPE( int nop_select, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr) );
 
 /* Parameters for the disk drive. */

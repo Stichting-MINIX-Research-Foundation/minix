@@ -24,6 +24,8 @@
  * |------------+---------+---------+---------+---------+---------|
  * |  DEV_IOCTL | device  | proc nr |func code|         | buf ptr |
  * |------------+---------+---------+---------+---------+---------|
+ * |  CANCEL    | device  | proc nr | r/w     |         |         |
+ * |------------+---------+---------+---------+---------+---------|
  * |  HARD_STOP |         |         |         |         |         |
  * ----------------------------------------------------------------
  *
@@ -65,6 +67,7 @@ FORWARD _PROTOTYPE( void init_buffer, (void) );
 FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp) );
 FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp) );
 
+int device_caller;
 
 /*===========================================================================*
  *				driver_task				     *
@@ -74,7 +77,7 @@ struct driver *dp;	/* Device dependent entry points. */
 {
 /* Main program of any device driver task. */
 
-  int r, caller, proc_nr;
+  int r, proc_nr;
   message mess;
   int s;
 
@@ -89,7 +92,7 @@ struct driver *dp;	/* Device dependent entry points. */
 	/* Wait for a request to read or write a disk block. */
 	receive(ANY, &mess);
 
-	caller = mess.m_source;
+	device_caller = mess.m_source;
 	proc_nr = mess.PROC_NR;
 
 	/* Now carry out the work. */
@@ -97,6 +100,8 @@ struct driver *dp;	/* Device dependent entry points. */
 	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
 	case DEV_IOCTL:		r = (*dp->dr_ioctl)(dp, &mess);	break;
+	case CANCEL:		r = (*dp->dr_cancel)(dp, &mess);break;
+	case DEV_SELECT:	r = (*dp->dr_select)(dp, &mess);break;
 
 	case DEV_READ:	
 	case DEV_WRITE:	  r = do_rdwt(dp, &mess);	break;
@@ -111,7 +116,12 @@ struct driver *dp;	/* Device dependent entry points. */
 				continue;	/* don't reply */
 	case FKEY_PRESSED:	(*dp->dr_fkey)(dp, &mess);
 				continue;	/* don't reply */
-	default:		r = EINVAL;			break;
+	default:		
+		if(dp->dr_other)
+			r = (*dp->dr_other)(dp, &mess);
+		else	
+			r = EINVAL;
+		break;
 	}
 
 	/* Clean up leftover state. */
@@ -122,7 +132,7 @@ struct driver *dp;	/* Device dependent entry points. */
 	mess.REP_PROC_NR = proc_nr;
 
 	mess.REP_STATUS = r;	/* # of bytes transferred or error code */
-	send(caller, &mess);	/* send reply to caller */
+	send(device_caller, &mess);	/* send reply to caller */
   }
 }
 
@@ -303,6 +313,30 @@ PUBLIC struct device *nop_prepare(device)
 PUBLIC void nop_cleanup()
 {
 /* Nothing to clean up. */
+}
+
+/*===========================================================================*
+ *				nop_fkey				     *
+ *===========================================================================*/
+PUBLIC void nop_fkey(struct driver *dr, message *m)
+{
+/* Nothing to do for fkey. */
+}
+
+/*===========================================================================*
+ *				nop_cancel				     *
+ *===========================================================================*/
+PUBLIC int nop_cancel(struct driver *dr, message *m)
+{
+/* Nothing to do for cancel. */
+}
+
+/*===========================================================================*
+ *				nop_select				     *
+ *===========================================================================*/
+PUBLIC int nop_select(struct driver *dr, message *m)
+{
+/* Nothing to do for select. */
 }
 
 

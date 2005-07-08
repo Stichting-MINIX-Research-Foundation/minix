@@ -274,6 +274,10 @@ PRIVATE struct driver f_dtab = {
   f_geometry,	/* tell the geometry of the diskette */
   floppy_stop,	/* floppy cleanup on shutdown */
   f_expire_tmrs,/* expire all alarm timers */
+  nop_fkey,	/* ignore function keys and CANCELs */
+  nop_cancel,
+  nop_select,
+  NULL
 };
 
 

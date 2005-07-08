@@ -24,3 +24,4 @@ all install depend clean:
 	cd ./rtl8139 && $(MAKE) $@
 	cd ./fxp && $(MAKE) $@
 	cd ./dpeth && $(MAKE) $@
+	cd ./log && $(MAKE) $@
