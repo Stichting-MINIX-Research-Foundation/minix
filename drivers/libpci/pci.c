@@ -25,7 +25,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #if ENABLE_PCI
 
 #if !__minix_vmd
-#define debug 0
+#define debug 1	/* for ast */
 #define irq_mode_pci(irq) ((void)0)
 #endif
 
