@@ -1,6 +1,7 @@
 # Makefile for commands.
 
 MAKE	= exec make -$(MAKEFLAGS)
+FLEX=flex-2.5.4
 GZIP=gzip-1.2.4
 PYTHON=python-1.5.2
 
@@ -11,10 +12,12 @@ usage:
 	@false
 
 all install::
+	cd $(FLEX) && ./configure --prefix=/usr && make $@
 	cd $(GZIP) && ./configure --prefix=/usr && make $@
 	cd $(PYTHON) && ./configure --prefix=/usr/local && make $@
 
 clean::
+	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
 	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
 	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
 
@@ -34,7 +37,6 @@ all install clean::
 	cd dis88 && $(MAKE) $@
 	cd elle && $(MAKE) $@
 	cd elvis && $(MAKE) $@
-	cd flex-2.3.7 && $(MAKE) $@
 	cd ftp && $(MAKE) $@
 	cd ftpd && $(MAKE) $@
 	cd ftpd200 && $(MAKE) $@
