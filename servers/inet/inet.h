@@ -26,6 +26,7 @@ Copyright 1995 Philip Homburg
 #else /* Assume at least Minix 3.x */
 
 #include <unistd.h>
+#include <sys/ioc_file.h>
 #include <sys/time.h>
 #include <minix/config.h>
 #include <minix/type.h>

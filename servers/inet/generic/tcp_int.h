@@ -192,6 +192,7 @@ void tcp_frag2conn ARGS(( tcp_conn_t *tcp_conn, ip_hdr_t *ip_hdr,
 void tcp_fd_read ARGS(( tcp_conn_t *tcp_conn, int enq ));
 unsigned tcp_sel_read ARGS(( tcp_conn_t *tcp_conn ));
 void tcp_rsel_read ARGS(( tcp_conn_t *tcp_conn ));
+void tcp_bytesavailable ARGS(( tcp_fd_t *tcp_fd, int *bytesp ));
 
 /* tcp_send.c */
 void tcp_conn_write ARGS(( tcp_conn_t *tcp_conn, int enq ));

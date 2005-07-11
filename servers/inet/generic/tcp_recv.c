@@ -1442,6 +1442,44 @@ tcp_conn_t *tcp_conn;
 		printf("tcp_rsel_read: no select_res\n");
 }
 
+PUBLIC void tcp_bytesavailable(tcp_fd, bytesp)
+tcp_fd_t *tcp_fd;
+int *bytesp;
+{
+	tcp_conn_t *tcp_conn;
+	size_t data_size, read_size;
+	acc_t *data;
+	int fin_recv, urg, push, result;
+	i32_t old_window, new_window;
+	u16_t mss;
+
+	*bytesp= 0;	/* The default is that nothing is available */
+
+	if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		return;
+	tcp_conn= tcp_fd->tf_conn;
+
+	if (tcp_conn->tc_state == TCS_CLOSED)
+		return;
+
+	urg= tcp_Gmod4G(tcp_conn->tc_RCV_UP, tcp_conn->tc_RCV_LO);
+	push= (tcp_conn->tc_flags & TCF_RCV_PUSH);
+	fin_recv= (tcp_conn->tc_flags & TCF_FIN_RECV);
+
+	data_size= tcp_conn->tc_RCV_NXT-tcp_conn->tc_RCV_LO;
+	if (fin_recv)
+		data_size--;
+	if (urg)
+		data_size= tcp_conn->tc_RCV_UP-tcp_conn->tc_RCV_LO;
+
+	if (urg && !(tcp_fd->tf_flags & TFF_RECV_URG))
+		return;
+	else if (!urg && (tcp_fd->tf_flags & TFF_RECV_URG))
+		return;
+
+	*bytesp= data_size;
+}
+
 /*
  * $PchId: tcp_recv.c,v 1.30 2005/06/28 14:21:35 philip Exp $
  */

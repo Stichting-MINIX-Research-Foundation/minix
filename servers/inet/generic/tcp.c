@@ -706,8 +706,8 @@ ioreq_t req;
 	tcp_conn_t *tcp_conn;
 	nwio_tcpconf_t *tcp_conf;
 	nwio_tcpopt_t *tcp_opt;
-	acc_t *conf_acc, *opt_acc;
-	int result;
+	acc_t *acc, *conf_acc, *opt_acc;
+	int result, *bytesp;
 
 	tcp_fd= &tcp_fd_table[fd];
 
@@ -833,6 +833,17 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		reply_thr_get (tcp_fd, NW_OK, TRUE);
 		result= NW_OK;
 		break;
+	case FIONREAD:
+		acc= bf_memreq(sizeof(*bytesp));
+		bytesp= (int *)ptr2acc_data(acc);
+		tcp_bytesavailable(tcp_fd, bytesp);
+		result= (*tcp_fd->tf_put_userdata)(tcp_fd->tf_srfd,
+			0, acc, TRUE);
+		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
+		reply_thr_put(tcp_fd, result, TRUE);
+		result= NW_OK;
+		break;
+
 	default:
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 		reply_thr_get(tcp_fd, EBADIOCTL, TRUE);
