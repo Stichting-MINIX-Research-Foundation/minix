@@ -32,7 +32,7 @@ int c;
 	m.DIAG_PRINT_BUF = print_buf;
 	m.DIAG_PROC_NR = SELF;
 	m.m_type = DIAGNOSTICS;
-	if (_sendrec(PRINT_PROC, &m) != 0) {
+	if (_sendrec(PRINTF_PROC, &m) != 0) {
 		m.m1_i1 = 2;
 		m.m1_i2 = buf_count;
 		m.m1_p1 = print_buf;
