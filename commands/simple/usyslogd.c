@@ -98,6 +98,7 @@ main(int argc, char *argv[])
 			copy(klog_fd, logfp);
 		}
 		fflush(logfp);
+		sync();
 	}
 
 	return 0;
