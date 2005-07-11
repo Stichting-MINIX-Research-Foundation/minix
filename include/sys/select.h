@@ -8,10 +8,10 @@
 #include <string.h>
 
 /* Use this datatype as basic storage unit in fd_set */
-typedef u32_t _fdsetword;	
+typedef u32_t fd_mask;	
 
 /* This many bits fit in an fd_set word. */
-#define _FDSETBITSPERWORD	(sizeof(_fdsetword)*8)
+#define _FDSETBITSPERWORD	(sizeof(fd_mask)*8)
 
 /* Bit manipulation macros */
 #define _FD_BITMASK(b)	(1L << ((b) % _FDSETBITSPERWORD))
@@ -26,7 +26,7 @@ typedef u32_t _fdsetword;
 #define _FDSETWORDS	((FD_SETSIZE+_FDSETBITSPERWORD-1)/_FDSETBITSPERWORD)
 
 typedef struct {
-	_fdsetword	_fdsetval[_FDSETWORDS];
+	fd_mask	fds_bits[_FDSETWORDS];
 } fd_set;
 
 _PROTOTYPE( int select, (int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *timeout) );

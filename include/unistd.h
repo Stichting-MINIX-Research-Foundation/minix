@@ -133,6 +133,10 @@ _PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
 
 /* Open Group Base Specifications Issue 6 (not complete) */
 _PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
+_PROTOTYPE( int getopt, (int _argc, char **_argv, char *_opts)		);
+extern char *optarg;
+extern int optind, opterr, optopt;
+_PROTOTYPE( int usleep, (useconds_t _useconds)				);
 
 #ifdef _MINIX
 #ifndef _TYPE_H

@@ -64,11 +64,21 @@ _PROTOTYPE( unsigned long int strtoul,
 			(const char *_nptr, char **_endptr, int _base)	);
 
 #ifdef _POSIX_SOURCE
+/* Open Group Base Specifications Issue 6 */
 _PROTOTYPE( int mkstemp, (char *_fmt)					);
+_PROTOTYPE( char *initstate, (unsigned _seed, char *_state,
+							size_t _size)	);
+_PROTOTYPE( long random, (void)						);
+_PROTOTYPE( char *setstate, (const char *state)				);
+_PROTOTYPE( void srandom, (unsigned seed)				);
 #endif
 
 #ifdef _MINIX
 _PROTOTYPE( int putenv, (const char *_name)				);
+
+/* According to POSIX, getopt should be in unistd.h. What do we do with
+ * this?
+ */
 _PROTOTYPE(int getopt, (int _argc, char **_argv, char *_opts));
 extern char *optarg;
 extern int optind, opterr, optopt;

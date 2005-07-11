@@ -22,7 +22,6 @@
 #define SUN_4             40	/* any Sun SPARC-based system */
 #define SUN_4_60	  40	/* Sun-4/60 (aka SparcStation 1 or Campus) */
 #define ATARI             60	/* ATARI ST/STe/TT (68000/68030) */
-#define AMIGA             61	/* Commodore Amiga (68000) */
 #define MACINTOSH         62	/* Apple Macintosh (68000) */
 
 /* Word size in bytes (a constant equal to sizeof(int)). */
@@ -160,7 +159,7 @@
 #define CHIP          INTEL
 #endif
 
-#if (MACHINE == ATARI) || (MACHINE == AMIGA) || (MACHINE == MACINTOSH)
+#if (MACHINE == ATARI) || (MACHINE == MACINTOSH)
 #define CHIP         M68000
 #endif
 
