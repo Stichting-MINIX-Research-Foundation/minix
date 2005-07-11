@@ -2341,7 +2341,7 @@ int reg;
 		v= fxp_inl(port, CSR_MDI_CTL);
 		if (v & CM_READY)
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(100000));
 
 	if (!(v & CM_READY))
 		panic("FXP","mii_read: MDI not ready after command", NO_NUM);
