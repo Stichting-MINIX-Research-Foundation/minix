@@ -52,9 +52,12 @@ OBJECTS	= \
 	$(LIBRARY)(popen.o) \
 	$(LIBRARY)(putenv.o) \
 	$(LIBRARY)(putw.o) \
+	$(LIBRARY)(random.o) \
 	$(LIBRARY)(setgroups.o) \
 	$(LIBRARY)(settimeofday.o) \
 	$(LIBRARY)(stderr.o) \
+	$(LIBRARY)(strdup.o) \
+	$(LIBRARY)(strtok_r.o) \
 	$(LIBRARY)(swab.o) \
 	$(LIBRARY)(syscall.o) \
 	$(LIBRARY)(sysconf.o) \
@@ -210,6 +213,9 @@ $(LIBRARY)(putw.o):	putw.c
 $(LIBRARY)(rindex.o):	rindex.c
 	$(CC1) rindex.c
 
+$(LIBRARY)(random.o):	random.c
+	$(CC1) random.c
+
 $(LIBRARY)(setgroups.o):	setgroups.c
 	$(CC1) setgroups.c
 
@@ -218,6 +224,12 @@ $(LIBRARY)(settimeofday.o):	settimeofday.c
 
 $(LIBRARY)(stderr.o):	stderr.c
 	$(CC1) stderr.c
+
+$(LIBRARY)(strdup.o):	strdup.c
+	$(CC1) strdup.c
+
+$(LIBRARY)(strtok_r.o):	strtok_r.c
+	$(CC1) strtok_r.c
 
 $(LIBRARY)(swab.o):	swab.c
 	$(CC1) swab.c
@@ -248,3 +260,6 @@ $(LIBRARY)(v8regexp.o):	v8regexp.c
 
 $(LIBRARY)(v8regsub.o):	v8regsub.c
 	$(CC1) v8regsub.c
+
+$(LIBRARY)(writev.o):	writev.c
+	$(CC1) writev.c
