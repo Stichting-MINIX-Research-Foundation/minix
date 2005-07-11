@@ -101,6 +101,7 @@ OBJECTS	= \
 	$(LIBRARY)(priority.o) \
 	$(LIBRARY)(readlink.o) \
 	$(LIBRARY)(symlink.o) \
+	$(LIBRARY)(usleep.o) \
 
 $(LIBRARY):	$(OBJECTS)
 	aal cr $@ *.o
@@ -387,4 +388,7 @@ $(LIBRARY)(lstat.o):	lstat.c
 
 $(LIBRARY)(symlink.o):	symlink.c
 	$(CC1) symlink.c
+
+$(LIBRARY)(usleep.o):	usleep.c
+	$(CC1) usleep.c
 
