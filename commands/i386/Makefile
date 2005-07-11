@@ -8,7 +8,7 @@ all::	acd
 
 acd:	acd.c
 	$(CCLD) -o $@ -DARCH=\"`arch`\" -DDESCR=\"/usr/lib/descr\" $?
-	install -S 25kw $@
+	install -S 50kw $@
 
 install::	/usr/bin/acd /usr/bin/cc /usr/bin/m2 /usr/bin/pc
 
