@@ -26,7 +26,6 @@ typedef struct {
 
 #define ASYN_NONBLOCK	0x01
 
-#define EINPROGRESS	EINTR
 #define ASYN_INPROGRESS	EINPROGRESS
 
 void asyn_init(asynchio_t *_asyn);

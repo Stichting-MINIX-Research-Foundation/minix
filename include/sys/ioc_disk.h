@@ -11,5 +11,6 @@
 #define DIOCSETP	_IOW('d', 3, struct partition)
 #define DIOCGETP	_IOR('d', 4, struct partition)
 #define DIOCEJECT	_IO ('d', 5)
+#define DIOCTIMEOUT	_IOW('d', 6, int)
 
 #endif /* _S_I_DISK_H */
