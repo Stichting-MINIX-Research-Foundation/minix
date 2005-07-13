@@ -1427,7 +1427,7 @@ int check_idle;
 		scb_cmd= fxp_inb(port, SCB_CMD);
 		if ((scb_cmd & SC_CUC_MASK) == SC_CU_NOP)
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(100000));
 
 	if ((scb_cmd & SC_CUC_MASK) != SC_CU_NOP)
 		panic("FXP","fxp_cu_ptr_cmd: CU does not accept command", NO_NUM);
