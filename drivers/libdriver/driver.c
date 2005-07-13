@@ -375,7 +375,11 @@ message *mp;			/* pointer to ioctl request */
   struct partition entry;
   int s;
 
-  if (mp->REQUEST != DIOCSETP && mp->REQUEST != DIOCGETP) return(ENOTTY);
+  if (mp->REQUEST != DIOCSETP && mp->REQUEST != DIOCGETP) {
+  	if(dp->dr_other) {
+  		return dp->dr_other(dp, mp);
+  	} else return(ENOTTY);
+  }
 
   /* Decode the message parameters. */
   if ((dv = (*dp->dr_prepare)(mp->DEVICE)) == NIL_DEV) return(ENXIO);

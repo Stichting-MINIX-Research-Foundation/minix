@@ -16,6 +16,7 @@
 #include "at_wini.h"
 #include <minix/utils.h>
 #include <minix/keymap.h>
+#include <sys/ioc_disk.h>
 
 #if ENABLE_AT_WINI
 
@@ -140,6 +141,8 @@ struct command {
 /* Some controllers don't interrupt, the clock will wake us up. */
 #define WAKEUP		(32*HZ)	/* drive may be out for 31 seconds max */
 
+int wakeup_ticks = WAKEUP;
+
 /* Miscellaneous. */
 #define MAX_DRIVES         4	/* this driver supports 4 drives (d0 - d3) */
 #if _WORD_SIZE > 2
@@ -153,8 +156,7 @@ struct command {
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 #define DELAY_USECS     1000	/* controller timeout in microseconds */
 #define DELAY_TICKS 	1	/* controller timeout in ticks */
-#define TIMEOUT_USECS   5000000	/* controller timeout in microseconds */
-#define TIMEOUT_TICKS 	300	/* controller timeout in ticks */
+#define DEF_TIMEOUT_TICKS 	300	/* controller timeout in ticks */
 #define RECOVERY_USECS  500000	/* controller recovery time in microseconds */
 #define RECOVERY_TICKS  30	/* controller recovery time in ticks */
 #define INITIALIZED	0x01	/* drive is initialized */
@@ -166,6 +168,7 @@ struct command {
 #define ATAPI		   0	/* don't bother with ATAPI; optimise out */
 #endif
 
+int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 
 /* Variables. */
 PRIVATE struct wini {		/* main drive struct, one entry per drive */
@@ -205,6 +208,7 @@ FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) );
 FORWARD _PROTOTYPE( void w_need_reset, (void) );
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
+FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int com_simple, (struct command *cmd) );
 FORWARD _PROTOTYPE( void w_timeout, (void) );
 FORWARD _PROTOTYPE( int w_reset, (void) );
@@ -237,7 +241,7 @@ PRIVATE struct driver w_dtab = {
   nop_fkey,		
   nop_cancel,
   nop_select,
-  NULL
+  w_other		/* catch-all for unrecognized commands and ioctls */
 };
 
 
@@ -640,7 +644,7 @@ unsigned nr_req;		/* length of request vector */
 	/* Any errors? */
 	if (r != OK) {
 		/* Don't retry if sector marked bad or too many errors. */
-		if (r == ERR_BAD_SECTOR || ++errors == MAX_ERRORS) {
+		if (r == ERR_BAD_SECTOR || ++errors == max_errors) {
 			w_command = CMD_IDLE;
 			return(EIO);
 		}
@@ -685,7 +689,7 @@ struct command *cmd;		/* Command block */
    * controller was not able to execute the command. Leftover timeouts are
    * simply ignored by the main loop. 
    */
-  sys_syncalrm(SELF, WAKEUP, 0);
+  sys_syncalrm(SELF, wakeup_ticks, 0);
 
   w_status = STATUS_ADMBSY;
   w_command = cmd->command;
@@ -894,7 +898,7 @@ int value;			/* required status */
 	if ((w_status & mask) == value) {
         	return 1;
 	}
-  } while ((s=getuptime(&t1)) == OK && (t1-t0) < TIMEOUT_TICKS );
+  } while ((s=getuptime(&t1)) == OK && (t1-t0) < timeout_ticks );
   if (OK != s) printf("AT_WINI: warning, get_uptime failed: %d\n",s);
 
   w_need_reset();			/* controller gone deaf */
@@ -1064,7 +1068,7 @@ unsigned nr_req;		/* length of request vector */
 
 	if (r < 0) {
   err:		/* Don't retry if too many errors. */
-		if (++errors == MAX_ERRORS) {
+		if (++errors == max_errors) {
 			w_command = CMD_IDLE;
 			return(EIO);
 		}
@@ -1103,7 +1107,7 @@ unsigned cnt;
    * controller was not able to execute the command. Leftover timeouts are
    * simply ignored by the main loop. 
    */
-  sys_syncalrm(SELF, WAKEUP, 0);
+  sys_syncalrm(SELF, wakeup_ticks, 0);
 
 #if _WORD_SIZE > 2
   if (cnt > 0xFFFE) cnt = 0xFFFE;	/* Max data per interrupt. */
@@ -1129,6 +1133,39 @@ unsigned cnt;
   if ((s=sys_outsw(wn->base + REG_DATA, SELF, packet, 12)) != OK)
 	panic(w_name(),"sys_outsw() failed", s);
   return(OK);
+}
+
+/*============================================================================*
+ *				w_other					      *
+ *============================================================================*/
+PRIVATE int w_other(dr, m)
+struct driver *dr;
+message *m;
+{
+	int r, timeout, prev;
+
+	if(m->m_type != DEV_IOCTL || m->REQUEST != DIOCTIMEOUT)
+		return EINVAL;
+
+	if((r=sys_datacopy(m->PROC_NR, (vir_bytes)m->ADDRESS,
+		SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
+		return r;
+
+	if(timeout < 1)
+		return EINVAL;
+
+	prev = wakeup_ticks;
+	wakeup_ticks = timeout;
+	if(timeout_ticks > timeout)
+		timeout_ticks = timeout;
+
+	if((r=sys_datacopy(SELF, (vir_bytes)&prev, 
+		m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
+		return r;
+
+	max_errors = 2;
+
+	return OK;
 }
 
 /*============================================================================*

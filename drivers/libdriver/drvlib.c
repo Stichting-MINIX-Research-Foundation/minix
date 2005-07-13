@@ -14,7 +14,7 @@
 FORWARD _PROTOTYPE( void extpartition, (struct driver *dp, int extdev,
 						unsigned long extbase) );
 FORWARD _PROTOTYPE( int get_part_table, (struct driver *dp, int device,
-			unsigned long offset, struct part_entry *table) );
+			unsigned long offset, struct part_entry *table, int *io) );
 FORWARD _PROTOTYPE( int get_iso_fake_part_table, (struct driver *dp, int device,
 			unsigned long offset, struct part_entry *table) );
 FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
@@ -36,7 +36,7 @@ int style;		/* partitioning style: floppy, primary, sub. */
  * systems that expect this.
  */
   struct part_entry table[NR_PARTITIONS], *pe;
-  int disk, par;
+  int disk, par, io;
   struct device *dv;
   unsigned long base, limit, part_limit;
 
@@ -47,8 +47,8 @@ int style;		/* partitioning style: floppy, primary, sub. */
   limit = base + div64u(dv->dv_size, SECTOR_SIZE);
 
   /* Read the partition table for the device. */
-  if (!get_part_table(dp, device, 0L, table))
-	  if(!get_iso_fake_part_table(dp, device, 0L, table))
+  if (!get_part_table(dp, device, 0L, table, &io))
+	  if(!io || !get_iso_fake_part_table(dp, device, 0L, table))
 	  	return;
 
   /* Compute the device number of the first partition. */
@@ -116,7 +116,7 @@ unsigned long extbase;	/* sector offset of the base extended partition */
 
   offset = 0;
   do {
-	if (!get_part_table(dp, extdev, offset, table)) return;
+	if (!get_part_table(dp, extdev, offset, table, NULL)) return;
 	sort(table);
 
 	/* The table should contain one logical partition and optionally
@@ -146,11 +146,12 @@ unsigned long extbase;	/* sector offset of the base extended partition */
 /*============================================================================*
  *				get_part_table				      *
  *============================================================================*/
-PRIVATE int get_part_table(dp, device, offset, table)
+PRIVATE int get_part_table(dp, device, offset, table, io_ok)
 struct driver *dp;
 int device;
 unsigned long offset;		/* sector offset to the table */
 struct part_entry *table;	/* four entries */
+int *io_ok;
 {
 /* Read the partition table for the device, return true iff there were no
  * errors.
@@ -158,6 +159,9 @@ struct part_entry *table;	/* four entries */
   iovec_t iovec1;
   off_t position;
   int s;
+
+  if(io_ok)
+  	*io_ok = 0;
 
   position = offset << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) tmp_buf;
@@ -169,6 +173,8 @@ struct part_entry *table;	/* four entries */
 	printf("%s: can't read partition table\n", (*dp->dr_name)());
 	return 0;
   }
+  if(io_ok)
+  	*io_ok = 1;
   if (tmp_buf[510] != 0x55 || tmp_buf[511] != 0xAA) {
 	/* Invalid partition table. */
 	return 0;
