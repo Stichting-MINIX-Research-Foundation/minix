@@ -54,7 +54,7 @@ Num Sort   Type
 #define DEV_FD0		0x200		/* Device number of /dev/fd0 */
 #define DEV_C0D0	0x300		/* Device number of /dev/c0d0 */
 
-#define MIN_REGION_MB	80
+#define MIN_REGION_MB	180
 #define MIN_REGION_SECTORS (1024*1024*MIN_REGION_MB/SECTOR_SIZE)
 
 #define MAX_REGION_MB	4095
@@ -374,7 +374,7 @@ struct part_entry table[1 + NR_PARTITIONS];
 int existing[1 + NR_PARTITIONS];
 unsigned long offset= 0, extbase= 0, extsize;
 int submerged= 0;
-char sort_index[1 + NR_PARTITIONS];
+char sort_index[1 + NR_PARTITIONS], sort_order[1 + NR_PARTITIONS];
 unsigned cylinders= 1, heads= 1, sectors= 1, secpcyl= 1;
 unsigned alt_cyls= 1, alt_heads= 1, alt_secs= 1;
 int precise= 0;
@@ -389,21 +389,20 @@ void sort(void)
 /* Let the sort_index array show the order partitions are sorted in. */
 {
 	int i, j;
-	int idx[1 + NR_PARTITIONS];
 
-	for (i= 1; i <= NR_PARTITIONS; i++) idx[i]= i;
+	for (i= 1; i <= NR_PARTITIONS; i++) sort_order[i]= i;
 
 	for (i= 1; i <= NR_PARTITIONS; i++) {
 		for (j= 1; j <= NR_PARTITIONS-1; j++) {
-			int sj= idx[j], sj1= idx[j+1];
+			int sj= sort_order[j], sj1= sort_order[j+1];
 
 			if (sortbase(&table[sj]) > sortbase(&table[sj1])) {
-				idx[j]= sj1;
-				idx[j+1]= sj;
+				sort_order[j]= sj1;
+				sort_order[j+1]= sj;
 			}
 		}
 	}
-	for (i= 1; i <= NR_PARTITIONS; i++) sort_index[idx[i]]= i;
+	for (i= 1; i <= NR_PARTITIONS; i++) sort_index[sort_order[i]]= i;
 }
 
 void dos2chs(unsigned char *dos, unsigned *chs)
@@ -1679,17 +1678,6 @@ ssize_t boot_readwrite(int rw)
 	return r;
 }
 
-int bigenough(region_t *reg)
-{
-	int sectors;
-	if(reg->used_part)
-		sectors = reg->used_part->size;
-	else
-		sectors = reg->free_sec_last - reg->free_sec_start + 1;
-
-	return sectors >= MIN_REGION_SECTORS;
-}
-
 int cylinderalign(region_t *reg)
 {
 	if(reg->used_part) {
@@ -1701,7 +1689,7 @@ int cylinderalign(region_t *reg)
 			reg->used_part->size -= extra;
 		}
 		if((reg->used_part->size+1) % secpcyl) {
-			reg->used_part->size -= secpcyl - (reg->used_part->size % secpcyl);
+			reg->used_part->size -= secpcyl - ((reg->used_part->size + 1) % secpcyl);
 		}
 		return reg->used_part->size > 0;
 	}
@@ -1710,9 +1698,9 @@ int cylinderalign(region_t *reg)
 		/* Start is unaligned. Round up. */
 		reg->free_sec_start += secpcyl - (reg->free_sec_start % secpcyl);
 	}
-	if(reg->free_sec_last % secpcyl) {
+	if((reg->free_sec_last+1) % secpcyl) {
 		/* End is unaligned. Round down. */
-		reg->free_sec_last -= reg->free_sec_last % secpcyl;
+		reg->free_sec_last -= (reg->free_sec_last+1) % secpcyl;
 	}
 	
 	/* Return nonzero if anything remains of the region after rounding. */
@@ -1744,7 +1732,7 @@ void m_read(int ev, object_t *op)
 	}
 
 	if(probing) {
-		v = HZ/2;
+		v = 2*HZ;
 		ioctl(device, DIOCTIMEOUT, &v);
 	}
 
@@ -1822,7 +1810,7 @@ void m_read(int ev, object_t *op)
 	/* Create region data used in autopart mode. */
 	free_regions = used_regions = nr_regions = nr_partitions = 0;
 	for(si = 1; si <= NR_PARTITIONS; si++) {
-		i = sort_index[si];
+		i = sort_order[si];
 		if(i < 1 || i > NR_PARTITIONS) {
 			printf("Sorry, something unexpected has happened (%d out of range).\n", i);
 			exit(1);
@@ -1835,16 +1823,15 @@ void m_read(int ev, object_t *op)
 			regions[nr_regions].free_sec_start = free_sec;
 			regions[nr_regions].free_sec_last = table[i].lowsec-1;
 			regions[nr_regions].used_part = NULL;
-			if(cylinderalign(&regions[nr_regions]) &&
-			   bigenough(&regions[nr_regions])) {
+			if(cylinderalign(&regions[nr_regions])) {
 				nr_regions++;
 				free_regions++;
 			}
 		}
 
 		if(autopartmode && si > 1) {
-			if(table[i].lowsec < table[sort_index[si-1]].lowsec ||
-			   table[i].lowsec < table[sort_index[si-1]].lowsec + table[sort_index[si-1]].size) {
+			if(table[i].lowsec < table[sort_order[si-1]].lowsec ||
+			   table[i].lowsec < table[sort_order[si-1]].lowsec + table[sort_order[si-1]].size) {
 				printf("Sanity check failed - partitions overlap.\n"
 					"Please use expert mode to correct it.\n");
 				exit(1);
@@ -1855,10 +1842,8 @@ void m_read(int ev, object_t *op)
 		free_sec = table[i].lowsec+table[i].size;
 		nr_partitions++;
 
-		if(bigenough(&regions[nr_regions])) {
-			nr_regions++;
-			used_regions++;
-		}
+		nr_regions++;
+		used_regions++;
 	}
 
 	/* Special case: space after partitions. */
@@ -1866,8 +1851,7 @@ void m_read(int ev, object_t *op)
 		regions[nr_regions].free_sec_start = free_sec;
 		regions[nr_regions].free_sec_last = table[0].lowsec + table[0].size-1;
 		regions[nr_regions].used_part = NULL;
-		if(cylinderalign(&regions[nr_regions]) &&
-		   bigenough(&regions[nr_regions])) {
+		if(cylinderalign(&regions[nr_regions])) {
 			nr_regions++;
 			free_regions++;
 		}
@@ -1895,9 +1879,8 @@ void m_write(int ev, object_t *op)
 	if (bootblock[510] != 0x55 || bootblock[511] != 0xAA) {
 		/* Invalid boot block, warn user. */
 		stat_start(1);
-		printf("Warning: About to write a new table on %s",
+		if(!autopartmode) printf("Warning: About to write a new table on %s",
 							curdev->subname);
-		if(autopartmode) printf("\n");
 		stat_end(5);
 	}
 	if (extbase != 0) {
@@ -2196,8 +2179,11 @@ void mainloop(void)
 char *
 prettysizeprint(int kb)
 {
-	static char str[20];
+	int toosmall = 0;
+	static char str[200];
 	char unit = 'k';
+	if(MIN_REGION_SECTORS > kb*2)
+		toosmall = 1;
 	if(kb >= 5*1024) {
 		kb /= 1024;
 		unit = 'M';
@@ -2206,7 +2192,8 @@ prettysizeprint(int kb)
 			unit = 'G';
 		}
 	}
-	sprintf(str, "%d%cB", kb, unit);
+	sprintf(str, "%d%cB%s", kb, unit,
+		toosmall ? " - too small for MINIX" : "");
 	return str;
 }
 
@@ -2237,10 +2224,8 @@ select_region(void)
 
 	do {
 		reg = regions;
-		printf("\nI've found the following region%s on this disk (%s).\n"
-		"(I'm only showing ones of at least %dMB.)\n\n",
-			SORNOT(nr_regions), prettysizeprint(table[0].size/2), 
-				MIN_REGION_MB);
+		printf("\nI've found the following region%s on this disk (%s).\n\n",
+			SORNOT(nr_regions), prettysizeprint(table[0].size/2));
 		for(r = 0; r < nr_regions; r++, reg++) {
 			unsigned long units;
 			if(reg->used_part) {
@@ -2385,7 +2370,7 @@ select_disk(void)
 }
 
 int
-scribble_region(region_t *reg)
+scribble_region(region_t *reg, struct part_entry **pe)
 {
 	int ex, trunc = 0, changed = 0, i;
 	struct part_entry *newpart;
@@ -2405,7 +2390,7 @@ scribble_region(region_t *reg)
 		}
 	}
 	if(trunc) {
-		printf("\nShrunk region to %dMB.\n", MAX_REGION_MB);
+		printf("\nWill only use %dMB.\n", MAX_REGION_MB);
 	}
 	if(!reg->used_part) {
 		for(i = 1; i <= NR_PARTITIONS; i++)
@@ -2420,17 +2405,19 @@ scribble_region(region_t *reg)
 		newpart->lowsec = reg->free_sec_start;
 		newpart->size = reg->free_sec_last - reg->free_sec_start + 1;
 		changed = 1;
-	} else newpart = reg->used_part;
+	} else  newpart = reg->used_part;
 	newpart->sysind = MINIX_PART;
+	*pe = newpart;
 	changed = 1;
 
 	return changed;
 }
 
 int
-do_autopart(void)
+do_autopart(int resultfd)
 {
 	region_t *r;
+	struct part_entry *pe;
 
 	nordonly = 1; 
 	probing = 1;
@@ -2456,10 +2443,35 @@ do_autopart(void)
 	} while(!r);
 
 	/* Write things. */
-	if(scribble_region(r)) {
+	if(scribble_region(r, &pe)) {
+		int i, found = -1;
+		char partbuf[100];
 		dirty = 1;
 		m_write('w', NULL);
-		return !dirty;
+		if(dirty) return 1;
+		/* Retrieve partition number in sorted order that we
+		 * have scribbled in.
+		 */
+		sort();
+		for(i = 1; i <= NR_PARTITIONS; i++) {
+			if(table[sort_order[i]].lowsec == pe->lowsec) {
+				if(found > 0) {
+					fprintf(stderr, "Internal error (1).\n");
+					return 1;
+				}
+				found = i;
+			}
+		}
+		if(found < 1) {
+			fprintf(stderr, "Internal error (2).\n");
+			return 1;
+		}
+		sprintf(partbuf, "%sp%d\n", curdev->name, found-1);
+		if(resultfd >= 0 && write(resultfd, partbuf, strlen(partbuf)) < strlen(partbuf)) {
+			fprintf(stderr, "Couldn't write result.\n");
+			return 1;
+		}
+		return 0;
 	}
 
 	return 1;
@@ -2472,6 +2484,7 @@ int main(int argc, char **argv)
 	struct part_entry *pe;
 	char *name;
 	int autopart = 0;
+	int resultfd = -1;
 
 	/* Autopilot mode if invoked as autopart. */
 	if(!(name = strrchr(argv[0], '/'))) name = argv[0];
@@ -2529,6 +2542,25 @@ int main(int argc, char **argv)
 		op= newobject(O_SIZE,   OF_MOD, r, 69,  9); op->entry= pe;
 		op= newobject(O_KB,     OF_MOD, r, 79,  9); op->entry= pe;
 	}
+     } else {
+     	int c;
+     	/* autopart uses getopt() */
+     	while((c = getopt(argc, argv, "f:")) != EOF) {
+     		switch(c) {
+     			case 'f':
+     				unlink(optarg);
+     				if((resultfd=open(optarg, O_CREAT | O_WRONLY | O_TRUNC)) < 0) {
+     					perror(optarg);
+     					return 1;
+     				}
+     				break;
+     			default:
+     				fprintf(stderr, "Unknown option\n");
+     				return 1;
+     		}
+     	}
+     	argc--;
+     	argv++;
      }
 
 	for (i= 1; i < argc; i++) newdevice(argv[i], 0, 0);
@@ -2541,11 +2573,14 @@ int main(int argc, char **argv)
 	}
 
 	if(autopart) {
+		int r;
 		if (firstdev == nil) {
 			fprintf(stderr, "autopart couldn't find any devices.\n");
 			return 1;
 		}
-		return do_autopart();
+		r = do_autopart(resultfd);
+		if(resultfd >= 0) { close(resultfd); }
+		return r;
 	}
 
 	if (firstdev != nil) {

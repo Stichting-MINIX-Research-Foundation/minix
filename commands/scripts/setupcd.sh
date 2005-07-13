@@ -26,70 +26,12 @@ EOF
 while getopts '' opt; do usage; done
 shift `expr $OPTIND - 1`
 
-# Installing a floppy set?
-case $# in
-0)  # No, we're installing a skeleton system on the hard disk.
-    ;;
-1)
-    cd "$1" || exit
-
-    # Annoying message still there?
-    grep "'setup /usr'" /etc/issue >/dev/null 2>&1 && rm -f /etc/issue
-
-    if [ -t 0 ]
-    then
-	size=bad
-	while [ "$size" = bad ]
-	do
-	    echo -n "\
-What is the size of the images on the diskettes? [all] "; read size
-
-	    case $size in
-	    ''|360|720|1200|1440)
-		;;
-	    *)	echo "Sorry, I don't believe \"$size\", try again." >&2
-		size=bad
-	    esac
-	done
-
-	drive=
-	while [ -z "$drive" ]
-	do
-	    echo -n "What floppy drive to use? [0] "; read drive
-
-	    case $drive in
-	    '')	drive=0
-		;;
-	    [01])
-		;;
-	    *)	echo "It must be 0 or 1, not \"$drive\"."
-		drive=
-	    esac
-	done
-
-	vol -r $size /dev/fd$drive | uncompress | tar xvfp -
-    else
-	# Standard input is where we can get our files from.
-	uncompress | tar xvfp -
-    fi
-
-    echo Done.
-    exit
-    ;;
-*)
-    usage
-esac
+if [ "$USER" != root ]
+then	echo "Please run setupcd as root."
+	exit 1
+fi
 
 # Installing Minix on the hard disk.
-# Must be in / or we can't mount or umount.
-if [ ! -f /CD ]
-then
-	case "`pwd`" in
-	/?*)
-	    echo "Please type 'cd /' first, you are locking up `pwd`" >&2	
-	    exit 1
-	esac
-fi
 
 case "$0" in
 /tmp/*)
@@ -116,26 +58,13 @@ case $thisroot:$fdusr in
 /dev/fd*:/dev/fd*)	fdroot=$thisroot	# ROOT is mounted directly
 			;;
 *)			fdroot=$thisroot	# ?
-    if [ -f /CD ]
-    then
-    	:
-    else
-	    echo -n "\
-It looks like Minix has been installed on disk already.  Are you sure you
-know what you are doing? [n] "
-	    read yn
-	    case "$yn" in
-	    [yY]*|sure)	;;
-	    *)	exit
-	    esac
-     fi
 esac
 
 echo -n "\
 This is the Minix installation script.
 
 Note 1: If the screen blanks suddenly then hit CTRL+F3 to select \"software
-	scrolling\".
+scrolling\".
 
 Note 2: If things go wrong then hit DEL and start over.
 
@@ -157,6 +86,25 @@ echo -n "
 Keyboard type? [us-std] "; read keymap
 test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 
+echo -n "Welcome to Minix partitioning. Do you want to
+follow the (A)utomatic or the e(X)pert mode? Expert mode drops
+you into part to let you edit your partition table to taste.
+Automatic mode is much easier, but can't handle all cases. In
+cases it can't handle, it will tell you to use expert mode.
+Please choose, A for Automatic, or X for Expert: "
+
+read ch
+case "$ch" in
+[Aa]*)	auto="1" ;;
+[Xx]*)	auto="" ;;
+*)	echo "Unrecognized response."; exit 1;
+esac
+
+primary=
+
+if [ -z "$auto" ]
+then
+	# Expert mode
 echo -n "
 Minix needs one primary partition of at about 210 MB for a full install
 with sources.  (The full install also fits in about 180 MB, but it
@@ -176,22 +124,48 @@ touch an existing partition unless you know precisely what you are doing!
 Please note the name of the partition (e.g. c0d0p1, c0d1p3, c1d1p0) you
 make.  (See the devices section in usage(8) on Minix device names.)
 :"
-read ret
+	read ret
 
-primary=
-while [ -z "$primary" ]
-do
-    part || exit
+	while [ -z "$primary" ]
+	do
+	    part || exit
 
-    echo -n "
+	    echo -n "
 Please finish the name of the primary partition you have created:
 (Just type RETURN if you want to rerun \"part\")                   /dev/"
-    read primary
-done
+	    read primary
+	done
+else
+	# Automatic mode
+	while [ -z "$primary" ]
+	do
+		PF="/tmp/pf"
+		echo -n "Press return to enter the autopart tool, or DEL to abort.
+:"
+		read ret
+		if autopart -f$PF
+		then	if [ -s "$PF" ]
+			then
+				bd="`cat $PF`"
+				if [ -b "$bd" ]
+				then	primary="$bd"
+				else	echo "Funny device $bd from autopart."
+				fi
+			else
+				echo "Didn't find output from autopart."
+			fi 
+		else	echo "Autopart tool failed. Trying again."
+		fi
+	done
+
+fi
 
 root=${primary}s0
 swap=${primary}s1
 usr=${primary}s2
+
+echo "$root $usr"
+exit 1
 
 hex2int()
 {
@@ -345,18 +319,9 @@ Copying $fdroot to /dev/$root
 
 mkfs /dev/$root || exit
 mount /dev/$root /mnt || exit
-if [ -d /boot ]
-then
-    # Running from the floppy itself (or installation CD).
-    cpdir -vx / /mnt || exit
-    chmod 555 /mnt/usr
-else
-    # Running from the RAM disk, root image is on a floppy.
-    mount $fdroot /root || exit
-    cpdir -v /root /mnt || exit
-    umount $fdroot || exit
-    cpdir -f /dev /mnt/dev		# Copy any extra MAKEDEV'd devices
-fi
+# Running from the installation CD.
+cpdir -vx / /mnt || exit
+chmod 555 /mnt/usr
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD 2>/dev/null
