@@ -49,6 +49,10 @@ mixer:	mixer.c
 	$(CCLD) -o $@ $? -lcurses
 	install -S 16kw $@
 
+autopart:	autopart.c
+	$(CCLD) -o $@ $?
+	install -S 11kw $@
+
 part:	part.c
 	$(CCLD) -o $@ $?
 	install -S 11kw $@
@@ -94,6 +98,7 @@ install:	\
 	/usr/bin/loadfont \
 	/usr/bin/loadkeys \
 	/usr/bin/mixer \
+	/usr/bin/autopart \
 	/usr/bin/part \
 	/usr/bin/partition \
 	/usr/bin/playwave \
@@ -126,6 +131,9 @@ install:	\
 
 /usr/bin/mixer:	mixer
 	install -cs -o bin $? $@
+
+/usr/bin/autopart:	autopart
+	install -lcs $? $@
 
 /usr/bin/part:	part
 	install -cs -o bin $? $@

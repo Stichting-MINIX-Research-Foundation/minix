@@ -1118,39 +1118,3 @@ register unsigned bytes;
 
 char dosread_c_rcs_id [] = 
 	"$Id$";
-/* $Log$
- * Revision 1.1  2005/04/21 14:54:57  beng
- * Initial revision
- *
-/* Revision 1.1.1.1  2005/04/20 13:33:07  beng
-/* Initial import of minix 2.0.4
-/*
- * Revision 1.8  1994/05/14  21:53:08  hjp
- * filenames with more than 3 characters and extension work again.
- * removed debugging stuff and b_copy.
- *
- * Revision 1.7  1994/04/09  03:09:01  hjp
- * (posted to comp.os.minix)
- * merged branch 1.5.387 with stem.
- * changed treatment of drive parameter
- *
- * Revision 1.5.387.9  1994/04/09  02:07:51  hjp
- * Disk full no longer produces lost clusters but a truncated file.
- * Truncated file names to 8+3 before comparisons to avoid duplicate
- * files and filenames containing dots in the extension.
- * Replaced sbrk and brk by malloc and free (mixing brk and malloc causes
- * heap corruption which sometimes lead to core dumps. It may also have
- * been the cause of data corruption Kees reported).
- * Made global variables static and removed some unused ones.
- * Error messages now contain program name.
- *
- * Revision 1.5.387.8  1993/11/13  00:38:45  hjp
- * Posted to comp.os.minix and included in Minix-386vm 1.6.25.1.
- * Speed optimizations for 1.44 MB disks.
- * Replaced lowlevel I/O by stdio.
- * Simplified -a: Now only removes resp. adds CRs
- * Cleaned up.
- * 
- * Revision 1.5.387.1  1993/01/15  19:32:29  ast
- * Released with 1.6.24b
- */
