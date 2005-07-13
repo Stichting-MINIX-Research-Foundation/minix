@@ -164,9 +164,6 @@ root=${primary}s0
 swap=${primary}s1
 usr=${primary}s2
 
-echo "$root $usr"
-exit 1
-
 hex2int()
 {
     # Translate hexadecimal to integer.
