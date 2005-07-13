@@ -7,9 +7,9 @@ LIBUTILS	= ../libutils.a
 all:	$(LIBUTILS)
 
 OBJECTS	= \
-	$(LIBSYS)(kmalloc.o) \
-	$(LIBSYS)(kprintf.o) \
-	$(LIBSYS)(kputc.o) \
+	$(LIBUTILS)(kmalloc.o) \
+	$(LIBUTILS)(kprintf.o) \
+	$(LIBUTILS)(kputc.o) \
 	$(LIBUTILS)(tickdelay.o) \
 	$(LIBUTILS)(getuptime.o) \
 	$(LIBUTILS)(get_mon_prm.o) \
@@ -26,13 +26,13 @@ $(LIBUTILS):	$(OBJECTS)
 	aal cr $@ *.o
 	rm *.o
 
-$(LIBSYS)(kmalloc.o):	kmalloc.c
+$(LIBUTILS)(kmalloc.o):	kmalloc.c
 	$(CC1) kmalloc.c
 
-$(LIBSYS)(kprintf.o):	kprintf.c
+$(LIBUTILS)(kprintf.o):	kprintf.c
 	$(CC1) kprintf.c
 
-$(LIBSYS)(kputc.o):	kputc.c
+$(LIBUTILS)(kputc.o):	kputc.c
 	$(CC1) kputc.c
 
 $(LIBUTILS)(getuptime.o):	getuptime.c
