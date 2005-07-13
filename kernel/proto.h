@@ -24,7 +24,7 @@ _PROTOTYPE( size_t kstrlen, (const char *s));
 _PROTOTYPE( int kstrncmp,
 	(register const char *s1, register const char *s2, register size_t n));
 _PROTOTYPE( char *kstrncpy, 
-	(char *s1, register const char *s2, register const size_t n));
+	(char *s1, register const char *s2, register const ssize_t n));
 #define karg(arg) (karg_t) (arg)
 _PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
 

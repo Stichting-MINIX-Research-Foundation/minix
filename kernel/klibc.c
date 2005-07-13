@@ -214,7 +214,7 @@ PUBLIC int kstrncmp(register const char *s1, register const char *s2, register s
 /*=========================================================================*
  *				kstrncpy				   *
  *=========================================================================*/
-PUBLIC char *kstrncpy(char *ret, register const char *s2, register size_t n)
+PUBLIC char *kstrncpy(char *ret, register const char *s2, register ssize_t n)
 {
   register char *s1 = ret;
   while((n-- > 0) && (*s1++ = *s2++)) 	/* copy up to n chars */

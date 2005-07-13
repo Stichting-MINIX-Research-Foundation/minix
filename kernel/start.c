@@ -55,8 +55,10 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
   kinfo.nr_tasks = NR_TASKS;
-  kstrncpy(kinfo.release, OS_RELEASE, 4);
-  kstrncpy(kinfo.version, OS_VERSION, 4);
+  kstrncpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
+  kinfo.release[sizeof(kinfo.release)-1] = '\0';
+  kstrncpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
+  kinfo.version[sizeof(kinfo.version)-1] = '\0';
   kinfo.proc_addr = (vir_bytes) proc;
   kinfo.kmem_base = vir2phys(0);
   kinfo.kmem_size = (phys_bytes) &end;	
