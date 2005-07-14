@@ -13,13 +13,13 @@ CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
 
-OBJ = 	main.o forkexit.o break.o exec.o time.o \
+OBJ = 	main.o forkexit.o break.o exec.o time.o timers.o \
 	signal.o alloc.o utility.o table.o trace.o getset.o misc.o
 
 # build local binary
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsys -lutils
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsys -lutils -ltimers
 	install -S 256w $@
 
 # install with other servers

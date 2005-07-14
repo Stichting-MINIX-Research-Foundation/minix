@@ -371,7 +371,7 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
   base += bss_offset;
   bytes -= bss_offset;
 
-  if ((s=sys_physzero(base, bytes)) != OK) {
+  if ((s=sys_memset(0, base, bytes)) != OK) {
 	panic(__FILE__,"new_mem can't zero", s);
   }
 

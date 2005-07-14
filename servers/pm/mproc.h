@@ -4,6 +4,7 @@
  * systems have tables that are also indexed by process, with the contents
  * of corresponding slots referring to the same process in all three.
  */
+#include <timers.h>
 
 EXTERN struct mproc {
   struct mem_map mp_seg[NR_LOCAL_SEGS]; /* points to text, data, stack */
@@ -37,6 +38,7 @@ EXTERN struct mproc {
   sigset_t mp_sigpending;	/* pending signals to be handled */
   struct sigaction mp_sigact[_NSIG + 1]; /* as in sigaction(2) */
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
+  struct timer mp_timer;	/* watchdog timer for alarm(2) */
 
   /* Backwards compatibility for signals. */
   sighandler_t mp_func;		/* all sigs vectored to a single user fcn */

@@ -4,9 +4,10 @@
 #include <timers.h>
 #include <ibm/interrupt.h>
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
+#include "../../kernel/debug.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
-#include "../../kernel/sendmask.h"
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
@@ -20,7 +21,8 @@ FORWARD _PROTOTYPE( char *proc_name, (int proc_nr)		);
  * so that most macros and definitions from proc.h also apply here.
  */
 PUBLIC struct proc proc[NR_TASKS + NR_PROCS];
-PUBLIC struct system_image image[IMAGE_SIZE];
+PUBLIC struct priv priv[NR_SYS_PROCS];
+PUBLIC struct system_image image[NR_BOOT_PROCS];
 
 
 
@@ -29,15 +31,15 @@ PUBLIC struct system_image image[IMAGE_SIZE];
  *===========================================================================*/
 PUBLIC void timing_dmp()
 {
-#if ! ENABLE_LOCK_TIMING
-  printf("Enable the ENABLE_LOCK_TIMING definition in <minix/config.h>\n");
+#if ! DEBUG_TIME_LOCKS
+  printf("Enable the DEBUG_TIME_LOCKS definition in src/kernel/config.h\n");
 #else
-  static struct lock_timedata timingdata[TIMING_CATEGORIES];
+  static struct lock_timingdata timingdata[TIMING_CATEGORIES];
   int r, c, f, skipped = 0, printed = 0, maxlines = 23, x = 0;
   static int offsetlines = 0;
 
-  if ((r = sys_getlocktimings(timingdata)) != OK) {
-      report("warning: couldn't get copy of lock timings", r);
+  if ((r = sys_getlocktimings(&timingdata[0])) != OK) {
+      report("IS","warning: couldn't get copy of lock timings", r);
       return;
   } 
 
@@ -190,10 +192,10 @@ PUBLIC void image_dmp()
   }
   printf("Image table dump showing all processes included in system image.\n");
   printf("---name-- -nr- -flags- -q- ----pc- -stack- ------sendmask-------\n");
-  for (i=0; i<IMAGE_SIZE; i++) { 
+  for (i=0; i<NR_BOOT_PROCS; i++) { 
       ip = &image[i];
       for (j=-NR_TASKS; j<INIT_PROC_NR+2; j++) 
-         maskstr[j+NR_TASKS] = (isallowed(ip->sendmask, j)) ? '1' : '0';
+         maskstr[j+NR_TASKS] = '0';
       maskstr[j+NR_TASKS] = '\0';
       printf("%8s %4d 0x%02x %3d %7lu %7lu   %s\n",
           ip->proc_name, ip->proc_nr, ip->flags, ip->priority, 
@@ -293,16 +295,62 @@ PUBLIC void kenv_dmp()
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- release:      %.6s\n", kinfo.release); 
     printf("- version:      %.6s\n", kinfo.version); 
-#if ENABLE_K_LOCKCHECK
+#if DEBUG_LOCK_CHECK
     printf("- relocking:    %d\n", kinfo.relocking); 
 #endif
     printf("\n");
 }
 
 
+/*===========================================================================*
+ *				privileges_dmp 				     *
+ *===========================================================================*/
+PUBLIC void privileges_dmp()
+{
+  register struct proc *rp;
+  static struct proc *oldrp = BEG_PROC_ADDR;
+  register struct priv *sp;
+  int r, i,j, n = 0;
+
+  /* First obtain a fresh copy of the current process and system table. */
+  if ((r = sys_getprivtab(priv)) != OK) {
+      report("IS","warning: couldn't get copy of system privileges table", r);
+      return;
+  }
+  if ((r = sys_getproctab(proc)) != OK) {
+      report("IS","warning: couldn't get copy of process table", r);
+      return;
+  }
+
+  printf("\n--nr-id-name---- -sanity- -flags- -sc-\n");
+
+  for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
+	if (isemptyp(rp)) continue;
+	if (++n > 23) break;
+	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
+	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
+	else 				printf(" %2d  ", proc_nr(rp));
+        r = -1;
+        for (sp = &priv[0]; sp < &priv[NR_SYS_PROCS]; sp++) 
+            if (sp->s_proc_nr == rp->p_nr) { r ++; break; }
+        if (r == -1) {
+            printf("... warning, no privileges found!\n");
+            continue;
+        }
+	printf("(%02u) %-7.7s %3x %02.2u",
+	       sp->s_id,
+	       rp->p_name,
+	       sp->s_flags, sp->s_call_mask 
+        );
+	printf("\n");
+  }
+  if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
+  oldrp = rp;
+
+}
 
 /*===========================================================================*
- *				sendmask_dmp    				     *
+ *				sendmask_dmp   				     *
  *===========================================================================*/
 PUBLIC void sendmask_dmp()
 {
@@ -322,6 +370,7 @@ PUBLIC void sendmask_dmp()
   printf("The rows of bits indicate to which processes each process may send.");
   printf("\n\n");
 
+#if DEAD_CODE
   printf("              ");
   for (j=proc_nr(BEG_PROC_ADDR); j< INIT_PROC_NR+1; j++) {
      printf("%3d", j);
@@ -346,6 +395,7 @@ PUBLIC void sendmask_dmp()
   if (rp == END_PROC_ADDR) { printf("\n"); rp = BEG_PROC_ADDR; }
   else printf("--more--\r");
   oldrp = rp;
+#endif
 }
 
 
@@ -369,7 +419,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n--nr-name-flags-prior-quant-##-sc- -user---sys- -text---data---size- -rts flags-\n");
+  printf("\n--nr-name---- -prior-quant-##- -user---sys- -text---data---size- -rts flags-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -381,13 +431,11 @@ PUBLIC void proctab_dmp()
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
-	printf("%-7.7s %2x %02u/%02u %02d/%02d %02u %02.2x %6lu%6lu %6uK%6uK%6uK %3x",
+	printf("  %-7.7s %02u/%02u %02d/%02d %02u %6lu%6lu %6uK%6uK%6uK %3x",
 	       rp->p_name,
-	       rp->p_flags,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_sched_ticks, rp->p_quantum_size, 
 	       rp->p_full_quantums, 
-	       (char) rp->p_call_mask,
 	       rp->p_user_time, rp->p_sys_time,
 	       click_to_round_k(text), click_to_round_k(data),
 	       click_to_round_k(size),

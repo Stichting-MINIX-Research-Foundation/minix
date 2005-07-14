@@ -25,6 +25,7 @@
 #include <timers.h>
 #include <string.h>
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 

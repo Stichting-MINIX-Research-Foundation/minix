@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include "mproc.h"
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
 #define NR_HOLES  (2*NR_PROCS)	/* max # entries in hole table */

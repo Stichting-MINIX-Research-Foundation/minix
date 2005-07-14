@@ -29,7 +29,7 @@ PUBLIC int do_time()
   clock_t uptime;
   int s;
 
-  if ( (s=sys_getuptime(&uptime)) != OK) 
+  if ( (s=getuptime(&uptime)) != OK) 
   	panic(__FILE__,"do_time couldn't get uptime", s);
 
   mp->mp_reply.reply_time = (time_t) (boottime + (uptime/HZ));
@@ -52,7 +52,7 @@ PUBLIC int do_stime()
   if (mp->mp_effuid != SUPER_USER) { 
       return(EPERM);
   }
-  if ( (s=sys_getuptime(&uptime)) != OK) 
+  if ( (s=getuptime(&uptime)) != OK) 
       panic(__FILE__,"do_stime couldn't get uptime", s);
   boottime = (long) m_in.stime - (uptime/HZ);
 
@@ -92,7 +92,7 @@ PUBLIC int do_gettimeofday(void)
   clock_t uptime;
   int s;
 
-  if ( (s=sys_getuptime(&uptime)) != OK) 
+  if ( (s=getuptime(&uptime)) != OK) 
   	panic(__FILE__,"do_gettimeofday couldn't get uptime", s);
 
   mp->mp_reply.m2_l1 = boottime + uptime/HZ;

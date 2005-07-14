@@ -32,7 +32,7 @@ PUBLIC int do_fkey_pressed(message *m)
   if (pressed(F1)) 	proctab_dmp();
   if (pressed(F2))      memmap_dmp();
   if (pressed(F3))	image_dmp();
-  if (pressed(F4))	sendmask_dmp();
+  if (pressed(F4))	privileges_dmp();
   if (pressed(F5))	monparams_dmp();
   if (pressed(F6))	irqtab_dmp();
   if (pressed(F7))	kmessages_dmp();
@@ -42,17 +42,15 @@ PUBLIC int do_fkey_pressed(message *m)
   if (pressed(F12))	sched_dmp();
 
   if (pressed(F9)) { 
-  	printf("IS server going into infinite loop, press F9 to break\n");
-  	printf("Five times any key is fine as well ...\n");
-  	s = 0;
+  	printf("IS server going into infinite loop... hit 5x a function key\n");
+  	printf("Five times a function key is fine as well ...\n");
 	while(TRUE) {
 		if (OK == nb_receive(ANY, m)) {
-		        s ++;
-			if (pressed(F9) || s >= 5 ) break;
-			else printf("IS server in infinite loop, press F9 to break\n");
+			if (s++ >= 5 ) break;
 		}
 	}
   	printf("IS server back to normal ... \n");
+  	return(EDONTREPLY);
   }
 
   /* Also check Shift F1-F6 keys. */

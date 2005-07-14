@@ -58,7 +58,7 @@ PUBLIC time_t get_time()
 		curr_time= mess.NEW_TIME;
 #else /* Minix 3 */
 		int s;
-		if ((s=sys_getuptime(&curr_time)) != OK)
+		if ((s=getuptime(&curr_time)) != OK)
 			ip_panic(("can't read clock"));
 #endif
 		assert(curr_time >= prev_time);

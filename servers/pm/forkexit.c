@@ -155,7 +155,7 @@ int exit_status;		/* the process' exit status (for parent) */
   /* Tell the kernel and FS that the process is no longer runnable. */
   DEBUG(proc_nr == PRINTER, printf("PM: telling FS and kernel about xit...\n"));
   tell_fs(EXIT, proc_nr, 0, 0);  /* file system can free the proc slot */
-  sys_xit(proc_nr);
+  sys_exit(proc_nr);
 
   /* Pending reply messages for the dead process cannot be delivered. */
   rmp->mp_flags &= ~REPLY;

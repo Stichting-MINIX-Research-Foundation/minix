@@ -103,7 +103,6 @@ PUBLIC void main()
 	u8_t randbits[32];
 	struct timeval tv;
 
-	printf("Hello, in inet\n");
 #if DEBUG
 	printf("Starting inet...\n");
 	printf("%s\n", version);
@@ -247,17 +246,10 @@ PUBLIC void main()
 			mq_free(mq);
 		}
 #else /* Minix 3 */
-		else if (mq->mq_mess.m_type & NOTIFICATION)
+		else if (mq->mq_mess.m_type == SYN_ALARM)
 		{
-			if (mq->mq_mess.m_type == SYN_ALARM)
-			{
 				clck_tick(&mq->mq_mess);
 				mq_free(mq);
-			}
-			else if (mq->mq_mess.m_type == HARD_STOP)
-			{
-				sys_exit(0);
-			}
 		} 
 #endif
 		else

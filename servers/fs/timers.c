@@ -2,9 +2,8 @@
  */
 
 #include "fs.h"
-#include "fs_timers.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #include <timers.h>
 #include <minix/syslib.h>
@@ -17,7 +16,7 @@ PUBLIC void fs_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 	int r;
 	clock_t now, old_head = 0, new_head;
 
-	if((r = sys_getuptime(&now)) != OK)
+	if((r = getuptime(&now)) != OK)
 		panic(__FILE__, "FS couldn't get uptime from system task.", NO_NUM);
 
 	tmr_inittimer(tp);
@@ -45,8 +44,8 @@ PUBLIC void fs_expire_timers(clock_t now)
 	if(new_head > 0) {
 		if(sys_syncalrm(SELF, new_head, 1) != OK)
 			panic(__FILE__, "FS expire timer couldn't set synchronous alarm.", NO_NUM);
-		else
 #if VERBOSE
+		else
 			printf("timers: after expiry, set synalarm to %d\n", new_head);
 #endif
 	}

@@ -62,14 +62,11 @@ PUBLIC void main(void)
             case FKEY_PRESSED:
             	result = do_fkey_pressed(&m_in);
             	break;
-            case HARD_STOP: 
-            	sys_exit(0); 
-            	/* never reached */
-            	continue;
-            default:
+            default: {
             	printf("Warning, IS got unexpected request %d from %d\n",
             		m_in.m_type, m_in.m_source);
             	result = EINVAL;
+  	   }
 	}
 
 	/* Finally send reply message, unless disabled. */
@@ -88,10 +85,10 @@ int sig;					/* signal number */
 {
 /* Expect a SIGTERM signal when this server must shutdown. */
   if (sig == SIGTERM) {
-  	printf("Shutting down IS server.\n");
+  	printf("Shutting down IS server due to SIGTERM.\n");
   	exit(0);
   } else {
-  	printf("IS got unknown signal\n");
+  	printf("IS got signal %d\n", sig);
   }
 }
 
@@ -106,15 +103,12 @@ PRIVATE void init_server()
   int i, s;
   struct sigaction sigact;
 
-#if DEAD_CODE
   /* Install signal handler.*/
   sigact.sa_handler = signal_handler;
   sigact.sa_mask = ~0;			/* block all other signals */
   sigact.sa_flags = 0;			/* default behaviour */
-  printf("IS calls sigaction()\n");
   if (sigaction(SIGTERM, &sigact, NULL) != OK) 
       report("IS","warning, sigaction() failed", errno);
-#endif
 
   /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6 . */
   fkeys = sfkeys = 0;
@@ -122,9 +116,6 @@ PRIVATE void init_server()
   for (i=1; i<= 6; i++) bit_set(sfkeys, i);
   if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
       report("IS", "warning, sendrec failed:", s);
-
-  /* Display status message ... */
-  report("IS", "information service is alive and kicking", NO_NUM);
 }
 
 /*===========================================================================*

@@ -9,7 +9,6 @@
  *   6 june 2005  Created (Ben Gras)
  */
 
-
  /* TODO: check if close (pipe?) / exit works; 
   * some printf()s are serious errors;
   * check combinations of cases listen in open group select
@@ -21,11 +20,10 @@
 #define DEBUG_SELECT 0
 
 #include "fs.h"
+#include "dmap.h"
 #include "select.h"
 #include "file.h"
 #include "inode.h"
-#include "fs_timers.h"
-#include "dmap.h"
 
 #include <sys/time.h>
 #include <sys/select.h>

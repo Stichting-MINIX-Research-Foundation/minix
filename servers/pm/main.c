@@ -23,6 +23,7 @@
 #include "param.h"
 
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
 FORWARD _PROTOTYPE( void get_work, (void)				);
@@ -51,10 +52,9 @@ PUBLIC void main()
 	get_work();		/* wait for an PM system call */
 
 	/* Check for system notifications first. Special cases. */
-	if (call_nr == HARD_STOP) {		/* MINIX is shutting down */
-		check_sig(-1, SIGKILL);		/* kill all processes */
-		sys_exit(0);
-		/* never reached */
+        if (call_nr == SYN_ALARM) {
+        	pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
+		result = SUSPEND;		/* don't reply */
 	} else if (call_nr == KSIG_PENDING) {	/* signals pending */
 		(void) ksig_pending();
 		result = SUSPEND;		/* don't reply */
@@ -137,7 +137,7 @@ PRIVATE void pm_init()
 {
 /* Initialize the process manager. */
   int key, i, s;
-  static struct system_image image[IMAGE_SIZE];
+  static struct system_image image[NR_BOOT_PROCS];
   register struct system_image *ip;
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
@@ -149,6 +149,11 @@ PRIVATE void pm_init()
   message mess;
   struct mem_map mem_map[NR_LOCAL_SEGS];
   struct memory mem_chunks[NR_MEMS];
+
+  /* Initialize process table, including timers. */
+  for (rmp=&mproc[0]; rmp<&mproc[NR_PROCS]; rmp++) {
+	tmr_inittimer(&rmp->mp_timer);
+  }
 
   /* Build the set of signals which cause core dumps, and the set of signals
    * that are by default ignored.
@@ -182,7 +187,7 @@ PRIVATE void pm_init()
   if (OK != (s=sys_getimage(image))) 
   	panic(__FILE__,"PM: warning, couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
-  for (ip = &image[0]; ip < &image[IMAGE_SIZE]; ip++) {		
+  for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {		
   	if (ip->proc_nr >= 0) {			/* task have negative nrs */
   		procs_in_use += 1;		/* found user process */
 
@@ -223,8 +228,6 @@ PRIVATE void pm_init()
 
   mproc[PM_PROC_NR].mp_pid = PM_PID;
   mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;
-  sigfillset(&mproc[PM_PROC_NR].mp_ignore);
-  sigfillset(&mproc[PM_PROC_NR].mp_sigmask);
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;

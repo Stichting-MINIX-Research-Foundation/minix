@@ -61,14 +61,17 @@ PUBLIC void main()
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
  	/* Check for special control messages first. */
+#if DEAD_CODE
         if (call_nr == HARD_STOP) { 
         	do_sync();
         	sys_exit(0);  		/* never returns */
-        } else if(call_nr == SYN_ALARM) {
+        } else 
+#endif
+	if(call_nr == SYN_ALARM) {
         	/* Not a user request; system has expired one of our timers,
         	 * currently only in use for select(). Check it.
         	 */
-        	fs_expire_timers(m_in.NOTIFY_ARG);
+        	fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
         } else if(call_nr == DEV_SELECTED) {
         	/* Device notify()s us of fd that has become usable. */
         	select_notified(&m_in);

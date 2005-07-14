@@ -4,6 +4,7 @@
 
 #include "is.h"
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
 /*==========================================================================*
@@ -20,8 +21,6 @@ PRIVATE void log_message(char *buf)
 
 	_sendrec(LOG_PROC_NR, &m);
 #endif
-
-	return;
 }
 
 
@@ -66,8 +65,8 @@ message *m;					/* notification message */
       print_buf[i] = 0;
       printf(print_buf);
 
-	/* Also send message to log device. */
-	log_message(print_buf);
+      /* Also send message to log device. */
+      log_message(print_buf);
   }
 
   /* Almost done, store 'next' so that we can determine what part of the
@@ -124,9 +123,7 @@ PUBLIC int do_diagnostics(message *m)
   }
 
   if(i > 0) {
-  	/* This is safe; if i were too large,
-  	 * this would have been done above.
-  	 */
+  	/* This is safe; above code ensures i doesn't exceed upper bound. */
       	diagbuf[i] = '\0';
       	log_message(diagbuf);
   }

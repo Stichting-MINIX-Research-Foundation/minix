@@ -9,6 +9,7 @@
 
 #include "is.h"
 #include "../pm/mproc.h"
+#include <timers.h> 
 
 
 PUBLIC struct mproc mproc[NR_PROCS];

@@ -34,7 +34,7 @@ PUBLIC time_t clock_time()
   register int k;
   clock_t uptime;
 
-  if ( (k=sys_getuptime(&uptime)) != OK) panic(__FILE__,"clock_time err", k);
+  if ( (k=getuptime(&uptime)) != OK) panic(__FILE__,"clock_time err", k);
   return( (time_t) (boottime + (uptime/HZ)));
 }
 
