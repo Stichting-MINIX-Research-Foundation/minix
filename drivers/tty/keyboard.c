@@ -18,6 +18,7 @@
 #include "tty.h"
 #include "keymaps/us-std.src"
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 
@@ -538,7 +539,11 @@ int scode;			/* scan code for a function key */
   /* See if an observer is registered and send it a message. */
   if (proc_nr != NONE) { 
       m.NOTIFY_TYPE = FKEY_PRESSED;
+#if DEAD_CODE
       notify(proc_nr, &m);
+#else
+      alert(proc_nr);
+#endif
   }
   return(TRUE);
 }

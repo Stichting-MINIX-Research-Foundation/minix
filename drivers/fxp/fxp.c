@@ -2364,7 +2364,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
 	int r;
 
 	/* Get the current time. */
-	r= sys_getuptime(&now);
+	r= getuptime(&now);
 	if (r != OK)
 		panic("FXP","unable to get uptime from clock", r);
 
@@ -2400,7 +2400,7 @@ PRIVATE void fxp_expire_timers()
   int r;
 
   /* Get the current time to compare the timers against. */
-  r= sys_getuptime(&now);
+  r= getuptime(&now);
   if (r != OK)
  	panic("FXP","Unable to get uptime from clock.", r);
 

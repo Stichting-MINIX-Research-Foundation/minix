@@ -12,7 +12,6 @@
  *	Apr 29, 2005	added null byte generator  (Jorrit N. Herder)
  *	Apr 27, 2005	added random device handling  (Jorrit N. Herder)
  *	Apr 09, 2005	added support for boot device  (Jorrit N. Herder)
- *	Sep 03, 2004	secured code with ENABLE_USERPRIV  (Jorrit N. Herder)
  *	Jul 26, 2004	moved RAM driver to user-space  (Jorrit N. Herder)
  *	Apr 20, 1992	device dependent/independent split  (Kees J. Bot)
  */
@@ -21,6 +20,7 @@
 #include "../libdriver/driver.h"
 #include <sys/ioc_memory.h>
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
 #define NR_DEVS            7		/* number of minor devices */
@@ -230,17 +230,11 @@ PRIVATE int m_do_open(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
 {
-/* Check device number on open.  Give I/O privileges to a process opening
- * /dev/mem or /dev/kmem. This may be needed in case of memory mapped I/O.
+/* Check device number on open.  (This used to give I/O privileges to a 
+ * process opening /dev/mem or /dev/kmem. This may be needed in case of 
+ * memory mapped I/O. With system calls to do I/O this is no longer needed.)
  */
   if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
-
-#if (CHIP == INTEL) && ENABLE_USERPRIV && ENABLE_USERIOPL
-  if (m_device == MEM_DEV || m_device == KMEM_DEV) {
-	sys_enable_iop(m_ptr->PROC_NR);
-	report("MEM", "sys_enable_iop for proc nr", m_ptr->PROC_NR);
-  }
-#endif
 
   return(OK);
 }

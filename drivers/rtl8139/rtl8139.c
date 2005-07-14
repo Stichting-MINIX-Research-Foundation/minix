@@ -69,6 +69,7 @@
 #include <unistd.h>
 #include <sys/ioc_memory.h>
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
 #define tmra_ut			timer_t
@@ -1902,8 +1903,8 @@ int may_block;
 	reply.DL_PROC = rep->re_client;
 	reply.DL_STAT = status | ((u32_t) err << 16);
 	reply.DL_COUNT = rep->re_read_s;
-	if (OK != (r = sys_getuptime(&now)))
-		panic("dp8390","sys_getuptime() failed:", r);
+	if (OK != (r = getuptime(&now)))
+		panic("dp8390","getuptime() failed:", r);
 	reply.DL_CLCK = now;
 
 	r= send(rep->re_client, &reply);

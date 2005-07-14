@@ -325,7 +325,7 @@ PRIVATE void f_expire_tmrs(struct driver *dp)
   int s;
 
   /* Get the current time to compare the timers against. */
-  if ((s=sys_getuptime(&now)) != OK)
+  if ((s=getuptime(&now)) != OK)
  	panic("FLOPPY","Couldn't get uptime from clock.", s);
 
   /* Scan the timers queue for expired timers. Dispatch the watchdog function
@@ -354,7 +354,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
   int s;
 
   /* Get the current time. */
-  if ((s=sys_getuptime(&now)) != OK)
+  if ((s=getuptime(&now)) != OK)
  	panic("FLOPPY","Couldn't get uptime from clock.", s);
 
   /* Add the timer to the local timer queue. */

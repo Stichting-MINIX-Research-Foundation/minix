@@ -199,10 +199,11 @@ PUBLIC void main(void)
 	case SYN_ALARM: 		/* fall through */
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
-	case HARD_INT:			/* hardware interrupt notification */
+	case HARD_INT: {		/* hardware interrupt notification */
 		do_interrupt(&tty_mess);/* fetch chars from keyboard */
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
+	}
 	case NEW_KMESS:			/* new kernel message is available */
 		do_new_kmess(&tty_mess);
 		continue;
@@ -1494,7 +1495,7 @@ PRIVATE void expire_timers(void)
   int s;
 
   /* Get the current time to compare the timers against. */
-  if ((s=sys_getuptime(&now)) != OK)
+  if ((s=getuptime(&now)) != OK)
  	panic("TTY","Couldn't get uptime from clock.", s);
 
   /* Scan the queue of timers for expired timers. This dispatch the watchdog
@@ -1521,7 +1522,7 @@ int enable;			/* set timer if true, otherwise unset */
   int s;
 
   /* Get the current time to calculate the timeout time. */
-  if ((s=sys_getuptime(&now)) != OK)
+  if ((s=getuptime(&now)) != OK)
  	panic("TTY","Couldn't get uptime from clock.", s);
   if (enable) {
   	exp_time = now + tty_ptr->tty_termios.c_cc[VTIME] * (HZ/10);

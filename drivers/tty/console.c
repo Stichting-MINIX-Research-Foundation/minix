@@ -23,6 +23,7 @@
 #include "tty.h"
 
 #include "../../kernel/const.h"
+#include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
 /* Definitions used by the console driver. */
@@ -746,7 +747,7 @@ PRIVATE void beep()
   int port_b_val, s;
   
   /* Fetch current time in advance to prevent beeping delay. */
-  if ((s=sys_getuptime(&now)) != OK)
+  if ((s=getuptime(&now)) != OK)
   	panic("TTY","Console couldn't get clock's uptime.", s);
   if (!beeping) {
 	/* Set timer channel 2, square wave, with given frequency. */

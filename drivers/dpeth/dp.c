@@ -13,11 +13,11 @@
 **
 **    m_type       DL_PORT   DL_PROC  DL_COUNT DL_MODE DL_ADDR
 **  +------------+---------+---------+--------+-------+---------+
-**  | HARD_INT   |         |         |        |       |         | NOTIFICATION|0
+**  | HARD_INT   |         |         |        |       |         | 
 **  +------------+---------+---------+--------+-------+---------+
-**  | SYN_ALARM  |         |         |        |       |         | NOTIFICATION|1
+**  | SYN_ALARM  |         |         |        |       |         | 
 **  +------------+---------+---------+--------+-------+---------+
-**  | HARD_STOP  |         |         |        |       |         | NOTIFICATION|4
+**  | HARD_STOP  |         |         |        |       |         | 
 **  +------------+---------+---------+--------+-------+---------+
 **  | FKEY_PRESSED         |         |        |       |         | (99)
 **  +------------+---------+---------+--------+-------+---------+
@@ -49,6 +49,9 @@
 **  +------------+---------+---------+---------------+
 **
 **  $Log$
+**  Revision 1.2  2005/07/14 15:15:17  jnherder
+**  Renamed some system library functionality.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -557,7 +560,7 @@ PUBLIC int main(void)
 #endif
   /* Request function key for debug dumps */
   fkeys = sfkeys = 0; bit_set(sfkeys, 8);
-  if ((fkey_map(fkeys, sfkeys)) != OK) 
+  if ((fkey_map(&fkeys, &sfkeys)) != OK) 
 	printf("%s: couldn't program Shift+F8 key (%d)\n", DevName, errno);
 
 #ifdef ETH_IGN_PROTO
