@@ -1,5 +1,7 @@
 /* This file contains a collection of miscellaneous procedures:
  *   panic	    abort MINIX due to a fatal error
+ *   safe_lock	    lock the kernel, use in combination with safe_unlock
+ *   safe_unlock    unlock the kernel, but prevent breaking nested locks
  *   alloc_bit      bit map manipulation
  *   free_bit       bit map manipulation
  */
@@ -9,6 +11,34 @@
 #include <unistd.h>
 #include <minix/com.h>
 
+
+PRIVATE int relock_count = 0;
+
+/*===========================================================================*
+ *                                   safe_lock                               *
+ *===========================================================================*/
+PUBLIC void safe_lock(c,v)
+int c;
+char *v;
+{
+  if(!(read_cpu_flags() & X86_FLAG_I)) {
+  	relock_count++;
+  } else {
+  	intr_disable();
+  }
+}
+
+/*===========================================================================*
+ *                                   safe_unlock                             *
+ *===========================================================================*/
+PUBLIC void safe_unlock(void)
+{
+  if(! relock_count) {
+  	intr_enable();
+  } else {
+  	relock_count--;
+  }
+}
 
 /*===========================================================================*
  *                                   panic                                   *
@@ -29,6 +59,9 @@ int n;
   }
   prepare_shutdown(RBT_PANIC);
 }
+
+
+
 
 /*===========================================================================*
  *			   	free_bit				     * 
