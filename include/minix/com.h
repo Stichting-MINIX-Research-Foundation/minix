@@ -21,8 +21,8 @@
 /* Kernel tasks. These all run in the same address space. */
 #define IDLE             -4	/* runs when no one else can run */
 #define CLOCK  		 -3	/* alarms and other clock functions */
-#define SYSTASK          -2	/* request system functionality */
-#define KERNEL           -1	/* used as source on notify() messages */
+#define SYSTEM           -2	/* request system functionality */
+#define KERNEL           -1	/* pseudo-process for IPC and scheduling */
 #define HARDWARE     KERNEL	/* for hardware interrupt handlers */
 
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
@@ -47,7 +47,7 @@
 #define INIT_PROC_NR	(LOG_PROC_NR + 1)   	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
-#define IMAGE_SIZE 	(NR_TASKS + \
+#define NR_BOOT_PROCS 	(NR_TASKS + \
 			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
 			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + \
 			ENABLE_DPETH + ENABLE_LOG + 1 )	
@@ -63,20 +63,25 @@
  * blocking notifications are delivered. The lowest numbers go first. The
  * offset are used for the per-process notification bit maps. 
  */
-#define NOTIFICATION  		  0x0800 	/* flag for notifications */
-#  define HARD_INT     (NOTIFICATION | 0)	/* hardware interrupt */
-#  define SYN_ALARM    (NOTIFICATION | 1)  	/* synchronous alarm */
-#  define KSIG_PENDING (NOTIFICATION | 2)  	/* signal(s) pending */
-#  define NEW_KMESS    (NOTIFICATION | 3)  	/* new kernel message */
-#  define HARD_STOP    (NOTIFICATION | 4)  	/* system shutdown */
+#define NOTIFY_FROM(p_nr)	 (0x1000 | ((p_nr) + NR_TASKS)) 
+#  define SYN_ALARM    NOTIFY_FROM(CLOCK) 	/* synchronous alarm */
+#  define KSIG_PENDING NOTIFY_FROM(SYSTEM) 	/* pending signal(s) */
+#  define HARD_INT     NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
+#  define NEW_KMESS    NOTIFY_FROM(SYSTEM)  	/* new kernel message */
+#  define NEW_KSIG     NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
+#  define FKEY_PRESSED NOTIFY_FROM(TTY)  	/* function key press */
+
+#define NOTIFICATION  		  0x800 	/* flag for notifications */
+#  define HARD_STOP    (NOTIFICATION | 4)  	/* system shutdown */ 
 #  define DEV_SELECTED (NOTIFICATION | 5)  	/* select() notification */
 #define NR_NOTIFY_TYPES    	       6	/* nr of bits in mask */
 
 /* Shorthands for message parameters passed with notifications. */
-#define NOTIFY_SOURCE	m_source
-#define NOTIFY_TYPE	m_type
-#define NOTIFY_FLAGS	m2_i1
-#define NOTIFY_ARG	m2_l1
+#define NOTIFY_SOURCE		m_source
+#define NOTIFY_TYPE		m_type
+#define NOTIFY_ARG		m2_l1
+#define NOTIFY_TIMESTAMP	m2_l2
+#define NOTIFY_FLAGS		m2_i1
 
 
 /*===========================================================================*
@@ -203,12 +208,12 @@
  * is made from the call vector.
  */ 
 #  define SYS_TIMES	 0	/* sys_times(proc_nr, bufptr) */
-#  define SYS_XIT	 1	/* sys_xit(parent, proc) */
-#  define SYS_GETSIG     2	/* sys_getsig(proc_nr, sig_map) */
-
+#  define SYS_EXIT	 1	/* sys_exit(parent, proc) */
+#  define SYS_GETKSIG    2	/* sys_getsig(proc_nr, sig_map) */
+#  define SYS_ENDKSIG    3	/* sys_endsig(proc_nr) */
 #  define SYS_FORK       4	/* sys_fork(parent, child, pid) */
 #  define SYS_NEWMAP     5	/* sys_newmap(proc_nr, map_ptr) */
-#  define SYS_ENDSIG     6	/* sys_endsig(proc_nr) */
+
 #  define SYS_EXEC       7	/* sys_exec(proc_nr, new_sp) */
 #  define SYS_SIGSEND    8	/* sys_sigsend(proc_nr, ctxt_ptr) */
 #  define SYS_ABORT      9	/* sys_abort() */
@@ -217,8 +222,7 @@
 
 #  define SYS_TRACE     13	/* sys_trace(req,pid,addr,data) */
 
-#  define SYS_SIGNALRM	15	/* sys_signalrm(proc_nr, ticks) */
-#  define SYS_SYNCALRM	16	/* sys_syncalrm(proc_nr,exp_time,abs_time) */
+#  define SYS_SETALARM	16	/* sys_setalarm(proc_nr,exp_time,abs_time) */
 
 #  define SYS_PHYSVCOPY 18	/* sys_physvcopy(vec_ptr, vec_size) */
 #  define SYS_SVRCTL    19	/* sys_svrctl(proc_nr, req, argp) */
@@ -229,21 +233,24 @@
 #  define SYS_VDEVIO    24	/* sys_vdevio(buf_ptr, nr_ports) */
 #  define SYS_IRQCTL    25	/* sys_irqctl() */
 
-#  define SYS_IOPENABLE 27	/* sys_enable_iop() */
 #  define SYS_SEGCTL    28	/* sys_segctl(*idx, *seg, *off, phys, size) */
 
 #  define SYS_VIRCOPY   30	/* sys_vircopy(src,seg,addr,dst,seg,addr,cnt) */
 #  define SYS_PHYSCOPY  31 	/* sys_physcopy(src_addr,dst_addr,count) */
 #  define SYS_VIRVCOPY  32	/* sys_virvcopy(vec_ptr, vec_size) */
-#  define SYS_PHYSZERO  33	/* sys_physzero(addr,count) */
-#  define SYS_SETPRIORITY  34	/* sys_setpriority(which,who,prio) */
+#  define SYS_MEMSET    33	/* sys_memset(char, addr, count) */
+#  define SYS_SETPRIORITY  34	/* sys_setpriority(who,prio) */
 #define NR_SYS_CALLS	35	/* number of system calls */ 
 
-/* Field names for SYS_SEGCTL. */
+/* Field names for SYS_MEMSET, SYS_SEGCTL. */
+#define MEM_PTR		m1_p1	/* base */
+#define MEM_COUNT	m1_i1	/* count */
+#define MEM_CHAR	m1_i2   /* char to write */
 #define MEM_CHUNK_BASE	m4_l1	/* physical base address */
 #define MEM_CHUNK_SIZE	m4_l2	/* size of mem chunk */
 #define MEM_TOT_SIZE	m4_l3	/* total memory size */
 #define MEM_CHUNK_TAG	m4_l4	/* tag to identify chunk of mem */
+
 
 /* Field names for SYS_DEVIO, SYS_VDEVIO, SYS_SDEVIO. */
 #define DIO_REQUEST	m2_i3	/* device in or output */
@@ -328,7 +335,7 @@
 #   define GET_KENV	   5	/* get kernel environment string */
 #   define GET_IRQHOOKS	   6	/* get the IRQ table */
 #   define GET_KMESSAGES   7	/* get kernel messages */
-
+#   define GET_PRIVTAB	   8	/* get kernel privileges table */
 #   define GET_KADDRESSES  9	/* get various kernel addresses */
 #   define GET_SCHEDINFO  10	/* get scheduling queues */
 #   define GET_PROC 	  11	/* get process slot if given process */
@@ -369,8 +376,9 @@
 #define SIG_MAP  	m2_l1	/* used by kernel to pass signal bit map */
 #define SIG_CTXT_PTR	m2_p1	/* pointer to info to restore signal context */
 
-/* Field names for SYS_FORK, _EXEC, _XIT, _GETSP, _GETMAP, _NEWMAP */
+/* Field names for SYS_FORK, _EXEC, _EXIT, _NEWMAP. */
 #define PR_PROC_NR	m1_i1	/* indicates a (child) process */
+#define PR_PRIORITY	m1_i2	/* process priority */
 #define PR_PPROC_NR	m1_i2	/* indicates a (parent) process */
 #define PR_PID		m1_i3	/* process id at process manager */
 #define PR_STACK_PTR	m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
@@ -378,10 +386,6 @@
 #define PR_NAME_PTR	m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
 #define PR_MEM_PTR	m1_p1	/* tells where memory map is for sys_newmap */
-
-/* Field names for SYS_PHYSZERO */
-#define PZ_MEM_PTR	m1_p1	/* base */
-#define PZ_COUNT	m1_i1	/* count */
 
 /* Field names for SELECT (FS). */
 #define SEL_NFDS	m8_i1
@@ -397,7 +401,6 @@
 /* Miscellaneous request types and field names, e.g. used by IS server. */
 #define PANIC_DUMPS  	97  	/* debug dumps at the TTY on RBT_PANIC */
 #define FKEY_CONTROL 	98  	/* control a function key at the TTY */
-#define FKEY_PRESSED 	99  	/* notify process of function key event */
 #  define FKEY_REQUEST		m2_i1	/* request to perform at TTY */
 #  define    FKEY_MAP		10	/* observe function key */
 #  define    FKEY_UNMAP		11	/* stop observing function key */

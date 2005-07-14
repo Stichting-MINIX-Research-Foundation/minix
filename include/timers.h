@@ -44,8 +44,10 @@ typedef struct timer
 /* These definitions can be used to initialize a timer variable and to set
  * the timer's argument before passing it to tmrs_settimer.
  */ 
-#define tmr_inittimer(tp) (void)((tp)->tmr_exp_time = TMR_NEVER)
+#define tmr_inittimer(tp) (void)((tp)->tmr_exp_time = TMR_NEVER, \
+	(tp)->tmr_next = NULL)
 #define tmr_arg(tp) (&(tp)->tmr_arg)
+#define tmr_exp_time(tp) (&(tp)->tmr_exp_time)
 
 
 /* The following generic timer management functions are available. They

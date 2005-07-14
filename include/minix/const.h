@@ -18,6 +18,7 @@
 
 #define SUPER_USER (uid_t) 0	/* uid_t of superuser */
 
+/* Devices. */
 #define MAJOR	           8	/* major device = (dev>>MAJOR) & 0377 */
 #define MINOR	           0	/* minor device = (dev>>MINOR) & 0377 */
 
@@ -27,6 +28,11 @@
 #define NR_IOREQS	MIN(NR_BUFS, 64)
 				/* maximum number of entries in an iorequest */
 
+/* Message passing constants. */
+#define MESS_SIZE (sizeof(message))	/* might need usizeof from FS here */
+#define NIL_MESS ((message *) 0)	/* null pointer */
+
+/* Memory related constants. */
 #define SEGMENT_TYPE  0xFF00	/* bit mask to get segment type */
 #define SEGMENT_INDEX 0x00FF	/* bit mask to get segment index */
 

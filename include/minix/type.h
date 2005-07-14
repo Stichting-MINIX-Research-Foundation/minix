@@ -10,9 +10,9 @@
 #endif
 
 /* Type definitions. */
-typedef unsigned int vir_clicks; /* virtual  addresses and lengths in clicks */
-typedef unsigned long phys_bytes;/* physical addresses and lengths in bytes */
-typedef unsigned int phys_clicks;/* physical addresses and lengths in clicks */
+typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
+typedef unsigned long phys_bytes;	/* physical addr/length in bytes */
+typedef unsigned int phys_clicks;	/* physical addr/length in clicks */
 
 #if (CHIP == INTEL)
 typedef unsigned int vir_bytes;	/* virtual addresses and lengths in bytes */
@@ -59,8 +59,8 @@ typedef struct {
 } iovec_t;
 
 
-/* MM passes the address of a structure of this type to KERNEL when
- * do_sendsig() is invoked as part of the signal catching mechanism.
+/* PM passes the address of a structure of this type to KERNEL when
+ * sys_sendsig() is invoked as part of the signal catching mechanism.
  * The structure contain all the information that KERNEL needs to build
  * the signal stack.
  */
@@ -71,9 +71,6 @@ struct sigmsg {
   vir_bytes sm_sigreturn;	/* address of _sigreturn in C library */
   vir_bytes sm_stkptr;		/* user stack pointer */
 };
-
-#define MESS_SIZE (sizeof(message))	/* might need usizeof from fs here */
-#define NIL_MESS ((message *) 0)
 
 /* This is used to obtain system information through SYS_GETINFO. */
 struct kinfo {
@@ -93,9 +90,7 @@ struct kinfo {
   int nr_tasks;			/* number of kernel tasks */
   char release[4];		/* kernel release number */
   char version[4];		/* kernel version number */
-#if ENABLE_K_LOCKCHECK
-  int relocking;
-#endif
+  int relocking;		/* relocking check (for debugging) */
 };
 
 struct machine {
@@ -106,16 +101,5 @@ struct machine {
   int vdu_ega;
   int vdu_vga;
 };
-
-/* Timing data of lock()/unlock() sequences, if selected to be compiled in. */
-
-#if ENABLE_LOCK_TIMING
-struct lock_timedata {
-	char names[TIMING_NAME];
-	unsigned long lock_timings[TIMING_POINTS];
-	unsigned long lock_timings_range[2];
-	unsigned long binsize, resets, misses, measurements;
-};
-#endif
 
 #endif /* _TYPE_H */

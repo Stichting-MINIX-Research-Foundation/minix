@@ -1,4 +1,4 @@
-/* Physical memory layout on IMB compatible PCs. Only the major, fixed memory 
+/* Physical memory layout on IBM compatible PCs. Only the major, fixed memory 
  * areas are detailed here. Known addresses of the BIOS data area are defined
  * in <ibm/bios.h>. The map upper memory area (UMA) is only roughly defined 
  * since the UMA sections may vary in size and locus. 

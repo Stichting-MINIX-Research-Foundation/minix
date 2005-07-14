@@ -30,8 +30,12 @@
 #define _PTR_SIZE	_EM_WSIZE
 #endif
 
-/* Number of slots in the process table for non-kernel processes. */
+/* Number of slots in the process table for non-kernel processes. The number
+ * of system processes defines how many processes with special privileges 
+ * there can be. User processes share the same properties and count for one. 
+ */
 #define NR_PROCS 	  64 
+#define NR_SYS_PROCS      32
 
 /* The buffer cache should be made as large as you can afford. */
 #if (MACHINE == IBM_PC && _WORD_SIZE == 2)
@@ -63,10 +67,6 @@
 
 /* Enable or disable swapping processes to disk. */
 #define ENABLE_SWAP	   1
-
-/* Enable or disable kernel calls (allows for minimal kernel). */
-#define ENABLE_K_DEBUGGING 0	/* kernel debugging calls */
-#define ENABLE_K_LOCKCHECK 0	/* kernel lock() sanity check */
 
 /* Include or exclude an image of /dev/boot in the boot image. */
 #define ENABLE_BOOTDEV	   0
@@ -104,22 +104,8 @@
 #define ENABLE_BINCOMPAT   0	/* for binaries using obsolete calls */
 #define ENABLE_SRCCOMPAT   0	/* for sources using obsolete calls */
 
-/* Include or exclude security sensitive code, i.e., enable or disable certain
- * code sections that would allow special priviliges to user-level processes.
- */
-#define ENABLE_USERPRIV    1	/* allow special user mode privileges */
-
-/* User mode privileges. Be careful to set these security related features.
- * USERBIOS allows user processes to perform INT86, GLDT86, and SLDT86 MIOC
- * calls; USERIOPL set the CPU's I/O Protection Level bits so that user 
- * processes can access I/O on opening /dev/mem/ or /dev/kmem/. In normal
- * operation, only the kernel should be trusted to do all this. Note that
- * ENABLE_USERPRIV must be set to 1 to allow the features anyway. 
- */
-#define ENABLE_USERBIOS    0	/* enable user mode BIOS calls */
-#define ENABLE_USERIOPL    0	/* enable CPU's IOPL bits for /dev/(k)mem */
-
-#define PRINTF_PROC	IS_PROC_NR
+/* Which process should receive diagnostics from the kernel and system? */
+#define PRINTF_PROC		TTY
 
 /* NR_CONS, NR_RS_LINES, and NR_PTYS determine the number of terminals the
  * system can handle.
@@ -128,17 +114,6 @@
 #define	NR_RS_LINES	   0	/* # rs232 terminals (0 to 4) */
 #define	NR_PTYS		   32	/* # pseudo terminals (0 to 64) */
 
-/* these timing functions use quite a bit more kernel memory to hold
- * timing data.
- */
-#define ENABLE_INT_TIMING	0
-#define ENABLE_LOCK_TIMING	0
-
-#if ENABLE_LOCK_TIMING
-#define TIMING_POINTS		20
-#define TIMING_CATEGORIES	20
-#define TIMING_NAME		10
-#endif
 
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *

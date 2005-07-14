@@ -1,18 +1,4 @@
-/* Prototypes for system library functions. 
- *
- * Changes:
- *   Nov 15, 2004   unified sys_sigctl calls  (Jorrit N. Herder)
- *   Oct 28, 2004   added nb_send, nb_receive  (Jorrit N. Herder)
- *   Oct 26, 2004   added sys_sdevio  (Jorrit N. Herder)
- *   Oct 18, 2004   added sys_irqctl  (Jorrit N. Herder)
- *   Oct 10, 2004   removed sys_findproc  (Jorrit N. Herder)
- *   Sep 23, 2004   added sys_getsig  (Jorrit N. Herder)
- *   Sep 09, 2004   added sys_physcopy, sys_vircopy  (Jorrit N. Herder)
- *   Aug 15, 2004   added sys_getinfo  (Jorrit N. Herder)
- *   Jul 23, 2004   added sys_umap  (Jorrit N. Herder)
- *   Jul 13, 2004   added sys_enable_iop, sys_segctl  (Jorrit N. Herder)
- *   Mar 20, 2004   added sys_devio, sys_vdevio  (Jorrit N. Herder)
- */
+/* Prototypes for system library functions. */
 
 #ifndef _SYSLIB_H
 #define _SYSLIB_H
@@ -29,36 +15,23 @@
 #include <minix/devio.h>
 #endif
 
+#define SYSTASK SYSTEM
 
 /*==========================================================================* 
  * Minix system library. 						    *
  *==========================================================================*/ 
-_PROTOTYPE( int printf, (const char *fmt, ...)				);
-_PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( int _taskcall, (int who, int syscallnr, message *msgptr)	);
 
 _PROTOTYPE( int sys_abort, (int how, ...)				);
-_PROTOTYPE( int sys_adjmap, (int proc, struct mem_map *ptr, 
-			vir_clicks data_clicks, vir_clicks sp)		);
 _PROTOTYPE( int sys_exec, (int proc, char *ptr, int traced, 
 				char *aout, vir_bytes initpc)		);
-_PROTOTYPE( int sys_execmap, (int proc, struct mem_map *ptr)		);
 _PROTOTYPE( int sys_fork, (int parent, int child, int pid)		);
-_PROTOTYPE( int sys_getsp, (int proc, vir_bytes *newsp)			);
 _PROTOTYPE( int sys_newmap, (int proc, struct mem_map *ptr)		);
-_PROTOTYPE( int sys_getmap, (int proc, struct mem_map *ptr)		);
-_PROTOTYPE( int sys_times, (int proc_nr, clock_t *ptr)			);
-_PROTOTYPE( int sys_getuptime, (clock_t *ticks)				);
+_PROTOTYPE( int sys_exit, (int proc)					);
 _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p)	);
-_PROTOTYPE( int sys_setpriority, (int proc, int prio)			);
-
-/* A system server can directly exit itself with the sys_xit call. The
- * status argument is here to resemble exit(2), but not passed to kernel.
- */
-#define sys_exit(status) sys_xit(SELF)	
-_PROTOTYPE( int sys_xit, (int proc)					);
 
 _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
+_PROTOTYPE( int sys_setpriority, (int proc, int prio)			);
 
 
 /* Shorthands for sys_sdevio() system call. */
@@ -73,10 +46,10 @@ _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
 _PROTOTYPE( int sys_sdevio, (int req, long port, int type, int proc_nr,
 	void *buffer, int count) );
 
-/* Clock functionality: (un)schedule an alarm call. */
-_PROTOTYPE(int sys_flagalrm, (clock_t ticks, int *flag_ptr)		);
-_PROTOTYPE(int sys_signalrm, (int proc_nr, clock_t *ticks)		);
-_PROTOTYPE(int sys_syncalrm, (int proc_nr, clock_t exp_time, int abs_time) );
+/* Clock functionality: get system times or (un)schedule an alarm call. */
+_PROTOTYPE( int sys_times, (int proc_nr, clock_t *ptr)			);
+#define sys_syncalrm sys_setalarm
+_PROTOTYPE(int sys_setalarm, (int proc_nr, clock_t exp_time, int abs_time) );
 
 /* Shorthands for sys_irqctl() system call. */
 #define sys_irqdisable(hook_id) \
@@ -108,19 +81,19 @@ _PROTOTYPE(int sys_vircopy, (int src_proc, int src_seg, vir_bytes src_vir,
 	sys_physcopy(NONE, PHYS_SEG, src_phys, NONE, PHYS_SEG, dst_phys, bytes)
 _PROTOTYPE(int sys_physcopy, (int src_proc, int src_seg, vir_bytes src_vir,
 	int dst_proc, int dst_seg, vir_bytes dst_vir, phys_bytes bytes)	);
-_PROTOTYPE(int sys_physzero, (phys_bytes base, phys_bytes bytes)	);
+_PROTOTYPE(int sys_memset, (char c, phys_bytes base, phys_bytes bytes)	);
 
 _PROTOTYPE(int sys_umap, (int proc_nr, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr) 			);
 _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 	phys_bytes phys, vir_bytes size));
-_PROTOTYPE(int sys_enable_iop, (int proc_nr)				);
 
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkmessages(dst)	sys_getinfo(GET_KMESSAGES, dst, 0,0,0)
 #define sys_getkinfo(dst)	sys_getinfo(GET_KINFO, dst, 0,0,0)
 #define sys_getmachine(dst)	sys_getinfo(GET_MACHINE, dst, 0,0,0)
 #define sys_getproctab(dst)	sys_getinfo(GET_PROCTAB, dst, 0,0,0)
+#define sys_getprivtab(dst)	sys_getinfo(GET_PRIVTAB, dst, 0,0,0)
 #define sys_getproc(dst,nr)	sys_getinfo(GET_PROC, dst, 0,0, nr)
 #define sys_getrandomness(dst)	sys_getinfo(GET_RANDOMNESS, dst, 0,0,0)
 #define sys_getimage(dst)	sys_getinfo(GET_IMAGE, dst, 0,0,0)
@@ -131,13 +104,12 @@ _PROTOTYPE(int sys_enable_iop, (int proc_nr)				);
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *key_ptr, int key_len)		);
 
-
 /* Signal control. */
 _PROTOTYPE(int sys_kill, (int proc, int sig) );
 _PROTOTYPE(int sys_sigsend, (int proc_nr, struct sigmsg *sig_ctxt) ); 
 _PROTOTYPE(int sys_sigreturn, (int proc_nr, struct sigmsg *sig_ctxt, int flags) );
-_PROTOTYPE(int sys_getsig, (int *k_proc_nr, sigset_t *k_sig_map) ); 
-_PROTOTYPE(int sys_endsig, (int proc_nr) );
+_PROTOTYPE(int sys_getksig, (int *k_proc_nr, sigset_t *k_sig_map) ); 
+_PROTOTYPE(int sys_endksig, (int proc_nr) );
 
 /* NOTE: two different approaches were used to distinguish the device I/O
  * types 'byte', 'word', 'long': the latter uses #define and results in a
