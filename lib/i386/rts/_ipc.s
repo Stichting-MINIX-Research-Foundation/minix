@@ -1,5 +1,5 @@
 .sect .text; .sect .rom; .sect .data; .sect .bss
-.define __echo, __send, __nb_send, __receive, __nb_receive, __sendrec, __notify
+.define __echo, __alert, __send, __nb_send, __receive, __nb_receive, __sendrec, __notify
 
 ! See src/kernel/ipc.h for C definitions
 ECHO = 0
@@ -7,6 +7,7 @@ SEND = 1
 RECEIVE = 2
 SENDREC = 3 + 32		! flags 0x20 to request fresh answer
 NOTIFY = 4
+ALERT = 5
 NB_SEND = 1 + 16 		! flags 0x10 to prevent blocking 
 NB_RECEIVE = 2 + 16		! flags 0x10 to prevent blocking 
 SYSVEC = 33			! trap to kernel 
@@ -19,7 +20,7 @@ MESSAGE = 12			! message pointer
 !                           IPC assembly routines			  *
 !*========================================================================*
 ! all message passing routines save ebp, but destroy eax and ecx.
-.define __echo, __send, __nb_send, __receive, __nb_receive, __sendrec, __notify
+.define __echo, __alert, __send, __nb_send, __receive, __nb_receive, __sendrec, __notify
 .sect .text
 __send:
 	push	ebp
@@ -88,6 +89,17 @@ __notify:
 	mov	eax, SRC_DST(ebp)	! eax = dest-src
 	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
 	mov	ecx, NOTIFY		! _notify(srcdest, ptr)
+	int	SYSVEC			! trap to the kernel
+	pop	ebx
+	pop	ebp
+	ret
+
+__alert:
+	push	ebp
+	mov	ebp, esp
+	push	ebx
+	mov	eax, SRC_DST(ebp)	! ebx = destination 
+	mov	ecx, ALERT		! _echo(srcdest, ptr)
 	int	SYSVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp

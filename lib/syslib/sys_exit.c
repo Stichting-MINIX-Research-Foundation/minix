@@ -1,9 +1,9 @@
 #include "syslib.h"
 
 /*===========================================================================*
- *                                sys_xit			     	     *
+ *                                sys_exit			     	     *
  *===========================================================================*/
-PUBLIC int sys_xit(proc)
+PUBLIC int sys_exit(proc)
 int proc;			/* which process has exited */
 {
 /* A process has exited. PM tells the kernel. In addition this call can be
@@ -13,5 +13,5 @@ int proc;			/* which process has exited */
   message m;
 
   m.PR_PROC_NR = proc;
-  return(_taskcall(SYSTASK, SYS_XIT, &m));
+  return(_taskcall(SYSTASK, SYS_EXIT, &m));
 }

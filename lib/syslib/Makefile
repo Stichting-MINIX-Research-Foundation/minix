@@ -6,30 +6,31 @@ CC1	= $(CC) $(CFLAGS) -c
 LIBSYS	= ../libsys.a
 all:	$(LIBSYS)
 
+clean: 
+	rm *.o
+
 OBJECTS	= \
 	$(LIBSYS)(sys_times.o) \
-	$(LIBSYS)(sys_getuptm.o) \
 	$(LIBSYS)(sys_abort.o) \
 	$(LIBSYS)(sys_exec.o) \
 	$(LIBSYS)(sys_fork.o) \
 	$(LIBSYS)(sys_kill.o) \
 	$(LIBSYS)(sys_newmap.o) \
 	$(LIBSYS)(sys_sigsend.o) \
-	$(LIBSYS)(sys_sigret.o) \
+	$(LIBSYS)(sys_sigreturn.o) \
 	$(LIBSYS)(sys_endsig.o) \
 	$(LIBSYS)(sys_getsig.o) \
 	$(LIBSYS)(sys_svrctl.o) \
 	$(LIBSYS)(sys_trace.o) \
-	$(LIBSYS)(sys_xit.o) \
+	$(LIBSYS)(sys_exit.o) \
 	$(LIBSYS)(sys_sdevio.o) \
 	$(LIBSYS)(sys_getinfo.o) \
 	$(LIBSYS)(sys_irqctl.o) \
-	$(LIBSYS)(sys_eniop.o) \
 	$(LIBSYS)(sys_segctl.o) \
 	$(LIBSYS)(sys_setpriority.o) \
 	$(LIBSYS)(sys_umap.o) \
-	$(LIBSYS)(sys_physcp.o) \
-	$(LIBSYS)(sys_vircp.o) \
+	$(LIBSYS)(sys_physcopy.o) \
+	$(LIBSYS)(sys_vircopy.o) \
 	$(LIBSYS)(sys_in.o) \
 	$(LIBSYS)(sys_out.o) \
 	$(LIBSYS)(sys_vinb.o) \
@@ -38,9 +39,8 @@ OBJECTS	= \
 	$(LIBSYS)(sys_voutb.o) \
 	$(LIBSYS)(sys_voutw.o) \
 	$(LIBSYS)(sys_voutl.o) \
-	$(LIBSYS)(sys_signalrm.o) \
-	$(LIBSYS)(sys_syncalrm.o) \
-	$(LIBSYS)(sys_physzero.o) \
+	$(LIBSYS)(sys_setalarm.o) \
+	$(LIBSYS)(sys_memset.o) \
 	$(LIBSYS)(taskcall.o) \
 
 $(LIBSYS):	$(OBJECTS)
@@ -74,8 +74,8 @@ $(LIBSYS)(sys_svrctl.o):	sys_svrctl.c
 $(LIBSYS)(sys_trace.o):	sys_trace.c
 	$(CC1) sys_trace.c
 
-$(LIBSYS)(sys_xit.o):	sys_xit.c
-	$(CC1) sys_xit.c
+$(LIBSYS)(sys_exit.o):	sys_exit.c
+	$(CC1) sys_exit.c
 
 $(LIBSYS)(sys_sdevio.o):	sys_sdevio.c
 	$(CC1) sys_sdevio.c
@@ -107,14 +107,14 @@ $(LIBSYS)(sys_endsig.o):	sys_endsig.c
 $(LIBSYS)(sys_sigsend.o):	sys_sigsend.c
 	$(CC1) sys_sigsend.c
 
-$(LIBSYS)(sys_sigret.o):	sys_sigret.c
-	$(CC1) sys_sigret.c
+$(LIBSYS)(sys_sigreturn.o):	sys_sigreturn.c
+	$(CC1) sys_sigreturn.c
 
-$(LIBSYS)(sys_physcp.o):	sys_physcp.c
-	$(CC1) sys_physcp.c
+$(LIBSYS)(sys_physcopy.o):	sys_physcopy.c
+	$(CC1) sys_physcopy.c
 
-$(LIBSYS)(sys_vircp.o):	sys_vircp.c
-	$(CC1) sys_vircp.c
+$(LIBSYS)(sys_vircopy.o):	sys_vircopy.c
+	$(CC1) sys_vircopy.c
 
 $(LIBSYS)(sys_out.o):		sys_out.c
 	$(CC1) sys_out.c
@@ -140,14 +140,11 @@ $(LIBSYS)(sys_vinw.o):	sys_vinw.c
 $(LIBSYS)(sys_vinl.o):	sys_vinl.c
 	$(CC1) sys_vinl.c
 
-$(LIBSYS)(sys_signalrm.o):	sys_signalrm.c
-	$(CC1) sys_signalrm.c
+$(LIBSYS)(sys_setalarm.o):	sys_setalarm.c
+	$(CC1) sys_setalarm.c
 
-$(LIBSYS)(sys_syncalrm.o):	sys_syncalrm.c
-	$(CC1) sys_syncalrm.c
-
-$(LIBSYS)(sys_physzero.o):	sys_physcp.c
-	$(CC1) sys_physzero.c
+$(LIBSYS)(sys_memset.o):	sys_memset.c
+	$(CC1) sys_memset.c
 
 $(LIBSYS)(taskcall.o):	taskcall.c
 	$(CC1) taskcall.c
