@@ -13,16 +13,13 @@ _PROTOTYPE( void clock_stop, (void)					);
 _PROTOTYPE( clock_t get_uptime, (void)					);
 _PROTOTYPE( unsigned long read_clock, (void)				);
 _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
-_PROTOTYPE( void reset_timer, (struct timer *tp)				);
+_PROTOTYPE( void reset_timer, (struct timer *tp)			);
 
 /* klibc.c */
 _PROTOTYPE( int katoi, (register const char *s));
 _PROTOTYPE( void *kmemcpy, (void *s1, const void *s2, register size_t n));
 _PROTOTYPE( void *kmemset, (void *s, register int c, register size_t n));
 _PROTOTYPE( int kstrcmp, (register const char *s1, register const char *s2));
-_PROTOTYPE( size_t kstrlen, (const char *s));
-_PROTOTYPE( int kstrncmp,
-	(register const char *s1, register const char *s2, register size_t n));
 _PROTOTYPE( char *kstrncpy, 
 	(char *s1, register const char *s2, register const ssize_t n));
 #define karg(arg) (karg_t) (arg)
@@ -33,14 +30,16 @@ _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void stop_sequence, (struct timer *tp)			);
 
-/* misc.c */
+/* utility.c */
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
+_PROTOTYPE( void safe_lock, (int c, char *v)				);
+_PROTOTYPE( void safe_unlock, (void)					);
 _PROTOTYPE( int alloc_bit, (bitchunk_t *map, bit_t nr_bits) 		); 
 _PROTOTYPE( void free_bit, (bit_t nr, bitchunk_t *map, bit_t nr_bits) 	); 
 
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
-_PROTOTYPE( int lock_notify, (int dst, message *m_ptr)			);
+_PROTOTYPE( int lock_alert, (int src, int dst)					);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_ready, (struct proc *rp)				);
 _PROTOTYPE( void lock_sched, (struct proc *rp)				);
@@ -52,6 +51,7 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 
 /* system.c */
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
+_PROTOTYPE( int init_proc, (int proc_nr, int proto_nr)			);
 _PROTOTYPE( void clear_proc, (int proc_nr)				);
 _PROTOTYPE( phys_bytes numap_local, (int proc_nr, vir_bytes vir_addr, 
 		vir_bytes bytes)					);

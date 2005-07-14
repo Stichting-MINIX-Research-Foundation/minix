@@ -1,12 +1,11 @@
 /* This file contains a simple exception handler.  Exceptions in user
- * processes are converted to signals.  Exceptions in the kernel, MM and
- * FS cause a panic.
+ * processes are converted to signals. Exceptions in a kernel task cause
+ * a panic.
  */
 
 #include "kernel.h"
 #include <signal.h>
 #include "proc.h"
-#include "debug.h"
 
 /*==========================================================================*
  *				exception				    *

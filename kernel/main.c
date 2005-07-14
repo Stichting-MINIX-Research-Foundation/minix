@@ -19,7 +19,6 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "proc.h"
-#include "sendmask.h"
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
@@ -33,7 +32,8 @@ PUBLIC void main()
 {
 /* Start the ball rolling. */
   register struct proc *rp;
-  register int i;
+  register struct priv *sp;
+  register int i,s;
   int hdrindex;			/* index to array of a.out headers */
   phys_clicks text_base;
   vir_clicks text_clicks;
@@ -46,12 +46,18 @@ PUBLIC void main()
   intr_init(1);
 
   /* Clear the process table. Anounce each slot as empty and set up mappings 
-   * for proc_addr() and proc_nr() macros.
+   * for proc_addr() and proc_nr() macros. Do the same for the table with 
+   * system properties structures. 
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
   	rp->p_rts_flags = SLOT_FREE;		/* initialize free slot */
 	rp->p_nr = i;				/* proc number from ptr */
         (pproc_addr + NR_TASKS)[i] = rp;        /* proc ptr from number */
+  }
+  for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
+	sp->s_proc_nr = NONE;			/* initialize as free */
+	sp->s_id = i;				/* priv structure index */
+	ppriv_addr[i] = sp;			/* priv ptr from number */
   }
 
   /* Set up proc table entries for tasks and servers.  The stacks of the
@@ -65,23 +71,23 @@ PUBLIC void main()
   /* Task stacks. */
   ktsb = (reg_t) t_stack;
 
-  for (i=0; i < IMAGE_SIZE; ++i) {
-	ip = &image[i];				/* t's task attributes */
-	rp = proc_addr(ip->proc_nr);		/* t's process slot */
+  for (i=0; i < NR_BOOT_PROCS; ++i) {
+	ip = &image[i];				/* process' attributes */
+	(void) init_proc(ip->proc_nr, NONE);	/* initialize new process */
+	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	kstrncpy(rp->p_name, ip->proc_name, P_NAME_LEN);  /* set name */
 	rp->p_name[P_NAME_LEN-1] = '\0';	/* just for safety */
-	rp->p_flags = ip->flags;		/* process flags */
 	rp->p_max_priority = ip->priority;	/* max scheduling priority */
 	rp->p_priority = ip->priority;		/* current priority */
 	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
 	rp->p_sched_ticks = ip->quantum;	/* current credit */
 	rp->p_full_quantums = QUANTUMS(ip->priority);  /* quantums left */
-	rp->p_call_mask = ip->call_mask;	/* allowed system calls */
-	rp->p_sendmask = ip->sendmask;		/* sendmask protection */
+	rp->p_priv->s_flags = ip->flags;	/* process flags */
+	rp->p_priv->s_call_mask = ip->call_mask;/* allowed system calls */
 	if (i-NR_TASKS < 0) {			/* part of the kernel? */ 
 		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
-			rp->p_stguard = (reg_t *) ktsb;
-			*rp->p_stguard = STACK_GUARD;
+			rp->p_priv->s_stack_guard = (reg_t *) ktsb;
+			*rp->p_priv->s_stack_guard = STACK_GUARD;
 		}
 		ktsb += ip->stksize;	/* point to high end of stack */
 		rp->p_reg.sp = ktsb;	/* this task's initial stack ptr */
@@ -126,9 +132,6 @@ PUBLIC void main()
 	}
 	
 	/* Set ready. The HARDWARE task is never ready. */
-#if ENABLE_K_DEBUGGING
-	rp->p_ready = 0;
-#endif
 	if (rp->p_nr != HARDWARE) lock_ready(rp);	
 	rp->p_rts_flags = 0;
 
@@ -197,12 +200,6 @@ int how;				/* reason to shut down */
       if (nb_send(TTY, &m) == OK)	/* don't block if TTY isn't ready */
           return;			/* await sys_abort() from TTY */
   }
-
-  /* The TTY expects two HARD_STOP notifications. One to switch to the 
-   * primary console for stop sequence output, and one to actually exit.
-   */
-  m.NOTIFY_TYPE = HARD_STOP;
-  lock_notify(TTY, &m);
 
   /* Allow processes to be scheduled to clean up, unless a CPU exception 
    * occurred. This is done by setting a timer. The timer argument passes

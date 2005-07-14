@@ -22,6 +22,7 @@
  *   generic_handler:	interrupt handler for user-level device drivers
  *
  * Changes:
+ *   Apr 25, 2005   new init_proc() function  (Jorrit N. Herder)
  *   Apr 25, 2005   made mapping of call vector explicit  (Jorrit N. Herder)
  *   Oct 29, 2004   new clear_proc() function  (Jorrit N. Herder)
  *   Oct 17, 2004   generic handler and IRQ policies  (Jorrit N. Herder)
@@ -38,8 +39,6 @@
 #include <unistd.h>
 #include <sys/sigcontext.h>
 #include <sys/svrctl.h>
-#include <minix/callnr.h>
-#include "sendmask.h"
 #if (CHIP == INTEL)
 #include <ibm/memory.h>
 #include "protect.h"
@@ -55,7 +54,7 @@ PUBLIC int (*call_vec[NR_SYS_CALLS])(message *m_ptr);
 
 #define map(call_nr, handler) \
 	{extern int dummy[NR_SYS_CALLS > (unsigned) (call_nr) ? 1 : -1];} \
-	call_vec[(call_nr)] = (handler) 
+	call_vec[(call_nr)] = (handler)  
 
 FORWARD _PROTOTYPE( void initialize, (void));
 
@@ -78,11 +77,9 @@ PUBLIC void sys_task()
 
       /* Handle the request. */
       if ((unsigned) m.m_type < NR_SYS_CALLS) {
-          result = (*call_vec[m.m_type])(&m);	/* do system call */
-      } else if(m.NOTIFY_TYPE == KSIG_PENDING) {
-      	  message pmm;
-          pmm.NOTIFY_TYPE = KSIG_PENDING;
-          lock_notify(PM_PROC_NR, &pmm);
+          result = (*call_vec[m.m_type])(&m);	/* handle the kernel call */
+      } else if (m.m_type == NEW_KSIG) {	
+          lock_alert(SYSTEM, PM_PROC_NR);	/* tell PM about signal */
           continue;
       } else {
 	  kprintf("Warning, illegal SYSTASK request from %d.\n", m.m_source);
@@ -94,7 +91,7 @@ PUBLIC void sys_task()
        * is known to be blocked waiting for a message.
        */
       if (result != EDONTREPLY) {
-  	  m.m_type = result;	/* report status of call */
+  	  m.m_type = result;			/* report status of call */
           if (OK != lock_send(m.m_source, &m)) {
               kprintf("Warning, SYSTASK couldn't reply to request from %d\n", 
                    m.m_source);
@@ -109,7 +106,7 @@ PUBLIC void sys_task()
  *===========================================================================*/
 PRIVATE void initialize(void)
 {
-  register struct proc *rp;
+  register struct priv *sp;
   int i;
 
   /* Initialize IRQ handler hooks. Mark all hooks available. */
@@ -118,8 +115,8 @@ PRIVATE void initialize(void)
   }
 
   /* Initialize all alarm timers for all processes. */
-  for (rp=BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
-    tmr_inittimer(&(rp->p_alarm_timer));
+  for (sp=BEG_PRIV_ADDR; sp < END_PRIV_ADDR; sp++) {
+    tmr_inittimer(&(sp->s_alarm_timer));
   }
 
   /* Initialize the call vector to a safe default handler. Some system calls 
@@ -132,23 +129,22 @@ PRIVATE void initialize(void)
   }
 
   /* Process management. */
-  map(SYS_FORK, do_fork); 	/* informs kernel that a process has forked */
-  map(SYS_XIT, do_xit);		/* informs kernel that a process has exited */
-  map(SYS_NEWMAP, do_newmap);	/* allows PM to set up a process memory map */
-  map(SYS_EXEC, do_exec);	/* sets program counter and stack pointer after EXEC */
-  map(SYS_TRACE, do_trace);	/* request a trace operation */
+  map(SYS_FORK, do_fork); 		/* a process forked a new process */
+  map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
+  map(SYS_EXEC, do_exec);		/* update process after execute */
+  map(SYS_EXIT, do_exit);		/* clean up after process exit */
+  map(SYS_TRACE, do_trace);		/* request a trace operation */
 
   /* Signal handling. */
   map(SYS_KILL, do_kill); 		/* cause a process to be signaled */
-  map(SYS_GETSIG, do_getsig);		/* PM checks for pending signals */
-  map(SYS_ENDSIG, do_endsig);		/* PM finished processing signal */
+  map(SYS_GETKSIG, do_getksig);		/* PM checks for pending signals */
+  map(SYS_ENDKSIG, do_endksig);		/* PM finished processing signal */
   map(SYS_SIGSEND, do_sigsend);		/* start POSIX-style signal */
   map(SYS_SIGRETURN, do_sigreturn);	/* return from POSIX-style signal */
 
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */
-  map(SYS_SIGNALRM, do_signalrm); 	/* causes an alarm signal */
-  map(SYS_SYNCALRM, do_syncalrm);	/* send a notification message */
+  map(SYS_SETALARM, do_setalarm);	/* schedule a synchronous alarm */
 
   /* Device I/O. */
   map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */ 
@@ -156,24 +152,59 @@ PRIVATE void initialize(void)
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
 
-  /* Server and driver control. */
+  /* System control. */
+  map(SYS_SETPRIORITY, do_schedctl);	/* set scheduling priority */
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
-  map(SYS_IOPENABLE, do_iopenable);	/* enable CPU I/O protection bits */
   map(SYS_SVRCTL, do_svrctl);		/* kernel control functions */
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
   map(SYS_VIRCOPY, do_vircopy); 	/* use pure virtual addressing */
   map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
-  map(SYS_PHYSZERO, do_physzero);	/* zero physical memory region */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
   map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
-  map(SYS_SETPRIORITY, do_setpriority);	/* set scheduling priority */
+  map(SYS_MEMSET, do_memset);		/* write char to memory area */
 
   /* Miscellaneous. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
 }
+
+
+/*===========================================================================*
+ *			         init_proc				     *
+ *===========================================================================*/
+PUBLIC int init_proc(proc_nr, proto_nr)
+int proc_nr;				/* slot of process to initialize */
+int proto_nr;				/* prototype process to copy from */
+{
+  register struct proc *rc, *rp;
+  register struct priv *sp;
+  int i;
+
+  /* Get a pointer to the process to initialize. */
+  rc = proc_addr(proc_nr);
+  
+  /* If there is a prototype process to initialize from, use it. Otherwise,
+   * assume the caller will take care of initialization, but make sure that 
+   * the new process gets a pointer to a system properties structure.
+   */
+  if (isokprocn(proto_nr)) {
+      kprintf("INIT proc from prototype %d\n", proto_nr);
+
+  } else {
+      for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
+          if (sp->s_proc_nr == NONE) {		/* found free slot */
+              sp->s_proc_nr = proc_nr;		/* set association */
+              rc->p_priv = sp;			/* assign to process */
+              return(OK);
+          }
+      }
+      kprintf("No free PRIV structure!\n", NO_NUM);
+      return(ENOSPC);				/* out of resources */
+  }
+}
+
 
 /*===========================================================================*
  *			         clear_proc				     *
@@ -189,7 +220,7 @@ int proc_nr;				/* slot of process to clean up */
   rc = proc_addr(proc_nr);
 
   /* Turn off any alarm timers at the clock. */   
-  reset_timer(&rc->p_alarm_timer);
+  reset_timer(&rc->p_priv->s_alarm_timer);
 
   /* Make sure the exiting process is no longer scheduled. */
   if (rc->p_rts_flags == 0) lock_unready(rc);
@@ -232,7 +263,6 @@ int proc_nr;				/* slot of process to clean up */
   kstrncpy(rc->p_name, "<none>", P_NAME_LEN);	/* unset name */
   sigemptyset(&rc->p_pending);		/* remove pending signals */
   rc->p_rts_flags = SLOT_FREE;		/* announce slot empty */
-  rc->p_sendmask = DENY_ALL_MASK;	/* set most restrictive mask */
 
 #if (CHIP == M68000)
   pmmu_delete(rc);			/* we're done, remove tables */
@@ -260,7 +290,7 @@ PUBLIC void get_randomness()
    * On machines without RDTSC, we use the get_uptime() - read_clock()
    * has a higher resolution, but would involve I/O calls.
    */
-  if(machine.processor > 486)
+  if (machine.processor > 486)
 	  read_tsc(&tsc_high, &krandom.r_buf[krandom.r_next]);
   else
   	  krandom.r_buf[krandom.r_next] = get_uptime();
@@ -278,18 +308,21 @@ irq_hook_t *hook;
 /* This function handles hardware interrupt in a simple and generic way. All
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
- * In addition, the interrupt handler gathers random information in a buffer
- * by timestamping the interrupts.
  */
-  message m;
 
-  /* Gather random information. */ 
+  /* As a side-effect, the interrupt handler gathers random information by 
+   * timestamping the interrupt events. This is used for /dev/random.
+   */
   get_randomness();
 
+  /* Add a bit for this interrupt to the process' pending interrupts. When 
+   * sending the notification message, this bit map will be magically set
+   * as an argument. 
+   */
+  priv(proc_addr(hook->proc_nr))->s_int_pending |= (1 << hook->irq);
+
   /* Build notification message and return. */
-  m.NOTIFY_TYPE = HARD_INT;
-  m.NOTIFY_ARG = hook->irq;
-  lock_notify(hook->proc_nr, &m);
+  lock_alert(HARDWARE, hook->proc_nr);
   return(hook->policy & IRQ_REENABLE);
 }
 
@@ -302,9 +335,9 @@ int proc_nr;			/* process to be signalled */
 int sig_nr;			/* signal to be sent, 1 to _NSIG */
 {
 /* A system process wants to send a signal to a process.  Examples are:
- *   TTY wanting to cause SIGINT upon getting a DEL
- *   CLOCK wanting to cause SIGALRM when timer expires
- *   FS wanting to cause SIGPIPE for a broken pipe 
+ *  - HARDWARE wanting to cause a SIGSEGV after a CPU exception
+ *  - TTY wanting to cause SIGINT upon getting a DEL
+ *  - FS wanting to cause SIGPIPE for a broken pipe 
  * Signals are handled by sending a message to PM.  This function handles the 
  * signals and makes sure the PM gets them by sending a notification. The 
  * process being signaled is blocked while PM has not finished all signals 
@@ -313,7 +346,6 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * PM can block waiting for FS to do a core dump.
  */
   register struct proc *rp;
-  message m;
 
   /* Check if the signal is already pending. Process it otherwise. */
   rp = proc_addr(proc_nr);
@@ -322,8 +354,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
       if (! (rp->p_rts_flags & SIGNALED)) {		/* other pending */
           if (rp->p_rts_flags == 0) lock_unready(rp);	/* make not ready */
           rp->p_rts_flags |= SIGNALED | SIG_PENDING;	/* update flags */
-          m.NOTIFY_TYPE = KSIG_PENDING;
-          lock_notify(SYSTASK, &m);
+          lock_alert(HARDWARE, SYSTEM);
       }
   }
 }
@@ -370,7 +401,6 @@ vir_bytes vir_addr;		/* virtual address in bytes within the seg */
 vir_bytes bytes;		/* # of bytes to be copied */
 {
 /* Calculate the physical memory address for a given virtual address. */
-
   vir_clicks vc;		/* the virtual address in clicks */
   phys_bytes pa;		/* intermediate variables as phys_bytes */
 #if (CHIP == INTEL)
@@ -451,7 +481,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
   if (bytes <= 0) return( (phys_bytes) 0);
   if (seg < 0 || seg >= NR_REMOTE_SEGS) return( (phys_bytes) 0);
 
-  fm = &rp->p_farmem[seg];
+  fm = &rp->p_priv->s_farmem[seg];
   if (! fm->in_use) return( (phys_bytes) 0);
   if (vir_addr + bytes > fm->mem_len) return( (phys_bytes) 0);
 

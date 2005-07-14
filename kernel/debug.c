@@ -1,17 +1,17 @@
-/* The system call implemented in this file:
- *   m_type:	SYS_DEBUG
- *
- * The parameters for this system call are:
+/* This file implements kernel debugging functionality that is not included
+ * in the standard kernel. Available functionality includes timing of lock
+ * functions and sanity checking of the scheduling queues.
  */
 
-#include "../kernel.h"
-#include "../system.h"
-#include "../proc.h"
-#include "../glo.h"
+#include "kernel.h"
+#include "proc.h"
+#include "debug.h"
 #include <limits.h>
 
-#if ENABLE_LOCK_TIMING
+#if DEBUG_TIME_LOCKS		/* only include code if enabled */
 
+/* Data structures to store lock() timing data. */
+struct lock_timingdata timingdata[TIMING_CATEGORIES];
 static unsigned long starttimes[TIMING_CATEGORIES][2];
 
 #define HIGHCOUNT	0
@@ -42,8 +42,6 @@ void timer_start(int cat, char *name)
 	}
 
 	read_tsc(&starttimes[cat][HIGHCOUNT], &starttimes[cat][LOWCOUNT]);
-
-	return;
 }
 
 void timer_end(int cat)
@@ -102,9 +100,10 @@ void timer_end(int cat)
 	return;
 }
 
-#endif
+#endif /* DEBUG_TIME_LOCKS */
 
-#if ENABLE_K_DEBUGGING		/* only include code if enabled */
+
+#if DEBUG_SCHED_CHECK		/* only include code if enabled */
 
 #define PROCLIMIT 10000
 
@@ -157,7 +156,7 @@ check_runqueues(char *when)
   }	
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
-	if(! isempty(xp) && xp->p_ready && ! xp->p_found) {
+	if(! isemptyp(xp) && xp->p_ready && ! xp->p_found) {
 		kprintf("scheduling error: ready not on queue: %s\n", (karg_t) when);
 		panic("ready proc not on scheduling queue", NO_NUM);
 		if(l++ > PROCLIMIT) { panic("loop in proc.t?", NO_NUM); }
@@ -165,8 +164,4 @@ check_runqueues(char *when)
   }
 }
 
-/*==========================================================================*
- *				do_debug 				    *
- *==========================================================================*/
-
-#endif	/* ENABLE_K_DEBUGGING */
+#endif /* DEBUG_SCHED_CHECK */

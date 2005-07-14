@@ -8,10 +8,10 @@
  *    m2_l2:    CTL_DATA        data to be written or returned here
  */
 
-#include "../kernel.h"
 #include "../system.h"
 #include <sys/ptrace.h>
 
+#if USE_TRACE
 
 /*==========================================================================*
  *				do_trace				    *
@@ -138,3 +138,4 @@ register message *m_ptr;
   return(OK);
 }
 
+#endif /* USE_TRACE */

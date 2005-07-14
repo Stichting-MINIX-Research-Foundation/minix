@@ -1,22 +1,21 @@
-/* General constants used by the kernel. */
+/* General macros and constants used by the kernel. */
+#ifndef CONST_H
+#define CONST_H
 
 #include <ibm/interrupt.h>	/* interrupt numbers and hardware vectors */
 #include <ibm/ports.h>		/* port addresses and magic numbers */
 #include <ibm/bios.h>		/* BIOS addresses, sizes and magic numbers */
 #include <ibm/cpu.h>		/* BIOS addresses, sizes and magic numbers */
 #include <minix/config.h>
+#include "config.h"
 
 /* To translate an address in kernel space to a physical address.  This is
  * the same as umap_local(proc_ptr, D, vir, sizeof(*vir)), but less costly.
  */
 #define vir2phys(vir)	(kinfo.data_base + (vir_bytes) (vir))
 
-/* Constants used in virtual_copy(). Values must be 0 and 1, respectively! */
-#define _SRC_	0
-#define _DST_	1
-
 /* Translate a pointer to a field in a structure to a pointer to the structure
- * itself.  So it translates '&struct_ptr->field' back to 'struct_ptr'.
+ * itself. So it translates '&struct_ptr->field' back to 'struct_ptr'.
  */
 #define structof(type, field, ptr) \
 	((type *) (((char *) (ptr)) - offsetof(type, field)))
@@ -24,30 +23,9 @@
 /* How many bytes for the kernel stack. Space allocated in mpx.s. */
 #define K_STACK_BYTES   1024	
 
-/* How long should the process names be in the kernel? */
-#define P_NAME_LEN	8
-
-/* Scheduling quantum. Number of ticks before preemption. */
-#define SCHED_MILLISEC         100		/* rate to call scheduler */
-#define SCHED_TICKS  (SCHED_MILLISEC*HZ/1000)	/* ticks per schedule */
-
-/* How many bytes should the circular buffer for kernel diagnostics. */
-#define KMESS_BUF_SIZE   256   	
-
-/* Maximum size in bytes for (port,value)-pairs vector to copy in. */
-#define VDEVIO_BUF_SIZE   64
-
-/* How many elements in vector of virtual copy requests. */
-#define VCOPY_VEC_SIZE    16
-
-/* How many IRQ hooks are there in total. */
-#define NR_IRQ_HOOKS	  16
-
-/* How many buffers for notification messages should there be? */
-#define NR_NOTIFY_BUFS	  32
-
-/* Buffer to gather randomness. How many entries before wrapping? */
-#define RANDOM_ELEMENTS   32
+/* Constants used in virtual_copy(). Values must be 0 and 1, respectively. */
+#define _SRC_	0
+#define _DST_	1
 
 /* Constants and macros for bit map manipulation. */
 #define BITCHUNK_BITS   (sizeof(bitchunk_t) * CHAR_BIT)
@@ -57,6 +35,14 @@
 #define GET_BIT(map,bit) ( MAP_CHUNK(map,bit) & (1 << CHUNK_OFFSET(bit) )
 #define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) )
 #define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) )
+
+#define get_sys_bit(map,bit) \
+	( MAP_CHUNK(map.chunk,bit) & (1 << CHUNK_OFFSET(bit) )
+#define set_sys_bit(map,bit) \
+	( MAP_CHUNK(map.chunk,bit) |= (1 << CHUNK_OFFSET(bit) )
+#define unset_sys_bit(map,bit) \
+	( MAP_CHUNK(map.chunk,bit) &= ~(1 << CHUNK_OFFSET(bit) )
+#define NR_SYS_CHUNKS	BITMAP_CHUNKS(NR_SYS_PROCS)
 
 
 #if (CHIP == INTEL)
@@ -70,29 +56,18 @@
 #define IF_MASK 0x00000200
 #define IOPL_MASK 0x003000
 
-#if ENABLE_LOCK_TIMING
-#define locktimestart(c, v) timer_start(c, v)
-#define locktimeend(c) timer_end(c)
-#else
-#define locktimestart(c, v)
-#define locktimeend(c)
-#endif
-
-#if ENABLE_K_LOCKCHECK
-#define lockcheck if(!(read_cpu_flags() & X86_FLAG_I)) kinfo.relocking++;
-#else
-#define lockcheck
-#endif
-
-/* Disable/Enable hardware interrupts. */
-#define lock(c, v)	do { lockcheck; intr_disable(); locktimestart(c, v); } while(0)
-#define unlock(c)	do { locktimeend(c); intr_enable(); } while(0)
+/* Disable/ enable hardware interrupts. The parameters of lock() and unlock()
+ * are used when debugging is enabled. See debug.h for more information.
+ */
+#define lock(c, v)	intr_disable(); 
+#define unlock(c)	intr_enable(); 
 
 /* Sizes of memory tables. The boot monitor distinguishes three memory areas, 
  * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed
  * for DOS MINIX.
  */
-#define NR_MEMS            8	/* number of chunks of memory */
+#define NR_MEMS            8	
+
 
 #endif /* (CHIP == INTEL) */
 
@@ -100,7 +75,4 @@
 /* M68000 specific constants go here. */
 #endif /* (CHIP == M68000) */
 
-#if ENABLE_INT_TIMING
-#define INT_TIMING_BITS		12
-#define INT_TIMING_ELEMENTS	(1L << 12)
-#endif
+#endif /* CONST_H */

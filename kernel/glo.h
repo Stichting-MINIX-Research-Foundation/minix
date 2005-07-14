@@ -1,7 +1,10 @@
+#ifndef GLO_H
+#define GLO_H
+
 /* Global variables used in the kernel. This file contains the declarations;
  * storage space for the variables is allocated in table.c, because EXTERN is
  * defined as extern unless the _TABLE definition is seen. We rely on the 
- * compiler's default initialization (0) for several global variables.
+ * compiler's default initialization (0) for several global variables. 
  */
 #ifdef _TABLE
 #undef EXTERN
@@ -9,6 +12,7 @@
 #endif
 
 #include <minix/config.h>
+#include "config.h"
 
 /* Variables relating to shutting down MINIX. */
 EXTERN char kernel_exception;		/* TRUE after system exceptions */
@@ -42,11 +46,6 @@ EXTERN irq_hook_t *irq_handlers[NR_IRQ_VECTORS];/* list of IRQ handlers */
 EXTERN int irq_actids[NR_IRQ_VECTORS];		/* IRQ ID bits active */
 EXTERN int irq_use;				/* map of all in-use irq's */
 
-/* Data structure to store lock() timing data. */
-#if ENABLE_LOCK_TIMING
-EXTERN struct lock_timedata timingdata[TIMING_CATEGORIES];
-#endif
-
 /* Miscellaneous. */
 EXTERN reg_t mon_ss, mon_sp;		/* boot monitor stack */
 EXTERN int mon_return;			/* true if we can return to monitor */
@@ -63,3 +62,4 @@ EXTERN _PROTOTYPE( void (*level0_func), (void) );
 /* M68000 specific variables go here. */
 #endif
 
+#endif /* GLO_H */

@@ -9,14 +9,13 @@
  *     kmemset:		set n bytes to c starting at pointer p
  *     kprintf:		printf for the kernel (see working below) 
  *     kstrcmp:		lexicographical comparison of two strings
- *     kstrlen:		get number of non-null characters in string
  *     kstrncpy:	copy string and pad or copy up to n chars 
  *
  * This file contains the routines that take care of kernel messages, i.e.,
  * diagnostic output within the kernel. Kernel messages are not directly
  * displayed on the console, because this must be done by the PRINT driver. 
  * Instead, the kernel accumulates characters in a buffer and notifies the
- * PRINT driver when a new message is ready. 
+ * output driver when a new message is ready. 
  */
 
 #include "kernel.h"
@@ -154,29 +153,16 @@ int c;					/* character to append */
 /* Accumulate a single character for a kernel message. Send a notification
  * the to PRINTF_PROC driver if an END_OF_KMESS is encountered. 
  */
-  message m;
   if (c != END_OF_KMESS) {
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
       if (kmess.km_size < KMESS_BUF_SIZE)
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
-      m.NOTIFY_TYPE = NEW_KMESS;
-      lock_notify(PRINTF_PROC, &m);
+      lock_alert(SYSTEM, PRINTF_PROC);
   }
 }
 
-
-/*=========================================================================*
- *				kstrlen		 			   *
- *=========================================================================*/
-PUBLIC size_t kstrlen(const char *org)
-{
-  register const char *s = org;
-  while (*s++)
-	/* EMPTY */ ;
-  return --s - org;
-}
 
 
 /*=========================================================================*
@@ -184,30 +170,11 @@ PUBLIC size_t kstrlen(const char *org)
  *=========================================================================*/
 int kstrcmp(register const char *s1, register const char *s2) 
 {
-  while (*s1 == *s2++) {
+  while (*s1 == *s2++)
       if (*s1++ == '\0') return 0;
-  }
   if (*s1 == '\0') return -1;
   if (*--s2 == '\0') return 1;
   return (unsigned char) *s1 - (unsigned char) *s2;
-}
-
-
-/*=========================================================================*
- *				kstrncmp		 		   *
- *=========================================================================*/
-PUBLIC int kstrncmp(register const char *s1, register const char *s2, register size_t n)
-{
-  while (n > 0  &&  *s1 == *s2++) {
-      if (*s1++ == '\0') return 0;
-      n--;
-  } 
-  if (n > 0) {
-      if (*s1 == '\0') return -1;
-      if (*--s2 == '\0') return 1;
-      return (unsigned char) *s1 - (unsigned char) *s2;
-  }
-  return 0;
 }
 
 

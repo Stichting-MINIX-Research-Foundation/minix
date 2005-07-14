@@ -2,8 +2,8 @@
  * Important events that are handled by the CLOCK include alarm timers and
  * (re)scheduling user processes. 
  * The CLOCK offers a direct interface to kernel processes. System services 
- * can access its services through system calls, such as sys_syncalrm(). The
- * CLOCK task thus is hidden for the outside.  
+ * can access its services through system calls, such as sys_setalarm(). The
+ * CLOCK task thus is hidden for the outside world.  
  *
  * Changes:
  *   Mar 18, 2004   clock interface moved to SYSTEM task (Jorrit N. Herder) 
@@ -29,11 +29,10 @@
  * The watchdog functions of expired timers are executed in do_clocktick(). 
  * It is crucial that watchdog functions cannot block, or the CLOCK task may
  * be blocked. Do not send() a message when the receiver is not expecting it.
- * The use of notify(), which always returns, is strictly preferred! 
+ * Instead, notify(), which always returns, should be used. 
  */
 
 #include "kernel.h"
-#include "debug.h"
 #include "proc.h"
 #include <signal.h>
 #include <minix/com.h>
@@ -159,46 +158,31 @@ message *m_ptr;				/* pointer to request message */
 PRIVATE int clock_handler(hook)
 irq_hook_t *hook;
 {
-/* This executes on every clock tick (i.e., every time the timer chip
- * generates an interrupt). It does a little bit of work so the clock
- * task does not have to be called on every tick.
+/* This executes on each clock tick (i.e., every time the timer chip generates 
+ * an interrupt). It does a little bit of work so the clock task does not have 
+ * to be called on every tick.  The clock task is called when:
  *
- * Switch context to do_clocktick() if an alarm has gone off.
- * Also switch there to reschedule if the reschedule will do something.
- * This happens when
- *	(1) quantum has expired
- *	(2) current process received full quantum (as clock sampled it!)
- *	(3) something else is ready to run.
+ *	(1) the scheduling quantum of the running process has expired, or
+ *	(2) a timer has expired and the watchdog function should be run.
  *
- * Many global global and static variables are accessed here.  The safety
- * of this must be justified.  Most of them are not changed here:
+ * Many global global and static variables are accessed here.  The safety of
+ * this must be justified. All scheduling and message passing code acquires a 
+ * lock by temporarily disabling interrupts, so no conflicts with calls from 
+ * the task level can occur. Furthermore, interrupts are not reentrant, the 
+ * interrupt handler cannot be bothered by other interrupts.
+ * 
+ * Variables that are updated in the clock's interrupt handler:
+ *	lost_ticks:
+ *		Clock ticks counted outside the clock task. This for example
+ *		is used when the boot monitor processes a real mode interrupt.
+ * 	realtime:
+ * 		The current uptime is incremented with all outstanding ticks.
  *	proc_ptr, bill_ptr:
  *		These are used for accounting.  It does not matter if proc.c
  *		is changing them, provided they are always valid pointers,
  *		since at worst the previous process would be billed.
- *	next_timeout, realtime, sched_ticks, bill_ptr, prev_ptr,
- *		These are tested to decide whether to call notify().  It
- *		does not matter if the test is sometimes (rarely) backwards
- *		due to a race, since this will only delay the high-level
- *		processing by one tick, or call the high level unnecessarily.
- * The variables which are changed require more care:
- *	rp->p_user_time, rp->p_sys_time:
- *		These are protected by explicit locks in system.c.
- *	lost_ticks:
- *		Clock ticks counted outside the clock task.
- *	sched_ticks, prev_ptr:
- *		Updating these competes with similar code in do_clocktick().
- *		No lock is necessary, because if bad things happen here
- *		(like sched_ticks going negative), the code in do_clocktick()
- *		will restore the variables to reasonable values, and an
- *		occasional missed or extra sched() is harmless.
- *
- * Are these complications worth the trouble?  Well, they make the system 15%
- * faster on a 5MHz 8088, and make task debugging much easier since there are
- * no task switches on an inactive system.
  */
   register unsigned ticks;
-  message m;
 
   /* Acknowledge the PS/2 clock interrupt. */
   if (machine.ps_mca) outb(PORT_B, inb(PORT_B) | CLOCK_ACK_BIT);
@@ -215,17 +199,16 @@ irq_hook_t *hook;
    */
   proc_ptr->p_user_time += ticks;
   if (proc_ptr != bill_ptr) bill_ptr->p_sys_time += ticks;
-  if (proc_ptr->p_flags & PREEMPTIBLE) proc_ptr->p_sched_ticks -= ticks;
+  if (priv(proc_ptr)->s_flags & PREEMPTIBLE) proc_ptr->p_sched_ticks -= ticks;
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
   if ((next_timeout <= realtime) || (proc_ptr->p_sched_ticks <= 0)) {
       prev_ptr = proc_ptr;			/* store running process */
-      m.NOTIFY_TYPE = HARD_INT;
-      lock_notify(CLOCK, &m);			/* send event notification */
+      lock_alert(HARDWARE, CLOCK);		/* send notification */
   } 
-  return(1);				/* reenable clock interrupts */
+  return(1);					/* reenable interrupts */
 }
 
 
@@ -288,6 +271,7 @@ PRIVATE void init_clock()
   put_irq_handler(&clock_hook, CLOCK_IRQ, clock_handler);/* register handler */
   enable_irq(&clock_hook);		/* ready for clock interrupts */
 }
+
 
 /*===========================================================================*
  *				clock_stop				     *

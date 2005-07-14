@@ -32,7 +32,6 @@
 #include "kernel.h"
 #include "proc.h"
 #include "ipc.h"
-#include "sendmask.h"
 #include <minix/com.h>
 #include <ibm/int86.h>
 
@@ -61,43 +60,46 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * routine and stack size is also provided.
  */
 #define IDLE_F		(PREEMPTIBLE | BILLABLE)
-#define USER_F		(PREEMPTIBLE | SCHED_Q_HEAD)
-#define SYS_F  		(PREEMPTIBLE)
+#define USER_F		(PREEMPTIBLE | RDY_Q_HEAD)
+#define SYS_F  		(PREEMPTIBLE | SYS_PROC)
+#define TCB_F  		(SYS_PROC)	/* trusted computing base */
 
 #define IDLE_T		32		/* ticks */
 #define USER_T		 8		/* ticks */
 #define SYS_T		16		/* ticks */
 
 PUBLIC struct system_image image[] = {
- { IDLE,    idle_task,  IDLE_F, IDLE_T,   IDLE_Q,  IDLE_S,    EMPTY_CALL_MASK, DENY_ALL_MASK,    "IDLE"    },
- { CLOCK,   clock_task, 0, SYS_T,   TASK_Q, CLOCK_S,   SYSTEM_CALL_MASK, ALLOW_ALL_MASK,   "CLOCK"   },
- { SYSTASK, sys_task,   0, SYS_T,   TASK_Q, SYSTEM_S,     SYSTEM_CALL_MASK, ALLOW_ALL_MASK,  "SYS"     },
- { HARDWARE,   0,       0, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_CALL_MASK, ALLOW_ALL_MASK,"HARDW." },
- { PM_PROC_NR, 0,       0, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "PM"      },
- { FS_PROC_NR, 0,       0, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   ALLOW_ALL_MASK,      "FS"      },
- { IS_PROC_NR, 0,       SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,      "IS"      },
- { TTY, 0,              SYS_F, SYS_T, 1, 0,           SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "TTY"      },
- { MEMORY, 0,           SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "MEMORY" },
+ { IDLE,    idle_task,  IDLE_F, IDLE_T,   IDLE_Q,  IDLE_S,    EMPTY_CALL_MASK, 0,    "IDLE"    },
+ { CLOCK,   clock_task, TCB_F, SYS_T,   TASK_Q, CLOCK_S,   SYSTEM_CALL_MASK, 0,   "CLOCK"   },
+ { SYSTEM,  sys_task,   TCB_F, SYS_T,   TASK_Q, SYSTEM_S,     SYSTEM_CALL_MASK, 0,  "SYS"     },
+ { HARDWARE,   0,       0, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_CALL_MASK, 0,"KERNEL" },
+ { PM_PROC_NR, 0,       TCB_F, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   0,      "PM"      },
+ { FS_PROC_NR, 0,       TCB_F, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   0,      "FS"      },
+ { IS_PROC_NR, 0,       SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,      "IS"      },
+ { TTY, 0,              SYS_F, SYS_T, 1, 0,           SYSTEM_CALL_MASK, 0,      "TTY"      },
+ { MEMORY, 0,           SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,     "MEMORY" },
 #if ENABLE_AT_WINI
- { AT_WINI, 0,            SYS_F, SYS_T, 2, 0,          SYSTEM_CALL_MASK, ALLOW_ALL_MASK,      "AT_WINI" },
+ { AT_WINI, 0,            SYS_F, SYS_T, 2, 0,          SYSTEM_CALL_MASK, 0,      "AT_WINI" },
 #endif
 #if ENABLE_FLOPPY
- { FLOPPY, 0,            SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FLOPPY" },
+ { FLOPPY, 0,            SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,  "FLOPPY" },
 #endif
 #if ENABLE_PRINTER
- { PRINTER, 0,            SYS_F, SYS_T, 3, 0,         SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,     "PRINTER" },
+ { PRINTER, 0,            SYS_F, SYS_T, 3, 0,         SYSTEM_CALL_MASK,  0,     "PRINTER" },
 #endif
 #if ENABLE_RTL8139
- { USR8139, 0,            SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "RTL8139" },
+ { USR8139, 0,            SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,  "RTL8139" },
 #endif
 #if ENABLE_FXP
- { FXP, 0,                SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "FXP" },
+ { FXP, 0,                SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,  "FXP" },
 #endif
 #if ENABLE_DPETH
- { DPETH, 0,              SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "DPETH" },
+ { DPETH, 0,              SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,  "DPETH" },
 #endif
- { LOG_PROC_NR, 0,     SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  ALLOW_ALL_MASK,  "LOG" },
- { INIT_PROC_NR, 0,    USER_F, USER_T, USER_Q, 0,         USER_CALL_MASK,    USER_PROC_SENDMASK,    "INIT"    },
+#if ENABLE_LOG
+ { LOG_PROC_NR, 0,     SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,  "LOG" },
+#endif
+ { INIT_PROC_NR, 0,    USER_F, USER_T, USER_Q, 0,         USER_CALL_MASK,    0,  "INIT"    },
 };
 
 /* Verify the size of the system image table at compile time. If the number 
@@ -105,5 +107,5 @@ PUBLIC struct system_image image[] = {
  * a compile time error. Note that no space is allocated because 'dummy' is
  * declared extern.
   */
-extern int dummy[(IMAGE_SIZE==sizeof(image)/sizeof(struct system_image))?1:-1];
+extern int dummy[(NR_BOOT_PROCS==sizeof(image)/sizeof(struct system_image))?1:-1];
 

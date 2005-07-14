@@ -8,13 +8,12 @@ typedef _PROTOTYPE( void task_t, (void) );
  */
 typedef long karg_t;			/* use largest type here */
 
-/* Process related types. 
- * A process number defines the index into the process table. With a signed
- * short we can support up to 256 user processes and more kernel tasks than
- * one can ever create.
- */ 
-typedef short proc_nr_t;		/* process table entry number */
-typedef unsigned long send_mask_t;	/* bit mask for sender */
+/* Process table and system property related types. */ 
+typedef int proc_nr_t;			/* process table entry number */
+typedef short sys_id_t;			/* system process index */
+typedef struct {			/* bitmap for system indexes */
+  bitchunk_t chunk[BITMAP_CHUNKS(NR_SYS_PROCS)];
+} sys_map_t;
 
 struct system_image {
   proc_nr_t proc_nr;			/* process number to use */
@@ -24,7 +23,7 @@ struct system_image {
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
   char call_mask;			/* allowed system calls */
-  send_mask_t sendmask;			/* send mask protection */
+  long send_mask;			/* send mask protection */
   char proc_name[P_NAME_LEN];		/* name in process table */
 };
 

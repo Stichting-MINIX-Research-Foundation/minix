@@ -215,7 +215,6 @@ vir_bytes size;
 int privilege;
 {
 /* Build descriptor for a data segment. */
-
   sdesc(segdp, base, size);
   segdp->access = (privilege << DPL_SHIFT) | (PRESENT | SEGMENT | WRITEABLE);
 		/* EXECUTABLE = 0, EXPAND_DOWN = 0, ACCESSED = 0 */

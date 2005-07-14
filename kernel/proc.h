@@ -12,6 +12,7 @@
 #include <minix/com.h>
 #include "protect.h"
 #include "const.h"
+#include "priv.h"
  
 struct proc {
   struct stackframe_s p_reg;	/* process' registers saved in stack frame */
@@ -25,9 +26,8 @@ struct proc {
 /* M68000 specific registers and FPU details go here. */
 #endif 
 
-  reg_t *p_stguard;		/* stack guard word */
   proc_nr_t p_nr;		/* number of this process (for fast access) */
-  char p_flags;			/* PREEMTIBLE, BILLABLE, etc. */
+  struct priv *p_priv;		/* system privileges structure */
   char p_rts_flags;		/* SENDING, RECEIVING, etc. */
 
   char p_priority;		/* current scheduling priority */
@@ -36,11 +36,7 @@ struct proc {
   char p_sched_ticks;		/* number of scheduling ticks left */
   char p_full_quantums;		/* number of full quantums left */
 
-  char p_call_mask;		/* bit map with allowed system call traps */
-  send_mask_t p_sendmask;	/* mask indicating to whom proc may send */
-
-  struct mem_map p_memmap[NR_LOCAL_SEGS];   /* local memory map (T, D, S) */
-  struct far_mem p_farmem[NR_REMOTE_SEGS];  /* remote memory map */
+  struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
 
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
@@ -53,18 +49,14 @@ struct proc {
   proc_nr_t p_getfrom;		/* from whom does process want to receive? */
   proc_nr_t p_sendto;		/* to whom does process want to send? */
 
-  timer_t p_alarm_timer;	/* timer shared by different alarm types */ 
   sigset_t p_pending;		/* bit map for pending kernel signals */
 
   char p_name[P_NAME_LEN];	/* name of the process, including \0 */
 
-#if ENABLE_K_DEBUGGING
+#if DEBUG_SCHED_CHECK
   int p_ready, p_found;
 #endif
 };
-
-/* Guard word for task stacks. */
-#define STACK_GUARD	((reg_t) (sizeof(reg_t) == 2 ? 0xBEEF : 0xDEADBEEF))
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
 #define SLOT_FREE	0x01	/* process slot is free */
@@ -74,11 +66,7 @@ struct proc {
 #define SIGNALED	0x10	/* set when new kernel signal arrives */
 #define SIG_PENDING	0x20	/* unready while signal being processed */
 #define P_STOP		0x40	/* set when process is being traced */
-
-/* Bits for the other process flags. */
-#define PREEMPTIBLE	0x01	/* kernel tasks are not preemptible */
-#define SCHED_Q_HEAD    0x02	/* add to queue head instead of tail */
-#define BILLABLE	0x04	/* system services are not billable */
+#define NO_PRIV		0x80	/* privilege structure not yet initialized */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment. Priorities of the processes in the boot image can 

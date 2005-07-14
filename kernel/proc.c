@@ -38,14 +38,10 @@
  * nonempty lists. As shown above, this is not required with pointer pointers.
  */
 
-#include "kernel.h"
-#include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/callnr.h>
+#include "kernel.h"
 #include "proc.h"
-#include "const.h"
-#include "debug.h"
-#include "ipc.h"
-#include "sendmask.h"
 
 
 /* Scheduling and message passing functions. The functions are available to 
@@ -56,6 +52,7 @@ FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst,
 		message *m_ptr, unsigned flags) );
 FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
 		message *m_ptr, unsigned flags) );
+FORWARD _PROTOTYPE( int mini_alert, (struct proc *caller_ptr, int dst) );
 FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst,
 		message *m_ptr ) );
 
@@ -64,11 +61,21 @@ FORWARD _PROTOTYPE( void unready, (struct proc *rp) );
 FORWARD _PROTOTYPE( void sched, (struct proc *rp) );
 FORWARD _PROTOTYPE( void pick_proc, (void) );
 
-#define BuildMess(m,n) \
+
+#define BuildOldMess(m,n) \
 	(m).NOTIFY_SOURCE = (n)->n_source, \
 	(m).NOTIFY_TYPE = (n)->n_type, \
 	(m).NOTIFY_FLAGS = (n)->n_flags, \
 	(m).NOTIFY_ARG = (n)->n_arg;
+
+#define BuildMess(m_ptr, src, dst_ptr) \
+	(m_ptr)->m_source = (src); 					\
+	(m_ptr)->m_type = NOTIFY_FROM(src);				\
+	(m_ptr)->NOTIFY_TIMESTAMP = get_uptime();			\
+	if ((src) == HARDWARE) {					\
+		(m_ptr)->NOTIFY_ARG = priv(dst_ptr)->s_int_pending;	\
+		priv(dst_ptr)->s_int_pending = 0;			\
+	}
 
 #if (CHIP == INTEL)
 #define CopyMess(s,sp,sm,dp,dm) \
@@ -107,7 +114,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * kernel may only be SENDREC, because tasks always reply and may not block 
    * if the caller doesn't do receive(). 
    */
-  if (! (caller_ptr->p_call_mask & (1 << function)) || 
+  if (! (priv(caller_ptr)->s_call_mask & (1 << function)) || 
           (iskerneln(src_dst) && function != SENDREC))  
       return(ECALLDENIED);	
   
@@ -115,6 +122,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
   if (! (isokprocn(src_dst) || src_dst == ANY || function == ECHO))  
       return(EBADSRCDST);
 
+#if DEAD_CODE		/* temporarily disabled for testing ALERT */
   /* Check validity of message pointer. */
   vb = (vir_bytes) m_ptr;
   vlo = vb >> CLICK_SHIFT;	/* vir click for bottom of message */
@@ -132,6 +140,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
   if (vhi < vlo ||
       vhi - caller_ptr->p_memmap[D].mem_vir >= caller_ptr->p_memmap[D].mem_len) 
         return(EFAULT); 
+#endif
 #endif
 
   /* Now check if the call is known and try to perform the request. The only
@@ -169,6 +178,9 @@ message *m_ptr;			/* pointer to message in the caller's space */
   case RECEIVE:			
       result = mini_receive(caller_ptr, src_dst, m_ptr, flags);
       break;
+  case ALERT:
+      result = mini_alert(caller_ptr, src_dst);
+      break;
   case NOTIFY:
       result = mini_notify(caller_ptr, src_dst, m_ptr);
       break;
@@ -182,14 +194,16 @@ message *m_ptr;			/* pointer to message in the caller's space */
   }
   
   /* If the caller made a successfull, blocking system call it's priority may
-   * be raised. The priority have been lowered if a process consumed to many 
-   * full quantums in a row to prevent damage from infinite loops 
+   * be raised. The priority may have been lowered if a process consumed too 
+   * many full quantums in a row to prevent damage from infinite loops 
    */
+#if DEAD_CODE		/* temporarily disabled for testing ALERT */
   if ((caller_ptr->p_priority > caller_ptr->p_max_priority) && 
          ! (flags & NON_BLOCKING) && (result == OK)) {
       caller_ptr->p_priority = caller_ptr->p_max_priority;
       caller_ptr->p_full_quantums = QUANTUMS(caller_ptr->p_priority);
   }
+#endif
 
   /* Now, return the result of the system call to the caller. */
   return(result);
@@ -264,12 +278,57 @@ unsigned flags;				/* system call flags */
   register struct notification **ntf_q_pp;
   message m;
   int bit_nr;
+  sys_map_t *map;
+  bitchunk_t *chunk;
+  int i, src_id, src_proc_nr;
 
   /* Check to see if a message from desired source is already available.
    * The caller's SENDING flag may be set if SENDREC couldn't send. If it is
    * set, the process should be blocked.
    */
   if (!(caller_ptr->p_rts_flags & SENDING)) {
+
+    /* Check if there are pending notifications, except for SENDREC. */
+    if (! (flags & FRESH_ANSWER)) {
+
+        map = &priv(caller_ptr)->s_notify_pending;
+        for (chunk=&map->chunk[0]; chunk<&map->chunk[NR_SYS_CHUNKS]; chunk++) {
+
+            /* Find a pending notification from the requested source. */ 
+            if (! *chunk) continue; 			/* no bits in chunk */
+            for (i=0; ! (*chunk & (1<<i)); ++i) {} 	/* look up the bit */
+            src_id = (chunk - &map->chunk[0]) * BITCHUNK_BITS + i;
+            if (src_id >= NR_SYS_PROCS) break;		/* out of range */
+            src_proc_nr = id_to_nr(src_id);		/* get source proc */
+            if (src!=ANY && src!=src_proc_nr) continue;	/* source not ok */
+            *chunk &= ~(1 << i);			/* no longer pending */
+
+            /* Found a suitable source, deliver the notification message. */
+	    BuildMess(&m, src_proc_nr, caller_ptr);	/* assemble message */
+            CopyMess(src_proc_nr, proc_addr(HARDWARE), &m, caller_ptr, m_ptr);
+            return(OK);					/* report success */
+        }
+
+        ntf_q_pp = &caller_ptr->p_ntf_q;	/* get pointer pointer */
+        while (*ntf_q_pp != NULL) {
+            if (src == ANY || src == (*ntf_q_pp)->n_source) {
+		/* Found notification. Assemble and copy message. */
+		BuildOldMess(m, *ntf_q_pp);
+     		if (m.m_source == HARDWARE) {
+          		m.NOTIFY_ARG = caller_ptr->p_priv->s_int_pending;
+          		caller_ptr->p_priv->s_int_pending = 0;
+      		}
+                CopyMess((*ntf_q_pp)->n_source, proc_addr(HARDWARE), &m, 
+                	caller_ptr, m_ptr);
+                /* Remove notification from queue and bit map. */
+                bit_nr = (int) (*ntf_q_pp - &notify_buffer[0]);  
+                *ntf_q_pp = (*ntf_q_pp)->n_next;/* remove from queue */
+                free_bit(bit_nr, notify_bitmap, NR_NOTIFY_BUFS);
+                return(OK);			/* report success */
+	    }
+	    ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
+        }
+    }
 
     /* Check caller queue. Use pointer pointers to keep code simple. */
     xpp = &caller_ptr->p_caller_q;
@@ -284,25 +343,6 @@ unsigned flags;				/* system call flags */
 	xpp = &(*xpp)->p_q_link;		/* proceed to next */
     }
 
-    /* Check if there are pending notifications, except for SENDREC. */
-    if (! (flags & FRESH_ANSWER)) {
-
-        ntf_q_pp = &caller_ptr->p_ntf_q;	/* get pointer pointer */
-        while (*ntf_q_pp != NULL) {
-            if (src == ANY || src == (*ntf_q_pp)->n_source) {
-		/* Found notification. Assemble and copy message. */
-		BuildMess(m, *ntf_q_pp);
-                CopyMess((*ntf_q_pp)->n_source, proc_addr(HARDWARE), &m, 
-                	caller_ptr, m_ptr);
-                /* Remove notification from queue and bit map. */
-                bit_nr = (int) (*ntf_q_pp - &notify_buffer[0]);  
-                *ntf_q_pp = (*ntf_q_pp)->n_next;/* remove from queue */
-                free_bit(bit_nr, notify_bitmap, NR_NOTIFY_BUFS);
-                return(OK);			/* report success */
-	    }
-	    ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
-        }
-    }
   }
 
   /* No suitable message is available or the caller couldn't send in SENDREC. 
@@ -317,6 +357,45 @@ unsigned flags;				/* system call flags */
   } else {
       return(ENOTREADY);
   }
+}
+
+
+/*===========================================================================*
+ *				mini_alert				     * 
+ *===========================================================================*/
+PRIVATE int mini_alert(caller_ptr, dst)
+register struct proc *caller_ptr;	/* sender of the notification */
+int dst;				/* which process to notify */
+{
+  register struct proc *dst_ptr = proc_addr(dst);
+  int src_id;				/* source id for late delivery */
+  message m;				/* the notification message */
+
+  /* Check to see if target is blocked waiting for this message. A process 
+   * can be both sending and receiving during a SENDREC system call.
+   */
+  if ((dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
+      (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
+
+      /* Destination is indeed waiting for a message. Assemble a notification 
+       * message and deliver it. Copy from pseudo-source HARDWARE, since the
+       * message is in the kernel's address space.
+       */ 
+      BuildMess(&m, proc_nr(caller_ptr), dst_ptr);
+      CopyMess(proc_nr(caller_ptr), proc_addr(HARDWARE), &m, 
+          dst_ptr, dst_ptr->p_messbuf);
+      dst_ptr->p_rts_flags &= ~RECEIVING;	/* deblock destination */
+      if (dst_ptr->p_rts_flags == 0) ready(dst_ptr);
+      return(OK);
+  } 
+
+  /* Destination is not ready to receive the notification. Add it to the 
+   * bit map with pending notifications. Note the indirectness: the system id 
+   * instead of the process number is used in the pending bit map.
+   */ 
+  src_id = priv(caller_ptr)->s_id;
+  set_sys_bit(priv(dst_ptr)->s_notify_pending, src_id); 
+  return(OK);
 }
 
 
@@ -337,15 +416,22 @@ message *m_ptr;				/* pointer to message buffer */
   /* Check to see if target is blocked waiting for this message. A process 
    * can be both sending and receiving during a SENDREC system call.
    */
-  if ( (dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
-       (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
+  if ((dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
+      (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
 
-	/* Destination is indeed waiting for this message. */
-	CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, 
-		dst_ptr, dst_ptr->p_messbuf);
-	dst_ptr->p_rts_flags &= ~RECEIVING;	/* deblock destination */
-	if (dst_ptr->p_rts_flags == 0) ready(dst_ptr);
-	return(OK);
+      /* Destination is indeed waiting for this message. Check if the source
+       * is HARDWARE; this is a special case that gets the map of pending
+       * interrupts as an argument. Then deliver the notification message. 
+       */
+      if (proc_nr(caller_ptr) == HARDWARE) {
+          m_ptr->NOTIFY_ARG = priv(dst_ptr)->s_int_pending;
+          priv(dst_ptr)->s_int_pending = 0;
+      }
+
+      CopyMess(proc_nr(caller_ptr), caller_ptr, m_ptr, dst_ptr, dst_ptr->p_messbuf);
+      dst_ptr->p_rts_flags &= ~RECEIVING;	/* deblock destination */
+      if (dst_ptr->p_rts_flags == 0) ready(dst_ptr);
+      return(OK);
   } 
 
   /* Destination is not ready. Add the notification to the pending queue. 
@@ -389,26 +475,27 @@ message *m_ptr;				/* pointer to message buffer */
 /*==========================================================================*
  *				lock_notify				    *
  *==========================================================================*/
-PUBLIC int lock_notify(dst, m_ptr)
-int dst;			/* to whom is message being sent? */
-message *m_ptr;			/* pointer to message buffer */
+PUBLIC int lock_alert(src, dst)
+int src;			/* sender of the notification */
+int dst;			/* who is to be notified */
 {
-/* Safe gateway to mini_notify() for tasks and interrupt handlers. MINIX 
+/* Safe gateway to mini_notify() for tasks and interrupt handlers. The sender
+ * is explicitely given to prevent confusion where the call comes from. MINIX 
  * kernel is not reentrant, which means to interrupts are disabled after 
  * the first kernel entry (hardware interrupt, trap, or exception). Locking
- * work is done by temporarily disabling interrupts. 
+ * is done by temporarily disabling interrupts. 
  */
   int result;
 
   /* Exception or interrupt occurred, thus already locked. */
   if (k_reenter >= 0) {
-      result = mini_notify(proc_addr(HARDWARE), dst, m_ptr); 
+      result = mini_alert(proc_addr(src), dst); 
   }
 
   /* Call from task level, locking is required. */
   else {
-      lock(0, "notify");
-      result = mini_notify(proc_ptr, dst, m_ptr); 
+      lock(0, "alert");
+      result = mini_alert(proc_addr(src), dst); 
       unlock(0);
   }
   return(result);
@@ -424,11 +511,9 @@ register struct proc *rp;	/* this process is now runnable */
 /* Add 'rp' to one of the queues of runnable processes.  */
   register int q = rp->p_priority;		/* scheduling queue to use */
 
-#if ENABLE_K_DEBUGGING
-  if(rp->p_ready) {
-	kprintf("ready() already ready process\n", NO_NUM);
-  }
-  rp->p_ready = 1;
+#if DEBUG_SCHED_CHECK
+  check_runqueues("ready");
+  if(rp->p_ready) kprintf("ready() already ready process\n", NO_NUM);
 #endif
 
   /* Processes, in principle, are added to the end of the queue. However, 
@@ -439,7 +524,7 @@ register struct proc *rp;	/* this process is now runnable */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   } 
-  else if (rp->p_flags & SCHED_Q_HEAD) {	/* add to head of queue */
+  else if (priv(rp)->s_flags & RDY_Q_HEAD) {    /* add to head of queue */
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
       rdy_head[q] = rp;				/* set new queue head */
   } 
@@ -449,6 +534,11 @@ register struct proc *rp;	/* this process is now runnable */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   }
   pick_proc();					/* select next to run */
+
+#if DEBUG_SCHED_CHECK
+  rp->p_ready = 1;
+  check_runqueues("ready");
+#endif
 }
 
 /*===========================================================================*
@@ -463,18 +553,16 @@ register struct proc *rp;	/* this process is no longer runnable */
   register struct proc **xpp;			/* iterate over queue */
   register struct proc *prev_xp;
 
-#if ENABLE_K_DEBUGGING
-  if(!rp->p_ready) {
-	kprintf("unready() already unready process\n", NO_NUM);
-  }
-  rp->p_ready = 0;
-#endif
-
   /* Side-effect for kernel: check if the task's stack still is ok? */
   if (iskernelp(rp)) { 				
-	if (*rp->p_stguard != STACK_GUARD)
+	if (*priv(rp)->s_stack_guard != STACK_GUARD)
 		panic("stack overrun by task", proc_nr(rp));
   }
+
+#if DEBUG_SCHED_CHECK
+  check_runqueues("unready");
+  if (! rp->p_ready) kprintf("unready() already unready process\n", NO_NUM);
+#endif
 
   /* Now make sure that the process is not in its ready queue. Remove the 
    * process if it is found. A process can be made unready even if it is not 
@@ -493,6 +581,11 @@ register struct proc *rp;	/* this process is no longer runnable */
       }
       prev_xp = *xpp;				/* save previous in chain */
   }
+
+#if DEBUG_SCHED_CHECK
+  rp->p_ready = 0;
+  check_runqueues("unready");
+#endif
 }
 
 /*===========================================================================*
@@ -504,16 +597,19 @@ struct proc *sched_ptr;				/* quantum eating process */
   int q;
 
   /* Check if this process is preemptible, otherwise leave it as is. */
-  if (! (sched_ptr->p_flags & PREEMPTIBLE)) { 
+  if (! (priv(sched_ptr)->s_flags & PREEMPTIBLE)) { 
+#if DEAD_CODE
       kprintf("Warning, sched for nonpreemptible proc %d\n", sched_ptr->p_nr);
+#endif
       return;
   }
 
+#if DEAD_CODE
   if (sched_ptr->p_nr == IS_PROC_NR) {
       kprintf("Scheduling IS: pri: %d, ", sched_ptr->p_priority);
       kprintf("qua %d", sched_ptr->p_full_quantums);
   }
-
+#endif
   /* Process exceeded the maximum number of full quantums it is allowed
    * to use in a row. Lower the process' priority, but make sure we don't 
    * end up in the IDLE queue. This helps to limit the damage caused by 
@@ -525,8 +621,10 @@ struct proc *sched_ptr;				/* quantum eating process */
           unready(sched_ptr);			/* remove from queues */
           sched_ptr->p_priority ++; 		/* lower priority */
           ready(sched_ptr);			/* add to new queue */
+#if DEAD_CODE
 kprintf("Warning, proc %d got lower priority: ", sched_ptr->p_nr);
 kprintf("%d\n", sched_ptr->p_priority);
+#endif
       }
       sched_ptr->p_full_quantums = QUANTUMS(sched_ptr->p_priority);
   }
@@ -548,12 +646,13 @@ kprintf("%d\n", sched_ptr->p_priority);
   sched_ptr->p_sched_ticks = sched_ptr->p_quantum_size;
   pick_proc();					
 
+#if DEAD_CODE
   if (sched_ptr->p_nr == IS_PROC_NR) {
       kprintf("Next proc: %d, ", next_ptr->p_nr); 
       kprintf("pri: %d, ", next_ptr->p_priority); 
       kprintf("qua: %d\n", next_ptr->p_full_quantums); 
-
   }
+#endif
 }
 
 
@@ -576,7 +675,7 @@ PRIVATE void pick_proc()
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
       if ( (rp = rdy_head[q]) != NIL_PROC) {
           next_ptr = rp;			/* run process 'rp' next */
-          if (rp->p_flags & BILLABLE)	 	
+          if (priv(rp)->s_flags & BILLABLE)	 	
               bill_ptr = rp;			/* bill for system time */
           return;				 
       }

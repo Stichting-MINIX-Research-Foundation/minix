@@ -1,61 +1,3 @@
-#include "../kernel.h"
-#include "../system.h"
-#include <unistd.h>
-#include <minix/config.h>
-
-
-/*===========================================================================*
- *			          do_unused				     *
- *===========================================================================*/
-PUBLIC int do_unused(m)
-message *m;				/* pointer to request message */
-{
-  kprintf("SYS task got illegal request from %d.", m->m_source);
-  return(EBADREQUEST);		/* illegal message type */
-}
-
-
-
-/* The system call implemented in this file:
- *   m_type:	SYS_ABORT
- *
- * The parameters for this system call are:
- *    m1_i1:	ABRT_HOW 	(how to abort, possibly fetch monitor params)	
- *    m1_i2:	ABRT_MON_PROC 	(proc nr to get monitor params from)	
- *    m1_i3:	ABRT_MON_LEN	(length of monitor params)
- *    m1_p1:	ABRT_MON_ADDR 	(virtual address of params)	
- */
-
-/*===========================================================================*
- *				do_abort				     *
- *===========================================================================*/
-PUBLIC int do_abort(m_ptr)
-message *m_ptr;			/* pointer to request message */
-{
-/* Handle sys_abort. MINIX is unable to continue. This can originate in the
- * PM (normal abort or panic) or FS (panic), or TTY (a CTRL-ALT-DEL or ESC
- * after debugging dumps).
- */
-  int how = m_ptr->ABRT_HOW;
-  
-  if (how == RBT_MONITOR) {
-      /* The monitor is to run the specified instructions. */
-      int proc_nr = m_ptr->ABRT_MON_PROC;
-      int length = m_ptr->ABRT_MON_LEN + 1;
-      vir_bytes src_vir = (vir_bytes) m_ptr->ABRT_MON_ADDR;
-      phys_bytes src_phys = numap_local(proc_nr, src_vir, length);
-
-      /* Validate length and address of shutdown code before copying. */
-      if (length > kinfo.params_size || src_phys == 0) 
-	  phys_copy(vir2phys("delay;boot"), kinfo.params_base, 11);
-      else
-          phys_copy(src_phys, kinfo.params_base, (phys_bytes) length);
-  }
-  prepare_shutdown(how);
-  return(OK);				/* pro-forma (really EDISASTER) */
-}
-
-
 /* The system call implemented in this file:
  *   m_type:	SYS_GETINFO
  *
@@ -70,6 +12,10 @@ message *m_ptr;			/* pointer to request message */
  * Author:
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
+
+#include "../system.h"
+
+#if USE_GETINFO
 
 /*===========================================================================*
  *			        do_getinfo				     *
@@ -96,7 +42,7 @@ register message *m_ptr;	/* pointer to request message */
     	break;
     }
     case GET_IMAGE: {
-    	length = sizeof(struct system_image) * IMAGE_SIZE;
+    	length = sizeof(struct system_image) * NR_BOOT_PROCS;
     	src_phys = vir2phys(image);
         break;
     }
@@ -123,6 +69,11 @@ register message *m_ptr;	/* pointer to request message */
     	src_phys = vir2phys(proc);
         break;
     }
+    case GET_PRIVTAB: {
+    	length = sizeof(struct priv) * (NR_SYS_PROCS);
+    	src_phys = vir2phys(priv);
+        break;
+    }
     case GET_PROC: {
     	nr = (m_ptr->I_KEY_LEN == SELF) ? m_ptr->m_source : m_ptr->I_KEY_LEN;
     	if (! isokprocn(nr)) return(EINVAL);	/* validate request */
@@ -147,7 +98,7 @@ register message *m_ptr;	/* pointer to request message */
         src_phys = vir2phys(&kmess);
         break;
     }
-#if ENABLE_LOCK_TIMING
+#if DEBUG_TIME_LOCKS
     case GET_LOCKTIMING: {
 	length = sizeof(timingdata);
 	src_phys = vir2phys(timingdata);
@@ -167,4 +118,5 @@ register message *m_ptr;	/* pointer to request message */
   return(OK);
 }
 
+#endif /* USE_GETINFO */
 

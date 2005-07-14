@@ -11,8 +11,9 @@
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 
-#include "../kernel.h"
 #include "../system.h"
+
+#if USE_IRQCTL
 
 /*===========================================================================*
  *				do_irqctl				     *
@@ -94,4 +95,6 @@ register message *m_ptr;	/* pointer to request message */
   }
   return(r);
 }
+
+#endif /* USE_IRQCTL */
 

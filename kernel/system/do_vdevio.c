@@ -1,101 +1,4 @@
 /* The system call implemented in this file:
- *   m_type:	SYS_DEVIO
- *
- * The parameters for this system call are:
- *    m2_i3:	DIO_REQUEST	(request input or output)	
- *    m2_i1:	DIO_TYPE	(flag indicating byte, word, or long)
- *    m2_l1:	DIO_PORT	(port to read/ write)	
- *    m2_l2:	DIO_VALUE	(value to write/ return value read)	
- *
- * Author:
- *    Jorrit N. Herder <jnherder@cs.vu.nl>
- */
-
-#include "../kernel.h"
-#include "../system.h"
-#include "../debug.h"
-#include <minix/devio.h>
-
-/*===========================================================================*
- *			        do_devio                                     *
- *===========================================================================*/
-PUBLIC int do_devio(m_ptr)
-register message *m_ptr;	/* pointer to request message */
-{
-    /* perform actual device I/O for byte, word, and long values */
-    if (m_ptr->DIO_REQUEST == DIO_INPUT) { 
-      switch (m_ptr->DIO_TYPE) {
-        case DIO_BYTE: m_ptr->DIO_VALUE = inb(m_ptr->DIO_PORT); break; 
-        case DIO_WORD: m_ptr->DIO_VALUE = inw(m_ptr->DIO_PORT); break; 
-        case DIO_LONG: m_ptr->DIO_VALUE = inl(m_ptr->DIO_PORT); break; 
-    	default: return(EINVAL);
-      } 
-    } else { 
-      switch (m_ptr->DIO_TYPE) {
-        case DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-        case DIO_WORD: outw(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-        case DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-    	default: return(EINVAL);
-      } 
-    }
-    return(OK);
-}
-
-
-/* The system call implemented in this file:
- *   m_type:	SYS_SDEVIO
- *
- * The parameters for this system call are:
- *    m2_i3:	DIO_REQUEST	(request input or output)	
- *    m2_i1:	DIO_TYPE	(flag indicating byte, word, or long)
- *    m2_l1:	DIO_PORT	(port to read/ write)	
- *    m2_p1:	DIO_VEC_ADDR	(virtual address of buffer)	
- *    m2_l2:	DIO_VEC_SIZE	(number of elements)	
- *    m2_i2:	DIO_VEC_PROC	(process where buffer is)	
- */
-
-/*===========================================================================*
- *			        do_sdevio                                    *
- *===========================================================================*/
-PUBLIC int do_sdevio(m_ptr)
-register message *m_ptr;	/* pointer to request message */
-{
-  int proc_nr = m_ptr->DIO_VEC_PROC;
-  int count = m_ptr->DIO_VEC_SIZE;
-  long port = m_ptr->DIO_PORT;
-  phys_bytes phys_buf;
-
-  /* Check if process number is OK. */
-  if (proc_nr == SELF) proc_nr = m_ptr->m_source;
-  if (! isokprocn(proc_nr))
-      return(EINVAL);
-
-  /* Get and check physical address. */
-  if ((phys_buf = numap_local(proc_nr, (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
-      return(EFAULT);
-
-  /* Perform device I/O for bytes and words. Longs are not supported. */
-  if (m_ptr->DIO_REQUEST == DIO_INPUT) { 
-      switch (m_ptr->DIO_TYPE) {
-      case DIO_BYTE: phys_insb(port, phys_buf, count); break; 
-      case DIO_WORD: phys_insw(port, phys_buf, count); break; 
-      default: return(EINVAL);
-      } 
-  } else if (m_ptr->DIO_REQUEST == DIO_OUTPUT) { 
-      switch (m_ptr->DIO_TYPE) {
-      case DIO_BYTE: phys_outsb(port, phys_buf, count); break;  
-      case DIO_WORD: phys_outsw(port, phys_buf, count); break;  
-      default: return(EINVAL);
-      } 
-  }
-  else {
-      return(EINVAL);
-  }
-  return(OK);
-}
-
-
-/* The system call implemented in this file:
  *   m_type:	SYS_VDEVIO
  *
  * The parameters for this system call are:
@@ -104,6 +7,12 @@ register message *m_ptr;	/* pointer to request message */
  *    m2_p1:	DIO_VEC_ADDR	(pointer to port/ value pairs)	
  *    m2_i2:	DIO_VEC_SIZE	(number of ports to read or write) 
  */
+
+#include "../system.h"
+#include <minix/devio.h>
+
+#if USE_VDEVIO
+
 
 /* Buffer for SYS_VDEVIO to copy (port,value)-pairs from/ to user. */
 PRIVATE char vdevio_pv_buf[VDEVIO_BUF_SIZE];      
@@ -213,4 +122,5 @@ register message *m_ptr;	/* pointer to request message */
     return(OK);
 }
 
+#endif /* USE_VDEVIO */
 
