@@ -8,4 +8,4 @@ clean::
 install::
 	-rm -rf $(INC)
 	mkdir -p $(INC)
-	tar cf - `find . -name '*.h'` | (cd $(INC) && tar xvf -)
+	tar cf - `find . -name '*.h'` | (cd $(INC) && tar xf -)
