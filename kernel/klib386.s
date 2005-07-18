@@ -26,7 +26,7 @@
 .define	_enable_irq	! enable an irq at the 8259 controller
 .define	_disable_irq	! disable an irq
 .define	_phys_copy	! copy data from anywhere to anywhere in memory
-.define	_phys_zero	! zero data anywhere in memory
+.define	_phys_fill	! zero data anywhere in memory
 .define	_mem_rdw	! copy one word from [segment:offset]
 .define	_reset		! reset the system
 .define	_idle_task	! task executed when there is no work
@@ -440,14 +440,14 @@ pc_small:
 	ret
 
 !*===========================================================================*
-!*				phys_zero				     *
+!*				phys_fill				     *
 !*===========================================================================*
-! PUBLIC void phys_zero(phys_bytes source, phys_bytes bytecount);
+! PUBLIC void phys_fill(phys_bytes source, phys_bytes bytecount, char char);
 ! Zero a block of physical memory.
 
 	.align	16
 
-_phys_zero:
+_phys_fill:
 	push	ebp
 	mov	ebp, esp
 	push	esi
@@ -457,13 +457,13 @@ _phys_zero:
 	mov	eax, 12(ebp)
 	mov	ebx, FLAT_DS_SELECTOR
 	mov	ds, bx
+	mov	ebx, 16(ebp)
 	shr	eax, 2
-zero_start:
-   	mov     (esi), 0
+fill_start:
+   	mov     (esi), ebx
 	add	esi, 4
 	dec	eax
-	jnz	zero_start
-zero_done:
+	jnz	fill_start
 	pop	ds
 	pop	ebx
 	pop	esi

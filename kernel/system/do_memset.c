@@ -18,7 +18,7 @@ PUBLIC int do_memset(m_ptr)
 register message *m_ptr;
 {
 /* Handle sys_memset(). */
-  phys_zero((phys_bytes) m_ptr->MEM_PTR, (phys_bytes) m_ptr->MEM_COUNT);
+  phys_fill((phys_bytes) m_ptr->MEM_PTR, (phys_bytes) m_ptr->MEM_COUNT, 0);
   return(OK);
 }
 

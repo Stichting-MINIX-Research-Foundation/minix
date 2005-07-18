@@ -88,7 +88,7 @@ _PROTOTYPE( int disable_irq, (irq_hook_t *hook)				);
 _PROTOTYPE( u16_t mem_rdw, (U16_t segm, vir_bytes offset)		);
 _PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
 		phys_bytes count)					);
-_PROTOTYPE( void phys_zero, (phys_bytes source, phys_bytes count)	);
+_PROTOTYPE( void phys_fill, (phys_bytes source, phys_bytes count, unsigned long pattern)	);
 _PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)	);
 _PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)	);
 _PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count));
