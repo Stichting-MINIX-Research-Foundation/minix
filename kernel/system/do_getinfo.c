@@ -87,8 +87,15 @@ register message *m_ptr;	/* pointer to request message */
     	break;
     }
     case GET_RANDOMNESS: {		
-        struct randomness copy = krandom;	/* copy to keep counters */
-  	krandom.r_next = krandom.r_size = 0;	/* invalidate random data */
+        static struct randomness copy;	/* copy to keep counters */
+
+	int i;
+
+        copy = krandom;
+        for (i= 0; i<RANDOM_SOURCES; i++) {
+  		krandom.bin[i].r_size = 0;	/* invalidate random data */
+  		krandom.bin[i].r_next = 0;
+	}
     	length = sizeof(struct randomness);
     	src_phys = vir2phys(&copy);
     	break;

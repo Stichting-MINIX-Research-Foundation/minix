@@ -27,6 +27,9 @@
 #define _SRC_	0
 #define _DST_	1
 
+/* Number of random sources */
+#define RANDOM_SOURCES	16
+
 /* Constants and macros for bit map manipulation. */
 #define BITCHUNK_BITS   (sizeof(bitchunk_t) * CHAR_BIT)
 #define BITMAP_CHUNKS(nr_bits) (((nr_bits)+BITCHUNK_BITS-1)/BITCHUNK_BITS)  

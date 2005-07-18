@@ -23,6 +23,9 @@
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
+#include "assert.h"
+#include "random.h"
+
 #define NR_DEVS            7		/* number of minor devices */
 #define KRANDOM_PERIOD    10 		/* ticks between krandom calls */
 
@@ -69,7 +72,7 @@ PRIVATE char dev_zero[ZERO_BUF_SIZE];
 
 /* Buffer for the /dev/random number generator. */
 #define RANDOM_BUF_SIZE 		1024
-PRIVATE char dev_random[RANDOM_BUF_SIZE];
+PRIVATE char random_buf[RANDOM_BUF_SIZE];
 
 
 #define click_to_round_k(n) \
@@ -180,15 +183,23 @@ unsigned nr_req;		/* length of request vector */
 
 	/* Random number generator. Character instead of block device. */
 	case RANDOM_DEV:
+	    if (opcode == DEV_GATHER)
+	    {
+		s= random_reseed();
+		if (s < 0)
+		    return(EAGAIN);
+	    }
 	    left = count;
 	    while (left > 0) {
 	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
  	        if (opcode == DEV_GATHER) {
-	    	    sys_vircopy(SELF, D, (vir_bytes) dev_random, 
+		    random_getbytes(random_buf, chunk);
+	    	    sys_vircopy(SELF, D, (vir_bytes) random_buf, 
 	    	        proc_nr, D, user_vir, chunk);
  	        } else if (opcode == DEV_SCATTER) {
 	    	    sys_vircopy(proc_nr, D, user_vir, 
-	    	        SELF, D, (vir_bytes) dev_random, chunk);
+	    	        SELF, D, (vir_bytes) random_buf, chunk);
+	    	        random_putbytes(random_buf, chunk);
  	        }
 	    	left -= chunk;
 	    }
@@ -275,10 +286,7 @@ PRIVATE void m_init()
        dev_zero[i] = '\0';
   }
 
-  /* Initialize /dev/random. Seed the buffer and get kernel randomness. */
-  for (i=0; i<RANDOM_BUF_SIZE; i++) {		
-       dev_random[i] = 'a' + i % 256;		/* from file in future !!! */
-  }		
+  random_init();
   m_random(NULL);				/* also set periodic timer */
 
   /* Set up memory ranges for /dev/mem. */
@@ -364,19 +372,29 @@ PRIVATE void m_random(dp)
 struct driver *dp;			/* pointer to driver structure */
 {
   /* Fetch random information from the kernel to update /dev/random. */
+  int i, s, r_next, r_size, r_high;
   struct randomness krandom;
-  static unsigned long *next_ptr = (unsigned long *) &dev_random[0];
-  int i,s;
+
   if (OK != (s=sys_getrandomness(&krandom)))
   	report("MEM", "sys_getrandomness failed", s);
 
-  i= (krandom.r_next + RANDOM_ELEMENTS -1) % RANDOM_ELEMENTS;
-  while (krandom.r_size -- > 0) {
-      *next_ptr = krandom.r_buf[i];		/* set dev_random data */
-      next_ptr ++;				/* proceed to next */
-      if ((next_ptr - (unsigned long *) &dev_random[RANDOM_BUF_SIZE-1]) >= 
-      	RANDOM_ELEMENTS) next_ptr = (unsigned long *) &dev_random[0];
-      i = (i + 1) % RANDOM_ELEMENTS;		/* next kernel random data */
+  for (i= 0; i<RANDOM_SOURCES; i++)	
+  {
+  	r_next= krandom.bin[i].r_next;
+  	r_size= krandom.bin[i].r_size;
+  	r_high= r_next+r_size;
+  	if (r_high <= RANDOM_ELEMENTS)
+  	{
+  		random_update(i, &krandom.bin[i].r_buf[r_next], r_size);
+	}
+	else
+	{
+		assert(r_next < RANDOM_ELEMENTS);
+  		random_update(i, &krandom.bin[i].r_buf[r_next],
+  			RANDOM_ELEMENTS-r_next);
+  		random_update(i, &krandom.bin[i].r_buf[0],
+  			r_high-RANDOM_ELEMENTS);
+	}
   }
 
   /* Schedule new alarm for next m_random call. */

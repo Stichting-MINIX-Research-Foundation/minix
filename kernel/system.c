@@ -273,11 +273,13 @@ int proc_nr;				/* slot of process to clean up */
 /*===========================================================================*
  *			       get_randomness				     *
  *===========================================================================*/
-PUBLIC void get_randomness()
+PUBLIC void get_randomness(source)
+int source;
 {
 /* Gather random information with help of the CPU's cycle counter. Only use 
  * the lowest bytes because the highest bytes won't differ that much. 
  */ 
+  int r_next;
   unsigned long tsc_high;
 
   /* On machines with the RDTSC (cycle counter read instruction - pentium
@@ -287,15 +289,17 @@ PUBLIC void get_randomness()
    * Unfortunately this test is run-time - we don't want to bother with
    * compiling different kernels for different machines..
    *
-   * On machines without RDTSC, we use the get_uptime() - read_clock()
-   * has a higher resolution, but would involve I/O calls.
+   * On machines without RDTSC, we use read_clock().
    */
-  if (machine.processor > 486)
-	  read_tsc(&tsc_high, &krandom.r_buf[krandom.r_next]);
+  source %= RANDOM_SOURCES;
+  r_next= krandom.bin[source].r_next;
+  if(machine.processor > 486 && 0)
+	  read_tsc(&tsc_high, &krandom.bin[source].r_buf[r_next]);
   else
-  	  krandom.r_buf[krandom.r_next] = get_uptime();
-  if (krandom.r_size < RANDOM_ELEMENTS) krandom.r_size ++;
-  krandom.r_next = (krandom.r_next + 1 ) % RANDOM_ELEMENTS;
+  	  krandom.bin[source].r_buf[r_next] = read_clock();
+  if (krandom.bin[source].r_size < RANDOM_ELEMENTS)
+  	krandom.bin[source].r_size ++;
+  krandom.bin[source].r_next = (r_next + 1 ) % RANDOM_ELEMENTS;
 }
 
 
@@ -313,7 +317,7 @@ irq_hook_t *hook;
   /* As a side-effect, the interrupt handler gathers random information by 
    * timestamping the interrupt events. This is used for /dev/random.
    */
-  get_randomness();
+  get_randomness(hook->irq);
 
   /* Add a bit for this interrupt to the process' pending interrupts. When 
    * sending the notification message, this bit map will be magically set

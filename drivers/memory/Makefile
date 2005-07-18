@@ -16,7 +16,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lutils
 
-OBJ = memory.o 
+OBJ = memory.o random.o sha2.o aes/rijndael_api.o aes/rijndael_alg.o
 LIBDRIVER = $d/libdriver/driver.o
 
 
@@ -24,10 +24,16 @@ LIBDRIVER = $d/libdriver/driver.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) $(LIBDRIVER)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
-	install -S 64w $(DRIVER)
+	install -S 1024w $(DRIVER)
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 
+
+aes/rijndael_api.o:
+	$(CC) -c -o $@ aes/rijndael_api.c
+
+aes/rijndael_alg.o:
+	$(CC) -c -o $@ aes/rijndael_alg.c
 
 # install with other drivers
 install:	/usr/sbin/drivers/$(DRIVER)
@@ -40,7 +46,7 @@ clean:
 
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c aes/*.c > .depend
 
 # Include generated dependencies.
 include .depend

@@ -56,7 +56,7 @@ _PROTOTYPE( void clear_proc, (int proc_nr)				);
 _PROTOTYPE( phys_bytes numap_local, (int proc_nr, vir_bytes vir_addr, 
 		vir_bytes bytes)					);
 _PROTOTYPE( void sys_task, (void)					);
-_PROTOTYPE( void get_randomness, (void)					);
+_PROTOTYPE( void get_randomness, (int source)					);
 _PROTOTYPE( int virtual_copy, (struct vir_addr *src, struct vir_addr *dst, 
 				vir_bytes bytes) 			);
 _PROTOTYPE( phys_bytes umap_local, (struct proc *rp, int seg, 

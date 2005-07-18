@@ -297,11 +297,11 @@ PUBLIC unsigned long read_clock()
  */
   unsigned count;
 
-  lock(10, "read_clock");
+  /* lock(10, "read_clock"); */
   outb(TIMER_MODE, LATCH_COUNT);
   count = inb(TIMER0);
   count |= (inb(TIMER0) << 8);
-  unlock(10);
+  /* unlock(10); */
   
   return count;
 }
