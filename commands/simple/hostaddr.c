@@ -59,7 +59,7 @@ char *argv[];
 	first_print= 1;
 	prog_name= argv[0];
 
-	a_flag= e_flag= i_flag= 0;
+	a_flag= e_flag= h_flag = i_flag= 0;
 	E_arg= I_arg= NULL;
 
 	while((c= getopt(argc, argv, "?aheE:iI:")) != -1)

@@ -209,8 +209,8 @@ void copylink(char *source, char *dest, int mode, int owner, int group)
 	int r, same= 0, change= 0, docopy= 1;
 	char buf[4096];
 #	define hdr ((struct exec *) buf)
-	pid_t pid;
-	int status;
+	pid_t pid = 0;
+	int status = 0;
 
 	/* Source must exist as a plain file, dest may exist as a plain file. */
 
