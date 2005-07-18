@@ -18,7 +18,10 @@ PUBLIC int do_memset(m_ptr)
 register message *m_ptr;
 {
 /* Handle sys_memset(). */
-  phys_fill((phys_bytes) m_ptr->MEM_PTR, (phys_bytes) m_ptr->MEM_COUNT, 0);
+  unsigned long pat;
+  unsigned char c = m_ptr->MEM_CHAR;
+  pat = c | (c << 8) | (c << 16) | (c << 24);
+  phys_fill((phys_bytes) m_ptr->MEM_PTR, (phys_bytes) m_ptr->MEM_COUNT, pat);
   return(OK);
 }
 
