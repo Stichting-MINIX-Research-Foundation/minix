@@ -38,7 +38,7 @@
  * used. Other addresses may be defined below when new features are added. 
  */
 
-/* Parallel ports (LPT1-LPT4). */
+/* Serial ports (COM1-COM4). */
 #define COM1_IO_PORT_ADDR       0x400   /* COM1 port address */
 #define COM1_IO_PORT_SIZE       2L    
 #define COM2_IO_PORT_ADDR       0x402   /* COM2 port address */
@@ -48,7 +48,7 @@
 #define COM4_IO_PORT_ADDR       0x406   /* COM4 port address */
 #define COM4_IO_PORT_SIZE       2L    
         
-/* Serial ports (COM1-COM4). */
+/* Parallel ports (LPT1-LPT4). */
 #define LPT1_IO_PORT_ADDR       0x408   /* LPT1 port address */
 #define LPT1_IO_PORT_SIZE       2L    
 #define LPT2_IO_PORT_ADDR       0x40A   /* LPT2 port address */

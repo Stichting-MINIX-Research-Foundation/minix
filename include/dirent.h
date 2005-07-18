@@ -67,10 +67,12 @@ typedef struct {
 	struct _fl_direct  _v7f[FLEX_PER_V7];	 /* V7 entry transformed to flex */
 } DIR;
 
+#define _DIRENT_NAME_LEN 61
+
 struct dirent {		/* Largest entry (8 slots) */
 	ino_t		d_ino;		/* I-node number */
 	unsigned char	d_extent;	/* Extended with this many slots */
-	char		d_name[61];	/* Null terminated name */
+	char		d_name[_DIRENT_NAME_LEN];	/* Null terminated name */
 };
 
 /* Function Prototypes. */
