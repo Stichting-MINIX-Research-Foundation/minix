@@ -41,22 +41,21 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <dirent.h>
+
+#define NAME_SIZE _DIRENT_NAME_LEN
 
 #undef NARROW			/* Width of verbose output */
 #define COPY_SIZE 4096
 #define MAX_ENTRIES 512
-#define DIR_ENT_SIZE 16
-#define NAME_SIZE 14
 #define MAX_PATH 256
 #define NONFATAL 0
 #define FATAL 1
 #define NO_SAVINGS 512		/* compress can return code 2 */
 #define OUT_OF_SPACE 2
 
-struct dir_buf {		/* list of the src directory */
-  unsigned short ino;
-  char name[NAME_SIZE];
-} dir_buf[MAX_ENTRIES];
+struct dirent dir_ent[MAX_ENTRIES];
+int entries = 0;
 
 struct sorted {
   int mode;			/* file mode */
@@ -93,6 +92,8 @@ char *argv[];
   int ct, n, m, fd;
   char *dir1, *dir2, *cp, c;
   struct stat s;
+  struct dirent *e;
+  DIR *DIR1, *DIR2;
 
   (void) sync();
 
@@ -133,18 +134,21 @@ char *argv[];
   if ((s.st_mode & S_IFMT) != S_IFDIR) error(FATAL, "non-directory ", dir1, "");
 
   /* Read in the source directory */
-  fd = open(dir1, O_RDONLY);
-  if (fd < 0) error(FATAL, "cannot open ", dir1, "");
-  ct = read(fd, (char *)&dir_buf[0], MAX_ENTRIES * DIR_ENT_SIZE);
-  close(fd);
-  if (ct == MAX_ENTRIES * DIR_ENT_SIZE)
+  if(!(DIR1 = opendir(dir1))) {
+  	perror(dir1);
+  	return 1;
+  }
+  while(entries < MAX_ENTRIES && (e=readdir(DIR1)))
+  	memcpy(&dir_ent[entries++], e, sizeof(*e));
+  closedir(DIR1);
+  if (entries == MAX_ENTRIES)
 	error(FATAL, "directory ", dir1, " is too large");
 
   /* Create the target directory. */
   maketarget(dir2);
 
   /* Stat all the entries. */
-  n = ct / DIR_ENT_SIZE;
+  n = entries;
   m = stat_all(dir1, n);
 
   /* Remove non-entries and sort what's left. */
@@ -218,29 +222,28 @@ int n;
 
   for (i = 0; i < n; i++) {
 	/* Mark "." and ".." as null entries, as well as unstatable ones. */
-	if (strcmp(dir_buf[i].name, ".") == 0) dir_buf[i].ino = 0;
-	if (strcmp(dir_buf[i].name, "..") == 0) dir_buf[i].ino = 0;
-	if (dir_buf[i].ino == 0) continue;
+	if (strcmp(dir_ent[i].d_name, ".") == 0) dir_ent[i].d_ino = 0;
+	if (strcmp(dir_ent[i].d_name, "..") == 0) dir_ent[i].d_ino = 0;
+	if (dir_ent[i].d_ino == 0) continue;
 
 	/* Stat the file. */
-	strcpy(cbuf, dir1);
-	strncat(cbuf, "/", (size_t)1);
-	strncat(cbuf, dir_buf[i].name, (size_t)NAME_SIZE);
+	snprintf(cbuf, sizeof(cbuf), "%s/%s", dir1, dir_ent[i].d_name);
 	if (stat(cbuf, &s) < 0) {
 		error(NONFATAL, "cannot stat ", cbuf, "");
-		dir_buf[i].ino = 0;	/* mark as unusable */
+		dir_ent[i].d_ino = 0;	/* mark as unusable */
 		continue;
 	}
 	sorted[i].mode = s.st_mode;
 	sorted[i].acctime = s.st_atime;
 	sorted[i].modtime = s.st_mtime;
-	sorted[i].namep = dir_buf[i].name;
+	sorted[i].namep = dir_ent[i].d_name;
+	sorted[i].namep[NAME_SIZE-1] = '\0';
   }
 
   /* Squeeze out all the entries whose ino field is 0. */
   j = 0;
   for (i = 0; i < n; i++) {
-	if (dir_buf[i].ino != 0) {
+	if (dir_ent[i].d_ino != 0) {
 		sorted[j] = sorted[i];
 		j++;
 	}
@@ -258,7 +261,7 @@ int m;
 
   for (sp1 = &sorted[0]; sp1 < &sorted[m - 1]; sp1++) {
 	for (sp2 = sp1 + 1; sp2 < &sorted[m]; sp2++) {
-		if (strncmp(sp1->namep, sp2->namep, (size_t)NAME_SIZE) > 0)
+		if (strcmp(sp1->namep, sp2->namep) > 0)
 			swap(sp1, sp2);
 	}
   }
@@ -274,21 +277,18 @@ char *dir1, *dir2;
  * recursively call the entire program to process the directory.
  */
 
-  int er, fmode, res, namlen;
+  int er, fmode, res;
   struct sorted *sp;
   struct stat s;
   char cbuf[MAX_PATH];
 
   for (sp = &sorted[0]; sp < &sorted[m]; sp++) {
+  	int namlen;
 	fmode = sp->mode & S_IFMT;
 	if (fmode == S_IFREG) {
 		/* Regular file.  Construct target name and stat it. */
-		strcpy(cbuf, dir2);
-		strncat(cbuf, "/", (size_t)1);
-		strncat(cbuf, sp->namep, (size_t)NAME_SIZE);
+		snprintf(cbuf, sizeof(cbuf), "%s/%s", dir2, sp->namep);
 		namlen = strlen(sp->namep);
-		if (namlen > NAME_SIZE)
-			namlen = NAME_SIZE; /* no terminating null here */
 		/* Switch between compressed and uncompressed file names */
 		if (zflag && !rflag && strncmp((sp->namep + namlen - 2), ".Z", (size_t)2)
 				&& (namlen <= (NAME_SIZE - 2)))
@@ -319,7 +319,7 @@ char *dir1, *dir2;
 		copydir(dir1, dir2, sp->namep);
 	} else if (fmode == S_IFBLK || fmode == S_IFCHR) {
 		/* Special file. */
-		strncpy(cbuf, sp->namep, (size_t)NAME_SIZE);
+		strncpy(cbuf, sp->namep, sizeof(cbuf));
 		printf("%s is special file.  Not backed up.\n", cbuf);
 	}
   }
@@ -467,6 +467,7 @@ char *src, *targ;
   int pid, status, res, s;
   char fbuf[20];
 
+  /* These flags go for compress and gzip. */
   strcpy(fbuf, "-c");
   if (rflag)
 	strcat(fbuf, "d");
@@ -485,9 +486,11 @@ char *src, *targ;
 	close(1);
 	s = open(targ, O_RDWR);
 	if (s < 0) error(FATAL, "cannot write on ", "targ", "");
+	execle("/usr/bin/gzip", "gzip", fbuf, src, (char *)0, environ);
+	execle("/usr/local/bin/gzip", "gzip", fbuf, src, (char *)0, environ);
 	execle("/bin/compress", "compress", fbuf, src, (char *)0, environ);
 	execle("/usr/bin/compress", "compress", fbuf, src, (char *)0, environ);
-	error(FATAL, "cannot exec compress", "", "");
+	error(FATAL, "cannot exec gzip or compress", "", "");
   }
   return(0);
 }
@@ -516,12 +519,8 @@ char *dir1, *dir2, *namep;
   if (tflag) strcat(fbuf, "t");
   if (vflag) strcat(fbuf, "v");
   if (zflag) strcat(fbuf, "z");
-  strcpy(d1buf, dir1);
-  strcat(d1buf, "/");
-  strncat(d1buf, namep, (size_t)NAME_SIZE);
-  strcpy(d2buf, dir2);
-  strcat(d2buf, "/");
-  strncat(d2buf, namep, (size_t)NAME_SIZE);
+  snprintf(d1buf, sizeof(d1buf), "%s/%s", dir1, namep);
+  snprintf(d2buf, sizeof(d2buf), "%s/%s", dir2, namep);
 
   if ((pid = fork()) < 0) error(FATAL, "cannot fork", "", "");
   if (pid > 0) {

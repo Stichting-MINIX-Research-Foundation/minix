@@ -73,6 +73,7 @@
 #define DOTZ ".Z"
 
 #include <limits.h>
+#include <dirent.h>
 
 /* The default for Minix is -b13, but we can do -b16 if the machine can. */
 #define DEFAULTBITS 13
@@ -574,7 +575,7 @@ char **argv;
 					cp++;
 				else
 					cp = ofname;
-				if (strlen(cp) > 12) 
+				if (strlen(cp) >= _DIRENT_NAME_LEN-3) 
 				{
 				    fprintf(stderr,"%s: filename too long to tack on .Z\n",cp);
 				    continue;
