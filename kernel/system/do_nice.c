@@ -1,5 +1,5 @@
 /* The system call implemented in this file:
- *   m_type:	SYS_SCHEDCTL
+ *   m_type:	SYS_NICE
  *
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR	process number to change priority
@@ -10,12 +10,12 @@
 #include <minix/type.h>
 #include <sys/resource.h>
 
-#if USE_SCHEDCTL
+#if USE_NICE
 
 /*===========================================================================*
- *				do_schedctl				     *
+ *				  do_nice				     *
  *===========================================================================*/
-PUBLIC int do_schedctl(message *m_ptr)
+PUBLIC int do_nice(message *m_ptr)
 {
   int proc_nr, pri, new_q ;
   register struct proc *rp;
@@ -46,5 +46,5 @@ PUBLIC int do_schedctl(message *m_ptr)
   return(OK);
 }
 
-#endif /* USE_SCHEDCTL */
+#endif /* USE_NICE */
 
