@@ -28,9 +28,9 @@ all:	inet
 inet:	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) version.c $(LIBS)
 
-install:	/usr/sbin/servers/inet
+install:	/usr/sbin/inet
 
-/usr/sbin/servers/inet:	inet
+/usr/sbin/inet:	inet
 	install -c $? $@
 
 clean:

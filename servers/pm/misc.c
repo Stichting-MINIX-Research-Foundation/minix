@@ -183,13 +183,13 @@ PUBLIC int do_getsetpriority()
 
 	/* Only support PRIO_PROCESS for now. */
 	if(arg_which != PRIO_PROCESS)
-		return EINVAL;
+		return(EINVAL);
 
 	if(arg_who == 0)
 		rmp_nr = who;
 	else
 		if((rmp_nr = proc_from_pid(arg_who)) < 0)
-			return ESRCH;
+			return(ESRCH);
 
 	rmp = &mproc[rmp_nr];
 
@@ -198,18 +198,17 @@ PUBLIC int do_getsetpriority()
 		return EPERM;
 
 	/* If GET, that's it. */
-
 	if(call_nr == GETPRIORITY) {
-		return rmp->mp_nice - PRIO_MIN;
+		return(rmp->mp_nice - PRIO_MIN);
 	}
 
 	/* Only root is allowed to reduce the nice level. */
 	if(rmp->mp_nice > arg_pri && mp->mp_effuid != SUPER_USER)
-		return EACCES;
-
+		return(EACCES);
+	
 	/* We're SET, and it's allowed. Do it and tell kernel. */
 	rmp->mp_nice = arg_pri;
-	return sys_setpriority(rmp_nr, arg_pri);
+	return sys_nice(rmp_nr, arg_pri);
 }
 
 /*=====================================================================*
@@ -280,6 +279,7 @@ PUBLIC int do_svrctl()
       return OK;
   }
   case MMSIGNON: {
+#if DEAD_CODE
 	/* A user process becomes a task.  Simulate an exit by
 	 * releasing a waiting parent and disinheriting children.
 	 */
@@ -307,10 +307,7 @@ PUBLIC int do_svrctl()
 			rmp->mp_parent = INIT_PROC_NR;
 		}
 	}
-
-	/* Become like PM and FS. */
-	mp->mp_pid = mp->mp_procgrp = 0;
-	mp->mp_parent = 0;
+#endif
 	return(OK); }
 
 #if ENABLE_SWAP

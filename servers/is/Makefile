@@ -26,8 +26,8 @@ $(SERVER):	$(OBJ)
 #	install -S 256w $@
 
 # install with other servers
-install:	/usr/sbin/servers/$(SERVER)
-/usr/sbin/servers/$(SERVER):	$(SERVER)
+install:	/usr/sbin/$(SERVER)
+/usr/sbin/$(SERVER):	$(SERVER)
 	install -o root -c $? $@
 #	install -o root -cs $? $@
 

@@ -41,9 +41,9 @@ FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks,
 PUBLIC void main()
 {
 /* Main routine of the process manager. */
-
   int result, s, proc_nr;
   struct mproc *rmp;
+  sigset_t sigset;
 
   pm_init();			/* initialize process manager tables */
 
@@ -55,8 +55,11 @@ PUBLIC void main()
         if (call_nr == SYN_ALARM) {
         	pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
 		result = SUSPEND;		/* don't reply */
-	} else if (call_nr == KSIG_PENDING) {	/* signals pending */
-		(void) ksig_pending();
+	} else if (call_nr == SYS_EVENT) {	/* signals pending */
+		sigset = m_in.NOTIFY_ARG;
+		if (sigismember(&sigset, SIGKSIG)) {
+			(void) ksig_pending();
+		}
 		result = SUSPEND;		/* don't reply */
 	}
 	/* Else, if the system call number is valid, perform the call. */
@@ -103,7 +106,8 @@ PRIVATE void get_work()
   call_nr = m_in.m_type;	/* system call number */
 
   /* Process slot of caller. Misuse PM's own process slot if the kernel is
-   * calling. The can happen in case of pending kernel signals.
+   * calling. This can happen in case of synchronous alarms (CLOCK) or or 
+   * event like pending kernel signals (SYSTEM).
    */
   mp = &mproc[who < 0 ? PM_PROC_NR : who];
 }
@@ -142,7 +146,6 @@ PRIVATE void pm_init()
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
   static char ign_sigs[] = { SIGCHLD };
-  register int proc_nr;
   register struct mproc *rmp;
   register char *sig_ptr;
   phys_clicks total_clicks, minix_clicks, free_clicks;
@@ -193,13 +196,23 @@ PRIVATE void pm_init()
 
 		/* Set process details found in the image table. */
 		rmp = &mproc[ip->proc_nr];	
-		rmp->mp_flags |= IN_USE | DONT_SWAP; 
-  		rmp->mp_pid = get_free_pid();
-		rmp->mp_parent = INIT_PROC_NR;
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
-		sigfillset(&rmp->mp_ignore);
-  		sigfillset(&rmp->mp_sigmask);
+		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
+  			rmp->mp_pid = INIT_PID;
+			rmp->mp_parent = PM_PROC_NR;
+			rmp->mp_flags |= IN_USE; 
+  			sigemptyset(&rmp->mp_ignore);	
+  			rmp->mp_nice = 0;
+		}
+		else {					/* system process */
+  			rmp->mp_pid = get_free_pid();
+			rmp->mp_parent = INIT_PROC_NR;
+			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
+			sigfillset(&rmp->mp_ignore);
+		}
+  		sigemptyset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
+  		sigemptyset(&rmp->mp_sig2mess);
 
   		/* Get memory map for this process from the kernel. */
 		if ((s=get_mem_map(ip->proc_nr, rmp->mp_seg)) != OK)
@@ -217,15 +230,7 @@ PRIVATE void pm_init()
   	}
   }
 
-  /* PM and INIT are somewhat special. Override some details. Set signal
-   * handling behaviour for PM, since PM cannot call sigaction() as others.
-   */
-  mproc[INIT_PROC_NR].mp_pid = INIT_PID;
-  mproc[INIT_PROC_NR].mp_nice = 0;
-  mproc[INIT_PROC_NR].mp_parent = PM_PROC_NR;
-  sigemptyset(&mproc[INIT_PROC_NR].mp_ignore);
-  sigemptyset(&mproc[INIT_PROC_NR].mp_sigmask);
-
+  /* PM is somewhat special. Override some details. */ 
   mproc[PM_PROC_NR].mp_pid = PM_PID;
   mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;
 

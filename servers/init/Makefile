@@ -22,8 +22,8 @@ $(SERVER):	$(OBJ)
 	install -S 192w $@
 
 # install with other servers
-install:	/usr/sbin/servers/$(SERVER)
-/usr/sbin/servers/$(SERVER):	$(SERVER)
+install:	/usr/sbin/$(SERVER)
+/usr/sbin/$(SERVER):	$(SERVER)
 	install -o root -cs $? $@
 
 # clean up local files

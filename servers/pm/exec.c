@@ -178,6 +178,8 @@ PUBLIC int do_exec()
   rmp->mp_name[PROC_NAME_LEN] = '\0';
   sys_exec(who, new_sp, rmp->mp_flags & TRACED, basename, pc);
 
+  if (rmp->mp_flags & TRACED) check_sig(rmp->mp_pid, SIGTRAP);
+
   return(SUSPEND);		/* no reply, new program just runs */
 }
 

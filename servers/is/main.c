@@ -42,6 +42,7 @@ PUBLIC void main(void)
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
     int result;                 
+    sigset_t sigset;
 
     /* Initialize the server, then go to work. */
     init_server();
@@ -53,9 +54,17 @@ PUBLIC void main(void)
         get_work();
 
         switch (callnr) {
-            case NEW_KMESS:
-            	result = do_new_kmess(&m_in);
-            	break;
+            case SYS_EVENT:
+                sigset = (sigset_t) m_in.NOTIFY_ARG;
+                if (sigismember(&sigset, SIGKMESS)) {
+                    printf("IS proc SIGKMESS\n");
+            	    result = do_new_kmess(&m_in);
+            	} else if (sigismember(&sigset, SIGTERM)) {
+                    printf("IS proc SIGTERM\n");
+            	} else {
+            	    report("IS","warning, got unknown signal", NO_NUM);
+            	}
+            	continue;
             case DIAGNOSTICS:
             	result = do_diagnostics(&m_in);
             	break;
@@ -103,8 +112,8 @@ PRIVATE void init_server()
   int i, s;
   struct sigaction sigact;
 
-  /* Install signal handler.*/
-  sigact.sa_handler = signal_handler;
+  /* Install signal handler. Ask PM to transform signal into message. */
+  sigact.sa_handler = SIG_MESS;
   sigact.sa_mask = ~0;			/* block all other signals */
   sigact.sa_flags = 0;			/* default behaviour */
   if (sigaction(SIGTERM, &sigact, NULL) != OK) 
