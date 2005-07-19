@@ -8,6 +8,7 @@
  */
 
 #include "../system.h"
+#include <string.h>
 #include <signal.h>
 #include <sys/sigcontext.h>
 
@@ -61,7 +62,7 @@ message *m_ptr;			/* pointer to request message */
 #endif
 
   /* Restore the registers. */
-  kmemcpy(&rp->p_reg, (char *)&sc.sc_regs, sizeof(struct sigregs));
+  memcpy(&rp->p_reg, (char *)&sc.sc_regs, sizeof(struct sigregs));
   return(OK);
 }
 #endif /* USE_SIGRETURN */

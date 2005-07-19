@@ -11,6 +11,7 @@
 #include "kernel.h"
 #include "protect.h"
 #include "proc.h"
+#include <stdlib.h>
 
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 
@@ -64,7 +65,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   kinfo.kmem_size = (phys_bytes) &end;	
 
   /* Processor?  86, 186, 286, 386, ... */
-  machine.processor=katoi(get_value(params, "processor")); 
+  machine.processor=atoi(get_value(params, "processor")); 
 
   /* Decide if mode is protected for older machines. */
 #if _WORD_SIZE == 2

@@ -183,11 +183,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
       break;
   case NOTIFY:
       result = mini_notify(caller_ptr, src_dst, m_ptr);
-#if TEMP_CODE
       break;
   case ECHO:
-      kprintf("Echo message from process %s\n", proc_nr(caller_ptr));
-#endif
       CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, caller_ptr, m_ptr);
       result = OK;
       break;

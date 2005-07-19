@@ -48,7 +48,7 @@ $(SYSTEM):	$(OBJECTS)
 	aal cr $@ *.o
 
 clean:
-	rm -f $(SYSTEM) *.o *.bak 
+	rm -f $(SYSTEM) *.o *~ *.bak 
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend

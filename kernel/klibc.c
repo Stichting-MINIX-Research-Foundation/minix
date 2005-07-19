@@ -4,7 +4,6 @@
  * can be slightly different.  
  *				                March 2005, Jorrit N. Herder.
  * Entrypoints into this file:
- *     katoi:		convert string to integer
  *     kmemcpy:		copy n bytes from pointer p1 to pointer p2
  *     kmemset:		set n bytes to c starting at pointer p
  *     kprintf:		printf for the kernel (see working below) 
@@ -26,23 +25,6 @@
 #define isdigit(c)	((unsigned) ((c) - '0') <  (unsigned) 10)
 #define END_OF_KMESS 	-1
 FORWARD _PROTOTYPE(void kputc, (int c));
-
-
-/*=========================================================================*
- *				katoi					   *
- *=========================================================================*/
-PUBLIC int katoi(register const char *s)
-{
-  int value = 0;				/* default value */
-  int sign = 1;					/* assume positive */
-
-  while(*s == ' ') s++;				/* skip spaces */
-  if (*s == '-') { sign = -1; s++; }		/* detect sign */
-  while(isdigit(*s))				/* get integer */
-      value = value*10 + (*s++) -'0';
-
-  return(sign * value); 			/* return result */
-}
 
 
 /*=========================================================================*

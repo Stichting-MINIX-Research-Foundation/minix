@@ -13,6 +13,7 @@
  * there are several other minor entry points:
  *   send_sig:		send signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via PM
+ *   init_proc:	        initialize a process, during start up or fork
  *   clear_proc:	clean up a process in the process table, e.g. on exit
  *   umap_local:	map virtual address in LOCAL_SEG to physical 
  *   umap_remote:	map virtual address in REMOTE_SEG to physical 
@@ -216,7 +217,7 @@ int proc_nr;				/* slot of process to clean up */
   rc = proc_addr(proc_nr);
 
   /* Turn off any alarm timers at the clock. */   
-  reset_timer(&rc->p_priv->s_alarm_timer);
+  reset_timer(&priv(rc)->s_alarm_timer);
 
   /* Make sure the exiting process is no longer scheduled. */
   if (rc->p_rts_flags == 0) lock_unready(rc);
@@ -248,11 +249,11 @@ int proc_nr;				/* slot of process to clean up */
           irq_hooks[i].proc_nr = NONE; 
   }
 
+#if TEMP_CODE
   /* Check if there are pending notifications. Release the buffers. */
   while (rc->p_ntf_q != NULL) {
       i = (int) (rc->p_ntf_q - &notify_buffer[0]);
       free_bit(i, notify_bitmap, NR_NOTIFY_BUFS); 
-#if TEMP_CODE
       rc->p_ntf_q = rc->p_ntf_q->n_next;
   }
 #endif

@@ -31,7 +31,7 @@ kernel build install: $(HEAD) $(OBJS)
 
 clean:
 	cd system && $(MAKE) -$(MAKEFLAGS) $@
-	rm -f *.a *.o *.bak kernel
+	rm -f *.a *.o *~ *.bak kernel
 
 depend: 
 	cd system && $(MAKE) -$(MAKEFLAGS) $@

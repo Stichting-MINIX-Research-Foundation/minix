@@ -52,6 +52,10 @@ unsigned vec_nr;
 	return;
   }
 
+  /* If an exception occurs while running a process, the k_reenter variable 
+   * will be zero. Exceptions in interrupt handlers or system traps will make 
+   * k_reenter larger than zero.
+   */
   if (k_reenter == 0 && ! iskernelp(saved_proc)) {
 	cause_sig(proc_nr(saved_proc), ep->signum);
 	return;
@@ -62,7 +66,8 @@ unsigned vec_nr;
 	kprintf("\nIntel-reserved exception %d\n", vec_nr);
   else
 	kprintf("\n%s\n", karg(ep->msg));
-  kprintf("process number %d, ", proc_nr(saved_proc));
+  kprintf("process number %d ", proc_nr(saved_proc));
+  kprintf("(%s), ", saved_proc->p_name);
   kprintf("pc = %d:",  (unsigned) saved_proc->p_reg.cs);
   kprintf("0x%x\n", (unsigned) saved_proc->p_reg.pc);
 

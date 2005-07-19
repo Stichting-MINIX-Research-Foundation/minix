@@ -16,7 +16,6 @@ _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
 _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 
 /* klibc.c */
-_PROTOTYPE( int katoi, (register const char *s));
 _PROTOTYPE( void *kmemcpy, (void *s1, const void *s2, register size_t n));
 _PROTOTYPE( void *kmemset, (void *s, register int c, register size_t n));
 _PROTOTYPE( int kstrcmp, (register const char *s1, register const char *s2));

@@ -3,9 +3,6 @@
  *
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR		(process that did exec call)
-#if DEAD_CODE
- *    m1_i3:	PR_TRACING		(flag to indicate tracing is on/ off)
-#endif
  *    m1_p1:	PR_STACK_PTR		(new stack pointer)
  *    m1_p2:	PR_NAME_PTR		(pointer to program name)
  *    m1_p3:	PR_IP_PTR		(new instruction pointer)
@@ -28,9 +25,6 @@ register message *m_ptr;	/* pointer to request message */
   char *np;
 
   rp = proc_addr(m_ptr->PR_PROC_NR);
-#if DEAD_CODE
-  if (m_ptr->PR_TRACING) cause_sig(m_ptr->PR_PROC_NR, SIGTRAP);
-#endif
   sp = (reg_t) m_ptr->PR_STACK_PTR;
   rp->p_reg.sp = sp;		/* set the stack pointer */
 #if (CHIP == M68000)
