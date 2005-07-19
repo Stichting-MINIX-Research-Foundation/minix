@@ -1,0 +1,18 @@
+.TH OPENPTY 3 "May 15, 1985"
+.AT 3
+.SH NAME
+openpty \- library call to obtain a pty
+.SH SYNOPSIS
+.nf
+.ft B
+#include <libutil.h>
+
+int openpty(int *\fIamaster\fP, int *\fIaslave\fP, char *\fIname\fP, struct termios *\fItermp\fP, struct winsize *\fIwinp\fP)
+.ft R
+.fi
+.SH DESCRIPTION
+.B Openpty
+tries to obtain pty file descriptors by opening /dev/ttypX and
+/dev/ptypX, setting *\fIamaster\fP and *\fIaslave\fP to these fd's,
+changing ownership of the slave pty to the current process, and making
+it only group-writable by group tty.
