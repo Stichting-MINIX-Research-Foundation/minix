@@ -2,6 +2,10 @@
 ##  Makefile for ISA ethernet drivers	May  02, 2000
 ##
 ##  $Log$
+##  Revision 1.2  2005/07/19 12:12:47  jnherder
+##  Changed Makefiles: drivers are now installed in /usr/sbin.
+##  TTY now gets SYS_EVENT message with sigset (e.g., SIGKMESS, SIGKSTOP).
+##
 ##  Revision 1.1  2005/06/29 10:16:46  beng
 ##  Import of dpeth 3c501/3c509b/.. ethernet driver by
 ##  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -34,8 +38,8 @@ $(DRIVER):	$(OBJS)
 	install -S 4kw $(DRIVER)
 
 ##  Install with other drivers
-install:	/usr/sbin/drivers/$(DRIVER)
-/usr/sbin/drivers/$(DRIVER):	$(DRIVER)
+install:	/usr/sbin/$(DRIVER)
+/usr/sbin/$(DRIVER):	$(DRIVER)
 	install -o root -cs $? $@
 
 ##  Generate dependencies

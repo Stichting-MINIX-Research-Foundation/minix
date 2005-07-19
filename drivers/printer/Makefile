@@ -24,8 +24,8 @@ $(DRIVER):	$(OBJ)
 #	install -S 64w $(DRIVER)
 
 # install with other drivers
-install:	/usr/sbin/drivers/$(DRIVER)
-/usr/sbin/drivers/$(DRIVER):	$(DRIVER)
+install:	/usr/sbin/$(DRIVER)
+/usr/sbin/$(DRIVER):	$(DRIVER)
 	install -o root -c $? $@
 #	install -o root -cs $? $@
 

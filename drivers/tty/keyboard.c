@@ -629,7 +629,7 @@ message *m;			/* request message to TTY */
 	 */
 	while (nb_receive(ANY, m) == OK) {
 		switch(m->m_type) {
-		case NEW_KMESS:	   do_new_kmess(m);	break;
+		case SYS_EVENT:	   do_new_kmess(m);	break;
 		case DIAGNOSTICS:  do_diagnostics(m);	break;
 		default:	;	/* do nothing */ 
 		}

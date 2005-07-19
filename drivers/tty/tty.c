@@ -204,9 +204,18 @@ PUBLIC void main(void)
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
 	}
-	case NEW_KMESS:			/* new kernel message is available */
-		do_new_kmess(&tty_mess);
+	case SYS_EVENT: {		/* new kernel message is available */
+		sigset_t sigset = (sigset_t) tty_mess.NOTIFY_ARG;
+		if (sigismember(&sigset, SIGKMESS)) {
+			do_new_kmess(&tty_mess);
+		} else if (sigismember(&sigset, SIGTERM)) {
+			cons_stop();	/* first switch to primary console */
+		} else if (sigismember(&sigset, SIGKSTOP)) {
+			cons_stop();		/* switch to primary console */
+			do_panic_dumps(&tty_mess);	
+		}
 		continue;
+	}
 	case HARD_STOP: {		/* MINIX is going down */
 		static int stop = 0;	/* expect two HARD_STOP messages */
 		if (! stop++) {

@@ -28,8 +28,8 @@ $(LIBPCI):
 	cd $d/libpci && $(MAKE) 
 
 # install with other drivers
-install:	/usr/sbin/drivers/$(DRIVER)
-/usr/sbin/drivers/$(DRIVER):	$(DRIVER)
+install:	/usr/sbin/$(DRIVER)
+/usr/sbin/$(DRIVER):	$(DRIVER)
 	install -o root -cs $? $@
 
 # clean up local files
