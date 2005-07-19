@@ -26,25 +26,26 @@ register message *m_ptr;	/* pointer to request message */
 #if (CHIP == INTEL)
   reg_t old_ldt_sel;
 #endif
-  register struct proc *rpc;
-  struct proc *rpp;
+  register struct proc *rpc;		/* child process pointer */
+  struct proc *rpp;			/* parent process pointer */
 
   rpp = proc_addr(m_ptr->PR_PPROC_NR);
   rpc = proc_addr(m_ptr->PR_PROC_NR);
-  if (! isemptyp(rpc)) return(EINVAL);
+  if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
 
-  /* Copy parent 'proc' struct to child. */
+  /* Copy parent 'proc' struct to child. And reinitialize some fields. */
 #if (CHIP == INTEL)
-  old_ldt_sel = rpc->p_ldt_sel;	/* stop this being obliterated by copy */
-#endif
-
-  *rpc = *rpp;					/* copy 'proc' struct */
-
-#if (CHIP == INTEL)
-  rpc->p_ldt_sel = old_ldt_sel;
+  old_ldt_sel = rpc->p_ldt_sel;		/* backup local descriptors */
+  *rpc = *rpp;				/* copy 'proc' struct */
+  rpc->p_ldt_sel = old_ldt_sel;		/* restore descriptors */
+#else
+  *rpc = *rpp;				/* copy 'proc' struct */
 #endif
   rpc->p_nr = m_ptr->PR_PROC_NR;	/* this was obliterated by copy */
+
+#if TEMP_CODE
   rpc->p_ntf_q = NULL;			/* remove pending notifications */
+#endif
 
   /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
   rpc->p_rts_flags |= NO_MAP;		/* inhibit process from running */

@@ -37,13 +37,13 @@ register message *m_ptr;	/* pointer to request message */
   rp = proc_addr(m_ptr->m_source);
   index = -1;
   for (i=0; i < NR_REMOTE_SEGS; i++) {
-  	if (! rp->p_priv->s_farmem[i].in_use) {
-  		index = i; 
-  		rp->p_priv->s_farmem[i].in_use = TRUE;
-  		rp->p_priv->s_farmem[i].mem_phys = phys;
-  		rp->p_priv->s_farmem[i].mem_len = size;
-  		break;
-  	}
+      if (! rp->p_priv->s_farmem[i].in_use) {
+          index = i; 
+          rp->p_priv->s_farmem[i].in_use = TRUE;
+          rp->p_priv->s_farmem[i].mem_phys = phys;
+          rp->p_priv->s_farmem[i].mem_len = size;
+          break;
+      }
   }
   if (index < 0) return(ENOSPC);
 
@@ -63,7 +63,7 @@ register message *m_ptr;	/* pointer to request message */
           	USER_PRIVILEGE);
           selector = ((EXTRA_LDT_INDEX+i)*0x08) | (1*0x04) | USER_PRIVILEGE;
           offset = 0;
-          result = OK;			
+          result = OK;
       } else {
           init_dataseg(&rp->p_ldt[EXTRA_LDT_INDEX+i], phys & ~0xFFFF, 0, 
           	USER_PRIVILEGE);

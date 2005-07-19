@@ -7,10 +7,8 @@
  *
  * Changes:
  *   Mar 18, 2004   clock interface moved to SYSTEM task (Jorrit N. Herder) 
- *   Oct 10, 2004   call vector + return values allowed  (Jorrit N. Herder) 
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  *   Sep 24, 2004   redesigned timers and alarms  (Jorrit N. Herder)
- *   Jun 04, 2004   new timeout flag alarm functionality  (Jorrit N. Herder)
  *
  * The function do_clocktick() is not triggered from the clock library, but 
  * by the clock's interrupt handler when a watchdog timer has expired or 
@@ -60,25 +58,18 @@ FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
 #endif
 
 /* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
- * The process structure contains one timer per type of alarm (SIGNALRM,
- * SYNCALRM, and FLAGALRM), which means that a process can have a single
- * outstanding timer for each alarm type.
- * If other kernel parts want to use additional timers, they must declare 
- * their own persistent timer structure, which can be passed to the clock
+ * All system processes possess a single synchronous alarm timer. If other 
+ * kernel parts want to use additional timers, they must declare their own 
+ * persistent (static) timer structure, which can be passed to the clock
  * via (re)set_timer().
  * When a timer expires its watchdog function is run by the CLOCK task. 
  */
 PRIVATE timer_t *clock_timers;		/* queue of CLOCK timers */
 PRIVATE clock_t next_timeout;		/* realtime that next timer expires */
 
-/* The boot time and the current real time. The real time is incremented by
- * the clock on each clock tick. The boot time is set by a utility program
- * after system startup to prevent troubles reading the CMOS.  
- */
+/* The time is incremented by the interrupt handler on each clock tick. */
 PRIVATE clock_t realtime;		/* real time clock */
-
-/* Variables for and changed by the CLOCK's interrupt handler. */
-PRIVATE irq_hook_t clock_hook;
+PRIVATE irq_hook_t clock_hook;		/* interrupt handler hook */
 
 
 /*===========================================================================*
@@ -86,12 +77,12 @@ PRIVATE irq_hook_t clock_hook;
  *===========================================================================*/
 PUBLIC void clock_task()
 {
-/* Main program of clock task. It corrects realtime by adding pending ticks
- * seen only by the interrupt service, then it determines which call this is 
- * by looking at the message type and dispatches.
+/* Main program of clock task. It determines which call this is by looking at
+ * the message type and dispatches.
  */
   message m;			/* message buffer for both input and output */
-  int result;
+  int result;			/* result returned by the handler */
+
   init_clock();			/* initialize clock task */
 
   /* Main loop of the clock task.  Get work, process it, sometimes reply. */
@@ -297,11 +288,9 @@ PUBLIC unsigned long read_clock()
  */
   unsigned count;
 
-  /* lock(10, "read_clock"); */
   outb(TIMER_MODE, LATCH_COUNT);
   count = inb(TIMER0);
   count |= (inb(TIMER0) << 8);
-  /* unlock(10); */
   
   return count;
 }

@@ -11,7 +11,8 @@
  *
  * In addition to the main sys_task() entry point, which starts the main loop,
  * there are several other minor entry points:
- *   cause_sig:		take action to cause a signal to occur
+ *   send_sig:		send signal directly to a system process
+ *   cause_sig:		take action to cause a signal to occur via PM
  *   clear_proc:	clean up a process in the process table, e.g. on exit
  *   umap_local:	map virtual address in LOCAL_SEG to physical 
  *   umap_remote:	map virtual address in REMOTE_SEG to physical 
@@ -78,9 +79,6 @@ PUBLIC void sys_task()
       /* Handle the request. */
       if ((unsigned) m.m_type < NR_SYS_CALLS) {
           result = (*call_vec[m.m_type])(&m);	/* handle the kernel call */
-      } else if (m.m_type == NEW_KSIG) {	
-          lock_alert(SYSTEM, PM_PROC_NR);	/* tell PM about signal */
-          continue;
       } else {
 	  kprintf("Warning, illegal SYSTASK request from %d.\n", m.m_source);
 	  result = EBADREQUEST;			/* illegal message type */
@@ -133,6 +131,7 @@ PRIVATE void initialize(void)
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_EXEC, do_exec);		/* update process after execute */
   map(SYS_EXIT, do_exit);		/* clean up after process exit */
+  map(SYS_NICE, do_nice);		/* set scheduling priority */
   map(SYS_TRACE, do_trace);		/* request a trace operation */
 
   /* Signal handling. */
@@ -153,7 +152,8 @@ PRIVATE void initialize(void)
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
 
   /* System control. */
-  map(SYS_SETPRIORITY, do_schedctl);	/* set scheduling priority */
+  map(SYS_ABORT, do_abort);		/* abort MINIX */
+  map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_SVRCTL, do_svrctl);		/* kernel control functions */
 
@@ -164,10 +164,6 @@ PRIVATE void initialize(void)
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
   map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
-
-  /* Miscellaneous. */
-  map(SYS_ABORT, do_abort);		/* abort MINIX */
-  map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
 }
 
 
@@ -256,17 +252,18 @@ int proc_nr;				/* slot of process to clean up */
   while (rc->p_ntf_q != NULL) {
       i = (int) (rc->p_ntf_q - &notify_buffer[0]);
       free_bit(i, notify_bitmap, NR_NOTIFY_BUFS); 
+#if TEMP_CODE
       rc->p_ntf_q = rc->p_ntf_q->n_next;
   }
-
-  /* Now clean up the process table entry. Reset to defaults. */
-  kstrncpy(rc->p_name, "<none>", P_NAME_LEN);	/* unset name */
-  sigemptyset(&rc->p_pending);		/* remove pending signals */
-  rc->p_rts_flags = SLOT_FREE;		/* announce slot empty */
-
-#if (CHIP == M68000)
-  pmmu_delete(rc);			/* we're done, remove tables */
 #endif
+
+  /* Now it is safe to release the process table slot. If this is a system 
+   * process, also release its privilege structure.  Further cleanup is not
+   * needed at this point. All important fields are reinitialized when the 
+   * slots are assigned to another, new process. 
+   */
+  rc->p_rts_flags = SLOT_FREE;		
+  if (priv(rp)->s_flags & SYS_PROC) priv(rp)->s_proc_nr = NONE;
 }
 
 
@@ -332,6 +329,25 @@ irq_hook_t *hook;
 
 
 /*===========================================================================*
+ *				send_sig				     *
+ *===========================================================================*/
+PUBLIC void send_sig(proc_nr, sig_nr)
+int proc_nr;			/* system process to be signalled */
+int sig_nr;			/* signal to be sent, 1 to _NSIG */
+{
+/* Notify a system process about a signal. This is straightforward. Simply
+ * set the signal that is to be delivered in the pending signals map and 
+ * send a notification with source SYSTEM.
+ */ 
+  register struct proc *rp;
+
+  rp = proc_addr(proc_nr);
+  sigaddset(&priv(rp)->s_sig_pending, sig_nr);
+  lock_alert(SYSTEM, proc_nr); 
+}
+
+
+/*===========================================================================*
  *				cause_sig				     *
  *===========================================================================*/
 PUBLIC void cause_sig(proc_nr, sig_nr)
@@ -346,8 +362,10 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * signals and makes sure the PM gets them by sending a notification. The 
  * process being signaled is blocked while PM has not finished all signals 
  * for it. 
- * It is not sufficient to ready the process when PM is informed, because 
- * PM can block waiting for FS to do a core dump.
+ * Race conditions between calls to this function and the system calls that
+ * process pending kernel signals cannot exist. Signal related functions are
+ * only called when a user process causes a CPU exception and from the kernel 
+ * process level, which runs to completion.
  */
   register struct proc *rp;
 
@@ -358,7 +376,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
       if (! (rp->p_rts_flags & SIGNALED)) {		/* other pending */
           if (rp->p_rts_flags == 0) lock_unready(rp);	/* make not ready */
           rp->p_rts_flags |= SIGNALED | SIG_PENDING;	/* update flags */
-          lock_alert(HARDWARE, SYSTEM);
+          send_sig(PM_PROC_NR, SIGKSIG);
       }
   }
 }
@@ -509,10 +527,7 @@ vir_bytes bytes;		/* # of bytes to copy  */
   int i;
 
   /* Check copy count. */
-  if (bytes <= 0) {
-      kprintf("v_cp: copy count problem <= 0\n", NO_NUM);
-      return(EDOM);
-  }
+  if (bytes <= 0) return(EDOM);
 
   /* Do some more checks and map virtual addresses to physical addresses. */
   vir_addr[_SRC_] = src_addr;
@@ -539,16 +554,12 @@ vir_bytes bytes;		/* # of bytes to copy  */
           phys_addr[i] = vir_addr[i]->offset;
           break;
       default:
-          kprintf("v_cp: Unknown segment type: %d\n", 
-              vir_addr[i]->segment & SEGMENT_TYPE);
           return(EINVAL);
       }
 
       /* Check if mapping succeeded. */
-      if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG) {
-          kprintf("v_cp: Mapping failed ... phys <= 0\n", NO_NUM);
+      if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG) 
           return(EFAULT);
-      }
   }
 
   /* Now copy bytes between physical addresseses. */

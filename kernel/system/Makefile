@@ -23,7 +23,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_newmap.o) \
 	$(SYSTEM)(do_exit.o) \
 	$(SYSTEM)(do_trace.o) \
-	$(SYSTEM)(do_schedctl.o) \
+	$(SYSTEM)(do_nice.o) \
 	$(SYSTEM)(do_times.o) \
 	$(SYSTEM)(do_alarm.o) \
 	$(SYSTEM)(do_irqctl.o) \
@@ -75,8 +75,8 @@ $(SYSTEM)(do_exit.o):	do_exit.c
 $(SYSTEM)(do_trace.o):	do_trace.c
 	$(CC) do_trace.c
 
-$(SYSTEM)(do_schedctl.o):	do_schedctl.c
-	$(CC) do_schedctl.c
+$(SYSTEM)(do_nice.o):	do_nice.c
+	$(CC) do_nice.c
 
 $(SYSTEM)(do_times.o):	do_times.c
 	$(CC) do_times.c

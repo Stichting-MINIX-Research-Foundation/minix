@@ -201,6 +201,9 @@ int how;				/* reason to shut down */
           return;			/* await sys_abort() from TTY */
   }
 
+  /* Send signal to TTY so that it can switch to the primary console. */
+  send_sig(TTY, SIGKSTOP);
+
   /* Allow processes to be scheduled to clean up, unless a CPU exception 
    * occurred. This is done by setting a timer. The timer argument passes
    * the shutdown status.

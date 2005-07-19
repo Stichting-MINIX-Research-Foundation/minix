@@ -51,39 +51,39 @@ int mine;
   intr_disable();
 
   if (machine.protected) {
-	/* The AT and newer PS/2 have two interrupt controllers, one master,
-	 * one slaved at IRQ 2.  (We don't have to deal with the PC that
-	 * has just one controller, because it must run in real mode.)
-	 */
-	outb(INT_CTL, machine.ps_mca ? ICW1_PS : ICW1_AT);
-	outb(INT_CTLMASK, mine ? IRQ0_VECTOR : BIOS_IRQ0_VEC);
+      /* The AT and newer PS/2 have two interrupt controllers, one master,
+       * one slaved at IRQ 2.  (We don't have to deal with the PC that
+       * has just one controller, because it must run in real mode.)
+       */
+      outb(INT_CTL, machine.ps_mca ? ICW1_PS : ICW1_AT);
+      outb(INT_CTLMASK, mine ? IRQ0_VECTOR : BIOS_IRQ0_VEC);
 							/* ICW2 for master */
-	outb(INT_CTLMASK, (1 << CASCADE_IRQ));		/* ICW3 tells slaves */
-	outb(INT_CTLMASK, ICW4_AT_MASTER);
-	outb(INT_CTLMASK, ~(1 << CASCADE_IRQ));		/* IRQ 0-7 mask */
-	outb(INT2_CTL, machine.ps_mca ? ICW1_PS : ICW1_AT);
-	outb(INT2_CTLMASK, mine ? IRQ8_VECTOR : BIOS_IRQ8_VEC);
+      outb(INT_CTLMASK, (1 << CASCADE_IRQ));		/* ICW3 tells slaves */
+      outb(INT_CTLMASK, ICW4_AT_MASTER);
+      outb(INT_CTLMASK, ~(1 << CASCADE_IRQ));		/* IRQ 0-7 mask */
+      outb(INT2_CTL, machine.ps_mca ? ICW1_PS : ICW1_AT);
+      outb(INT2_CTLMASK, mine ? IRQ8_VECTOR : BIOS_IRQ8_VEC);
 							/* ICW2 for slave */
-	outb(INT2_CTLMASK, CASCADE_IRQ);		/* ICW3 is slave nr */
-	outb(INT2_CTLMASK, ICW4_AT_SLAVE);
-	outb(INT2_CTLMASK, ~0);				/* IRQ 8-15 mask */
+      outb(INT2_CTLMASK, CASCADE_IRQ);		/* ICW3 is slave nr */
+      outb(INT2_CTLMASK, ICW4_AT_SLAVE);
+      outb(INT2_CTLMASK, ~0);				/* IRQ 8-15 mask */
 
-	/* Copy the BIOS vectors from the BIOS to the Minix location, so we
-	 * can still make BIOS calls without reprogramming the i8259s.
-	 */
+      /* Copy the BIOS vectors from the BIOS to the Minix location, so we
+       * can still make BIOS calls without reprogramming the i8259s.
+       */
 #if IRQ0_VECTOR != BIOS_IRQ0_VEC
-	phys_copy(BIOS_VECTOR(0) * 4L, VECTOR(0) * 4L, 8 * 4L);
+      phys_copy(BIOS_VECTOR(0) * 4L, VECTOR(0) * 4L, 8 * 4L);
 #endif
 #if IRQ8_VECTOR != BIOS_IRQ8_VEC
-	phys_copy(BIOS_VECTOR(8) * 4L, VECTOR(8) * 4L, 8 * 4L);
+      phys_copy(BIOS_VECTOR(8) * 4L, VECTOR(8) * 4L, 8 * 4L);
 #endif
   } else {
-	/* Use the BIOS interrupt vectors in real mode.  We only reprogram the
-	 * exceptions here, the interrupt vectors are reprogrammed on demand.
-	 * SYS_VECTOR is the Minix system call for message passing.
-	 */
-	for (i = 0; i < 8; i++) set_vec(i, int_vec[i]);
-	set_vec(SYS_VECTOR, s_call);
+      /* Use the BIOS interrupt vectors in real mode.  We only reprogram the
+       * exceptions here, the interrupt vectors are reprogrammed on demand.
+       * SYS_VECTOR is the Minix system call for message passing.
+       */
+      for (i = 0; i < 8; i++) set_vec(i, int_vec[i]);
+      set_vec(SYS_VECTOR, s_call);
   }
 }
 
@@ -100,14 +100,14 @@ irq_handler_t handler;
   irq_hook_t **line;
 
   if (irq < 0 || irq >= NR_IRQ_VECTORS)
-	panic("invalid call to put_irq_handler", irq);
+      panic("invalid call to put_irq_handler", irq);
 
   line = &irq_handlers[irq];
   id = 1;
   while (*line != NULL) {
-	if (hook == *line) return;	/* extra initialization */
-	line = &(*line)->next;
-	id <<= 1;
+      if (hook == *line) return;	/* extra initialization */
+      line = &(*line)->next;
+      id <<= 1;
   }
   if (id == 0) panic("Too many handlers for irq", irq);
 
@@ -130,22 +130,20 @@ int id;
 /* Unregister an interrupt handler. */
   irq_hook_t **line;
 
-  if (irq < 0 || irq >= NR_IRQ_VECTORS) {
-  	return EINVAL;
-  }
+  if (irq < 0 || irq >= NR_IRQ_VECTORS) return(EINVAL);
 
   line = &irq_handlers[irq];
   while (*line != NULL) {
-  	if((*line)->id == id) {
-		(*line) = (*line)->next;
-		if(!irq_handlers[irq])
-			irq_use &= ~(1 << irq);
-  		return OK;
-  	}
-	line = &(*line)->next;
+      if((*line)->id == id) {
+          (*line) = (*line)->next;
+          if(! irq_handlers[irq])
+              irq_use &= ~(1 << irq);
+          return(OK);
+      }
+      line = &(*line)->next;
   }
 
-  return ENOENT;
+  return(ENOENT);
 }
 
 /*==========================================================================*
@@ -161,12 +159,12 @@ irq_hook_t *hook;
 
   /* Call list of handlers for an IRQ. */
   while (hook != NULL) {
-	/* For each handler in the list, mark it active by setting its ID bit,
-	 * call the function, and unmark it if the function returns true.
-	 */
-	irq_actids[hook->irq] |= hook->id;
-	if ((*hook->handler)(hook)) irq_actids[hook->irq] &= ~hook->id;
-	hook = hook->next;
+      /* For each handler in the list, mark it active by setting its ID bit,
+       * call the function, and unmark it if the function returns true.
+       */
+      irq_actids[hook->irq] |= hook->id;
+      if ((*hook->handler)(hook)) irq_actids[hook->irq] &= ~hook->id;
+      hook = hook->next;
   }
 
   /* The assembly code will now disable interrupts, unmask the IRQ if and only

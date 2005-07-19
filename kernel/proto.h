@@ -50,6 +50,7 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 				U16_t parmoff, U16_t parmsize)		);
 
 /* system.c */
+_PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( int init_proc, (int proc_nr, int proto_nr)			);
 _PROTOTYPE( void clear_proc, (int proc_nr)				);

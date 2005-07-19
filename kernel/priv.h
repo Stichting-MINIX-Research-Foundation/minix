@@ -26,6 +26,7 @@ struct priv {
 
   sys_map_t s_notify_pending;  	/* bit map with pending notifications */
   short s_int_pending;		/* pending hardware interrupts */
+  sigset_t s_sig_pending;	/* pending signals */
 
   timer_t s_alarm_timer;	/* synchronous alarm timer */ 
   struct far_mem s_farmem[NR_REMOTE_SEGS];  /* remote memory map */
@@ -59,6 +60,9 @@ struct priv {
  */
 EXTERN struct priv priv[NR_SYS_PROCS];		/* system properties table */
 EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
+
+/* Unprivileged user processes all share the same privilege structure. */
+#define USER_PRIV_ID	0
 
 /* Make sure the system can boot. The following sanity check verifies that
  * the system privileges table is large enough for the number of processes

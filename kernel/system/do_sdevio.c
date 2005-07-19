@@ -44,8 +44,8 @@ register message *m_ptr;	/* pointer to request message */
       } 
   } else if (m_ptr->DIO_REQUEST == DIO_OUTPUT) { 
       switch (m_ptr->DIO_TYPE) {
-      case DIO_BYTE: phys_outsb(port, phys_buf, count); break;  
-      case DIO_WORD: phys_outsw(port, phys_buf, count); break;  
+      case DIO_BYTE: phys_outsb(port, phys_buf, count); break; 
+      case DIO_WORD: phys_outsw(port, phys_buf, count); break; 
       default: return(EINVAL);
       } 
   }

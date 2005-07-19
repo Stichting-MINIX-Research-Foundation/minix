@@ -62,19 +62,27 @@ FORWARD _PROTOTYPE( void sched, (struct proc *rp) );
 FORWARD _PROTOTYPE( void pick_proc, (void) );
 
 
+#if TEMP_CODE
 #define BuildOldMess(m,n) \
 	(m).NOTIFY_SOURCE = (n)->n_source, \
 	(m).NOTIFY_TYPE = (n)->n_type, \
 	(m).NOTIFY_FLAGS = (n)->n_flags, \
 	(m).NOTIFY_ARG = (n)->n_arg;
+#endif
 
 #define BuildMess(m_ptr, src, dst_ptr) \
 	(m_ptr)->m_source = (src); 					\
 	(m_ptr)->m_type = NOTIFY_FROM(src);				\
 	(m_ptr)->NOTIFY_TIMESTAMP = get_uptime();			\
-	if ((src) == HARDWARE) {					\
+	switch (src) {							\
+	case HARDWARE:							\
 		(m_ptr)->NOTIFY_ARG = priv(dst_ptr)->s_int_pending;	\
 		priv(dst_ptr)->s_int_pending = 0;			\
+		break;							\
+	case SYSTEM:							\
+		(m_ptr)->NOTIFY_ARG = priv(dst_ptr)->s_sig_pending;	\
+		priv(dst_ptr)->s_sig_pending = 0;			\
+		break;							\
 	}
 
 #if (CHIP == INTEL)
@@ -123,24 +131,16 @@ message *m_ptr;			/* pointer to message in the caller's space */
       return(EBADSRCDST);
 
 #if DEAD_CODE		/* temporarily disabled for testing ALERT */
-  /* Check validity of message pointer. */
-  vb = (vir_bytes) m_ptr;
-  vlo = vb >> CLICK_SHIFT;	/* vir click for bottom of message */
-  vhi = (vb + MESS_SIZE - 1) >> CLICK_SHIFT;	/* vir click for top of msg */
-#if ALLOW_GAP_MESSAGES
   /* This check allows a message to be anywhere in data or stack or gap. 
    * It will have to be made more elaborate later for machines which
    * don't have the gap mapped.
    */
+  vb = (vir_bytes) m_ptr;
+  vlo = vb >> CLICK_SHIFT;	/* vir click for bottom of message */
+  vhi = (vb + MESS_SIZE - 1) >> CLICK_SHIFT;	/* vir click for top of msg */
   if (vlo < caller_ptr->p_memmap[D].mem_vir || vlo > vhi ||
       vhi >= caller_ptr->p_memmap[S].mem_vir + caller_ptr->p_memmap[S].mem_len) 
         return(EFAULT); 
-#else
-  /* Check for messages wrapping around top of memory or outside data seg. */
-  if (vhi < vlo ||
-      vhi - caller_ptr->p_memmap[D].mem_vir >= caller_ptr->p_memmap[D].mem_len) 
-        return(EFAULT); 
-#endif
 #endif
 
   /* Now check if the call is known and try to perform the request. The only
@@ -183,9 +183,11 @@ message *m_ptr;			/* pointer to message in the caller's space */
       break;
   case NOTIFY:
       result = mini_notify(caller_ptr, src_dst, m_ptr);
+#if TEMP_CODE
       break;
   case ECHO:
       kprintf("Echo message from process %s\n", proc_nr(caller_ptr));
+#endif
       CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, caller_ptr, m_ptr);
       result = OK;
       break;
@@ -197,7 +199,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * be raised. The priority may have been lowered if a process consumed too 
    * many full quantums in a row to prevent damage from infinite loops 
    */
-#if DEAD_CODE		/* temporarily disabled for testing ALERT */
+#if DEAD_CODE		/* buggy ... do unready() first! */
   if ((caller_ptr->p_priority > caller_ptr->p_max_priority) && 
          ! (flags & NON_BLOCKING) && (result == OK)) {
       caller_ptr->p_priority = caller_ptr->p_max_priority;

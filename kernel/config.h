@@ -34,7 +34,7 @@
 #define USE_IRQCTL     	1	/* set an interrupt policy */
 #define USE_SEGCTL     	1	/* set up a remote segment */
 #define USE_SVRCTL     	1	/* system server control */
-#define USE_SCHEDCTL 	1	/* change scheduling priority (nice) */
+#define USE_NICE 	1	/* change scheduling priority */
 #define USE_UMAP       	1	/* map virtual to physical address */
 #define USE_VIRCOPY   	1	/* copy using virtual addressing */ 
 #define USE_VIRVCOPY  	1	/* vector with virtual copy requests */
@@ -70,8 +70,13 @@
 #define VDEVIO_BUF_SIZE   64		/* max elements per VDEVIO request */
 #define VCOPY_VEC_SIZE    16		/* max elements per VCOPY request */
 
+#if TEMP_CODE
 /* How many buffers for notification messages should there be? */
 #define NR_NOTIFY_BUFS	  32
+#endif
+
+/* How many bytes for the kernel stack. Space allocated in mpx.s. */
+#define K_STACK_BYTES   1024	
 
 
 /* This section allows to enable kernel debugging and timing functionality.

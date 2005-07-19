@@ -18,9 +18,8 @@
 
 /* Call masks indicating which system calls a process can make. */
 #define EMPTY_CALL_MASK 	(0)
-#define _USER_CALL_MASK	 	((1 << SENDREC) | (1 << ALERT))
+#define USER_CALL_MASK	 	(1 << SENDREC) 
 #define SYSTEM_CALL_MASK 	(~0)
-#define USER_CALL_MASK 	(~0)
 
 
 #endif /* IPC_H */

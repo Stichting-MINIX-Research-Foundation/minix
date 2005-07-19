@@ -1,20 +1,11 @@
 /* The system call that is implemented in this file:
- *     SYS_SIGCTL	# signal handling functionality 
+ *   m_type:	SYS_SIGSEND
  *
- * The parameters and types for this system call are:
- *     SIG_REQUEST 	# request to perform			(long)
- *     SIG_PROC  	# process to signal/ pending		(int)
- *     SIG_CTXT_PTR 	# pointer to sigcontext structure	(pointer)	
- *     SIG_FLAGS    	# flags for S_SIGRETURN call		(int)	
- *     SIG_MAP		# bit map with pending signals		(long)	
- *     SIG_NUMBER	# signal number to send to process	(int)	
+ * The parameters for this system call are:
+ *     m2_i1:	SIG_PROC  	# process to call signal handler
+ *     m2_p1:	SIG_CTXT_PTR 	# pointer to sigcontext structure
+ *     m2_i3:	SIG_FLAGS    	# flags for S_SIGRETURN call	
  *
- * Supported request types are in the parameter SIG_REQUEST:
- *     S_GETSIG		# get a pending kernel signal
- *     S_ENDSIG		# signal has been processed 
- *     S_SENDSIG	# deliver a POSIX-style signal 
- *     S_SIGRETURN	# return from a POSIX-style signal 
- *     S_KILL		# send a signal to a process 
  */
 
 #include "../system.h"

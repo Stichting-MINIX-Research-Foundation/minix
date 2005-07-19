@@ -48,24 +48,24 @@ register message *m_ptr;	/* pointer to request message */
     phys_bytes caller_phys;     /* physical address at caller */
     phys_bytes kernel_phys;     /* physical address in kernel */
 
-    
+
     /* Check if nr of ports is ok and get size of (port,value) data. */
     if (m_ptr->DIO_VEC_SIZE <= 0) return(EINVAL);
     switch(m_ptr->DIO_TYPE) {
-    	case DIO_BYTE:
-    	    if (m_ptr->DIO_VEC_SIZE > MAX_PVB_PAIRS)  return(EINVAL);
-    	    bytes = (size_t) (m_ptr->DIO_VEC_SIZE * sizeof(pvb_pair_t));
-    	    break;
-    	case DIO_WORD:
-    	    if (m_ptr->DIO_VEC_SIZE > MAX_PVW_PAIRS)  return(EINVAL);
-    	    bytes = (size_t) (m_ptr->DIO_VEC_SIZE * sizeof(pvw_pair_t));
-    	    break;
-    	case DIO_LONG:
-    	    if (m_ptr->DIO_VEC_SIZE > MAX_PVL_PAIRS)  return(EINVAL);
-    	    bytes = (size_t) (m_ptr->DIO_VEC_SIZE * sizeof(pvl_pair_t));
-    	    break;
-    	default:	/* this once and for all checks for a correct type */
-    	    return(EINVAL);
+    case DIO_BYTE:
+        if (m_ptr->DIO_VEC_SIZE > MAX_PVB_PAIRS)  return(EINVAL);
+        bytes = (size_t) (m_ptr->DIO_VEC_SIZE * sizeof(pvb_pair_t));
+        break;
+    case DIO_WORD:
+        if (m_ptr->DIO_VEC_SIZE > MAX_PVW_PAIRS)  return(EINVAL);
+        bytes = (size_t) (m_ptr->DIO_VEC_SIZE * sizeof(pvw_pair_t));
+        break;
+    case DIO_LONG:
+        if (m_ptr->DIO_VEC_SIZE > MAX_PVL_PAIRS)  return(EINVAL);
+        bytes = (size_t) (m_ptr->DIO_VEC_SIZE * sizeof(pvl_pair_t));
+        break;
+    default:	/* this once and for all checks for a correct type */
+        return(EINVAL);
     }
 
     /* Calculate physical addresses and copy (port,value)-pairs from user. */

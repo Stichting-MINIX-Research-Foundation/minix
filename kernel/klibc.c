@@ -20,6 +20,7 @@
 
 #include "kernel.h"
 
+#include <signal.h>
 #include <minix/com.h>
 
 #define isdigit(c)	((unsigned) ((c) - '0') <  (unsigned) 10)
@@ -159,7 +160,7 @@ int c;					/* character to append */
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
-      lock_alert(SYSTEM, PRINTF_PROC);
+      send_sig(PRINTF_PROC, SIGKMESS);
   }
 }
 

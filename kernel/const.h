@@ -20,9 +20,6 @@
 #define structof(type, field, ptr) \
 	((type *) (((char *) (ptr)) - offsetof(type, field)))
 
-/* How many bytes for the kernel stack. Space allocated in mpx.s. */
-#define K_STACK_BYTES   1024	
-
 /* Constants used in virtual_copy(). Values must be 0 and 1, respectively. */
 #define _SRC_	0
 #define _DST_	1

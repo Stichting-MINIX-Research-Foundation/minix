@@ -45,10 +45,8 @@ register message *m_ptr;	/* pointer to request message */
 
       /* Check if process number was given implictly with SELF and is valid. */
       if (vir_addr[i].proc_nr == SELF) vir_addr[i].proc_nr = m_ptr->m_source;
-      if (! isokprocn(vir_addr[i].proc_nr) && vir_addr[i].segment != PHYS_SEG) {
-          kprintf("do_vircopy: illegal proc nr, while not phys addr\n",NO_NUM);
+      if (! isokprocn(vir_addr[i].proc_nr) && vir_addr[i].segment != PHYS_SEG) 
           return(EINVAL); 
-      }
 
       /* Check if physical addressing is used without SYS_PHYSCOPY. */
       if ((vir_addr[i].segment & PHYS_SEG) &&
@@ -58,10 +56,7 @@ register message *m_ptr;	/* pointer to request message */
   /* Check for overflow. This would happen for 64K segments and 16-bit 
    * vir_bytes. Especially copying by the PM on do_fork() is affected. 
    */
-  if (bytes != (vir_bytes) bytes) {
-	kprintf("do_vircopy: overflow\n", NO_NUM);
-	return(E2BIG);
-  }
+  if (bytes != (vir_bytes) bytes) return(E2BIG);
 
   /* Now try to make the actual virtual copy. */
   return( virtual_copy(&vir_addr[_SRC_], &vir_addr[_DST_], bytes) );

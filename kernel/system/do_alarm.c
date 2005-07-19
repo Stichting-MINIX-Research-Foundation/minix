@@ -5,10 +5,10 @@
  *    m2_i1:	ALRM_PROC_NR		(set alarm for this process)	
  *    m2_l1:	ALRM_EXP_TIME		(alarm's expiration time)
  *    m2_i2:	ALRM_ABS_TIME		(expiration time is absolute?)
- *    m2_l1:	ALRM_SEC_LEFT		(return seconds left of previous)
+ *    m2_l1:	ALRM_TIME_LEFT		(return seconds left of previous)
  *
  * Changes:
- *    Aug 25, 2004   fully rewritten to clean up code  (Jorrit N. Herder)  
+ *    Aug 25, 2004   fully rewritten to clean up code  (Jorrit N. Herder)
  */
 
 #include "../system.h"
@@ -40,10 +40,10 @@ message *m_ptr;			/* pointer to request message */
   /* Get the timer structure and set the parameters for this alarm. */
   tp = &(proc_addr(proc_nr)->p_priv->s_alarm_timer);	
   tmr_arg(tp)->ta_int = proc_nr;	
-  tp->tmr_func = cause_alarm; 	
+  tp->tmr_func = cause_alarm; 
 
   /* Return the ticks left on the previous alarm. */
-  uptime = get_uptime();  
+  uptime = get_uptime(); 
   if ((tp->tmr_exp_time == TMR_NEVER) || (tp->tmr_exp_time < uptime) ) {
       m_ptr->ALRM_TIME_LEFT = 0;
   } else {
@@ -69,7 +69,7 @@ timer_t *tp;
 {
 /* Routine called if a timer goes off and the process requested a synchronous
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that
- * process given with a SYN_ALARM message.
+ * process with a notification message from CLOCK.
  */
   lock_alert(CLOCK, tmr_arg(tp)->ta_int);
 }

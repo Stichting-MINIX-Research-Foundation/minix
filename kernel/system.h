@@ -43,9 +43,9 @@ _PROTOTYPE( int do_trace, (message *m_ptr) );
 #define do_trace do_unused
 #endif
 
-_PROTOTYPE( int do_schedctl, (message *m_ptr) );
-#if ! USE_SCHEDCTL
-#define do_schedctl do_unused
+_PROTOTYPE( int do_nice, (message *m_ptr) );
+#if ! USE_NICE
+#define do_nice do_unused
 #endif
 
 _PROTOTYPE( int do_copy, (message *m_ptr) );	
