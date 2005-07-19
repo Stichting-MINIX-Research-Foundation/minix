@@ -442,8 +442,9 @@ pc_small:
 !*===========================================================================*
 !*				phys_fill				     *
 !*===========================================================================*
-! PUBLIC void phys_fill(phys_bytes source, phys_bytes bytecount, char char);
-! Zero a block of physical memory.
+! PUBLIC void phys_fill(phys_bytes source, phys_bytes bytecount,
+! 	unsigned long pattern);
+! Fill a block of physical memory with pattern.
 
 	.align	16
 
@@ -464,6 +465,19 @@ fill_start:
 	add	esi, 4
 	dec	eax
 	jnz	fill_start
+	! Any remaining bytes?
+	mov	eax, 12(ebp)
+	and	eax, 3
+remain_fill:
+	cmp	eax, 0
+	jz	fill_done
+	movb	bl, 16(ebp)
+   	movb    (esi), bl
+	add	esi, 1
+	inc	ebp
+	dec	eax
+	jmp	remain_fill
+fill_done:
 	pop	ds
 	pop	ebx
 	pop	esi

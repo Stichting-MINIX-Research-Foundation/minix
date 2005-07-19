@@ -35,8 +35,10 @@ clean:
 
 depend: 
 	cd system && $(MAKE) -$(MAKEFLAGS) $@
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c *.s > .depend
 
 # Include generated dependencies.
+klib.o:	klib386.s klib88.s
+mpx.o:	mpx386.s mpx88.s
 include .depend
 
