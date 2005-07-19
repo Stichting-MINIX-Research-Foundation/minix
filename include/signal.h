@@ -25,7 +25,7 @@ typedef unsigned long sigset_t;
 #endif
 #endif
 
-#define _NSIG             17	/* number of signals used */
+#define _NSIG             20	/* number of signals used */
 
 #define SIGHUP             1	/* hangup */
 #define SIGINT             2	/* interrupt (DEL) */
@@ -48,6 +48,13 @@ typedef unsigned long sigset_t;
 #define SIGEMT             7	/* obsolete */
 #define SIGBUS            10	/* obsolete */
 
+/* MINIX specific signals. These signals are not used by user proceses, 
+ * but meant to inform system processes, like the PM, about system events.
+ */
+#define SIGKMESS   	  18	/* new kernel message */
+#define SIGKSIG    	  19	/* kernel signal pending */
+#define SIGKSTOP    	  20	/* kernel shutting down */
+
 /* POSIX requires the following signals to be defined, even if they are
  * not supported.  Here are the definitions, but they are not supported.
  */
@@ -56,6 +63,7 @@ typedef unsigned long sigset_t;
 #define SIGTSTP           20	/* interactive stop signal */
 #define SIGTTIN           21	/* background process wants to read */
 #define SIGTTOU           22	/* background process wants to write */
+
 
 /* The sighandler_t type is not allowed unless _POSIX_SOURCE is defined. */
 typedef void _PROTOTYPE( (*__sighandler_t), (int) );
@@ -66,6 +74,7 @@ typedef void _PROTOTYPE( (*__sighandler_t), (int) );
 #define SIG_IGN	   ((__sighandler_t)  1)	/* ignore signal */
 #define SIG_HOLD   ((__sighandler_t)  2)	/* block signal */
 #define SIG_CATCH  ((__sighandler_t)  3)	/* catch signal */
+#define SIG_MESS   ((__sighandler_t)  4)	/* pass as message (MINIX) */
 
 #ifdef _POSIX_SOURCE
 struct sigaction {

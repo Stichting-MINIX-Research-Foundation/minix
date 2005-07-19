@@ -64,12 +64,11 @@
  * offset are used for the per-process notification bit maps. 
  */
 #define NOTIFY_FROM(p_nr)	 (0x1000 | ((p_nr) + NR_TASKS)) 
-#  define SYN_ALARM    NOTIFY_FROM(CLOCK) 	/* synchronous alarm */
-#  define KSIG_PENDING NOTIFY_FROM(SYSTEM) 	/* pending signal(s) */
-#  define HARD_INT     NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
-#  define NEW_KMESS    NOTIFY_FROM(SYSTEM)  	/* new kernel message */
-#  define NEW_KSIG     NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
-#  define FKEY_PRESSED NOTIFY_FROM(TTY)  	/* function key press */
+#  define SYN_ALARM	NOTIFY_FROM(CLOCK) 	/* synchronous alarm */
+#  define SYS_EVENT	NOTIFY_FROM(SYSTEM) 	/* signal system event */
+#  define HARD_INT	NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
+#  define NEW_KSIG	NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
+#  define FKEY_PRESSED	NOTIFY_FROM(TTY)  	/* function key press */
 
 #define NOTIFICATION  		  0x800 	/* flag for notifications */
 #  define HARD_STOP    (NOTIFICATION | 4)  	/* system shutdown */ 
@@ -239,7 +238,7 @@
 #  define SYS_PHYSCOPY  31 	/* sys_physcopy(src_addr,dst_addr,count) */
 #  define SYS_VIRVCOPY  32	/* sys_virvcopy(vec_ptr, vec_size) */
 #  define SYS_MEMSET    33	/* sys_memset(char, addr, count) */
-#  define SYS_SETPRIORITY  34	/* sys_setpriority(who,prio) */
+#  define SYS_NICE      34	/* sys_nice(who,prio) */
 #define NR_SYS_CALLS	35	/* number of system calls */ 
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
@@ -344,8 +343,8 @@
 #define I_PROC_NR      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */
-#define I_KEY_PTR      m7_p2	/* virtual address of key to lookup */ 
-#define I_KEY_LEN      m7_i2	/* length of key to lookup */
+#define I_VAL_PTR2      m7_p2	/* second virtual address */ 
+#define I_VAL_LEN2      m7_i2	/* second length, or proc nr */
 
 /* Field names for SYS_TIMES. */
 #define T_PROC_NR   	m4_l1	/* process to request time info for */

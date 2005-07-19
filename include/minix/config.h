@@ -56,8 +56,6 @@
 /* Defines for driver and kernel configuration. */
 #define AUTO_BIOS          0	/* xt_wini.c - use Western's autoconfig BIOS */
 #define LINEWRAP           1	/* console.c - wrap lines at column 80 */
-#define ALLOW_GAP_MESSAGES 1	/* proc.c - allow messages in the gap between
-				 * the end of bss and lowest stack address */
 
 /* Number of controller tasks (/dev/cN device classes). */
 #define NR_CTRLRS          2

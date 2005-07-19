@@ -31,7 +31,7 @@ _PROTOTYPE( int sys_exit, (int proc)					);
 _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p)	);
 
 _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
-_PROTOTYPE( int sys_setpriority, (int proc, int prio)			);
+_PROTOTYPE( int sys_nice, (int proc, int prio)				);
 
 
 /* Shorthands for sys_sdevio() system call. */
@@ -102,7 +102,7 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
-				 void *key_ptr, int key_len)		);
+				 void *val_ptr2, int val_len2)		);
 
 /* Signal control. */
 _PROTOTYPE(int sys_kill, (int proc, int sig) );
