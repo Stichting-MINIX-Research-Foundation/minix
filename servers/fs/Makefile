@@ -11,7 +11,7 @@ h = $i/minix
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lutils -ltimers
+LIBS = -lsys -lsysutil -ltimers
 
 OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 	device.o path.o mount.o link.o super.o inode.o \

@@ -13,7 +13,7 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i 
-LIBS = -lsys -lutils -ltimers
+LIBS = -lsys -lsysutil -ltimers
 
 OBJ = fxp.o mii.o
 LIBPCI = $d/libpci/pci.o $d/libpci/pci_table.o

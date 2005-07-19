@@ -14,7 +14,7 @@
  */
 
 #include "at_wini.h"
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <sys/ioc_disk.h>
 

@@ -20,7 +20,7 @@ Copyright 1995 Philip Homburg
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <minix/type.h>
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include "inet_config.h"
 

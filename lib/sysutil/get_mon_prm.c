@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "sysutil.h"
 #include <minix/config.h>
 #include <string.h>
 

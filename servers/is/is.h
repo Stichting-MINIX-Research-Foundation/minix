@@ -18,7 +18,7 @@
 #include <minix/const.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
 

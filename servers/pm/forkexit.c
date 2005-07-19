@@ -18,7 +18,6 @@
 #include <sys/wait.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
-#include <minix/utils.h>
 #include <signal.h>
 #include "mproc.h"
 #include "param.h"

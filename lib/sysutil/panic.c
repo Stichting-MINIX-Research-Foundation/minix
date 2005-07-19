@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "sysutil.h"
 
 /*===========================================================================*
  *				panic					     *
@@ -13,7 +13,6 @@ int num;			/* number to go with format string */
  * value of a defined constant.
  */
   message m;
-
   if (NULL != who && NULL != mess) {
       if (num != NO_NUM) {
           printf("Panic in %s: %s: %d\n", who, mess, num); 

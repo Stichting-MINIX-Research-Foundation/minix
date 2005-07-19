@@ -11,7 +11,7 @@ m = $i/minix
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lutils
+LIBS = -lsys -lsysutil
 
 OBJECTS = pci.o pci_table.o 
 

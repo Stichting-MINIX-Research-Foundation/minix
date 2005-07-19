@@ -30,7 +30,6 @@ Copyright 1995 Philip Homburg
 #include <sys/time.h>
 #include <minix/config.h>
 #include <minix/type.h>
-#include <minix/utils.h>
 
 #define _NORETURN	/* Should be non empty for GCC */
 
@@ -41,6 +40,7 @@ typedef int ioreq_t;
 #include <minix/const.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
+#include <minix/sysutil.h>
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_hdr.h>

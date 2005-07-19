@@ -16,7 +16,6 @@
 #include <sys/svrctl.h>
 #include <sys/resource.h>
 #include <minix/com.h>
-#include <minix/utils.h>
 #include <string.h>
 #include "mproc.h"
 #include "param.h"

@@ -21,7 +21,6 @@
  */
 
 #include "pm.h"
-#include <minix/utils.h>
 #include <sys/stat.h>
 #include <minix/callnr.h>
 #include <minix/com.h>

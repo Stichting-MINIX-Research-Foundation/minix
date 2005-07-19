@@ -3,7 +3,7 @@
 CFLAGS	= -O -D_MINIX -D_POSIX_SOURCE
 CC1	= $(CC) $(CFLAGS) -c
 
-LIBUTILS	= ../libutils.a
+LIBUTILS	= ../libsysutil.a
 all:	$(LIBUTILS)
 
 OBJECTS	= \

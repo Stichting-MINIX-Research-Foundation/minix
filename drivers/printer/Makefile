@@ -13,7 +13,7 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lutils
+LIBS = -lsys -lsysutil
 
 OBJ = printer.o
 

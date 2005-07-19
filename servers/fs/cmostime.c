@@ -1,7 +1,6 @@
 #include "fs.h"
 #include <minix/com.h>
 #include <minix/callnr.h>
-#include <minix/utils.h>
 #include <time.h>
 #include <ibm/cmos.h>
 #include <ibm/bios.h>

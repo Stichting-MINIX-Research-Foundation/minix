@@ -2,6 +2,9 @@
 ##  Makefile for ISA ethernet drivers	May  02, 2000
 ##
 ##  $Log$
+##  Revision 1.3  2005/07/19 13:21:48  jnherder
+##  Renamed src/lib/utils to src/lib/sysutil --- because of new src/lib/util
+##
 ##  Revision 1.2  2005/07/19 12:12:47  jnherder
 ##  Changed Makefiles: drivers are now installed in /usr/sbin.
 ##  TTY now gets SYS_EVENT message with sigset (e.g., SIGKMESS, SIGKSTOP).
@@ -28,7 +31,7 @@ LDFLAGS	= -i -o $@
 
 SRCS	= 3c501.c 3c509.c 3c503.c ne.c wd.c 8390.c devio.c netbuff.c dp.c
 OBJS	= 3c501.o 3c509.o 3c503.o ne.o wd.o 8390.o devio.o netbuff.o dp.o
-LIBS	= -lutils -lsys # -ltimers
+LIBS	= -lsysutil -lsys # -ltimers
 
 ##  Build rules
 all build:	$(DRIVER)

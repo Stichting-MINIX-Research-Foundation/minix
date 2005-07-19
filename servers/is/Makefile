@@ -15,7 +15,7 @@ f = $u/src/servers/fs
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lutils 
+LIBS = -lsys -lsysutil 
 
 OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o diag.o kputc.o
 

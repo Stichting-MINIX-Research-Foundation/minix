@@ -15,7 +15,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <minix/syslib.h>
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 
 #include <limits.h>
 #include <errno.h>

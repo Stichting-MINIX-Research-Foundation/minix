@@ -15,7 +15,7 @@
 #include <minix/const.h>
 #include <minix/devio.h>
 #include <minix/syslib.h>
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 #include <minix/bitmap.h>
 
 #include <ibm/interrupt.h>	/* IRQ vectors and miscellaneous ports */

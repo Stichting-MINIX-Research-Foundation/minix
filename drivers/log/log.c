@@ -53,6 +53,7 @@ FORWARD _PROTOTYPE( int log_other, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void log_geometry, (struct partition *entry) );
 FORWARD _PROTOTYPE( void log_reply, (int code, int replyee, int proc, int status) );
 FORWARD _PROTOTYPE( void log_notify, (int code, int replyee, int line, int ops) );
+FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count, int proc_nr, vir_bytes user_vir) );
 
 /* Entry points to this driver. */
 PRIVATE struct driver log_dtab = {

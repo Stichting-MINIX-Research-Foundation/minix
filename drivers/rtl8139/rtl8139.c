@@ -56,7 +56,7 @@
 #include <minix/keymap.h>
 #include <minix/syslib.h>
 #include <minix/type.h>
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 #include <timers.h>
 #include <ibm/portio.h>
 #include <net/hton.h>

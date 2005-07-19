@@ -10,7 +10,7 @@
  * to pollute the kernel message buffer with its debug dumps. 
  */
 
-#include "utils.h"
+#include "sysutil.h"
 
 /*===========================================================================*
  *				kputc					     *

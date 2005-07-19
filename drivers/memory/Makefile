@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lutils
+LIBS = -lsys -lsysutil
 
 OBJ = memory.o random.o sha2.o aes/rijndael_api.o aes/rijndael_alg.o
 LIBDRIVER = $d/libdriver/driver.o

@@ -24,7 +24,7 @@
 #include "floppy.h"
 #include <timers.h>
 #include <ibm/diskparm.h>
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 #include <minix/syslib.h>
 
 /* I/O Ports used by floppy disk task. */

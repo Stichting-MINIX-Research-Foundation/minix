@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/syslib.h>
-#include <minix/utils.h>
+#include <minix/sysutil.h>
 
 #include <string.h>
 #include <limits.h>

@@ -9,7 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <minix/com.h>
-#include <minix/utils.h>
 
 /* Some devices may or may not be there in the next table. */
 #define DT(enable, opcl, io, driver, flags) \
