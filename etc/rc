@@ -2,7 +2,7 @@
 
 umask 022
 TERM="${TERM-minix}"
-PATH=/usr/local/bin:/bin:/usr/bin
+PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin
 export TERM PATH
 
 usage()

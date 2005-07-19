@@ -36,7 +36,7 @@ start)
 
     # Start servers.
     ifs="$IFS"; IFS=,
-    for server in `sysenv servers`; do /usr/sbin/servers/$server; done
+    for server in `sysenv servers`; do daemonize $server; done
     IFS="$ifs"; unset ifs
     sleep 1
 
