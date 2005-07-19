@@ -26,6 +26,8 @@ daemonize()
     done
 }
 
+RANDOM_FILE=/usr/adm/random.dat
+
 case $action in
 start)
     # Select console font.
@@ -33,6 +35,14 @@ start)
 
     # Cleanup.
     rm -rf /tmp/. /usr/run/. /usr/spool/lpd/. /usr/spool/locks/.
+
+    # load random number generator
+    if [ -f $RANDOM_FILE ]
+    then
+    	cat < $RANDOM_FILE >/dev/random
+    	# overwrite $RANDOM_FILE. We don't want to use this data again
+    	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1
+    fi
 
     # Start servers.
     ifs="$IFS"; IFS=,
@@ -106,4 +116,14 @@ prompt to investigate, otherwise just wait until an address is received..."
 
     # Run the daily cleanup on systems that are not on at night.
     test -f /usr/etc/daily && sh /usr/etc/daily boot &
+
+;;
+stop|down)
+    	# Save random data.
+    	if dd if=/dev/random of=$RANDOM_FILE.new bs=1024 count=1 2>/dev/null
+    	then
+    		mv $RANDOM_FILE.new $RANDOM_FILE
+	else
+		echo 'Failed to save random data.'
+	fi
 esac

@@ -33,6 +33,7 @@ PRIVATE u32_t reseed_count;
 FORWARD _PROTOTYPE( void add_sample, (int source, unsigned long sample)	);
 FORWARD _PROTOTYPE( void data_block, (rd_keyinstance *keyp,
 							void *data)	);
+FORWARD _PROTOTYPE( void reseed, (void)					);
 
 PUBLIC void random_init()
 {
@@ -54,42 +55,11 @@ PUBLIC void random_init()
 	reseed_count= 0;
 }
 
-PUBLIC int random_reseed()
+PUBLIC int random_isseeded()
 {
-	int i;
-	SHA256_CTX ctx;
-	u8_t digest[SHA256_DIGEST_LENGTH];
-
-	if (samples >= MIN_SAMPLES)
-	{
-		reseed_count++;
-		printf("random_reseed:  round %d, samples = %d\n",
-			reseed_count, samples);
-		SHA256_Init(&ctx);
-		if (got_seeded)
-			SHA256_Update(&ctx, random_key, sizeof(random_key));
-		SHA256_Final(digest, &pool_ctx[0]);
-		SHA256_Update(&ctx, digest, sizeof(digest));
-		SHA256_Init(&pool_ctx[0]);
-		for (i= 1; i<NR_POOLS; i++)
-		{
-			if ((reseed_count & (1UL << (i-1))) != 0)
-				break;
-			printf("random_reseed: adding pool %d\n", i);
-			SHA256_Final(digest, &pool_ctx[i]);
-			SHA256_Update(&ctx, digest, sizeof(digest));
-			SHA256_Init(&pool_ctx[i]);
-		}
-		SHA256_Final(digest, &ctx);
-		assert(sizeof(random_key) == sizeof(digest));
-		memcpy(random_key, &digest, sizeof(random_key));
-		samples= 0;
-
-		got_seeded= 1;
-	}
 	if (got_seeded)
-		return 0;
-	return -1;
+		return 1;
+	return 0;
 }
 
 PUBLIC void random_update(source, buf, count)
@@ -106,6 +76,7 @@ int count;
 		panic("memory", "random_update: bad source", source);
 	for (i= 0; i<count; i++)
 		add_sample(source, buf[i]);
+	reseed();
 }
 
 PUBLIC void random_getbytes(buf, size)
@@ -153,6 +124,8 @@ size_t size;
 	 * with the number of bits.
 	 */
 	samples += size*8;
+
+	reseed();
 }
 
 PRIVATE void add_sample(source, sample)
@@ -230,3 +203,38 @@ void *data;
 	if (count_lo == 0)
 		count_hi++;
 }
+
+PRIVATE void reseed()
+{
+	int i;
+	SHA256_CTX ctx;
+	u8_t digest[SHA256_DIGEST_LENGTH];
+
+	if (samples < MIN_SAMPLES)
+		return;
+
+	reseed_count++;
+	printf("reseed: round %d, samples = %d\n", reseed_count, samples);
+	SHA256_Init(&ctx);
+	if (got_seeded)
+		SHA256_Update(&ctx, random_key, sizeof(random_key));
+	SHA256_Final(digest, &pool_ctx[0]);
+	SHA256_Update(&ctx, digest, sizeof(digest));
+	SHA256_Init(&pool_ctx[0]);
+	for (i= 1; i<NR_POOLS; i++)
+	{
+		if ((reseed_count & (1UL << (i-1))) != 0)
+			break;
+		printf("random_reseed: adding pool %d\n", i);
+		SHA256_Final(digest, &pool_ctx[i]);
+		SHA256_Update(&ctx, digest, sizeof(digest));
+		SHA256_Init(&pool_ctx[i]);
+	}
+	SHA256_Final(digest, &ctx);
+	assert(sizeof(random_key) == sizeof(digest));
+	memcpy(random_key, &digest, sizeof(random_key));
+	samples= 0;
+
+	got_seeded= 1;
+}
+

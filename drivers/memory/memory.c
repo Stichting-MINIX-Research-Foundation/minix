@@ -27,7 +27,7 @@
 #include "random.h"
 
 #define NR_DEVS            7		/* number of minor devices */
-#define KRANDOM_PERIOD    10 		/* ticks between krandom calls */
+#define KRANDOM_PERIOD    1 		/* ticks between krandom calls */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
@@ -183,12 +183,8 @@ unsigned nr_req;		/* length of request vector */
 
 	/* Random number generator. Character instead of block device. */
 	case RANDOM_DEV:
-	    if (opcode == DEV_GATHER)
-	    {
-		s= random_reseed();
-		if (s < 0)
+	    if (opcode == DEV_GATHER && !random_isseeded())
 		    return(EAGAIN);
-	    }
 	    left = count;
 	    while (left > 0) {
 	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
