@@ -33,6 +33,7 @@ all:
 	cd socket && $(MAKE)
 	cd syscall && $(MAKE)
 	cd syslib && $(MAKE)
+	cd util && $(MAKE)
 	cd sysutil && $(MAKE)
 	cd timers && $(MAKE)
 	cd $(ZLIB) && $(MAKE)
@@ -59,6 +60,7 @@ install_i86:	\
 	$(LIB)/end.a \
 	$(LIB)/libsys.a \
 	$(LIB)/libtimers.a \
+	$(LIB)/util.a \
 	$(LIB)/sysutil.a \
 	$(LIB)/libcurses.a \
 	$(LIB)/libedit.a \
@@ -106,6 +108,9 @@ $(LIB)/libtimers.a:	libtimers.a
 $(LIB)/libsysutil.a:	libsysutil.a
 	install -c -o bin $? $@
 
+$(LIB)/libutil.a:	libutil.a
+	install -c -o bin $? $@
+
 $(LIB)/libcurses.a:	libcurses.a
 	install -c -o bin $? $@
 
@@ -134,6 +139,7 @@ install_i386:	\
 	$(LIB386)/end.a \
 	$(LIB386)/libsys.a \
 	$(LIB386)/libtimers.a \
+	$(LIB386)/libutil.a \
 	$(LIB386)/libsysutil.a \
 	$(LIB386)/libcurses.a \
 	$(LIB386)/libedit.a \
@@ -182,6 +188,9 @@ $(LIB386)/libtimers.a:	libtimers.a
 	install -c -o bin $? $@
 
 $(LIB386)/libsysutil.a:	libsysutil.a
+	install -c -o bin $? $@
+
+$(LIB386)/libutil.a:	libutil.a
 	install -c -o bin $? $@
 
 $(LIB386)/libcurses.a:	libcurses.a
