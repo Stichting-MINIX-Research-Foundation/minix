@@ -5,12 +5,12 @@ CFLAGS = -Wall -D_MINIX -D_POSIX_SOURCE
 
 PROG =	speed test00 test01 test02 test03 test04_srv test04_cli test05_srv \
         test05_cli test06_srv test06_cli test07_srv test07_cli test08_srv \
-        test08_cli test09 test10 test11 test12 test13a test13b
+        test08_cli test09 test10 test11 test12 test13a test13b test14
 
 all: $(PROG)
 
 $(PROG): 
-	$(CC) $(CFLAGS) -o $@ $@.c
+	$(CC) $(CFLAGS) -o $@ $@.c -lutil
 
 clean:
 	/usr/bin/rm -f *.o $(PROG)
