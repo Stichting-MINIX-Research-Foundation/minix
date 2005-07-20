@@ -89,6 +89,7 @@ PUBLIC void udp_init()
 		udp_port->up_state= UPS_EMPTY;
 		udp_port->up_next_fd= udp_fd_table;
 		udp_port->up_write_fd= NULL;
+		udp_port->up_wr_pack= NULL;
 		udp_port->up_port_any= NULL;
 		for (j= 0; j<UDP_PORT_HASH_NR; j++)
 			udp_port->up_port_hash[j]= NULL;
