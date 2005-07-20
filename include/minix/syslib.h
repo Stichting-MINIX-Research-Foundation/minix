@@ -23,7 +23,7 @@
 _PROTOTYPE( int _taskcall, (int who, int syscallnr, message *msgptr)	);
 
 _PROTOTYPE( int sys_abort, (int how, ...)				);
-_PROTOTYPE( int sys_exec, (int proc, char *ptr, int traced, 
+_PROTOTYPE( int sys_exec, (int proc, char *ptr,  
 				char *aout, vir_bytes initpc)		);
 _PROTOTYPE( int sys_fork, (int parent, int child, int pid)		);
 _PROTOTYPE( int sys_newmap, (int proc, struct mem_map *ptr)		);

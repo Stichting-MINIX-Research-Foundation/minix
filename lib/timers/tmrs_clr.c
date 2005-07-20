@@ -3,21 +3,21 @@
 /*===========================================================================*
  *				tmrs_clrtimer				     *
  *===========================================================================*/
-clock_t tmrs_clrtimer(tmrs, tp, new_head)
+clock_t tmrs_clrtimer(tmrs, tp, next_time)
 timer_t **tmrs;				/* pointer to timers queue */
 timer_t *tp;				/* timer to be removed */
-clock_t *new_head;
+clock_t *next_time;
 {
 /* Deactivate a timer and remove it from the timers queue. 
  */
   timer_t **atp;
   struct proc *p;
-  clock_t old_head = 0;
+  clock_t prev_time;
 
   if(*tmrs)
-  	old_head = (*tmrs)->tmr_exp_time;
+  	prev_time = (*tmrs)->tmr_exp_time;
   else
-  	old_head = 0;
+  	prev_time = 0;
 
   tp->tmr_exp_time = TMR_NEVER;
 
@@ -28,13 +28,13 @@ clock_t *new_head;
 	}
   }
 
-  if(new_head) {
+  if(next_time) {
   	if(*tmrs)
-  		*new_head = (*tmrs)->tmr_exp_time;
+  		*next_time = (*tmrs)->tmr_exp_time;
   	else	
-  		*new_head = 0;
+  		*next_time = 0;
   }
 
-  return old_head;
+  return prev_time;
 }
 
