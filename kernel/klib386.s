@@ -26,7 +26,7 @@
 .define	_enable_irq	! enable an irq at the 8259 controller
 .define	_disable_irq	! disable an irq
 .define	_phys_copy	! copy data from anywhere to anywhere in memory
-.define	_phys_fill	! zero data anywhere in memory
+.define	_phys_memset	! write pattern anywhere in memory
 .define	_mem_rdw	! copy one word from [segment:offset]
 .define	_reset		! reset the system
 .define	_idle_task	! task executed when there is no work
@@ -440,25 +440,24 @@ pc_small:
 	ret
 
 !*===========================================================================*
-!*				phys_fill				     *
+!*				phys_memset				     *
 !*===========================================================================*
-! PUBLIC void phys_fill(phys_bytes source, phys_bytes bytecount,
-! 	unsigned long pattern);
+! PUBLIC void phys_memset(phys_bytes source, unsigned long pattern,
+!	phys_bytes bytecount);
 ! Fill a block of physical memory with pattern.
 
 	.align	16
-
-_phys_fill:
+_phys_memset:
 	push	ebp
 	mov	ebp, esp
 	push	esi
 	push	ebx
 	push	ds
 	mov	esi, 8(ebp)
-	mov	eax, 12(ebp)
+	mov	eax, 16(ebp)
 	mov	ebx, FLAT_DS_SELECTOR
 	mov	ds, bx
-	mov	ebx, 16(ebp)
+	mov	ebx, 12(ebp)
 	shr	eax, 2
 fill_start:
    	mov     (esi), ebx
@@ -466,12 +465,12 @@ fill_start:
 	dec	eax
 	jnz	fill_start
 	! Any remaining bytes?
-	mov	eax, 12(ebp)
+	mov	eax, 16(ebp)
 	and	eax, 3
 remain_fill:
 	cmp	eax, 0
 	jz	fill_done
-	movb	bl, 16(ebp)
+	movb	bl, 12(ebp)
    	movb    (esi), bl
 	add	esi, 1
 	inc	ebp

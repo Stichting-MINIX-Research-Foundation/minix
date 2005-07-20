@@ -53,7 +53,7 @@
  * a system server is notified and a copy of the buffer can be retrieved to 
  * display the message. The buffers size can safely be reduced.  
  */
-#define KMESS_BUF_SIZE   128   	
+#define KMESS_BUF_SIZE   256   	
 
 /* Buffer to gather randomness. This is used to generate a random stream by 
  * the MEMORY driver when reading from /dev/random. 

@@ -123,28 +123,29 @@ irq_handler_t handler;
 /*=========================================================================*
  *				rm_irq_handler				   *
  *=========================================================================*/
-PUBLIC int rm_irq_handler(irq, id)
-int irq;
-int id;
+PUBLIC void rm_irq_handler(hook)
+irq_hook_t *hook;
 {
 /* Unregister an interrupt handler. */
+  int irq = hook->irq; 
+  int id = hook->id;
   irq_hook_t **line;
 
-  if (irq < 0 || irq >= NR_IRQ_VECTORS) return(EINVAL);
+  if (irq < 0 || irq >= NR_IRQ_VECTORS) 
+      panic("invalid call to rm_irq_handler", irq);
 
   line = &irq_handlers[irq];
   while (*line != NULL) {
       if((*line)->id == id) {
           (*line) = (*line)->next;
-          if(! irq_handlers[irq])
-              irq_use &= ~(1 << irq);
-          return(OK);
+          if(! irq_handlers[irq]) irq_use &= ~(1 << irq);
+          return;
       }
       line = &(*line)->next;
   }
-
-  return(ENOENT);
+  /* When the handler is not found, normally return here. */
 }
+
 
 /*==========================================================================*
  *				intr_handle				    *

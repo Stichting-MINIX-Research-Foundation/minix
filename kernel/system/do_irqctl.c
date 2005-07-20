@@ -80,9 +80,9 @@ register message *m_ptr;	/* pointer to request message */
            return(EINVAL);
       } else if (m_ptr->m_source != irq_hooks[irq_hook_id].proc_nr) {
            return(EPERM);
-      } else {
-           r = rm_irq_handler(irq_vec, irq_hooks[irq_hook_id].id);
       }
+      /* Remove the handler and return. */
+      rm_irq_handler(&irq_hooks[irq_hook_id]);
       break;
 
   default:

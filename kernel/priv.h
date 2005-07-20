@@ -61,7 +61,9 @@ struct priv {
 EXTERN struct priv priv[NR_SYS_PROCS];		/* system properties table */
 EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
 
-/* Unprivileged user processes all share the same privilege structure. */
+/* Unprivileged user processes all share the same privilege structure.
+ * This id must be fixed because it is used to check send mask entries.
+ */
 #define USER_PRIV_ID	0
 
 /* Make sure the system can boot. The following sanity check verifies that

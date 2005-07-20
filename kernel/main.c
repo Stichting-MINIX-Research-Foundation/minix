@@ -14,6 +14,7 @@
  */
 #include "kernel.h"
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 #include <a.out.h>
 #include <minix/callnr.h>
@@ -24,6 +25,8 @@
 FORWARD _PROTOTYPE( void announce, (void));	
 FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
 
+#define SHUTDOWN_TICKS 5	/* time allowed to do cleanup */
+
 
 /*===========================================================================*
  *                                   main                                    *
@@ -31,15 +34,14 @@ FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
 PUBLIC void main()
 {
 /* Start the ball rolling. */
-  register struct proc *rp;
-  register struct priv *sp;
-  register int i,s;
+  struct system_image *ip;	/* boot image pointer */
+  register struct proc *rp;	/* process pointer */
+  register struct priv *sp;	/* privilege structure pointer */
+  register int i, s;
   int hdrindex;			/* index to array of a.out headers */
   phys_clicks text_base;
-  vir_clicks text_clicks;
-  vir_clicks data_clicks;
+  vir_clicks text_clicks, data_clicks;
   reg_t ktsb;			/* kernel task stack base */
-  struct system_image *ip;	/* boot image pointer */
   struct exec e_hdr;		/* for a copy of an a.out header */
 
   /* Initialize the interrupt controller. */
@@ -73,9 +75,13 @@ PUBLIC void main()
 
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	ip = &image[i];				/* process' attributes */
-	(void) init_proc(ip->proc_nr, NONE);	/* initialize new process */
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
-	kstrncpy(rp->p_name, ip->proc_name, P_NAME_LEN);  /* set name */
+	(void) init_proc(rp, NIL_SYS_PROC);
+#if DEAD_CODE
+		(ip->flags & SYS_PROC) ?
+		NIL_SYS_PROC : NIL_PROC);	/* initialize new process */
+#endif
+	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN);  /* set name */
 	rp->p_name[P_NAME_LEN-1] = '\0';	/* just for safety */
 	rp->p_max_priority = ip->priority;	/* max scheduling priority */
 	rp->p_priority = ip->priority;		/* current priority */
@@ -106,7 +112,7 @@ PUBLIC void main()
 	/* Convert addresses to clicks and build process memory map */
 	text_base = e_hdr.a_syms >> CLICK_SHIFT;
 	text_clicks = (e_hdr.a_text + CLICK_SIZE-1) >> CLICK_SHIFT;
-	if (!(e_hdr.a_flags & A_SEP)) text_clicks = 0;	/* Common I&D */
+	if (!(e_hdr.a_flags & A_SEP)) text_clicks = 0;	   /* common I&D */
 	data_clicks = (e_hdr.a_total + CLICK_SIZE-1) >> CLICK_SHIFT;
 	rp->p_memmap[T].mem_phys = text_base;
 	rp->p_memmap[T].mem_len  = text_clicks;
@@ -168,13 +174,13 @@ PUBLIC void main()
 PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
-  kprintf("MINIX %s.  Copyright 2001 Prentice-Hall, Inc.\n", 
-      karg(OS_RELEASE "." OS_VERSION));
+  kprintf("MINIX %s.%s.  Copyright 2001 Prentice-Hall, Inc.\n", 
+      OS_RELEASE, OS_VERSION);
 
 #if (CHIP == INTEL)
   /* Real mode, or 16/32-bit protected mode? */
   kprintf("Executing in %s mode\n\n",
-      machine.protected ? karg("32-bit protected") : karg("real"));
+      machine.protected ? "32-bit protected" : "real");
 #endif
 }
 
@@ -189,6 +195,7 @@ int how;				/* reason to shut down */
  * sure it is only executed once. Unless a CPU exception occurred, the 
  */
   static timer_t shutdown_timer; 	/* timer for watchdog function */ 
+  register struct proc *rp; 
   message m;
 
   /* Show debugging dumps on panics. Make sure that the TTY task is still 
@@ -201,21 +208,26 @@ int how;				/* reason to shut down */
           return;			/* await sys_abort() from TTY */
   }
 
-  /* Send signal to TTY so that it can switch to the primary console. */
-  send_sig(TTY, SIGKSTOP);
-
-  /* Allow processes to be scheduled to clean up, unless a CPU exception 
-   * occurred. This is done by setting a timer. The timer argument passes
-   * the shutdown status.
+  /* Send a signal to all system processes that are still alive to inform 
+   * them that the MINIX kernel is shutting down. A proper shutdown sequence
+   * should be implemented by a user-space server. This mechanism is useful
+   * as a backup in case of system panics, so that system processes can still
+   * run their shutdown code, e.g, to synchronize the FS or to let the TTY
+   * switch to the first console. 
    */
-  tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
-  if (kernel_exception) {			/* set in exception() */
-      kprintf("\nAn exception occured; skipping stop sequence.\n", NO_NUM);
-      shutdown(&shutdown_timer);		/* TTY isn't scheduled */
-  } else {
-      kprintf("\nNotifying system services about MINIX shutdown.\n", NO_NUM); 
-      set_timer(&shutdown_timer, get_uptime(), shutdown);
+  for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
+      if (! isemptyp(rp) && (priv(rp)->s_flags & SYS_PROC) && ! iskernelp(rp))
+          send_sig(proc_nr(rp), SIGKSTOP);
   }
+
+  /* Notify system processes of the upcoming shutdown and allow them to be 
+   * scheduled by setting a watchog timer that calls shutdown(). The timer 
+   * argument passes the shutdown status. 
+   */
+  kprintf("Informed system about upcoming shutdown with SIGKSTOP signal.\n"); 
+  kprintf("Time for cleanup is allowed.  MINIX will now be brought down.\n");
+  tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
+  set_timer(&shutdown_timer, get_uptime() + SHUTDOWN_TICKS, shutdown);
 }
 
 

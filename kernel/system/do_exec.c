@@ -8,6 +8,7 @@
  *    m1_p3:	PR_IP_PTR		(new instruction pointer)
  */
 #include "../system.h"
+#include <string.h>
 #include <signal.h>
 
 #if USE_EXEC
@@ -35,7 +36,7 @@ register message *m_ptr;	/* pointer to request message */
 #endif
 #endif
 #if (CHIP == INTEL)		/* wipe extra LDT entries */
-  kmemset(&rp->p_ldt[EXTRA_LDT_INDEX], 0,
+  phys_memset(vir2phys(&rp->p_ldt[EXTRA_LDT_INDEX]), 0,
 	(LDT_SIZE - EXTRA_LDT_INDEX) * sizeof(rp->p_ldt[0]));
 #endif
   rp->p_reg.pc = (reg_t) m_ptr->PR_IP_PTR;	/* set pc */
@@ -50,7 +51,7 @@ register message *m_ptr;	/* pointer to request message */
 	for (np = rp->p_name; (*np & BYTE) >= ' '; np++) {}
 	*np = 0;					/* mark end */
   } else {
-  	kstrncpy(rp->p_name, "<unset>", P_NAME_LEN);
+  	strncpy(rp->p_name, "<unset>", P_NAME_LEN);
   }
   return(OK);
 }

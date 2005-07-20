@@ -3,11 +3,6 @@
 
 typedef _PROTOTYPE( void task_t, (void) );
 
-/* Type accepted by kprintf(). This is a hack to accept both integers and
- * char pointers in the same argument. 
- */
-typedef long karg_t;			/* use largest type here */
-
 /* Process table and system property related types. */ 
 typedef int proc_nr_t;			/* process table entry number */
 typedef short sys_id_t;			/* system process index */

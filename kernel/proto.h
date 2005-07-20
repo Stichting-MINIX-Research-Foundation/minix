@@ -15,24 +15,14 @@ _PROTOTYPE( unsigned long read_clock, (void)				);
 _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
 _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 
-/* klibc.c */
-_PROTOTYPE( void *kmemcpy, (void *s1, const void *s2, register size_t n));
-_PROTOTYPE( void *kmemset, (void *s, register int c, register size_t n));
-_PROTOTYPE( int kstrcmp, (register const char *s1, register const char *s2));
-_PROTOTYPE( char *kstrncpy, 
-	(char *s1, register const char *s2, register const ssize_t n));
-#define karg(arg) (karg_t) (arg)
-_PROTOTYPE( void kprintf, (const char *fmt, karg_t arg)			);
-
 /* main.c */
 _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void stop_sequence, (struct timer *tp)			);
 
 /* utility.c */
+_PROTOTYPE( void kprintf, (const char *fmt, ...)			);
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
-_PROTOTYPE( void safe_lock, (int c, char *v)				);
-_PROTOTYPE( void safe_unlock, (void)					);
 _PROTOTYPE( int alloc_bit, (bitchunk_t *map, bit_t nr_bits) 		); 
 _PROTOTYPE( void free_bit, (bit_t nr, bitchunk_t *map, bit_t nr_bits) 	); 
 
@@ -51,8 +41,8 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 /* system.c */
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
-_PROTOTYPE( int init_proc, (int proc_nr, int proto_nr)			);
-_PROTOTYPE( void clear_proc, (int proc_nr)				);
+_PROTOTYPE( int init_proc, (register struct proc *rc, struct proc *rp)	);
+_PROTOTYPE( void clear_proc, (register struct proc *rc)				);
 _PROTOTYPE( phys_bytes numap_local, (int proc_nr, vir_bytes vir_addr, 
 		vir_bytes bytes)					);
 _PROTOTYPE( void sys_task, (void)					);
@@ -77,7 +67,7 @@ _PROTOTYPE( void intr_init, (int mine)					);
 _PROTOTYPE( void intr_handle, (irq_hook_t *hook)			);
 _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
 						irq_handler_t handler)	);
-_PROTOTYPE( int rm_irq_handler, (int irq, int id)			);
+_PROTOTYPE( void rm_irq_handler, (irq_hook_t *hook)			);
 
 /* klib*.s */
 _PROTOTYPE( void int86, (void)						);
@@ -88,11 +78,12 @@ _PROTOTYPE( int disable_irq, (irq_hook_t *hook)				);
 _PROTOTYPE( u16_t mem_rdw, (U16_t segm, vir_bytes offset)		);
 _PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
 		phys_bytes count)					);
-_PROTOTYPE( void phys_fill, (phys_bytes source, phys_bytes count, unsigned long pattern)	);
+_PROTOTYPE( void phys_memset, (phys_bytes source, unsigned long pattern,
+		phys_bytes count)					);
 _PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)	);
 _PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)	);
-_PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count));
-_PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count));
+_PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count)	);
+_PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count)	);
 _PROTOTYPE( void reset, (void)						);
 _PROTOTYPE( void level0, (void (*func)(void))				);
 _PROTOTYPE( void monitor, (void)					);

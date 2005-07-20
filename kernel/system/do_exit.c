@@ -28,13 +28,13 @@ message *m_ptr;			/* pointer to request message */
       exit_proc_nr = m_ptr->PR_PROC_NR;		/* get exiting process */
       if (exit_proc_nr != SELF) { 		/* PM tries to exit self */
           if (! isokprocn(exit_proc_nr)) return(EINVAL);
-          clear_proc(exit_proc_nr);		/* exit a user process */
+          clear_proc(proc_addr(exit_proc_nr));	/* exit a user process */
           return(OK);				/* report back to PM */
       }
   } 
 
   /* The PM or some other system process requested to be exited. */
-  clear_proc(m_ptr->m_source);
+  clear_proc(proc_addr(m_ptr->m_source));
   return(EDONTREPLY);
 }
 #endif /* USE_EXIT */

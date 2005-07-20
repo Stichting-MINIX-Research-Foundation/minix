@@ -65,13 +65,12 @@ unsigned vec_nr;
   if (ep->msg == NIL_PTR || machine.processor < ep->minprocessor)
 	kprintf("\nIntel-reserved exception %d\n", vec_nr);
   else
-	kprintf("\n%s\n", karg(ep->msg));
-  kprintf("process number %d ", proc_nr(saved_proc));
-  kprintf("(%s), ", saved_proc->p_name);
-  kprintf("pc = %d:",  (unsigned) saved_proc->p_reg.cs);
-  kprintf("0x%x\n", (unsigned) saved_proc->p_reg.pc);
+	kprintf("\n%s\n", ep->msg);
+  kprintf("k_reenter = %d ", k_reenter);
+  kprintf("process %d (%s)", proc_nr(saved_proc), saved_proc->p_name);
+  kprintf("pc = %d:0x%x", (unsigned) saved_proc->p_reg.cs,
+  (unsigned) saved_proc->p_reg.pc);
 
-  kernel_exception = TRUE;		/* directly shutdown */
   panic("exception in a kernel task", NO_NUM);
 }
 

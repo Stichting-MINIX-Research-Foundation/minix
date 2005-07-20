@@ -12,6 +12,7 @@
 #include "protect.h"
 #include "proc.h"
 #include <stdlib.h>
+#include <string.h>
 
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 
@@ -56,9 +57,9 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
   kinfo.nr_tasks = NR_TASKS;
-  kstrncpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
+  strncpy(kinfo.release, OS_RELEASE, sizeof(kinfo.release));
   kinfo.release[sizeof(kinfo.release)-1] = '\0';
-  kstrncpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
+  strncpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
   kinfo.version[sizeof(kinfo.version)-1] = '\0';
   kinfo.proc_addr = (vir_bytes) proc;
   kinfo.kmem_base = vir2phys(0);
@@ -75,16 +76,16 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 
   /* XT, AT or MCA bus? */
   value = get_value(params, "bus");
-  if (value == NIL_PTR || kstrcmp(value, "at") == 0) {
+  if (value == NIL_PTR || strcmp(value, "at") == 0) {
       machine.pc_at = TRUE;			/* PC-AT compatible hardware */
-  } else if (kstrcmp(value, "mca") == 0) {
+  } else if (strcmp(value, "mca") == 0) {
       machine.pc_at = machine.ps_mca = TRUE;	/* PS/2 with micro channel */
   }
 
   /* Type of VDU: */
   value = get_value(params, "video");			/* EGA or VGA video unit */
-  if (kstrcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
-  if (kstrcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
+  if (strcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
+  if (strcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
 
   /* Return to assembler code to switch to protected mode (if 286), 
    * reload selectors and call main().
