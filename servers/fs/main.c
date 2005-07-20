@@ -15,6 +15,7 @@ struct super_block;		/* proto.h needs to know this */
 #include "fs.h"
 #include <fcntl.h>
 #include <string.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <sys/ioc_memory.h>
 #include <sys/svrctl.h>
@@ -48,6 +49,7 @@ PUBLIC void main()
  * three major activities: getting new work, processing the work, and sending
  * the reply.  This loop never terminates as long as the file system runs.
  */
+  sigset_t sigset;
   int error;
 
   fs_init();
@@ -60,18 +62,18 @@ PUBLIC void main()
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
  	/* Check for special control messages first. */
-#if DEAD_CODE
-        if (call_nr == HARD_STOP) { 
-        	do_sync();
-        	sys_exit(0);  		/* never returns */
-        } else 
-#endif
-	if(call_nr == SYN_ALARM) {
+        if (call_nr == SYS_EVENT) { 
+		sigset = m_in.NOTIFY_ARG;
+		if (sigismember(&sigset, SIGKSTOP)) {
+        		do_sync();
+        		sys_exit(0);  		/* never returns */
+		}
+        } else if (call_nr == SYN_ALARM) {
         	/* Not a user request; system has expired one of our timers,
         	 * currently only in use for select(). Check it.
         	 */
         	fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
-        } else if(call_nr == DEV_SELECTED) {
+        } else if (call_nr == DEV_SELECTED) {
         	/* Device notify()s us of fd that has become usable. */
         	select_notified(&m_in);
         } else {

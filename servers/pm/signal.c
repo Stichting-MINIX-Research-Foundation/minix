@@ -355,6 +355,7 @@ struct timer *tp;
 
   proc_nr = tmr_arg(tp)->ta_int;	/* get process from timer */
   rmp = &mproc[proc_nr];
+
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) return;
   if ((rmp->mp_flags & ALARM_ON) == 0) return;
   rmp->mp_flags &= ~ALARM_ON;

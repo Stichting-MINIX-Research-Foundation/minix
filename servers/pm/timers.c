@@ -14,23 +14,23 @@ PRIVATE timer_t *pm_timers = NULL;
 PUBLIC void pm_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 {
 	int r;
-	clock_t now, old_head = 0, new_head;
+	clock_t now, prev_time = 0, next_time;
 
 	if((r = getuptime(&now)) != OK)
 		panic(__FILE__, "PM couldn't get uptime from system task.", NO_NUM);
 
-	tmr_inittimer(tp);
+	/* Set timer argument. */
 	tmr_arg(tp)->ta_int = arg;
 
-	old_head = tmrs_settimer(&pm_timers, tp, now+ticks, watchdog, &new_head);
+	prev_time = tmrs_settimer(&pm_timers, tp, now+ticks, watchdog, &next_time);
 
 	/* reschedule our synchronous alarm if necessary */
-	if(! old_head || old_head > new_head) {
-		if(sys_syncalrm(SELF, new_head, 1) != OK)
+	if(! prev_time || prev_time > next_time) {
+		if(sys_syncalrm(SELF, next_time, 1) != OK)
 			panic(__FILE__, "PM set timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		else
-			printf("timers: after setting, set synalarm to %d -> %d\n", old_head, new_head);
+			printf("timers: after setting, set synalarm to %d -> %d\n", prev_time, next_time);
 #endif
 	}
 
@@ -39,14 +39,14 @@ PUBLIC void pm_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 
 PUBLIC void pm_expire_timers(clock_t now)
 {
-	clock_t new_head;
-	tmrs_exptimers(&pm_timers, now, &new_head);
-	if(new_head > 0) {
-		if(sys_syncalrm(SELF, new_head, 1) != OK)
+	clock_t next_time;
+	tmrs_exptimers(&pm_timers, now, &next_time);
+	if(next_time > 0) {
+		if(sys_syncalrm(SELF, next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		else
-			printf("timers: after expiry, set synalarm to %d\n", new_head);
+			printf("timers: after expiry, set synalarm to %d\n", next_time);
 #endif
 	}
 #if VERBOSE
@@ -56,19 +56,19 @@ PUBLIC void pm_expire_timers(clock_t now)
 
 PUBLIC void pm_cancel_timer(timer_t *tp)
 {
-	clock_t new_head, old_head;
-	old_head = tmrs_clrtimer(&pm_timers, tp, &new_head);
+	clock_t next_time, prev_time;
+	prev_time = tmrs_clrtimer(&pm_timers, tp, &next_time);
 
 	/* if the earliest timer has been removed, we have to set
 	 * the synalarm to the next timer, or cancel the synalarm
-	 * altogether if th last time has been cancelled (new_head
+	 * altogether if th last time has been cancelled (next_time
 	 * will be 0 then).
 	 */
-	if(old_head < new_head || ! new_head) {
-		if(sys_syncalrm(SELF, new_head, 1) != OK)
+	if(prev_time < next_time || ! next_time) {
+		if(sys_syncalrm(SELF, next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
-		printf("timers: after cancelling, set synalarm to %d -> %d\n", old_head, new_head);
+		printf("timers: after cancelling, set synalarm to %d -> %d\n", prev_time, next_time);
 #endif
 	}
 #if VERBOSE

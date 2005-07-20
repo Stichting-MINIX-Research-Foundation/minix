@@ -57,12 +57,13 @@ PUBLIC void main(void)
             case SYS_EVENT:
                 sigset = (sigset_t) m_in.NOTIFY_ARG;
                 if (sigismember(&sigset, SIGKMESS)) {
-                    printf("IS proc SIGKMESS\n");
             	    result = do_new_kmess(&m_in);
-            	} else if (sigismember(&sigset, SIGTERM)) {
-                    printf("IS proc SIGTERM\n");
-            	} else {
-            	    report("IS","warning, got unknown signal", NO_NUM);
+            	} 
+            	if (sigismember(&sigset, SIGTERM)) {
+                    /* nothing to do on shutdown */    
+            	} 
+            	if (sigismember(&sigset, SIGKSTOP)) {
+                    /* nothing to do on shutdown */    
             	}
             	continue;
             case DIAGNOSTICS:

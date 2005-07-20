@@ -322,7 +322,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -sanity- -flags- -sc-\n");
+  printf("\n--nr-id-name--- -flags- -sc-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -333,8 +333,8 @@ PUBLIC void privileges_dmp()
         r = -1;
         for (sp = &priv[0]; sp < &priv[NR_SYS_PROCS]; sp++) 
             if (sp->s_proc_nr == rp->p_nr) { r ++; break; }
-        if (r == -1) {
-            printf("... warning, no privileges found!\n");
+        if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
+            printf("... no privileges found, probaly a user process\n");
             continue;
         }
 	printf("(%02u) %-7.7s %3x %02.2u",

@@ -176,8 +176,9 @@ PUBLIC int do_exec()
   if (basename == NULL) basename = name; else basename++;
   strncpy(rmp->mp_name, basename, PROC_NAME_LEN-1);
   rmp->mp_name[PROC_NAME_LEN] = '\0';
-  sys_exec(who, new_sp, rmp->mp_flags & TRACED, basename, pc);
+  sys_exec(who, new_sp, basename, pc);
 
+  /* Cause a signal if this process is traced. */
   if (rmp->mp_flags & TRACED) check_sig(rmp->mp_pid, SIGTRAP);
 
   return(SUSPEND);		/* no reply, new program just runs */
