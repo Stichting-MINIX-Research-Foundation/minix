@@ -41,17 +41,20 @@ typedef struct timer
 #define TMR_NEVER	((clock_t) LONG_MAX)
 
 
-/* These definitions can be used to initialize a timer variable and to set
- * the timer's argument before passing it to tmrs_settimer.
- */ 
-#define tmr_inittimer(tp) (void)((tp)->tmr_exp_time = TMR_NEVER, \
-	(tp)->tmr_next = NULL)
+/* These definitions can be used to set or get data from a timer variable. */ 
 #define tmr_arg(tp) (&(tp)->tmr_arg)
 #define tmr_exp_time(tp) (&(tp)->tmr_exp_time)
 
+/* Timers should be initialize once before they are being used. Be careful 
+ * not the reinitialize a timer that is a list of timers, or the chain will 
+ * be broken. 
+ */ 
+#define tmr_inittimer(tp) (void)((tp)->tmr_exp_time = TMR_NEVER, \
+	(tp)->tmr_next = NULL)
 
 /* The following generic timer management functions are available. They
- * can be used to operate on the lists of timers.
+ * can be used to operate on the lists of timers. Adding a timer to a list 
+ * automatically takes care of removing it.
  */
 _PROTOTYPE( clock_t tmrs_clrtimer, (timer_t **tmrs, timer_t *tp, clock_t *new_head)		);
 _PROTOTYPE( void tmrs_exptimers, (timer_t **tmrs, clock_t now, clock_t *new_head)		);
