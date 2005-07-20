@@ -315,7 +315,11 @@ int main(void)
 				fxp_check_ints(fp);
 			}
 			break;
-		case HARD_STOP:	fxp_stop();			break;
+		case SYS_EVENT:	{
+			sigset_t sigset = m.NOTIFY_ARG;
+			if (sigismember(&sigset, SIGKSTOP)) fxp_stop();
+			break;
+		}
 		case SYN_ALARM:	fxp_expire_timers();		break;
 		default:
 			panic("FXP"," illegal message", m.m_type);

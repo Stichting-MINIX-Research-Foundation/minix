@@ -327,9 +327,7 @@ void main(void)
 			 * the driver in some cases.
 			 * MINIX timeouts result in a SYN_ALARM message to the
 			 * driver and thus are handled where they should be
-			 * handled. Interrupt()s are faked by setting m_type to
-			 * HARD_INT in rl_watchdog_f when needed, so that this 
-			 * case falls through.
+			 * handled. Locally, watchdog functions are used again. 
 			 */
 			rl_watchdog_f(NULL);     
 			break;		 
@@ -339,7 +337,11 @@ void main(void)
 				check_int_events();
 			break ;
 		case FKEY_PRESSED: rtl8139_dump(&m);		break;
-		case HARD_STOP: rtl8139_stop();			break;
+		case SYS_EVENT: {
+			sigset_t sigset = m.NOTIFY_ARG;
+			if (sigismember(&sigset, SIGKSTOP)) rtl8139_stop();		
+			break;
+		}
 		default:
 			panic("rtl8139","illegal message", m.m_type);
 		}
@@ -1904,7 +1906,7 @@ int may_block;
 	reply.DL_STAT = status | ((u32_t) err << 16);
 	reply.DL_COUNT = rep->re_read_s;
 	if (OK != (r = getuptime(&now)))
-		panic("dp8390","getuptime() failed:", r);
+		panic("rtl8139","getuptime() failed:", r);
 	reply.DL_CLCK = now;
 
 	r= send(rep->re_client, &reply);
@@ -1915,8 +1917,10 @@ int may_block;
 		return;
 	}
 
-	if (r < 0)
-		panic("dp8390","send failed:", r);
+	if (r < 0) {
+		printf("RTL8139 tried sending to %d, type %d\n", rep->re_client, reply.m_type);
+		panic("rtl8139","send failed:", r);
+	}
 	
 	rep->re_read_s = 0;
 	rep->re_flags &= ~(REF_PACK_SENT | REF_PACK_RECV);
@@ -2345,7 +2349,7 @@ timer_t *tp;
 	int i;
 	re_t *rep;
 	/* Use a synchronous alarm instead of a watchdog timer. */
-	sys_syncalrm(SELF, HZ, 0);
+	sys_setalarm(SELF, HZ, 0);
 
 	for (i= 0, rep = &re_table[0]; i<RE_PORT_NR; i++, rep++)
 	{

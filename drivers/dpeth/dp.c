@@ -49,6 +49,9 @@
 **  +------------+---------+---------+---------------+
 **
 **  $Log$
+**  Revision 1.3  2005/07/20 15:28:04  jnherder
+**  Kernel sends SIGKSTOP just before shutdown. Drivers do clean up and exit.
+**
 **  Revision 1.2  2005/07/14 15:15:17  jnherder
 **  Renamed some system library functionality.
 **
@@ -604,16 +607,19 @@ PUBLIC int main(void)
 	    case DL_STOP:	/* Stop device */
 		do_stop(&m);
 		break;
-	    case HARD_STOP:	/* Shut down */
-		for (rc = 0; rc < DE_PORT_NR; rc += 1) {
+	    case SYS_EVENT: {
+	    	sigset_t sigset = m.NOTIFY_ARG;
+	    	if (sigismember(&sigset, SIGKSTOP)) {	/* Shut down */
+		    for (rc = 0; rc < DE_PORT_NR; rc += 1) {
 			if (de_table[rc].de_mode == DEM_ENABLED) {
 				m.m_type = DL_STOP;
 				m.DL_PORT = rc;
 				do_stop(&m);
 			}
+		    }
 		}
-		sys_exit(0);
 		break;
+	    }
 	    case HARD_INT:	/* Interrupt from device */
 		for (dep = de_table; dep < &de_table[DE_PORT_NR]; dep += 1) {
 			/* If device is enabled and interrupt pending */

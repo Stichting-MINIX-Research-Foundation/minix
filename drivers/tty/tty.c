@@ -19,7 +19,7 @@
  * The valid messages and their parameters are:
  *
  *   HARD_INT:       output has been completed or input has arrived
- *   HARD_STOP:      MINIX wants to shutdown; run code to cleanly stop
+ *   SYS_EVENT:      e.g., MINIX wants to shutdown; run code to cleanly stop
  *   DEV_READ:       a process wants to read from a terminal
  *   DEV_WRITE:      a process wants to write on a terminal
  *   DEV_IOCTL:      a process wants to change a terminal's parameters
@@ -33,7 +33,7 @@
  * ---------------------------------------------------------------------------
  * | HARD_INT    |         |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
- * | HARD_STOP   |         |         |         |         |         |         |
+ * | SYS_EVENT   | sig set |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
  * | DEV_READ    |minor dev| proc nr |  count  |         O_NONBLOCK| buf ptr |
  * |-------------+---------+---------+---------+---------+---------+---------|
@@ -206,31 +206,18 @@ PUBLIC void main(void)
 	}
 	case SYS_EVENT: {		/* new kernel message is available */
 		sigset_t sigset = (sigset_t) tty_mess.NOTIFY_ARG;
-		if (sigismember(&sigset, SIGKMESS)) {
-			do_new_kmess(&tty_mess);
-		} else if (sigismember(&sigset, SIGTERM)) {
-			cons_stop();	/* first switch to primary console */
-		} else if (sigismember(&sigset, SIGKSTOP)) {
+		if (sigismember(&sigset, SIGKSTOP)) {
 			cons_stop();		/* switch to primary console */
-			do_panic_dumps(&tty_mess);	
-		}
-		continue;
-	}
-	case HARD_STOP: {		/* MINIX is going down */
-		static int stop = 0;	/* expect two HARD_STOP messages */
-		if (! stop++) {
-			cons_stop();	/* first switch to primary console */
-		} else {
-			if(irq_hook_id != -1) {
-				int r;
-				r = sys_irqdisable(&irq_hook_id);
-				r = sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
+#if DEAD_CODE
+			if (irq_hook_id != -1) {
+				sys_irqdisable(&irq_hook_id);
+				sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
 			}
-			printf("[DONE]\n");
-			printf("MINIX will now be shutdown.\n");
-			sys_exit(0);	/* then exit TTY */
-		}
-	 	continue;		
+#endif
+		} 
+		if (sigismember(&sigset, SIGTERM)) cons_stop();	
+		if (sigismember(&sigset, SIGKMESS)) do_new_kmess(&tty_mess);
+		continue;
 	}
 	case PANIC_DUMPS:		/* allow panic dumps */
 		cons_stop();		/* switch to primary console */
