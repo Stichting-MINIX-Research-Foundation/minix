@@ -273,7 +273,8 @@ char *get_sector(u32_t vsec)
 {
 	u32_t sec;
 	int r;
-	static char buf[32 * SECTOR_SIZE];
+#define SECBUFS 16
+	static char buf[SECBUFS * SECTOR_SIZE];
 	static size_t count;		/* Number of sectors in the buffer. */
 	static u32_t bufsec;		/* First Sector now in the buffer. */
 
@@ -298,7 +299,7 @@ char *get_sector(u32_t vsec)
 	bufsec= sec;
 
 	/* Read a whole track if possible. */
-	while (++count < 32 && !dev_boundary(bufsec + count)) {
+	while (++count < SECBUFS && !dev_boundary(bufsec + count)) {
 		vsec++;
 		if ((sec= (*vir2sec)(vsec)) == -1) break;
 
@@ -641,7 +642,7 @@ char *select_image(char *image)
 	image= strcpy(malloc((strlen(image) + 1 + NAME_MAX + 1)
 						 * sizeof(char)), image);
 
-	if (fsok == -1) fsok= r_super(&block_size) != 0;
+	fsok= r_super(&block_size) != 0;
 	if (!fsok || (image_ino= r_lookup(ROOT_INO, image)) == 0) {
 		char *size;
 
