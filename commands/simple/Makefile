@@ -66,6 +66,7 @@ ALL	= \
 	date \
 	dd \
 	decomp16 \
+	dev2name \
 	df \
 	dhrystone \
 	diff \
@@ -310,6 +311,10 @@ dd:	dd.c
 	@install -S 20kw $@
 
 decomp16:	decomp16.c
+	$(CCLD) -o $@ $?
+	@install -S 4kw $@
+
+dev2name:	dev2name.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
 
@@ -880,6 +885,7 @@ install:	\
 	/usr/bin/date \
 	/usr/bin/dd \
 	/usr/bin/decomp16 \
+	/bin/dev2name \
 	/usr/bin/df \
 	/usr/bin/dhrystone \
 	/usr/bin/diff \
@@ -1137,6 +1143,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/dd:	dd
+	install -cs -o bin $? $@
+
+/bin/dev2name:	dev2name
 	install -cs -o bin $? $@
 
 /usr/bin/decomp16:	decomp16
