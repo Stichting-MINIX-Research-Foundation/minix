@@ -2,7 +2,6 @@
  *   m_type:	SYS_SETALARM 
  *
  * The parameters for this system call are:
- *    m2_i1:	ALRM_PROC_NR		(set alarm for this process)	
  *    m2_l1:	ALRM_EXP_TIME		(alarm's expiration time)
  *    m2_i2:	ALRM_ABS_TIME		(expiration time is absolute?)
  *    m2_l1:	ALRM_TIME_LEFT		(return seconds left of previous)
@@ -31,9 +30,7 @@ message *m_ptr;			/* pointer to request message */
   clock_t uptime;		/* placeholder for current uptime */
 
   /* Extract shared parameters from the request message. */
-  proc_nr = m_ptr->ALRM_PROC_NR;	/* process to interrupt later */
-  if (SELF == proc_nr) proc_nr = m_ptr->m_source;
-  if (! isokprocn(proc_nr)) return(EINVAL);
+  proc_nr = m_ptr->m_source;		/* process to interrupt later */
   exp_time = m_ptr->ALRM_EXP_TIME;	/* alarm's expiration time */
   use_abs_time = m_ptr->ALRM_ABS_TIME;	/* flag for absolute time */
 
@@ -50,7 +47,7 @@ message *m_ptr;			/* pointer to request message */
       m_ptr->ALRM_TIME_LEFT = (tp->tmr_exp_time - uptime);
   }
 
-  /* Finally, (re)set the timer depending on 'exp_time'. */
+  /* Finally, (re)set the timer depending on the expiration time. */
   if (exp_time == 0) {
       reset_timer(tp);
   } else {

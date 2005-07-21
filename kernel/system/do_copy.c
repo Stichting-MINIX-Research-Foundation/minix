@@ -23,7 +23,8 @@ PUBLIC int do_copy(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
 /* Handle sys_vircopy() and sys_physcopy().  Copy data using virtual or
- * physical addressing. 
+ * physical addressing. Although a single handler function is used, there 
+ * are two different system calls so that permissions can be checked. 
  */
   struct vir_addr vir_addr[2];	/* virtual source and destination address */
   vir_bytes bytes;		/* number of bytes to copy */

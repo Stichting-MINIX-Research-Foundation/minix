@@ -33,7 +33,7 @@
 #define USE_SDEVIO     	1	/* perform I/O request on a buffer */
 #define USE_IRQCTL     	1	/* set an interrupt policy */
 #define USE_SEGCTL     	1	/* set up a remote segment */
-#define USE_SVRCTL     	1	/* system server control */
+#define USE_PRIVCTL    	1	/* system privileges control */
 #define USE_NICE 	1	/* change scheduling priority */
 #define USE_UMAP       	1	/* map virtual to physical address */
 #define USE_VIRCOPY   	1	/* copy using virtual addressing */ 

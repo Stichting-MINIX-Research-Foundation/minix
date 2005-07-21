@@ -13,7 +13,6 @@
 
 #if USE_VDEVIO
 
-
 /* Buffer for SYS_VDEVIO to copy (port,value)-pairs from/ to user. */
 PRIVATE char vdevio_pv_buf[VDEVIO_BUF_SIZE];      
 
@@ -42,7 +41,7 @@ register message *m_ptr;	/* pointer to request message */
     pvw_pair_t *pvw_pairs;      /* needed for word values */
     pvl_pair_t *pvl_pairs;      /* needed for long values */
     int i;
-    pid_t caller_pid;           /* process id of caller */
+    int caller_proc;            /* process number of caller */
     size_t bytes;               /* # bytes to be copied */
     vir_bytes caller_vir;       /* virtual address at caller */
     phys_bytes caller_phys;     /* physical address at caller */
@@ -69,9 +68,9 @@ register message *m_ptr;	/* pointer to request message */
     }
 
     /* Calculate physical addresses and copy (port,value)-pairs from user. */
-    caller_pid = (pid_t) m_ptr->m_source; 
+    caller_proc = m_ptr->m_source; 
     caller_vir = (vir_bytes) m_ptr->DIO_VEC_ADDR;
-    caller_phys = umap_local(proc_addr(caller_pid), D, caller_vir, bytes);
+    caller_phys = umap_local(proc_addr(caller_proc), D, caller_vir, bytes);
     if (0 == caller_phys) return EFAULT;
     kernel_phys = vir2phys(vdevio_pv_buf);
     phys_copy(caller_phys, kernel_phys, (phys_bytes) bytes);

@@ -17,8 +17,7 @@ _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
-_PROTOTYPE( void prepare_shutdown, (int how)				);
-_PROTOTYPE( void stop_sequence, (struct timer *tp)			);
+_PROTOTYPE( void prepare_shutdown, (struct timer *tp)			);
 
 /* utility.c */
 _PROTOTYPE( void kprintf, (const char *fmt, ...)			);
@@ -41,8 +40,7 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 /* system.c */
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
-_PROTOTYPE( int init_proc, (register struct proc *rc, struct proc *rp)	);
-_PROTOTYPE( void clear_proc, (register struct proc *rc)				);
+_PROTOTYPE( int set_priv, (register struct proc *rc,int sys_proc_flag)	);
 _PROTOTYPE( phys_bytes numap_local, (int proc_nr, vir_bytes vir_addr, 
 		vir_bytes bytes)					);
 _PROTOTYPE( void sys_task, (void)					);

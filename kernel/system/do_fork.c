@@ -22,7 +22,6 @@ PUBLIC int do_fork(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
 /* Handle sys_fork().  PR_PPROC_NR has forked.  The child is PR_PROC_NR. */
-
 #if (CHIP == INTEL)
   reg_t old_ldt_sel;
 #endif
@@ -42,10 +41,6 @@ register message *m_ptr;	/* pointer to request message */
   *rpc = *rpp;				/* copy 'proc' struct */
 #endif
   rpc->p_nr = m_ptr->PR_PROC_NR;	/* this was obliterated by copy */
-
-#if TEMP_CODE
-  rpc->p_ntf_q = NULL;			/* remove pending notifications */
-#endif
 
   /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
   rpc->p_rts_flags |= NO_MAP;		/* inhibit process from running */

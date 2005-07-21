@@ -308,6 +308,7 @@ unsigned flags;				/* system call flags */
             return(OK);					/* report success */
         }
 
+#if TEMP_CODE
         ntf_q_pp = &caller_ptr->p_ntf_q;	/* get pointer pointer */
         while (*ntf_q_pp != NULL) {
             if (src == ANY || src == (*ntf_q_pp)->n_source) {
@@ -328,6 +329,7 @@ unsigned flags;				/* system call flags */
 	    ntf_q_pp = &(*ntf_q_pp)->n_next;	/* proceed to next */
         }
     }
+#endif
 
     /* Check caller queue. Use pointer pointers to keep code simple. */
     xpp = &caller_ptr->p_caller_q;

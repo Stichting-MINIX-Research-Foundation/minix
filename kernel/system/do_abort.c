@@ -24,9 +24,10 @@ message *m_ptr;			/* pointer to request message */
  * or ESC after debugging dumps).
  */
   int how = m_ptr->ABRT_HOW;
+  timer_t *tp;
 
+  /* See if the monitor is to run the specified instructions. */
   if (how == RBT_MONITOR) {
-      /* The monitor is to run the specified instructions. */
       int proc_nr = m_ptr->ABRT_MON_PROC;
       int length = m_ptr->ABRT_MON_LEN + 1;
       vir_bytes src_vir = (vir_bytes) m_ptr->ABRT_MON_ADDR;
@@ -38,7 +39,14 @@ message *m_ptr;			/* pointer to request message */
       else
           phys_copy(src_phys, kinfo.params_base, (phys_bytes) length);
   }
-  prepare_shutdown(how);
+
+  /* Set a watchdog timer to shut down, so that this call returns first.
+   * The timer will expire at the next clock tick, which can be any moment.
+   * The CLOCK task is only scheduled when the SYSTEM task is done, though.
+   */
+  tp = &priv(proc_addr(KERNEL))->s_alarm_timer;
+  tmr_arg(tp)->ta_int = how;		/* pass status as timer argument */
+  set_timer(tp, get_uptime(), prepare_shutdown);
   return(OK);				/* pro-forma (really EDISASTER) */
 }
 

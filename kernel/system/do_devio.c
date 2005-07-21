@@ -22,7 +22,7 @@
 PUBLIC int do_devio(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-    /* Perform actual device I/O for byte, word, and long values. */
+/* Process a single I/O request for byte, word, and long values. */
     if (m_ptr->DIO_REQUEST == DIO_INPUT) { 
       switch (m_ptr->DIO_TYPE) {
         case DIO_BYTE: m_ptr->DIO_VALUE = inb(m_ptr->DIO_PORT); break; 

@@ -66,7 +66,6 @@ struct proc {
 #define SIGNALED	0x10	/* set when new kernel signal arrives */
 #define SIG_PENDING	0x20	/* unready while signal being processed */
 #define P_STOP		0x40	/* set when process is being traced */
-#define NO_PRIV		0x80	/* privilege structure not yet initialized */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment. Priorities of the processes in the boot image can 

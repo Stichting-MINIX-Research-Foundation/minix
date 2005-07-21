@@ -41,7 +41,7 @@ message *m_ptr;			/* pointer to request message */
   scp = (struct sigcontext *) smsg.sm_stkptr - 1;
 
   /* Copy the registers to the sigcontext structure. */
-  memcpy(&sc.sc_regs, &rp->p_reg, sizeof(struct sigregs));
+  memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(struct sigregs));
 
   /* Finish the sigcontext initialization. */
   sc.sc_flags = SC_SIGCONTEXT;

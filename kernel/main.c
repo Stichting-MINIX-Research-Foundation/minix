@@ -76,18 +76,14 @@ PUBLIC void main()
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	ip = &image[i];				/* process' attributes */
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
-	(void) init_proc(rp, NIL_SYS_PROC);
-#if DEAD_CODE
-		(ip->flags & SYS_PROC) ?
-		NIL_SYS_PROC : NIL_PROC);	/* initialize new process */
-#endif
-	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN);  /* set name */
 	rp->p_name[P_NAME_LEN-1] = '\0';	/* just for safety */
 	rp->p_max_priority = ip->priority;	/* max scheduling priority */
 	rp->p_priority = ip->priority;		/* current priority */
 	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
 	rp->p_sched_ticks = ip->quantum;	/* current credit */
-	rp->p_full_quantums = QUANTUMS(ip->priority);  /* quantums left */
+	rp->p_full_quantums = QUANTUMS(ip->priority);   /* nr quantums left */
+	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
+	(void) set_priv(rp, (ip->flags & SYS_PROC));    /* assign structure */
 	rp->p_priv->s_flags = ip->flags;	/* process flags */
 	rp->p_priv->s_call_mask = ip->call_mask;/* allowed system calls */
 	if (i-NR_TASKS < 0) {			/* part of the kernel? */ 
@@ -188,14 +184,16 @@ PRIVATE void announce(void)
 /*==========================================================================*
  *			       prepare_shutdown				    *
  *==========================================================================*/
-PUBLIC void prepare_shutdown(how)
-int how;				/* reason to shut down */
+PUBLIC void prepare_shutdown(tp)
+timer_t *tp;
 {
-/* This function prepares to shutdown MINIX. It uses a global flag to make 
- * sure it is only executed once. Unless a CPU exception occurred, the 
+/* This function prepares to shutdown MINIX. It is called by a watchdog 
+ * timer if this is a normal abort so that the sys_abort() call can return
+ * first. The timer structure passes the shutdown status as an argument.
  */
-  static timer_t shutdown_timer; 	/* timer for watchdog function */ 
   register struct proc *rp; 
+  static timer_t shutdown_timer;
+  int how = tmr_arg(tp)->ta_int;
   message m;
 
   /* Show debugging dumps on panics. Make sure that the TTY task is still 
@@ -215,8 +213,9 @@ int how;				/* reason to shut down */
    * run their shutdown code, e.g, to synchronize the FS or to let the TTY
    * switch to the first console. 
    */
+  kprintf("Sending SIGKSTOP to system processes ...\n"); 
   for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
-      if (! isemptyp(rp) && (priv(rp)->s_flags & SYS_PROC) && ! iskernelp(rp))
+      if (!isemptyp(rp) && (priv(rp)->s_flags & SYS_PROC) && !iskernelp(rp))
           send_sig(proc_nr(rp), SIGKSTOP);
   }
 
@@ -224,9 +223,8 @@ int how;				/* reason to shut down */
    * scheduled by setting a watchog timer that calls shutdown(). The timer 
    * argument passes the shutdown status. 
    */
-  kprintf("Informed system about upcoming shutdown with SIGKSTOP signal.\n"); 
-  kprintf("Time for cleanup is allowed.  MINIX will now be brought down.\n");
-  tmr_arg(&shutdown_timer)->ta_int = how;	/* pass how in timer */
+  kprintf("MINIX will now be shut down ...\n");
+  tmr_arg(&shutdown_timer)->ta_int = how;
   set_timer(&shutdown_timer, get_uptime() + SHUTDOWN_TICKS, shutdown);
 }
 

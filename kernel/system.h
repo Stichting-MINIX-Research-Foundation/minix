@@ -82,9 +82,9 @@ _PROTOTYPE( int do_getinfo, (message *m_ptr) );
 #define do_getinfo do_unused
 #endif
 
-_PROTOTYPE( int do_svrctl, (message *m_ptr) );	
-#if ! USE_SVRCTL
-#define do_svrctl do_unused
+_PROTOTYPE( int do_privctl, (message *m_ptr) );	
+#if ! USE_PRIVCTL
+#define do_privctl do_unused
 #endif
 
 _PROTOTYPE( int do_segctl, (message *m_ptr) );

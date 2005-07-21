@@ -2,9 +2,9 @@
  *   m_type:	SYS_MEMSET
  *
  * The parameters for this system call are:
- *    m5_l1:	CP_SRC_ADDR	(virtual address)	
- *    m5_l2:	CP_DST_ADDR	(returns physical address)	
- *    m5_l3:	CP_NR_BYTES	(size of datastructure) 	
+ *    m1_p1:	MEM_PTR		(virtual address)	
+ *    m1_i1:	MEM_COUNT	(returns physical address)	
+ *    m1_i2:	MEM_PATTERN	(size of datastructure) 	
  */
 
 #include "../system.h"
@@ -17,9 +17,9 @@
 PUBLIC int do_memset(m_ptr)
 register message *m_ptr;
 {
-/* Handle sys_memset(). */
+/* Handle sys_memset(). This writes a pattern into the specified memory. */
   unsigned long p;
-  unsigned char c = m_ptr->MEM_CHAR;
+  unsigned char c = m_ptr->MEM_PATTERN;
   p = c | (c << 8) | (c << 16) | (c << 24);
   phys_memset((phys_bytes) m_ptr->MEM_PTR, p, (phys_bytes) m_ptr->MEM_COUNT);
   return(OK);

@@ -62,7 +62,7 @@ message *m_ptr;			/* pointer to request message */
 #endif
 
   /* Restore the registers. */
-  memcpy(&rp->p_reg, (char *)&sc.sc_regs, sizeof(struct sigregs));
+  memcpy(&rp->p_reg, &sc.sc_regs, sizeof(struct sigregs));
   return(OK);
 }
 #endif /* USE_SIGRETURN */

@@ -25,7 +25,10 @@ PRIVATE struct vir_cp_req vir_cp_req[VCOPY_VEC_SIZE];
 PUBLIC int do_vcopy(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-/* Handle sys_virvcopy(). Handle virtual copy requests from vector. */
+/* Handle sys_virvcopy() and sys_physvcopy() that pass a vector with copy
+ * requests. Although a single handler function is used, there are two
+ * different system calls so that permissions can be checked.
+ */
   int nr_req;
   int caller_pid;
   vir_bytes caller_vir;

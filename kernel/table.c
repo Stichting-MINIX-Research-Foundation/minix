@@ -19,12 +19,12 @@
  * or PRIVATE. The reason for this is that extern variables cannot have a  
  * default initialization. If such variables are shared, they must also be
  * declared in one of the *.h files without the initialization.  Examples 
- * include 'tasktab' (this file) and 'idt'/'gdt' (protect.c). 
+ * include 'system_image' (this file) and 'idt' and 'gdt' (protect.c). 
  *
  * Changes:
  *    Nov 10, 2004   removed controller->driver mappings  (Jorrit N. Herder)
  *    Oct 17, 2004   updated above and tasktab comments  (Jorrit N. Herder)
- *    May 01, 2004   included p_sendmask in tasktab  (Jorrit N. Herder)
+ *    May 01, 2004   changed struct for system image  (Jorrit N. Herder)
  */
 
 #define _TABLE
@@ -59,22 +59,21 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * mask, and a name for the process table. For kernel processes, the startup 
  * routine and stack size is also provided.
  */
-#define IDLE_F		(PREEMPTIBLE | BILLABLE)
-#define USER_F		(PREEMPTIBLE | RDY_Q_HEAD)
+#define USER_F		(PREEMPTIBLE | BILLABLE | RDY_Q_HEAD)
 #define SYS_F  		(PREEMPTIBLE | SYS_PROC)
-#define TCB_F  		(SYS_PROC)	/* trusted computing base */
+#define TASK_F 		(SYS_PROC)	
 
 #define IDLE_T		32		/* ticks */
 #define USER_T		 8		/* ticks */
 #define SYS_T		16		/* ticks */
 
 PUBLIC struct system_image image[] = {
- { IDLE,    idle_task,  IDLE_F, IDLE_T,   IDLE_Q,  IDLE_S,    EMPTY_CALL_MASK, 0,    "IDLE"    },
- { CLOCK,   clock_task, TCB_F, SYS_T,   TASK_Q, CLOCK_S,   SYSTEM_CALL_MASK, 0,   "CLOCK"   },
- { SYSTEM,  sys_task,   TCB_F, SYS_T,   TASK_Q, SYSTEM_S,     SYSTEM_CALL_MASK, 0,  "SYS"     },
- { HARDWARE,   0,       0, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_CALL_MASK, 0,"KERNEL" },
- { PM_PROC_NR, 0,       TCB_F, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   0,      "PM"      },
- { FS_PROC_NR, 0,       TCB_F, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   0,      "FS"      },
+ { IDLE,    idle_task,  USER_F, IDLE_T,   IDLE_Q,  IDLE_S,    EMPTY_CALL_MASK, 0,    "IDLE"    },
+ { CLOCK,   clock_task, TASK_F, SYS_T,   TASK_Q, CLOCK_S,   SYSTEM_CALL_MASK, 0,   "CLOCK"   },
+ { SYSTEM,  sys_task,   TASK_F, SYS_T,   TASK_Q, SYSTEM_S,     SYSTEM_CALL_MASK, 0,  "SYS"     },
+ { HARDWARE,   0,       TASK_F, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_CALL_MASK, 0,"KERNEL" },
+ { PM_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   0,      "PM"      },
+ { FS_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          SYSTEM_CALL_MASK,   0,      "FS"      },
  { IS_PROC_NR, 0,       SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,      "IS"      },
  { TTY, 0,              SYS_F, SYS_T, 1, 0,           SYSTEM_CALL_MASK, 0,      "TTY"      },
  { MEMORY, 0,           SYS_F, SYS_T, 2, 0,           SYSTEM_CALL_MASK,  0,     "MEMORY" },

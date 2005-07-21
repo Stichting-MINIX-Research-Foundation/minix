@@ -11,10 +11,9 @@
  *
  * In addition to the main sys_task() entry point, which starts the main loop,
  * there are several other minor entry points:
- *   send_sig:		send signal directly to a system process
+ *   set_priv:		assign privilege structure to user or system process
+ *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via PM
- *   init_proc:	        initialize a process, during start up or fork
- *   clear_proc:	clean up a process in the process table, e.g. on exit
  *   umap_local:	map virtual address in LOCAL_SEG to physical 
  *   umap_remote:	map virtual address in REMOTE_SEG to physical 
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
@@ -24,9 +23,7 @@
  *   generic_handler:	interrupt handler for user-level device drivers
  *
  * Changes:
- *   Apr 25, 2005   new init_proc() function  (Jorrit N. Herder)
  *   Apr 25, 2005   made mapping of call vector explicit  (Jorrit N. Herder)
- *   Oct 29, 2004   new clear_proc() function  (Jorrit N. Herder)
  *   Oct 17, 2004   generic handler and IRQ policies  (Jorrit N. Herder)
  *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
@@ -40,7 +37,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/sigcontext.h>
-#include <sys/svrctl.h>
 #if (CHIP == INTEL)
 #include <ibm/memory.h>
 #include "protect.h"
@@ -127,7 +123,6 @@ PRIVATE void initialize(void)
       call_vec[i] = do_unused;
   }
 
-  /* Process management. */
   map(SYS_FORK, do_fork); 		/* a process forked a new process */
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_EXEC, do_exec);		/* update process after execute */
@@ -155,8 +150,8 @@ PRIVATE void initialize(void)
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
+  map(SYS_PRIVCTL, do_privctl);		/* system privileges control */
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
-  map(SYS_SVRCTL, do_svrctl);		/* kernel control functions */
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
@@ -169,93 +164,28 @@ PRIVATE void initialize(void)
 
 
 /*===========================================================================*
- *			         init_proc				     *
+ *			         set_priv				     *
  *===========================================================================*/
-PUBLIC int init_proc(rc, rp)
+PUBLIC int set_priv(rc, proc_type)
 register struct proc *rc;		/* new (child) process pointer */
-struct proc *rp; 			/* prototype (parent) process */
+int proc_type;				/* system or user process flag */
 {
-  register struct priv *sp;		/* process' privilege structure */
-  int i;
+/* Get a privilege structure. All user processes share the same privilege 
+ * structure. System processes get their own privilege structure. 
+ */
+  register struct priv *sp;			/* privilege structure */
 
-  /* If there is a prototype process to initialize from, use it. Otherwise,
-   * assume the caller will take care of initialization, but make sure that 
-   * the new process gets a pointer to a system properties structure.
-   */
-  if (rp == NIL_PROC) {				/* new user process */
-      kprintf("init_proc() for new user proc %d\n", proc_nr(rc));
-      sp = &priv[USER_PRIV_ID];
-      sp->s_proc_nr = ANY;			/* misuse for users */
-      rc->p_priv = sp;				/* assign to process */
-      return(OK);
-  } else if (rp == NIL_SYS_PROC) {		/* new system process */
-      for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
-          if (sp->s_proc_nr == NONE) {		/* found free slot */
-              sp->s_proc_nr = proc_nr(rc);	/* set association */
-              rc->p_priv = sp;			/* assign to process */
-              return(OK);
-          }
-      }
-      kprintf("No free PRIV structure!\n", NO_NUM);
-      return(ENOSPC);				/* out of resources */
-  } else {					/* forked process */
-
-      kprintf("init_proc() from prototype %d\n", proc_nr(rp));
+  if (proc_type == SYS_PROC) {			/* find a new slot */
+      for (sp = BEG_PRIV_ADDR; sp < END_PRIV_ADDR; ++sp) 
+          if (sp->s_proc_nr == NONE && sp->s_id != USER_PRIV_ID) break;	
+      if (sp->s_proc_nr != NONE) return(ENOSPC);
+      rc->p_priv = sp;				/* assign new slot */
+      rc->p_priv->s_proc_nr = proc_nr(rc);	/* set association */
+  } else {
+      rc->p_priv = &priv[USER_PRIV_ID];		/* use shared slot */
+      rc->p_priv->s_proc_nr = INIT_PROC_NR;	/* set association */
   }
-}
-
-
-/*===========================================================================*
- *			         clear_proc				     *
- *===========================================================================*/
-PUBLIC void clear_proc(rc)
-register struct proc *rc;		/* slot of process to clean up */
-{
-  register struct proc *rp;		/* iterate over process table */
-  register struct proc **xpp;		/* iterate over caller queue */
-  int i;
-
-  /* Turn off any alarm timers at the clock. */   
-  reset_timer(&priv(rc)->s_alarm_timer);
-
-  /* Make sure that the exiting process is no longer scheduled. */
-  if (rc->p_rts_flags == 0) lock_unready(rc);
-
-  /* If the process being terminated happens to be queued trying to send a
-   * message (e.g., the process was killed by a signal, rather than it doing 
-   * a normal exit), then it must be removed from the message queues.
-   */
-  if (rc->p_rts_flags & SENDING) {
-      /* Check all proc slots to see if the exiting process is queued. */
-      for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
-          if (rp->p_caller_q == NIL_PROC) continue;
-          /* Make sure that the exiting process is not on the queue. */
-          xpp = &rp->p_caller_q;
-          while (*xpp != NIL_PROC) {		/* check entire queue */
-              if (*xpp == rc) {			/* process is on the queue */
-                  *xpp = (*xpp)->p_q_link;	/* replace by next process */
-                  break;
-              }
-              xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
-          }
-      }
-  }
-
-  /* Check the table with IRQ hooks to see if hooks should be released. */
-  for (i=0; i < NR_IRQ_HOOKS; i++) {
-      if (irq_hooks[i].proc_nr == proc_nr(rc)) {
-          rm_irq_handler(&irq_hooks[i]);	/* remove interrupt handler */
-          irq_hooks[i].proc_nr = NONE; 		/* mark hook as free */
-      }
-  }
-
-  /* Now it is safe to release the process table slot. If this is a system 
-   * process, also release its privilege structure.  Further cleanup is not
-   * needed at this point. All important fields are reinitialized when the 
-   * slots are assigned to another, new process. 
-   */
-  rc->p_rts_flags = SLOT_FREE;		
-  if (priv(rc)->s_flags & SYS_PROC) priv(rc)->s_proc_nr = NONE;
+  return(OK);
 }
 
 
@@ -390,12 +320,12 @@ vir_bytes bytes;		/* # of bytes to be copied */
  */
 
   /* Check all acceptable ranges. */
-#if DEAD_CODE	/* to be replaced by proper ranges, e.g. 640 - 1 KB */
   if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
   	return (phys_bytes) vir_addr;
-  else if (vir_addr >= UPPER_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
+  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
   	return (phys_bytes) vir_addr;
-#else
+
+#if DEAD_CODE	/* brutal fix for QEMU and Bochs, if above doesn't work */
   if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
   	return (phys_bytes) vir_addr;
 #endif

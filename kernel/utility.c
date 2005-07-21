@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <minix/com.h>
+#include "proc.h"
 
 #define END_OF_KMESS 	-1
 FORWARD _PROTOTYPE(void kputc, (int c));
@@ -33,6 +34,7 @@ int nr;
 {
 /* The system has run aground of a fatal kernel error. Terminate execution. */
   static int panicking = 0;
+  timer_t *tp;
   if (panicking ++) return;		/* prevent recursive panics */
 
   if (mess != NULL) {
@@ -40,7 +42,13 @@ int nr;
 	if (nr != NO_NUM) kprintf(" %d", nr);
 	kprintf("\n",NO_NUM);
   }
-  prepare_shutdown(RBT_PANIC);
+
+  /* Make a direct call to shutdown. Interface requires to pass the shutdown
+   * status by means of a timer. 
+   */
+  tp = &priv(proc_addr(KERNEL))->s_alarm_timer;
+  tmr_arg(tp)->ta_int = RBT_PANIC;
+  prepare_shutdown(tp);
 }
 
 

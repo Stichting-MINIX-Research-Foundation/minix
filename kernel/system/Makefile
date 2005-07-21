@@ -34,7 +34,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_vcopy.o) \
 	$(SYSTEM)(do_umap.o) \
 	$(SYSTEM)(do_memset.o) \
-	$(SYSTEM)(do_svrctl.o) \
+	$(SYSTEM)(do_privctl.o) \
 	$(SYSTEM)(do_segctl.o) \
 	$(SYSTEM)(do_getksig.o) \
 	$(SYSTEM)(do_endksig.o) \
@@ -129,8 +129,8 @@ $(SYSTEM)(do_getinfo.o):	do_getinfo.c
 $(SYSTEM)(do_abort.o):	do_abort.c
 	$(CC) do_abort.c
 
-$(SYSTEM)(do_svrctl.o):	do_svrctl.c
-	$(CC) do_svrctl.c
+$(SYSTEM)(do_privctl.o):	do_privctl.c
+	$(CC) do_privctl.c
 
 $(SYSTEM)(do_segctl.o):	do_segctl.c
 	$(CC) do_segctl.c
