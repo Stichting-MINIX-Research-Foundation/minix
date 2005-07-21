@@ -5,9 +5,8 @@
  * reviewed at a later time. 
  *
  * This routine can only be used by servers and device drivers.  The kernel
- * must define its own kputc(). Note that the IS also defines its own kputc()
- * to directly call the TTY instead of the kernel, because it does not want
- * to pollute the kernel message buffer with its debug dumps. 
+ * must define its own kputc(). Note that the log driver also defines its own 
+ * kputc() to directly call the TTY instead of going through this library.
  */
 
 #include "sysutil.h"
