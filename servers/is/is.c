@@ -21,16 +21,10 @@ int callnr;		/* system call number */
 
 extern int errno;	/* error number set by system library */
 
-/* Diagnostic messages buffer. */
-char diag_buf[DIAG_BUF_SIZE];
-int diag_size = 0;
-int diag_next = 0;
-
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
-FORWARD _PROTOTYPE(void signal_handler, (int sig)			);
 
 /*===========================================================================*
  *                                  main                                     *
@@ -56,9 +50,6 @@ PUBLIC void main(void)
         switch (callnr) {
             case SYS_EVENT:
                 sigset = (sigset_t) m_in.NOTIFY_ARG;
-                if (sigismember(&sigset, SIGKMESS)) {
-            	    result = do_new_kmess(&m_in);
-            	} 
             	if (sigismember(&sigset, SIGTERM)) {
                     /* nothing to do on shutdown */    
             	} 
@@ -66,9 +57,6 @@ PUBLIC void main(void)
                     /* nothing to do on shutdown */    
             	}
             	continue;
-            case DIAGNOSTICS:
-            	result = do_diagnostics(&m_in);
-            	break;
             case FKEY_PRESSED:
             	result = do_fkey_pressed(&m_in);
             	break;
@@ -87,20 +75,6 @@ PUBLIC void main(void)
 }
 
 
-/*===========================================================================*
- *				 signal_handler                              *
- *===========================================================================*/
-PRIVATE void signal_handler(sig)
-int sig;					/* signal number */
-{
-/* Expect a SIGTERM signal when this server must shutdown. */
-  if (sig == SIGTERM) {
-  	printf("Shutting down IS server due to SIGTERM.\n");
-  	exit(0);
-  } else {
-  	printf("IS got signal %d\n", sig);
-  }
-}
 
 
 /*===========================================================================*

@@ -58,7 +58,6 @@ PUBLIC int do_fkey_pressed(message *m)
 
   if (pressed(SF3))	fproc_dmp();
   if (pressed(SF4))	dtab_dmp();
-  if (pressed(SF6))	diagnostics_dmp();
 
   /* Inhibit sending a reply message. */
   return(EDONTREPLY);

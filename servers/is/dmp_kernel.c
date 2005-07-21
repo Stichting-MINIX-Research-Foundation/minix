@@ -197,7 +197,7 @@ PUBLIC void image_dmp()
       for (j=-NR_TASKS; j<INIT_PROC_NR+2; j++) 
          maskstr[j+NR_TASKS] = '0';
       maskstr[j+NR_TASKS] = '\0';
-      printf("%8s %4d 0x%02x %3d %7lu %7lu   %s\n",
+      printf("%8s %4d     0x%02x %3d %7lu %7lu   %s\n",
           ip->proc_name, ip->proc_nr, ip->flags, ip->priority, 
           (long)ip->initial_pc, ip->stksize, maskstr); 
   }
@@ -334,12 +334,10 @@ PUBLIC void privileges_dmp()
         for (sp = &priv[0]; sp < &priv[NR_SYS_PROCS]; sp++) 
             if (sp->s_proc_nr == rp->p_nr) { r ++; break; }
         if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
-            printf("... no privileges found, probaly a user process\n");
-            continue;
+	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s %3x %02.2u",
-	       sp->s_id,
-	       rp->p_name,
+	printf("(%02u) %-7.7s 0x%02x    %02.2u",
+	       sp->s_id, rp->p_name,
 	       sp->s_flags, sp->s_call_mask 
         );
 	printf("\n");

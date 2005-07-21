@@ -3,15 +3,6 @@
 /* main.c */
 _PROTOTYPE( void main, (void)						);
 
-/* putk.c */
-_PROTOTYPE( void kputc, (int c)						);
-
-/* diag.c */
-_PROTOTYPE( int do_new_kmess, (message *m)				);
-_PROTOTYPE( int do_diagnostics, (message *m)				);
-_PROTOTYPE( void diag_putc, (int c)					);
-_PROTOTYPE( void diagnostics_dmp, (void) 				);
-
 /* dmp.c */
 _PROTOTYPE( int do_fkey_pressed, (message *m) 				);
 

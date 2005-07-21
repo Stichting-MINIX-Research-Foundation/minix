@@ -17,7 +17,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lsysutil 
 
-OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o diag.o kputc.o
+OBJ = is.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o 
 
 # build local binary
 all build:	$(SERVER)
