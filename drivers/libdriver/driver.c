@@ -128,11 +128,13 @@ struct driver *dp;	/* Device dependent entry points. */
 	(*dp->dr_cleanup)();
 
 	/* Finally, prepare and send the reply message. */
-	mess.m_type = TASK_REPLY;
-	mess.REP_PROC_NR = proc_nr;
-
-	mess.REP_STATUS = r;	/* # of bytes transferred or error code */
-	send(device_caller, &mess);	/* send reply to caller */
+	if (r != EDONTREPLY) {
+		mess.m_type = TASK_REPLY;
+		mess.REP_PROC_NR = proc_nr;
+		/* Status is # of bytes transferred or error code. */
+		mess.REP_STATUS = r;	
+		send(device_caller, &mess);
+	}
   }
 }
 

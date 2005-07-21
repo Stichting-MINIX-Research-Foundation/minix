@@ -2,45 +2,26 @@
  *     /dev/klog	- system log device
  *
  * Changes:
- *    7 july 2005   - Created (Ben Gras)
+ *   21 July 2005   - Support for diagnostic messages (Jorrit N. Herder)
+ *    7 July 2005   - Created (Ben Gras)
  */
 
-#include "../drivers.h"
-#include "../libdriver/driver.h"
+#include "log.h"
+#include <sys/time.h>
+#include <sys/select.h>
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 
-#include <sys/time.h>
-#include <sys/select.h>
+#define LOG_DEBUG		0	/* enable/ disable debugging */
 
-#define NR_DEVS            1		/* number of minor devices */
-#define KRANDOM_PERIOD    10 		/* ticks between krandom calls */
-
-#define LOG_DEBUG		0
-
+#define NR_DEVS            	1	/* number of minor devices */
 #define MINOR_KLOG		0	/* /dev/klog */
 
-#define LOG_SIZE	(5*1024) 
 #define LOGINC(n, i)	do { (n) = (((n) + (i)) % LOG_SIZE); } while(0)
 
-#define SUSPENDABLE 1
-
-PRIVATE struct logdevice {
-	char log_buffer[LOG_SIZE];
-	int	log_size,	/* no. of bytes in log buffer */
-		log_read,	/* read mark */
-		log_write;	/* write mark */
-#if SUSPENDABLE
-	int log_proc_nr,
-		log_source,
-		log_iosize;	/* proc that is blocking on read */
-	vir_bytes log_user_vir;
-#endif
-	int	log_selected, log_select_proc;
-} logdevices[NR_DEVS];
-
-PRIVATE struct device log_geom[NR_DEVS];  /* base and size of each device */
-PRIVATE int log_device = -1;			/* current device */
+PUBLIC struct logdevice logdevices[NR_DEVS];
+PRIVATE struct device log_geom[NR_DEVS];  	/* base and size of devices */
+PRIVATE int log_device = -1;	 		/* current device */
 
 FORWARD _PROTOTYPE( char *log_name, (void) );
 FORWARD _PROTOTYPE( struct device *log_prepare, (int device) );
@@ -376,15 +357,22 @@ message *m_ptr;
 	 * understand.
 	 */
 	switch(m_ptr->m_type) {
-		case DIAGNOSTICS:
-			r = subwrite(&logdevices[0], m_ptr->DIAG_BUF_COUNT,
-				m_ptr->m_source, (vir_bytes) m_ptr->DIAG_PRINT_BUF);
-			break;
-		default:
-			r = EINVAL;
-			break;
+	case DIAGNOSTICS: {
+		r = do_diagnostics(m_ptr);
+		break;
 	}
-
+	case SYS_EVENT: {
+		sigset_t sigset = m_ptr->NOTIFY_ARG;
+		if (sigismember(&sigset, SIGKMESS)) {
+			do_new_kmess(m_ptr);
+		}	
+		r = EDONTREPLY;
+		break;
+	}
+	default:
+		r = EINVAL;
+		break;
+	}
 	return r;
 }
 

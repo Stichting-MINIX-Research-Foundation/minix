@@ -15,7 +15,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lsysutil
 
-OBJ = log.o 
+OBJ = log.o diag.o kputc.o
 LIBDRIVER = $d/libdriver/driver.o
 
 
