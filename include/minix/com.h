@@ -224,7 +224,7 @@
 #  define SYS_SETALARM	16	/* sys_setalarm(proc_nr,exp_time,abs_time) */
 
 #  define SYS_PHYSVCOPY 18	/* sys_physvcopy(vec_ptr, vec_size) */
-#  define SYS_SVRCTL    19	/* sys_svrctl(proc_nr, req, argp) */
+#  define SYS_PRIVCTL   19	/* sys_privctl(proc_nr, ...) */
 #  define SYS_SDEVIO    20	/* sys_sdevio(port, proc_nr, buf, count) */
 #  define SYS_SIGRETURN 21	/* sys_sigreturn(proc_nr, ctxt_ptr, flags) */
 #  define SYS_GETINFO   22 	/* sys_getinfo(what, whereto) */
@@ -244,7 +244,7 @@
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
 #define MEM_PTR		m1_p1	/* base */
 #define MEM_COUNT	m1_i1	/* count */
-#define MEM_CHAR	m1_i2   /* char to write */
+#define MEM_PATTERN	m1_i2   /* pattern to write */
 #define MEM_CHUNK_BASE	m4_l1	/* physical base address */
 #define MEM_CHUNK_SIZE	m4_l2	/* size of mem chunk */
 #define MEM_TOT_SIZE	m4_l3	/* total memory size */

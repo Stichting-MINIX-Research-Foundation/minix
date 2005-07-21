@@ -102,8 +102,11 @@
 #define ENABLE_BINCOMPAT   0	/* for binaries using obsolete calls */
 #define ENABLE_SRCCOMPAT   0	/* for sources using obsolete calls */
 
-/* Which process should receive diagnostics from the kernel and system? */
-#define PRINTF_PROC		TTY
+/* Which process should receive diagnostics from the kernel and system? 
+ * Directly sending it to TTY only displays the output. Sending it to the
+ * log driver will cause the diagnostics to be buffered and displayed.
+ */
+#define PRINTF_PROC		LOG_PROC_NR	/* TTY or LOG_PROC_NR */
 
 /* NR_CONS, NR_RS_LINES, and NR_PTYS determine the number of terminals the
  * system can handle.

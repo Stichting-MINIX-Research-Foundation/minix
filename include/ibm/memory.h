@@ -18,6 +18,7 @@
 /* Physical memory layout. Design decisions made for the earliest PCs, caused
  * memory to be broken broken into the following four basic pieces:
  *  - Conventional or base memory: first 640 KB (incl. BIOS data, see below);
+ *    The top of conventional memory is often used by the BIOS to store data.
  *  - Upper Memory Area (UMA): upper 384 KB of the first megabyte of memory;
  *  - High Memory Area (HMA): ~ first 64 KB of the second megabyte of memory;
  *  - Extended Memory: all the memory above first megabyte of memory.
@@ -26,6 +27,7 @@
  * when the processor is in real mode. 
  */
 #define BASE_MEM_BEGIN            0x000000
+#define BASE_MEM_TOP		  0x090000	
 #define BASE_MEM_END              0x09FFFF
 
 #define UPPER_MEM_BEGIN           0x0A0000
