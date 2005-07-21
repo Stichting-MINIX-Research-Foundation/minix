@@ -4,6 +4,7 @@ COPYITEMS="usr/src usr/bin bin usr/lib"
 RELEASEDIR=/usr/r/release
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
+CDFILES=/tmp/cdreleasefiles
 ISO=minix.iso
 ISOGZ=minix.iso.gz
 RAM=/dev/ram
@@ -16,8 +17,7 @@ then	echo "$RAM should be exactly ${rootkb}k."
 fi
 echo "Warning: I'm going to mkfs $RAM!"
 echo "Temporary (sub)partition to use to make the /usr FS image? "
-echo "It has to be at least 40MB, not much more because it's going to be "
-echo "appended to the .iso. It will be mkfsed!"
+echo "It will be mkfsed!"
 echo -n "Device: /dev/"
 read dev || exit 1
 TMPDISK=/dev/$dev
@@ -32,7 +32,8 @@ umount $TMPDISK
 umount $RAM
 
 ( cd .. && make clean )
-rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE ${IMAGE}.z
+rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
+mkdir $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -b 1440 -B 1024 $RAM || exit
 echo " * mounting $RAM as $RELEASEDIR"
@@ -61,7 +62,8 @@ make programs image
 (cd ../boot && make)
 make image || exit 1
 sh mkboot cdfdboot
-writeisofs -l MINIX -b $IMAGE /tmp $ISO || exit 1
+cp release/cd/* $CDFILES
+writeisofs -l MINIX -b $IMAGE $CDFILES $ISO || exit 1
 echo "Appending Minix root and usr filesystem"
 cat $ISO $ROOTIMAGE $TMPDISK | gzip >$ISOGZ || exit 1
 ls -al $ISOGZ
