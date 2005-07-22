@@ -378,6 +378,21 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
 	panic(__FILE__,"new_mem can't zero", s);
   }
 
+#define ENABLE_USAGE_TEST 0
+#if ENABLE_USAGE_TEST
+ /* Junk-fill gap and stack.
+  * Mind the gap..
+  */
+ {
+ static int pat = 1;
+ if ((s=sys_memset(pat++ & 0xff,
+ 	(rmp->mp_seg[D].mem_phys + rmp->mp_seg[D].mem_len) << CLICK_SHIFT,
+  	(gap_clicks + stack_clicks) << CLICK_SHIFT)) != OK) {
+	panic(__FILE__,"can't junk-fill", s);
+  }
+ }
+#endif
+
 #if DEAD_CODE
   while (bytes > 0) {
   	static char zero[1024];		/* used to zero bss */

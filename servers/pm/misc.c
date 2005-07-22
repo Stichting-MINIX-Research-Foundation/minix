@@ -217,6 +217,13 @@ PUBLIC int do_svrctl()
 {
   int s, req;
   vir_bytes ptr;
+#define MAX_LOCAL_PARAMS 2
+  static struct {
+  	char name[30];
+  	char value[30];
+  } local_param_overrides[MAX_LOCAL_PARAMS];
+  static int local_params = 0;
+
   req = m_in.svrctl_req;
   ptr = (vir_bytes) m_in.svrctl_argp;
 
@@ -236,6 +243,7 @@ PUBLIC int do_svrctl()
 
   /* Control operations local to the PM. */
   switch(req) {
+  case MMSETPARAM:
   case MMGETPARAM: {
       struct sysgetenv sysgetenv;
       char search_key[64];
@@ -247,20 +255,52 @@ PUBLIC int do_svrctl()
       if (sys_datacopy(who, ptr, SELF, (vir_bytes) &sysgetenv, 
               sizeof(sysgetenv)) != OK) return(EFAULT);  
 
+      /* Set a param override? */
+      if(req == MMSETPARAM) {
+  		if(local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
+  		if(sysgetenv.keylen <= 0 || sysgetenv.keylen >= sizeof(local_param_overrides[local_params].name)
+  		 || sysgetenv.vallen <= 0 || sysgetenv.vallen >= sizeof(local_param_overrides[local_params].value))
+  			return EINVAL;
+  		
+          	if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.key,
+               	   SELF, (vir_bytes) local_param_overrides[local_params].name,
+               	    sysgetenv.keylen)) != OK)
+               	    	return s;
+          	if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.val,
+               	   SELF, (vir_bytes) local_param_overrides[local_params].value,
+               	    sysgetenv.keylen)) != OK)
+               	    	return s;
+               	local_param_overrides[local_params].name[sysgetenv.keylen] = '\0';
+               	local_param_overrides[local_params].value[sysgetenv.vallen] = '\0';
+
+  		local_params++;
+
+  		return OK;
+      }
+
       if (sysgetenv.keylen == 0) {	/* copy all parameters */
           val_start = monitor_params;
           val_len = sizeof(monitor_params);
       } 
       else {				/* lookup value for key */
+      	  int p;
           /* Try to get a copy of the requested key. */
           if (sysgetenv.keylen > sizeof(search_key)) return(EINVAL);
           if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.key,
                   SELF, (vir_bytes) search_key, sysgetenv.keylen)) != OK)
               return(s);
 
-          /* Make sure key is null-terminated and lookup value. */
+          /* Make sure key is null-terminated and lookup value.
+           * First check local overrides.
+           */
           search_key[sysgetenv.keylen-1]= '\0';
-          if ((val_start = find_param(search_key)) == NULL)
+          for(p = 0; p < local_params; p++) {
+          	if(!strcmp(search_key, local_param_overrides[p].name)) {
+          		val_start = local_param_overrides[p].value;
+          		break;
+          	}
+          }
+          if(p >= local_params && (val_start = find_param(search_key)) == NULL)
                return(ESRCH);
           val_len = strlen(val_start) + 1;
       }
