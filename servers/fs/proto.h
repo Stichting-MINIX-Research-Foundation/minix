@@ -184,9 +184,14 @@ _PROTOTYPE( int do_select, (void)					);
 _PROTOTYPE( int select_callback, (struct filp *, int ops)		);
 _PROTOTYPE( void select_forget, (int fproc)				);
 _PROTOTYPE( void select_timeout_check, (timer_t *)			);
+_PROTOTYPE( void init_select, (void)					);
 _PROTOTYPE( int select_notified, (message *)				);
 
 /* timers.c */
 _PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, tmr_func_t watchdog, int arg));
 _PROTOTYPE( void fs_expire_timers, (clock_t now));
 _PROTOTYPE( void fs_cancel_timer, (timer_t *tp));
+_PROTOTYPE( void fs_init_timer, (timer_t *tp));
+
+/* cdprobe.c */
+_PROTOTYPE( int cdprobe, (void));

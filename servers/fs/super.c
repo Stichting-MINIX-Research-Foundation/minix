@@ -1,5 +1,4 @@
-/* This file manages the super block table and the related data structures,
- * namely, the bit maps that keep track of which zones and which inodes are
+/* This file manages the super block table and the related data structures, * namely, the bit maps that keep track of which zones and which inodes are
  * allocated and which are free.  When a new inode or zone is needed, the
  * appropriate bit map is searched for a free entry.
  *
@@ -174,9 +173,11 @@ PUBLIC int get_block_size(dev_t dev)
   if(dev == NO_DEV)
   	panic(__FILE__,"request for block size of NO_DEV", NO_NUM);
 
-  for (sp = &super_block[0]; sp < &super_block[NR_SUPERS]; sp++)
-	if (sp->s_dev == dev)
+  for (sp = &super_block[0]; sp < &super_block[NR_SUPERS]; sp++) {
+	if (sp->s_dev == dev) {
 		return(sp->s_block_size);
+	}
+  }
 
   /* no mounted filesystem? use this block size then. */
   return MIN_BLOCK_SIZE;

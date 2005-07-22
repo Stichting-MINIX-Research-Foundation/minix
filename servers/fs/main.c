@@ -15,6 +15,7 @@ struct super_block;		/* proto.h needs to know this */
 #include "fs.h"
 #include <fcntl.h>
 #include <string.h>
+#include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioc_memory.h>
@@ -34,11 +35,10 @@ struct super_block;		/* proto.h needs to know this */
 
 
 FORWARD _PROTOTYPE( void fs_init, (void)				);
-FORWARD _PROTOTYPE( int igetenv, (char *var)				);
+FORWARD _PROTOTYPE( int igetenv, (char *var, int optional)		);
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void load_ram, (void)				);
 FORWARD _PROTOTYPE( void load_super, (Dev_t super_dev)			);
-
 
 /*===========================================================================*
  *				main					     *
@@ -225,6 +225,7 @@ PRIVATE void fs_init()
   map_controllers();		/* map controller devices to drivers */
   load_ram();			/* init RAM disk, load if it is root */
   load_super(root_dev);		/* load super block for root device */
+  init_select();		/* init select() structures */
 
 
   /* The root device can now be accessed; set process directories. */
@@ -242,18 +243,21 @@ PRIVATE void fs_init()
 /*===========================================================================*
  *				igetenv					     *
  *===========================================================================*/
-PRIVATE int igetenv(key)
+PRIVATE int igetenv(key, optional)
 char *key;
+int optional;
 {
 /* Ask kernel for an integer valued boot environment variable. */
   char value[64];
   int i;
 
-  if ((i = get_mon_param(key, value, sizeof(value))) != OK)
-      printf("FS: Warning, couldn't get monitor param: %d\n", i);
+  if ((i = get_mon_param(key, value, sizeof(value))) != OK) {
+      if(!optional)
+      	printf("FS: Warning, couldn't get monitor param: %d\n", i);
+      return 0;
+  }
   return(atoi(value));
 }
-
 
 /*===========================================================================*
  *				load_ram				     *
@@ -276,18 +280,38 @@ PRIVATE void load_ram(void)
   int block_size_image, block_size_ram, ramfs_block_size;
 
   /* Get some boot environment variables. */
-  root_dev = igetenv("rootdev");
-  image_dev = igetenv("ramimagedev");
-  ram_size_kb = igetenv("ramsize");
+  root_dev = igetenv("rootdev", 0);
+  image_dev = igetenv("ramimagedev", 0);
+  ram_size_kb = igetenv("ramsize", 0);
 
   /* Open the root device. */
-  if (dev_open(root_dev, FS_PROC_NR, R_BIT|W_BIT) != OK) {
+  if (dev_open(root_dev, FS_PROC_NR, R_BIT|W_BIT) != OK)
 	panic(__FILE__,"Cannot open root device",NO_NUM);
-  }
 
   /* If we must initialize a ram disk, get details from the image device. */
   if (root_dev == DEV_RAM || root_dev != image_dev) {
-  	u32_t fsmax;
+  	u32_t fsmax, probedev;
+
+  	/* If we are running from CD, see if we can find it. */
+  	if(igetenv("cdproberoot", 1) && (probedev=cdprobe()) != NO_DEV) {
+  		char devnum[10];
+  		struct sysgetenv env;
+
+  		/* If so, this is our new RAM image device. */
+  		image_dev = probedev;
+
+  		/* Tell PM about it, so userland can find out about it
+  		 * with sysenv interface.
+  		 */
+  		env.key = "cdproberoot";
+  		env.keylen = strlen(env.key);
+  		sprintf(devnum, "%d", probedev);
+  		env.val = devnum;
+  		env.vallen = strlen(devnum);
+  		svrctl(MMSETPARAM, &env);
+  	}
+
+  	/* Open image device for RAM root. */
 	if (dev_open(image_dev, FS_PROC_NR, R_BIT) != OK)
 		panic(__FILE__,"Cannot open RAM image device", NO_NUM);
 
@@ -349,21 +373,33 @@ PRIVATE void load_ram(void)
   block_size_ram = get_block_size(DEV_RAM);
   block_size_image = get_block_size(image_dev);
 
-  if(block_size_ram != block_size_image) {
-  	printf("ram block size: %d image block size: %d\n", 
+  /* RAM block size has to be a multiple of the root image block
+   * size to make copying easier.
+   */
+  if(block_size_image % block_size_ram) {
+  	printf("\nram block size: %d image block size: %d\n", 
   		block_size_ram, block_size_image);
-  	panic(__FILE__,"ram disk and image disk block sizes must match", NO_NUM);
+  	panic(__FILE__, "ram disk block size must be a multiple of the image disk block size", NO_NUM);
   }
 
+  /* Loading blocks from image device. */
   for (b = 0; b < (block_t) lcount; b++) {
+  	int rb, factor;
 	bp = rahead(&inode[0], b, (off_t)block_size_image * b, block_size_image);
-	bp1 = get_block(root_dev, b, NO_READ);
-	memcpy(bp1->b_data, bp->b_data, (size_t) block_size_image);
-	bp1->b_dirt = DIRTY;
+	factor = block_size_image/block_size_ram;
+  	for(rb = 0; rb < factor; rb++) {
+		bp1 = get_block(root_dev, b * factor + rb, NO_READ);
+		memcpy(bp1->b_data, bp->b_data + rb * block_size_ram,
+			(size_t) block_size_ram);
+		bp1->b_dirt = DIRTY;
+		put_block(bp1, FULL_DATA_BLOCK);
+	}
 	put_block(bp, FULL_DATA_BLOCK);
-	put_block(bp1, FULL_DATA_BLOCK);
-	printf("\b\b\b\b\b\b\b%5ldK ", ((long) b * block_size_image)/1024L);
+	printf("\b\b\b\b\b\b\b\b%6ldK ", ((long) b * block_size_image)/1024L);
   }
+
+  /* Commit changes to RAM so dev_io will see it. */
+  do_sync();
 
   printf("\rRAM disk of %u kb loaded.\33[K", ram_size_kb);
   if (root_dev == DEV_RAM) printf(" RAM disk is used as root FS.");

@@ -58,9 +58,7 @@ FORWARD _PROTOTYPE(int select_reevaluate, (struct filp *fp));
 FORWARD _PROTOTYPE(int select_request_file, (struct filp *f, int *ops, int block));
 FORWARD _PROTOTYPE(int select_match_file, (struct filp *f));
 
-FORWARD _PROTOTYPE(int select_request_tty, (struct filp *f, int *ops, int block));
-FORWARD _PROTOTYPE(int select_request_inet, (struct filp *f, int *ops, int block));
-FORWARD _PROTOTYPE(int select_request_log, (struct filp *f, int *ops, int block));
+FORWARD _PROTOTYPE(int select_request_general, (struct filp *f, int *ops, int block));
 FORWARD _PROTOTYPE(int select_major_match, (int match_major, struct filp *file));
 
 FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e));
@@ -80,13 +78,13 @@ PRIVATE struct fdtype {
 		/* SELFD_FILE */
 	{ select_request_file, select_match_file, 0 },
 		/* SELFD_TTY (also PTY) */
-	{ select_request_tty, NULL, TTY_MAJOR },
+	{ select_request_general, NULL, TTY_MAJOR },
 		/* SELFD_INET */
-	{ select_request_inet, NULL, INET_MAJOR },
+	{ select_request_general, NULL, INET_MAJOR },
 		/* SELFD_PIPE (pipe(2) pipes and FS FIFOs) */
 	{ select_request_pipe, select_match_pipe, 0 },
 		/* SELFD_LOG (/dev/klog) */
-	{ select_request_log, NULL, LOG_MAJOR },
+	{ select_request_general, NULL, LOG_MAJOR },
 };
 
 /* Open Group:
@@ -128,25 +126,9 @@ PRIVATE int select_request_tty(struct filp *f, int *ops, int block)
 }
 
 /*===========================================================================*
- *				select_request_inet			     *
+ *				select_request_general			     *
  *===========================================================================*/
-PRIVATE int select_request_inet(struct filp *f, int *ops, int block)
-{
-	int r, rops;
-	rops = *ops;
-	if(block) rops |= SEL_NOTIFY;
-	*ops = dev_io(DEV_SELECT, f->filp_ino->i_zone[0], rops, NULL, 0, 0, 0);
-	printf("select_request_inet: got reply %d from inet for %d on %d\n",
-		*ops, rops, f->filp_ino->i_zone[0]);
-	if(*ops < 0)
-		return SEL_ERR;
-	return SEL_OK;
-}
-
-/*===========================================================================*
- *				select_request_log			     *
- *===========================================================================*/
-PRIVATE int select_request_log(struct filp *f, int *ops, int block)
+PRIVATE int select_request_general(struct filp *f, int *ops, int block)
 {
 	int r, rops;
 	rops = *ops;
@@ -536,7 +518,6 @@ PUBLIC int select_callback(struct filp *fp, int ops)
 	 * operations that we are still interested in, if any.
 	 */
 
-restart_callback:
 	want_ops = 0;
 	type = -1;
 	for(s = 0; s < MAXSELECTS; s++) {
@@ -612,6 +593,16 @@ PUBLIC int select_notified(message *m)
 	}
 
 	return OK;
+}
+/*===========================================================================*
+ *				init_select  				     *
+ *===========================================================================*/
+PUBLIC void init_select(void)
+{
+	int s;
+
+	for(s = 0; s < MAXSELECTS; s++)
+		fs_init_timer(&selecttab[s].timer);
 }
 
 /*===========================================================================*

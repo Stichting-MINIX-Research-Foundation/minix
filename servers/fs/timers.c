@@ -19,7 +19,6 @@ PUBLIC void fs_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 	if((r = getuptime(&now)) != OK)
 		panic(__FILE__, "FS couldn't get uptime from system task.", NO_NUM);
 
-	tmr_inittimer(tp);
 	tmr_arg(tp)->ta_int = arg;
 
 	old_head = tmrs_settimer(&fs_timers, tp, now+ticks, watchdog, &new_head);
@@ -52,6 +51,11 @@ PUBLIC void fs_expire_timers(clock_t now)
 #if VERBOSE
 	 else printf("after expiry, no new timer set\n");
 #endif
+}
+
+PUBLIC void fs_init_timer(timer_t *tp)
+{
+	tmr_inittimer(tp);
 }
 
 PUBLIC void fs_cancel_timer(timer_t *tp)
