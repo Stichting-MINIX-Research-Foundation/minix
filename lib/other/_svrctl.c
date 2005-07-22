@@ -23,7 +23,6 @@ int svrctl(int request, void *argp)
 		/* FS handles calls for itself and inet. */
 		return _syscall(FS, SVRCTL, &m);
 	default:
-		printf("Yups ...\n");
 		errno = EINVAL;
 		return -1;
 	}
