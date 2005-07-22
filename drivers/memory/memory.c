@@ -197,6 +197,7 @@ unsigned nr_req;		/* length of request vector */
 	    	        SELF, D, (vir_bytes) random_buf, chunk);
 	    	        random_putbytes(random_buf, chunk);
  	        }
+ 	        user_vir += chunk;
 	    	left -= chunk;
 	    }
 	    break;
@@ -211,6 +212,7 @@ unsigned nr_req;		/* length of request vector */
 	    	            proc_nr, D, user_vir, chunk)))
 	    	        report("MEM","sys_vircopy failed", s);
 	    	    left -= chunk;
+ 	            user_vir += chunk;
 	    	}
 	    }
 	    break;
