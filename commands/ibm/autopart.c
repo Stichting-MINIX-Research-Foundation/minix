@@ -237,7 +237,8 @@ typedef struct region {
 	 * entry (used_part is non-NULL) or free space (free_*
 	 * contains data).
 	 */
-	struct part_entry *used_part;
+	struct part_entry used_part;
+	int is_used_part;
 	int free_sec_start, free_sec_last;
 } region_t;
 
@@ -250,6 +251,13 @@ int nr_partitions = 0, nr_regions = 0, free_regions, used_regions;
 int nordonly = 0;
 
 device_t *firstdev= nil, *curdev;
+
+#define MAX_DEVICES 100
+	static struct {
+		device_t *dev;
+		int nr_partitions, free_regions, used_regions, sectors, nr_regions;
+		region_t regions[NR_REGIONS];
+	} devices[MAX_DEVICES];
 
 void newdevice(char *name, int scanning, int disk_only)
 /* Add a device to the device list.  If scanning is set then we are reading
@@ -1680,18 +1688,18 @@ ssize_t boot_readwrite(int rw)
 
 int cylinderalign(region_t *reg)
 {
-	if(reg->used_part) {
-		if(reg->used_part->lowsec != table[0].lowsec + sectors
-			&& (reg->used_part->lowsec % secpcyl)) {
+	if(reg->is_used_part) {
+		if(reg->used_part.lowsec != table[0].lowsec + sectors
+			&& (reg->used_part.lowsec % secpcyl)) {
 			int extra;
-			extra = secpcyl - (reg->used_part->lowsec % secpcyl);
-			reg->used_part->lowsec += extra;
-			reg->used_part->size -= extra;
+			extra = secpcyl - (reg->used_part.lowsec % secpcyl);
+			reg->used_part.lowsec += extra;
+			reg->used_part.size -= extra;
 		}
-		if((reg->used_part->size+1) % secpcyl) {
-			reg->used_part->size -= secpcyl - ((reg->used_part->size + 1) % secpcyl);
+		if((reg->used_part.size+1) % secpcyl) {
+			reg->used_part.size -= secpcyl - ((reg->used_part.size + 1) % secpcyl);
 		}
-		return reg->used_part->size > 0;
+		return reg->used_part.size > 0;
 	}
 
 	if(reg->free_sec_start != table[0].lowsec + sectors && (reg->free_sec_start % secpcyl)) {
@@ -1822,7 +1830,7 @@ void m_read(int ev, object_t *op)
 			/* Free region before this partition. */
 			regions[nr_regions].free_sec_start = free_sec;
 			regions[nr_regions].free_sec_last = table[i].lowsec-1;
-			regions[nr_regions].used_part = NULL;
+			regions[nr_regions].is_used_part = 0;
 			if(cylinderalign(&regions[nr_regions])) {
 				nr_regions++;
 				free_regions++;
@@ -1838,7 +1846,7 @@ void m_read(int ev, object_t *op)
 			}
 		}
 
-		regions[nr_regions].used_part = &table[i];
+		memcpy(&regions[nr_regions].used_part, &table[i], sizeof(table[i]));
 		free_sec = table[i].lowsec+table[i].size;
 		nr_partitions++;
 
@@ -1850,7 +1858,7 @@ void m_read(int ev, object_t *op)
 	if(free_sec < table[0].size-1) {
 		regions[nr_regions].free_sec_start = free_sec;
 		regions[nr_regions].free_sec_last = table[0].lowsec + table[0].size-1;
-		regions[nr_regions].used_part = NULL;
+		regions[nr_regions].is_used_part = 0;
 		if(cylinderalign(&regions[nr_regions])) {
 			nr_regions++;
 			free_regions++;
@@ -2192,9 +2200,38 @@ prettysizeprint(int kb)
 			unit = 'G';
 		}
 	}
-	sprintf(str, "%d%cB%s", kb, unit,
-		toosmall ? " - too small for MINIX" : "");
+	sprintf(str, "%d %cB%s", kb, unit,
+		toosmall ? " - too small for MINIX3" : "");
 	return str;
+}
+
+void
+printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_regions, int p_nr_regions)
+{
+	int r, nofree = 0;
+	region_t *reg;
+	reg = theregions;
+
+	if((p_nr_partitions >= NR_PARTITIONS || !p_free_regions) && p_free_regions)
+		nofree = 1;
+	for(r = 0; r < p_nr_regions; r++, reg++) {
+		unsigned long units;
+		if(reg->is_used_part) {
+			char *name;
+			name = typ2txt(reg->used_part.sysind);
+			if(!name || strlen(name) < 2)
+				name = "unknown system";
+			printf("%*s\033[31m%2d.  in use by %s", indent, "", r, name);
+			units = reg->used_part.size / 2;
+			printf("\033[0m (%s)\n", prettysizeprint(units));
+		} else if(!nofree) {
+			printf("%*s\033[36m%2d.  free space", indent, "", r);
+			units = ((reg->free_sec_last - reg->free_sec_start+1))/2;
+			printf("\033[0m (%s)\n", prettysizeprint(units));
+		}
+	}
+
+	return;
 }
 
 region_t *
@@ -2223,25 +2260,9 @@ select_region(void)
 	}
 
 	do {
-		reg = regions;
 		printf("\nI've found the following region%s on this disk (%s).\n\n",
 			SORNOT(nr_regions), prettysizeprint(table[0].size/2));
-		for(r = 0; r < nr_regions; r++, reg++) {
-			unsigned long units;
-			if(reg->used_part) {
-				char *name;
-				name = typ2txt(reg->used_part->sysind);
-				if(!name || strlen(name) < 2)
-					name = "unknown system";
-				printf("\033[31m%2d.  in use by %s", r, name);
-				units = reg->used_part->size / 2;
-				printf("\033[0m (%s)\n", prettysizeprint(units));
-			} else if(!nofree) {
-				printf("\033[36m%2d.  free space", r);
-				units = ((reg->free_sec_last - reg->free_sec_start+1))/2;
-				printf("\033[0m (%s)\n", prettysizeprint(units));
-			}
-		}
+		printregions(regions, 0, nr_partitions, free_regions, nr_regions);
 
 		if(nofree) {
 			printf("\nOnly the expert mode can free a slot to use the free space.\n");
@@ -2262,7 +2283,7 @@ select_region(void)
 				continue;
 			}
 
-			if(nofree && !regions[rn].used_part) {
+			if(nofree && !regions[rn].is_used_part) {
 				printf("That region number isn't available.\n");
 				continue;
 			}
@@ -2285,11 +2306,7 @@ select_region(void)
 device_t *
 select_disk(void)
 {
-#define MAX_DEVICES 100
-	static struct {
-		device_t *dev;
-		int free_regions, used_regions, sectors;
-	} devices[MAX_DEVICES];
+
 	int i, choice, drives;
 	static char line[500];
 
@@ -2306,8 +2323,11 @@ select_disk(void)
 			if(device >= 0) {
 				devices[i].dev = curdev;
 				devices[i].free_regions = free_regions;
+				devices[i].nr_regions = nr_regions;
+				devices[i].nr_partitions = nr_partitions;
 				devices[i].used_regions = used_regions;
 				devices[i].sectors = table[0].size;
+				memcpy(devices[i].regions, regions, sizeof(regions));
 				i++;
 			}
 
@@ -2338,7 +2358,13 @@ select_disk(void)
 				printf(", %d unallocated one%s ",
 					devices[i].free_regions, SORNOT(devices[i].free_regions));
 			}
-			printf(" (%s)\n", prettysizeprint(devices[i].sectors/2));
+			printf(" (%s)\n\n", prettysizeprint(devices[i].sectors/2));
+			printf("regions :%d %d %d\n",
+				i, devices[i].nr_partitions, devices[i].free_regions);
+			printregions(devices[i].regions, 8,
+				devices[i].nr_partitions,
+				devices[i].free_regions,
+				devices[i].nr_regions);
 		}
 
 		if(drives > 1) {
@@ -2374,13 +2400,13 @@ scribble_region(region_t *reg, struct part_entry **pe)
 {
 	int ex, trunc = 0, changed = 0, i;
 	struct part_entry *newpart;
-	if(reg->used_part && reg->used_part->size > MAX_REGION_SECTORS) {
-		reg->used_part->size = MAX_REGION_SECTORS;
+	if(reg->is_used_part && reg->used_part.size > MAX_REGION_SECTORS) {
+		reg->used_part.size = MAX_REGION_SECTORS;
 		trunc = 1;
 		changed = 1;
 		cylinderalign(reg);
 	}
-	if(!reg->used_part) {
+	if(!reg->is_used_part) {
 		ex = reg->free_sec_last - reg->free_sec_start + 1;
 		if(ex > MAX_REGION_SECTORS) {
 			reg->free_sec_last -= ex - MAX_REGION_SECTORS;
@@ -2392,7 +2418,7 @@ scribble_region(region_t *reg, struct part_entry **pe)
 	if(trunc) {
 		printf("\nWill only use %dMB.\n", MAX_REGION_MB);
 	}
-	if(!reg->used_part) {
+	if(!reg->is_used_part) {
 		for(i = 1; i <= NR_PARTITIONS; i++)
 			if(table[i].sysind == NO_PART)
 				break;
@@ -2405,7 +2431,7 @@ scribble_region(region_t *reg, struct part_entry **pe)
 		newpart->lowsec = reg->free_sec_start;
 		newpart->size = reg->free_sec_last - reg->free_sec_start + 1;
 		changed = 1;
-	} else  newpart = reg->used_part;
+	} else  newpart = &reg->used_part;
 	newpart->sysind = MINIX_PART;
 	*pe = newpart;
 	changed = 1;
@@ -2444,6 +2470,7 @@ do_autopart(int resultfd)
 
 	/* Write things. */
 	if(scribble_region(r, &pe)) {
+		char *name;
 		int i, found = -1;
 		char partbuf[100];
 		dirty = 1;
@@ -2466,7 +2493,10 @@ do_autopart(int resultfd)
 			fprintf(stderr, "Internal error (2).\n");
 			return 1;
 		}
-		sprintf(partbuf, "%sp%d\n", curdev->name, found-1);
+		name=strrchr(curdev->name, '/');
+		if(!name) name = curdev->name;
+		else name++;
+		sprintf(partbuf, "%sp%d\n", name, found-1);
 		if(resultfd >= 0 && write(resultfd, partbuf, strlen(partbuf)) < strlen(partbuf)) {
 			fprintf(stderr, "Couldn't write result.\n");
 			return 1;

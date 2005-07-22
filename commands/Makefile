@@ -41,6 +41,7 @@ all install clean::
 	cd ftpd && $(MAKE) $@
 	cd ftpd200 && $(MAKE) $@
 	cd ibm && $(MAKE) $@
+	cd indent && $(MAKE) $@
 	cd kermit && $(MAKE) $@
 	cd m4 && $(MAKE) $@
 	cd make && $(MAKE) $@

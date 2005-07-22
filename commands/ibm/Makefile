@@ -13,6 +13,7 @@ ALL	= \
 	loadfont \
 	loadkeys \
 	mixer \
+	autopart \
 	part \
 	partition \
 	playwave \

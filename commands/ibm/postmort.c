@@ -238,7 +238,7 @@ struct proc *pt;
   printf("Nonzero if held by busy syscall:	0x%04.4x\n", pt->p_ntf_held);	/* int */
   printf("Next in chain of held-up processes:	0x%04.4x\n", pt->p_ntf_nextheld);	/* struct proc * */
 #endif
-  printf("SENDING, RECEIVING, etc.:		0x%04.4x\n", pt->p_flags);	/* int */
+  printf("SENDING, RECEIVING, etc.:		0x%04.4x\n", pt->p_rts_flags);	/* int */
 #if 0
   printf("Memory map:				0x%04.4x\n", pt->p_map[NR_LOCAL_SEGS]);	/* struct mem_map */
 #endif

@@ -193,7 +193,7 @@ echo "3. A different Ethernet card is installed (no networking)"
 echo ""
 echo "You can always change your mind after the install."
 echo ""
-echo "Choice? "
+echo -n "Choice? "
 read eth
 driver=""
 inetparams=""
@@ -223,6 +223,27 @@ i86)
     ;;
 *)  test $memsize -lt 6144 && swapadv=$(expr 6144 - $memsize)
 esac
+
+blockdefault=8
+echo "\
+The default block size on the disk is $blockdefault KB. However, sizes of 1 to $blockdefault KB
+are also supported. If you have a small disk or small RAM you may want less
+than $blockdefault KB, in which case type a block size from 1 to 8 (1, 2, 4 or $blockdefault are
+suggested values). Otherwise hit ENTER for the default of $blockdefault KB blocks, which
+should be fine in most cases."
+
+while [ -z "$blocksize" ]
+do	echo -n "Block size [$blockdefault KB]? "
+	read blocksize
+	if [ -z "$blocksize" ]
+	then	blocksize=$blockdefault
+	fi
+	if [ $blocksize -gt $blockdefault -o $blocksize -lt 1 ]
+	then	echo "$blocksize bogus block size. 1-$blockdefault please."
+		blocksize=""
+	fi
+done
+
 
 echo -n "
 How much swap space would you like?  Swapspace is only needed if this
@@ -263,12 +284,11 @@ else
     # Forget about swap.
     swap=
 fi
-
 echo "
 Migrating to disk...
 "
 
-mkfs /dev/$usr
+mkfs -B $blocksize /dev/$usr
 echo "\
 Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are
 absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
@@ -314,7 +334,7 @@ echo "
 Copying $fdroot to /dev/$root
 "
 
-mkfs /dev/$root || exit
+mkfs -B $blocksize /dev/$root || exit
 mount /dev/$root /mnt || exit
 # Running from the installation CD.
 cpdir -vx / /mnt || exit
@@ -357,14 +377,14 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; main() { delay 2000; boot }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
 sync
 
 echo "
-Please type 'halt' to exit Minix.
+Please type 'shutdown' to exit Minix.
 You can type 'boot $primary' to try the newly installed Minix system.  See
 \"TESTING\" in the usage manual."
 
