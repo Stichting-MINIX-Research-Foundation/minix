@@ -112,8 +112,13 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
 		count = LOG_SIZE - log->log_write;
 	buf = log->log_buffer + log->log_write;
 
-	if((r=sys_vircopy(proc_nr,D,user_vir, SELF,D,(int)buf, count)) != OK)
-		return r;
+	if(proc_nr == SELF) {
+		memcpy(buf, (char *) user_vir, count);
+	}
+	else {
+		if((r=sys_vircopy(proc_nr,D,user_vir, SELF,D,(int)buf, count)) != OK)
+			return r;
+	}
 
 	LOGINC(log->log_write, count);
 	log->log_size += count;
@@ -158,6 +163,25 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
 #endif
 
         return count;
+}
+
+/*===========================================================================*
+ *				log_append				*
+ *===========================================================================*/
+PUBLIC void
+log_append(char *buf, int count)
+{
+	int w = 0, skip = 0;
+
+	if(count < 1) return;
+	if(count > LOG_SIZE) skip = count - LOG_SIZE;
+	count -= skip;
+	buf += skip;
+	w = subwrite(&logdevices[0], count, SELF, (vir_bytes) buf);
+
+	if(w > 0 && w < count)
+		subwrite(&logdevices[0], count-w, SELF, (vir_bytes) buf+w);
+	return;
 }
 
 /*===========================================================================*
@@ -224,9 +248,6 @@ unsigned nr_req;		/* length of request vector */
 	    		/* There's already someone hanging to read, or
 	    		 * no real I/O requested.
 	    		 */
-#if LOG_DEBUG
-	    		printf("someone (%d) is already blocking\n", log->log_proc_nr);
-#endif
 	    		return(OK);
 	    	}
 
@@ -345,7 +366,7 @@ message *m_ptr;
 }
 
 /*============================================================================*
- *				log_select				      *
+ *				log_other				      *
  *============================================================================*/
 PRIVATE int log_other(dp, m_ptr)
 struct driver *dp;

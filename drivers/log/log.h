@@ -31,6 +31,5 @@ struct logdevice {
 _PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( int do_new_kmess, (message *m)				);
 _PROTOTYPE( int do_diagnostics, (message *m)				);
-_PROTOTYPE( void log_putc, (int c)					);
-
+_PROTOTYPE( void log_append, (char *buf, int len)				);
 

@@ -23,7 +23,7 @@ LIBDRIVER = $d/libdriver/driver.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) $(LIBDRIVER)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
-	install -S 64w $(DRIVER)
+	install -S 4kb $(DRIVER)
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 

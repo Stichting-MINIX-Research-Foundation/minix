@@ -48,14 +48,14 @@ message *m;					/* notification message */
       i=0;
       while (bytes > 0) {			
           print_buf[i] = kmess.km_buf[(r%KMESS_BUF_SIZE)];
-          log_putc( kmess.km_buf[(r%KMESS_BUF_SIZE)] );
           bytes --;
           r ++;
           i ++;
       }
       /* Now terminate the new message and print it. */
       print_buf[i] = 0;
-      printf(print_buf);
+      printf("%s", print_buf);
+      log_append(print_buf, i);
   }
 
   /* Almost done, store 'next' so that we can determine what part of the
@@ -82,7 +82,7 @@ PUBLIC int do_diagnostics(message *m)
   int count;
   char c;
   int i = 0;
-  static char diagbuf[1024];
+  static char diagbuf[10240];
 
   /* Forward the message to the TTY driver. Inform the TTY driver about the
    * original sender, so that it knows where the buffer to be printed is.
@@ -97,26 +97,14 @@ PUBLIC int do_diagnostics(message *m)
    */
   src = (vir_bytes) m->DIAG_PRINT_BUF;
   count = m->DIAG_BUF_COUNT; 
-  while (count > 0) {
+  while (count > 0 && i < sizeof(diagbuf)-1) {
       if (sys_datacopy(proc_nr, src, SELF, (vir_bytes) &c, 1) != OK) 
           break;		/* stop copying on error */
-      log_putc(c);		/* accumulate character */
       src ++;
       count --;
+      diagbuf[i++] = c;
   }
+  log_append(diagbuf, i);
 
   return result;
 }
-
-
-/*===========================================================================*
- *				log_putc				     *
- *===========================================================================*/
-PUBLIC void log_putc(c)
-int c;					/* char to be added to diag buffer */
-{
-
-}
-
-
-
