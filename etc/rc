@@ -58,13 +58,14 @@ start)
     # If booting from CD, /usr has to be mounted readonly.
     # Also, $usr won't be specified correctly in the
     # fstab (the CD could be anywhere), so we decide
-    # where it is.
+    # where it is based on sysenv (set by FS when probing for CD).
     if [ "$bootcd" = 1 ]
     then	
-    		ramname="`/bin/sysenv ramimagedev_n`"
+    		imagedev="`/bin/sysenv cdproberoot`"
+    		usrdev="`expr $imagedev + 1`"
     		usr_roflag="-r"
-    		usr="/dev/c0`echo $ramname | sed 's/.*\(d.\).*/\1/'`p2"
-    		echo "Setting /usr to mount readonly from cd: $ramname -> $usr"
+    		usr="`/bin/dev2name $usrdev`"
+    		echo "Setting /usr to mount readonly from cd: $usrdev -> $usr"
     fi
  
     # Mount the /usr partition unless this is a single floppy Minix.
