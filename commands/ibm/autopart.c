@@ -63,7 +63,7 @@ Num Sort   Type
 #define arraysize(a)	(sizeof(a) / sizeof((a)[0]))
 #define arraylimit(a)	((a) + arraysize(a))
 
-#define SORNOT(n) ((n) == 1 ? "" : "s")
+#define SORNOT(n) ((n) == 1 ? " " : "s")
 
 int probing = 0, autopartmode = 0;
 
@@ -1826,6 +1826,8 @@ void m_read(int ev, object_t *op)
 
 		if(table[i].sysind == NO_PART)
 			break;
+
+		/* Free space before this partition? */
 		if(table[i].lowsec > free_sec) {
 			/* Free region before this partition. */
 			regions[nr_regions].free_sec_start = free_sec;
@@ -1837,6 +1839,7 @@ void m_read(int ev, object_t *op)
 			}
 		}
 
+		/* Sanity check. */
 		if(autopartmode && si > 1) {
 			if(table[i].lowsec < table[sort_order[si-1]].lowsec ||
 			   table[i].lowsec < table[sort_order[si-1]].lowsec + table[sort_order[si-1]].size) {
@@ -1846,10 +1849,11 @@ void m_read(int ev, object_t *op)
 			}
 		}
 
+		/* Remember used region. */
 		memcpy(&regions[nr_regions].used_part, &table[i], sizeof(table[i]));
 		free_sec = table[i].lowsec+table[i].size;
+		regions[nr_regions].is_used_part = 1;
 		nr_partitions++;
-
 		nr_regions++;
 		used_regions++;
 	}
@@ -2200,13 +2204,13 @@ prettysizeprint(int kb)
 			unit = 'G';
 		}
 	}
-	sprintf(str, "%d %cB%s", kb, unit,
+	sprintf(str, "%4d %cB%s", kb, unit,
 		toosmall ? " - too small for MINIX3" : "");
 	return str;
 }
 
 void
-printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_regions, int p_nr_regions)
+printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_regions, int p_nr_regions, int numbers)
 {
 	int r, nofree = 0;
 	region_t *reg;
@@ -2221,11 +2225,15 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 			name = typ2txt(reg->used_part.sysind);
 			if(!name || strlen(name) < 2)
 				name = "unknown system";
-			printf("%*s\033[31m%2d.  in use by %s", indent, "", r, name);
+			printf("%*s\033[31m", indent, "");
+			if(numbers) printf("%2d.  ", r);
+			printf("In use by %-10s ", name);
 			units = reg->used_part.size / 2;
 			printf("\033[0m (%s)\n", prettysizeprint(units));
 		} else if(!nofree) {
-			printf("%*s\033[36m%2d.  free space", indent, "", r);
+			printf("%*s\033[36m", indent, "");
+			if(numbers) printf("%2d.  ", r);
+			printf("Free space           ");
 			units = ((reg->free_sec_last - reg->free_sec_start+1))/2;
 			printf("\033[0m (%s)\n", prettysizeprint(units));
 		}
@@ -2262,7 +2270,7 @@ select_region(void)
 	do {
 		printf("\nI've found the following region%s on this disk (%s).\n\n",
 			SORNOT(nr_regions), prettysizeprint(table[0].size/2));
-		printregions(regions, 0, nr_partitions, free_regions, nr_regions);
+		printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
 
 		if(nofree) {
 			printf("\nOnly the expert mode can free a slot to use the free space.\n");
@@ -2345,7 +2353,7 @@ select_disk(void)
 
 		printf("\nProbing done; %d drive%s found.\n", drives, SORNOT(drives));
 
-		printf("\nI've found the following drive%s on your system.\n\n", SORNOT(drives));
+		printf("\nI've found the following drive%s on your system.\n", SORNOT(drives));
 
 		for(i = 0; i < drives; i++) {
 			if(drives > 1)
@@ -2358,13 +2366,11 @@ select_disk(void)
 				printf(", %d unallocated one%s ",
 					devices[i].free_regions, SORNOT(devices[i].free_regions));
 			}
-			printf(" (%s)\n\n", prettysizeprint(devices[i].sectors/2));
-			printf("regions :%d %d %d\n",
-				i, devices[i].nr_partitions, devices[i].free_regions);
+			printf(" (%s)\n", prettysizeprint(devices[i].sectors/2));
 			printregions(devices[i].regions, 8,
 				devices[i].nr_partitions,
 				devices[i].free_regions,
-				devices[i].nr_regions);
+				devices[i].nr_regions, 0);
 		}
 
 		if(drives > 1) {
@@ -2593,7 +2599,7 @@ int main(int argc, char **argv)
      	argv++;
      }
 
-	for (i= 1; i < argc; i++) newdevice(argv[i], 0, 0);
+	for (i= 0; i < argc; i++) newdevice(argv[i], 0, 0);
 
 	if (firstdev == nil) {
 		getdevices(autopart);
