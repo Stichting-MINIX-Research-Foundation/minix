@@ -244,8 +244,8 @@ void test8b()
   if (sigdelset(&s_nokill, SIGKILL) != 0) e(8);
 #ifndef _MINIX /* XXX - should unsupported signals be <= _NSIG? */
   if (SIGSTOP > _NSIG) e(666);
-#endif /* _MINIX */
   if (SIGSTOP <= _NSIG && sigdelset(&s_nokill, SIGSTOP) != 0) e(888);
+#endif /* _MINIX */
 
   /* Now get most of the signals into default state.  Don't change SIGINT
   * or SIGQUIT, so this program can be killed.  SIGKILL is also special.
