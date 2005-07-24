@@ -245,7 +245,6 @@ do	echo -n "Block size [$blockdefault KB]? "
 done
 
 blocksizebytes="`expr $blocksize '*' 1024`"
-echo $blocksizebytes ; exit
 
 echo -n "
 How much swap space would you like?  Swapspace is only needed if this
