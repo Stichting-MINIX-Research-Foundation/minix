@@ -147,7 +147,7 @@ else
 		then	if [ -s "$PF" ]
 			then
 				bd="`cat $PF`"
-				if [ -b "$bd" ]
+				if [ -b "/dev/$bd" ]
 				then	primary="$bd"
 				else	echo "Funny device $bd from autopart."
 				fi
@@ -244,6 +244,8 @@ do	echo -n "Block size [$blockdefault KB]? "
 	fi
 done
 
+blocksizebytes="`expr $blocksize '*' 1024`"
+echo $blocksizebytes ; exit
 
 echo -n "
 How much swap space would you like?  Swapspace is only needed if this
@@ -288,7 +290,7 @@ echo "
 Migrating to disk...
 "
 
-mkfs -B $blocksize /dev/$usr
+mkfs -B $blocksizebytes /dev/$usr
 echo "\
 Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are
 absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
@@ -334,7 +336,7 @@ echo "
 Copying $fdroot to /dev/$root
 "
 
-mkfs -B $blocksize /dev/$root || exit
+mkfs -B $blocksizebytes /dev/$root || exit
 mount /dev/$root /mnt || exit
 # Running from the installation CD.
 cpdir -vx / /mnt || exit
