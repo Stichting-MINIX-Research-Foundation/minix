@@ -31,7 +31,7 @@ typedef unsigned long int u_int32_t;
 #include <sys/stat.h>
 
 #define NAMELEN		(DIRSIZ+5)
-#define ISONAMELEN	11
+#define ISONAMELEN	12
 #define PLATFORM_80X86	0
 
 #define ISO_SECTOR 2048
@@ -523,7 +523,7 @@ write_direntry(char *origname, u_int32_t sector, u_int32_t size, int isdir,
 		strcpy(copyname, origname);
 		namelen = strlen(copyname);
 
-		if(namelen >= ISONAMELEN) {
+		if(namelen > ISONAMELEN) {
 			fprintf(stderr, "%s: truncated, too long for iso9660\n", copyname);
 			namelen = ISONAMELEN;
 			copyname[namelen] = '\0';
