@@ -106,7 +106,8 @@ Mount $usr /usr failed -- Single user."
     fi
 
     # This file is necessary for above 'shutdown -C' check.
-    touch /usr/adm/wtmp
+    # (Silence stderr in case of running from cd.)
+    touch /usr/adm/wtmp 2>/dev/null
 
     if [ "$sflag" ]
     then
