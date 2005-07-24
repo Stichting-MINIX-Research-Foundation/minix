@@ -4,7 +4,7 @@ COPYITEMS="usr/src usr/bin bin usr/lib"
 RELEASEDIR=/usr/r/release
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
-CDFILES=/tmp/cdreleasefiles
+CDFILES=/usr/tmp/cdreleasefiles
 ISO=minix.iso
 ISOGZ=minix.iso.gz
 RAM=/dev/ram
@@ -32,8 +32,9 @@ umount $TMPDISK
 umount $RAM
 
 ( cd .. && make clean )
+echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
-mkdir $CDFILES || exit
+mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -b 1440 -B 1024 $RAM || exit
 echo " * mounting $RAM as $RELEASEDIR"
@@ -51,6 +52,8 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 chown -R bin $RELEASEDIR/usr/src
 date >$RELEASEDIR/CD
 ( cd $RELEASEDIR && find . -name CVS | xargs rm -rf )
+echo " * Making source .tgz for on ISO filesystem"
+( cd $RELEASEDIR/usr/src && tar cf - . | gzip > $CDFILES/MINIXSRC.TGZ )
 echo " * Chroot build"
 chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
 echo " * Chroot build done"
