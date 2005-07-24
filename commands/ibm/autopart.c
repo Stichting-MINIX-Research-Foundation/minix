@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stddef.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
@@ -239,6 +240,7 @@ typedef struct region {
 	 */
 	struct part_entry used_part;
 	int is_used_part;
+	int tableno;
 	int free_sec_start, free_sec_last;
 } region_t;
 
@@ -684,7 +686,7 @@ char *typ2txt(int ind)
 	for (pind= ind_table; pind < arraylimit(ind_table); pind++) {
 		if (pind->ind == ind) return pind->name;
 	}
-	return "";
+	return "unknown system";
 }
 
 int round_sysind(int ind, int delta)
@@ -1853,6 +1855,7 @@ void m_read(int ev, object_t *op)
 		memcpy(&regions[nr_regions].used_part, &table[i], sizeof(table[i]));
 		free_sec = table[i].lowsec+table[i].size;
 		regions[nr_regions].is_used_part = 1;
+		regions[nr_regions].tableno = i;
 		nr_partitions++;
 		nr_regions++;
 		used_regions++;
@@ -2205,7 +2208,7 @@ prettysizeprint(int kb)
 		}
 	}
 	sprintf(str, "%4d %cB%s", kb, unit,
-		toosmall ? " - too small for MINIX3" : "");
+		toosmall ? ", too small for MINIX3" : "");
 	return str;
 }
 
@@ -2223,8 +2226,6 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 		if(reg->is_used_part) {
 			char *name;
 			name = typ2txt(reg->used_part.sysind);
-			if(!name || strlen(name) < 2)
-				name = "unknown system";
 			printf("%*s\033[31m", indent, "");
 			if(numbers) printf("%2d.  ", r);
 			printf("In use by %-10s ", name);
@@ -2240,6 +2241,49 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 	}
 
 	return;
+}
+
+int
+may_kill_region(void)
+{
+	char line[100];
+	int r, i;
+
+	if(used_regions < 1) return 1;
+
+	printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
+	printf("\nIf you want to delete an in-use region to free it up for MINIX,\n"
+		"type its number.\nOtherwise hit ENTER to continue: ");
+	fflush(NULL);
+	fgets(line, sizeof(line)-2, stdin);
+	if(!isdigit(line[0]))
+		return 1;
+
+	r=atoi(line);
+	if(r < 0 || r >= nr_regions) {
+		printf("This choice is out of range.\n");
+		return 0;
+	}
+
+	if(!regions[r].is_used_part) {
+		printf("This region is not in use.\n");
+		return 0;
+	}
+
+	i = regions[r].tableno;
+
+	printf("Are you absolutely positive you want to delete this region,\n"
+	"losing all data it contains?\n"
+	"You have selected a region used\n"
+	"by %s (%s).\n"
+	"Please type yes or no: ",
+		typ2txt(table[i].sysind),
+		prettysizeprint(table[i].size / 2));
+	fgets(line, sizeof(line)-2, stdin);
+	if(!strncmp(line, "yes", 3)) {
+		table[i].sysind = NO_PART;
+		dirty = 1;
+	}
 }
 
 region_t *
@@ -2466,7 +2510,25 @@ do_autopart(int resultfd)
 	}
 	recompute0();
 
-	/* Read contents. */
+	/* Allow for partition to be killed. */
+	do {
+		m_read('r', NULL);
+	} while(!may_kill_region());
+
+	/* Update changes. */
+	if(dirty) {
+		m_write('w', NULL);
+		printf("dirty\n");
+	}
+
+	if(dirty) {
+		printf("Something went wrong writing.\n");
+		exit(1);
+	}
+
+	if (device >= 0) { close(device); device= -1; }
+
+	/* Reread contents. */
 	m_read('r', NULL);
 
 	/* Show regions. */
@@ -2595,11 +2657,17 @@ int main(int argc, char **argv)
      				return 1;
      		}
      	}
-     	argc--;
-     	argv++;
+     printf("%d\n", argc);
      }
+     printf("%d %d\n", argc, optind);
+     argc -= optind;
+     argv += optind;
 
-	for (i= 0; i < argc; i++) newdevice(argv[i], 0, 0);
+	printf(" %d %p\n", argc, firstdev);
+	for (i= 0; i < argc; i++) {
+	printf(" %d %d %p\n", i, argc, firstdev);
+	 newdevice(argv[i], 0, 0);
+	 }
 
 	if (firstdev == nil) {
 		getdevices(autopart);
