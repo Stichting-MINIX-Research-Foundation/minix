@@ -60,6 +60,7 @@ register message *m_ptr;
 	if (rp->p_memmap[T].mem_len != 0) {
 		if ((src = umap_local(rp, T, tr_addr, TR_VLSIZE)) == 0) return(EIO);
 		phys_copy(src, vir2phys(&tr_data), (phys_bytes) sizeof(long));
+		m_ptr->CTL_DATA= tr_data;
 		break;
 	}
 	/* Text space is actually data space - fall through. */
@@ -67,20 +68,21 @@ register message *m_ptr;
   case T_GETDATA:		/* return value from data space */
 	if ((src = umap_local(rp, D, tr_addr, TR_VLSIZE)) == 0) return(EIO);
 	phys_copy(src, vir2phys(&tr_data), (phys_bytes) sizeof(long));
+	m_ptr->CTL_DATA= tr_data;
 	break;
 
   case T_GETUSER:		/* return value from process table */
 	if ((tr_addr & (sizeof(long) - 1)) != 0 ||
 	    tr_addr > sizeof(struct proc) - sizeof(long))
 		return(EIO);
-	tr_data = *(long *) ((char *) rp + (int) tr_addr);
+	m_ptr->CTL_DATA = *(long *) ((char *) rp + (int) tr_addr);
 	break;
 
   case T_SETINS:		/* set value in instruction space */
 	if (rp->p_memmap[T].mem_len != 0) {
 		if ((dst = umap_local(rp, T, tr_addr, TR_VLSIZE)) == 0) return(EIO);
 		phys_copy(vir2phys(&tr_data), dst, (phys_bytes) sizeof(long));
-		tr_data = 0;
+		m_ptr->CTL_DATA = 0;
 		break;
 	}
 	/* Text space is actually data space - fall through. */
@@ -88,7 +90,7 @@ register message *m_ptr;
   case T_SETDATA:			/* set value in data space */
 	if ((dst = umap_local(rp, D, tr_addr, TR_VLSIZE)) == 0) return(EIO);
 	phys_copy(vir2phys(&tr_data), dst, (phys_bytes) sizeof(long));
-	tr_data = 0;
+	m_ptr->CTL_DATA = 0;
 	break;
 
   case T_SETUSER:			/* set value in process table */
@@ -116,20 +118,20 @@ register message *m_ptr;
 		SETPSW(rp, tr_data);
 	else
 		*(reg_t *) ((char *) &rp->p_reg + i) = (reg_t) tr_data;
-	tr_data = 0;
+	m_ptr->CTL_DATA = 0;
 	break;
 
   case T_RESUME:		/* resume execution */
 	rp->p_rts_flags &= ~P_STOP;
 	if (rp->p_rts_flags == 0) lock_ready(rp);
-	tr_data = 0;
+	m_ptr->CTL_DATA = 0;
 	break;
 
   case T_STEP:			/* set trace bit */
 	rp->p_reg.psw |= TRACEBIT;
 	rp->p_rts_flags &= ~P_STOP;
 	if (rp->p_rts_flags == 0) lock_ready(rp);
-	tr_data = 0;
+	m_ptr->CTL_DATA = 0;
 	break;
 
   default:
