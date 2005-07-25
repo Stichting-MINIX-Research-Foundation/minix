@@ -34,21 +34,22 @@
 /* User-level processes, that is, device drivers, servers, and INIT. */
 #define PM_PROC_NR	 0	/* process manager */
 #define FS_PROC_NR 	 1	/* file system */
+#define SM_PROC_NR 	 2	/* system service manager */
 #define IS_PROC_NR	 5 	/* information server */
 #define TTY		 6	/* terminal (TTY) driver */
 #define MEMORY	 	 8  	/* memory driver (RAM disk, null, etc.) */
 #define AT_WINI		(MEMORY + ENABLE_AT_WINI)	/* AT Winchester */
 #define FLOPPY		(AT_WINI + ENABLE_FLOPPY)	/* floppy disk */
 #define PRINTER		(FLOPPY + ENABLE_PRINTER)	/* Centronics */
-#define USR8139		(PRINTER + ENABLE_RTL8139)	/* Realtek RTL8139 */
-#define FXP		(USR8139 + ENABLE_FXP)	/* Intel Pro/100 */
+#define RTL8139		(PRINTER + ENABLE_RTL8139)	/* Realtek RTL8139 */
+#define FXP		(RTL8139 + ENABLE_FXP)	/* Intel Pro/100 */
 #define DPETH		(FXP + ENABLE_DPETH)	/* ISA Network task */
 #define LOG_PROC_NR	(DPETH + ENABLE_LOG)	/* log device */
 #define INIT_PROC_NR	(LOG_PROC_NR + 1)   	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + \
-			5 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
+			6 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
 			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + \
 			ENABLE_DPETH + ENABLE_LOG + 1 )	
 
@@ -63,7 +64,8 @@
  * blocking notifications are delivered. The lowest numbers go first. The
  * offset are used for the per-process notification bit maps. 
  */
-#define NOTIFY_FROM(p_nr)	 (0x1000 | ((p_nr) + NR_TASKS)) 
+#define NOTIFY_MESSAGE		  0x1000
+#define NOTIFY_FROM(p_nr)	 (NOTIFY_MESSAGE | ((p_nr) + NR_TASKS)) 
 #  define SYN_ALARM	NOTIFY_FROM(CLOCK) 	/* synchronous alarm */
 #  define SYS_EVENT	NOTIFY_FROM(SYSTEM) 	/* signal system event */
 #  define HARD_INT	NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
@@ -71,7 +73,6 @@
 #  define FKEY_PRESSED	NOTIFY_FROM(TTY)  	/* function key press */
 
 #define NOTIFICATION  		  0x800 	/* flag for notifications */
-#  define HARD_STOP    (NOTIFICATION | 4)  	/* system shutdown */ 
 #  define DEV_SELECTED (NOTIFICATION | 5)  	/* select() notification */
 #define NR_NOTIFY_TYPES    	       6	/* nr of bits in mask */
 
@@ -84,8 +85,19 @@
 
 
 /*===========================================================================*
+ *                Messages for system management server 		     *
+ *===========================================================================*/
+
+#define START_SERVICE	0
+#define STOP_SERVICE	1
+
+
+/*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
  *===========================================================================*/
+
+#define DEV_RQ_BASE   0x400	/* base for device request types */
+#define DEV_RS_BASE   0x500	/* base for device response types */
 
 #define CANCEL       	 0	/* general req to force a task to cancel */
 #define DEV_READ	 3	/* fcn code for reading from tty */
@@ -98,6 +110,13 @@
 #define TTY_SETPGRP 	10	/* fcn code for setpgroup */
 #define TTY_EXIT	11	/* a process group leader has exited */	
 #define DEV_SELECT	12	/* request select() attention */
+#define DEV_STATUS   	(DEV_RQ_BASE + 13)	/* request driver status */
+
+#define DEV_REPLY       (DEV_RS_BASE + 0)	/* general task reply */
+#define DEV_CLONED      (DEV_RS_BASE + 1)	/* return cloned minor */
+#define DEV_REVIVE      (DEV_RS_BASE + 2)	/* driver revives process */
+#define DEV_IO_READY    (DEV_RS_BASE + 3)	/* selected device ready */
+
 #define SUSPEND	 	-998	/* used in interrupts when tty has no data */
 
 /* Field names for messages to block and character device drivers. */
@@ -206,6 +225,8 @@
  * modifying the system call numbers. The numbers here determine which call
  * is made from the call vector.
  */ 
+#define KERNEL_CALL	0x600	/* base for kernel calls to SYSTEM */ 
+
 #  define SYS_TIMES	 0	/* sys_times(proc_nr, bufptr) */
 #  define SYS_EXIT	 1	/* sys_exit(parent, proc) */
 #  define SYS_GETKSIG    2	/* sys_getsig(proc_nr, sig_map) */
