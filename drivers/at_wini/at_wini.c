@@ -236,11 +236,10 @@ PRIVATE struct driver w_dtab = {
   w_transfer,		/* do the I/O */
   nop_cleanup,		/* nothing to clean up */
   w_geometry,		/* tell the geometry of the disk */
-  nop_stop,		/* no cleanup needed on shutdown */
-  nop_alarm,		/* ignore leftover alarms, function key presses, CANCELs, SELECTs */
-  nop_fkey,		
-  nop_cancel,
-  nop_select,
+  nop_signal,		/* no cleanup needed on shutdown */
+  nop_alarm,		/* ignore leftover alarms */
+  nop_cancel,		/* ignore CANCELs */
+  nop_select,		/* ignore selects */
   w_other		/* catch-all for unrecognized commands and ioctls */
 };
 

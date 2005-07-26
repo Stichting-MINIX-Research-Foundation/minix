@@ -46,7 +46,7 @@ FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_init, (void) );
 FORWARD _PROTOTYPE( int m_ioctl, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) );
-FORWARD _PROTOTYPE( void m_random, (struct driver *dp) );
+FORWARD _PROTOTYPE( void m_random, (struct driver *dp, message *m_ptr) );
 
 /* Entry points to this driver. */
 PRIVATE struct driver m_dtab = {
@@ -58,9 +58,8 @@ PRIVATE struct driver m_dtab = {
   m_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
   m_geometry,	/* memory device "geometry" */
-  nop_stop,	/* no need to clean up on shutdown */
+  nop_signal,	/* system signals */
   m_random, 	/* get randomness from kernel (alarm) */
-  nop_fkey,	/* ignore function key presses and CANCELs */
   nop_cancel,
   nop_select,
   NULL
@@ -285,7 +284,7 @@ PRIVATE void m_init()
   }
 
   random_init();
-  m_random(NULL);				/* also set periodic timer */
+  m_random(NULL, NULL);				/* also set periodic timer */
 
   /* Set up memory ranges for /dev/mem. */
 #if (CHIP == INTEL)
@@ -366,8 +365,9 @@ message *m_ptr;				/* pointer to control message */
 /*============================================================================*
  *				m_random				      *
  *============================================================================*/
-PRIVATE void m_random(dp)
+PRIVATE void m_random(dp, m_ptr)
 struct driver *dp;			/* pointer to driver structure */
+message *m_ptr;				/* pointer to alarm message */
 {
   /* Fetch random information from the kernel to update /dev/random. */
   int i, s, r_next, r_size, r_high;

@@ -234,7 +234,7 @@ PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
 PRIVATE timer_t f_tmr_timeout;		/* timer for various timeouts */
 PRIVATE timer_t *f_timers;		/* queue of floppy timers */
 PRIVATE clock_t f_next_timeout; 	/* the next timeout time */
-FORWARD _PROTOTYPE( void f_expire_tmrs, (struct driver *dp) );
+FORWARD _PROTOTYPE( void f_expire_tmrs, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void f_set_timer, (timer_t *tp, clock_t delta,
 						 tmr_func_t watchdog) );
 FORWARD _PROTOTYPE( void stop_motor, (timer_t *tp) );
@@ -257,7 +257,7 @@ FORWARD _PROTOTYPE( void f_reset, (void) );
 FORWARD _PROTOTYPE( int f_intr_wait, (void) );
 FORWARD _PROTOTYPE( int read_id, (void) );
 FORWARD _PROTOTYPE( int f_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void floppy_stop, (struct driver *dp) );
+FORWARD _PROTOTYPE( void floppy_stop, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int test_read, (int density) );
 FORWARD _PROTOTYPE( void f_geometry, (struct partition *entry));
 
@@ -274,7 +274,6 @@ PRIVATE struct driver f_dtab = {
   f_geometry,	/* tell the geometry of the diskette */
   floppy_stop,	/* floppy cleanup on shutdown */
   f_expire_tmrs,/* expire all alarm timers */
-  nop_fkey,	/* ignore function keys and CANCELs */
   nop_cancel,
   nop_select,
   NULL
@@ -315,7 +314,7 @@ PUBLIC void main()
 /*===========================================================================*
  *				f_expire_tmrs				     *
  *===========================================================================*/
-PRIVATE void f_expire_tmrs(struct driver *dp)
+PRIVATE void f_expire_tmrs(struct driver *dp, message *m_ptr)
 {
 /* A synchronous alarm message was received. Check if there are any expired 
  * timers. Possibly reschedule the next alarm.  
@@ -694,7 +693,7 @@ PRIVATE void start_motor()
   do {
   	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) { 
-  		f_expire_tmrs(NULL);
+  		f_expire_tmrs(NULL, NULL);
   	} else {
   		f_busy = BSY_IDLE;
   	}
@@ -722,13 +721,16 @@ timer_t *tp;
 /*===========================================================================*
  *				floppy_stop				     *
  *===========================================================================*/
-PRIVATE void floppy_stop(struct driver *dp)
+PRIVATE void floppy_stop(struct driver *dp, message *m_ptr)
 {
 /* Stop all activity and cleanly exit with the system. */
   int s;
-  if ((s=sys_outb(DOR, ENABLE_INT)) != OK)
-	panic("FLOPPY","Sys_outb in floppy_stop() failed", s);
-  sys_exit(0);	
+  sigset_t sigset = m_ptr->NOTIFY_ARG;
+  if (sigismember(&sigset, SIGTERM) || sigismember(&sigset, SIGKSTOP)) {
+      if ((s=sys_outb(DOR, ENABLE_INT)) != OK)
+		panic("FLOPPY","Sys_outb in floppy_stop() failed", s);
+      exit(0);	
+  }
 }
 
 
@@ -776,7 +778,7 @@ PRIVATE int seek()
   	do {
   		receive(ANY, &mess); 
   		if (mess.m_type == SYN_ALARM) { 
-  			f_expire_tmrs(NULL);
+  			f_expire_tmrs(NULL, NULL);
   		} else {
   			f_busy = BSY_IDLE;
   		}
@@ -1051,7 +1053,7 @@ PRIVATE void f_reset()
   do {
   	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) { 
-  		f_expire_tmrs(NULL);
+  		f_expire_tmrs(NULL, NULL);
   	} else {			/* expect HARD_INT */
   		f_busy = BSY_IDLE;
   	}
@@ -1097,7 +1099,7 @@ PRIVATE int f_intr_wait()
   do {
   	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) {
-  		f_expire_tmrs(NULL);
+  		f_expire_tmrs(NULL, NULL);
   	} else { 
   		f_busy = BSY_IDLE;
   	}

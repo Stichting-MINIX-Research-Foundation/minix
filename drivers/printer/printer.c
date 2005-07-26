@@ -22,7 +22,7 @@
  * -------------------------------------------------------
  * | HARD_INT    |         |         |         |         |
  * |-------------+---------+---------+---------+---------|
- * | HARD_STOP   |         |         |         |         |
+ * | SYS_EVENT   |         |         |         |         |
  * |-------------+---------+---------+---------+---------|
  * | DEV_WRITE   |minor dev| proc nr |  count  | buf ptr |
  * |-------------+---------+---------+---------+---------|
@@ -33,8 +33,6 @@
  */
 
 #include "../drivers.h"
-
-#if ENABLE_PRINTER
 
 /* Control bits (in port_base + 2).  "+" means positive logic and "-" means
  * negative logic.  Most of the signals are negative logic on the pins but
@@ -160,9 +158,6 @@ PUBLIC void main(void)
 	    case DEV_WRITE:	do_write(&pr_mess);	break;
 	    case CANCEL   :	do_cancel(&pr_mess);	break;
 	    case HARD_INT :	do_printer_output();	break;
-	    case HARD_STOP:	sys_exit(0);
-	    			/* never reached */
-	    			break;
 	    default:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.PROC_NR, EINVAL);
 	}
@@ -408,5 +403,4 @@ PRIVATE void do_printer_output()
 }
 
 
-#endif /* ENABLE_PRINTER */
 

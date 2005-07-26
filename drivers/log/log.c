@@ -46,9 +46,8 @@ PRIVATE struct driver log_dtab = {
   log_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
   log_geometry,	/* geometry */
-  nop_stop,	/* no need to clean up on shutdown */
+  nop_signal,	/* no need to clean up on shutdown */
   nop_alarm, 	/* no alarm */
-  nop_fkey,	/* no fkey registered */
   log_cancel,	/* CANCEL request */
   log_select,	/* DEV_SELECT request */
   log_other	/* Unrecognized messages */

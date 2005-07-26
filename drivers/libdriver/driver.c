@@ -1,9 +1,10 @@
 /* This file contains device independent device driver interface.
- *                                                  Author: Kees J. Bot.
+ *
  * Changes:
+ *   Jul 25, 2005   added SYS_EVENT type for signals  (Jorrit N. Herder)
  *   Sep 15, 2004   added SYN_ALARM type for timeouts  (Jorrit N. Herder)
- *   Aug 18, 2004   added HARD_STOP type for shutdown  (Jorrit N. Herder)
  *   Jul 23, 2004   removed kernel dependencies  (Jorrit N. Herder)
+ *   Apr 02, 1992   constructed from AT wini and floppy driver  (Kees J. Bot)
  *
  *
  * The drivers support the following operations (using message format m2):
@@ -32,9 +33,6 @@
  * The file contains one entry point:
  *
  *   driver_task:	called by the device dependent task entry
- *
- *
- * Constructed 92/04/02 by Kees J. Bot from the old AT wini and floppy driver.
  */
 
 #include "../drivers.h"
@@ -110,11 +108,9 @@ struct driver *dp;	/* Device dependent entry points. */
 
 	case HARD_INT:		/* leftover interrupt or expired timer. */
 				continue;
-	case HARD_STOP:		(*dp->dr_stop)(dp);
+	case SYS_EVENT:		(*dp->dr_signal)(dp, &mess);
 				continue;	/* don't reply */
-	case SYN_ALARM:		(*dp->dr_alarm)(dp);	
-				continue;	/* don't reply */
-	case FKEY_PRESSED:	(*dp->dr_fkey)(dp, &mess);
+	case SYN_ALARM:		(*dp->dr_alarm)(dp, &mess);	
 				continue;	/* don't reply */
 	default:		
 		if(dp->dr_other)
@@ -282,20 +278,21 @@ message *mp;
 }
 
 /*============================================================================*
- *				nop_stop			  	      *
+ *				nop_signal			  	      *
  *============================================================================*/
-PUBLIC void nop_stop(dp)
+PUBLIC void nop_signal(dp, mp)
 struct driver *dp;
+message *mp;
 {
-/* No cleanup needed on shutdown. */
-  sys_exit(0);
+/* Default action for signal is to ignore. */
 }
 
 /*============================================================================*
  *				nop_alarm				      *
  *============================================================================*/
-PUBLIC void nop_alarm(dp)
+PUBLIC void nop_alarm(dp, mp)
 struct driver *dp;
+message *mp;
 {
 /* Ignore the leftover alarm. */
 }
@@ -317,13 +314,6 @@ PUBLIC void nop_cleanup()
 /* Nothing to clean up. */
 }
 
-/*===========================================================================*
- *				nop_fkey				     *
- *===========================================================================*/
-PUBLIC void nop_fkey(struct driver *dr, message *m)
-{
-/* Nothing to do for fkey. */
-}
 
 /*===========================================================================*
  *				nop_cancel				     *
@@ -342,26 +332,6 @@ PUBLIC int nop_select(struct driver *dr, message *m)
 }
 
 
-/*===========================================================================*
- *				nop_task				     *
- *===========================================================================*/
-PUBLIC void nop_task()
-{
-/* Unused controllers are "serviced" by this task. */
-  struct driver nop_tab = {
-	no_name,
-	do_nop,
-	do_nop,
-	do_nop,
-	nop_prepare,
-	NULL,
-	nop_cleanup,
-	NULL,
-	nop_stop,
-	nop_alarm,
-  };
-  driver_task(&nop_tab);
-}
 
 
 /*============================================================================*

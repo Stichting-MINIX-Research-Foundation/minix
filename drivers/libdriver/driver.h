@@ -10,6 +10,7 @@
 #include <minix/config.h>	/* MUST be first */
 #include <ansi.h>		/* MUST be second */
 #include <minix/type.h>
+#include <minix/ipc.h>
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <sys/types.h>
@@ -36,9 +37,8 @@ struct driver {
 					iovec_t *iov, unsigned nr_req) );
   _PROTOTYPE( void (*dr_cleanup), (void) );
   _PROTOTYPE( void (*dr_geometry), (struct partition *entry) );
-  _PROTOTYPE( void (*dr_stop), (struct driver *dp) );
-  _PROTOTYPE( void (*dr_alarm), (struct driver *dp) );
-  _PROTOTYPE( void (*dr_fkey), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( void (*dr_signal), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( void (*dr_alarm), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_cancel), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_select), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_other), (struct driver *dp, message *m_ptr) );
@@ -67,9 +67,8 @@ _PROTOTYPE( int do_nop, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( struct device *nop_prepare, (int device) );
 _PROTOTYPE( void nop_cleanup, (void) );
 _PROTOTYPE( void nop_task, (void) );
-_PROTOTYPE( void nop_stop, (struct driver *dp) );
-_PROTOTYPE( void nop_alarm, (struct driver *dp) );
-_PROTOTYPE( void nop_fkey, (struct driver *dp, message *m_ptr) );
+_PROTOTYPE( void nop_signal, (struct driver *dp, message *m_ptr) );
+_PROTOTYPE( void nop_alarm, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_cancel, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_select, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr) );

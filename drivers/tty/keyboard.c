@@ -542,6 +542,7 @@ int scode;			/* scan code for a function key */
 #if DEAD_CODE
       notify(proc_nr, &m);
 #else
+	printf("alerted %d \n", proc_nr);
       alert(proc_nr);
 #endif
   }
@@ -614,7 +615,6 @@ PUBLIC void do_panic_dumps(m)
 message *m;			/* request message to TTY */
 {
 /* Wait for keystrokes for printing debugging info and reboot. */
-
   int quiet, code;
 
   /* A panic! Allow debug dumps until user wants to shutdown. */
@@ -629,6 +629,7 @@ message *m;			/* request message to TTY */
 	 */
 	while (nb_receive(ANY, m) == OK) {
 		switch(m->m_type) {
+		case FKEY_CONTROL: do_fkey_ctl(m);      break;
 		case SYS_EVENT:	   do_new_kmess(m);	break;
 		case DIAGNOSTICS:  do_diagnostics(m);	break;
 		default:	;	/* do nothing */ 
