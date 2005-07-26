@@ -227,39 +227,39 @@
  */ 
 #define KERNEL_CALL	0x600	/* base for kernel calls to SYSTEM */ 
 
-#  define SYS_TIMES	 0	/* sys_times(proc_nr, bufptr) */
-#  define SYS_EXIT	 1	/* sys_exit(parent, proc) */
-#  define SYS_GETKSIG    2	/* sys_getsig(proc_nr, sig_map) */
-#  define SYS_ENDKSIG    3	/* sys_endsig(proc_nr) */
-#  define SYS_FORK       4	/* sys_fork(parent, child, pid) */
-#  define SYS_NEWMAP     5	/* sys_newmap(proc_nr, map_ptr) */
+#  define SYS_TIMES	 (KERNEL_CALL + 0)	/* sys_times() */
+#  define SYS_EXIT	 (KERNEL_CALL + 1)	/* sys_exit() */
+#  define SYS_GETKSIG    (KERNEL_CALL + 2)	/* sys_getsig() */
+#  define SYS_ENDKSIG    (KERNEL_CALL + 3)	/* sys_endsig() */
+#  define SYS_FORK       (KERNEL_CALL + 4)	/* sys_fork() */
+#  define SYS_NEWMAP     (KERNEL_CALL + 5)	/* sys_newmap() */
 
-#  define SYS_EXEC       7	/* sys_exec(proc_nr, new_sp) */
-#  define SYS_SIGSEND    8	/* sys_sigsend(proc_nr, ctxt_ptr) */
-#  define SYS_ABORT      9	/* sys_abort() */
-#  define SYS_KILL      10	/* sys_kill(proc_nr, sig) */
-#  define SYS_UMAP      11	/* sys_umap(proc_nr, etc) */
+#  define SYS_EXEC       (KERNEL_CALL + 7)	/* sys_exec() */
+#  define SYS_SIGSEND    (KERNEL_CALL + 8)	/* sys_sigsend() */
+#  define SYS_ABORT      (KERNEL_CALL + 9)	/* sys_abort() */
+#  define SYS_KILL       (KERNEL_CALL + 10)	/* sys_kill() */
+#  define SYS_UMAP       (KERNEL_CALL + 11)	/* sys_umap() */
 
-#  define SYS_TRACE     13	/* sys_trace(req,pid,addr,data) */
+#  define SYS_TRACE      (KERNEL_CALL + 13)	/* sys_trace() */
 
-#  define SYS_SETALARM	16	/* sys_setalarm(proc_nr,exp_time,abs_time) */
+#  define SYS_SETALARM	 (KERNEL_CALL + 16)	/* sys_setalarm() */
 
-#  define SYS_PHYSVCOPY 18	/* sys_physvcopy(vec_ptr, vec_size) */
-#  define SYS_PRIVCTL   19	/* sys_privctl(proc_nr, ...) */
-#  define SYS_SDEVIO    20	/* sys_sdevio(port, proc_nr, buf, count) */
-#  define SYS_SIGRETURN 21	/* sys_sigreturn(proc_nr, ctxt_ptr, flags) */
-#  define SYS_GETINFO   22 	/* sys_getinfo(what, whereto) */
-#  define SYS_DEVIO     23	/* sys_devio(port, value) */
-#  define SYS_VDEVIO    24	/* sys_vdevio(buf_ptr, nr_ports) */
-#  define SYS_IRQCTL    25	/* sys_irqctl() */
+#  define SYS_PHYSVCOPY  (KERNEL_CALL + 18)	/* sys_physvcopy() */
+#  define SYS_PRIVCTL    (KERNEL_CALL + 19)	/* sys_privctl() */
+#  define SYS_SDEVIO     (KERNEL_CALL + 20)	/* sys_sdevio() */
+#  define SYS_SIGRETURN  (KERNEL_CALL + 21)	/* sys_sigreturn() */
+#  define SYS_GETINFO    (KERNEL_CALL + 22) 	/* sys_getinfo() */
+#  define SYS_DEVIO      (KERNEL_CALL + 23)	/* sys_devio() */
+#  define SYS_VDEVIO     (KERNEL_CALL + 24)	/* sys_vdevio() */
+#  define SYS_IRQCTL     (KERNEL_CALL + 25)	/* sys_irqctl() */
 
-#  define SYS_SEGCTL    28	/* sys_segctl(*idx, *seg, *off, phys, size) */
+#  define SYS_SEGCTL     (KERNEL_CALL + 28)	/* sys_segctl() */
 
-#  define SYS_VIRCOPY   30	/* sys_vircopy(src,seg,addr,dst,seg,addr,cnt) */
-#  define SYS_PHYSCOPY  31 	/* sys_physcopy(src_addr,dst_addr,count) */
-#  define SYS_VIRVCOPY  32	/* sys_virvcopy(vec_ptr, vec_size) */
-#  define SYS_MEMSET    33	/* sys_memset(char, addr, count) */
-#  define SYS_NICE      34	/* sys_nice(who,prio) */
+#  define SYS_VIRCOPY    (KERNEL_CALL + 30)	/* sys_vircopy() */
+#  define SYS_PHYSCOPY   (KERNEL_CALL + 31) 	/* sys_physcopy() */
+#  define SYS_VIRVCOPY   (KERNEL_CALL + 32)	/* sys_virvcopy() */
+#  define SYS_MEMSET     (KERNEL_CALL + 33)	/* sys_memset() */
+#  define SYS_NICE       (KERNEL_CALL + 34)	/* sys_nice() */
 #define NR_SYS_CALLS	35	/* number of system calls */ 
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */

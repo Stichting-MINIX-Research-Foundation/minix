@@ -51,8 +51,8 @@
 PUBLIC int (*call_vec[NR_SYS_CALLS])(message *m_ptr);
 
 #define map(call_nr, handler) \
-	{extern int dummy[NR_SYS_CALLS > (unsigned) (call_nr) ? 1 : -1];} \
-	call_vec[(call_nr)] = (handler)  
+    {extern int dummy[NR_SYS_CALLS>(unsigned)(call_nr-KERNEL_CALL) ? 1:-1];} \
+    call_vec[(call_nr-KERNEL_CALL)] = (handler)  
 
 FORWARD _PROTOTYPE( void initialize, (void));
 
@@ -65,6 +65,7 @@ PUBLIC void sys_task()
 /* Main entry point of sys_task.  Get the message and dispatch on type. */
   static message m;
   register int result;
+  unsigned int call;
 
   /* Initialize the system task. */
   initialize();
@@ -74,8 +75,9 @@ PUBLIC void sys_task()
       receive(ANY, &m);
 
       /* Handle the request. */
-      if ((unsigned) m.m_type < NR_SYS_CALLS) {
-          result = (*call_vec[m.m_type])(&m);	/* handle the kernel call */
+      call = (unsigned) m.m_type - KERNEL_CALL;	/* substract offset */
+      if (call < NR_SYS_CALLS) {		/* check call number */
+          result = (*call_vec[call])(&m);	/* handle the kernel call */
       } else {
 	  kprintf("Warning, illegal SYSTASK request from %d.\n", m.m_source);
 	  result = EBADREQUEST;			/* illegal message type */

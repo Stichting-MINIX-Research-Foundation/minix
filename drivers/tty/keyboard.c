@@ -539,12 +539,7 @@ int scode;			/* scan code for a function key */
   /* See if an observer is registered and send it a message. */
   if (proc_nr != NONE) { 
       m.NOTIFY_TYPE = FKEY_PRESSED;
-#if DEAD_CODE
-      notify(proc_nr, &m);
-#else
-	printf("alerted %d \n", proc_nr);
       alert(proc_nr);
-#endif
   }
   return(TRUE);
 }
