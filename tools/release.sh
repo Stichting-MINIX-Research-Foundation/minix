@@ -52,8 +52,8 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 chown -R bin $RELEASEDIR/usr/src
 date >$RELEASEDIR/CD
 ( cd $RELEASEDIR && find . -name CVS | xargs rm -rf )
-echo " * Making source .tgz for on ISO filesystem"
-( cd $RELEASEDIR/usr/src && tar cf - . | gzip > $CDFILES/MINIXSRC.TGZ )
+#echo " * Making source .tgz for on ISO filesystem"
+#( cd $RELEASEDIR/usr/src && tar cf - . | gzip > $CDFILES/MINIXSRC.TGZ )
 echo " * Chroot build"
 chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
 echo " * Chroot build done"
@@ -65,6 +65,7 @@ make programs image
 (cd ../boot && make)
 make image || exit 1
 sh mkboot cdfdboot
+cp cdfdboot $CDFILES/bootflp.img
 cp release/cd/* $CDFILES
 writeisofs -l MINIX -b $IMAGE $CDFILES $ISO || exit 1
 echo "Appending Minix root and usr filesystem"
