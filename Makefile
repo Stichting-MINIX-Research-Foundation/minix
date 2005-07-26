@@ -55,11 +55,13 @@ clean::
 etcfiles::
 	cd etc && $(MAKE) install
 
+clean::
+	cd test && $(MAKE) $@
+
 all install clean::
 	cd boot && $(MAKE) $@
 	cd man && $(MAKE) $@	# First manpages, then commands
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 	cd tools && $(MAKE) $@
-	cd test && $(MAKE) $@
 	cd servers && $(MAKE) $@
 
