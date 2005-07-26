@@ -17,7 +17,7 @@ struct system_image {
   char quantum;				/* quantum (tick count) */
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
-  char call_mask;			/* allowed system calls */
+  short call_mask;			/* allowed system calls */
   bitchunk_t send_mask;			/* send mask protection */
   char proc_name[P_NAME_LEN];		/* name in process table */
 };

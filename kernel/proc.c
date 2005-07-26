@@ -135,7 +135,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * anywhere in data or stack or gap. It will have to be made more elaborate 
    * for machines which don't have the gap mapped. 
    */
-  if (function & SENDREC) {	
+  if (function & CHECK_PTR) {	
       vb = (vir_bytes) m_ptr;				/* virtual clicks */
       vlo = vb >> CLICK_SHIFT;				/* bottom of message */
       vhi = (vb + MESS_SIZE - 1) >> CLICK_SHIFT;	/* top of message */
@@ -148,7 +148,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * verify that the caller is allowed to send to the given destination and
    * that the destination is still alive. 
    */
-  if (function & SEND) {	
+  if (function & CHECK_DST) {	
       if (! get_sys_bit(priv(caller_ptr)->s_send_mask, nr_to_id(src_dst))) {
           kprintf("Warning, send_mask denied %d sending to %d\n",
           	proc_nr(caller_ptr), src_dst);

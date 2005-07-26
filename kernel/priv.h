@@ -18,9 +18,9 @@
 struct priv {
   proc_nr_t s_proc_nr;		/* number of associated process */
   sys_id_t s_id;		/* index of this system structure */
-  char s_flags;			/* PREEMTIBLE, BILLABLE, etc. */
+  short s_flags;		/* PREEMTIBLE, BILLABLE, etc. */
 
-  char s_call_mask;		/* allowed system call traps */
+  short s_call_mask;		/* allowed system call traps */
   sys_map_t s_send_mask;	/* allowed send destinations */
   long s_sys_mask;		/* allowed kernel calls */
 

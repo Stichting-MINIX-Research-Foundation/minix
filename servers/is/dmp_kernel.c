@@ -182,24 +182,26 @@ PUBLIC void irqtab_dmp()
  *===========================================================================*/
 PUBLIC void image_dmp()
 {
-  int i,j,r;
+  int m, i,j,r;
   struct system_image *ip;
-  char maskstr[NR_TASKS + NR_PROCS] = "mask";
+  static char send_mask[BITCHUNK_BITS*2];
 	
   if ((r = sys_getimage(image)) != OK) {
       report("IS","warning: couldn't get copy of image table", r);
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
-  printf("---name-- -nr- -flags- -q- ----pc- -stack- ------sendmask-------\n");
-  for (i=0; i<NR_BOOT_PROCS; i++) { 
-      ip = &image[i];
-      for (j=-NR_TASKS; j<INIT_PROC_NR+2; j++) 
-         maskstr[j+NR_TASKS] = '0';
-      maskstr[j+NR_TASKS] = '\0';
+  printf("---name-- -nr- -flags- -q- ----pc- -stack- ----sendmask[0]-----\n");
+  for (m=0; m<NR_BOOT_PROCS; m++) { 
+      ip = &image[m];
+        for (i=j=0; i < BITCHUNK_BITS; i++, j++) {
+       	    send_mask[j] = (ip->send_mask & (1<<i)) ? '1' : '0';
+       	    if (i % 8 == 7) send_mask[++j] = ' ';
+       	}
+        send_mask[j] = '\0';
       printf("%8s %4d     0x%02x %3d %7lu %7lu   %s\n",
           ip->proc_name, ip->proc_nr, ip->flags, ip->priority, 
-          (long)ip->initial_pc, ip->stksize, maskstr); 
+          (long)ip->initial_pc, ip->stksize, send_mask); 
   }
   printf("\n");
 }
@@ -323,7 +325,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name--- -flags- -sc- -send mask-\n");
+  printf("\n--nr-id-name---- -flags- -traps- -send mask-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -337,7 +339,7 @@ PUBLIC void privileges_dmp()
         if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
 	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s 0x%02x   %02.2u  ",
+	printf("(%02u) %-7.7s 0x%03x   0x%03.3x  ",
 	       sp->s_id, rp->p_name,
 	       sp->s_flags, sp->s_call_mask 
         );

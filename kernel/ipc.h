@@ -14,26 +14,25 @@
  * numbers are carefully defined so that it can easily be seen (based on 
  * the bits that are on) which checks should be done in sys_call().
  */
-#define ECHO		 0	/* 0 0 0 0 1 (01) : echo a message */
-#define SEND		 1	/* 0 0 0 1 1 (03) : blocking send */
-#define RECEIVE		 2	/* 0 0 1 0 1 (05) : blocking receive */
-#define SENDREC	 	 3  	/* 0 0 1 1 1 (07) : SEND + RECEIVE */
-#define NOTIFY		 4	/* temp */
-#define ALERT		 5	/* 0 1 0 1 0 (10) : nonblocking notify */
+#define SEND		 1	/* 0 0 0 1 : blocking send */
+#define RECEIVE		 2	/* 0 0 1 0 : blocking receive */
+#define SENDREC	 	 3  	/* 0 0 1 1 : SEND + RECEIVE */
+#define ALERT		 4	/* 0 1 0 0 : nonblocking notify */
+#define ECHO		 8	/* 1 0 0 0 : echo a message */
 
-/* The following definitions determine whether a calls message buffer and/
- * or destination processes should be validated. 
- */
-#define CHECK_PTR     0x01      /* 0 0 0 0 1 : validate message buffer */
-#define CHECK_DST     0x02	/* 0 0 0 1 0 : validate message destination */
-#define CHECK_SRC     0x04	/* 0 0 1 0 0 : validate message source */
+#define NOTIFY		 16   /* 1 0 0 0 0 : temp */
+
+/* The following bit masks determine what checks that should be done. */
+#define CHECK_PTR     0x0B      /* 1 0 1 1 : validate message buffer */
+#define CHECK_DST     0x05	/* 0 1 0 1 : validate message destination */
+#define CHECK_SRC     0x02	/* 0 0 1 0 : validate message source */
 
 /* Call masks indicating which system calls (traps) a process can make. 
- * The values here are used for the processes in the boot image.
+ * System processes can do anything; user processes are highly restricted. 
  */
 #define EMPTY_MASK 		(0)
 #define FILLED_MASK 		(~0)
-#define USER_CALL_MASK	 	(1 << SENDREC) 
+#define USER_CALL_MASK	 	((1 << SENDREC) | (1 << ECHO))
 
 /* Send masks determine to whom processes can send messages or notifications. 
  * The values here are used for the processes in the boot image. We rely on 

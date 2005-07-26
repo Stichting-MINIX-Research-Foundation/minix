@@ -71,7 +71,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 PUBLIC struct system_image image[] = {
  { IDLE,    idle_task,  IDLE_F, IDLE_T,   IDLE_Q,  IDLE_S,    EMPTY_MASK, EMPTY_MASK,    "IDLE"    },
  { CLOCK,   clock_task, TASK_F, SYS_T,   TASK_Q, CLOCK_S,   FILLED_MASK, SYSTEM_SEND_MASK,   "CLOCK"   },
- { SYSTEM,  sys_task,   TASK_F, SYS_T,   TASK_Q, SYSTEM_S,     FILLED_MASK, SYSTEM_SEND_MASK,  "SYS"     },
+ { SYSTEM,  sys_task,   TASK_F, SYS_T,   TASK_Q, SYSTEM_S,     FILLED_MASK, SYSTEM_SEND_MASK,  "SYSTEM"     },
  { HARDWARE,   0,       TASK_F, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_MASK, SYSTEM_SEND_MASK, "KERNEL" },
  { PM_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          FILLED_MASK,   SERVER_SEND_MASK,      "PM"      },
  { FS_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          FILLED_MASK,   SERVER_SEND_MASK,      "FS"      },
