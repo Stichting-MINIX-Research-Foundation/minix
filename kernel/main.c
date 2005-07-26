@@ -49,7 +49,7 @@ PUBLIC void main()
 
   /* Clear the process table. Anounce each slot as empty and set up mappings 
    * for proc_addr() and proc_nr() macros. Do the same for the table with 
-   * system properties structures. 
+   * privilege structures for the system processes. 
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
   	rp->p_rts_flags = SLOT_FREE;		/* initialize free slot */
@@ -76,17 +76,17 @@ PUBLIC void main()
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	ip = &image[i];				/* process' attributes */
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
-	rp->p_name[P_NAME_LEN-1] = '\0';	/* just for safety */
 	rp->p_max_priority = ip->priority;	/* max scheduling priority */
 	rp->p_priority = ip->priority;		/* current priority */
 	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
 	rp->p_sched_ticks = ip->quantum;	/* current credit */
 	rp->p_full_quantums = QUANTUMS(ip->priority);   /* nr quantums left */
 	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
-	(void) set_priv(rp, (ip->flags & SYS_PROC));    /* assign structure */
-	rp->p_priv->s_flags = ip->flags;	/* process flags */
-	rp->p_priv->s_call_mask = ip->call_mask;/* allowed system calls */
-	if (i-NR_TASKS < 0) {			/* part of the kernel? */ 
+	(void) get_priv(rp, (ip->flags & SYS_PROC));    /* assign structure */
+	priv(rp)->s_flags = ip->flags;			/* process flags */
+	priv(rp)->s_call_mask = ip->call_mask;		/* allowed traps */
+	priv(rp)->s_send_mask.chunk[0] = ip->send_mask;	/* restrict targets */
+	if (iskerneln(proc_nr(rp))) {		/* part of the kernel? */ 
 		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
 			rp->p_priv->s_stack_guard = (reg_t *) ktsb;
 			*rp->p_priv->s_stack_guard = STACK_GUARD;
@@ -97,14 +97,14 @@ PUBLIC void main()
 					/* processes that are in the kernel */
 		hdrindex = 0;		/* all use the first a.out header */
 	} else {
-		hdrindex = 1 + i-NR_TASKS;	/* drivers, servers, INIT follow */
+		hdrindex = 1 + i-NR_TASKS;	/* servers, drivers, INIT */
 	}
 
 	/* The bootstrap loader created an array of the a.out headers at
 	 * absolute address 'aout'. Get one element to e_hdr.
 	 */
 	phys_copy(aout + hdrindex * A_MINHDR, vir2phys(&e_hdr),
-							(phys_bytes) A_MINHDR);
+						(phys_bytes) A_MINHDR);
 	/* Convert addresses to clicks and build process memory map */
 	text_base = e_hdr.a_syms >> CLICK_SHIFT;
 	text_clicks = (e_hdr.a_text + CLICK_SIZE-1) >> CLICK_SHIFT;
@@ -127,7 +127,7 @@ PUBLIC void main()
 	/* Initialize the server stack pointer. Take it down one word
 	 * to give crtso.s something to use as "argc".
 	 */
-	if (i-NR_TASKS >= 0) {
+	if (isusern(proc_nr(rp))) {		/* user-space process? */ 
 		rp->p_reg.sp = (rp->p_memmap[S].mem_vir +
 				rp->p_memmap[S].mem_len) << CLICK_SHIFT;
 		rp->p_reg.sp -= sizeof(reg_t);

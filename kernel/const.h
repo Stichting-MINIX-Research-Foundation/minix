@@ -51,7 +51,7 @@
 #define INIT_PSW      0x0200	/* initial psw */
 #define INIT_TASK_PSW 0x1200	/* initial psw for tasks (with IOPL 1) */
 #define TRACEBIT      0x0100	/* OR this with psw in proc[] for tracing */
-#define SETPSW(rp, new)	/* permits only certain bits to be set */ \
+#define SETPSW(rp, new)		/* permits only certain bits to be set */ \
 	((rp)->p_reg.psw = (rp)->p_reg.psw & ~0xCD5 | (new) & 0xCD5)
 #define IF_MASK 0x00000200
 #define IOPL_MASK 0x003000

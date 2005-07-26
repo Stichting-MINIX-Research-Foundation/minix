@@ -79,7 +79,7 @@ struct proc {
 #define IDLE_Q		  15    /* lowest, only IDLE process goes here */
 
 /* Each queue has a maximum number of full quantums associated with it. */
-#define QUANTUMS(q)	(NR_SCHED_QUEUES - (q))
+#define QUANTUMS(q)	(1 + (NR_SCHED_QUEUES - (q))/2)
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])

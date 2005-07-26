@@ -27,6 +27,7 @@ register message *m_ptr;	/* pointer to request message */
 #endif
   register struct proc *rpc;		/* child process pointer */
   struct proc *rpp;			/* parent process pointer */
+  int i;
 
   rpp = proc_addr(m_ptr->PR_PPROC_NR);
   rpc = proc_addr(m_ptr->PR_PROC_NR);
@@ -51,6 +52,16 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
   rpc->p_sys_time = 0;
 
+  /* If this is a system process, make sure the child process gets its own
+   * privilege structure for accounting.
+   */
+  if (priv(rpc)->s_flags & SYS_PROC) {
+      if (OK != (i=get_priv(rpc, SYS_PROC))) return(i);	/* get structure */
+      for (i=0; i< BITMAP_CHUNKS(NR_SYS_PROCS); i++)	/* remove pending: */
+          priv(rpc)->s_notify_pending.chunk[i] = 0;	/* - notifications */
+      priv(rpc)->s_int_pending = 0;			/* - interrupts */
+      sigemptyset(&priv(rpc)->s_sig_pending);		/* - signals */
+  }
   return(OK);
 }
 

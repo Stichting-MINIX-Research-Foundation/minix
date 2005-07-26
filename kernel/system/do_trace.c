@@ -60,7 +60,7 @@ register message *m_ptr;
 	if (rp->p_memmap[T].mem_len != 0) {
 		if ((src = umap_local(rp, T, tr_addr, TR_VLSIZE)) == 0) return(EIO);
 		phys_copy(src, vir2phys(&tr_data), (phys_bytes) sizeof(long));
-		m_ptr->CTL_DATA= tr_data;
+		m_ptr->CTL_DATA = tr_data;
 		break;
 	}
 	/* Text space is actually data space - fall through. */

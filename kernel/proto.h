@@ -40,7 +40,7 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 /* system.c */
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
-_PROTOTYPE( int set_priv, (register struct proc *rc,int sys_proc_flag)	);
+_PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
 _PROTOTYPE( phys_bytes numap_local, (int proc_nr, vir_bytes vir_addr, 
 		vir_bytes bytes)					);
 _PROTOTYPE( void sys_task, (void)					);

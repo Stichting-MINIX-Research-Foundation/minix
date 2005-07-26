@@ -130,47 +130,46 @@ message *m_ptr;			/* pointer to message in the caller's space */
   if (! (isokprocn(src_dst) || src_dst == ANY || function == ECHO))  
       return(EBADSRCDST);
 
-#if DEAD_CODE		/* temporarily disabled for testing ALERT */
-  /* This check allows a message to be anywhere in data or stack or gap. 
-   * It will have to be made more elaborate later for machines which
-   * don't have the gap mapped.
+  /* If the call involves a message buffer, i.e., for SEND, RECEIVE, SENDREC, 
+   * or ECHO, check the message pointer. This check allows a message to be 
+   * anywhere in data or stack or gap. It will have to be made more elaborate 
+   * for machines which don't have the gap mapped. 
    */
-  vb = (vir_bytes) m_ptr;
-  vlo = vb >> CLICK_SHIFT;	/* vir click for bottom of message */
-  vhi = (vb + MESS_SIZE - 1) >> CLICK_SHIFT;	/* vir click for top of msg */
-  if (vlo < caller_ptr->p_memmap[D].mem_vir || vlo > vhi ||
-      vhi >= caller_ptr->p_memmap[S].mem_vir + caller_ptr->p_memmap[S].mem_len) 
-        return(EFAULT); 
-#endif
+  if (function & SENDREC) {	
+      vb = (vir_bytes) m_ptr;				/* virtual clicks */
+      vlo = vb >> CLICK_SHIFT;				/* bottom of message */
+      vhi = (vb + MESS_SIZE - 1) >> CLICK_SHIFT;	/* top of message */
+      if (vlo < caller_ptr->p_memmap[D].mem_vir || vlo > vhi ||
+              vhi >= caller_ptr->p_memmap[S].mem_vir + 
+              caller_ptr->p_memmap[S].mem_len)  return(EFAULT); 
+  }
+
+  /* If the call is to send to a process, i.e., for SEND, SENDREC or NOTIFY,
+   * verify that the caller is allowed to send to the given destination and
+   * that the destination is still alive. 
+   */
+  if (function & SEND) {	
+      if (! get_sys_bit(priv(caller_ptr)->s_send_mask, nr_to_id(src_dst))) {
+          kprintf("Warning, send_mask denied %d sending to %d\n",
+          	proc_nr(caller_ptr), src_dst);
+          return(ECALLDENIED);
+      }
+
+      if (isemptyn(src_dst)) return(EDEADDST); 	/* cannot send to the dead */
+  }
 
   /* Now check if the call is known and try to perform the request. The only
    * system calls that exist in MINIX are sending and receiving messages.
    *   - SENDREC: combines SEND and RECEIVE in a single system call
    *   - SEND:    sender blocks until its message has been delivered
    *   - RECEIVE: receiver blocks until an acceptable message has arrived
-   *   - NOTIFY:  sender continues; either directly deliver the message or
-   *              queue the notification message until it can be delivered  
-   *   - ECHO:    the message directly will be echoed to the sender 
+   *   - NOTIFY:  nonblocking call; deliver notification or mark pending
+   *   - ECHO:    nonblocking call; directly echo back the message 
    */
   switch(function) {
-  case SENDREC:				/* has FRESH_ANSWER flag */		
+  case SENDREC:					/* has FRESH_ANSWER flag */		
       /* fall through */
   case SEND:			
-      if (isemptyn(src_dst)) { 			
-          result = EDEADDST;		/* cannot send to the dead */
-          break;
-      }
-
-#if DEAD_CODE	/* to be replaced by better mechanism */
-      mask_entry = isuserp(proc_addr(src_dst)) ? USER_PROC_NR : src_dst;
-      if (! isallowed(caller_ptr->p_sendmask, mask_entry)) {
-          kprintf("WARNING: sys_call denied %d ", caller_ptr->p_nr);
-          kprintf("sending to %d\n", proc_addr(src_dst)->p_nr);
-          result = ECALLDENIED;		/* call denied by send mask */
-          break;
-      } 
-#endif
-
       result = mini_send(caller_ptr, src_dst, m_ptr, flags);
       if (function == SEND || result != OK) {	
           break;				/* done, or SEND failed */
@@ -191,18 +190,6 @@ message *m_ptr;			/* pointer to message in the caller's space */
   default:
       result = EBADCALL;			/* illegal system call */
   }
-  
-  /* If the caller made a successfull, blocking system call it's priority may
-   * be raised. The priority may have been lowered if a process consumed too 
-   * many full quantums in a row to prevent damage from infinite loops 
-   */
-#if DEAD_CODE		/* buggy ... do unready() first! */
-  if ((caller_ptr->p_priority > caller_ptr->p_max_priority) && 
-         ! (flags & NON_BLOCKING) && (result == OK)) {
-      caller_ptr->p_priority = caller_ptr->p_max_priority;
-      caller_ptr->p_full_quantums = QUANTUMS(caller_ptr->p_priority);
-  }
-#endif
 
   /* Now, return the result of the system call to the caller. */
   return(result);
@@ -514,7 +501,7 @@ register struct proc *rp;	/* this process is now runnable */
 
 #if DEBUG_SCHED_CHECK
   check_runqueues("ready");
-  if(rp->p_ready) kprintf("ready() already ready process\n", NO_NUM);
+  if(rp->p_ready) kprintf("ready() already ready process\n");
 #endif
 
   /* Processes, in principle, are added to the end of the queue. However, 
@@ -562,7 +549,7 @@ register struct proc *rp;	/* this process is no longer runnable */
 
 #if DEBUG_SCHED_CHECK
   check_runqueues("unready");
-  if (! rp->p_ready) kprintf("unready() already unready process\n", NO_NUM);
+  if (! rp->p_ready) kprintf("unready() already unready process\n");
 #endif
 
   /* Now make sure that the process is not in its ready queue. Remove the 
@@ -582,6 +569,13 @@ register struct proc *rp;	/* this process is no longer runnable */
       }
       prev_xp = *xpp;				/* save previous in chain */
   }
+  
+  /* The caller blocked. Reset the scheduling priority and quantums allowed.
+   * The process' priority may have been lowered if a process consumed too 
+   * many full quantums in a row to prevent damage from infinite loops 
+   */
+  rp->p_priority = rp->p_max_priority;
+  rp->p_full_quantums = QUANTUMS(rp->p_priority);
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 0;
@@ -598,19 +592,8 @@ struct proc *sched_ptr;				/* quantum eating process */
   int q;
 
   /* Check if this process is preemptible, otherwise leave it as is. */
-  if (! (priv(sched_ptr)->s_flags & PREEMPTIBLE)) { 
-#if DEAD_CODE
-      kprintf("Warning, sched for nonpreemptible proc %d\n", sched_ptr->p_nr);
-#endif
-      return;
-  }
+  if (! (priv(sched_ptr)->s_flags & PREEMPTIBLE))  return;
 
-#if DEAD_CODE
-  if (sched_ptr->p_nr == IS_PROC_NR) {
-      kprintf("Scheduling IS: pri: %d, ", sched_ptr->p_priority);
-      kprintf("qua %d", sched_ptr->p_full_quantums);
-  }
-#endif
   /* Process exceeded the maximum number of full quantums it is allowed
    * to use in a row. Lower the process' priority, but make sure we don't 
    * end up in the IDLE queue. This helps to limit the damage caused by 
@@ -619,13 +602,10 @@ struct proc *sched_ptr;				/* quantum eating process */
    */
   if (-- sched_ptr->p_full_quantums <= 0) {	/* exceeded threshold */ 
       if (sched_ptr->p_priority + 1 < IDLE_Q ) {
+	  q = sched_ptr->p_priority + 1;	/* backup new priority */
           unready(sched_ptr);			/* remove from queues */
-          sched_ptr->p_priority ++; 		/* lower priority */
+          sched_ptr->p_priority = q; 		/* lower priority */
           ready(sched_ptr);			/* add to new queue */
-#if DEAD_CODE
-kprintf("Warning, proc %d got lower priority: ", sched_ptr->p_nr);
-kprintf("%d\n", sched_ptr->p_priority);
-#endif
       }
       sched_ptr->p_full_quantums = QUANTUMS(sched_ptr->p_priority);
   }
@@ -646,14 +626,6 @@ kprintf("%d\n", sched_ptr->p_priority);
   /* Give the expired process a new quantum and see who is next to run. */
   sched_ptr->p_sched_ticks = sched_ptr->p_quantum_size;
   pick_proc();					
-
-#if DEAD_CODE
-  if (sched_ptr->p_nr == IS_PROC_NR) {
-      kprintf("Next proc: %d, ", next_ptr->p_nr); 
-      kprintf("pri: %d, ", next_ptr->p_priority); 
-      kprintf("qua: %d\n", next_ptr->p_full_quantums); 
-  }
-#endif
 }
 
 

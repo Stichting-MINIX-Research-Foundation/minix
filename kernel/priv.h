@@ -50,8 +50,8 @@ struct priv {
 #define priv_id(rp)	  ((rp)->p_priv->s_id)
 #define priv(rp)	  ((rp)->p_priv)
 
-#define id_to_nr(id)	priv_addr(id)->s_proc_nr;
-#define nr_to_id(nr)    priv(proc_addr(nr))->s_id;
+#define id_to_nr(id)	priv_addr(id)->s_proc_nr
+#define nr_to_id(nr)    priv(proc_addr(nr))->s_id
 
 /* The system structures table and pointers to individual table slots. The 
  * pointers allow faster access because now a process entry can be found by 

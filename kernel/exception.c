@@ -48,7 +48,7 @@ unsigned vec_nr;
   ep = &ex_data[vec_nr];
 
   if (vec_nr == 2) {		/* spurious NMI on some machines */
-	kprintf("got spurious NMI\n",NO_NUM);
+	kprintf("got spurious NMI\n");
 	return;
   }
 
@@ -67,8 +67,8 @@ unsigned vec_nr;
   else
 	kprintf("\n%s\n", ep->msg);
   kprintf("k_reenter = %d ", k_reenter);
-  kprintf("process %d (%s)", proc_nr(saved_proc), saved_proc->p_name);
-  kprintf("pc = %d:0x%x", (unsigned) saved_proc->p_reg.cs,
+  kprintf("process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);
+  kprintf("pc = %u:0x%x", (unsigned) saved_proc->p_reg.cs,
   (unsigned) saved_proc->p_reg.pc);
 
   panic("exception in a kernel task", NO_NUM);

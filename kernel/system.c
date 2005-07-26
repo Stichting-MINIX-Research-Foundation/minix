@@ -11,7 +11,7 @@
  *
  * In addition to the main sys_task() entry point, which starts the main loop,
  * there are several other minor entry points:
- *   set_priv:		assign privilege structure to user or system process
+ *   get_priv:		assign privilege structure to user or system process
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via PM
  *   umap_local:	map virtual address in LOCAL_SEG to physical 
@@ -164,9 +164,9 @@ PRIVATE void initialize(void)
 
 
 /*===========================================================================*
- *			         set_priv				     *
+ *			         get_priv				     *
  *===========================================================================*/
-PUBLIC int set_priv(rc, proc_type)
+PUBLIC int get_priv(rc, proc_type)
 register struct proc *rc;		/* new (child) process pointer */
 int proc_type;				/* system or user process flag */
 {

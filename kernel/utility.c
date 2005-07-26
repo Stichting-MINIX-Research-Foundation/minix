@@ -12,9 +12,9 @@
  * output driver when a new message is ready. 
  */
 
+#include <stdarg.h>
 #include "kernel.h"
 #include <unistd.h>
-#include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -58,6 +58,7 @@ int nr;
 PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
 {
   int c;					/* next character in fmt */
+  int d;
   unsigned long u;				/* hold number argument */
   int base;					/* base of number arg */
   int negative = 0;				/* print minus sign */
@@ -79,8 +80,8 @@ PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
            * conversion after the switch statement.
            */ 
           case 'd':				/* output decimal */
-              u = va_arg(argp, int);
-              if (u < 0) { negative = 1; u = -u; }
+              d = va_arg(argp, signed int);
+              if (d < 0) { negative = 1; u = -d; }  else { u = d; }
               base = 10;
               break;
           case 'u':				/* output unsigned long */
@@ -116,6 +117,7 @@ PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
           /* This is where the actual output for format "%key" is done. */
           if (negative) kputc('-');  		/* print sign if negative */
           while(*s != 0) { kputc(*s++); }	/* print string/ number */
+	  s = NULL;				/* reset for next round */
       }
       else {
           kputc(c);				/* print and continue */
