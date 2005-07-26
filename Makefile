@@ -60,5 +60,6 @@ all install clean::
 	cd man && $(MAKE) $@	# First manpages, then commands
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 	cd tools && $(MAKE) $@
+	cd test && $(MAKE) $@
 	cd servers && $(MAKE) $@
 
