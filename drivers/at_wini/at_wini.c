@@ -167,6 +167,7 @@ int wakeup_ticks = WAKEUP;
 #else
 #define ATAPI		   0	/* don't bother with ATAPI; optimise out */
 #endif
+#define IDENTIFIED	0x10	/* w_identify done successfully */
 
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 
@@ -317,16 +318,18 @@ message *m_ptr;
   struct wini *wn;
 
   if (w_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+
   wn = w_wn;
 
-  if (wn->state == 0) {
+  if (!(wn->state & (IDENTIFIED)) || (wn->state & DEAF)) {
 	/* Try to identify the device. */
 	if (w_identify() != OK) {
-		printf("%s: probe failed\n", w_name());
+  		printf("%s: probe failed\n", w_name());
 		if (wn->state & DEAF) w_reset();
 		wn->state = 0;
 		return(ENXIO);
 	}
+
   }
   if (wn->open_ct == 0) {
 #if ENABLE_ATAPI
@@ -448,7 +451,7 @@ PRIVATE int w_identify()
 	/* Not an ATA device; no translations, no special features.  Don't
 	 * touch it unless the BIOS knows about it.
 	 */
-	if (wn->lcylinders == 0) return(ERR);	/* no BIOS parameters */
+	if (wn->lcylinders == 0) { return(ERR); }	/* no BIOS parameters */
 	wn->pcylinders = wn->lcylinders;
 	wn->pheads = wn->lheads;
 	wn->psectors = wn->lsectors;
@@ -458,7 +461,9 @@ PRIVATE int w_identify()
   /* Size of the whole drive */
   wn->part[0].dv_size = mul64u(size, SECTOR_SIZE);
 
-  if (w_specify() != OK && w_specify() != OK) return(ERR);
+  if (w_specify() != OK && w_specify() != OK) {
+  	return(ERR);
+  }
 
   printf("%s: user-space AT Winchester driver detected ", w_name());
   if (wn->state & (SMART|ATAPI)) {
@@ -473,6 +478,7 @@ PRIVATE int w_identify()
   	panic(w_name(), "coudn't set IRQ policy", s);
   if ((s=sys_irqenable(&wn->irq_hook_id)) != OK)
   	panic(w_name(), "coudn't enable IRQ line", s);
+  wn->state |= IDENTIFIED;
   return(OK);
 }
 
