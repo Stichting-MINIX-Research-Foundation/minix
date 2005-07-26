@@ -51,6 +51,7 @@ PUBLIC void main(void)
             case SYS_EVENT:
                 sigset = (sigset_t) m_in.NOTIFY_ARG;
             	if (sigismember(&sigset, SIGTERM)) {
+            	    exit(3);
                     /* nothing to do on shutdown */    
             	} 
             	if (sigismember(&sigset, SIGKSTOP)) {

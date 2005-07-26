@@ -30,7 +30,6 @@ EXTERN struct fproc {
 #define NOT_REVIVING       0	/* process is not being revived */
 #define REVIVING           1	/* process is being revived from suspension */
 #define PID_FREE	   0	/* process slot free */
-#define PID_SERVER	 (-1)	/* process has become a server */
 
 /* Check is process number is acceptable - includes system processes. */
 #define isokprocnr(n)	((unsigned)((n)+NR_TASKS) < NR_PROCS + NR_TASKS)

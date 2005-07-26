@@ -405,7 +405,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
 	printf("PM: signal %d sent to %s process %d\n",
-		(rmp->mp_flags & ZOMBIE) ? "zombie" : "dead", signo, slot);
+		signo, (rmp->mp_flags & ZOMBIE) ? "zombie" : "dead", slot);
 	panic(__FILE__,"", NO_NUM);
   }
   if ((rmp->mp_flags & TRACED) && signo != SIGKILL) {

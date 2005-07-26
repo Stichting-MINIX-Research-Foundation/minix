@@ -200,14 +200,14 @@ PRIVATE void pm_init()
   			rmp->mp_pid = INIT_PID;
 			rmp->mp_parent = PM_PROC_NR;
 			rmp->mp_flags |= IN_USE; 
-  			sigemptyset(&rmp->mp_ignore);	
   			rmp->mp_nice = 0;
+  			sigemptyset(&rmp->mp_ignore);	
 		}
 		else {					/* system process */
   			rmp->mp_pid = get_free_pid();
-			rmp->mp_parent = INIT_PROC_NR;
+			rmp->mp_parent = SM_PROC_NR;
 			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
-			sigfillset(&rmp->mp_ignore);
+  			sigfillset(&rmp->mp_ignore);	
 		}
   		sigemptyset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
@@ -230,8 +230,10 @@ PRIVATE void pm_init()
   }
 
   /* PM is somewhat special. Override some details. */ 
-  mproc[PM_PROC_NR].mp_pid = PM_PID;
-  mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;
+  sigfillset(&mproc[PM_PROC_NR].mp_ignore);	/* guard against signals */
+  mproc[PM_PROC_NR].mp_pid = PM_PID;		/* magically override pid */
+  mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;	/* PM doesn't have parent */
+
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;

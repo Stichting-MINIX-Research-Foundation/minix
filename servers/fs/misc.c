@@ -369,7 +369,7 @@ PUBLIC int do_exit()
 	}
   }
 
-  /* Truly exiting, or becoming a server? */
+  /* Mark slot as free. */
   fp->fp_pid = PID_FREE;
   return(OK);
 }

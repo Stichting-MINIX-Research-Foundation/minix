@@ -310,6 +310,7 @@ PUBLIC void privileges_dmp()
   register struct proc *rp;
   static struct proc *oldrp = BEG_PROC_ADDR;
   register struct priv *sp;
+  static char send_mask[NR_SYS_PROCS + 1 + NR_SYS_PROCS/8];
   int r, i,j, n = 0;
 
   /* First obtain a fresh copy of the current process and system table. */
@@ -322,7 +323,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name--- -flags- -sc-\n");
+  printf("\n--nr-id-name--- -flags- -sc- -send mask-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -336,11 +337,17 @@ PUBLIC void privileges_dmp()
         if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
 	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s 0x%02x    %02.2u",
+	printf("(%02u) %-7.7s 0x%02x   %02.2u  ",
 	       sp->s_id, rp->p_name,
 	       sp->s_flags, sp->s_call_mask 
         );
-	printf("\n");
+        for (i=j=0; i < NR_SYS_PROCS; i++, j++) {
+       	    send_mask[j] = get_sys_bit(sp->s_send_mask, i) ? '1' : '0';
+       	    if (i % 8 == 7) send_mask[++j] = ' ';
+       	}
+        send_mask[j] = '\0';
+
+	printf(" %s \n", send_mask);
   }
   if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
   oldrp = rp;

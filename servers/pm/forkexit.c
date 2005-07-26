@@ -137,7 +137,6 @@ int exit_status;		/* the process' exit status (for parent) */
   clock_t t[5];
 
   proc_nr = (int) (rmp - mproc);	/* get process slot number */
-  DEBUG(proc_nr == PRINTER, printf("PM: printer about to die ...\n"));
 
   /* Remember a session leader's process group. */
   procgrp = (rmp->mp_pid == mp->mp_procgrp) ? mp->mp_procgrp : 0;
@@ -152,7 +151,6 @@ int exit_status;		/* the process' exit status (for parent) */
   p_mp->mp_child_stime += t[1] + rmp->mp_child_stime;	/* add system time */
 
   /* Tell the kernel and FS that the process is no longer runnable. */
-  DEBUG(proc_nr == PRINTER, printf("PM: telling FS and kernel about xit...\n"));
   tell_fs(EXIT, proc_nr, 0, 0);  /* file system can free the proc slot */
   sys_exit(proc_nr);
 
@@ -173,16 +171,12 @@ int exit_status;		/* the process' exit status (for parent) */
 
   pidarg = p_mp->mp_wpid;		/* who's being waited for? */
   parent_waiting = p_mp->mp_flags & WAITING;
-  DEBUG(proc_nr == PRINTER, printf("PM: parent waiting %d, for %d...\n", parent_waiting, pidarg));
-  
   right_child =				/* child meets one of the 3 tests? */
 	(pidarg == -1 || pidarg == rmp->mp_pid || -pidarg == rmp->mp_procgrp);
 
   if (parent_waiting && right_child) {
-  DEBUG(proc_nr == PRINTER, printf("PM: parent waiting, release slot...\n"));
 	cleanup(rmp);			/* tell parent and release child slot */
   } else {
-  DEBUG(proc_nr == PRINTER, printf("PM: parent not waiting, zombify ...\n"));
 	rmp->mp_flags = IN_USE|ZOMBIE;	/* parent not waiting, zombify child */
 	sig_proc(p_mp, SIGCHLD);	/* send parent a "child died" signal */
   }
