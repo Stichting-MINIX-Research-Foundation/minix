@@ -10,15 +10,14 @@ MAKE=	exec make -$(MAKEFLAGS)
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
+	../servers/sm/sm \
 	../servers/is/is \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/at_wini/at_wini \
 	../drivers/floppy/floppy \
-	../drivers/printer/printer \
 	../drivers/rtl8139/rtl8139 \
 	../drivers/fxp/fxp \
-	../drivers/dpeth/dpeth \
 	../drivers/log/log \
 	../servers/init/init \
 #	bootdev.img
@@ -30,6 +29,7 @@ usage:
 	@echo " " >&2
 	@echo "Usage:" >&2
 	@echo "	make includes   # Install include files" >&2
+	@echo "	make depend     # Generate dependency files" >&2
 	@echo "	make libraries  # Make system libraries" >&2
 	@echo "	make programs   # Compile and install all programs" >&2
 	@echo "	make fresh      # Make clean, libraries, and programs" >&2
@@ -61,7 +61,7 @@ includes:
 depend:
 	cd ../ && $(MAKE) depend
 
-programs: includes depend
+programs: includes 
 	cd ../kernel && $(MAKE) 
 	cd ../servers && $(MAKE) install
 	cd ../drivers && $(MAKE) install
