@@ -34,7 +34,7 @@ usr:	\
 	/usr/bin/mkdep \
 	/usr/bin/mkdist \
 	/usr/bin/setup \
-	/usr/bin/setupcd \
+	/usr/bin/floppysetup \
 	/usr/bin/spell \
 	/usr/bin/srccrc \
 	/usr/bin/svclog \
@@ -102,7 +102,7 @@ clean:
 /usr/bin/mkdist:	mkdist.sh
 	install -m 755 -c -o bin $? $@
 
-/usr/bin/setupcd:	setupcd.sh
+/usr/bin/floppysetup:	floppysetup.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/setup:	setup.sh
