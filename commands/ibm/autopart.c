@@ -2208,7 +2208,7 @@ prettysizeprint(int kb)
 		}
 	}
 	sprintf(str, "%4d %cB%s", kb, unit,
-		toosmall ? ", too small for MINIX3" : "");
+		toosmall ? ", too small for MINIX 3" : "");
 	return str;
 }
 
