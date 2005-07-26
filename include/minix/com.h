@@ -31,13 +31,13 @@
 /* Magic numbers for controllers. Device driver mapping is dynamic. */
 #define CTRLR(n)	(NONE + (n))
 
-/* User-level processes, that is, device drivers, servers, and INIT. */
+/* User-space processes, that is, device drivers, servers, and INIT. */
 #define PM_PROC_NR	 0	/* process manager */
 #define FS_PROC_NR 	 1	/* file system */
 #define SM_PROC_NR 	 2	/* system service manager */
-#define IS_PROC_NR	 5 	/* information server */
-#define TTY		 6	/* terminal (TTY) driver */
-#define MEMORY	 	 8  	/* memory driver (RAM disk, null, etc.) */
+#define IS_PROC_NR	 3 	/* information server */
+#define TTY		 4	/* terminal (TTY) driver */
+#define MEMORY	 	 5  	/* memory driver (RAM disk, null, etc.) */
 #define AT_WINI		(MEMORY + ENABLE_AT_WINI)	/* AT Winchester */
 #define FLOPPY		(AT_WINI + ENABLE_FLOPPY)	/* floppy disk */
 #define PRINTER		(FLOPPY + ENABLE_PRINTER)	/* Centronics */

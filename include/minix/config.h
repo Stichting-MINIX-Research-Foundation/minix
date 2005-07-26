@@ -80,7 +80,7 @@
 #define ENABLE_PCI	   1	/* enable PCI device recognition */
 
 /* Include or exclude user-level device drivers (and supporting servers). */
-#define ENABLE_PRINTER     1	/* user-level Centronics printer driver */
+#define ENABLE_PRINTER     0	/* user-level Centronics printer driver */
 #define ENABLE_FLOPPY      1	/* enable floppy disk driver */
 #define ENABLE_AT_WINI     1	/* enable AT winchester driver */
 #define   ENABLE_ATAPI     1	/* add ATAPI support to AT driver */
@@ -89,7 +89,7 @@
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */
 
 /* Enable or disable networking drivers. */
-#define ENABLE_DPETH	 1	/* enable DP8390 ethernet driver */
+#define ENABLE_DPETH	 0	/* enable DP8390 ethernet driver */
 #define   ENABLE_WDETH     0	/*   add Western Digital WD80x3 */
 #define   ENABLE_NE2000    0	/*   add Novell NE1000/NE2000 */
 #define   ENABLE_3C503     0	/*   add 3Com Etherlink II (3c503) */
