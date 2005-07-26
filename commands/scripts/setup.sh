@@ -27,7 +27,7 @@ while getopts '' opt; do usage; done
 shift `expr $OPTIND - 1`
 
 if [ "$USER" != root ]
-then	echo "Please run setupcd as root."
+then	echo "Please run setup as root."
 	exit 1
 fi
 
