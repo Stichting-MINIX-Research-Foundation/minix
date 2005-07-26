@@ -25,7 +25,8 @@ void logline(FILE *outfp, char *proc, char *line)
 	/* Trim off year and newline. */
 	if((s=strrchr(d, ' ')))
 		*s = '\0';
-	fprintf(outfp, "%s %s kernel: %s\n", d, nodename, line);
+	if(s=strchr(d, ' ')) d = s+1;
+	fprintf(outfp, "%s %s: %s\n", d, nodename, line);
 }
 
 void copy(int in_fd, FILE *outfp)
