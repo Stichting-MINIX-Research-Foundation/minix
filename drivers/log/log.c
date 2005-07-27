@@ -354,8 +354,6 @@ PRIVATE void do_status(message *m_ptr)
 	int d, nr = 0;
 	message m;
 
-	printf("do_status..\n");
-
 	/* Caller has requested pending status information, which currently
 	 * can be pending available select()s, or REVIVE events. One message
 	 * is returned for every event, or DEV_NO_STATUS if no (more) events
@@ -431,7 +429,6 @@ message *m_ptr;
 		break;
 	}
 	case DEV_STATUS: {
-		printf("status..\n");
 		do_status(m_ptr);
 		r = EDONTREPLY;
 		break;
