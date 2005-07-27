@@ -89,8 +89,9 @@ FORWARD _PROTOTYPE ( int sr_restart_ioctl, (sr_fd_t *fdp) );
 FORWARD _PROTOTYPE ( int sr_cancel, (message *m) );
 #ifndef __minix_vmd /* Minix 3 */
 FORWARD _PROTOTYPE ( int sr_select, (message *m) );
+FORWARD _PROTOTYPE ( void sr_status, (message *m) );
 #endif
-FORWARD _PROTOTYPE ( void sr_reply, (mq_t *m, int reply, int can_enqueue) );
+FORWARD _PROTOTYPE ( void sr_reply_, (mq_t *m, int reply, int is_revive) );
 FORWARD _PROTOTYPE ( sr_fd_t *sr_getchannel, (int minor));
 FORWARD _PROTOTYPE ( acc_t *sr_get_userdata, (int fd, vir_bytes offset,
 					vir_bytes count, int for_ioctl) );
@@ -103,7 +104,7 @@ FORWARD _PROTOTYPE (void sr_select_res, (int fd, unsigned ops) );
 #endif
 FORWARD _PROTOTYPE ( int sr_repl_queue, (int proc, int ref, int operation) );
 FORWARD _PROTOTYPE ( int walk_queue, (sr_fd_t *sr_fd, mq_t *q_head, 
-			mq_t **q_tail_ptr, int type, int proc_nr, int ref) );
+	mq_t **q_tail_ptr, int type, int proc_nr, int ref, int first_flag) );
 FORWARD _PROTOTYPE ( void process_req_q, (mq_t *mq, mq_t *tail, 
 							mq_t **tail_ptr) );
 FORWARD _PROTOTYPE ( void sr_event, (event_t *evp, ev_arg_t arg) );
@@ -131,6 +132,11 @@ mq_t *m;
 	int result;
 	int send_reply, free_mess;
 
+#if 0
+	if (m->mq_mess.m_source == FS_PROC_NR)
+		printf("sr_rec: got type %d from FS\n", m->mq_mess.m_type);
+#endif
+
 	if (repl_queue)
 	{
 		if (m->mq_mess.m_type == DEV_CANCEL)
@@ -148,8 +154,10 @@ mq_t *m;
 				return;	/* canceled request in queue */
 			}
 		}
+#if 0
 		else
 			sr_repl_queue(ANY, 0, 0);
+#endif
 	}
 
 	switch (m->mq_mess.m_type)
@@ -190,6 +198,11 @@ mq_t *m;
 		send_reply= 1;
 		free_mess= 1;
 		break;
+	case DEV_STATUS:
+		sr_status(&m->mq_mess);
+		send_reply= 0;
+		free_mess= 1;
+		break;
 #endif
 	default:
 		ip_panic(("unknown message, from %d, type %d",
@@ -197,7 +210,7 @@ mq_t *m;
 	}
 	if (send_reply)
 	{
-		sr_reply(m, result, FALSE);
+		sr_reply_(m, result, FALSE /* !is_revive */);
 	}
 	if (free_mess)
 		mq_free(m);
@@ -296,13 +309,17 @@ mq_t *m;
 {
 	sr_fd_t *sr_fd;
 	mq_t **q_head_ptr, **q_tail_ptr;
-	int ip_flag, susp_flag;
+	int ip_flag, susp_flag, first_flag;
 	int r;
 	ioreq_t request;
 	size_t size;
 
 	sr_fd= sr_getchannel(m->mq_mess.NDEV_MINOR);
 	assert (sr_fd);
+
+#if 0
+	printf("sr_rwio: for %d\n", m->mq_mess.NDEV_PROC);
+#endif
 
 	switch(m->mq_mess.m_type)
 	{
@@ -311,18 +328,21 @@ mq_t *m;
 		q_tail_ptr= &sr_fd->srf_read_q_tail;
 		ip_flag= SFF_READ_IP;
 		susp_flag= SFF_READ_SUSP;
+		first_flag= SFF_READ_FIRST;
 		break;
 	case DEV_WRITE:
 		q_head_ptr= &sr_fd->srf_write_q;
 		q_tail_ptr= &sr_fd->srf_write_q_tail;
 		ip_flag= SFF_WRITE_IP;
 		susp_flag= SFF_WRITE_SUSP;
+		first_flag= SFF_WRITE_FIRST;
 		break;
 	case DEV_IOCTL3:
 		q_head_ptr= &sr_fd->srf_ioctl_q;
 		q_tail_ptr= &sr_fd->srf_ioctl_q_tail;
 		ip_flag= SFF_IOCTL_IP;
 		susp_flag= SFF_IOCTL_SUSP;
+		first_flag= SFF_IOCTL_FIRST;
 		break;
 	default:
 		ip_panic(("illegal case entry"));
@@ -341,6 +361,8 @@ mq_t *m;
 
 	*q_tail_ptr= *q_head_ptr= m;
 	sr_fd->srf_flags |= ip_flag;
+	assert(!(sr_fd->srf_flags & first_flag));
+	sr_fd->srf_flags |= first_flag;
 
 	switch(m->mq_mess.m_type)
 	{
@@ -381,10 +403,15 @@ mq_t *m;
 		ip_panic(("illegal case entry"));
 	}
 
+	assert(sr_fd->srf_flags & first_flag);
+	sr_fd->srf_flags &= ~first_flag;
+
 	assert(r == OK || r == SUSPEND || 
 		(printf("r= %d\n", r), 0));
 	if (r == SUSPEND)
 		sr_fd->srf_flags |= susp_flag;
+	else
+		mq_free(m);
 	return r;
 }
 
@@ -491,7 +518,7 @@ message *m;
 	{
 		result= walk_queue(sr_fd, sr_fd->srf_ioctl_q, 
 			&sr_fd->srf_ioctl_q_tail, SR_CANCEL_IOCTL,
-			proc_nr, ref);
+			proc_nr, ref, SFF_IOCTL_FIRST);
 		if (result != EAGAIN)
 			return result;
 	}
@@ -501,7 +528,7 @@ message *m;
 	{
 		result= walk_queue(sr_fd, sr_fd->srf_read_q, 
 			&sr_fd->srf_read_q_tail, SR_CANCEL_READ,
-			proc_nr, ref);
+			proc_nr, ref, SFF_READ_FIRST);
 		if (result != EAGAIN)
 			return result;
 	}
@@ -511,7 +538,7 @@ message *m;
 	{
 		result= walk_queue(sr_fd, sr_fd->srf_write_q, 
 			&sr_fd->srf_write_q_tail, SR_CANCEL_WRITE,
-			proc_nr, ref);
+			proc_nr, ref, SFF_WRITE_FIRST);
 		if (result != EAGAIN)
 			return result;
 	}
@@ -563,14 +590,80 @@ message *m;
 
 	return m_ops;
 }
+
+PRIVATE void sr_status(m)
+message *m;
+{
+	int fd, result;
+	unsigned m_ops;
+	sr_fd_t *sr_fd;
+	mq_t *mq;
+
+	mq= repl_queue;
+	if (mq != NULL)
+	{
+		repl_queue= mq->mq_next;
+
+#if 0
+		printf("sr_status: status %d for proc %d\n",
+			mq->mq_mess.REP_STATUS, mq->mq_mess.REP_PROC_NR);
 #endif
 
-PRIVATE int walk_queue(sr_fd, q_head, q_tail_ptr, type, proc_nr, ref)
+		mq->mq_mess.m_type= DEV_REVIVE;
+		result= send(mq->mq_mess.m_source, &mq->mq_mess);
+		if (result != OK)
+			ip_panic(("unable to send"));
+		mq_free(mq);
+
+		return;
+	}
+
+	for (fd=0, sr_fd= sr_fd_table; fd<FD_NR; fd++, sr_fd++)
+	{
+		if ((sr_fd->srf_flags &
+			(SFF_SELECT_R|SFF_SELECT_W|SFF_SELECT_X)) == 0)
+		{
+			/* Nothing to report */
+			continue;
+		}
+		if (sr_fd->srf_select_proc != m->m_source)
+		{
+			/* Wrong process */
+			continue;
+		}
+
+		m_ops= 0;
+		if (sr_fd->srf_flags & SFF_SELECT_R) m_ops |= SEL_RD;
+		if (sr_fd->srf_flags & SFF_SELECT_W) m_ops |= SEL_WR;
+		if (sr_fd->srf_flags & SFF_SELECT_X) m_ops |= SEL_ERR;
+
+		sr_fd->srf_flags &= ~(SFF_SELECT_R|SFF_SELECT_W|SFF_SELECT_X);
+
+		m->m_type= DEV_IO_READY;
+		m->DEV_MINOR= fd;
+		m->DEV_SEL_OPS= m_ops;
+
+		result= send(m->m_source, m);
+		if (result != OK)
+			ip_panic(("unable to send"));
+		return;
+	}
+
+	m->m_type= DEV_NO_STATUS;
+	result= send(m->m_source, m);
+	if (result != OK)
+		ip_panic(("unable to send"));
+}
+#endif
+
+PRIVATE int walk_queue(sr_fd, q_head, q_tail_ptr, type, proc_nr, ref,
+	first_flag)
 sr_fd_t *sr_fd;
 mq_t *q_head, **q_tail_ptr;
 int type;
 int proc_nr;
 int ref;
+int first_flag;
 {
 	mq_t *q_ptr_prv, *q_ptr;
 	int result;
@@ -586,8 +679,15 @@ int ref;
 #endif
 		if (!q_ptr_prv)
 		{
+			assert(!(sr_fd->srf_flags & first_flag));
+			sr_fd->srf_flags |= first_flag;
+
 			result= (*sr_fd->srf_cancel)(sr_fd->srf_fd, type);
 			assert(result == OK);
+
+			assert(sr_fd->srf_flags & first_flag);
+			sr_fd->srf_flags &= ~first_flag;
+
 			return OK;
 		}
 		q_ptr_prv->mq_next= q_ptr->mq_next;
@@ -615,10 +715,10 @@ int minor;
 	return loc_fd;
 }
 
-PRIVATE void sr_reply (mq, status, can_enqueue)
+PRIVATE void sr_reply_(mq, status, is_revive)
 mq_t *mq;
 int status;
-int can_enqueue;
+int is_revive;
 {
 	int result, proc, ref,operation;
 	message reply, *mp;
@@ -634,7 +734,11 @@ int can_enqueue;
 	assert(operation != DEV_CANCEL);
 #endif
 
-	if (can_enqueue)
+#if 0
+	printf("sr_reply: for %d, is_revive = %d\n", proc, is_revive);
+#endif
+
+	if (is_revive)
 		mp= &mq->mq_mess;
 	else
 		mp= &reply;
@@ -646,8 +750,15 @@ int can_enqueue;
 	mp->REP_REF= ref;
 	mp->REP_OPERATION= operation;
 #endif
-	result= send(mq->mq_mess.m_source, mp);
-	if (result == ELOCKED && can_enqueue)
+	if (is_revive)
+	{
+		alert(mq->mq_mess.m_source);
+		result= ELOCKED;
+	}
+	else
+		result= send(mq->mq_mess.m_source, mp);
+
+	if (result == ELOCKED && is_revive)
 	{
 		mq->mq_next= NULL;
 		if (repl_queue)
@@ -659,7 +770,7 @@ int can_enqueue;
 	}
 	if (result != OK)
 		ip_panic(("unable to send"));
-	if (can_enqueue)
+	if (is_revive)
 		mq_free(mq);
 }
 
@@ -671,9 +782,8 @@ int for_ioctl;
 {
 	sr_fd_t *loc_fd;
 	mq_t **head_ptr, *m, *mq;
-	int ip_flag, susp_flag;
-	int result;
-	int suspended;
+	int ip_flag, susp_flag, first_flag;
+	int result, suspended, is_revive;
 	char *src;
 	acc_t *acc;
 	event_t *evp;
@@ -687,6 +797,7 @@ int for_ioctl;
 		evp= &loc_fd->srf_ioctl_ev;
 		ip_flag= SFF_IOCTL_IP;
 		susp_flag= SFF_IOCTL_SUSP;
+		first_flag= SFF_IOCTL_FIRST;
 	}
 	else
 	{
@@ -694,6 +805,7 @@ int for_ioctl;
 		evp= &loc_fd->srf_write_ev;
 		ip_flag= SFF_WRITE_IP;
 		susp_flag= SFF_WRITE_SUSP;
+		first_flag= SFF_WRITE_FIRST;
 	}
 		
 assert (loc_fd->srf_flags & ip_flag);
@@ -704,7 +816,8 @@ assert (loc_fd->srf_flags & ip_flag);
 		mq= m->mq_next;
 		*head_ptr= mq;
 		result= (int)offset;
-		sr_reply (m, result, 1);
+		is_revive= !(loc_fd->srf_flags & first_flag);
+		sr_reply_(m, result, is_revive);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
@@ -733,9 +846,8 @@ int for_ioctl;
 {
 	sr_fd_t *loc_fd;
 	mq_t **head_ptr, *m, *mq;
-	int ip_flag, susp_flag;
-	int result;
-	int suspended;
+	int ip_flag, susp_flag, first_flag;
+	int result, suspended, is_revive;
 	char *dst;
 	event_t *evp;
 	ev_arg_t arg;
@@ -748,6 +860,7 @@ int for_ioctl;
 		evp= &loc_fd->srf_ioctl_ev;
 		ip_flag= SFF_IOCTL_IP;
 		susp_flag= SFF_IOCTL_SUSP;
+		first_flag= SFF_IOCTL_FIRST;
 	}
 	else
 	{
@@ -755,6 +868,7 @@ int for_ioctl;
 		evp= &loc_fd->srf_read_ev;
 		ip_flag= SFF_READ_IP;
 		susp_flag= SFF_READ_SUSP;
+		first_flag= SFF_READ_FIRST;
 	}
 		
 	assert (loc_fd->srf_flags & ip_flag);
@@ -765,7 +879,8 @@ int for_ioctl;
 		mq= m->mq_next;
 		*head_ptr= mq;
 		result= (int)offset;
-		sr_reply (m, result, 1);
+		is_revive= !(loc_fd->srf_flags & first_flag);
+		sr_reply_(m, result, is_revive);
 		suspended= (loc_fd->srf_flags & susp_flag);
 		loc_fd->srf_flags &= ~(ip_flag|susp_flag);
 		if (suspended)
@@ -789,25 +904,15 @@ PRIVATE void sr_select_res(fd, ops)
 int fd;
 unsigned ops;
 {
-	unsigned m_ops;
 	sr_fd_t *sr_fd;
-	message m;
 
 	sr_fd= &sr_fd_table[fd];
 	
-	m_ops= 0;
-	if (ops & SR_SELECT_READ) m_ops |= SEL_RD;
-	if (ops & SR_SELECT_WRITE) m_ops |= SEL_WR;
-	if (ops & SR_SELECT_EXCEPTION) m_ops |= SEL_ERR;
+	if (ops & SR_SELECT_READ) sr_fd->srf_flags |= SFF_SELECT_R;
+	if (ops & SR_SELECT_WRITE) sr_fd->srf_flags |= SFF_SELECT_W;
+	if (ops & SR_SELECT_EXCEPTION) sr_fd->srf_flags |= SFF_SELECT_X;
 
-	m.NOTIFY_TYPE= DEV_SELECTED;
-	m.NOTIFY_ARG= fd;
-	m.NOTIFY_FLAGS= m_ops;
-
-	printf("sr_select_res: notifying caller %d with ops 0%o\n",
-		sr_fd->srf_select_proc, m_ops);
-
-	notify(sr_fd->srf_select_proc, &m);
+	alert(sr_fd->srf_select_proc);
 }
 #endif
 

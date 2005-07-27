@@ -29,17 +29,23 @@ typedef struct sr_fd
 	event_t srf_write_ev;
 } sr_fd_t;
 
-#	define SFF_FREE		0x00
-#	define SFF_MINOR	0x01
-#	define SFF_INUSE	0x02
-#define SFF_BUSY		0x1C
-#	define SFF_IOCTL_IP	0x04
-#	define SFF_READ_IP	0x08
-#	define SFF_WRITE_IP	0x10
+#	define SFF_FREE		  0x00
+#	define SFF_MINOR	  0x01
+#	define SFF_INUSE	  0x02
+#define SFF_BUSY		  0x1C
+#	define SFF_IOCTL_IP	  0x04
+#	define SFF_READ_IP	  0x08
+#	define SFF_WRITE_IP	  0x10
 #define SFF_SUSPENDED	0x1C0
-#	define SFF_IOCTL_SUSP	0x40
-#	define SFF_READ_SUSP	0x80
-#	define SFF_WRITE_SUSP	0x100
+#	define SFF_IOCTL_SUSP	  0x40
+#	define SFF_READ_SUSP	  0x80
+#	define SFF_WRITE_SUSP	 0x100
+#define SFF_IOCTL_FIRST		 0x200
+#define SFF_READ_FIRST		 0x400
+#define SFF_WRITE_FIRST		 0x800
+#define SFF_SELECT_R		0x1000
+#define SFF_SELECT_W		0x2000
+#define SFF_SELECT_X		0x4000
 
 EXTERN sr_fd_t sr_fd_table[FD_NR];
 
