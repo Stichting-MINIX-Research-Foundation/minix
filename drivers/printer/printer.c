@@ -85,6 +85,8 @@
  */
 
 PRIVATE int caller;		/* process to tell when printing done (FS) */
+PRIVATE int revive_pending;	/* set to true if revive is pending */
+PRIVATE int revive_status;	/* revive status */
 PRIVATE int done_status;	/* status of last output completion */
 PRIVATE int oleft;		/* bytes of output left in obuf */
 PRIVATE char obuf[128];		/* output buffer */
@@ -102,6 +104,7 @@ extern int errno;		/* error number */
 FORWARD _PROTOTYPE( void do_cancel, (message *m_ptr) );
 FORWARD _PROTOTYPE( void output_done, (void) );
 FORWARD _PROTOTYPE( void do_write, (message *m_ptr) );
+FORWARD _PROTOTYPE( void do_status, (message *m_ptr) );
 FORWARD _PROTOTYPE( void prepare_output, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
 FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
@@ -156,6 +159,7 @@ PUBLIC void main(void)
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.PROC_NR, OK);
 		break;
 	    case DEV_WRITE:	do_write(&pr_mess);	break;
+	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL   :	do_cancel(&pr_mess);	break;
 	    case HARD_INT :	do_printer_output();	break;
 	    default:
@@ -248,10 +252,34 @@ PRIVATE void output_done()
     else {				/* done! report back to FS */
 	status = orig_count;
     }
+#if DEAD_CODE
     reply(REVIVE, caller, proc_nr, status);
     writing = FALSE;
+#else
+    revive_pending = TRUE;
+    revive_status = status;
+    alert(caller);
+#endif
 }
 
+/*===========================================================================*
+ *				do_status				     *
+ *===========================================================================*/
+PRIVATE void do_status(m_ptr)
+register message *m_ptr;	/* pointer to the newly arrived message */
+{
+  if (revive_pending) {
+	m_ptr->m_type = DEV_REVIVE;		/* build message */
+	m_ptr->REP_PROC_NR = proc_nr;
+	m_ptr->REP_STATUS = revive_status;
+
+	writing = FALSE;			/* unmark event */
+	revive_pending = FALSE;			/* unmark event */
+  } else {
+	m_ptr->m_type = DEV_NO_STATUS;
+  }
+  send(m_ptr->m_source, m_ptr);			/* send the message */
+}
 
 /*===========================================================================*
  *				do_cancel				     *
@@ -268,6 +296,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
   if (writing && m_ptr->PROC_NR == proc_nr) {
 	oleft = 0;		/* cancel output by interrupt handler */
 	writing = FALSE;
+	revive_pending = FALSE;
   }
   reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, EINTR);
 }
