@@ -29,7 +29,7 @@ all:	sh
 
 sh:	$(OBJS)
 	$(CC) $(CFLAGS) -o sh $(OBJS) $(LIBS)
-	install -S 128kw sh
+	install -S 256kw sh
 
 install:	/usr/bin/ash /usr/bin/sh /bin/sh
 
