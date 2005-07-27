@@ -12,7 +12,7 @@
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 
-#define LOG_DEBUG		1	/* enable/ disable debugging */
+#define LOG_DEBUG		0	/* enable/ disable debugging */
 
 #define NR_DEVS            	1	/* number of minor devices */
 #define MINOR_KLOG		0	/* /dev/klog */
@@ -33,7 +33,6 @@ FORWARD _PROTOTYPE( int log_select, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_other, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void log_geometry, (struct partition *entry) );
 FORWARD _PROTOTYPE( void log_reply, (int code, int replyee, int proc, int status) );
-FORWARD _PROTOTYPE( void log_notify, (int code, int replyee, int line, int ops) );
 FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count, int proc_nr, vir_bytes user_vir) );
 
 /* Entry points to this driver. */
@@ -69,10 +68,8 @@ PUBLIC void main(void)
 	 	logdevices[i].log_select_alerted =
 	 	logdevices[i].log_selected =
 	 	logdevices[i].log_select_ready_ops = 0;
-#if SUSPENDABLE
  	logdevices[i].log_proc_nr = 0;
  	logdevices[i].log_revive_alerted = 0;
-#endif
  }
  driver_task(&log_dtab);
 }
@@ -133,7 +130,6 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
         	LOGINC(log->log_read, overflow);
         }
 
-#if SUSPENDABLE
         if(log->log_size > 0 && log->log_proc_nr && !log->log_revive_alerted) {
         	/* Someone who was suspended on read can now
         	 * be revived.
@@ -144,7 +140,6 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
     		alert(log->log_source); 
     		printf("alert for revive done..\n");
     		log->log_revive_alerted = 1;
-/*    		log_reply(REVIVE, log->log_source, log->log_proc_nr, r); */
  	} 
 
 	if(log->log_size > 0)
@@ -158,20 +153,13 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
   		 * swallow all the data (log_size > 0).
   		 */
   		if(log->log_selected & SEL_RD) {
-  		/*
-  			log_notify(DEV_SELECTED,
- 			  log->log_select_proc, log_device, SEL_RD);
- 		*/
- 			printf("alert select\n");
     			alert(log->log_select_proc);
- 			printf("alert select done\n");
     			log->log_select_alerted = 1;
 #if LOG_DEBUG
 			printf("log notified %d\n", log->log_select_proc);
 #endif
   		}
   	}
-#endif
 
         return count;
 }
@@ -254,7 +242,6 @@ unsigned nr_req;		/* length of request vector */
 
 	case MINOR_KLOG:
 	    if (opcode == DEV_GATHER) {
-#if SUSPENDABLE
 	    	if (log->log_proc_nr || count < 1) {
 	    		/* There's already someone hanging to read, or
 	    		 * no real I/O requested.
@@ -279,11 +266,6 @@ unsigned nr_req;		/* length of request vector */
 #endif
 	    		return(SUSPEND);
 	    	}
-#else
-	    	if (!log->log_size) {
-	    		return OK;
-	    	}
-#endif
 	    	count = subread(log, count, proc_nr, user_vir);
 	    	if(count < 0) {
 	    		return count;
@@ -305,18 +287,6 @@ unsigned nr_req;		/* length of request vector */
   	if ((iov->iov_size -= count) == 0) { iov++; nr_req--; }
   }
   return(OK);
-}
-
-/*===========================================================================*
- *				log_notify					     *
- *===========================================================================*/
-PRIVATE void log_notify(int code, int replyee, int line, int ops)
-{
-	message lm;
-	lm.NOTIFY_TYPE = code;
-	lm.NOTIFY_ARG = line;
-	lm.NOTIFY_FLAGS = ops;
-	notify(replyee, &lm);
 }
 
 /*===========================================================================*
@@ -367,14 +337,12 @@ PRIVATE int log_cancel(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
 {
-#if SUSPENDABLE
   int d;
   d = m_ptr->TTY_LINE;
   if(d < 0 || d >= NR_DEVS)
   	return EINVAL;
   logdevices[d].log_proc_nr = 0;
   logdevices[d].log_revive_alerted = 0;
-#endif
   return(OK);
 }
 
@@ -493,7 +461,6 @@ message *m_ptr;
 
   ops = m_ptr->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
 
-#if SUSPENDABLE 
   	/* Read blocks when there is no log. */
   if((m_ptr->PROC_NR & SEL_RD) && logdevices[d].log_size > 0) {
 #if LOG_DEBUG
@@ -501,10 +468,6 @@ message *m_ptr;
 #endif
   	ready_ops |= SEL_RD; /* writes never block */
  }
-#else
-  	/* Read never blocks. */
-  if(m_ptr->PROC_NR & SEL_RD) ready_ops |= SEL_RD;
-#endif
 
   	/* Write never blocks. */
   if(m_ptr->PROC_NR & SEL_WR) ready_ops |= SEL_WR;
