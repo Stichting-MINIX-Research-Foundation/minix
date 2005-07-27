@@ -303,6 +303,18 @@ PUBLIC void kenv_dmp()
     printf("\n");
 }
 
+PRIVATE char *s_flags_str(int flags)
+{
+	static char str[10];
+	str[0] = (flags & PREEMPTIBLE) ? 'P' : '-';
+	str[1] = (flags & RDY_Q_HEAD)  ? 'Q' : '-';
+	str[2] = (flags & BILLABLE)    ? 'B' : '-';
+	str[3] = (flags & SYS_PROC)    ? 'S' : '-';
+	str[4] = '\0';
+
+	return str;
+}
+
 
 /*===========================================================================*
  *				privileges_dmp 				     *
@@ -339,9 +351,9 @@ PUBLIC void privileges_dmp()
         if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
 	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s 0x%03x   0x%03.3x  ",
+	printf("(%02u) %-7.7s %5s   0x%03.3x  ",
 	       sp->s_id, rp->p_name,
-	       sp->s_flags, sp->s_call_mask 
+	       s_flags_str(sp->s_flags), sp->s_call_mask 
         );
         for (i=j=0; i < NR_SYS_PROCS; i++, j++) {
        	    send_mask[j] = get_sys_bit(sp->s_send_mask, i) ? '1' : '0';
