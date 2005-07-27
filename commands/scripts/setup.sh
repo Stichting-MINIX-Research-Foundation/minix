@@ -378,7 +378,7 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; main() { delay 2000; boot }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; main() { trap 2000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit

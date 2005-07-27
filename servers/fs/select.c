@@ -17,7 +17,7 @@
   * make select cancel disappearing fp's
   */
 
-#define DEBUG_SELECT 1
+#define DEBUG_SELECT 0
 
 #include "fs.h"
 #include "dmap.h"
