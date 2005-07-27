@@ -20,6 +20,8 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
+#define NOT_IMPLEMENTED 0
+
 PUBLIC tcp_port_t *tcp_port_table;
 PUBLIC tcp_fd_t tcp_fd_table[TCP_FD_NR];
 PUBLIC tcp_conn_t tcp_conn_table[TCP_CONN_NR];
@@ -36,7 +38,8 @@ FORWARD void read_ip_packets ARGS(( tcp_port_t *port ));
 FORWARD int tcp_setconf ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD int tcp_setopt ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD int tcp_connect ARGS(( tcp_fd_t *tcp_fd ));
-FORWARD int tcp_listen ARGS(( tcp_fd_t *tcp_fd ));
+FORWARD int tcp_listen ARGS(( tcp_fd_t *tcp_fd, int do_listenq ));
+FORWARD int tcp_acceptto ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD tcpport_t find_unused_port ARGS(( int fd ));
 FORWARD int is_unused_port ARGS(( Tcpport_t port ));
 FORWARD int reply_thr_put ARGS(( tcp_fd_t *tcp_fd, int reply,
@@ -48,6 +51,7 @@ FORWARD tcp_conn_t *find_conn_entry ARGS(( Tcpport_t locport,
 FORWARD tcp_conn_t *find_empty_conn ARGS(( void ));
 FORWARD tcp_conn_t *find_best_conn ARGS(( ip_hdr_t *ip_hdr, 
 	tcp_hdr_t *tcp_hdr ));
+FORWARD tcp_conn_t *new_conn_for_queue ARGS(( tcp_fd_t *tcp_fd ));
 FORWARD int maybe_listen ARGS(( ipaddr_t locaddr, Tcpport_t locport,
 				ipaddr_t remaddr, Tcpport_t remport ));
 FORWARD int tcp_su4connect ARGS(( tcp_fd_t *tcp_fd ));
@@ -247,8 +251,8 @@ PRIVATE int tcp_select(fd, operations)
 int fd;
 unsigned operations;
 {
+	int i;
 	unsigned resops;
-
 	tcp_fd_t *tcp_fd;
 	tcp_conn_t *tcp_conn;
 
@@ -256,9 +260,33 @@ unsigned operations;
 	assert (tcp_fd->tf_flags & TFF_INUSE);
 
 	resops= 0;
+	if (tcp_fd->tf_flags & TFF_LISTENQ)
+	{
+		/* Special case for LISTENQ */
+		if (operations & SR_SELECT_READ)
+		{
+			for (i= 0; i<TFL_LISTEN_MAX; i++)
+			{
+				if (tcp_fd->tf_listenq[i] == NULL)
+					continue;
+				if (tcp_fd->tf_listenq[i]->tc_connInprogress
+					== 0)
+				{
+					break;
+				}
+			}
+			if (i >= TFL_LISTEN_MAX)
+				tcp_fd->tf_flags |= TFF_SEL_READ;
+			else
+				resops |= SR_SELECT_READ;
+		}
+		if (operations & SR_SELECT_WRITE)
+			return ENOTCONN;	/* Is this right? */
+		return resops;
+	}
 	if (operations & SR_SELECT_READ)
 	{
-		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
 			return ENOTCONN;	/* Is this right? */
 
 		tcp_conn= tcp_fd->tf_conn;
@@ -270,7 +298,7 @@ unsigned operations;
 	}
 	if (operations & SR_SELECT_WRITE)
 	{
-		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
 			return ENOTCONN;	/* Is this right? */
 		tcp_conn= tcp_fd->tf_conn;
 
@@ -666,7 +694,8 @@ put_userdata_t put_userdata;
 put_pkt_t put_pkt;
 select_res_t select_res;
 {
-	int i;
+	int i, j;
+
 	tcp_fd_t *tcp_fd;
 
 	for (i=0; i<TCP_FD_NR && (tcp_fd_table[i].tf_flags & TFF_INUSE);
@@ -691,6 +720,8 @@ select_res_t select_res;
 	tcp_fd->tf_put_userdata= put_userdata;
 	tcp_fd->tf_select_res= select_res;
 	tcp_fd->tf_conn= 0;
+	for (j= 0; j<TFL_LISTEN_MAX; j++)
+		tcp_fd->tf_listenq[j]= NULL;
 	return i;
 }
 
@@ -706,12 +737,14 @@ ioreq_t req;
 	tcp_conn_t *tcp_conn;
 	nwio_tcpconf_t *tcp_conf;
 	nwio_tcpopt_t *tcp_opt;
+	tcp_cookie_t *cookiep;
 	acc_t *acc, *conf_acc, *opt_acc;
 	int result, *bytesp;
+	u8_t rndbits[RAND256_BUFSIZE];
 
 	tcp_fd= &tcp_fd_table[fd];
 
-assert (tcp_fd->tf_flags & TFF_INUSE);
+	assert (tcp_fd->tf_flags & TFF_INUSE);
 
 	tcp_port= tcp_fd->tf_port;
 	tcp_fd->tf_flags |= TFF_IOCTL_IP;
@@ -726,7 +759,9 @@ assert (tcp_fd->tf_flags & TFF_INUSE);
 	switch (req)
 	{
 	case NWIOSTCPCONF:
-		if (tcp_fd->tf_flags & TFF_CONNECTED)
+		if ((tcp_fd->tf_flags & TFF_CONNECTEDx) ||
+			(tcp_fd->tf_flags & TFF_CONNECTING) ||
+			(tcp_fd->tf_flags & TFF_LISTENQ))
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, EISCONN, TRUE);
@@ -741,7 +776,7 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		tcp_conf= (nwio_tcpconf_t *)ptr2acc_data(conf_acc);
 
 		*tcp_conf= tcp_fd->tf_tcpconf;
-		if (tcp_fd->tf_flags & TFF_CONNECTED)
+		if (tcp_fd->tf_flags & TFF_CONNECTEDx)
 		{
 			tcp_conn= tcp_fd->tf_conn;
 			tcp_conf->nwtc_locport= tcp_conn->tc_locport;
@@ -771,7 +806,9 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		result= NW_OK;
 		break;
 	case NWIOTCPCONN:
-		if (tcp_fd->tf_flags & TFF_CONNECTED)
+		if (tcp_fd->tf_flags & TFF_CONNECTING)
+			assert(NOT_IMPLEMENTED);
+		if (tcp_fd->tf_flags & TFF_CONNECTEDx)
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, EISCONN, TRUE);
@@ -781,17 +818,20 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		result= tcp_connect(tcp_fd);
 		break;
 	case NWIOTCPLISTEN:
-		if (tcp_fd->tf_flags & TFF_CONNECTED)
+	case NWIOTCPLISTENQ:
+		if ((tcp_fd->tf_flags & TFF_CONNECTEDx) ||
+			(tcp_fd->tf_flags & TFF_LISTENQ) ||
+			(tcp_fd->tf_flags & TFF_CONNECTING))
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, EISCONN, TRUE);
 			result= NW_OK;
 			break;
 		}
-		result= tcp_listen(tcp_fd);
+		result= tcp_listen(tcp_fd, (req == NWIOTCPLISTENQ));
 		break;
 	case NWIOTCPSHUTDOWN:
-		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, ENOTCONN, TRUE);
@@ -812,7 +852,7 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 			result= NW_SUSPEND;
 		break;
 	case NWIOTCPPUSH:
-		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, ENOTCONN, TRUE);
@@ -832,6 +872,31 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 		reply_thr_get (tcp_fd, NW_OK, TRUE);
 		result= NW_OK;
+		break;
+	case NWIOGTCPCOOKIE:
+		printf("NWIOGTCPCOOKIE request for fd %d\n", fd);
+		if (!(tcp_fd->tf_flags & TFF_COOKIE))
+		{
+			tcp_fd->tf_cookie.tc_ref= fd;
+			rand256(rndbits);
+			assert(sizeof(tcp_fd->tf_cookie.tc_secret) <=
+				RAND256_BUFSIZE);
+			memcpy(tcp_fd->tf_cookie.tc_secret, 
+				rndbits, sizeof(tcp_fd->tf_cookie.tc_secret));
+			tcp_fd->tf_flags |= TFF_COOKIE;
+		}
+		acc= bf_memreq(sizeof(*cookiep));
+		cookiep= (tcp_cookie_t *)ptr2acc_data(acc);
+
+		*cookiep= tcp_fd->tf_cookie;
+		result= (*tcp_fd->tf_put_userdata)(tcp_fd->tf_srfd,
+			0, acc, TRUE);
+		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
+		reply_thr_put(tcp_fd, result, TRUE);
+		result= NW_OK;
+		break;
+	case NWIOTCPACCEPTTO:
+		result= tcp_acceptto(tcp_fd);
 		break;
 	case FIONREAD:
 		acc= bf_memreq(sizeof(*bytesp));
@@ -1235,13 +1300,11 @@ int for_ioctl;
 	assert (!result);
 }
 
-PUBLIC int tcp_su4listen(tcp_fd)
+PUBLIC int tcp_su4listen(tcp_fd, tcp_conn, do_listenq)
 tcp_fd_t *tcp_fd;
+tcp_conn_t *tcp_conn;
+int do_listenq;
 {
-	tcp_conn_t *tcp_conn;
-
-	tcp_conn= tcp_fd->tf_conn;
-
 	tcp_conn->tc_locport= tcp_fd->tf_tcpconf.nwtc_locport;
 	tcp_conn->tc_locaddr= tcp_fd->tf_port->tp_ipaddr;
 	if (tcp_fd->tf_tcpconf.nwtc_flags & NWTC_SET_RP)
@@ -1259,6 +1322,12 @@ tcp_fd_t *tcp_fd;
 	tcp_conn->tc_orglisten= TRUE;
 	tcp_conn->tc_state= TCS_LISTEN;
 	tcp_conn->tc_rt_dead= TCP_DEF_RT_MAX_LISTEN;
+	if (do_listenq)
+	{
+		tcp_fd->tf_flags |= TFF_LISTENQ;
+		tcp_reply_ioctl(tcp_fd, NW_OK);
+		return NW_OK;
+	}
 	return NW_SUSPEND;
 }
 
@@ -1445,9 +1514,10 @@ tcp_hdr_t *tcp_hdr;
 			continue;
 		if (new_level != 7 && tcp_conn->tc_state != TCS_LISTEN)
 			continue;
-		if (new_level == 7 && !tcp_conn->tc_fd)
+		if (new_level == 7)
 			/* We found an abandoned connection */
 		{
+		 	assert(!tcp_conn->tc_fd);
 			if (best_conn && tcp_Lmod4G(tcp_conn->tc_ISS,
 				best_conn->tc_ISS))
 			{
@@ -1460,7 +1530,19 @@ tcp_hdr_t *tcp_hdr;
 			continue;
 		best_level= new_level;
 		listen_conn= tcp_conn;
+		assert(listen_conn->tc_fd != NULL);
 	}
+
+	if (listen_conn && listen_conn->tc_fd->tf_flags & TFF_LISTENQ &&
+		listen_conn->tc_fd->tf_conn == listen_conn)
+	{
+		/* Special processing for listen queues. Only accept the 
+		 * connection if there is empty space in the queue and
+		 * there are empty connections as well.
+		 */
+		listen_conn= new_conn_for_queue(listen_conn->tc_fd);
+	}
+	
 	if (!best_conn && !listen_conn)
 	{
 		if ((tcp_hdr->th_flags & THF_SYN) &&
@@ -1514,6 +1596,33 @@ tcp_hdr_t *tcp_hdr;
 	}
 	assert (listen_conn);
 	return listen_conn;
+}
+
+/*
+new_conn_for_queue
+*/
+PRIVATE tcp_conn_t *new_conn_for_queue(tcp_fd)
+tcp_fd_t *tcp_fd;
+{
+	int i;
+	tcp_conn_t *tcp_conn;
+
+	assert(tcp_fd->tf_flags & TFF_LISTENQ);
+
+	for (i= 0; i<TFL_LISTEN_MAX; i++)
+	{
+		if (tcp_fd->tf_listenq[i] == NULL)
+			break;
+	}
+	if (i >= TFL_LISTEN_MAX)
+		return NULL;
+
+	tcp_conn= find_empty_conn();
+	if (!tcp_conn)
+		return NULL;
+	tcp_fd->tf_listenq[i]= tcp_conn;
+	(void)tcp_su4listen(tcp_fd, tcp_conn, 0 /* !do_listenq */);
+	return tcp_conn;
 }
 
 /*
@@ -1574,6 +1683,8 @@ int reply;
 	assert (tcp_fd->tf_flags & TFF_IOCTL_IP);
 	assert (tcp_fd->tf_ioreq == NWIOTCPSHUTDOWN ||
 		tcp_fd->tf_ioreq == NWIOTCPLISTEN ||
+		tcp_fd->tf_ioreq == NWIOTCPLISTENQ ||
+		tcp_fd->tf_ioreq == NWIOTCPACCEPTTO ||
 		tcp_fd->tf_ioreq == NWIOTCPCONN);
 	
 	tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
@@ -1611,7 +1722,7 @@ size_t count;
 
 	assert (tcp_fd->tf_flags & TFF_INUSE);
 
-	if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+	if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
 	{
 		reply_thr_get (tcp_fd, ENOTCONN, FALSE);
 		return NW_OK;
@@ -1665,7 +1776,7 @@ size_t count;
 
 	assert (tcp_fd->tf_flags & TFF_INUSE);
 
-	if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+	if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
 	{
 		reply_thr_put (tcp_fd, ENOTCONN, FALSE);
 		return NW_OK;
@@ -1693,21 +1804,46 @@ reply the success or failure of a connect to the user.
 */
 
 
-PUBLIC void tcp_restart_connect(tcp_fd)
-tcp_fd_t *tcp_fd;
+PUBLIC void tcp_restart_connect(tcp_conn)
+tcp_conn_t *tcp_conn;
 {
-	tcp_conn_t *tcp_conn;
+	tcp_fd_t *tcp_fd;
 	int reply;
 
+	assert(tcp_conn->tc_connInprogress);
+	tcp_conn->tc_connInprogress= 0;
+
+	tcp_fd= tcp_conn->tc_fd;
 	assert(tcp_fd);
+	if (tcp_fd->tf_flags & TFF_LISTENQ)
+	{
+		/* Special code for listen queues */
+		if (tcp_conn->tc_state == TCS_CLOSED)
+		{
+			assert(NOT_IMPLEMENTED);
+			reply= tcp_conn->tc_error;
+			tcp_conn->tc_fd= NULL;
+		}
+
+		/* Reply for select */
+		if ((tcp_fd->tf_flags & TFF_SEL_READ) &&
+			tcp_fd->tf_select_res)
+		{
+			tcp_fd->tf_flags &= ~TFF_SEL_READ;
+			tcp_fd->tf_select_res(tcp_fd->tf_srfd,
+				SR_SELECT_READ);
+		}
+
+		/* Reply for acceptto */
+		if (tcp_fd->tf_flags & TFF_IOCTL_IP)
+			(void) tcp_acceptto(tcp_fd);
+
+		return;
+	}
+
 	assert(tcp_fd->tf_flags & TFF_IOCTL_IP);
 	assert(tcp_fd->tf_ioreq == NWIOTCPLISTEN ||
 		tcp_fd->tf_ioreq == NWIOTCPCONN);
-
-	tcp_conn= tcp_fd->tf_conn;
-
-	assert(tcp_conn);
-	assert(tcp_conn->tc_connInprogress);
 
 	if (tcp_conn->tc_state == TCS_CLOSED)
 	{
@@ -1718,10 +1854,9 @@ tcp_fd_t *tcp_fd;
 	}
 	else
 	{
-		tcp_fd->tf_flags |= TFF_CONNECTED;
+		tcp_fd->tf_flags |= TFF_CONNECTEDx;
 		reply= NW_OK;
 	}
-	tcp_conn->tc_connInprogress= 0;
 	tcp_reply_ioctl (tcp_fd, reply);
 }
 
@@ -1732,6 +1867,7 @@ tcp_close
 PUBLIC void tcp_close(fd)
 int fd;
 {
+	int i;
 	tcp_fd_t *tcp_fd;
 	tcp_conn_t *tcp_conn;
 
@@ -1741,13 +1877,58 @@ int fd;
 	assert (!(tcp_fd->tf_flags &
 		(TFF_IOCTL_IP|TFF_READ_IP|TFF_WRITE_IP)));
 
+	if (tcp_fd->tf_flags & TFF_LISTENQ)
+	{
+		/* Special code for listen queues */
+		for (i= 0; i<TFL_LISTEN_MAX; i++)
+		{
+			tcp_conn= tcp_fd->tf_listenq[i];
+			if (!tcp_conn)
+				continue;
+
+			tcp_fd->tf_listenq[i]= NULL;
+			assert(tcp_conn->tc_fd == tcp_fd);
+			tcp_conn->tc_fd= NULL;
+
+			if (tcp_conn->tc_connInprogress)
+			{
+				tcp_conn->tc_connInprogress= 0;
+				tcp_close_connection(tcp_conn, ENOCONN);
+				continue;
+			}
+
+			tcp_shutdown (tcp_conn);
+			if (tcp_conn->tc_state == TCS_ESTABLISHED)
+				tcp_conn->tc_state= TCS_CLOSING;
+
+			/* Set the retransmission timeout a bit smaller. */
+			tcp_conn->tc_rt_dead= TCP_DEF_RT_MAX_CLOSING;
+
+			/* If all data has been acknowledged, close the connection. */
+			if (tcp_conn->tc_SND_UNA == tcp_conn->tc_SND_NXT)
+				tcp_close_connection(tcp_conn, ENOTCONN);
+		}
+
+		tcp_conn= tcp_fd->tf_conn;
+		assert(tcp_conn->tc_fd == tcp_fd);
+		assert (tcp_conn->tc_connInprogress);
+		tcp_conn->tc_connInprogress= 0;
+		tcp_conn->tc_fd= NULL;
+		tcp_fd->tf_conn= NULL;
+		tcp_close_connection(tcp_conn, ENOCONN);
+	}
+	for (i= 0; i<TFL_LISTEN_MAX; i++)
+	{
+		assert(tcp_fd->tf_listenq[i] == NULL);
+	}
+
 	tcp_fd->tf_flags &= ~TFF_INUSE;
 	if (!tcp_fd->tf_conn)
 		return;
 
 	tcp_conn= tcp_fd->tf_conn;
 	assert(tcp_conn->tc_fd == tcp_fd);
-	tcp_conn->tc_fd= 0;
+	tcp_conn->tc_fd= NULL;
 
 	assert (!tcp_conn->tc_connInprogress);
 
@@ -1814,8 +1995,8 @@ assert (tcp_fd->tf_flags & TFF_IOCTL_IP);
 		case NWIOTCPLISTEN:
 			assert (tcp_conn->tc_connInprogress);
 			tcp_conn->tc_connInprogress= 0;
-			tcp_conn->tc_fd= 0;
-			tcp_fd->tf_conn= 0;
+			tcp_conn->tc_fd= NULL;
+			tcp_fd->tf_conn= NULL;
 			tcp_close_connection(tcp_conn, ENOCONN);
 			reply_thr_get (tcp_fd, EINTR, TRUE);
 			break;
@@ -1847,11 +2028,9 @@ tcp_fd_t *tcp_fd;
 		tcp_reply_ioctl(tcp_fd, EBADMODE);
 		return NW_OK;
 	}
-	if (tcp_fd->tf_flags & TFF_CONNECT)
-	{
-		tcp_reply_ioctl(tcp_fd, EISCONN);
-		return NW_OK;
-	}
+	assert (!(tcp_fd->tf_flags & TFF_CONNECTEDx) &&
+		!(tcp_fd->tf_flags & TFF_CONNECTING) &&
+		!(tcp_fd->tf_flags & TFF_LISTENQ));
 	if ((tcp_fd->tf_tcpconf.nwtc_flags & (NWTC_SET_RA|NWTC_SET_RP))
 		!= (NWTC_SET_RA|NWTC_SET_RP))
 	{
@@ -1929,8 +2108,9 @@ tcp_fd_t *tcp_fd;
 tcp_listen
 */
 
-PRIVATE int tcp_listen(tcp_fd)
+PRIVATE int tcp_listen(tcp_fd, do_listenq)
 tcp_fd_t *tcp_fd;
+int do_listenq;
 {
 	tcp_conn_t *tcp_conn;
 
@@ -1940,12 +2120,9 @@ tcp_fd_t *tcp_fd;
 		reply_thr_get(tcp_fd, EBADMODE, TRUE);
 		return NW_OK;
 	}
-	if (tcp_fd->tf_flags & TFF_CONNECT)
-	{
-		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
-		reply_thr_get(tcp_fd, EISCONN, TRUE);
-		return NW_OK;
-	}
+	assert (!(tcp_fd->tf_flags & TFF_CONNECTEDx) &&
+		!(tcp_fd->tf_flags & TFF_CONNECTING) &&
+		!(tcp_fd->tf_flags & TFF_LISTENQ));
 	tcp_conn= tcp_fd->tf_conn;
 	assert(!tcp_conn);
 
@@ -1966,7 +2143,7 @@ tcp_fd_t *tcp_fd;
 				return NW_OK;
 			}
 			tcp_fd->tf_conn= tcp_conn;
-			return tcp_su4listen(tcp_fd);
+			return tcp_su4listen(tcp_fd, tcp_conn, do_listenq);
 		}
 	}
 	tcp_conn= find_empty_conn();
@@ -1977,8 +2154,80 @@ tcp_fd_t *tcp_fd;
 		return NW_OK;
 	}
 	tcp_fd->tf_conn= tcp_conn;
-	return tcp_su4listen(tcp_fd);
+	return tcp_su4listen(tcp_fd, tcp_conn, do_listenq);
 }
+
+/*
+tcp_acceptto
+*/
+
+PRIVATE int tcp_acceptto(tcp_fd)
+tcp_fd_t *tcp_fd;
+{
+	int i, dst_nr;
+	tcp_fd_t *dst_fd;
+	tcp_conn_t *tcp_conn;
+	tcp_cookie_t *cookiep;
+	acc_t *data;
+
+	if (!(tcp_fd->tf_flags & TFF_LISTENQ))
+	{
+		tcp_reply_ioctl(tcp_fd, EINVAL);
+		return NW_OK;
+	}
+	for (i= 0; i<TFL_LISTEN_MAX; i++)
+	{
+		tcp_conn= tcp_fd->tf_listenq[i];
+		if (tcp_conn && !tcp_conn->tc_connInprogress)
+			break;
+	}
+	if (i >= TFL_LISTEN_MAX)
+	{
+		/* Nothing, suspend caller */
+		return NW_SUSPEND;
+	}
+
+	data= (*tcp_fd->tf_get_userdata) (tcp_fd->tf_srfd, 0,
+		sizeof(*cookiep), TRUE);
+	if (!data)
+		return EFAULT;
+	data= bf_packIffLess(data, sizeof(*cookiep));
+	cookiep= (tcp_cookie_t *)ptr2acc_data(data);
+
+	dst_nr= cookiep->tc_ref;
+	if (dst_nr < 0 || dst_nr >= TCP_FD_NR)
+	{
+		printf("tcp_acceptto: bad fd %d\n", dst_nr);
+		tcp_reply_ioctl(tcp_fd, EINVAL);
+		return NW_OK;
+	}
+	dst_fd= &tcp_fd_table[dst_nr];
+	if (!(dst_fd->tf_flags & TFF_INUSE) ||
+		(dst_fd->tf_flags & (TFF_READ_IP|TFF_WRITE_IP|TFF_IOCTL_IP)) ||
+		dst_fd->tf_conn != NULL ||
+		!(dst_fd->tf_flags & TFF_COOKIE))
+	{
+		printf("tcp_acceptto: bad flags 0x%x or conn %p for fd %d\n",
+			dst_fd->tf_flags, dst_fd->tf_conn, dst_nr);
+		tcp_reply_ioctl(tcp_fd, EINVAL);
+		return NW_OK;
+	}
+	if (memcmp(cookiep, &dst_fd->tf_cookie, sizeof(*cookiep)) != 0)
+	{
+		printf("tcp_acceptto: bad cookie\n");
+		return NW_OK;
+	}
+
+	/* Move connection */
+	tcp_fd->tf_listenq[i]= NULL;
+	tcp_conn->tc_fd= dst_fd;
+	dst_fd->tf_conn= tcp_conn;
+	dst_fd->tf_flags |= TFF_CONNECTEDx;
+
+	tcp_reply_ioctl(tcp_fd, NW_OK);
+	return NW_OK;
+}
+
 
 PRIVATE void tcp_buffree (priority)
 int priority;
@@ -2338,7 +2587,7 @@ tcp_conn_t *tcp_conn;
 
 PRIVATE u32_t tcp_rand32()
 {
-	u8_t bits[32];
+	u8_t bits[RAND256_BUFSIZE];
 
 	rand256(bits);
 	return bits[0] | (bits[1] << 8) | (bits[2] << 16) | (bits[3] << 24);

@@ -18,6 +18,8 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
+#define NOT_IMPLEMENTED 0
+
 FORWARD void create_RST ARGS(( tcp_conn_t *tcp_conn,
 	ip_hdr_t *ip_hdr, tcp_hdr_t *tcp_hdr, int data_len ));
 FORWARD void process_data ARGS(( tcp_conn_t *tcp_conn,
@@ -282,7 +284,7 @@ SYN-SENT:
 				assert (tcp_check_conn(tcp_conn));
 				assert(tcp_conn->tc_connInprogress);
 
-				tcp_restart_connect(tcp_conn->tc_fd);
+				tcp_restart_connect(tcp_conn);
 
 				tcp_conn->tc_flags |= TCF_SEND_ACK;
 				tcp_conn_write(tcp_conn, 1);
@@ -398,6 +400,7 @@ SYN-RECEIVED:
 		{
 			if (tcp_conn->tc_orglisten)
 			{
+				assert(NOT_IMPLEMENTED);
 				connuser= tcp_conn->tc_fd;
 
 				tcp_conn->tc_connInprogress= 0;
@@ -409,7 +412,10 @@ SYN-RECEIVED:
 				tcp_conn->tc_ISS= 0;
 
 				if (connuser)
-					(void)tcp_su4listen(connuser);
+				{
+					(void)tcp_su4listen(connuser, tcp_conn,
+						0 /* !do_listenq */);
+				}
 				break;
 			}
 			else
@@ -433,6 +439,8 @@ SYN-RECEIVED:
 		{
 			if (tcp_conn->tc_orglisten)
 			{
+				assert(NOT_IMPLEMENTED);
+
 				connuser= tcp_conn->tc_fd;
 
 				tcp_conn->tc_connInprogress= 0;
@@ -440,7 +448,10 @@ SYN-RECEIVED:
 
 				tcp_close_connection(tcp_conn, ECONNRESET);
 				if (connuser)
-					(void)tcp_su4listen(connuser);
+				{
+					(void)tcp_su4listen(connuser, tcp_conn,
+						0 /* !do_listenq */);
+				}
 				break;
 			}
 			tcp_close_connection(tcp_conn, ECONNRESET);
@@ -471,7 +482,7 @@ SYN-RECEIVED:
 			assert (tcp_check_conn(tcp_conn));
 			assert(tcp_conn->tc_connInprogress);
 
-			tcp_restart_connect(tcp_conn->tc_fd);
+			tcp_restart_connect(tcp_conn);
 			tcp_frag2conn(tcp_conn, ip_hdr, tcp_hdr, tcp_data,
 				data_len);
 			/* tcp_data is already freed */
@@ -1455,7 +1466,7 @@ int *bytesp;
 
 	*bytesp= 0;	/* The default is that nothing is available */
 
-	if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+	if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
 		return;
 	tcp_conn= tcp_fd->tf_conn;
 

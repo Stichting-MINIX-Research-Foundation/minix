@@ -1345,7 +1345,7 @@ int error;
 			tcp_rsel_write(tcp_conn);
 
 		if (tcp_conn->tc_connInprogress)
-			tcp_restart_connect(tcp_conn->tc_fd);
+			tcp_restart_connect(tcp_conn);
 		assert (!tcp_conn->tc_connInprogress);
 		assert (!(tcp_fd->tf_flags & TFF_IOCTL_IP) ||
 			(printf("req= 0x%lx\n",

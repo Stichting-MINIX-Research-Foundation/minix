@@ -42,9 +42,11 @@ typedef struct tcp_port
 #define TPS_MAIN	3
 #define TPS_ERROR	4
 
+#define TFL_LISTEN_MAX	5
+
 typedef struct tcp_fd
 {
-	int tf_flags;
+	unsigned long tf_flags;
 	tcp_port_t *tf_port;
 	int tf_srfd;
 	ioreq_t tf_ioreq;
@@ -54,28 +56,32 @@ typedef struct tcp_fd
 	put_userdata_t tf_put_userdata;
 	select_res_t tf_select_res;
 	struct tcp_conn *tf_conn;
+	struct tcp_conn *tf_listenq[TFL_LISTEN_MAX];
 	size_t tf_write_offset;
 	size_t tf_write_count;
 	size_t tf_read_offset;
 	size_t tf_read_count;
+	tcp_cookie_t tf_cookie;
 } tcp_fd_t;
 
-#define TFF_EMPTY	   0x0
-#define TFF_INUSE	   0x1
-#define TFF_READ_IP	   0x2
-#define TFF_WRITE_IP	   0x4
-#define TFF_IOCTL_IP	   0x8
-#define TFF_CONF_SET	  0x10
-#define TFF_IOC_INIT_SP	  0x20
-#define TFF_CONNECT	  0x40
-#define TFF_CONNECTED	  0x80
-#define TFF_WR_URG	 0x100
-#define TFF_PUSH_DATA	 0x200
-#define TFF_RECV_URG	 0x400
-#define TFF_DEL_RST	 0x800
-#define TFF_SEL_READ	0x1000
-#define TFF_SEL_WRITE	0x2000
-#define TFF_SEL_EXCEPT	0x4000
+#define TFF_EMPTY	    0x0
+#define TFF_INUSE	    0x1
+#define TFF_READ_IP	    0x2
+#define TFF_WRITE_IP	    0x4
+#define TFF_IOCTL_IP	    0x8
+#define TFF_CONF_SET	   0x10
+#define TFF_IOC_INIT_SP	   0x20
+#define TFF_LISTENQ	   0x40
+#define TFF_CONNECTING	   0x80
+#define TFF_CONNECTEDx	  0x100
+#define TFF_WR_URG	  0x200
+#define TFF_PUSH_DATA	  0x400
+#define TFF_RECV_URG	  0x800
+#define TFF_SEL_READ	 0x1000
+#define TFF_SEL_WRITE	 0x2000
+#define TFF_SEL_EXCEPT	 0x4000
+#define TFF_DEL_RST	 0x8000
+#define TFF_COOKIE	0x10000
 
 typedef struct tcp_conn
 {
@@ -230,8 +236,9 @@ int tcp_GEmod4G ARGS(( u32_t n1, u32_t n2 ));
 int tcp_Gmod4G ARGS(( u32_t n1, u32_t n2 ));
 
 /* tcp.c */
-void tcp_restart_connect ARGS(( tcp_fd_t *tcp_fd ));
-int tcp_su4listen ARGS(( tcp_fd_t *tcp_fd ));
+void tcp_restart_connect ARGS(( tcp_conn_t *tcp_conn ));
+int tcp_su4listen ARGS(( tcp_fd_t *tcp_fd, tcp_conn_t *tcp_conn,
+	int do_listenq ));
 void tcp_reply_ioctl ARGS(( tcp_fd_t *tcp_fd, int reply ));
 void tcp_reply_write ARGS(( tcp_fd_t *tcp_fd, size_t reply ));
 void tcp_reply_read ARGS(( tcp_fd_t *tcp_fd, size_t reply ));

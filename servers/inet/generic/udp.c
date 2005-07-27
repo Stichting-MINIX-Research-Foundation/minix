@@ -31,6 +31,7 @@ FORWARD acc_t *udp_get_data ARGS(( int fd, size_t offset, size_t count,
 FORWARD int udp_put_data ARGS(( int fd, size_t offset, acc_t *data, 	
 	int for_ioctl ));
 FORWARD int udp_peek ARGS(( udp_fd_t * ));
+FORWARD int udp_sel_read ARGS(( udp_fd_t * ));
 FORWARD void udp_restart_write_port ARGS(( udp_port_t *udp_port ));
 FORWARD void udp_ip_arrived ARGS(( int port, acc_t *pack, size_t pack_size ));
 FORWARD void reply_thr_put ARGS(( udp_fd_t *udp_fd, int reply,
@@ -132,6 +133,7 @@ select_res_t select_res;
 	udp_fd->uf_udpopt.nwuo_flags= UDP_DEF_OPT;
 	udp_fd->uf_get_userdata= get_userdata;
 	udp_fd->uf_put_userdata= put_userdata;
+	udp_fd->uf_select_res= select_res;
 	assert(udp_fd->uf_rdbuf_head == NULL);
 	udp_fd->uf_port_next= NULL;
 
@@ -294,8 +296,32 @@ PRIVATE int udp_select(fd, operations)
 int fd;
 unsigned operations;
 {
-	printf("udp_select: not implemented\n");
-	return 0;
+	int i;
+	unsigned resops;
+	udp_fd_t *udp_fd;
+
+	udp_fd= &udp_fd_table[fd];
+	assert (udp_fd->uf_flags & UFF_INUSE);
+
+	resops= 0;
+
+	if (operations & SR_SELECT_READ)
+	{
+		if (udp_sel_read(udp_fd))
+			resops |= SR_SELECT_READ;
+		else if (!(operations & SR_SELECT_POLL))
+			udp_fd->uf_flags |= UFF_SEL_READ;
+	}
+	if (operations & SR_SELECT_WRITE)
+	{
+		/* Should handle special case when the interface is down */
+		resops |= SR_SELECT_WRITE;
+	}
+	if (operations & SR_SELECT_EXCEPTION)
+	{
+		printf("udp_select: not implemented for exceptions\n");
+	}
+	return resops;
 }
 
 PRIVATE acc_t *udp_get_data (port, offset, count, for_ioctl)
@@ -779,6 +805,32 @@ udp_fd_t *udp_fd;
 	}
 	udp_fd->uf_flags |= UFF_PEEK_IP;
 	return NW_SUSPEND;
+}
+
+PRIVATE int udp_sel_read (udp_fd)
+udp_fd_t *udp_fd;
+{
+	acc_t *pack, *tmp_acc, *next_acc;
+	int result;
+
+	if (!(udp_fd->uf_flags & UFF_OPTSET))
+		return 1;	/* Read will not block */
+
+	if (udp_fd->uf_rdbuf_head)
+	{
+		if (get_time() <= udp_fd->uf_exp_tim)
+			return 1;
+		
+		tmp_acc= udp_fd->uf_rdbuf_head;
+		while (tmp_acc)
+		{
+			next_acc= tmp_acc->acc_ext_link;
+			bf_afree(tmp_acc);
+			tmp_acc= next_acc;
+		}
+		udp_fd->uf_rdbuf_head= NULL;
+	}
+	return 0;
 }
 
 PRIVATE int udp_packet2user (udp_fd)
@@ -1522,6 +1574,15 @@ clock_t exp_tim;
 		result= (*udp_fd->uf_put_userdata)(udp_fd->uf_srfd,
 			result, (acc_t *)0, TRUE);
 		assert (result == 0);
+	}
+
+	if (udp_fd->uf_flags & UFF_SEL_READ)
+	{
+		udp_fd->uf_flags &= ~UFF_SEL_READ;
+		if (udp_fd->uf_select_res)
+			udp_fd->uf_select_res(udp_fd->uf_srfd, SR_SELECT_READ);
+		else
+			printf("udp_rd_enqueue: no select_res\n");
 	}
 }
 

@@ -46,6 +46,7 @@ typedef struct udp_fd
 	nwio_udpopt_t uf_udpopt;
 	get_userdata_t uf_get_userdata;
 	put_userdata_t uf_put_userdata;
+	select_res_t uf_select_res;
 	acc_t *uf_rdbuf_head;
 	acc_t *uf_rdbuf_tail;
 	size_t uf_rd_count;
@@ -61,6 +62,8 @@ typedef struct udp_fd
 #define UFF_WRITE_IP	0x8
 #define UFF_OPTSET	0x10
 #define UFF_PEEK_IP	0x20
+#define UFF_SEL_READ	0x40
+#define UFF_SEL_WRITE	0x80
 
 EXTERN udp_port_t *udp_port_table;
 EXTERN udp_fd_t udp_fd_table[UDP_FD_NR];
