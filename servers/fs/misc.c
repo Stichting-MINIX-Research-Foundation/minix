@@ -350,9 +350,15 @@ PUBLIC int do_exit()
   /* If a session leader exits then revoke access to its controlling tty from
    * all other processes using it.
    */
-  if (!fp->fp_sesldr) return(OK);		/* not a session leader */
+  if (!fp->fp_sesldr) {
+	fp->fp_pid = PID_FREE;
+  	return(OK);		/* not a session leader */
+  }
   fp->fp_sesldr = FALSE;
-  if (fp->fp_tty == 0) return(OK);		/* no controlling tty */
+  if (fp->fp_tty == 0) {
+	fp->fp_pid = PID_FREE;
+  	return(OK);		/* no controlling tty */
+  }
   dev = fp->fp_tty;
 
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {

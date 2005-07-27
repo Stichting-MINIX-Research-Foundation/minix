@@ -81,6 +81,9 @@ PUBLIC void main()
 		if (call_nr < 0 || call_nr >= NCALLS) { 
 			error = ENOSYS;
 			printf("FS, warning illegal %d system call by %d\n", call_nr, who);
+		} else if (fp->fp_pid == PID_FREE) {
+			error = ENOSYS;
+			printf("FS, bad process, who = %d\n", who);
 		} else {
 			error = (*call_vec[call_nr])();
 		}
