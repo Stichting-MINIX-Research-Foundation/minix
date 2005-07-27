@@ -28,6 +28,7 @@ typedef uint8_t		sa_family_t;
 
 /* Protocols */
 #define IPPROTO_IP	0	/* Dummy protocol */
+#define IPPROTO_TCP	6	/* TCP */
 
 /* setsockopt options at IP level */
 #define IP_ADD_MEMBERSHIP	12

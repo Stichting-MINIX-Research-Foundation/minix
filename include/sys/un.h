@@ -4,11 +4,11 @@ sys/un.h
 
 /* Open Group Base Specifications Issue 6 */
 
-#ifndef SA_FAMILY_T
-#define SA_FAMILY_T
+#ifndef _SA_FAMILY_T
+#define _SA_FAMILY_T
 /* Should match corresponding typedef in <sys/socket.h> */
 typedef uint8_t		sa_family_t;
-#endif /* SA_FAMILY_T */
+#endif /* _SA_FAMILY_T */
 
 struct sockaddr_un
 {

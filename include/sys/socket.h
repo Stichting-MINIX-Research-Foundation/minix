@@ -15,11 +15,17 @@ sys/socket.h
 
 #define SOCK_STREAM	1
 #define SOCK_DGRAM	2
+#define SOCK_RAW	3
+#define SOCK_RDM	4
+#define SOCK_SEQPACKET	5
 
 #define SOL_SOCKET	0xFFFF
 
+#define SO_DEBUG	0x0001
 #define SO_REUSEADDR	0x0004
 #define SO_KEEPALIVE	0x0008
+
+#define SO_ERROR	0x1007
 
 /* The how argument to shutdown */
 #define SHUT_RD		0	/* No further reads */
