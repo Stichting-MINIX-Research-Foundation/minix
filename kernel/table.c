@@ -74,7 +74,7 @@ PUBLIC struct system_image image[] = {
  { SYSTEM,  sys_task,   TASK_F, SYS_T,   TASK_Q, SYSTEM_S,     FILLED_MASK, SYSTEM_SEND_MASK,  "SYSTEM"     },
  { HARDWARE,   0,       TASK_F, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_MASK, SYSTEM_SEND_MASK, "KERNEL" },
  { PM_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          FILLED_MASK,   SERVER_SEND_MASK,      "PM"      },
- { FS_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          FILLED_MASK,   SERVER_SEND_MASK,      "FS"      },
+ { FS_PROC_NR, 0,       SYS_F, SYS_T, 4, 0,          FILLED_MASK,   SERVER_SEND_MASK,      "FS"      },
  { SM_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          FILLED_MASK,   SYSTEM_SEND_MASK,      "SM"      },
  { IS_PROC_NR, 0,       SYS_F, SYS_T, 2, 0,           FILLED_MASK,  DRIVER_SEND_MASK,      "IS"      },
  { TTY, 0,              SYS_F, SYS_T, 1, 0,           FILLED_MASK, SYSTEM_SEND_MASK,      "TTY"      },
