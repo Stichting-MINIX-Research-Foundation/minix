@@ -167,7 +167,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
    *   - ECHO:    nonblocking call; directly echo back the message 
    */
   switch(function) {
-  case SENDREC:					/* has FRESH_ANSWER flag */		
+  case SENDREC:
+  	caller_ptr->p_priv->s_flags |= SENDREC_BUSY;
       /* fall through */
   case SEND:			
       result = mini_send(caller_ptr, src_dst, m_ptr, flags);
@@ -175,6 +176,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
           break;				/* done, or SEND failed */
       }						/* fall through for SENDREC */
   case RECEIVE:			
+      if(function == RECEIVE)
+      	caller_ptr->p_priv->s_flags &= ~SENDREC_BUSY;
       result = mini_receive(caller_ptr, src_dst, m_ptr, flags);
       break;
   case ALERT:
@@ -275,7 +278,7 @@ unsigned flags;				/* system call flags */
   if (!(caller_ptr->p_rts_flags & SENDING)) {
 
     /* Check if there are pending notifications, except for SENDREC. */
-    if (! (flags & FRESH_ANSWER)) {
+    if (! (caller_ptr->p_priv->s_flags & SENDREC_BUSY)) {
 
         map = &priv(caller_ptr)->s_notify_pending;
         for (chunk=&map->chunk[0]; chunk<&map->chunk[NR_SYS_CHUNKS]; chunk++) {
@@ -363,6 +366,7 @@ int dst;				/* which process to notify */
    * can be both sending and receiving during a SENDREC system call.
    */
   if ((dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
+      !(dst_ptr->p_priv->s_flags & SENDREC_BUSY) &&
       (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
 
       /* Destination is indeed waiting for a message. Assemble a notification 

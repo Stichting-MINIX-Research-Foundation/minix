@@ -41,6 +41,7 @@ struct priv {
 #define RDY_Q_HEAD      0x02	/* add to queue head instead of tail */
 #define BILLABLE	0x04	/* some processes are not billable */
 #define SYS_PROC	0x10	/* system processes are privileged */
+#define SENDREC_BUSY	0x20	/* sendrec() in progress */
 
 /* Magic system structure table addresses. */
 #define BEG_PRIV_ADDR (&priv[0])
