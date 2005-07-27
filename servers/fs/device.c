@@ -5,6 +5,7 @@
  *   dev_open:   FS opens a device
  *   dev_close:  FS closes a device
  *   dev_io:	 FS does a read or write on a device
+ *   dev_status: FS processes callback request alert
  *   gen_opcl:   generic call to a task to perform an open/close
  *   gen_io:     generic call to a task to perform an I/O operation
  *   no_dev:     open/close processing for devices that don't exist
@@ -60,6 +61,47 @@ PUBLIC void dev_close(dev)
 dev_t dev;			/* device to close */
 {
   (void) (*dmap[(dev >> MAJOR) & BYTE].dmap_opcl)(DEV_CLOSE, dev, 0, 0);
+}
+
+/*===========================================================================*
+ *				dev_status					*
+ *===========================================================================*/
+PUBLIC void dev_status(message *m)
+{
+	message st;
+	int d, get_more = 1;
+
+	for(d = 0; d < NR_DEVICES; d++)
+		if(dmap[d].dmap_driver == m->m_source)
+			break;
+
+	if(d >= NR_DEVICES)
+		return;
+
+	do {
+		int r;
+		st.m_type = DEV_STATUS;
+		if((r=sendrec(m->m_source, &st)) != OK)
+			panic(__FILE__,"couldn't sendrec for DEV_STATUS", r);
+
+		switch(st.m_type) {
+			case DEV_REVIVE:
+				revive(st.REP_PROC_NR, st.REP_STATUS);
+				break;
+			case DEV_IO_READY:
+				select_notified(d, st.DEV_MINOR, st.DEV_SEL_OPS);
+				break;
+			default:
+				printf("FS: unrecognized reply %d to DEV_STATUS\n", st.m_type);
+				/* Fall through. */
+			case DEV_NO_STATUS:
+				get_more = 0;
+				break;
+		}
+	} while(get_more);
+
+
+	return;
 }
 
 /*===========================================================================*
@@ -274,8 +316,8 @@ message *mess_ptr;		/* pointer to message for task */
 
   proc_nr = mess_ptr->PROC_NR;
   if (! isokprocnr(proc_nr)) {
-      printf("FS: warning, got illegal process number from %d.\n",
-          mess_ptr->PROC_NR);
+      printf("FS: warning, got illegal process number (%d) from %d\n",
+          mess_ptr->PROC_NR, mess_ptr->m_source);
       return;
   }
 
@@ -320,11 +362,6 @@ message *mess_ptr;		/* pointer to message for task */
   	/* Did the process we did the sendrec() for get a result? */
   	if (mess_ptr->REP_PROC_NR == proc_nr) {
   		break;
-  	}
-
-	if(mess_ptr->m_type == DEV_SELECTED) {
-		/* select() became possible.. This can happen. */
-		select_notified(mess_ptr);
 	} else if(mess_ptr->m_type == REVIVE) {
 		/* Otherwise it should be a REVIVE. */
 		revive(mess_ptr->REP_PROC_NR, mess_ptr->REP_STATUS);
@@ -333,7 +370,7 @@ message *mess_ptr;		/* pointer to message for task */
 		"fs: strange device reply from %d, type = %d, proc = %d (2)\n",
 			mess_ptr->m_source,
 			mess_ptr->m_type, mess_ptr->REP_PROC_NR);
-		continue;	/* XXX should this be a continue?? */
+		continue; /* XXX ? */
 	}
 
 	r = receive(task_nr, mess_ptr);
@@ -437,3 +474,4 @@ int flags;			/* mode bits and flags */
   }
   return(dev_mess.REP_STATUS);
 }
+

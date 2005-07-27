@@ -41,6 +41,7 @@ _PROTOTYPE( int clone_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( void ctty_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int do_ioctl, (void)					);
 _PROTOTYPE( int do_setsid, (void)					);
+_PROTOTYPE( void dev_status, (message *)					);
 
 /* dmp.c */
 _PROTOTYPE( int do_fkey_pressed, (void)					);
@@ -185,7 +186,7 @@ _PROTOTYPE( int select_callback, (struct filp *, int ops)		);
 _PROTOTYPE( void select_forget, (int fproc)				);
 _PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void init_select, (void)					);
-_PROTOTYPE( int select_notified, (message *)				);
+_PROTOTYPE( int select_notified, (int major, int minor, int ops)				);
 
 /* timers.c */
 _PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, tmr_func_t watchdog, int arg));

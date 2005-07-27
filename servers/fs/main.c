@@ -74,8 +74,10 @@ PUBLIC void main()
         	 */
         	fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
         } else if (call_nr == DEV_SELECTED) {
-        	/* Device notify()s us of fd that has become usable. */
-        	select_notified(&m_in);
+        	printf("Old select device callback received - ignored\n");
+        } else if ((call_nr & NOTIFY_MESSAGE)) {
+        	/* Device notifies (alert()s) us of an event. */
+        	dev_status(&m_in);
         } else {
 		/* Call the internal function that does the work. */
 		if (call_nr < 0 || call_nr >= NCALLS) { 

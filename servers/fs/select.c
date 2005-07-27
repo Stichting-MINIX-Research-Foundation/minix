@@ -17,7 +17,7 @@
   * make select cancel disappearing fp's
   */
 
-#define DEBUG_SELECT 0
+#define DEBUG_SELECT 1
 
 #include "fs.h"
 #include "dmap.h"
@@ -553,47 +553,49 @@ PUBLIC int select_callback(struct filp *fp, int ops)
 /*===========================================================================*
  *				int select_notified			     *
  *===========================================================================*/
-PUBLIC int select_notified(message *m)
+PUBLIC int select_notified(int major, int minor, int selected_ops)
 {
-	int s, f, d, t;
+	int s, f, t;
 
-	for(d = 0; d < NR_DEVICES; d++)
-		if(dmap[d].dmap_driver == m->m_source)
-			break;
-
-	if(d >= NR_DEVICES)
-		return OK;
+#if DEBUG_SELECT
+	printf("select callback: %d, %d: %d\n", major, minor, selected_ops);
+#endif
 
 	for(t = 0; t < SEL_FDS; t++)
-		if(!fdtypes[t].select_match && fdtypes[t].select_major == d)
+		if(!fdtypes[t].select_match && fdtypes[t].select_major == major)
 		    	break;
 
-	if(t >= SEL_FDS)
+	if(t >= SEL_FDS) {
+#if DEBUG_SELECT
+		printf("select callback: no fdtype found for device %d\n", major);
+#endif
 		return OK;
+	}
 
 	/* We have a select callback from major device no.
 	 * d, which corresponds to our select type t.
 	 */
 
 	for(s = 0; s < MAXSELECTS; s++) {
-		int line, ops;
+		int s_minor, ops;
 		if(!selecttab[s].requestor)
 			continue;
 		for(f = 0; f < selecttab[s].nfds; f++) {
 			if(!selecttab[s].filps[f] ||
-			   !select_major_match(d, selecttab[s].filps[f]))
+			   !select_major_match(major, selecttab[s].filps[f]))
 			   	continue;
 			ops = tab2ops(f, &selecttab[s]);
-			line = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
-			if((line == m->NOTIFY_ARG) &&
-				(m->NOTIFY_FLAGS & ops)) {
-				select_callback(selecttab[s].filps[f], ops);
+			s_minor = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
+			if((s_minor == minor) &&
+				(selected_ops & ops)) {
+				select_callback(selecttab[s].filps[f], (selected_ops & ops));
 			}
 		}
 	}
 
 	return OK;
 }
+
 /*===========================================================================*
  *				init_select  				     *
  *===========================================================================*/
