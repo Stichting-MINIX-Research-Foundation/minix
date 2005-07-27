@@ -34,7 +34,7 @@ PUBLIC int do_fchdir()
 
 	/* Is the file descriptor valid? */
 	if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
-
+	dup_inode(rfilp->filp_ino);
 	return change_into(&fp->fp_workdir, rfilp->filp_ino);
 }
 
