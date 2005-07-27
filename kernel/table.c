@@ -59,7 +59,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * mask, and a name for the process table. For kernel processes, the startup 
  * routine and stack size is also provided.
  */
-#define USER_F		(PREEMPTIBLE | BILLABLE | RDY_Q_HEAD)
+#define USER_F		(PREEMPTIBLE | BILLABLE)
 #define IDLE_F 		(BILLABLE | SYS_PROC)
 #define SYS_F  		(PREEMPTIBLE | SYS_PROC)
 #define TASK_F 		(SYS_PROC)	
