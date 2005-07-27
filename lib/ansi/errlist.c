@@ -78,6 +78,10 @@ const char *_sys_errlist[] = {
 	"No such connection",		/* ENOCONN */
 	"Address family not supported",	/* EAFNOSUPPORT */
 	"Protocol not supported by AF",	/* EPROTONOSUPPORT */
+	"Protocol wrong type for socket", /* EPROTOTYPE */
+	"Operation in progress",	/* EINPROGRESS */
+	"Address not available",	/* EADDRNOTAVAIL */
+	"Connection already in progress", /* EALREADY */
 };
 
 const int _sys_nerr = sizeof(_sys_errlist) / sizeof(_sys_errlist[0]);
