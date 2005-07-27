@@ -22,6 +22,7 @@
 
 #include "pm.h"
 #include <sys/stat.h>
+#include <sys/ptrace.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <signal.h>
@@ -672,7 +673,7 @@ register struct mproc *rmp;	/* whose core is to be dumped */
 
   /* Write out the whole kernel process table entry to get the regs. */
   trace_off = 0;
-  while (sys_trace(3, slot, trace_off, &trace_data) == OK) {
+  while (sys_trace(T_GETUSER, slot, trace_off, &trace_data) == OK) {
 	if (write(fd, (char *) &trace_data, (unsigned) sizeof (long))
 	    != (unsigned) sizeof (long)) {
 		close(fd);
