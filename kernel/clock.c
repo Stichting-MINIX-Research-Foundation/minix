@@ -197,7 +197,7 @@ irq_hook_t *hook;
    */ 
   if ((next_timeout <= realtime) || (proc_ptr->p_sched_ticks <= 0)) {
       prev_ptr = proc_ptr;			/* store running process */
-      lock_alert(HARDWARE, CLOCK);		/* send notification */
+      lock_notify(HARDWARE, CLOCK);		/* send notification */
   } 
   return(1);					/* reenable interrupts */
 }

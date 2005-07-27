@@ -1,3 +1,4 @@
+#define NEW_REVIVE 1
 /* This file contains the tesminal driver, both for the IBM console and regular
  * ASCII terminals.  It handles only the device-independent part of a TTY, the
  * device dependent parts are in console.c, rs232.c, etc.  This file contains
@@ -26,7 +27,7 @@
  *   DEV_OPEN:       a tty line has been opened
  *   DEV_CLOSE:      a tty line has been closed
  *   DEV_SELECT:     start select notification request
- *   DEV_SELECT_CAN: cancel select notification
+ *   DEV_STATUS:     FS wants to know status for SELECT or REVIVE
  *   CANCEL:         terminate a previous incomplete system call immediately
  *
  *    m_type      TTY_LINE   PROC_NR    COUNT   TTY_SPEK  TTY_FLAGS  ADDRESS
@@ -44,6 +45,8 @@
  * | DEV_OPEN    |minor dev| proc nr | O_NOCTTY|         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
  * | DEV_CLOSE   |minor dev| proc nr |         |         |         |         |
+ * |-------------+---------+---------+---------+---------+---------+---------|
+ * | DEV_STATUS  |         |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
  * | CANCEL      |minor dev| proc nr |         |         |         |         |
  * ---------------------------------------------------------------------------
@@ -112,6 +115,7 @@ FORWARD _PROTOTYPE( void do_close, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_select, (tty_t *tp, message *m_ptr)		);
+FORWARD _PROTOTYPE( void do_status, (message *m_ptr)			);
 FORWARD _PROTOTYPE( void in_transfer, (tty_t *tp)			);
 FORWARD _PROTOTYPE( int tty_echo, (tty_t *tp, int ch)			);
 FORWARD _PROTOTYPE( void rawecho, (tty_t *tp, int ch)			);
@@ -208,12 +212,10 @@ PUBLIC void main(void)
 		sigset_t sigset = (sigset_t) tty_mess.NOTIFY_ARG;
 		if (sigismember(&sigset, SIGKSTOP)) {
 			cons_stop();		/* switch to primary console */
-#if DEAD_CODE
 			if (irq_hook_id != -1) {
 				sys_irqdisable(&irq_hook_id);
 				sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
 			}
-#endif
 		} 
 		if (sigismember(&sigset, SIGTERM)) cons_stop();	
 		if (sigismember(&sigset, SIGKMESS)) do_new_kmess(&tty_mess);
@@ -233,9 +235,14 @@ PUBLIC void main(void)
 		;			/* do nothing; end switch */
 	}
 
-	/* Only device requests should get to this point.
-	 * Check the minor device number.
+	/* Only device requests should get to this point. All requests, 
+	 * except DEV_STATUS, have a minor device number. Check this
+	 * exception and get the minor device number otherwise.
 	 */
+	if (tty_mess.m_type == DEV_STATUS) {
+		do_status(&tty_mess);
+		continue;
+	}
 	line = tty_mess.TTY_LINE;
 	if ((line - CONS_MINOR) < NR_CONS) {
 		tp = tty_addr(line - CONS_MINOR);
@@ -279,6 +286,73 @@ PUBLIC void main(void)
 	    tty_reply(TASK_REPLY, tty_mess.m_source,
 						tty_mess.PROC_NR, EINVAL);
 	}
+  }
+}
+
+
+/*===========================================================================*
+ *				do_status				     *
+ *===========================================================================*/
+PRIVATE void do_status(m_ptr)
+message *m_ptr;
+{
+  register struct tty *tp;
+  int event_found;
+  int status;
+  int ops;
+  
+  /* Check for select or revive events on any of the ttys. If we found an, 
+   * event return a single status message for it. The FS will make another 
+   * call to see if there is more.
+   */
+  event_found = 0;
+  for (tp = FIRST_TTY; tp < END_TTY; tp++) {
+	if ((ops = select_try(tp, tp->tty_select_ops)) && 
+			tp->tty_select_proc == m_ptr->m_source) {
+
+		/* I/O for a selected minor device is ready. */
+		m_ptr->m_type = DEV_IO_READY;
+		m_ptr->DEV_MINOR = tp->tty_index;
+		m_ptr->DEV_SEL_OPS = ops;
+
+		tp->tty_select_ops &= ~ops;	/* unmark select event */
+  		event_found = 1;
+		break;
+	}
+	else if (tp->tty_inrevived && tp->tty_incaller == m_ptr->m_source) {
+		
+		/* Suspended request finished. Send a REVIVE. */
+		m_ptr->m_type = DEV_REVIVE;
+  		m_ptr->REP_PROC_NR = tp->tty_inproc;
+  		m_ptr->REP_STATUS = tp->tty_incum;
+
+		tp->tty_inleft = tp->tty_incum = 0;
+		tp->tty_inrevived = 0;		/* unmark revive event */
+  		event_found = 1;
+  		break;
+	}
+	else if (tp->tty_outrevived && tp->tty_outcaller == m_ptr->m_source) {
+		
+		/* Suspended request finished. Send a REVIVE. */
+		m_ptr->m_type = DEV_REVIVE;
+  		m_ptr->REP_PROC_NR = tp->tty_outproc;
+  		m_ptr->REP_STATUS = tp->tty_outcum;
+
+		tp->tty_outcum = 0;
+		tp->tty_outrevived = 0;		/* unmark revive event */
+  		event_found = 1;
+  		break;
+	}
+  }
+
+  if (! event_found) {
+	/* No events of interest were found. Return an empty message. */
+  	m_ptr->m_type = DEV_NO_STATUS;
+  }
+
+  /* Almost done. Send back the reply message to the caller. */
+  if ((status = send(m_ptr->m_source, m_ptr)) != OK) {
+	panic("TTY","send in do_status failed, status\n", status);
   }
 }
 
@@ -720,7 +794,7 @@ PUBLIC int select_try(struct tty *tp, int ops)
 {
 	int ready_ops = 0;
 
-	/* special case. if line is hung up, no operations will block.
+	/* Special case. If line is hung up, no operations will block.
 	 * (and it can be seen as an exceptional condition.)
 	 */
 	if (tp->tty_termios.c_ospeed == B0) {
@@ -758,6 +832,7 @@ PUBLIC int select_try(struct tty *tp, int ops)
 
 PUBLIC int select_retry(struct tty *tp)
 {
+#if DEAD_CODE
 	int ops;
 	if((ops = select_try(tp, tp->tty_select_ops))) {
 		message m;
@@ -767,6 +842,10 @@ PUBLIC int select_retry(struct tty *tp)
 		notify(tp->tty_select_proc, &m);
 		tp->tty_select_ops &= ~ops;
 	}
+#else
+	if (select_try(tp, tp->tty_select_ops))
+		alert(tp->tty_select_proc);
+#endif
 
 	return OK;
 }
@@ -812,9 +891,20 @@ tty_t *tp;			/* TTY to check for events. */
 
   /* Reply if enough bytes are available. */
   if (tp->tty_incum >= tp->tty_min && tp->tty_inleft > 0) {
+#if NEW_REVIVE
+	if (tp->tty_inrepcode == REVIVE) {
+		alert(tp->tty_incaller);
+		tp->tty_inrevived = 1;
+	} else {
+		tty_reply(tp->tty_inrepcode, tp->tty_incaller, 
+			tp->tty_inproc, tp->tty_incum);
+		tp->tty_inleft = tp->tty_incum = 0;
+	}
+#else
 	tty_reply(tp->tty_inrepcode, tp->tty_incaller, tp->tty_inproc,
 								tp->tty_incum);
 	tp->tty_inleft = tp->tty_incum = 0;
+#endif
   }
 }
 
@@ -878,9 +968,20 @@ register tty_t *tp;		/* pointer to terminal to read from */
 
   /* Usually reply to the reader, possibly even if incum == 0 (EOF). */
   if (tp->tty_inleft == 0) {
+#if NEW_REVIVE
+	if (tp->tty_inrepcode == REVIVE) {
+		alert(tp->tty_incaller);
+		tp->tty_inrevived = 1;
+	} else {
+		tty_reply(tp->tty_inrepcode, tp->tty_incaller, 
+			tp->tty_inproc, tp->tty_incum);
+		tp->tty_inleft = tp->tty_incum = 0;
+	}
+#else
 	tty_reply(tp->tty_inrepcode, tp->tty_incaller, tp->tty_inproc,
 								tp->tty_incum);
 	tp->tty_inleft = tp->tty_incum = 0;
+#endif
   }
 }
 
@@ -1369,12 +1470,12 @@ int proc_nr;			/* to whom should the reply go? */
 int status;			/* reply code */
 {
 /* Send a reply to a process that wanted to read or write data. */
-
   message tty_mess;
 
   tty_mess.m_type = code;
   tty_mess.REP_PROC_NR = proc_nr;
   tty_mess.REP_STATUS = status;
+
   if ((status = send(replyee, &tty_mess)) != OK) {
 	panic("TTY","tty_reply failed, status\n", status);
   }

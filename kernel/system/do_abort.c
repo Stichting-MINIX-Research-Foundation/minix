@@ -24,7 +24,6 @@ message *m_ptr;			/* pointer to request message */
  * or ESC after debugging dumps).
  */
   int how = m_ptr->ABRT_HOW;
-  timer_t *tp;
 
   /* See if the monitor is to run the specified instructions. */
   if (how == RBT_MONITOR) {
@@ -40,13 +39,8 @@ message *m_ptr;			/* pointer to request message */
           phys_copy(src_phys, kinfo.params_base, (phys_bytes) length);
   }
 
-  /* Set a watchdog timer to shut down, so that this call returns first.
-   * The timer will expire at the next clock tick, which can be any moment.
-   * The CLOCK task is only scheduled when the SYSTEM task is done, though.
-   */
-  tp = &priv(proc_addr(KERNEL))->s_alarm_timer;
-  tmr_arg(tp)->ta_int = how;		/* pass status as timer argument */
-  set_timer(tp, get_uptime(), prepare_shutdown);
+  /* Now prepare to shutdown MINIX. */
+  prepare_shutdown(how);
   return(OK);				/* pro-forma (really EDISASTER) */
 }
 

@@ -201,7 +201,7 @@ int source;
  * the lowest bytes because the highest bytes won't differ that much. 
  */ 
   int r_next;
-  unsigned long tsc_high;
+  unsigned long tsc_high, tsc_low;
 
   /* On machines with the RDTSC (cycle counter read instruction - pentium
    * and up), use that for high-resolution raw entropy gathering. Otherwise,
@@ -214,12 +214,15 @@ int source;
    */
   source %= RANDOM_SOURCES;
   r_next= krandom.bin[source].r_next;
-  if(machine.processor > 486 && 0)
-	  read_tsc(&tsc_high, &krandom.bin[source].r_buf[r_next]);
-  else
-  	  krandom.bin[source].r_buf[r_next] = read_clock();
-  if (krandom.bin[source].r_size < RANDOM_ELEMENTS)
+  if(machine.processor > 486) {
+      read_tsc(&tsc_high, &tsc_low);
+      krandom.bin[source].r_buf[r_next] = tsc_low;
+  } else {
+      krandom.bin[source].r_buf[r_next] = read_clock();
+  }
+  if (krandom.bin[source].r_size < RANDOM_ELEMENTS) {
   	krandom.bin[source].r_size ++;
+  }
   krandom.bin[source].r_next = (r_next + 1 ) % RANDOM_ELEMENTS;
 }
 
@@ -247,7 +250,7 @@ irq_hook_t *hook;
   priv(proc_addr(hook->proc_nr))->s_int_pending |= (1 << hook->irq);
 
   /* Build notification message and return. */
-  lock_alert(HARDWARE, hook->proc_nr);
+  lock_notify(HARDWARE, hook->proc_nr);
   return(hook->policy & IRQ_REENABLE);
 }
 
@@ -267,7 +270,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
-  lock_alert(SYSTEM, proc_nr); 
+  lock_notify(SYSTEM, proc_nr); 
 }
 
 

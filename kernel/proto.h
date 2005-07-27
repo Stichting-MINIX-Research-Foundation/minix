@@ -17,17 +17,15 @@ _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
-_PROTOTYPE( void prepare_shutdown, (struct timer *tp)			);
+_PROTOTYPE( void prepare_shutdown, (int how)				);
 
 /* utility.c */
 _PROTOTYPE( void kprintf, (const char *fmt, ...)			);
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
-_PROTOTYPE( int alloc_bit, (bitchunk_t *map, bit_t nr_bits) 		); 
-_PROTOTYPE( void free_bit, (bit_t nr, bitchunk_t *map, bit_t nr_bits) 	); 
 
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
-_PROTOTYPE( int lock_alert, (int src, int dst)					);
+_PROTOTYPE( int lock_notify, (int src, int dst)					);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_ready, (struct proc *rp)				);
 _PROTOTYPE( void lock_sched, (struct proc *rp)				);

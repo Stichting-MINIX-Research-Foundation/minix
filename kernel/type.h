@@ -27,19 +27,6 @@ struct memory {
   phys_clicks size;			/* size of memory chunk */
 };
 
-typedef unsigned long notify_mask_t;	/* bit mask for notifications */
-typedef short notify_type_t;		/* notification type */
-typedef char notify_flags_t;		/* notification flags */
-typedef int notify_arg_t;		/* notification argument */
-
-struct notification {
-  proc_nr_t 	 n_source;		/* sender of notification */
-  notify_type_t	 n_type;		/* notification type */
-  notify_arg_t 	 n_arg;			/* notification argument */
-  notify_flags_t n_flags;		/* notification flags */
-  struct notification* n_next;		/* pointer to next notification */
-};
-
 /* The kernel outputs diagnostic messages in a circular buffer. */
 struct kmessages {
   int km_next;				/* next index to write */
@@ -51,7 +38,7 @@ struct randomness {
   struct {
 	int r_next;				/* next index to write */
 	int r_size;				/* number of random elements */
-	unsigned long r_buf[RANDOM_ELEMENTS]; /* buffer for random info */
+	unsigned short r_buf[RANDOM_ELEMENTS]; /* buffer for random info */
   } bin[RANDOM_SOURCES];
 };
 

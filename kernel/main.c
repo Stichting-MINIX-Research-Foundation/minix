@@ -184,16 +184,12 @@ PRIVATE void announce(void)
 /*==========================================================================*
  *			       prepare_shutdown				    *
  *==========================================================================*/
-PUBLIC void prepare_shutdown(tp)
-timer_t *tp;
+PUBLIC void prepare_shutdown(how)
+int how;
 {
-/* This function prepares to shutdown MINIX. It is called by a watchdog 
- * timer if this is a normal abort so that the sys_abort() call can return
- * first. The timer structure passes the shutdown status as an argument.
- */
+/* This function prepares to shutdown MINIX. */
   register struct proc *rp; 
   static timer_t shutdown_timer;
-  int how = tmr_arg(tp)->ta_int;
   message m;
 
   /* Show debugging dumps on panics. Make sure that the TTY task is still 

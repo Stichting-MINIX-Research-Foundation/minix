@@ -68,7 +68,7 @@ timer_t *tp;
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that
  * process with a notification message from CLOCK.
  */
-  lock_alert(CLOCK, tmr_arg(tp)->ta_int);
+  lock_notify(CLOCK, tmr_arg(tp)->ta_int);
 }
 
 #endif /* USE_SETALARM */

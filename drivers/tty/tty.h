@@ -46,12 +46,14 @@ typedef struct tty {
 
   /* Information about incomplete I/O requests is stored here. */
   char tty_inrepcode;		/* reply code, TASK_REPLY or REVIVE */
+  char tty_inrevived;		/* set to 1 if revive callback is pending */
   char tty_incaller;		/* process that made the call (usually FS) */
   char tty_inproc;		/* process that wants to read from tty */
   vir_bytes tty_in_vir;		/* virtual address where data is to go */
   int tty_inleft;		/* how many chars are still needed */
   int tty_incum;		/* # chars input so far */
   char tty_outrepcode;		/* reply code, TASK_REPLY or REVIVE */
+  char tty_outrevived;		/* set to 1 if revive callback is pending */
   char tty_outcaller;		/* process that made the call (usually FS) */
   char tty_outproc;		/* process that wants to write to tty */
   vir_bytes tty_out_vir;	/* virtual address where data comes from */
@@ -122,6 +124,7 @@ _PROTOTYPE( void tty_wakeup, (clock_t now)				);
 _PROTOTYPE( void tty_reply, (int code, int replyee, int proc_nr,
 							int status)	);
 _PROTOTYPE( int tty_devnop, (struct tty *tp, int try)				);
+_PROTOTYPE( int select_try, (struct tty *tp, int ops)				);
 _PROTOTYPE( int select_retry, (struct tty *tp)				);
 
 /* rs232.c */

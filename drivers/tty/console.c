@@ -194,6 +194,7 @@ int try;
 
   /* Reply to the writer if all output is finished or if an error occured. */
   if (tp->tty_outleft == 0 || result != OK) {
+	/* REVIVE is not possible. I/O on memory mapped consoles finishes. */
 	tty_reply(tp->tty_outrepcode, tp->tty_outcaller, tp->tty_outproc,
 							tp->tty_outcum);
 	tp->tty_outcum = 0;

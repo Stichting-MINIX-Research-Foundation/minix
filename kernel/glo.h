@@ -33,12 +33,6 @@ EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
 EXTERN int sched_ticks;		/* keep track of quantum usage */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
-#if TEMP_CODE
-/* Declare buffer space and a bit map for notification messages. */
-EXTERN struct notification notify_buffer[NR_NOTIFY_BUFS];
-EXTERN bitchunk_t notify_bitmap[BITMAP_CHUNKS(NR_NOTIFY_BUFS)];     
-#endif
-
 
 #if (CHIP == INTEL)
 

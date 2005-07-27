@@ -18,6 +18,7 @@
 #include <minix/keymap.h>
 #include <sys/ioc_disk.h>
 
+
 #if ENABLE_AT_WINI
 
 #define ATAPI_DEBUG	    0	/* To debug ATAPI code. */

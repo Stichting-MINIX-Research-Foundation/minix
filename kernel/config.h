@@ -58,7 +58,7 @@
 /* Buffer to gather randomness. This is used to generate a random stream by 
  * the MEMORY driver when reading from /dev/random. 
  */
-#define RANDOM_ELEMENTS   64
+#define RANDOM_ELEMENTS   32
 
 
 /* This section contains defines for valuable system resources that are used
@@ -70,10 +70,6 @@
 #define VDEVIO_BUF_SIZE   64		/* max elements per VDEVIO request */
 #define VCOPY_VEC_SIZE    16		/* max elements per VCOPY request */
 
-#if TEMP_CODE
-/* How many buffers for notification messages should there be? */
-#define NR_NOTIFY_BUFS	  32
-#endif
 
 /* How many bytes for the kernel stack. Space allocated in mpx.s. */
 #define K_STACK_BYTES   1024	

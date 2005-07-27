@@ -17,10 +17,8 @@
 #define SEND		 1	/* 0 0 0 1 : blocking send */
 #define RECEIVE		 2	/* 0 0 1 0 : blocking receive */
 #define SENDREC	 	 3  	/* 0 0 1 1 : SEND + RECEIVE */
-#define ALERT		 4	/* 0 1 0 0 : nonblocking notify */
+#define NOTIFY		 4	/* 0 1 0 0 : nonblocking notify */
 #define ECHO		 8	/* 1 0 0 0 : echo a message */
-
-#define NOTIFY		 16   /* 1 0 0 0 0 : temp */
 
 /* The following bit masks determine what checks that should be done. */
 #define CHECK_PTR     0x0B      /* 1 0 1 1 : validate message buffer */

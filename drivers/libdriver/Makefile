@@ -11,7 +11,7 @@ m = $i/minix
 CC = exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lsysutil
+LIBS = -lsysutil -lsys
 
 OBJECTS = driver.o drvlib.o
 

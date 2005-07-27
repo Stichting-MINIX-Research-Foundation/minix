@@ -166,7 +166,6 @@ tty_t *tp;
 int try;
 {
 /* Process characters from the circular keyboard buffer. */
-
   char buf[3];
   int scode;
   unsigned ch;

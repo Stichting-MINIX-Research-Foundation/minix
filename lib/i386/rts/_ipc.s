@@ -4,7 +4,7 @@
 ! See src/kernel/ipc.h for C definitions
 SEND = 1
 RECEIVE = 2
-SENDREC = 3 + 32		! flags 0x20 to request fresh answer
+SENDREC = 3 
 NOTIFY = 16
 ALERT = 4
 ECHO = 8
