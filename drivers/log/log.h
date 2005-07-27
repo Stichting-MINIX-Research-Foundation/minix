@@ -20,10 +20,13 @@ struct logdevice {
 #if SUSPENDABLE
 	int log_proc_nr,
 		log_source,
-		log_iosize;	/* proc that is blocking on read */
+		log_iosize,
+		log_revive_alerted,
+		log_status;	/* proc that is blocking on read */
 	vir_bytes log_user_vir;
 #endif
-	int	log_selected, log_select_proc;
+	int	log_selected, log_select_proc,
+		log_select_alerted, log_select_ready_ops;
 };
 
 

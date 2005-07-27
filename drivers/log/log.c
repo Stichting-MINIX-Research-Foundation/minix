@@ -12,7 +12,7 @@
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 
-#define LOG_DEBUG		0	/* enable/ disable debugging */
+#define LOG_DEBUG		1	/* enable/ disable debugging */
 
 #define NR_DEVS            	1	/* number of minor devices */
 #define MINOR_KLOG		0	/* /dev/klog */
@@ -65,9 +65,13 @@ PUBLIC void main(void)
   	log_geom[i].dv_size = cvul64(LOG_SIZE);
  	log_geom[i].dv_base = cvul64((long)logdevices[i].log_buffer);
  	logdevices[i].log_size = logdevices[i].log_read =
-	 	logdevices[i].log_write = logdevices[i].log_selected = 0;
+	 	logdevices[i].log_write =
+	 	logdevices[i].log_select_alerted =
+	 	logdevices[i].log_selected =
+	 	logdevices[i].log_select_ready_ops = 0;
 #if SUSPENDABLE
  	logdevices[i].log_proc_nr = 0;
+ 	logdevices[i].log_revive_alerted = 0;
 #endif
  }
  driver_task(&log_dtab);
@@ -130,30 +134,38 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
         }
 
 #if SUSPENDABLE
-        if(log->log_size > 0 && log->log_proc_nr) {
+        if(log->log_size > 0 && log->log_proc_nr && !log->log_revive_alerted) {
         	/* Someone who was suspended on read can now
         	 * be revived.
         	 */
-    		r = subread(log, log->log_iosize, log->log_proc_nr,
-    			log->log_user_vir);
-    		log_reply(REVIVE, log->log_source, log->log_proc_nr, r);
-#if LOG_DEBUG
-    		printf("revived to %d (%d) with %d bytes\n", 
-    			log->log_source, log->log_proc_nr, r);
-#endif
-    		log->log_proc_nr = 0;
- 	}
+    		log->log_status = subread(log, log->log_iosize,
+    			log->log_proc_nr, log->log_user_vir);
+    		printf("alert for revive %d..\n", log->log_source);
+    		alert(log->log_source); 
+    		printf("alert for revive done..\n");
+    		log->log_revive_alerted = 1;
+/*    		log_reply(REVIVE, log->log_source, log->log_proc_nr, r); */
+ 	} 
 
-	if(log->log_size > 0 && log->log_selected) {
+	if(log->log_size > 0)
+		log->log_select_ready_ops |= SEL_RD;
+
+	if(log->log_size > 0 && log->log_selected &&
+	  !(log->log_select_alerted)) {
   		/* Someone(s) who was/were select()ing can now
   		 * be awoken. If there was a blocking read (above),
   		 * this can only happen if the blocking read didn't
   		 * swallow all the data (log_size > 0).
   		 */
   		if(log->log_selected & SEL_RD) {
+  		/*
   			log_notify(DEV_SELECTED,
  			  log->log_select_proc, log_device, SEL_RD);
-			log->log_selected &= ~SEL_RD;
+ 		*/
+ 			printf("alert select\n");
+    			alert(log->log_select_proc);
+ 			printf("alert select done\n");
+    			log->log_select_alerted = 1;
 #if LOG_DEBUG
 			printf("log notified %d\n", log->log_select_proc);
 #endif
@@ -257,6 +269,7 @@ unsigned nr_req;		/* length of request vector */
 	    		log->log_proc_nr = proc_nr;
 	    		log->log_iosize = count;
 	    		log->log_user_vir = user_vir;
+	    		log->log_revive_alerted = 0;
 
 			/* Device_caller is a global in drivers library. */
 	    		log->log_source = device_caller;
@@ -360,8 +373,68 @@ message *m_ptr;
   if(d < 0 || d >= NR_DEVS)
   	return EINVAL;
   logdevices[d].log_proc_nr = 0;
+  logdevices[d].log_revive_alerted = 0;
 #endif
   return(OK);
+}
+
+/*============================================================================*
+ *				do_status				      *
+ *============================================================================*/
+PRIVATE void do_status(message *m_ptr)
+{
+	int d, nr = 0;
+	message m;
+
+	printf("do_status..\n");
+
+	/* Caller has requested pending status information, which currently
+	 * can be pending available select()s, or REVIVE events. One message
+	 * is returned for every event, or DEV_NO_STATUS if no (more) events
+	 * are to be returned.
+	 */
+
+	for(d = 0; d < NR_DEVS; d++) {
+		/* Check for revive callback. */
+		if(logdevices[d].log_proc_nr && logdevices[d].log_revive_alerted
+		   && logdevices[d].log_source == m_ptr->m_source) {
+			m.m_type = DEV_REVIVE;
+			m.REP_PROC_NR = logdevices[d].log_proc_nr;
+			m.REP_STATUS  = logdevices[d].log_status;
+  			send(m_ptr->m_source, &m);
+			logdevices[d].log_proc_nr = 0;
+			logdevices[d].log_revive_alerted = 0;
+#if LOG_DEBUG
+    		printf("revived %d with %d bytes\n", 
+			m.REP_PROC_NR, m.REP_STATUS);
+#endif
+			return;
+		}
+
+		/* Check for select callback. */
+		if(logdevices[d].log_selected && logdevices[d].log_select_proc == m_ptr->m_source 
+			&& logdevices[d].log_select_alerted) {
+			m.m_type = DEV_IO_READY;
+			m.DEV_SEL_OPS = logdevices[d].log_select_ready_ops;
+			m.DEV_MINOR   = d;
+#if LOG_DEBUG
+    		printf("select sending sent\n");
+#endif
+  			send(m_ptr->m_source, &m);
+			logdevices[d].log_selected &= ~logdevices[d].log_select_ready_ops;
+			logdevices[d].log_select_alerted = 0;
+#if LOG_DEBUG
+    		printf("select send sent\n");
+#endif
+			return;
+		}
+	}
+
+	/* No event found. */
+	m.m_type = DEV_NO_STATUS;
+  	send(m_ptr->m_source, &m);
+
+	return;
 }
 
 /*============================================================================*
@@ -386,6 +459,12 @@ message *m_ptr;
 		if (sigismember(&sigset, SIGKMESS)) {
 			do_new_kmess(m_ptr);
 		}	
+		r = EDONTREPLY;
+		break;
+	}
+	case DEV_STATUS: {
+		printf("status..\n");
+		do_status(m_ptr);
 		r = EDONTREPLY;
 		break;
 	}
