@@ -212,7 +212,6 @@ PUBLIC void image_dmp()
 PUBLIC void sched_dmp()
 {
   struct proc *rdy_head[NR_SCHED_QUEUES];
-  char *types[] = {"task","higher","high","normal","low","lower","user","idle"};
   struct kinfo kinfo;
   register struct proc *rp;
   vir_bytes ptr_diff;
@@ -244,13 +243,14 @@ PUBLIC void sched_dmp()
   printf("Dumping scheduling queues.\n");
 
   for (r=0;r<NR_SCHED_QUEUES; r++) {
-      printf("* %6s: ", types[r]);
       rp = rdy_head[r];
+      if(!rp) continue;
+      printf("%2d: ", r);
       while (rp != NIL_PROC) {
-          printf("%3d, ", rp->p_nr);
+          printf("%3d ", rp->p_nr);
           rp = rp->p_nextready;
       }
-      printf("NIL\n");
+      printf("\n");
   }
   printf("\n");
 }
