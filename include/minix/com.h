@@ -1,3 +1,7 @@
+
+#ifndef _MINIX_COM_H
+#define _MINIX_COM_H 1
+
 /*===========================================================================*
  *          	    		Magic process numbers			     *
  *===========================================================================*/
@@ -109,13 +113,14 @@
 #define DEV_GATHER   	 9	/* fcn code for reading into a vector */
 #define TTY_SETPGRP 	10	/* fcn code for setpgroup */
 #define TTY_EXIT	11	/* a process group leader has exited */	
-#define DEV_SELECT	12	/* request select() attention */
-#define DEV_STATUS   	(DEV_RQ_BASE + 13)	/* request driver status */
+#define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
+#define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
 
-#define DEV_REPLY       (DEV_RS_BASE + 0)	/* general task reply */
-#define DEV_CLONED      (DEV_RS_BASE + 1)	/* return cloned minor */
-#define DEV_REVIVE      (DEV_RS_BASE + 2)	/* driver revives process */
-#define DEV_IO_READY    (DEV_RS_BASE + 3)	/* selected device ready */
+#define DEV_REPLY       (DEV_RS_BASE + 0) /* general task reply */
+#define DEV_CLONED      (DEV_RS_BASE + 1) /* return cloned minor */
+#define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
+#define DEV_IO_READY    (DEV_RS_BASE + 3) /* selected device ready */
+#define DEV_NO_STATUS   (DEV_RS_BASE + 4) /* empty status reply */
 
 #define SUSPEND	 	-998	/* used in interrupts when tty has no data */
 
@@ -128,7 +133,7 @@
 #define ADDRESS 	m2_p1	/* core buffer address */
 
 /* Field names for DEV_SELECT messages to device drivers. */
-#define DEVICE		m2_i1	/* minor device */
+#define DEV_MINOR	m2_i1	/* minor device */
 #define DEV_SEL_OPS	m2_i2	/* which select operations are requested */
 #define DEV_SEL_WATCH	m2_i3	/* request notify if no operations are ready */
 
@@ -433,3 +438,4 @@
 #  define DIAG_PROC_NR   	m1_i2
 
 
+#endif
