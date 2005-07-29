@@ -20,15 +20,11 @@
  *   numap_local:	umap_local D segment from proc nr instead of pointer
  *   virtual_copy:	copy bytes from one virtual address to another 
  *   get_randomness:	accumulate randomness in a buffer
- *   generic_handler:	interrupt handler for user-level device drivers
  *
  * Changes:
- *   Apr 25, 2005   made mapping of call vector explicit  (Jorrit N. Herder)
- *   Oct 17, 2004   generic handler and IRQ policies  (Jorrit N. Herder)
  *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
- *   Sep 10, 2004   system call functions in library  (Jorrit N. Herder)
- *   2004 to 2005   various new syscalls (see syslib.h)  (Jorrit N. Herder)
+ *   2004 to 2005   various new syscalls (see system.h)  (Jorrit N. Herder)
  */
 
 #include "kernel.h"
@@ -184,6 +180,7 @@ int proc_type;				/* system or user process flag */
       if (sp->s_proc_nr != NONE) return(ENOSPC);
       rc->p_priv = sp;				/* assign new slot */
       rc->p_priv->s_proc_nr = proc_nr(rc);	/* set association */
+      rc->p_priv->s_flags = SYS_PROC;		/* mark as privileged */
   } else {
       rc->p_priv = &priv[USER_PRIV_ID];		/* use shared slot */
       rc->p_priv->s_proc_nr = INIT_PROC_NR;	/* set association */
@@ -225,34 +222,6 @@ int source;
   	krandom.bin[source].r_size ++;
   }
   krandom.bin[source].r_next = (r_next + 1 ) % RANDOM_ELEMENTS;
-}
-
-
-/*===========================================================================*
- *			       generic_handler				     *
- *===========================================================================*/
-PUBLIC int generic_handler(hook)
-irq_hook_t *hook;	
-{
-/* This function handles hardware interrupt in a simple and generic way. All
- * interrupts are transformed into messages to a driver. The IRQ line will be
- * reenabled if the policy says so.
- */
-
-  /* As a side-effect, the interrupt handler gathers random information by 
-   * timestamping the interrupt events. This is used for /dev/random.
-   */
-  get_randomness(hook->irq);
-
-  /* Add a bit for this interrupt to the process' pending interrupts. When 
-   * sending the notification message, this bit map will be magically set
-   * as an argument. 
-   */
-  priv(proc_addr(hook->proc_nr))->s_int_pending |= (1 << hook->notify_id);
-
-  /* Build notification message and return. */
-  lock_notify(HARDWARE, hook->proc_nr);
-  return(hook->policy & IRQ_REENABLE);
 }
 
 

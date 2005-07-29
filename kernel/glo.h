@@ -47,7 +47,7 @@ EXTERN reg_t mon_ss, mon_sp;		/* boot monitor stack */
 EXTERN int mon_return;			/* true if we can return to monitor */
 
 /* Variables that are initialized elsewhere are just extern here. */
-extern struct system_image image[]; 	/* system image processes */
+extern struct boot_image image[]; 	/* system image processes */
 extern char *t_stack[];			/* task stack space */
 extern struct segdesc_s gdt[];		/* global descriptor table */
 

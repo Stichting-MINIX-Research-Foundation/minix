@@ -26,10 +26,13 @@ register message *m_ptr;	/* pointer to request message */
   long port = m_ptr->DIO_PORT;
   phys_bytes phys_buf;
 
-  /* Check if process number is OK. */
+  /* Check if process number is OK. A process number is allowed here, because
+   * driver may directly provide a pointer to a buffer at the user-process
+   * that initiated the device I/O. Kernel processes, of course, are denied.
+   */
   if (proc_nr == SELF) proc_nr = m_ptr->m_source;
-  if (! isokprocn(proc_nr))
-      return(EINVAL);
+  if (! isokprocn(proc_nr)) return(EINVAL);
+  if (iskerneln(proc_nr)) return(EPERM);
 
   /* Get and check physical address. */
   if ((phys_buf = numap_local(proc_nr, (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)

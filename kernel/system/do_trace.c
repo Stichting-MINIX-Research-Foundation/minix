@@ -47,6 +47,9 @@ register message *m_ptr;
   int tr_proc_nr = m_ptr->CTL_PROC_NR;
   int i;
 
+  if (! isokprocn(tr_proc_nr)) return(EINVAL);
+  if (iskerneln(tr_proc_nr)) return(EPERM);
+
   rp = proc_addr(tr_proc_nr);
   if (isemptyp(rp)) return(EIO);
   switch (tr_request) {

@@ -4,7 +4,6 @@
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR	(child's process table slot)	
  *    m1_i2:	PR_PPROC_NR	(parent, process that forked)	
- *    m1_i3:	PR_PID	 	(child pid received from PM)
  */
 
 #include "../system.h"
@@ -33,6 +32,18 @@ register message *m_ptr;	/* pointer to request message */
   rpc = proc_addr(m_ptr->PR_PROC_NR);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
 
+  /* If this is a system process, make sure the child process gets its own
+   * privilege structure for accounting. This is the only part that can fail,
+   * so do this before allocating the process table slot.
+   */
+  if (priv(rpc)->s_flags & SYS_PROC) {
+      if (OK != (i=get_priv(rpc, SYS_PROC))) return(i);	/* get structure */
+      for (i=0; i< BITMAP_CHUNKS(NR_SYS_PROCS); i++)	/* remove pending: */
+          priv(rpc)->s_notify_pending.chunk[i] = 0;	/* - notifications */
+      priv(rpc)->s_int_pending = 0;			/* - interrupts */
+      sigemptyset(&priv(rpc)->s_sig_pending);		/* - signals */
+  }
+
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
 #if (CHIP == INTEL)
   old_ldt_sel = rpc->p_ldt_sel;		/* backup local descriptors */
@@ -52,16 +63,6 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
   rpc->p_sys_time = 0;
 
-  /* If this is a system process, make sure the child process gets its own
-   * privilege structure for accounting.
-   */
-  if (priv(rpc)->s_flags & SYS_PROC) {
-      if (OK != (i=get_priv(rpc, SYS_PROC))) return(i);	/* get structure */
-      for (i=0; i< BITMAP_CHUNKS(NR_SYS_PROCS); i++)	/* remove pending: */
-          priv(rpc)->s_notify_pending.chunk[i] = 0;	/* - notifications */
-      priv(rpc)->s_int_pending = 0;			/* - interrupts */
-      sigemptyset(&priv(rpc)->s_sig_pending);		/* - signals */
-  }
   return(OK);
 }
 

@@ -19,7 +19,7 @@
  * or PRIVATE. The reason for this is that extern variables cannot have a  
  * default initialization. If such variables are shared, they must also be
  * declared in one of the *.h files without the initialization.  Examples 
- * include 'system_image' (this file) and 'idt' and 'gdt' (protect.c). 
+ * include 'boot_image' (this file) and 'idt' and 'gdt' (protect.c). 
  *
  * Changes:
  *    Nov 10, 2004   removed controller->driver mappings  (Jorrit N. Herder)
@@ -68,10 +68,10 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define USER_T		 8		/* ticks */
 #define SYS_T		16		/* ticks */
 
-PUBLIC struct system_image image[] = {
+PUBLIC struct boot_image image[] = {
  { IDLE,    idle_task,  IDLE_F, IDLE_T,   IDLE_Q,  IDLE_S,    EMPTY_MASK, EMPTY_MASK,    "IDLE"    },
- { CLOCK,   clock_task, TASK_F, SYS_T,   TASK_Q, CLOCK_S,   FILLED_MASK, SYSTEM_SEND_MASK,   "CLOCK"   },
- { SYSTEM,  sys_task,   TASK_F, SYS_T,   TASK_Q, SYSTEM_S,     FILLED_MASK, SYSTEM_SEND_MASK,  "SYSTEM"     },
+ { CLOCK,   clock_task, TASK_F, SYS_T,   TASK_Q, CLOCK_S,   TASK_CALL_MASK, SYSTEM_SEND_MASK,   "CLOCK"   },
+ { SYSTEM,  sys_task,   TASK_F, SYS_T,   TASK_Q, SYSTEM_S,     TASK_CALL_MASK, SYSTEM_SEND_MASK,  "SYSTEM"     },
  { HARDWARE,   0,       TASK_F, SYS_T,   TASK_Q, HARDWARE_S, EMPTY_MASK, SYSTEM_SEND_MASK, "KERNEL" },
  { PM_PROC_NR, 0,       SYS_F, SYS_T, 3, 0,          FILLED_MASK,   SERVER_SEND_MASK,      "PM"      },
  { FS_PROC_NR, 0,       SYS_F, SYS_T, 4, 0,          FILLED_MASK,   SERVER_SEND_MASK,      "FS"      },
@@ -111,5 +111,5 @@ PUBLIC struct system_image image[] = {
  * a compile time error. Note that no space is allocated because 'dummy' is
  * declared extern.
   */
-extern int dummy[(NR_BOOT_PROCS==sizeof(image)/sizeof(struct system_image))?1:-1];
+extern int dummy[(NR_BOOT_PROCS==sizeof(image)/sizeof(struct boot_image))?1:-1];
 

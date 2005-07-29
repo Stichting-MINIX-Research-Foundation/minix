@@ -25,7 +25,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_trace.o) \
 	$(SYSTEM)(do_nice.o) \
 	$(SYSTEM)(do_times.o) \
-	$(SYSTEM)(do_alarm.o) \
+	$(SYSTEM)(do_setalarm.o) \
 	$(SYSTEM)(do_irqctl.o) \
 	$(SYSTEM)(do_devio.o) \
 	$(SYSTEM)(do_vdevio.o) \
@@ -82,8 +82,8 @@ $(SYSTEM)(do_nice.o):	do_nice.c
 $(SYSTEM)(do_times.o):	do_times.c
 	$(CC) do_times.c
 
-$(SYSTEM)(do_alarm.o):	do_alarm.c
-	$(CC) do_alarm.c
+$(SYSTEM)(do_setalarm.o):	do_setalarm.c
+	$(CC) do_setalarm.c
 
 $(SYSTEM)(do_irqctl.o):	do_irqctl.c
 	$(CC) do_irqctl.c

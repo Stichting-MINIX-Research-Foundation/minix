@@ -27,6 +27,8 @@ message *m_ptr;			/* pointer to request message */
   register struct proc *rp;
   phys_bytes src_phys;
 
+  if (! isokprocn(m_ptr->SIG_PROC)) return(EINVAL);
+  if (iskerneln(m_ptr->SIG_PROC)) return(EPERM);
   rp = proc_addr(m_ptr->SIG_PROC);
 
   /* Copy in the sigcontext structure. */

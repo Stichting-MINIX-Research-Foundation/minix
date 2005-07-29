@@ -26,6 +26,7 @@ message *m_ptr;			/* pointer to request message */
   caller = m_ptr->m_source;
   map_ptr = (struct mem_map *) m_ptr->PR_MEM_PTR;
   if (! isokprocn(m_ptr->PR_PROC_NR)) return(EINVAL);
+  if (iskerneln(m_ptr->PR_PROC_NR)) return(EPERM);
   rp = proc_addr(m_ptr->PR_PROC_NR);
 
   /* Copy the map from PM. */

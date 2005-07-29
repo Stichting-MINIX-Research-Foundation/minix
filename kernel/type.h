@@ -10,7 +10,7 @@ typedef struct {			/* bitmap for system indexes */
   bitchunk_t chunk[BITMAP_CHUNKS(NR_SYS_PROCS)];
 } sys_map_t;
 
-struct system_image {
+struct boot_image {
   proc_nr_t proc_nr;			/* process number to use */
   task_t *initial_pc;			/* start function for tasks */
   int flags;				/* process flags */

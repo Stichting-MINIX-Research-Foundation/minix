@@ -3,7 +3,6 @@
  *
  * The parameters for this system call are:
  *    m1_i3:	I_REQUEST	(what info to get)	
- *    m1_i4:	I_PROC_NR	(process to store value at)	
  *    m1_p1:	I_VAL_PTR 	(where to put it)	
  *    m1_i1:	I_VAL_LEN 	(maximum length expected, optional)	
  *    m1_p2:	I_VAL_PTR2	(second, optional pointer)	
@@ -47,7 +46,7 @@ register message *m_ptr;	/* pointer to request message */
         break;
     }
     case GET_IMAGE: {
-        length = sizeof(struct system_image) * NR_BOOT_PROCS;
+        length = sizeof(struct boot_image) * NR_BOOT_PROCS;
         src_phys = vir2phys(image);
         break;
     }

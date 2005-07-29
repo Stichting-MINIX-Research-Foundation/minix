@@ -20,23 +20,25 @@ PUBLIC int do_abort(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
 /* Handle sys_abort. MINIX is unable to continue. This can originate in the
- * PM (normal abort or panic) or FS (panic), or TTY (user issued CTRL-ALT-DEL 
- * or ESC after debugging dumps).
+ * PM (normal abort or panic) or FS (panic), or TTY (after CTRL-ALT-DEL). 
  */
   int how = m_ptr->ABRT_HOW;
+  int proc_nr;
+  int length;
+  phys_bytes src_phys;
 
   /* See if the monitor is to run the specified instructions. */
   if (how == RBT_MONITOR) {
-      int proc_nr = m_ptr->ABRT_MON_PROC;
-      int length = m_ptr->ABRT_MON_LEN + 1;
-      vir_bytes src_vir = (vir_bytes) m_ptr->ABRT_MON_ADDR;
-      phys_bytes src_phys = numap_local(proc_nr, src_vir, length);
 
-      /* Validate length and address of shutdown code before copying. */
-      if (length > kinfo.params_size || src_phys == 0)
-          phys_copy(vir2phys("delay;boot"), kinfo.params_base, 11);
-      else
-          phys_copy(src_phys, kinfo.params_base, (phys_bytes) length);
+      proc_nr = m_ptr->ABRT_MON_PROC;
+      if (! isokprocn(proc_nr)) return(EINVAL);
+      length = m_ptr->ABRT_MON_LEN + 1;
+      if (length > kinfo.params_size) return(E2BIG);
+      src_phys = numap_local(proc_nr,(vir_bytes)m_ptr->ABRT_MON_ADDR,length);
+      if (! src_phys) return(EFAULT);
+
+      /* Parameters seem ok, copy them and prepare shutting down. */
+      phys_copy(src_phys, kinfo.params_base, (phys_bytes) length);
   }
 
   /* Now prepare to shutdown MINIX. */

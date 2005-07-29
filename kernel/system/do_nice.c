@@ -23,6 +23,7 @@ PUBLIC int do_nice(message *m_ptr)
   /* Extract the message parameters and do sanity checking. */
   proc_nr = m_ptr->PR_PROC_NR;
   if (! isokprocn(proc_nr)) return(EINVAL);
+  if (iskerneln(proc_nr)) return(EPERM);
   pri = m_ptr->PR_PRIORITY;
   if (pri < PRIO_MIN || pri > PRIO_MAX) return(EINVAL);
 

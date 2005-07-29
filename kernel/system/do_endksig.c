@@ -23,8 +23,11 @@ message *m_ptr;			/* pointer to request message */
  */
   register struct proc *rp;
 
+  /* Get process pointer and verify that it had signals pending. If the 
+   * process is already dead its flags will be reset. 
+   */
   rp = proc_addr(m_ptr->SIG_PROC);
-  if (isemptyp(rp)) return(EINVAL);		/* process already dead? */
+  if (! (rp->p_rts_flags & SIG_PENDING)) return(EINVAL);
 
   /* PM has finished one kernel signal. Perhaps process is ready now? */
   if (! (rp->p_rts_flags & SIGNALED)) 		/* new signal arrived */

@@ -30,6 +30,7 @@
  */
 #define EMPTY_MASK 		(0)
 #define FILLED_MASK 		(~0)
+#define TASK_CALL_MASK	 	(1 << RECEIVE)
 #define USER_CALL_MASK	 	((1 << SENDREC) | (1 << ECHO))
 
 /* Send masks determine to whom processes can send messages or notifications. 

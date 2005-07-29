@@ -33,7 +33,7 @@ message *m_ptr;			/* pointer to request message */
 
   /* Make sure this process has its own privileges structure. */
   if (! (priv(rp)->s_flags & SYS_PROC)) 
-      get_priv(rp, SYS_PROC);
+      if ((i=get_priv(rp, SYS_PROC)) != OK) return(i);
 
   /* Now update the process' privileges as requested. */
   rp->p_priv->s_call_mask = FILLED_MASK;

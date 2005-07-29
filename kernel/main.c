@@ -25,8 +25,6 @@
 FORWARD _PROTOTYPE( void announce, (void));	
 FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
 
-#define SHUTDOWN_TICKS 5	/* time allowed to do cleanup */
-
 
 /*===========================================================================*
  *                                   main                                    *
@@ -34,7 +32,7 @@ FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
 PUBLIC void main()
 {
 /* Start the ball rolling. */
-  struct system_image *ip;	/* boot image pointer */
+  struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register struct priv *sp;	/* privilege structure pointer */
   register int i, s;
@@ -188,8 +186,8 @@ PUBLIC void prepare_shutdown(how)
 int how;
 {
 /* This function prepares to shutdown MINIX. */
-  register struct proc *rp; 
   static timer_t shutdown_timer;
+  register struct proc *rp; 
   message m;
 
   /* Show debugging dumps on panics. Make sure that the TTY task is still 
@@ -221,7 +219,7 @@ int how;
    */
   kprintf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-  set_timer(&shutdown_timer, get_uptime() + SHUTDOWN_TICKS, shutdown);
+  set_timer(&shutdown_timer, get_uptime() + HZ, shutdown);
 }
 
 

@@ -30,6 +30,7 @@ message *m_ptr;			/* pointer to request message */
   int sig_nr = m_ptr->SIG_NUMBER;
 
   if (! isokprocn(proc_nr) || sig_nr > _NSIG) return(EINVAL);
+  if (iskerneln(proc_nr)) return(EPERM);
 
   if (m_ptr->m_source == PM_PROC_NR) {
       /* Directly send signal notification to a system process. */

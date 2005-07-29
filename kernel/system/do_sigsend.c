@@ -29,6 +29,8 @@ message *m_ptr;			/* pointer to request message */
   struct sigcontext sc, *scp;
   struct sigframe fr, *frp;
 
+  if (! isokprocn(m_ptr->SIG_PROC)) return(EINVAL);
+  if (iskerneln(m_ptr->SIG_PROC)) return(EPERM);
   rp = proc_addr(m_ptr->SIG_PROC);
 
   /* Get the sigmsg structure into our address space.  */

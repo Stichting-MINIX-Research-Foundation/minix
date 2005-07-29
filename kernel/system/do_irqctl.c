@@ -5,7 +5,8 @@
  *    m5_c1:	IRQ_REQUEST	(control operation to perform)	
  *    m5_c2:	IRQ_VECTOR	(irq line that must be controlled)
  *    m5_i1:	IRQ_POLICY	(irq policy allows reenabling interrupts)
- *    m5_l3:	IRQ_HOOK_ID	(index of irq hook assigned at kernel)
+ *    m5_l3:	IRQ_HOOK_ID	(provides index to be returned on interrupt)
+ *      ,,          ,,          (returns index of irq hook assigned at kernel)
  *
  * Author:
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
@@ -13,7 +14,10 @@
 
 #include "../system.h"
 
+
 #if USE_IRQCTL
+
+FORWARD _PROTOTYPE(int generic_handler, (irq_hook_t *hook));
 
 /*===========================================================================*
  *				do_irqctl				     *
@@ -97,6 +101,34 @@ register message *m_ptr;	/* pointer to request message */
       r = EINVAL;				/* invalid IRQ_REQUEST */
   }
   return(r);
+}
+
+
+/*===========================================================================*
+ *			       generic_handler				     *
+ *===========================================================================*/
+PRIVATE int generic_handler(hook)
+irq_hook_t *hook;	
+{
+/* This function handles hardware interrupt in a simple and generic way. All
+ * interrupts are transformed into messages to a driver. The IRQ line will be
+ * reenabled if the policy says so.
+ */
+
+  /* As a side-effect, the interrupt handler gathers random information by 
+   * timestamping the interrupt events. This is used for /dev/random.
+   */
+  get_randomness(hook->irq);
+
+  /* Add a bit for this interrupt to the process' pending interrupts. When 
+   * sending the notification message, this bit map will be magically set
+   * as an argument. 
+   */
+  priv(proc_addr(hook->proc_nr))->s_int_pending |= (1 << hook->notify_id);
+
+  /* Build notification message and return. */
+  lock_notify(HARDWARE, hook->proc_nr);
+  return(hook->policy & IRQ_REENABLE);
 }
 
 #endif /* USE_IRQCTL */

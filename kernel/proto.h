@@ -51,7 +51,6 @@ _PROTOTYPE( phys_bytes umap_remote, (struct proc *rp, int seg,
 		vir_bytes vir_addr, vir_bytes bytes)			);
 _PROTOTYPE( phys_bytes umap_bios, (struct proc *rp, vir_bytes vir_addr,
 		vir_bytes bytes)					);
-_PROTOTYPE( int generic_handler, (irq_hook_t *hook)			);
 
 #if (CHIP == INTEL)
 
