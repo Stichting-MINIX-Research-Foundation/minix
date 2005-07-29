@@ -47,6 +47,7 @@ struct vir_addr {
   vir_bytes offset;
 };
 
+#define phys_cp_req vir_cp_req 
 struct vir_cp_req {
   struct vir_addr src;
   struct vir_addr dst;

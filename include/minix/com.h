@@ -270,9 +270,9 @@
 #define NR_SYS_CALLS	36	/* number of system calls */ 
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
-#define MEM_PTR		m1_p1	/* base */
-#define MEM_COUNT	m1_i1	/* count */
-#define MEM_PATTERN	m1_i2   /* pattern to write */
+#define MEM_PTR		m2_p1	/* base */
+#define MEM_COUNT	m2_l1	/* count */
+#define MEM_PATTERN	m2_l2   /* pattern to write */
 #define MEM_CHUNK_BASE	m4_l1	/* physical base address */
 #define MEM_CHUNK_SIZE	m4_l2	/* size of mem chunk */
 #define MEM_TOT_SIZE	m4_l3	/* total memory size */
@@ -347,8 +347,7 @@
 #define CP_NR_BYTES	m5_l3	/* number of bytes to copy */
 
 /* Field names for SYS_VCOPY and SYS_VVIRCOPY. */
-#define VCP_SRC_PROC	m1_i1	/* process to copy from */
-#define VCP_DST_PROC	m1_i2	/* process to copy to */
+#define VCP_NR_OK	m1_i2	/* number of successfull copies */
 #define VCP_VEC_SIZE	m1_i3	/* size of copy vector */
 #define VCP_VEC_ADDR	m1_p1	/* pointer to copy vector */
 
