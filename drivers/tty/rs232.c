@@ -226,6 +226,7 @@ typedef struct rs232 {
   unsigned parity_errors;
   unsigned break_interrupts;
 
+  int irq;			/* irq for this line */
   int irq_hook_id;		/* interrupt hook */
 
   char ibuf[RS_IBUFSIZE];	/* input buffer */
@@ -249,21 +250,21 @@ PRIVATE port_t addr_8250[] = {
 };
 #endif
 
-FORWARD _PROTOTYPE( int rs232_handler, (message *m)			);
 FORWARD _PROTOTYPE( void in_int, (rs232_t *rs)				);
 FORWARD _PROTOTYPE( void line_int, (rs232_t *rs)			);
 FORWARD _PROTOTYPE( void modem_int, (rs232_t *rs)			);
 FORWARD _PROTOTYPE( int rs_write, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void rs_echo, (tty_t *tp, int c)			);
-FORWARD _PROTOTYPE( void rs_ioctl, (tty_t *tp)				);
+FORWARD _PROTOTYPE( int rs_ioctl, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void rs_config, (rs232_t *rs)			);
 FORWARD _PROTOTYPE( int rs_read, (tty_t *tp, int try)				);
-FORWARD _PROTOTYPE( void rs_icancel, (tty_t *tp)			);
-FORWARD _PROTOTYPE( void rs_ocancel, (tty_t *tp)			);
+FORWARD _PROTOTYPE( int rs_icancel, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int rs_ocancel, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void rs_ostart, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( void rs_break, (tty_t *tp)				);
-FORWARD _PROTOTYPE( void rs_close, (tty_t *tp)				);
+FORWARD _PROTOTYPE( int rs_break, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int rs_close, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void out_int, (rs232_t *rs)				);
+FORWARD _PROTOTYPE( void rs232_handler, (rs232_t *rs)			);
 
 /* XXX */
 PRIVATE void lock(void) {}
@@ -282,7 +283,7 @@ PRIVATE int my_inb(port_t port)
 /*==========================================================================*
  *				rs_write				    *
  *==========================================================================*/
-PRIVATE void rs_write(tp, try)
+PRIVATE int rs_write(tp, try)
 register tty_t *tp;
 int try;
 {
@@ -387,13 +388,15 @@ int c;				/* character to echo */
 /*==========================================================================*
  *				rs_ioctl				    *
  *==========================================================================*/
-PRIVATE void rs_ioctl(tp)
+PRIVATE int rs_ioctl(tp, dummy)
 tty_t *tp;			/* which TTY */
+int dummy;
 {
 /* Reconfigure the line as soon as the output has drained. */
   rs232_t *rs = tp->tty_priv;
 
   rs->drain = TRUE;
+  return 0;	/* dummy */
 }
 
 
@@ -580,6 +583,7 @@ tty_t *tp;			/* which TTY */
   /* Enable interrupts for both interrupt controller and device. */
   irq = (line & 1) == 0 ? RS232_IRQ : SECONDARY_IRQ;
 
+  rs->irq = irq;
   if(sys_irqsetpolicy(irq, IRQ_REENABLE, &rs->irq_hook_id) != OK) {
   	printf("RS232: Couldn't obtain hook for irq %d\n", irq);
   } else {
@@ -587,6 +591,8 @@ tty_t *tp;			/* which TTY */
   		printf("RS232: Couldn't enable irq %d (hooked)\n", irq);
   	}
   }
+
+  rs_irq_set |= (1 << irq);
 
   sys_outb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE
 				| IE_RECEIVER_READY | IE_TRANSMITTER_READY);
@@ -617,14 +623,35 @@ tty_t *tp;			/* which TTY */
 
   /* Tell external device we are ready. */
   istart(rs);
+
+}
+
+
+/*==========================================================================*
+ *				rs_interrupt					    *
+ *==========================================================================*/
+PUBLIC void rs_interrupt(m)
+message *m;			/* which TTY */
+{
+	unsigned long irq_set;
+	int i;
+	rs232_t *rs;
+
+	irq_set= m->NOTIFY_ARG;
+	for (i= 0, rs = rs_lines; i<NR_RS_LINES; i++, rs++)
+	{
+		if (irq_set & (1 << rs->irq))
+			rs232_handler(rs);
+	}
 }
 
 
 /*==========================================================================*
  *				rs_icancel				    *
  *==========================================================================*/
-PRIVATE void rs_icancel(tp)
+PRIVATE int rs_icancel(tp, dummy)
 tty_t *tp;			/* which TTY */
+int dummy;
 {
 /* Cancel waiting input. */
   rs232_t *rs = tp->tty_priv;
@@ -634,14 +661,17 @@ tty_t *tp;			/* which TTY */
   rs->itail = rs->ihead;
   istart(rs);
   unlock();
+
+  return 0;	/* dummy */
 }
 
 
 /*==========================================================================*
  *				rs_ocancel				    *
  *==========================================================================*/
-PRIVATE void rs_ocancel(tp)
+PRIVATE int rs_ocancel(tp, dummy)
 tty_t *tp;			/* which TTY */
+int dummy;
 {
 /* Cancel pending output. */
   rs232_t *rs = tp->tty_priv;
@@ -651,13 +681,15 @@ tty_t *tp;			/* which TTY */
   rs->ocount = 0;
   rs->otail = rs->ohead;
   unlock();
+
+  return 0;	/* dummy */
 }
 
 
 /*==========================================================================*
  *				rs_read					    *
  *==========================================================================*/
-PRIVATE void rs_read(tp, try)
+PRIVATE int rs_read(tp, try)
 tty_t *tp;			/* which tty */
 int try;
 {
@@ -718,8 +750,9 @@ rs232_t *rs;			/* which rs line */
 /*==========================================================================*
  *				rs_break				    *
  *==========================================================================*/
-PRIVATE void rs_break(tp)
+PRIVATE int rs_break(tp, dummy)
 tty_t *tp;			/* which tty */
+int dummy;
 {
 /* Generate a break condition by setting the BREAK bit for 0.4 sec. */
   rs232_t *rs = tp->tty_priv;
@@ -731,21 +764,25 @@ tty_t *tp;			/* which tty */
   /* milli_delay(400); */				/* ouch */
   printf("RS232 break\n");
   sys_outb(rs->line_ctl_port, line_controls);
+  return 0;	/* dummy */
 }
 
 
 /*==========================================================================*
  *				rs_close				    *
  *==========================================================================*/
-PRIVATE void rs_close(tp)
+PRIVATE int rs_close(tp, dummy)
 tty_t *tp;			/* which tty */
+int dummy;
 {
 /* The line is closed; optionally hang up. */
   rs232_t *rs = tp->tty_priv;
+  int r;
 
   if (tp->tty_termios.c_cflag & HUPCL) {
 	sys_outb(rs->modem_ctl_port, MC_OUT2 | MC_RTS);
   }
+  return 0;	/* dummy */
 }
 
 
@@ -755,18 +792,10 @@ tty_t *tp;			/* which tty */
 /*==========================================================================*
  *				rs232_handler				    *
  *==========================================================================*/
-PRIVATE int rs232_handler(m)
-message *m;
+PRIVATE void rs232_handler(rs)
+struct rs232 *rs;
 {
 /* Interrupt hander for RS232. */
-
-	/* XXX */
-#if DEAD_CODE
-  register rs232_t *rs = structof(rs232_t, hook, hook);
-#else
-	/* XXX */
-  register rs232_t *rs = NULL;
-#endif
 
   while (TRUE) {
   	int v;
@@ -790,7 +819,7 @@ message *m;
 		line_int(rs);
 		continue;
 	}
-	return(1);	/* reenable serial interrupt */
+	return;
   }
 }
 #endif /* MACHINE == IBM_PC */

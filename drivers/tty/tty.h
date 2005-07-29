@@ -84,6 +84,9 @@ extern tty_t tty_table[NR_CONS+NR_RS_LINES+NR_PTYS];
 extern int ccurrent;		/* currently visible console */
 extern int irq_hook_id;		/* hook id for keyboard irq */
 
+extern unsigned long kbd_irq_set;
+extern unsigned long rs_irq_set;
+
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */
 #define ESCAPED            1	/* previous character was LNEXT (^V) */
@@ -129,6 +132,7 @@ _PROTOTYPE( int select_retry, (struct tty *tp)				);
 
 /* rs232.c */
 _PROTOTYPE( void rs_init, (struct tty *tp)				);
+_PROTOTYPE( void rs_interrupt, (message *m)				);
 
 #if (CHIP == INTEL)
 /* console.c */
@@ -146,7 +150,7 @@ _PROTOTYPE( void kb_init, (struct tty *tp)				);
 _PROTOTYPE( int kbd_loadmap, (message *m)				);
 _PROTOTYPE( void do_panic_dumps, (message *m)				);
 _PROTOTYPE( void do_fkey_ctl, (message *m)				);
-_PROTOTYPE( void do_interrupt, (message *m)				);
+_PROTOTYPE( void kbd_interrupt, (message *m)				);
 
 /* pty.c */
 _PROTOTYPE( void do_pty, (struct tty *tp, message *m_ptr)		);

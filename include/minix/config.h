@@ -112,7 +112,7 @@
  * system can handle.
  */
 #define NR_CONS            4	/* # system consoles (1 to 8) */
-#define	NR_RS_LINES	   0	/* # rs232 terminals (0 to 4) */
+#define	NR_RS_LINES	   4	/* # rs232 terminals (0 to 4) */
 #define	NR_PTYS		   32	/* # pseudo terminals (0 to 64) */
 
 

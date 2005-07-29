@@ -76,6 +76,9 @@
 
 extern int irq_hook_id;
 
+unsigned long kbd_irq_set = 0;
+unsigned long rs_irq_set = 0;
+
 /* Address of a tty structure. */
 #define tty_addr(line)	(&tty_table[line])
 
@@ -204,7 +207,10 @@ PUBLIC void main(void)
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
 	case HARD_INT: {		/* hardware interrupt notification */
-		do_interrupt(&tty_mess);/* fetch chars from keyboard */
+		if (tty_mess.NOTIFY_ARG & kbd_irq_set)
+			kbd_interrupt(&tty_mess);/* fetch chars from keyboard */
+		if (tty_mess.NOTIFY_ARG & rs_irq_set)
+			rs_interrupt(&tty_mess);/* serial I/O */
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
 	}

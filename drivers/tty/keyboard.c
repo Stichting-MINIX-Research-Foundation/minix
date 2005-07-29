@@ -133,9 +133,9 @@ int scode;
 }
 
 /*===========================================================================*
- *				kbd_hw_int				     *
+ *				kbd_interrupt				     *
  *===========================================================================*/
-PUBLIC void do_interrupt(m_ptr)
+PUBLIC void kbd_interrupt(m_ptr)
 message *m_ptr;
 {
 /* A keyboard interrupt has occurred.  Process it. */
@@ -406,6 +406,7 @@ tty_t *tp;
           panic("TTY",  "Couldn't set keyboard IRQ policy", i);
       if ((i=sys_irqenable(&irq_hook_id)) != OK)
           panic("TTY", "Couldn't enable keyboard IRQs", i);
+      kbd_irq_set |= (1 << KEYBOARD_IRQ);
   }
 }
 
