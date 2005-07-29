@@ -3,8 +3,7 @@
 /*===========================================================================*
  *                               sys_setalarm		     	     	     *
  *===========================================================================*/
-PUBLIC int sys_setalarm(proc_nr, exp_time, abs_time)
-int proc_nr;		/* process to send SYN_ALARM message to */
+PUBLIC int sys_setalarm(exp_time, abs_time)
 clock_t exp_time;	/* expiration time for the alarm */
 int abs_time;		/* use absolute or relative expiration time */
 {
@@ -12,8 +11,6 @@ int abs_time;		/* use absolute or relative expiration time */
  * number can be SELF if the caller doesn't know its process number.
  */
     message m;
-
-    m.ALRM_PROC_NR = proc_nr;		/* receiving process */
     m.ALRM_EXP_TIME = exp_time;		/* the expiration time */
     m.ALRM_ABS_TIME = abs_time;		/* time is absolute? */
     return _taskcall(SYSTASK, SYS_SETALARM, &m);
