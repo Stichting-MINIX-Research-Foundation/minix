@@ -248,7 +248,7 @@ irq_hook_t *hook;
    * sending the notification message, this bit map will be magically set
    * as an argument. 
    */
-  priv(proc_addr(hook->proc_nr))->s_int_pending |= (1 << hook->irq);
+  priv(proc_addr(hook->proc_nr))->s_int_pending |= (1 << hook->notify_id);
 
   /* Build notification message and return. */
   lock_notify(HARDWARE, hook->proc_nr);

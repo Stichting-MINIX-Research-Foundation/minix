@@ -300,7 +300,10 @@ PUBLIC void main()
 	tmr_inittimer(&fp->fl_tmr_stop);
   }
 
-  /* Set IRQ policy, only request notifications. */
+  /* Set IRQ policy, only request notifications, do not automatically 
+   * reenable interrupts. ID return on interrupt is the IRQ line number. 
+   */
+  irq_hook_id = FLOPPY_IRQ;
   if ((s=sys_irqsetpolicy(FLOPPY_IRQ, 0, &irq_hook_id )) != OK)
   	panic("FLOPPY", "Couldn't set IRQ policy", s);
   if ((s=sys_irqenable(&irq_hook_id)) != OK)

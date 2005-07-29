@@ -49,6 +49,12 @@
 **  +------------+---------+---------+---------------+
 **
 **  $Log$
+**  Revision 1.4  2005/07/29 12:44:41  jnherder
+**  Small update to SYS_IRQCTL -> setting an interrupt policy now allows the caller
+**  to provide an index (0 .. 31) that is passed in the HARD_INT message when an
+**  interrupt occurs. The NOTIFY_ARG field contains a bitmap with all indexes for
+**  which an interrupt occured.
+**
 **  Revision 1.3  2005/07/20 15:28:04  jnherder
 **  Kernel sends SIGKSTOP just before shutdown. Drivers do clean up and exit.
 **
@@ -267,7 +273,10 @@ static void do_first_init(dpeth_t *dep, dp_conf_t *dcp)
   /* Device specific initialization */
   (*dep->de_initf) (dep);
 
-  /* Set the interrupt handler policy */
+  /* Set the interrupt handler policy. Request interrupts to be reenabled
+   * automatically. Return the IRQ line number when an interrupt occurs.
+   */
+  dep->de_hook = dep->de_irq;
   sys_irqsetpolicy(dep->de_irq, IRQ_REENABLE, &dep->de_hook);
   sys_irqenable(&dep->de_hook);
 

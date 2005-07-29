@@ -25,7 +25,7 @@ struct priv {
   long s_sys_mask;		/* allowed kernel calls */
 
   sys_map_t s_notify_pending;  	/* bit map with pending notifications */
-  short s_int_pending;		/* pending hardware interrupts */
+  irq_id_t s_int_pending;	/* pending hardware interrupts */
   sigset_t s_sig_pending;	/* pending signals */
 
   timer_t s_alarm_timer;	/* synchronous alarm timer */ 

@@ -210,12 +210,15 @@ PUBLIC void main(void)
 	}
 	case SYS_EVENT: {		/* new kernel message is available */
 		sigset_t sigset = (sigset_t) tty_mess.NOTIFY_ARG;
+
 		if (sigismember(&sigset, SIGKSTOP)) {
 			cons_stop();		/* switch to primary console */
+#if DEAD_CODE
 			if (irq_hook_id != -1) {
 				sys_irqdisable(&irq_hook_id);
 				sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
 			}
+#endif
 		} 
 		if (sigismember(&sigset, SIGTERM)) cons_stop();	
 		if (sigismember(&sigset, SIGKMESS)) do_new_kmess(&tty_mess);

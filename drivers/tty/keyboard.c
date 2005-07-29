@@ -401,6 +401,7 @@ tty_t *tp;
       }
 
       /* Set interrupt handler and enable keyboard IRQ. */
+      irq_hook_id = KEYBOARD_IRQ;	/* id to be returned on interrupt */
       if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &irq_hook_id)) != OK)
           panic("TTY",  "Couldn't set keyboard IRQ policy", i);
       if ((i=sys_irqenable(&irq_hook_id)) != OK)

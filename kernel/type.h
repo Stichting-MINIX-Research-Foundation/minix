@@ -86,6 +86,7 @@ struct segdesc_s {		/* segment descriptor for protected mode */
 };
 
 typedef unsigned long irq_policy_t;	
+typedef unsigned long irq_id_t;	
 
 typedef struct irq_hook {
   struct irq_hook *next;		/* next hook in chain */
@@ -93,6 +94,7 @@ typedef struct irq_hook {
   int irq;				/* IRQ vector number */ 
   int id;				/* id of this hook */
   int proc_nr;				/* NONE if not in use */
+  irq_id_t notify_id;			/* id to return on interrupt */
   irq_policy_t policy;			/* bit mask for policy */
 } irq_hook_t;
 

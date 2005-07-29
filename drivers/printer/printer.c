@@ -340,6 +340,7 @@ PRIVATE void do_initialize()
   tickdelay(1);			/* easily satisfies Centronics minimum */
   				/* was 2 millisecs; now is ~17 millisecs */
   sys_outb(port_base + 2, PR_SELECT);
+  irq_hook_id = 0;
   sys_irqsetpolicy(PRINTER_IRQ, 0, &irq_hook_id);
   sys_irqenable(&irq_hook_id);
 

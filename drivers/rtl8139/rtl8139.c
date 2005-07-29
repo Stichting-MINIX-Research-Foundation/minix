@@ -747,8 +747,11 @@ re_t *rep;
 	rep->re_flags = REF_EMPTY;
 	rep->re_flags |= REF_ENABLED;
 
-	/* set the interrupt handler */
-	/* only send HARD_INT notifications */
+	/* Set the interrupt handler. The policy is to only send HARD_INT 
+	 * notifications. Don't reenable interrupts automatically. The id
+	 * that is passed back is the interrupt line number.
+	 */
+	rep->re_hook_id = rep->re_irq;	
 	if ((s=sys_irqsetpolicy(rep->re_irq, 0, &rep->re_hook_id)) != OK)
 		printf("RTL8139: error, couldn't set IRQ policy: %d\n", s);
 

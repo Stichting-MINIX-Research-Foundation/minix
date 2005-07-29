@@ -475,6 +475,7 @@ PRIVATE int w_identify()
 
   /* Everything looks OK; register IRQ so we can stop polling. */
   wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
+  wn->irq_hook_id = wn->irq;	/* id to be returned if interrupt occurs */
   if ((s=sys_irqsetpolicy(wn->irq, IRQ_REENABLE, &wn->irq_hook_id)) != OK) 
   	panic(w_name(), "coudn't set IRQ policy", s);
   if ((s=sys_irqenable(&wn->irq_hook_id)) != OK)

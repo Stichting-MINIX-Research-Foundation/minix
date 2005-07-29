@@ -24,6 +24,7 @@ register message *m_ptr;	/* pointer to request message */
   /* Dismember the request message. */
   int irq_vec;
   int irq_hook_id;
+  int notify_id;
   int r = OK;
   irq_hook_t *hook_ptr;
 
@@ -65,8 +66,15 @@ register message *m_ptr;	/* pointer to request message */
       }
       if (hook_ptr == NULL) return(ENOSPC);
 
-      /* Only caller can request IRQ mappings. Install handler. */
+      /* When setting a policy, the caller must provide an identifier that
+       * is returned on the notification message if a interrupt occurs.
+       */
+      notify_id = (unsigned) m_ptr->IRQ_HOOK_ID;
+      if (notify_id > CHAR_BIT * sizeof(irq_id_t) - 1) return(EINVAL);
+
+      /* Install the handler. */
       hook_ptr->proc_nr = m_ptr->m_source;	/* process to notify */   	
+      hook_ptr->notify_id = notify_id;		/* identifier to pass */   	
       hook_ptr->policy = m_ptr->IRQ_POLICY;	/* policy for interrupts */
       put_irq_handler(hook_ptr, irq_vec, generic_handler);
 

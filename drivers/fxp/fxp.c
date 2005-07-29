@@ -736,7 +736,10 @@ fxp_t *fp;
 	fp->fxp_flags = FF_EMPTY;
 	fp->fxp_flags |= FF_ENABLED;
 
-	/* set the interrupt handler */
+	/* Set the interrupt handler and policy. Do not automatically 
+	 * reenable interrupts. Return the IRQ line number on interrupts.
+ 	 */
+ 	fp->fxp_hook = fp->fxp_irq;
 	r= sys_irqsetpolicy(fp->fxp_irq, 0, &fp->fxp_hook);
 	if (r != OK)
 		panic("FXP","sys_irqsetpolicy failed", r);
