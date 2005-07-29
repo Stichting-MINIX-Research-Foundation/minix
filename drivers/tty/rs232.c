@@ -584,6 +584,7 @@ tty_t *tp;			/* which TTY */
   irq = (line & 1) == 0 ? RS232_IRQ : SECONDARY_IRQ;
 
   rs->irq = irq;
+  rs->irq_hook_id = rs->irq;	/* call back with irq line number */
   if(sys_irqsetpolicy(irq, IRQ_REENABLE, &rs->irq_hook_id) != OK) {
   	printf("RS232: Couldn't obtain hook for irq %d\n", irq);
   } else {

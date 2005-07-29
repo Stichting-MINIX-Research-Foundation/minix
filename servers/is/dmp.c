@@ -41,6 +41,7 @@ PUBLIC int do_fkey_pressed(message *m)
   if (pressed(F11))	timing_dmp();
   if (pressed(F12))	sched_dmp();
 
+#if DEAD_CODE
   if (pressed(F9)) { 
   	printf("IS server going into infinite loop... hit 5x a function key\n");
   	printf("Five times a function key is fine as well ...\n");
@@ -52,6 +53,7 @@ PUBLIC int do_fkey_pressed(message *m)
   	printf("IS server back to normal ... \n");
   	return(EDONTREPLY);
   }
+#endif
 
   /* Also check Shift F1-F6 keys. */
   if (pressed(SF1))	mproc_dmp();
