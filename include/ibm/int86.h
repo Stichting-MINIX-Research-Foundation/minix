@@ -44,9 +44,7 @@ union reg86 {
     } b;
 };
 
-#ifdef _SYSTEM		/* Kernel: Registers used in an 8086 interrupt */
-EXTERN union reg86 reg86;
-#endif
+struct reg86u { union reg86 u; };	/* Better for forward declarations */
 
 /* Parameters passed on ioctls to the memory task. */
 

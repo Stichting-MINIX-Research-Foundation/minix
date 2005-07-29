@@ -100,6 +100,9 @@ PUBLIC struct system_image image[] = {
 #if ENABLE_LOG
  { LOG_PROC_NR, 0,     SYS_F, SYS_T, 2, 0,           FILLED_MASK,  SYSTEM_SEND_MASK,  "LOG" },
 #endif
+#if ENABLE_BIOS_WINI
+ { BIOS_WINI, 0,     SYS_F, SYS_T, 2, 0,           FILLED_MASK,  SYSTEM_SEND_MASK,  "BIOS" },
+#endif
  { INIT_PROC_NR, 0,    USER_F, USER_T, USER_Q, 0,         USER_CALL_MASK,    USER_SEND_MASK,  "INIT"    },
 };
 

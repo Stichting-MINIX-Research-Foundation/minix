@@ -14,6 +14,7 @@ OBJECTS	= \
 	$(LIBSYS)(sys_abort.o) \
 	$(LIBSYS)(sys_exec.o) \
 	$(LIBSYS)(sys_fork.o) \
+	$(LIBSYS)(sys_int86.o) \
 	$(LIBSYS)(sys_kill.o) \
 	$(LIBSYS)(sys_newmap.o) \
 	$(LIBSYS)(sys_sigsend.o) \
@@ -61,6 +62,9 @@ $(LIBSYS)(sys_exec.o):	sys_exec.c
 
 $(LIBSYS)(sys_fork.o):	sys_fork.c
 	$(CC1) sys_fork.c
+
+$(LIBSYS)(sys_int86.o):	sys_int86.c
+	$(CC1) sys_int86.c
 
 $(LIBSYS)(sys_kill.o):	sys_kill.c
 	$(CC1) sys_kill.c

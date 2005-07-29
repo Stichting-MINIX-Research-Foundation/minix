@@ -25,3 +25,4 @@ all install depend clean:
 	cd ./fxp && $(MAKE) $@
 	cd ./dpeth && $(MAKE) $@
 	cd ./log && $(MAKE) $@
+	cd ./bios_wini && $(MAKE) $@

@@ -70,7 +70,7 @@
 #define ENABLE_BOOTDEV	   0
 
 /* Include or exclude device drivers.  Set to 1 to include, 0 to exclude. */
-#define ENABLE_BIOS_WINI   0	/* enable BIOS winchester driver */
+#define ENABLE_BIOS_WINI   1	/* enable BIOS winchester driver */
 #define ENABLE_ESDI_WINI   0	/* enable ESDI winchester driver */
 #define ENABLE_XT_WINI     0	/* enable XT winchester driver */
 #define ENABLE_AHA1540     0	/* enable Adaptec 1540 SCSI driver */
@@ -81,7 +81,7 @@
 
 /* Include or exclude user-level device drivers (and supporting servers). */
 #define ENABLE_PRINTER     0	/* user-level Centronics printer driver */
-#define ENABLE_FLOPPY      1	/* enable floppy disk driver */
+#define ENABLE_FLOPPY      0	/* enable floppy disk driver */
 #define ENABLE_AT_WINI     1	/* enable AT winchester driver */
 #define   ENABLE_ATAPI     1	/* add ATAPI support to AT driver */
 

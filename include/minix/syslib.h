@@ -15,6 +15,9 @@
 #include <minix/devio.h>
 #endif
 
+/* Forward declaration */
+struct reg86u;
+
 #define SYSTASK SYSTEM
 
 /*==========================================================================* 
@@ -33,6 +36,7 @@ _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p)	);
 _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
 _PROTOTYPE( int sys_nice, (int proc, int prio)				);
 
+_PROTOTYPE( int sys_int86, (struct reg86u *reg86p)				);
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_nr, buffer, count) \
@@ -101,6 +105,8 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getmonparams(v,vl)	sys_getinfo(GET_MONPARAMS, v,vl, 0,0)
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
+#define sys_getbiosbuffer(virp, sizep) sys_getinfo(GET_BIOSBUFFER, virp, \
+	sizeof(*virp), sizep, sizeof(*sizep))
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *val_ptr2, int val_len2)		);
 

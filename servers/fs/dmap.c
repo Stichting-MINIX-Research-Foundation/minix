@@ -115,7 +115,7 @@ PUBLIC void map_controllers()
       char proc_name[8];
   } drivertab[] = {
 	{ "at",		"AT_WINI"	},	/* AT Winchester */
-	{ "bios",	"..." },
+	{ "bios",	"BIOS" },
 	{ "esdi",	"..." },
 	{ "xt",		"..." },
 	{ "aha1540",	"..." },

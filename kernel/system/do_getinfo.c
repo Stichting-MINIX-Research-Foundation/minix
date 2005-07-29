@@ -15,6 +15,9 @@
 
 #include "../system.h"
 
+static unsigned long bios_buf[1024];	/* 4K, what about alignment */
+static vir_bytes bios_buf_vir, bios_buf_len;
+
 #if USE_GETINFO
 
 /*===========================================================================*
@@ -113,6 +116,22 @@ register message *m_ptr;	/* pointer to request message */
     break;
     }
 #endif
+    case GET_BIOSBUFFER:
+    	bios_buf_vir = (vir_bytes)bios_buf;
+    	bios_buf_len = sizeof(bios_buf);
+
+    	length = sizeof(bios_buf_len);
+    	src_phys = vir2phys(&bios_buf_len);
+	if (length != m_ptr->I_VAL_LEN2) return (EINVAL);
+	proc_nr = m_ptr->m_source;	/* only caller can request copy */
+	dst_phys = numap_local(proc_nr, (vir_bytes) m_ptr->I_VAL_PTR2, length); 
+	if (src_phys == 0 || dst_phys == 0) return(EFAULT);
+	phys_copy(src_phys, dst_phys, length);
+
+    	length = sizeof(bios_buf_vir);
+    	src_phys = vir2phys(&bios_buf_vir);
+    	break;
+
     default:
         return(EINVAL);
   }

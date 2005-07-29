@@ -29,6 +29,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_irqctl.o) \
 	$(SYSTEM)(do_devio.o) \
 	$(SYSTEM)(do_vdevio.o) \
+	$(SYSTEM)(do_int86.o) \
 	$(SYSTEM)(do_sdevio.o) \
 	$(SYSTEM)(do_copy.o) \
 	$(SYSTEM)(do_vcopy.o) \
@@ -96,6 +97,9 @@ $(SYSTEM)(do_sdevio.o):	do_sdevio.c
 $(SYSTEM)(do_vdevio.o):	do_vdevio.c
 	$(CC) do_vdevio.c
 
+$(SYSTEM)(do_int86.o):	do_int86.c
+	$(CC) do_int86.c
+
 $(SYSTEM)(do_copy.o):	do_copy.c
 	$(CC) do_copy.c
 
@@ -134,4 +138,3 @@ $(SYSTEM)(do_privctl.o):	do_privctl.c
 
 $(SYSTEM)(do_segctl.o):	do_segctl.c
 	$(CC) do_segctl.c
-

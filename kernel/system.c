@@ -148,6 +148,7 @@ PRIVATE void initialize(void)
   map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */ 
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
+  map(SYS_INT86, do_int86);  		/* BIOS call */ 
 
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */

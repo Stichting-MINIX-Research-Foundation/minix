@@ -15,10 +15,10 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/at_wini/at_wini \
-	../drivers/floppy/floppy \
 	../drivers/rtl8139/rtl8139 \
 	../drivers/fxp/fxp \
 	../drivers/log/log \
+	../drivers/bios_wini/bios_wini \
 	../servers/init/init \
 #	bootdev.img
 

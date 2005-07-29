@@ -49,13 +49,14 @@
 #define FXP		(RTL8139 + ENABLE_FXP)	/* Intel Pro/100 */
 #define DPETH		(FXP + ENABLE_DPETH)	/* ISA Network task */
 #define LOG_PROC_NR	(DPETH + ENABLE_LOG)	/* log device */
-#define INIT_PROC_NR	(LOG_PROC_NR + 1)   	/* init -- goes multiuser */
+#define BIOS_WINI	(LOG_PROC_NR + ENABLE_BIOS_WINI) /* BIOS disk device */
+#define INIT_PROC_NR	(BIOS_WINI + 1)   	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + \
 			6 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
 			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + \
-			ENABLE_DPETH + ENABLE_LOG + 1 )	
+			ENABLE_DPETH + ENABLE_LOG + ENABLE_BIOS_WINI + 1 )	
 
 
 /*===========================================================================*
@@ -265,7 +266,8 @@
 #  define SYS_VIRVCOPY   (KERNEL_CALL + 32)	/* sys_virvcopy() */
 #  define SYS_MEMSET     (KERNEL_CALL + 33)	/* sys_memset() */
 #  define SYS_NICE       (KERNEL_CALL + 34)	/* sys_nice() */
-#define NR_SYS_CALLS	35	/* number of system calls */ 
+#  define SYS_INT86      (KERNEL_CALL + 35)	/* sys_int86() */
+#define NR_SYS_CALLS	36	/* number of system calls */ 
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
 #define MEM_PTR		m1_p1	/* base */
@@ -366,6 +368,7 @@
 #   define GET_PROC 	  11	/* get process slot if given process */
 #   define GET_MACHINE 	  12	/* get machine information */
 #   define GET_LOCKTIMING 13	/* get lock()/unlock() latency timing */
+#   define GET_BIOSBUFFER 14	/* get a buffer for BIOS calls */
 #define I_PROC_NR      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */
@@ -411,6 +414,9 @@
 #define PR_NAME_PTR	m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
 #define PR_MEM_PTR	m1_p1	/* tells where memory map is for sys_newmap */
+
+/* Field names for SYS_INT86 */
+#define INT86_REG86	m1_p1	/* Point to registers */
 
 /* Field names for SELECT (FS). */
 #define SEL_NFDS	m8_i1

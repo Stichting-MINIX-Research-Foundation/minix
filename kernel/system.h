@@ -107,6 +107,8 @@ _PROTOTYPE( int do_vdevio, (message *m_ptr) );
 #define do_vdevio do_unused
 #endif
 
+_PROTOTYPE( int do_int86, (message *m_ptr) );
+
 _PROTOTYPE( int do_sdevio, (message *m_ptr) );
 #if ! USE_SDEVIO
 #define do_sdevio do_unused
