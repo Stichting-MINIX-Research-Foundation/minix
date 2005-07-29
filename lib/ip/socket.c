@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/socket.h>
 
@@ -12,6 +13,10 @@ static int _udp_socket(int protocol);
 
 int socket(int domain, int type, int protocol)
 {
+#if DEBUG
+	fprintf(stderr, "socket: domain %d, type %d, protocol %d\n",
+		domain, type, protocol);
+#endif
 	if (domain != AF_INET)
 	{
 #if DEBUG
@@ -52,6 +57,7 @@ static int _tcp_socket(int protocol)
 static int _udp_socket(int protocol)
 {
 	int fd;
+
 	if (protocol != 0)
 	{
 #if DEBUG

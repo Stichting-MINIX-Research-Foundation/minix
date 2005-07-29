@@ -53,6 +53,7 @@ OBJECTS	= \
 	$(LIBRARY)(sethostent.o) \
 	$(LIBRARY)(setsockopt.o) \
 	$(LIBRARY)(servxcheck.o) \
+	$(LIBRARY)(shutdown.o) \
 	$(LIBRARY)(socket.o) \
 	$(LIBRARY)(strcasecmp.o) \
 
@@ -191,6 +192,9 @@ $(LIBRARY)(setsockopt.o):	setsockopt.c
 
 $(LIBRARY)(servxcheck.o):	servxcheck.c
 	$(CC1) servxcheck.c
+
+$(LIBRARY)(shutdown.o):	shutdown.c
+	$(CC1) shutdown.c
 
 $(LIBRARY)(socket.o):	socket.c
 	$(CC1) socket.c

@@ -23,7 +23,7 @@ int connect(int socket, const struct sockaddr *address,
 	nwio_tcpconf_t tcpconf;
 
 	r= ioctl(socket, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || errno != ENOTTY)
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
 	{
 		if (r == -1)
 		{
@@ -68,7 +68,7 @@ static int _tcp_connect(int socket, const struct sockaddr *address,
 	{
 		int  t_errno= errno;
 
-		fprintf(stderr, "setconf failed: %s\n", strerror(errno));
+		fprintf(stderr, "connect(tcp) failed: %s\n", strerror(errno));
 
 		errno= t_errno;
 
@@ -82,7 +82,7 @@ static int _tcp_connect(int socket, const struct sockaddr *address,
 	{
 		int  t_errno= errno;
 
-		fprintf(stderr, "connect failed: %s\n", strerror(errno));
+		fprintf(stderr, "connect(tcp) failed: %s\n", strerror(errno));
 
 		errno= t_errno;
 	}
