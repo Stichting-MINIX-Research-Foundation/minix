@@ -94,7 +94,7 @@ PUBLIC int do_fork()
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
   /* Tell kernel and file system about the (now successful) FORK. */
-  sys_fork(who, child_nr, rmc->mp_pid);
+  sys_fork(who, child_nr);
   tell_fs(FORK, who, child_nr, rmc->mp_pid);
 
   /* Report child's memory map to kernel. */

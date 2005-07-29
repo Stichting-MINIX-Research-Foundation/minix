@@ -76,7 +76,7 @@ PUBLIC void main()
         } else if (call_nr == DEV_SELECTED) {
         	printf("Old select device callback received - ignored\n");
         } else if ((call_nr & NOTIFY_MESSAGE)) {
-        	/* Device notifies (alert()s) us of an event. */
+        	/* Device notifies us of an event. */
         	dev_status(&m_in);
         } else {
 		/* Call the internal function that does the work. */

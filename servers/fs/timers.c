@@ -25,7 +25,7 @@ PUBLIC void fs_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 
 	/* reschedule our synchronous alarm if necessary */
 	if(!old_head || old_head > new_head) {
-		if(sys_syncalrm(SELF, new_head, 1) != OK)
+		if(sys_setalarm(new_head, 1) != OK)
 			panic(__FILE__, "FS set timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		else
@@ -41,7 +41,7 @@ PUBLIC void fs_expire_timers(clock_t now)
 	clock_t new_head;
 	tmrs_exptimers(&fs_timers, now, &new_head);
 	if(new_head > 0) {
-		if(sys_syncalrm(SELF, new_head, 1) != OK)
+		if(sys_setalarm(new_head, 1) != OK)
 			panic(__FILE__, "FS expire timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		else
@@ -69,7 +69,7 @@ PUBLIC void fs_cancel_timer(timer_t *tp)
 	 * will be 0 then).
 	 */
 	if(old_head < new_head || !new_head) {
-		if(sys_syncalrm(SELF, new_head, 1) != OK)
+		if(sys_setalarm(new_head, 1) != OK)
 			panic(__FILE__, "FS expire timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		printf("timers: after cancelling, set synalarm to %d -> %d\n", old_head, new_head);

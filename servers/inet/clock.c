@@ -191,7 +191,7 @@ PRIVATE void set_timer()
 		next_timeout= new_time;
 		new_time -= curr_time;
 
-		if (sys_syncalrm(SELF, new_time, 0) != OK)
+		if (sys_setalarm(new_time, 0) != OK)
   			ip_panic(("can't set timer"));
 #endif
 	}

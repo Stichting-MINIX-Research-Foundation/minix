@@ -181,7 +181,7 @@ PUBLIC int do_sigreturn()
   mp->mp_sigmask = (sigset_t) m_in.sig_set;
   sigdelset(&mp->mp_sigmask, SIGKILL);
 
-  r = sys_sigreturn(who, (struct sigmsg *) m_in.sig_context, m_in.sig_flags);
+  r = sys_sigreturn(who, (struct sigmsg *) m_in.sig_context);
   check_pending(mp);
   return(r);
 }

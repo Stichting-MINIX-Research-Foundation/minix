@@ -8,12 +8,16 @@
 #include "../../kernel/debug.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
+#include "../../kernel/ipc.h"
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
 /* Declare some local dump procedures. */
 FORWARD _PROTOTYPE( char *proc_name, (int proc_nr)		);
+FORWARD _PROTOTYPE( char *s_traps_str, (int flags)		);
+FORWARD _PROTOTYPE( char *s_flags_str, (int flags)		);
+FORWARD _PROTOTYPE( char *p_rts_flags_str, (int flags)		);
 
 
 /* Some global data that is shared among several dumping procedures. 
@@ -22,7 +26,7 @@ FORWARD _PROTOTYPE( char *proc_name, (int proc_nr)		);
  */
 PUBLIC struct proc proc[NR_TASKS + NR_PROCS];
 PUBLIC struct priv priv[NR_SYS_PROCS];
-PUBLIC struct system_image image[NR_BOOT_PROCS];
+PUBLIC struct boot_image image[NR_BOOT_PROCS];
 
 
 
@@ -184,7 +188,7 @@ PUBLIC void irqtab_dmp()
 PUBLIC void image_dmp()
 {
   int m, i,j,r;
-  struct system_image *ip;
+  struct boot_image *ip;
   static char send_mask[BITCHUNK_BITS*2];
 	
   if ((r = sys_getimage(image)) != OK) {
@@ -192,7 +196,7 @@ PUBLIC void image_dmp()
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
-  printf("---name-- -nr- -flags- -q- ----pc- -stack- ----sendmask[0]-----\n");
+  printf("---name-- -nr- -flags- -traps- -sq- ----pc- -stack- -sendmask[0]------\n");
   for (m=0; m<NR_BOOT_PROCS; m++) { 
       ip = &image[m];
         for (i=j=0; i < BITCHUNK_BITS; i++, j++) {
@@ -200,9 +204,10 @@ PUBLIC void image_dmp()
        	    if (i % 8 == 7) send_mask[++j] = ' ';
        	}
         send_mask[j] = '\0';
-      printf("%8s %4d     0x%02x %3d %7lu %7lu   %s\n",
-          ip->proc_name, ip->proc_nr, ip->flags, ip->priority, 
-          (long)ip->initial_pc, ip->stksize, send_mask); 
+      printf("%8s %4d   %s   %s  %3d %7lu %7lu   %s\n",
+          ip->proc_name, ip->proc_nr, 
+	       s_flags_str(ip->flags), s_traps_str(ip->call_mask), 
+	ip->priority, (long)ip->initial_pc, ip->stksize, send_mask); 
   }
   printf("\n");
 }
@@ -311,7 +316,21 @@ PRIVATE char *s_flags_str(int flags)
 	str[1] = (flags & RDY_Q_HEAD)  ? 'Q' : '-';
 	str[2] = (flags & BILLABLE)    ? 'B' : '-';
 	str[3] = (flags & SYS_PROC)    ? 'S' : '-';
-	str[4] = '\0';
+	str[4] = '-';
+	str[5] = '\0';
+
+	return str;
+}
+
+PRIVATE char *s_traps_str(int flags)
+{
+	static char str[10];
+	str[0] = (flags & (1 << ECHO)) ? 'E' : '-';
+	str[1] = (flags & (1 << SEND))  ? 'S' : '-';
+	str[2] = (flags & (1 << RECEIVE))  ? 'R' : '-';
+	str[3] = (flags & (1 << SENDREC))  ? 'B' : '-';
+	str[4] = (flags & (1 << NOTIFY)) ? 'N' : '-';
+	str[5] = '\0';
 
 	return str;
 }
@@ -338,7 +357,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- -send mask-\n");
+  printf("\n--nr-id-name---- -flags- -traps- -send mask------------------------- \n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -352,9 +371,9 @@ PUBLIC void privileges_dmp()
         if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
 	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s %5s   0x%03.3x  ",
+	printf("(%02u) %-7.7s %s   %s  ",
 	       sp->s_id, rp->p_name,
-	       s_flags_str(sp->s_flags), sp->s_call_mask 
+	       s_flags_str(sp->s_flags), s_traps_str(sp->s_call_mask) 
         );
         for (i=j=0; i < NR_SYS_PROCS; i++, j++) {
        	    send_mask[j] = get_sys_bit(sp->s_send_mask, i) ? '1' : '0';
@@ -419,6 +438,20 @@ PUBLIC void sendmask_dmp()
 }
 
 
+PRIVATE char *p_rts_flags_str(int flags)
+{
+	static char str[10];
+	str[0] = (flags & NO_MAP) ? 'M' : '-';
+	str[1] = (flags & SENDING)  ? 'S' : '-';
+	str[2] = (flags & RECEIVING)    ? 'R' : '-';
+	str[3] = (flags & SIGNALED)    ? 'S' : '-';
+	str[4] = (flags & SIG_PENDING)    ? 'P' : '-';
+	str[5] = (flags & P_STOP)    ? 'T' : '-';
+	str[6] = '\0';
+
+	return str;
+}
+
 
 /*===========================================================================*
  *				proctab_dmp    				     *
@@ -451,7 +484,7 @@ PUBLIC void proctab_dmp()
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
-	printf("  %-7.7s %02u/%02u %02d/%02d %02u %6lu%6lu %6uK%6uK%6uK %3x",
+	printf(" %-8.8s %02u/%02u %02d/%02d %02u %6lu%6lu %6uK%6uK%6uK %s",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_sched_ticks, rp->p_quantum_size, 
@@ -459,12 +492,9 @@ PUBLIC void proctab_dmp()
 	       rp->p_user_time, rp->p_sys_time,
 	       click_to_round_k(text), click_to_round_k(data),
 	       click_to_round_k(size),
-	       rp->p_rts_flags);
-	if (rp->p_rts_flags & RECEIVING) {
+	       p_rts_flags_str(rp->p_rts_flags));
+	if (rp->p_rts_flags & (SENDING|RECEIVING)) {
 		printf(" %-7.7s", proc_name(rp->p_getfrom));
-	} else
-	if (rp->p_rts_flags & SENDING) {
-		printf(" S:%-5.5s", proc_name(rp->p_sendto));
 	} else
 	if (rp->p_rts_flags == 0) {
 		printf("        ");

@@ -26,7 +26,7 @@ PUBLIC void pm_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 
 	/* reschedule our synchronous alarm if necessary */
 	if(! prev_time || prev_time > next_time) {
-		if(sys_syncalrm(SELF, next_time, 1) != OK)
+		if(sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM set timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		else
@@ -42,7 +42,7 @@ PUBLIC void pm_expire_timers(clock_t now)
 	clock_t next_time;
 	tmrs_exptimers(&pm_timers, now, &next_time);
 	if(next_time > 0) {
-		if(sys_syncalrm(SELF, next_time, 1) != OK)
+		if(sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		else
@@ -65,7 +65,7 @@ PUBLIC void pm_cancel_timer(timer_t *tp)
 	 * will be 0 then).
 	 */
 	if(prev_time < next_time || ! next_time) {
-		if(sys_syncalrm(SELF, next_time, 1) != OK)
+		if(sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set synchronous alarm.", NO_NUM);
 #if VERBOSE
 		printf("timers: after cancelling, set synalarm to %d -> %d\n", prev_time, next_time);

@@ -140,8 +140,8 @@ PRIVATE void pm_init()
 {
 /* Initialize the process manager. */
   int key, i, s;
-  static struct system_image image[NR_BOOT_PROCS];
-  register struct system_image *ip;
+  static struct boot_image image[NR_BOOT_PROCS];
+  register struct boot_image *ip;
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
   static char ign_sigs[] = { SIGCHLD };

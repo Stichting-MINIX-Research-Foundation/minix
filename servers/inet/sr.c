@@ -752,7 +752,7 @@ int is_revive;
 #endif
 	if (is_revive)
 	{
-		alert(mq->mq_mess.m_source);
+		notify(mq->mq_mess.m_source);
 		result= ELOCKED;
 	}
 	else
@@ -912,7 +912,7 @@ unsigned ops;
 	if (ops & SR_SELECT_WRITE) sr_fd->srf_flags |= SFF_SELECT_W;
 	if (ops & SR_SELECT_EXCEPTION) sr_fd->srf_flags |= SFF_SELECT_X;
 
-	alert(sr_fd->srf_select_proc);
+	notify(sr_fd->srf_select_proc);
 }
 #endif
 
