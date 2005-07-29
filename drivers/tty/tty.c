@@ -213,12 +213,10 @@ PUBLIC void main(void)
 
 		if (sigismember(&sigset, SIGKSTOP)) {
 			cons_stop();		/* switch to primary console */
-#if DEAD_CODE
 			if (irq_hook_id != -1) {
 				sys_irqdisable(&irq_hook_id);
 				sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
 			}
-#endif
 		} 
 		if (sigismember(&sigset, SIGTERM)) cons_stop();	
 		if (sigismember(&sigset, SIGKMESS)) do_new_kmess(&tty_mess);
@@ -847,7 +845,7 @@ PUBLIC int select_retry(struct tty *tp)
 	}
 #else
 	if (select_try(tp, tp->tty_select_ops))
-		alert(tp->tty_select_proc);
+		notify(tp->tty_select_proc);
 #endif
 
 	return OK;
@@ -896,7 +894,7 @@ tty_t *tp;			/* TTY to check for events. */
   if (tp->tty_incum >= tp->tty_min && tp->tty_inleft > 0) {
 #if NEW_REVIVE
 	if (tp->tty_inrepcode == REVIVE) {
-		alert(tp->tty_incaller);
+		notify(tp->tty_incaller);
 		tp->tty_inrevived = 1;
 	} else {
 		tty_reply(tp->tty_inrepcode, tp->tty_incaller, 
@@ -973,7 +971,7 @@ register tty_t *tp;		/* pointer to terminal to read from */
   if (tp->tty_inleft == 0) {
 #if NEW_REVIVE
 	if (tp->tty_inrepcode == REVIVE) {
-		alert(tp->tty_incaller);
+		notify(tp->tty_incaller);
 		tp->tty_inrevived = 1;
 	} else {
 		tty_reply(tp->tty_inrepcode, tp->tty_incaller, 
@@ -1605,7 +1603,7 @@ PRIVATE void expire_timers(void)
   if (tty_timers == NULL) tty_next_timeout = TMR_NEVER;
   else {  					  /* set new sync alarm */
   	tty_next_timeout = tty_timers->tmr_exp_time;
-  	if ((s=sys_syncalrm(SELF, tty_next_timeout, 1)) != OK)
+  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
  		panic("TTY","Couldn't set synchronous alarm.", s);
   }
 }
@@ -1641,7 +1639,7 @@ int enable;			/* set timer if true, otherwise unset */
   if (tty_timers == NULL) tty_next_timeout = TMR_NEVER;
   else if (tty_timers->tmr_exp_time != tty_next_timeout) { 
   	tty_next_timeout = tty_timers->tmr_exp_time;
-  	if ((s=sys_syncalrm(SELF, tty_next_timeout, 1)) != OK)
+  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
  		panic("TTY","Couldn't set synchronous alarm.", s);
   }
 }

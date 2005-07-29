@@ -2385,9 +2385,9 @@ tmr_func_t watchdog;			/* watchdog function to be called */
 		fxp_timers->tmr_exp_time < fxp_next_timeout)
 	{
 		fxp_next_timeout= fxp_timers->tmr_exp_time; 
-		printf("fxp_set_timer: calling sys_syncalrm for %d (now+%d)\n",
+		printf("fxp_set_timer: calling sys_setalarm for %d (now+%d)\n",
 			fxp_next_timeout, fxp_next_timeout-now);
-		r= sys_syncalrm(SELF, fxp_next_timeout, 1);
+		r= sys_setalarm(fxp_next_timeout, 1);
 		if (r != OK)
 			panic("FXP","unable to set synchronous alarm", r);
 	}
@@ -2420,7 +2420,7 @@ PRIVATE void fxp_expire_timers()
   else
   {  					  /* set new alarm */
   	fxp_next_timeout = fxp_timers->tmr_exp_time;
-  	r= sys_syncalrm(SELF, fxp_next_timeout, 1);
+  	r= sys_setalarm(fxp_next_timeout, 1);
   	if (r != OK)
  		panic("FXP","Unable to set synchronous alarm.", r);
   }

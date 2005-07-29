@@ -396,8 +396,8 @@ message *m_ptr;				/* pointer to alarm message */
   }
 
   /* Schedule new alarm for next m_random call. */
-  if (OK != (s=sys_syncalrm(SELF, KRANDOM_PERIOD, 0)))
-  	report("MEM", "sys_syncalarm failed", s);
+  if (OK != (s=sys_setalarm(KRANDOM_PERIOD, 0)))
+  	report("MEM", "sys_setalarm failed", s);
 }
 
 /*============================================================================*

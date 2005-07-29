@@ -459,7 +459,7 @@ message *mp;
 
 		tmra_inittimer(&rl_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
-		sys_syncalrm(SELF, HZ, 0);
+		sys_setalarm(HZ, 0);
 	}
 
 	port = mp->DL_PORT;
@@ -2352,7 +2352,7 @@ timer_t *tp;
 	int i;
 	re_t *rep;
 	/* Use a synchronous alarm instead of a watchdog timer. */
-	sys_setalarm(SELF, HZ, 0);
+	sys_setalarm(HZ, 0);
 
 	for (i= 0, rep = &re_table[0]; i<RE_PORT_NR; i++, rep++)
 	{

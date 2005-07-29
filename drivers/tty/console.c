@@ -765,8 +765,8 @@ PRIVATE void beep()
   tmrs_settimer(&tty_timers, &tmr_stop_beep, now+B_TIME, stop_beep, NULL);
   if (tty_timers->tmr_exp_time != tty_next_timeout) {
   	tty_next_timeout = tty_timers->tmr_exp_time;
-  	if ((s=sys_syncalrm(SELF, tty_next_timeout, 1)) != OK)
-  		panic("TTY","Console couldn't set syn alarm.", s);
+  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
+  		panic("TTY","Console couldn't set alarm.", s);
   }
 }
 

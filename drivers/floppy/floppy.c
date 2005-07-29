@@ -339,7 +339,7 @@ PRIVATE void f_expire_tmrs(struct driver *dp, message *m_ptr)
   	f_next_timeout = TMR_NEVER;
   } else {  					  /* set new sync alarm */
   	f_next_timeout = f_timers->tmr_exp_time;
-  	if ((s=sys_syncalrm(SELF, f_next_timeout, 1)) != OK)
+  	if ((s=sys_setalarm(f_next_timeout, 1)) != OK)
  		panic("FLOPPY","Couldn't set synchronous alarm.", s);
   }
 }
@@ -368,7 +368,7 @@ tmr_func_t watchdog;			/* watchdog function to be called */
    */
   if (f_timers->tmr_exp_time != f_next_timeout) {
   	f_next_timeout = f_timers->tmr_exp_time; 
-  	if ((s=sys_syncalrm(SELF, f_next_timeout, 1)) != OK)
+  	if ((s=sys_setalarm(f_next_timeout, 1)) != OK)
  		panic("FLOPPY","Couldn't set synchronous alarm.", s);
   }
 }

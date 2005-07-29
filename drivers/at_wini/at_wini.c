@@ -696,7 +696,7 @@ struct command *cmd;		/* Command block */
    * controller was not able to execute the command. Leftover timeouts are
    * simply ignored by the main loop. 
    */
-  sys_syncalrm(SELF, wakeup_ticks, 0);
+  sys_setalarm(wakeup_ticks, 0);
 
   w_status = STATUS_ADMBSY;
   w_command = cmd->command;
@@ -1114,7 +1114,7 @@ unsigned cnt;
    * controller was not able to execute the command. Leftover timeouts are
    * simply ignored by the main loop. 
    */
-  sys_syncalrm(SELF, wakeup_ticks, 0);
+  sys_setalarm(wakeup_ticks, 0);
 
 #if _WORD_SIZE > 2
   if (cnt > 0xFFFE) cnt = 0xFFFE;	/* Max data per interrupt. */

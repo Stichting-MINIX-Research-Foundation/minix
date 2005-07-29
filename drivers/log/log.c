@@ -137,7 +137,7 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
     		log->log_status = subread(log, log->log_iosize,
     			log->log_proc_nr, log->log_user_vir);
     		printf("alert for revive %d..\n", log->log_source);
-    		alert(log->log_source); 
+    		notify(log->log_source); 
     		printf("alert for revive done..\n");
     		log->log_revive_alerted = 1;
  	} 
@@ -153,7 +153,7 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
   		 * swallow all the data (log_size > 0).
   		 */
   		if(log->log_selected & SEL_RD) {
-    			alert(log->log_select_proc);
+    			notify(log->log_select_proc);
     			log->log_select_alerted = 1;
 #if LOG_DEBUG
 			printf("log notified %d\n", log->log_select_proc);

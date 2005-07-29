@@ -258,7 +258,7 @@ PRIVATE void output_done()
 #else
     revive_pending = TRUE;
     revive_status = status;
-    alert(caller);
+    notify(caller);
 #endif
 }
 
