@@ -64,7 +64,7 @@ PUBLIC int random_isseeded()
 
 PUBLIC void random_update(source, buf, count)
 int source;
-unsigned long *buf;
+unsigned short *buf;
 int count;
 {
 	int i;
