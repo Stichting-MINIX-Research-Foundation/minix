@@ -155,6 +155,7 @@ _PROTOTYPE( void kbd_interrupt, (message *m)				);
 /* pty.c */
 _PROTOTYPE( void do_pty, (struct tty *tp, message *m_ptr)		);
 _PROTOTYPE( void pty_init, (struct tty *tp)				);
+_PROTOTYPE( int pty_status, (message *m_ptr)				);
 
 /* vidcopy.s */
 _PROTOTYPE( void vid_vid_copy, (unsigned src, unsigned dst, unsigned count));

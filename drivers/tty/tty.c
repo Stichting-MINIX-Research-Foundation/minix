@@ -352,6 +352,9 @@ message *m_ptr;
 	}
   }
 
+  if (!event_found)
+  	event_found = pty_status(m_ptr);
+
   if (! event_found) {
 	/* No events of interest were found. Return an empty message. */
   	m_ptr->m_type = DEV_NO_STATUS;

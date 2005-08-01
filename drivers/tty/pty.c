@@ -17,6 +17,7 @@
  */
 
 #include "../drivers.h"
+#include <assert.h>
 #include <termios.h>
 #include <signal.h>
 #include <minix/com.h>
@@ -31,7 +32,7 @@ typedef struct pty {
   char		state;		/* flags: busy, closed, ... */
 
   /* Read call on /dev/ptypX. */
-  char		rdrepcode;	/* reply code, TASK_REPLY or REVIVE */
+  char		rdsendreply;	/* send a reply (instead of notify) */
   char		rdcaller;	/* process making the call (usually FS) */
   char		rdproc;		/* process that wants to read from the pty */
   vir_bytes	rdvir;		/* virtual address in readers address space */
@@ -39,7 +40,7 @@ typedef struct pty {
   int		rdcum;		/* # bytes written so far */
 
   /* Write call to /dev/ptypX. */
-  char		wrrepcode;	/* reply code, TASK_REPLY or REVIVE */
+  char		wrsendreply;	/* send a reply (instead of notify) */
   char		wrcaller;	/* process making the call (usually FS) */
   char		wrproc;		/* process that wants to write to the pty */
   vir_bytes	wrvir;		/* virtual address in writers address space */
@@ -88,7 +89,7 @@ message *m_ptr;
 		r = 0;
 		break;
 	}
-	if (pp->rdleft != 0) {
+	if (pp->rdleft != 0 || pp->rdcum != 0) {
 		r = EIO;
 		break;
 	}
@@ -105,7 +106,7 @@ message *m_ptr;
 #endif
 		break;
 	}
-	pp->rdrepcode = TASK_REPLY;
+	pp->rdsendreply = TRUE;
 	pp->rdcaller = m_ptr->m_source;
 	pp->rdproc = m_ptr->PROC_NR;
 	pp->rdvir = (vir_bytes) m_ptr->ADDRESS;
@@ -119,7 +120,7 @@ message *m_ptr;
 		pp->rdleft = pp->rdcum = 0;
 	} else {
 		r = SUSPEND;				/* do suspend */
-		pp->rdrepcode = REVIVE;
+		pp->rdsendreply = FALSE;
 	}
 	break;
 
@@ -129,7 +130,7 @@ message *m_ptr;
 		r = EIO;
 		break;
 	}
-	if (pp->wrleft != 0) {
+	if (pp->wrleft != 0 || pp->wrcum != 0) {
 		r = EIO;
 		break;
 	}
@@ -147,7 +148,7 @@ message *m_ptr;
 #endif
 		break;
 	}
-	pp->wrrepcode = TASK_REPLY;
+	pp->wrsendreply = TRUE;
 	pp->wrcaller = m_ptr->m_source;
 	pp->wrproc = m_ptr->PROC_NR;
 	pp->wrvir = (vir_bytes) m_ptr->ADDRESS;
@@ -159,7 +160,7 @@ message *m_ptr;
 		r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
 		pp->wrleft = pp->wrcum = 0;
 	} else {
-		pp->wrrepcode = REVIVE;			/* do suspend */
+		pp->wrsendreply = FALSE;			/* do suspend */
 		r = SUSPEND;
 	}
 	break;
@@ -167,6 +168,8 @@ message *m_ptr;
     case DEV_OPEN:
 	r = pp->state != 0 ? EIO : OK;
 	pp->state |= PTY_ACTIVE;
+	pp->rdcum = 0;
+	pp->wrcum = 0;
 	break;
 
     case DEV_CLOSE:
@@ -338,8 +341,12 @@ pty_t *pp;
  */
 
   if (pp->rdcum > 0) {
-	tty_reply(pp->rdrepcode, pp->rdcaller, pp->rdproc, pp->rdcum);
-	pp->rdleft = pp->rdcum = 0;
+        if (pp->rdsendreply) {
+		tty_reply(TASK_REPLY, pp->rdcaller, pp->rdproc, pp->rdcum);
+		pp->rdleft = pp->rdcum = 0;
+	}
+	else
+		notify(pp->rdcaller);
   }
 }
 
@@ -390,8 +397,13 @@ int try;
 	pp->wrvir++;
 	pp->wrcum++;
 	if (--pp->wrleft == 0) {
-		tty_reply(pp->wrrepcode, pp->wrcaller, pp->wrproc, pp->wrcum);
-		pp->wrcum = 0;
+		if (pp->wrsendreply) {
+			tty_reply(TASK_REPLY, pp->wrcaller, pp->wrproc,
+				pp->wrcum);
+			pp->wrcum = 0;
+		}
+		else
+			notify(pp->wrcaller);
 	}
   }
 }
@@ -410,13 +422,13 @@ int try;
   if (!(pp->state & PTY_ACTIVE)) return;
 
   if (pp->rdleft > 0) {
-	tty_reply(pp->rdrepcode, pp->rdcaller, pp->rdproc, 0);
-	pp->rdleft = pp->rdcum = 0;
+  	assert(!pp->rdsendreply);
+  	notify(pp->rdcaller);
   }
 
   if (pp->wrleft > 0) {
-	tty_reply(pp->wrrepcode, pp->wrcaller, pp->wrproc, EIO);
-	pp->wrleft = pp->wrcum = 0;
+  	assert(!pp->wrsendreply);
+  	notify(pp->wrcaller);
   }
 
   if (pp->state & PTY_CLOSED) pp->state = 0; else pp->state |= TTY_CLOSED;
@@ -434,9 +446,10 @@ int try;
   pty_t *pp = tp->tty_priv;
 
   if (pp->wrleft > 0) {
-	tty_reply(pp->wrrepcode, pp->wrcaller, pp->wrproc,
-						pp->wrcum + pp->wrleft);
-	pp->wrleft = pp->wrcum = 0;
+  	assert(!pp->wrsendreply);
+  	pp->wrcum += pp->wrleft;
+  	pp->wrleft= 0;
+  	notify(pp->wrcaller);
   }
 }
 
@@ -481,4 +494,48 @@ tty_t *tp;
   tp->tty_ocancel = pty_ocancel;
   tp->tty_close = pty_close;
 }
+
+
+/*==========================================================================*
+ *				pty_status				    *
+ *==========================================================================*/
+PUBLIC int pty_status(message *m_ptr)
+{
+	int i, event_found;
+	pty_t *pp;
+
+	event_found = 0;
+	for (i= 0, pp = pty_table; i<NR_PTYS; i++, pp++) {
+		if (((pp->state & TTY_CLOSED && pp->rdleft > 0) ||
+			pp->rdcum > 0) &&
+			pp->rdcaller == m_ptr->m_source)
+		{
+			m_ptr->m_type = DEV_REVIVE;
+			m_ptr->REP_PROC_NR = pp->rdproc;
+			m_ptr->REP_STATUS = pp->rdcum;
+
+			pp->rdleft = pp->rdcum = 0;
+			event_found = 1;
+			break;
+		}
+
+		if (((pp->state & TTY_CLOSED && pp->wrleft > 0) ||
+			pp->wrcum > 0) &&
+			pp->wrcaller == m_ptr->m_source)
+		{
+			m_ptr->m_type = DEV_REVIVE;
+			m_ptr->REP_PROC_NR = pp->wrproc;
+			if (pp->wrcum == 0)
+				m_ptr->REP_STATUS = EIO;
+			else
+				m_ptr->REP_STATUS = pp->wrcum;
+
+			pp->wrleft = pp->wrcum = 0;
+			event_found = 1;
+			break;
+		}
+	}
+	return event_found;
+}
+
 #endif /* NR_PTYS > 0 */
