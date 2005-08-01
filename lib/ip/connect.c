@@ -15,12 +15,15 @@
 
 static int _tcp_connect(int socket, const struct sockaddr *address,
 	socklen_t address_len, nwio_tcpconf_t *tcpconfp);
+static int _udp_connect(int socket, const struct sockaddr *address,
+	socklen_t address_len, nwio_udpopt_t *udpoptp);
 
 int connect(int socket, const struct sockaddr *address,
 	socklen_t address_len)
 {
 	int r;
 	nwio_tcpconf_t tcpconf;
+	nwio_udpopt_t udpopt;
 
 	r= ioctl(socket, NWIOGTCPCONF, &tcpconf);
 	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
@@ -31,6 +34,17 @@ int connect(int socket, const struct sockaddr *address,
 			return -1;
 		}
 		return _tcp_connect(socket, address, address_len, &tcpconf);
+	}
+
+	r= ioctl(socket, NWIOGUDPOPT, &udpopt);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	{
+		if (r == -1)
+		{
+			/* Bad file descriptor */
+			return -1;
+		}
+		return _udp_connect(socket, address, address_len, &udpopt);
 	}
 #if DEBUG
 	fprintf(stderr, "connect: not implemented for fd %d\n", socket);
@@ -65,26 +79,47 @@ static int _tcp_connect(int socket, const struct sockaddr *address,
 	tcpconf.nwtc_remport= sinp->sin_port;
 
 	if (ioctl(socket, NWIOSTCPCONF, &tcpconf) == -1)
-	{
-		int  t_errno= errno;
-
-		fprintf(stderr, "connect(tcp) failed: %s\n", strerror(errno));
-
-		errno= t_errno;
-
 		return -1;
-	}
 
 	tcpcl.nwtcl_flags= 0;
 
 	r= ioctl(socket, NWIOTCPCONN, &tcpcl);
-	if (r == -1)
+	return r;
+}
+
+static int _udp_connect(int socket, const struct sockaddr *address,
+	socklen_t address_len, nwio_udpopt_t *udpoptp)
+{
+	int r;
+	struct sockaddr_in *sinp;
+	nwio_udpopt_t udpopt;
+
+	if (address == NULL)
 	{
-		int  t_errno= errno;
+		/* Unset remote address */
+		udpopt.nwuo_flags= NWUO_RP_ANY | NWUO_RA_ANY;
 
-		fprintf(stderr, "connect(tcp) failed: %s\n", strerror(errno));
-
-		errno= t_errno;
+		r= ioctl(socket, NWIOSUDPOPT, &udpopt);
+		return r;
 	}
+
+	if (address_len != sizeof(*sinp))
+	{
+		errno= EINVAL;
+		return -1;
+	}
+	sinp= (struct sockaddr_in *)address;
+	if (sinp->sin_family != AF_INET)
+	{
+		errno= EINVAL;
+		return -1;
+	}
+	udpopt.nwuo_flags= NWUO_RP_SET | NWUO_RA_SET;
+	if ((udpoptp->nwuo_flags & NWUO_LOCPORT_MASK) == NWUO_LP_ANY)
+		udpopt.nwuo_flags |= NWUO_LP_SEL;
+	udpopt.nwuo_remaddr= sinp->sin_addr.s_addr;
+	udpopt.nwuo_remport= sinp->sin_port;
+
+	r= ioctl(socket, NWIOSUDPOPT, &udpopt) == -1)
 	return r;
 }
