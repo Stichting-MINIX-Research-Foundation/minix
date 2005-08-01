@@ -120,6 +120,6 @@ static int _udp_connect(int socket, const struct sockaddr *address,
 	udpopt.nwuo_remaddr= sinp->sin_addr.s_addr;
 	udpopt.nwuo_remport= sinp->sin_port;
 
-	r= ioctl(socket, NWIOSUDPOPT, &udpopt) == -1)
+	r= ioctl(socket, NWIOSUDPOPT, &udpopt);
 	return r;
 }
