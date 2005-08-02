@@ -72,13 +72,13 @@ start)
 
     # Start servers and drivers set at the boot monitor.
     echo -n "Starting services:"
-    up rtl8139
-    up fxp
-    up dpeth
-    up inet
-    up is "arg is leuk"
+    up rtl8139 ""
+    up fxp ""
+    up dpeth ""
+    up inet ""
+    up is ""
     up printer "" /dev/lp
-    up floppy "" /dev/fd0
+#    up floppy "" /dev/fd0
     echo .
 
     # Network initialization.
