@@ -23,6 +23,7 @@ OBJECTS	= \
 	$(LIBRARY)(close.o) \
 	$(LIBRARY)(closedir.o) \
 	$(LIBRARY)(creat.o) \
+	$(LIBRARY)(devctl.o) \
 	$(LIBRARY)(dup.o) \
 	$(LIBRARY)(dup2.o) \
 	$(LIBRARY)(execl.o) \
@@ -161,6 +162,9 @@ $(LIBRARY)(closedir.o):	closedir.s
 
 $(LIBRARY)(creat.o):	creat.s
 	$(CC1) creat.s
+
+$(LIBRARY)(devctl.o):	devctl.s
+	$(CC1) devctl.s
 
 $(LIBRARY)(dup.o):	dup.s
 	$(CC1) dup.s

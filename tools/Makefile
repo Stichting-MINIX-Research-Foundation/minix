@@ -11,13 +11,10 @@ PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
 	../servers/sm/sm \
-	../servers/is/is \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
-	../drivers/at_wini/at_wini \
-	../drivers/rtl8139/rtl8139 \
-	../drivers/fxp/fxp \
 	../drivers/log/log \
+	../drivers/at_wini/at_wini \
 	../drivers/bios_wini/bios_wini \
 	../servers/init/init \
 #	bootdev.img
