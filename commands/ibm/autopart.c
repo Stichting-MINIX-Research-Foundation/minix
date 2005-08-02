@@ -2344,7 +2344,7 @@ select_region(void)
 			fflush(NULL);
 		} else {
 			rn = 0;
-			printf("\nUse it? Please enter 'yes' or 'no': ");
+			printf("\nUse this region? Please enter 'yes' or 'no': ");
 			fflush(NULL);
 		}
 
@@ -2433,7 +2433,7 @@ select_disk(void)
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
 		} else {
-			printf("\nUse it? ");
+			printf("\nUse this disk? ");
 			choice = 0;
 			fflush(NULL);
 			if(!fgets(line, sizeof(line)-2, stdin))
@@ -2518,7 +2518,6 @@ do_autopart(int resultfd)
 	/* Update changes. */
 	if(dirty) {
 		m_write('w', NULL);
-		printf("dirty\n");
 	}
 
 	if(dirty) {
