@@ -203,13 +203,14 @@ PRIVATE void pm_init()
 			rmp->mp_parent = PM_PROC_NR;
 			rmp->mp_flags |= IN_USE; 
   			rmp->mp_nice = 0;
+  		sigemptyset(&rmp->mp_ignore);	
 		}
 		else {					/* system process */
   			rmp->mp_pid = get_free_pid();
 			rmp->mp_parent = SM_PROC_NR;
 			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
+  		sigfillset(&rmp->mp_ignore);	
 		}
-  		sigemptyset(&rmp->mp_ignore);	
   		sigemptyset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
   		sigemptyset(&rmp->mp_sig2mess);

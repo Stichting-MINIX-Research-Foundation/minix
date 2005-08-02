@@ -67,7 +67,7 @@ start)
     then
     	cat < $RANDOM_FILE >/dev/random
     	# overwrite $RANDOM_FILE. We don't want to use this data again
-    	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1
+    	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1 2> /dev/null
     fi
 
     # Start servers and drivers set at the boot monitor.
@@ -93,6 +93,7 @@ start)
     if [ ! -f /CD ]
     then	daemonize cron
     fi
+    echo .
 
     if [ "$net" ]
     then
@@ -102,6 +103,7 @@ start)
 	    . /etc/rc.net
 	else
 	    # Standard network daemons.
+    	    echo -n "Starting networking:"
 	    daemonize dhcpd
 	    daemonize nonamed
 	    daemonize talkd

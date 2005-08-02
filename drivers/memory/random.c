@@ -214,7 +214,6 @@ PRIVATE void reseed()
 		return;
 
 	reseed_count++;
-	printf("reseed: round %d, samples = %d\n", reseed_count, samples);
 	SHA256_Init(&ctx);
 	if (got_seeded)
 		SHA256_Update(&ctx, random_key, sizeof(random_key));
@@ -225,7 +224,6 @@ PRIVATE void reseed()
 	{
 		if ((reseed_count & (1UL << (i-1))) != 0)
 			break;
-		printf("random_reseed: adding pool %d\n", i);
 		SHA256_Final(digest, &pool_ctx[i]);
 		SHA256_Update(&ctx, digest, sizeof(digest));
 		SHA256_Init(&pool_ctx[i]);

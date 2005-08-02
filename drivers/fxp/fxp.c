@@ -273,8 +273,6 @@ int main(void)
 	v= 0;
 #if 0
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
-#else
-	printf("not calling env_parse for ETH_IGN_PROTO\n");
 #endif
 	eth_ign_proto= htons((u16_t) v);
 
@@ -432,11 +430,8 @@ static void fxp_pci_conf()
 			if (!env_prefix(envvar, "pci"))
 				env_panic(envvar);
 		}
-#else
-		printf("FXP: not calling getenv\n");
 #endif
 
-		printf("not calling env_parse\n");
 		v= 0;
 #if 0
 		(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
@@ -935,7 +930,6 @@ fxp_t *fp;
 	}
 #else
 	i= 0;
-	printf("not calling env_parse\n");
 #endif
 
 #if 0
