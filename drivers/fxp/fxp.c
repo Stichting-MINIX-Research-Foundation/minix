@@ -57,7 +57,6 @@
 #define printW()		((void)0)
 #define vm_1phys2bus(p)		(p)
 
-#if ENABLE_FXP
 #if !ENABLE_PCI
 #error PCI support not enabled
 #endif
@@ -207,6 +206,8 @@ static int fxp_tasknr= ANY;
 static u16_t eth_ign_proto;
 static tmra_ut fxp_watchdog;
 
+extern int errno;
+
 #define fxp_inb(port, offset)	(do_inb((port) + (offset)))
 #define fxp_inw(port, offset)	(do_inw((port) + (offset)))
 #define fxp_inl(port, offset)	(do_inl((port) + (offset)))
@@ -266,7 +267,8 @@ int main(void)
 	fxp_t *fp;
 	long v;
 
-	fxp_tasknr= FXP;
+	if ((fxp_tasknr= getprocnr())<0)
+		panic("FXP", "couldn't get proc nr", errno);
 
 	v= 0;
 #if 0
@@ -315,7 +317,7 @@ int main(void)
 				fxp_check_ints(fp);
 			}
 			break;
-		case SYS_EVENT:	{
+		case SYS_SIG:	{
 			sigset_t sigset = m.NOTIFY_ARG;
 			if (sigismember(&sigset, SIGKSTOP)) fxp_stop();
 			break;
@@ -2471,7 +2473,6 @@ static void do_outl(port_t port, u32_t value)
 		panic("FXP","sys_outl failed", r);
 }
 
-#endif /* ENABLE_FXP */
 
 /*
  * $PchId: fxp.c,v 1.4 2005/01/31 22:10:37 philip Exp $

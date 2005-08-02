@@ -1,7 +1,7 @@
 /* This file contains device independent device driver interface.
  *
  * Changes:
- *   Jul 25, 2005   added SYS_EVENT type for signals  (Jorrit N. Herder)
+ *   Jul 25, 2005   added SYS_SIG type for signals  (Jorrit N. Herder)
  *   Sep 15, 2004   added SYN_ALARM type for timeouts  (Jorrit N. Herder)
  *   Jul 23, 2004   removed kernel dependencies  (Jorrit N. Herder)
  *   Apr 02, 1992   constructed from AT wini and floppy driver  (Kees J. Bot)
@@ -108,7 +108,7 @@ struct driver *dp;	/* Device dependent entry points. */
 
 	case HARD_INT:		/* leftover interrupt or expired timer. */
 				continue;
-	case SYS_EVENT:		(*dp->dr_signal)(dp, &mess);
+	case SYS_SIG:		(*dp->dr_signal)(dp, &mess);
 				continue;	/* don't reply */
 	case SYN_ALARM:		(*dp->dr_alarm)(dp, &mess);	
 				continue;	/* don't reply */

@@ -6,6 +6,12 @@
 **  Interface description for ethernet device driver
 **
 **  $Log$
+**  Revision 1.2  2005/08/02 15:30:35  jnherder
+**  Various updates to support dynamically starting drivers.
+**  Output during initialization should be suppressed. Unless an error occurs.
+**  Note that main() can now be main(int argc, char **argv) and arguments can
+**  be passed when bringing up the driver.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -23,7 +29,7 @@
 #undef  ENABLE_WDETH
 #undef  ENABLE_DP8390
 
-#define ENABLE_NETWORKING ENABLE_DPETH 	/** (from /usr/include/minix/config.h **/
+#define ENABLE_NETWORKING 1 
 
 #define ENABLE_3C501	1	/* enable 3Com Etherlink I board	 */
 #define ENABLE_3C503	1	/* enable 3Com Etherlink II board 	 */

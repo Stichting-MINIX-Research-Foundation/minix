@@ -135,19 +135,7 @@ int sig;					/* signal number */
 PUBLIC void main(void)
 {
 /* Main routine of the printer task. */
-
   message pr_mess;		/* buffer for all incoming messages */
-#if DEAD_CODE
-  struct sigaction sigact;
-
-  /* Install signal handler.*/
-  sigact.sa_handler = signal_handler;
-  sigact.sa_mask = ~0;			/* block all other signals */
-  sigact.sa_flags = 0;			/* default behaviour */
-  printf("PRINTER calls sigaction()\n");
-  if (sigaction(SIGTERM, &sigact, NULL) != OK) 
-      report("PRINTER","warning, sigaction() failed", errno);
-#endif
   
   while (TRUE) {
 	receive(ANY, &pr_mess);

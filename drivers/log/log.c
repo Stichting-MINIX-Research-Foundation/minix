@@ -420,7 +420,7 @@ message *m_ptr;
 		r = do_diagnostics(m_ptr);
 		break;
 	}
-	case SYS_EVENT: {
+	case SYS_SIG: {
 		sigset_t sigset = m_ptr->NOTIFY_ARG;
 		if (sigismember(&sigset, SIGKMESS)) {
 			do_new_kmess(m_ptr);

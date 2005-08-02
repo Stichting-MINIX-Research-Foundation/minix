@@ -49,6 +49,12 @@
 **  +------------+---------+---------+---------------+
 **
 **  $Log$
+**  Revision 1.5  2005/08/02 15:30:35  jnherder
+**  Various updates to support dynamically starting drivers.
+**  Output during initialization should be suppressed. Unless an error occurs.
+**  Note that main() can now be main(int argc, char **argv) and arguments can
+**  be passed when bringing up the driver.
+**
 **  Revision 1.4  2005/07/29 12:44:41  jnherder
 **  Small update to SYS_IRQCTL -> setting an interrupt policy now allows the caller
 **  to provide an index (0 .. 31) that is passed in the HARD_INT message when an
@@ -79,11 +85,10 @@
 
 #include "dp.h"
 
-#if ENABLE_NETWORKING == 1
-
 /*
 **  Local data
 */
+extern int errno;
 static dpeth_t de_table[DE_PORT_NR];
 static int dpeth_tasknr = ANY;
 
@@ -556,15 +561,15 @@ static void do_watchdog(void *message)
 **  Name:	int dpeth_task(void)
 **  Function:	Main entry for dp task
 */
-PUBLIC int main(void)
+PUBLIC int main(int argc, char **argv)
 {
   message m;
   dpeth_t *dep;
   int rc, fkeys, sfkeys;
 
   /* Get precess number */
-  if ((rc = getprocnr(&dpeth_tasknr)) != OK)
-	panic(DevName, "getprocnr() failed", rc);
+  if ((dpeth_tasknr = getprocnr()) < 0)
+	panic(DevName, "getprocnr() failed", errno);
 #if defined USE_IOPL
   /* Request direct access to hardware I/O ports */
   if ((rc = sys_enable_iop(dpeth_tasknr)) != OK)
@@ -574,6 +579,7 @@ PUBLIC int main(void)
   fkeys = sfkeys = 0; bit_set(sfkeys, 8);
   if ((fkey_map(&fkeys, &sfkeys)) != OK) 
 	printf("%s: couldn't program Shift+F8 key (%d)\n", DevName, errno);
+
 
 #ifdef ETH_IGN_PROTO
   {
@@ -585,7 +591,6 @@ PUBLIC int main(void)
   }
 #endif
 
-  printf("DPETH: ethernet driver task initialized (process No. %d)\n", dpeth_tasknr);
   while (TRUE) {
 	if ((rc = receive(ANY, &m)) != OK) panic(dep->de_name, RecvErrMsg, rc);
 
@@ -616,7 +621,7 @@ PUBLIC int main(void)
 	    case DL_STOP:	/* Stop device */
 		do_stop(&m);
 		break;
-	    case SYS_EVENT: {
+	    case SYS_SIG: {
 	    	sigset_t sigset = m.NOTIFY_ARG;
 	    	if (sigismember(&sigset, SIGKSTOP)) {	/* Shut down */
 		    for (rc = 0; rc < DE_PORT_NR; rc += 1) {
@@ -652,8 +657,5 @@ PUBLIC int main(void)
   return OK;			/* Never reached, but keeps compiler happy */
 }
 
-#else
-int main(void) { return 0; }
-#endif				/* ENABLE_NETWORKING */
 
 /** dp.c **/

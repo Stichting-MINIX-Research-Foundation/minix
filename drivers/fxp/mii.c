@@ -11,7 +11,6 @@ Media Independent (Ethernet) Interface functions
 #include "config.h"
 #endif
 
-#if ENABLE_FXP
 
 #include "mii.h"
 
@@ -196,8 +195,6 @@ u16_t techab;
 		printf("0x%x", (techab & MII_ANA_TAF_RES) >> MII_ANA_TAF_S);
 	}
 }
-
-#endif /* ENABLE_FXP */
 
 /*
  * $PchId: mii.c,v 1.2 2005/01/31 22:17:26 philip Exp $

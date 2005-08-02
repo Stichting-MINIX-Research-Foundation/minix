@@ -309,7 +309,6 @@ PUBLIC void main()
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
   	panic("FLOPPY", "Couldn't enable IRQs", s);
 
-  printf("FLOPPY: user-level floppy disk driver initialized\n");
   driver_task(&f_dtab);
 }
 

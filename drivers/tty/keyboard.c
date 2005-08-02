@@ -440,6 +440,7 @@ message *m_ptr;			/* pointer to the request message */
 
   switch (m_ptr->FKEY_REQUEST) {	/* see what we must do */
   case FKEY_MAP:			/* request for new mapping */
+      result = OK;			/* assume everything will be ok*/
       for (i=0; i < 12; i++) {		/* check F1-F12 keys */
           if (bit_isset(m_ptr->FKEY_FKEYS, i+1) ) {
               if (fkey_obs[i].proc_nr == NONE) { 
@@ -448,8 +449,7 @@ message *m_ptr;			/* pointer to the request message */
     	          bit_unset(m_ptr->FKEY_FKEYS, i+1);
     	      } else {
     	          printf("WARNING, fkey_map failed F%d\n", i);
-    	          result = EBUSY;
-    	          break;
+    	          result = EBUSY;	/* report failure, but try rest */
     	      }
     	  }
       }
@@ -461,15 +461,35 @@ message *m_ptr;			/* pointer to the request message */
     	          bit_unset(m_ptr->FKEY_SFKEYS, i+1);
     	      } else {
     	          printf("WARNING, fkey_map failed Shift F%d\n", i);
-    	          result = EBUSY;
-    	          break;
+    	          result = EBUSY;	/* report failure but try rest */
     	      }
     	  }
       }
-      result = OK;			/* done, new observer registered */
       break;
   case FKEY_UNMAP:
-      result = ENOSYS;			/* not yet supported (not needed) */
+      result = OK;			/* assume everything will be ok*/
+      for (i=0; i < 12; i++) {		/* check F1-F12 keys */
+          if (bit_isset(m_ptr->FKEY_FKEYS, i+1) ) {
+              if (fkey_obs[i].proc_nr == m_ptr->m_source) { 
+    	          fkey_obs[i].proc_nr = NONE;
+    	          fkey_obs[i].events = 0;
+    	          bit_unset(m_ptr->FKEY_FKEYS, i+1);
+    	      } else {
+    	          result = EPERM;	/* report failure, but try rest */
+    	      }
+    	  }
+      }
+      for (i=0; i < 12; i++) {		/* check Shift+F1-F12 keys */
+          if (bit_isset(m_ptr->FKEY_SFKEYS, i+1) ) {
+              if (sfkey_obs[i].proc_nr == m_ptr->m_source) { 
+    	          sfkey_obs[i].proc_nr = NONE;
+    	          sfkey_obs[i].events = 0;
+    	          bit_unset(m_ptr->FKEY_SFKEYS, i+1);
+    	      } else {
+    	          result = EPERM;	/* report failure, but try rest */
+    	      }
+    	  }
+      }
       break;
   case FKEY_EVENTS:
       m_ptr->FKEY_FKEYS = m_ptr->FKEY_SFKEYS = 0;
@@ -626,7 +646,7 @@ message *m;			/* request message to TTY */
 	while (nb_receive(ANY, m) == OK) {
 		switch(m->m_type) {
 		case FKEY_CONTROL: do_fkey_ctl(m);      break;
-		case SYS_EVENT:	   do_new_kmess(m);	break;
+		case SYS_SIG:	   do_new_kmess(m);	break;
 		case DIAGNOSTICS:  do_diagnostics(m);	break;
 		default:	;	/* do nothing */ 
 		}

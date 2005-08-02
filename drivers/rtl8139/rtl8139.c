@@ -10,7 +10,7 @@
  * |------------+----------+---------+----------+---------+---------|
  * | HARD_INT	|          |         |          |         |         |
  * |------------|----------|---------|----------|---------|---------|
- * | HARD_STOP	|          |         |          |         |         |
+ * | SYS_SIG	|          |         |          |         |         |
  * |------------|----------|---------|----------|---------|---------|
  * | DL_WRITE	| port nr  | proc nr | count    | mode    | address |
  * |------------|----------|---------|----------|---------|---------|
@@ -79,7 +79,8 @@
 #define printW()		((void)0)
 #define vm_1phys2bus(p)		(p)
 
-#if ENABLE_RTL8139
+#define VERBOSE	0	/* display message during init */
+
 #if !ENABLE_PCI
 #error PCI support not enabled
 #endif
@@ -285,7 +286,7 @@ void main(void)
 	re_t *rep;
 	long v;
 
-	if (getprocnr(&rl_tasknr) != OK)
+	if ((rl_tasknr = getprocnr()) < 0)
 		panic("RTL8139", "getprocnr failed", errno);
 
 	v= 0;
@@ -337,7 +338,7 @@ void main(void)
 				check_int_events();
 			break ;
 		case FKEY_PRESSED: rtl8139_dump(&m);		break;
-		case SYS_EVENT: {
+		case SYS_SIG: {
 			sigset_t sigset = m.NOTIFY_ARG;
 			if (sigismember(&sigset, SIGKSTOP)) rtl8139_stop();		
 			break;
@@ -485,7 +486,9 @@ message *mp;
 		}
 		if (rep->re_mode == REM_ENABLED)
 			rl_init_hw(rep);
+#if VERBOSE	/* load silently ... can always check status later */
 		rl_report_link(rep);
+#endif
 	}
 
 	assert(rep->re_mode == REM_ENABLED);
@@ -628,11 +631,13 @@ re_t *rep;
 			return 0;
 	}
 
+#if VERBOSE	/* stay silent at startup, can always get status later */
 	dname= pci_dev_name(vid, did);
 	if (!dname)
 		dname= "unknown device";
 	printf("%s: ", rep->re_name);
 	printf("%s (%x/%x) at %s\n", dname, vid, did, pci_slot_name(devind));
+#endif
 	pci_reserve(devind);
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
@@ -760,6 +765,7 @@ re_t *rep;
 	if ((s=sys_irqenable(&rep->re_hook_id)) != OK)
 		printf("RTL8139: error, couldn't enable interrupts: %d\n", s);
 
+#if VERBOSE	/* stay silent during startup, can always get status later */
 	if (rep->re_mode) {
 		printf("%s: model %s\n", rep->re_name, rep->re_model);
 	} else
@@ -769,6 +775,7 @@ re_t *rep;
 			rl_inl(rep->re_base_port, RL_TCR) &
 			(RL_TCR_HWVER_AM | RL_TCR_HWVER_BM));
 	}
+#endif
 
 	rl_confaddr(rep);
 	if (debug)
@@ -2619,7 +2626,6 @@ dpeth_t *dep;
 	outb_reg0(dep, DP_CR, CR_PS_P0);	/* back to bank 0 */
 }
 #endif
-#endif /* ENABLE_RTL8139 */
 
 /*
  * $PchId: rtl8139.c,v 1.3 2003/09/11 14:15:15 philip Exp $

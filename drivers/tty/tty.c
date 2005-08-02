@@ -20,7 +20,7 @@
  * The valid messages and their parameters are:
  *
  *   HARD_INT:       output has been completed or input has arrived
- *   SYS_EVENT:      e.g., MINIX wants to shutdown; run code to cleanly stop
+ *   SYS_SIG:      e.g., MINIX wants to shutdown; run code to cleanly stop
  *   DEV_READ:       a process wants to read from a terminal
  *   DEV_WRITE:      a process wants to write on a terminal
  *   DEV_IOCTL:      a process wants to change a terminal's parameters
@@ -34,7 +34,7 @@
  * ---------------------------------------------------------------------------
  * | HARD_INT    |         |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
- * | SYS_EVENT   | sig set |         |         |         |         |         |
+ * | SYS_SIG   | sig set |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
  * | DEV_READ    |minor dev| proc nr |  count  |         O_NONBLOCK| buf ptr |
  * |-------------+---------+---------+---------+---------+---------+---------|
@@ -214,7 +214,7 @@ PUBLIC void main(void)
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
 	}
-	case SYS_EVENT: {		/* new kernel message is available */
+	case SYS_SIG: {			/* system signal */
 		sigset_t sigset = (sigset_t) tty_mess.NOTIFY_ARG;
 
 		if (sigismember(&sigset, SIGKSTOP)) {
