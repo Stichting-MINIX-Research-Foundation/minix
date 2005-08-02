@@ -27,7 +27,7 @@ register message *m_ptr;	/* pointer to request message */
  * are two different system calls so that permissions can be checked. 
  */
   struct vir_addr vir_addr[2];	/* virtual source and destination address */
-  vir_bytes bytes;		/* number of bytes to copy */
+  phys_bytes bytes;		/* number of bytes to copy */
   int i;
 
   /* Dismember the command message. */

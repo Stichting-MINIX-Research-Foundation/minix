@@ -117,8 +117,10 @@ message *m_ptr;			/* pointer to message in the caller's space */
       return(ECALLDENIED);	
   
   /* Require a valid source and/ or destination process, unless echoing. */
-  if (! (isokprocn(src_dst) || src_dst == ANY || function == ECHO))  
+  if (! (isokprocn(src_dst) || src_dst == ANY || function == ECHO)) { 
+      kprintf("sys_call: function %d, src_dst %d\n", function, src_dst);
       return(EBADSRCDST);
+  }
 
   /* If the call involves a message buffer, i.e., for SEND, RECEIVE, SENDREC, 
    * or ECHO, check the message pointer. This check allows a message to be 

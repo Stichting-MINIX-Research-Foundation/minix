@@ -32,17 +32,19 @@ register message *m_ptr;	/* pointer to request message */
   rpc = proc_addr(m_ptr->PR_PROC_NR);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
 
-  /* If this is a system process, make sure the child process gets its own
-   * privilege structure for accounting. This is the only part that can fail,
-   * so do this before allocating the process table slot.
+#if DEAD_CODE
+  /* If the parent is a privileged process, ensure the child process also gets 
+   * its own privilege structure for accounting. This is the only part that can 
+   * fail, so do this before allocating the process table slot.
    */
-  if (priv(rpc)->s_flags & SYS_PROC) {
+  if (priv(rpp)->s_flags & SYS_PROC) {
       if (OK != (i=get_priv(rpc, SYS_PROC))) return(i);	/* get structure */
       for (i=0; i< BITMAP_CHUNKS(NR_SYS_PROCS); i++)	/* remove pending: */
           priv(rpc)->s_notify_pending.chunk[i] = 0;	/* - notifications */
       priv(rpc)->s_int_pending = 0;			/* - interrupts */
       sigemptyset(&priv(rpc)->s_sig_pending);		/* - signals */
   }
+#endif
 
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
 #if (CHIP == INTEL)
@@ -63,6 +65,14 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
   rpc->p_sys_time = 0;
 
+  /* If the parent is a privileged process, take away the privileges from the 
+   * child process and inhibit it from running by setting the NO_PRIV flag.
+   * The caller should explicitely set the new privileges before executing.
+   */
+  if (priv(rpp)->s_flags & SYS_PROC) {
+      rpc->p_priv = priv_addr(USER_PRIV_ID);
+      rpc->p_rts_flags |= NO_PRIV;
+  }
   return(OK);
 }
 
