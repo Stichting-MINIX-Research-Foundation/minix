@@ -1,5 +1,7 @@
 # /usr/etc/rc - continued system initialization.
 
+RANDOM_FILE=/usr/adm/random.dat
+
 case "$#:$1" in
 1:start|1:stop|1:down)
     action=$1
@@ -26,7 +28,31 @@ daemonize()
     done
 }
 
-RANDOM_FILE=/usr/adm/random.dat
+up()
+{
+    service=$1
+    args=$2
+    device=$3
+
+    # Function to dynamically start a system service
+
+    # First check if this service is disabled at the boot monitor.
+    ifs="$IFS"; IFS=,
+    for name in `sysenv disable`
+    do 
+        if [ "$name" = "$service" ]
+	then 	 return
+	fi
+    done
+    IFS="$ifs"; unset ifs
+
+    # Service is not disabled. Try to bring it up.
+    command="/usr/sbin/$service"
+    if [ ! -z "$args" ]; then command="$command -args \"$args\""; fi
+    if [ ! -z "$device" ]; then command="$command -dev \"$device\""; fi
+    echo -n " $service"
+    eval service up $command
+}
 
 case $action in
 start)
@@ -44,11 +70,16 @@ start)
     	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1
     fi
 
-    # Start servers.
-    ifs="$IFS"; IFS=,
-    for server in `sysenv servers`; do daemonize $server; done
-    IFS="$ifs"; unset ifs
-    sleep 1
+    # Start servers and drivers set at the boot monitor.
+    echo -n "Starting services:"
+    up rtl8139
+    up fxp
+    up dpeth
+    up inet
+    up is "arg is leuk"
+    up printer "" /dev/lp
+    up floppy "" /dev/fd0
+    echo .
 
     # Network initialization.
     (: </dev/tcp) 2>/dev/null && net=t	# Is there a TCP/IP server?
