@@ -86,19 +86,24 @@ echo -n "
 Keyboard type? [us-std] "; read keymap
 test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 
-echo -n "Welcome to Minix partitioning. Do you want to
+ok=""
+while [ $ok = "" ]
+do
+	echo -n "Welcome to Minix partitioning. Do you want to
 follow the (A)utomatic or the e(X)pert mode? Expert mode drops
 you into part to let you edit your partition table to taste.
 Automatic mode is much easier, but can't handle all cases. In
 cases it can't handle, it will tell you to use expert mode.
-Please choose, A for Automatic, or X for Expert: "
+Please choose, A for Automatic, or X for Expert: [A] "
 
-read ch
-case "$ch" in
-[Aa]*)	auto="1" ;;
-[Xx]*)	auto="" ;;
-*)	echo "Unrecognized response."; exit 1;
-esac
+	read ch
+	case "$ch" in
+	[Aa]*)	auto="1"; ok="yes"; ;;
+	'')	auto="1"; ok="yes"; ;;
+	[Xx]*)	auto="";  ok="yes"; ;;
+	*)	echo "Unrecognized response."; ok=""; ;;
+	esac
+done
 
 primary=
 

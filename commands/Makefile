@@ -30,6 +30,7 @@ all install clean::
 	cd awk && $(MAKE) $@
 	cd bc && $(MAKE) $@
 	cd byacc && $(MAKE) $@
+	cd bzip2-1.0.3 && $(MAKE) $@
 	cd cawf && $(MAKE) $@
 	cd cron && $(MAKE) $@
 	cd de && $(MAKE) $@
