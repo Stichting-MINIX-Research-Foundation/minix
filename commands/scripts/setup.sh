@@ -87,7 +87,7 @@ Keyboard type? [us-std] "; read keymap
 test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 
 ok=""
-while [ $ok = "" ]
+while [ "$ok" = "" ]
 do
 	echo -n "Welcome to Minix partitioning. Do you want to
 follow the (A)utomatic or the e(X)pert mode? Expert mode drops
