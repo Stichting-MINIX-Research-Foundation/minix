@@ -2656,15 +2656,11 @@ int main(int argc, char **argv)
      				return 1;
      		}
      	}
-     printf("%d\n", argc);
      }
-     printf("%d %d\n", argc, optind);
      argc -= optind;
      argv += optind;
 
-	printf(" %d %p\n", argc, firstdev);
 	for (i= 0; i < argc; i++) {
-	printf(" %d %d %p\n", i, argc, firstdev);
 	 newdevice(argv[i], 0, 0);
 	 }
 
