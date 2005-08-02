@@ -4,7 +4,7 @@
 #define exec_len	m1_i1
 #define func		m6_f1
 #define grp_id		m1_i1
-#define namelen		m1_i1
+#define namelen		m1_i2
 #define pid		m1_i1
 #define procnr		m1_i1
 #define seconds		m1_i1

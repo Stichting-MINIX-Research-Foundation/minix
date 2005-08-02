@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>
+#include <minix/dmap.h>
 
 #include <limits.h>
 #include <errno.h>

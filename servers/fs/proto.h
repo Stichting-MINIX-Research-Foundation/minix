@@ -34,19 +34,20 @@ _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
 			off_t pos, int bytes, int flags)		);
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( void gen_io, (int task_nr, message *mess_ptr)		);
-_PROTOTYPE( int no_dev, (int op, Dev_t dev, int proc, int flags)		);
+_PROTOTYPE( int no_dev, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int tty_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int ctty_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int clone_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( void ctty_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int do_ioctl, (void)					);
 _PROTOTYPE( int do_setsid, (void)					);
-_PROTOTYPE( void dev_status, (message *)					);
+_PROTOTYPE( void dev_status, (message *)				);
 
 /* dmp.c */
 _PROTOTYPE( int do_fkey_pressed, (void)					);
 
 /* dmap.c */
+_PROTOTYPE( int do_devctl, (void)					);
 _PROTOTYPE( void map_controllers, (void)				);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style)	);
 
@@ -190,9 +191,9 @@ _PROTOTYPE( int select_notified, (int major, int minor, int ops)				);
 
 /* timers.c */
 _PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, tmr_func_t watchdog, int arg));
-_PROTOTYPE( void fs_expire_timers, (clock_t now));
-_PROTOTYPE( void fs_cancel_timer, (timer_t *tp));
-_PROTOTYPE( void fs_init_timer, (timer_t *tp));
+_PROTOTYPE( void fs_expire_timers, (clock_t now)			);
+_PROTOTYPE( void fs_cancel_timer, (timer_t *tp)				);
+_PROTOTYPE( void fs_init_timer, (timer_t *tp)				);
 
 /* cdprobe.c */
-_PROTOTYPE( int cdprobe, (void));
+_PROTOTYPE( int cdprobe, (void)						);

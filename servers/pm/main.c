@@ -54,7 +54,7 @@ PUBLIC void main()
         if (call_nr == SYN_ALARM) {
         	pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
 		result = SUSPEND;		/* don't reply */
-	} else if (call_nr == SYS_EVENT) {	/* signals pending */
+	} else if (call_nr == SYS_SIG) {	/* signals pending */
 		sigset = m_in.NOTIFY_ARG;
 		if (sigismember(&sigset, SIGKSIG)) {
 			(void) ksig_pending();
@@ -145,6 +145,8 @@ PRIVATE void pm_init()
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
   static char ign_sigs[] = { SIGCHLD };
+  static int protected[] = {PM_PROC_NR, FS_PROC_NR, SM_PROC_NR,
+			TTY, AT_WINI, MEMORY};
   register struct mproc *rmp;
   register char *sig_ptr;
   phys_clicks total_clicks, minix_clicks, free_clicks;
@@ -201,14 +203,13 @@ PRIVATE void pm_init()
 			rmp->mp_parent = PM_PROC_NR;
 			rmp->mp_flags |= IN_USE; 
   			rmp->mp_nice = 0;
-  			sigemptyset(&rmp->mp_ignore);	
 		}
 		else {					/* system process */
   			rmp->mp_pid = get_free_pid();
 			rmp->mp_parent = SM_PROC_NR;
 			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
-  			sigfillset(&rmp->mp_ignore);	
 		}
+  		sigemptyset(&rmp->mp_ignore);	
   		sigemptyset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
   		sigemptyset(&rmp->mp_sig2mess);
@@ -229,10 +230,11 @@ PRIVATE void pm_init()
   	}
   }
 
-  /* PM is somewhat special. Override some details. */ 
-  sigfillset(&mproc[PM_PROC_NR].mp_ignore);	/* guard against signals */
+  /* Override some details. PM is somewhat special. */
   mproc[PM_PROC_NR].mp_pid = PM_PID;		/* magically override pid */
   mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;	/* PM doesn't have parent */
+  for (i=0; i<sizeof(protected)/sizeof(int); i++)
+  	sigfillset(&mproc[i].mp_ignore);	/* guard against signals */
 
 
   /* Tell FS that no more system processes follow and synchronize. */

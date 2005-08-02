@@ -20,7 +20,6 @@
 #include <fcntl.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
-#include "dmap.h"
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"

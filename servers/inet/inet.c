@@ -162,10 +162,12 @@ PUBLIC void main()
 	/* Our new identity as a server. */
 	this_proc = info.proc_nr;
 #else /* Minix 3 */
+#if DEAD_CODE
 	if (svrctl(SYSSIGNON, (void *) NULL) == -1) pause();
+#endif
 
 	/* Our new identity as a server. */
-	if (getprocnr(&this_proc) != OK)
+	if ((this_proc = getprocnr()) < 0)
 		ip_panic(( "unable to get own process nr\n"));
 #endif
 

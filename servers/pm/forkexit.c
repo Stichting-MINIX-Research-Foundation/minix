@@ -101,8 +101,9 @@ PUBLIC int do_fork()
   sys_newmap(child_nr, rmc->mp_seg);
 
   /* Reply to child to wake it up. */
-  setreply(child_nr, 0);
-  return(new_pid);		 /* child's pid */
+  setreply(child_nr, 0);		/* only parent gets details */
+  rmp->mp_reply.procnr = child_nr;	/* child's process number */
+  return(new_pid);		 	/* child's pid */
 }
 
 

@@ -13,35 +13,81 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <minix/dmap.h>
 
 extern int errno;
 
-#define EXEC_FAILED	49		/* recognizable exit status */
+#define EXEC_FAILED	49		/* arbitrary, recognizable status */
+#define MAX_PATH_LEN    256		/* maximum path string length */
+#define MAX_ARGS_LEN    4096		/* maximum argument string length */
+#define MAX_ARG_COUNT   1		/* parsed arguments count */
+
+PRIVATE char command[MAX_PATH_LEN+1];
+PRIVATE char arg_buf[MAX_ARGS_LEN+1];
 
 /*===========================================================================*
  *				   do_start				     *
  *===========================================================================*/
 PUBLIC int do_start(message *m_ptr)
 {
+  message m;
+  int child_proc_nr;
+  int major_nr;
+  enum dev_style dev_style;
   pid_t child_pid;
-  char command[255] = "/usr/sbin/is";
+  char *args[MAX_ARG_COUNT+1];
+  int s;
 
   /* Obtain command name and parameters. */
-  
+  if (m_ptr->SRV_PATH_LEN > MAX_PATH_LEN) return(E2BIG);
+  if (OK != (s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->SRV_PATH_ADDR, 
+  	SELF, (vir_bytes) command, m_ptr->SRV_PATH_LEN))) return(s);
+  command[m_ptr->SRV_PATH_LEN] = '\0';
+  if (command[0] != '/') return(EINVAL);
 
-  /* Now try to execute the new system service. */
-  child_pid = fork();	/* normal POSIX fork */
-  switch(child_pid) {
-  case 0:		/* child process, start system service */
-      execve(command, NULL, NULL);			/* POSIX exec */
+  if (m_ptr->SRV_ARGS_LEN > 0) {
+      if (m_ptr->SRV_ARGS_LEN > MAX_ARGS_LEN) return(E2BIG);
+      if (OK != (s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->SRV_ARGS_ADDR, 
+  	SELF, (vir_bytes) arg_buf, m_ptr->SRV_ARGS_LEN))) return(s);
+      arg_buf[m_ptr->SRV_ARGS_LEN] = '\0';
+      args[0] = &arg_buf[0];
+      args[1] = NULL;
+  } else {
+      args[0] = NULL;
+  }
+  
+  /* Now try to execute the new system service. Fork a new process. The child
+   * process will be inhibited from running by the NO_PRIV flag. Only let the
+   * child run once its privileges have been set by the parent.
+   */
+  if ((s = _taskcall(PM_PROC_NR, FORK, &m)) < 0)	/* use raw interface */
+  	report("SM", "_taskcall to PM failed", s);	/* to get both */
+  child_pid = m.m_type;					/* - child's pid */
+  child_proc_nr = m.PR_PROC_NR;				/* - process nr */
+
+  /* Now branch for parent and child process, and check for error. */
+  switch(child_pid) {					/* see fork(2) */
+  case 0:						/* child process */
+      execve(command, args, NULL);			/* POSIX exec */
       report("SM", "warning, exec() failed", errno);	/* shouldn't happen */
       exit(EXEC_FAILED);				/* terminate child */
       break;
-  case -1:		/* fork failed, report error */
+  case -1:						/* fork failed */
       report("SM", "warning, fork() failed", errno);	/* shouldn't happen */
       return(errno);
-  default:		/* parent process */
-      report("SM", "new process forked, pid", child_pid);
+  default:						/* parent process */
+      if ((major_nr = m_ptr->SRV_DEV_MAJOR) > 0) {	/* set driver map */
+          dev_style = STYLE_DEV;
+          if ((s=mapdriver(child_proc_nr, major_nr, dev_style)) < 0) {
+             report("SM", "couldn't map driver", errno);
+          }
+      }
+      if ((s = _taskcall(SYSTEM, SYS_PRIVCTL, &m)) < 0) /* set privileges */
+          report("SM", "_taskcall to SYSTEM failed", s); /* to let child run */
+#if DEAD_CODE
+      printf("SM: started '%s %s', major %d, pid %d, proc_nr %d", 
+          command, arg_buf, major_nr, child_pid, child_proc_nr);
+#endif
       							/* update tables */
   }
   return(OK);

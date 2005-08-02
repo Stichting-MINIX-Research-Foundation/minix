@@ -43,7 +43,7 @@ PUBLIC void main(void)
       get_work();
 
       switch (callnr) {
-      case SYS_EVENT:
+      case SYS_SIG:
           /* Signals are passed by means of a notification message from SYSTEM. 
            * Extract the map of pending signals from the notification argument.
            */ 
@@ -63,10 +63,10 @@ PUBLIC void main(void)
                 /* Nothing to do on shutdown. */    
           }
           continue;
-      case START_SERVICE:
+      case SRV_UP:
           result = do_start(&m_in);
           break;
-      case STOP_SERVICE:
+      case SRV_DOWN:
           result = do_stop(&m_in);
           break;
       default: 

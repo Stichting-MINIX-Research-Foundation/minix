@@ -25,7 +25,6 @@ struct super_block;		/* proto.h needs to know this */
 #include <minix/keymap.h>
 #include <minix/const.h>
 #include "buf.h"
-#include "dmap.h"
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"
@@ -62,7 +61,7 @@ PUBLIC void main()
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
  	/* Check for special control messages first. */
-        if (call_nr == SYS_EVENT) { 
+        if (call_nr == SYS_SIG) { 
 		sigset = m_in.NOTIFY_ARG;
 		if (sigismember(&sigset, SIGKSTOP)) {
         		do_sync();
@@ -85,7 +84,7 @@ PUBLIC void main()
 			printf("FS, warning illegal %d system call by %d\n", call_nr, who);
 		} else if (fp->fp_pid == PID_FREE) {
 			error = ENOSYS;
-			printf("FS, bad process, who = %d\n", who);
+			printf("FS, bad process, who = %d, call_nr = %d\n", who, call_nr);
 		} else {
 			error = (*call_vec[call_nr])();
 		}

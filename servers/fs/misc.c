@@ -27,7 +27,6 @@
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"
-#include "dmap.h"
 #include "param.h"
 #include "super.h"
 

@@ -97,7 +97,15 @@ PUBLIC int do_getprocnr()
   int key_len;
   int s;
 
-  if (m_in.namelen > 0) {		/* lookup process by name */
+  if (m_in.pid >= 0) {				/* lookup process by pid */
+  	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+		if ((rmp->mp_flags & IN_USE) && (rmp->mp_pid==m_in.pid)) {
+  			mp->mp_reply.procnr = (int) (rmp - mproc);
+  			return(OK);
+		} 
+	}
+  	return(ESRCH);			
+  } else if (m_in.namelen > 0) {		/* lookup process by name */
   	key_len = MIN(m_in.namelen, PROC_NAME_LEN);
  	if (OK != (s=sys_datacopy(who, (vir_bytes) m_in.addr, 
  			SELF, (vir_bytes) search_key, key_len))) 
@@ -111,8 +119,7 @@ PUBLIC int do_getprocnr()
 		} 
 	}
   	return(ESRCH);			
-  } 
-  else {				/* return own process number */
+  } else {				/* return own process number */
   	mp->mp_reply.procnr = who;
   }
   return(OK);

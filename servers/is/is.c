@@ -22,57 +22,53 @@ int callnr;		/* system call number */
 extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
-FORWARD _PROTOTYPE(void init_server, (void)				);
+FORWARD _PROTOTYPE(void init_server, (int argc, char **argv)		);
+FORWARD _PROTOTYPE(void exit_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
+
 
 /*===========================================================================*
  *                                  main                                     *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC void main(int argc, char **argv)
 {
 /* This is the main routine of this service. The main loop consists of 
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-    int result;                 
-    sigset_t sigset;
+  int result;                 
+  sigset_t sigset;
 
-    /* Initialize the server, then go to work. */
-    init_server();
+  /* Initialize the server, then go to work. */
+  init_server(argc, argv);
 
-    /* Main loop - get work and do it, forever. */         
-    while (TRUE) {              
+  /* Main loop - get work and do it, forever. */         
+  while (TRUE) {              
 
-        /* Wait for incoming message, sets 'callnr' and 'who'. */
-        get_work();
+      /* Wait for incoming message, sets 'callnr' and 'who'. */
+      get_work();
 
-        switch (callnr) {
-            case SYS_EVENT:
-                sigset = (sigset_t) m_in.NOTIFY_ARG;
-            	if (sigismember(&sigset, SIGTERM)) {
-            	    exit(3);
-                    /* nothing to do on shutdown */    
-            	} 
-            	if (sigismember(&sigset, SIGKSTOP)) {
-                    /* nothing to do on shutdown */    
-            	}
-            	continue;
-            case FKEY_PRESSED:
-            	result = do_fkey_pressed(&m_in);
-            	break;
-            default: {
-            	printf("Warning, IS got unexpected request %d from %d\n",
-            		m_in.m_type, m_in.m_source);
-            	result = EINVAL;
-  	   }
-	}
+      switch (callnr) {
+      case SYS_SIG:
+          sigset = (sigset_t) m_in.NOTIFY_ARG;
+          if (sigismember(&sigset,SIGTERM) || sigismember(&sigset,SIGKSTOP)) {
+              exit_server();
+          }
+          continue;
+      case FKEY_PRESSED:
+          result = do_fkey_pressed(&m_in);
+          break;
+      default: 
+          report("IS","warning, got illegal request from %d\n", m_in.m_source);
+          result = EINVAL;
+      }
 
-	/* Finally send reply message, unless disabled. */
-	if (result != EDONTREPLY) {
-	    reply(who, result);
-        }
-    }
+      /* Finally send reply message, unless disabled. */
+      if (result != EDONTREPLY) {
+	  reply(who, result);
+      }
+  }
 }
 
 
@@ -81,27 +77,52 @@ PUBLIC void main(void)
 /*===========================================================================*
  *				 init_server                                 *
  *===========================================================================*/
-PRIVATE void init_server()
+PRIVATE void init_server(int argc, char **argv)
 {
 /* Initialize the information service. */
   int fkeys, sfkeys;
   int i, s;
+#if DEAD_CODE
   struct sigaction sigact;
 
   /* Install signal handler. Ask PM to transform signal into message. */
   sigact.sa_handler = SIG_MESS;
   sigact.sa_mask = ~0;			/* block all other signals */
   sigact.sa_flags = 0;			/* default behaviour */
-  if (sigaction(SIGTERM, &sigact, NULL) != OK) 
+  if (sigaction(SIGTERM, &sigact, NULL) < 0) 
       report("IS","warning, sigaction() failed", errno);
+#endif
 
-  /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6 . */
+  /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6. */
   fkeys = sfkeys = 0;
   for (i=1; i<=12; i++) bit_set(fkeys, i);
   for (i=1; i<= 6; i++) bit_set(sfkeys, i);
   if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
-      report("IS", "warning, sendrec failed:", s);
+      report("IS", "warning, fkey_map failed:", s);
 }
+
+/*===========================================================================*
+ *				 exit_server                                 *
+ *===========================================================================*/
+PRIVATE void exit_server()
+{
+/* Shut down the information service. */
+  int fkeys, sfkeys;
+  int i,s;
+
+  /* Release the function key mappings requested in init_server(). 
+   * IS took all of F1-F12 and Shift+F1-F6. 
+   */
+  fkeys = sfkeys = 0;
+  for (i=1; i<=12; i++) bit_set(fkeys, i);
+  for (i=1; i<= 6; i++) bit_set(sfkeys, i);
+  if ((s=fkey_unmap(&fkeys, &sfkeys)) != OK)
+      report("IS", "warning, unfkey_map failed:", s);
+
+  /* Done. Now exit. */
+  exit(0);
+}
+
 
 /*===========================================================================*
  *				   get_work                                  *

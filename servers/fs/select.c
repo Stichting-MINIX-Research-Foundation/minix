@@ -20,7 +20,6 @@
 #define DEBUG_SELECT 0
 
 #include "fs.h"
-#include "dmap.h"
 #include "select.h"
 #include "file.h"
 #include "inode.h"

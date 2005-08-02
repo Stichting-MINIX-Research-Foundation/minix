@@ -495,10 +495,7 @@ PUBLIC void proctab_dmp()
 	       p_rts_flags_str(rp->p_rts_flags));
 	if (rp->p_rts_flags & (SENDING|RECEIVING)) {
 		printf(" %-7.7s", proc_name(rp->p_getfrom));
-	} else
-	if (rp->p_rts_flags == 0) {
-		printf("        ");
-	}
+	} 
 	printf("\n");
   }
   if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");

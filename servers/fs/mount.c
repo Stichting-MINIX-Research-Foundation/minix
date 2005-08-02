@@ -10,7 +10,6 @@
 #include <minix/com.h>
 #include <sys/stat.h>
 #include "buf.h"
-#include "dmap.h"
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"

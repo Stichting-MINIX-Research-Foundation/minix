@@ -1,5 +1,6 @@
 # Makefile for System Process Manager (SM)
 SERVER = sm
+UTIL = service
 
 # directories
 u = /usr
@@ -12,25 +13,29 @@ b = $i/ibm
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
+UTIL_LIBS = -lsys 
 LIBS = -lsys -lsysutil 
 
+UTIL_OBJ = service.o
 OBJ = sm.o manager.o 
 
 # build local binary
-all build:	$(SERVER)
+all build:	$(SERVER) $(UTIL)
+$(UTIL):	$(UTIL_OBJ)
+	$(CC) -o $@ $(LDFLAGS) $(UTIL_OBJ) $(UTIL_LIBS)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-#	install -S 256w $@
 
 # install with other servers
-install:	/usr/sbin/$(SERVER)
+install:	/bin/$(UTIL) /usr/sbin/$(SERVER)
+/bin/$(UTIL):	$(UTIL)
+	install -c $? $@
 /usr/sbin/$(SERVER):	$(SERVER)
 	install -o root -c $? $@
-#	install -o root -cs $? $@
 
 # clean up local files
 clean:
-	rm -f $(SERVER) *.o *.bak 
+	rm -f $(UTIL) $(SERVER) *.o *.bak 
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
