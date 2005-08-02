@@ -160,10 +160,15 @@ _PROTOTYPE( int ttyslot, (void)						);
 _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
 _PROTOTYPE( int getsysinfo, (int who, int what, void *where)		);
-_PROTOTYPE( int getprocnr, (int *proc_nr)				);
+_PROTOTYPE( int getprocnr, (void)						);
 _PROTOTYPE( int findproc, (char *proc_name, int *proc_nr)		);
 _PROTOTYPE( int allocmem, (phys_bytes size, phys_bytes *base)		);
 _PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
+#define DEV_MAP 1
+#define DEV_UNMAP 2
+#define mapdriver(driver, device, style) devctl(DEV_MAP, driver, device, style)
+#define unmapdriver(device) devctl(DEV_UNMAP, 0, device, 0)
+_PROTOTYPE( int devctl, (int ctl_req, int driver, int device, int style));
 
 /* For compatibility with other Unix systems */
 _PROTOTYPE( int getpagesize, (void)					);

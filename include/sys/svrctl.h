@@ -44,7 +44,7 @@ struct svrqueryparam {
 };
 
 /* A proper system call must be created later. */
-#include "/usr/src/servers/fs/dmap.h"
+#include <minix/dmap.h>
 struct fssignon {
 	dev_t		dev;		/* Device to manage. */
 	enum dev_style	style;		/* Management style. */

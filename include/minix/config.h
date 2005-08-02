@@ -88,16 +88,6 @@
 /* DMA_SECTORS may be increased to speed up DMA based drivers. */
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */
 
-/* Enable or disable networking drivers. */
-#define ENABLE_DPETH	 0	/* enable DP8390 ethernet driver */
-#define   ENABLE_WDETH     0	/*   add Western Digital WD80x3 */
-#define   ENABLE_NE2000    0	/*   add Novell NE1000/NE2000 */
-#define   ENABLE_3C503     0	/*   add 3Com Etherlink II (3c503) */
-#define ENABLE_RTL8139	 1	/* enable Realtek 8139 (rtl8139) */
-#define ENABLE_FXP	 1	/* enable Intel Pro/100 (fxp) */
-
-#define ENABLE_LOG	1	/* /dev/klog */
-
 /* Include or exclude backwards compatibility code. */
 #define ENABLE_BINCOMPAT   0	/* for binaries using obsolete calls */
 #define ENABLE_SRCCOMPAT   0	/* for sources using obsolete calls */

@@ -69,7 +69,7 @@
 #define CMOSTIME	  78	/* to FS */
 #define GETSYSINFO	  79	/* to PM or FS */
 #define GETPROCNR         80    /* to PM */
-
+#define DEVCTL		  81    /* to FS */
 #define FSTATFS	 	  82	/* to FS */
 #define ALLOCMEM	  83	/* to PM */
 #define FREEMEM		  84	/* to PM */

@@ -39,24 +39,15 @@
 #define PM_PROC_NR	 0	/* process manager */
 #define FS_PROC_NR 	 1	/* file system */
 #define SM_PROC_NR 	 2	/* system service manager */
-#define IS_PROC_NR	 3 	/* information server */
-#define TTY		 4	/* terminal (TTY) driver */
-#define MEMORY	 	 5  	/* memory driver (RAM disk, null, etc.) */
-#define AT_WINI		(MEMORY + ENABLE_AT_WINI)	/* AT Winchester */
-#define FLOPPY		(AT_WINI + ENABLE_FLOPPY)	/* floppy disk */
-#define PRINTER		(FLOPPY + ENABLE_PRINTER)	/* Centronics */
-#define RTL8139		(PRINTER + ENABLE_RTL8139)	/* Realtek RTL8139 */
-#define FXP		(RTL8139 + ENABLE_FXP)	/* Intel Pro/100 */
-#define DPETH		(FXP + ENABLE_DPETH)	/* ISA Network task */
-#define LOG_PROC_NR	(DPETH + ENABLE_LOG)	/* log device */
-#define BIOS_WINI	(LOG_PROC_NR + ENABLE_BIOS_WINI) /* BIOS disk device */
-#define INIT_PROC_NR	(BIOS_WINI + 1)   	/* init -- goes multiuser */
+#define MEMORY	 	 3  	/* memory driver (RAM disk, null, etc.) */
+#define LOG_PROC_NR	 4	/* log device driver */
+#define TTY		 5	/* terminal (TTY) driver */
+#define AT_WINI		 6 	/* AT Winchester */
+#define BIOS_WINI	 7	/* BIOS disk device */
+#define INIT_PROC_NR	 8    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
-#define NR_BOOT_PROCS 	(NR_TASKS + \
-			6 + ENABLE_AT_WINI + ENABLE_FLOPPY + \
-			ENABLE_PRINTER + ENABLE_RTL8139 + ENABLE_FXP + \
-			ENABLE_DPETH + ENABLE_LOG + ENABLE_BIOS_WINI + 1 )	
+#define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
 
 
 /*===========================================================================*
@@ -72,7 +63,7 @@
 #define NOTIFY_MESSAGE		  0x1000
 #define NOTIFY_FROM(p_nr)	 (NOTIFY_MESSAGE | ((p_nr) + NR_TASKS)) 
 #  define SYN_ALARM	NOTIFY_FROM(CLOCK) 	/* synchronous alarm */
-#  define SYS_EVENT	NOTIFY_FROM(SYSTEM) 	/* signal system event */
+#  define SYS_SIG	NOTIFY_FROM(SYSTEM) 	/* system signal */
 #  define HARD_INT	NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
 #  define NEW_KSIG	NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
 #  define FKEY_PRESSED	NOTIFY_FROM(TTY)  	/* function key press */
@@ -93,8 +84,19 @@
  *                Messages for system management server 		     *
  *===========================================================================*/
 
-#define START_SERVICE	0
-#define STOP_SERVICE	1
+#define SRV_RQ_BASE		0x700
+
+#define SRV_UP		(SRV_RQ_BASE + 0)	/* start system service */
+#define SRV_DOWN	(SRV_RQ_BASE + 1)	/* stop system service */
+#define SRV_STATUS	(SRV_RQ_BASE + 2)	/* get service status */
+
+#  define SRV_PATH_ADDR		m1_p1		/* path of binary */
+#  define SRV_PATH_LEN		m1_i1		/* length of binary */
+#  define SRV_ARGS_ADDR         m1_p2		/* arguments to be passed */
+#  define SRV_ARGS_LEN          m1_i2		/* length of arguments */
+#  define SRV_DEV_MAJOR         m1_i3           /* major device number */
+#  define SRV_PRIV_ADDR         m1_p3		/* privileges string */
+#  define SRV_PRIV_LEN          m1_i3		/* length of privileges */
 
 
 /*===========================================================================*
