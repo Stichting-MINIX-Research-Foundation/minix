@@ -2,6 +2,7 @@
 
 #include <timers.h>
 
+#define LINEWRAP	   1	/* console.c - wrap lines at column 80 */
 
 #define TTY_IN_BYTES     256	/* tty input queue size */
 #define TAB_SIZE           8	/* distance between tab stops */

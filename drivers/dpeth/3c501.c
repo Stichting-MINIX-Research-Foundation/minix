@@ -9,6 +9,9 @@
 **  network environments.
 **
 **  $Log$
+**  Revision 1.2  2005/08/03 11:53:34  jnherder
+**  Miscellaneous cleanups.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -26,7 +29,7 @@
 #include <net/gen/eth_io.h>
 #include "dp.h"
 
-#if (ENABLE_NETWORKING == 1 && ENABLE_3C501 == 1)
+#if (ENABLE_3C501 == 1)
 
 #include "3c501.h"
 
@@ -423,6 +426,6 @@ PUBLIC int el1_probe(dpeth_t * dep)
   return TRUE;			/* Etherlink board found */
 }
 
-#endif				/* ENABLE_NETWORKING */
+#endif				/* ENABLE_3C501 */
 
 /** 3c501.c **/

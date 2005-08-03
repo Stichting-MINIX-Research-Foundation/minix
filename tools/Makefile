@@ -17,7 +17,7 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/at_wini/at_wini \
 	../drivers/bios_wini/bios_wini \
 	../servers/init/init \
-#	bootdev.img
+	bootdev.img
 
 usage:	
 	@echo " " >&2

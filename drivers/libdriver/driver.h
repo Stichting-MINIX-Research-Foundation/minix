@@ -79,6 +79,7 @@ _PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr) );
 #define SECTOR_MASK      511	/* and remainder */
 
 /* Size of the DMA buffer buffer in bytes. */
+#define USE_EXTRA_DMA_BUF  0	/* usually not needed */
 #define DMA_BUF_SIZE	(DMA_SECTORS * SECTOR_SIZE)
 
 #if (CHIP == INTEL)

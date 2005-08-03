@@ -149,22 +149,12 @@ PUBLIC void main()
 	}
 	init_rand256(randbits);
 
-#if DEAD_CODE
-	/* Sign on as a server at all offices in the proper order. */
-	if (svrctl(MMSIGNON, (void *) NULL) == -1) {
-		printf("inet: server signon failed\n");
-		exit(1);
-	}
-#endif
 #ifdef __minix_vmd
 	if (svrctl(SYSSIGNON, (void *) &info) == -1) pause();
 
 	/* Our new identity as a server. */
 	this_proc = info.proc_nr;
 #else /* Minix 3 */
-#if DEAD_CODE
-	if (svrctl(SYSSIGNON, (void *) NULL) == -1) pause();
-#endif
 
 	/* Our new identity as a server. */
 	if ((this_proc = getprocnr()) < 0)

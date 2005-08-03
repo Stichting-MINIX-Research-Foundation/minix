@@ -5,7 +5,6 @@
 #define OS_RELEASE "3"
 #define OS_VERSION "0.6"
 
-#define _MINIX_VERSION	3
 
 /* This file sets configuration parameters for the MINIX kernel, FS, and PM.
  * It is divided up into two main sections.  The first section contains
@@ -53,10 +52,6 @@
 #define NR_BUF_HASH	 512	/* size of buf hash table; MUST BE POWER OF 2*/
 #endif
 
-/* Defines for driver and kernel configuration. */
-#define AUTO_BIOS          0	/* xt_wini.c - use Western's autoconfig BIOS */
-#define LINEWRAP           1	/* console.c - wrap lines at column 80 */
-
 /* Number of controller tasks (/dev/cN device classes). */
 #define NR_CTRLRS          2
 
@@ -66,24 +61,10 @@
 /* Enable or disable swapping processes to disk. */
 #define ENABLE_SWAP	   1
 
-/* Include or exclude an image of /dev/boot in the boot image. */
-#define ENABLE_BOOTDEV	   0
-
-/* Include or exclude device drivers.  Set to 1 to include, 0 to exclude. */
-#define ENABLE_BIOS_WINI   1	/* enable BIOS winchester driver */
-#define ENABLE_ESDI_WINI   0	/* enable ESDI winchester driver */
-#define ENABLE_XT_WINI     0	/* enable XT winchester driver */
-#define ENABLE_AHA1540     0	/* enable Adaptec 1540 SCSI driver */
-#define ENABLE_FATFILE     0	/* enable FAT file virtual disk driver */
-#define ENABLE_DOSFILE     0	/* enable DOS file virtual disk driver */
-#define ENABLE_SB16        0	/* enable Soundblaster audio driver */
-#define ENABLE_PCI	   1	/* enable PCI device recognition */
-
-/* Include or exclude user-level device drivers (and supporting servers). */
-#define ENABLE_PRINTER     0	/* user-level Centronics printer driver */
-#define ENABLE_FLOPPY      0	/* enable floppy disk driver */
-#define ENABLE_AT_WINI     1	/* enable AT winchester driver */
-#define   ENABLE_ATAPI     1	/* add ATAPI support to AT driver */
+/* Include or exclude an image of /dev/boot in the boot image. 
+ * Please update the makefile in /usr/src/tools/ as well.
+ */
+#define ENABLE_BOOTDEV	   1
 
 /* DMA_SECTORS may be increased to speed up DMA based drivers. */
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */

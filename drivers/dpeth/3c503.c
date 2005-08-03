@@ -9,6 +9,9 @@
 **  the rest is in 8390.c        Code specific for ISA bus only
 **
 **  $Log$
+**  Revision 1.2  2005/08/03 11:53:34  jnherder
+**  Miscellaneous cleanups.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -24,7 +27,7 @@
 #include <net/gen/eth_io.h>
 #include "dp.h"
 
-#if ENABLE_NETWORKING == 1 && ENABLE_3C503 == 1
+#if (ENABLE_3C503 == 1)
 
 #include "8390.h"
 #include "3c503.h"
@@ -170,6 +173,6 @@ int el2_probe(dpeth_t * dep)
   dep->de_stopf = el2_stop;
   return TRUE;
 }
-#endif				/* ENABLE_NETWORKING && ENABLE_3C503 */
+#endif				/* ENABLE_3C503 */
 
 /** 3c503.c **/

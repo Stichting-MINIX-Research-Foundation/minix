@@ -14,6 +14,7 @@
 #define DT(enable, opcl, io, driver, flags) \
   { (enable?(opcl):no_dev), (enable?(io):0), \
   	(enable?(driver):0), (flags) },
+#define NC(x) (NR_CTRLRS >= (x))
 
 /* The order of the entries here determines the mapping between major device
  * numbers and tasks.  The first entry (major device 0) is not used.  The
@@ -28,24 +29,24 @@
   --------------     --------  ------  -----------  ----- ------  ----       
  */
 struct dmap dmap[NR_DEVICES] = {
-  DT(1,              no_dev,   0,      0,       0)  /* 0 = not used   */
-  DT(1,		     gen_opcl, gen_io, MEM_PROC_NR,  0)	       /* 1 = /dev/mem   */
-  DT(ENABLE_FLOPPY,  gen_opcl, gen_io, NONE,    DMAP_MUTABLE)  /* 2 = /dev/fd0   */
-  DT(NR_CTRLRS >= 1, gen_opcl, gen_io, CTRLR(0),DMAP_MUTABLE)  /* 3 = /dev/c0    */
-  DT(1,              tty_opcl, gen_io, TTY_PROC_NR,	0)     /* 4 = /dev/tty00 */
-  DT(1,              ctty_opcl,ctty_io,TTY_PROC_NR,	0)     /* 5 = /dev/tty   */
-  DT(ENABLE_PRINTER, gen_opcl, gen_io, NONE,	DMAP_MUTABLE)  /* 6 = /dev/lp    */
+  DT(1,     no_dev,   0,      0,       	   0) 	  	  /* 0 = not used   */
+  DT(1,     gen_opcl, gen_io, MEM_PROC_NR, 0)	          /* 1 = /dev/mem   */
+  DT(0,     gen_opcl, gen_io, NONE,        DMAP_MUTABLE)  /* 2 = /dev/fd0   */
+  DT(NC(1), gen_opcl, gen_io, CTRLR(0),    DMAP_MUTABLE)  /* 3 = /dev/c0    */
+  DT(1,     tty_opcl, gen_io, TTY_PROC_NR, 0)    	  /* 4 = /dev/tty00 */
+  DT(1,     ctty_opcl,ctty_io,TTY_PROC_NR, 0)     	  /* 5 = /dev/tty   */
+  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /* 6 = /dev/lp    */
 
 #if (MACHINE == IBM_PC)
-  DT(1,              no_dev,   0,      0,   	DMAP_MUTABLE)  /* 7 = /dev/ip    */
-  DT(NR_CTRLRS >= 2, gen_opcl, gen_io, CTRLR(1),DMAP_MUTABLE)  /* 8 = /dev/c1    */
-  DT(0,              0,        0,      0,   	DMAP_MUTABLE)  /* 9 = not used   */
-  DT(NR_CTRLRS >= 3, gen_opcl, gen_io, CTRLR(2),DMAP_MUTABLE)  /*10 = /dev/c2    */
-  DT(0,              0,        0,      0,   	DMAP_MUTABLE)  /*11 = not used   */
-  DT(NR_CTRLRS >= 4, gen_opcl, gen_io, CTRLR(3),DMAP_MUTABLE)  /*12 = /dev/c3    */
-  DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,	DMAP_MUTABLE)  /*13 = /dev/audio */
-  DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,	DMAP_MUTABLE)  /*14 = /dev/mixer */
-  DT(1,		     gen_opcl, gen_io, LOG_PROC_NR,   0)       /*15 = /dev/klog    */
+  DT(1,     no_dev,   0,      0,   	   DMAP_MUTABLE)  /* 7 = /dev/ip    */
+  DT(NC(2), gen_opcl, gen_io, CTRLR(1),    DMAP_MUTABLE)  /* 8 = /dev/c1    */
+  DT(0,     0,        0,      0,   	   DMAP_MUTABLE)  /* 9 = not used   */
+  DT(NC(3), gen_opcl, gen_io, CTRLR(2),    DMAP_MUTABLE)  /*10 = /dev/c2    */
+  DT(0,     0,        0,      0,   	   DMAP_MUTABLE)  /*11 = not used   */
+  DT(NC(4), gen_opcl, gen_io, CTRLR(3),    DMAP_MUTABLE)  /*12 = /dev/c3    */
+  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*13 = /dev/audio */
+  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*14 = /dev/mixer */
+  DT(1,     gen_opcl, gen_io, LOG_PROC_NR, 0)       	  /*15 = /dev/klog  */
 #endif /* IBM_PC */
 };
 
@@ -146,7 +147,7 @@ PUBLIC void map_controllers()
     ctrlr_nr[1] = '0' + c;
     if ((s = get_mon_param(ctrlr_nr, ctrlr_type, 8)) != OK)  {
     	 if (s != ESRCH)
-             printf("FS: warning, couldn't get monitor param: %d\n", s);
+             panic(__FILE__,"couldn't get monitor param", s);
          continue;
     }
     for (dp = drivertab;
@@ -155,10 +156,13 @@ PUBLIC void map_controllers()
 	if ((s=findproc(dp->proc_name, &proc_nr)) == OK) {
 	  for (i=0; i< NR_DEVICES; i++) {		/* find mapping */
 	    if (dmap[i].dmap_driver == CTRLR(c)) {  
-	      if (map_driver(i, proc_nr, STYLE_DEV) == OK) {
-	        printf("FS: controller %s (%s) mapped to %s driver (proc. nr %d)\n",
-	    	ctrlr_nr, dp->wini_type, dp->proc_name,  dmap[i].dmap_driver);
+	      if ((s=map_driver(i, proc_nr, STYLE_DEV)) != OK) {
+	          panic(__FILE__,"map_driver failed",s);
 	      }
+#if VERBOSE
+	      printf("FS: controller %s (%s) mapped to %s driver (nr %d)\n",
+	    	  ctrlr_nr, dp->wini_type, dp->proc_name, dmap[i].dmap_driver);
+#endif
 	    }
 	  }
 	}

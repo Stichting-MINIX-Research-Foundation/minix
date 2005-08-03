@@ -79,11 +79,7 @@
 #define printW()		((void)0)
 #define vm_1phys2bus(p)		(p)
 
-#define VERBOSE	0	/* display message during init */
-
-#if !ENABLE_PCI
-#error PCI support not enabled
-#endif
+#define VERBOSE		0	/* display message during init */
 
 #include "../libpci/pci.h"
 #include "rtl8139.h"

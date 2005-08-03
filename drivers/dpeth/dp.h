@@ -6,6 +6,9 @@
 **  Interface description for ethernet device driver
 **
 **  $Log$
+**  Revision 1.3  2005/08/03 11:53:34  jnherder
+**  Miscellaneous cleanups.
+**
 **  Revision 1.2  2005/08/02 15:30:35  jnherder
 **  Various updates to support dynamically starting drivers.
 **  Output during initialization should be suppressed. Unless an error occurs.
@@ -28,8 +31,6 @@
 #undef  ENABLE_NE2000
 #undef  ENABLE_WDETH
 #undef  ENABLE_DP8390
-
-#define ENABLE_NETWORKING 1 
 
 #define ENABLE_3C501	1	/* enable 3Com Etherlink I board	 */
 #define ENABLE_3C503	1	/* enable 3Com Etherlink II board 	 */

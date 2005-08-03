@@ -10,6 +10,9 @@
 **  to extract the NS 8390 common functions.
 **
 **  $Log$
+**  Revision 1.2  2005/08/03 11:53:34  jnherder
+**  Miscellaneous cleanups.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -27,7 +30,7 @@
 #include <net/gen/eth_io.h>
 #include "dp.h"
 
-#if (ENABLE_NETWORKING == 1 && ENABLE_DP8390 == 1)
+#if (ENABLE_DP8390 == 1)
 
 #define PIO16	0	/* NOTE: pio 16 functions missing */
 
@@ -734,6 +737,6 @@ static void dp_pio16_nic2user(dpeth_t * dep, int nic_addr, int count)
 
 #endif				/* PIO16 == 1 */
 
-#endif				/* ENABLE_NETWORKING && ENABLE_DP8390 */
+#endif				/* ENABLE_DP8390 */
 
 /** end 8390.c **/

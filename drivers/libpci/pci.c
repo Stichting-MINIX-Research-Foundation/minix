@@ -22,7 +22,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include "config.h"
 #endif
 
-#if ENABLE_PCI
 
 #if !__minix_vmd
 #define debug 0	
@@ -1317,7 +1316,6 @@ u16_t value;
 	outl(PCII_CONFADD, PCII_UNSEL);
 #endif
 }
-#endif /* ENABLE_PCI */
 
 /*
  * $PchId: pci.c,v 1.7 2003/08/07 09:06:51 philip Exp $

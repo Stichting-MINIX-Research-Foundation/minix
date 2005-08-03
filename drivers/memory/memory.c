@@ -307,9 +307,6 @@ PRIVATE void m_init()
 #error /* memory limit not set up */
 #endif /* !(CHIP == M68000) */
 #endif /* !(CHIP == INTEL) */
-
-  /* Initialization succeeded. Print welcome message. */
-  report("MEM","user-space memory driver has been initialized.", NO_NUM);
 }
 
 

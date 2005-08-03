@@ -100,9 +100,6 @@ PRIVATE void init_server(void)
   if (sigaction(SIGTERM, &sa, NULL)<0) panic("SM","sigaction failed", errno);
   if (sigaction(SIGABRT, &sa, NULL)<0) panic("SM","sigaction failed", errno);
   if (sigaction(SIGHUP,  &sa, NULL)<0) panic("SM","sigaction failed", errno);
-
-  /* Report successfull start. */
-  report("SM","system service manager successfully initialized", NO_NUM);
 }
 
 

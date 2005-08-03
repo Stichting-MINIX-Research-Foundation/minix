@@ -19,7 +19,6 @@ See the Linux PCI ID Repository <http://pciids.sourceforge.net/>.
 #include "config.h"
 #endif
 
-#if ENABLE_PCI
 
 struct pci_vendor pci_vendor_table[]=
 {
@@ -257,7 +256,6 @@ struct pci_pcibridge pci_pcibridge[]=
 	{ 0x1106, 0x8305, PCI_AGPB_VIA, },	/* VIA VT8365 [KM133 AGP] */
 	{ 0x0000, 0x0000, 0, },
 };
-#endif /* ENABLE_PCI */
 
 /*
  * $PchId: pci_table.c,v 1.7 2003/09/05 10:53:22 philip Exp $

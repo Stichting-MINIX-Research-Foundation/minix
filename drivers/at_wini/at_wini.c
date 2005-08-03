@@ -19,7 +19,6 @@
 #include <sys/ioc_disk.h>
 
 
-#if ENABLE_AT_WINI
 
 #define ATAPI_DEBUG	    0	/* To debug ATAPI code. */
 
@@ -466,12 +465,14 @@ PRIVATE int w_identify()
   	return(ERR);
   }
 
+#if VERBOSE
   printf("%s: user-space AT Winchester driver detected ", w_name());
   if (wn->state & (SMART|ATAPI)) {
 	printf("%.40s\n", id_string);
   } else {
 	printf("%ux%ux%u\n", wn->pcylinders, wn->pheads, wn->psectors);
   }
+#endif
 
   /* Everything looks OK; register IRQ so we can stop polling. */
   wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
@@ -1250,4 +1251,3 @@ PRIVATE int atapi_intr_wait()
   return(r);
 }
 #endif /* ENABLE_ATAPI */
-#endif /* ENABLE_AT_WINI */

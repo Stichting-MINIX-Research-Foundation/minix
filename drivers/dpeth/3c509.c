@@ -9,6 +9,9 @@
 **	  I/O base and IRQ.  The driver is for ISA bus only
 **
 **  $Log$
+**  Revision 1.2  2005/08/03 11:53:34  jnherder
+**  Miscellaneous cleanups.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -27,7 +30,7 @@
 
 #include "dp.h"
 
-#if ENABLE_NETWORKING == 1 && ENABLE_3C509 == 1
+#if (ENABLE_3C509 == 1)
 
 #include "3c509.h"
 
@@ -598,6 +601,6 @@ PUBLIC int el3_probe(dpeth_t * dep)
   return(el3_checksum(id_port) == 0);	/* Etherlink board found/not found */
 }
 
-#endif				/* ENABLE_NETWORKING */
+#endif				/* ENABLE_3C509 */
 
 /** 3c509.c **/

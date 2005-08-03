@@ -29,7 +29,6 @@
 #include <ibm/int86.h>
 #include <assert.h>
 
-#if ENABLE_BIOS_WINI
 
 #define ME "BIOS_WINI"
 
@@ -473,4 +472,3 @@ message *m_ptr;
 	return OK;
 }
 
-#endif /* ENABLE_BIOS_WINI */

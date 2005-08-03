@@ -7,6 +7,9 @@
 **  from/to the device registers.
 **
 **  $Log$
+**  Revision 1.2  2005/08/03 11:53:34  jnherder
+**  Miscellaneous cleanups.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -22,8 +25,7 @@
 #include <net/gen/eth_io.h>
 #include "dp.h"
 
-#if ENABLE_NETWORKING == 1
-#if USE_IOPL == 0
+#if (USE_IOPL == 0)
 
 static void warning(const char *type, int err)
 {
@@ -137,5 +139,4 @@ PUBLIC void outsw(unsigned short port, int proc_nr, void *buffer, int count)
 #else
 #error To be implemented
 #endif				/* USE_IOPL */
-#endif				/* ENABLE_NETWORKING */
 /**  devio.c  **/

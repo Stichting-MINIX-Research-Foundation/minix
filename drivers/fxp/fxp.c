@@ -57,10 +57,6 @@
 #define printW()		((void)0)
 #define vm_1phys2bus(p)		(p)
 
-#if !ENABLE_PCI
-#error PCI support not enabled
-#endif
-
 #include "assert.h"
 #include "../libpci/pci.h"
 #include "fxp.h"

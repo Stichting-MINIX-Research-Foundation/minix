@@ -72,8 +72,6 @@ PUBLIC void main()
         	 * currently only in use for select(). Check it.
         	 */
         	fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
-        } else if (call_nr == DEV_SELECTED) {
-        	printf("Old select device callback received - ignored\n");
         } else if ((call_nr & NOTIFY_MESSAGE)) {
         	/* Device notifies us of an event. */
         	dev_status(&m_in);

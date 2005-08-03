@@ -4,7 +4,6 @@ ibm/rtl8139.h
 Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
 */
 
-#define ENABLE_RTL8139	1
 
 #define	RL_IDR		0x00	/* Ethernet address
 				 * Note: RL_9346CR_EEM_CONFIG mode is

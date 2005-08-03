@@ -1,6 +1,5 @@
-
 #ifndef _MINIX_COM_H
-#define _MINIX_COM_H 1
+#define _MINIX_COM_H 
 
 /*===========================================================================*
  *          	    		Magic process numbers			     *
@@ -32,7 +31,7 @@
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
 #define NR_TASKS	4 
 
-/* Magic numbers for controllers. Device driver mapping is dynamic. */
+/* Magic numbers for controllers. Device to driver mapping is dynamic. */
 #define CTRLR(n)	(NONE + (n))
 
 /* User-space processes, that is, device drivers, servers, and INIT. */
@@ -48,6 +47,34 @@
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
+
+
+/*===========================================================================*
+ *               	 Major and minor device numbers  		     *
+ *===========================================================================*/
+
+/* Major and minor device numbers for MEMORY driver. */
+#define MEMORY_MAJOR  1		/* major device for memory devices */
+#  define RAM_DEV     0		/* minor device for /dev/ram */
+#  define MEM_DEV     1		/* minor device for /dev/mem */
+#  define KMEM_DEV    2		/* minor device for /dev/kmem */
+#  define NULL_DEV    3		/* minor device for /dev/null */
+#  define BOOT_DEV    4		/* minor device for /dev/boot */
+#  define RANDOM_DEV  5		/* minor device for /dev/(u)random */
+#  define URANDOM_DEV RANDOM_DEV 
+#  define ZERO_DEV    6		/* minor device for /dev/zero */
+
+/* Full device numbers that are special to the boot monitor and FS. */
+#  define DEV_RAM	0x0100	/* device number of /dev/ram */
+#  define DEV_BOOT	0x0104	/* device number of /dev/boot */
+
+#define TTY_MAJOR	4	/* major device for ttys */
+#define CTTY_MAJOR	5	/* major device for /dev/tty */
+
+#define INET_MAJOR	7	/* major device for inet */
+
+#define LOG_MAJOR	15	/* major device for log driver */
+#  define IS_KLOG_DEV	0	/* minor device for /dev/klog */
 
 
 /*===========================================================================*
@@ -68,10 +95,6 @@
 #  define NEW_KSIG	NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
 #  define FKEY_PRESSED	NOTIFY_FROM(TTY_PROC_NR)/* function key press */
 
-#define NOTIFICATION  		  0x800 	/* flag for notifications */
-#  define DEV_SELECTED (NOTIFICATION | 5)  	/* select() notification */
-#define NR_NOTIFY_TYPES    	       6	/* nr of bits in mask */
-
 /* Shorthands for message parameters passed with notifications. */
 #define NOTIFY_SOURCE		m_source
 #define NOTIFY_TYPE		m_type
@@ -81,41 +104,23 @@
 
 
 /*===========================================================================*
- *                Messages for system management server 		     *
- *===========================================================================*/
-
-#define SRV_RQ_BASE		0x700
-
-#define SRV_UP		(SRV_RQ_BASE + 0)	/* start system service */
-#define SRV_DOWN	(SRV_RQ_BASE + 1)	/* stop system service */
-#define SRV_STATUS	(SRV_RQ_BASE + 2)	/* get service status */
-
-#  define SRV_PATH_ADDR		m1_p1		/* path of binary */
-#  define SRV_PATH_LEN		m1_i1		/* length of binary */
-#  define SRV_ARGS_ADDR         m1_p2		/* arguments to be passed */
-#  define SRV_ARGS_LEN          m1_i2		/* length of arguments */
-#  define SRV_DEV_MAJOR         m1_i3           /* major device number */
-#  define SRV_PRIV_ADDR         m1_p3		/* privileges string */
-#  define SRV_PRIV_LEN          m1_i3		/* length of privileges */
-
-
-/*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
  *===========================================================================*/
 
+/* Message types for device drivers. */
 #define DEV_RQ_BASE   0x400	/* base for device request types */
 #define DEV_RS_BASE   0x500	/* base for device response types */
 
-#define CANCEL       	 0	/* general req to force a task to cancel */
-#define DEV_READ	 3	/* fcn code for reading from tty */
-#define DEV_WRITE   	 4	/* fcn code for writing to tty */
-#define DEV_IOCTL    	 5	/* fcn code for ioctl */
-#define DEV_OPEN     	 6	/* fcn code for opening tty */
-#define DEV_CLOSE    	 7	/* fcn code for closing tty */
-#define DEV_SCATTER  	 8	/* fcn code for writing from a vector */
-#define DEV_GATHER   	 9	/* fcn code for reading into a vector */
-#define TTY_SETPGRP 	10	/* fcn code for setpgroup */
-#define TTY_EXIT	11	/* a process group leader has exited */	
+#define CANCEL       	(DEV_RQ_BASE +  0) /* general req to force a task to cancel */
+#define DEV_READ	(DEV_RQ_BASE +  3) /* read from minor device */
+#define DEV_WRITE   	(DEV_RQ_BASE +  4) /* write to minor device */
+#define DEV_IOCTL    	(DEV_RQ_BASE +  5) /* I/O control code */
+#define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
+#define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
+#define DEV_SCATTER  	(DEV_RQ_BASE +  8) /* write from a vector */
+#define DEV_GATHER   	(DEV_RQ_BASE +  9) /* read into a vector */
+#define TTY_SETPGRP 	(DEV_RQ_BASE + 10) /* set process group */
+#define TTY_EXIT	(DEV_RQ_BASE + 11) /* process group leader exited */	
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
 #define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
 
@@ -124,8 +129,6 @@
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
 #define DEV_IO_READY    (DEV_RS_BASE + 3) /* selected device ready */
 #define DEV_NO_STATUS   (DEV_RS_BASE + 4) /* empty status reply */
-
-#define SUSPEND	 	-998	/* used in interrupts when tty has no data */
 
 /* Field names for messages to block and character device drivers. */
 #define DEVICE    	m2_i1	/* major-minor device */
@@ -143,6 +146,7 @@
 /* Field names used in reply messages from tasks. */
 #define REP_PROC_NR	m2_i1	/* # of proc on whose behalf I/O was done */
 #define REP_STATUS	m2_i2	/* bytes transferred or error number */
+#  define SUSPEND 	 -998 	/* status to suspend caller, reply later */
 
 /* Field names for messages to TTY driver. */
 #define TTY_LINE	DEVICE	/* message parameter: terminal line */
@@ -154,29 +158,6 @@
 /* Field names for the QIC 02 status reply from tape driver */
 #define TAPE_STAT0	m2_l1
 #define TAPE_STAT1	m2_l2
-
-/* Major and minor device numbers for MEMORY driver. */
-#  define MEMORY_MAJOR  1	/* major device for memory devices */
-#  define RAM_DEV     0		/* minor device for /dev/ram */
-#  define MEM_DEV     1		/* minor device for /dev/mem */
-#  define KMEM_DEV    2		/* minor device for /dev/kmem */
-#  define NULL_DEV    3		/* minor device for /dev/null */
-#  define BOOT_DEV    4		/* minor device for /dev/boot */
-#  define RANDOM_DEV  5		/* minor device for /dev/(u)random */
-#  define URANDOM_DEV RANDOM_DEV 
-#  define ZERO_DEV    6		/* minor device for /dev/zero */
-
-#define TTY_MAJOR	4	/* major device no. for ttys */
-#define CTTY_MAJOR	5	/* major device no. for /dev/tty */
-
-#define INET_MAJOR	7	/* major device no. for inet */
-
-#define LOG_MAJOR	15	/* major device no. for LOG */
-#define  IS_KLOG_DEV	0	/* minor device for /dev/klog */
-
-/* Full device numbers that are special to the boot monitor and FS. */
-#  define DEV_RAM	0x0100	/* device number of /dev/ram */
-#  define DEV_BOOT	0x0104	/* device number of /dev/boot */
 
 
 /*===========================================================================*
@@ -417,7 +398,7 @@
 #define PR_MEM_PTR	m1_p1	/* tells where memory map is for sys_newmap */
 
 /* Field names for SYS_INT86 */
-#define INT86_REG86	m1_p1	/* Point to registers */
+#define INT86_REG86	m1_p1	/* pointer to registers */
 
 /* Field names for SELECT (FS). */
 #define SEL_NFDS	m8_i1
@@ -426,8 +407,28 @@
 #define SEL_ERRORFDS	m8_p3
 #define SEL_TIMEOUT	m8_p4
 
+
 /*===========================================================================*
- *                Miscellaneous messages, mainly used by IS		     *
+ *                Messages for system management server 		     *
+ *===========================================================================*/
+
+#define SRV_RQ_BASE		0x700
+
+#define SRV_UP		(SRV_RQ_BASE + 0)	/* start system service */
+#define SRV_DOWN	(SRV_RQ_BASE + 1)	/* stop system service */
+#define SRV_STATUS	(SRV_RQ_BASE + 2)	/* get service status */
+
+#  define SRV_PATH_ADDR		m1_p1		/* path of binary */
+#  define SRV_PATH_LEN		m1_i1		/* length of binary */
+#  define SRV_ARGS_ADDR         m1_p2		/* arguments to be passed */
+#  define SRV_ARGS_LEN          m1_i2		/* length of arguments */
+#  define SRV_DEV_MAJOR         m1_i3           /* major device number */
+#  define SRV_PRIV_ADDR         m1_p3		/* privileges string */
+#  define SRV_PRIV_LEN          m1_i3		/* length of privileges */
+
+
+/*===========================================================================*
+ *                Miscellaneous messages used by TTY			     *
  *===========================================================================*/
 
 /* Miscellaneous request types and field names, e.g. used by IS server. */
@@ -445,4 +446,4 @@
 #  define DIAG_PROC_NR   	m1_i2
 
 
-#endif
+#endif /* _MINIX_COM_H */ 

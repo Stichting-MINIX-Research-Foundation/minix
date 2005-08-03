@@ -41,7 +41,7 @@
 
 
 #if (CHIP == INTEL)
-#if ENABLE_AHA1540_SCSI && DMA_BUF_SIZE < 2048
+#if USE_EXTRA_DMA_BUF && DMA_BUF_SIZE < 2048
 /* A bit extra scratch for the Adaptec driver. */
 #define BUF_EXTRA	(2048 - DMA_BUF_SIZE)
 #else

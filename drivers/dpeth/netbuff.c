@@ -7,6 +7,9 @@
 **  for network packets.
 **
 **  $Log$
+**  Revision 1.2  2005/08/03 11:53:34  jnherder
+**  Miscellaneous cleanups.
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -22,7 +25,7 @@
 #include <net/gen/eth_io.h>
 #include "dp.h"
 
-#if ENABLE_NETWORKING == 1 && HAVE_BUFFERS == 1
+#if (HAVE_BUFFERS == 1)
 
 static m_hdr_t *allocptr = NULL;
 static char tx_rx_buff[8192];
@@ -171,6 +174,6 @@ PUBLIC void user2mem(dpeth_t *dep, buff_t *txbuff)
   return;
 }
 
-#endif				/* ENABLE_NETWORKING */
+#endif				/* HAVE_BUFFERS */
 
 /** netbuff.c **/

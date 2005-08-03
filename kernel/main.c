@@ -139,7 +139,7 @@ PUBLIC void main()
 	alloc_segments(rp);
   }
 
-#if ENABLE_BOOTDEV
+#if ENABLE_BOOTDEV 
   /* Expect an image of the boot device to be loaded into memory as well. 
    * The boot device is the last module that is loaded into memory, and, 
    * for example, can contain the root FS (useful for embedded systems). 
