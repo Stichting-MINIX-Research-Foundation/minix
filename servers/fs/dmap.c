@@ -120,8 +120,7 @@ PUBLIC void map_controllers()
 {
 /* Map drivers to controllers and update the dmap table to that selection. 
  * For each controller, the environment variable set by the boot monitor is
- * analyzed to see what type of Winchester disk is attached. Then, the name 
- * of the driver that handles the device is looked up in the local drivertab. 
+ * analyzed to see what type of Winchester disk is attached. 
  * Finally, the process number of the driver is looked up, and, if found, is
  * installed in the dmap table.  
  */
@@ -134,8 +133,8 @@ PUBLIC void map_controllers()
       char wini_type[8];
       char proc_name[8];
   } drivertab[] = {
-	{ "at",		"AT_WINI"	},	/* AT Winchester */
-	{ "bios",	"BIOS" },
+	{ "at",		"boot"	},	/* AT Winchester */
+	{ "bios",	"bios" },	/* BIOS Winchester */
 	{ "esdi",	"..." },
 	{ "xt",		"..." },
 	{ "aha1540",	"..." },
@@ -144,12 +143,15 @@ PUBLIC void map_controllers()
   };
 
   for (c=0; c < NR_CTRLRS; c++) {
+
+    /* See if there is a mapping for this controller. */
     ctrlr_nr[1] = '0' + c;
     if ((s = get_mon_param(ctrlr_nr, ctrlr_type, 8)) != OK)  {
-    	 if (s != ESRCH)
-             panic(__FILE__,"couldn't get monitor param", s);
+    	 if (s != ESRCH) panic(__FILE__,"couldn't get monitor param", s);
          continue;
     }
+
+    /* If there is a mapping, look up the driver with the given name. */
     for (dp = drivertab;
         dp < drivertab + sizeof(drivertab)/sizeof(drivertab[0]); dp++)  {
       if (strcmp(ctrlr_type, dp->wini_type) == 0) {	/* found driver name */

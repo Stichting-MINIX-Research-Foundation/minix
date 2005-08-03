@@ -64,7 +64,7 @@
 /* Include or exclude an image of /dev/boot in the boot image. 
  * Please update the makefile in /usr/src/tools/ as well.
  */
-#define ENABLE_BOOTDEV	   1
+#define ENABLE_BOOTDEV	   0	/* load image of /dev/boot at boot time */
 
 /* DMA_SECTORS may be increased to speed up DMA based drivers. */
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */

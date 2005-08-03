@@ -191,6 +191,7 @@ PRIVATE void pm_init()
   if (OK != (s=sys_getimage(image))) 
   	panic(__FILE__,"PM: warning, couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
+  printf("Builing process table:");		/* show what's happening */
   for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {		
   	if (ip->proc_nr >= 0) {			/* task have negative nrs */
   		procs_in_use += 1;		/* found user process */
@@ -228,8 +229,10 @@ PRIVATE void pm_init()
 		mess.PR_PID = rmp->mp_pid;
   		if (OK != (s=send(FS_PROC_NR, &mess)))
 			panic(__FILE__,"PM can't sync up with FS", s);
+  		printf(" %s", ip->proc_name);	/* display process name */
   	}
   }
+  printf(".\n");				/* last process done */
 
   /* Override some details. PM is somewhat special. */
   mproc[PM_PROC_NR].mp_pid = PM_PID;		/* magically override pid */
@@ -252,11 +255,13 @@ PRIVATE void pm_init()
   }
 
   /* Initialize tables to all physical memory and print memory information. */
+  printf("Parsing memory:");
   mem_init(mem_chunks, &free_clicks);
   total_clicks = minix_clicks + free_clicks;
-  printf("Memory size=%uK   ", click_to_round_k(total_clicks));
-  printf("System services=%uK   ", click_to_round_k(minix_clicks));
-  printf("Available=%uK\n\n", click_to_round_k(free_clicks));
+  printf(" total=%uK", click_to_round_k(total_clicks));
+  printf(" system=%uK", click_to_round_k(minix_clicks));
+  printf(" available=%uK", click_to_round_k(free_clicks));
+  printf(".\n\n");
 }
 
 

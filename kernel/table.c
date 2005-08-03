@@ -68,19 +68,19 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  */
 PUBLIC struct boot_image image[] = {
 /* process nr,    pc,  flags, qs,  queue,  stack,  traps, ipc mask,  name */ 
- { IDLE,   idle_task, IDLE_F, 32, IDLE_Q, IDLE_S,      0,      0, "IDLE"    },
- { CLOCK, clock_task, TASK_F,  0, TASK_Q, TASK_S, TASK_T,      0, "CLOCK"   },
- { SYSTEM,  sys_task, TASK_F,  0, TASK_Q, TASK_S, TASK_T,      0, "SYSTEM"  },
- { HARDWARE,       0, TASK_F,  0, TASK_Q, HRDW_S,      0,      0, "KERNEL"  },
- { PM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SERV_M, "PM"      },
- { FS_PROC_NR,     0, SERV_F, 16,      4, 0,      SERV_T, SERV_M, "FS"      },
- { SM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SYST_M, "SM"      },
- { TTY_PROC_NR,    0, SERV_F, 16,      1, 0,      SERV_T, SYST_M, "TTY"     },
- { MEM_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "MEMORY"  },
- { LOG_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "LOG"     },
- { AT_PROC_NR,     0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "AT_WINI" },
- { BIOS_PROC_NR,   0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "BIOS"    },
- { INIT_PROC_NR,   0, USER_F,  8, USER_Q, 0,      USER_T, USER_M, "INIT"    },
+ { IDLE,   idle_task, IDLE_F, 32, IDLE_Q, IDLE_S,      0,      0, "IDLE"   },
+ { CLOCK, clock_task, TASK_F,  0, TASK_Q, TASK_S, TASK_T,      0, "CLOCK"  },
+ { SYSTEM,  sys_task, TASK_F,  0, TASK_Q, TASK_S, TASK_T,      0, "SYSTEM" },
+ { HARDWARE,       0, TASK_F,  0, TASK_Q, HRDW_S,      0,      0, "KERNEL" },
+ { PM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SERV_M, "pm"     },
+ { FS_PROC_NR,     0, SERV_F, 16,      4, 0,      SERV_T, SERV_M, "fs"     },
+ { SM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SYST_M, "sm"     },
+ { TTY_PROC_NR,    0, SERV_F, 16,      1, 0,      SERV_T, SYST_M, "tty"    },
+ { MEM_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "memory" },
+ { LOG_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "log"    },
+ { AT_PROC_NR,     0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "boot"   },
+ { BIOS_PROC_NR,   0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "bios"   },
+ { INIT_PROC_NR,   0, USER_F,  8, USER_Q, 0,      USER_T, USER_M, "init"   },
 };
 
 /* Verify the size of the system image table at compile time. If the number 
