@@ -46,4 +46,5 @@
 /* Sanity check to make sure the send masks can be set. */
 extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];
 
+
 #endif /* IPC_H */
