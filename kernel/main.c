@@ -173,7 +173,7 @@ PRIVATE void announce(void)
 
 #if (CHIP == INTEL)
   /* Real mode, or 16/32-bit protected mode? */
-  kprintf("Executing in %s mode\n\n",
+  kprintf("Executing in %s mode.\n\n",
       machine.protected ? "32-bit protected" : "real");
 #endif
 }

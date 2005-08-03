@@ -58,6 +58,26 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define SERV_T		(~0)				/* system services */
 #define USER_T          ((1 << SENDREC) | (1 << ECHO))	/* user processes */
 
+/* Send masks determine to whom processes can send messages or notifications. 
+ * The values here are used for the processes in the boot image. We rely on 
+ * the initialization code in main() to match the s_nr_to_id() mapping for the
+ * processes in the boot image, so that the send mask that is defined here 
+ * can be directly copied onto map[0] of the actual send mask. Privilege
+ * structure 0 is shared by user processes. 
+ *
+ * Note that process numbers in the boot image should not be higher than
+ * "BITCHUNK_BITS - NR_TASKS", because a bitchunk_t field is used to store 
+ * the send masks in the table that describes that processes in the image.  
+ */
+#define SERV_M		(~0)
+#define SYST_M		(~0)
+#define USER_M		(s(PM_PROC_NR)|s(FS_PROC_NR)|s(SM_PROC_NR))
+#define DRIV_M		(USER_M | \
+			 s(SYSTEM)|s(CLOCK)|s(LOG_PROC_NR)|s(TTY_PROC_NR))
+
+/* Sanity check to make sure the send masks can be set. */
+extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];
+
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
@@ -78,8 +98,7 @@ PUBLIC struct boot_image image[] = {
  { TTY_PROC_NR,    0, SERV_F, 16,      1, 0,      SERV_T, SYST_M, "tty"    },
  { MEM_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "memory" },
  { LOG_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "log"    },
- { AT_PROC_NR,     0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "boot"   },
- { BIOS_PROC_NR,   0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "bios"   },
+ { DRVR_PROC_NR,   0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "driver" },
  { INIT_PROC_NR,   0, USER_F,  8, USER_Q, 0,      USER_T, USER_M, "init"   },
 };
 

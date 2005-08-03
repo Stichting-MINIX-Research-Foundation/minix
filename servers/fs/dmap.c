@@ -6,6 +6,8 @@
 #include "fs.h"
 #include "fproc.h"
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <minix/com.h>
 #include "param.h"
@@ -119,59 +121,33 @@ int style;			/* style of the device */
  *===========================================================================*/
 PUBLIC void map_controllers()
 {
-/* Map drivers to controllers and update the dmap table to that selection. 
- * For each controller, the environment variable set by the boot monitor is
- * analyzed to see what type of Winchester disk is attached. 
- * Finally, the process number of the driver is looked up, and, if found, is
- * installed in the dmap table.  
+/* Map the boot drivers to a controller and update the dmap table to that
+ * selection. The boot driver and the controller it handles are set at the
+ * boot monitor.  
  */
-  static char ctrlr_nr[] = "c0";	/* controller currently analyzed */
-  char ctrlr_type[8];			/* type of Winchester disk */
-  int i, c, s; 
-  int proc_nr=0;			/* process number of driver */
-  struct drivertab *dp;
-  struct drivertab {
-      char wini_type[8];
-      char proc_name[8];
-  } drivertab[] = {
-	{ "at",		"boot"	},	/* AT Winchester */
-	{ "bios",	"bios" },	/* BIOS Winchester */
-	{ "esdi",	"..." },
-	{ "xt",		"..." },
-	{ "aha1540",	"..." },
-	{ "dosfile",	"..." },
-	{ "fatfile",	"..." },
-  };
-
-  for (c=0; c < NR_CTRLRS; c++) {
-
-    /* See if there is a mapping for this controller. */
-    ctrlr_nr[1] = '0' + c;
-    if ((s = get_mon_param(ctrlr_nr, ctrlr_type, 8)) != OK)  {
-    	 if (s != ESRCH) panic(__FILE__,"couldn't get monitor param", s);
-         continue;
-    }
-
-    /* If there is a mapping, look up the driver with the given name. */
-    for (dp = drivertab;
-        dp < drivertab + sizeof(drivertab)/sizeof(drivertab[0]); dp++)  {
-      if (strcmp(ctrlr_type, dp->wini_type) == 0) {	/* found driver name */
-	if ((s=findproc(dp->proc_name, &proc_nr)) == OK) {
-	  for (i=0; i< NR_DEVICES; i++) {		/* find mapping */
-	    if (dmap[i].dmap_driver == CTRLR(c)) {  
-	      if ((s=map_driver(i, proc_nr, STYLE_DEV)) != OK) {
-	          panic(__FILE__,"map_driver failed",s);
-	      }
-#if VERBOSE
-	      printf("FS: controller %s (%s) mapped to %s driver (nr %d)\n",
-	    	  ctrlr_nr, dp->wini_type, dp->proc_name, dmap[i].dmap_driver);
-#endif
-	    }
-	  }
-	}
+  char driver[16];
+  char *controller = "c##";
+  int number;
+  int i,s;
+  if ((s = get_mon_param("label", driver, sizeof(driver))) != OK) 
+      panic(__FILE__,"couldn't get boot monitor parameter 'driver'", s);
+  if ((s = get_mon_param("controller", controller, sizeof(controller))) != OK) 
+      panic(__FILE__,"couldn't get boot monitor parameter 'controller'", s);
+  if (controller[0] != 'c' || ! isdigit(controller[1]))
+      panic(__FILE__,"monitor parameter 'controller' syntax is 'c#'", NO_NUM); 
+  if ((number = (unsigned) atoi(&controller[1])) > NR_CTRLRS)
+      panic(__FILE__,"monitor parameter 'controller' maximum is", NR_CTRLRS);
+  
+  for (i=0; i< NR_DEVICES; i++) {		/* find controller */
+      if (dmap[i].dmap_driver == CTRLR(number)) {  
+          if ((s=map_driver(i, DRVR_PROC_NR, STYLE_DEV)) != OK)
+              panic(__FILE__,"map_driver failed",s);
+  printf("Boot medium driver: %s driver mapped onto controller c%d.\n",
+      driver, number);
+          return;				/* success! */
       }
-    }
   }
+  panic(__FILE__, "cannot find controller in dmap, number", number);
 }
 
 

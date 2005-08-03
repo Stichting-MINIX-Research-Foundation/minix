@@ -14,6 +14,10 @@
  */
 #define vir2phys(vir)	(kinfo.data_base + (vir_bytes) (vir))
 
+/* Map a process number to a privilege structure id. Used at boot time. */
+#define s_nr_to_id(n)	(NR_TASKS + (n) + 1)
+#define s(n)		(1 << s_nr_to_id(n))
+
 /* Translate a pointer to a field in a structure to a pointer to the structure
  * itself. So it translates '&struct_ptr->field' back to 'struct_ptr'.
  */

@@ -79,6 +79,9 @@ PUBLIC int do_start(message *m_ptr)
       if ((major_nr = m_ptr->SRV_DEV_MAJOR) > 0) {	/* set driver map */
           dev_style = STYLE_DEV;
           if ((s=mapdriver(child_proc_nr, major_nr, dev_style)) < 0) {
+	     
+      printf("SM: '%s %s', major %d, pid %d, proc_nr %d", 
+          command, arg_buf, major_nr, child_pid, child_proc_nr);
              report("SM", "couldn't map driver", errno);
           }
       }

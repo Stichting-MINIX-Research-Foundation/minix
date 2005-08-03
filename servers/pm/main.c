@@ -146,7 +146,7 @@ PRIVATE void pm_init()
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
   static char ign_sigs[] = { SIGCHLD };
   static int protected[] = {PM_PROC_NR, FS_PROC_NR, SM_PROC_NR,
-			TTY_PROC_NR, AT_PROC_NR, MEM_PROC_NR};
+			TTY_PROC_NR, DRVR_PROC_NR, MEM_PROC_NR};
   register struct mproc *rmp;
   register char *sig_ptr;
   phys_clicks total_clicks, minix_clicks, free_clicks;
@@ -258,10 +258,9 @@ PRIVATE void pm_init()
   printf("Parsing memory:");
   mem_init(mem_chunks, &free_clicks);
   total_clicks = minix_clicks + free_clicks;
-  printf(" total=%uK", click_to_round_k(total_clicks));
-  printf(" system=%uK", click_to_round_k(minix_clicks));
-  printf(" available=%uK", click_to_round_k(free_clicks));
-  printf(".\n\n");
+  printf(" total %u KB,", click_to_round_k(total_clicks));
+  printf(" system %u KB,", click_to_round_k(minix_clicks));
+  printf(" available %u KB.\n", click_to_round_k(free_clicks));
 }
 
 

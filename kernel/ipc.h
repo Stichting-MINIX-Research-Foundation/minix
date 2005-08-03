@@ -24,27 +24,4 @@
 #define CHECK_SRC     0x02	/* 0 0 1 0 : validate message source */
 
 
-/* Send masks determine to whom processes can send messages or notifications. 
- * The values here are used for the processes in the boot image. We rely on 
- * the initialization code in main() to match the s_nr_to_id() mapping for the
- * processes in the boot image, so that the send mask that is defined here 
- * can be directly copied onto map[0] of the actual send mask. Privilege
- * structure 0 is shared by user processes. 
- *
- * Note that process numbers in the boot image should not be higher than
- * "BITCHUNK_BITS - NR_TASKS", because a bitchunk_t field is used to store 
- * the send masks in the table that describes that processes in the image.  
- */
-#define s_nr_to_id(n)	(NR_TASKS + (n) + 1)
-#define s(n)		(1 << s_nr_to_id(n))
-#define SERV_M		(~0)
-#define SYST_M		(~0)
-#define USER_M		(s(PM_PROC_NR)|s(FS_PROC_NR)|s(SM_PROC_NR))
-#define DRIV_M		(USER_M | \
-			 s(SYSTEM)|s(CLOCK)|s(LOG_PROC_NR)|s(TTY_PROC_NR))
-
-/* Sanity check to make sure the send masks can be set. */
-extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];
-
-
 #endif /* IPC_H */

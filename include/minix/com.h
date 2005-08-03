@@ -41,9 +41,8 @@
 #define MEM_PROC_NR 	 3  	/* memory driver (RAM disk, null, etc.) */
 #define LOG_PROC_NR	 4	/* log device driver */
 #define TTY_PROC_NR	 5	/* terminal (TTY) driver */
-#define AT_PROC_NR	 6 	/* AT Winchester */
-#define BIOS_PROC_NR	 7	/* BIOS disk device */
-#define INIT_PROC_NR	 8    	/* init -- goes multiuser */
+#define DRVR_PROC_NR     6	/* device driver for boot medium */
+#define INIT_PROC_NR	 7    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)

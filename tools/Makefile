@@ -7,6 +7,9 @@ MDEC=	/usr/mdec
 MAKE=	exec make -$(MAKEFLAGS)
 
 # specify the programs that are part of the system image
+# only one boot medium driver can actually be loaded, 
+# use labels to include multiple driver and set a label
+# at the boot monitor to select one
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
@@ -14,10 +17,11 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/log/log \
-	../drivers/at_wini/at_wini \
-	../drivers/bios_wini/bios_wini \
+	AT:../drivers/at_wini/at_wini \
+	BIOS:../drivers/bios_wini/bios_wini \
 	../servers/init/init \
 #	bootdev.img
+
 
 usage:	
 	@echo " " >&2
@@ -55,7 +59,7 @@ image: programs
 includes:
 	cd ../include && $(MAKE) install
 
-depend:
+depend: includes
 	cd ../ && $(MAKE) depend
 
 programs: includes 

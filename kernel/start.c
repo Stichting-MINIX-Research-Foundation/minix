@@ -65,10 +65,10 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   kinfo.kmem_base = vir2phys(0);
   kinfo.kmem_size = (phys_bytes) &end;	
 
-  /* Processor?  86, 186, 286, 386, ... */
+  /* Processor?  86, 186, 286, 386, ... 
+   * Decide if mode is protected for older machines. 
+   */
   machine.processor=atoi(get_value(params, "processor")); 
-
-  /* Decide if mode is protected for older machines. */
 #if _WORD_SIZE == 2
   machine.protected = machine.processor >= 286;		
 #endif
@@ -83,7 +83,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   }
 
   /* Type of VDU: */
-  value = get_value(params, "video");			/* EGA or VGA video unit */
+  value = get_value(params, "video");		/* EGA or VGA video unit */
   if (strcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
   if (strcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
 

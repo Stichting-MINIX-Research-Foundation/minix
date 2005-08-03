@@ -31,6 +31,7 @@ esac
 
 case $action in
 start)
+    echo ""
     echo "Multiuser startup in progress ..."
 
     # National keyboard?

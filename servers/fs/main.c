@@ -365,7 +365,7 @@ PRIVATE void load_ram(void)
   	return;
 
   /* Copy the blocks one at a time from the image to the RAM disk. */
-  printf("Loading RAM disk.\33[23CLoaded:    0K ");
+  printf("Loading RAM disk onto /dev/ram:\33[23CLoaded:    0K ");
 
   inode[0].i_mode = I_BLOCK_SPECIAL;	/* temp inode for rahead() */
   inode[0].i_size = LONG_MAX;
@@ -403,9 +403,9 @@ PRIVATE void load_ram(void)
   /* Commit changes to RAM so dev_io will see it. */
   do_sync();
 
-  printf("\rRAM disk of %u kb loaded.\33[K", ram_size_kb);
-  if (root_dev == DEV_RAM) printf(" RAM disk is used as root FS.");
-  printf("\n\n");
+  printf("\rRAM disk of %u KB loaded onto /dev/ram.", ram_size_kb);
+  if (root_dev == DEV_RAM) printf(" Using RAM disk as root FS.");
+  printf("\n");
 
   /* Invalidate and close the image device. */
   invalidate(image_dev);
