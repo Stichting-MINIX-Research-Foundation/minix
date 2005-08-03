@@ -31,6 +31,7 @@
 #include <minix/u64.h>
 #include <ibm/partition.h>
 #include <termios.h>
+#include <stdarg.h>
 
 /* True if a partition is an extended partition. */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
@@ -64,7 +65,40 @@ Num Sort   Type
 #define arraysize(a)	(sizeof(a) / sizeof((a)[0]))
 #define arraylimit(a)	((a) + arraysize(a))
 
-#define SORNOT(n) ((n) == 1 ? " " : "s")
+#define SORNOT(n) ((n) == 1 ? "" : "s")
+
+/* screen colours */
+#define COL_RED		1
+#define COL_GREEN	2
+#define COL_ORANGE	3
+#define COL_BLUE	4
+#define COL_MAGENTA	5
+#define COL_CYAN	6
+
+#define SURE_SERIOUS	1
+#define SURE_BACK	2
+
+void col(int col)
+{
+	if(!col) printf("\033[0m");
+	else printf("\033[3%dm", col % 10);
+}
+
+void type2col(int type)
+{
+	switch(type) {
+		/* minix */
+		case 0x80:
+		case MINIX_PART:	col(COL_GREEN);	break;
+
+		/* dos/windows */
+		case 0x0B: case 0x0C: case 0x0E: case 0x0F: case 0x42:
+		case 0x07: 		col(COL_CYAN);		break;
+
+		/* linux */
+		case 0x82: case 0x83:	col(COL_ORANGE);	break;
+	}
+}
 
 int probing = 0, autopartmode = 0;
 
@@ -1717,10 +1751,75 @@ int cylinderalign(region_t *reg)
 	return reg->free_sec_last > reg->free_sec_start;
 }
 
+void regionize(void)
+{
+	int free_sec, i, si;
+
+	sort();
+
+	free_sec = table[0].lowsec + sectors;
+
+	/* Create region data used in autopart mode. */
+	free_regions = used_regions = nr_regions = nr_partitions = 0;
+	for(si = 1; si <= NR_PARTITIONS; si++) {
+		i = sort_order[si];
+		if(i < 1 || i > NR_PARTITIONS) {
+			printf("Sorry, something unexpected has happened (%d out of range).\n", i);
+			exit(1);
+		}
+
+		if(table[i].sysind == NO_PART)
+			break;
+
+		/* Free space before this partition? */
+		if(table[i].lowsec > free_sec) {
+			/* Free region before this partition. */
+			regions[nr_regions].free_sec_start = free_sec;
+			regions[nr_regions].free_sec_last = table[i].lowsec-1;
+			regions[nr_regions].is_used_part = 0;
+			if(cylinderalign(&regions[nr_regions])) {
+				nr_regions++;
+				free_regions++;
+			}
+		}
+
+		/* Sanity check. */
+		if(autopartmode && si > 1) {
+			if(table[i].lowsec < table[sort_order[si-1]].lowsec ||
+			   table[i].lowsec < table[sort_order[si-1]].lowsec + table[sort_order[si-1]].size) {
+				printf("Sanity check failed - partitions overlap.\n"
+					"Please use expert mode to correct it.\n");
+				exit(1);
+			}
+		}
+
+		/* Remember used region. */
+		memcpy(&regions[nr_regions].used_part, &table[i], sizeof(table[i]));
+		free_sec = table[i].lowsec+table[i].size;
+		regions[nr_regions].is_used_part = 1;
+		regions[nr_regions].tableno = i;
+		nr_partitions++;
+		nr_regions++;
+		used_regions++;
+	}
+
+	/* Special case: space after partitions. */
+	if(free_sec < table[0].size-1) {
+		regions[nr_regions].free_sec_start = free_sec;
+		regions[nr_regions].free_sec_last = table[0].lowsec + table[0].size-1;
+		regions[nr_regions].is_used_part = 0;
+		if(cylinderalign(&regions[nr_regions])) {
+			nr_regions++;
+			free_regions++;
+		}
+	}
+
+}
+
 void m_read(int ev, object_t *op)
 /* Read the partition table from the current device. */
 {
-	int si, i, mode, n, r, free_sec, v;
+	int si, i, mode, n, r, v;
 	struct part_entry *pe;
 
 	if (ev != 'r' || device >= 0) return;
@@ -1815,62 +1914,7 @@ void m_read(int ev, object_t *op)
 		stat_end(5);
 	}
 
-	free_sec = table[0].lowsec + sectors;
-
-	/* Create region data used in autopart mode. */
-	free_regions = used_regions = nr_regions = nr_partitions = 0;
-	for(si = 1; si <= NR_PARTITIONS; si++) {
-		i = sort_order[si];
-		if(i < 1 || i > NR_PARTITIONS) {
-			printf("Sorry, something unexpected has happened (%d out of range).\n", i);
-			exit(1);
-		}
-
-		if(table[i].sysind == NO_PART)
-			break;
-
-		/* Free space before this partition? */
-		if(table[i].lowsec > free_sec) {
-			/* Free region before this partition. */
-			regions[nr_regions].free_sec_start = free_sec;
-			regions[nr_regions].free_sec_last = table[i].lowsec-1;
-			regions[nr_regions].is_used_part = 0;
-			if(cylinderalign(&regions[nr_regions])) {
-				nr_regions++;
-				free_regions++;
-			}
-		}
-
-		/* Sanity check. */
-		if(autopartmode && si > 1) {
-			if(table[i].lowsec < table[sort_order[si-1]].lowsec ||
-			   table[i].lowsec < table[sort_order[si-1]].lowsec + table[sort_order[si-1]].size) {
-				printf("Sanity check failed - partitions overlap.\n"
-					"Please use expert mode to correct it.\n");
-				exit(1);
-			}
-		}
-
-		/* Remember used region. */
-		memcpy(&regions[nr_regions].used_part, &table[i], sizeof(table[i]));
-		free_sec = table[i].lowsec+table[i].size;
-		regions[nr_regions].is_used_part = 1;
-		regions[nr_regions].tableno = i;
-		nr_partitions++;
-		nr_regions++;
-		used_regions++;
-	}
-
-	/* Special case: space after partitions. */
-	if(free_sec < table[0].size-1) {
-		regions[nr_regions].free_sec_start = free_sec;
-		regions[nr_regions].free_sec_last = table[0].lowsec + table[0].size-1;
-		regions[nr_regions].is_used_part = 0;
-		if(cylinderalign(&regions[nr_regions])) {
-			nr_regions++;
-			free_regions++;
-		}
-	}
+	regionize();
 }
 
 void m_write(int ev, object_t *op)
@@ -1988,38 +2032,29 @@ void m_shell(int ev, object_t *op)
 		event(ctrl('L'), op);
 }
 
-void m_dump(int ev, object_t *op)
+void m_dump(struct part_entry *print_table)
 /* Raw dump of the partition table. */
 {
-	struct part_entry table[NR_PARTITIONS], *pe;
+	struct part_entry *pe;
 	int i;
 	unsigned chs[3];
 
-	if (ev != 'p' || device < 0) return;
-
-	memcpy(table, bootblock+PART_TABLE_OFF,
-					NR_PARTITIONS * sizeof(table[0]));
-	for (i= 0; i < NR_PARTITIONS; i++) {
-		pe= &table[i];
-		stat_start(0);
+printf(" Partition + type      Cyl Head Sec   Cyl Head Sec      Base      Size       Kb\n");
+	for (i= 1; i <= NR_PARTITIONS; i++) {
+		pe= &print_table[i];
 		dos2chs(&pe->start_head, chs);
 		printf("%2d%c      %02X%15d%5d%4d",
-			i+1,
+			i,
 			pe->bootind & ACTIVE_FLAG ? '*' : ' ',
 			pe->sysind,
 			chs[0], chs[1], chs[2]);
 		dos2chs(&pe->last_head, chs);
-		printf("%6d%5d%4d%10lu%10ld%9lu",
+		printf("%6d%5d%4d%10lu%10ld%9lu\n",
 			chs[0], chs[1], chs[2],
 			pe->lowsec,
 			howend == SIZE ? pe->size : pe->size + pe->lowsec - 1,
 			pe->size / 2);
-		stat_end(10);
 	}
-	stat_start(0);
-	printf("(Raw dump of the original %.40s table)",
-		curdev->subname);
-	stat_end(10);
 }
 
 int quitting= 0;
@@ -2117,7 +2152,6 @@ void event(int ev, object_t *op)
 	m_read(ev, op);
 	m_write(ev, op);
 	m_shell(ev, op);
-	m_dump(ev, op);
 	m_quit(ev, op);
 }
 
@@ -2226,21 +2260,47 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 		if(reg->is_used_part) {
 			char *name;
 			name = typ2txt(reg->used_part.sysind);
-			printf("%*s\033[31m", indent, "");
+			printf("%*s", indent, ""); type2col(reg->used_part.sysind);
 			if(numbers) printf("%2d.  ", r);
 			printf("In use by %-10s ", name);
 			units = reg->used_part.size / 2;
-			printf("\033[0m (%s)\n", prettysizeprint(units));
+			col(0);
+			printf(" (%s)\n", prettysizeprint(units));
 		} else if(!nofree) {
-			printf("%*s\033[36m", indent, "");
+			printf("%*s", indent, ""); 
 			if(numbers) printf("%2d.  ", r);
 			printf("Free space           ");
 			units = ((reg->free_sec_last - reg->free_sec_start+1))/2;
-			printf("\033[0m (%s)\n", prettysizeprint(units));
+			printf(" (%s)\n", prettysizeprint(units));
 		}
 	}
 
+	if(p_nr_partitions >= NR_PARTITIONS && p_free_regions) {
+		printf(
+"\nNote: there is free space on this disk, but I'm not showing it,\n"
+"because there isn't a free slot to use it. You can free up a slot\n"
+"by deleting an in-use region, or use expert mode.\n");
+	}
+
 	return;
+}
+
+int
+is_sure(int flags, char *fmt, ...)
+{
+	char yesno[10];
+	va_list ap;
+	va_start (ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	if(flags & SURE_SERIOUS) printf(" ('yes' or 'no' please) ");
+	else {
+		printf(" (y/n) [y] ");
+	}
+	fflush(stdout);
+	if(!fgets(yesno, sizeof(yesno)-1, stdin)) exit(1);
+	if(!(flags & SURE_SERIOUS)) return (tolower(yesno[0]) != 'n');
+	return !strncmp(yesno, "yes", 3);
 }
 
 int
@@ -2251,9 +2311,11 @@ may_kill_region(void)
 
 	if(used_regions < 1) return 1;
 
+	printf("\n-- STEP 2 -- Optionally delete regions -----------------------------\n\n");
+
 	printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
 	printf("\nIf you want to delete an in-use region to free it up for MINIX,\n"
-		"type its number.\nOtherwise hit ENTER to continue: ");
+		"type its number. Otherwise hit ENTER to continue: ");
 	fflush(NULL);
 	fgets(line, sizeof(line)-2, stdin);
 	if(!isdigit(line[0]))
@@ -2272,24 +2334,26 @@ may_kill_region(void)
 
 	i = regions[r].tableno;
 
-	printf("Are you absolutely positive you want to delete this region,\n"
+	if(is_sure(0, "Are you sure you want to delete this region,\n"
 	"losing all data it contains?\n"
 	"You have selected a region used\n"
 	"by %s (%s).\n"
-	"Please type yes or no: ",
-		typ2txt(table[i].sysind),
-		prettysizeprint(table[i].size / 2));
-	fgets(line, sizeof(line)-2, stdin);
-	if(!strncmp(line, "yes", 3)) {
+	"I won't actually update your disk right away, but still. Sure?",
+		typ2txt(table[i].sysind), prettysizeprint(table[i].size / 2))) {
 		table[i].sysind = NO_PART;
 		dirty = 1;
+		regionize();
 	}
+
+	/* User may go again. */
+	return 0;
 }
+
 
 region_t *
 select_region(void)
 {
-	int r, rem, rn;
+	int r, rem, rn, sure = 0;
 	static char line[100];
 	region_t *reg;
 	int nofree = 0;
@@ -2316,16 +2380,20 @@ select_region(void)
 			SORNOT(nr_regions), prettysizeprint(table[0].size/2));
 		printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
 
-		if(nofree) {
-			printf("\nOnly the expert mode can free a slot to use the free space.\n");
+		if(used_regions > 0) {
+			printf("\nIf you select a region that is already in use,\n"
+			"it will be overwritten.\n");
 		}
 
 		if(nr_regions > 1) {
-			printf("\nPlease enter region number you want to use: ");
+			printf("\nPlease enter region number you want to use,\n"
+				"or ENTER to go back a step to free a region: ");
 			fflush(NULL);
 
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
+
+			if(line[0] == '\n') return NULL;
 
 			if(sscanf(line, "%d", &rn) != 1) 
 				continue;
@@ -2340,17 +2408,12 @@ select_region(void)
 				continue;
 			}
 
-			printf("Really use region number %d? Please enter 'yes' or 'no': ", rn);
-			fflush(NULL);
+			sure = is_sure(0, "Please confirm you want to use region no. %d?", rn);
 		} else {
 			rn = 0;
-			printf("\nUse this region? Please enter 'yes' or 'no': ");
-			fflush(NULL);
+			sure = is_sure(0, "\nUse this region?");
 		}
-
-		if(!fgets(line, sizeof(line)-2, stdin))
-			exit(1);
-	} while(strncmp(line, "yes", 3));
+	} while(!sure);
 
 	return(&regions[rn]);
 }
@@ -2358,13 +2421,11 @@ select_region(void)
 device_t *
 select_disk(void)
 {
-
+	int sure = 0;
 	int i, choice, drives;
 	static char line[500];
 
-	printf("Probing for disks. This may take a short while.\n"
-		"You can ignore errors while probing. If the system hangs,\n"
-		"please try expert mode.\n\n");
+	printf("Probing for disks. This may take a short while. Please ignore error messages.\n");
 
 	do {
 		i = 0;
@@ -2401,16 +2462,10 @@ select_disk(void)
 
 		for(i = 0; i < drives; i++) {
 			if(drives > 1)
-				printf("  %2d. ", i);
+				printf("\n  %2d. ", i);
 			else	printf("  ");
-			printf(" (%s) %d allocated region%s",
-				devices[i].dev->name,
-				devices[i].used_regions, SORNOT(devices[i].used_regions));
-			if(devices[i].used_regions < NR_PARTITIONS) {
-				printf(", %d unallocated one%s ",
-					devices[i].free_regions, SORNOT(devices[i].free_regions));
-			}
-			printf(" (%s)\n", prettysizeprint(devices[i].sectors/2));
+			printf(" (%s, ", devices[i].dev->name);
+			printf("%s)\n", prettysizeprint(devices[i].sectors/2));
 			printregions(devices[i].regions, 8,
 				devices[i].nr_partitions,
 				devices[i].free_regions,
@@ -2427,21 +2482,15 @@ select_disk(void)
 				printf("Number out of range.\n");
 				continue;
 			}
-			printf("\nUse disk number %d (%s)? ",
-				choice, devices[choice].dev->name);
-			fflush(NULL);
-			if(!fgets(line, sizeof(line)-2, stdin))
+			if(!(sure = is_sure(0, "\nPlease confirm you want to use disk %d (%s)?",
+				choice, devices[choice].dev->name)))
 				exit(1);
 		} else {
-			printf("\nUse this disk? ");
+			if(!(sure = is_sure(0, "\nUse this disk?")))
+				exit(1);
 			choice = 0;
-			fflush(NULL);
-			if(!fgets(line, sizeof(line)-2, stdin))
-				exit(1);
-			if(line[0] != 'y' && line[0] != 'Y')
-				exit(1);
 		}
-	} while(line[0] != 'y' && line[0] != 'Y');
+	} while(!sure);
 	return devices[choice].dev;
 }
 
@@ -2482,10 +2531,11 @@ scribble_region(region_t *reg, struct part_entry **pe)
 		newpart->size = reg->free_sec_last - reg->free_sec_start + 1;
 		changed = 1;
 	} else  newpart = &reg->used_part;
+	check_ind(newpart);
 	newpart->sysind = MINIX_PART;
 	*pe = newpart;
 	changed = 1;
-
+	dirty = 1;
 	return changed;
 }
 
@@ -2494,12 +2544,29 @@ do_autopart(int resultfd)
 {
 	region_t *r;
 	struct part_entry *pe;
+	char sure[50];
+	struct part_entry orig_table[1 + NR_PARTITIONS];
 
 	nordonly = 1; 
 	probing = 1;
 	autopartmode = 1;
 
-	/* Select drive. */
+	printf("\nWelcome to the autopart process. There are four steps.\n\n"
+		"1. Select the drive you want to use.\n"
+		"2. Optionally delete in-use regions(s), if they exist.\n"
+		"3. Select a region to install MINIX in.\n"
+		"4. After confirmation, write new table to disk.\n"
+		"\n"
+		"As you can see, nothing will happen to your disk before the\n"
+		"last step. Then I will print the new table and let you confirm it.\n\n"
+		);
+
+	printf("Press ENTER to continue: ");
+	fflush(stdout);
+	if(!fgets(sure, sizeof(sure)-1, stdin)) exit(1);
+
+	printf("\n-- STEP 1 -- Select drive -----------------------------------------\n\n");
+
 	do {
 		curdev = select_disk();
 	} while(!curdev);
@@ -2510,39 +2577,43 @@ do_autopart(int resultfd)
 	}
 	recompute0();
 
-	/* Allow for partition to be killed. */
-	do {
-		m_read('r', NULL);
-	} while(!may_kill_region());
-
-	/* Update changes. */
-	if(dirty) {
-		m_write('w', NULL);
-	}
-
-	if(dirty) {
-		printf("Something went wrong writing.\n");
-		exit(1);
-	}
-
-	if (device >= 0) { close(device); device= -1; }
-
-	/* Reread contents. */
 	m_read('r', NULL);
 
-	/* Show regions. */
+	memcpy(orig_table, table, sizeof(table));
+
 	do {
+		/* Allow for partition(s) to be killed. */
+		while(!may_kill_region())
+			;
+
+		printf("\n-- STEP 3 -- Select region to install in ---------------------------\n\n");
+	
+		/* Show regions. */
 		r = select_region();
-	} while(!r);
+	} while(!r);	/* Back to step 2. */
+
+	printf("\n-- STEP 4 -- Write table to disk -----------------------------------\n\n");
 
 	/* Write things. */
 	if(scribble_region(r, &pe)) {
 		char *name;
 		int i, found = -1;
 		char partbuf[100];
-		dirty = 1;
+
+
+#if 0
+		printf("\nThis is your current partition table:\n");
+		m_dump(orig_table);
+		printf("\nThis will be your new partition table:\n");
+		m_dump(table);
+#endif
+
+		if(!is_sure(SURE_SERIOUS, "This is the point of no return.\n"
+		"Nothing has actually been written so far.\n"
+			"Are you sure you want to write it?"))
+			return 1;
+
 		m_write('w', NULL);
-		if(dirty) return 1;
 		/* Retrieve partition number in sorted order that we
 		 * have scribbled in.
 		 */
@@ -2645,11 +2716,13 @@ int main(int argc, char **argv)
      	while((c = getopt(argc, argv, "f:")) != EOF) {
      		switch(c) {
      			case 'f':
+				/* Make sure old data file is gone. */
      				unlink(optarg);
      				if((resultfd=open(optarg, O_CREAT | O_WRONLY | O_TRUNC)) < 0) {
      					perror(optarg);
      					return 1;
      				}
+     				sync();	/* Make sure no old data file lingers. */
      				break;
      			default:
      				fprintf(stderr, "Unknown option\n");

@@ -90,12 +90,7 @@ ok=""
 while [ "$ok" = "" ]
 do
 	echo -n "Welcome to Minix partitioning. Do you want to
-follow the (A)utomatic or the e(X)pert mode? Expert mode drops
-you into part to let you edit your partition table to taste.
-Automatic mode is much easier, but can't handle all cases. In
-cases it can't handle, it will tell you to use expert mode.
-Please choose, A for Automatic, or X for Expert: [A] "
-
+follow the (A)utomatic or the e(X)pert mode? [A] "
 	read ch
 	case "$ch" in
 	[Aa]*)	auto="1"; ok="yes"; ;;
@@ -145,9 +140,6 @@ else
 	while [ -z "$primary" ]
 	do
 		PF="/tmp/pf"
-		echo -n "Press return to enter the autopart tool, or DEL to abort.
-:"
-		read ret
 		if autopart -f$PF
 		then	if [ -s "$PF" ]
 			then
@@ -383,7 +375,7 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; main() { trap 2000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; main() { echo \"This is the MINIX 3 boot monitor.\"; echo \"MINIX will load in 5 seconds, or press ESC.\"; trap 5000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
