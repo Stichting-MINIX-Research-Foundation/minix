@@ -30,6 +30,7 @@ FORWARD _PROTOTYPE( int log_transfer, (int proc_nr, int opcode, off_t position,
 FORWARD _PROTOTYPE( int log_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_cancel, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_select, (struct driver *dp, message *m_ptr) );
+FORWARD _PROTOTYPE( void log_signal, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_other, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void log_geometry, (struct partition *entry) );
 FORWARD _PROTOTYPE( void log_reply, (int code, int replyee, int proc, int status) );
@@ -45,7 +46,7 @@ PRIVATE struct driver log_dtab = {
   log_transfer,	/* do the I/O */
   nop_cleanup,	/* no need to clean up */
   log_geometry,	/* geometry */
-  nop_signal,	/* no need to clean up on shutdown */
+  log_signal,	/* handle system signal */
   nop_alarm, 	/* no alarm */
   log_cancel,	/* CANCEL request */
   log_select,	/* DEV_SELECT request */
@@ -404,6 +405,20 @@ PRIVATE void do_status(message *m_ptr)
 }
 
 /*============================================================================*
+ *				log_signal				      *
+ *============================================================================*/
+PRIVATE void log_signal(dp, m_ptr)
+struct driver *dp;
+message *m_ptr;
+{
+  sigset_t sigset = m_ptr->NOTIFY_ARG;
+  if (sigismember(&sigset, SIGKMESS)) {
+	do_new_kmess(m_ptr);
+  }	
+}
+
+	
+/*============================================================================*
  *				log_other				      *
  *============================================================================*/
 PRIVATE int log_other(dp, m_ptr)
@@ -418,14 +433,6 @@ message *m_ptr;
 	switch(m_ptr->m_type) {
 	case DIAGNOSTICS: {
 		r = do_diagnostics(m_ptr);
-		break;
-	}
-	case SYS_SIG: {
-		sigset_t sigset = m_ptr->NOTIFY_ARG;
-		if (sigismember(&sigset, SIGKMESS)) {
-			do_new_kmess(m_ptr);
-		}	
-		r = EDONTREPLY;
 		break;
 	}
 	case DEV_STATUS: {

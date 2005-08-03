@@ -90,7 +90,7 @@ PUBLIC int do_diagnostics(message *m)
    */ 
   if ((proc_nr = m->DIAG_PROC_NR) == SELF)
       m->DIAG_PROC_NR = proc_nr = m->m_source;
-  result = _sendrec(TTY, m);
+  result = _sendrec(TTY_PROC_NR, m);
 
   /* Now also make a copy for the private buffer at the LOG server, so
    * that the messages can be reviewed at a later time.

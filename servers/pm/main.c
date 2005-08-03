@@ -146,7 +146,7 @@ PRIVATE void pm_init()
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
   static char ign_sigs[] = { SIGCHLD };
   static int protected[] = {PM_PROC_NR, FS_PROC_NR, SM_PROC_NR,
-			TTY, AT_WINI, MEMORY};
+			TTY_PROC_NR, AT_PROC_NR, MEM_PROC_NR};
   register struct mproc *rmp;
   register char *sig_ptr;
   phys_clicks total_clicks, minix_clicks, free_clicks;

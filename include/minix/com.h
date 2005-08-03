@@ -39,11 +39,11 @@
 #define PM_PROC_NR	 0	/* process manager */
 #define FS_PROC_NR 	 1	/* file system */
 #define SM_PROC_NR 	 2	/* system service manager */
-#define MEMORY	 	 3  	/* memory driver (RAM disk, null, etc.) */
+#define MEM_PROC_NR 	 3  	/* memory driver (RAM disk, null, etc.) */
 #define LOG_PROC_NR	 4	/* log device driver */
-#define TTY		 5	/* terminal (TTY) driver */
-#define AT_WINI		 6 	/* AT Winchester */
-#define BIOS_WINI	 7	/* BIOS disk device */
+#define TTY_PROC_NR	 5	/* terminal (TTY) driver */
+#define AT_PROC_NR	 6 	/* AT Winchester */
+#define BIOS_PROC_NR	 7	/* BIOS disk device */
 #define INIT_PROC_NR	 8    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
@@ -66,7 +66,7 @@
 #  define SYS_SIG	NOTIFY_FROM(SYSTEM) 	/* system signal */
 #  define HARD_INT	NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
 #  define NEW_KSIG	NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
-#  define FKEY_PRESSED	NOTIFY_FROM(TTY)  	/* function key press */
+#  define FKEY_PRESSED	NOTIFY_FROM(TTY_PROC_NR)/* function key press */
 
 #define NOTIFICATION  		  0x800 	/* flag for notifications */
 #  define DEV_SELECTED (NOTIFICATION | 5)  	/* select() notification */

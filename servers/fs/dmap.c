@@ -29,23 +29,23 @@
  */
 struct dmap dmap[NR_DEVICES] = {
   DT(1,              no_dev,   0,      0,       0)  /* 0 = not used   */
-  DT(1,		     gen_opcl, gen_io, MEMORY,  0)  /* 1 = /dev/mem   */
-  DT(ENABLE_FLOPPY,  gen_opcl, gen_io, NONE,    DMAP_MUTABLE) /* 2 = /dev/fd0   */
-  DT(NR_CTRLRS >= 1, gen_opcl, gen_io, CTRLR(0),DMAP_MUTABLE)     /* 3 = /dev/c0    */
-  DT(1,              tty_opcl, gen_io, TTY,	0)          /* 4 = /dev/tty00 */
-  DT(1,              ctty_opcl,ctty_io,TTY,	0)          /* 5 = /dev/tty   */
+  DT(1,		     gen_opcl, gen_io, MEM_PROC_NR,  0)	       /* 1 = /dev/mem   */
+  DT(ENABLE_FLOPPY,  gen_opcl, gen_io, NONE,    DMAP_MUTABLE)  /* 2 = /dev/fd0   */
+  DT(NR_CTRLRS >= 1, gen_opcl, gen_io, CTRLR(0),DMAP_MUTABLE)  /* 3 = /dev/c0    */
+  DT(1,              tty_opcl, gen_io, TTY_PROC_NR,	0)     /* 4 = /dev/tty00 */
+  DT(1,              ctty_opcl,ctty_io,TTY_PROC_NR,	0)     /* 5 = /dev/tty   */
   DT(ENABLE_PRINTER, gen_opcl, gen_io, NONE,	DMAP_MUTABLE)  /* 6 = /dev/lp    */
 
 #if (MACHINE == IBM_PC)
-  DT(1,              no_dev,   0,      0,   	DMAP_MUTABLE)          /* 7 = /dev/ip    */
-  DT(NR_CTRLRS >= 2, gen_opcl, gen_io, CTRLR(1),DMAP_MUTABLE)     /* 8 = /dev/c1    */
-  DT(0,              0,        0,      0,   	DMAP_MUTABLE)            /* 9 = not used   */
-  DT(NR_CTRLRS >= 3, gen_opcl, gen_io, CTRLR(2),DMAP_MUTABLE)     /*10 = /dev/c2    */
-  DT(0,              0,        0,      0,   	DMAP_MUTABLE)            /*11 = not used   */
-  DT(NR_CTRLRS >= 4, gen_opcl, gen_io, CTRLR(3),DMAP_MUTABLE)     /*12 = /dev/c3    */
-  DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,	DMAP_MUTABLE)     /*13 = /dev/audio */
-  DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,	DMAP_MUTABLE)    /*14 = /dev/mixer */
-  DT(1,		     gen_opcl, gen_io, LOG_PROC_NR,   0)  /* 15 = /dev/klog    */
+  DT(1,              no_dev,   0,      0,   	DMAP_MUTABLE)  /* 7 = /dev/ip    */
+  DT(NR_CTRLRS >= 2, gen_opcl, gen_io, CTRLR(1),DMAP_MUTABLE)  /* 8 = /dev/c1    */
+  DT(0,              0,        0,      0,   	DMAP_MUTABLE)  /* 9 = not used   */
+  DT(NR_CTRLRS >= 3, gen_opcl, gen_io, CTRLR(2),DMAP_MUTABLE)  /*10 = /dev/c2    */
+  DT(0,              0,        0,      0,   	DMAP_MUTABLE)  /*11 = not used   */
+  DT(NR_CTRLRS >= 4, gen_opcl, gen_io, CTRLR(3),DMAP_MUTABLE)  /*12 = /dev/c3    */
+  DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,	DMAP_MUTABLE)  /*13 = /dev/audio */
+  DT(ENABLE_SB16,    gen_opcl, gen_io, NONE,	DMAP_MUTABLE)  /*14 = /dev/mixer */
+  DT(1,		     gen_opcl, gen_io, LOG_PROC_NR,   0)       /*15 = /dev/klog    */
 #endif /* IBM_PC */
 };
 

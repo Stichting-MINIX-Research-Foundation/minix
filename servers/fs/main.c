@@ -344,7 +344,7 @@ PRIVATE void load_ram(void)
   m_out.DEVICE = RAM_DEV;
   m_out.REQUEST = MIOCRAMSIZE;			/* I/O control to use */
   m_out.POSITION = (ram_size_kb * 1024);	/* request in bytes */
-  if ((s=sendrec(MEMORY, &m_out)) != OK)
+  if ((s=sendrec(MEM_PROC_NR, &m_out)) != OK)
   	panic("FS","sendrec from MEM failed", s);
   else if (m_out.REP_STATUS != OK) {
   	/* Report and continue, unless RAM disk is required as root FS. */

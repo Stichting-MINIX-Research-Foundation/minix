@@ -7,18 +7,18 @@
  * 
  * This file contains the routines that take care of kernel messages, i.e.,
  * diagnostic output within the kernel. Kernel messages are not directly
- * displayed on the console, because this must be done by the PRINT driver. 
+ * displayed on the console, because this must be done by the output driver. 
  * Instead, the kernel accumulates characters in a buffer and notifies the
  * output driver when a new message is ready. 
  */
 
-#include <stdarg.h>
+#include <minix/com.h>
 #include "kernel.h"
+#include <stdarg.h>
 #include <unistd.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <minix/com.h>
 #include "proc.h"
 
 #define END_OF_KMESS 	-1
@@ -130,7 +130,7 @@ PRIVATE void kputc(c)
 int c;					/* character to append */
 {
 /* Accumulate a single character for a kernel message. Send a notification
- * the to PRINTF_PROC driver if an END_OF_KMESS is encountered. 
+ * the to output driver if an END_OF_KMESS is encountered. 
  */
   if (c != END_OF_KMESS) {
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
@@ -138,7 +138,7 @@ int c;					/* character to append */
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
-      send_sig(PRINTF_PROC, SIGKMESS);
+      send_sig(OUTPUT_PROC_NR, SIGKMESS);
   }
 }
 

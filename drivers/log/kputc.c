@@ -25,9 +25,9 @@ int c;
 	m.DIAG_BUF_COUNT = buf_count;
 	m.DIAG_PRINT_BUF = print_buf;
 	m.DIAG_PROC_NR = SELF;
-	m.m_type = DIAGNOSTICS;	/* request TTY to output this buffer */
-	_sendrec(TTY, &m);	/* if it fails, we cannot do better */ 
-	buf_count = 0;		/* clear buffer for next batch */
+	m.m_type = DIAGNOSTICS;		/* request TTY to output this buffer */
+	_sendrec(TTY_PROC_NR, &m);	/* if it fails, we give up */ 
+	buf_count = 0;			/* clear buffer for next batch */
   }
   if (c != 0) {
   	print_buf[buf_count++] = c;

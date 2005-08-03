@@ -40,7 +40,8 @@
 #define SERV_M		(~0)
 #define SYST_M		(~0)
 #define USER_M		(s(PM_PROC_NR)|s(FS_PROC_NR)|s(SM_PROC_NR))
-#define DRIV_M		(USER_M | s(SYSTEM)|s(CLOCK)|s(LOG_PROC_NR)|s(TTY))
+#define DRIV_M		(USER_M | \
+			 s(SYSTEM)|s(CLOCK)|s(LOG_PROC_NR)|s(TTY_PROC_NR))
 
 /* Sanity check to make sure the send masks can be set. */
 extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];

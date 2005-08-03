@@ -196,7 +196,7 @@ int how;
    */
   if (how == RBT_PANIC) {
       m.m_type = PANIC_DUMPS;
-      if (nb_send(TTY, &m) == OK)	/* don't block if TTY isn't ready */
+      if (nb_send(TTY_PROC_NR,&m)==OK)	/* don't block if TTY isn't ready */
           return;			/* await sys_abort() from TTY */
   }
 

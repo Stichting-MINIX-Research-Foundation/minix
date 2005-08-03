@@ -75,14 +75,14 @@ PUBLIC struct boot_image image[] = {
  { PM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SERV_M, "PM"      },
  { FS_PROC_NR,     0, SERV_F, 16,      4, 0,      SERV_T, SERV_M, "FS"      },
  { SM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SYST_M, "SM"      },
- { TTY,            0, SERV_F, 16,      1, 0,      SERV_T, SYST_M, "TTY"     },
- { MEMORY,         0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "MEMORY"  },
+ { TTY_PROC_NR,    0, SERV_F, 16,      1, 0,      SERV_T, SYST_M, "TTY"     },
+ { MEM_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "MEMORY"  },
  { LOG_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "LOG"     },
 #if ENABLE_AT_WINI
- { AT_WINI,        0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "AT_WINI" },
+ { AT_PROC_NR,     0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "AT_WINI" },
 #endif
 #if ENABLE_BIOS_WINI
- { BIOS_WINI,      0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "BIOS"    },
+ { BIOS_PROC_NR,   0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "BIOS"    },
 #endif
  { INIT_PROC_NR,   0, USER_F,  8, USER_Q, 0,      USER_T, USER_M, "INIT"    },
 };
