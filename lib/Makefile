@@ -30,7 +30,6 @@ all:
 	test `arch` = i86 || { cd regex && $(MAKE); }
 	cd rts && $(MAKE)
 	cd stdio && $(MAKE)
-	#cd socket && $(MAKE)
 	cd syscall && $(MAKE)
 	cd syslib && $(MAKE)
 	cd util && $(MAKE)
@@ -144,7 +143,6 @@ install_i386:	\
 	$(LIB386)/libcurses.a \
 	$(LIB386)/libedit.a \
 	$(LIB386)/liby.a \
-#	$(LIB386)/libsocket.a \
 #	$(LIB86)/libc.a \
 #	$(LIB86)/end.a \
 
@@ -202,9 +200,6 @@ $(LIB386)/libedit.a:	libedit.a
 $(LIB386)/liby.a:	liby.a
 	install -c -o bin $? $@
 
-#$(LIB386)/libsocket.a:	libsocket.a
-#	install -c -o bin $? $@
-#
 #$(LIB86)/libc.a:	libc86.a
 #	install -c -o bin $? $@
 #
