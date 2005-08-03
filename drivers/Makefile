@@ -26,3 +26,4 @@ all install depend clean:
 	cd ./dpeth && $(MAKE) $@
 	cd ./log && $(MAKE) $@
 	cd ./bios_wini && $(MAKE) $@
+	cd ./random && $(MAKE) $@

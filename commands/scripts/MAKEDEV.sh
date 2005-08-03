@@ -59,8 +59,8 @@ do
 	$e mknod kmem c 1 2;	$e chmod 640 kmem
 	$e mknod null c 1 3;	$e chmod 666 null
 	$e mknod boot b 1 4;	$e chmod 600 ram
-	$e mknod random c 1 5;	$e chmod 644 random
-	$e mknod urandom c 1 5;	$e chmod 644 urandom
+	$e mknod random c 16 0;	$e chmod 644 random
+	$e mknod urandom c 16 0; $e chmod 644 urandom
 	$e mknod zero c 1 6;	$e chmod 644 zero
 	$e chgrp kmem ram mem kmem null boot random urandom zero
 	;;

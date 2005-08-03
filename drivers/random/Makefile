@@ -1,5 +1,5 @@
-# Makefile for memory driver (MEMORY)
-DRIVER = memory
+# Makefile for random driver (RANDOM)
+DRIVER = random
 
 # directories
 u = /usr
@@ -16,7 +16,7 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lsysutil
 
-OBJ = memory.o
+OBJ = main.o random.o sha2.o aes/rijndael_api.o aes/rijndael_alg.o
 LIBDRIVER = $d/libdriver/driver.o
 
 
@@ -46,7 +46,7 @@ clean:
 
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c aes/*.c > .depend
 
 # Include generated dependencies.
 include .depend

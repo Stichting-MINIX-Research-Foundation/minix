@@ -5,7 +5,6 @@
  *     /dev/kmem	- kernel virtual memory
  *     /dev/null	- null device (data sink)
  *     /dev/boot	- boot device loaded from boot image 
- *     /dev/random	- random number generator
  *     /dev/zero	- null byte stream generator
  *
  *  Changes:
@@ -24,17 +23,14 @@
 #include "../../kernel/type.h"
 
 #include "assert.h"
-#include "random.h"
 
 #define NR_DEVS            7		/* number of minor devices */
-#define KRANDOM_PERIOD    1 		/* ticks between krandom calls */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
 PRIVATE int m_device;			/* current device */
 PRIVATE struct kinfo kinfo;		/* kernel information */ 
 PRIVATE struct machine machine;		/* machine information */ 
-PRIVATE struct randomness krandom;	/* randomness from the kernel */ 
 
 extern int errno;			/* error number for PM calls */
 
@@ -46,7 +42,6 @@ FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_init, (void) );
 FORWARD _PROTOTYPE( int m_ioctl, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) );
-FORWARD _PROTOTYPE( void m_random, (struct driver *dp, message *m_ptr) );
 
 /* Entry points to this driver. */
 PRIVATE struct driver m_dtab = {
@@ -59,7 +54,7 @@ PRIVATE struct driver m_dtab = {
   nop_cleanup,	/* no need to clean up */
   m_geometry,	/* memory device "geometry" */
   nop_signal,	/* system signals */
-  m_random, 	/* get randomness from kernel (alarm) */
+  nop_alarm,
   nop_cancel,
   nop_select,
   NULL
@@ -68,11 +63,6 @@ PRIVATE struct driver m_dtab = {
 /* Buffer for the /dev/zero null byte feed. */
 #define ZERO_BUF_SIZE 			1024
 PRIVATE char dev_zero[ZERO_BUF_SIZE];
-
-/* Buffer for the /dev/random number generator. */
-#define RANDOM_BUF_SIZE 		1024
-PRIVATE char random_buf[RANDOM_BUF_SIZE];
-
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
@@ -180,27 +170,6 @@ unsigned nr_req;		/* length of request vector */
 	    }
 	    break;
 
-	/* Random number generator. Character instead of block device. */
-	case RANDOM_DEV:
-	    if (opcode == DEV_GATHER && !random_isseeded())
-		    return(EAGAIN);
-	    left = count;
-	    while (left > 0) {
-	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
- 	        if (opcode == DEV_GATHER) {
-		    random_getbytes(random_buf, chunk);
-	    	    sys_vircopy(SELF, D, (vir_bytes) random_buf, 
-	    	        proc_nr, D, user_vir, chunk);
- 	        } else if (opcode == DEV_SCATTER) {
-	    	    sys_vircopy(proc_nr, D, user_vir, 
-	    	        SELF, D, (vir_bytes) random_buf, chunk);
-	    	        random_putbytes(random_buf, chunk);
- 	        }
- 	        user_vir += chunk;
-	    	left -= chunk;
-	    }
-	    break;
-
 	/* Null byte stream generator. */
 	case ZERO_DEV:
 	    if (opcode == DEV_GATHER) {
@@ -283,9 +252,6 @@ PRIVATE void m_init()
        dev_zero[i] = '\0';
   }
 
-  random_init();
-  m_random(NULL, NULL);				/* also set periodic timer */
-
   /* Set up memory ranges for /dev/mem. */
 #if (CHIP == INTEL)
   if (OK != (s=sys_getmachine(&machine))) {
@@ -358,44 +324,6 @@ message *m_ptr;				/* pointer to control message */
   return(OK);
 }
 
-
-/*============================================================================*
- *				m_random				      *
- *============================================================================*/
-PRIVATE void m_random(dp, m_ptr)
-struct driver *dp;			/* pointer to driver structure */
-message *m_ptr;				/* pointer to alarm message */
-{
-  /* Fetch random information from the kernel to update /dev/random. */
-  int i, s, r_next, r_size, r_high;
-  struct randomness krandom;
-
-  if (OK != (s=sys_getrandomness(&krandom)))
-  	report("MEM", "sys_getrandomness failed", s);
-
-  for (i= 0; i<RANDOM_SOURCES; i++)	
-  {
-  	r_next= krandom.bin[i].r_next;
-  	r_size= krandom.bin[i].r_size;
-  	r_high= r_next+r_size;
-  	if (r_high <= RANDOM_ELEMENTS)
-  	{
-  		random_update(i, &krandom.bin[i].r_buf[r_next], r_size);
-	}
-	else
-	{
-		assert(r_next < RANDOM_ELEMENTS);
-  		random_update(i, &krandom.bin[i].r_buf[r_next],
-  			RANDOM_ELEMENTS-r_next);
-  		random_update(i, &krandom.bin[i].r_buf[0],
-  			r_high-RANDOM_ELEMENTS);
-	}
-  }
-
-  /* Schedule new alarm for next m_random call. */
-  if (OK != (s=sys_setalarm(KRANDOM_PERIOD, 0)))
-  	report("MEM", "sys_setalarm failed", s);
-}
 
 /*============================================================================*
  *				m_geometry				      *

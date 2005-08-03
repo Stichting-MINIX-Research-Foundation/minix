@@ -60,8 +60,6 @@
 #  define KMEM_DEV    2		/* minor device for /dev/kmem */
 #  define NULL_DEV    3		/* minor device for /dev/null */
 #  define BOOT_DEV    4		/* minor device for /dev/boot */
-#  define RANDOM_DEV  5		/* minor device for /dev/(u)random */
-#  define URANDOM_DEV RANDOM_DEV 
 #  define ZERO_DEV    6		/* minor device for /dev/zero */
 
 /* Full device numbers that are special to the boot monitor and FS. */

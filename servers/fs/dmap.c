@@ -47,6 +47,7 @@ struct dmap dmap[NR_DEVICES] = {
   DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*13 = /dev/audio */
   DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*14 = /dev/mixer */
   DT(1,     gen_opcl, gen_io, LOG_PROC_NR, 0)       	  /*15 = /dev/klog  */
+  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*16 = /dev/random */
 #endif /* IBM_PC */
 };
 
