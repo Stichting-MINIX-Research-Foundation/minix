@@ -1578,13 +1578,17 @@ tcp_hdr_t *tcp_hdr;
 
 	if (best_conn)
 	{
-		assert(!best_conn->tc_fd);
 		if (!listen_conn)
+		{
+			assert(!best_conn->tc_fd);
 			return best_conn;
+		}
 
+		assert(listen_conn->tc_connInprogress);
 		tcp_fd= listen_conn->tc_fd;
-		assert(tcp_fd && listen_conn->tc_connInprogress &&
-			tcp_fd->tf_conn == listen_conn);
+		assert(tcp_fd);
+		assert((tcp_fd->tf_flags & TFF_LISTENQ) ||
+			 tcp_fd->tf_conn == listen_conn);
 
 		if (best_conn->tc_state != TCS_CLOSED)
 			tcp_close_connection(best_conn, ENOCONN);
@@ -1818,12 +1822,7 @@ tcp_conn_t *tcp_conn;
 	if (tcp_fd->tf_flags & TFF_LISTENQ)
 	{
 		/* Special code for listen queues */
-		if (tcp_conn->tc_state == TCS_CLOSED)
-		{
-			assert(NOT_IMPLEMENTED);
-			reply= tcp_conn->tc_error;
-			tcp_conn->tc_fd= NULL;
-		}
+		assert(tcp_conn->tc_state != TCS_CLOSED);
 
 		/* Reply for select */
 		if ((tcp_fd->tf_flags & TFF_SEL_READ) &&

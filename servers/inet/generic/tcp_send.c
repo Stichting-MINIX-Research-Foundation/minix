@@ -1300,6 +1300,7 @@ PUBLIC void tcp_close_connection(tcp_conn, error)
 tcp_conn_t *tcp_conn;
 int error;
 {
+	int i;
 	tcp_port_t *tcp_port;
 	tcp_fd_t *tcp_fd;
 	tcp_conn_t *tc;
@@ -1317,8 +1318,25 @@ int error;
 	tcp_conn->tc_state= TCS_CLOSED;
 	DBLOCK(0x10, tcp_print_state(tcp_conn); printf("\n"));
 
-	if (tcp_fd)
+	if (tcp_fd && (tcp_fd->tf_flags & TFF_LISTENQ))
 	{
+		for (i= 0; i<TFL_LISTEN_MAX; i++)
+		{
+			if (tcp_fd->tf_listenq[i] == tcp_conn)
+				break;
+		}
+		assert(i < TFL_LISTEN_MAX);
+		tcp_fd->tf_listenq[i]= NULL;
+
+		assert(tcp_conn->tc_connInprogress);
+		tcp_conn->tc_connInprogress= 0;
+
+		tcp_conn->tc_fd= NULL;
+		tcp_fd= NULL;
+	}
+	else if (tcp_fd)
+	{
+
 		tcp_conn->tc_busy++;
 		assert(tcp_fd->tf_conn == tcp_conn);
 

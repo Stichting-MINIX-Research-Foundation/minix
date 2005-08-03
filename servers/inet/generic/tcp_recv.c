@@ -18,8 +18,6 @@ Copyright 1995 Philip Homburg
 
 THIS_FILE
 
-#define NOT_IMPLEMENTED 0
-
 FORWARD void create_RST ARGS(( tcp_conn_t *tcp_conn,
 	ip_hdr_t *ip_hdr, tcp_hdr_t *tcp_hdr, int data_len ));
 FORWARD void process_data ARGS(( tcp_conn_t *tcp_conn,
@@ -40,7 +38,7 @@ size_t data_len;
 	u32_t seg_ack, seg_seq, rcv_hi, snd_una, snd_nxt;
 	u16_t seg_wnd, mtu;
 	size_t mss;
-	int acceptable_ACK, segm_acceptable, send_rst;
+	int acceptable_ACK, segm_acceptable, send_rst, close_connection;
 
 	ip_hdr_len= (ip_hdr->ih_vers_ihl & IH_IHL_MASK) << 2;
 	tcp_hdr_len= (tcp_hdr->th_data_off & TH_DO_MASK) >> 2;
@@ -329,6 +327,7 @@ SYN-RECEIVED:
 			rcv_hi++;
 		send_rst= tcp_Lmod4G(seg_seq, tcp_conn->tc_IRS) ||
 			tcp_Gmod4G(seg_seq, tcp_conn->tc_RCV_NXT+0x10000);
+		close_connection= 0;
 
 		if (!data_len)
 		{
@@ -396,34 +395,10 @@ SYN-RECEIVED:
 			error "connection refused"
 			exit
 */
+
 		if (tcp_hdr_flags & THF_RST)
-		{
-			if (tcp_conn->tc_orglisten)
-			{
-				assert(NOT_IMPLEMENTED);
-				connuser= tcp_conn->tc_fd;
+			close_connection= 1;
 
-				tcp_conn->tc_connInprogress= 0;
-				tcp_conn->tc_fd= NULL;
-
-				tcp_close_connection (tcp_conn, ECONNREFUSED);
-
-				/* Pick a new ISS next time */
-				tcp_conn->tc_ISS= 0;
-
-				if (connuser)
-				{
-					(void)tcp_su4listen(connuser, tcp_conn,
-						0 /* !do_listenq */);
-				}
-				break;
-			}
-			else
-			{
-				tcp_close_connection(tcp_conn, ECONNREFUSED);
-				break;
-			}
-		}
 /*
 	SYN in window ?
 		initiated by a LISTEN ?
@@ -437,24 +412,38 @@ SYN-RECEIVED:
 		if ((tcp_hdr_flags & THF_SYN) && tcp_GEmod4G(seg_seq,
 			tcp_conn->tc_RCV_NXT))
 		{
-			if (tcp_conn->tc_orglisten)
+			close_connection= 1;
+		}
+
+		if (close_connection)
+		{
+			if (!tcp_conn->tc_orglisten)
 			{
-				assert(NOT_IMPLEMENTED);
+				tcp_close_connection(tcp_conn, ECONNREFUSED);
+				break;
+			}
 
-				connuser= tcp_conn->tc_fd;
-
+			connuser= tcp_conn->tc_fd;
+			assert(connuser);
+			if (connuser->tf_flags & TFF_LISTENQ)
+			{
+				tcp_close_connection (tcp_conn,
+					ECONNREFUSED);
+			}
+			else
+			{
 				tcp_conn->tc_connInprogress= 0;
 				tcp_conn->tc_fd= NULL;
 
-				tcp_close_connection(tcp_conn, ECONNRESET);
-				if (connuser)
-				{
-					(void)tcp_su4listen(connuser, tcp_conn,
-						0 /* !do_listenq */);
-				}
-				break;
+				tcp_close_connection (tcp_conn,
+					ECONNREFUSED);
+
+				/* Pick a new ISS next time */
+				tcp_conn->tc_ISS= 0;
+
+				(void)tcp_su4listen(connuser, tcp_conn,
+					0 /* !do_listenq */);
 			}
-			tcp_close_connection(tcp_conn, ECONNRESET);
 			break;
 		}
 /*
