@@ -420,6 +420,7 @@ char *device;
   int fd;
   struct partition entry;
   block_t d;
+  struct stat st;
 
   if ((fd = open(device, O_RDONLY)) == -1) {
   	perror("sizeup open");
@@ -427,7 +428,13 @@ char *device;
   }
   if (ioctl(fd, DIOCGETP, &entry) == -1) {
   	perror("sizeup ioctl");
-  	entry.size = cvu64(0);
+  	if(fstat(fd, &st) < 0) {
+  		perror("fstat");
+	  	entry.size = cvu64(0);
+  	} else {
+  		fprintf(stderr, "used fstat instead\n");
+	  	entry.size = cvu64(st.st_size);
+  	}
   }
   close(fd);
   d = div64u(entry.size, block_size);
@@ -594,8 +601,9 @@ ino_t parent;
 		if ((f = open(token[4], O_RDONLY)) < 0) {
 			fprintf(stderr, "%s: Can't open %s: %s\n",
 				progname, token[4], strerror(errno));
-		} else
+		} else {
 			eat_file(n, f);
+		}
 	}
   }
 
@@ -827,7 +835,10 @@ ino_t n;
 {
   /* Increment the link count to inode n */
   int off;
+  static int enter = 0;
   block_t b;
+
+  if(enter) exit(1);
 
   b = ((n - 1) / inodes_per_block) + inode_offset;
   off = (n - 1) % inodes_per_block;
@@ -838,17 +849,18 @@ ino_t n;
 	inode1[off].d1_nlinks++;
 	put_block(b, (char *) inode1);
   } else {
-	d2_inode *inode2;
+	static d2_inode *inode2 = NULL;
+	int n;
 
-	if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size))))
+	n = sizeof(*inode2) * V2_INODES_PER_BLOCK(block_size);
+	if(!inode2 && !(inode2 = malloc(n)))
 		pexit("couldn't allocate a block of inodes");
 
 	get_block(b, (char *) inode2);
 	inode2[off].d2_nlinks++;
 	put_block(b, (char *) inode2);
-
-	free(inode2);
   }
+  enter = 0;
 }
 
 
@@ -870,7 +882,7 @@ long count;
 	put_block(b, (char *) inode1);
   } else {
 	d2_inode *inode2;
-	if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size))))
+	if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size) * sizeof(*inode2))))
 		pexit("couldn't allocate a block of inodes");
 
 	get_block(b, (char *) inode2);
@@ -892,7 +904,10 @@ int mode, usrid, grpid;
   block_t b;
 
   num = next_inode++;
-  if (num > nrinodes) pexit("File system does not have enough inodes");
+  if (num > nrinodes) {
+  	fprintf(stderr, "have %d inodoes\n", nrinodes);
+  	pexit("File system does not have enough inodes");
+  }
   b = ((num - 1) / inodes_per_block) + inode_offset;
   off = (num - 1) % inodes_per_block;
   if (fs_version == 1) {
@@ -906,7 +921,7 @@ int mode, usrid, grpid;
   } else {
 	d2_inode *inode2;
 
-	if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size))))
+	if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size) * sizeof(*inode2))))
 		pexit("couldn't allocate a block of inodes");
 
 	get_block(b, (char *) inode2);
@@ -1117,7 +1132,7 @@ void print_fs()
   block_t b, inode_limit;
   struct direct *dir;
 
-  if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size))))
+  if(!(inode2 = malloc(V2_INODES_PER_BLOCK(block_size) * sizeof(*inode2))))
 	pexit("couldn't allocate a block of inodes");
 
   if(!(dir = malloc(NR_DIR_ENTRIES(block_size)*sizeof(*dir))))
