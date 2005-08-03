@@ -546,7 +546,6 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 	    && mp->mp_effuid != rmp->mp_realuid
 	    && mp->mp_realuid != rmp->mp_effuid
 	    && mp->mp_effuid != rmp->mp_effuid) {
-  DEBUG(m_in.pid == 11, printf("PM: check_sig, EPERM\n"));
 		error_code = EPERM;
 		continue;
 	}
@@ -558,7 +557,6 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 	 * signal may be caught, blocked, ignored, or cause process
 	 * termination, possibly with core dump.
 	 */
-  DEBUG(m_in.pid == 11, printf("PM: calling sig_proc with signo %d\n", signo));
 	sig_proc(rmp, signo);
 
 	if (proc_id > 0) break;	/* only one process being signaled */

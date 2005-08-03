@@ -7,6 +7,8 @@ and 82562 fast ethernet controllers.
 Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
 */
 
+#define VERBOSE 	0	/* display output during intialization */
+
 /* Revisions in PCI_REV */
 #define FXP_REV_82557A		0x01
 #define FXP_REV_82557B		0x02

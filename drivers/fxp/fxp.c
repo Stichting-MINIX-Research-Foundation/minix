@@ -533,10 +533,12 @@ fxp_t *fp;
 	}
 
 	dname= pci_dev_name(vid, did);
+#if VERBOSE
 	if (!dname)
 		dname= "unknown device";
 	printf("%s: %s (%04x/%04x) at %s\n",
 		fp->fxp_name, dname, vid, did, pci_slot_name(devind));
+#endif
 	pci_reserve(devind);
 
 	bar= pci_attr_r32(devind, PCI_BAR_2) & 0xffffffe0;
@@ -582,10 +584,12 @@ fxp_t *fp;
 	case FXP_REV_82551_2:	str= "82551(2)"; break;		/* 0x10 */
 	}
 
+#if VERBOSE
 	if (str)
 		printf("%s: device revision: %s\n", fp->fxp_name, str);
 	else
 		printf("%s: unknown revision: 0x%x\n", fp->fxp_name, rev);
+#endif
 
 	if (fp->fxp_type == FT_UNKNOWN)
 	{
@@ -660,9 +664,11 @@ fxp_t *fp;
 	fp->fxp_conf_bytes[20]= CCB20_PFCL | CCB20_RES1;
 	fp->fxp_conf_bytes[21]= CCB21_RES21;
 
+#if VERBOSE
 	for (i= 0; i<CC_BYTES_NR; i++)
 		printf("%d: %0x, ", i, fp->fxp_conf_bytes[i]);
 	printf("\n");
+#endif
 
 	mwi= 0;		/* Do we want "Memory Write and Invalidate"? */
 	ext_stat1= 0;	/* Do we want extended statistical counters? */
@@ -706,9 +712,11 @@ fxp_t *fp;
 		panic("FXP","fxp_conf_hw: bad device type", fp->fxp_type);
 	}
 
+#if VERBOSE
 	for (i= 0; i<CC_BYTES_NR; i++)
 		printf("%d: %0x, ", i, fp->fxp_conf_bytes[i]);
 	printf("\n");
+#endif
 }
 
 
@@ -930,8 +938,6 @@ fxp_t *fp;
 
 #if 0
 	if (i != 0 && i != 6) env_panic(eakey);	/* It's all or nothing */
-#else
-	printf("not checking for env_panic\n");
 #endif
 
 	if (i == 0)
@@ -970,6 +976,7 @@ fxp_t *fp;
 	if (!(ias.ias_status & CBL_F_OK))
 		panic("FXP","fxp_confaddr: CU command failed", NO_NUM);
 
+#if VERBOSE
 	printf("%s: hardware ethernet address: ", fp->fxp_name);
 	for (i= 0; i<6; i++)
 	{
@@ -977,6 +984,7 @@ fxp_t *fp;
 			i < 5 ? ":" : "");
 	}
 	printf("\n");
+#endif
 }
 
 /*===========================================================================*
@@ -1910,7 +1918,9 @@ fxp_t *fp;
 	fp->fxp_link_up= link_up;
 	if (!link_up)
 	{
+#if VERBOSE
 		printf("%s: link down\n", fp->fxp_name);
+#endif
 		return;
 	}
 
@@ -1920,7 +1930,9 @@ fxp_t *fp;
 	model= ((mii_id2 & MII_PL_MODEL_MASK) >> MII_PL_MODEL_SHIFT);
 	rev= (mii_id2 & MII_PL_REV_MASK);
 
+#if VERBOSE
 	printf("OUI 0x%06lx, Model 0x%02x, Revision 0x%x\n", oui, model, rev);
+#endif
 
 	if (mii_ctrl & (MII_CTRL_LB|MII_CTRL_PD|MII_CTRL_ISO))
 	{
@@ -2309,8 +2321,10 @@ fxp_t *fp;
 	fxp_outb(port, CSR_EEPROM, 0);	/* Disable EEPROM */
 	micro_delay(EECS_DELAY);
 
+#if VERBOSE
 	printf("%s EEPROM address length: %d\n",
 		fp->fxp_name, fp->fxp_ee_addrlen);
+#endif
 }
 
 
@@ -2377,8 +2391,10 @@ tmr_func_t watchdog;			/* watchdog function to be called */
 		fxp_timers->tmr_exp_time < fxp_next_timeout)
 	{
 		fxp_next_timeout= fxp_timers->tmr_exp_time; 
+#if VERBOSE
 		printf("fxp_set_timer: calling sys_setalarm for %d (now+%d)\n",
 			fxp_next_timeout, fxp_next_timeout-now);
+#endif
 		r= sys_setalarm(fxp_next_timeout, 1);
 		if (r != OK)
 			panic("FXP","unable to set synchronous alarm", r);

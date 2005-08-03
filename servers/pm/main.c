@@ -260,7 +260,7 @@ PRIVATE void pm_init()
   total_clicks = minix_clicks + free_clicks;
   printf(" total %u KB,", click_to_round_k(total_clicks));
   printf(" system %u KB,", click_to_round_k(minix_clicks));
-  printf(" available %u KB.\n", click_to_round_k(free_clicks));
+  printf(" free %u KB.\n", click_to_round_k(free_clicks));
 }
 
 

@@ -162,8 +162,8 @@ PUBLIC int do_reboot()
 	return(EINVAL);
   }
 
-  tell_fs(REBOOT,0,0,0);		/* tell FS to prepare for shutdown */
   check_sig(-1, SIGKILL); 		/* kill all processes except init */
+  tell_fs(REBOOT,0,0,0);		/* tell FS to prepare for shutdown */
 
   /* Ask the kernel to abort. All system services, including the PM, will 
    * get a HARD_STOP notification. Await the notification in the main loop.
@@ -234,19 +234,8 @@ PUBLIC int do_svrctl()
   req = m_in.svrctl_req;
   ptr = (vir_bytes) m_in.svrctl_argp;
 
-  /* Is the request for the kernel? Forward it, except for SYSGETENV. */
-  if (((req >> 8) & 0xFF) == 'S') {
-
-      /* Binary compatibility check. */
-      if (req == SYSGETENV) {
-	printf("SYSGETENV by %d (fix!)\n", who);
-  	req = MMGETPARAM;
-      }
-      else 
-
-      /* Simply forward call to the SYSTEM task. */
-      return(sys_svrctl(who, req, mp->mp_effuid == SUPER_USER, ptr));
-  }
+  /* Is the request indeed for the MM? */
+  if (((req >> 8) & 0xFF) != 'M') return(EINVAL);
 
   /* Control operations local to the PM. */
   switch(req) {
@@ -324,37 +313,6 @@ PUBLIC int do_svrctl()
 
       return OK;
   }
-  case MMSIGNON: {
-#if DEAD_CODE
-	/* A user process becomes a task.  Simulate an exit by
-	 * releasing a waiting parent and disinheriting children.
-	 */
-	struct mproc *rmp;
-	pid_t pidarg;
-
-	if (mp->mp_effuid != SUPER_USER) return(EPERM);
-
-	rmp = &mproc[mp->mp_parent];
-	tell_fs(EXIT, who, 0, 0);
-
-	pidarg = rmp->mp_wpid;
-	if ((rmp->mp_flags & WAITING) && (pidarg == -1
-		|| pidarg == mp->mp_pid || -pidarg == mp->mp_procgrp))
-	{
-		/* Wake up the parent. */
-		rmp->mp_reply.reply_res2 = 0;
-		setreply(mp->mp_parent, mp->mp_pid);
-		rmp->mp_flags &= ~WAITING;
-	}
-
-	/* Disinherit children. */
-	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if ((rmp->mp_flags & IN_USE) && rmp->mp_parent == who) {
-			rmp->mp_parent = INIT_PROC_NR;
-		}
-	}
-#endif
-	return(OK); }
 
 #if ENABLE_SWAP
   case MMSWAPON: {

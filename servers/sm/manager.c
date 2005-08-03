@@ -80,14 +80,16 @@ PUBLIC int do_start(message *m_ptr)
           dev_style = STYLE_DEV;
           if ((s=mapdriver(child_proc_nr, major_nr, dev_style)) < 0) {
 	     
+#if VERBOSE
       printf("SM: '%s %s', major %d, pid %d, proc_nr %d", 
           command, arg_buf, major_nr, child_pid, child_proc_nr);
+#endif
              report("SM", "couldn't map driver", errno);
           }
       }
       if ((s = _taskcall(SYSTEM, SYS_PRIVCTL, &m)) < 0) /* set privileges */
           report("SM", "_taskcall to SYSTEM failed", s); /* to let child run */
-#if DEAD_CODE
+#if VERBOSE
       printf("SM: started '%s %s', major %d, pid %d, proc_nr %d", 
           command, arg_buf, major_nr, child_pid, child_proc_nr);
 #endif
@@ -113,7 +115,9 @@ PUBLIC int do_exit(message *m_ptr)
   pid_t exit_pid;
   int exit_status;
 
+#if VERBOSE
   printf("SM: got SIGCHLD signal, doing wait to get exited child.\n");
+#endif
 
   /* See which child exited and what the exit status is. This is done in a
    * loop because multiple childs may have exited, all reported by one 
@@ -122,12 +126,15 @@ PUBLIC int do_exit(message *m_ptr)
    */
   while ( (exit_pid = waitpid(-1, &exit_status, WNOHANG)) != 0 ) {
 
+#if VERBOSE
   	printf("SM: pid %d,", exit_pid); 
   	if (WIFSIGNALED(exit_status)) {
   		printf("killed, signal number %d\n", WTERMSIG(exit_status));
   	} else if (WIFEXITED(exit_status)) {
   		printf("normal exit, status %d\n", WEXITSTATUS(exit_status));
   	}
+#endif
+
   }
   return(OK);
 }
