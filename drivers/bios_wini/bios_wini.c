@@ -38,7 +38,7 @@
 /* Parameters for the disk drive. */
 #define MAX_DRIVES         4	/* this driver supports 4 drives (d0 - d3)*/
 #define MAX_SECS	 255	/* bios can transfer this many sectors */
-#define NR_DEVICES      (MAX_DRIVES * DEV_PER_DRIVE)
+#define NR_MINORS      (MAX_DRIVES * DEV_PER_DRIVE)
 #define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 
@@ -108,7 +108,7 @@ int device;
 {
 /* Prepare for I/O on a device. */
 
-  if (device < NR_DEVICES) {			/* d0, d0p[0-3], d1, ... */
+  if (device < NR_MINORS) {			/* d0, d0p[0-3], d1, ... */
 	w_drive = device / DEV_PER_DRIVE;	/* save drive number */
 	w_wn = &wini[w_drive];
 	w_dv = &w_wn->part[device % DEV_PER_DRIVE];

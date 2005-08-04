@@ -22,7 +22,7 @@
  * include 'boot_image' (this file) and 'idt' and 'gdt' (protect.c). 
  *
  * Changes:
- *    Nov 10, 2004   removed controller->driver mappings  (Jorrit N. Herder)
+ *    Aug 02, 2005   minimal boot image and cleanup  (Jorrit N. Herder)
  *    Oct 17, 2004   updated above and tasktab comments  (Jorrit N. Herder)
  *    May 01, 2004   changed struct for system image  (Jorrit N. Herder)
  */
@@ -37,26 +37,26 @@
 /* Define stack sizes for the kernel tasks included in the system image. */
 #define NO_STACK	0
 #define SMALL_STACK	(128 * sizeof(char *))
-#define IDLE_S		SMALL_STACK	/* 3 intr, 3 temps, 4 db for Intel */
-#define	HRDW_S		NO_STACK	/* dummy task, uses kernel stack */
-#define	TASK_S		SMALL_STACK	/* system and clock task */
+#define IDL_S	SMALL_STACK	/* 3 intr, 3 temps, 4 db for Intel */
+#define	HRD_S	NO_STACK	/* dummy task, uses kernel stack */
+#define	TSK_S	SMALL_STACK	/* system and clock task */
 
 /* Stack space for all the task stacks.  Declared as (char *) to align it. */
-#define	TOT_STACK_SPACE	(IDLE_S + HRDW_S + (2 * TASK_S))
+#define	TOT_STACK_SPACE	(IDL_S + HRD_S + (2 * TSK_S))
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 	
 /* Define flags for the various process types. */
-#define IDLE_F 		(BILLABLE | SYS_PROC)		/* idle task */
-#define TASK_F 		(SYS_PROC)			/* kernel tasks */
-#define SERV_F 		(PREEMPTIBLE | SYS_PROC)	/* system services */
-#define USER_F		(PREEMPTIBLE | BILLABLE)	/* user processes */
+#define IDL_F 	(BILLABLE | SYS_PROC)		/* idle task */
+#define TSK_F 	(SYS_PROC)			/* kernel tasks */
+#define SRV_F 	(PREEMPTIBLE | SYS_PROC)	/* system services */
+#define USR_F	(PREEMPTIBLE | BILLABLE)	/* user processes */
 
 /* Define system call traps for the various process types. These call masks
  * determine what system call traps a process is allowed to make.
  */
-#define TASK_T		(1 << RECEIVE)			/* clock and system */
-#define SERV_T		(~0)				/* system services */
-#define USER_T          ((1 << SENDREC) | (1 << ECHO))	/* user processes */
+#define TSK_T	(1 << RECEIVE)			/* clock and system */
+#define SRV_T	(~0)				/* system services */
+#define USR_T   ((1 << SENDREC) | (1 << ECHO))	/* user processes */
 
 /* Send masks determine to whom processes can send messages or notifications. 
  * The values here are used for the processes in the boot image. We rely on 
@@ -69,11 +69,10 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * "BITCHUNK_BITS - NR_TASKS", because a bitchunk_t field is used to store 
  * the send masks in the table that describes that processes in the image.  
  */
-#define SERV_M		(~0)
-#define SYST_M		(~0)
-#define USER_M		(s(PM_PROC_NR)|s(FS_PROC_NR)|s(SM_PROC_NR))
-#define DRIV_M		(USER_M | \
-			 s(SYSTEM)|s(CLOCK)|s(LOG_PROC_NR)|s(TTY_PROC_NR))
+#define SRV_M	(~0)
+#define SYS_M	(~0)
+#define USR_M	(s(PM_PROC_NR)|s(FS_PROC_NR)|s(SM_PROC_NR))
+#define DRV_M	(USR_M | s(SYSTEM)|s(CLOCK)|s(LOG_PROC_NR)|s(TTY_PROC_NR))
 
 /* Sanity check to make sure the send masks can be set. */
 extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];
@@ -87,19 +86,19 @@ extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];
  * initial program counter and stack size is also provided for kernel tasks.
  */
 PUBLIC struct boot_image image[] = {
-/* process nr,    pc,  flags, qs,  queue,  stack,  traps, ipc mask,  name */ 
- { IDLE,   idle_task, IDLE_F, 32, IDLE_Q, IDLE_S,      0,      0, "IDLE"   },
- { CLOCK, clock_task, TASK_F,  0, TASK_Q, TASK_S, TASK_T,      0, "CLOCK"  },
- { SYSTEM,  sys_task, TASK_F,  0, TASK_Q, TASK_S, TASK_T,      0, "SYSTEM" },
- { HARDWARE,       0, TASK_F,  0, TASK_Q, HRDW_S,      0,      0, "KERNEL" },
- { PM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SERV_M, "pm"     },
- { FS_PROC_NR,     0, SERV_F, 16,      4, 0,      SERV_T, SERV_M, "fs"     },
- { SM_PROC_NR,     0, SERV_F, 16,      3, 0,      SERV_T, SYST_M, "sm"     },
- { TTY_PROC_NR,    0, SERV_F, 16,      1, 0,      SERV_T, SYST_M, "tty"    },
- { MEM_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "memory" },
- { LOG_PROC_NR,    0, SERV_F, 16,      2, 0,      SERV_T, SYST_M, "log"    },
- { DRVR_PROC_NR,   0, SERV_F, 16,      2, 0,      SERV_T, DRIV_M, "driver" },
- { INIT_PROC_NR,   0, USER_F,  8, USER_Q, 0,      USER_T, USER_M, "init"   },
+/* process nr,   pc, flags, qs,  queue, stack, traps,   ipc, sys,  name */ 
+ { IDLE,  idle_task, IDL_F, 32, IDLE_Q, IDL_S,     0,     0,   0, "IDLE"   },
+ { CLOCK,clock_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,   0, "CLOCK"  },
+ { SYSTEM, sys_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,   0, "SYSTEM" },
+ { HARDWARE,      0, TSK_F,  0, TASK_Q, HRD_S,     0,     0,   0, "KERNEL" },
+ { PM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SRV_M,  ~0, "pm"     },
+ { FS_PROC_NR,    0, SRV_F, 16,      4, 0,     SRV_T, SRV_M,  ~0, "fs"     },
+ { SM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SYS_M,  ~0, "sm"     },
+ { TTY_PROC_NR,   0, SRV_F, 16,      1, 0,     SRV_T, SYS_M,  ~0, "tty"    },
+ { MEM_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, DRV_M,  ~0, "memory" },
+ { LOG_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, SYS_M,  ~0, "log"    },
+ { DRVR_PROC_NR,  0, SRV_F, 16,      2, 0,     SRV_T, DRV_M,  ~0, "driver" },
+ { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     USR_T, USR_M,   0, "init"   },
 };
 
 /* Verify the size of the system image table at compile time. If the number 

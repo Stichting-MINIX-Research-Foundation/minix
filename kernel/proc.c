@@ -13,12 +13,12 @@
  *   lock_sched:      a process has run too long; schedule another one
  *
  * Changes:
- *   Jul 25, 2005     better protection in sys_call()  (Jorrit N. Herder)
- *   May 26, 2005     optimized message passing functions  (Jorrit N. Herder)
+ *   Jul 25, 2005     protection and checks in sys_call()  (Jorrit N. Herder)
+ *   May 26, 2005     rewrite of message passing functions  (Jorrit N. Herder)
  *   May 24, 2005     new, queued NOTIFY system call  (Jorrit N. Herder)
  *   Oct 28, 2004     new, non-blocking SEND and RECEIVE  (Jorrit N. Herder)
  *   Oct 28, 2004     rewrite of sys_call() function  (Jorrit N. Herder)
- *   Aug 19, 2004     generalized multilevel scheduling  (Jorrit N. Herder)
+ *   Aug 19, 2004     rewrite of multilevel scheduling  (Jorrit N. Herder)
  *
  * The code here is critical to make everything work and is important for the
  * overall performance of the system. A large fraction of the code deals with

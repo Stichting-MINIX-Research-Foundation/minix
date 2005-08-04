@@ -7,9 +7,6 @@
  *    m4_l1:	SEG_SELECT	(return segment selector here)
  *    m4_l2:	SEG_OFFSET	(return offset within segment here)
  *    m4_l5:	SEG_INDEX	(return index into remote memory map here)
- *
- * Author:
- *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 #include "../system.h"
 #include "../protect.h"

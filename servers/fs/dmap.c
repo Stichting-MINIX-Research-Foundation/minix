@@ -117,37 +117,50 @@ int style;			/* style of the device */
 }
 
 /*===========================================================================*
- *				map_controllers		 		     *
+ *				map_controller		 		     *
  *===========================================================================*/
-PUBLIC void map_controllers()
+PUBLIC void map_controller()
 {
-/* Map the boot drivers to a controller and update the dmap table to that
+/* Map the boot driver to a controller and update the dmap table to that
  * selection. The boot driver and the controller it handles are set at the
  * boot monitor.  
  */
   char driver[16];
   char *controller = "c##";
-  int number;
+  int nr, major = -1;
   int i,s;
+
+  /* Get settings of 'controller' and 'driver' at the boot monitor. */
   if ((s = get_mon_param("label", driver, sizeof(driver))) != OK) 
       panic(__FILE__,"couldn't get boot monitor parameter 'driver'", s);
   if ((s = get_mon_param("controller", controller, sizeof(controller))) != OK) 
       panic(__FILE__,"couldn't get boot monitor parameter 'controller'", s);
-  if (controller[0] != 'c' || ! isdigit(controller[1]))
-      panic(__FILE__,"monitor parameter 'controller' syntax is 'c#'", NO_NUM); 
-  if ((number = (unsigned) atoi(&controller[1])) > NR_CTRLRS)
-      panic(__FILE__,"monitor parameter 'controller' maximum is", NR_CTRLRS);
-  
-  for (i=0; i< NR_DEVICES; i++) {		/* find controller */
-      if (dmap[i].dmap_driver == CTRLR(number)) {  
-          if ((s=map_driver(i, DRVR_PROC_NR, STYLE_DEV)) != OK)
-              panic(__FILE__,"map_driver failed",s);
-  printf("Boot medium driver: %s driver mapped onto controller c%d.\n",
-      driver, number);
-          return;				/* success! */
+
+  /* Determine major number to map driver onto. */
+  if (controller[0] == 'f' && controller[1] == 'd') {
+      major = FLOPPY_MAJOR;
+  } 
+  else if (controller[0] == 'c' && isdigit(controller[1])) {
+      if ((nr = (unsigned) atoi(&controller[1])) > NR_CTRLRS)
+          panic(__FILE__,"monitor 'controller' maximum 'c#' is", NR_CTRLRS);
+      for (i=0; i< NR_DEVICES; i++) {		/* find controller */
+          if (dmap[i].dmap_driver == CTRLR(nr)) {  
+              major = i;
+              break;
+          }
       }
+      if ((unsigned) major >= NR_DEVICES)
+          panic(__FILE__, "cannot find controller in dmap, number", nr);
+  } 
+  else {
+      panic(__FILE__,"monitor 'controller' syntax is 'c#' of 'fd'", NO_NUM); 
   }
-  panic(__FILE__, "cannot find controller in dmap, number", number);
+  
+  /* Now try to set the actual mapping and report to the user. */
+  if ((s=map_driver(i, DRVR_PROC_NR, STYLE_DEV)) != OK)
+      panic(__FILE__,"map_driver failed",s);
+  printf("Boot medium driver: %s driver mapped onto controller %s.\n",
+      driver, controller);
 }
 
 

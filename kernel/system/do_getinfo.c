@@ -7,9 +7,6 @@
  *    m1_i1:	I_VAL_LEN 	(maximum length expected, optional)	
  *    m1_p2:	I_VAL_PTR2	(second, optional pointer)	
  *    m1_i2:	I_VAL_LEN2	(second length or process nr)	
- * 
- * Author:
- *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 
 #include "../system.h"

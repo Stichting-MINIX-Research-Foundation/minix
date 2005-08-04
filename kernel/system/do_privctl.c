@@ -48,7 +48,7 @@ message *m_ptr;			/* pointer to request message */
    */
   if ((i=get_priv(rp, SYS_PROC)) != OK) return(i);
   priv_id = priv(rp)->s_id;			/* backup privilege id */
-  *priv(rp) = *priv(caller_ptr);		/* copy privileges */
+  *priv(rp) = *priv(caller_ptr);		/* copy from caller */
   priv(rp)->s_id = priv_id;			/* restore privilege id */
   priv(rp)->s_proc_nr = proc_nr;		/* reassociate process nr */
 

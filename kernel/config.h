@@ -5,7 +5,8 @@
  * kernel buffers and to enable or disable debugging code, timing features, 
  * and individual kernel calls.
  *
- *				Created: Jul 11, 2005   Jorrit N. Herder
+ * Changes:
+ *   Jul 11, 2005	Created.  (Jorrit N. Herder)
  */
 
 /* In embedded and sensor applications, not all the kernel calls may be

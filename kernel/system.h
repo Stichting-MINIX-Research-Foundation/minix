@@ -13,6 +13,7 @@
 
 /* Common includes for the system library. */
 #include "kernel.h"
+#include "proto.h"
 #include "proc.h"
 
 /* Default handler for unused kernel calls. */

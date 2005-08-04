@@ -297,8 +297,5 @@ PUBLIC unsigned long read_clock()
 
 #endif /* (CHIP == INTEL) */
 
-#if (CHIP == M68000)
-/* Initialize the timer C in the MFP 68901: implement init_clock() here. */
-#endif /* (CHIP == M68000) */
 
 

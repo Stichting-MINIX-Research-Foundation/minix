@@ -17,14 +17,15 @@
  *   umap_local:	map virtual address in LOCAL_SEG to physical 
  *   umap_remote:	map virtual address in REMOTE_SEG to physical 
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
- *   numap_local:	umap_local D segment from proc nr instead of pointer
  *   virtual_copy:	copy bytes from one virtual address to another 
  *   get_randomness:	accumulate randomness in a buffer
  *
  * Changes:
+ *   2004 to 2005   many new system calls (see system.h)  (Jorrit N. Herder)
+ *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
+ *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)
  *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
- *   2004 to 2005   various new syscalls (see system.h)  (Jorrit N. Herder)
  */
 
 #include "kernel.h"
@@ -121,11 +122,12 @@ PRIVATE void initialize(void)
       call_vec[i] = do_unused;
   }
 
+  /* Process management. */
   map(SYS_FORK, do_fork); 		/* a process forked a new process */
-  map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_EXEC, do_exec);		/* update process after execute */
   map(SYS_EXIT, do_exit);		/* clean up after process exit */
   map(SYS_NICE, do_nice);		/* set scheduling priority */
+  map(SYS_PRIVCTL, do_privctl);		/* system privileges control */
   map(SYS_TRACE, do_trace);		/* request a trace operation */
 
   /* Signal handling. */
@@ -135,22 +137,17 @@ PRIVATE void initialize(void)
   map(SYS_SIGSEND, do_sigsend);		/* start POSIX-style signal */
   map(SYS_SIGRETURN, do_sigreturn);	/* return from POSIX-style signal */
 
-  /* Clock functionality. */
-  map(SYS_TIMES, do_times);		/* get uptime and process times */
-  map(SYS_SETALARM, do_setalarm);	/* schedule a synchronous alarm */
-
   /* Device I/O. */
   map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */ 
   map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */ 
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
-  map(SYS_INT86, do_int86);  		/* BIOS call */ 
+  map(SYS_INT86, do_int86);  		/* real-mode BIOS calls */ 
 
-  /* System control. */
-  map(SYS_ABORT, do_abort);		/* abort MINIX */
-  map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
-  map(SYS_PRIVCTL, do_privctl);		/* system privileges control */
+  /* Memory management. */
+  map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
+  map(SYS_MEMSET, do_memset);		/* write char to memory area */
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
@@ -158,7 +155,14 @@ PRIVATE void initialize(void)
   map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
   map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
-  map(SYS_MEMSET, do_memset);		/* write char to memory area */
+
+  /* Clock functionality. */
+  map(SYS_TIMES, do_times);		/* get uptime and process times */
+  map(SYS_SETALARM, do_setalarm);	/* schedule a synchronous alarm */
+
+  /* System control. */
+  map(SYS_ABORT, do_abort);		/* abort MINIX */
+  map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
 }
 
 
@@ -184,6 +188,7 @@ int proc_type;				/* system or user process flag */
   } else {
       rc->p_priv = &priv[USER_PRIV_ID];		/* use shared slot */
       rc->p_priv->s_proc_nr = INIT_PROC_NR;	/* set association */
+      rc->p_priv->s_flags = 0;			/* no initial flags */
   }
   return(OK);
 }
@@ -195,21 +200,18 @@ int proc_type;				/* system or user process flag */
 PUBLIC void get_randomness(source)
 int source;
 {
-/* Gather random information with help of the CPU's cycle counter. Only use 
- * the lowest bytes because the highest bytes won't differ that much. 
- */ 
+/* On machines with the RDTSC (cycle counter read instruction - pentium
+ * and up), use that for high-resolution raw entropy gathering. Otherwise,
+ * use the realtime clock (tick resolution).
+ *
+ * Unfortunately this test is run-time - we don't want to bother with
+ * compiling different kernels for different machines.
+ *
+ * On machines without RDTSC, we use read_clock().
+ */
   int r_next;
   unsigned long tsc_high, tsc_low;
 
-  /* On machines with the RDTSC (cycle counter read instruction - pentium
-   * and up), use that for high-resolution raw entropy gathering. Otherwise,
-   * use the realtime clock (tick resolution).
-   *
-   * Unfortunately this test is run-time - we don't want to bother with
-   * compiling different kernels for different machines..
-   *
-   * On machines without RDTSC, we use read_clock().
-   */
   source %= RANDOM_SOURCES;
   r_next= krandom.bin[source].r_next;
   if(machine.processor > 486) {
@@ -300,7 +302,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
   else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
   	return (phys_bytes) vir_addr;
 
-#if DEAD_CODE	/* brutal fix for QEMU and Bochs, if above doesn't work */
+#if DEAD_CODE	/* brutal fix, if the above is too restrictive */
   if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
   	return (phys_bytes) vir_addr;
 #endif
@@ -366,22 +368,6 @@ vir_bytes bytes;		/* # of bytes to be copied */
   pa += (phys_bytes)rp->p_memmap[seg].mem_phys << CLICK_SHIFT;
   return(pa);
 #endif
-}
-
-/*==========================================================================*
- *				numap_local				    *
- *==========================================================================*/
-PUBLIC phys_bytes numap_local(proc_nr, vir_addr, bytes)
-int proc_nr;			/* process number to be mapped */
-vir_bytes vir_addr;		/* virtual address in bytes within D seg */
-vir_bytes bytes;		/* # of bytes required in segment  */
-{
-/* Do umap_local() starting from a process number instead of a pointer.  
- * This function is used by device drivers, so they need not know about the
- * process table.  To save time, there is no 'seg' parameter. The segment
- * is always D.
- */
-  return(umap_local(proc_addr(proc_nr), D, vir_addr, bytes));
 }
 
 

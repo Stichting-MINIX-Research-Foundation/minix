@@ -1,6 +1,9 @@
 #ifndef IPC_H
 #define IPC_H
 
+/* This header file defines constants for MINIX inter-process communication.
+ * These definitions are used in the file proc.c.
+ */
 #include <minix/com.h>
 
 /* Masks and flags for system calls. */

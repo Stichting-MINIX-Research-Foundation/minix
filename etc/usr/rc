@@ -62,9 +62,9 @@ start)
     # Cleanup.
     rm -rf /tmp/. /usr/run/. /usr/spool/lpd/. /usr/spool/locks/.
 
-    echo -n "Starting "
+    # Start servers and drivers set at the boot monitor.
+    echo -n "Starting services:"
     up random "" /dev/random
-    echo .
 
     # load random number generator
     if [ -f $RANDOM_FILE ]
@@ -74,11 +74,14 @@ start)
     	dd if=/dev/random of=$RANDOM_FILE bs=1024 count=1 2> /dev/null
     fi
 
-    # Start servers and drivers set at the boot monitor.
-    echo -n "Starting services:"
-    up rtl8139 ""
-    up fxp ""
-    up dpeth ""
+    # start only network drivers that are in use
+    for driver in rtl8139 fxp dpeth
+    do
+        if grep " $driver " /etc/inet.conf > /dev/null 
+        then 
+            up $driver 
+        fi
+    done
     up inet ""
     up is ""
     up printer "" /dev/lp

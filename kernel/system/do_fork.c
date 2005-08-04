@@ -32,20 +32,6 @@ register message *m_ptr;	/* pointer to request message */
   rpc = proc_addr(m_ptr->PR_PROC_NR);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
 
-#if DEAD_CODE
-  /* If the parent is a privileged process, ensure the child process also gets 
-   * its own privilege structure for accounting. This is the only part that can 
-   * fail, so do this before allocating the process table slot.
-   */
-  if (priv(rpp)->s_flags & SYS_PROC) {
-      if (OK != (i=get_priv(rpc, SYS_PROC))) return(i);	/* get structure */
-      for (i=0; i< BITMAP_CHUNKS(NR_SYS_PROCS); i++)	/* remove pending: */
-          priv(rpc)->s_notify_pending.chunk[i] = 0;	/* - notifications */
-      priv(rpc)->s_int_pending = 0;			/* - interrupts */
-      sigemptyset(&priv(rpc)->s_sig_pending);		/* - signals */
-  }
-#endif
-
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
 #if (CHIP == INTEL)
   old_ldt_sel = rpc->p_ldt_sel;		/* backup local descriptors */

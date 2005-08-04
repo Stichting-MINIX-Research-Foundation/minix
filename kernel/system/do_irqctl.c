@@ -7,9 +7,6 @@
  *    m5_i1:	IRQ_POLICY	(irq policy allows reenabling interrupts)
  *    m5_l3:	IRQ_HOOK_ID	(provides index to be returned on interrupt)
  *      ,,          ,,          (returns index of irq hook assigned at kernel)
- *
- * Author:
- *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 
 #include "../system.h"

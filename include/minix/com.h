@@ -49,32 +49,6 @@
 
 
 /*===========================================================================*
- *               	 Major and minor device numbers  		     *
- *===========================================================================*/
-
-/* Major and minor device numbers for MEMORY driver. */
-#define MEMORY_MAJOR  1		/* major device for memory devices */
-#  define RAM_DEV     0		/* minor device for /dev/ram */
-#  define MEM_DEV     1		/* minor device for /dev/mem */
-#  define KMEM_DEV    2		/* minor device for /dev/kmem */
-#  define NULL_DEV    3		/* minor device for /dev/null */
-#  define BOOT_DEV    4		/* minor device for /dev/boot */
-#  define ZERO_DEV    6		/* minor device for /dev/zero */
-
-/* Full device numbers that are special to the boot monitor and FS. */
-#  define DEV_RAM	0x0100	/* device number of /dev/ram */
-#  define DEV_BOOT	0x0104	/* device number of /dev/boot */
-
-#define TTY_MAJOR	4	/* major device for ttys */
-#define CTTY_MAJOR	5	/* major device for /dev/tty */
-
-#define INET_MAJOR	7	/* major device for inet */
-
-#define LOG_MAJOR	15	/* major device for log driver */
-#  define IS_KLOG_DEV	0	/* minor device for /dev/klog */
-
-
-/*===========================================================================*
  *                	   Kernel notification types                         *
  *===========================================================================*/
 

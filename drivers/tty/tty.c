@@ -181,8 +181,6 @@ PUBLIC void main(void)
     panic("TTY","Couldn't obtain kernel environment.", s);
   }
 
-  printf("User-level TTY driver alive!\n");
-
   while (TRUE) {
 
 	/* Check for and handle any events on any of the ttys. */

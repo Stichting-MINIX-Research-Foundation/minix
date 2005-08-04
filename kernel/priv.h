@@ -8,7 +8,8 @@
  * user processes share one structure. This setup provides a clear separation
  * between common and privileged process fields and is very space efficient. 
  *
- * 					Created: Jul 1, 2005  Jorrit N. Herder	
+ * Changes:
+ *   Jul 01, 2005	Created.  (Jorrit N. Herder)	
  */
 #include <minix/com.h>
 #include "protect.h"

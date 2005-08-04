@@ -149,7 +149,7 @@ struct command {
 #define MAX_SECS	 127	/* but not to a 16 bit process */
 #endif
 #define MAX_ERRORS         4	/* how often to try rd/wt before quitting */
-#define NR_DEVICES      (MAX_DRIVES * DEV_PER_DRIVE)
+#define NR_MINORS       (MAX_DRIVES * DEV_PER_DRIVE)
 #define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 #define DELAY_USECS     1000	/* controller timeout in microseconds */
@@ -392,7 +392,7 @@ int device;
 /* Prepare for I/O on a device. */
 
   w_device = device;
-  if (device < NR_DEVICES) {			/* d0, d0p[0-3], d1, ... */
+  if (device < NR_MINORS) {			/* d0, d0p[0-3], d1, ... */
 	w_drive = device / DEV_PER_DRIVE;	/* save drive number */
 	w_wn = &wini[w_drive];
 	w_dv = &w_wn->part[device % DEV_PER_DRIVE];

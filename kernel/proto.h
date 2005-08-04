@@ -36,15 +36,15 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 				U16_t parmoff, U16_t parmsize)		);
 
 /* system.c */
+_PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
-_PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
-_PROTOTYPE( phys_bytes numap_local, (int proc_nr, vir_bytes vir_addr, 
-		vir_bytes bytes)					);
 _PROTOTYPE( void sys_task, (void)					);
 _PROTOTYPE( void get_randomness, (int source)					);
 _PROTOTYPE( int virtual_copy, (struct vir_addr *src, struct vir_addr *dst, 
 				vir_bytes bytes) 			);
+#define numap_local(proc_nr, vir_addr, bytes) \
+	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 _PROTOTYPE( phys_bytes umap_local, (struct proc *rp, int seg, 
 		vir_bytes vir_addr, vir_bytes bytes)			);
 _PROTOTYPE( phys_bytes umap_remote, (struct proc *rp, int seg, 

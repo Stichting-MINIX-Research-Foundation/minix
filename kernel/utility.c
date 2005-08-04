@@ -1,9 +1,9 @@
 /* This file contains a collection of miscellaneous procedures:
- *     panic:	        abort MINIX due to a fatal error
- *     kprintf:		diagnostic output for the kernel 
+ *   panic:	    abort MINIX due to a fatal error
+ *   kprintf:	    diagnostic output for the kernel 
  *
  * Changes:
- *                      simple printing to circular buffer  (Jorrit N. Herder)
+ *   Dec 10, 2004   kernel printing to circular buffer  (Jorrit N. Herder)
  * 
  * This file contains the routines that take care of kernel messages, i.e.,
  * diagnostic output within the kernel. Kernel messages are not directly
