@@ -18,7 +18,7 @@ case $#:$1 in
     cat >&2 <<EOF
 Usage:	$0 [-n] key ...
 Where key is one of the following:
-  ram mem kmem null boot random zero	  # One of these makes all these memory devices
+  ram mem kmem null boot zero	  # One of these makes all these memory devices
   fd0 fd1 ...		  # Floppy devices for drive 0, 1, ...
   fd0p0 fd1p0 ...	  # Make floppy partitions fd0p[0-3], fd1p[0-3], ...
   c0d0 c0d1 ...		  # Make disks c0d0, c0d1, ...
@@ -33,6 +33,8 @@ Where key is one of the following:
   eth ip tcp udp	  # One of these makes some TCP/IP devices
   audio mixer		  # Make audio devices
   klog                    # Make /dev/klog
+  random                  # Make /dev/random, /dev/urandom
+  cmos                    # Make /dev/cmos
   std			  # All standard devices
 EOF
     exit 1
@@ -51,7 +53,7 @@ do
     esac
 
     case $dev in
-    ram|mem|kmem|null|boot|random|urandom|zero)
+    ram|mem|kmem|null|boot|zero)
 	# Memory devices.
 	#
 	$e mknod ram b 1 0;	$e chmod 600 ram
@@ -59,10 +61,8 @@ do
 	$e mknod kmem c 1 2;	$e chmod 640 kmem
 	$e mknod null c 1 3;	$e chmod 666 null
 	$e mknod boot b 1 4;	$e chmod 600 ram
-	$e mknod random c 16 0;	$e chmod 644 random
-	$e mknod urandom c 16 0; $e chmod 644 urandom
 	$e mknod zero c 1 6;	$e chmod 644 zero
-	$e chgrp kmem ram mem kmem null boot random urandom zero
+	$e chgrp kmem ram mem kmem null boot zero
 	;;
     fd[0-3])
 	# Floppy disk drive n.
@@ -218,8 +218,19 @@ do
 	$e mknod mixer c 14 0
 	$e chmod 666 audio mixer
 	;;
+    random|urandom)
+	# random data generator.
+	$e mknod random c 16 0;	$e chmod 644 random
+	$e mknod urandom c 16 0; $e chmod 644 urandom
+	$e chgrp random urandom
+	;;
+    cmos)
+    	# cmos device (set/get system time).
+    	$e mknod cmos c 17 0
+	$e chmod 600 cmos
+	;;
     klog)
-    	# IS devices.
+    	# logging device.
     	$e mknod klog c 15 0
 	$e chmod 600 klog
 	;;
