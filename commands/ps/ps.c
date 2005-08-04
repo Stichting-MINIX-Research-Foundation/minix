@@ -340,7 +340,7 @@ char *argv[];
 
   /* We need to know where INIT hangs out. */
   for (i = FS_PROC_NR; i < nr_procs; i++) {
-	if (strcmp(ps_proc[nr_tasks + i].p_name, "INIT") == 0) break;
+	if (strcmp(ps_proc[nr_tasks + i].p_name, "init") == 0) break;
   }
   init_proc_nr = i;
 
