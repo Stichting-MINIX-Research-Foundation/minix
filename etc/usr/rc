@@ -10,6 +10,23 @@ case "$#:$1" in
     exit 1
 esac
 
+disabled()
+{
+    service=$1
+
+    ifs="$IFS"; IFS=,
+    for name in `sysenv disable`
+    do 
+        if [ "$name" = "$service" ]
+	then 	 
+                IFS="$ifs"; unset ifs
+		return 0
+	fi
+    done
+    IFS="$ifs"; unset ifs
+    return 1
+}
+
 daemonize()
 {
     # Function to start a daemon, if it exists.
@@ -21,6 +38,10 @@ daemonize()
     do
 	if [ -f "$dir/$1" ]
 	then
+
+            # check if this service is disabled at the boot monitor.
+            if disabled $name; then return; fi
+
 	    echo -n " $name"
 	    "$@" &
 	    return
@@ -37,14 +58,7 @@ up()
     # Function to dynamically start a system service
 
     # First check if this service is disabled at the boot monitor.
-    ifs="$IFS"; IFS=,
-    for name in `sysenv disable`
-    do 
-        if [ "$name" = "$service" ]
-	then 	 return
-	fi
-    done
-    IFS="$ifs"; unset ifs
+    if disabled $service; then return; fi
 
     # Service is not disabled. Try to bring it up.
     command="/usr/sbin/$service"
