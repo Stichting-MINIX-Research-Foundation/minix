@@ -111,6 +111,9 @@
 #define X_BIT           0000001	/* rwX protection bit */
 #define I_NOT_ALLOC     0000000	/* this inode is free */
 
+/* Flag used only in flags argument of dev_open. */
+#define RO_BIT		0200000	/* Open device readonly; fail if writable. */
+
 /* Some limits. */
 #define MAX_BLOCK_NR  ((block_t) 077777777)	/* largest block number */
 #define HIGHEST_ZONE   ((zone_t) 077777777)	/* largest zone number */
