@@ -22,6 +22,7 @@
  *
  * Changes:
  *   2004 to 2005   many new system calls (see system.h)  (Jorrit N. Herder)
+ *   Aug 04, 2005   check if kernel call is allowed  (Jorrit N. Herder)
  *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
  *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)
  *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
@@ -62,22 +63,30 @@ PUBLIC void sys_task()
 /* Main entry point of sys_task.  Get the message and dispatch on type. */
   static message m;
   register int result;
-  unsigned int call;
+  register struct proc *caller_ptr;
+  unsigned int call_nr;
+  int s;
 
   /* Initialize the system task. */
   initialize();
 
   while (TRUE) {
-      /* Get work. */
-      receive(ANY, &m);
+      /* Get work. Block and wait until a request message arrives. */
+      receive(ANY, &m);			
+      call_nr = (unsigned) m.m_type - KERNEL_CALL;	
+      caller_ptr = proc_addr(m.m_source);	
 
-      /* Handle the request. */
-      call = (unsigned) m.m_type - KERNEL_CALL;	/* substract offset */
-      if (call < NR_SYS_CALLS) {		/* check call number */
-          result = (*call_vec[call])(&m);	/* handle the kernel call */
-      } else {
-	  kprintf("Warning, illegal SYSTASK request from %d.\n", m.m_source);
+      /* See if the caller made a valid request and try to handle it. */
+      if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr))) {
+	  kprintf("SYSTEM: request %d from %d denied.\n", call_nr,m.m_source);
+	  result = ECALLDENIED;			/* illegal message type */
+      }
+      if (call_nr >= NR_SYS_CALLS) {		/* check call number */
+	  kprintf("SYSTEM: illegal request %d from %d.\n", call_nr,m.m_source);
 	  result = EBADREQUEST;			/* illegal message type */
+      } 
+      else {
+          result = (*call_vec[call_nr])(&m);	/* handle the kernel call */
       }
 
       /* Send a reply, unless inhibited by a handler function. Use the kernel
@@ -86,9 +95,8 @@ PUBLIC void sys_task()
        */
       if (result != EDONTREPLY) {
   	  m.m_type = result;			/* report status of call */
-          if (OK != lock_send(m.m_source, &m)) {
-              kprintf("Warning, SYSTASK couldn't reply to request from %d.\n", 
-                   m.m_source);
+          if (OK != (s=lock_send(m.m_source, &m))) {
+              kprintf("SYSTEM, reply to %d failed: %d\n", m.m_source, s);
           }
       }
   }

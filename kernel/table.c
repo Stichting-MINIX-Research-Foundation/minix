@@ -22,7 +22,7 @@
  * include 'boot_image' (this file) and 'idt' and 'gdt' (protect.c). 
  *
  * Changes:
- *    Aug 02, 2005   minimal boot image and cleanup  (Jorrit N. Herder)
+ *    Aug 02, 2005   set privileges and minimal boot image (Jorrit N. Herder)
  *    Oct 17, 2004   updated above and tasktab comments  (Jorrit N. Herder)
  *    May 01, 2004   changed struct for system image  (Jorrit N. Herder)
  */
@@ -48,7 +48,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 /* Define flags for the various process types. */
 #define IDL_F 	(BILLABLE | SYS_PROC)		/* idle task */
 #define TSK_F 	(SYS_PROC)			/* kernel tasks */
-#define SRV_F 	(PREEMPTIBLE | SYS_PROC)	/* system services */
+#define SRV_F 	(BILLABLE | PREEMPTIBLE | SYS_PROC)	/* system services */
 #define USR_F	(PREEMPTIBLE | BILLABLE)	/* user processes */
 
 /* Define system call traps for the various process types. These call masks
@@ -64,19 +64,26 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * processes in the boot image, so that the send mask that is defined here 
  * can be directly copied onto map[0] of the actual send mask. Privilege
  * structure 0 is shared by user processes. 
- *
- * Note that process numbers in the boot image should not be higher than
- * "BITCHUNK_BITS - NR_TASKS", because a bitchunk_t field is used to store 
- * the send masks in the table that describes that processes in the image.  
  */
+#define s(n)		(1 << s_nr_to_id(n))
 #define SRV_M	(~0)
 #define SYS_M	(~0)
-#define USR_M	(s(PM_PROC_NR)|s(FS_PROC_NR)|s(SM_PROC_NR))
-#define DRV_M	(USR_M | s(SYSTEM)|s(CLOCK)|s(LOG_PROC_NR)|s(TTY_PROC_NR))
+#define USR_M	(s(PM_PROC_NR) | s(FS_PROC_NR) | s(SM_PROC_NR))
+#define DRV_M	(USR_M | s(SYSTEM) | s(CLOCK) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
 
-/* Sanity check to make sure the send masks can be set. */
-extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];
-
+/* Define kernel calls that processes are allowed to make. This is not looking
+ * very nice, but we really need to set access rights on a per call basis. 
+ * Note that the system services manager has all bits on, because it should
+ * be allowed to distribute rights to services that it starts. 
+ */
+#define c(n)	(1 << ((n)-KERNEL_CALL))
+#define SM_C	~0	
+#define PM_C	~(c(SYS_DEVIO) | c(SYS_SDEVIO) | c(SYS_VDEVIO) \
+    | c(SYS_IRQCTL) | c(SYS_INT86))
+#define FS_C	(c(SYS_KILL) | c(SYS_VIRCOPY) | c(SYS_VIRVCOPY) | c(SYS_UMAP) \
+    | c(SYS_GETINFO) | c(SYS_EXIT) | c(SYS_TIMES) | c(SYS_SETALARM))
+#define DRV_C	(FS_C | c(SYS_SEGCTL) | c(SYS_IRQCTL) | c(SYS_INT86) \
+    | c(SYS_DEVIO) | c(SYS_VDEVIO) | c(SYS_SDEVIO))
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
@@ -86,25 +93,29 @@ extern int dummy[(BITCHUNK_BITS-NR_TASKS > INIT_PROC_NR) ? 1 : -1];
  * initial program counter and stack size is also provided for kernel tasks.
  */
 PUBLIC struct boot_image image[] = {
-/* process nr,   pc, flags, qs,  queue, stack, traps,   ipc, sys,  name */ 
- { IDLE,  idle_task, IDL_F, 32, IDLE_Q, IDL_S,     0,     0,   0, "IDLE"   },
- { CLOCK,clock_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,   0, "CLOCK"  },
- { SYSTEM, sys_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,   0, "SYSTEM" },
- { HARDWARE,      0, TSK_F,  0, TASK_Q, HRD_S,     0,     0,   0, "KERNEL" },
- { PM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SRV_M,  ~0, "pm"     },
- { FS_PROC_NR,    0, SRV_F, 16,      4, 0,     SRV_T, SRV_M,  ~0, "fs"     },
- { SM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SYS_M,  ~0, "sm"     },
- { TTY_PROC_NR,   0, SRV_F, 16,      1, 0,     SRV_T, SYS_M,  ~0, "tty"    },
- { MEM_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, DRV_M,  ~0, "memory" },
- { LOG_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, SYS_M,  ~0, "log"    },
- { DRVR_PROC_NR,  0, SRV_F, 16,      2, 0,     SRV_T, DRV_M,  ~0, "driver" },
- { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     USR_T, USR_M,   0, "init"   },
+/* process nr,   pc, flags, qs,  queue, stack, traps, ipcto, call,  name */ 
+ { IDLE,  idle_task, IDL_F, 32, IDLE_Q, IDL_S,     0,     0,     0, "IDLE"  },
+ { CLOCK,clock_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,     0, "CLOCK" },
+ { SYSTEM, sys_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,     0, "SYSTEM"},
+ { HARDWARE,      0, TSK_F,  0, TASK_Q, HRD_S,     0,     0,     0, "KERNEL"},
+ { PM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SRV_M,  PM_C, "pm"    },
+ { FS_PROC_NR,    0, SRV_F, 16,      4, 0,     SRV_T, SRV_M,  FS_C, "fs"    },
+ { SM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SYS_M,  SM_C, "sm"    },
+ { TTY_PROC_NR,   0, SRV_F, 16,      1, 0,     SRV_T, SYS_M, DRV_C, "tty"   },
+ { MEM_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, DRV_M, DRV_C, "memory"},
+ { LOG_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, SYS_M, DRV_C, "log"   },
+ { DRVR_PROC_NR,  0, SRV_F, 16,      2, 0,     SRV_T, SYS_M, DRV_C, "driver"},
+ { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     USR_T, USR_M,     0, "init"  },
 };
 
-/* Verify the size of the system image table at compile time. If the number 
- * is not correct, the size of the 'dummy' array will be negative, causing
- * a compile time error. Note that no space is allocated because 'dummy' is
- * declared extern.
-  */
+/* Verify the size of the system image table at compile time. Also verify that 
+ * the first chunk of the ipc mask has enough bits to accommodate the processes
+ * in the image.  
+ * If a problem is detected, the size of the 'dummy' array will be negative, 
+ * causing a compile time error. Note that no space is actually allocated 
+ * because 'dummy' is declared extern.
+ */
 extern int dummy[(NR_BOOT_PROCS==sizeof(image)/sizeof(struct boot_image))?1:-1];
+extern int dummy[(BITCHUNK_BITS > NR_BOOT_PROCS - 1) ? 1 : -1];
+
 

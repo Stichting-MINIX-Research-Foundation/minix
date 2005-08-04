@@ -58,18 +58,18 @@ message *m_ptr;			/* pointer to request message */
   sigemptyset(&priv(rp)->s_sig_pending);		/* - signals */
 
   /* Now update the process' privileges as requested. */
-  rp->p_priv->s_call_mask = FILLED_MASK;
+  rp->p_priv->s_trap_mask = FILLED_MASK;
   for (i=0; i<BITMAP_CHUNKS(NR_SYS_PROCS); i++) {
-	rp->p_priv->s_send_mask.chunk[i] = FILLED_MASK;
+	rp->p_priv->s_ipc_to.chunk[i] = FILLED_MASK;
   }
-  unset_sys_bit(rp->p_priv->s_send_mask, USER_PRIV_ID);
+  unset_sys_bit(rp->p_priv->s_ipc_to, USER_PRIV_ID);
 
   /* All process that this process can send to must be able to reply. 
    * Therefore, their send masks should be updated as well. 
    */
   for (i=0; i<NR_SYS_PROCS; i++) {
-      if (get_sys_bit(rp->p_priv->s_send_mask, i)) {
-          set_sys_bit(priv_addr(i)->s_send_mask, priv_id(rp));
+      if (get_sys_bit(rp->p_priv->s_ipc_to, i)) {
+          set_sys_bit(priv_addr(i)->s_ipc_to, priv_id(rp));
       }
   }
 

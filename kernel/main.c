@@ -82,8 +82,9 @@ PUBLIC void main()
 	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
 	(void) get_priv(rp, (ip->flags & SYS_PROC));    /* assign structure */
 	priv(rp)->s_flags = ip->flags;			/* process flags */
-	priv(rp)->s_call_mask = ip->call_mask;		/* allowed traps */
-	priv(rp)->s_send_mask.chunk[0] = ip->send_mask;	/* restrict targets */
+	priv(rp)->s_trap_mask = ip->trap_mask;		/* allowed traps */
+	priv(rp)->s_call_mask = ip->call_mask;		/* kernel call mask */
+	priv(rp)->s_ipc_to.chunk[0] = ip->ipc_to;	/* restrict targets */
 	if (iskerneln(proc_nr(rp))) {		/* part of the kernel? */ 
 		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
 			rp->p_priv->s_stack_guard = (reg_t *) ktsb;

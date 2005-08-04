@@ -21,9 +21,10 @@ struct priv {
   sys_id_t s_id;		/* index of this system structure */
   short s_flags;		/* PREEMTIBLE, BILLABLE, etc. */
 
-  short s_call_mask;		/* allowed system call traps */
-  sys_map_t s_send_mask;	/* allowed send destinations */
-  long s_sys_mask;		/* allowed kernel calls */
+  short s_trap_mask;		/* allowed system call traps */
+  sys_map_t s_ipc_from;		/* allowed callers to receive from */
+  sys_map_t s_ipc_to;		/* allowed destination processes */
+  long s_call_mask;		/* allowed kernel calls */
 
   sys_map_t s_notify_pending;  	/* bit map with pending notifications */
   irq_id_t s_int_pending;	/* pending hardware interrupts */

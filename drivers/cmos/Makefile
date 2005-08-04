@@ -1,5 +1,5 @@
-# Makefile for memory driver (MEMORY)
-DRIVER = memory
+# Makefile for the CMOS driver 
+DRIVER = cmos
 
 # directories
 u = /usr
@@ -16,23 +16,24 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lsysutil
 
-OBJ = memory.o
+OBJ = cmos.o 
 LIBDRIVER = $d/libdriver/driver.o
 
 
 # build local binary
-all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) $(LIBDRIVER)
+all build:	$(DRIVER) 
+$(DRIVER):	$(OBJ) $(LIBDRIVER) readclock.o 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
 	install -S 1024w $(DRIVER)
+	$(CC) -o readclock readclock.c
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 
 
 
 # install with other drivers
-install:	/usr/sbin/$(DRIVER)
-/usr/sbin/$(DRIVER):	$(DRIVER)
+install:	/sbin/$(DRIVER)
+/sbin/$(DRIVER):	$(DRIVER)
 	install -o root -cs $? $@
 
 # clean up local files

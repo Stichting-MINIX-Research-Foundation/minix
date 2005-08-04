@@ -9,7 +9,6 @@
  *
  *  Changes:
  *	Apr 29, 2005	added null byte generator  (Jorrit N. Herder)
- *	Apr 27, 2005	added random device handling  (Jorrit N. Herder)
  *	Apr 09, 2005	added support for boot device  (Jorrit N. Herder)
  *	Jul 26, 2004	moved RAM driver to user-space  (Jorrit N. Herder)
  *	Apr 20, 1992	device dependent/independent split  (Kees J. Bot)

@@ -112,7 +112,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * kernel may only be SENDREC, because tasks always reply and may not block 
    * if the caller doesn't do receive(). 
    */
-  if (! (priv(caller_ptr)->s_call_mask & (1 << function)) || 
+  if (! (priv(caller_ptr)->s_trap_mask & (1 << function)) || 
           (iskerneln(src_dst) && function != SENDREC))  
       return(ECALLDENIED);	
   
@@ -141,7 +141,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * that the destination is still alive. 
    */
   if (function & CHECK_DST) {	
-      if (! get_sys_bit(priv(caller_ptr)->s_send_mask, nr_to_id(src_dst))) {
+      if (! get_sys_bit(priv(caller_ptr)->s_ipc_to, nr_to_id(src_dst))) {
           kprintf("Warning, send_mask denied %d sending to %d\n",
           	proc_nr(caller_ptr), src_dst);
           return(ECALLDENIED);

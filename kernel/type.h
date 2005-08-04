@@ -17,9 +17,9 @@ struct boot_image {
   char quantum;				/* quantum (tick count) */
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
-  short call_mask;			/* allowed system call traps */
-  bitchunk_t send_mask;			/* send mask protection */
-  long sys_mask;			/* system call protection */
+  short trap_mask;			/* allowed system call traps */
+  bitchunk_t ipc_to;			/* send mask protection */
+  long call_mask;			/* system call protection */
   char proc_name[P_NAME_LEN];		/* name in process table */
 };
 

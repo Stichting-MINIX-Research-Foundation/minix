@@ -366,7 +366,7 @@ PRIVATE void load_ram(void)
   	return;
 
   /* Copy the blocks one at a time from the image to the RAM disk. */
-  printf("Loading RAM disk onto /dev/ram:\33[23CLoaded:    0K ");
+  printf("Loading RAM disk onto /dev/ram:\33[23CLoaded:    0 KB");
 
   inode[0].i_mode = I_BLOCK_SPECIAL;	/* temp inode for rahead() */
   inode[0].i_size = LONG_MAX;
@@ -398,7 +398,8 @@ PRIVATE void load_ram(void)
 		put_block(bp1, FULL_DATA_BLOCK);
 	}
 	put_block(bp, FULL_DATA_BLOCK);
-	printf("\b\b\b\b\b\b\b\b%6ldK ", ((long) b * block_size_image)/1024L);
+	if (b % 11 == 0)
+	printf("\b\b\b\b\b\b\b\b\b%6ld KB", ((long) b * block_size_image)/1024L);
   }
 
   /* Commit changes to RAM so dev_io will see it. */

@@ -164,9 +164,6 @@ _PROTOTYPE( int get_block_size, (dev_t dev)				);
 _PROTOTYPE( int do_stime, (void)					);
 _PROTOTYPE( int do_utime, (void)					);
 
-/* cmostime.c */
-_PROTOTYPE( int do_cmostime, (void)					);
-
 /* utility.c */
 _PROTOTYPE( time_t clock_time, (void)					);
 _PROTOTYPE( unsigned conv2, (int norm, int w)				);

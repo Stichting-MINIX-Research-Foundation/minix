@@ -95,7 +95,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_reboot,	/* 76 = reboot */
 	do_svrctl,	/* 77 = svrctl */
 
-	do_cmostime,    /* 78 = cmostime */
+	no_sys,		/* 78 = unused */
 	do_getsysinfo,  /* 79 = getsysinfo */
 	no_sys,		/* 80 = unused */
 	do_devctl,	/* 81 = devctl */

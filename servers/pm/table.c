@@ -94,7 +94,7 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 	do_reboot,	/* 76 = reboot	*/
 	do_svrctl,	/* 77 = svrctl	*/
 
-	no_sys,		/* 78 = cmostime */
+	no_sys,		/* 78 = unused */
 	do_getsysinfo,	/* 79 = getsysinfo */
 	do_getprocnr,	/* 80 = getprocnr */
 	no_sys, 	/* 81 = unused */

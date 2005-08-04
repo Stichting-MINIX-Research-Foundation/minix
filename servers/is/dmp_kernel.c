@@ -189,25 +189,25 @@ PUBLIC void image_dmp()
 {
   int m, i,j,r;
   struct boot_image *ip;
-  static char send_mask[BITCHUNK_BITS*2];
+  static char ipc_to[BITCHUNK_BITS*2];
 	
   if ((r = sys_getimage(image)) != OK) {
       report("IS","warning: couldn't get copy of image table", r);
       return;
   }
   printf("Image table dump showing all processes included in system image.\n");
-  printf("---name-- -nr- -flags- -traps- -sq- ----pc- -stack- -sendmask[0]------\n");
+  printf("---name-- -nr- -flags- -traps- -sq- ----pc- -stack- -ipc_to[0]--------\n");
   for (m=0; m<NR_BOOT_PROCS; m++) { 
       ip = &image[m];
         for (i=j=0; i < BITCHUNK_BITS; i++, j++) {
-       	    send_mask[j] = (ip->send_mask & (1<<i)) ? '1' : '0';
-       	    if (i % 8 == 7) send_mask[++j] = ' ';
+       	    ipc_to[j] = (ip->ipc_to & (1<<i)) ? '1' : '0';
+       	    if (i % 8 == 7) ipc_to[++j] = ' ';
        	}
-        send_mask[j] = '\0';
+        ipc_to[j] = '\0';
       printf("%8s %4d   %s   %s  %3d %7lu %7lu   %s\n",
           ip->proc_name, ip->proc_nr, 
-	       s_flags_str(ip->flags), s_traps_str(ip->call_mask), 
-	ip->priority, (long)ip->initial_pc, ip->stksize, send_mask); 
+	       s_flags_str(ip->flags), s_traps_str(ip->trap_mask), 
+	ip->priority, (long)ip->initial_pc, ip->stksize, ipc_to); 
   }
   printf("\n");
 }
@@ -344,7 +344,7 @@ PUBLIC void privileges_dmp()
   register struct proc *rp;
   static struct proc *oldrp = BEG_PROC_ADDR;
   register struct priv *sp;
-  static char send_mask[NR_SYS_PROCS + 1 + NR_SYS_PROCS/8];
+  static char ipc_to[NR_SYS_PROCS + 1 + NR_SYS_PROCS/8];
   int r, i,j, n = 0;
 
   /* First obtain a fresh copy of the current process and system table. */
@@ -357,7 +357,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- -send mask------------------------- \n");
+  printf("\n--nr-id-name---- -flags- -traps- -ipc_to mask------------------------ \n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -373,15 +373,15 @@ PUBLIC void privileges_dmp()
         }
 	printf("(%02u) %-7.7s %s   %s  ",
 	       sp->s_id, rp->p_name,
-	       s_flags_str(sp->s_flags), s_traps_str(sp->s_call_mask) 
+	       s_flags_str(sp->s_flags), s_traps_str(sp->s_trap_mask) 
         );
         for (i=j=0; i < NR_SYS_PROCS; i++, j++) {
-       	    send_mask[j] = get_sys_bit(sp->s_send_mask, i) ? '1' : '0';
-       	    if (i % 8 == 7) send_mask[++j] = ' ';
+       	    ipc_to[j] = get_sys_bit(sp->s_ipc_to, i) ? '1' : '0';
+       	    if (i % 8 == 7) ipc_to[++j] = ' ';
        	}
-        send_mask[j] = '\0';
+        ipc_to[j] = '\0';
 
-	printf(" %s \n", send_mask);
+	printf(" %s \n", ipc_to);
   }
   if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
   oldrp = rp;

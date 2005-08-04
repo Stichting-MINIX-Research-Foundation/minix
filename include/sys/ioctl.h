@@ -18,6 +18,7 @@
 #include <sys/ioc_disk.h>	/* 'd'			*/
 #include <sys/ioc_file.h>	/* 'f'			*/
 #include <sys/ioc_memory.h>	/* 'm'			*/
+#include <sys/ioc_cmos.h>	/* 'c'			*/
 #include <sys/ioc_tape.h>	/* 'M'			*/
 #include <sys/ioc_scsi.h>	/* 'S'			*/
 #include <sys/ioc_sound.h>	/* 's'			*/

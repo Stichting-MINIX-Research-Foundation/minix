@@ -11,6 +11,20 @@ usage()
     exec intr sh
 }
 
+up()
+{
+    service=$1
+    args=$2
+    device=$3
+
+    # Function to dynamically start a system service
+    command="/sbin/$service"
+    if [ ! -z "$args" ]; then command="$command -args \"$args\""; fi
+    if [ ! -z "$device" ]; then command="$command -dev \"$device\""; fi
+    echo -n " $service"
+    eval service up $command
+}
+
 while getopts 'saf' opt
 do
     case $opt in
@@ -36,6 +50,12 @@ start)
 
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
+
+    # Start crucial system services
+    echo -n "Starting services:"
+    up is ""
+    up cmos "" /dev/cmos
+    echo .
 
     # Set timezone.
     . /etc/profile

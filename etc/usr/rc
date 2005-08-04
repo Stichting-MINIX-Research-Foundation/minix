@@ -75,7 +75,7 @@ start)
     rm -rf /tmp/. /usr/run/. /usr/spool/lpd/. /usr/spool/locks/.
 
     # Start servers and drivers set at the boot monitor.
-    echo -n "Starting services:"
+    echo -n "More services:"
     up random "" /dev/random
 
     # load random number generator
@@ -95,7 +95,6 @@ start)
         fi
     done
     up inet ""
-    up is ""
     up printer "" /dev/lp
 #    up floppy "" /dev/fd0
     echo .

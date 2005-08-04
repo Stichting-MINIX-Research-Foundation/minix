@@ -874,7 +874,7 @@ tty_t *tp;
 	 * is updated automatically later.
 	 */
 	scroll_screen(cons, SCROLL_UP);
-	cons->c_row = scr_lines-1;
+	cons->c_row = scr_lines - 1;
 	cons->c_column = 0;
   }
   select_console(0);

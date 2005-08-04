@@ -181,6 +181,7 @@ PUBLIC void main(void)
     panic("TTY","Couldn't obtain kernel environment.", s);
   }
 
+printf("\n");
   while (TRUE) {
 
 	/* Check for and handle any events on any of the ttys. */

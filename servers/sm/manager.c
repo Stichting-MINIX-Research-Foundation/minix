@@ -45,15 +45,16 @@ PUBLIC int do_start(message *m_ptr)
   command[m_ptr->SRV_PATH_LEN] = '\0';
   if (command[0] != '/') return(EINVAL);
 
+  args[0] = command;
   if (m_ptr->SRV_ARGS_LEN > 0) {
       if (m_ptr->SRV_ARGS_LEN > MAX_ARGS_LEN) return(E2BIG);
       if (OK != (s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->SRV_ARGS_ADDR, 
   	SELF, (vir_bytes) arg_buf, m_ptr->SRV_ARGS_LEN))) return(s);
       arg_buf[m_ptr->SRV_ARGS_LEN] = '\0';
-      args[0] = &arg_buf[0];
-      args[1] = NULL;
+      args[1] = &arg_buf[0];
+      args[2] = NULL;
   } else {
-      args[0] = NULL;
+      args[1] = NULL;
   }
   
   /* Now try to execute the new system service. Fork a new process. The child

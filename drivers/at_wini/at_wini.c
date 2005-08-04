@@ -352,12 +352,14 @@ message *m_ptr;
 	  	return(ENXIO);
 	  }
 
+#if VERBOSE
 	  printf("%s: AT driver detected ", w_name());
 	  if (wn->state & (SMART|ATAPI)) {
 		printf("%.40s\n", w_id_string);
 	  } else {
 		printf("%ux%ux%u\n", wn->pcylinders, wn->pheads, wn->psectors);
 	  }
+#endif
   }
 
   /* Partition the drive if it's being opened for the first time,

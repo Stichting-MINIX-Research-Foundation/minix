@@ -193,8 +193,6 @@ PUBLIC int do_kill()
 {
 /* Perform the kill(pid, signo) system call. */
 
-  DEBUG(m_in.pid == 11, printf("PM: detected do_kill PRINTER\n"));
-
   return check_sig(m_in.pid, m_in.sig_nr);
 }
 
@@ -417,7 +415,6 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   }
   /* Some signals are ignored by default. */
   if (sigismember(&rmp->mp_ignore, signo)) { 
-  	DEBUG(m_in.pid == 11, printf("PM: sig_proc ignored sig\n"));
   	return;
   }
   if (sigismember(&rmp->mp_sigmask, signo)) {
@@ -434,7 +431,6 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 
   sigflags = rmp->mp_sigact[signo].sa_flags;
   if (sigismember(&rmp->mp_catch, signo)) {
-  	DEBUG(m_in.pid == 11, printf("PM: sig_proc catch sig!\n"));
 	if (rmp->mp_flags & SIGSUSPENDED)
 		sm.sm_mask = rmp->mp_sigmask2;
 	else
@@ -464,7 +460,6 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		rmp->mp_sigact[signo].sa_handler = SIG_DFL;
 	}
 
-  	DEBUG(m_in.pid == 11, printf("PM: sig_proc about to call sys_sigsend for %d \n",slot));
 	if (OK == (s=sys_sigsend(slot, &sm))) {
 
 		sigdelset(&rmp->mp_sigpending, signo);
@@ -483,7 +478,6 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   }
 
 doterminate:
-  	DEBUG(m_in.pid == 11, printf("PM: sig_proc doterminate\n"));
   /* Signal should not or cannot be caught.  Take default action. */
   if (sigismember(&ign_sset, signo)) return;
 
@@ -499,7 +493,6 @@ doterminate:
 	tell_fs(CHDIR, slot, FALSE, 0);
 	dump_core(rmp);
   }
-  DEBUG(m_in.pid == 11, printf("PM: about to exit proc\n"));
   mm_exit(rmp, 0);		/* terminate process */
 }
 

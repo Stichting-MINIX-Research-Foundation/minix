@@ -55,6 +55,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioc_cmos.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -94,8 +95,11 @@ int bcd_to_dec(int n);
 int dec_to_bcd(int n);
 void usage(void);
 
+#define CMOS_DEV "/dev/cmos"
+
 PUBLIC int main(int argc, char **argv)
 {
+  int fd;
   struct tm time1;
   struct tm time2;
   struct tm tmnow;
@@ -105,6 +109,7 @@ PUBLIC int main(int argc, char **argv)
   unsigned char mach_id, cmos_state;
   struct sysgetenv sysgetenv;
   message m;
+  int request;
 
 
   /* Process options. */
@@ -144,14 +149,17 @@ PUBLIC int main(int argc, char **argv)
 	/* sleep, unless first iteration */
 	if (i > 0) sleep(5);
 
-	/* get_time(&time1); */
-  	m.m_type = CMOSTIME;
-  	m.ADDRESS = (void *) &time1;
-  	m.REQUEST = y2kflag;
-  	if (0 != (s=sendrec(FS_PROC_NR, &m))) {
-		fprintf(stderr, "Couldn't get CMOS time from FS: %d.\n",s);
+	/* Open the CMOS device to read the system time. */
+	if ((fd = open(CMOS_DEV, O_RDONLY)) < 0) {
+		fprintf(stderr, "Couldn't open CMOS device: %d.\n",s);
 		exit(1);
 	}
+        request = (y2kflag) ? CIOCGETTIME : CIOCGETTIMEY2K;
+	if ((s=ioctl(fd, request, (void *) &time1)) < 0) {
+		fprintf(stderr, "Couldn't do CMOS ioctl: %d.\n",s);
+		exit(1);
+	}
+	close(fd);
 
 	now = time(NULL);
 
@@ -159,7 +167,9 @@ PUBLIC int main(int argc, char **argv)
 	time2 = time1;
 
 	rtc= mktime(&time1);	/* Transform to a time_t. */
-	if (rtc != -1) break;
+	if (rtc != -1) {
+		break;
+	}
 
 	fprintf(stderr,
 "readclock: Invalid time read from CMOS RTC: %d-%02d-%02d %02d:%02d:%02d\n",
@@ -168,7 +178,7 @@ PUBLIC int main(int argc, char **argv)
   }
   if (i >= MAX_RETRIES) exit(1);
 
-  /* Set system time. */
+  /* Now set system time. */
   if (nflag) {
 		printf("stime(%lu)\n", (unsigned long) rtc);
   } else {

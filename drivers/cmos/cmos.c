@@ -1,12 +1,12 @@
-#include "fs.h"
-#include <minix/com.h>
-#include <minix/callnr.h>
-#include <time.h>
-#include <ibm/cmos.h>
-#include <ibm/bios.h>
-
-
-/* Manufacturers usually use the ID value of the IBM model they emulate.
+/* This file contains a device driver that can access the CMOS chip to 
+ * get or set the system time. It drives the special file:
+ *
+ *     /dev/cmos	- CMOS chip
+ *
+ * Changes:
+ *     Aug 04, 2005	Created. Read CMOS time.  (Jorrit N. Herder)
+ *
+ * Manufacturers usually use the ID value of the IBM model they emulate.
  * However some manufacturers, notably HP and COMPAQ, have had different
  * ideas in the past.
  *
@@ -15,20 +15,126 @@
  *	published by Microsoft Press
  */
 
+#include "../drivers.h"
+#include <sys/ioc_cmos.h>
+#include <time.h>
+#include <ibm/cmos.h>
+#include <ibm/bios.h>
+
+extern int errno;			/* error number for PM calls */
+
+FORWARD _PROTOTYPE( int gettime, (int who, int y2kflag, vir_bytes dst_time));
+FORWARD _PROTOTYPE( void reply, (int reply, int replyee, int proc, int s));
+
 FORWARD _PROTOTYPE( int read_register, (int register_address));
 FORWARD _PROTOTYPE( int get_cmostime, (struct tm *tmp, int y2kflag));
 FORWARD _PROTOTYPE( int dec_to_bcd, (int dec));
 FORWARD _PROTOTYPE( int bcd_to_dec, (int bcd));
 
 
+/*===========================================================================*
+ *				   main 				     *
+ *===========================================================================*/
+PUBLIC void main(void)
+{
+  message m;
+  int y2kflag;
+  int result;
+  int suspended = NONE;
+  int s;
 
-PUBLIC int do_cmostime(void)
+  while(TRUE) {
+
+      /* Get work. */
+      if (OK != (s=receive(ANY, &m)))
+          panic("CMOS", "attempt to receive work failed", s);
+
+      /* Handle request. */
+      switch(m.m_type) {
+
+      case DEV_OPEN:
+      case DEV_CLOSE:
+      case CANCEL:
+          reply(TASK_REPLY, m.m_source, m.PROC_NR, OK);
+          break;
+
+      case DEV_IOCTL:				
+
+	  /* Probably best to SUSPEND the caller, CMOS I/O has nasty timeouts. 
+	   * This way we don't block the rest of the system. First check if
+           * another process is already suspended. We cannot handle multiple
+           * requests at a time. 
+           */
+          if (suspended != NONE) {
+              reply(TASK_REPLY, m.m_source, m.PROC_NR, EBUSY);
+              break;
+          }
+          suspended = m.PROC_NR;
+          reply(TASK_REPLY, m.m_source, m.PROC_NR, SUSPEND);
+
+	  switch(m.REQUEST) {
+	  case CIOCGETTIME:			/* get CMOS time */ 
+          case CIOCGETTIMEY2K:
+              y2kflag = (m.REQUEST = CIOCGETTIME) ? 0 : 1;
+              result = gettime(m.PROC_NR, y2kflag, (vir_bytes) m.ADDRESS);
+              break;
+          case CIOCSETTIME:
+          case CIOCSETTIMEY2K:
+          default:				/* unsupported ioctl */
+              result = ENOSYS;
+          }
+
+          /* Request completed. Tell the caller to check our status. */
+	  notify(m.m_source);
+          break;
+
+      case DEV_STATUS:
+
+          /* The FS calls back to get our status. Revive the suspended 
+           * processes and return the status of reading the CMOS.
+           */
+	  if (suspended == NONE)
+              reply(DEV_NO_STATUS, m.m_source, NONE, OK);
+          else 
+              reply(DEV_REVIVE, m.m_source, suspended, result);
+          suspended = NONE;
+          break;
+
+      case SYN_ALARM:		/* shouldn't happen */
+      case SYS_SIG:		/* ignore system events */
+          continue;		
+
+      default:
+          reply(TASK_REPLY, m.m_source, m.PROC_NR, EINVAL);
+      }	
+  }
+}
+
+
+/*===========================================================================*
+ *				reply					     *
+ *===========================================================================*/
+PRIVATE void reply(int code, int replyee, int process, int status)
+{
+  message m;
+  int s;
+
+  m.m_type = code;		/* TASK_REPLY or REVIVE */
+  m.REP_STATUS = status;	/* result of device operation */
+  m.REP_PROC_NR = process;	/* which user made the request */
+  if (OK != (s=send(replyee, &m)))
+      panic("CMOS", "sending reply failed", s);
+}
+
+
+/*===========================================================================*
+ *				gettime					     *
+ *===========================================================================*/
+PRIVATE int gettime(int who, int y2kflag, vir_bytes dst_time)
 {
   unsigned char mach_id, cmos_state;
   struct tm time1;
   int i, s;
-  int y2kflag = m_in.REQUEST;
-  vir_bytes dst_time = (vir_bytes) m_in.ADDRESS;
 
   /* First obtain the machine ID to see if we can read the CMOS clock. Only
    * for PS_386 and PC_AT this is possible. Otherwise, return an error.  
