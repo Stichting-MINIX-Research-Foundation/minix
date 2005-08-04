@@ -141,8 +141,6 @@ struct command {
 /* Some controllers don't interrupt, the clock will wake us up. */
 #define WAKEUP		(32*HZ)	/* drive may be out for 31 seconds max */
 
-int wakeup_ticks = WAKEUP;
-
 /* Miscellaneous. */
 #define MAX_DRIVES         4	/* this driver supports 4 drives (d0 - d3) */
 #if _WORD_SIZE > 2
@@ -168,8 +166,13 @@ int wakeup_ticks = WAKEUP;
 #define ATAPI		   0	/* don't bother with ATAPI; optimise out */
 #endif
 #define IDENTIFIED	0x10	/* w_identify done successfully */
+#define IGNORING	0x20	/* w_identify failed once */
 
+/* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
+int wakeup_ticks = WAKEUP;
+
+int w_testing = 0;
 
 /* Variables. */
 PRIVATE struct wini {		/* main drive struct, one entry per drive */
@@ -191,6 +194,9 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
   struct device subpart[SUB_PER_DRIVE];	/* subpartitions */
 } wini[MAX_DRIVES], *w_wn;
 
+PRIVATE int w_device = -1;
+PRIVATE char w_id_string[40];
+
 PRIVATE int win_tasknr;			/* my task number */
 PRIVATE int w_command;			/* current command in execution */
 PRIVATE u8_t w_byteval;			/* used for SYS_IRQCTL */
@@ -204,6 +210,7 @@ FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );
 FORWARD _PROTOTYPE( int w_identify, (void) );
 FORWARD _PROTOTYPE( char *w_name, (void) );
 FORWARD _PROTOTYPE( int w_specify, (void) );
+FORWARD _PROTOTYPE( int w_io_test, (void) );
 FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
 					iovec_t *iov, unsigned nr_req) );
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) );
@@ -321,16 +328,41 @@ message *m_ptr;
 
   wn = w_wn;
 
-  if (!(wn->state & (IDENTIFIED)) || (wn->state & DEAF)) {
+  /* If we've probed it before and it failed, don't probe it again. */
+  if (wn->state & IGNORING) return ENXIO;
+
+  /* If we haven't identified it yet, or it's gone deaf, 
+   * (re-)identify it.
+   */
+  if (!(wn->state & IDENTIFIED) || (wn->state & DEAF)) {
 	/* Try to identify the device. */
 	if (w_identify() != OK) {
   		printf("%s: probe failed\n", w_name());
 		if (wn->state & DEAF) w_reset();
-		wn->state = 0;
+		wn->state = IGNORING;
 		return(ENXIO);
 	}
+	  /* Do a test transaction unless it's a CD drive (then
+	   * we can believe the controller, and a test may fail
+	   * due to no CD being in the drive). If it fails, ignore
+	   * the device forever.
+	   */
+	  if(!(wn->state & ATAPI) && w_io_test() != OK) {
+  		wn->state |= IGNORING;
+	  	return(ENXIO);
+	  }
 
+	  printf("%s: AT driver detected ", w_name());
+	  if (wn->state & (SMART|ATAPI)) {
+		printf("%.40s\n", w_id_string);
+	  } else {
+		printf("%ux%ux%u\n", wn->pcylinders, wn->pheads, wn->psectors);
+	  }
   }
+
+  /* Partition the drive if it's being opened for the first time,
+   * or being opened after being closed.
+   */
   if (wn->open_ct == 0) {
 #if ENABLE_ATAPI
 	if (wn->state & ATAPI) {
@@ -340,6 +372,9 @@ message *m_ptr;
 		if ((r = atapi_open()) != OK) return(r);
 	}
 #endif
+	/* If it's not an ATAPI device, then don't open read-only. */
+	if (!(wn->state & ATAPI) && (m_ptr->COUNT & RO_BIT)) return EACCES;
+
 	/* Partition the disk. */
 	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY);
 	wn->open_ct++;
@@ -356,6 +391,7 @@ int device;
 {
 /* Prepare for I/O on a device. */
 
+  w_device = device;
   if (device < NR_DEVICES) {			/* d0, d0p[0-3], d1, ... */
 	w_drive = device / DEV_PER_DRIVE;	/* save drive number */
 	w_wn = &wini[w_drive];
@@ -366,6 +402,7 @@ int device;
 	w_wn = &wini[w_drive];
 	w_dv = &w_wn->subpart[device % SUB_PER_DRIVE];
   } else {
+  	w_device = -1;
 	return(NIL_DEV);
   }
   return(w_dv);
@@ -383,7 +420,6 @@ PRIVATE int w_identify()
 
   struct wini *wn = w_wn;
   struct command cmd;
-  char id_string[40];
   int i, r, s;
   unsigned long size;
 #define id_byte(n)	(&tmp_buf[2 * (n)])
@@ -406,7 +442,7 @@ PRIVATE int w_identify()
 		panic(w_name(),"Call to sys_insw() failed", s);
 
 	/* Why are the strings byte swapped??? */
-	for (i = 0; i < 40; i++) id_string[i] = id_byte(27)[i^1];
+	for (i = 0; i < 40; i++) w_id_string[i] = id_byte(27)[i^1];
 
 	/* Preferred CHS translation mode. */
 	wn->pcylinders = id_word(1);
@@ -443,7 +479,7 @@ PRIVATE int w_identify()
 		panic(w_name(),"Call to sys_insw() failed", s);
 
 	/* Why are the strings byte swapped??? */
-	for (i = 0; i < 40; i++) id_string[i] = id_byte(27)[i^1];
+	for (i = 0; i < 40; i++) w_id_string[i] = id_byte(27)[i^1];
 
 	size = 0;	/* Size set later. */
 #endif
@@ -461,6 +497,7 @@ PRIVATE int w_identify()
   /* Size of the whole drive */
   wn->part[0].dv_size = mul64u(size, SECTOR_SIZE);
 
+  /* Reset/calibrate (where necessary) */
   if (w_specify() != OK && w_specify() != OK) {
   	return(ERR);
   }
@@ -498,6 +535,59 @@ PRIVATE char *w_name()
   return name;
 }
 
+/*===========================================================================*
+ *				w_io_test				     *
+ *===========================================================================*/
+PRIVATE int w_io_test(void)
+{
+	int r, save_dev;
+	int save_timeout, save_errors, save_wakeup;
+	iovec_t iov;
+#ifdef CD_SECTOR_SIZE
+	static char buf[CD_SECTOR_SIZE];
+#else
+	static char buf[SECTOR_SIZE];
+#endif
+
+	iov.iov_addr = (vir_bytes) buf;
+	iov.iov_size = sizeof(buf);
+	save_dev = w_device;
+
+	/* Reduce timeout values for this test transaction. */
+	save_timeout = timeout_ticks;
+	save_errors = max_errors;
+	save_wakeup = wakeup_ticks;
+
+	timeout_ticks = HZ * 2;
+	wakeup_ticks = HZ * 5;
+	max_errors = 2;
+	w_testing = 1;
+
+	/* Try I/O on the actual drive (not any (sub)partition). */
+ 	if(w_prepare(w_drive * DEV_PER_DRIVE) == NIL_DEV)
+ 		panic(w_name(), "Couldn't switch devices", NO_NUM);
+
+	r = w_transfer(SELF, DEV_GATHER, 0, &iov, 1);
+
+	/* Switch back. */
+ 	if(w_prepare(save_dev) == NIL_DEV)
+ 		panic(w_name(), "Couldn't switch back devices", NO_NUM);
+
+ 	/* Restore parameters. */
+	timeout_ticks = save_timeout;
+	max_errors = save_errors;
+	wakeup_ticks = save_wakeup;
+	w_testing = 0;
+
+ 	/* Test if everything worked. */
+	if(r != OK || iov.iov_size != 0) {
+		return ERR;
+	}
+
+	/* Everything worked. */
+
+	return OK;
+}
 
 /*===========================================================================*
  *				w_specify				     *
@@ -563,6 +653,8 @@ unsigned nr_req;		/* length of request vector */
 	return atapi_transfer(proc_nr, opcode, position, iov, nr_req);
   }
 #endif
+
+  
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
@@ -677,6 +769,8 @@ struct command *cmd;		/* Command block */
   pvb_pair_t outbyte[7];		/* vector for sys_voutb() */
   int s;				/* status for sys_(v)outb() */
 
+  if(w_wn->state & IGNORING) return ERR;
+
   if (!w_waitfor(STATUS_BSY, 0)) {
 	printf("%s: controller not ready\n", w_name());
 	return(ERR);
@@ -756,6 +850,8 @@ struct command *cmd;		/* Command block */
 /* A simple controller command, only one interrupt and no data-out phase. */
   int r;
 
+  if(w_wn->state & IGNORING) return ERR;
+
   if ((r = com_out(cmd)) == OK) r = at_intr_wait();
   w_command = CMD_IDLE;
   return(r);
@@ -785,7 +881,8 @@ PRIVATE void w_timeout(void)
 	/*FALL THROUGH*/
   default:
 	/* Some other command. */
-	printf("%s: timeout on command %02x\n", w_name(), w_command);
+	if(w_testing)  wn->state |= IGNORING;	/* Kick out this drive. */
+	else printf("%s: timeout on command %02x\n", w_name(), w_command);
 	w_need_reset();
 	w_status = 0;
   }
@@ -801,7 +898,10 @@ PRIVATE int w_reset()
  * like the controller refusing to respond.
  */
   int s;
-  struct wini *wn;
+  struct wini *wn = w_wn;
+
+  /* Don't bother if this drive is forgotten. */
+  if(w_wn->state & IGNORING) return ERR;
 
   /* Wait for any internal drive recovery. */
   tickdelay(RECOVERY_TICKS);
@@ -1099,6 +1199,8 @@ unsigned cnt;
   message mess;
   pvb_pair_t outbyte[6];		/* vector for sys_voutb() */
   int s;
+
+  if(wn->state & IGNORING) return ERR;
 
   /* Select Master/Slave drive */
   if ((s=sys_outb(wn->base + REG_DRIVE, wn->ldhpref)) != OK)
