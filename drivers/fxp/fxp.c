@@ -1822,7 +1822,9 @@ timer_t *tp;
 			/* Check the link status. */
 			if (fxp_link_changed(fp))
 			{
+#if VERBOSE
 				printf("fxp_watchdog_f: link changed\n");
+#endif
 				fp->fxp_report_link= TRUE;
 				fp->fxp_got_int= TRUE;
 				interrupt(fxp_tasknr);
@@ -2100,9 +2102,12 @@ fxp_t *fp;
 	}
 
 resspeed:
+#if VERBOSE
 	printf("%s: link up, %d Mbps, %s duplex\n",
 		fp->fxp_name, (scr & MII_SCR_100) ? 100 : 10,
 		(scr & MII_SCR_FD) ? "full" : "half");
+#endif
+	;
 }
 
 
