@@ -402,7 +402,8 @@ int crash_check()
   crashed = (lseek(fd, - (off_t) sizeof(last), SEEK_END) == -1
     || read(fd, (void *) &last, sizeof(last)) != sizeof(last)
     || last.ut_line[0] != '~'
-    || strncmp(last.ut_user, "shutdown", sizeof(last.ut_user)));
+    || (strncmp(last.ut_user, "shutdown", sizeof(last.ut_user))
+     && strncmp(last.ut_user, "halt", sizeof(last.ut_user))));
   close(fd);
   return crashed;
 }
