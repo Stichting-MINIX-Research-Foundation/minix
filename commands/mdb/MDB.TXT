@@ -1,0 +1,25 @@
+INFORMATION on mdb version 2.6.0 (Sept 9/96).
+   
+MDB is the MINIX debugger which allows you to place breakpoints and
+control the execution of a program. It has a lot of the features that
+you would expect in a program debugger; for example, stack traces and
+single step execution.
+
+The current version works with MINIX for PC and was developed and tested
+under MINIX 1.7.x (32 bit version). It should work with 16 bit MINIX. 
+
+How to Install
+
+1) Unpack mdb.tar.Z and review additional information in the README file.
+   (If you got this from the Minix CD-ROM or an MS-DOS system rename 
+   MDB.TAZ to mdb.tar.Z)   
+2) Edit Makefile for Compiler and extra options as required.
+3) make 
+4) make install
+5) make install_man
+
+Comments to:
+
+Philip Murton. 
+philip.murton@utoronto.ca
+

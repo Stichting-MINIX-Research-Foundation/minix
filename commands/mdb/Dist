@@ -1,0 +1,38 @@
+Mdb (Minix debugger) Distribution
+=================================
+
+Version: 	2.6.0
+Date:		Sept 9/96
+Author:		Philip Murton
+E-mail:		philip.murton@utoronto.ca
+
+
+Files included: 
+===============
+
+Dist		This file
+Makefile	Makefile 
+MDB.TXT		Cover file
+README		README file 
+a.out.h		GNU a.out.h (copied to /usr/include/gnu)
+core.c		core file functions
+decode.c	Optional for syscalls support
+gnu_load.c	Optional for GNU EXEC support
+io.c		I/O done here
+ioctl.c		Optional for syscalls support
+kernel.c	kernel functions
+log		Log from sample command file (See README)
+mdb.c		main program
+mdb.h		main header
+mdb.1		man page
+mdbdis86.c	Disassembler 
+mdbexp.c	Expression parsing
+misc.c		misc functions including help
+gnu_sym.c	Optional for GNU EXEC support
+proto.h		Prototypes 
+ptrace.2	man page
+sample		sample command file
+sym.c		Symbolic names read from exec file
+syscalls.c	Optional for syscalls support
+trace.c		ptrace() called here
+

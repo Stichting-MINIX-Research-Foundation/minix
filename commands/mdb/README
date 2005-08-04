@@ -1,0 +1,32 @@
+README for mdb version 2.6.0
+
+Sept 9/96
+
+Please note the following: 
+
+1) Has been tested with Minix 1.7.4 (32-bit version).
+   A previous version was tested with Minix 1.7.x (16 bit version).
+   Some optional parts of mdb have not been extensively tested. 
+   This is especially true on the code to trace system calls.
+   See options in Makefile.
+
+2) I know that the commands are somewhat cryptic; thus  
+   there are currently two types of 'help' for mdb
+   a) the "?" gives a help page. 
+   b) typing "command ?" will give help on a specific command. 
+
+3) The sample comand file and log output. 
+   To test this, type something like the following 
+   "mdb -llog.new /usr/bin/sleep @sample"
+   The output "log.new' should be similar to the distributed "log" file;
+   but not necessarily exactly the same.
+
+4) Man pages need some more work.
+
+5) See top part of mdb.c for version history.
+
+Send comments to Philip Murton. Thanks. 
+
+philip.murton@utoronto.ca
+
+

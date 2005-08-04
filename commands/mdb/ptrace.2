@@ -1,0 +1,87 @@
+.TH PTRACE 2
+.SH NAME
+ptrace \- ptrace system call. 
+.SH SYNOPSIS
+.ft B
+.nf
+.sp
+#include <sys/ptrace.h>
+
+long ptrace( int req, pid_t pid, long addr, long data)
+
+.fi
+.ft P
+.SH DESCRIPTION
+.sp
+Ptrace(2) is called with following arguments:
+.sp 
+.br
+req
+request
+.br
+pid 
+process id
+.br
+addr
+address
+.br
+data
+data
+.br
+.SH REQUESTS
+.sp
+.I
+T_STOP
+stop the process.
+.br
+.I
+T_OK
+enable tracing by parent for this process. 
+.br
+.I
+T_GETINS
+return value from instruction space 
+.br
+.I
+T_GETDATA
+return value from data space. 
+.br
+.I
+T_GETUSER
+return value from process table. See proc.h in kernel.
+.br
+.I
+T_SETINS
+set value from instruction space. 
+.br
+.I
+T_SETDATA
+set value from data space.
+.br
+.I
+T_SETUSER
+set value in process table. 
+.br
+.I
+T_RESUME
+resume execution.
+.br
+.I
+T_EXIT
+exit. Turn off tracing.
+.br
+.I
+T_STEP
+set trace bit to enable single step.
+.SH "SEE ALSO"
+.sp
+mdb(1)
+.SH DIAGNOSTICS
+.sp
+errno is set by ptrace().
+.SH FILES
+.sp
+/usr/src/kernel/proc.h for process table info. 
+
+
+

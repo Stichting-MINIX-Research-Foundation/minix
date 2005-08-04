@@ -46,6 +46,7 @@ all install clean::
 	cd kermit && $(MAKE) $@
 	cd m4 && $(MAKE) $@
 	cd make && $(MAKE) $@
+	cd mdb && $(MAKE) $@
 	cd mined && $(MAKE) $@
 	cd patch && $(MAKE) $@
 	cd ps && $(MAKE) $@
