@@ -191,7 +191,7 @@ PRIVATE void pm_init()
   if (OK != (s=sys_getimage(image))) 
   	panic(__FILE__,"PM: warning, couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
-  printf("Builing process table:");		/* show what's happening */
+  printf("Building process table:");		/* show what's happening */
   for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {		
   	if (ip->proc_nr >= 0) {			/* task have negative nrs */
   		procs_in_use += 1;		/* found user process */
@@ -264,6 +264,7 @@ PRIVATE void pm_init()
 }
 
 
+#if _WORD_SIZE == 2
 /* In real mode only 1M can be addressed, and in 16-bit protected we can go
  * no further than we can count in clicks.  (The 286 is further limited by
  * its 24 bit address bus, but we can assume in that case that no more than
@@ -271,6 +272,7 @@ PRIVATE void pm_init()
  */
 #define MAX_REAL	0x00100000L
 #define MAX_16BIT	(0xFFF0L << CLICK_SHIFT)
+#endif
 
 /*=========================================================================*
  *				get_mem_chunks				   *
