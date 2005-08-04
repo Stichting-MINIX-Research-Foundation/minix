@@ -12,12 +12,10 @@ esac
 
 disabled()
 {
-    service=$1
-
     ifs="$IFS"; IFS=,
-    for name in `sysenv disable`
+    for skip in `sysenv disable`
     do 
-        if [ "$name" = "$service" ]
+        if [ "$skip" = "$1" ]
 	then 	 
                 IFS="$ifs"; unset ifs
 		return 0
