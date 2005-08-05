@@ -82,15 +82,9 @@ unsigned long rs_irq_set = 0;
 /* Address of a tty structure. */
 #define tty_addr(line)	(&tty_table[line])
 
-/* First minor numbers for the various classes of TTY devices. */
-#define CONS_MINOR	  0
-#define LOG_MINOR	 15
-#define RS232_MINOR	 16
-#define TTYPX_MINOR	128
-#define PTYPX_MINOR	192
-
 /* Macros for magic tty types. */
 #define isconsole(tp)	((tp) < tty_addr(NR_CONS))
+#define ispty(tp)	((tp) >= tty_addr(NR_CONS+NR_RS_LINES))
 
 /* Macros for magic tty structure pointers. */
 #define FIRST_TTY	tty_addr(0)
@@ -181,7 +175,6 @@ PUBLIC void main(void)
     panic("TTY","Couldn't obtain kernel environment.", s);
   }
 
-printf("\n");
   while (TRUE) {
 
 	/* Check for and handle any events on any of the ttys. */
@@ -476,11 +469,8 @@ register message *m_ptr;	/* pointer to message sent to the task */
 
 	/* Try to write. */
 	handle_events(tp);
-	if (tp->tty_outleft == 0) {
-  		if(tp->tty_select_ops)
-		  	select_retry(tp);
-		return;		/* already done */
-	}
+	if (tp->tty_outleft == 0) 
+		return;	/* already done */
 
 	/* None or not all the bytes could be written, so either suspend the
 	 * caller or break off the write if nonblocking.
@@ -494,8 +484,6 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	}
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
-  if(tp->tty_select_ops)
-  	select_retry(tp);
 }
 
 
@@ -807,7 +795,6 @@ PUBLIC int select_try(struct tty *tp, int ops)
 	 * (and it can be seen as an exceptional condition.)
 	 */
 	if (tp->tty_termios.c_ospeed == B0) {
-		printf("tty: hangup always ok\n");
 		ready_ops |= ops;
 	}
 
@@ -816,8 +803,8 @@ PUBLIC int select_try(struct tty *tp, int ops)
 		if (tp->tty_inleft > 0) {
 			ready_ops |= SEL_RD;	/* EIO - no blocking */
 		} else if(tp->tty_incount > 0) {
-			/* is a regular read possible? tty_incount
-			 * says there is data. but a read will only succeed
+			/* Is a regular read possible? tty_incount
+			 * says there is data. But a read will only succeed
 			 * in canonical mode if a newline has been seen.
 			 */
 			if(!(tp->tty_termios.c_lflag & ICANON) ||
@@ -827,13 +814,9 @@ PUBLIC int select_try(struct tty *tp, int ops)
 		}
 	}
 
-	if(ops & SEL_WR) {
-  		if (tp->tty_outleft > 0) {
-			ready_ops |= SEL_WR;	/* EIO - no blocking */
-  		}
-		if((*tp->tty_devwrite)(tp, 1)) {
-			ready_ops |= SEL_WR;	/* real write possible */
-  		}
+	if(ops & SEL_WR)  {
+  		if (tp->tty_outleft > 0)  ready_ops |= SEL_WR;
+		else if((*tp->tty_devwrite)(tp, 1)) ready_ops |= SEL_WR;
 	}
 
 	return ready_ops;
@@ -841,21 +824,8 @@ PUBLIC int select_try(struct tty *tp, int ops)
 
 PUBLIC int select_retry(struct tty *tp)
 {
-#if DEAD_CODE
-	int ops;
-	if((ops = select_try(tp, tp->tty_select_ops))) {
-		message m;
-		m.NOTIFY_TYPE = DEV_SELECTED;
-		m.NOTIFY_ARG = tp->tty_index;
-		m.NOTIFY_FLAGS = ops;
-		notify(tp->tty_select_proc, &m);
-		tp->tty_select_ops &= ~ops;
-	}
-#else
 	if (select_try(tp, tp->tty_select_ops))
 		notify(tp->tty_select_proc);
-#endif
-
 	return OK;
 }
 
@@ -915,6 +885,10 @@ tty_t *tp;			/* TTY to check for events. */
 	tp->tty_inleft = tp->tty_incum = 0;
 #endif
   }
+  if(tp->tty_select_ops)
+  	select_retry(tp);
+  if(ispty(tp))
+  	select_retry_pty(tp);
 }
 
 
@@ -1559,11 +1533,14 @@ PRIVATE void tty_init()
 								tty_devnop;
   	if (tp < tty_addr(NR_CONS)) {
 		scr_init(tp);
+  		tp->tty_minor = CONS_MINOR + s;
   	} else
   	if (tp < tty_addr(NR_CONS+NR_RS_LINES)) {
 		rs_init(tp);
+  		tp->tty_minor = RS232_MINOR + s-NR_CONS;
   	} else {
 		pty_init(tp);
+  		tp->tty_minor = s + TTYPX_MINOR + s-(NR_CONS+RS232_MINOR);
   	}
   }
 
@@ -1671,7 +1648,6 @@ register tty_t *tp;		/* pointer to tty struct */
 register message *m_ptr;	/* pointer to message sent to the task */
 {
 	int ops, ready_ops = 0, watch;
-	printf("doing select..\n");
 
 	ops = m_ptr->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
 	watch = (m_ptr->PROC_NR & SEL_NOTIFY) ? 1 : 0;
@@ -1679,11 +1655,9 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	ready_ops = select_try(tp, ops);
 
 	if(!ready_ops && ops && watch) {
-		printf("doing select.. ops %d\n", ops);
 		tp->tty_select_ops |= ops;
 		tp->tty_select_proc = m_ptr->m_source;
-	} else printf("not doing select.. ready_ops %d ops %d watch %d\n",
-		ready_ops, ops, watch);
+	}
 
         tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, ready_ops);
 

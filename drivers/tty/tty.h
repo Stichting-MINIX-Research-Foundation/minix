@@ -2,6 +2,13 @@
 
 #include <timers.h>
 
+/* First minor numbers for the various classes of TTY devices. */
+#define CONS_MINOR	  0
+#define LOG_MINOR	 15
+#define RS232_MINOR	 16
+#define TTYPX_MINOR	128
+#define PTYPX_MINOR	192
+
 #define LINEWRAP	   1	/* console.c - wrap lines at column 80 */
 
 #define TTY_IN_BYTES     256	/* tty input queue size */
@@ -20,6 +27,7 @@ typedef _PROTOTYPE( void (*devfunarg_t), (struct tty *tp, int c) );
 typedef struct tty {
   int tty_events;		/* set when TTY should inspect this line */
   int tty_index;		/* index into TTY table */
+  int tty_minor;		/* device minor number */
 
   /* Input queue.  Typed characters are stored here until read by a program. */
   u16_t *tty_inhead;		/* pointer to place where next char goes */
@@ -156,6 +164,7 @@ _PROTOTYPE( void kbd_interrupt, (message *m)				);
 /* pty.c */
 _PROTOTYPE( void do_pty, (struct tty *tp, message *m_ptr)		);
 _PROTOTYPE( void pty_init, (struct tty *tp)				);
+_PROTOTYPE( void select_retry_pty, (struct tty *tp)				);
 _PROTOTYPE( int pty_status, (message *m_ptr)				);
 
 /* vidcopy.s */

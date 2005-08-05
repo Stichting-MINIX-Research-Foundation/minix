@@ -22,6 +22,7 @@
 #include <signal.h>
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <sys/select.h>
 #include "tty.h"
 
 #if NR_PTYS > 0
@@ -51,6 +52,11 @@ typedef struct pty {
   int		ocount;		/* # characters in the buffer */
   char		*ohead, *otail;	/* head and tail of the circular buffer */
   char		obuf[128];	/* buffer for bytes going to the pty reader */
+
+  /* select() data. */
+  int		select_ops,	/* Which operations do we want to know about? */
+  		select_proc,	/* Who wants to know about it? */
+  		select_ready_ops;	/* For callback. */
 } pty_t;
 
 #define PTY_ACTIVE	0x01	/* pty is open/active */
@@ -64,10 +70,11 @@ FORWARD _PROTOTYPE( int pty_write, (tty_t *tp, int try)				);
 FORWARD _PROTOTYPE( void pty_echo, (tty_t *tp, int c)			);
 FORWARD _PROTOTYPE( void pty_start, (pty_t *pp)				);
 FORWARD _PROTOTYPE( void pty_finish, (pty_t *pp)			);
-FORWARD _PROTOTYPE( int pty_read, (tty_t *tp, int try)				);
-FORWARD _PROTOTYPE( int pty_close, (tty_t *tp, int try)				);
-FORWARD _PROTOTYPE( int pty_icancel, (tty_t *tp, int try)			);
-FORWARD _PROTOTYPE( int pty_ocancel, (tty_t *tp, int try)			);
+FORWARD _PROTOTYPE( int pty_read, (tty_t *tp, int try)			);
+FORWARD _PROTOTYPE( int pty_close, (tty_t *tp, int try)			);
+FORWARD _PROTOTYPE( int pty_icancel, (tty_t *tp, int try)		);
+FORWARD _PROTOTYPE( int pty_ocancel, (tty_t *tp, int try)		);
+FORWARD _PROTOTYPE( int pty_select, (tty_t *tp, message *m)		);
 
 
 /*==========================================================================*
@@ -182,6 +189,10 @@ message *m_ptr;
 	}
 	break;
 
+    case DEV_SELECT:
+    	r = pty_select(tp, m_ptr);
+    	break;
+
     case CANCEL:
 	if (m_ptr->PROC_NR == pp->rdproc) {
 		/* Cancel a read from a PTY. */
@@ -215,6 +226,7 @@ int try;
   int count, ocount, s;
   phys_bytes user_phys;
 
+
   /* PTY closed down? */
   if (pp->state & PTY_CLOSED) {
   	if(try) return 1;
@@ -229,14 +241,12 @@ int try;
   /* While there is something to do. */
   for (;;) {
 	ocount = buflen(pp->obuf) - pp->ocount;
+	if(try) return (ocount > 0);
 	count = bufend(pp->obuf) - pp->ohead;
 	if (count > ocount) count = ocount;
 	if (count > tp->tty_outleft) count = tp->tty_outleft;
-	if (count == 0 || tp->tty_inhibited) {
-		if(try) return 0;
+	if (count == 0 || tp->tty_inhibited)
 		break;
-	}
-	if(try) return 1;
 
 	/* Copy from user space to the PTY output buffer. */
 	if((s = sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir,
@@ -339,7 +349,6 @@ pty_t *pp;
 /* Finish the read request of a PTY reader if there is at least one byte
  * transferred.
  */
-
   if (pp->rdcum > 0) {
         if (pp->rdsendreply) {
 		tty_reply(TASK_REPLY, pp->rdcaller, pp->rdproc, pp->rdcum);
@@ -348,6 +357,7 @@ pty_t *pp;
 	else
 		notify(pp->rdcaller);
   }
+
 }
 
 
@@ -363,6 +373,7 @@ int try;
  */
   pty_t *pp = tp->tty_priv;
   char c;
+
 
   if (pp->state & PTY_CLOSED) {
 	if(try) return 1;
@@ -482,6 +493,7 @@ tty_t *tp;
   line = tp - &tty_table[NR_CONS + NR_RS_LINES];
   pp = tp->tty_priv = &pty_table[line];
   pp->tty = tp;
+  pp->select_ops = 0;
 
   /* Set up output queue. */
   pp->ohead = pp->otail = pp->obuf;
@@ -493,6 +505,7 @@ tty_t *tp;
   tp->tty_icancel = pty_icancel;
   tp->tty_ocancel = pty_ocancel;
   tp->tty_close = pty_close;
+  tp->tty_select_ops = 0;
 }
 
 
@@ -506,7 +519,7 @@ PUBLIC int pty_status(message *m_ptr)
 
 	event_found = 0;
 	for (i= 0, pp = pty_table; i<NR_PTYS; i++, pp++) {
-		if (((pp->state & TTY_CLOSED && pp->rdleft > 0) ||
+		if ((((pp->state & TTY_CLOSED) && pp->rdleft > 0) ||
 			pp->rdcum > 0) &&
 			pp->rdcaller == m_ptr->m_source)
 		{
@@ -519,7 +532,7 @@ PUBLIC int pty_status(message *m_ptr)
 			break;
 		}
 
-		if (((pp->state & TTY_CLOSED && pp->wrleft > 0) ||
+		if ((((pp->state & TTY_CLOSED) && pp->wrleft > 0) ||
 			pp->wrcum > 0) &&
 			pp->wrcaller == m_ptr->m_source)
 		{
@@ -534,8 +547,79 @@ PUBLIC int pty_status(message *m_ptr)
 			event_found = 1;
 			break;
 		}
+
+		if(pp->select_ready_ops && pp->select_proc == m_ptr->m_source) {
+			m_ptr->m_type = DEV_IO_READY;
+			m_ptr->DEV_MINOR = PTYPX_MINOR + i;
+			m_ptr->DEV_SEL_OPS = pp->select_ready_ops;
+			pp->select_ready_ops = 0;
+			event_found = 1;
+			break;
+		}
 	}
 	return event_found;
+}
+
+/*==========================================================================*
+ *				select_try_pty				    *
+ *==========================================================================*/
+PRIVATE int select_try_pty(tty_t *tp, int ops)
+{
+  	pty_t *pp = tp->tty_priv;
+	int r = 0;
+
+	if(ops & SEL_WR)  {
+		/* Write won't block on error. */
+		if (pp->state & TTY_CLOSED) r |= SEL_WR;
+		else if (pp->wrleft != 0 || pp->wrcum != 0) r |= SEL_WR;
+		else r |= SEL_WR;
+	}
+
+	if(ops & SEL_RD) {
+		/* Read won't block on error. */
+		if (pp->state & TTY_CLOSED) r |= SEL_RD;
+		else if(pp->rdleft != 0 || pp->rdcum != 0) r |= SEL_RD;
+		else if(pp->ocount > 0) r |= SEL_RD;	/* Actual data. */
+	}
+
+	return r;
+}
+
+/*==========================================================================*
+ *				select_retry_pty				    *
+ *==========================================================================*/
+PUBLIC void select_retry_pty(tty_t *tp)
+{
+  	pty_t *pp = tp->tty_priv;
+  	int r;
+
+	/* See if the pty side of a pty is ready to return a select. */
+	if(pp->select_ops && (r=select_try_pty(tp, pp->select_ops))) {
+		pp->select_ops &= ~r;
+		pp->select_ready_ops |= r;
+		notify(pp->select_proc);
+	}
+}
+
+/*==========================================================================*
+ *				pty_select				    *
+ *==========================================================================*/
+PRIVATE int pty_select(tty_t *tp, message *m)
+{
+  	pty_t *pp = tp->tty_priv;
+	int ops, ready_ops = 0, watch;
+
+	ops = m->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
+	watch = (m->PROC_NR & SEL_NOTIFY) ? 1 : 0;
+
+	ready_ops = select_try_pty(tp, ops);
+
+	if(!ready_ops && ops && watch) {
+		pp->select_ops |= ops;
+		pp->select_proc = m->m_source;
+	}
+
+	return ready_ops;
 }
 
 #endif /* NR_PTYS > 0 */
