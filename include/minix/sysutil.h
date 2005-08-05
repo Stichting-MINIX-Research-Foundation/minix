@@ -31,9 +31,14 @@
 
 _PROTOTYPE( int get_mon_param, (char *key, char *value, int max_size)	);
 _PROTOTYPE( int env_prefix, (char *env, char *prefix)			);
+_PROTOTYPE( int env_prefix_x, (int argc, char *argv[],
+                                        char *env, char *prefix)        );
 _PROTOTYPE( void env_panic, (char *key)					);
 _PROTOTYPE( int env_parse, (char *env, char *fmt, int field, long *param,
 				long min, long max)			);
+_PROTOTYPE( int env_parse_x, (int argc, char *argv[], char *env,
+	char *fmt, int field, long *param, long min, long max)          );
+
 
 #define fkey_map(fkeys, sfkeys) fkey_ctl(FKEY_MAP, (fkeys), (sfkeys))
 #define fkey_unmap(fkeys, sfkeys) fkey_ctl(FKEY_UNMAP, (fkeys), (sfkeys))

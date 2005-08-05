@@ -28,3 +28,4 @@ all install depend clean:
 	cd ./bios_wini && $(MAKE) $@
 	cd ./cmos && $(MAKE) $@
 	cd ./random && $(MAKE) $@
+	cd ./dp8390 && $(MAKE) $@
