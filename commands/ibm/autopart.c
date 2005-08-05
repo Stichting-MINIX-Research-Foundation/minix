@@ -2370,13 +2370,8 @@ select_region(void)
 
 	if(nr_partitions >= NR_PARTITIONS || !free_regions) {
 		if(free_regions) {
-			printf("\nThere is no slot available to use any of the free regions.\n");
 			nofree = 1;
-		} else {
-			printf("There are no free regions.\n");
 		}
-		printf("Please select a region that is in use to \n"
-			"overwrite it, or use expert mode to free up space.\n");
 	}
 
 	do {
@@ -2392,14 +2387,15 @@ select_region(void)
 		if(nr_regions > 1) {
 			printf("\nPlease enter region number you want to use");
 			if(used_regions > 0) {
-				printf(" or F to free an in-use region: ");
+				printf(" or F to free an in-use region");
 			}
+			printf(": ");
 			fflush(NULL);
 
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
 
-			if(line[0] == 'F') {
+			if(toupper(line[0]) == 'F') {
 				may_kill_region();
 				return NULL;
 			}
