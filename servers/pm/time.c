@@ -33,6 +33,7 @@ PUBLIC int do_time()
   	panic(__FILE__,"do_time couldn't get uptime", s);
 
   mp->mp_reply.reply_time = (time_t) (boottime + (uptime/HZ));
+  mp->mp_reply.reply_utime = (uptime%HZ)*1000000/HZ;
   return(OK);
 }
 
@@ -80,23 +81,6 @@ PUBLIC int do_times()
   rmp->mp_reply.reply_t3 = rmp->mp_child_utime;	/* child user time */
   rmp->mp_reply.reply_t4 = rmp->mp_child_stime;	/* child system time */
   rmp->mp_reply.reply_t5 = t[4];		/* uptime since boot */
-
-  return(OK);
-}
-
-/*===========================================================================*
- *				do_gettimeofday				     *
- *===========================================================================*/
-PUBLIC int do_gettimeofday(void)
-{
-  clock_t uptime;
-  int s;
-
-  if ( (s=getuptime(&uptime)) != OK) 
-  	panic(__FILE__,"do_gettimeofday couldn't get uptime", s);
-
-  mp->mp_reply.m2_l1 = boottime + uptime/HZ;
-  mp->mp_reply.m2_l2 = (uptime%HZ)*1000000/HZ;
 
   return(OK);
 }
