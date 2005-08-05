@@ -2171,7 +2171,9 @@ int may_block;
 
 	if (r == ELOCKED && may_block)
 	{
+#if 0
 		printW(); printf("send locked\n");
+#endif
 		return;
 	}
 
