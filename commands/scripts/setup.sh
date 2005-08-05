@@ -3,6 +3,8 @@
 #	setup 4.1 - install a Minix distribution	Author: Kees J. Bot
 #								20 Dec 1994
 
+LOCALRC=/usr/etc/rc.local
+
 PATH=/bin:/usr/bin
 export PATH
 
@@ -192,16 +194,20 @@ echo "   is installed (NE2000 is emulated by Bochs)"
 echo "5. A 3com 501 or 509 Ethernet card is installed "
 echo "6. A different Ethernet card is installed (no networking)"
 echo ""
+echo "In with some cards, you'll have to edit $LOCALRC "
+echo "after installing to the proper parameters."
+echo ""
 echo "You can always change your mind after the install."
 echo ""
 echo -n "Choice? "
 read eth
 driver=""
+driverargs=""
 case "$eth" in
 	1)	driver=fxp;      ;;
 	2)	driver=rtl8139;  ;;
 	3)	driver=dp8390;   driverargs="dp8390_args='DPETH0=pci'";	;;
-	4)	driver=dp8390;   driverargs="#dp8390_args='DPETH0=port:irq:memory'";	;;
+	4)	driver=dp8390;   driverargs="#dp8390_args='DPETH0=port:irq:memory'"; echo "Note: After installing, please edit $LOCALRC to the right configuration."; 	;;
 	5)	driver=dpeth;    ;;
 esac
 
@@ -360,6 +366,7 @@ test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 # Set inet.conf to correct driver
 if [ -n "$driver" ]
 then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
+	echo "$driverargs" >$LOCALRC
 fi
 
 umount /dev/$root || exit		# Unmount the new root.
