@@ -102,7 +102,6 @@ start)
     done
     up inet ""
     up printer "" /dev/lp
-#    up floppy "" /dev/fd0
     echo .
 
     # Network initialization.

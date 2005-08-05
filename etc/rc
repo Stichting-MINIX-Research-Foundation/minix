@@ -51,8 +51,10 @@ start)
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
 
-    # Start crucial system services
+    # Start crucial system services. The floppy driver *must* be loaded 
+    # first, as it needs memory below 16MB in order to do ISA DMA.
     echo -n "Starting services:"
+    up floppy "" /dev/fd0
     up is ""
     up cmos "" /dev/cmos
     echo .

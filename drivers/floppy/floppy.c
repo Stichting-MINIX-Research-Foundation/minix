@@ -33,12 +33,14 @@
 #define FDC_DATA       0x3F5	/* floppy disk controller data register */
 #define FDC_RATE       0x3F7	/* transfer rate register */
 #define DMA_ADDR       0x004	/* port for low 16 bits of DMA address */
-#define DMA_TOP        0x081	/* port for top 4 bits of 20-bit DMA addr */
+#define DMA_TOP        0x081	/* port for top 8 bits of 24-bit DMA addr */
 #define DMA_COUNT      0x005	/* port for DMA count (count =  bytes - 1) */
 #define DMA_FLIPFLOP   0x00C	/* DMA byte pointer flip-flop */
 #define DMA_MODE       0x00B	/* DMA mode port */
 #define DMA_INIT       0x00A	/* DMA init port */
-#define DMA_RESET_VAL   0x06
+#define DMA_RESET_VAL  0x006
+
+#define DMA_ADDR_MASK  0xFFFFFF	/* mask to verify DMA address is 24-bit */
 
 /* Status registers returned as result of operation. */
 #define ST0             0x00	/* status register 0 */
@@ -245,7 +247,7 @@ FORWARD _PROTOTYPE( char *f_name, (void) );
 FORWARD _PROTOTYPE( void f_cleanup, (void) );
 FORWARD _PROTOTYPE( int f_transfer, (int proc_nr, int opcode, off_t position,
 					iovec_t *iov, unsigned nr_req) );
-FORWARD _PROTOTYPE( void dma_setup, (int opcode) );
+FORWARD _PROTOTYPE( int dma_setup, (int opcode) );
 FORWARD _PROTOTYPE( void start_motor, (void) );
 FORWARD _PROTOTYPE( int seek, (void) );
 FORWARD _PROTOTYPE( int fdc_transfer, (int opcode) );
@@ -571,7 +573,13 @@ unsigned nr_req;		/* length of request vector */
 
 		/* Set up the DMA chip and perform the transfer. */
 		if (r == OK) {
-			dma_setup(opcode);
+			if (dma_setup(opcode) != OK) {
+				/* This can only fail for addresses above 16MB
+				 * that cannot be handled by the controller, 
+ 				 * because it uses 24-bit addressing.
+				 */
+				return(EIO);
+			}
 			r = fdc_transfer(opcode);
 		}
 
@@ -627,7 +635,7 @@ unsigned nr_req;		/* length of request vector */
 /*===========================================================================*
  *				dma_setup				     *
  *===========================================================================*/
-PRIVATE void dma_setup(opcode)
+PRIVATE int dma_setup(opcode)
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
 {
 /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
@@ -636,9 +644,20 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
  * opcode.  This routine sets up the DMA chip.  Note that the chip is not
  * capable of doing a DMA across a 64K boundary (e.g., you can't read a
  * 512-byte block starting at physical address 65520).
+ *
+ * Warning! Also note that it's not possible to do DMA above 16 MB because 
+ * the ISA bus uses 24-bit addresses. Addresses above 16 MB therefore will 
+ * be interpreted modulo 16 MB, dangerously overwriting arbitrary memory. 
+ * A check here denies the I/O if the address is out of range. 
  */
   pvb_pair_t byte_out[9];
   int s;
+
+  /* First check the DMA memory address not to exceed maximum. */
+  if (tmp_phys != (tmp_phys & DMA_ADDR_MASK)) {
+	report("FLOPPY", "DMA denied because address out of range", NO_NUM);
+	return(EIO);
+  }
 
   /* Set up the DMA registers.  (The comment on the reset is a bit strong,
    * it probably only resets the floppy channel.)
@@ -655,6 +674,7 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
 
   if ((s=sys_voutb(byte_out, 9)) != OK)
   	panic("FLOPPY","Sys_voutb in dma_setup() failed", s);
+  return(OK);
 }
 
 

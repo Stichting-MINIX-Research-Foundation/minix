@@ -41,6 +41,7 @@
 
 
 #if (CHIP == INTEL)
+
 #if USE_EXTRA_DMA_BUF && DMA_BUF_SIZE < 2048
 /* A bit extra scratch for the Adaptec driver. */
 #define BUF_EXTRA	(2048 - DMA_BUF_SIZE)
@@ -156,7 +157,7 @@ PRIVATE void init_buffer()
 	tmp_buf += left;
 	tmp_phys += left;
   }
-#endif /* CHIP != INTEL */
+#endif /* CHIP == INTEL */
 }
 
 
