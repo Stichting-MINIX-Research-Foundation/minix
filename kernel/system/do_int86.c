@@ -3,6 +3,9 @@
  *
  * The parameters for this system call are:
  *    m1_p1:	INT86_REG86     
+ * 
+ * Changes:
+ *   Jul 30, 2005   created to support BIOS driver  (Philip Homburg) 
  */
 
 #include "../system.h"

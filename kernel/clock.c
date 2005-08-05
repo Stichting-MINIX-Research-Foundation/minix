@@ -8,22 +8,21 @@
  * Changes:
  *   Mar 18, 2004   clock interface moved to SYSTEM task (Jorrit N. Herder) 
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
- *   Sep 24, 2004   redesigned timers and alarms  (Jorrit N. Herder)
+ *   Sep 24, 2004   redesigned alarm timers  (Jorrit N. Herder)
  *
- * The function do_clocktick() is not triggered from the clock library, but 
- * by the clock's interrupt handler when a watchdog timer has expired or 
- * another user process must be scheduled. 
+ * The function do_clocktick() is not triggered by the clock's interrupt 
+ * handler when a watchdog timer has expired or a process must be scheduled. 
  *
  * In addition to the main clock_task() entry point, which starts the main 
  * loop, there are several other minor entry points:
  *   clock_stop:	called just before MINIX shutdown
  *   get_uptime:	get realtime since boot in clock ticks
- *   set_timer:		set a watchdog timer (*, see note below!)
- *   reset_timer:	reset a watchdog timer (*)
+ *   set_timer:		set a watchdog timer (+)
+ *   reset_timer:	reset a watchdog timer (+)
  *   calc_elapsed:	do timing measurements: get delta ticks and pulses
  *   read_clock:	read the counter of channel 0 of the 8253A timer
  *
- * (*) The CLOCK task keeps tracks of watchdog timers for the entire kernel.
+ * (+) The CLOCK task keeps tracks of watchdog timers for the entire kernel.
  * The watchdog functions of expired timers are executed in do_clocktick(). 
  * It is crucial that watchdog functions cannot block, or the CLOCK task may
  * be blocked. Do not send() a message when the receiver is not expecting it.

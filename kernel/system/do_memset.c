@@ -5,6 +5,9 @@
  *    m2_p1:	MEM_PTR		(virtual address)	
  *    m2_l1:	MEM_COUNT	(returns physical address)	
  *    m2_l2:	MEM_PATTERN	(size of datastructure) 	
+ *
+ * Changes:
+ *   Jun 21, 2005   created to speed up exec(2)  (Ben J. Gras)
  */
 
 #include "../system.h"

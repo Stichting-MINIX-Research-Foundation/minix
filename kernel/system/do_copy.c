@@ -9,6 +9,9 @@
  *    m5_l2:	CP_DST_ADDR	
  *    m5_i2:	CP_DST_PROC_NR	
  *    m5_l3:	CP_NR_BYTES
+ *
+ * Changes:
+ *   Jan 20, 2005	updated to use new virtual_copy()  (Jorrit N. Herder)
  */
 
 #include "../system.h"

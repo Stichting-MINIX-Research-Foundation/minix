@@ -21,7 +21,6 @@
  *   get_randomness:	accumulate randomness in a buffer
  *
  * Changes:
- *   2004 to 2005   many new system calls (see system.h)  (Jorrit N. Herder)
  *   Aug 04, 2005   check if kernel call is allowed  (Jorrit N. Herder)
  *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
  *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)

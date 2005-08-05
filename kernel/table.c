@@ -72,7 +72,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define DRV_M	(USR_M | s(SYSTEM) | s(CLOCK) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
 
 /* Define kernel calls that processes are allowed to make. This is not looking
- * very nice, but we really need to set access rights on a per call basis. 
+ * very nice, but we need to define the access rights on a per call basis. 
  * Note that the system services manager has all bits on, because it should
  * be allowed to distribute rights to services that it starts. 
  */

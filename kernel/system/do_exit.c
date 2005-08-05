@@ -3,6 +3,9 @@
  *
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR		(slot number of exiting process)
+ *
+ * Changes:
+ *   Sep 09, 2004   updated to allow services to exit  (Jorrit N. Herder) 
  */
 
 #include "../system.h"
