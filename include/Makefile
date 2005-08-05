@@ -9,3 +9,4 @@ install::
 	-rm -rf $(INC)
 	mkdir -p $(INC)
 	tar cf - `find . -name '*.h'` | (cd $(INC) && tar xf -)
+	@chown -R bin $(INC)
