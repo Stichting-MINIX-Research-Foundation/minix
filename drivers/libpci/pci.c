@@ -516,10 +516,12 @@ printf("probe_bus(%d)\n", busind);
 			sts= pci_attr_rsts(devind);
 			if (sts & (PSR_SSE|PSR_RMAS|PSR_RTAS))
 			{
+#if 0
 				printf(
 			"pci: ignoring bad value 0x%x in sts for QEMU\n",
 					sts & (PSR_SSE|PSR_RMAS|PSR_RTAS));
-				/* break; */
+#endif
+				break;
 			}
 			if (vid == NO_VID)
 			{
@@ -800,7 +802,8 @@ int devind;
 			{
 				printf("IRQ %d is not level triggered\n",
 					irq);
-				panic(NULL,NULL, NO_NUM);
+				printf("(ignored for QEMU)\n");
+				/* panic(NULL,NULL, NO_NUM); */
 			}
 			irq_mode_pci(irq);
 		}
