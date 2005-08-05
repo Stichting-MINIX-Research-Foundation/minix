@@ -238,7 +238,7 @@ timer_t *tp;
   u16_t magic; 
 
   /* Now mask all interrupts, including the clock, and stop the clock. */
-  outb(INT_CTLMASK, ~0); 
+  outb(INT_CTLMASK, ~1); 
   clock_stop();
 
   if (mon_return && how != RBT_RESET) {

@@ -44,10 +44,10 @@ message *m_ptr;			/* pointer to request message */
 
   /* Return the ticks left on the previous alarm. */
   uptime = get_uptime(); 
-  if ((tp->tmr_exp_time == TMR_NEVER) || (tp->tmr_exp_time < uptime) ) {
-      m_ptr->ALRM_TIME_LEFT = 0;
-  } else {
+  if ((tp->tmr_exp_time != TMR_NEVER) && (uptime < tp->tmr_exp_time) ) {
       m_ptr->ALRM_TIME_LEFT = (tp->tmr_exp_time - uptime);
+  } else {
+      m_ptr->ALRM_TIME_LEFT = 0;
   }
 
   /* Finally, (re)set the timer depending on the expiration time. */
@@ -72,7 +72,6 @@ timer_t *tp;
  * process with a notification message from CLOCK.
  */
   int proc_nr = tmr_arg(tp)->ta_int;		/* get process number */
-  tmr_inittimer(tp);				/* reset alarm timer */
   lock_notify(CLOCK, proc_nr);			/* notify process */
 }
 
