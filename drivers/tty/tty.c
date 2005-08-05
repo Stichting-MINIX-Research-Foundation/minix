@@ -1,4 +1,3 @@
-#define NEW_REVIVE 1
 /* This file contains the tesminal driver, both for the IBM console and regular
  * ASCII terminals.  It handles only the device-independent part of a TTY, the
  * device dependent parts are in console.c, rs232.c, etc.  This file contains
@@ -870,7 +869,6 @@ tty_t *tp;			/* TTY to check for events. */
 
   /* Reply if enough bytes are available. */
   if (tp->tty_incum >= tp->tty_min && tp->tty_inleft > 0) {
-#if NEW_REVIVE
 	if (tp->tty_inrepcode == REVIVE) {
 		notify(tp->tty_incaller);
 		tp->tty_inrevived = 1;
@@ -879,11 +877,6 @@ tty_t *tp;			/* TTY to check for events. */
 			tp->tty_inproc, tp->tty_incum);
 		tp->tty_inleft = tp->tty_incum = 0;
 	}
-#else
-	tty_reply(tp->tty_inrepcode, tp->tty_incaller, tp->tty_inproc,
-								tp->tty_incum);
-	tp->tty_inleft = tp->tty_incum = 0;
-#endif
   }
   if(tp->tty_select_ops)
   	select_retry(tp);
@@ -951,7 +944,6 @@ register tty_t *tp;		/* pointer to terminal to read from */
 
   /* Usually reply to the reader, possibly even if incum == 0 (EOF). */
   if (tp->tty_inleft == 0) {
-#if NEW_REVIVE
 	if (tp->tty_inrepcode == REVIVE) {
 		notify(tp->tty_incaller);
 		tp->tty_inrevived = 1;
@@ -960,11 +952,6 @@ register tty_t *tp;		/* pointer to terminal to read from */
 			tp->tty_inproc, tp->tty_incum);
 		tp->tty_inleft = tp->tty_incum = 0;
 	}
-#else
-	tty_reply(tp->tty_inrepcode, tp->tty_incaller, tp->tty_inproc,
-								tp->tty_incum);
-	tp->tty_inleft = tp->tty_incum = 0;
-#endif
   }
 }
 

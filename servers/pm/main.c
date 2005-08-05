@@ -253,7 +253,7 @@ PRIVATE void pm_init()
   }
 
   /* Initialize tables to all physical memory and print memory information. */
-  printf("Gathering memory:");
+  printf("Physical memory:");
   mem_init(mem_chunks, &free_clicks);
   total_clicks = minix_clicks + free_clicks;
   printf(" total %u KB,", click_to_round_k(total_clicks));

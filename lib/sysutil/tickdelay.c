@@ -1,4 +1,5 @@
 #include "sysutil.h"
+#include <timers.h>
 
 /*===========================================================================*
  *                               tickdelay			    	     *
@@ -27,7 +28,7 @@ long ticks;				/* number of ticks to wait */
     receive(CLOCK,&m_alarm);		/* await synchronous alarm */
 
     /* Check if we must reschedule the current alarm. */
-    if (m.ALRM_TIME_LEFT > 0) {
+    if (m.ALRM_TIME_LEFT > 0 && m.ALRM_TIME_LEFT != TMR_NEVER) {
     	m.ALRM_EXP_TIME = m.ALRM_TIME_LEFT - ticks;
     	if (m.ALRM_EXP_TIME <= 0) 
     		m.ALRM_EXP_TIME = 1;
