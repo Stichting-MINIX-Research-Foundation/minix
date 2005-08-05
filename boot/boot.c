@@ -20,6 +20,7 @@ char version[]=		"2.20";
 #include <minix/config.h>
 #include <minix/type.h>
 #include <minix/com.h>
+#include <minix/dmap.h>
 #include <minix/const.h>
 #include <minix/minlib.h>
 #include <minix/syslib.h>
