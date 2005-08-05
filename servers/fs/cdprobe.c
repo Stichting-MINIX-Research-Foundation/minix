@@ -33,74 +33,57 @@ PUBLIC int cdprobe(void)
 
 		dev = (AT_MAJOR << MAJOR) | minors[i];
 
-		/* 1. The drive should be a CD - which is not write-openable.
-		 *    Check for this.
+		/* Open device readonly. (This fails if the device
+		 * is also writable, which a CD isn't.)
 		 */
-		if((r = dev_open(dev, FS_PROC_NR, R_BIT|W_BIT)) == OK) {
-			printf("%d. no - can open r/w, so no cd\n", i);
-			dev_close(dev);
+		printf("%d", i);
+		if((r = dev_open(dev, FS_PROC_NR, RO_BIT)) != OK) {
+			printf("ro", i);
 			continue;
 		}
-		printf("passed no-r/w test ", i);
-
-		/* 2. The drive should be a CD. Open whole drive and 
-		 *    check for the PVD.
-		 */
-		if((r = dev_open(dev, FS_PROC_NR, R_BIT)) != OK) {
-			printf("%d. no - can't open readonly\n", i);
-			continue;
-		}
-		printf("%d. passed open-readonly test ", i);
 
 		if((r = dev_io(DEV_READ, dev, FS_PROC_NR, pvd,
 			16*CD_SECTOR, sizeof(pvd), 0)) != sizeof(pvd)) {
-			printf("%d. no - can't read pvd (%d)\n", i, r);
+			printf("rpvd", i);
 			dev_close(dev);
 			continue;
 		}
 		dev_close(dev);
-		printf("%d. passed read pvd test ", i);
 
 		/* Check PVD ID. */
 		if(pvd[0] !=  1  || pvd[1] != 'C' || pvd[2] != 'D' ||
 		   pvd[3] != '0' || pvd[4] != '0' || pvd[5] != '1' || pvd[6] != 1 ||
 		   strncmp(pvd + 40, "MINIX", 5)) {
-			printf("%d. no - cd signature or minix label not found\n", i, r);
+			printf("vpvd", i, r);
 		   	continue;
 		   }
-		printf("%d. pvd id test ", i);
 
 		/* 3. Both c0dXp1 and p2 should have a superblock. */
 		for(minor = minors[i]+2; minor <= minors[i]+3; minor++) {
 			dev = (AT_MAJOR << MAJOR) | minor;
 			if((r = dev_open(dev, FS_PROC_NR, R_BIT)) != OK) {
-				printf("%d. no - couldn't open subdev %d\n", i, dev);
+				printf("[o%d]\n", minor);
 				break;
 			}
 			probe_super.s_dev = dev;
 			r = read_super(&probe_super);
 			dev_close(dev);
 			if(r != OK) {
-				printf("%d. subdev %d doesn't contain a superblock\n", i, dev);
+				printf("fs[%d]", minor);
 				break;
 			}
-			printf("%d. (%d) passed superblock test ", i, minor);
 		}
 
 		if(minor > minors[i]+3) {
 			/* Success? Then set dev to p1. */
 			dev = (AT_MAJOR << MAJOR) | (minors[i]+2);
 			found = 1;
-			printf("%d. YES - passed all tests, root is %d\n", i, dev);
 			break;
-		} else  printf("%d. no superblock(s)\n", i);
+		}
 	}
+	printf("\n");
 
-	if(!found) {
-		return NO_DEV;
-	}
-
-	printf("\nCD probing done.\n");
+	if(!found) return NO_DEV;
 
 	return dev;
 }
