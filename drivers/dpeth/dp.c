@@ -48,35 +48,6 @@
 **  |DL_INIT_REPL| port nr |last port| ethernet addr | (20)
 **  +------------+---------+---------+---------------+
 **
-**  $Log$
-**  Revision 1.6  2005/08/05 18:37:15  philip
-**  Temp hacks for QEMU. Call to env_setargs in dpeth.
-**
-**  Revision 1.5  2005/08/02 15:30:35  jnherder
-**  Various updates to support dynamically starting drivers.
-**  Output during initialization should be suppressed. Unless an error occurs.
-**  Note that main() can now be main(int argc, char **argv) and arguments can
-**  be passed when bringing up the driver.
-**
-**  Revision 1.4  2005/07/29 12:44:41  jnherder
-**  Small update to SYS_IRQCTL -> setting an interrupt policy now allows the caller
-**  to provide an index (0 .. 31) that is passed in the HARD_INT message when an
-**  interrupt occurs. The NOTIFY_ARG field contains a bitmap with all indexes for
-**  which an interrupt occured.
-**
-**  Revision 1.3  2005/07/20 15:28:04  jnherder
-**  Kernel sends SIGKSTOP just before shutdown. Drivers do clean up and exit.
-**
-**  Revision 1.2  2005/07/14 15:15:17  jnherder
-**  Renamed some system library functionality.
-**
-**  Revision 1.1  2005/06/29 10:16:46  beng
-**  Import of dpeth 3c501/3c509b/.. ethernet driver by
-**  Giovanni Falzoni <fgalzoni@inwind.it>.
-**
-**  Revision 2.0  2005/06/26 16:16:46  lsodgf0
-**  Initial revision for Minix 3.0.6
-**
 **  $Id$
 */
 

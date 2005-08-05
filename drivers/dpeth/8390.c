@@ -9,17 +9,6 @@
 **  Rewritten from Minix 2.0.0 ethernet driver dp8390.c
 **  to extract the NS 8390 common functions.
 **
-**  $Log$
-**  Revision 1.2  2005/08/03 11:53:34  jnherder
-**  Miscellaneous cleanups.
-**
-**  Revision 1.1  2005/06/29 10:16:46  beng
-**  Import of dpeth 3c501/3c509b/.. ethernet driver by
-**  Giovanni Falzoni <fgalzoni@inwind.it>.
-**
-**  Revision 2.0  2005/06/26 16:16:46  lsodgf0
-**  Initial revision for Minix 3.0.6
-**
 **  $Id$
 */
 
