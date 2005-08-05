@@ -172,7 +172,7 @@ struct command {
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 int wakeup_ticks = WAKEUP;
 
-int w_testing = 0;
+int w_testing = 0, w_silent = 0;
 
 /* Variables. */
 PRIVATE struct wini {		/* main drive struct, one entry per drive */
@@ -884,7 +884,7 @@ PRIVATE void w_timeout(void)
   default:
 	/* Some other command. */
 	if(w_testing)  wn->state |= IGNORING;	/* Kick out this drive. */
-	else printf("%s: timeout on command %02x\n", w_name(), w_command);
+	else if(!w_silent) printf("%s: timeout on command %02x\n", w_name(), w_command);
 	w_need_reset();
 	w_status = 0;
   }
@@ -1263,19 +1263,31 @@ message *m;
 		SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
 		return r;
 
-	if(timeout < 1)
+	if(timeout == 0) {
+		/* Restore defaults. */
+		timeout_ticks = DEF_TIMEOUT_TICKS;
+		max_errors = MAX_ERRORS;
+		wakeup_ticks = WAKEUP;
+		w_silent = 0;
+	} else if(timeout < 0) {
 		return EINVAL;
+	} else {
+		prev = wakeup_ticks;
 
-	prev = wakeup_ticks;
-	wakeup_ticks = timeout;
-	if(timeout_ticks > timeout)
-		timeout_ticks = timeout;
+		/* Set (lower) timeout, lower error
+		 * tolerance and set silent mode.
+		 */
+		wakeup_ticks = timeout;
+		max_errors = 2;
+		w_silent = 1;
 
-	if((r=sys_datacopy(SELF, (vir_bytes)&prev, 
-		m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
-		return r;
+		if(timeout_ticks > timeout)
+			timeout_ticks = timeout;
 
-	max_errors = 2;
+		if((r=sys_datacopy(SELF, (vir_bytes)&prev, 
+			m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
+			return r;
+	}
 
 	return OK;
 }
