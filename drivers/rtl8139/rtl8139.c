@@ -175,7 +175,6 @@ re_t;
 
 static re_t re_table[RE_PORT_NR];
 
-static int rl_tasknr;
 static u16_t eth_ign_proto;
 static tmra_ut rl_watchdog;
 
@@ -273,17 +272,16 @@ PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 extern int errno;
 
 /*===========================================================================*
- *				rtl8139_task				     *
+ *				main				     *
  *===========================================================================*/
-void main(void)
+int main(int argc, char *argv[])
 {
 	int fkeys, sfkeys;
 	int i, r;
 	re_t *rep;
 	long v;
 
-	if ((rl_tasknr = getprocnr()) < 0)
-		panic("RTL8139", "getprocnr failed", errno);
+	env_setargs(argc, argv);
 
 	v= 0;
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
@@ -528,7 +526,7 @@ static void rl_pci_conf()
 		rep->re_name[8] += i;
 		rep->re_seen= FALSE;
 		envvar[sizeof(RL_ENVVAR)-1]= '0'+i;
-		if (0 == get_mon_param(envvar, val, sizeof(val)) && 
+		if (0 == env_get_param(envvar, val, sizeof(val)) && 
 				! env_prefix(envvar, "pci")) {
 			env_panic(envvar);
 		}

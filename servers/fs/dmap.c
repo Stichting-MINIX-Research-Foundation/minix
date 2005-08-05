@@ -131,9 +131,9 @@ PUBLIC void map_controller()
   int i,s;
 
   /* Get settings of 'controller' and 'driver' at the boot monitor. */
-  if ((s = get_mon_param("label", driver, sizeof(driver))) != OK) 
+  if ((s = env_get_param("label", driver, sizeof(driver))) != OK) 
       panic(__FILE__,"couldn't get boot monitor parameter 'driver'", s);
-  if ((s = get_mon_param("controller", controller, sizeof(controller))) != OK) 
+  if ((s = env_get_param("controller", controller, sizeof(controller))) != OK) 
       panic(__FILE__,"couldn't get boot monitor parameter 'controller'", s);
 
   /* Determine major number to map driver onto. */

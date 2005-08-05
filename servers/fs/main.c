@@ -254,7 +254,7 @@ int optional;
   char value[64];
   int i;
 
-  if ((i = get_mon_param(key, value, sizeof(value))) != OK) {
+  if ((i = env_get_param(key, value, sizeof(value))) != OK) {
       if(!optional)
       	printf("FS: Warning, couldn't get monitor param: %d\n", i);
       return 0;
