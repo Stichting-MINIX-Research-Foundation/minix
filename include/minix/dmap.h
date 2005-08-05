@@ -42,6 +42,8 @@ extern struct dmap {
 #  define BOOT_DEV    4		/* minor device for /dev/boot */
 #  define ZERO_DEV    5		/* minor device for /dev/zero */
 
+#define CTRLR(n) ((n)==0 ? 3 : (8 + 2*((n)-1)))	/* magic formula */
+
 /* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	0x0100	/* device number of /dev/ram */
 #  define DEV_BOOT	0x0104	/* device number of /dev/boot */

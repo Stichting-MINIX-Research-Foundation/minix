@@ -105,7 +105,6 @@ message *m_ptr;			/* pointer to message in the caller's space */
   unsigned flags = call_nr & SYSCALL_FLAGS;	/* get flags */
   int mask_entry;				/* bit to check in send mask */
   int result;					/* the system call's result */
-  vir_bytes vb;			/* message buffer pointer as vir_bytes */
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
 
   /* Check if the process has privileges for the requested call. Calls to the 
@@ -113,13 +112,17 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * if the caller doesn't do receive(). 
    */
   if (! (priv(caller_ptr)->s_trap_mask & (1 << function)) || 
-          (iskerneln(src_dst) && function != SENDREC))  
-      return(ECALLDENIED);	
+          (iskerneln(src_dst) && function != SENDREC)) { 
+      kprintf("sys_call: trap not allowed, function %d, caller %d\n", 
+          function, proc_nr(caller_ptr));
+      return(ECALLDENIED);		/* call denied by trap mask */
+  }
   
   /* Require a valid source and/ or destination process, unless echoing. */
   if (! (isokprocn(src_dst) || src_dst == ANY || function == ECHO)) { 
-      kprintf("sys_call: function %d, src_dst %d\n", function, src_dst);
-      return(EBADSRCDST);
+      kprintf("sys_call: invalid src_dst, src_dst %d, caller %d\n", 
+          src_dst, proc_nr(caller_ptr));
+      return(EBADSRCDST);		/* invalid process number */
   }
 
   /* If the call involves a message buffer, i.e., for SEND, RECEIVE, SENDREC, 
@@ -128,12 +131,15 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * for machines which don't have the gap mapped. 
    */
   if (function & CHECK_PTR) {	
-      vb = (vir_bytes) m_ptr;				/* virtual clicks */
-      vlo = vb >> CLICK_SHIFT;				/* bottom of message */
-      vhi = (vb + MESS_SIZE - 1) >> CLICK_SHIFT;	/* top of message */
+      vlo = (vir_bytes) m_ptr >> CLICK_SHIFT;		
+      vhi = ((vir_bytes) m_ptr + MESS_SIZE - 1) >> CLICK_SHIFT;
       if (vlo < caller_ptr->p_memmap[D].mem_vir || vlo > vhi ||
               vhi >= caller_ptr->p_memmap[S].mem_vir + 
-              caller_ptr->p_memmap[S].mem_len)  return(EFAULT); 
+              caller_ptr->p_memmap[S].mem_len) {
+          kprintf("sys_call: invalid message pointer, function %d, caller %d\n",
+          	function, proc_nr(caller_ptr));
+          return(EFAULT); 		/* invalid message pointer */
+      }
   }
 
   /* If the call is to send to a process, i.e., for SEND, SENDREC or NOTIFY,
@@ -142,12 +148,16 @@ message *m_ptr;			/* pointer to message in the caller's space */
    */
   if (function & CHECK_DST) {	
       if (! get_sys_bit(priv(caller_ptr)->s_ipc_to, nr_to_id(src_dst))) {
-          kprintf("Warning, send_mask denied %d sending to %d\n",
+          kprintf("sys_call: ipc mask denied %d sending to %d\n",
           	proc_nr(caller_ptr), src_dst);
-          return(ECALLDENIED);
+          return(ECALLDENIED);		/* call denied by ipc mask */
       }
 
-      if (isemptyn(src_dst)) return(EDEADDST); 	/* cannot send to the dead */
+      if (isemptyn(src_dst)) {
+          kprintf("sys_call: dead destination, function %d, caller %d\n", 
+              function, proc_nr(caller_ptr));
+          return(EDEADDST); 		/* cannot send to the dead */
+      }
   }
 
   /* Now check if the call is known and try to perform the request. The only

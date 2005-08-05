@@ -30,27 +30,28 @@
   Driver enabled     Open/Cls  I/O     Driver #     Flags Device  File
   --------------     --------  ------  -----------  ----- ------  ----       
  */
-struct dmap dmap[NR_DEVICES] = {
-  DT(1,     no_dev,   0,      0,       	   0) 	  	  /* 0 = not used   */
-  DT(1,     gen_opcl, gen_io, MEM_PROC_NR, 0)	          /* 1 = /dev/mem   */
-  DT(0,     gen_opcl, gen_io, NONE,        DMAP_MUTABLE)  /* 2 = /dev/fd0   */
-  DT(NC(1), gen_opcl, gen_io, CTRLR(0),    DMAP_MUTABLE)  /* 3 = /dev/c0    */
-  DT(1,     tty_opcl, gen_io, TTY_PROC_NR, 0)    	  /* 4 = /dev/tty00 */
-  DT(1,     ctty_opcl,ctty_io,TTY_PROC_NR, 0)     	  /* 5 = /dev/tty   */
-  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /* 6 = /dev/lp    */
+struct dmap dmap[NR_DEVICES];				/* actual map */ 
+PRIVATE struct dmap init_dmap[] = {
+  DT(1, no_dev,   0,       0,       	0) 	  	/* 0 = not used   */
+  DT(1, gen_opcl, gen_io,  MEM_PROC_NR, 0)	        /* 1 = /dev/mem   */
+  DT(0, no_dev,   0,       0,           DMAP_MUTABLE)	/* 2 = /dev/fd0   */
+  DT(0, no_dev,   0,       0,           DMAP_MUTABLE)	/* 3 = /dev/c0    */
+  DT(1, tty_opcl, gen_io,  TTY_PROC_NR, 0)    	  	/* 4 = /dev/tty00 */
+  DT(1, ctty_opcl,ctty_io, TTY_PROC_NR, 0)     	   	/* 5 = /dev/tty   */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)	/* 6 = /dev/lp    */
 
 #if (MACHINE == IBM_PC)
-  DT(1,     no_dev,   0,      0,   	   DMAP_MUTABLE)  /* 7 = /dev/ip    */
-  DT(NC(2), gen_opcl, gen_io, CTRLR(1),    DMAP_MUTABLE)  /* 8 = /dev/c1    */
-  DT(0,     0,        0,      0,   	   DMAP_MUTABLE)  /* 9 = not used   */
-  DT(NC(3), gen_opcl, gen_io, CTRLR(2),    DMAP_MUTABLE)  /*10 = /dev/c2    */
-  DT(0,     0,        0,      0,   	   DMAP_MUTABLE)  /*11 = not used   */
-  DT(NC(4), gen_opcl, gen_io, CTRLR(3),    DMAP_MUTABLE)  /*12 = /dev/c3    */
-  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*13 = /dev/audio */
-  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*14 = /dev/mixer */
-  DT(1,     gen_opcl, gen_io, LOG_PROC_NR, 0)       	  /*15 = /dev/klog  */
-  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*16 = /dev/random */
-  DT(0,     gen_opcl, gen_io, NONE,	   DMAP_MUTABLE)  /*17 = /dev/cmos */
+  DT(1, no_dev,   0,       0,   	DMAP_MUTABLE)  /* 7 = /dev/ip    */
+  DT(0, no_dev,   0,       NONE,        DMAP_MUTABLE)  /* 8 = /dev/c1    */
+  DT(0, 0,        0,       0,   	DMAP_MUTABLE)  /* 9 = not used   */
+  DT(0, no_dev,   0,       0,           DMAP_MUTABLE)  /*10 = /dev/c2    */
+  DT(0, 0,        0,       0,   	DMAP_MUTABLE)  /*11 = not used   */
+  DT(0, no_dev,   0,       NONE,     	DMAP_MUTABLE)  /*12 = /dev/c3    */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*13 = /dev/audio */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*14 = /dev/mixer */
+  DT(1, gen_opcl, gen_io,  LOG_PROC_NR, 0)  	       /*15 = /dev/klog  */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*16 = /dev/random */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*17 = /dev/cmos */
 #endif /* IBM_PC */
 };
 
@@ -117,18 +118,37 @@ int style;			/* style of the device */
 }
 
 /*===========================================================================*
- *				map_controller		 		     *
+ *				build_dmap		 		     *
  *===========================================================================*/
-PUBLIC void map_controller()
+PUBLIC void build_dmap()
 {
-/* Map the boot driver to a controller and update the dmap table to that
- * selection. The boot driver and the controller it handles are set at the
- * boot monitor.  
+/* Initialize the table with all device <-> driver mappings. Then, map  
+ * the boot driver to a controller and update the dmap table to that
+ * selection. The boot driver and the controller it handles are set at 
+ * the boot monitor.  
  */
   char driver[16];
   char *controller = "c##";
   int nr, major = -1;
   int i,s;
+  struct dmap *dp;
+
+  /* Build table with device <-> driver mappings. */
+  for (i=0; i<NR_DEVICES; i++) {
+      dp = &dmap[i];		
+      if (i < sizeof(init_dmap)/sizeof(struct dmap) && 
+              init_dmap[i].dmap_opcl != no_dev) {	/* a preset driver */
+          dp->dmap_opcl = init_dmap[i].dmap_opcl;
+          dp->dmap_io = init_dmap[i].dmap_io;
+          dp->dmap_driver = init_dmap[i].dmap_driver;
+          dp->dmap_flags = init_dmap[i].dmap_flags;
+      } else {						/* no default */
+          dp->dmap_opcl = no_dev;
+          dp->dmap_io = 0;
+          dp->dmap_driver = 0;
+          dp->dmap_flags = DMAP_MUTABLE;
+      }
+  }
 
   /* Get settings of 'controller' and 'driver' at the boot monitor. */
   if ((s = env_get_param("label", driver, sizeof(driver))) != OK) 
@@ -143,21 +163,14 @@ PUBLIC void map_controller()
   else if (controller[0] == 'c' && isdigit(controller[1])) {
       if ((nr = (unsigned) atoi(&controller[1])) > NR_CTRLRS)
           panic(__FILE__,"monitor 'controller' maximum 'c#' is", NR_CTRLRS);
-      for (i=0; i< NR_DEVICES; i++) {		/* find controller */
-          if (dmap[i].dmap_driver == CTRLR(nr)) {  
-              major = i;
-              break;
-          }
-      }
-      if ((unsigned) major >= NR_DEVICES)
-          panic(__FILE__, "cannot find controller in dmap, number", nr);
+      major = CTRLR(nr);
   } 
   else {
       panic(__FILE__,"monitor 'controller' syntax is 'c#' of 'fd'", NO_NUM); 
   }
   
   /* Now try to set the actual mapping and report to the user. */
-  if ((s=map_driver(i, DRVR_PROC_NR, STYLE_DEV)) != OK)
+  if ((s=map_driver(major, DRVR_PROC_NR, STYLE_DEV)) != OK)
       panic(__FILE__,"map_driver failed",s);
   printf("Boot medium driver: %s driver mapped onto controller %s.\n",
       driver, controller);

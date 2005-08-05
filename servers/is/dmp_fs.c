@@ -65,10 +65,11 @@ PUBLIC void dtab_dmp()
     getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap);
     
     printf("File System (FS) device <-> driver mappings\n");
-    printf("Dev  File        Open/Cls  I/O     Proc\n");
-    printf("---  ----------  --------  ------  ----\n");
+    printf("Major  Proc\n");
+    printf("-----  ----\n");
     for (i=0; i<NR_DEVICES; i++) {
-        printf("%3d  %s  ", i, file[i] );
+        printf("%5d  ", i);
+        printf("%4d\n", dmap[i].dmap_driver);
         
 #if DEAD_CODE
         if (dmap[i].dmap_opcl == no_dev)  		printf("  no_dev");	
@@ -80,7 +81,6 @@ PUBLIC void dtab_dmp()
         else 				printf("%8x", dmap[i].dmap_io);
 #endif
 
-        printf("%6d\n", dmap[i].dmap_driver);
     }
 }
 

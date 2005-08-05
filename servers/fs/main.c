@@ -225,7 +225,7 @@ PRIVATE void fs_init()
   who = FS_PROC_NR;
 
   buf_pool();			/* initialize buffer pool */
-  map_controller();		/* map boot driver onto controller */
+  build_dmap();			/* build device table and map boot driver */
   load_ram();			/* init RAM disk, load if it is root */
   load_super(root_dev);		/* load super block for root device */
   init_select();		/* init select() structures */

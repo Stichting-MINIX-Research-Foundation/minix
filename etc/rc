@@ -54,7 +54,10 @@ start)
     # Start crucial system services. The floppy driver *must* be loaded 
     # first, as it needs memory below 16MB in order to do ISA DMA.
     echo -n "Starting services:"
-    up floppy "" /dev/fd0
+    if [ ! "`sysenv label`" = "FLOPPY" ]  
+    then up floppy "" /dev/fd0
+    else up at_wini "" /dev/c0d0
+    fi
     up is ""
     up cmos "" /dev/cmos
     echo .

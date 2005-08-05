@@ -90,24 +90,13 @@ PUBLIC void clock_task()
       /* Go get a message. */
       receive(ANY, &m);	
 
-      /* Handle the request. */
+      /* Handle the request. Only clock ticks are expected. */
       switch (m.m_type) {
-          case HARD_INT:
-              result = do_clocktick(&m);	/* handle clock tick */
-              break;
-          default:				/* illegal message type */
-              kprintf("Warning, illegal CLOCK request from %d.\n", m.m_source);
-              result = EBADREQUEST;			
-      }
-
-      /* Send reply, unless inhibited, e.g. by do_clocktick(). Use the kernel 
-       * function lock_send() to prevent a system call trap. The destination
-       * is known to be blocked waiting for a message.  
-       */
-      if (result != EDONTREPLY) {
-          m.m_type = result;
-          if (OK != lock_send(m.m_source, &m))
-              kprintf("Warning, CLOCK couldn't reply to %d.\n", m.m_source);
+      case HARD_INT:
+          result = do_clocktick(&m);	/* handle clock tick */
+          break;
+      default:				/* illegal request type */
+          kprintf("CLOCK: illegal request %d from %d.\n", m.m_type,m.m_source);
       }
   }
 }

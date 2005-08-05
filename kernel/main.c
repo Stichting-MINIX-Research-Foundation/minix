@@ -220,7 +220,11 @@ int how;
    */
   kprintf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
+#if DEAD_CODE	/* timer hangs the boot monitor ... to be fixed! */
   set_timer(&shutdown_timer, get_uptime() + HZ, shutdown);
+#else
+  shutdown(&shutdown_timer);
+#endif
 }
 
 
@@ -238,7 +242,7 @@ timer_t *tp;
   u16_t magic; 
 
   /* Now mask all interrupts, including the clock, and stop the clock. */
-  outb(INT_CTLMASK, ~1); 
+  outb(INT_CTLMASK, ~0); 
   clock_stop();
 
   if (mon_return && how != RBT_RESET) {

@@ -48,7 +48,7 @@ _PROTOTYPE( int do_fkey_pressed, (void)					);
 
 /* dmap.c */
 _PROTOTYPE( int do_devctl, (void)					);
-_PROTOTYPE( void map_controller, (void)					);
+_PROTOTYPE( void build_dmap, (void)					);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style)	);
 
 /* filedes.c */

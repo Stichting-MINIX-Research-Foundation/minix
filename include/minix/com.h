@@ -31,9 +31,6 @@
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
 #define NR_TASKS	4 
 
-/* Magic numbers for controllers. Device to driver mapping is dynamic. */
-#define CTRLR(n)	(NONE + (n))
-
 /* User-space processes, that is, device drivers, servers, and INIT. */
 #define PM_PROC_NR	 0	/* process manager */
 #define FS_PROC_NR 	 1	/* file system */
