@@ -40,7 +40,7 @@ extern struct dmap {
 #  define KMEM_DEV    2		/* minor device for /dev/kmem */
 #  define NULL_DEV    3		/* minor device for /dev/null */
 #  define BOOT_DEV    4		/* minor device for /dev/boot */
-#  define ZERO_DEV    6		/* minor device for /dev/zero */
+#  define ZERO_DEV    5		/* minor device for /dev/zero */
 
 /* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	0x0100	/* device number of /dev/ram */

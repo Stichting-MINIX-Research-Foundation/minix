@@ -61,7 +61,7 @@ do
 	$e mknod kmem c 1 2;	$e chmod 640 kmem
 	$e mknod null c 1 3;	$e chmod 666 null
 	$e mknod boot b 1 4;	$e chmod 600 ram
-	$e mknod zero c 1 6;	$e chmod 644 zero
+	$e mknod zero c 1 5;	$e chmod 644 zero
 	$e chgrp kmem ram mem kmem null boot zero
 	;;
     fd[0-3])

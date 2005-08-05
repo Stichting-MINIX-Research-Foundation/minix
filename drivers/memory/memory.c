@@ -23,7 +23,7 @@
 
 #include "assert.h"
 
-#define NR_DEVS            7		/* number of minor devices */
+#define NR_DEVS            6		/* number of minor devices */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
@@ -72,8 +72,9 @@ PRIVATE char dev_zero[ZERO_BUF_SIZE];
  *===========================================================================*/
 PUBLIC void main(void)
 {
-  m_init();			/* initialize the memory driver */
-  driver_task(&m_dtab);		/* start driver's main loop */
+/* Main program. Initialize the memory driver and start the main loop. */
+  m_init();			
+  driver_task(&m_dtab);		
 }
 
 
@@ -95,7 +96,6 @@ PRIVATE struct device *m_prepare(device)
 int device;
 {
 /* Prepare for I/O on a device: check if the minor device number is ok. */
-
   if (device < 0 || device >= NR_DEVS) return(NIL_DEV);
   m_device = device;
 
@@ -139,7 +139,7 @@ unsigned nr_req;		/* length of request vector */
 	    if (opcode == DEV_GATHER) return(OK);	/* always at EOF */
 	    break;
 
-	/* Virtual copying. For boot device. */
+	/* Virtual copying. For RAM disk, kernel memory and boot device. */
 	case RAM_DEV:
 	case KMEM_DEV:
 	case BOOT_DEV:
