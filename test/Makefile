@@ -28,6 +28,7 @@ $(ROOTOBJ):
 	@rm a.out
 
 clean:	
+	cd select && make clean
 	rm -rf *.o *.s *.bak test? test?? t10a t11a t11b DIR*
 
 test1:	test1.c

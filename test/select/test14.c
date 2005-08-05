@@ -55,7 +55,7 @@ void do_child(int pty_fds[])
 		FD_SET(pty_fds[CHILDFD], &fds_exception);
 		timeout.tv_sec = 5;
 		timeout.tv_usec = 0;
-		retval = select(pty_fds[CHILDFD]+1,  &fds_read, NULL, &fds_exception, &timeout);
+		retval = select(pty_fds[CHILDFD]+2,  &fds_read, NULL, &fds_exception, &timeout);
 		if (retval == -1) {
 			perror("select");
 			fprintf(stderr, "child: Error in select\n");
@@ -102,7 +102,7 @@ void do_parent(int pty_fds[])
 		FD_SET(pty_fds[PARENTFD], &fds_write);
 		printf("pid %d Waiting for pty ready to write on %s...\n",
 			getpid(), name);
-		retval = select(pty_fds[PARENTFD]+1, NULL, &fds_write, NULL, NULL);
+		retval = select(pty_fds[PARENTFD]+2, NULL, &fds_write, NULL, NULL);
 		if (retval == -1) {
 			perror("select");
 			fprintf(stderr, "Parent: Error in select\n");
@@ -120,12 +120,12 @@ void do_parent(int pty_fds[])
 			fprintf(stderr, "parent: write fd not set?! retrying\n");
 			continue;
 		}
-		retval = write(pty_fds[PARENTFD], &data, 1024);
+		retval = write(pty_fds[PARENTFD], data, 1024);
 		if (retval == -1) {
 			perror("write");
 			fprintf(stderr, "Error writing on pty\n");
 			exit(-1);
-		}
+		} else printf("wrote %d\n", retval);
 	}
 
 	/* got exit from user */

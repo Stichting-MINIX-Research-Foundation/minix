@@ -3,7 +3,7 @@
 
 /* Minix release and version numbers. */
 #define OS_RELEASE "3"
-#define OS_VERSION "0.6"
+#define OS_VERSION "0.7"
 
 
 /* This file sets configuration parameters for the MINIX kernel, FS, and PM.
