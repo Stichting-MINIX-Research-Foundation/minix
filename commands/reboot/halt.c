@@ -101,8 +101,11 @@ char **argv;
 
   if (fast) {
     /* But not too fast... */
+    signal(SIGTERM, SIG_IGN);
+    kill(1, SIGTERM);
+    printf("Sending SIGTERM to all processes ...\n");
+    kill(-1, SIGTERM);
     sleep(1);
-
   } else {
     /* Run the shutdown scripts. */
     signal(SIGHUP, SIG_IGN);

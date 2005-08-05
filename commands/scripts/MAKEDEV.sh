@@ -12,7 +12,7 @@ case $#:$1 in
     set -$- mem fd0 fd1 fd0p0 fd1p0 \
 	c0d0 c0d0p0 c0d0p0s0 c0d1 c0d1p0 c0d1p0s0 \
 	c0d2 c0d2p0 c0d2p0s0 c0d3 c0d3p0 c0d3p0s0 \
-	tty ttyc1 ttyc2 ttyc3 tty00 tty01 ttyp0 ttyp1 ttyp2 ttyp3 eth klog
+	tty ttyc1 ttyc2 ttyc3 tty00 tty01 ttyp0 ttyp1 ttyp2 ttyp3 eth klog random cmos
     ;;
 0:|1:-\?)
     cat >&2 <<EOF

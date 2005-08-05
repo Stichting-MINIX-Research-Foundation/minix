@@ -388,7 +388,7 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; main() { echo \"This is the MINIX 3 boot monitor.\"; echo \"MINIX will load in 5 seconds, or press ESC.\"; trap 5000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; main() { echo This is the MINIX 3 boot monitor.; echo MINIX will load in 5 seconds, or press ESC.; trap 5000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit

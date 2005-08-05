@@ -1226,8 +1226,9 @@ void check_ind(struct part_entry *pe)
 /* If there are no other partitions then make this new one active. */
 {
 	struct part_entry *pe2;
+	int i = 0;
 
-	for (pe2= table + 1; pe2 < table + 1 + NR_PARTITIONS; pe2++)
+	for (pe2= table + 1; pe2 < table + 1 + NR_PARTITIONS; pe2++, i++)
 		if (pe2->sysind != NO_PART && (pe2->bootind & ACTIVE_FLAG))
 			return;
 
@@ -1828,10 +1829,7 @@ void m_read(int ev, object_t *op)
 	stat_start(0);
 	fflush(stdout);
 
-	if (((device= open(curdev->name, mode= O_RDWR, 0666)) < 0
-		&& (errno != EACCES
-			|| (!nordonly && (device= open(curdev->name, mode= O_RDONLY)) < 0)))
-	) {
+	if ((device= open(curdev->name, mode= O_RDWR, 0666)) < 0) {
 		stat_start(1);
 		if(!probing)
 			printf("%s: %s", curdev->name, strerror(errno));
@@ -2602,12 +2600,10 @@ do_autopart(int resultfd)
 		char partbuf[100];
 
 
-#if 0
 		printf("\nThis is your current partition table:\n");
 		m_dump(orig_table);
 		printf("\nThis will be your new partition table:\n");
 		m_dump(table);
-#endif
 
 		printf("\nThis is the point of no return. You have selected to install MINIX\n");
 		printf("into region %d of disk %d.  If you agree with this selection, your\n", (int)(r-regions), (int) (curdev-firstdev));
