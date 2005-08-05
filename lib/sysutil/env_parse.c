@@ -13,21 +13,6 @@ int field;		/* field number of value to return */
 long *param;		/* address of parameter to get */
 long min, max;		/* minimum and maximum values for the parameter */
 {
-	return env_parse_x(0, NULL, env, fmt, field, param, min, max);
-}
-
-/*=========================================================================*
- *				env_parse_x				   *
- *=========================================================================*/
-PUBLIC int env_parse_x(argc, argv, env, fmt, field, param, min, max)
-int argc;
-char *argv[];
-char *env;		/* environment variable to inspect */
-char *fmt;		/* template to parse it with */
-int field;		/* field number of value to return */
-long *param;		/* address of parameter to get */
-long min, max;		/* minimum and maximum values for the parameter */
-{
 /* Parse an environment variable setting, something like "DPETH0=300:3".
  * Panic if the parsing fails.  Return EP_UNSET if the environment variable
  * is not set, EP_OFF if it is set to "off", EP_ON if set to "on" or a
@@ -46,25 +31,7 @@ long min, max;		/* minimum and maximum values for the parameter */
   long newpar;
   int s, i, radix, r, keylen;
 
-  keylen= strlen(env);
-  for (i= 0; i<argc; i++)
-  {
-  	if (strncmp(argv[i], env, keylen) != 0)
-  		continue;
-	if (strlen(argv[i]) <= keylen)
-		continue;
-	if (argv[i][keylen] != '=')
-		continue;
-	val= argv[i]+keylen+1;
-	if (strlen(val)+1 > EP_BUF_SIZE)
-	{
-	      printf("WARNING: env_parse() failed: argument too long\n");
-	      return(EP_EGETKENV);
-	}
-	strcpy(value, val);
-  }
-
-  if (i >= argc && (s=get_mon_param(env, value, sizeof(value))) != 0) { 
+  if ((s=env_get_param(env, value, sizeof(value))) != 0) { 
       if (s == ESRCH) return(EP_UNSET);		/* only error allowed */ 
       printf("WARNING: get_mon_param() failed in env_parse(): %d\n",s);
       return(EP_EGETKENV);

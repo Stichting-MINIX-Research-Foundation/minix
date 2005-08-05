@@ -62,8 +62,6 @@
 
 static dpeth_t de_table[DE_PORT_NR];
 static u16_t eth_ign_proto;
-static int arg_c;
-static char **arg_v;
 
 /* Configuration */
 typedef struct dp_conf
@@ -175,8 +173,7 @@ int main(int argc, char *argv[])
 	dpeth_t *dep;
 	long v;
 
-	arg_c= argc;
-	arg_v= argv;
+	env_setargs(argc, argv);
 
 	for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
 	{
@@ -185,8 +182,7 @@ int main(int argc, char *argv[])
 	}
 
 	v= 0;
-	(void) env_parse_x(arg_c, arg_v, 
-		"ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
+	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
 	eth_ign_proto= htons((u16_t) v);
 
 	while (TRUE)
@@ -332,16 +328,16 @@ static void pci_conf()
 	for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
 	{
 		envvar= dp_conf[i].dpc_envvar;
-		if (!(dep->de_pci= env_prefix_x(arg_c, arg_v, envvar, "pci")))
+		if (!(dep->de_pci= env_prefix(envvar, "pci")))
 			continue;	/* no PCI config */
 		v= 0;
-		(void) env_parse_x(arg_c, arg_v, envvar, envfmt, 1, &v, 0, 255);
+		(void) env_parse(envvar, envfmt, 1, &v, 0, 255);
 		dep->de_pcibus= v;
 		v= 0;
-		(void) env_parse_x(arg_c, arg_v, envvar, envfmt, 2, &v, 0, 255);
+		(void) env_parse(envvar, envfmt, 2, &v, 0, 255);
 		dep->de_pcidev= v;
 		v= 0;
-		(void) env_parse_x(arg_c, arg_v, envvar, envfmt, 3, &v, 0, 255);
+		(void) env_parse(envvar, envfmt, 3, &v, 0, 255);
 		dep->de_pcifunc= v;
 	}
 
@@ -826,8 +822,7 @@ dpeth_t *dep;
 	for (i= 0; i < 6; i++)
 	{
 		v= dep->de_address.ea_addr[i];
-		if (env_parse_x(arg_c, arg_v,
-			eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
+		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 		{
 			break;
 		}
@@ -1748,8 +1743,7 @@ dp_conf_t *dcp;
 	/* Get the default settings and modify them from the environment. */
 	dep->de_mode= DEM_SINK;
 	v= dcp->dpc_port;
-	switch (env_parse_x(arg_c, arg_v,
-		dcp->dpc_envvar, dpc_fmt, 0, &v, 0x0000L, 0xFFFFL)) {
+	switch (env_parse(dcp->dpc_envvar, dpc_fmt, 0, &v, 0x0000L, 0xFFFFL)) {
 	case EP_OFF:
 		dep->de_mode= DEM_DISABLED;
 		break;
@@ -1762,18 +1756,16 @@ dp_conf_t *dcp;
 	dep->de_base_port= v;
 
 	v= dcp->dpc_irq | DEI_DEFAULT;
-	(void) env_parse_x(arg_c, arg_v, dcp->dpc_envvar, dpc_fmt, 1, &v, 0L,
+	(void) env_parse(dcp->dpc_envvar, dpc_fmt, 1, &v, 0L,
 						(long) NR_IRQ_VECTORS - 1);
 	dep->de_irq= v;
 
 	v= dcp->dpc_mem;
-	(void) env_parse_x(arg_c, arg_v,
-		dcp->dpc_envvar, dpc_fmt, 2, &v, 0L, 0xFFFFFL);
+	(void) env_parse(dcp->dpc_envvar, dpc_fmt, 2, &v, 0L, 0xFFFFFL);
 	dep->de_linmem= v;
 
 	v= 0;
-	(void) env_parse_x(arg_c, arg_v,
-		dcp->dpc_envvar, dpc_fmt, 3, &v, 0x2000L, 0x8000L);
+	(void) env_parse(dcp->dpc_envvar, dpc_fmt, 3, &v, 0x2000L, 0x8000L);
 	dep->de_ramsize= v;
 }
 

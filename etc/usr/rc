@@ -92,7 +92,7 @@ start)
     fi
 
     # start only network drivers that are in use
-    for driver in rtl8139 fxp dpeth
+    for driver in rtl8139 fxp dpeth dp8390
     do
         if grep " $driver " /etc/inet.conf > /dev/null 
         then 

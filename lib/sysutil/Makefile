@@ -12,7 +12,7 @@ OBJECTS	= \
 	$(LIBUTILS)(kputc.o) \
 	$(LIBUTILS)(tickdelay.o) \
 	$(LIBUTILS)(getuptime.o) \
-	$(LIBUTILS)(get_mon_prm.o) \
+	$(LIBUTILS)(env_get_prm.o) \
 	$(LIBUTILS)(env_parse.o) \
 	$(LIBUTILS)(env_panic.o) \
 	$(LIBUTILS)(env_prefix.o) \
@@ -41,8 +41,8 @@ $(LIBUTILS)(getuptime.o):	getuptime.c
 $(LIBUTILS)(tickdelay.o):	tickdelay.c
 	$(CC1) tickdelay.c
 
-$(LIBUTILS)(get_mon_prm.o):	get_mon_prm.c
-	$(CC1) get_mon_prm.c
+$(LIBUTILS)(env_get_prm.o):	env_get_prm.c
+	$(CC1) env_get_prm.c
 
 $(LIBUTILS)(env_parse.o):	env_parse.c
 	$(CC1) env_parse.c
