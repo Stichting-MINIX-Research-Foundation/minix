@@ -1,5 +1,6 @@
 755 root    operator /
 755 bin     operator /bin
+755 bin     operator /sbin
 755 root    operator /dev
 755 root    operator /etc
 755 root    operator /lib

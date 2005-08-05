@@ -1,6 +1,7 @@
 # /usr/etc/rc - continued system initialization.
 
 RANDOM_FILE=/usr/adm/random.dat
+LOCAL_FILE=/usr/etc/rc.local
 
 case "$#:$1" in
 1:start|1:stop|1:down)
@@ -9,6 +10,10 @@ case "$#:$1" in
 *)  echo >&2 "Usage: $0 start|stop|down"
     exit 1
 esac
+
+if [ -f "$LOCAL_FILE" ]
+then	. "$LOCAL_FILE" $1
+fi
 
 disabled()
 {
@@ -91,7 +96,8 @@ start)
     do
         if grep " $driver " /etc/inet.conf > /dev/null 
         then 
-            up $driver 
+            eval arg=\$${driver}_arg
+            up $driver "$arg"
         fi
     done
     up inet ""
