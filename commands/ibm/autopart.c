@@ -2297,7 +2297,7 @@ is_sure(int flags, char *fmt, ...)
 	va_start (ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
-	if(flags & SURE_SERIOUS) printf(" ('yes' or 'no' please) ");
+	if(flags & SURE_SERIOUS) printf("  Please enter 'yes' or 'no': ");
 	else {
 		printf(" (y/n) [y] ");
 	}
@@ -2380,14 +2380,13 @@ select_region(void)
 		printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
 
 		if(used_regions > 0) {
-			printf("\nIf you select a region that is already in use,\n"
-			"it will be overwritten.\n");
+			printf("\nIf you select an in-use region it will be overwritten.\n");
 		}
 
 		if(nr_regions > 1) {
-			printf("\nPlease enter region number you want to use");
+			printf("\nPlease enter the region number you want to install MINIX into");
 			if(used_regions > 0) {
-				printf(" or F to free an in-use region");
+				printf("\nor enter 'F' to free a disk region that is currently in use");
 			}
 			printf(": ");
 			fflush(NULL);
@@ -2413,7 +2412,7 @@ select_region(void)
 				continue;
 			}
 
-			sure = is_sure(0, "Please confirm you want to use region no. %d?", rn);
+			sure = is_sure(0, "\nPlease confirm you want to use disk region number %d?", rn);
 		} else {
 			rn = 0;
 			sure = is_sure(0, "\nUse this region?");
@@ -2430,13 +2429,14 @@ select_disk(void)
 	int i, choice, drives;
 	static char line[500];
 
-	printf("Probing for disks. This may take a short while. Please ignore error messages.\n");
+	printf("\nProbing for disks. This may take a short while. ");
 
 	do {
 		i = 0;
 		curdev=firstdev;
 
 		for(; i < MAX_DEVICES;) {
+			printf(".");
 			m_read('r', NULL);
 			if(device >= 0) {
 				devices[i].dev = curdev;
@@ -2519,9 +2519,11 @@ scribble_region(region_t *reg, struct part_entry **pe)
 			cylinderalign(reg);
 		}
 	}
+#if 0
 	if(trunc) {
 		printf("\nWill only use %dMB.\n", MAX_REGION_MB);
 	}
+#endif
 	if(!reg->is_used_part) {
 		for(i = 1; i <= NR_PARTITIONS; i++)
 			if(table[i].sysind == NO_PART)
@@ -2556,20 +2558,19 @@ do_autopart(int resultfd)
 	probing = 1;
 	autopartmode = 1;
 
-	printf("\nWelcome to the autopart process. There are three steps.\n\n"
+	printf("\nWelcome to the autopart process. There are three steps:\n\n"
 		"1. Select the drive you want to use.\n"
 		"2. Select a region to install MINIX in.\n"
 		"3. After confirmation, write new table to disk.\n"
 		"\n"
-		"As you can see, nothing will happen to your disk before the\n"
-		"last step.\n\n"
+		"Nothing will happen to your disk before step 3.\n\n"
 		);
 
 	printf("Press ENTER to continue: ");
 	fflush(stdout);
 	if(!fgets(sure, sizeof(sure)-1, stdin)) exit(1);
 
-	printf("\n-- STEP 1 -- Select drive -----------------------------------------\n\n");
+	printf("\n\n+-- STEP 1 -- Select drive ----------------------------------------+\n");
 
 	do {
 		curdev = select_disk();
@@ -2586,13 +2587,13 @@ do_autopart(int resultfd)
 	memcpy(orig_table, table, sizeof(table));
 
 	do {
-		printf("\n-- STEP 2 -- Select region to install in ---------------------------\n\n");
+		printf("\n\n+-- STEP 2 -- Select region to install in --------------------------+\n");
 	
 		/* Show regions. */
 		r = select_region();
 	} while(!r);	/* Back to step 2. */
 
-	printf("\n-- STEP 3 -- Write table to disk -----------------------------------\n\n");
+	printf("\n\n+-- STEP 3 -- Write table to disk ----------------------------------+\n");
 
 	/* Write things. */
 	if(scribble_region(r, &pe)) {
@@ -2608,9 +2609,11 @@ do_autopart(int resultfd)
 		m_dump(table);
 #endif
 
-		if(!is_sure(SURE_SERIOUS, "This is the point of no return.\n"
-		"Nothing has actually been written so far.\n"
-			"Are you sure you want to write it?"))
+		printf("\nThis is the point of no return. You have selected to install MINIX\n");
+		printf("into region %d of disk %d.  If you agree with this selection, your\n", (int)(r-regions), (int) (curdev-firstdev));
+		printf("disk will be written to prepare for the rest of the installation.\n\n");
+
+		if(!is_sure(SURE_SERIOUS, "Are you sure you want to continue?"))
 			return 1;
 
 		m_write('w', NULL);
