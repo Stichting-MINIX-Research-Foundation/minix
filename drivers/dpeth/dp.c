@@ -49,6 +49,9 @@
 **  +------------+---------+---------+---------------+
 **
 **  $Log$
+**  Revision 1.6  2005/08/05 18:37:15  philip
+**  Temp hacks for QEMU. Call to env_setargs in dpeth.
+**
 **  Revision 1.5  2005/08/02 15:30:35  jnherder
 **  Various updates to support dynamically starting drivers.
 **  Output during initialization should be suppressed. Unless an error occurs.
@@ -90,7 +93,6 @@
 */
 extern int errno;
 static dpeth_t de_table[DE_PORT_NR];
-static int dpeth_tasknr = ANY;
 
 typedef struct dp_conf {	/* Configuration description structure */
   port_t dpc_port;
@@ -567,14 +569,8 @@ PUBLIC int main(int argc, char **argv)
   dpeth_t *dep;
   int rc, fkeys, sfkeys;
 
-  /* Get precess number */
-  if ((dpeth_tasknr = getprocnr()) < 0)
-	panic(DevName, "getprocnr() failed", errno);
-#if defined USE_IOPL
-  /* Request direct access to hardware I/O ports */
-  if ((rc = sys_enable_iop(dpeth_tasknr)) != OK)
-	panic(DevName, "sys_enable_iop() failed", rc);
-#endif
+  env_setargs(argc, argv);
+
   /* Request function key for debug dumps */
   fkeys = sfkeys = 0; bit_set(sfkeys, 8);
   if ((fkey_map(&fkeys, &sfkeys)) != OK) 

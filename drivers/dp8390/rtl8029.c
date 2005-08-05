@@ -120,7 +120,11 @@ struct dpeth *dep;
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
 	if ((bar & 0x3ff) >= 0x100-32 || bar < 0x400)
-		panic("", "base address is not properly configured", NO_NUM);
+	{
+		printf("rtl8029: ignoring bad base address 0x%x for QEMU\n",
+			bar);
+		/* panic("", "base address is not properly configured", NO_NUM); */
+	}
 	dep->de_base_port= bar;
 
 	ilr= pci_attr_r8(devind, PCI_ILR);

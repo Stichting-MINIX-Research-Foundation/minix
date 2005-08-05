@@ -515,7 +515,12 @@ printf("probe_bus(%d)\n", busind);
 			headt= pci_attr_r8(devind, PCI_HEADT);
 			sts= pci_attr_rsts(devind);
 			if (sts & (PSR_SSE|PSR_RMAS|PSR_RTAS))
-				break;
+			{
+				printf(
+			"pci: ignoring bad value 0x%x in sts for QEMU\n",
+					sts & (PSR_SSE|PSR_RMAS|PSR_RTAS));
+				/* break; */
+			}
 			if (vid == NO_VID)
 			{
 				/* Some bridge implementations do support 
