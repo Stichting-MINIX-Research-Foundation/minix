@@ -3,7 +3,7 @@
  * The entry points into this file are
  *   do_time:		perform the TIME system call
  *   do_stime:		perform the STIME system call
- *   do_tims:		perform the TIMES system call
+ *   do_times:		perform the TIMES system call
  */
 
 #include "pm.h"

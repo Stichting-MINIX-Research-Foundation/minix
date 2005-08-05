@@ -99,7 +99,7 @@ PUBLIC int no_sys()
 {
 /* A system call number not implemented by PM has been requested. */
 
-  return(EINVAL);
+  return(ENOSYS);
 }
 
 

@@ -51,14 +51,12 @@ PUBLIC void main()
 	get_work();		/* wait for an PM system call */
 
 	/* Check for system notifications first. Special cases. */
-        if (call_nr == SYN_ALARM) {
-        	pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
+	if (call_nr == SYN_ALARM) {
+		pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
 		result = SUSPEND;		/* don't reply */
 	} else if (call_nr == SYS_SIG) {	/* signals pending */
 		sigset = m_in.NOTIFY_ARG;
-		if (sigismember(&sigset, SIGKSIG)) {
-			(void) ksig_pending();
-		}
+		if (sigismember(&sigset, SIGKSIG))  (void) ksig_pending();
 		result = SUSPEND;		/* don't reply */
 	}
 	/* Else, if the system call number is valid, perform the call. */
@@ -181,7 +179,7 @@ PRIVATE void pm_init()
 
   /* Get the memory map of the kernel to see how much memory it uses. */
   if ((s=get_mem_map(SYSTASK, mem_map)) != OK)
-  	panic(__FILE__,"PM couldn't get memory map of SYSTASK",s);
+  	panic(__FILE__,"couldn't get memory map of SYSTASK",s);
   minix_clicks = (mem_map[S].mem_phys+mem_map[S].mem_len)-mem_map[T].mem_phys;
   patch_mem_chunks(mem_chunks, mem_map);
 
@@ -189,7 +187,7 @@ PRIVATE void pm_init()
    * that is defined at the kernel level to see which slots to fill in.
    */
   if (OK != (s=sys_getimage(image))) 
-  	panic(__FILE__,"PM: warning, couldn't get image table: %d\n", s);
+  	panic(__FILE__,"couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
   printf("Building process table:");		/* show what's happening */
   for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {		
@@ -228,7 +226,7 @@ PRIVATE void pm_init()
 		mess.PR_PROC_NR = ip->proc_nr;
 		mess.PR_PID = rmp->mp_pid;
   		if (OK != (s=send(FS_PROC_NR, &mess)))
-			panic(__FILE__,"PM can't sync up with FS", s);
+			panic(__FILE__,"can't sync up with FS", s);
   		printf(" %s", ip->proc_name);	/* display process name */
   	}
   }
@@ -244,7 +242,7 @@ PRIVATE void pm_init()
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;
   if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
-	panic(__FILE__,"PM can't sync up with FS", NO_NUM);
+	panic(__FILE__,"can't sync up with FS", NO_NUM);
 
   /* Possibly we must correct the memory chunks for the boot device. */
   if (kinfo.bootdev_size > 0) {
@@ -255,7 +253,7 @@ PRIVATE void pm_init()
   }
 
   /* Initialize tables to all physical memory and print memory information. */
-  printf("Parsing memory:");
+  printf("Gathering memory:");
   mem_init(mem_chunks, &free_clicks);
   total_clicks = minix_clicks + free_clicks;
   printf(" total %u KB,", click_to_round_k(total_clicks));
