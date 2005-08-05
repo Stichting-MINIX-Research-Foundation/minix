@@ -114,8 +114,13 @@ vir_bytes sp;			/* new value of sp */
 
   /* Do the new data and stack segment sizes fit in the address space? */
   ft = (rmp->mp_flags & SEPARATE);
+#if (CHIP == INTEL && _WORD_SIZE == 2)
   r = size_ok(ft, rmp->mp_seg[T].mem_len, rmp->mp_seg[D].mem_len, 
        rmp->mp_seg[S].mem_len, rmp->mp_seg[D].mem_vir, rmp->mp_seg[S].mem_vir);
+#else
+  r = (rmp->mp_seg[D].mem_vir + rmp->mp_seg[D].mem_len > 
+          rmp->mp_seg[S].mem_vir) ? ENOMEM : OK;
+#endif
   if (r == OK) {
 	if (changed) sys_newmap((int)(rmp - mproc), rmp->mp_seg);
 	return(OK);
@@ -131,7 +136,7 @@ vir_bytes sp;			/* new value of sp */
   return(ENOMEM);
 }
 
-
+#if (CHIP == INTEL && _WORD_SIZE == 2)
 /*===========================================================================*
  *				size_ok  				     *
  *===========================================================================*/
@@ -150,7 +155,6 @@ vir_clicks s_vir;		/* virtual address for start of stack seg */
  * is needed, since the data and stack may not exceed 4096 clicks.
  */
 
-#if (CHIP == INTEL && _WORD_SIZE == 2)
   int pt, pd, ps;		/* segment sizes in pages */
 
   pt = ( (tc << CLICK_SHIFT) + PAGE_SIZE - 1)/PAGE_SIZE;
@@ -162,9 +166,12 @@ vir_clicks s_vir;		/* virtual address for start of stack seg */
   } else {
 	if (pt + pd + ps > MAX_PAGES) return(ENOMEM);
   }
-#endif
 
   if (dvir + dc > s_vir) return(ENOMEM);
 
   return(OK);
 }
+#endif
+
+
+

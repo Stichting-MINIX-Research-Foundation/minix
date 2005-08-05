@@ -275,7 +275,11 @@ vir_bytes *pc;			/* program entry point (initial PC) */
   if (dc >= totc) return(ENOEXEC);	/* stack must be at least 1 click */
   dvir = (*ft == SEPARATE ? 0 : tc);
   s_vir = dvir + (totc - sc);
+#if (CHIP == INTEL && _WORD_SIZE == 2)
   m = size_ok(*ft, tc, dc, sc, dvir, s_vir);
+#else
+  m = (dvir + dc > s_vir) ? ENOMEM : OK;
+#endif
   ct = hdr.a_hdrlen & BYTE;		/* header length */
   if (ct > A_MINHDR) lseek(fd, (off_t) ct, SEEK_SET); /* skip unused hdr */
   return(m);
