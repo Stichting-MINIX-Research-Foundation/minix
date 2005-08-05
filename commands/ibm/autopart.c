@@ -2560,7 +2560,7 @@ do_autopart(int resultfd)
 	probing = 1;
 	autopartmode = 1;
 
-	printf("\nWelcome to the autopart process. There are four steps.\n\n"
+	printf("\nWelcome to the autopart process. There are three steps.\n\n"
 		"1. Select the drive you want to use.\n"
 		"2. Select a region to install MINIX in.\n"
 		"3. After confirmation, write new table to disk.\n"
