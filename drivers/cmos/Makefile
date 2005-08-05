@@ -22,10 +22,9 @@ LIBDRIVER = $d/libdriver/driver.o
 
 # build local binary
 all build:	$(DRIVER) 
-$(DRIVER):	$(OBJ) $(LIBDRIVER) readclock.o 
+$(DRIVER):	$(OBJ) $(LIBDRIVER) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
 	install -S 1024w $(DRIVER)
-	$(CC) -o readclock readclock.c
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 
