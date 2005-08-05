@@ -1227,12 +1227,12 @@ void check_ind(struct part_entry *pe)
 {
 	struct part_entry *pe2;
 
-	if (pe->sysind != NO_PART) return;
-
 	for (pe2= table + 1; pe2 < table + 1 + NR_PARTITIONS; pe2++)
-		if (pe2->sysind != NO_PART || pe2->bootind & ACTIVE_FLAG) break;
+		if (pe2->sysind != NO_PART && (pe2->bootind & ACTIVE_FLAG))
+			return;
 
-	if (pe2 == table + 1 + NR_PARTITIONS) pe->bootind= ACTIVE_FLAG;
+	pe->bootind= ACTIVE_FLAG;
+	dirty = 1;
 }
 
 int check_existing(struct part_entry *pe)
@@ -1867,12 +1867,16 @@ void m_read(int ev, object_t *op)
 	} else
 	if (n < SECTOR_SIZE) {
 		if(probing) {
+			v = 0;
+			ioctl(device, DIOCTIMEOUT, &v);
 			close(device);
 			device= -1;
 			return;
 		}
 		printf("%s: Unexpected EOF", curdev->subname);
 	}
+	v = 0;
+	ioctl(device, DIOCTIMEOUT, &v);
 	if (n <= 0) stat_end(5);
 
 	if (n < SECTOR_SIZE) n= SECTOR_SIZE;
@@ -2311,11 +2315,11 @@ may_kill_region(void)
 
 	if(used_regions < 1) return 1;
 
-	printf("\n-- STEP 2 -- Optionally delete regions -----------------------------\n\n");
+	printf("\n -- Delete in-use region? ----\n\n");
 
 	printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
-	printf("\nIf you want to delete an in-use region to free it up for MINIX,\n"
-		"type its number. Otherwise hit ENTER to continue: ");
+	printf("\nIf you want to delete an in-use region, please type its \n"
+	"number. Otherwise hit ENTER to continue: ");
 	fflush(NULL);
 	fgets(line, sizeof(line)-2, stdin);
 	if(!isdigit(line[0]))
@@ -2386,14 +2390,19 @@ select_region(void)
 		}
 
 		if(nr_regions > 1) {
-			printf("\nPlease enter region number you want to use,\n"
-				"or ENTER to go back a step to free a region: ");
+			printf("\nPlease enter region number you want to use");
+			if(used_regions > 0) {
+				printf(" or F to free an in-use region: ");
+			}
 			fflush(NULL);
 
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
 
-			if(line[0] == '\n') return NULL;
+			if(line[0] == 'F') {
+				may_kill_region();
+				return NULL;
+			}
 
 			if(sscanf(line, "%d", &rn) != 1) 
 				continue;
@@ -2553,12 +2562,11 @@ do_autopart(int resultfd)
 
 	printf("\nWelcome to the autopart process. There are four steps.\n\n"
 		"1. Select the drive you want to use.\n"
-		"2. Optionally delete in-use regions(s), if they exist.\n"
-		"3. Select a region to install MINIX in.\n"
-		"4. After confirmation, write new table to disk.\n"
+		"2. Select a region to install MINIX in.\n"
+		"3. After confirmation, write new table to disk.\n"
 		"\n"
 		"As you can see, nothing will happen to your disk before the\n"
-		"last step. Then I will print the new table and let you confirm it.\n\n"
+		"last step.\n\n"
 		);
 
 	printf("Press ENTER to continue: ");
@@ -2582,17 +2590,13 @@ do_autopart(int resultfd)
 	memcpy(orig_table, table, sizeof(table));
 
 	do {
-		/* Allow for partition(s) to be killed. */
-		while(!may_kill_region())
-			;
-
-		printf("\n-- STEP 3 -- Select region to install in ---------------------------\n\n");
+		printf("\n-- STEP 2 -- Select region to install in ---------------------------\n\n");
 	
 		/* Show regions. */
 		r = select_region();
 	} while(!r);	/* Back to step 2. */
 
-	printf("\n-- STEP 4 -- Write table to disk -----------------------------------\n\n");
+	printf("\n-- STEP 3 -- Write table to disk -----------------------------------\n\n");
 
 	/* Write things. */
 	if(scribble_region(r, &pe)) {
