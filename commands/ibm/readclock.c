@@ -151,12 +151,14 @@ PUBLIC int main(int argc, char **argv)
 
 	/* Open the CMOS device to read the system time. */
 	if ((fd = open(CMOS_DEV, O_RDONLY)) < 0) {
-		fprintf(stderr, "Couldn't open CMOS device: %d.\n",s);
+		perror(CMOS_DEV);
+		fprintf(stderr, "Couldn't open CMOS device.\n");
 		exit(1);
 	}
         request = (y2kflag) ? CIOCGETTIME : CIOCGETTIMEY2K;
 	if ((s=ioctl(fd, request, (void *) &time1)) < 0) {
-		fprintf(stderr, "Couldn't do CMOS ioctl: %d.\n",s);
+		perror("ioctl");
+		fprintf(stderr, "Couldn't do CMOS ioctl.\n");
 		exit(1);
 	}
 	close(fd);
