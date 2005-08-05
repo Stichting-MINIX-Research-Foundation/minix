@@ -23,6 +23,8 @@
 #include <signal.h>
 #include <libutil.h>
 
+char name[100];
+
 void pipehandler(int sig)
 {
 
@@ -95,7 +97,8 @@ void do_parent(int pty_fds[])
 	while (1) {
 		FD_ZERO(&fds_write);
 		FD_SET(pty_fds[1], &fds_write);
-		printf("pid %d Waiting for pty ready to write...\n", getpid());
+		printf("pid %d Waiting for pty ready to write on %s...\n",
+			getpid(), name);
 		retval = select(pty_fds[1]+1, NULL, &fds_write, NULL, NULL);
 		if (retval == -1) {
 			perror("select");
@@ -131,15 +134,15 @@ void do_parent(int pty_fds[])
 
 int main(int argc, char *argv[])
 {
-	int pipes[2];
+	int ptys[2];
 	int retval;
 	int pid;	
 
-	if(openpty(&pipes[0], &pipes[1], NULL, NULL, NULL) < 0) {
+	if(openpty(&ptys[0], &ptys[1], name, NULL, NULL) < 0) {
 		perror("openpty");
 		return 1;
 	}
-	sleep(50);
+	printf("Using %s\n", name);
 	pid = fork();
 	if (pid == -1) {
 		fprintf(stderr, "Error forking\n");
@@ -147,9 +150,9 @@ int main(int argc, char *argv[])
 	}
 
 	if (pid == 0) /* child proc */
-		do_child(pipes);
+		do_child(ptys);
 	else
-		do_parent(pipes);
+		do_parent(ptys);
 
 	/* not reached */
 	return 0;
