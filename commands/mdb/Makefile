@@ -94,22 +94,21 @@ mdb:	$(OBJPC) $(EXTRA_OBJS)
 #
 # Dependencies for objects
 #
-mdb.o:		mdb.c mdb.h
-mdbdis86.o:	mdbdis86.c mdb.h
-mdbexp.o:	mdbexp.c mdb.h
-sym.o:		sym.c mdb.h
-trace.o:	trace.c mdb.h $(PTRACE)
-core.o:		core.c mdb.h $(MMFILES)
-misc.o:		misc.c mdb.h 
-io.o:		io.c mdb.h
-mdb.h:		$(SYSFILES) proto.h
+mdb.o:		mdb.c mdb.h $(SYSFILES) proto.h
+mdbdis86.o:	mdbdis86.c mdb.h $(SYSFILES) proto.h
+mdbexp.o:	mdbexp.c mdb.h $(SYSFILES) proto.h
+sym.o:		sym.c mdb.h $(SYSFILES) proto.h
+trace.o:	trace.c mdb.h $(PTRACE) $(SYSFILES) proto.h
+core.o:		core.c mdb.h $(MMFILES) $(SYSFILES) proto.h
+misc.o:		misc.c mdb.h  $(SYSFILES) proto.h
+io.o:		io.c mdb.h $(SYSFILES) proto.h
 
-syscalls.o:	syscalls.c mdb.h
-decode.o:	decode.c mdb.h $(INCLUDE)/minix/callnr.h
-ioctl.o:	ioctl.c mdb.h 
+syscalls.o:	syscalls.c mdb.h $(SYSFILES) proto.h
+decode.o:	decode.c mdb.h $(INCLUDE)/minix/callnr.h $(SYSFILES) proto.h
+ioctl.o:	ioctl.c mdb.h  $(SYSFILES) proto.h
 
-gnu_sym.o:	gnu_sym.c mdb.h $(INCLUDE)/gnu/a.out.h
-gnu_load.o:	gnu_load.c $(INCLUDE)/gnu/a.out.h
+gnu_sym.o:	gnu_sym.c mdb.h $(INCLUDE)/gnu/a.out.h $(SYSFILES) proto.h
+gnu_load.o:	gnu_load.c $(INCLUDE)/gnu/a.out.h $(SYSFILES) proto.h
 
 $(INCLUDE)/gnu/a.out.h:	a.out.h
 		install -c -o bin a.out.h $(INCLUDE)/gnu
