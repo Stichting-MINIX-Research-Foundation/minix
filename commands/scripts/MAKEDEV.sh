@@ -222,7 +222,7 @@ do
 	# random data generator.
 	$e mknod random c 16 0;	$e chmod 644 random
 	$e mknod urandom c 16 0; $e chmod 644 urandom
-	$e chgrp random urandom
+	$e chgrp operator random urandom
 	;;
     cmos)
     	# cmos device (set/get system time).
