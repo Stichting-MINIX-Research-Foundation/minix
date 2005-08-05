@@ -186,17 +186,23 @@ echo ""
 echo "0. No Ethernet card (no networking)"
 echo "1. An Intel Pro/100 Ethernet card is installed"
 echo "2. A Realtek 8139 Ethernet card is installed"
-echo "3. A different Ethernet card is installed (no networking)"
+echo "3. A Realtek 8029 Ethernet card is installed (emulated by Qemu)"
+echo "4. An NE2000, 3com 503 or WD based Ethernet card "
+echo "   is installed (NE2000 is emulated by Bochs)"
+echo "5. A 3com 501 or 509 Ethernet card is installed "
+echo "6. A different Ethernet card is installed (no networking)"
 echo ""
 echo "You can always change your mind after the install."
 echo ""
 echo -n "Choice? "
 read eth
 driver=""
-inetparams=""
 case "$eth" in
-	1)	driver=FXP;	inetparams="servers=inet;" ;;
-	2)	driver=RTL8139;	inetparams="servers=inet;" ;;
+	1)	driver=fxp;      ;;
+	2)	driver=rtl8139;  ;;
+	3)	driver=dp8390;   driverargs="dp8390_args='DPETH0=pci'";	;;
+	4)	driver=dp8390;   driverargs="#dp8390_args='DPETH0=port:irq:memory'";	;;
+	5)	driver=dpeth;    ;;
 esac
 
 # Compute the amount of memory available to Minix.
@@ -375,7 +381,7 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; $inetparams; main() { echo \"This is the MINIX 3 boot monitor.\"; echo \"MINIX will load in 5 seconds, or press ESC.\"; trap 5000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; main() { echo \"This is the MINIX 3 boot monitor.\"; echo \"MINIX will load in 5 seconds, or press ESC.\"; trap 5000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
