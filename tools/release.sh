@@ -37,6 +37,8 @@ rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -b 1440 -B 1024 $RAM || exit
+echo " * chowning to bin"
+chown -R bin /usr/src
 echo " * mounting $RAM as $RELEASEDIR"
 mount $RAM $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
