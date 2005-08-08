@@ -67,20 +67,16 @@ This is the Minix installation script.
 
 Note 1: If the screen blanks suddenly then hit CTRL+F3 to select \"software
 scrolling\".
-
 Note 2: If things go wrong then hit DEL and start over.
-
-Note 3: The installation procedure is described in the manual page
-	usage(8).  It will be hard without it.
-
-Note 4: Some questions have default answers, like this: [y]
+Note 3: Some questions have default answers, like this: [y]
 	Simply hit RETURN (or ENTER) if you want to choose that answer.
-
-Note 5: If you see a colon (:) then you should hit RETURN to continue.
+Note 4: If you see a colon (:) then you should hit RETURN to continue.
 :"
 read ret
 
 echo "
+ --- Step 1 --- Select keyboard type. --------------------------------
+
 What type of keyboard do you have?  You can choose one of:
 "
 ls -C /usr/lib/keymaps | sed -e 's/\.map//g' -e 's/^/    /'
@@ -91,7 +87,10 @@ test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 ok=""
 while [ "$ok" = "" ]
 do
-	echo -n "Welcome to Minix partitioning. Do you want to
+echo "
+ --- Step 2 --- Partitioning -----------------------------------------
+"
+	echo -n "Now is the MINIX 3 partitioning step. Do you want to
 follow the (A)utomatic or the e(X)pert mode? [A] "
 	read ch
 	case "$ch" in
@@ -179,6 +178,9 @@ hex2int()
     done
     echo $i
 }
+echo "
+ --- Step 3 --- Networking -------------------------------------------
+"
 
 # Ask user about networking
 echo ""
@@ -234,11 +236,14 @@ i86)
 esac
 
 blockdefault=8
+echo "
+ --- Step 4 --- Block size -------------------------------------------
+"
 echo "\
 The default block size on the disk is $blockdefault KB. However, sizes of 1 to $blockdefault KB
 are also supported. If you have a small disk or small RAM you may want less
 than $blockdefault KB, in which case type a block size from 1 to 8 (1, 2, 4 or $blockdefault are
-suggested values). Otherwise hit ENTER for the default of $blockdefault KB blocks, which
+suggested values). Otherwise hit RETURN for the default of $blockdefault KB blocks, which
 should be fine in most cases."
 
 while [ -z "$blocksize" ]
@@ -254,6 +259,9 @@ do	echo -n "Block size [$blockdefault KB]? "
 done
 
 blocksizebytes="`expr $blocksize '*' 1024`"
+echo "
+ --- Step 5 --- Swap space -------------------------------------------
+"
 
 echo -n "
 How much swap space would you like?  Swapspace is only needed if this
@@ -294,8 +302,9 @@ else
     # Forget about swap.
     swap=
 fi
+
 echo "
-Migrating to disk...
+ --- Step 5 --- Copy files -------------------------------------------
 "
 
 mkfs -B $blocksizebytes /dev/$usr
@@ -367,6 +376,8 @@ test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 if [ -n "$driver" ]
 then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 	echo "$driverargs" >$LOCALRC
+	disable=""
+else	disable=inet
 fi
 
 umount /dev/$root || exit		# Unmount the new root.
@@ -388,7 +399,7 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $cache; main() { echo This is the MINIX 3 boot monitor.; echo MINIX will load in 5 seconds, or press ESC.; trap 5000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; disable=$disable; $cache; main() { echo This is the MINIX 3 boot monitor.; echo MINIX will load in 5 seconds, or press ESC.; trap 5000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit

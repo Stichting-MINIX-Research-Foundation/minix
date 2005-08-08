@@ -2556,19 +2556,19 @@ do_autopart(int resultfd)
 	probing = 1;
 	autopartmode = 1;
 
-	printf("\nWelcome to the autopart process. There are three steps:\n\n"
-		"1. Select the drive you want to use.\n"
-		"2. Select a region to install MINIX in.\n"
-		"3. After confirmation, write new table to disk.\n"
+	printf("\nWelcome to the autopart process. There are three sub-steps:\n\n"
+		"2.1. Select the drive you want to use.\n"
+		"2.2. Select a region to install MINIX in.\n"
+		"2.3. After confirmation, write new table to disk.\n"
 		"\n"
-		"Nothing will happen to your disk before step 3.\n\n"
+		"Nothing will happen to your disk before step 2.3.\n\n"
 		);
 
 	printf("Press ENTER to continue: ");
 	fflush(stdout);
 	if(!fgets(sure, sizeof(sure)-1, stdin)) exit(1);
 
-	printf("\n\n+-- STEP 1 -- Select drive ----------------------------------------+\n");
+	printf("\n\n --- Step 2.1 --- Select drive ---------------------------------------\n\n");
 
 	do {
 		curdev = select_disk();
@@ -2585,13 +2585,13 @@ do_autopart(int resultfd)
 	memcpy(orig_table, table, sizeof(table));
 
 	do {
-		printf("\n\n+-- STEP 2 -- Select region to install in --------------------------+\n");
+		printf("\n\n --- Step 2.2 --- Select region to install in ------------------------\n\n");
 	
 		/* Show regions. */
 		r = select_region();
 	} while(!r);	/* Back to step 2. */
 
-	printf("\n\n+-- STEP 3 -- Write table to disk ----------------------------------+\n");
+	printf("\n\n --- Step 2.3 --- Write table to disk --------------------------------\n\n");
 
 	/* Write things. */
 	if(scribble_region(r, &pe)) {
@@ -2600,10 +2600,12 @@ do_autopart(int resultfd)
 		char partbuf[100];
 
 
+#if 0
 		printf("\nThis is your current partition table:\n");
 		m_dump(orig_table);
 		printf("\nThis will be your new partition table:\n");
 		m_dump(table);
+#endif
 
 		printf("\nThis is the point of no return. You have selected to install MINIX\n");
 		printf("into region %d of disk %d.  If you agree with this selection, your\n", (int)(r-regions), (int) (curdev-firstdev));
