@@ -143,27 +143,8 @@ start)
     if [ "$net" ]
     then
 	# Get the nodename from the DNS and set it.
-	t='-t 10'
 	trap '' 2
-	while :;
-	do
-	    intr $t hostaddr -h
-
-	    case $? in
-	    142)
-		echo "\
-Unable to obtain an IP address after 10 seconds.  Hit DEL to get a root
-prompt to investigate, otherwise just wait until an address is received..."
-		t=
-		;;
-	    130)
-		echo "Single user."
-		intr sh
-		echo "Continue waiting for an address..."
-		;;
-	    *)	break
-	    esac
-	done
+	intr -t 10 hostaddr -h || echo "Unable to obtain an IP address."
 	trap 2
     fi
 
