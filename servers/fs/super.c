@@ -283,8 +283,14 @@ register struct super_block *sp; /* pointer to a superblock */
 	sp->s_nindirs = V2_INDIRECTS(sp->s_block_size);
   }
 
-  if(sp->s_block_size < MIN_BLOCK_SIZE || sp->s_block_size > MAX_BLOCK_SIZE) {
+  if(sp->s_block_size < MIN_BLOCK_SIZE) {
   	printf("block size (%d) out of range\n", sp->s_block_size);
+  	return EINVAL;
+  }
+  if(sp->s_block_size > MAX_BLOCK_SIZE) {
+  	printf("Filesystem block size is %d kB; maximum filesystem\n"
+ 	"block size is %d kB. This limit can be increased by recompiling.\n",
+  	sp->s_block_size/1024, MAX_BLOCK_SIZE/1024);
   	return EINVAL;
   }
   if((sp->s_block_size % 512) != 0) {
