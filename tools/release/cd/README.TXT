@@ -8,6 +8,10 @@ harddisk with it. Its contents are not visible here.
 In this directory:
 	README.TXT: This file.
 	PRESZ134.ZIP: A tool to help resizing partitions.
+	BOOTFLP.IMG: If you can't boot from CD, write this image to a
+	             floppy and boot from it, while having the CD in a
+	             CD drive. The system on the floppy should find the
+	             CD and start up as if it had been booted from CD.
 
 For more information, new releases, other software and documentation
 about MINIX 3, please visit:

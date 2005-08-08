@@ -32,6 +32,7 @@ umount $TMPDISK
 umount $RAM
 
 ( cd .. && make clean )
+( cd .. && make depend )
 echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
@@ -67,7 +68,7 @@ make programs image
 (cd ../boot && make)
 make image || exit 1
 sh mkboot cdfdboot
-cp cdfdboot $CDFILES/bootflp.img
+cp $IMAGE $CDFILES/bootflp.img
 cp release/cd/* $CDFILES
 writeisofs -l MINIX -b $IMAGE $CDFILES $ISO || exit 1
 echo "Appending Minix root and usr filesystem"

@@ -238,11 +238,11 @@ echo "
  --- Step 4 --- Block size -------------------------------------------
 "
 echo "\
-The default block size on the disk is $blockdefault KB. However, sizes of 1 to $blockdefault KB
-are also supported. If you have a small disk or small RAM you may want less
-than $blockdefault KB, in which case type a block size from 1 to 8 (1, 2, 4 or $blockdefault are
-suggested values). Otherwise hit ENTER for the default of $blockdefault KB blocks, which
-should be fine in most cases."
+The default block size on the disk is $blockdefault KB.
+If you have a small disk or small RAM you may want less
+than $blockdefault KB. Please type 1, 2, or 4 for a smaller
+block size (in KB), or hit ENTER for the default of 
+$blockdefault KB blocks, which should be fine in most cases."
 
 while [ -z "$blocksize" ]
 do	echo -n "Block size [$blockdefault KB]? "
@@ -250,8 +250,8 @@ do	echo -n "Block size [$blockdefault KB]? "
 	if [ -z "$blocksize" ]
 	then	blocksize=$blockdefault
 	fi
-	if [ $blocksize -gt $blockdefault -o $blocksize -lt 1 ]
-	then	echo "$blocksize bogus block size. 1-$blockdefault please."
+	if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne 4 -a "$blocksize" -ne $blockdefault ]
+	then	echo "$blocksize bogus block size. 1, 2, 4 or $blockdefault please."
 		blocksize=""
 	fi
 done
@@ -376,7 +376,7 @@ if [ -n "$driver" ]
 then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 	echo "$driverargs" >$LOCALRC
 	disable=""
-else	disable=inet
+else	disable="disable=inet;"
 fi
 
 umount /dev/$root || exit		# Unmount the new root.
@@ -398,7 +398,7 @@ if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
 					# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; disable=$disable; $cache; main() { echo This is the MINIX 3 boot monitor.; echo MINIX will load in 5 seconds, or press ESC.; trap 5000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable $cache; main() { echo This is the MINIX 3 boot monitor.; echo MINIX will load in 5 seconds, or press ESC.; trap 5000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
