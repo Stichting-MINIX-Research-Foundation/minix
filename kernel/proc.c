@@ -112,9 +112,10 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * if the caller doesn't do receive(). 
    */
   if (! (priv(caller_ptr)->s_trap_mask & (1 << function)) || 
-          (iskerneln(src_dst) && function != SENDREC)) { 
-      kprintf("sys_call: trap not allowed, function %d, caller %d\n", 
-          function, proc_nr(caller_ptr));
+          (iskerneln(src_dst) && function != SENDREC && function != RECEIVE)) { 
+      kprintf("sys_call: trap not allowed, function %d, caller %d, mask %x, src_dst %d\n", 
+          function, proc_nr(caller_ptr), 
+          	priv(caller_ptr)->s_trap_mask, src_dst);
       return(ECALLDENIED);		/* call denied by trap mask */
   }
   

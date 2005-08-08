@@ -83,7 +83,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define FS_C	(c(SYS_KILL) | c(SYS_VIRCOPY) | c(SYS_VIRVCOPY) | c(SYS_UMAP) \
     | c(SYS_GETINFO) | c(SYS_EXIT) | c(SYS_TIMES) | c(SYS_SETALARM))
 #define DRV_C	(FS_C | c(SYS_SEGCTL) | c(SYS_IRQCTL) | c(SYS_INT86) \
-    | c(SYS_DEVIO) | c(SYS_VDEVIO) | c(SYS_SDEVIO))
+    | c(SYS_DEVIO) | c(SYS_VDEVIO) | c(SYS_SDEVIO) | c(SYS_PHYSCOPY) | c(SYS_PHYSVCOPY))
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
