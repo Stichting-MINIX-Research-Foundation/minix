@@ -2553,7 +2553,7 @@ do_autopart(int resultfd)
 	probing = 1;
 	autopartmode = 1;
 
-	printf("\n\n --- Step 2.1 --- Select drive ---------------------------------------\n\n");
+		printf("\n\n --- Step 2.1 --- Select drive and region -----------------------------\n\n");
 
 	do {
 		curdev = select_disk();
@@ -2570,13 +2570,13 @@ do_autopart(int resultfd)
 	memcpy(orig_table, table, sizeof(table));
 
 	do {
-		printf("\n\n --- Step 2.2 --- Select region to install in ------------------------\n\n");
+		printf("\n\n --- Step 2.1 --- Select drive and region -----------------------------\n\n");
 	
 		/* Show regions. */
 		r = select_region();
 	} while(!r);	/* Back to step 2. */
 
-	printf("\n\n --- Step 2.3 --- Write table to disk --------------------------------\n\n");
+		printf("\n\n --- Step 2.2 --- Confirm your choice ---------------------------------\n\n");
 
 	/* Write things. */
 	if(scribble_region(r, &pe)) {

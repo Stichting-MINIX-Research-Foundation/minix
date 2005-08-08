@@ -37,7 +37,7 @@ echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
-mkfs -b 1440 -B 1024 $RAM || exit
+mkfs -b 16384 -B 1024 $RAM || exit
 echo " * chowning to bin"
 chown -R bin /usr/src
 echo " * mounting $RAM as $RELEASEDIR"

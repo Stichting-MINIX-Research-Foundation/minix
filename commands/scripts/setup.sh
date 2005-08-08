@@ -88,7 +88,7 @@ ok=""
 while [ "$ok" = "" ]
 do
 echo "
- --- Step 2 --- Partitioning -----------------------------------------
+ --- Step 2 --- Create a MINIX 3 partition ---------------------------
 "
 	echo -n "Now is the MINIX 3 partitioning step. Do you want to
 follow the (A)utomatic or the e(X)pert mode? [A] "
@@ -179,7 +179,7 @@ hex2int()
     echo $i
 }
 echo "
- --- Step 3 --- Networking -------------------------------------------
+ --- Step 3 --- Select your Ethernet chip ----------------------------
 "
 
 # Ask user about networking
@@ -235,7 +235,7 @@ esac
 
 blockdefault=8
 echo "
- --- Step 4 --- Block size -------------------------------------------
+ --- Step 4 --- Select a disk block size -----------------------------
 "
 echo "\
 The default block size on the disk is $blockdefault KB.
@@ -258,13 +258,14 @@ done
 
 blocksizebytes="`expr $blocksize '*' 1024`"
 echo "
- --- Step 5 --- Swap space -------------------------------------------
+ --- Step 5 --- Allocate swap space ----------------------------------
 "
 
 echo -n "
 How much swap space would you like?  Swapspace is only needed if this
-system is memory starved, like a 16-bit system with less then 2M, or a
-32-bit system with less then 4M. 
+system is memory starved. If you have 256 MB of memory or more, you
+probably don't need it. If you have less and want to run many programs
+at once, I suggest setting it to the memory size.
 
 Size in kilobytes? [$swapadv] "
 		    
@@ -303,7 +304,7 @@ else
 fi
 
 echo "
- --- Step 6 --- Copy files -------------------------------------------
+ --- Step 6 --- Copy files to hard disk ------------------------------
 "
 
 mkfs -B $blocksizebytes /dev/$usr
