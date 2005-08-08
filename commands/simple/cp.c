@@ -538,7 +538,7 @@ int copy(const char *src, const char *dst, struct stat *srcst,
 	}
     }
     if (vflag) {
-	printf(action == COPY ? "cp %s %s\n" : "mv %s %s\n", src, dst);
+	printf(action == COPY ? "cp %s ..\n" : "mv %s ..\n", src);
     }
     return 1;
 }
