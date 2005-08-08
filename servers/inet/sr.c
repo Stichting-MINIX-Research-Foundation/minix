@@ -103,7 +103,7 @@ FORWARD _PROTOTYPE ( int sr_put_userdata, (int fd, vir_bytes offset,
 FORWARD _PROTOTYPE (void sr_select_res, (int fd, unsigned ops) );
 #endif
 FORWARD _PROTOTYPE ( int sr_repl_queue, (int proc, int ref, int operation) );
-FORWARD _PROTOTYPE ( int walk_queue, (sr_fd_t *sr_fd, mq_t *q_head, 
+FORWARD _PROTOTYPE ( int walk_queue, (sr_fd_t *sr_fd, mq_t **q_head_ptr, 
 	mq_t **q_tail_ptr, int type, int proc_nr, int ref, int first_flag) );
 FORWARD _PROTOTYPE ( void process_req_q, (mq_t *mq, mq_t *tail, 
 							mq_t **tail_ptr) );
@@ -516,7 +516,7 @@ message *m;
 	if (operation == CANCEL_ANY || operation == DEV_IOCTL3)
 #endif
 	{
-		result= walk_queue(sr_fd, sr_fd->srf_ioctl_q, 
+		result= walk_queue(sr_fd, &sr_fd->srf_ioctl_q, 
 			&sr_fd->srf_ioctl_q_tail, SR_CANCEL_IOCTL,
 			proc_nr, ref, SFF_IOCTL_FIRST);
 		if (result != EAGAIN)
@@ -526,7 +526,7 @@ message *m;
 	if (operation == CANCEL_ANY || operation == DEV_READ)
 #endif
 	{
-		result= walk_queue(sr_fd, sr_fd->srf_read_q, 
+		result= walk_queue(sr_fd, &sr_fd->srf_read_q, 
 			&sr_fd->srf_read_q_tail, SR_CANCEL_READ,
 			proc_nr, ref, SFF_READ_FIRST);
 		if (result != EAGAIN)
@@ -536,7 +536,7 @@ message *m;
 	if (operation == CANCEL_ANY || operation == DEV_WRITE)
 #endif
 	{
-		result= walk_queue(sr_fd, sr_fd->srf_write_q, 
+		result= walk_queue(sr_fd, &sr_fd->srf_write_q, 
 			&sr_fd->srf_write_q_tail, SR_CANCEL_WRITE,
 			proc_nr, ref, SFF_WRITE_FIRST);
 		if (result != EAGAIN)
@@ -656,10 +656,11 @@ message *m;
 }
 #endif
 
-PRIVATE int walk_queue(sr_fd, q_head, q_tail_ptr, type, proc_nr, ref,
+PRIVATE int walk_queue(sr_fd, q_head_ptr, q_tail_ptr, type, proc_nr, ref,
 	first_flag)
 sr_fd_t *sr_fd;
-mq_t *q_head, **q_tail_ptr;
+mq_t **q_head_ptr;
+mq_t **q_tail_ptr;
 int type;
 int proc_nr;
 int ref;
@@ -668,7 +669,7 @@ int first_flag;
 	mq_t *q_ptr_prv, *q_ptr;
 	int result;
 
-	for(q_ptr_prv= NULL, q_ptr= q_head; q_ptr; 
+	for(q_ptr_prv= NULL, q_ptr= *q_head_ptr; q_ptr; 
 		q_ptr_prv= q_ptr, q_ptr= q_ptr->mq_next)
 	{
 		if (q_ptr->mq_mess.NDEV_PROC != proc_nr)
@@ -684,6 +685,9 @@ int first_flag;
 
 			result= (*sr_fd->srf_cancel)(sr_fd->srf_fd, type);
 			assert(result == OK);
+
+			*q_head_ptr= q_ptr->mq_next;
+			mq_free(q_ptr);
 
 			assert(sr_fd->srf_flags & first_flag);
 			sr_fd->srf_flags &= ~first_flag;

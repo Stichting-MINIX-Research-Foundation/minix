@@ -249,6 +249,7 @@ PUBLIC void main()
 		{
 				/* signaled */ 
 				/* probably SIGTERM */
+				mq_free(mq);
 		} 
 #endif
 		else
