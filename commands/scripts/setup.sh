@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	setup 4.1 - install a Minix distribution	Author: Kees J. Bot
+#	setup 4.1 - install a MINIX distribution	Author: Kees J. Bot
 #								20 Dec 1994
 
 LOCALRC=/usr/etc/rc.local
@@ -33,7 +33,7 @@ then	echo "Please run setup as root."
 	exit 1
 fi
 
-# Installing Minix on the hard disk.
+# Installing MINIX on the hard disk.
 
 case "$0" in
 /tmp/*)
@@ -63,19 +63,19 @@ case $thisroot:$fdusr in
 esac
 
 echo -n "\
-This is the Minix installation script.
+This is the MINIX installation script.
 
 Note 1: If the screen blanks suddenly then hit CTRL+F3 to select \"software
 scrolling\".
 Note 2: If things go wrong then hit DEL and start over.
 Note 3: Some questions have default answers, like this: [y]
-	Simply hit RETURN (or ENTER) if you want to choose that answer.
-Note 4: If you see a colon (:) then you should hit RETURN to continue.
+	Simply hit ENTER if you want to choose that answer.
+Note 4: If you see a colon (:) then you should hit ENTER to continue.
 :"
 read ret
 
 echo "
- --- Step 1 --- Select keyboard type. --------------------------------
+ --- Step 1 --- Select keyboard type ---------------------------------
 
 What type of keyboard do you have?  You can choose one of:
 "
@@ -107,23 +107,23 @@ if [ -z "$auto" ]
 then
 	# Expert mode
 echo -n "
-Minix needs one primary partition of at about 210 MB for a full install
+MINIX needs one primary partition of at about 210 MB for a full install
 with sources.  (The full install also fits in about 180 MB, but it
 needs more if fully recompiled.  Add more space to taste.)
 
-  * Minix currently only understands filesystems up to 4GB, so don't make
+  * MINIX currently only understands filesystems up to 4GB, so don't make
     it bigger.
 
 If there is no free space on your disk then you have to back up one of the
 other partitions, shrink, and reinstall.  See the appropriate manuals of the
-the operating systems currently installed.  Restart your Minix installation
+the operating systems currently installed.  Restart your MINIX installation
 after you have made space.
 
 To make this partition you will be put in the editor \"part\".  Follow the
 advice under the '!' key to make a new partition of type MINIX.  Do not
 touch an existing partition unless you know precisely what you are doing!
 Please note the name of the partition (e.g. c0d0p1, c0d1p3, c1d1p0) you
-make.  (See the devices section in usage(8) on Minix device names.)
+make.  (See the devices section in usage(8) on MINIX device names.)
 :"
 	read ret
 
@@ -133,7 +133,7 @@ make.  (See the devices section in usage(8) on Minix device names.)
 
 	    echo -n "
 Please finish the name of the primary partition you have created:
-(Just type RETURN if you want to rerun \"part\")                   /dev/"
+(Just type ENTER if you want to rerun \"part\")                   /dev/"
 	    read primary
 	done
 else
@@ -184,19 +184,17 @@ echo "
 
 # Ask user about networking
 echo ""
-echo "Minix currently supports the Intel Pro/100 and RealTek 8139 "
-echo "Ethernet cards. Please choose: "
+echo "MINIX currently supports the following Ethernet cards. Please choose: "
 echo ""
 echo "0. No Ethernet card (no networking)"
-echo "1. An Intel Pro/100 Ethernet card is installed"
-echo "2. A Realtek 8139 Ethernet card is installed"
-echo "3. A Realtek 8029 Ethernet card is installed (emulated by Qemu)"
-echo "4. An NE2000, 3com 503 or WD based Ethernet card "
-echo "   is installed (NE2000 is emulated by Bochs)"
-echo "5. A 3com 501 or 509 Ethernet card is installed "
-echo "6. A different Ethernet card is installed (no networking)"
+echo "1. Intel Pro/100"
+echo "2. Realtek 8139 based card"
+echo "3. Realtek 8029 based card (emulated by Qemu)"
+echo "4. NE2000, 3com 503 or WD based card (NE2000 is emulated by Bochs)"
+echo "5. A 3com 501 or 509"
+echo "6. A different Ethernet card (no networking)"
 echo ""
-echo "In with some cards, you'll have to edit $LOCALRC "
+echo "With some cards, you'll have to edit $LOCALRC "
 echo "after installing to the proper parameters."
 echo ""
 echo "You can always change your mind after the install."
@@ -213,7 +211,7 @@ case "$eth" in
 	5)	driver=dpeth;    ;;
 esac
 
-# Compute the amount of memory available to Minix.
+# Compute the amount of memory available to MINIX.
 memsize=0
 ifs="$IFS"
 IFS=','
@@ -243,7 +241,7 @@ echo "\
 The default block size on the disk is $blockdefault KB. However, sizes of 1 to $blockdefault KB
 are also supported. If you have a small disk or small RAM you may want less
 than $blockdefault KB, in which case type a block size from 1 to 8 (1, 2, 4 or $blockdefault are
-suggested values). Otherwise hit RETURN for the default of $blockdefault KB blocks, which
+suggested values). Otherwise hit ENTER for the default of $blockdefault KB blocks, which
 should be fine in most cases."
 
 while [ -z "$blocksize" ]
@@ -266,9 +264,10 @@ echo "
 echo -n "
 How much swap space would you like?  Swapspace is only needed if this
 system is memory starved, like a 16-bit system with less then 2M, or a
-32-bit system with less then 4M.  Minix swapping isn't very good yet, so
-there is no need for it otherwise.
-		    Size in kilobytes? [$swapadv] "
+32-bit system with less then 4M. 
+
+Size in kilobytes? [$swapadv] "
+		    
 swapsize=
 read swapsize
 test -z "$swapsize" && swapsize=$swapadv
@@ -281,7 +280,7 @@ The following subpartitions are about to be created on /dev/$primary:
     Swap subpartition:	/dev/$swap	$swapsize kb
     /usr subpartition:	/dev/$usr	rest of $primary
 
-Hit return if everything looks fine, or hit DEL to bail out if you want to
+Hit ENTER if everything looks fine, or hit DEL to bail out if you want to
 think it over.  The next step will destroy /dev/$primary.
 :"
 read ret
@@ -304,7 +303,7 @@ else
 fi
 
 echo "
- --- Step 5 --- Copy files -------------------------------------------
+ --- Step 6 --- Copy files -------------------------------------------
 "
 
 mkfs -B $blocksizebytes /dev/$usr
@@ -406,7 +405,9 @@ echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
 sync
 
 echo "
-Please type 'shutdown' to exit Minix.
-You can type 'boot $primary' to try the newly installed Minix system.  See
-\"TESTING\" in the usage manual."
+Please type 'shutdown' to exit MINIX 3 and enter the boot monitor.
+At the boot monitor prompt, you can type 'boot $primary' to try the
+newly installed MINIX system.
+See Part IV: Testing in the usage manual.
+"
 

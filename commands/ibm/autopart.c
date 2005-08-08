@@ -326,7 +326,7 @@ void newdevice(char *name, int scanning, int disk_only)
 		}
 		/* Interesting device found. */
 	} else {
-		(void) stat(name, &st);
+		if(stat(name, &st) < 0) { perror(name); return; }
 	}
 
 	new= alloc(sizeof(*new));
@@ -2384,7 +2384,7 @@ select_region(void)
 		if(nr_regions > 1) {
 			printf("\nPlease enter the region number you want to install MINIX into");
 			if(used_regions > 0) {
-				printf("\nor enter 'F' to free a disk region that is currently in use");
+				printf("\nor enter 'D' to Delete an existing partition");
 			}
 			printf(": ");
 			fflush(NULL);
@@ -2392,7 +2392,7 @@ select_region(void)
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
 
-			if(toupper(line[0]) == 'F') {
+			if(toupper(line[0]) == 'D') {
 				may_kill_region();
 				return NULL;
 			}
@@ -2555,18 +2555,6 @@ do_autopart(int resultfd)
 	nordonly = 1; 
 	probing = 1;
 	autopartmode = 1;
-
-	printf("\nWelcome to the autopart process. There are three sub-steps:\n\n"
-		"2.1. Select the drive you want to use.\n"
-		"2.2. Select a region to install MINIX in.\n"
-		"2.3. After confirmation, write new table to disk.\n"
-		"\n"
-		"Nothing will happen to your disk before step 2.3.\n\n"
-		);
-
-	printf("Press ENTER to continue: ");
-	fflush(stdout);
-	if(!fgets(sure, sizeof(sure)-1, stdin)) exit(1);
 
 	printf("\n\n --- Step 2.1 --- Select drive ---------------------------------------\n\n");
 
