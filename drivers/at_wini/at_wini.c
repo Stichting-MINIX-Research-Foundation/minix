@@ -337,7 +337,9 @@ message *m_ptr;
   if (!(wn->state & IDENTIFIED) || (wn->state & DEAF)) {
 	/* Try to identify the device. */
 	if (w_identify() != OK) {
+#if VERBOSE
   		printf("%s: probe failed\n", w_name());
+#endif
 		if (wn->state & DEAF) w_reset();
 		wn->state = IGNORING;
 		return(ENXIO);
@@ -378,7 +380,7 @@ message *m_ptr;
 	if (!(wn->state & ATAPI) && (m_ptr->COUNT & RO_BIT)) return EACCES;
 
 	/* Partition the disk. */
-	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY);
+	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY, wn->state & ATAPI);
 	wn->open_ct++;
   }
   return(OK);

@@ -4,7 +4,7 @@
 
 #include <ibm/partition.h>
 
-_PROTOTYPE( void partition, (struct driver *dr, int device, int style) );
+_PROTOTYPE( void partition, (struct driver *dr, int device, int style, int atapi) );
 
 /* BIOS parameter table layout. */
 #define bp_cylinders(t)		(* (u16_t *) (&(t)[0]))

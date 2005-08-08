@@ -1277,7 +1277,7 @@ int density;
 
   if (iovec1.iov_size != 0) return(EIO);
 
-  partition(&f_dtab, f_drive, P_FLOPPY);
+  partition(&f_dtab, f_drive, P_FLOPPY, 0);
   return(OK);
 }
 

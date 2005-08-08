@@ -24,10 +24,11 @@ FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
 /*============================================================================*
  *				partition				      *
  *============================================================================*/
-PUBLIC void partition(dp, device, style)
+PUBLIC void partition(dp, device, style, atapi)
 struct driver *dp;	/* device dependent entry points */
 int device;		/* device to partition */
 int style;		/* partitioning style: floppy, primary, sub. */
+int atapi;		/* atapi device */
 {
 /* This routine is called on first open to initialize the partition tables
  * of a device.  It makes sure that each partition falls safely within the
@@ -48,9 +49,12 @@ int style;		/* partitioning style: floppy, primary, sub. */
   limit = base + div64u(dv->dv_size, SECTOR_SIZE);
 
   /* Read the partition table for the device. */
-  if (!get_part_table(dp, device, 0L, table, &io))
-	  if(!io || !get_iso_fake_part_table(dp, device, 0L, table))
-	  	return;
+  if(atapi) {
+  	if(!get_iso_fake_part_table(dp, device, 0L, table))
+  		return;
+  } else if(!get_part_table(dp, device, 0L, table, &io)) {
+	  return;
+  }
 
   /* Compute the device number of the first partition. */
   switch (style) {
@@ -86,7 +90,7 @@ int style;		/* partitioning style: floppy, primary, sub. */
 	if (style == P_PRIMARY) {
 		/* Each Minix primary partition can be subpartitioned. */
 		if (pe->sysind == MINIX_PART)
-			partition(dp, device + par, P_SUB);
+			partition(dp, device + par, P_SUB, atapi);
 
 		/* An extended partition has logical partitions. */
 		if (ext_part(pe->sysind))

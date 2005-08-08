@@ -317,7 +317,7 @@ message *m_ptr;
 
   if (w_wn->open_ct++ == 0) {
 	/* Partition the disk. */
-	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY);
+	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY, 0);
   }
   return(OK);
 }
