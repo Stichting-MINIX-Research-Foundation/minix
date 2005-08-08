@@ -2336,10 +2336,9 @@ may_kill_region(void)
 
 	i = regions[r].tableno;
 
-	if(is_sure(0, "Are you sure you want to delete this region,\n"
-	"losing all data it contains?\n"
-	"You have selected a region used\n"
-	"by %s (%s).\n"
+	if(is_sure(0, "\nAre you sure you want to delete this region,\n"
+	"losing all data it contains? You have selected a region used\n"
+	"by %s (%s).\n\n"
 	"I won't actually update your disk right away, but still. Sure?",
 		typ2txt(table[i].sysind), prettysizeprint(table[i].size / 2))) {
 		table[i].sysind = NO_PART;
@@ -2536,8 +2535,6 @@ scribble_region(region_t *reg, struct part_entry **pe)
 		newpart->size = reg->free_sec_last - reg->free_sec_start + 1;
 		changed = 1;
 	} else  newpart = &reg->used_part;
-	check_ind(newpart);
-	newpart->sysind = MINIX_PART;
 	*pe = newpart;
 	changed = 1;
 	dirty = 1;
@@ -2602,7 +2599,6 @@ do_autopart(int resultfd)
 		if(!is_sure(SURE_SERIOUS, "Are you sure you want to continue?"))
 			return 1;
 
-		m_write('w', NULL);
 		/* Retrieve partition number in sorted order that we
 		 * have scribbled in.
 		 */
@@ -2613,11 +2609,18 @@ do_autopart(int resultfd)
 					fprintf(stderr, "Internal error (1).\n");
 					return 1;
 				}
+				check_ind(&table[sort_order[i]]);
+				table[sort_order[i]].sysind = MINIX_PART;
 				found = i;
 			}
 		}
 		if(found < 1) {
 			fprintf(stderr, "Internal error (2).\n");
+			return 1;
+		}
+		m_write('w', NULL);
+		if(dirty) {
+			fprintf(stderr, "Internal error (3).\n");
 			return 1;
 		}
 		name=strrchr(curdev->name, '/');
