@@ -24,7 +24,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 
 #if !__minix_vmd
-#define debug 0	
 #define irq_mode_pci(irq) ((void)0)
 #endif
 
@@ -38,6 +37,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 #define PBT_INTEL	 1
 #define PBT_PCIBRIDGE	 2
+
+PRIVATE int debug= 0;
 
 PRIVATE struct pcibus
 {
@@ -70,6 +71,9 @@ PRIVATE struct pcidev
 	u8_t pd_inuse;
 } pcidev[NR_PCIDEV];
 PRIVATE int nr_pcidev= 0;
+
+/* Work around the limitation of the PCI emulation in QEMU 0.7.1 */
+PRIVATE int qemu_pci= 0;
 
 FORWARD _PROTOTYPE( void pci_intel_init, (void)				);
 FORWARD _PROTOTYPE( void probe_bus, (int busind)			);
@@ -150,8 +154,19 @@ PUBLIC void pci_init()
 {
 	static int first_time= 1;
 
+	long v;
+
 	if (!first_time)
 		return;
+
+	v= 0;
+	env_parse("qemu_pci", "d", 0, &v, 0, 1);
+	qemu_pci= v;
+
+	v= 0;
+	env_parse("pci_debug", "d", 0, &v, 0, 1);
+	debug= v;
+
 
 	/* We don't expect to interrupted */
 	assert(first_time == 1);
@@ -514,21 +529,20 @@ printf("probe_bus(%d)\n", busind);
 			did= pci_attr_r16(devind, PCI_DID);
 			headt= pci_attr_r8(devind, PCI_HEADT);
 			sts= pci_attr_rsts(devind);
+
+			if (vid == NO_VID)
+				break;	/* Nothing here */
+
 			if (sts & (PSR_SSE|PSR_RMAS|PSR_RTAS))
 			{
-#if 0
-				printf(
+				if (qemu_pci)
+				{
+					printf(
 			"pci: ignoring bad value 0x%x in sts for QEMU\n",
 					sts & (PSR_SSE|PSR_RMAS|PSR_RTAS));
-#endif
-				break;
-			}
-			if (vid == NO_VID)
-			{
-				/* Some bridge implementations do support 
-				 * pci_attr_rsts.
-				 */
-				break;
+				}
+				else
+					break;
 			}
 
 			dstr= pci_dev_name(vid, did);
@@ -800,10 +814,17 @@ int devind;
 				printf("INT%c: %d\n", 'A'+i, irq);
 			if (!(elcr & (1 << irq)))
 			{
-				printf("IRQ %d is not level triggered\n",
-					irq);
-				printf("(ignored for QEMU)\n");
-				/* panic(NULL,NULL, NO_NUM); */
+				if (qemu_pci)
+				{
+					printf(
+			"IRQ is not level triggered (ignored for QEMU)\n");
+				}
+				else
+				{
+					panic("PCI",
+						"IRQ is not level triggered\n",
+						NO_NUM);
+				}
 			}
 			irq_mode_pci(irq);
 		}
