@@ -8,7 +8,8 @@ CDFILES=/usr/tmp/cdreleasefiles
 ISO=minix.iso
 ISOGZ=minix.iso.gz
 RAM=/dev/ram
-rootmb=16
+BS=2048
+rootmb=2
 rootkb=`expr $rootmb \* 1024`
 rootbytes=`expr $rootkb \* 1024`
 if [ `wc -c $RAM | awk '{ print $1 }'` -ne $rootbytes ]
@@ -37,7 +38,7 @@ echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
-mkfs -b 16384 -B 1024 $RAM || exit
+mkfs -b 1024 -B $BS $RAM || exit
 echo " * chowning to bin"
 chown -R bin /usr/src
 echo " * mounting $RAM as $RELEASEDIR"
@@ -45,7 +46,7 @@ mount $RAM $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 
-mkfs $TMPDISK || exit
+mkfs -B $BS $TMPDISK || exit
 echo " * mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
