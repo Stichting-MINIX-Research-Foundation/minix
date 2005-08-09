@@ -1,3 +1,5 @@
-# Set timezone.
-
-TZ='GMT0'	export TZ
+RC_TZ=/etc/rc.timezone
+export TZ=GMT0
+if [ -f "$RC_TZ" ]
+then . "$RC_TZ"
+fi

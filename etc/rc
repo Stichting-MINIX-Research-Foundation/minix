@@ -3,6 +3,7 @@
 umask 022
 TERM="${TERM-minix}"
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin
+RC_TZ=/etc/rc.timezone
 export TERM PATH
 
 usage()
@@ -63,7 +64,10 @@ start)
     echo .
 
     # Set timezone.
-    . /etc/profile
+    export TZ=GMT0
+    if [ -f "$RC_TZ" ]
+    then . "$RC_TZ"
+    fi
 
     # Try to read the hardware real-time clock, otherwise do it manually.
     readclock || intr date -q
