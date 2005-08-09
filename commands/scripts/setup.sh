@@ -65,8 +65,7 @@ esac
 echo -n "\
 This is the MINIX installation script.
 
-Note 1: If the screen blanks suddenly then hit CTRL+F3 to select \"software
-scrolling\".
+Note 1: If the screen blanks, hit CTRL+F3 to select \"software scrolling\".
 Note 2: If things go wrong then hit DEL and start over.
 Note 3: Some questions have default answers, like this: [y]
 	Simply hit ENTER if you want to choose that answer.
@@ -74,9 +73,9 @@ Note 4: If you see a colon (:) then you should hit ENTER to continue.
 :"
 read ret
 
-echo "
- --- Step 1 --- Select keyboard type ---------------------------------
+echo " --- Step 1: Select keyboard type ---------------------------------"
 
+echo "
 What type of keyboard do you have?  You can choose one of:
 "
 ls -C /usr/lib/keymaps | sed -e 's/\.map//g' -e 's/^/    /'
@@ -88,10 +87,10 @@ ok=""
 while [ "$ok" = "" ]
 do
 echo "
- --- Step 2 --- Create a MINIX 3 partition ---------------------------
+ --- Step 2: Select your expertise level ---------------------------
 "
-	echo -n "Now is the MINIX 3 partitioning step. Do you want to
-follow the (A)utomatic or the e(X)pert mode? [A] "
+	echo "Now you need to create a MINIX 3 partition on the hard disk."
+	echo -n "Do you want to use (A)utomatic or the e(X)pert mode? [A] "
 	read ch
 	case "$ch" in
 	[Aa]*)	auto="1"; ok="yes"; ;;
@@ -107,17 +106,13 @@ if [ -z "$auto" ]
 then
 	# Expert mode
 echo -n "
-MINIX needs one primary partition of at about 210 MB for a full install
-with sources.  (The full install also fits in about 180 MB, but it
-needs more if fully recompiled.  Add more space to taste.)
+MINIX needs one primary partition of about 250 MB for a full install.
+The maxium fill system currently supported is 4 GB.
 
-  * MINIX currently only understands filesystems up to 4GB, so don't make
-    it bigger.
-
-If there is no free space on your disk then you have to back up one of the
-other partitions, shrink, and reinstall.  See the appropriate manuals of the
-the operating systems currently installed.  Restart your MINIX installation
-after you have made space.
+If there is no free space on your disk then you have to choose an option:
+   (1) Delete one or more partitions
+   (2) Allocate an existing partition to MINIX 3
+   (3) Exit setup and shrink a partition using a different OS
 
 To make this partition you will be put in the editor \"part\".  Follow the
 advice under the '!' key to make a new partition of type MINIX.  Do not
@@ -178,9 +173,7 @@ hex2int()
     done
     echo $i
 }
-echo "
- --- Step 3 --- Select your Ethernet chip ----------------------------
-"
+echo " --- Step 8: Select your Ethernet chip ----------------------------"
 
 # Ask user about networking
 echo ""
@@ -234,11 +227,9 @@ i86)
 esac
 
 blockdefault=8
-echo "
- --- Step 4 --- Select a disk block size -----------------------------
-"
-echo "\
-The default block size on the disk is $blockdefault KB.
+echo " --- Step 9: Select a disk block size -----------------------------"
+
+echo "The default block size on the disk is $blockdefault KB.
 If you have a small disk or small RAM you may want less
 than $blockdefault KB. Please type 1, 2, or 4 for a smaller
 block size (in KB), or hit ENTER for the default of 
@@ -257,13 +248,10 @@ do	echo -n "Block size [$blockdefault KB]? "
 done
 
 blocksizebytes="`expr $blocksize '*' 1024`"
-echo "
- --- Step 5 --- Allocate swap space ----------------------------------
-"
+echo " --- Step 10: Allocate swap space ----------------------------------"
 
-echo -n "
-How much swap space would you like?  Swapspace is only needed if this
-system is memory starved. If you have 256 MB of memory or more, you
+echo -n "How much swap space would you like?  Swapspace is only needed if this
+system is memory starved. If you have 128 MB of memory or more, you
 probably don't need it. If you have less and want to run many programs
 at once, I suggest setting it to the memory size.
 
@@ -273,8 +261,11 @@ swapsize=
 read swapsize
 test -z "$swapsize" && swapsize=$swapadv
 
-echo -n "
-You have created a partition named:	/dev/$primary
+echo "
+ --- Step 11:  Check all your choices ----------------------------------
+"
+
+echo -n "You have created a partition named:	/dev/$primary
 The following subpartitions are about to be created on /dev/$primary:
 
     Root subpartition:	/dev/$root	16 MB
@@ -303,9 +294,7 @@ else
     swap=
 fi
 
-echo "
- --- Step 6 --- Copy files to hard disk ------------------------------
-"
+echo " --- Step 12: Wait for bad block detection ----------------------------"
 
 mkfs -B $blocksizebytes /dev/$usr
 echo "\
@@ -315,6 +304,8 @@ trap ': nothing' 2
 readall -b /dev/$usr | sh
 sleep 2
 trap 2
+
+echo " --- Step 13: Wait for files to be copied ------------------------------"
 
 mount /dev/$usr /mnt || exit		# Mount the intended /usr.
 
