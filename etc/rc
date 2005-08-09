@@ -150,6 +150,8 @@ Mount $usr /usr failed -- Single user."
 	# Remove boot-only things to make space,
 	# unless booting from CD, in which case we need them.
 	rm -rf /boot
+	# put the compiler on ram
+	cp /usr/lib/em* /usr/lib/cpp* /lib
     esac
 
     # Things should be alright now.

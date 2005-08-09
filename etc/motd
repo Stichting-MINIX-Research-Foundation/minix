@@ -12,6 +12,5 @@ you find a bug, please use the "Report a bug" link on that page.
 For help with MINIX 3 and discussion about it, please subscribe to the
 newsgroup: comp.os.minix.
 
-MINIX 3 supports virtual terminals. Hit ALT+F2, ALT+F3 etc. to
-see them.
+MINIX 3 supports virtual terminals. Hit ALT+F2, ALT+F3 etc. to see them.
 
