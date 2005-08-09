@@ -79,8 +79,8 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(!(logfp = fopen("/var/log/messages", "a"))) {
-		perror("/var/log/messages");
+	if(!(logfp = fopen("/usr/log/messages", "a"))) {
+		perror("/usr/log/messages");
 		return 1;
 	}
 

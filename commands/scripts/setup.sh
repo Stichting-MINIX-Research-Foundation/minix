@@ -107,7 +107,7 @@ then
 	# Expert mode
 echo -n "
 MINIX needs one primary partition of about 250 MB for a full install.
-The maxium fill system currently supported is 4 GB.
+The maximum fill system currently supported is 4 GB.
 
 If there is no free space on your disk then you have to choose an option:
    (1) Delete one or more partitions
@@ -149,6 +149,10 @@ else
 			fi 
 		else	echo "Autopart tool failed. Trying again."
 		fi
+
+		# reset at retries and timeouts in case autopart left
+		# them messy
+		atnormalize
 	done
 
 fi
@@ -184,8 +188,9 @@ echo "1. Intel Pro/100"
 echo "2. Realtek 8139 based card"
 echo "3. Realtek 8029 based card (emulated by Qemu)"
 echo "4. NE2000, 3com 503 or WD based card (NE2000 is emulated by Bochs)"
-echo "5. A 3com 501 or 509"
-echo "6. A different Ethernet card (no networking)"
+echo "5. NE2000, with default settings for Bochs emulation in $LOCALRC"
+echo "6. A 3com 501 or 509"
+echo "7. A different Ethernet card (no networking)"
 echo ""
 echo "With some cards, you'll have to edit $LOCALRC "
 echo "after installing to the proper parameters."
@@ -196,12 +201,18 @@ echo -n "Choice? "
 read eth
 driver=""
 driverargs=""
+config_warn="Note: After installing, please edit $LOCALRC to the right configuration."
 case "$eth" in
 	1)	driver=fxp;      ;;
 	2)	driver=rtl8139;  ;;
-	3)	driver=dp8390;   driverargs="dp8390_args='DPETH0=pci'";	;;
-	4)	driver=dp8390;   driverargs="#dp8390_args='DPETH0=port:irq:memory'"; echo "Note: After installing, please edit $LOCALRC to the right configuration."; 	;;
-	5)	driver=dpeth;    ;;
+	3)	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
+	4)	driver=dp8390;   driverargs="#dp8390_arg='DPETH0=port:irq:memory'";
+		echo $config_warn;
+		;;
+	5)	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; ;;
+	6)	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
+		echo $config_warn;
+		;;
 esac
 
 # Compute the amount of memory available to MINIX.
@@ -226,23 +237,21 @@ i86)
 *)  test $memsize -lt 6144 && swapadv=$(expr 6144 - $memsize)
 esac
 
-blockdefault=8
+blockdefault=2
 echo " --- Step 9: Select a disk block size -----------------------------"
 
 echo "The default block size on the disk is $blockdefault KB.
-If you have a small disk or small RAM you may want less
-than $blockdefault KB. Please type 1, 2, or 4 for a smaller
-block size (in KB), or hit ENTER for the default of 
-$blockdefault KB blocks, which should be fine in most cases."
+If you have a small disk or small RAM you may want 1 KB blocks.
+Please type 1 then, or leave it at the default.
 
 while [ -z "$blocksize" ]
-do	echo -n "Block size [$blockdefault KB]? "
+do	echo -n "Block size in KB [$blockdefault]? "
 	read blocksize
 	if [ -z "$blocksize" ]
 	then	blocksize=$blockdefault
 	fi
-	if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne 4 -a "$blocksize" -ne $blockdefault ]
-	then	echo "$blocksize bogus block size. 1, 2, 4 or $blockdefault please."
+	if [ "$blocksize" -ne 1 -a "$blocksize" -ne $blockdefault ]
+	then	echo "$blocksize bogus block size. 1 or $blockdefault please."
 		blocksize=""
 	fi
 done
@@ -282,7 +291,7 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
 p3=0:0
 test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
-partition /dev/$primary 1 81:32768* $p3 81:0+ || exit
+partition /dev/$primary 1 81:4352* $p3 81:0+ || exit
 
 if [ "$swapsize" -gt 0 ]
 then
@@ -302,7 +311,6 @@ Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are
 absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
 trap ': nothing' 2
 readall -b /dev/$usr | sh
-sleep 2
 trap 2
 
 echo " --- Step 13: Wait for files to be copied ------------------------------"
@@ -345,6 +353,7 @@ Copying $fdroot to /dev/$root
 "
 
 mkfs -B $blocksizebytes /dev/$root || exit
+readall -b /dev/$root | sh
 mount /dev/$root /mnt || exit
 # Running from the installation CD.
 cpdir -vx / /mnt || exit

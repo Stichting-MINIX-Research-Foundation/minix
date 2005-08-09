@@ -7,6 +7,7 @@ CCLD	= $(CC) -i $(CFLAGS)
 MAKE	= exec make -$(MAKEFLAGS)
 
 ALL	= \
+	atnormalize \
 	dosread \
 	fdisk \
 	format \
@@ -27,6 +28,10 @@ ALL	= \
 all:	$(ALL)
 
 dosread:	dosread.c
+	$(CCLD) -o $@ $?
+	install -S 16kw $@
+
+atnormalize:	atnormalize.c
 	$(CCLD) -o $@ $?
 	install -S 16kw $@
 
@@ -91,6 +96,7 @@ sdump:	sdump.c
 	install -S 4kw $@
 
 install:	\
+	/usr/bin/atnormalize \
 	/usr/bin/dosread \
 		/usr/bin/dosdir \
 		/usr/bin/doswrite \
@@ -111,6 +117,9 @@ install:	\
 	/usr/bin/sdump \
 	/bin/loadkeys \
 	/bin/readclock \
+
+/usr/bin/atnormalize:	atnormalize
+	install -cs -o bin $? $@
 
 /usr/bin/dosread:	dosread
 	install -cs -o bin $? $@
