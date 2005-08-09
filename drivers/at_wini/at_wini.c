@@ -570,9 +570,9 @@ PRIVATE int w_io_test(void)
 	save_wakeup = wakeup_ticks;
 
 	if(!w_standard_timeouts) {
-		timeout_ticks = HZ * 2;
-		wakeup_ticks = HZ * 5;
-		max_errors = 2;
+		timeout_ticks = HZ * 4;
+		wakeup_ticks = HZ * 6;
+		max_errors = 3;
 	}
 
 	w_testing = 1;
@@ -1291,7 +1291,7 @@ message *m;
 			 * tolerance and set silent mode.
 			 */
 			wakeup_ticks = timeout;
-			max_errors = 2;
+			max_errors = 3;
 			w_silent = 1;
 
 			if(timeout_ticks > timeout)
