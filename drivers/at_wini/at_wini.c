@@ -171,6 +171,7 @@ struct command {
 /* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 int wakeup_ticks = WAKEUP;
+long w_standard_timeouts = 0;
 
 int w_testing = 0, w_silent = 0;
 
@@ -310,6 +311,8 @@ PRIVATE void init_params()
 	/* Base I/O register to address controller. */
 	wn->base = drive < 2 ? REG_BASE0 : REG_BASE1;
   }
+
+  env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
 }
 
 
@@ -566,9 +569,12 @@ PRIVATE int w_io_test(void)
 	save_errors = max_errors;
 	save_wakeup = wakeup_ticks;
 
-	timeout_ticks = HZ * 2;
-	wakeup_ticks = HZ * 5;
-	max_errors = 2;
+	if(!w_standard_timeouts) {
+		timeout_ticks = HZ * 2;
+		wakeup_ticks = HZ * 5;
+		max_errors = 2;
+	}
+
 	w_testing = 1;
 
 	/* Try I/O on the actual drive (not any (sub)partition). */
@@ -1277,18 +1283,20 @@ message *m;
 		w_silent = 0;
 	} else if(timeout < 0) {
 		return EINVAL;
-	} else {
+	} else  {
 		prev = wakeup_ticks;
 
-		/* Set (lower) timeout, lower error
-		 * tolerance and set silent mode.
-		 */
-		wakeup_ticks = timeout;
-		max_errors = 2;
-		w_silent = 1;
+		if(!w_standard_timeouts) {
+			/* Set (lower) timeout, lower error
+			 * tolerance and set silent mode.
+			 */
+			wakeup_ticks = timeout;
+			max_errors = 2;
+			w_silent = 1;
 
-		if(timeout_ticks > timeout)
-			timeout_ticks = timeout;
+			if(timeout_ticks > timeout)
+				timeout_ticks = timeout;
+		}
 
 		if((r=sys_datacopy(SELF, (vir_bytes)&prev, 
 			m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
