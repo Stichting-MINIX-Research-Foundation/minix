@@ -364,6 +364,14 @@ message *m_ptr;
 #endif
   }
 
+#if ENABLE_ATAPI
+   if ((wn->state & ATAPI) && (m_ptr->COUNT & W_BIT))
+	return(EACCES);
+#endif
+
+   /* If it's not an ATAPI device, then don't open with RO_BIT. */
+   if (!(wn->state & ATAPI) && (m_ptr->COUNT & RO_BIT)) return EACCES;
+
   /* Partition the drive if it's being opened for the first time,
    * or being opened after being closed.
    */
@@ -371,13 +379,9 @@ message *m_ptr;
 #if ENABLE_ATAPI
 	if (wn->state & ATAPI) {
 		int r;
-
-		if (m_ptr->COUNT & W_BIT) return(EACCES);
 		if ((r = atapi_open()) != OK) return(r);
 	}
 #endif
-	/* If it's not an ATAPI device, then don't open read-only. */
-	if (!(wn->state & ATAPI) && (m_ptr->COUNT & RO_BIT)) return EACCES;
 
 	/* Partition the disk. */
 	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY, wn->state & ATAPI);
