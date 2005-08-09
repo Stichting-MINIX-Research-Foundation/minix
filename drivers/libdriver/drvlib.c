@@ -224,7 +224,8 @@ struct part_entry *table;	/* four entries */
   memcpy(&isosize, pvd + 80, sizeof(isosize));
   isosize *= CD_SECTOR_SIZE;
 
-#define ROOT_IMAGE_SECTORS (16*1024*1024/SECTOR_SIZE)
+/* root */
+#define ROOT_IMAGE_SECTORS (2*1024*1024/SECTOR_SIZE)
   table[0].lowsec = 0;
   table[0].size =  isosize / SECTOR_SIZE;
 
