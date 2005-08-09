@@ -81,7 +81,8 @@ PUBLIC int cdprobe(void)
 			break;
 		}
 	}
-	printf("\n");
+
+	printf("\nCD probe done.\n");
 
 	if(!found) return NO_DEV;
 
