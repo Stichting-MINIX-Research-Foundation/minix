@@ -407,7 +407,7 @@ PRIVATE void load_ram(void)
 
   printf("\rRAM disk of %u KB loaded onto /dev/ram.", ram_size_kb);
   if (root_dev == DEV_RAM) printf(" Using RAM disk as root FS.");
-  printf("\n");
+  printf("  \n");
 
   /* Invalidate and close the image device. */
   invalidate(image_dev);
