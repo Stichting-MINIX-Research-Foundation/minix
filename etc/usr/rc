@@ -134,11 +134,10 @@ start)
 	    daemonize tcpd login in.rlogind
 	    daemonize tcpd telnet in.telnetd
 	    daemonize tcpd ftp in.ftpd
+	    # The last daemon has been started, so close the list:
+	    echo .
 	fi
     fi
-
-    # The last daemon has been started, so close the list:
-    echo .
 
     if [ "$net" ]
     then
