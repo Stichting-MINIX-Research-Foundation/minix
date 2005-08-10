@@ -4,9 +4,6 @@
  * The parameters for this system call are:
  *     m2_i1:	SIG_PROC  	# process with pending signals
  *     m2_l1:	SIG_MAP		# bit map with pending signals
- *
- * Changes:
- *   Oct 24, 2004   Created.  (Jorrit N. Herder) 
  */
 
 #include "../system.h"

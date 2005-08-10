@@ -8,9 +8,6 @@
  *    m2_p1:	DIO_VEC_ADDR	(virtual address of buffer)	
  *    m2_l2:	DIO_VEC_SIZE	(number of elements)	
  *    m2_i2:	DIO_VEC_PROC	(process where buffer is)	
- *
- * Changes:
- *   May 24, 2004   Created to support user-space drivers  (Jorrit N. Herder) 
  */
 
 #include "../system.h"

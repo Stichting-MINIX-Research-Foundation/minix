@@ -4,9 +4,6 @@
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR	process number to change priority
  *    m1_i2:	PR_PRIORITY	the new priority
- *
- * Changes:
- *   Jun 21, 2005   created for nice(2) system call  (Ben J. Gras)
  */
 
 #include "../system.h"

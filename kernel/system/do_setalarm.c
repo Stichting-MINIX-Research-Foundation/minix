@@ -5,9 +5,6 @@
  *    m2_l1:	ALRM_EXP_TIME		(alarm's expiration time)
  *    m2_i2:	ALRM_ABS_TIME		(expiration time is absolute?)
  *    m2_l1:	ALRM_TIME_LEFT		(return seconds left of previous)
- *
- * Changes:
- *    Aug 25, 2004   fully rewritten to clean up code  (Jorrit N. Herder)
  */
 
 #include "../system.h"

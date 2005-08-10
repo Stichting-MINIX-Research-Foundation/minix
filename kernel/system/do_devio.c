@@ -6,9 +6,6 @@
  *   m2_i1:	DIO_TYPE	(flag indicating byte, word, or long)
  *   m2_l1:	DIO_PORT	(port to read/ write)	
  *   m2_l2:	DIO_VALUE	(value to write/ return value read)	
- *
- * Changes:
- *   Feb 02, 2004   created to support user-space drivers  (Jorrit N. Herder) 
  */
 
 #include "../system.h"

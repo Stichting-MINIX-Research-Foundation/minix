@@ -5,9 +5,6 @@
  *    m1_i3:	VCP_VEC_SIZE		size of copy request vector 
  *    m1_p1:	VCP_VEC_ADDR		address of vector at caller 
  *    m1_i2:	VCP_NR_OK		number of successfull copies	
- *
- * Changes:
- *   Apr 12, 2005	updated to use new virtual_copy()  (Jorrit N. Herder)
  */
 
 #include "../system.h"

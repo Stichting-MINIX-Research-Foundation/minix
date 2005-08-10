@@ -1,9 +1,6 @@
 /* This file provides a catch-all handler for unused system calls. A system 
  * call may be unused when it is not defined or when it is disabled in the
  * kernel's configuration.
- *
- * Changes:
- *   Oct 10, 2004   created  (Jorrit N. Herder) 
  */
 #include "../system.h"
 
@@ -14,7 +11,7 @@ PUBLIC int do_unused(m)
 message *m;				/* pointer to request message */
 {
   kprintf("SYSTEM: got unused request %d from %d", m->m_type, m->m_source);
-  return(EBADREQUEST);		/* illegal message type */
+  return(EBADREQUEST);			/* illegal message type */
 }
 
 

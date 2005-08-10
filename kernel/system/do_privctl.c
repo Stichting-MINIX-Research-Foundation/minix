@@ -3,9 +3,6 @@
  *
  * The parameters for this system call are:
  *    m1_i1:	PR_PROC_NR 	(process number of caller)	
- *
- * Changes:
- *   Jul 13, 2005   created to dynamically start services  (Jorrit N. Herder) 
  */
 
 #include "../system.h"

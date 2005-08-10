@@ -6,9 +6,6 @@
  *    m2_i1:	DIO_TYPE	(flag indicating byte, word, or long)
  *    m2_p1:	DIO_VEC_ADDR	(pointer to port/ value pairs)	
  *    m2_i2:	DIO_VEC_SIZE	(number of ports to read or write) 
- *
- * Changes:
- *   Apr 18, 2004   created to support user-space drivers  (Jorrit N. Herder) 
  */
 
 #include "../system.h"

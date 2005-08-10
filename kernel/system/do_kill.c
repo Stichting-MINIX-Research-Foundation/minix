@@ -4,9 +4,6 @@
  * The parameters for this system call are:
  *     m2_i1:	SIG_PROC  	# process to signal/ pending		
  *     m2_i2:	SIG_NUMBER	# signal number to send to process
- *
- * Changes:
- *   Jul 09, 2005   updated to signal system processes  (Jorrit N. Herder) 
  */
 
 #include "../system.h"
