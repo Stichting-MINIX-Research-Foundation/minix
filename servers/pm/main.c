@@ -237,6 +237,7 @@ PRIVATE void pm_init()
   if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic(__FILE__,"can't sync up with FS", NO_NUM);
 
+#if ENABLE_BOOTDEV
   /* Possibly we must correct the memory chunks for the boot device. */
   if (kinfo.bootdev_size > 0) {
       mem_map[T].mem_phys = kinfo.bootdev_base >> CLICK_SHIFT;
@@ -244,6 +245,7 @@ PRIVATE void pm_init()
       mem_map[D].mem_len = (kinfo.bootdev_size+CLICK_SIZE-1) >> CLICK_SHIFT;
       patch_mem_chunks(mem_chunks, mem_map);
   }
+#endif /* ENABLE_BOOTDEV */
 
   /* Initialize tables to all physical memory and print memory information. */
   printf("Physical memory:");
