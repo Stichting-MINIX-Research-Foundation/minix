@@ -493,7 +493,7 @@ doterminate:
 	tell_fs(CHDIR, slot, FALSE, 0);
 	dump_core(rmp);
   }
-  mm_exit(rmp, 0);		/* terminate process */
+  pm_exit(rmp, 0);		/* terminate process */
 }
 
 

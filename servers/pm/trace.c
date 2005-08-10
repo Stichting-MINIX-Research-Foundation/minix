@@ -54,7 +54,7 @@ PUBLIC int do_trace()
    */
   switch (m_in.request) {
   case T_EXIT:		/* exit */
-	mm_exit(child, (int) m_in.data);
+	pm_exit(child, (int) m_in.data);
 	mp->mp_reply.reply_trace = 0;
 	return(OK);
   case T_RESUME: 

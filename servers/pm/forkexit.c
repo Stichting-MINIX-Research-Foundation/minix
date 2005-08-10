@@ -8,8 +8,8 @@
  *
  * The entry points into this file are:
  *   do_fork:	 perform the FORK system call
- *   do_mm_exit: perform the EXIT system call (by calling mm_exit())
- *   mm_exit:	 actually do the exiting
+ *   do_pm_exit: perform the EXIT system call (by calling pm_exit())
+ *   pm_exit:	 actually do the exiting
  *   do_wait:	 perform the WAITPID or WAIT system call
  */
 
@@ -108,22 +108,22 @@ PUBLIC int do_fork()
 
 
 /*===========================================================================*
- *				do_mm_exit				     *
+ *				do_pm_exit				     *
  *===========================================================================*/
-PUBLIC int do_mm_exit()
+PUBLIC int do_pm_exit()
 {
-/* Perform the exit(status) system call. The real work is done by mm_exit(),
+/* Perform the exit(status) system call. The real work is done by pm_exit(),
  * which is also called when a process is killed by a signal.
  */
-  mm_exit(mp, m_in.status);
+  pm_exit(mp, m_in.status);
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
 
 
 /*===========================================================================*
- *				mm_exit					     *
+ *				pm_exit					     *
  *===========================================================================*/
-PUBLIC void mm_exit(rmp, exit_status)
+PUBLIC void pm_exit(rmp, exit_status)
 register struct mproc *rmp;	/* pointer to the process to be terminated */
 int exit_status;		/* the process' exit status (for parent) */
 {

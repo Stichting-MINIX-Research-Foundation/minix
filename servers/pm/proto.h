@@ -44,9 +44,9 @@ _PROTOTYPE( struct mproc *find_share, (struct mproc *mp_ign, Ino_t ino,
 
 /* forkexit.c */
 _PROTOTYPE( int do_fork, (void)						);
-_PROTOTYPE( int do_mm_exit, (void)					);
+_PROTOTYPE( int do_pm_exit, (void)					);
 _PROTOTYPE( int do_waitpid, (void)					);
-_PROTOTYPE( void mm_exit, (struct mproc *rmp, int exit_status)		);
+_PROTOTYPE( void pm_exit, (struct mproc *rmp, int exit_status)		);
 
 /* getset.c */
 _PROTOTYPE( int do_getset, (void)					);

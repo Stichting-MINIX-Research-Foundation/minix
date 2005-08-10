@@ -143,8 +143,6 @@ PRIVATE void pm_init()
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
   static char ign_sigs[] = { SIGCHLD };
-  static int protected[] = {PM_PROC_NR, FS_PROC_NR, SM_PROC_NR,
-			TTY_PROC_NR, DRVR_PROC_NR, MEM_PROC_NR};
   register struct mproc *rmp;
   register char *sig_ptr;
   phys_clicks total_clicks, minix_clicks, free_clicks;
@@ -197,18 +195,16 @@ PRIVATE void pm_init()
 		/* Set process details found in the image table. */
 		rmp = &mproc[ip->proc_nr];	
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
+		rmp->mp_parent = SM_PROC_NR;
 		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
   			rmp->mp_pid = INIT_PID;
-			rmp->mp_parent = PM_PROC_NR;
 			rmp->mp_flags |= IN_USE; 
-  			rmp->mp_nice = 0;
-  		sigemptyset(&rmp->mp_ignore);	
+  		        sigemptyset(&rmp->mp_ignore);	
 		}
 		else {					/* system process */
   			rmp->mp_pid = get_free_pid();
-			rmp->mp_parent = SM_PROC_NR;
 			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
-  		sigfillset(&rmp->mp_ignore);	
+  			sigfillset(&rmp->mp_ignore);	
 		}
   		sigemptyset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
@@ -235,9 +231,6 @@ PRIVATE void pm_init()
   /* Override some details. PM is somewhat special. */
   mproc[PM_PROC_NR].mp_pid = PM_PID;		/* magically override pid */
   mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;	/* PM doesn't have parent */
-  for (i=0; i<sizeof(protected)/sizeof(int); i++)
-  	sigfillset(&mproc[i].mp_ignore);	/* guard against signals */
-
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;

@@ -15,7 +15,7 @@ char core_name[] = "core";	/* file name where core images are produced */
 
 _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 	no_sys,		/*  0 = unused	*/
-	do_mm_exit,	/*  1 = exit	*/
+	do_pm_exit,	/*  1 = exit	*/
 	do_fork,	/*  2 = fork	*/
 	no_sys,		/*  3 = read	*/
 	no_sys,		/*  4 = write	*/
