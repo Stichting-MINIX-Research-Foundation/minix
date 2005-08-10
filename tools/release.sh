@@ -8,7 +8,7 @@ CDFILES=/usr/tmp/cdreleasefiles
 ISO=minix.iso
 ISOGZ=minix.iso.gz
 RAM=/dev/ram
-BS=2048
+BS=4096
 rootmb=2
 rootkb=`expr $rootmb \* 1024`
 rootbytes=`expr $rootkb \* 1024`
@@ -38,7 +38,7 @@ echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
-mkfs -b 1024 -B $BS $RAM || exit
+mkfs -B $BS $RAM || exit
 echo " * chowning to bin"
 chown -R bin /usr/src
 echo " * mounting $RAM as $RELEASEDIR"
@@ -54,6 +54,8 @@ mkdir -p $RELEASEDIR/usr/tmp
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
 chown -R bin $RELEASEDIR/usr/src
+# Bug tracking system not for on cd
+rm -rf $RELEASEDIR/usr/src/doc/bugs
 date >$RELEASEDIR/CD
 ( cd $RELEASEDIR && find . -name CVS | xargs rm -rf )
 #echo " * Making source .tgz for on ISO filesystem"
