@@ -237,21 +237,22 @@ i86)
 *)  test $memsize -lt 6144 && swapadv=$(expr 6144 - $memsize)
 esac
 
-blockdefault=2
+blockdefault=4
 echo " --- Step 9: Select a disk block size -----------------------------"
 
 echo "The default block size on the disk is $blockdefault KB.
 If you have a small disk or small RAM you may want 1 KB blocks.
 Please type 1 then, or leave it at the default.
+"
 
 while [ -z "$blocksize" ]
-do	echo -n "Block size in KB [$blockdefault]? "
+do	echo -n "Block size in kilobytes [$blockdefault]? "
 	read blocksize
 	if [ -z "$blocksize" ]
 	then	blocksize=$blockdefault
 	fi
-	if [ "$blocksize" -ne 1 -a "$blocksize" -ne $blockdefault ]
-	then	echo "$blocksize bogus block size. 1 or $blockdefault please."
+	if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne $blockdefault ]
+	then	echo "$blocksize bogus block size. 1, 2 or $blockdefault please."
 		blocksize=""
 	fi
 done
@@ -277,12 +278,12 @@ echo "
 echo -n "You have created a partition named:	/dev/$primary
 The following subpartitions are about to be created on /dev/$primary:
 
-    Root subpartition:	/dev/$root	16 MB
+    Root subpartition:	/dev/$root	2 MB
     Swap subpartition:	/dev/$swap	$swapsize kb
     /usr subpartition:	/dev/$usr	rest of $primary
 
 Hit ENTER if everything looks fine, or hit DEL to bail out if you want to
-think it over.  The next step will destroy /dev/$primary.
+think it over.  The next step will overwrite /dev/$primary.
 :"
 read ret
 					# Secondary master bootstrap.
@@ -291,7 +292,7 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
 p3=0:0
 test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
-partition /dev/$primary 1 81:4352* $p3 81:0+ || exit
+partition /dev/$primary 1 81:4096* $p3 81:0+ || exit
 
 if [ "$swapsize" -gt 0 ]
 then
