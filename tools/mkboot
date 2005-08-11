@@ -174,7 +174,7 @@ cdfdboot)
 	cp -p ../boot/boot /mnt/boot/boot || exit 1
 	umount $dev || exit 1
 	installboot -d $dev ../boot/bootblock boot/boot || exit 1
-	edparams $dev 'unset bootopts; unset servers; disable=inet; unset image; cdproberoot=1; unset rootdev; unset leader; leader() { echo \n--- Welcome to MINIX 3 ---\n\nThis is the MINIX boot monitor.\nPress ESC if you need to do any special configuration\nOtherwise I will boot with my defaults in 10 seconds\n\n }; bootcd=1; main(){delay 10000;boot}; save' || exit
+	edparams $dev 'unset bootopts; unset servers; disable=inet; unset image; cdproberoot=1; unset rootdev; unset leader; leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nPress ESC if you need to do any special configuration.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; bootcd=1; main(){delay 10000;boot}; save' || exit
 
 	# copy image
 	dd if=$dev of=cdfdimage bs=8192 count=180
