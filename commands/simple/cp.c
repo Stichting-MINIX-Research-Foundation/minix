@@ -364,7 +364,7 @@ int trylink(const char *src, const char *dst, struct stat *srcst,
     if (dstst->st_ino != 0) (void) unlink(dst);
 
     if ((linked= (link(olddst, dst) == 0)) && vflag)
-	printf("ln %s %s\n", olddst, dst);
+	printf("ln %s ..\n", olddst);
 
     return linked;
 }
@@ -728,7 +728,7 @@ void link1(const char *src, const char *dst, struct stat *srcst,
 	    /* Can't do a cross-device link, we have to symlink. */
 	    xdev= 1;
 	} else {
-	    if (vflag) printf("ln %s %s\n", src, dst);
+	    if (vflag) printf("ln %s..\n", src);
 	    return;
 	}
     }
