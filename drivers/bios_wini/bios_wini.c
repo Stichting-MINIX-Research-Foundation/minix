@@ -240,8 +240,8 @@ unsigned nr_req;		/* length of request vector */
 		reg86.u.b.intno = 0x13;
 		reg86.u.b.ah = opcode == DEV_SCATTER ? 0x03 : 0x02;
 		reg86.u.b.al = nbytes >> SECTOR_SHIFT;
-		reg86.u.w.bx = (bios_buf_phys + i13e_rw_off) % HCLICK_SIZE;
-		reg86.u.w.es = (bios_buf_phys + i13e_rw_off) / HCLICK_SIZE;
+		reg86.u.w.bx = bios_buf_phys % HCLICK_SIZE;
+		reg86.u.w.es = bios_buf_phys / HCLICK_SIZE;
 		reg86.u.b.ch = cylinder & 0xFF;
 		reg86.u.b.cl = sector | ((cylinder & 0x300) >> 2);
 		reg86.u.b.dh = head;
