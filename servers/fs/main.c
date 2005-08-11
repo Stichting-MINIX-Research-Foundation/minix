@@ -6,8 +6,6 @@
  *   main:	main program of the File System
  *   reply:	send a reply to a process after the requested work is done
  *
- * Changes:
- *   Mar 23, 2005   allow arbitrary partitions as RAM disk  (Jorrit N. Herder)
  */
 
 struct super_block;		/* proto.h needs to know this */
@@ -292,7 +290,7 @@ PRIVATE void load_ram(void)
 	panic(__FILE__,"Cannot open root device",NO_NUM);
 
   /* If we must initialize a ram disk, get details from the image device. */
-  if (root_dev == DEV_RAM || root_dev != image_dev) {
+  if (root_dev == DEV_RAM) {
   	u32_t fsmax, probedev;
 
   	/* If we are running from CD, see if we can find it. */
@@ -362,7 +360,7 @@ PRIVATE void load_ram(void)
 #endif
 
   /* See if we must load the RAM disk image, otherwise return. */
-  if (root_dev != DEV_RAM && root_dev == image_dev)
+  if (root_dev != DEV_RAM)
   	return;
 
   /* Copy the blocks one at a time from the image to the RAM disk. */
