@@ -33,6 +33,9 @@
 #include <termios.h>
 #include <stdarg.h>
 
+/* Declare prototype. */
+static void printstep(int step, char *message);
+
 /* True if a partition is an extended partition. */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
 
@@ -2359,6 +2362,8 @@ select_region(void)
 	region_t *reg;
 	int nofree = 0;
 
+	printstep(2, "Select a disk region");
+
 	if(nr_regions < 1) {
 		printf("\nNo regions found - maybe the drive is too small.\n"
 			"Please try expert mode.\n");
@@ -2372,7 +2377,6 @@ select_region(void)
 	}
 
 	do {
-		printstep(5, "Select a region");
 
 		printf("\nI've found the following region%s on this disk (%s).\n\n",
 			SORNOT(nr_regions), prettysizeprint(table[0].size/2));
@@ -2410,11 +2414,9 @@ select_region(void)
 				printf("That region number isn't available.\n");
 				continue;
 			}
-			printstep(6, "Confirm your partition choice");
 
 			sure = is_sure(0, "\nPlease confirm you want to use disk region number %d?", rn);
 		} else {
-			printstep(6, "Confirm your partition choice");
 			rn = 0;
 			sure = is_sure(0, "\nUse this region?");
 		}
@@ -2423,12 +2425,12 @@ select_region(void)
 	return(&regions[rn]);
 }
 
-void printstep(int step, char *str)
+static void printstep(int step, char *str)
 {
 	int n;
-	n = printf("\n --- Step %d: %s ", step, str);
+	n = printf("\n --- Substep 2.%d: %s ---", step, str);
 	while(n++ < 70) printf("-");
-	printf("\n\n");
+	printf("\n");
 }
 
 device_t *
@@ -2438,6 +2440,7 @@ select_disk(void)
 	int i, choice, drives;
 	static char line[500];
 
+	printstep(1, "Select a disk to install MINIX");
 	printf("\nProbing for disks. This may take a short while.");
 
 	do {
@@ -2445,7 +2448,6 @@ select_disk(void)
 		curdev=firstdev;
 
 		for(; i < MAX_DEVICES;) {
-			printf(".");
 			m_read('r', NULL);
 			if(device >= 0) {
 				devices[i].dev = curdev;
@@ -2472,20 +2474,13 @@ select_disk(void)
 
 		printf("\nProbing done; %d drive%s found.\n", drives, SORNOT(drives));
 
-		if(drives == 1) {
-			sure = 1;
-			choice = 0;
-		} else {
-
-			printstep(3, "Choose a disk to install MINIX 3 on");
 
 			printf("\nI've found the following drive%s on your system.\n", SORNOT(drives));
 
 			for(i = 0; i < drives; i++) {
-				if(drives > 1)
-					printf("\n  %2d. ", i);
-				else	printf("  ");
-				printf(" (%s, ", devices[i].dev->name);
+				printf("  ");
+				printf("Disk %d", i);
+				printf(" ( %s, ", devices[i].dev->name);
 				printf("%s)\n", prettysizeprint(devices[i].sectors/2));
 				printregions(devices[i].regions, 8,
 					devices[i].nr_partitions,
@@ -2493,6 +2488,7 @@ select_disk(void)
 					devices[i].nr_regions, 0);
 			}
 	
+	           if (drives > 1) {
 			printf("\nPlease enter disk number you want to use: ");
 			fflush(NULL);
 			if(!fgets(line, sizeof(line)-2, stdin))
@@ -2502,10 +2498,12 @@ select_disk(void)
 				printf("Number out of range.\n");
 				continue;
 			}
-			printstep(4, "Confirm your choice");
+	            }
+	            else {
+	                choice = 0;
+	            }
 			sure = is_sure(0, "\nPlease confirm you want to use disk %d (%s)?",
 				choice, devices[choice].dev->name);
-		}
 	} while(!sure);
 	return devices[choice].dev;
 }
@@ -2562,6 +2560,7 @@ do_autopart(int resultfd)
 	struct part_entry *pe;
 	char sure[50];
 	struct part_entry orig_table[1 + NR_PARTITIONS];
+	int region, disk;
 
 	nordonly = 1; 
 	probing = 1;
@@ -2600,11 +2599,14 @@ do_autopart(int resultfd)
 		m_dump(table);
 #endif
 
-		printstep(7, "Point of no return");
+		printstep(3, "Confirm your choices");
 
-		printf("\nThis is the point of no return. You have selected to install MINIX\n");
-		printf("into region %d of disk %d.  If you agree with this selection, your\n", (int)(r-regions), (int) (curdev-firstdev));
-		printf("disk will be written to prepare for the rest of the installation.\n\n");
+		region =  (int)(r-regions); 
+		disk = (int) (curdev-firstdev);
+
+		printf("\nThis is the point of no return.  You have selected to install MINIX\n");
+		printf("into region %d of disk %d (%sp%d).  Please confirm that you want\n", region, disk, devices[disk].dev->name, region);
+		printf("to use this selection to install MINIX.\n\n");
 
 		if(!is_sure(SURE_SERIOUS, "Are you sure you want to continue?"))
 			return 1;

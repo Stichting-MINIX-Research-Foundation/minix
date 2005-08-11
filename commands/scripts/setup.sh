@@ -62,22 +62,21 @@ case $thisroot:$fdusr in
 *)			fdroot=$thisroot	# ?
 esac
 
-echo -n "\
-This is the MINIX installation script.
+echo -n "
+Welcome to the MINIX installation script.
 
 Note 1: If the screen blanks, hit CTRL+F3 to select \"software scrolling\".
 Note 2: If things go wrong then hit DEL and start over.
-Note 3: Some questions have default answers, like this: [y]
-	Simply hit ENTER if you want to choose that answer.
+Note 3: Default answers, like [y], can simply be chosen by hitting ENTER.
 Note 4: If you see a colon (:) then you should hit ENTER to continue.
 :"
 read ret
 
-echo " --- Step 1: Select keyboard type ---------------------------------"
-
-echo "
-What type of keyboard do you have?  You can choose one of:
-"
+echo ""
+echo " --- Step 1: Select keyboard type --------------------------------------"
+echo ""
+echo "What type of keyboard do you have?  You can choose one of:"
+echo ""
 ls -C /usr/lib/keymaps | sed -e 's/\.map//g' -e 's/^/    /'
 echo -n "
 Keyboard type? [us-std] "; read keymap
@@ -86,10 +85,14 @@ test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 ok=""
 while [ "$ok" = "" ]
 do
-echo "
- --- Step 2: Select your expertise level ---------------------------
-"
-	echo "Now you need to create a MINIX 3 partition on the hard disk."
+echo ""
+echo " --- Step 2: Create a partition for MINIX 3 ----------------------------"
+echo ""
+
+	echo "Now you need to create a MINIX 3 partition on your hard disk."
+	echo "Unless you are an expert, you are advised to use the automated"
+	echo "step-by-step help in setting up."
+	echo ""
 	echo -n "Do you want to use (A)utomatic or the e(X)pert mode? [A] "
 	read ch
 	case "$ch" in
@@ -130,7 +133,17 @@ make.  (See the devices section in usage(8) on MINIX device names.)
 Please finish the name of the primary partition you have created:
 (Just type ENTER if you want to rerun \"part\")                   /dev/"
 	    read primary
-	done
+echo ""
+echo "This is the point of no return.  You have selected to install MINIX"
+echo "on partition /dev/$primary.  Please confirm that you want to use this"
+echo "selection to install MINIX."
+echo ""
+while [ -z "$confirmation" -o "$confirmation" != yes ]
+    do
+    echo -n "Are you sure you want to continue? Please enter 'yes' or 'no':"
+    read confirmation
+    done
+done
 else
 	# Automatic mode
 	while [ -z "$primary" ]
@@ -177,41 +190,42 @@ hex2int()
     done
     echo $i
 }
-echo " --- Step 8: Select your Ethernet chip ----------------------------"
+
+echo ""
+echo " --- Step 3: Select your Ethernet chip ---------------------------------"
+echo ""
 
 # Ask user about networking
-echo ""
 echo "MINIX currently supports the following Ethernet cards. Please choose: "
 echo ""
 echo "0. No Ethernet card (no networking)"
 echo "1. Intel Pro/100"
 echo "2. Realtek 8139 based card"
 echo "3. Realtek 8029 based card (emulated by Qemu)"
-echo "4. NE2000, 3com 503 or WD based card (NE2000 is emulated by Bochs)"
-echo "5. NE2000, with default settings for Bochs emulation in $LOCALRC"
-echo "6. A 3com 501 or 509"
-echo "7. A different Ethernet card (no networking)"
+echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
+echo "5. 3Com 501 or 3Com 509 based card"
+echo "6. Different Ethernet card (no networking)"
 echo ""
-echo "With some cards, you'll have to edit $LOCALRC "
-echo "after installing to the proper parameters."
+echo "With some cards, you'll have to edit $LOCALRC after installing."
 echo ""
 echo "You can always change your mind after the install."
 echo ""
-echo -n "Choice? "
+echo -n "Choice? [0] "
 read eth
 driver=""
 driverargs=""
-config_warn="Note: After installing, please edit $LOCALRC to the right configuration."
+config_warn="
+Note: After installing, edit $LOCALRC to the right configuration.
+If you chose option 4, the defaults for emulation by Bochs have been set."
 case "$eth" in
 	1)	driver=fxp;      ;;
 	2)	driver=rtl8139;  ;;
 	3)	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	4)	driver=dp8390;   driverargs="#dp8390_arg='DPETH0=port:irq:memory'";
-		echo $config_warn;
+	4)	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+		echo "$config_warn";
 		;;
-	5)	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; ;;
-	6)	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
-		echo $config_warn;
+	5)	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
+		echo "$config_warn";
 		;;
 esac
 
@@ -238,30 +252,35 @@ i86)
 esac
 
 blockdefault=4
-echo " --- Step 9: Select a disk block size -----------------------------"
 
-echo "The default block size on the disk is $blockdefault KB.
-If you have a small disk or small RAM you may want 1 KB blocks.
-Please type 1 then, or leave it at the default.
-"
+echo ""
+echo " --- Step 4: Select a block size ---------------------------------------"
+echo ""
+
+echo "The maximum (and default) file system block size is $blockdefault KB."
+echo "For a small disk or small RAM you may want 1 or 2 KB blocks."
+echo ""
 
 while [ -z "$blocksize" ]
-do	echo -n "Block size in kilobytes [$blockdefault]? "
+do	echo -n "Block size in kilobytes? [$blockdefault] "
 	read blocksize
 	if [ -z "$blocksize" ]
 	then	blocksize=$blockdefault
 	fi
 	if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne $blockdefault ]
-	then	echo "$blocksize bogus block size. 1, 2 or $blockdefault please."
+	then	echo "$blocksize KB is a bogus block size; 1, 2 or $blockdefault KB please."
 		blocksize=""
 	fi
 done
 
 blocksizebytes="`expr $blocksize '*' 1024`"
-echo " --- Step 10: Allocate swap space ----------------------------------"
+
+echo ""
+echo " --- Step 5: Allocate swap space ---------------------------------------"
+echo ""
 
 echo -n "How much swap space would you like?  Swapspace is only needed if this
-system is memory starved. If you have 128 MB of memory or more, you
+system is memory starved.  If you have 128 MB of memory or more, you
 probably don't need it. If you have less and want to run many programs
 at once, I suggest setting it to the memory size.
 
@@ -271,28 +290,22 @@ swapsize=
 read swapsize
 test -z "$swapsize" && swapsize=$swapadv
 
-echo "
- --- Step 11:  Check all your choices ----------------------------------
-"
 
-echo -n "You have created a partition named:	/dev/$primary
+echo "
+You have selected to install MINIX in the partition /dev/$primary.
 The following subpartitions are about to be created on /dev/$primary:
 
-    Root subpartition:	/dev/$root	2 MB
-    Swap subpartition:	/dev/$swap	$swapsize kb
+    Root subpartition:	/dev/$root	16 MB
+    Swap subpartition:	/dev/$swap	$swapsize KB
     /usr subpartition:	/dev/$usr	rest of $primary
-
-Hit ENTER if everything looks fine, or hit DEL to bail out if you want to
-think it over.  The next step will overwrite /dev/$primary.
-:"
-read ret
+"
 					# Secondary master bootstrap.
 installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 
 					# Partition the primary.
 p3=0:0
 test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
-partition /dev/$primary 1 81:4096* $p3 81:0+ || exit
+partition /dev/$primary 1 81:32768* $p3 81:0+ > /dev/null || exit
 
 if [ "$swapsize" -gt 0 ]
 then
@@ -304,17 +317,21 @@ else
     swap=
 fi
 
-echo " --- Step 12: Wait for bad block detection ----------------------------"
+echo ""
+echo " --- Step 6: Wait for bad block detection ------------------------------"
+echo ""
 
 mkfs -B $blocksizebytes /dev/$usr
-echo "\
-Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are
-absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
+echo "Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are"
+echo "absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
+echo ""
 trap ': nothing' 2
 readall -b /dev/$usr | sh
 trap 2
 
-echo " --- Step 13: Wait for files to be copied ------------------------------"
+echo ""
+echo " --- Step 7: Wait for files to be copied -------------------------------"
+echo ""
 
 mount /dev/$usr /mnt || exit		# Mount the intended /usr.
 
@@ -395,14 +412,14 @@ i86)
     test $cache -lt 64 && cache=0
     test $cache -gt 1024 && cache=1024
 esac
-echo "Second level file system block cache set to $cache kb."
+# echo "Second level file system block cache set to $cache KB."
 if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
 
-					# Make bootable.
+# Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable $cache; main() { echo This is the MINIX 3 boot monitor.; echo MINIX will load in 5 seconds, or press ESC.; trap 5000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable $cache; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
-echo "Remembering boot parameters in ${pfile}."
+# echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
 sync
 
@@ -410,6 +427,7 @@ echo "
 Please type 'shutdown' to exit MINIX 3 and enter the boot monitor.
 At the boot monitor prompt, you can type 'boot $primary' to try the
 newly installed MINIX system.
+
 See Part IV: Testing in the usage manual.
 "
 

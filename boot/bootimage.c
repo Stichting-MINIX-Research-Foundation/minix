@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
 #include <string.h>
 #include <errno.h>

@@ -13,6 +13,7 @@ char version[]=		"2.20";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
 #include <string.h>
 #include <errno.h>
@@ -894,9 +895,8 @@ void get_parameters(void)
 
 	/* Variables boot needs: */
 	b_setvar(E_SPECIAL|E_VAR, "image", "boot/image");
-	b_setvar(E_SPECIAL|E_FUNCTION, "leader",
-		"echo MINIX boot monitor \\v\\n"
-		"\\nPress ESC to enter the monitor");
+	b_setvar(E_SPECIAL|E_FUNCTION, "leader", 
+		"echo --- Welcome to MINIX 3. This is the boot monitor. ---\\n");
 	b_setvar(E_SPECIAL|E_FUNCTION, "main", "menu");
 	b_setvar(E_SPECIAL|E_FUNCTION, "trailer", "");
 
