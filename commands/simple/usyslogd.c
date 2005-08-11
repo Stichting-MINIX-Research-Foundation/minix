@@ -80,7 +80,6 @@ main(int argc, char *argv[])
 	}
 
 	if(!(logfp = fopen("/usr/log/messages", "a"))) {
-		perror("/usr/log/messages");
 		return 1;
 	}
 

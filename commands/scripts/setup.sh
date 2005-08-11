@@ -335,7 +335,8 @@ echo ""
 
 mount /dev/$usr /mnt || exit		# Mount the intended /usr.
 
-cpdir -v /usr /mnt || exit		# Copy the usr floppy.
+files="`find /usr | wc -l`"
+cpdir -v /usr /mnt | progressbar "$files" || exit	# Copy the usr floppy.
 
 umount /dev/$usr || exit		# Unmount the intended /usr.
 

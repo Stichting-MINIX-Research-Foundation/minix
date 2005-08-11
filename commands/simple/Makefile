@@ -132,6 +132,7 @@ ALL	= \
 	ping \
 	pr \
 	pr_routes \
+	progressbar \
 	prep \
 	printf \
 	printroot \
@@ -579,6 +580,10 @@ pr_routes:	pr_routes.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
 
+progressbar:	progressbar.c
+	$(CCLD) -o $@ $?
+	@install -S 4kw $@
+
 prep:	prep.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
@@ -964,6 +969,7 @@ install:	\
 	/usr/bin/ping \
 	/usr/bin/pr \
 	/usr/bin/pr_routes \
+	/usr/bin/progressbar \
 	/usr/bin/prep \
 	/usr/bin/printf \
 	/usr/bin/printenv \
@@ -1368,6 +1374,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/pr_routes:	pr_routes
+	install -cs -o root -m 4755 $? $@
+
+/usr/bin/progressbar:	progressbar
 	install -cs -o root -m 4755 $? $@
 
 /usr/bin/prep:	prep
