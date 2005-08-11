@@ -12,7 +12,7 @@ BS=4096
 rootmb=2
 rootkb=`expr $rootmb \* 1024`
 rootbytes=`expr $rootkb \* 1024`
-if [ `wc -c $RAM | awk '{ print $1 }'` -ne $rootbytes ]
+if [ "`wc -c $RAM | awk '{ print $1 }'`" -ne $rootbytes ]
 then	echo "$RAM should be exactly ${rootkb}k."
 	exit 1
 fi
