@@ -2429,7 +2429,7 @@ static void printstep(int step, char *str)
 {
 	int n;
 	n = printf("\n --- Substep 2.%d: %s ---", step, str);
-	while(n++ < 70) printf("-");
+	while(n++ < 73) printf("-");
 	printf("\n");
 }
 
@@ -2479,9 +2479,9 @@ select_disk(void)
 
 			for(i = 0; i < drives; i++) {
 				printf("  ");
-				printf("Disk %d", i);
-				printf(" ( %s, ", devices[i].dev->name);
-				printf("%s)\n", prettysizeprint(devices[i].sectors/2));
+				printf("Disk %d:  ", i);
+				printf("%s, ", devices[i].dev->name);
+				printf("%s\n", prettysizeprint(devices[i].sectors/2));
 				printregions(devices[i].regions, 8,
 					devices[i].nr_partitions,
 					devices[i].free_regions,
