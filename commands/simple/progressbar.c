@@ -52,9 +52,9 @@ char *argv[];
 		i++;
 		printf("[K%s", line);
 		if(i <= count) prettyprogress(i, count, start);
+		else printf("\r");
 		printf("[A");
 		fflush(NULL);
-		sleep(1);
 	}
 
   	fprintf(stderr, "\nDone.[K\n");
