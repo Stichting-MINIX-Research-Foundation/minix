@@ -80,7 +80,7 @@ start)
     rm -rf /tmp/. /usr/run/. /usr/spool/lpd/. /usr/spool/locks/.
 
     # Start servers and drivers set at the boot monitor.
-    echo -n "More services:"
+    echo -n "Starting services:"
     up random "" /dev/random
 
     # load random number generator

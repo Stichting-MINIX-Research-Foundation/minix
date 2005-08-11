@@ -47,14 +47,13 @@ esac
 case $action in
 start)
     echo ""
-    echo "Multiuser startup in progress ..."
+    echo -n "Multiuser startup in progress ...:"
 
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
 
     # Start crucial system services. The floppy driver *must* be loaded 
     # first, as it needs memory below 16MB in order to do ISA DMA.
-    echo -n "Starting services:"
     if [ ! "`sysenv label`" = "FLOPPY" ]  
     then up floppy "" /dev/fd0
     else up at_wini "" /dev/c0d0
