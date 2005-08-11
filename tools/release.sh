@@ -56,6 +56,9 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 chown -R bin $RELEASEDIR/usr/src
 # Bug tracking system not for on cd
 rm -rf $RELEASEDIR/usr/src/doc/bugs
+# No GNU core utils
+rm -rf $RELEASEDIR/usr/src/contrib/gnu/coreutils*
+# Make sure the CD knows it's a CD
 date >$RELEASEDIR/CD
 ( cd $RELEASEDIR && find . -name CVS | xargs rm -rf )
 #echo " * Making source .tgz for on ISO filesystem"
