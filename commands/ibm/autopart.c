@@ -2291,22 +2291,24 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 	return;
 }
 
+#define IS_YES   3
+#define IS_NO    4
+#define IS_OTHER 5
 int
-is_sure(int flags, char *fmt, ...)
+is_sure(char *fmt, ...)
 {
 	char yesno[10];
 	va_list ap;
 	va_start (ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
-	if(flags & SURE_SERIOUS) printf("  Please enter 'yes' or 'no': ");
-	else {
-		printf(" (y/n) [y] ");
-	}
+	printf("  Please enter 'yes' or 'no': ");
 	fflush(stdout);
 	if(!fgets(yesno, sizeof(yesno)-1, stdin)) exit(1);
-	if(!(flags & SURE_SERIOUS)) return (tolower(yesno[0]) != 'n');
-	return !strncmp(yesno, "yes", 3);
+
+	if (strcmp(yesno, "yes\n") == 0) return(IS_YES);
+	if (strcmp(yesno, "no\n") == 0) return(IS_NO);
+	return IS_OTHER;
 }
 
 void warn(char *message)
@@ -2317,6 +2319,7 @@ void warn(char *message)
 int
 may_kill_region(void)
 {
+        int confirmation;
 	char line[100];
 	int r, i;
 
@@ -2344,15 +2347,18 @@ may_kill_region(void)
 
 	i = regions[r].tableno;
 
-	if(is_sure(0, "\nAre you sure you want to delete this region,\n"
-	"losing all data it contains? You have selected a region used\n"
-	"by %s (%s).\n\n"
-	"I won't actually update your disk right away, but still. Sure?",
-		typ2txt(table[i].sysind), prettysizeprint(table[i].size / 2))) {
+	printf("\nPlease confirm that you want to delete region %d, loosing all data it", r); 
+	printf("\ncontains. You're disk is not actually updated right away, but still.");
+	printf("\n\n");
+
+ 	do {
+		confirmation = is_sure("Are you sure you want to continue?");
+		if (confirmation == IS_NO) return 0;
+	} while (confirmation != IS_YES);
+
 		table[i].sysind = NO_PART;
 		dirty = 1;
 		regionize();
-	}
 
 	/* User may go again. */
 	return 0;
@@ -2563,6 +2569,7 @@ scribble_region(region_t *reg, struct part_entry **pe)
 int
 do_autopart(int resultfd)
 {
+	int confirmation;
 	region_t *r;
 	struct part_entry *pe;
 	char sure[50];
@@ -2615,8 +2622,10 @@ do_autopart(int resultfd)
 		printf("into region %d of disk %d (%sp%d).  Please confirm that you want\n", region, disk, devices[disk].dev->name, region);
 		printf("to use this selection to install MINIX 3.\n\n");
 
-		if(!is_sure(SURE_SERIOUS, "Are you sure you want to continue?"))
-			return 1;
+		do {
+			confirmation = is_sure("Are you sure you want to continue?");
+			if (confirmation == IS_NO) return 1;
+		} while (confirmation != IS_YES);
 
 		/* Retrieve partition number in sorted order that we
 		 * have scribbled in.
