@@ -2282,9 +2282,8 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 
 	if(p_nr_partitions >= NR_PARTITIONS && p_free_regions) {
 		printf(
-"\nNote: there is free space on this disk, but I'm not showing it,\n"
-"because there isn't a free slot to use it. You can free up a slot\n"
-"by deleting an in-use region, or use expert mode.\n");
+"\nNote: there is free space on this disk, but it is not shown above,\n"
+"because there isn't a free slot in the partition table to use it.\n");
 	}
 
 	return;
@@ -2378,7 +2377,7 @@ select_region(void)
 
 	do {
 
-		printf("\nI've found the following region%s on this disk (%s).\n\n",
+		printf("\nThe following region%s were found on this disk (%s):\n\n",
 			SORNOT(nr_regions), prettysizeprint(table[0].size/2));
 		printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
 
@@ -2436,14 +2435,13 @@ static void printstep(int step, char *str)
 device_t *
 select_disk(void)
 {
-	int sure = 0;
+	int done = 0;
 	int i, choice, drives;
 	static char line[500];
 
 	printstep(1, "Select a disk to install MINIX");
 	printf("\nProbing for disks. This may take a short while.");
 
-	do {
 		i = 0;
 		curdev=firstdev;
 
@@ -2472,10 +2470,8 @@ select_disk(void)
 			exit(1);
 		}
 
-		printf("\nProbing done; %d drive%s found.\n", drives, SORNOT(drives));
-
-
-			printf("\nI've found the following drive%s on your system.\n", SORNOT(drives));
+		printf(" Probing done.\n"); 
+		printf("The following disk%s were found on your system:\n\n", SORNOT(drives));
 
 			for(i = 0; i < drives; i++) {
 				printf("  ");
@@ -2488,23 +2484,27 @@ select_disk(void)
 					devices[i].nr_regions, 0);
 			}
 	
-	           if (drives > 1) {
-			printf("\nPlease enter disk number you want to use: ");
+	   printf("\n");
+	   if (drives > 1) {
+		do {
+			printf("Please enter disk number you want to use: ");
 			fflush(NULL);
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
 			if(sscanf(line, "%d", &choice) != 1) continue;
 			if(choice < 0 || choice >= i) {
-				printf("Number out of range.\n");
+				printf("\b\b\b\b\b\b\b\b\b\b\b\b\b ! out of range.\n");
 				continue;
 			}
-	            }
-	            else {
+			done = 1;
+		} while(! done);
+	    }
+	    else {
+			printf("There is only one disk. Press ENTER to continue and use this disk.\n:");
+			if(!fgets(line, sizeof(line)-2, stdin))
+				exit(1);
 	                choice = 0;
-	            }
-			sure = is_sure(0, "\nPlease confirm you want to use disk %d (%s)?",
-				choice, devices[choice].dev->name);
-	} while(!sure);
+	    }
 	return devices[choice].dev;
 }
 
