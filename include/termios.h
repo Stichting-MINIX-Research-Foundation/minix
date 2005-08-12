@@ -177,7 +177,7 @@ _PROTOTYPE( int tcsetattr, \
 #define TEOF_DEF	'\4'	/* ^D */
 #define TEOL_DEF	_POSIX_VDISABLE
 #define TERASE_DEF	'\10'	/* ^H */
-#define TINTR_DEF	'\177'	/* ^? */
+#define TINTR_DEF	'\3'	/* ^C */
 #define TKILL_DEF	'\25'	/* ^U */
 #define TMIN_DEF	1
 #define TQUIT_DEF	'\34'	/* ^\ */
