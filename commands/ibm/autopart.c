@@ -2258,7 +2258,7 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 			char *name;
 			name = typ2txt(reg->used_part.sysind);
 			printf("%*s", indent, ""); type2col(reg->used_part.sysind);
-			if(numbers) printf("%2d.  ", r);
+			if(numbers) printf("[%d]  ", r);
 			printf("In use by %-10s ", name);
 			units = reg->used_part.size / 2;
 			col(0);
@@ -2267,7 +2267,7 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 			printf("%*s", indent, ""); 
 			if(numbers) {
 				if(!nofree) printf("%2d.  ", r);
-				else printf(" -   ");
+				else printf("[-]  ");
 			}
 			printf("Free space           ");
 			units = ((reg->free_sec_last - reg->free_sec_start+1))/2;
@@ -2278,7 +2278,8 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 	if(numbers && p_nr_partitions >= NR_PARTITIONS && p_free_regions) {
 		printf(
 "\nNote: there is free space on this disk, but you can't select it,\n"
-"as there isn't a free slot in the partition table to use it.\n");
+"because there isn't a free slot in the partition table to use it.\n"
+"You can reclaim the free space by deleting an adjacent region.\n");
 	}
 
 	return;
@@ -2315,11 +2316,10 @@ may_kill_region(void)
 
 	if(used_regions < 1) return 1;
 
-	printf("\n -- Delete in-use region? ----\n\n");
+	printf("\n -- Delete in-use region? --\n\n");
 
-	printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
-	printf("\nIf you want to delete an in-use region, please type its \n"
-	"number. Otherwise hit ENTER to continue: ");
+	printregions(regions, 3, nr_partitions, free_regions, nr_regions, 1);
+	printf("\nEnter the region number to delete or ENTER to continue: ");
 	fflush(NULL);
 	fgets(line, sizeof(line)-2, stdin);
 	if(!isdigit(line[0]))
@@ -2356,7 +2356,7 @@ may_kill_region(void)
 region_t *
 select_region(void)
 {
-	int r, rem, rn, sure = 0;
+	int r, rem, rn, done = 0;
 	static char line[100];
 	region_t *reg;
 	int nofree = 0;
@@ -2375,51 +2375,51 @@ select_region(void)
 		}
 	}
 
+
+	printf("\nPlease select the region that you want to use for the MINIX 3 setup.");
+	printf("\nIf you select an in-use region it will be overwritten by MINIX. The");
+	printf("\nfollowing region%s were found on the selected disk:\n\n",
+		SORNOT(nr_regions));
+	printregions(regions, 3, nr_partitions, free_regions, nr_regions, 1);
+
+
+	printf("\n");
 	do {
+		printf("Enter the region number to use or type 'delete': ");
+		if(nr_regions == 1) printf(" [0] ");
+		fflush(NULL);
 
-		printf("\nThe following region%s were found on this disk (%s):\n\n",
-			SORNOT(nr_regions), prettysizeprint(table[0].size/2));
-		printregions(regions, 0, nr_partitions, free_regions, nr_regions, 1);
+		if(!fgets(line, sizeof(line)-2, stdin))
+			exit(1);
 
-		if(used_regions > 0) {
-			printf("\nIf you select an in-use region it will be overwritten.\n");
+		if (nr_regions == 1 && line[0] == '\n') {
+		    rn = 0;
+		    done = 1;
 		}
-
-		if(nr_regions > 1) {
-			printf("\nPlease enter the region number you want to install MINIX 3 into");
-			if(used_regions > 0) {
-				printf("\nor enter 'D' to Delete an existing partition");
-			}
-			printf(": ");
-			fflush(NULL);
-
-			if(!fgets(line, sizeof(line)-2, stdin))
-				exit(1);
-
-			if(toupper(line[0]) == 'D') {
+		else {
+			if(strcmp(line,"delete\n") == 0) {
 				may_kill_region();
 				return NULL;
 			}
 
-			if(sscanf(line, "%d", &rn) != 1) 
+			if(sscanf(line, "%d", &rn) != 1)  {
+				warn("invalid choice");
 				continue;
+			}
 
 			if(rn < 0 || rn >= nr_regions) {
-				printf("Region number %d is out of range.\n", rn);
+				warn("out of range");
 				continue;
 			}
 
 			if(nofree && !regions[rn].is_used_part) {
-				printf("That region number isn't available.\n");
+				warn("not available");
 				continue;
 			}
 
-			sure = is_sure(0, "\nPlease confirm you want to use disk region number %d?", rn);
-		} else {
-			rn = 0;
-			sure = is_sure(0, "\nUse this region?");
-		}
-	} while(!sure);
+			done = 1;
+		} 
+	} while(! done);
 
 	return(&regions[rn]);
 }
@@ -2475,7 +2475,7 @@ select_disk(void)
 
 			for(i = 0; i < drives; i++) {
 				printf("  ");
-				printf("Disk %d:  ", i);
+				printf("Disk [%d]:  ", i);
 				printf("%s, ", devices[i].dev->name);
 				printf("%s\n", prettysizeprint(devices[i].sectors/2));
 				printregions(devices[i].regions, 8,
@@ -2485,29 +2485,27 @@ select_disk(void)
 			}
 	
 	   printf("\n");
-	   if (drives > 1) {
 		do {
-			printf("Please enter disk number you want to use: ");
+			printf("Enter the disk number to use: ");
+	   		if (drives == 1) printf("[0] ");
 			fflush(NULL);
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
-			if(sscanf(line, "%d", &choice) != 1) {
+			if (line[0] == '\n' && drives == 1) {
+				choice = 0;
+				done = 1;
+			} else {
+			    if(sscanf(line, "%d", &choice) != 1) {
 				warn("choose a disk");
 			 	continue;
-			}
-			if(choice < 0 || choice >= i) {
+			    }
+			    if(choice < 0 || choice >= i) {
 				warn("out of range");
 				continue;
+			    }
+			    done = 1;
 			}
-			done = 1;
 		} while(! done);
-	    }
-	    else {
-			printf("There is only one disk. Press ENTER to continue and use this disk.\n:");
-			if(!fgets(line, sizeof(line)-2, stdin))
-				exit(1);
-	                choice = 0;
-	    }
 	return devices[choice].dev;
 }
 
