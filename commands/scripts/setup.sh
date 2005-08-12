@@ -334,18 +334,20 @@ blocksizebytes="`expr $blocksize '*' 1024`"
 
 echo "
 You have selected to install MINIX in the partition /dev/$primary.
-The following subpartitions are about to be created on /dev/$primary:
+The following subpartitions are now being created on /dev/$primary:
 
     Root subpartition:	/dev/$root	16 MB
     /usr subpartition:	/dev/$usr	rest of $primary
 "
 					# Secondary master bootstrap.
 installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
-
 					# Partition the primary.
 p3=0:0
 # test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
 partition /dev/$primary 1 81:32768* $p3 81:0+ > /dev/null || exit
+mkfs -B $blocksizebytes /dev/$root || exit
+mkfs -B $blocksizebytes /dev/$usr || exit
+
 
 # if [ "$swapsize" -gt 0 ]
 # then
@@ -357,6 +359,7 @@ partition /dev/$primary 1 81:32768* $p3 81:0+ > /dev/null || exit
 #     swap=
 # fi
 
+
 echo ""
 echo " --- Step 5: Wait for bad block detection ------------------------------"
 echo ""
@@ -366,28 +369,27 @@ echo "sure that there can not be any bad blocks.  Otherwise just wait."
 trap ': nothing;echo' 2
 echo ""
 echo "Scanning /dev/$root for bad blocks:"
-mkfs -B $blocksizebytes /dev/$root || exit
 readall -b /dev/$root | sh
 echo ""
 echo "Scanning /dev/$usr for bad blocks:"
-mkfs -B $blocksizebytes /dev/$usr || exit
 readall -b /dev/$usr | sh
 trap 2
 
 echo ""
 echo " --- Step 6: Wait for files to be copied -------------------------------"
 echo ""
+echo "This is the final step of the MINIX setup.  All files will be now be"
+echo "copied to your hard disk.  This may take a while."
+echo ""
 
-mount /dev/$usr /mnt || exit		# Mount the intended /usr.
+mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 
 files="`find /usr | wc -l`"
 cpdir -v /usr /mnt | progressbar "$files" || exit	# Copy the usr floppy.
 
-umount /dev/$usr || exit		# Unmount the intended /usr.
-
-umount $fdusr				# Unmount the /usr floppy.
-
-mount /dev/$usr /usr || exit		# A new /usr
+umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
+umount $fdusr	>/dev/null 			# Unmount the /usr floppy.
+mount /dev/$usr /usr >/dev/null || exit		# A new /usr
 
 if [ $fdroot = unknown ]
 then
@@ -412,11 +414,7 @@ By now the floppy USR has been copied to /dev/$usr, and it is now in use as
     fdroot=/dev/fd$drive
 fi
 
-echo "
-Copying $fdroot to /dev/$root
-"
-
-mount /dev/$root /mnt || exit
+mount /dev/$root /mnt >/dev/null || exit
 # Running from the installation CD.
 files="`find / -xdev | wc -l`"
 cpdir -vx / /mnt || progressbar "$files" || exit	
@@ -435,7 +433,7 @@ usr=/dev/$usr"
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
-# Set inet.conf to correct driver
+					# Set inet.conf to correct driver
 if [ -n "$driver" ]
 then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 	echo "$driverargs" >$LOCALRC
@@ -443,7 +441,7 @@ then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 else	disable="disable=inet;"
 fi
 
-umount /dev/$root || exit		# Unmount the new root.
+umount /dev/$root >/dev/null || exit	# Unmount the new root.
 
 # Compute size of the second level file block cache.
 case `arch` in
