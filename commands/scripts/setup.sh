@@ -1,12 +1,18 @@
 #!/bin/sh
 #
-#	setup 4.1 - install a MINIX distribution	Author: Kees J. Bot
-#								20 Dec 1994
+#	setup 4.1 - install a MINIX distribution	
+#
+# Changes:
+#    Aug     2005   robustness checks and beautifications  (Jorrit N. Herder)
+#    Jul     2005   extended with autopart and networking  (Ben J. Gras)
+#    Dec 20, 1994   created  (Kees J. Bot)
+#						
 
 LOCALRC=/usr/etc/rc.local
 
 PATH=/bin:/usr/bin
 export PATH
+
 
 usage()
 {
@@ -22,6 +28,11 @@ Usage:	setup		# Install a skeleton system on the hard disk.
 	dosread c0d0p0 ... | setup /usr		# Likewise if no mtools.
 EOF
     exit 1
+}
+
+warn() 
+{
+  echo -e "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b ! $1"
 }
 
 # No options.
@@ -63,45 +74,59 @@ case $thisroot:$fdusr in
 esac
 
 echo -n "
-Welcome to the MINIX installation script.
+Welcome to the MINIX setup script.  This script will guide you in setting up
+MINIX on your machine.  Please consult the manual for detailed instructions.
 
 Note 1: If the screen blanks, hit CTRL+F3 to select \"software scrolling\".
-Note 2: If things go wrong then hit CTRL+C and start over.
+Note 2: If things go wrong then hit CTRL+C to abort and start over.
 Note 3: Default answers, like [y], can simply be chosen by hitting ENTER.
 Note 4: If you see a colon (:) then you should hit ENTER to continue.
 :"
 read ret
 
+# begin Step 1
 echo ""
 echo " --- Step 1: Select keyboard type --------------------------------------"
 echo ""
-echo "What type of keyboard do you have?  You can choose one of:"
-echo ""
-ls -C /usr/lib/keymaps | sed -e 's/\.map//g' -e 's/^/    /'
-echo -n "
-Keyboard type? [us-std] "; read keymap
-test -n "$keymap" && loadkeys "/usr/lib/keymaps/$keymap.map"
 
-ok=""
-while [ "$ok" = "" ]
+    echo "What type of keyboard do you have?  You can choose one of:"
+    echo ""
+    ls -C /usr/lib/keymaps | sed -e 's/\.map//g' -e 's/^/    /'
+    echo ""
+step1=""
+while [ "$step1" != ok ]
+do
+    echo -n "Keyboard type? [us-std] "; read keymap
+    test -n "$keymap" || keymap=us-std
+    if loadkeys "/usr/lib/keymaps/$keymap.map" 2>/dev/null 
+    then step1=ok 
+    else warn "invalid keyboard"
+    fi
+done
+# end Step 1
+
+
+# begin Step 2
+step2=""
+while [ "$step2" != ok ]
 do
 echo ""
 echo " --- Step 2: Create a partition for MINIX 3 ----------------------------"
 echo ""
 
-	echo "Now you need to create a MINIX 3 partition on your hard disk."
-	echo "Unless you are an expert, you are advised to use the automated"
-	echo "step-by-step help in setting up."
-	echo ""
-	echo -n "Do you want to use (A)utomatic or the e(X)pert mode? [A] "
-	read ch
-	case "$ch" in
-	[Aa]*)	auto="1"; ok="yes"; ;;
-	'')	auto="1"; ok="yes"; ;;
-	[Xx]*)	auto="";  ok="yes"; ;;
-	*)	echo "Unrecognized response."; ok=""; ;;
-	esac
-done
+    echo "Now you need to create a MINIX 3 partition on your hard disk."
+    echo "Unless you are an expert, you are advised to use the automated"
+    echo "step-by-step help in setting up."
+    echo ""
+    ok=""
+    while [ "$ok" = "" ]
+    do
+    echo -n "Press ENTER for automatic mode or type 'expert': "
+    read mode
+    if [ -z "$mode" ]; then auto="1"; ok="yes"; fi 
+    if [ "$mode" = expert ]; then auto=""; ok="yes"; fi
+    if [ "$ok" != yes ]; then warn "try again"; fi 
+    done
 
 primary=
 
@@ -133,21 +158,24 @@ make.  (See the devices section in usage(8) on MINIX device names.)
 Please finish the name of the primary partition you have created:
 (Just type ENTER if you want to rerun \"part\")                   /dev/"
 	    read primary
+done
 echo ""
 echo "This is the point of no return.  You have selected to install MINIX"
 echo "on partition /dev/$primary.  Please confirm that you want to use this"
 echo "selection to install MINIX."
 echo ""
-while [ -z "$confirmation" -o "$confirmation" != yes ]
-    do
-    echo -n "Are you sure you want to continue? Please enter 'yes' or 'no':"
-    read confirmation
-    done
+confirmation=""
+while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
+do
+echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
+read confirmation
+if [ "$confirmation" = yes ]; then step2=ok; fi
 done
+
 else
 	# Automatic mode
-	while [ -z "$primary" ]
-	do
+#	while [ -z "$primary" ]
+#	do
 		PF="/tmp/pf"
 		if autopart -f$PF
 		then	if [ -s "$PF" ]
@@ -166,9 +194,14 @@ else
 		# reset at retries and timeouts in case autopart left
 		# them messy
 		atnormalize
-	done
+#	done
+
+	if [ -n "$primary" ]; then step2=ok; fi
 
 fi
+
+done
+# end Step 2
 
 root=${primary}s0
 swap=${primary}s1
@@ -191,43 +224,52 @@ hex2int()
     echo $i
 }
 
+# begin Step 3
 echo ""
 echo " --- Step 3: Select your Ethernet chip ---------------------------------"
 echo ""
 
 # Ask user about networking
 echo "MINIX currently supports the following Ethernet cards. Please choose: "
-echo ""
-echo "0. No Ethernet card (no networking)"
-echo "1. Intel Pro/100"
-echo "2. Realtek 8139 based card"
-echo "3. Realtek 8029 based card (emulated by Qemu)"
-echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
-echo "5. 3Com 501 or 3Com 509 based card"
-echo "6. Different Ethernet card (no networking)"
-echo ""
-echo "With some cards, you'll have to edit $LOCALRC after installing."
-echo ""
-echo "You can always change your mind after the install."
-echo ""
-echo -n "Choice? [0] "
-read eth
-driver=""
-driverargs=""
-config_warn="
-Note: After installing, edit $LOCALRC to the right configuration.
-If you chose option 4, the defaults for emulation by Bochs have been set."
-case "$eth" in
-	1)	driver=fxp;      ;;
-	2)	driver=rtl8139;  ;;
-	3)	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	4)	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
-		echo "$config_warn";
+    echo ""
+    echo "0. No Ethernet card (no networking)"
+    echo "1. Intel Pro/100"
+    echo "2. Realtek 8139 based card"
+    echo "3. Realtek 8029 based card (emulated by Qemu)"
+    echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
+    echo "5. 3Com 501 or 3Com 509 based card"
+    echo "6. Different Ethernet card (no networking)"
+    echo ""
+    echo "You can always change your mind after the setup."
+    echo ""
+step3=""
+while [ "$step3" != ok ]
+do
+    eth=""
+    echo -n "Ethernet card? [0] "; read eth
+    test -z $eth && eth=0
+    driver=""
+    driverargs=""
+    case "$eth" in
+        0) step3="ok"; ;;    
+	1) step3="ok";	driver=fxp;      ;;
+	2) step3="ok";	driver=rtl8139;  ;;
+	3) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
+	4) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+	   echo ""
+           echo "Note: After installing, edit $LOCALRC to the right configuration."
+           echo " chose option 4, the defaults for emulation by Bochs have been set."
 		;;
-	5)	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
-		echo "$config_warn";
+	5) step3="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
+	   echo ""
+           echo "Note: After installing, edit $LOCALRC to the right configuration."
 		;;
-esac
+        6) step3="ok"; ;;    
+        *) warn "choose a number"
+    esac
+done
+# end Step 3
+
 
 # Compute the amount of memory available to MINIX.
 memsize=0
@@ -243,13 +285,13 @@ do
 done
 
 # Compute an advised swap size.
-swapadv=0
-case `arch` in
-i86)
-    test $memsize -lt 4096 && swapadv=$(expr 4096 - $memsize)
-    ;;
-*)  test $memsize -lt 6144 && swapadv=$(expr 6144 - $memsize)
-esac
+# swapadv=0
+# case `arch` in
+# i86)
+#     test $memsize -lt 4096 && swapadv=$(expr 4096 - $memsize)
+#     ;;
+# *)  test $memsize -lt 6144 && swapadv=$(expr 6144 - $memsize)
+# esac
 
 blockdefault=4
 
@@ -262,41 +304,39 @@ echo "For a small disk or small RAM you may want 1 or 2 KB blocks."
 echo ""
 
 while [ -z "$blocksize" ]
-do	echo -n "Block size in kilobytes? [$blockdefault] "
-	read blocksize
-	if [ -z "$blocksize" ]
-	then	blocksize=$blockdefault
-	fi
+do	
+	echo -n "Block size in kilobytes? [$blockdefault] "; read blocksize
+	test -z "$blocksize" && blocksize=$blockdefault
 	if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne $blockdefault ]
-	then	echo "$blocksize KB is a bogus block size; 1, 2 or $blockdefault KB please."
+	then	
+		warn "1, 2 or 4 please"
 		blocksize=""
 	fi
 done
 
 blocksizebytes="`expr $blocksize '*' 1024`"
 
-echo ""
-echo " --- Step 5: Allocate swap space ---------------------------------------"
-echo ""
 
-echo -n "How much swap space would you like?  Swapspace is only needed if this
-system is memory starved.  If you have 128 MB of memory or more, you
-probably don't need it. If you have less and want to run many programs
-at once, I suggest setting it to the memory size.
+# begin Step 5
+# echo ""
+# echo " --- Step 5: Allocate swap space ---------------------------------------"
+# echo ""
 
-Size in kilobytes? [$swapadv] "
-		    
-swapsize=
-read swapsize
-test -z "$swapsize" && swapsize=$swapadv
+# echo -n "How much swap space would you like?  Swapspace is only needed if this
+# system is memory starved.  If you have 128 MB of memory or more, you
+# probably don't need it. If you have less and want to run many programs
+# at once, I suggest setting it to the memory size.
 
+# Size in kilobytes? [$swapadv] "
+# read swapsize
+# test -z "$swapsize" && swapsize=$swapadv
+# 
 
 echo "
 You have selected to install MINIX in the partition /dev/$primary.
 The following subpartitions are about to be created on /dev/$primary:
 
     Root subpartition:	/dev/$root	16 MB
-    Swap subpartition:	/dev/$swap	$swapsize KB
     /usr subpartition:	/dev/$usr	rest of $primary
 "
 					# Secondary master bootstrap.
@@ -304,33 +344,38 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 
 					# Partition the primary.
 p3=0:0
-test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
+# test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
 partition /dev/$primary 1 81:32768* $p3 81:0+ > /dev/null || exit
 
-if [ "$swapsize" -gt 0 ]
-then
-    # We must have that swap, now!
-    mkswap -f /dev/$swap || exit
-    mount -s /dev/$swap || exit
-else
-    # Forget about swap.
-    swap=
-fi
+# if [ "$swapsize" -gt 0 ]
+# then
+#     # We must have that swap, now!
+#     mkswap -f /dev/$swap || exit
+#     mount -s /dev/$swap || exit
+# else
+#     # Forget about swap.
+#     swap=
+# fi
 
 echo ""
-echo " --- Step 6: Wait for bad block detection ------------------------------"
+echo " --- Step 5: Wait for bad block detection ------------------------------"
 echo ""
+echo "Scanning disk for bad blocks.  Hit CTRL-C to stop the scan if you are"
+echo "sure that there can not be any bad blocks.  Otherwise just wait."
 
-mkfs -B $blocksizebytes /dev/$usr
-echo "Scanning /dev/$usr for bad blocks.  (Hit CTRL+C to stop the scan if you are"
-echo "absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
+trap ': nothing;echo' 2
 echo ""
-trap ': nothing' 2
+echo "Scanning /dev/$root for bad blocks:"
+mkfs -B $blocksizebytes /dev/$root || exit
+readall -b /dev/$root | sh
+echo ""
+echo "Scanning /dev/$usr for bad blocks:"
+mkfs -B $blocksizebytes /dev/$usr || exit
 readall -b /dev/$usr | sh
 trap 2
 
 echo ""
-echo " --- Step 7: Wait for files to be copied -------------------------------"
+echo " --- Step 6: Wait for files to be copied -------------------------------"
 echo ""
 
 mount /dev/$usr /mnt || exit		# Mount the intended /usr.
@@ -371,10 +416,6 @@ echo "
 Copying $fdroot to /dev/$root
 "
 
-mkfs -B $blocksizebytes /dev/$root || exit
-echo "Scanning /dev/$root for bad blocks.  (Hit CTRL+C to stop the scan if you are"
-echo "absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
-readall -b /dev/$root | sh
 mount /dev/$root /mnt || exit
 # Running from the installation CD.
 files="`find / -xdev | wc -l`"
@@ -383,12 +424,12 @@ chmod 555 /mnt/usr
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD 2>/dev/null
-					# Change /etc/fstab.
+					# Change /etc/fstab. (No swap.)
+					# ${swap:+swap=/dev/$swap}
 echo >/mnt/etc/fstab "\
 # Poor man's File System Table.
 
 root=/dev/$root
-${swap:+swap=/dev/$swap}
 usr=/dev/$usr"
 
 					# National keyboard map.
@@ -428,10 +469,13 @@ echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
 sync
 
 echo "
-Please type 'shutdown' to exit MINIX 3 and enter the boot monitor.
-At the boot monitor prompt, you can type 'boot $primary' to try the
-newly installed MINIX system.
+Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At the
+boot monitor prompt, type 'boot $primary' to try your new MINIX system.
 
-See Part IV: Testing in the usage manual.
+This ends the MINIX setup script.  After booting your newly set up system,
+you can run the test suites as indicated in the setup manual.  You also 
+may want to take care of local configuration, such as securing your system
+with a password.  Please consult the usage manual for more information. 
+
 "
 
