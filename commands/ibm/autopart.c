@@ -2576,8 +2576,6 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 	int fd;
 	unsigned long it_lowsec, it_secsize;
 
-	printf("Opening %s\n", dev);
-
 	if((fd = open(dev, O_RDONLY)) < 0) {
 		perror(dev);
 		return 1;
