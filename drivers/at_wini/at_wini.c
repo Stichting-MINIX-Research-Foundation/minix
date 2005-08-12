@@ -388,8 +388,8 @@ message *m_ptr;
 
 	/* Partition the disk. */
 	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY, wn->state & ATAPI);
-	wn->open_ct++;
   }
+  wn->open_ct++;
   return(OK);
 }
 
