@@ -2272,7 +2272,7 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 		} else {
 			printf("%*s", indent, ""); 
 			if(numbers) {
-				if(!nofree) printf("%2d.  ", r);
+				if(!nofree) printf("[%d]  ", r);
 				else printf("[-]  ");
 			}
 			printf("Free space           ");
@@ -2347,7 +2347,7 @@ may_kill_region(void)
 
 	i = regions[r].tableno;
 
-	printf("\nPlease confirm that you want to delete region %d, loosing all data it", r); 
+	printf("\nPlease confirm that you want to delete region %d, losing all data it", r); 
 	printf("\ncontains. You're disk is not actually updated right away, but still.");
 	printf("\n\n");
 
@@ -2559,11 +2559,49 @@ scribble_region(region_t *reg, struct part_entry **pe)
 		newpart->lowsec = reg->free_sec_start;
 		newpart->size = reg->free_sec_last - reg->free_sec_start + 1;
 		changed = 1;
-	} else  newpart = &reg->used_part;
+		newpart->sysind = MINIX_PART;
+	} else  {
+		newpart = &reg->used_part;
+	}
 	*pe = newpart;
 	changed = 1;
 	dirty = 1;
 	return changed;
+}
+
+int
+sanitycheck_failed(char *dev, struct part_entry *pe)
+{
+	struct partition part;
+	int fd;
+	unsigned long it_lowsec, it_secsize;
+
+	if((fd = open(dev, O_RDONLY)) < 0) {
+		perror(dev);
+		return 1;
+	}
+
+	if (ioctl(fd, DIOCGETP, &part) < 0) {
+		fprintf(stderr, "DIOCGETP failed\n");
+		perror(dev);
+		return 1;
+	}
+
+	close(fd);
+
+	it_lowsec = div64u(part.base, SECTOR_SIZE);
+	it_secsize = div64u(part.size, SECTOR_SIZE);
+
+	if(it_lowsec != pe->lowsec || it_secsize != pe->size) {
+		fprintf(stderr, "Autopart numbers don't match up! (%lu, %lu, %lu, %lu)\n",
+			it_lowsec, pe->lowsec, it_secsize, pe->size);
+		return 1;
+	}
+
+	fprintf(stderr, "Autopart numbers match. (%lu, %lu, %lu, %lu)\n",
+		it_lowsec, pe->lowsec, it_secsize, pe->size);
+
+	return 0;
 }
 
 int
@@ -2603,15 +2641,8 @@ do_autopart(int resultfd)
 	if(scribble_region(r, &pe)) {
 		char *name;
 		int i, found = -1;
-		char partbuf[100];
+		char partbuf[100], devname[100];
 
-
-#if 0
-		printf("\nThis is your current partition table:\n");
-		m_dump(orig_table);
-		printf("\nThis will be your new partition table:\n");
-		m_dump(table);
-#endif
 
 		printstep(3, "Confirm your choices");
 
@@ -2619,7 +2650,7 @@ do_autopart(int resultfd)
 		disk = (int) (curdev-firstdev);
 
 		printf("\nThis is the point of no return.  You have selected to install MINIX 3\n");
-		printf("into region %d of disk %d (%sp%d).  Please confirm that you want\n", region, disk, devices[disk].dev->name, region);
+		printf("into region %d of disk %d (%s).  Please confirm that you want\n", region, disk, devices[disk].dev->name);
 		printf("to use this selection to install MINIX 3.\n\n");
 
 		do {
@@ -2632,32 +2663,54 @@ do_autopart(int resultfd)
 		 */
 		sort();
 		for(i = 1; i <= NR_PARTITIONS; i++) {
-			if(table[sort_order[i]].lowsec == pe->lowsec) {
+			int si;
+			si = sort_order[i];
+			if(si < 1 || si > NR_PARTITIONS) {
+				fprintf(stderr, "Autopart internal error (out of range) (nothing written).\n");
+				exit(1);
+			}
+			if(table[si].lowsec == pe->lowsec) {
 				if(found > 0) {
-					fprintf(stderr, "Internal error (1).\n");
-					return 1;
+					fprintf(stderr, "Autopart internal error (part found twice) (nothing written).\n");
+					exit(1);
 				}
-				check_ind(&table[sort_order[i]]);
-				table[sort_order[i]].sysind = MINIX_PART;
+				check_ind(&table[si]);
+				table[si].sysind = MINIX_PART;
 				found = i;
 			}
 		}
 		if(found < 1) {
-			fprintf(stderr, "Internal error (2).\n");
-			return 1;
+			fprintf(stderr, "Autopart internal error (part not found) (nothing written).\n");
+			exit(1);
 		}
 		m_write('w', NULL);
 		if(dirty) {
-			fprintf(stderr, "Internal error (3).\n");
-			return 1;
+			fprintf(stderr, "Autopart internal error (couldn't update disk).\n");
+			exit(1);
 		}
 		name=strrchr(curdev->name, '/');
 		if(!name) name = curdev->name;
 		else name++;
 		sprintf(partbuf, "%sp%d\n", name, found-1);
+		sprintf(devname, "/dev/%sp%d", name, found-1);
 		if(resultfd >= 0 && write(resultfd, partbuf, strlen(partbuf)) < strlen(partbuf)) {
-			fprintf(stderr, "Couldn't write result.\n");
-			return 1;
+			fprintf(stderr, "Autopart internal error (couldn't write result).\n");
+			exit(1);
+		}
+		if(device >= 0) {
+			close(device);
+			device = -1;
+		}
+
+#if 0
+		m_dump(orig_table);
+		printf("\n");
+		m_dump(table);
+#endif
+
+		if(sanitycheck_failed(devname, &table[found])) {
+			fprintf(stderr, "Autopart internal error (disk sanity check failed).\n");
+			exit(1);
 		}
 		return 0;
 	}
