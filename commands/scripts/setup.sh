@@ -66,7 +66,7 @@ echo -n "
 Welcome to the MINIX installation script.
 
 Note 1: If the screen blanks, hit CTRL+F3 to select \"software scrolling\".
-Note 2: If things go wrong then hit DEL and start over.
+Note 2: If things go wrong then hit CTRL+C and start over.
 Note 3: Default answers, like [y], can simply be chosen by hitting ENTER.
 Note 4: If you see a colon (:) then you should hit ENTER to continue.
 :"
@@ -322,7 +322,7 @@ echo " --- Step 6: Wait for bad block detection ------------------------------"
 echo ""
 
 mkfs -B $blocksizebytes /dev/$usr
-echo "Scanning /dev/$usr for bad blocks.  (Hit DEL to stop the scan if you are"
+echo "Scanning /dev/$usr for bad blocks.  (Hit CTRL+C to stop the scan if you are"
 echo "absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
 echo ""
 trap ': nothing' 2
@@ -372,6 +372,8 @@ Copying $fdroot to /dev/$root
 "
 
 mkfs -B $blocksizebytes /dev/$root || exit
+echo "Scanning /dev/$root for bad blocks.  (Hit CTRL+C to stop the scan if you are"
+echo "absolutely sure that there can not be any bad blocks.  Otherwise just wait.)"
 readall -b /dev/$root | sh
 mount /dev/$root /mnt || exit
 # Running from the installation CD.
