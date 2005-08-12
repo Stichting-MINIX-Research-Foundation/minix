@@ -34,6 +34,7 @@ usr:	\
 	/usr/bin/mkdep \
 	/usr/bin/mkdist \
 	/usr/bin/setup \
+	/usr/bin/rotate \
 	/usr/bin/floppysetup \
 	/usr/bin/spell \
 	/usr/bin/srccrc \
@@ -103,6 +104,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/floppysetup:	floppysetup.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/rotate:	rotate.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/setup:	setup.sh
