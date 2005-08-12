@@ -2595,8 +2595,8 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 	it_secsize = div64u(part.size, SECTOR_SIZE);
 
 	if(it_lowsec != pe->lowsec || it_secsize != pe->size) {
-		fprintf(stderr, "Autopart numbers don't match up! (%lu, %lu, %lu, %lu)\n",
-			it_lowsec, pe->lowsec, it_secsize, pe->size);
+		fprintf(stderr, "Returned and set numbers don't match up!\n");
+		fprintf(stderr, "This can happen if the disk is still opened.\n");
 		return 1;
 	}
 
