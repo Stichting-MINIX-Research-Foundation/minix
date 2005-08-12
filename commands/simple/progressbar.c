@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 
 _PROTOTYPE(int main, (int argc, char **argv));
 
@@ -14,31 +15,31 @@ prettyprogress(long b, long maxb, time_t starttime)
   double bpsec;
   time(&now);
   spent = now - starttime;
+  printf("\r");	/* Make sure progress bar starts at beginning of line */
   if(spent > 0 && (bpsec = (double)b / spent) > 0) {
   	int len, i;
   	long secremain, minremain, hremain;
 	  secremain = (maxb - b) / bpsec;
 	  minremain = (secremain / 60) % 60;
 	  hremain = secremain / 3600;
-  	len = fprintf(stderr, "Remain %ld files. ", maxb-b);
+  	len = printf("Remainining: %ld files. ", maxb-b);
 
 #if 0
-  	len += fprintf(stderr, "ETA: %d:%02d:%02d ",
+  	len += printf("ETA: %d:%02d:%02d ",
   		hremain, minremain, secremain % 60);
 #endif
 
-	len += fprintf(stderr, " [");
+	len += printf(" [");
 
 #define WIDTH 77
   	len = WIDTH - len;
   	for(i = 0; i < (b * (len-1) / maxb); i++) 
-  		fprintf(stderr, "=");
- 	fprintf(stderr, "|");
+  		printf("=");
+ 	printf("|");
   	for(; i < len-2; i++) 
-  		fprintf(stderr, "-");
-  	fprintf(stderr, "]\r");
-  	fflush(stderr);
-  }
+  		printf("-");
+  	printf("]\n");
+  } else printf("\n");
 
   return;
 }
@@ -48,24 +49,29 @@ int argc;
 char *argv[];
 {
 	long i = 0, count = 0;
+	int l;
 	char line[2000];
 	time_t start;
 	if(argc < 2) return 1;
 	count = atol(argv[1]);
 	if(count < 1) return 1;
-	sync();
 	time(&start);
 	printf("\n");
+#define LINES 5
+	for(l = 1; l <= LINES+1; l++) printf("\n");
+	printf("[A");
+	sleep(1);
 	while(fgets(line, sizeof(line), stdin)) {
 		i++;
-		printf("[K%s", line);
+		for(l = 0; l <= LINES; l++)  printf("[A");
 		if(i <= count) prettyprogress(i, count, start);
-		else printf("\r");
-		printf("[A");
-		fflush(stdout);
+		else printf("\n");
+		printf("[M");
+		for(l = 0; l < LINES; l++)  printf("[B");
+		printf("\r%s[A", line);
 	}
 
-  	fprintf(stderr, "\nDone.[K\n");
+  	printf("\nDone.[K\n");
 
 	return 0;
 }
