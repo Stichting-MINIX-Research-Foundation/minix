@@ -22,7 +22,7 @@ prettyprogress(long b, long maxb, time_t starttime)
 	  secremain = (maxb - b) / bpsec;
 	  minremain = (secremain / 60) % 60;
 	  hremain = secremain / 3600;
-  	len = printf("Remainining: %ld files. ", maxb-b);
+  	len = printf("Remaining: %ld files. ", maxb-b);
 
 #if 0
   	len += printf("ETA: %d:%02d:%02d ",
@@ -38,7 +38,7 @@ prettyprogress(long b, long maxb, time_t starttime)
  	printf("|");
   	for(; i < len-2; i++) 
   		printf("-");
-  	printf("]\n");
+  	printf("][K\n");
   } else printf("\n");
 
   return;
@@ -61,13 +61,16 @@ char *argv[];
 	for(l = 1; l <= LINES+1; l++) printf("\n");
 	printf("[A");
 	while(fgets(line, sizeof(line), stdin)) {
+		char *nl;
 		i++;
 		for(l = 0; l <= LINES; l++)  printf("[A");
 		if(i <= count) prettyprogress(i, count, start);
 		else printf("\n");
 		printf("[M");
 		for(l = 0; l < LINES; l++)  printf("[B");
-		printf("\r%s[A", line);
+		if((nl = strchr(line, '\n'))) *nl = '\0';
+		line[78] = '\0';
+		printf("\r%s\r", line);
 	}
 
   	printf("\nDone.[K\n");
