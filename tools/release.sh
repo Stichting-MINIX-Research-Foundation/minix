@@ -48,7 +48,7 @@ mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 
 echo " * Zeroing $TMPDISK"
-#dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
+dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
 mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
 echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
