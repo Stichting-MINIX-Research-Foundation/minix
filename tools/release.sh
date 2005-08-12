@@ -57,7 +57,7 @@ mkdir -p $RELEASEDIR/usr/tmp
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
 echo " * Doing new cvs export"
-( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null )
+( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null 2>&1 || exit 1 )
 chown -R bin $RELEASEDIR/usr/src
 # Bug tracking system not for on cd
 rm -rf $RELEASEDIR/usr/src/doc/bugs
