@@ -377,7 +377,8 @@ echo "absolutely sure that there can not be any bad blocks.  Otherwise just wait
 readall -b /dev/$root | sh
 mount /dev/$root /mnt || exit
 # Running from the installation CD.
-cpdir -vx / /mnt || exit
+files="`find / -xdev | wc -l`"
+cpdir -vx / /mnt || progressbar "$files" || exit	
 chmod 555 /mnt/usr
 
 # CD remnants that aren't for the installed system
