@@ -47,7 +47,7 @@ struct _v7_direct {
  * 3 of these blocks and has to fit within 64kB, so this can't be
  * increased without taking that into account.
  */
-#define MAX_BLOCK_SIZE		 8192
+#define MAX_BLOCK_SIZE		 4096
 
 /* This is the block size for the fixed versions of the filesystem (V1/V2) */
 #define STATIC_BLOCK_SIZE	1024

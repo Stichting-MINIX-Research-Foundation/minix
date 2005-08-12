@@ -43,7 +43,7 @@
 #endif
 
 #if (MACHINE == IBM_PC && _WORD_SIZE == 4)
-#define NR_BUFS         1536	/* # blocks in the buffer cache */
+#define NR_BUFS         1500	/* # blocks in the buffer cache */
 #define NR_BUF_HASH     2048	/* size of buf hash table; MUST BE POWER OF 2*/
 #endif
 
