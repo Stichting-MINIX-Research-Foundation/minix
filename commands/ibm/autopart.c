@@ -1757,6 +1757,12 @@ void regionize(void)
 
 	/* Create region data used in autopart mode. */
 	free_regions = used_regions = nr_regions = nr_partitions = 0;
+	if(table[0].lowsec > table[sort_order[1]].lowsec &&
+		table[sort_order[1]].sysind != NO_PART) {
+		printf("\nSanity check failed on %s - first partition starts before disk.\n"
+			"Please use expert mode to correct it.\n", curdev->name);
+		exit(1);
+	}
 	for(si = 1; si <= NR_PARTITIONS; si++) {
 		i = sort_order[si];
 		if(i < 1 || i > NR_PARTITIONS) {
@@ -1783,8 +1789,8 @@ void regionize(void)
 		if(autopartmode && si > 1) {
 			if(table[i].lowsec < table[sort_order[si-1]].lowsec ||
 			   table[i].lowsec < table[sort_order[si-1]].lowsec + table[sort_order[si-1]].size) {
-				printf("Sanity check failed - partitions overlap.\n"
-					"Please use expert mode to correct it.\n");
+				printf("\nSanity check failed on %s - partitions overlap.\n"
+					"Please use expert mode to correct it.\n", curdev->name);
 				exit(1);
 			}
 		}
@@ -1800,7 +1806,7 @@ void regionize(void)
 	}
 
 	/* Special case: space after partitions. */
-	if(free_sec < table[0].size-1) {
+	if(free_sec <   table[0].lowsec + table[0].size-1) {
 		regions[nr_regions].free_sec_start = free_sec;
 		regions[nr_regions].free_sec_last = table[0].lowsec + table[0].size-1;
 		regions[nr_regions].is_used_part = 0;

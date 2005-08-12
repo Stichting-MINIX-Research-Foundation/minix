@@ -1,7 +1,8 @@
 
-MINIX 3 is still under development and may contain bugs and other
-imperfections.  If you would like to help develop MINIX 3 further into a
-rock solid, reliable operating system, please go to the official Website:
+Welcome.  MINIX 3 is still under development and may contain bugs and
+other imperfections.  If you would like to help develop MINIX 3 further
+into a rock solid, reliable operating system, please go to the official
+Website:
 
 www.minix3.org
 
@@ -13,4 +14,5 @@ For help with MINIX 3 and discussion about it, please subscribe to the
 newsgroup: comp.os.minix.
 
 MINIX 3 supports virtual terminals. Hit ALT+F2, ALT+F3 etc. to see them.
+ALT+<left arrow> and ALT+<right arrow> walks through them.
 
