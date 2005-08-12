@@ -60,7 +60,6 @@ char *argv[];
 #define LINES 5
 	for(l = 1; l <= LINES+1; l++) printf("\n");
 	printf("[A");
-	sleep(1);
 	while(fgets(line, sizeof(line), stdin)) {
 		i++;
 		for(l = 0; l <= LINES; l++)  printf("[A");
