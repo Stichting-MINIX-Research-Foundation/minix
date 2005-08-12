@@ -109,6 +109,7 @@ start)
 
     echo -n "Starting daemons:"
     daemonize update
+    rotate /usr/log/messages 7
     daemonize usyslogd
 
     # Ugly error message when starting cron from CD.
