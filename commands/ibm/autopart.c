@@ -2576,6 +2576,8 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 	int fd;
 	unsigned long it_lowsec, it_secsize;
 
+	printf("Opening %s\n", dev);
+
 	if((fd = open(dev, O_RDONLY)) < 0) {
 		perror(dev);
 		return 1;
@@ -2597,9 +2599,6 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 			it_lowsec, pe->lowsec, it_secsize, pe->size);
 		return 1;
 	}
-
-	fprintf(stderr, "Autopart numbers match. (%lu, %lu, %lu, %lu)\n",
-		it_lowsec, pe->lowsec, it_secsize, pe->size);
 
 	return 0;
 }
@@ -2642,6 +2641,7 @@ do_autopart(int resultfd)
 		char *name;
 		int i, found = -1;
 		char partbuf[100], devname[100];
+		struct part_entry *tpe;
 
 
 		printstep(3, "Confirm your choices");
@@ -2677,6 +2677,7 @@ do_autopart(int resultfd)
 				check_ind(&table[si]);
 				table[si].sysind = MINIX_PART;
 				found = i;
+				tpe = &table[si];
 			}
 		}
 		if(found < 1) {
@@ -2708,7 +2709,7 @@ do_autopart(int resultfd)
 		m_dump(table);
 #endif
 
-		if(sanitycheck_failed(devname, &table[found])) {
+		if(sanitycheck_failed(devname, tpe)) {
 			fprintf(stderr, "Autopart internal error (disk sanity check failed).\n");
 			exit(1);
 		}
