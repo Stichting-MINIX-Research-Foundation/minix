@@ -9,8 +9,7 @@ then	echo "Usage: $0 <log> <keep>"
 fi
 
 if [ ! -f "$1" ]
-then	echo "$1 doesn't exist or isn't a file."
-	exit 1
+then	 exit 1
 fi
 
 if [ "$2" -le 0 ]
@@ -19,7 +18,7 @@ then	echo "Keep at least 1 copy please."
 fi
 
 k="$2"
-$RM "$1.$k" || exit 1
+$RM "$1.$k" 2>/dev/null || exit 1
 while [ "$k" -ge 2 ]
 do	prev="`expr $k - 1`"
 	$MV $1.$prev.gz $1.$k.gz 2>/dev/null 
