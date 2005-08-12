@@ -2307,6 +2307,11 @@ is_sure(int flags, char *fmt, ...)
 	return !strncmp(yesno, "yes", 3);
 }
 
+void warn(char *message)
+{
+	printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b ! %s\n",message);
+}
+
 int
 may_kill_region(void)
 {
@@ -2491,9 +2496,12 @@ select_disk(void)
 			fflush(NULL);
 			if(!fgets(line, sizeof(line)-2, stdin))
 				exit(1);
-			if(sscanf(line, "%d", &choice) != 1) continue;
+			if(sscanf(line, "%d", &choice) != 1) {
+				warn("choose a disk");
+			 	continue;
+			}
 			if(choice < 0 || choice >= i) {
-				printf("\b\b\b\b\b\b\b\b\b\b\b\b\b ! out of range.\n");
+				warn("out of range");
 				continue;
 			}
 			done = 1;
