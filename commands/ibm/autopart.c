@@ -311,15 +311,7 @@ void newdevice(char *name, int scanning, int disk_only)
 		if (stat(name, &st) < 0 || !S_ISBLK(st.st_mode)) return;
 
 		switch (major(st.st_rdev)) {
-		case 2:
-			/* Floppy */
-			if (disk_only || minor(st.st_rdev) >= 4) return;
-			break;
 		case 3:
-		case 8:
-		case 10:
-		case 12:
-		case 16:
 			/* Disk controller */
 			if (minor(st.st_rdev) >= 0x80
 					|| minor(st.st_rdev) % 5 != 0) return;
@@ -2271,19 +2263,22 @@ printregions(region_t *theregions, int indent, int p_nr_partitions, int p_free_r
 			units = reg->used_part.size / 2;
 			col(0);
 			printf(" (%s)\n", prettysizeprint(units));
-		} else if(!nofree) {
+		} else {
 			printf("%*s", indent, ""); 
-			if(numbers) printf("%2d.  ", r);
+			if(numbers) {
+				if(!nofree) printf("%2d.  ", r);
+				else printf(" -   ");
+			}
 			printf("Free space           ");
 			units = ((reg->free_sec_last - reg->free_sec_start+1))/2;
 			printf(" (%s)\n", prettysizeprint(units));
 		}
 	}
 
-	if(p_nr_partitions >= NR_PARTITIONS && p_free_regions) {
+	if(numbers && p_nr_partitions >= NR_PARTITIONS && p_free_regions) {
 		printf(
-"\nNote: there is free space on this disk, but it is not shown above,\n"
-"because there isn't a free slot in the partition table to use it.\n");
+"\nNote: there is free space on this disk, but you can't select it,\n"
+"as there isn't a free slot in the partition table to use it.\n");
 	}
 
 	return;
@@ -2391,7 +2386,7 @@ select_region(void)
 		}
 
 		if(nr_regions > 1) {
-			printf("\nPlease enter the region number you want to install MINIX into");
+			printf("\nPlease enter the region number you want to install MINIX 3 into");
 			if(used_regions > 0) {
 				printf("\nor enter 'D' to Delete an existing partition");
 			}
@@ -2444,7 +2439,7 @@ select_disk(void)
 	int i, choice, drives;
 	static char line[500];
 
-	printstep(1, "Select a disk to install MINIX");
+	printstep(1, "Select a disk to install MINIX 3");
 	printf("\nProbing for disks. This may take a short while.");
 
 		i = 0;
@@ -2612,9 +2607,9 @@ do_autopart(int resultfd)
 		region =  (int)(r-regions); 
 		disk = (int) (curdev-firstdev);
 
-		printf("\nThis is the point of no return.  You have selected to install MINIX\n");
+		printf("\nThis is the point of no return.  You have selected to install MINIX 3\n");
 		printf("into region %d of disk %d (%sp%d).  Please confirm that you want\n", region, disk, devices[disk].dev->name, region);
-		printf("to use this selection to install MINIX.\n\n");
+		printf("to use this selection to install MINIX 3.\n\n");
 
 		if(!is_sure(SURE_SERIOUS, "Are you sure you want to continue?"))
 			return 1;
