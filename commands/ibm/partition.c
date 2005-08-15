@@ -293,11 +293,23 @@ void geometry(void)
 {
 	int fd;
 	struct partition geometry;
+	struct stat sb;
 
 	if ((fd= open(device, O_RDONLY)) < 0) fatal(device);
 
 	/* Get the geometry of the drive, and the device's base and size. */
-	if (ioctl(fd, DIOCGETP, &geometry) < 0) fatal(device);
+	if (ioctl(fd, DIOCGETP, &geometry) < 0)
+	{
+		/* Faking geometry. Use the same fake geometry as part. */
+		if (fstat(fd, &sb) < 0)
+			fatal(device);
+		geometry.base= cvul64(0);
+		geometry.size= cvul64(sb.st_size);
+		geometry.sectors= 32;
+		geometry.heads= 64;
+		geometry.cylinders= (sb.st_size-1)/SECTOR_SIZE/
+			(geometry.sectors*geometry.heads) + 1;
+	}
 	close(fd);
 	primary.lowsec= div64u(geometry.base, SECTOR_SIZE);
 	primary.size= div64u(geometry.size, SECTOR_SIZE);
