@@ -300,7 +300,7 @@ void geometry(void)
 	/* Get the geometry of the drive, and the device's base and size. */
 	if (ioctl(fd, DIOCGETP, &geometry) < 0)
 	{
-		/* Faking geometry. Use the same fake geometry as part. */
+		/* Use the same fake geometry as part. */
 		if (fstat(fd, &sb) < 0)
 			fatal(device);
 		geometry.base= cvul64(0);
