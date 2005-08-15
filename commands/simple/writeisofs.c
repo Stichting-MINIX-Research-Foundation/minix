@@ -1,6 +1,7 @@
 
 /* writeisofs - simple ISO9660-format-image writing utility */
 
+#include <errno.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <ctype.h>
+#include <ibm/partition.h>
 
 #include <sys/stat.h>
 
@@ -158,6 +160,10 @@ struct node {
 };
 
 int n_reserved_pathtableentries = 0, n_used_pathtableentries = 0;
+int harddisk_emulation = 0;
+int system_type = 0;
+
+int get_system_type(int fd);
 
 ssize_t
 Write(int fd, void *buf, ssize_t len)
@@ -730,7 +736,13 @@ writebootcatalog(int fd, int  *currentsector, int imagesector, int imagesectors)
 	memset(&initial, 0, sizeof(initial));
 
 	initial.indicator = INDICATE_BOOTABLE;
-	initial.media = BOOTMEDIA_144M;
+	if (harddisk_emulation)
+	{
+		initial.media = BOOTMEDIA_HARDDISK;
+		initial.type = system_type;
+	}
+	else
+		initial.media = BOOTMEDIA_144M;
 	/* initial.sectors = imagesectors; */
 	initial.sectors = 1;
 	initial.startsector = imagesector;
@@ -845,8 +857,11 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	while ((ch = getopt(argc, argv, "Rb:l:")) != -1) {
+	while ((ch = getopt(argc, argv, "Rb:hl:")) != -1) {
 		switch(ch) {
+			case 'h':
+				harddisk_emulation= 1;
+				break;
 			case 'l':
 				label = optarg;
 				break;
@@ -956,6 +971,8 @@ main(int argc, char *argv[])
 		/* write the boot catalog */
 		fprintf(stderr, " * writing the boot catalog\n");
 		bootcatalogsector = currentsector;
+		if (harddisk_emulation)
+			system_type = get_system_type(bootfd);
 		writebootcatalog(fd, &currentsector, imagesector, imagesectors);
 
 		/* write boot image */
@@ -1045,4 +1062,50 @@ main(int argc, char *argv[])
 	return 0;
 }
 
+int get_system_type(int fd)
+{
+	off_t old_pos;
+	size_t size;
+	ssize_t r;
+	int type;
+	struct part_entry *partp;
+	unsigned char bootsector[512];
 
+	errno= 0;
+	old_pos= lseek(fd, SEEK_SET, 0);
+	if (old_pos == -1 && errno != 0)
+	{
+		fprintf(stderr, "bootimage file is not seekable: %s\n",
+			strerror(errno));
+		exit(1);
+	}
+	size= sizeof(bootsector);
+	r= read(fd, bootsector, size);
+	if (r != size)
+	{
+		fprintf(stderr, "error reading bootimage file: %s\n",
+			r < 0 ? strerror(errno) : "unexpected EOF");
+		exit(1);
+	}
+	if (bootsector[size-2] != 0x55 && bootsector[size-1] != 0xAA)
+	{
+		fprintf(stderr, "bad magic in bootimage file\n");
+		exit(1);
+	}
+
+	partp= (struct part_entry *)&bootsector[PART_TABLE_OFF];
+	type= partp->sysind;
+	if (type == NO_PART)
+	{
+		fprintf(stderr, "first partition table entry is unused\n");
+		exit(1);
+	}
+	if (!(partp->bootind & ACTIVE_FLAG))
+	{
+		fprintf(stderr, "first partition table entry is not active\n");
+		exit(1);
+	}
+
+	lseek(fd, SEEK_SET, old_pos);
+	return type;
+}
