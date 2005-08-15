@@ -36,7 +36,7 @@
 #define ERR		 (-1)	/* general error */
 
 /* Parameters for the disk drive. */
-#define MAX_DRIVES         4	/* this driver supports 4 drives (d0 - d3)*/
+#define MAX_DRIVES         8	/* this driver supports 8 drives (d0 - d7)*/
 #define MAX_SECS	 255	/* bios can transfer this many sectors */
 #define NR_MINORS      (MAX_DRIVES * DEV_PER_DRIVE)
 #define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
@@ -50,16 +50,18 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
   unsigned heads;		/* number of heads */
   unsigned sectors;		/* number of sectors per track */
   unsigned open_ct;		/* in-use count */
+  int drive_id;			/* Drive ID at BIOS level */
+  int present;			/* Valid drive */
   int int13ext;			/* IBM/MS INT 13 extensions supported? */
   struct device part[DEV_PER_DRIVE];	/* disks and partitions */
   struct device subpart[SUB_PER_DRIVE]; /* subpartitions */
 } wini[MAX_DRIVES], *w_wn;
 
-PRIVATE int nr_drives = MAX_DRIVES;	/* Number of drives */
 PRIVATE int w_drive;			/* selected drive */
 PRIVATE struct device *w_dv;		/* device's base and size */
 PRIVATE vir_bytes bios_buf_vir, bios_buf_size;
 PRIVATE phys_bytes bios_buf_phys;
+PRIVATE int remap_first = 0;		/* Remap drives for CD HD emulation */
 
 _PROTOTYPE(int main, (void) );
 FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );
@@ -95,6 +97,12 @@ PRIVATE struct driver w_dtab = {
  *===========================================================================*/
 PUBLIC int main()
 {
+  long v;
+
+  v= 0;
+  env_parse("bios_remap_first", "d", 0, &v, 0, 1);
+  remap_first= v;
+
 /* Set special disk parameters then call the generic main loop. */
   driver_task(&w_dtab);
 }
@@ -120,7 +128,9 @@ int device;
   } else {
 	return(NIL_DEV);
   }
-  return(w_drive < nr_drives ? w_dv : NIL_DEV);
+  if (w_drive >= MAX_DRIVES || !w_wn->present)
+  	return NIL_DEV;
+  return(w_dv);
 }
 
 
@@ -228,7 +238,7 @@ unsigned nr_req;		/* length of request vector */
 		/* Set up an extended read or write BIOS call. */
 		reg86.u.b.intno = 0x13;
 		reg86.u.w.ax = opcode == DEV_SCATTER ? 0x4300 : 0x4200;
-		reg86.u.b.dl = 0x80 + w_drive;
+		reg86.u.b.dl = wn->drive_id;
 		reg86.u.w.si = (bios_buf_phys + i13e_rw_off) % HCLICK_SIZE;
 		reg86.u.w.ds = (bios_buf_phys + i13e_rw_off) / HCLICK_SIZE;
 	} else {
@@ -245,7 +255,7 @@ unsigned nr_req;		/* length of request vector */
 		reg86.u.b.ch = cylinder & 0xFF;
 		reg86.u.b.cl = sector | ((cylinder & 0x300) >> 2);
 		reg86.u.b.dh = head;
-		reg86.u.b.dl = 0x80 + w_drive;
+		reg86.u.b.dl = wn->drive_id;
 	}
 
 	r= sys_int86(&reg86);
@@ -345,7 +355,7 @@ PRIVATE void w_init()
 {
 /* This routine is called at startup to initialize the drive parameters. */
 
-  int r, drive;
+  int r, drive, drive_id, nr_drives;
   struct wini *wn;
   unsigned long capacity;
   struct int13ext_params {
@@ -376,19 +386,31 @@ PRIVATE void w_init()
 #endif
 
   /* Get the geometry of the drives */
-  for (drive = 0; drive < nr_drives; drive++) {
+  for (drive = 0; drive < MAX_DRIVES; drive++) {
+  	if (remap_first)
+  	{
+  		if (drive == 7)
+			drive_id= 0x80;
+		else
+			drive_id= 0x80 + drive + 1;
+  	}
+  	else
+		drive_id= 0x80 + drive;
+
 	(void) w_prepare(drive * DEV_PER_DRIVE);
 	wn = w_wn;
+	wn->drive_id= drive_id;
+
 	reg86.u.b.intno = 0x13;
 	reg86.u.b.ah = 0x08;	/* Get drive parameters. */
-	reg86.u.b.dl = 0x80 + drive;
+	reg86.u.b.dl = drive_id;
 	r= sys_int86(&reg86);
 	if (r != OK)
 		panic(ME, "BIOS call failed", r);
 
 	nr_drives = !(reg86.u.w.f & 0x0001) ? reg86.u.b.dl : drive;
-	if (nr_drives > MAX_DRIVES) nr_drives = MAX_DRIVES;
-	if (drive >= nr_drives) break;
+	if (drive_id >= 0x80 + nr_drives) continue;
+	wn->present= 1;
 
 	wn->heads = reg86.u.b.dh + 1;
 	wn->sectors = reg86.u.b.cl & 0x3F;
@@ -399,7 +421,7 @@ PRIVATE void w_init()
 	reg86.u.b.intno = 0x13;
 	reg86.u.b.ah = 0x41;	/* INT 13 Extensions - Installation check */
 	reg86.u.w.bx = 0x55AA;
-	reg86.u.b.dl = 0x80 + drive;
+	reg86.u.b.dl = drive_id;
 
 	if (pc_at) {
 		r= sys_int86(&reg86);
@@ -418,7 +440,7 @@ PRIVATE void w_init()
 			panic(ME, "sys_vircopy failed\n", r);
 		reg86.u.b.intno = 0x13;
 		reg86.u.b.ah = 0x48;	/* Ext. Get drive parameters. */
-		reg86.u.b.dl = 0x80 + drive;
+		reg86.u.b.dl = drive_id;
 		reg86.u.w.si = bios_buf_phys % HCLICK_SIZE;
 		reg86.u.w.ds = bios_buf_phys / HCLICK_SIZE;
 
