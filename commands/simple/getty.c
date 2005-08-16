@@ -77,13 +77,16 @@ int readch(void)
 
 /* Handle the process of a GETTY.
  */
-void do_getty(char *name, size_t len, char **args)
+void do_getty(char *name, size_t len, char **args, char *ttyname)
 {
   register char *np, *s, *s0;
   int ch;
   struct utsname utsname;
-  char **banner;
-  static char *def_banner[] = { "%s  Release %r Version %v\n\n%n login: ", 0 };
+  char **banner, *t;
+  static char *def_banner[] = { "%s  Release %r Version %v  (%t)\n\n%n login: ", 0 };
+
+  /* Clean up tty name. */
+  if((t = strrchr(ttyname, '/'))) ttyname = t + 1;
 
   /* Default banner? */
   if (args[0] == NULL) args = def_banner;
@@ -121,6 +124,7 @@ void do_getty(char *name, size_t len, char **args)
 				case 'v':  std_out(utsname.version); break;
 				case 'm':  std_out(utsname.machine); break;
 				case 'p':  std_out(utsname.arch); break;
+				case 't':  std_out(ttyname); break;
 #if __minix_vmd
 				case 'k':  std_out(utsname.kernel); break;
 				case 'h':  std_out(utsname.hostname); break;
@@ -188,7 +192,7 @@ int main(int argc, char **argv)
   chown(tty_name, 0, 0);	/* set owner of TTY to root */
   chmod(tty_name, 0600);	/* mode to max secure */
 
-  do_getty(name, sizeof(name), argv+1);	/* handle getty() */
+  do_getty(name, sizeof(name), argv+1, tty_name);	/* handle getty() */
   name[29] = '\0';		/* make sure the name fits! */
 
   do_login(name);		/* and call login(1) if OK */
