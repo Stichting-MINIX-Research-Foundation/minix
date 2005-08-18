@@ -665,7 +665,7 @@ char        *basename;
 char        *inputname;
 {
   register struct depend *dp;
-
+  size_t l1, l2;
 
   if (dotouch)
     touch(np);
@@ -683,6 +683,10 @@ char        *inputname;
     setDFmacro("*",basename);
 
     for (dp = qdp; dp; dp = qdp) {
+       l1= strlen(str1);
+       l2= strlen(dp->d_name->n_name);
+       while (l1 + 1 + l2 +1 > str1s.len)
+       		strrealloc(&str1s);
        if (strlen(str1))
           strcat(str1, " ");
        strcat(str1, dp->d_name->n_name);
