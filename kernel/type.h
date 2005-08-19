@@ -14,7 +14,7 @@ struct boot_image {
   proc_nr_t proc_nr;			/* process number to use */
   task_t *initial_pc;			/* start function for tasks */
   int flags;				/* process flags */
-  char quantum;				/* quantum (tick count) */
+  unsigned char quantum;		/* quantum (tick count) */
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
   short trap_mask;			/* allowed system call traps */

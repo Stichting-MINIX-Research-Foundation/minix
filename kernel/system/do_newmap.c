@@ -42,7 +42,7 @@ message *m_ptr;			/* pointer to request message */
 #endif
   old_flags = rp->p_rts_flags;	/* save the previous value of the flags */
   rp->p_rts_flags &= ~NO_MAP;
-  if (old_flags != 0 && rp->p_rts_flags == 0) lock_ready(rp);
+  if (old_flags != 0 && rp->p_rts_flags == 0) lock_enqueue(rp);
 
   return(OK);
 }

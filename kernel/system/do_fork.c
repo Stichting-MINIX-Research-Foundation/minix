@@ -51,6 +51,9 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
   rpc->p_sys_time = 0;
 
+  rpc->p_sched_ticks /= 2;	/* parent and child have to share quantum */
+  rpp->p_sched_ticks /= 2;	
+
   /* If the parent is a privileged process, take away the privileges from the 
    * child process and inhibit it from running by setting the NO_PRIV flag.
    * The caller should explicitely set the new privileges before executing.

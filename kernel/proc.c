@@ -8,17 +8,15 @@
  *
  *   lock_notify:     notify a process of a system event
  *   lock_send:	      send a message to a process
- *   lock_ready:      put a process on one of the ready queues 
- *   lock_unready:    remove a process from the ready queues
- *   lock_sched:      a process has run too long; schedule another one
+ *   lock_enqueue:    put a process on one of the scheduling queues 
+ *   lock_dequeue:    remove a process from the scheduling queues
  *
  * Changes:
+ *   Aug 19, 2005     rewrote multilevel scheduling code  (Jorrit N. Herder)
  *   Jul 25, 2005     protection and checks in sys_call()  (Jorrit N. Herder)
- *   May 26, 2005     rewrite of message passing functions  (Jorrit N. Herder)
- *   May 24, 2005     new, queued NOTIFY system call  (Jorrit N. Herder)
- *   Oct 28, 2004     new, non-blocking SEND and RECEIVE  (Jorrit N. Herder)
- *   Oct 28, 2004     rewrite of sys_call() function  (Jorrit N. Herder)
- *   Aug 19, 2004     rewrite of multilevel scheduling  (Jorrit N. Herder)
+ *   May 26, 2005     rewrote message passing functions  (Jorrit N. Herder)
+ *   May 24, 2005     new notification system call  (Jorrit N. Herder)
+ *   Oct 28, 2004     nonblocking send and receive calls  (Jorrit N. Herder)
  *
  * The code here is critical to make everything work and is important for the
  * overall performance of the system. A large fraction of the code deals with
@@ -54,11 +52,11 @@ FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
 		message *m_ptr, unsigned flags) );
 FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst) );
 
-FORWARD _PROTOTYPE( void ready, (struct proc *rp) );
-FORWARD _PROTOTYPE( void unready, (struct proc *rp) );
-FORWARD _PROTOTYPE( void sched, (struct proc *rp) );
+FORWARD _PROTOTYPE( void enqueue, (struct proc *rp) );
+FORWARD _PROTOTYPE( void dequeue, (struct proc *rp) );
+FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front) );
 FORWARD _PROTOTYPE( void pick_proc, (void) );
-
+FORWARD _PROTOTYPE( void balance_queues, (struct proc *rp) );
 
 #define BuildMess(m_ptr, src, dst_ptr) \
 	(m_ptr)->m_source = (src); 					\
@@ -85,7 +83,6 @@ FORWARD _PROTOTYPE( void pick_proc, (void) );
  * for cp_mess() here and define the function below. Also define CopyMess. 
  */
 #endif /* (CHIP == M68000) */
-
 
 
 /*===========================================================================*
@@ -231,17 +228,17 @@ unsigned flags;				/* system call flags */
 	/* Destination is indeed waiting for this message. */
 	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 		 dst_ptr->p_messbuf);
-	if ((dst_ptr->p_rts_flags &= ~RECEIVING) == 0) ready(dst_ptr);
+	if ((dst_ptr->p_rts_flags &= ~RECEIVING) == 0) enqueue(dst_ptr);
   } else if ( ! (flags & NON_BLOCKING)) {
 	/* Destination is not waiting.  Block and queue caller. */
 	caller_ptr->p_messbuf = m_ptr;
-	if (caller_ptr->p_rts_flags == 0) unready(caller_ptr);
+	if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
 	caller_ptr->p_rts_flags |= SENDING;
 	caller_ptr->p_sendto = dst;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
 	xpp = &dst_ptr->p_caller_q;		/* find end of list */
-	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_q_link;
+	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_q_link;	
 	*xpp = caller_ptr;			/* add caller to end */
 	caller_ptr->p_q_link = NIL_PROC;	/* mark new end of list */
   } else {
@@ -305,7 +302,7 @@ unsigned flags;				/* system call flags */
         if (src == ANY || src == proc_nr(*xpp)) {
 	    /* Found acceptable message. Copy it and update status. */
 	    CopyMess((*xpp)->p_nr, *xpp, (*xpp)->p_messbuf, caller_ptr, m_ptr);
-            if (((*xpp)->p_rts_flags &= ~SENDING) == 0) ready(*xpp);
+            if (((*xpp)->p_rts_flags &= ~SENDING) == 0) enqueue(*xpp);
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
 	}
@@ -319,7 +316,7 @@ unsigned flags;				/* system call flags */
   if ( ! (flags & NON_BLOCKING)) {
       caller_ptr->p_getfrom = src;		
       caller_ptr->p_messbuf = m_ptr;
-      if (caller_ptr->p_rts_flags == 0) unready(caller_ptr);
+      if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
       caller_ptr->p_rts_flags |= RECEIVING;		
       return(OK);
   } else {
@@ -354,7 +351,7 @@ int dst;				/* which process to notify */
       CopyMess(proc_nr(caller_ptr), proc_addr(HARDWARE), &m, 
           dst_ptr, dst_ptr->p_messbuf);
       dst_ptr->p_rts_flags &= ~RECEIVING;	/* deblock destination */
-      if (dst_ptr->p_rts_flags == 0) ready(dst_ptr);
+      if (dst_ptr->p_rts_flags == 0) enqueue(dst_ptr);
       return(OK);
   } 
 
@@ -399,28 +396,49 @@ int dst;			/* who is to be notified */
 
 
 /*===========================================================================*
- *				ready					     * 
+ *				enqueue					     * 
  *===========================================================================*/
-PRIVATE void ready(rp)
+PRIVATE void enqueue(rp)
 register struct proc *rp;	/* this process is now runnable */
 {
-/* Add 'rp' to one of the queues of runnable processes.  */
-  register int q = rp->p_priority;		/* scheduling queue to use */
+/* Add 'rp' to one of the queues of runnable processes. We need to decide
+ * where to put the process based on its quantum. If there is time left, it
+ * is added to the front of its queue, so that it can immediately run. 
+ * Otherwise its is given a new quantum and added to the rear of the queue.
+ */
+  register int q; 				/* scheduling queue to use */
+  int time_left;				/* quantum fully used? */
+
+  /* Check if the process has time left and determine what queue to use. A
+   * process that consumed a full quantum is given a lower priority, so that 
+   * the CPU-bound processes cannot starve I/O-bound processes. When the 
+   * threshold is reached, the scheduling queues are balanced to prevent all
+   * processes from ending up in the lowest queue.
+   */
+  time_left = (rp->p_sched_ticks > 0);		/* check ticks left */
+  if ( ! time_left) {				/* quantum consumed ? */
+      rp->p_sched_ticks = rp->p_quantum_size;   /* give new quantum */
+#if DEAD_CODE
+      if (proc_nr(rp) != IDLE) {		/* already lowest priority */
+          rp->p_priority ++;			/* lower the priority */
+          if (rp->p_priority >= IDLE_Q) 	/* threshold exceeded */
+              balance_queues(rp);		/* rebalance queues */
+      }
+#endif
+  }
+  q = rp->p_priority;				/* scheduling queue to use */
 
 #if DEBUG_SCHED_CHECK
-  check_runqueues("ready");
-  if(rp->p_ready) kprintf("ready() already ready process\n");
+  check_runqueues("enqueue");
+  if(rp->p_ready) kprintf("enqueue() already ready process\n");
 #endif
 
-  /* Processes, in principle, are added to the end of the queue. However, 
-   * user processes are added in front of the queue, because this is a bit 
-   * fairer to I/O bound processes. 
-   */
+  /* Now add the process to the queue. */
   if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   } 
-  else if (priv(rp)->s_flags & RDY_Q_HEAD) {    /* add to head of queue */
+  else if (time_left) {				/* add to head of queue */
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
       rdy_head[q] = rp;				/* set new queue head */
   } 
@@ -433,14 +451,14 @@ register struct proc *rp;	/* this process is now runnable */
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 1;
-  check_runqueues("ready");
+  check_runqueues("enqueue");
 #endif
 }
 
 /*===========================================================================*
- *				unready					     * 
+ *				dequeue					     * 
  *===========================================================================*/
-PRIVATE void unready(rp)
+PRIVATE void dequeue(rp)
 register struct proc *rp;	/* this process is no longer runnable */
 {
 /* A process has blocked. See ready for a description of the queues. */
@@ -456,8 +474,8 @@ register struct proc *rp;	/* this process is no longer runnable */
   }
 
 #if DEBUG_SCHED_CHECK
-  check_runqueues("unready");
-  if (! rp->p_ready) kprintf("unready() already unready process\n");
+  check_runqueues("dequeue");
+  if (! rp->p_ready) kprintf("dequeue() already unready process\n");
 #endif
 
   /* Now make sure that the process is not in its ready queue. Remove the 
@@ -478,62 +496,67 @@ register struct proc *rp;	/* this process is no longer runnable */
       prev_xp = *xpp;				/* save previous in chain */
   }
   
+#if DEAD_CODE
   /* The caller blocked. Reset the scheduling priority and quantums allowed.
    * The process' priority may have been lowered if a process consumed too 
    * many full quantums in a row to prevent damage from infinite loops 
    */
   rp->p_priority = rp->p_max_priority;
   rp->p_full_quantums = QUANTUMS(rp->p_priority);
+#endif
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 0;
-  check_runqueues("unready");
+  check_runqueues("dequeue");
 #endif
 }
+
 
 /*===========================================================================*
  *				sched					     * 
  *===========================================================================*/
-PRIVATE void sched(sched_ptr)
-struct proc *sched_ptr;				/* quantum eating process */
+PRIVATE void sched(sched_ptr, queue, front)
+struct proc *sched_ptr;				/* process to be scheduled */
+int *queue;					/* return: queue to use */
+int *front;					/* return: front or back */
 {
-  int q;
 
-  /* Check if this process is preemptible, otherwise leave it as is. */
-  if (! (priv(sched_ptr)->s_flags & PREEMPTIBLE))  return;
+}
 
-  /* Process exceeded the maximum number of full quantums it is allowed
-   * to use in a row. Lower the process' priority, but make sure we don't 
-   * end up in the IDLE queue. This helps to limit the damage caused by 
-   * for example infinite loops in high-priority processes. 
-   * This is a rare situation, so the overhead is acceptable.  
+/*===========================================================================*
+ *				balance_queues				     * 
+ *===========================================================================*/
+PRIVATE void balance_queues(pp)
+struct proc *pp;				/* process that caused this */
+{
+/* To balance the scheduling queues, they will be rebuild whenever a process
+ * is put in the lowest queues where IDLE resides. All processes get their 
+ * priority raised up to their maximum priority. 
+ */ 
+  register struct proc *rp;
+  register int q;
+  int penalty = pp->p_priority - pp->p_max_priority;
+
+  /* First clean up the old scheduling queues. */
+  for (q=0; q<NR_SCHED_QUEUES; q++) {
+      rdy_head[q] = rdy_tail[q] = NIL_PROC;
+  }
+
+  /* Then rebuild the queues, while balancing priorities. Each process that is 
+   * in use may get a higher priority and gets a new quantum. Processes that
+   * are runnable are added to the scheduling queues, unless it concerns the
+   * process that caused this function to be called (it will be added after 
+   * returning from this function). 
    */
-  if (-- sched_ptr->p_full_quantums <= 0) {	/* exceeded threshold */ 
-      if (sched_ptr->p_priority + 1 < IDLE_Q ) {
-	  q = sched_ptr->p_priority + 1;	/* backup new priority */
-          unready(sched_ptr);			/* remove from queues */
-          sched_ptr->p_priority = q; 		/* lower priority */
-          ready(sched_ptr);			/* add to new queue */
+  for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
+      if (! (rp->p_rts_flags & SLOT_FREE)) {	/* update in-use slots */
+          rp->p_priority = MAX(rp->p_priority - penalty, rp->p_max_priority);
+          rp->p_sched_ticks = rp->p_quantum_size;
+          if (rp->p_rts_flags == 0) {		/* process is runnable */
+              if (rp != pp) enqueue(rp);	/* add it to a queue */
+          }
       }
-      sched_ptr->p_full_quantums = QUANTUMS(sched_ptr->p_priority);
   }
-
-  /* The current process has run too long. If another low priority (user)
-   * process is runnable, put the current process on the tail of its queue,
-   * possibly promoting another user to head of the queue. Don't do anything
-   * if the queue is empty, or the process to be scheduled is not the head.
-   */
-  q = sched_ptr->p_priority;			/* convenient shorthand */
-  if (rdy_head[q] == sched_ptr) {		  
-      rdy_tail[q]->p_nextready = rdy_head[q];  	/* add expired to end */
-      rdy_tail[q] = rdy_head[q];	   	/* set new queue tail */
-      rdy_head[q] = rdy_head[q]->p_nextready;  	/* set new queue head */
-      rdy_tail[q]->p_nextready = NIL_PROC;   	/* mark new queue end */
-  }
-
-  /* Give the expired process a new quantum and see who is next to run. */
-  sched_ptr->p_sched_ticks = sched_ptr->p_quantum_size;
-  pick_proc();					
 }
 
 
@@ -581,38 +604,27 @@ message *m_ptr;			/* pointer to message buffer */
 
 
 /*==========================================================================*
- *				lock_ready				    *
+ *				lock_enqueue				    *
  *==========================================================================*/
-PUBLIC void lock_ready(rp)
+PUBLIC void lock_enqueue(rp)
 struct proc *rp;		/* this process is now runnable */
 {
-/* Safe gateway to ready() for tasks. */
-  lock(3, "ready");
-  ready(rp);
+/* Safe gateway to enqueue() for tasks. */
+  lock(3, "enqueue");
+  enqueue(rp);
   unlock(3);
 }
 
 /*==========================================================================*
- *				lock_unready				    *
+ *				lock_dequeue				    *
  *==========================================================================*/
-PUBLIC void lock_unready(rp)
+PUBLIC void lock_dequeue(rp)
 struct proc *rp;		/* this process is no longer runnable */
 {
-/* Safe gateway to unready() for tasks. */
-  lock(4, "unready");
-  unready(rp);
+/* Safe gateway to dequeue() for tasks. */
+  lock(4, "dequeue");
+  dequeue(rp);
   unlock(4);
 }
 
-/*==========================================================================*
- *				lock_sched				    *
- *==========================================================================*/
-PUBLIC void lock_sched(sched_ptr)
-struct proc *sched_ptr;
-{
-/* Safe gateway to sched() for tasks. */
-  lock(5, "sched");
-  sched(sched_ptr);
-  unlock(5);
-}
 

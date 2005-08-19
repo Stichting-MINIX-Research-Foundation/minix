@@ -40,9 +40,9 @@ PUBLIC int do_nice(message *m_ptr)
    * queue if it is runnable.
    */
   rp = proc_addr(proc_nr);
-  lock_unready(rp);
+  lock_dequeue(rp);
   rp->p_max_priority = rp->p_priority = new_q;
-  if (! rp->p_rts_flags) lock_ready(rp);
+  if (! rp->p_rts_flags) lock_enqueue(rp);
 
   return(OK);
 }

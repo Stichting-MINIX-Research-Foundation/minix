@@ -40,7 +40,6 @@ struct priv {
 
 /* Bits for the system property flags. */
 #define PREEMPTIBLE	0x01	/* kernel tasks are not preemptible */
-#define RDY_Q_HEAD      0x02	/* add to queue head instead of tail */
 #define BILLABLE	0x04	/* some processes are not billable */
 #define SYS_PROC	0x10	/* system processes are privileged */
 #define SENDREC_BUSY	0x20	/* sendrec() in progress */

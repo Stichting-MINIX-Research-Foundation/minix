@@ -280,7 +280,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   if (! sigismember(&rp->p_pending, sig_nr)) {
       sigaddset(&rp->p_pending, sig_nr);
       if (! (rp->p_rts_flags & SIGNALED)) {		/* other pending */
-          if (rp->p_rts_flags == 0) lock_unready(rp);	/* make not ready */
+          if (rp->p_rts_flags == 0) lock_dequeue(rp);	/* make not ready */
           rp->p_rts_flags |= SIGNALED | SIG_PENDING;	/* update flags */
           send_sig(PM_PROC_NR, SIGKSIG);
       }

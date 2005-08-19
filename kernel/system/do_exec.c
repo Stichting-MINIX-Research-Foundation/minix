@@ -41,7 +41,7 @@ register message *m_ptr;	/* pointer to request message */
 #endif
   rp->p_reg.pc = (reg_t) m_ptr->PR_IP_PTR;	/* set pc */
   rp->p_rts_flags &= ~RECEIVING;	/* PM does not reply to EXEC call */
-  if (rp->p_rts_flags == 0) lock_ready(rp);
+  if (rp->p_rts_flags == 0) lock_enqueue(rp);
 
   /* Save command name for debugging, ps(1) output, etc. */
   phys_name = numap_local(m_ptr->m_source, (vir_bytes) m_ptr->PR_NAME_PTR,

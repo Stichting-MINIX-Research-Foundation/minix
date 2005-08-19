@@ -313,7 +313,7 @@ PRIVATE char *s_flags_str(int flags)
 {
 	static char str[10];
 	str[0] = (flags & PREEMPTIBLE) ? 'P' : '-';
-	str[1] = (flags & RDY_Q_HEAD)  ? 'Q' : '-';
+	str[1] = '-';
 	str[2] = (flags & BILLABLE)    ? 'B' : '-';
 	str[3] = (flags & SYS_PROC)    ? 'S' : '-';
 	str[4] = '-';

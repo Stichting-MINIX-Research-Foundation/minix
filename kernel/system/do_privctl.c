@@ -76,7 +76,7 @@ message *m_ptr;			/* pointer to request message */
   /* Done. Privileges have been set. Allow process to run again. */
   old_flags = rp->p_rts_flags;		/* save value of the flags */
   rp->p_rts_flags &= ~NO_PRIV; 		
-  if (old_flags != 0 && rp->p_rts_flags == 0) lock_ready(rp);
+  if (old_flags != 0 && rp->p_rts_flags == 0) lock_enqueue(rp);
   return(OK);
 }
 

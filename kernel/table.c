@@ -46,10 +46,10 @@
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 	
 /* Define flags for the various process types. */
-#define IDL_F 	(BILLABLE | SYS_PROC)		/* idle task */
+#define IDL_F 	(SYS_PROC | PREEMPTIBLE | BILLABLE)  /* idle task */
 #define TSK_F 	(SYS_PROC)			/* kernel tasks */
-#define SRV_F 	(BILLABLE | PREEMPTIBLE | SYS_PROC)	/* system services */
-#define USR_F	(PREEMPTIBLE | BILLABLE)	/* user processes */
+#define SRV_F 	(SYS_PROC | PREEMPTIBLE)	/* system services */
+#define USR_F	(BILLABLE | PREEMPTIBLE)	/* user processes */
 
 /* Define system call traps for the various process types. These call masks
  * determine what system call traps a process is allowed to make.
@@ -83,7 +83,8 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define FS_C	(c(SYS_KILL) | c(SYS_VIRCOPY) | c(SYS_VIRVCOPY) | c(SYS_UMAP) \
     | c(SYS_GETINFO) | c(SYS_EXIT) | c(SYS_TIMES) | c(SYS_SETALARM))
 #define DRV_C	(FS_C | c(SYS_SEGCTL) | c(SYS_IRQCTL) | c(SYS_INT86) \
-    | c(SYS_DEVIO) | c(SYS_VDEVIO) | c(SYS_SDEVIO) | c(SYS_PHYSCOPY) | c(SYS_PHYSVCOPY))
+    | c(SYS_DEVIO) | c(SYS_VDEVIO) | c(SYS_SDEVIO)) 
+#define MEM_C	(DRV_C | c(SYS_PHYSCOPY) | c(SYS_PHYSVCOPY))
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
@@ -94,15 +95,15 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  */
 PUBLIC struct boot_image image[] = {
 /* process nr,   pc, flags, qs,  queue, stack, traps, ipcto, call,  name */ 
- { IDLE,  idle_task, IDL_F, 32, IDLE_Q, IDL_S,     0,     0,     0, "IDLE"  },
- { CLOCK,clock_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,     0, "CLOCK" },
- { SYSTEM, sys_task, TSK_F,  0, TASK_Q, TSK_S, TSK_T,     0,     0, "SYSTEM"},
- { HARDWARE,      0, TSK_F,  0, TASK_Q, HRD_S,     0,     0,     0, "KERNEL"},
- { PM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SRV_M,  PM_C, "pm"    },
- { FS_PROC_NR,    0, SRV_F, 16,      4, 0,     SRV_T, SRV_M,  FS_C, "fs"    },
- { SM_PROC_NR,    0, SRV_F, 16,      3, 0,     SRV_T, SYS_M,  SM_C, "sm"    },
+ { IDLE,  idle_task, IDL_F,  8, IDLE_Q, IDL_S,     0,     0,     0, "IDLE"  },
+ { CLOCK,clock_task, TSK_F, 64, TASK_Q, TSK_S, TSK_T,     0,     0, "CLOCK" },
+ { SYSTEM, sys_task, TSK_F, 64, TASK_Q, TSK_S, TSK_T,     0,     0, "SYSTEM"},
+ { HARDWARE,      0, TSK_F, 64, TASK_Q, HRD_S,     0,     0,     0, "KERNEL"},
+ { PM_PROC_NR,    0, SRV_F, 32,      3, 0,     SRV_T, SRV_M,  PM_C, "pm"    },
+ { FS_PROC_NR,    0, SRV_F, 32,      4, 0,     SRV_T, SRV_M,  FS_C, "fs"    },
+ { SM_PROC_NR,    0, SRV_F, 32,      3, 0,     SRV_T, SYS_M,  SM_C, "sm"    },
  { TTY_PROC_NR,   0, SRV_F, 16,      1, 0,     SRV_T, SYS_M, DRV_C, "tty"   },
- { MEM_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, DRV_M, DRV_C, "memory"},
+ { MEM_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, DRV_M, MEM_C, "memory"},
  { LOG_PROC_NR,   0, SRV_F, 16,      2, 0,     SRV_T, SYS_M, DRV_C, "log"   },
  { DRVR_PROC_NR,  0, SRV_F, 16,      2, 0,     SRV_T, SYS_M, DRV_C, "driver"},
  { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     USR_T, USR_M,     0, "init"  },

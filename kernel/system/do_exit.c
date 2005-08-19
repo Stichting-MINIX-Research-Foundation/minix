@@ -55,7 +55,7 @@ register struct proc *rc;		/* slot of process to clean up */
   reset_timer(&priv(rc)->s_alarm_timer);
 
   /* Make sure that the exiting process is no longer scheduled. */
-  if (rc->p_rts_flags == 0) lock_unready(rc);
+  if (rc->p_rts_flags == 0) lock_dequeue(rc);
 
   /* If the process being terminated happens to be queued trying to send a
    * message (e.g., the process was killed by a signal, rather than it doing 

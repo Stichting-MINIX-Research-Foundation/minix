@@ -32,7 +32,7 @@ message *m_ptr;			/* pointer to request message */
   /* PM has finished one kernel signal. Perhaps process is ready now? */
   if (! (rp->p_rts_flags & SIGNALED)) 		/* new signal arrived */
      if ((rp->p_rts_flags &= ~SIG_PENDING)==0)	/* remove pending flag */
-         lock_ready(rp);			/* ready if no flags */
+         lock_enqueue(rp);			/* ready if no flags */
   return(OK);
 }
 

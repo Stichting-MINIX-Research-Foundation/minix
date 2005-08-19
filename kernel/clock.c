@@ -112,18 +112,22 @@ message *m_ptr;				/* pointer to request message */
  * is called on those clock ticks when a lot of work needs to be done.
  */
 
+  /* A process used up a full quantum. The interrupt handler stored this
+   * process in 'prev_ptr'.  First make sure that the process is not on the 
+   * scheduling queues.  Then announce the process ready again. Since it has 
+   * no more time left, it will get a new quantum and inserted at the right 
+   * place in the queues.  As a side-effect a new process will be scheduled.
+   */ 
+  if (prev_ptr->p_sched_ticks <= 0 && priv(prev_ptr)->s_flags & PREEMPTIBLE) {
+      lock_dequeue(prev_ptr);		/* take it off the queues */
+      lock_enqueue(prev_ptr);		/* and reinsert it again */ 
+  }
+
   /* Check if a clock timer expired and run its watchdog function. */
   if (next_timeout <= realtime) { 
   	tmrs_exptimers(&clock_timers, realtime, NULL);
   	next_timeout = clock_timers == NULL ? 
 		TMR_NEVER : clock_timers->tmr_exp_time;
-  }
-
-  /* A process used up a full quantum. The interrupt handler stored this
-   * process in 'prev_ptr'. Reset the quantum and schedule another process. 
-   */
-  if (prev_ptr->p_sched_ticks <= 0) {
-      lock_sched(prev_ptr);  
   }
 
   /* Inhibit sending a reply. */
@@ -177,8 +181,13 @@ irq_hook_t *hook;
    * Thus the unbillable process' user time is the billable user's system time.
    */
   proc_ptr->p_user_time += ticks;
-  if (proc_ptr != bill_ptr) bill_ptr->p_sys_time += ticks;
-  if (priv(proc_ptr)->s_flags & PREEMPTIBLE) proc_ptr->p_sched_ticks -= ticks;
+  if (priv(proc_ptr)->s_flags & PREEMPTIBLE) {
+      proc_ptr->p_sched_ticks -= ticks;
+  }
+  if (! (priv(proc_ptr)->s_flags & BILLABLE)) {
+      bill_ptr->p_sys_time += ticks;
+      bill_ptr->p_sched_ticks -= ticks;
+  }
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 
