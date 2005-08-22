@@ -118,7 +118,7 @@ message *m_ptr;				/* pointer to request message */
    * no more time left, it will get a new quantum and inserted at the right 
    * place in the queues.  As a side-effect a new process will be scheduled.
    */ 
-  if (prev_ptr->p_sched_ticks <= 0 && priv(prev_ptr)->s_flags & PREEMPTIBLE) {
+  if (prev_ptr->p_ticks_left <= 0 && priv(prev_ptr)->s_flags & PREEMPTIBLE) {
       lock_dequeue(prev_ptr);		/* take it off the queues */
       lock_enqueue(prev_ptr);		/* and reinsert it again */ 
   }
@@ -182,17 +182,17 @@ irq_hook_t *hook;
    */
   proc_ptr->p_user_time += ticks;
   if (priv(proc_ptr)->s_flags & PREEMPTIBLE) {
-      proc_ptr->p_sched_ticks -= ticks;
+      proc_ptr->p_ticks_left -= ticks;
   }
   if (! (priv(proc_ptr)->s_flags & BILLABLE)) {
       bill_ptr->p_sys_time += ticks;
-      bill_ptr->p_sched_ticks -= ticks;
+      bill_ptr->p_ticks_left -= ticks;
   }
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
-  if ((next_timeout <= realtime) || (proc_ptr->p_sched_ticks <= 0)) {
+  if ((next_timeout <= realtime) || (proc_ptr->p_ticks_left <= 0)) {
       prev_ptr = proc_ptr;			/* store running process */
       lock_notify(HARDWARE, CLOCK);		/* send notification */
   } 

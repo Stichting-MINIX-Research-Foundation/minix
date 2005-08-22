@@ -12,8 +12,8 @@
  *   lock_dequeue:    remove a process from the scheduling queues
  *
  * Changes:
- *   Aug 19, 2005     rewrote multilevel scheduling code  (Jorrit N. Herder)
- *   Jul 25, 2005     protection and checks in sys_call()  (Jorrit N. Herder)
+ *   Aug 19, 2005     rewrote scheduling code  (Jorrit N. Herder)
+ *   Jul 25, 2005     rewrote system call handling  (Jorrit N. Herder)
  *   May 26, 2005     rewrote message passing functions  (Jorrit N. Herder)
  *   May 24, 2005     new notification system call  (Jorrit N. Herder)
  *   Oct 28, 2004     nonblocking send and receive calls  (Jorrit N. Herder)
@@ -56,7 +56,6 @@ FORWARD _PROTOTYPE( void enqueue, (struct proc *rp) );
 FORWARD _PROTOTYPE( void dequeue, (struct proc *rp) );
 FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front) );
 FORWARD _PROTOTYPE( void pick_proc, (void) );
-FORWARD _PROTOTYPE( void balance_queues, (struct proc *rp) );
 
 #define BuildMess(m_ptr, src, dst_ptr) \
 	(m_ptr)->m_source = (src); 					\
@@ -401,44 +400,28 @@ int dst;			/* who is to be notified */
 PRIVATE void enqueue(rp)
 register struct proc *rp;	/* this process is now runnable */
 {
-/* Add 'rp' to one of the queues of runnable processes. We need to decide
- * where to put the process based on its quantum. If there is time left, it
- * is added to the front of its queue, so that it can immediately run. 
- * Otherwise its is given a new quantum and added to the rear of the queue.
+/* Add 'rp' to one of the queues of runnable processes.  This function is 
+ * responsible for inserting a process into one of the scheduling queues. 
+ * The mechanism is implemented here.   The actual scheduling policy is
+ * defined in sched() and pick_proc().
  */
-  register int q; 				/* scheduling queue to use */
-  int time_left;				/* quantum fully used? */
-
-  /* Check if the process has time left and determine what queue to use. A
-   * process that consumed a full quantum is given a lower priority, so that 
-   * the CPU-bound processes cannot starve I/O-bound processes. When the 
-   * threshold is reached, the scheduling queues are balanced to prevent all
-   * processes from ending up in the lowest queue.
-   */
-  time_left = (rp->p_sched_ticks > 0);		/* check ticks left */
-  if ( ! time_left) {				/* quantum consumed ? */
-      rp->p_sched_ticks = rp->p_quantum_size;   /* give new quantum */
-#if DEAD_CODE
-      if (proc_nr(rp) != IDLE) {		/* already lowest priority */
-          rp->p_priority ++;			/* lower the priority */
-          if (rp->p_priority >= IDLE_Q) 	/* threshold exceeded */
-              balance_queues(rp);		/* rebalance queues */
-      }
-#endif
-  }
-  q = rp->p_priority;				/* scheduling queue to use */
+  int q;	 				/* scheduling queue to use */
+  int front;					/* add to front or back */
 
 #if DEBUG_SCHED_CHECK
   check_runqueues("enqueue");
   if(rp->p_ready) kprintf("enqueue() already ready process\n");
 #endif
 
+  /* Determine where to insert to process. */
+  sched(rp, &q, &front);
+
   /* Now add the process to the queue. */
   if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
       rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   } 
-  else if (time_left) {				/* add to head of queue */
+  else if (front) {				/* add to head of queue */
       rp->p_nextready = rdy_head[q];		/* chain head of queue */
       rdy_head[q] = rp;				/* set new queue head */
   } 
@@ -447,7 +430,9 @@ register struct proc *rp;	/* this process is now runnable */
       rdy_tail[q] = rp;				/* set new queue tail */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   }
-  pick_proc();					/* select next to run */
+
+  /* Now select the next process to run. */
+  pick_proc();			
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 1;
@@ -461,8 +446,10 @@ register struct proc *rp;	/* this process is now runnable */
 PRIVATE void dequeue(rp)
 register struct proc *rp;	/* this process is no longer runnable */
 {
-/* A process has blocked. See ready for a description of the queues. */
-
+/* A process must be removed from the scheduling queues, for example, because
+ * it has blocked.  If the currently active process is removed, a new process
+ * is picked to run by calling pick_proc().
+ */
   register int q = rp->p_priority;		/* queue to use */
   register struct proc **xpp;			/* iterate over queue */
   register struct proc *prev_xp;
@@ -496,15 +483,6 @@ register struct proc *rp;	/* this process is no longer runnable */
       prev_xp = *xpp;				/* save previous in chain */
   }
   
-#if DEAD_CODE
-  /* The caller blocked. Reset the scheduling priority and quantums allowed.
-   * The process' priority may have been lowered if a process consumed too 
-   * many full quantums in a row to prevent damage from infinite loops 
-   */
-  rp->p_priority = rp->p_max_priority;
-  rp->p_full_quantums = QUANTUMS(rp->p_priority);
-#endif
-
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 0;
   check_runqueues("dequeue");
@@ -515,48 +493,42 @@ register struct proc *rp;	/* this process is no longer runnable */
 /*===========================================================================*
  *				sched					     * 
  *===========================================================================*/
-PRIVATE void sched(sched_ptr, queue, front)
-struct proc *sched_ptr;				/* process to be scheduled */
+PRIVATE void sched(rp, queue, front)
+register struct proc *rp;			/* process to be scheduled */
 int *queue;					/* return: queue to use */
 int *front;					/* return: front or back */
 {
+/* This function determines the scheduling policy. It is called whenever a
+ * process must be added to one of the scheduling queues to decide where to
+ * insert it. 
+ */
+  int time_left;
+  int penalty;
 
-}
-
-/*===========================================================================*
- *				balance_queues				     * 
- *===========================================================================*/
-PRIVATE void balance_queues(pp)
-struct proc *pp;				/* process that caused this */
-{
-/* To balance the scheduling queues, they will be rebuild whenever a process
- * is put in the lowest queues where IDLE resides. All processes get their 
- * priority raised up to their maximum priority. 
- */ 
-  register struct proc *rp;
-  register int q;
-  int penalty = pp->p_priority - pp->p_max_priority;
-
-  /* First clean up the old scheduling queues. */
-  for (q=0; q<NR_SCHED_QUEUES; q++) {
-      rdy_head[q] = rdy_tail[q] = NIL_PROC;
-  }
-
-  /* Then rebuild the queues, while balancing priorities. Each process that is 
-   * in use may get a higher priority and gets a new quantum. Processes that
-   * are runnable are added to the scheduling queues, unless it concerns the
-   * process that caused this function to be called (it will be added after 
-   * returning from this function). 
+  /* Check whether the process has time left. Otherwise give a new quantum.
    */
-  for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
-      if (! (rp->p_rts_flags & SLOT_FREE)) {	/* update in-use slots */
-          rp->p_priority = MAX(rp->p_priority - penalty, rp->p_max_priority);
-          rp->p_sched_ticks = rp->p_quantum_size;
-          if (rp->p_rts_flags == 0) {		/* process is runnable */
-              if (rp != pp) enqueue(rp);	/* add it to a queue */
-          }
-      }
+  time_left = (rp->p_ticks_left > 0);		/* check ticks left */
+  if ( ! time_left) {				/* quantum consumed ? */
+      rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
   }
+
+  /* Determine the new priority of this process. User and system processes
+   * are treated different. They can be distinguished because only user
+   * processes (and IDLE) are billable.
+   */
+  penalty = 0;
+  if (priv(rp)->s_flags & BILLABLE) {		/* user process */
+  }
+  else {					/* system process */
+  }
+  rp->p_priority = MIN((rp->p_max_priority + penalty), (IDLE_Q - 1));
+
+  /* If there is time left, the process is added to the front of its queue, 
+   * so that it can immediately run. The queue to use simply is always the
+   * process' current priority. 
+   */
+  *queue = rp->p_priority;
+  *front = time_left;
 }
 
 

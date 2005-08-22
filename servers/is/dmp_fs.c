@@ -68,6 +68,7 @@ PUBLIC void dtab_dmp()
     printf("Major  Proc\n");
     printf("-----  ----\n");
     for (i=0; i<NR_DEVICES; i++) {
+        if (dmap[i].dmap_driver == 0) continue;
         printf("%5d  ", i);
         printf("%4d\n", dmap[i].dmap_driver);
         

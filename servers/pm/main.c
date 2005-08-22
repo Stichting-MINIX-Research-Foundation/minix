@@ -16,7 +16,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <sys/ioc_memory.h>
+#include <sys/resource.h>
 #include <string.h>
 #include "mproc.h"
 #include "param.h"
@@ -24,9 +24,11 @@
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
+#include "../../kernel/proc.h"
 
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void pm_init, (void)				);
+FORWARD _PROTOTYPE( int get_nice_value, (int queue)				);
 FORWARD _PROTOTYPE( void get_mem_chunks, (struct memory *mem_chunks) 	);
 FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks, 
 	struct mem_map *map_ptr) 	);
@@ -207,6 +209,7 @@ PRIVATE void pm_init()
 		rmp = &mproc[ip->proc_nr];	
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
 		rmp->mp_parent = SM_PROC_NR;
+		rmp->mp_nice = get_nice_value(ip->priority);
 		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
   			rmp->mp_pid = INIT_PID;
 			rmp->mp_flags |= IN_USE; 
@@ -267,6 +270,22 @@ PRIVATE void pm_init()
   printf(" free %u KB.\n", click_to_round_k(free_clicks));
 }
 
+/*=========================================================================*
+ *				get_nice_value				   *
+ *=========================================================================*/
+PRIVATE int get_nice_value(queue)
+int queue;				/* store mem chunks here */
+{
+/* Processes in the boot image have a priority assigned. The PM doesn't know
+ * about priorities, but uses 'nice' values instead. The priority is between 
+ * MIN_USER_Q and MAX_USER_Q. We have to scale between PRIO_MIN and PRIO_MAX.
+ */ 
+  int nice_val = (queue - USER_Q) * (PRIO_MAX-PRIO_MIN+1) / 
+      (MIN_USER_Q-MAX_USER_Q+1);
+  if (nice_val > PRIO_MAX) nice_val = PRIO_MAX;	/* shouldn't happen */
+  if (nice_val < PRIO_MIN) nice_val = PRIO_MIN;	/* shouldn't happen */
+  return nice_val;
+}
 
 #if _WORD_SIZE == 2
 /* In real mode only 1M can be addressed, and in 16-bit protected we can go

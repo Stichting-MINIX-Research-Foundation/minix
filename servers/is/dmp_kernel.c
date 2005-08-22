@@ -472,7 +472,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n--nr-name---- -prior-quant-##- -user---sys- -text---data---size- -rts flags-\n");
+  printf("\n--nr-name---- -prior-quant- -user---sys- -text---data---size- -rts flags-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -484,11 +484,10 @@ PUBLIC void proctab_dmp()
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
-	printf(" %-8.8s %02u/%02u %02d/%02d %02u %6lu%6lu %6uK%6uK%6uK %s",
+	printf(" %-8.8s %02u/%02u %02u/%02u %6lu%6lu %6uK%6uK%6uK %s",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
-	       rp->p_sched_ticks, rp->p_quantum_size, 
-	       rp->p_full_quantums, 
+	       rp->p_ticks_left, rp->p_quantum_size, 
 	       rp->p_user_time, rp->p_sys_time,
 	       click_to_round_k(text), click_to_round_k(data),
 	       click_to_round_k(size),

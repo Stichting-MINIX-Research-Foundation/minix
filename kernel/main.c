@@ -77,8 +77,7 @@ PUBLIC void main()
 	rp->p_max_priority = ip->priority;	/* max scheduling priority */
 	rp->p_priority = ip->priority;		/* current priority */
 	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
-	rp->p_sched_ticks = ip->quantum;	/* current credit */
-	rp->p_full_quantums = QUANTUMS(ip->priority);   /* nr quantums left */
+	rp->p_ticks_left = ip->quantum;		/* current credit */
 	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
 	(void) get_priv(rp, (ip->flags & SYS_PROC));    /* assign structure */
 	priv(rp)->s_flags = ip->flags;			/* process flags */

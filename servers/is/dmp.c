@@ -57,6 +57,7 @@ PUBLIC int do_fkey_pressed(message *m)
 
   /* Also check Shift F1-F6 keys. */
   if (pressed(SF1))	mproc_dmp();
+  if (pressed(SF2))	sigaction_dmp();
 
   if (pressed(SF3))	fproc_dmp();
   if (pressed(SF4))	dtab_dmp();

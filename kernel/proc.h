@@ -33,8 +33,9 @@ struct proc {
   char p_priority;		/* current scheduling priority */
   char p_max_priority;		/* maximum scheduling priority */
   char p_quantum_size;		/* quantum size in ticks */
-  char p_sched_ticks;		/* number of scheduling ticks left */
-  char p_full_quantums;		/* number of full quantums left */
+  char p_ticks_left;		/* number of scheduling ticks left */
+  char p_history;		/* scheduling history ageing algorithm */
+  short p_block_count;		/* times blocked in current quantum */
 
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
 
@@ -42,7 +43,6 @@ struct proc {
   clock_t p_sys_time;		/* sys time in ticks */
 
   struct proc *p_nextready;	/* pointer to next ready process */
-  struct notification *p_ntf_q;	/* queue of pending notifications */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_q_link;	/* link to next proc wishing to send */
   message *p_messbuf;		/* pointer to passed message buffer */
@@ -79,9 +79,6 @@ struct proc {
 #define USER_Q  	   7    /* default (should correspond to nice 0) */   
 #define MIN_USER_Q	  14	/* minimum priority for user processes */
 #define IDLE_Q		  15    /* lowest, only IDLE process goes here */
-
-/* Each queue has a maximum number of full quantums associated with it. */
-#define QUANTUMS(q)	(1 + (NR_SCHED_QUEUES - (q))/2)
 
 /* Magic process table addresses. */
 #define BEG_PROC_ADDR (&proc[0])
