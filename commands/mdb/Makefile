@@ -11,7 +11,7 @@ USR		=/usr
 #
 # For ANSI C and Minix 1.7.x 32-bit 
 #
-CC		=exec cc -O2
+CC		=exec cc 
 LD		=exec cc
 LDFLAGS		=-i
 TARGET		=mdb
