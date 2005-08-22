@@ -419,27 +419,12 @@ fi
 
 umount /dev/$root >/dev/null || exit	# Unmount the new root.
 
-# Compute size of the second level file block cache.
-case `arch` in
-i86)
-    cache=`expr "0$memsize" - 1024`
-    test $cache -lt 32 && cache=0
-    test $cache -gt 512 && cache=512
-    ;;
-*)
-    cache=`expr "0$memsize" - 2560`
-    test $cache -lt 64 && cache=0
-    test $cache -gt 1024 && cache=1024
-esac
-# echo "Second level file system block cache set to $cache KB."
-if [ $cache -eq 0 ]; then cache=; else cache="ramsize=$cache"; fi
-
 # Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable $cache; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
 pfile="/usr/src/tools/fdbootparams"
 # echo "Remembering boot parameters in ${pfile}."
-echo "rootdev=$root; ramimagedev=$root; $cache; save" >$pfile || exit
+echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile || exit
 sync
 
 echo "
