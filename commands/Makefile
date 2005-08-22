@@ -12,9 +12,9 @@ usage:
 	@false
 
 all install::
-	cd $(FLEX) && ./configure --prefix=/usr && make $@
-	cd $(GZIP) && ./configure --prefix=/usr && make $@
-	cd $(PYTHON) && ./configure --prefix=/usr/local && make $@
+	cd $(FLEX) && /bin/sh ./configure --prefix=/usr && make $@
+	cd $(GZIP) && /bin/sh ./configure --prefix=/usr && make $@
+	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && make $@
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
