@@ -65,7 +65,6 @@ void test26a()
   subtest = 1;
   System("rm -rf ../DIR_26/*");
 
-
   System("echo -n hihaho > hihaho");
   if ((fd = open("hihaho", O_RDONLY)) != 3) e(1);
   if (lseek(fd, (off_t) 3, SEEK_SET) != (off_t) 3) e(2);
@@ -245,7 +244,6 @@ void test26c()
   }
 }
 
-
 void e(n)
 int n;
 {
@@ -262,7 +260,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

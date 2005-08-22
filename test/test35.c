@@ -170,8 +170,6 @@ void test35b()
   if (chmod("foo", 0777) != 0) e(5);
   if (utime("foo", NULL) != 0) e(6);
 
-
-
   System("rm -rf ../DIR_35/*");
 }
 
@@ -291,8 +289,6 @@ void test35c()
   System("rm -rf ../DIR_35/*");
 }
 
-
-
 void makelongnames()
 {
   register int i;
@@ -314,8 +310,6 @@ void makelongnames()
   PathTooLong[PATH_MAX] = '\0';	/* inc PathTooLong by one */
 }
 
-
-
 void e(n)
 int n;
 {
@@ -333,7 +327,6 @@ int n;
   errno = 0;
 }
 
-
 void quit()
 {
   Chdir("..");
@@ -347,7 +340,6 @@ void quit()
 	exit(1);
   }
 }
-
 
 /* Getids returns a valid uid and gid. Is used PASSWD FILE.
 ** It assumes the following format for a passwd file line:

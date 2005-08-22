@@ -8,7 +8,6 @@
  * 
  * Ben Gras
  */
-
 #include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -22,17 +21,12 @@
 #include <string.h>
 #include <signal.h>
 #include <libutil.h>
-
 char name[100];
-
 void pipehandler(int sig)
 {
-
 }
-
 #define CHILDFD 1
 #define PARENTFD 0
-
 void do_child(int pty_fds[]) 
 {
 	/* reads from pipe and prints out the data */
@@ -41,10 +35,8 @@ void do_child(int pty_fds[])
 	fd_set fds_read;
 	fd_set fds_exception;	
 	struct timeval timeout;
-
 	signal(SIGPIPE, pipehandler);
 	signal(SIGUSR1, pipehandler);
-
 	/* first, close the write part, since it is not needed */
 	close(pty_fds[PARENTFD]);
 	
@@ -83,19 +75,15 @@ void do_child(int pty_fds[])
 	
 	exit(0);
 }
-
 void do_parent(int pty_fds[]) 
 {
 	char data[1024];
 	int retval;
 	fd_set fds_write;
-
 	signal(SIGPIPE, pipehandler);
 	signal(SIGUSR1, pipehandler);
-
 	/* first, close the read part of pty, since it is not needed */
 	close(pty_fds[CHILDFD]);
-
 	/* now enter a loop of read user input, and writing it to the pty */
 	while (1) {
 		FD_ZERO(&fds_write);
@@ -108,7 +96,6 @@ void do_parent(int pty_fds[])
 			fprintf(stderr, "Parent: Error in select\n");
 			exit(-1);
 		}		
-
 		printf("Input data: ");
 		if(!gets(data)) {
 			printf("parent: eof; exiting\n");
@@ -127,20 +114,17 @@ void do_parent(int pty_fds[])
 			exit(-1);
 		} else printf("wrote %d\n", retval);
 	}
-
 	/* got exit from user */
 	close(pty_fds[PARENTFD]);	/* close pty, let child know we're done */
 	wait(&retval);
 	printf("Child exited with status: %d\n", retval);
 	exit(0);
 }
-
 int main(int argc, char *argv[])
 {
 	int ptys[2];
 	int retval;
 	int pid;	
-
 	if(openpty(&ptys[0], &ptys[1], name, NULL, NULL) < 0) {
 		perror("openpty");
 		return 1;
@@ -151,12 +135,10 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error forking\n");
 		exit(-1);
 	}
-
 	if (pid == 0) /* child proc */
 		do_child(ptys);
 	else
 		do_parent(ptys);
-
 	/* not reached */
 	return 0;
 }

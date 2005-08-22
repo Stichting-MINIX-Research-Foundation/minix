@@ -56,7 +56,6 @@ char *s1, *s2;
   }
 }
 
-
 void e(n)
 int n;
 {

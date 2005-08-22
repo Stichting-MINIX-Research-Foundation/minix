@@ -106,7 +106,6 @@ void main(void) {
 	FD_SET(fd3, &fds_read);		/* fd3 => O_WRONLY */
 	FD_SET(fd4, &fds_read);		/* fd4 => O_WRONLY */
 
-
 	/* make a select call where none of them are ready (don't use fd5 and fd6) */
 	/* create a timeout as well */
 	timeout.tv_sec = 5;
@@ -119,7 +118,6 @@ void main(void) {
 	dump_fdset(&fds_read);
 	printf("* Dump RESULTING fds_write:\n");
 	dump_fdset(&fds_write);	
-
 
 	/* close and delete dummy files */
 	close(fd1);

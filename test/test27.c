@@ -58,7 +58,6 @@ char *argv[];
   quit();
 }
 
-
 void test27a()
 {				/* Test Normal operation. */
   struct stat st1, st2;
@@ -296,7 +295,6 @@ void test27c()
   System("rm -rf ../DIR_27/*");
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -334,7 +332,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

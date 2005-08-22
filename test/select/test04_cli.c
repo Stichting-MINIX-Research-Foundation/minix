@@ -34,7 +34,6 @@ typedef struct
   char data[1024];
 } udp_buffer_t;
 
-
 int udp_conf(char *host, long port, udp_io_hdr_t *header)
 {
   /* configures UDP connection */

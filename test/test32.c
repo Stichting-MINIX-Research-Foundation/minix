@@ -335,8 +335,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
-
 void e(n)
 int n;
 {
@@ -353,7 +351,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

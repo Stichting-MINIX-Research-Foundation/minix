@@ -22,7 +22,6 @@
 #include <net/netlib.h>
 #include <time.h>
 
-
 #define NUMBER 12
 
 void main(void) {

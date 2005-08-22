@@ -76,7 +76,6 @@ int udp_conf(long port) {
   return netfd;
 }
 
-
 int main(int argc,char *argv[]) {
   int fd;
   ssize_t data_read;

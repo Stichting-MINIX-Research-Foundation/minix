@@ -67,7 +67,6 @@ char *argv[];
   quit();
 }
 
-
 void test30a()
 {				/* Test normal operation. */
 
@@ -233,7 +232,6 @@ void test30b()
   MaxPath[strlen(MaxPath) - 1] = '/';	/* make ././.../a */
 }
 
-
 void test30c()
 {
   int fd;
@@ -291,7 +289,6 @@ void test30c()
   ToLongPath[PATH_MAX - 1] = '/';
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -313,8 +310,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
-
 void e(n)
 int n;
 {
@@ -331,7 +326,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

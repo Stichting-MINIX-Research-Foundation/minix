@@ -19,7 +19,6 @@
 #include <string.h>
 #include <limits.h>
 
-
 void main(void) {
 	fd_set fds_read, fds_write;
 	int retval;

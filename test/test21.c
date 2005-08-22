@@ -345,7 +345,6 @@ void test21d()
 
 }
 
-
 void test21e()
 {
 /* Test error conditions. */
@@ -422,7 +421,6 @@ void test21f()
   if (unlink("D1/y") != 0) e(10);
   if (rmdir("D1") != 0) e(11);
 }
-
 
 void test21g()
 {
@@ -590,7 +588,6 @@ void test21m()
   if (rmdir("D1") != 0) e(12);
 }
 
-
 void test21n()
 {
   int D1_before, D1_after, D2_before, D2_after, x_link, y_link;
@@ -624,7 +621,6 @@ void test21n()
   if (rmdir("D2") != 0) e(19);
 }
 
-
 void test21o()
 {
   /* Test trying to remove . and .. */
@@ -645,7 +641,6 @@ void test21o()
   if (rmdir("D1") != 0) e(14);
 }
 
-
 int get_link(name)
 char *name;
 {
@@ -658,7 +653,6 @@ char *name;
   }
   return(statbuf.st_nlink);
 }
-
 
 void e(n)
 int n;

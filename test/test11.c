@@ -67,13 +67,11 @@ char *argv[];
   return(0);
 }
 
-
 void test11a()
 {
 /* Test exec */
   int n, fd;
   char aa[4];
-
 
   subtest = 1;
 
@@ -120,8 +118,6 @@ void test11a()
 	exit(3);
   }
 }
-
-
 
 void test11b()
 {

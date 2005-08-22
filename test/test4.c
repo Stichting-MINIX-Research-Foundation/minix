@@ -39,7 +39,6 @@ int main()
   return(-1);			/* impossible */
 }
 
-
 void subr()
 {
   if ( (pid0 = fork()) != 0) {

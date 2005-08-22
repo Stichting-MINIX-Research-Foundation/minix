@@ -40,7 +40,6 @@ char *argv[];
   return(-1);			/* impossible */
 }
 
-
 void test16a()
 {
 /* Test atime, ctime, and mtime. */
@@ -207,7 +206,6 @@ void test16a()
   if (unlink("T16.k") != 0) e(86); 
 }
 
-
 void get_times(name, a, c, m)
 char *name;
 time_t *a, *c, *m;
@@ -219,8 +217,6 @@ time_t *a, *c, *m;
   *c = s.st_ctime;
   *m = s.st_mtime;
 }
-
-
 
 void e(n)
 int n;

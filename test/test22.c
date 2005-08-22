@@ -185,7 +185,6 @@ int n;
   errno = 0;
 }
 
-
 void quit()
 {
   Chdir("..");

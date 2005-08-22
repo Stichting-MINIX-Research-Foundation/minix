@@ -32,7 +32,6 @@ _PROTOTYPE(void pipecatcher, (int s));
 _PROTOTYPE(void e, (int n));
 _PROTOTYPE(void quit, (void));
 
-
 int main(argc, argv)
 int argc;
 char *argv[];
@@ -115,7 +114,6 @@ void test19a()
   if (unlink("T19.a3") != 0) e(32);
 }
 
-
 void test19b()
 {
 /* Test open with O_APPEND and O_TRUNC. */
@@ -146,7 +144,6 @@ void test19b()
 
   unlink("T19.b1");
 }
-
 
 void test19c()
 {
@@ -280,8 +277,6 @@ void test19d()
   if (unlink("T19.d1") != 0) e(20);
 }
 
-
-
 void test19e()
 {
 /* Test link, unlink, stat, fstat, dup, umask.  */
@@ -381,7 +376,6 @@ void test19f()
   }
 }
 
-
 void test19g()
 {
 /* Test POSIX calls for pipe, read, write, lseek and close. */
@@ -477,20 +471,17 @@ void test19g()
   if (unlink("T19.g1") != 0) e(60);
 }
 
-
 void clraa()
 {
   int i;
   for (i = 0; i < 100; i++) aa[i] = 0;
 }
 
-
 void pipecatcher(s)
 int s;				/* it is supposed to have an arg */
 {
   pipesigs++;
 }
-
 
 void e(n)
 int n;
@@ -527,5 +518,4 @@ void quit()
 	exit(1);
   }
 }
-
 

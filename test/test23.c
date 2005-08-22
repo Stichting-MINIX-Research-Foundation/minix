@@ -292,7 +292,6 @@ void test23c()
   if (chdir(cwd) != 0) e(58);
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -314,7 +313,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
 /* The following code, is take from pwd written by Adri Koppes */
 
 /* My_getcwd() helper. */
@@ -330,7 +328,6 @@ char ch;
   }
   return(retval);
 }
-
 
 char *my_getcwd(buf, size)
 char *buf;
@@ -386,7 +383,6 @@ int size;
   return buf;
 }
 
-
 void e(n)
 int n;
 {
@@ -403,7 +399,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

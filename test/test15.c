@@ -577,7 +577,6 @@ void second()
   (void) memmove(one + 2, one + 1, 8);
   equal(one, "abbcdefgh", 14);
 
-
   /* Memccpy - first test like memcpy, then the search part 
    * The SVID, the only place where memccpy is mentioned, says overlap
    * might fail, so we don't try it.  Besides, it's hard to see the

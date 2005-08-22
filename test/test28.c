@@ -69,7 +69,6 @@ char *argv[];
   quit();
 }
 
-
 void test28a()
 {
   int mode;			/* used in for loop */
@@ -163,7 +162,6 @@ void test28a()
   if (st.st_mtime <= time1) e(43);
   if (st.st_mtime >= time2) e(44);
 }
-
 
 void test28b()
 {				/* Test critical values. */
@@ -387,7 +385,6 @@ void test28c()
   System("rm -rf foo");		/* clean up */
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -409,7 +406,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
 void e(n)
 int n;
 {
@@ -426,7 +422,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

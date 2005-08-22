@@ -37,7 +37,6 @@ typedef struct
   char data[1024];
 } udp_buffer_t;
 
-
 int udp_conf(char *host, long port, udp_io_hdr_t *header)
 {
   /* configures UDP connection */
@@ -114,7 +113,6 @@ int main(int argc,char *argv[]) {
 
   if ((fd = udp_conf(argv[1], PORT, &buffer_send.header) ) < 0) 
     exit(-1);	
-
 
   while (1) 
   {

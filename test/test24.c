@@ -39,7 +39,6 @@ char MaxPath[PATH_MAX];		/* Same for path */
 char ToLongName[NAME_MAX + 2];	/* Name of maximum +1 length */
 char ToLongPath[PATH_MAX + 1];	/* Same for path, both too long */
 
-
 void main(argc, argv)
 int argc;
 char *argv[];
@@ -165,7 +164,6 @@ void test24a()
   if (closedir(dirp) != 0) e(34);	/* close parent's foo */
 }
 
-
 void test24b()
 {
 /* See what happens with too many dir's open.  Check if file size seems ok, 
@@ -244,7 +242,6 @@ void test24b()
   if (strcmp(dep2->d_name, name) == 0) e(26);	/* Must be next */
   if (closedir(dirp[2]) != 0) e(27);
 }
-
 
 void test24c()
 {
@@ -349,7 +346,6 @@ DIR *dirp;			/* (`f1', `f3', `f5', `.', `..')  */
   subtest = oldsubtest;
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -371,7 +367,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
 void e(n)
 int n;
 {
@@ -388,7 +383,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

@@ -39,7 +39,6 @@ _PROTOTYPE(int not_provided_option, (int _option));
 _PROTOTYPE(int provided_option, (int _option, int _minimum_value));
 _PROTOTYPE(int variating_option, (int _option, int _minimum_value));
 
-
 char *testdirs[] = {
 	    "/",
 	    "/etc",
@@ -141,7 +140,6 @@ void test36d()
   System("rm -rf ../DIR_36/*");
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -163,8 +161,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
-
 void e(n)
 int n;
 {
@@ -181,7 +177,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {
@@ -208,7 +203,6 @@ int option;
   return 0;
 }
 
-
 int provided_option(option, minimum)
 int option, minimum;
 {
@@ -228,7 +222,6 @@ int option, minimum;
   }
   return 0;
 }
-
 
 int variating_option(option, minimum)
 int option, minimum;

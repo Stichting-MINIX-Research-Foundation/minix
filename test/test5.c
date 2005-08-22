@@ -40,7 +40,6 @@ _PROTOTYPE(void ex, (void));
 _PROTOTYPE(void e, (int n));
 _PROTOTYPE(void quit, (void));
 
-
 #ifdef _ANSI
 void (*Signal(int _sig, void (*_func)(int)))(int);
 #define SIG_ZERO	((void (*)(int))0)	/* default signal handling */
@@ -78,8 +77,6 @@ char *argv[];
   quit();
   return(-1);			/* impossible */
 }
-
-
 
 void test5a()
 {
@@ -156,7 +153,6 @@ int s;				/* for ANSI */
   e(38);
 }
 
-
 void test5b()
 {
   int cpid, n, pid;
@@ -183,7 +179,6 @@ void test5b()
 	exit(0);
   }
 }
-
 
 void test5c()
 {
@@ -225,8 +220,6 @@ void test5d()
   }
 }
 
-
-
 void test5e()
 {
 /* When a signal knocks a processes out of WAIT or PAUSE, it is supposed to
@@ -249,7 +242,6 @@ void test5e()
 	exit(0);
   }
 }
-
 
 void test5f()
 {
@@ -282,7 +274,6 @@ void test5f()
   }
 }
 
-
 void test5g()
 {
   int n;
@@ -300,7 +291,6 @@ int s;				/* for ANSI */
 {
   alarms++;
 }
-
 
 void test5h()
 {
@@ -357,14 +347,12 @@ void test5i()
   unlink("XXXxxxXXX");
 }
 
-
 void ex()
 {
   int e = errno;
   printf("Fork failed: %s (%d)\n", strerror(e), e);
   exit(1);
 }
-
 
 void e(n)
 int n;
@@ -395,7 +383,6 @@ void (*b)();
   else
 	return(SIG_ZERO);
 }
-
 
 void quit()
 {

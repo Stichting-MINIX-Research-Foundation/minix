@@ -63,7 +63,6 @@ char *argv[];
   return(-1);			/* impossible */
 }
 
-
 void test2a()
 {
 /* Test pipes */
@@ -123,7 +122,6 @@ void test2a()
   }
 }
 
-
 void test2b()
 {
   int fd[2], n;
@@ -147,8 +145,6 @@ void test2b()
 	exit(0);
   }
 }
-
-
 
 void test2c()
 {
@@ -264,7 +260,6 @@ void test2d()
   if (errno != ECHILD) e(26);
 }
 
-
 void test2e()
 {
 
@@ -300,7 +295,6 @@ void test2e()
   }
 
 }
-
 
 void test2f()
 {
@@ -375,7 +369,6 @@ void test2h()
   if (getgroups(1, g) != 0) e(2);
   if (getgroups(0, g) != 0) e(3);
 }
-
 
 void sigpip(s)
 int s;				/* for ANSI */

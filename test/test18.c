@@ -113,7 +113,6 @@ _PROTOTYPE(void clean_up_the_mess, (void));
 _PROTOTYPE(void chmod_8_dirs, (int sw));
 _PROTOTYPE(void quit, (void));
 
-
 /*****************************************************************************
  *                              TEST                                         *
  ****************************************************************************/
@@ -144,8 +143,6 @@ int main()
   return(0);
 }
 
-
-
 void test()
 {
   umask(0);			/* not honest, but i always forget */
@@ -160,11 +157,6 @@ void test()
   test07();
   umask(022);
 }				/* test */
-
-
-
-
-
 
 /* "t1.c" created by Rene Montsma and Menno Wilcke */
 
@@ -187,7 +179,6 @@ void test01()
 
   if ((tempvalue = umask(0)) != 0) err(2, UMASK, "values");
 
-
   /* Now test all possible modes of umask on a file */
   for (newvalue = MASK; newvalue >= 0; newvalue -= 0111) {
 	tempvalue = umask(newvalue);
@@ -209,8 +200,6 @@ void test01()
   if ((tempvalue = umask(0)) != 0)
 	err(7, UMASK, "umask may influence rest of tests!");
 }				/* test01 */
-
-
 
 /*****************************************************************************
  *                              test CREAT                                   *
@@ -334,10 +323,6 @@ void test02()
 	check(CREAT, EISDIR);
 }				/* test02 */
 
-
-
-
-
 /*****************************************************************************
  *                              test WRITE                                   *
  ****************************************************************************/
@@ -395,7 +380,6 @@ void test03()
   }
 }				/* test03 */
 
-
 void write_standards(filedes, a)
 int filedes;
 char a[];
@@ -420,13 +404,7 @@ char a[];
 #endif
 }				/* write_standards */
 
-
-
-
-
-
 /* "t2.c", created by Rene Montsma and Menno Wilcke */
-
 
 /*****************************************************************************
  *                              test READ                                    *
@@ -505,7 +483,6 @@ void test04()
   }
 }				/* test04 */
 
-
 void read_standards(filedes, a)
 int filedes;
 char a[];
@@ -520,13 +497,11 @@ char a[];
   else if (read(filedes, b, ARSIZE) != READ_EOF)
 	err(11, READ, "read beyond endoffile");
 
-
   /* Try giving read wrong input: wrong filedes */
   if (read(FAIL, b, ARSIZE) != FAIL)
 	err(2, READ, "filedes");
   else
 	check(READ, EBADF);
-
 
   /* Wrong length */
   if (read(filedes, b, -ARSIZE) != FAIL)
@@ -534,8 +509,6 @@ char a[];
   else
 	check(READ, EINVAL);
 }				/* read_standards */
-
-
 
 void read_more(filedes, a)
 int filedes;
@@ -662,10 +635,8 @@ void test05()
   else
 	check(OPEN, EACCES);
 
-
   /* Unlink testfile */
   try_unlink("file05");
-
 
   /* File is not readable */
   if (open("drwx/-wx", R) != FAIL)
@@ -698,7 +669,6 @@ void test05()
 	check(CLOSE, EBADF);
 }				/* test05 */
 
-
 void try_open(fname, mode, test)
 int mode, test;
 char *fname;
@@ -709,8 +679,6 @@ char *fname;
 	err(11, OPEN, "break through filepermission with an incorrect mode");
   if (n != FAIL) try_close(n, fname);	/* cleanup */
 }				/* try_open */
-
-
 
 /*****************************************************************************
  *                              test LSEEK                                   *
@@ -771,11 +739,7 @@ void test06()
 
 }
 
-
-
-
 /* "t3.c", created by Rene Montsma and Menno Wilcke */
-
 
 /*****************************************************************************
  *                              test ACCESS                                  *
@@ -794,7 +758,6 @@ void test07()
   access_standards();
 
   if (chdir("..") != OK) err(5, CHDIR, "'..'");
-
 
   /* Check several wrong combinations */
   /* File does not exist */
@@ -816,7 +779,6 @@ void test07()
 	check(ACCESS, EACCES);
 
 }				/* test07 */
-
 
 void access_standards()
 {
@@ -874,8 +836,6 @@ void access_standards()
   for (i = 0; i < 8; i++) try_access(fnames[mode], i, OK);
 }				/* access_standards */
 
-
-
 void try_access(fname, mode, test)
 int mode, test;
 char *fname;
@@ -884,20 +844,12 @@ char *fname;
 	err(100, ACCESS, "incorrect access on a file (try_access)");
 }				/* try_access */
 
-
-
-
-
-
-
 /* "support.c", created by Rene Montsma and Menno Wilcke */
-
 
 /* Err, make_and_fill_dirs, init_array, clear_array, comp_array,
    try_close, try_unlink, Remove, get_mode, check, open_alot,
    close_alot, clean_up_the_mess.
 */
-
 
 /***********************************************************************
  *				EXTENDED FIONS			       *
@@ -922,7 +874,6 @@ char *s;
 {
   printf(s);
 }
-
 
 /*****************************************************************************
 *                                                                            *
@@ -1029,7 +980,6 @@ int number;
   nlcr();
 }				/* err */
 
-
 /*****************************************************************************
 *                                                                            *
 *                          MAKE_AND_FILL_DIRS                                *
@@ -1060,15 +1010,12 @@ void make_and_fill_dirs()
 
 }				/* make_and_fill_dirs */
 
-
-
 void put_file_in_dir(dirname, mode)
 char *dirname;
 int mode;
  /* Fill directory 'dirname' with file with mode 'mode'.   */
 {
   int nr;
-
 
   if (chdir(dirname) != OK)
 	err(5, CHDIR, "to dirname (put_f_in_dir)");
@@ -1084,7 +1031,6 @@ int mode;
   }
 }				/* put_file_in_dir */
 
-
 /*****************************************************************************
 *                                                                            *
 *                               MISCELLANEOUS                                *
@@ -1092,7 +1038,6 @@ int mode;
 *(all about arrays, 'try_close', 'try_unlink', 'Remove', 'get_mode')         *
 *                                                                            *
 *****************************************************************************/
-
 
 void init_array(a)
 char *a;
@@ -1113,7 +1058,6 @@ char *b;
 
 }				/* clear_array */
 
-
 int comp_array(a, b, range)
 char *a, *b;
 int range;
@@ -1130,7 +1074,6 @@ int range;
   }
 }				/* comp_array */
 
-
 void try_close(filedes, name)
 int filedes;
 char *name;
@@ -1138,13 +1081,11 @@ char *name;
   if (close(filedes) != OK) err(5, CLOSE, name);
 }				/* try_close */
 
-
 void try_unlink(fname)
 char *fname;
 {
   if (unlink(fname) != 0) err(5, UNLINK, fname);
 }				/* try_unlink */
-
 
 void Remove(fdes, fname)
 int fdes;
@@ -1153,7 +1094,6 @@ char *fname;
   try_close(fdes, fname);
   try_unlink(fname);
 }				/* Remove */
-
 
 int get_mode(name)
 char *name;
@@ -1169,13 +1109,11 @@ char *name;
 	return(stbf1.st_mode & 07777);	/* take last 4 bits */
 }				/* get_mode */
 
-
 /*****************************************************************************
 *                                                                            *
 *                                  CHECK                                     *
 *                                                                            *
 *****************************************************************************/
-
 
 void check(scall, number)
 int number;
@@ -1235,15 +1173,11 @@ int nr;
   }
 }
 
-
 /*****************************************************************************
 *                                                                            *
 *                                ALOT-functions                              *
 *                                                                            *
 *****************************************************************************/
-
-
-
 
 int open_alot()
 {
@@ -1254,7 +1188,6 @@ int open_alot()
   if (i == 0) err(5, "open_alot", "at all");
   return(i);
 }				/* open_alot */
-
 
 int close_alot(number)
 int number;
@@ -1270,13 +1203,11 @@ int number;
   return(number - count);	/* return number of closed files */
 }				/* close_alot */
 
-
 /*****************************************************************************
 *                                                                            *
 *                         CLEAN UP THE MESS                                  *
 *                                                                            *
 *****************************************************************************/
-
 
 void clean_up_the_mess()
 {
@@ -1293,7 +1224,6 @@ void clean_up_the_mess()
 	for (i = 0; i < 8; i++) try_unlink(fnames[i]);
 	if (chdir("..") != OK) err(5, CHDIR, "to '..'");
   }
-
 
   /* Before unlinking files in some dirs, make them writable */
   chmod_8_dirs(RWX);
@@ -1331,8 +1261,6 @@ int sw;				/* if switch == 8, give all different
 	if (sw == 8) mode++;
   }
 }
-
-
 
 void quit()
 {

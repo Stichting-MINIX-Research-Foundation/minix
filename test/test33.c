@@ -178,8 +178,6 @@ void test33a()
   }
 }
 
-
-
 void test33b()
 {
   int stat_loc;			/* For the wait(&stat_loc) call. */
@@ -601,7 +599,6 @@ void test_access()
   }
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -623,8 +620,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
-
 void e(n)
 int n;
 {
@@ -641,7 +636,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

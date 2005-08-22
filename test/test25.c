@@ -93,7 +93,6 @@ void test25a()
   if (!(EXCLUDE(O_RDWR, ADDIT))) e(7);
 }
 
-
 void test25b()
 {				/* Test normal operation. */
 
@@ -362,7 +361,6 @@ void test25b()
   }
 }
 
-
 void test25c()
 {				/* Test normal operation Part two. */
   int fd1, fd2;
@@ -569,7 +567,6 @@ void test25d()
   MaxPath[strlen(MaxPath) - 1] = '/';	/* make ././.../a */
 }
 
-
 void test25e()
 {
   int fd;
@@ -676,7 +673,6 @@ void test25e()
   ToLongPath[PATH_MAX - 1] = '/';
 }
 
-
 void makelongnames()
 {
   register int i;
@@ -698,8 +694,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
-
 void e(n)
 int n;
 {
@@ -716,7 +710,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

@@ -107,7 +107,6 @@ void mkfiles()
   close(fd);
 }
 
-
 void cr_file(name, size)
 char *name;
 int size;

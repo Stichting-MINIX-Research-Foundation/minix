@@ -55,8 +55,6 @@ char *argv[];
   return(-1);			/* impossible */
 }
 
-
-
 void test6a()
 {
 /* Test sbrk() and brk(). */
@@ -107,7 +105,6 @@ void test6a()
   if (sbrk(0) != addr) e(12);
 }
 
-
 void test6b()
 {
   int i, err;
@@ -120,8 +117,6 @@ void test6b()
   if (err > 0) e(1);
   kill(getpid(), SIGQUIT);
 }
-
-
 
 void test6c()
 {

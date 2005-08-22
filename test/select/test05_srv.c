@@ -76,7 +76,6 @@ int udp_conf(long port) {
   return netfd;
 }
 
-
 int main(int argc,char *argv[]) {
   int fd;
   ssize_t data_read;
@@ -95,7 +94,6 @@ int main(int argc,char *argv[]) {
   }
   printf("Waiting for messages on port: %ld\n", PORT);
   fflush(stdout);
-
 
   /* get a first message so we know who is the client and we can harass it
      afterwards */

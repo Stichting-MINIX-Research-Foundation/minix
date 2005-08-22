@@ -4,7 +4,6 @@
  *	pipe(), mkfifo(), fcntl()
  */
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -49,7 +48,6 @@ _PROTOTYPE(int locked, (int b));
 _PROTOTYPE(void e, (int n));
 _PROTOTYPE(void sigfunc, (int s));
 _PROTOTYPE(void quit, (void));
-
 
 int main(argc, argv)
 int argc;
@@ -113,7 +111,6 @@ void test7a()
   /* Close all the pipes. */
   for (i = 3; i < OPEN_MAX; i++) close(i);
 }
-
 
 void test7b()
 {
@@ -182,7 +179,6 @@ void test7b()
   
   if (unlink("T7.b") != 0) e(28);
 }
-
 
 void test7c()
 {
@@ -268,7 +264,6 @@ void test7c()
   if (close(newfd) != 0) e(47);
   if (close(newfd2) != 0) e(48);
 }
-
 
 void test7d()
 {
@@ -415,7 +410,6 @@ void test7f()
   close(xfd);
 }
 
-
 void test7g()
 {
 /* Test to see if SETLKW unlocks when the needed lock becomes available. */
@@ -448,7 +442,6 @@ void test7g()
   }
   close(xfd);
 }
-
 
 void test7h()
 {
@@ -560,7 +553,6 @@ void test7i()
 	}
   }
 
-
   /* Check EMFILE. */
   for (i = xfd + 1; i < OPEN_MAX; i++) open("T7.i", 0);	/* use up all fds */
   errno = 0;
@@ -569,7 +561,6 @@ void test7i()
 
   for (i = xfd; i < OPEN_MAX; i++) if (close(i) != 0) e(29);
 }
-
 
 void test7j()
 {
@@ -619,7 +610,6 @@ void cloexec_test()
   fflush(stdout);
   exit(0);
 }
-
 
 int set(how, first, last)
 int how, first, last;

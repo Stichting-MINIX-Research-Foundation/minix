@@ -82,7 +82,6 @@ char *argv[];
   system("rm -rf DIR_08; mkdir DIR_08");
   chdir("DIR_08");
 
-
   for (i = 0; i < ITERATIONS; i++) {
 	iteration = i;
 	if (m & 0000001) test8a();
@@ -105,7 +104,6 @@ char *argv[];
   quit();
   return(-1);			/* impossible */
 }
-
 
 void test8a()
 {

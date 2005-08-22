@@ -475,7 +475,6 @@ errno =0;
   }
 }
 
-
 void test29b()
 {
   int i, fd, stat_loc;
@@ -521,7 +520,6 @@ void test29b()
   if (read(fd, buf, BUF_SIZE) != 19) e(16);
   if (strcmp(buf, "one two three four") != 0) e(17);
   if (close(fd) != 0) e(18);
-
 
   /* Non written bytes in regular files should be zero. */
   memset(buf2, '\0', BUF_SIZE);
@@ -710,7 +708,6 @@ void test29c()
   }
 }
 
-
 void setsignumber(signum)
 int signum;
 {
@@ -733,7 +730,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

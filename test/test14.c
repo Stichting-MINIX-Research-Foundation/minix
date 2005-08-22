@@ -33,7 +33,6 @@ int main()
   name[7] = ((pid * pid) & 037) + 33;
   name[8] = 0;
 
-
   for (i = 0; i < TRIALS; i++) {
 	if ( (fd0 = creat(name, 0777)) < 0) e(1);
 	if (write(fd0, name, 20) != 20) e(2);
@@ -41,14 +40,12 @@ int main()
 	if (close(fd0) != 0) e(4);
   }
 
-
   fd0 = creat(name, 0777);
   write(fd0, name, 20);
   unlink(name);
   quit();
   return(-1);			/* impossible */
 }
-
 
 void e(n)
 int n;

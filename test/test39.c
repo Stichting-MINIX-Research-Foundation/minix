@@ -144,7 +144,6 @@ void test39d()
   fl.l_type = F_RDLCK;
   if (fcntl(fd7, F_SETLK, &fl) == -1) e(10);
 
-
   switch (fork()) {
       case -1:	printf("Can't fork\n");	break;
       case 0:
@@ -257,7 +256,6 @@ void test39d()
   System("rm -f ../DIR_39/*\n");
 }
 
-
 /* This routine checks that fds 0 through 4, 7 and 8 are open and the rest
 ** is closed. It also checks if we can lock the first 10 bytes on fd no. 3
 ** and 4. It should not be possible to lock fd no. 3, but it should be
@@ -365,8 +363,6 @@ void makelongnames()
   ToLongPath[PATH_MAX] = '\0';	/* inc ToLongPath by one */
 }
 
-
-
 void e(n)
 int n;
 {
@@ -383,7 +379,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

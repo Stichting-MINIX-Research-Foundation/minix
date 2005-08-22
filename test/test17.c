@@ -160,8 +160,6 @@ int mask;
   umask(022);
 }				/* test */
 
-
-
 /* "t1.c" created by Rene Montsma and Menno Wilcke */
 
 /*****************************************************************************
@@ -324,8 +322,6 @@ void test02()
 	check(CREAT, EISDIR);
 }				/* test02 */
 
-
-
 void test08()
 {
   /* Test chdir to searchable dir */
@@ -442,7 +438,6 @@ void test09()
 
 /* New page */
 
-
 /* "t4.c", created by Rene Montsma and Menno Wilcke */
 
 /*****************************************************************************
@@ -550,7 +545,6 @@ void test10()
   if (unlink_alot(n) != n) err(5, UNLINK, "all linked files");
 
 }				/* test10 */
-
 
 int link_alot(bigboss)
 char *bigboss;
@@ -697,7 +691,6 @@ void test11()
 
 /* New page */
 
-
 void comp_stats(stbf1, stbf2)
 struct stat *stbf1, *stbf2;
 {
@@ -715,10 +708,7 @@ struct stat *stbf1, *stbf2;
 
 /* New page */
 
-
 /* "t5.c", created by Rene Montsma and Menno Wilcke */
-
-
 
 void comp_inodes(m, m1)
 int m, m1;			/* twee filedes's */
@@ -1066,7 +1056,6 @@ int nr;
 *                                ALOT-functions                              *
 *                                                                            *
 *****************************************************************************/
-
 
 int open_alot()
 {

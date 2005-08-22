@@ -10,7 +10,6 @@
  *	getcwd()
  */
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -189,7 +188,6 @@ int t;				/* subtest number to use */
   return;
 }
 
-
 void test20b()
 {
 /* Subtest 4.  Test error handling. */
@@ -216,7 +214,6 @@ void test20b()
   if (unlink("abc") != 0) e(15);
 
 }
-
 
 void test20c()
 {
@@ -309,7 +306,6 @@ void test20d()
   if (unlink("Dir/x") != 0) e(32);
   if (system("rmdir Dir") != 0) e(33);
 }
-
 
 void test20e()
 {
@@ -445,7 +441,6 @@ void test20f()
   if (stbuf1.st_mtime < t) e(53);
   if (unlink("T20f") < 0) e(54);
 }
-
 
 void test20g()
 {

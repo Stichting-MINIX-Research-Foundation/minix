@@ -140,7 +140,6 @@ void test37a()
   if (close(tube[1]) != 0) e(59);
 }
 
-
 void test37b()
 {
   int tube[2], child2parent[2], parent2child[2];
@@ -237,7 +236,6 @@ void test37b()
   for (i = 3; i < OPEN_MAX; i++) (void) close(i);
 }
 
-
 void e(n)
 int n;
 {
@@ -254,7 +252,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {

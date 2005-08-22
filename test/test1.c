@@ -107,7 +107,6 @@ void test1b()
   }
 }
 
-
 void parent1(childpid)
 int childpid;
 {
@@ -132,7 +131,6 @@ void child1()
   while (glov == 0);
   exit(gct);
 }
-
 
 void quit()
 {

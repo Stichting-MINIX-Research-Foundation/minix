@@ -237,8 +237,6 @@ void quit()
   }
 }
 
-
-
 void e(n)
 int n;
 {

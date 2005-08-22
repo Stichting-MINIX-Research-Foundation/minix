@@ -179,7 +179,6 @@ void test38b()
   if (strncmp(buf, "o!", 2) != 0) e(21);
   if (close(fd) != 0) e(22);
 
-
   System("rm -rf ../DIR_38/*");
 }
 
@@ -215,8 +214,6 @@ void test38c()
   System("rm -rf ../DIR_38/*");
 }
 
-
-
 void e(n)
 int n;
 {
@@ -233,7 +230,6 @@ int n;
   }
   errno = 0;
 }
-
 
 void quit()
 {
