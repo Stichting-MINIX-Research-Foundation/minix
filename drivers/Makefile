@@ -29,3 +29,4 @@ all install depend clean:
 	cd ./cmos && $(MAKE) $@
 	cd ./random && $(MAKE) $@
 	cd ./dp8390 && $(MAKE) $@
+	cd ./sb16 && $(MAKE) $@
