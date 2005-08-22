@@ -206,6 +206,8 @@ done
 root=${primary}s0
 swap=${primary}s1
 usr=${primary}s2
+umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
+umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
 
 hex2int()
 {
@@ -388,32 +390,6 @@ files="`find /usr | wc -l`"
 cpdir -v /usr /mnt | progressbar "$files" || exit	# Copy the usr floppy.
 
 umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
-umount $fdusr	>/dev/null 			# Unmount the /usr floppy.
-mount /dev/$usr /usr >/dev/null || exit		# A new /usr
-
-if [ $fdroot = unknown ]
-then
-    echo "
-By now the floppy USR has been copied to /dev/$usr, and it is now in use as
-/usr.  Please insert the installation ROOT floppy in a floppy drive."
-
-    drive=
-    while [ -z "$drive" ]
-    do
-	echo -n "What floppy drive is it in? [0] "; read drive
-
-	case $drive in
-	'')	drive=0
-	    ;;
-	[01])
-	    ;;
-	*)	echo "It must be 0 or 1, not \"$drive\"."
-	    drive=
-	esac
-    done
-    fdroot=/dev/fd$drive
-fi
-
 mount /dev/$root /mnt >/dev/null || exit
 # Running from the installation CD.
 files="`find / -xdev | wc -l`"
