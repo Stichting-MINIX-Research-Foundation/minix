@@ -53,7 +53,6 @@ PUBLIC int (*call_vec[NR_SYS_CALLS])(message *m_ptr);
 
 FORWARD _PROTOTYPE( void initialize, (void));
 
-
 /*===========================================================================*
  *				sys_task				     *
  *===========================================================================*/
@@ -100,7 +99,6 @@ PUBLIC void sys_task()
       }
   }
 }
-
 
 /*===========================================================================*
  *			          initialize				     *
@@ -172,7 +170,6 @@ PRIVATE void initialize(void)
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
 }
 
-
 /*===========================================================================*
  *			         get_priv				     *
  *===========================================================================*/
@@ -199,7 +196,6 @@ int proc_type;				/* system or user process flag */
   }
   return(OK);
 }
-
 
 /*===========================================================================*
  *			       get_randomness				     *
@@ -233,7 +229,6 @@ int source;
   krandom.bin[source].r_next = (r_next + 1 ) % RANDOM_ELEMENTS;
 }
 
-
 /*===========================================================================*
  *				send_sig				     *
  *===========================================================================*/
@@ -251,7 +246,6 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
   lock_notify(SYSTEM, proc_nr); 
 }
-
 
 /*===========================================================================*
  *				cause_sig				     *
@@ -287,7 +281,6 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   }
 }
 
-
 /*===========================================================================*
  *				umap_bios				     *
  *===========================================================================*/
@@ -317,7 +310,6 @@ vir_bytes bytes;		/* # of bytes to be copied */
   kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
   return 0;
 }
-
 
 /*===========================================================================*
  *				umap_local				     *
@@ -376,7 +368,6 @@ vir_bytes bytes;		/* # of bytes to be copied */
   return(pa);
 #endif
 }
-
 
 /*===========================================================================*
  *				umap_remote				     *
@@ -456,5 +447,4 @@ vir_bytes bytes;		/* # of bytes to copy  */
   phys_copy(phys_addr[_SRC_], phys_addr[_DST_], (phys_bytes) bytes);
   return(OK);
 }
-
 

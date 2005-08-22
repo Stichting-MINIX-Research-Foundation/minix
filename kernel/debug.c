@@ -102,7 +102,6 @@ void timer_end(int cat)
 
 #endif /* DEBUG_TIME_LOCKS */
 
-
 #if DEBUG_SCHED_CHECK		/* only include code if enabled */
 
 #define PROCLIMIT 10000

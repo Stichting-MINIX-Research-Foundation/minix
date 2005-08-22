@@ -11,7 +11,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-
 /* This array defines all known requests. */
 PRIVATE char *known_requests[] = {
   "up", 
@@ -68,7 +67,6 @@ PRIVATE void panic(char *app_name, char *mess, int num)
   printf("\n");
   exit(EGENERIC);
 }
-
 
 /* Parse and verify correctness of arguments. Report problem and exit if an 
  * error is found. Store needed parameters in global variables.
@@ -140,7 +138,6 @@ PRIVATE int parse_arguments(int argc, char **argv)
   /* Return the request number if no error were found. */
   return(i);
 }
-
 
 /* Main program. 
  */

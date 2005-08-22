@@ -19,7 +19,6 @@ struct passwd {
   char *pw_gecos;		/* just in case you have a GE 645 around */
 };
 
-
 /* Function Prototypes. */
 _PROTOTYPE( struct passwd *getpwnam, (const char *_name)		);
 _PROTOTYPE( struct passwd *getpwuid, (_mnx_Uid_t _uid)			);

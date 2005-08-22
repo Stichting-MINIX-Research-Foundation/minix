@@ -29,7 +29,6 @@ FORWARD _PROTOTYPE( int remove_dir, (struct inode *rldirp, struct inode *rip,
 FORWARD _PROTOTYPE( int unlink_file, (struct inode *dirp, struct inode *rip,
 			char file_name[NAME_MAX])			);
 
-
 /*===========================================================================*
  *				do_link					     *
  *===========================================================================*/
@@ -100,7 +99,6 @@ PUBLIC int do_link()
   return(r);
 }
 
-
 /*===========================================================================*
  *				do_unlink				     *
  *===========================================================================*/
@@ -158,7 +156,6 @@ PUBLIC int do_unlink()
   put_inode(rldirp);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_rename				     *
@@ -314,7 +311,6 @@ PUBLIC int do_rename()
   return(r == SAME ? OK : r);
 }
 
-
 /*===========================================================================*
  *				truncate				     *
  *===========================================================================*/
@@ -374,7 +370,6 @@ register struct inode *rip;	/* pointer to inode to be truncated */
   /* Leave zone numbers for de(1) to recover file after an unlink(2).  */
 }
 
-
 /*===========================================================================*
  *				remove_dir				     *
  *===========================================================================*/
@@ -414,7 +409,6 @@ char dir_name[NAME_MAX];		/* name of directory to be removed */
   (void) unlink_file(rip, NIL_INODE, dot2);
   return(OK);
 }
-
 
 /*===========================================================================*
  *				unlink_file				     *

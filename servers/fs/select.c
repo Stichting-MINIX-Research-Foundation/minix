@@ -229,7 +229,6 @@ PUBLIC int do_select(void)
 	FD_ZERO(&selecttab[s].ready_writefds);
 	FD_ZERO(&selecttab[s].ready_errorfds);
 
-
 	selecttab[s].vir_readfds = (fd_set *) m_in.SEL_READFDS;
 	selecttab[s].vir_writefds = (fd_set *) m_in.SEL_WRITEFDS;
 	selecttab[s].vir_errorfds = (fd_set *) m_in.SEL_ERRORFDS;

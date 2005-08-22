@@ -24,7 +24,6 @@
 #define END_OF_KMESS 	-1
 FORWARD _PROTOTYPE(void kputc, (int c));
 
-
 /*===========================================================================*
  *                                   panic                                   *
  *===========================================================================*/
@@ -45,7 +44,6 @@ int nr;
   /* Abort MINIX. */
   prepare_shutdown(RBT_PANIC);
 }
-
 
 /*===========================================================================*
  *				kprintf					     *
@@ -122,7 +120,6 @@ PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
   va_end(argp);					/* end variable arguments */
 }
 
-
 /*===========================================================================*
  *			            kputc				     *
  *===========================================================================*/
@@ -141,5 +138,4 @@ int c;					/* character to append */
       send_sig(OUTPUT_PROC_NR, SIGKMESS);
   }
 }
-
 

@@ -14,4 +14,3 @@ message *m;				/* pointer to request message */
   return(EBADREQUEST);			/* illegal message type */
 }
 
-

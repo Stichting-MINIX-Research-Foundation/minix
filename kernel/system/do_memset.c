@@ -27,4 +27,3 @@ register message *m_ptr;
 
 #endif /* USE_MEMSET */
 
-

@@ -21,7 +21,6 @@
 #ifndef _STDARG_H
 #define _STDARG_H
 
-
 #ifdef __GNUC__
 /* The GNU C-compiler uses its own, but similar varargs mechanism. */
 
@@ -73,7 +72,6 @@ void va_end (va_list);		/* Defined in libgcc.a */
 
 #else	/* not __GNUC__ */
 
-
 typedef char *va_list;
 
 #define __vasz(x)		((sizeof(x)+sizeof(int)-1) & ~(sizeof(int) -1))
@@ -83,7 +81,6 @@ typedef char *va_list;
   (*((type *)((va_list)((ap) = (void *)((va_list)(ap) + __vasz(type))) \
 						    - __vasz(type))))
 #define va_end(ap)
-
 
 #endif /* __GNUC__ */
 

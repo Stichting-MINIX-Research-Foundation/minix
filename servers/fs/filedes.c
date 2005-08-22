@@ -56,7 +56,6 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
   return(ENFILE);
 }
 
-
 /*===========================================================================*
  *				get_filp				     *
  *===========================================================================*/
@@ -69,7 +68,6 @@ int fild;			/* file descriptor */
   if (fild < 0 || fild >= OPEN_MAX ) return(NIL_FILP);
   return(fp->fp_filp[fild]);	/* may also be NIL_FILP */
 }
-
 
 /*===========================================================================*
  *				find_filp				     *

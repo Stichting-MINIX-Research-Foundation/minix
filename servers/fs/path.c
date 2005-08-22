@@ -49,7 +49,6 @@ char *path;			/* the path name to be parsed */
   return(rip);
 }
 
-
 /*===========================================================================*
  *				last_dir				     *
  *===========================================================================*/
@@ -108,7 +107,6 @@ char string[NAME_MAX];		/* the final component is returned here */
   }
 }
 
-
 /*===========================================================================*
  *				get_name				     *
  *===========================================================================*/
@@ -149,7 +147,6 @@ char string[NAME_MAX];		/* component extracted from 'old_name' */
   }
   return(rnp);
 }
-
 
 /*===========================================================================*
  *				advance					     *
@@ -231,7 +228,6 @@ char string[NAME_MAX];		/* component name to look for */
   }
   return(rip);		/* return pointer to inode's component */
 }
-
 
 /*===========================================================================*
  *				search_dir				     *
@@ -331,7 +327,6 @@ int flag;			/* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 			put_block(bp, DIRECTORY_BLOCK);
 			return(r);
 		}
-
 
 		/* Check for free slot for the benefit of ENTER. */
 		if (flag == ENTER && dp->d_ino == 0) {

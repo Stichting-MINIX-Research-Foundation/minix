@@ -50,7 +50,6 @@ typedef struct dns_hdr
 #define DHF_UNUSED	0x30
 #define DHF_RCODE	0x0F
 
-
 /*
 Define constants based on rfc883
 */

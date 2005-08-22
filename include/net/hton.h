@@ -28,7 +28,6 @@ extern u32_t _tmp_l;
 #define BIG_ENDIAN	1
 #endif
 
-
 #if (LITTLE_ENDIAN) && (BIG_ENDIAN)
 #include "both LITTLE_ENDIAN and BIG_ENDIAN are defined"
 			/* LITTLE_ENDIAN and BIG_ENDIAN are both defined */

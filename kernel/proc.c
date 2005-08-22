@@ -41,7 +41,6 @@
 #include "kernel.h"
 #include "proc.h"
 
-
 /* Scheduling and message passing functions. The functions are available to 
  * other parts of the kernel through lock_...(). The lock temporarily disables 
  * interrupts to prevent race conditions. 
@@ -82,7 +81,6 @@ FORWARD _PROTOTYPE( void pick_proc, (void) );
  * for cp_mess() here and define the function below. Also define CopyMess. 
  */
 #endif /* (CHIP == M68000) */
-
 
 /*===========================================================================*
  *				sys_call				     * 
@@ -193,7 +191,6 @@ message *m_ptr;			/* pointer to message in the caller's space */
   /* Now, return the result of the system call to the caller. */
   return(result);
 }
-
 
 /*===========================================================================*
  *				mini_send				     * 
@@ -323,7 +320,6 @@ unsigned flags;				/* system call flags */
   }
 }
 
-
 /*===========================================================================*
  *				mini_notify				     * 
  *===========================================================================*/
@@ -363,7 +359,6 @@ int dst;				/* which process to notify */
   return(OK);
 }
 
-
 /*==========================================================================*
  *				lock_notify				    *
  *==========================================================================*/
@@ -392,7 +387,6 @@ int dst;			/* who is to be notified */
   }
   return(result);
 }
-
 
 /*===========================================================================*
  *				enqueue					     * 
@@ -489,7 +483,6 @@ register struct proc *rp;	/* this process is no longer runnable */
 #endif
 }
 
-
 /*===========================================================================*
  *				sched					     * 
  *===========================================================================*/
@@ -531,7 +524,6 @@ int *front;					/* return: front or back */
   *front = time_left;
 }
 
-
 /*===========================================================================*
  *				pick_proc				     * 
  *===========================================================================*/
@@ -558,7 +550,6 @@ PRIVATE void pick_proc()
   }
 }
 
-
 /*==========================================================================*
  *				lock_send				    *
  *==========================================================================*/
@@ -573,7 +564,6 @@ message *m_ptr;			/* pointer to message buffer */
   unlock(2);
   return(result);
 }
-
 
 /*==========================================================================*
  *				lock_enqueue				    *
@@ -598,5 +588,4 @@ struct proc *rp;		/* this process is no longer runnable */
   dequeue(rp);
   unlock(4);
 }
-
 

@@ -8,4 +8,3 @@ _PROTOTYPE( int do_exit, (message *m));
 _PROTOTYPE( int do_start, (message *m));
 _PROTOTYPE( int do_stop, (message *m));
 
-

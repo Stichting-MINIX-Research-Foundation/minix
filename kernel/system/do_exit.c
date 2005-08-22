@@ -40,7 +40,6 @@ message *m_ptr;			/* pointer to request message */
   return(EDONTREPLY);
 }
 
-
 /*===========================================================================*
  *			         clear_proc				     *
  *===========================================================================*/
@@ -95,5 +94,4 @@ register struct proc *rc;		/* slot of process to clean up */
 }
 
 #endif /* USE_EXIT */
-
 

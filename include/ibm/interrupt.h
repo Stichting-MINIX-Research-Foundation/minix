@@ -14,7 +14,6 @@
 /* Magic numbers for interrupt controller. */
 #define END_OF_INT      0x20	/* code used to re-enable after an interrupt */
 
-
 /* Interrupt vectors defined/reserved by processor. */
 #define DIVIDE_VECTOR      0	/* divide error */
 #define DEBUG_VECTOR       1	/* single step (trace) */
@@ -49,7 +48,6 @@
 #define PRINTER_IRQ        7
 #define AT_WINI_0_IRQ     14	/* at winchester controller 0 */
 #define AT_WINI_1_IRQ     15	/* at winchester controller 1 */
-
 
 /* Interrupt number to hardware vector. */
 #define BIOS_VECTOR(irq)	\

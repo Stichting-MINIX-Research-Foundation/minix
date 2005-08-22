@@ -26,5 +26,4 @@
 #define CHECK_DST     0x05	/* 0 1 0 1 : validate message destination */
 #define CHECK_SRC     0x02	/* 0 0 1 0 : validate message source */
 
-
 #endif /* IPC_H */

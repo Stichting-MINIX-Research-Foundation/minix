@@ -9,7 +9,6 @@
 #define NONE 		0x6ace  /* used to indicate 'no process at all' */
 #define SELF		0x8ace 	/* used to indicate 'own process' */
 
-
 /*===========================================================================*
  *            	Process numbers of processes in the system image	     *
  *===========================================================================*/
@@ -44,7 +43,6 @@
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
 
-
 /*===========================================================================*
  *                	   Kernel notification types                         *
  *===========================================================================*/
@@ -69,7 +67,6 @@
 #define NOTIFY_ARG		m2_l1
 #define NOTIFY_TIMESTAMP	m2_l2
 #define NOTIFY_FLAGS		m2_i1
-
 
 /*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
@@ -127,7 +124,6 @@
 #define TAPE_STAT0	m2_l1
 #define TAPE_STAT1	m2_l2
 
-
 /*===========================================================================*
  *                  	   Messages for networking layer		     *
  *===========================================================================*/
@@ -176,7 +172,6 @@
 #  define DL_PROMISC_REQ	0x2
 #  define DL_MULTI_REQ		0x4
 #  define DL_BROAD_REQ		0x8
-
 
 /*===========================================================================*
  *                  SYSTASK request types and field names                    *
@@ -232,7 +227,6 @@
 #define MEM_CHUNK_SIZE	m4_l2	/* size of mem chunk */
 #define MEM_TOT_SIZE	m4_l3	/* total memory size */
 #define MEM_CHUNK_TAG	m4_l4	/* tag to identify chunk of mem */
-
 
 /* Field names for SYS_DEVIO, SYS_VDEVIO, SYS_SDEVIO. */
 #define DIO_REQUEST	m2_i3	/* device in or output */
@@ -379,7 +373,6 @@
 #define SEL_ERRORFDS	m8_p3
 #define SEL_TIMEOUT	m8_p4
 
-
 /*===========================================================================*
  *                Messages for system management server 		     *
  *===========================================================================*/
@@ -398,7 +391,6 @@
 #  define SRV_PRIV_ADDR         m1_p3		/* privileges string */
 #  define SRV_PRIV_LEN          m1_i3		/* length of privileges */
 
-
 /*===========================================================================*
  *                Miscellaneous messages used by TTY			     *
  *===========================================================================*/
@@ -416,6 +408,5 @@
 #  define DIAG_PRINT_BUF 	m1_p1
 #  define DIAG_BUF_COUNT 	m1_i1
 #  define DIAG_PROC_NR   	m1_i2
-
 
 #endif /* _MINIX_COM_H */ 

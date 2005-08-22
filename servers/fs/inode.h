@@ -33,7 +33,6 @@ EXTERN struct inode {
   char i_update;		/* the ATIME, CTIME, and MTIME bits are here */
 } inode[NR_INODES];
 
-
 #define NIL_INODE (struct inode *) 0	/* indicates absence of inode slot */
 
 /* Field values.  Note that CLEAN and DIRTY are defined in "const.h" */

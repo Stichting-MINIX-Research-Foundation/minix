@@ -27,7 +27,6 @@ FORWARD _PROTOTYPE( void old_icopy, (struct inode *rip, d1_inode *dip,
 FORWARD _PROTOTYPE( void new_icopy, (struct inode *rip, d2_inode *dip,
 						int direction, int norm));
 
-
 /*===========================================================================*
  *				get_inode				     *
  *===========================================================================*/
@@ -70,7 +69,6 @@ int numb;			/* inode number (ANSI: may not be unshort) */
 
   return(xp);
 }
-
 
 /*===========================================================================*
  *				put_inode				     *
@@ -175,7 +173,6 @@ register struct inode *rip;	/* the inode to be erased */
   for (i = 0; i < V2_NR_TZONES; i++) rip->i_zone[i] = NO_ZONE;
 }
 
-
 /*===========================================================================*
  *				free_inode				     *
  *===========================================================================*/
@@ -222,7 +219,6 @@ register struct inode *rip;	/* pointer to inode to be read/written */
   rip->i_update = 0;		/* they are all up-to-date now */
 }
 
-
 /*===========================================================================*
  *				rw_inode				     *
  *===========================================================================*/
@@ -264,7 +260,6 @@ int rw_flag;			/* READING or WRITING */
   put_block(bp, INODE_BLOCK);
   rip->i_dirt = CLEAN;
 }
-
 
 /*===========================================================================*
  *				old_icopy				     *
@@ -312,7 +307,6 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
   }
 }
 
-
 /*===========================================================================*
  *				new_icopy				     *
  *===========================================================================*/
@@ -355,7 +349,6 @@ int norm;			/* TRUE = do not swap bytes; FALSE = swap */
 		dip->d2_zone[i] = conv4(norm, (long) rip->i_zone[i]);
   }
 }
-
 
 /*===========================================================================*
  *				dup_inode				     *

@@ -59,7 +59,6 @@ struct flock {
   pid_t l_pid;			/* process id of the locks' owner */
 };
 
-
 /* Function Prototypes. */
 _PROTOTYPE( int creat, (const char *_path, _mnx_Mode_t _mode)		);
 _PROTOTYPE( int fcntl, (int _filedes, int _cmd, ...)	  		);

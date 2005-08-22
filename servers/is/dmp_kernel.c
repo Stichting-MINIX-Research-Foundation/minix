@@ -19,7 +19,6 @@ FORWARD _PROTOTYPE( char *s_traps_str, (int flags)		);
 FORWARD _PROTOTYPE( char *s_flags_str, (int flags)		);
 FORWARD _PROTOTYPE( char *p_rts_flags_str, (int flags)		);
 
-
 /* Some global data that is shared among several dumping procedures. 
  * Note that the process table copy has the same name as in the kernel
  * so that most macros and definitions from proc.h also apply here.
@@ -27,8 +26,6 @@ FORWARD _PROTOTYPE( char *p_rts_flags_str, (int flags)		);
 PUBLIC struct proc proc[NR_TASKS + NR_PROCS];
 PUBLIC struct priv priv[NR_SYS_PROCS];
 PUBLIC struct boot_image image[NR_BOOT_PROCS];
-
-
 
 /*===========================================================================*
  *				timing_dmp				     *
@@ -103,7 +100,6 @@ PUBLIC void kmessages_dmp()
   printf("%s", print_buf);		/* print the messages */
 }
 
-
 /*===========================================================================*
  *				monparams_dmp				     *
  *===========================================================================*/
@@ -130,7 +126,6 @@ PUBLIC void monparams_dmp()
   printf("Dump of kernel environment strings set by boot monitor.\n");
   printf("\n%s\n", val);
 }
-
 
 /*===========================================================================*
  *				irqtab_dmp				     *
@@ -180,7 +175,6 @@ PUBLIC void irqtab_dmp()
   }
   printf("\n");
 }
-
 
 /*===========================================================================*
  *				image_dmp				     *
@@ -335,7 +329,6 @@ PRIVATE char *s_traps_str(int flags)
 	return str;
 }
 
-
 /*===========================================================================*
  *				privileges_dmp 				     *
  *===========================================================================*/
@@ -437,7 +430,6 @@ PUBLIC void sendmask_dmp()
 #endif
 }
 
-
 PRIVATE char *p_rts_flags_str(int flags)
 {
 	static char str[10];
@@ -451,7 +443,6 @@ PRIVATE char *p_rts_flags_str(int flags)
 
 	return str;
 }
-
 
 /*===========================================================================*
  *				proctab_dmp    				     *
@@ -549,5 +540,4 @@ int proc_nr;
   if (proc_nr == ANY) return "ANY";
   return cproc_addr(proc_nr)->p_name;
 }
-
 

@@ -146,6 +146,5 @@ _PROTOTYPE(int sys_out, (int port, unsigned long value, int type)	);
 #define sys_inl(p,v)	sys_in((p), (unsigned long*) (v), DIO_LONG)
 _PROTOTYPE(int sys_in, (int port, unsigned long *value, int type)	);
 
-
 #endif /* _SYSLIB_H */
 

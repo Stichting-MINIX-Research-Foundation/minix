@@ -80,7 +80,6 @@ typedef struct {
 #define m8_p3  m_u.m_m8.m8p3
 #define m8_p4  m_u.m_m8.m8p4
 
-
 /*==========================================================================* 
  * Minix run-time system (IPC). 					    *
  *==========================================================================*/ 
@@ -101,6 +100,5 @@ _PROTOTYPE( int receive, (int src, message *m_ptr)			);
 _PROTOTYPE( int send, (int dest, message *m_ptr)			);
 _PROTOTYPE( int nb_receive, (int src, message *m_ptr)			);
 _PROTOTYPE( int nb_send, (int dest, message *m_ptr)			);
-
 
 #endif /* _IPC_H */

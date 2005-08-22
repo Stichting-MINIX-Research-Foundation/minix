@@ -328,7 +328,6 @@ void startup(int linenr, struct ttyent *ttyp)
   slotp->errct = 0;
 }
 
-
 int execute(char **cmd)
 {
   /* Execute a command with a path search along /sbin:/bin:/usr/sbin:/usr/bin.
@@ -357,7 +356,6 @@ int execute(char **cmd)
   }
   return -1;
 }
-
 
 void wtmp(type, linenr, line, pid)
 int type;			/* type of entry */

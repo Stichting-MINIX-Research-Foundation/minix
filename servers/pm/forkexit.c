@@ -13,7 +13,6 @@
  *   do_wait:	 perform the WAITPID or WAIT system call
  */
 
-
 #include "pm.h"
 #include <sys/wait.h>
 #include <minix/callnr.h>
@@ -23,7 +22,6 @@
 #include "param.h"
 
 #define LAST_FEW            2	/* last few slots reserved for superuser */
-
 
 FORWARD _PROTOTYPE (void cleanup, (register struct mproc *child) );
 
@@ -106,7 +104,6 @@ PUBLIC int do_fork()
   return(new_pid);		 	/* child's pid */
 }
 
-
 /*===========================================================================*
  *				do_pm_exit				     *
  *===========================================================================*/
@@ -118,7 +115,6 @@ PUBLIC int do_pm_exit()
   pm_exit(mp, m_in.status);
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
-
 
 /*===========================================================================*
  *				pm_exit					     *
@@ -196,7 +192,6 @@ int exit_status;		/* the process' exit status (for parent) */
   if (procgrp != 0) check_sig(-procgrp, SIGHUP);
 }
 
-
 /*===========================================================================*
  *				do_waitpid				     *
  *===========================================================================*/
@@ -258,7 +253,6 @@ PUBLIC int do_waitpid()
 	return(ECHILD);			     /* no - parent has no children */
   }
 }
-
 
 /*===========================================================================*
  *				cleanup					     *

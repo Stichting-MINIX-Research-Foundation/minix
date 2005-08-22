@@ -119,4 +119,3 @@ PUBLIC struct boot_image image[] = {
 extern int dummy[(NR_BOOT_PROCS==sizeof(image)/sizeof(struct boot_image))?1:-1];
 extern int dummy[(BITCHUNK_BITS > NR_BOOT_PROCS - 1) ? 1 : -1];
 
-

@@ -142,7 +142,6 @@ _PROTOTYPE( void phys2seg, (u16_t *seg, vir_bytes *off, phys_bytes phys));
 _PROTOTYPE( void enable_iop, (struct proc *pp)				);
 _PROTOTYPE( void alloc_segments, (struct proc *rp)			);
 
-
 #endif /* (CHIP == INTEL) */
 
 #if (CHIP == M68000)

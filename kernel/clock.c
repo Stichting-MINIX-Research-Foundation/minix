@@ -39,7 +39,6 @@ FORWARD _PROTOTYPE( void init_clock, (void) );
 FORWARD _PROTOTYPE( int clock_handler, (irq_hook_t *hook) );
 FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
 
-
 /* Clock parameters. */
 #if (CHIP == INTEL)
 #define COUNTER_FREQ (2*TIMER_FREQ) /* counter frequency using square wave */
@@ -70,7 +69,6 @@ PRIVATE clock_t next_timeout;		/* realtime that next timer expires */
 PRIVATE clock_t realtime;		/* real time clock */
 PRIVATE irq_hook_t clock_hook;		/* interrupt handler hook */
 
-
 /*===========================================================================*
  *				clock_task				     *
  *===========================================================================*/
@@ -100,7 +98,6 @@ PUBLIC void clock_task()
       }
   }
 }
-
 
 /*===========================================================================*
  *				do_clocktick				     *
@@ -133,7 +130,6 @@ message *m_ptr;				/* pointer to request message */
   /* Inhibit sending a reply. */
   return(EDONTREPLY);
 }
-
 
 /*===========================================================================*
  *				clock_handler				     *
@@ -199,7 +195,6 @@ irq_hook_t *hook;
   return(1);					/* reenable interrupts */
 }
 
-
 /*===========================================================================*
  *				get_uptime				     *
  *===========================================================================*/
@@ -208,7 +203,6 @@ PUBLIC clock_t get_uptime()
 /* Get and return the current clock uptime in ticks. */
   return(realtime);
 }
-
 
 /*===========================================================================*
  *				set_timer				     *
@@ -225,7 +219,6 @@ tmr_func_t watchdog;		/* watchdog to be called */
   next_timeout = clock_timers->tmr_exp_time;
 }
 
-
 /*===========================================================================*
  *				reset_timer				     *
  *===========================================================================*/
@@ -240,7 +233,6 @@ struct timer *tp;		/* pointer to timer structure */
   next_timeout = (clock_timers == NULL) ? 
 	TMR_NEVER : clock_timers->tmr_exp_time;
 }
-
 
 #if (CHIP == INTEL)
 
@@ -260,7 +252,6 @@ PRIVATE void init_clock()
   enable_irq(&clock_hook);		/* ready for clock interrupts */
 }
 
-
 /*===========================================================================*
  *				clock_stop				     *
  *===========================================================================*/
@@ -271,7 +262,6 @@ PUBLIC void clock_stop()
   outb(TIMER0, 0);
   outb(TIMER0, 0);
 }
-
 
 /*===========================================================================*
  *				read_clock				     *
@@ -293,6 +283,4 @@ PUBLIC unsigned long read_clock()
 }
 
 #endif /* (CHIP == INTEL) */
-
-
 

@@ -10,7 +10,6 @@
 #ifndef _BIOS_H
 #define _BIOS_H
 
-
 /* PART I --
  * The BIOS interrupt vector table (IVT) area (1024 B as of address 0x0000). 
  * Although this area holds 256 interrupt vectors (with jump addresses), some 
@@ -30,7 +29,6 @@
 
 #define BIOS_HD1_PARAMS_ADDR       0x0118 /* disk 1 parameters */
 #define BIOS_HD1_PARAMS_SIZE       4L
-
 
 /* PART I -- 
  * Addresses in the BIOS data area (256 B as of address 0x0400). The addresses 
@@ -110,7 +108,6 @@
 #define VDU_VIDEO_MODE_ADDR     0x49A   /* current video mode */
 #define VDU_VIDEO_MODE_SIZE     1L  
 
-
 /* PART III --
  * The motherboard BIOS memory contains some known values that are currently 
  * in use. Other sections in the upper memory area (UMA) addresses vary in 
@@ -123,7 +120,6 @@
 #define MACHINE_ID_SIZE         1L
 #define   PS_386_MACHINE        0xF8    /* ID byte for PS/2 modela 70/80 */
 #define   PC_AT_MACHINE         0xFC    /* PC/AT, PC/XT286, PS/2 models 50/60 */
-
 
 #endif /* _BIOS_H */
 

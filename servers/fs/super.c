@@ -94,7 +94,6 @@ bit_t origin;			/* number of bit to start searching at */
   return(NO_BIT);		/* no bit could be allocated */
 }
 
-
 /*===========================================================================*
  *				free_bit				     *
  *===========================================================================*/
@@ -137,7 +136,6 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 
   put_block(bp, MAP_BLOCK);
 }
-
 
 /*===========================================================================*
  *				get_super				     *
@@ -183,7 +181,6 @@ PUBLIC int get_block_size(dev_t dev)
   return MIN_BLOCK_SIZE;
 }
 
-
 /*===========================================================================*
  *				mounted					     *
  *===========================================================================*/
@@ -203,7 +200,6 @@ register struct inode *rip;	/* pointer to inode */
 
   return(FALSE);
 }
-
 
 /*===========================================================================*
  *				read_super				     *

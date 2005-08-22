@@ -29,8 +29,6 @@ struct super_block;		/* proto.h needs to know this */
 #include "param.h"
 #include "super.h"
 
-
-
 FORWARD _PROTOTYPE( void fs_init, (void)				);
 FORWARD _PROTOTYPE( int igetenv, (char *var, int optional)		);
 FORWARD _PROTOTYPE( void get_work, (void)				);
@@ -94,7 +92,6 @@ PUBLIC void main()
 	}
   }
 }
-
 
 /*===========================================================================*
  *				get_work				     *
@@ -173,7 +170,6 @@ int result;			/* result of the call (usually OK or error #) */
   if (s != OK) printf("FS: couldn't send reply %d: %d\n", result, s);
 }
 
-
 /*===========================================================================*
  *				fs_init					     *
  *===========================================================================*/
@@ -207,7 +203,6 @@ PRIVATE void fs_init()
   mess.m_type = OK;			/* tell PM that we succeeded */
   s=send(PM_PROC_NR, &mess);		/* send synchronization message */
 
-
   /* All process table entries have been set. Continue with FS initialization.
    * Certain relations must hold for the file system to work at all. Some 
    * extra block_size requirements are checked at super-block-read-in time.
@@ -228,7 +223,6 @@ PRIVATE void fs_init()
   load_super(root_dev);		/* load super block for root device */
   init_select();		/* init select() structures */
 
-
   /* The root device can now be accessed; set process directories. */
   for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
   	if (rfp->fp_pid != PID_FREE) {
@@ -239,7 +233,6 @@ PRIVATE void fs_init()
   	}
   }
 }
-
 
 /*===========================================================================*
  *				igetenv					     *
@@ -353,7 +346,6 @@ PRIVATE void load_ram(void)
   	}
   }
 
-
 #if ENABLE_CACHE2
   /* The RAM disk is a second level block cache while not otherwise used. */
   init_cache2(ram_size);
@@ -430,7 +422,6 @@ PRIVATE void load_ram(void)
   	printf("WARNING: ramdisk write for resizing failed\n");
   }
 }
-
 
 /*===========================================================================*
  *				load_super				     *

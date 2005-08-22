@@ -19,7 +19,6 @@
 #include <ansi.h>
 #endif
 
-
 #ifdef NDEBUG
 /* Debugging disabled -- do not evaluate assertions. */
 #define assert(expr)  ((void) 0)

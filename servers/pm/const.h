@@ -19,4 +19,3 @@
 #define PM_PID	           0	/* PM's process id number */
 #define INIT_PID	   1	/* INIT's process id number */
 
-

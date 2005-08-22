@@ -244,7 +244,6 @@ phys_clicks *free;		/* memory size summaries */
 #endif
 }
 
-
 #if ENABLE_SWAP
 /*===========================================================================*
  *				swap_on					     *

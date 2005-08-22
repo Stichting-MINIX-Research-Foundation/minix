@@ -15,7 +15,6 @@
 #ifndef _TIMERS_H
 #define _TIMERS_H
 
-
 #include <limits.h>
 #include <sys/types.h>
 
@@ -40,7 +39,6 @@ typedef struct timer
 #undef TMR_NEVER
 #define TMR_NEVER	((clock_t) LONG_MAX)
 
-
 /* These definitions can be used to set or get data from a timer variable. */ 
 #define tmr_arg(tp) (&(tp)->tmr_arg)
 #define tmr_exp_time(tp) (&(tp)->tmr_exp_time)
@@ -61,7 +59,5 @@ _PROTOTYPE( void tmrs_exptimers, (timer_t **tmrs, clock_t now, clock_t *new_head
 _PROTOTYPE( clock_t tmrs_settimer, (timer_t **tmrs, timer_t *tp, 
 	clock_t exp_time, tmr_func_t watchdog, clock_t *new_head)				);
 
-
 #endif /* _TIMERS_H */
-
 

@@ -27,7 +27,6 @@ FORWARD _PROTOTYPE(void exit_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 
-
 /*===========================================================================*
  *                                  main                                     *
  *===========================================================================*/
@@ -70,9 +69,6 @@ PUBLIC void main(int argc, char **argv)
       }
   }
 }
-
-
-
 
 /*===========================================================================*
  *				 init_server                                 *
@@ -123,7 +119,6 @@ PRIVATE void exit_server()
   exit(0);
 }
 
-
 /*===========================================================================*
  *				   get_work                                  *
  *===========================================================================*/
@@ -136,7 +131,6 @@ PRIVATE void get_work()
     who = m_in.m_source;        /* message arrived! set sender */
     callnr = m_in.m_type;       /* set function call number */
 }
-
 
 /*===========================================================================*
  *				reply					     *
@@ -151,6 +145,4 @@ int result;                           	/* report result to replyee */
     if (OK != send_status)
         panic("IS", "unable to send reply!", send_status);
 }
-
-
 

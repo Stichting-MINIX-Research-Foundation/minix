@@ -32,7 +32,6 @@ FORWARD _PROTOTYPE( int pipe_open, (struct inode *rip,mode_t bits,int oflags));
 FORWARD _PROTOTYPE( struct inode *new_node, (char *path, mode_t bits,
 							zone_t z0)	);
 
-
 /*===========================================================================*
  *				do_creat				     *
  *===========================================================================*/
@@ -45,7 +44,6 @@ PUBLIC int do_creat()
   r = common_open(O_WRONLY | O_CREAT | O_TRUNC, (mode_t) m_in.mode);
   return(r);
 }
-
 
 /*===========================================================================*
  *				do_open					     *
@@ -69,7 +67,6 @@ PUBLIC int do_open()
   r = common_open(m_in.mode, create_mode);
   return(r);
 }
-
 
 /*===========================================================================*
  *				common_open				     *
@@ -195,7 +192,6 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   return(m_in.fd);
 }
 
-
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
@@ -257,7 +253,6 @@ PRIVATE struct inode *new_node(char *path, mode_t bits,	zone_t z0)
   return(rip);
 }
 
-
 /*===========================================================================*
  *				pipe_open				     *
  *===========================================================================*/
@@ -285,7 +280,6 @@ PRIVATE int pipe_open(register struct inode *rip, register mode_t bits,
   return(OK);
 }
 
-
 /*===========================================================================*
  *				do_mknod				     *
  *===========================================================================*/
@@ -305,7 +299,6 @@ PUBLIC int do_mknod()
   put_inode(ip);
   return(err_code);
 }
-
 
 /*===========================================================================*
  *				do_mkdir				     *
@@ -365,7 +358,6 @@ PUBLIC int do_mkdir()
   put_inode(rip);		/* return the inode of the newly made dir */
   return(err_code);		/* new_node() always sets 'err_code' */
 }
-
 
 /*===========================================================================*
  *				do_close				     *
@@ -440,7 +432,6 @@ PUBLIC int do_close()
   if (nr_locks < lock_count) lock_revive();	/* lock released */
   return(OK);
 }
-
 
 /*===========================================================================*
  *				do_lseek				     *

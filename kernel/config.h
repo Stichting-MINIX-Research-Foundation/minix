@@ -43,7 +43,6 @@
 #define USE_PHYSVCOPY  	1	/* vector with physical copy requests */
 #define USE_MEMSET  	1	/* write char to a given memory area */
 
-
 /* Length of program names stored in the process table. This is only used
  * for the debugging dumps that can be generated with the IS server. The PM
  * server keeps its own copy of the program name.  
@@ -61,7 +60,6 @@
  */
 #define RANDOM_ELEMENTS   32
 
-
 /* This section contains defines for valuable system resources that are used
  * by device drivers. The number of elements of the vectors is determined by 
  * the maximum needed by any given driver. The number of interrupt hooks may
@@ -71,10 +69,8 @@
 #define VDEVIO_BUF_SIZE   64		/* max elements per VDEVIO request */
 #define VCOPY_VEC_SIZE    16		/* max elements per VCOPY request */
 
-
 /* How many bytes for the kernel stack. Space allocated in mpx.s. */
 #define K_STACK_BYTES   1024	
-
 
 /* This section allows to enable kernel debugging and timing functionality.
  * For normal operation all options should be disabled.

@@ -19,7 +19,6 @@ PRIVATE pvb_pair_t *pvb = (pvb_pair_t *) vdevio_buf;
 PRIVATE pvw_pair_t *pvw = (pvw_pair_t *) vdevio_buf;      
 PRIVATE pvl_pair_t *pvl = (pvl_pair_t *) vdevio_buf;     
 
-
 /*===========================================================================*
  *			        do_vdevio                                    *
  *===========================================================================*/

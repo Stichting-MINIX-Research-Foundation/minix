@@ -5,7 +5,6 @@
 #define OS_RELEASE "3"
 #define OS_VERSION "0.7"
 
-
 /* This file sets configuration parameters for the MINIX kernel, FS, and PM.
  * It is divided up into two main sections.  The first section contains
  * user-settable parameters.  In the second section, various internal system
@@ -85,7 +84,6 @@
 #define NR_CONS            4	/* # system consoles (1 to 8) */
 #define	NR_RS_LINES	   4	/* # rs232 terminals (0 to 4) */
 #define	NR_PTYS		   32	/* # pseudo terminals (0 to 64) */
-
 
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *

@@ -7,7 +7,6 @@
 #define BTMP  "/usr/adm/btmp"	/* the bad-login history file */
 #define UTMP  "/etc/utmp"	/* the user accouting file */
 
-
 struct utmp {
   char ut_user[8];		/* user name */
   char ut_id[4];		/* /etc/inittab ID */
@@ -19,7 +18,6 @@ struct utmp {
 };
 
 #define ut_name ut_user		/* for compatibility with other systems */
-
 
 /* Definitions for ut_type. */
 #define RUN_LVL            1	/* this is a RUN_LEVEL record */

@@ -13,7 +13,6 @@
 #include "../fs/fproc.h"
 #include <minix/dmap.h>
 
-
 PUBLIC struct fproc fproc[NR_PROCS];
 PUBLIC struct dmap dmap[NR_DEVICES];
 
@@ -49,7 +48,6 @@ PUBLIC void fproc_dmp()
   prev_i = i;
 }
 
-
 /*===========================================================================*
  *				dtab_dmp				     *
  *===========================================================================*/
@@ -84,5 +82,4 @@ PUBLIC void dtab_dmp()
 
     }
 }
-
 

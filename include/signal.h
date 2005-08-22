@@ -64,7 +64,6 @@ typedef unsigned long sigset_t;
 #define SIGTTIN           21	/* background process wants to read */
 #define SIGTTOU           22	/* background process wants to write */
 
-
 /* The sighandler_t type is not allowed unless _POSIX_SOURCE is defined. */
 typedef void _PROTOTYPE( (*__sighandler_t), (int) );
 

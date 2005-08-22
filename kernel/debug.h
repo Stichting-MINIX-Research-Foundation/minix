@@ -40,7 +40,6 @@ _PROTOTYPE( void timer_end, (int cat) );
 #define locktimeend(c)
 #endif /* DEBUG_TIME_LOCKS */
 
-
 /* The locking checks counts relocking situation, which are dangerous because
  * the inner lock may unlock the outer one.
  */
@@ -50,14 +49,12 @@ _PROTOTYPE( void timer_end, (int cat) );
 #define lockcheck
 #endif /* DEBUG_LOCK_CHECK */
 
-
 /* This check makes sure that the scheduling queues are in a consistent state.
  * The check is run when the queues are updated with ready() and unready().
  */ 
 #if DEBUG_SCHED_CHECK 					
 _PROTOTYPE( void check_runqueues, (char *when) );
 #endif /* DEBUG_SCHED_CHECK */
-
 
 /* The timing and checking of kernel locking requires a redefine of the lock()
  * and unlock() macros. That's done here. This redefine requires that this 
@@ -69,6 +66,5 @@ _PROTOTYPE( void check_runqueues, (char *when) );
 #  undef unlock
 #  define unlock(c)	do { locktimeend(c); intr_enable(); } while(0)
 #endif
-
 
 #endif /* DEBUG_H */

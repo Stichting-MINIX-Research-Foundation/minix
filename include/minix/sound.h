@@ -6,7 +6,6 @@
 #ifndef SOUND_H
 #define SOUND_H
 
-
 /* ------- Mixer stuff ------- */
 
 /* Available devices */

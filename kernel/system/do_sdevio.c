@@ -60,5 +60,3 @@ register message *m_ptr;	/* pointer to request message */
 
 #endif /* USE_SDEVIO */
 
-
-

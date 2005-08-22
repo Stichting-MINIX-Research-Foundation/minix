@@ -25,7 +25,6 @@ extern struct dmap {
   int dmap_flags;
 } dmap[];
 
-
 /*===========================================================================*
  *               	 Major and minor device numbers  		     *
  *===========================================================================*/
@@ -56,6 +55,5 @@ extern struct dmap {
 
 #define LOG_MAJOR	15	/* major device for log driver */
 #  define IS_KLOG_DEV	0	/* minor device for /dev/klog */
-
 
 #endif /* _DMAP_H */

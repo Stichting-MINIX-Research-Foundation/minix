@@ -6,7 +6,6 @@
  * Created: March 2005, Jorrit N. Herder
  */
 
-
 /* I/O-mapped peripherals. I/O addresses are different from memory addresses 
  * due to the I/O signal on the ISA bus. Individual I/O ports are defined by 
  * the drivers that use them or looked up with help of the BIOS. 
@@ -123,7 +122,6 @@
 #define   BIOS_DATA_BEGIN          0x00400      /* BIOS data area */
 #define   BIOS_DATA_END            0x004FF
 
-
 /* The base memory is followed by 384 KB reserved memory located at the top of
  * the first MB of physical memory. This memory is known as the upper memory 
  * area (UMA). It is used for memory-mapped peripherals, such as video RAM, 
@@ -145,7 +143,6 @@
 #define   UMA_COLOR_TEXT_BEGIN     0xB8000      /* color text */
 #define   UMA_COLOR_TEXT_END       0xBFFFF
 
-
 /* o The next 128K (the memory range C0000-DFFFF) is reserved for the adapter 
  *   BIOS that resides in the ROM on some adapter boards. Most VGA-compatible 
  *   video adapters use the first 32 KB of this area for their on-board BIOS. 
@@ -159,7 +156,6 @@
 #define   UMA_IDE_HD_BIOS_BEGIN    0xC8000      /* IDE hard disk */
 #define   UMA_IDE_HD_BIOS_END      0xCBFFF
 
-
 /* o The last 128K of the upper memory area (E0000-FFFFF) is reserved for 
  *   motherboard BIOS (Basic I/O System). The POST (Power-On Self Test) and 
  *   bootstrap loader also reside in  this space. The memory falls apart in 
@@ -171,6 +167,5 @@
 #define   UMA_PNP_ESCD_BIOS_END    0xEFFFF
 #define   UMA_SYSTEM_BIOS_BEGIN    0xF0000      /* system BIOS */
 #define   UMA_SYSTEM_BIOS_END      0xFFFFF
-
 
  

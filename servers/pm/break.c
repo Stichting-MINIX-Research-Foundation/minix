@@ -56,7 +56,6 @@ PUBLIC int do_brk()
   return(r);			/* return new address or -1 */
 }
 
-
 /*===========================================================================*
  *				adjust  				     *
  *===========================================================================*/
@@ -172,6 +171,4 @@ vir_clicks s_vir;		/* virtual address for start of stack seg */
   return(OK);
 }
 #endif
-
-
 

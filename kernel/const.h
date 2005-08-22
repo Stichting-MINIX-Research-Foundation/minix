@@ -47,7 +47,6 @@
 	( MAP_CHUNK(map.chunk,bit) &= ~(1 << CHUNK_OFFSET(bit) )
 #define NR_SYS_CHUNKS	BITMAP_CHUNKS(NR_SYS_PROCS)
 
-
 #if (CHIP == INTEL)
 
 /* Program stack words and masks. */
@@ -70,7 +69,6 @@
  * for DOS MINIX.
  */
 #define NR_MEMS            8	
-
 
 #endif /* (CHIP == INTEL) */
 

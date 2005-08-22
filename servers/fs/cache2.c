@@ -33,7 +33,6 @@ PRIVATE unsigned buf2_idx;		/* round-robin reuse index */
 
 #define hash2(block)	((unsigned) ((block) & (MAX_BUF2 - 1)))
 
-
 /*===========================================================================*
  *				init_cache2				     *
  *===========================================================================*/
@@ -44,7 +43,6 @@ unsigned long size;
 
   nr_buf2 = size > MAX_BUF2 ? MAX_BUF2 : (unsigned) size;
 }
-
 
 /*===========================================================================*
  *				get_block2				     *
@@ -81,7 +79,6 @@ int only_search;		/* if NO_READ, do nothing, else act normal */
   return(0);
 }
 
-
 /*===========================================================================*
  *				put_block2				     *
  *===========================================================================*/
@@ -107,7 +104,6 @@ struct buf *bp;			/* buffer to store in the 2nd level cache */
 	buf2[hash2(bp2->b2_blocknr)].b2_count++;
   }
 }
-
 
 /*===========================================================================*
  *				invalidate2				     *

@@ -55,7 +55,6 @@ PRIVATE struct dmap init_dmap[] = {
 #endif /* IBM_PC */
 };
 
-
 /*===========================================================================*
  *				do_devctl		 		     *
  *===========================================================================*/
@@ -76,7 +75,6 @@ PUBLIC int do_devctl()
   }
   return(result);
 }
-
 
 /*===========================================================================*
  *				map_driver		 		     *
@@ -175,6 +173,4 @@ PUBLIC void build_dmap()
   printf("Boot medium driver: %s driver mapped onto controller %s.\n",
       driver, controller);
 }
-
-
 

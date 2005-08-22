@@ -70,7 +70,6 @@ Dallas DS12887, compatible with the Motorola MC146818
 					 */
 #define RTC_REG_C	0xC
 
-
 /* Contents of the general purpose CMOS RAM (source IBM reference manual) */
 #define CMOS_STATUS	0xE
 #define		CS_LOST_POWER	0x80	/* Chip lost power */

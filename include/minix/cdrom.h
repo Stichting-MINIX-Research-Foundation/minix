@@ -14,13 +14,11 @@ struct cd_play_mss
 	u8_t	end_mss[3];
 };
 
-
 struct cd_play_track
 {
 	u8_t 	begin_track;
 	u8_t 	end_track;
 };
-
 
 struct cd_disk_info
 {
@@ -29,7 +27,6 @@ struct cd_disk_info
 	u8_t	disk_length_mss[3];
 	u8_t	first_track_mss[3];
 };
-
 
 struct cd_toc_entry
 {

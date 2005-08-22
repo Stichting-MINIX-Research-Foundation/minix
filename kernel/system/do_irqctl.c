@@ -11,7 +11,6 @@
 
 #include "../system.h"
 
-
 #if USE_IRQCTL
 
 FORWARD _PROTOTYPE(int generic_handler, (irq_hook_t *hook));
@@ -47,7 +46,6 @@ register message *m_ptr;	/* pointer to request message */
       else 
           disable_irq(&irq_hooks[irq_hook_id]);	
       break;
-
 
   /* Control IRQ policies. Set a policy and needed details in the IRQ table.
    * This policy is used by a generic function to handle hardware interrupts. 
@@ -99,7 +97,6 @@ register message *m_ptr;	/* pointer to request message */
   }
   return(r);
 }
-
 
 /*===========================================================================*
  *			       generic_handler				     *
