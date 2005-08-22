@@ -418,13 +418,15 @@ else	disable="disable=inet;"
 fi
 
 umount /dev/$root >/dev/null || exit	# Unmount the new root.
+mount /dev/$usr /mnt >/dev/null || exit
 
 # Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
 edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
-pfile="/usr/src/tools/fdbootparams"
+pfile="/mnt/src/tools/fdbootparams"
 # echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile || exit
+umount /dev/$usr
 sync
 
 echo "
