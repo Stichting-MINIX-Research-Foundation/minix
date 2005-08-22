@@ -52,6 +52,8 @@ fresh:
 	$(MAKE) clean 
 	$(MAKE) libraries programs
 
+all: image
+
 image: programs	
 	installboot -image $@ $(PROGRAMS)
 
