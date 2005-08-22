@@ -98,8 +98,6 @@ fi
 umount $TMPDISK
 umount $RAM
 
-( cd .. && make clean )
-( cd .. && make depend )
 echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
