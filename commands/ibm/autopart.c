@@ -1794,6 +1794,16 @@ void regionize(void)
 				exit(1);
 			}
 		}
+		if(table[i].size > table[0].size) {
+			printf("\nSanity check failed on %s - partition is larger than disk.\n"
+				"Please use expert mode to correct it.\n", curdev->name);
+			exit(1);
+		}
+		if(table[i].size < 1) {
+			printf("\nSanity check failed on %s - zero-sized partition.\n"
+				"Please use expert mode to correct it.\n", curdev->name);
+			exit(1);
+		} 
 
 		/* Remember used region. */
 		memcpy(&regions[nr_regions].used_part, &table[i], sizeof(table[i]));
