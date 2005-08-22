@@ -260,7 +260,6 @@ struct cbl_conf
 					 */
 #define CCB7_DSRF	0x01	/* Discard Short Receive Frames. */
 
-
 /* Byte 8 */
 #define CCB8_CSMAD	0x80	/* CSMA Disable. Reserved on 82557, should be
 				 * set to zero.

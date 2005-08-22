@@ -4,7 +4,6 @@ pci.h
 Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
-
 /* tempory functions: to be replaced later (see pci_intel.h) */
 _PROTOTYPE( unsigned pci_inb, (U16_t port) );
 _PROTOTYPE( unsigned pci_inw, (U16_t port) );
@@ -29,7 +28,6 @@ _PROTOTYPE( u16_t pci_attr_r16, (int devind, int port)			);
 _PROTOTYPE( u32_t pci_attr_r32, (int devind, int port)			);
 _PROTOTYPE( void pci_attr_w16, (int devind, int port, U16_t value)	);
 _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
-
 
 #define PCI_VID		0x00	/* Vendor ID, 16-bit */
 #define PCI_DID		0x02	/* Device ID, 16-bit */

@@ -4,7 +4,6 @@ ibm/rtl8139.h
 Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
 */
 
-
 #define	RL_IDR		0x00	/* Ethernet address
 				 * Note: RL_9346CR_EEM_CONFIG mode is
 				 * required the change the ethernet
@@ -240,7 +239,6 @@ Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
 #define RL_RXS_CRC	0x00000004	/* CRC Error */
 #define RL_RXS_FAE	0x00000002	/* Frame Alignment Error */
 #define RL_RXS_ROK	0x00000001	/* Receive OK */
-
 
 /* Registers in the Machine Independent Interface (MII) to the PHY.
  * IEEE 802.3 (2000 Edition) Clause 22.

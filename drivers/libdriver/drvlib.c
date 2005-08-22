@@ -8,7 +8,6 @@
 #include "drvlib.h"
 #include <unistd.h>
 
-
 /* Extended partition? */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
 
@@ -19,7 +18,6 @@ FORWARD _PROTOTYPE( int get_part_table, (struct driver *dp, int device,
 FORWARD _PROTOTYPE( int get_iso_fake_part_table, (struct driver *dp, int device,
 			unsigned long offset, struct part_entry *table) );
 FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
-
 
 /*============================================================================*
  *				partition				      *
@@ -147,7 +145,6 @@ unsigned long extbase;	/* sector offset of the base extended partition */
   } while ((offset = nextoffset) != 0);
 }
 
-
 /*============================================================================*
  *				get_part_table				      *
  *============================================================================*/
@@ -242,7 +239,6 @@ struct part_entry *table;	/* four entries */
   /* Read the partition table at 'offset'. */
   return 1;
 }
-
 
 /*===========================================================================*
  *				sort					     *

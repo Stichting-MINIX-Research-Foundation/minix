@@ -36,7 +36,6 @@
  *
  */
 
-
 #include <sys/types.h>
 /* #include <sys/time.h> */
 /* #include <sys/systm.h> */
@@ -66,7 +65,6 @@
 #if defined(__bsdi__) || defined(__FreeBSD__)
 #define assert(x)
 #endif
-
 
 /*** SHA-256/384/512 Machine Architecture Definitions *****************/
 /*
@@ -128,13 +126,11 @@ typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
 
 #endif /* SHA2_USE_INTTYPES_H */
 
-
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 /* NOTE: Most of these are in sha2.h */
 #define SHA256_SHORT_BLOCK_LENGTH	(SHA256_BLOCK_LENGTH - 8)
 #define SHA384_SHORT_BLOCK_LENGTH	(SHA384_BLOCK_LENGTH - 16)
 #define SHA512_SHORT_BLOCK_LENGTH	(SHA512_BLOCK_LENGTH - 16)
-
 
 /*** ENDIAN REVERSAL MACROS *******************************************/
 #if SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN
@@ -214,7 +210,6 @@ typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
 void SHA512_Last(SHA512_CTX*);
 void SHA256_Transform(SHA256_CTX*, const sha2_word32*);
 void SHA512_Transform(SHA512_CTX*, const sha2_word64*);
-
 
 /*** SHA-XYZ INITIAL HASH VALUES AND CONSTANTS ************************/
 /* Hash constant words K for SHA-256: */
@@ -325,7 +320,6 @@ const static sha2_word64 sha512_initial_hash_value[8] = {
  */
 static const char *sha2_hex_digits = "0123456789abcdef";
 
-
 /*** SHA-256: *********************************************************/
 void SHA256_Init(SHA256_CTX* context) {
 	if (context == (SHA256_CTX*)0) {
@@ -353,7 +347,6 @@ void SHA256_Init(SHA256_CTX* context) {
 	(d) += T1; \
 	(h) = T1 + Sigma0_256(a) + Maj((a), (b), (c)); \
 	j++
-
 
 #else /* SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN */
 
@@ -708,7 +701,6 @@ void SHA512_Init(SHA512_CTX* context) {
 	(h) = T1 + Sigma0_512(a) + Maj((a), (b), (c)), \
 	j++
 
-
 #else /* SHA2_BYTE_ORDER == SHA2_LITTLE_ENDIAN */
 
 #define ROUND512_0_TO_15(a,b,c,d,e,f,g,h)	\
@@ -1012,7 +1004,6 @@ char* SHA512_Data(const sha2_byte* data, size_t len, char digest[SHA512_DIGEST_S
 	SHA512_Update(&context, data, len);
 	return SHA512_End(&context, digest);
 }
-
 
 /*** SHA-384: *********************************************************/
 void SHA384_Init(SHA384_CTX* context) {

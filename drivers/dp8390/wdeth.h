@@ -84,7 +84,6 @@ Created:	before Dec 28, 1992 by Philip Homburg
 #define E_790_GCR_IR1	0x08		/* bit 1 of encoded IRQ */
 #define E_790_GCR_IR2	0x40		/* bit 2 of encoded IRQ */
 
-
 #define inb_we(dep, reg)	(inb(dep->de_base_port+reg))
 #define outb_we(dep, reg, data)	(outb(dep->de_base_port+reg, data))
 

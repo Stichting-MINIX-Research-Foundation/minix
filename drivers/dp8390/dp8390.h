@@ -152,7 +152,6 @@ Created:	before Dec 28, 1992 by Philip Homburg
 #define RSR_DIS		0x40	/* Receiver Disabled                 */
 #define RSR_DFR		0x80	/* In later manuals: Deferring       */
 
-
 typedef struct dp_rcvhdr
 {
 	u8_t dr_status;			/* Copy of rsr                       */

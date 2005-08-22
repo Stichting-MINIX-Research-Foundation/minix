@@ -43,7 +43,6 @@
 extern "C" {
 #endif
 
-
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 #define SHA256_BLOCK_LENGTH		64
 #define SHA256_DIGEST_LENGTH		32
@@ -135,7 +134,6 @@ typedef struct _SHA512_CTX {
 
 typedef SHA512_CTX SHA384_CTX;
 
-
 /*** SHA-256/384/512 Function Prototypes ******************************/
 
 void SHA256_Init __P((SHA256_CTX *));
@@ -161,7 +159,6 @@ char* SHA512_Data __P((const u_int8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH
 #endif /* __cplusplus */
 
 #endif /* __SHA2_H__ */
-
 
 /*
  * $PchId: sha2.h,v 1.1 2005/06/28 14:29:33 philip Exp $

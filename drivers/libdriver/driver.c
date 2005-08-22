@@ -39,7 +39,6 @@
 #include <sys/ioc_disk.h>
 #include "driver.h"
 
-
 #if (CHIP == INTEL)
 
 #if USE_EXTRA_DMA_BUF && DMA_BUF_SIZE < 2048
@@ -135,7 +134,6 @@ struct driver *dp;	/* Device dependent entry points. */
   }
 }
 
-
 /*===========================================================================*
  *				init_buffer				     *
  *===========================================================================*/
@@ -159,7 +157,6 @@ PRIVATE void init_buffer()
   }
 #endif /* CHIP == INTEL */
 }
-
 
 /*===========================================================================*
  *				do_rdwt					     *
@@ -194,7 +191,6 @@ message *mp;			/* pointer to read or write message */
   /* Return the number of bytes transferred or an error code. */
   return(r == OK ? (mp->COUNT - iovec1.iov_size) : r);
 }
-
 
 /*==========================================================================*
  *				do_vrdwt				    *
@@ -244,7 +240,6 @@ message *mp;		/* pointer to read or write message */
   return(r);
 }
 
-
 /*===========================================================================*
  *				no_name					     *
  *===========================================================================*/
@@ -259,7 +254,6 @@ PUBLIC char *no_name()
   static char name[] = "noname";
   return name;
 }
-
 
 /*============================================================================*
  *				do_nop					      *
@@ -315,7 +309,6 @@ PUBLIC void nop_cleanup()
 /* Nothing to clean up. */
 }
 
-
 /*===========================================================================*
  *				nop_cancel				     *
  *===========================================================================*/
@@ -331,9 +324,6 @@ PUBLIC int nop_select(struct driver *dr, message *m)
 {
 /* Nothing to do for select. */
 }
-
-
-
 
 /*============================================================================*
  *				do_diocntl				      *

@@ -173,4 +173,3 @@ _PROTOTYPE( void mem_vid_copy, (u16_t *src, unsigned dst, unsigned count));
 
 #endif /* (CHIP == INTEL) */
 
-

@@ -19,7 +19,6 @@ See the Linux PCI ID Repository <http://pciids.sourceforge.net/>.
 #include "config.h"
 #endif
 
-
 struct pci_vendor pci_vendor_table[]=
 {
 	{ 0x1000, "NCR" },

@@ -31,7 +31,6 @@ FORWARD _PROTOTYPE( int get_cmostime, (struct tm *tmp, int y2kflag));
 FORWARD _PROTOTYPE( int dec_to_bcd, (int dec));
 FORWARD _PROTOTYPE( int bcd_to_dec, (int bcd));
 
-
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
@@ -110,7 +109,6 @@ PUBLIC void main(void)
   }
 }
 
-
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
@@ -125,7 +123,6 @@ PRIVATE void reply(int code, int replyee, int process, int status)
   if (OK != (s=send(replyee, &m)))
       panic("CMOS", "sending reply failed", s);
 }
-
 
 /*===========================================================================*
  *				gettime					     *
@@ -171,7 +168,6 @@ PRIVATE int gettime(int who, int y2kflag, vir_bytes dst_time)
 
   return(OK);
 }
-
 
 PRIVATE int get_cmostime(struct tm *t, int y2kflag)
 {

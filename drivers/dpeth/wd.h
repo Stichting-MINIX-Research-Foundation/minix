@@ -5,6 +5,9 @@
 **  $PchId: wdeth.h,v 1.4 1995/12/22 08:36:57 philip Exp $
 **
 **  $Log$
+**  Revision 1.2  2005/08/22 15:17:40  beng
+**  Remove double-blank lines (Al)
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -93,7 +96,6 @@
 #define E_790_GCR_IR0	0x04	/* bit 0 of encoded IRQ */
 #define E_790_GCR_IR1	0x08	/* bit 1 of encoded IRQ */
 #define E_790_GCR_IR2	0x40	/* bit 2 of encoded IRQ */
-
 
 #define inb_we(dep, reg) (inb(dep->de_base_port+reg))
 #define outb_we(dep, reg, data) (outb(dep->de_base_port+reg, data))

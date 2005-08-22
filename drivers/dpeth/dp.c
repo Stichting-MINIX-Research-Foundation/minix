@@ -547,7 +547,6 @@ PUBLIC int main(int argc, char **argv)
   if ((fkey_map(&fkeys, &sfkeys)) != OK) 
 	printf("%s: couldn't program Shift+F8 key (%d)\n", DevName, errno);
 
-
 #ifdef ETH_IGN_PROTO
   {
 	static u16_t eth_ign_proto = 0;
@@ -623,6 +622,5 @@ PUBLIC int main(int argc, char **argv)
   }
   return OK;			/* Never reached, but keeps compiler happy */
 }
-
 
 /** dp.c **/

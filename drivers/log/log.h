@@ -29,7 +29,6 @@ struct logdevice {
 		log_select_alerted, log_select_ready_ops;
 };
 
-
 /* Function prototypes. */
 _PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( int do_new_kmess, (message *m)				);

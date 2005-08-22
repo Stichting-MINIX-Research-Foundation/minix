@@ -6,6 +6,9 @@
 **  National Semiconductor NS 8390 Network Interface Controller
 **
 **  $Log$
+**  Revision 1.2  2005/08/22 15:17:40  beng
+**  Remove double-blank lines (Al)
+**
 **  Revision 1.1  2005/06/29 10:16:46  beng
 **  Import of dpeth 3c501/3c509b/.. ethernet driver by
 **  Giovanni Falzoni <fgalzoni@inwind.it>.
@@ -15,7 +18,6 @@
 **
 **  $Id$
 */
-
 
 #define DP_PAGESIZE	256	/* NS 8390 page size */
 #define SENDQ_PAGES	6	/* SENDQ_PAGES * DP_PAGESIZE >= 1514 bytes */

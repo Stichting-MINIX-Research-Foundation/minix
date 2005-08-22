@@ -11,9 +11,7 @@ Media Independent (Ethernet) Interface functions
 #include "config.h"
 #endif
 
-
 #include "mii.h"
-
 
 /*===========================================================================*
  *				mii_print_stat_speed			     *
@@ -117,7 +115,6 @@ u16_t extstat;
 		}
 	}
 }
-
 
 /*===========================================================================*
  *				mii_print_techab			     *

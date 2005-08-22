@@ -55,7 +55,6 @@ PRIVATE struct driver r_dtab = {
 #define RANDOM_BUF_SIZE 		1024
 PRIVATE char random_buf[RANDOM_BUF_SIZE];
 
-
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
@@ -64,7 +63,6 @@ PUBLIC void main(void)
   r_init();			/* initialize the memory driver */
   driver_task(&r_dtab);		/* start driver's main loop */
 }
-
 
 /*===========================================================================*
  *				 r_name					     *
@@ -75,7 +73,6 @@ PRIVATE char *r_name()
   static char name[] = "random";
   return name;  
 }
-
 
 /*===========================================================================*
  *				r_prepare				     *
@@ -90,7 +87,6 @@ int device;
 
   return(&m_geom[device]);
 }
-
 
 /*===========================================================================*
  *				r_transfer				     *
@@ -144,7 +140,6 @@ unsigned nr_req;		/* length of request vector */
 	    }
 	    break;
 
-
 	/* Unknown (illegal) minor device. */
 	default:
 	    return(EINVAL);
@@ -158,7 +153,6 @@ unsigned nr_req;		/* length of request vector */
   }
   return(OK);
 }
-
 
 /*============================================================================*
  *				r_do_open				      *
@@ -174,7 +168,6 @@ message *m_ptr;
   return(OK);
 }
 
-
 /*===========================================================================*
  *				r_init					     *
  *===========================================================================*/
@@ -186,7 +179,6 @@ PRIVATE void r_init()
   random_init();
   r_random(NULL, NULL);				/* also set periodic timer */
 }
-
 
 /*===========================================================================*
  *				r_ioctl					     *
@@ -205,7 +197,6 @@ message *m_ptr;				/* pointer to control message */
   }
   return(OK);
 }
-
 
 /*============================================================================*
  *				r_random				      *
@@ -256,5 +247,4 @@ struct partition *entry;
   entry->heads = 64;
   entry->sectors = 32;
 }
-
 

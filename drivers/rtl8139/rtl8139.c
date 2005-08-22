@@ -141,7 +141,6 @@ typedef struct re
 	} re_tx[N_TX_BUF];
 	u32_t re_ertxth;	/* Early Tx Threshold */
 
-
 	/* PCI related */
 	int re_seen;			/* TRUE iff device available */
 	u8_t re_pcibus;	
@@ -171,7 +170,6 @@ re_t;
 #define REF_MULTI	0x080
 #define REF_BROAD	0x100
 #define REF_ENABLED	0x200
-
 
 static re_t re_table[RE_PORT_NR];
 
@@ -433,7 +431,6 @@ message *m;			/* pointer to request message */
 			rep->re_tx[2].ret_busy, rep->re_tx[3].ret_busy);
 	}
 }
-
 
 /*===========================================================================*
  *				do_init					     *
@@ -919,7 +916,6 @@ re_t *rep;
 
 	if (i != 0 && i != 6) env_panic(eakey);	/* It's all or nothing */
 
-
 	/* Should update ethernet address in hardware */
 	if (i == 6)
 	{
@@ -1194,7 +1190,6 @@ int vectored;
 	#endif
 			goto suspend;	/* Buffer overflow */
 		}
-
 
 		rep->re_stat.ets_packetR++;
 		rep->re_read_s= packlen;
@@ -1884,7 +1879,6 @@ message *mp;
 	reply(rep, OK, FALSE);
 }
 
-
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
@@ -1931,8 +1925,6 @@ int may_block;
 	rep->re_read_s = 0;
 	rep->re_flags &= ~(REF_PACK_SENT | REF_PACK_RECV);
 }
-
-
 
 /*===========================================================================*
  *				mess_reply				     *
@@ -2069,7 +2061,6 @@ static int do_hard_int(void)
 		printf("RTL8139: error, couldn't enable interrupts: %d\n", s);
 	}
 }
-
 
 /*===========================================================================*
  *				rl_handler				     *
@@ -2390,7 +2381,6 @@ timer_t *tp;
 		check_int_events();
 	}
 }
-
 
 #if 0
 

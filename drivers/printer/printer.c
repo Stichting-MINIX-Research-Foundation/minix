@@ -111,8 +111,6 @@ FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
 FORWARD _PROTOTYPE( void do_printer_output, (void) );
 FORWARD _PROTOTYPE( void signal_handler, (int sig) );
 
-
-
 /*===========================================================================*
  *				 signal_handler                              *
  *===========================================================================*/
@@ -127,7 +125,6 @@ int sig;					/* signal number */
   	printf("PRINTER got unknown signal\n");
   }
 }
-
 
 /*===========================================================================*
  *				printer_task				     *
@@ -156,7 +153,6 @@ PUBLIC void main(void)
 	}
   }
 }
-
 
 /*===========================================================================*
  *				do_write				     *
@@ -205,7 +201,6 @@ register message *m_ptr;	/* pointer to the newly arrived message */
         output_done();
     }
 }
-
 
 /*===========================================================================*
  *				output_done					     *
@@ -290,7 +285,6 @@ register message *m_ptr;	/* pointer to the newly arrived message */
   reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, EINTR);
 }
 
-
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
@@ -309,7 +303,6 @@ int status;			/* number of  chars printed or error code */
   pr_mess.REP_PROC_NR = process;	/* which user does this pertain to */
   send(replyee, &pr_mess);		/* send the message */
 }
-
 
 /*===========================================================================*
  *				do_initialize				     *
@@ -335,7 +328,6 @@ PRIVATE void do_initialize()
 
 }
 
-
 /*==========================================================================*
  *		    	      prepare_output				    *
  *==========================================================================*/
@@ -354,7 +346,6 @@ PRIVATE void prepare_output()
   optr = obuf;
   oleft = chunk;
 }
-
 
 /*===========================================================================*
  *				do_printer_output				     *
@@ -420,6 +411,4 @@ PRIVATE void do_printer_output()
   output_done();
   sys_irqenable(&irq_hook_id);
 }
-
-
 
