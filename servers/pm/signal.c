@@ -39,7 +39,6 @@ FORWARD _PROTOTYPE( void unpause, (int pro)				);
 FORWARD _PROTOTYPE( void handle_sig, (int proc_nr, sigset_t sig_map)	);
 FORWARD _PROTOTYPE( void cause_sigalrm, (struct timer *tp)		);
 
-
 /*===========================================================================*
  *			       do_sigaction				     *
  *===========================================================================*/
@@ -166,7 +165,6 @@ PUBLIC int do_sigsuspend()
   return(SUSPEND);
 }
 
-
 /*===========================================================================*
  *                               do_sigreturn				     *
  *===========================================================================*/
@@ -226,7 +224,6 @@ PUBLIC int ksig_pending()
  return(SUSPEND);			/* prevents sending reply */
 }
 
-
 /*===========================================================================*
  *				handle_sig				     *
  *===========================================================================*/
@@ -274,7 +271,6 @@ sigset_t sig_map;
   }
 }
 
-
 /*===========================================================================*
  *				do_alarm				     *
  *===========================================================================*/
@@ -283,7 +279,6 @@ PUBLIC int do_alarm()
 /* Perform the alarm(seconds) system call. */
   return(set_alarm(who, m_in.seconds));
 }
-
 
 /*===========================================================================*
  *				set_alarm				     *
@@ -342,7 +337,6 @@ int sec;			/* how many seconds delay before the signal */
   return(remaining);
 }
 
-
 /*===========================================================================*
  *				cause_sigalrm				     *
  *===========================================================================*/
@@ -361,7 +355,6 @@ struct timer *tp;
   check_sig(rmp->mp_pid, SIGALRM);
 }
 
-
 /*===========================================================================*
  *				do_pause				     *
  *===========================================================================*/
@@ -372,7 +365,6 @@ PUBLIC int do_pause()
   mp->mp_flags |= PAUSED;
   return(SUSPEND);
 }
-
 
 /*===========================================================================*
  *				sig_proc				     *
@@ -422,13 +414,14 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	sigaddset(&rmp->mp_sigpending, signo);
 	return;
   }
+#if ENABLE_SWAP
   if (rmp->mp_flags & ONSWAP) {
 	/* Process is swapped out, leave signal pending. */
 	sigaddset(&rmp->mp_sigpending, signo);
 	swap_inqueue(rmp);
 	return;
   }
-
+#endif
   sigflags = rmp->mp_sigact[signo].sa_flags;
   if (sigismember(&rmp->mp_catch, signo)) {
 	if (rmp->mp_flags & SIGSUSPENDED)
@@ -483,19 +476,20 @@ doterminate:
 
   rmp->mp_sigstatus = (char) signo;
   if (sigismember(&core_sset, signo)) {
+#if ENABLE_SWAP
 	if (rmp->mp_flags & ONSWAP) {
 		/* Process is swapped out, leave signal pending. */
 		sigaddset(&rmp->mp_sigpending, signo);
 		swap_inqueue(rmp);
 		return;
 	}
+#endif
 	/* Switch to the user's FS environment and dump core. */
 	tell_fs(CHDIR, slot, FALSE, 0);
 	dump_core(rmp);
   }
   pm_exit(rmp, 0);		/* terminate process */
 }
-
 
 /*===========================================================================*
  *				check_sig				     *
@@ -560,7 +554,6 @@ int signo;			/* signal to send to process (0 to _NSIG) */
   return(count > 0 ? OK : error_code);
 }
 
-
 /*===========================================================================*
  *                               check_pending				     *
  *===========================================================================*/
@@ -590,7 +583,6 @@ register struct mproc *rmp;
   }
 }
 
-
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
@@ -618,7 +610,6 @@ int pro;			/* which process number */
   /* Process is not hanging on an PM call.  Ask FS to take a look. */
   tell_fs(UNPAUSE, pro, 0, 0);
 }
-
 
 /*===========================================================================*
  *				dump_core				     *
@@ -680,3 +671,4 @@ register struct mproc *rmp;	/* whose core is to be dumped */
   }
   close(fd);
 }
+
