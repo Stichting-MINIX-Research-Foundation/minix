@@ -45,7 +45,9 @@ _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 #define PCI_HEADT	0x0E	/* Header type, 8-bit */
 #define		PHT_MULTIFUNC	0x80	/* Multiple functions */
 #define PCI_BAR		0x10	/* Base Address Register */
-#define PCI_BAR_2	0x14	/* Second Base Address Register */
+#define PCI_BAR_2	0x14	/* Base Address Register */
+#define PCI_BAR_3	0x18	/* Base Address Register */
+#define PCI_BAR_4	0x1C	/* Base Address Register */
 #define PCI_ILR		0x3C	/* Interrupt Line Register */
 #define PCI_IPR		0x3D	/* Interrupt Pin Register */
 
