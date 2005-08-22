@@ -124,6 +124,8 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 echo " * Doing new cvs export"
 ( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null 2>&1 || exit 1 )
 chown -R bin $RELEASEDIR/usr/src
+find $RELEASEDIR/usr/src -type d | xargs chmod 755
+find $RELEASEDIR/usr/src -type f | xargs chmod 644
 # Bug tracking system not for on cd
 rm -rf $RELEASEDIR/usr/src/doc/bugs
 # No GNU core utils
