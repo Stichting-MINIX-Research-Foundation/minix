@@ -19,7 +19,7 @@ The
 .I pseudo-ip-device
 argument names one of the
 .B /dev/psip*
-devices that is offered by the Minix TCP/IP driver
+devices that is offered by the MINIX 3 TCP/IP driver
 .BR inet (8).
 The
 .B slip
@@ -41,7 +41,7 @@ standard output.  A typical use is like this:
 The SLIP protocol is just a very simple packet framing protocol.  It defines
 two characters as markers on a byte stream to frame packets.  SLIP does
 not implement any higher level addressing, error detection, or compression.
-Thanks to its simplicity it can be used under Minix, any other system would
+Thanks to its simplicity it can be used under MINIX 3, any other system would
 prefer to use the Point-to-Point protocol: PPP.
 .PP
 The SLIP packet framing protocol as defined in RFC-1055 is as follows:
@@ -58,7 +58,7 @@ at all by escaping it this way, making finding the framing END easier.)
 .PP
 The manual page
 .BR serial-ip (8)
-describes how to configure the Minix network devices to be used with a
+describes how to configure the MINIX 3 network devices to be used with a
 serial IP connection.
 ..
 .SH FILES
@@ -73,7 +73,7 @@ Pseudo-IP devices for use by
 ..
 .BR RFC-1055 .
 .SH NOTES
-Under Minix
+Under MINIX 3
 .B slip
 forks in two to handle the two data streams in or out of the serial line.
 Under Minix-vmd it uses asynchronous I/O to handle the two streams within

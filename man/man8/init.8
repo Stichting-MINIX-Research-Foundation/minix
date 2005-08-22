@@ -2,7 +2,7 @@
 .SH NAME
 init \- grandparent of all processes
 .SH DESCRIPTION
-The first program started by Minix is
+The first program started by MINIX 3 is
 .BR init .
 The actions performed by
 .B init
@@ -89,7 +89,7 @@ that line manually,
 doesn't do that for you.
 .TP
 .B SIGTERM
-Normally sent by programs that halt or reboot Minix.  Causes
+Normally sent by programs that halt or reboot MINIX 3.  Causes
 .B init
 to stop spawning new processes.
 .TP
@@ -104,12 +104,12 @@ command.  A second abort signal makes
 .B init
 halt the system directly with a system call.  The keyboard driver halts the
 system, without a sync, after the third CTRL-ALT-DEL.
-.SS "Minix vs. Minix-vmd"
-There are a few differences between standard Minix and Minix-vmd on how
+.SS "MINIX 3 vs. Minix-vmd"
+There are a few differences between standard MINIX 3 and Minix-vmd on how
 .B init
 is run.  The
 .B /etc/rc
-file is executed under standard Minix with input connected to
+file is executed under standard MINIX 3 with input connected to
 .BR /dev/console ,
 but under Minix-vmd this is still
 .BR /dev/null .
@@ -120,7 +120,7 @@ with the
 program if they need user interaction.
 Minix-vmd passes the value of the
 .B bootopts
-boot variable to /etc/rc.  Standard Minix does not.
+boot variable to /etc/rc.  Standard MINIX 3 does not.
 .SH FILES
 .TP 25n
 .B /etc/ttytab

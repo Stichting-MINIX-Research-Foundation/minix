@@ -9,7 +9,7 @@ controller, disk, tape, at, bios, esdi, aha1540, ncr810, dosfile, fatfile \- con
 The
 .BI c n *
 family of devices refer to drivers that control disks, disk like devices,
-and tapes.  Minix contains a number of drivers for several different
+and tapes.  MINIX 3 contains a number of drivers for several different
 controllers.  These controllers can have disks, cdroms and tapes attached to
 them.  Boot Monitor variables specify which drivers are activated using
 the variables
@@ -69,7 +69,7 @@ minor	device	what?	obsolete
 .PP
 The device names in
 .B /dev
-also name the controller, of course, so the usual place for the Minix
+also name the controller, of course, so the usual place for the MINIX 3
 root device, the first subpartition of the second partition of disk 0 on
 controller 0 is
 .BR /dev/c0d0p1s0 .
@@ -78,12 +78,12 @@ Note that everything is numbered from 0!  The first controller is controller
 .BR p1 .
 .PP
 The fourth column in the table above shows the disk devices names that were
-used by previous versions of Minix for what is now controller 0.  These
+used by previous versions of MINIX 3 for what is now controller 0.  These
 devices are no longer present in
 .BR /dev .
 .SS Disks
 Most disks are arrays of 512 byte sectors.  The disk devices are normally
-block devices, which means they are block buffered by the Minix file system
+block devices, which means they are block buffered by the MINIX 3 file system
 cache using 1024 byte blocks.  The FS cache allows I/O at any byte offset,
 and takes care of cutting and pasting incomplete blocks together.  If one
 creates a character device for a disk device, then I/O must be in multiples
@@ -101,8 +101,8 @@ partitions may be defined, named
 to
 .BR c0d0p3
 for disk 0 on controller 0.  To make things interesting you can also place a
-partition table in the first sector of a Minix partition, which divides the
-partition into up to four subpartitions.  Normally Minix is installed into a
+partition table in the first sector of a MINIX 3 partition, which divides the
+partition into up to four subpartitions.  Normally MINIX 3 is installed into a
 single partition, with the root, swap and /usr file systems in subpartitions.
 .PP
 If a partition is an extended partition then it contains a linked list of
@@ -139,7 +139,7 @@ struct part_entry {
 
 /* Partition types (sysind). */
 #define NO_PART	0x00	/* unused entry */
-#define MINIX_PART	0x81	/* Minix partition type */
+#define MINIX_PART	0x81	/* MINIX 3 partition type */
 .fi
 .PP
 The cylinder numbers are encoded in a very strange way, bits 8 and 9 are
@@ -288,7 +288,7 @@ By setting the Boot variables
 .BR c0
 to
 .BR c3
-under Minix, or
+under MINIX 3, or
 .BR c0
 to
 .BR c4
@@ -312,7 +312,7 @@ DMA_SECTORS (see
 it works well enough.
 .SS esdi
 A hard disk driver for use on some PS/2 models.
-.SS "xt \fR(Minix only)"
+.SS "xt \fR(MINIX 3 only)"
 A hard disk driver for IBM/XT type hard disks.  Useful for old 286 based
 machines that have such a disk.  On XTs you are better off with the
 .B bios
@@ -326,10 +326,10 @@ This will eventually become a Symbios 810 SCSI driver.  (Formerly owned by
 NCR.)  KJB has read the docs on this card three times, but has still done
 nothing, the lazy bum.
 .SS dosfile
-The "DOS file as disk" driver that is used when Minix is running
-under DOS.  It treats a large DOS file as a Minix disk.  Only primary
+The "DOS file as disk" driver that is used when MINIX 3 is running
+under DOS.  It treats a large DOS file as a MINIX 3 disk.  Only primary
 partitions are supported, there are no subpartitions.  This is the default
-driver when Minix is started under DOS.
+driver when MINIX 3 is started under DOS.
 .SS fatfile
 Uses a large file on a FAT file system as a disk.  It needs one of the other
 disk drivers to do the actual I/O.  This driver only knows how to interpret

@@ -45,9 +45,9 @@ those devices.  Data read or written by processes is passed through the file
 system block cache.  Unaligned bytes read or written are extracted or
 reassembled by the file server from or to whole blocks in the cache.  The
 file server transfers data to or from the device driver as blocks to
-positions at block size boundaries.  These blocks are Minix blocks of 1024
+positions at block size boundaries.  These blocks are MINIX 3 blocks of 1024
 bytes, disk devices usually have a 512 byte block size.  Only block devices
-can be mounted as part of the file system tree if they contain a Minix file
+can be mounted as part of the file system tree if they contain a MINIX 3 file
 system.
 .PP
 The major device number (2 for
@@ -61,7 +61,7 @@ and 0 for
 .BR console )
 is passed to the driver to select a device among a number of related devices
 that are all managed by that driver.  The device drivers are usually kernel
-tasks under Minix, small processes that are contained within the address
+tasks under MINIX 3, small processes that are contained within the address
 space of the kernel.  The following tasks and associated devices exist:
 .SS "Memory (major 1)"
 The
@@ -122,9 +122,9 @@ Each of these devices accesses a range of sectors on the
 device.  It is customary to give each operating system on a disk a primary
 partition.  So the Windows C: "drive" can be on
 .BR c0d0p0 ,
-and Minix can be on
+and MINIX 3 can be on
 .BR c0d0p1 .
-Minix wants to have several partitions on its own, so
+MINIX 3 wants to have several partitions on its own, so
 .B c0d0p1
 can be further subdivided into the subpartitions
 .BR c0d0p1s0 ,
@@ -202,7 +202,7 @@ device is used to control the audio driver.
 .SH FILES
 .TP 10
 .B /dev/*
-All Minix devices
+All MINIX 3 devices
 .SH "SEE ALSO"
 .BR read (2),
 .BR write (2),
@@ -241,7 +241,7 @@ Some devices are not present by default.  The
 .BR MAKEDEV
 script knows how to make them.
 .SS "MS-DOS/Windows equivalents"
-The names of MS-DOS/Windows devices probably map to Minix devices as follows:
+The names of MS-DOS/Windows devices probably map to MINIX 3 devices as follows:
 .PP
 .RS
 .nf

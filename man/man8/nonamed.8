@@ -41,7 +41,7 @@ then only the hosts file is used to answer queries, and any query for a name
 not in that file gets a failure response.
 .PP
 .B Nonamed
-accepts both UDP and TCP queries under Minix-vmd.  Under standard Minix
+accepts both UDP and TCP queries under Minix-vmd.  Under standard MINIX 3
 only UDP queries are accepted.  \*(NI relayed UDP queries can be outstanding
 before it forgets where the first one came from.
 .PP
@@ -293,7 +293,7 @@ neighbouring name daemon on another PC at home.
 .PP
 The default cache size seems to be more than enough for normal use, but if
 you do decide to make it larger then don't forget to increase the stack size
-of the program under standard Minix.
+of the program under standard MINIX 3.
 .PP
 Don't let two
 .BR nonamed 's

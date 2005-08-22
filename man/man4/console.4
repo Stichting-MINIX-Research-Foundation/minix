@@ -35,7 +35,7 @@ Adapter	Usable memory	Mono/Colour
 .RE
 .PP
 MDA and Hercules are the same to the console driver, because the graphics
-mode of the Hercules is of no use to Minix.  EGA and VGA are also mostly
+mode of the Hercules is of no use to MINIX 3.  EGA and VGA are also mostly
 seen as the same in text mode.  An EGA adapter is either a monochrome or a
 colour device depending on the screen attached to it.  A VGA adapter can run
 in either monochrome or colour (grayscale) mode depending on how the Boot
@@ -189,7 +189,7 @@ Font memory consists of 256 character definitions of 32 lines per character
 and 8 pixels per line.  The first line is the topmost line of the character.
 The leftmost pixel is lit if the most significant bit of a line is set, etc.
 How many lines are used depends on the current video mode.  The 80x25 video
-mode used by Minix has an 8x16 character cell, 80x28 has 8x14 characters,
+mode used by MINIX 3 has an 8x16 character cell, 80x28 has 8x14 characters,
 and 132x43 or 132x50 has 8x8 characters.  The boot variable
 .B console
 is used by both the Boot Monitor and the console driver to set the video

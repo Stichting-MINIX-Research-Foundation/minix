@@ -24,15 +24,15 @@ ACK \- Additional information on the Amsterdam Compiler Kit compilers
 \s-2UNIX\s+2
 ..
 .de MX
-.if n Minix
-.if t \s-2MINIX\s+2
+.if n MINIX 3
+.if t \s-1MINIX 3\s-1
 ..
-.if n .ds Mx Minix
-.if t .ds Mx \s-2MINIX\s+2
+.if n .ds Mx MINIX 3
+.if t .ds Mx \s-1MINIX 3\s-1
 .if n .ds Mp Minix-PC
 .if t .ds Mx \s-2MINIX-PC\s+2
 .if n .ds Mv Minix-vmd
-.if t .ds Mv \s-2MINIX\s+2-vmd
+.if t .ds Mv \s-1MINIX 3\s-1-vmd
 .if n .ds Cw \fR
 .if t .ds Cw \fC
 .de CW
@@ -145,7 +145,7 @@ different type, the resulting value will usually be garbage.  The
 compiler makes no effort to catch these errors.
 .IP \(bu
 The alignment of types under 16-bit \*(Mp is 1 byte for characters and 2
-bytes for all other types.  Under other Minix versions 'int' and smaller
+bytes for all other types.  Under other MINIX 3 versions 'int' and smaller
 types are aligned to a multiple of their size, bigger scalar types are
 aligned like 'int'.  Arrays have the same alignment as their elements;
 structs and unions are aligned like their field with the worst alignment.

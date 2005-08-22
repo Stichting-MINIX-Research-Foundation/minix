@@ -30,11 +30,11 @@ values for the base or size of a partition.  These values are: Aligned to a
 cylinder, taped to other partitions (inside or outside), or filling out holes.
 .BR "Use this key" !
 .PP
-Minix subpartition tables or extended partitions may be edited after hitting
+MINIX 3 subpartition tables or extended partitions may be edited after hitting
 the '>' key.  The number of this partition will be shown after the device
 name on the second row, e.g.
 .BR /dev/hd0:2 .
-Minix subpartition tables are shown as is, but extended partition bases are
+MINIX 3 subpartition tables are shown as is, but extended partition bases are
 translated to absolute offsets on the screen to hide the gory details of their
 implementation from the innocent user.  (Hit 'p' if you dare.)  The '<' key
 will bring you back to the enclosing partition table.
@@ -50,7 +50,7 @@ sorted by device number and starting with
 .PP
 Values that are out of range, overlapping, or otherwise strange are shown in
 reverse video.  Values that may possibly be a problem for operating systems
-other then Minix are shown in bold characters.
+other then MINIX 3 are shown in bold characters.
 .PP
 The name of the device is highlighted when it has not been read yet.
 .PP
@@ -65,15 +65,15 @@ if they are inside some other partition, if the base equals the device's base
 complies with the good old \s-2UNIX\s+2 tradition of trusting the user.
 It will write any table, no matter how bad.  You have been warned.
 .PP
-By the way, as far as Minix is concerned there is absolutely no reason to
+By the way, as far as MINIX 3 is concerned there is absolutely no reason to
 make partitions start precisely on a cylinder or track nor does it have to
-be an exact number of cylinders long.  Minix only looks at the base and size
+be an exact number of cylinders long.  MINIX 3 only looks at the base and size
 of a partition, the geometry of the drive doesn't have to be correct.  Other
 Operating systems can be very picky about partitions that are not aligned.
 Some partition editors may refuse to edit a table, others may even make a
 mess of the table.  The only exception is the first partition, it
 traditionally starts on the first track, not the first cylinder.  All
-editors must understand this.  (Subpartition tables are Minix specific, so
+editors must understand this.  (Subpartition tables are MINIX 3 specific, so
 there is no reason at all for any alignment.)
 .SS "Extended Partitions"
 Extended partitions are a mess that is only made slightly better by

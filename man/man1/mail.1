@@ -36,13 +36,13 @@ mail \- send and receive electronic mail
 .PP
 \fIMail\fR is an extremely simple electronic mail program.  It can be used
 to send or receive email on a single 
-\s-2MINIX\s+2
+\s-1MINIX 3\s-1
 system, in which case it functions
 as user agent and local delivery agent.  
 If the flag \fIMAILER\fR is defined in \fImail.c\fR,
 it can also call a trans\%port agent to handle remote mail as well.
 No such agent is supplied with
-\s-2MINIX\s+2.
+\s-1MINIX 3\s-1.
 .PP
 When called by \fIuser\fR with no arguments, it examines the mailbox
 \fI/usr/spool/mail/user\fR, prints one message (depending on the \fB\-r\fR
@@ -81,7 +81,7 @@ will be delivered with Subject: No subject.
 .SH NOTES
 The \fB\-s\fR option was added to make this simple mail program
 consistent with mail programs found in other *nix variants.  Many
-programs, including the version of cron distributed with Minix releases
+programs, including the version of cron distributed with MINIX 3 releases
 2.0.3 and later, report their outcome by piping output to the mail
 program in order to send a mail message to root in lieu of writing a
 log file.  Such programs often expect the mail program to accept a
@@ -90,7 +90,7 @@ subject line using this option.
 If an external \fIMAILER\fR is used it is likely the conditional code 
 supporting this will need some editing to be made to work correctly.
 .SH AUTHOR
-The original mail program for Minix was written by Peter B. Housel.
+The original mail program for MINIX 3 was written by Peter B. Housel.
 The -e and -t options were added by C. W. Rose. The -s option was added
 by A. S. Woodhull. This man page revised by ASW 2003-07-18.
 

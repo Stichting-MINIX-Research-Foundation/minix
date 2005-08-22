@@ -35,7 +35,7 @@ u64_t make64(unsigned long \fIlo\fP, unsigned long \fIhi\fP)
 ..
 The
 .B int64
-family of functions allow Minix to handle disks of up to 4 terabytes using
+family of functions allow MINIX 3 to handle disks of up to 4 terabytes using
 32 bit sector numbers and 64 bit byte offsets on a machine where the C type
 .B long
 is 32 bits.  The <minix/u64.h> include file defines a 64 bit data
@@ -174,11 +174,11 @@ kernel.  They should not be used for anything else.)
 With the usual disk block size of 512 bytes the maximum disk size is 512
 \(** 4 gigabytes = 2 terabytes.
 .PP
-Standard Minix only uses 64 bit computations within the disk drivers, so
+Standard MINIX 3 only uses 64 bit computations within the disk drivers, so
 individual partitions are still limited to 4 gigabytes.  Minix-vmd has 64
 bit computations also in the file system code.
 .PP
-Special care must be taken when accessing disk devices.  For Minix one may
+Special care must be taken when accessing disk devices.  For MINIX 3 one may
 have to temporarily change the start of the partition to go beyond 4 G.
 Minix-vmd can go beyond 4 G, but the
 .B lseek

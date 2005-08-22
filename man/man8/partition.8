@@ -12,7 +12,7 @@ makes a partition table on
 .I device
 using the types and sizes given.  It may be used in combination with
 .BR repartition (8)
-for automatic installation of Minix.  
+for automatic installation of MINIX 3.  
 .PP
 You may give up to four \fItype\fP:\fIlength\fP[\fB+*\fP] specifications
 for the partitions.  You may also specify holes before, between, and after
@@ -39,12 +39,12 @@ to indicate that an existing partition of the given type must be kept
 from the old partition table.
 .PP
 Partitions are padded out to cylinder boundaries, except for the first one,
-it starts on track 1.  Some operating systems care about this.  Minix and
+it starts on track 1.  Some operating systems care about this.  MINIX 3 and
 MS-DOS do not.
 .SH OPTIONS
 .TP
 .B \-m
-Minix only, no need to pad partitions.  This is the default for subpartition
+MINIX 3 only, no need to pad partitions.  This is the default for subpartition
 tables.
 .TP
 .B \-f
@@ -55,7 +55,7 @@ Play-act, don't write the new table, just show what it would look like.
 .SH EXAMPLE
 .B "partition /dev/hd0 01:16384 81:40000 81:2880* 06:20000+"
 .PP
-Partitions disk 0 into an 8 Mb DOS partition, 20 Mb Minix /usr, 1.44 Mb Minix
+Partitions disk 0 into an 8 Mb DOS partition, 20 Mb MINIX 3 /usr, 1.44 Mb MINIX 3
 / (active), and a DOS partition of at least 10 Mb at the end of the disk.
 (06:0+ would have been ok too, it's just a sanity check.)
 .SH "SEE ALSO"

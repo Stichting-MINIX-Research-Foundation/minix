@@ -82,7 +82,7 @@ Encode the new output baud rate into the termios structure.
 .B tcsendbreak(\fIfd\fP, \fIduration\fP)
 Emit a break condition on a serial line for a time indicated by
 .IR duration .
-(Always 0.4 seconds under Minix,
+(Always 0.4 seconds under MINIX 3,
 .I duration
 is ignored.)
 .TP
@@ -130,7 +130,7 @@ does not refer to a terminal device, and
 if one of the functions waiting for output to drain is interrupted.
 .SH NOTES
 It may be interesting to know that the functions operating on the tty are
-directly translated into the following Minix
+directly translated into the following MINIX 3
 .B ioctl
 requests:
 .BR TCGETS ,

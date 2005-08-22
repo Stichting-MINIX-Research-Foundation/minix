@@ -1,6 +1,6 @@
 .TH DOSMINIX 8
 .SH NAME
-dosminix, mkfile \- Running Minix under DOS
+dosminix, mkfile \- Running MINIX 3 under DOS
 .SH SYNOPSIS
 .RB "C:\eMINIX> " "boot disk0.mnx" "\0\0\0\0\0(Typical example)"
 .br
@@ -10,21 +10,21 @@ dosminix, mkfile \- Running Minix under DOS
 .if t .sp 0.4
 .if n .sp
 ..
-This text describes running Minix
+This text describes running MINIX 3
 .\" or Minix-vmd
 under DOS.  The DOS version
 of the Boot Monitor, described in
 .BR monitor (8),
-grabs as much memory as DOS is willing to give, loads Minix into that memory
-from the active partition of a "file as disk", and jumps to the Minix kernel
-to let Minix take control.  As far as DOS is concerned Minix is just a part
+grabs as much memory as DOS is willing to give, loads MINIX 3 into that memory
+from the active partition of a "file as disk", and jumps to the MINIX 3 kernel
+to let MINIX 3 take control.  As far as DOS is concerned MINIX 3 is just a part
 of the
 .B boot.com
 program.
 .PP
 In the example above
 .B disk0.mnx
-is the "file as disk".  It is a file of many megabytes that is used by Minix
+is the "file as disk".  It is a file of many megabytes that is used by MINIX 3
 as a disk of four partitions.  These partitions will normally be
 .B /dev/dosd1
 through
@@ -41,7 +41,7 @@ It is better to use the special name
 to indicate this device, usually in the setting
 .BR rootdev = bootdev .
 .PP
-Once Minix is running it will operate the same as if started from a regular
+Once MINIX 3 is running it will operate the same as if started from a regular
 disk partition until it is shut down.  On shutdown from protected mode it
 will return to the Boot Monitor prompt, and with the
 .B exit
@@ -49,7 +49,7 @@ command you leave the Boot Monitor and return to DOS.  Shutting down from
 real mode will reboot the machine, just like when run from a disk partition.
 (This more or less crashes DOS, but DOS is used to such abuse.)
 .SS EMM386
-Minix can't run in protected mode (286 or 386 mode) if DOS is using a memory
+MINIX 3 can't run in protected mode (286 or 386 mode) if DOS is using a memory
 manager like
 .BR EMM386 .
 You can either temporarily comment out EMM386 from
@@ -90,14 +90,14 @@ anything else, or things will go horribly wrong.  Save MSDOS.SYS and exit.
 Don't forget to make MSDOS.SYS read-only again, and also hide all the hidden
 files again, unless you like it this way.
 .SS "DOS compatibility box"
-The 16-bit version of standard Minix can be run in real mode in a DOS box.
+The 16-bit version of standard MINIX 3 can be run in real mode in a DOS box.
 This is somewhat surprising, because it means Windows 95 simulates devices
-like the keyboard, timer, and interrupt controller well enough to fool Minix
+like the keyboard, timer, and interrupt controller well enough to fool MINIX 3
 into thinking that all is well.  Alas it doesn't work as well under Windows
 NT.  Keypresses get lost if you type to fast, and using the floppy
-occasionally locks Minix up.  This is a bit disappointing, because it is the
-only way to run Minix under NT.  Under Windows 95 one is better off
-putting the system in DOS at boot and then to run Minix in protected mode.
+occasionally locks MINIX 3 up.  This is a bit disappointing, because it is the
+only way to run MINIX 3 under NT.  Under Windows 95 one is better off
+putting the system in DOS at boot and then to run MINIX 3 in protected mode.
 .PP
 One thing that is better under NT is that the Boot Monitor is able to get a
 so-called "Upper Memory Block", thereby raising useful memory to about 750K.
@@ -109,32 +109,32 @@ some of this memory you can put
 at the start of
 .BR autoexec.bat .
 The monitor will grab a 64K UMB if it can get it, and keep that memory safe
-for use by Minix when it is later started from Windows.
+for use by MINIX 3 when it is later started from Windows.
 .PP
-The easiest way to start Minix is to give all Minix disk files the suffix
+The easiest way to start MINIX 3 is to give all MINIX 3 disk files the suffix
 .BR MNX .
 Doubleclick on the disk you want to run to make the "\fBOpen With\fP" window
 appear.  Click on "\fBOther\fP" and browse to the
 .B BOOT.COM
-program.  Set the name of the .mnx files to "\fBMinix "disk" file\fP" in the
+program.  Set the name of the .mnx files to "\fBMINIX 3 "disk" file\fP" in the
 description box if you want everything right.  In the future you can
-just click on a Minix disk file to run it, you don't have to start a DOS
+just click on a MINIX 3 disk file to run it, you don't have to start a DOS
 box first.  (To make it perfect use "View", "Options", "File Types", choose
-"Minix "disk" file", "Edit", "Change Icon", "Browse", select MINIX.ICO.)
+"MINIX 3 "disk" file", "Edit", "Change Icon", "Browse", select MINIX.ICO.)
 .PP
-When Minix shuts down it will try to reboot what it thinks is a PC.  Windows
+When MINIX 3 shuts down it will try to reboot what it thinks is a PC.  Windows
 seems to assume that the DOS session has exited.  Right-click on the
 BOOT.COM program, "Properties", "Program", and enable "Close on exit" to make
-the DOS box disappear automatically when Minix thinks it reboots.  You may
+the DOS box disappear automatically when MINIX 3 thinks it reboots.  You may
 also want to lock the font to
 .BR 7x12 ,
 or any other font that isn't ugly.
 .PP
-Minix disk files are opened in a write-exclusive mode.  A second Minix
+MINIX 3 disk files are opened in a write-exclusive mode.  A second MINIX 3
 session can only open it read-only, which may lead to a "can't open
 root device" error.
 .SS "Mkfile"
-Minix disk files can be created or resized with the
+MINIX 3 disk files can be created or resized with the
 .B mkfile
 utility.  Its two arguments are the size and name of the disk file.  The
 size is a number optionally followed by the letter
@@ -153,7 +153,7 @@ will create a 50 megabyte file named
 If the file already exist then it is shrunk or grown to 50 megabytes.  No
 data is lost if the file is grown.  If the file is shrunk then only the data
 that is cut off is lost.  These features allow one to inrease the size of a
-Minix /usr partition with the following recipe:
+MINIX 3 /usr partition with the following recipe:
 .PP
 .RS
 .ta +24n+2m
@@ -184,11 +184,11 @@ boot disk0.mnx	Run the larger system
 .fi
 .RE
 .PP
-Now Minix runs from a larger "disk".  Don't worry if it claims to have
+Now MINIX 3 runs from a larger "disk".  Don't worry if it claims to have
 crashed, there wasn't a "shutdown" entry in /usr/adm/wtmp at the time it was
 copied.
 .PP
-The above recipe is for a ordinary standard Minix installation with /usr on
+The above recipe is for a ordinary standard MINIX 3 installation with /usr on
 the second and last partition.
 .\" Minix-vmd usually has /usr on the third and
 .\" last partition (dosd3 / dosd8), its
@@ -201,10 +201,10 @@ the second and last partition.
 In the recipe above you saw how simple it is to create a new system, just
 copy a disk file.  It is equally simple to make a backup, you just copy the
 disk file.  To make a test system: copy the disk file.  To make another test
-system: copy the disk file.  Let friends have their own Minix: copy the disk
+system: copy the disk file.  Let friends have their own MINIX 3: copy the disk
 file again.  (Exciting, eh?)
 .PP
-You may want to save a Minix disk file in a ZIP file to save space.  It may
+You may want to save a MINIX 3 disk file in a ZIP file to save space.  It may
 look as a good idea to first run
 .B "make clean"
 in
@@ -233,7 +233,7 @@ will almost disappear in the ZIP file.
 .\" cp /dev/zero junk
 .\" .RE
 .\" .PP
-.\" instead of the echo/while pair of lines above.  Standard Minix doesn't have
+.\" instead of the echo/while pair of lines above.  Standard MINIX 3 doesn't have
 .\" /dev/zero.
 .SS "FAT driver"
 The dos disk driver, described in
@@ -241,8 +241,8 @@ The dos disk driver, described in
 has two identities.  By default you get the "\fBfile\fP" driver, that uses
 DOS file I/O calls to access a large DOS file as a disk.  The other
 alternative is the "\fBFAT\fP" driver.  The FAT driver sits on top of an
-ordinary Minix disk driver, and interprets a partition as a FAT (File Access
-Table) file system to find a file to use as a Minix disk.  The result
+ordinary MINIX 3 disk driver, and interprets a partition as a FAT (File Access
+Table) file system to find a file to use as a MINIX 3 disk.  The result
 has the same effect as the file driver, except that no costly calls to DOS
 are made.  To enable this feature you have to use the following Boot
 environment settings:
@@ -256,10 +256,10 @@ dosd0 = hd1:\eminix\edisk0.mnx
 .PP
 The
 .B dosd
-setting tells Minix to use the FAT driver, and the
+setting tells MINIX 3 to use the FAT driver, and the
 .B dosd0
-setting tells the Minix device and DOS file name to use.  Disk I/O should
-be sped up nicely by this change, although typical use of Minix doesn't
+setting tells the MINIX 3 device and DOS file name to use.  Disk I/O should
+be sped up nicely by this change, although typical use of MINIX 3 doesn't
 require fast disk I/O, so the difference won't be too noticable.
 .PP
 Support for FAT-32 (big file system support added in the later Windows 95
@@ -267,7 +267,7 @@ releases) has not been tested very well.  The FAT-12 and FAT-16 code has
 been used a lot, and seems safe.  Note the risks inherent in these
 drivers:  The file driver uses simple DOS file I/O calls, leaving it to
 DOS to know its own file system.  The FAT driver interprets FAT file system
-structures by itself.  Minix booted from a real hard disk partition can
+structures by itself.  MINIX 3 booted from a real hard disk partition can
 only use DOS disk files through the FAT driver.
 .SH "SEE ALSO"
 .BR dosd (4),

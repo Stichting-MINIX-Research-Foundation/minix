@@ -1,5 +1,5 @@
 .\" man(7) manpage by rosenkra@hall.cray.com (Bill Rosenkranz)
-.\" Modified a bit for Minix by Kees J. Bot (kjb@cs.vu.nl)
+.\" Modified a bit for MINIX 3 by Kees J. Bot (kjb@cs.vu.nl)
 .\"
 .TH MAN 7
 .SH NAME
@@ -26,7 +26,7 @@ reaching a non-indented paragraph (i.e. at .SH or .SS).
 .SH FILES
 .TP 25n
 /usr/lib/tmac/tmac.an
-For standard Minix nroff.
+For standard MINIX 3 nroff.
 .TP
 /usr/lib/cawf/man.mac
 For cawf.
@@ -259,7 +259,7 @@ A typical manual page for a command or function is laid out as follows:
 Even though
 .BR cawf (1)
 has a better chance at formatting a random manual page then the standard
-Minix nroff, it has two annoying bugs in its macro set.  Both .PP and .IP 
+MINIX 3 nroff, it has two annoying bugs in its macro set.  Both .PP and .IP 
 reset the indentation level to the level set by .SH.  This means that
 you can't use them in a piece of text indented by .RS.  For .IP this is
 troublesome, you can see why in the unformatted source of this text.  .PP

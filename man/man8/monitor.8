@@ -1,6 +1,6 @@
 .TH MONITOR 8
 .SH NAME
-monitor, edparams \- load and start Minix, modify boot parameters
+monitor, edparams \- load and start MINIX 3, modify boot parameters
 .SH SYNOPSIS
 .B /boot
 .br
@@ -17,8 +17,8 @@ monitor, edparams \- load and start Minix, modify boot parameters
 .if n .sp
 ..
 This text describes the Boot Monitor, a boot time interactive program designed
-not only to load and start Minix, its most important task, but to also
-provide an interface to configure Minix and to boot other operating systems.
+not only to load and start MINIX 3, its most important task, but to also
+provide an interface to configure MINIX 3 and to boot other operating systems.
 .PP
 The monitor is controlled with an environment that is modeled after the
 Bourne shell.  This environment is filled at startup with default values
@@ -40,17 +40,17 @@ it commands as arguments.
 .PP
 The DOS version of the monitor, usually named
 .B boot.com
-under DOS, boots Minix from a "DOS virtual disk".
+under DOS, boots MINIX 3 from a "DOS virtual disk".
 .B Boot.com
 is a simple COM program that interprets a DOS
-file as a disk, loads a Minix kernel from the active partition in the same
-way as the BIOS based monitor, and executes it to start Minix.  All the
+file as a disk, loads a MINIX 3 kernel from the active partition in the same
+way as the BIOS based monitor, and executes it to start MINIX 3.  All the
 monitor commands function in the same way, except for the
 .B boot
-command, it can only load Minix.  The monitor grabs as much free memory as
-it can for Minix to work in, as the
+command, it can only load MINIX 3.  The monitor grabs as much free memory as
+it can for MINIX 3 to work in, as the
 .B memory
-variable shows.  Further details on how to run Minix under DOS, Windows 95,
+variable shows.  Further details on how to run MINIX 3 under DOS, Windows 95,
 or even Windows NT are written down in
 .BR dosminix (8).
 .SH COMMANDS
@@ -131,7 +131,7 @@ to initialize?"  Or: "Does the keyboard have LEDs?"
 .SP
 .B memory
 .RS
-List of memory free for use by Minix.  It is a comma separated list of
+List of memory free for use by MINIX 3.  It is a comma separated list of
 .IR base:size
 pairs denoting the byte offsets and sizes of free memory in hexadecimal.
 .B "800:925E0,100000:F00000"
@@ -139,7 +139,7 @@ is a typical example of about 585K starting at 2K, and 15M starting at 1M.
 (The first 2K are BIOS parameters and the 53K under the 640K boundary is
 the monitor itself.)  The very last number you can play with if you know
 what you are doing.  Either increase it if the monitor has it wrong, or
-decrease it to test if Minix still runs with less memory then normal.
+decrease it to test if MINIX 3 still runs with less memory then normal.
 .RE
 .SP
 .B video
@@ -181,7 +181,7 @@ to a suitable default, so that most machines can find their disk.
 .B console
 .RS
 If set to a hexadecimal value it makes the monitor set the BIOS video mode to
-this value when Minix is started.
+this value when MINIX 3 is started.
 This allows the use of video modes with more rows or colums than the
 standard 80x25 mode.  You can use any text mode in the 00-FF range, and VESA
 extended modes in the 100-FFF range.  Most text modes use a 9x16 font with
@@ -221,7 +221,7 @@ The name of the file containing the kernel image, by default
 If it refers to a directory however then the newest file inside the
 directory is chosen to be the kernel image.  The names inside
 .B /minix/
-are best set to the Minix version you are using, which looks good when the
+are best set to the MINIX 3 version you are using, which looks good when the
 monitor prints its name.  Rules for pretty printing image names:
 .RS
 .SP
@@ -253,13 +253,13 @@ image name tell the starting sector and sector count of the image on disk.
 Define function.
 .br
 Functions may be used to bundle a set of commands, so that you can easily
-boot Minix with a different set of parameters then normal.  E.g.
+boot MINIX 3 with a different set of parameters then normal.  E.g.
 .SP
 .RS
 ram() { rootdev=ram; boot }
 .RE
 .SP
-will allow you to run Minix with the root device on RAM for a change, if you
+will allow you to run MINIX 3 with the root device on RAM for a change, if you
 normally use a real device as root.  There are three predefined functions,
 .BR leader ,
 with default value an
@@ -275,7 +275,7 @@ The monitor executes
 .B leader;main
 at startup to show the banner message and a menu.  The
 .B trailer
-function is executed just before Minix is started.  These three functions can
+function is executed just before MINIX 3 is started.  These three functions can
 be redefined as you please.
 .RE
 .SP
@@ -339,17 +339,17 @@ to increase it's heap.
 .br
 \fBboot\fP \fIdevice\fP
 .RS
-Boot Minix or another O.S.
+Boot MINIX 3 or another O.S.
 .br
 Without an argument,
 .B boot
-will load and execute the Minix image named by the
+will load and execute the MINIX 3 image named by the
 .B image
 variable.  With options the variable
 .B bootopts
 is first set to
 .BI \- opts
-before Minix is started, and unset when Minix returns.  With a
+before MINIX 3 is started, and unset when Minix returns.  With a
 .I device
 argument,
 .B boot
@@ -372,7 +372,7 @@ then partition 2 is first made active.  You'll then need to use
 .SP
 with
 .I keys
-chosen so that Minix is booted at startup.  (See
+chosen so that MINIX 3 is booted at startup.  (See
 .BR installboot (8).)
 .RE
 .SP
@@ -381,7 +381,7 @@ chosen so that Minix is booted at startup.  (See
 Copies output to and takes input from serial line
 .I n
 (0-3) at 9600 baud, 8 bits, no parity.
-This allows you to control a Minix system remotely through an RS-232
+This allows you to control a MINIX 3 system remotely through an RS-232
 connection.
 .RE
 .SP
@@ -443,7 +443,7 @@ will use this one hidden built-in function:
 Kernel selecting functions only add new options to this set, but if you
 define a two argument function yourself then the above one is no longer
 shown, allowing you to customize the menu completely.  Your first
-function definition should therefore be one that starts Minix.
+function definition should therefore be one that starts MINIX 3.
 .SP
 Menu entries are shown in the same order as
 .B set
@@ -486,7 +486,7 @@ is killed when the prompt is printed.  Example:
 main() {trap 10000 boot; menu}
 .RE
 .SP
-This gives you 10 seconds to choose a menu option before Minix is booted.
+This gives you 10 seconds to choose a menu option before MINIX 3 is booted.
 .RE
 .SP
 \fBunset\fP \fIname\fP ...
@@ -502,7 +502,7 @@ to remove the "device name translation" property from a variable.
 .RS
 Exit the monitor.
 .br
-Reboot the machine, exit to Minix or exit to DOS as appropriate.
+Reboot the machine, exit to MINIX 3 or exit to DOS as appropriate.
 .RE
 .SP
 \fBoff\fP
@@ -521,7 +521,7 @@ Treat a number of commands as a single command.  Used for function
 definitions when a function body must contain more than one command.
 .RE
 .SH DEVICES
-The Minix kernel can't do anything with device names, so they have to be
+The MINIX 3 kernel can't do anything with device names, so they have to be
 translated to device numbers before they are passed to the kernel.  This
 number is found under the st_rdev field (see
 .BR stat (2))
@@ -537,7 +537,7 @@ or 'c0d0p1s0', and then searched for in /dev.
 .B Bootdev
 can only be translated to a device for the first controller, and only if
 the disks on that controller are numbered without "gaps".  (The master
-device on the second IDE channel is always d2 on Minix.  The BIOS will
+device on the second IDE channel is always d2 on MINIX 3.  The BIOS will
 call it disk 0, 1, or 2 depending on the number of disks on the first
 IDE channel.)
 .SP
@@ -548,7 +548,7 @@ for device names, and it is best to always omit
 .B c0
 for the
 .B boot
-command, and to always use the full name for variables passed to Minix.
+command, and to always use the full name for variables passed to MINIX 3.
 .SH EXTENSIONS
 A few extensions have been made to this program for kernel hackers.  They
 may be triggered by setting bits in the flags word in the kernel startup

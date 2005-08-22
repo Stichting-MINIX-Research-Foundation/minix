@@ -71,7 +71,7 @@ set to
 .BR EAGAIN .
 .SS "Special characters"
 Some characters have special functions in some of the terminal modes.  These
-characters are as follows, with the Minix defaults shown in parentheses:
+characters are as follows, with the MINIX 3 defaults shown in parentheses:
 .TP 5
 .BR INTR " (^?)"
 Special input character that is recognized if
@@ -140,7 +140,7 @@ are set.  A
 .B CR NL
 sequence is output instead of just
 .BR NL .
-(Minix specific, but almost mandatory on any UNIX-like system.)
+(MINIX 3 specific, but almost mandatory on any UNIX-like system.)
 .TP
 .BR TAB " (^I)"
 Special character on output if
@@ -161,7 +161,7 @@ Special input character if job control is implemented and
 .B ISIG
 is set.  It causes a
 .B SIGTSTP
-signal to be send to the terminal process group.  (Minix does not have job
+signal to be send to the terminal process group.  (MINIX 3 does not have job
 control.)
 .TP
 .BR STOP " (^S)"
@@ -205,7 +205,7 @@ All of these characters except
 .B NL
 and
 .B TAB
-may be changed or disabled under Minix.  (Changes to
+may be changed or disabled under MINIX 3.  (Changes to
 .B START
 and
 .B STOP
@@ -213,13 +213,13 @@ may be ignored under other termios implementations.)  The
 .B REPRINT
 and
 .B LNEXT
-characters are Minix extensions that are commonly present in other
+characters are MINIX 3 extensions that are commonly present in other
 implementations.  \s-2POSIX\s+2 is unclear on whether
 .BR IEXTEN,
 .BR IGNCR
 and
 .BR ICRNL
-should be active in non-canonical mode, but under Minix they are.
+should be active in non-canonical mode, but under MINIX 3 they are.
 .SS "Terminal attributes"
 The attributes of a terminal, such as whether the mode should be canonical or
 non-canonical, are controlled by routines that use the
@@ -284,7 +284,7 @@ Enable start/stop output control.
 Enable start/stop input control.  (Not implemented.)
 .TP
 .B IXANY
-Allow any character to restart output.  (Minix specific.)
+Allow any character to restart output.  (MINIX 3 specific.)
 .TP
 .B ISTRIP
 Strip characters to seven bits.
@@ -322,7 +322,7 @@ field contains the following single bit flags that control output processing:
 .TP
 .B OPOST
 Perform output processing.  This flag is the "main switch" on output
-processing.  All other flags are Minix specific.
+processing.  All other flags are MINIX 3 specific.
 .TP
 .B ONLCR
 Transform an
@@ -473,7 +473,7 @@ a signal is sent.
 Send a
 .B SIGTTOU
 signal if job control is implemented and a background process tries to
-write.  (Minix has no job control.)
+write.  (MINIX 3 has no job control.)
 .SS "Input and output speed"
 The input and output speed are encoded into the
 .B c_ispeed
@@ -523,7 +523,7 @@ fields and the
 .B B57600
 and
 .B B115200
-symbols are Minix specific.)
+symbols are MINIX 3 specific.)
 .SS "Special characters"
 The
 .B c_cc
@@ -560,7 +560,7 @@ subscripts respectively, and may ignore changes to
 .B START
 and
 .BR STOP .
-(Under Minix all special characters have their own
+(Under MINIX 3 all special characters have their own
 .I c_cc
 slot and can all be modified.)
 .SS "Raw I/O Parameters"
@@ -632,7 +632,7 @@ reach the terminal even when standard input, output and error are
 redirected.  Opening this device can also be used as a test to see if a
 process has a controlling tty or not.
 .PP
-For Minix a special write-only device
+For MINIX 3 a special write-only device
 .B /dev/log
 exists for processes that want to write messages to the system console.
 Unlike the console this device is still accessible when a session leader
@@ -701,10 +701,10 @@ terminal interface are still supported by the terminal driver by emulation.
 Note that these old functions cannot control all termios attributes, so the
 terminal must be in a relatively sane state to avoid problems.
 .SH FILES
-The list below shows all devices that Minix and Minix-vmd have.  Not all of
+The list below shows all devices that MINIX 3 and Minix-vmd have.  Not all of
 these devices are configured in by default, as indicated by the numbers
 (i/j/k, l/m/n) that tell the minimum, default and maximum possible number of
-these devices for Minix (i/j/k) and Minix-vmd (l/m/n).
+these devices for MINIX 3 (i/j/k) and Minix-vmd (l/m/n).
 .TP 20
 .B /dev/console
 System console.
@@ -730,7 +730,7 @@ Associated pseudo tty controllers.
 .BR read (2),
 .BR write (2).
 .SH BUGS
-A fair number of flags are not implemented under Minix (yet).  Luckily they
+A fair number of flags are not implemented under MINIX 3 (yet).  Luckily they
 are very limited utility and only apply to RS-232, not to the user interface.
 .SH AUTHOR
 Kees J. Bot (kjb@cs.vu.nl)

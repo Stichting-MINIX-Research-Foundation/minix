@@ -94,7 +94,7 @@ If the daemon finds out that all networks have an infinite lease (configured
 with a fixed address), there is no router information to keep warm, and
 it isn't a server then it simply exits.
 .SS "Asynchronous I/O?"
-Minix doesn't have the asynchronous I/O that Minix-vmd has, so under Minix
+MINIX 3 doesn't have the asynchronous I/O that Minix-vmd has, so under MINIX 3
 the daemon only works with one network at a time.  If it's stuck on the same
 network for 32 seconds then that network is closed and another network is
 tried for 32 seconds.  This usually works ok as a client, but as a server it
@@ -200,7 +200,7 @@ any IP stack will immediately respond, so that the DHCP server can't
 possibly beat it at sending out an ACK.  (The DHCP server has to commit the
 lease to stable storage first anyway.)
 .PP
-Way more nonsense can be sent in a DHCP packet that Minix could do
+Way more nonsense can be sent in a DHCP packet that MINIX 3 could do
 something with, but nobody does so we don't bother.
 .PP
 DHCP was invented by a rabid gerbil on speed.

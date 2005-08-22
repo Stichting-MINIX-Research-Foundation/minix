@@ -9,18 +9,18 @@ boot \- from power on to the login prompt
 At power on the machine reads the first sector of the boot device into memory
 and executes it.  This bootstrap code loads
 .BR /boot/boot ,
-the Minix Boot Monitor.  The monitor loads the kernel binaries from
+the MINIX 3 Boot Monitor.  The monitor loads the kernel binaries from
 .BR /boot/image ,
 or the newest file in
 .B /boot/image
 if it is a directory.
 .PP
-The Minix system is now running, the different tasks initialize themselves
+The MINIX 3 system is now running, the different tasks initialize themselves
 and control is transferred to the last one,
 .BR init .
 .PP
 .B Init
-is the grandparent of all Minix processes, it is responsible for starting
+is the grandparent of all MINIX 3 processes, it is responsible for starting
 login processes on each terminal, but first it runs
 .BR /etc/rc .
 .PP
@@ -30,7 +30,7 @@ keyboard translation to the mapping in
 .B /etc/keymap
 if present, followed by a call to
 .BR readclock (8)
-to set Minix time from the hardware clock.  Next the file systems are checked
+to set MINIX 3 time from the hardware clock.  Next the file systems are checked
 if necessary and the
 .B /usr
 file system is mounted.
@@ -110,7 +110,7 @@ This section lists extra variables or variable settings:
 Choose the driver that is to be used as controller
 .IR n ,
 in order: IBM/AT (classic AT or newer IDE), BIOS (any disk), ESDI
-(some PS/2s), IBM/XT, Adaptec 154x, Minix under DOS "file as disk",
+(some PS/2s), IBM/XT, Adaptec 154x, MINIX 3 under DOS "file as disk",
 FAT file system "file as disk".
 By default
 .B at
@@ -311,7 +311,7 @@ It can also be seen among the drivers in the output of
 See also
 .BR inet (8).
 .PP
-In a small network there may not be a DHCP server for Minix to obtain its IP
+In a small network there may not be a DHCP server for MINIX 3 to obtain its IP
 address and name from, so you need specify the ethernet address of your machine
 and host names of all machines in the hosts and DHCP configuration files.
 Suppose your machine is to be named "flotsam", and another machine in the
@@ -428,7 +428,7 @@ Note that
 is sourced, so you can use the same variables and functions that
 .BR /usr/etc/rc
 uses.
-These changes undo all the efforts to make Minix TCP/IP
+These changes undo all the efforts to make MINIX 3 TCP/IP
 autoconfigurable.  Make very sure that all the IP addresses are correct, and
 that the IP address of your machine is unique.  (Mistakenly using the
 address of a main server will make all other machines look at your machine,
@@ -436,7 +436,7 @@ and will make all the users of all other machines look at you.)
 .SH FILES
 .TP 20n
 /boot
-Minix Boot Monitor.
+MINIX 3 Boot Monitor.
 .TP
 /minix
 Kernel image, or directory containing them.
@@ -519,6 +519,6 @@ they are bad.
 Indefinite hangs are possible if I/O addresses or IRQ's are wrong.  A driver
 may babble about addresses and IRQ's, but that does not mean that what it
 says is true, it may just be configured that way.  It is very difficult to
-find peripherals on a PC automatically, and Minix doesn't even try.
+find peripherals on a PC automatically, and MINIX 3 doesn't even try.
 .SH AUTHOR
 Kees J. Bot <kjb@cs.vu.nl>

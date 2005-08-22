@@ -65,7 +65,7 @@ there are no processes that wish to report status (WNOHANG),
 and/or that children of the current process that are stopped
 due to a SIGTTIN, SIGTTOU, SIGTSTP, or SIGSTOP signal should also have
 their status reported (WUNTRACED).  (Job control is not implemented for
-Minix, but these symbols and signals are.)
+MINIX 3, but these symbols and signals are.)
 .PP
 When the WNOHANG option is specified and no processes
 wish to report status, 
@@ -75,7 +75,7 @@ either returns 0 under some implementations, or \-1 with
 set to
 .B EAGAIN
 under others.
-(Under Minix it returns 0.)
+(Under MINIX 3 it returns 0.)
 The WNOHANG and WUNTRACED options may be combined by 
 .IR or 'ing
 the two values.
@@ -120,7 +120,7 @@ Signal number if the process died by a signal, zero otherwise.
 True if the process died by a signal.
 .TP 5
 .BI "WIFSTOPPED(" status ")"
-True if the process is stopped.  (Never true under Minix.)
+True if the process is stopped.  (Never true under MINIX 3.)
 .TP 5
 .BI "WSTOPSIG(" status ")"
 Signal number of the signal that stopped the process.
@@ -153,7 +153,7 @@ The \fIstatus\fP argument points to an illegal address.
 [EAGAIN]
 .B Waitpid
 is called with the WNOHANG option and no child has exited yet.  (Not under
-Minix, it'll return 0 in this case and leave
+MINIX 3, it'll return 0 in this case and leave
 .B errno
 alone.)
 .SH "SEE ALSO"

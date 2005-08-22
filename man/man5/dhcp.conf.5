@@ -90,7 +90,7 @@ own networks, it ignored on entries for other hosts.
 .PP
 .RS
 Includes the macro or parameters if one of the class names is matched.  A
-host normally includes a class ID in its request.  Minix and Minix-vmd
+host normally includes a class ID in its request.  MINIX 3 and Minix-vmd
 use "Minix" as the class name.  For Windows the class ID starts with
 "MSFT", and Solaris' starts with "SUNW".
 (Use
@@ -243,7 +243,7 @@ The
 field tells the maximum number of items that may be used with the tag, with
 0 meaning "unlimited".
 .SP
-Three tags, the ones that Minix really cares about, have been predefined,
+Three tags, the ones that MINIX 3 really cares about, have been predefined,
 and there are also a few pseudotags predefined for the static fields in a
 DHCP packet that one may want to set:
 .SP
@@ -400,13 +400,13 @@ two external servers at the VU that know the world.
 host darask {
 	option server;
 	DNSserver saone;
-	class Minix { DNSserver saone 130.37.24.3 130.37.24.6; };
+	class MINIX 3 { DNSserver saone 130.37.24.3 130.37.24.6; };
 };
 .xE
 .cS
 The darask is also a server, the backup for saone on the odd chance that it
 is unavailable.  It uses saone and the external name servers, but only
-when it is running Minix.  When running Windows it only uses saone.
+when it is running MINIX 3.  When running Windows it only uses saone.
 .cE
 .xS
 .ta +32m +16m
@@ -473,7 +473,7 @@ tag numbers and their meaning are standard, the names are made up.)
 .SH NOTES
 The amount of memory
 .B dhcpd
-needs increases with the size of configuration file.  Minix can
+needs increases with the size of configuration file.  MINIX 3 can
 handle
 .B dhcptags.conf
 and a modest sized
@@ -485,12 +485,12 @@ Items that are only necessary for a certain host should only be specified
 for that host.  Items for a whole network are best added to a netblock
 specification.  Use class elements for a certain type of host, and macros
 for exceptions.  Try to limit information as much as possibly to those hosts
-that need it.  (Don't go overboard.  A Minix machine won't be bothered by a
+that need it.  (Don't go overboard.  A MINIX 3 machine won't be bothered by a
 few NetBIOS tags.)
 .PP
 DHCPINFORM requests should always be answered when being a server, but
 J. Random Sysadmin trying to diagnose problems doesn't like it when little
-Minix machines show up in a packet trace unexpectedly.  It's best to be
+MINIX 3 machines show up in a packet trace unexpectedly.  It's best to be
 inconspicuous on a network you don't own.
 .SH BUGS
 There are a few too many subtle mistakes one can make.

@@ -77,8 +77,8 @@ or a disk pack is not loaded on a drive.
 .en 7 E2BIG "Arg list too long
 An argument list longer than ARG_MAX bytes is presented to
 .BR execve .
-ARG_MAX is set to 4096 bytes for 16-bit Minix, 16384 bytes for 32-bit
-Minix, and unlimited for Minix-vmd as these systems are released.
+ARG_MAX is set to 4096 bytes for 16-bit MINIX 3, 16384 bytes for 32-bit
+MINIX 3, and unlimited for Minix-vmd as these systems are released.
 .en 8 ENOEXEC "Exec format error
 A request is made to execute a file
 that, although it has the appropriate permissions,
@@ -163,7 +163,7 @@ and temporarily no more
 can be accepted.
 .en 24 EMFILE "Too many open files
 The limit on the number of open files per process, OPEN_MAX, is reached.
-As released, this limit is 20 for Minix, and 30 for Minix-vmd.
+As released, this limit is 20 for MINIX 3, and 30 for Minix-vmd.
 .en 25 ENOTTY "Not a typewriter
 The file mentioned in an
 .B ioctl
@@ -171,7 +171,7 @@ is not a terminal or one of the
 devices to which this call applies.  (Often seen error from programs with
 bugs in their error reporting code.)
 .en 26 ETXTBSY "Text file busy
-Attempt to execute a program that is open for writing.  Obsolete under Minix.
+Attempt to execute a program that is open for writing.  Obsolete under MINIX 3.
 .en 27 EFBIG "File too large
 The size of a file exceeded the maximum (little over 64 megabytes for
 the V2 file system).
@@ -303,7 +303,7 @@ One of these groups is distinguished from others and
 used in implementing accounting facilities.  The positive
 integer corresponding to this distinguished group is termed 
 the real group ID.
-(Under standard Minix this is the only group a process can be a member of.)
+(Under standard MINIX 3 this is the only group a process can be a member of.)
 .IP
 All processes have a real user ID and real group ID.
 These are initialized from the equivalent attributes
@@ -325,7 +325,7 @@ The group access list is an additional set of group ID's
 used only in determining resource accessibility.  Access checks
 are performed as described below in ``File Access Permissions''.
 The maximum number of additional group ID's is NGROUPS_MAX.
-For Minix this is 0, but Minix-vmd supports a list of up to 16
+For MINIX 3 this is 0, but Minix-vmd supports a list of up to 16
 additional group ID's.  (Also known as ``supplemental'' group ID's.)
 .TP 5
 Super-user

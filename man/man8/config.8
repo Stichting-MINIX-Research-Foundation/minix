@@ -1,17 +1,17 @@
 .TH CONFIG 8
 .SH NAME
-config \- configuring Minix tasks and servers
+config \- configuring MINIX 3 tasks and servers
 .SH DESCRIPTION
 .de SP
 .if t .sp 0.4
 .if n .sp
 ..
-Minix has a number of configuration files containing parameters that can
+MINIX 3 has a number of configuration files containing parameters that can
 be changed to enable or disable a device driver, to change the number of
 times a resource can be used, or to tune the performance of the system.
 We will name the file that contains the parameter, the name of the
 parameter, and the values it can be set to.  Some comments are prefixed by
-"8086" for Minix running in 16-bit real mode, "286" for 16-bit protected
+"8086" for MINIX 3 running in 16-bit real mode, "286" for 16-bit protected
 mode, and "386" for 32-bit protected mode.
 Configuration file names can be
 .RI < file.h >
@@ -34,7 +34,7 @@ in 32-bit mode.
 .ti 2m
 .RB < minix/config.h >
 .br
-This is the main configuration file for the Minix.  It contains lots of
+This is the main configuration file for the MINIX 3.  It contains lots of
 boolean variables to enable or disable drivers and a number of parameters
 that specify the sizes of system data structures:
 .TP
@@ -132,14 +132,14 @@ disks.  In real mode it is best to use the BIOS driver.
 Enables the Adaptec 1540 series SCSI driver.
 .TP
 .SB ENABLE_DOSFILE
-Enable the "DOS file as disk" driver that is used when Minix is run from
+Enable the "DOS file as disk" driver that is used when MINIX 3 is run from
 MS-DOS to access a large file as a disk.
 .TP
 .SB ENABLE_FATFILE
 Enable the "FAT file as disk" driver that interprets a FAT file system
 to find a large file to use as a disk.  This driver combined with a fast
-native Minix disk driver is a better choice then the previous driver.  (And
-it works when Minix is not started from MS-DOS.)  This is the last driver
+native MINIX 3 disk driver is a better choice then the previous driver.  (And
+it works when MINIX 3 is not started from MS-DOS.)  This is the last driver
 that needs to be assigned to a controller task.
 .TP
 .SB ENABLE_SB16
@@ -290,7 +290,7 @@ default setting for
 allows up to four backlogged TCP streams, i.e. when data is output faster
 then it is read.  If more buffers are needed then one of the TCP connections
 is shut down.  When this happens you will see a "not enough buffers left"
-error.  This could happen for instance if a Minix web server is assaulted by
+error.  This could happen for instance if a MINIX 3 web server is assaulted by
 a browser that likes to open several connections to the server
 simultaneously.  The fix is to increase
 .SB BUF512_NR

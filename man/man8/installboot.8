@@ -30,7 +30,7 @@ installboot \- make a device bootable
 ..
 .B Installboot
 may be used to make a device bootable by constructing a kernel image and
-installing bootstrap code into the boot block of a Minix file system.  To
+installing bootstrap code into the boot block of a MINIX 3 file system.  To
 understand how this can be done one first has to know what happens when a
 PC is booted.
 .PP
@@ -44,7 +44,7 @@ in the first sector of /dev/fd0, /dev/c0d0p0, /dev/c0d0p1, /dev/c0d0p2, or
 The bootstrap will locate the operating system on the device it itself was
 loaded from, load it, and execute it.
 .PP
-To make a Minix file system
+To make a MINIX 3 file system
 .B /dev/fd0
 mounted on
 .B /mnt
@@ -86,7 +86,7 @@ The
 .B \-image
 option (or the
 .B \-i
-shorthand) combines the executable files needed to run Minix in one file.
+shorthand) combines the executable files needed to run MINIX 3 in one file.
 Only the names and a few zero bytes are inserted into the image.  The name
 is for identification and the zeros are used to pad separate pieces to
 sector boundaries for fast loading.
@@ -156,10 +156,10 @@ Old boot parameters are kept if there are no images added.
 This option fills a blank floppy in
 .I device
 with boot code and kernel images.  This "boot disk" does not have a root
-file system, only the Boot Monitor and Minix kernels.  The boot parameters
+file system, only the Boot Monitor and MINIX 3 kernels.  The boot parameters
 sector is filled with code that enables menu options for selecting an
 image.  After loading an image, the Monitor will ask you to insert a root
-file system diskette before starting Minix.
+file system diskette before starting MINIX 3.
 .SP
 The labels used on the images should match those on the executables used
 inside the image.  You can put a comma separated list of labels on an image
@@ -198,7 +198,7 @@ then its bootstrap code is copied to
 .IR device .
 The master bootstrap on a hard disk boots the active partition on that disk
 at boot time.  The MS-DOS fdisk command normally puts a master bootstrap on
-the hard disk.  Minix has two bootstraps that can be used as a master
+the hard disk.  MINIX 3 has two bootstraps that can be used as a master
 bootstrap,
 .B masterboot
 and
@@ -212,9 +212,9 @@ If installed on a hard disk then it will load the bootstrap of the active
 partition and run it.
 .B Masterboot
 can be put in the first sector of a hard disk to boot the active partition,
-or in the first sector of a Minix partition to boot the active subpartition.
+or in the first sector of a MINIX 3 partition to boot the active subpartition.
 .SP
-If installed on a Minix floppy then it will try to boot the next floppy or
+If installed on a MINIX 3 floppy then it will try to boot the next floppy or
 the first hard disk.  Ideal for floppies with just data on it, they will no
 longer obstruct the boot process if left in the drive.  Also a very useful
 trick to boot from floppy drive 1.
@@ -292,15 +292,15 @@ under MS-DOS 5.0 (or newer) to restore the master bootstrap.
 .SH FILES
 .TP 25
 .B /usr/mdec/bootblock
-Minix bootstrap for the Minix root device.  To be placed in the boot sector.
+MINIX 3 bootstrap for the Minix root device.  To be placed in the boot sector.
 .TP
 .B /usr/mdec/boot
-Minix Boot Monitor.  Can usually be found in the root directory of a bootable
+MINIX 3 Boot Monitor.  Can usually be found in the root directory of a bootable
 device.
 .TP
 .B /usr/mdec/masterboot
 Master bootstrap.  Can be placed in the first sector of a disk to select the
-active partition.  In a Minix primary partition it selects the active
+active partition.  In a MINIX 3 primary partition it selects the active
 subpartition.
 .TP
 .B /usr/mdec/jumpboot
@@ -333,7 +333,7 @@ monitor instead of just "boot"?
 .RE
 .SP
 .I Device
-is not a Minix file system
+is not a MINIX 3 file system
 .RS
 You are using
 .B \-device
@@ -380,9 +380,9 @@ Not bootable
 Partition does not exist (jumpboot), or it's bootstrap isn't executable.
 .RE
 .SH NOTES
-The Minix bootstraps can boot beyond the 8G disk size limit if the BIOS
+The MINIX 3 bootstraps can boot beyond the 8G disk size limit if the BIOS
 supports the IBM/MS INT 13 Extensions.  Alas only Minix-vmd can make use of
-this, standard Minix has a 4G disk size limit.
+this, standard MINIX 3 has a 4G disk size limit.
 .SH BUGS
 It has four more options than the SunOS installboot program it is modeled
 after.

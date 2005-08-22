@@ -113,7 +113,7 @@ Note that
 .B signal()
 and all of the
 .B SA_*
-flags are Minix extensions.
+flags are MINIX 3 extensions.
 .PP
 Signal handlers are reset to
 .B SIG_DFL
@@ -121,7 +121,7 @@ on an
 .BR execve (2).
 Signals that are ignored stay ignored.
 .SS Signals
-Minix knows about the following signals:
+MINIX 3 knows about the following signals:
 .PP
 .nf
 .ta +11n +7n +8n
@@ -167,7 +167,7 @@ The signal is ignored if not caught.
 Only Minix-vmd implements this signal.
 .TP
 .B x
-Minix extension, not defined by \s-2POSIX\s+2.
+MINIX 3 extension, not defined by \s-2POSIX\s+2.
 .TP
 .B p
 These signals are not implemented, but \s-2POSIX\s+2 requires that they are

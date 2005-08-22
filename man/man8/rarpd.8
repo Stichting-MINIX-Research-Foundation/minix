@@ -21,7 +21,7 @@ looks up the six octet ethernet number in the
 file finding a host name.  This name is translated to the IP address of the
 host by a DNS lookup.  The IP address is then sent to the host.
 .PP
-Under Minix the program forks as needed to give each network its own server.
+Under MINIX 3 the program forks as needed to give each network its own server.
 Under Minix-vmd all networks are handled in the same program using async I/O.
 .SS "Private Ethernet Addresses"
 For VU practical work, where students have to create their own IP stack

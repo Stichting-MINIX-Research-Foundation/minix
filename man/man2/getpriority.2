@@ -14,7 +14,7 @@ int setpriority(int \fIwhich\fP, int \fIwho\fP, int \fIprio\fP)
 returns the scheduling priority of the process, process group, or user
 referred to in \fIwho\fP. Which of the three is indicated in
 \fIwhich\fP, by PRIO_PROCESS, PRIO_PGRP and PRIO_USER, respectively.
-In Minix, currently only PRIO_PROCESS is implemented.
+In MINIX 3, currently only PRIO_PROCESS is implemented.
 
 The range of the returned value is between PRIO_MIN and PRIO_MAX,
 currently between -20 and 20, and is the so-called nice value of

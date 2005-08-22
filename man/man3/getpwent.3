@@ -122,7 +122,7 @@ and
 fields are also not defined by \s-2POSIX\s+2, but are always visible.
 Portable code cannot reliably detect errors by setting
 .B errno
-to zero.  Under Minix it is better to make a
+to zero.  Under MINIX 3 it is better to make a
 .B getpwent()
 scan if you need to look up several user-id's or names, but portable code
 had better use several

@@ -12,19 +12,19 @@ serial-ip \- Serial IP (SLIP or PPP) setup
 This text and the serial IP code is not finished.  Code needs to be added to
 .B nonamed
 to allow it to be used both with and without a connection to the Internet,
-and by now there is a PPP program for standard Minix "out there" that will
+and by now there is a PPP program for standard MINIX 3 "out there" that will
 change everything that is said in this text.  So much to do, so little
 time...
 .br
 \-\-\-\-\-\-\-
 .PP
-This manual page describes the Minix network setup to use serial line IP.
+This manual page describes the MINIX 3 network setup to use serial line IP.
 The serial IP protocol used can either be the older SLIP by means of the
 .BR slip (8)
 program, or PPP (Point-to-Point Protocol), the newer and better serial IP
 protocol implemented by the
 .BR ppp (8)
-program.  Alas standard Minix only supports SLIP.
+program.  Alas standard MINIX 3 only supports SLIP.
 .PP
 In the following text all descriptions and examples will name SLIP or the
 .BR slip
@@ -42,7 +42,7 @@ program is like this:
 .PP
 The argument of the program, the
 .B /dev/psip2
-device, is one of the so-called "Pseudo IP" devices that the Minix TCP/IP
+device, is one of the so-called "Pseudo IP" devices that the MINIX 3 TCP/IP
 driver
 .BR inet (8)
 offers to implement a virtual network on.  On an ethernet IP packets are
@@ -58,7 +58,7 @@ through an RS-232 serial line like the second serial line
 as used in the example above.
 .PP
 If we look at the flow of data over normal ethernet then this is what a TCP
-connection between two Minix machines,
+connection between two MINIX 3 machines,
 .B telnet
 for instance, looks like:
 .PP
@@ -112,7 +112,7 @@ by your service provider.  Let's choose another address on that network,
 for instance.  (You can use the address of the SLIP gateway if you want
 to make it look pretty, but it doesn't really matter, anything "out there"
 is ok.)
-To make Minix aware of the situation you have to configure the pseudo IP
+To make MINIX 3 aware of the situation you have to configure the pseudo IP
 network.  For Minix-vmd you need to look for the
 .B if-then-else-fi
 code in
@@ -138,7 +138,7 @@ add_route -g 192.168.0.1
 .fi
 .RE
 .PP
-For standard Minix one has to edit
+For standard MINIX 3 one has to edit
 .B /etc/rc
 instead at the point of the XXX comments.  The
 .B ifconfig

@@ -1,6 +1,6 @@
 .TH CC 1
 .SH NAME
-cc, pc, m2 \- Minix C, Pascal, and Modula-2 compilers
+cc, pc, m2 \- MINIX 3 C, Pascal, and Modula-2 compilers
 .SH SYNOPSIS
 .in +.5i
 .ti -.5i
@@ -101,7 +101,7 @@ cc, pc, m2 \- Minix C, Pascal, and Modula-2 compilers
 .BR pc ,
 and
 .BR m2
-are the call names of the Minix C, Pascal, and Modula-2 compilers from
+are the call names of the MINIX 3 C, Pascal, and Modula-2 compilers from
 the Amsterdam Compiler Kit (ACK).
 .PP
 All these call names are links to the
@@ -124,12 +124,12 @@ the synopsis above shows the options that the Minix-86 driver supports.  The
 rest of this manual page is geared towards the
 .B acd
 driver.  People writing software for Minix-86, or that should be
-portable to all Minix versions should stick to the options listed under
+portable to all MINIX 3 versions should stick to the options listed under
 the Minix-86 compiler.
 .SH OPTIONS
 The transformations done by the compiler are modified by the following
 options.  They are a superset of the options required by \s-2POSIX\s+2,
-with the Minix or compiler specific ones are marked as such.  Options
+with the MINIX 3 or compiler specific ones are marked as such.  Options
 for one specific compiler are ignored for others.  Read the OPTIONS section
 of
 .BR acd (1)
@@ -172,12 +172,12 @@ implicit
 .BR \-.c .
 The runtime startoff can be omitted by specifying
 .B \-.o
-for those rare cases where you want to supply your own startoff.  (Minix)
+for those rare cases where you want to supply your own startoff.  (MINIX 3)
 .TP
 .B \-c
 Transform the input files to object files and stop.  The
 .B \-o
-option may be used under Minix to set the name of the object file.
+option may be used under MINIX 3 to set the name of the object file.
 .BR Make (1)
 likes this, because
 .BI "cc \-c" " dir/file" .c
@@ -209,7 +209,7 @@ with the suffix
 .BR .i .
 File and line number information is omitted from the output.  Use
 .B \-P \-E
-under Minix to omit this info for
+under MINIX 3 to omit this info for
 .B \-E
 too.
 .TP
@@ -232,7 +232,7 @@ library.  (So you do not need to know how the archiver works.)  Note that you
 need to give object files as arguments if you want to replace old object
 files.  Transformed files are added under a (unique) temporary name.  With
 .B \-o
-you can name the library.  (Minix)  (Minix-86 can't do
+you can name the library.  (MINIX 3)  (Minix-86 can't do
 .BR \-c.a .)
 .TP
 .B \-O
@@ -244,13 +244,13 @@ optimization level to get code of reasonable quality.  Use
 to turn off optimization to speed up compilation at debug time.
 .TP
 .BI \-O level
-Compile with the given optimization level.  (Minix)
+Compile with the given optimization level.  (MINIX 3)
 .PP
 .B \-OS
 .br
 .B \-OT
 .RS
-Optimize for space or for time.  (Minix)
+Optimize for space or for time.  (MINIX 3)
 .RE
 .TP
 .B \-g
@@ -289,27 +289,27 @@ Strip the resulting executable of its symbol table.
 .RS
 Use software floating point instead of hardware floating point.  This is
 a loader flag, but in general it is best to specify this flag in all
-phases of the compilation.  (Minix)
+phases of the compilation.  (MINIX 3)
 .RE
 .TP
 .B \-fnone
 Ignored.  Used under Minix-vmd to omit floating point printing/scanning
-code.  The standard Minix compiler figures this out automatically using
-a special loader trick.  (Minix)
+code.  The standard MINIX 3 compiler figures this out automatically using
+a special loader trick.  (MINIX 3)
 .TP
 .B \-w
 Do not produce warnings about dubious C language constructs.  Normally
 the compiler is configured to do the maximum amount of checking
-without being too annoying.  (Minix)
+without being too annoying.  (MINIX 3)
 .TP
 .B \-wo
-Omit warnings about old (K&R) style.  (Minix)
+Omit warnings about old (K&R) style.  (MINIX 3)
 .TP
 .B \-ws
-Omit strict warnings.  (Minix)
+Omit strict warnings.  (MINIX 3)
 .TP
 .B \-wa
-Omit all warnings.  (Minix)
+Omit all warnings.  (MINIX 3)
 .TP
 .B \-3
 Only accept 3rd edition Modula-2.  (Modula-2)
@@ -337,7 +337,7 @@ Under Minix-86 this option transforms the function declarations (prototypes)
 to the old K&R form, i.e. the arguments declarations are removed.  This saves
 a lot of memory in the compiler and may allow a large program to be compiled.
 One must make sure that function arguments are properly type-cast where
-necessary.  (Minix)
+necessary.  (MINIX 3)
 .TP
 .BI \-m arch
 Set the target architecture for a cross compiler.  Normally the compiler
@@ -356,7 +356,7 @@ names are:
 .B m68020
 (Motorola MC68020, 32-bit ints),
 .B sparc
-(Sun SPARC).  (Minix)  (Ignored under Minix-86.)
+(Sun SPARC).  (MINIX 3)  (Ignored under Minix-86.)
 .TP
 .BI \-o " outfile"
 Set the output file for the
@@ -389,7 +389,7 @@ and
 itself.
 .RI ( Arch
 is the machine architecture name.  This is
-Minix dependent, compilers on other systems usually only look in
+MINIX 3 dependent, compilers on other systems usually only look in
 .IR directory .)
 (Minix-86 only has
 .B /lib
@@ -411,13 +411,13 @@ default.  Common I&D is probably only useful for the bootstraps.  The
 option has the same meaning as
 .BR \-sep ,
 but should no longer be used.
-(Minix)
+(MINIX 3)
 .RE
 .TP
 .B \-r
 Makes the loader produce a relocatable object file, i.e. a file that
 may be loaded again.  The runtime startoff and the default libraries are
-omitted, only the files mentioned are combined.  (Minix)
+omitted, only the files mentioned are combined.  (MINIX 3)
 .TP
 .BI \-stack " size"
 Allow the process
@@ -439,7 +439,7 @@ is used by default, translating to 64k for
 and 132k for other architectures.  Too large a size is rounded down to keep
 the data segment within 64 kilobytes for the
 .BR i86 .
-(Minix)
+(MINIX 3)
 .SH OPERANDS
 All leftover operands are treated as files to be compiled, with one
 exception.  The construct
@@ -455,8 +455,8 @@ mistake to write
 instead of
 .BR "cc\ x.c\ \-lcurses" .)
 .SH IMPLEMENTATION
-The Minix compiler implementation uses the ACK compilers adapted for use
-under Minix as described below.  Read
+The MINIX 3 compiler implementation uses the ACK compilers adapted for use
+under MINIX 3 as described below.  Read
 .BR ACK (7)
 for more detailed information on the ACK compilers themselves.
 .SS "Feature test macros"
@@ -464,7 +464,7 @@ The preprocessors are given these arguments to define feature test macros:
 .B \-D__ACK__
 tells what compiler is used.
 .B \-D__minix
-tells that this is Minix.
+tells that this is MINIX 3.
 .BI \-D__ arch
 tells the architecture.
 (More macros are defined, but they are only to be used in the include files.)
@@ -478,12 +478,12 @@ compiles a standard C program.  If you want the extensions described in
 POSIX.1 to become visible, then you have to set
 .BR _POSIX_SOURCE " to " 1
 at the start of your program.
-To enable \s-2UNIX\s+2 or Minix extensions you need to also set
+To enable \s-2UNIX\s+2 or MINIX 3 extensions you need to also set
 .BR _MINIX " to " 1 .
 If you don't want to clutter your source files with these symbols then you
 can use
 .B cc \-D_MINIX \-D_POSIX_SOURCE
-to get the POSIX.1 and the Minix extensions.
+to get the POSIX.1 and the MINIX 3 extensions.
 .SS "Preprocessing"
 Pascal, Modula-2, EM source (see below), and Assembly source are
 preprocessed by the C preprocessor if the very first character in the file
