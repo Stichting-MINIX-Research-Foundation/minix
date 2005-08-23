@@ -46,10 +46,10 @@
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 	
 /* Define flags for the various process types. */
-#define IDL_F 	(SYS_PROC | PREEMPTIBLE | BILLABLE)  /* idle task */
-#define TSK_F 	(SYS_PROC)			/* kernel tasks */
-#define SRV_F 	(SYS_PROC | PREEMPTIBLE)	/* system services */
-#define USR_F	(BILLABLE | PREEMPTIBLE)	/* user processes */
+#define IDL_F 	(SYS_PROC | PREEMPTIBLE | BILLABLE)	/* idle task */
+#define TSK_F 	(SYS_PROC)				/* kernel tasks */
+#define SRV_F 	(SYS_PROC | PREEMPTIBLE)		/* system services */
+#define USR_F	(BILLABLE | PREEMPTIBLE)		/* user processes */
 
 /* Define system call traps for the various process types. These call masks
  * determine what system call traps a process is allowed to make.

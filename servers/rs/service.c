@@ -1,3 +1,10 @@
+/* Utility to start or stop system services.  Requests are sent to the 
+ * reincarnation server that does the actual work. 
+ *
+ * Changes:
+ *   Jul 22, 2005:	Created  (Jorrit N. Herder)
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,6 +17,7 @@
 #include <minix/syslib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
 
 /* This array defines all known requests. */
 PRIVATE char *known_requests[] = {
@@ -67,6 +75,7 @@ PRIVATE void panic(char *app_name, char *mess, int num)
   printf("\n");
   exit(EGENERIC);
 }
+
 
 /* Parse and verify correctness of arguments. Report problem and exit if an 
  * error is found. Store needed parameters in global variables.
@@ -139,6 +148,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
   return(i);
 }
 
+
 /* Main program. 
  */
 PUBLIC int main(int argc, char **argv)
@@ -164,7 +174,7 @@ PUBLIC int main(int argc, char **argv)
       m.SRV_ARGS_ADDR = req_args;
       m.SRV_ARGS_LEN = strlen(req_args);
       m.SRV_DEV_MAJOR = req_major;
-      if (OK != (s=_taskcall(SM_PROC_NR, SRV_UP, &m))) 
+      if (OK != (s=_taskcall(RS_PROC_NR, SRV_UP, &m))) 
           panic(argv[ARG_NAME], "sendrec to manager server failed", s);
       result = m.m_type;
       break;

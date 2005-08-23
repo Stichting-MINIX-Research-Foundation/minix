@@ -9,7 +9,7 @@
  *   Jul 22, 2005:	Created  (Jorrit N. Herder)
  */
 
-#include "sm.h"
+#include "rs.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -99,6 +99,7 @@ PUBLIC int do_start(message *m_ptr)
   return(OK);
 }
 
+
 /*===========================================================================*
  *				   do_stop				     *
  *===========================================================================*/
@@ -138,4 +139,5 @@ PUBLIC int do_exit(message *m_ptr)
   }
   return(OK);
 }
+
 

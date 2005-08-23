@@ -1,10 +1,11 @@
-/* System Process Manager. 
+/* Reincarnation Server.  This servers starts new system services and detects
+ * they are exiting.  In case of errors, system services can be restarted.  
  * 
  * Created:
  *   Jul 22, 2005	by Jorrit N. Herder
  */
 
-#include "sm.h"
+#include "rs.h"
 
 /* Set debugging level to 0, 1, or 2 to see no, some, all debug output. */
 #define DEBUG_LEVEL	1
@@ -70,7 +71,7 @@ PUBLIC void main(void)
           result = do_stop(&m_in);
           break;
       default: 
-          printf("Warning, SM got unexpected request %d from %d\n",
+          printf("Warning, RS got unexpected request %d from %d\n",
             	m_in.m_type, m_in.m_source);
           result = EINVAL;
       }
@@ -82,12 +83,13 @@ PUBLIC void main(void)
   }
 }
 
+
 /*===========================================================================*
  *				 init_server                                 *
  *===========================================================================*/
 PRIVATE void init_server(void)
 {
-/* Initialize the information service. */
+/* Initialize the reincarnation server. */
   int i, s;
   struct sigaction sa;
 
@@ -95,11 +97,12 @@ PRIVATE void init_server(void)
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  if (sigaction(SIGCHLD, &sa, NULL)<0) panic("SM","sigaction failed", errno);
-  if (sigaction(SIGTERM, &sa, NULL)<0) panic("SM","sigaction failed", errno);
-  if (sigaction(SIGABRT, &sa, NULL)<0) panic("SM","sigaction failed", errno);
-  if (sigaction(SIGHUP,  &sa, NULL)<0) panic("SM","sigaction failed", errno);
+  if (sigaction(SIGCHLD, &sa, NULL)<0) panic("RS","sigaction failed", errno);
+  if (sigaction(SIGTERM, &sa, NULL)<0) panic("RS","sigaction failed", errno);
+  if (sigaction(SIGABRT, &sa, NULL)<0) panic("RS","sigaction failed", errno);
+  if (sigaction(SIGHUP,  &sa, NULL)<0) panic("RS","sigaction failed", errno);
 }
+
 
 /*===========================================================================*
  *				   get_work                                  *
@@ -109,10 +112,11 @@ PRIVATE void get_work()
     int status = 0;
     status = receive(ANY, &m_in);   /* this blocks until message arrives */
     if (OK != status)
-        panic("SM","failed to receive message!", status);
+        panic("RS","failed to receive message!", status);
     who = m_in.m_source;        /* message arrived! set sender */
     callnr = m_in.m_type;       /* set function call number */
 }
+
 
 /*===========================================================================*
  *				reply					     *
@@ -125,6 +129,8 @@ int result;                           	/* report result to replyee */
     m_out.m_type = result;  		/* build reply message */
     send_status = send(who, &m_out);    /* send the message */
     if (OK != send_status)
-        panic("SM", "unable to send reply!", send_status);
+        panic("RS", "unable to send reply!", send_status);
 }
+
+
 

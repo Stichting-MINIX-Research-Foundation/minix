@@ -16,7 +16,7 @@ build: all
 all install depend clean:
 	cd ./pm && $(MAKE) $@
 	cd ./fs && $(MAKE) $@
-	cd ./sm && $(MAKE) $@
+	cd ./rs && $(MAKE) $@
 	cd ./is && $(MAKE) $@
 	cd ./init && $(MAKE) $@
 	cd ./inet && $(MAKE) $@

@@ -511,18 +511,11 @@ int *front;					/* return: front or back */
       prev_ptr = rp;				/* store ptr for next */
   }
 
-#if 0
-  if (priv(rp)->s_flags & BILLABLE) {		/* user process */
-  }
-  else {					/* system process */
-  }
-#endif
-
   /* Determine the new priority of this process. The bounds are determined
    * by IDLE's queue and the maximum priority of this process. Kernel task 
    * and the idle process are never changed in priority.
    */
-  if (! iskernelp(rp) && penalty != 0) {
+  if (penalty != 0 && ! iskernelp(rp)) {
       rp->p_priority += penalty;		/* update with penalty */
       if (rp->p_priority < rp->p_max_priority)  /* check upper bound */ 
           rp->p_priority=rp->p_max_priority;

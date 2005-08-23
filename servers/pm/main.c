@@ -205,7 +205,7 @@ PRIVATE void pm_init()
 		/* Set process details found in the image table. */
 		rmp = &mproc[ip->proc_nr];	
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
-		rmp->mp_parent = SM_PROC_NR;
+		rmp->mp_parent = RS_PROC_NR;
 		rmp->mp_nice = get_nice_value(ip->priority);
 		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
   			rmp->mp_pid = INIT_PID;
