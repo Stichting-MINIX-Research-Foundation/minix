@@ -32,10 +32,8 @@ struct proc {
 
   char p_priority;		/* current scheduling priority */
   char p_max_priority;		/* maximum scheduling priority */
-  char p_quantum_size;		/* quantum size in ticks */
   char p_ticks_left;		/* number of scheduling ticks left */
-  char p_history;		/* scheduling history ageing algorithm */
-  short p_block_count;		/* times blocked in current quantum */
+  char p_quantum_size;		/* quantum size in ticks */
 
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
 

@@ -20,14 +20,13 @@ OBJ = tty.o console.o vidcopy.o keyboard.o pty.o rs232.o
 
 # build local binary 
 all build:	$(DRIVER)
-	cd keymaps && $(MAKE) -$(MAKEFLAGS) $@
 $(DRIVER):	$(OBJ) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 256w $(DRIVER)
 
 # install with other drivers
 install:	/usr/sbin/$(DRIVER)
-	cd keymaps && $(MAKE) -$(MAKEFLAGS) $@
+	cd keymaps && $(MAKE) -$(MAKEFLAGS) install
 /usr/sbin/$(DRIVER):	$(DRIVER)
 	install -o root -cs $? $@
 

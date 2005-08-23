@@ -7,6 +7,7 @@ usage:
 	@echo "Makefile for all device drivers." >&2
 	@echo "Usage:" >&2
 	@echo "	make build    # Compile all device drivers locally" >&2
+	@echo "	make image    # Compile drivers in boot image" >&2
 	@echo "	make clean    # Remove local compiler results" >&2
 	@echo "	make install  # Install drivers to /etc/drivers/" >&2
 	@echo "	                (requires root privileges)" >&2
@@ -30,3 +31,12 @@ all install depend clean:
 	cd ./random && $(MAKE) $@
 	cd ./dp8390 && $(MAKE) $@
 	cd ./sb16 && $(MAKE) $@
+
+image:
+	cd ./libdriver && $(MAKE) build
+	cd ./memory && $(MAKE) build
+	cd ./at_wini && $(MAKE) build
+	cd ./floppy && $(MAKE) build
+	cd ./bios_wini && $(MAKE) build
+	cd ./log && $(MAKE) build
+	cd ./tty && $(MAKE) build

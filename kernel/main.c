@@ -169,7 +169,7 @@ PUBLIC void main()
 PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
-  kprintf("MINIX %s.%s.  Copyright 1987-2006 Prentice-Hall, Inc.\n", 
+  kprintf("MINIX %s.%s.  Copyright 1987-2006 Prentice-Hall, Inc. and contributes.\n", 
       OS_RELEASE, OS_VERSION);
 
 #if (CHIP == INTEL)

@@ -1,15 +1,15 @@
 # Makefile for the kernel image.
-#
+
 u=/usr
 CC=	exec cc
 CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 MDEC=	/usr/mdec
 MAKE=	exec make -$(MAKEFLAGS)
 
-# specify the programs that are part of the system image
-# only one boot medium driver can actually be loaded, 
-# use labels to include multiple driver and set a label
-# at the boot monitor to select one
+# Specify the programs that are part of the system image.
+# Multiple boot medium drivers can be included in the image, 
+# but only one is actually be loaded. The driver to load is
+# determined by the 'label=...' boot monitor parameter. 
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
@@ -33,9 +33,9 @@ usage:
 	@echo "	make includes   # Install include files" >&2
 	@echo "	make depend     # Generate dependency files" >&2
 	@echo "	make libraries  # Make system libraries" >&2
-	@echo "	make programs   # Compile and install all programs" >&2
-	@echo "	make fresh      # Make clean, libraries, and programs" >&2
-	@echo "	make image      # Make programs and create system image" >&2
+	@echo "	make services   # Compile and install all services" >&2
+	@echo "	make fresh      # Make clean, libraries, and services" >&2
+	@echo "	make image      # Make needed services and create boot image" >&2
 	@echo "	make install    # Make image, and install to hard disk" >&2
 	@echo "	make hdboot     # Make image, and install to hard disk" >&2
 	@echo "	make fdboot     # Make image, and install to floppy disk" >&2
@@ -43,18 +43,22 @@ usage:
 	@echo "	make clean      # Remove all compiler results, except libs" >&2
 	@echo " " >&2
 	@echo "To create a fresh MINIX configuration, try:" >&2
-	@echo "	make fresh install" >&2
+	@echo "	make clean install      # new boot image" >&2
+	@echo "	make fresh install      # new everything" >&2
 	@echo " " >&2
 
 # create a fresh configuration or system image
 fresh: 
 	cd ../lib && $(MAKE) clean
 	$(MAKE) clean 
-	$(MAKE) libraries programs
+	$(MAKE) libraries services
 
 all: image
 
-image: programs	
+image: 
+	cd ../kernel && $(MAKE) 
+	cd ../servers && $(MAKE) image
+	cd ../drivers && $(MAKE) image
 	installboot -image $@ $(PROGRAMS)
 
 
@@ -65,7 +69,7 @@ includes:
 depend: includes
 	cd ../ && $(MAKE) depend
 
-programs: includes 
+services: includes 
 	cd ../kernel && $(MAKE) 
 	cd ../servers && $(MAKE) install
 	cd ../drivers && $(MAKE) install
