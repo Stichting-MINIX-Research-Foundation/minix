@@ -33,7 +33,7 @@
 /* User-space processes, that is, device drivers, servers, and INIT. */
 #define PM_PROC_NR	 0	/* process manager */
 #define FS_PROC_NR 	 1	/* file system */
-#define SM_PROC_NR 	 2	/* system service manager */
+#define RS_PROC_NR 	 2	/* reincarnation server */
 #define MEM_PROC_NR 	 3  	/* memory driver (RAM disk, null, etc.) */
 #define LOG_PROC_NR	 4	/* log device driver */
 #define TTY_PROC_NR	 5	/* terminal (TTY) driver */

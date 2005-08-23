@@ -68,7 +68,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define s(n)		(1 << s_nr_to_id(n))
 #define SRV_M	(~0)
 #define SYS_M	(~0)
-#define USR_M	(s(PM_PROC_NR) | s(FS_PROC_NR) | s(SM_PROC_NR))
+#define USR_M	(s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR))
 #define DRV_M	(USR_M | s(SYSTEM) | s(CLOCK) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
 
 /* Define kernel calls that processes are allowed to make. This is not looking
@@ -77,7 +77,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * be allowed to distribute rights to services that it starts. 
  */
 #define c(n)	(1 << ((n)-KERNEL_CALL))
-#define SM_C	~0	
+#define RS_C	~0	
 #define PM_C	~(c(SYS_DEVIO) | c(SYS_SDEVIO) | c(SYS_VDEVIO) \
     | c(SYS_IRQCTL) | c(SYS_INT86))
 #define FS_C	(c(SYS_KILL) | c(SYS_VIRCOPY) | c(SYS_VIRVCOPY) | c(SYS_UMAP) \
@@ -101,7 +101,7 @@ PUBLIC struct boot_image image[] = {
  { HARDWARE,      0, TSK_F, 64, TASK_Q, HRD_S,     0,     0,     0, "KERNEL"},
  { PM_PROC_NR,    0, SRV_F, 32,      3, 0,     SRV_T, SRV_M,  PM_C, "pm"    },
  { FS_PROC_NR,    0, SRV_F, 32,      4, 0,     SRV_T, SRV_M,  FS_C, "fs"    },
- { SM_PROC_NR,    0, SRV_F,  4,      3, 0,     SRV_T, SYS_M,  SM_C, "sm"    },
+ { RS_PROC_NR,    0, SRV_F,  4,      3, 0,     SRV_T, SYS_M,  RS_C, "rs"    },
  { TTY_PROC_NR,   0, SRV_F,  4,      1, 0,     SRV_T, SYS_M, DRV_C, "tty"   },
  { MEM_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, DRV_M, MEM_C, "memory"},
  { LOG_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, DRV_C, "log"   },
