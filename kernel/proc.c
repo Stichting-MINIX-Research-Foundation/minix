@@ -491,30 +491,44 @@ register struct proc *rp;			/* process to be scheduled */
 int *queue;					/* return: queue to use */
 int *front;					/* return: front or back */
 {
-/* This function determines the scheduling policy. It is called whenever a
+/* This function determines the scheduling policy.  It is called whenever a
  * process must be added to one of the scheduling queues to decide where to
- * insert it. 
+ * insert it.  As a side-effect the process' priority may be updated.  
  */
-  int time_left;
-  int penalty;
+  static struct proc *prev_ptr = NIL_PROC;	/* previous without time */
+  int time_left = (rp->p_ticks_left > 0);	/* quantum fully consumed */
+  int penalty = 0;				/* change in priority */
 
-  /* Check whether the process has time left. Otherwise give a new quantum.
+  /* Check whether the process has time left. Otherwise give a new quantum 
+   * and possibly raise the priority.  Processes using multiple quantums 
+   * in a row get a lower priority to catch infinite loops in high priority
+   * processes (system servers and drivers). 
    */
-  time_left = (rp->p_ticks_left > 0);		/* check ticks left */
   if ( ! time_left) {				/* quantum consumed ? */
       rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
+      if (prev_ptr == rp) penalty ++;		/* catch infinite loops */
+      else penalty --; 				/* give slow way back */
+      prev_ptr = rp;				/* store ptr for next */
   }
 
-  /* Determine the new priority of this process. User and system processes
-   * are treated different. They can be distinguished because only user
-   * processes (and IDLE) are billable.
-   */
-  penalty = 0;
+#if 0
   if (priv(rp)->s_flags & BILLABLE) {		/* user process */
   }
   else {					/* system process */
   }
-  rp->p_priority = MIN((rp->p_max_priority + penalty), (IDLE_Q - 1));
+#endif
+
+  /* Determine the new priority of this process. The bounds are determined
+   * by IDLE's queue and the maximum priority of this process. Kernel task 
+   * and the idle process are never changed in priority.
+   */
+  if (! iskernelp(rp) && penalty != 0) {
+      rp->p_priority += penalty;		/* update with penalty */
+      if (rp->p_priority < rp->p_max_priority)  /* check upper bound */ 
+          rp->p_priority=rp->p_max_priority;
+      else if (rp->p_priority > IDLE_Q-1)   	/* check lower bound */
+      	  rp->p_priority = IDLE_Q-1;
+  }
 
   /* If there is time left, the process is added to the front of its queue, 
    * so that it can immediately run. The queue to use simply is always the
