@@ -90,7 +90,7 @@ fdboot:	image
 	exec su root mkboot $@
 	@sync
 
-install: hdboot
+install: services hdboot
 
 # clean up compile results
 clean:
