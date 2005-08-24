@@ -361,7 +361,7 @@ message *mess_ptr;		/* pointer to message for task */
 		"fs: strange device reply from %d, type = %d, proc = %d (2)\n",
 			mess_ptr->m_source,
 			mess_ptr->m_type, mess_ptr->REP_PROC_NR);
-		continue; /* XXX ? */
+		return;
 	}
 
 	r = receive(task_nr, mess_ptr);
