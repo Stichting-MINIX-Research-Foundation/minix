@@ -2464,6 +2464,8 @@ select_disk(void)
 		curdev=firstdev;
 
 		for(; i < MAX_DEVICES;) {
+			printf("."); 
+			fflush(stdout);
 			m_read('r', NULL);
 			if(device >= 0) {
 				devices[i].dev = curdev;
@@ -2651,10 +2653,11 @@ do_autopart(int resultfd)
 		printstep(3, "Confirm your choices");
 
 		region =  (int)(r-regions); 
-		disk = (int) (curdev-firstdev);
+		/* disk = (int) (curdev-devices); */
 
 		printf("\nThis is the point of no return.  You have selected to install MINIX 3\n");
-		printf("into region %d of disk %d (%s).  Please confirm that you want\n", region, disk, devices[disk].dev->name);
+		printf("into region %d of disk %s.  Please confirm that you want\n",
+			region, curdev->name);
 		printf("to use this selection to install MINIX 3.\n\n");
 
 		do {
