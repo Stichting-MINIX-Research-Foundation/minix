@@ -65,22 +65,31 @@ ROOTMB=2
 ROOTBLOCKS="`expr $ROOTMB \* 1024 \* 1024 / $BS`"
 
 HDEMU=0
+COPY=0
 
-while getopts "h?" c
+while getopts "ch?" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-h]" >&2
+		echo "Usage: $0 [-c] [-h]" >&2
 		exit 1
 	;;
 	h)
 		HDEMU=1
+		;;
+	c)
+		COPY=1
+		;;
 	esac
 done
 
-echo "Note: this script wants to do cvs operations, so it's necessary"
-echo "to have \$CVSROOT set and cvs login done."
-echo ""
+if [ "$COPY" -ne 1 ]
+then
+	echo "Note: this script wants to do cvs operations, so it's necessary"
+	echo "to have \$CVSROOT set and cvs login done."
+	echo ""
+fi
+
 echo "Warning: I'm going to mkfs $RAM! It has to be at least $ROOTMB MB."
 echo ""
 echo "Temporary (sub)partition to use to make the /usr FS image? "
@@ -119,8 +128,17 @@ mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
-echo " * Doing new cvs export"
-( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null 2>&1 || exit 1 )
+
+if [ "$COPY" -ne 1 ]
+then
+	echo " * Doing new cvs export"
+	( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null 2>&1 || exit 1 )
+else
+	( cd .. && make clean )
+	echo " * Transfering source to $RELEASEDIR"
+	( cd /usr && tar cf - src ) | ( cd $RELEASEDIR/usr && tar xf - )
+fi
+
 chown -R bin $RELEASEDIR/usr/src
 find $RELEASEDIR/usr/src -type d | xargs chmod 755
 find $RELEASEDIR/usr/src -type f | xargs chmod 644

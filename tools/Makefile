@@ -53,7 +53,7 @@ fresh:
 	$(MAKE) clean 
 	$(MAKE) libraries services
 
-all: image
+all: services image
 
 image:  includes
 	cd ../kernel && $(MAKE) 
