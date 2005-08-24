@@ -9,6 +9,7 @@
 #						
 
 LOCALRC=/usr/etc/rc.local
+MYLOCALRC=/mnt/etc/rc.local
 
 PATH=/bin:/usr/bin
 export PATH
@@ -389,12 +390,24 @@ mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 files="`find /usr | wc -l`"
 cpdir -v /usr /mnt | progressbar "$files" || exit	# Copy the usr floppy.
 
+
+					# Set inet.conf to correct driver
+if [ -n "$driver" ]
+then	echo "$driverargs" >$MYLOCALRC
+	disable=""
+else	disable="disable=inet;"
+fi
+
 umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
 mount /dev/$root /mnt >/dev/null || exit
+
 # Running from the installation CD.
 files="`find / -xdev | wc -l`"
-cpdir -vx / /mnt || progressbar "$files" || exit	
-chmod 555 /mnt/usr
+cpdir -vx / /mnt | progressbar "$files" || exit	
+
+if [ -n "$driver" ]
+then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
+fi
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD 2>/dev/null
@@ -408,14 +421,6 @@ usr=/dev/$usr"
 
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
-
-					# Set inet.conf to correct driver
-if [ -n "$driver" ]
-then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
-	echo "$driverargs" >$LOCALRC
-	disable=""
-else	disable="disable=inet;"
-fi
 
 umount /dev/$root >/dev/null || exit	# Unmount the new root.
 mount /dev/$usr /mnt >/dev/null || exit
