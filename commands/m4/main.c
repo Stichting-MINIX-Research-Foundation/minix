@@ -185,7 +185,7 @@ char *argv[];
 #endif
 	initkwds();
 
-	while ((c = getopt(argc, argv, "tD:U:o:")) != EOF)
+	while ((c = getopt(argc, argv, "tD:U:o:")) != EOF) {
 		switch(c) {
 
 		case 'D':               /* define something..*/
@@ -204,8 +204,20 @@ char *argv[];
 		default:
 			usage();
 		}
+	}
 
+	argc -= optind;
+	argv += optind;
+
+	if(argc > 1) { usage(); }
 	infile[0] = stdin;		/* default input (naturally) */
+	if(argc == 1) {
+		if(!(infile[0] = fopen(argv[0], "r"))) {
+			perror(argv[0]);
+			return 1;
+		}
+	}
+
 	active = stdout;		/* default active output     */
 	m4temp = mktemp(divnam);	/* filename for diversions   */
 
