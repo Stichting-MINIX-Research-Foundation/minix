@@ -375,15 +375,19 @@ PUBLIC void kb_init(tp)
 tty_t *tp;
 {
 /* Initialize the keyboard driver. */
-  static int count = 0;
-  int i;
 
   tp->tty_devread = kb_read;	/* input function */
+}
+
+/*===========================================================================*
+ *				kb_init_once					     *
+ *===========================================================================*/
+PUBLIC void kb_init_once(void)
+{
+  int i;
+
   set_leds();			/* turn off numlock led */
   scan_keyboard();		/* discard leftover keystroke */
-
-  /* The following initialization should only run once. */
-  if (! count ++) {
 
       /* Clear the function key observers array. Also see func_key(). */
       for (i=0; i<12; i++) {
@@ -400,7 +404,6 @@ tty_t *tp;
       if ((i=sys_irqenable(&irq_hook_id)) != OK)
           panic("TTY", "Couldn't enable keyboard IRQs", i);
       kbd_irq_set |= (1 << KEYBOARD_IRQ);
-  }
 }
 
 /*===========================================================================*

@@ -156,6 +156,7 @@ _PROTOTYPE( void select_console, (int cons_line)			);
 
 /* keyboard.c */
 _PROTOTYPE( void kb_init, (struct tty *tp)				);
+_PROTOTYPE( void kb_init_once, (void)					);
 _PROTOTYPE( int kbd_loadmap, (message *m)				);
 _PROTOTYPE( void do_panic_dumps, (message *m)				);
 _PROTOTYPE( void do_fkey_ctl, (message *m)				);

@@ -168,12 +168,15 @@ PUBLIC void main(void)
   /* Initialize the TTY driver. */
   tty_init();
 
-  printf("\n");
-
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
   if (OK != (s=sys_getmachine(&machine))) {
     panic("TTY","Couldn't obtain kernel environment.", s);
   }
+
+  /* Final one-time keyboard initialization. */
+  kb_init_once();
+
+  printf("\n");
 
   while (TRUE) {
 
