@@ -196,7 +196,7 @@ char *argv[];
 	}
 
   if(fs_version == 3) {
-  	if(!block_size) block_size = 8192; /* V3 default block size */
+  	if(!block_size) block_size = MAX_BLOCK_SIZE; /* V3 default block size */
   	if(block_size%SECTOR_SIZE || block_size < MIN_BLOCK_SIZE) {
   		fprintf(stderr, "block size must be multiple of sector (%d) "
   			"and at least %d bytes\n",
