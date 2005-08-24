@@ -55,7 +55,7 @@ fresh:
 
 all: image
 
-image: 
+image:  includes
 	cd ../kernel && $(MAKE) 
 	cd ../servers && $(MAKE) image
 	cd ../drivers && $(MAKE) image
