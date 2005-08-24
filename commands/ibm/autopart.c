@@ -1876,16 +1876,12 @@ void m_read(int ev, object_t *op)
 	} else
 	if (n < SECTOR_SIZE) {
 		if(probing) {
-			v = 0;
-			ioctl(device, DIOCTIMEOUT, &v);
 			close(device);
 			device= -1;
 			return;
 		}
 		printf("%s: Unexpected EOF", curdev->subname);
 	}
-	v = 0;
-	ioctl(device, DIOCTIMEOUT, &v);
 	if (n <= 0) stat_end(5);
 
 	if (n < SECTOR_SIZE) n= SECTOR_SIZE;
