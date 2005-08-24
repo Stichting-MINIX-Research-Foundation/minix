@@ -94,7 +94,7 @@ start)
     # start only network drivers that are in use
     for driver in rtl8139 fxp dpeth dp8390
     do
-        if grep " $driver " /etc/inet.conf > /dev/null 
+        if grep " $driver " /etc/inet.conf > /dev/null  2>&1
         then 
             eval arg=\$${driver}_arg
             up $driver "$arg"
@@ -116,6 +116,7 @@ start)
     # (and cron unnecessary then so..)
     if [ ! -f /CD ]
     then	daemonize cron
+    else	. /etc/rc.cd
     fi
     echo .
 
