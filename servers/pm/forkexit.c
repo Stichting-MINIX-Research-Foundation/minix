@@ -33,7 +33,7 @@ PUBLIC int do_fork()
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
   register struct mproc *rmc;	/* pointer to child */
-  int i, child_nr, t;
+  int child_nr, s;
   phys_clicks prog_clicks, child_base;
   phys_bytes prog_bytes, parent_abs, child_abs;	/* Intel only */
   pid_t new_pid;
@@ -60,8 +60,8 @@ PUBLIC int do_fork()
   /* Create a copy of the parent's core image for the child. */
   child_abs = (phys_bytes) child_base << CLICK_SHIFT;
   parent_abs = (phys_bytes) rmp->mp_seg[D].mem_phys << CLICK_SHIFT;
-  i = sys_abscopy(parent_abs, child_abs, prog_bytes);
-  if (i < 0) panic(__FILE__,"do_fork can't copy", i);
+  s = sys_abscopy(parent_abs, child_abs, prog_bytes);
+  if (s < 0) panic(__FILE__,"do_fork can't copy", s);
 
   /* Find a slot in 'mproc' for the child process.  A slot must exist. */
   for (rmc = &mproc[0]; rmc < &mproc[NR_PROCS]; rmc++)

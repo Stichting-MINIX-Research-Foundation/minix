@@ -619,11 +619,8 @@ register struct mproc *rmp;	/* whose core is to be dumped */
 {
 /* Make a core dump on the file "core", if possible. */
 
-  int s, fd, fake_fd, nr_written, seg, slot;
-  char *buf;
+  int s, fd, seg, slot;
   vir_bytes current_sp;
-  phys_bytes left;		/* careful; 64K might overflow vir_bytes */
-  unsigned nr_to_write;		/* unsigned for arg to write() but < INT_MAX */
   long trace_data, trace_off;
 
   slot = (int) (rmp - mproc);

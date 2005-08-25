@@ -39,7 +39,7 @@ FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks,
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC void main()
+PUBLIC int main()
 {
 /* Main routine of the process manager. */
   int result, s, proc_nr;
@@ -91,6 +91,7 @@ PUBLIC void main()
 		}
 	}
   }
+  return(OK);
 }
 
 /*===========================================================================*
@@ -147,7 +148,7 @@ PRIVATE void pm_init()
  * array are struct hole, which, in addition to storage for a base and size in 
  * click units also contain space for a link, a pointer to another element.
 */
-  int key, i, s;
+  int s;
   static struct boot_image image[NR_BOOT_PROCS];
   register struct boot_image *ip;
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,

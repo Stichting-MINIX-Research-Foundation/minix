@@ -71,6 +71,7 @@ phys_clicks clicks;		/* amount of memory requested */
   phys_clicks old_base;
 
   do {
+        prev_ptr = NIL_HOLE;
 	hp = hole_head;
 	while (hp != NIL_HOLE && hp->h_base < swap_base) {
 		if (hp->h_len >= clicks) {
@@ -128,6 +129,7 @@ phys_clicks clicks;		/* number of clicks to free */
   }
 
   /* Block to be returned does not go on front of hole list. */
+  prev_ptr = NIL_HOLE;
   while (hp != NIL_HOLE && base > hp->h_base) {
 	prev_ptr = hp;
 	hp = hp->h_next;
@@ -212,9 +214,6 @@ phys_clicks *free;		/* memory size summaries */
  */
   int i;
   register struct hole *hp;
-  phys_clicks base;		/* base address of chunk */
-  phys_clicks size;		/* size of chunk */
-  message mess;
 
   /* Put all holes on the free list. */
   for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) hp->h_next = hp + 1;
@@ -262,6 +261,7 @@ u32_t offset, size;			/* area on swap file to use */
   size >>= CLICK_SHIFT;
   if (size > swap_maxsize) size = swap_maxsize;
   if (size > 0) free_mem(swap_base, (phys_clicks) size);
+  return(OK);
 }
 
 /*===========================================================================*

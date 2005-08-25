@@ -299,10 +299,10 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
  * the new map to the kernel.  Zero the new core image's bss, gap and stack.
  */
 
-  register struct mproc *rmp;
+  register struct mproc *rmp = mp;
   vir_clicks text_clicks, data_clicks, gap_clicks, stack_clicks, tot_clicks;
   phys_clicks new_base;
-  phys_bytes bytes, base, count, bss_offset;
+  phys_bytes bytes, base, bss_offset;
   int s;
 
   /* No need to allocate text if it can be shared. */

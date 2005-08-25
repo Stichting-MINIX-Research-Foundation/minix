@@ -52,7 +52,7 @@ _PROTOTYPE( void pm_exit, (struct mproc *rmp, int exit_status)		);
 _PROTOTYPE( int do_getset, (void)					);
 
 /* main.c */
-_PROTOTYPE( void main, (void)						);
+_PROTOTYPE( int main, (void)						);
 
 /* misc.c */
 _PROTOTYPE( int do_reboot, (void)					);
