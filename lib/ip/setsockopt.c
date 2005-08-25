@@ -62,9 +62,12 @@ static int _tcp_setsockopt(int socket, int level, int option_name,
 		}
 		return 0;
 	}
+#if DEBUG
 	fprintf(stderr, "_tcp_setsocketopt: level %d, name %d\n",
 		level, option_name);
+#endif
 
-	assert(0);
+	errno= ENOSYS;
+	return -1;
 }
 

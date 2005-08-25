@@ -31,6 +31,8 @@ OBJECTS	= \
 	$(LIBRARY)(getproto.o) \
 	$(LIBRARY)(getprotoent.o) \
 	$(LIBRARY)(getservent.o) \
+	$(LIBRARY)(getsockname.o) \
+	$(LIBRARY)(getsockopt.o) \
 	$(LIBRARY)(getsrvbyname.o) \
 	$(LIBRARY)(getsrvbyport.o) \
 	$(LIBRARY)(hton.o) \
@@ -123,6 +125,12 @@ $(LIBRARY)(getprotoent.o):	getprotoent.c
 
 $(LIBRARY)(getservent.o):	getservent.c
 	$(CC1) getservent.c
+
+$(LIBRARY)(getsockname.o):	getsockname.c
+	$(CC1) getsockname.c
+
+$(LIBRARY)(getsockopt.o):	getsockopt.c
+	$(CC1) getsockopt.c
 
 $(LIBRARY)(getsrvbyname.o):	getsrvbyname.c
 	$(CC1) getsrvbyname.c
