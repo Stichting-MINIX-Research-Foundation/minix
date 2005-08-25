@@ -26,8 +26,11 @@
 /* I/O Ports used by winchester disk controllers. */
 
 /* Read and write registers */
-#define REG_BASE0	0x1F0	/* base register of controller 0 */
-#define REG_BASE1	0x170	/* base register of controller 1 */
+#define REG_CMD_BASE0	0x1F0	/* command base register of controller 0 */
+#define REG_CMD_BASE1	0x170	/* command base register of controller 1 */
+#define REG_CTL_BASE0	0x3F6	/* control base register of controller 0 */
+#define REG_CTL_BASE1	0x376	/* control base register of controller 1 */
+
 #define REG_DATA	    0	/* data register (offset from the base reg.) */
 #define REG_PRECOMP	    1	/* start of write precompensation */
 #define REG_COUNT	    2	/* sectors to transfer */
@@ -63,14 +66,17 @@
 #define   CMD_IDLE		0x00	/* for w_command: drive idle */
 #define   CMD_RECALIBRATE	0x10	/* recalibrate drive */
 #define   CMD_READ		0x20	/* read data */
+#define   CMD_READ_EXT		0x24	/* read data (LBA48 addressed) */
 #define   CMD_WRITE		0x30	/* write data */
+#define	  CMD_WRITE_EXT		0x34	/* write data (LBA48 addressed) */
 #define   CMD_READVERIFY	0x40	/* read verify */
 #define   CMD_FORMAT		0x50	/* format track */
 #define   CMD_SEEK		0x70	/* seek cylinder */
 #define   CMD_DIAG		0x90	/* execute device diagnostics */
 #define   CMD_SPECIFY		0x91	/* specify parameters */
 #define   ATA_IDENTIFY		0xEC	/* identify drive */
-#define REG_CTL		0x206	/* control register */
+/* #define REG_CTL		0x206	*/ /* control register */
+#define REG_CTL		0	/* control register */
 #define   CTL_NORETRY		0x80	/* disable access retry */
 #define   CTL_NOECC		0x40	/* disable ecc retry */
 #define   CTL_EIGHTHEADS	0x08	/* more than eight heads */
@@ -172,7 +178,7 @@ struct command {
 /* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 int wakeup_ticks = WAKEUP;
-long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0;
+long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0, w_lba48 = 0;
 
 int w_testing = 0, w_silent = 0;
 
@@ -187,11 +193,13 @@ int w_next_drive = 0;
 PRIVATE struct wini {		/* main drive struct, one entry per drive */
   unsigned state;		/* drive state: deaf, initialized, dead */
   unsigned w_status;		/* device status register */
-  unsigned base;		/* base register of the register file */
+  unsigned base_cmd;		/* command base register */
+  unsigned base_ctl;		/* control base register */
   unsigned irq;			/* interrupt request line */
   unsigned irq_mask;		/* 1 << irq */
   unsigned irq_need_ack;	/* irq needs to be acknowledged */
   int irq_hook_id;		/* id of irq hook at the kernel */
+  int lba48;			/* supports lba48 */
   unsigned lcylinders;		/* logical number of cylinders (BIOS) */
   unsigned lheads;		/* logical number of heads */
   unsigned lsectors;		/* logical number of sectors per track */
@@ -219,7 +227,7 @@ PRIVATE int w_controller;		/* selected controller */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
 FORWARD _PROTOTYPE( void init_params, (void) );
-FORWARD _PROTOTYPE( void init_drive, (struct wini *, int, int, int, int, int));
+FORWARD _PROTOTYPE( void init_drive, (struct wini *, int, int, int, int, int, int));
 FORWARD _PROTOTYPE( void init_params_pci, (int) );
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( struct device *w_prepare, (int dev) );
@@ -298,6 +306,7 @@ PRIVATE void init_params()
   env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
   env_parse("ata_pci_debug", "d", 0, &w_pci_debug, 0, 1);
   env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
+  env_parse("ata_lba48", "d", 0, &w_lba48, 0, 1);
 
   if(w_instance == 0) {
 	  /* Get the number of drives from the BIOS data area */
@@ -329,7 +338,10 @@ PRIVATE void init_params()
 		}
 
 		/* Fill in non-BIOS parameters. */
-		init_drive(wn, drive < 2 ? REG_BASE0 : REG_BASE1, NO_IRQ, 0, 0, drive);
+		init_drive(wn,
+			drive < 2 ? REG_CMD_BASE0 : REG_CMD_BASE1,
+			drive < 2 ? REG_CTL_BASE0 : REG_CTL_BASE1,
+			NO_IRQ, 0, 0, drive);
 		w_next_drive++;
   	}
   }
@@ -350,17 +362,19 @@ PRIVATE void init_params()
 /*============================================================================*
  *				init_drive				      *
  *============================================================================*/
-PRIVATE void init_drive(struct wini *w, int base, int irq, int ack, int hook, int drive)
+PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl, int irq, int ack, int hook, int drive)
 {
 	w->state = 0;
 	w->w_status = 0;
-	w->base = base;
+	w->base_cmd = base_cmd;
+	w->base_ctl = base_ctl;
 	w->irq = irq;
 	w->irq_mask = 1 << irq;
 	w->irq_need_ack = ack;
 	w->irq_hook_id = hook;
 	w->ldhpref = ldh_init(drive);
 	w->max_count = MAX_SECS << SECTOR_SHIFT;
+	w->lba48 = 0;
 }
 
 /*============================================================================*
@@ -416,26 +430,32 @@ PRIVATE void init_params_pci(int skip)
 
   	/* Primary channel not in compatability mode? */
   	if(interface & ATA_IF_NOTCOMPAT1) {
-  		u32_t base;
-  		base = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
-  		if(base != REG_BASE0 && base != REG_BASE1) {
-	  		init_drive(&wini[w_next_drive], base, irq, 1, irq_hook, 0);
-  			init_drive(&wini[w_next_drive+1], base, irq, 1, irq_hook, 1);
-	  		if(w_pci_debug)
-		  		printf("atapci %d: 0x%x irq %d\n", devind, base, irq);
-  		} else printf("atapci: ignored drives on primary channel, base %x\n", base);
+  		u32_t base_cmd, base_ctl;
+  		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
+  		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & 0xffffffe0;
+  		if(base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
+	  		init_drive(&wini[w_next_drive],
+	  			base_cmd, base_ctl, irq, 1, irq_hook, 0);
+  			init_drive(&wini[w_next_drive+1],
+  				base_cmd, base_ctl, irq, 1, irq_hook, 1);
+	  		if(w_pci_debug || 1)
+		  		printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
+  		} else printf("atapci: ignored drives on primary channel, base %x\n", base_cmd);
   	}
 
   	/* Secondary channel not in compatability mode? */
   	if(interface & ATA_IF_NOTCOMPAT2) {
-  		u32_t base;
-  		base = pci_attr_r32(devind, PCI_BAR_3) & 0xffffffe0;
-  		if(base != REG_BASE0 && base != REG_BASE1) {
-  			init_drive(&wini[w_next_drive+2], base, irq, 1, irq_hook, 2);
-	  		init_drive(&wini[w_next_drive+3], base, irq, 1, irq_hook, 3);
-  			if(w_pci_debug)
-  				printf("atapci %d: 0x%x irq %d\n", devind, base, irq);
-  		} else printf("atapci: ignored drives on secondary channel, base %x\n", base);
+  		u32_t base_cmd, base_ctl;
+  		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xffffffe0;
+  		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & 0xffffffe0;
+  		if(base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
+  			init_drive(&wini[w_next_drive+2],
+  				base_cmd, base_ctl, irq, 1, irq_hook, 2);
+	  		init_drive(&wini[w_next_drive+3],
+	  			base_cmd, base_ctl, irq, 1, irq_hook, 3);
+	  		if(w_pci_debug || 1)
+  				printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
+  		} else printf("atapci: ignored drives on secondary channel, base %x\n", base_cmd);
   	}
   	w_next_drive += 4;
   }
@@ -570,7 +590,7 @@ PRIVATE int w_identify()
 	wn->state |= SMART;
 
 	/* Device information. */
-	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
+	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 
 	/* Why are the strings byte swapped??? */
@@ -588,6 +608,23 @@ PRIVATE int w_identify()
 		 */
 		wn->ldhpref |= LDH_LBA;
 		size = id_longword(60);
+
+		if(w_lba48 && ((id_word(83)) & (1L << 10))) {
+			/* Drive is LBA48 capable (and LBA48 is turned on). */
+			if(id_word(102) || id_word(103)) {
+				/* If no. of sectors doesn't fit in 32 bits,
+				 * trunacte to this. So it's LBA32 for now.
+				 * This can still address devices up to 2TB
+				 * though.
+				 */
+				size = ULONG_MAX;
+			} else {
+				/* Actual number of sectors fits in 32 bits. */
+				size = id_longword(100);
+			}
+
+			wn->lba48 = 1;
+		}
 	}
 
 	if (wn->lcylinders == 0) {
@@ -607,7 +644,7 @@ PRIVATE int w_identify()
 	wn->state |= ATAPI;
 
 	/* Device information. */
-	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, 512)) != OK)
+	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, 512)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 
 	/* Why are the strings byte swapped??? */
@@ -765,6 +802,40 @@ PRIVATE int w_specify()
 }
 
 /*===========================================================================*
+ *				do_transfer				     *
+ *===========================================================================*/
+PRIVATE int do_transfer(struct wini *wn, unsigned int precomp, unsigned int count,
+	unsigned int sector, unsigned int opcode)
+{
+  	struct command cmd;
+	unsigned secspcyl = wn->pheads * wn->psectors;
+
+	cmd.precomp = precomp;
+	cmd.count   = count;
+	cmd.command = opcode == DEV_SCATTER ? CMD_WRITE : CMD_READ;
+	/* 
+	if (w_lba48 && wn->lba48) {
+	} else  */
+	if (wn->ldhpref & LDH_LBA) {
+		cmd.sector  = (sector >>  0) & 0xFF;
+		cmd.cyl_lo  = (sector >>  8) & 0xFF;
+		cmd.cyl_hi  = (sector >> 16) & 0xFF;
+		cmd.ldh     = wn->ldhpref | ((sector >> 24) & 0xF);
+	} else {
+  		int cylinder, head, sec;
+		cylinder = sector / secspcyl;
+		head = (sector % secspcyl) / wn->psectors;
+		sec = sector % wn->psectors;
+		cmd.sector  = sec + 1;
+		cmd.cyl_lo  = cylinder & BYTE;
+		cmd.cyl_hi  = (cylinder >> 8) & BYTE;
+		cmd.ldh     = wn->ldhpref | head;
+	}
+
+	return com_out(&cmd);
+}
+
+/*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
 PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req)
@@ -779,9 +850,7 @@ unsigned nr_req;		/* length of request vector */
   int r, s, errors;
   unsigned long block;
   unsigned long dv_size = cv64ul(w_dv->dv_size);
-  struct command cmd;
   unsigned cylinder, head, sector, nbytes;
-  unsigned secspcyl = wn->pheads * wn->psectors;
 
 #if ENABLE_ATAPI
   if (w_wn->state & ATAPI) {
@@ -816,6 +885,10 @@ unsigned nr_req;		/* length of request vector */
 	if (!(wn->state & INITIALIZED) && w_specify() != OK) return(EIO);
 
 	/* Tell the controller to transfer nbytes bytes. */
+#if 1
+	r = do_transfer(wn, wn->precomp, ((nbytes >> SECTOR_SHIFT) & BYTE),
+		block, opcode);
+#else
 	cmd.precomp = wn->precomp;
 	cmd.count   = (nbytes >> SECTOR_SHIFT) & BYTE;
 	if (wn->ldhpref & LDH_LBA) {
@@ -835,6 +908,7 @@ unsigned nr_req;		/* length of request vector */
 	cmd.command = opcode == DEV_SCATTER ? CMD_WRITE : CMD_READ;
 
 	r = com_out(&cmd);
+#endif
 
 	while (r == OK && nbytes > 0) {
 		/* For each sector, wait for an interrupt and fetch the data
@@ -847,7 +921,7 @@ unsigned nr_req;		/* length of request vector */
 			if ((r = at_intr_wait()) != OK) {
 				/* An error, send data to the bit bucket. */
 				if (w_wn->w_status & STATUS_DRQ) {
-	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
+	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 				}
 				break;
@@ -859,10 +933,10 @@ unsigned nr_req;		/* length of request vector */
 
 		/* Copy bytes to or from the device's buffer. */
 		if (opcode == DEV_GATHER) {
-	if ((s=sys_insw(wn->base + REG_DATA, proc_nr, (void *) iov->iov_addr, SECTOR_SIZE)) != OK)
+	if ((s=sys_insw(wn->base_cmd + REG_DATA, proc_nr, (void *) iov->iov_addr, SECTOR_SIZE)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 		} else {
-	if ((s=sys_outsw(wn->base + REG_DATA, proc_nr, (void *) iov->iov_addr, SECTOR_SIZE)) != OK)
+	if ((s=sys_outsw(wn->base_cmd + REG_DATA, proc_nr, (void *) iov->iov_addr, SECTOR_SIZE)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 
 			/* Data sent, wait for an interrupt. */
@@ -899,7 +973,8 @@ struct command *cmd;		/* Command block */
 /* Output the command block to the winchester controller and return status */
 
   struct wini *wn = w_wn;
-  unsigned base = wn->base;
+  unsigned base_cmd = wn->base_cmd;
+  unsigned base_ctl = wn->base_ctl;
   pvb_pair_t outbyte[7];		/* vector for sys_voutb() */
   int s;				/* status for sys_(v)outb() */
 
@@ -911,7 +986,7 @@ struct command *cmd;		/* Command block */
   }
 
   /* Select drive. */
-  if ((s=sys_outb(base + REG_LDH, cmd->ldh)) != OK)
+  if ((s=sys_outb(base_cmd + REG_LDH, cmd->ldh)) != OK)
   	panic(w_name(),"Couldn't write register to select drive",s);
 
   if (!w_waitfor(STATUS_BSY, 0)) {
@@ -929,13 +1004,13 @@ struct command *cmd;		/* Command block */
 
   wn->w_status = STATUS_ADMBSY;
   w_command = cmd->command;
-  pv_set(outbyte[0], base + REG_CTL, wn->pheads >= 8 ? CTL_EIGHTHEADS : 0);
-  pv_set(outbyte[1], base + REG_PRECOMP, cmd->precomp);
-  pv_set(outbyte[2], base + REG_COUNT, cmd->count);
-  pv_set(outbyte[3], base + REG_SECTOR, cmd->sector);
-  pv_set(outbyte[4], base + REG_CYL_LO, cmd->cyl_lo);
-  pv_set(outbyte[5], base + REG_CYL_HI, cmd->cyl_hi);
-  pv_set(outbyte[6], base + REG_COMMAND, cmd->command);
+  pv_set(outbyte[0], base_ctl + REG_CTL, wn->pheads >= 8 ? CTL_EIGHTHEADS : 0);
+  pv_set(outbyte[1], base_cmd + REG_PRECOMP, cmd->precomp);
+  pv_set(outbyte[2], base_cmd + REG_COUNT, cmd->count);
+  pv_set(outbyte[3], base_cmd + REG_SECTOR, cmd->sector);
+  pv_set(outbyte[4], base_cmd + REG_CYL_LO, cmd->cyl_lo);
+  pv_set(outbyte[5], base_cmd + REG_CYL_HI, cmd->cyl_hi);
+  pv_set(outbyte[6], base_cmd + REG_COMMAND, cmd->command);
   if ((s=sys_voutb(outbyte,7)) != OK)
   	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
   return(OK);
@@ -951,7 +1026,7 @@ PRIVATE void w_need_reset()
   int dr = 0;
 
   for (wn = wini; wn < &wini[MAX_DRIVES]; wn++, dr++) {
-	if (wn->base == w_wn->base) {
+	if (wn->base_cmd == w_wn->base_cmd) {
 		wn->state |= DEAF;
 		wn->state &= ~INITIALIZED;
 	}
@@ -1039,10 +1114,10 @@ PRIVATE int w_reset()
   tickdelay(RECOVERY_TICKS);
 
   /* Strobe reset bit */
-  if ((s=sys_outb(wn->base + REG_CTL, CTL_RESET)) != OK)
+  if ((s=sys_outb(wn->base_ctl + REG_CTL, CTL_RESET)) != OK)
   	panic(w_name(),"Couldn't strobe reset bit",s);
   tickdelay(DELAY_TICKS);
-  if ((s=sys_outb(wn->base + REG_CTL, 0)) != OK)
+  if ((s=sys_outb(wn->base_ctl + REG_CTL, 0)) != OK)
   	panic(w_name(),"Couldn't strobe reset bit",s);
   tickdelay(DELAY_TICKS);
 
@@ -1055,7 +1130,7 @@ PRIVATE int w_reset()
   /* The error register should be checked now, but some drives mess it up. */
 
   for (wn = wini; wn < &wini[MAX_DRIVES]; wn++) {
-	if (wn->base == w_wn->base) {
+	if (wn->base_cmd == w_wn->base_cmd) {
 		wn->state &= ~DEAF;
   		if (w_wn->irq_need_ack) {
 		    	/* Make sure irq is actually enabled.. */
@@ -1084,7 +1159,7 @@ PRIVATE void w_intr_wait()
 		if (m.m_type == SYN_ALARM) { 	/* but check for timeout */
 		    w_timeout();		/* a.o. set w_status */
 		} else if (m.m_type == HARD_INT) {
-		    sys_inb(w_wn->base + REG_STATUS, &w_wn->w_status);
+		    sys_inb(w_wn->base_cmd + REG_STATUS, &w_wn->w_status);
 		    ack_irqs(m.NOTIFY_ARG);
 	        } else {
 	        	printf("AT_WINI got unexpected message %d from %d\n",
@@ -1110,7 +1185,7 @@ PRIVATE int at_intr_wait()
   if ((w_wn->w_status & (STATUS_BSY | STATUS_WF | STATUS_ERR)) == 0) {
 	r = OK;
   } else {
-  	if ((s=sys_inb(w_wn->base + REG_ERROR, &inbval)) != OK)
+  	if ((s=sys_inb(w_wn->base_cmd + REG_ERROR, &inbval)) != OK)
   		panic(w_name(),"Couldn't read register",s);
   	if ((w_wn->w_status & STATUS_ERR) && (inbval & ERROR_BB)) {
   		r = ERR_BAD_SECTOR;	/* sector marked bad, retries won't help */
@@ -1138,7 +1213,7 @@ int value;			/* required status */
   int s;
   getuptime(&t0);
   do {
-	if ((s=sys_inb(w_wn->base + REG_STATUS, &w_wn->w_status)) != OK)
+	if ((s=sys_inb(w_wn->base_cmd + REG_STATUS, &w_wn->w_status)) != OK)
 		panic(w_name(),"Couldn't read register",s);
 	if ((w_wn->w_status & mask) == value) {
         	return 1;
@@ -1276,7 +1351,7 @@ unsigned nr_req;		/* length of request vector */
 			chunk = before;
 			if (chunk > count) chunk = count;
 			if (chunk > DMA_BUF_SIZE) chunk = DMA_BUF_SIZE;
-	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, chunk)) != OK)
+	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, chunk)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 			before -= chunk;
 			count -= chunk;
@@ -1286,7 +1361,7 @@ unsigned nr_req;		/* length of request vector */
 			chunk = nbytes;
 			if (chunk > count) chunk = count;
 			if (chunk > iov->iov_size) chunk = iov->iov_size;
-	if ((s=sys_insw(wn->base + REG_DATA, proc_nr, (void *) iov->iov_addr, chunk)) != OK)
+	if ((s=sys_insw(wn->base_cmd + REG_DATA, proc_nr, (void *) iov->iov_addr, chunk)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 			position += chunk;
 			nbytes -= chunk;
@@ -1303,7 +1378,7 @@ unsigned nr_req;		/* length of request vector */
 		while (count > 0) {		/* Excess data. */
 			chunk = count;
 			if (chunk > DMA_BUF_SIZE) chunk = DMA_BUF_SIZE;
-	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, chunk)) != OK)
+	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, chunk)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 			count -= chunk;
 		}
@@ -1337,7 +1412,7 @@ unsigned cnt;
   if(wn->state & IGNORING) return ERR;
 
   /* Select Master/Slave drive */
-  if ((s=sys_outb(wn->base + REG_DRIVE, wn->ldhpref)) != OK)
+  if ((s=sys_outb(wn->base_cmd + REG_DRIVE, wn->ldhpref)) != OK)
   	panic(w_name(),"Couldn't select master/ slave drive",s);
 
   if (!w_waitfor(STATUS_BSY | STATUS_DRQ, 0)) {
@@ -1358,12 +1433,12 @@ unsigned cnt;
 #endif
 
   w_command = ATAPI_PACKETCMD;
-  pv_set(outbyte[0], wn->base + REG_FEAT, 0);
-  pv_set(outbyte[1], wn->base + REG_IRR, 0);
-  pv_set(outbyte[2], wn->base + REG_SAMTAG, 0);
-  pv_set(outbyte[3], wn->base + REG_CNT_LO, (cnt >> 0) & 0xFF);
-  pv_set(outbyte[4], wn->base + REG_CNT_HI, (cnt >> 8) & 0xFF);
-  pv_set(outbyte[5], wn->base + REG_COMMAND, w_command);
+  pv_set(outbyte[0], wn->base_cmd + REG_FEAT, 0);
+  pv_set(outbyte[1], wn->base_cmd + REG_IRR, 0);
+  pv_set(outbyte[2], wn->base_cmd + REG_SAMTAG, 0);
+  pv_set(outbyte[3], wn->base_cmd + REG_CNT_LO, (cnt >> 0) & 0xFF);
+  pv_set(outbyte[4], wn->base_cmd + REG_CNT_HI, (cnt >> 8) & 0xFF);
+  pv_set(outbyte[5], wn->base_cmd + REG_COMMAND, w_command);
   if ((s=sys_voutb(outbyte,6)) != OK)
   	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
 
@@ -1374,7 +1449,7 @@ unsigned cnt;
   wn->w_status |= STATUS_ADMBSY;		/* Command not at all done yet. */
 
   /* Send the command packet to the device. */
-  if ((s=sys_outsw(wn->base + REG_DATA, SELF, packet, 12)) != OK)
+  if ((s=sys_outsw(wn->base_cmd + REG_DATA, SELF, packet, 12)) != OK)
 	panic(w_name(),"sys_outsw() failed", s);
   return(OK);
 }
@@ -1462,7 +1537,7 @@ PRIVATE void ack_irqs(unsigned int irqs)
   for (drive = 0; drive < MAX_DRIVES && irqs; drive++) {
   	if(!(wini[drive].state & IGNORING) && wini[drive].irq_need_ack &&
 		(wini[drive].irq_mask & irqs)) {
-		if(sys_inb((wini[drive].base + REG_STATUS), &wini[drive].w_status) != OK)
+		if(sys_inb((wini[drive].base_cmd + REG_STATUS), &wini[drive].w_status) != OK)
 		  	printf("couldn't ack irq on drive %d\n", drive);
 	 	if (sys_irqenable(&wini[drive].irq_hook_id) != OK)
 		  	printf("couldn't re-enable drive %d\n", drive);
@@ -1491,10 +1566,10 @@ PRIVATE int atapi_intr_wait()
   w_intr_wait();
 
   /* Request series of device I/O. */
-  inbyte[0].port = wn->base + REG_ERROR;
-  inbyte[1].port = wn->base + REG_CNT_LO;
-  inbyte[2].port = wn->base + REG_CNT_HI;
-  inbyte[3].port = wn->base + REG_IRR;
+  inbyte[0].port = wn->base_cmd + REG_ERROR;
+  inbyte[1].port = wn->base_cmd + REG_CNT_LO;
+  inbyte[2].port = wn->base_cmd + REG_CNT_HI;
+  inbyte[3].port = wn->base_cmd + REG_IRR;
   if ((s=sys_vinb(inbyte, 4)) != OK)
   	panic(w_name(),"ATAPI failed sys_vinb()", s);
   e = inbyte[0].value;
