@@ -2578,10 +2578,11 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 	}
 
 	if(!open_ct_ok(fd)) {
-		printf("Autopart error: the disk is in use. This means that although a\n"
+		printf("\nAutopart error: the disk is in use. This means that although a\n"
 			"new table has been written, it won't be in use by the system\n"
 			"until it's no longer in use (or a reboot is done). Just in case,\n"
-			"I'm not going to continue.\n\n");
+			"I'm not going to continue. Please un-use the disk (or reboot) and try\n"
+			"again.\n\n");
 		return 1;
 	}
 
@@ -2591,7 +2592,7 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 	it_secsize = div64u(part.size, SECTOR_SIZE);
 
 	if(it_lowsec != pe->lowsec || it_secsize != pe->size) {
-		fprintf(stderr, "Returned and set numbers don't match up!\n");
+		fprintf(stderr, "\nReturned and set numbers don't match up!\n");
 		fprintf(stderr, "This can happen if the disk is still opened.\n");
 		return 1;
 	}
