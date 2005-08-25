@@ -77,7 +77,6 @@ struct driver *dp;	/* Device dependent entry points. */
 
   int r, proc_nr;
   message mess;
-  int s, p;
 
   /* Get a DMA buffer. */
   init_buffer();
@@ -208,7 +207,6 @@ message *mp;		/* pointer to read or write message */
  */
   static iovec_t iovec[NR_IOREQS];
   iovec_t *iov;
-  phys_bytes iovec_phys, user_iovec_phys;
   phys_bytes iovec_size;
   unsigned nr_req;
   int r;
@@ -318,6 +316,7 @@ PUBLIC void nop_cleanup()
 PUBLIC int nop_cancel(struct driver *dr, message *m)
 {
 /* Nothing to do for cancel. */
+   return(OK);
 }
 
 /*===========================================================================*
@@ -326,6 +325,7 @@ PUBLIC int nop_cancel(struct driver *dr, message *m)
 PUBLIC int nop_select(struct driver *dr, message *m)
 {
 /* Nothing to do for select. */
+   return(OK);
 }
 
 /*============================================================================*
@@ -337,7 +337,6 @@ message *mp;			/* pointer to ioctl request */
 {
 /* Carry out a partition setting/getting request. */
   struct device *dv;
-  phys_bytes user_phys, entry_phys;
   struct partition entry;
   int s;
 

@@ -160,7 +160,6 @@ int *io_ok;
  */
   iovec_t iovec1;
   off_t position;
-  int s;
 
   if(io_ok)
   	*io_ok = 0;
@@ -197,7 +196,6 @@ struct part_entry *table;	/* four entries */
   iovec_t iovec1;
   off_t position;
   off_t isosize;
-  int s;
 #ifndef CD_SECTOR_SIZE
 #define CD_SECTOR_SIZE 2048
 #endif 
