@@ -30,7 +30,7 @@ FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 /*===========================================================================*
  *                                  main                                     *
  *===========================================================================*/
-PUBLIC void main(int argc, char **argv)
+PUBLIC int main(int argc, char **argv)
 {
 /* This is the main routine of this service. The main loop consists of 
  * three major activities: getting new work, processing the work, and
@@ -68,6 +68,7 @@ PUBLIC void main(int argc, char **argv)
 	  reply(who, result);
       }
   }
+  return(OK);				/* shouldn't come here */
 }
 
 /*===========================================================================*

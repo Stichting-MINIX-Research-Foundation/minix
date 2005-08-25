@@ -74,7 +74,6 @@ PUBLIC void kmessages_dmp()
 {
   struct kmessages kmess;		/* get copy of kernel messages */
   char print_buf[KMESS_BUF_SIZE+1];	/* this one is used to print */
-  int next, size;			/* vars returned by sys_kmess() */
   int start;				/* calculate start of messages */
   int r;
 
@@ -132,7 +131,7 @@ PUBLIC void monparams_dmp()
  *===========================================================================*/
 PUBLIC void irqtab_dmp()
 {
-  int i,j,r;
+  int i,r;
   struct irq_hook irq_hooks[NR_IRQ_HOOKS];
   struct irq_hook *e;	/* irq tab entry */
   char *irq[] = {

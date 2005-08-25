@@ -1,7 +1,7 @@
 /* Function prototypes. */
 
 /* main.c */
-_PROTOTYPE( void main, (int argc, char **argv)				);
+_PROTOTYPE( int  main, (int argc, char **argv)				);
 
 /* dmp.c */
 _PROTOTYPE( int do_fkey_pressed, (message *m) 				);

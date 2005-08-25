@@ -54,11 +54,6 @@ PUBLIC void fproc_dmp()
 PUBLIC void dtab_dmp()
 {
     int i;
-    char *file[] = {
-        "not used  ", "/dev/mem  ", "/dev/fd0  ", "/dev/c0   ", "/dev/tty0 ", 
-        "/dev/tty  ", "/dev/lp   ", "/dev/ip   ", "/dev/c1   ", "not used  ",
-        "/dev/c2   ", "not used  ", "/dev/c3   ", "/dev/audio", "/dev/mixer",
-    };
 
     getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap);
     
@@ -69,17 +64,6 @@ PUBLIC void dtab_dmp()
         if (dmap[i].dmap_driver == 0) continue;
         printf("%5d  ", i);
         printf("%4d\n", dmap[i].dmap_driver);
-        
-#if DEAD_CODE
-        if (dmap[i].dmap_opcl == no_dev)  		printf("  no_dev");	
-        else if (dmap[i].dmap_opcl == gen_opcl)		printf("gen_opcl");
-        else 				printf("%8x", dmap[i].dmap_opcl);
-        
-        if ((void *)dmap[i].dmap_io == (void *)no_dev)	printf("  no_dev");
-        else if (dmap[i].dmap_io == gen_io)		printf("  gen_io");
-        else 				printf("%8x", dmap[i].dmap_io);
-#endif
-
     }
 }
 
