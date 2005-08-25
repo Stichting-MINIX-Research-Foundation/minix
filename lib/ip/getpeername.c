@@ -47,8 +47,8 @@ static int _tcp_getpeername(int socket, struct sockaddr *_RESTRICT address,
 	socklen_t len;
 	struct sockaddr_in sin;
 
-	if (((tcpconfp->nwtc_flags & NWTC_REMADDR_MASK) != NWTC_SET_RA) ||
-		((tcpconfp->nwtc_flags & NWTC_REMPORT_MASK) != NWTC_SET_RP))
+	if (tcpconfp->nwtc_remaddr == 0 ||
+		tcpconfp->nwtc_remport == 0)
 	{
 		errno= ENOTCONN;
 		return -1;
