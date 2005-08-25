@@ -31,7 +31,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <string.h>
 #include <minix/sysutil.h>
 
-#define NR_PCIBUS	 2
+#define NR_PCIBUS	 4
 #define NR_PCIDEV	40
 
 #define PBT_INTEL	 1
@@ -741,6 +741,7 @@ int busind;
 		pcibus[ind].pb_wreg32= pcibus[busind].pb_wreg32;
 		switch(type)
 		{
+		case PCI_PCIB_INTEL:
 		case PCI_AGPB_INTEL:
 			pcibus[ind].pb_rsts= pcibr_intel_rsts;
 			pcibus[ind].pb_wsts= pcibr_intel_wsts;

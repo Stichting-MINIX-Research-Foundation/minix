@@ -110,8 +110,9 @@ struct pci_pcibridge
 #define PCI_IB_AMD	3	/* AMD compatible ISA bridge */
 #define PCI_IB_SIS	4	/* SIS compatible ISA bridge */
 
-#define PCI_AGPB_INTEL	1	/* Intel compatible AGP bridge */
-#define PCI_AGPB_VIA	2	/* VIA compatible AGP bridge */
+#define PCI_PCIB_INTEL	1	/* Intel compatible PCI bridge */
+#define PCI_AGPB_INTEL	2	/* Intel compatible AGP bridge */
+#define PCI_AGPB_VIA	3	/* VIA compatible AGP bridge */
 
 extern struct pci_vendor pci_vendor_table[];
 extern struct pci_device pci_device_table[];

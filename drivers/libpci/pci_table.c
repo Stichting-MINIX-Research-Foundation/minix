@@ -53,6 +53,10 @@ struct pci_device pci_device_table[]=
 	{ 0x100B, 0xD001, "Nat. Semi. 87410" },
 	{ 0x1013, 0x00B8, "Cirrus Logic GD 5446" },
 	{ 0x1013, 0x6003, "Cirrus Logic CS4614/22/24 CrystalClear" },
+	{ 0x1022, 0x1100, "K8 HyperTransport Tech. Conf." },
+	{ 0x1022, 0x1101, "K8 [Athlon64/Opteron] Address Map" },
+	{ 0x1022, 0x1102, "K8 [Athlon64/Opteron] DRAM Controller" },
+	{ 0x1022, 0x1103, "K8 [Athlon64/Opteron] Misc. Control" },
 	{ 0x1022, 0x2000, "AMD Lance/PCI" },
 	{ 0x1022, 0x700C, "AMD-762 CPU to PCI Bridge (SMP chipset)" },
 	{ 0x1022, 0x700D, "AMD-762 CPU to PCI Bridge (AGP 4x)" },
@@ -80,14 +84,24 @@ struct pci_device pci_device_table[]=
 	{ 0x1106, 0x0305, "VIA VT8363/8365 [KT133/KM133]" },
 	{ 0x1106, 0x0571, "VIA IDE controller" },
 	{ 0x1106, 0x0686, "VIA VT82C686 (Apollo South Bridge)" },
+	{ 0x1106, 0x1204, "K8M800 Host Bridge" },
+	{ 0x1106, 0x2204, "K8M800 Host Bridge" },
 	{ 0x1106, 0x3038, "VT83C572 PCI USB Controller" },
 	{ 0x1106, 0x3057, "VT82C686A ACPI Power Management Controller" },
 	{ 0x1106, 0x3058, "VIA AC97 Audio Controller" },
 	{ 0x1106, 0x3059, "VIA AC97 Audio Controller" },
+	{ 0x1106, 0x3065, "VT6102 [Rhine-II]" },
 	{ 0x1106, 0x3074, "VIA VT8233" },
 	{ 0x1106, 0x3099, "VIA VT8367 [KT266]" },
+	{ 0x1106, 0x3104, "VIA USB 2.0" },
+	{ 0x1106, 0x3108, "VIA S3 Unichrome Pro VGA Adapter" },
+	{ 0x1106, 0x3149, "VIA VT6420 SATA RAID Controller" },
+	{ 0x1106, 0x3204, "K8M800 Host Bridge" },
+	{ 0x1106, 0x3227, "VT8237 ISA bridge" },
+	{ 0x1106, 0x4204, "K8M800 Host Bridge" },
 	{ 0x1106, 0x8305, "VIA VT8365 [KM133 AGP]" },
 	{ 0x1106, 0xB099, "VIA VT8367 [KT266 AGP]" },
+	{ 0x1106, 0xB188, "VT8237 PCI bridge" },
 	{ 0x110A, 0x0005, "Siemens Nixdorf Tulip Cntlr., Power Management" },
 	{ 0x1186, 0x1300, "D-Link RTL8139" },
 	{ 0x125D, 0x1969, "ESS ES1969 Solo-1 Audiodrive" },
@@ -109,6 +123,9 @@ struct pci_device pci_device_table[]=
 	{ 0x8086, 0x1237, "Intel 82441FX (440FX)" },
 	{ 0x8086, 0x1250, "Intel 82439HX" },
  	{ 0x8086, 0x2449, "Intel EtherExpressPro100 82562EM" },
+ 	{ 0x8086, 0x244e, "Intel 82801 PCI Bridge" },
+ 	{ 0x8086, 0x2560, "Intel 82845G/GL[Brookdale-G]/GE/PE" },
+ 	{ 0x8086, 0x2561, "Intel 82845G/GL/GE/PE Host-to-AGP Bridge" },
 	{ 0x8086, 0x7000, "Intel 82371SB" },
 	{ 0x8086, 0x7010, "Intel 82371SB (IDE)" },
 	{ 0x8086, 0x7020, "Intel 82371SB (USB)" },
@@ -223,6 +240,7 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
 	{ 0x8086, 0x122D, },	/* Intel 82437FX */
 	{ 0x8086, 0x1237, }, 	/* Intel 82441FX */
 	{ 0x8086, 0x1250, },	/* Intel 82439HX */
+	{ 0x8086, 0x2560, },	/* Intel 82845G/GL[Brookdale-G]/GE/PE */
  	{ 0x8086, 0x7030, },	/* Intel 82437VX (asw 2005-03-02) */ 
  	{ 0x8086, 0x7100, },	/* Intel 82371AB (asw 2004-07-31) */
  	{ 0x8086, 0x7124, },	/* Intel 82801AA (asw 2004-11-09) */
@@ -249,10 +267,13 @@ struct pci_isabridge pci_isabridge[]=
 
 struct pci_pcibridge pci_pcibridge[]=
 {
+	{ 0x8086, 0x244e, PCI_PCIB_INTEL, },	/* Intel 82801 PCI Bridge */
+	{ 0x8086, 0x2561, PCI_AGPB_INTEL, },	/* Intel 82845 AGP Bridge */
 	{ 0x8086, 0x7191, PCI_AGPB_INTEL, },	/* Intel 82443BX (AGP bridge) */
 	{ 0x1022, 0x700D, PCI_AGPB_INTEL, },	/* AMD-762 (AGP 4x) */
 	{ 0x10B9, 0x5243, PCI_AGPB_INTEL, },	/* ALI M5243 */
 	{ 0x1106, 0x8305, PCI_AGPB_VIA, },	/* VIA VT8365 [KM133 AGP] */
+	{ 0x1106, 0xB188, PCI_AGPB_VIA, },	/* VT8237 PCI bridge */
 	{ 0x0000, 0x0000, 0, },
 };
 
