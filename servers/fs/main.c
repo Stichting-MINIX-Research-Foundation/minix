@@ -38,7 +38,7 @@ FORWARD _PROTOTYPE( void load_super, (Dev_t super_dev)			);
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC void main()
+PUBLIC int main()
 {
 /* This is the main program of the file system.  The main loop consists of
  * three major activities: getting new work, processing the work, and sending
@@ -91,6 +91,7 @@ PUBLIC void main()
 		}
 	}
   }
+  return(OK);				/* shouldn't come here */
 }
 
 /*===========================================================================*
@@ -178,8 +179,8 @@ PRIVATE void fs_init()
 /* Initialize global variables, tables, etc. */
   register struct inode *rip;
   register struct fproc *rfp;
-  int key, s, i;
   message mess;
+  int s;
 
   /* Initialize the process table with help of the process manager messages. 
    * Expect one message for each system process with its slot number and pid. 
@@ -269,9 +270,9 @@ PRIVATE void load_ram(void)
   struct super_block *sp, *dsp;
   block_t b;
   Dev_t image_dev;
-  int s,r;
   static char sbbuf[MIN_BLOCK_SIZE];
   int block_size_image, block_size_ram, ramfs_block_size;
+  int s;
 
   /* Get some boot environment variables. */
   root_dev = igetenv("rootdev", 0);
@@ -299,7 +300,7 @@ PRIVATE void load_ram(void)
   		 */
   		env.key = "cdproberoot";
   		env.keylen = strlen(env.key);
-  		sprintf(devnum, "%d", probedev);
+  		sprintf(devnum, "%d", (int) probedev);
   		env.val = devnum;
   		env.vallen = strlen(devnum);
   		svrctl(MMSETPARAM, &env);
@@ -395,7 +396,7 @@ PRIVATE void load_ram(void)
   /* Commit changes to RAM so dev_io will see it. */
   do_sync();
 
-  printf("\rRAM disk of %u KB loaded onto /dev/ram.", ram_size_kb);
+  printf("\rRAM disk of %u KB loaded onto /dev/ram.", (unsigned) ram_size_kb);
   if (root_dev == DEV_RAM) printf(" Using RAM disk as root FS.");
   printf("  \n");
 

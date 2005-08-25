@@ -31,7 +31,7 @@ bit_t origin;			/* number of bit to start searching at */
   block_t start_block;		/* first bit block */
   bit_t map_bits;		/* how many bits are there in the bit map? */
   unsigned bit_blocks;		/* how many blocks are there in the bit map? */
-  unsigned block, word, bcount, wcount;
+  unsigned block, word, bcount;
   struct buf *bp;
   bitchunk_t *wptr, *wlim, k;
   bit_t i, b;
@@ -210,8 +210,7 @@ register struct super_block *sp; /* pointer to a superblock */
 /* Read a superblock. */
   dev_t dev;
   int magic;
-  int version, native, sb_block, r;
-  off_t sb_bytes_offset, sb_io_offset;
+  int version, native, r;
   static char sbbuf[MIN_BLOCK_SIZE];
 
   dev = sp->s_dev;		/* save device (will be overwritten by copy) */

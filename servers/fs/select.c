@@ -13,7 +13,6 @@
   * some printf()s are serious errors;
   * check combinations of cases listen in open group select
   * spec (various NULLs and behaviours);
-  * pty support in tty
   * make select cancel disappearing fp's
   */
 
@@ -61,7 +60,7 @@ FORWARD _PROTOTYPE(int select_request_general, (struct filp *f, int *ops, int bl
 FORWARD _PROTOTYPE(int select_major_match, (int match_major, struct filp *file));
 
 FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e));
-FORWARD _PROTOTYPE(int select_wakeup, (struct selectentry *e));
+FORWARD _PROTOTYPE(void select_wakeup, (struct selectentry *e));
 
 /* The Open Group:
  * "The pselect() and select() functions shall support
@@ -111,26 +110,11 @@ PRIVATE int select_match_file(struct filp *file)
 }
 
 /*===========================================================================*
- *				select_request_tty			     *
- *===========================================================================*/
-PRIVATE int select_request_tty(struct filp *f, int *ops, int block)
-{
-	int r, rops;
-	rops = *ops;
-	if(block) rops |= SEL_NOTIFY;
-	*ops = dev_io(DEV_SELECT, f->filp_ino->i_zone[0], rops, NULL, 0, 0, 0);
-	if(*ops < 0)
-		return SEL_ERR;
-	return SEL_OK;
-}
-
-/*===========================================================================*
  *				select_request_general			     *
  *===========================================================================*/
 PRIVATE int select_request_general(struct filp *f, int *ops, int block)
 {
-	int r, rops;
-	rops = *ops;
+	int rops = *ops;
 	if(block) rops |= SEL_NOTIFY;
 	*ops = dev_io(DEV_SELECT, f->filp_ino->i_zone[0], rops, NULL, 0, 0, 0);
 	if(*ops < 0)
@@ -460,7 +444,7 @@ PRIVATE void select_cancel_all(struct selectentry *e)
 	return;
 }
 
-PRIVATE int select_wakeup(struct selectentry *e)
+PRIVATE void select_wakeup(struct selectentry *e)
 {
 	/* Open Group:
 	 * "Upon successful completion, the pselect() and select()
@@ -468,14 +452,11 @@ PRIVATE int select_wakeup(struct selectentry *e)
 	 * set in the bit masks."
 	 */
 	revive(e->req_procnr, e->nreadyfds);
-	return;
 }
 
 PRIVATE int select_reevaluate(struct filp *fp)
 {
-	int r;
 	int s, remain_ops = 0, fd, type = -1;
-	int want_ops;
 
 	if(!fp) {
 		printf("fs: select: reevalute NULL fp\n");
@@ -509,7 +490,7 @@ PRIVATE int select_reevaluate(struct filp *fp)
  *===========================================================================*/
 PUBLIC int select_callback(struct filp *fp, int ops)
 {
-	int s, f, fd, want_ops, remain_ops, type;
+	int s, fd, want_ops, type;
 
 	/* We are being notified that file pointer fp is available for
 	 * operations 'ops'. We must re-register the select for
@@ -641,8 +622,7 @@ PUBLIC void select_forget(int proc)
  *===========================================================================*/
 PUBLIC void select_timeout_check(timer_t *timer)
 {
-	int s, r;
-	clock_t now;
+	int s;
 
 	s = tmr_arg(timer)->ta_int;
 

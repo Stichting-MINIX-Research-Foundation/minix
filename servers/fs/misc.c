@@ -425,7 +425,6 @@ PUBLIC int do_svrctl()
 	/* A server in user space calls in to manage a device. */
 	struct fssignon device;
 	int r, major;
-	struct dmap *dp;
 
 	if (fp->fp_effuid != SU_UID) return(EPERM);
 

@@ -77,7 +77,7 @@ _PROTOTYPE( int lock_op, (struct filp *f, int req)			);
 _PROTOTYPE( void lock_revive, (void)					);
 
 /* main.c */
-_PROTOTYPE( void main, (void)						);
+_PROTOTYPE( int main, (void)						);
 _PROTOTYPE( void reply, (int whom, int result)				);
 
 /* misc.c */

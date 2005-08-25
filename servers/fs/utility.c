@@ -99,8 +99,6 @@ int num;			/* number to go with it */
  * inconsistency is detected, e.g., a programming error or illegal value of a
  * defined constant.
  */
-  int i;
-
   if (panicking) return;	/* do not panic during a sync */
   panicking = TRUE;		/* prevent another panic during the sync */
 

@@ -240,8 +240,6 @@ PUBLIC void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */
-  struct super_block *sb;
-  int block_size;
   memset(bp->b_data, 0, MAX_BLOCK_SIZE);
   bp->b_dirt = DIRTY;
 }

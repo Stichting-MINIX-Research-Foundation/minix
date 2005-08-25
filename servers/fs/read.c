@@ -21,19 +21,9 @@
 #include "param.h"
 #include "super.h"
 
-#define VVIRCOPY 0
-
-#if VVIRCOPY
-#define NOVVIRCOPY	0
-#else
-#define NOVVIRCOPY	1
-#endif
-
 FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, off_t position,
 			unsigned off, int chunk, unsigned left, int rw_flag,
 			char *buff, int seg, int usr, int block_size, int *completed)			);
-
-FORWARD _PROTOTYPE( int rw_chunk_finish, (int *)			);
 
 /*===========================================================================*
  *				do_read					     *
@@ -42,25 +32,6 @@ PUBLIC int do_read()
 {
   return(read_write(READING));
 }
-
-/* The following data is shared between rw_chunk() and rw_chunk_finish().
- * It saves up the copying operations that have to be done between user
- * space and the file system. After every (set of) rw_chunk()s,
- * rw_chunk_finish() has to be called immediately (before the FS call returns)
- * so the actual data copying is done.
- *
- * The point of this is to save on the number of copy system calls.
- */
-#define COPY_QUEUE_LEN CPVEC_NR 
-PRIVATE struct copy_queue_entry {
-	struct buf *bp;			/* buf to put_block after copying */
-	int user_seg, user_proc;	/* user space data */
-	phys_bytes user_offset, fs_offset;
-	int blocktype;
-	int chunk;
-	int op;
-} copy_queue[COPY_QUEUE_LEN];
-PRIVATE int copy_queue_used = 0;
 
 /*===========================================================================*
  *				read_write				     *
@@ -85,9 +56,6 @@ int rw_flag;			/* READING or WRITING */
   /* left unfinished rw_chunk()s from previous call! this can't happen.
    * it means something has gone wrong we can't repair now.
    */
-  if(copy_queue_used != 0) {
-  	panic(__FILE__,"start - copy queue size nonzero", copy_queue_used);
-  }
   if(bufs_in_use < 0) {
   	panic(__FILE__,"start - bufs_in_use negative", bufs_in_use);
   }
@@ -176,7 +144,6 @@ int rw_flag;			/* READING or WRITING */
 
 	/* Pipes are a little different.  Check. */
 	if (rip->i_pipe == I_PIPE) {
-		struct filp *other_end;
 	       r = pipe_check(rip, rw_flag, oflags,
 	       		m_in.nbytes, position, &partial_cnt, 0);
 	       if (r <= 0) return(r);
@@ -219,11 +186,6 @@ int rw_flag;			/* READING or WRITING */
 		}
 	}
   }
-
-#if VVIRCOPY
-  /* do copying to/from user space */
-  r2 = rw_chunk_finish(&completed);
-#endif
 
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
@@ -275,9 +237,6 @@ int rw_flag;			/* READING or WRITING */
 	fp->fp_cum_io_partial = 0;
 	return(cum_io);
   }
-  if(copy_queue_used != 0) {
-  	panic(__FILE__,"end - copy queue size nonzero", copy_queue_used);
-  }
   if(bufs_in_use < 0) {
   	panic(__FILE__,"end - bufs_in_use negative", bufs_in_use);
   }
@@ -307,7 +266,6 @@ int *completed;			/* number of bytes copied */
   int n, block_spec;
   block_t b;
   dev_t dev;
-  int entry;
 
   *completed = 0;
 
@@ -351,7 +309,6 @@ int *completed;			/* number of bytes copied */
 	zero_block(bp);
   }
 
-#if NOVVIRCOPY
   if (rw_flag == READING) {
 	/* Copy a chunk from the block buffer to user space. */
 	r = sys_vircopy(FS_PROC_NR, D, (phys_bytes) (bp->b_data+off),
@@ -366,96 +323,10 @@ int *completed;			/* number of bytes copied */
   }
   n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
   put_block(bp, n);
-#else
-  /* have to copy a buffer now. remember to do it. */
-  if(copy_queue_used < 0 || copy_queue_used > COPY_QUEUE_LEN) {
-  	panic(__FILE__,"copy_queue_used illegal size", copy_queue_used);
-  }
-
-  if(copy_queue_used == COPY_QUEUE_LEN) {
-  	r = rw_chunk_finish(completed);
-	if(copy_queue_used != 0) {
-	  	panic(__FILE__,"copy_queue_used nonzero", copy_queue_used);
-  	}
-  }
-
-  entry = copy_queue_used++;
-
-  if(entry < 0 || entry >= COPY_QUEUE_LEN) {
-  	panic(__FILE__,"entry illegal slot", entry);
-  }
-
-  copy_queue[entry].bp = bp;
-  copy_queue[entry].op = rw_flag;
-  copy_queue[entry].user_seg = seg;
-  copy_queue[entry].user_proc = usr;
-  copy_queue[entry].fs_offset = (phys_bytes) bp->b_data+off;
-  copy_queue[entry].user_offset = (phys_bytes) buff;
-  copy_queue[entry].chunk = chunk;
-  copy_queue[entry].blocktype = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
-
-  if(rw_flag == WRITING)  {
-	bp->b_dirt = DIRTY;
-  }
-#endif
 
   return(r);
 }
 
-/*===========================================================================*
- *				rw_chunk_finish				     *
- *===========================================================================*/
-PRIVATE int rw_chunk_finish(int *completed)
-{
-	int i, total = 0, r;
-	static struct vir_cp_req vir_cp_req[CPVEC_NR];
-	message m;
-
-	*completed = 0;
-	if(copy_queue_used < 1) {
-		return OK;
-	}
-
-	for(i = 0; i < copy_queue_used; i++) {
-		struct vir_addr *fs, *user;
-
-		if(copy_queue[i].op == READING) {
-			fs = &vir_cp_req[i].src;
-			user = &vir_cp_req[i].dst;
-		} else {
-			fs = &vir_cp_req[i].dst;
-			user = &vir_cp_req[i].src;
-		}
-
-		vir_cp_req[i].count = copy_queue[i].chunk;
-		fs->proc_nr = FS_PROC_NR;
-		fs->segment = D;
-		fs->offset = copy_queue[i].fs_offset;
-		user->proc_nr = copy_queue[i].user_proc;
-		user->segment = copy_queue[i].user_seg;
-		user->offset = copy_queue[i].user_offset;
-		total += copy_queue[i].chunk;
-	}
-
-	m.m_type = SYS_VIRVCOPY;
-	m.VCP_VEC_SIZE = i;
-	m.VCP_VEC_ADDR = (char *) vir_cp_req;
-
-	if((r=sendrec(SYSTASK, &m)) < 0) {
-		panic(__FILE__,"rw_chunk_finish: virvcopy sendrec failed", r);
-	}
-
-	for(i = 0; i < copy_queue_used; i++) {
-		put_block(copy_queue[i].bp, copy_queue[i].blocktype);
-	}
-
-	*completed = total;
-
-  	copy_queue_used = 0;
-
-	/* return VIRVCOPY return code */
-	return m.m_type;
-}
 
 /*===========================================================================*
  *				read_map				     *

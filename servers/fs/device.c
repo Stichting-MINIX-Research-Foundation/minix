@@ -246,6 +246,7 @@ PUBLIC int do_setsid()
   rfp = &fproc[m_in.slot1];
   rfp->fp_sesldr = TRUE;
   rfp->fp_tty = 0;
+  return(OK);
 }
 
 /*===========================================================================*

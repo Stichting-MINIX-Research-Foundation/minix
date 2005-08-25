@@ -86,7 +86,7 @@ char string[NAME_MAX];		/* the final component is returned here */
 		put_inode(rip);	/* bad path in user space */
 		return(NIL_INODE);
 	}
-	if (*new_name == '\0')
+	if (*new_name == '\0') {
 		if ( (rip->i_mode & I_TYPE) == I_DIRECTORY) {
 			return(rip);	/* normal exit */
 		} else {
@@ -95,6 +95,7 @@ char string[NAME_MAX];		/* the final component is returned here */
 			err_code = ENOTDIR;			
 			return(NIL_INODE);
 		}
+        }
 
 	/* There is more path.  Keep parsing. */
 	new_ip = advance(rip, string);
@@ -247,8 +248,8 @@ int flag;			/* LOOK_UP, ENTER, DELETE or IS_EMPTY */
  *    if 'string' is dot1 or dot2, no access permissions are checked.
  */
 
-  register struct direct *dp;
-  register struct buf *bp;
+  register struct direct *dp = NULL;
+  register struct buf *bp = NULL;
   int i, r, e_hit, t, match;
   mode_t bits;
   off_t pos;
