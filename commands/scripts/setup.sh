@@ -434,9 +434,12 @@ echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile || exit
 umount /dev/$usr
 sync
 
+bios="`echo $primary | sed 's/d./dX/g'`"
+
 echo "
-Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At the
-boot monitor prompt, type 'boot $primary' to try your new MINIX system.
+Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At
+the boot monitor prompt, type 'boot $bios', where X is the bios drive
+number of the drive you installed on, to try your new MINIX system.
 
 This ends the MINIX setup script.  After booting your newly set up system,
 you can run the test suites as indicated in the setup manual.  You also 

@@ -59,7 +59,7 @@ Num Sort   Type
 #define DEV_FD0		0x200		/* Device number of /dev/fd0 */
 #define DEV_C0D0	0x300		/* Device number of /dev/c0d0 */
 
-#define MIN_REGION_MB	180
+#define MIN_REGION_MB	160
 #define MIN_REGION_SECTORS (1024*1024*MIN_REGION_MB/SECTOR_SIZE)
 
 #define MAX_REGION_MB	4095
@@ -103,7 +103,19 @@ void type2col(int type)
 	}
 }
 
-int probing = 0, autopartmode = 0;
+int open_ct_ok(int fd)
+{
+	int c = -1;
+	if(ioctl(fd, DIOCOPENCT, &c) < 0) {
+		printf("Warning: couldn't verify opencount, continuing\n");
+		return 1;
+	}
+
+	if(c == 1) return 1;
+	if(c < 1) { printf("Error: open count %d\n", c); }
+
+	return 0;
+}
 
 void report(const char *label)
 {
@@ -1786,7 +1798,7 @@ void regionize(void)
 		}
 
 		/* Sanity check. */
-		if(autopartmode && si > 1) {
+		if(si > 1) {
 			if(table[i].lowsec < table[sort_order[si-1]].lowsec ||
 			   table[i].lowsec < table[sort_order[si-1]].lowsec + table[sort_order[si-1]].size) {
 				printf("\nSanity check failed on %s - partitions overlap.\n"
@@ -1841,18 +1853,12 @@ void m_read(int ev, object_t *op)
 	fflush(stdout);
 
 	if ((device= open(curdev->name, mode= O_RDWR, 0666)) < 0) {
-		stat_start(1);
-		if(!probing)
-			printf("%s: %s", curdev->name, strerror(errno));
-		stat_end(5);
 		if (device >= 0) { close(device); device= -1; }
 		return;
 	}
 
-	if(probing) {
-		v = 2*HZ;
-		ioctl(device, DIOCTIMEOUT, &v);
-	}
+	v = 2*HZ;
+	ioctl(device, DIOCTIMEOUT, &v);
 
 	/* Assume up to five lines of kernel messages. */
 	statusrow+= 5-1;
@@ -1869,39 +1875,34 @@ void m_read(int ev, object_t *op)
 
 	if (n <= 0) stat_start(1);
 	if (n < 0) {
-		if(!probing)
-			printf("%s: %s", curdev->name, strerror(errno));
 		close(device);
 		device= -1;
 	} else
 	if (n < SECTOR_SIZE) {
-		if(probing) {
-			close(device);
-			device= -1;
-			return;
-		}
-		printf("%s: Unexpected EOF", curdev->subname);
+		close(device);
+		device= -1;
+		return;
 	}
 	if (n <= 0) stat_end(5);
 
 	if (n < SECTOR_SIZE) n= SECTOR_SIZE;
 
+	if(!open_ct_ok(device)) {
+		printf("\n%s: device in use! skipping it.", curdev->subname);
+		fflush(stdout);
+		close(device);
+		device= -1;
+		return;
+	}
+
 	memcpy(table+1, bootblock+PART_TABLE_OFF,
 					NR_PARTITIONS * sizeof(table[1]));
-	for (i= 1; i <= NR_PARTITIONS; i++) {
-		if ((table[i].bootind & ~ACTIVE_FLAG) != 0) break;
-	}
-	if (i <= NR_PARTITIONS || bootblock[510] != 0x55
-				|| bootblock[511] != 0xAA) {
+	if (bootblock[510] != 0x55 || bootblock[511] != 0xAA) {
 		/* Invalid boot block, install bootstrap, wipe partition table.
 		 */
 		memset(bootblock, 0, sizeof(bootblock));
 		installboot(bootblock, MASTERBOOT);
 		memset(table+1, 0, NR_PARTITIONS * sizeof(table[1]));
-		stat_start(1);
-		if(!probing)
-			printf("%s: Invalid partition table (reset)", curdev->subname);
-		stat_end(5);
 	}
 
 	/* Fix an extended partition table up to something mere mortals can
@@ -1944,31 +1945,11 @@ void m_write(int ev, object_t *op)
 		return;
 	}
 
-	if (bootblock[510] != 0x55 || bootblock[511] != 0xAA) {
-		/* Invalid boot block, warn user. */
-		stat_start(1);
-		if(!autopartmode) printf("Warning: About to write a new table on %s",
-							curdev->subname);
-		stat_end(5);
-	}
 	if (extbase != 0) {
 		/* Will this stop him?  Probably not... */
 		stat_start(1);
 		printf("You have changed an extended partition.  Bad Idea.");
 		stat_end(5);
-	}
-
-	if(!autopartmode) {
-		stat_start(1);
-		putstr("Save partition table? (y/n) ");
-		fflush(stdout);
-
-		while ((c= getchar()) != 'y' && c != 'n' && c != ctrl('?')) {}
-
-		if (c == ctrl('?')) putstr("DEL"); else putchr(c);
-		stat_end(5);
-		if (c == 'n' && ev == E_WRITE) dirty= 0;
-		if (c != 'y') return;
 	}
 
 	memcpy(new_table, table+1, NR_PARTITIONS * sizeof(table[1]));
@@ -2491,7 +2472,8 @@ select_disk(void)
 		}
 
 		printf(" Probing done.\n"); 
-		printf("The following disk%s were found on your system:\n\n", SORNOT(drives));
+		printf("The following disk%s %s found on your system:\n\n", SORNOT(drives),
+			drives == 1 ? "was" : "were");
 
 			for(i = 0; i < drives; i++) {
 				printf("  ");
@@ -2595,6 +2577,14 @@ sanitycheck_failed(char *dev, struct part_entry *pe)
 		return 1;
 	}
 
+	if(!open_ct_ok(fd)) {
+		printf("Autopart error: the disk is in use. This means that although a\n"
+			"new table has been written, it won't be in use by the system\n"
+			"until it's no longer in use (or a reboot is done). Just in case,\n"
+			"I'm not going to continue.\n\n");
+		return 1;
+	}
+
 	close(fd);
 
 	it_lowsec = div64u(part.base, SECTOR_SIZE);
@@ -2620,8 +2610,6 @@ do_autopart(int resultfd)
 	int region, disk;
 
 	nordonly = 1; 
-	probing = 1;
-	autopartmode = 1;
 
 	do {
 		curdev = select_disk();

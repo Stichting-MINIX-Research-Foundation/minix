@@ -1388,43 +1388,54 @@ message *m;
 {
 	int r, timeout, prev;
 
-	if(m->m_type != DEV_IOCTL || m->REQUEST != DIOCTIMEOUT) {
+	if(m->m_type != DEV_IOCTL ) {
 		return EINVAL;
 	}
 
-	if((r=sys_datacopy(m->PROC_NR, (vir_bytes)m->ADDRESS,
-		SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
-		return r;
-
-	if(timeout == 0) {
-		/* Restore defaults. */
-		timeout_ticks = DEF_TIMEOUT_TICKS;
-		max_errors = MAX_ERRORS;
-		wakeup_ticks = WAKEUP;
-		w_silent = 0;
-	} else if(timeout < 0) {
-		return EINVAL;
-	} else  {
-		prev = wakeup_ticks;
-
-		if(!w_standard_timeouts) {
-			/* Set (lower) timeout, lower error
-			 * tolerance and set silent mode.
-			 */
-			wakeup_ticks = timeout;
-			max_errors = 3;
-			w_silent = 1;
-
-			if(timeout_ticks > timeout)
-				timeout_ticks = timeout;
-		}
-
-		if((r=sys_datacopy(SELF, (vir_bytes)&prev, 
-			m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
+	if(m->REQUEST == DIOCTIMEOUT) {
+		if((r=sys_datacopy(m->PROC_NR, (vir_bytes)m->ADDRESS,
+			SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
 			return r;
+	
+		if(timeout == 0) {
+			/* Restore defaults. */
+			timeout_ticks = DEF_TIMEOUT_TICKS;
+			max_errors = MAX_ERRORS;
+			wakeup_ticks = WAKEUP;
+			w_silent = 0;
+		} else if(timeout < 0) {
+			return EINVAL;
+		} else  {
+			prev = wakeup_ticks;
+	
+			if(!w_standard_timeouts) {
+				/* Set (lower) timeout, lower error
+				 * tolerance and set silent mode.
+				 */
+				wakeup_ticks = timeout;
+				max_errors = 3;
+				w_silent = 1;
+	
+				if(timeout_ticks > timeout)
+					timeout_ticks = timeout;
+			}
+	
+			if((r=sys_datacopy(SELF, (vir_bytes)&prev, 
+				m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
+				return r;
+		}
+	
+		return OK;
+	} else  if(m->REQUEST == DIOCOPENCT) {
+		int count;
+		if(w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
+		count = w_wn->open_ct;
+		if((r=sys_datacopy(SELF, (vir_bytes)&count, 
+			m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
+			return r;
+		return OK;
 	}
-
-	return OK;
+	return EINVAL;
 }
 
 

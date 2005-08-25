@@ -158,7 +158,6 @@ if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
 umount $TMPDISK || exit
 umount $RAM || exit
 dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
-make programs image
 (cd ../boot && make)
 make image || exit 1
 sh mkboot cdfdboot
