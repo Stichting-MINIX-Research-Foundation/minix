@@ -70,11 +70,12 @@ PRIVATE char dev_zero[ZERO_BUF_SIZE];
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC int main(void)
 {
 /* Main program. Initialize the memory driver and start the main loop. */
   m_init();			
   driver_task(&m_dtab);		
+  return(OK);				
 }
 
 /*===========================================================================*
@@ -111,7 +112,7 @@ iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 {
 /* Read or write one the driver's minor devices. */
-  phys_bytes mem_phys, user_phys;
+  phys_bytes mem_phys;
   int seg;
   unsigned count, left, chunk;
   vir_bytes user_vir;
@@ -287,7 +288,6 @@ message *m_ptr;				/* pointer to control message */
 	/* FS wants to create a new RAM disk with the given size. */
 	phys_bytes ramdev_size;
 	phys_bytes ramdev_base;
-	message m;
 	int s;
 
 	if (m_ptr->PROC_NR != FS_PROC_NR) {
