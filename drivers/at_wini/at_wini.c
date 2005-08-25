@@ -272,11 +272,12 @@ PRIVATE struct driver w_dtab = {
 /*===========================================================================*
  *				at_winchester_task			     *
  *===========================================================================*/
-PUBLIC void main()
+PUBLIC int main()
 {
 /* Set special disk parameters then call the generic main loop. */
   init_params();
   driver_task(&w_dtab);
+  return(OK);
 }
 
 /*============================================================================*
@@ -291,7 +292,7 @@ PRIVATE void init_params()
   int drive, nr_drives;
   struct wini *wn;
   u8_t params[16];
-  int s, i;
+  int s;
 
   /* Boot variables. */
   env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
@@ -374,7 +375,7 @@ PRIVATE void init_params_pci(int skip)
   	wini[drive].state = IGNORING;
   for(r = pci_first_dev(&devind, &vid, &did);
   	r != 0 && w_next_drive < MAX_DRIVES; r = pci_next_dev(&devind, &vid, &did)) {
-  	int interface, irq, irq_hook, any_foud = 0;
+  	int interface, irq, irq_hook;
   	/* Base class must be 01h (mass storage), subclass must
   	 * be 01h (ATA).
   	 */
@@ -551,7 +552,7 @@ PRIVATE int w_identify()
 
   struct wini *wn = w_wn;
   struct command cmd;
-  int i, r, s;
+  int i, s;
   unsigned long size;
 #define id_byte(n)	(&tmp_buf[2 * (n)])
 #define id_word(n)	(((u16_t) id_byte(n)[0] <<  0) \
@@ -779,7 +780,7 @@ unsigned nr_req;		/* length of request vector */
   unsigned long block;
   unsigned long dv_size = cv64ul(w_dv->dv_size);
   struct command cmd;
-  unsigned cylinder, head, sector, nbytes, count, chunk;
+  unsigned cylinder, head, sector, nbytes;
   unsigned secspcyl = wn->pheads * wn->psectors;
 
 #if ENABLE_ATAPI
@@ -1330,7 +1331,6 @@ unsigned cnt;
 {
 /* Send an Atapi Packet Command */
   struct wini *wn = w_wn;
-  message mess;
   pvb_pair_t outbyte[6];		/* vector for sys_voutb() */
   int s;
 
@@ -1368,7 +1368,7 @@ unsigned cnt;
   	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
 
   if (!w_waitfor(STATUS_BSY | STATUS_DRQ, STATUS_DRQ)) {
-	printf("%s: timeout (BSY|DRQ -> DRQ)\n");
+	printf("%s: timeout (BSY|DRQ -> DRQ)\n", w_name());
 	return(ERR);
   }
   wn->w_status |= STATUS_ADMBSY;		/* Command not at all done yet. */
