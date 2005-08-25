@@ -673,8 +673,8 @@ int busind;
 
 	if (unknown_bridge == -1)
 	{
-		printf("do_isabridge: no ISA bridge found for bus %d", busind);
-		return -1;
+		printf("(warning) no ISA bridge found on bus %d", busind);
+		return 0;
 	}
 	printf("(warning) unsupported ISA bridge %04X/%04X for bus %d\n",
 		pcidev[unknown_bridge].pd_vid,
