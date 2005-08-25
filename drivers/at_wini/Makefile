@@ -8,6 +8,7 @@ s = $i/sys
 m = $i/minix
 b = $i/ibm
 d = ..
+p = ../libpci
 
 # programs, flags, etc.
 MAKE = exec make
@@ -17,14 +18,18 @@ LDFLAGS = -i
 LIBS = -lsysutil -lsys -ltimers
 
 OBJ = at_wini.o 
-LIBDRIVER = $d/libdriver/driver.o $d/libdriver/drvlib.o
+LIBDRIVER = $d/libdriver/driver.o $d/libdriver/drvlib.o 
+LIBPCI = $p/pci.o $p/pci_table.o
 
 
 # build local binary
 all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) $(LIBDRIVER)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
+$(DRIVER):	$(OBJ) $(LIBDRIVER) $(LIBPCI)
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS) $(LIBPCI)
 	install -S 8k $(DRIVER)
+
+$(LIBPCI):
+	cd $p && $(MAKE)
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 

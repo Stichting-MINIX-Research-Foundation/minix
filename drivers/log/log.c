@@ -50,7 +50,8 @@ PRIVATE struct driver log_dtab = {
   nop_alarm, 	/* no alarm */
   log_cancel,	/* CANCEL request */
   log_select,	/* DEV_SELECT request */
-  log_other	/* Unrecognized messages */
+  log_other,	/* Unrecognized messages */
+  NULL		/* HW int */
 };
 
 extern int device_caller;

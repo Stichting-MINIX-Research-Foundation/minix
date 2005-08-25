@@ -6,6 +6,7 @@
  *   at_winchester_task:	main entry when system is brought up
  *
  * Changes:
+ *   Aug 19, 2005   ata pci support, supports SATA  (Ben Gras)
  *   Nov 18, 2004   moved AT disk driver to user-space  (Jorrit N. Herder)
  *   Aug 20, 2004   watchdogs replaced by sync alarms  (Jorrit N. Herder)
  *   Mar 23, 2000   added ATAPI CDROM support  (Michael Temari)
@@ -14,6 +15,8 @@
  */
 
 #include "at_wini.h"
+#include "../libpci/pci.h"
+
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <sys/ioc_disk.h>
@@ -139,7 +142,8 @@ struct command {
 #define WAKEUP		(32*HZ)	/* drive may be out for 31 seconds max */
 
 /* Miscellaneous. */
-#define MAX_DRIVES         4	/* this driver supports 4 drives (d0 - d3) */
+#define MAX_DRIVES         8
+#define COMPAT_DRIVES      4
 #if _WORD_SIZE > 2
 #define MAX_SECS	 256	/* controller can transfer this many sectors */
 #else
@@ -168,15 +172,25 @@ struct command {
 /* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 int wakeup_ticks = WAKEUP;
-long w_standard_timeouts = 0;
+long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0;
 
 int w_testing = 0, w_silent = 0;
 
+int w_next_drive = 0;
+
 /* Variables. */
+
+/* wini is indexed by controller first, then drive (0-3).
+ * controller 0 is always the 'compatability' ide controller, at
+ * the fixed locations, whether present or not.
+ */
 PRIVATE struct wini {		/* main drive struct, one entry per drive */
   unsigned state;		/* drive state: deaf, initialized, dead */
+  unsigned w_status;		/* device status register */
   unsigned base;		/* base register of the register file */
   unsigned irq;			/* interrupt request line */
+  unsigned irq_mask;		/* 1 << irq */
+  unsigned irq_need_ack;	/* irq needs to be acknowledged */
   int irq_hook_id;		/* id of irq hook at the kernel */
   unsigned lcylinders;		/* logical number of cylinders (BIOS) */
   unsigned lheads;		/* logical number of heads */
@@ -193,18 +207,22 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
 } wini[MAX_DRIVES], *w_wn;
 
 PRIVATE int w_device = -1;
+PRIVATE int w_controller = -1;
+PRIVATE int w_major = -1;
 PRIVATE char w_id_string[40];
 
 PRIVATE int win_tasknr;			/* my task number */
 PRIVATE int w_command;			/* current command in execution */
 PRIVATE u8_t w_byteval;			/* used for SYS_IRQCTL */
-PRIVATE int w_status;			/* status after interrupt */
 PRIVATE int w_drive;			/* selected drive */
+PRIVATE int w_controller;		/* selected controller */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
 FORWARD _PROTOTYPE( void init_params, (void) );
+FORWARD _PROTOTYPE( void init_drive, (struct wini *, int, int, int, int, int));
+FORWARD _PROTOTYPE( void init_params_pci, (int) );
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );
+FORWARD _PROTOTYPE( struct device *w_prepare, (int dev) );
 FORWARD _PROTOTYPE( int w_identify, (void) );
 FORWARD _PROTOTYPE( char *w_name, (void) );
 FORWARD _PROTOTYPE( int w_specify, (void) );
@@ -213,8 +231,10 @@ FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
 					iovec_t *iov, unsigned nr_req) );
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) );
 FORWARD _PROTOTYPE( void w_need_reset, (void) );
+FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) );
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr) );
+FORWARD _PROTOTYPE( int w_hw_int, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int com_simple, (struct command *cmd) );
 FORWARD _PROTOTYPE( void w_timeout, (void) );
 FORWARD _PROTOTYPE( int w_reset, (void) );
@@ -245,7 +265,8 @@ PRIVATE struct driver w_dtab = {
   nop_alarm,		/* ignore leftover alarms */
   nop_cancel,		/* ignore CANCELs */
   nop_select,		/* ignore selects */
-  w_other		/* catch-all for unrecognized commands and ioctls */
+  w_other,		/* catch-all for unrecognized commands and ioctls */
+  w_hw_int		/* leftover hardware interrupts */
 };
 
 /*===========================================================================*
@@ -270,43 +291,153 @@ PRIVATE void init_params()
   int drive, nr_drives;
   struct wini *wn;
   u8_t params[16];
-  int s;
+  int s, i;
 
-  /* Get the number of drives from the BIOS data area */
-  if ((s=sys_vircopy(SELF, BIOS_SEG, NR_HD_DRIVES_ADDR, 
- 	 	SELF, D, (vir_bytes) params, NR_HD_DRIVES_SIZE)) != OK)
-  	panic(w_name(), "Couldn't read BIOS", s);
-  if ((nr_drives = params[0]) > 2) nr_drives = 2;
+  /* Boot variables. */
+  env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
+  env_parse("ata_pci_debug", "d", 0, &w_pci_debug, 0, 1);
+  env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
 
-  for (drive = 0, wn = wini; drive < MAX_DRIVES; drive++, wn++) {
-	if (drive < nr_drives) {
-	    /* Copy the BIOS parameter vector */
-	    vector = (drive == 0) ? BIOS_HD0_PARAMS_ADDR:BIOS_HD1_PARAMS_ADDR;
-	    size = (drive == 0) ? BIOS_HD0_PARAMS_SIZE:BIOS_HD1_PARAMS_SIZE;
-	    if ((s=sys_vircopy(SELF, BIOS_SEG, vector,
-				SELF, D, (vir_bytes) parv, size)) != OK)
-  			panic(w_name(), "Couldn't read BIOS", s);
+  if(w_instance == 0) {
+	  /* Get the number of drives from the BIOS data area */
+	  if ((s=sys_vircopy(SELF, BIOS_SEG, NR_HD_DRIVES_ADDR, 
+ 		 	SELF, D, (vir_bytes) params, NR_HD_DRIVES_SIZE)) != OK)
+  		panic(w_name(), "Couldn't read BIOS", s);
+	  if ((nr_drives = params[0]) > 2) nr_drives = 2;
 
-		/* Calculate the address of the parameters and copy them */
-  		if ((s=sys_vircopy(
-  			SELF, BIOS_SEG, hclick_to_physb(parv[1]) + parv[0],
-  			SELF, D, (phys_bytes) params, 16L))!=OK)
-  		    panic(w_name(),"Couldn't copy parameters", s);
+	  for (drive = 0, wn = wini; drive < COMPAT_DRIVES; drive++, wn++) {
+		if (drive < nr_drives) {
+		    /* Copy the BIOS parameter vector */
+		    vector = (drive == 0) ? BIOS_HD0_PARAMS_ADDR:BIOS_HD1_PARAMS_ADDR;
+		    size = (drive == 0) ? BIOS_HD0_PARAMS_SIZE:BIOS_HD1_PARAMS_SIZE;
+		    if ((s=sys_vircopy(SELF, BIOS_SEG, vector,
+					SELF, D, (vir_bytes) parv, size)) != OK)
+  				panic(w_name(), "Couldn't read BIOS", s);
+	
+			/* Calculate the address of the parameters and copy them */
+  			if ((s=sys_vircopy(
+  				SELF, BIOS_SEG, hclick_to_physb(parv[1]) + parv[0],
+  				SELF, D, (phys_bytes) params, 16L))!=OK)
+  			    panic(w_name(),"Couldn't copy parameters", s);
+	
+			/* Copy the parameters to the structures of the drive */
+			wn->lcylinders = bp_cylinders(params);
+			wn->lheads = bp_heads(params);
+			wn->lsectors = bp_sectors(params);
+			wn->precomp = bp_precomp(params) >> 2;
+		}
 
-		/* Copy the parameters to the structures of the drive */
-		wn->lcylinders = bp_cylinders(params);
-		wn->lheads = bp_heads(params);
-		wn->lsectors = bp_sectors(params);
-		wn->precomp = bp_precomp(params) >> 2;
-	}
-	wn->ldhpref = ldh_init(drive);
-	wn->max_count = MAX_SECS << SECTOR_SHIFT;
-
-	/* Base I/O register to address controller. */
-	wn->base = drive < 2 ? REG_BASE0 : REG_BASE1;
+		/* Fill in non-BIOS parameters. */
+		init_drive(wn, drive < 2 ? REG_BASE0 : REG_BASE1, NO_IRQ, 0, 0, drive);
+		w_next_drive++;
+  	}
   }
 
-  env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
+  /* Look for controllers on the pci bus. Skip none the first instance,
+   * skip one and then 2 for every instance, for every next instance.
+   */
+  if(w_instance == 0)
+  	init_params_pci(0);
+  else
+  	init_params_pci(w_instance*2-1);
+
+}
+
+#define ATA_IF_NOTCOMPAT1 (1L << 0)
+#define ATA_IF_NOTCOMPAT2 (1L << 2)
+
+/*============================================================================*
+ *				init_drive				      *
+ *============================================================================*/
+PRIVATE void init_drive(struct wini *w, int base, int irq, int ack, int hook, int drive)
+{
+	w->state = 0;
+	w->w_status = 0;
+	w->base = base;
+	w->irq = irq;
+	w->irq_mask = 1 << irq;
+	w->irq_need_ack = ack;
+	w->irq_hook_id = hook;
+	w->ldhpref = ldh_init(drive);
+	w->max_count = MAX_SECS << SECTOR_SHIFT;
+}
+
+/*============================================================================*
+ *				init_params_pci				      *
+ *============================================================================*/
+PRIVATE void init_params_pci(int skip)
+{
+  int r, devind, drive;
+  u16_t vid, did;
+  pci_init();
+  for(drive = w_next_drive; drive < MAX_DRIVES; drive++)
+  	wini[drive].state = IGNORING;
+  for(r = pci_first_dev(&devind, &vid, &did);
+  	r != 0 && w_next_drive < MAX_DRIVES; r = pci_next_dev(&devind, &vid, &did)) {
+  	int interface, irq, irq_hook, any_foud = 0;
+  	/* Base class must be 01h (mass storage), subclass must
+  	 * be 01h (ATA).
+  	 */
+  	if(pci_attr_r8(devind, PCI_BCR) != 0x01 ||
+  	   pci_attr_r8(devind, PCI_SCR) != 0x01) {
+  	   continue;
+  	}
+  	/* Found a controller.
+  	 * Programming interface register tells us more.
+  	 */
+  	interface = pci_attr_r8(devind, PCI_PIFR);
+  	irq = pci_attr_r8(devind, PCI_ILR);
+
+  	/* Any non-compat drives? */
+  	if(interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2)) {
+  		int s;
+  		irq_hook = irq;
+  		if(skip > 0) {
+  			if(w_pci_debug) printf("atapci skipping controller (remain %d)\n", skip);
+  			skip--;
+  			continue;
+  		}
+  		if ((s=sys_irqsetpolicy(irq, 0, &irq_hook)) != OK) {
+		  	printf("atapci: couldn't set IRQ policy %d\n", irq);
+		  	continue;
+		}
+		if ((s=sys_irqenable(&irq_hook)) != OK) {
+			printf("atapci: couldn't enable IRQ line %d\n", irq);
+		  	continue;
+		}
+  	} else {
+  		/* If not.. this is not the ata-pci controller we're
+  		 * looking for.
+  		 */
+  		if(w_pci_debug) printf("atapci skipping compatability controller\n");
+  		continue;
+  	}
+
+  	/* Primary channel not in compatability mode? */
+  	if(interface & ATA_IF_NOTCOMPAT1) {
+  		u32_t base;
+  		base = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
+  		if(base != REG_BASE0 && base != REG_BASE1) {
+	  		init_drive(&wini[w_next_drive], base, irq, 1, irq_hook, 0);
+  			init_drive(&wini[w_next_drive+1], base, irq, 1, irq_hook, 1);
+	  		if(w_pci_debug)
+		  		printf("atapci %d: 0x%x irq %d\n", devind, base, irq);
+  		} else printf("atapci: ignored drives on primary channel, base %x\n", base);
+  	}
+
+  	/* Secondary channel not in compatability mode? */
+  	if(interface & ATA_IF_NOTCOMPAT2) {
+  		u32_t base;
+  		base = pci_attr_r32(devind, PCI_BAR_3) & 0xffffffe0;
+  		if(base != REG_BASE0 && base != REG_BASE1) {
+  			init_drive(&wini[w_next_drive+2], base, irq, 1, irq_hook, 2);
+	  		init_drive(&wini[w_next_drive+3], base, irq, 1, irq_hook, 3);
+  			if(w_pci_debug)
+  				printf("atapci %d: 0x%x irq %d\n", devind, base, irq);
+  		} else printf("atapci: ignored drives on secondary channel, base %x\n", base);
+  	}
+  	w_next_drive += 4;
+  }
 }
 
 /*============================================================================*
@@ -389,11 +520,9 @@ message *m_ptr;
 /*===========================================================================*
  *				w_prepare				     *
  *===========================================================================*/
-PRIVATE struct device *w_prepare(device)
-int device;
+PRIVATE struct device *w_prepare(int device)
 {
 /* Prepare for I/O on a device. */
-
   w_device = device;
   if (device < NR_MINORS) {			/* d0, d0p[0-3], d1, ... */
 	w_drive = device / DEV_PER_DRIVE;	/* save drive number */
@@ -505,7 +634,7 @@ PRIVATE int w_identify()
   }
 
 #if VERBOSE
-  printf("%s: user-space AT Winchester driver detected ", w_name());
+  printf("%s: user-space AT driver detected ", w_name());
   if (wn->state & (SMART|ATAPI)) {
 	printf("%.40s\n", id_string);
   } else {
@@ -513,13 +642,15 @@ PRIVATE int w_identify()
   }
 #endif
 
-  /* Everything looks OK; register IRQ so we can stop polling. */
-  wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
-  wn->irq_hook_id = wn->irq;	/* id to be returned if interrupt occurs */
-  if ((s=sys_irqsetpolicy(wn->irq, IRQ_REENABLE, &wn->irq_hook_id)) != OK) 
-  	panic(w_name(), "coudn't set IRQ policy", s);
-  if ((s=sys_irqenable(&wn->irq_hook_id)) != OK)
-  	panic(w_name(), "coudn't enable IRQ line", s);
+  if(wn->irq == NO_IRQ) {
+	  /* Everything looks OK; register IRQ so we can stop polling. */
+	  wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
+	  wn->irq_hook_id = wn->irq;	/* id to be returned if interrupt occurs */
+	  if ((s=sys_irqsetpolicy(wn->irq, IRQ_REENABLE, &wn->irq_hook_id)) != OK) 
+	  	panic(w_name(), "couldn't set IRQ policy", s);
+	  if ((s=sys_irqenable(&wn->irq_hook_id)) != OK)
+	  	panic(w_name(), "couldn't enable IRQ line", s);
+  }
   wn->state |= IDENTIFIED;
   return(OK);
 }
@@ -714,7 +845,7 @@ unsigned nr_req;		/* length of request vector */
 			/* First an interrupt, then data. */
 			if ((r = at_intr_wait()) != OK) {
 				/* An error, send data to the bit bucket. */
-				if (w_status & STATUS_DRQ) {
+				if (w_wn->w_status & STATUS_DRQ) {
 	if ((s=sys_insw(wn->base + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 				}
@@ -795,7 +926,7 @@ struct command *cmd;		/* Command block */
    */
   sys_setalarm(wakeup_ticks, 0);
 
-  w_status = STATUS_ADMBSY;
+  wn->w_status = STATUS_ADMBSY;
   w_command = cmd->command;
   pv_set(outbyte[0], base + REG_CTL, wn->pheads >= 8 ? CTL_EIGHTHEADS : 0);
   pv_set(outbyte[1], base + REG_PRECOMP, cmd->precomp);
@@ -816,10 +947,13 @@ PRIVATE void w_need_reset()
 {
 /* The controller needs to be reset. */
   struct wini *wn;
+  int dr = 0;
 
-  for (wn = wini; wn < &wini[MAX_DRIVES]; wn++) {
-	wn->state |= DEAF;
-	wn->state &= ~INITIALIZED;
+  for (wn = wini; wn < &wini[MAX_DRIVES]; wn++, dr++) {
+	if (wn->base == w_wn->base) {
+		wn->state |= DEAF;
+		wn->state &= ~INITIALIZED;
+	}
   }
 }
 
@@ -831,8 +965,8 @@ struct driver *dp;
 message *m_ptr;
 {
 /* Device close: Release a device. */
-
-  if (w_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (w_prepare(m_ptr->DEVICE) == NIL_DEV)
+  	return(ENXIO);
   w_wn->open_ct--;
 #if ENABLE_ATAPI
   if (w_wn->open_ct == 0 && (w_wn->state & ATAPI)) atapi_close();
@@ -882,7 +1016,7 @@ PRIVATE void w_timeout(void)
 	if(w_testing)  wn->state |= IGNORING;	/* Kick out this drive. */
 	else if(!w_silent) printf("%s: timeout on command %02x\n", w_name(), w_command);
 	w_need_reset();
-	w_status = 0;
+	wn->w_status = 0;
   }
 }
 
@@ -920,8 +1054,16 @@ PRIVATE int w_reset()
   /* The error register should be checked now, but some drives mess it up. */
 
   for (wn = wini; wn < &wini[MAX_DRIVES]; wn++) {
-	if (wn->base == w_wn->base) wn->state &= ~DEAF;
+	if (wn->base == w_wn->base) {
+		wn->state &= ~DEAF;
+  		if (w_wn->irq_need_ack) {
+		    	/* Make sure irq is actually enabled.. */
+	  		sys_irqenable(&w_wn->irq_hook_id);
+		}
+	}
   }
+		
+
   return(OK);
 }
 
@@ -936,14 +1078,14 @@ PRIVATE void w_intr_wait()
 
   if (w_wn->irq != NO_IRQ) {
 	/* Wait for an interrupt that sets w_status to "not busy". */
-	while (w_status & (STATUS_ADMBSY|STATUS_BSY)) {
+	while (w_wn->w_status & (STATUS_ADMBSY|STATUS_BSY)) {
 		receive(ANY, &m);		/* expect HARD_INT message */
 		if (m.m_type == SYN_ALARM) { 	/* but check for timeout */
 		    w_timeout();		/* a.o. set w_status */
 		} else if (m.m_type == HARD_INT) {
-		    sys_inb((w_wn->base + REG_STATUS), &w_status);
-	        }
-	        else {
+		    sys_inb(w_wn->base + REG_STATUS, &w_wn->w_status);
+		    ack_irqs(m.NOTIFY_ARG);
+	        } else {
 	        	printf("AT_WINI got unexpected message %d from %d\n",
 	        		m.m_type, m.m_source);
 	        }
@@ -964,18 +1106,18 @@ PRIVATE int at_intr_wait()
   int s,inbval;		/* read value with sys_inb */ 
 
   w_intr_wait();
-  if ((w_status & (STATUS_BSY | STATUS_WF | STATUS_ERR)) == 0) {
+  if ((w_wn->w_status & (STATUS_BSY | STATUS_WF | STATUS_ERR)) == 0) {
 	r = OK;
   } else {
   	if ((s=sys_inb(w_wn->base + REG_ERROR, &inbval)) != OK)
   		panic(w_name(),"Couldn't read register",s);
-  	if ((w_status & STATUS_ERR) && (inbval & ERROR_BB)) {
+  	if ((w_wn->w_status & STATUS_ERR) && (inbval & ERROR_BB)) {
   		r = ERR_BAD_SECTOR;	/* sector marked bad, retries won't help */
   	} else {
   		r = ERR;		/* any other error */
   	}
   }
-  w_status |= STATUS_ADMBSY;	/* assume still busy with I/O */
+  w_wn->w_status |= STATUS_ADMBSY;	/* assume still busy with I/O */
   return(r);
 }
 
@@ -995,9 +1137,9 @@ int value;			/* required status */
   int s;
   getuptime(&t0);
   do {
-	if ((s=sys_inb(w_wn->base + REG_STATUS, &w_status)) != OK)
+	if ((s=sys_inb(w_wn->base + REG_STATUS, &w_wn->w_status)) != OK)
 		panic(w_name(),"Couldn't read register",s);
-	if ((w_status & mask) == value) {
+	if ((w_wn->w_status & mask) == value) {
         	return 1;
 	}
   } while ((s=getuptime(&t1)) == OK && (t1-t0) < timeout_ticks );
@@ -1229,7 +1371,7 @@ unsigned cnt;
 	printf("%s: timeout (BSY|DRQ -> DRQ)\n");
 	return(ERR);
   }
-  w_status |= STATUS_ADMBSY;		/* Command not at all done yet. */
+  wn->w_status |= STATUS_ADMBSY;		/* Command not at all done yet. */
 
   /* Send the command packet to the device. */
   if ((s=sys_outsw(wn->base + REG_DATA, SELF, packet, 12)) != OK)
@@ -1246,8 +1388,9 @@ message *m;
 {
 	int r, timeout, prev;
 
-	if(m->m_type != DEV_IOCTL || m->REQUEST != DIOCTIMEOUT)
+	if(m->m_type != DEV_IOCTL || m->REQUEST != DIOCTIMEOUT) {
 		return EINVAL;
+	}
 
 	if((r=sys_datacopy(m->PROC_NR, (vir_bytes)m->ADDRESS,
 		SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
@@ -1284,6 +1427,39 @@ message *m;
 	return OK;
 }
 
+
+/*============================================================================*
+ *				w_hw_int					      *
+ *============================================================================*/
+PRIVATE int w_hw_int(dr, m)
+struct driver *dr;
+message *m;
+{
+  /* Leftover interrupt(s) received; ack it/them. */
+  ack_irqs(m->NOTIFY_ARG);
+
+  return OK;
+}
+
+
+/*============================================================================*
+ *				ack_irqs					      *
+ *============================================================================*/
+PRIVATE void ack_irqs(unsigned int irqs)
+{
+  unsigned int drive;
+  for (drive = 0; drive < MAX_DRIVES && irqs; drive++) {
+  	if(!(wini[drive].state & IGNORING) && wini[drive].irq_need_ack &&
+		(wini[drive].irq_mask & irqs)) {
+		if(sys_inb((wini[drive].base + REG_STATUS), &wini[drive].w_status) != OK)
+		  	printf("couldn't ack irq on drive %d\n", drive);
+	 	if (sys_irqenable(&wini[drive].irq_hook_id) != OK)
+		  	printf("couldn't re-enable drive %d\n", drive);
+		irqs &= ~wini[drive].irq_mask;
+	}
+  }
+}
+
 /*============================================================================*
  *				atapi_intr_wait				      *
  *============================================================================*/
@@ -1316,11 +1492,11 @@ PRIVATE int atapi_intr_wait()
   irr = inbyte[3].value;
 
   if (ATAPI_DEBUG) {
-	printf("S=%02x E=%02x L=%04x I=%02x\n", w_status, e, len, irr);
+	printf("S=%02x E=%02x L=%04x I=%02x\n", wn->w_status, e, len, irr);
   }
-  if (w_status & (STATUS_BSY | STATUS_CHECK)) return ERR;
+  if (wn->w_status & (STATUS_BSY | STATUS_CHECK)) return ERR;
 
-  phase = (w_status & STATUS_DRQ) | (irr & (IRR_COD | IRR_IO));
+  phase = (wn->w_status & STATUS_DRQ) | (irr & (IRR_COD | IRR_IO));
 
   switch (phase) {
   case IRR_COD | IRR_IO:
@@ -1351,11 +1527,11 @@ PRIVATE int atapi_intr_wait()
 
 #if 0
   /* retry if the media changed */
-  XXX while (phase == (IRR_IO | IRR_COD) && (w_status & STATUS_CHECK)
+  XXX while (phase == (IRR_IO | IRR_COD) && (wn->w_status & STATUS_CHECK)
 	&& (e & ERROR_SENSE) == SENSE_UATTN && --try > 0);
 #endif
 
-  w_status |= STATUS_ADMBSY;	/* Assume not done yet. */
+  wn->w_status |= STATUS_ADMBSY;	/* Assume not done yet. */
   return(r);
 }
 #endif /* ENABLE_ATAPI */

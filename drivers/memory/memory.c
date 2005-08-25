@@ -56,6 +56,7 @@ PRIVATE struct driver m_dtab = {
   nop_alarm,
   nop_cancel,
   nop_select,
+  NULL,
   NULL
 };
 

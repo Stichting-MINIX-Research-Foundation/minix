@@ -48,6 +48,7 @@ PRIVATE struct driver r_dtab = {
   r_random, 	/* get randomness from kernel (alarm) */
   nop_cancel,
   nop_select,
+  NULL,
   NULL
 };
 

@@ -87,7 +87,8 @@ PRIVATE struct driver w_dtab = {
   nop_alarm,		/* ignore leftover alarms */
   nop_cancel,		/* ignore CANCELs */
   nop_select,		/* ignore selects */
-  nop_other		/* catch-all for unrecognized commands and ioctls */
+  nop_other,		/* catch-all for unrecognized commands and ioctls */
+  NULL			/* leftover hardware interrupts */
 };
 
 /*===========================================================================*

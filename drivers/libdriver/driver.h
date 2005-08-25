@@ -42,6 +42,7 @@ struct driver {
   _PROTOTYPE( int (*dr_cancel), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_select), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_other), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( int (*dr_hw_int), (struct driver *dp, message *m_ptr) );
 };
 
 #if (CHIP == INTEL)

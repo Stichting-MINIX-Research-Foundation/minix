@@ -77,7 +77,7 @@ struct driver *dp;	/* Device dependent entry points. */
 
   int r, proc_nr;
   message mess;
-  int s;
+  int s, p;
 
   /* Get a DMA buffer. */
   init_buffer();
@@ -88,7 +88,7 @@ struct driver *dp;	/* Device dependent entry points. */
   while (TRUE) {
 
 	/* Wait for a request to read or write a disk block. */
-	receive(ANY, &mess);
+	if(receive(ANY, &mess) != OK) continue;
 
 	device_caller = mess.m_source;
 	proc_nr = mess.PROC_NR;
@@ -107,6 +107,9 @@ struct driver *dp;	/* Device dependent entry points. */
 	case DEV_SCATTER: r = do_vrdwt(dp, &mess);	break;
 
 	case HARD_INT:		/* leftover interrupt or expired timer. */
+				if(dp->dr_hw_int) {
+					(*dp->dr_hw_int)(dp, &mess);
+				}
 				continue;
 	case SYS_SIG:		(*dp->dr_signal)(dp, &mess);
 				continue;	/* don't reply */

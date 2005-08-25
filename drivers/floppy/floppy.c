@@ -277,6 +277,7 @@ PRIVATE struct driver f_dtab = {
   f_expire_tmrs,/* expire all alarm timers */
   nop_cancel,
   nop_select,
+  NULL,
   NULL
 };
 
