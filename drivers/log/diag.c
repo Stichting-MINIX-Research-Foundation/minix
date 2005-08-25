@@ -25,7 +25,6 @@ message *m;					/* notification message */
   struct kmessages kmess;		/* entire kmess structure */
   char print_buf[KMESS_BUF_SIZE];	/* copy new message here */
   static int prev_next = 0;
-  int size, next;
   int bytes;
   int i, r;
 

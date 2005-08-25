@@ -33,7 +33,6 @@ FORWARD _PROTOTYPE( int log_select, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void log_signal, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_other, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void log_geometry, (struct partition *entry) );
-FORWARD _PROTOTYPE( void log_reply, (int code, int replyee, int proc, int status) );
 FORWARD _PROTOTYPE( int subread, (struct logdevice *log, int count, int proc_nr, vir_bytes user_vir) );
 
 /* Entry points to this driver. */
@@ -59,7 +58,7 @@ extern int device_caller;
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC int main(void)
 {
   int i;
   for(i = 0; i < NR_DEVS; i++) {
@@ -72,8 +71,9 @@ PUBLIC void main(void)
 	 	logdevices[i].log_select_ready_ops = 0;
  	logdevices[i].log_proc_nr = 0;
  	logdevices[i].log_revive_alerted = 0;
- }
- driver_task(&log_dtab);
+  }
+  driver_task(&log_dtab);
+  return(OK);
 }
 
 /*===========================================================================*
@@ -221,7 +221,7 @@ unsigned nr_req;		/* length of request vector */
   vir_bytes user_vir;
   struct device *dv;
   unsigned long dv_size;
-  int s, accumulated_read = 0;
+  int accumulated_read = 0;
   struct logdevice *log;
 
   if(log_device < 0 || log_device >= NR_DEVS)
@@ -233,7 +233,6 @@ unsigned nr_req;		/* length of request vector */
   log = &logdevices[log_device];
 
   while (nr_req > 0) {
-  	char *buf;
 	/* How much to transfer and where to / from. */
 	count = iov->iov_size;
 	user_vir = iov->iov_addr;
@@ -289,23 +288,6 @@ unsigned nr_req;		/* length of request vector */
   return(OK);
 }
 
-/*===========================================================================*
- *				log_reply					     *
- *===========================================================================*/
-PRIVATE void log_reply(code, replyee, process, status)
-int code;			/* TASK_REPLY or REVIVE */
-int replyee;			/* destination for message (normally FS) */
-int process;			/* which user requested the printing */
-int status;			/* number of  chars printed or error code */
-{
-  message mess;
-
-  mess.m_type = code;
-  mess.REP_STATUS = status;
-  mess.REP_PROC_NR = process;
-  send(replyee, &mess);	
-}
-
 /*============================================================================*
  *				log_do_open				      *
  *============================================================================*/
@@ -351,7 +333,7 @@ message *m_ptr;
  *============================================================================*/
 PRIVATE void do_status(message *m_ptr)
 {
-	int d, nr = 0;
+	int d; 
 	message m;
 
 	/* Caller has requested pending status information, which currently

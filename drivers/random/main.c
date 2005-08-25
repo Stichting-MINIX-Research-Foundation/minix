@@ -20,7 +20,6 @@
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE int m_device;			/* current device */
-PRIVATE struct randomness krandom;	/* randomness from the kernel */ 
 
 extern int errno;			/* error number for PM calls */
 
@@ -59,10 +58,11 @@ PRIVATE char random_buf[RANDOM_BUF_SIZE];
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC int main(void)
 {
   r_init();			/* initialize the memory driver */
   driver_task(&r_dtab);		/* start driver's main loop */
+  return(OK);
 }
 
 /*===========================================================================*
@@ -100,13 +100,10 @@ iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 {
 /* Read or write one the driver's minor devices. */
-  phys_bytes mem_phys, user_phys;
-  int seg;
   unsigned count, left, chunk;
   vir_bytes user_vir;
   struct device *dv;
   unsigned long dv_size;
-  int s;
 
   /* Get minor device number and check for /dev/null. */
   dv = &m_geom[m_device];
@@ -175,8 +172,6 @@ message *m_ptr;
 PRIVATE void r_init()
 {
   /* Initialize this task. All minor devices are initialized one by one. */
-  int i, s;
-
   random_init();
   r_random(NULL, NULL);				/* also set periodic timer */
 }
