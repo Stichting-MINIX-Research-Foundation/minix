@@ -25,7 +25,7 @@ FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 /*===========================================================================*
  *                                  main                                     *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC int main(void)
 {
 /* This is the main routine of this service. The main loop consists of 
  * three major activities: getting new work, processing the work, and
@@ -90,7 +90,6 @@ PUBLIC void main(void)
 PRIVATE void init_server(void)
 {
 /* Initialize the reincarnation server. */
-  int i, s;
   struct sigaction sa;
 
   /* Install signal handlers. Ask PM to transform signal into message. */

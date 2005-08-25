@@ -1,7 +1,7 @@
 /* Function prototypes. */
 
 /* sm.c */
-_PROTOTYPE( void main, (void));
+_PROTOTYPE( int main, (void));
 
 /* manager.c */
 _PROTOTYPE( int do_exit, (message *m));
