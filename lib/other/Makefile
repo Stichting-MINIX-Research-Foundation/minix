@@ -21,6 +21,7 @@ OBJECTS	= \
 	$(LIBRARY)(_devctl.o) \
 	$(LIBRARY)(_findproc.o) \
 	$(LIBRARY)(asynchio.o) \
+	$(LIBRARY)(basename.o) \
 	$(LIBRARY)(configfile.o) \
 	$(LIBRARY)(crypt.o) \
 	$(LIBRARY)(ctermid.o) \
@@ -105,6 +106,9 @@ $(LIBRARY)(_getsysinfo.o):	_getsysinfo.c
 
 $(LIBRARY)(asynchio.o):	asynchio.c
 	$(CC1) asynchio.c
+
+$(LIBRARY)(basename.o):	basename.c
+	$(CC1) basename.c
 
 $(LIBRARY)(bcmp.o):	bcmp.c
 	$(CC1) bcmp.c
