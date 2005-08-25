@@ -104,6 +104,7 @@ PUBLIC int main()
 
 /* Set special disk parameters then call the generic main loop. */
   driver_task(&w_dtab);
+  return(OK);
 }
 
 /*===========================================================================*
