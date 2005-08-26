@@ -8,7 +8,7 @@ clean::
 install::
 	-rm -rf $(MAN)
 	mkdir $(MAN)
-	tar cf - `find . -name '*.[0-9]'` | (cd $(MAN) && tar xf -)
+	cpdir . $(MAN)
 	chown -R bin /usr/man
 	chgrp -R operator /usr/man
 	find /usr/man -type f | xargs chmod 644
