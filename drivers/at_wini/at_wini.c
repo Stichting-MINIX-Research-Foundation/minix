@@ -122,12 +122,16 @@
 #define   ATAPI_PACKETCMD       0xA0    /* packet command */
 #define   ATAPI_IDENTIFY        0xA1    /* identify drive */
 #define   SCSI_READ10           0x28    /* read from disk */
+#define   SCSI_SENSE            0x03    /* sense request */
 
 #define CD_SECTOR_SIZE		2048	/* sector size of a CD-ROM */
 #endif /* ATAPI */
 
 /* Interrupt request lines. */
 #define NO_IRQ		 0	/* no IRQ set yet */
+
+#define ATAPI_PACKETSIZE	12
+#define SENSE_PACKETSIZE	18
 
 /* Common command block */
 struct command {
@@ -178,7 +182,8 @@ struct command {
 /* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 int wakeup_ticks = WAKEUP;
-long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0, w_lba48 = 0;
+long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0,
+ w_lba48 = 0, atapi_debug = 0;
 
 int w_testing = 0, w_silent = 0;
 
@@ -307,6 +312,7 @@ PRIVATE void init_params()
   env_parse("ata_pci_debug", "d", 0, &w_pci_debug, 0, 1);
   env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
   env_parse("ata_lba48", "d", 0, &w_lba48, 0, 1);
+  env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
 
   if(w_instance == 0) {
 	  /* Get the number of drives from the BIOS data area */
@@ -438,7 +444,7 @@ PRIVATE void init_params_pci(int skip)
 	  			base_cmd, base_ctl, irq, 1, irq_hook, 0);
   			init_drive(&wini[w_next_drive+1],
   				base_cmd, base_ctl, irq, 1, irq_hook, 1);
-	  		if(w_pci_debug || 1)
+	  		if(w_pci_debug)
 		  		printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
   		} else printf("atapci: ignored drives on primary channel, base %x\n", base_cmd);
   	}
@@ -453,7 +459,7 @@ PRIVATE void init_params_pci(int skip)
   				base_cmd, base_ctl, irq, 1, irq_hook, 2);
 	  		init_drive(&wini[w_next_drive+3],
 	  			base_cmd, base_ctl, irq, 1, irq_hook, 3);
-	  		if(w_pci_debug || 1)
+	  		if(w_pci_debug)
   				printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
   		} else printf("atapci: ignored drives on secondary channel, base %x\n", base_cmd);
   	}
@@ -544,7 +550,10 @@ message *m_ptr;
 PRIVATE struct device *w_prepare(int device)
 {
 /* Prepare for I/O on a device. */
+struct wini *prev_wn;
+prev_wn = w_wn;
   w_device = device;
+
   if (device < NR_MINORS) {			/* d0, d0p[0-3], d1, ... */
 	w_drive = device / DEV_PER_DRIVE;	/* save drive number */
 	w_wn = &wini[w_drive];
@@ -670,15 +679,6 @@ PRIVATE int w_identify()
   if (w_specify() != OK && w_specify() != OK) {
   	return(ERR);
   }
-
-#if VERBOSE
-  printf("%s: user-space AT driver detected ", w_name());
-  if (wn->state & (SMART|ATAPI)) {
-	printf("%.40s\n", id_string);
-  } else {
-	printf("%ux%ux%u\n", wn->pcylinders, wn->pheads, wn->psectors);
-  }
-#endif
 
   if(wn->irq == NO_IRQ) {
 	  /* Everything looks OK; register IRQ so we can stop polling. */
@@ -1266,6 +1266,36 @@ PRIVATE void atapi_close()
 /* Should unlock the device.  For now do nothing.  (XXX) */
 }
 
+void sense_request(void)
+{
+	int r, i;
+	static u8_t sense[100], packet[ATAPI_PACKETSIZE];
+
+	packet[0] = SCSI_SENSE;
+	packet[1] = 0;
+	packet[2] = 0;
+	packet[3] = 0;
+	packet[4] = SENSE_PACKETSIZE;
+	packet[5] = 0;
+	packet[7] = 0;
+	packet[8] = 0;
+	packet[9] = 0;
+	packet[10] = 0;
+	packet[11] = 0;
+
+	for(i = 0; i < SENSE_PACKETSIZE; i++) sense[i] = 0xff;
+	r = atapi_sendpacket(packet, SENSE_PACKETSIZE);
+	if (r != OK) { printf("request sense command failed\n"); return; }
+	if(atapi_intr_wait() <= 0) { printf("WARNING: request response failed\n"); }
+
+	if (sys_insw(w_wn->base_cmd + REG_DATA, SELF, (void *) sense, SENSE_PACKETSIZE) != OK)
+		printf("WARNING: sense reading failed\n");
+
+	printf("sense data:");
+	for(i = 0; i < SENSE_PACKETSIZE; i++) printf(" %02x", sense[i]);
+	printf("\n");
+}
+
 /*===========================================================================*
  *				atapi_transfer				     *
  *===========================================================================*/
@@ -1283,7 +1313,7 @@ unsigned nr_req;		/* length of request vector */
   unsigned long block;
   unsigned long dv_size = cv64ul(w_dv->dv_size);
   unsigned nbytes, nblocks, count, before, chunk;
-  u8_t packet[12];
+  static u8_t packet[ATAPI_PACKETSIZE];
 
   errors = fresh = 0;
 
@@ -1386,10 +1416,13 @@ unsigned nr_req;		/* length of request vector */
 
 	if (r < 0) {
   err:		/* Don't retry if too many errors. */
+		if(atapi_debug) sense_request();
 		if (++errors == max_errors) {
 			w_command = CMD_IDLE;
+			if(atapi_debug) printf("giving up (%d)\n", errors);
 			return(EIO);
 		}
+		if(atapi_debug) printf("retry (%d)\n", errors);
 	}
   }
 
@@ -1439,6 +1472,7 @@ unsigned cnt;
   pv_set(outbyte[3], wn->base_cmd + REG_CNT_LO, (cnt >> 0) & 0xFF);
   pv_set(outbyte[4], wn->base_cmd + REG_CNT_HI, (cnt >> 8) & 0xFF);
   pv_set(outbyte[5], wn->base_cmd + REG_COMMAND, w_command);
+  if(atapi_debug) printf("cmd: %x  ", w_command);
   if ((s=sys_voutb(outbyte,6)) != OK)
   	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
 
@@ -1449,8 +1483,17 @@ unsigned cnt;
   wn->w_status |= STATUS_ADMBSY;		/* Command not at all done yet. */
 
   /* Send the command packet to the device. */
-  if ((s=sys_outsw(wn->base_cmd + REG_DATA, SELF, packet, 12)) != OK)
+  if ((s=sys_outsw(wn->base_cmd + REG_DATA, SELF, packet, ATAPI_PACKETSIZE)) != OK)
 	panic(w_name(),"sys_outsw() failed", s);
+
+ {
+ int p;
+ if(atapi_debug) {
+ 	printf("sent command:");
+	 for(p = 0; p < ATAPI_PACKETSIZE; p++) { printf(" %02x", packet[p]); }
+	 printf("\n");
+	}
+ }
   return(OK);
 }
 
@@ -1546,6 +1589,39 @@ PRIVATE void ack_irqs(unsigned int irqs)
   }
 }
 
+
+#define STSTR(a) if(status & STATUS_ ## a) { strcat(str, #a); strcat(str, " "); }
+#define ERRSTR(a) if(e & ERROR_ ## a) { strcat(str, #a); strcat(str, " "); }
+char *strstatus(int status)
+{
+	static char str[200];
+	str[0] = '\0';
+
+	STSTR(BSY);
+	STSTR(DRDY);
+	STSTR(DMADF);
+	STSTR(SRVCDSC);
+	STSTR(DRQ);
+	STSTR(CORR);
+	STSTR(CHECK);
+	return str;
+}
+
+char *strerr(int e)
+{
+	static char str[200];
+	str[0] = '\0';
+
+	ERRSTR(BB);
+	ERRSTR(ECC);
+	ERRSTR(ID);
+	ERRSTR(AC);
+	ERRSTR(TK);
+	ERRSTR(DM);
+
+	return str;
+}
+
 /*============================================================================*
  *				atapi_intr_wait				      *
  *============================================================================*/
@@ -1577,10 +1653,15 @@ PRIVATE int atapi_intr_wait()
   len |= inbyte[2].value << 8;
   irr = inbyte[3].value;
 
-  if (ATAPI_DEBUG) {
-	printf("S=%02x E=%02x L=%04x I=%02x\n", wn->w_status, e, len, irr);
+#if ATAPI_DEBUG
+	printf("wn %p  S=%x=%s E=%02x=%s L=%04x I=%02x\n", wn, wn->w_status, strstatus(wn->w_status), e, strerr(e), len, irr);
+#endif
+  if (wn->w_status & (STATUS_BSY | STATUS_CHECK)) {
+	if(atapi_debug) {
+		printf("atapi fail:  S=%x=%s E=%02x=%s L=%04x I=%02x\n", wn->w_status, strstatus(wn->w_status), e, strerr(e), len, irr);
+	}
+  	return ERR;
   }
-  if (wn->w_status & (STATUS_BSY | STATUS_CHECK)) return ERR;
 
   phase = (wn->w_status & STATUS_DRQ) | (irr & (IRR_COD | IRR_IO));
 
