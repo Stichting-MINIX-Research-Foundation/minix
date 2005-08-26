@@ -25,6 +25,7 @@
 #include <utmp.h>
 #include <time.h>
 #include <stdio.h>
+#include <minix/paths.h>
 
 static char *Version = "@(#) WRITE 1.6 (10/24/92)";
 
@@ -68,7 +69,7 @@ char *finduser()
   if (verbose) fprintf(stderr, "Trying to write to %s\n",
 		userptr->pw_gecos);
 
-  if ((utmpfd = open("/etc/utmp", O_RDONLY)) < 0) {
+  if ((utmpfd = open(_PATH_UTMP, O_RDONLY)) < 0) {
 	fprintf(stderr, "Cannot open utmp file\n");
 	return(NULL);
   }

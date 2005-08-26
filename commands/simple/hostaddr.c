@@ -30,9 +30,11 @@ Created:	Jan 27, 1992 by Philip Homburg
 #include <net/gen/resolv.h>
 #include <net/gen/dhcp.h>
 
+#include <minix/paths.h>
+
 char *prog_name;
 
-char DHCPCACHE[]="/usr/adm/dhcp.cache";
+char DHCPCACHE[]=_PATH_DHCPCACHE;
 
 void main _ARGS(( int argc, char *argv[] ));
 void usage _ARGS(( void ));

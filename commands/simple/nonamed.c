@@ -40,6 +40,8 @@ static const char version[] = "2.7";
 #include <net/gen/udp_io.h>
 #include <net/gen/dhcp.h>
 
+#include <minix/paths.h>
+
 #define HTTL	  	3600L	/* Default time to live for /etc/hosts data. */
 #define SHORT_TIMEOUT	   2	/* If you expect an answer soon. */
 #define MEDIUM_TIMEOUT	   4	/* Soon, but not that soon. */
@@ -54,10 +56,10 @@ static const char version[] = "2.7";
 #define DO_TCP (__minix_vmd || !__minix)
 
 /* Host data, file to store our process id in, our cache, DHCP's cache. */
-static char HOSTS[]=	"/etc/hosts";
+static char HOSTS[]=	_PATH_HOSTS;
 static char PIDFILE[]=	"/usr/run/nonamed.pid";
 static char NNCACHE[]=	"/usr/adm/nonamed.cache";
-static char DHCPCACHE[]="/usr/adm/dhcp.cache";
+static char DHCPCACHE[]= _PATH_DHCPCACHE;
 
 /* Magic string to head the cache file. */
 static char MAGIC[4]=	"NND\2";

@@ -10,8 +10,9 @@
 #include <utmp.h>
 #include <time.h>
 #include <string.h>
+#include <minix/paths.h>
 
-char PATH_UTMP[] = "/etc/utmp";
+char PATH_UTMP[] = _PATH_UTMP;
 
 char day[] = "SunMonTueWedThuFriSat";
 char month[] = "JanFebMarAprMayJunJulAugSepOctNovDec";

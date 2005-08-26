@@ -23,7 +23,9 @@
 #include <utmp.h>
 #include <errno.h>
 
-char PATH_UTMP[] = "/etc/utmp";			/* current logins */
+#include <minix/paths.h>
+
+char PATH_UTMP[] = _PATH_UTMP;			/* current logins */
 
 _PROTOTYPE(void usage , (void));
 _PROTOTYPE(int main , (int argc , char *argv []));

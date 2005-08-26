@@ -5,11 +5,13 @@
 
 #define nil ((void*)0)
 
+#include <minix/paths.h>
+
 /* Paths to files. */
-#define PATH_DHCPCONF	"/etc/dhcp.conf"
-#define PATH_DHCPPID	"/usr/run/dhcpd.pid"
-#define PATH_DHCPCACHE	"/usr/adm/dhcp.cache"
-#define PATH_DHCPPOOL	"/usr/adm/dhcp.pool"
+#define PATH_DHCPCONF	_PATH_DHCPCONF
+#define PATH_DHCPPID	_PATH_DHCPPID
+#define PATH_DHCPCACHE	_PATH_DHCPCACHE
+#define PATH_DHCPPOOL	_PATH_DHCPPOOL
 
 #define CLID_MAX	32	/* Maximum client ID length. */
 

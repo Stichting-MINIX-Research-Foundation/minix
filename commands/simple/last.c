@@ -57,6 +57,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include <minix/paths.h>
 
 #define  FALSE	0
 #define  TRUE	1
@@ -307,7 +308,7 @@ long to;
  */
 void Print_Uptime()
 {
-  char *utmp_file = "/etc/utmp";
+  char *utmp_file = _PATH_UTMP;
   unsigned nusers;
   struct utmp ut;
   FILE *uf;
@@ -380,7 +381,7 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  char *wtmp_file = "/usr/adm/wtmp";
+  char *wtmp_file = _PATH_WTMP;
   FILE *f;
   long size;			/* Number of wtmp records in the file	 */
   int wtmp_count;		/* How many to read into wtmp_buffer	 */

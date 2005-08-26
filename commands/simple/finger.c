@@ -97,8 +97,10 @@ struct person {			/* one for each person fingered */
 	char hostt[HMAX+1];		/* login host */
 };
 
-char LASTLOG[] = "/usr/adm/lastlog";	/* last login info */
-char USERLOG[] = "/etc/utmp";		/* who is logged in */
+#include <minix/paths.h>
+
+char LASTLOG[] = _PATH_LASTLOG;	/* last login info */
+char USERLOG[] = _PATH_UTMP;		/* who is logged in */
 char PLAN[] = "/.plan";			/* what plan file is */
 char PROJ[] = "/.project";		/* what project file */
 	

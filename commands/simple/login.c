@@ -75,11 +75,12 @@
 #include <time.h>
 #include <sys/utsname.h>
 #include <minix/minlib.h>
+#include <minix/paths.h>
 
-char PATH_UTMP[] = "/etc/utmp";			/* current logins */
-char PATH_WTMP[] = "/usr/adm/wtmp";		/* login/logout history */
-char PATH_LASTLOG[] = "/usr/adm/lastlog";	/* last login history */
-char PATH_MOTD[] = "/etc/motd";			/* message of the day */
+char PATH_UTMP[] = _PATH_UTMP;			/* current logins */
+char PATH_WTMP[] = _PATH_WTMP;		/* login/logout history */
+char PATH_LASTLOG[] = _PATH_LASTLOG;	/* last login history */
+char PATH_MOTD[] = _PATH_MOTD;			/* message of the day */
 
 #define TTY_GID		4			/* group ID of ttys */
 
