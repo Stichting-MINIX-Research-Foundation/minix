@@ -692,7 +692,8 @@ int busind;
 	int devind, i;
 	int ind, type;
 	u16_t vid, did;
-	u8_t sbusn;
+	u8_t sbusn, baseclass, subclass, infclass;
+	u32_t t3;
 
 	vid= did= 0;	/* lint */
 	for (devind= 0; devind< nr_pcidev; devind++)
@@ -711,7 +712,27 @@ int busind;
 			break;
 		}
 		if (pci_pcibridge[i].vid == 0)
+		{
+			if (debug)
+			{
+				/* Report unsupported bridges */
+				baseclass= pci_attr_r8(devind, PCI_BCR);
+				subclass= pci_attr_r8(devind, PCI_SCR);
+				infclass= pci_attr_r8(devind, PCI_PIFR);
+				t3= ((baseclass << 16) | (subclass << 8) |
+					infclass);
+				if (t3 != PCI_T3_PCI2PCI &&
+					t3 != PCI_T3_PCI2PCI_SUBTR)
+				{
+					/* No a PCI-to-PCI bridge */
+					continue;
+				}
+				printf(
+			"Ignoring unknown PCI-to-PCI bridge: %04X/%04X\n",
+					vid, did);
+			}
 			continue;
+		}
 		type= pci_pcibridge[i].type;
 
 		if (debug)

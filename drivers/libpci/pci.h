@@ -49,6 +49,10 @@ _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 #define PCI_ILR		0x3C	/* Interrupt Line Register */
 #define PCI_IPR		0x3D	/* Interrupt Pin Register */
 
+/* Device type values as ([PCI_BCR] << 16) | ([PCI_SCR] << 8) | [PCI_PIFR] */
+#define	PCI_T3_PCI2PCI		0x060400	/* PCI-to-PCI Bridge device */
+#define	PCI_T3_PCI2PCI_SUBTR	0x060401	/* Subtr. PCI-to-PCI Bridge */
+
 /* PCI bridge devices (AGP) */
 #define PPB_SBUSN	0x19	/* Secondary Bus Number */
 
