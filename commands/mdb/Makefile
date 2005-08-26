@@ -119,7 +119,7 @@ $(INCLUDE)/gnu/a.out.h:	a.out.h
 #
 
 install:	mdb 
-		install -cs -o bin mdb /usr/local/bin
+		install -cs -o bin mdb /usr/bin
 
 install_man:	mdb.1 ptrace.2
 		install -c -o bin mdb.1 /usr/man/man1
