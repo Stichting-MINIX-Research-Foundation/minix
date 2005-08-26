@@ -157,6 +157,9 @@ cp issue.install $RELEASEDIR/etc/issue
 
 if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
 
+echo "Temporary filesystems still mounted. Make changes, or press RETURN"
+echo -n "to continue making the image.."
+read xyzzy
 umount $TMPDISK || exit
 umount $RAM || exit
 dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
