@@ -151,6 +151,8 @@ date >$RELEASEDIR/CD
 echo " * Chroot build"
 chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
 echo " * Chroot build done"
+# The build process leaves some file in src as root.
+chown -R bin $RELEASEDIR/usr/src
 cp issue.install $RELEASEDIR/etc/issue
 
 if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
@@ -161,7 +163,7 @@ dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 (cd ../boot && make)
 make image || exit 1
 sh mkboot cdfdboot
-cp $IMAGE $CDFILES/bootflp.img
+cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES
 
 h_opt=
