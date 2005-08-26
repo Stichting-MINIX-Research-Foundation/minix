@@ -797,16 +797,11 @@ int devind;
 				printf("INT%c: %d\n", 'A'+i, irq);
 			if (!(elcr & (1 << irq)))
 			{
-				if (qemu_pci)
+				if (debug)
 				{
 					printf(
-			"IRQ is not level triggered (ignored for QEMU)\n");
-				}
-				else
-				{
-					panic("PCI",
-						"IRQ is not level triggered\n",
-						NO_NUM);
+				"(warning) IRQ %d is not level triggered\n", 
+						irq);
 				}
 			}
 			irq_mode_pci(irq);
@@ -855,11 +850,11 @@ int devind;
 		{
 			if (debug)
 				printf("INT%c: %d\n", 'A'+i, irq);
-			if (edge)
+			if (edge && debug)
 			{
-				printf("IRQ %d is not level triggered\n",
+				printf(
+				"(warning) IRQ %d is not level triggered\n",
 					irq);
-				panic(NULL, NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}
@@ -945,11 +940,11 @@ int devind;
 		{
 			if (debug)
 				printf("INT%c: %d\n", 'A'+i, irq);
-			if (edge)
+			if (edge && debug)
 			{
-				printf("IRQ %d is not level triggered\n",
+				printf(
+				"(warning) IRQ %d is not level triggered\n",
 					irq);
-				panic(NULL, NULL, NO_NUM);
 			}
 			irq_mode_pci(irq);
 		}
