@@ -136,9 +136,7 @@ subwrite(struct logdevice *log, int count, int proc_nr, vir_bytes user_vir)
         	 */
     		log->log_status = subread(log, log->log_iosize,
     			log->log_proc_nr, log->log_user_vir);
-    		printf("alert for revive %d..\n", log->log_source);
     		notify(log->log_source); 
-    		printf("alert for revive done..\n");
     		log->log_revive_alerted = 1;
  	} 
 
