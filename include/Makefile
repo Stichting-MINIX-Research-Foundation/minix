@@ -10,3 +10,4 @@ install::
 	mkdir -p $(INC)
 	cpdir . $(INC)
 	@chown -R bin $(INC)
+	@rm -f $(INC)/Makefile
