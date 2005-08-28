@@ -241,6 +241,8 @@ register char *argv[];
   if (argc < 3) error(usage, NIL_PTR);
 
   for (ptr = argv[1]; *ptr; ptr++) {
+  	/* Ignore - as first char */
+  	if(*ptr == '-' && ptr == argv[1]) continue;
 	switch (*ptr) {
 	    case 'c':	creat_fl = TRUE;	break;
 	    case 'x':	ext_fl = TRUE;	break;
