@@ -8,7 +8,7 @@ htons means convert a (unsigned) short in host byte order to network byte order.
 #ifndef _NET__HTON_H
 #define _NET__HTON_H
 
-#include <minix/config.h>
+#include <minix/sys_config.h>
 
 extern u16_t _tmp;
 extern u32_t _tmp_l;
@@ -16,15 +16,15 @@ extern u32_t _tmp_l;
 /* Find out about the byte order. */
 
 /* assume <minix/config.h> is included, let's check */
-#if (CHIP == 0)
-#include "CHIP macro not set, include <minix/config.h>"
+#if (_MINIX_CHIP == 0)
+#include "_MINIX_CHIP macro not set, include <minix/config.h>"
 #endif
 
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 #define LITTLE_ENDIAN	1
 #endif
 
-#if (CHIP == M68000 || CHIP == SPARC)
+#if (_MINIX_CHIP == _CHIP_M68000 || _MINIX_CHIP == _CHIP_SPARC)
 #define BIG_ENDIAN	1
 #endif
 

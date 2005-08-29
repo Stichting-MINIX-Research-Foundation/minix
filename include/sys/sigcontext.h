@@ -10,11 +10,11 @@
 #include <ansi.h>
 #endif
 
-#ifndef _CONFIG_H
-#include <minix/config.h>
+#ifndef _MINIX_SYS_CONFIG_H
+#include <minix/sys_config.h>
 #endif
 
-#if !defined(CHIP)
+#if !defined(_MINIX_CHIP)
 #include "error, configuration is not known"
 #endif
 
@@ -22,7 +22,7 @@
  * by the kernel's context switching code.  Floating point registers should
  * be added in a different struct.
  */
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 struct sigregs {  
 #if _WORD_SIZE == 4
   short sr_gs;
@@ -58,7 +58,7 @@ struct sigframe {		/* stack frame created for signalled process */
 };
 
 #else
-#if (CHIP == M68000)
+#if (_MINIX_CHIP == _CHIP_M68000)
 struct sigregs {  
   long sr_retreg;			/* d0 */
   long sr_d1;
@@ -81,9 +81,9 @@ struct sigregs {
   short sr_dummy;		/* make size multiple of 4 for system.c */
 };
 #else
-#include "error, CHIP is not supported"
+#include "error, _MINIX_CHIP is not supported"
 #endif
-#endif /* CHIP == INTEL */
+#endif /* _MINIX_CHIP == _CHIP_INTEL */
 
 struct sigcontext {
   int sc_flags;			/* sigstack state to restore */
@@ -91,7 +91,7 @@ struct sigcontext {
   struct sigregs sc_regs;	/* register set to restore */
 };
 
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 #if _WORD_SIZE == 4
 #define sc_gs sc_regs.sr_gs
 #define sc_fs sc_regs.sr_fs
@@ -113,9 +113,9 @@ struct sigcontext {
 #define sc_psw sc_regs.sr_psw
 #define sc_sp sc_regs.sr_sp
 #define sc_ss sc_regs.sr_ss
-#endif /* CHIP == INTEL */
+#endif /* _MINIX_CHIP == _CHIP_INTEL */
 
-#if (CHIP == M68000)
+#if (_MINIX_CHIP == M68000)
 #define sc_retreg sc_regs.sr_retreg
 #define sc_d1 sc_regs.sr_d1
 #define sc_d2 sc_regs.sr_d2
@@ -134,7 +134,7 @@ struct sigcontext {
 #define sc_sp sc_regs.sr_sp
 #define sc_pc sc_regs.sr_pc
 #define sc_psw sc_regs.sr_psw
-#endif /* CHIP == M68000 */
+#endif /* _MINIX_CHIP == M68000 */
 
 /* Values for sc_flags.  Must agree with <minix/jmp_buf.h>. */
 #define SC_SIGCONTEXT	2	/* nonzero when signal context is included */

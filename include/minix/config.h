@@ -9,31 +9,35 @@
  * It is divided up into two main sections.  The first section contains
  * user-settable parameters.  In the second section, various internal system
  * parameters are set based on the user-settable parameters.
+ *
+ * Parts of config.h have been moved to sys_config.h, which can be included
+ * by other include files that wish to get at the configuration data, but
+ * don't want to pollute the users namespace. Some editable values have
+ * gone there.
+ *
  */
 
-/*===========================================================================*
- *		This section contains user-settable parameters		     *
- *===========================================================================*/
-#define MACHINE       IBM_PC	/* Must be one of the names listed below */
+/* The MACHINE (called _MINIX_MACHINE) setting can be done
+ * in <minix/machine.h>.
+ */
+#include <minix/sys_config.h>
 
-#define IBM_PC             1	/* any  8088 or 80x86-based system */
-#define SUN_4             40	/* any Sun SPARC-based system */
-#define SUN_4_60	  40	/* Sun-4/60 (aka SparcStation 1 or Campus) */
-#define ATARI             60	/* ATARI ST/STe/TT (68000/68030) */
-#define MACINTOSH         62	/* Apple Macintosh (68000) */
+#define MACHINE      _MINIX_MACHINE
 
-/* Word size in bytes (a constant equal to sizeof(int)). */
-#if __ACK__
-#define _WORD_SIZE	_EM_WSIZE
-#define _PTR_SIZE	_EM_WSIZE
-#endif
+#define IBM_PC       _MACHINE_IBM_PC
+#define SUN_4        _MACHINE_SUN_4
+#define SUN_4_60     _MACHINE_SUN_4_60
+#define ATARI        _MACHINE_ATARI
+#define MACINTOSH    _MACHINE_MACINTOSH
 
 /* Number of slots in the process table for non-kernel processes. The number
  * of system processes defines how many processes with special privileges 
  * there can be. User processes share the same properties and count for one. 
+ *
+ * These can be changed in sys_config.h.
  */
-#define NR_PROCS 	  64 
-#define NR_SYS_PROCS      32
+#define NR_PROCS 	  _NR_PROCS 
+#define NR_SYS_PROCS      _NR_SYS_PROCS
 
 /* The buffer cache should be made as large as you can afford. */
 #if (MACHINE == IBM_PC && _WORD_SIZE == 2)
@@ -92,50 +96,22 @@
  * indicative of more than just the CPU.  For example, machines for which
  * CHIP == INTEL are expected to have 8259A interrrupt controllers and the
  * other properties of IBM PC/XT/AT/386 types machines in general. */
-#define INTEL             1	/* CHIP type for PC, XT, AT, 386 and clones */
-#define M68000            2	/* CHIP type for Atari, Amiga, Macintosh    */
-#define SPARC             3	/* CHIP type for SUN-4 (e.g. SPARCstation)  */
+#define INTEL             _CHIP_INTEL	/* CHIP type for PC, XT, AT, 386 and clones */
+#define M68000            _CHIP_M68000	/* CHIP type for Atari, Amiga, Macintosh    */
+#define SPARC             _CHIP_SPARC	/* CHIP type for SUN-4 (e.g. SPARCstation)  */
 
 /* Set the FP_FORMAT type based on the machine selected, either hw or sw    */
-#define FP_NONE		  0	/* no floating point support                */
-#define FP_IEEE		  1	/* conform IEEE floating point standard     */
+#define FP_NONE	 _FP_NONE	/* no floating point support                */
+#define FP_IEEE	 _FP_IEEE	/* conform IEEE floating point standard     */
 
-#if (MACHINE == IBM_PC)
-#define CHIP          INTEL
-#endif
+/* _MINIX_CHIP is defined in sys_config.h. */
+#define CHIP	_MINIX_CHIP
 
-#if (MACHINE == ATARI) || (MACHINE == MACINTOSH)
-#define CHIP         M68000
-#endif
+/* _MINIX_FP_FORMAT is defined in sys_config.h. */
+#define FP_FORMAT	_MINIX_FP_FORMAT
 
-#if (MACHINE == SUN_4) || (MACHINE == SUN_4_60)
-#define CHIP          SPARC
-#define FP_FORMAT   FP_IEEE
-#endif
-
-#if (MACHINE == ATARI) || (MACHINE == SUN_4)
-#define ASKDEV            1	/* ask for boot device */
-#define FASTLOAD          1	/* use multiple block transfers to init ram */
-#endif
-
-#if (ATARI_TYPE == TT) /* and all other 68030's */
-#define FPP
-#endif
-
-#ifndef FP_FORMAT
-#define FP_FORMAT   FP_NONE
-#endif
-
-#ifndef MACHINE
-error "In <minix/config.h> please define MACHINE"
-#endif
-
-#ifndef CHIP
-error "In <minix/config.h> please define MACHINE to have a legal value"
-#endif
-
-#if (MACHINE == 0)
-error "MACHINE has incorrect value (0)"
-#endif
+/* _ASKDEV and _FASTLOAD are defined in sys_config.h. */
+#define ASKDEV _ASKDEV
+#define FASTLOAD _FASTLOAD
 
 #endif /* _CONFIG_H */

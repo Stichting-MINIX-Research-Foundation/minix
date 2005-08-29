@@ -1,8 +1,8 @@
 #ifndef _TYPE_H
 #define _TYPE_H
 
-#ifndef _CONFIG_H
-#include <minix/config.h>
+#ifndef _MINIX_SYS_CONFIG_H
+#include <minix/sys_config.h>
 #endif
 
 #ifndef _TYPES_H
@@ -14,15 +14,15 @@ typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
 typedef unsigned long phys_bytes;	/* physical addr/length in bytes */
 typedef unsigned int phys_clicks;	/* physical addr/length in clicks */
 
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 typedef unsigned int vir_bytes;	/* virtual addresses and lengths in bytes */
 #endif
 
-#if (CHIP == M68000)
+#if (_MINIX_CHIP == _CHIP_M68000)
 typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
 #endif
 
-#if (CHIP == SPARC)
+#if (_MINIX_CHIP == _CHIP_SPARC)
 typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
 #endif
 

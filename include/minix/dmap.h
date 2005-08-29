@@ -1,7 +1,7 @@
 #ifndef _DMAP_H
 #define _DMAP_H
 
-#include <minix/config.h>
+#include <minix/sys_config.h>
 #include <minix/ipc.h>
 
 /*===========================================================================*
