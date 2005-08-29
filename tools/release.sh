@@ -165,6 +165,11 @@ umount $RAM || exit
 dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 (cd ../boot && make)
 make image || exit 1
+cp image image_big
+make clean
+make image_small || exit 1
+# Prepare image and image_small for cdfdboot
+cp image_big image
 sh mkboot cdfdboot
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES

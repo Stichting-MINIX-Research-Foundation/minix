@@ -61,6 +61,11 @@ image:  includes
 	cd ../drivers && $(MAKE) image
 	installboot -image $@ $(PROGRAMS)
 
+image_small:  includes
+	cd ../kernel && $(MAKE) 
+	cd ../servers && $(MAKE) EXTRA_OPTS=-D_MINIX_SMALL=1 image
+	cd ../drivers && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) image
+	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries
 includes:
