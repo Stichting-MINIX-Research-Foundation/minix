@@ -39,6 +39,11 @@
 #define NR_PROCS 	  _NR_PROCS 
 #define NR_SYS_PROCS      _NR_SYS_PROCS
 
+#if _MINIX_SMALL
+
+#define NR_BUFS	20
+#define NR_BUF_HASH 32
+#else
 /* The buffer cache should be made as large as you can afford. */
 #if (MACHINE == IBM_PC && _WORD_SIZE == 2)
 #define NR_BUFS           40	/* # blocks in the buffer cache */
@@ -54,6 +59,8 @@
 #define NR_BUFS		 512	/* # blocks in the buffer cache (<=1536) */
 #define NR_BUF_HASH	 512	/* size of buf hash table; MUST BE POWER OF 2*/
 #endif
+
+#endif	/* _MINIX_SMALL */
 
 /* Number of controller tasks (/dev/cN device classes). */
 #define NR_CTRLRS          2
