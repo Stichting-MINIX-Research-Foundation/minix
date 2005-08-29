@@ -23,9 +23,9 @@ all install depend clean:
 	cd ./inet && $(MAKE) $@
 
 image:
-	cd ./pm && $(MAKE) build
-	cd ./fs && $(MAKE) build
-	cd ./rs && $(MAKE) build
-	cd ./init && $(MAKE) build
+	cd ./pm && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
+	cd ./fs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
+	cd ./rs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
+	cd ./init && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 
 
