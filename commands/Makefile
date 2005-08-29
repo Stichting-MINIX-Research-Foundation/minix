@@ -4,22 +4,37 @@ MAKE	= exec make -$(MAKEFLAGS)
 FLEX=flex-2.5.4
 GZIP=gzip-1.2.4
 PYTHON=python-1.5.2
+BZIP2=bzip2-1.0.3
+KERMIT=kermit-2.1.1
 
 usage:
-	@echo "Usage: make all       # Compile all commands" >&2
-	@echo "       make install   # Install the result (run as bin!)" >&2
-	@echo "       make clean     # Delete .o files and other junk" >&2
+	@echo "Usage: make all        # Compile all commands" >&2
+	@echo "       make install    # Install the result (run as bin!)" >&2
+	@echo "       make clean      # Delete .o files and other junk" >&2
+	@echo "       make bigall     # Compile all big commands" >&2
+	@echo "       make biginstall # Install all big commands" >&2
 	@false
 
-all install::
-	cd $(FLEX) && /bin/sh ./configure --prefix=/usr && make $@
-	cd $(GZIP) && /bin/sh ./configure --prefix=/usr && make $@
-	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && make $@
+bigall:
+	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && make all
+	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && make all
+	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && make all
+	cd $(BZIP2) && $(MAKE) all
+	cd $(KERMIT) && $(MAKE) all
+
+biginstall:
+	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && make install
+	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && make install
+	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && make install
+	cd $(BZIP2) && $(MAKE) install
+	cd $(KERMIT) && $(MAKE) install
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
 	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
 	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
+	cd $(BZIP2) && $(MAKE) clean
+	cd $(KERMIT) && $(MAKE) clean
 
 all install clean::
 	cd `arch` && $(MAKE) $@
@@ -30,7 +45,6 @@ all install clean::
 	cd awk && $(MAKE) $@
 	cd bc && $(MAKE) $@
 	cd byacc && $(MAKE) $@
-	cd bzip2-1.0.3 && $(MAKE) $@
 	cd cawf && $(MAKE) $@
 	cd cron && $(MAKE) $@
 	cd de && $(MAKE) $@
