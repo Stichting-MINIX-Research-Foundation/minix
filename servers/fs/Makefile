@@ -9,7 +9,7 @@ h = $i/minix
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i
+CFLAGS = -I$i $(EXTRA_OPTS)
 LDFLAGS = -i
 LIBS = -lsys -lsysutil -ltimers
 
