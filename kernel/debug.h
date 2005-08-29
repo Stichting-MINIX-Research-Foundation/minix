@@ -62,9 +62,14 @@ _PROTOTYPE( void check_runqueues, (char *when) );
  */
 #if (DEBUG_TIME_LOCKS || DEBUG_LOCK_CHECK)
 #  undef lock
-#  define lock(c, v)	do { lockcheck; intr_disable(); locktimestart(c, v); } while(0)
+#  define lock(c, v)	do { lockcheck; \
+	intr_disable(); \
+	locktimestart(c, v); \
+	} while(0)
 #  undef unlock
-#  define unlock(c)	do { locktimeend(c); intr_enable(); } while(0)
+#  define unlock(c)	do { locktimeend(c); \
+	intr_enable();\
+	 } while(0)
 #endif
 
 #endif /* DEBUG_H */

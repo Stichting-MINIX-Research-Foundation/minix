@@ -1,4 +1,5 @@
-/* This file manages the super block table and the related data structures, * namely, the bit maps that keep track of which zones and which inodes are
+/* This file manages the super block table and the related data structures,
+ * namely, the bit maps that keep track of which zones and which inodes are
  * allocated and which are free.  When a new inode or zone is needed, the
  * appropriate bit map is searched for a free entry.
  *
@@ -118,7 +119,9 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 	start_block = START_BLOCK + sp->s_imap_blocks;
   }
   block = bit_returned / FS_BITS_PER_BLOCK(sp->s_block_size);
-  word = (bit_returned % FS_BITS_PER_BLOCK(sp->s_block_size)) / FS_BITCHUNK_BITS;
+  word = (bit_returned % FS_BITS_PER_BLOCK(sp->s_block_size))
+  	 / FS_BITCHUNK_BITS;
+
   bit = bit_returned % FS_BITCHUNK_BITS;
   mask = 1 << bit;
 
@@ -315,7 +318,8 @@ register struct super_block *sp; /* pointer to a superblock */
 				|| sp->s_ninodes < 1 || sp->s_zones < 1
 				|| (unsigned) sp->s_log_zone_size > 4) {
   	printf("not enough imap or zone map blocks, \n");
-  	printf("or not enough inodes, or not enough zones, or zone size too large\n");
+  	printf("or not enough inodes, or not enough zones, "
+  		"or zone size too large\n");
 	return(EINVAL);
   }
   sp->s_dev = dev;		/* restore device number */

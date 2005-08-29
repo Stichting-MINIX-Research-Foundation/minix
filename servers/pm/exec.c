@@ -39,8 +39,8 @@ FORWARD _PROTOTYPE( int read_header, (int fd, int *ft, vir_bytes *text_bytes,
 		phys_bytes *tot_bytes, long *sym_bytes, vir_clicks sc,
 		vir_bytes *pc)						);
 
-#define ESCRIPT	(-2000)		/* Returned by read_header for a #! script. */
-#define PTRSIZE	sizeof(char *)	/* Size of pointers in argv[] and envp[]. */
+#define ESCRIPT	(-2000)	/* Returned by read_header for a #! script. */
+#define PTRSIZE	sizeof(char *) /* Size of pointers in argv[] and envp[]. */
 
 /*===========================================================================*
  *				do_exec					     *
@@ -82,8 +82,8 @@ PUBLIC int do_exec()
   dst = (vir_bytes) mbuf;
   r = sys_datacopy(who, (vir_bytes) src,
   			PM_PROC_NR, (vir_bytes) dst, (phys_bytes)stk_bytes);
-
-  if (r != OK) return(EACCES);	/* can't fetch stack (e.g. bad virtual addr) */
+  /* can't fetch stack (e.g. bad virtual addr) */
+  if (r != OK) return(EACCES);	
 
   r = 0;	/* r = 0 (first attempt), or 1 (interpreted script) */
   name = name_buf;	/* name of file to exec. */
@@ -287,7 +287,8 @@ vir_bytes *pc;			/* program entry point (initial PC) */
 /*===========================================================================*
  *				new_mem					     *
  *===========================================================================*/
-PRIVATE int new_mem(sh_mp, text_bytes, data_bytes,bss_bytes,stk_bytes,tot_bytes)
+PRIVATE int new_mem(sh_mp, text_bytes, data_bytes,
+	bss_bytes,stk_bytes,tot_bytes)
 struct mproc *sh_mp;		/* text can be shared with this process */
 vir_bytes text_bytes;		/* text segment size in bytes */
 vir_bytes data_bytes;		/* size of initialized data in bytes */
@@ -337,7 +338,7 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
   }
   /* Free the data and stack segments. */
   free_mem(rmp->mp_seg[D].mem_phys,
-      rmp->mp_seg[S].mem_vir + rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
+   rmp->mp_seg[S].mem_vir + rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
 
   /* We have now passed the point of no return.  The old core image has been
    * forever lost, memory for a new core image has been allocated.  Set up
@@ -361,7 +362,8 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
 #if (CHIP == M68000)
   rmp->mp_seg[T].mem_vir = 0;
   rmp->mp_seg[D].mem_vir = rmp->mp_seg[T].mem_len;
-  rmp->mp_seg[S].mem_vir = rmp->mp_seg[D].mem_vir + rmp->mp_seg[D].mem_len + gap_clicks;
+  rmp->mp_seg[S].mem_vir = rmp->mp_seg[D].mem_vir 
+  	+ rmp->mp_seg[D].mem_len + gap_clicks;
 #endif
 
   sys_newmap(who, rmp->mp_seg);   /* report new map to the kernel */

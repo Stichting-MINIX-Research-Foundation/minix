@@ -43,10 +43,10 @@
 
 #define DUP_MASK        0100	/* mask to distinguish dup2 from dup */
 
-#define LOOK_UP            0	/* tells search_dir to lookup string */
-#define ENTER              1	/* tells search_dir to make dir entry */
-#define DELETE             2	/* tells search_dir to delete entry */
-#define IS_EMPTY           3	/* tells search_dir to ret. OK or ENOTEMPTY */  
+#define LOOK_UP            0 /* tells search_dir to lookup string */
+#define ENTER              1 /* tells search_dir to make dir entry */
+#define DELETE             2 /* tells search_dir to delete entry */
+#define IS_EMPTY           3 /* tells search_dir to ret. OK or ENOTEMPTY */  
 
 #define CLEAN              0	/* disk and memory copies identical */
 #define DIRTY              1	/* disk and memory copies differ */
@@ -75,8 +75,12 @@
 /* Derived sizes pertaining to the V1 file system. */
 #define V1_ZONE_NUM_SIZE           usizeof (zone1_t)  /* # bytes in V1 zone  */
 #define V1_INODE_SIZE             usizeof (d1_inode)  /* bytes in V1 dsk ino */
-#define V1_INDIRECTS   (STATIC_BLOCK_SIZE/V1_ZONE_NUM_SIZE)  /* # zones/indir block */
-#define V1_INODES_PER_BLOCK (STATIC_BLOCK_SIZE/V1_INODE_SIZE)/* # V1 dsk inodes/blk */
+
+/* # zones/indir block */
+#define V1_INDIRECTS (STATIC_BLOCK_SIZE/V1_ZONE_NUM_SIZE)  
+
+/* # V1 dsk inodes/blk */
+#define V1_INODES_PER_BLOCK (STATIC_BLOCK_SIZE/V1_INODE_SIZE)
 
 /* Derived sizes pertaining to the V2 file system. */
 #define V2_ZONE_NUM_SIZE            usizeof (zone_t)  /* # bytes in V2 zone  */

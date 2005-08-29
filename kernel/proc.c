@@ -2,7 +2,7 @@
  * Together with "mpx.s" it forms the lowest layer of the MINIX kernel.
  * There is one entry point from the outside:
  *
- *   sys_call: 	      a system call, i.e., the kernel is trapped with an INT 
+ *   sys_call: 	      a system call, i.e., the kernel is trapped with an INT
  *
  * As well as several entry points used from the interrupt and task level:
  *
@@ -73,7 +73,8 @@ FORWARD _PROTOTYPE( void pick_proc, (void) );
 
 #if (CHIP == INTEL)
 #define CopyMess(s,sp,sm,dp,dm) \
-	cp_mess(s, (sp)->p_memmap[D].mem_phys, (vir_bytes)sm, (dp)->p_memmap[D].mem_phys, (vir_bytes)dm)
+	cp_mess(s, (sp)->p_memmap[D].mem_phys,	\
+		 (vir_bytes)sm, (dp)->p_memmap[D].mem_phys, (vir_bytes)dm)
 #endif /* (CHIP == INTEL) */
 
 #if (CHIP == M68000)
@@ -106,7 +107,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
    * if the caller doesn't do receive(). 
    */
   if (! (priv(caller_ptr)->s_trap_mask & (1 << function)) || 
-          (iskerneln(src_dst) && function != SENDREC && function != RECEIVE)) { 
+          (iskerneln(src_dst) && function != SENDREC
+           && function != RECEIVE)) { 
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           function, proc_nr(caller_ptr), src_dst);
       return(ECALLDENIED);		/* trap denied by mask or kernel */

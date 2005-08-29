@@ -66,10 +66,10 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * structure 0 is shared by user processes. 
  */
 #define s(n)		(1 << s_nr_to_id(n))
-#define SRV_M	(~0)
-#define SYS_M	(~0)
-#define USR_M	(s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR))
-#define DRV_M	(USR_M | s(SYSTEM) | s(CLOCK) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
+#define SRV_M (~0)
+#define SYS_M (~0)
+#define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR))
+#define DRV_M (USR_M | s(SYSTEM) | s(CLOCK) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
 
 /* Define kernel calls that processes are allowed to make. This is not looking
  * very nice, but we need to define the access rights on a per call basis. 
@@ -89,7 +89,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
  * in the boot image and all kernel tasks must come first.
- * Each entry provides the process number, flags, quantum size (qs), scheduling 
+ * Each entry provides the process number, flags, quantum size (qs), scheduling
  * queue, allowed traps, ipc mask, and a name for the process table. The 
  * initial program counter and stack size is also provided for kernel tasks.
  */
@@ -116,6 +116,7 @@ PUBLIC struct boot_image image[] = {
  * causing a compile time error. Note that no space is actually allocated 
  * because 'dummy' is declared extern.
  */
-extern int dummy[(NR_BOOT_PROCS==sizeof(image)/sizeof(struct boot_image))?1:-1];
+extern int dummy[(NR_BOOT_PROCS==sizeof(image)/
+	sizeof(struct boot_image))?1:-1];
 extern int dummy[(BITCHUNK_BITS > NR_BOOT_PROCS - 1) ? 1 : -1];
 

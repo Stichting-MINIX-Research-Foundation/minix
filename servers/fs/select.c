@@ -9,13 +9,6 @@
  *   6 june 2005  Created (Ben Gras)
  */
 
- /* TODO: check if close (pipe?) / exit works; 
-  * some printf()s are serious errors;
-  * check combinations of cases listen in open group select
-  * spec (various NULLs and behaviours);
-  * make select cancel disappearing fp's
-  */
-
 #define DEBUG_SELECT 0
 
 #include "fs.h"
@@ -53,11 +46,14 @@ PRIVATE struct selectentry {
 
 FORWARD _PROTOTYPE(int select_reevaluate, (struct filp *fp));
 
-FORWARD _PROTOTYPE(int select_request_file, (struct filp *f, int *ops, int block));
+FORWARD _PROTOTYPE(int select_request_file,
+	 (struct filp *f, int *ops, int block));
 FORWARD _PROTOTYPE(int select_match_file, (struct filp *f));
 
-FORWARD _PROTOTYPE(int select_request_general, (struct filp *f, int *ops, int block));
-FORWARD _PROTOTYPE(int select_major_match, (int match_major, struct filp *file));
+FORWARD _PROTOTYPE(int select_request_general,
+	 (struct filp *f, int *ops, int block));
+FORWARD _PROTOTYPE(int select_major_match,
+	(int match_major, struct filp *file));
 
 FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e));
 FORWARD _PROTOTYPE(void select_wakeup, (struct selectentry *e));
@@ -218,15 +214,18 @@ PUBLIC int do_select(void)
 	selecttab[s].vir_errorfds = (fd_set *) m_in.SEL_ERRORFDS;
 
 	/* copy args */
-	if(selecttab[s].vir_readfds && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_READFDS,
+	if(selecttab[s].vir_readfds
+	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_READFDS,
 		SELF, D, (vir_bytes) &selecttab[s].readfds, sizeof(fd_set))) != OK)
 		return r;
 
-	if(selecttab[s].vir_writefds && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_WRITEFDS,
+	if(selecttab[s].vir_writefds
+	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_WRITEFDS,
 		SELF, D, (vir_bytes) &selecttab[s].writefds, sizeof(fd_set))) != OK)
 		return r;
 
-	if(selecttab[s].vir_errorfds && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_ERRORFDS,
+	if(selecttab[s].vir_errorfds
+	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_ERRORFDS,
 		SELF, D, (vir_bytes) &selecttab[s].errorfds, sizeof(fd_set))) != OK)
 		return r;
 

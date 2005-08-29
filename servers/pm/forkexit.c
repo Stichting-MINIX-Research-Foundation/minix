@@ -161,7 +161,8 @@ int exit_status;		/* the process' exit status (for parent) */
   }
   /* Free the data and stack segments. */
   free_mem(rmp->mp_seg[D].mem_phys,
-      rmp->mp_seg[S].mem_vir + rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
+      rmp->mp_seg[S].mem_vir 
+        + rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
 
   /* The process slot can only be freed if the parent has done a WAIT. */
   rmp->mp_exitstatus = (char) exit_status;

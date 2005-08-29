@@ -3,7 +3,8 @@
  * them from the disk.
  *
  * The entry points into this file are
- *   get_inode:	   search inode table for a given inode; if not there, read it
+ *   get_inode:	   search inode table for a given inode; if not there,
+ *                 read it
  *   put_inode:	   indicate that an inode is no longer needed in memory
  *   alloc_inode:  allocate a new, unused inode
  *   wipe_inode:   erase some fields of a newly allocated inode
@@ -241,7 +242,8 @@ int rw_flag;			/* READING or WRITING */
   b = (block_t) (rip->i_num - 1)/sp->s_inodes_per_block + offset;
   bp = get_block(rip->i_dev, b, NORMAL);
   dip  = bp->b_v1_ino + (rip->i_num - 1) % V1_INODES_PER_BLOCK;
-  dip2 = bp->b_v2_ino + (rip->i_num - 1) % V2_INODES_PER_BLOCK(sp->s_block_size);
+  dip2 = bp->b_v2_ino + (rip->i_num - 1) %
+  	 V2_INODES_PER_BLOCK(sp->s_block_size);
 
   /* Do the read or write. */
   if (rw_flag == WRITING) {

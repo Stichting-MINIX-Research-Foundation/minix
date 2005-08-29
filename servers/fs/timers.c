@@ -3,8 +3,6 @@
 
 #include "fs.h"
 
-#define VERBOSE 0
-
 #include <timers.h>
 #include <minix/syslib.h>
 #include <minix/com.h>
@@ -26,11 +24,8 @@ PUBLIC void fs_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 	/* reschedule our synchronous alarm if necessary */
 	if(!old_head || old_head > new_head) {
 		if(sys_setalarm(new_head, 1) != OK)
-			panic(__FILE__, "FS set timer couldn't set synchronous alarm.", NO_NUM);
-#if VERBOSE
-		else
-			printf("timers: after setting, set synalarm to %d -> %d\n", old_head, new_head);
-#endif
+			panic(__FILE__, "FS set timer "
+			"couldn't set synchronous alarm.", NO_NUM);
 	}
 
 	return;
@@ -42,15 +37,9 @@ PUBLIC void fs_expire_timers(clock_t now)
 	tmrs_exptimers(&fs_timers, now, &new_head);
 	if(new_head > 0) {
 		if(sys_setalarm(new_head, 1) != OK)
-			panic(__FILE__, "FS expire timer couldn't set synchronous alarm.", NO_NUM);
-#if VERBOSE
-		else
-			printf("timers: after expiry, set synalarm to %d\n", new_head);
-#endif
+			panic(__FILE__, "FS expire timer couldn't set "
+				"synchronous alarm.", NO_NUM);
 	}
-#if VERBOSE
-	 else printf("after expiry, no new timer set\n");
-#endif
 }
 
 PUBLIC void fs_init_timer(timer_t *tp)
@@ -70,9 +59,8 @@ PUBLIC void fs_cancel_timer(timer_t *tp)
 	 */
 	if(old_head < new_head || !new_head) {
 		if(sys_setalarm(new_head, 1) != OK)
-			panic(__FILE__, "FS expire timer couldn't set synchronous alarm.", NO_NUM);
-#if VERBOSE
-		printf("timers: after cancelling, set synalarm to %d -> %d\n", old_head, new_head);
-#endif
+			panic(__FILE__,
+			"FS expire timer couldn't set synchronous alarm.",
+				 NO_NUM);
 	}
 }

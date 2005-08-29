@@ -18,12 +18,18 @@ EXTERN struct buf {
   /* Data portion of the buffer. */
   union {
     char b__data[MAX_BLOCK_SIZE];		     /* ordinary user data */
-    struct direct b__dir[NR_DIR_ENTRIES(MAX_BLOCK_SIZE)];    /* directory block */
-    zone1_t b__v1_ind[V1_INDIRECTS];	     /* V1 indirect block */
-    zone_t  b__v2_ind[V2_INDIRECTS(MAX_BLOCK_SIZE)];	     /* V2 indirect block */
-    d1_inode b__v1_ino[V1_INODES_PER_BLOCK]; /* V1 inode block */
-    d2_inode b__v2_ino[V2_INODES_PER_BLOCK(MAX_BLOCK_SIZE)]; /* V2 inode block */
-    bitchunk_t b__bitmap[FS_BITMAP_CHUNKS(MAX_BLOCK_SIZE)];  /* bit map block */
+/* directory block */
+    struct direct b__dir[NR_DIR_ENTRIES(MAX_BLOCK_SIZE)];    
+/* V1 indirect block */
+    zone1_t b__v1_ind[V1_INDIRECTS];	     
+/* V2 indirect block */
+    zone_t  b__v2_ind[V2_INDIRECTS(MAX_BLOCK_SIZE)];	     
+/* V1 inode block */
+    d1_inode b__v1_ino[V1_INODES_PER_BLOCK]; 
+/* V2 inode block */
+    d2_inode b__v2_ino[V2_INODES_PER_BLOCK(MAX_BLOCK_SIZE)]; 
+/* bit map block */
+    bitchunk_t b__bitmap[FS_BITMAP_CHUNKS(MAX_BLOCK_SIZE)];  
   } b;
 
   /* Header portion of the buffer. */
@@ -56,8 +62,8 @@ EXTERN struct buf *rear;	/* points to most recently used free block */
 EXTERN int bufs_in_use;		/* # bufs currently in use (not on free list)*/
 
 /* When a block is released, the type of usage is passed to put_block(). */
-#define WRITE_IMMED        0100	/* block should be written to disk now */
-#define ONE_SHOT           0200	/* set if block not likely to be needed soon */
+#define WRITE_IMMED   0100 /* block should be written to disk now */
+#define ONE_SHOT      0200 /* set if block not likely to be needed soon */
 
 #define INODE_BLOCK        0				 /* inode block */
 #define DIRECTORY_BLOCK    1				 /* directory block */

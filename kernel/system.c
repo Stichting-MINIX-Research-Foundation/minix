@@ -402,7 +402,7 @@ vir_bytes bytes;		/* # of bytes to copy  */
 /* Copy bytes from virtual address src_addr to virtual address dst_addr. 
  * Virtual addresses can be in ABS, LOCAL_SEG, REMOTE_SEG, or BIOS_SEG.
  */
-  struct vir_addr *vir_addr[2];	/* virtual source and destination address */ 
+  struct vir_addr *vir_addr[2];	/* virtual source and destination address */
   phys_bytes phys_addr[2];	/* absolute source and destination */ 
   int seg_index;
   int i;

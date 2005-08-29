@@ -48,7 +48,8 @@ zone_t new_zone;		/* zone # to be inserted */
   rip->i_dirt = DIRTY;		/* inode will be changed */
   bp = NIL_BUF;
   scale = rip->i_sp->s_log_zone_size;		/* for zone-block conversion */
-  zone = (position/rip->i_sp->s_block_size) >> scale;	/* relative zone # to insert */
+  	/* relative zone # to insert */
+  zone = (position/rip->i_sp->s_block_size) >> scale;
   zones = rip->i_ndzones;	/* # direct zones in the inode */
   nr_indirects = rip->i_nindirs;/* # indirect zones per indirect block */
 

@@ -22,8 +22,8 @@
 #include "super.h"
 
 FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, off_t position,
-			unsigned off, int chunk, unsigned left, int rw_flag,
-			char *buff, int seg, int usr, int block_size, int *completed)			);
+	unsigned off, int chunk, unsigned left, int rw_flag,
+	char *buff, int seg, int usr, int block_size, int *completed));
 
 /*===========================================================================*
  *				do_read					     *
@@ -76,7 +76,8 @@ int rw_flag;			/* READING or WRITING */
   if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {
 	return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
   }
-  if (m_in.nbytes == 0) return(0);	/* so char special files need not check for 0*/
+  if (m_in.nbytes == 0)
+  	 return(0);	/* so char special files need not check for 0*/
 
   /* check if user process has the memory it needs.
    * if not, copying will fail later.
@@ -101,13 +102,15 @@ int rw_flag;			/* READING or WRITING */
 
   if((char_spec = (mode_word == I_CHAR_SPECIAL ? 1 : 0))) {
   	if(rip->i_zone[0] == NO_DEV)
-  		panic(__FILE__,"read_write tries to read from character device NO_DEV", NO_NUM);
+  		panic(__FILE__,"read_write tries to read from "
+  			"character device NO_DEV", NO_NUM);
   	block_size = get_block_size(rip->i_zone[0]);
   }
   if((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
   	f_size = ULONG_MAX;
   	if(rip->i_zone[0] == NO_DEV)
-  		panic(__FILE__,"read_write tries to read from block device NO_DEV", NO_NUM);
+  		panic(__FILE__,"read_write tries to read from "
+  		" block device NO_DEV", NO_NUM);
   	block_size = get_block_size(rip->i_zone[0]);
   }
 
@@ -246,7 +249,8 @@ int rw_flag;			/* READING or WRITING */
 /*===========================================================================*
  *				rw_chunk				     *
  *===========================================================================*/
-PRIVATE int rw_chunk(rip, position, off, chunk, left, rw_flag, buff, seg, usr, block_size, completed)
+PRIVATE int rw_chunk(rip, position, off, chunk, left, rw_flag, buff,
+ seg, usr, block_size, completed)
 register struct inode *rip;	/* pointer to inode for file to be rd/wr */
 off_t position;			/* position within file to read or write */
 unsigned off;			/* off within the current block */

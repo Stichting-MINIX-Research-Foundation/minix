@@ -290,7 +290,9 @@ int flag;			/* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 		panic(__FILE__,"get_block returned NO_BLOCK", NO_NUM);
 
 	/* Search a directory block. */
-	for (dp = &bp->b_dir[0]; dp < &bp->b_dir[NR_DIR_ENTRIES(ldir_ptr->i_sp->s_block_size)]; dp++) {
+	for (dp = &bp->b_dir[0];
+		dp < &bp->b_dir[NR_DIR_ENTRIES(ldir_ptr->i_sp->s_block_size)];
+		dp++) {
 		if (++new_slots > old_slots) { /* not found, but room left */
 			if (flag == ENTER) e_hit = TRUE;
 			break;

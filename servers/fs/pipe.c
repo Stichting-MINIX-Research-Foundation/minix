@@ -8,7 +8,8 @@
  *   do_pipe:	  perform the PIPE system call
  *   pipe_check:  check to see that a read or write on a pipe is feasible now
  *   suspend:	  suspend a process that cannot do a requested read or write
- *   release:	  check to see if a suspended process can be released and do it
+ *   release:	  check to see if a suspended process can be released and do
+ *                it
  *   revive:	  mark a suspended process as able to run again
  *   do_unpause:  a signal has been sent to a process; see if it suspended
  */
@@ -128,10 +129,13 @@ int notouch;			/* check only */
 	}
 
 	if (position + bytes > PIPE_SIZE(rip->i_sp->s_block_size)) {
-		if ((oflags & O_NONBLOCK) && bytes < PIPE_SIZE(rip->i_sp->s_block_size))
+		if ((oflags & O_NONBLOCK)
+		 && bytes < PIPE_SIZE(rip->i_sp->s_block_size))
 			return(EAGAIN);
-		else if ((oflags & O_NONBLOCK) && bytes > PIPE_SIZE(rip->i_sp->s_block_size)) {
-			if ( (*canwrite = (PIPE_SIZE(rip->i_sp->s_block_size) - position)) > 0)  {
+		else if ((oflags & O_NONBLOCK)
+		&& bytes > PIPE_SIZE(rip->i_sp->s_block_size)) {
+		if ( (*canwrite = (PIPE_SIZE(rip->i_sp->s_block_size) 
+			- position)) > 0)  {
 				/* Do a partial write. Need to wakeup reader */
 				if(!notouch)
 					release(rip, READ, susp_count);
@@ -141,7 +145,8 @@ int notouch;			/* check only */
 			}
 		     }
 		if (bytes > PIPE_SIZE(rip->i_sp->s_block_size)) {
-			if ((*canwrite = PIPE_SIZE(rip->i_sp->s_block_size) - position) > 0) {
+			if ((*canwrite = PIPE_SIZE(rip->i_sp->s_block_size) 
+				- position) > 0) {
 				/* Do a partial write. Need to wakeup reader
 				 * since we'll suspend ourself in read_write()
 				 */
@@ -250,7 +255,8 @@ int returned;			/* if hanging on task, how many bytes read */
   register struct fproc *rfp;
   register int task;
 
-  if (proc_nr < 0 || proc_nr >= NR_PROCS) panic(__FILE__,"revive err", proc_nr);
+  if (proc_nr < 0 || proc_nr >= NR_PROCS)
+  	panic(__FILE__,"revive err", proc_nr);
   rfp = &fproc[proc_nr];
   if (rfp->fp_suspended == NOT_SUSPENDED || rfp->fp_revived == REVIVING)return;
 
@@ -295,7 +301,8 @@ PUBLIC int do_unpause()
 
   if (who > PM_PROC_NR) return(EPERM);
   proc_nr = m_in.pro;
-  if (proc_nr < 0 || proc_nr >= NR_PROCS) panic(__FILE__,"unpause err 1", proc_nr);
+  if (proc_nr < 0 || proc_nr >= NR_PROCS)
+  	panic(__FILE__,"unpause err 1", proc_nr);
   rfp = &fproc[proc_nr];
   if (rfp->fp_suspended == NOT_SUSPENDED) return(OK);
   task = -rfp->fp_task;

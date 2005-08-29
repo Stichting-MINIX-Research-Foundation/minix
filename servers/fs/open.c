@@ -317,7 +317,8 @@ PUBLIC int do_mkdir()
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   ldirp = last_dir(user_path, string);	/* pointer to new dir's parent */
   if (ldirp == NIL_INODE) return(err_code);
-  if (ldirp->i_nlinks >= (ldirp->i_sp->s_version == V1 ? CHAR_MAX : SHRT_MAX)) {
+  if (ldirp->i_nlinks >= (ldirp->i_sp->s_version == V1 ?
+  	 CHAR_MAX : SHRT_MAX)) {
 	put_inode(ldirp);	/* return parent */
 	return(EMLINK);
   }

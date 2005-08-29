@@ -145,8 +145,10 @@ PUBLIC void prot_init()
   * (u32_t *) dtp->base = vir2phys(idt);
 
   /* Build segment descriptors for tasks and interrupt handlers. */
-  init_codeseg(&gdt[CS_INDEX], kinfo.code_base, kinfo.code_size, INTR_PRIVILEGE);
-  init_dataseg(&gdt[DS_INDEX], kinfo.data_base, kinfo.data_size, INTR_PRIVILEGE);
+  init_codeseg(&gdt[CS_INDEX],
+  	 kinfo.code_base, kinfo.code_size, INTR_PRIVILEGE);
+  init_dataseg(&gdt[DS_INDEX],
+  	 kinfo.data_base, kinfo.data_size, INTR_PRIVILEGE);
   init_dataseg(&gdt[ES_INDEX], 0L, 0, TASK_PRIVILEGE);
 
   /* Build scratch descriptors for functions in klib88. */

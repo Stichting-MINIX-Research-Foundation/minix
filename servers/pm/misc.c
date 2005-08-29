@@ -250,25 +250,29 @@ PUBLIC int do_svrctl()
 
       /* Set a param override? */
       if(req == MMSETPARAM) {
-  		if(local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
-  		if(sysgetenv.keylen <= 0 || sysgetenv.keylen >= sizeof(local_param_overrides[local_params].name)
-  		 || sysgetenv.vallen <= 0 || sysgetenv.vallen >= sizeof(local_param_overrides[local_params].value))
-  			return EINVAL;
+  	if(local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
+  	if(sysgetenv.keylen <= 0
+  	 || sysgetenv.keylen >=
+  	 	 sizeof(local_param_overrides[local_params].name)
+  	 || sysgetenv.vallen <= 0
+  	 || sysgetenv.vallen >=
+  	 	 sizeof(local_param_overrides[local_params].value))
+  		return EINVAL;
   		
-          	if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.key,
-               	   SELF, (vir_bytes) local_param_overrides[local_params].name,
-               	    sysgetenv.keylen)) != OK)
-               	    	return s;
-          	if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.val,
-               	   SELF, (vir_bytes) local_param_overrides[local_params].value,
-               	    sysgetenv.keylen)) != OK)
-               	    	return s;
-               	local_param_overrides[local_params].name[sysgetenv.keylen] = '\0';
-               	local_param_overrides[local_params].value[sysgetenv.vallen] = '\0';
+          if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.key,
+            SELF, (vir_bytes) local_param_overrides[local_params].name,
+               sysgetenv.keylen)) != OK)
+               	return s;
+          if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.val,
+            SELF, (vir_bytes) local_param_overrides[local_params].value,
+              sysgetenv.keylen)) != OK)
+               	return s;
+            local_param_overrides[local_params].name[sysgetenv.keylen] = '\0';
+            local_param_overrides[local_params].value[sysgetenv.vallen] = '\0';
 
-  		local_params++;
+  	local_params++;
 
-  		return OK;
+  	return OK;
       }
 
       if (sysgetenv.keylen == 0) {	/* copy all parameters */

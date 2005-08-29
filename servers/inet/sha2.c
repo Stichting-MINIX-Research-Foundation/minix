@@ -1,5 +1,3 @@
-/*	$FreeBSD: src/sys/crypto/sha2/sha2.c,v 1.2.2.2 2002/03/05 08:36:47 ume Exp $	*/
-/*	$KAME: sha2.c,v 1.8 2001/11/08 01:07:52 itojun Exp $	*/
 
 /*
  * sha2.c
@@ -74,8 +72,8 @@
  *
  * Please make sure that your system defines SHA2_BYTE_ORDER.  If your
  * architecture is little-endian, make sure it also defines
- * SHA2_LITTLE_ENDIAN and that the two (SHA2_BYTE_ORDER and SHA2_LITTLE_ENDIAN) are
- * equivilent.
+ * SHA2_LITTLE_ENDIAN and that the two (SHA2_BYTE_ORDER and
+ * SHA2_LITTLE_ENDIAN) are equivilent.
  *
  * If your system does not define the above, then you can do so by
  * hand like this:

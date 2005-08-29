@@ -32,8 +32,8 @@
 #define CS_SELECTOR       0x30	/* (CS_INDEX * DESC_SIZE) */
 #define MON_CS_SELECTOR   0x38	/* (MON_CS_INDEX * DESC_SIZE) */
 #define TSS_SELECTOR      0x40	/* (TSS_INDEX * DESC_SIZE) */
-#define DS_286_SELECTOR   0x49	/* (DS_286_INDEX*DESC_SIZE + TASK_PRIVILEGE) */
-#define ES_286_SELECTOR   0x51	/* (ES_286_INDEX*DESC_SIZE + TASK_PRIVILEGE) */
+#define DS_286_SELECTOR   0x49	/* (DS_286_INDEX*DESC_SIZE+TASK_PRIVILEGE) */
+#define ES_286_SELECTOR   0x51	/* (ES_286_INDEX*DESC_SIZE+TASK_PRIVILEGE) */
 
 /* Fixed local descriptors. */
 #define CS_LDT_INDEX     0	/* process CS */
@@ -113,12 +113,12 @@
 #define PAGE_GRAN_SHIFT     12	/* extra shift for page granular limits */
 
 /* Type-byte bits. */
-#define DESC_386_BIT      0x08	/* 386 types are obtained by ORing with this */
+#define DESC_386_BIT  0x08 /* 386 types are obtained by ORing with this */
 				/* LDT's and TASK_GATE's don't need it */
 
 /* Granularity byte. */
-#define GRANULAR          0x80	/* set for 4K granularilty */
-#define DEFAULT           0x40	/* set for 32-bit defaults (executable seg) */
-#define BIG               0x40	/* set for "BIG" (expand-down seg) */
-#define AVL               0x10	/* 0 for available */
-#define LIMIT_HIGH        0x0F	/* mask for high bits of limit */
+#define GRANULAR   0x80	/* set for 4K granularilty */
+#define DEFAULT    0x40	/* set for 32-bit defaults (executable seg) */
+#define BIG        0x40	/* set for "BIG" (expand-down seg) */
+#define AVL        0x10	/* 0 for available */
+#define LIMIT_HIGH 0x0F	/* mask for high bits of limit */

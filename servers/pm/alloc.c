@@ -145,8 +145,10 @@ phys_clicks clicks;		/* number of clicks to free */
  *				del_slot				     *
  *===========================================================================*/
 PRIVATE void del_slot(prev_ptr, hp)
-register struct hole *prev_ptr;	/* pointer to hole entry just ahead of 'hp' */
-register struct hole *hp;	/* pointer to hole entry to be removed */
+/* pointer to hole entry just ahead of 'hp' */
+register struct hole *prev_ptr;
+/* pointer to hole entry to be removed */
+register struct hole *hp;	
 {
 /* Remove an entry from the hole list.  This procedure is called when a
  * request to allocate memory removes a hole in its entirety, thus reducing

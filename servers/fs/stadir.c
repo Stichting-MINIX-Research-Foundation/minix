@@ -187,7 +187,10 @@ char *user_addr;		/* user space address where stat buf goes */
 
   /* Fill in the statbuf struct. */
   mo = rip->i_mode & I_TYPE;
-  s = (mo == I_CHAR_SPECIAL || mo == I_BLOCK_SPECIAL);	/* true iff special */
+
+  /* true iff special */
+  s = (mo == I_CHAR_SPECIAL || mo == I_BLOCK_SPECIAL);
+
   statbuf.st_dev = rip->i_dev;
   statbuf.st_ino = rip->i_num;
   statbuf.st_mode = rip->i_mode;

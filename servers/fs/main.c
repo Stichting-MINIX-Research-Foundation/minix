@@ -78,8 +78,8 @@ PUBLIC int main()
 			printf("FS, warning illegal %d system call by %d\n", call_nr, who);
 		} else if (fp->fp_pid == PID_FREE) {
 			error = ENOSYS;
-			printf("FS, bad process, who = %d, call_nr = %d, slot1 = %d\n", who, call_nr, m_in.slot1);
-
+			printf("FS, bad process, who = %d, call_nr = %d, slot1 = %d\n",
+				 who, call_nr, m_in.slot1);
 		} else {
 			error = (*call_vec[call_nr])();
 		}
@@ -212,7 +212,8 @@ PRIVATE void fs_init()
   if (NR_BUFS < 6) panic(__FILE__,"NR_BUFS < 6", NO_NUM);
   if (V1_INODE_SIZE != 32) panic(__FILE__,"V1 inode size != 32", NO_NUM);
   if (V2_INODE_SIZE != 64) panic(__FILE__,"V2 inode size != 64", NO_NUM);
-  if (OPEN_MAX > 8 * sizeof(long)) panic(__FILE__,"Too few bits in fp_cloexec", NO_NUM);
+  if (OPEN_MAX > 8 * sizeof(long))
+  	 panic(__FILE__,"Too few bits in fp_cloexec", NO_NUM);
 
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;
@@ -373,7 +374,8 @@ PRIVATE void load_ram(void)
   if(block_size_image % block_size_ram) {
   	printf("\nram block size: %d image block size: %d\n", 
   		block_size_ram, block_size_image);
-  	panic(__FILE__, "ram disk block size must be a multiple of the image disk block size", NO_NUM);
+  	panic(__FILE__, "ram disk block size must be a multiple of "
+  		"the image disk block size", NO_NUM);
   }
 
   /* Loading blocks from image device. */
