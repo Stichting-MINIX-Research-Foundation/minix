@@ -11,7 +11,7 @@ usage:
 	@echo "	make world      # Compile everything (libraries & commands)" >&2
 	@echo "	make includes   # Install include files from src/" >&2
 	@echo "	make libraries  # Compile and install libraries" >&2
-	@echo "	make cmds       # Compile commands, but don't install" >&2
+	@echo "	make cmds       # Compile non-big commands, but don't install" >&2
 	@echo "	make install    # Compile and install commands" >&2
 	@echo "	make depend     # Generate required .depend files" >&2
 	@echo "	make clean      # Remove all compiler results" >&2
@@ -25,7 +25,7 @@ usage:
 # for which it has to install /etc (for users and ownerships).
 # etcfiles also creates a directory hierarchy in its
 # 'make install' target.
-world:	etcfiles includes depend libraries cmds install
+world:	etcfiles includes depend libraries cmds bigcmds install biginstallcmds postinstall
 
 includes:
 	cd include && $(MAKE) install
@@ -36,8 +36,14 @@ libraries:
 cmds:
 	cd commands && $(MAKE) all
 
+bigcmds:
+	cd commands && $(MAKE) bigall
+
 install::
 	cd commands && $(MAKE) $@
+
+biginstallcmds::
+	cd commands && $(MAKE) biginstall
 
 depend::
 	mkdep kernel
@@ -65,3 +71,5 @@ all install clean::
 	cd tools && $(MAKE) $@
 	cd servers && $(MAKE) $@
 
+postinstall:
+	cd etc && $(MAKE) $@
