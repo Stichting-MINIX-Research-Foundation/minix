@@ -132,7 +132,7 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new cvs export"
-	( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null 2>&1 || exit 1 )
+	( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null || exit 1 )
 else
 	( cd .. && make clean )
 	echo " * Transfering source to $RELEASEDIR"
