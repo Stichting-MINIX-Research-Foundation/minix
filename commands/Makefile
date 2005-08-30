@@ -16,25 +16,25 @@ usage:
 	@false
 
 bigall:
-	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && make all
-	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && make all
-	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && make all
-	cd $(BZIP2) && $(MAKE) all
-	cd $(KERMIT) && $(MAKE) all
+	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && bigmake all
+	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && bigmake all
+	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && bigmake all
+	cd $(BZIP2) && bigmake all
+	cd $(KERMIT) && bigmake all
 
 biginstall:
-	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && make install
-	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && make install
-	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && make install
-	cd $(BZIP2) && $(MAKE) install
-	cd $(KERMIT) && $(MAKE) install
+	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && bigmake install
+	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && bigmake install
+	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && bigmake install
+	cd $(BZIP2) && bigmake install
+	cd $(KERMIT) && bigmake install
 
 clean::
-	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
-	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
-	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
-	cd $(BZIP2) && $(MAKE) clean
-	cd $(KERMIT) && $(MAKE) clean
+	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && bigmake $@; fi
+	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && bigmake $@; fi
+	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && bigmake $@; fi
+	cd $(BZIP2) && bigmake clean
+	cd $(KERMIT) && bigmake clean
 
 all install clean::
 	cd `arch` && $(MAKE) $@
