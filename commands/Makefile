@@ -30,11 +30,11 @@ biginstall:
 	cd $(KERMIT) && bigmake install
 
 clean::
-	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && bigmake $@; fi
-	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && bigmake $@; fi
-	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && bigmake $@; fi
-	cd $(BZIP2) && bigmake clean
-	cd $(KERMIT) && bigmake clean
+	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
+	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
+	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
+	cd $(BZIP2) && make clean
+	cd $(KERMIT) && make clean
 
 all install clean::
 	cd `arch` && $(MAKE) $@
