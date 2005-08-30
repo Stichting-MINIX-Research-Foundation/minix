@@ -178,12 +178,12 @@ read xyzzy
 umount $TMPDISK || exit
 umount $TMPDISK2 || exit
 umount $RAM || exit
-dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 (cd ../boot && make)
 make image || exit 1
 cp image image_big
 make clean
 make image_small || exit 1
+dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 # Prepare image and image_small for cdfdboot
 cp image_big image
 sh mkboot cdfdboot
