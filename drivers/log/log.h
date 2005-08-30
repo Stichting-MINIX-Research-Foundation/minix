@@ -9,7 +9,7 @@
 
 /* Constants and types. */
 
-#define LOG_SIZE	(5*1024) 
+#define LOG_SIZE	(50*1024) 
 #define SUSPENDABLE 	      1
 
 struct logdevice {

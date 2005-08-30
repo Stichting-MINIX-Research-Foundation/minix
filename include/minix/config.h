@@ -41,9 +41,11 @@
 
 #if _MINIX_SMALL
 
-#define NR_BUFS	20
-#define NR_BUF_HASH 32
+#define NR_BUFS	512
+#define NR_BUF_HASH 512
+
 #else
+
 /* The buffer cache should be made as large as you can afford. */
 #if (MACHINE == IBM_PC && _WORD_SIZE == 2)
 #define NR_BUFS           40	/* # blocks in the buffer cache */
