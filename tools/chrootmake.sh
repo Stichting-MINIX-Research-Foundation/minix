@@ -7,6 +7,9 @@ rm revision
 rm /boot/image/*
 make hdboot || exit 1
 cp ../boot/boot /boot/boot || exit 1
+make clean
+make image_small || exit 1
+cp image_small /boot || exit 1
 cd /usr/src || exit 1
 make clean
 # Let man find the manpages
