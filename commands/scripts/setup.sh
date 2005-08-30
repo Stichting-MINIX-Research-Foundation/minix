@@ -427,7 +427,7 @@ mount /dev/$usr /mnt >/dev/null || exit
 
 # Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(=,Start MINIX 3) { unset image; boot; }; smallminix(+,Start Small MINIX 3) { image=/boot/image_small; boot; }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(=,Start MINIX 3) { unset image; boot; }; smallminix(+,Start Small MINIX 3) { image=/boot/image_small; ramsize=0; boot; }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
 pfile="/mnt/src/tools/fdbootparams"
 # echo "Remembering boot parameters in ${pfile}."
 echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile || exit
