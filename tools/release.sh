@@ -176,7 +176,7 @@ echo "Temporary filesystems still mounted. Make changes, or press RETURN"
 echo -n "to continue making the image.."
 read xyzzy
 umount $TMPDISK || exit
-umount TMPDISK2 || exit
+umount $TMPDISK2 || exit
 umount $RAM || exit
 dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 (cd ../boot && make)
