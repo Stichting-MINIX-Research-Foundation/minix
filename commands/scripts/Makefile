@@ -22,6 +22,7 @@ usr:	\
 		/usr/bin/echo \
 		/usr/bin/expr \
 		/usr/bin/false \
+		/usr/bin/gcc \
 		/usr/bin/getopts \
 		/usr/bin/read \
 		/usr/bin/test \
@@ -83,6 +84,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/cd:	cd.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/gcc:	gcc.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/[ /usr/bin/command /usr/bin/echo /usr/bin/expr /usr/bin/false \
