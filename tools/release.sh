@@ -104,7 +104,20 @@ else	echo "$TMPDISK is not a block device.."
 	exit 1
 fi
 
+echo "Temporary (sub)partition to use for /tmp? "
+echo "It will be mkfsed!"
+echo -n "Device: /dev/"
+read dev || exit 1
+TMPDISK2=/dev/$dev
+
+if [ -b $TMPDISK2 ]
+then :
+else	echo "$TMPDISK2 is not a block device.."
+	exit 1
+fi
+
 umount $TMPDISK
+umount $TMPDISK2
 umount $RAM
 
 echo " * Cleanup old files"
@@ -114,10 +127,12 @@ mkdir -p $RELEASEDIR
 echo " * Zeroing $RAM"
 dd if=/dev/zero of=$RAM bs=$BS count=$ROOTBLOCKS
 mkfs -B $BS -b $ROOTBLOCKS $RAM || exit
+mkfs $TMPDISK2 || exit
 echo " * mounting $RAM as $RELEASEDIR"
 mount $RAM $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
+mount $TMPDISK2 $RELEASEDIR/tmp
 
 echo " * Zeroing $TMPDISK"
 dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
