@@ -14,6 +14,7 @@ usr:	\
 	/usr/bin/M \
 		/usr/bin/U \
 	/usr/bin/MAKEDEV \
+	/usr/bin/bigmake \
 	/usr/bin/adduser \
 	/usr/bin/cd \
 		/usr/bin/[ \
@@ -73,6 +74,9 @@ clean:
 	install -m 755 -l $? $@
 
 /usr/bin/MAKEDEV:	MAKEDEV.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/bigmake:	bigmake.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/adduser:	adduser.sh
