@@ -874,7 +874,6 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		result= NW_OK;
 		break;
 	case NWIOGTCPCOOKIE:
-		printf("NWIOGTCPCOOKIE request for fd %d\n", fd);
 		if (!(tcp_fd->tf_flags & TFF_COOKIE))
 		{
 			tcp_fd->tf_cookie.tc_ref= fd;

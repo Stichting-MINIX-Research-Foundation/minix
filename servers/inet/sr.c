@@ -132,11 +132,6 @@ mq_t *m;
 	int result;
 	int send_reply, free_mess;
 
-#if 0
-	if (m->mq_mess.m_source == FS_PROC_NR)
-		printf("sr_rec: got type %d from FS\n", m->mq_mess.m_type);
-#endif
-
 	if (repl_queue)
 	{
 		if (m->mq_mess.m_type == DEV_CANCEL)
@@ -316,10 +311,6 @@ mq_t *m;
 
 	sr_fd= sr_getchannel(m->mq_mess.NDEV_MINOR);
 	assert (sr_fd);
-
-#if 0
-	printf("sr_rwio: for %d\n", m->mq_mess.NDEV_PROC);
-#endif
 
 	switch(m->mq_mess.m_type)
 	{
@@ -579,7 +570,6 @@ message *m;
 	if (m_ops & SEL_ERR) i_ops |= SR_SELECT_EXCEPTION;
 	if (!(m_ops & SEL_NOTIFY)) i_ops |= SR_SELECT_POLL;
 
-	printf("should select 0%o on fd %d\n", i_ops, m->NDEV_MINOR);
 	r= (*sr_fd->srf_select)(sr_fd->srf_fd,  i_ops);
 	if (r < 0)
 		return r;
@@ -603,11 +593,6 @@ message *m;
 	if (mq != NULL)
 	{
 		repl_queue= mq->mq_next;
-
-#if 0
-		printf("sr_status: status %d for proc %d\n",
-			mq->mq_mess.REP_STATUS, mq->mq_mess.REP_PROC_NR);
-#endif
 
 		mq->mq_mess.m_type= DEV_REVIVE;
 		result= send(mq->mq_mess.m_source, &mq->mq_mess);
@@ -738,10 +723,6 @@ int is_revive;
 	assert(operation != DEV_CANCEL);
 #endif
 
-#if 0
-	printf("sr_reply: for %d, is_revive = %d\n", proc, is_revive);
-#endif
-
 	if (is_revive)
 		mp= &mq->mq_mess;
 	else
@@ -828,7 +809,6 @@ assert (loc_fd->srf_flags & ip_flag);
 		{
 			if (mq)
 			{
- { where(); printf("sr_get_userdata: enqueuing event\n"); }
 				arg.ev_ptr= loc_fd;
 				ev_enqueue(evp, sr_event, arg);
 			}
@@ -891,7 +871,6 @@ int for_ioctl;
 		{
 			if (mq)
 			{
- { where(); printf("sr_put_userdata: enqueuing event\n"); }
 				arg.ev_ptr= loc_fd;
 				ev_enqueue(evp, sr_event, arg);
 			}
@@ -930,8 +909,6 @@ mq_t *mq, *tail, **tail_ptr;
 	{
 		m= mq;
 		mq= mq->mq_next;
-
-		DBLOCK(1, printf("calling rwio\n"));
 
 		result= sr_rwio(m);
 		if (result == SUSPEND)
