@@ -1,0 +1,106 @@
+.de IT
+.nr a +1 1
+.ti -0.25i
+.if \\na<10 \\0\\na.~\\fB\\$1\\fP
+.if \\na>9 \\na.~\\fB\\$1\\fP
+.PP
+..
+.de Cb
+.sp 0.5v
+\s-1\\f5\\c
+..
+.de Ce
+\\fR\\s0\\c
+.sp 0.5v
+..
+.tr ~ 
+.TH LS 1
+.SH NAME
+setup \- install MINIX 3 on the hard disk
+.SH SYNOPSIS
+\fBsetup\fR
+.SH DESCRIPTION
+.in +0.25i
+.PP
+These steps correspond to the steps on the screen.
+
+.IT "Select keyboard type"
+When you are asked to select your national keyboard, do so. 
+This and other steps have a default choice, in square brackets.
+If you agree with it, just hit ENTER. In most steps, the default is generally
+a good choice for beginners.
+The us-swap keyboard interchanges the CAPS LOCK and CTRL keys, as is conventional
+on UNIX systems.
+
+.IT "Select your Ethernet chip"
+You will now be asked which of the available Ethernet driver you want
+installed (or none). Please choose one of the options.
+
+.IT "Create a partition for MINIX 3"
+You will first be asked if you are an expert in MINIX 3 disk partitioning.
+If so, you will be placed in the \fIpart\fR program to give you full power to
+edit the Master Boot Record (and enough rope to hang yourself).
+If you are not an expert, press ENTER for the default action, which is an
+automated step-by-step guide to creating a disk partition.
+
+\fBSubstep 2.1: Select a disk to install MINIX 3\fR
+.PP
+An IDE controller may have up to four disks. The \fIsetup\fR script will now
+look for each one. Just ignore an error messages.
+When the drives are listed, select one. and confirm your choice.
+If you have two hard disks and install MINIX 3 to the second one and have
+trouble booting from it, please see \fIwww.minix3.org/doc/using2disks.html\fR
+for the solution.
+
+\fBSubstep 2.2: Select a disk region\fR
+.PP
+You must now choose a region to install MINIX 3 into. You have three choices:
+.sp 0.5v
+   (1) Select a free region
+   (2) Select a partition to overwrite
+   (3) Delete an existing partition to free up space and merge with adjacent free space
+.sp 0.5v
+For choices (1) and (2), type the region number. For (3) type
+.Cb
+   delete
+.Ce
+then give the region number when asked.
+
+\fBSubstep 2.3: Confirm your choices\fR
+.PP
+You have now reached the point of no return. You will be asked if you want to
+continue. \fBIf you do, the data in the selected region will be lost forever.\fR
+If you are sure, type:
+.Cb
+   yes
+.Ce
+and then ENTER. To exit the setup script without changing the
+partition table, hit CTRL-C.
+
+.IT "Select a block size"
+Disk block sizes of 1-KB, 2-KB, 4-KB, and 8-KB are supported, but
+to use a size larger than 4-KB you have to change a constant and recompile
+the system. If your memory is 16 MB or more, use the default (4 KB); with
+smaller memories, use 1 KB.
+
+.IT "Wait for bad block detection"
+The setup script will now scan for bad disk blocks. This will take
+several minutes, possibly 10 minutes or more on a large partition.
+Please be patient.
+If you are absolutely certain there are no bad blocks, you can kill the scan
+by hitting CTRL-C.
+
+.IT "Wait for files to be copied"
+When the scan finishes, files will be automatically copied from the CD-ROM to
+the hard disk. Every file will be announced as it is copied. 
+When the copying is complete, MINIX 3 is installed.
+Shut the system down by typing
+.Cb
+   shutdown
+.Ce
+Always stop MINIX 3 this way to avoid data loss as MINIX 3 keeps some files on
+the RAM disk and only copies them back to the hard disk at shutdown time.
+.SH "SEE ALSO"
+.BR boot(8),
+.BR usage (8)
+
