@@ -16,6 +16,7 @@
 755 ast     other    /usr/ast
 755 bin     operator /usr/bin
 755 root    operator /usr/etc
+755 root    operator /home
 755 root    operator /usr/home
 700 bin     other    /usr/home/bin
 755 bin     operator /usr/include

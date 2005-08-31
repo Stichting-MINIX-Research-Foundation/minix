@@ -112,20 +112,28 @@ step2=""
 while [ "$step2" != ok ]
 do
 echo ""
-echo " --- Step 2: Create a partition for MINIX 3 ----------------------------"
+echo " --- Step 2: Create a partition for MINIX 3, Or Reinstall ------------"
 echo ""
 
     echo "Now you need to create a MINIX 3 partition on your hard disk."
+    echo "You can also select one that's already there."
+    echo " "
+    echo "If you have an existing installation, 'reinstall'ing will let you"
+    echo "keep your current partitioning and subpartitioning, and overwrite"
+    echo "everything except your s3 subpartition (/home)."
+    echo " "
     echo "Unless you are an expert, you are advised to use the automated"
     echo "step-by-step help in setting up."
     echo ""
     ok=""
     while [ "$ok" = "" ]
     do
-    echo -n "Press ENTER for automatic mode or type 'expert': "
+    echo "Press ENTER for automatic mode, or type 'expert', or"
+    echo -n "type 'reinstall': "
     read mode
     if [ -z "$mode" ]; then auto="1"; ok="yes"; fi 
     if [ "$mode" = expert ]; then auto=""; ok="yes"; fi
+    if [ "$mode" = reinstall ]; then auto="r"; ok="yes"; fi
     if [ "$ok" != yes ]; then warn "try again"; fi 
     done
 
@@ -159,25 +167,24 @@ make.  (See the devices section in usage(8) on MINIX device names.)
 Please finish the name of the primary partition you have created:
 (Just type ENTER if you want to rerun \"part\")                   /dev/"
 	    read primary
-done
-echo ""
-echo "This is the point of no return.  You have selected to install MINIX"
-echo "on partition /dev/$primary.  Please confirm that you want to use this"
-echo "selection to install MINIX."
-echo ""
-confirmation=""
-while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
-do
-echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
-read confirmation
-if [ "$confirmation" = yes ]; then step2=ok; fi
-done
-biosdrivename="Actual BIOS device name unknown, due to expert mode."
-
+	done
+	echo ""
+	echo "This is the point of no return.  You have selected to install MINIX"
+	echo "on partition /dev/$primary.  Please confirm that you want to use this"
+	echo "selection to install MINIX."
+	echo ""
+	confirmation=""
+	while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
+	do
+		echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
+		read confirmation
+		if [ "$confirmation" = yes ]; then step2=ok; fi
+	done
+	biosdrivename="Actual BIOS device name unknown, due to expert mode."
 else
-	# Automatic mode
-#	while [ -z "$primary" ]
-#	do
+	if [ "$auto" = "1" ]
+	then
+		# Automatic mode
 		PF="/tmp/pf"
 		if autopart -f$PF
 		then	if [ -s "$PF" ]
@@ -195,154 +202,152 @@ else
 		else	echo "Autopart tool failed. Trying again."
 		fi
 
-		# reset at retries and timeouts in case autopart left
-		# them messy
+		# Reset at retries and timeouts in case autopart left
+		# them messy.
 		atnormalize
-#	done
 
-	if [ -n "$primary" ]; then step2=ok; fi
+		if [ -n "$primary" ]; then step2=ok; fi
+	else
+		# Reinstall mode
+		primary=""
 
+		while [ -z "$primary" ]
+		do
+		    echo -n "
+Please finish the name of the primary partition you have a MINIX install on:
+/dev/"
+		    read primary
+		done
+		echo ""
+		echo "This is the point of no return.  You have selected to reinstall MINIX"
+		echo "on partition /dev/$primary.  Please confirm that you want to use this"
+		echo "selection to reinstall MINIX. This will wipe out your s0 (root) and"
+		echo "s2 (/usr) filesystems."
+		echo ""
+		confirmation=""
+		while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
+		do
+			echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
+			read confirmation
+			if [ "$confirmation" = yes ]; then step2=ok; fi
+		done
+		biosdrivename="Actual BIOS device name unknown, due to reinstallation."
+	fi
+done	# while step2 != ok
+# end Step 2
+
+if [ ! "$auto" = "r" ]
+then
+	# begin Step 3
+	echo ""
+	echo " --- Step 3: Select your Ethernet chip ---------------------------------"
+	echo ""
+	
+	# Ask user about networking
+	echo "MINIX 3 currently supports the following Ethernet cards. Please choose: "
+	    echo ""
+	    echo "0. No Ethernet card (no networking)"
+	    echo "1. Intel Pro/100"
+	    echo "2. Realtek 8139 based card"
+	    echo "3. Realtek 8029 based card (emulated by Qemu)"
+	    echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
+	    echo "5. 3Com 501 or 3Com 509 based card"
+	    echo "6. Different Ethernet card (no networking)"
+	    echo ""
+	    echo "You can always change your mind after the setup."
+	    echo ""
+	step3=""
+	while [ "$step3" != ok ]
+	do
+	    eth=""
+	    echo -n "Ethernet card? [0] "; read eth
+	    test -z $eth && eth=0
+	    driver=""
+	    driverargs=""
+	    case "$eth" in
+	        0) step3="ok"; ;;    
+		1) step3="ok";	driver=fxp;      ;;
+		2) step3="ok";	driver=rtl8139;  ;;
+		3) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
+		4) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+		   echo ""
+	           echo "Note: After installing, edit $LOCALRC to the right configuration."
+	           echo " chose option 4, the defaults for emulation by Bochs have been set."
+			;;
+		5) step3="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
+		   echo ""
+	           echo "Note: After installing, edit $LOCALRC to the right configuration."
+			;;
+	        6) step3="ok"; ;;    
+	        *) warn "choose a number"
+	    esac
+	done
+	# end Step 3
 fi
 
-done
-# end Step 2
+if [ ! "$auto" = r ]
+then	homesize=""
+	while [ -z "$homesize" ]
+	do
+		echo ""
+		echo -n "How big do you want your /home to be, in MB? "
+		read home
+		echo -n "$home MB Ok? [Y] "
+		read ok
+		[ "$ok" = Y -o "$ok" = y -o "$ok" = "" ] || homesize=""
+		echo ""
+	done
+	# Homesize in sectors
+	homemb="$homesize MB"
+	homesize="`expr $homesize '*' 1024 '*' 1024 '*' 2`"
+else
+	# Homesize unchanged (reinstall)
+	homesize=exist
+	homemb="current size"
+fi
 
 root=${primary}s0
 swap=${primary}s1
 usr=${primary}s2
+home=${primary}s3
 umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
-
-hex2int()
-{
-    # Translate hexadecimal to integer.
-    local h d i
-
-    h=$1
-    i=0
-    while [ -n "$h" ]
-    do
-	d=$(expr $h : '\(.\)')
-	h=$(expr $h : '.\(.*\)')
-	d=$(expr \( 0123456789ABCDEF : ".*$d" \) - 1)
-	i=$(expr $i \* 16 + $d)
-    done
-    echo $i
-}
-
-# begin Step 3
-echo ""
-echo " --- Step 3: Select your Ethernet chip ---------------------------------"
-echo ""
-
-# Ask user about networking
-echo "MINIX currently supports the following Ethernet cards. Please choose: "
-    echo ""
-    echo "0. No Ethernet card (no networking)"
-    echo "1. Intel Pro/100"
-    echo "2. Realtek 8139 based card"
-    echo "3. Realtek 8029 based card (emulated by Qemu)"
-    echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
-    echo "5. 3Com 501 or 3Com 509 based card"
-    echo "6. Different Ethernet card (no networking)"
-    echo ""
-    echo "You can always change your mind after the setup."
-    echo ""
-step3=""
-while [ "$step3" != ok ]
-do
-    eth=""
-    echo -n "Ethernet card? [0] "; read eth
-    test -z $eth && eth=0
-    driver=""
-    driverargs=""
-    case "$eth" in
-        0) step3="ok"; ;;    
-	1) step3="ok";	driver=fxp;      ;;
-	2) step3="ok";	driver=rtl8139;  ;;
-	3) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	4) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
-	   echo ""
-           echo "Note: After installing, edit $LOCALRC to the right configuration."
-           echo " chose option 4, the defaults for emulation by Bochs have been set."
-		;;
-	5) step3="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
-	   echo ""
-           echo "Note: After installing, edit $LOCALRC to the right configuration."
-		;;
-        6) step3="ok"; ;;    
-        *) warn "choose a number"
-    esac
-done
-# end Step 3
-
-
-# Compute the amount of memory available to MINIX.
-memsize=0
-ifs="$IFS"
-IFS=','
-set -- $(sysenv memory)
-IFS="$ifs"
-
-for mem
-do
-    mem=$(expr $mem : '.*:\(.*\)')
-    memsize=$(expr $memsize + $(hex2int $mem) / 1024)
-done
-
-# Compute an advised swap size.
-# swapadv=0
-# case `arch` in
-# i86)
-#     test $memsize -lt 4096 && swapadv=$(expr 4096 - $memsize)
-#     ;;
-# *)  test $memsize -lt 6144 && swapadv=$(expr 6144 - $memsize)
-# esac
+umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
 
 blockdefault=4
 
-echo ""
-echo " --- Step 4: Select a block size ---------------------------------------"
-echo ""
-
-echo "The maximum (and default) file system block size is $blockdefault KB."
-echo "For a small disk or small RAM you may want 1 or 2 KB blocks."
-echo ""
-
-while [ -z "$blocksize" ]
-do	
-	echo -n "Block size in kilobytes? [$blockdefault] "; read blocksize
-	test -z "$blocksize" && blocksize=$blockdefault
-	if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne $blockdefault ]
-	then	
-		warn "1, 2 or 4 please"
-		blocksize=""
-	fi
-done
+if [ ! "$auto" = "r" ]
+then
+	echo ""
+	echo " --- Step 4: Select a block size ---------------------------------------"
+	echo ""
+	
+	echo "The maximum (and default) file system block size is $blockdefault KB."
+	echo "For a small disk or small RAM you may want 1 or 2 KB blocks."
+	echo ""
+	
+	while [ -z "$blocksize" ]
+	do	
+		echo -n "Block size in kilobytes? [$blockdefault] "; read blocksize
+		test -z "$blocksize" && blocksize=$blockdefault
+		if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne $blockdefault ]
+		then	
+			warn "1, 2 or 4 please"
+			blocksize=""
+		fi
+	done
+else
+	blocksize=$blockdefault
+fi
 
 blocksizebytes="`expr $blocksize '*' 1024`"
 
-
-# begin Step 5
-# echo ""
-# echo " --- Step 5: Allocate swap space ---------------------------------------"
-# echo ""
-
-# echo -n "How much swap space would you like?  Swapspace is only needed if this
-# system is memory starved.  If you have 128 MB of memory or more, you
-# probably don't need it. If you have less and want to run many programs
-# at once, I suggest setting it to the memory size.
-
-# Size in kilobytes? [$swapadv] "
-# read swapsize
-# test -z "$swapsize" && swapsize=$swapadv
-# 
-
 echo "
-You have selected to install MINIX in the partition /dev/$primary.
+You have selected to (re)install MINIX in the partition /dev/$primary.
 The following subpartitions are now being created on /dev/$primary:
 
     Root subpartition:	/dev/$root	16 MB
+    /home subpartition:	/dev/$home	$homemb
     /usr subpartition:	/dev/$usr	rest of $primary
 "
 					# Secondary master bootstrap.
@@ -350,26 +355,22 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
 p3=0:0
 # test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
-partition /dev/$primary 1 81:32768* $p3 81:0+ > /dev/null || exit
+partition /dev/$primary 1 81:32768* $p3 81:0+ 81:$homesize > /dev/null || exit
+
+echo "Creating /dev/$root .."
 mkfs -B $blocksizebytes /dev/$root || exit
+echo "Creating /dev/$usr .."
 mkfs -B $blocksizebytes /dev/$usr || exit
 
-
-# if [ "$swapsize" -gt 0 ]
-# then
-#     # We must have that swap, now!
-#     mkswap -f /dev/$swap || exit
-#     mount -s /dev/$swap || exit
-# else
-#     # Forget about swap.
-#     swap=
-# fi
-
+if [ ! "$auto" = r ]
+then	echo "Creating /dev/$home .."
+	mkfs -B $blocksizebytes /dev/$home || exit
+fi
 
 echo ""
 echo " --- Step 5: Wait for bad block detection ------------------------------"
 echo ""
-echo "Scanning disk for bad blocks.  Hit CTRL-C to stop the scan if you are"
+echo "Scanning disk for bad blocks.  Hit CTRL+C to stop the scan if you are"
 echo "sure that there can not be any bad blocks.  Otherwise just wait."
 
 trap ': nothing;echo' 2
@@ -379,6 +380,9 @@ readall -b /dev/$root | sh
 echo ""
 echo "Scanning /dev/$usr for bad blocks:"
 readall -b /dev/$usr | sh
+trap 2
+echo "Scanning /dev/$home for bad blocks:"
+readall -b /dev/$home | sh
 trap 2
 
 echo ""
@@ -420,7 +424,8 @@ echo >/mnt/etc/fstab "\
 # Poor man's File System Table.
 
 root=/dev/$root
-usr=/dev/$usr"
+usr=/dev/$usr
+home=/dev/$home"
 
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
@@ -428,13 +433,17 @@ test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 umount /dev/$root >/dev/null || exit	# Unmount the new root.
 mount /dev/$usr /mnt >/dev/null || exit
 
-# Make bootable.
-installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(=,Start MINIX 3) { unset image; boot; }; smallminix(+,Start Small MINIX 3) { image=/boot/image_small; ramsize=0; boot; }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
-pfile="/mnt/src/tools/fdbootparams"
-# echo "Remembering boot parameters in ${pfile}."
-echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile || exit
-umount /dev/$usr
+if [ ! "$auto" = "r" ]
+then
+	# Make bootable.
+	installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
+	edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(=,Start MINIX 3) { unset image; boot; }; smallminix(+,Start Small MINIX 3) { image=/boot/image_small; ramsize=0; boot; }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
+	pfile="/mnt/src/tools/fdbootparams"
+	# echo "Remembering boot parameters in ${pfile}."
+	echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile || exit
+	umount /dev/$usr
+fi
+
 sync
 
 bios="`echo $primary | sed 's/d./dX/g'`"

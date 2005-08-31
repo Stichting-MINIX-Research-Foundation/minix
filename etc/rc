@@ -131,7 +131,11 @@ Mount $usr /usr failed -- Single user."
 	umount $usr
 	intr fsck -r $root
 	intr fsck -r $usr
+	if [ ! -z "$home" ]
+	then	intr fsck -r $home
+	fi
 	mount $usr /usr
+	mount $home /home
     fi
 
     # This file is necessary for above 'shutdown -C' check.
@@ -166,4 +170,5 @@ test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
 
 # Any messages?
 test "$action" = start -a -f /etc/issue && cat /etc/issue
+
 exit 0
