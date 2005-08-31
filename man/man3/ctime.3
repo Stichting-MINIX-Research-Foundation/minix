@@ -86,17 +86,12 @@ struct tm {
 	int tm_wday;	/* 0-6	day of week (Sunday = 0) */
 	int tm_yday;	/* 0-365	day of year */
 	int tm_isdst;	/* flag:	daylight savings time in effect */
-	long tm_gmtoff;	/* offset from GMT in seconds */
-	char **tm_zone;	/* abbreviation of timezone name */
 };
 .fi
 .RE
 .PP
 \fBTm_isdst\fP is non-zero if a time zone adjustment such as Daylight
 Savings time is in effect.
-.PP
-\fBTm_gmtoff\fP is the offset (in seconds) of the time represented
-from GMT, with positive values indicating East of Greenwich.
 .SH FILES
 .ta \w'/usr/lib/zoneinfo\0\0'u
 /usr/lib/zoneinfo	time zone information directory
@@ -111,6 +106,4 @@ from GMT, with positive values indicating East of Greenwich.
 .BR zic (8).
 .SH NOTE
 The return values point to static data whose content is overwritten by
-each call.  The \fBtm_zone\fP field of a returned \fBstruct tm\fP
-points to a static array of characters, which will also be overwritten
-at the next call (and by calls to \fBtzset\fP).
+each call.  

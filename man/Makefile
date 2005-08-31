@@ -7,7 +7,7 @@ clean::
 
 install::
 	-rm -rf $(MAN)
-	mkdir $(MAN)
+	-mkdir $(MAN)
 	cpdir . $(MAN)
 	chown -R bin $(MAN)
 	chgrp -R operator $(MAN)
