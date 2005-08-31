@@ -172,6 +172,7 @@ echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
 read confirmation
 if [ "$confirmation" = yes ]; then step2=ok; fi
 done
+biosdrivename="Actual BIOS device name unknown, due to expert mode."
 
 else
 	# Automatic mode
@@ -182,6 +183,8 @@ else
 		then	if [ -s "$PF" ]
 			then
 				bd="`cat $PF`"
+				cat "$PF" | read bd bdn
+				biosdrivename="Probably, the right command is \"boot $bdn\"."
 				if [ -b "/dev/$bd" ]
 				then	primary="$bd"
 				else	echo "Funny device $bd from autopart."
@@ -440,6 +443,7 @@ echo "
 Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At
 the boot monitor prompt, type 'boot $bios', where X is the bios drive
 number of the drive you installed on, to try your new MINIX system.
+$biosdrivename
 
 This ends the MINIX setup script.  After booting your newly set up system,
 you can run the test suites as indicated in the setup manual.  You also 

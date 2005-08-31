@@ -280,6 +280,7 @@ typedef struct device {
 	char	*name;			/* E.g. /dev/c0d0 */
 	char	*subname;		/* E.g. /dev/c0d0:2 */
 	parttype_t parttype;
+	int biosdrive;
 } device_t;
 
 typedef struct region {
@@ -307,6 +308,7 @@ device_t *firstdev= nil, *curdev;
 	static struct {
 		device_t *dev;
 		int nr_partitions, free_regions, used_regions, sectors, nr_regions;
+		int biosdrive;
 		region_t regions[NR_REGIONS];
 	} devices[MAX_DEVICES];
 
@@ -1840,7 +1842,7 @@ void regionize(void)
 
 }
 
-void m_read(int ev, object_t *op)
+void m_read(int ev, int *biosdrive)
 /* Read the partition table from the current device. */
 {
 	int si, i, mode, n, r, v;
@@ -1860,15 +1862,6 @@ void m_read(int ev, object_t *op)
 	v = 2*HZ;
 	ioctl(device, DIOCTIMEOUT, &v);
 
-	/* Assume up to five lines of kernel messages. */
-	statusrow+= 5-1;
-	stat_end(5);
-
-	if (mode == O_RDONLY) {
-		stat_start(1);
-		printf("%s: Readonly", curdev->name);
-		stat_end(5);
-	}
 	memset(bootblock, 0, sizeof(bootblock));
 
 	n= boot_readwrite(0);
@@ -1886,6 +1879,8 @@ void m_read(int ev, object_t *op)
 	if (n <= 0) stat_end(5);
 
 	if (n < SECTOR_SIZE) n= SECTOR_SIZE;
+
+	if(biosdrive) (*biosdrive)++;
 
 	if(!open_ct_ok(device)) {
 		printf("\n%s: device in use! skipping it.", curdev->subname);
@@ -2139,7 +2134,7 @@ void event(int ev, object_t *op)
 	m_magic(ev, op);
 	m_in(ev, op);
 	m_out(ev, op);
-	m_read(ev, op);
+	m_read(ev, NULL);
 	m_write(ev, op);
 	m_shell(ev, op);
 	m_quit(ev, op);
@@ -2437,6 +2432,7 @@ select_disk(void)
 	int done = 0;
 	int i, choice, drives;
 	static char line[500];
+	int biosdrive = 0;
 
 	printstep(1, "Select a disk to install MINIX 3");
 	printf("\nProbing for disks. This may take a short while.");
@@ -2447,7 +2443,7 @@ select_disk(void)
 		for(; i < MAX_DEVICES;) {
 			printf("."); 
 			fflush(stdout);
-			m_read('r', NULL);
+			m_read('r', &biosdrive);
 			if(device >= 0) {
 				devices[i].dev = curdev;
 				devices[i].free_regions = free_regions;
@@ -2455,6 +2451,7 @@ select_disk(void)
 				devices[i].nr_partitions = nr_partitions;
 				devices[i].used_regions = used_regions;
 				devices[i].sectors = table[0].size;
+				curdev->biosdrive = biosdrive-1;
 				memcpy(devices[i].regions, regions, sizeof(regions));
 				i++;
 			}
@@ -2688,7 +2685,9 @@ do_autopart(int resultfd)
 		name=strrchr(curdev->name, '/');
 		if(!name) name = curdev->name;
 		else name++;
-		sprintf(partbuf, "%sp%d\n", name, found-1);
+
+		sprintf(partbuf, "%sp%d d%dp%d\n", name, found-1,
+			curdev->biosdrive, found-1);
 		sprintf(devname, "/dev/%sp%d", name, found-1);
 		if(resultfd >= 0 && write(resultfd, partbuf, strlen(partbuf)) < strlen(partbuf)) {
 			fprintf(stderr, "Autopart internal error (couldn't write result).\n");
