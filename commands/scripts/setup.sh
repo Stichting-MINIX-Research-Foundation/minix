@@ -111,9 +111,9 @@ done
 step2=""
 while [ "$step2" != ok ]
 do
-echo ""
-echo " --- Step 2: Create a partition for MINIX 3, Or Reinstall ------------"
-echo ""
+	echo ""
+	echo " --- Step 2: Create a partition for MINIX 3, Or Reinstall ------------"
+	echo ""
 
     echo "Now you need to create a MINIX 3 partition on your hard disk."
     echo "You can also select one that's already there."
@@ -128,21 +128,21 @@ echo ""
     ok=""
     while [ "$ok" = "" ]
     do
-    echo "Press ENTER for automatic mode, or type 'expert', or"
-    echo -n "type 'reinstall': "
-    read mode
-    if [ -z "$mode" ]; then auto="1"; ok="yes"; fi 
-    if [ "$mode" = expert ]; then auto=""; ok="yes"; fi
-    if [ "$mode" = reinstall ]; then auto="r"; ok="yes"; fi
-    if [ "$ok" != yes ]; then warn "try again"; fi 
+	    echo "Press ENTER for automatic mode, or type 'expert', or"
+	    echo -n "type 'reinstall': "
+	    read mode
+	    if [ -z "$mode" ]; then auto="1"; ok="yes"; fi 
+	    if [ "$mode" = expert ]; then auto=""; ok="yes"; fi
+	    if [ "$mode" = reinstall ]; then auto="r"; ok="yes"; fi
+	    if [ "$ok" != yes ]; then warn "try again"; fi 
     done
 
-primary=
+	primary=
 
-if [ -z "$auto" ]
-then
-	# Expert mode
-echo -n "
+	if [ -z "$auto" ]
+	then
+		# Expert mode
+		echo -n "
 MINIX needs one primary partition of about 250 MB for a full install.
 The maximum fill system currently supported is 4 GB.
 
@@ -157,72 +157,21 @@ touch an existing partition unless you know precisely what you are doing!
 Please note the name of the partition (e.g. c0d0p1, c0d1p3, c1d1p0) you
 make.  (See the devices section in usage(8) on MINIX device names.)
 :"
-	read ret
-
-	while [ -z "$primary" ]
-	do
-	    part || exit
-
-	    echo -n "
-Please finish the name of the primary partition you have created:
-(Just type ENTER if you want to rerun \"part\")                   /dev/"
-	    read primary
-	done
-	echo ""
-	echo "This is the point of no return.  You have selected to install MINIX"
-	echo "on partition /dev/$primary.  Please confirm that you want to use this"
-	echo "selection to install MINIX."
-	echo ""
-	confirmation=""
-	while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
-	do
-		echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
-		read confirmation
-		if [ "$confirmation" = yes ]; then step2=ok; fi
-	done
-	biosdrivename="Actual BIOS device name unknown, due to expert mode."
-else
-	if [ "$auto" = "1" ]
-	then
-		# Automatic mode
-		PF="/tmp/pf"
-		if autopart -f$PF
-		then	if [ -s "$PF" ]
-			then
-				bd="`cat $PF`"
-				cat "$PF" | read bd bdn
-				biosdrivename="Probably, the right command is \"boot $bdn\"."
-				if [ -b "/dev/$bd" ]
-				then	primary="$bd"
-				else	echo "Funny device $bd from autopart."
-				fi
-			else
-				echo "Didn't find output from autopart."
-			fi 
-		else	echo "Autopart tool failed. Trying again."
-		fi
-
-		# Reset at retries and timeouts in case autopart left
-		# them messy.
-		atnormalize
-
-		if [ -n "$primary" ]; then step2=ok; fi
-	else
-		# Reinstall mode
-		primary=""
+		read ret
 
 		while [ -z "$primary" ]
 		do
+		    part || exit
+
 		    echo -n "
-Please finish the name of the primary partition you have a MINIX install on:
-/dev/"
+Please finish the name of the primary partition you have created:
+(Just type ENTER if you want to rerun \"part\")                   /dev/"
 		    read primary
 		done
 		echo ""
-		echo "This is the point of no return.  You have selected to reinstall MINIX"
+		echo "This is the point of no return.  You have selected to install MINIX"
 		echo "on partition /dev/$primary.  Please confirm that you want to use this"
-		echo "selection to reinstall MINIX. This will wipe out your s0 (root) and"
-		echo "s2 (/usr) filesystems."
+		echo "selection to install MINIX."
 		echo ""
 		confirmation=""
 		while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
@@ -231,7 +180,59 @@ Please finish the name of the primary partition you have a MINIX install on:
 			read confirmation
 			if [ "$confirmation" = yes ]; then step2=ok; fi
 		done
-		biosdrivename="Actual BIOS device name unknown, due to reinstallation."
+		biosdrivename="Actual BIOS device name unknown, due to expert mode."
+	else
+		if [ "$auto" = "1" ]
+		then
+			# Automatic mode
+			PF="/tmp/pf"
+			if autopart -f$PF
+			then	if [ -s "$PF" ]
+				then
+					bd="`cat $PF`"
+					cat "$PF" | read bd bdn
+					biosdrivename="Probably, the right command is \"boot $bdn\"."
+					if [ -b "/dev/$bd" ]
+					then	primary="$bd"
+					else	echo "Funny device $bd from autopart."
+					fi
+				else
+					echo "Didn't find output from autopart."
+				fi 
+			else	echo "Autopart tool failed. Trying again."
+			fi
+
+			# Reset at retries and timeouts in case autopart left
+			# them messy.
+			atnormalize
+
+			if [ -n "$primary" ]; then step2=ok; fi
+		else
+			# Reinstall mode
+			primary=""
+
+			while [ -z "$primary" ]
+			do
+			    echo -n "
+Please finish the name of the primary partition you have a MINIX install on:
+/dev/"
+			    read primary
+			done
+			echo ""
+			echo "This is the point of no return.  You have selected to reinstall MINIX"
+			echo "on partition /dev/$primary.  Please confirm that you want to use this"
+			echo "selection to reinstall MINIX. This will wipe out your s0 (root) and"
+			echo "s2 (/usr) filesystems."
+			echo ""
+			confirmation=""
+			while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
+			do
+				echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
+				read confirmation
+				if [ "$confirmation" = yes ]; then step2=ok; fi
+			done
+			biosdrivename="Actual BIOS device name unknown, due to reinstallation."
+		fi
 	fi
 done	# while step2 != ok
 # end Step 2
