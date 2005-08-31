@@ -312,9 +312,8 @@ else
 fi
 
 root=${primary}s0
-swap=${primary}s1
+home=${primary}s1
 usr=${primary}s2
-home=${primary}s3
 umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
 umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
@@ -358,9 +357,7 @@ The following subpartitions are now being created on /dev/$primary:
 					# Secondary master bootstrap.
 installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
-p3=0:0
-# test "$swapsize" -gt 0 && p3=81:`expr $swapsize \* 2`
-partition /dev/$primary 1 81:32768* $p3 81:0+ 81:$homesize > /dev/null || exit
+partition /dev/$primary 1 81:32768* 81:$homesize 81:0+ > /dev/null || exit
 
 echo "Creating /dev/$root .."
 mkfs -B $blocksizebytes /dev/$root || exit
