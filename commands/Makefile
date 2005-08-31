@@ -15,17 +15,22 @@ usage:
 	@echo "       make biginstall # Install all big commands" >&2
 	@false
 
+all install::
+	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && $(MAKE) $@
+
+clean::
+	[ -f $(GZIP)/Makefile ] && cd $(GZIP) && $(MAKE) $@
+
 bigall:
-	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && bigmake all
-	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && bigmake all
-	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && bigmake all
+	cd $(FLEX) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake all
+	cd $(PYTHON) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake all
 	cd $(BZIP2) && bigmake all
 	cd $(KERMIT) && bigmake all
 
 biginstall:
-	cd $(FLEX) && /bin/sh ./configure --prefix=/usr/local && bigmake install
-	cd $(GZIP) && /bin/sh ./configure --prefix=/usr/local && bigmake install
-	cd $(PYTHON) && /bin/sh ./configure --prefix=/usr/local && bigmake install
+	cd $(FLEX) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake install
+	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake install
+	cd $(PYTHON) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake install
 	cd $(BZIP2) && bigmake install
 	cd $(KERMIT) && bigmake install
 
