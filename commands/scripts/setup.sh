@@ -304,9 +304,9 @@ fi
 root=${primary}s0
 home=${primary}s1
 usr=${primary}s2
-umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
 umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
+umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 
 blockdefault=4
 
@@ -351,13 +351,14 @@ partition /dev/$primary 1 81:32768* 81:$homesize 81:0+ > /dev/null || exit
 
 echo "Creating /dev/$root .."
 mkfs -B $blocksizebytes /dev/$root || exit
-echo "Creating /dev/$usr .."
-mkfs -B $blocksizebytes /dev/$usr || exit
 
 if [ ! "$auto" = r ]
 then	echo "Creating /dev/$home .."
 	mkfs -B $blocksizebytes /dev/$home || exit
 fi
+
+echo "Creating /dev/$usr .."
+mkfs -B $blocksizebytes /dev/$usr || exit
 
 echo ""
 echo " --- Step 5: Wait for bad block detection ------------------------------"
@@ -369,12 +370,14 @@ trap ': nothing;echo' 2
 echo ""
 echo "Scanning /dev/$root for bad blocks:"
 readall -b /dev/$root | sh
+
+echo "Scanning /dev/$home for bad blocks:"
+readall -b /dev/$home | sh
+trap 2
+
 echo ""
 echo "Scanning /dev/$usr for bad blocks:"
 readall -b /dev/$usr | sh
-trap 2
-echo "Scanning /dev/$home for bad blocks:"
-readall -b /dev/$home | sh
 trap 2
 
 echo ""
