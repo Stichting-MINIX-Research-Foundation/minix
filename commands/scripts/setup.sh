@@ -45,16 +45,6 @@ then	echo "Please run setup as root."
 	exit 1
 fi
 
-# Installing MINIX on the hard disk.
-
-case "$0" in
-/tmp/*)
-    rm -f "$0"
-    ;;
-*)  cp -p "$0" /tmp/setup
-    exec /tmp/setup
-esac
-
 # Find out what we are running from.
 exec 9<&0 </etc/mtab			# Mounted file table.
 read thisroot rest			# Current root (/dev/ram or /dev/fd?)
@@ -304,7 +294,7 @@ then	homesize=""
 	done
 	# Homesize in sectors
 	homemb="$homesize MB"
-	homesize="`expr $homesize '*' 1024 '*' 1024 '*' 2`"
+	homesize="`expr $homesize '*' 1024 '*' 2`"
 else
 	# Homesize unchanged (reinstall)
 	homesize=exist
