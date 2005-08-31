@@ -287,14 +287,17 @@ then
 	# end Step 3
 fi
 
+defmb=200
+
 if [ ! "$auto" = r ]
 then	homesize=""
 	while [ -z "$homesize" ]
 	do
 		echo ""
-		echo -n "How big do you want your /home to be, in MB? "
-		read home
-		echo -n "$home MB Ok? [Y] "
+		echo -n "How big do you want your /home to be, in MB? [$defmb] "
+		read homesize
+		if [ "$homesize" = "" ] ; then homesize=$defmb; fi
+		echo -n "$homesize MB Ok? [Y] "
 		read ok
 		[ "$ok" = Y -o "$ok" = y -o "$ok" = "" ] || homesize=""
 		echo ""
