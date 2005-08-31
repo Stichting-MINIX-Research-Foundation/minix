@@ -189,8 +189,9 @@ Please finish the name of the primary partition you have created:
 			if autopart -f$PF
 			then	if [ -s "$PF" ]
 				then
-					bd="`cat $PF`"
-					cat "$PF" | read bd bdn
+					set `cat $PF`
+					bd="$1"
+					bdn="$2"
 					biosdrivename="Probably, the right command is \"boot $bdn\"."
 					if [ -b "/dev/$bd" ]
 					then	primary="$bd"
