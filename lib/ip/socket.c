@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 
 #include <net/netlib.h>
+#include <netinet/in.h>
 
 #define DEBUG 0
 
@@ -42,7 +43,7 @@ int socket(int domain, int type, int protocol)
 static int _tcp_socket(int protocol)
 {
 	int fd;
-	if (protocol != 0)
+	if (protocol != 0 && protocol != IPPROTO_TCP)
 	{
 #if DEBUG
 		fprintf(stderr, "socket(tcp): bad protocol %d\n", protocol);
@@ -58,7 +59,7 @@ static int _udp_socket(int protocol)
 {
 	int fd;
 
-	if (protocol != 0)
+	if (protocol != 0 && protocol != IPPROTO_UDP)
 	{
 #if DEBUG
 		fprintf(stderr, "socket(udp): bad protocol %d\n", protocol);
