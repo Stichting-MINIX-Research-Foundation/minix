@@ -367,17 +367,19 @@ echo "Scanning disk for bad blocks.  Hit CTRL+C to stop the scan if you are"
 echo "sure that there can not be any bad blocks.  Otherwise just wait."
 
 trap ': nothing;echo' 2
+
 echo ""
 echo "Scanning /dev/$root for bad blocks:"
 readall -b /dev/$root | sh
 
+echo ""
 echo "Scanning /dev/$home for bad blocks:"
 readall -b /dev/$home | sh
-trap 2
 
 echo ""
 echo "Scanning /dev/$usr for bad blocks:"
 readall -b /dev/$usr | sh
+
 trap 2
 
 echo ""
