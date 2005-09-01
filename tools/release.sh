@@ -59,7 +59,7 @@ ISO=minix.iso
 ISOGZ=minix.iso.gz
 RAM=/dev/ram
 BS=4096
-USRMB=150
+USRMB=350
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 ROOTMB=2
 ROOTBLOCKS="`expr $ROOTMB \* 1024 \* 1024 / $BS`"
@@ -76,12 +76,15 @@ do
 		exit 1
 	;;
 	h)
+		echo " * Making HD image"
 		HDEMU=1
 		;;
 	c)
+		echo " * Copying, not CVS"
 		COPY=1
 		;;
 	a)
+		echo " * Including contrib"
 		ALL=1
 		;;
 	esac
@@ -168,6 +171,12 @@ echo " * Transfering source to $RELEASEDIR"
 
 ( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
 
+if [ "$ALL" = 0 ]
+then	echo " * Removing temporary cvs source tree"
+	rm -rf src
+fi
+
+echo " * Fixups for owners and modes of dirs and files"
 chown -R bin $RELEASEDIR/usr/src
 find $RELEASEDIR/usr/src -type d | xargs chmod 755
 find $RELEASEDIR/usr/src -type f | xargs chmod 644
