@@ -13,7 +13,7 @@
 #define _MACHINE_MACINTOSH         62	/* Apple Macintosh (68000) */
 
 /* Word size in bytes (a constant equal to sizeof(int)). */
-#if __ACK__
+#if __ACK__ || __GNUC__
 #define _WORD_SIZE	_EM_WSIZE
 #define _PTR_SIZE	_EM_WSIZE
 #endif

@@ -84,7 +84,7 @@
 #define _SETJMP_SAVES_REGS 1
 #endif
 #ifdef __GNUC__
-#define _SETJMP_SYMBOL 0
+#define _SETJMP_SYMBOL 1
 #define _SETJMP_SAVES_REGS 1
 #endif
 
@@ -119,7 +119,11 @@ _PROTOTYPE(void _longjmp, (jmp_buf _env, int _val)			);
 
 #ifdef _POSIX_SOURCE
 typedef jmp_buf sigjmp_buf;
+#ifdef __GNUC__
+#define siglongjmp longjmp
+#else
 _PROTOTYPE( void siglongjmp, (sigjmp_buf _env, int _val)		);
+#endif
 
 #define sigsetjmp(env, savemask) __setjmp((env), (savemask))
 #endif /* _POSIX_SOURCE */

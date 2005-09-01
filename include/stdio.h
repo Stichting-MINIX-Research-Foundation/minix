@@ -36,6 +36,7 @@ typedef struct __iobuf {
 #define	_IOREADING	0x080
 #define	_IOWRITING	0x100
 #define	_IOAPPEND	0x200
+#define _IOFIFO		0x400
 
 /* The following definitions are also in <unistd.h>. They should not
  * conflict.
