@@ -31,7 +31,7 @@ sh:	$(OBJS)
 	$(CC) $(CFLAGS) -o sh $(OBJS) $(LIBS)
 	install -S 100k sh
 
-install:	/usr/bin/ash /usr/bin/sh /bin/sh
+install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 
 /usr/bin/ash:	sh
 	install -cs -o bin $? $@
@@ -41,6 +41,9 @@ install:	/usr/bin/ash /usr/bin/sh /bin/sh
 
 /bin/sh:	/usr/bin/ash
 	install -lcs $? $@
+
+/bin/bigsh:	/usr/bin/ash
+	install -S 500000 -lcs $? $@
 
 clean:
 	rm -f $(CLEANFILES) sh core
