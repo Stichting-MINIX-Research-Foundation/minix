@@ -66,8 +66,9 @@ ROOTBLOCKS="`expr $ROOTMB \* 1024 \* 1024 / $BS`"
 
 HDEMU=0
 COPY=0
+ALL=0
 
-while getopts "ch?" c
+while getopts "cha?" c
 do
 	case "$c" in
 	\?)
@@ -79,6 +80,9 @@ do
 		;;
 	c)
 		COPY=1
+		;;
+	a)
+		ALL=1
 		;;
 	esac
 done
@@ -147,20 +151,28 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new cvs export"
-	( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src >/dev/null || exit 1 )
+	rm -rf src
+	cvs export -rHEAD src >/dev/null || exit 1
+	srcdir=src
+	if [ "$ALL" = 0 ]
+	then
+		# No contrib stuff
+		rm -rf src/contrib
+	fi
 else
 	( cd .. && make clean )
-	echo " * Transfering source to $RELEASEDIR"
-	( cd /usr && tar cf - src ) | ( cd $RELEASEDIR/usr && tar xf - )
+	srcdir=/usr/src
 fi
+
+echo " * Transfering source to $RELEASEDIR"
+
+( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
 
 chown -R bin $RELEASEDIR/usr/src
 find $RELEASEDIR/usr/src -type d | xargs chmod 755
 find $RELEASEDIR/usr/src -type f | xargs chmod 644
 # Bug tracking system not for on cd
 rm -rf $RELEASEDIR/usr/src/doc/bugs
-# No GNU core utils
-rm -rf $RELEASEDIR/usr/src/contrib/gnu/coreutils*
 # Make sure the CD knows it's a CD
 date >$RELEASEDIR/CD
 echo " * Chroot build"
