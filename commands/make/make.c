@@ -567,10 +567,9 @@ int          level;
   while (time(&now) == np->n_time) {
      /* Time of target is equal to the current time.  This bothers us, because
       * we can't tell if it needs to be updated if we update a file it depends
-      * on within a second.  So wait a second.  (A per-second timer is too
-      * coarse for today's fast machines.)
+      * on within a second.  So wait until the second is over.
       */
-     sleep(1);
+     usleep(10000);
   }
 
   if (rules) {
