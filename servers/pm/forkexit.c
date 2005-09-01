@@ -71,9 +71,9 @@ PUBLIC int do_fork()
   child_nr = (int)(rmc - mproc);	/* slot number of the child */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
-
   rmc->mp_parent = who;			/* record child's parent */
-  rmc->mp_flags &= (IN_USE|SEPARATE);	/* inherit only these flags */
+  /* inherit only these flags */
+  rmc->mp_flags &= (IN_USE|SEPARATE|PRIV_PROC|DONT_SWAP);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
 
