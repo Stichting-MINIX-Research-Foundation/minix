@@ -1,3 +1,12 @@
+/*
+
+   getsockname()
+
+   from socket emulation library for Minix 2.0.x
+
+*/
+
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,46 +20,44 @@
 #include <net/gen/udp.h>
 #include <net/gen/udp_io.h>
 
-#define DEBUG 0
 
-static int _tcp_getsockname(int socket, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len, nwio_tcpconf_t *tcpconfp);
+#define DEBUG 1
 
-int getsockname(int socket, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len)
+/*
+   getsockname...
+*/
+int getsockname(int fd, struct sockaddr *_RESTRICT address, 
+   socklen_t *_RESTRICT address_len)
 {
-	int r;
 	nwio_tcpconf_t tcpconf;
-
-	r= ioctl(socket, NWIOGTCPCONF, &tcpconf);
-	if (r != -1 || errno != ENOTTY)
-	{
-		if (r == -1)
-		{
-			/* Bad file descriptor */
-			return -1;
-		}
-		return _tcp_getsockname(socket, address, address_len,
-			&tcpconf);
-	}
-
-#if DEBUG
-	fprintf(stderr, "getsockname: not implemented for fd %d\n", socket);
-#endif
-	errno= ENOSYS;
-	return -1;
-}
-
-static int _tcp_getsockname(int socket, struct sockaddr *_RESTRICT address,
-	socklen_t *_RESTRICT address_len, nwio_tcpconf_t *tcpconfp)
-{
 	socklen_t len;
 	struct sockaddr_in sin;
 
+#ifdef DEBUG
+	fprintf(stderr,"mnx_getsockname: ioctl fd %d.\n", fd);
+#endif
+	if (ioctl(fd, NWIOGTCPCONF, &tcpconf)==-1) {
+#ifdef DEBUG
+	   fprintf(stderr,"mnx_getsockname: error %d\n", errno);
+#endif
+	   return (-1);
+	   }
+#ifdef DEBUG1
+	fprintf(stderr, "mnx_getsockname: from %s, %u",
+			inet_ntoa(tcpconf.nwtc_remaddr),
+			ntohs(tcpconf.nwtc_remport));
+	fprintf(stderr," for %s, %u\n",
+			inet_ntoa(tcpconf.nwtc_locaddr),
+			ntohs(tcpconf.nwtc_locport));
+#endif
+/*
+	addr->sin_addr.s_addr = tcpconf.nwtc_remaddr ;
+	addr->sin_port = tcpconf.nwtc_locport;
+*/
 	memset(&sin, '\0', sizeof(sin));
 	sin.sin_family= AF_INET;
-	sin.sin_addr.s_addr= tcpconfp->nwtc_locaddr;
-	sin.sin_port= tcpconfp->nwtc_locport;
+	sin.sin_addr.s_addr= tcpconf.nwtc_remaddr ;
+	sin.sin_port= tcpconf.nwtc_locport;
 
 	len= *address_len;
 	if (len > sizeof(sin))
@@ -60,4 +67,11 @@ static int _tcp_getsockname(int socket, struct sockaddr *_RESTRICT address,
 
 	return 0;
 }
+
+
+
+
+
+
+
 
