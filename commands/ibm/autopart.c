@@ -59,7 +59,7 @@ Num Sort   Type
 #define DEV_FD0		0x200		/* Device number of /dev/fd0 */
 #define DEV_C0D0	0x300		/* Device number of /dev/c0d0 */
 
-#define MIN_REGION_MB	160
+#define MIN_REGION_MB	500
 #define MIN_REGION_SECTORS (1024*1024*MIN_REGION_MB/SECTOR_SIZE)
 
 #define MAX_REGION_MB	4095
