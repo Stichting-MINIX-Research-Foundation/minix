@@ -138,7 +138,7 @@ Mount $usr /usr failed -- Single user."
     fi
 
     if [ ! -z "$home" ]
-    then mount $home /home || echo 'WARNING: couldn't mount $home on /home'
+    then mount $home /home || echo "WARNING: couldn't mount $home on /home"
     fi
 
     # This file is necessary for above 'shutdown -C' check.
