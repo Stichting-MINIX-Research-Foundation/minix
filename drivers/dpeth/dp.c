@@ -102,23 +102,25 @@ static void reply(dpeth_t * dep, int err)
   reply.m_type = DL_TASK_REPLY;
   reply.DL_PORT = dep - de_table;
   reply.DL_PROC = dep->de_client;
-  reply.DL_STAT = status | ((u32_t) err << 16);
+  reply.DL_STAT = status /* | ((u32_t) err << 16) */;
   reply.DL_COUNT = dep->de_read_s;
   getuptime(&reply.DL_CLCK);
 
   DEBUG(printf("\t reply %d (%ld)\n", reply.m_type, reply.DL_STAT));
 
-  if ((status = send(dep->de_client, &reply)) != OK)
-	panic(dep->de_name, SendErrMsg, dep->de_client);
+  if ((status = send(dep->de_client, &reply)) == OK) {
+	dep->de_read_s = 0;
+	dep->de_flags &= NOT(DEF_ACK_SEND | DEF_ACK_RECV);
 
-  dep->de_read_s = 0;
-  dep->de_flags &= NOT(DEF_ACK_SEND | DEF_ACK_RECV);
+  } else if (status != ELOCKED || err == OK)
+	panic(dep->de_name, SendErrMsg, status);
+
   return;
 }
 
 /*
 **  Name:	void dp_confaddr(dpeth_t *dep)
-**  Function:	Chechs environment for a User defined ethernet address.
+**  Function:	Checks environment for a User defined ethernet address.
 */
 static void dp_confaddr(dpeth_t * dep)
 {
@@ -190,7 +192,7 @@ static void do_dump(message *mp)
 	printf("%s statistics:\t\t", dep->de_name);
 
 	/* Network interface status  */
-	printf("Status: 0x%04x\n\n", dep->de_flags);
+	printf("Status: 0x%04x (%d)\n\n", dep->de_flags, dep->de_int_pending);
 
 	(*dep->de_dumpstatsf) (dep);
 
@@ -251,11 +253,12 @@ static void do_first_init(dpeth_t *dep, dp_conf_t *dcp)
   /* Device specific initialization */
   (*dep->de_initf) (dep);
 
-  /* Set the interrupt handler policy. Request interrupts to be reenabled
+  /* Set the interrupt handler policy. Request interrupts not to be reenabled
    * automatically. Return the IRQ line number when an interrupt occurs.
    */
   dep->de_hook = dep->de_irq;
-  sys_irqsetpolicy(dep->de_irq, IRQ_REENABLE, &dep->de_hook);
+  sys_irqsetpolicy(dep->de_irq, 0 /*IRQ_REENABLE*/, &dep->de_hook);
+  dep->de_int_pending = FALSE;
   sys_irqenable(&dep->de_hook);
 
   return;
@@ -604,11 +607,12 @@ PUBLIC int main(int argc, char **argv)
 		for (dep = de_table; dep < &de_table[DE_PORT_NR]; dep += 1) {
 			/* If device is enabled and interrupt pending */
 			if (dep->de_mode == DEM_ENABLED) {
-				/* dep->de_int_pending = FALSE; */
+				dep->de_int_pending = TRUE;
 				(*dep->de_interruptf) (dep);
 				if (dep->de_flags & (DEF_ACK_SEND | DEF_ACK_RECV))
-					reply(dep, OK);
-				/* enable_irq(&dep->de_hook); */
+					reply(dep, !OK);
+				dep->de_int_pending = FALSE;
+				sys_irqenable(&dep->de_hook);
 			}
 		}
 		break;

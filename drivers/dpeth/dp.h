@@ -6,6 +6,11 @@
 **  Interface description for ethernet device driver
 **
 **  $Log$
+**  Revision 1.4  2005/09/04 18:52:16  beng
+**  Giovanni's fixes to dpeth:
+**  Date: Sat, 03 Sep 2005 11:05:22 +0200
+**  Subject: Minix 3.0.8
+**
 **  Revision 1.3  2005/08/03 11:53:34  jnherder
 **  Miscellaneous cleanups.
 **
@@ -103,8 +108,8 @@ typedef struct dpeth {
   port_t de_data_port;		/* For boards using Prog. I/O for xmit/recv */
 
   int de_irq;
-  /* int de_int_pending; */
-  int de_hook;			/* V306 irq_hook_t de_hook; */
+  int de_int_pending;
+  int de_hook;			/* interrupt hook at kernel */
 
   char de_name[8];
 
@@ -269,8 +274,8 @@ int wdeth_probe(dpeth_t * dep);
 #define wdeth_probe(x) (0)
 #endif
 
-#define lock() sys_irqdisable(&dep->de_hook);
-#define unlock() sys_irqenable(&dep->de_hook);
+#define lock()	 (++dep->de_int_pending,sys_irqdisable(&dep->de_hook))
+#define unlock() do{int i=(--dep->de_int_pending)?0:sys_irqenable(&dep->de_hook);}while(0)
 #define milli_delay(t) tickdelay(1)
 
 /** dp.h **/

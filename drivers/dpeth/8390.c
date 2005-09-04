@@ -25,6 +25,13 @@
 
 #include "8390.h"
 
+#define	sys_nic2mem(srcOffs,dstProc,dstOffs,length) \
+	sys_vircopy(SELF,dep->de_memsegm,(vir_bytes)(srcOffs),\
+		    (dstProc),D,(vir_bytes)(dstOffs),length)
+#define	sys_user2nic(srcProc,srcOffs,dstOffs,length) \
+	sys_vircopy((srcProc),D,(vir_bytes)(srcOffs),\
+		    SELF,dep->de_memsegm,(vir_bytes)(dstOffs),length)
+
 static const char RdmaErrMsg[] = "remote dma failed to complete";
 
 /*
@@ -65,9 +72,8 @@ static void ns_start_xmit(dpeth_t * dep, int size, int pageno)
 */
 static void mem_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 {
-  
-  sys_datacopy(dep->de_memsegm, dep->de_linmem + offset,
-	       SELF, (vir_bytes)dst, size);
+
+  sys_nic2mem(dep->de_linmem + offset, SELF, dst, size);
   return;
 }
 
@@ -94,16 +100,16 @@ static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 
 		/* Circular buffer wrap-around */
 		bytes = dep->de_stoppage * DP_PAGESIZE - offset;
-		sys_datacopy(dep->de_memsegm, dep->de_linmem + offset,
-			     iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_addr, bytes);
+		sys_nic2mem(dep->de_linmem + offset, iovp->iod_proc_nr,
+			    iovp->iod_iovec[ix].iov_addr, bytes);
 		pktsize -= bytes;
 		phys_user += bytes;
 		bytes = iovp->iod_iovec[ix].iov_size - bytes;
 		if (bytes > pktsize) bytes = pktsize;
 		offset = dep->de_startpage * DP_PAGESIZE;
 	}
-	sys_datacopy(dep->de_memsegm, dep->de_linmem + offset,
-		     iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_addr, bytes);
+	sys_nic2mem(dep->de_linmem + offset, iovp->iod_proc_nr,
+		    iovp->iod_iovec[ix].iov_addr, bytes);
 	offset += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
@@ -126,7 +132,7 @@ static void mem_user2nic(dpeth_t *dep, int pageno, int pktsize)
   int bytes, ix = 0;
 
   /* Computes shared memory address */
-  offset = dep->de_linmem + pageno * DP_PAGESIZE;
+  offset = pageno * DP_PAGESIZE;
 
   do {				/* Reads chuncks of packet from user area */
 
@@ -134,8 +140,8 @@ static void mem_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	if (bytes > pktsize) bytes = pktsize;
 
 	/* Reads from user area to board (shared memory) */
-	sys_datacopy(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_addr, 
-		     dep->de_memsegm, dep->de_linmem + offset, bytes);
+	sys_user2nic(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_addr, 
+		     dep->de_linmem + offset, bytes);
 	offset += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
