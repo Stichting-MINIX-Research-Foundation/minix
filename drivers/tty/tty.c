@@ -204,8 +204,10 @@ PUBLIC void main(void)
 	case HARD_INT: {		/* hardware interrupt notification */
 		if (tty_mess.NOTIFY_ARG & kbd_irq_set)
 			kbd_interrupt(&tty_mess);/* fetch chars from keyboard */
+#if NR_RS_LINES > 0
 		if (tty_mess.NOTIFY_ARG & rs_irq_set)
 			rs_interrupt(&tty_mess);/* serial I/O */
+#endif
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
 	}
@@ -346,8 +348,10 @@ message *m_ptr;
 	}
   }
 
+#if NR_PTYS > 0
   if (!event_found)
   	event_found = pty_status(m_ptr);
+#endif
 
   if (! event_found) {
 	/* No events of interest were found. Return an empty message. */
@@ -877,8 +881,10 @@ tty_t *tp;			/* TTY to check for events. */
   }
   if(tp->tty_select_ops)
   	select_retry(tp);
+#if NR_PTYS > 0
   if(ispty(tp))
   	select_retry_pty(tp);
+#endif
 }
 
 /*===========================================================================*
