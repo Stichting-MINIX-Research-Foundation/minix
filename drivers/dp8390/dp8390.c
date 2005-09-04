@@ -1147,8 +1147,8 @@ void *dst;
 
 	offset = page * DP_PAGESIZE + offset;
 
-	r= sys_vircopy(SELF, D, (vir_bytes)dst, 
-		BIOS_SEG, D, dep->de_linmem + offset, size);
+	r = sys_vircopy(SELF, BIOS_SEG, dep->de_linmem + offset,
+		SELF, D, (vir_bytes)dst, size);
 
 	if (r != OK)
 		panic("DP8390", "dp_getblock: sys_vircopy failed", r);
@@ -1270,7 +1270,7 @@ vir_bytes count;
 
 		r= sys_vircopy(iovp->iod_proc_nr, D,
 			iovp->iod_iovec[i].iov_addr + offset,
-			BIOS_SEG, D, vir_hw, bytes);
+			SELF, BIOS_SEG, vir_hw, bytes);
 		if (r != OK)
 			panic("DP8390", "dp_user2nic: sys_vircopy failed", r);
 
@@ -1486,7 +1486,7 @@ vir_bytes count;
 		if (bytes > count)
 			bytes = count;
 
-		r= sys_vircopy(BIOS_SEG, D, vir_hw,
+		r= sys_vircopy(SELF, BIOS_SEG, vir_hw,
 			iovp->iod_proc_nr, D,
 			iovp->iod_iovec[i].iov_addr + offset, bytes);
 		if (r != OK)
