@@ -63,8 +63,9 @@
 #define ENABLE_INT      0x0C	/* used for setting DOR port */
 
 /* ST0. */
-#define ST0_BITS        0xF8	/* check top 5 bits of seek status */
-#define TRANS_ST0       0x00	/* top 5 bits of ST0 for READ/WRITE */
+#define ST0_BITS_TRANS  0xD8	/* check 4 bits of status */
+#define TRANS_ST0       0x00	/* 4 bits of ST0 for READ/WRITE */
+#define ST0_BITS_SEEK   0xF8	/* check top 5 bits of seek status */
 #define SEEK_ST0        0x20	/* top 5 bits of ST0 for SEEK */
 
 /* ST1. */
@@ -775,7 +776,7 @@ PRIVATE int seek()
   /* Interrupt has been received.  Check drive status. */
   fdc_out(FDC_SENSE);		/* probe FDC to make it return status */
   r = fdc_results();		/* get controller status bytes */
-  if (r != OK || (f_results[ST0] & ST0_BITS) != SEEK_ST0
+  if (r != OK || (f_results[ST0] & ST0_BITS_SEEK) != SEEK_ST0
 				|| f_results[ST1] != fp->fl_hardcyl) {
 	/* seek failed, may need a recalibrate */
 	return(ERR_SEEK);
@@ -855,7 +856,7 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
 	return(ERR_WR_PROTECT);
   }
 
-  if ((f_results[ST0] & ST0_BITS) != TRANS_ST0) return(ERR_TRANSFER);
+  if ((f_results[ST0] & ST0_BITS_TRANS) != TRANS_ST0) return(ERR_TRANSFER);
   if (f_results[ST1] | f_results[ST2]) return(ERR_TRANSFER);
 
   if (f_device & FORMAT_DEV_BIT) return(OK);
@@ -1008,7 +1009,7 @@ PRIVATE int recalibrate()
   fp->fl_curcyl = NO_CYL;	/* force a SEEK next time */
   fp->fl_sector = NO_SECTOR;
   if (r != OK ||		/* controller would not respond */
-     (f_results[ST0] & ST0_BITS) != SEEK_ST0 || f_results[ST_PCN] != 0) {
+     (f_results[ST0] & ST0_BITS_SEEK) != SEEK_ST0 || f_results[ST_PCN] != 0) {
 	/* Recalibration failed.  FDC must be reset. */
 	need_reset = TRUE;
 	return(ERR_RECALIBRATE);
@@ -1161,7 +1162,7 @@ PRIVATE int read_id()
   result = fdc_results();
   if (result != OK) return(result);
 
-  if ((f_results[ST0] & ST0_BITS) != TRANS_ST0) return(ERR_READ_ID);
+  if ((f_results[ST0] & ST0_BITS_TRANS) != TRANS_ST0) return(ERR_READ_ID);
   if (f_results[ST1] | f_results[ST2]) return(ERR_READ_ID);
 
   /* The next sector is next for I/O: */
@@ -1270,3 +1271,4 @@ struct partition *entry;
   entry->heads = NR_HEADS;
   entry->sectors = f_sectors;
 }
+
