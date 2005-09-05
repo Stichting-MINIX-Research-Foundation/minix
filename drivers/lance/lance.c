@@ -38,7 +38,7 @@
  * |------------|---------|-----------|---------------|
  *
  * Created: Jul 27, 2002 by Kazuya Kodama <kazuya@nii.ac.jp>
- *
+ * Adapted for Minix 3: Sep 05, 2005 by Joren l'Ami <jwlami@cs.vu.nl>
  */
 
 #define VERBOSE 0
@@ -59,7 +59,7 @@
 
 #include <sys/ioc_memory.h>
 
-/* Joren l'Ami */
+/* new I/O functions in Minix 3 */
 #define out_byte( x, y ) sys_outb( x, y )
 #define out_word( x, y ) sys_outw( x, y )
 
@@ -84,7 +84,6 @@ static U16_t in_word( U16_t port)
 #define in_byte( x ) inb( x )
 #define in_word( x ) inw( x )
 */
-/* Joren l'Ami */
 
 static ether_card_t ec_table[EC_PORT_NR_MAX];
 static int eth_tasknr= ANY;
@@ -181,6 +180,7 @@ _PROTOTYPE( static void lance_init_card, (ether_card_t *ec)             );
 #define Address                 unsigned long
 
 
+/* Minix 3 */
 #define virt_to_bus(x)          (vir2phys((unsigned long)x))
 unsigned long vir2phys( unsigned long x )
 {
@@ -193,6 +193,10 @@ unsigned long vir2phys( unsigned long x )
 	return value;
 }
 
+/* DMA limitations */
+#define DMA_ADDR_MASK  0xFFFFFF	/* mask to verify DMA address is 24-bit */
+
+#define CORRECT_DMA_MEM() ( (virt_to_bus(lance + sizeof(lance)) & ~DMA_ADDR_MASK) == 0 )
 
 #define ETH_FRAME_LEN           1518
 
@@ -435,8 +439,6 @@ static void lance_dump()
       
       printf("irq = %d\tioadr = %d\n", ec->ec_irq, ec->ec_port);
     }
-      printf("virt_to_bus(begin) = 0x%x\t virt_to_bus(end) = 0x%x\n",
-      	virt_to_bus(lance), virt_to_bus(lance + sizeof(lance)) );
 }
 
 /*===========================================================================*
@@ -488,7 +490,16 @@ pci_init();
   if (ec->mode == EC_DISABLED)
     {
       /* This is the default, try to (re)locate the device. */
-      conf_hw(ec);
+      /* only try to enable if memory is correct for DMA */
+	  if ( CORRECT_DMA_MEM() )
+	  {
+		conf_hw(ec);
+	  }
+	  else
+	  {
+	  	report( "LANCE", "DMA denied because address out of range", NO_NUM );
+	  }
+	  
       if (ec->mode == EC_DISABLED)
 	{
 	  /* Probe failed, or the device is configured off. */
