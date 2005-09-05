@@ -9,6 +9,7 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	"loc_incl.h"
+#include	<sys/stat.h>
 
 #define	PMODE		0666
 
@@ -31,6 +32,7 @@ FILE *
 freopen(const char *name, const char *mode, FILE *stream)
 {
 	register int i;
+	struct stat st;
 	int rwmode = 0, rwflags = 0;
 	int fd, flags = stream->_flags & (_IONBF | _IOFBF | _IOLBF | _IOMYBUF);
 
@@ -53,7 +55,7 @@ freopen(const char *name, const char *mode, FILE *stream)
 		rwflags |= O_APPEND | O_CREAT;
 		break;         
 	default:
-		return (FILE *)NULL;
+		goto loser;
 	}
 
 	while (*mode) {
@@ -81,19 +83,28 @@ freopen(const char *name, const char *mode, FILE *stream)
 	}
 
 	if (fd < 0) {
-		for( i = 0; i < FOPEN_MAX; i++) {
-			if (stream == __iotab[i]) {
-				__iotab[i] = 0;
-				break;
-			}
-		}
-		if (stream != stdin && stream != stdout && stream != stderr)
-			free((void *)stream);
-		return (FILE *)NULL;
+		goto loser;
 	}
 
+	if ( fstat( fd, &st ) == 0 ) {
+		if ( st.st_mode & S_IFIFO ) flags |= _IOFIFO;
+	} else {
+		goto loser;
+	}
+	
 	stream->_count = 0;
 	stream->_fd = fd;
 	stream->_flags = flags;
 	return stream;
+
+loser:
+	for( i = 0; i < FOPEN_MAX; i++) {
+		if (stream == __iotab[i]) {
+			__iotab[i] = 0;
+			break;
+		}
+	}
+	if (stream != stdin && stream != stdout && stream != stderr)
+		free((void *)stream);
+	return (FILE *)NULL;	
 }

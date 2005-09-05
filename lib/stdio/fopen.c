@@ -9,6 +9,7 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	"loc_incl.h"
+#include	<sys/stat.h>
 
 #define	PMODE		0666
 
@@ -48,6 +49,7 @@ fopen(const char *name, const char *mode)
 	register int i;
 	int rwmode = 0, rwflags = 0;
 	FILE *stream;
+	struct stat st;
 	int fd, flags = 0;
 
 	for (i = 0; __iotab[i] != 0 ; i++) 
@@ -103,6 +105,13 @@ fopen(const char *name, const char *mode)
 
 	if (fd < 0) return (FILE *)NULL;
 
+	if ( fstat( fd, &st ) < 0 ) {
+		_close(fd);
+		return (FILE *)NULL;
+	}
+	
+	if ( st.st_mode & S_IFIFO ) flags |= _IOFIFO;
+	
 	if (( stream = (FILE *) malloc(sizeof(FILE))) == NULL ) {
 		_close(fd);
 		return (FILE *)NULL;

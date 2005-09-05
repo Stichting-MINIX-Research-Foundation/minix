@@ -29,6 +29,10 @@ fflush(FILE *stream)
 	if (io_testflag(stream, _IOREADING)) {
 		/* (void) fseek(stream, 0L, SEEK_CUR); */
 		int adjust = 0;
+		if (io_testflag(stream, _IOFIFO)) {
+			/* Can't seek in a pipe. */
+			return 0;
+		}
 		if (stream->_buf && !io_testflag(stream,_IONBF))
 			adjust = -stream->_count;
 		stream->_count = 0;
