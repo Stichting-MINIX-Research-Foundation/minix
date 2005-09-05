@@ -37,7 +37,7 @@ install:	/usr/sbin/$(DRIVER)
 clean:
 	rm -f *.o *.bak $(DRIVER)
 
-mkdepend:
+depend:
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libpci/*.c > .depend
 
 # Include generated dependencies.
