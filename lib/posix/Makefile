@@ -34,6 +34,7 @@ OBJECTS	= \
 	$(LIBRARY)(_fpathconf.o) \
 	$(LIBRARY)(_fstat.o) \
 	$(LIBRARY)(_fstatfs.o) \
+	$(LIBRARY)(_fsync.o) \
 	$(LIBRARY)(_getcwd.o) \
 	$(LIBRARY)(_getegid.o) \
 	$(LIBRARY)(_geteuid.o) \
@@ -184,6 +185,9 @@ $(LIBRARY)(_fpathconf.o):	_fpathconf.c
 
 $(LIBRARY)(_fstat.o):	_fstat.c
 	$(CC1) _fstat.c
+
+$(LIBRARY)(_fsync.o):	_fsync.c
+	$(CC1) _fsync.c
 
 $(LIBRARY)(_fstatfs.o):	_fstatfs.c
 	$(CC1) _fstatfs.c
