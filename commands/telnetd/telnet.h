@@ -61,6 +61,7 @@
 #define	TELOPT_SNDLOC	23	/* send location			*/
 #define	TELOPT_TTYPE	24	/* terminal type			*/
 #define	TELOPT_EOR	25	/* end or record			*/
+#define	TELOPT_WINCH	31	/* window size				*/
 #define TELOPT_EXOPL	255	/* extended-options-list		*/
 
 /* Sub-option qualifiers. */

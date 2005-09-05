@@ -38,6 +38,7 @@ void term_init()
   telopt(1, WILL, TELOPT_BINARY);
   telopt(1, DO,   TELOPT_BINARY);
   telopt(1, WILL, TELOPT_ECHO);
+  telopt(1, DO,   TELOPT_WINCH);
 }
 
 static int io_done = 0;

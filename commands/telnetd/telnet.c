@@ -12,23 +12,31 @@
 #include <sys/types.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <unistd.h>
+#include <termios.h>
 #include "telnetd.h"
 #include "telnet.h"
 #include <stdio.h>
+#include <sys/ioctl.h>
+
 
 #define	IN_DATA	0
 #define	IN_CR	1
 #define	IN_IAC	2
 #define	IN_IAC2	3
+#define IN_SB	4
 
 _PROTOTYPE(static void dowill, (int c));
 _PROTOTYPE(static void dowont, (int c));
 _PROTOTYPE(static void dodo, (int c));
 _PROTOTYPE(static void dodont, (int c));
 _PROTOTYPE(static void respond, (int ack, int option));
+_PROTOTYPE(static void respond_really, (int ack, int option));
 
 #define	LASTTELOPT	TELOPT_SGA
+
+static int r_winch = 0;
 
 static int TelROpts[LASTTELOPT+1];
 static int TelLOpts[LASTTELOPT+1];
@@ -63,7 +71,7 @@ int len;
 		if(option <= LASTTELOPT) {
 			TelROpts[option] = 1;
 			len = 3;
-		}
+		} else if(option == TELOPT_WINCH && !r_winch) { r_winch = 1; len = 3; } 
 		break;
 	case DONT:
 		if(option <= LASTTELOPT) {
@@ -86,6 +94,15 @@ int len;
    }
    if(len > 0)
 	(void) write(fdout, buf, len);
+}
+
+int set_winsize(int fd, unsigned int cols, unsigned int rows)
+{
+	struct winsize w;
+	memset(&w, 0, sizeof(w));
+	w.ws_col = cols;
+	w.ws_row = rows;
+	ioctl(fd, TIOCSWINSZ, (char *) &w);
 }
 
 int tel_in(fdout, telout, buffer, len)
@@ -134,6 +151,9 @@ int c;
    					InState = IN_IAC2;
    					ThisOpt = c;
    					break;
+   				case SB:
+   				 	InState = IN_SB; 
+   					break;
    				case EOR:
    				case SE:
    				case NOP:
@@ -144,7 +164,6 @@ int c;
    				case EC:
    				case EL:
    				case GA:
-   				case SB:
    					break;
    				default:
    					break;
@@ -164,6 +183,43 @@ int c;
    				case DONT:	dodont(c);	break;
    			}
    			break;
+   		case IN_SB:
+ 		{
+			static int winchpos = -1;
+   			/* Subnegotiation. */
+   			if(winchpos >= 0) {
+				static unsigned int winchbuf[5], iacs = 0;
+   				winchbuf[winchpos] = c;
+   				/* IAC is escaped - unescape it. */
+   				if(c == IAC) iacs++; else { iacs = 0; winchpos++; }
+   				if(iacs == 2) { winchpos++; iacs = 0; }
+   				if(winchpos >= 4) {
+   					/* End of WINCH data. */
+   					set_winsize(fdout,
+   					(winchbuf[0] << 8) | winchbuf[1],
+   					(winchbuf[2] << 8) | winchbuf[3]);
+   					winchpos = -1;
+   				}
+   			} else {
+				static int lastiac = 0;
+	   			switch(c) {
+   					case TELOPT_WINCH:
+   						/* Start listening. */
+   						winchpos = 0;
+   						break;
+   					case SE:
+   						if(lastiac) InState = IN_DATA;
+   						break;
+   					default:
+   						break;
+   				}
+   				if(c == IAC) lastiac = 1;
+   				else lastiac = 0;
+
+
+   			}
+   			break;
+   		}
    	}
    }
 
@@ -211,9 +267,16 @@ int ack;
 		TelROpts[c] = 1;
 		ack = DO;
 		break;
+	case TELOPT_WINCH:
+		if(r_winch) return;
+		r_winch = 1;
+		ack = DO;
+ 		respond_really(ack, c); 
+		return;
 	default:
 		ack = DONT;
    }
+
    respond(ack, c);
 }
 
@@ -259,5 +322,16 @@ unsigned char c[3];
    c[0] = IAC;
    c[1] = ack;
    c[2] = option;
-   /* write(telfdout, c, 3); */
+/*   write(telfdout, c, 3); */
+}
+
+static void respond_really(ack, option)
+int ack, option;
+{
+unsigned char c[3];
+
+   c[0] = IAC;
+   c[1] = ack;
+   c[2] = option;
+   write(telfdout, c, 3); 
 }
