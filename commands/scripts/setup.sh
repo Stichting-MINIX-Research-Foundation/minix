@@ -441,6 +441,20 @@ sync
 
 bios="`echo $primary | sed 's/d./dX/g'`"
 
+if [ ! "$auto" = "r" ]
+then	if mount /dev/$home /home
+	then	for u in bin ast
+		do	if mkdir ~$u
+			then	echo " * Creating home directory for $u in ~$u"
+				cpdir /usr/ast ~$u
+				chown -R $u:operator ~$u
+			else	echo " * Couldn't create ~$u"
+			fi
+		done
+		umount /dev/$home
+	fi
+fi
+
 echo "
 Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At
 the boot monitor prompt, type 'boot $bios', where X is the bios drive
