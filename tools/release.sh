@@ -151,6 +151,9 @@ mkdir -p $RELEASEDIR/usr/tmp
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
 
+# Make sure compilers and libraries are bin-owned
+chown -R bin $RELEASEDIR/usr/lib
+
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new cvs export"
