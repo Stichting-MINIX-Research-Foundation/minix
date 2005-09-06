@@ -6,6 +6,7 @@
 #include	<stdlib.h>
 #include	"../stdio/loc_incl.h"
 #include	<stdio.h>
+#include	<sys/stat.h>
 
 FILE *
 fdopen(fd, mode)
@@ -13,6 +14,7 @@ int fd;
 _CONST char *mode;
 {
 	register int i;
+	struct stat st;
 	FILE *stream;
 	int flags = 0;
 
@@ -47,6 +49,14 @@ _CONST char *mode;
 		break;
 	}
 
+	if ( fstat( fd, &st ) < 0 ) {
+		return (FILE *)NULL;
+	}
+	
+	if ( st.st_mode & S_IFIFO ) {
+		flags |= _IOFIFO;
+	}
+	
 	if ((stream = (FILE *) malloc(sizeof(FILE))) == NULL) {
 		return (FILE *)NULL;
 	}
