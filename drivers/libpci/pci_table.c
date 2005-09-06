@@ -139,6 +139,7 @@ struct pci_device pci_device_table[]=
  	{ 0x8086, 0x7124, "Intel 82801AA" },	/* asw 2004-11-09 */
 	{ 0x8086, 0x7190, "Intel 82443BX" },
 	{ 0x8086, 0x7191, "Intel 82443BX (AGP bridge)" },
+	{ 0x8086, 0x7192, "Intel 82443BX (Host-to-PCI bridge)" },
 	{ 0x9004, 0x8178, "Adaptec AHA-2940U/2940UW Ultra/Ultra-Wide SCSI Ctrlr" },
 	{ 0x9005, 0x0080, "Adaptec AIC-7892A Ultra160/m PCI SCSI Controller" },
 	{ 0x0000, 0x0000, NULL }
@@ -244,7 +245,8 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
  	{ 0x8086, 0x7030, },	/* Intel 82437VX (asw 2005-03-02) */ 
  	{ 0x8086, 0x7100, },	/* Intel 82371AB (asw 2004-07-31) */
  	{ 0x8086, 0x7124, },	/* Intel 82801AA (asw 2004-11-09) */
-	{ 0x8086, 0x7190, },	/* Intel 82443BX */
+	{ 0x8086, 0x7190, },	/* Intel 82443BX - AGP enabled */
+	{ 0x8086, 0x7192, },	/* Intel 82443BX - AGP disabled */
 	{ 0x0000, 0x0000, },
 };
 
