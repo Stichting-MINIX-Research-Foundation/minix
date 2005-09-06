@@ -862,7 +862,8 @@ int main(int argc, char **argv)
 	    if (np->renew <= now) {
 		u8_t type;
 		static u8_t taglist[] = {
-		    DHCP_TAG_NETMASK, DHCP_TAG_GATEWAY, DHCP_TAG_DNS
+		    DHCP_TAG_NETMASK, DHCP_TAG_GATEWAY, DHCP_TAG_DNS,
+		    	DHCP_TAG_HOSTNAME
 		};
 		u8_t ethclid[1+DHCP_HLEN_ETH];
 
