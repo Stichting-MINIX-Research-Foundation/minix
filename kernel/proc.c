@@ -150,8 +150,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
       }
 
       if (isemptyn(src_dst)) {
-          kprintf("sys_call: dead destination, function %d, caller %d\n", 
-              function, proc_nr(caller_ptr));
+          kprintf("[sys_call: dead dest; %d, %d, %d] ", 
+              function, proc_nr(caller_ptr), src_dst);
           return(EDEADDST); 		/* cannot send to the dead */
       }
   }
