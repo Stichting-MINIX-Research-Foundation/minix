@@ -14,12 +14,12 @@
 FORWARD _PROTOTYPE( void extpartition, (struct driver *dp, int extdev,
 						unsigned long extbase) );
 FORWARD _PROTOTYPE( int get_part_table, (struct driver *dp, int device,
-			unsigned long offset, struct part_entry *table, int *io) );
-#if DEAD_CODE
-FORWARD _PROTOTYPE( int get_iso_fake_part_table, (struct driver *dp, int device,
-			unsigned long offset, struct part_entry *table) );
-#endif
+			unsigned long offset, struct part_entry *table));
 FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
+
+#ifndef CD_SECTOR_SIZE
+#define CD_SECTOR_SIZE 2048
+#endif 
 
 /*============================================================================*
  *				partition				      *
@@ -38,7 +38,7 @@ int atapi;		/* atapi device */
  * systems that expect this.
  */
   struct part_entry table[NR_PARTITIONS], *pe;
-  int disk, par, io;
+  int disk, par;
   struct device *dv;
   unsigned long base, limit, part_limit;
 
@@ -49,7 +49,7 @@ int atapi;		/* atapi device */
   limit = base + div64u(dv->dv_size, SECTOR_SIZE);
 
   /* Read the partition table for the device. */
-  if(!get_part_table(dp, device, 0L, table, &io)) {
+  if(!get_part_table(dp, device, 0L, table)) {
 	  return;
   }
 
@@ -118,7 +118,7 @@ unsigned long extbase;	/* sector offset of the base extended partition */
 
   offset = 0;
   do {
-	if (!get_part_table(dp, extdev, offset, table, NULL)) return;
+	if (!get_part_table(dp, extdev, offset, table)) return;
 	sort(table);
 
 	/* The table should contain one logical partition and optionally
@@ -147,63 +147,21 @@ unsigned long extbase;	/* sector offset of the base extended partition */
 /*============================================================================*
  *				get_part_table				      *
  *============================================================================*/
-PRIVATE int get_part_table(dp, device, offset, table, io_ok)
+PRIVATE int get_part_table(dp, device, offset, table)
 struct driver *dp;
 int device;
 unsigned long offset;		/* sector offset to the table */
 struct part_entry *table;	/* four entries */
-int *io_ok;
 {
 /* Read the partition table for the device, return true iff there were no
  * errors.
  */
   iovec_t iovec1;
   off_t position;
-
-  if(io_ok)
-  	*io_ok = 0;
+  static unsigned char partbuf[CD_SECTOR_SIZE];
 
   position = offset << SECTOR_SHIFT;
-  iovec1.iov_addr = (vir_bytes) tmp_buf;
-  iovec1.iov_size = SECTOR_SIZE;
-  if ((*dp->dr_prepare)(device) != NIL_DEV) {
-	(void) (*dp->dr_transfer)(SELF, DEV_GATHER, position, &iovec1, 1);
-  }
-  if (iovec1.iov_size != 0) {
-	printf("%s: can't read partition table\n", (*dp->dr_name)());
-	return 0;
-  }
-  if(io_ok)
-  	*io_ok = 1;
-  if (tmp_buf[510] != 0x55 || tmp_buf[511] != 0xAA) {
-	/* Invalid partition table. */
-	return 0;
-  }
-  memcpy(table, (tmp_buf + PART_TABLE_OFF), NR_PARTITIONS * sizeof(table[0]));
-  return 1;
-}
-
-#if DEAD_CODE
-/*============================================================================*
- *				get_iso_fake_part_table				      *
- *============================================================================*/
-PRIVATE int get_iso_fake_part_table(dp, device, offset, table)
-struct driver *dp;
-int device;
-unsigned long offset;		/* sector offset to the table */
-struct part_entry *table;	/* four entries */
-{
-  iovec_t iovec1;
-  off_t position;
-  off_t isosize;
-#ifndef CD_SECTOR_SIZE
-#define CD_SECTOR_SIZE 2048
-#endif 
-  static unsigned char pvd[CD_SECTOR_SIZE];
-
-  /* Read the partition table at 'offset'. */
-  position = 16*CD_SECTOR_SIZE;
-  iovec1.iov_addr = (vir_bytes) pvd;
+  iovec1.iov_addr = (vir_bytes) partbuf;
   iovec1.iov_size = CD_SECTOR_SIZE;
   if ((*dp->dr_prepare)(device) != NIL_DEV) {
 	(void) (*dp->dr_transfer)(SELF, DEV_GATHER, position, &iovec1, 1);
@@ -211,33 +169,13 @@ struct part_entry *table;	/* four entries */
   if (iovec1.iov_size != 0) {
 	return 0;
   }
-  if (pvd[0] != 1 || pvd[1] != 'C' || pvd[2] != 'D' || pvd[3] != '0' ||
-  pvd[4] != '0' || pvd[5] != '1' || pvd[6] != 1) {
-	/* Invalid primary volume descriptor. */
+  if (partbuf[510] != 0x55 || partbuf[511] != 0xAA) {
+	/* Invalid partition table. */
 	return 0;
   }
-  memcpy(&isosize, pvd + 80, sizeof(isosize));
-  isosize *= CD_SECTOR_SIZE;
-
-/* root */
-#define ROOT_IMAGE_SECTORS (2*1024*1024/SECTOR_SIZE)
-  table[0].lowsec = 0;
-  table[0].size =  isosize / SECTOR_SIZE;
-
-  table[1].lowsec = table[0].size;
-  table[1].size = ROOT_IMAGE_SECTORS;
-
-  /* XXX figure out real size - give it 400MB for now */
-  table[2].lowsec = table[1].lowsec + table[1].size;
-  table[2].size = 400*1024*1024/SECTOR_SIZE;
-
-  table[0].sysind = table[1].sysind = table[2].sysind = MINIX_PART;
-  table[3].sysind = NO_PART;
-
-  /* Read the partition table at 'offset'. */
+  memcpy(table, (partbuf + PART_TABLE_OFF), NR_PARTITIONS * sizeof(table[0]));
   return 1;
 }
-#endif
 
 /*===========================================================================*
  *				sort					     *
