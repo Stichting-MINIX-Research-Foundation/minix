@@ -81,9 +81,9 @@ _int86:
 	movb	ah, al
 	inb	INT_CTLMASK
 	push	eax			! save interrupt masks
-	mov	eax, (_irq_use)		! map of in-use IRQ`s
+	mov	eax, (_irq_use)		! map of in-use IRQ's
 	and	eax, ~[1<<CLOCK_IRQ]	! keep the clock ticking
-	outb	INT_CTLMASK		! enable all unused IRQ`s and vv.
+	outb	INT_CTLMASK		! enable all unused IRQ's and vv.
 	movb	al, ah
 	outb	INT2_CTLMASK
 

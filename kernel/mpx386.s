@@ -124,7 +124,7 @@ MINIX:				! this is the entry point for the MINIX kernel
 flags:
 	.data2	0x01FD		! boot monitor flags:
 				!	call in 386 mode, make bss, make stack,
-				!	load high, don`t patch, will return,
+				!	load high, don't patch, will return,
 				!	uses generic INT, memory vector,
 				!	new boot code return
 	nop			! extra byte to sync up disassembler
