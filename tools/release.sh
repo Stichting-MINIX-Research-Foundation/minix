@@ -61,7 +61,9 @@ RAM=/dev/ram
 BS=4096
 USRMB=300
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
+USRSECTS="`expr $USRMB \* 1024 \* 2`"
 ROOTMB=2
+ROOTSECTS="`expr $ROOTMB \* 1024 \* 2`"
 ROOTBLOCKS="`expr $ROOTMB \* 1024 \* 1024 / $BS`"
 
 HDEMU=0
@@ -226,9 +228,15 @@ writeisofs -l MINIX -b $bootimage $h_opt $CDFILES $ISO || exit 1
 if [ "$HDEMU" -eq 0 ]
 then
 	echo "Appending Minix root and usr filesystem"
-	( cat $ISO $ROOTIMAGE ; dd if=$TMPDISK bs=$BS count=$USRBLOCKS ) |
-		gzip -9 >$ISOGZ || exit 1
-else
-	gzip -9 $ISO
+	( cat $ISO $ROOTIMAGE ; dd if=$TMPDISK bs=$BS count=$USRBLOCKS ) >m
+	isobytes=`stat -size $ISO`
+	isosects=`expr $isobytes / 512 - 1`
+	mv m $ISO
+	# Make CD partition table
+	installboot -m $ISO /usr/mdec/masterboot
+	partition -m $ISO 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 fi
+echo " * gzipping $ISO"
+gzip -9 $ISO
 ls -al $ISOGZ
+
