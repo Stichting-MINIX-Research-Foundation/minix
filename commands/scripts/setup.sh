@@ -244,7 +244,8 @@ then
 	    echo "3. Realtek 8029 based card (emulated by Qemu)"
 	    echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
 	    echo "5. 3Com 501 or 3Com 509 based card"
-	    echo "6. Different Ethernet card (no networking)"
+	    echo "6. AMD LANCE driver (emulated by VMWare)"
+	    echo "7. Different Ethernet card (no networking)"
 	    echo ""
 	    echo "You can always change your mind after the setup."
 	    echo ""
@@ -270,7 +271,8 @@ then
 		   echo ""
 	           echo "Note: After installing, edit $LOCALRC to the right configuration."
 			;;
-	        6) step3="ok"; ;;    
+	        6) driver="lance"; driverargs="LANCE0=on"; step3="ok"; ;;    
+	        7) step3="ok"; ;;    
 	        *) warn "choose a number"
 	    esac
 	done
