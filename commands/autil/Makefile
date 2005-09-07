@@ -1,5 +1,6 @@
 # Makefile for commands/autil
 
+CC = exec cc
 CFLAGS	= -I. -D_MINIX -D_POSIX_SOURCE -wo
 CCLD	= $(CC) -i $(CFLAGS)
 

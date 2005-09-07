@@ -1,5 +1,7 @@
 # Makefile for mined
 
+CC = exec cc
+
 CFLAGS	= -O -wo -D_MINIX -D_POSIX_SOURCE
 
 OBJ = mined1.o mined2.o

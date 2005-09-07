@@ -2,6 +2,7 @@
 
 CFLAGS=	-D_MINIX -D_POSIX_SOURCE
 LDFLAGS=-i
+CC = exec cc
 
 SRC=	ttn.c ttn_conf.c
 

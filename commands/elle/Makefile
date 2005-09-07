@@ -1,5 +1,6 @@
 # Makefile for elle
 
+CC = exec cc
 CFLAGS = -O -DIGN_JOB_CONTROL -D_POSIX_SOURCE -wa
 LDFLAGS= -i
 

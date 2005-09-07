@@ -7,6 +7,7 @@ CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 LDFLAGS=-i
 BINDIR=	/usr/bin
 PROG=	talkd
+CC = exec cc
 
 OBJS=	talkd.o net.o process.o finduser.o
 

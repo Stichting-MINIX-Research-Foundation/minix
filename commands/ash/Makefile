@@ -19,6 +19,7 @@ OBJS=	builtins.o cd.o dirent.o error.o eval.o exec.o expand.o input.o \
 CPPFLAGS= -DSHELL -I. -D_MINIX -D_POSIX_SOURCE
 CFLAGS=	-wo -i $(CPPFLAGS)
 LIBS=	-ledit
+CC = exec cc
 
 CLEANFILES= $(OBJS) \
 	builtins.c builtins.h init.c mkinit mknodes mksignames mksyntax \

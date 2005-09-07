@@ -34,6 +34,8 @@
 #
 #DEFS = -DUNIX -DMALLOCH
 
+CC = exec cc
+
 DEFS = -DUNIX -DUSG -DSTDLIB
 
 CFLAGS = -i -f -wo -O ${DEFS}

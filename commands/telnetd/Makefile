@@ -7,6 +7,7 @@ CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 LDFLAGS=-i
 BINDIR=	/usr/bin
 PROG=	in.telnetd
+CC = exec cc
 
 OBJS=	main.o telnet.o term.o pty.o wtmp.o
 

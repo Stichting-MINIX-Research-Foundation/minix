@@ -1,5 +1,6 @@
 # Makefile for awk.
 
+CC = exec cc
 CFLAGS	= -D_MINIX -D_POSIX_SOURCE -wo -w
 LDFLAGS	= -i -f
 

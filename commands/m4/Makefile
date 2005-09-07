@@ -7,6 +7,7 @@
 #
 
 CFLAGS = -DEXTENDED -O -D_POSIX_SOURCE -D_MINIX
+CC = exec cc
 
 OBJ =  main.o eval.o serv.o look.o misc.o expr.o
 INCL =  mdef.h extr.h patchlevel.h

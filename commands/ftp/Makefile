@@ -12,6 +12,8 @@ OBJS=	ftp.o local.o file.o other.o net.o
 
 all:	$(PROG)
 
+CC = exec cc
+
 $(PROG):	$(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 	install -S 8kw $@

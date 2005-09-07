@@ -2,6 +2,7 @@
 
 CFLAGS	= -O -D_MINIX -D_POSIX_SOURCE -wa
 LDFLAGS	= -i
+CC = exec cc
 
 OBJ	= sh1.o sh2.o sh3.o sh4.o sh5.o sh6.o
 

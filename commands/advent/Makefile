@@ -8,7 +8,7 @@ BINDIR	= /usr/bin
 # Flags you may want to add to CFLAGS:
 # -DHAS_STDC=0 or 1	We have Standard C.  Default=1 iff __STDC__ is nonzero.
 
-CC	= cc
+CC	= exec cc
 CFLAGS	= -D_POSIX_SOURCE
 LDFLAGS	=  -i
 

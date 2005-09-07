@@ -3,6 +3,7 @@
 CFLAGS	= -D_MINIX -D_POSIX_SOURCE
 SYS	= ../..
 CCLD	= $(CC) -i $(CFLAGS)
+CC	= exec cc
 
 # This Makefile is large, but that is because it lists all actions that must
 # be taken to compile and install all the simple commands.  If there were only

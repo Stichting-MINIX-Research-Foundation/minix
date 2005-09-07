@@ -170,7 +170,7 @@ void stat_reset(void)
 		if (statusrow > STATUSROW) stat_start(0);
 		stat_start(0);
 		putstr(
-"Type '+' or '-' to change, 'r' to read, '?' for more help, '!' for advice");
+"Type '+' or '-' to change, 'r' to read, '?' for more help, 'q' to exit");
 	}
 	statusrow= STATUSROW;
 	need_help= 0;

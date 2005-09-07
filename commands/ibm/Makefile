@@ -5,6 +5,7 @@
 CFLAGS	= -D_MINIX -D_POSIX_SOURCE
 CCLD	= $(CC) -i $(CFLAGS)
 MAKE	= exec make -$(MAKEFLAGS)
+CC = exec cc
 
 ALL	= \
 	atnormalize \

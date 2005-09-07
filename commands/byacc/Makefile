@@ -10,6 +10,8 @@ LDFLAGS	      = -i
 
 LIBS	      =
 
+CC = exec cc
+
 LINKER	      = $(CC)
 
 MAKEFILE      = Makefile

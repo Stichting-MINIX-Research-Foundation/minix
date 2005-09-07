@@ -1,6 +1,7 @@
 # Makefile for make (!)
 
 CFLAGS = -O -Dunix -D_MINIX -D_POSIX_SOURCE
+CC = exec cc
 
 OBJ =	check.o input.o macro.o main.o make.o reader.o rules.o archive.o
 

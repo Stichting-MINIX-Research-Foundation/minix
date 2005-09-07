@@ -2,14 +2,15 @@
 
 all: rz sz
 
+CC = exec cc
 CFLAGS= -DPOSIX -D_MINIX -D_POSIX_SOURCE -O -wo
 
 rz: rz.c rbsb.c zm.c zmodem.h
-	cc $(CFLAGS) -i -o rz rz.c
+	$(CC) $(CFLAGS) -i -o rz rz.c
 	install -S 5kw $@
 
 sz: sz.c rbsb.c zm.c zmodem.h
-	cc $(CFLAGS) -i -o sz sz.c
+	$(CC) $(CFLAGS) -i -o sz sz.c
 	install -S 5kw $@
 
 install:	/usr/bin/rz /usr/bin/sz

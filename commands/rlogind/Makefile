@@ -1,6 +1,7 @@
 # Makefile for rlogind.
 
 CFLAGS	= $(OPT) -D_MINIX
+CC = exec cc
 LDFLAGS	=
 
 all:	rlogind

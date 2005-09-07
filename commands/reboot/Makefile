@@ -2,6 +2,7 @@
 
 CFLAGS=$(OPT) -D_MINIX -D_POSIX_SOURCE
 LDFLAGS=-i
+CC=exec cc
 
 PROGRAMS=	shutdown halt tinyhalt
 MANUALS=	shutdown.8 halt.8 reboot.2 reboot.8

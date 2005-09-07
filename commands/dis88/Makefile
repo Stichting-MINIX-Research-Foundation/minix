@@ -26,6 +26,7 @@
 
 CFLAGS =-O -wo
 OBJ = disrel.o dismain.o distabs.o dishand.o disfp.o
+CC=exec cc
 
 all:	dis88
 

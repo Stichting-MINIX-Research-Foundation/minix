@@ -6,6 +6,7 @@ GZIP=gzip-1.2.4
 PYTHON=python-1.5.2
 BZIP2=bzip2-1.0.3
 KERMIT=kermit-2.1.1
+CC=exec cc
 
 usage:
 	@echo "Usage: make all        # Compile all commands" >&2

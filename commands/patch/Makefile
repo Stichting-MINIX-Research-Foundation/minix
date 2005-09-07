@@ -2,6 +2,8 @@
 
 CFLAGS= -O -DVOIDSIG -wo -D_MINIX -D_POSIX_SOURCE -DSMALL
 
+CC = exec cc
+
 OBJ = patch.o pch.o inp.o util.o version.o
 
 all:	patch

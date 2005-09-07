@@ -2,7 +2,7 @@
 SHELL=/bin/sh
 
 # To assist in cross-compiling
-CC=cc
+CC=exec cc
 AR=ar
 ARFLAGS=cr
 RANLIB=ranlib

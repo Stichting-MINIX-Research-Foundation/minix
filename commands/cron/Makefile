@@ -1,6 +1,7 @@
 # Makefile for cron.
 
 CFLAGS=		-D_MINIX -D_POSIX_SOURCE
+CC = exec cc
 LDFLAGS=
 
 all:	cron crontab

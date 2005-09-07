@@ -18,7 +18,7 @@ YACC = yacc
 #YACC = bison -y
 LEX = flex -I8
 #LEX = lex
-CC = cc
+CC = exec cc
 CFLAGS = -D_POSIX_SOURCE
 LDFLAGS = -i
 #

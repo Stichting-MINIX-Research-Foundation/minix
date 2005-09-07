@@ -1,6 +1,6 @@
 # Makefile for de
 
-CC	= cc
+CC	= exec cc
 CFLAGS	= -O -D_MINIX -D_POSIX_SOURCE -D_POSIX_1_SOURCE=2
 
 all:	de

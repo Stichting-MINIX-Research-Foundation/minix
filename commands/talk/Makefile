@@ -7,6 +7,7 @@ CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 LDFLAGS=-i
 BINDIR=	/usr/bin
 PROG=	talk
+CC = exec cc
 
 OBJS=	talk.o screen.o net.o proto.o
 

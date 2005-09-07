@@ -2,6 +2,7 @@
 
 CFLAGS=		$(OPT)
 LDFLAGS=	-i
+CC = exec cc
 
 all:	asmconv
 

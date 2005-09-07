@@ -2,6 +2,7 @@
 
 # CFLAGS : options for the C-compiler
 CFLAGS = -O -D_MINIX -D_POSIX_SOURCE -wa
+CC=exec cc
 
 # LDFLAGS : flags for the loader
 #	-i for a PDP-11 with separate I/D (not necessary)

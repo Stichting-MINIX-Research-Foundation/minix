@@ -1,6 +1,7 @@
 # Makefile for indent
 
 CFLAGS= -c -O -D_MINIX -D_POSIX_SOURCE -wo -m
+CC = exec cc
 
 all:	indent
 

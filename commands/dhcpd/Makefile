@@ -2,6 +2,7 @@
 
 CFLAGS	= $(OPT) -D_MINIX
 LDFLAGS	=
+CC = exec cc
 
 all:	dhcpd
 

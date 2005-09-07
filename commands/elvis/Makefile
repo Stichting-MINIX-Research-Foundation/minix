@@ -9,6 +9,7 @@
 #	PROGS	the list of all programs
 #	SORT	if the "tags" file must be sorted, then SORT=-DSORT
 
+CC = exec cc
 PROGS=	elvis ctags ref elvrec fmt elvprsv
 
 #---- These settings are recommended for Minix-PC ----

@@ -9,6 +9,7 @@ BINDIR=	/usr/bin
 PROG=	urlget
 LINK1=	httpget
 LINK2=	ftpget
+CC=exec cc
 
 OBJS=	urlget.o net.o
 

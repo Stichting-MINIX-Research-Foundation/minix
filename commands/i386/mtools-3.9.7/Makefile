@@ -33,7 +33,7 @@ mandir      = ${prefix}/man
 infodir     = ${prefix}/info
 sysconfdir  = /etc
 
-CC         = cc -D_MINIX
+CC         = exec cc -D_MINIX
 CXX        = @CXX@
 MYCFLAGS   = 
 MYCXXFLAGS = 

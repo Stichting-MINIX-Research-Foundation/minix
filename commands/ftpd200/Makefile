@@ -9,6 +9,7 @@ BINDIR=	/usr/bin
 PROG=	in.ftpd
 MANDIR= /usr/man/man8
 MANPAGE=ftpd.8
+CC = exec cc
 
 OBJS=	ftpd.o access.o file.o net.o
 
