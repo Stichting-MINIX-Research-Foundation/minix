@@ -15,8 +15,10 @@ FORWARD _PROTOTYPE( void extpartition, (struct driver *dp, int extdev,
 						unsigned long extbase) );
 FORWARD _PROTOTYPE( int get_part_table, (struct driver *dp, int device,
 			unsigned long offset, struct part_entry *table, int *io) );
+#if DEAD_CODE
 FORWARD _PROTOTYPE( int get_iso_fake_part_table, (struct driver *dp, int device,
 			unsigned long offset, struct part_entry *table) );
+#endif
 FORWARD _PROTOTYPE( void sort, (struct part_entry *table) );
 
 /*============================================================================*
@@ -47,10 +49,7 @@ int atapi;		/* atapi device */
   limit = base + div64u(dv->dv_size, SECTOR_SIZE);
 
   /* Read the partition table for the device. */
-  if(atapi) {
-  	if(!get_iso_fake_part_table(dp, device, 0L, table))
-  		return;
-  } else if(!get_part_table(dp, device, 0L, table, &io)) {
+  if(!get_part_table(dp, device, 0L, table, &io)) {
 	  return;
   }
 
@@ -184,6 +183,7 @@ int *io_ok;
   return 1;
 }
 
+#if DEAD_CODE
 /*============================================================================*
  *				get_iso_fake_part_table				      *
  *============================================================================*/
@@ -237,6 +237,7 @@ struct part_entry *table;	/* four entries */
   /* Read the partition table at 'offset'. */
   return 1;
 }
+#endif
 
 /*===========================================================================*
  *				sort					     *
