@@ -604,6 +604,9 @@ void exec_image(char *image)
 	/* Return from Minix.  Things may have changed, so assume nothing. */
 	fsok= -1;
 	errno= 0;
+
+	/* Read leftover character, if any. */
+	scan_keyboard();
 }
 
 ino_t latest_version(char *version, struct stat *stp)

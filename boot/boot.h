@@ -103,6 +103,8 @@ int writesectors(u32_t bufaddr, u32_t sector, U8_t count);
 			/* Write 1 or more sectors to "device". */
 int getch(void);
 			/* Read a keypress. */
+void scan_keyboard(void);	
+			/* Read keypress directly from kb controller. */
 void ungetch(int c);
 			/* Undo a keypress. */
 int escape(void);

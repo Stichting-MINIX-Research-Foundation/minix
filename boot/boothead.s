@@ -169,6 +169,7 @@ adj_ext:
 	add	14(di), bx	! Add ext mem above 16M to mem below 16M
 no_ext:
 
+
 ! Time to switch to a higher level language (not much higher)
 	call	_boot
 
@@ -1204,44 +1205,6 @@ bcd:	movb	ah, al
 	.data1 0xD5,10 ! aad	! ax = (al >> 4) * 10 + (al & 0x0F)
 	ret			! (BUG: assembler messes up aad & aam!)
 
-
-! void bootcdinfo(u32_t bufaddr, int *ret, int drive)
-! If booted from CD, do BIOS int 0x13 call to obtain boot CD device.
-.define	_bootcdinfo
-_bootcdinfo:
-	push bp
-	mov bp, sp
-	push ax
-	push bx
-	push cx
-	push dx
-	push si
-	push ds
-	mov	bx, 10(bp)	! drive number
-	mov	cx,  8(bp)
-	mov	ax,  4(bp)	! buffer address from stack
-	mov	dx,  6(bp)
-	call	abs2seg
-	mov	si, ax		! bios will put data in ds:si
-	mov	ds, dx
-!	movb	dl, #0x00
-	movb	dh, #0x00
-	movb	dl, bl
-!	mov	ax, #0x4b01	! command 0x4b, subcommand 0x01
-	movb	ah, #0x4b
-	movb	al, bh
-	int	0x13
-	mov	bp, cx
-	mov	(bp), ax
-	pop ds
-	pop si
-	pop dx
-	pop cx
-	pop bx
-	pop ax
-	pop bp
-	ret
-
 ! Support function for Minix-386 to make a BIOS int 13 call (disk I/O).
 bios13:
 	mov	bp, sp
@@ -1448,6 +1411,19 @@ _int15:
 	pop	si		! Restore
 	ret
 
+! void scan_keyboard(void)
+!	Read keyboard character. Needs to be done in case one is waiting.
+.define _scan_keyboard
+_scan_keyboard:
+	inb	0x60
+	inb	0x61
+	movb	ah, al
+	orb	al, #0x80
+	outb	0x61
+	movb	al, ah
+	outb	0x61
+	ret
+
 .data
 	.ascii	"(null)\0"	! Just in case someone follows a null pointer
 	.align	2
@@ -1533,3 +1509,5 @@ p_mcs_desc:
 	.comm	bus, 2		! Saved return value of _get_bus
 	.comm	unchar, 2	! Char returned by ungetch(c)
 	.comm	line, 2		! Serial line I/O port to copy console I/O to.
+
+

@@ -515,6 +515,7 @@ void initialize(void)
 	relocate();
 
 #if !DOS
+
 	/* Take the monitor out of the memory map if we have memory to spare,
 	 * and also keep the BIOS data area safe (1.5K), plus a bit extra for
 	 * where we may have to put a.out headers for older kernels.
