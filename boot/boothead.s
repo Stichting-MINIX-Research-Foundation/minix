@@ -1255,7 +1255,7 @@ int86:
 0:
  cseg	cmp	ax, intret	! Needs to be changed?
 	je	0f		! If not then avoid a huge I-cache stall
-   cseg	mov	intret, ax	! Patch `INT n' or `RETF; NOP' into code
+   cseg	mov	intret, ax	! Patch 'INT n' or 'RETF; NOP' into code
 	jmp	.+2		! Clear instruction queue
 0:
 	mov	ds, 16(bp)	! Load parameters

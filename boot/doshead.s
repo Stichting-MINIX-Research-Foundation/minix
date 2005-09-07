@@ -1145,7 +1145,7 @@ o32 eseg mov	(0x046C), eax	! Clear BIOS clock tick counter
 	push	intret+2	! Far return address
    o32	push	12(bp)		! Far driver address
 	mov	ax, 0x90CB	! RETF; NOP
-0: cseg	mov	(intret), ax	! Patch `INT n' or `RETF; NOP' into code
+0: cseg	mov	(intret), ax	! Patch 'INT n' or 'RETF; NOP' into code
 
 	mov	ds, 16(bp)	! Load parameters
 	mov	es, 18(bp)
