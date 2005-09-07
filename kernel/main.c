@@ -219,11 +219,11 @@ int how;
    */
   kprintf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-#if DEAD_CODE	/* timer hangs the boot monitor ... to be fixed! */
+
+  /* Continue after 1 second, to give processes a chance to get
+   * scheduled to do shutdown work.
+   */
   set_timer(&shutdown_timer, get_uptime() + HZ, shutdown);
-#else
-  shutdown(&shutdown_timer);
-#endif
 }
 
 /*==========================================================================*
