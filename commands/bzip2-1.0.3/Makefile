@@ -27,6 +27,8 @@ OBJS= blocksort.o  \
       decompress.o \
       bzlib.o
 
+include ../bigmake.inc
+
 all: all_notest test_nodep
 
 all_notest: libbz2.a bzip2 bzip2recover 

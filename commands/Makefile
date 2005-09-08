@@ -19,21 +19,17 @@ usage:
 all install::
 	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && $(MAKE) $@
 
-clean::
-	[ -f $(GZIP)/Makefile ] && cd $(GZIP) && $(MAKE) $@
-
 bigall:
-	cd $(FLEX) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake all
-	cd $(PYTHON) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake all
-	cd $(BZIP2) && bigmake all
-	cd $(KERMIT) && bigmake all
+	cd $(FLEX) && /bin/sh makeme.sh 
+	cd $(PYTHON) && /bin/sh makeme.sh 
+	cd $(BZIP2) && /bin/sh makeme.sh 
+	cd $(KERMIT) && /bin/sh makeme.sh
 
-biginstall:
-	cd $(FLEX) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake install
-	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake install
-	cd $(PYTHON) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && bigmake install
-	cd $(BZIP2) && bigmake install
-	cd $(KERMIT) && bigmake install
+biginstall: bigall
+	cd $(FLEX) && make install
+	cd $(PYTHON) && make install
+	cd $(BZIP2) && make install
+	cd $(KERMIT) && make install
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
