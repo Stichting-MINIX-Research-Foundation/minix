@@ -10,6 +10,8 @@
 
 LOCALRC=/usr/etc/rc.local
 MYLOCALRC=/mnt/etc/rc.local
+ROOTMB=16
+ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 
 PATH=/bin:/usr/bin
 export PATH
@@ -96,10 +98,57 @@ do
 done
 # end Step 1
 
-
 # begin Step 2
+echo ""
+echo " --- Step 2: Select your Ethernet chip ---------------------------------"
+echo ""
+
+# Ask user about networking
+echo "MINIX 3 currently supports the following Ethernet cards. Please choose: "
+    echo ""
+    echo "0. No Ethernet card (no networking)"
+    echo "1. Intel Pro/100"
+    echo "2. Realtek 8139 based card"
+    echo "3. Realtek 8029 based card (emulated by Qemu)"
+    echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
+    echo "5. 3Com 501 or 3Com 509 based card"
+    echo "6. AMD LANCE (emulated by VMWare)"
+    echo "7. Different Ethernet card (no networking)"
+    echo ""
+    echo "You can always change your mind after the setup."
+    echo ""
 step2=""
 while [ "$step2" != ok ]
+do
+    eth=""
+    echo -n "Ethernet card? [0] "; read eth
+    test -z $eth && eth=0
+    driver=""
+    driverargs=""
+    case "$eth" in
+        0) step2="ok"; ;;    
+	1) step2="ok";	driver=fxp;      ;;
+	2) step2="ok";	driver=rtl8139;  ;;
+	3) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
+	4) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+	   echo ""
+           echo "Note: After installing, edit $LOCALRC to the right configuration."
+           echo " chose option 4, the defaults for emulation by Bochs have been set."
+		;;
+	5) step2="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
+	   echo ""
+           echo "Note: After installing, edit $LOCALRC to the right configuration."
+		;;
+        6) driver="lance"; driverargs="LANCE0=on"; step2="ok"; ;;    
+        7) step2="ok"; ;;    
+        *) warn "choose a number"
+    esac
+done
+# end Step 2
+
+# begin Step 3
+step3=""
+while [ "$step3" != ok ]
 do
 	echo ""
 	echo " --- Step 2: Create a partition for MINIX 3, Or Reinstall ------------"
@@ -168,7 +217,7 @@ Please finish the name of the primary partition you have created:
 		do
 			echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
 			read confirmation
-			if [ "$confirmation" = yes ]; then step2=ok; fi
+			if [ "$confirmation" = yes ]; then step3=ok; fi
 		done
 		biosdrivename="Actual BIOS device name unknown, due to expert mode."
 	else
@@ -197,7 +246,7 @@ Please finish the name of the primary partition you have created:
 			# them messy.
 			atnormalize
 
-			if [ -n "$primary" ]; then step2=ok; fi
+			if [ -n "$primary" ]; then step3=ok; fi
 		else
 			# Reinstall mode
 			primary=""
@@ -220,64 +269,13 @@ Please finish the name of the primary partition you have a MINIX install on:
 			do
 				echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
 				read confirmation
-				if [ "$confirmation" = yes ]; then step2=ok; fi
+				if [ "$confirmation" = yes ]; then step3=ok; fi
 			done
 			biosdrivename="Actual BIOS device name unknown, due to reinstallation."
 		fi
 	fi
-done	# while step2 != ok
-# end Step 2
-
-if [ ! "$auto" = "r" ]
-then
-	# begin Step 3
-	echo ""
-	echo " --- Step 3: Select your Ethernet chip ---------------------------------"
-	echo ""
-	
-	# Ask user about networking
-	echo "MINIX 3 currently supports the following Ethernet cards. Please choose: "
-	    echo ""
-	    echo "0. No Ethernet card (no networking)"
-	    echo "1. Intel Pro/100"
-	    echo "2. Realtek 8139 based card"
-	    echo "3. Realtek 8029 based card (emulated by Qemu)"
-	    echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
-	    echo "5. 3Com 501 or 3Com 509 based card"
-	    echo "6. AMD LANCE driver (emulated by VMWare)"
-	    echo "7. Different Ethernet card (no networking)"
-	    echo ""
-	    echo "You can always change your mind after the setup."
-	    echo ""
-	step3=""
-	while [ "$step3" != ok ]
-	do
-	    eth=""
-	    echo -n "Ethernet card? [0] "; read eth
-	    test -z $eth && eth=0
-	    driver=""
-	    driverargs=""
-	    case "$eth" in
-	        0) step3="ok"; ;;    
-		1) step3="ok";	driver=fxp;      ;;
-		2) step3="ok";	driver=rtl8139;  ;;
-		3) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-		4) step3="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
-		   echo ""
-	           echo "Note: After installing, edit $LOCALRC to the right configuration."
-	           echo " chose option 4, the defaults for emulation by Bochs have been set."
-			;;
-		5) step3="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
-		   echo ""
-	           echo "Note: After installing, edit $LOCALRC to the right configuration."
-			;;
-	        6) driver="lance"; driverargs="LANCE0=on"; step3="ok"; ;;    
-	        7) step3="ok"; ;;    
-	        *) warn "choose a number"
-	    esac
-	done
-	# end Step 3
-fi
+done	# while step3 != ok
+# end Step 3
 
 defmb=200
 
@@ -342,14 +340,14 @@ echo "
 You have selected to (re)install MINIX in the partition /dev/$primary.
 The following subpartitions are now being created on /dev/$primary:
 
-    Root subpartition:	/dev/$root	16 MB
+    Root subpartition:	/dev/$root	$ROOTMB MB
     /home subpartition:	/dev/$home	$homemb
     /usr subpartition:	/dev/$usr	rest of $primary
 "
 					# Secondary master bootstrap.
 installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
-partition /dev/$primary 1 81:32768* 81:$homesize 81:0+ > /dev/null || exit
+partition /dev/$primary 1 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exit
 
 echo "Creating /dev/$root .."
 mkfs -B $blocksizebytes /dev/$root || exit

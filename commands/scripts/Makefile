@@ -36,7 +36,7 @@ usr:	\
 	/usr/bin/mkdep \
 	/usr/bin/mkdist \
 	/usr/bin/setup \
-	/usr/bin/minixsize \
+	/usr/bin/binsizes \
 	/usr/bin/rotate \
 	/usr/bin/floppysetup \
 	/usr/bin/spell \
@@ -121,7 +121,7 @@ clean:
 /usr/bin/setup:	setup.sh
 	install -m 755 -c -o bin $? $@
 
-/usr/bin/minixsize:	minixsize.sh
+/usr/bin/binsizes:	binsizes.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/spell:	spell.sh
