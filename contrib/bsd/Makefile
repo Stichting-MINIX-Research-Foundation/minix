@@ -2,12 +2,9 @@
 NVI=nvi-1.79
 NVIWORK=$(NVI)/minix
 
-all:
+all install:
 	-mkdir $(NVIWORK)
-	cd $(NVIWORK) && /bin/sh makeme.sh 
-
-install: all
-	cd $(NVIWORK) && sh ../build/install.minix
+	cd $(NVI) && make  $@
 
 clean:
 	if [ -f $(NVIWORK)/Makefile ]; then cd $(NVIWORK) && make clean; fi
