@@ -4,7 +4,7 @@ NVIWORK=$(NVI)/minix
 
 all:
 	-mkdir $(NVIWORK)
-	cd $(NVIWORK) && CFLAGS="-D_MINIX=1 -D_POSIX_SOURCE=1" ../build/configure.minix --prefix=/usr/local --host=minix && make $@
+	cd $(NVIWORK) && /bin/sh makeme.sh 
 
 install: all
 	cd $(NVIWORK) && sh ../build/install.minix
