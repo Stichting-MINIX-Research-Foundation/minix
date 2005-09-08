@@ -24,5 +24,5 @@ install::
 	for u in bin ast root; do (cd ast && tar cf - .[a-z]* ) | (cd ~$$u && tar xf - ); chown -R $$u ~$$u; done
 
 postinstall:
-	minixsize normal
+	binsizes normal
 
