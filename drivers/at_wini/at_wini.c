@@ -885,30 +885,8 @@ unsigned nr_req;		/* length of request vector */
 	if (!(wn->state & INITIALIZED) && w_specify() != OK) return(EIO);
 
 	/* Tell the controller to transfer nbytes bytes. */
-#if 1
 	r = do_transfer(wn, wn->precomp, ((nbytes >> SECTOR_SHIFT) & BYTE),
 		block, opcode);
-#else
-	cmd.precomp = wn->precomp;
-	cmd.count   = (nbytes >> SECTOR_SHIFT) & BYTE;
-	if (wn->ldhpref & LDH_LBA) {
-		cmd.sector  = (block >>  0) & 0xFF;
-		cmd.cyl_lo  = (block >>  8) & 0xFF;
-		cmd.cyl_hi  = (block >> 16) & 0xFF;
-		cmd.ldh     = wn->ldhpref | ((block >> 24) & 0xF);
-	} else {
-		cylinder = block / secspcyl;
-		head = (block % secspcyl) / wn->psectors;
-		sector = block % wn->psectors;
-		cmd.sector  = sector + 1;
-		cmd.cyl_lo  = cylinder & BYTE;
-		cmd.cyl_hi  = (cylinder >> 8) & BYTE;
-		cmd.ldh     = wn->ldhpref | head;
-	}
-	cmd.command = opcode == DEV_SCATTER ? CMD_WRITE : CMD_READ;
-
-	r = com_out(&cmd);
-#endif
 
 	while (r == OK && nbytes > 0) {
 		/* For each sector, wait for an interrupt and fetch the data
