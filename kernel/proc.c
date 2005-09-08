@@ -149,8 +149,8 @@ message *m_ptr;			/* pointer to message in the caller's space */
           return(ECALLDENIED);		/* call denied by ipc mask */
       }
 
-      if (isemptyn(src_dst)) {
-          kprintf("[sys_call: dead dest; %d, %d, %d] ", 
+      if (isemptyn(src_dst) && !shutdown_started) {
+          kprintf("sys_call: dead dest; %d, %d, %d\n", 
               function, proc_nr(caller_ptr), src_dst);
           return(EDEADDST); 		/* cannot send to the dead */
       }

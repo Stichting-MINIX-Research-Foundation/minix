@@ -155,6 +155,9 @@ PUBLIC void main()
   }
 #endif
 
+  /* We're definitely not shutting down. */
+  shutdown_started = 0;
+
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */
@@ -212,6 +215,9 @@ int how;
       if (!isemptyp(rp) && (priv(rp)->s_flags & SYS_PROC) && !iskernelp(rp))
           send_sig(proc_nr(rp), SIGKSTOP);
   }
+
+  /* We're shutting down. Diagnostics may behave differently now. */
+  shutdown_started = 1;
 
   /* Notify system processes of the upcoming shutdown and allow them to be 
    * scheduled by setting a watchog timer that calls shutdown(). The timer 
