@@ -94,7 +94,7 @@ do
 done
 
 if [ $QUICK = 0 ]
-then USRMB=300
+then USRMB=400
 else USRMB=30
 fi
 
@@ -163,7 +163,7 @@ mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 
-if [ QUICK = 0 ]
+if [ $QUICK = 0 ]
 then
 	echo " * Transfering $COPYITEMS to $RELEASEDIR"
 	( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1

@@ -102,5 +102,5 @@ clean:
 	cd ../kernel && $(MAKE) $@
 	cd ../servers && $(MAKE) $@
 	cd ../drivers && $(MAKE) $@
-	rm -f *.bak image image_small *.iso *.iso.gz cdfdimage rootimage
+	rm -rf *.bak image image_small *.iso *.iso.gz cdfdimage rootimage src
 
