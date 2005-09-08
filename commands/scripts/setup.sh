@@ -4,7 +4,7 @@
 #
 # Changes:
 #    Aug     2005   robustness checks and beautifications  (Jorrit N. Herder)
-#    Jul     2005   extended with autopart and networking  (Ben J. Gras)
+#    Jul     2005   extended with autopart and networking  (Ben Gras)
 #    Dec 20, 1994   created  (Kees J. Bot)
 #						
 
@@ -157,9 +157,10 @@ do
     echo "Now you need to create a MINIX 3 partition on your hard disk."
     echo "You can also select one that's already there."
     echo " "
-    echo "If you have an existing installation, 'reinstall'ing will let you"
+    echo "If you have an existing installation, reinstalling will let you"
     echo "keep your current partitioning and subpartitioning, and overwrite"
-    echo "everything except your s3 subpartition (/home)."
+    echo "everything except your s3 subpartition (/home). If you want to"
+    echo "reinstall, select your existing minix partition."
     echo " "
     echo "Unless you are an expert, you are advised to use the automated"
     echo "step-by-step help in setting up."
@@ -167,12 +168,10 @@ do
     ok=""
     while [ "$ok" = "" ]
     do
-	    echo "Press ENTER for automatic mode, or type 'expert', or"
-	    echo -n "type 'reinstall': "
+	    echo -n "Press ENTER for automatic mode, or type 'expert': "
 	    read mode
 	    if [ -z "$mode" ]; then auto="1"; ok="yes"; fi 
 	    if [ "$mode" = expert ]; then auto=""; ok="yes"; fi
-	    if [ "$mode" = reinstall ]; then auto="r"; ok="yes"; fi
 	    if [ "$ok" != yes ]; then warn "try again"; fi 
     done
 
@@ -183,7 +182,7 @@ do
 		# Expert mode
 		echo -n "
 MINIX needs one primary partition of about 250 MB for a full install.
-The maximum fill system currently supported is 4 GB.
+The maximum file system currently supported is 4 GB.
 
 If there is no free space on your disk then you have to choose an option:
    (1) Delete one or more partitions
@@ -247,44 +246,69 @@ Please finish the name of the primary partition you have created:
 			atnormalize
 
 			if [ -n "$primary" ]; then step3=ok; fi
-		else
-			# Reinstall mode
-			primary=""
-
-			while [ -z "$primary" ]
-			do
-			    echo -n "
-Please finish the name of the primary partition you have a MINIX install on:
-/dev/"
-			    read primary
-			done
-			echo ""
-			echo "This is the point of no return.  You have selected to reinstall MINIX"
-			echo "on partition /dev/$primary.  Please confirm that you want to use this"
-			echo "selection to reinstall MINIX. This will wipe out your s0 (root) and"
-			echo "s2 (/usr) filesystems."
-			echo ""
-			confirmation=""
-			while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
-			do
-				echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
-				read confirmation
-				if [ "$confirmation" = yes ]; then step3=ok; fi
-			done
-			biosdrivename="Actual BIOS device name unknown, due to reinstallation."
 		fi
 	fi
 done	# while step3 != ok
 # end Step 3
 
-defmb=200
+root=${primary}s0
+home=${primary}s1
+usr=${primary}s2
+umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
+umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
+umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
+
+TMPMP=/m
+mkdir $TMPMP >/dev/null 2>&1
+
+confirm=""
+
+while [ "$confirm" = "" ]
+do
+	echo ""
+	if mount /dev/$home $TMPMP >/dev/null 2>&1
+	then	umount /dev/$home >/dev/null 2>&1
+		echo "Reinstall?"
+		echo ""
+		echo "It seems like there is already a MINIX system there (in $home)."
+		echo "You can reinstall, which means your /home won't be touched."
+		echo "If you don't want to keep /home, you can \"mkfs /dev/$home\" after installing."
+		echo "If you type N, I'll exit. "
+		echo ""
+		echo -n "Would you like to reinstall, keeping /home intact? [Y] "
+		auto="r"
+	else	echo "Clean install?"
+		echo ""
+		echo "It seems like there is NO MINIX system in $home."
+		echo "Just in case there is something there you want to keep, I'll"
+		echo "ask you this. If you type N, I'll exit to let you figure"
+		echo "out what is wrong."
+		echo ""
+		echo "Would you like to install, wiping everything "
+		echo -n "in /dev/$primary ? [Y] "
+		auto=""
+	fi
+	read conf
+	case "$conf" in
+	"") 	confirm="ok"; ;;
+	[Yy]*)	confirm="ok"; ;;
+	[Nn]*)	exit 1; ;;
+	esac
+done
 
 if [ ! "$auto" = r ]
 then	homesize=""
 	while [ -z "$homesize" ]
 	do
+		devsize="`devsize /dev/$primary`"
+		devsizemb="`expr $devsize / 1024 / 2`"
+
+		# 10% of partition is default
+		defmb="`expr $devsizemb / 10`"
+
 		echo ""
-		echo -n "How big do you want your /home to be, in MB? [$defmb] "
+		echo "How big do you want your /home to be, "
+		echo -n "in MB (total partition size is $devsizemb) ? [$defmb] "
 		read homesize
 		if [ "$homesize" = "" ] ; then homesize=$defmb; fi
 		echo -n "$homesize MB Ok? [Y] "
@@ -300,13 +324,6 @@ else
 	homesize=exist
 	homemb="current size"
 fi
-
-root=${primary}s0
-home=${primary}s1
-usr=${primary}s2
-umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
-umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
-umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 
 blockdefault=4
 

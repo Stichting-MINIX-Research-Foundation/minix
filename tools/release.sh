@@ -1,5 +1,7 @@
 #!/bin/sh
 
+secs=`expr 32 '*' 64`
+
 make_hdimage()
 {
 	dd if=$TMPDISK of=usrimage bs=$BS count=$USRBLOCKS
@@ -17,8 +19,8 @@ make_hdimage()
 	dd < tmpimage > subpart count=1
 
 	primsects=`expr 1 + $rootsects + $usrsects`
-	cyl=`expr '(' $primsects ')' / 32 / 64 + 1`
-	padsects=`expr $cyl \* 32 \* 64 - 1 - $primsects`
+	cyl=`expr '(' $primsects ')' / $secs + 1`
+	padsects=`expr $cyl \* $secs - 1 - $primsects`
 
 	{ dd < /dev/zero count=1
 		cat subpart
@@ -59,22 +61,17 @@ ISO=minix.iso
 ISOGZ=minix.iso.gz
 RAM=/dev/ram
 BS=4096
-USRMB=300
-USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
-USRSECTS="`expr $USRMB \* 1024 \* 2`"
-ROOTMB=2
-ROOTSECTS="`expr $ROOTMB \* 1024 \* 2`"
-ROOTBLOCKS="`expr $ROOTMB \* 1024 \* 1024 / $BS`"
 
 HDEMU=0
 COPY=0
 ALL=0
+QUICK=0
 
-while getopts "cha?" c
+while getopts "chaq?" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-c] [-h]" >&2
+		echo "Usage: $0 [-a] [-c] [-h]" >&2
 		exit 1
 	;;
 	h)
@@ -89,8 +86,23 @@ do
 		echo " * Including contrib"
 		ALL=1
 		;;
+	q)
+		echo " * Quick option (skip important bits"
+		QUICK=1
+		;;
 	esac
 done
+
+if [ $QUICK = 0 ]
+then USRMB=300
+else USRMB=30
+fi
+
+USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
+USRSECTS="`expr $USRMB \* 1024 \* 2`"
+ROOTMB=2
+ROOTSECTS="`expr $ROOTMB \* 1024 \* 2`"
+ROOTBLOCKS="`expr $ROOTMB \* 1024 \* 1024 / $BS`"
 
 if [ "$COPY" -ne 1 ]
 then
@@ -150,57 +162,63 @@ echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
-echo " * Transfering $COPYITEMS to $RELEASEDIR"
-( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
 
-# Make sure compilers and libraries are bin-owned
-chown -R bin $RELEASEDIR/usr/lib
-
-if [ "$COPY" -ne 1 ]
+if [ QUICK = 0 ]
 then
-	echo " * Doing new cvs export"
-	rm -rf src
-	cvs export -rHEAD src >/dev/null || exit 1
-	srcdir=src
-	if [ "$ALL" = 0 ]
+	echo " * Transfering $COPYITEMS to $RELEASEDIR"
+	( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
+
+	# Make sure compilers and libraries are bin-owned
+	chown -R bin $RELEASEDIR/usr/lib
+
+	if [ "$COPY" -ne 1 ]
 	then
-		# No contrib stuff
-		rm -rf src/contrib
+		echo " * Doing new cvs export"
+		rm -rf src
+		cvs export -rHEAD src >/dev/null || exit 1
+		srcdir=src
+		if [ "$ALL" = 0 ]
+		then
+			# No contrib stuff
+			rm -rf src/contrib
+		fi
+	else
+		( cd .. && make clean )
+		srcdir=/usr/src
 	fi
-else
-	( cd .. && make clean )
-	srcdir=/usr/src
+
+	echo " * Transfering source to $RELEASEDIR"
+
+	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
+
+	if [ "$ALL" = 0 ]
+	then	echo " * Removing temporary cvs source tree"
+		rm -rf src
+	fi
+
+	echo " * Fixups for owners and modes of dirs and files"
+	chown -R bin $RELEASEDIR/usr/src
+	find $RELEASEDIR/usr/src -type d | xargs chmod 755
+	find $RELEASEDIR/usr/src -type f | xargs chmod 644
+	# Bug tracking system not for on cd
+	rm -rf $RELEASEDIR/usr/src/doc/bugs
+
+	# Make sure the CD knows it's a CD
+	date >$RELEASEDIR/CD
+	echo " * Chroot build"
+	chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
+	echo " * Chroot build done"
+	# The build process leaves some file in src as root.
+	chown -R bin $RELEASEDIR/usr/src
+	cp issue.install $RELEASEDIR/etc/issue
+
+	if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
+
+	echo "Temporary filesystems still mounted. Make changes, or press RETURN"
+	echo -n "to continue making the image.."
+	read xyzzy
 fi
 
-echo " * Transfering source to $RELEASEDIR"
-
-( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
-
-if [ "$ALL" = 0 ]
-then	echo " * Removing temporary cvs source tree"
-	rm -rf src
-fi
-
-echo " * Fixups for owners and modes of dirs and files"
-chown -R bin $RELEASEDIR/usr/src
-find $RELEASEDIR/usr/src -type d | xargs chmod 755
-find $RELEASEDIR/usr/src -type f | xargs chmod 644
-# Bug tracking system not for on cd
-rm -rf $RELEASEDIR/usr/src/doc/bugs
-# Make sure the CD knows it's a CD
-date >$RELEASEDIR/CD
-echo " * Chroot build"
-chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
-echo " * Chroot build done"
-# The build process leaves some file in src as root.
-chown -R bin $RELEASEDIR/usr/src
-cp issue.install $RELEASEDIR/etc/issue
-
-if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
-
-echo "Temporary filesystems still mounted. Make changes, or press RETURN"
-echo -n "to continue making the image.."
-read xyzzy
 umount $TMPDISK || exit
 umount $TMPDISK2 || exit
 umount $RAM || exit
@@ -228,13 +246,20 @@ writeisofs -l MINIX -b $bootimage $h_opt $CDFILES $ISO || exit 1
 if [ "$HDEMU" -eq 0 ]
 then
 	echo "Appending Minix root and usr filesystem"
-	( cat $ISO $ROOTIMAGE ; dd if=$TMPDISK bs=$BS count=$USRBLOCKS ) >m
+	# Pad ISO out to cylinder boundary
 	isobytes=`stat -size $ISO`
-	isosects=`expr $isobytes / 512 - 1`
+	isosects=`expr $isobytes / 512`
+	isopad=`expr $secs - '(' $isosects % $secs ')'`
+	dd if=/dev/zero count=$isopad >>$ISO
+	# number of sectors
+	isosects=`expr $isosects + $isopad`
+	( cat $ISO $ROOTIMAGE ; dd if=$TMPDISK bs=$BS count=$USRBLOCKS ) >m
 	mv m $ISO
 	# Make CD partition table
 	installboot -m $ISO /usr/mdec/masterboot
-	partition -m $ISO 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
+	# Make sure there is no hole..! Otherwise the ISO format is
+	# unreadable.
+	partition -m $ISO 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 fi
 echo " * gzipping $ISO"
 gzip -9 $ISO
