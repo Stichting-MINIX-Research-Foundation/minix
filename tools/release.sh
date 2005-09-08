@@ -174,22 +174,22 @@ then
 	if [ "$COPY" -ne 1 ]
 	then
 		echo " * Doing new cvs export"
-		rm -rf src
-		cvs export -rHEAD src >/dev/null || exit 1
-		srcdir=src
 		if [ "$ALL" = 0 ]
 		then
+			cvs export -rHEAD src >/dev/null || exit 1
+			srcdir=src
 			# No contrib stuff
 			rm -rf src/contrib
+			echo " * Transfering source to $RELEASEDIR"
+			( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
+		else
+			( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src )
 		fi
 	else
 		( cd .. && make clean )
 		srcdir=/usr/src
+		( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
 	fi
-
-	echo " * Transfering source to $RELEASEDIR"
-
-	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
 
 	if [ "$ALL" = 0 ]
 	then	echo " * Removing temporary cvs source tree"
