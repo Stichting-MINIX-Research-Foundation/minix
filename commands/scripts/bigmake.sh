@@ -1,6 +1,6 @@
 #!/bin/sh
-minixsize big
+binsizes big
 make $*
 c=$?
-minixsize normal
+binsizes normal
 exit $c
