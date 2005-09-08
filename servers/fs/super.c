@@ -239,7 +239,6 @@ register struct super_block *sp; /* pointer to a superblock */
 	version = V3;
   	native = 1;
   } else {
-  	printf("unrecognized magic number\n");
 	return(EINVAL);
   }
 
@@ -282,7 +281,6 @@ register struct super_block *sp; /* pointer to a superblock */
   }
 
   if(sp->s_block_size < MIN_BLOCK_SIZE) {
-  	printf("block size (%d) out of range\n", sp->s_block_size);
   	return EINVAL;
   }
   if(sp->s_block_size > MAX_BLOCK_SIZE) {
@@ -292,19 +290,13 @@ register struct super_block *sp; /* pointer to a superblock */
   	return EINVAL;
   }
   if((sp->s_block_size % 512) != 0) {
-  	printf("block size (%d) not multiple of sector size\n",
-  		sp->s_block_size);
   	return EINVAL;
   }
   if(SUPER_SIZE > sp->s_block_size) {
-  	printf("super block size size (%d) larger than block size (%d)\n",
-  		SUPER_SIZE, sp->s_block_size);
   	return EINVAL;
   }
   if((sp->s_block_size % V2_INODE_SIZE) != 0 ||
      (sp->s_block_size % V1_INODE_SIZE) != 0) {
-  	printf("super block size size (%d) not multiple of inode size\n",
-  		sp->s_block_size);
   	return EINVAL;
   }
 
