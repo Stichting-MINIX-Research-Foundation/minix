@@ -21,7 +21,7 @@ install::
 	cd /dev && sh /usr/src/commands/scripts/MAKEDEV.sh null 
 	cd /dev && sh /usr/src/commands/scripts/MAKEDEV.sh std  2>/dev/null
 	@echo "Making user homedirs.."
-	for u in bin ast root; do (cd ast && tar cf - .[a-z]* ) | (cd ~$$u && tar xf - ); chown -R $$u ~$$u; done
+	for u in /usr/ast ~root; do (cd ast && tar cf - .[a-z]* ) | (cd $$u && tar xf - ); done
 
 postinstall:
 	binsizes normal
