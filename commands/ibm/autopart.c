@@ -59,8 +59,9 @@ Num Sort   Type
 #define DEV_FD0		0x200		/* Device number of /dev/fd0 */
 #define DEV_C0D0	0x300		/* Device number of /dev/c0d0 */
 
-#define MIN_REGION_MB	500
-#define MIN_REGION_SECTORS (1024*1024*MIN_REGION_MB/SECTOR_SIZE)
+int min_region_mb = 500;
+
+#define MIN_REGION_SECTORS (1024*1024*min_region_mb/SECTOR_SIZE)
 
 #define MAX_REGION_MB	4095
 #define MAX_REGION_SECTORS (1024*(1024/SECTOR_SIZE)*MAX_REGION_MB)
@@ -2509,7 +2510,7 @@ select_disk(void)
 }
 
 int
-scribble_region(region_t *reg, struct part_entry **pe)
+scribble_region(region_t *reg, struct part_entry **pe, int *made_new)
 {
 	int ex, trunc = 0, changed = 0, i;
 	struct part_entry *newpart;
@@ -2527,7 +2528,8 @@ scribble_region(region_t *reg, struct part_entry **pe)
 			changed = 1;
 			cylinderalign(reg);
 		}
-	}
+		if(made_new) *made_new = 1;
+	} else if(made_new) *made_new = 0;
 #if 0
 	if(trunc) {
 		printf("\nWill only use %dMB.\n", MAX_REGION_MB);
@@ -2605,7 +2607,7 @@ do_autopart(int resultfd)
 	struct part_entry *pe;
 	char sure[50];
 	struct part_entry orig_table[1 + NR_PARTITIONS];
-	int region, disk;
+	int region, disk, newp;
 
 	nordonly = 1; 
 
@@ -2629,12 +2631,11 @@ do_autopart(int resultfd)
 	} while(!r);	/* Back to step 2. */
 
 	/* Write things. */
-	if(scribble_region(r, &pe)) {
+	if(scribble_region(r, &pe, &newp)) {
 		char *name;
 		int i, found = -1;
 		char partbuf[100], devname[100];
 		struct part_entry *tpe;
-
 
 		printstep(3, "Confirm your choices");
 
@@ -2707,6 +2708,18 @@ do_autopart(int resultfd)
 		if(sanitycheck_failed(devname, tpe)) {
 			fprintf(stderr, "Autopart internal error (disk sanity check failed).\n");
 			exit(1);
+		}
+
+		if(newp) {
+			int fd;
+			if((fd=open(devname, O_WRONLY)) < 0) {
+				perror(devname);
+			} else {
+				/* Clear any subpartitioning. */
+				static char sub[2048];
+				write(fd, sub, sizeof(sub));
+				close(fd);
+			}
 		}
 		return 0;
 	}
@@ -2782,8 +2795,11 @@ int main(int argc, char **argv)
      } else {
      	int c;
      	/* autopart uses getopt() */
-     	while((c = getopt(argc, argv, "f:")) != EOF) {
+     	while((c = getopt(argc, argv, "m:f:")) != EOF) {
      		switch(c) {
+			case 'm':
+				min_region_mb = atoi(optarg);
+				break;
      			case 'f':
 				/* Make sure old data file is gone. */
      				unlink(optarg);
