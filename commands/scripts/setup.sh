@@ -12,6 +12,8 @@ LOCALRC=/usr/etc/rc.local
 MYLOCALRC=/mnt/etc/rc.local
 ROOTMB=16
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
+USRKB="`cat /.usrkb`"
+TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
 
 PATH=/bin:/usr/bin
 export PATH
@@ -108,11 +110,11 @@ echo "MINIX 3 currently supports the following Ethernet cards. Please choose: "
     echo ""
     echo "0. No Ethernet card (no networking)"
     echo "1. Intel Pro/100"
-    echo "2. Realtek 8139 based card"
-    echo "3. Realtek 8029 based card (emulated by Qemu)"
-    echo "4. NE2000, 3com 503 or WD based card (emulated by Bochs)"
-    echo "5. 3Com 501 or 3Com 509 based card"
-    echo "6. AMD LANCE (emulated by VMWare)"
+    echo "2. 3Com 501 or 3Com 509 based card"
+    echo "3. Realtek 8139 based card"
+    echo "4. Realtek 8029 based card (also emulated by Qemu)"
+    echo "5. NE2000, 3com 503 or WD based card (also emulated by Bochs)"
+    echo "6. AMD LANCE (also emulated by VMWare)"
     echo "7. Different Ethernet card (no networking)"
     echo ""
     echo "You can always change your mind after the setup."
@@ -128,16 +130,16 @@ do
     case "$eth" in
         0) step2="ok"; ;;    
 	1) step2="ok";	driver=fxp;      ;;
-	2) step2="ok";	driver=rtl8139;  ;;
-	3) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	4) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+	2) step2="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
+	   echo ""
+           echo "Note: After installing, edit $LOCALRC to the right configuration."
+		;;
+	3) step2="ok";	driver=rtl8139;  ;;
+	4) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
+	5) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
 	   echo ""
            echo "Note: After installing, edit $LOCALRC to the right configuration."
            echo " chose option 4, the defaults for emulation by Bochs have been set."
-		;;
-	5) step2="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
-	   echo ""
-           echo "Note: After installing, edit $LOCALRC to the right configuration."
 		;;
         6) driver="lance"; driverargs="LANCE0=on"; step2="ok"; ;;    
         7) step2="ok"; ;;    
@@ -151,15 +153,16 @@ step3=""
 while [ "$step3" != ok ]
 do
 	echo ""
-	echo " --- Step 2: Create a partition for MINIX 3, Or Reinstall ------------"
+	echo " --- Step 3: Create or Select a partition for MINIX 3 -------------------"
 	echo ""
 
     echo "Now you need to create a MINIX 3 partition on your hard disk."
+    echo "It has to have $TOTALMB MB at the very least."
     echo "You can also select one that's already there."
     echo " "
     echo "If you have an existing installation, reinstalling will let you"
     echo "keep your current partitioning and subpartitioning, and overwrite"
-    echo "everything except your s3 subpartition (/home). If you want to"
+    echo "everything except your s1 subpartition (/home). If you want to"
     echo "reinstall, select your existing minix partition."
     echo " "
     echo "Unless you are an expert, you are advised to use the automated"
@@ -181,7 +184,8 @@ do
 	then
 		# Expert mode
 		echo -n "
-MINIX needs one primary partition of about 250 MB for a full install.
+MINIX needs one primary partition of $TOTALMB MB for a full install,
+plus what you want for /home.
 The maximum file system currently supported is 4 GB.
 
 If there is no free space on your disk then you have to choose an option:
@@ -224,7 +228,7 @@ Please finish the name of the primary partition you have created:
 		then
 			# Automatic mode
 			PF="/tmp/pf"
-			if autopart -f$PF
+			if autopart -m$TOTALMB -f$PF
 			then	if [ -s "$PF" ]
 				then
 					set `cat $PF`
@@ -258,6 +262,15 @@ umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
 umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
 umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 
+devsize="`devsize /dev/$primary`"
+devsizemb="`expr $devsize / 1024 / 2`"
+
+if [ $devsizemb -lt $TOTALMB ]
+then	echo "The selected partition ($devsizemb MB) is too small."
+	echo "You'll need $TOTALMB MB at least."
+	exit 1
+fi
+
 TMPMP=/m
 mkdir $TMPMP >/dev/null 2>&1
 
@@ -265,55 +278,77 @@ confirm=""
 
 while [ "$confirm" = "" ]
 do
+	auto=""
 	echo ""
 	if mount /dev/$home $TMPMP >/dev/null 2>&1
 	then	umount /dev/$home >/dev/null 2>&1
 		echo "Reinstall?"
 		echo ""
-		echo "It seems like there is already a MINIX system there (in $home)."
-		echo "You can reinstall, which means your /home won't be touched."
-		echo "If you don't want to keep /home, you can \"mkfs /dev/$home\" after installing."
-		echo "If you type N, I'll exit. "
+		echo "You have selected an existing MINIX 3 partition."
+		echo "Type F for full installation (to overwrite entire partition)"
+		echo "Type R for a reinstallation (existing /home will not be affected)"
 		echo ""
-		echo -n "Would you like to reinstall, keeping /home intact? [Y] "
-		auto="r"
+		echo -n "(F)ull or (R)einstall? [R] "
+		read conf
+		case "$conf" in
+		"") 	confirm="ok"; auto="r"; ;;
+		[Rr]*)	confirm="ok"; auto="r"; ;;
+		[Ff]*)	confirm="ok"; auto="" ;;
+		esac
+
 	else	echo "Clean install?"
 		echo ""
-		echo "It seems like there is NO MINIX system in $home."
+		echo "It seems like there is NO MINIX system already there,"
+		echo "or no /home filesystem in $home."
 		echo "Just in case there is something there you want to keep, I'll"
 		echo "ask you this. If you type N, I'll exit to let you figure"
 		echo "out what is wrong."
 		echo ""
 		echo "Would you like to install, wiping everything "
 		echo -n "in /dev/$primary ? [Y] "
-		auto=""
+
+		read conf
+		case "$conf" in
+		"") 	confirm="ok"; ;;
+		[Yy]*)	confirm="ok"; ;;
+		[Nn]*)	exit 1; ;;
+		esac
 	fi
-	read conf
-	case "$conf" in
-	"") 	confirm="ok"; ;;
-	[Yy]*)	confirm="ok"; ;;
-	[Nn]*)	exit 1; ;;
-	esac
+
 done
+
+nohome="0"
 
 if [ ! "$auto" = r ]
 then	homesize=""
 	while [ -z "$homesize" ]
 	do
-		devsize="`devsize /dev/$primary`"
-		devsizemb="`expr $devsize / 1024 / 2`"
 
 		# 10% of partition is default
 		defmb="`expr $devsizemb / 10`"
+		maxhome="`expr $devsizemb - $TOTALMB - 1`"
+		if [ $defmb -gt $maxhome ]
+		then
+			defmb=$maxhome
+		fi
 
 		echo ""
-		echo "How big do you want your /home to be, "
-		echo -n "in MB (total partition size is $devsizemb) ? [$defmb] "
+		echo "MINIX will take up $TOTALMB MB, without /home."
+		echo -n "How big do you want your /home to be in MB (0-$maxhome) ? [$defmb] "
 		read homesize
 		if [ "$homesize" = "" ] ; then homesize=$defmb; fi
-		echo -n "$homesize MB Ok? [Y] "
-		read ok
-		[ "$ok" = Y -o "$ok" = y -o "$ok" = "" ] || homesize=""
+		if [ "$homesize" -lt 1 ]
+		then	nohome=1
+			homesize=0
+		else
+			if [ "`expr $TOTALMB + $homesize`" -gt $devsizemb ]
+			then	echo "That won't fit!"
+			else
+				echo -n "$homesize MB Ok? [Y] "
+				read ok
+				[ "$ok" = Y -o "$ok" = y -o "$ok" = "" ] || homesize=""
+			fi
+		fi
 		echo ""
 	done
 	# Homesize in sectors
@@ -369,9 +404,13 @@ partition /dev/$primary 1 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exi
 echo "Creating /dev/$root for / .."
 mkfs -B $blocksizebytes /dev/$root || exit
 
-if [ ! "$auto" = r ]
-then	echo "Creating /dev/$home for /home .."
-	mkfs -B $blocksizebytes /dev/$home || exit
+if [ "$nohome" = 0 ]
+then
+	if [ ! "$auto" = r ]
+	then	echo "Creating /dev/$home for /home .."
+		mkfs -B $blocksizebytes /dev/$home || exit
+	fi
+else	echo "Skipping /home"
 fi
 
 echo "Creating /dev/$usr for /usr .."
@@ -389,9 +428,14 @@ echo ""
 echo "Scanning /dev/$root for bad blocks:"
 readall -b /dev/$root | sh
 
-echo ""
-echo "Scanning /dev/$home for bad blocks:"
-readall -b /dev/$home | sh
+if [ "$nohome" = 0 ]
+then
+	echo ""
+	echo "Scanning /dev/$home for bad blocks:"
+	readall -b /dev/$home | sh
+	fshome="home=/dev/$home"
+else	fshome=""
+fi
 
 echo ""
 echo "Scanning /dev/$usr for bad blocks:"
@@ -408,7 +452,7 @@ echo ""
 
 mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 
-files="`find /usr | wc -l`"
+files="`cat /.usrfiles`"
 cpdir -v /usr /mnt | progressbar "$files" || exit	# Copy the usr floppy.
 
 
@@ -423,7 +467,7 @@ umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
 mount /dev/$root /mnt >/dev/null || exit
 
 # Running from the installation CD.
-files="`find / -xdev | wc -l`"
+files="`cat /.rootfiles`"
 cpdir -vx / /mnt | progressbar "$files" || exit	
 
 if [ -n "$driver" ]
@@ -431,7 +475,7 @@ then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 fi
 
 # CD remnants that aren't for the installed system
-rm /mnt/etc/issue /mnt/CD 2>/dev/null
+rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
 					# Change /etc/fstab. (No swap.)
 					# ${swap:+swap=/dev/$swap}
 echo >/mnt/etc/fstab "\
@@ -439,7 +483,7 @@ echo >/mnt/etc/fstab "\
 
 root=/dev/$root
 usr=/dev/$usr
-home=/dev/$home"
+$fshome"
 
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
@@ -459,7 +503,7 @@ sync
 bios="`echo $primary | sed 's/d./dX/g'`"
 
 if [ ! "$auto" = "r" ]
-then	if mount /dev/$home /home
+then	if mount /dev/$home /home 2>/dev/null
 	then	for u in bin ast
 		do	if mkdir ~$u
 			then	echo " * Creating home directory for $u in ~$u"
