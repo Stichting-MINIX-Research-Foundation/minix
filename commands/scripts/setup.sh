@@ -366,15 +366,15 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 					# Partition the primary.
 partition /dev/$primary 1 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exit
 
-echo "Creating /dev/$root .."
+echo "Creating /dev/$root for / .."
 mkfs -B $blocksizebytes /dev/$root || exit
 
 if [ ! "$auto" = r ]
-then	echo "Creating /dev/$home .."
+then	echo "Creating /dev/$home for /home .."
 	mkfs -B $blocksizebytes /dev/$home || exit
 fi
 
-echo "Creating /dev/$usr .."
+echo "Creating /dev/$usr for /usr .."
 mkfs -B $blocksizebytes /dev/$usr || exit
 
 echo ""
