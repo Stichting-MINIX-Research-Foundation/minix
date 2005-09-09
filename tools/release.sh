@@ -219,6 +219,10 @@ then
 	read xyzzy
 fi
 
+df $TMPDISK | tail -1 | awk '{ print $4 }' >$RELEASEDIR/.usrkb
+echo " * Counting files"
+find $RELEASEDIR/usr | wc -l >$RELEASEDIR/.usrfiles
+find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 umount $TMPDISK || exit
 umount $TMPDISK2 || exit
 umount $RAM || exit
