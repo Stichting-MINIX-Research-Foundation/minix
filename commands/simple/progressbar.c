@@ -54,7 +54,7 @@ char *argv[];
 	time_t start;
 	if(argc < 2) return 1;
 	count = atol(argv[1]);
-	if(count < 1) return 1;
+	if(count < 0) return 1;
 	time(&start);
 	printf("\n");
 #define LINES 5
