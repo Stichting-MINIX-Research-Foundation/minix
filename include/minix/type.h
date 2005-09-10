@@ -88,8 +88,8 @@ struct kinfo {
   phys_bytes params_size;
   int nr_procs;			/* number of user processes */
   int nr_tasks;			/* number of kernel tasks */
-  char release[4];		/* kernel release number */
-  char version[4];		/* kernel version number */
+  char release[6];		/* kernel release number */
+  char version[6];		/* kernel version number */
   int relocking;		/* relocking check (for debugging) */
 };
 
