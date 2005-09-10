@@ -2422,7 +2422,7 @@ select_region(void)
 static void printstep(int step, char *str)
 {
 	int n;
-	n = printf("\n --- Substep 2.%d: %s ---", step, str);
+	n = printf("\n --- Substep 3.%d: %s ---", step, str);
 	while(n++ < 73) printf("-");
 	printf("\n");
 }
