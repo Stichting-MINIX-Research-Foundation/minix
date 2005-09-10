@@ -15,6 +15,13 @@ ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 USRKB="`cat /.usrkb`"
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
 
+if [ "$TOTALMB" -lt 1 ]
+then	 
+	echo "Are you really running from CD?"
+	echo "Something wrong with size estimate on CD."
+	exit 1
+fi
+
 PATH=/bin:/usr/bin
 export PATH
 
@@ -44,6 +51,11 @@ warn()
 while getopts '' opt; do usage; done
 shift `expr $OPTIND - 1`
 
+if [ ! -f /CD ]
+then	echo "Please run setup from the CD, not from a live system."
+	exit 1
+fi
+
 if [ "$USER" != root ]
 then	echo "Please run setup as root."
 	exit 1
@@ -69,7 +81,7 @@ case $thisroot:$fdusr in
 esac
 
 echo -n "
-Welcome to the MINIX setup script.  This script will guide you in setting up
+Welcome to the MINIX 3 setup script.  This script will guide you in setting up
 MINIX on your machine.  Please consult the manual for detailed instructions.
 
 Note 1: If the screen blanks, hit CTRL+F3 to select \"software scrolling\".
@@ -252,6 +264,11 @@ Please finish the name of the primary partition you have created:
 			if [ -n "$primary" ]; then step3=ok; fi
 		fi
 	fi
+
+	if [ ! -b "/dev/$primary" ]
+	then	echo "/dev/$primary is not a block device."
+		step3=""
+	fi
 done	# while step3 != ok
 # end Step 3
 
@@ -282,7 +299,6 @@ do
 	echo ""
 	if mount /dev/$home $TMPMP >/dev/null 2>&1
 	then	umount /dev/$home >/dev/null 2>&1
-		echo "Reinstall?"
 		echo ""
 		echo "You have selected an existing MINIX 3 partition."
 		echo "Type F for full installation (to overwrite entire partition)"
@@ -296,23 +312,7 @@ do
 		[Ff]*)	confirm="ok"; auto="" ;;
 		esac
 
-	else	echo "Clean install?"
-		echo ""
-		echo "It seems like there is NO MINIX system already there,"
-		echo "or no /home filesystem in $home."
-		echo "Just in case there is something there you want to keep, I'll"
-		echo "ask you this. If you type N, I'll exit to let you figure"
-		echo "out what is wrong."
-		echo ""
-		echo "Would you like to install, wiping everything "
-		echo -n "in /dev/$primary ? [Y] "
-
-		read conf
-		case "$conf" in
-		"") 	confirm="ok"; ;;
-		[Yy]*)	confirm="ok"; ;;
-		[Nn]*)	exit 1; ;;
-		esac
+	else	confirm="ok";
 	fi
 
 done
@@ -389,7 +389,7 @@ fi
 blocksizebytes="`expr $blocksize '*' 1024`"
 
 echo "
-You have selected to (re)install MINIX in the partition /dev/$primary.
+You have selected to (re)install MINIX 3 in the partition /dev/$primary.
 The following subpartitions are now being created on /dev/$primary:
 
     Root subpartition:	/dev/$root	$ROOTMB MB
@@ -446,7 +446,7 @@ trap 2
 echo ""
 echo " --- Step 6: Wait for files to be copied -------------------------------"
 echo ""
-echo "This is the final step of the MINIX setup.  All files will be now be"
+echo "This is the final step of the MINIX 3 setup.  All files will be now be"
 echo "copied to your hard disk.  This may take a while."
 echo ""
 
@@ -522,7 +522,7 @@ the boot monitor prompt, type 'boot $bios', where X is the bios drive
 number of the drive you installed on, to try your new MINIX system.
 $biosdrivename
 
-This ends the MINIX setup script.  After booting your newly set up system,
+This ends the MINIX 3 setup script.  After booting your newly set up system,
 you can run the test suites as indicated in the setup manual.  You also 
 may want to take care of local configuration, such as securing your system
 with a password.  Please consult the usage manual for more information. 
