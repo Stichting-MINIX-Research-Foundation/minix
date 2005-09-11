@@ -14,11 +14,27 @@ ROOTMB=16
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 USRKB="`cat /.usrkb`"
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
+ROOTFILES="`cat /.rootfiles`"
+USRFILES="`cat /.usrfiles`"
 
 if [ "$TOTALMB" -lt 1 ]
 then	 
 	echo "Are you really running from CD?"
 	echo "Something wrong with size estimate on CD."
+	exit 1
+fi
+
+if [ "$ROOTFILES" -lt 1 ]
+then	 
+	echo "Are you really running from CD?"
+	echo "Something wrong with root files count on CD."
+	exit 1
+fi
+
+if [ "$USRFILES" -lt 1 ]
+then	 
+	echo "Are you really running from CD?"
+	echo "Something wrong with usr files count on CD."
 	exit 1
 fi
 
@@ -452,8 +468,7 @@ echo ""
 
 mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 
-files="`cat /.usrfiles`"
-cpdir -v /usr /mnt | progressbar "$files" || exit	# Copy the usr floppy.
+cpdir -v /usr /mnt | progressbar "$USRFILES" || exit	# Copy the usr floppy.
 
 
 					# Set inet.conf to correct driver
@@ -467,8 +482,7 @@ umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
 mount /dev/$root /mnt >/dev/null || exit
 
 # Running from the installation CD.
-files="`cat /.rootfiles`"
-cpdir -vx / /mnt | progressbar "$files" || exit	
+cpdir -vx / /mnt | progressbar "$ROOTFILES" || exit	
 
 if [ -n "$driver" ]
 then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
