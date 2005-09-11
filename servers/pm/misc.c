@@ -21,7 +21,7 @@
 #include "param.h"
 
 /*===========================================================================*
- *				    do_allocmem				     *
+ *				do_allocmem				     *
  *===========================================================================*/
 PUBLIC int do_allocmem()
 {
@@ -36,7 +36,7 @@ PUBLIC int do_allocmem()
 }
 
 /*===========================================================================*
- *				    do_freemem				     *
+ *				do_freemem				     *
  *===========================================================================*/
 PUBLIC int do_freemem()
 {
@@ -50,7 +50,7 @@ PUBLIC int do_freemem()
 }
 
 /*===========================================================================*
- *				  do_getsysinfo			       	     *
+ *				do_getsysinfo			       	     *
  *===========================================================================*/
 PUBLIC int do_getsysinfo()
 {
@@ -86,7 +86,7 @@ PUBLIC int do_getsysinfo()
 }
 
 /*===========================================================================*
- *				 do_getprocnr			             *
+ *				do_getprocnr			             *
  *===========================================================================*/
 PUBLIC int do_getprocnr()
 {
@@ -123,9 +123,9 @@ PUBLIC int do_getprocnr()
   return(OK);
 }
 
-/*=====================================================================*
- *			    do_reboot				       *
- *=====================================================================*/
+/*===========================================================================*
+ *				do_reboot				     *
+ *===========================================================================*/
 #define REBOOT_CODE 	"delay; boot"
 PUBLIC int do_reboot()
 {
@@ -169,9 +169,9 @@ PUBLIC int do_reboot()
   return(SUSPEND);			/* don't reply to killed process */
 }
 
-/*=====================================================================*
- *			    do_getsetpriority			       *
- *=====================================================================*/
+/*===========================================================================*
+ *				do_getsetpriority			     *
+ *===========================================================================*/
 PUBLIC int do_getsetpriority()
 {
 	int arg_which, arg_who, arg_pri;
@@ -185,28 +185,28 @@ PUBLIC int do_getsetpriority()
 	/* Code common to GETPRIORITY and SETPRIORITY. */
 
 	/* Only support PRIO_PROCESS for now. */
-	if(arg_which != PRIO_PROCESS)
+	if (arg_which != PRIO_PROCESS)
 		return(EINVAL);
 
-	if(arg_who == 0)
+	if (arg_who == 0)
 		rmp_nr = who;
 	else
-		if((rmp_nr = proc_from_pid(arg_who)) < 0)
+		if ((rmp_nr = proc_from_pid(arg_who)) < 0)
 			return(ESRCH);
 
 	rmp = &mproc[rmp_nr];
 
-	if(mp->mp_effuid != SUPER_USER &&
+	if (mp->mp_effuid != SUPER_USER &&
 	   mp->mp_effuid != rmp->mp_effuid && mp->mp_effuid != rmp->mp_realuid)
 		return EPERM;
 
 	/* If GET, that's it. */
-	if(call_nr == GETPRIORITY) {
+	if (call_nr == GETPRIORITY) {
 		return(rmp->mp_nice - PRIO_MIN);
 	}
 
 	/* Only root is allowed to reduce the nice level. */
-	if(rmp->mp_nice > arg_pri && mp->mp_effuid != SUPER_USER)
+	if (rmp->mp_nice > arg_pri && mp->mp_effuid != SUPER_USER)
 		return(EACCES);
 	
 	/* We're SET, and it's allowed. Do it and tell kernel. */
@@ -214,9 +214,9 @@ PUBLIC int do_getsetpriority()
 	return sys_nice(rmp_nr, arg_pri);
 }
 
-/*=====================================================================*
- *			    do_svrctl				       *
- *=====================================================================*/
+/*===========================================================================*
+ *				do_svrctl				     *
+ *===========================================================================*/
 PUBLIC int do_svrctl()
 {
   int s, req;
@@ -249,9 +249,9 @@ PUBLIC int do_svrctl()
               sizeof(sysgetenv)) != OK) return(EFAULT);  
 
       /* Set a param override? */
-      if(req == MMSETPARAM) {
-  	if(local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
-  	if(sysgetenv.keylen <= 0
+      if (req == MMSETPARAM) {
+  	if (local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
+  	if (sysgetenv.keylen <= 0
   	 || sysgetenv.keylen >=
   	 	 sizeof(local_param_overrides[local_params].name)
   	 || sysgetenv.vallen <= 0
@@ -292,12 +292,12 @@ PUBLIC int do_svrctl()
            */
           search_key[sysgetenv.keylen-1]= '\0';
           for(p = 0; p < local_params; p++) {
-          	if(!strcmp(search_key, local_param_overrides[p].name)) {
+          	if (!strcmp(search_key, local_param_overrides[p].name)) {
           		val_start = local_param_overrides[p].value;
           		break;
           	}
           }
-          if(p >= local_params && (val_start = find_param(search_key)) == NULL)
+          if (p >= local_params && (val_start = find_param(search_key)) == NULL)
                return(ESRCH);
           val_len = strlen(val_start) + 1;
       }

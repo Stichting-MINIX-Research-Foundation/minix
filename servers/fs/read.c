@@ -56,7 +56,7 @@ int rw_flag;			/* READING or WRITING */
   /* left unfinished rw_chunk()s from previous call! this can't happen.
    * it means something has gone wrong we can't repair now.
    */
-  if(bufs_in_use < 0) {
+  if (bufs_in_use < 0) {
   	panic(__FILE__,"start - bufs_in_use negative", bufs_in_use);
   }
 
@@ -100,21 +100,21 @@ int rw_flag;			/* READING or WRITING */
   mode_word = rip->i_mode & I_TYPE;
   regular = mode_word == I_REGULAR || mode_word == I_NAMED_PIPE;
 
-  if((char_spec = (mode_word == I_CHAR_SPECIAL ? 1 : 0))) {
-  	if(rip->i_zone[0] == NO_DEV)
+  if ((char_spec = (mode_word == I_CHAR_SPECIAL ? 1 : 0))) {
+  	if (rip->i_zone[0] == NO_DEV)
   		panic(__FILE__,"read_write tries to read from "
   			"character device NO_DEV", NO_NUM);
   	block_size = get_block_size(rip->i_zone[0]);
   }
-  if((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
+  if ((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
   	f_size = ULONG_MAX;
-  	if(rip->i_zone[0] == NO_DEV)
+  	if (rip->i_zone[0] == NO_DEV)
   		panic(__FILE__,"read_write tries to read from "
   		" block device NO_DEV", NO_NUM);
   	block_size = get_block_size(rip->i_zone[0]);
   }
 
-  if(!char_spec && !block_spec)
+  if (!char_spec && !block_spec)
   	block_size = rip->i_sp->s_block_size;
 
   rdwt_err = OK;		/* set to EIO if disk error occurs */
@@ -197,7 +197,7 @@ int rw_flag;			/* READING or WRITING */
 	}
   } else {
 	if (rip->i_pipe == I_PIPE) {
-		if( position >= rip->i_size) {
+		if ( position >= rip->i_size) {
 			/* Reset pipe pointers. */
 			rip->i_size = 0;	/* no data left */
 			position = 0;		/* reset reader(s) */
@@ -240,7 +240,7 @@ int rw_flag;			/* READING or WRITING */
 	fp->fp_cum_io_partial = 0;
 	return(cum_io);
   }
-  if(bufs_in_use < 0) {
+  if (bufs_in_use < 0) {
   	panic(__FILE__,"end - bufs_in_use negative", bufs_in_use);
   }
   return(r);
@@ -305,7 +305,7 @@ int *completed;			/* number of bytes copied */
   }
 
   /* In all cases, bp now points to a valid buffer. */
-  if(bp == NIL_BUF) {
+  if (bp == NIL_BUF) {
   	panic(__FILE__,"bp not valid in rw_chunk, this can't happen", NO_NUM);
   }
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&

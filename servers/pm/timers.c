@@ -22,14 +22,14 @@
 PRIVATE timer_t *pm_timers = NULL;
 
 /*===========================================================================*
- *				pm_set_timer			     *
+ *				pm_set_timer				     *
  *===========================================================================*/
 PUBLIC void pm_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 {
 	int r;
 	clock_t now, prev_time = 0, next_time;
 
-	if((r = getuptime(&now)) != OK)
+	if ((r = getuptime(&now)) != OK)
 		panic(__FILE__, "PM couldn't get uptime", NO_NUM);
 
 	/* Set timer argument and add timer to the list. */
@@ -37,8 +37,8 @@ PUBLIC void pm_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 	prev_time = tmrs_settimer(&pm_timers,tp,now+ticks,watchdog,&next_time);
 
 	/* Reschedule our synchronous alarm if necessary. */
-	if(! prev_time || prev_time > next_time) {
-		if(sys_setalarm(next_time, 1) != OK)
+	if (! prev_time || prev_time > next_time) {
+		if (sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM set timer couldn't set alarm.", NO_NUM);
 	}
 
@@ -54,14 +54,14 @@ PUBLIC void pm_expire_timers(clock_t now)
 
 	/* Check for expired timers and possibly reschedule an alarm. */
 	tmrs_exptimers(&pm_timers, now, &next_time);
-	if(next_time > 0) {
-		if(sys_setalarm(next_time, 1) != OK)
+	if (next_time > 0) {
+		if (sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set alarm.", NO_NUM);
 	}
 }
 
 /*===========================================================================*
- *				pm_cancel_timer			     *
+ *				pm_cancel_timer				     *
  *===========================================================================*/
 PUBLIC void pm_cancel_timer(timer_t *tp)
 {
@@ -72,8 +72,8 @@ PUBLIC void pm_cancel_timer(timer_t *tp)
      * the next timer, or cancel the alarm altogether if the last timer has 
      * been cancelled (next_time will be 0 then).
 	 */
-	if(prev_time < next_time || ! next_time) {
-		if(sys_setalarm(next_time, 1) != OK)
+	if (prev_time < next_time || ! next_time) {
+		if (sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set alarm.", NO_NUM);
 	}
 }

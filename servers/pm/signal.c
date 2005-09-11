@@ -40,7 +40,7 @@ FORWARD _PROTOTYPE( void handle_sig, (int proc_nr, sigset_t sig_map)	);
 FORWARD _PROTOTYPE( void cause_sigalrm, (struct timer *tp)		);
 
 /*===========================================================================*
- *			       do_sigaction				     *
+ *				do_sigaction				     *
  *===========================================================================*/
 PUBLIC int do_sigaction()
 {
@@ -93,7 +93,7 @@ PUBLIC int do_sigaction()
 }
 
 /*===========================================================================*
- *                            do_sigpending                                  *
+ *				do_sigpending                                *
  *===========================================================================*/
 PUBLIC int do_sigpending()
 {
@@ -102,7 +102,7 @@ PUBLIC int do_sigpending()
 }
 
 /*===========================================================================*
- *                            do_sigprocmask                                 *
+ *				do_sigprocmask                               *
  *===========================================================================*/
 PUBLIC int do_sigprocmask()
 {
@@ -153,7 +153,7 @@ PUBLIC int do_sigprocmask()
 }
 
 /*===========================================================================*
- *                            do_sigsuspend                                  *
+ *				do_sigsuspend                                *
  *===========================================================================*/
 PUBLIC int do_sigsuspend()
 {
@@ -166,7 +166,7 @@ PUBLIC int do_sigsuspend()
 }
 
 /*===========================================================================*
- *                               do_sigreturn				     *
+ *				do_sigreturn				     *
  *===========================================================================*/
 PUBLIC int do_sigreturn()
 {
@@ -554,7 +554,7 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 }
 
 /*===========================================================================*
- *                               check_pending				     *
+ *				check_pending				     *
  *===========================================================================*/
 PUBLIC void check_pending(rmp)
 register struct mproc *rmp;

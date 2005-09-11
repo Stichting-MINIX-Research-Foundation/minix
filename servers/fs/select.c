@@ -100,7 +100,7 @@ PRIVATE int select_request_file(struct filp *f, int *ops, int block)
  *===========================================================================*/
 PRIVATE int select_match_file(struct filp *file)
 {
-	if(file && file->filp_ino && (file->filp_ino->i_mode & I_REGULAR))
+	if (file && file->filp_ino && (file->filp_ino->i_mode & I_REGULAR))
 		return 1;
 	return 0;
 }
@@ -111,9 +111,9 @@ PRIVATE int select_match_file(struct filp *file)
 PRIVATE int select_request_general(struct filp *f, int *ops, int block)
 {
 	int rops = *ops;
-	if(block) rops |= SEL_NOTIFY;
+	if (block) rops |= SEL_NOTIFY;
 	*ops = dev_io(DEV_SELECT, f->filp_ino->i_zone[0], rops, NULL, 0, 0, 0);
-	if(*ops < 0)
+	if (*ops < 0)
 		return SEL_ERR;
 	return SEL_OK;
 }
@@ -124,11 +124,11 @@ PRIVATE int select_request_general(struct filp *f, int *ops, int block)
 PRIVATE int select_major_match(int match_major, struct filp *file)
 {
 	int major;
-	if(!(file && file->filp_ino &&
+	if (!(file && file->filp_ino &&
 		(file->filp_ino->i_mode & I_TYPE) == I_CHAR_SPECIAL))
 		return 0;
 	major = (file->filp_ino->i_zone[0] >> MAJOR) & BYTE;
-	if(major == match_major)
+	if (major == match_major)
 		return 1;
 	return 0;
 }
@@ -142,17 +142,17 @@ PRIVATE int tab2ops(int fd, struct selectentry *e)
 
 PRIVATE void ops2tab(int ops, int fd, struct selectentry *e)
 {
-	if((ops & SEL_RD) && e->vir_readfds && FD_ISSET(fd, &e->readfds)
+	if ((ops & SEL_RD) && e->vir_readfds && FD_ISSET(fd, &e->readfds)
 	        && !FD_ISSET(fd, &e->ready_readfds)) {
 		FD_SET(fd, &e->ready_readfds);
 		e->nreadyfds++;
 	}
-	if((ops & SEL_WR) && e->vir_writefds && FD_ISSET(fd, &e->writefds) 
+	if ((ops & SEL_WR) && e->vir_writefds && FD_ISSET(fd, &e->writefds) 
 		&& !FD_ISSET(fd, &e->ready_writefds)) {
 		FD_SET(fd, &e->ready_writefds);
 		e->nreadyfds++;
 	}
-	if((ops & SEL_ERR) && e->vir_errorfds && FD_ISSET(fd, &e->errorfds)
+	if ((ops & SEL_ERR) && e->vir_errorfds && FD_ISSET(fd, &e->errorfds)
 		&& !FD_ISSET(fd, &e->ready_errorfds)) {
 		FD_SET(fd, &e->ready_errorfds);
 		e->nreadyfds++;
@@ -163,13 +163,13 @@ PRIVATE void ops2tab(int ops, int fd, struct selectentry *e)
 
 PRIVATE void copy_fdsets(struct selectentry *e)
 {
-	if(e->vir_readfds)
+	if (e->vir_readfds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_readfds,
 		e->req_procnr, D, (vir_bytes) e->vir_readfds, sizeof(fd_set));
-	if(e->vir_writefds)
+	if (e->vir_writefds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_writefds,
 		e->req_procnr, D, (vir_bytes) e->vir_writefds, sizeof(fd_set));
-	if(e->vir_errorfds)
+	if (e->vir_errorfds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_errorfds,
 		e->req_procnr, D, (vir_bytes) e->vir_errorfds, sizeof(fd_set));
 
@@ -177,7 +177,7 @@ PRIVATE void copy_fdsets(struct selectentry *e)
 }
 
 /*===========================================================================*
- *				do_select					     *
+ *				do_select				      *
  *===========================================================================*/
 PUBLIC int do_select(void)
 {
@@ -186,14 +186,14 @@ PUBLIC int do_select(void)
 	struct timeval timeout;
 	nfds = m_in.SEL_NFDS;
 
-	if(nfds < 0 || nfds > FD_SETSIZE)
+	if (nfds < 0 || nfds > FD_SETSIZE)
 		return EINVAL;
 
 	for(s = 0; s < MAXSELECTS; s++)
-		if(!selecttab[s].requestor)
+		if (!selecttab[s].requestor)
 			break;
 
-	if(s >= MAXSELECTS)
+	if (s >= MAXSELECTS)
 		return ENOSPC;
 
 	selecttab[s].req_procnr = who;
@@ -214,40 +214,40 @@ PUBLIC int do_select(void)
 	selecttab[s].vir_errorfds = (fd_set *) m_in.SEL_ERRORFDS;
 
 	/* copy args */
-	if(selecttab[s].vir_readfds
+	if (selecttab[s].vir_readfds
 	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_READFDS,
 		SELF, D, (vir_bytes) &selecttab[s].readfds, sizeof(fd_set))) != OK)
 		return r;
 
-	if(selecttab[s].vir_writefds
+	if (selecttab[s].vir_writefds
 	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_WRITEFDS,
 		SELF, D, (vir_bytes) &selecttab[s].writefds, sizeof(fd_set))) != OK)
 		return r;
 
-	if(selecttab[s].vir_errorfds
+	if (selecttab[s].vir_errorfds
 	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_ERRORFDS,
 		SELF, D, (vir_bytes) &selecttab[s].errorfds, sizeof(fd_set))) != OK)
 		return r;
 
-	if(!m_in.SEL_TIMEOUT)
+	if (!m_in.SEL_TIMEOUT)
 		is_timeout = nonzero_timeout = 0;
 	else
-		if((r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_TIMEOUT,
+		if ((r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_TIMEOUT,
 			SELF, D, (vir_bytes) &timeout, sizeof(timeout))) != OK)
 			return r;
 
 	/* No nonsense in the timeval please. */
-	if(is_timeout && (timeout.tv_sec < 0 || timeout.tv_usec < 0))
+	if (is_timeout && (timeout.tv_sec < 0 || timeout.tv_usec < 0))
 		return EINVAL;
 
 	/* if is_timeout if 0, we block forever. otherwise, if nonzero_timeout
 	 * is 0, we do a poll (don't block). otherwise, we block up to the
 	 * specified time interval.
 	 */
-	if(is_timeout && (timeout.tv_sec > 0 || timeout.tv_usec > 0))
+	if (is_timeout && (timeout.tv_sec > 0 || timeout.tv_usec > 0))
 		nonzero_timeout = 1;
 
-	if(nonzero_timeout || !is_timeout)
+	if (nonzero_timeout || !is_timeout)
 		block = 1;
 	else
 		block = 0; /* timeout set as (0,0) - this effects a poll */
@@ -259,24 +259,24 @@ PUBLIC int do_select(void)
 		int orig_ops, ops, t, type = -1, r;
 		struct filp *filp;
 	
-		if(!(orig_ops = ops = tab2ops(fd, &selecttab[s])))
+		if (!(orig_ops = ops = tab2ops(fd, &selecttab[s])))
 			continue;
-		if(!(filp = selecttab[s].filps[fd] = get_filp(fd))) {
+		if (!(filp = selecttab[s].filps[fd] = get_filp(fd))) {
 			select_cancel_all(&selecttab[s]);
 			return EBADF;
 		}
 
 		for(t = 0; t < SEL_FDS; t++) {
-			if(fdtypes[t].select_match) {
-			   if(fdtypes[t].select_match(filp)) {
+			if (fdtypes[t].select_match) {
+			   if (fdtypes[t].select_match(filp)) {
 #if DEBUG_SELECT
 				printf("select: fd %d is type %d ", fd, t);
 #endif
-				if(type != -1)
+				if (type != -1)
 					printf("select: double match\n");
 				type = t;
 			  }
-	 		} else if(select_major_match(fdtypes[t].select_major, filp)) {
+	 		} else if (select_major_match(fdtypes[t].select_major, filp)) {
 				type = t;
 			}
 		}
@@ -291,7 +291,7 @@ PUBLIC int do_select(void)
 		 * If all types are implemented, then this is another
 		 * type of file and we get to do whatever we want.
 		 */
-		if(type == -1)
+		if (type == -1)
 		{
 #if DEBUG_SELECT
 			printf("do_select: bad type\n");
@@ -301,7 +301,7 @@ PUBLIC int do_select(void)
 
 		selecttab[s].type[fd] = type;
 
-		if((selecttab[s].filps[fd]->filp_select_ops & ops) != ops) {
+		if ((selecttab[s].filps[fd]->filp_select_ops & ops) != ops) {
 			int wantops;
 			/* Request the select on this fd.  */
 #if DEBUG_SELECT
@@ -313,15 +313,15 @@ PUBLIC int do_select(void)
 #if DEBUG_SELECT
 			printf("%d\n", selecttab[s].filps[fd]->filp_select_ops);
 #endif
-			if((r = fdtypes[type].select_request(filp,
+			if ((r = fdtypes[type].select_request(filp,
 				&wantops, block)) != SEL_OK) {
 				/* error or bogus return code.. backpaddle */
 				select_cancel_all(&selecttab[s]);
 				printf("select: select_request returned error\n");
 				return EINVAL;
 			}
-			if(wantops) {
-				if(wantops & ops) {
+			if (wantops) {
+				if (wantops & ops) {
 					/* operations that were just requested
 					 * are ready to go right away
 					 */
@@ -350,7 +350,7 @@ PUBLIC int do_select(void)
 #endif
 	}
 
-	if(selecttab[s].nreadyfds > 0 || !block) {
+	if (selecttab[s].nreadyfds > 0 || !block) {
 		/* fd's were found that were ready to go right away, and/or
 		 * we were instructed not to block at all. Must return
 		 * immediately.
@@ -377,7 +377,7 @@ PUBLIC int do_select(void)
 	/* Convert timeval to ticks and set the timer. If it fails, undo
 	 * all, return error.
 	 */
-	if(is_timeout) {
+	if (is_timeout) {
 		int ticks;
 		/* Open Group:
 		 * "If the requested timeout interval requires a finer
@@ -415,13 +415,13 @@ PRIVATE void select_cancel_all(struct selectentry *e)
 	for(fd = 0; fd < e->nfds; fd++) {
 		struct filp *fp;
 		fp = e->filps[fd];
-		if(!fp) {
+		if (!fp) {
 #if DEBUG_SELECT
 			printf("[ fd %d/%d NULL ] ", fd, e->nfds);
 #endif
 			continue;
 		}
-		if(fp->filp_selectors < 1) {
+		if (fp->filp_selectors < 1) {
 #if DEBUG_SELECT
 			printf("select: %d selectors?!\n", fp->filp_selectors);
 #endif
@@ -432,7 +432,7 @@ PRIVATE void select_cancel_all(struct selectentry *e)
 		select_reevaluate(fp);
 	}
 
-	if(e->expiry > 0) {
+	if (e->expiry > 0) {
 #if DEBUG_SELECT
 		printf("cancelling timer %d\n", e - selecttab);
 #endif
@@ -457,16 +457,16 @@ PRIVATE int select_reevaluate(struct filp *fp)
 {
 	int s, remain_ops = 0, fd, type = -1;
 
-	if(!fp) {
+	if (!fp) {
 		printf("fs: select: reevalute NULL fp\n");
 		return 0;
 	}
 
 	for(s = 0; s < MAXSELECTS; s++) {
-		if(!selecttab[s].requestor)
+		if (!selecttab[s].requestor)
 			continue;
 		for(fd = 0; fd < selecttab[s].nfds; fd++)
-			if(fp == selecttab[s].filps[fd]) {
+			if (fp == selecttab[s].filps[fd]) {
 				remain_ops |= tab2ops(fd, &selecttab[s]);
 				type = selecttab[s].type[fd];
 			}
@@ -485,7 +485,7 @@ PRIVATE int select_reevaluate(struct filp *fp)
 }
 
 /*===========================================================================*
- *				int select_callback			     *
+ *				select_callback			             *
  *===========================================================================*/
 PUBLIC int select_callback(struct filp *fp, int ops)
 {
@@ -500,16 +500,16 @@ PUBLIC int select_callback(struct filp *fp, int ops)
 	type = -1;
 	for(s = 0; s < MAXSELECTS; s++) {
 		int wakehim = 0;
-		if(!selecttab[s].requestor)
+		if (!selecttab[s].requestor)
 			continue;
 		for(fd = 0; fd < selecttab[s].nfds; fd++) {
-			if(!selecttab[s].filps[fd])
+			if (!selecttab[s].filps[fd])
 				continue;
-			if(selecttab[s].filps[fd] == fp) {
+			if (selecttab[s].filps[fd] == fp) {
 				int this_want_ops;
 				this_want_ops = tab2ops(fd, &selecttab[s]);
 				want_ops |= this_want_ops;
-				if(this_want_ops & ops) {
+				if (this_want_ops & ops) {
 					/* this select() has been satisfied. */
 					ops2tab(ops, fd, &selecttab[s]);
 					wakehim = 1;
@@ -517,7 +517,7 @@ PUBLIC int select_callback(struct filp *fp, int ops)
 				type = selecttab[s].type[fd];
 			}
 		}
-		if(wakehim) {
+		if (wakehim) {
 			select_cancel_all(&selecttab[s]);
 			copy_fdsets(&selecttab[s]);
 			selecttab[s].requestor = NULL;
@@ -529,7 +529,7 @@ PUBLIC int select_callback(struct filp *fp, int ops)
 }
 
 /*===========================================================================*
- *				int select_notified			     *
+ *				select_notified			             *
  *===========================================================================*/
 PUBLIC int select_notified(int major, int minor, int selected_ops)
 {
@@ -540,10 +540,10 @@ PUBLIC int select_notified(int major, int minor, int selected_ops)
 #endif
 
 	for(t = 0; t < SEL_FDS; t++)
-		if(!fdtypes[t].select_match && fdtypes[t].select_major == major)
+		if (!fdtypes[t].select_match && fdtypes[t].select_major == major)
 		    	break;
 
-	if(t >= SEL_FDS) {
+	if (t >= SEL_FDS) {
 #if DEBUG_SELECT
 		printf("select callback: no fdtype found for device %d\n", major);
 #endif
@@ -556,15 +556,15 @@ PUBLIC int select_notified(int major, int minor, int selected_ops)
 
 	for(s = 0; s < MAXSELECTS; s++) {
 		int s_minor, ops;
-		if(!selecttab[s].requestor)
+		if (!selecttab[s].requestor)
 			continue;
 		for(f = 0; f < selecttab[s].nfds; f++) {
-			if(!selecttab[s].filps[f] ||
+			if (!selecttab[s].filps[f] ||
 			   !select_major_match(major, selecttab[s].filps[f]))
 			   	continue;
 			ops = tab2ops(f, &selecttab[s]);
 			s_minor = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
-			if((s_minor == minor) &&
+			if ((s_minor == minor) &&
 				(selected_ops & ops)) {
 				select_callback(selecttab[s].filps[f], (selected_ops & ops));
 			}
@@ -586,7 +586,7 @@ PUBLIC void init_select(void)
 }
 
 /*===========================================================================*
- *				int select_forget			     *
+ *				select_forget			             *
  *===========================================================================*/
 PUBLIC void select_forget(int proc)
 {
@@ -596,14 +596,14 @@ PUBLIC void select_forget(int proc)
 	int s;
 
 	for(s = 0; s < MAXSELECTS; s++) {
-		if(selecttab[s].requestor &&
+		if (selecttab[s].requestor &&
 			selecttab[s].req_procnr == proc) {
 			break;
 		}
 
 	}
 
-	if(s >= MAXSELECTS) {
+	if (s >= MAXSELECTS) {
 #if DEBUG_SELECT
 		printf("select: cancelled select() not found");
 #endif
@@ -617,7 +617,7 @@ PUBLIC void select_forget(int proc)
 }
 
 /*===========================================================================*
- *				int select_timeout_check	  	     *
+ *				select_timeout_check	  	     	     *
  *===========================================================================*/
 PUBLIC void select_timeout_check(timer_t *timer)
 {
@@ -625,21 +625,21 @@ PUBLIC void select_timeout_check(timer_t *timer)
 
 	s = tmr_arg(timer)->ta_int;
 
-	if(s < 0 || s >= MAXSELECTS) {
+	if (s < 0 || s >= MAXSELECTS) {
 #if DEBUG_SELECT
 		printf("select: bogus slot arg to watchdog %d\n", s);
 #endif
 		return;
 	}
 
-	if(!selecttab[s].requestor) {
+	if (!selecttab[s].requestor) {
 #if DEBUG_SELECT
 		printf("select: no requestor in watchdog\n");
 #endif
 		return;
 	}
 
-	if(selecttab[s].expiry <= 0) {
+	if (selecttab[s].expiry <= 0) {
 #if DEBUG_SELECT
 		printf("select: strange expiry value in watchdog\n", s);
 #endif

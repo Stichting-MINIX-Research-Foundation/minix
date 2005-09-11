@@ -107,7 +107,7 @@ int len;			/* length of the directory name string */
 }
 
 /*===========================================================================*
- *				change_into					     *
+ *				change_into				     *
  *===========================================================================*/
 PRIVATE int change_into(iip, rip)
 struct inode **iip;		/* pointer to the inode pointer for the dir */

@@ -248,7 +248,7 @@ int optional;
   int i;
 
   if ((i = env_get_param(key, value, sizeof(value))) != OK) {
-      if(!optional)
+      if (!optional)
       	printf("FS: Warning, couldn't get monitor param: %d\n", i);
       return 0;
   }
@@ -289,7 +289,7 @@ PRIVATE void load_ram(void)
   	u32_t fsmax, probedev;
 
   	/* If we are running from CD, see if we can find it. */
-  	if(igetenv("cdproberoot", 1) && (probedev=cdprobe()) != NO_DEV) {
+  	if (igetenv("cdproberoot", 1) && (probedev=cdprobe()) != NO_DEV) {
   		char devnum[10];
   		struct sysgetenv env;
 
@@ -371,7 +371,7 @@ PRIVATE void load_ram(void)
   /* RAM block size has to be a multiple of the root image block
    * size to make copying easier.
    */
-  if(block_size_image % block_size_ram) {
+  if (block_size_image % block_size_ram) {
   	printf("\nram block size: %d image block size: %d\n", 
   		block_size_ram, block_size_image);
   	panic(__FILE__, "ram disk block size must be a multiple of "
@@ -407,12 +407,12 @@ PRIVATE void load_ram(void)
   dev_close(image_dev);
 
   /* Resize the RAM disk root file system. */
-  if(dev_io(DEV_READ, root_dev, FS_PROC_NR,
+  if (dev_io(DEV_READ, root_dev, FS_PROC_NR,
   	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0) != MIN_BLOCK_SIZE) {
   	printf("WARNING: ramdisk read for resizing failed\n");
   }
   dsp = (struct super_block *) sbbuf;
-  if(dsp->s_magic == SUPER_V3)
+  if (dsp->s_magic == SUPER_V3)
   	ramfs_block_size = dsp->s_block_size;
   else
   	ramfs_block_size = STATIC_BLOCK_SIZE;
@@ -420,7 +420,7 @@ PRIVATE void load_ram(void)
 
   dsp->s_nzones = conv2(sp->s_native, (u16_t) zones);
   dsp->s_zones = conv4(sp->s_native, zones);
-  if(dev_io(DEV_WRITE, root_dev, FS_PROC_NR,
+  if (dev_io(DEV_WRITE, root_dev, FS_PROC_NR,
   	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0) != MIN_BLOCK_SIZE) {
   	printf("WARNING: ramdisk write for resizing failed\n");
   }

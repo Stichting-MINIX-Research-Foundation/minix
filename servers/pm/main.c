@@ -28,7 +28,7 @@
 
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void pm_init, (void)				);
-FORWARD _PROTOTYPE( int get_nice_value, (int queue)				);
+FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
 FORWARD _PROTOTYPE( void get_mem_chunks, (struct memory *mem_chunks) 	);
 FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks, 
 	struct mem_map *map_ptr) 	);
@@ -268,9 +268,9 @@ PRIVATE void pm_init()
   printf(" free %u KB.\n", click_to_round_k(free_clicks));
 }
 
-/*=========================================================================*
- *				get_nice_value				   *
- *=========================================================================*/
+/*===========================================================================*
+ *				get_nice_value				     *
+ *===========================================================================*/
 PRIVATE int get_nice_value(queue)
 int queue;				/* store mem chunks here */
 {
@@ -295,9 +295,9 @@ int queue;				/* store mem chunks here */
 #define MAX_16BIT	(0xFFF0L << CLICK_SHIFT)
 #endif
 
-/*=========================================================================*
- *				get_mem_chunks				   *
- *=========================================================================*/
+/*===========================================================================*
+ *				get_mem_chunks				     *
+ *===========================================================================*/
 PRIVATE void get_mem_chunks(mem_chunks)
 struct memory *mem_chunks;			/* store mem chunks here */
 {
@@ -358,9 +358,9 @@ struct memory *mem_chunks;			/* store mem chunks here */
   }
 }
 
-/*=========================================================================*
- *				patch_mem_chunks			   *
- *=========================================================================*/
+/*===========================================================================*
+ *				patch_mem_chunks			     *
+ *===========================================================================*/
 PRIVATE void patch_mem_chunks(mem_chunks, map_ptr)
 struct memory *mem_chunks;			/* store mem chunks here */
 struct mem_map *map_ptr;			/* memory to remove */

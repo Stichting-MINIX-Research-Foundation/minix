@@ -36,11 +36,11 @@ PUBLIC int cdprobe(void)
 		/* Open device readonly. (This fails if the device
 		 * is also writable, which a CD isn't.)
 		 */
-		if((r = dev_open(dev, FS_PROC_NR, RO_BIT)) != OK) {
+		if ((r = dev_open(dev, FS_PROC_NR, RO_BIT)) != OK) {
 			continue;
 		}
 
-		if((r = dev_io(DEV_READ, dev, FS_PROC_NR, pvd,
+		if ((r = dev_io(DEV_READ, dev, FS_PROC_NR, pvd,
 			16*CD_SECTOR, sizeof(pvd), 0)) != sizeof(pvd)) {
 			dev_close(dev);
 			continue;
@@ -48,7 +48,7 @@ PUBLIC int cdprobe(void)
 		dev_close(dev);
 
 		/* Check PVD ID. */
-		if(pvd[0] !=  1  || pvd[1] != 'C' || pvd[2] != 'D' ||
+		if (pvd[0] !=  1  || pvd[1] != 'C' || pvd[2] != 'D' ||
 		   pvd[3] != '0' || pvd[4] != '0' || pvd[5] != '1' || pvd[6] != 1 ||
 		   strncmp(pvd + 40, "MINIX", 5)) {
 		   	continue;
@@ -57,18 +57,18 @@ PUBLIC int cdprobe(void)
 		/* 3. Both c0dXp1 and p2 should have a superblock. */
 		for(minor = minors[i]+2; minor <= minors[i]+3; minor++) {
 			dev = (AT_MAJOR << MAJOR) | minor;
-			if((r = dev_open(dev, FS_PROC_NR, R_BIT)) != OK) {
+			if ((r = dev_open(dev, FS_PROC_NR, R_BIT)) != OK) {
 				break;
 			}
 			probe_super.s_dev = dev;
 			r = read_super(&probe_super);
 			dev_close(dev);
-			if(r != OK) {
+			if (r != OK) {
 				break;
 			}
 		}
 
-		if(minor > minors[i]+3) {
+		if (minor > minors[i]+3) {
 			/* Success? Then set dev to p1. */
 			dev = (AT_MAJOR << MAJOR) | (minors[i]+2);
 			found = 1;
@@ -76,7 +76,7 @@ PUBLIC int cdprobe(void)
 		}
 	}
 
-	if(!found) return NO_DEV;
+	if (!found) return NO_DEV;
 
 	return dev;
 }

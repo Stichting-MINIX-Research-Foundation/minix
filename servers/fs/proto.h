@@ -89,7 +89,7 @@ _PROTOTYPE( int do_exec, (void)						);
 _PROTOTYPE( int do_revive, (void)					);
 _PROTOTYPE( int do_set, (void)						);
 _PROTOTYPE( int do_sync, (void)						);
-_PROTOTYPE( int do_fsync, (void)						);
+_PROTOTYPE( int do_fsync, (void)					);
 _PROTOTYPE( int do_reboot, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
@@ -122,7 +122,7 @@ _PROTOTYPE( int pipe_check, (struct inode *rip, int rw_flag,
 _PROTOTYPE( void release, (struct inode *ip, int call_nr, int count)	);
 _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);
-_PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)			);
+_PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
 _PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
 _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
 
@@ -184,7 +184,7 @@ _PROTOTYPE( int select_callback, (struct filp *, int ops)		);
 _PROTOTYPE( void select_forget, (int fproc)				);
 _PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void init_select, (void)					);
-_PROTOTYPE( int select_notified, (int major, int minor, int ops)				);
+_PROTOTYPE( int select_notified, (int major, int minor, int ops)	);
 
 /* timers.c */
 _PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, tmr_func_t watchdog, int arg));

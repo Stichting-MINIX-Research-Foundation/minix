@@ -70,16 +70,16 @@ PUBLIC void dev_status(message *m)
 	int d, get_more = 1;
 
 	for(d = 0; d < NR_DEVICES; d++)
-		if(dmap[d].dmap_driver == m->m_source)
+		if (dmap[d].dmap_driver == m->m_source)
 			break;
 
-	if(d >= NR_DEVICES)
+	if (d >= NR_DEVICES)
 		return;
 
 	do {
 		int r;
 		st.m_type = DEV_STATUS;
-		if((r=sendrec(m->m_source, &st)) != OK)
+		if ((r=sendrec(m->m_source, &st)) != OK)
 			panic(__FILE__,"couldn't sendrec for DEV_STATUS", r);
 
 		switch(st.m_type) {
@@ -354,7 +354,7 @@ message *mess_ptr;		/* pointer to message for task */
   	/* Did the process we did the sendrec() for get a result? */
   	if (mess_ptr->REP_PROC_NR == proc_nr) {
   		break;
-	} else if(mess_ptr->m_type == REVIVE) {
+	} else if (mess_ptr->m_type == REVIVE) {
 		/* Otherwise it should be a REVIVE. */
 		revive(mess_ptr->REP_PROC_NR, mess_ptr->REP_STATUS);
 	} else {

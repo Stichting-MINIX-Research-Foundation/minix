@@ -109,7 +109,7 @@ int notouch;			/* check only */
 			if (oflags & O_NONBLOCK) {
 				r = EAGAIN;
 			} else {
-				if(!notouch)
+				if (!notouch)
 					suspend(XPIPE);	/* block reader */
 				r = SUSPEND;
 			}
@@ -123,7 +123,7 @@ int notouch;			/* check only */
 	/* Process is writing to a pipe. */
 	if (find_filp(rip, R_BIT) == NIL_FILP) {
 		/* Tell kernel to generate a SIGPIPE signal. */
-		if(!notouch)
+		if (!notouch)
 			sys_kill((int)(fp - fproc), SIGPIPE);
 		return(EPIPE);
 	}
@@ -137,7 +137,7 @@ int notouch;			/* check only */
 		if ( (*canwrite = (PIPE_SIZE(rip->i_sp->s_block_size) 
 			- position)) > 0)  {
 				/* Do a partial write. Need to wakeup reader */
-				if(!notouch)
+				if (!notouch)
 					release(rip, READ, susp_count);
 				return(1);
 			} else {
@@ -154,7 +154,7 @@ int notouch;			/* check only */
 				return(1);
 			}
 		}
-		if(!notouch)
+		if (!notouch)
 			suspend(XPIPE);	/* stop writer -- pipe full */
 		return(SUSPEND);
 	}
@@ -213,14 +213,14 @@ int count;			/* max number of processes to release */
   /* Trying to perform the call also includes SELECTing on it with that
    * operation.
    */
-  if(call_nr == READ || call_nr == WRITE) {
+  if (call_nr == READ || call_nr == WRITE) {
   	  int op;
-  	  if(call_nr == READ)
+  	  if (call_nr == READ)
   	  	op = SEL_RD;
   	  else
   	  	op = SEL_WR;
 	  for(f = &filp[0]; f < &filp[NR_FILPS]; f++) {
-  		if(f->filp_count < 1 || !(f->filp_pipe_select_ops & op) ||
+  		if (f->filp_count < 1 || !(f->filp_pipe_select_ops & op) ||
   		   f->filp_ino != ip)
   			continue;
   		 select_callback(f, op);
@@ -274,7 +274,7 @@ int returned;			/* if hanging on task, how many bytes read */
 	rfp->fp_suspended = NOT_SUSPENDED;
 	if (task == XPOPEN) /* process blocked in open or create */
 		reply(proc_nr, rfp->fp_fd>>8);
-	else if(task == XSELECT) {
+	else if (task == XSELECT) {
 		reply(proc_nr, returned);
 	} else {
 		/* Revive a process suspended on TTY or other device. */
@@ -349,24 +349,24 @@ PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
 {
 	int orig_ops, r = 0, err, canwrite;
 	orig_ops = *ops;
-	if((*ops & SEL_RD)) {
-		if((err = pipe_check(f->filp_ino, READING, 0,
+	if ((*ops & SEL_RD)) {
+		if ((err = pipe_check(f->filp_ino, READING, 0,
 			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
 			r |= SEL_RD;
-		if(err < 0 && err != SUSPEND && (*ops & SEL_ERR))
+		if (err < 0 && err != SUSPEND && (*ops & SEL_ERR))
 			r |= SEL_ERR;
 	}
-	if((*ops & SEL_WR)) {
-		if((err = pipe_check(f->filp_ino, WRITING, 0,
+	if ((*ops & SEL_WR)) {
+		if ((err = pipe_check(f->filp_ino, WRITING, 0,
 			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
 			r |= SEL_WR;
-		if(err < 0 && err != SUSPEND && (*ops & SEL_ERR))
+		if (err < 0 && err != SUSPEND && (*ops & SEL_ERR))
 			r |= SEL_ERR;
 	}
 
 	*ops = r;
 
-	if(!r && block) {
+	if (!r && block) {
 		f->filp_pipe_select_ops |= orig_ops;
 	}
 
@@ -379,7 +379,7 @@ PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
 PUBLIC int select_match_pipe(struct filp *f)
 {
 	/* recognize either pipe or named pipe (FIFO) */
-	if(f && f->filp_ino && (f->filp_ino->i_mode & I_NAMED_PIPE))
+	if (f && f->filp_ino && (f->filp_ino->i_mode & I_NAMED_PIPE))
 		return 1;
 	return 0;
 }

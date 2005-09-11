@@ -389,7 +389,7 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
  *				patch_ptr				     *
  *===========================================================================*/
 PRIVATE void patch_ptr(stack, base)
-char stack[ARG_MAX];	/* pointer to stack image within PM */
+char stack[ARG_MAX];		/* pointer to stack image within PM */
 vir_bytes base;			/* virtual address of stack base inside user */
 {
 /* When doing an exec(name, argv, envp) call, the user builds up a stack
@@ -441,7 +441,7 @@ int replace;
   a0 = (int) ((char **) stack)[1];	/* argv[0] */
   if (a0 < 4 * PTRSIZE || a0 >= old_bytes) return(FALSE);
 
-  a1 = a0;		/* a1 will point to the strings to be moved */
+  a1 = a0;			/* a1 will point to the strings to be moved */
   if (replace) {
 	/* Move a1 to the end of argv[0][] (argv[1] if nargs > 1). */
 	do {

@@ -46,7 +46,7 @@ PUBLIC void timing_dmp()
 
   for(c = 0; c < TIMING_CATEGORIES; c++) {
 	int b;
-	if(!timingdata[c].lock_timings_range[0] || !timingdata[c].binsize)
+	if (!timingdata[c].lock_timings_range[0] || !timingdata[c].binsize)
 		continue;
 	x = printf("%-*s: misses %lu, resets %lu, measurements %lu: ",
 	TIMING_NAME, timingdata[c].names,
@@ -55,14 +55,14 @@ PUBLIC void timing_dmp()
 		timingdata[c].measurements);
 	for(b = 0; b < TIMING_POINTS; b++) {
 		int w;
-		if(!timingdata[c].lock_timings[b])
+		if (!timingdata[c].lock_timings[b])
 			continue;
 		x += (w = printf(" %5d: %5d", timingdata[c].lock_timings_range[0] +
 			b*timingdata[c].binsize,
 			timingdata[c].lock_timings[b]));
-	 	if(x + w >= 80) { printf("\n"); x = 0; }
+	 	if (x + w >= 80) { printf("\n"); x = 0; }
 	}
-  	if(x > 0) printf("\n");
+  	if (x > 0) printf("\n");
   }
 #endif
 }
@@ -243,7 +243,7 @@ PUBLIC void sched_dmp()
 
   for (r=0;r<NR_SCHED_QUEUES; r++) {
       rp = rdy_head[r];
-      if(!rp) continue;
+      if (!rp) continue;
       printf("%2d: ", r);
       while (rp != NIL_PROC) {
           printf("%3d ", rp->p_nr);

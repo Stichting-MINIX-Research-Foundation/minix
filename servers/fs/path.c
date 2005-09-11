@@ -234,10 +234,10 @@ char string[NAME_MAX];		/* component name to look for */
  *				search_dir				     *
  *===========================================================================*/
 PUBLIC int search_dir(ldir_ptr, string, numb, flag)
-register struct inode *ldir_ptr;	/* ptr to inode for dir to search */
-char string[NAME_MAX];		/* component to search for */
-ino_t *numb;			/* pointer to inode number */
-int flag;			/* LOOK_UP, ENTER, DELETE or IS_EMPTY */
+register struct inode *ldir_ptr; /* ptr to inode for dir to search */
+char string[NAME_MAX];		 /* component to search for */
+ino_t *numb;			 /* pointer to inode number */
+int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 {
 /* This function searches the directory whose inode is pointed to by 'ldip':
  * if (flag == ENTER)  enter 'string' in the directory with inode # '*numb';
@@ -286,7 +286,7 @@ int flag;			/* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
 	bp = get_block(ldir_ptr->i_dev, b, NORMAL);	/* get a dir block */
 
-	if(bp == NO_BLOCK)
+	if (bp == NO_BLOCK)
 		panic(__FILE__,"get_block returned NO_BLOCK", NO_NUM);
 
 	/* Search a directory block. */

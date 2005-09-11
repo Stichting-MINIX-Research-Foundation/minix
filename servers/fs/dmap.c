@@ -41,17 +41,17 @@ PRIVATE struct dmap init_dmap[] = {
   DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)	/* 6 = /dev/lp    */
 
 #if (MACHINE == IBM_PC)
-  DT(1, no_dev,   0,       0,   	DMAP_MUTABLE)  /* 7 = /dev/ip    */
-  DT(0, no_dev,   0,       NONE,        DMAP_MUTABLE)  /* 8 = /dev/c1    */
-  DT(0, 0,        0,       0,   	DMAP_MUTABLE)  /* 9 = not used   */
-  DT(0, no_dev,   0,       0,           DMAP_MUTABLE)  /*10 = /dev/c2    */
-  DT(0, 0,        0,       0,   	DMAP_MUTABLE)  /*11 = not used   */
-  DT(0, no_dev,   0,       NONE,     	DMAP_MUTABLE)  /*12 = /dev/c3    */
-  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*13 = /dev/audio */
-  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*14 = /dev/mixer */
-  DT(1, gen_opcl, gen_io,  LOG_PROC_NR, 0)  	       /*15 = /dev/klog  */
-  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*16 = /dev/random */
-  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)  /*17 = /dev/cmos */
+  DT(1, no_dev,   0,       0,   	DMAP_MUTABLE)   /* 7 = /dev/ip    */
+  DT(0, no_dev,   0,       NONE,        DMAP_MUTABLE)   /* 8 = /dev/c1    */
+  DT(0, 0,        0,       0,   	DMAP_MUTABLE)   /* 9 = not used   */
+  DT(0, no_dev,   0,       0,           DMAP_MUTABLE)   /*10 = /dev/c2    */
+  DT(0, 0,        0,       0,   	DMAP_MUTABLE)   /*11 = not used   */
+  DT(0, no_dev,   0,       NONE,     	DMAP_MUTABLE)   /*12 = /dev/c3    */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)   /*13 = /dev/audio */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)   /*14 = /dev/mixer */
+  DT(1, gen_opcl, gen_io,  LOG_PROC_NR, 0)  	        /*15 = /dev/klog  */
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)   /*16 = /dev/random*/
+  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE)   /*17 = /dev/cmos  */
 #endif /* IBM_PC */
 };
 
