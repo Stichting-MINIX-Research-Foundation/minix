@@ -340,9 +340,10 @@ then	homesize=""
 	while [ -z "$homesize" ]
 	do
 
-		# 10% of partition is default
-		defmb="`expr $devsizemb / 10`"
 		maxhome="`expr $devsizemb - $TOTALMB - 1`"
+		# 20% of what is left over after /home and /usr
+		# are taken.
+		defmb="`$maxhome / 5`"
 		if [ $defmb -gt $maxhome ]
 		then
 			defmb=$maxhome
