@@ -60,7 +60,7 @@ depend::
 
 clean::
 	cd lib && $(MAKE) $@
-	cd contrib && $(MAKE) $@
+	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) $@; fi
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) clean; fi
 
