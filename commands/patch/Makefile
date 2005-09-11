@@ -10,7 +10,7 @@ all:	patch
 
 patch: $(OBJ)
 	cc -i -o patch $(OBJ)
-	install -S 32kw patch
+	install -S 1M patch
 
 install:	/usr/bin/patch
 
