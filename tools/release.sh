@@ -57,8 +57,11 @@ RELEASEDIR=/usr/r/release
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
-ISO=minix.iso
-ISOGZ=minix.iso.gz
+sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
+version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
+ISO=minix${version}.iso
+ISOGZ=${ISO}.gz
+echo $ISOGZ
 RAM=/dev/ram
 BS=4096
 
@@ -156,7 +159,7 @@ mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
 echo " * Zeroing $TMPDISK"
-dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
+#dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
 mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
 echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
