@@ -41,8 +41,8 @@
 
 #if _MINIX_SMALL
 
-#define NR_BUFS	256
-#define NR_BUF_HASH 256
+#define NR_BUFS	128
+#define NR_BUF_HASH 128
 
 #else
 
