@@ -103,9 +103,9 @@ fi
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
-ROOTMB=2
-ROOTSECTS="`expr $ROOTMB \* 1024 \* 2`"
-ROOTBLOCKS="`expr $ROOTMB \* 1024 \* 1024 / $BS`"
+ROOTKB=1400
+ROOTSECTS="`expr $ROOTKB \* 2`"
+ROOTBLOCKS="`expr $ROOTKB \* 1024 / $BS`"
 
 if [ "$COPY" -ne 1 ]
 then
@@ -114,7 +114,7 @@ then
 	echo ""
 fi
 
-echo "Warning: I'm going to mkfs $RAM! It has to be at least $ROOTMB MB."
+echo "Warning: I'm going to mkfs $RAM! It has to be at least $ROOTKB KB."
 echo ""
 echo "Temporary (sub)partition to use to make the /usr FS image? "
 echo "I need $USRMB MB. It will be mkfsed!"
@@ -159,7 +159,7 @@ mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
 echo " * Zeroing $TMPDISK"
-#dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
+dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
 mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
 echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
