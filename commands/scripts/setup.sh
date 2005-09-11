@@ -297,11 +297,17 @@ umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 
 devsize="`devsize /dev/$primary`"
 devsizemb="`expr $devsize / 1024 / 2`"
+maxhome="`expr $devsizemb - $TOTALMB - 1`"
 
 if [ $devsizemb -lt $TOTALMB ]
 then	echo "The selected partition ($devsizemb MB) is too small."
 	echo "You'll need $TOTALMB MB at least."
 	exit 1
+fi
+
+if [ $maxhome -lt 1 ]
+then	echo "Note: you can't have /home with that size partition."
+	maxhome=0
 fi
 
 TMPMP=/m
@@ -313,7 +319,7 @@ while [ "$confirm" = "" ]
 do
 	auto=""
 	echo ""
-	if mount /dev/$home $TMPMP >/dev/null 2>&1
+	if mount -r /dev/$home $TMPMP >/dev/null 2>&1
 	then	umount /dev/$home >/dev/null 2>&1
 		echo ""
 		echo "You have selected an existing MINIX 3 partition."
@@ -340,10 +346,9 @@ then	homesize=""
 	while [ -z "$homesize" ]
 	do
 
-		maxhome="`expr $devsizemb - $TOTALMB - 1`"
 		# 20% of what is left over after /home and /usr
 		# are taken.
-		defmb="`$maxhome / 5`"
+		defmb="`expr $maxhome / 5`"
 		if [ $defmb -gt $maxhome ]
 		then
 			defmb=$maxhome
