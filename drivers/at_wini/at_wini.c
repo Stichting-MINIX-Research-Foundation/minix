@@ -164,10 +164,10 @@ struct command {
 #define SUB_PER_DRIVE	(NR_PARTITIONS * NR_PARTITIONS)
 #define NR_SUBDEVS	(MAX_DRIVES * SUB_PER_DRIVE)
 #define DELAY_USECS     1000	/* controller timeout in microseconds */
-#define DELAY_TICKS 	1	/* controller timeout in ticks */
+#define DELAY_TICKS 	   1	/* controller timeout in ticks */
 #define DEF_TIMEOUT_TICKS 	300	/* controller timeout in ticks */
-#define RECOVERY_USECS  500000	/* controller recovery time in microseconds */
-#define RECOVERY_TICKS  30	/* controller recovery time in ticks */
+#define RECOVERY_USECS 500000	/* controller recovery time in microseconds */
+#define RECOVERY_TICKS    30	/* controller recovery time in ticks */
 #define INITIALIZED	0x01	/* drive is initialized */
 #define DEAF		0x02	/* controller must be reset */
 #define SMART		0x04	/* drive supports ATA commands */
@@ -231,37 +231,37 @@ PRIVATE int w_drive;			/* selected drive */
 PRIVATE int w_controller;		/* selected controller */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
-FORWARD _PROTOTYPE( void init_params, (void) );
+FORWARD _PROTOTYPE( void init_params, (void) 				);
 FORWARD _PROTOTYPE( void init_drive, (struct wini *, int, int, int, int, int, int));
-FORWARD _PROTOTYPE( void init_params_pci, (int) );
-FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( struct device *w_prepare, (int dev) );
-FORWARD _PROTOTYPE( int w_identify, (void) );
-FORWARD _PROTOTYPE( char *w_name, (void) );
-FORWARD _PROTOTYPE( int w_specify, (void) );
-FORWARD _PROTOTYPE( int w_io_test, (void) );
+FORWARD _PROTOTYPE( void init_params_pci, (int) 			);
+FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( struct device *w_prepare, (int dev) 		);
+FORWARD _PROTOTYPE( int w_identify, (void) 				);
+FORWARD _PROTOTYPE( char *w_name, (void) 				);
+FORWARD _PROTOTYPE( int w_specify, (void) 				);
+FORWARD _PROTOTYPE( int w_io_test, (void) 				);
 FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) );
-FORWARD _PROTOTYPE( int com_out, (struct command *cmd) );
-FORWARD _PROTOTYPE( void w_need_reset, (void) );
-FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) );
+					iovec_t *iov, unsigned nr_req) 	);
+FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
+FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
+FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) 			);
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int w_hw_int, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int com_simple, (struct command *cmd) );
-FORWARD _PROTOTYPE( void w_timeout, (void) );
-FORWARD _PROTOTYPE( int w_reset, (void) );
-FORWARD _PROTOTYPE( void w_intr_wait, (void) );
-FORWARD _PROTOTYPE( int at_intr_wait, (void) );
-FORWARD _PROTOTYPE( int w_waitfor, (int mask, int value) );
-FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry) );
+FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( int w_hw_int, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( int com_simple, (struct command *cmd) 		);
+FORWARD _PROTOTYPE( void w_timeout, (void) 				);
+FORWARD _PROTOTYPE( int w_reset, (void) 				);
+FORWARD _PROTOTYPE( void w_intr_wait, (void) 				);
+FORWARD _PROTOTYPE( int at_intr_wait, (void) 				);
+FORWARD _PROTOTYPE( int w_waitfor, (int mask, int value) 		);
+FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry) 		);
 #if ENABLE_ATAPI
-FORWARD _PROTOTYPE( int atapi_sendpacket, (u8_t *packet, unsigned cnt) );
-FORWARD _PROTOTYPE( int atapi_intr_wait, (void) );
-FORWARD _PROTOTYPE( int atapi_open, (void) );
-FORWARD _PROTOTYPE( void atapi_close, (void) );
+FORWARD _PROTOTYPE( int atapi_sendpacket, (u8_t *packet, unsigned cnt) 	);
+FORWARD _PROTOTYPE( int atapi_intr_wait, (void) 			);
+FORWARD _PROTOTYPE( int atapi_open, (void) 				);
+FORWARD _PROTOTYPE( void atapi_close, (void) 				);
 FORWARD _PROTOTYPE( int atapi_transfer, (int proc_nr, int opcode,
-			off_t position, iovec_t *iov, unsigned nr_req) );
+			off_t position, iovec_t *iov, unsigned nr_req) 	);
 #endif
 
 /* Entry points to this driver. */
@@ -293,9 +293,9 @@ PUBLIC int main()
   return(OK);
 }
 
-/*============================================================================*
- *				init_params				      *
- *============================================================================*/
+/*===========================================================================*
+ *				init_params				     *
+ *===========================================================================*/
 PRIVATE void init_params()
 {
 /* This routine is called at startup to initialize the drive parameters. */
@@ -314,7 +314,7 @@ PRIVATE void init_params()
   env_parse("ata_lba48", "d", 0, &w_lba48, 0, 1);
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
 
-  if(w_instance == 0) {
+  if (w_instance == 0) {
 	  /* Get the number of drives from the BIOS data area */
 	  if ((s=sys_vircopy(SELF, BIOS_SEG, NR_HD_DRIVES_ADDR, 
  		 	SELF, D, (vir_bytes) params, NR_HD_DRIVES_SIZE)) != OK)
@@ -355,7 +355,7 @@ PRIVATE void init_params()
   /* Look for controllers on the pci bus. Skip none the first instance,
    * skip one and then 2 for every instance, for every next instance.
    */
-  if(w_instance == 0)
+  if (w_instance == 0)
   	init_params_pci(0);
   else
   	init_params_pci(w_instance*2-1);
@@ -365,9 +365,9 @@ PRIVATE void init_params()
 #define ATA_IF_NOTCOMPAT1 (1L << 0)
 #define ATA_IF_NOTCOMPAT2 (1L << 2)
 
-/*============================================================================*
- *				init_drive				      *
- *============================================================================*/
+/*===========================================================================*
+ *				init_drive				     *
+ *===========================================================================*/
 PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl, int irq, int ack, int hook, int drive)
 {
 	w->state = 0;
@@ -383,9 +383,9 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl, int irq, int
 	w->lba48 = 0;
 }
 
-/*============================================================================*
- *				init_params_pci				      *
- *============================================================================*/
+/*===========================================================================*
+ *				init_params_pci				     *
+ *===========================================================================*/
 PRIVATE void init_params_pci(int skip)
 {
   int r, devind, drive;
@@ -399,7 +399,7 @@ PRIVATE void init_params_pci(int skip)
   	/* Base class must be 01h (mass storage), subclass must
   	 * be 01h (ATA).
   	 */
-  	if(pci_attr_r8(devind, PCI_BCR) != 0x01 ||
+  	if (pci_attr_r8(devind, PCI_BCR) != 0x01 ||
   	   pci_attr_r8(devind, PCI_SCR) != 0x01) {
   	   continue;
   	}
@@ -410,11 +410,11 @@ PRIVATE void init_params_pci(int skip)
   	irq = pci_attr_r8(devind, PCI_ILR);
 
   	/* Any non-compat drives? */
-  	if(interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2)) {
+  	if (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2)) {
   		int s;
   		irq_hook = irq;
-  		if(skip > 0) {
-  			if(w_pci_debug) printf("atapci skipping controller (remain %d)\n", skip);
+  		if (skip > 0) {
+  			if (w_pci_debug) printf("atapci skipping controller (remain %d)\n", skip);
   			skip--;
   			continue;
   		}
@@ -430,36 +430,36 @@ PRIVATE void init_params_pci(int skip)
   		/* If not.. this is not the ata-pci controller we're
   		 * looking for.
   		 */
-  		if(w_pci_debug) printf("atapci skipping compatability controller\n");
+  		if (w_pci_debug) printf("atapci skipping compatability controller\n");
   		continue;
   	}
 
   	/* Primary channel not in compatability mode? */
-  	if(interface & ATA_IF_NOTCOMPAT1) {
+  	if (interface & ATA_IF_NOTCOMPAT1) {
   		u32_t base_cmd, base_ctl;
   		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
   		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & 0xffffffe0;
-  		if(base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
+  		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
 	  		init_drive(&wini[w_next_drive],
 	  			base_cmd, base_ctl, irq, 1, irq_hook, 0);
   			init_drive(&wini[w_next_drive+1],
   				base_cmd, base_ctl, irq, 1, irq_hook, 1);
-	  		if(w_pci_debug)
+	  		if (w_pci_debug)
 		  		printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
   		} else printf("atapci: ignored drives on primary channel, base %x\n", base_cmd);
   	}
 
   	/* Secondary channel not in compatability mode? */
-  	if(interface & ATA_IF_NOTCOMPAT2) {
+  	if (interface & ATA_IF_NOTCOMPAT2) {
   		u32_t base_cmd, base_ctl;
   		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xffffffe0;
   		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & 0xffffffe0;
-  		if(base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
+  		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
   			init_drive(&wini[w_next_drive+2],
   				base_cmd, base_ctl, irq, 1, irq_hook, 2);
 	  		init_drive(&wini[w_next_drive+3],
 	  			base_cmd, base_ctl, irq, 1, irq_hook, 3);
-	  		if(w_pci_debug)
+	  		if (w_pci_debug)
   				printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
   		} else printf("atapci: ignored drives on secondary channel, base %x\n", base_cmd);
   	}
@@ -467,9 +467,9 @@ PRIVATE void init_params_pci(int skip)
   }
 }
 
-/*============================================================================*
- *				w_do_open				      *
- *============================================================================*/
+/*===========================================================================*
+ *				w_do_open				     *
+ *===========================================================================*/
 PRIVATE int w_do_open(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
@@ -503,7 +503,7 @@ message *m_ptr;
 	   * due to no CD being in the drive). If it fails, ignore
 	   * the device forever.
 	   */
-	  if(!(wn->state & ATAPI) && w_io_test() != OK) {
+	  if (!(wn->state & ATAPI) && w_io_test() != OK) {
   		wn->state |= IGNORING;
 	  	return(ENXIO);
 	  }
@@ -618,9 +618,9 @@ PRIVATE int w_identify()
 		wn->ldhpref |= LDH_LBA;
 		size = id_longword(60);
 
-		if(w_lba48 && ((id_word(83)) & (1L << 10))) {
+		if (w_lba48 && ((id_word(83)) & (1L << 10))) {
 			/* Drive is LBA48 capable (and LBA48 is turned on). */
-			if(id_word(102) || id_word(103)) {
+			if (id_word(102) || id_word(103)) {
 				/* If no. of sectors doesn't fit in 32 bits,
 				 * trunacte to this. So it's LBA32 for now.
 				 * This can still address devices up to 2TB
@@ -680,7 +680,7 @@ PRIVATE int w_identify()
   	return(ERR);
   }
 
-  if(wn->irq == NO_IRQ) {
+  if (wn->irq == NO_IRQ) {
 	  /* Everything looks OK; register IRQ so we can stop polling. */
 	  wn->irq = w_drive < 2 ? AT_WINI_0_IRQ : AT_WINI_1_IRQ;
 	  wn->irq_hook_id = wn->irq;	/* id to be returned if interrupt occurs */
@@ -728,7 +728,7 @@ PRIVATE int w_io_test(void)
 	save_errors = max_errors;
 	save_wakeup = wakeup_ticks;
 
-	if(!w_standard_timeouts) {
+	if (!w_standard_timeouts) {
 		timeout_ticks = HZ * 4;
 		wakeup_ticks = HZ * 6;
 		max_errors = 3;
@@ -737,13 +737,13 @@ PRIVATE int w_io_test(void)
 	w_testing = 1;
 
 	/* Try I/O on the actual drive (not any (sub)partition). */
- 	if(w_prepare(w_drive * DEV_PER_DRIVE) == NIL_DEV)
+ 	if (w_prepare(w_drive * DEV_PER_DRIVE) == NIL_DEV)
  		panic(w_name(), "Couldn't switch devices", NO_NUM);
 
 	r = w_transfer(SELF, DEV_GATHER, 0, &iov, 1);
 
 	/* Switch back. */
- 	if(w_prepare(save_dev) == NIL_DEV)
+ 	if (w_prepare(save_dev) == NIL_DEV)
  		panic(w_name(), "Couldn't switch back devices", NO_NUM);
 
  	/* Restore parameters. */
@@ -753,7 +753,7 @@ PRIVATE int w_io_test(void)
 	w_testing = 0;
 
  	/* Test if everything worked. */
-	if(r != OK || iov.iov_size != 0) {
+	if (r != OK || iov.iov_size != 0) {
 		return ERR;
 	}
 
@@ -942,9 +942,9 @@ unsigned nr_req;		/* length of request vector */
   return(OK);
 }
 
-/*============================================================================*
- *				com_out					      *
- *============================================================================*/
+/*===========================================================================*
+ *				com_out					     *
+ *===========================================================================*/
 PRIVATE int com_out(cmd)
 struct command *cmd;		/* Command block */
 {
@@ -956,7 +956,7 @@ struct command *cmd;		/* Command block */
   pvb_pair_t outbyte[7];		/* vector for sys_voutb() */
   int s;				/* status for sys_(v)outb() */
 
-  if(w_wn->state & IGNORING) return ERR;
+  if (w_wn->state & IGNORING) return ERR;
 
   if (!w_waitfor(STATUS_BSY, 0)) {
 	printf("%s: controller not ready\n", w_name());
@@ -1011,9 +1011,9 @@ PRIVATE void w_need_reset()
   }
 }
 
-/*============================================================================*
- *				w_do_close				      *
- *============================================================================*/
+/*===========================================================================*
+ *				w_do_close				     *
+ *===========================================================================*/
 PRIVATE int w_do_close(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
@@ -1028,16 +1028,16 @@ message *m_ptr;
   return(OK);
 }
 
-/*============================================================================*
- *				com_simple				      *
- *============================================================================*/
+/*===========================================================================*
+ *				com_simple				     *
+ *===========================================================================*/
 PRIVATE int com_simple(cmd)
 struct command *cmd;		/* Command block */
 {
 /* A simple controller command, only one interrupt and no data-out phase. */
   int r;
 
-  if(w_wn->state & IGNORING) return ERR;
+  if (w_wn->state & IGNORING) return ERR;
 
   if ((r = com_out(cmd)) == OK) r = at_intr_wait();
   w_command = CMD_IDLE;
@@ -1067,8 +1067,8 @@ PRIVATE void w_timeout(void)
 	/*FALL THROUGH*/
   default:
 	/* Some other command. */
-	if(w_testing)  wn->state |= IGNORING;	/* Kick out this drive. */
-	else if(!w_silent) printf("%s: timeout on command %02x\n", w_name(), w_command);
+	if (w_testing)  wn->state |= IGNORING;	/* Kick out this drive. */
+	else if (!w_silent) printf("%s: timeout on command %02x\n", w_name(), w_command);
 	w_need_reset();
 	wn->w_status = 0;
   }
@@ -1086,7 +1086,7 @@ PRIVATE int w_reset()
   struct wini *wn = w_wn;
 
   /* Don't bother if this drive is forgotten. */
-  if(w_wn->state & IGNORING) return ERR;
+  if (w_wn->state & IGNORING) return ERR;
 
   /* Wait for any internal drive recovery. */
   tickdelay(RECOVERY_TICKS);
@@ -1121,9 +1121,9 @@ PRIVATE int w_reset()
   return(OK);
 }
 
-/*============================================================================*
- *				w_intr_wait				      *
- *============================================================================*/
+/*===========================================================================*
+ *				w_intr_wait				     *
+ *===========================================================================*/
 PRIVATE void w_intr_wait()
 {
 /* Wait for a task completion interrupt. */
@@ -1150,9 +1150,9 @@ PRIVATE void w_intr_wait()
   }
 }
 
-/*============================================================================*
- *				at_intr_wait				      *
- *============================================================================*/
+/*===========================================================================*
+ *				at_intr_wait				     *
+ *===========================================================================*/
 PRIVATE int at_intr_wait()
 {
 /* Wait for an interrupt, study the status bits and return error/success. */
@@ -1175,9 +1175,9 @@ PRIVATE int at_intr_wait()
   return(r);
 }
 
-/*==========================================================================*
- *				w_waitfor				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				w_waitfor				     *
+ *===========================================================================*/
 PRIVATE int w_waitfor(mask, value)
 int mask;			/* status mask */
 int value;			/* required status */
@@ -1203,9 +1203,9 @@ int value;			/* required status */
   return(0);
 }
 
-/*============================================================================*
- *				w_geometry				      *
- *============================================================================*/
+/*===========================================================================*
+ *				w_geometry				     *
+ *===========================================================================*/
 PRIVATE void w_geometry(entry)
 struct partition *entry;
 {
@@ -1264,7 +1264,7 @@ void sense_request(void)
 	for(i = 0; i < SENSE_PACKETSIZE; i++) sense[i] = 0xff;
 	r = atapi_sendpacket(packet, SENSE_PACKETSIZE);
 	if (r != OK) { printf("request sense command failed\n"); return; }
-	if(atapi_intr_wait() <= 0) { printf("WARNING: request response failed\n"); }
+	if (atapi_intr_wait() <= 0) { printf("WARNING: request response failed\n"); }
 
 	if (sys_insw(w_wn->base_cmd + REG_DATA, SELF, (void *) sense, SENSE_PACKETSIZE) != OK)
 		printf("WARNING: sense reading failed\n");
@@ -1394,13 +1394,13 @@ unsigned nr_req;		/* length of request vector */
 
 	if (r < 0) {
   err:		/* Don't retry if too many errors. */
-		if(atapi_debug) sense_request();
+		if (atapi_debug) sense_request();
 		if (++errors == max_errors) {
 			w_command = CMD_IDLE;
-			if(atapi_debug) printf("giving up (%d)\n", errors);
+			if (atapi_debug) printf("giving up (%d)\n", errors);
 			return(EIO);
 		}
-		if(atapi_debug) printf("retry (%d)\n", errors);
+		if (atapi_debug) printf("retry (%d)\n", errors);
 	}
   }
 
@@ -1420,7 +1420,7 @@ unsigned cnt;
   pvb_pair_t outbyte[6];		/* vector for sys_voutb() */
   int s;
 
-  if(wn->state & IGNORING) return ERR;
+  if (wn->state & IGNORING) return ERR;
 
   /* Select Master/Slave drive */
   if ((s=sys_outb(wn->base_cmd + REG_DRIVE, wn->ldhpref)) != OK)
@@ -1450,7 +1450,7 @@ unsigned cnt;
   pv_set(outbyte[3], wn->base_cmd + REG_CNT_LO, (cnt >> 0) & 0xFF);
   pv_set(outbyte[4], wn->base_cmd + REG_CNT_HI, (cnt >> 8) & 0xFF);
   pv_set(outbyte[5], wn->base_cmd + REG_COMMAND, w_command);
-  if(atapi_debug) printf("cmd: %x  ", w_command);
+  if (atapi_debug) printf("cmd: %x  ", w_command);
   if ((s=sys_voutb(outbyte,6)) != OK)
   	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
 
@@ -1466,7 +1466,7 @@ unsigned cnt;
 
  {
  int p;
- if(atapi_debug) {
+ if (atapi_debug) {
  	printf("sent command:");
 	 for(p = 0; p < ATAPI_PACKETSIZE; p++) { printf(" %02x", packet[p]); }
 	 printf("\n");
@@ -1475,36 +1475,36 @@ unsigned cnt;
   return(OK);
 }
 
-/*============================================================================*
- *				w_other					      *
- *============================================================================*/
+/*===========================================================================*
+ *				w_other					     *
+ *===========================================================================*/
 PRIVATE int w_other(dr, m)
 struct driver *dr;
 message *m;
 {
 	int r, timeout, prev;
 
-	if(m->m_type != DEV_IOCTL ) {
+	if (m->m_type != DEV_IOCTL ) {
 		return EINVAL;
 	}
 
-	if(m->REQUEST == DIOCTIMEOUT) {
-		if((r=sys_datacopy(m->PROC_NR, (vir_bytes)m->ADDRESS,
+	if (m->REQUEST == DIOCTIMEOUT) {
+		if ((r=sys_datacopy(m->PROC_NR, (vir_bytes)m->ADDRESS,
 			SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
 			return r;
 	
-		if(timeout == 0) {
+		if (timeout == 0) {
 			/* Restore defaults. */
 			timeout_ticks = DEF_TIMEOUT_TICKS;
 			max_errors = MAX_ERRORS;
 			wakeup_ticks = WAKEUP;
 			w_silent = 0;
-		} else if(timeout < 0) {
+		} else if (timeout < 0) {
 			return EINVAL;
 		} else  {
 			prev = wakeup_ticks;
 	
-			if(!w_standard_timeouts) {
+			if (!w_standard_timeouts) {
 				/* Set (lower) timeout, lower error
 				 * tolerance and set silent mode.
 				 */
@@ -1512,21 +1512,21 @@ message *m;
 				max_errors = 3;
 				w_silent = 1;
 	
-				if(timeout_ticks > timeout)
+				if (timeout_ticks > timeout)
 					timeout_ticks = timeout;
 			}
 	
-			if((r=sys_datacopy(SELF, (vir_bytes)&prev, 
+			if ((r=sys_datacopy(SELF, (vir_bytes)&prev, 
 				m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
 				return r;
 		}
 	
 		return OK;
-	} else  if(m->REQUEST == DIOCOPENCT) {
+	} else  if (m->REQUEST == DIOCOPENCT) {
 		int count;
-		if(w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
+		if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
 		count = w_wn->open_ct;
-		if((r=sys_datacopy(SELF, (vir_bytes)&count, 
+		if ((r=sys_datacopy(SELF, (vir_bytes)&count, 
 			m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
 			return r;
 		return OK;
@@ -1535,9 +1535,9 @@ message *m;
 }
 
 
-/*============================================================================*
- *				w_hw_int					      *
- *============================================================================*/
+/*===========================================================================*
+ *				w_hw_int				     *
+ *===========================================================================*/
 PRIVATE int w_hw_int(dr, m)
 struct driver *dr;
 message *m;
@@ -1549,16 +1549,16 @@ message *m;
 }
 
 
-/*============================================================================*
- *				ack_irqs					      *
- *============================================================================*/
+/*===========================================================================*
+ *				ack_irqs				     *
+ *===========================================================================*/
 PRIVATE void ack_irqs(unsigned int irqs)
 {
   unsigned int drive;
   for (drive = 0; drive < MAX_DRIVES && irqs; drive++) {
-  	if(!(wini[drive].state & IGNORING) && wini[drive].irq_need_ack &&
+  	if (!(wini[drive].state & IGNORING) && wini[drive].irq_need_ack &&
 		(wini[drive].irq_mask & irqs)) {
-		if(sys_inb((wini[drive].base_cmd + REG_STATUS), &wini[drive].w_status) != OK)
+		if (sys_inb((wini[drive].base_cmd + REG_STATUS), &wini[drive].w_status) != OK)
 		  	printf("couldn't ack irq on drive %d\n", drive);
 	 	if (sys_irqenable(&wini[drive].irq_hook_id) != OK)
 		  	printf("couldn't re-enable drive %d\n", drive);
@@ -1568,8 +1568,8 @@ PRIVATE void ack_irqs(unsigned int irqs)
 }
 
 
-#define STSTR(a) if(status & STATUS_ ## a) { strcat(str, #a); strcat(str, " "); }
-#define ERRSTR(a) if(e & ERROR_ ## a) { strcat(str, #a); strcat(str, " "); }
+#define STSTR(a) if (status & STATUS_ ## a) { strcat(str, #a); strcat(str, " "); }
+#define ERRSTR(a) if (e & ERROR_ ## a) { strcat(str, #a); strcat(str, " "); }
 char *strstatus(int status)
 {
 	static char str[200];
@@ -1600,9 +1600,9 @@ char *strerr(int e)
 	return str;
 }
 
-/*============================================================================*
- *				atapi_intr_wait				      *
- *============================================================================*/
+/*===========================================================================*
+ *				atapi_intr_wait				     *
+ *===========================================================================*/
 PRIVATE int atapi_intr_wait()
 {
 /* Wait for an interrupt and study the results.  Returns a number of bytes
@@ -1635,7 +1635,7 @@ PRIVATE int atapi_intr_wait()
 	printf("wn %p  S=%x=%s E=%02x=%s L=%04x I=%02x\n", wn, wn->w_status, strstatus(wn->w_status), e, strerr(e), len, irr);
 #endif
   if (wn->w_status & (STATUS_BSY | STATUS_CHECK)) {
-	if(atapi_debug) {
+	if (atapi_debug) {
 		printf("atapi fail:  S=%x=%s E=%02x=%s L=%04x I=%02x\n", wn->w_status, strstatus(wn->w_status), e, strerr(e), len, irr);
 	}
   	return ERR;

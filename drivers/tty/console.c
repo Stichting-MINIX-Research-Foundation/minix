@@ -115,7 +115,7 @@ struct sequence {
 	unsigned char value;
 };
 
-FORWARD _PROTOTYPE( int cons_write, (struct tty *tp, int try)			);
+FORWARD _PROTOTYPE( int cons_write, (struct tty *tp, int try)		);
 FORWARD _PROTOTYPE( void cons_echo, (tty_t *tp, int c)			);
 FORWARD _PROTOTYPE( void out_char, (console_t *cons, int c)		);
 FORWARD _PROTOTYPE( void putk, (int c)					);
@@ -126,7 +126,7 @@ FORWARD _PROTOTYPE( void parse_escape, (console_t *cons, int c)		);
 FORWARD _PROTOTYPE( void scroll_screen, (console_t *cons, int dir)	);
 FORWARD _PROTOTYPE( void set_6845, (int reg, unsigned val)		);
 FORWARD _PROTOTYPE( void get_6845, (int reg, unsigned *val)		);
-FORWARD _PROTOTYPE( void stop_beep, (timer_t *tmrp)				);
+FORWARD _PROTOTYPE( void stop_beep, (timer_t *tmrp)			);
 FORWARD _PROTOTYPE( void cons_org0, (void)				);
 FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
 FORWARD _PROTOTYPE( int cons_ioctl, (tty_t *tp, int)			);
@@ -149,7 +149,7 @@ int try;
   char buf[64];
   console_t *cons = tp->tty_priv;
 
-  if(try) return 1;	/* we can always write to console */
+  if (try) return 1;	/* we can always write to console */
 
   /* Check quickly for nothing to do, so this can be called often without
    * unmodular tests elsewhere.
@@ -853,7 +853,7 @@ tty_t *tp;
   cons->c_cur = cons->c_org = cons->c_start;
   cons->c_attr = cons->c_blank = BLANK_COLOR;
 
-  if(line != 0) {
+  if (line != 0) {
         /* Clear the non-console vtys. */
   	blank_color = BLANK_COLOR;
 	mem_vid_copy(BLANK_MEM, cons->c_start, scr_size);
@@ -870,18 +870,18 @@ tty_t *tp;
   cons_ioctl(tp, 0);
 }
 
-/*==========================================================================*
- *				    kputc				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				kputc					     *
+ *===========================================================================*/
 PUBLIC void kputc(c)
 int c;
 {
 	putk(c);
 }
 
-/*==========================================================================*
- *				do_new_kmess				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				do_new_kmess				     *
+ *===========================================================================*/
 PUBLIC void do_new_kmess(m)
 message *m;
 {
@@ -928,9 +928,9 @@ message *m;
   prev_next = kmess.km_next;
 }
 
-/*==========================================================================*
- *				do_diagnostics				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				do_diagnostics				     *
+ *===========================================================================*/
 PUBLIC void do_diagnostics(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {

@@ -65,7 +65,7 @@ typedef struct pty {
 
 PRIVATE pty_t pty_table[NR_PTYS];	/* PTY bookkeeping */
 
-FORWARD _PROTOTYPE( int pty_write, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int pty_write, (tty_t *tp, int try)			);
 FORWARD _PROTOTYPE( void pty_echo, (tty_t *tp, int c)			);
 FORWARD _PROTOTYPE( void pty_start, (pty_t *pp)				);
 FORWARD _PROTOTYPE( void pty_finish, (pty_t *pp)			);
@@ -75,9 +75,9 @@ FORWARD _PROTOTYPE( int pty_icancel, (tty_t *tp, int try)		);
 FORWARD _PROTOTYPE( int pty_ocancel, (tty_t *tp, int try)		);
 FORWARD _PROTOTYPE( int pty_select, (tty_t *tp, message *m)		);
 
-/*==========================================================================*
- *				do_pty					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				do_pty					     *
+ *===========================================================================*/
 PUBLIC void do_pty(tp, m_ptr)
 tty_t *tp;
 message *m_ptr;
@@ -209,9 +209,9 @@ message *m_ptr;
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
 }
 
-/*==========================================================================*
- *				pty_write				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_write				     *
+ *===========================================================================*/
 PRIVATE int pty_write(tp, try)
 tty_t *tp;
 int try;
@@ -225,7 +225,7 @@ int try;
 
   /* PTY closed down? */
   if (pp->state & PTY_CLOSED) {
-  	if(try) return 1;
+  	if (try) return 1;
 	if (tp->tty_outleft > 0) {
 		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
 							tp->tty_outproc, EIO);
@@ -237,7 +237,7 @@ int try;
   /* While there is something to do. */
   for (;;) {
 	ocount = buflen(pp->obuf) - pp->ocount;
-	if(try) return (ocount > 0);
+	if (try) return (ocount > 0);
 	count = bufend(pp->obuf) - pp->ohead;
 	if (count > ocount) count = ocount;
 	if (count > tp->tty_outleft) count = tp->tty_outleft;
@@ -245,7 +245,7 @@ int try;
 		break;
 
 	/* Copy from user space to the PTY output buffer. */
-	if((s = sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir,
+	if ((s = sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir,
 		SELF, D, (vir_bytes) pp->ohead, (phys_bytes) count)) != OK) {
 		printf("pty tty%d: copy failed (error %d)\n",  s);
 		break;
@@ -276,9 +276,9 @@ int try;
   return 1;
 }
 
-/*==========================================================================*
- *				pty_echo				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_echo				     *
+ *===========================================================================*/
 PRIVATE void pty_echo(tp, c)
 tty_t *tp;
 int c;
@@ -301,9 +301,9 @@ int c;
   pty_start(pp);
 }
 
-/*==========================================================================*
- *				pty_start				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_start				     *
+ *===========================================================================*/
 PRIVATE void pty_start(pp)
 pty_t *pp;
 {
@@ -319,7 +319,7 @@ pty_t *pp;
 	if (count == 0) break;
 
 	/* Copy from the output buffer to the readers address space. */
-	if((s = sys_vircopy(SELF, D, (vir_bytes)pp->otail,
+	if ((s = sys_vircopy(SELF, D, (vir_bytes)pp->otail,
 		(vir_bytes) pp->rdproc, D, (vir_bytes) pp->rdvir, (phys_bytes) count)) != OK) {
 		printf("pty tty%d: copy failed (error %d)\n",  s);
 		break;
@@ -334,9 +334,9 @@ pty_t *pp;
   }
 }
 
-/*==========================================================================*
- *				pty_finish				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_finish				     *
+ *===========================================================================*/
 PRIVATE void pty_finish(pp)
 pty_t *pp;
 {
@@ -354,9 +354,9 @@ pty_t *pp;
 
 }
 
-/*==========================================================================*
- *				pty_read				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_read				     *
+ *===========================================================================*/
 PRIVATE int pty_read(tp, try)
 tty_t *tp;
 int try;
@@ -368,7 +368,7 @@ int try;
   char c;
 
   if (pp->state & PTY_CLOSED) {
-	if(try) return 1;
+	if (try) return 1;
 	if (tp->tty_inleft > 0) {
 		tty_reply(tp->tty_inrepcode, tp->tty_incaller, tp->tty_inproc,
 								tp->tty_incum);
@@ -377,8 +377,8 @@ int try;
 	return 1;
   }
 
-  if(try) {
-  	if(pp->wrleft > 0)
+  if (try) {
+  	if (pp->wrleft > 0)
   		return 1;
   	return 0;
   }
@@ -387,7 +387,7 @@ int try;
   	int s;
 
 	/* Transfer one character to 'c'. */
-	if((s = sys_vircopy(pp->wrproc, D, (vir_bytes) pp->wrvir,
+	if ((s = sys_vircopy(pp->wrproc, D, (vir_bytes) pp->wrvir,
 		SELF, D, (vir_bytes) &c, (phys_bytes) 1)) != OK) {
 		printf("pty: copy failed (error %d)\n", s);
 		break;
@@ -411,9 +411,9 @@ int try;
   }
 }
 
-/*==========================================================================*
- *				pty_close				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_close				     *
+ *===========================================================================*/
 PRIVATE int pty_close(tp, try)
 tty_t *tp;
 int try;
@@ -436,9 +436,9 @@ int try;
   if (pp->state & PTY_CLOSED) pp->state = 0; else pp->state |= TTY_CLOSED;
 }
 
-/*==========================================================================*
- *				pty_icancel				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_icancel				     *
+ *===========================================================================*/
 PRIVATE int pty_icancel(tp, try)
 tty_t *tp;
 int try;
@@ -454,9 +454,9 @@ int try;
   }
 }
 
-/*==========================================================================*
- *				pty_ocancel				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_ocancel				     *
+ *===========================================================================*/
 PRIVATE int pty_ocancel(tp, try)
 tty_t *tp;
 int try;
@@ -468,9 +468,9 @@ int try;
   pp->otail = pp->ohead;
 }
 
-/*==========================================================================*
- *				pty_init				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_init				     *
+ *===========================================================================*/
 PUBLIC void pty_init(tp)
 tty_t *tp;
 {
@@ -496,9 +496,9 @@ tty_t *tp;
   tp->tty_select_ops = 0;
 }
 
-/*==========================================================================*
- *				pty_status				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_status				     *
+ *===========================================================================*/
 PUBLIC int pty_status(message *m_ptr)
 {
 	int i, event_found;
@@ -535,7 +535,7 @@ PUBLIC int pty_status(message *m_ptr)
 			break;
 		}
 
-		if(pp->select_ready_ops && pp->select_proc == m_ptr->m_source) {
+		if (pp->select_ready_ops && pp->select_proc == m_ptr->m_source) {
 			m_ptr->m_type = DEV_IO_READY;
 			m_ptr->DEV_MINOR = PTYPX_MINOR + i;
 			m_ptr->DEV_SEL_OPS = pp->select_ready_ops;
@@ -547,50 +547,50 @@ PUBLIC int pty_status(message *m_ptr)
 	return event_found;
 }
 
-/*==========================================================================*
- *				select_try_pty				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				select_try_pty				     *
+ *===========================================================================*/
 PRIVATE int select_try_pty(tty_t *tp, int ops)
 {
   	pty_t *pp = tp->tty_priv;
 	int r = 0;
 
-	if(ops & SEL_WR)  {
+	if (ops & SEL_WR)  {
 		/* Write won't block on error. */
 		if (pp->state & TTY_CLOSED) r |= SEL_WR;
 		else if (pp->wrleft != 0 || pp->wrcum != 0) r |= SEL_WR;
 		else r |= SEL_WR;
 	}
 
-	if(ops & SEL_RD) {
+	if (ops & SEL_RD) {
 		/* Read won't block on error. */
 		if (pp->state & TTY_CLOSED) r |= SEL_RD;
-		else if(pp->rdleft != 0 || pp->rdcum != 0) r |= SEL_RD;
-		else if(pp->ocount > 0) r |= SEL_RD;	/* Actual data. */
+		else if (pp->rdleft != 0 || pp->rdcum != 0) r |= SEL_RD;
+		else if (pp->ocount > 0) r |= SEL_RD;	/* Actual data. */
 	}
 
 	return r;
 }
 
-/*==========================================================================*
- *				select_retry_pty				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				select_retry_pty			     *
+ *===========================================================================*/
 PUBLIC void select_retry_pty(tty_t *tp)
 {
   	pty_t *pp = tp->tty_priv;
   	int r;
 
 	/* See if the pty side of a pty is ready to return a select. */
-	if(pp->select_ops && (r=select_try_pty(tp, pp->select_ops))) {
+	if (pp->select_ops && (r=select_try_pty(tp, pp->select_ops))) {
 		pp->select_ops &= ~r;
 		pp->select_ready_ops |= r;
 		notify(pp->select_proc);
 	}
 }
 
-/*==========================================================================*
- *				pty_select				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				pty_select				     *
+ *===========================================================================*/
 PRIVATE int pty_select(tty_t *tp, message *m)
 {
   	pty_t *pp = tp->tty_priv;
@@ -601,7 +601,7 @@ PRIVATE int pty_select(tty_t *tp, message *m)
 
 	ready_ops = select_try_pty(tp, ops);
 
-	if(!ready_ops && ops && watch) {
+	if (!ready_ops && ops && watch) {
 		pp->select_ops |= ops;
 		pp->select_proc = m->m_source;
 	}

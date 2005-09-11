@@ -6,6 +6,7 @@
  *   floppy_task:   main entry when system is brought up
  *
  * Changes:
+ *   Sep 11, 2005   code cleanup (Andy Tanenbaum)
  *   Dec 01, 2004   floppy driver moved to user-space (Jorrit N. Herder)
  *   Sep 15, 2004   sync alarms/ local timer management  (Jorrit N. Herder)
  *   Aug 12, 2003   null seek no interrupt fix  (Mike Haertel)
@@ -239,30 +240,30 @@ PRIVATE timer_t *f_timers;		/* queue of floppy timers */
 PRIVATE clock_t f_next_timeout; 	/* the next timeout time */
 FORWARD _PROTOTYPE( void f_expire_tmrs, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void f_set_timer, (timer_t *tp, clock_t delta,
-						 tmr_func_t watchdog) );
-FORWARD _PROTOTYPE( void stop_motor, (timer_t *tp) );
-FORWARD _PROTOTYPE( void f_timeout, (timer_t *tp) );
+						 tmr_func_t watchdog) 	);
+FORWARD _PROTOTYPE( void stop_motor, (timer_t *tp) 			);
+FORWARD _PROTOTYPE( void f_timeout, (timer_t *tp) 			);
 
-FORWARD _PROTOTYPE( struct device *f_prepare, (int device) );
-FORWARD _PROTOTYPE( char *f_name, (void) );
-FORWARD _PROTOTYPE( void f_cleanup, (void) );
+FORWARD _PROTOTYPE( struct device *f_prepare, (int device) 		);
+FORWARD _PROTOTYPE( char *f_name, (void) 				);
+FORWARD _PROTOTYPE( void f_cleanup, (void) 				);
 FORWARD _PROTOTYPE( int f_transfer, (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) );
-FORWARD _PROTOTYPE( int dma_setup, (int opcode) );
-FORWARD _PROTOTYPE( void start_motor, (void) );
-FORWARD _PROTOTYPE( int seek, (void) );
-FORWARD _PROTOTYPE( int fdc_transfer, (int opcode) );
-FORWARD _PROTOTYPE( int fdc_results, (void) );
-FORWARD _PROTOTYPE( int fdc_command, (u8_t *cmd, int len) );
-FORWARD _PROTOTYPE( void fdc_out, (int val) );
-FORWARD _PROTOTYPE( int recalibrate, (void) );
-FORWARD _PROTOTYPE( void f_reset, (void) );
-FORWARD _PROTOTYPE( int f_intr_wait, (void) );
-FORWARD _PROTOTYPE( int read_id, (void) );
-FORWARD _PROTOTYPE( int f_do_open, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void floppy_stop, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int test_read, (int density) );
-FORWARD _PROTOTYPE( void f_geometry, (struct partition *entry));
+					iovec_t *iov, unsigned nr_req) 	);
+FORWARD _PROTOTYPE( int dma_setup, (int opcode) 			);
+FORWARD _PROTOTYPE( void start_motor, (void) 				);
+FORWARD _PROTOTYPE( int seek, (void) 					);
+FORWARD _PROTOTYPE( int fdc_transfer, (int opcode) 			);
+FORWARD _PROTOTYPE( int fdc_results, (void) 				);
+FORWARD _PROTOTYPE( int fdc_command, (u8_t *cmd, int len) 		);
+FORWARD _PROTOTYPE( void fdc_out, (int val) 				);
+FORWARD _PROTOTYPE( int recalibrate, (void) 				);
+FORWARD _PROTOTYPE( void f_reset, (void) 				);
+FORWARD _PROTOTYPE( int f_intr_wait, (void) 				);
+FORWARD _PROTOTYPE( int read_id, (void) 				);
+FORWARD _PROTOTYPE( int f_do_open, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( void floppy_stop, (struct driver *dp, message *m_ptr));
+FORWARD _PROTOTYPE( int test_read, (int density)	 		);
+FORWARD _PROTOTYPE( void f_geometry, (struct partition *entry)		);
 
 /* Entry points to this driver. */
 PRIVATE struct driver f_dtab = {
@@ -561,7 +562,7 @@ unsigned nr_req;		/* length of request vector */
 
 		if (r == OK && opcode == DEV_SCATTER) {
 			/* Copy the user bytes to the DMA buffer. */
-			if((s=sys_datacopy(proc_nr, *up,  SELF, 
+			if ((s=sys_datacopy(proc_nr, *up,  SELF, 
 				(vir_bytes) tmp_buf,
 				(phys_bytes) SECTOR_SIZE)) != OK)
 			panic("FLOPPY", "Sys_vircopy failed", s);
@@ -581,7 +582,7 @@ unsigned nr_req;		/* length of request vector */
 
 		if (r == OK && opcode == DEV_GATHER) {
 			/* Copy the DMA buffer to user space. */
-			if((s=sys_datacopy(SELF, (vir_bytes) tmp_buf, 
+			if ((s=sys_datacopy(SELF, (vir_bytes) tmp_buf, 
 				proc_nr, *up, 
 				(phys_bytes) SECTOR_SIZE)) != OK)
 			panic("FLOPPY", "Sys_vircopy failed", s);
@@ -875,9 +876,9 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
   return(OK);
 }
 
-/*==========================================================================*
- *				fdc_results				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				fdc_results				     *
+ *===========================================================================*/
 PRIVATE int fdc_results()
 {
 /* Extract results from the controller after an operation, then allow floppy
@@ -1137,9 +1138,9 @@ timer_t *tp;
   }
 }
 
-/*==========================================================================*
- *				read_id					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				read_id					     *
+ *===========================================================================*/
 PRIVATE int read_id()
 {
 /* Determine current cylinder and sector. */
@@ -1170,9 +1171,9 @@ PRIVATE int read_id()
   return(OK);
 }
 
-/*==========================================================================*
- *				f_do_open				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				f_do_open				     *
+ *===========================================================================*/
 PRIVATE int f_do_open(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;			/* pointer to open message */
@@ -1231,9 +1232,9 @@ message *m_ptr;			/* pointer to open message */
   return(EIO);			/* nothing worked */
 }
 
-/*==========================================================================*
- *				test_read				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				test_read				     *
+ *===========================================================================*/
 PRIVATE int test_read(density)
 int density;
 {
@@ -1261,9 +1262,9 @@ int density;
   return(OK);
 }
 
-/*============================================================================*
- *				f_geometry				      *
- *============================================================================*/
+/*===========================================================================*
+ *				f_geometry				     *
+ *===========================================================================*/
 PRIVATE void f_geometry(entry)
 struct partition *entry;
 {

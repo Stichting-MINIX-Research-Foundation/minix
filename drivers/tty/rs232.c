@@ -1,8 +1,8 @@
 #include <minix/config.h>
-/*==========================================================================*
- *		rs232.c - serial driver for 8250 and 16450 UARTs	    *
- *		Added support for Atari ST M68901 and YM-2149	--kub	    *
- *==========================================================================*/
+/*---------------------------------------------------------------------------*
+ *		rs232.c - serial driver for 8250 and 16450 UARTs	     *
+ *		Added support for Atari ST M68901 and YM-2149	--kub	     *
+ *---------------------------------------------------------------------------*/
 
 #include "../drivers.h"
 #include <termios.h>
@@ -252,16 +252,16 @@ PRIVATE port_t addr_8250[] = {
 FORWARD _PROTOTYPE( void in_int, (rs232_t *rs)				);
 FORWARD _PROTOTYPE( void line_int, (rs232_t *rs)			);
 FORWARD _PROTOTYPE( void modem_int, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( int rs_write, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int rs_write, (tty_t *tp, int try)			);
 FORWARD _PROTOTYPE( void rs_echo, (tty_t *tp, int c)			);
-FORWARD _PROTOTYPE( int rs_ioctl, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int rs_ioctl, (tty_t *tp, int try)			);
 FORWARD _PROTOTYPE( void rs_config, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( int rs_read, (tty_t *tp, int try)				);
-FORWARD _PROTOTYPE( int rs_icancel, (tty_t *tp, int try)				);
-FORWARD _PROTOTYPE( int rs_ocancel, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int rs_read, (tty_t *tp, int try)			);
+FORWARD _PROTOTYPE( int rs_icancel, (tty_t *tp, int try)		);
+FORWARD _PROTOTYPE( int rs_ocancel, (tty_t *tp, int try)		);
 FORWARD _PROTOTYPE( void rs_ostart, (rs232_t *rs)			);
-FORWARD _PROTOTYPE( int rs_break, (tty_t *tp, int try)				);
-FORWARD _PROTOTYPE( int rs_close, (tty_t *tp, int try)				);
+FORWARD _PROTOTYPE( int rs_break, (tty_t *tp, int try)			);
+FORWARD _PROTOTYPE( int rs_close, (tty_t *tp, int try)			);
 FORWARD _PROTOTYPE( void out_int, (rs232_t *rs)				);
 FORWARD _PROTOTYPE( void rs232_handler, (rs232_t *rs)			);
 
@@ -273,15 +273,15 @@ PRIVATE int my_inb(port_t port)
 {
 	int r, v = 0;
 	r = sys_inb(port, &v);
-	if(r != OK)
+	if (r != OK)
 		printf("RS232 warning: failed inb 0x%x\n", port);
 
 	return v;
 }
 
-/*==========================================================================*
- *				rs_write				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_write				     *
+ *===========================================================================*/
 PRIVATE int rs_write(tp, try)
 register tty_t *tp;
 int try;
@@ -314,10 +314,10 @@ int try;
 	if (count > ocount) count = ocount;
 	if (count > tp->tty_outleft) count = tp->tty_outleft;
 	if (count == 0 || tp->tty_inhibited) {
-		if(try) return 0;
+		if (try) return 0;
 		break;
 	}
-	if(try) return 1;
+	if (try) return 1;
 
 	/* Copy from user space to the RS232 output buffer. */
 	sys_vircopy(tp->tty_outproc, D, (vir_bytes) tp->tty_out_vir, 
@@ -355,9 +355,9 @@ int try;
   return 1;
 }
 
-/*==========================================================================*
- *				rs_echo					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_echo					     *
+ *===========================================================================*/
 PRIVATE void rs_echo(tp, c)
 tty_t *tp;			/* which TTY */
 int c;				/* character to echo */
@@ -382,9 +382,9 @@ int c;				/* character to echo */
   if ((rs->ohead += ocount) >= bufend(rs->obuf)) rs->ohead -= buflen(rs->obuf);
 }
 
-/*==========================================================================*
- *				rs_ioctl				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_ioctl				     *
+ *===========================================================================*/
 PRIVATE int rs_ioctl(tp, dummy)
 tty_t *tp;			/* which TTY */
 int dummy;
@@ -396,9 +396,9 @@ int dummy;
   return 0;	/* dummy */
 }
 
-/*==========================================================================*
- *				rs_config				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_config				     *
+ *===========================================================================*/
 PRIVATE void rs_config(rs)
 rs232_t *rs;			/* which line */
 {
@@ -504,9 +504,9 @@ rs232_t *rs;			/* which line */
 #endif /* MACHINE == ATARI */
 }
 
-/*==========================================================================*
- *				rs_init					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_init					     *
+ *===========================================================================*/
 PUBLIC void rs_init(tp)
 tty_t *tp;			/* which TTY */
 {
@@ -580,10 +580,10 @@ tty_t *tp;			/* which TTY */
 
   rs->irq = irq;
   rs->irq_hook_id = rs->irq;	/* call back with irq line number */
-  if(sys_irqsetpolicy(irq, IRQ_REENABLE, &rs->irq_hook_id) != OK) {
+  if (sys_irqsetpolicy(irq, IRQ_REENABLE, &rs->irq_hook_id) != OK) {
   	printf("RS232: Couldn't obtain hook for irq %d\n", irq);
   } else {
-  	if(sys_irqenable(&rs->irq_hook_id) != OK)  {
+  	if (sys_irqenable(&rs->irq_hook_id) != OK)  {
   		printf("RS232: Couldn't enable irq %d (hooked)\n", irq);
   	}
   }
@@ -622,9 +622,9 @@ tty_t *tp;			/* which TTY */
 
 }
 
-/*==========================================================================*
- *				rs_interrupt					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_interrupt				     *
+ *===========================================================================*/
 PUBLIC void rs_interrupt(m)
 message *m;			/* which TTY */
 {
@@ -640,9 +640,9 @@ message *m;			/* which TTY */
 	}
 }
 
-/*==========================================================================*
- *				rs_icancel				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_icancel				     *
+ *===========================================================================*/
 PRIVATE int rs_icancel(tp, dummy)
 tty_t *tp;			/* which TTY */
 int dummy;
@@ -659,9 +659,9 @@ int dummy;
   return 0;	/* dummy */
 }
 
-/*==========================================================================*
- *				rs_ocancel				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_ocancel				     *
+ *===========================================================================*/
 PRIVATE int rs_ocancel(tp, dummy)
 tty_t *tp;			/* which TTY */
 int dummy;
@@ -678,9 +678,9 @@ int dummy;
   return 0;	/* dummy */
 }
 
-/*==========================================================================*
- *				rs_read					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_read					     *
+ *===========================================================================*/
 PRIVATE int rs_read(tp, try)
 tty_t *tp;			/* which tty */
 int try;
@@ -691,7 +691,7 @@ int try;
   int icount, count, ostate;
 
   if (!(tp->tty_termios.c_cflag & CLOCAL)) {
-  	if(try) return 1;
+  	if (try) return 1;
 	/* Send a SIGHUP if hangup detected. */
 	lock();
 	ostate = rs->ostate;
@@ -704,8 +704,8 @@ int try;
 	}
   }
 
-  if(try) {
-  	if(rs->icount > 0)
+  if (try) {
+  	if (rs->icount > 0)
 	  	return 1;
 	return 0;
   }
@@ -725,9 +725,9 @@ int try;
   }
 }
 
-/*==========================================================================*
- *				rs_ostart				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_ostart				     *
+ *===========================================================================*/
 PRIVATE void rs_ostart(rs)
 rs232_t *rs;			/* which rs line */
 {
@@ -737,9 +737,9 @@ rs232_t *rs;			/* which rs line */
   if (txready(rs)) out_int(rs);
 }
 
-/*==========================================================================*
- *				rs_break				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_break				     *
+ *===========================================================================*/
 PRIVATE int rs_break(tp, dummy)
 tty_t *tp;			/* which tty */
 int dummy;
@@ -757,9 +757,9 @@ int dummy;
   return 0;	/* dummy */
 }
 
-/*==========================================================================*
- *				rs_close				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs_close				     *
+ *===========================================================================*/
 PRIVATE int rs_close(tp, dummy)
 tty_t *tp;			/* which tty */
 int dummy;
@@ -777,9 +777,9 @@ int dummy;
 /* Low level (interrupt) routines. */
 
 #if (MACHINE == IBM_PC)
-/*==========================================================================*
- *				rs232_handler				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rs232_handler				     *
+ *===========================================================================*/
 PRIVATE void rs232_handler(rs)
 struct rs232 *rs;
 {
@@ -813,9 +813,9 @@ struct rs232 *rs;
 #endif /* MACHINE == IBM_PC */
 
 #if (MACHINE == ATARI)
-/*==========================================================================*
- *				siaint					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				siaint					     *
+ *===========================================================================*/
 PRIVATE void siaint(type)
 int    type;	       /* interrupt type */
 {
@@ -855,9 +855,9 @@ int    type;	       /* interrupt type */
 }
 #endif /* MACHINE == ATARI */
 
-/*==========================================================================*
- *				in_int					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				in_int					     *
+ *===========================================================================*/
 PRIVATE void in_int(rs)
 register rs232_t *rs;		/* line with input interrupt */
 {
@@ -897,9 +897,9 @@ register rs232_t *rs;		/* line with input interrupt */
   }
 }
 
-/*==========================================================================*
- *				line_int				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				line_int				     *
+ *===========================================================================*/
 PRIVATE void line_int(rs)
 register rs232_t *rs;		/* line with line status interrupt */
 {
@@ -918,9 +918,9 @@ register rs232_t *rs;		/* line with line status interrupt */
   if (rs->lstatus & LS_BREAK_INTERRUPT) ++rs->break_interrupts;
 }
 
-/*==========================================================================*
- *				modem_int				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				modem_int				     *
+ *===========================================================================*/
 PRIVATE void modem_int(rs)
 register rs232_t *rs;		/* line with modem interrupt */
 {
@@ -948,9 +948,9 @@ register rs232_t *rs;		/* line with modem interrupt */
   }
 }
 
-/*==========================================================================*
+/*===========================================================================*
  *				out_int					    *
- *==========================================================================*/
+ *===========================================================================*/
 PRIVATE void out_int(rs)
 register rs232_t *rs;		/* line with output interrupt */
 {

@@ -3,11 +3,11 @@
 #include <timers.h>
 
 /* First minor numbers for the various classes of TTY devices. */
-#define CONS_MINOR	  0
-#define LOG_MINOR	 15
-#define RS232_MINOR	 16
-#define TTYPX_MINOR	128
-#define PTYPX_MINOR	192
+#define CONS_MINOR	   0
+#define LOG_MINOR	  15
+#define RS232_MINOR	  16
+#define TTYPX_MINOR	 128
+#define PTYPX_MINOR	 192
 
 #define LINEWRAP	   1	/* console.c - wrap lines at column 80 */
 
@@ -135,8 +135,8 @@ _PROTOTYPE( void out_process, (struct tty *tp, char *bstart, char *bpos,
 _PROTOTYPE( void tty_wakeup, (clock_t now)				);
 _PROTOTYPE( void tty_reply, (int code, int replyee, int proc_nr,
 							int status)	);
-_PROTOTYPE( int tty_devnop, (struct tty *tp, int try)				);
-_PROTOTYPE( int select_try, (struct tty *tp, int ops)				);
+_PROTOTYPE( int tty_devnop, (struct tty *tp, int try)			);
+_PROTOTYPE( int select_try, (struct tty *tp, int ops)			);
 _PROTOTYPE( int select_retry, (struct tty *tp)				);
 
 /* rs232.c */
@@ -147,7 +147,7 @@ _PROTOTYPE( void rs_interrupt, (message *m)				);
 /* console.c */
 _PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( void cons_stop, (void)					);
-_PROTOTYPE( void do_new_kmess, (message *m)					);
+_PROTOTYPE( void do_new_kmess, (message *m)				);
 _PROTOTYPE( void do_diagnostics, (message *m)				);
 _PROTOTYPE( void scr_init, (struct tty *tp)				);
 _PROTOTYPE( void toggle_scroll, (void)					);
@@ -165,7 +165,7 @@ _PROTOTYPE( void kbd_interrupt, (message *m)				);
 /* pty.c */
 _PROTOTYPE( void do_pty, (struct tty *tp, message *m_ptr)		);
 _PROTOTYPE( void pty_init, (struct tty *tp)				);
-_PROTOTYPE( void select_retry_pty, (struct tty *tp)				);
+_PROTOTYPE( void select_retry_pty, (struct tty *tp)			);
 _PROTOTYPE( int pty_status, (message *m_ptr)				);
 
 /* vidcopy.s */

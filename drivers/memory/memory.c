@@ -33,14 +33,14 @@ PRIVATE struct machine machine;		/* machine information */
 
 extern int errno;			/* error number for PM calls */
 
-FORWARD _PROTOTYPE( char *m_name, (void) );
-FORWARD _PROTOTYPE( struct device *m_prepare, (int device) );
+FORWARD _PROTOTYPE( char *m_name, (void) 				);
+FORWARD _PROTOTYPE( struct device *m_prepare, (int device) 		);
 FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) );
-FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) );
+					iovec_t *iov, unsigned nr_req) 	);
+FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( void m_init, (void) );
-FORWARD _PROTOTYPE( int m_ioctl, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) );
+FORWARD _PROTOTYPE( int m_ioctl, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) 		);
 
 /* Entry points to this driver. */
 PRIVATE struct driver m_dtab = {
@@ -196,9 +196,9 @@ unsigned nr_req;		/* length of request vector */
   return(OK);
 }
 
-/*============================================================================*
- *				m_do_open				      *
- *============================================================================*/
+/*===========================================================================*
+ *				m_do_open				     *
+ *===========================================================================*/
 PRIVATE int m_do_open(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
@@ -317,9 +317,9 @@ message *m_ptr;				/* pointer to control message */
   return(OK);
 }
 
-/*============================================================================*
- *				m_geometry				      *
- *============================================================================*/
+/*===========================================================================*
+ *				m_geometry				     *
+ *===========================================================================*/
 PRIVATE void m_geometry(entry)
 struct partition *entry;
 {

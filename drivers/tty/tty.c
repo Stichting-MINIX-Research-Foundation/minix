@@ -33,7 +33,7 @@
  * ---------------------------------------------------------------------------
  * | HARD_INT    |         |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
- * | SYS_SIG   | sig set |         |         |         |         |         |
+ * | SYS_SIG     | sig set |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
  * | DEV_READ    |minor dev| proc nr |  count  |         O_NONBLOCK| buf ptr |
  * |-------------+---------+---------+---------+---------+---------+---------|
@@ -419,7 +419,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	/* ...then go back for more. */
 	handle_events(tp);
 	if (tp->tty_inleft == 0)  {
-  		if(tp->tty_select_ops)
+  		if (tp->tty_select_ops)
   			select_retry(tp);
 		return;			/* already done */
 	}
@@ -436,7 +436,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	}
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
-  if(tp->tty_select_ops)
+  if (tp->tty_select_ops)
   	select_retry(tp);
 }
 
@@ -595,9 +595,9 @@ message *m_ptr;			/* pointer to message sent to task */
 		SELF, D, (vir_bytes) &param.i, (vir_bytes) size);
 	if (r != OK) break;
 	switch (param.i) {
-	    case TCIFLUSH:	tty_icancel(tp);			break;
-	    case TCOFLUSH:	(*tp->tty_ocancel)(tp, 0);			break;
-	    case TCIOFLUSH:	tty_icancel(tp); (*tp->tty_ocancel)(tp, 0);break;
+	    case TCIFLUSH:	tty_icancel(tp);		 	    break;
+	    case TCOFLUSH:	(*tp->tty_ocancel)(tp, 0);		    break;
+	    case TCIOFLUSH:	tty_icancel(tp); (*tp->tty_ocancel)(tp, 0); break;
 	    default:		r = EINVAL;
 	}
 	break;
@@ -798,25 +798,25 @@ PUBLIC int select_try(struct tty *tp, int ops)
 		ready_ops |= ops;
 	}
 
-	if(ops & SEL_RD) {
+	if (ops & SEL_RD) {
 		/* will i/o not block on read? */
 		if (tp->tty_inleft > 0) {
 			ready_ops |= SEL_RD;	/* EIO - no blocking */
-		} else if(tp->tty_incount > 0) {
+		} else if (tp->tty_incount > 0) {
 			/* Is a regular read possible? tty_incount
 			 * says there is data. But a read will only succeed
 			 * in canonical mode if a newline has been seen.
 			 */
-			if(!(tp->tty_termios.c_lflag & ICANON) ||
+			if (!(tp->tty_termios.c_lflag & ICANON) ||
 				tp->tty_eotct > 0) {
 				ready_ops |= SEL_RD;
 			}
 		}
 	}
 
-	if(ops & SEL_WR)  {
+	if (ops & SEL_WR)  {
   		if (tp->tty_outleft > 0)  ready_ops |= SEL_WR;
-		else if((*tp->tty_devwrite)(tp, 1)) ready_ops |= SEL_WR;
+		else if ((*tp->tty_devwrite)(tp, 1)) ready_ops |= SEL_WR;
 	}
 
 	return ready_ops;
@@ -879,10 +879,10 @@ tty_t *tp;			/* TTY to check for events. */
 		tp->tty_inleft = tp->tty_incum = 0;
 	}
   }
-  if(tp->tty_select_ops)
+  if (tp->tty_select_ops)
   	select_retry(tp);
 #if NR_PTYS > 0
-  if(ispty(tp))
+  if (ispty(tp))
   	select_retry_pty(tp);
 #endif
 }
@@ -1179,9 +1179,9 @@ register int ch;		/* pointer to character to echo */
   return(ch | (len << IN_LSHIFT));
 }
 
-/*==========================================================================*
- *				rawecho					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				rawecho					     *
+ *===========================================================================*/
 PRIVATE void rawecho(tp, ch)
 register tty_t *tp;
 int ch;
@@ -1192,9 +1192,9 @@ int ch;
   tp->tty_reprint = rp;
 }
 
-/*==========================================================================*
- *				back_over				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				back_over				     *
+ *===========================================================================*/
 PRIVATE int back_over(tp)
 register tty_t *tp;
 {
@@ -1221,9 +1221,9 @@ register tty_t *tp;
   return(1);				/* one character erased */
 }
 
-/*==========================================================================*
- *				reprint					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				reprint					     *
+ *===========================================================================*/
 PRIVATE void reprint(tp)
 register tty_t *tp;		/* pointer to tty struct */
 {
@@ -1260,9 +1260,9 @@ register tty_t *tp;		/* pointer to tty struct */
   } while (count < tp->tty_incount);
 }
 
-/*==========================================================================*
- *				out_process				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				out_process				     *
+ *===========================================================================*/
 PUBLIC void out_process(tp, bstart, bpos, bend, icount, ocount)
 tty_t *tp;
 char *bstart, *bpos, *bend;	/* start/pos/end of circular buffer */
@@ -1471,9 +1471,9 @@ int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
   }
 }
 
-/*==========================================================================*
- *				tty_icancel				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				tty_icancel				     *
+ *===========================================================================*/
 PRIVATE void tty_icancel(tp)
 register tty_t *tp;
 {
@@ -1484,9 +1484,9 @@ register tty_t *tp;
   (*tp->tty_icancel)(tp, 0);
 }
 
-/*==========================================================================*
- *				tty_init				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				tty_init				     *
+ *===========================================================================*/
 PRIVATE void tty_init()
 {
 /* Initialize tty structure and call device initialization routines. */
@@ -1530,9 +1530,9 @@ PRIVATE void tty_init()
 #endif
 }
 
-/*==========================================================================*
- *				tty_timed_out				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				tty_timed_out				     *
+ *===========================================================================*/
 PRIVATE void tty_timed_out(timer_t *tp)
 {
 /* This timer has expired. Set the events flag, to force processing. */
@@ -1542,9 +1542,9 @@ PRIVATE void tty_timed_out(timer_t *tp)
   tty_ptr->tty_events = 1;		
 }
 
-/*==========================================================================*
- *				expire_timers			    	    *
- *==========================================================================*/
+/*===========================================================================*
+ *				expire_timers			    	     *
+ *===========================================================================*/
 PRIVATE void expire_timers(void)
 {
 /* A synchronous alarm message was received. Check if there are any expired 
@@ -1605,9 +1605,9 @@ int enable;			/* set timer if true, otherwise unset */
   }
 }
 
-/*==========================================================================*
- *				tty_devnop				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				tty_devnop				     *
+ *===========================================================================*/
 PUBLIC int tty_devnop(tp, try)
 tty_t *tp;
 int try;
@@ -1616,7 +1616,7 @@ int try;
 }
 
 /*===========================================================================*
- *				do_select			     *
+ *				do_select				     *
  *===========================================================================*/
 PRIVATE void do_select(tp, m_ptr)
 register tty_t *tp;		/* pointer to tty struct */
@@ -1629,7 +1629,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 
 	ready_ops = select_try(tp, ops);
 
-	if(!ready_ops && ops && watch) {
+	if (!ready_ops && ops && watch) {
 		tp->tty_select_ops |= ops;
 		tp->tty_select_proc = m_ptr->m_source;
 	}

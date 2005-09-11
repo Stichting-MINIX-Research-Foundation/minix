@@ -81,15 +81,15 @@ typedef struct observer { int proc_nr; int events; } obs_t;
 PRIVATE obs_t  fkey_obs[12];	/* observers for F1-F12 */
 PRIVATE obs_t sfkey_obs[12];	/* observers for SHIFT F1-F12 */
 
-FORWARD _PROTOTYPE( int kb_ack, (void) );
-FORWARD _PROTOTYPE( int kb_wait, (void) );
-FORWARD _PROTOTYPE( int func_key, (int scode) );
-FORWARD _PROTOTYPE( int scan_keyboard, (void) );
-FORWARD _PROTOTYPE( unsigned make_break, (int scode) );
-FORWARD _PROTOTYPE( void set_leds, (void) );
-FORWARD _PROTOTYPE( void show_key_mappings, (void) );
-FORWARD _PROTOTYPE( int kb_read, (struct tty *tp, int try) );
-FORWARD _PROTOTYPE( unsigned map_key, (int scode) );
+FORWARD _PROTOTYPE( int kb_ack, (void) 					);
+FORWARD _PROTOTYPE( int kb_wait, (void)				 	);
+FORWARD _PROTOTYPE( int func_key, (int scode) 				);
+FORWARD _PROTOTYPE( int scan_keyboard, (void) 				);
+FORWARD _PROTOTYPE( unsigned make_break, (int scode) 			);
+FORWARD _PROTOTYPE( void set_leds, (void) 				);
+FORWARD _PROTOTYPE( void show_key_mappings, (void) 			);
+FORWARD _PROTOTYPE( int kb_read, (struct tty *tp, int try) 		);
+FORWARD _PROTOTYPE( unsigned map_key, (int scode) 			);
 
 /*===========================================================================*
  *				map_key0				     *
@@ -149,15 +149,15 @@ message *m_ptr;
 	if (ihead == ibuf + KB_IN_BYTES) ihead = ibuf;
 	icount++;
 	tty_table[ccurrent].tty_events = 1;
-	if(tty_table[ccurrent].tty_select_ops & SEL_RD) {
+	if (tty_table[ccurrent].tty_select_ops & SEL_RD) {
 		select_retry(&tty_table[ccurrent]);
 	}
   }
 }
 
-/*==========================================================================*
- *				kb_read					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				kb_read					     *
+ *===========================================================================*/
 PRIVATE int kb_read(tp, try)
 tty_t *tp;
 int try;
@@ -169,9 +169,9 @@ int try;
 
   tp = &tty_table[ccurrent];		/* always use the current console */
 
-  if(try) {
+  if (try) {
   	printf("tty: kb: try: %d icount: %d\n", try, icount);
-  	if(icount > 0) return 1;
+  	if (icount > 0) return 1;
   	return 0;
   }
 
@@ -326,9 +326,9 @@ PRIVATE void set_leds()
   kb_ack();			/* wait for ack response  */
 }
 
-/*==========================================================================*
- *				kb_wait					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				kb_wait					     *
+ *===========================================================================*/
 PRIVATE int kb_wait()
 {
 /* Wait until the controller is ready; return zero if this times out. */
@@ -348,9 +348,9 @@ PRIVATE int kb_wait()
   return(retries);		/* zero on timeout, positive if ready */
 }
 
-/*==========================================================================*
- *				kb_ack					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				kb_ack					     *
+ *===========================================================================*/
 PRIVATE int kb_ack()
 {
 /* Wait until kbd acknowledges last command; return zero if this times out. */
@@ -380,7 +380,7 @@ tty_t *tp;
 }
 
 /*===========================================================================*
- *				kb_init_once					     *
+ *				kb_init_once				     *
  *===========================================================================*/
 PUBLIC void kb_init_once(void)
 {
@@ -559,9 +559,9 @@ int scode;			/* scan code for a function key */
   return(TRUE);
 }
 
-/*==========================================================================*
- *				show_key_mappings			    *
- *==========================================================================*/
+/*===========================================================================*
+ *				show_key_mappings			     *
+ *===========================================================================*/
 PRIVATE void show_key_mappings()
 {
     int i,s;
@@ -596,9 +596,9 @@ PRIVATE void show_key_mappings()
     printf("\n");
 }
 
-/*==========================================================================*
- *				scan_keyboard				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				scan_keyboard				     *
+ *===========================================================================*/
 PRIVATE int scan_keyboard()
 {
 /* Fetch the character from the keyboard hardware and acknowledge it. */
@@ -615,9 +615,9 @@ PRIVATE int scan_keyboard()
   return(byte_in[0].value);		/* return scan code */
 }
 
-/*==========================================================================*
- *				do_panic_dumps 				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				do_panic_dumps 				     *
+ *===========================================================================*/
 PUBLIC void do_panic_dumps(m)
 message *m;			/* request message to TTY */
 {
