@@ -15,10 +15,9 @@
 #include <string.h>
 
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
-
-/*==========================================================================*
- *				cstart					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				cstart					     *
+ *===========================================================================*/
 PUBLIC void cstart(cs, ds, mds, parmoff, parmsize)
 U16_t cs, ds;			/* kernel code and data segment */
 U16_t mds;			/* monitor data segment */
@@ -92,9 +91,10 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
    */
 }
 
-/*==========================================================================*
- *				get_value					    *
- *==========================================================================*/
+/*===========================================================================*
+ *				get_value				     *
+ *===========================================================================*/
+
 PRIVATE char *get_value(params, name)
 _CONST char *params;				/* boot monitor parameters */
 _CONST char *name;				/* key to look up */

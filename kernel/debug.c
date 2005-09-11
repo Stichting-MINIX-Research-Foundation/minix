@@ -23,15 +23,15 @@ void timer_start(int cat, char *name)
 	unsigned long h, l;
 	int i;
 
-	if(cat < 0 || cat >= TIMING_CATEGORIES) return;
+	if (cat < 0 || cat >= TIMING_CATEGORIES) return;
 
 	for(i = 0; i < sizeof(timingdata[0].names) && *name; i++)
 		timingdata[cat].names[i] = *name++;
 	timingdata[0].names[sizeof(timingdata[0].names)-1] = '\0';
 
-	if(starttimes[cat][HIGHCOUNT]) {  return; }
+	if (starttimes[cat][HIGHCOUNT]) {  return; }
 
-	if(!init) {
+	if (!init) {
 		int t, f;
 		init = 1;
 		for(t = 0; t < TIMING_CATEGORIES; t++) {
@@ -50,14 +50,14 @@ void timer_end(int cat)
 	int bin;
 
 	read_tsc(&h, &l);
-	if(cat < 0 || cat >= TIMING_CATEGORIES) return;
-	if(!starttimes[cat][HIGHCOUNT]) {
+	if (cat < 0 || cat >= TIMING_CATEGORIES) return;
+	if (!starttimes[cat][HIGHCOUNT]) {
 		timingdata[cat].misses++;
 		return;
 	}
-	if(starttimes[cat][HIGHCOUNT] == h) {
+	if (starttimes[cat][HIGHCOUNT] == h) {
 		d = (l - starttimes[cat][1]);
-	} else if(starttimes[cat][HIGHCOUNT] == h-1 &&
+	} else if (starttimes[cat][HIGHCOUNT] == h-1 &&
 		starttimes[cat][LOWCOUNT] > l) {
 		d = ((ULONG_MAX - starttimes[cat][LOWCOUNT]) + l);
 	} else {
@@ -65,14 +65,14 @@ void timer_end(int cat)
 		return;
 	}
 	starttimes[cat][HIGHCOUNT] = 0;
-	if(!timingdata[cat].lock_timings_range[0] ||
+	if (!timingdata[cat].lock_timings_range[0] ||
 		d < timingdata[cat].lock_timings_range[0] ||
 		d > timingdata[cat].lock_timings_range[1]) {
 		int t;
-		if(!timingdata[cat].lock_timings_range[0] ||
+		if (!timingdata[cat].lock_timings_range[0] ||
 			d < timingdata[cat].lock_timings_range[0])
 			timingdata[cat].lock_timings_range[0] = d;
-		if(!timingdata[cat].lock_timings_range[1] ||
+		if (!timingdata[cat].lock_timings_range[1] ||
 			d > timingdata[cat].lock_timings_range[1])
 			timingdata[cat].lock_timings_range[1] = d;
 		for(t = 0; t < TIMING_POINTS; t++)
@@ -80,13 +80,13 @@ void timer_end(int cat)
 		timingdata[cat].binsize =
 			(timingdata[cat].lock_timings_range[1] -
 			timingdata[cat].lock_timings_range[0])/(TIMING_POINTS+1);
-		if(timingdata[cat].binsize < 1)
+		if (timingdata[cat].binsize < 1)
 		  timingdata[cat].binsize = 1;
 		timingdata[cat].resets++;
 	}
 	bin = (d-timingdata[cat].lock_timings_range[0]) /
 		timingdata[cat].binsize;
-	if(bin < 0 || bin >= TIMING_POINTS) {
+	if (bin < 0 || bin >= TIMING_POINTS) {
 		int t;
 		/* this indicates a bug, but isn't really serious */
 		for(t = 0; t < TIMING_POINTS; t++)
@@ -114,19 +114,19 @@ check_runqueues(char *when)
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	xp->p_found = 0;
-	if(l++ > PROCLIMIT) {  panic("check error", NO_NUM); }
+	if (l++ > PROCLIMIT) {  panic("check error", NO_NUM); }
   }
 
   for (q=0; q < NR_SCHED_QUEUES; q++) {
-    if(rdy_head[q] && !rdy_tail[q]) {
+    if (rdy_head[q] && !rdy_tail[q]) {
 	kprintf("head but no tail: %s", when);
 		 panic("scheduling error", NO_NUM);
     }
-    if(!rdy_head[q] && rdy_tail[q]) {
+    if (!rdy_head[q] && rdy_tail[q]) {
 	kprintf("tail but no head: %s", when);
 		 panic("scheduling error", NO_NUM);
     }
-    if(rdy_tail[q] && rdy_tail[q]->p_nextready != NIL_PROC) {
+    if (rdy_tail[q] && rdy_tail[q]->p_nextready != NIL_PROC) {
 	kprintf("tail and tail->next not null; %s", when);
 		 panic("scheduling error", NO_NUM);
     }
@@ -136,29 +136,29 @@ check_runqueues(char *when)
 		
   		panic("found unready process on run queue", NO_NUM);
         }
-        if(xp->p_priority != q) {
+        if (xp->p_priority != q) {
 		kprintf("scheduling error: wrong priority: %s\n", when);
 		
 		panic("wrong priority", NO_NUM);
 	}
-	if(xp->p_found) {
+	if (xp->p_found) {
 		kprintf("scheduling error: double scheduling: %s\n", when);
 		panic("proc more than once on scheduling queue", NO_NUM);
 	}
 	xp->p_found = 1;
-	if(xp->p_nextready == NIL_PROC && rdy_tail[q] != xp) {
+	if (xp->p_nextready == NIL_PROC && rdy_tail[q] != xp) {
 		kprintf("scheduling error: last element not tail: %s\n", when);
 		panic("scheduling error", NO_NUM);
 	}
-	if(l++ > PROCLIMIT) panic("loop in schedule queue?", NO_NUM);
+	if (l++ > PROCLIMIT) panic("loop in schedule queue?", NO_NUM);
     }
   }	
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
-	if(! isemptyp(xp) && xp->p_ready && ! xp->p_found) {
+	if (! isemptyp(xp) && xp->p_ready && ! xp->p_found) {
 		kprintf("scheduling error: ready not on queue: %s\n", when);
 		panic("ready proc not on scheduling queue", NO_NUM);
-		if(l++ > PROCLIMIT) { panic("loop in proc.t?", NO_NUM); }
+		if (l++ > PROCLIMIT) { panic("loop in proc.t?", NO_NUM); }
 	}
   }
 }

@@ -101,7 +101,7 @@ PUBLIC void sys_task()
 }
 
 /*===========================================================================*
- *			          initialize				     *
+ *				initialize				     *
  *===========================================================================*/
 PRIVATE void initialize(void)
 {
@@ -171,7 +171,7 @@ PRIVATE void initialize(void)
 }
 
 /*===========================================================================*
- *			         get_priv				     *
+ *				get_priv				     *
  *===========================================================================*/
 PUBLIC int get_priv(rc, proc_type)
 register struct proc *rc;		/* new (child) process pointer */
@@ -198,7 +198,7 @@ int proc_type;				/* system or user process flag */
 }
 
 /*===========================================================================*
- *			       get_randomness				     *
+ *				get_randomness				     *
  *===========================================================================*/
 PUBLIC void get_randomness(source)
 int source;
@@ -217,7 +217,7 @@ int source;
 
   source %= RANDOM_SOURCES;
   r_next= krandom.bin[source].r_next;
-  if(machine.processor > 486) {
+  if (machine.processor > 486) {
       read_tsc(&tsc_high, &tsc_low);
       krandom.bin[source].r_buf[r_next] = tsc_low;
   } else {
@@ -347,10 +347,10 @@ vir_bytes bytes;		/* # of bytes to be copied */
 	seg = (vc < rp->p_memmap[S].mem_vir ? D : S);
 #endif
 
-  if((vir_addr>>CLICK_SHIFT) >= rp->p_memmap[seg].mem_vir + 
+  if ((vir_addr>>CLICK_SHIFT) >= rp->p_memmap[seg].mem_vir + 
   	rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
 
-  if(vc >= rp->p_memmap[seg].mem_vir + 
+  if (vc >= rp->p_memmap[seg].mem_vir + 
   	rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
 
 #if (CHIP == INTEL)
@@ -391,9 +391,9 @@ vir_bytes bytes;		/* # of bytes to be copied */
   return(fm->mem_phys + (phys_bytes) vir_addr); 
 }
 
-/*==========================================================================*
- *				virtual_copy				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				virtual_copy				     *
+ *===========================================================================*/
 PUBLIC int virtual_copy(src_addr, dst_addr, bytes)
 struct vir_addr *src_addr;	/* source virtual address */
 struct vir_addr *dst_addr;	/* destination virtual address */

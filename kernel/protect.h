@@ -7,21 +7,21 @@
 #define LDT_SIZE (2 + NR_REMOTE_SEGS) 	/* CS, DS and remote segments */
 
 /* Fixed global descriptors.  1 to 7 are prescribed by the BIOS. */
-#define GDT_INDEX        1	/* GDT descriptor */
-#define IDT_INDEX        2	/* IDT descriptor */
-#define DS_INDEX         3	/* kernel DS */
-#define ES_INDEX         4	/* kernel ES (386: flag 4 Gb at startup) */
-#define SS_INDEX         5	/* kernel SS (386: monitor SS at startup) */
-#define CS_INDEX         6	/* kernel CS */
-#define MON_CS_INDEX     7	/* temp for BIOS (386: monitor CS at startup) */
-#define TSS_INDEX        8	/* kernel TSS */
-#define DS_286_INDEX     9	/* scratch 16-bit source segment */
-#define ES_286_INDEX    10	/* scratch 16-bit destination segment */
-#define A_INDEX         11	/* 64K memory segment at A0000 */
-#define B_INDEX         12	/* 64K memory segment at B0000 */
-#define C_INDEX         13	/* 64K memory segment at C0000 */
-#define D_INDEX         14	/* 64K memory segment at D0000 */
-#define FIRST_LDT_INDEX 15	/* rest of descriptors are LDT's */
+#define GDT_INDEX            1	/* GDT descriptor */
+#define IDT_INDEX            2	/* IDT descriptor */
+#define DS_INDEX             3	/* kernel DS */
+#define ES_INDEX             4	/* kernel ES (386: flag 4 Gb at startup) */
+#define SS_INDEX             5	/* kernel SS (386: monitor SS at startup) */
+#define CS_INDEX             6	/* kernel CS */
+#define MON_CS_INDEX         7	/* temp for BIOS (386: monitor CS at startup) */
+#define TSS_INDEX            8	/* kernel TSS */
+#define DS_286_INDEX         9	/* scratch 16-bit source segment */
+#define ES_286_INDEX        10	/* scratch 16-bit destination segment */
+#define A_INDEX             11	/* 64K memory segment at A0000 */
+#define B_INDEX             12	/* 64K memory segment at B0000 */
+#define C_INDEX             13	/* 64K memory segment at C0000 */
+#define D_INDEX             14	/* 64K memory segment at D0000 */
+#define FIRST_LDT_INDEX     15	/* rest of descriptors are LDT's */
 
 #define GDT_SELECTOR      0x08	/* (GDT_INDEX * DESC_SIZE) bad for asld */
 #define IDT_SELECTOR      0x10	/* (IDT_INDEX * DESC_SIZE) */
@@ -36,64 +36,64 @@
 #define ES_286_SELECTOR   0x51	/* (ES_286_INDEX*DESC_SIZE+TASK_PRIVILEGE) */
 
 /* Fixed local descriptors. */
-#define CS_LDT_INDEX     0	/* process CS */
-#define DS_LDT_INDEX     1	/* process DS=ES=FS=GS=SS */
-#define EXTRA_LDT_INDEX  2	/* first of the extra LDT entries */
+#define CS_LDT_INDEX         0	/* process CS */
+#define DS_LDT_INDEX         1	/* process DS=ES=FS=GS=SS */
+#define EXTRA_LDT_INDEX      2	/* first of the extra LDT entries */
 
 /* Privileges. */
-#define INTR_PRIVILEGE   0	/* kernel and interrupt handlers */
-#define TASK_PRIVILEGE   1	/* kernel tasks */
-#define USER_PRIVILEGE   3	/* servers and user processes */
+#define INTR_PRIVILEGE       0	/* kernel and interrupt handlers */
+#define TASK_PRIVILEGE       1	/* kernel tasks */
+#define USER_PRIVILEGE       3	/* servers and user processes */
 
 /* 286 hardware constants. */
 
 /* Exception vector numbers. */
-#define BOUNDS_VECTOR       5	/* bounds check failed */
-#define INVAL_OP_VECTOR     6	/* invalid opcode */
-#define COPROC_NOT_VECTOR   7	/* coprocessor not available */
-#define DOUBLE_FAULT_VECTOR 8
-#define COPROC_SEG_VECTOR   9	/* coprocessor segment overrun */
-#define INVAL_TSS_VECTOR   10	/* invalid TSS */
-#define SEG_NOT_VECTOR     11	/* segment not present */
-#define STACK_FAULT_VECTOR 12	/* stack exception */
-#define PROTECTION_VECTOR  13	/* general protection */
+#define BOUNDS_VECTOR        5	/* bounds check failed */
+#define INVAL_OP_VECTOR      6	/* invalid opcode */
+#define COPROC_NOT_VECTOR    7	/* coprocessor not available */
+#define DOUBLE_FAULT_VECTOR  8
+#define COPROC_SEG_VECTOR    9	/* coprocessor segment overrun */
+#define INVAL_TSS_VECTOR    10	/* invalid TSS */
+#define SEG_NOT_VECTOR      11	/* segment not present */
+#define STACK_FAULT_VECTOR  12	/* stack exception */
+#define PROTECTION_VECTOR   13	/* general protection */
 
 /* Selector bits. */
-#define TI            0x04	/* table indicator */
-#define RPL           0x03	/* requester privilege level */
+#define TI                0x04	/* table indicator */
+#define RPL               0x03	/* requester privilege level */
 
 /* Descriptor structure offsets. */
-#define DESC_BASE        2	/* to base_low */
-#define DESC_BASE_MIDDLE 4	/* to base_middle */
-#define DESC_ACCESS      5	/* to access byte */
-#define DESC_SIZE        8	/* sizeof (struct segdesc_s) */
+#define DESC_BASE            2	/* to base_low */
+#define DESC_BASE_MIDDLE     4	/* to base_middle */
+#define DESC_ACCESS          5	/* to access byte */
+#define DESC_SIZE            8	/* sizeof (struct segdesc_s) */
 
 /* Base and limit sizes and shifts. */
 #define BASE_MIDDLE_SHIFT   16	/* shift for base --> base_middle */
 
 /* Access-byte and type-byte bits. */
-#define PRESENT       0x80	/* set for descriptor present */
-#define DPL           0x60	/* descriptor privilege level mask */
-#define DPL_SHIFT        5
-#define SEGMENT       0x10	/* set for segment-type descriptors */
+#define PRESENT           0x80	/* set for descriptor present */
+#define DPL               0x60	/* descriptor privilege level mask */
+#define DPL_SHIFT            5
+#define SEGMENT           0x10	/* set for segment-type descriptors */
 
 /* Access-byte bits. */
-#define EXECUTABLE    0x08	/* set for executable segment */
-#define CONFORMING    0x04	/* set for conforming segment if executable */
-#define EXPAND_DOWN   0x04	/* set for expand-down segment if !executable*/
-#define READABLE      0x02	/* set for readable segment if executable */
-#define WRITEABLE     0x02	/* set for writeable segment if !executable */
-#define TSS_BUSY      0x02	/* set if TSS descriptor is busy */
-#define ACCESSED      0x01	/* set if segment accessed */
+#define EXECUTABLE        0x08	/* set for executable segment */
+#define CONFORMING        0x04	/* set for conforming segment if executable */
+#define EXPAND_DOWN       0x04	/* set for expand-down segment if !executable*/
+#define READABLE          0x02	/* set for readable segment if executable */
+#define WRITEABLE         0x02	/* set for writeable segment if !executable */
+#define TSS_BUSY          0x02	/* set if TSS descriptor is busy */
+#define ACCESSED          0x01	/* set if segment accessed */
 
 /* Special descriptor types. */
-#define AVL_286_TSS      1	/* available 286 TSS */
-#define LDT              2	/* local descriptor table */
-#define BUSY_286_TSS     3	/* set transparently to the software */
-#define CALL_286_GATE    4	/* not used */
-#define TASK_GATE        5	/* only used by debugger */
-#define INT_286_GATE     6	/* interrupt gate, used for all vectors */
-#define TRAP_286_GATE    7	/* not used */
+#define AVL_286_TSS          1	/* available 286 TSS */
+#define LDT                  2	/* local descriptor table */
+#define BUSY_286_TSS         3	/* set transparently to the software */
+#define CALL_286_GATE        4	/* not used */
+#define TASK_GATE            5	/* only used by debugger */
+#define INT_286_GATE         6	/* interrupt gate, used for all vectors */
+#define TRAP_286_GATE        7	/* not used */
 
 /* Extra 386 hardware constants. */
 
@@ -117,8 +117,8 @@
 				/* LDT's and TASK_GATE's don't need it */
 
 /* Granularity byte. */
-#define GRANULAR   0x80	/* set for 4K granularilty */
-#define DEFAULT    0x40	/* set for 32-bit defaults (executable seg) */
-#define BIG        0x40	/* set for "BIG" (expand-down seg) */
-#define AVL        0x10	/* 0 for available */
-#define LIMIT_HIGH 0x0F	/* mask for high bits of limit */
+#define GRANULAR  	  0x80	/* set for 4K granularilty */
+#define DEFAULT   	  0x40	/* set for 32-bit defaults (executable seg) */
+#define BIG       	  0x40	/* set for "BIG" (expand-down seg) */
+#define AVL        	  0x10	/* 0 for available */
+#define LIMIT_HIGH   	  0x0F	/* mask for high bits of limit */

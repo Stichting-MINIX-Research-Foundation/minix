@@ -25,7 +25,7 @@
 FORWARD _PROTOTYPE(void kputc, (int c));
 
 /*===========================================================================*
- *                                   panic                                   *
+ *				panic                                        *
  *===========================================================================*/
 PUBLIC void panic(mess,nr)
 _CONST char *mess;
@@ -121,7 +121,7 @@ PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
 }
 
 /*===========================================================================*
- *			            kputc				     *
+ *				kputc				     	     *
  *===========================================================================*/
 PRIVATE void kputc(c)
 int c;					/* character to append */

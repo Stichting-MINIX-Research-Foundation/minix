@@ -25,9 +25,9 @@ _PROTOTYPE( void panic, (_CONST char *s, int n)				);
 
 /* proc.c */
 _PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
-_PROTOTYPE( int lock_notify, (int src, int dst)					);
+_PROTOTYPE( int lock_notify, (int src, int dst)				);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
-_PROTOTYPE( void lock_enqueue, (struct proc *rp)				);
+_PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
 _PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
 
 /* start.c */
@@ -39,7 +39,7 @@ _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void sys_task, (void)					);
-_PROTOTYPE( void get_randomness, (int source)					);
+_PROTOTYPE( void get_randomness, (int source)				);
 _PROTOTYPE( int virtual_copy, (struct vir_addr *src, struct vir_addr *dst, 
 				vir_bytes bytes) 			);
 #define numap_local(proc_nr, vir_addr, bytes) \

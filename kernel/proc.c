@@ -361,9 +361,9 @@ int dst;				/* which process to notify */
   return(OK);
 }
 
-/*==========================================================================*
- *				lock_notify				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				lock_notify				     *
+ *===========================================================================*/
 PUBLIC int lock_notify(src, dst)
 int src;			/* sender of the notification */
 int dst;			/* who is to be notified */
@@ -406,7 +406,7 @@ register struct proc *rp;	/* this process is now runnable */
 
 #if DEBUG_SCHED_CHECK
   check_runqueues("enqueue");
-  if(rp->p_ready) kprintf("enqueue() already ready process\n");
+  if (rp->p_ready) kprintf("enqueue() already ready process\n");
 #endif
 
   /* Determine where to insert to process. */
@@ -559,9 +559,9 @@ PRIVATE void pick_proc()
   }
 }
 
-/*==========================================================================*
- *				lock_send				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				lock_send				     *
+ *===========================================================================*/
 PUBLIC int lock_send(dst, m_ptr)
 int dst;			/* to whom is message being sent? */
 message *m_ptr;			/* pointer to message buffer */
@@ -574,9 +574,9 @@ message *m_ptr;			/* pointer to message buffer */
   return(result);
 }
 
-/*==========================================================================*
- *				lock_enqueue				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				lock_enqueue				     *
+ *===========================================================================*/
 PUBLIC void lock_enqueue(rp)
 struct proc *rp;		/* this process is now runnable */
 {
@@ -586,9 +586,9 @@ struct proc *rp;		/* this process is now runnable */
   unlock(3);
 }
 
-/*==========================================================================*
- *				lock_dequeue				    *
- *==========================================================================*/
+/*===========================================================================*
+ *				lock_dequeue				     *
+ *===========================================================================*/
 PUBLIC void lock_dequeue(rp)
 struct proc *rp;		/* this process is no longer runnable */
 {

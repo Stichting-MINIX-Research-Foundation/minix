@@ -15,15 +15,15 @@
  * numbers are carefully defined so that it can easily be seen (based on 
  * the bits that are on) which checks should be done in sys_call().
  */
-#define SEND		 1	/* 0 0 0 1 : blocking send */
-#define RECEIVE		 2	/* 0 0 1 0 : blocking receive */
-#define SENDREC	 	 3  	/* 0 0 1 1 : SEND + RECEIVE */
-#define NOTIFY		 4	/* 0 1 0 0 : nonblocking notify */
-#define ECHO		 8	/* 1 0 0 0 : echo a message */
+#define SEND		   1	/* 0 0 0 1 : blocking send */
+#define RECEIVE		   2	/* 0 0 1 0 : blocking receive */
+#define SENDREC	 	   3  	/* 0 0 1 1 : SEND + RECEIVE */
+#define NOTIFY		   4	/* 0 1 0 0 : nonblocking notify */
+#define ECHO		   8	/* 1 0 0 0 : echo a message */
 
 /* The following bit masks determine what checks that should be done. */
-#define CHECK_PTR     0x0B      /* 1 0 1 1 : validate message buffer */
-#define CHECK_DST     0x05	/* 0 1 0 1 : validate message destination */
-#define CHECK_SRC     0x02	/* 0 0 1 0 : validate message source */
+#define CHECK_PTR       0x0B	/* 1 0 1 1 : validate message buffer */
+#define CHECK_DST       0x05	/* 0 1 0 1 : validate message destination */
+#define CHECK_SRC       0x02	/* 0 0 1 0 : validate message source */
 
 #endif /* IPC_H */
