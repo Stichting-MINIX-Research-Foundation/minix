@@ -13,6 +13,7 @@ BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33
 
 all:	$(OBJ) $(BIGOBJ) $(ROOTOBJ)
+	chmod 755 *.sh run
 
 $(OBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
