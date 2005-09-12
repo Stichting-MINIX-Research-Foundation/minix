@@ -1764,15 +1764,22 @@ int cylinderalign(region_t *reg)
 
 void regionize(void)
 {
-	int free_sec, i, si;
+	int free_sec, i, si, sanitycheck = 1;
 
 	sort();
 
 	free_sec = table[0].lowsec + sectors;
 
+	/* Looks like disk too big - disable sanity check. */
+	if(table[0].size >= (1L << 28) - 1) {
+		fprintf(stderr, "WARNING: disabling sanity checks.\n");
+		sanitycheck = 0;
+	}
+
 	/* Create region data used in autopart mode. */
 	free_regions = used_regions = nr_regions = nr_partitions = 0;
-	if(table[0].lowsec > table[sort_order[1]].lowsec &&
+	if(sanitycheck &&
+		table[0].lowsec > table[sort_order[1]].lowsec &&
 		table[sort_order[1]].sysind != NO_PART) {
 		printf("\nSanity check failed on %s - first partition starts before disk.\n"
 			"Please use expert mode to correct it.\n", curdev->name);
@@ -1801,7 +1808,7 @@ void regionize(void)
 		}
 
 		/* Sanity check. */
-		if(si > 1) {
+		if(sanitycheck && si > 1) {
 			if(table[i].lowsec < table[sort_order[si-1]].lowsec ||
 			   table[i].lowsec < table[sort_order[si-1]].lowsec + table[sort_order[si-1]].size) {
 				printf("\nSanity check failed on %s - partitions overlap.\n"
@@ -1809,7 +1816,7 @@ void regionize(void)
 				exit(1);
 			}
 		}
-		if(table[i].size > table[0].size) {
+		if(sanitycheck && table[i].size > table[0].size) {
 			printf("\nSanity check failed on %s - partition is larger than disk.\n"
 				"Please use expert mode to correct it.\n", curdev->name);
 			exit(1);
