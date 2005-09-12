@@ -16,6 +16,26 @@ USRKB="`cat /.usrkb`"
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
 ROOTFILES="`cat /.rootfiles`"
 USRFILES="`cat /.usrfiles`"
+EXTRASRCFILES="`cat /.extrasrcfiles`"
+EXTRASRCKB="`cat /.extrasrckb`"
+
+# Install size without extra sources (rounded up)
+NOSRCMB="`expr $TOTALMB - $EXTRASRCKB / 1024`"
+NOSRCUSRFILES="`expr $USRFILES - $EXTRASRCFILES`"
+
+if [ "$EXTRASRCKB" -lt 1 ]
+then	 
+	echo "Are you really running from CD?"
+	echo "Something wrong with the extra-source-kb on CD."
+	exit 1
+fi
+
+if [ "$EXTRASRCFILES" -lt 1 ]
+then	 
+	echo "Are you really running from CD?"
+	echo "Something wrong with the extra-source-files estimate on CD."
+	exit 1
+fi
 
 if [ "$TOTALMB" -lt 1 ]
 then	 
@@ -181,7 +201,32 @@ step3=""
 while [ "$step3" != ok ]
 do
 	echo ""
-	echo " --- Step 3: Create or Select a partition for MINIX 3 -------------------"
+	echo " --- Step 3: Select binary or source distribution ----------------------"
+	echo ""
+	echo "You can install MINIX as (B)inary or (S)ource. (B)inary"
+	echo "includes only the binary system and basic system sources."
+	echo "(S)ource also includes commands sources."
+	echo ""
+	echo "Please select:"
+	echo "  (B)inary install (only basic sources) ($NOSRCMB MB required)"
+	echo "  (S)ource install (full install) ($TOTALMB MB required)"
+	echo " "
+	echo -n "Basic (B)inary or Full (S)ource install? [S] "
+	read conf
+	case "$conf" in
+	"") 	step3="ok"; nobigsource="" ;;
+	[Ss]*)	step3="ok"; nobigsource="" ;;
+	[Bb]*)	step3="ok"; nobigsource="1"; TOTALMB=$NOSRCMB; USRFILES=$NOSRCUSRFILES ;;
+	esac
+done
+# end Step 3
+
+# begin Step 4
+step4=""
+while [ "$step4" != ok ]
+do
+	echo ""
+	echo " --- Step 4: Create or Select a partition for MINIX 3 -------------------"
 	echo ""
 
     echo "Now you need to create a MINIX 3 partition on your hard disk."
@@ -248,7 +293,7 @@ Please finish the name of the primary partition you have created:
 		do
 			echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
 			read confirmation
-			if [ "$confirmation" = yes ]; then step3=ok; fi
+			if [ "$confirmation" = yes ]; then step4=ok; fi
 		done
 		biosdrivename="Actual BIOS device name unknown, due to expert mode."
 	else
@@ -277,16 +322,16 @@ Please finish the name of the primary partition you have created:
 			# them messy.
 			atnormalize
 
-			if [ -n "$primary" ]; then step3=ok; fi
+			if [ -n "$primary" ]; then step4=ok; fi
 		fi
 	fi
 
 	if [ ! -b "/dev/$primary" ]
 	then	echo "/dev/$primary is not a block device."
-		step3=""
+		step4=""
 	fi
-done	# while step3 != ok
-# end Step 3
+done	# while step4 != ok
+# end Step 4
 
 root=${primary}s0
 home=${primary}s1
@@ -319,7 +364,7 @@ while [ "$confirm" = "" ]
 do
 	auto=""
 	echo ""
-echo " --- Step 4: Reinstall choice ------------------------------------------"
+echo " --- Step 5: Reinstall choice ------------------------------------------"
 	if mount -r /dev/$home $TMPMP >/dev/null 2>&1
 	then	umount /dev/$home >/dev/null 2>&1
 		echo ""
@@ -348,7 +393,7 @@ nohome="0"
 if [ ! "$auto" = r ]
 then	homesize=""
 echo ""
-echo " --- Step 5: /home configuration ---------------------------------------"
+echo " --- Step 6: /home configuration ---------------------------------------"
 	while [ -z "$homesize" ]
 	do
 
@@ -393,7 +438,7 @@ blockdefault=4
 if [ ! "$auto" = "r" ]
 then
 	echo ""
-echo " --- Step 6: Select a block size ---------------------------------------"
+echo " --- Step 7: Select a block size ---------------------------------------"
 	echo ""
 	
 	echo "The maximum (and default) file system block size is $blockdefault KB."
@@ -445,7 +490,7 @@ echo "Creating /dev/$usr for /usr .."
 mkfs -B $blocksizebytes /dev/$usr || exit
 
 echo ""
-echo " --- Step 7: Wait for bad block detection ------------------------------"
+echo " --- Step 8: Wait for bad block detection ------------------------------"
 echo ""
 echo "Scanning disk for bad blocks.  Hit CTRL+C to stop the scan if you are"
 echo "sure that there can not be any bad blocks.  Otherwise just wait."
@@ -472,7 +517,7 @@ readall -b /dev/$usr | sh
 trap 2
 
 echo ""
-echo " --- Step 8: Wait for files to be copied -------------------------------"
+echo " --- Step 9: Wait for files to be copied -------------------------------"
 echo ""
 echo "This is the final step of the MINIX 3 setup.  All files will be now be"
 echo "copied to your hard disk.  This may take a while."
@@ -480,9 +525,30 @@ echo ""
 
 mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 
-cpdir -v /usr /mnt | progressbar "$USRFILES" || exit	# Copy the usr floppy.
+(cd /usr || exit 1
+ if [ "$nobigsource" = 1 ]
+ then	list="`ls | fgrep -v src.`"
+ else	list="`ls`"
+ fi
+ for d in *
+ do	
+ 	cpdir -v $d /mnt/$d
+ done
+) | progressbar "$USRFILES" || exit	# Copy the usr floppy.
 
+if [ -d /mnt/src.commands ]
+then	mv /mnt/src.commands /mnt/src/commands
+fi
 
+if [ -d /mnt/src.contrib ]
+then	mv /mnt/src.contrib /mnt/src/contrib
+fi
+					# Set inet.conf to correct driver
+if [ -n "$driver" ]
+then	echo "$driverargs" >$MYLOCALRC
+	disable=""
+else	disable="disable=inet;"
+fi
 					# Set inet.conf to correct driver
 if [ -n "$driver" ]
 then	echo "$driverargs" >$MYLOCALRC
