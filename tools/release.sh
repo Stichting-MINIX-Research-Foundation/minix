@@ -160,7 +160,7 @@ mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
 echo " * Zeroing $TMPDISK"
-dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
+#dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
 mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
 echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
@@ -213,7 +213,7 @@ then
 	chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
 	echo " * Chroot build done"
 	# The build process leaves some file in src as root.
-	chown -R bin $RELEASEDIR/usr/src
+	chown -R bin $RELEASEDIR/usr/src*
 	cp issue.install $RELEASEDIR/etc/issue
 
 	if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
