@@ -1,4 +1,3 @@
 #!/bin/sh
 
-cd ~root || exit
-echo 'set dir=/tmp' >>.exrc
+# CD boottime initializations.
