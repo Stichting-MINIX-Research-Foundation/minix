@@ -24,6 +24,7 @@ usr:	\
 		/usr/bin/false \
 		/usr/bin/gcc \
 		/usr/bin/getopts \
+		/usr/bin/getpack \
 		/usr/bin/read \
 		/usr/bin/test \
 		/usr/bin/true \
@@ -94,6 +95,9 @@ clean:
 /usr/bin/getopts /usr/bin/read /usr/bin/test /usr/bin/true /usr/bin/umask \
 /usr/bin/wait:	/usr/bin/cd
 	install -m 755 -l $? $@
+
+/usr/bin/getpack:	getpack.sh
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/checkhier:	checkhier.sh
 	install -m 755 -c -o bin $? $@
