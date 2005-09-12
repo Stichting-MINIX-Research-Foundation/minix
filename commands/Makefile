@@ -52,6 +52,7 @@ all install clean::
 	cd dhcpd && $(MAKE) $@
 	cd dis88 && $(MAKE) $@
 	cd elle && $(MAKE) $@
+	cd elvis && $(MAKE) $@
 	cd ftp && $(MAKE) $@
 	cd ftpd && $(MAKE) $@
 	cd ftpd200 && $(MAKE) $@
