@@ -530,7 +530,7 @@ mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
  then	list="`ls | fgrep -v src.`"
  else	list="`ls`"
  fi
- for d in *
+ for d in $list
  do	
  	cpdir -v $d /mnt/$d
  done
