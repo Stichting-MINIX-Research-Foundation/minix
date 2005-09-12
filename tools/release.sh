@@ -58,6 +58,7 @@ IMAGE=cdfdimage
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
+version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
 ISO=minix${version}.iso
 ISOGZ=${ISO}.gz
@@ -222,8 +223,11 @@ then
 	read xyzzy
 fi
 
-df $TMPDISK | tail -1 | awk '{ print $4 }' >$RELEASEDIR/.usrkb
+echo $version_pretty >$RELEASEDIR/etc/version
 echo " * Counting files"
+df $TMPDISK | tail -1 | awk '{ print $4 }' >$RELEASEDIR/.usrkb
+du -s $RELEASEDIR/usr/src.* | awk '{ t += $1 } END { print t }' >$RELEASEDIR/.extrasrckb
+( for d in $RELEASEDIR/usr/src.*; do find $d; done) | wc -l >$RELEASEDIR/.extrasrcfiles
 find $RELEASEDIR/usr | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 umount $TMPDISK || exit

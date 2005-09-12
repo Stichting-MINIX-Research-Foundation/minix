@@ -14,6 +14,9 @@ cd /usr/src || exit 1
 make clean
 # Let man find the manpages
 makewhatis /usr/man
+makewhatis /usr/gnu/man
 makewhatis /usr/local/man
+mv /usr/src/commands /usr/src.commands
+mv /usr/src/contrib /usr/src.contrib
 exit 0
 
