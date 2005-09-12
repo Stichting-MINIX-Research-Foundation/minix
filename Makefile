@@ -34,20 +34,20 @@ libraries:
 	cd lib && $(MAKE) install
 
 cmds:
-	cd commands && $(MAKE) all
+	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) all; fi
 
 bigcmds:
-	cd commands && $(MAKE) bigall
+	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) bigall; fi
 
 contribs:
 	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) all; fi
 
 install::
-	cd commands && $(MAKE) $@
+	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) install; fi
 	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) install; fi
 
 biginstallcmds::
-	cd commands && $(MAKE) biginstall
+	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) biginstall; fi
 
 depend::
 	mkdep kernel
