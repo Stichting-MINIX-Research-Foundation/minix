@@ -319,6 +319,7 @@ while [ "$confirm" = "" ]
 do
 	auto=""
 	echo ""
+echo " --- Step 4: Reinstall choice ------------------------------------------"
 	if mount -r /dev/$home $TMPMP >/dev/null 2>&1
 	then	umount /dev/$home >/dev/null 2>&1
 		echo ""
@@ -334,7 +335,10 @@ do
 		[Ff]*)	confirm="ok"; auto="" ;;
 		esac
 
-	else	confirm="ok";
+	else	echo ""
+		echo "No old /home found. Doing full install."
+		echo ""
+		confirm="ok";
 	fi
 
 done
@@ -343,6 +347,8 @@ nohome="0"
 
 if [ ! "$auto" = r ]
 then	homesize=""
+echo ""
+echo " --- Step 5: /home configuration ---------------------------------------"
 	while [ -z "$homesize" ]
 	do
 
@@ -387,7 +393,7 @@ blockdefault=4
 if [ ! "$auto" = "r" ]
 then
 	echo ""
-	echo " --- Step 4: Select a block size ---------------------------------------"
+echo " --- Step 6: Select a block size ---------------------------------------"
 	echo ""
 	
 	echo "The maximum (and default) file system block size is $blockdefault KB."
@@ -439,7 +445,7 @@ echo "Creating /dev/$usr for /usr .."
 mkfs -B $blocksizebytes /dev/$usr || exit
 
 echo ""
-echo " --- Step 5: Wait for bad block detection ------------------------------"
+echo " --- Step 7: Wait for bad block detection ------------------------------"
 echo ""
 echo "Scanning disk for bad blocks.  Hit CTRL+C to stop the scan if you are"
 echo "sure that there can not be any bad blocks.  Otherwise just wait."
@@ -466,7 +472,7 @@ readall -b /dev/$usr | sh
 trap 2
 
 echo ""
-echo " --- Step 6: Wait for files to be copied -------------------------------"
+echo " --- Step 8: Wait for files to be copied -------------------------------"
 echo ""
 echo "This is the final step of the MINIX 3 setup.  All files will be now be"
 echo "copied to your hard disk.  This may take a while."
