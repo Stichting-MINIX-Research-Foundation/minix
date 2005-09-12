@@ -42,6 +42,7 @@ usr:	\
 	/usr/bin/spell \
 	/usr/bin/srccrc \
 	/usr/bin/svclog \
+	/usr/bin/version \
 	/usr/bin/whatis \
 		/usr/bin/apropos \
 	/usr/bin/whereis \
@@ -131,6 +132,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/svclog:	svclog.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/version:	version.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/whatis:	whatis.sh
