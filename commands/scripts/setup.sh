@@ -404,7 +404,7 @@ echo " --- Step 6: Select the size of /home ----------------------------------"
 	while [ -z "$homesize" ]
 	do
 
-		# 20% of what is left over after /home and /usr
+		# 20% of what is left over after / and /usr
 		# are taken.
 		defmb="`expr $maxhome / 5`"
 		if [ "$defmb" -gt "$maxhome" ]
@@ -424,6 +424,7 @@ echo " --- Step 6: Select the size of /home ----------------------------------"
 		else
 			if [ "$homesize" -gt "$maxhome" ]
 			then	echo "That won't fit!"
+				homesize=""
 			else
 				echo -n "$homesize MB Ok? [Y] "
 				read ok
