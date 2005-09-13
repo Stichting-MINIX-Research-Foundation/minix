@@ -329,6 +329,13 @@ Please finish the name of the primary partition you have created:
 	if [ ! -b "/dev/$primary" ]
 	then	echo "/dev/$primary is not a block device."
 		step4=""
+	else
+		devsize="`devsize /dev/$primary`"
+
+		if [ "$devsize" -lt 1 ]
+		then	echo "/dev/$primary is a 0-sized device."
+			step4=""
+		fi
 	fi
 done	# while step4 != ok
 # end Step 4
@@ -340,17 +347,16 @@ umount /dev/$root 2>/dev/null && echo "Unmounted $root for you."
 umount /dev/$home 2>/dev/null && echo "Unmounted $home for you."
 umount /dev/$usr 2>/dev/null && echo "Unmounted $usr for you."
 
-devsize="`devsize /dev/$primary`"
 devsizemb="`expr $devsize / 1024 / 2`"
 maxhome="`expr $devsizemb - $TOTALMB - 1`"
 
-if [ $devsizemb -lt $TOTALMB ]
+if [ "$devsizemb" -lt "$TOTALMB" ]
 then	echo "The selected partition ($devsizemb MB) is too small."
 	echo "You'll need $TOTALMB MB at least."
 	exit 1
 fi
 
-if [ $maxhome -lt 1 ]
+if [ "$maxhome" -lt 1 ]
 then	echo "Note: you can't have /home with that size partition."
 	maxhome=0
 fi
@@ -400,7 +406,7 @@ echo " --- Step 6: /home configuration ---------------------------------------"
 		# 20% of what is left over after /home and /usr
 		# are taken.
 		defmb="`expr $maxhome / 5`"
-		if [ $defmb -gt $maxhome ]
+		if [ "$defmb" -gt "$maxhome" ]
 		then
 			defmb=$maxhome
 		fi
@@ -414,7 +420,7 @@ echo " --- Step 6: /home configuration ---------------------------------------"
 		then	nohome=1
 			homesize=0
 		else
-			if [ "`expr $TOTALMB + $homesize`" -gt $devsizemb ]
+			if [ "`expr $TOTALMB + $homesize`" -gt "$devsizemb" ]
 			then	echo "That won't fit!"
 			else
 				echo -n "$homesize MB Ok? [Y] "
