@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 	return 1;
   }
 
-  printf("%lu\n", sizeup(argv[optind]));
+  printf("%lu\n", sizeup(argv[1]));
   return 0;
 }	
 
