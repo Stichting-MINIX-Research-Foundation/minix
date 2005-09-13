@@ -437,7 +437,8 @@ echo " --- Step 6: Select the size of /home ----------------------------------"
 	homemb="$homesize MB"
 	homesize="`expr $homesize '*' 1024 '*' 2`"
 else
-	homesize="`devsize /dev/$home` / 2 / 1024"
+	homepart="`devsize /dev/$home`"
+	homesize="`expr $homepart / 2 / 1024`"
 	if [ "$homesize" -gt "$maxhome" ]
 	then
 		echo "Sorry, but your /home is too big ($homesize MB) to leave enough"
