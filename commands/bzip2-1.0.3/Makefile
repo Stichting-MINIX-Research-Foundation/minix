@@ -74,31 +74,31 @@ install: bzip2 bzip2recover
 	if ( test ! -d $(PREFIX_MAN) ) ; then mkdir -p $(PREFIX_MAN) ; fi
 	if ( test ! -d $(PREFIX_MAN)/man1 ) ; then mkdir -p $(PREFIX_MAN)/man1 ; fi
 	if ( test ! -d $(PREFIX_INC) ) ; then mkdir -p $(PREFIX_INC) ; fi
-	cp -f bzip2 $(PREFIX_BIN)/bzip2
-	cp -f bzip2 $(PREFIX_BIN)/bunzip2
-	cp -f bzip2 $(PREFIX_BIN)/bzcat
-	cp -f bzip2recover $(PREFIX_BIN)/bzip2recover
+	install -o bin bzip2 $(PREFIX_BIN)/bzip2
+	install -o bin bzip2 $(PREFIX_BIN)/bunzip2
+	install -o bin bzip2 $(PREFIX_BIN)/bzcat
+	install -o bin bzip2recover $(PREFIX_BIN)/bzip2recover
 	chmod a+x $(PREFIX_BIN)/bzip2
 	chmod a+x $(PREFIX_BIN)/bunzip2
 	chmod a+x $(PREFIX_BIN)/bzcat
 	chmod a+x $(PREFIX_BIN)/bzip2recover
-	cp -f bzip2.1 $(PREFIX_MAN)/man1
+	install -o bin bzip2.1 $(PREFIX_MAN)/man1
 	chmod a+r $(PREFIX_MAN)/man1/bzip2.1
-	cp -f bzlib.h $(PREFIX_INC)
+	install -o bin bzlib.h $(PREFIX_INC)
 	chmod a+r $(PREFIX_INC)/bzlib.h
-	cp -f libbz2.a $(PREFIX_LIB)
+	install -o bin libbz2.a $(PREFIX_LIB)
 	chmod a+r $(PREFIX_LIB)/libbz2.a
-	cp -f bzgrep $(PREFIX_BIN)/bzgrep
+	install -o bin bzgrep $(PREFIX_BIN)/bzgrep
 	ln -f $(PREFIX_BIN)/bzgrep $(PREFIX_BIN)/bzegrep
 	ln -f $(PREFIX_BIN)/bzgrep $(PREFIX_BIN)/bzfgrep
 	chmod a+x $(PREFIX_BIN)/bzgrep
-	cp -f bzmore $(PREFIX_BIN)/bzmore
+	install -o bin bzmore $(PREFIX_BIN)/bzmore
 	ln -f $(PREFIX_BIN)/bzmore $(PREFIX_BIN)/bzless
 	chmod a+x $(PREFIX_BIN)/bzmore
-	cp -f bzdiff $(PREFIX_BIN)/bzdiff
+	install -o bin bzdiff $(PREFIX_BIN)/bzdiff
 	ln -f $(PREFIX_BIN)/bzdiff $(PREFIX_BIN)/bzcmp
 	chmod a+x $(PREFIX_BIN)/bzdiff
-	cp -f bzgrep.1 bzmore.1 bzdiff.1 $(PREFIX_MAN)/man1
+	install -o bin bzgrep.1 bzmore.1 bzdiff.1 $(PREFIX_MAN)/man1
 	chmod a+r $(PREFIX_MAN)/man1/bzgrep.1
 	chmod a+r $(PREFIX_MAN)/man1/bzmore.1
 	chmod a+r $(PREFIX_MAN)/man1/bzdiff.1
