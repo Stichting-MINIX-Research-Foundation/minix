@@ -396,8 +396,17 @@ done
 
 nohome="0"
 
+homesize=""
 if [ ! "$auto" = r ]
-then	homesize=""
+then	homesize="`devsize /dev/$home` / 2 / 1024"
+	if [ "$homesize" -gt "$maxhome" ]
+	then
+		echo "Sorry, but your /home is too big ($homesize MB) to leave enough"
+		echo "space on the rest of the partition ($devsizemb MB) for your"
+		echo "selected installation size ($TOTALMB MB)."
+		exit 1
+	fi
+else
 echo ""
 echo " --- Step 6: Select the size of /home ----------------------------------"
 	while [ -z "$homesize" ]
@@ -418,9 +427,10 @@ echo " --- Step 6: Select the size of /home ----------------------------------"
 		if [ "$homesize" = "" ] ; then homesize=$defmb; fi
 		if [ "$homesize" -lt 1 ]
 		then	nohome=1
+			echo "Ok, not making a /home."
 			homesize=0
 		else
-			if [ "`expr $TOTALMB + $homesize`" -gt "$devsizemb" ]
+			if [ "$homesize" -gt "$maxhome" ]
 			then	echo "That won't fit!"
 			else
 				echo -n "$homesize MB Ok? [Y] "
