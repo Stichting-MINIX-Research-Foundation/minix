@@ -211,7 +211,7 @@ do
 	echo "  (B)inary install (only basic sources) ($NOSRCMB MB required)"
 	echo "  (S)ource install (full install) ($TOTALMB MB required)"
 	echo " "
-	echo -n "Basic (B)inary or Full (S)ource install? [S] "
+	echo -n "Basic (B)inary or full (S)ource install? [S] "
 	read conf
 	case "$conf" in
 	"") 	step3="ok"; nobigsource="" ;;
