@@ -399,7 +399,7 @@ nohome="0"
 if [ ! "$auto" = r ]
 then	homesize=""
 echo ""
-echo " --- Step 6: /home configuration ---------------------------------------"
+echo " --- Step 6: Select the size of /home ----------------------------------"
 	while [ -z "$homesize" ]
 	do
 
