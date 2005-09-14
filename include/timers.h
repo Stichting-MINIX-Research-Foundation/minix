@@ -43,10 +43,10 @@ typedef struct timer
 #define tmr_arg(tp) (&(tp)->tmr_arg)
 #define tmr_exp_time(tp) (&(tp)->tmr_exp_time)
 
-/* Timers should be initialize once before they are being used. Be careful 
- * not the reinitialize a timer that is a list of timers, or the chain will 
- * be broken. 
- */ 
+/* Timers should be initialized once before they are being used. Be careful
+ * not to reinitialize a timer that is in a list of timers, or the chain
+ * will be broken.
+ */
 #define tmr_inittimer(tp) (void)((tp)->tmr_exp_time = TMR_NEVER, \
 	(tp)->tmr_next = NULL)
 
