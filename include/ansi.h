@@ -1,6 +1,6 @@
 /* The <ansi.h> header attempts to decide whether the compiler has enough
  * conformance to Standard C for Minix to take advantage of.  If so, the
- * symbol _ANSI is defined (as 31415).  Otherwise _ANSI is not defined
+ * symbol _ANSI is defined (as 31459).  Otherwise _ANSI is not defined
  * here, but it may be defined by applications that want to bend the rules.
  * The magic number in the definition is to inhibit unnecessary bending
  * of the rules.  (For consistency with the new '#ifdef _ANSI" tests in
