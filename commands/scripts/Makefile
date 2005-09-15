@@ -19,6 +19,7 @@ usr:	\
 	/usr/bin/cd \
 		/usr/bin/[ \
 		/usr/bin/command \
+		/usr/bin/easypack \
 		/usr/bin/echo \
 		/usr/bin/expr \
 		/usr/bin/false \
@@ -95,6 +96,9 @@ clean:
 /usr/bin/getopts /usr/bin/read /usr/bin/test /usr/bin/true /usr/bin/umask \
 /usr/bin/wait:	/usr/bin/cd
 	install -m 755 -l $? $@
+
+/usr/bin/easypack:	easypack.sh
+	install -m 755 -c -o bin $? $@
 
 /usr/bin/getpack:	getpack.sh
 	install -m 755 -c -o bin $? $@
