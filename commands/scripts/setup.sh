@@ -394,7 +394,7 @@ echo " --- Step 5: Reinstall choice ------------------------------------------"
 
 done
 
-rm -f $TMPMP
+rmdir $TMPMP
 
 nohome="0"
 
