@@ -15,7 +15,7 @@ case $#:$1 in
 	c0d4 c0d4p0 c0d4p0s0 c0d5 c0d5p0 c0d5p0s0 \
 	c0d6 c0d6p0 c0d6p0s0 c0d7 c0d7p0 c0d7p0s0 \
 	tty ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03 ttyp0 ttyp1 ttyp2 ttyp3 \
-	eth klog random cmos
+	eth klog random cmos kbd psm
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -38,6 +38,8 @@ Where key is one of the following:
   klog                    # Make /dev/klog
   random                  # Make /dev/random, /dev/urandom
   cmos                    # Make /dev/cmos
+  kbd                     # Make /dev/kbd*
+  psm                     # Make /dev/psm*
   std			  # All standard devices
 EOF
     exit 1
@@ -153,9 +155,9 @@ do
 	$e mknod ${n} c $maj `expr $m + 1`
 	$e chmod 660 ${n}n ${n}
 	;;
-    console|lp|tty|log)
-	# Console, line printer, anonymous tty, diagnostics device.
-	#
+    console|lp|tty|log|kbd*|psm*)
+	# Console, line printer, anonymous tty, diagnostics device,
+	# raw keyboard, ps/2 mouse.
 	$e mknod console c 4 0
 	$e chmod 600 console
 	$e chgrp tty console
@@ -167,6 +169,10 @@ do
 	$e chmod 200 lp
 	$e mknod log c 4 15
 	$e chmod 222 log
+	$e mknod kbd0 c 4 250
+	$e mknod psm0 c 4 251
+	$e chmod 660 kbd0 psm0
+	$e chgrp operator kbd0 psm0
 	;;
     ttyc[1-7])
 	# Virtual consoles.
