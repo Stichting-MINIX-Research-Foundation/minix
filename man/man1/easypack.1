@@ -1,0 +1,30 @@
+.TH EASYPACK 1
+.SH NAME
+easypack \- Fetch and install a package
+.SH SYNOPSIS
+\fBeasypack\fR [\fB\-\fIo\fR]
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH OPTIONS
+.FL "\-\fIo\fR" "If package is already installed, overwrite it
+.SH EXAMPLES
+.EX "easypack gzip-1.2.4" "Fetch gzip-1.2.4 package"
+.EX "easypack indent telnet patch" "Fetch these three packages"
+.SH DESCRIPTION
+.PP
+A package in .tar.bz2 format is fetched from \fIwww.minix3.org\fR,
+copied to \fI/usr/src/commands\fR, decompressed and untarred.
+Then the \fIbuild\fR script in the top-level directory is executed
+to install it. This command should be called when logged in as bin
+to provide write access to the relevant directories. A log file,
+\fILog\fR is produced for debugging in case building fails.
+
