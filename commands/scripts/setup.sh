@@ -394,6 +394,8 @@ echo " --- Step 5: Reinstall choice ------------------------------------------"
 
 done
 
+rm -f $TMPMP
+
 nohome="0"
 
 homesize=""
