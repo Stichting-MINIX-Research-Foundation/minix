@@ -204,13 +204,14 @@ then
 	chown -R bin $RELEASEDIR/usr/src
 	find $RELEASEDIR/usr/src -type d | xargs chmod 755
 	find $RELEASEDIR/usr/src -type f | xargs chmod 644
+	find $RELEASEDIR/usr/src -name configure | xargs chmod 755
 	# Bug tracking system not for on cd
 	rm -rf $RELEASEDIR/usr/src/doc/bugs
 
 	# Make sure the CD knows it's a CD
 	date >$RELEASEDIR/CD
 	echo " * Chroot build"
-	chroot $RELEASEDIR '/bin/sh -x /usr/src/tools/chrootmake.sh' || exit 1
+	chroot $RELEASEDIR "/usr/bin su bin -c '/bin/sh -x /usr/src/tools/chrootmake.sh'" || exit 1
 	echo " * Chroot build done"
 	# The build process leaves some file in src as root.
 	chown -R bin $RELEASEDIR/usr/src*
