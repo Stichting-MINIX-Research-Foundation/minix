@@ -58,29 +58,29 @@
 
 /* Values actually implemented by MINIX (Tables 2-4, 2-5, 2-6, and 2-7). */
 /* Some of these old names had better be defined when not POSIX. */
-#define _NO_LIMIT        100	/* arbitrary number; limit not enforced */
+#define _NO_LIMIT          100	/* arbitrary number; limit not enforced */
 
-#define NGROUPS_MAX        0	/* supplemental group IDs not available */
+#define NGROUPS_MAX          0	/* supplemental group IDs not available */
 #if _EM_WSIZE > 2
-#define ARG_MAX        16384	/* # bytes of args + environ for exec() */
+#define ARG_MAX          16384	/* # bytes of args + environ for exec() */
 #else
-#define ARG_MAX         4096	/* args + environ on small machines */
+#define ARG_MAX           4096	/* args + environ on small machines */
 #endif
-#define CHILD_MAX  _NO_LIMIT    /* MINIX does not limit children */
-#define OPEN_MAX          20	/* # open files a process may have */
+#define CHILD_MAX    _NO_LIMIT	/* MINIX does not limit children */
+#define OPEN_MAX            20	/* # open files a process may have */
 #if 0			/* V1 file system */
-#define LINK_MAX       CHAR_MAX	/* # links a file may have */
+#define LINK_MAX      CHAR_MAX	/* # links a file may have */
 #else			/* V2 or better file system */
-#define LINK_MAX       SHRT_MAX	/* # links a file may have */
+#define LINK_MAX      SHRT_MAX	/* # links a file may have */
 #endif
-#define MAX_CANON        255	/* size of the canonical input queue */
-#define MAX_INPUT        255	/* size of the type-ahead buffer */
-#define NAME_MAX      DIRSIZ   	/* # chars in a file name */
-#define PATH_MAX         255	/* # chars in a path name */
-#define PIPE_BUF        7168	/* # bytes in atomic write to a pipe */
-#define STREAM_MAX        20	/* must be the same as FOPEN_MAX in stdio.h */
-#define TZNAME_MAX         3	/* maximum bytes in a time zone name is 3 */
-#define SSIZE_MAX      32767	/* max defined byte count for read() */
+#define MAX_CANON          255	/* size of the canonical input queue */
+#define MAX_INPUT          255	/* size of the type-ahead buffer */
+#define NAME_MAX        DIRSIZ	/* # chars in a file name */
+#define PATH_MAX           255	/* # chars in a path name */
+#define PIPE_BUF          7168	/* # bytes in atomic write to a pipe */
+#define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */
+#define TZNAME_MAX           3	/* maximum bytes in a time zone name is 3 */
+#define SSIZE_MAX        32767	/* max defined byte count for read() */
 
 #endif /* _POSIX_SOURCE */
 

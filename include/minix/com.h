@@ -28,17 +28,17 @@
 #define HARDWARE     KERNEL	/* for hardware interrupt handlers */
 
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
-#define NR_TASKS	4 
+#define NR_TASKS	  4 
 
 /* User-space processes, that is, device drivers, servers, and INIT. */
-#define PM_PROC_NR	 0	/* process manager */
-#define FS_PROC_NR 	 1	/* file system */
-#define RS_PROC_NR 	 2	/* reincarnation server */
-#define MEM_PROC_NR 	 3  	/* memory driver (RAM disk, null, etc.) */
-#define LOG_PROC_NR	 4	/* log device driver */
-#define TTY_PROC_NR	 5	/* terminal (TTY) driver */
-#define DRVR_PROC_NR     6	/* device driver for boot medium */
-#define INIT_PROC_NR	 7    	/* init -- goes multiuser */
+#define PM_PROC_NR	  0	/* process manager */
+#define FS_PROC_NR 	  1	/* file system */
+#define RS_PROC_NR 	  2	/* reincarnation server */
+#define MEM_PROC_NR 	  3  	/* memory driver (RAM disk, null, etc.) */
+#define LOG_PROC_NR	  4	/* log device driver */
+#define TTY_PROC_NR	  5	/* terminal (TTY) driver */
+#define DRVR_PROC_NR      6	/* device driver for boot medium */
+#define INIT_PROC_NR	  7    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
@@ -257,10 +257,10 @@
 #  define IRQ_DISABLE       4	/* disable interrupts */
 #define IRQ_VECTOR	m5_c2   /* irq vector */
 #define IRQ_POLICY	m5_i1   /* options for IRQCTL request */
-#  define IRQ_REENABLE     0x001    /* reenable IRQ line after interrupt */
-#  define IRQ_BYTE         0x100    /* byte values */      
-#  define IRQ_WORD         0x200    /* word values */
-#  define IRQ_LONG         0x400    /* long values */
+#  define IRQ_REENABLE  0x001	/* reenable IRQ line after interrupt */
+#  define IRQ_BYTE      0x100	/* byte values */      
+#  define IRQ_WORD      0x200	/* word values */
+#  define IRQ_LONG      0x400	/* long values */
 #define IRQ_PROC_NR	m5_i2   /* process number, SELF, NONE */
 #define IRQ_HOOK_ID	m5_l3   /* id of irq hook at kernel */
 
@@ -320,58 +320,58 @@
 #define I_PROC_NR      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */
-#define I_VAL_PTR2      m7_p2	/* second virtual address */ 
-#define I_VAL_LEN2      m7_i2	/* second length, or proc nr */
+#define I_VAL_PTR2     m7_p2	/* second virtual address */ 
+#define I_VAL_LEN2     m7_i2	/* second length, or proc nr */
 
 /* Field names for SYS_TIMES. */
-#define T_PROC_NR   	m4_l1	/* process to request time info for */
-#define T_USER_TIME 	m4_l1	/* user time consumed by process */
-#define T_SYSTEM_TIME	m4_l2	/* system time consumed by process */
-#define T_CHILD_UTIME	m4_l3	/* user time consumed by process' children */
-#define T_CHILD_STIME	m4_l4	/* sys time consumed by process' children */
-#define T_BOOT_TICKS 	m4_l5	/* number of clock ticks since boot time */
+#define T_PROC_NR      m4_l1	/* process to request time info for */
+#define T_USER_TIME    m4_l1	/* user time consumed by process */
+#define T_SYSTEM_TIME  m4_l2	/* system time consumed by process */
+#define T_CHILD_UTIME  m4_l3	/* user time consumed by process' children */
+#define T_CHILD_STIME  m4_l4	/* sys time consumed by process' children */
+#define T_BOOT_TICKS   m4_l5	/* number of clock ticks since boot time */
 
 /* Field names for SYS_TRACE, SYS_SVRCTL. */
-#define CTL_PROC_NR	m2_i1	/* process number of the caller */
-#define CTL_REQUEST	m2_i2	/* server control request */
-#define CTL_MM_PRIV	m2_i3	/* privilege as seen by PM */
-#define CTL_ARG_PTR	m2_p1	/* pointer to argument */
-#define CTL_ADDRESS	m2_l1	/* address at traced process' space */
-#define CTL_DATA	m2_l2	/* data field for tracing */
+#define CTL_PROC_NR    m2_i1	/* process number of the caller */
+#define CTL_REQUEST    m2_i2	/* server control request */
+#define CTL_MM_PRIV    m2_i3	/* privilege as seen by PM */
+#define CTL_ARG_PTR    m2_p1	/* pointer to argument */
+#define CTL_ADDRESS    m2_l1	/* address at traced process' space */
+#define CTL_DATA       m2_l2	/* data field for tracing */
 
 /* Field names for SYS_KILL, SYS_SIGCTL */
-#define SIG_REQUEST	m2_l2	/* PM signal control request */
-#define S_GETSIG 	 0	/* get pending kernel signal */
-#define S_ENDSIG 	 1	/* finish a kernel signal */
-#define S_SENDSIG   	 2	/* POSIX style signal handling */
-#define S_SIGRETURN	 3 	/* return from POSIX handling */
-#define S_KILL		 4 	/* servers kills process with signal */
-#define SIG_PROC	m2_i1	/* process number for inform */
-#define SIG_NUMBER	m2_i2	/* signal number to send */
-#define SIG_FLAGS 	m2_i3	/* signal flags field */
-#define SIG_MAP  	m2_l1	/* used by kernel to pass signal bit map */
-#define SIG_CTXT_PTR	m2_p1	/* pointer to info to restore signal context */
+#define SIG_REQUEST    m2_l2	/* PM signal control request */
+#define S_GETSIG 	   0	/* get pending kernel signal */
+#define S_ENDSIG 	   1	/* finish a kernel signal */
+#define S_SENDSIG   	   2	/* POSIX style signal handling */
+#define S_SIGRETURN	   3 	/* return from POSIX handling */
+#define S_KILL		   4 	/* servers kills process with signal */
+#define SIG_PROC       m2_i1	/* process number for inform */
+#define SIG_NUMBER     m2_i2	/* signal number to send */
+#define SIG_FLAGS      m2_i3	/* signal flags field */
+#define SIG_MAP        m2_l1	/* used by kernel to pass signal bit map */
+#define SIG_CTXT_PTR   m2_p1	/* pointer to info to restore signal context */
 
 /* Field names for SYS_FORK, _EXEC, _EXIT, _NEWMAP. */
-#define PR_PROC_NR	m1_i1	/* indicates a (child) process */
-#define PR_PRIORITY	m1_i2	/* process priority */
-#define PR_PPROC_NR	m1_i2	/* indicates a (parent) process */
-#define PR_PID		m1_i3	/* process id at process manager */
-#define PR_STACK_PTR	m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
-#define PR_TRACING	m1_i3	/* flag to indicate tracing is on/ off */
-#define PR_NAME_PTR	m1_p2	/* tells where program name is for dmp */
-#define PR_IP_PTR       m1_p3	/* initial value for ip after exec */
-#define PR_MEM_PTR	m1_p1	/* tells where memory map is for sys_newmap */
+#define PR_PROC_NR     m1_i1	/* indicates a (child) process */
+#define PR_PRIORITY    m1_i2	/* process priority */
+#define PR_PPROC_NR    m1_i2	/* indicates a (parent) process */
+#define PR_PID	       m1_i3	/* process id at process manager */
+#define PR_STACK_PTR   m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
+#define PR_TRACING     m1_i3	/* flag to indicate tracing is on/ off */
+#define PR_NAME_PTR    m1_p2	/* tells where program name is for dmp */
+#define PR_IP_PTR      m1_p3	/* initial value for ip after exec */
+#define PR_MEM_PTR     m1_p1	/* tells where memory map is for sys_newmap */
 
 /* Field names for SYS_INT86 */
-#define INT86_REG86	m1_p1	/* pointer to registers */
+#define INT86_REG86    m1_p1	/* pointer to registers */
 
 /* Field names for SELECT (FS). */
-#define SEL_NFDS	m8_i1
-#define SEL_READFDS	m8_p1
-#define SEL_WRITEFDS	m8_p2
-#define SEL_ERRORFDS	m8_p3
-#define SEL_TIMEOUT	m8_p4
+#define SEL_NFDS       m8_i1
+#define SEL_READFDS    m8_p1
+#define SEL_WRITEFDS   m8_p2
+#define SEL_ERRORFDS   m8_p3
+#define SEL_TIMEOUT    m8_p4
 
 /*===========================================================================*
  *                Messages for system management server 		     *
@@ -396,17 +396,17 @@
  *===========================================================================*/
 
 /* Miscellaneous request types and field names, e.g. used by IS server. */
-#define PANIC_DUMPS  	97  	/* debug dumps at the TTY on RBT_PANIC */
-#define FKEY_CONTROL 	98  	/* control a function key at the TTY */
-#  define FKEY_REQUEST		m2_i1	/* request to perform at TTY */
+#define PANIC_DUMPS  		97  	/* debug dumps at the TTY on RBT_PANIC */
+#define FKEY_CONTROL 		98  	/* control a function key at the TTY */
+#  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
 #  define    FKEY_MAP		10	/* observe function key */
 #  define    FKEY_UNMAP		11	/* stop observing function key */
 #  define    FKEY_EVENTS	12	/* request open key presses */
-#  define FKEY_FKEYS		m2_l1	/* F1-F12 keys pressed */
-#  define FKEY_SFKEYS		m2_l2	/* Shift-F1-F12 keys pressed */
+#  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
+#  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
 #define DIAGNOSTICS 	100 	/* output a string without FS in between */
-#  define DIAG_PRINT_BUF 	m1_p1
-#  define DIAG_BUF_COUNT 	m1_i1
-#  define DIAG_PROC_NR   	m1_i2
+#  define DIAG_PRINT_BUF      m1_p1
+#  define DIAG_BUF_COUNT      m1_i1
+#  define DIAG_PROC_NR        m1_i2
 
 #endif /* _MINIX_COM_H */ 

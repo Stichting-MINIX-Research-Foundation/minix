@@ -7,7 +7,7 @@ typedef unsigned short tcflag_t;
 typedef unsigned char cc_t;
 typedef unsigned int speed_t;
 
-#define NCCS		20	/* size of cc_c array, some extra space
+#define NCCS		   20	/* size of cc_c array, some extra space
 				 * for extensions. */
 
 /* Primary terminal control structure. POSIX Table 7-1. */
@@ -62,17 +62,17 @@ struct termios {
 #define TOSTOP		0x0100	/* send SIGTTOU (job control, not implemented*/
 
 /* Indices into c_cc array.  Default values in parentheses. POSIX Table 7-5. */
-#define VEOF               0	/* cc_c[VEOF] = EOF char (^D) */
-#define VEOL               1	/* cc_c[VEOL] = EOL char (undef) */
-#define VERASE             2	/* cc_c[VERASE] = ERASE char (^H) */
-#define VINTR              3	/* cc_c[VINTR] = INTR char (DEL) */
-#define VKILL              4	/* cc_c[VKILL] = KILL char (^U) */
-#define VMIN               5	/* cc_c[VMIN] = MIN value for timer */
-#define VQUIT              6	/* cc_c[VQUIT] = QUIT char (^\) */
-#define VTIME              7	/* cc_c[VTIME] = TIME value for timer */
-#define VSUSP              8	/* cc_c[VSUSP] = SUSP (^Z, ignored) */
-#define VSTART             9	/* cc_c[VSTART] = START char (^S) */
-#define VSTOP             10	/* cc_c[VSTOP] = STOP char (^Q) */
+#define VEOF                 0	/* cc_c[VEOF] = EOF char (^D) */
+#define VEOL                 1	/* cc_c[VEOL] = EOL char (undef) */
+#define VERASE               2	/* cc_c[VERASE] = ERASE char (^H) */
+#define VINTR                3	/* cc_c[VINTR] = INTR char (DEL) */
+#define VKILL                4	/* cc_c[VKILL] = KILL char (^U) */
+#define VMIN                 5	/* cc_c[VMIN] = MIN value for timer */
+#define VQUIT                6	/* cc_c[VQUIT] = QUIT char (^\) */
+#define VTIME                7	/* cc_c[VTIME] = TIME value for timer */
+#define VSUSP                8	/* cc_c[VSUSP] = SUSP (^Z, ignored) */
+#define VSTART               9	/* cc_c[VSTART] = START char (^S) */
+#define VSTOP               10	/* cc_c[VSTOP] = STOP char (^Q) */
 
 #define _POSIX_VDISABLE	  (cc_t)0xFF	/* You can't even generate this 
 					 * character with 'normal' keyboards.

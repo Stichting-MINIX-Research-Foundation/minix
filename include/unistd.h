@@ -36,37 +36,37 @@
 #endif
 
 /* What system info to retrieve with sysgetinfo(). */
-#define SI_KINFO		0	/* get kernel info via PM */
-#define SI_PROC_ADDR		1	/* address of process table */
-#define SI_PROC_TAB		2	/* copy of entire process table */
-#define SI_DMAP_TAB		3	/* get device <-> driver mappings */
+#define SI_KINFO	   0	/* get kernel info via PM */
+#define SI_PROC_ADDR	   1	/* address of process table */
+#define SI_PROC_TAB	   2	/* copy of entire process table */
+#define SI_DMAP_TAB	   3	/* get device <-> driver mappings */
 
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #define NULL    ((void *)0)
 
 /* The following relate to configurable system variables. POSIX Table 4-2. */
-#define _SC_ARG_MAX		1
-#define _SC_CHILD_MAX		2
-#define _SC_CLOCKS_PER_SEC	3
-#define _SC_CLK_TCK             3
-#define _SC_NGROUPS_MAX		4
-#define _SC_OPEN_MAX		5
-#define _SC_JOB_CONTROL		6
-#define _SC_SAVED_IDS		7
-#define _SC_VERSION		8
-#define _SC_STREAM_MAX		9
-#define _SC_TZNAME_MAX         10
+#define _SC_ARG_MAX	   1
+#define _SC_CHILD_MAX	   2
+#define _SC_CLOCKS_PER_SEC 3
+#define _SC_CLK_TCK	   3
+#define _SC_NGROUPS_MAX	   4
+#define _SC_OPEN_MAX	   5
+#define _SC_JOB_CONTROL	   6
+#define _SC_SAVED_IDS	   7
+#define _SC_VERSION	   8
+#define _SC_STREAM_MAX	   9
+#define _SC_TZNAME_MAX    10
 
 /* The following relate to configurable pathname variables. POSIX Table 5-2. */
-#define _PC_LINK_MAX		1	/* link count */
-#define _PC_MAX_CANON		2	/* size of the canonical input queue */
-#define _PC_MAX_INPUT		3	/* type-ahead buffer size */
-#define _PC_NAME_MAX		4	/* file name size */
-#define _PC_PATH_MAX		5	/* pathname size */
-#define _PC_PIPE_BUF		6	/* pipe size */
-#define _PC_NO_TRUNC		7	/* treatment of long name components */
-#define _PC_VDISABLE		8	/* tty disable */
-#define _PC_CHOWN_RESTRICTED	9	/* chown restricted or not */
+#define _PC_LINK_MAX	   1	/* link count */
+#define _PC_MAX_CANON	   2	/* size of the canonical input queue */
+#define _PC_MAX_INPUT	   3	/* type-ahead buffer size */
+#define _PC_NAME_MAX	   4	/* file name size */
+#define _PC_PATH_MAX	   5	/* pathname size */
+#define _PC_PIPE_BUF	   6	/* pipe size */
+#define _PC_NO_TRUNC	   7	/* treatment of long name components */
+#define _PC_VDISABLE	   8	/* tty disable */
+#define _PC_CHOWN_RESTRICTED 9	/* chown restricted or not */
 
 /* POSIX defines several options that may be implemented or not, at the
  * implementer's whim.  This implementer has made the following choices:
@@ -119,10 +119,10 @@ _PROTOTYPE( int pause, (void)						);
 _PROTOTYPE( int pipe, (int _fildes[2])					);
 _PROTOTYPE( ssize_t read, (int _fd, void *_buf, size_t _n)		);
 _PROTOTYPE( int rmdir, (const char *_path)				);
-_PROTOTYPE( int setgid, (_mnx_Gid_t _gid)					);
+_PROTOTYPE( int setgid, (_mnx_Gid_t _gid)				);
 _PROTOTYPE( int setpgid, (pid_t _pid, pid_t _pgid)			);
 _PROTOTYPE( pid_t setsid, (void)					);
-_PROTOTYPE( int setuid, (_mnx_Uid_t _uid)					);
+_PROTOTYPE( int setuid, (_mnx_Uid_t _uid)				);
 _PROTOTYPE( unsigned int sleep, (unsigned int _seconds)			);
 _PROTOTYPE( long sysconf, (int _name)					);
 _PROTOTYPE( pid_t tcgetpgrp, (int _fd)					);
@@ -160,7 +160,7 @@ _PROTOTYPE( int ttyslot, (void)						);
 _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
 _PROTOTYPE( int getsysinfo, (int who, int what, void *where)		);
-_PROTOTYPE( int getprocnr, (void)						);
+_PROTOTYPE( int getprocnr, (void)					);
 _PROTOTYPE( int findproc, (char *proc_name, int *proc_nr)		);
 _PROTOTYPE( int allocmem, (phys_bytes size, phys_bytes *base)		);
 _PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
