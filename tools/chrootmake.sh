@@ -2,7 +2,7 @@
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 cd /usr/src || exit 1
 ( cd etc && make install )
-make world install || exit 1
+su bin -c 'make world install' || exit 1
 cd tools || exit 1
 rm revision
 rm /boot/image/*
@@ -14,9 +14,9 @@ cp image_small /boot || exit 1
 cd /usr/src || exit 1
 make clean
 # Let man find the manpages
-makewhatis /usr/man
-makewhatis /usr/gnu/man
-makewhatis /usr/local/man
+su bin -c 'makewhatis /usr/man'
+su bin -c 'makewhatis /usr/gnu/man'
+su bin -c 'makewhatis /usr/local/man'
 mv /usr/src/commands /usr/src.commands
 mv /usr/src/contrib /usr/src.contrib
 exit 0
