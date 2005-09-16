@@ -1,0 +1,21 @@
+
+Sound Blaster 16 ISA driver for Minix 3
+
+Note: supports audio playback and volume control (mixer),
+recording is not yet supported
+
+
+Installation instructions SB16 driver Minix >= 3.0.7
+
+- set IRQ and I/O address in sb16.h
+(default 7 and 220)
+- make install
+- MAKEDEV /dev/audio (if /dev/audio doesn't allready exist)
+- service up /usr/sbin/sb16_dsp -dev /dev/audio
+- service up /usr/sbin/sb16_mixer -dev /dev/mixer
+done... (you can include the last 2 lines in /usr/etc/rc)
+
+
+Peter Boonstoppel - September 2005
+paboonst@cs.vu.nl
+

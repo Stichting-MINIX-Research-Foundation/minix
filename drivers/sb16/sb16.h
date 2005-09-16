@@ -1,8 +1,10 @@
 #ifndef SB16_H
 #define SB16_H
 
-#define SB_DEBUG		0	/* 1 = print debug info */
-#define SB_DEBUG_2		0	/* 1 = print more debug info */
+#include "../drivers.h"
+#include <sys/ioc_sound.h>
+#include <minix/sound.h>
+
 
 #define SB_TIMEOUT		32000   /* timeout count */
 
@@ -32,6 +34,7 @@
 #define DMA8_MODE	0x0B
 #define DMA8_CLEAR	0x0C
 
+
 /* If after this preprocessing stuff DMA8_PAGE is not defined
  * the 8-bit DMA channel specified is not valid
  */
@@ -54,6 +57,7 @@
 #define DMA16_MODE	0xD6
 #define DMA16_CLEAR	0xD8
 
+
 /* If after this preprocessing stuff DMA16_PAGE is not defined
  * the 16-bit DMA channel specified is not valid
  */
@@ -69,11 +73,13 @@
 #  endif
 #endif
 
+
 /* DMA modes */
 #define DMA16_AUTO_PLAY		0x58 + (SB_DMA_16 & 3)
 #define DMA16_AUTO_REC		0x54 + (SB_DMA_16 & 3)
 #define DMA8_AUTO_PLAY		0x58 + SB_DMA_8
 #define DMA8_AUTO_REC		0x54 + SB_DMA_8
+
 
 /* IO ports for soundblaster */
 #define DSP_RESET	0x6 + SB_BASE_ADDR
@@ -88,6 +94,7 @@
 #define OPL3_LEFT	0x0 + SB_BASE_ADDR
 #define OPL3_RIGHT	0x2 + SB_BASE_ADDR
 #define OPL3_BOTH	0x8 + SB_BASE_ADDR
+
 
 /* DSP Commands */
 #define DSP_INPUT_RATE		0x42  /* set input sample rate */
@@ -106,11 +113,13 @@
 #define DSP_CMD_IRQREQ8		0xF2  /* Interrupt request 8 bit        */
 #define DSP_CMD_IRQREQ16	0xF3  /* Interrupt request 16 bit        */
 
+
 /* DSP Modes */
 #define DSP_MODE_MONO_US	0x00  /* Mono unsigned */
 #define DSP_MODE_MONO_S		0x10  /* Mono signed */
 #define DSP_MODE_STEREO_US	0x20  /* Stereo unsigned */
 #define DSP_MODE_STEREO_S	0x30  /* Stereo signed */
+
 
 /* MIXER commands */
 #define MIXER_RESET		0x00  /* Reset */
@@ -160,8 +169,15 @@
 #define DSP_MIN_FRAGMENT_SIZE	1024 	   /* Minimum fragment size */
 #define DSP_NR_OF_BUFFERS		8
 
+
 /* Number of bytes you can DMA before hitting a 64K boundary: */
 #define dma_bytes_left(phys)    \
    ((unsigned) (sizeof(int) == 2 ? 0 : 0x10000) - (unsigned) ((phys) & 0xFFFF))
+
+
+_PROTOTYPE(int mixer_set, (int reg, int data));
+_PROTOTYPE( int sb16_inb, (int port) );
+_PROTOTYPE( void sb16_outb, (int port, int value) );
+
 
 #endif /* SB16_H */
