@@ -1938,6 +1938,10 @@ IntNative main ( IntNative argc, Char *argv[] )
       srcMode = (numFileNames == 0) ? SM_I2O : SM_F2O;
    }
 
+   if(strstr ( progName, "small" ) != 0) {
+   	smallMode = True;
+   }
+
 
    /*-- Look at the flags. --*/
    for (aa = argList; aa != NULL; aa = aa->link) {

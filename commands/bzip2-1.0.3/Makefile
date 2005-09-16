@@ -8,7 +8,7 @@ ARFLAGS=cr
 RANLIB=ranlib
 LDFLAGS=
 
-BIGFILES=-D_FILE_OFFSET_BITS=64
+BIGFILES=#-D_FILE_OFFSET_BITS=64
 CFLAGS=-Wall -Winline -O -g $(BIGFILES) -Dlstat=stat
 
 # Where you want it installed when you do 'make install'
@@ -74,8 +74,9 @@ install: bzip2 bzip2recover
 	if ( test ! -d $(PREFIX_MAN) ) ; then mkdir -p $(PREFIX_MAN) ; fi
 	if ( test ! -d $(PREFIX_MAN)/man1 ) ; then mkdir -p $(PREFIX_MAN)/man1 ; fi
 	if ( test ! -d $(PREFIX_INC) ) ; then mkdir -p $(PREFIX_INC) ; fi
-	install -o bin bzip2 $(PREFIX_BIN)/bzip2
-	install -o bin bzip2 $(PREFIX_BIN)/bunzip2
+	install -S 8M -o bin bzip2 $(PREFIX_BIN)/bzip2
+	install -S 4M -o bin bzip2 $(PREFIX_BIN)/bunzip2
+	install -S 2450k -o bin bzip2 $(PREFIX_BIN)/smallbunzip2
 	install -o bin bzip2 $(PREFIX_BIN)/bzcat
 	install -o bin bzip2recover $(PREFIX_BIN)/bzip2recover
 	chmod a+x $(PREFIX_BIN)/bzip2
