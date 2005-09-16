@@ -31,7 +31,7 @@ install:	/usr/sbin/sb16_dsp /usr/sbin/sb16_mixer
 
 # clean up local files
 clean:
-	rm -f *.o *.bak $(DRIVER)
+	rm -f *.o *.bak sb16 sb16_dsp sb16_mixer
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
