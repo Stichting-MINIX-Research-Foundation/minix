@@ -80,7 +80,7 @@ do # Check to see if it exists. Don't overwrite unless -o given
    fi
 
    # We got it. Unpack it.
-   bunzip2 $i.tar.bz2
+   bunzip2 $i.tar.bz2 || smallbunzip2 $i.tar.bz2
    tar xf $i.tar
    if test ! -d $i
       then echo Unable to unpack $i
