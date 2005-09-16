@@ -110,6 +110,8 @@
 #define REG_CNT_LO          4   /* low byte of cylinder number */
 #define REG_CNT_HI          5   /* high byte of cylinder number */
 #define REG_DRIVE           6   /* drive select */
+#endif
+
 #define REG_STATUS          7   /* status */
 #define   STATUS_BSY            0x80    /* controller busy */
 #define   STATUS_DRDY           0x40    /* drive ready */
@@ -119,6 +121,7 @@
 #define   STATUS_CORR           0x04    /* correctable error occurred */
 #define   STATUS_CHECK          0x01    /* check error */
 
+#ifdef ENABLE_ATAPI
 #define   ATAPI_PACKETCMD       0xA0    /* packet command */
 #define   ATAPI_IDENTIFY        0xA1    /* identify drive */
 #define   SCSI_READ10           0x28    /* read from disk */
@@ -1477,6 +1480,9 @@ unsigned cnt;
   return(OK);
 }
 
+
+#endif /* ENABLE_ATAPI */
+
 /*===========================================================================*
  *				w_other					     *
  *===========================================================================*/
@@ -1535,7 +1541,6 @@ message *m;
 	}
 	return EINVAL;
 }
-
 
 /*===========================================================================*
  *				w_hw_int				     *
@@ -1601,6 +1606,8 @@ char *strerr(int e)
 
 	return str;
 }
+
+#if ENABLE_ATAPI
 
 /*===========================================================================*
  *				atapi_intr_wait				     *
