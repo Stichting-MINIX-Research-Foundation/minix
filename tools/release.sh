@@ -68,7 +68,6 @@ BS=4096
 
 HDEMU=0
 COPY=0
-ALL=0
 QUICK=0
 
 while getopts "chaq?" c
@@ -85,10 +84,6 @@ do
 	c)
 		echo " * Copying, not CVS"
 		COPY=1
-		;;
-	a)
-		echo " * Including contrib"
-		ALL=1
 		;;
 	q)
 		echo " * Quick option (skip important bits"
@@ -178,26 +173,11 @@ then
 	if [ "$COPY" -ne 1 ]
 	then
 		echo " * Doing new cvs export"
-		if [ "$ALL" = 0 ]
-		then
-			cvs export -rHEAD src >/dev/null || exit 1
-			srcdir=src
-			# No contrib stuff
-			rm -rf src/contrib
-			echo " * Transfering source to $RELEASEDIR"
-			( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
-		else
-			( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src )
-		fi
+		( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src )
 	else
 		( cd .. && make clean )
 		srcdir=/usr/src
 		( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
-	fi
-
-	if [ "$ALL" = 0 ]
-	then	echo " * Removing temporary cvs source tree"
-		rm -rf src
 	fi
 
 	echo " * Fixups for owners and modes of dirs and files"

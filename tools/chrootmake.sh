@@ -18,6 +18,5 @@ su bin -c 'makewhatis /usr/man'
 su bin -c 'makewhatis /usr/gnu/man'
 su bin -c 'makewhatis /usr/local/man'
 mv /usr/src/commands /usr/src.commands
-mv /usr/src/contrib /usr/src.contrib
 exit 0
 
