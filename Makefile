@@ -25,7 +25,9 @@ usage:
 # for which it has to install /etc (for users and ownerships).
 # etcfiles also creates a directory hierarchy in its
 # 'make install' target.
-world:	etcfiles includes depend libraries cmds bigcmds contribs install biginstallcmds postinstall
+# 
+# etcfiles has to be done first.
+world: includes depend libraries cmds bigcmds contribs install biginstallcmds postinstall
 
 includes:
 	cd include && $(MAKE) install
