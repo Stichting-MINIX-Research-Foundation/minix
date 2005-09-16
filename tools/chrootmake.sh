@@ -1,6 +1,7 @@
 #!/bin/sh
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 cd /usr/src || exit 1
+( cd etc && make install )
 make world install || exit 1
 cd tools || exit 1
 rm revision

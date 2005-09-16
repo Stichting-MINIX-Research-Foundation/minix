@@ -211,7 +211,7 @@ then
 	# Make sure the CD knows it's a CD
 	date >$RELEASEDIR/CD
 	echo " * Chroot build"
-	chroot $RELEASEDIR "/usr/bin su bin -c '/bin/sh -x /usr/src/tools/chrootmake.sh'" || exit 1
+	chroot $RELEASEDIR "/bin/sh -x /usr/src/tools/chrootmake.sh" || exit 1
 	echo " * Chroot build done"
 	# The build process leaves some file in src as root.
 	chown -R bin $RELEASEDIR/usr/src*
