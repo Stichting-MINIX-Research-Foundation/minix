@@ -27,7 +27,7 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-world: includes depend libraries cmds bigcmds contribs install biginstallcmds postinstall
+world: includes depend libraries cmds bigcmds install biginstallcmds postinstall
 
 includes:
 	cd include && $(MAKE) install
@@ -41,12 +41,8 @@ cmds:
 bigcmds:
 	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) bigall; fi
 
-contribs:
-	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) all; fi
-
 install::
 	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) install; fi
-	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) install; fi
 
 biginstallcmds::
 	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) biginstall; fi
@@ -62,9 +58,7 @@ depend::
 
 clean::
 	cd lib && $(MAKE) $@
-	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) $@; fi
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
-	if [ -f contrib/Makefile ]; then cd contrib && $(MAKE) clean; fi
 
 etcfiles::
 	cd etc && $(MAKE) install
