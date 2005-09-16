@@ -1,30 +1,3 @@
-From real-beng@top.few.vu.nl  Thu Sep 15 12:33:54 2005
-Return-Path: <real-beng@top.few.vu.nl>
-X-Original-To: ben@scum.org
-Delivered-To: beng@atlantis.8hz.com
-Received: from top.few.vu.nl (top.few.vu.nl [130.37.20.4])
-	by atlantis.8hz.com (Postfix) with ESMTP id 12A02BA52
-	for <ben@scum.org>; Thu, 15 Sep 2005 12:33:54 +0200 (CEST)
-Received: from flits.few.vu.nl (flits.few.vu.nl [192.31.231.65])
-	by top.few.vu.nl with esmtp
-	(Smail #108) id m1EFr3x-0000PXC; Thu, 15 Sep 2005 12:33 +0200
-Received: by flits.few.vu.nl (Smail #108)
-	id m1EFr3x-0001vsC; Thu, 15 Sep 2005 12:33 +0200
-Message-Id: <m1EFr3x-0001vsC@flits.few.vu.nl>
-Date:     Thu, 15 Sep 2005 12:33:53 CEST
-From: Andy Tanenbaum <ast@cs.vu.nl>
-To: beng@few.vu.nl
-Subject:  easypack
-Status: RO
-Content-Length: 2825
-Lines: 106
-
-To make it possible to have two places for code to come from (tested
-and beta), I changed pack to try both of them in sequence. I also 
-improved error reporting and logging.
-
-Andy
----------------------- easypack -----------------------
 #!/bin/sh
 
 # This script gets and installs a package from the Website.
