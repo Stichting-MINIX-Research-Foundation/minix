@@ -201,22 +201,22 @@ step3=""
 while [ "$step3" != ok ]
 do
 	echo ""
-	echo " --- Step 3: Select binary or source distribution ----------------------"
+	echo " --- Step 3: Select minimal or full distribution -----------------------"
 	echo ""
-	echo "You can install MINIX as (B)inary or (S)ource. (B)inary"
+	echo "You can install MINIX as (M)inimal or (F)ull. (M)inimal"
 	echo "includes only the binary system and basic system sources."
-	echo "(S)ource also includes commands sources."
+	echo "(F)ull also includes commands sources."
 	echo ""
 	echo "Please select:"
-	echo "  (B)inary install (only basic sources) ($NOSRCMB MB required)"
-	echo "  (S)ource install (full install) ($TOTALMB MB required)"
+	echo "  (M)inimal install (only basic sources) ($NOSRCMB MB required)"
+	echo "  (F)ull install (full install) ($TOTALMB MB required)"
 	echo " "
-	echo -n "Basic (B)inary or full (S)ource install? [S] "
+	echo -n "Basic (M)inimal or (F)ull install? [F] "
 	read conf
 	case "$conf" in
 	"") 	step3="ok"; nobigsource="" ;;
-	[Ss]*)	step3="ok"; nobigsource="" ;;
-	[Bb]*)	step3="ok"; nobigsource="1"; TOTALMB=$NOSRCMB; USRFILES=$NOSRCUSRFILES ;;
+	[Ff]*)	step3="ok"; nobigsource="" ;;
+	[Mm]*)	step3="ok"; nobigsource="1"; TOTALMB=$NOSRCMB; USRFILES=$NOSRCUSRFILES ;;
 	esac
 done
 # end Step 3
