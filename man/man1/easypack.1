@@ -1,3 +1,24 @@
+From real-beng@top.few.vu.nl  Thu Sep 15 20:57:32 2005
+Return-Path: <real-beng@top.few.vu.nl>
+X-Original-To: ben@scum.org
+Delivered-To: beng@atlantis.8hz.com
+Received: from top.few.vu.nl (top.few.vu.nl [130.37.20.4])
+	by atlantis.8hz.com (Postfix) with ESMTP id EB335BA6A
+	for <ben@scum.org>; Thu, 15 Sep 2005 20:57:31 +0200 (CEST)
+Received: from fluit.few.vu.nl (fluit.few.vu.nl [130.37.20.8])
+	by top.few.vu.nl with esmtp
+	(Smail #108) id m1EFyvM-0000PnC; Thu, 15 Sep 2005 20:57 +0200
+Received: by fluit.few.vu.nl (Smail #108)
+	id m1EFyvK-0001wwC; Thu, 15 Sep 2005 20:57 +0200
+Message-Id: <m1EFyvK-0001wwC@fluit.few.vu.nl>
+Date:     Thu, 15 Sep 2005 20:57:30 CEST
+From: Andy Tanenbaum <ast@cs.vu.nl>
+To: beng@few.vu.nl
+Subject:  Revised easypack.1 man page
+Status: RO
+Content-Length: 1176
+Lines: 36
+
 .TH EASYPACK 1
 .SH NAME
 easypack \- Fetch and install a package
@@ -18,13 +39,20 @@ easypack \- Fetch and install a package
 .FL "\-\fIo\fR" "If package is already installed, overwrite it
 .SH EXAMPLES
 .EX "easypack gzip-1.2.4" "Fetch gzip-1.2.4 package"
-.EX "easypack indent telnet patch" "Fetch these three packages"
+.EX "easypack -o  indent telnet" "Refetch these 2 packages"
 .SH DESCRIPTION
 .PP
-A package in .tar.bz2 format is fetched from \fIwww.minix3.org\fR,
+MINIX 3 user programs, such as emacs, kermit, and telnet are
+organized into packages. The list is available at
+\fIwww.minix3.org/software\fR. While most packages are included
+on the downloadable CD-ROM image, the larger ones are not.
+Any package can be easily downloaded and installed by just
+giving one simple easypack command listing the package names
+taken from the Website.
+Each package is a .tar.bz2 file that is fetched from \fIwww.minix3.org\fR,
 copied to \fI/usr/src/commands\fR, decompressed and untarred.
 Then the \fIbuild\fR script in the top-level directory is executed
 to install it. This command should be called when logged in as bin
 to provide write access to the relevant directories. A log file,
-\fILog\fR is produced for debugging in case building fails.
+\fILog\fR, is produced for debugging in case building fails.
 
