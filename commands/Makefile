@@ -56,6 +56,7 @@ all install clean::
 	cd ftp && $(MAKE) $@
 	cd ftpd && $(MAKE) $@
 	cd ftpd200 && $(MAKE) $@
+	cd httpd && $(MAKE) $@
 	cd ibm && $(MAKE) $@
 	cd indent && $(MAKE) $@
 	cd m4 && $(MAKE) $@

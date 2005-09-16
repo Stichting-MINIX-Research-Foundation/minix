@@ -1,0 +1,104 @@
+.TH HTTPD 8
+.SH NAME
+httpd, in.httpd, dir2html \- a web server for Minix
+.SH SYNOPSIS
+.B httpd
+.RB [\-t|\-v]
+.RI [ config_file ]
+.br
+.B "tcpd http /usr/local/bin/in.httpd"
+.br 
+.B dir2html
+.RB [directory] 
+.SH DESCRIPTION
+.B httpd
+is a World Wide Web (WWW) server written by Michael Temari.  It was
+written from scratch so the setup and configuration will not be like
+other web servers.
+.P
+.B in.httpd 
+is linked to 
+.B httpd.
+This alternate name is used to indicate the program is a server that is
+started by
+.B tcpd,  
+a program which listens for incoming TCP connections on the passed
+port (defined in 
+.BI /etc/services ).  
+When a connection comes in 
+.B tcpd
+forks and starts the given daemon program, after possibly checking for access
+restrictions and logging the connection.  Therefore to start 
+.B httpd
+you use:
+.br
+.B  "tcpd http /usr/local/bin/in.httpd &"
+.br
+or
+.br
+.B "daemonize tcpd http /usr/local/bin/in.httpd"
+.P
+.B (daemonize 
+is a shell function defined in 
+.BI/usr/etc/rc 
+in Minix 2.0.3 and later releases which starts programs as daemons).
+.P
+.B dir2html
+is an accessory program that produces a directory listing formatted as 
+web page for the current directory or for a directory specified as an 
+argument. It is called by
+.B httpd
+when a web client references a directory that includes no index.html
+file (or whatever alternative to index.html that may be defined in 
+/etc/httpd.conf). Since it writes to standard output it may also be called 
+as a standalone program.
+.P
+Options for 
+.B httpd
+are:
+.SH OPTIONS
+.TP
+.B \-t
+This tells the server to parse the configuration file so that you can
+see if it is the way you want it.  You may also pass the name of your
+configuration file if it is not the default /etc/httpd.conf.
+.TP
+.B \-v
+Shows the server version, then exits.
+.br
+.IR config_file
+normally /etc/httpd.conf
+.SH FILES
+.TP 25n
+.B /etc/httpd.conf
+The configuration file.
+.P
+.B /etc/httpd.mtype
+Extension to configuration file defining MIME types.
+.P
+.B /usr/adm/httpd.log
+Log file. The file must exist for logging to begin.
+.SH "SEE ALSO"
+.BR httpd.conf (5)
+.br
+.BR http_status (5)
+.br
+.BR serv.access (5)
+.br
+.BR tcpd (8)
+.SH NOTES
+Running a server exposed to the Internet is risky to the host system and 
+to the local network. Consult with the owner of your net before you go 
+public. Read the 
+.B SECURITY
+document in the source directory.
+.SH BUGS
+None are known, but there are surely some unknown ones. Be careful!
+.SH AUTHOR
+The Minix httpd server was created by and is maintained by Michael Temari
+<Michael@TemWare.Com>
+.br
+This man page was compiled by Al Woodhull <awoodhull@hampshire.edu>
+.P
+updated 2003-07-06
+

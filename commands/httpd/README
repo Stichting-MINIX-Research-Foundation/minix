@@ -1,0 +1,242 @@
+httpd documentation 7/16/96 by Michael Temari <Michael@TemWare.Com>
+updated 2003-07-05 by Al Woodhull <awoodhull@hampshire.edu>
+
+DISCLAIMER:
+
+Use at own risk etc...
+
+
+COMMENTS:
+
+Please send me any bug reports, comments, questions, etc...  My email
+address is Michael@TemWare.Com
+
+
+BACKGROUND:
+
+httpd is a World Wide Web (WWW) server.  I wrote it from scratch so
+the setup and configuration will not be like other web servers though
+hopefully by reading this document there will be no problems in getting
+my web server up and running on your Minix system.
+
+
+COMPILING:
+
+To compile httpd all you need to do is type "make" in the httpd source
+directory.  There should be no errors or warnings.  If you should run
+out of memory when compiling try adding the -m option to the CFLAGS
+list in the Makefile.
+
+
+INSTALLING:
+
+To install httpd all you need to do is type "make install" in the httpd
+source directory.  By default the place to install httpd is into
+/usr/local/bin.  If you would like to change this then change BINDIR in
+the Makefile.  Httpd will be linked to in.httpd, which is the preferred
+name for a program started by the tcpd internet access control program.
+The program dir2html is also installed -- this provides a directory
+listing when a web client accesses a directory which does not contain a
+file named index.html (or an alternative designated in /etc/httpd.conf).
+The man pages are installed by typing "make installman".
+
+CONFIGURING:
+
+Before running httpd it must be configured.  The name of the default
+configuration file is /etc/httpd.conf or you may pass the configuration
+file name to httpd.  Upon starting up, httpd will parse the configuration
+file and then process requests.  This README file and the sample httpd.conf
+may also help in configuring. The httpd.conf.5 man page presents the same
+information for reference use.
+
+
+The configuration file is an ascii file which consists of lines of the
+following form:
+
+directive LWS [parameters separated by LWS]
+
+NOTE: LWS denotes Linear White Space which is spaces and/or tabs
+
+The following are valid configuration file directives:
+  serverroot user chroot logfile dbgfile dirsend direxec vhost auth
+  proxyauth vpath include mtype 
+
+To make the file more readable, on directives which occupy multiple 
+lines you may omit the directive on lines after the first and begin 
+these lines with LWS.
+
+
+serverroot path
+
+The serverroot directive sets the translation for // to the given path.
+
+
+user username
+
+The user directive causes the server to run as the given username, otherwise
+the server will run as whoever started it (normally root).
+
+
+chroot directory
+
+The chroot directive causes the server to chroot to the given directory after
+the configuration and log files have been opened.  Normally this will be the
+home directory of the given username in the user directive.
+NOTE: /~user will be translated to the home directory of the given user
+      // will be translated to the serverroot directory
+NOTE: if this directive is used then beware of the consequences.
+
+
+logfile filename
+
+The logfile directive tells the server where to log http transactions.
+NOTE: the file must exist to enable logging
+
+
+dbgfile filename
+
+The dbgfile directive tells the server where to log debug http transactions.
+NOTE: the file must exist to enable logging
+
+dirsend filelist
+
+The dirsend directive tells the server that when a directory is requested
+that it should send the first file that it finds in the directory from the
+filelist for the request.
+
+
+direxec program
+
+The direxec directive tells the server that when a directory is requested
+and no file is found from the dirsend directive that it should run the
+given program.
+NOTE: the program normally generates a directory listing on the fly
+NOTE: the program access is considered X with no access restrictions.
+
+
+vhost hostname VhostRoot
+
+vhost is for defining access for virtual hosts.  If none are configured then
+any host is accepted.  If specified then access is only granted for requests
+for hosts which are configured here.  In the Vpath section below the /// gets
+translated to the corresponding VhostRoot.
+
+
+auth authname authdescription access [passwdfile [users]]
+
+The auth directive sets up different authorizations with the server.  The
+authname is the name given to the authorization and is case insensitive.
+The authdescription is the description of the authorization and is what
+the user will see when asked to enter a username and password.  The
+access is one or more of (rwx).  R tells the server the url can be
+read.  W tells the server the url can be overwritten.  X tells the server
+that the url can and should be executed.  Access is in addition to normal
+unix security considerations.  For instance a file that can be written to
+that does not have the W access will have an error returned.  The
+passwdfile is the name of the passwdfile to validate users against.  If
+the passwdfile is given as '.' then the system password file will be used
+which is /etc/passwd.  If no passwdfile is given then no authorization is
+allowed for anyone.  If no users are given then any validated users is
+authorized, otherwise only the given users are allowed.
+
+
+proxyauth authname authdescription access [passwdfile [users]]
+
+proxyauth defines any access authorization to be used for Proxy access
+authname = Same as auth above
+authdescription = Same as auth above
+access = Must be R to allow proxy
+passwdfile = Same as auth above
+users = Same as auth above
+
+
+vpath from to [auth [access]]
+
+The vpath directive sets up url path translations and authorizations.  A
+requested url that matches from will be translated to to with the given
+auth and access.  If auth does not exist then the url will have no access.
+If access is not given then the access is taken from the auth record (see
+above).  A '.' in place of the to means that the server should use a
+translation from another vpath record, but associate the given auth and
+access with the requested url.  A '*' maybe at the end only of the from
+which is a wildcard match.  For example if the from has /AB* then any of
+/ABCDEF or /AB or /ABmichael will match, but /AD or /a will not.  The
+requested url is first checked against each vpath record until an exact
+match (meaning url match from and from had no '*') is found or the end of
+the list.  Therefore a wildcard match will match the last from is the list
+in which it matched.
+NOTE: if at the beginning of the to field
+      /~user will get translated to the home directory of the given user
+      // wile get translated to the serverroot directory
+
+
+include filename
+
+The include directive tells the server to read configuration information
+from the given filename.
+NOTE: normally mtype directives are included from another file
+
+
+mtype mimetype extensions
+
+The mtype directive tells the server what mimetype to associate with files
+which have any of the given extensions.  If no match is found then the file
+will be treated as application/octet-stream.
+NOTE: normally you get mtype directives in included file
+
+
+
+USAGE:
+
+		httpd [-v|-t] [configuration-file]
+
+The -t tells the server to just parse the configuration file so that you
+can test it to see if it is the way you want it.  You may also pass the
+name of your configuration file if it is not the default /etc/httpd.conf.
+
+The -v option prints the server version and then exits.
+
+
+STARTING:
+
+First of all httpd is a server and therefore you will need to start it
+with tcpd.  Tcpd is a program which listens for incoming TCP connections
+on the passed port and when a connection comes in it forks and starts the
+given daemon program.  Therefore to start httpd you use:
+
+		tcpd http /usr/local/bin/in.httpd &
+
+You will more than likely have this line in your /etc/rc or /etc/rc.net
+file so that whenever your system is restarted the web server will also
+be started.  The first parameter http is the port that tcpd is going
+to be listening for connections on.  Here http (which should be defined
+in /etc/services as 80) is the standard port for a web server.  The second
+parameter is the program that tcpd will fork and exec when a connection
+comes in.  The program will then have its stdin and stderr connected to
+the client  Then the web server program will start running with the tcpd
+program waiting for the next connection.  Currently there is no ability to
+limit the number of simultaneous web servers running.  NOTE: At some point
+I will be adding the ability for httpd to start itself without the need of
+tcpd.  That way httpd will already be in memory and have parsed its
+configuration file.
+
+In Minix 2.0.3 and later versions you may use:
+
+		daemonize tcpd http /usr/local/bin/in.httpd
+
+(daemonize is a shell function defined in /usr/etc/rc which starts programs
+as daemons).
+
+
+FINAL WORDS
+
+I wanted to get the server out as soon as possible so I hurried up and
+created this document to help out.  Hopefully it will HELP more than
+it HURTS.  If anyone is interested in writing man pages for httpd or any
+of the other network programs please let me know.
+
+
+Michael Temari
+Michael@TemWare.Com
+
+Please note also the SECURITY document in this directory. (asw 2003-07-05)

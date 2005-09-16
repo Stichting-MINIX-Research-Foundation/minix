@@ -1,0 +1,41 @@
+httpd0993 --- A www server for Minix 2.0  
+written by Michael Temari <Michael@TemWare.Com> release 0.993 2003-07-??
+
+Httpd is a World Wide Web (WWW) server.  I wrote it from scratch so
+the setup and configuration will not be like other web servers though
+hopefully by reading this document there will be no problems in getting
+my web server up and running on your Minix system.
+
+This is the web server in use on minix1.hampshire.edu and
+minix1.bio.umass.edu.
+
+Installation: unpack the tarball in /usr/local/src or another directory 
+of your choice:
+zcat < httpd0993.tar.Z | tar xvfp -
+
+An httpd0993 directory will be created and files will be unpacked
+there.  The README file explains compilation, installation,
+configuration, and use. 
+
+Changes for release 0.993: 
+
+- a new method of authorizing proxy.  You will no longer need the Proxy
+entry in Auth and can remove the http://* entry in vpath.  The old way
+allowed for having different authorizations depending on what URLs were
+asked for via proxy, i.e., you could allow proxy access only to
+http:://www.hampshire.edu/. Now it is just a simple authorization for
+allowing proxy or not.  
+
+- avoids using a Minix 2.0.3 library call that was not present in Minix
+2.0.2, and thus can be compiled with either of the two most recent
+Minix releases.  
+
+- a -v option has been added to display the current version then exit.
+
+- man pages added, other documentation updated.
+
+Changes for release 0.99: You can set a default in the httpd.mtype
+file.  A mime type with no extensions on a line will be the default.
+Previously recompilation was needed to change the default mime type. 
+
+updated 2003-07-07

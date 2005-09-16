@@ -32,7 +32,7 @@ include ../bigmake.inc
 all: all_notest test_nodep
 
 all_notest: libbz2.a bzip2 bzip2recover 
-	chmem =2750000 bzip2
+	chmem =8000000 bzip2
 
 bzip2: libbz2.a bzip2.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2

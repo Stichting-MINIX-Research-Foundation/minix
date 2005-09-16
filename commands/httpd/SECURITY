@@ -1,0 +1,48 @@
+SECURITY NOTE 
+
+Al Woodhull <awoodhull@hampshire.edu> 2003-07-05
+
+Running a web server is fun, but it's also not without risks.  If, like
+many Minix users, you are a guest on someone else's network, you need
+to be very careful to operate your server in ways that will not put
+your system at risk or interfere with others on the net.  Here are some
+points to consider: 
+
+- Be sure to touch /usr/adm/httpd.log (or whatever you specify as the log
+file in httpd.conf) before you start your web server for the first time
+-- nothing will be logged if the log file does not exist.  Then look at 
+your log file frequently and be alert for any unusual activity.  
+
+- You may also want to be sure that tcpd is configured to operate in
+PARANOID mode.  That will enable logging of connection attempts and
+allow you to use the serv.access (5) file to limit the kinds of
+connections that your system allows.
+
+- If you enable proxy webserving, be very careful, it can be used by
+people you don't know to visit sites that don't welcome visitors whose
+identity is hidden.  This may cause your network host and ultimately you 
+some unpleasantness.
+
+- The Minix httpd can also support CGI applications.  These are also
+dangerous -- a CGI application allows someone else to execute a program
+on your computer.  Make sure anything you allow this way cannot be
+abused. Many security violations are due to effects of input that was not 
+expected by the original author of a program.
+
+- It's an understatement to say that Minix is not a well-known 
+operating system.  There are not many Minix systems operating as
+servers on the internet.  A consequence of this is that there few, if
+any, people engaged in finding ways to attack weaknesses in Minix.  But
+the idea of "security through obscurity" is deprecated by serious
+computer security experts.  Any operating system or program of any
+degree of complexity is likely to have bugs or features that can be
+exploited in ways the original programmers did not foresee.  You can't
+count on the "good guys" being the first ones to discover a risk.
+There are two things you should be sure to do if you are running a
+network server of any kind: 
+
+(1) be alert for new versions of the program that may fix bugs
+discovered by other users, and 
+
+(2) be sure to report to the program author or maintainer anything you
+observe that looks like a bug or a way the program can be misused.
