@@ -11,7 +11,7 @@ usage:
 	@echo "	make world      # Compile everything (libraries & commands)" >&2
 	@echo "	make includes   # Install include files from src/" >&2
 	@echo "	make libraries  # Compile and install libraries" >&2
-	@echo "	make cmds       # Compile non-big commands, but don't install" >&2
+	@echo "	make cmds       # Compile all, commands, but don't install" >&2
 	@echo "	make install    # Compile and install commands" >&2
 	@echo "	make depend     # Generate required .depend files" >&2
 	@echo "	make clean      # Remove all compiler results" >&2
@@ -27,7 +27,7 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-world: includes depend libraries cmds bigcmds install biginstallcmds postinstall
+world: includes depend libraries cmds install postinstall
 
 includes:
 	cd include && $(MAKE) install
@@ -38,14 +38,8 @@ libraries:
 cmds:
 	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) all; fi
 
-bigcmds:
-	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) bigall; fi
-
 install::
 	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) install; fi
-
-biginstallcmds::
-	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) biginstall; fi
 
 depend::
 	mkdep kernel
