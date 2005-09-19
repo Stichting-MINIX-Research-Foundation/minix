@@ -18,6 +18,8 @@ usage:
 	@echo "       make clean      # Delete .o files and other junk" >&2
 	@echo "       make bigall     # Compile all big commands" >&2
 	@echo "       make biginstall # Install all big commands" >&2
+	@echo "       make ack        # Make ack" >&2
+	@echo "       make installack # Make ack" >&2
 	@false
 
 all install::
@@ -95,3 +97,8 @@ all install clean::
 	cd yap && $(MAKE) $@
 	cd zmodem && $(MAKE) $@
 
+ack:
+	cd ackpack && make
+
+installack:
+	cd ackpack && make install
