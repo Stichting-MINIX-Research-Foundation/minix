@@ -1,0 +1,4 @@
+#!/bin/sh
+make clean
+sh makeme.sh
+make install
