@@ -47,7 +47,11 @@ static unsigned n_nets;		/* Actual number of networks. */
 
 void report(const char *label)
 {
-    fprintf(stderr, "%s: %s: %s\n", program, label, strerror(errno));
+    static FILE *logfp;
+    if(!logfp)
+	logfp = fopen("/usr/log/dhcp.log", "w");
+    if(logfp)
+    	fprintf(logfp, "%s: %s: %s\n", program, label, strerror(errno));
 }
 
 void fatal(const char *label)
