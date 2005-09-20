@@ -12,22 +12,37 @@ EMACS=emacs-21.4
 LYNX=lynx2-8-5
 COREUTILS=gnu-coreutils-5.2.1
 
+SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch ps reboot rlogind scripts sh simple talk talkd telnet telnetd urlget yap zmodem
+
 usage:
-	@echo "Usage: make all        # Compile all commands" >&2
-	@echo "       make install    # Install the result (run as bin!)" >&2
-	@echo "       make clean      # Delete .o files and other junk" >&2
-	@echo "       make bigall     # Compile all big commands" >&2
-	@echo "       make biginstall # Install all big commands" >&2
-	@echo "       make ack        # Make ack" >&2
-	@echo "       make installack # Make ack" >&2
+	@echo "Usage: make all          # Compile all commands" >&2
+	@echo "       make install      # Install the result (run as bin!)" >&2
+	@echo "       make clean        # Delete .o files and other junk" >&2
+	@echo "       make big          # Compile all big commands" >&2
+	@echo "       make biginstall   # Install all big commands" >&2
+	@echo "       make small        # Install all small commands" >&2
+	@echo "       make smallinstall # Install all small commands" >&2
+	@echo "       make ack          # Make ack" >&2
+	@echo "       make ackinstall   # Install ack" >&2
+	@echo " "
+	@echo "big compiles the commands the require large compiler sizes."
+	@echo "small compiles the rest. all compiles all."
 	@false
 
-all install::
-	-mkdir $(NVIWORK)
-	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && $(MAKE) $@
-	cd $(NVI) && make  $@
+all: big small
 
-bigall:
+install: biginstall smallinstall
+
+small::
+	-mkdir $(NVIWORK)
+	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && $(MAKE) all
+	cd $(NVI) && make all
+
+smallinstall:: small
+	cd $(GZIP) && $(MAKE) install 
+	cd $(NVI) && make install
+
+big:
 	cd $(FLEX) && /bin/sh makeme.sh 
 	cd $(PYTHON) && /bin/sh makeme.sh 
 	cd $(BZIP2) && /bin/sh makeme.sh 
@@ -36,7 +51,7 @@ bigall:
 	cd $(EMACS) && /bin/sh makeme.sh
 	cd $(COREUTILS) && /bin/sh makeme.sh
 
-biginstall: bigall
+biginstall: big
 	cd $(FLEX) && make install
 	cd $(PYTHON) && make install
 	cd $(BZIP2) && make install
@@ -55,50 +70,17 @@ clean::
 	if [ -f $(LYNX)/Makefile ] ; then cd $(LYNX) && make clean; fi
 	if [ -f $(EMACS)/Makefile ] ; then cd $(EMACS) && make clean; fi
 	cd $(COREUTILS) && make clean
+	for p in $(SMALLPROGRAMS); do cd $$p && make clean; done
 
-all install clean::
-	cd `arch` && $(MAKE) $@
-	cd aal && $(MAKE) $@
-	cd advent && $(MAKE) $@
-	cd ash && $(MAKE) $@
-	cd autil && $(MAKE) $@
-	cd awk && $(MAKE) $@
-	cd bc && $(MAKE) $@
-	cd byacc && $(MAKE) $@
-	cd cawf && $(MAKE) $@
-	cd cron && $(MAKE) $@
-	cd de && $(MAKE) $@
-	cd dhcpd && $(MAKE) $@
-	cd dis88 && $(MAKE) $@
-	cd elle && $(MAKE) $@
-	cd elvis && $(MAKE) $@
-	cd ftp && $(MAKE) $@
-	cd ftpd && $(MAKE) $@
-	cd ftpd200 && $(MAKE) $@
-	cd httpd && $(MAKE) $@
-	cd ibm && $(MAKE) $@
-	cd indent && $(MAKE) $@
-	cd m4 && $(MAKE) $@
-	cd make && $(MAKE) $@
-	cd mdb && $(MAKE) $@
-	cd mined && $(MAKE) $@
-	cd patch && $(MAKE) $@
-	cd ps && $(MAKE) $@
-	cd reboot && $(MAKE) $@
-	cd rlogind && $(MAKE) $@
-	cd scripts && $(MAKE) $@
-	cd sh && $(MAKE) $@
-	cd simple && $(MAKE) $@
-	cd talk && $(MAKE) $@
-	cd talkd && $(MAKE) $@
-	cd telnet && $(MAKE) $@
-	cd telnetd && $(MAKE) $@
-	cd urlget && $(MAKE) $@
-	cd yap && $(MAKE) $@
-	cd zmodem && $(MAKE) $@
+small::
+	for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
+
+smallinstall::
+	for p in $(SMALLPROGRAMS); do ( cd $$p && make install ); done
 
 ack:
 	cd ackpack && make
 
-installack:
+ackinstall:
 	cd ackpack && make install
+
