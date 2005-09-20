@@ -70,7 +70,7 @@ clean::
 	if [ -f $(LYNX)/Makefile ] ; then cd $(LYNX) && make clean; fi
 	if [ -f $(EMACS)/Makefile ] ; then cd $(EMACS) && make clean; fi
 	cd $(COREUTILS) && make clean
-	for p in $(SMALLPROGRAMS); do cd $$p && make clean; done
+	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
 
 small::
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
