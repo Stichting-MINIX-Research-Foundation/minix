@@ -78,8 +78,7 @@ PUBLIC void sys_task()
       if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr))) {
 	  kprintf("SYSTEM: request %d from %d denied.\n", call_nr,m.m_source);
 	  result = ECALLDENIED;			/* illegal message type */
-      }
-      if (call_nr >= NR_SYS_CALLS) {		/* check call number */
+      } else if (call_nr >= NR_SYS_CALLS) {		/* check call number */
 	  kprintf("SYSTEM: illegal request %d from %d.\n", call_nr,m.m_source);
 	  result = EBADREQUEST;			/* illegal message type */
       } 
