@@ -16,8 +16,6 @@ setup
 ..
 .de IT
 .ti -0.25i
-.if \\na<10 \\0\\n+a.~\\fB\\$1\\fP
-.if \\na>9 \\n+a.~\\fB\\$1\\fP
 .PP
 ..
 .PP
@@ -134,24 +132,24 @@ the hard disk.
 When the \fIlogin\fR prompt appears, login as \fIroot.\fR
 After a successful login as root, you will see the shell prompt (#).
 At this point you are running fully-operational MINIX 3. If you type:
-.CB l
+.PP
    ls /usr/bin | more
-.CE
+.PP
 you can see what software is available.
 Hit space to scroll the list. 
 To see what program \fIfoo\fR does, type:
-.CB l
+.PP
    man foo
-.CE
+.PP
 The manual pages are also available at
 .br
 \fIwww.minix3.org/manpages\fR. 
 
 .IT "Start the setup script"
 To start the installation of MINIX 3 on the hard disk, type
-.CB l
+.PP
    setup
-.CE
+.PP
 After this and all other commands, be sure to type ENTER (RETURN).
 When the installation script ends a screen with a colon, hit ENTER to
 continue. If the screen suddenly goes blank, press CTRL-F3 to select
@@ -209,9 +207,9 @@ space
 .sp 0.5v
 For choices (1) and (2), type the region number. For (3) type
 .sp -0.25v
-.CB l
+.PP
    delete
-.CE
+.PP
 .sp -0.25v
 then give the region number when asked. 
 This region will be overwritten and its previous contents lost forever.
@@ -221,9 +219,9 @@ This region will be overwritten and its previous contents lost forever.
 You have now reached the point of no return. You will be asked if you want to
 continue. \fBIf you do, the data in the selected region will be lost forever.\fR
 If you are sure, type:
-.CB l
+.PP
    yes
-.CE
+.PP
 and then ENTER. To exit the setup script without changing the
 partition table, hit CTRL-C.
 
@@ -259,9 +257,9 @@ When the scan finishes, files will be automatically copied from the CD-ROM to
 the hard disk. Every file will be announced as it is copied. 
 When the copying is complete, MINIX 3 is installed.
 Shut the system down by typing
-.CB l
+.PP
    shutdown
-.CE
+.PP
 Always stop MINIX 3 this way to avoid data loss as MINIX 3 keeps some files on
 the RAM disk and only copies them back to the hard disk at shutdown time.
 
@@ -272,9 +270,9 @@ the RAM disk and only copies them back to the hard disk at shutdown time.
 This section tells you how to test your installation, rebuild the system after
 modifying it, and boot it later. To start, boot your new MINIX 3 system.
 For example, if you used controller 0, disk 0, partition 3, type
-.CB l
+.PP
    boot c0d0p3
-.CE
+.PP
 and log in as root. Under very rare conditions the drive number seen by the
 BIOS (and used by the boot monitor) may not agree with the one used by
 MINIX 3, in which case try other drive numbers.
@@ -282,21 +280,21 @@ This is a good time to create a root password. See \fIman passwd\fR for help.
 
 .IT "Compile the test suite"
 To test MINIX 3, at the command prompt (#) type
-.CB l
+.PP
    cd /usr/src/test
 .br
    make
-.CE
+.PP
 and wait until it completes all 40 compilations.
 Log out by typing CTRL-D,
 
 .IT "Run the test suite"
 To test the system, log in as bin (required) and type
-.CB l
+.PP
    cd /usr/src/test
 .br
    ./run
-.CE
+.PP
 to run the test programs. They should all run correctly but they can take
 20 min on a fast machine and over an hour on a slow one.
 \fINote\fR: It is necessary to compile the test suite when running as root
@@ -307,45 +305,45 @@ If all the tests work correctly, you can now rebuild the system.
 Doing so is not necessary since it comes prebuilt, but
 if you plan to modify the system, you will need to know how to rebuild it.
 Besides, rebuilding the system is a good test to see if it works. Type:
-.CB l
+.PP
    cd /usr/src/tools
 .br
    make
-.CE
+.PP
 to see the various options available. Now make a new bootable image by typing
-.CB l
+.PP
    su
    make clean
    time make image
-.CE
+.PP
 You just rebuilt the operating system, including all the kernel and user-mode
 parts. That did not take very long, did it?
 If you have a legacy floppy disk drive, you can make a
 bootable floppy for use later by inserting a formatted floppy and typing
-.CB l
+.PP
    make fdboot
-.CE
+.PP
 When you are asked to complete the path, type:
-.CB l
+.PP
    fd0
-.CE
+.PP
 This approach does not currently work with USB floppies since there is no MINIX 3 USB
 floppy disk driver yet. 
 To update the boot image currently installed on the hard disk, type
-.CB l
+.PP
    make hdboot
-.CE
+.PP
 
 .IT "Shut down and reboot the new system"
 To boot the new system, first shut down by typing:
-.CB l
+.PP
    shutdown
-.CE
+.PP
 This command saves certain files and returns you to the MINIX 3 boot monitor.
 To get a summary of what the boot monitor can do, while in it, type:
-.CB l
+.PP
    help
-.CE
+.PP
 For more details, see \fIwww.minix3.org/manpages/man8/boot.8.html\fR.
 You can now remove any CD-ROM or floppy disk and turn off the computer.
 
@@ -354,19 +352,19 @@ You can now remove any CD-ROM or floppy disk and turn off the computer.
 If you have a legacy floppy disk drive, the simplest way to boot MINIX 3 is by
 inserting your new boot floppy and turning on the power. It takes only a few seconds.
 Alternatively, boot from the MINIX 3 CD-ROM, login as bin and type:
-.CB l
+.PP
    shutdown
-.CE
+.PP
 to get back to the MINIX 3 boot monitor. Now type:
-.CB l
+.PP
    boot c0d0p0
-.CE
+.PP
 to boot from the operating system image file on
 controller 0, driver 0, partition 0.
 Of course, if you put MINIX 3 on drive 0 partition 1, use:
-.CB l
+.PP
    boot c0d0p1
-.CE
+.PP
 and so on.
 .PP
 A third possibility for booting is to make the MINIX 3 partition the active one,
