@@ -185,6 +185,7 @@ then
 	find $RELEASEDIR/usr/src -type d | xargs chmod 755
 	find $RELEASEDIR/usr/src -type f | xargs chmod 644
 	find $RELEASEDIR/usr/src -name configure | xargs chmod 755
+	find $RELEASEDIR/usr/src/commands -name build | xargs chmod 755
 	# Bug tracking system not for on cd
 	rm -rf $RELEASEDIR/usr/src/doc/bugs
 
