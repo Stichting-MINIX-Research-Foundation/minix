@@ -152,6 +152,7 @@ _PROTOTYPE( int mount, (char *_spec, char *_name, int _flag)		);
 _PROTOTYPE( long ptrace, (int _req, pid_t _pid, long _addr, long _data)	);
 _PROTOTYPE( char *sbrk, (int _incr)					);
 _PROTOTYPE( int sync, (void)						);
+_PROTOTYPE( int fsync, (int fd)						);
 _PROTOTYPE( int umount, (const char *_name)				);
 _PROTOTYPE( int reboot, (int _how, ...)					);
 _PROTOTYPE( int gethostname, (char *_hostname, size_t _len)		);
