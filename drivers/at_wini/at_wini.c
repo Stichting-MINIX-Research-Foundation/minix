@@ -541,8 +541,6 @@ message *m_ptr;
 #endif
 
 	/* Partition the disk. */
-	memset(wn->part, sizeof(wn->part), 0);
-	memset(wn->subpart, sizeof(wn->subpart), 0);
 	partition(&w_dtab, w_drive * DEV_PER_DRIVE, P_PRIMARY, wn->state & ATAPI);
   }
   wn->open_ct++;
