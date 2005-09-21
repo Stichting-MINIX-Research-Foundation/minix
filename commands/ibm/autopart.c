@@ -642,27 +642,11 @@ void geometry(void)
 		}
 
 		if (heads != alt_heads || sectors != alt_secs) {
-			stat_start(1);
-			printf("WARNING:");
-			stat_end(10);
-			stat_start(0);
-			printf(
-"The %ux%ux%u geometry obtained from the device driver does not match",
-				cylinders, heads, sectors);
-			stat_end(10);
-			stat_start(0);
-			printf(
-"the %ux%ux%u geometry implied by the partition table.  Hit 'X' to switch",
-				alt_cyls, alt_heads, alt_secs);
-			stat_end(10);
-			stat_start(0);
-			printf(
-"between the two geometries to see what is best.  Note that the geometry");
-			stat_end(10);
-			stat_start(0);
-			printf(
-"must be correct when the table is written or the system may not boot!");
-			stat_end(10);
+printf(
+"The %ux%ux%u geometry obtained from the driver\n"
+"does not match the %ux%ux%u geometry implied by the partition\n"
+"table. Please use expert mode instead.\n");
+exit(1);
 		}
 	}
 
@@ -2723,7 +2707,9 @@ do_autopart(int resultfd)
 				perror(devname);
 			} else {
 				/* Clear any subpartitioning. */
-				static char sub[2048];
+				static unsigned char sub[2048];
+				sub[510] = 0x55;
+				sub[511] = 0xAA;
 				write(fd, sub, sizeof(sub));
 				close(fd);
 			}
