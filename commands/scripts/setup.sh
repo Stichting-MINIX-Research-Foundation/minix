@@ -226,7 +226,7 @@ step4=""
 while [ "$step4" != ok ]
 do
 	echo ""
-	echo " --- Step 4: Create or Select a partition for MINIX 3 -------------------"
+	echo " --- Step 4: Create or select a partition for MINIX 3 -------------------"
 	echo ""
 
     echo "Now you need to create a MINIX 3 partition on your hard disk."
