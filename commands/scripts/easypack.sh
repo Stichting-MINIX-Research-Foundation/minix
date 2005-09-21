@@ -89,7 +89,7 @@ do # Check to see if it exists. Don't overwrite unless -o given
 
    # It is now unpacked. Build it
    cd $i
-   if ./build >>$ORIG_DIR/Log 2>&1
+   if sh build >>$ORIG_DIR/Log 2>&1
       then echo $i installed from $URL
       else echo $i failed to install
    fi
