@@ -133,6 +133,9 @@ PRIVATE int select_major_match(int match_major, struct filp *file)
 	return 0;
 }
 
+/*===========================================================================*
+ *				tab2ops					     *
+ *===========================================================================*/
 PRIVATE int tab2ops(int fd, struct selectentry *e)
 {
 	return (FD_ISSET(fd, &e->readfds) ? SEL_RD : 0) |
@@ -140,6 +143,9 @@ PRIVATE int tab2ops(int fd, struct selectentry *e)
 		(FD_ISSET(fd, &e->errorfds) ? SEL_ERR : 0);
 }
 
+/*===========================================================================*
+ *				ops2tab					     *
+ *===========================================================================*/
 PRIVATE void ops2tab(int ops, int fd, struct selectentry *e)
 {
 	if ((ops & SEL_RD) && e->vir_readfds && FD_ISSET(fd, &e->readfds)
@@ -161,6 +167,9 @@ PRIVATE void ops2tab(int ops, int fd, struct selectentry *e)
 	return;
 }
 
+/*===========================================================================*
+ *				copy_fdsets				     *
+ *===========================================================================*/
 PRIVATE void copy_fdsets(struct selectentry *e)
 {
 	if (e->vir_readfds)
@@ -408,6 +417,9 @@ PUBLIC int do_select(void)
 	return SUSPEND;
 }
 
+/*===========================================================================*
+ *				select_cancel_all			     *
+ *===========================================================================*/
 PRIVATE void select_cancel_all(struct selectentry *e)
 {
 	int fd;
@@ -443,6 +455,9 @@ PRIVATE void select_cancel_all(struct selectentry *e)
 	return;
 }
 
+/*===========================================================================*
+ *				select_wakeup				     *
+ *===========================================================================*/
 PRIVATE void select_wakeup(struct selectentry *e)
 {
 	/* Open Group:
@@ -453,6 +468,9 @@ PRIVATE void select_wakeup(struct selectentry *e)
 	revive(e->req_procnr, e->nreadyfds);
 }
 
+/*===========================================================================*
+ *				select_reevaluate			     *
+ *===========================================================================*/
 PRIVATE int select_reevaluate(struct filp *fp)
 {
 	int s, remain_ops = 0, fd, type = -1;
@@ -654,4 +672,3 @@ PUBLIC void select_timeout_check(timer_t *timer)
 
 	return;
 }
-
