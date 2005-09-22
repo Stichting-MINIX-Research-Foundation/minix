@@ -1,4 +1,4 @@
-/* This file contains the tesminal driver, both for the IBM console and regular
+/* This file contains the terminal driver, both for the IBM console and regular
  * ASCII terminals.  It handles only the device-independent part of a TTY, the
  * device dependent parts are in console.c, rs232.c, etc.  This file contains
  * two main entry points, tty_task() and tty_wakeup(), and several minor entry
