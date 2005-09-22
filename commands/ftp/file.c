@@ -84,7 +84,7 @@ unsigned long total=0L;
 		}
 	}
 	if(atty) {
-		printf("%8lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
+		printf("%9lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
 		fflush(stdout);
 	}
    }
@@ -114,7 +114,7 @@ unsigned long total=0L;
 	write(fdout, buffer, s);
 	total += (long)s;
 	if(atty) {
-		printf("%8lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
+		printf("%9lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
 		fflush(stdout);
 	}
    }
@@ -183,7 +183,7 @@ unsigned long total=0L;
 		}
 	}
 	if(atty && fd > 2) {
-		printf("%8lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
+		printf("%9lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
 		fflush(stdout);
 	}
    }
@@ -213,7 +213,7 @@ unsigned long total=0L;
 	write(fd, buffer, s);
 	total += (long)s;
 	if(atty && fd > 2) {
-		printf("%8lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
+		printf("%9lu bytes\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", total);
 		fflush(stdout);
 	}
    }
