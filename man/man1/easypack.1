@@ -22,14 +22,14 @@ easypack \- Fetch and install a package
 .SH DESCRIPTION
 .PP
 MINIX 3 user programs, such as emacs, kermit, and telnet are
-organized into packages. The list is available at
+organized into packages. The complete list is avail\%able at
 \fIwww.minix3.org/software\fR. While most packages are included
 on the downloadable CD-ROM image, the larger ones are not.
 Any package can be easily downloaded and installed by just
 giving one simple easypack command listing the package names
 taken from the Website.
 Each package is a .tar.bz2 file that is fetched from \fIwww.minix3.org\fR,
-copied to \fI/usr/src/commands\fR, decompressed and untarred.
+and then copied to \fI/usr/src/commands\fR, decompressed and untarred.
 Then the \fIbuild\fR script in the top-level directory is executed
 to install it. This command should be called when logged in as bin
 to provide write access to the relevant directories. A log file,
