@@ -170,7 +170,6 @@ int try;
   tp = &tty_table[ccurrent];		/* always use the current console */
 
   if (try) {
-  	printf("tty: kb: try: %d icount: %d\n", try, icount);
   	if (icount > 0) return 1;
   	return 0;
   }
