@@ -93,7 +93,7 @@ do
 done
 
 if [ $QUICK = 0 ]
-then USRMB=400
+then USRMB=350
 else USRMB=30
 fi
 
