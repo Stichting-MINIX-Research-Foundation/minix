@@ -12,7 +12,7 @@
  * The entry points into this file are:
  *   do_brk:	  BRK/SBRK system calls to grow or shrink the data segment
  *   adjust:	  see if a proposed segment adjustment is allowed
- *   size_ok:	  see if the segment sizes are feasible
+ *   size_ok:	  see if the segment sizes are feasible (i86 only)
  */
 
 #include "pm.h"
@@ -152,6 +152,7 @@ vir_clicks s_vir;		/* virtual address for start of stack seg */
  * (32K, 16K, 16K) will fit, but (33K, 17K, 13K) will not, even though the
  * former is bigger (64K) than the latter (63K).  Even on the 8088 this test
  * is needed, since the data and stack may not exceed 4096 clicks.
+ * Note this is not used for 32-bit Intel Minix, the test is done in-line.
  */
 
   int pt, pd, ps;		/* segment sizes in pages */
