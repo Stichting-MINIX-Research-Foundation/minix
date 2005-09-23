@@ -441,7 +441,7 @@ message *m_ptr;			/* pointer to the request message */
     	          fkey_obs[i].events = 0;
     	          bit_unset(m_ptr->FKEY_FKEYS, i+1);
     	      } else {
-    	          printf("WARNING, fkey_map failed F%d\n", i);
+    	          printf("WARNING, fkey_map failed F%d\n", i+1);
     	          result = EBUSY;	/* report failure, but try rest */
     	      }
     	  }
@@ -453,7 +453,7 @@ message *m_ptr;			/* pointer to the request message */
     	          sfkey_obs[i].events = 0;
     	          bit_unset(m_ptr->FKEY_SFKEYS, i+1);
     	      } else {
-    	          printf("WARNING, fkey_map failed Shift F%d\n", i);
+    	          printf("WARNING, fkey_map failed Shift F%d\n", i+1);
     	          result = EBUSY;	/* report failure but try rest */
     	      }
     	  }
