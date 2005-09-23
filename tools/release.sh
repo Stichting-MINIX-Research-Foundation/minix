@@ -60,7 +60,7 @@ CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
-ISO=minix${version}.iso
+ISO=minix${version}_`date +%Y%m%d-%H%M%S`.iso
 ISOGZ=${ISO}.gz
 echo $ISOGZ
 RAM=/dev/ram
