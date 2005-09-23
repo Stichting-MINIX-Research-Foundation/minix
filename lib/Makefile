@@ -4,7 +4,7 @@
 # See ansi/Makefile for a further explanation.
 
 MAKE	= exec make -$(MAKEFLAGS)
-ZLIB=zlib-1.2.2
+ZLIB=zlib-1.2.3
 
 usage:
 	@echo "Usage: make all" >&2	# Compile all library functions" >&2
