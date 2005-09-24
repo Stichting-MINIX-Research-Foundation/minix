@@ -53,7 +53,7 @@ usr_roflag="-r"' > $RELEASEDIR/etc/fstab
 HDEMU=1
 
 COPYITEMS="usr/bin bin usr/lib"
-RELEASEDIR=/usr/r/release
+RELEASEDIR=/usr/r
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
