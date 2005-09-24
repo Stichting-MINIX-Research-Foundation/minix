@@ -61,7 +61,6 @@ sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
 ISO=minix${version}_`date +%Y%m%d-%H%M%S`
-echo $ISOGZ
 RAM=/dev/ram
 BS=4096
 
@@ -89,6 +88,7 @@ done
 
 ISO=${ISO}.iso
 ISOGZ=${ISO}.gz
+echo "Making $ISOGZ"
 
 USRMB=400
 
