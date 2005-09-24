@@ -60,15 +60,13 @@ CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
-ISO=minix${version}_`date +%Y%m%d-%H%M%S`.iso
-ISOGZ=${ISO}.gz
+ISO=minix${version}_`date +%Y%m%d-%H%M%S`
 echo $ISOGZ
 RAM=/dev/ram
 BS=4096
 
 HDEMU=0
 COPY=0
-QUICK=0
 
 while getopts "chaq?" c
 do
@@ -79,23 +77,20 @@ do
 	;;
 	h)
 		echo " * Making HD image"
+		ISO=${ISO}_bios
 		HDEMU=1
 		;;
 	c)
 		echo " * Copying, not CVS"
 		COPY=1
 		;;
-	q)
-		echo " * Quick option (skip important bits"
-		QUICK=1
-		;;
 	esac
 done
 
-if [ $QUICK = 0 ]
-then USRMB=380
-else USRMB=30
-fi
+ISO=${ISO}.iso
+ISOGZ=${ISO}.gz
+
+USRMB=400
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -162,48 +157,47 @@ mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 
-if [ $QUICK = 0 ]
+echo " * Transfering $COPYITEMS to $RELEASEDIR"
+( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
+
+# Make sure compilers and libraries are bin-owned
+chown -R bin $RELEASEDIR/usr/lib
+chmod -R u+w $RELEASEDIR/usr/lib
+
+if [ "$COPY" -ne 1 ]
 then
-	echo " * Transfering $COPYITEMS to $RELEASEDIR"
-	( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
-
-	# Make sure compilers and libraries are bin-owned
-	chown -R bin $RELEASEDIR/usr/lib
-
-	if [ "$COPY" -ne 1 ]
-	then
-		echo " * Doing new cvs export"
-		( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src )
-	else
-		( cd .. && make clean )
-		srcdir=/usr/src
-		( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
-	fi
-
-	echo " * Fixups for owners and modes of dirs and files"
-	chown -R bin $RELEASEDIR/usr/src
-	find $RELEASEDIR/usr/src -type d | xargs chmod 755
-	find $RELEASEDIR/usr/src -type f | xargs chmod 644
-	find $RELEASEDIR/usr/src -name configure | xargs chmod 755
-	find $RELEASEDIR/usr/src/commands -name build | xargs chmod 755
-	# Bug tracking system not for on cd
-	rm -rf $RELEASEDIR/usr/src/doc/bugs
-
-	# Make sure the CD knows it's a CD
-	date >$RELEASEDIR/CD
-	echo " * Chroot build"
-	chroot $RELEASEDIR "/bin/sh -x /usr/src/tools/chrootmake.sh" || exit 1
-	echo " * Chroot build done"
-	# The build process leaves some file in src as root.
-	chown -R bin $RELEASEDIR/usr/src*
-	cp issue.install $RELEASEDIR/etc/issue
-
-	if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
-
-	echo "Temporary filesystems still mounted. Make changes, or press RETURN"
-	echo -n "to continue making the image.."
-	read xyzzy
+	echo " * Doing new cvs export"
+	( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src )
+else
+	( cd .. && make clean )
+	srcdir=/usr/src
+	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
 fi
+
+echo " * Fixups for owners and modes of dirs and files"
+chown -R bin $RELEASEDIR/usr/src
+chmod -R u+w $RELEASEDIR/usr/lib
+find $RELEASEDIR/usr/src -type d | xargs chmod 755
+find $RELEASEDIR/usr/src -type f | xargs chmod 644
+find $RELEASEDIR/usr/src -name configure | xargs chmod 755
+find $RELEASEDIR/usr/src/commands -name build | xargs chmod 755
+# Bug tracking system not for on cd
+rm -rf $RELEASEDIR/usr/src/doc/bugs
+
+# Make sure the CD knows it's a CD
+date >$RELEASEDIR/CD
+echo " * Chroot build"
+chroot $RELEASEDIR "/bin/sh -x /usr/src/tools/chrootmake.sh" || exit 1
+echo " * Chroot build done"
+# The build process leaves some file in src as root.
+chown -R bin $RELEASEDIR/usr/src*
+cp issue.install $RELEASEDIR/etc/issue
+
+if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
+
+echo "Temporary filesystems still mounted. Make changes, or press RETURN"
+echo -n "to continue making the image.."
+read xyzzy
 
 echo $version_pretty >$RELEASEDIR/etc/version
 echo " * Counting files"
