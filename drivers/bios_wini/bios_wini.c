@@ -71,7 +71,7 @@ FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void w_init, (void) );
 FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry));
-FORWARD _PROTOTYPE( int nop_other, (struct driver *dp, message *m_ptr) );
+FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr)    );
 
 /* Entry points to this driver. */
 PRIVATE struct driver w_dtab = {
@@ -87,7 +87,7 @@ PRIVATE struct driver w_dtab = {
   nop_alarm,		/* ignore leftover alarms */
   nop_cancel,		/* ignore CANCELs */
   nop_select,		/* ignore selects */
-  nop_other,		/* catch-all for unrecognized commands and ioctls */
+  w_other,		/* catch-all for unrecognized commands and ioctls */
   NULL			/* leftover hardware interrupts */
 };
 
@@ -477,13 +477,28 @@ struct partition *entry;
 }
 
 /*============================================================================*
- *				nop_other				      *
+ *				w_other				      *
  *============================================================================*/
-PRIVATE int nop_other(dp, m_ptr)
-struct driver *dp;
-message *m_ptr;
+PRIVATE int w_other(dr, m)
+struct driver *dr;
+message *m;
 {
-	printf("bios_wini: in nop_other\n");
-	return OK;
+        int r, timeout, prev;
+
+        if (m->m_type != DEV_IOCTL ) {
+                return EINVAL;
+        }
+
+	if (m->REQUEST == DIOCOPENCT) {
+                int count;
+                if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
+                count = w_wn->open_ct;
+                if ((r=sys_datacopy(SELF, (vir_bytes)&count,
+                        m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
+                        return r;
+                return OK;
+        }
+
+        return EINVAL;
 }
 
