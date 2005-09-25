@@ -3,8 +3,8 @@
 # Device	Type		Program		Init
 console		minix		getty
 ttyc1		minix		getty
-#ttyc2		minix		getty
-#ttyc3		minix		getty
+ttyc2		minix		getty
+ttyc3		minix		getty
 tty00		unknown
 tty01		unknown
 ttyp0		network
