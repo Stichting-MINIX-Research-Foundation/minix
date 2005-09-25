@@ -29,7 +29,7 @@ OBJS= blocksort.o  \
 
 include ../bigmake.inc
 
-all: all_notest test_nodep
+all: all_notest
 
 all_notest: libbz2.a bzip2 bzip2recover 
 	chmem =8000000 bzip2
