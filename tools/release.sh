@@ -211,6 +211,7 @@ umount $TMPDISK2 || exit
 umount $RAM || exit
 (cd ../boot && make)
 (cd .. && make depend)
+make clean
 make image || exit 1
 cp image image_big
 make clean
