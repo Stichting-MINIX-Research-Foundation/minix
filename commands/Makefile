@@ -44,12 +44,12 @@ smallinstall:: small
 
 big:
 	cd $(FLEX) && /bin/sh makeme.sh 
-	cd $(PYTHON) && /bin/sh makeme.sh 
 	cd $(BZIP2) && /bin/sh makeme.sh 
 	cd $(KERMIT) && /bin/sh makeme.sh
 	cd $(LYNX) && /bin/sh makeme.sh
-	cd $(EMACS) && /bin/sh makeme.sh
 	cd $(COREUTILS) && /bin/sh makeme.sh
+	cd $(EMACS) && /bin/sh makeme.sh
+	cd $(PYTHON) && /bin/sh makeme.sh 
 
 biginstall: big
 	cd $(FLEX) && make install
