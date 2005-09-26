@@ -428,6 +428,7 @@ echo " --- Step 6: Select the size of /home ----------------------------------"
 			then	echo "That won't fit!"
 				homesize=""
 			else
+				echo ""
 				echo -n "$homesize MB Ok? [Y] "
 				read ok
 				[ "$ok" = Y -o "$ok" = y -o "$ok" = "" ] || homesize=""
