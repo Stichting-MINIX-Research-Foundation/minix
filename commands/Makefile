@@ -29,7 +29,7 @@ usage:
 	@echo "small compiles the rest. all compiles all."
 	@false
 
-all: big small
+all: small big
 
 install: biginstall smallinstall
 
