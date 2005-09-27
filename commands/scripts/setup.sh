@@ -540,7 +540,7 @@ trap 2
 echo ""
 echo " --- Step 9: Wait for files to be copied -------------------------------"
 echo ""
-echo "This is the final step of the MINIX 3 setup.  All files will be now be"
+echo "This is the final step of the MINIX 3 setup.  All files will now be"
 echo "copied to your hard disk.  This may take a while."
 echo ""
 
