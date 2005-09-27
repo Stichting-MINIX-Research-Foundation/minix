@@ -576,7 +576,7 @@ irq_hook_t *hook;
 
   structof(ether_card_t, ec_hook, hook)->ec_int_pending= 1;
 
-  notify(eth_tasknr, HARD_INT);
+  notify(eth_tasknr);
 
   return 0;
 }
