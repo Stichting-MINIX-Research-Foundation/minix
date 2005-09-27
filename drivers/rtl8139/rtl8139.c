@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 			/* Under MINIX, synchronous alarms are used instead of
 			 * watchdog functions. The approach is very different:
 			 * MINIX VMD timeouts are handled within the kernel 
-			 * (the wathdog is executed by CLOCK), and notify()
+			 * (the watchdog is executed by CLOCK), and notify()
 			 * the driver in some cases.
 			 * MINIX timeouts result in a SYN_ALARM message to the
 			 * driver and thus are handled where they should be
