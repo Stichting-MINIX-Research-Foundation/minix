@@ -63,6 +63,8 @@ OBJECTS	= \
 	$(LIBRARY)(swab.o) \
 	$(LIBRARY)(syscall.o) \
 	$(LIBRARY)(sysconf.o) \
+	$(LIBRARY)(sys_eniop.o) \
+	$(LIBRARY)(taskcall.o) \
 	$(LIBRARY)(telldir.o) \
 	$(LIBRARY)(termcap.o) \
 	$(LIBRARY)(ttyname.o) \
@@ -250,6 +252,12 @@ $(LIBRARY)(sysconf.o):	sysconf.c
 
 $(LIBRARY)(syslib.o):	syslib.c
 	$(CC1) syslib.c
+
+$(LIBRARY)(sys_eniop.o): sys_eniop.c
+	$(CC1) sys_eniop.c
+
+$(LIBRARY)(taskcall.o):	taskcall.c
+	$(CC1) taskcall.c
 
 $(LIBRARY)(telldir.o):	telldir.c
 	$(CC1) telldir.c

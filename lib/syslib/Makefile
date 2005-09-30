@@ -42,6 +42,8 @@ OBJECTS	= \
 	$(LIBSYS)(sys_voutl.o) \
 	$(LIBSYS)(sys_setalarm.o) \
 	$(LIBSYS)(sys_memset.o) \
+	$(LIBSYS)(sys_vm_setbuf.o) \
+	$(LIBSYS)(sys_vm_map.o) \
 	$(LIBSYS)(taskcall.o) \
 
 $(LIBSYS):	$(OBJECTS)
@@ -149,6 +151,12 @@ $(LIBSYS)(sys_setalarm.o):	sys_setalarm.c
 
 $(LIBSYS)(sys_memset.o):	sys_memset.c
 	$(CC1) sys_memset.c
+
+$(LIBSYS)(sys_vm_setbuf.o):	sys_vm_setbuf.c
+	$(CC1) sys_vm_setbuf.c
+
+$(LIBSYS)(sys_vm_map.o):	sys_vm_map.c
+	$(CC1) sys_vm_map.c
 
 $(LIBSYS)(taskcall.o):	taskcall.c
 	$(CC1) taskcall.c
