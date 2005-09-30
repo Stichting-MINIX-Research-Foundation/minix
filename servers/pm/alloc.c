@@ -227,6 +227,8 @@ phys_clicks *free;		/* memory size summaries */
   *free = 0;
   for (i=NR_MEMS-1; i>=0; i--) {
   	if (chunks[i].size > 0) {
+  		printf("mem_init: adding (clicks) 0x%x @ 0x%x\n",
+  			chunks[i].size, chunks[i].base);
 		free_mem(chunks[i].base, chunks[i].size);
 		*free += chunks[i].size;
 #if ENABLE_SWAP
