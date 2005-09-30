@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/socket.h>
 
 #include <net/netlib.h>
@@ -57,7 +58,8 @@ static int _tcp_socket(int protocol)
 
 static int _udp_socket(int protocol)
 {
-	int fd;
+	int r, fd, t_errno;
+	struct sockaddr_in sin;
 
 	if (protocol != 0 && protocol != IPPROTO_UDP)
 	{
@@ -68,6 +70,21 @@ static int _udp_socket(int protocol)
 		return -1;
 	}
 	fd= open(UDP_DEVICE, O_RDWR);
+	if (fd == -1)
+		return fd;
+
+	/* Bind is implict for UDP sockets? */
+	sin.sin_family= AF_INET;
+	sin.sin_addr.s_addr= INADDR_ANY;
+	sin.sin_port= 0;
+	r= bind(fd, (struct sockaddr *)&sin, sizeof(sin));
+	if (r != 0)
+	{
+		t_errno= errno;
+		close(fd);
+		errno= t_errno;
+		return -1;
+	}
 	return fd;
 }
 
