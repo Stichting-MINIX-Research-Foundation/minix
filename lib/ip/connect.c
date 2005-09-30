@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -79,9 +80,21 @@ static int _tcp_connect(int socket, const struct sockaddr *address,
 	tcpconf.nwtc_remport= sinp->sin_port;
 
 	if (ioctl(socket, NWIOSTCPCONF, &tcpconf) == -1)
-		return -1;
+        {
+		/* Ignore EISCONN error. The NWIOTCPCONN ioctl will get the
+		 * right error.
+		 */
+		if (errno != EISCONN)
+			return -1;
+	}
 
-	tcpcl.nwtcl_flags= 0;
+	tcpcl.nwtcl_flags= TCF_DEFAULT;
+
+	r= fcntl(socket, F_GETFL);
+	if (r == 1)
+		return -1;
+	if (r & O_NONBLOCK)
+		tcpcl.nwtcl_flags |= TCF_ASYNCH;
 
 	r= ioctl(socket, NWIOTCPCONN, &tcpcl);
 	return r;
