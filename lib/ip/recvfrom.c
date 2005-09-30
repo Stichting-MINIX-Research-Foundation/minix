@@ -92,6 +92,11 @@ static ssize_t _udp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	if (r == -1)
 	{
 		t_errno= errno;
+#if DEBUG
+		fprintf(stderr, "recvfrom(udp): read failed: %s\n",
+			strerror(errno));
+		fprintf(stderr, "udp opt flags = 0x%x\n", udpoptp->nwuo_flags);
+#endif
 		free(buf);
 		errno= t_errno;
 		return -1;
