@@ -28,10 +28,28 @@ message *m;					/* notification message */
   int bytes;
   int i, r;
 
-  /* Try to get a fresh copy of the buffer with kernel messages. */
-  if ((r=sys_getkmessages(&kmess)) != OK) {
-  	report("LOG","couldn't get copy of kmessages", r);
-  	return EDONTREPLY;
+  if (m->m_source == TTY_PROC_NR)
+  {
+	message mess;
+
+	/* Ask TTY driver for log output */
+	mess.GETKM_PTR= &kmess;
+	mess.m_type = GET_KMESS;
+	r= sendrec(TTY_PROC_NR, &mess);
+	if (r == OK) r= mess.m_type;
+	if (r != OK)
+	{
+		report("LOG","couldn't get copy of kmessages from TTY", r);
+		return EDONTREPLY;
+	}
+  }
+  else
+  {
+	/* Try to get a fresh copy of the buffer with kernel messages. */
+	if ((r=sys_getkmessages(&kmess)) != OK) {
+		report("LOG","couldn't get copy of kmessages", r);
+		return EDONTREPLY;
+	}
   }
 
   /* Print only the new part. Determine how many new bytes there are with 

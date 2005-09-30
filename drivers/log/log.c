@@ -419,6 +419,10 @@ message *m_ptr;
 		r = EDONTREPLY;
 		break;
 	}
+	case NOTIFY_FROM(TTY_PROC_NR):
+		do_new_kmess(m_ptr);
+		r = EDONTREPLY;
+		break;
 	default:
 		r = EINVAL;
 		break;
