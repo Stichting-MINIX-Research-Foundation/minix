@@ -284,6 +284,13 @@ unsigned operations;
 			return ENOTCONN;	/* Is this right? */
 		return resops;
 	}
+	if (tcp_fd->tf_flags & TFF_CONNECTING)
+	{
+		/* Special case for CONNECTING */
+		if (operations & SR_SELECT_WRITE)
+			tcp_fd->tf_flags |= TFF_SEL_WRITE;
+		return 0;
+	}
 	if (operations & SR_SELECT_READ)
 	{
 		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
@@ -807,7 +814,12 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		break;
 	case NWIOTCPCONN:
 		if (tcp_fd->tf_flags & TFF_CONNECTING)
-			assert(NOT_IMPLEMENTED);
+		{
+			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
+			reply_thr_get (tcp_fd, EALREADY, TRUE);
+			result= NW_OK;
+			break;
+		}
 		if (tcp_fd->tf_flags & TFF_CONNECTEDx)
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
@@ -816,6 +828,8 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 			break;
 		}
 		result= tcp_connect(tcp_fd);
+		if (result == NW_OK)
+			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 		break;
 	case NWIOTCPLISTEN:
 	case NWIOTCPLISTENQ:
@@ -1839,10 +1853,6 @@ tcp_conn_t *tcp_conn;
 		return;
 	}
 
-	assert(tcp_fd->tf_flags & TFF_IOCTL_IP);
-	assert(tcp_fd->tf_ioreq == NWIOTCPLISTEN ||
-		tcp_fd->tf_ioreq == NWIOTCPCONN);
-
 	if (tcp_conn->tc_state == TCS_CLOSED)
 	{
 		reply= tcp_conn->tc_error;
@@ -1855,6 +1865,28 @@ tcp_conn_t *tcp_conn;
 		tcp_fd->tf_flags |= TFF_CONNECTEDx;
 		reply= NW_OK;
 	}
+
+	if (tcp_fd->tf_flags & TFF_CONNECTING)
+	{
+		/* Special code for asynchronous connects */
+		tcp_fd->tf_flags &= ~TFF_CONNECTING;
+
+		/* Reply for select */
+		if ((tcp_fd->tf_flags & TFF_SEL_WRITE) &&
+			tcp_fd->tf_select_res)
+		{
+			tcp_fd->tf_flags &= ~TFF_SEL_WRITE;
+			tcp_fd->tf_select_res(tcp_fd->tf_srfd,
+				SR_SELECT_WRITE);
+		}
+
+		return;
+	}
+
+	assert(tcp_fd->tf_flags & TFF_IOCTL_IP);
+	assert(tcp_fd->tf_ioreq == NWIOTCPLISTEN ||
+		tcp_fd->tf_ioreq == NWIOTCPCONN);
+
 	tcp_reply_ioctl (tcp_fd, reply);
 }
 
@@ -1920,9 +1952,24 @@ int fd;
 		assert(tcp_fd->tf_listenq[i] == NULL);
 	}
 
+	if (tcp_fd->tf_flags & TFF_CONNECTING)
+	{
+		tcp_conn= tcp_fd->tf_conn;
+		assert(tcp_conn != NULL);
+
+		assert (tcp_conn->tc_connInprogress);
+		tcp_conn->tc_connInprogress= 0;
+		tcp_conn->tc_fd= NULL;
+		tcp_fd->tf_conn= NULL;
+		tcp_close_connection(tcp_conn, ENOCONN);
+
+		tcp_fd->tf_flags &= ~TFF_CONNECTING;
+	}
+
 	tcp_fd->tf_flags &= ~TFF_INUSE;
 	if (!tcp_fd->tf_conn)
 		return;
+
 
 	tcp_conn= tcp_fd->tf_conn;
 	assert(tcp_conn->tc_fd == tcp_fd);
@@ -2020,6 +2067,10 @@ PRIVATE int tcp_connect(tcp_fd)
 tcp_fd_t *tcp_fd;
 {
 	tcp_conn_t *tcp_conn;
+	nwio_tcpcl_t *tcpcl;
+	long nwtcl_flags;
+	int r, do_asynch;
+	acc_t *data;
 
 	if (!(tcp_fd->tf_flags & TFF_CONF_SET))
 	{
@@ -2033,6 +2084,28 @@ tcp_fd_t *tcp_fd;
 		!= (NWTC_SET_RA|NWTC_SET_RP))
 	{
 		tcp_reply_ioctl(tcp_fd, EBADMODE);
+		return NW_OK;
+	}
+
+	data= (*tcp_fd->tf_get_userdata) (tcp_fd->tf_srfd, 0,
+		sizeof(*tcpcl), TRUE);
+	if (!data)
+		return EFAULT;
+
+	data= bf_packIffLess(data, sizeof(*tcpcl));
+	assert (data->acc_length == sizeof(*tcpcl));
+	tcpcl= (nwio_tcpcl_t *)ptr2acc_data(data);
+
+	nwtcl_flags= tcpcl->nwtcl_flags;
+	bf_afree(data); data= NULL; tcpcl= NULL;
+
+	if (nwtcl_flags == TCF_ASYNCH)
+		do_asynch= 1;
+	else if (nwtcl_flags == TCF_DEFAULT)
+		do_asynch= 0;
+	else
+	{
+		tcp_reply_ioctl(tcp_fd, EINVAL);
 		return NW_OK;
 	}
 
@@ -2060,7 +2133,14 @@ tcp_fd_t *tcp_fd;
 	}
 	tcp_fd->tf_conn= tcp_conn;
 
-	return tcp_su4connect(tcp_fd);
+	r= tcp_su4connect(tcp_fd);
+	if (r == NW_SUSPEND && do_asynch)
+	{
+		tcp_fd->tf_flags |= TFF_CONNECTING;
+		tcp_reply_ioctl(tcp_fd, EINPROGRESS);
+		r= NW_OK;
+	}
+	return r;
 }
 
 /*

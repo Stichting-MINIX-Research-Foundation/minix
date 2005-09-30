@@ -36,6 +36,11 @@ typedef struct nwio_tcpcl
 	long nwtcl_ttl;
 } nwio_tcpcl_t;
 
+#define TCF_DEFAULT	0	/* Default parameters */
+#define TCF_ASYNCH	1	/* Asynchronous connect for non-blocking
+				 * socket emulation.
+				 */
+
 typedef struct nwio_tcpatt
 {
 	long nwta_flags;
