@@ -1,6 +1,11 @@
 /*	tty.h - Terminals	*/
 
 #include <timers.h>
+#include "../../kernel/const.h"
+#include "../../kernel/type.h"
+
+#undef lock
+#undef unlock
 
 /* First minor numbers for the various classes of TTY devices. */
 #define CONS_MINOR	   0
@@ -124,6 +129,9 @@ extern clock_t tty_next_timeout;	/* next TTY timeout */
 /* Memory allocated in tty.c, so extern here. */
 extern struct machine machine;	/* machine information (a.o.: pc_at, ega) */
 
+/* The tty outputs diagnostic messages in a circular buffer. */
+extern struct kmessages kmess;
+
 /* Function prototypes for TTY driver. */
 /* tty.c */
 _PROTOTYPE( void handle_events, (struct tty *tp)			);
@@ -149,6 +157,7 @@ _PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( void cons_stop, (void)					);
 _PROTOTYPE( void do_new_kmess, (message *m)				);
 _PROTOTYPE( void do_diagnostics, (message *m)				);
+_PROTOTYPE( void do_get_kmess, (message *m)				);
 _PROTOTYPE( void scr_init, (struct tty *tp)				);
 _PROTOTYPE( void toggle_scroll, (void)					);
 _PROTOTYPE( int con_loadfont, (message *m)				);

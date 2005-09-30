@@ -118,7 +118,7 @@ struct sequence {
 FORWARD _PROTOTYPE( int cons_write, (struct tty *tp, int try)		);
 FORWARD _PROTOTYPE( void cons_echo, (tty_t *tp, int c)			);
 FORWARD _PROTOTYPE( void out_char, (console_t *cons, int c)		);
-FORWARD _PROTOTYPE( void putk, (int c)					);
+FORWARD _PROTOTYPE( void cons_putk, (int c)				);
 FORWARD _PROTOTYPE( void beep, (void)					);
 FORWARD _PROTOTYPE( void do_escape, (console_t *cons, int c)		);
 FORWARD _PROTOTYPE( void flush, (console_t *cons)			);
@@ -876,7 +876,21 @@ tty_t *tp;
 PUBLIC void kputc(c)
 int c;
 {
-	putk(c);
+#if 0
+	cons_putk(c);
+#else
+/* Accumulate a single character for a kernel message. Send a notification
+ * the to output driver if an END_OF_KMESS is encountered. 
+ */
+  if (c != 0) {
+      kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
+      if (kmess.km_size < KMESS_BUF_SIZE)
+          kmess.km_size += 1;		
+      kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
+  } else {
+      notify(LOG_PROC_NR);
+  }
+#endif
 }
 
 /*===========================================================================*
@@ -915,11 +929,11 @@ message *m;
       bytes = ((kmess.km_next + KMESS_BUF_SIZE) - prev_next) % KMESS_BUF_SIZE;
       r=prev_next;				/* start at previous old */ 
       while (bytes > 0) {			
-          putk( kmess.km_buf[(r%KMESS_BUF_SIZE)] );
+          cons_putk( kmess.km_buf[(r%KMESS_BUF_SIZE)] );
           bytes --;
           r ++;
       }
-      putk(0);			/* terminate to flush output */
+      cons_putk(0);			/* terminate to flush output */
   }
 
   /* Almost done, store 'next' so that we can determine what part of the
@@ -948,26 +962,43 @@ message *m_ptr;			/* pointer to request message */
 		result = EFAULT;
 		break;
 	}
-	putk(c);
+	cons_putk(c);
   }
-  putk(0);			/* always terminate, even with EFAULT */
+  cons_putk(0);			/* always terminate, even with EFAULT */
   m_ptr->m_type = result;
   send(m_ptr->m_source, m_ptr);
 }
 
 /*===========================================================================*
- *				putk					     *
+ *				do_get_kmess				     *
  *===========================================================================*/
-PRIVATE void putk(c)
+PUBLIC void do_get_kmess(m_ptr)
+message *m_ptr;			/* pointer to request message */
+{
+/* Provide the log device with debug output */
+  vir_bytes dst;
+  int r;
+
+  dst = (vir_bytes) m_ptr->GETKM_PTR;
+  r= OK;
+  if (sys_vircopy(SELF, D, (vir_bytes)&kmess, m_ptr->m_source, D,
+	dst, sizeof(kmess)) != OK) {
+	r = EFAULT;
+  }
+  m_ptr->m_type = r;
+  send(m_ptr->m_source, m_ptr);
+}
+
+/*===========================================================================*
+ *				cons_putk				     *
+ *===========================================================================*/
+PRIVATE void cons_putk(c)
 int c;				/* character to print */
 {
-/* This procedure is used by the version of printf() that is linked with
- * the TTY driver.  The one in the library sends a message to FS, which is
- * not what is needed for printing within the TTY. This version just queues
- * the character and starts the output.
+/* This procedure is used to print a character on the console.
  */
   if (c != 0) {
-	if (c == '\n') putk('\r');
+	if (c == '\n') cons_putk('\r');
 	out_char(&cons_table[0], (int) c);
   } else {
 	flush(&cons_table[0]);

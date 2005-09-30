@@ -101,6 +101,8 @@ unsigned long rs_irq_set = 0;
 #define do_pty(tp, mp)	((void) 0)
 #endif
 
+struct kmessages kmess;
+
 FORWARD _PROTOTYPE( void tty_timed_out, (timer_t *tp)			);
 FORWARD _PROTOTYPE( void expire_timers, (void)				);
 FORWARD _PROTOTYPE( void settimer, (tty_t *tty_ptr, int enable)		);
@@ -160,7 +162,7 @@ PUBLIC void main(void)
 
   message tty_mess;		/* buffer for all incoming messages */
   unsigned line;
-  int s;
+  int r, s;
   char *types[] = {"task","driver","server", "user"};
   register struct proc *rp;
   register tty_t *tp;
@@ -186,7 +188,9 @@ PUBLIC void main(void)
 	}
 
 	/* Get a request message. */
-	receive(ANY, &tty_mess);
+	r= receive(ANY, &tty_mess);
+	if (r != 0)
+		panic("TTY", "receive failed with %d", r);
 
 	/* First handle all kernel notification types that the TTY supports. 
 	 *  - An alarm went off, expire all timers and handle the events. 
@@ -232,6 +236,9 @@ PUBLIC void main(void)
 	case DIAGNOSTICS: 		/* a server wants to print some */
 		do_diagnostics(&tty_mess);
 		continue;
+	case GET_KMESS:
+		do_get_kmess(&tty_mess);
+		continue;
 	case FKEY_CONTROL:		/* (un)register a fkey observer */
 		do_fkey_ctl(&tty_mess);
 		continue;
@@ -270,8 +277,11 @@ PUBLIC void main(void)
 	if (tp == NULL || ! tty_active(tp)) {
 		printf("Warning, TTY got illegal request %d from %d\n",
 			tty_mess.m_type, tty_mess.m_source);
-		tty_reply(TASK_REPLY, tty_mess.m_source,
+		if (tty_mess.m_source != LOG_PROC_NR)
+		{
+			tty_reply(TASK_REPLY, tty_mess.m_source,
 						tty_mess.PROC_NR, ENXIO);
+		}
 		continue;
 	}
 
