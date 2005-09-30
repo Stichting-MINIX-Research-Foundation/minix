@@ -269,6 +269,7 @@ struct pci_isabridge pci_isabridge[]=
 
 struct pci_pcibridge pci_pcibridge[]=
 {
+	{ 0x8086, 0x2448, PCI_PCIB_INTEL, },	/* Intel 82801 Mobile */
 	{ 0x8086, 0x244e, PCI_PCIB_INTEL, },	/* Intel 82801 PCI Bridge */
 	{ 0x8086, 0x2561, PCI_AGPB_INTEL, },	/* Intel 82845 AGP Bridge */
 	{ 0x8086, 0x7191, PCI_AGPB_INTEL, },	/* Intel 82443BX (AGP bridge) */
