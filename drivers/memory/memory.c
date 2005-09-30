@@ -21,6 +21,8 @@
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
+#include <sys/vm.h>
+
 #include "assert.h"
 
 #define NR_DEVS            6		/* number of minor devices */
@@ -309,6 +311,26 @@ message *m_ptr;				/* pointer to control message */
       		panic("MEM","Couldn't install remote segment.",s);
   	}
 	break;
+    }
+    case MIOCMAP:
+    case MIOCUNMAP: {
+    	int r, do_map;
+    	struct mapreq mapreq;
+
+    	if (m_device != MEM_DEV)
+    		return ENOTTY;
+
+	do_map= (m_ptr->REQUEST == MIOCMAP);	/* else unmap */
+
+	/* Get request structure */
+	r= sys_vircopy(m_ptr->PROC_NR, D, (vir_bytes)m_ptr->ADDRESS,
+		SELF, D, (vir_bytes)&mapreq, sizeof(mapreq));
+	if (r != OK)
+		return r;
+	r= sys_vm_map(m_ptr->PROC_NR, do_map,
+		(phys_bytes)mapreq.base, mapreq.size, mapreq.offset);
+	printf("m_ioctl MIOC(UN)MAP: result %d\n", r);
+	return r;
     }
 
     default:
