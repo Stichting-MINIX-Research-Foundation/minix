@@ -5,7 +5,15 @@ arpa/inet.h
 #ifndef _ARPA__INET_H
 #define _ARPA__INET_H
 
+#include <stdint.h>
+
 /* Open Group Base Specifications Issue 6 (not complete): */
+
+#ifndef _IN_ADDR_T
+#define _IN_ADDR_T
+/* Has to match corresponding declaration in <netinet/in.h> */
+typedef uint32_t	in_addr_t;
+#endif /* _IN_ADDR_T */
 
 #ifndef _STRUCT_IN_ADDR
 #define _STRUCT_IN_ADDR
