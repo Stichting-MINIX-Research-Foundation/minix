@@ -66,9 +66,9 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * structure 0 is shared by user processes. 
  */
 #define s(n)		(1 << s_nr_to_id(n))
-#define SRV_M (~0)
-#define SYS_M (~0)
-#define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR))
+#define SRV_M	(~0)
+#define SYS_M	(~0)
+#define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR) | s(SYSTEM))
 #define DRV_M (USR_M | s(SYSTEM) | s(CLOCK) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
 
 /* Define kernel calls that processes are allowed to make. This is not looking
@@ -84,7 +84,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
     | c(SYS_GETINFO) | c(SYS_EXIT) | c(SYS_TIMES) | c(SYS_SETALARM))
 #define DRV_C	(FS_C | c(SYS_SEGCTL) | c(SYS_IRQCTL) | c(SYS_INT86) \
     | c(SYS_DEVIO) | c(SYS_VDEVIO) | c(SYS_SDEVIO)) 
-#define MEM_C	(DRV_C | c(SYS_PHYSCOPY) | c(SYS_PHYSVCOPY))
+#define MEM_C	(DRV_C | c(SYS_PHYSCOPY) | c(SYS_PHYSVCOPY) | c(SYS_VM_MAP))
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs

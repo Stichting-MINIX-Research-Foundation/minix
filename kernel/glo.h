@@ -44,6 +44,12 @@ EXTERN int irq_use;				/* map of all in-use irq's */
 /* Miscellaneous. */
 EXTERN reg_t mon_ss, mon_sp;		/* boot monitor stack */
 EXTERN int mon_return;			/* true if we can return to monitor */
+EXTERN int do_serial_debug;
+
+/* VM */
+EXTERN phys_bytes vm_base;
+EXTERN phys_bytes vm_size;
+EXTERN phys_bytes vm_mem_high;
 
 /* Variables that are initialized elsewhere are just extern here. */
 extern struct boot_image image[]; 	/* system image processes */

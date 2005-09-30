@@ -82,6 +82,9 @@ _PROTOTYPE( void reset, (void)						);
 _PROTOTYPE( void level0, (void (*func)(void))				);
 _PROTOTYPE( void monitor, (void)					);
 _PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)	);
+_PROTOTYPE( unsigned long read_cr0, (void)				);
+_PROTOTYPE( void write_cr0, (unsigned long value)			);
+_PROTOTYPE( void write_cr3, (unsigned long value)			);
 _PROTOTYPE( unsigned long read_cpu_flags, (void)			);
 
 /* mpx*.s */
@@ -141,6 +144,9 @@ _PROTOTYPE( phys_bytes seg2phys, (U16_t seg)				);
 _PROTOTYPE( void phys2seg, (u16_t *seg, vir_bytes *off, phys_bytes phys));
 _PROTOTYPE( void enable_iop, (struct proc *pp)				);
 _PROTOTYPE( void alloc_segments, (struct proc *rp)			);
+
+/* system/do_vm.c */
+_PROTOTYPE( void vm_map_default, (struct proc *pp)			);
 
 #endif /* (CHIP == INTEL) */
 

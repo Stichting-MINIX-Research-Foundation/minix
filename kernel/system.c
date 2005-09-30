@@ -75,7 +75,8 @@ PUBLIC void sys_task()
       caller_ptr = proc_addr(m.m_source);	
 
       /* See if the caller made a valid request and try to handle it. */
-      if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr))) {
+      if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr)) &&
+	  m.m_type != SYS_IOPENABLE ) {
 	  kprintf("SYSTEM: request %d from %d denied.\n", call_nr,m.m_source);
 	  result = ECALLDENIED;			/* illegal message type */
       } else if (call_nr >= NR_SYS_CALLS) {		/* check call number */
@@ -152,6 +153,8 @@ PRIVATE void initialize(void)
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
+  map(SYS_VM_SETBUF, do_vm_setbuf); 	/* PM passes buffer for page tables */
+  map(SYS_VM_MAP, do_vm_map); 		/* Map/unmap physical (device) memory */
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
@@ -167,6 +170,7 @@ PRIVATE void initialize(void)
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
+  map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
 }
 
 /*===========================================================================*

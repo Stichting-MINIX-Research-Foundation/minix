@@ -84,6 +84,10 @@ register struct proc *rc;		/* slot of process to clean up */
       }
   }
 
+  /* Clean up virtual memory */
+  if (rc->p_misc_flags & MF_VM)
+  	vm_map_default(rc);
+
   /* Now it is safe to release the process table slot. If this is a system 
    * process, also release its privilege structure.  Further cleanup is not
    * needed at this point. All important fields are reinitialized when the 

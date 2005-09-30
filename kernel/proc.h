@@ -30,6 +30,8 @@ struct proc {
   struct priv *p_priv;		/* system privileges structure */
   char p_rts_flags;		/* SENDING, RECEIVING, etc. */
 
+  char p_misc_flags;		/* Flags that do suspend the process */
+
   char p_priority;		/* current scheduling priority */
   char p_max_priority;		/* maximum scheduling priority */
   char p_ticks_left;		/* number of scheduling ticks left */
@@ -65,6 +67,9 @@ struct proc {
 #define SIG_PENDING	0x20	/* unready while signal being processed */
 #define P_STOP		0x40	/* set when process is being traced */
 #define NO_PRIV		0x80	/* keep forked system process from running */
+
+/* Misc flags */
+#define MF_VM		0x01	/* Process uses VM */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 

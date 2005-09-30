@@ -33,6 +33,9 @@
 .define	_level0		! call a function at level 0
 .define	_read_tsc	! read the cycle counter (Pentium and up)
 .define	_read_cpu_flags	! read the cpu flags
+.define	_read_cr0	! read cr0
+.define	_write_cr0	! write a value in cr0
+.define	_write_cr3	! write a value in cr3 (root of the page table)
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -570,5 +573,43 @@ _read_cpu_flags:
 	pushf
 	mov eax, (esp)
 	popf
+	ret
+
+
+!*===========================================================================*
+!*			      read_cr0					     *
+!*===========================================================================*
+! PUBLIC unsigned long read_cr0(void);
+_read_cr0:
+	push	ebp
+	mov	ebp, esp
+	mov	eax, cr0
+	pop	ebp
+	ret
+
+!*===========================================================================*
+!*			      write_cr0					     *
+!*===========================================================================*
+! PUBLIC void write_cr0(unsigned long value);
+_write_cr0:
+	push	ebp
+	mov	ebp, esp
+	mov	eax, 8(ebp)
+	mov	cr0, eax
+	jmp	0f		! A jump is required for some flags
+0:
+	pop	ebp
+	ret
+
+!*===========================================================================*
+!*			      write_cr3					     *
+!*===========================================================================*
+! PUBLIC void write_cr3(unsigned long value);
+_write_cr3:
+	push	ebp
+	mov	ebp, esp
+	mov	eax, 8(ebp)
+	mov	cr3, eax
+	pop	ebp
 	ret
 
