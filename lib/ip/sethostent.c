@@ -64,7 +64,12 @@ sethostent(stayopen)
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return;
 	if (stayopen)
-		_res.options |= RES_STAYOPEN | RES_USEVC;
+	{
+		_res.options |= RES_STAYOPEN;
+#ifdef __minix_vmd
+		_res.options |= RES_USEVC;
+#endif
+	}
 }
 
 void
