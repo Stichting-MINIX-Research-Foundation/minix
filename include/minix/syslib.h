@@ -26,6 +26,7 @@ struct reg86u;
 _PROTOTYPE( int _taskcall, (int who, int syscallnr, message *msgptr));
 
 _PROTOTYPE( int sys_abort, (int how, ...));
+_PROTOTYPE( int sys_enable_iop, (int proc));
 _PROTOTYPE( int sys_exec, (int proc, char *ptr,  
 				char *aout, vir_bytes initpc));
 _PROTOTYPE( int sys_fork, (int parent, int child));
@@ -37,6 +38,10 @@ _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
 _PROTOTYPE( int sys_nice, (int proc, int priority));
 
 _PROTOTYPE( int sys_int86, (struct reg86u *reg86p));
+_PROTOTYPE( int sys_vm_setbuf, (phys_bytes base, phys_bytes size,
+							phys_bytes high));
+_PROTOTYPE( int sys_vm_map, (int proc_nr, int do_map,
+	phys_bytes base, phys_bytes size, phys_bytes offset));
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_nr, buffer, count) \

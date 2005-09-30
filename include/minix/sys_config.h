@@ -18,7 +18,7 @@
 #define _PTR_SIZE	_EM_WSIZE
 #endif
 
-#define _NR_PROCS	64
+#define _NR_PROCS	100
 #define _NR_SYS_PROCS	32
 
 /* Set the CHIP type based on the machine selected. The symbol CHIP is actually

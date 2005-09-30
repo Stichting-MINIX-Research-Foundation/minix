@@ -72,8 +72,8 @@
 
 /* Memory is allocated in clicks. */
 #if (CHIP == INTEL)
-#define CLICK_SIZE      1024	/* unit in which memory is allocated */
-#define CLICK_SHIFT       10	/* log2 of CLICK_SIZE */
+#define CLICK_SIZE      4096	/* unit in which memory is allocated */
+#define CLICK_SHIFT       12	/* log2 of CLICK_SIZE */
 #endif
 
 #if (CHIP == SPARC) || (CHIP == M68000)
