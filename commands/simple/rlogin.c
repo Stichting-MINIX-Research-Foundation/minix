@@ -713,6 +713,7 @@ stop(cmdc)
 }
 #endif
 
+#if __minix_vmd
 #ifdef SIGWINCH
 static void
 sigwinch(sig)
@@ -762,6 +763,7 @@ sendwindow()
 	wp->ws_ypixel = htons(winsize.ws_ypixel);
 }
 #endif /* SIGWINCH */
+#endif
 
 #if !__minix_vmd
 /*
