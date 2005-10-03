@@ -9,9 +9,9 @@ all: ps
 
 # process status utility
 ps:	ps.c /usr/include/minix/config.h /usr/include/minix/const.h \
-		/usr/src/kernel/const.h /usr/src/kernel/type.h \
-		/usr/src/kernel/proc.h /usr/src/servers/pm/mproc.h \
-		/usr/src/servers/fs/fproc.h /usr/src/servers/fs/const.h
+		../../kernel/const.h ../../kernel/type.h \
+		../../kernel/proc.h ../../servers/pm/mproc.h \
+		../../servers/fs/fproc.h ../../servers/fs/const.h
 	$(CC) -i $(CFLAGS) -o $@ ps.c
 	install -S 32kw $@
 install:	/usr/bin/ps
