@@ -546,7 +546,7 @@ PRIVATE void pick_proc()
   int q;					/* iterate over queues */
 
   /* Check each of the scheduling queues for ready processes. The number of
-   * queues is defined in proc.h, and priorities are set in the task table.
+   * queues is defined in proc.h, and priorities are set in the image table.
    * The lowest queue contains IDLE, which is always ready.
    */
   for (q=0; q < NR_SCHED_QUEUES; q++) {	

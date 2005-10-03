@@ -193,7 +193,7 @@ int how;
   register struct proc *rp; 
   message m;
 
-  /* Show debugging dumps on panics. Make sure that the TTY task is still 
+  /* Show debugging dumps on panics. Make sure that the TTY driver is still 
    * available to handle them. This is done with help of a non-blocking send. 
    * We rely on TTY to call sys_abort() when it is done with the dumps.
    */
