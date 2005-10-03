@@ -1,0 +1,30 @@
+.TH SERVICE 8
+.SH NAME
+service \- start or stop a system service
+.SH SYNOPSIS
+.PP
+\fBservice up\fR \fIservice\fR [\fB-args\fR \fIargs\fR]
+[\fB-dev\fR \fIspecial\fR]
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.SH DESCRIPTION
+.PP
+Tells the reincarnation server to start a system service, such as a
+device driver. The device driver will be automatically restarted when
+it exits.
+.SH EXAMPLES
+.EX "service up /usr/sbin/dp8390 -args DPETH0=pci" "Start the DP8390 ethernet driver, passing DPEd.
+.SH "SEE ALSO"
+.PP
+.BR boot (8),
+.BR monitor (8)
+
