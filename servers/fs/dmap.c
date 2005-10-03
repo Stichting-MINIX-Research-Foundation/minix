@@ -68,7 +68,7 @@ PUBLIC int do_devctl()
       result = map_driver(m_in.dev_nr, m_in.driver_nr, m_in.dev_style);
       break;
   case DEV_UNMAP:
-      result = ENOSYS;
+      result = map_driver(m_in.dev_nr, NONE, 0);
       break;
   default:
       result = EINVAL;
@@ -86,19 +86,29 @@ int style;			/* style of the device */
 {
 /* Set a new device driver mapping in the dmap table. Given that correct 
  * arguments are given, this only works if the entry is mutable and the 
- * current driver is not busy. 
+ * current driver is not busy.  If the proc_nr is set to NONE, we're supposed
+ * to unmap it.
+ *
  * Normal error codes are returned so that this function can be used from
  * a system call that tries to dynamically install a new driver.
  */
   struct dmap *dp;
 
   /* Get pointer to device entry in the dmap table. */
-  if (major >= NR_DEVICES) return(ENODEV);
+  if (major < 0 || major >= NR_DEVICES) return(ENODEV);
   dp = &dmap[major];		
 	
   /* See if updating the entry is allowed. */
   if (! (dp->dmap_flags & DMAP_MUTABLE))  return(EPERM);
   if (dp->dmap_flags & DMAP_BUSY)  return(EBUSY);
+
+  /* Check if we're supposed to unmap it. */
+ if(proc_nr == NONE) {
+	dp->dmap_opcl = no_dev;
+	dp->dmap_io = 0;
+	dp->dmap_driver = 0;
+	return(OK);
+  }
 
   /* Check process number of new driver. */
   if (! isokprocnr(proc_nr))  return(EINVAL);

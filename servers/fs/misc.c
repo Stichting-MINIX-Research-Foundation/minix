@@ -439,6 +439,18 @@ PUBLIC int do_svrctl()
 	r=map_driver(major, who, device.style);
 	return(r);
   }
+  case FSDEVUNMAP: {
+	struct fsdevunmap fdu;
+	int r, major;
+	/* Try to copy request structure to FS. */
+	if ((r = sys_datacopy(who, (vir_bytes) m_in.svrctl_argp,
+		FS_PROC_NR, (vir_bytes) &fdu,
+		(phys_bytes) sizeof(fdu))) != OK) 
+	    return(r);
+	major = (fdu.dev >> MAJOR) & BYTE;
+	r=map_driver(major, NONE, 0);
+	return(r);
+  }
   default:
 	return(EINVAL);
   }
