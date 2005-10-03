@@ -25,8 +25,6 @@ typedef unsigned long sigset_t;
 #endif
 #endif
 
-#define _NSIG             20	/* number of signals used */
-
 #define SIGHUP             1	/* hangup */
 #define SIGINT             2	/* interrupt (DEL) */
 #define SIGQUIT            3	/* quit (ASCII FS) */
@@ -54,6 +52,11 @@ typedef unsigned long sigset_t;
 #define SIGKMESS   	  18	/* new kernel message */
 #define SIGKSIG    	  19	/* kernel signal pending */
 #define SIGKSTOP    	  20	/* kernel shutting down */
+
+/* Regular signals. */
+#define SIGWINCH    	  21	/* window size has changed */
+
+#define _NSIG             21	/* number of signals used */
 
 /* POSIX requires the following signals to be defined, even if they are
  * not supported.  Here are the definitions, but they are not supported.

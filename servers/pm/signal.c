@@ -244,15 +244,16 @@ sigset_t sig_map;
   /* Check each bit in turn to see if a signal is to be sent.  Unlike
    * kill(), the kernel may collect several unrelated signals for a
    * process and pass them to PM in one blow.  Thus loop on the bit
-   * map. For SIGINT and SIGQUIT, use proc_id 0 to indicate a broadcast
-   * to the recipient's process group.  For SIGKILL, use proc_id -1 to
-   * indicate a systemwide broadcast.
+   * map. For SIGINT, SIGWINCH and SIGQUIT, use proc_id 0 to indicate
+   * a broadcast to the recipient's process group.  For SIGKILL, use
+   * proc_id -1 to indicate a systemwide broadcast.
    */
   for (i = 1; i <= _NSIG; i++) {
 	if (!sigismember(&sig_map, i)) continue;
 	switch (i) {
 	    case SIGINT:
 	    case SIGQUIT:
+	    case SIGWINCH:
 		id = 0; break;	/* broadcast to process group */
 	    case SIGKILL:
 		id = -1; break;	/* broadcast to all except INIT */

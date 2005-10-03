@@ -646,7 +646,7 @@ message *m_ptr;			/* pointer to message sent to task */
     case TIOCSWINSZ:
 	r = sys_vircopy( m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS,
 		SELF, D, (vir_bytes) &tp->tty_winsize, (vir_bytes) size);
-	/* SIGWINCH... */
+	sigchar(tp, SIGWINCH);
 	break;
 
 #if ENABLE_SRCCOMPAT
