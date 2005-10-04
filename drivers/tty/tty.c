@@ -325,7 +325,7 @@ message *m_ptr;
 
 		/* I/O for a selected minor device is ready. */
 		m_ptr->m_type = DEV_IO_READY;
-		m_ptr->DEV_MINOR = tp->tty_index;
+		m_ptr->DEV_MINOR = tp->tty_minor;
 		m_ptr->DEV_SEL_OPS = ops;
 
 		tp->tty_select_ops &= ~ops;	/* unmark select event */
