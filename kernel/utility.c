@@ -128,7 +128,7 @@ PRIVATE void kputc(c)
 int c;					/* character to append */
 {
 /* Accumulate a single character for a kernel message. Send a notification
- * the to output driver if an END_OF_KMESS is encountered. 
+ * to the output driver if an END_OF_KMESS is encountered. 
  */
   if (c != END_OF_KMESS) {
       if (do_serial_debug)
