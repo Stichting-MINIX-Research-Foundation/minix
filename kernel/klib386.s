@@ -567,7 +567,7 @@ _read_tsc:
 !*			      read_flags					     *
 !*===========================================================================*
 ! PUBLIC unsigned long read_cpu_flags(void);
-! Read the cycle counter of the CPU. Pentium and up. 
+! Read CPU status flags from C.
 .align 16
 _read_cpu_flags:
 	pushf
