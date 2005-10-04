@@ -24,6 +24,7 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 /* FS controls. */
 #define FSSIGNON	_IOW('F',  2, struct fssignon)
 #define FSDEVMAP	_IORW('F', 5, struct fsdevmap)
+#define FSDEVUNMAP	_IOW('F',  6, struct fsdevunmap)
 
 /* Kernel controls. */
 #define SYSSENDMASK	_IO ('S',  4)
@@ -48,6 +49,10 @@ struct svrqueryparam {
 struct fssignon {
 	dev_t		dev;		/* Device to manage. */
 	enum dev_style	style;		/* Management style. */
+};
+
+struct fsdevunmap {
+	dev_t		dev;		/* Device to unmap. */
 };
 
 struct systaskinfo {
