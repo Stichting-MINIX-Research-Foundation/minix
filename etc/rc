@@ -129,10 +129,13 @@ Mount $usr /usr failed -- Single user."
     if [ "$fflag" ]
     then
 	umount $usr
+	echo "fsck / - $root"
 	intr fsck -r $root
+	echo "fsck /usr - $usr"
 	intr fsck -r $usr
 	if [ ! -z "$home" ]
-	then	intr fsck -r $home
+	then	echo "fsck /home - $home"
+		intr fsck -r $home
 	fi
 	mount $usr /usr
     fi
