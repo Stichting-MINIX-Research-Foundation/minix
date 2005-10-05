@@ -282,35 +282,59 @@ errno =0;
 	if (stat_loc != 0) e(120);	/* Alarm? */
   }
 
+#if DEAD_CODE
+  /* Does this test test what it is supposed to test??? */
+
   /* Read from fifo should wait for all writers to close. */
   switch (fork()) {
       case -1:	printf("Can't fork\n");	break;
 
       case 0:
-	alarm(20);
+	alarm(60);
 	switch (fork()) {
 	    case -1:	printf("Can't fork\n");	break;
 	    case 0:
 		alarm(20);
 		if ((fd1 = open("fifo", O_WRONLY)) != 3) e(121);
+		printf("C2 did open\n");
 		if (close(fd1) != 0) e(122);
+		printf("C2 did close\n");
 		exit(0);
 	    default:
+		printf("C1 scheduled\n");
 		if ((fd1 = open("fifo", O_WRONLY)) != 3) e(123);
-		sleep(1);
+		printf("C1 did open\n");
+		sleep(2);
 		if (close(fd1) != 0) e(124);
+		printf("C1 did close\n");
+		sleep(1);
 		if (wait(&stat_loc) == -1) e(125);
 		if (stat_loc != 0) e(126);	/* Alarm? */
 	}
 	exit(stat_loc);
 
-      default:
+      default: {
+	int wait_status;
+	printf("Parent running\n");
+	sleep(1);				/* open in childs first */
 	if ((fd1 = open("fifo", O_RDONLY)) != 3) e(127);
 	if (read(fd1, buf, BUF_SIZE) != 0) e(128);
 	if (close(fd1) != 0) e(129);
-	if (wait(&stat_loc) == -1) e(130);
+	printf("Parent closed\n");
+	if ((wait_status=wait(&stat_loc)) == -1) e(130);
+
+      printf("wait_status %d, stat_loc %d:", wait_status, stat_loc);
+      if (WIFSIGNALED(stat_loc)) {
+          printf(" killed, signal number %d\n", WTERMSIG(stat_loc));
+      } 
+      else if (WIFEXITED(stat_loc)) {
+          printf(" normal exit, status %d\n", WEXITSTATUS(stat_loc));
+      }
+
 	if (stat_loc != 0) e(131);	/* Alarm? */
+      }
   }
+#endif
 
   /* PIPE_BUF has to have a nice value. */
   if (PIPE_BUF < 5) e(132);
