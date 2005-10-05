@@ -108,7 +108,7 @@ extern int errno;		  /* place where the error numbers go */
 #define EBADCALL     (_SIGN 102)  /* illegal system call number */
 #define EBADSRCDST   (_SIGN 103)  /* bad source or destination process */
 #define ECALLDENIED  (_SIGN 104)  /* no permission for system call */
-#define EDEADDST     (_SIGN 105)  /* send destination is not alive */
+#define EDEADSRCDST  (_SIGN 105)  /* source or destination is not alive */
 #define ENOTREADY    (_SIGN 106)  /* source or destination is not ready */
 #define EBADREQUEST  (_SIGN 107)  /* destination cannot handle request */
 #define EDONTREPLY   (_SIGN 201)  /* pseudo-code: don't send a reply */
