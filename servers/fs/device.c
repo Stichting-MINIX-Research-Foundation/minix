@@ -9,6 +9,7 @@
  *   gen_opcl:   generic call to a task to perform an open/close
  *   gen_io:     generic call to a task to perform an I/O operation
  *   no_dev:     open/close processing for devices that don't exist
+ *   no_dev_io:  i/o processing for devices that don't exist
  *   tty_opcl:   perform tty-specific processing for open/close
  *   ctty_opcl:  perform controlling-tty-specific processing for open/close
  *   ctty_io:    perform controlling-tty-specific processing for I/O
@@ -49,6 +50,8 @@ int flags;			/* mode bits and flags */
   dp = &dmap[major];
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);
+  if (r == OK && dp->dmap_driver == NONE)
+	panic(__FILE__, "no driver for dev %d", dev);
   return(r);
 }
 
@@ -119,6 +122,10 @@ int flags;			/* special flags, like O_NONBLOCK */
 
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
+
+  /* See if driver is roughly valid. */
+  if (dp->dmap_driver == NONE)
+	panic(__FILE__, "no driver for i/o on dev %d", dev);
 
   /* Set up the message passed to task. */
   dev_mess.m_type   = op;
@@ -347,7 +354,7 @@ message *mess_ptr;		/* pointer to message for task */
    */
   for (;;) {
 	if (r != OK) {
-		if (r == EDEADDST) return;	/* give up */
+		if (r == EDEADSRCDST) return;	/* give up */
 		else panic(__FILE__,"call_task: can't send/receive", r);
 	}
 
@@ -404,8 +411,17 @@ int proc;			/* process to open/close for */
 int flags;			/* mode bits and flags */
 {
 /* Called when opening a nonexistent device. */
-
   return(ENODEV);
+}
+
+/*===========================================================================*
+ *				no_dev_io				     *
+ *===========================================================================*/
+PUBLIC void no_dev_io(int proc, message *m)
+{
+/* Called when doing i/o on a nonexistent device. */
+  printf("FS: I/O on unmapped device number\n");
+  return;
 }
 
 /*===========================================================================*

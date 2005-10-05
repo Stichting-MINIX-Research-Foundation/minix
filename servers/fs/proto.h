@@ -35,6 +35,7 @@ _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( void gen_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int no_dev, (int op, Dev_t dev, int proc, int flags)	);
+_PROTOTYPE( void no_dev_io, (int, message *)				);
 _PROTOTYPE( int tty_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int ctty_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int clone_opcl, (int op, Dev_t dev, int proc, int flags)	);
@@ -50,6 +51,7 @@ _PROTOTYPE( int do_fkey_pressed, (void)					);
 _PROTOTYPE( int do_devctl, (void)					);
 _PROTOTYPE( void build_dmap, (void)					);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style)	);
+_PROTOTYPE( void dmap_unmap_by_proc, (int proc_nr)			);
 
 /* filedes.c */
 _PROTOTYPE( struct filp *find_filp, (struct inode *rip, mode_t bits)	);

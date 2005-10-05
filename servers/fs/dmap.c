@@ -97,18 +97,22 @@ int style;			/* style of the device */
   /* Get pointer to device entry in the dmap table. */
   if (major < 0 || major >= NR_DEVICES) return(ENODEV);
   dp = &dmap[major];		
+
+  /* Check if we're supposed to unmap it. If so, do it even
+   * if busy or unmutable, as unmap is called when driver has
+   * exited.
+   */
+ if(proc_nr == NONE) {
+	dp->dmap_opcl = no_dev;
+	dp->dmap_io = no_dev_io;
+	dp->dmap_driver = NONE;
+	dp->dmap_flags = DMAP_MUTABLE;	/* When gone, not busy or reserved. */
+	return(OK);
+  }
 	
   /* See if updating the entry is allowed. */
   if (! (dp->dmap_flags & DMAP_MUTABLE))  return(EPERM);
   if (dp->dmap_flags & DMAP_BUSY)  return(EBUSY);
-
-  /* Check if we're supposed to unmap it. */
- if(proc_nr == NONE) {
-	dp->dmap_opcl = no_dev;
-	dp->dmap_io = 0;
-	dp->dmap_driver = 0;
-	return(OK);
-  }
 
   /* Check process number of new driver. */
   if (! isokprocnr(proc_nr))  return(EINVAL);
@@ -123,6 +127,21 @@ int style;			/* style of the device */
   dp->dmap_io = gen_io;
   dp->dmap_driver = proc_nr;
   return(OK); 
+}
+
+/*===========================================================================*
+ *				dmap_unmap_by_proc	 		     *
+ *===========================================================================*/
+PUBLIC void dmap_unmap_by_proc(int proc_nr)
+{
+	int i, r;
+	for (i=0; i<NR_DEVICES; i++)
+	  if(dmap[i].dmap_driver && dmap[i].dmap_driver == proc_nr)
+	    if((r=map_driver(i, NONE, 0)) != OK)
+		printf("FS: unmap of p %d / d %d failed: %d\n", proc_nr, i, r);
+
+	return;
+
 }
 
 /*===========================================================================*
@@ -152,8 +171,8 @@ PUBLIC void build_dmap()
           dp->dmap_flags = init_dmap[i].dmap_flags;
       } else {						/* no default */
           dp->dmap_opcl = no_dev;
-          dp->dmap_io = 0;
-          dp->dmap_driver = 0;
+          dp->dmap_io = no_dev_io;
+          dp->dmap_driver = NONE;
           dp->dmap_flags = DMAP_MUTABLE;
       }
   }

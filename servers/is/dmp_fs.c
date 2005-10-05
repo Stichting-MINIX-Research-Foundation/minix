@@ -49,6 +49,18 @@ PUBLIC void fproc_dmp()
 }
 
 /*===========================================================================*
+ *				dmap_flags				     *
+ *===========================================================================*/
+PRIVATE char * dmap_flags(int flags)
+{
+	static char fl[10];
+	fl[0] = '-';
+	if(flags & DMAP_MUTABLE) fl[0] = 'M';
+	fl[1] = '\0';
+	return fl;
+}
+
+/*===========================================================================*
  *				dtab_dmp				     *
  *===========================================================================*/
 PUBLIC void dtab_dmp()
@@ -58,12 +70,12 @@ PUBLIC void dtab_dmp()
     getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap);
     
     printf("File System (FS) device <-> driver mappings\n");
-    printf("Major  Proc\n");
-    printf("-----  ----\n");
+    printf("Major  Proc  Flags\n");
+    printf("-----  ----  -----\n");
     for (i=0; i<NR_DEVICES; i++) {
         if (dmap[i].dmap_driver == 0) continue;
-        printf("%5d  ", i);
-        printf("%4d\n", dmap[i].dmap_driver);
+        printf("%5d  %4d  %s\n",
+		i, dmap[i].dmap_driver, dmap_flags(dmap[i].dmap_flags));
     }
 }
 

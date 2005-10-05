@@ -339,6 +339,9 @@ PUBLIC int do_exit()
   fp->fp_rootdir = NIL_INODE;
   fp->fp_workdir = NIL_INODE;
 
+  /* If a driver exits, unmap its entries in the dmap table. */
+  dmap_unmap_by_proc(exitee);
+
   /* If a session leader exits then revoke access to its controlling tty from
    * all other processes using it.
    */
@@ -369,6 +372,7 @@ PUBLIC int do_exit()
 
   /* Mark slot as free. */
   fp->fp_pid = PID_FREE;
+
   return(OK);
 }
 
