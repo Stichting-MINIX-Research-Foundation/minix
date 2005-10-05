@@ -1,3 +1,4 @@
+
 /* The file contais the clock task, which handles all time related functions.
  * Important events that are handled by the CLOCK include alarm timers and
  * (re)scheduling user processes. 
@@ -10,7 +11,7 @@
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  *   Sep 24, 2004   redesigned alarm timers  (Jorrit N. Herder)
  *
- * The function do_clocktick() is not triggered by the clock's interrupt 
+ * The function do_clocktick() is only triggered by the clocks interrupt 
  * handler when a watchdog timer has expired or a process must be scheduled. 
  *
  * In addition to the main clock_task() entry point, which starts the main 
@@ -19,7 +20,6 @@
  *   get_uptime:	get realtime since boot in clock ticks
  *   set_timer:		set a watchdog timer (+)
  *   reset_timer:	reset a watchdog timer (+)
- *   calc_elapsed:	do timing measurements: get delta ticks and pulses
  *   read_clock:	read the counter of channel 0 of the 8253A timer
  *
  * (+) The CLOCK task keeps tracks of watchdog timers for the entire kernel.
@@ -186,7 +186,7 @@ irq_hook_t *hook;
   }
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
-   * Some processes, such as the kernel tasks, cannot be preempted. 
+   * Even the clock and system tasks get finite, but large, quanta.
    */ 
   if ((next_timeout <= realtime) || (proc_ptr->p_ticks_left <= 0)) {
       prev_ptr = proc_ptr;			/* store running process */
