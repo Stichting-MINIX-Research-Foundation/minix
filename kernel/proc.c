@@ -115,10 +115,17 @@ message *m_ptr;			/* pointer to message in the caller's space */
   }
   
   /* Require a valid source and/ or destination process, unless echoing. */
-  if (! (isokprocn(src_dst) || src_dst == ANY || function == ECHO)) { 
-      kprintf("sys_call: invalid src_dst, src_dst %d, caller %d\n", 
-          src_dst, proc_nr(caller_ptr));
-      return(EBADSRCDST);		/* invalid process number */
+  if (src_dst != ANY && function != ECHO) {
+      if (! isokprocn(src_dst)) { 
+          kprintf("sys_call: invalid src_dst, src_dst %d, caller %d\n", 
+              src_dst, proc_nr(caller_ptr));
+          return(EBADSRCDST);		/* invalid process number */
+      }
+      if (isemptyn(src_dst)) {
+          kprintf("sys_call: dead src_dst; trap %d, from %d, to %d\n", 
+              function, proc_nr(caller_ptr), src_dst);
+	  return(EDEADSRCDST);
+      }
   }
 
   /* If the call involves a message buffer, i.e., for SEND, RECEIVE, SENDREC, 
@@ -139,20 +146,13 @@ message *m_ptr;			/* pointer to message in the caller's space */
   }
 
   /* If the call is to send to a process, i.e., for SEND, SENDREC or NOTIFY,
-   * verify that the caller is allowed to send to the given destination and
-   * that the destination is still alive. 
+   * verify that the caller is allowed to send to the given destination. 
    */
   if (function & CHECK_DST) {	
       if (! get_sys_bit(priv(caller_ptr)->s_ipc_to, nr_to_id(src_dst))) {
           kprintf("sys_call: ipc mask denied %d sending to %d\n",
           	proc_nr(caller_ptr), src_dst);
           return(ECALLDENIED);		/* call denied by ipc mask */
-      }
-
-      if (isemptyn(src_dst) && !shutdown_started) {
-          kprintf("sys_call: dead dest; %d, %d, %d\n", 
-              function, proc_nr(caller_ptr), src_dst);
-          return(EDEADDST); 		/* cannot send to the dead */
       }
   }
 

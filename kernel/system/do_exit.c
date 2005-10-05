@@ -61,19 +61,33 @@ register struct proc *rc;		/* slot of process to clean up */
    * a normal exit), then it must be removed from the message queues.
    */
   if (rc->p_rts_flags & SENDING) {
-      /* Check all proc slots to see if the exiting process is queued. */
-      for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
-          if (rp->p_caller_q == NIL_PROC) continue;
-          /* Make sure that the exiting process is not on the queue. */
-          xpp = &rp->p_caller_q;
-          while (*xpp != NIL_PROC) {		/* check entire queue */
-              if (*xpp == rc) {			/* process is on the queue */
-                  *xpp = (*xpp)->p_q_link;	/* replace by next process */
-                  break;
-              }
-              xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
+      xpp = &proc[rc->p_sendto].p_caller_q;	/* destination's queue */
+      while (*xpp != NIL_PROC) {		/* check entire queue */
+          if (*xpp == rc) {			/* process is on the queue */
+              *xpp = (*xpp)->p_q_link;		/* replace by next process */
+              break;				/* done, can only send one */
           }
+          xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
       }
+  }
+
+  /* Likewise, if another process was sending or receive a message to or from 
+   * the exiting process, it must be alerted that process no longer is alive.
+   * Check all processes. 
+   */
+  for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
+
+      /* Check if process is receiving from exiting process. */
+      if ((rp->p_rts_flags & RECEIVING) && rp->p_getfrom == proc_nr(rc)) {
+          rp->p_reg.retreg = EDEADSRCDST;	/* report source died */
+	  rp->p_rts_flags &= ~RECEIVING;	/* no longer receiving */
+	  lock_enqueue(rp);			/* let process run again */
+      } 
+      else if ((rp->p_rts_flags & SENDING) && rp->p_sendto == proc_nr(rc)) {
+          rp->p_reg.retreg = EDEADSRCDST;	/* report destination died */
+	  rp->p_rts_flags &= ~SENDING;		/* no longer sending */
+	  lock_enqueue(rp);			/* let process run again */
+      } 
   }
 
   /* Check the table with IRQ hooks to see if hooks should be released. */

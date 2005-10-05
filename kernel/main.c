@@ -155,9 +155,6 @@ PUBLIC void main()
   }
 #endif
 
-  /* We're definitely not shutting down. */
-  shutdown_started = 0;
-
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */
@@ -193,16 +190,6 @@ int how;
   register struct proc *rp; 
   message m;
 
-  /* Show debugging dumps on panics. Make sure that the TTY task is still 
-   * available to handle them. This is done with help of a non-blocking send. 
-   * We rely on TTY to call sys_abort() when it is done with the dumps.
-   */
-  if (how == RBT_PANIC) {
-      m.m_type = PANIC_DUMPS;
-      if (nb_send(TTY_PROC_NR,&m)==OK)	/* don't block if TTY isn't ready */
-          return;			/* await sys_abort() from TTY */
-  }
-
   /* Send a signal to all system processes that are still alive to inform 
    * them that the MINIX kernel is shutting down. A proper shutdown sequence
    * should be implemented by a user-space server. This mechanism is useful
@@ -216,22 +203,14 @@ int how;
           send_sig(proc_nr(rp), SIGKSTOP);
   }
 
-  /* We're shutting down. Diagnostics may behave differently now. */
-  shutdown_started = 1;
-
-  /* Notify system processes of the upcoming shutdown and allow them to be 
-   * scheduled by setting a watchog timer that calls shutdown(). The timer 
+  /* Continue after 1 second, to give processes a chance to get scheduled to 
+   * do shutdown work.  Set a watchog timer to call shutdown(). The timer 
    * argument passes the shutdown status. 
    */
   kprintf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-
-  /* Continue after 1 second, to give processes a chance to get
-   * scheduled to do shutdown work.
-   */
   set_timer(&shutdown_timer, get_uptime() + HZ, shutdown);
 }
-
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/

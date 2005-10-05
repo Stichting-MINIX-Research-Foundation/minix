@@ -55,10 +55,10 @@ PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
   int d;
   unsigned long u;				/* hold number argument */
   int base;					/* base of number arg */
-  int negative = 0;				/* print minus sign */
+  int negative;					/* print minus sign */
   static char x2c[] = "0123456789ABCDEF";	/* nr conversion table */
   char ascii[8 * sizeof(long) / 3 + 2];		/* string for ascii number */
-  char *s = NULL;				/* string to be printed */
+  char *s;					/* string to be printed */
   va_list argp;					/* optional arguments */
   
   va_start(argp, fmt);				/* init variable arguments */
@@ -66,6 +66,8 @@ PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
   while((c=*fmt++) != 0) {
 
       if (c == '%') {				/* expect format '%key' */
+	  negative = 0;				/* (re)initialize */
+	  s = NULL;				/* (re)initialize */
           switch(c = *fmt++) {			/* determine what to do */
 
           /* Known keys are %d, %u, %x, %s, and %%. This is easily extended 
@@ -111,7 +113,6 @@ PUBLIC void kprintf(const char *fmt, ...) 	/* format to be printed */
           /* This is where the actual output for format "%key" is done. */
           if (negative) kputc('-');  		/* print sign if negative */
           while(*s != 0) { kputc(*s++); }	/* print string/ number */
-	  s = NULL;				/* reset for next round */
       }
       else {
           kputc(c);				/* print and continue */
@@ -144,7 +145,7 @@ int c;					/* character to append */
 
 #define COM1_BASE	0x3F8
 #define COM1_THR	(COM1_BASE + 0)
-#define		LSR_THRE	0x20
+#define	  LSR_THRE	0x20
 #define COM1_LSR	(COM1_BASE + 5)
 
 PRIVATE void ser_putc(char c)
