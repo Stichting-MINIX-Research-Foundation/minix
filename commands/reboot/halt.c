@@ -133,6 +133,8 @@ char **argv;
     sleep(2);
   }
 
+  sync();
+
   reboot(flag, monitor_code, strlen(monitor_code));
   fprintf(stderr, "%s: reboot(): %s\n", strerror(errno));
   return 1;
