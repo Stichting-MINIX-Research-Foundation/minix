@@ -11,7 +11,7 @@
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  *   Sep 24, 2004   redesigned alarm timers  (Jorrit N. Herder)
  *
- * The function do_clocktick() is only triggered by the clocks interrupt 
+ * The function do_clocktick() is only triggered by the clock's interrupt 
  * handler when a watchdog timer has expired or a process must be scheduled. 
  *
  * In addition to the main clock_task() entry point, which starts the main 
