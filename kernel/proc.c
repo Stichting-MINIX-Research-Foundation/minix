@@ -228,7 +228,7 @@ unsigned flags;				/* system call flags */
 		 dst_ptr->p_messbuf);
 	if ((dst_ptr->p_rts_flags &= ~RECEIVING) == 0) enqueue(dst_ptr);
   } else if ( ! (flags & NON_BLOCKING)) {
-	/* Destination is not waiting.  Block and queue caller. */
+	/* Destination is not waiting.  Block and dequeue caller. */
 	caller_ptr->p_messbuf = m_ptr;
 	if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
 	caller_ptr->p_rts_flags |= SENDING;

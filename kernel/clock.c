@@ -1,5 +1,5 @@
 
-/* The file contais the clock task, which handles all time related functions.
+/* The file contains the clock task, which handles all time related functions.
  * Important events that are handled by the CLOCK include alarm timers and
  * (re)scheduling user processes. 
  * The CLOCK offers a direct interface to kernel processes. System services 
