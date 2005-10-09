@@ -1,17 +1,17 @@
-
-/* The file contains the clock task, which handles all time related functions.
- * Important events that are handled by the CLOCK include alarm timers and
- * (re)scheduling user processes. 
+/* This file contains the clock task, which handles time related functions.
+ * Important events that are handled by the CLOCK include setting and 
+ * monitoring alarm timers and deciding when to (re)schedule processes. 
  * The CLOCK offers a direct interface to kernel processes. System services 
  * can access its services through system calls, such as sys_setalarm(). The
- * CLOCK task thus is hidden for the outside world.  
+ * CLOCK task thus is hidden from the outside world.  
  *
  * Changes:
+ *   Oct 08, 2005   reordering and comment editing (A. S. Woodhull)
  *   Mar 18, 2004   clock interface moved to SYSTEM task (Jorrit N. Herder) 
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  *   Sep 24, 2004   redesigned alarm timers  (Jorrit N. Herder)
  *
- * The function do_clocktick() is only triggered by the clock's interrupt 
+ * The function do_clocktick() is triggered by the clock's interrupt 
  * handler when a watchdog timer has expired or a process must be scheduled. 
  *
  * In addition to the main clock_task() entry point, which starts the main 
@@ -24,7 +24,7 @@
  *
  * (+) The CLOCK task keeps tracks of watchdog timers for the entire kernel.
  * The watchdog functions of expired timers are executed in do_clocktick(). 
- * It is crucial that watchdog functions cannot block, or the CLOCK task may
+ * It is crucial that watchdog functions not block, or the CLOCK task may
  * be blocked. Do not send() a message when the receiver is not expecting it.
  * Instead, notify(), which always returns, should be used. 
  */
@@ -40,7 +40,6 @@ FORWARD _PROTOTYPE( int clock_handler, (irq_hook_t *hook) );
 FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
 
 /* Clock parameters. */
-#if (CHIP == INTEL)
 #define COUNTER_FREQ (2*TIMER_FREQ) /* counter frequency using square wave */
 #define LATCH_COUNT     0x00	/* cc00xxxx, c = channel, x = any */
 #define SQUARE_WAVE     0x36	/* ccaammmb, a = access, m = mode, b = BCD */
@@ -49,14 +48,9 @@ FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
 #define TIMER_FREQ  1193182L	/* clock frequency for timer in PC and AT */
 
 #define CLOCK_ACK_BIT	0x80	/* PS/2 clock interrupt acknowledge bit */
-#endif
-
-#if (CHIP == M68000)
-#define TIMER_FREQ  2457600L	/* timer 3 input clock frequency */
-#endif
 
 /* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
- * All system processes possess a single synchronous alarm timer. If other 
+ * Each system process possesses a single synchronous alarm timer. If other 
  * kernel parts want to use additional timers, they must declare their own 
  * persistent (static) timer structure, which can be passed to the clock
  * via (re)set_timer().
@@ -74,15 +68,14 @@ PRIVATE irq_hook_t clock_hook;		/* interrupt handler hook */
  *===========================================================================*/
 PUBLIC void clock_task()
 {
-/* Main program of clock task. It determines which call this is by looking at
- * the message type and dispatches.
+/* Main program of clock task. If the call is not HARD_INT it is an error.
  */
   message m;			/* message buffer for both input and output */
   int result;			/* result returned by the handler */
 
   init_clock();			/* initialize clock task */
 
-  /* Main loop of the clock task.  Get work, process it, sometimes reply. */
+  /* Main loop of the clock task.  Get work, process it. Never reply. */
   while (TRUE) {
 
       /* Go get a message. */
@@ -112,7 +105,7 @@ message *m_ptr;				/* pointer to request message */
   /* A process used up a full quantum. The interrupt handler stored this
    * process in 'prev_ptr'.  First make sure that the process is not on the 
    * scheduling queues.  Then announce the process ready again. Since it has 
-   * no more time left, it will get a new quantum and inserted at the right 
+   * no more time left, it gets a new quantum and is inserted at the right 
    * place in the queues.  As a side-effect a new process will be scheduled.
    */ 
   if (prev_ptr->p_ticks_left <= 0 && priv(prev_ptr)->s_flags & PREEMPTIBLE) {
@@ -129,6 +122,33 @@ message *m_ptr;				/* pointer to request message */
 
   /* Inhibit sending a reply. */
   return(EDONTREPLY);
+}
+
+/*===========================================================================*
+ *				init_clock				     *
+ *===========================================================================*/
+PRIVATE void init_clock()
+{
+  /* Initialize the CLOCK's interrupt hook. */
+  clock_hook.proc_nr = CLOCK;
+
+  /* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz. */
+  outb(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */
+  outb(TIMER0, TIMER_COUNT);		/* load timer low byte */
+  outb(TIMER0, TIMER_COUNT >> 8);	/* load timer high byte */
+  put_irq_handler(&clock_hook, CLOCK_IRQ, clock_handler);/* register handler */
+  enable_irq(&clock_hook);		/* ready for clock interrupts */
+}
+
+/*===========================================================================*
+ *				clock_stop				     *
+ *===========================================================================*/
+PUBLIC void clock_stop()
+{
+/* Reset the clock to the BIOS rate. (For rebooting) */
+  outb(TIMER_MODE, 0x36);
+  outb(TIMER0, 0);
+  outb(TIMER0, 0);
 }
 
 /*===========================================================================*
@@ -186,7 +206,7 @@ irq_hook_t *hook;
   }
 
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
-   * Even the clock and system tasks get finite, but large, quanta.
+   * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
   if ((next_timeout <= realtime) || (proc_ptr->p_ticks_left <= 0)) {
       prev_ptr = proc_ptr;			/* store running process */
@@ -234,35 +254,6 @@ struct timer *tp;		/* pointer to timer structure */
 	TMR_NEVER : clock_timers->tmr_exp_time;
 }
 
-#if (CHIP == INTEL)
-
-/*===========================================================================*
- *				init_clock				     *
- *===========================================================================*/
-PRIVATE void init_clock()
-{
-  /* Initialize the CLOCK's interrupt hook. */
-  clock_hook.proc_nr = CLOCK;
-
-  /* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz. */
-  outb(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */
-  outb(TIMER0, TIMER_COUNT);		/* load timer low byte */
-  outb(TIMER0, TIMER_COUNT >> 8);	/* load timer high byte */
-  put_irq_handler(&clock_hook, CLOCK_IRQ, clock_handler);/* register handler */
-  enable_irq(&clock_hook);		/* ready for clock interrupts */
-}
-
-/*===========================================================================*
- *				clock_stop				     *
- *===========================================================================*/
-PUBLIC void clock_stop()
-{
-/* Reset the clock to the BIOS rate. (For rebooting) */
-  outb(TIMER_MODE, 0x36);
-  outb(TIMER0, 0);
-  outb(TIMER0, 0);
-}
-
 /*===========================================================================*
  *				read_clock				     *
  *===========================================================================*/
@@ -281,6 +272,3 @@ PUBLIC unsigned long read_clock()
   
   return count;
 }
-
-#endif /* (CHIP == INTEL) */
-
