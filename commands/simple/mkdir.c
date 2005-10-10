@@ -192,7 +192,7 @@ char **argv;
 int makepath(fordir)
 char *fordir;
 {
-  char parent[PATH_MAX + 1], *end;
+  char parent[PATH_MAX + 1], *end, *last;
 
   strcpy(parent, fordir);
   do {
