@@ -31,7 +31,7 @@ static void usage(void);
 static int name_to_ip(char *name, ipaddr_t *addr);
 static int parse_cidr(char *cidr, ipaddr_t *addr, ipaddr_t *mask);
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct netent *netent;
 	ipaddr_t gateway, destination, netmask, defaultmask=0;
@@ -278,7 +278,7 @@ void main(int argc, char *argv[])
 			strerror(errno));
 		exit(1);
 	}
-	exit(0);
+	return(0);
 }
 
 static void usage(void)
