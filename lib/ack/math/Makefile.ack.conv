@@ -1,0 +1,29 @@
+# Makefile for lib/math.
+
+CFLAGS	= -O -D_MINIX -D_POSIX_SOURCE
+CC1	= $(CC) $(CFLAGS) -c
+
+LIBRARY	= ../../libc.a
+all:	$(LIBRARY)
+
+OBJECTS	= \
+	$(LIBRARY)(frexp.o) \
+	$(LIBRARY)(modf.o) \
+	$(LIBRARY)(isnan.o) \
+	$(LIBRARY)(ldexp.o) \
+
+$(LIBRARY):	$(OBJECTS)
+	aal cr $@ *.o
+	rm *.o
+
+$(LIBRARY)(frexp.o):	frexp.s
+	$(CC1) frexp.s
+
+$(LIBRARY)(modf.o):	modf.s
+	$(CC1) modf.s
+
+$(LIBRARY)(isnan.o):	isnan.c
+	$(CC1) isnan.c
+
+$(LIBRARY)(ldexp.o):	ldexp.c
+	$(CC1) ldexp.c
