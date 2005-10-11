@@ -1516,7 +1516,7 @@ PRIVATE void tty_init()
   		tp->tty_minor = RS232_MINOR + s-NR_CONS;
   	} else {
 		pty_init(tp);
-  		tp->tty_minor = s + TTYPX_MINOR + s-(NR_CONS+RS232_MINOR);
+		tp->tty_minor = s - (NR_CONS+NR_RS_LINES) + TTYPX_MINOR;
   	}
   }
 
