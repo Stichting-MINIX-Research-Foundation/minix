@@ -290,7 +290,15 @@ PRIVATE struct driver w_dtab = {
  *===========================================================================*/
 PUBLIC int main()
 {
-/* Set special disk parameters then call the generic main loop. */
+/* Install signal handlers. Ask PM to transform signal into message. */
+  struct sigaction sa;
+
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("RS","sigaction failed", errno);
+
+  /* Set special disk parameters then call the generic main loop. */
   init_params();
   signal(SIGTERM, SIG_IGN);
   driver_task(&w_dtab);

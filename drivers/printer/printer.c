@@ -109,22 +109,8 @@ FORWARD _PROTOTYPE( void prepare_output, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
 FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
 FORWARD _PROTOTYPE( void do_printer_output, (void) );
-FORWARD _PROTOTYPE( void signal_handler, (int sig) );
+FORWARD _PROTOTYPE( void do_signal, (message *m_ptr) );
 
-/*===========================================================================*
- *				 signal_handler                              *
- *===========================================================================*/
-PRIVATE void signal_handler(sig)
-int sig;					/* signal number */
-{
-/* Expect a SIGTERM signal when this server must shutdown. */
-  if (sig == SIGTERM) {
-  	printf("Shutting down PRINTER driver\n");
-  	exit(0);
-  } else {
-  	printf("PRINTER got unknown signal\n");
-  }
-}
 
 /*===========================================================================*
  *				printer_task				     *
@@ -133,6 +119,14 @@ PUBLIC void main(void)
 {
 /* Main routine of the printer task. */
   message pr_mess;		/* buffer for all incoming messages */
+  struct sigaction sa;
+  int s;
+
+  /* Install signal handlers. Ask PM to transform signal into message. */
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("PRN","sigaction failed", errno);
   
   while (TRUE) {
 	receive(ANY, &pr_mess);
@@ -147,12 +141,29 @@ PUBLIC void main(void)
 	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL:	do_cancel(&pr_mess);	break;
 	    case HARD_INT:	do_printer_output();	break;
-	    case SYS_SIG:	/* do nothing */	break;
-	    case DEV_PING:	notify(pr_mess.m_source);	break;
+	    case SYS_SIG:	do_signal(&pr_mess); 	break;
+	    case DEV_PING:  	notify(pr_mess.m_source);	break;
 	    default:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.PROC_NR, EINVAL);
 	}
   }
+}
+
+
+/*===========================================================================*
+ *				 do_signal	                             *
+ *===========================================================================*/
+PRIVATE void do_signal(m_ptr)
+message *m_ptr;					/* signal message */
+{
+  int sig;
+  sigset_t sigset = m_ptr->NOTIFY_ARG;
+  
+  /* Expect a SIGTERM signal when this server must shutdown. */
+  if (sigismember(&sigset, SIGTERM)) {
+	exit(0);
+  } 
+  /* Ignore all other signals. */
 }
 
 /*===========================================================================*
@@ -204,7 +215,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 }
 
 /*===========================================================================*
- *				output_done					     *
+ *				output_done				     *
  *===========================================================================*/
 PRIVATE void output_done()
 {
@@ -237,14 +248,9 @@ PRIVATE void output_done()
     else {				/* done! report back to FS */
 	status = orig_count;
     }
-#if DEAD_CODE
-    reply(REVIVE, caller, proc_nr, status);
-    writing = FALSE;
-#else
     revive_pending = TRUE;
     revive_status = status;
     notify(caller);
-#endif
 }
 
 /*===========================================================================*
@@ -311,7 +317,6 @@ int status;			/* number of  chars printed or error code */
 PRIVATE void do_initialize()
 {
 /* Set global variables and initialize the printer. */
-
   static int initialized = FALSE;
   if (initialized) return;
   initialized = TRUE;

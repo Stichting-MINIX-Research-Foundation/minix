@@ -163,7 +163,6 @@ PUBLIC void main(void)
   message tty_mess;		/* buffer for all incoming messages */
   unsigned line;
   int r, s;
-  char *types[] = {"task","driver","server", "user"};
   register struct proc *rp;
   register tty_t *tp;
 
@@ -1506,7 +1505,7 @@ PRIVATE void tty_init()
 
   register tty_t *tp;
   int s;
-  struct sigaction sigact;
+  struct sigaction sa;
 
   /* Initialize the terminal lines. */
   for (tp = FIRST_TTY,s=0; tp < END_TTY; tp++,s++) {
@@ -1534,12 +1533,13 @@ PRIVATE void tty_init()
   }
 
 #if DEAD_CODE
-  /* Install signal handler to ignore SIGTERM. */
-  sigact.sa_handler = SIG_IGN;
-  sigact.sa_mask = ~0;			/* block all other signals */
-  sigact.sa_flags = 0;			/* default behaviour */
-  if (sigaction(SIGTERM, &sigact, NULL) != OK) 
-      report("TTY","warning, sigaction() failed", errno);
+  /* Install signal handlers. Ask PM to transform signal into message. */
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
+  if (sigaction(SIGKMESS,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
+  if (sigaction(SIGKSTOP,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
 #endif
 }
 
