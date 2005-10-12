@@ -148,6 +148,7 @@ PUBLIC void main(void)
 	    case CANCEL:	do_cancel(&pr_mess);	break;
 	    case HARD_INT:	do_printer_output();	break;
 	    case SYS_SIG:	/* do nothing */	break;
+	    case DEV_PING:	notify(pr_mess.m_source);	break;
 	    default:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.PROC_NR, EINVAL);
 	}

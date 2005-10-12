@@ -711,6 +711,8 @@ PRIVATE void start_motor()
   	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) { 
   		f_expire_tmrs(NULL, NULL);
+	} else if(mess.m_type == DEV_PING) {
+		notify(mess.m_source);
   	} else {
   		f_busy = BSY_IDLE;
   	}
@@ -793,6 +795,8 @@ PRIVATE int seek()
   		receive(ANY, &mess); 
   		if (mess.m_type == SYN_ALARM) { 
   			f_expire_tmrs(NULL, NULL);
+		} else if(mess.m_type == DEV_PING) {
+			notify(mess.m_source);
   		} else {
   			f_busy = BSY_IDLE;
   		}
@@ -1061,6 +1065,8 @@ PRIVATE void f_reset()
   	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) { 
   		f_expire_tmrs(NULL, NULL);
+	} else if(mess.m_type == DEV_PING) {
+		notify(mess.m_source);
   	} else {			/* expect HARD_INT */
   		f_busy = BSY_IDLE;
   	}
@@ -1106,6 +1112,8 @@ PRIVATE int f_intr_wait()
   	receive(ANY, &mess); 
   	if (mess.m_type == SYN_ALARM) {
   		f_expire_tmrs(NULL, NULL);
+	} else if(mess.m_type == DEV_PING) {
+		notify(mess.m_source);
   	} else { 
   		f_busy = BSY_IDLE;
   	}

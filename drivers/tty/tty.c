@@ -205,6 +205,9 @@ PUBLIC void main(void)
 	case SYN_ALARM: 		/* fall through */
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
+	case DEV_PING:
+		notify(tty_mess.m_source);
+		continue;
 	case HARD_INT: {		/* hardware interrupt notification */
 		if (tty_mess.NOTIFY_ARG & kbd_irq_set)
 			kbd_interrupt(&tty_mess);/* fetch chars from keyboard */

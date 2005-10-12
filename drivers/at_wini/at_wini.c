@@ -292,6 +292,7 @@ PUBLIC int main()
 {
 /* Set special disk parameters then call the generic main loop. */
   init_params();
+  signal(SIGTERM, SIG_IGN);
   driver_task(&w_dtab);
   return(OK);
 }
@@ -1142,6 +1143,8 @@ PRIVATE void w_intr_wait()
 		} else if (m.m_type == HARD_INT) {
 		    sys_inb(w_wn->base_cmd + REG_STATUS, &w_wn->w_status);
 		    ack_irqs(m.NOTIFY_ARG);
+		} else if (m.m_type == DEV_PING) {
+		    notify(m.m_source);
 	        } else {
 	        	printf("AT_WINI got unexpected message %d from %d\n",
 	        		m.m_type, m.m_source);

@@ -57,6 +57,9 @@ PUBLIC void main(void)
           reply(TASK_REPLY, m.m_source, m.PROC_NR, OK);
           break;
 
+      case DEV_PING:
+	  notify(m.m_source);
+	  break;
       case DEV_IOCTL:				
 
 	  /* Probably best to SUSPEND the caller, CMOS I/O has nasty timeouts. 

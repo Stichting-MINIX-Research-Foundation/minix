@@ -114,6 +114,8 @@ struct driver *dp;	/* Device dependent entry points. */
 				continue;	/* don't reply */
 	case SYN_ALARM:		(*dp->dr_alarm)(dp, &mess);	
 				continue;	/* don't reply */
+	case DEV_PING:		notify(mess.m_source);
+				continue;
 	default:		
 		if(dp->dr_other)
 			r = (*dp->dr_other)(dp, &mess);
