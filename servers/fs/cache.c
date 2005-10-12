@@ -8,8 +8,10 @@
  *   put_block:	  return a block previously requested with get_block
  *   alloc_zone:  allocate a new zone (to increase the length of a file)
  *   free_zone:	  release a zone (when a file is removed)
- *   rw_block:	  read or write a block from the disk itself
  *   invalidate:  remove all the cache blocks on some device
+ *
+ * Private functions:
+ *   rw_block:    read or write a block from the disk itself
  */
 
 #include "fs.h"
@@ -20,6 +22,7 @@
 #include "super.h"
 
 FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
+FORWARD _PROTOTYPE( int rw_block, (struct buf *, int) );
 
 /*===========================================================================*
  *				get_block				     *
