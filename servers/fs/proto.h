@@ -15,7 +15,6 @@ _PROTOTYPE( void free_zone, (Dev_t dev, zone_t numb)			);
 _PROTOTYPE( struct buf *get_block, (Dev_t dev, block_t block,int only_search));
 _PROTOTYPE( void invalidate, (Dev_t device)				);
 _PROTOTYPE( void put_block, (struct buf *bp, int block_type)		);
-_PROTOTYPE( void rw_block, (struct buf *bp, int rw_flag)		);
 _PROTOTYPE( void rw_scattered, (Dev_t dev,
 			struct buf **bufq, int bufqsize, int rw_flag)	);
 
@@ -127,6 +126,7 @@ _PROTOTYPE( void suspend, (int task)					);
 _PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
 _PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
 _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
+_PROTOTYPE( void unsuspend_by_proc, (int)				);
 
 /* protect.c */
 _PROTOTYPE( int do_access, (void)					);

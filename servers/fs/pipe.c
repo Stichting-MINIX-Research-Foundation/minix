@@ -195,6 +195,25 @@ int task;			/* who is proc waiting for? (PIPE = pipe) */
 }
 
 /*===========================================================================*
+ *				unsuspend_by_proc			     *
+ *===========================================================================*/
+void unsuspend_by_proc(int proc)
+{
+  struct fproc *rp;
+  int client = 0;
+
+  /* Revive processes waiting for drivers (SUSPENDed) that have
+   * disappeared with return code EIO.
+   */
+  for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++, client++)
+	if(rp->fp_suspended == SUSPENDED && rp->fp_task == -proc)
+		revive(client, EIO);
+
+  return;
+}
+
+
+/*===========================================================================*
  *				release					     *
  *===========================================================================*/
 PUBLIC void release(ip, call_nr, count)

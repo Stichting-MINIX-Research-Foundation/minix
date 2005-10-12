@@ -339,8 +339,11 @@ PUBLIC int do_exit()
   fp->fp_rootdir = NIL_INODE;
   fp->fp_workdir = NIL_INODE;
 
-  /* If a driver exits, unmap its entries in the dmap table. */
+  /* If a driver exits, unmap its entries in the dmap table.
+   * Also check if any process is SUSPENDed on it.
+   */
   dmap_unmap_by_proc(exitee);
+  unsuspend_by_proc(exitee);
 
   /* If a session leader exits then revoke access to its controlling tty from
    * all other processes using it.
