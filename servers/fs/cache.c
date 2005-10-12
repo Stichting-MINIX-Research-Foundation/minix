@@ -249,7 +249,7 @@ zone_t numb;				/* zone to be returned */
 /*===========================================================================*
  *				rw_block				     *
  *===========================================================================*/
-PUBLIC void rw_block(bp, rw_flag)
+PRIVATE int rw_block(bp, rw_flag)
 register struct buf *bp;	/* buffer pointer */
 int rw_flag;			/* READING or WRITING */
 {
