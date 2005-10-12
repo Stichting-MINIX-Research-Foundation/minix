@@ -122,6 +122,9 @@ struct pci_device pci_device_table[]=
 	{ 0x8086, 0x1230, "Intel 82371FB (IDE)" },
 	{ 0x8086, 0x1237, "Intel 82441FX (440FX)" },
 	{ 0x8086, 0x1250, "Intel 82439HX" },
+	{ 0x8086, 0x1A30, "Intel 82845B/A MCH" },
+	{ 0x8086, 0x1A31, "Intel 82845B/A PCI Bridge to AGP port" },
+	{ 0x8086, 0x2440, "Intel 82801B PCI to ISA bridge" },
  	{ 0x8086, 0x2449, "Intel EtherExpressPro100 82562EM" },
  	{ 0x8086, 0x244e, "Intel 82801 PCI Bridge" },
  	{ 0x8086, 0x2560, "Intel 82845G/GL[Brookdale-G]/GE/PE" },
@@ -241,6 +244,7 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
 	{ 0x8086, 0x122D, },	/* Intel 82437FX */
 	{ 0x8086, 0x1237, }, 	/* Intel 82441FX */
 	{ 0x8086, 0x1250, },	/* Intel 82439HX */
+	{ 0x8086, 0x1A30, },	/* Intel 82845 MCH */
 	{ 0x8086, 0x2560, },	/* Intel 82845G/GL[Brookdale-G]/GE/PE */
  	{ 0x8086, 0x7030, },	/* Intel 82437VX (asw 2005-03-02) */ 
  	{ 0x8086, 0x7100, },	/* Intel 82371AB (asw 2004-07-31) */
@@ -259,6 +263,7 @@ struct pci_isabridge pci_isabridge[]=
 	{ 0x1106, 0x3074, 1, PCI_IB_VIA,	},	/* VIA VT8233 */
 	{ 0x1106, 0x3227, 1, PCI_IB_VIA,	},	/* VIA */
 	{ 0x8086, 0x122E, 1, PCI_IB_PIIX,	},	/* Intel 82371FB */
+	{ 0x8086, 0x2440, 1, PCI_IB_PIIX,	},	/* Intel 82801B */
 	{ 0x8086, 0x7000, 1, PCI_IB_PIIX,	},	/* Intel 82371SB */
  	{ 0x8086, 0x7030, 1, PCI_IB_PIIX,	},	/* Intel 82437VX (asw 2005-03-02) */
  	{ 0x8086, 0x7100, 1, PCI_IB_PIIX,	},	/* Intel 82371AB (asw 2004-07-31) */
@@ -269,6 +274,7 @@ struct pci_isabridge pci_isabridge[]=
 
 struct pci_pcibridge pci_pcibridge[]=
 {
+	{ 0x8086, 0x1A31, PCI_AGPB_INTEL, },	/* Intel 82845B/A AGP Bridge */
 	{ 0x8086, 0x2448, PCI_PCIB_INTEL, },	/* Intel 82801 Mobile */
 	{ 0x8086, 0x244e, PCI_PCIB_INTEL, },	/* Intel 82801 PCI Bridge */
 	{ 0x8086, 0x2561, PCI_AGPB_INTEL, },	/* Intel 82845 AGP Bridge */
