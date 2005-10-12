@@ -99,18 +99,12 @@ char **argv;
 
   write_log();
 
-  if (fast) {
-    /* But not too fast... */
-    signal(SIGTERM, SIG_IGN);
-    kill(1, SIGTERM);
-    printf("Sending SIGTERM to all processes ...\n");
-    kill(-1, SIGTERM);
-    sleep(1);
-  } else {
-    /* Run the shutdown scripts. */
-    signal(SIGHUP, SIG_IGN);
-    signal(SIGTERM, SIG_IGN);
+  signal(SIGHUP, SIG_IGN);
+  signal(SIGTERM, SIG_IGN);
 
+  /* Skip this part for fast shut down. */
+  if (! fast) {
+    /* Run the shutdown scripts. */
     switch ((pid = fork())) {
       case -1:
 	fprintf(stderr, "%s: can't fork(): %s\n", prog, strerror(errno));
@@ -123,15 +117,15 @@ char **argv;
       default:
 	while (waitpid(pid, NULL, 0) != pid) {}
     }
-
-    /* Tell init to stop spawning getty's. */
-    kill(1, SIGTERM);
-
-    /* Give everybody a chance to die peacefully. */
-    printf("Sending SIGTERM to all processes ...\n");
-    kill(-1, SIGTERM);
-    sleep(2);
   }
+
+  /* Tell init to stop spawning getty's. */
+  kill(1, SIGTERM);
+
+  /* Give everybody a chance to die peacefully. */
+  printf("Sending SIGTERM to all processes ...\n");
+  kill(-1, SIGTERM);
+  sleep(2);
 
   sync();
 

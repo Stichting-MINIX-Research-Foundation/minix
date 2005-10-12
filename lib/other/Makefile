@@ -18,6 +18,9 @@ OBJECTS	= \
 	$(LIBRARY)(_svrctl.o) \
 	$(LIBRARY)(_getsysinfo.o) \
 	$(LIBRARY)(_getprocnr.o) \
+	$(LIBRARY)(_getpprocnr.o) \
+	$(LIBRARY)(_getnprocnr.o) \
+	$(LIBRARY)(_getnpid.o) \
 	$(LIBRARY)(_devctl.o) \
 	$(LIBRARY)(_findproc.o) \
 	$(LIBRARY)(asynchio.o) \
@@ -97,8 +100,17 @@ $(LIBRARY)(_svrctl.o):	_svrctl.c
 $(LIBRARY)(_devctl.o):	_devctl.c
 	$(CC1) _devctl.c
 
+$(LIBRARY)(_getnpid.o):	_getnpid.c
+	$(CC1) _getnpid.c
+
 $(LIBRARY)(_getprocnr.o):	_getprocnr.c
 	$(CC1) _getprocnr.c
+
+$(LIBRARY)(_getpprocnr.o):	_getpprocnr.c
+	$(CC1) _getpprocnr.c
+
+$(LIBRARY)(_getnprocnr.o):	_getnprocnr.c
+	$(CC1) _getnprocnr.c
 
 $(LIBRARY)(_findproc.o):	_findproc.c
 	$(CC1) _findproc.c

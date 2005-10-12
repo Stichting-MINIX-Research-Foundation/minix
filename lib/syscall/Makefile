@@ -44,9 +44,12 @@ OBJECTS	= \
 	$(LIBRARY)(getgroups.o) \
 	$(LIBRARY)(getpgrp.o) \
 	$(LIBRARY)(getpid.o) \
+	$(LIBRARY)(getnpid.o) \
 	$(LIBRARY)(getppid.o) \
 	$(LIBRARY)(getuid.o) \
 	$(LIBRARY)(getprocnr.o) \
+	$(LIBRARY)(getpprocnr.o) \
+	$(LIBRARY)(getnprocnr.o) \
 	$(LIBRARY)(getsysinfo.o) \
 	$(LIBRARY)(findproc.o) \
 	$(LIBRARY)(ioctl.o) \
@@ -226,6 +229,9 @@ $(LIBRARY)(getpgrp.o):	getpgrp.s
 $(LIBRARY)(getpid.o):	getpid.s
 	$(CC1) getpid.s
 
+$(LIBRARY)(getnpid.o):	getnpid.s
+	$(CC1) getnpid.s
+
 $(LIBRARY)(getppid.o):	getppid.s
 	$(CC1) getppid.s
 
@@ -234,6 +240,12 @@ $(LIBRARY)(getsysinfo.o):	getsysinfo.s
 
 $(LIBRARY)(getprocnr.o):	getprocnr.s
 	$(CC1) getprocnr.s
+
+$(LIBRARY)(getnprocnr.o):	getnprocnr.s
+	$(CC1) getnprocnr.s
+
+$(LIBRARY)(getpprocnr.o):	getpprocnr.s
+	$(CC1) getpprocnr.s
 
 $(LIBRARY)(findproc.o):		findproc.s
 	$(CC1) findproc.s
