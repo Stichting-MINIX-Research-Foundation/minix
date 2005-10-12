@@ -257,12 +257,6 @@ sigset_t sig_map;
 		id = 0; break;	/* broadcast to process group */
 	    case SIGKILL:
 		id = -1; break;	/* broadcast to all except INIT */
-#if DEAD_CODE
-	    case SIGALRM:
-		if ((rmp->mp_flags & ALARM_ON) == 0) continue;
-		rmp->mp_flags &= ~ALARM_ON;
-		/* fall through */
-#endif
 	    default:
 		id = proc_id;
 		break;

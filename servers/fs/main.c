@@ -60,6 +60,7 @@ PUBLIC int main()
         if (call_nr == SYS_SIG) { 
 		sigset = m_in.NOTIFY_ARG;
 		if (sigismember(&sigset, SIGKSTOP)) {
+			printf("FS got SIGKSTOP\n");
         		do_sync();
         		sys_exit(0);  		/* never returns */
 		}

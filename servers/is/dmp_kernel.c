@@ -435,7 +435,7 @@ PRIVATE char *p_rts_flags_str(int flags)
 	str[0] = (flags & NO_MAP) ? 'M' : '-';
 	str[1] = (flags & SENDING)  ? 'S' : '-';
 	str[2] = (flags & RECEIVING)    ? 'R' : '-';
-	str[3] = (flags & SIGNALED)    ? 'S' : '-';
+	str[3] = (flags & SIGNALED)    ? 'I' : '-';
 	str[4] = (flags & SIG_PENDING)    ? 'P' : '-';
 	str[5] = (flags & P_STOP)    ? 'T' : '-';
 	str[6] = '\0';

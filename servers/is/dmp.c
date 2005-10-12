@@ -9,7 +9,7 @@
 
 #include "is.h"
 
-#define NHOOKS 15
+#define NHOOKS 17
 
 struct hook_entry {
 	int key;
@@ -23,14 +23,16 @@ struct hook_entry {
 	{ F5,	monparams_dmp, "Boot monitor parameters" },
 	{ F6,	irqtab_dmp, "IRQ hooks and policies" },
 	{ F7,	kmessages_dmp, "Kernel messages" },
+	{ F9,	sched_dmp, "Scheduling queues" },
 	{ F10,	kenv_dmp, "Kernel parameters" },
 	{ F11,	timing_dmp, "Timing details (if enabled)" },
-	{ F12,	sched_dmp, "Scheduling queues" },
+	{ F12,  reboot_dmp, "Reboot system after panic." },
 	{ SF1,	mproc_dmp, "Process manager process table" },
 	{ SF2,	sigaction_dmp, "Signals" },
 	{ SF3,	fproc_dmp, "Filesystem process table" },
 	{ SF4,	dtab_dmp, "Device/Driver mapping" },
 	{ SF5,	mapping_dmp, "Print key mappings" },
+	{ SF6,	rproc_dmp, "Reincarnation server process table" },
 };
 
 /*===========================================================================*
@@ -73,6 +75,13 @@ PRIVATE char *keyname(int key)
 
 	return name;
 }
+
+
+PUBLIC void reboot_dmp(void)
+{
+  if (sys_panic) sys_abort(RBT_HALT);
+}
+
 
 PUBLIC void mapping_dmp(void)
 {

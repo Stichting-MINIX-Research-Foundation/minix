@@ -113,9 +113,21 @@ int num;			/* number to go with it */
  * defined constant. The process manager decides to shut down. This results 
  * in a HARD_STOP notification to all system processes to allow local cleanup.
  */
+  message m;
+  int s;
+
+  /* Switch to primary console and print panic message. */
+  check_sig(mproc[TTY_PROC_NR].mp_pid, SIGTERM);
   printf("PM panic (%s): %s", who, mess);
   if (num != NO_NUM) printf(": %d",num);
   printf("\n");
+
+  /* Allow for debug dumps if the IS server is available. */
+  m.m_type = PANIC_DUMPS;
+  if (OK == (s= nb_send(11, &m))) {
+      return;				/* IS responsible for exit */
+  }
+  printf("Shutting down: IS is not answering: %d\n", s);
   sys_abort(RBT_PANIC);
 }
 
@@ -135,8 +147,12 @@ int what, p1, p2, p3;
  *      tell_fs(SETUID, proc, realuid, effuid)
  *      tell_fs(UNPAUSE, proc, signr, 0)
  *      tell_fs(STIME, time, 0, 0)
+ * Ignore this call if the FS is already dead, e.g. on shutdown.
  */
   message m;
+
+  if ((mproc[FS_PROC_NR].mp_flags & (IN_USE|ZOMBIE)) != IN_USE)
+      return;
 
   m.tell_fs_arg1 = p1;
   m.tell_fs_arg2 = p2;

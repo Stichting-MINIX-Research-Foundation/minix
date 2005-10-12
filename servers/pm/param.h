@@ -7,6 +7,7 @@
 #define namelen		m1_i2
 #define pid		m1_i1
 #define procnr		m1_i1
+#define pprocnr		m1_i2
 #define seconds		m1_i1
 #define sig		m6_i1
 #define stack_bytes	m1_i2
@@ -41,6 +42,7 @@
 /* The following names are synonyms for the variables in a reply message. */
 #define reply_res	m_type
 #define reply_res2	m2_i1
+#define reply_res3	m2_i2
 #define reply_ptr	m2_p1
 #define reply_mask	m2_l1 	
 #define reply_trace	m2_l2 	

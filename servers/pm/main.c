@@ -155,7 +155,9 @@ PRIVATE void pm_init()
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
   static char ign_sigs[] = { SIGCHLD, SIGWINCH };
+  static char mess_sigs[] = { SIGTERM, SIGHUP, SIGABRT, SIGQUIT };
   register struct mproc *rmp;
+  register int i;
   register char *sig_ptr;
   phys_clicks total_clicks, minix_clicks, free_clicks;
   message mess;
@@ -209,19 +211,24 @@ PRIVATE void pm_init()
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
 		rmp->mp_parent = RS_PROC_NR;
 		rmp->mp_nice = get_nice_value(ip->priority);
+  		sigemptyset(&rmp->mp_sig2mess);
+  		sigemptyset(&rmp->mp_ignore);	
+  		sigemptyset(&rmp->mp_sigmask);
+  		sigemptyset(&rmp->mp_catch);
 		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
   			rmp->mp_pid = INIT_PID;
 			rmp->mp_flags |= IN_USE; 
-  		        sigemptyset(&rmp->mp_ignore);	
 		}
 		else {					/* system process */
   			rmp->mp_pid = get_free_pid();
 			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
-  			sigfillset(&rmp->mp_ignore);	
+#if DEAD_CODE
+  			for (sig_ptr = mess_sigs; 
+				sig_ptr < mess_sigs+sizeof(mess_sigs); 
+				sig_ptr++)
+			sigaddset(&rmp->mp_sig2mess, *sig_ptr);
+#endif
 		}
-  		sigemptyset(&rmp->mp_sigmask);
-  		sigemptyset(&rmp->mp_catch);
-  		sigemptyset(&rmp->mp_sig2mess);
 
   		/* Get memory map for this process from the kernel. */
 		if ((s=get_mem_map(ip->proc_nr, rmp->mp_seg)) != OK)
@@ -241,9 +248,11 @@ PRIVATE void pm_init()
   }
   printf(".\n");				/* last process done */
 
-  /* Override some details. PM is somewhat special. */
-  mproc[PM_PROC_NR].mp_pid = PM_PID;		/* magically override pid */
-  mproc[PM_PROC_NR].mp_parent = PM_PROC_NR;	/* PM doesn't have parent */
+  /* Override some details. INIT, PM, FS and RS are somewhat special. */
+  mproc[PM_PROC_NR].mp_pid = PM_PID;		/* PM has magic pid */
+  mproc[RS_PROC_NR].mp_parent = INIT_PROC_NR;	/* INIT is root */
+  sigfillset(&mproc[PM_PROC_NR].mp_ignore); 	/* guard against signals */
+  sigfillset(&mproc[FS_PROC_NR].mp_sig2mess); 	/* forward signals */
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;

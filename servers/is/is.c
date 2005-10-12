@@ -18,6 +18,7 @@ message m_in;		/* the input message itself */
 message m_out;		/* the output message used for reply */
 int who;		/* caller's proc number */
 int callnr;		/* system call number */
+int sys_panic;		/* flag to indicate system-wide panic */
 
 extern int errno;	/* error number set by system library */
 
@@ -55,11 +56,16 @@ PUBLIC int main(int argc, char **argv)
               exit_server();
           }
           continue;
+      case PANIC_DUMPS:
+	  printf("Oops ... panic in %d.  ", who);
+	  printf("Hit F-keys for debug dumps or F12 to shut down.\n");
+	  sys_panic = TRUE;			/* set flag to allow exit */
+	  continue;
       case FKEY_PRESSED:
           result = do_fkey_pressed(&m_in);
           break;
       default: 
-          report("IS","warning, got illegal request from %d\n", m_in.m_source);
+          report("IS","warning, got illegal request from:", m_in.m_source);
           result = EINVAL;
       }
 
@@ -79,7 +85,6 @@ PRIVATE void init_server(int argc, char **argv)
 /* Initialize the information service. */
   int fkeys, sfkeys;
   int i, s;
-#if DEAD_CODE
   struct sigaction sigact;
 
   /* Install signal handler. Ask PM to transform signal into message. */
@@ -88,7 +93,6 @@ PRIVATE void init_server(int argc, char **argv)
   sigact.sa_flags = 0;			/* default behaviour */
   if (sigaction(SIGTERM, &sigact, NULL) < 0) 
       report("IS","warning, sigaction() failed", errno);
-#endif
 
   /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6. */
   fkeys = sfkeys = 0;

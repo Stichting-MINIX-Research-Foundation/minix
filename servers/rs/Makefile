@@ -17,7 +17,7 @@ UTIL_LIBS = -lsys
 LIBS = -lsys -lsysutil 
 
 UTIL_OBJ = service.o
-OBJ = rs.o manager.o 
+OBJ = main.o manager.o 
 
 # build local binary
 all build:	$(SERVER) $(UTIL)

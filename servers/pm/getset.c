@@ -38,6 +38,8 @@ PUBLIC int do_getset()
 	case GETPID:
 		r = mproc[who].mp_pid;
 		rmp->mp_reply.reply_res2 = mproc[rmp->mp_parent].mp_pid;
+		if (m_in.procnr >= 0 && m_in.procnr < NR_PROCS) 
+			rmp->mp_reply.reply_res3 = mproc[m_in.procnr].mp_pid;
 		break;
 
 	case SETUID:
