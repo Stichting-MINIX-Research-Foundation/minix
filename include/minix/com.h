@@ -385,15 +385,13 @@
 
 #define SRV_UP		(SRV_RQ_BASE + 0)	/* start system service */
 #define SRV_DOWN	(SRV_RQ_BASE + 1)	/* stop system service */
-#define SRV_STATUS	(SRV_RQ_BASE + 2)	/* get service status */
+#define SRV_SHUTDOWN	(SRV_RQ_BASE + 2)	/* alert about shutdown */
 
-#  define SRV_PATH_ADDR		m1_p1		/* path of binary */
-#  define SRV_PATH_LEN		m1_i1		/* length of binary */
-#  define SRV_ARGS_ADDR         m1_p2		/* arguments to be passed */
-#  define SRV_ARGS_LEN          m1_i2		/* length of arguments */
+#  define SRV_CMD_ADDR		m1_p1		/* command string */
+#  define SRV_CMD_LEN		m1_i1		/* length of command */
+#  define SRV_PID		m1_i1		/* pid of system service */
+#  define SRV_PERIOD 	        m1_i2		/* heartbeat period */
 #  define SRV_DEV_MAJOR         m1_i3           /* major device number */
-#  define SRV_PRIV_ADDR         m1_p3		/* privileges string */
-#  define SRV_PRIV_LEN          m1_i3		/* length of privileges */
 
 /*===========================================================================*
  *                Miscellaneous messages used by TTY			     *
