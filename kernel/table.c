@@ -107,10 +107,7 @@ PUBLIC struct boot_image image[] = {
  { MEM_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, DRV_M, MEM_C, "memory"},
  { LOG_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, DRV_C, "log"   },
  { DRVR_PROC_NR,  0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, DRV_C, "driver"},
-#if DEAD_CODE
-  ... WARNING: replace ~0 with USR_T / USR_M
-#endif
- { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     ~0, ~0,     0, "init"  },
+ { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     USR_T, USR_M,     0, "init"  },
 };
 
 /* Verify the size of the system image table at compile time. Also verify that 

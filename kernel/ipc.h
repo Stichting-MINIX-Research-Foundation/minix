@@ -25,5 +25,6 @@
 #define CHECK_PTR       0x0B	/* 1 0 1 1 : validate message buffer */
 #define CHECK_DST       0x05	/* 0 1 0 1 : validate message destination */
 #define CHECK_SRC       0x02	/* 0 0 1 0 : validate message source */
+#define CHECK_DEADLOCK  0x03	/* 0 0 1 1 : check for deadlock */
 
 #endif /* IPC_H */

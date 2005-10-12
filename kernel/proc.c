@@ -46,15 +46,16 @@
  * interrupts to prevent race conditions. 
  */
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst,
-		message *m_ptr, unsigned flags) );
+		message *m_ptr, unsigned flags));
 FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
-		message *m_ptr, unsigned flags) );
-FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst) );
-
-FORWARD _PROTOTYPE( void enqueue, (struct proc *rp) );
-FORWARD _PROTOTYPE( void dequeue, (struct proc *rp) );
-FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front) );
-FORWARD _PROTOTYPE( void pick_proc, (void) );
+		message *m_ptr, unsigned flags));
+FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst));
+FORWARD _PROTOTYPE( int deadlock, (int function,
+		register struct proc *caller, int src_dst));
+FORWARD _PROTOTYPE( void enqueue, (struct proc *rp));
+FORWARD _PROTOTYPE( void dequeue, (struct proc *rp));
+FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
+FORWARD _PROTOTYPE( void pick_proc, (void));
 
 #define BuildMess(m_ptr, src, dst_ptr) \
 	(m_ptr)->m_source = (src); 					\
@@ -99,6 +100,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
   int function = call_nr & SYSCALL_FUNC;	/* get system call function */
   unsigned flags = call_nr & SYSCALL_FLAGS;	/* get flags */
   int mask_entry;				/* bit to check in send mask */
+  int group_size;				/* used for deadlock check */
   int result;					/* the system call's result */
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
 
@@ -150,9 +152,18 @@ message *m_ptr;			/* pointer to message in the caller's space */
    */
   if (function & CHECK_DST) {	
       if (! get_sys_bit(priv(caller_ptr)->s_ipc_to, nr_to_id(src_dst))) {
-          kprintf("sys_call: ipc mask denied %d sending to %d\n",
-          	proc_nr(caller_ptr), src_dst);
+          kprintf("sys_call: ipc mask denied trap %d from %d to %d\n",
+          	function, proc_nr(caller_ptr), src_dst);
           return(ECALLDENIED);		/* call denied by ipc mask */
+      }
+  }
+
+  /* Check for a possible deadlock for blocking SEND(REC) and RECEIVE. */
+  if (function & CHECK_DEADLOCK) {
+      if (group_size = deadlock(function, caller_ptr, src_dst)) {
+          kprintf("sys_call: trap %d from %d to %d deadlocked, group size %d\n",
+              function, proc_nr(caller_ptr), src_dst, group_size);
+          return(ELOCKED);
       }
   }
 
@@ -195,6 +206,56 @@ message *m_ptr;			/* pointer to message in the caller's space */
 }
 
 /*===========================================================================*
+ *				deadlock				     * 
+ *===========================================================================*/
+PRIVATE int deadlock(function, cp, src_dst) 
+int function;					/* trap number */
+register struct proc *cp;			/* pointer to caller */
+register int src_dst;				/* src or dst process */
+{
+/* Check for deadlock. This can happen if 'caller_ptr' and 'src_dst' have
+ * a cyclic dependency of blocking send and receive calls. The only cyclic 
+ * depency that is not fatal is if the caller and target directly SEND(REC)
+ * and RECEIVE to each other. If a deadlock is found, the group size is 
+ * returned. Otherwise zero is returned. 
+ */
+  register struct proc *xp;			/* process pointer */
+  int group_size = 1;				/* start with only caller */
+  int trap_flags;
+
+  while (src_dst != ANY) { 			/* check while process nr */
+      xp = proc_addr(src_dst);			/* follow chain of processes */
+      group_size ++;				/* extra process in group */
+
+      /* Check whether the last process in the chain has a depency. If it 
+       * has not, the cycle cannot be closed and we are done.
+       */
+      if (xp->p_rts_flags & RECEIVING) {	/* xp has dependency */
+          src_dst = xp->p_getfrom;		/* get xp's source */
+      } else if (xp->p_rts_flags & SENDING) {	/* xp has dependency */
+          src_dst = xp->p_sendto;		/* get xp's destination */
+      } else {
+	  return(0);				/* not a deadlock */
+      }
+
+      /* Now check if there is a cyclic dependency. For group sizes of two,  
+       * a combination of SEND(REC) and RECEIVE is not fatal. Larger groups
+       * or other combinations indicate a deadlock.  
+       */
+      if (src_dst == proc_nr(cp)) {		/* possible deadlock */
+	  if (group_size == 2) {		/* caller and src_dst */
+	      /* The function number is magically converted to flags. */
+	      if ((xp->p_rts_flags ^ (function << 2)) & SENDING) { 
+	          return(0);			/* not a deadlock */
+	      }
+	  }
+          return(group_size);			/* deadlock found */
+      }
+  }
+  return(0);					/* not a deadlock */
+}
+
+/*===========================================================================*
  *				mini_send				     * 
  *===========================================================================*/
 PRIVATE int mini_send(caller_ptr, dst, m_ptr, flags)
@@ -209,14 +270,6 @@ unsigned flags;				/* system call flags */
  */
   register struct proc *dst_ptr = proc_addr(dst);
   register struct proc **xpp;
-  register struct proc *xp;
-
-  /* Check for deadlock by 'caller_ptr' and 'dst' sending to each other. */
-  xp = dst_ptr;
-  while (xp->p_rts_flags & SENDING) {		/* check while sending */
-  	xp = proc_addr(xp->p_sendto);		/* get xp's destination */
-  	if (xp == caller_ptr) return(ELOCKED);	/* deadlock if cyclic */
-  }
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
