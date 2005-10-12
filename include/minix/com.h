@@ -60,6 +60,7 @@
 #  define HARD_INT	NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
 #  define NEW_KSIG	NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
 #  define FKEY_PRESSED	NOTIFY_FROM(TTY_PROC_NR)/* function key press */
+#  define DEV_PING	NOTIFY_FROM(RS_PROC_NR) /* driver liveness ping */
 
 /* Shorthands for message parameters passed with notifications. */
 #define NOTIFY_SOURCE		m_source
