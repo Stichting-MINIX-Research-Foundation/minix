@@ -68,7 +68,7 @@ HDEMU=0
 COPY=0
 CVSTAG=HEAD
 
-while getopts "rch?" c
+while getopts "r:ch?" c
 do
 	case "$c" in
 	\?)
@@ -89,6 +89,8 @@ do
 		;;
 	esac
 done
+
+echo "CVS tag: $OPTARG"
 
 ISO=${ISO}.iso
 ISOGZ=${ISO}.gz
