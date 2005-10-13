@@ -16,6 +16,8 @@
 #include <sys/svrctl.h>
 #include <sys/resource.h>
 #include <minix/com.h>
+#include <minix/config.h>
+#include <minix/type.h>
 #include <string.h>
 #include "mproc.h"
 #include "param.h"
@@ -58,7 +60,9 @@ PUBLIC int do_getsysinfo()
   vir_bytes src_addr, dst_addr;
   struct kinfo kinfo;
   size_t len;
-  int s;
+  static struct hole holes[_NR_HOLES];
+  int s, r;
+  size_t holesize;
 
   switch(m_in.info_what) {
   case SI_KINFO:			/* kernel info is obtained via PM */
@@ -75,6 +79,12 @@ PUBLIC int do_getsysinfo()
         src_addr = (vir_bytes) mproc;
         len = sizeof(struct mproc) * NR_PROCS;
         break;
+  case SI_MEM_ALLOC:
+  	holesize = sizeof(holes);
+	if((r=mem_holes_copy(holes, &holesize)) != OK) return r;
+	src_addr = (vir_bytes) holes;
+	len = holesize;
+	break;
   default:
   	return(EINVAL);
   }

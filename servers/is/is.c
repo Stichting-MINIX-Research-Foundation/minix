@@ -97,7 +97,7 @@ PRIVATE void init_server(int argc, char **argv)
   /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6. */
   fkeys = sfkeys = 0;
   for (i=1; i<=12; i++) bit_set(fkeys, i);
-  for (i=1; i<= 6; i++) bit_set(sfkeys, i);
+  for (i=1; i<= 7; i++) bit_set(sfkeys, i);
   if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
       report("IS", "warning, fkey_map failed:", s);
 }
@@ -116,7 +116,7 @@ PRIVATE void exit_server()
    */
   fkeys = sfkeys = 0;
   for (i=1; i<=12; i++) bit_set(fkeys, i);
-  for (i=1; i<= 6; i++) bit_set(sfkeys, i);
+  for (i=1; i<= 7; i++) bit_set(sfkeys, i);
   if ((s=fkey_unmap(&fkeys, &sfkeys)) != OK)
       report("IS", "warning, unfkey_map failed:", s);
 

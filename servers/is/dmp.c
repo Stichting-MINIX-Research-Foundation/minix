@@ -9,7 +9,7 @@
 
 #include "is.h"
 
-#define NHOOKS 17
+#define NHOOKS 18
 
 struct hook_entry {
 	int key;
@@ -33,6 +33,7 @@ struct hook_entry {
 	{ SF4,	dtab_dmp, "Device/Driver mapping" },
 	{ SF5,	mapping_dmp, "Print key mappings" },
 	{ SF6,	rproc_dmp, "Reincarnation server process table" },
+	{ SF7,  holes_dmp, "Memory free list" },
 };
 
 /*===========================================================================*
@@ -53,7 +54,7 @@ PUBLIC int do_fkey_pressed(message *m)
   if (OK != (s=sendrec(TTY_PROC_NR, m)))
       report("IS", "warning, sendrec to TTY failed", s);
 
-  /* Now check which keys were pressed: F1-F12. */
+  /* Now check which keys were pressed: F1-F12, SF1-SF12. */
   for(h = 0; h < NHOOKS; h++)
 	if(pressed(hooks[h].key))
 		hooks[h].function();

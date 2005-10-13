@@ -13,26 +13,25 @@
  *   free_mem:	release a previously allocated chunk of memory
  *   mem_init:	initialize the tables when PM start up
  *   max_hole:	returns the largest hole currently available
+ *   mem_holes_copy: for outsiders who want a copy of the hole-list
  */
 
 #include "pm.h"
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <minix/type.h>
+#include <minix/config.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include "mproc.h"
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
-#define NR_HOLES  (2*NR_PROCS)	/* max # entries in hole table */
 #define NIL_HOLE (struct hole *) 0
 
-PRIVATE struct hole {
-  struct hole *h_next;		/* pointer to next entry on the list */
-  phys_clicks h_base;		/* where does the hole begin? */
-  phys_clicks h_len;		/* how big is the hole? */
-} hole[NR_HOLES];
+PRIVATE struct hole hole[_NR_HOLES];
 
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
 PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
@@ -161,6 +160,7 @@ register struct hole *hp;
 	prev_ptr->h_next = hp->h_next;
 
   hp->h_next = free_slots;
+  hp->h_base = hp->h_len = 0;
   free_slots = hp;
 }
 
@@ -218,8 +218,11 @@ phys_clicks *free;		/* memory size summaries */
   register struct hole *hp;
 
   /* Put all holes on the free list. */
-  for (hp = &hole[0]; hp < &hole[NR_HOLES]; hp++) hp->h_next = hp + 1;
-  hole[NR_HOLES-1].h_next = NIL_HOLE;
+  for (hp = &hole[0]; hp < &hole[_NR_HOLES]; hp++) {
+	hp->h_next = hp + 1;
+	hp->h_base = hp->h_len = 0;
+  }
+  hole[_NR_HOLES-1].h_next = NIL_HOLE;
   hole_head = NIL_HOLE;
   free_slots = &hole[0];
 
@@ -245,6 +248,17 @@ phys_clicks *free;		/* memory size summaries */
   swap_base++;				/* make separate */
   swap_maxsize = 0 - swap_base;		/* maximum we can possibly use */
 #endif
+}
+
+/*===========================================================================*
+ *				mem_holes_copy				     *
+ *===========================================================================*/
+PUBLIC int mem_holes_copy(struct hole *holecopies, size_t *bytes)
+{
+	if(*bytes < sizeof(hole)) return ENOSPC;
+	memcpy(holecopies, hole, sizeof(hole));
+	*bytes = sizeof(hole);
+	return OK;
 }
 
 #if ENABLE_SWAP

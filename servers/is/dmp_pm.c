@@ -10,6 +10,8 @@
 #include "is.h"
 #include "../pm/mproc.h"
 #include <timers.h> 
+#include <minix/config.h> 
+#include <minix/type.h> 
 
 PUBLIC struct mproc mproc[NR_PROCS];
 
@@ -95,5 +97,41 @@ PUBLIC void sigaction_dmp()
   if (i >= NR_PROCS) i = 0;
   else printf("--more--\r");
   prev_i = i;
+}
+
+/*===========================================================================*
+ *				holes_dmp				     *
+ *===========================================================================*/
+PUBLIC void holes_dmp(void)
+{
+	static struct hole holes[_NR_HOLES];
+	int h;
+	int largest_bytes = 0, total_bytes = 0;
+
+	if(getsysinfo(PM_PROC_NR, SI_MEM_ALLOC, holes) != OK) {
+		printf("Obtaining memory hole list failed.\n");
+		return;
+	}
+	printf("Available memory stats\n");
+
+	for(h = 0; h < _NR_HOLES; h++) {
+		if(holes[h].h_base && holes[h].h_len) {
+			int bytes;
+			bytes = (holes[h].h_len << CLICK_SHIFT);
+			printf("%08lx: %6d kB\n",
+				holes[h].h_base << CLICK_SHIFT, bytes / 1024);
+			if(bytes > largest_bytes) largest_bytes = bytes;
+			total_bytes += bytes;
+		}
+	}
+	printf("\nTotal memory free: %d kB\n"
+		"Largest contiguous chunk: %d kB\n"
+		"Uncontiguous rest: %d kB (%d%% of total free)\n",
+		total_bytes/1024,
+		largest_bytes/1024,
+		(total_bytes-largest_bytes)/1024,
+		100*(total_bytes/100-largest_bytes/100)/total_bytes);
+
+	return;
 }
 
