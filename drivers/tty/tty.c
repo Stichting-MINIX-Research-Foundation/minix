@@ -285,8 +285,8 @@ PUBLIC void main(void)
 	    case DEV_SELECT:	 do_select(tp, &tty_mess);	  break;
 	    case CANCEL:	 do_cancel(tp, &tty_mess);	  break;
 	    default:		
-		printf("Warning, TTY got unexpected request %d from %d (open is %d)\n",
-			tty_mess.m_type, tty_mess.m_source, DEV_OPEN);
+		printf("Warning, TTY got unexpected request %d from %d\n",
+			tty_mess.m_type, tty_mess.m_source);
 	    tty_reply(TASK_REPLY, tty_mess.m_source,
 						tty_mess.PROC_NR, EINVAL);
 	}
