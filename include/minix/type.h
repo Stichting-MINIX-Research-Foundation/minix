@@ -47,6 +47,13 @@ struct vir_addr {
   vir_bytes offset;
 };
 
+/* Memory allocation by PM. */
+struct hole {
+  struct hole *h_next;          /* pointer to next entry on the list */
+  phys_clicks h_base;           /* where does the hole begin? */
+  phys_clicks h_len;            /* how big is the hole? */
+};
+
 #define phys_cp_req vir_cp_req 
 struct vir_cp_req {
   struct vir_addr src;

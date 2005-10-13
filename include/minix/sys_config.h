@@ -20,6 +20,7 @@
 
 #define _NR_PROCS	100
 #define _NR_SYS_PROCS	32
+#define _NR_HOLES (2*_NR_PROCS+4)  /* No. of memory holes maintained by PM */
 
 /* Set the CHIP type based on the machine selected. The symbol CHIP is actually
  * indicative of more than just the CPU.  For example, machines for which
