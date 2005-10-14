@@ -1,6 +1,6 @@
-/* This task handles the interface between the kernel and user-space system
- * processes. System services can be accessed by doing a kernel call. System
- * calls are transformed into request messages, which are handled by this
+/* This task provides an interface between the kernel and user-space system
+ * processes. System services can be accessed by doing a kernel call. Kernel
+ * calls are  transformed into request messages, which are handled by this
  * task. By convention, a sys_call() is transformed in a SYS_CALL request
  * message that is handled in a function named do_call(). 
  *
@@ -24,7 +24,7 @@
  *   Aug 04, 2005   check if kernel call is allowed  (Jorrit N. Herder)
  *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
  *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)
- *   Oct 10, 2004   dispatch kernel calls from call vector  (Jorrit N. Herder)
+ *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  */
 
@@ -87,7 +87,7 @@ PUBLIC void sys_task()
       }
 
       /* Send a reply, unless inhibited by a handler function. Use the kernel
-       * function lock_send() to prevent a kernel call trap. The destination
+       * function lock_send() to prevent a system call trap. The destination
        * is known to be blocked waiting for a message.
        */
       if (result != EDONTREPLY) {
@@ -118,7 +118,7 @@ PRIVATE void initialize(void)
   }
 
   /* Initialize the call vector to a safe default handler. Some kernel calls 
-   * may be disabled or nonexistant. Then explicitely map known calls to their
+   * may be disabled or nonexistant. Then explicitly map known calls to their
    * handler functions. This is done with a macro that gives a compile error
    * if an illegal call number is used. The ordering is not important here.
    */
@@ -261,7 +261,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * signals and makes sure the PM gets them by sending a notification. The 
  * process being signaled is blocked while PM has not finished all signals 
  * for it. 
- * Race conditions between calls to this function and the kernel calls that
+ * Race conditions between calls to this function and the system calls that
  * process pending kernel signals cannot exist. Signal related functions are
  * only called when a user process causes a CPU exception and from the kernel 
  * process level, which runs to completion.
@@ -278,36 +278,6 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
           send_sig(PM_PROC_NR, SIGKSIG);
       }
   }
-}
-
-/*===========================================================================*
- *				umap_bios				     *
- *===========================================================================*/
-PUBLIC phys_bytes umap_bios(rp, vir_addr, bytes)
-register struct proc *rp;	/* pointer to proc table entry for process */
-vir_bytes vir_addr;		/* virtual address in BIOS segment */
-vir_bytes bytes;		/* # of bytes to be copied */
-{
-/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
- * address zero (the first BIOS interrupt vector) is not considered, as an 
- * error here, but since the physical address will be zero as well, the 
- * calling function will think an error occurred. This is not a problem,
- * since no one uses the first BIOS interrupt vector.  
- */
-
-  /* Check all acceptable ranges. */
-  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
-  	return (phys_bytes) vir_addr;
-  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
-  	return (phys_bytes) vir_addr;
-
-#if DEAD_CODE	/* brutal fix, if the above is too restrictive */
-  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
-  	return (phys_bytes) vir_addr;
-#endif
-
-  kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
-  return 0;
 }
 
 /*===========================================================================*
@@ -343,7 +313,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
 	seg = (vc < rp->p_memmap[D].mem_vir + rp->p_memmap[D].mem_len ? D : S);
 #else
   if (seg != T)
-	seg = (vc < rp->p_memmap[S].mem_vir ? D : S);
+       seg = (vc < rp->p_memmap[S].mem_vir ? D : S);
 #endif
 
   if ((vir_addr>>CLICK_SHIFT) >= rp->p_memmap[seg].mem_vir + 
@@ -388,6 +358,30 @@ vir_bytes bytes;		/* # of bytes to be copied */
   if (vir_addr + bytes > fm->mem_len) return( (phys_bytes) 0);
 
   return(fm->mem_phys + (phys_bytes) vir_addr); 
+}
+
+/*===========================================================================*
+ *				umap_bios				     *
+ *===========================================================================*/
+PUBLIC phys_bytes umap_bios(rp, vir_addr, bytes)
+register struct proc *rp;	/* pointer to proc table entry for process */
+vir_bytes vir_addr;		/* virtual address in BIOS segment */
+vir_bytes bytes;		/* # of bytes to be copied */
+{
+/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
+ * address zero (the first BIOS interrupt vector) is not considered as an 
+ * error here, but since the physical address will be zero as well, the 
+ * calling function will think an error occurred. This is not a problem,
+ * since no one uses the first BIOS interrupt vector.  
+ */
+
+  /* Check all acceptable ranges. */
+  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
+  	return (phys_bytes) vir_addr;
+  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
+  	return (phys_bytes) vir_addr;
+  kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
+  return 0;
 }
 
 /*===========================================================================*
