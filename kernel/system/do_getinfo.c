@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_GETINFO
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m1_i3:	I_REQUEST	(what info to get)	
  *    m1_p1:	I_VAL_PTR 	(where to put it)	
  *    m1_i1:	I_VAL_LEN 	(maximum length expected, optional)	

@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_VIRCOPY, SYS_PHYSCOPY
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m5_c1:	CP_SRC_SPACE		source virtual segment
  *    m5_l1:	CP_SRC_ADDR		source offset within segment
  *    m5_i1:	CP_SRC_PROC_NR		source process number
@@ -24,7 +24,7 @@ register message *m_ptr;	/* pointer to request message */
 {
 /* Handle sys_vircopy() and sys_physcopy().  Copy data using virtual or
  * physical addressing. Although a single handler function is used, there 
- * are two different system calls so that permissions can be checked. 
+ * are two different kernel calls so that permissions can be checked. 
  */
   struct vir_addr vir_addr[2];	/* virtual source and destination address */
   phys_bytes bytes;		/* number of bytes to copy */

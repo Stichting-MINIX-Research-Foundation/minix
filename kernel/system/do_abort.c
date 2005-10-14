@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_ABORT
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m1_i1:	ABRT_HOW 	(how to abort, possibly fetch monitor params)	
  *    m1_i2:	ABRT_MON_PROC 	(proc nr to get monitor params from)	
  *    m1_i3:	ABRT_MON_LEN	(length of monitor params)

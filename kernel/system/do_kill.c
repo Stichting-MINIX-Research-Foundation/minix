@@ -1,7 +1,7 @@
-/* The system call that is implemented in this file:
+/* The kernel call that is implemented in this file:
  *   m_type:	SYS_KILL
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *     m2_i1:	SIG_PROC  	# process to signal/ pending		
  *     m2_i2:	SIG_NUMBER	# signal number to send to process
  */

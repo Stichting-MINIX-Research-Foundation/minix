@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_MEMSET
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m2_p1:	MEM_PTR		(virtual address)	
  *    m2_l1:	MEM_COUNT	(returns physical address)	
  *    m2_l2:	MEM_PATTERN	(size of datastructure) 	

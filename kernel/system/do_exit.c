@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_EXIT
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m1_i1:	PR_PROC_NR		(slot number of exiting process)
  */
 

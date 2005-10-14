@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_IRQCTL
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m5_c1:	IRQ_REQUEST	(control operation to perform)	
  *    m5_c2:	IRQ_VECTOR	(irq line that must be controlled)
  *    m5_i1:	IRQ_POLICY	(irq policy allows reenabling interrupts)

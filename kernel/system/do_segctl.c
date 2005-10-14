@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_SEGCTL
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m4_l3:	SEG_PHYS	(physical base address)
  *    m4_l4:	SEG_SIZE	(size of segment)
  *    m4_l1:	SEG_SELECT	(return segment selector here)

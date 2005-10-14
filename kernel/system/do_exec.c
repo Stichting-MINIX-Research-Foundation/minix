@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_EXEC
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m1_i1:	PR_PROC_NR		(process that did exec call)
  *    m1_p1:	PR_STACK_PTR		(new stack pointer)
  *    m1_p2:	PR_NAME_PTR		(pointer to program name)

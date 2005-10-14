@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_TRACE
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m2_i1:	CTL_PROC_NR	process that is traced
  *    m2_i2:    CTL_REQUEST	trace request
  *    m2_l1:    CTL_ADDRESS     address at traced process' space

@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_SETALARM 
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m2_l1:	ALRM_EXP_TIME		(alarm's expiration time)
  *    m2_i2:	ALRM_ABS_TIME		(expiration time is absolute?)
  *    m2_l1:	ALRM_TIME_LEFT		(return seconds left of previous)
