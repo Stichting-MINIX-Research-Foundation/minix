@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_INT86
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m1_p1:	INT86_REG86     
  */
 

@@ -1,7 +1,7 @@
-/* The system call that is implemented in this file:
+/* The kernel call that is implemented in this file:
  *   m_type:	SYS_ENDKSIG
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *     m2_i1:	SIG_PROC  	# process for which PM is done
  */
 

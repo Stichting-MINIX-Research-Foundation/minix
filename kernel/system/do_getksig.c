@@ -1,7 +1,7 @@
-/* The system call that is implemented in this file:
+/* The kernel call that is implemented in this file:
  *   m_type:	SYS_GETKSIG
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *     m2_i1:	SIG_PROC  	# process with pending signals
  *     m2_l1:	SIG_MAP		# bit map with pending signals
  */
@@ -18,7 +18,7 @@
 PUBLIC int do_getksig(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-/* PM is ready to accept signals and repeatedly does a system call to get 
+/* PM is ready to accept signals and repeatedly does a kernel call to get 
  * one. Find a process with pending signals. If no signals are available, 
  * return NONE in the process number field.
  * It is not sufficient to ready the process when PM is informed, because 

@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_UMAP
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m5_i1:	CP_SRC_PROC_NR	(process number)	
  *    m5_c1:	CP_SRC_SPACE	(segment where address is: T, D, or S)
  *    m5_l1:	CP_SRC_ADDR	(virtual address)	

@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_VIRVCOPY, SYS_PHYSVCOPY 
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m1_i3:	VCP_VEC_SIZE		size of copy request vector 
  *    m1_p1:	VCP_VEC_ADDR		address of vector at caller 
  *    m1_i2:	VCP_NR_OK		number of successfull copies	
@@ -23,7 +23,7 @@ register message *m_ptr;	/* pointer to request message */
 {
 /* Handle sys_virvcopy() and sys_physvcopy() that pass a vector with copy
  * requests. Although a single handler function is used, there are two
- * different system calls so that permissions can be checked.
+ * different kernel calls so that permissions can be checked.
  */
   int nr_req;
   int caller_pid;

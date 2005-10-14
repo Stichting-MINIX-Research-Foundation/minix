@@ -1,4 +1,4 @@
-/* This file provides a catch-all handler for unused system calls. A system 
+/* This file provides a catch-all handler for unused kernel calls. A kernel 
  * call may be unused when it is not defined or when it is disabled in the
  * kernel's configuration.
  */
