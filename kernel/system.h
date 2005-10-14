@@ -2,7 +2,7 @@
  * are undefined to do_unused if the kernel call is not enabled in config.h. 
  * The implementation is contained in src/kernel/system/.  
  *
- * The system library allows to access system services by doing a system call.
+ * The system library allows to access system services by doing a kernel call.
  * System calls are transformed into request messages to the SYS task that is 
  * responsible for handling the call. By convention, sys_call() is transformed 
  * into a message with type SYS_CALL that is handled in a function do_call(). 
@@ -11,7 +11,7 @@
  *   Jul 30, 2005   created SYS_INT86 to support BIOS driver  (Philip Homburg) 
  *   Jul 13, 2005   created SYS_PRIVCTL to manage services  (Jorrit N. Herder) 
  *   Jul 09, 2005   updated SYS_KILL to signal services  (Jorrit N. Herder) 
- *   Jun 21, 2005   created SYS_NICE for nice(2) system call  (Ben J. Gras)
+ *   Jun 21, 2005   created SYS_NICE for nice(2) kernel call  (Ben J. Gras)
  *   Jun 21, 2005   created SYS_MEMSET to speed up exec(2)  (Ben J. Gras)
  *   Apr 12, 2005   updated SYS_VCOPY for virtual_copy()  (Jorrit N. Herder)
  *   Jan 20, 2005   updated SYS_COPY for virtual_copy()  (Jorrit N. Herder)

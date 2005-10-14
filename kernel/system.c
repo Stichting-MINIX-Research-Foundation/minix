@@ -21,7 +21,7 @@
  *   get_randomness:	accumulate randomness in a buffer
  *
  * Changes:
- *   Aug 04, 2005   check if kernel call is allowed  (Jorrit N. Herder)
+ *   Aug 04, 2005   check if system call is allowed  (Jorrit N. Herder)
  *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
  *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)
  *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
@@ -84,7 +84,7 @@ PUBLIC void sys_task()
 	  result = EBADREQUEST;			/* illegal message type */
       } 
       else {
-          result = (*call_vec[call_nr])(&m);	/* handle the kernel call */
+          result = (*call_vec[call_nr])(&m);	/* handle the system call */
       }
 
       /* Send a reply, unless inhibited by a handler function. Use the kernel
