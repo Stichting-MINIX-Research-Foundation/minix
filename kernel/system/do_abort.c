@@ -19,8 +19,8 @@
 PUBLIC int do_abort(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-/* Handle sys_abort. MINIX is unable to continue. This can originate in the
- * PM (normal abort or panic) or FS (panic), or TTY (after CTRL-ALT-DEL). 
+/* Handle sys_abort. MINIX is unable to continue. This can originate e.g.
+ * in the PM (normal abort or panic) or TTY (after CTRL-ALT-DEL).
  */
   int how = m_ptr->ABRT_HOW;
   int proc_nr;

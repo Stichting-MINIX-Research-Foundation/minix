@@ -1,10 +1,10 @@
 /* This task handles the interface between the kernel and user-space system
- * processes. System services can be accessed by doing a system call. System
+ * processes. System services can be accessed by doing a kernel call. System
  * calls are transformed into request messages, which are handled by this
  * task. By convention, a sys_call() is transformed in a SYS_CALL request
  * message that is handled in a function named do_call(). 
  *
- * A private call vector is used to map all system calls to the functions that
+ * A private call vector is used to map all kernel calls to the functions that
  * handle them. The actual handler functions are contained in separate files
  * to keep this file clean. The call vector is used in the system task's main
  * loop to handle all incoming requests.  
@@ -24,7 +24,7 @@
  *   Aug 04, 2005   check if kernel call is allowed  (Jorrit N. Herder)
  *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
  *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)
- *   Oct 10, 2004   dispatch system calls from call vector  (Jorrit N. Herder)
+ *   Oct 10, 2004   dispatch kernel calls from call vector  (Jorrit N. Herder)
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  */
 
@@ -39,9 +39,9 @@
 #include "protect.h"
 #endif
 
-/* Declaration of the call vector that defines the mapping of system calls 
+/* Declaration of the call vector that defines the mapping of kernel calls 
  * to handler functions. The vector is initialized in sys_init() with map(), 
- * which makes sure the system call numbers are ok. No space is allocated, 
+ * which makes sure the kernel call numbers are ok. No space is allocated, 
  * because the dummy is declared extern. If an illegal call is given, the 
  * array size will be negative and this won't compile. 
  */
@@ -87,7 +87,7 @@ PUBLIC void sys_task()
       }
 
       /* Send a reply, unless inhibited by a handler function. Use the kernel
-       * function lock_send() to prevent a system call trap. The destination
+       * function lock_send() to prevent a kernel call trap. The destination
        * is known to be blocked waiting for a message.
        */
       if (result != EDONTREPLY) {
@@ -117,7 +117,7 @@ PRIVATE void initialize(void)
     tmr_inittimer(&(sp->s_alarm_timer));
   }
 
-  /* Initialize the call vector to a safe default handler. Some system calls 
+  /* Initialize the call vector to a safe default handler. Some kernel calls 
    * may be disabled or nonexistant. Then explicitely map known calls to their
    * handler functions. This is done with a macro that gives a compile error
    * if an illegal call number is used. The ordering is not important here.
@@ -261,7 +261,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * signals and makes sure the PM gets them by sending a notification. The 
  * process being signaled is blocked while PM has not finished all signals 
  * for it. 
- * Race conditions between calls to this function and the system calls that
+ * Race conditions between calls to this function and the kernel calls that
  * process pending kernel signals cannot exist. Signal related functions are
  * only called when a user process causes a CPU exception and from the kernel 
  * process level, which runs to completion.
