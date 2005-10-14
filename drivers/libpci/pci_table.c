@@ -264,6 +264,7 @@ struct pci_isabridge pci_isabridge[]=
  	{ 0x8086, 0x7100, 1, PCI_IB_PIIX,	},	/* Intel 82371AB (asw 2004-07-31) */
  	{ 0x8086, 0x7110, 1, PCI_IB_PIIX,	},	/* Intel PIIX4 */
  	{ 0x8086, 0x7124, 1, PCI_IB_PIIX,	},	/* Intel 82801AA (asw 2004-11-09) */
+	{ 0x8086, 0x2641, 1, PCI_IB_PIIX,	},
 	{ 0x0000, 0x0000, 0, 0, 		},
 };
 
