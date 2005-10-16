@@ -34,13 +34,10 @@ all: small big
 install: biginstall smallinstall
 
 small::
-	-mkdir $(NVIWORK)
 	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && $(MAKE) all
-	cd $(NVI) && make all
 
 smallinstall:: small
 	cd $(GZIP) && $(MAKE) install 
-	cd $(NVI) && make install
 
 big:
 	cd $(FLEX) && /bin/sh makeme.sh 
@@ -50,6 +47,8 @@ big:
 	cd $(COREUTILS) && /bin/sh makeme.sh
 	cd $(EMACS) && /bin/sh makeme.sh
 	cd $(PYTHON) && /bin/sh makeme.sh 
+	-mkdir $(NVIWORK)
+	cd $(NVI) && make all
 
 biginstall: big
 	cd $(FLEX) && make install
@@ -59,6 +58,7 @@ biginstall: big
 	cd $(LYNX) && make install
 	cd $(EMACS) && make install
 	cd $(COREUTILS) && make install
+	cd $(NVI) && make install
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
