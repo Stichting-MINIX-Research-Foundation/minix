@@ -120,7 +120,7 @@ PUBLIC int do_getprocnr()
  		return(s);
  	search_key[key_len] = '\0';	/* terminate for safety */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if ((rmp->mp_flags & IN_USE) && 
+		if (((rmp->mp_flags & (IN_USE | ZOMBIE)) == IN_USE) && 
 			strncmp(rmp->mp_name, search_key, key_len)==0) {
   			mp->mp_reply.procnr = (int) (rmp - mproc);
   			return(OK);
