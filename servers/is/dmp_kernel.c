@@ -474,7 +474,7 @@ PUBLIC void proctab_dmp()
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
-	printf(" %-8.8s %02u/%02u %02u/%02u %6lu%6lu %6uK%6uK%6uK %s",
+	printf(" %-8.8s %02u/%02u %02d/%02u %6lu%6lu %6uK%6uK%6uK %s",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 
