@@ -436,26 +436,38 @@ message *m_ptr;			/* pointer to the request message */
       result = OK;			/* assume everything will be ok*/
       for (i=0; i < 12; i++) {		/* check F1-F12 keys */
           if (bit_isset(m_ptr->FKEY_FKEYS, i+1) ) {
+#if DEAD_CODE
+	/* Currently, we don't check if the slot is in use, so that IS
+	 * can recover after a crash by overtaking its existing mappings.
+	 * In future, a better solution will be implemented.
+	 */
               if (fkey_obs[i].proc_nr == NONE) { 
+#endif
     	          fkey_obs[i].proc_nr = m_ptr->m_source;
     	          fkey_obs[i].events = 0;
     	          bit_unset(m_ptr->FKEY_FKEYS, i+1);
+#if DEAD_CODE
     	      } else {
     	          printf("WARNING, fkey_map failed F%d\n", i+1);
     	          result = EBUSY;	/* report failure, but try rest */
     	      }
+#endif
     	  }
       }
       for (i=0; i < 12; i++) {		/* check Shift+F1-F12 keys */
           if (bit_isset(m_ptr->FKEY_SFKEYS, i+1) ) {
+#if DEAD_CODE
               if (sfkey_obs[i].proc_nr == NONE) { 
+#endif
     	          sfkey_obs[i].proc_nr = m_ptr->m_source;
     	          sfkey_obs[i].events = 0;
     	          bit_unset(m_ptr->FKEY_SFKEYS, i+1);
+#if DEAD_CODE
     	      } else {
     	          printf("WARNING, fkey_map failed Shift F%d\n", i+1);
     	          result = EBUSY;	/* report failure but try rest */
     	      }
+#endif
     	  }
       }
       break;
