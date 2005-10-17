@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "sysutil.h"
 
 /*===========================================================================*
@@ -13,6 +15,7 @@ int num;			/* number to go with format string */
  * value of a defined constant.
  */
   message m;
+  void (*suicide)(void);
   if (NULL != who && NULL != mess) {
       if (num != NO_NUM) {
           printf("Panic in %s: %s: %d\n", who, mess, num); 
@@ -21,8 +24,16 @@ int num;			/* number to go with format string */
       }
   }
 
-  m.PR_PROC_NR = SELF;
-  _taskcall(SYSTASK, SYS_EXIT, &m);
-  /* never reached */
+  /* Exit nicely through PM. */
+  exit(1);
+
+  /* If exiting nicely through PM fails for some reason, try to
+   * commit suicide. E.g., message to PM might fail due to deadlock.
+   */
+  suicide = (void (*)(void)) -1;
+  suicide();
+
+  /* If committing suicide fails for some reason, hang. */
+  for(;;) { }
 }
 
