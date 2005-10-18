@@ -104,33 +104,36 @@ PUBLIC void sigaction_dmp()
  *===========================================================================*/
 PUBLIC void holes_dmp(void)
 {
-	static struct hole holes[_NR_HOLES];
+	static struct pm_mem_info pmi;
 	int h;
 	int largest_bytes = 0, total_bytes = 0;
 
-	if(getsysinfo(PM_PROC_NR, SI_MEM_ALLOC, holes) != OK) {
+	if(getsysinfo(PM_PROC_NR, SI_MEM_ALLOC, &pmi) != OK) {
 		printf("Obtaining memory hole list failed.\n");
 		return;
 	}
 	printf("Available memory stats\n");
 
 	for(h = 0; h < _NR_HOLES; h++) {
-		if(holes[h].h_base && holes[h].h_len) {
+		if(pmi.pmi_holes[h].h_base && pmi.pmi_holes[h].h_len) {
 			int bytes;
-			bytes = (holes[h].h_len << CLICK_SHIFT);
+			bytes = (pmi.pmi_holes[h].h_len << CLICK_SHIFT);
 			printf("%08lx: %6d kB\n",
-				holes[h].h_base << CLICK_SHIFT, bytes / 1024);
+				pmi.pmi_holes[h].h_base << CLICK_SHIFT, bytes / 1024);
 			if(bytes > largest_bytes) largest_bytes = bytes;
 			total_bytes += bytes;
 		}
 	}
-	printf("\nTotal memory free: %d kB\n"
-		"Largest contiguous chunk: %d kB\n"
-		"Uncontiguous rest: %d kB (%d%% of total free)\n",
+	printf("\n"
+		"Total memory free:     %7d kB\n"
+		"Largest chunk:         %7d kB\n"
+		"Uncontiguous rest:     %7d kB (%d%% of total free)\n"
+		"Memory high watermark: %7d kB\n",
 		total_bytes/1024,
 		largest_bytes/1024,
 		(total_bytes-largest_bytes)/1024,
-		100*(total_bytes/100-largest_bytes/100)/total_bytes);
+		100*(total_bytes/100-largest_bytes/100)/total_bytes,
+		(pmi.pmi_hi_watermark/1024 << CLICK_SHIFT));
 
 	return;
 }

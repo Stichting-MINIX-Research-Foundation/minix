@@ -20,7 +20,7 @@ _PROTOTYPE( void swap_inqueue, (struct mproc *rmp)			);
 #define swap_in()			((void)0)
 #define swap_inqueue(rmp)		((void)0)
 #endif /* !SWAP */
-_PROTOTYPE(int mem_holes_copy, (struct hole *, size_t *)		);
+_PROTOTYPE(int mem_holes_copy, (struct hole *, size_t *, u32_t *)	);
 
 /* break.c */
 _PROTOTYPE( int adjust, (struct mproc *rmp,

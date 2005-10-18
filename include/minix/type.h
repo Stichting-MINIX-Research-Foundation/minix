@@ -54,6 +54,12 @@ struct hole {
   phys_clicks h_len;            /* how big is the hole? */
 };
 
+/* Memory info from PM. */
+struct pm_mem_info {
+	struct hole pmi_holes[_NR_HOLES];/* memory (un)allocations */
+	u32_t pmi_hi_watermark;		 /* highest ever-used click + 1 */
+};
+
 #define phys_cp_req vir_cp_req 
 struct vir_cp_req {
   struct vir_addr src;

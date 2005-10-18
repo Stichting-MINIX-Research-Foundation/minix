@@ -60,7 +60,7 @@ PUBLIC int do_getsysinfo()
   vir_bytes src_addr, dst_addr;
   struct kinfo kinfo;
   size_t len;
-  static struct hole holes[_NR_HOLES];
+  static struct pm_mem_info pmi;
   int s, r;
   size_t holesize;
 
@@ -80,10 +80,12 @@ PUBLIC int do_getsysinfo()
         len = sizeof(struct mproc) * NR_PROCS;
         break;
   case SI_MEM_ALLOC:
-  	holesize = sizeof(holes);
-	if((r=mem_holes_copy(holes, &holesize)) != OK) return r;
-	src_addr = (vir_bytes) holes;
-	len = holesize;
+  	holesize = sizeof(pmi.pmi_holes);
+	if((r=mem_holes_copy(pmi.pmi_holes, &holesize,
+	   &pmi.pmi_hi_watermark)) != OK)
+		return r;
+	src_addr = (vir_bytes) &pmi;
+	len = sizeof(pmi);
 	break;
   default:
   	return(EINVAL);

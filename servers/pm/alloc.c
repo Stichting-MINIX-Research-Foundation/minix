@@ -32,6 +32,7 @@
 #define NIL_HOLE (struct hole *) 0
 
 PRIVATE struct hole hole[_NR_HOLES];
+PRIVATE u32_t high_watermark = 0;
 
 PRIVATE struct hole *hole_head;	/* pointer to first hole */
 PRIVATE struct hole *free_slots;/* ptr to list of unused table slots */
@@ -78,6 +79,10 @@ phys_clicks clicks;		/* amount of memory requested */
 			old_base = hp->h_base;	/* remember where it started */
 			hp->h_base += clicks;	/* bite a piece off */
 			hp->h_len -= clicks;	/* ditto */
+
+			/* Remember new high watermark of used memory. */
+			if(hp->h_base > high_watermark)
+				high_watermark = hp->h_base;
 
 			/* Delete the hole if used up completely. */
 			if (hp->h_len == 0) del_slot(prev_ptr, hp);
@@ -253,11 +258,12 @@ phys_clicks *free;		/* memory size summaries */
 /*===========================================================================*
  *				mem_holes_copy				     *
  *===========================================================================*/
-PUBLIC int mem_holes_copy(struct hole *holecopies, size_t *bytes)
+PUBLIC int mem_holes_copy(struct hole *holecopies, size_t *bytes, u32_t *hi)
 {
 	if(*bytes < sizeof(hole)) return ENOSPC;
 	memcpy(holecopies, hole, sizeof(hole));
 	*bytes = sizeof(hole);
+	*hi = high_watermark;
 	return OK;
 }
 
