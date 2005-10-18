@@ -13,4 +13,4 @@ install::
 	cpdir . $(INC)
 	@chown -R bin $(INC)
 	@rm -f $(INC)/Makefile
-#	if [ -f $(MKHEADERS) ] ; then sh $(MKHEADERS) ; fi
+	if [ -f $(MKHEADERS) ] ; then sh $(MKHEADERS) ; fi
