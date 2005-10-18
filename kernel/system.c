@@ -77,10 +77,14 @@ PUBLIC void sys_task()
       /* See if the caller made a valid request and try to handle it. */
       if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr)) &&
 	  m.m_type != SYS_IOPENABLE ) {
+#if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("SYSTEM: request %d from %d denied.\n", call_nr,m.m_source);
+#endif
 	  result = ECALLDENIED;			/* illegal message type */
       } else if (call_nr >= NR_SYS_CALLS) {		/* check call number */
+#if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("SYSTEM: illegal request %d from %d.\n", call_nr,m.m_source);
+#endif
 	  result = EBADREQUEST;			/* illegal message type */
       } 
       else {

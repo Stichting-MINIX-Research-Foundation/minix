@@ -18,6 +18,17 @@
 #define TIMING_CATEGORIES	20
 #define TIMING_NAME		10
 
+/* Enable prints such as
+ *  . send/receive failed due to deadlock or dead source or dead destination
+ *  . trap not allowed
+ *  . bogus message pointer
+ *  . kernel call number not allowed by this process
+ *
+ * Of course the call still fails, but nothing is printed if these warnings
+ * are disabled.
+ */
+#define DEBUG_ENABLE_IPC_WARNINGS	0
+
 /* Definition of the data structure to store lock() timing data. */ 
 struct lock_timingdata {
 	char names[TIMING_NAME];

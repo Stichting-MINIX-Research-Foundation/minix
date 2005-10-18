@@ -111,21 +111,27 @@ message *m_ptr;			/* pointer to message in the caller's space */
   if (! (priv(caller_ptr)->s_trap_mask & (1 << function)) || 
           (iskerneln(src_dst) && function != SENDREC
            && function != RECEIVE)) { 
+#if DEBUG_ENABLE_IPC_WARNINGS
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           function, proc_nr(caller_ptr), src_dst);
+#endif
       return(ECALLDENIED);		/* trap denied by mask or kernel */
   }
   
   /* Require a valid source and/ or destination process, unless echoing. */
   if (src_dst != ANY && function != ECHO) {
       if (! isokprocn(src_dst)) { 
+#if DEBUG_ENABLE_IPC_WARNINGS
           kprintf("sys_call: invalid src_dst, src_dst %d, caller %d\n", 
               src_dst, proc_nr(caller_ptr));
+#endif
           return(EBADSRCDST);		/* invalid process number */
       }
       if (isemptyn(src_dst)) {
+#if DEBUG_ENABLE_IPC_WARNINGS
           kprintf("sys_call: dead src_dst; trap %d, from %d, to %d\n", 
               function, proc_nr(caller_ptr), src_dst);
+#endif
 	  return(EDEADSRCDST);
       }
   }
@@ -141,8 +147,10 @@ message *m_ptr;			/* pointer to message in the caller's space */
       if (vlo < caller_ptr->p_memmap[D].mem_vir || vlo > vhi ||
               vhi >= caller_ptr->p_memmap[S].mem_vir + 
               caller_ptr->p_memmap[S].mem_len) {
+#if DEBUG_ENABLE_IPC_WARNINGS
           kprintf("sys_call: invalid message pointer, trap %d, caller %d\n",
           	function, proc_nr(caller_ptr));
+#endif
           return(EFAULT); 		/* invalid message pointer */
       }
   }
@@ -152,8 +160,10 @@ message *m_ptr;			/* pointer to message in the caller's space */
    */
   if (function & CHECK_DST) {	
       if (! get_sys_bit(priv(caller_ptr)->s_ipc_to, nr_to_id(src_dst))) {
+#if DEBUG_ENABLE_IPC_WARNINGS
           kprintf("sys_call: ipc mask denied trap %d from %d to %d\n",
           	function, proc_nr(caller_ptr), src_dst);
+#endif
           return(ECALLDENIED);		/* call denied by ipc mask */
       }
   }
@@ -161,8 +171,10 @@ message *m_ptr;			/* pointer to message in the caller's space */
   /* Check for a possible deadlock for blocking SEND(REC) and RECEIVE. */
   if (function & CHECK_DEADLOCK) {
       if (group_size = deadlock(function, caller_ptr, src_dst)) {
+#if DEBUG_ENABLE_IPC_WARNINGS
           kprintf("sys_call: trap %d from %d to %d deadlocked, group size %d\n",
               function, proc_nr(caller_ptr), src_dst, group_size);
+#endif
           return(ELOCKED);
       }
   }
