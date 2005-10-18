@@ -63,7 +63,7 @@ This CD contains:
    - LISTING.PS	     Appendix B in PostScript
    - LISTING.PDF     Appendix B in PDF
    - INDEX.TXT	     Index of files
-   - BOOKSRC.TAR     UNIX tar file of the files listed in the book
+   - BOOKSRC.TGZ     gzipped UNIX tar file of the files listed in the book
                      plus modified Makefiles and additional files to
                      compile the book subset of Minix.
 
