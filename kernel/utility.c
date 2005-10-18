@@ -139,7 +139,10 @@ int c;					/* character to append */
           kmess.km_size += 1;		
       kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
   } else {
-      send_sig(OUTPUT_PROC_NR, SIGKMESS);
+      int p, outprocs[] = OUTPUT_PROCS_ARRAY;
+      for(p = 0; outprocs[p] != NONE; p++) {
+         send_sig(outprocs[p], SIGKMESS);
+      }
   }
 }
 

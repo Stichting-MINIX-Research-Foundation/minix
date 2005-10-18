@@ -91,7 +91,6 @@ PUBLIC int do_diagnostics(message *m)
  * user. It also saves a copy in a local buffer so that messages can be 
  * reviewed at a later time.
  */
-  int result;
   int proc_nr; 
   vir_bytes src;
   int count;
@@ -99,13 +98,9 @@ PUBLIC int do_diagnostics(message *m)
   int i = 0;
   static char diagbuf[10240];
 
-  /* Forward the message to the TTY driver. Inform the TTY driver about the
-   * original sender, so that it knows where the buffer to be printed is.
-   * The message type, DIAGNOSTICS, remains the same.
-   */ 
+  /* Change SELF to actual process number. */
   if ((proc_nr = m->DIAG_PROC_NR) == SELF)
       m->DIAG_PROC_NR = proc_nr = m->m_source;
-  result = _sendrec(TTY_PROC_NR, m);
 
   /* Now also make a copy for the private buffer at the LOG server, so
    * that the messages can be reviewed at a later time.
@@ -121,5 +116,5 @@ PUBLIC int do_diagnostics(message *m)
   }
   log_append(diagbuf, i);
 
-  return result;
+  return OK;
 }

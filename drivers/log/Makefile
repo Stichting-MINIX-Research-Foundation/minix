@@ -29,8 +29,8 @@ $(LIBDRIVER):
 	cd $d/libdriver && $(MAKE) 
 
 # install with other drivers
-install:	/usr/sbin/$(DRIVER)
-/usr/sbin/$(DRIVER):	$(DRIVER)
+install:	/sbin/$(DRIVER)
+/sbin/$(DRIVER):	$(DRIVER)
 	install -o root -cs $? $@
 
 # clean up local files

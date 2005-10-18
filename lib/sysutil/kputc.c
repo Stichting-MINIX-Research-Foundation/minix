@@ -21,13 +21,17 @@ int c;
   message m;
 
   if ((c == 0 && buf_count > 0) || buf_count == sizeof(print_buf)) {
+	int procs[] = OUTPUT_PROCS_ARRAY;
+	int p;
 
-	/* Send the buffer to the OUTPUT_PROC_NR driver. */
-	m.DIAG_BUF_COUNT = buf_count;
-	m.DIAG_PRINT_BUF = print_buf;
-	m.DIAG_PROC_NR = SELF;
-	m.m_type = DIAGNOSTICS;
-	(void) _sendrec(OUTPUT_PROC_NR, &m);
+	for(p = 0; procs[p] != NONE; p++) {
+		/* Send the buffer to this output driver. */
+		m.DIAG_BUF_COUNT = buf_count;
+		m.DIAG_PRINT_BUF = print_buf;
+		m.DIAG_PROC_NR = SELF;
+		m.m_type = DIAGNOSTICS;
+		(void) _sendrec(procs[p], &m);
+	}
 	buf_count = 0;
 
 	/* If the output fails, e.g., due to an ELOCKED, do not retry output
