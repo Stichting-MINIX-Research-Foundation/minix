@@ -222,7 +222,6 @@ unsigned nr_req;		/* length of request vector */
   int accumulated_read = 0;
   struct logdevice *log;
   static int f;
-  if(f++ > 100) exit(0);
 
   if(log_device < 0 || log_device >= NR_DEVS)
   	return EIO;
