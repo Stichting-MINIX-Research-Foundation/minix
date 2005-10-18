@@ -13,16 +13,10 @@
 #	echo "int __dummy__;" > $@
 #
 
-# Makefile for lib/dummy.
+all:	../libm.a
 
-# Make a dummy libm library so that -lm works.
-
-
-LIBRARIES=libm
-
-libm_OBJECTS=dummy.o
-
-include ../Makefile.inc
-
-dummy.c:
-	echo "int __dummy__;" > $@
+../libm.a:
+	echo "int __dummy__;" >dummy.c
+	$(CC) -c dummy.c
+	aal cr $@ dummy.o
+	rm dummy.?
