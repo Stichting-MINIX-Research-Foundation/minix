@@ -6,8 +6,8 @@ Operating Systems Design and Implementation, 3rd Edition
 by Andrew S. Tanenbaum and Albert S. Woodhull
 Text ISBN: 0-13-142938-8
 CD ISBN:   0-13-142987-6
-   Copyright 2006, 1997, 1987 Pearson Education, Inc.
-   MINIX 3 Copyright 2006, 1997, 1987 Vrije Universiteit
+   MINIX 3 Copyright 2006, 1997, 1987, Vrije Universiteit, Amsterdam, The Netherlands
+   CD-ROM  Copyright 2006, 1997, 1987, Pearson Education, Inc., Upper Saddle River, NJ
 All rights reserved.
 
 ------------------------------------------------------------------------
@@ -63,7 +63,7 @@ This CD contains:
    - LISTING.PS	     Appendix B in PostScript
    - LISTING.PDF     Appendix B in PDF
    - INDEX.TXT	     Index of files
-
+   - SYSTEM.TAR      UNIX tar file of the files listed in the book
 
 There are also many invisible files used for installing MINIX 3.
 
