@@ -246,7 +246,7 @@ ccl:
 				p++;
 			}
 			p++;
-			if (found == negate)
+			if (found == negate || c == 0)
 				goto bad;
 			break;
 		case RE_LP:
