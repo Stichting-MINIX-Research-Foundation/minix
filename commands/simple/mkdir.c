@@ -192,12 +192,14 @@ char **argv;
 int makepath(fordir)
 char *fordir;
 {
-  char parent[PATH_MAX + 1], *end;
+  char parent[PATH_MAX + 1], *end, *last;
 
   strcpy(parent, fordir);
-  if (!(end = strrchr(parent, '/'))) return(0);
-  *end = '\0';
-  if (!parent[0]) return(0);
+  do {
+	  if (!(end = strrchr(parent, '/'))) return(0);
+	  *end = '\0';
+	  if (!parent[0] || !strcmp(parent, ".")) return(0);
+  } while((last = strrchr(parent, '/')) && !strcmp(last+1, "."));
 
   if (!stat(parent, &st)) {
 	if (S_ISDIR(st.st_mode)) return(0);

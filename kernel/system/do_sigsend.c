@@ -1,7 +1,7 @@
-/* The system call that is implemented in this file:
+/* The kernel call that is implemented in this file:
  *   m_type:	SYS_SIGSEND
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *     m2_i1:	SIG_PROC  	# process to call signal handler
  *     m2_p1:	SIG_CTXT_PTR 	# pointer to sigcontext structure
  *     m2_i3:	SIG_FLAGS    	# flags for S_SIGRETURN call	

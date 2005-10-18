@@ -1,7 +1,7 @@
 
 ETC=/etc/
 USRETC=/usr/etc/
-FILES1=fstab group hostname.file inet.conf motd mtab passwd profile protocols rc services termcap ttytab utmp rc.cd
+FILES1=fstab group hostname.file inet.conf motd mtab passwd profile protocols rc services termcap ttytab utmp rc.cd binary_sizes binary_sizes.big
 FILES2=shadow
 FILES3=daily dhcptags.conf rc
 
@@ -18,8 +18,8 @@ install::
 	sh mtree.sh mtree/minix.tree
 	@for f in $(FILES3); do if [ -f $(USRETC)/$$f ]; then :; else cp usr/$$f $(USRETC); chmod 755 $(USRETC)/$$f; fi; done
 	@echo "Making devices.."
-	cd /dev && sh /usr/src/commands/scripts/MAKEDEV.sh null 
-	cd /dev && sh /usr/src/commands/scripts/MAKEDEV.sh std  2>/dev/null
+	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh null 
+	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh std  2>/dev/null
 	@echo "Making user homedirs.."
 	for u in /usr/ast ~root; do (cd ast && tar cf - .[a-z]* ) | (cd $$u && tar xf - ); done
 

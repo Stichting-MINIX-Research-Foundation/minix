@@ -24,7 +24,6 @@ usr:	\
 		/usr/bin/expr \
 		/usr/bin/false \
 		/usr/bin/getopts \
-		/usr/bin/getpack \
 		/usr/bin/read \
 		/usr/bin/test \
 		/usr/bin/true \
@@ -94,9 +93,6 @@ clean:
 	install -m 755 -l $? $@
 
 /usr/bin/easypack:	easypack.sh
-	install -m 755 -c -o bin $? $@
-
-/usr/bin/getpack:	getpack.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/checkhier:	checkhier.sh

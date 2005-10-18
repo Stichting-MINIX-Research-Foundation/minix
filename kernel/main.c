@@ -59,7 +59,7 @@ PUBLIC void main()
 	ppriv_addr[i] = sp;			/* priv ptr from number */
   }
 
-  /* Set up proc table entries for tasks and servers.  The stacks of the
+  /* Set up proc table entries for processes in boot image.  The stacks of the
    * kernel tasks are initialized to an array in data space.  The stacks
    * of the servers have been added to the data segment by the monitor, so
    * the stack pointer is set to the end of the data segment.  All the
@@ -172,8 +172,8 @@ PUBLIC void main()
 PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
-  kprintf("MINIX %s.%s.\nCopyright 2006, 1997, 1987 Pearson Education, Inc.\n"
-  "MINIX 3 Copyright 2006, 1997, 1987 Vrije Universiteit\n",
+  kprintf("\nMINIX %s.%s. "
+  "Copyright 2006, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
 #if (CHIP == INTEL)
   /* Real mode, or 16/32-bit protected mode? */
@@ -193,7 +193,7 @@ int how;
   register struct proc *rp; 
   message m;
 
-  /* Show debugging dumps on panics. Make sure that the TTY task is still 
+  /* Show debugging dumps on panics. Make sure that the TTY driver is still 
    * available to handle them. This is done with help of a non-blocking send. 
    * We rely on TTY to call sys_abort() when it is done with the dumps.
    */

@@ -66,12 +66,13 @@ BS=4096
 
 HDEMU=0
 COPY=0
+CVSTAG=HEAD
 
-while getopts "chaq?" c
+while getopts "r:ch?" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-a] [-c] [-h]" >&2
+		echo "Usage: $0 [-c] [-h] [-r <tag>]" >&2
 		exit 1
 	;;
 	h)
@@ -83,8 +84,13 @@ do
 		echo " * Copying, not CVS"
 		COPY=1
 		;;
+	r)	
+		CVSTAG=$OPTARG
+		;;
 	esac
 done
+
+echo "CVS tag: $OPTARG"
 
 ISO=${ISO}.iso
 ISOGZ=${ISO}.gz
@@ -167,7 +173,7 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new cvs export"
-	( cd $RELEASEDIR/usr && mkdir src && cvs export -rHEAD src )
+	( cd $RELEASEDIR/usr && mkdir src && cvs export -r$CVSTAG src )
 else
 	( cd .. && make clean )
 	srcdir=/usr/src

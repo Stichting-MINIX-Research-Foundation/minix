@@ -285,8 +285,8 @@ PUBLIC void main(void)
 	    case DEV_SELECT:	 do_select(tp, &tty_mess);	  break;
 	    case CANCEL:	 do_cancel(tp, &tty_mess);	  break;
 	    default:		
-		printf("Warning, TTY got unexpected request %d from %d (open is %d)\n",
-			tty_mess.m_type, tty_mess.m_source, DEV_OPEN);
+		printf("Warning, TTY got unexpected request %d from %d\n",
+			tty_mess.m_type, tty_mess.m_source);
 	    tty_reply(TASK_REPLY, tty_mess.m_source,
 						tty_mess.PROC_NR, EINVAL);
 	}
@@ -1516,7 +1516,7 @@ PRIVATE void tty_init()
   		tp->tty_minor = RS232_MINOR + s-NR_CONS;
   	} else {
 		pty_init(tp);
-  		tp->tty_minor = s + TTYPX_MINOR + s-(NR_CONS+RS232_MINOR);
+		tp->tty_minor = s - (NR_CONS+NR_RS_LINES) + TTYPX_MINOR;
   	}
   }
 

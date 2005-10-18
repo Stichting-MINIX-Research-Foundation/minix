@@ -149,9 +149,9 @@ message *m_ptr;			/* pointer to message in the caller's space */
           return(ECALLDENIED);		/* call denied by ipc mask */
       }
 
-      if (isemptyn(src_dst) && !shutdown_started) {
-          kprintf("sys_call: dead dest; %d, %d, %d\n", 
-              function, proc_nr(caller_ptr), src_dst);
+      if (isemptyn(src_dst)) {
+	if(!shutdown_started)
+	 kprintf("sys_call: dead dst; %d->%d\n", proc_nr(caller_ptr), src_dst);
           return(EDEADDST); 		/* cannot send to the dead */
       }
   }
@@ -228,7 +228,7 @@ unsigned flags;				/* system call flags */
 		 dst_ptr->p_messbuf);
 	if ((dst_ptr->p_rts_flags &= ~RECEIVING) == 0) enqueue(dst_ptr);
   } else if ( ! (flags & NON_BLOCKING)) {
-	/* Destination is not waiting.  Block and queue caller. */
+	/* Destination is not waiting.  Block and dequeue caller. */
 	caller_ptr->p_messbuf = m_ptr;
 	if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
 	caller_ptr->p_rts_flags |= SENDING;
@@ -546,7 +546,7 @@ PRIVATE void pick_proc()
   int q;					/* iterate over queues */
 
   /* Check each of the scheduling queues for ready processes. The number of
-   * queues is defined in proc.h, and priorities are set in the task table.
+   * queues is defined in proc.h, and priorities are set in the image table.
    * The lowest queue contains IDLE, which is always ready.
    */
   for (q=0; q < NR_SCHED_QUEUES; q++) {	

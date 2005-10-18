@@ -1,7 +1,7 @@
-/* The system call implemented in this file:
+/* The kernel call implemented in this file:
  *   m_type:	SYS_SDEVIO
  *
- * The parameters for this system call are:
+ * The parameters for this kernel call are:
  *    m2_i3:	DIO_REQUEST	(request input or output)	
  *    m2_i1:	DIO_TYPE	(flag indicating byte, word, or long)
  *    m2_l1:	DIO_PORT	(port to read/ write)	

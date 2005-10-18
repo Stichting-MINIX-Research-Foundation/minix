@@ -70,6 +70,7 @@ hdboot)
 
 	if [ -z "$revision" ]
 	then
+		target="${version}"
 		revision=0
 	elif [ -f $rootdir/boot/image/$target ]
 	then
@@ -80,8 +81,8 @@ hdboot)
 			exit 0
 		fi
 		revision=`expr $revision + 1`
+		target="${version}r${revision}"
 	fi
-	target="${version}r${revision}"
 
 	set -- `ls -t $rootdir/boot/image`
 

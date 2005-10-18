@@ -1,10 +1,10 @@
-/* This task handles the interface between the kernel and user-level servers.
- * System services can be accessed by doing a system call. System calls are 
- * transformed into request messages, which are handled by this task. By 
- * convention, a sys_call() is transformed in a SYS_CALL request message that
- * is handled in a function named do_call(). 
+/* This task provides an interface between the kernel and user-space system
+ * processes. System services can be accessed by doing a kernel call. Kernel
+ * calls are  transformed into request messages, which are handled by this
+ * task. By convention, a sys_call() is transformed in a SYS_CALL request
+ * message that is handled in a function named do_call(). 
  *
- * A private call vector is used to map all system calls to the functions that
+ * A private call vector is used to map all kernel calls to the functions that
  * handle them. The actual handler functions are contained in separate files
  * to keep this file clean. The call vector is used in the system task's main
  * loop to handle all incoming requests.  
@@ -39,9 +39,9 @@
 #include "protect.h"
 #endif
 
-/* Declaration of the call vector that defines the mapping of system calls 
+/* Declaration of the call vector that defines the mapping of kernel calls 
  * to handler functions. The vector is initialized in sys_init() with map(), 
- * which makes sure the system call numbers are ok. No space is allocated, 
+ * which makes sure the kernel call numbers are ok. No space is allocated, 
  * because the dummy is declared extern. If an illegal call is given, the 
  * array size will be negative and this won't compile. 
  */
@@ -117,8 +117,8 @@ PRIVATE void initialize(void)
     tmr_inittimer(&(sp->s_alarm_timer));
   }
 
-  /* Initialize the call vector to a safe default handler. Some system calls 
-   * may be disabled or nonexistant. Then explicitely map known calls to their
+  /* Initialize the call vector to a safe default handler. Some kernel calls 
+   * may be disabled or nonexistant. Then explicitly map known calls to their
    * handler functions. This is done with a macro that gives a compile error
    * if an illegal call number is used. The ordering is not important here.
    */
@@ -281,36 +281,6 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
 }
 
 /*===========================================================================*
- *				umap_bios				     *
- *===========================================================================*/
-PUBLIC phys_bytes umap_bios(rp, vir_addr, bytes)
-register struct proc *rp;	/* pointer to proc table entry for process */
-vir_bytes vir_addr;		/* virtual address in BIOS segment */
-vir_bytes bytes;		/* # of bytes to be copied */
-{
-/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
- * address zero (the first BIOS interrupt vector) is not considered, as an 
- * error here, but since the physical address will be zero as well, the 
- * calling function will think an error occurred. This is not a problem,
- * since no one uses the first BIOS interrupt vector.  
- */
-
-  /* Check all acceptable ranges. */
-  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
-  	return (phys_bytes) vir_addr;
-  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
-  	return (phys_bytes) vir_addr;
-
-#if DEAD_CODE	/* brutal fix, if the above is too restrictive */
-  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
-  	return (phys_bytes) vir_addr;
-#endif
-
-  kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
-  return 0;
-}
-
-/*===========================================================================*
  *				umap_local				     *
  *===========================================================================*/
 PUBLIC phys_bytes umap_local(rp, seg, vir_addr, bytes)
@@ -343,7 +313,7 @@ vir_bytes bytes;		/* # of bytes to be copied */
 	seg = (vc < rp->p_memmap[D].mem_vir + rp->p_memmap[D].mem_len ? D : S);
 #else
   if (seg != T)
-	seg = (vc < rp->p_memmap[S].mem_vir ? D : S);
+       seg = (vc < rp->p_memmap[S].mem_vir ? D : S);
 #endif
 
   if ((vir_addr>>CLICK_SHIFT) >= rp->p_memmap[seg].mem_vir + 
@@ -388,6 +358,30 @@ vir_bytes bytes;		/* # of bytes to be copied */
   if (vir_addr + bytes > fm->mem_len) return( (phys_bytes) 0);
 
   return(fm->mem_phys + (phys_bytes) vir_addr); 
+}
+
+/*===========================================================================*
+ *				umap_bios				     *
+ *===========================================================================*/
+PUBLIC phys_bytes umap_bios(rp, vir_addr, bytes)
+register struct proc *rp;	/* pointer to proc table entry for process */
+vir_bytes vir_addr;		/* virtual address in BIOS segment */
+vir_bytes bytes;		/* # of bytes to be copied */
+{
+/* Calculate the physical memory address at the BIOS. Note: currently, BIOS
+ * address zero (the first BIOS interrupt vector) is not considered as an 
+ * error here, but since the physical address will be zero as well, the 
+ * calling function will think an error occurred. This is not a problem,
+ * since no one uses the first BIOS interrupt vector.  
+ */
+
+  /* Check all acceptable ranges. */
+  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= BIOS_MEM_END)
+  	return (phys_bytes) vir_addr;
+  else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
+  	return (phys_bytes) vir_addr;
+  kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
+  return 0;
 }
 
 /*===========================================================================*

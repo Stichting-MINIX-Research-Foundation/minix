@@ -73,7 +73,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 
 /* Define kernel calls that processes are allowed to make. This is not looking
  * very nice, but we need to define the access rights on a per call basis. 
- * Note that the system services manager has all bits on, because it should
+ * Note that the reincarnation server has all bits on, because it should
  * be allowed to distribute rights to services that it starts. 
  */
 #define c(n)	(1 << ((n)-KERNEL_CALL))
