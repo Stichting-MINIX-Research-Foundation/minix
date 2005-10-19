@@ -46,7 +46,7 @@ char *extra;			/* If non-nil, why is the shutdown */
 
   time(&now);
   if (uname(&utsname) != 0) strcpy(utsname.nodename, "?");
-  sprintf(message, "\r\nBroadcast message from %s@%s (%s)\r\n%.24s...\007\007\007\r\n",
+  sprintf(message, "\r\nBroadcast message from %s@%s (%s)\r\n%.24s...\r\n",
 		ourname, utsname.nodename, ourtty, ctime(&now));
 
   crnlcat(message, when);
