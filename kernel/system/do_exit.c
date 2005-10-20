@@ -65,8 +65,10 @@ register struct proc *rc;		/* slot of process to clean up */
       while (*xpp != NIL_PROC) {		/* check entire queue */
           if (*xpp == rc) {			/* process is on the queue */
               *xpp = (*xpp)->p_q_link;		/* replace by next process */
+#if DEBUG_ENABLE_IPC_WARNINGS
 	      kprintf("Proc %d removed from queue at %d\n",
 	          proc_nr(rc), rc->p_sendto);
+#endif
               break;				/* can only be queued once */
           }
           xpp = &(*xpp)->p_q_link;		/* proceed to next queued */
@@ -79,17 +81,24 @@ register struct proc *rc;		/* slot of process to clean up */
    */
   for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++) {
 
+      /* Unset pending notification bits. */
+      unset_sys_bit(priv(rp)->s_notify_pending, priv(rc)->s_id);
+
       /* Check if process is receiving from exiting process. */
       if ((rp->p_rts_flags & RECEIVING) && rp->p_getfrom == proc_nr(rc)) {
-          rp->p_reg.retreg = EDEADSRCDST;	/* report source died */
+          rp->p_reg.retreg = ESRCDIED;		/* report source died */
 	  rp->p_rts_flags &= ~RECEIVING;	/* no longer receiving */
+#if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("Proc %d receive dead src %d\n", proc_nr(rp), proc_nr(rc));
+#endif
 	  lock_enqueue(rp);			/* let process run again */
       } 
       else if ((rp->p_rts_flags & SENDING) && rp->p_sendto == proc_nr(rc)) {
-          rp->p_reg.retreg = EDEADSRCDST;	/* report destination died */
+          rp->p_reg.retreg = EDSTDIED;		/* report destination died */
 	  rp->p_rts_flags &= ~SENDING;		/* no longer sending */
+#if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("Proc %d send dead dst %d\n", proc_nr(rp), proc_nr(rc));
+#endif
 	  lock_enqueue(rp);			/* let process run again */
       } 
   }

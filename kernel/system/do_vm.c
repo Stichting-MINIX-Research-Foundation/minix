@@ -24,6 +24,8 @@ FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 FORWARD _PROTOTYPE( void map_range, (u32_t base, u32_t size,
 							u32_t offset)	);
 
+#define VM_DEBUG 0		/* enable/ disable debug output */
+
 /*===========================================================================*
  *				do_vm_setbuf				     *
  *===========================================================================*/
@@ -36,7 +38,9 @@ message *m_ptr;			/* pointer to request message */
 
 	/* do_serial_debug= 1; */
 
+#if VM_DEBUG
 	kprintf("in do_vm_map\n");
+#endif
 
 	if (vm_needs_init)
 	{
@@ -54,14 +58,18 @@ message *m_ptr;			/* pointer to request message */
 	p_phys= umap_local(pp, D, base, size);
 	if (p_phys == 0)
 		return EFAULT;
+#if VM_DEBUG
 	kprintf("got 0x%x for 0x%x [D].mem_start = 0x%x\n", 
 		p_phys, base, pp->p_memmap[D].mem_phys);
+#endif
 
 	if (do_map)
 	{
+#if VM_DEBUG
 		kprintf(
 		"do_vm_map: mapping 0x%x @ 0x%x to 0x%x @ proc %d\n",
 			size, offset, base, proc_nr);
+#endif
 		pp->p_misc_flags |= MF_VM;
 
 		map_range(p_phys, size, offset);
@@ -102,9 +110,10 @@ PRIVATE void vm_init(void)
 	u32_t entry;
 	unsigned pages;
 
+#if VM_DEBUG
 	kprintf("in vm_init\n");
-
-kprintf("%s, %d\n", __FILE__, __LINE__);
+	kprintf("%s, %d\n", __FILE__, __LINE__);
+#endif
 	if (!vm_size)
 		panic("vm_init: no space for page tables", NO_NUM);
 
@@ -126,7 +135,9 @@ kprintf("%s, %d\n", __FILE__, __LINE__);
 	if (pages * I386_VM_PT_ENT_SIZE > pt_size)
 		panic("vm_init: page table too small", NO_NUM);
 
-kprintf("%s, %d\n", __FILE__, __LINE__);
+#if VM_DEBUG
+	kprintf("%s, %d\n", __FILE__, __LINE__);
+#endif
 
 	for (p= 0; p*I386_VM_PT_ENT_SIZE < pt_size; p++)
 	{
@@ -147,8 +158,9 @@ kprintf("%s, %d\n", __FILE__, __LINE__);
 			entry= 0;
 		phys_put32(vm_dir_base + p*I386_VM_PT_ENT_SIZE, entry);
 	}
-
-kprintf("%s, %d\n", __FILE__, __LINE__);
+#if VM_DEBUG
+	kprintf("%s, %d\n", __FILE__, __LINE__);
+#endif
 	vm_set_cr3(vm_dir_base);
 	level0(vm_enable_paging);
 }
@@ -157,7 +169,7 @@ PRIVATE void phys_put32(addr, value)
 phys_bytes addr;
 u32_t value;
 {
-#if 0
+#if VM_DEBUG
 kprintf("%s, %d: %d bytes from 0x%x to 0x%x\n", __FILE__, __LINE__,
 	sizeof(value), vir2phys((vir_bytes)&value), addr);
 #endif
@@ -178,11 +190,17 @@ phys_bytes addr;
 PRIVATE void vm_set_cr3(value)
 u32_t value;
 {
+#if VM_DEBUG
 kprintf("%s, %d\n", __FILE__, __LINE__);
+#endif
 	vm_cr3= value;
+#if VM_DEBUG
 kprintf("%s, %d\n", __FILE__, __LINE__);
+#endif
 	level0(set_cr3);
+#if VM_DEBUG
 kprintf("%s, %d\n", __FILE__, __LINE__);
+#endif
 }
 
 PRIVATE void set_cr3()
@@ -226,12 +244,14 @@ u32_t offset;
 			curr_pt_addr= phys_get32(vm_cr3 +
 				dir_ent * I386_VM_PT_ENT_SIZE);
 			curr_pt_addr &= I386_VM_ADDR_MASK;
+#if VM_DEBUG
 			kprintf("got address 0x%x for page table 0x%x\n",
 				curr_pt_addr, curr_pt);
+#endif
 		}
 		entry= offset | I386_VM_USER | I386_VM_WRITE |
 			I386_VM_PRESENT;
-#if 0
+#if VM_DEBUG
 		kprintf(
 		"putting 0x%x at dir_ent 0x%x, pt_ent 0x%x (addr 0x%x)\n",
 			entry,  dir_ent, pt_ent,

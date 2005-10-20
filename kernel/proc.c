@@ -115,7 +115,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           function, proc_nr(caller_ptr), src_dst);
 #endif
-      return(ECALLDENIED);		/* trap denied by mask or kernel */
+      return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
   
   /* Require a valid source and/ or destination process, unless echoing. */
