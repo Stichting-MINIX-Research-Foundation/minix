@@ -7,7 +7,7 @@
  *   May 11, 2005:	by Jorrit N. Herder
  */
 
-#include "is.h"
+#include "inc.h"
 #include "../pm/mproc.h"
 #include <timers.h> 
 #include <minix/config.h> 

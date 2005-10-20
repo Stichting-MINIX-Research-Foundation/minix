@@ -7,9 +7,12 @@
  *   handle_fkey:	handle a function key pressed notification
  */
 
-#include "is.h"
+#include "inc.h"
 
-#define NHOOKS 18
+/* Define hooks for the debugging dumps. This table maps function keys
+ * onto a specific dump and provides a description for it.
+ */
+#define NHOOKS 19
 
 struct hook_entry {
 	int key;
@@ -34,15 +37,16 @@ struct hook_entry {
 	{ SF5,	mapping_dmp, "Print key mappings" },
 	{ SF6,	rproc_dmp, "Reincarnation server process table" },
 	{ SF7,  holes_dmp, "Memory free list" },
+	{ SF8,  data_store_dmp, "Data store contents" },
 };
 
 /*===========================================================================*
  *				handle_fkey				     *
  *===========================================================================*/
-#define pressed(k) ((F1<=(k) && (k)<=F12 && bit_isset(m->FKEY_FKEYS, ((k)-F1+1))) \
+#define pressed(k) ((F1<=(k)&&(k)<=F12 && bit_isset(m->FKEY_FKEYS,((k)-F1+1)))\
   	|| (SF1<=(k) && (k)<=SF12 && bit_isset(m->FKEY_SFKEYS, ((k)-SF1+1)))) 
-
-PUBLIC int do_fkey_pressed(message *m)
+PUBLIC int do_fkey_pressed(m)
+message *m;					/* notification message */
 {
   int s, h;
 
@@ -55,15 +59,18 @@ PUBLIC int do_fkey_pressed(message *m)
       report("IS", "warning, sendrec to TTY failed", s);
 
   /* Now check which keys were pressed: F1-F12, SF1-SF12. */
-  for(h = 0; h < NHOOKS; h++)
-	if(pressed(hooks[h].key))
-		hooks[h].function();
+  for(h=0; h < NHOOKS; h++)
+      if(pressed(hooks[h].key))
+          hooks[h].function();
 
-  /* Inhibit sending a reply message. */
+  /* Don't send a reply message. */
   return(EDONTREPLY);
 }
 
-PRIVATE char *keyname(int key)
+/*===========================================================================*
+ *				key_name				     *
+ *===========================================================================*/
+PRIVATE char *key_name(int key)
 {
 	static char name[15];
 
@@ -73,30 +80,32 @@ PRIVATE char *keyname(int key)
 		sprintf(name, "Shift+F%d", key - SF1 + 1);
 	else
 		sprintf(name, "?");
-
 	return name;
 }
 
-
+/*===========================================================================*
+ *				reboot_dmp				     *
+ *===========================================================================*/
 PUBLIC void reboot_dmp(void)
 {
   if (sys_panic) sys_abort(RBT_HALT);
 }
 
 
+/*===========================================================================*
+ *				mapping_dmp				     *
+ *===========================================================================*/
 PUBLIC void mapping_dmp(void)
 {
-	int h;
+  int h;
 
-	printf(
-"Function key mappings for debug dumps in IS server.\n"
-"        Key   Description\n"
-"-------------------------------------------------------------------------\n");
-	for(h = 0; h < NHOOKS; h++)
-		printf(" %10s.  %s\n", keyname(hooks[h].key), hooks[h].name);
+  printf("Function key mappings for debug dumps in IS server.\n");
+  printf("        Key   Description\n");
+  printf("-------------------------------------");
+  printf("------------------------------------\n");
 
-	printf("\n");
-
-	return;
+  for(h=0; h < NHOOKS; h++)
+      printf(" %10s.  %s\n", key_name(hooks[h].key), hooks[h].name);
+  printf("\n");
 }
 

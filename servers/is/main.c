@@ -7,7 +7,7 @@
  *   Apr 29, 2004	by Jorrit N. Herder
  */
 
-#include "is.h"
+#include "inc.h"
 
 /* Set debugging level to 0, 1, or 2 to see no, some, all debug output. */
 #define DEBUG_LEVEL	1
@@ -64,6 +64,9 @@ PUBLIC int main(int argc, char **argv)
       case FKEY_PRESSED:
           result = do_fkey_pressed(&m_in);
           break;
+      case DEV_PING:
+	  notify(m_in.m_source);
+	  continue;
       default: 
           report("IS","warning, got illegal request from:", m_in.m_source);
           result = EINVAL;
@@ -97,7 +100,7 @@ PRIVATE void init_server(int argc, char **argv)
   /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6. */
   fkeys = sfkeys = 0;
   for (i=1; i<=12; i++) bit_set(fkeys, i);
-  for (i=1; i<= 7; i++) bit_set(sfkeys, i);
+  for (i=1; i<= 8; i++) bit_set(sfkeys, i);
   if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
       report("IS", "warning, fkey_map failed:", s);
 }

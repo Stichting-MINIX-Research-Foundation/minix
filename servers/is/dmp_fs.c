@@ -8,7 +8,7 @@
  *   Oct 01, 2004:	by Jorrit N. Herder
  */
 
-#include "is.h"
+#include "inc.h"
 #include "../fs/const.h"
 #include "../fs/fproc.h"
 #include <minix/dmap.h>

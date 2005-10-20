@@ -1,6 +1,6 @@
 /* Debugging dump procedures for the kernel. */
 
-#include "is.h"
+#include "inc.h"
 #include <timers.h>
 #include <ibm/interrupt.h>
 #include "../../kernel/const.h"
@@ -289,7 +289,8 @@ PUBLIC void kenv_dmp()
     printf("- kmem_size:  %5u\n", kinfo.kmem_size); 
     printf("- bootdev_base:  %5u\n", kinfo.bootdev_base); 
     printf("- bootdev_size:  %5u\n", kinfo.bootdev_size); 
-    printf("- bootdev_mem:  %5u\n", kinfo.bootdev_mem); 
+    printf("- ramdev_base:   %5u\n", kinfo.ramdev_base); 
+    printf("- ramdev_size:   %5u\n", kinfo.ramdev_size); 
     printf("- params_base:   %5u\n", kinfo.params_base); 
     printf("- params_size:   %5u\n", kinfo.params_size); 
     printf("- nr_procs:     %3u\n", kinfo.nr_procs); 

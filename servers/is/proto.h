@@ -32,3 +32,6 @@ _PROTOTYPE( void fproc_dmp, (void)					);
 
 /* dmp_rs.c */
 _PROTOTYPE( void rproc_dmp, (void)					);
+
+/* dmp_ds.c */
+_PROTOTYPE( void data_store_dmp, (void)					);
