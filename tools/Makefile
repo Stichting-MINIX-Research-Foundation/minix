@@ -14,6 +14,7 @@ PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
 	../servers/rs/rs \
+	../servers/ds/ds \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/log/log \
