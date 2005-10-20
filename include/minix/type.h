@@ -96,7 +96,8 @@ struct kinfo {
   phys_bytes kmem_size;
   phys_bytes bootdev_base;	/* boot device from boot image (/dev/boot) */
   phys_bytes bootdev_size;
-  phys_bytes bootdev_mem;
+  phys_bytes ramdev_base;	/* boot device from boot image (/dev/boot) */
+  phys_bytes ramdev_size;
   phys_bytes params_base;	/* parameters passed by boot monitor */
   phys_bytes params_size;
   int nr_procs;			/* number of user processes */

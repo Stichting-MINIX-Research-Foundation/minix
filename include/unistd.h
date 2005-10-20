@@ -41,6 +41,7 @@
 #define SI_PROC_TAB	   2	/* copy of entire process table */
 #define SI_DMAP_TAB	   3	/* get device <-> driver mappings */
 #define SI_MEM_ALLOC	   4	/* get memory allocation data */
+#define SI_DATA_STORE	   5	/* get copy of data store */
 
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #define NULL    ((void *)0)

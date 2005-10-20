@@ -38,7 +38,8 @@
 #define LOG_PROC_NR	  4	/* log device driver */
 #define TTY_PROC_NR	  5	/* terminal (TTY) driver */
 #define DRVR_PROC_NR      6	/* device driver for boot medium */
-#define INIT_PROC_NR	  7    	/* init -- goes multiuser */
+#define DS_PROC_NR	  7    	/* data store server */
+#define INIT_PROC_NR	  8    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
@@ -77,7 +78,7 @@
 #define DEV_RQ_BASE   0x400	/* base for device request types */
 #define DEV_RS_BASE   0x500	/* base for device response types */
 
-#define CANCEL       	(DEV_RQ_BASE +  0) /* general req to force a task to cancel */
+#define CANCEL       	(DEV_RQ_BASE +  0) /* force a task to cancel */
 #define DEV_READ	(DEV_RQ_BASE +  3) /* read from minor device */
 #define DEV_WRITE   	(DEV_RQ_BASE +  4) /* write to minor device */
 #define DEV_IOCTL    	(DEV_RQ_BASE +  5) /* I/O control code */
@@ -378,20 +379,37 @@
 #define SEL_TIMEOUT    m8_p4
 
 /*===========================================================================*
- *                Messages for system management server 		     *
+ *                Messages for the Reincarnation Server 		     *
  *===========================================================================*/
 
-#define SRV_RQ_BASE		0x700
+#define RS_RQ_BASE		0x700
 
-#define SRV_UP		(SRV_RQ_BASE + 0)	/* start system service */
-#define SRV_DOWN	(SRV_RQ_BASE + 1)	/* stop system service */
-#define SRV_SHUTDOWN	(SRV_RQ_BASE + 2)	/* alert about shutdown */
+#define RS_UP		(RS_RQ_BASE + 0)	/* start system service */
+#define RS_DOWN		(RS_RQ_BASE + 1)	/* stop system service */
+#define RS_REFRESH	(RS_RQ_BASE + 2)	/* restart system service */
+#define RS_SHUTDOWN	(RS_RQ_BASE + 3)	/* alert about shutdown */
 
-#  define SRV_CMD_ADDR		m1_p1		/* command string */
-#  define SRV_CMD_LEN		m1_i1		/* length of command */
-#  define SRV_PID		m1_i1		/* pid of system service */
-#  define SRV_PERIOD 	        m1_i2		/* heartbeat period */
-#  define SRV_DEV_MAJOR         m1_i3           /* major device number */
+#  define RS_CMD_ADDR		m1_p1		/* command string */
+#  define RS_CMD_LEN		m1_i1		/* length of command */
+#  define RS_PID		m1_i1		/* pid of system service */
+#  define RS_PERIOD 	        m1_i2		/* heartbeat period */
+#  define RS_DEV_MAJOR          m1_i3           /* major device number */
+
+/*===========================================================================*
+ *                Messages for the Data Store Server			     *
+ *===========================================================================*/
+
+#define DS_RQ_BASE		0x800
+
+#define DS_PUBLISH	(DS_RQ_BASE + 0)	/* publish information */
+#define DS_RETRIEVE	(DS_RQ_BASE + 1)	/* retrieve information */
+#define DS_SUBSCRIBE	(DS_RQ_BASE + 2)	/* subscribe to information */
+
+#  define DS_KEY		m2_i1		/* key for the information */
+#  define DS_FLAGS		m2_i2		/* flags provided by caller */
+#  define DS_AUTH		m2_p1		/* authorization of caller */
+#  define DS_VAL_L1		m2_l1		/* first long data value */
+#  define DS_VAL_L2		m2_l2		/* second long data value */
 
 /*===========================================================================*
  *                Miscellaneous messages used by TTY			     *
