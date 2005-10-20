@@ -7,7 +7,7 @@
  * Created:
  *   Jul 22, 2005	by Jorrit N. Herder
  */
-#include "rs.h"
+#include "inc.h"
 #include <minix/dmap.h>
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
@@ -16,7 +16,6 @@
 FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
-FORWARD _PROTOTYPE(int do_getsysinfo, (message *m)			);
 
 /* Data buffers to retrieve info during initialization. */
 PRIVATE struct boot_image image[NR_BOOT_PROCS];
@@ -85,13 +84,16 @@ PUBLIC int main(void)
        */
       else {	
           switch(call_nr) {
-          case SRV_UP:
-              result = do_start(&m);
+          case RS_UP:
+              result = do_up(&m);
               break;
-          case SRV_DOWN:
-              result = do_stop(&m);
+          case RS_DOWN:
+              result = do_down(&m);
               break;
-          case SRV_SHUTDOWN:
+          case RS_REFRESH:
+              result = do_refresh(&m);
+              break;
+          case RS_SHUTDOWN:
               result = do_shutdown(&m);
               break;
           case GETSYSINFO:
@@ -148,7 +150,7 @@ PRIVATE void init_server(void)
       ip = &image[s];
       if (ip->proc_nr >= 0) {
           nr_in_use ++;
-          rproc[s].r_flags = IN_USE;
+          rproc[s].r_flags = RS_IN_USE;
           rproc[s].r_proc_nr = ip->proc_nr;
           rproc[s].r_pid = getnpid(ip->proc_nr);
 	  for(t=0; t< NR_DEVICES; t++)
@@ -162,38 +164,11 @@ PRIVATE void init_server(void)
   }
 
   /* Set alarm to periodically check driver status. */
-  if (OK != (s=sys_setalarm(HZ, 0)))
+  if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("RS", "couldn't set alarm", s);
 
 }
 
-
-/*===========================================================================*
- *				do_getsysinfo				     *
- *===========================================================================*/
-PRIVATE int do_getsysinfo(m_ptr)
-message *m_ptr;
-{
-  vir_bytes src_addr, dst_addr;
-  int dst_proc;
-  size_t len;
-  int s;
-
-  switch(m_ptr->m1_i1) {
-  case SI_PROC_TAB:
-  	src_addr = (vir_bytes) rproc;
-  	len = sizeof(struct rproc) * NR_SYS_PROCS;
-  	break; 
-  default:
-  	return(EINVAL);
-  }
-
-  dst_proc = m_ptr->m_source;
-  dst_addr = (vir_bytes) m_ptr->m1_p1;
-  if (OK != (s=sys_datacopy(SELF, src_addr, dst_proc, dst_addr, len)))
-  	return(s);
-  return(OK);
-}
 
 /*===========================================================================*
  *				get_work                                     *

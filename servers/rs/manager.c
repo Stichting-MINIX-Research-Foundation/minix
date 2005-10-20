@@ -3,7 +3,7 @@
  *   Jul 22, 2005:	Created  (Jorrit N. Herder)
  */
 
-#include "rs.h"
+#include "inc.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -17,16 +17,16 @@ extern int errno;				/* error status */
 
 /* Prototypes for internal functions that do the hard work. */
 FORWARD _PROTOTYPE( int start_service, (struct rproc *rp) );
-FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp) );
+FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
 
 PRIVATE int shutting_down = FALSE;
 
 #define EXEC_FAILED	49			/* recognizable status */
 
 /*===========================================================================*
- *				do_start				     *
+ *					do_up				     *
  *===========================================================================*/
-PUBLIC int do_start(m_ptr)
+PUBLIC int do_up(m_ptr)
 message *m_ptr;					/* request message pointer */
 {
 /* A request was made to start a new system service. Dismember the request 
@@ -44,7 +44,7 @@ message *m_ptr;					/* request message pointer */
   if (nr_in_use >= NR_SYS_PROCS) return(EAGAIN); 
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
       rp = &rproc[slot_nr];			/* get pointer to slot */
-      if (! rp->r_flags & IN_USE) 		/* check if available */
+      if (! rp->r_flags & RS_IN_USE) 		/* check if available */
 	  break;
   }
   nr_in_use ++;					/* update administration */
@@ -52,10 +52,10 @@ message *m_ptr;					/* request message pointer */
   /* Obtain command name and parameters. This is a space-separated string
    * that looks like "/sbin/service arg1 arg2 ...". Arguments are optional.
    */
-  if (m_ptr->SRV_CMD_LEN > MAX_COMMAND_LEN) return(E2BIG);
-  if (OK!=(s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->SRV_CMD_ADDR, 
-  	SELF, (vir_bytes) rp->r_cmd, m_ptr->SRV_CMD_LEN))) return(s);
-  rp->r_cmd[m_ptr->SRV_CMD_LEN] = '\0';		/* ensure it is terminated */
+  if (m_ptr->RS_CMD_LEN > MAX_COMMAND_LEN) return(E2BIG);
+  if (OK!=(s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
+  	SELF, (vir_bytes) rp->r_cmd, m_ptr->RS_CMD_LEN))) return(s);
+  rp->r_cmd[m_ptr->RS_CMD_LEN] = '\0';		/* ensure it is terminated */
   if (rp->r_cmd[0] != '/') return(EINVAL);	/* insist on absolute path */
 
   /* Build argument vector to be passed to execute call. The format of the
@@ -77,10 +77,11 @@ message *m_ptr;					/* request message pointer */
   rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
   rp->r_argc = arg_count;
 
-  /* Check if a heartbeat period was given. */
-  rp->r_period = m_ptr->SRV_PERIOD;
-  rp->r_dev_nr = m_ptr->SRV_DEV_MAJOR;
+  /* Initialize some fields. */
+  rp->r_period = m_ptr->RS_PERIOD;
+  rp->r_dev_nr = m_ptr->RS_DEV_MAJOR;
   rp->r_dev_style = STYLE_DEV; 
+  rp->r_restarts = -1; 				/* will be incremented */
   
   /* All information was gathered. Now try to start the system service. */
   return(start_service(rp));
@@ -88,21 +89,49 @@ message *m_ptr;					/* request message pointer */
 
 
 /*===========================================================================*
- *				do_stop					     *
+ *				do_down					     *
  *===========================================================================*/
-PUBLIC int do_stop(message *m_ptr)
+PUBLIC int do_down(message *m_ptr)
 {
   register struct rproc *rp;
-  pid_t pid = (pid_t) m_ptr->SRV_PID;
+  pid_t pid = (pid_t) m_ptr->RS_PID;
 
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if (rp->r_flags & IN_USE && rp->r_pid == pid) {
-	  printf("stopping %d (%d)\n", pid, m_ptr->SRV_PID);
-	  stop_service(rp);
+      if (rp->r_flags & RS_IN_USE && rp->r_pid == pid) {
+#if VERBOSE
+	  printf("stopping %d (%d)\n", pid, m_ptr->RS_PID);
+#endif
+	  stop_service(rp,RS_EXITING);
 	  return(OK);
       }
   }
-  printf("not found %d (%d)\n", pid, m_ptr->SRV_PID);
+#if VERBOSE
+  printf("not found %d (%d)\n", pid, m_ptr->RS_PID);
+#endif
+  return(ESRCH);
+}
+
+
+/*===========================================================================*
+ *				do_refresh				     *
+ *===========================================================================*/
+PUBLIC int do_refresh(message *m_ptr)
+{
+  register struct rproc *rp;
+  pid_t pid = (pid_t) m_ptr->RS_PID;
+
+  for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
+      if (rp->r_flags & RS_IN_USE && rp->r_pid == pid) {
+#if VERBOSE
+	  printf("refreshing %d (%d)\n", pid, m_ptr->RS_PID);
+#endif
+	  stop_service(rp,RS_REFRESHING);
+	  return(OK);
+      }
+  }
+#if VERBOSE
+  printf("not found %d (%d)\n", pid, m_ptr->RS_PID);
+#endif
   return(ESRCH);
 }
 
@@ -151,24 +180,37 @@ PUBLIC void do_exit(message *m_ptr)
        * This should always succeed. 
        */
       for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-          if ((rp->r_flags & IN_USE) && rp->r_pid == exit_pid) {
+          if ((rp->r_flags & RS_IN_USE) && rp->r_pid == exit_pid) {
 
-	      printf("Slot found!\n");
               rproc_ptr[rp->r_proc_nr] = NULL;		/* invalidate */
 
-              if ((rp->r_flags & EXIT_PENDING) || shutting_down) {
-		  printf("Expected exit. Doing nothing.\n");
+              if ((rp->r_flags & RS_EXITING) || shutting_down) {
 		  rp->r_flags = 0;			/* release slot */
 		  rproc_ptr[rp->r_proc_nr] = NULL;
 	      }
+	      else if(rp->r_flags & RS_REFRESHING) {
+		      rp->r_restarts = -1;		/* reset counter */
+		      start_service(rp);		/* direct restart */
+	      }
               else if (WIFEXITED(exit_status) &&
 		      WEXITSTATUS(exit_status) == EXEC_FAILED) {
-		  printf("Exit because EXEC() failed. Doing nothing.\n");
 		  rp->r_flags = 0;			/* release slot */
               }
 	      else {
+#if VERBOSE
 		  printf("Unexpected exit. Restarting %s\n", rp->r_cmd);
-		  start_service(rp);			/* restart */
+#endif
+                  /* Determine what to do. If this is the first unexpected 
+		   * exit, immediately restart this service. Otherwise use
+		   * a binary exponetial backoff.
+		   */
+                  if (rp->r_restarts > 0) {
+		      rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-1));
+		      rp->r_backoff = MIN(rp->r_backoff,MAX_BACKOFF); 
+		  }
+		  else {
+		      start_service(rp);		/* direct restart */
+		  }
               }
 	      break;
 	  }
@@ -188,10 +230,30 @@ message *m_ptr;
 
   /* Search system services table. Only check slots that are in use. */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if (rp->r_flags & IN_USE) {
+      if (rp->r_flags & RS_IN_USE) {
+
+          /* If the service is to be revived (because it repeatedly exited, 
+	   * and was not directly restarted), the binary backoff field is  
+	   * greater than zero. 
+	   */
+	  if (rp->r_backoff > 0) {
+              rp->r_backoff -= 1;
+	      if (rp->r_backoff == 0) {
+		  start_service(rp);
+	      }
+	  }
+
+	  /* If the service was signaled with a SIGTERM and fails to respond,
+	   * kill the system service with a SIGKILL signal.
+	   */
+	  else if (rp->r_stop_tm > 0 && now - rp->r_stop_tm > 2*RS_DELTA_T) {
+              kill(rp->r_pid, SIGKILL);		/* terminate */
+	  }
 	
-	  /* If the service has a period assigned check its status. */
-	  if (rp->r_period > 0) {
+	  /* There seems to be no special conditions. If the service has a 
+	   * period assigned check its status. 
+	   */
+	  else if (rp->r_period > 0) {
 
 	      /* Check if an answer to a status request is still pending. If 
 	       * the driver didn't respond within time, kill it to simulate 
@@ -218,18 +280,11 @@ message *m_ptr;
 		  rp->r_check_tm = now;			/* mark time */
               }
           }
-
-	  /* If the service was signaled with a SIGTERM and fails to respond,
-	   * kill the system service with a SIGKILL signal.
-	   */
-	  if (rp->r_stop_tm > 0 && now - rp->r_stop_tm > 2*HZ) {
-              kill(rp->r_pid, SIGKILL);		/* terminate */
-	  }
       }
   }
 
   /* Reschedule a synchronous alarm for the next period. */
-  if (OK != (s=sys_setalarm(HZ, 0)))
+  if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("RS", "couldn't set alarm", s);
 }
 
@@ -274,7 +329,7 @@ struct rproc *rp;
       if ((s=mapdriver(child_proc_nr, rp->r_dev_nr, rp->r_dev_style)) < 0) {
           report("RS", "couldn't map driver", errno);
           kill(child_pid, SIGKILL);			/* kill driver */
-          rp->r_flags |= EXIT_PENDING;			/* expect exit */
+          rp->r_flags |= RS_EXITING;			/* expect exit */
 	  return(s);					/* return error */
       }
   }
@@ -287,7 +342,7 @@ struct rproc *rp;
   if ((s = _taskcall(SYSTEM, SYS_PRIVCTL, &m)) < 0) { 	/* set privileges */
       report("RS","call to SYSTEM failed", s);		/* to let child run */
       kill(child_pid, SIGKILL);				/* kill driver */
-      rp->r_flags |= EXIT_PENDING;			/* expect exit */
+      rp->r_flags |= RS_EXITING;			/* expect exit */
       return(s);					/* return error */
   }
 
@@ -301,7 +356,8 @@ struct rproc *rp;
    * thing that can go wrong now, is that execution fails at the child. If 
    * that's the case, the child will exit. 
    */
-  rp->r_flags = IN_USE;				/* mark slot in use */
+  rp->r_flags = RS_IN_USE;			/* mark slot in use */
+  rp->r_restarts += 1;				/* raise nr of restarts */
   rp->r_proc_nr = child_proc_nr;		/* set child details */
   rp->r_pid = child_pid;
   rp->r_check_tm = 0;				/* not check yet */
@@ -314,16 +370,49 @@ struct rproc *rp;
 /*===========================================================================*
  *				stop_service				     *
  *===========================================================================*/
-PRIVATE int stop_service(rp)
+PRIVATE int stop_service(rp,how)
 struct rproc *rp;
+int how;
 {
-  printf("RS tries to stop %s (pid %d)\n", rp->r_cmd, rp->r_pid);
   /* Try to stop the system service. First send a SIGTERM signal to ask the
    * system service to terminate. If the service didn't install a signal 
    * handler, it will be killed. If it did and ignores the signal, we'll
    * find out because we record the time here and send a SIGKILL.
    */
-  rp->r_flags |= EXIT_PENDING;			/* expect exit */
+#if VERBOSE
+  printf("RS tries to stop %s (pid %d)\n", rp->r_cmd, rp->r_pid);
+#endif
+
+  rp->r_flags |= how;				/* what to on exit? */
   kill(rp->r_pid, SIGTERM);			/* first try friendly */
   getuptime(&rp->r_stop_tm); 			/* record current time */
 }
+
+
+/*===========================================================================*
+ *				do_getsysinfo				     *
+ *===========================================================================*/
+PUBLIC int do_getsysinfo(m_ptr)
+message *m_ptr;
+{
+  vir_bytes src_addr, dst_addr;
+  int dst_proc;
+  size_t len;
+  int s;
+
+  switch(m_ptr->m1_i1) {
+  case SI_PROC_TAB:
+  	src_addr = (vir_bytes) rproc;
+  	len = sizeof(struct rproc) * NR_SYS_PROCS;
+  	break; 
+  default:
+  	return(EINVAL);
+  }
+
+  dst_proc = m_ptr->m_source;
+  dst_addr = (vir_bytes) m_ptr->m1_p1;
+  if (OK != (s=sys_datacopy(SELF, src_addr, dst_proc, dst_addr, len)))
+  	return(s);
+  return(OK);
+}
+

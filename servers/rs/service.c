@@ -23,6 +23,7 @@
 PRIVATE char *known_requests[] = {
   "up", 
   "down",
+  "refresh", 
   "shutdown", 
   "catch for illegal requests"
 };
@@ -72,6 +73,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
   printf("    %s up <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
 	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD);
   printf("    %s down <pid>\n", app_name);
+  printf("    %s refresh <pid>\n", app_name);
   printf("    %s shutdown\n", app_name);
   printf("\n");
 }
@@ -109,9 +111,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
       print_usage(argv[ARG_NAME], "illegal request type");
       exit(ENOSYS);
   }
+  req_nr = RS_RQ_BASE + req_type;
 
-  req_nr = SRV_RQ_BASE + req_type;
-  if (req_nr == SRV_UP) {
+  if (req_nr == RS_UP) {
 
       /* Verify argument count. */ 
       if (argc - 1 < ARG_PATH) {
@@ -171,7 +173,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
           }
       }
   }
-  else if (req_nr == SRV_DOWN) {
+  else if (req_nr == RS_DOWN || req_nr == RS_REFRESH) {
 
       /* Verify argument count. */ 
       if (argc - 1 < ARG_PID) {
@@ -183,7 +185,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
           exit(EINVAL);
       }
   } 
-  else if (req_nr == SRV_SHUTDOWN) {
+  else if (req_nr == RS_SHUTDOWN) {
 	/* no extra arguments required */
   }
 
@@ -198,6 +200,7 @@ PUBLIC int main(int argc, char **argv)
 {
   message m;
   int result;
+  int request;
   int s;
 
   /* Verify and parse the command line arguments. All arguments are checked
@@ -205,34 +208,35 @@ PUBLIC int main(int argc, char **argv)
    * all needed parameters to perform the request are extracted and stored
    * global variables. 
    */
-  parse_arguments(argc, argv);
+  request = parse_arguments(argc, argv);
 
   /* Arguments seem fine. Try to perform the request. Only valid requests 
    * should end up here. The default is used for not yet supported requests. 
    */
-  switch(req_type+SRV_RQ_BASE) {
-  case SRV_UP:
+  switch(request) {
+  case RS_UP:
       /* Build space-separated command string to be passed to RS server. */
       strcpy(command, req_path);
       command[strlen(req_path)] = ' ';
       strcpy(command+strlen(req_path)+1, req_args);
 
       /* Build request message and send the request. */
-      m.SRV_CMD_ADDR = command;
-      m.SRV_CMD_LEN = strlen(command);
-      m.SRV_DEV_MAJOR = req_major;
-      m.SRV_PERIOD = req_period;
-      if (OK != (s=_taskcall(RS_PROC_NR, SRV_UP, &m))) 
+      m.RS_CMD_ADDR = command;
+      m.RS_CMD_LEN = strlen(command);
+      m.RS_DEV_MAJOR = req_major;
+      m.RS_PERIOD = req_period;
+      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(s);
       result = m.m_type;
       break;
-  case SRV_DOWN:
-      m.SRV_PID = req_pid;
-      if (OK != (s=_taskcall(RS_PROC_NR, SRV_DOWN, &m))) 
+  case RS_DOWN:
+  case RS_REFRESH:
+      m.RS_PID = req_pid;
+      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(s);
       break;
-  case SRV_SHUTDOWN:
-      if (OK != (s=_taskcall(RS_PROC_NR, SRV_SHUTDOWN, &m))) 
+  case RS_SHUTDOWN:
+      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(s);
       break;
   default:
