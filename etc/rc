@@ -168,6 +168,12 @@ Mount $usr /usr failed -- Single user."
     esac
 
     # Things should be alright now.
+    ;;
+down|stop)
+    sync
+    # Tell RS server we're going down.
+    service shutdown
+    ;;
 esac
 
 # Further initialization.
