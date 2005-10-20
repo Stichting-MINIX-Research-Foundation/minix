@@ -1,10 +1,14 @@
 .TH SERVICE 8
 .SH NAME
-service \- start or stop a system service
+service \- Start or stop an operating system server or device driver.
 .SH SYNOPSIS
 .PP
-\fBservice up\fR \fIservice\fR [\fB-args\fR \fIargs\fR]
-[\fB-dev\fR \fIspecial\fR]
+\fBservice up\fR \fI<service>\fR [\fB-args\fR \fIargs\fR]
+[\fB-dev\fR \fIspecial\fR] [\fB-period\fR \fIticks\fR]
+.PP
+\fBservice down\fR \fI<pid>\fR
+.PP
+\fBservice shutdown\fR
 .br
 .de FL
 .TP
@@ -18,11 +22,31 @@ service \- start or stop a system service
 ..
 .SH DESCRIPTION
 .PP
-Tells the reincarnation server to start a system service, such as a
-device driver. The device driver will be automatically restarted when
-it exits.
+Tells the reincarnation server to start or stop a system service, such as a
+server or device driver. The device driver will be automatically restarted when
+it unexpectedly exits, e.g., if it is killed because of a bad pointer. 
+Starting requires an absoluate path to the binary to be executed.
+.PP
+When an optional period is specified, the reincarnation server sends a status
+request to the system service after every period. If there the response does 
+not arrive in time, the reincarnation server will kill the misbehaving process
+and restart a new one. The period must be specified in ticks, but can be 
+appended with 'HZ' to make it seconds.
+.PP
+Stopping a system service requires the process id of a running system service. 
+Issuing a kill command from the shell will not work, since the reincarnation
+server interprets this as an unexpected exit and will automatically restart
+a fresh copy of the process.
+.PP
+If the system is to be shutdown, the reincarnation server should know about thisevent to prevent it from restarting services that are killed during the shutdown
+sequence.
 .SH EXAMPLES
-.EX "service up /usr/sbin/dp8390 -args DPETH0=pci" "Start the DP8390 ethernet driver, passing DPEd.
+.EX "service up /sbin/is -period 5HZ" "Start the IS server and check its status every 5 seconds."
+.br
+.EX "service up /usr/sbin/dp8390 -args DPETH0=pci" "Start the DP8390 ethernet driver, passing one argument."
+.br
+.EX "service down 117" "Stop the system service with process id 117."
+.br
 .SH "SEE ALSO"
 .PP
 .BR boot (8),
