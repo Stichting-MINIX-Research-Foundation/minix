@@ -8,6 +8,8 @@ service \- Start or stop an operating system server or device driver.
 .PP
 \fBservice down\fR \fI<pid>\fR
 .PP
+\fBservice refresh\fR \fI<pid>\fR
+.PP
 \fBservice shutdown\fR
 .br
 .de FL
@@ -36,7 +38,8 @@ appended with 'HZ' to make it seconds.
 Stopping a system service requires the process id of a running system service. 
 Issuing a kill command from the shell will not work, since the reincarnation
 server interprets this as an unexpected exit and will automatically restart
-a fresh copy of the process.
+a fresh copy of the process. The clean way to restart a process is using the
+'refresh' option of the service utility.
 .PP
 If the system is to be shutdown, the reincarnation server should know about this event to prevent it from restarting services that are killed during the shutdown
 sequence.
