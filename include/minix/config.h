@@ -41,7 +41,7 @@
 
 #if _MINIX_SMALL
 
-#define NR_BUFS	128
+#define NR_BUFS	100
 #define NR_BUF_HASH 128
 
 #else
@@ -53,7 +53,7 @@
 #endif
 
 #if (MACHINE == IBM_PC && _WORD_SIZE == 4)
-#define NR_BUFS         1280	/* # blocks in the buffer cache */
+#define NR_BUFS         1200	/* # blocks in the buffer cache */
 #define NR_BUF_HASH     2048	/* size of buf hash table; MUST BE POWER OF 2*/
 #endif
 
