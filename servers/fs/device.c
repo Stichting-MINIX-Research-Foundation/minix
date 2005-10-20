@@ -87,6 +87,8 @@ PUBLIC void dev_status(message *m)
 		if ((r=sendrec(m->m_source, &st)) != OK) {
 			printf("DEV_STATUS failed to %d: %d\n", m->m_source, r);
 			if (r == EDEADSRCDST) return;
+			if (r == EDSTDIED) return;
+			if (r == ESRCDIED) return;
 			panic(__FILE__,"couldn't sendrec for DEV_STATUS", r);
 		}
 
@@ -360,6 +362,8 @@ message *mess_ptr;		/* pointer to message for task */
   for (;;) {
 	if (r != OK) {
 		if (r == EDEADSRCDST) return;	/* give up */
+		if (r == EDSTDIED) return;
+		if (r == ESRCDIED) return;
 		else panic(__FILE__,"call_task: can't send/receive", r);
 	}
 
