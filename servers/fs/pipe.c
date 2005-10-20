@@ -11,6 +11,7 @@
  *   release:	  check to see if a suspended process can be released and do
  *                it
  *   revive:	  mark a suspended process as able to run again
+ *   unsuspend_by_proc: revive all processes blocking on a given process
  *   do_unpause:  a signal has been sent to a process; see if it suspended
  */
 
@@ -197,17 +198,22 @@ int task;			/* who is proc waiting for? (PIPE = pipe) */
 /*===========================================================================*
  *				unsuspend_by_proc			     *
  *===========================================================================*/
-void unsuspend_by_proc(int proc)
+PUBLIC void unsuspend_by_proc(int proc)
 {
   struct fproc *rp;
   int client = 0;
 
   /* Revive processes waiting for drivers (SUSPENDed) that have
-   * disappeared with return code EIO.
+   * disappeared with return code EAGAIN.
    */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++, client++)
 	if(rp->fp_suspended == SUSPENDED && rp->fp_task == -proc)
-		revive(client, EIO);
+		revive(client, EAGAIN);
+
+  /* Revive processes waiting in drivers on select()s
+   * with EAGAIN too.
+   */
+  select_unsuspend_by_proc(proc);
 
   return;
 }

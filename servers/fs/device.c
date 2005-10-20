@@ -25,6 +25,7 @@
 #include "fproc.h"
 #include "inode.h"
 #include "param.h"
+#include "super.h"
 
 #define ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
@@ -51,7 +52,7 @@ int flags;			/* mode bits and flags */
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);
   if (r == OK && dp->dmap_driver == NONE)
-	panic(__FILE__, "no driver for dev %d", dev);
+	panic(__FILE__, "no driver for dev", dev);
   return(r);
 }
 
@@ -73,7 +74,8 @@ PUBLIC void dev_status(message *m)
 	int d, get_more = 1;
 
 	for(d = 0; d < NR_DEVICES; d++)
-		if (dmap[d].dmap_driver == m->m_source)
+		if (dmap[d].dmap_driver != NONE &&
+		    dmap[d].dmap_driver == m->m_source)
 			break;
 
 	if (d >= NR_DEVICES)
@@ -82,8 +84,11 @@ PUBLIC void dev_status(message *m)
 	do {
 		int r;
 		st.m_type = DEV_STATUS;
-		if ((r=sendrec(m->m_source, &st)) != OK)
+		if ((r=sendrec(m->m_source, &st)) != OK) {
+			printf("DEV_STATUS failed to %d: %d\n", m->m_source, r);
+			if (r == EDEADSRCDST) return;
 			panic(__FILE__,"couldn't sendrec for DEV_STATUS", r);
+		}
 
 		switch(st.m_type) {
 			case DEV_REVIVE:
@@ -125,7 +130,7 @@ int flags;			/* special flags, like O_NONBLOCK */
 
   /* See if driver is roughly valid. */
   if (dp->dmap_driver == NONE)
-	panic(__FILE__, "no driver for i/o on dev %d", dev);
+	panic(__FILE__, "no driver for i/o on dev", dev);
 
   /* Set up the message passed to task. */
   dev_mess.m_type   = op;
@@ -478,5 +483,36 @@ int flags;			/* mode bits and flags */
 	dev_mess.REP_STATUS = OK;
   }
   return(dev_mess.REP_STATUS);
+}
+
+/*===========================================================================*
+ *				dev_up					     *
+ *===========================================================================*/
+PUBLIC void dev_up(int maj)
+{
+	/* A new device driver has been mapped in. This function
+	 * checks if any filesystems are mounted on it, and if so,
+	 * dev_open()s them so the filesystem can be reused.
+	 */
+	struct super_block *sb;
+	int r;
+
+	printf("dev_up for %d..\n", maj);
+	for(sb = super_block; sb < &super_block[NR_SUPERS]; sb++) {
+		int minor;
+		if(sb->s_dev == NO_DEV)
+			continue;
+		if(((sb->s_dev >> MAJOR) & BYTE) != maj)
+			continue;
+		minor = ((sb->s_dev >> MINOR) & BYTE);
+		printf("FS: remounting dev %d/%d\n", maj, minor);
+		if((r = dev_open(sb->s_dev, FS_PROC_NR,
+		   sb->s_rd_only ? R_BIT : (R_BIT|W_BIT))) != OK) {
+			printf("FS: mounted dev %d/%d re-open failed: %d.\n",
+				maj, minor, r);
+		} else printf("FS: mounted dev %d/%d re-opened\n", maj, minor);
+	}
+
+	return;
 }
 

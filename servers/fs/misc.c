@@ -264,6 +264,9 @@ PUBLIC int do_fork()
   /* A child is not a process leader. */
   cp->fp_sesldr = 0;
 
+  /* This child has not exec()ced yet. */
+  cp->fp_execced = 0;
+
   /* Record the fact that both root and working dir have another user. */
   dup_inode(cp->fp_rootdir);
   dup_inode(cp->fp_workdir);
@@ -288,15 +291,25 @@ PUBLIC int do_exec()
   /* The array of FD_CLOEXEC bits is in the fp_cloexec bit map. */
   fp = &fproc[m_in.slot1];		/* get_filp() needs 'fp' */
   bitmap = fp->fp_cloexec;
-  if (bitmap == 0) return(OK);	/* normal case, no FD_CLOEXECs */
-
-  /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
-  for (i = 0; i < OPEN_MAX; i++) {
-	m_in.fd = i;
-	if ( (bitmap >> i) & 01) (void) do_close();
+  if (bitmap) {
+    /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
+    for (i = 0; i < OPEN_MAX; i++) {
+	  m_in.fd = i;
+	  if ( (bitmap >> i) & 01) (void) do_close();
+    }
   }
 
-  return(OK);
+  /* This child has now exec()ced. */
+  fp->fp_execced = 1;
+
+  /* Reply to caller (PM) directly. */
+  reply(who, OK);
+
+  /* Check if this is a driver that can now be useful. */
+  dmap_proc_up(fp - fproc);
+
+  /* Suppress reply to caller (caller already replied to). */
+  return SUSPEND;
 }
 
 /*===========================================================================*
@@ -339,11 +352,13 @@ PUBLIC int do_exit()
   fp->fp_rootdir = NIL_INODE;
   fp->fp_workdir = NIL_INODE;
 
-  /* If a driver exits, unmap its entries in the dmap table.
-   * Also check if any process is SUSPENDed on it.
+  /* Check if any process is SUSPENDed on this driver.
+   * If a driver exits, unmap its entries in the dmap table.
+   * (unmapping has to be done after the first step, because the
+   * dmap table is used in the first step.)
    */
-  dmap_unmap_by_proc(exitee);
   unsuspend_by_proc(exitee);
+  dmap_unmap_by_proc(exitee);
 
   /* If a session leader exits then revoke access to its controlling tty from
    * all other processes using it.

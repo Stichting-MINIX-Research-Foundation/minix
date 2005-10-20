@@ -42,6 +42,7 @@ _PROTOTYPE( void ctty_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int do_ioctl, (void)					);
 _PROTOTYPE( int do_setsid, (void)					);
 _PROTOTYPE( void dev_status, (message *)				);
+_PROTOTYPE( void dev_up, (int major)					);
 
 /* dmp.c */
 _PROTOTYPE( int do_fkey_pressed, (void)					);
@@ -50,7 +51,9 @@ _PROTOTYPE( int do_fkey_pressed, (void)					);
 _PROTOTYPE( int do_devctl, (void)					);
 _PROTOTYPE( void build_dmap, (void)					);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style)	);
+_PROTOTYPE( int dmap_driver_match, (int proc, int major)		);
 _PROTOTYPE( void dmap_unmap_by_proc, (int proc_nr)			);
+_PROTOTYPE( void dmap_proc_up, (int proc_nr)				);
 
 /* filedes.c */
 _PROTOTYPE( struct filp *find_filp, (struct inode *rip, mode_t bits)	);
@@ -186,6 +189,7 @@ _PROTOTYPE( int select_callback, (struct filp *, int ops)		);
 _PROTOTYPE( void select_forget, (int fproc)				);
 _PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void init_select, (void)					);
+_PROTOTYPE( void select_unsuspend_by_proc, (int proc)			);
 _PROTOTYPE( int select_notified, (int major, int minor, int ops)	);
 
 /* timers.c */

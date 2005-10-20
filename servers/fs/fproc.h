@@ -20,6 +20,7 @@ EXTERN struct fproc {
   char fp_revived;		/* set to indicate process being revived */
   char fp_task;			/* which task is proc suspended on */
   char fp_sesldr;		/* true if proc is a session leader */
+  char fp_execced;		/* true if proc has exec()ced after fork */
   pid_t fp_pid;			/* process id */
   long fp_cloexec;		/* bit map for POSIX Table 6-2 FD_CLOEXEC */
 } fproc[NR_PROCS];

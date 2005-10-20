@@ -4,6 +4,7 @@
  *   do_select:	       perform the SELECT system call
  *   select_callback:  notify select system of possible fd operation 
  *   select_notified:  low-level entry for device notifying select
+ *   select_unsuspend_by_proc: cancel a blocking select on exiting driver
  * 
  * Changes:
  *   6 june 2005  Created (Ben Gras)
@@ -56,7 +57,8 @@ FORWARD _PROTOTYPE(int select_major_match,
 	(int match_major, struct filp *file));
 
 FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e));
-FORWARD _PROTOTYPE(void select_wakeup, (struct selectentry *e));
+FORWARD _PROTOTYPE(void select_wakeup, (struct selectentry *e, int r));
+FORWARD _PROTOTYPE(void select_return, (struct selectentry *, int));
 
 /* The Open Group:
  * "The pselect() and select() functions shall support
@@ -458,14 +460,9 @@ PRIVATE void select_cancel_all(struct selectentry *e)
 /*===========================================================================*
  *				select_wakeup				     *
  *===========================================================================*/
-PRIVATE void select_wakeup(struct selectentry *e)
+PRIVATE void select_wakeup(struct selectentry *e, int r)
 {
-	/* Open Group:
-	 * "Upon successful completion, the pselect() and select()
-	 * functions shall return the total number of bits
-	 * set in the bit masks."
-	 */
-	revive(e->req_procnr, e->nreadyfds);
+	revive(e->req_procnr, r);
 }
 
 /*===========================================================================*
@@ -503,6 +500,17 @@ PRIVATE int select_reevaluate(struct filp *fp)
 }
 
 /*===========================================================================*
+ *				select_return				     *
+ *===========================================================================*/
+PRIVATE void select_return(struct selectentry *s, int r)
+{
+	select_cancel_all(s);
+	copy_fdsets(s);
+	select_wakeup(s, r ? r : s->nreadyfds);
+	s->requestor = NULL;
+}
+
+/*===========================================================================*
  *				select_callback			             *
  *===========================================================================*/
 PUBLIC int select_callback(struct filp *fp, int ops)
@@ -535,12 +543,8 @@ PUBLIC int select_callback(struct filp *fp, int ops)
 				type = selecttab[s].type[fd];
 			}
 		}
-		if (wakehim) {
-			select_cancel_all(&selecttab[s]);
-			copy_fdsets(&selecttab[s]);
-			selecttab[s].requestor = NULL;
-			select_wakeup(&selecttab[s]);
-		}
+		if (wakehim)
+			select_return(&selecttab[s], 0);
 	}
 
 	return 0;
@@ -581,7 +585,9 @@ PUBLIC int select_notified(int major, int minor, int selected_ops)
 			   !select_major_match(major, selecttab[s].filps[f]))
 			   	continue;
 			ops = tab2ops(f, &selecttab[s]);
-			s_minor = selecttab[s].filps[f]->filp_ino->i_zone[0] & BYTE;
+			s_minor =
+			(selecttab[s].filps[f]->filp_ino->i_zone[0] >> MINOR)
+				& BYTE;
 			if ((s_minor == minor) &&
 				(selected_ops & ops)) {
 				select_callback(selecttab[s].filps[f], (selected_ops & ops));
@@ -665,10 +671,33 @@ PUBLIC void select_timeout_check(timer_t *timer)
 	}
 
 	selecttab[s].expiry = 0;
-	copy_fdsets(&selecttab[s]);
-	select_cancel_all(&selecttab[s]);
-	selecttab[s].requestor = NULL;
-	select_wakeup(&selecttab[s]);
+	select_return(&selecttab[s], 0);
 
 	return;
 }
+
+/*===========================================================================*
+ *				select_unsuspend_by_proc  	     	     *
+ *===========================================================================*/
+PUBLIC void select_unsuspend_by_proc(int proc)
+{
+	struct filp *fp;
+	int fd, s;
+
+	for(s = 0; s < MAXSELECTS; s++) {
+	  if (!selecttab[s].requestor)
+		  continue;
+	  for(fd = 0; fd < selecttab[s].nfds; fd++) {
+	    int maj;
+	    if (!selecttab[s].filps[fd] || !selecttab[s].filps[fd]->filp_ino)
+		continue;
+	    maj = (selecttab[s].filps[fd]->filp_ino->i_zone[0] >> MAJOR)&BYTE;
+	    if(dmap_driver_match(proc, maj)) {
+			select_return(&selecttab[s], EAGAIN);
+	    }
+	  }
+	}
+
+	return;
+}
+

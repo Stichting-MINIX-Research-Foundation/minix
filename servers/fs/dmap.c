@@ -126,6 +126,14 @@ int style;			/* style of the device */
   }
   dp->dmap_io = gen_io;
   dp->dmap_driver = proc_nr;
+
+  /* If a driver has completed its exec(), it can be announced to be up. */
+  if(fproc[proc_nr].fp_execced) {
+	dev_up(major);
+  } else {
+	dp->dmap_flags |= DMAP_BABY;
+  }
+
   return(OK); 
 }
 
@@ -203,3 +211,31 @@ PUBLIC void build_dmap()
       driver, controller);
 }
 
+/*===========================================================================*
+ *				dmap_driver_match	 		     *
+ *===========================================================================*/ 
+PUBLIC int dmap_driver_match(int proc, int major)
+{
+	if (major < 0 || major >= NR_DEVICES) return(0);
+	if(dmap[major].dmap_driver != NONE && dmap[major].dmap_driver == proc)
+		return 1;
+	return 0;
+}
+
+/*===========================================================================*
+ *				dmap_proc_up		 		     *
+ *===========================================================================*/ 
+PUBLIC void dmap_proc_up(int proc)
+{
+	int i;
+	for (i=0; i<NR_DEVICES; i++) {
+		if(dmap[i].dmap_driver != NONE
+			&& dmap[i].dmap_driver == proc
+			&& (dmap[i].dmap_flags & DMAP_BABY)) {
+			dmap[i].dmap_flags &= ~DMAP_BABY;
+			printf("FS: %d execced\n", proc);
+			dev_up(i);
+		}
+	}
+	return;
+}
