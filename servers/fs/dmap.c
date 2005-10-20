@@ -233,7 +233,6 @@ PUBLIC void dmap_proc_up(int proc)
 			&& dmap[i].dmap_driver == proc
 			&& (dmap[i].dmap_flags & DMAP_BABY)) {
 			dmap[i].dmap_flags &= ~DMAP_BABY;
-			printf("FS: %d execced\n", proc);
 			dev_up(i);
 		}
 	}

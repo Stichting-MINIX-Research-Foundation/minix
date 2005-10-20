@@ -495,9 +495,13 @@ PUBLIC void dev_up(int maj)
 	 * dev_open()s them so the filesystem can be reused.
 	 */
 	struct super_block *sb;
+	struct filp *fp;
 	int r;
 
-	printf("dev_up for %d..\n", maj);
+	/* Open a device once for every filp that's opened on it,
+	 * and once for every filesystem mounted from it.
+	 */
+
 	for(sb = super_block; sb < &super_block[NR_SUPERS]; sb++) {
 		int minor;
 		if(sb->s_dev == NO_DEV)
@@ -510,7 +514,23 @@ PUBLIC void dev_up(int maj)
 		   sb->s_rd_only ? R_BIT : (R_BIT|W_BIT))) != OK) {
 			printf("FS: mounted dev %d/%d re-open failed: %d.\n",
 				maj, minor, r);
-		} else printf("FS: mounted dev %d/%d re-opened\n", maj, minor);
+		}
+	}
+
+	for(fp = filp; fp < &filp[NR_FILPS]; fp++) {
+		struct inode *in;
+		int minor;
+		if(fp->filp_count < 1 || !(in=fp->filp_ino)) continue;
+		if(((in->i_zone[0] >> MAJOR) & BYTE) != maj) continue;
+		if(!(in->i_mode & (I_BLOCK_SPECIAL|I_CHAR_SPECIAL))) continue;
+		
+		minor = ((in->i_zone[0] >> MINOR) & BYTE);
+
+		if((r = dev_open(in->i_dev, FS_PROC_NR,
+		   in->i_mode & (R_BIT|W_BIT))) != OK) {
+			printf("FS: file on dev %d/%d re-open failed: %d.\n",
+				maj, minor, r);
+		}
 	}
 
 	return;
