@@ -54,9 +54,10 @@ PUBLIC void fproc_dmp()
 PRIVATE char * dmap_flags(int flags)
 {
 	static char fl[10];
-	fl[0] = '-';
+	strcpy(fl, "---");
 	if(flags & DMAP_MUTABLE) fl[0] = 'M';
-	fl[1] = '\0';
+	if(flags & DMAP_BUSY)    fl[1] = 'S';
+	if(flags & DMAP_BABY)    fl[2] = 'B';
 	return fl;
 }
 

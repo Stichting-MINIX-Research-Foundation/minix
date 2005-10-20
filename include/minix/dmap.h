@@ -15,6 +15,7 @@
  */
 #define DMAP_MUTABLE		0x01	/* mapping can be overtaken */
 #define DMAP_BUSY		0x02	/* driver busy with request */
+#define DMAP_BABY		0x04	/* driver exec() not done yet */
 
 enum dev_style { STYLE_DEV, STYLE_NDEV, STYLE_TTY, STYLE_CLONE };
 
