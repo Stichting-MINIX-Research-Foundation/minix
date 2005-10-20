@@ -68,9 +68,8 @@ message *m;					/* notification message */
           r ++;
           i ++;
       }
-      /* Now terminate the new message and print it. */
+      /* Now terminate the new message and save it in the log. */
       print_buf[i] = 0;
-      printf("%s", print_buf);
       log_append(print_buf, i);
   }
 
