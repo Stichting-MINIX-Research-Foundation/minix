@@ -6,7 +6,7 @@
  *   at_winchester_task:	main entry when system is brought up
  *
  * Changes:
- *   Aug 19, 2005   ata pci support, supports SATA  (Ben Gras)
+ *   Aug 19, 2005   ATA PCI support, supports SATA  (Ben Gras)
  *   Nov 18, 2004   moved AT disk driver to user-space  (Jorrit N. Herder)
  *   Aug 20, 2004   watchdogs replaced by sync alarms  (Jorrit N. Herder)
  *   Mar 23, 2000   added ATAPI CDROM support  (Michael Temari)
@@ -194,8 +194,8 @@ int w_next_drive = 0;
 
 /* Variables. */
 
-/* wini is indexed by controller first, then drive (0-3).
- * controller 0 is always the 'compatability' ide controller, at
+/* The struct wini is indexed by controller first, then drive (0-3).
+ * Controller 0 is always the 'compatability' ide controller, at
  * the fixed locations, whether present or not.
  */
 PRIVATE struct wini {		/* main drive struct, one entry per drive */
@@ -235,7 +235,8 @@ PRIVATE int w_controller;		/* selected controller */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
 FORWARD _PROTOTYPE( void init_params, (void) 				);
-FORWARD _PROTOTYPE( void init_drive, (struct wini *, int, int, int, int, int, int));
+FORWARD _PROTOTYPE( void init_drive, (struct wini *, int, int, int, 
+					int, int, int));
 FORWARD _PROTOTYPE( void init_params_pci, (int) 			);
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( struct device *w_prepare, (int dev) 		);

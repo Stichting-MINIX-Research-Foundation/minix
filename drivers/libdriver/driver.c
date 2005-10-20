@@ -87,23 +87,22 @@ struct driver *dp;	/* Device dependent entry points. */
   while (TRUE) {
 
 	/* Wait for a request to read or write a disk block. */
-	if(receive(ANY, &mess) != OK) continue;
+	if (receive(ANY, &mess) != OK) continue;
 
 	device_caller = mess.m_source;
 	proc_nr = mess.PROC_NR;
 
 	/* Now carry out the work. */
 	switch(mess.m_type) {
-	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;
+	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;	
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
 	case DEV_IOCTL:		r = (*dp->dr_ioctl)(dp, &mess);	break;
 	case CANCEL:		r = (*dp->dr_cancel)(dp, &mess);break;
 	case DEV_SELECT:	r = (*dp->dr_select)(dp, &mess);break;
-
 	case DEV_READ:	
-	case DEV_WRITE:	  r = do_rdwt(dp, &mess);	break;
+	case DEV_WRITE:	  	r = do_rdwt(dp, &mess);	break;
 	case DEV_GATHER: 
-	case DEV_SCATTER: r = do_vrdwt(dp, &mess);	break;
+	case DEV_SCATTER: 	r = do_vrdwt(dp, &mess);	break;
 
 	case HARD_INT:		/* leftover interrupt or expired timer. */
 				if(dp->dr_hw_int) {
@@ -137,6 +136,7 @@ struct driver *dp;	/* Device dependent entry points. */
 	}
   }
 }
+
 
 /*===========================================================================*
  *				init_buffer				     *

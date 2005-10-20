@@ -205,12 +205,8 @@ PRIVATE int m_do_open(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
 {
-/* Check device number on open.  (This used to give I/O privileges to a 
- * process opening /dev/mem or /dev/kmem. This may be needed in case of 
- * memory mapped I/O. With system calls to do I/O this is no longer needed.)
- */
+/* Check device number on open. */
   if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
-
   return(OK);
 }
 
@@ -220,6 +216,9 @@ message *m_ptr;
 PRIVATE void m_init()
 {
   /* Initialize this task. All minor devices are initialized one by one. */
+  phys_bytes ramdev_size;
+  phys_bytes ramdev_base;
+  message m;
   int i, s;
 
   if (OK != (s=sys_getkinfo(&kinfo))) {
@@ -242,6 +241,22 @@ PRIVATE void m_init()
               kinfo.bootdev_base, kinfo.bootdev_size))) {
           panic("MEM","Couldn't install remote segment.",s);
       }
+  }
+
+  /* See if there are already RAM disk details at the Data Store server. */
+  m.DS_KEY = MEMORY_MAJOR;
+  if (OK == (s = _taskcall(DS_PROC_NR, DS_RETRIEVE, &m))) {
+  	ramdev_size = m.DS_VAL_L1;
+ 	ramdev_base = m.DS_VAL_L2;
+  	printf("MEM retrieved size %u and base %u from DS, status %d\n",
+    		ramdev_size, ramdev_base, s);
+  	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, 
+		(vir_bytes *) &s, ramdev_base, ramdev_size))) {
+      		panic("MEM","Couldn't install remote segment.",s);
+  	}
+  	m_geom[RAM_DEV].dv_base = cvul64(ramdev_base);
+ 	m_geom[RAM_DEV].dv_size = cvul64(ramdev_size);
+	printf("MEM stored retrieved details as new RAM disk\n");
   }
 
   /* Initialize /dev/zero. Simply write zeros into the buffer. */
@@ -283,19 +298,19 @@ message *m_ptr;				/* pointer to control message */
  * - MIOCRAMSIZE: to set the size of the RAM disk.
  */
   struct device *dv;
-  if ((dv = m_prepare(m_ptr->DEVICE)) == NIL_DEV) return(ENXIO);
 
   switch (m_ptr->REQUEST) {
     case MIOCRAMSIZE: {
 	/* FS wants to create a new RAM disk with the given size. */
 	phys_bytes ramdev_size;
 	phys_bytes ramdev_base;
+	message m;
 	int s;
 
-	if (m_ptr->PROC_NR != FS_PROC_NR) {
-	    report("MEM", "warning, MIOCRAMSIZE called by", m_ptr->PROC_NR);
-	    return(EPERM);
-	}
+	/* Only FS can create RAM disk, and only on RAM disk device. */
+	if (m_ptr->PROC_NR != FS_PROC_NR) return(EPERM);
+	if (m_ptr->DEVICE != RAM_DEV) return(EINVAL);
+        if ((dv = m_prepare(m_ptr->DEVICE)) == NIL_DEV) return(ENXIO);
 
 	/* Try to allocate a piece of memory for the RAM disk. */
 	ramdev_size = m_ptr->POSITION;
@@ -303,13 +318,26 @@ message *m_ptr;				/* pointer to control message */
             report("MEM", "warning, allocmem failed", errno);
             return(ENOMEM);
         }
-	dv->dv_base = cvul64(ramdev_base);
-	dv->dv_size = cvul64(ramdev_size);
 
-  	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
-  		ramdev_base, ramdev_size))) {
+	/* Store the values we got in the data store so we can retrieve
+	 * them later on, in the unfortunate event of a crash.
+	 */
+	m.DS_KEY = MEMORY_MAJOR;
+	m.DS_VAL_L1 = ramdev_size;
+	m.DS_VAL_L2 = ramdev_base;
+	if (OK != (s = _taskcall(DS_PROC_NR, DS_PUBLISH, &m))) {
+      		panic("MEM","Couldn't store RAM disk details at DS.",s);
+	}
+	printf("MEM stored size %u and base %u at DS, status %d\n",
+	    ramdev_size, ramdev_base, s);
+
+  	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, 
+		(vir_bytes *) &s, ramdev_base, ramdev_size))) {
       		panic("MEM","Couldn't install remote segment.",s);
   	}
+
+	dv->dv_base = cvul64(ramdev_base);
+	dv->dv_size = cvul64(ramdev_size);
 	break;
     }
     case MIOCMAP:
@@ -329,7 +357,6 @@ message *m_ptr;				/* pointer to control message */
 		return r;
 	r= sys_vm_map(m_ptr->PROC_NR, do_map,
 		(phys_bytes)mapreq.base, mapreq.size, mapreq.offset);
-	printf("m_ioctl MIOC(UN)MAP: result %d\n", r);
 	return r;
     }
 
