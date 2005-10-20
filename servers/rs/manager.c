@@ -292,7 +292,7 @@ struct rproc *rp;
   }
 
 #if VERBOSE
-      printf("RS: started '%s', major %d, pid %d, proc_nr %d", 
+      printf("RS: started '%s', major %d, pid %d, proc_nr %d\n", 
           rp->r_cmd, rp->r_dev_nr, child_pid, child_proc_nr);
 #endif
 
