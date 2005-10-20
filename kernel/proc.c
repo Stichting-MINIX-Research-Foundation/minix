@@ -349,6 +349,11 @@ unsigned flags;				/* system call flags */
             src_id = (chunk - &map->chunk[0]) * BITCHUNK_BITS + i;
             if (src_id >= NR_SYS_PROCS) break;		/* out of range */
             src_proc_nr = id_to_nr(src_id);		/* get source proc */
+#if DEBUG_ENABLE_IPC_WARNINGS
+	    if(src_proc_nr == NONE) {
+		kprintf("mini_receive: sending notify from NONE\n");
+	    }
+#endif
             if (src!=ANY && src!=src_proc_nr) continue;	/* source not ok */
             *chunk &= ~(1 << i);			/* no longer pending */
 
