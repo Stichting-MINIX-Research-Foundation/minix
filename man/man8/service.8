@@ -38,7 +38,7 @@ Issuing a kill command from the shell will not work, since the reincarnation
 server interprets this as an unexpected exit and will automatically restart
 a fresh copy of the process.
 .PP
-If the system is to be shutdown, the reincarnation server should know about thisevent to prevent it from restarting services that are killed during the shutdown
+If the system is to be shutdown, the reincarnation server should know about this event to prevent it from restarting services that are killed during the shutdown
 sequence.
 .SH EXAMPLES
 .EX "service up /sbin/is -period 5HZ" "Start the IS server and check its status every 5 seconds."
