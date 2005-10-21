@@ -49,10 +49,12 @@ int flags;			/* mode bits and flags */
   major = (dev >> MAJOR) & BYTE;
   if (major >= NR_DEVICES) major = 0;
   dp = &dmap[major];
+  if (dp->dmap_driver == NONE) {
+	printf("FS: open: no driver for dev %x\n", dev);
+	return EIO;
+  }
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);
-  if (r == OK && dp->dmap_driver == NONE)
-	panic(__FILE__, "no driver for dev", dev);
   return(r);
 }
 
@@ -62,6 +64,10 @@ int flags;			/* mode bits and flags */
 PUBLIC void dev_close(dev)
 dev_t dev;			/* device to close */
 {
+  /* See if driver is roughly valid. */
+  if (dmap[(dev >> MAJOR)].dmap_driver == NONE) {
+	return;
+  }
   (void) (*dmap[(dev >> MAJOR) & BYTE].dmap_opcl)(DEV_CLOSE, dev, 0, 0);
 }
 
@@ -131,8 +137,10 @@ int flags;			/* special flags, like O_NONBLOCK */
   dp = &dmap[(dev >> MAJOR) & BYTE];
 
   /* See if driver is roughly valid. */
-  if (dp->dmap_driver == NONE)
-	panic(__FILE__, "no driver for i/o on dev", dev);
+  if (dp->dmap_driver == NONE) {
+	printf("FS: dev_io: no driver for dev %x\n", dev);
+	return EIO;
+  }
 
   /* Set up the message passed to task. */
   dev_mess.m_type   = op;
@@ -364,6 +372,7 @@ message *mess_ptr;		/* pointer to message for task */
 		if (r == EDEADSRCDST) return;	/* give up */
 		if (r == EDSTDIED) return;
 		if (r == ESRCDIED) return;
+		if (r == ELOCKED) return;
 		else panic(__FILE__,"call_task: can't send/receive", r);
 	}
 
