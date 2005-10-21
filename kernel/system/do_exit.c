@@ -109,7 +109,7 @@ register struct proc *rc;		/* slot of process to clean up */
 #endif
   	  if (rp->p_rts_flags == 0) lock_enqueue(rp);/* let process run again */
       } 
-      else if ((rp->p_rts_flags & SENDING) && rp->p_sendto == proc_nr(rc)) {
+      if ((rp->p_rts_flags & SENDING) && rp->p_sendto == proc_nr(rc)) {
           rp->p_reg.retreg = EDSTDIED;		/* report destination died */
 	  rp->p_rts_flags &= ~SENDING;		/* no longer sending */
 #if DEBUG_ENABLE_IPC_WARNINGS
