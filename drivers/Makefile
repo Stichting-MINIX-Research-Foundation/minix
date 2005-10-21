@@ -32,6 +32,7 @@ all install depend clean:
 	cd ./dp8390 && $(MAKE) $@
 	cd ./sb16 && $(MAKE) $@
 	cd ./lance && $(MAKE) $@
+	cd ./rescue && $(MAKE) $@
 
 image:
 	cd ./libdriver && $(MAKE) build
