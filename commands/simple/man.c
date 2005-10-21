@@ -16,7 +16,7 @@
 #include <sys/wait.h>
 
 /* Defaults: */
-char MANPATH[]=	"/usr/local/man:/usr/man";
+char MANPATH[]=	"/usr/local/man:/usr/man:/usr/gnu/man";
 char PAGER[]=	"more";
 
 /* Comment at the start to let tbl(1) be run before n/troff. */

@@ -12,6 +12,7 @@ EMACS=emacs-21.4
 LYNX=lynx2-8-5
 COREUTILS=gnu-coreutils-5.2.1
 VIM=vim63
+PERL=perl-5.8.7
 
 SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch ps reboot rlogind scripts sh simple talk talkd telnet telnetd urlget yap zmodem
 
@@ -49,6 +50,7 @@ big:
 	cd $(KERMIT) && /bin/sh makeme.sh
 	cd $(LYNX) && /bin/sh makeme.sh
 	cd $(COREUTILS) && /bin/sh makeme.sh
+	cd $(PERL) && /bin/sh makeme.sh
 	cd $(EMACS) && /bin/sh makeme.sh
 	cd $(PYTHON) && /bin/sh makeme.sh 
 	cd $(VIM) && /bin/sh makeme.sh 
@@ -61,6 +63,7 @@ biginstall: big
 	cd $(LYNX) && make install
 	cd $(EMACS) && make install
 	cd $(COREUTILS) && make install
+	cd $(PERL) && make install
 	cd $(VIM) && make install
 
 clean::
