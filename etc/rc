@@ -179,6 +179,7 @@ esac
 # Further initialization.
 test -f /usr/etc/rc && sh /usr/etc/rc $action
 test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
+test -f /etc/rc.rescue && sh /etc/rc.rescue $action
 
 # Any messages?
 test "$action" = start -a -f /etc/issue && cat /etc/issue

@@ -1,0 +1,28 @@
+#!/bin/sh
+DRIVERS=/sbin
+RESCUE=/boot/rescue
+
+if [ "$1" != start ]
+then	exit
+fi
+
+service up $DRIVERS/rescue -dev /dev/rescue -arg 128
+mkfs /dev/rescue || exit
+mount /dev/rescue $RESCUE || exit
+cp $DRIVERS/memory $RESCUE
+label=`sysenv label`
+case "$label" in
+AT)
+	d=at_wini
+	;;
+FLOPPY)
+	d=floppy
+	;;
+BIOS)
+	d=bios_wini
+	;;
+*)	exit
+	;;
+esac
+cp $DRIVERS/$d $RESCUE
+service rescue $RESCUE
