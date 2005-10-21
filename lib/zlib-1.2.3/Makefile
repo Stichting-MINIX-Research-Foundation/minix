@@ -28,7 +28,7 @@ CFLAGS=-D_MINIX=1 -D_POSIX_SOURCE=1
 #LDSHARED=cc
 #CPP=cc -E
 
-#LIBS=libz.a
+LIBS=$(ACKBASE)/libz.a
 LIBRARIES=libz
 #SHAREDLIB=libz.so
 #SHAREDLIBV=libz.so.1.2.2
@@ -40,12 +40,12 @@ LIBRARIES=libz
 #SHELL=/bin/sh
 #EXE=
 
-#prefix =/usr/local
-#exec_prefix =${prefix}
-#libdir =${exec_prefix}/lib
-#includedir =${prefix}/include
-#mandir =/usr/local/man
-#man3dir = ${mandir}/man3
+prefix =/usr/local
+exec_prefix =${prefix}
+libdir =${exec_prefix}/lib
+includedir =${prefix}/include
+mandir =/usr/local/man
+man3dir = ${mandir}/man3
 
 #OBJS = adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o \
 #       zutil.o inflate.o infback.o inftrees.o inffast.o
@@ -95,24 +95,24 @@ libz_OBJECTS = adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o \
 #minigzip$(EXE): minigzip.o $(LIBS)
 #	$(CC) $(CFLAGS) -o $@ minigzip.o $(LDFLAGS)
 
-#install: $(LIBS)
-#	-@if [ ! -d $(exec_prefix) ]; then mkdir -p $(exec_prefix); fi
-#	-@if [ ! -d $(includedir)  ]; then mkdir -p $(includedir); fi
-#	-@if [ ! -d $(libdir)      ]; then mkdir -p $(libdir); fi
-#	-@if [ ! -d $(man3dir)     ]; then mkdir -p $(man3dir); fi
-#	install -o bin zlib.h zconf.h $(includedir)
-#	chmod 644 $(includedir)/zlib.h $(includedir)/zconf.h
-#	install -o bin $(LIBS) $(libdir)
-#	cd $(libdir); chmod 755 $(LIBS)
-#	-@(cd $(libdir); $(RANLIB) libz.a || true) >/dev/null 2>&1
-#	cd $(libdir); if test -f $(SHAREDLIBV); then \
-#	  rm -f $(SHAREDLIB) $(SHAREDLIBM); \
-#	  ln -s $(SHAREDLIBV) $(SHAREDLIB); \
-#	  ln -s $(SHAREDLIBV) $(SHAREDLIBM); \
-#	  (ldconfig || true)  >/dev/null 2>&1; \
-#	fi
-#	install -o bin zlib.3 $(man3dir)
-#	chmod 644 $(man3dir)/zlib.3
+install::
+	-@if [ ! -d $(exec_prefix) ]; then mkdir -p $(exec_prefix); fi
+	-@if [ ! -d $(includedir)  ]; then mkdir -p $(includedir); fi
+	-@if [ ! -d $(libdir)      ]; then mkdir -p $(libdir); fi
+	-@if [ ! -d $(man3dir)     ]; then mkdir -p $(man3dir); fi
+	install -o bin zlib.h zconf.h $(includedir)
+	chmod 644 $(includedir)/zlib.h $(includedir)/zconf.h
+	install -o bin $(LIBS) $(libdir)
+	cd $(libdir); chmod 755 $(LIBS)
+	-@(cd $(libdir); $(RANLIB) libz.a || true) >/dev/null 2>&1
+	cd $(libdir); if test -f $(SHAREDLIBV); then \
+	  rm -f $(SHAREDLIB) $(SHAREDLIBM); \
+	  ln -s $(SHAREDLIBV) $(SHAREDLIB); \
+	  ln -s $(SHAREDLIBV) $(SHAREDLIBM); \
+	  (ldconfig || true)  >/dev/null 2>&1; \
+	fi
+	install -o bin zlib.3 $(man3dir)
+	chmod 644 $(man3dir)/zlib.3
 # The ranlib in install is needed on NeXTSTEP which checks file times
 # ldconfig is for Linux
 
