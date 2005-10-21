@@ -107,7 +107,7 @@ register struct proc *rc;		/* slot of process to clean up */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("Proc %d receive dead src %d\n", proc_nr(rp), proc_nr(rc));
 #endif
-	  lock_enqueue(rp);			/* let process run again */
+  	  if (rp->p_rts_flags == 0) lock_enqueue(rp);/* let process run again */
       } 
       else if ((rp->p_rts_flags & SENDING) && rp->p_sendto == proc_nr(rc)) {
           rp->p_reg.retreg = EDSTDIED;		/* report destination died */
@@ -115,7 +115,7 @@ register struct proc *rc;		/* slot of process to clean up */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("Proc %d send dead dst %d\n", proc_nr(rp), proc_nr(rc));
 #endif
-	  lock_enqueue(rp);			/* let process run again */
+  	  if (rp->p_rts_flags == 0) lock_enqueue(rp);/* let process run again */
       } 
   }
 
