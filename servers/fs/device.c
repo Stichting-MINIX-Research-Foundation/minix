@@ -49,10 +49,7 @@ int flags;			/* mode bits and flags */
   major = (dev >> MAJOR) & BYTE;
   if (major >= NR_DEVICES) major = 0;
   dp = &dmap[major];
-  if (dp->dmap_driver == NONE) {
-	printf("FS: open: no driver for dev %x\n", dev);
-	return EIO;
-  }
+  if (dp->dmap_driver == NONE) return ENXIO;
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);
   return(r);
@@ -91,7 +88,6 @@ PUBLIC void dev_status(message *m)
 		int r;
 		st.m_type = DEV_STATUS;
 		if ((r=sendrec(m->m_source, &st)) != OK) {
-			printf("DEV_STATUS failed to %d: %d\n", m->m_source, r);
 			if (r == EDEADSRCDST) return;
 			if (r == EDSTDIED) return;
 			if (r == ESRCDIED) return;
@@ -137,10 +133,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   dp = &dmap[(dev >> MAJOR) & BYTE];
 
   /* See if driver is roughly valid. */
-  if (dp->dmap_driver == NONE) {
-	printf("FS: dev_io: no driver for dev %x\n", dev);
-	return EIO;
-  }
+  if (dp->dmap_driver == NONE) return ENXIO;
 
   /* Set up the message passed to task. */
   dev_mess.m_type   = op;
@@ -438,7 +431,6 @@ int flags;			/* mode bits and flags */
 PUBLIC void no_dev_io(int proc, message *m)
 {
 /* Called when doing i/o on a nonexistent device. */
-  printf("FS: I/O on unmapped device number\n");
   return;
 }
 
