@@ -68,7 +68,7 @@ HDEMU=0
 COPY=0
 CVSTAG=HEAD
 
-while getopts "ch?" c
+while getopts "rch?" c
 do
 	case "$c" in
 	\?)
