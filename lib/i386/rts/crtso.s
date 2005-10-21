@@ -18,7 +18,7 @@ begdata:
 .sect .bss
 begbss:
 
-.define crtso, ___main, __penviron, __penvp, __fpu_present
+.define crtso, __penviron, __penvp, __fpu_present
 .extern _main, _exit
 .sect .text
 crtso:
@@ -56,9 +56,6 @@ crtso:
 	call	_exit
 
 	hlt				! force a trap if exit fails
-
-___main:				! for GCC
-	ret
 
 .sect .rom
 	.data4	0			! Separate I&D: *NULL == 0

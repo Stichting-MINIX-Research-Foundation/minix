@@ -1,42 +1,17 @@
 # Makefile for lib/i386/rts.
 
-CFLAGS	= -O -D_MINIX -D_POSIX_SOURCE -Was-ack
-CC1	= $(CC) $(CFLAGS) -c
+CFLAGS	= -O -D_MINIX -D_POSIX_SOURCE
 
-LIBRARY	= ../../libc.a
+LIBRARIES = libc
 
-all:	\
-	../../crtso.o \
-	../../m2rtso.o \
-	../../prtso.o \
-	$(LIBRARY)
+libc_OBJECTS	= \
+	__sigreturn.o \
+	_ipc.o \
+	brksize.o \
+	
+TOPLEVEL_OBJECTS = \
+	crtso.o \
+	m2rtso.o \
+	prtso.o \
 
-../../crtso.o:	crtso.s
-	$(CC1) -c crtso.s
-	mv crtso.o $@
-
-../../m2rtso.o:	m2rtso.s
-	$(CC1) -c m2rtso.s
-	mv m2rtso.o $@
-
-../../prtso.o:	prtso.s
-	$(CC1) -c prtso.s
-	mv prtso.o $@
-
-OBJECTS	= \
-	$(LIBRARY)(__sigreturn.o) \
-	$(LIBRARY)(_ipc.o) \
-	$(LIBRARY)(brksize.o) \
-
-$(LIBRARY):	$(OBJECTS)
-	aal cr $@ *.o
-	rm *.o
-
-$(LIBRARY)(__sigreturn.o):	__sigreturn.s
-	$(CC1) __sigreturn.s
-
-$(LIBRARY)(_ipc.o):	_ipc.s
-	$(CC1) _ipc.s
-
-$(LIBRARY)(brksize.o):	brksize.s
-	$(CC1) brksize.s
+include ../../Makefile.inc

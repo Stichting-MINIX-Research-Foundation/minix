@@ -1,0 +1,2 @@
+Libraries are compiled for both ack and gcc. If you want to compile them
+for ack only (gcc takes up a lot of memory), please see ackonly/README.
