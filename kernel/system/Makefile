@@ -44,9 +44,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_sigreturn.o) \
 	$(SYSTEM)(do_abort.o) \
 	$(SYSTEM)(do_getinfo.o) \
-	$(SYSTEM)(do_iopenable.o) \
-	$(SYSTEM)(do_vm.o) \
-	$(SYSTEM)(do_vm_setbuf.o) \
+	$(SYSTEM)(do_iopenable.o)
 
 $(SYSTEM):	$(OBJECTS)
 	aal cr $@ *.o
@@ -144,10 +142,3 @@ $(SYSTEM)(do_segctl.o):	do_segctl.c
 
 $(SYSTEM)(do_iopenable.o):	do_iopenable.c
 	$(CC) do_iopenable.c
-
-$(SYSTEM)(do_vm.o):	do_vm.o
-do_vm.o:	do_vm.c
-	$(CC) do_vm.c
-
-$(SYSTEM)(do_vm_setbuf.o):	do_vm_setbuf.c
-	$(CC) do_vm_setbuf.c

@@ -126,10 +126,6 @@ register struct proc *rc;		/* slot of process to clean up */
           irq_hooks[i].proc_nr = NONE; 		/* mark hook as free */
       }
   }
-
-  /* Clean up virtual memory */
-  if (rc->p_misc_flags & MF_VM)
-  	vm_map_default(rc);
 }
 
 #endif /* USE_EXIT */

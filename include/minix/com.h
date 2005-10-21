@@ -222,10 +222,8 @@
 #  define SYS_GETINFO    (KERNEL_CALL + 26) 	/* sys_getinfo() */
 #  define SYS_ABORT      (KERNEL_CALL + 27)	/* sys_abort() */
 #  define SYS_IOPENABLE  (KERNEL_CALL + 28)	/* sys_enable_iop() */
-#  define SYS_VM_SETBUF  (KERNEL_CALL + 29)	/* sys_vm_setbuf() */
-#  define SYS_VM_MAP  	 (KERNEL_CALL + 30)	/* sys_vm_map() */
 
-#define NR_SYS_CALLS	31	/* number of system calls */ 
+#define NR_SYS_CALLS	29	/* number of system calls */ 
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
 #define MEM_PTR		m2_p1	/* base */

@@ -38,10 +38,6 @@ _PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
 _PROTOTYPE( int sys_nice, (int proc, int priority));
 
 _PROTOTYPE( int sys_int86, (struct reg86u *reg86p));
-_PROTOTYPE( int sys_vm_setbuf, (phys_bytes base, phys_bytes size,
-							phys_bytes high));
-_PROTOTYPE( int sys_vm_map, (int proc_nr, int do_map,
-	phys_bytes base, phys_bytes size, phys_bytes offset));
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_nr, buffer, count) \

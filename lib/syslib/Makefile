@@ -37,8 +37,6 @@ libsys_OBJECTS	= \
 	sys_voutl.o \
 	sys_setalarm.o \
 	sys_memset.o \
-	taskcall.o \
-	sys_vm_setbuf.o \
-	sys_vm_map.o \
+	taskcall.o
 
 include ../Makefile.inc

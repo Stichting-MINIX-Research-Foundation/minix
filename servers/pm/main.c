@@ -32,7 +32,6 @@ FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
 FORWARD _PROTOTYPE( void get_mem_chunks, (struct memory *mem_chunks) 	);
 FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks, 
 	struct mem_map *map_ptr) 	);
-FORWARD _PROTOTYPE( void do_x86_vm, (struct memory mem_chunks[NR_MEMS])	);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
@@ -270,9 +269,6 @@ PRIVATE void pm_init()
   }
 #endif /* ENABLE_BOOTDEV */
 
-  /* Withhold some memory from x86 VM */
-  do_x86_vm(mem_chunks);
-
   /* Initialize tables to all physical memory and print memory information. */
   printf("Physical memory:");
   mem_init(mem_chunks, &free_clicks);
@@ -394,64 +390,3 @@ struct mem_map *map_ptr;			/* memory to remove */
   }
 }
 
-#define PAGE_SIZE	4096
-#define PAGE_TABLE_COVER (1024*PAGE_SIZE)
-/*=========================================================================*
- *				do_x86_vm				   *
- *=========================================================================*/
-PRIVATE void do_x86_vm(mem_chunks)
-struct memory mem_chunks[NR_MEMS];
-{
-	phys_bytes high, bytes;
-	phys_clicks clicks, base_click;
-	unsigned pages;
-	int i, r;
-
-	/* Compute the highest memory location */
-	high= 0;
-	for (i= 0; i<NR_MEMS; i++)
-	{
-		if (mem_chunks[i].size == 0)
-			continue;
-		if (mem_chunks[i].base + mem_chunks[i].size > high)
-			high= mem_chunks[i].base + mem_chunks[i].size;
-	}
-
-	high <<= CLICK_SHIFT;
-#if VERBOSE_VM
-	printf("do_x86_vm: found high 0x%x\n", high);
-#endif
-
-	/* The number of pages we need is one for the page directory, enough
-	 * page tables to cover the memory, and one page for alignement.
-	 */
-	pages= 1 + (high + PAGE_TABLE_COVER-1)/PAGE_TABLE_COVER + 1;
-	bytes= pages*PAGE_SIZE;
-	clicks= (bytes + CLICK_SIZE-1) >> CLICK_SHIFT;
-
-#if VERBOSE_VM
-	printf("do_x86_vm: need %d pages\n", pages);
-	printf("do_x86_vm: need %d bytes\n", bytes);
-	printf("do_x86_vm: need %d clicks\n", clicks);
-#endif
-
-	for (i= 0; i<NR_MEMS; i++)
-	{
-		if (mem_chunks[i].size <= clicks)
-			continue;
-		break;
-	}
-	if (i >= NR_MEMS)
-		panic("PM", "not enough memory for VM page tables?", NO_NUM);
-	base_click= mem_chunks[i].base;
-	mem_chunks[i].base += clicks;
-	mem_chunks[i].size -= clicks;
-
-#if VERBOSE_VM
-	printf("do_x86_vm: using 0x%x clicks @ 0x%x\n", clicks, base_click);
-#endif
-	r= sys_vm_setbuf(base_click << CLICK_SHIFT, clicks << CLICK_SHIFT,
-		high);
-	if (r != 0)
-		printf("do_x86_vm: sys_vm_setbuf failed: %d\n", r);
-}

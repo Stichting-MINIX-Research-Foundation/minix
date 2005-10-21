@@ -10,7 +10,5 @@
 #include <minix/ioctl.h>
 
 #define MIOCRAMSIZE	_IOW('m', 3, u32_t)
-#define MIOCMAP		_IOR('m', 4, struct mapreq)
-#define MIOCUNMAP	_IOR('m', 5, struct mapreq)
 
 #endif /* _S_I_MEMORY_H */

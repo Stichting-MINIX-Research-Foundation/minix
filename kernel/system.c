@@ -157,8 +157,6 @@ PRIVATE void initialize(void)
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
-  map(SYS_VM_SETBUF, do_vm_setbuf); 	/* PM passes buffer for page tables */
-  map(SYS_VM_MAP, do_vm_map); 		/* Map/unmap physical (device) memory */
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
