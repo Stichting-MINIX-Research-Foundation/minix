@@ -172,8 +172,8 @@ PUBLIC int do_reboot()
 	return(EINVAL);
   }
 
-  tell_fs(REBOOT, 0, 0, 0);		/* tell FS to synchronize */
   check_sig(-1, SIGKILL); 		/* kill all processes except init */
+  tell_fs(REBOOT, 0, 0, 0);		/* tell FS to synchronize */
 
   /* Ask the kernel to abort. All system services, including the PM, will 
    * get a HARD_STOP notification. Await the notification in the main loop.
