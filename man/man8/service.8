@@ -10,6 +10,8 @@ service \- Start or stop an operating system server or device driver.
 .PP
 \fBservice refresh\fR \fI<pid>\fR
 .PP
+\fBservice rescue\fR \fI<dir>\fR
+.PP
 \fBservice shutdown\fR
 .br
 .de FL
@@ -40,6 +42,8 @@ Issuing a kill command from the shell will not work, since the reincarnation
 server interprets this as an unexpected exit and will automatically restart
 a fresh copy of the process. The clean way to restart a process is using the
 'refresh' option of the service utility.
+.PP
+The rescue call can be used to set the current working directory of the reincarnation server. By using a trusted rescue driver to shadow certain binaries in RAM the reincarnation server can check that rescue directory for binaries if the normal execution of the absolute path fails. This allows recovery from failures of the root file system driver.
 .PP
 If the system is to be shutdown, the reincarnation server should know about this event to prevent it from restarting services that are killed during the shutdown
 sequence.

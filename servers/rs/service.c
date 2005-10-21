@@ -24,6 +24,7 @@ PRIVATE char *known_requests[] = {
   "up", 
   "down",
   "refresh", 
+  "rescue", 
   "shutdown", 
   "catch for illegal requests"
 };
@@ -39,7 +40,7 @@ extern int errno;
  */
 #define ARG_NAME	0		/* own application name */
 #define ARG_REQUEST	1		/* request to perform */
-#define ARG_PATH	2		/* binary of system service */
+#define ARG_PATH	2		/* rescue dir or system service */
 #define ARG_PID		2		/* pid of system service */
 
 #define MIN_ARG_COUNT	2		/* require an action */
@@ -74,6 +75,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
 	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD);
   printf("    %s down <pid>\n", app_name);
   printf("    %s refresh <pid>\n", app_name);
+  printf("    %s rescue <dir>\n", app_name);
   printf("    %s shutdown\n", app_name);
   printf("\n");
 }
@@ -159,7 +161,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
                   exit(errno);
               }
 	      if ( ! (stat_buf.st_mode & (S_IFBLK | S_IFCHR))) {
-                  print_usage(argv[ARG_NAME], "special file is not a device node");
+                  print_usage(argv[ARG_NAME], "special file is not a device");
                   exit(EINVAL);
        	      } 
               req_major = (stat_buf.st_rdev >> MAJOR) & BYTE;
@@ -185,8 +187,25 @@ PRIVATE int parse_arguments(int argc, char **argv)
           exit(EINVAL);
       }
   } 
+  else if (req_nr == RS_RESCUE) {
+
+      /* Verify argument count. */ 
+      if (argc - 1 < ARG_PATH) {
+          print_usage(argv[ARG_NAME], "action requires rescue directory");
+          exit(EINVAL);
+      }
+      req_path = argv[ARG_PATH];
+      if (stat(argv[ARG_PATH], &stat_buf) == -1) {
+          print_usage(argv[ARG_NAME], "couldn't get status of directory");
+          exit(errno);
+      }
+      if ( ! (stat_buf.st_mode & S_IFDIR)) {
+          print_usage(argv[ARG_NAME], "file is not a directory");
+          exit(EINVAL);
+      } 
+  } 
   else if (req_nr == RS_SHUTDOWN) {
-	/* no extra arguments required */
+        /* no extra arguments required */
   }
 
   /* Return the request number if no error were found. */
@@ -232,6 +251,12 @@ PUBLIC int main(int argc, char **argv)
   case RS_DOWN:
   case RS_REFRESH:
       m.RS_PID = req_pid;
+      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
+          failure(s);
+      break;
+  case RS_RESCUE:
+      m.RS_CMD_ADDR = req_path;
+      m.RS_CMD_LEN = strlen(req_path);
       if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(s);
       break;

@@ -135,6 +135,30 @@ PUBLIC int do_refresh(message *m_ptr)
   return(ESRCH);
 }
 
+/*===========================================================================*
+ *				do_rescue				     *
+ *===========================================================================*/
+PUBLIC int do_rescue(message *m_ptr)
+{
+  char rescue_dir[MAX_RESCUE_DIR_LEN];
+  int s;
+
+  /* Copy rescue directory from user. */
+  if (m_ptr->RS_CMD_LEN > MAX_RESCUE_DIR_LEN) return(E2BIG);
+  if (OK!=(s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
+  	SELF, (vir_bytes) rescue_dir, m_ptr->RS_CMD_LEN))) return(s);
+  rescue_dir[m_ptr->RS_CMD_LEN] = '\0';		/* ensure it is terminated */
+  if (rescue_dir[0] != '/') return(EINVAL);	/* insist on absolute path */
+
+  /* Change RS' directory to the rescue directory. Provided that the needed
+   * binaries are in the rescue dir, this makes recovery possible even if the 
+   * (root) file system is no longer available, because no directory lookups
+   * are required. Thus if an absolute path fails, we can try to strip the 
+   * path an see if the command is in the rescue dir. 
+   */
+  if (chdir(rescue_dir) != 0) return(errno);
+  return(OK);
+}
 
 /*===========================================================================*
  *				do_shutdown				     *
@@ -303,6 +327,7 @@ struct rproc *rp;
  */
   int child_proc_nr;				/* child process slot */
   pid_t child_pid;				/* child's process id */
+  char *file_only;
   int s;
   message m;
 
@@ -314,9 +339,16 @@ struct rproc *rp;
       return(errno);					/* return error */
 
   case 0:						/* child process */
+      /* Try to execute the binary that has an absolute path. If this fails, 
+       * e.g., because the root file system cannot be read, try to strip of
+       * the path, and see if the command is in RS' current working dir.
+       */
       execve(rp->r_argv[0], rp->r_argv, NULL);		/* POSIX execute */
-      printf("RS: exec failed for %s\n", rp->r_argv[0]);
-      report("RS", "warning, exec() failed", errno);	/* shouldn't happen */
+      file_only = strrchr(rp->r_argv[0], '/') + 1;
+      printf("Absolute exec failed (%d), trying file only: %s\n",
+	  errno, file_only);
+      execve(file_only, rp->r_argv, NULL);		/* POSIX execute */
+      printf("RS: exec failed for %s: %d\n", rp->r_argv[0], errno);
       exit(EXEC_FAILED);				/* terminate child */
 
   default:						/* parent process */

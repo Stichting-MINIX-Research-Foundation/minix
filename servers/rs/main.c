@@ -60,20 +60,14 @@ PUBLIC int main(void)
           switch (call_nr) {
           case SYN_ALARM:
 	      do_period(&m);			/* check drivers status */
-	      continue;				/* no reply is expected */
+	      continue;				
           case SYS_SIG:
-              sigset = (sigset_t) m.NOTIFY_ARG;
-              if (sigismember(&sigset, SIGCHLD)) {
-                  do_exit(&m);
-              } 
-              if (sigismember(&sigset, SIGTERM) ||
-                  sigismember(&sigset, SIGKSTOP)) {
-                  /* Prevent restarting services. */
-		  do_shutdown(NULL);
-              }
-              continue;				/* no reply is expected */
+              sigset = (sigset_t) m.NOTIFY_ARG;	/* check signals passed */
+              if (sigismember(&sigset, SIGCHLD)) do_exit(&m);
+              if (sigismember(&sigset, SIGTERM)) do_shutdown(NULL);
+              if (sigismember(&sigset, SIGKSTOP)) do_shutdown(NULL);
+              continue;				
 	  default:				/* heartbeat notification */
-	      printf("Got heartbeat from %d\n", who);
 	      if (rproc_ptr[who] != NULL)	/* mark heartbeat time */ 
 		  rproc_ptr[who]->r_alive_tm = m.NOTIFY_TIMESTAMP;
 	  }
@@ -84,22 +78,12 @@ PUBLIC int main(void)
        */
       else {	
           switch(call_nr) {
-          case RS_UP:
-              result = do_up(&m);
-              break;
-          case RS_DOWN:
-              result = do_down(&m);
-              break;
-          case RS_REFRESH:
-              result = do_refresh(&m);
-              break;
-          case RS_SHUTDOWN:
-              result = do_shutdown(&m);
-              break;
-          case GETSYSINFO:
-	      printf("RS got GETSYSINFO request from %d\n", m.m_source);
-              result = do_getsysinfo(&m);
-              break;
+          case RS_UP: 		result = do_up(&m); 		break;
+          case RS_DOWN: 	result = do_down(&m); 		break;
+          case RS_REFRESH: 	result = do_refresh(&m); 	break;
+          case RS_RESCUE: 	result = do_rescue(&m); 	break;
+          case RS_SHUTDOWN: 	result = do_shutdown(&m); 	break;
+          case GETSYSINFO: 	result = do_getsysinfo(&m); 	break;
           default: 
               printf("Warning, RS got unexpected request %d from %d\n",
                   m.m_type, m.m_source);
@@ -142,10 +126,9 @@ PRIVATE void init_server(void)
   if ((s = getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap)) < 0)
       panic("RS","warning: couldn't get copy of dmap table", errno);
   
-  /* Change working directory to /sbin, where the binaries for the programs
-   * in the system image are. 
+  /* Now initialize the table with the processes in the system image. 
+   * Prepend /sbin/ to the binaries so that we can actually find them. 
    */
-  chdir("/sbin/");
   for (s=0; s< NR_BOOT_PROCS; s++) {
       ip = &image[s];
       if (ip->proc_nr >= 0) {
@@ -156,7 +139,8 @@ PRIVATE void init_server(void)
 	  for(t=0; t< NR_DEVICES; t++)
 	      if (dmap[t].dmap_driver == ip->proc_nr)
                   rproc[s].r_dev_nr = t;
-          strcpy(rproc[s].r_cmd, ip->proc_name);
+	  strcpy(rproc[s].r_cmd, "/sbin/");
+          strcpy(rproc[s].r_cmd+6, ip->proc_name);
           rproc[s].r_argc = 1;
           rproc[s].r_argv[0] = rproc[s].r_cmd;
           rproc[s].r_argv[1] = NULL;

@@ -6,6 +6,7 @@
 /* Space reserved for program and arguments. */
 #define MAX_COMMAND_LEN     512		/* maximum argument string length */
 #define MAX_NR_ARGS	      4		/* maximum number of arguments */
+#define MAX_RESCUE_DIR_LEN   64		/* maximum rescue dir length */
 
 /* Definition of the system process table. This table only has entries for
  * the servers and drivers, and thus is not directly indexed by slot number.
