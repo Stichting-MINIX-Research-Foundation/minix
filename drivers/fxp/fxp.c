@@ -287,8 +287,6 @@ int main(int argc, char *argv[])
 	r = findproc("inet", &tasknr);
 	if (r == OK)
 		notify(tasknr);
-	else
-		printf("fxp: cannot find proc number for inet: %d\n", r);
 
 	while (TRUE)
 	{
@@ -1600,7 +1598,7 @@ message *mp;
 	mp->m_type= DL_NAME_REPLY;
 	r= send(mp->m_source, mp);
 	if (r != OK)
-		panic("FXP", "fxp_getname: send failed: %d\n", r);
+		panic("FXP", "fxp_getname: send failed", r);
 }
 
 /*===========================================================================*
