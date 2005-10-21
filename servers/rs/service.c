@@ -195,6 +195,10 @@ PRIVATE int parse_arguments(int argc, char **argv)
           exit(EINVAL);
       }
       req_path = argv[ARG_PATH];
+      if (req_path[0] != '/') {
+          print_usage(argv[ARG_NAME], "rescue dir should be absolute path");
+          exit(EINVAL);
+      }
       if (stat(argv[ARG_PATH], &stat_buf) == -1) {
           print_usage(argv[ARG_NAME], "couldn't get status of directory");
           exit(errno);

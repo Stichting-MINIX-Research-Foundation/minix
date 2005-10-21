@@ -299,13 +299,13 @@ int main(int argc, char *argv[])
 	for (rep= &re_table[0]; rep < re_table+RE_PORT_NR; rep++)
 		rl_init_buf(rep);
 
-	/* Try to notify inet that we are present (again). */
+	/* Try to notify INET that we are present (again). If INET cannot
+	 * be found, assume this is the first time we started and INET is
+	 * not yet alive.
+	 */
 	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 	r = findproc("inet", &inet_proc_nr);
-	if (r == OK)
-		notify(inet_proc_nr);
-	else
-		printf("rtl8139: cannot find proc number for inet: %d\n", r);
+	if (r == OK) notify(inet_proc_nr);
 
 
 	while (TRUE)

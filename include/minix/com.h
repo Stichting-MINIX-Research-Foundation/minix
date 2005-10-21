@@ -390,7 +390,8 @@
 #define RS_UP		(RS_RQ_BASE + 0)	/* start system service */
 #define RS_DOWN		(RS_RQ_BASE + 1)	/* stop system service */
 #define RS_REFRESH	(RS_RQ_BASE + 2)	/* restart system service */
-#define RS_SHUTDOWN	(RS_RQ_BASE + 3)	/* alert about shutdown */
+#define RS_RESCUE	(RS_RQ_BASE + 3)	/* set rescue directory */
+#define RS_SHUTDOWN	(RS_RQ_BASE + 4)	/* alert about shutdown */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */

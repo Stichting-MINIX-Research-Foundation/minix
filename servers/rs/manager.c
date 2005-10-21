@@ -345,8 +345,6 @@ struct rproc *rp;
        */
       execve(rp->r_argv[0], rp->r_argv, NULL);		/* POSIX execute */
       file_only = strrchr(rp->r_argv[0], '/') + 1;
-      printf("Absolute exec failed (%d), trying file only: %s\n",
-	  errno, file_only);
       execve(file_only, rp->r_argv, NULL);		/* POSIX execute */
       printf("RS: exec failed for %s: %d\n", rp->r_argv[0], errno);
       exit(EXEC_FAILED);				/* terminate child */

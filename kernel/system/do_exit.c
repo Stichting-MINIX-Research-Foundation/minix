@@ -50,7 +50,7 @@ register struct proc *rc;		/* slot of process to clean up */
   register struct proc **xpp;		/* iterate over caller queue */
   int i;
   int sys_id;
-  char rts_flags;
+  char saved_rts_flags;
 
   /* Don't clear if already cleared. */
   if(isemptyp(rc)) return;
@@ -66,7 +66,7 @@ register struct proc *rc;		/* slot of process to clean up */
    * this point. All important fields are reinitialized when the 
    * slots are assigned to another, new process. 
    */
-  rts_flags = rc->p_rts_flags;
+  saved_rts_flags = rc->p_rts_flags;
   rc->p_rts_flags = SLOT_FREE;		
   if (priv(rc)->s_flags & SYS_PROC) priv(rc)->s_proc_nr = NONE;
 
@@ -74,7 +74,7 @@ register struct proc *rc;		/* slot of process to clean up */
    * message (e.g., the process was killed by a signal, rather than it doing 
    * a normal exit), then it must be removed from the message queues.
    */
-  if (rts_flags & SENDING) {
+  if (saved_rts_flags & SENDING) {
       xpp = &proc[rc->p_sendto].p_caller_q;	/* destination's queue */
       while (*xpp != NIL_PROC) {		/* check entire queue */
           if (*xpp == rc) {			/* process is on the queue */

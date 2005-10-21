@@ -10,7 +10,7 @@
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
-
+#define VERBOSE	 	   0		/* enable/ disable messages */
 #define NR_DEVS            1		/* number of rescue devices */
 #define RESCUE_KBYTES	 128		/* default size in kilobytes */
 
@@ -200,8 +200,10 @@ char **argv;
               panic("RESCUE","Couldn't store rescue disk details at DS.",s);
           }
 
+#if VERBOSE
           printf("RESCUE disk %d (size %u/base %u) initialized\n",
               i, rescue_size, rescue_base);
+#endif
       }
   }
 }
