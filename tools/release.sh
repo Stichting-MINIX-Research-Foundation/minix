@@ -68,7 +68,7 @@ HDEMU=0
 COPY=0
 CVSTAG=HEAD
 
-while getopts "rch?" c
+while getopts "r:ch?" c
 do
 	case "$c" in
 	\?)
@@ -90,7 +90,7 @@ do
 	esac
 done
 
-ISO=${ISO}.iso
+ISO=${ISO}_${CVSTAG}.iso
 ISOGZ=${ISO}.gz
 echo "Making $ISOGZ"
 
