@@ -418,7 +418,9 @@ struct memory mem_chunks[NR_MEMS];
 	}
 
 	high <<= CLICK_SHIFT;
+#if VERBOSE_VM
 	printf("do_x86_vm: found high 0x%x\n", high);
+#endif
 
 	/* The number of pages we need is one for the page directory, enough
 	 * page tables to cover the memory, and one page for alignement.
@@ -427,9 +429,11 @@ struct memory mem_chunks[NR_MEMS];
 	bytes= pages*PAGE_SIZE;
 	clicks= (bytes + CLICK_SIZE-1) >> CLICK_SHIFT;
 
+#if VERBOSE_VM
 	printf("do_x86_vm: need %d pages\n", pages);
 	printf("do_x86_vm: need %d bytes\n", bytes);
 	printf("do_x86_vm: need %d clicks\n", clicks);
+#endif
 
 	for (i= 0; i<NR_MEMS; i++)
 	{
@@ -443,7 +447,9 @@ struct memory mem_chunks[NR_MEMS];
 	mem_chunks[i].base += clicks;
 	mem_chunks[i].size -= clicks;
 
+#if VERBOSE_VM
 	printf("do_x86_vm: using 0x%x clicks @ 0x%x\n", clicks, base_click);
+#endif
 	r= sys_vm_setbuf(base_click << CLICK_SHIFT, clicks << CLICK_SHIFT,
 		high);
 	if (r != 0)
