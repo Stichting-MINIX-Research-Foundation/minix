@@ -32,4 +32,5 @@ include Makefile.inc
 
 install:: all
 	install -o bin $(ACKBASE)/*.[ao] /usr/lib/i386
+	install -o bin $(ACKBASE)/*.[ao] /usr/local/lib
 	install -o bin $(GNUBASE)/*.[ao] /usr/gnu/lib
