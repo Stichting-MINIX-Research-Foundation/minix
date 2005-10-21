@@ -172,6 +172,11 @@ PUBLIC int do_reboot()
 	return(EINVAL);
   }
 
+  /* Order matters here. When FS is told to reboot, it exits all its
+   * processes, and then would be confused if they're exited again by
+   * SIGKILL. So first kill, then reboot.
+   */
+
   check_sig(-1, SIGKILL); 		/* kill all processes except init */
   tell_fs(REBOOT, 0, 0, 0);		/* tell FS to synchronize */
 
