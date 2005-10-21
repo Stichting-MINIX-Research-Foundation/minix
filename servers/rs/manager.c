@@ -167,7 +167,7 @@ PUBLIC void do_exit(message *m_ptr)
   while ( (exit_pid = waitpid(-1, &exit_status, WNOHANG)) != 0 ) {
 
 #if VERBOSE
-      printf("RS: proc %d, pid %d,", rp->r_proc_nr, exit_pid); 
+      printf("RS: proc %d, pid %d, ", rp->r_proc_nr, exit_pid); 
       if (WIFSIGNALED(exit_status)) {
           printf("killed, signal number %d\n", WTERMSIG(exit_status));
       } 
@@ -246,7 +246,8 @@ message *m_ptr;
 	  /* If the service was signaled with a SIGTERM and fails to respond,
 	   * kill the system service with a SIGKILL signal.
 	   */
-	  else if (rp->r_stop_tm > 0 && now - rp->r_stop_tm > 2*RS_DELTA_T) {
+	  else if (rp->r_stop_tm > 0 && now - rp->r_stop_tm > 2*RS_DELTA_T
+	   && rp->r_pid > 0) {
               kill(rp->r_pid, SIGKILL);		/* terminate */
 	  }
 	
@@ -261,7 +262,8 @@ message *m_ptr;
 	       * be restarted automatically.
 	       */
               if (rp->r_alive_tm < rp->r_check_tm) { 
-	          if (now - rp->r_alive_tm > 2*rp->r_period) { 
+	          if (now - rp->r_alive_tm > 2*rp->r_period &&
+		      rp->r_pid > 0) { 
 #if VERBOSE
                       printf("RS: service %d reported late\n", rp->r_proc_nr); 
 #endif
@@ -313,6 +315,7 @@ struct rproc *rp;
 
   case 0:						/* child process */
       execve(rp->r_argv[0], rp->r_argv, NULL);		/* POSIX execute */
+      printf("RS: exec failed for %s\n", rp->r_argv[0]);
       report("RS", "warning, exec() failed", errno);	/* shouldn't happen */
       exit(EXEC_FAILED);				/* terminate child */
 
@@ -328,7 +331,8 @@ struct rproc *rp;
   if (rp->r_dev_nr > 0) {				/* set driver map */
       if ((s=mapdriver(child_proc_nr, rp->r_dev_nr, rp->r_dev_style)) < 0) {
           report("RS", "couldn't map driver", errno);
-          kill(child_pid, SIGKILL);			/* kill driver */
+	  if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
+	  else report("RS", "didn't kill pid", child_pid);
           rp->r_flags |= RS_EXITING;			/* expect exit */
 	  return(s);					/* return error */
       }
@@ -341,7 +345,8 @@ struct rproc *rp;
   m.PR_PROC_NR = child_proc_nr;
   if ((s = _taskcall(SYSTEM, SYS_PRIVCTL, &m)) < 0) { 	/* set privileges */
       report("RS","call to SYSTEM failed", s);		/* to let child run */
-      kill(child_pid, SIGKILL);				/* kill driver */
+      if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
+      else report("RS", "didn't kill pid", child_pid);
       rp->r_flags |= RS_EXITING;			/* expect exit */
       return(s);					/* return error */
   }
@@ -384,7 +389,8 @@ int how;
 #endif
 
   rp->r_flags |= how;				/* what to on exit? */
-  kill(rp->r_pid, SIGTERM);			/* first try friendly */
+  if(rp->r_pid > 0) kill(rp->r_pid, SIGTERM);	/* first try friendly */
+  else report("RS", "didn't kill pid", rp->r_pid);
   getuptime(&rp->r_stop_tm); 			/* record current time */
 }
 
