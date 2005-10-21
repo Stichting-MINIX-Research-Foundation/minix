@@ -7,6 +7,7 @@
 755 root    operator /lib/i386
 755 root    operator /boot
 755 root    operator /boot/image
+755 root    operator /boot/rescue
 555 root    operator /mnt
 700 root    operator /root
 1777 root   operator /tmp
