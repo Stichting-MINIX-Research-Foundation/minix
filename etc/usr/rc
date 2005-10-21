@@ -56,6 +56,7 @@ up()
 {
     service=$1
     args=$2
+    device=$3
 
     # Function to dynamically start a system service
 
@@ -63,8 +64,10 @@ up()
     if disabled $service; then return; fi
 
     # Service is not disabled. Try to bring it up.
+    command="/usr/sbin/$service"
+    if [ ! -z "$args" ]; then command="$command -args \"$args\""; fi
+    if [ ! -z "$device" ]; then command="$command -dev \"$device\""; fi
     echo -n " $service"
-    command="/usr/sbin/$service $args"
     eval service up $command
 }
 
@@ -78,7 +81,7 @@ start)
 
     # Start servers and drivers set at the boot monitor.
     echo -n "Starting services:"
-    up random "-dev /dev/random -period 3HZ"
+    up random "" /dev/random
 
     # load random number generator
     if [ -f $RANDOM_FILE ]
@@ -94,11 +97,11 @@ start)
         if grep " $driver " /etc/inet.conf > /dev/null  2>&1
         then 
             eval arg=\$${driver}_arg
-            up $driver "$arg -period 5HZ"
+            up $driver "$arg"
         fi
     done
-    up inet "-period 3HZ"
-    up printer "-dev /dev/lp -period 10HZ"
+    up inet ""
+    up printer "" /dev/lp
     echo .
 
     # Network initialization.

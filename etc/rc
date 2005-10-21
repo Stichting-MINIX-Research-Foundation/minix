@@ -16,10 +16,13 @@ up()
 {
     service=$1
     args=$2
+    device=$3
 
     # Function to dynamically start a system service
+    command="/sbin/$service"
+    if [ ! -z "$args" ]; then command="$command -args \"$args\""; fi
+    if [ ! -z "$device" ]; then command="$command -dev \"$device\""; fi
     echo -n " $service"
-    command="/sbin/$service $args"
     eval service up $command
 }
 
@@ -52,11 +55,11 @@ start)
     # Start crucial system services. The floppy driver *must* be loaded 
     # first, as it needs memory below 16MB in order to do ISA DMA.
     if [ ! "`sysenv label`" = "FLOPPY" ]  
-    then up floppy "-dev /dev/fd0 -period 5HZ"
-    else up at_wini "-dev /dev/c0d0 -period 5HZ"
+    then up floppy "" /dev/fd0
+    else up at_wini "" /dev/c0d0
     fi
-    up is "-period 5HZ"
-    up cmos "-dev /dev/cmos -period 5HZ"
+    up is ""
+    up cmos "" /dev/cmos
     echo .
 
     # Set timezone.
