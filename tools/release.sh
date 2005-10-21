@@ -94,7 +94,7 @@ ISO=${ISO}_${CVSTAG}.iso
 ISOGZ=${ISO}.gz
 echo "Making $ISOGZ"
 
-USRMB=600
+USRMB=650
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
