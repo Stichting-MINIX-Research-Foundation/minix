@@ -64,6 +64,7 @@
 */
 extern int errno;
 static dpeth_t de_table[DE_PORT_NR];
+static char *progname;
 
 typedef struct dp_conf {	/* Configuration description structure */
   port_t dpc_port;
@@ -86,6 +87,8 @@ static const char SendErrMsg[] = "send failed";
 static const char SizeErrMsg[] = "illegal packet size";
 static const char TypeErrMsg[] = "illegal message type";
 static const char DevName[] = "eth#?";
+
+static void do_getname(message *mp);
 
 /*
 **  Name:	void reply(dpeth_t *dep, int err)
@@ -502,6 +505,19 @@ static void do_getstat(message * mp)
   return;
 }
 
+static void do_getname(mp)
+message *mp;
+{
+	int r;
+
+	strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
+	mp->DL_NAME[sizeof(mp->DL_NAME)-1]= '\0';
+	mp->m_type= DL_NAME_REPLY;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic("dpeth", "do_getname: send failed: %d\n", r);
+}
+
 /*
 **  Name:	void do_stop(message *mp)
 **  Function:	Stops network interface.
@@ -541,7 +557,9 @@ PUBLIC int main(int argc, char **argv)
 {
   message m;
   dpeth_t *dep;
-  int rc, fkeys, sfkeys;
+  int rc, fkeys, sfkeys, tasknr;
+
+  (progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
   env_setargs(argc, argv);
 
@@ -559,6 +577,11 @@ PUBLIC int main(int argc, char **argv)
 	eth_ign_proto = htons((u16_t) val);
   }
 #endif
+
+  /* Try to notify inet that we are present (again) */
+  rc = findproc("inet", &tasknr);
+  if (rc == OK)
+	notify(tasknr);
 
   while (TRUE) {
 	if ((rc = receive(ANY, &m)) != OK) panic(dep->de_name, RecvErrMsg, rc);
@@ -586,6 +609,9 @@ PUBLIC int main(int argc, char **argv)
 		break;
 	    case DL_GETSTAT:	/* Get device statistics */
 		do_getstat(&m);
+		break;
+	    case DL_GETNAME:
+		do_getname(&m);
 		break;
 	    case SYN_ALARM:	/* to be defined */
 		do_watchdog(&m);

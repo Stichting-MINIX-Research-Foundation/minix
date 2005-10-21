@@ -62,6 +62,7 @@
 
 static dpeth_t de_table[DE_PORT_NR];
 static u16_t eth_ign_proto;
+static char *progname;
 
 /* Configuration */
 typedef struct dp_conf
@@ -111,6 +112,7 @@ _PROTOTYPE( static void do_vread, (message *mp, int vectored)		);
 _PROTOTYPE( static void do_init, (message *mp)				);
 _PROTOTYPE( static void do_int, (dpeth_t *dep)				);
 _PROTOTYPE( static void do_getstat, (message *mp)			);
+_PROTOTYPE( static void do_getname, (message *mp)			);
 _PROTOTYPE( static void do_stop, (message *mp)				);
 _PROTOTYPE( static void dp_init, (dpeth_t *dep)				);
 _PROTOTYPE( static void dp_confaddr, (dpeth_t *dep)			);
@@ -169,9 +171,16 @@ _PROTOTYPE( static void do_vir_outsw, (port_t port, int proc,
 int main(int argc, char *argv[])
 {
 	message m;
-	int i, irq, r;
+	int i, irq, r, tasknr;
 	dpeth_t *dep;
 	long v;
+
+	if (argc < 1)
+	{
+		panic("DP8390",
+			"A head which at this time has no name", NO_NUM);
+	}
+	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
 	env_setargs(argc, argv);
 
@@ -184,6 +193,11 @@ int main(int argc, char *argv[])
 	v= 0;
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
 	eth_ign_proto= htons((u16_t) v);
+
+	/* Try to notify inet that we are present (again) */
+	r = findproc("inet", &tasknr);
+	if (r == OK)
+		notify(tasknr);
 
 	while (TRUE)
 	{
@@ -199,6 +213,7 @@ int main(int argc, char *argv[])
 		case DL_READV:	do_vread(&m, TRUE);		break;
 		case DL_INIT:	do_init(&m);			break;
 		case DL_GETSTAT: do_getstat(&m);		break;
+		case DL_GETNAME: do_getname(&m); 		break;
 		case DL_STOP:	do_stop(&m);			break;
 		case HARD_INT:
 			for (i= 0, dep= &de_table[0]; i<DE_PORT_NR; i++, dep++)
@@ -642,6 +657,22 @@ message *mp;
 	put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
 		(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
 	reply(dep, OK, FALSE);
+}
+
+/*===========================================================================*
+ *				do_getname				     *
+ *===========================================================================*/
+static void do_getname(mp)
+message *mp;
+{
+	int r;
+
+	strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
+	mp->DL_NAME[sizeof(mp->DL_NAME)-1]= '\0';
+	mp->m_type= DL_NAME_REPLY;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic("dp8390", "do_getname: send failed: %d\n", r);
 }
 
 /*===========================================================================*
@@ -1861,7 +1892,7 @@ void *loc_addr;
 u8_t inb(port_t port)
 {
 	int r;
-	u8_t value;
+	u32_t value;
 
 	r= sys_inb(port, &value);
 	if (r != OK)
