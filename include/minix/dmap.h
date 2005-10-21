@@ -54,6 +54,8 @@ extern struct dmap {
 
 #define INET_MAJOR		   7	/* major device for inet */
 
+#define RESCUE_MAJOR		   9    /* major device for rescue */
+
 #define LOG_MAJOR		  15	/* major device for log driver */
 #  define IS_KLOG_DEV		   0	/* minor device for /dev/klog */
 
