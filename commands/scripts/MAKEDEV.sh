@@ -15,7 +15,7 @@ case $#:$1 in
 	c0d4 c0d4p0 c0d4p0s0 c0d5 c0d5p0 c0d5p0s0 \
 	c0d6 c0d6p0 c0d6p0s0 c0d7 c0d7p0 c0d7p0s0 \
 	tty ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03 ttyp0 ttyp1 ttyp2 ttyp3 \
-	eth klog random cmos kbd psm
+	eth klog random cmos kbd psm rescue
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -38,6 +38,7 @@ Where key is one of the following:
   klog                    # Make /dev/klog
   random                  # Make /dev/random, /dev/urandom
   cmos                    # Make /dev/cmos
+  rescue                  # Make /dev/rescue
   kbd                     # Make /dev/kbd*
   psm                     # Make /dev/psm*
   std			  # All standard devices
@@ -237,6 +238,11 @@ do
     	# cmos device (set/get system time).
     	$e mknod cmos c 17 0
 	$e chmod 600 cmos
+	;;
+    rescue)
+    	# rescue device
+    	$e mknod rescue b 9 0
+	$e chmod 644 rescue
 	;;
     klog)
     	# logging device.
