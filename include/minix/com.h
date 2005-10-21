@@ -150,10 +150,12 @@
 #define DL_INIT		(DL_RQ_BASE + 7)
 #define DL_STOP		(DL_RQ_BASE + 8)
 #define DL_GETSTAT	(DL_RQ_BASE + 9)
+#define DL_GETNAME	(DL_RQ_BASE +10)
 
 /* Message type for data link layer replies. */
 #define DL_INIT_REPLY	(DL_RS_BASE + 20)
 #define DL_TASK_REPLY	(DL_RS_BASE + 21)
+#define DL_NAME_REPLY	(DL_RS_BASE + 22)
 
 /* Field names for data link layer messages. */
 #define DL_PORT		m2_i1
@@ -163,6 +165,7 @@
 #define DL_CLCK		m2_l2
 #define DL_ADDR		m2_p1
 #define DL_STAT		m2_l1
+#define DL_NAME		m3_ca1
 
 /* Bits in 'DL_STAT' field of DL replies. */
 #  define DL_PACK_SEND		0x01

@@ -13,6 +13,7 @@ _PROTOTYPE( void clck_tick, (message *mess) );
 /* mnx_eth.c */
 
 _PROTOTYPE( void eth_rec, (message *m) );
+_PROTOTYPE( void eth_check_drivers, (message *m) );
 
 /* sr.c */
 

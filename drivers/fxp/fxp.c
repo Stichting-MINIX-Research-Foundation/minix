@@ -201,6 +201,7 @@ static fxp_t fxp_table[FXP_PORT_NR];
 static int fxp_tasknr= ANY;
 static u16_t eth_ign_proto;
 static tmra_ut fxp_watchdog;
+static char *progname;
 
 extern int errno;
 
@@ -231,6 +232,7 @@ _PROTOTYPE( static void fxp_ru_ptr_cmd, (fxp_t *fp, int cmd,
 				phys_bytes bus_addr, int check_idle)	);
 _PROTOTYPE( static void fxp_restart_ru, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_getstat, (message *mp)			);
+_PROTOTYPE( static void fxp_getname, (message *mp)			);
 _PROTOTYPE( static int fxp_handler, (fxp_t *fp)				);
 _PROTOTYPE( static void fxp_check_ints, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_watchdog_f, (timer_t *tp)			);
@@ -255,15 +257,19 @@ _PROTOTYPE( static void do_outl, (port_t port, u32_t v)			);
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-int main(void)
+int main(int argc, char *argv[])
 {
 	message m;
-	int i, r;
+	int i, r, tasknr;
 	fxp_t *fp;
 	long v;
 
 	if ((fxp_tasknr= getprocnr())<0)
 		panic("FXP", "couldn't get proc nr", errno);
+
+	if (argc < 1)
+		panic("FXP", "A head which at this time has no name", NO_NUM);
+	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
 	v= 0;
 #if 0
@@ -276,6 +282,13 @@ int main(void)
 	for (fp= &fxp_table[0]; fp < fxp_table+FXP_PORT_NR; fp++)
 		fxp_init_buf(fp);
 #endif
+
+	/* Try to notify inet that we are present (again) */
+	r = findproc("inet", &tasknr);
+	if (r == OK)
+		notify(tasknr);
+	else
+		printf("fxp: cannot find proc number for inet: %d\n", r);
 
 	while (TRUE)
 	{
@@ -292,6 +305,7 @@ int main(void)
 		case DL_READV:	fxp_readv(&m, FALSE, TRUE);	break;
 		case DL_INIT:	fxp_init(&m);			break;
 		case DL_GETSTAT: fxp_getstat(&m);		break;
+		case DL_GETNAME: fxp_getname(&m); 		break;
 		case HARD_INT:
 			for (i= 0, fp= &fxp_table[0]; i<FXP_PORT_NR; i++, fp++)
 			{
@@ -1571,6 +1585,23 @@ message *mp;
 	reply(fp, OK, FALSE);
 }
 
+
+/*===========================================================================*
+ *				fxp_getname				     *
+ *===========================================================================*/
+static void fxp_getname(mp)
+message *mp;
+{
+	int r;
+
+	strncpy(mp->DL_NAME, progname, sizeof(mp->DL_NAME));
+	mp->DL_NAME[sizeof(mp->DL_NAME)-1]= '\0';
+	mp->m_type= DL_NAME_REPLY;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic("FXP", "fxp_getname: send failed: %d\n", r);
+}
+
 /*===========================================================================*
  *				fxp_handler				     *
  *===========================================================================*/
@@ -2417,7 +2448,7 @@ static void micro_delay(unsigned long usecs)
 static u8_t do_inb(port_t port)
 {
 	int r;
-	u8_t value;
+	u32_t value;
 
 	r= sys_inb(port, &value);
 	if (r != OK)

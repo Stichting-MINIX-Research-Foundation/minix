@@ -242,15 +242,21 @@ PUBLIC void main()
 #else /* Minix 3 */
 		else if (mq->mq_mess.m_type == SYN_ALARM)
 		{
-				clck_tick(&mq->mq_mess);
-				mq_free(mq);
+			clck_tick(&mq->mq_mess);
+			mq_free(mq);
 		} 
 		else if (mq->mq_mess.m_type == SYS_SIG)
 		{
-				/* signaled */ 
-				/* probably SIGTERM */
-				mq_free(mq);
+			/* signaled */ 
+			/* probably SIGTERM */
+			mq_free(mq);
 		} 
+		else if (mq->mq_mess.m_type & NOTIFY_MESSAGE)
+		{
+			/* A driver is (re)started. */
+			eth_check_drivers(&mq->mq_mess);
+			mq_free(mq);
+		}
 #endif
 		else
 		{
