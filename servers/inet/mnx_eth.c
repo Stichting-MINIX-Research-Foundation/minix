@@ -73,8 +73,14 @@ PUBLIC void osdep_eth_init()
 			continue;
 		}
 
-		if (receive(eth_port->etp_osdep.etp_task, &mess)<0)
-			ip_panic(("unable to receive"));
+		r= receive(eth_port->etp_osdep.etp_task, &mess);
+		if (r<0)
+		{
+			printf(
+	"osdep_eth_init: unable to receive from ethernet task, error= %d\n",
+				r);
+			continue;
+		}
 
 		if (mess.m3_i1 == ENXIO)
 		{
@@ -217,7 +223,7 @@ acc_t *pack;
 
 	for (;;)
 	{
-		r= send (eth_port->etp_osdep.etp_task, &mess1);
+		r= sendrec(eth_port->etp_osdep.etp_task, &mess1);
 		if (r != ELOCKED)
 			break;
 
@@ -256,11 +262,11 @@ acc_t *pack;
 	}
 
 	if (r < 0)
-		ip_panic(("unable to send"));
-
-	r= receive(eth_port->etp_osdep.etp_task, &mess1);
-	if (r < 0)
-		ip_panic(("unable to receive"));
+	{
+		printf("eth_write_port: sendrec to %d failed: %d\n",
+			eth_port->etp_osdep.etp_task, r);
+		return;
+	}
 
 	assert(mess1.m_type == DL_TASK_REPLY &&
 		mess1.DL_PORT == eth_port->etp_osdep.etp_port &&
@@ -396,7 +402,7 @@ PUBLIC int eth_get_stat(eth_port, eth_stat)
 eth_port_t *eth_port;
 eth_stat_t *eth_stat;
 {
-	int result;
+	int r;
 	message mess, mlocked;
 
 	assert(!eth_port->etp_vlan);
@@ -408,29 +414,31 @@ eth_stat_t *eth_stat;
 
 	for (;;)
 	{
-		result= send(eth_port->etp_osdep.etp_task, &mess);
-		if (result != ELOCKED)
+		r= sendrec(eth_port->etp_osdep.etp_task, &mess);
+		if (r != ELOCKED)
 			break;
-		result= receive(eth_port->etp_osdep.etp_task, &mlocked);
-		assert(result == OK);
+
+		r= receive(eth_port->etp_osdep.etp_task, &mlocked);
+		assert(r == OK);
 
 		compare(mlocked.m_type, ==, DL_TASK_REPLY);
 		eth_rec(&mlocked);
 	}
-	assert(result == OK);
 
-	result= receive(eth_port->etp_osdep.etp_task, &mess);
-	assert(result == OK);
+	if (r != OK)
+	{
+		printf("eth_get_stat: sendrec to %d failed: %d\n",
+			eth_port->etp_osdep.etp_task, r);
+		return EIO;
+	}
+
 	assert(mess.m_type == DL_TASK_REPLY);
 
-	result= mess.DL_STAT >> 16;
-assert (result == 0);
+	r= mess.DL_STAT >> 16;
+	assert (r == 0);
 
 	if (mess.DL_STAT)
 	{
-#if DEBUG
- { where(); printf("calling eth_rec()\n"); }
-#endif
 		eth_rec(&mess);
 	}
 	return OK;
@@ -440,12 +448,13 @@ PUBLIC void eth_set_rec_conf (eth_port, flags)
 eth_port_t *eth_port;
 u32_t flags;
 {
-	int result;
+	int r;
 	unsigned dl_flags;
 	message mess, repl_mess;
 
 	assert(!eth_port->etp_vlan);
 
+	eth_port->etp_osdep.etp_recvconf= flags;
 	dl_flags= DL_NOMODE;
 	if (flags & NWEO_EN_BROAD)
 		dl_flags |= DL_BROAD_REQ;
@@ -458,12 +467,11 @@ u32_t flags;
 	mess.DL_PORT= eth_port->etp_osdep.etp_port;
 	mess.DL_PROC= this_proc;
 	mess.DL_MODE= dl_flags;
-	eth_port->etp_osdep.etp_dl_flags= dl_flags;
 
 	do
 	{
-		result= send (eth_port->etp_osdep.etp_task, &mess);
-		if (result == ELOCKED)	/* etp_task is sending to this task,
+		r= sendrec(eth_port->etp_osdep.etp_task, &mess);
+		if (r == ELOCKED)	/* etp_task is sending to this task,
 					   I hope */
 		{
 			if (receive (eth_port->etp_osdep.etp_task, 
@@ -475,20 +483,20 @@ u32_t flags;
 			compare(repl_mess.m_type, ==, DL_TASK_REPLY);
 			eth_rec(&repl_mess);
 		}
-	} while (result == ELOCKED);
+	} while (r == ELOCKED);
 	
-	if (result < 0)
-		ip_panic(("unable to send(%d)", result));
+	if (r < 0)
+	{
+		printf("eth_set_rec_conf: sendrec to %d failed: %d\n",
+			eth_port->etp_osdep.etp_task, r);
+		return;
+	}
 
-	if (receive (eth_port->etp_osdep.etp_task, &repl_mess) < 0)
-		ip_panic(("unable to receive"));
-
-	assert (repl_mess.m_type == DL_INIT_REPLY);
-	if (repl_mess.m3_i1 != eth_port->etp_osdep.etp_port)
+	assert (mess.m_type == DL_INIT_REPLY);
+	if (mess.m3_i1 != eth_port->etp_osdep.etp_port)
 	{
 		ip_panic(("got reply for wrong port"));
 	}
-	eth_port->etp_osdep.etp_recvconf= flags;
 }
 
 PRIVATE void write_int(eth_port)
@@ -580,7 +588,7 @@ eth_port_t *eth_port;
 				printf("eth%d: sending DL_READV\n",
 					mess1.DL_PORT);
 			}
-			r= send (eth_port->etp_osdep.etp_task, &mess1);
+			r= sendrec(eth_port->etp_osdep.etp_task, &mess1);
 			if (r != ELOCKED)
 				break;
 
@@ -622,11 +630,13 @@ eth_port_t *eth_port;
 		}
 
 		if (r < 0)
-			ip_panic(("unable to send"));
-
-		r= receive (eth_port->etp_osdep.etp_task, &mess1);
-		if (r < 0)
-			ip_panic(("unable to receive"));
+		{
+			printf("mnx_eth`setup_read: sendrec to %d failed: %d\n",
+				eth_port->etp_osdep.etp_task, r);
+			eth_port->etp_rd_pack= pack;
+			eth_port->etp_flags |= EPF_READ_IP;
+			continue;
+		}
 
 		assert (mess1.m_type == DL_TASK_REPLY &&
 			mess1.DL_PORT == mess1.DL_PORT &&
@@ -737,6 +747,7 @@ eth_port_t *eth_port;
 int tasknr;
 {
 	int r;
+	unsigned flags, dl_flags;
 	message mess;
 #if 0
 	int i, r, rport;
@@ -750,22 +761,28 @@ int tasknr;
 
 	eth_port->etp_osdep.etp_task= tasknr;
 
+	flags= eth_port->etp_osdep.etp_recvconf;
+	dl_flags= DL_NOMODE;
+	if (flags & NWEO_EN_BROAD)
+		dl_flags |= DL_BROAD_REQ;
+	if (flags & NWEO_EN_MULTI)
+		dl_flags |= DL_MULTI_REQ;
+	if (flags & NWEO_EN_PROMISC)
+		dl_flags |= DL_PROMISC_REQ;
 	mess.m_type= DL_INIT;
 	mess.DL_PORT= eth_port->etp_osdep.etp_port;
 	mess.DL_PROC= this_proc;
-	mess.DL_MODE= eth_port->etp_osdep.etp_dl_flags;
+	mess.DL_MODE= dl_flags;
 
-	r= send(eth_port->etp_osdep.etp_task, &mess);
+	r= sendrec(eth_port->etp_osdep.etp_task, &mess);
+	/* YYY */
 	if (r<0)
 	{
 		printf(
-	"osdep_eth_init: unable to send to ethernet task, error= %d\n",
-			r);
+	"eth_restart: sendrec to ethernet task %d failed: %d\n",
+			eth_port->etp_osdep.etp_task, r);
 		return;
 	}
-
-	if (receive(eth_port->etp_osdep.etp_task, &mess)<0)
-		ip_panic(("unable to receive"));
 
 	if (mess.m3_i1 == ENXIO)
 	{
@@ -790,9 +807,17 @@ int tasknr;
 
 	eth_port->etp_flags |= EPF_ENABLED;
 	if (eth_port->etp_wr_pack)
-		ip_panic(("eth_restart: should clear etp_wr_pack\n"));
+	{
+		bf_afree(eth_port->etp_wr_pack);
+		eth_port->etp_wr_pack= NULL;
+		eth_restart_write(eth_port);
+	}
 	if (eth_port->etp_rd_pack)
-		ip_panic(("eth_restart: should clear etp_rd_pack\n"));
+	{
+		bf_afree(eth_port->etp_rd_pack);
+		eth_port->etp_rd_pack= NULL;
+		eth_port->etp_flags &= ~(EPF_READ_IP|EPF_READ_SP);
+	}
 	setup_read (eth_port);
 }
 

@@ -342,7 +342,12 @@ ioreq_t req;
 			{
 				result= eth_get_stat(eth_port,
 					&ethstat->nwes_stat);
-				assert (result == 0);
+				if (result != NW_OK)
+				{
+					bf_afree(acc);
+					reply_thr_put(eth_fd, result, TRUE);
+					return NW_OK;
+				}
 			}
 			else
 			{

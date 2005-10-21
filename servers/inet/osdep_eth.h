@@ -19,7 +19,6 @@ typedef struct osdep_eth_port
 	int etp_task;
 	int etp_port;
 	int etp_recvconf;
-	unsigned etp_dl_flags;
 	iovec_t etp_wr_iovec[IOVEC_NR];
 	iovec_t etp_rd_iovec[RD_IOVEC];
 	event_t etp_recvev;
