@@ -566,6 +566,9 @@ PUBLIC int main(int argc, char **argv)
 	DEBUG(printf("eth: got message %d, ", m.m_type));
 
 	switch (m.m_type) {
+	    case DEV_PING:	/* Status request from RS */
+		notify(m.m_source);
+		continue;
 	    case DL_WRITE:	/* Write message to device */
 		do_vwrite(&m, FALSE);
 		break;

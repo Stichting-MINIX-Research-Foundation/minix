@@ -297,6 +297,7 @@ int main(int argc, char *argv[])
 
 		switch (m.m_type)
 		{
+		case DEV_PING:  notify(m.m_source);		continue;
 		case DL_WRITEV:	fxp_writev(&m, FALSE, TRUE);	break;
 		case DL_WRITE:	fxp_writev(&m, FALSE, FALSE);	break;
 #if 0

@@ -192,6 +192,7 @@ int main(int argc, char *argv[])
 
 		switch (m.m_type)
 		{
+		case DEV_PING:  notify(m.m_source);		continue;
 		case DL_WRITE:	do_vwrite(&m, FALSE, FALSE);	break;
 		case DL_WRITEV:	do_vwrite(&m, FALSE, TRUE);	break;
 		case DL_READ:	do_vread(&m, FALSE);		break;
