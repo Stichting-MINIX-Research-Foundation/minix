@@ -109,13 +109,21 @@ then
 	echo ""
 fi
 
-echo "Warning: I'm going to mkfs $RAM! It has to be at least $ROOTKB KB."
-echo ""
-echo "Temporary (sub)partition to use to make the /usr FS image? "
-echo "I need $USRMB MB. It will be mkfsed!"
-echo -n "Device: /dev/"
-read dev || exit 1
-TMPDISK=/dev/$dev
+TD1=.td1
+TD2=.td2
+
+if [ -f $TD1 ]
+then	TMPDISK="`cat $TD1`"
+else
+	echo "Warning: I'm going to mkfs $RAM!"
+	echo "It has to be at least $ROOTKB KB."
+	echo ""
+	echo "Temporary (sub)partition to use to make the /usr FS image? "
+	echo "I need $USRMB MB. It will be mkfsed!"
+	echo -n "Device: /dev/"
+	read dev || exit 1
+	TMPDISK=/dev/$dev
+fi
 
 if [ -b $TMPDISK ]
 then :
@@ -123,17 +131,25 @@ else	echo "$TMPDISK is not a block device.."
 	exit 1
 fi
 
-echo "Temporary (sub)partition to use for /tmp? "
-echo "It will be mkfsed!"
-echo -n "Device: /dev/"
-read dev || exit 1
-TMPDISK2=/dev/$dev
+echo $TMPDISK >$TD1
+
+if [ -f $TD2 ]
+then	TMPDISK2="`cat $TD2`"
+else
+	echo "Temporary (sub)partition to use for /tmp? "
+	echo "It will be mkfsed!"
+	echo -n "Device: /dev/"
+	read dev || exit 1
+	TMPDISK2=/dev/$dev
+fi
 
 if [ -b $TMPDISK2 ]
 then :
 else	echo "$TMPDISK2 is not a block device.."
 	exit 1
 fi
+
+echo $TMPDISK2 >$TD2
 
 umount $TMPDISK
 umount $TMPDISK2
