@@ -273,8 +273,10 @@ int rw_flag;			/* READING or WRITING */
 	if (r != block_size) {
 	    if (r >= 0) r = END_OF_FILE;
 	    if (r != END_OF_FILE)
+#if FS_ERRORS
 	      printf("Unrecoverable disk error on device %d/%d, block %ld\n",
 			(dev>>MAJOR)&BYTE, (dev>>MINOR)&BYTE, bp->b_blocknr);
+#endif
 		bp->b_dev = NO_DEV;	/* invalidate block */
 
 		/* Report read errors to interested parties. */
@@ -381,10 +383,12 @@ int rw_flag;			/* READING or WRITING */
 		if (iop->iov_size != 0) {
 			/* Transfer failed. An error? Do we care? */
 			if (r != OK && i == 0) {
+#if FS_ERRORS
 				printf(
 				"fs: I/O error on device %d/%d, block %lu\n",
 					(dev>>MAJOR)&BYTE, (dev>>MINOR)&BYTE,
 					bp->b_blocknr);
+#endif
 				bp->b_dev = NO_DEV;	/* invalidate block */
 			}
 			break;
