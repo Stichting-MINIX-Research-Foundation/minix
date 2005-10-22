@@ -16,6 +16,8 @@ PERL=perl-5.8.7
 
 SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch ps reboot rlogind scripts sh simple talk talkd telnet telnetd urlget yap zmodem
 
+BIGDIRS=$(FLEX) $(BZIP2) $(KERMIT) $(LYNX) $(COREUTILS) $(PERL) $(EMACS) $(PYTHON) $(VIM) $(NVI)
+
 usage:
 	@echo "Usage: make all          # Compile all commands" >&2
 	@echo "       make install      # Install the result (run as bin!)" >&2
@@ -42,29 +44,11 @@ smallinstall:: small
 	cd $(GZIP) && $(MAKE) install 
 
 big:
-	cd $(FLEX) && /bin/sh makeme.sh 
-	cd $(BZIP2) && /bin/sh makeme.sh 
-	cd $(KERMIT) && /bin/sh makeme.sh
-	cd $(LYNX) && /bin/sh makeme.sh
-	cd $(COREUTILS) && /bin/sh makeme.sh
-	cd $(PERL) && /bin/sh makeme.sh
-	cd $(EMACS) && /bin/sh makeme.sh
-	cd $(PYTHON) && /bin/sh makeme.sh 
-	cd $(VIM) && /bin/sh makeme.sh 
 	-mkdir $(NVIWORK)
-	cd $(NVI) && make all
+	for d in $(BIGDIRS); do if [ -d $$d ]; then ( cd $$d && /bin/sh makeme.sh ); fi; done
 
 biginstall: big
-	cd $(FLEX) && make install
-	cd $(PYTHON) && make install
-	cd $(BZIP2) && make install
-	cd $(KERMIT) && make install
-	cd $(LYNX) && make install
-	cd $(EMACS) && make install
-	cd $(COREUTILS) && make install
-	cd $(PERL) && make install
-	cd $(VIM) && make install
-	cd $(NVI) && make install
+	for d in $(BIGDIRS); do if [ -d $$d ]; then ( cd $$d && make install ); fi; done
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
