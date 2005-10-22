@@ -292,6 +292,13 @@ PUBLIC void main()
 
   struct floppy *fp;
   int s;
+  struct sigaction sa;
+
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("floppy","sigaction failed", errno);
+  signal(SIGTERM, SIG_IGN);
 
   f_next_timeout = TMR_NEVER;
   tmr_inittimer(&f_tmr_timeout);
