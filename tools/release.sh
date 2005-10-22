@@ -67,8 +67,9 @@ BS=4096
 HDEMU=0
 COPY=0
 CVSTAG=HEAD
+CHECKOUTLIST=src
 
-while getopts "r:ch?" c
+while getopts "sr:ch?" c
 do
 	case "$c" in
 	\?)
@@ -86,6 +87,9 @@ do
 		;;
 	r)	
 		CVSTAG=$OPTARG
+		;;
+	s)	CHECKOUTLIST="src/LICENSE src/Makefile src/boot src/drivers src/etc src/include src/kernel src/lib src/man src/servers src/test src/tools src/commands/Makefile src/commands/ src/commands/Makefile src/commands/aal src/commands/ackpack src/commands/advent src/commands/ash src/commands/autil src/commands/awk src/commands/bc src/commands/bigmake.inc src/commands/byacc src/commands/cawf src/commands/cron src/commands/cvs-1.11.5 src/commands/de src/commands/dhcpd src/commands/dis88 src/commands/elle src/commands/elvis src/commands/ftp src/commands/ftpd src/commands/ftpd200 src/commands/gzip-1.2.4 src/commands/httpd src/commands/i386 src/commands/i86 src/commands/ibm src/commands/indent src/commands/m4 src/commands/make src/commands/make-3.80 src/commands/mdb src/commands/mined src/commands/nvi-1.79 src/commands/patch src/commands/ps src/commands/reboot src/commands/rlogind src/commands/scripts src/commands/sh src/commands/simple src/commands/talk src/commands/talkd src/commands/telnet src/commands/telnetd src/commands/urlget src/commands/yap src/commands/zmodem"
+
 		;;
 	esac
 done
@@ -187,7 +191,7 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new cvs export"
-	( cd $RELEASEDIR/usr && mkdir src && cvs export -r$CVSTAG src )
+	( cd $RELEASEDIR/usr && mkdir src && cvs export -r$CVSTAG $CHECKOUTLIST )
 else
 	( cd .. && make clean )
 	srcdir=/usr/src
