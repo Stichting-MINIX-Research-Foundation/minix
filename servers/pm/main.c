@@ -253,6 +253,7 @@ PRIVATE void pm_init()
   sigfillset(&mproc[PM_PROC_NR].mp_ignore); 	/* guard against signals */
   sigfillset(&mproc[FS_PROC_NR].mp_sig2mess); 	/* forward signals */
   sigfillset(&mproc[TTY_PROC_NR].mp_sig2mess); 	/* forward signals */
+  sigfillset(&mproc[MEM_PROC_NR].mp_sig2mess); 	/* forward signals */
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_PROC_NR = NONE;
