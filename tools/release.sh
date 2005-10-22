@@ -163,8 +163,6 @@ echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
-echo " * Zeroing $RAM"
-dd if=/dev/zero of=$RAM bs=$BS count=$ROOTBLOCKS
 mkfs -B $BS -b $ROOTBLOCKS $RAM || exit
 mkfs $TMPDISK2 || exit
 echo " * mounting $RAM as $RELEASEDIR"
@@ -173,8 +171,6 @@ mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
-echo " * Zeroing $TMPDISK"
-#dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
 mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
 echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
