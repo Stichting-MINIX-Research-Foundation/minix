@@ -209,7 +209,7 @@ int how;
    */
   kprintf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-  set_timer(&shutdown_timer, get_uptime() + HZ, shutdown);
+  shutdown(&shutdown_timer);
 }
 /*===========================================================================*
  *				shutdown 				     *
