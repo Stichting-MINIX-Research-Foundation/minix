@@ -59,8 +59,8 @@ clean::
 	if [ -f $(NVIWORK)/Makefile ]; then cd $(NVIWORK) && make clean; fi
 	if [ -f $(LYNX)/Makefile ] ; then cd $(LYNX) && make clean; fi
 	if [ -f $(EMACS)/Makefile ] ; then cd $(EMACS) && make clean; fi
-	cd $(COREUTILS) && make clean
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
+	for d in $(BIGDIRS); do if [ -d $$d ]; then ( cd $$d && make clean ); fi; done
 
 small::
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
