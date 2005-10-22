@@ -78,8 +78,10 @@ PUBLIC int main()
 			printf("FS, warning illegal %d system call by %d\n", call_nr, who);
 		} else if (fp->fp_pid == PID_FREE) {
 			error = ENOSYS;
+#if FS_VERBOSE
 			printf("FS, bad process, who = %d, call_nr = %d, slot1 = %d\n",
 				 who, call_nr, m_in.slot1);
+#endif
 		} else {
 			error = (*call_vec[call_nr])();
 		}
@@ -168,7 +170,9 @@ int result;			/* result of the call (usually OK or error #) */
   int s;
   m_out.reply_type = result;
   s = send(whom, &m_out);
+#if FS_VERBOSE
   if (s != OK) printf("FS: couldn't send reply %d: %d\n", result, s);
+#endif
 }
 
 /*===========================================================================*
