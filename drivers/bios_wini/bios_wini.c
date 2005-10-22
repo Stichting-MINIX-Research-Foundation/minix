@@ -102,7 +102,7 @@ PUBLIC int main()
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("at_wini","sigaction failed", errno);
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("bios_wini","sigaction failed", errno);
   signal(SIGTERM, SIG_IGN);
 
   v= 0;
