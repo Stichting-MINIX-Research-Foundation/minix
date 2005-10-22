@@ -120,8 +120,7 @@ PRIVATE void exit_server()
   fkeys = sfkeys = 0;
   for (i=1; i<=12; i++) bit_set(fkeys, i);
   for (i=1; i<= 7; i++) bit_set(sfkeys, i);
-  if ((s=fkey_unmap(&fkeys, &sfkeys)) != OK)
-      report("IS", "warning, unfkey_map failed:", s);
+  fkey_unmap(&fkeys, &sfkeys);
 
   /* Done. Now exit. */
   exit(0);
