@@ -23,7 +23,7 @@ LIBPCI = $d/libpci/pci.o $d/libpci/pci_table.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) $(LIBPCI)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBPCI) $(LIBS)
-	install -S 1k $(DRIVER)
+	install -S 8k $(DRIVER)
 
 $(LIBPCI): 
 	cd $d/libpci && $(MAKE) 
