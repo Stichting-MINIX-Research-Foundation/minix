@@ -45,6 +45,8 @@
  * |-------------+---------+---------+---------+---------+---------+---------|
  * | DEV_CLOSE   |minor dev| proc nr |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
+ * | DEV_SELECT  |         |         |         |         |         |         |
+ * |-------------+---------+---------+---------+---------+---------+---------|
  * | DEV_STATUS  |         |         |         |         |         |         |
  * |-------------+---------+---------+---------+---------+---------+---------|
  * | CANCEL      |minor dev| proc nr |         |         |         |         |
@@ -56,7 +58,6 @@
  *   Jul 13, 2004   support for function key observers  (Jorrit N. Herder)  
  */
 
-#include "../drivers.h"
 #include "../drivers.h"
 #include <termios.h>
 #if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
