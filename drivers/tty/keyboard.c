@@ -7,6 +7,8 @@
  */
 
 #include "../drivers.h"
+#include <sys/ioctl.h>
+#include <sys/kbdio.h>
 #include <sys/time.h>
 #include <sys/select.h>
 #include <termios.h>
@@ -23,6 +25,7 @@
 #include "../../kernel/proc.h"
 
 int irq_hook_id = -1;
+int aux_irq_hook_id = -1;
 
 /* Standard and AT keyboard.  (PS/2 MCA implies AT throughout.) */
 #define KEYBD		0x60	/* I/O port for keyboard data */
@@ -31,12 +34,22 @@ int irq_hook_id = -1;
 #define KB_COMMAND	0x64	/* I/O port for commands on AT */
 #define KB_STATUS	0x64	/* I/O port for status on AT */
 #define KB_ACK		0xFA	/* keyboard ack response */
+#define KB_AUX_BYTE	0x20	/* Auxiliary Device Output Buffer Full */
 #define KB_OUT_FULL	0x01	/* status bit set when keypress char pending */
 #define KB_IN_FULL	0x02	/* status bit set when not ready to receive */
+#define KBC_RD_RAM_CCB	0x20	/* Read controller command byte */
+#define KBC_WR_RAM_CCB	0x60	/* Write controller command byte */
+#define KBC_DI_AUX	0xA7	/* Disable Auxiliary Device */
+#define KBC_EN_AUX	0xA8	/* Enable Auxiliary Device */
+#define KBC_DI_KBD	0xAD	/* Disable Keybard Interface */
+#define KBC_EN_KBD	0xAE	/* Enable Keybard Interface */
+#define KBC_WRITE_AUX	0xD4	/* Write to Auxiliary Device */
 #define LED_CODE	0xED	/* command to keyboard to set LEDs */
 #define MAX_KB_ACK_RETRIES 0x1000	/* max #times to wait for kb ack */
 #define MAX_KB_BUSY_RETRIES 0x1000	/* max #times to loop while kb busy */
 #define KBIT		0x80	/* bit used to ack characters to keyboard */
+
+#define KBC_IN_DELAY	7	/* wait 7 microseconds when polling */
 
 /* Miscellaneous. */
 #define ESC_SCAN	0x01	/* reboot key when panicking */
@@ -45,6 +58,13 @@ int irq_hook_id = -1;
 #define HOME_SCAN	0x47	/* first key on the numeric keypad */
 #define INS_SCAN	0x52	/* INS for use in CTRL-ALT-INS reboot */
 #define DEL_SCAN	0x53	/* DEL for use in CTRL-ALT-DEL reboot */
+
+#define KBD_BUFSZ	64	/* Buffer size for raw scan codes */
+#define KBD_OUT_BUFSZ	16	/* Output buffer to sending data to the
+				 * keyboard.
+				 */
+
+#define MICROS_TO_TICKS(m)  (((m)*HZ/1000000)+1)
 
 #define CONSOLE		   0	/* line number for console */
 #define KB_IN_BYTES	  32	/* size of keyboard input buffer */
@@ -81,15 +101,309 @@ typedef struct observer { int proc_nr; int events; } obs_t;
 PRIVATE obs_t  fkey_obs[12];	/* observers for F1-F12 */
 PRIVATE obs_t sfkey_obs[12];	/* observers for SHIFT F1-F12 */
 
+PRIVATE struct kbd
+{
+	int minor;
+	int nr_open;
+	char buf[KBD_BUFSZ];
+	int offset;
+	int avail;
+	int req_size;
+	int req_proc;
+	vir_bytes req_addr;
+	int incaller;
+	int select_ops;
+	int select_proc;
+} kbd, kbdaux;
+
+/* Data that is to be sent to the keyboard. Each byte is ACKed by the
+ * keyboard.
+ */
+PRIVATE struct kbd_outack
+{
+	unsigned char buf[KBD_OUT_BUFSZ];
+	int offset;
+	int avail;
+	int expect_ack;
+} kbdout;
+
+PRIVATE int kbd_watchdog_set= 0;
+PRIVATE int kbd_alive= 1;
+PRIVATE timer_t tmr_kbd_wd;
+
+FORWARD _PROTOTYPE( void handle_req, (struct kbd *kbdp, message *m)	);
+FORWARD _PROTOTYPE( int handle_status, (struct kbd *kbdp, message *m)	);
+FORWARD _PROTOTYPE( void kbc_cmd0, (int cmd)				);
+FORWARD _PROTOTYPE( void kbc_cmd1, (int cmd, int data)			);
+FORWARD _PROTOTYPE( int kbc_read, (void)				);
+FORWARD _PROTOTYPE( void kbd_send, (void)				);
 FORWARD _PROTOTYPE( int kb_ack, (void) 					);
 FORWARD _PROTOTYPE( int kb_wait, (void)				 	);
 FORWARD _PROTOTYPE( int func_key, (int scode) 				);
-FORWARD _PROTOTYPE( int scan_keyboard, (void) 				);
+FORWARD _PROTOTYPE( int scan_keyboard, (unsigned char *bp, int *isauxp)	);
 FORWARD _PROTOTYPE( unsigned make_break, (int scode) 			);
 FORWARD _PROTOTYPE( void set_leds, (void) 				);
 FORWARD _PROTOTYPE( void show_key_mappings, (void) 			);
 FORWARD _PROTOTYPE( int kb_read, (struct tty *tp, int try) 		);
 FORWARD _PROTOTYPE( unsigned map_key, (int scode) 			);
+FORWARD _PROTOTYPE( void micro_delay, (unsigned long usecs)		);
+FORWARD _PROTOTYPE( void kbd_watchdog, (timer_t *tmrp)			);
+
+/*===========================================================================*
+ *				do_kbd					     *
+ *===========================================================================*/
+PUBLIC void do_kbd(message *m)
+{
+	handle_req(&kbd, m);
+}
+
+
+/*===========================================================================*
+ *				kbd_status				     *
+ *===========================================================================*/
+PUBLIC int kbd_status(message *m)
+{
+	int r;
+
+	r= handle_status(&kbd, m);
+	if (r)
+		return r;
+	return handle_status(&kbdaux, m);
+}
+
+
+/*===========================================================================*
+ *				do_kbdaux				     *
+ *===========================================================================*/
+PUBLIC void do_kbdaux(message *m)
+{
+	handle_req(&kbdaux, m);
+}
+
+
+/*===========================================================================*
+ *				handle_req				     *
+ *===========================================================================*/
+PRIVATE void handle_req(kbdp, m)
+struct kbd *kbdp;
+message *m;
+{
+	int i, n, r, ops, watch;
+	unsigned char c;
+
+	/* Execute the requested device driver function. */
+	r= EINVAL;	/* just in case */
+	switch (m->m_type) {
+	    case DEV_OPEN:
+		kbdp->nr_open++;
+		r= OK;
+		break;
+	    case DEV_CLOSE:
+		kbdp->nr_open--;
+		if (kbdp->nr_open < 0)
+		{
+			printf("TTY(kbd): open count is negative\n");
+			kbdp->nr_open= 0;
+		}
+		if (kbdp->nr_open == 0)
+			kbdp->avail= 0;
+		r= OK;
+		break;
+	    case DEV_READ:	 
+		if (kbdp->req_size)
+		{
+			/* We handle only request at a time */
+			r= EIO;
+			break;
+		}
+		if (kbdp->avail == 0)
+		{
+			/* Should record proc */
+			kbdp->req_size= m->COUNT;
+			kbdp->req_proc= m->PROC_NR;
+			kbdp->req_addr= (vir_bytes)m->ADDRESS;
+			kbdp->incaller= m->m_source;
+			r= SUSPEND;
+			break;
+		}
+
+		/* Handle read request */
+		n= kbdp->avail;
+		if (n > m->COUNT)
+			n= m->COUNT;
+		if (kbdp->offset + n > KBD_BUFSZ)
+			n= KBD_BUFSZ-kbdp->offset;
+		if (n <= 0)
+			panic("TTY", "do_kbd(READ): bad n", n);
+		r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
+			m->PROC_NR, D, (vir_bytes) m->ADDRESS, n);
+		if (r == OK)
+		{
+			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
+			kbdp->avail -= n;
+			r= n;
+		}
+
+		break;
+
+	    case DEV_WRITE:
+		if (kbdp != &kbdaux)
+		{
+			printf("write to keyboard not implemented\n");
+			r= EINVAL;
+			break;
+		}
+
+		/* Assume that output to AUX only happens during
+		 * initialization and we can afford to lose input. This should
+		 * be fixed at a later time.
+		 */
+		for (i= 0; i<m->COUNT; i++)
+		{
+			r= sys_vircopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS+i,
+				SELF, D, (vir_bytes)&c, 1);
+			if (r != OK)
+				break;
+			kbc_cmd1(KBC_WRITE_AUX, c);
+		}
+		r= i;
+		break;
+
+	    case CANCEL:
+		kbdp->req_size= 0;
+		r= OK;
+		break;
+	    case DEV_SELECT:
+		ops = m->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
+		watch = (m->PROC_NR & SEL_NOTIFY) ? 1 : 0;
+		
+		r= 0;
+		if (kbdp->avail && (ops & SEL_RD))
+		{
+			r |= SEL_RD;
+			break;
+		}
+
+		if (ops && watch)
+		{
+			kbdp->select_ops |= ops;
+			kbdp->select_proc= m->m_source;
+		}
+		break;
+	    case DEV_IOCTL:
+		if (kbdp == &kbd && m->TTY_REQUEST == KIOCSLEDS)
+		{
+			kio_leds_t leds;
+			unsigned char b;
+
+			r= sys_vircopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS,
+				SELF, D, (vir_bytes)&leds, sizeof(leds));
+			if (r != OK)
+				break;
+			b= 0;
+			if (leds.kl_bits & KBD_LEDS_NUM) b |= NUM_LOCK;
+			if (leds.kl_bits & KBD_LEDS_CAPS) b |= CAPS_LOCK;
+			if (leds.kl_bits & KBD_LEDS_SCROLL) b |= SCROLL_LOCK;
+			if (kbdout.avail == 0)
+				kbdout.offset= 0;
+			if (kbdout.offset + kbdout.avail + 2 > KBD_OUT_BUFSZ)
+			{
+				/* Output buffer is full. Ignore this command.
+				 * Reset ACK flag.
+				 */
+				kbdout.expect_ack= 0;
+			}
+			else
+			{
+				kbdout.buf[kbdout.offset+kbdout.avail]=
+					LED_CODE;
+				kbdout.buf[kbdout.offset+kbdout.avail+1]= b;
+				kbdout.avail += 2;
+			 }
+			 if (!kbdout.expect_ack)
+				kbd_send();
+			 r= OK;
+			 break;
+		}
+		if (kbdp == &kbd && m->TTY_REQUEST == KIOCBELL)
+		{
+			kio_bell_t bell;
+			clock_t ticks;
+
+			r= sys_vircopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS,
+				SELF, D, (vir_bytes)&bell, sizeof(bell));
+			if (r != OK)
+				break;
+
+			ticks= bell.kb_duration.tv_usec * HZ / 1000000;
+			ticks += bell.kb_duration.tv_sec * HZ;
+			if (!ticks)
+				ticks++;
+			beep_x(bell.kb_pitch, ticks);
+
+			r= OK;
+			break;
+		}
+		r= ENOTTY;
+		break;
+
+	    default:		
+		printf("Warning, TTY(kbd) got unexpected request %d from %d\n",
+			m->m_type, m->m_source);
+		r= EINVAL;
+	}
+	tty_reply(TASK_REPLY, m->m_source, m->PROC_NR, r);
+}
+
+
+/*===========================================================================*
+ *				handle_status				     *
+ *===========================================================================*/
+PRIVATE int handle_status(kbdp, m)
+struct kbd *kbdp;
+message *m;
+{
+	int n, r;
+
+	if (kbdp->avail && kbdp->req_size && m->m_source == kbdp->incaller)
+	{
+		/* Handle read request */
+		n= kbdp->avail;
+		if (n > kbdp->req_size)
+			n= kbdp->req_size;
+		if (kbdp->offset + n > KBD_BUFSZ)
+			n= KBD_BUFSZ-kbdp->offset;
+		if (n <= 0)
+			panic("TTY", "kbd_status: bad n", n);
+		kbdp->req_size= 0;
+		r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
+			kbdp->req_proc, D, kbdp->req_addr, n);
+		if (r == OK)
+		{
+			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
+			kbdp->avail -= n;
+			r= n;
+		}
+
+		m->m_type = DEV_REVIVE;
+  		m->REP_PROC_NR= kbdp->req_proc;
+  		m->REP_STATUS= r;
+		return 1;
+	}
+	if (kbdp->avail && (kbdp->select_ops & SEL_RD) &&
+		m->m_source == kbdp->select_proc)
+	{
+		m->m_type = DEV_IO_READY;
+		m->DEV_MINOR = kbdp->minor;
+		m->DEV_SEL_OPS = SEL_RD;
+
+		kbdp->select_ops &= ~SEL_RD;
+		return 1;
+	}
+
+	return 0;
+}
+
 
 /*===========================================================================*
  *				map_key0				     *
@@ -137,11 +451,36 @@ PUBLIC void kbd_interrupt(m_ptr)
 message *m_ptr;
 {
 /* A keyboard interrupt has occurred.  Process it. */
-  int scode;
+  int o, isaux;
+  unsigned char scode;
+  struct kbd *kbdp;
   static timer_t timer;		/* timer must be static! */
 
   /* Fetch the character from the keyboard hardware and acknowledge it. */
-  scode = scan_keyboard();
+  if (!scan_keyboard(&scode, &isaux))
+	return;
+
+  if (isaux)
+	kbdp= &kbdaux;
+  else if (kbd.nr_open && !panicing)
+	kbdp= &kbd;
+  else
+	kbdp= NULL;
+
+  if (kbdp)
+  {
+	/* raw scan codes or aux data */
+	if (kbdp->avail >= KBD_BUFSZ)
+		return;	/* Buffer is full */
+	 o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
+	 kbdp->buf[o]= scode;
+	 kbdp->avail++;
+	 if (kbdp->req_size)
+		notify(kbdp->incaller);
+	 if (kbdp->select_ops & SEL_RD)
+		notify(kbdp->select_proc);
+	 return;
+  }
 
   /* Store the scancode in memory so the task can get at it later. */
   if (icount < KB_IN_BYTES) {
@@ -224,6 +563,62 @@ int try;
   }
 
   return 1;
+}
+
+/*===========================================================================*
+ *				kbd_send				     *
+ *===========================================================================*/
+PRIVATE void kbd_send()
+{
+	unsigned long sb;
+	int r;
+	clock_t now;
+
+	if (!kbdout.avail)
+		return;
+	if (kbdout.expect_ack)
+		return;
+
+	sys_inb(KB_STATUS, &sb);
+	if (sb & (KB_OUT_FULL|KB_IN_FULL))
+	{
+		printf("not sending 1: sb = 0x%x\n", sb);
+		return;
+	}
+	micro_delay(KBC_IN_DELAY);
+	sys_inb(KB_STATUS, &sb);
+	if (sb & (KB_OUT_FULL|KB_IN_FULL))
+	{
+		printf("not sending 2: sb = 0x%x\n", sb);
+		return;
+	}
+
+	/* Okay, buffer is really empty */
+#if 0
+	printf("sending byte 0x%x to keyboard\n", kbdout.buf[kbdout.offset]);
+#endif
+	sys_outb(KEYBD, kbdout.buf[kbdout.offset]);
+	kbdout.offset++;
+	kbdout.avail--;
+	kbdout.expect_ack= 1;
+
+	kbd_alive= 1;
+	if (kbd_watchdog_set)
+	{
+		/* Add a timer to the timers list. Possibly reschedule the
+		 * alarm.
+		 */
+		if ((r= getuptime(&now)) != OK)
+			panic("TTY","Keyboard couldn't get clock's uptime.", r);
+		tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+HZ, kbd_watchdog,
+			NULL);
+		if (tty_timers->tmr_exp_time != tty_next_timeout) {
+			tty_next_timeout = tty_timers->tmr_exp_time;
+			if ((r= sys_setalarm(tty_next_timeout, 1)) != OK)
+				panic("TTY","Keyboard couldn't set alarm.", r);
+		}
+		kbd_watchdog_set= 1;
+	 }
 }
 
 /*===========================================================================*
@@ -312,6 +707,8 @@ PRIVATE void set_leds()
   int s;
   if (! machine.pc_at) return;	/* PC/XT doesn't have LEDs */
 
+  printf("in set_leds\n");
+
   kb_wait();			/* wait for buffer empty  */
   if ((s=sys_outb(KEYBD, LED_CODE)) != OK)
       printf("Warning, sys_outb couldn't prepare for LED values: %d\n", s);
@@ -326,20 +723,98 @@ PRIVATE void set_leds()
 }
 
 /*===========================================================================*
+ *				kbc_cmd0				     *
+ *===========================================================================*/
+PRIVATE void kbc_cmd0(cmd)
+int cmd;
+{
+	kb_wait();
+	sys_outb(KB_COMMAND, cmd);
+}
+
+/*===========================================================================*
+ *				kbc_cmd1				     *
+ *===========================================================================*/
+PRIVATE void kbc_cmd1(cmd, data)
+int cmd;
+int data;
+{
+	kb_wait();
+	sys_outb(KB_COMMAND, cmd);
+	kb_wait();
+	sys_outb(KEYBD, data);
+}
+
+
+/*===========================================================================*
+*                              kbc_read                                     *
+*===========================================================================*/
+PRIVATE int kbc_read()
+{
+	int i;
+	unsigned long byte, st;
+#if 0
+	struct micro_state ms;
+#endif
+
+	printf("in kbc_read\n");
+
+	/* Wait at most 1 second for a byte from the keyboard or
+	* the kbd controller, return -1 on a timeout.
+	*/
+	for (i= 0; i<1000; i++)
+ #if 0
+	micro_start(&ms);
+	do
+#endif
+	{
+		sys_inb(KB_STATUS, &st);
+		if (st & KB_OUT_FULL)
+		{
+			micro_delay(KBC_IN_DELAY);
+			sys_inb(KEYBD, &byte);
+			if (st & KB_AUX_BYTE)
+			{
+				printf(
+		"keyboard`kbc_read: ignoring byte (0x%x) from aux device.\n",
+					byte);
+				continue;
+			}
+			printf("keyboard`kbc_read: returning byte 0x%x\n",
+				byte);
+			return byte;
+		}
+	}
+#if 0
+	while (micro_elapsed(&ms) < 1000000);
+#endif
+	panic("TTY", "kbc_read failed to complete", NO_NUM);
+}
+
+
+
+/*===========================================================================*
  *				kb_wait					     *
  *===========================================================================*/
 PRIVATE int kb_wait()
 {
 /* Wait until the controller is ready; return zero if this times out. */
 
-  int retries, status, temp;
-  int s;
+  int retries;
+  unsigned long status, temp;
+  int s, isaux;
+  unsigned char byte;
+
+  printf("in kb_wait\n");
 
   retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
   do {
       s = sys_inb(KB_STATUS, &status);
       if (status & KB_OUT_FULL) {
-          s = sys_inb(KEYBD, &temp);	/* discard value */
+	  if (scan_keyboard(&byte, &isaux))
+	  {
+		  printf("ignoring %sbyte in kb_wait\n", isaux ? "AUX " : "");
+	  }
       }
       if (! (status & (KB_IN_FULL|KB_OUT_FULL)) )
           break;			/* wait until ready */
@@ -355,10 +830,13 @@ PRIVATE int kb_ack()
 /* Wait until kbd acknowledges last command; return zero if this times out. */
 
   int retries, s;
-  u8_t u8val;
+  unsigned long u8val;
+
+  printf("in kb_ack\n");
 
   retries = MAX_KB_ACK_RETRIES + 1;
   do {
+      printf("ignoring byte in kb_ack\n");
       s = sys_inb(KEYBD, &u8val);
       if (u8val == KB_ACK)	
           break;		/* wait for ack */
@@ -384,9 +862,10 @@ tty_t *tp;
 PUBLIC void kb_init_once(void)
 {
   int i;
+  u8_t ccb;
 
   set_leds();			/* turn off numlock led */
-  scan_keyboard();		/* discard leftover keystroke */
+  scan_keyboard(NULL, NULL);	/* discard leftover keystroke */
 
       /* Clear the function key observers array. Also see func_key(). */
       for (i=0; i<12; i++) {
@@ -396,6 +875,9 @@ PUBLIC void kb_init_once(void)
           sfkey_obs[i].events = 0;	/* Shift F1-F12 observers */
       }
 
+      kbd.minor= KBD_MINOR;
+      kbdaux.minor= KBDAUX_MINOR;
+
       /* Set interrupt handler and enable keyboard IRQ. */
       irq_hook_id = KEYBOARD_IRQ;	/* id to be returned on interrupt */
       if ((i=sys_irqsetpolicy(KEYBOARD_IRQ, IRQ_REENABLE, &irq_hook_id)) != OK)
@@ -403,6 +885,32 @@ PUBLIC void kb_init_once(void)
       if ((i=sys_irqenable(&irq_hook_id)) != OK)
           panic("TTY", "Couldn't enable keyboard IRQs", i);
       kbd_irq_set |= (1 << KEYBOARD_IRQ);
+
+      /* Set AUX interrupt handler and enable AUX IRQ. */
+      aux_irq_hook_id = KBD_AUX_IRQ;	/* id to be returned on interrupt */
+      if ((i=sys_irqsetpolicy(KBD_AUX_IRQ, IRQ_REENABLE,
+		&aux_irq_hook_id)) != OK)
+          panic("TTY",  "Couldn't set AUX IRQ policy", i);
+      if ((i=sys_irqenable(&aux_irq_hook_id)) != OK)
+          panic("TTY", "Couldn't enable AUX IRQs", i);
+      kbd_irq_set |= (1 << KBD_AUX_IRQ);
+
+	/* Disable the keyboard and aux */
+	kbc_cmd0(KBC_DI_KBD);
+	kbc_cmd0(KBC_DI_AUX);
+
+	/* Get the current configuration byte */
+	kbc_cmd0(KBC_RD_RAM_CCB);
+	ccb= kbc_read();
+
+	/* Enable both interrupts. */
+	kbc_cmd1(KBC_WR_RAM_CCB, ccb | 3);
+
+	/* Re-enable the keyboard device. */
+	kbc_cmd0(KBC_EN_KBD);
+
+	/* Enable the aux device. */
+	kbc_cmd0(KBC_EN_AUX);
 }
 
 /*===========================================================================*
@@ -610,8 +1118,11 @@ PRIVATE void show_key_mappings()
 /*===========================================================================*
  *				scan_keyboard				     *
  *===========================================================================*/
-PRIVATE int scan_keyboard()
+PRIVATE int scan_keyboard(bp, isauxp)
+unsigned char *bp;
+int *isauxp;
 {
+#if 0	/* Is this old XT code? It doesn't match the PS/2 hardware */
 /* Fetch the character from the keyboard hardware and acknowledge it. */
   pvb_pair_t byte_in[2], byte_out[2];
   
@@ -624,6 +1135,41 @@ PRIVATE int scan_keyboard()
   sys_voutb(byte_out, 2);	/* request actual output */
 
   return(byte_in[0].value);		/* return scan code */
+#else
+  unsigned long b, sb;
+
+  sys_inb(KB_STATUS, &sb);
+  if (!(sb & KB_OUT_FULL))
+  {
+	if (kbdout.avail && !kbdout.expect_ack)
+		kbd_send();
+	return 0;
+  }
+  sys_inb(KEYBD, &b);
+#if 0
+  printf("got byte 0x%x from %s\n", b, (sb & KB_AUX_BYTE) ? "AUX" : "keyboard");
+#endif
+  if (!(sb & KB_AUX_BYTE) && b == KB_ACK && kbdout.expect_ack)
+  {
+#if 1
+	printf("got ACK from keyboard\n");
+#endif
+	kbdout.expect_ack= 0;
+	micro_delay(KBC_IN_DELAY);
+	kbd_send();
+	return 0;
+  }
+  if (bp)
+  	*bp= b;
+  if (isauxp)
+  	*isauxp= !!(sb & KB_AUX_BYTE);
+  if (kbdout.avail && !kbdout.expect_ack)
+  {
+	micro_delay(KBC_IN_DELAY);
+	kbd_send();
+  }
+  return 1;
+#endif
 }
 
 /*===========================================================================*
@@ -633,13 +1179,13 @@ PUBLIC void do_panic_dumps(m)
 message *m;			/* request message to TTY */
 {
 /* Wait for keystrokes for printing debugging info and reboot. */
-  int quiet, code;
+  unsigned char code;
+  int isaux;
 
   /* A panic! Allow debug dumps until user wants to shutdown. */
   printf("\nHit ESC to reboot, DEL to shutdown, F-keys for debug dumps\n");
 
-  (void) scan_keyboard();	/* ack any old input */
-  quiet = scan_keyboard();/* quiescent value (0 on PC, last code on AT)*/
+  (void) scan_keyboard(NULL, NULL);	/* ack any old input */
   for (;;) {
 	tickdelay(10);
 	/* See if there are pending request for output, but don't block. 
@@ -654,16 +1200,51 @@ message *m;			/* request message to TTY */
 		}
 		tickdelay(1);		/* allow more */
 	}
-	code = scan_keyboard();
-	if (code != quiet) {
-		/* A key has been pressed. */
-		switch (code) {			/* possibly abort MINIX */
-		case ESC_SCAN:  sys_abort(RBT_REBOOT); 	return;	
-		case DEL_SCAN:  sys_abort(RBT_HALT); 	return;	
-		}
-		(void) func_key(code);	     	/* check for function key */
-		quiet = scan_keyboard();
+	if (!scan_keyboard(&code, &isaux))
+		continue;
+	if (isaux)
+		continue;
+
+	/* A key has been pressed. */
+	switch (code) {			/* possibly abort MINIX */
+	case ESC_SCAN:  sys_abort(RBT_REBOOT); 	return;	
+	case DEL_SCAN:  sys_abort(RBT_HALT); 	return;	
 	}
+	(void) func_key(code);	     	/* check for function key */
   }
 }
 
+static void micro_delay(unsigned long usecs)
+{
+	tickdelay(MICROS_TO_TICKS(usecs));
+}
+
+/*===========================================================================*
+ *				kbd_watchdog 				     *
+ *===========================================================================*/
+PRIVATE void kbd_watchdog(tmrp)
+timer_t *tmrp;
+{
+	int r;
+	clock_t now;
+
+	kbd_watchdog_set= 0;
+	if (!kbdout.avail)
+		return;	/* Watchdog is no longer needed */
+	if (!kbd_alive)
+	{
+		printf("kbd_watchdog: should reset keyboard\n");
+	}
+	kbd_alive= 0;
+
+	if ((r= getuptime(&now)) != OK)
+		panic("TTY","Keyboard couldn't get clock's uptime.", r);
+	tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+HZ, kbd_watchdog,
+		NULL);
+	if (tty_timers->tmr_exp_time != tty_next_timeout) {
+		tty_next_timeout = tty_timers->tmr_exp_time;
+		if ((r= sys_setalarm(tty_next_timeout, 1)) != OK)
+			panic("TTY","Keyboard couldn't set alarm.", r);
+	}
+	kbd_watchdog_set= 1;
+}

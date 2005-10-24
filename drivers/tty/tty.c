@@ -166,6 +166,15 @@ PUBLIC void main(void)
   register struct proc *rp;
   register tty_t *tp;
 
+  kputc('H');
+  kputc('e');
+  kputc('l');
+  kputc('l');
+  kputc('o');
+  kputc(',');
+  kputc(' ');
+  printf("TTY\n");
+
   /* Initialize the TTY driver. */
   tty_init();
 
@@ -257,7 +266,13 @@ PUBLIC void main(void)
 		continue;
 	}
 	line = tty_mess.TTY_LINE;
-	if ((line - CONS_MINOR) < NR_CONS) {
+	if (line == KBD_MINOR) {
+		do_kbd(&tty_mess);
+		continue;
+	} else if (line == KBDAUX_MINOR) {
+		do_kbdaux(&tty_mess);
+		continue;
+	} else if ((line - CONS_MINOR) < NR_CONS) {
 		tp = tty_addr(line - CONS_MINOR);
 	} else if (line == LOG_MINOR) {
 		tp = tty_addr(0);
@@ -364,6 +379,8 @@ message *m_ptr;
   if (!event_found)
   	event_found = pty_status(m_ptr);
 #endif
+  if (!event_found)
+	event_found= kbd_status(m_ptr);
 
   if (! event_found) {
 	/* No events of interest were found. Return an empty message. */
@@ -386,18 +403,22 @@ register message *m_ptr;	/* pointer to message sent to the task */
 /* A process wants to read from a terminal. */
   int r, status;
   phys_bytes phys_addr;
+  int more_verbose= (tp == tty_addr(NR_CONS));
 
   /* Check if there is already a process hanging in a read, check if the
    * parameters are correct, do I/O.
    */
   if (tp->tty_inleft > 0) {
+	if (more_verbose) printf("do_read: EIO\n");
 	r = EIO;
   } else
   if (m_ptr->COUNT <= 0) {
+	if (more_verbose) printf("do_read: EINVAL\n");
 	r = EINVAL;
   } else
   if (sys_umap(m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS, m_ptr->COUNT,
 		&phys_addr) != OK) {
+	if (more_verbose) printf("do_read: EFAULT\n");
 	r = EFAULT;
   } else {
 	/* Copy information from the message to the tty struct. */
@@ -447,6 +468,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 		tp->tty_inrepcode = REVIVE;
 	}
   }
+  if (more_verbose) printf("do_read: replying %d\n", r);
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
   if (tp->tty_select_ops)
   	select_retry(tp);
@@ -830,13 +852,12 @@ PUBLIC int select_try(struct tty *tp, int ops)
   		if (tp->tty_outleft > 0)  ready_ops |= SEL_WR;
 		else if ((*tp->tty_devwrite)(tp, 1)) ready_ops |= SEL_WR;
 	}
-
 	return ready_ops;
 }
 
 PUBLIC int select_retry(struct tty *tp)
 {
-	if (select_try(tp, tp->tty_select_ops))
+  	if (tp->tty_select_ops && select_try(tp, tp->tty_select_ops))
 		notify(tp->tty_select_proc);
 	return OK;
 }
@@ -892,7 +913,9 @@ tty_t *tp;			/* TTY to check for events. */
 	}
   }
   if (tp->tty_select_ops)
+  {
   	select_retry(tp);
+  }
 #if NR_PTYS > 0
   if (ispty(tp))
   	select_retry_pty(tp);
@@ -1521,6 +1544,10 @@ PRIVATE void tty_init()
 								tty_devnop;
   	if (tp < tty_addr(NR_CONS)) {
 		scr_init(tp);
+
+		/* Initialize the keyboard driver. */
+		kb_init(tp);
+
   		tp->tty_minor = CONS_MINOR + s;
   	} else
   	if (tp < tty_addr(NR_CONS+NR_RS_LINES)) {
@@ -1541,6 +1568,7 @@ PRIVATE void tty_init()
   if (sigaction(SIGKMESS,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
   if (sigaction(SIGKSTOP,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
 #endif
+	printf("end of tty_init\n");
 }
 
 /*===========================================================================*

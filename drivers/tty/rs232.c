@@ -886,7 +886,11 @@ register rs232_t *rs;		/* line with input interrupt */
 	}
   }
 
-  if (rs->icount == buflen(rs->ibuf)) return;	/* input buffer full, discard */
+  if (rs->icount == buflen(rs->ibuf))
+  {
+	printf("in_int: discarding byte\n");
+	return;	/* input buffer full, discard */
+  }
 
   if (++rs->icount == RS_IHIGHWATER && rs->idevready) istop(rs);
   *rs->ihead = c;
@@ -895,6 +899,8 @@ register rs232_t *rs;		/* line with input interrupt */
 	rs->tty->tty_events = 1;
 	force_timeout();
   }
+  else
+	printf("in_int: icount = %d\n", rs->icount);
 }
 
 /*===========================================================================*

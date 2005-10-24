@@ -9,6 +9,8 @@
 
 /* First minor numbers for the various classes of TTY devices. */
 #define CONS_MINOR	   0
+#define KBD_MINOR	  13
+#define KBDAUX_MINOR	  14
 #define LOG_MINOR	  15
 #define RS232_MINOR	  16
 #define TTYPX_MINOR	 128
@@ -101,6 +103,8 @@ extern int irq_hook_id;		/* hook id for keyboard irq */
 extern unsigned long kbd_irq_set;
 extern unsigned long rs_irq_set;
 
+extern int panicing;	/* From panic.c in sysutil */
+
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */
 #define ESCAPED            1	/* previous character was LNEXT (^V) */
@@ -162,6 +166,7 @@ _PROTOTYPE( void scr_init, (struct tty *tp)				);
 _PROTOTYPE( void toggle_scroll, (void)					);
 _PROTOTYPE( int con_loadfont, (message *m)				);
 _PROTOTYPE( void select_console, (int cons_line)			);
+_PROTOTYPE( void beep_x, ( unsigned freq, clock_t dur)			);
 
 /* keyboard.c */
 _PROTOTYPE( void kb_init, (struct tty *tp)				);
@@ -170,6 +175,9 @@ _PROTOTYPE( int kbd_loadmap, (message *m)				);
 _PROTOTYPE( void do_panic_dumps, (message *m)				);
 _PROTOTYPE( void do_fkey_ctl, (message *m)				);
 _PROTOTYPE( void kbd_interrupt, (message *m)				);
+_PROTOTYPE( void do_kbd, (message *m)					);
+_PROTOTYPE( void do_kbdaux, (message *m)				);
+_PROTOTYPE( int kbd_status, (message *m_ptr)				);
 
 /* pty.c */
 _PROTOTYPE( void do_pty, (struct tty *tp, message *m_ptr)		);

@@ -48,6 +48,9 @@
 #define VID_ORG           12	/* 6845's origin register */
 #define CURSOR            14	/* 6845's cursor register */
 
+/* The clock task should provide an interface for this */
+#define TIMER_FREQ  1193182L    /* clock frequency for timer in PC and AT */
+
 /* Beeper. */
 #define BEEP_FREQ     0x0533	/* value to put into timer to set beep freq */
 #define B_TIME		   3	/* length of CTRL-G beep is ticks */
@@ -130,6 +133,7 @@ FORWARD _PROTOTYPE( void stop_beep, (timer_t *tmrp)			);
 FORWARD _PROTOTYPE( void cons_org0, (void)				);
 FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
 FORWARD _PROTOTYPE( int cons_ioctl, (tty_t *tp, int)			);
+PRIVATE _PROTOTYPE( void ser_putc, (char c)				);
 
 /*===========================================================================*
  *				cons_write				     *
@@ -761,6 +765,50 @@ PRIVATE void beep()
   }
 }
 
+
+/*===========================================================================*
+ *				beep_x					     *
+ *===========================================================================*/
+PUBLIC void beep_x(freq, dur)
+unsigned freq;
+clock_t dur;
+{
+/* Making a beeping sound on the speaker.
+ * This routine works by turning on the bits 0 and 1 in port B of the 8255
+ * chip that drive the speaker.
+ */
+  static timer_t tmr_stop_beep;
+  pvb_pair_t char_out[3];
+  clock_t now;
+  int port_b_val, s;
+  
+  unsigned long ival= TIMER_FREQ / freq;
+  if (ival == 0 || ival > 0xffff)
+	return;	/* Frequency out of range */
+
+  /* Fetch current time in advance to prevent beeping delay. */
+  if ((s=getuptime(&now)) != OK)
+  	panic("TTY","Console couldn't get clock's uptime.", s);
+  if (!beeping) {
+	/* Set timer channel 2, square wave, with given frequency. */
+        pv_set(char_out[0], TIMER_MODE, 0xB6);	
+        pv_set(char_out[1], TIMER2, (ival >> 0) & BYTE);
+        pv_set(char_out[2], TIMER2, (ival >> 8) & BYTE);
+        if (sys_voutb(char_out, 3)==OK) {
+        	if (sys_inb(PORT_B, &port_b_val)==OK &&
+        	    sys_outb(PORT_B, (port_b_val|3))==OK)
+        	    	beeping = TRUE;
+        }
+  }
+  /* Add a timer to the timers list. Possibly reschedule the alarm. */
+  tmrs_settimer(&tty_timers, &tmr_stop_beep, now+dur, stop_beep, NULL);
+  if (tty_timers->tmr_exp_time != tty_next_timeout) {
+  	tty_next_timeout = tty_timers->tmr_exp_time;
+  	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
+  		panic("TTY","Console couldn't set alarm.", s);
+  }
+}
+
 /*===========================================================================*
  *				stop_beep				     *
  *===========================================================================*/
@@ -796,9 +844,6 @@ tty_t *tp;
   cons = &cons_table[line];
   cons->c_tty = tp;
   tp->tty_priv = cons;
-
-  /* Initialize the keyboard driver. */
-  kb_init(tp);
 
   /* Fill in TTY function hooks. */
   tp->tty_devwrite = cons_write;
@@ -876,12 +921,16 @@ tty_t *tp;
 PUBLIC void kputc(c)
 int c;
 {
-#if 0
-	cons_putk(c);
-#else
 /* Accumulate a single character for a kernel message. Send a notification
  * the to output driver if an END_OF_KMESS is encountered. 
  */
+#if 0
+  ser_putc(c);
+  return;
+#endif
+
+  if (panicing)
+	cons_putk(c);
   if (c != 0) {
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
       if (kmess.km_size < KMESS_BUF_SIZE)
@@ -890,7 +939,6 @@ int c;
   } else {
       notify(LOG_PROC_NR);
   }
-#endif
 }
 
 /*===========================================================================*
@@ -1136,4 +1184,26 @@ int try;
   tp->tty_winsize.ws_col= scr_width;
   tp->tty_winsize.ws_xpixel= scr_width * 8;
   tp->tty_winsize.ws_ypixel= scr_lines * font_lines;
+}
+
+#define COM1_BASE	0x3F8
+#define COM1_THR	(COM1_BASE + 0)
+#define		LSR_THRE	0x20
+#define COM1_LSR	(COM1_BASE + 5)
+
+PRIVATE void ser_putc(char c)
+{
+	unsigned long b;
+	int i;
+	int lsr, thr;
+
+	lsr= COM1_LSR;
+	thr= COM1_THR;
+	for (i= 0; i<100; i++)
+	{
+		sys_inb(lsr, &b);
+		if (b & LSR_THRE)
+			break;
+	}
+	sys_outb(thr, c);
 }
