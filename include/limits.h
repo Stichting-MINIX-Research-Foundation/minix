@@ -67,7 +67,7 @@
 #define ARG_MAX           4096	/* args + environ on small machines */
 #endif
 #define CHILD_MAX    _NO_LIMIT	/* MINIX does not limit children */
-#define OPEN_MAX            20	/* # open files a process may have */
+#define OPEN_MAX            30	/* # open files a process may have */
 #if 0			/* V1 file system */
 #define LINK_MAX      CHAR_MAX	/* # links a file may have */
 #else			/* V2 or better file system */
