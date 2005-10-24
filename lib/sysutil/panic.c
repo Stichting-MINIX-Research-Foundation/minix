@@ -2,6 +2,8 @@
 
 #include "sysutil.h"
 
+int panicing= 0;
+
 /*===========================================================================*
  *				panic					     *
  *===========================================================================*/
@@ -16,6 +18,8 @@ int num;			/* number to go with format string */
  */
   message m;
   void (*suicide)(void);
+
+  panicing= 1;
   if (NULL != who && NULL != mess) {
       if (num != NO_NUM) {
           printf("Panic in %s: %s: %d\n", who, mess, num); 
