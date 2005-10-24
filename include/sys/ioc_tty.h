@@ -31,6 +31,8 @@
 #define TIOCSETC	_IOW('t',  4, struct tchars)
 
 /* Keyboard ioctls. */
+#define KIOCBELL        _IOW('k', 1, struct kio_bell)
+#define KIOCSLEDS       _IOW('k', 2, struct kio_leds)
 #define KIOCSMAP	_IOW('k', 3, keymap_t)
 
 #endif /* _S_I_TTY_H */
