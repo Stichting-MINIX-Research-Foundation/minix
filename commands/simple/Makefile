@@ -296,7 +296,7 @@ compress:	compress.c
 
 cp:    cp.c
 	$(CCLD) -o $@ $?
-	@install -S 16kw $@
+	@install -S 32kw $@
 
 crc:	crc.c
 	$(CCLD) -o $@ $?
@@ -344,7 +344,7 @@ dirname:	dirname.c
 
 du:	du.c
 	$(CCLD) -o $@ $?
-	@install -S 16kw $@
+	@install -S 256kw $@
 
 ed:	ed.c
 	$(CCLD) -o $@ $?
@@ -724,7 +724,7 @@ sync:	sync.c
 
 synctree:	synctree.c
 	$(CCLD) -o $@ -wo $?
-	install -S 64kw $@
+	install -S 256kw $@
 
 sysenv:	sysenv.c
 	$(CCLD) -o $@ -wo $?
