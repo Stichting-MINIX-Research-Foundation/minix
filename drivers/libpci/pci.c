@@ -109,7 +109,7 @@ FORWARD _PROTOTYPE( void pcii_wsts, (int busind, U16_t value)		);
  *			helper functions for I/O			     *
  *===========================================================================*/
 PUBLIC unsigned pci_inb(U16_t port) {
-	U8_t value;
+	u32_t value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
 		printf("PCI: warning, sys_inb failed: %d\n", s);
@@ -786,7 +786,7 @@ PRIVATE int do_piix(devind)
 int devind;
 {
 	int i, s, dev, func, irqrc, irq;
-	u16_t elcr1, elcr2, elcr;
+	u32_t elcr1, elcr2, elcr;
 
 #if DEBUG
 	printf("in piix\n");
