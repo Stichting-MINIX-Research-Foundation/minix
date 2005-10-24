@@ -10,7 +10,7 @@ OBJ=	rlogind.o setup.o
 
 rlogind:	$(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ)
-	install -S 4kw $@
+	install -S 8kw $@
 
 install:	/usr/bin/in.rlogind
 
