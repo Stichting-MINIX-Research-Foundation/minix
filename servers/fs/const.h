@@ -4,8 +4,8 @@
 #define V2_NR_DZONES       7	/* # direct zone numbers in a V2 inode */
 #define V2_NR_TZONES      10	/* total # zone numbers in a V2 inode */
 
-#define NR_FILPS         128	/* # slots in filp table */
-#define NR_INODES         64	/* # slots in "in core" inode table */
+#define NR_FILPS         256	/* # slots in filp table */
+#define NR_INODES        256	/* # slots in "in core" inode table */
 #define NR_SUPERS          8	/* # slots in super block table */
 #define NR_LOCKS           8	/* # slots in the file locking table */
 
