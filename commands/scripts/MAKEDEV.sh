@@ -15,7 +15,7 @@ case $#:$1 in
 	c0d4 c0d4p0 c0d4p0s0 c0d5 c0d5p0 c0d5p0s0 \
 	c0d6 c0d6p0 c0d6p0s0 c0d7 c0d7p0 c0d7p0s0 \
 	tty ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03 ttyp0 ttyp1 ttyp2 ttyp3 \
-	eth klog random cmos kbd psm rescue
+	eth klog random cmos kbd kbdaux rescue
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -39,8 +39,8 @@ Where key is one of the following:
   random                  # Make /dev/random, /dev/urandom
   cmos                    # Make /dev/cmos
   rescue                  # Make /dev/rescue
-  kbd                     # Make /dev/kbd*
-  psm                     # Make /dev/psm*
+  kbd                     # Make /dev/kbd
+  kbdaux                  # Make /dev/kbdaux
   std			  # All standard devices
 EOF
     exit 1
@@ -156,7 +156,7 @@ do
 	$e mknod ${n} c $maj `expr $m + 1`
 	$e chmod 660 ${n}n ${n}
 	;;
-    console|lp|tty|log|kbd*|psm*)
+    console|lp|tty|log|kbd|kbdaux)
 	# Console, line printer, anonymous tty, diagnostics device,
 	# raw keyboard, ps/2 mouse.
 	$e mknod console c 4 0
@@ -170,10 +170,10 @@ do
 	$e chmod 200 lp
 	$e mknod log c 4 15
 	$e chmod 222 log
-	$e mknod kbd0 c 4 250
-	$e mknod psm0 c 4 251
-	$e chmod 660 kbd0 psm0
-	$e chgrp operator kbd0 psm0
+	$e mknod kbd c 4 13
+	$e mknod kbdaux c 4 14
+	$e chmod 660 kbd kbdaux
+	$e chgrp operator kbd kbdaux
 	;;
     ttyc[1-7])
 	# Virtual consoles.
