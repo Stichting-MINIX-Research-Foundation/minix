@@ -28,6 +28,7 @@ libc_OBJECTS	= \
 	errno.o \
 	fdopen.o \
 	ffs.o \
+	flock.o \
 	fslib.o \
 	fsversion.o \
 	getgrent.o \
@@ -61,11 +62,12 @@ libc_OBJECTS	= \
 	swab.o \
 	syscall.o \
 	sysconf.o \
+	syslog.o \
 	telldir.o \
 	termcap.o \
 	ttyname.o \
 	ttyslot.o \
 	v8regexp.o \
-	v8regsub.o \
+	v8regsub.o 
 
 include ../Makefile.inc
