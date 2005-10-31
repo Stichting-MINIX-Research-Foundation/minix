@@ -182,8 +182,4 @@ _PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
 
 #endif
 
-_PROTOTYPE( int readlink, (const char *, char *, int));
-_PROTOTYPE( int getopt, (int, char **, char *));
-extern int optind, opterr, optopt;
-
 #endif /* _UNISTD_H */

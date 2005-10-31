@@ -73,6 +73,7 @@ extern int errno;		  /* place where the error numbers go */
 #define ENOLCK        (_SIGN 37)  /* no locks available */
 #define ENOSYS        (_SIGN 38)  /* function not implemented */
 #define ENOTEMPTY     (_SIGN 39)  /* directory not empty */
+#define ELOOP         (_SIGN 40)  /* too many levels of symlinks detected */
 
 /* The following errors relate to networking. */
 #define EPACKSIZE     (_SIGN 50)  /* invalid packet size for some protocol */

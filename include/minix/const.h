@@ -96,6 +96,7 @@
 
 /* Flag bits for i_mode in the inode. */
 #define I_TYPE          0170000	/* this field gives inode type */
+#define I_SYMBOLIC_LINK 0120000	/* file is a symbolic link */
 #define I_REGULAR       0100000	/* regular file, not dir or special */
 #define I_BLOCK_SPECIAL 0060000	/* block special file */
 #define I_DIRECTORY     0040000	/* file is a directory */
@@ -118,6 +119,8 @@
 #define HIGHEST_ZONE   ((zone_t) 077777777)	/* largest zone number */
 #define MAX_INODE_NR ((ino_t) 037777777777)	/* largest inode number */
 #define MAX_FILE_POS ((off_t) 037777777777)	/* largest legal file offset */
+
+#define MAX_SYM_LOOPS	8	/* how many symbolic links are recursed */
 
 #define NO_BLOCK              ((block_t) 0)	/* absence of a block number */
 #define NO_ENTRY                ((ino_t) 0)	/* absence of a dir entry */

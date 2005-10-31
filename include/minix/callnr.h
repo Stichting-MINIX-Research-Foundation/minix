@@ -39,9 +39,12 @@
 #define DUP		  41 
 #define PIPE		  42 
 #define TIMES		  43
+#define SYMLINK		  45
 #define SETGID		  46
 #define GETGID		  47
 #define SIGNAL		  48
+#define RDLNK		  49
+#define LSTAT		  50
 #define IOCTL		  54
 #define FCNTL		  55
 #define EXEC		  59
