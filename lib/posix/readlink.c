@@ -1,12 +1,18 @@
-/*
-readlink.c
-*/
-
+#include <lib.h>
 #include <unistd.h>
-#include <errno.h>
+#include <string.h>
 
-int readlink(const char *path, char *buf, int bufsiz)
+PUBLIC int readlink(name, buffer, bufsiz)
+_CONST char *name;
+char *buffer;
+size_t bufsiz;
 {
-	errno = EINVAL;	/* "The named file is not a symbolic link" */
-	return -1;
+  message m;
+
+  m.m1_i1 = strlen(name) + 1;
+  m.m1_i2 = bufsiz;
+  m.m1_p1 = (char *) name;
+  m.m1_p2 = (char *) buffer;
+
+  return(_syscall(FS, RDLNK, &m));
 }
