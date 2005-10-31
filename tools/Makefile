@@ -71,7 +71,7 @@ image_small:  includes
 
 # rebuild the program or system libraries
 includes:
-#	cd ../include && $(MAKE) install
+	cd ../include && $(MAKE) install
 
 depend: includes
 	cd ../ && $(MAKE) depend
