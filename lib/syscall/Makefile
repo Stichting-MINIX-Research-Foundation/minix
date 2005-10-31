@@ -54,6 +54,7 @@ libc_OBJECTS	= \
 	kill.o \
 	link.o \
 	lseek.o \
+	lstat.o \
 	mkdir.o \
 	mkfifo.o \
 	mknod.o \
@@ -66,6 +67,7 @@ libc_OBJECTS	= \
 	ptrace.o \
 	read.o \
 	readdir.o \
+	readlink.o \
 	reboot.o \
 	rename.o \
 	rewinddir.o \
@@ -90,6 +92,7 @@ libc_OBJECTS	= \
 	stime.o \
 	sync.o \
 	svrctl.o \
+	symlink.o \
 	tcdrain.o \
 	tcflow.o \
 	tcflush.o \
