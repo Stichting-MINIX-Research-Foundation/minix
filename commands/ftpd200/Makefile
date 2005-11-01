@@ -31,7 +31,7 @@ $(BINDIR)/setup.anonftp:	setup.anonftp
 	install -c -o bin $? $@
 
 $(BINDIR)/ftpdsh:	ftpdsh
-	install -c -o bin $? $@
+	install -m 755 -c -o bin $? $@
 
 ftpd.o:		ftpd.c   ftpd.h access.h file.h net.h
 access.o:	access.c ftpd.h access.h
