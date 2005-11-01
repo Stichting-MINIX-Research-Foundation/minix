@@ -94,10 +94,10 @@ libc_OBJECTS	= \
 	_write.o \
 	gettimeofday.o \
 	getopt.o \
-	lstat.o \
+	_lstat.o \
 	priority.o \
-	readlink.o \
-	symlink.o \
+	_readlink.o \
+	_symlink.o \
 	usleep.o \
 
 include ../Makefile.inc

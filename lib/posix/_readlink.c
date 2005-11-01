@@ -1,4 +1,5 @@
 #include <lib.h>
+#define readlink _readlink
 #include <unistd.h>
 #include <string.h>
 
