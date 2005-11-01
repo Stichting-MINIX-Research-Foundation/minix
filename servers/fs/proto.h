@@ -110,6 +110,7 @@ _PROTOTYPE( int do_lseek, (void)					);
 _PROTOTYPE( int do_mknod, (void)					);
 _PROTOTYPE( int do_mkdir, (void)					);
 _PROTOTYPE( int do_open, (void)						);
+_PROTOTYPE( int do_symlink, (void)					);
 
 /* path.c */
 _PROTOTYPE( struct inode *advance,(struct inode *dirp, char string[NAME_MAX]));
@@ -117,6 +118,8 @@ _PROTOTYPE( int search_dir, (struct inode *ldir_ptr,
 			char string [NAME_MAX], ino_t *numb, int flag)	);
 _PROTOTYPE( struct inode *eat_path, (char *path)			);
 _PROTOTYPE( struct inode *last_dir, (char *path, char string [NAME_MAX]));
+_PROTOTYPE( struct inode *slink_traverse, (struct inode *rip, char *path,
+			char string[NAME_MAX], struct inode *ldip)	);
 
 /* pipe.c */
 _PROTOTYPE( int do_pipe, (void)						);
@@ -153,6 +156,8 @@ _PROTOTYPE( int do_chdir, (void)					);
 _PROTOTYPE( int do_fchdir, (void)					);
 _PROTOTYPE( int do_chroot, (void)					);
 _PROTOTYPE( int do_fstat, (void)					);
+_PROTOTYPE( int do_lstat, (void)					);
+_PROTOTYPE( int do_rdlink, (void)					);
 _PROTOTYPE( int do_stat, (void)						);
 _PROTOTYPE( int do_fstatfs, (void)					);
 

@@ -6,10 +6,13 @@
  *   do_chroot:	perform the CHROOT system call
  *   do_stat:	perform the STAT system call
  *   do_fstat:	perform the FSTAT system call
+ *   do_rdlink:	perform the RDLINK system call
+ *   do_lstat:	perform the LSTAT system call
  *   do_fstatfs: perform the FSTATFS system call
  */
 
 #include "fs.h"
+#include "buf.h"
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <minix/com.h>
@@ -217,6 +220,75 @@ char *user_addr;		/* user space address where stat buf goes */
 }
 
 /*===========================================================================*
+ *                            do_rdlink                                    *
+ *===========================================================================*/
+PUBLIC int do_rdlink()
+{
+/* Perform the readlink(name, buf, bufsiz) system call. */
+
+  register struct inode *ldip, *rip;
+  register int r;
+  char string[NAME_MAX];
+  register char *p;
+  vir_bytes v;
+  block_t b;
+  struct buf *bp;
+
+  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+  if ( (ldip = last_dir(user_path, string)) == NIL_INODE) return(err_code);
+
+  /* Get final component of the path. */
+  rip = advance(ldip, string);
+  put_inode(ldip);
+
+  if (rip == NIL_INODE) return(err_code);
+
+  if ((rip->i_mode & I_TYPE) == I_SYMBOLIC_LINK) {
+#define bufsiz	m1_i2
+	int len = MIN(rip->i_size, m_in.bufsiz);
+	b = read_map(rip, 0);
+	bp = get_block(rip->i_dev, b, NORMAL);
+	/* Copy the name to user space. */
+	r = sys_datacopy(FS_PROC_NR, (phys_bytes) bp->b_data,
+		who, (phys_bytes) m_in.name2, (phys_bytes) len);
+	put_block(bp, NORMAL);
+	r = rip->i_size;
+  } else 
+	r = EINVAL;
+  put_inode(rip);             /* release the inode */
+  return(r);
+}
+
+/*===========================================================================*
+ *				do_lstat				     *
+ *===========================================================================*/
+PUBLIC int do_lstat()
+{
+/* Perform the lstat(name, buf) system call. */
+
+  register struct inode *ldip, *rip;
+  register int r;
+  char string[NAME_MAX];
+  register char *p;
+
+  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+
+  /* Can't use eat_path() since it will traverse the link */
+  if ( (ldip = last_dir(user_path, string)) == NIL_INODE) return(err_code);
+
+  /* Get final component of the path. */
+  rip = advance(ldip, string);
+  put_inode(ldip);
+
+  if (rip == NIL_INODE) return(err_code);
+
+  r = stat_inode(rip, NIL_FILP, m_in.name2); /* Work just like stat */
+
+  put_inode(rip);             /* Release the inode */
+  return(r);
+}
+
+/*===========================================================================*
  *				do_fstatfs				     *
  *===========================================================================*/
 PUBLIC int do_fstatfs()
@@ -237,3 +309,4 @@ PUBLIC int do_fstatfs()
    return(r);
 }
 
+/** stadir.c **/

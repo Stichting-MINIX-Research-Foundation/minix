@@ -2,16 +2,18 @@
  * seeking on files.
  *
  * The entry points into this file are
- *   do_creat:	perform the CREAT system call
- *   do_open:	perform the OPEN system call
- *   do_mknod:	perform the MKNOD system call
- *   do_mkdir:	perform the MKDIR system call
- *   do_close:	perform the CLOSE system call
- *   do_lseek:  perform the LSEEK system call
+ *   do_creat:		perform the CREAT system call
+ *   do_open:		perform the OPEN system call
+ *   do_mknod:		perform the MKNOD system call
+ *   do_mkdir:		perform the MKDIR system call
+ *   do_close:		perform the CLOSE system call
+ *   do_lseek:  	perform the LSEEK system call
+ *   do_symlink:	perform the LSEEK system call
  */
 
 #include "fs.h"
 #include <sys/stat.h>
+#include <string.h>
 #include <fcntl.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -205,14 +207,37 @@ PRIVATE struct inode *new_node(char *path, mode_t bits,	zone_t z0)
  */
 
   register struct inode *rlast_dir_ptr, *rip;
+  struct inode *old_workdir_ip;
   register int r;
+  int slink_found, loops = 0;
   char string[NAME_MAX];
 
-  /* See if the path can be opened down to the last directory. */
-  if ((rlast_dir_ptr = last_dir(path, string)) == NIL_INODE) return(NIL_INODE);
+  old_workdir_ip = fp->fp_workdir; /* Save the current working directory */
 
-  /* The final directory is accessible. Get final component of the path. */
-  rip = advance(rlast_dir_ptr, string);
+  do {
+	slink_found = FALSE;
+	/* See if the path can be opened down to the last directory. */
+	if ((rlast_dir_ptr = last_dir(path, string)) == NIL_INODE) {
+		fp->fp_workdir = old_workdir_ip; /* Restore cwd */
+		return(NIL_INODE);
+	}
+
+	/* The final directory is accessible. Get final component of the path. */
+	rip = advance(rlast_dir_ptr, string);
+	if (rip != NIL_INODE && (rip->i_mode & I_TYPE) == I_SYMBOLIC_LINK) {
+		if (++loops > MAX_SYM_LOOPS) {
+			fp->fp_workdir = old_workdir_ip;
+			put_inode(rlast_dir_ptr);
+			err_code = ELOOP;
+			return(NIL_INODE);
+		}
+		rip = slink_traverse(rip, path, string, rlast_dir_ptr);
+		slink_found = TRUE;
+		put_inode(rlast_dir_ptr);
+		fp->fp_workdir = rip; /* cd to symlink target dir */
+	}
+  } while (slink_found);
+
   if ( rip == NIL_INODE && err_code == ENOENT) {
 	/* Last path component does not exist.  Make new directory entry. */
 	if ( (rip = alloc_inode(rlast_dir_ptr->i_dev, bits)) == NIL_INODE) {
@@ -471,3 +496,67 @@ PUBLIC int do_lseek()
   m_out.reply_l1 = pos;		/* insert the long into the output message */
   return(OK);
 }
+
+
+/*===========================================================================*
+ *                            do_symlink                                   *
+ *===========================================================================*/
+PUBLIC int do_symlink()
+{
+/* perform the symlink(name1, name2) system call */
+
+  register struct inode *ip;
+  register int r;
+  char string[NAME_MAX];
+  register struct inode *new_ip;
+  struct buf *bp;
+
+  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK)
+	return(err_code);
+
+  /* Does the final directory of 'name2' exist? */
+  if ( (ip = last_dir(user_path, string)) == NIL_INODE)
+	return(err_code);
+
+  r = OK;
+  /* if name2 exists in full set 'r' to error */
+  if ( (new_ip = advance(ip, string)) == NIL_INODE) {
+	r = err_code;
+	if (r == ENOENT) r = OK;
+  } else {
+	put_inode(new_ip);
+	r = EEXIST;
+  }
+  put_inode(ip);
+  if (r != OK) return(r);
+
+  if ( (new_ip = new_node(user_path, (mode_t)(I_SYMBOLIC_LINK | 0777),
+                      (off_t)0)) == NIL_INODE) {
+	put_inode(new_ip);
+	return(err_code);
+  }
+
+  truncate(new_ip);
+  wipe_inode(new_ip);
+  new_ip->i_size = m_in.name1_length;
+
+  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) {
+	put_inode(new_ip);
+	return(err_code);
+  }
+  /* allocate disk block for name1 */
+  if ( (bp = new_block(new_ip, 0)) == NIL_BUF) {
+	put_inode(new_ip);
+	return(err_code);
+  }
+  /* stuff pathname into diskblock and set immediate writing */
+  memcpy(bp->b_data, user_path, m_in.name1_length);
+  bp->b_dirt = DIRTY;
+  put_block(bp, INODE_BLOCK);
+  new_ip->i_dirt = DIRTY;
+  rw_inode(new_ip, WRITING);
+  put_inode(new_ip);
+  return(err_code);
+}
+
+/** open.c **/
