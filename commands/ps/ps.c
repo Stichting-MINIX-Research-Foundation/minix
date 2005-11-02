@@ -134,8 +134,8 @@ int kmemfd, memfd;		/* file descriptors of [k]mem */
  */
 #define S_HEADER "  PID TTY  TIME CMD\n"
 #define S_FORMAT "%5s %3s %s %s\n"
-#define L_HEADER "  F S UID   PID  PPID  PGRP     SZ       RECV TTY  TIME CMD\n"
-#define L_FORMAT "%3o %c %3d %5s %5d %5d %6d %10s %3s %s %s\n"
+#define L_HEADER "  F S UID   PID  PPID  PGRP     SZ         RECV TTY  TIME CMD\n"
+#define L_FORMAT "%3o %c %3d %5s %5d %5d %6d %12s %3s %s %s\n"
 
 
 struct pstat {			/* structure filled by pstat() */
@@ -242,8 +242,12 @@ struct pstat *bufp;
 		blkstr = "popen";
 	else if (-bufp->ps_ftask == XLOCK)
 		blkstr = "flock";
-	else
+	else if(-bufp->ps_ftask == XSELECT)
+		blkstr = "select";
+	else if(-bufp->ps_ftask >= 0)
 		blkstr = taskname(-bufp->ps_ftask);
+	else
+		blkstr = "??";
   }
   (void) sprintf(recvstr, "(%s) %s", blkstr, task);
   return recvstr;
