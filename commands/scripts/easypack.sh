@@ -42,7 +42,7 @@ fi
 # Loop on the packages
 for i
 do # Check to see if it exists. Don't overwrite unless -o given
-   echo " " ; echo Start fetching $i 
+   echo " " ; echo Start fetching package $i 
    echo " " >>$ORIG_DIR/Log
    echo ------------- Start fetching $i ------------------ >>$ORIG_DIR/Log
    if test -r $i
@@ -65,11 +65,11 @@ do # Check to see if it exists. Don't overwrite unless -o given
    urlget $URL >$i.tar.bz2
 
    # See if we got the file or an error
-   if grep "<HTML>" $i.tar.bz2 >/dev/null
+   if grep "<html>" $i.tar.bz2 >/dev/null
       then # It is not in the directory of tested software. Try beta dir.
 	   URL=$BETA_DIR/$i.tar.bz2
 	   urlget $URL >$i.tar.bz2
-	   if grep "<HTML>" $i.tar.bz2 >/dev/null
+	   if grep "<HTML>" $i.tar.bz2 >/dev/null || grep "<html>" $i.tar.bz2  >/dev/null
 	      then echo Cannot get $i.
 		   echo "   " Tried $URL1
 		   echo "   " Tried $URL
@@ -80,18 +80,20 @@ do # Check to see if it exists. Don't overwrite unless -o given
    fi
 
    # We got it. Unpack it.
+   echo Package $i.tar.bz2 successfully fetched
    bunzip2 $i.tar.bz2 || smallbunzip2 $i.tar.bz2
    tar xf $i.tar
    if test ! -d $i
       then echo Unable to unpack $i
 	   continue
+      else echo Package $i unpacked
    fi
 
    # It is now unpacked. Build it
    cd $i
    if sh build >>$ORIG_DIR/Log 2>&1
-      then echo $i installed from $URL
-      else echo $i failed to install
+      then echo Package $i installed
+      else echo Package $i failed to install; see Log
    fi
 
    # Clean up
