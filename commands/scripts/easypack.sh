@@ -80,7 +80,7 @@ do # Check to see if it exists. Don't overwrite unless -o given
    fi
 
    # We got it. Unpack it.
-   echo Package $i.tar.bz2 successfully fetched
+   echo Package $i fetched
    bunzip2 $i.tar.bz2 || smallbunzip2 $i.tar.bz2
    tar xf $i.tar
    if test ! -d $i
@@ -93,7 +93,7 @@ do # Check to see if it exists. Don't overwrite unless -o given
    cd $i
    if sh build >>$ORIG_DIR/Log 2>&1
       then echo Package $i installed
-      else echo Package $i failed to install; see Log
+      else echo Package $i failed to install, see Log
    fi
 
    # Clean up
