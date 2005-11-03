@@ -551,7 +551,7 @@ fxp_t *fp;
 	pci_reserve(devind);
 
 	bar= pci_attr_r32(devind, PCI_BAR_2) & 0xffffffe0;
-	if ((bar & 0x3ff) >= 0x100-32 || bar < 0x400)
+	if (bar < 0x400)
 	{
 		panic("FXP","fxp_probe: base address is not properly configured",
 			NO_NUM);
