@@ -42,6 +42,7 @@ char *argv[];
   struct exec exec;
   char cpu;
   long max;
+  int last_failed = 0, any_failed = 0;
 
   progname = argv[0];
   if (argc < 3) usage();
@@ -58,6 +59,10 @@ char *argv[];
   argv += 1;
 
   while (--argc) {
+	if(last_failed) any_failed = 1;
+
+	/* Unless we reach the end of this loop, this one failed. */
+	last_failed = 1;
 	++argv;
 	if(fd != -1) close(fd);
 	fd = open(*argv, O_RDWR);
@@ -117,8 +122,11 @@ char *argv[];
 	}
 	printf("%s: Stack+malloc area changed from %ld to %ld bytes.\n",
 	       *argv, olddynam, newdynam);
+
+	/* This one didn't fail. */
+	last_failed = 0;
   }
-  return(0);
+  return(any_failed || last_failed ? 1 : 0);
 }
 
 void error(s1, s2)
