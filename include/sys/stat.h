@@ -25,18 +25,15 @@ struct stat {
 };
 
 /* Traditional mask definitions for st_mode. */
-/* The ugly casts on only some of the definitions are to avoid suprising sign
- * extensions such as S_IFREG != (mode_t) S_IFREG when ints are 32 bits.
- */
-#define S_IFMT  ((mode_t) 0170000)	/* type of file */
-#define S_IFLNK ((mode_t) 0120000)	/* symbolic link */
-#define S_IFREG ((mode_t) 0100000)	/* regular */
-#define S_IFBLK ((mode_t) 0060000)	/* block special */
-#define S_IFDIR ((mode_t) 0040000)	/* directory */
-#define S_IFCHR ((mode_t) 0020000)	/* character special */
-#define S_IFIFO ((mode_t) 0010000)	/* this is a FIFO */
-#define S_ISUID ((mode_t) 0004000)	/* set user id on execution */
-#define S_ISGID ((mode_t) 0002000)	/* set group id on execution */
+#define S_IFMT  0170000	/* type of file */
+#define S_IFLNK 0120000	/* symbolic link */
+#define S_IFREG 0100000	/* regular */
+#define S_IFBLK 0060000	/* block special */
+#define S_IFDIR 0040000	/* directory */
+#define S_IFCHR 0020000	/* character special */
+#define S_IFIFO 0010000	/* this is a FIFO */
+#define S_ISUID 0004000	/* set user id on execution */
+#define S_ISGID 0002000	/* set group id on execution */
 				/* next is reserved for future use */
 #define S_ISVTX   01000		/* save swapped text even after use */
 
