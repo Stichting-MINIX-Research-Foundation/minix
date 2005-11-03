@@ -182,7 +182,7 @@ FORWARD _PROTOTYPE( unsigned my_inb, (U16_t port) );
 FORWARD _PROTOTYPE( unsigned my_inw, (U16_t port) );
 FORWARD _PROTOTYPE( unsigned my_inl, (U16_t port) );
 static unsigned my_inb(U16_t port) {
-	U8_t value;
+	u32_t value;
 	int s;
 	if ((s=sys_inb(port, &value)) !=OK)
 		printf("RTL8139: warning, sys_inb failed: %d\n", s);
@@ -648,9 +648,11 @@ re_t *rep;
 	pci_reserve(devind);
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
-	if ((bar & 0x3ff) >= 0x100-32 || bar < 0x400)
-	  panic("rtl_probe",
-	    "base address is not properly configured", NO_NUM);
+	if (bar < 0x400)
+	{
+		panic("rtl_probe",
+			"base address is not properly configured", NO_NUM);
+	}
 	rep->re_base_port= bar;
 
 	ilr= pci_attr_r8(devind, PCI_ILR);
