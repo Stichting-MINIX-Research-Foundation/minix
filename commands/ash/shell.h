@@ -58,7 +58,17 @@
 
 
 #define JOBS	  0
+
+/* Set SYMLINKS to 0 by request of Giovanni Falzoni, who wrote the
+ * symlink patches for Minix; email to minix-devel-l of thu 3 nov.
+ */
+
+#if 0
 #define SYMLINKS  defined(S_ISLNK)
+#else
+#define SYMLINKS  0
+#endif
+
 #define DIRENT	  1
 #define UDIR	  0
 #define TILDE	  1
