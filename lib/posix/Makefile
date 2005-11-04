@@ -71,6 +71,7 @@ libc_OBJECTS	= \
 	_sigprocmask.o \
 	_sigreturn.o \
 	_sigset.o \
+	_sigsetjmp.o \
 	_sigsuspend.o \
 	_sleep.o \
 	_stat.o \
