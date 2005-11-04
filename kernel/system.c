@@ -75,8 +75,7 @@ PUBLIC void sys_task()
       caller_ptr = proc_addr(m.m_source);	
 
       /* See if the caller made a valid request and try to handle it. */
-      if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr)) &&
-	  m.m_type != SYS_IOPENABLE ) {
+      if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr))) {
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("SYSTEM: request %d from %d denied.\n", call_nr,m.m_source);
 #endif
