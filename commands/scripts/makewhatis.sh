@@ -28,6 +28,7 @@ cd $1 || exit
 		   if	test -f "$page"; then	# (Old sh barfs on 'continue')
 
 			sed -e 's/	/ /g
+				s/"NAME"/NAME/g
 				/^\.SH NAME/,/^\.SH /!d
 				/^\.SH /d
 				s/\\f.//g	# should not be needed
