@@ -35,6 +35,7 @@ _PROTOTYPE( double sinh,  (double _x)					);
 _PROTOTYPE( double sqrt,  (double _x)					);
 _PROTOTYPE( double tan,   (double _x)					);
 _PROTOTYPE( double tanh,  (double _x)					);
+_PROTOTYPE( double hypot, (double _x, double _y)			);
 
 #ifdef _POSIX_SOURCE	/* STD-C? */
 #include <mathconst.h>
