@@ -43,7 +43,7 @@ typedef int32_t socklen_t;
 struct sockaddr
 {
 	sa_family_t	sa_family;
-	char		sa_data[1];
+	char		sa_data[8];	/* Big enough for sockaddr_in */
 };
 
 _PROTOTYPE( int accept, (int _socket,
