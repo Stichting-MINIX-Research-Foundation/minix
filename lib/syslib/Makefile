@@ -15,6 +15,7 @@ libsys_OBJECTS	= \
 	sys_sigsend.o \
 	sys_sigreturn.o \
 	sys_endsig.o \
+	sys_eniop.o \
 	sys_getsig.o \
 	sys_svrctl.o \
 	sys_trace.o \
