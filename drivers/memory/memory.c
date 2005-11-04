@@ -205,8 +205,20 @@ PRIVATE int m_do_open(dp, m_ptr)
 struct driver *dp;
 message *m_ptr;
 {
+  int r;
+
 /* Check device number on open. */
   if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
+  if (m_device == MEM_DEV)
+  {
+	r = sys_enable_iop(m_ptr->PROC_NR);
+	if (r != OK)
+	{
+		printf("m_do_open: sys_enable_iop failed for %d: %d\n",
+			m_ptr->PROC_NR, r);
+		return r;
+	}
+  }
   return(OK);
 }
 
@@ -345,6 +357,7 @@ message *m_ptr;				/* pointer to control message */
     	int r, do_map;
     	struct mapreq mapreq;
 
+	if ((*dp->dr_prepare)(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
     	if (m_device != MEM_DEV)
     		return ENOTTY;
 
