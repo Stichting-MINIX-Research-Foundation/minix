@@ -8,9 +8,12 @@ _CONST char *name;
 struct stat *buffer;
 {
   message m;
+  int r;
 
   m.m1_i1 = strlen(name) + 1;
   m.m1_p1 = (char *) name;
   m.m1_p2 = (char *) buffer;
-  return(_syscall(FS, LSTAT, &m));
+  if((r = _syscall(FS, LSTAT, &m)) >= 0 || errno != ENOSYS)
+     return r;
+  return _stat(name, buffer);
 }
