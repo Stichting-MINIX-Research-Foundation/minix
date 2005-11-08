@@ -49,6 +49,7 @@ libc_OBJECTS	= \
 	mstats.o \
 	mtab.o \
 	nlist.o \
+	paramvalue.o \
 	peekpoke.o \
 	popen.o \
 	putenv.o \
