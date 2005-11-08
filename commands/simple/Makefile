@@ -40,6 +40,7 @@ CC	= exec cc
 
 ALL	= \
 	add_route \
+	arp \
 	at \
 	backup \
 	badblocks \
@@ -208,6 +209,10 @@ all:	$(ALL)
 
 add_route:	add_route.c
 	$(CCLD) -o $@ add_route.c
+	@install -S 4kw $@
+
+arp:	arp.c
+	$(CCLD) -o $@ arp.c
 	@install -S 4kw $@
 
 at:	at.c
@@ -859,6 +864,7 @@ yes:	yes.c
 install:	\
 	/usr/bin/add_route \
 		/usr/bin/del_route \
+	/usr/bin/arp \
 	/usr/bin/at \
 	/usr/bin/backup \
 	/usr/bin/restore \
@@ -1066,6 +1072,9 @@ install:	\
 
 /usr/bin/del_route:	/usr/bin/add_route
 	install -l $? $@
+
+/usr/bin/arp:	arp
+	install -cs -o root -m 4755 $? $@
 
 /usr/bin/at:	at
 	install -cs -o root -m 4755 $? $@
