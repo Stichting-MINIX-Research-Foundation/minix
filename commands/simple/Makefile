@@ -2,6 +2,7 @@
 
 CFLAGS	= -D_MINIX -D_POSIX_SOURCE
 SYS	= ../..
+SERVERS = ../../servers
 CCLD	= $(CC) -i $(CFLAGS)
 CC	= exec cc
 
@@ -175,6 +176,7 @@ ALL	= \
 	tar \
 	tcpd \
 	tcpdp \
+	tcpstat \
 	tee \
 	term \
 	termcap \
@@ -186,6 +188,7 @@ ALL	= \
 	tsort \
 	ttt \
 	tty \
+	udpstat \
 	umount \
 	uname \
 	unexpand \
@@ -751,6 +754,10 @@ tcpdp:	tcpd.c
 	$(CCLD) -o $@ -DPARANOID=1 tcpd.c
 	@install -S 8kw $@
 
+tcpstat:	tcpstat.c
+	$(CCLD) -o $@ -I$(SERVERS) tcpstat.c
+	@install -S 8kw $@
+
 tee:	tee.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
@@ -794,6 +801,10 @@ ttt:	ttt.c
 tty:	tty.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
+
+udpstat:	udpstat.c
+	$(CCLD) -o $@ -I$(SERVERS) $?
+	@install -S 32k $@
 
 umount:	umount.c
 	$(CCLD) -o $@ $?
@@ -1025,6 +1036,7 @@ install:	\
 	/usr/bin/tar \
 	/usr/bin/tcpd \
 	/usr/bin/tcpdp \
+	/usr/bin/tcpstat \
 	/usr/bin/tee \
 	/usr/bin/term \
 	/usr/bin/termcap \
@@ -1036,6 +1048,7 @@ install:	\
 	/usr/bin/tsort \
 	/usr/bin/ttt \
 	/usr/bin/tty \
+	/usr/bin/udpstat \
 	/usr/bin/umount \
 	/usr/bin/uname \
 		/usr/bin/arch \
@@ -1056,6 +1069,7 @@ install:	\
 	/usr/bin/writeisofs \
 	/usr/bin/xargs \
 	/usr/bin/yes \
+	/usr/bin/udpstat \
 	/bin/cat \
 	/bin/date \
 	/bin/fsck \
@@ -1527,6 +1541,9 @@ install:	\
 /usr/bin/tcpdp:	tcpdp
 	install -cs -o bin $? $@
 
+/usr/bin/tcpstat:	tcpstat
+	install -cs -o bin $? $@
+
 /usr/bin/tee:	tee
 	install -cs -o bin $? $@
 
@@ -1558,6 +1575,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/tty:	tty
+	install -cs -o bin $? $@
+
+/usr/bin/udpstat:	udpstat
 	install -cs -o bin $? $@
 
 /usr/bin/umount:	umount
