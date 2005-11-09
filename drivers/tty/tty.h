@@ -9,10 +9,11 @@
 
 /* First minor numbers for the various classes of TTY devices. */
 #define CONS_MINOR	   0
-#define KBD_MINOR	  13
-#define KBDAUX_MINOR	  14
 #define LOG_MINOR	  15
 #define RS232_MINOR	  16
+#define KBD_MINOR	 127
+#define KBDAUX_MINOR	 126
+#define VIDEO_MINOR	 125
 #define TTYPX_MINOR	 128
 #define PTYPX_MINOR	 192
 
@@ -167,6 +168,7 @@ _PROTOTYPE( void toggle_scroll, (void)					);
 _PROTOTYPE( int con_loadfont, (message *m)				);
 _PROTOTYPE( void select_console, (int cons_line)			);
 _PROTOTYPE( void beep_x, ( unsigned freq, clock_t dur)			);
+_PROTOTYPE( void do_video, (message *m)					);
 
 /* keyboard.c */
 _PROTOTYPE( void kb_init, (struct tty *tp)				);

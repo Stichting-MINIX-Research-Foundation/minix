@@ -272,6 +272,9 @@ PUBLIC void main(void)
 	} else if (line == KBDAUX_MINOR) {
 		do_kbdaux(&tty_mess);
 		continue;
+	} else if (line == VIDEO_MINOR) {
+		do_video(&tty_mess);
+		continue;
 	} else if ((line - CONS_MINOR) < NR_CONS) {
 		tp = tty_addr(line - CONS_MINOR);
 	} else if (line == LOG_MINOR) {

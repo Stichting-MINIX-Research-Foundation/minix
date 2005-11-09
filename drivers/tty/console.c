@@ -18,6 +18,8 @@
 
 #include "../drivers.h"
 #include <termios.h>
+#include <sys/ioctl.h>
+#include <sys/vm.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "tty.h"
@@ -763,6 +765,61 @@ PRIVATE void beep()
   	if ((s=sys_setalarm(tty_next_timeout, 1)) != OK)
   		panic("TTY","Console couldn't set alarm.", s);
   }
+}
+
+
+/*===========================================================================*
+ *				do_video				     *
+ *===========================================================================*/
+PUBLIC void do_video(message *m)
+{
+	int i, n, r, ops, watch;
+	unsigned char c;
+
+	/* Execute the requested device driver function. */
+	r= EINVAL;	/* just in case */
+	switch (m->m_type) {
+	    case DEV_OPEN:
+		/* Should grant IOPL */
+		r= OK;
+		break;
+	    case DEV_CLOSE:
+		r= OK;
+		break;
+	    case DEV_IOCTL:
+		if (m->TTY_REQUEST == MIOCMAP || m->TTY_REQUEST == MIOCUNMAP)
+		{
+			int r, do_map;
+			struct mapreq mapreq;
+
+			do_map= (m->REQUEST == MIOCMAP);	/* else unmap */
+
+			/* Get request structure */
+			r= sys_vircopy(m->PROC_NR, D,
+				(vir_bytes)m->ADDRESS,
+				SELF, D, (vir_bytes)&mapreq, sizeof(mapreq));
+			if (r != OK)
+			{
+				tty_reply(TASK_REPLY, m->m_source, m->PROC_NR,
+					r);
+				return;
+			}
+			r= sys_vm_map(m->PROC_NR, do_map,
+				(phys_bytes)mapreq.base, mapreq.size,
+				mapreq.offset);
+			tty_reply(TASK_REPLY, m->m_source, m->PROC_NR, r);
+			return;
+		}
+		r= ENOTTY;
+		break;
+
+	    default:		
+		printf(
+		"Warning, TTY(video) got unexpected request %d from %d\n",
+			m->m_type, m->m_source);
+		r= EINVAL;
+	}
+	tty_reply(TASK_REPLY, m->m_source, m->PROC_NR, r);
 }
 
 
