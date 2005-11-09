@@ -35,6 +35,7 @@ _PROTOTYPE( int isupper, (int  _c)  );	/* upper-case letter [A-Z] */
 _PROTOTYPE( int isxdigit,(int  _c)  );	/* hex digit [0-9], [a-f], [A-F] */
 _PROTOTYPE( int tolower, (int  _c)  );	/* convert to lower-case */
 _PROTOTYPE( int toupper, (int  _c)  );	/* convert to upper-case */
+_PROTOTYPE( int toascii, (int  _c)  );	/* convert to 7-bit ASCII */
 
 /* Macros for identifying character classes. */
 #define isalnum(c)	((__ctype+1)[c]&(_U|_L|_N))
@@ -50,5 +51,7 @@ _PROTOTYPE( int toupper, (int  _c)  );	/* convert to upper-case */
 #define isupper(c)	((unsigned) ((c)-'A') < 26)
 #define isprint(c)	((unsigned) ((c)-' ') < 95)
 #define isascii(c)	((unsigned) (c) < 128)
+
+#define toascii(c)	((c) & 0x7f)
 
 #endif /* _CTYPE_H */

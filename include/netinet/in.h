@@ -29,7 +29,9 @@ typedef uint8_t		sa_family_t;
 
 /* Protocols */
 #define IPPROTO_IP	0	/* Dummy protocol */
+#define IPPROTO_ICMP	1	/* ICMP */
 #define IPPROTO_TCP	6	/* TCP */
+#define IPPROTO_EGP	8	/* exterior gateway protocol */
 #define IPPROTO_UDP	17	/* UDP */
 
 /* setsockopt options at IP level */
@@ -56,5 +58,15 @@ struct ip_mreq
 	struct  in_addr imr_multiaddr;
 	struct  in_addr imr_interface;
 };
+
+/* Definitions that are not part of the Open Group Base Specifications */
+#define IN_CLASSA(i)	(((uint32_t)(i) & 0x80000000) == 0)
+#define IN_CLASSA_NET	0xff000000
+
+#define IN_CLASSB(i)	(((uint32_t)(i) & 0xc0000000) == 0x80000000)
+#define IN_CLASSB_NET	0xffff0000
+
+#define IN_CLASSC(i)	(((u_int32_t)(i) & 0xe0000000) == 0xc0000000)
+#define IN_CLASSC_NET	0xffffff00
 
 #endif /* _NETINET__IN_H */
