@@ -27,6 +27,7 @@ libc_OBJECTS	= \
 	getpeername.o \
 	getproto.o \
 	getprotoent.o \
+	getprotoname.o \
 	getservent.o \
 	getsockname.o \
 	getsockopt.o \
