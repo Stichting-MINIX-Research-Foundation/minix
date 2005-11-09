@@ -15,7 +15,7 @@ case $#:$1 in
 	c0d4 c0d4p0 c0d4p0s0 c0d5 c0d5p0 c0d5p0s0 \
 	c0d6 c0d6p0 c0d6p0s0 c0d7 c0d7p0 c0d7p0s0 \
 	tty ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03 ttyp0 ttyp1 ttyp2 ttyp3 \
-	eth klog random cmos kbd kbdaux rescue
+	eth klog random cmos kbd kbdaux rescue video
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -38,9 +38,10 @@ Where key is one of the following:
   klog                    # Make /dev/klog
   random                  # Make /dev/random, /dev/urandom
   cmos                    # Make /dev/cmos
-  rescue                  # Make /dev/rescue
   kbd                     # Make /dev/kbd
   kbdaux                  # Make /dev/kbdaux
+  rescue                  # Make /dev/rescue
+  video                   # Make /dev/video
   std			  # All standard devices
 EOF
     exit 1
@@ -156,9 +157,9 @@ do
 	$e mknod ${n} c $maj `expr $m + 1`
 	$e chmod 660 ${n}n ${n}
 	;;
-    console|lp|tty|log|kbd|kbdaux)
+    console|lp|tty|log|kbd|kbdaux|video)
 	# Console, line printer, anonymous tty, diagnostics device,
-	# raw keyboard, ps/2 mouse.
+	# raw keyboard, ps/2 mouse, video.
 	$e mknod console c 4 0
 	$e chmod 600 console
 	$e chgrp tty console
@@ -170,10 +171,13 @@ do
 	$e chmod 200 lp
 	$e mknod log c 4 15
 	$e chmod 222 log
-	$e mknod kbd c 4 13
-	$e mknod kbdaux c 4 14
+	$e mknod kbd c 4 127
+	$e mknod kbdaux c 4 126
 	$e chmod 660 kbd kbdaux
 	$e chgrp operator kbd kbdaux
+	$e mknod video c 4 125
+	$e chmod 600 video
+	$e chgrp operator video
 	;;
     ttyc[1-7])
 	# Virtual consoles.
