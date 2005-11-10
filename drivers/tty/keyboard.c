@@ -59,7 +59,7 @@ int aux_irq_hook_id = -1;
 #define INS_SCAN	0x52	/* INS for use in CTRL-ALT-INS reboot */
 #define DEL_SCAN	0x53	/* DEL for use in CTRL-ALT-DEL reboot */
 
-#define KBD_BUFSZ	64	/* Buffer size for raw scan codes */
+#define KBD_BUFSZ	1024	/* Buffer size for raw scan codes */
 #define KBD_OUT_BUFSZ	16	/* Output buffer to sending data to the
 				 * keyboard.
 				 */
@@ -471,7 +471,11 @@ message *m_ptr;
   {
 	/* raw scan codes or aux data */
 	if (kbdp->avail >= KBD_BUFSZ)
+	{
+		printf("kbd_interrupt: %s buffer is full\n",
+			isaux ? "kbdaux" : "keyboard");
 		return;	/* Buffer is full */
+	}
 	 o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
 	 kbdp->buf[o]= scode;
 	 kbdp->avail++;
