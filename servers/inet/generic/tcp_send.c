@@ -370,8 +370,6 @@ tcp_conn_t *tcp_conn;
 					DBLOCK(0x1, printf(
 				"partial segment: setting TCF_NO_PUSH\n"));
 					tcp_conn->tc_flags |= TCF_NO_PUSH;
-					tcp_print_conn(tcp_conn);
-					printf("\n");
 				}
 				goto after_data;
 			}

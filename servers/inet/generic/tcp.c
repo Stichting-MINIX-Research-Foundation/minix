@@ -320,7 +320,7 @@ unsigned operations;
 	}
 	if (operations & SR_SELECT_EXCEPTION)
 	{
-		printf("tcp_select: not implemented for exceptions\n");
+		/* Should add code for exceptions */
 	}
 	return resops;
 }
