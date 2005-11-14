@@ -38,6 +38,7 @@
 FORWARD _PROTOTYPE( void init_clock, (void) );
 FORWARD _PROTOTYPE( int clock_handler, (irq_hook_t *hook) );
 FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
+FORWARD _PROTOTYPE( void load_update, (void));
 
 /* Clock parameters. */
 #define COUNTER_FREQ (2*TIMER_FREQ) /* counter frequency using square wave */
@@ -205,6 +206,9 @@ irq_hook_t *hook;
       bill_ptr->p_ticks_left -= ticks;
   }
 
+  /* Update load average. */
+  load_update();
+
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
@@ -272,3 +276,30 @@ PUBLIC unsigned long read_clock()
   
   return count;
 }
+
+/*===========================================================================*
+ *				load_update				     * 
+ *===========================================================================*/
+PRIVATE void load_update(void)
+{
+	u16_t slot;
+
+	/* Load average data is stored as a list of numbers in a circular
+	 * buffer. Each slot accumulates _LOAD_UNIT_SECS of samples of
+	 * the number of runnable processes. Computations can then
+	 * be made of the load average over variable periods, in the
+	 * user library (see getloadavg(3)).
+	 */
+	slot = (realtime / HZ / _LOAD_UNIT_SECS) % _LOAD_HISTORY;
+	if(slot != kloadinfo.proc_last_slot) {
+		kloadinfo.proc_load_history[slot] = 0;
+		kloadinfo.proc_last_slot = slot;
+	}
+
+	/* Cumulation. */
+	kloadinfo.proc_load_history[slot] += kloadinfo.procs_enqueued;
+
+	/* Up-to-dateness. */
+	kloadinfo.last_clock = realtime;
+}
+

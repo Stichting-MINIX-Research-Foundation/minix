@@ -59,6 +59,7 @@ PUBLIC int do_getsysinfo()
   struct mproc *proc_addr;
   vir_bytes src_addr, dst_addr;
   struct kinfo kinfo;
+  struct loadinfo loadinfo;
   size_t len;
   static struct pm_mem_info pmi;
   int s, r;
@@ -87,6 +88,11 @@ PUBLIC int do_getsysinfo()
 	src_addr = (vir_bytes) &pmi;
 	len = sizeof(pmi);
 	break;
+  case SI_LOADINFO:			/* loadinfo is obtained via PM */
+        sys_getloadinfo(&loadinfo);
+        src_addr = (vir_bytes) &loadinfo;
+        len = sizeof(struct loadinfo);
+        break;
   default:
   	return(EINVAL);
   }

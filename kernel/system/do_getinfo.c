@@ -42,6 +42,11 @@ register message *m_ptr;	/* pointer to request message */
         src_phys = vir2phys(&kinfo);
         break;
     }
+    case GET_LOADINFO: {
+        length = sizeof(struct loadinfo);
+        src_phys = vir2phys(&kloadinfo);
+        break;
+    }
     case GET_IMAGE: {
         length = sizeof(struct boot_image) * NR_BOOT_PROCS;
         src_phys = vir2phys(image);

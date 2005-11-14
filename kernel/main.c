@@ -142,6 +142,9 @@ PUBLIC void main()
 	alloc_segments(rp);
   }
 
+  /* Special compensation for IDLE - don't let it count in the load average. */
+  kloadinfo.procs_enqueued--;
+
 #if ENABLE_BOOTDEV 
   /* Expect an image of the boot device to be loaded into memory as well. 
    * The boot device is the last module that is loaded into memory, and, 

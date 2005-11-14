@@ -29,6 +29,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   char params[128*sizeof(char *)];		/* boot monitor parameters */
   register char *value;				/* value in key=value pair */
   extern int etext, end;
+  int h;
 
   /* Decide if mode is protected; 386 or higher implies protected mode.
    * This must be done first, because it is needed for, e.g., seg2phys().
@@ -63,6 +64,12 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   kinfo.proc_addr = (vir_bytes) proc;
   kinfo.kmem_base = vir2phys(0);
   kinfo.kmem_size = (phys_bytes) &end;	
+
+  /* Load average data initialization. */
+  kloadinfo.procs_enqueued = 0;
+  kloadinfo.proc_last_slot = 0;
+  for(h = 0; h < _LOAD_HISTORY; h++)
+	kloadinfo.proc_load_history[h] = 0;
 
   /* Processor?  86, 186, 286, 386, ... 
    * Decide if mode is protected for older machines. 

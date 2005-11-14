@@ -500,6 +500,8 @@ register struct proc *rp;	/* this process is now runnable */
   /* Now select the next process to run. */
   pick_proc();			
 
+  kloadinfo.procs_enqueued++;
+
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 1;
   check_runqueues("enqueue");
@@ -548,10 +550,14 @@ register struct proc *rp;	/* this process is no longer runnable */
       }
       prev_xp = *xpp;				/* save previous in chain */
   }
+
+  kloadinfo.procs_enqueued--;
   
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 0;
   check_runqueues("dequeue");
+  if(kloadinfo.procs_enqueued < 0)
+	kprintf("%d processes enqueued\n", kloadinfo.procs_enqueued);
 #endif
 }
 
