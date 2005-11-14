@@ -71,6 +71,7 @@ _PROTOTYPE( char *initstate, (unsigned _seed, char *_state,
 _PROTOTYPE( long random, (void)						);
 _PROTOTYPE( char *setstate, (const char *state)				);
 _PROTOTYPE( void srandom, (unsigned seed)				);
+_PROTOTYPE( int getloadavg, (double *, int)				);
 #endif
 
 #ifdef _MINIX

@@ -325,6 +325,7 @@
 #   define GET_MACHINE 	  12	/* get machine information */
 #   define GET_LOCKTIMING 13	/* get lock()/unlock() latency timing */
 #   define GET_BIOSBUFFER 14	/* get a buffer for BIOS calls */
+#   define GET_LOADINFO   15	/* get load average information */
 #define I_PROC_NR      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */

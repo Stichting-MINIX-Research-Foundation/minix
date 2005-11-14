@@ -106,6 +106,7 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 /* Shorthands for sys_getinfo() system call. */
 #define sys_getkmessages(dst)	sys_getinfo(GET_KMESSAGES, dst, 0,0,0)
 #define sys_getkinfo(dst)	sys_getinfo(GET_KINFO, dst, 0,0,0)
+#define sys_getloadinfo(dst)	sys_getinfo(GET_LOADINFO, dst, 0,0,0)
 #define sys_getmachine(dst)	sys_getinfo(GET_MACHINE, dst, 0,0,0)
 #define sys_getproctab(dst)	sys_getinfo(GET_PROCTAB, dst, 0,0,0)
 #define sys_getprivtab(dst)	sys_getinfo(GET_PRIVTAB, dst, 0,0,0)

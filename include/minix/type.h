@@ -107,6 +107,24 @@ struct kinfo {
   int relocking;		/* relocking check (for debugging) */
 };
 
+/* Load data accounted every this no. of seconds. */
+#define _LOAD_UNIT_SECS		 6 
+
+/* Load data history is kept for this long. */
+#define _LOAD_HISTORY_MINUTES	15
+#define _LOAD_HISTORY_SECONDS	(60*_LOAD_HISTORY_MINUTES)
+
+/* We need this many slots to store the load history. */
+#define _LOAD_HISTORY	(_LOAD_HISTORY_SECONDS/_LOAD_UNIT_SECS)
+
+/* Runnable processes and other load-average information. */
+struct loadinfo {
+  u16_t procs_enqueued;		/* current no. of runnable processes */
+  u16_t proc_load_history[_LOAD_HISTORY];	/* history of proc_s_cur */
+  u16_t proc_last_slot;
+  clock_t last_clock;
+};
+
 struct machine {
   int pc_at;
   int ps_mca;
