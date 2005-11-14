@@ -100,6 +100,7 @@ libc_OBJECTS	= \
 	_readlink.o \
 	_symlink.o \
 	usleep.o \
+	getloadavg.o
 
 include ../Makefile.inc
 
