@@ -161,7 +161,7 @@ char *this;
 void swapon(file)
 char *file;
 {
-  u32_t super[2][MAX_BLOCK_SIZE / 2 / sizeof(u32_t)];
+  u32_t super[2][_MAX_BLOCK_SIZE / 2 / sizeof(u32_t)];
   swap_hdr_t *sp;
   struct mmswapon mmswapon;
   int fd, r;
@@ -169,7 +169,7 @@ char *file;
   
   if ((fd = open(file, O_RDWR)) < 0
 	|| lseek(fd, SUPER_BLOCK_BYTES, SEEK_SET) == -1
-	|| (r = read(fd, super, STATIC_BLOCK_SIZE)) < 0
+	|| (r = read(fd, super, _STATIC_BLOCK_SIZE)) < 0
   ) {
 	err = strerror(errno);
 	std_err("mount: ");
@@ -182,7 +182,7 @@ char *file;
   sp = (swap_hdr_t *) &super[0];
   if (memcmp(sp->sh_magic, MAGIC, sizeof(MAGIC)) != 0)
 	sp = (swap_hdr_t *) &super[1];
-  if (r == STATIC_BLOCK_SIZE && memcmp(sp->sh_magic, MAGIC, sizeof(MAGIC)) != 0
+  if (r == _STATIC_BLOCK_SIZE && memcmp(sp->sh_magic, MAGIC, sizeof(MAGIC)) != 0
 			|| sp->sh_version > SH_VERSION) {
 	std_err("mount: ");
 	std_err(file);

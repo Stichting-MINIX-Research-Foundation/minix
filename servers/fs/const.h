@@ -77,10 +77,10 @@
 #define V1_INODE_SIZE             usizeof (d1_inode)  /* bytes in V1 dsk ino */
 
 /* # zones/indir block */
-#define V1_INDIRECTS (STATIC_BLOCK_SIZE/V1_ZONE_NUM_SIZE)  
+#define V1_INDIRECTS (_STATIC_BLOCK_SIZE/V1_ZONE_NUM_SIZE)  
 
 /* # V1 dsk inodes/blk */
-#define V1_INODES_PER_BLOCK (STATIC_BLOCK_SIZE/V1_INODE_SIZE)
+#define V1_INODES_PER_BLOCK (_STATIC_BLOCK_SIZE/V1_INODE_SIZE)
 
 /* Derived sizes pertaining to the V2 file system. */
 #define V2_ZONE_NUM_SIZE            usizeof (zone_t)  /* # bytes in V2 zone  */

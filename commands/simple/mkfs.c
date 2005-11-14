@@ -196,11 +196,11 @@ char *argv[];
 	}
 
   if(fs_version == 3) {
-  	if(!block_size) block_size = MAX_BLOCK_SIZE; /* V3 default block size */
-  	if(block_size%SECTOR_SIZE || block_size < MIN_BLOCK_SIZE) {
+  	if(!block_size) block_size = _MAX_BLOCK_SIZE; /* V3 default block size */
+  	if(block_size%SECTOR_SIZE || block_size < _MIN_BLOCK_SIZE) {
   		fprintf(stderr, "block size must be multiple of sector (%d) "
   			"and at least %d bytes\n",
-  			SECTOR_SIZE, MIN_BLOCK_SIZE);
+  			SECTOR_SIZE, _MIN_BLOCK_SIZE);
   		pexit("specified block size illegal");
   	}
   	if(block_size%V2_INODE_SIZE) {
@@ -212,7 +212,7 @@ char *argv[];
   	if(block_size) {
 	  	pexit("Can't specify a block size if FS version is <3");
   	}
- 	block_size = STATIC_BLOCK_SIZE;	/* V1/V2 block size */
+ 	block_size = _STATIC_BLOCK_SIZE;	/* V1/V2 block size */
   }
 
   if(!inodes_per_block)
@@ -508,10 +508,10 @@ ino_t inodes;
 
   zone_size = 1 << zone_shift;	/* nr of blocks per zone */
 
-  if (lseek(fd, (off_t) STATIC_BLOCK_SIZE, SEEK_SET) == (off_t) -1) {
+  if (lseek(fd, (off_t) _STATIC_BLOCK_SIZE, SEEK_SET) == (off_t) -1) {
 	pexit("super() couldn't seek");
   }
-  if (write(fd, buf, STATIC_BLOCK_SIZE) != STATIC_BLOCK_SIZE) {
+  if (write(fd, buf, _STATIC_BLOCK_SIZE) != _STATIC_BLOCK_SIZE) {
 	pexit("super() couldn't write");
   }
 
@@ -1537,8 +1537,8 @@ char *buf;
   	perror("lseek");
   	pexit("seek failed");
   }
-  k = read(fd, buf, STATIC_BLOCK_SIZE);
-  if (k != STATIC_BLOCK_SIZE) {
+  k = read(fd, buf, _STATIC_BLOCK_SIZE);
+  if (k != _STATIC_BLOCK_SIZE) {
 	pexit("get_super_block couldn't read");
   }
 }

@@ -40,7 +40,7 @@ int main(int argc, char **argv)
     ssize_t r;
     struct super_block super;
     swap_hdr_t swap_hdr;
-    static u8_t block[MAX_BLOCK_SIZE];
+    static u8_t block[_MAX_BLOCK_SIZE];
 
     first= 0;
     i= 1;
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 	    /* Is there a file system? */
 	    r= -1;
 	    if (lseek(fd, SUPER_BLOCK_BYTES, SEEK_SET) == -1
-		|| (r= read(fd, block, STATIC_BLOCK_SIZE)) < STATIC_BLOCK_SIZE
+		|| (r= read(fd, block, _STATIC_BLOCK_SIZE)) < _STATIC_BLOCK_SIZE
 	    ) {
 		fprintf(stderr, "mkswap: %s: %s\n",
 		    file, r >= 0 ? "End of file" : strerror(errno));
@@ -113,10 +113,10 @@ int main(int argc, char **argv)
 	    }
 	    memcpy(&super, block, sizeof(super));
 	    if (super.s_magic == SUPER_MAGIC) {
-		offset= (unsigned long) super.s_nzones * STATIC_BLOCK_SIZE;
+		offset= (unsigned long) super.s_nzones * _STATIC_BLOCK_SIZE;
 	    } else
 	    if (super.s_magic == SUPER_V2) {
-		offset= (unsigned long) super.s_zones * STATIC_BLOCK_SIZE;
+		offset= (unsigned long) super.s_zones * _STATIC_BLOCK_SIZE;
 	    } else if (super.s_magic == SUPER_V3) {
 		offset= (unsigned long) super.s_zones * super.s_block_size;
 	    } else {

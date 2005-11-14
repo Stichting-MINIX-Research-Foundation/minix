@@ -181,7 +181,7 @@ PUBLIC int get_block_size(dev_t dev)
   }
 
   /* no mounted filesystem? use this block size then. */
-  return MIN_BLOCK_SIZE;
+  return _MIN_BLOCK_SIZE;
 }
 
 /*===========================================================================*
@@ -214,14 +214,14 @@ register struct super_block *sp; /* pointer to a superblock */
   dev_t dev;
   int magic;
   int version, native, r;
-  static char sbbuf[MIN_BLOCK_SIZE];
+  static char sbbuf[_MIN_BLOCK_SIZE];
 
   dev = sp->s_dev;		/* save device (will be overwritten by copy) */
   if (dev == NO_DEV)
   	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
   r = dev_io(DEV_READ, dev, FS_PROC_NR,
-  	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0);
-  if (r != MIN_BLOCK_SIZE) {
+  	sbbuf, SUPER_BLOCK_BYTES, _MIN_BLOCK_SIZE, 0);
+  if (r != _MIN_BLOCK_SIZE) {
   	return EINVAL;
   }
   memcpy(sp, sbbuf, sizeof(*sp));
@@ -265,28 +265,28 @@ register struct super_block *sp; /* pointer to a superblock */
    * hide some of the differences.
    */
   if (version == V1) {
-  	sp->s_block_size = STATIC_BLOCK_SIZE;
+  	sp->s_block_size = _STATIC_BLOCK_SIZE;
 	sp->s_zones = sp->s_nzones;	/* only V1 needs this copy */
 	sp->s_inodes_per_block = V1_INODES_PER_BLOCK;
 	sp->s_ndzones = V1_NR_DZONES;
 	sp->s_nindirs = V1_INDIRECTS;
   } else {
   	if (version == V2)
-  		sp->s_block_size = STATIC_BLOCK_SIZE;
-  	if (sp->s_block_size < MIN_BLOCK_SIZE)
+  		sp->s_block_size = _STATIC_BLOCK_SIZE;
+  	if (sp->s_block_size < _MIN_BLOCK_SIZE)
   		return EINVAL;
 	sp->s_inodes_per_block = V2_INODES_PER_BLOCK(sp->s_block_size);
 	sp->s_ndzones = V2_NR_DZONES;
 	sp->s_nindirs = V2_INDIRECTS(sp->s_block_size);
   }
 
-  if (sp->s_block_size < MIN_BLOCK_SIZE) {
+  if (sp->s_block_size < _MIN_BLOCK_SIZE) {
   	return EINVAL;
   }
-  if (sp->s_block_size > MAX_BLOCK_SIZE) {
+  if (sp->s_block_size > _MAX_BLOCK_SIZE) {
   	printf("Filesystem block size is %d kB; maximum filesystem\n"
  	"block size is %d kB. This limit can be increased by recompiling.\n",
-  	sp->s_block_size/1024, MAX_BLOCK_SIZE/1024);
+  	sp->s_block_size/1024, _MAX_BLOCK_SIZE/1024);
   	return EINVAL;
   }
   if ((sp->s_block_size % 512) != 0) {

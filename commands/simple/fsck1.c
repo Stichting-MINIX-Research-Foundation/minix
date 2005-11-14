@@ -56,7 +56,7 @@
 #include <stdio.h>
 #include <dirent.h>
 
-#define BLOCK_SIZE STATIC_BLOCK_SIZE
+#define BLOCK_SIZE _STATIC_BLOCK_SIZE
 
 #define BITSHIFT	  4	/* = log2(#bits(int)) */
 

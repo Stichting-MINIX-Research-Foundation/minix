@@ -302,10 +302,10 @@ int df(const struct mtab *mt)
 	return(1);
   }
 
-  if(sp->s_magic != SUPER_V3) block_size = STATIC_BLOCK_SIZE;
+  if(sp->s_magic != SUPER_V3) block_size = _STATIC_BLOCK_SIZE;
   else block_size = super.s_block_size;
 
-  if(block_size < MIN_BLOCK_SIZE || block_size > MAX_BLOCK_SIZE) {
+  if(block_size < _MIN_BLOCK_SIZE || block_size > _MAX_BLOCK_SIZE) {
 	fprintf(stderr, "df: %s: funny block size (%d)\n",
 		mt->devname, block_size);
 	close(fd);
@@ -405,7 +405,7 @@ bit_t bit_count(unsigned blocks, bit_t bits, int fd, int block_size)
   int i, b;
   bit_t busy;
   char *wlim;
-  static char buf[MAX_BLOCK_SIZE];
+  static char buf[_MAX_BLOCK_SIZE];
   static char bits_in_char[1 << CHAR_BIT];
 
   /* Precalculate bitcount for each char. */

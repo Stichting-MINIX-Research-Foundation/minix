@@ -17,19 +17,19 @@
 EXTERN struct buf {
   /* Data portion of the buffer. */
   union {
-    char b__data[MAX_BLOCK_SIZE];		     /* ordinary user data */
+    char b__data[_MAX_BLOCK_SIZE];		     /* ordinary user data */
 /* directory block */
-    struct direct b__dir[NR_DIR_ENTRIES(MAX_BLOCK_SIZE)];    
+    struct direct b__dir[NR_DIR_ENTRIES(_MAX_BLOCK_SIZE)];    
 /* V1 indirect block */
     zone1_t b__v1_ind[V1_INDIRECTS];	     
 /* V2 indirect block */
-    zone_t  b__v2_ind[V2_INDIRECTS(MAX_BLOCK_SIZE)];	     
+    zone_t  b__v2_ind[V2_INDIRECTS(_MAX_BLOCK_SIZE)];	     
 /* V1 inode block */
     d1_inode b__v1_ino[V1_INODES_PER_BLOCK]; 
 /* V2 inode block */
-    d2_inode b__v2_ino[V2_INODES_PER_BLOCK(MAX_BLOCK_SIZE)]; 
+    d2_inode b__v2_ino[V2_INODES_PER_BLOCK(_MAX_BLOCK_SIZE)]; 
 /* bit map block */
-    bitchunk_t b__bitmap[FS_BITMAP_CHUNKS(MAX_BLOCK_SIZE)];  
+    bitchunk_t b__bitmap[FS_BITMAP_CHUNKS(_MAX_BLOCK_SIZE)];  
   } b;
 
   /* Header portion of the buffer. */

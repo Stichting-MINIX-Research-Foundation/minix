@@ -271,7 +271,7 @@ PRIVATE void load_ram(void)
   struct super_block *sp, *dsp;
   block_t b;
   Dev_t image_dev;
-  static char sbbuf[MIN_BLOCK_SIZE];
+  static char sbbuf[_MIN_BLOCK_SIZE];
   int block_size_image, block_size_ram, ramfs_block_size;
   int s;
 
@@ -408,20 +408,20 @@ PRIVATE void load_ram(void)
 
   /* Resize the RAM disk root file system. */
   if (dev_io(DEV_READ, root_dev, FS_PROC_NR,
-  	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0) != MIN_BLOCK_SIZE) {
+  	sbbuf, SUPER_BLOCK_BYTES, _MIN_BLOCK_SIZE, 0) != _MIN_BLOCK_SIZE) {
   	printf("WARNING: ramdisk read for resizing failed\n");
   }
   dsp = (struct super_block *) sbbuf;
   if (dsp->s_magic == SUPER_V3)
   	ramfs_block_size = dsp->s_block_size;
   else
-  	ramfs_block_size = STATIC_BLOCK_SIZE;
+  	ramfs_block_size = _STATIC_BLOCK_SIZE;
   zones = (ram_size_kb * 1024 / ramfs_block_size) >> sp->s_log_zone_size;
 
   dsp->s_nzones = conv2(sp->s_native, (u16_t) zones);
   dsp->s_zones = conv4(sp->s_native, zones);
   if (dev_io(DEV_WRITE, root_dev, FS_PROC_NR,
-  	sbbuf, SUPER_BLOCK_BYTES, MIN_BLOCK_SIZE, 0) != MIN_BLOCK_SIZE) {
+  	sbbuf, SUPER_BLOCK_BYTES, _MIN_BLOCK_SIZE, 0) != _MIN_BLOCK_SIZE) {
   	printf("WARNING: ramdisk write for resizing failed\n");
   }
 }

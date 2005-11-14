@@ -1476,7 +1476,7 @@ char *f, **clist, **ilist, **zlist;
 
   getsuper();
 
-  if(block_size < MIN_BLOCK_SIZE || block_size > MAX_BLOCK_SIZE)
+  if(block_size < _MIN_BLOCK_SIZE || block_size > _MAX_BLOCK_SIZE)
   	fatal("funny block size");
 
   if(!(rwbuf = malloc(block_size))) fatal("couldn't allocate fs buf (1)");

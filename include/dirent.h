@@ -40,21 +40,21 @@ struct _v7_direct {
 /* The block size must be at least 1024 bytes, because otherwise
  * the superblock (at 1024 bytes) overlaps with other filesystem data.
  */
-#define MIN_BLOCK_SIZE		 1024
+#define _MIN_BLOCK_SIZE		 1024
 
 /* The below is allocated in some parts of the system as the largest
  * a filesystem block can be. For instance, the boot monitor allocates
  * 3 of these blocks and has to fit within 64kB, so this can't be
  * increased without taking that into account.
  */
-#define MAX_BLOCK_SIZE		 4096
+#define _MAX_BLOCK_SIZE		 4096
 
 /* This is the block size for the fixed versions of the filesystem (V1/V2) */
-#define STATIC_BLOCK_SIZE	1024
+#define _STATIC_BLOCK_SIZE	1024
 
-#define STATIC_FLEX_PER_BLOCK (STATIC_BLOCK_SIZE/sizeof(struct _fl_direct))
-#define FLEX_PER_V7 (_EXTENT(DIRSIZ) + 1)
-#define FLEX_PER_BLOCK (STATIC_BLOCK_SIZE/sizeof(struct _fl_direct))
+#define _STATIC_FLEX_PER_BLOCK (_STATIC_BLOCK_SIZE/sizeof(struct _fl_direct))
+#define _FLEX_PER_V7 (_EXTENT(DIRSIZ) + 1)
+#define _FLEX_PER_BLOCK (_STATIC_BLOCK_SIZE/sizeof(struct _fl_direct))
 
 /* Definitions for the directory(3) routines: */
 typedef struct {
@@ -63,8 +63,8 @@ typedef struct {
 	short		_count;	/* This many objects in buf */
 	off_t		_pos;	/* Position in directory file */
 	struct _fl_direct  *_ptr;	/* Next slot in buf */
-	struct _fl_direct  _buf[FLEX_PER_BLOCK]; /* One block of a directory file */
-	struct _fl_direct  _v7f[FLEX_PER_V7];	 /* V7 entry transformed to flex */
+	struct _fl_direct  _buf[_FLEX_PER_BLOCK]; /* One block of a directory file */
+	struct _fl_direct  _v7f[_FLEX_PER_V7];	 /* V7 entry transformed to flex */
 } DIR;
 
 #define _DIRENT_NAME_LEN 61
