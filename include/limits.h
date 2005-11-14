@@ -47,7 +47,7 @@
 #define _POSIX_LINK_MAX      8	/* a file may have 8 links */
 #define _POSIX_MAX_CANON   255	/* size of the canonical input queue */
 #define _POSIX_MAX_INPUT   255	/* you can type 255 chars ahead */
-#define _POSIX_NAME_MAX DIRSIZ	/* a file name may have 14 chars */
+#define _POSIX_NAME_MAX DIRSIZ	/* max. file name length */
 #define _POSIX_NGROUPS_MAX   0	/* supplementary group IDs are optional */
 #define _POSIX_OPEN_MAX     16	/* a process may have 16 files open */
 #define _POSIX_PATH_MAX    255	/* a pathname may contain 255 chars */
