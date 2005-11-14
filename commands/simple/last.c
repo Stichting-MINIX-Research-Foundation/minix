@@ -308,6 +308,9 @@ long to;
  */
 void Print_Uptime()
 {
+#define NLOADS 3
+  int nloads;
+  double loads[NLOADS];
   char *utmp_file = _PATH_UTMP;
   unsigned nusers;
   struct utmp ut;
@@ -345,7 +348,14 @@ void Print_Uptime()
 	printf(" %lu day%s,", days, days == 1 ? "" : "s");
   }
   printf(" %lu:%02lu,", (up % (24 * 3600L)) / 3600, (up % 3600) / 60);
-  printf("  %u user%s\n", nusers, nusers == 1 ? "" : "s");
+  printf("  %u user%s", nusers, nusers == 1 ? "" : "s");
+  if((nloads = getloadavg(loads, NLOADS)) > 0) {
+	int i;
+	printf(", load averages:");
+	for(i = 0; i < nloads; i++)
+		printf("%s %.2f", (i > 0) ? "," : "", loads[i]);
+  }
+  printf("\n");
 }
 
 
