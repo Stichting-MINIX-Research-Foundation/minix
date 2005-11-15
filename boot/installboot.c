@@ -367,7 +367,7 @@ int raw_install(char *file, off_t *start, off_t *len, int block_size)
  * Note: *len == 0 when an image is read.  It is set right afterwards.
  */
 {
-	static char buf[MAX_BLOCK_SIZE];	/* Nonvolatile block buffer. */
+	static char buf[_MAX_BLOCK_SIZE];	/* Nonvolatile block buffer. */
 	FILE *f;
 	off_t sec;
 	unsigned long devsize;
@@ -424,7 +424,7 @@ void make_bootable(enum howto how, char *device, char *bootblock,
  * vector are added to the end of the device.
  */
 {
-	char buf[MAX_BLOCK_SIZE + 256], *adrp, *parmp;
+	char buf[_MAX_BLOCK_SIZE + 256], *adrp, *parmp;
 	struct fileaddr {
 		off_t	address;
 		int	count;
@@ -695,7 +695,7 @@ void install_master(char *device, char *masterboot, char **guide)
 	FILE *masf;
 	unsigned long size;
 	struct stat st;
-	static char buf[MAX_BLOCK_SIZE];
+	static char buf[_MAX_BLOCK_SIZE];
 
 	/* Open device. */
 	if ((rawfd= open(rawdev= device, O_RDWR)) < 0) fatal(device);
