@@ -14,6 +14,8 @@ netinet/in.h
 #define    INADDR_ANY              (uint32_t)0x00000000
 #define    INADDR_BROADCAST        (uint32_t)0xFFFFFFFF
 
+#define       IPPORT_RESERVED         1024
+
 typedef uint16_t	in_port_t;
 
 #ifndef _IN_ADDR_T
