@@ -1,6 +1,6 @@
 .TH ADD_ROUTE 8
 .SH NAME
-add_route \- configure IP routing.
+add_route, del_route \- configure IP routing.
 .SH SYNOPSIS
 .B add_route
 .RB \-g 
@@ -9,15 +9,45 @@ add_route \- configure IP routing.
 .RI destination 
 .RB [ \-n
 .RI netmask " ]]"
-.RB [ \-i 
+.RB [ \-I 
 .RI "ip device]"
+.B del_route
+.RB [ \-o "]"
+.RB [ \-D "]"
+.RB \-g
+.RI gateway
+.RB [ \-d
+.RI destination "]"
+.RB [ \-n
+.RI netmask " ]]"
+.RB [ \-I
+.RI ipdev "]"
+.RB [ \-v "]"
+
+.B del_route
+.RB \-i
+.RB [ \-D "]"
+.RB \-g
+.RI gateway 
+.RB \-d
+.RI dst 
+.RB [ \-n
+.RI netmask "]"
+.RB [ \-I
+.RI ipdev "]"
+.RB [ \-v "]"
+
+
 .SH DESCRIPTION
 .de SP
 .if t .sp 0.4
 .if n .sp
 ..
 .B Add_route
-is used for manual entry of routes in the IP routing table.
+and
+.B del_route
+are used for manual maintenance of routes in the IP routing table.
+
 .SH OPTIONS
 .TP
 .B \-g 
@@ -32,7 +62,7 @@ specifies the destination(s) reached via this gateway.
 .I netmask
 specifies a netmask when the destination is a net.
 .TP
-.B \-i
+.B \-I
 .I "ip device"
 specifies the ip device. 
 .SH "SEE ALSO"
@@ -41,7 +71,8 @@ specifies the ip device.
 .SH AUTHOR
 .I Add_route.c 
 was created August 7, 1991 by Philip Homburg. 
-This manual page by A. S. Woodhull, last revised 13.02.96.
+This manual page by A. S. Woodhull, last revised 13.02.96. Added
+alias for del_route 17.11.05.
 
 
 
