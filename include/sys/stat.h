@@ -53,6 +53,11 @@ struct stat {
 #define S_IWOTH   00002		/* others: -------w- */
 #define S_IXOTH   00001		/* others: --------x */
 
+/* Synonyms for above. */
+#define S_IEXEC		S_IXUSR
+#define S_IWRITE	S_IWUSR
+#define S_IREAD		S_IRUSR
+
 /* The following macros test st_mode (from POSIX Sec. 5.6.1.1). */
 #define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)	/* is a reg file */
 #define S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)	/* is a directory */
