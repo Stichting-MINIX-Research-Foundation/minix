@@ -39,6 +39,8 @@ typedef struct dns_hdr
 	u16_t dh_arcount;
 } dns_hdr_t;
 
+typedef dns_hdr_t HEADER;
+
 #define DHF_QR		0x80
 #define DHF_OPCODE	0x78
 #define DHF_AA		0x04
