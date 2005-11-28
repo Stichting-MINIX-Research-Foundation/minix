@@ -55,7 +55,7 @@ daemonize()
 up()
 {
     service=$1
-    args=$2
+    shift
 
     # Function to dynamically start a system service
 
@@ -64,8 +64,7 @@ up()
 
     # Service is not disabled. Try to bring it up.
     echo -n " $service"
-    command="/usr/sbin/$service $args"
-    eval service up $command
+    service up /usr/sbin/$service "$@" 
 }
 
 case $action in
@@ -78,7 +77,7 @@ start)
 
     # Start servers and drivers set at the boot monitor.
     echo -n "Starting services:"
-    up random "-dev /dev/random -period 3HZ"
+    up random -dev /dev/random -period 3HZ
 
     # load random number generator
     if [ -f $RANDOM_FILE ]
@@ -94,11 +93,12 @@ start)
         if grep " $driver " /etc/inet.conf > /dev/null  2>&1
         then 
             eval arg=\$${driver}_arg
-            up $driver "$arg -period 5HZ"
+	    if [ ! -z "$arg" ]; then arg="-args \"$arg\""; fi
+            eval up $driver $arg -period 5HZ
         fi
     done
-    up inet "-period 3HZ"
-    up printer "-dev /dev/lp -period 10HZ"
+    up inet 
+    up printer -dev /dev/lp -period 10HZ
     echo .
 
     # Network initialization.

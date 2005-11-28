@@ -15,12 +15,11 @@ usage()
 up()
 {
     service=$1
-    args=$2
+    shift
 
     # Function to dynamically start a system service
     echo -n " $service"
-    command="/sbin/$service $args"
-    eval service up $command
+    service up /sbin/$service "$@"
 }
 
 while getopts 'saf' opt
@@ -52,11 +51,11 @@ start)
     # Start crucial system services. The floppy driver *must* be loaded 
     # first, as it needs memory below 16MB in order to do ISA DMA.
     if [ ! "`sysenv label`" = "FLOPPY" ]  
-    then up floppy "-dev /dev/fd0 -period 5HZ"
-    else up at_wini "-dev /dev/c0d0 -period 5HZ"
+    then up floppy -dev /dev/fd0 -period 5HZ
+    else up at_wini -dev /dev/c0d0 -period 5HZ
     fi
-    up is "-period 5HZ"
-    up cmos "-dev /dev/cmos -period 5HZ"
+    up is -period 5HZ
+    up cmos -dev /dev/cmos -period 5HZ
     echo .
 
     # Set timezone.
