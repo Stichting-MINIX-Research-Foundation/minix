@@ -116,7 +116,7 @@ PUBLIC unsigned pci_inb(U16_t port) {
 	return value;
 }
 PUBLIC unsigned pci_inw(U16_t port) {
-	U16_t value;
+	u32_t value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
 		printf("PCI: warning, sys_inw failed: %d\n", s);

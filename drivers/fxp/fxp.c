@@ -46,6 +46,7 @@
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
+#include <ibm/pci.h>
 
 #include <timers.h>
 
@@ -58,7 +59,6 @@
 #define vm_1phys2bus(p)		(p)
 
 #include "assert.h"
-#include "../libpci/pci.h"
 #include "fxp.h"
 #include "mii.h"
 
@@ -585,12 +585,24 @@ fxp_t *fp;
 	case FXP_REV_82559C:	str= "82559C";			/* 0x08 */
 				fp->fxp_type= FT_82559;
 				break;
-	case FXP_REV_82559ERA:	str= "82559ER-A"; break;	/* 0x09 */
-	case FXP_REV_82550_1:	str= "82550(1)"; break;		/* 0x0C */
-	case FXP_REV_82550_2:	str= "82550(2)"; break;		/* 0x0D */
-	case FXP_REV_82550_3:	str= "82550(3)"; break;		/* 0x0E */
-	case FXP_REV_82551_1:	str= "82551(1)"; break;		/* 0x0F */
-	case FXP_REV_82551_2:	str= "82551(2)"; break;		/* 0x10 */
+	case FXP_REV_82559ERA:	str= "82559ER-A"; 		/* 0x09 */
+				fp->fxp_type= FT_82559;
+				break;
+	case FXP_REV_82550_1:	str= "82550(1)"; 		/* 0x0C */
+				fp->fxp_type= FT_82559;
+				break;
+	case FXP_REV_82550_2:	str= "82550(2)"; 		/* 0x0D */
+				fp->fxp_type= FT_82559;
+				break;
+	case FXP_REV_82550_3:	str= "82550(3)"; 		/* 0x0E */
+				fp->fxp_type= FT_82559;
+				break;
+	case FXP_REV_82551_1:	str= "82551(1)"; 		/* 0x0F */
+				fp->fxp_type= FT_82559;
+				break;
+	case FXP_REV_82551_2:	str= "82551(2)"; 		/* 0x10 */
+				fp->fxp_type= FT_82559;
+				break;
 	}
 
 #if VERBOSE

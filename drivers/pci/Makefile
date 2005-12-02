@@ -1,5 +1,5 @@
-# Makefile for dp8390 driver
-DRIVER = dp8390
+# Makefile for PCI support
+DRIVER = pci
 
 # directories
 u = /usr
@@ -10,12 +10,12 @@ b = $i/ibm
 d = ..
 
 # programs, flags, etc.
-CC =	exec cc
+CC =	cc
 CFLAGS = -I$i
 LDFLAGS = -i 
 LIBS = -lsys -lsysutil -ltimers
 
-OBJ = 3c503.o dp8390.o ne2000.o rtl8029.o wdeth.o
+OBJ = main.o pci.o pci_table.o
 
 # build local binary
 all build:	$(DRIVER)

@@ -52,9 +52,9 @@
 #include <assert.h>
 
 #include <minix/syslib.h>
+#include <ibm/pci.h>
 
 #include "lance.h"
-#include "../libpci/pci.h"
 /*#include "proc.h"*/
 
 #include <sys/ioc_memory.h>

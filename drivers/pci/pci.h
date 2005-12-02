@@ -13,21 +13,6 @@ _PROTOTYPE( void pci_outb, (U16_t port, U8_t value) );
 _PROTOTYPE( void pci_outw, (U16_t port, U16_t value) );
 _PROTOTYPE( void pci_outl, (U16_t port, U32_t value) );
 
-/* pci.c */
-_PROTOTYPE( void pci_init, (void)					);
-_PROTOTYPE( int pci_find_dev, (U8_t bus, U8_t dev, U8_t func,
-							int *devindp)	);
-_PROTOTYPE( int pci_first_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( int pci_next_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( void pci_reserve, (int devind)				);
-_PROTOTYPE( void pci_ids, (int devind, u16_t *vidp, u16_t *didp)	);
-_PROTOTYPE( char *pci_slot_name, (int devind)				);
-_PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
-_PROTOTYPE( u8_t pci_attr_r8, (int devind, int port)			);
-_PROTOTYPE( u16_t pci_attr_r16, (int devind, int port)			);
-_PROTOTYPE( u32_t pci_attr_r32, (int devind, int port)			);
-_PROTOTYPE( void pci_attr_w16, (int devind, int port, U16_t value)	);
-_PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 
 #define PCI_VID		0x00	/* Vendor ID, 16-bit */
 #define PCI_DID		0x02	/* Device ID, 16-bit */

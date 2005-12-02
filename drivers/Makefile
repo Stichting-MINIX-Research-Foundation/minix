@@ -16,7 +16,6 @@ usage:
 build: all
 all install depend clean:
 	cd ./libdriver && $(MAKE) $@
-	cd ./libpci && $(MAKE) $@
 	cd ./tty && $(MAKE) $@
 	cd ./memory && $(MAKE) $@
 	cd ./at_wini && $(MAKE) $@
@@ -32,13 +31,14 @@ all install depend clean:
 	cd ./dp8390 && $(MAKE) $@
 	cd ./sb16 && $(MAKE) $@
 	cd ./lance && $(MAKE) $@
+	cd ./pci && $(MAKE) $@
 
 image:
 	cd ./libdriver && $(MAKE) build
-	cd ./libpci && $(MAKE) build
 	cd ./tty && $(MAKE) build
 	cd ./memory && $(MAKE) build
 	cd ./at_wini && $(MAKE) build
 	cd ./floppy && $(MAKE) build
 	cd ./bios_wini && $(MAKE) build
 	cd ./log && $(MAKE) build
+	cd ./pci && $(MAKE) build

@@ -15,11 +15,11 @@
  */
 
 #include "at_wini.h"
-#include "../libpci/pci.h"
 
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <sys/ioc_disk.h>
+#include <ibm/pci.h>
 
 #define ATAPI_DEBUG	    0	/* To debug ATAPI code. */
 
@@ -416,6 +416,10 @@ PRIVATE void init_params_pci(int skip)
   	   pci_attr_r8(devind, PCI_SCR) != 0x01) {
   	   continue;
   	}
+
+	printf("init_params_pci: found device %04x/%04x at index %d\n",
+		vid, did, devind);
+
   	/* Found a controller.
   	 * Programming interface register tells us more.
   	 */

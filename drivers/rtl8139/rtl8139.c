@@ -64,6 +64,7 @@
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
+#include <ibm/pci.h>
 
 #include <sys/types.h>
 #include <fcntl.h>
@@ -81,9 +82,8 @@
 #define printW()		((void)0)
 #define vm_1phys2bus(p)		(p)
 
-#define VERBOSE		0	/* display message during init */
+#define VERBOSE		1	/* display message during init */
 
-#include "../libpci/pci.h"
 #include "rtl8139.h"
 
 #define RX_BUFSIZE	RL_RCR_RBLEN_64K_SIZE
@@ -189,7 +189,7 @@ static unsigned my_inb(U16_t port) {
 	return value;
 }
 static unsigned my_inw(U16_t port) {
-	U16_t value;
+	u32_t value;
 	int s;
 	if ((s=sys_inw(port, &value)) !=OK)
 		printf("RTL8139: warning, sys_inw failed: %d\n", s);
@@ -775,7 +775,7 @@ re_t *rep;
 		printf("RTL8139: error, couldn't enable interrupts: %d\n", s);
 
 #if VERBOSE	/* stay silent during startup, can always get status later */
-	if (rep->re_mode) {
+	if (rep->re_model) {
 		printf("%s: model %s\n", rep->re_name, rep->re_model);
 	} else
 	{
@@ -825,14 +825,18 @@ re_t *rep;
 #endif
 
 	/* Reset the device */
+	printf("rl_reset_hw: (before reset) port = 0x%x, RL_CR = 0x%x\n",
+		port, rl_inb(port, RL_CR));
 	rl_outb(port, RL_CR, RL_CR_RST);
 	getuptime(&t0);
 	do {
 		if (!(rl_inb(port, RL_CR) & RL_CR_RST))
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
+	printf("rl_reset_hw: (after reset) port = 0x%x, RL_CR = 0x%x\n",
+		port, rl_inb(port, RL_CR));
 	if (rl_inb(port, RL_CR) & RL_CR_RST)
-		panic("rtl8139","reset failed to complete", NO_NUM);
+		printf("rtl8139: reset failed to complete");
 
 	t= rl_inl(port, RL_TCR);
 	switch(t & (RL_TCR_HWVER_AM | RL_TCR_HWVER_BM))

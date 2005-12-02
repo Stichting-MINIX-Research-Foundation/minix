@@ -17,17 +17,12 @@ LDFLAGS = -i
 LIBS = -lsys -lsysutil -ltimers
 
 OBJ = rtl8139.o 
-LIBPCI = $d/libpci/pci.o $d/libpci/pci_table.o
-
 
 # build local binary
 all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) $(PCI)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBPCI) $(LIBS)
+$(DRIVER):	$(OBJ) 
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 50kw $(DRIVER)
-
-$(PCI): 
-	cd $d/libpci && $(MAKE) 
 
 # install with other drivers
 install:	/usr/sbin/$(DRIVER)
@@ -39,7 +34,7 @@ clean:
 	rm -f $(DRIVER) *.o *.bak 
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libpci/*.c > .depend
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 # Include generated dependencies.
 include .depend

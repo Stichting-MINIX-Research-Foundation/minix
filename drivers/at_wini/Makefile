@@ -19,17 +19,13 @@ LIBS = -lsysutil -lsys -ltimers
 
 OBJ = at_wini.o 
 LIBDRIVER = $d/libdriver/driver.o $d/libdriver/drvlib.o 
-LIBPCI = $p/pci.o $p/pci_table.o
 
 
 # build local binary
 all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) $(LIBDRIVER) $(LIBPCI)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS) $(LIBPCI)
+$(DRIVER):	$(OBJ) $(LIBDRIVER)
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
 	install -S 8k $(DRIVER)
-
-$(LIBPCI):
-	cd $p && $(MAKE)
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 
