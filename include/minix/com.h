@@ -39,7 +39,8 @@
 #define TTY_PROC_NR	  5	/* terminal (TTY) driver */
 #define DRVR_PROC_NR      6	/* device driver for boot medium */
 #define DS_PROC_NR	  7    	/* data store server */
-#define INIT_PROC_NR	  8    	/* init -- goes multiuser */
+#define PCI_PROC_NR       8	/* driver for PCI controllers */
+#define INIT_PROC_NR	  9    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
@@ -69,6 +70,56 @@
 #define NOTIFY_ARG		m2_l1
 #define NOTIFY_TIMESTAMP	m2_l2
 #define NOTIFY_FLAGS		m2_i1
+
+/*===========================================================================*
+ *                Messages for BUS controller drivers 			     *
+ *===========================================================================*/
+#define BUSC_RQ_BASE	0x300	/* base for request types */
+#define BUSC_RS_BASE	0x380	/* base for response types */
+
+#define BUSC_PCI_INIT		(BUSC_RQ_BASE + 0)	/* First message to
+							 * PCI driver
+							 */
+#define BUSC_PCI_FIRST_DEV	(BUSC_RQ_BASE + 1)	/* Get index (and
+							 * vid/did) of the
+							 * first PCI device
+							 */
+#define BUSC_PCI_NEXT_DEV	(BUSC_RQ_BASE + 2)	/* Get index (and
+							 * vid/did) of the
+							 * next PCI device
+							 */
+#define BUSC_PCI_FIND_DEV	(BUSC_RQ_BASE + 3)	/* Get index of a
+							 * PCI device based on
+							 * bus/dev/function
+							 */
+#define BUSC_PCI_IDS		(BUSC_RQ_BASE + 4)	/* Get vid/did from an
+							 * index
+							 */
+#define BUSC_PCI_DEV_NAME	(BUSC_RQ_BASE + 5)	/* Get the name of a
+							 * PCI device
+							 */
+#define BUSC_PCI_SLOT_NAME	(BUSC_RQ_BASE + 6)	/* Get the name of a
+							 * PCI slot
+							 */
+#define BUSC_PCI_RESERVE	(BUSC_RQ_BASE + 7)	/* Reserve a PCI dev */
+#define BUSC_PCI_ATTR_R8	(BUSC_RQ_BASE + 8)	/* Read 8-bit
+							 * attribute value
+							 */
+#define BUSC_PCI_ATTR_R16	(BUSC_RQ_BASE + 9)	/* Read 16-bit
+							 * attribute value
+							 */
+#define BUSC_PCI_ATTR_R32	(BUSC_RQ_BASE + 10)	/* Read 32-bit
+							 * attribute value
+							 */
+#define BUSC_PCI_ATTR_W8	(BUSC_RQ_BASE + 11)	/* Write 8-bit
+							 * attribute value
+							 */
+#define BUSC_PCI_ATTR_W16	(BUSC_RQ_BASE + 12)	/* Write 16-bit
+							 * attribute value
+							 */
+#define BUSC_PCI_ATTR_W32	(BUSC_RQ_BASE + 13)	/* Write 32-bit
+							 * attribute value
+							 */
 
 /*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
