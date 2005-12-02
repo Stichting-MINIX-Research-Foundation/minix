@@ -22,6 +22,7 @@ PROGRAMS=	../kernel/kernel \
 	AT:../drivers/at_wini/at_wini \
 	BIOS:../drivers/bios_wini/bios_wini \
 	FLOPPY:../drivers/floppy/floppy \
+	../drivers/pci/pci \
 	../servers/init/init \
 #	bootdev.img
 
