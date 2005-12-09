@@ -173,6 +173,7 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
 
     switch (fdtype) {
     case FT_ETHERNET:
+	fcntl(np->fdp->fd, F_SETFL, fcntl(np->fdp->fd, F_GETFL) | O_NONBLOCK);
 	if (ioctl(np->fdp->fd, NWIOGETHSTAT, &ethstat) < 0) {
 	    /* Not an Ethernet. */
 	    close(fdp->fd);
