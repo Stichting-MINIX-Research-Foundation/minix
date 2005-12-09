@@ -50,9 +50,13 @@ PUBLIC void osdep_eth_init()
 #endif 
 		if (r != OK)
 		{
+			/* Eventually, we expect ethernet drivers to be
+			 * started after INET. So we always end up here. And
+			 * the findproc can be removed.
+			 */
 			printf("eth%d: unable to find task %s: %d\n",
 				i, ecp->ec_task, r);
-			continue;
+			tasknr= ANY;
 		}
 
  		eth_port->etp_osdep.etp_port= ecp->ec_port;
@@ -64,45 +68,55 @@ PUBLIC void osdep_eth_init()
 		mess.DL_PROC= this_proc;
 		mess.DL_MODE= DL_NOMODE;
 
-		r= send(eth_port->etp_osdep.etp_task, &mess);
-		if (r<0)
+		if (tasknr == ANY)
+			r= ENXIO;
+		else
 		{
-			printf(
+			r= send(eth_port->etp_osdep.etp_task, &mess);
+			if (r<0)
+			{
+				printf(
 		"osdep_eth_init: unable to send to ethernet task, error= %d\n",
-				r);
-			continue;
+					r);
+			}
 		}
 
-		r= receive(eth_port->etp_osdep.etp_task, &mess);
-		if (r<0)
+		if (r == OK)
 		{
-			printf(
+			r= receive(eth_port->etp_osdep.etp_task, &mess);
+			if (r<0)
+			{
+				printf(
 	"osdep_eth_init: unable to receive from ethernet task, error= %d\n",
-				r);
-			continue;
+					r);
+			}
 		}
 
-		if (mess.m3_i1 == ENXIO)
+		if (r == OK)
 		{
-			printf(
+			r= mess.m3_i1;
+			if (r == ENXIO)
+			{
+				printf(
 		"osdep_eth_init: no ethernet device at task=%d,port=%d\n",
-				eth_port->etp_osdep.etp_task, 
-				eth_port->etp_osdep.etp_port);
-			continue;
-		}
-		if (mess.m3_i1 < 0)
-			ip_panic(("osdep_eth_init: DL_INIT returned error %d\n",
-				mess.m3_i1));
-			
-		if (mess.m3_i1 != eth_port->etp_osdep.etp_port)
-		{
-			ip_panic((
+					eth_port->etp_osdep.etp_task, 
+					eth_port->etp_osdep.etp_port);
+			}
+			else if (r < 0)
+			{
+				ip_panic((
+				"osdep_eth_init: DL_INIT returned error %d\n",
+					r));
+			}
+			else if (mess.m3_i1 != eth_port->etp_osdep.etp_port)
+			{
+				ip_panic((
 	"osdep_eth_init: got reply for wrong port (got %d, expected %d)\n",
-				mess.m3_i1, eth_port->etp_osdep.etp_port));
+					mess.m3_i1,
+					eth_port->etp_osdep.etp_port));
+			}
 		}
-
-		eth_port->etp_ethaddr= *(ether_addr_t *)mess.m3_ca1;
-
+			
 		sr_add_minor(if2minor(ecp->ec_ifno, ETH_DEV_OFF),
 			i, eth_open, eth_close, eth_read, 
 			eth_write, eth_ioctl, eth_cancel, eth_select);
@@ -112,7 +126,12 @@ PUBLIC void osdep_eth_init()
 		eth_port->etp_vlan_port= NULL;
 		eth_port->etp_wr_pack= 0;
 		eth_port->etp_rd_pack= 0;
-		setup_read (eth_port);
+		if (r == OK)
+		{
+			eth_port->etp_ethaddr= *(ether_addr_t *)mess.m3_ca1;
+			eth_port->etp_flags |= EPF_GOT_ADDR;
+			setup_read (eth_port);
+		}
 	}
 
 	/* And now come the VLANs */
@@ -144,7 +163,11 @@ PUBLIC void osdep_eth_init()
 			continue;
 		}
 		
-		eth_port->etp_ethaddr= rep->etp_ethaddr;
+		if (rep->etp_flags & EPF_GOT_ADDR)
+		{
+			eth_port->etp_ethaddr= rep->etp_ethaddr;
+			eth_port->etp_flags |= EPF_GOT_ADDR;
+		}
 
 		sr_add_minor(if2minor(ecp->ec_ifno, ETH_DEV_OFF),
 			i, eth_open, eth_close, eth_read, 
@@ -454,6 +477,13 @@ u32_t flags;
 
 	assert(!eth_port->etp_vlan);
 
+	if (!(eth_port->etp_flags & EPF_GOT_ADDR))
+	{
+		/* We have never seen the device. */
+		printf("eth_set_rec_conf: waiting for device to appear\n");
+		return;
+	}
+
 	eth_port->etp_osdep.etp_recvconf= flags;
 	dl_flags= DL_NOMODE;
 	if (flags & NWEO_EN_BROAD)
@@ -746,14 +776,10 @@ static void eth_restart(eth_port, tasknr)
 eth_port_t *eth_port;
 int tasknr;
 {
-	int r;
+	int i, r;
 	unsigned flags, dl_flags;
 	message mess;
-#if 0
-	int i, r, rport;
-	struct eth_conf *ecp;
-	eth_port_t *rep;
-#endif
+	eth_port_t *loc_port;
 
 	printf("eth_restart: restarting eth%d, task %d, port %d\n",
 		eth_port-eth_port_table, tasknr,
@@ -803,9 +829,29 @@ int tasknr;
 			mess.m3_i1, eth_port->etp_osdep.etp_port));
 	}
 
-	eth_port->etp_ethaddr= *(ether_addr_t *)mess.m3_ca1;
-
 	eth_port->etp_flags |= EPF_ENABLED;
+
+	eth_port->etp_ethaddr= *(ether_addr_t *)mess.m3_ca1;
+	if (!(eth_port->etp_flags & EPF_GOT_ADDR))
+	{
+		eth_port->etp_flags |= EPF_GOT_ADDR;
+		eth_restart_ioctl(eth_port);
+
+		/* Also update any VLANs on this device */
+		for (i=0, loc_port= eth_port_table; i<eth_conf_nr;
+			i++, loc_port++)
+		{
+			if (!(loc_port->etp_flags & EPF_ENABLED))
+				continue;
+			if (loc_port->etp_vlan_port != eth_port)
+				continue;
+			 
+			loc_port->etp_ethaddr= eth_port->etp_ethaddr;
+			loc_port->etp_flags |= EPF_GOT_ADDR;
+			eth_restart_ioctl(loc_port);
+		}
+	}
+
 	if (eth_port->etp_wr_pack)
 	{
 		bf_afree(eth_port->etp_wr_pack);

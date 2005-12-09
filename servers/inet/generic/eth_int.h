@@ -38,6 +38,7 @@ typedef struct eth_port
 
 #define EPF_EMPTY	 0x0
 #define EPF_ENABLED	 0x1
+#define EPF_GOT_ADDR	 0x2	/* Got ethernet address from device */
 #define EPF_READ_IP	0x20
 #define EPF_READ_SP	0x40
 
@@ -53,6 +54,7 @@ void eth_set_rec_conf ARGS(( eth_port_t *eth_port, u32_t flags ));
 void eth_restart_write ARGS(( eth_port_t *eth_port ));
 void eth_loop_ev ARGS(( event_t *ev, ev_arg_t ev_arg ));
 void eth_reg_vlan ARGS(( eth_port_t *eth_port, eth_port_t *vlan_port ));
+void eth_restart_ioctl ARGS(( eth_port_t *eth_port ));
 
 #endif /* ETH_INT_H */
 
