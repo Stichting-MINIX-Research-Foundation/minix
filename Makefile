@@ -1,7 +1,7 @@
 # Master Makefile to compile everything in /usr/src except the system.
 
 MAKE	= exec make -$(MAKEFLAGS)
-GMAKE	= gmake
+GMAKE	= /usr/gnu/bin/gmake
 
 usage:
 	@echo "" 
