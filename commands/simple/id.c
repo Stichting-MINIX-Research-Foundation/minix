@@ -14,9 +14,7 @@
 #include <stdio.h>
 #include <limits.h>
 
-_PROTOTYPE(int main, (void));
-
-int main()
+int main(int argc, char *argv[])
 {
   struct passwd *pwd;
   struct group *grp;
@@ -38,6 +36,7 @@ int main()
 #endif
   int g;
   int isug;
+  int c, uopt = 0;
 
 #if __minix_vmd
   get6id(&ruid, &euid, &suid, &rgid, &egid, &sgid);
@@ -52,6 +51,22 @@ int main()
 #if NGROUPS_MAX > 0
   ngroups = getgroups(NGROUPS_MAX, groups);
 #endif
+
+  while((c = getopt(argc, argv, "u")) != EOF) {
+	switch(c) {
+		case 'u':
+			uopt = 1;
+			break;
+		default:
+			fprintf(stderr, "%s: unrecognized option\n", argv[0]);
+			return(1);
+	}
+  }
+
+  if(uopt) {
+	printf("%d\n", euid);
+	return 0;
+  }
 
   if ((pwd = getpwuid(ruid)) == NULL)
 	printf("uid=%d", ruid);
