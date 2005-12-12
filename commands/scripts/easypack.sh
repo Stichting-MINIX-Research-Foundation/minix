@@ -24,13 +24,16 @@ esac
 
 # Change to source directory
 ORIG_DIR=`pwd`
-rm -rf Log			# remove old debugging log
-cd $SOURCE_DIR
+rm -f Log			# remove old debugging log
+cd $SOURCE_DIR || exit
 
-# Check for write permission here
-if test ! -w . 
-   then echo You do not have write permission for $SOURCE_DIR
-   exit 1
+if [ "`id -u`" -ne 0 ]
+then
+	# Check for write permission here
+	if test ! -w . 
+	   then echo You do not have write permission for $SOURCE_DIR
+	   exit 1
+	fi
 fi
 
 # Check for -o flag; if found, set OVERWRITE
@@ -57,31 +60,32 @@ do # Check to see if it exists. Don't overwrite unless -o given
     fi
 
    # Remove any junk from previous attempts
-   rm -rf $i.tar.bz2 $i.tar
+   rm -f $i.tar.bz2 $i.tar
 
    # Get the package
    URL=$SOFTWARE_DIR/$i.tar.bz2
    URL1=$URL
-   urlget $URL >$i.tar.bz2
+   TARBZ=$i.tar.bz2
+   urlget $URL >$TARBZ
 
    # See if we got the file or an error
-   if grep "<html>" $i.tar.bz2 >/dev/null
+   if grep "<html>" $TARBZ >/dev/null
       then # It is not in the directory of tested software. Try beta dir.
-	   URL=$BETA_DIR/$i.tar.bz2
-	   urlget $URL >$i.tar.bz2
-	   if grep "<HTML>" $i.tar.bz2 >/dev/null || grep "<html>" $i.tar.bz2  >/dev/null
+	   URL=$BETA_DIR/$TARBZ
+	   urlget $URL >$TARBZ
+	   if grep "<HTML>" $TARBZ >/dev/null || grep "<html>" $TARBZ  >/dev/null
 	      then echo Cannot get $i.
 		   echo "   " Tried $URL1
 		   echo "   " Tried $URL
 		   echo "   " Skipping this package
-		   rm -rf $i.tar.bz2
+		   rm -f $TARBZ
 		   continue
 	   fi
    fi
 
    # We got it. Unpack it.
    echo Package $i fetched
-   bunzip2 $i.tar.bz2 || smallbunzip2 $i.tar.bz2
+   bunzip2 $TARBZ || smallbunzip2 $TARBZ
    tar xf $i.tar
    if test ! -d $i
       then echo Unable to unpack $i
@@ -98,6 +102,6 @@ do # Check to see if it exists. Don't overwrite unless -o given
 
    # Clean up
    cd ..
-#   rm -rf $i.tar*
+   rm -f $i.tar $TARBZ # Remove whatever is still lying around
 done
 
