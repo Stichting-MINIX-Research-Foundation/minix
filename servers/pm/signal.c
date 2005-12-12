@@ -113,6 +113,8 @@ PUBLIC int do_sigprocmask()
  *
  * The library interface must set SIG_INQUIRE if the 'act' argument
  * is NULL.
+ *
+ * KILL and STOP can't be masked.
  */
 
   int i;
@@ -122,6 +124,7 @@ PUBLIC int do_sigprocmask()
   switch (m_in.sig_how) {
       case SIG_BLOCK:
 	sigdelset((sigset_t *)&m_in.sig_set, SIGKILL);
+	sigdelset((sigset_t *)&m_in.sig_set, SIGSTOP);
 	for (i = 1; i <= _NSIG; i++) {
 		if (sigismember((sigset_t *)&m_in.sig_set, i))
 			sigaddset(&mp->mp_sigmask, i);
@@ -138,6 +141,7 @@ PUBLIC int do_sigprocmask()
 
       case SIG_SETMASK:
 	sigdelset((sigset_t *) &m_in.sig_set, SIGKILL);
+	sigdelset((sigset_t *) &m_in.sig_set, SIGSTOP);
 	mp->mp_sigmask = (sigset_t) m_in.sig_set;
 	check_pending(mp);
 	break;
