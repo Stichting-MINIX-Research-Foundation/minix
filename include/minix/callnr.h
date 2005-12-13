@@ -1,4 +1,4 @@
-#define NCALLS		  91	/* number of system calls allowed */
+#define NCALLS		  93	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 
@@ -82,3 +82,5 @@
 #define GETPRIORITY       88	/* to PM */
 #define SETPRIORITY       89	/* to PM */
 #define GETTIMEOFDAY      90	/* to PM */
+#define SETEUID		  91	/* to PM (and PM -> FS) */
+#define SETEGID		  92	/* to PM (and PM -> FS) */

@@ -107,6 +107,8 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 	do_getsetpriority,	/* 88 = getpriority */
 	do_getsetpriority,	/* 89 = setpriority */
 	do_time,	/* 90 = gettimeofday */
+	do_getset,	/* 91 = seteuid	*/
+	do_getset	/* 92 = setegid	*/
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

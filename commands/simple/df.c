@@ -40,9 +40,6 @@
 #define v12_super_block		super_block
 #define SUPER_V1		SUPER_MAGIC
 
-/* Only setuid() and setgid(). */
-#define seteuid(uid)	setuid(uid)
-#define setegid(gid)	setgid(gid)
 #endif
 
 #define ISDISK(mode)	S_ISBLK(mode)	/* || S_ISCHR for raw device??? */

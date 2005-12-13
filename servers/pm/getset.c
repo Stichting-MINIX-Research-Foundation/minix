@@ -42,21 +42,23 @@ PUBLIC int do_getset()
 			rmp->mp_reply.reply_res3 = mproc[m_in.procnr].mp_pid;
 		break;
 
+	case SETEUID:
 	case SETUID:
 		if (rmp->mp_realuid != (uid_t) m_in.usr_id && 
 				rmp->mp_effuid != SUPER_USER)
 			return(EPERM);
-		rmp->mp_realuid = (uid_t) m_in.usr_id;
+		if(call_nr == SETUID) rmp->mp_realuid = (uid_t) m_in.usr_id;
 		rmp->mp_effuid = (uid_t) m_in.usr_id;
 		tell_fs(SETUID, who, rmp->mp_realuid, rmp->mp_effuid);
 		r = OK;
 		break;
 
+	case SETEGID:
 	case SETGID:
 		if (rmp->mp_realgid != (gid_t) m_in.grp_id && 
 				rmp->mp_effuid != SUPER_USER)
 			return(EPERM);
-		rmp->mp_realgid = (gid_t) m_in.grp_id;
+		if(call_nr == SETGID) rmp->mp_realgid = (gid_t) m_in.grp_id;
 		rmp->mp_effgid = (gid_t) m_in.grp_id;
 		tell_fs(SETGID, who, rmp->mp_realgid, rmp->mp_effgid);
 		r = OK;
