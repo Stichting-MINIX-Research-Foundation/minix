@@ -32,44 +32,20 @@ char *path;			/* the path name to be parsed */
  * return NIL_INODE as function value and an error code in 'err_code'.
  */
 
-  register struct inode *ldip, *rip, *old_workdir_ip;
-  char string[NAME_MAX];      /* hold 1 path component name here */
-  int slink_found;
-  int loops = 0;	      /* count symlink traversals */
+  register struct inode *ldip, *rip;
+  char string[NAME_MAX];	/* hold 1 path component name here */
 
-  old_workdir_ip = fp->fp_workdir; /* save the current working directory */
+  /* First open the path down to the final directory. */
+  if ( (ldip = last_dir(path, string)) == NIL_INODE) {
+	return(NIL_INODE);	/* we couldn't open final directory */
+	}
 
-  do {
-      slink_found = FALSE;
+  /* The path consisting only of "/" is a special case, check for it. */
+  if (string[0] == '\0') return(ldip);
 
-      /* First open the path down to the final directory. */
-      if ( (ldip = last_dir(path, string)) == NIL_INODE) {
-              fp->fp_workdir = old_workdir_ip;
-              return(NIL_INODE);      /* we couldn't open final directory */
-      }
-
-      /* The path consisting only of "/" is a special case, check for it. */
-      if (string[0] == '\0') return(ldip);
-
-      /* Get final component of the path. */
-      rip = advance(ldip, string);
-
-      if (rip != NIL_INODE && (rip->i_mode & I_TYPE) == I_SYMBOLIC_LINK) {
-              if (++loops > MAX_SYM_LOOPS) {
-                      put_inode(rip);
-                      put_inode(ldip);
-                      fp->fp_workdir = old_workdir_ip;
-                      err_code = ELOOP;
-                      return(NIL_INODE);
-              }
-              rip = slink_traverse(rip, path, string, ldip);
-              slink_found = TRUE;
-              fp->fp_workdir = rip; /* cd to link's starting dir */
-              put_inode(rip);
-      }
-      put_inode(ldip);
-  } while (slink_found);
-  fp->fp_workdir = old_workdir_ip;
+  /* Get final component of the path. */
+  rip = advance(ldip, string);
+  put_inode(ldip);
   return(rip);
 }
 
@@ -91,7 +67,6 @@ char string[NAME_MAX];		/* the final component is returned here */
   register struct inode *rip;
   register char *new_name;
   register struct inode *new_ip;
-  int loops = 0;	/* count symlink traversals */
 
   /* Is the path absolute or relative?  Initialize 'rip' accordingly. */
   rip = (*path == '/' ? fp->fp_rootdir : fp->fp_workdir);
@@ -124,24 +99,11 @@ char string[NAME_MAX];		/* the final component is returned here */
 
 	/* There is more path.  Keep parsing. */
 	new_ip = advance(rip, string);
-	if (new_ip == NIL_INODE) {
-		put_inode(rip);
-		return(NIL_INODE);
-	}
-	
+	put_inode(rip);		/* rip either obsolete or irrelevant */
+	if (new_ip == NIL_INODE) return(NIL_INODE);
+
 	/* The call to advance() succeeded.  Fetch next component. */
-	if ((new_ip->i_mode & I_TYPE) == I_SYMBOLIC_LINK) {
-		if (++loops > MAX_SYM_LOOPS) {
-			err_code = ELOOP;
-			put_inode(rip);
-			put_inode(new_ip);
-			return(NIL_INODE);
-		}
-		new_ip = slink_traverse(new_ip, path, string, rip);
-	} else
-		path = new_name;
-	
-	put_inode(rip);         /* rip either obsolete or irrelevant */
+	path = new_name;
 	rip = new_ip;
   }
 }
@@ -414,43 +376,3 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
   }
   return(OK);
 }
-
-
-/*===========================================================================*
- *                            slink_traverse                               *
- *===========================================================================*/
-PUBLIC struct inode *slink_traverse(rip, path, string, ldip)
-register struct inode *rip;
-char *path;
-char *string;
-register struct inode *ldip;
-{
-
-  /* copy path out of symlink's disk block -- return inode pointer to
-   * the directory that the path infers */
-
-  register char *p, *q;
-  char temp[PATH_MAX];
-  struct buf *bp;
-  block_t b;
-
-  b = read_map(rip, 0);
-  bp = get_block(rip->i_dev, b, NORMAL); /* get the pathname block */
-  memcpy(temp, bp->b_data, rip->i_size);
-  temp[rip->i_size] = '\0';
-  put_block(bp, NORMAL);
-
-  q = strstr(path, string);
-  if ((p = strchr(q, '/')) != NULL && (q + strlen(string)) == p) {
-	strcat(temp, p);
-  }
-  strcpy(path, temp);
-
-  put_inode(rip);
-  rip = (*path == '/') ?  fp->fp_rootdir : ldip;
-
-  dup_inode(rip);
-  return (rip);
-}
-
-/** path.c **/
