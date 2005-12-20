@@ -65,7 +65,6 @@ struct stat {
 #define S_ISBLK(m)	(((m) & S_IFMT) == S_IFBLK)	/* is a block spec */
 #define S_ISLNK(m)	(((m) & S_IFMT) == S_IFLNK)	/* is a symlink */
 #define S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)	/* is a pipe/FIFO */
-#define S_ISLNK(m)      (((m) & S_IFMT) == S_IFLNK)     /* is a sym link */
 
 /* Function Prototypes. */
 _PROTOTYPE( int chmod, (const char *_path, _mnx_Mode_t _mode)		);

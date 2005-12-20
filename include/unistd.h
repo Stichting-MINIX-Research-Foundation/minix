@@ -139,6 +139,7 @@ _PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
 
 /* Open Group Base Specifications Issue 6 (not complete) */
 _PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
+_PROTOTYPE( int readlink, (const char *, char *, int)			);
 _PROTOTYPE( int getopt, (int _argc, char **_argv, char *_opts)		);
 extern char *optarg;
 extern int optind, opterr, optopt;
@@ -173,6 +174,8 @@ _PROTOTYPE( int getpprocnr, (void)					);
 _PROTOTYPE( int findproc, (char *proc_name, int *proc_nr)		);
 _PROTOTYPE( int allocmem, (phys_bytes size, phys_bytes *base)		);
 _PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
+_PROTOTYPE( int truncate, (const char *_path, off_t _length)		);
+_PROTOTYPE( int ftruncate, (int _fd, off_t _length)			);
 #define DEV_MAP 1
 #define DEV_UNMAP 2
 #define mapdriver(driver, device, style) devctl(DEV_MAP, driver, device, style)

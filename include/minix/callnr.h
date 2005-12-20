@@ -82,5 +82,7 @@
 #define GETPRIORITY       88	/* to PM */
 #define SETPRIORITY       89	/* to PM */
 #define GETTIMEOFDAY      90	/* to PM */
-#define SETEUID		  91	/* to PM (and PM -> FS) */
-#define SETEGID		  92	/* to PM (and PM -> FS) */
+#define SETEUID		  91	/* to PM */
+#define SETEGID		  92	/* to PM */
+#define TRUNCATE	  93	/* to FS */
+#define FTRUNCATE	  94	/* to FS */
