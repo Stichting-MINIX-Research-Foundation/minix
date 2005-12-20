@@ -47,6 +47,7 @@ libc_OBJECTS	= \
 	_kill.o \
 	_link.o \
 	_lseek.o \
+	_lstat.o \
 	_mkdir.o \
 	_mkfifo.o \
 	_mknod.o \
@@ -62,6 +63,7 @@ libc_OBJECTS	= \
 	_rename.o \
 	_rewinddir.o \
 	_rmdir.o \
+	_readlink.o \
 	_select.o \
 	_setgid.o \
 	_setsid.o \
@@ -76,6 +78,7 @@ libc_OBJECTS	= \
 	_sleep.o \
 	_stat.o \
 	_stime.o \
+	_symlink.o \
 	_sync.o \
 	_tcdrain.o \
 	_tcflow.o \
@@ -85,6 +88,7 @@ libc_OBJECTS	= \
 	_tcsetattr.o \
 	_time.o \
 	_times.o \
+	_truncate.o \
 	_umask.o \
 	_umount.o \
 	_uname.o \
@@ -93,14 +97,11 @@ libc_OBJECTS	= \
 	_wait.o \
 	_waitpid.o \
 	_write.o \
-	gettimeofday.o \
+	getloadavg.o \
 	getopt.o \
-	_lstat.o \
+	gettimeofday.o \
 	priority.o \
-	_readlink.o \
-	_symlink.o \
 	usleep.o \
-	getloadavg.o
 
 include ../Makefile.inc
 

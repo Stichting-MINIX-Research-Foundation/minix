@@ -49,7 +49,7 @@ const char *_sys_errlist[] = {
 	"No locks available",		/* ENOLCK */
 	"Function not implemented",	/* ENOSYS */
 	"Directory not empty",		/* ENOTEMPTY */
-	unknown,			/* 40 */
+	"Too many levels of symbolic links",	/* ELOOP */
 	unknown,			/* 41 */
 	unknown,			/* 42 */
 	unknown,			/* 43 */

@@ -101,6 +101,7 @@ libc_OBJECTS	= \
 	tcsetattr.o \
 	time.o \
 	times.o \
+	truncate.o \
 	umask.o \
 	umount.o \
 	uname.o \
