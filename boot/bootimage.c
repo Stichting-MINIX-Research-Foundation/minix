@@ -500,6 +500,12 @@ void exec_image(char *image)
 			a_data+= a_text;
 		}
 
+		/* Read the data segment. */
+		if (!get_segment(&vsec, &a_data, &addr, limit)) return;
+
+		/* Make space for bss and stack unless... */
+		if (i != KERNEL && (k_flags & K_CLAIM)) a_bss= a_stack= 0;
+
 		printf("%07lx  %07lx %8ld %8ld %8ld",
 			procp->cs, procp->ds,
 			hdr.process.a_text, hdr.process.a_data,
@@ -508,12 +514,6 @@ void exec_image(char *image)
 		if (k_flags & K_CHMEM) printf(" %8ld", a_stack);
 
 		printf("  %s\n", hdr.name);
-
-		/* Read the data segment. */
-		if (!get_segment(&vsec, &a_data, &addr, limit)) return;
-
-		/* Make space for bss and stack unless... */
-		if (i != KERNEL && (k_flags & K_CLAIM)) a_bss= a_stack= 0;
 
 		/* Note that a_data may be negative now, but we can look at it
 		 * as -a_data bss bytes.
