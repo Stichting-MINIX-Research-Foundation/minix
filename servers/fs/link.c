@@ -36,7 +36,7 @@ PUBLIC int do_link()
 {
 /* Perform the link(name1, name2) system call. */
 
-  register struct inode *ip, *rip;
+  struct inode *ip, *rip;
   register int r;
   char string[NAME_MAX];
   struct inode *new_ip;
@@ -69,7 +69,7 @@ PUBLIC int do_link()
 
   /* If 'name2' exists in full (even if no space) set 'r' to error. */
   if (r == OK) {
-	if ( (new_ip = advance(ip, string)) == NIL_INODE) {
+	if ( (new_ip = advance(&ip, string)) == NIL_INODE) {
 		r = err_code;
 		if (r == ENOENT) r = OK;
 	} else {
@@ -121,7 +121,7 @@ PUBLIC int do_unlink()
 
   /* The last directory exists.  Does the file also exist? */
   r = OK;
-  if ( (rip = advance(rldirp, string)) == NIL_INODE) r = err_code;
+  if ( (rip = advance(&rldirp, string)) == NIL_INODE) r = err_code;
 
   /* If error, return inode. */
   if (r != OK) {
@@ -178,12 +178,12 @@ PUBLIC int do_rename()
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   if ( (old_dirp = last_dir(user_path, old_name))==NIL_INODE) return(err_code);
 
-  if ( (old_ip = advance(old_dirp, old_name)) == NIL_INODE) r = err_code;
+  if ( (old_ip = advance(&old_dirp, old_name)) == NIL_INODE) r = err_code;
 
   /* See if 'name2' (new name) exists.  Get dir and file inodes. */
   if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) r = err_code;
   if ( (new_dirp = last_dir(user_path, new_name)) == NIL_INODE) r = err_code;
-  new_ip = advance(new_dirp, new_name);	/* not required to exist */
+  new_ip = advance(&new_dirp, new_name);	/* not required to exist */
 
   if (old_ip != NIL_INODE)
 	odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY);  /* TRUE iff dir */
@@ -200,7 +200,7 @@ PUBLIC int do_rename()
 				r = EINVAL;
 				break;
 			}
-			next_new_superdirp = advance(new_superdirp, dot2);
+			next_new_superdirp = advance(&new_superdirp, dot2);
 			put_inode(new_superdirp);
 			if (next_new_superdirp == new_superdirp)
 				break;	/* back at system root directory */
@@ -312,10 +312,12 @@ PUBLIC int do_rename()
 }
 
 /*===========================================================================*
- *				truncate				     *
+ *				truncate_inode				     *
  *===========================================================================*/
-PUBLIC void truncate(rip)
+PUBLIC void truncate_inode(rip, newsize, resetzones)
 register struct inode *rip;	/* pointer to inode to be truncated */
+off_t newsize;			/* inode must become this size (ignored) */
+int resetzones;			/* zone references cleared on disk (ignored) */
 {
 /* Remove all the zones from the inode 'rip' and mark it dirty. */
 

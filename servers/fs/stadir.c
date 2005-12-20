@@ -7,12 +7,16 @@
  *   do_stat:	perform the STAT system call
  *   do_fstat:	perform the FSTAT system call
  *   do_fstatfs: perform the FSTATFS system call
+ *   do_lstat:  perform the LSTAT system call
+ *   do_rdlink: perform the RDLNK system call
  */
 
 #include "fs.h"
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <minix/com.h>
+#include <string.h>
+#include "buf.h"
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"
@@ -235,5 +239,57 @@ PUBLIC int do_fstatfs()
   		who, (vir_bytes) m_in.buffer, (phys_bytes) sizeof(st));
 
    return(r);
+}
+
+/*===========================================================================*
+ *                             do_lstat                                     *
+ *===========================================================================*/
+PUBLIC int do_lstat()
+{
+/* Perform the lstat(name, buf) system call. */
+
+  register int r;              /* return value */
+  register struct inode *rip;  /* target inode */
+
+  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+  if ((rip = parse_path(user_path, (char *) 0, EAT_PATH_OPAQUE)) == NIL_INODE)
+       return(err_code);
+  r = stat_inode(rip, NIL_FILP, m_in.name2);
+  put_inode(rip);
+  return(r);
+}
+
+/*===========================================================================*
+ *                             do_rdlink                                    *
+ *===========================================================================*/
+PUBLIC int do_rdlink()
+{
+/* Perform the readlink(name, buf) system call. */
+
+  register int r;              /* return value */
+  block_t b;                   /* block containing link text */
+  struct buf *bp;              /* buffer containing link text */
+  register struct inode *rip;  /* target inode */
+
+  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+  if ((rip = parse_path(user_path, (char *) 0, EAT_PATH_OPAQUE)) == NIL_INODE)
+       return(err_code);
+
+  r = EACCES;
+  if (S_ISLNK(rip->i_mode) && (b = read_map(rip, (off_t) 0)) != NO_BLOCK) {
+       if (m_in.name2_length <= 0) r = EINVAL;
+       else if (m_in.name2_length < rip->i_size) r = ERANGE;
+       else {
+               bp = get_block(rip->i_dev, b, NORMAL);
+               r = sys_vircopy(SELF, D, (vir_bytes) bp->b_data,
+		who, D, (vir_bytes) m_in.name2, (vir_bytes) rip->i_size);
+
+               if (r == OK) r = rip->i_size;
+               put_block(bp, DIRECTORY_BLOCK);
+       }
+  }
+
+  put_inode(rip);
+  return(r);
 }
 

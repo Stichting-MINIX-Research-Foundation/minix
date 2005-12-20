@@ -6,11 +6,13 @@
  *   last_dir:	 find the final directory on a given path
  *   advance:	 parse one component of a path name
  *   search_dir: search a directory for a string and return its inode number
+ *
  */
 
 #include "fs.h"
 #include <string.h>
 #include <minix/callnr.h>
+#include <sys/stat.h>
 #include "buf.h"
 #include "file.h"
 #include "fproc.h"
@@ -22,51 +24,30 @@ PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */
 
 FORWARD _PROTOTYPE( char *get_name, (char *old_name, char string [NAME_MAX]) );
 
-/*===========================================================================*
- *				eat_path				     *
- *===========================================================================*/
-PUBLIC struct inode *eat_path(path)
-char *path;			/* the path name to be parsed */
-{
-/* Parse the path 'path' and put its inode in the inode table. If not possible,
- * return NIL_INODE as function value and an error code in 'err_code'.
- */
-
-  register struct inode *ldip, *rip;
-  char string[NAME_MAX];	/* hold 1 path component name here */
-
-  /* First open the path down to the final directory. */
-  if ( (ldip = last_dir(path, string)) == NIL_INODE) {
-	return(NIL_INODE);	/* we couldn't open final directory */
-	}
-
-  /* The path consisting only of "/" is a special case, check for it. */
-  if (string[0] == '\0') return(ldip);
-
-  /* Get final component of the path. */
-  rip = advance(ldip, string);
-  put_inode(ldip);
-  return(rip);
-}
+FORWARD _PROTOTYPE( struct inode *ltraverse, (struct inode *rip,
+                       char *path, char *suffix, struct inode *ldip)   );
 
 /*===========================================================================*
- *				last_dir				     *
+ *                             parse_path                                   *
  *===========================================================================*/
-PUBLIC struct inode *last_dir(path, string)
-char *path;			/* the path name to be parsed */
-char string[NAME_MAX];		/* the final component is returned here */
+PUBLIC struct inode *parse_path(path, string, action)
+char *path;                    /* the path name to be parsed */
+char string[NAME_MAX];         /* the final component is returned here */
+int action;                    /* action on last part of path */
 {
-/* Given a path, 'path', located in the fs address space, parse it as
- * far as the last directory, fetch the inode for the last directory into
- * the inode table, and return a pointer to the inode.  In
- * addition, return the final component of the path in 'string'.
- * If the last directory can't be opened, return NIL_INODE and
- * the reason for failure in 'err_code'.
+/* This is the actual code for last_dir and eat_path. Return the inode of
+ * the last directory and the name of object within that directory, or the
+ * inode of the last object (an empty name will be returned). Names are
+ * returned in string. If string is null the name is discarded. The action
+ * code determines how "last" is defined. If an error occurs, NIL_INODE
+ * will be returned with an error code in err_code.
  */
 
-  register struct inode *rip;
-  register char *new_name;
-  register struct inode *new_ip;
+  struct inode *rip, *dir_ip;
+  char *new_name;
+  struct inode *new_ip;
+  int symloop;
+  char lstring[NAME_MAX];
 
   /* Is the path absolute or relative?  Initialize 'rip' accordingly. */
   rip = (*path == '/' ? fp->fp_rootdir : fp->fp_workdir);
@@ -79,6 +60,9 @@ char string[NAME_MAX];		/* the final component is returned here */
 
   dup_inode(rip);		/* inode will be returned with put_inode */
 
+  symloop = 0;                 /* symbolic link traversal count */
+  if (string == (char *) 0) string = lstring;
+
   /* Scan the path component by component. */
   while (TRUE) {
 	/* Extract one component. */
@@ -86,7 +70,7 @@ char string[NAME_MAX];		/* the final component is returned here */
 		put_inode(rip);	/* bad path in user space */
 		return(NIL_INODE);
 	}
-	if (*new_name == '\0') {
+	if (*new_name == '\0' && (action & PATH_PENULTIMATE)) {
 		if ( (rip->i_mode & I_TYPE) == I_DIRECTORY) {
 			return(rip);	/* normal exit */
 		} else {
@@ -98,14 +82,128 @@ char string[NAME_MAX];		/* the final component is returned here */
         }
 
 	/* There is more path.  Keep parsing. */
-	new_ip = advance(rip, string);
-	put_inode(rip);		/* rip either obsolete or irrelevant */
-	if (new_ip == NIL_INODE) return(NIL_INODE);
+	dir_ip = rip;
+	rip = advance(&dir_ip, string);
 
-	/* The call to advance() succeeded.  Fetch next component. */
-	path = new_name;
-	rip = new_ip;
+       if (rip == NIL_INODE) {
+               if (*new_name == '\0' && (action & PATH_NONSYMBOLIC) != 0)
+                       return(dir_ip);
+               else {
+                       put_inode(dir_ip);
+                       return(NIL_INODE);
+               }
+       }
+
+       /* The call to advance() succeeded.  Fetch next component. */
+       if (S_ISLNK(rip->i_mode)) {
+               if (*new_name != '\0' || (action & PATH_OPAQUE) == 0) {
+                       if (*new_name != '\0') new_name--;
+                       rip = ltraverse(rip, path, new_name, dir_ip);
+                       put_inode(dir_ip);
+                       if (++symloop > SYMLOOP) {
+                               err_code = ELOOP;
+                               put_inode(rip);
+                               rip = NIL_INODE;
+                       }
+                       if (rip == NIL_INODE) return(NIL_INODE);
+                       continue;
+               }
+       } else if (*new_name != '\0') {
+               put_inode(dir_ip);
+               path = new_name;
+               continue;
+	}
+      
+       /* Either last name reached or symbolic link is opaque */
+       if ((action & PATH_NONSYMBOLIC) != 0) {
+               put_inode(rip);
+               return(dir_ip);
+       } else {
+               put_inode(dir_ip);
+               return(rip);
+       }
   }
+}
+
+/*===========================================================================*
+ *                             eat_path                                     *
+ *===========================================================================*/
+PUBLIC struct inode *eat_path(path)
+char *path;                    /* the path name to be parsed */
+{
+ /* Parse the path 'path' and put its inode in the inode table. If not possible,
+  * return NIL_INODE as function value and an error code in 'err_code'.
+  */
+  
+  return parse_path(path, (char *) 0, EAT_PATH);
+}
+
+/*===========================================================================*
+ *                             last_dir                                      *
+ *===========================================================================*/
+PUBLIC struct inode *last_dir(path, string)
+char *path;                    /* the path name to be parsed */
+char string[NAME_MAX];         /* the final component is returned here */
+{
+/* Given a path, 'path', located in the fs address space, parse it as
+ * far as the last directory, fetch the inode for the last directory into
+ * the inode table, and return a pointer to the inode.  In
+ * addition, return the final component of the path in 'string'.
+ * If the last directory can't be opened, return NIL_INODE and
+ * the reason for failure in 'err_code'.
+ */
+  
+  return parse_path(path, string, LAST_DIR);
+}
+
+/*===========================================================================*
+ *                             ltraverse                                    *
+ *===========================================================================*/
+PRIVATE struct inode *ltraverse(rip, path, suffix, ldip)
+register struct inode *rip;    /* symbolic link */
+char *path;                    /* path containing link */
+char *suffix;                  /* suffix following link within path */
+register struct inode *ldip;   /* directory containing link */
+{
+/* Traverse a symbolic link. Copy the link text from the inode and insert
+ * the text into the path. Return the inode of base directory and the
+ * ammended path. The symbolic link inode is always freed. The inode
+ * returned is already duplicated. NIL_INODE is returned on error.
+ */
+  
+  block_t b;                   /* block containing link text */
+  struct inode *bip;           /* inode of base directory */
+  struct buf *bp;              /* buffer containing link text */
+  size_t sl;                   /* length of link */
+  size_t tl;                   /* length of suffix */
+  char *sp;                    /* start of link text */
+  char *ep;                    /* end of conditional segment */
+
+  bip = NIL_INODE;
+  bp  = NIL_BUF;
+
+  if ((b = read_map(rip, (off_t) 0)) != NO_BLOCK) {
+       bp = get_block(rip->i_dev, b, NORMAL);
+       sl = rip->i_size;
+       sp = bp->b_data;
+
+       /* Insert symbolic text into path name. */
+       tl = strlen(suffix);
+       if (sl > 0 && sl + tl <= PATH_MAX-1) {
+               memmove(path+sl, suffix, tl);
+               memmove(path, sp, sl);
+               path[sl+tl] = 0;
+               dup_inode(bip = path[0] == '/' ? fp->fp_rootdir : ldip);
+       }
+  }
+  
+  put_block(bp, DIRECTORY_BLOCK);
+  put_inode(rip);
+  if (bip == NIL_INODE)
+  {
+       err_code = ENOENT;
+  }
+  return (bip);
 }
 
 /*===========================================================================*
@@ -152,8 +250,8 @@ char string[NAME_MAX];		/* component extracted from 'old_name' */
 /*===========================================================================*
  *				advance					     *
  *===========================================================================*/
-PUBLIC struct inode *advance(dirp, string)
-struct inode *dirp;		/* inode for directory to be searched */
+PUBLIC struct inode *advance(pdirp, string)
+struct inode **pdirp;		/* inode for directory to be searched */
 char string[NAME_MAX];		/* component name to look for */
 {
 /* Given a directory and a component of a path, look up the component in
@@ -161,12 +259,13 @@ char string[NAME_MAX];		/* component name to look for */
  * slot.  If it can't be done, return NIL_INODE.
  */
 
-  register struct inode *rip;
-  struct inode *rip2;
+  register struct inode *rip, *dirp;
   register struct super_block *sp;
   int r, inumb;
   dev_t mnt_dev;
   ino_t numb;
+
+  dirp = *pdirp;
 
   /* If 'string' is empty, yield same inode straight away. */
   if (string[0] == '\0') { return(get_inode(dirp->i_dev, (int) dirp->i_num)); }
@@ -189,20 +288,30 @@ char string[NAME_MAX];		/* component name to look for */
 	return(NIL_INODE);
 	}
 
+  /* The following test is for "mountpoint/.." where mountpoint is a
+   * mountpoint. ".." will refer to the root of the mounted filesystem,
+   * but has to become a reference to the parent of the 'mountpoint'
+   * directory.
+   *
+   * This case is recognized by the looked up name pointing to a
+   * root inode, and the directory in which it is held being a
+   * root inode, _and_ the name[1] being '.'. (This is a test for '..'
+   * and excludes '.'.)
+   */
   if (rip->i_num == ROOT_INODE)
 	if (dirp->i_num == ROOT_INODE) {
 	    if (string[1] == '.') {
 		for (sp = &super_block[1]; sp < &super_block[NR_SUPERS]; sp++){
 			if (sp->s_dev == rip->i_dev) {
 				/* Release the root inode.  Replace by the
-				 * inode mounted on.
+				 * inode mounted on. Update parent.
 				 */
 				put_inode(rip);
+				put_inode(dirp);
 				mnt_dev = sp->s_imount->i_dev;
 				inumb = (int) sp->s_imount->i_num;
-				rip2 = get_inode(mnt_dev, inumb);
-				rip = advance(rip2, string);
-				put_inode(rip2);
+				dirp = *pdirp = get_inode(mnt_dev, inumb);
+				rip = advance(pdirp, string);
 				break;
 			}
 		}
@@ -259,7 +368,9 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
   int extended = 0;
 
   /* If 'ldir_ptr' is not a pointer to a dir inode, error. */
-  if ( (ldir_ptr->i_mode & I_TYPE) != I_DIRECTORY) return(ENOTDIR);
+  if ( (ldir_ptr->i_mode & I_TYPE) != I_DIRECTORY)  {
+	return(ENOTDIR);
+   }
 
   r = OK;
 

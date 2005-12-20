@@ -48,6 +48,18 @@
 #define DELETE             2 /* tells search_dir to delete entry */
 #define IS_EMPTY           3 /* tells search_dir to ret. OK or ENOTEMPTY */  
 
+#define PATH_TRANSPARENT 000   /* parse_path stops at final object */
+#define PATH_PENULTIMATE 001   /* parse_path stops at last but one name */
+#define PATH_OPAQUE      002   /* parse_path stops at final name */
+#define PATH_NONSYMBOLIC 004   /* parse_path scans final name if symbolic */
+#define PATH_STRIPDOT    010   /* parse_path strips /. from path */
+#define EAT_PATH         PATH_TRANSPARENT
+#define EAT_PATH_OPAQUE  PATH_OPAQUE 
+#define LAST_DIR         PATH_PENULTIMATE
+#define LAST_DIR_NOTDOT  PATH_PENULTIMATE | PATH_STRIPDOT
+#define LAST_DIR_EATSYM  PATH_NONSYMBOLIC
+#define SYMLOOP		16
+
 #define CLEAN              0	/* disk and memory copies identical */
 #define DIRTY              1	/* disk and memory copies differ */
 #define ATIME            002	/* set if atime field needs updating */

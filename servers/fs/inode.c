@@ -86,12 +86,12 @@ register struct inode *rip;	/* pointer to inode to be released */
   if (--rip->i_count == 0) {	/* i_count == 0 means no one is using it now */
 	if (rip->i_nlinks == 0) {
 		/* i_nlinks == 0 means free the inode. */
-		truncate(rip);	/* return all the disk blocks */
+		truncate_inode(rip, 0, 0);	/* return all the disk blocks */
 		rip->i_mode = I_NOT_ALLOC;	/* clear I_TYPE field */
 		rip->i_dirt = DIRTY;
 		free_inode(rip->i_dev, rip->i_num);
 	} else {
-		if (rip->i_pipe == I_PIPE) truncate(rip);
+		if (rip->i_pipe == I_PIPE) truncate_inode(rip, 0, 0);
 	}
 	rip->i_pipe = NO_PIPE;  /* should always be cleared */
 	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);

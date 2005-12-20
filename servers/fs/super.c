@@ -130,7 +130,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   k = conv2(sp->s_native, (int) bp->b_bitmap[word]);
   if (!(k & mask)) {
 	panic(__FILE__,map == IMAP ? "tried to free unused inode" :
-	      "tried to free unused block", NO_NUM);
+	      "tried to free unused block", bit_returned);
   }
 
   k &= ~mask;

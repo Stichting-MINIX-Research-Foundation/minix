@@ -13,6 +13,7 @@
 #include "fs.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "buf.h"
@@ -29,8 +30,8 @@ PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
 FORWARD _PROTOTYPE( int pipe_open, (struct inode *rip,mode_t bits,int oflags));
-FORWARD _PROTOTYPE( struct inode *new_node, (char *path, mode_t bits,
-							zone_t z0)	);
+FORWARD _PROTOTYPE( struct inode *new_node, (struct inode **ldirp, 
+	char *path, mode_t bits, zone_t z0, int opaque, char *string));
 
 /*===========================================================================*
  *				do_creat				     *
@@ -75,7 +76,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 {
 /* Common code from do_creat and do_open. */
 
-  register struct inode *rip;
+  struct inode *rip, *ldirp;
   int r, b, exist = TRUE;
   dev_t dev;
   mode_t bits;
@@ -92,8 +93,9 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   if (oflags & O_CREAT) {
   	/* Create a new inode by calling new_node(). */
         omode = I_REGULAR | (omode & ALL_MODES & fp->fp_umask);
-    	rip = new_node(user_path, omode, NO_ZONE);
+    	rip = new_node(&ldirp, user_path, omode, NO_ZONE, oflags&O_EXCL, NULL);
     	r = err_code;
+        put_inode(ldirp);
     	if (r == OK) exist = FALSE;      /* we just created the file */
 	else if (r != EEXIST) return(r); /* other error */
 	else exist = !(oflags & O_EXCL); /* file exists, if the O_EXCL 
@@ -119,7 +121,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 			/* Truncate regular file if O_TRUNC. */
 			if (oflags & O_TRUNC) {
 				if ((r = forbidden(rip, W_BIT)) !=OK) break;
-				truncate(rip);
+				truncate_inode(rip, 0, 0);
 				wipe_inode(rip);
 				/* Send the inode from the inode cache to the
 				 * block cache, so it gets written on the next
@@ -195,29 +197,43 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-PRIVATE struct inode *new_node(char *path, mode_t bits,	zone_t z0)
+PRIVATE struct inode *new_node(struct inode **ldirp,
+	char *path, mode_t bits, zone_t z0, int opaque, char *parsed)
 {
 /* New_node() is called by common_open(), do_mknod(), and do_mkdir().  
  * In all cases it allocates a new inode, makes a directory entry for it on 
  * the path 'path', and initializes it.  It returns a pointer to the inode if 
  * it can do this; otherwise it returns NIL_INODE.  It always sets 'err_code'
  * to an appropriate value (OK or an error code).
+ * 
+ * The parsed path rest is returned in 'parsed' if parsed is nonzero. It
+ * has to hold at least NAME_MAX bytes.
  */
 
-  register struct inode *rlast_dir_ptr, *rip;
+  register struct inode *rip;
   register int r;
   char string[NAME_MAX];
 
-  /* See if the path can be opened down to the last directory. */
-  if ((rlast_dir_ptr = last_dir(path, string)) == NIL_INODE) return(NIL_INODE);
+  *ldirp = parse_path(path, string, opaque ? LAST_DIR : LAST_DIR_EATSYM)
+;       
+  if (*ldirp == NIL_INODE) return(NIL_INODE);
 
   /* The final directory is accessible. Get final component of the path. */
-  rip = advance(rlast_dir_ptr, string);
+  rip = advance(ldirp, string);
+
+  if (S_ISDIR(bits) && 
+      (*ldirp)->i_nlinks >= ((*ldirp)->i_sp->s_version == V1 ?
+      CHAR_MAX : SHRT_MAX)) {
+        /* New entry is a directory, alas we can't give it a ".." */
+        put_inode(rip);
+        err_code = EMLINK;
+        return(NIL_INODE);
+  }
+
   if ( rip == NIL_INODE && err_code == ENOENT) {
 	/* Last path component does not exist.  Make new directory entry. */
-	if ( (rip = alloc_inode(rlast_dir_ptr->i_dev, bits)) == NIL_INODE) {
+	if ( (rip = alloc_inode((*ldirp)->i_dev, bits)) == NIL_INODE) {
 		/* Can't creat new inode: out of inodes. */
-		put_inode(rlast_dir_ptr);
 		return(NIL_INODE);
 	}
 
@@ -230,8 +246,7 @@ PRIVATE struct inode *new_node(char *path, mode_t bits,	zone_t z0)
 	rw_inode(rip, WRITING);		/* force inode to disk now */
 
 	/* New inode acquired.  Try to make directory entry. */
-	if ((r = search_dir(rlast_dir_ptr, string, &rip->i_num,ENTER)) != OK) {
-		put_inode(rlast_dir_ptr);
+	if ((r = search_dir(*ldirp, string, &rip->i_num,ENTER)) != OK) {
 		rip->i_nlinks--;	/* pity, have to free disk inode */
 		rip->i_dirt = DIRTY;	/* dirty inodes are written out */
 		put_inode(rip);	/* this call frees the inode */
@@ -247,8 +262,12 @@ PRIVATE struct inode *new_node(char *path, mode_t bits,	zone_t z0)
 		r = err_code;
   }
 
-  /* Return the directory inode and exit. */
-  put_inode(rlast_dir_ptr);
+  if(parsed) { /* Give the caller the parsed string if requested. */
+	strncpy(parsed, string, NAME_MAX-1);
+	parsed[NAME_MAX-1] = '\0';
+  }
+
+  /* The caller has to return the directory inode (*ldirp).  */
   err_code = r;
   return(rip);
 }
@@ -288,15 +307,16 @@ PUBLIC int do_mknod()
 /* Perform the mknod(name, mode, addr) system call. */
 
   register mode_t bits, mode_bits;
-  struct inode *ip;
+  struct inode *ip, *ldirp;
 
   /* Only the super_user may make nodes other than fifos. */
   mode_bits = (mode_t) m_in.mk_mode;		/* mode of the inode */
   if (!super_user && ((mode_bits & I_TYPE) != I_NAMED_PIPE)) return(EPERM);
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   bits = (mode_bits & I_TYPE) | (mode_bits & ALL_MODES & fp->fp_umask);
-  ip = new_node(user_path, bits, (zone_t) m_in.mk_z0);
+  ip = new_node(&ldirp, user_path, bits, (zone_t) m_in.mk_z0, TRUE, NULL);
   put_inode(ip);
+  put_inode(ldirp);
   return(err_code);
 }
 
@@ -311,24 +331,16 @@ PUBLIC int do_mkdir()
   ino_t dot, dotdot;		/* inode numbers for . and .. */
   mode_t bits;			/* mode bits for the new inode */
   char string[NAME_MAX];	/* last component of the new dir's path name */
-  register struct inode *rip, *ldirp;
+  struct inode *rip, *ldirp;
 
-  /* Check to see if it is possible to make another link in the parent dir. */
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  ldirp = last_dir(user_path, string);	/* pointer to new dir's parent */
-  if (ldirp == NIL_INODE) return(err_code);
-  if (ldirp->i_nlinks >= (ldirp->i_sp->s_version == V1 ?
-  	 CHAR_MAX : SHRT_MAX)) {
-	put_inode(ldirp);	/* return parent */
-	return(EMLINK);
-  }
 
   /* Next make the inode. If that fails, return error code. */
   bits = I_DIRECTORY | (m_in.mode & RWX_MODES & fp->fp_umask);
-  rip = new_node(user_path, bits, (zone_t) 0);
+  rip = new_node(&ldirp, user_path, bits, (zone_t) 0, TRUE, string);
   if (rip == NIL_INODE || err_code == EEXIST) {
 	put_inode(rip);		/* can't make dir: it already exists */
-	put_inode(ldirp);	/* return parent too */
+	put_inode(ldirp);
 	return(err_code);
   }
 
@@ -349,8 +361,11 @@ PUBLIC int do_mkdir()
 	ldirp->i_nlinks++;	/* this accounts for .. */
 	ldirp->i_dirt = DIRTY;	/* mark parent's inode as dirty */
   } else {
-	/* It was not possible to enter . or .. probably disk was full. */
-	(void) search_dir(ldirp, string, (ino_t *) 0, DELETE);
+	/* It was not possible to enter . or .. probably disk was full -
+	 * links counts haven't been touched.
+	 */
+	if(search_dir(ldirp, string, (ino_t *) 0, DELETE) != OK)
+		panic(__FILE__, "Dir disappeared ", rip->i_num);
 	rip->i_nlinks--;	/* undo the increment done in new_node() */
   }
   rip->i_dirt = DIRTY;		/* either way, i_nlinks has changed */
@@ -471,3 +486,54 @@ PUBLIC int do_lseek()
   m_out.reply_l1 = pos;		/* insert the long into the output message */
   return(OK);
 }
+
+/*===========================================================================*
+ *                             do_slink                                     *
+ *===========================================================================*/
+PUBLIC int do_slink()
+{
+/* Perform the symlink(name1, name2) system call. */
+
+  register int r;              /* error code */
+  char string[NAME_MAX];       /* last component of the new dir's path name */
+  struct inode *sip;           /* inode containing symbolic link */
+  struct buf *bp;              /* disk buffer for link */
+  struct inode *ldirp;         /* directory containing link */
+
+  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK)
+       return(err_code);
+
+  if (m_in.name1_length <= 1 || m_in.name1_length > _MIN_BLOCK_SIZE+1)
+       return(ENAMETOOLONG);
+
+  /* Create the inode for the symlink. */
+  sip = new_node(&ldirp, user_path, (mode_t) (I_SYMBOLIC_LINK | RWX_MODES),
+                 (zone_t) 0, TRUE, string);
+
+  /* Allocate a disk block for the contents of the symlink.
+   * Copy contents of symlink (the name pointed to) into first disk block.
+   */
+  if ((r = err_code) == OK) {
+       r = (bp = new_block(sip, (off_t) 0)) == NIL_BUF
+           ? err_code
+           : ( sip->i_size = m_in.name1_length-1,
+               sys_vircopy(who, D, (vir_bytes) m_in.name1,
+                       SELF, D, (vir_bytes) bp->b_data,
+		       (vir_bytes) m_in.name1_length-1));
+  
+       put_block(bp, DIRECTORY_BLOCK); 	/* put_block() accepts NIL_BUF. */
+  
+       if (r != OK) {
+               sip->i_nlinks = 0;
+               if (search_dir(ldirp, string, (ino_t *) 0, DELETE) != OK)
+                       panic(__FILE__, "Symbolic link vanished", NO_NUM);
+       } 
+  }
+
+  /* put_inode() accepts NIL_INODE as a noop, so the below are safe. */
+  put_inode(sip);
+  put_inode(ldirp);
+
+  return(r);
+}
+

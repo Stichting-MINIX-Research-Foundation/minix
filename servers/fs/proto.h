@@ -74,7 +74,7 @@ _PROTOTYPE( void wipe_inode, (struct inode *rip)			);
 _PROTOTYPE( int do_link, (void)						);
 _PROTOTYPE( int do_unlink, (void)					);
 _PROTOTYPE( int do_rename, (void)					);
-_PROTOTYPE( void truncate, (struct inode *rip)				);
+_PROTOTYPE( void truncate_inode, (struct inode *rip, off_t len, int cz)	);
 
 /* lock.c */
 _PROTOTYPE( int lock_op, (struct filp *f, int req)			);
@@ -110,13 +110,16 @@ _PROTOTYPE( int do_lseek, (void)					);
 _PROTOTYPE( int do_mknod, (void)					);
 _PROTOTYPE( int do_mkdir, (void)					);
 _PROTOTYPE( int do_open, (void)						);
+_PROTOTYPE( int do_slink, (void)                                       );
 
 /* path.c */
-_PROTOTYPE( struct inode *advance,(struct inode *dirp, char string[NAME_MAX]));
+_PROTOTYPE( struct inode *advance,(struct inode **dirp, char string[NAME_MAX]));
 _PROTOTYPE( int search_dir, (struct inode *ldir_ptr,
 			char string [NAME_MAX], ino_t *numb, int flag)	);
 _PROTOTYPE( struct inode *eat_path, (char *path)			);
 _PROTOTYPE( struct inode *last_dir, (char *path, char string [NAME_MAX]));
+_PROTOTYPE( struct inode *parse_path, (char *path, char string[NAME_MAX], 
+                                                       int action)     );
 
 /* pipe.c */
 _PROTOTYPE( int do_pipe, (void)						);
@@ -155,6 +158,8 @@ _PROTOTYPE( int do_chroot, (void)					);
 _PROTOTYPE( int do_fstat, (void)					);
 _PROTOTYPE( int do_stat, (void)						);
 _PROTOTYPE( int do_fstatfs, (void)					);
+_PROTOTYPE( int do_rdlink, (void)                                      );
+_PROTOTYPE( int do_lstat, (void)                                       );
 
 /* super.c */
 _PROTOTYPE( bit_t alloc_bit, (struct super_block *sp, int map, bit_t origin));
