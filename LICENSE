@@ -1,32 +1,52 @@
-        Copyright (c) 1987,1997,2001 Prentice Hall
-        All rights reserved.
 
-        Redistribution and use of the MINIX operating system in source and
-        binary forms, with or without modification, are permitted provided
-        that the following conditions are met:
+License
 
-           * Redistributions of source code must retain the above copyright
-             notice, this list of conditions and the following disclaimer.
+Copyright (c) 1987, 1997, 2006, Vrije Universiteit, Amsterdam,
+The Netherlands All rights reserved. Redistribution and use of the MINIX 3
+operating system in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
 
-           * Redistributions in binary form must reproduce the above
-             copyright notice, this list of conditions and the following
-             disclaimer in the documentation and/or other materials provided
-             with the distribution.
+    * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
 
-           * Neither the name of Prentice Hall nor the names of the software
-             authors or contributors may be used to endorse or promote
-             products derived from this software without specific prior
-             written permission.
+    * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
 
-        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS, AUTHORS, AND
-        CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-        INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-        IN NO EVENT SHALL PRENTICE HALL OR ANY AUTHORS OR CONTRIBUTORS BE
-        LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-        CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-        SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-        BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-        WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-        OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-        EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    * Neither the name of the Vrije Universiteit nor the names of the
+    software authors or contributors may be used to endorse or promote
+    products derived from this software without specific prior written
+    permission.
+
+    * Any deviations from these conditions require written permission
+    from the copyright holder in advance
+
+
+Disclaimer
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS, AUTHORS, AND
+ CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+ NO EVENT SHALL PRENTICE HALL OR ANY AUTHORS OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Aggregated Software
+
+In addition to MINIX 3 itself, the distribution CD-ROM and this Website
+contain additional software that is not part of MINIX 3 and is not
+covered by this license. The licensing condtions for this additional
+software are stated in the various packages. In particular, some of the
+additional software falls under the GPL, and you must take care to
+observe the conditions of the GPL with respect to this software. As
+clearly stated in Article 2 of the GPL, when GPL and nonGPL software are
+distributed together on the same medium, this aggregation does not cause
+the license of either part to apply to the other part.
