@@ -1622,7 +1622,7 @@ ssize_t boot_readwrite(int rw)
 		if (ioctl(device, DIOCGETP, &geom0) < 0) return -1;
 		geom_seek.base = add64(geom0.base, off64);
 		geom_seek.size = cvu64(cmp64(add64u(off64, SECTOR_SIZE),
-			geom0.size) <= 0 ? STATIC_BLOCK_SIZE : 0);
+			geom0.size) <= 0 ? _STATIC_BLOCK_SIZE : 0);
 		sync();
 		if (ioctl(device, DIOCSETP, &geom_seek) < 0) return -1;
 		if (lseek(device, (off_t) 0, SEEK_SET) == -1) return -1;

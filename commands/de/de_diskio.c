@@ -135,14 +135,14 @@ void Read_Super_Block( s )
     s->zone_num_size = V1_ZONE_NUM_SIZE;
     s->zones = super->s_nzones;
     s->ndzones = V1_NR_DZONES;
-    s->block_size = STATIC_BLOCK_SIZE;
+    s->block_size = _STATIC_BLOCK_SIZE;
     }
   else if ( s->magic == SUPER_V2 || s->magic == SUPER_V3)
     {
     if(s->magic == SUPER_V3)
     	s->block_size = super->s_block_size;
     else
-    	s->block_size = STATIC_BLOCK_SIZE;
+    	s->block_size = _STATIC_BLOCK_SIZE;
     s->is_fs = TRUE;
     s->v1 = FALSE;
     s->inode_size = V2_INODE_SIZE;

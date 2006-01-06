@@ -244,7 +244,7 @@ typedef  struct  de_state		/*  State of disk ed.	*/
   zone_t block;				/*  Current block (1K)	*/
   unsigned offset;			/*  Offset within block	*/
 
-  char buffer[ MAX_BLOCK_SIZE ];
+  char buffer[ _MAX_BLOCK_SIZE ];
 
   /*  Display state  */
 
