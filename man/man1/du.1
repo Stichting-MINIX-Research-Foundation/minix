@@ -27,5 +27,10 @@ du \- print disk usage
 .PP
 \fIDu\fR examines one or more directories and prints the amount of space 
 occupied by the files in those directories and their subdirectories.
+.SH BUGS
+\fIDu\fR calculates disk usage based on file size. It could be there
+are holes in the file, not occupying any actual disk blocks, causing
+\fIdu\fR to overestimate disk usage. (\fIDu\fR does recognize and correctly
+calculate disk usage when hard links are encountered.)
 .SH "SEE ALSO"
 .BR df (1).
