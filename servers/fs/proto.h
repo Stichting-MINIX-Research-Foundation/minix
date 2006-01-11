@@ -74,7 +74,10 @@ _PROTOTYPE( void wipe_inode, (struct inode *rip)			);
 _PROTOTYPE( int do_link, (void)						);
 _PROTOTYPE( int do_unlink, (void)					);
 _PROTOTYPE( int do_rename, (void)					);
-_PROTOTYPE( void truncate_inode, (struct inode *rip, off_t len, int cz)	);
+_PROTOTYPE( int do_truncate, (void)					);
+_PROTOTYPE( int do_ftruncate, (void)					);
+_PROTOTYPE( int truncate_inode, (struct inode *rip, off_t len)		);
+_PROTOTYPE( int freesp_inode, (struct inode *rip, off_t st, off_t end)	);
 
 /* lock.c */
 _PROTOTYPE( int lock_op, (struct filp *f, int req)			);
@@ -147,7 +150,7 @@ _PROTOTYPE( int do_read, (void)						);
 _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,
 			off_t position, unsigned bytes_ahead)		);
 _PROTOTYPE( void read_ahead, (void)					);
-_PROTOTYPE( block_t read_map, (struct inode *rip, off_t position)	);
+_PROTOTYPE( block_t read_map, (struct inode *rip, off_t pos)		);
 _PROTOTYPE( int read_write, (int rw_flag)				);
 _PROTOTYPE( zone_t rd_indir, (struct buf *bp, int index)		);
 
@@ -187,6 +190,7 @@ _PROTOTYPE( void clear_zone, (struct inode *rip, off_t pos, int flag)	);
 _PROTOTYPE( int do_write, (void)					);
 _PROTOTYPE( struct buf *new_block, (struct inode *rip, off_t position)	);
 _PROTOTYPE( void zero_block, (struct buf *bp)				);
+_PROTOTYPE( int write_map, (struct inode *, off_t, zone_t, int)		);
 
 /* select.c */
 _PROTOTYPE( int do_select, (void)					);

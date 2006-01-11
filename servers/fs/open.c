@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include "buf.h"
@@ -121,7 +122,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 			/* Truncate regular file if O_TRUNC. */
 			if (oflags & O_TRUNC) {
 				if ((r = forbidden(rip, W_BIT)) !=OK) break;
-				truncate_inode(rip, 0, 0);
+				truncate_inode(rip, 0);
 				wipe_inode(rip);
 				/* Send the inode from the inode cache to the
 				 * block cache, so it gets written on the next
@@ -467,9 +468,9 @@ PUBLIC int do_lseek()
 
   /* The value of 'whence' determines the start position to use. */
   switch(m_in.whence) {
-	case 0:	pos = 0;	break;
-	case 1: pos = rfilp->filp_pos;	break;
-	case 2: pos = rfilp->filp_ino->i_size;	break;
+	case SEEK_SET: pos = 0;	break;
+	case SEEK_CUR: pos = rfilp->filp_pos;	break;
+	case SEEK_END: pos = rfilp->filp_ino->i_size;	break;
 	default: return(EINVAL);
   }
 

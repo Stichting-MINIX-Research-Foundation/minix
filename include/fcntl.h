@@ -23,6 +23,7 @@
 #define F_GETLK            5	/* get record locking information */
 #define F_SETLK            6	/* set record locking information */
 #define F_SETLKW           7	/* set record locking info; wait if blocked */
+#define F_FREESP           8	/* free a section of a regular file */
 
 /* File descriptor flags used for fcntl().  POSIX Table 6-2. */
 #define FD_CLOEXEC         1	/* close on exec flag for third arg of fcntl */

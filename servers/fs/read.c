@@ -410,6 +410,9 @@ int index;			/* index into *bp */
   struct super_block *sp;
   zone_t zone;			/* V2 zones are longs (shorts in V1) */
 
+  if(bp == NIL_BUF)
+	panic(__FILE__, "rd_indir() on NIL_BUF", NO_NUM);
+
   sp = get_super(bp->b_dev);	/* need super block to find file sys type */
 
   /* read a zone from an indirect block */

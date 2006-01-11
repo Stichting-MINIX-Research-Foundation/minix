@@ -32,6 +32,7 @@ int cmd;
      case F_GETLK:
      case F_SETLK:
      case F_SETLKW:
+     case F_FREESP:
 	m.m1_p1 = (char *) va_arg(argp, struct flock *);
 	break;
   }

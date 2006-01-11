@@ -681,7 +681,6 @@ PUBLIC void select_timeout_check(timer_t *timer)
  *===========================================================================*/
 PUBLIC void select_unsuspend_by_proc(int proc)
 {
-	struct filp *fp;
 	int fd, s;
 
 	for(s = 0; s < MAXSELECTS; s++) {

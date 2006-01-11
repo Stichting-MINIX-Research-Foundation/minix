@@ -15,10 +15,8 @@
 #include "inode.h"
 #include "super.h"
 
-FORWARD _PROTOTYPE( int write_map, (struct inode *rip, off_t position,
-			zone_t new_zone)				);
-
 FORWARD _PROTOTYPE( void wr_indir, (struct buf *bp, int index, zone_t zone) );
+FORWARD _PROTOTYPE( int empty_indir, (struct buf *, struct super_block *) );
 
 /*===========================================================================*
  *				do_write				     *
@@ -33,20 +31,27 @@ PUBLIC int do_write()
 /*===========================================================================*
  *				write_map				     *
  *===========================================================================*/
-PRIVATE int write_map(rip, position, new_zone)
-register struct inode *rip;	/* pointer to inode to be changed */
+PUBLIC int write_map(rip, position, new_zone, op)
+struct inode *rip;		/* pointer to inode to be changed */
 off_t position;			/* file address to be mapped */
 zone_t new_zone;		/* zone # to be inserted */
+int op;				/* special actions */
 {
-/* Write a new zone into an inode. */
+/* Write a new zone into an inode.
+ *
+ * If op includes WMAP_FREE, free the data zone corresponding to that position
+ * in the inode ('new_zone' is ignored then). Also free the indirect block
+ * if that was the last entry in the indirect block.
+ * Also free the double indirect block if that was the last entry in the
+ * double indirect block.
+ */
   int scale, ind_ex, new_ind, new_dbl, zones, nr_indirects, single, zindex, ex;
-  zone_t z, z1;
+  zone_t z, z1, z2 = NO_ZONE, old_zone;
   register block_t b;
   long excess, zone;
-  struct buf *bp;
+  struct buf *bp_dindir = NIL_BUF, *bp = NIL_BUF;
 
   rip->i_dirt = DIRTY;		/* inode will be changed */
-  bp = NIL_BUF;
   scale = rip->i_sp->s_log_zone_size;		/* for zone-block conversion */
   	/* relative zone # to insert */
   zone = (position/rip->i_sp->s_block_size) >> scale;
@@ -56,7 +61,12 @@ zone_t new_zone;		/* zone # to be inserted */
   /* Is 'position' to be found in the inode itself? */
   if (zone < zones) {
 	zindex = (int) zone;	/* we need an integer here */
-	rip->i_zone[zindex] = new_zone;
+	if(rip->i_zone[zindex] != NO_ZONE && (op & WMAP_FREE)) {
+		free_zone(rip->i_dev, rip->i_zone[zindex]);
+		rip->i_zone[zindex] = NO_ZONE;
+	} else {
+		rip->i_zone[zindex] = new_zone;
+	}
 	return(OK);
   }
 
@@ -71,7 +81,8 @@ zone_t new_zone;		/* zone # to be inserted */
 	single = TRUE;
   } else {
 	/* 'position' can be located via the double indirect block. */
-	if ( (z = rip->i_zone[zones+1]) == NO_ZONE) {
+	if ( (z2 = z = rip->i_zone[zones+1]) == NO_ZONE &&
+	    !(op & WMAP_FREE)) {
 		/* Create the double indirect block. */
 		if ( (z = alloc_zone(rip->i_dev, rip->i_zone[0])) == NO_ZONE)
 			return(err_code);
@@ -79,44 +90,98 @@ zone_t new_zone;		/* zone # to be inserted */
 		new_dbl = TRUE;	/* set flag for later */
 	}
 
-	/* Either way, 'z' is zone number for double indirect block. */
+	/* 'z' is zone number for double indirect block, either old
+	 * or newly created.
+	 * If there wasn't one and WMAP_FREE is set, 'z' is NO_ZONE.
+	 */
 	excess -= nr_indirects;	/* single indirect doesn't count */
 	ind_ex = (int) (excess / nr_indirects);
 	excess = excess % nr_indirects;
 	if (ind_ex >= nr_indirects) return(EFBIG);
-	b = (block_t) z << scale;
-	bp = get_block(rip->i_dev, b, (new_dbl ? NO_READ : NORMAL));
-	if (new_dbl) zero_block(bp);
-	z1 = rd_indir(bp, ind_ex);
+
+	if(z == NO_ZONE) {
+		/* WMAP_FREE and no double indirect block - then no
+		 * single indirect block either.
+		 */
+		z1 = NO_ZONE;
+	} else {
+		b = (block_t) z << scale;
+		bp_dindir = get_block(rip->i_dev, b, (new_dbl?NO_READ:NORMAL));
+		if (new_dbl) zero_block(bp_dindir);
+		z1 = rd_indir(bp_dindir, ind_ex);
+	}
 	single = FALSE;
   }
 
-  /* z1 is now single indirect zone; 'excess' is index. */
-  if (z1 == NO_ZONE) {
-	/* Create indirect block and store zone # in inode or dbl indir blk. */
+  /* z1 is now single indirect zone, or NO_ZONE; 'excess' is index.
+   * We have to create the indirect zone if it's NO_ZONE. Unless
+   * we're freeing (WMAP_FREE).
+   */
+  if (z1 == NO_ZONE && !(op & WMAP_FREE)) {
 	z1 = alloc_zone(rip->i_dev, rip->i_zone[0]);
 	if (single)
-		rip->i_zone[zones] = z1;	/* update inode */
+		rip->i_zone[zones] = z1; /* update inode w. single indirect */
 	else
-		wr_indir(bp, ind_ex, z1);	/* update dbl indir */
+		wr_indir(bp_dindir, ind_ex, z1);	/* update dbl indir */
 
 	new_ind = TRUE;
-	if (bp != NIL_BUF) bp->b_dirt = DIRTY;	/* if double ind, it is dirty*/
+	/* If double ind, it is dirty. */
+	if (bp_dindir != NIL_BUF) bp_dindir->b_dirt = DIRTY;
 	if (z1 == NO_ZONE) {
-		put_block(bp, INDIRECT_BLOCK);	/* release dbl indirect blk */
+		/* Release dbl indirect blk. */
+		put_block(bp_dindir, INDIRECT_BLOCK);
 		return(err_code);	/* couldn't create single ind */
 	}
   }
-  put_block(bp, INDIRECT_BLOCK);	/* release double indirect blk */
 
-  /* z1 is indirect block's zone number. */
-  b = (block_t) z1 << scale;
-  bp = get_block(rip->i_dev, b, (new_ind ? NO_READ : NORMAL) );
-  if (new_ind) zero_block(bp);
-  ex = (int) excess;			/* we need an int here */
-  wr_indir(bp, ex, new_zone);
-  bp->b_dirt = DIRTY;
-  put_block(bp, INDIRECT_BLOCK);
+  /* z1 is indirect block's zone number (unless it's NO_ZONE when we're
+   * freeing).
+   */
+  if(z1 != NO_ZONE) {
+  	ex = (int) excess;			/* we need an int here */
+	b = (block_t) z1 << scale;
+	bp = get_block(rip->i_dev, b, (new_ind ? NO_READ : NORMAL) );
+	if (new_ind) zero_block(bp);
+	if(op & WMAP_FREE) {
+		if((old_zone = rd_indir(bp, ex)) != NO_ZONE) {
+			free_zone(rip->i_dev, old_zone);
+			wr_indir(bp, ex, NO_ZONE);
+		}
+
+		/* Last reference in the indirect block gone? Then
+		 * Free the indirect block.
+		 */
+		if(empty_indir(bp, rip->i_sp)) {
+			free_zone(rip->i_dev, z1);
+			z1 = NO_ZONE;
+			/* Update the reference to the indirect block to
+			 * NO_ZONE - in the double indirect block if there
+			 * is one, otherwise in the inode directly.
+			 */
+			if(single) {
+				rip->i_zone[zones] = z1;
+			} else {
+				wr_indir(bp_dindir, ind_ex, z1);
+				bp_dindir->b_dirt = DIRTY;
+			}
+		}
+	} else {
+		wr_indir(bp, ex, new_zone);
+	}
+	bp->b_dirt = DIRTY;
+	put_block(bp, INDIRECT_BLOCK);
+  }
+
+  /* If the single indirect block isn't there (or was just freed),
+   * see if we have to keep the double indirect block.
+   */
+  if(z1 == NO_ZONE && !single && empty_indir(bp_dindir, rip->i_sp) &&
+     z2 != NO_ZONE) {
+	free_zone(rip->i_dev, z2);
+	rip->i_zone[zones+1] = NO_ZONE;
+  }
+
+  put_block(bp_dindir, INDIRECT_BLOCK);	/* release double indirect blk */
 
   return(OK);
 }
@@ -133,6 +198,9 @@ zone_t zone;			/* zone to write */
 
   struct super_block *sp;
 
+  if(bp == NIL_BUF)
+	panic(__FILE__, "wr_indir() on NIL_BUF", NO_NUM);
+
   sp = get_super(bp->b_dev);	/* need super block to find file sys type */
 
   /* write a zone into an indirect block */
@@ -140,6 +208,30 @@ zone_t zone;			/* zone to write */
 	bp->b_v1_ind[index] = (zone1_t) conv2(sp->s_native, (int)  zone);
   else
 	bp->b_v2_ind[index] = (zone_t)  conv4(sp->s_native, (long) zone);
+}
+
+/*===========================================================================*
+ *				empty_indir				     *
+ *===========================================================================*/
+PRIVATE int empty_indir(bp, sb)
+struct buf *bp;			/* pointer to indirect block */
+struct super_block *sb;		/* superblock of device block resides on */
+{
+/* Return nonzero if the indirect block pointed to by bp contains
+ * only NO_ZONE entries.
+ */
+	int i;
+	if(sb->s_version == V1) {
+		for(i = 0; i < V1_INDIRECTS; i++)
+			if(bp->b_v1_ind[i] != NO_ZONE)
+				return 0;
+	} else {
+		for(i = 0; i < V2_INDIRECTS(sb->s_block_size); i++)
+			if(bp->b_v2_ind[i] != NO_ZONE)
+				return 0;
+	}
+
+	return 1;
 }
 
 /*===========================================================================*
@@ -215,7 +307,7 @@ off_t position;			/* file pointer */
 		z = rip->i_zone[0];	/* hunt near first zone */
 	}
 	if ( (z = alloc_zone(rip->i_dev, z)) == NO_ZONE) return(NIL_BUF);
-	if ( (r = write_map(rip, position, z)) != OK) {
+	if ( (r = write_map(rip, position, z, 0)) != OK) {
 		free_zone(rip->i_dev, z);
 		err_code = r;
 		return(NIL_BUF);

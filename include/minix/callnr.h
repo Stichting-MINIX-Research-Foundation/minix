@@ -1,4 +1,4 @@
-#define NCALLS		  93	/* number of system calls allowed */
+#define NCALLS		  95	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 

@@ -45,7 +45,6 @@ int action;                    /* action on last part of path */
 
   struct inode *rip, *dir_ip;
   char *new_name;
-  struct inode *new_ip;
   int symloop;
   char lstring[NAME_MAX];
 
@@ -177,7 +176,6 @@ register struct inode *ldip;   /* directory containing link */
   size_t sl;                   /* length of link */
   size_t tl;                   /* length of suffix */
   char *sp;                    /* start of link text */
-  char *ep;                    /* end of conditional segment */
 
   bip = NIL_INODE;
   bp  = NIL_BUF;

@@ -156,6 +156,54 @@ PUBLIC int do_fcntl()
 	/* Set or clear a file lock. */
 	r = lock_op(f, m_in.request);
 	return(r);
+
+     case F_FREESP:
+     {
+	/* Free a section of a file. Preparation is done here,
+	 * actual freeing in freesp_inode().
+	 */
+	off_t start, end;
+	struct flock flock_arg;
+	signed long offset;
+
+	/* Check if it's a regular file. */
+	if((f->filp_ino->i_mode & I_TYPE) != I_REGULAR) {
+		return EINVAL;
+	}
+
+	/* Copy flock data from userspace. */
+	if((r = sys_datacopy(who, (vir_bytes) m_in.name1, 
+	  SELF, (vir_bytes) &flock_arg,
+	  (phys_bytes) sizeof(flock_arg))) != OK)
+		return r;
+
+	/* Convert starting offset to signed. */
+	offset = (signed long) flock_arg.l_start;
+
+	/* Figure out starting position base. */
+	switch(flock_arg.l_whence) {
+		case SEEK_SET: start = 0; if(offset < 0) return EINVAL; break;
+		case SEEK_CUR: start = f->filp_pos; break;
+		case SEEK_END: start = f->filp_ino->i_size; break;
+		default: return EINVAL;
+	}
+
+	/* Check for overflow or underflow. */
+	if(offset > 0 && start + offset < start) { return EINVAL; }
+	if(offset < 0 && start + offset > start) { return EINVAL; }
+	start += offset;
+	if(flock_arg.l_len > 0) {
+		end = start + flock_arg.l_len;
+		if(end <= start) {
+			return EINVAL;
+		}
+		r = freesp_inode(f->filp_ino, start, end);
+	} else {
+		r = truncate_inode(f->filp_ino, start);
+	}
+	return r;
+     }
+
      default:
 	return(EINVAL);
   }

@@ -48,6 +48,9 @@
 #define DELETE             2 /* tells search_dir to delete entry */
 #define IS_EMPTY           3 /* tells search_dir to ret. OK or ENOTEMPTY */  
 
+/* write_map() args */
+#define WMAP_FREE	(1 << 0)
+
 #define PATH_TRANSPARENT 000   /* parse_path stops at final object */
 #define PATH_PENULTIMATE 001   /* parse_path stops at last but one name */
 #define PATH_OPAQUE      002   /* parse_path stops at final name */
