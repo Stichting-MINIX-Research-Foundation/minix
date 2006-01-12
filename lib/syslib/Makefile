@@ -42,14 +42,19 @@ libsys_OBJECTS	= \
 	sys_vm_setbuf.o \
 	sys_vm_map.o \
 	pci_attr_r8.o \
+	pci_attr_r16.o \
 	pci_attr_r32.o \
+	pci_attr_w8.o \
+	pci_attr_w16.o \
 	pci_attr_w32.o \
 	pci_dev_name.o \
 	pci_find_dev.o \
 	pci_first_dev.o \
 	pci_ids.o \
 	pci_init.o \
+	pci_init1.o \
 	pci_next_dev.o \
+	pci_rescan_bus.o \
 	pci_reserve.o \
 	pci_slot_name.o \
 
