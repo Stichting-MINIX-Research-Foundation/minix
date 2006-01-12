@@ -173,7 +173,7 @@ then
 	echo " * Doing new cvs export"
 	( cd $RELEASEDIR/usr && mkdir src && cvs export -r$CVSTAG src )
 else
-	( cd .. && make clean )
+	( cd .. && make depend && make clean )
 	srcdir=/usr/src
 	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
 fi

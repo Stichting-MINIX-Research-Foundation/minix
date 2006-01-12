@@ -169,7 +169,7 @@ cdfdboot)
 	mkdir /mnt/dev
 	mkdir /mnt/boot
 	mkdir /mnt/boot/image
-	( cd /mnt/dev && /usr/src/commands/scripts/MAKEDEV.sh std )
+	( cd /mnt/dev && sh /usr/src/commands/scripts/MAKEDEV.sh std )
 	cp -p image image_* /mnt/boot/image || exit 1
 	cp -p ../boot/boot /mnt/boot/boot || exit 1
 	umount $dev || exit 1
