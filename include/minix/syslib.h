@@ -114,6 +114,7 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getrandomness(dst)	sys_getinfo(GET_RANDOMNESS, dst, 0,0,0)
 #define sys_getimage(dst)	sys_getinfo(GET_IMAGE, dst, 0,0,0)
 #define sys_getirqhooks(dst)	sys_getinfo(GET_IRQHOOKS, dst, 0,0,0)
+#define sys_getirqactids(dst)	sys_getinfo(GET_IRQACTIDS, dst, 0,0,0)
 #define sys_getmonparams(v,vl)	sys_getinfo(GET_MONPARAMS, v,vl, 0,0)
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
@@ -154,15 +155,18 @@ _PROTOTYPE(int sys_in, (int port, unsigned long *value, int type)	);
 
 /* pci.c */
 _PROTOTYPE( void pci_init, (void)					);
+_PROTOTYPE( void pci_init1, (char *name)				);
 _PROTOTYPE( int pci_first_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( int pci_next_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( int pci_find_dev, (U8_t bus, U8_t dev, U8_t func,
 							int *devindp)	);
 _PROTOTYPE( void pci_reserve, (int devind)				);
 _PROTOTYPE( void pci_ids, (int devind, u16_t *vidp, u16_t *didp)	);
+_PROTOTYPE( void pci_rescan_bus, (U8_t busnr)				);
 _PROTOTYPE( u8_t pci_attr_r8, (int devind, int port)			);
 _PROTOTYPE( u16_t pci_attr_r16, (int devind, int port)			);
 _PROTOTYPE( u32_t pci_attr_r32, (int devind, int port)			);
+_PROTOTYPE( void pci_attr_w8, (int devind, int port, U8_t value)	);
 _PROTOTYPE( void pci_attr_w16, (int devind, int port, U16_t value)	);
 _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 _PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
