@@ -38,7 +38,7 @@ includes:
 	cd include && $(MAKE) install gcc
 
 libraries:
-	cd lib && $(GMAKE) install
+	cd lib && $(GMAKE) all && $(GMAKE) install
 
 cmds:
 	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) all; fi
