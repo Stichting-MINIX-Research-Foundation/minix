@@ -10,6 +10,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include "../drivers.h"
 #define	NDEBUG			/* disable assertions */
 #include <assert.h>
+#include <ibm/pci.h>
+#include <sys/vm.h>
 #include <minix/com.h>
 #include <minix/syslib.h>
 
@@ -34,22 +36,27 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define NR_PCIBUS	 4
 #define NR_PCIDEV	40
 
-#define PBT_INTEL	 1
+#define PBT_INTEL_HOST	 1
 #define PBT_PCIBRIDGE	 2
+#define PBT_CARDBUS	 3
+
+#define BAM_NR		6	/* Number of base-address registers */
 
 PRIVATE int debug= 0;
 
 PRIVATE struct pcibus
 {
 	int pb_type;
+	int pb_needinit;
 	int pb_isabridge_dev;
 	int pb_isabridge_type;
 
 	int pb_devind;
-	int pb_bus;
+	int pb_busnr;
 	u8_t (*pb_rreg8)(int busind, int devind, int port);
 	u16_t (*pb_rreg16)(int busind, int devind, int port);
 	u32_t (*pb_rreg32)(int busind, int devind, int port);
+	void (*pb_wreg8)(int busind, int devind, int port, U8_t value);
 	void (*pb_wreg16)(int busind, int devind, int port, U16_t value);
 	void (*pb_wreg32)(int busind, int devind, int port, u32_t value);
 	u16_t (*pb_rsts)(int busind);
@@ -59,7 +66,7 @@ PRIVATE int nr_pcibus= 0;
 
 PRIVATE struct pcidev
 {
-	u8_t pd_busind;
+	u8_t pd_busnr;
 	u8_t pd_dev;
 	u8_t pd_func;
 	u8_t pd_baseclass;
@@ -67,17 +74,46 @@ PRIVATE struct pcidev
 	u8_t pd_infclass;
 	u16_t pd_vid;
 	u16_t pd_did;
+	u8_t pd_ilr;
 	u8_t pd_inuse;
+
+	struct bar
+	{
+		int pb_flags;
+		int pb_nr;
+		u32_t pb_base;
+		u32_t pb_size;
+	} pd_bar[BAM_NR];
+	int pd_bar_nr;
+
+	char pd_name[M3_STRING];
 } pcidev[NR_PCIDEV];
+
+/* pb_flags */
+#define PBF_IO		1	/* I/O else memory */
+#define PBF_INCOMPLETE	2	/* not allocated */
+
 PRIVATE int nr_pcidev= 0;
 
-/* Work around the limitation of the PCI emulation in QEMU 0.7.1 */
+/* Work around the limitations of the PCI emulation in QEMU 0.7.1 */
 PRIVATE int qemu_pci= 0;
 
 FORWARD _PROTOTYPE( void pci_intel_init, (void)				);
 FORWARD _PROTOTYPE( void probe_bus, (int busind)			);
+FORWARD _PROTOTYPE( int is_duplicate, (U8_t busnr, U8_t dev, U8_t func)	);
+FORWARD _PROTOTYPE( void record_irq, (int devind)			);
+FORWARD _PROTOTYPE( void record_bars, (int devind)			);
+FORWARD _PROTOTYPE( void record_bars_bridge, (int devind)		);
+FORWARD _PROTOTYPE( void record_bars_cardbus, (int devind)		);
+FORWARD _PROTOTYPE( void record_bar, (int devind, int bar_nr)		);
+FORWARD _PROTOTYPE( void complete_bridges, (void)			);
+FORWARD _PROTOTYPE( void complete_bars, (void)				);
+FORWARD _PROTOTYPE( void update_bridge4dev_io, (int devind,
+					u32_t io_base, u32_t io_size)	);
+FORWARD _PROTOTYPE( int get_freebus, (void)				);
 FORWARD _PROTOTYPE( int do_isabridge, (int busind)			);
 FORWARD _PROTOTYPE( void do_pcibridge, (int busind)			);
+FORWARD _PROTOTYPE( int get_busind, (int busnr)				);
 FORWARD _PROTOTYPE( int do_piix, (int devind)				);
 FORWARD _PROTOTYPE( int do_amd_isabr, (int devind)			);
 FORWARD _PROTOTYPE( int do_sis_isabr, (int devind)			);
@@ -89,8 +125,10 @@ FORWARD _PROTOTYPE( char *pci_subclass_name, (U8_t baseclass,
 FORWARD _PROTOTYPE( void ntostr, (unsigned n, char **str, char *end)	);
 FORWARD _PROTOTYPE( u16_t pci_attr_rsts, (int devind)			);
 FORWARD _PROTOTYPE( void pci_attr_wsts, (int devind, U16_t value)	);
-FORWARD _PROTOTYPE( u16_t pcibr_intel_rsts, (int busind)		);
-FORWARD _PROTOTYPE( void pcibr_intel_wsts, (int busind, U16_t value)	);
+FORWARD _PROTOTYPE( u16_t pcibr_std_rsts, (int busind)		);
+FORWARD _PROTOTYPE( void pcibr_std_wsts, (int busind, U16_t value)	);
+FORWARD _PROTOTYPE( u16_t pcibr_cb_rsts, (int busind)		);
+FORWARD _PROTOTYPE( void pcibr_cb_wsts, (int busind, U16_t value)	);
 FORWARD _PROTOTYPE( u16_t pcibr_via_rsts, (int busind)			);
 FORWARD _PROTOTYPE( void pcibr_via_wsts, (int busind, U16_t value)	);
 FORWARD _PROTOTYPE( u8_t pcii_rreg8, (int busind, int devind, int port)	);
@@ -98,6 +136,8 @@ FORWARD _PROTOTYPE( u16_t pcii_rreg16, (int busind, int devind,
 							int port)	);
 FORWARD _PROTOTYPE( u32_t pcii_rreg32, (int busind, int devind,
 							int port)	);
+FORWARD _PROTOTYPE( void pcii_wreg8, (int busind, int devind, int port,
+							U8_t value)	);
 FORWARD _PROTOTYPE( void pcii_wreg16, (int busind, int devind, int port,
 							U16_t value)	);
 FORWARD _PROTOTYPE( void pcii_wreg32, (int busind, int devind, int port,
@@ -190,7 +230,7 @@ int *devindp;
 
 	for (devind= 0; devind < nr_pcidev; devind++)
 	{
-		if (pcidev[devind].pd_busind == bus &&
+		if (pcidev[devind].pd_busnr == bus &&
 			pcidev[devind].pd_dev == dev &&
 			pcidev[devind].pd_func == func)
 		{
@@ -252,14 +292,34 @@ u16_t *didp;
 }
 
 /*===========================================================================*
- *				pci_reserve				     *
+ *				pci_reserve2				     *
  *===========================================================================*/
-PUBLIC void pci_reserve(devind)
+PUBLIC void pci_reserve2(devind, name)
 int devind;
+char *name;
 {
 	assert(devind <= nr_pcidev);
 	assert(!pcidev[devind].pd_inuse);
 	pcidev[devind].pd_inuse= 1;
+	strcpy(pcidev[devind].pd_name, name);
+}
+
+/*===========================================================================*
+ *				pci_release				     *
+ *===========================================================================*/
+PUBLIC void pci_release(name)
+char *name;
+{
+	int i;
+
+	for (i= 0; i<nr_pcidev; i++)
+	{
+		if (!pcidev[i].pd_inuse)
+			continue;
+		if (strcmp(pcidev[i].pd_name, name) != 0)
+			continue;
+		pcidev[i].pd_inuse= 0;
+	}
 }
 
 /*===========================================================================*
@@ -276,6 +336,24 @@ u16_t *didp;
 }
 
 /*===========================================================================*
+ *				pci_rescan_bus				     *
+ *===========================================================================*/
+PUBLIC void pci_rescan_bus(busnr)
+u8_t busnr;
+{
+	int busind;
+
+	busind= get_busind(busnr);
+	probe_bus(busind);
+
+	/* Allocate bus numbers for uninitialized bridges */
+	complete_bridges();
+
+	/* Allocate I/O and memory resources for uninitialized devices */
+	complete_bars();
+}
+
+/*===========================================================================*
  *				pci_slot_name				     *
  *===========================================================================*/
 PUBLIC char *pci_slot_name(devind)
@@ -288,7 +366,7 @@ int devind;
 	p= label;
 	end= label+sizeof(label);
 
-	ntostr(pcidev[devind].pd_busind, &p, end);
+	ntostr(pcidev[devind].pd_busnr, &p, end);
 	*p++= '.';
 
 	ntostr(pcidev[devind].pd_dev, &p, end);
@@ -326,9 +404,10 @@ PUBLIC u8_t pci_attr_r8(devind, port)
 int devind;
 int port;
 {
-	int busind;
+	int busnr, busind;
 
-	busind= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
 	return pcibus[busind].pb_rreg8(busind, devind, port);
 }
 
@@ -339,9 +418,10 @@ PUBLIC u16_t pci_attr_r16(devind, port)
 int devind;
 int port;
 {
-	int busind;
+	int busnr, busind;
 
-	busind= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
 	return pcibus[busind].pb_rreg16(busind, devind, port);
 }
 
@@ -352,10 +432,26 @@ PUBLIC u32_t pci_attr_r32(devind, port)
 int devind;
 int port;
 {
-	int busind;
+	int busnr, busind;
 
-	busind= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
 	return pcibus[busind].pb_rreg32(busind, devind, port);
+}
+
+/*===========================================================================*
+ *				pci_attr_w8				     *
+ *===========================================================================*/
+PUBLIC void pci_attr_w8(devind, port, value)
+int devind;
+int port;
+u16_t value;
+{
+	int busnr, busind;
+
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
+	pcibus[busind].pb_wreg8(busind, devind, port, value);
 }
 
 /*===========================================================================*
@@ -366,9 +462,10 @@ int devind;
 int port;
 u16_t value;
 {
-	int busind;
+	int busnr, busind;
 
-	busind= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
 	pcibus[busind].pb_wreg16(busind, devind, port, value);
 }
 
@@ -380,9 +477,10 @@ int devind;
 int port;
 u32_t value;
 {
-	int busind;
+	int busnr, busind;
 
-	busind= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
 	pcibus[busind].pb_wreg32(busind, devind, port, value);
 }
 
@@ -399,7 +497,7 @@ PRIVATE void pci_intel_init()
 	 */
 	u32_t bus, dev, func;
 	u16_t vid, did;
-	int s, i, r, busind;
+	int s, i, r, busind, busnr;
 	char *dstr;
 
 	bus= 0;
@@ -438,14 +536,16 @@ PRIVATE void pci_intel_init()
 		panic("PCI","too many PCI busses", nr_pcibus);
 	busind= nr_pcibus;
 	nr_pcibus++;
-	pcibus[busind].pb_type= PBT_INTEL;
+	pcibus[busind].pb_type= PBT_INTEL_HOST;
+	pcibus[busind].pb_needinit= 0;
 	pcibus[busind].pb_isabridge_dev= -1;
 	pcibus[busind].pb_isabridge_type= 0;
 	pcibus[busind].pb_devind= -1;
-	pcibus[busind].pb_bus= 0;
+	pcibus[busind].pb_busnr= 0;
 	pcibus[busind].pb_rreg8= pcii_rreg8;
 	pcibus[busind].pb_rreg16= pcii_rreg16;
 	pcibus[busind].pb_rreg32= pcii_rreg32;
+	pcibus[busind].pb_wreg8= pcii_wreg8;
 	pcibus[busind].pb_wreg16= pcii_wreg16;
 	pcibus[busind].pb_wreg32= pcii_wreg32;
 	pcibus[busind].pb_rsts= pcii_rsts;
@@ -465,18 +565,26 @@ PRIVATE void pci_intel_init()
 	r= do_isabridge(busind);
 	if (r != OK)
 	{
+		busnr= pcibus[busind].pb_busnr;
+
 		/* Disable all devices for this bus */
 		for (i= 0; i<nr_pcidev; i++)
 		{
-			if (pcidev[i].pd_busind != busind)
+			if (pcidev[i].pd_busnr != busnr)
 				continue;
 			pcidev[i].pd_inuse= 1;
 		}
 		return;
 	}
 
-	/* Look for PCI bridges (for AGP) */
+	/* Look for PCI bridges */
 	do_pcibridge(busind);
+
+	/* Allocate bus numbers for uninitialized bridges */
+	complete_bridges();
+
+	/* Allocate I/O and memory resources for uninitialized devices */
+	complete_bars();
 }
 
 /*===========================================================================*
@@ -489,7 +597,7 @@ int busind;
 	u16_t vid, did, sts;
 	u8_t headt;
 	u8_t baseclass, subclass, infclass;
-	int devind;
+	int devind, busnr;
 	char *s, *dstr;
 
 #if DEBUG
@@ -499,12 +607,13 @@ printf("probe_bus(%d)\n", busind);
 		panic("PCI","too many PCI devices", nr_pcidev);
 	devind= nr_pcidev;
 
+	busnr= pcibus[busind].pb_busnr;
 	for (dev= 0; dev<32; dev++)
 	{
 
 		for (func= 0; func < 8; func++)
 		{
-			pcidev[devind].pd_busind= busind;
+			pcidev[devind].pd_busnr= busnr;
 			pcidev[devind].pd_dev= dev;
 			pcidev[devind].pd_func= func;
 
@@ -514,6 +623,11 @@ printf("probe_bus(%d)\n", busind);
 			did= pci_attr_r16(devind, PCI_DID);
 			headt= pci_attr_r8(devind, PCI_HEADT);
 			sts= pci_attr_rsts(devind);
+
+#if 0
+			printf("vid 0x%x, did 0x%x, headt 0x%x, sts 0x%x\n",
+				vid, did, headt, sts);
+#endif
 
 			if (vid == NO_VID)
 				break;	/* Nothing here */
@@ -548,6 +662,10 @@ printf("probe_bus(%d)\n", busind);
 						(unsigned long)func, vid,
 						pci_vid_name(vid), did);
 				}
+				printf("Device index: %d\n", devind);
+				printf("Subsystem: Vid 0x%x, did 0x%x\n",
+					pci_attr_r16(devind, PCI_SUBVID),
+					pci_attr_r16(devind, PCI_SUBDID));
 			}
 
 			baseclass= pci_attr_r8(devind, PCI_BCR);
@@ -566,6 +684,14 @@ printf("probe_bus(%d)\n", busind);
 					baseclass, subclass, infclass);
 			}
 
+			if (is_duplicate(busnr, dev, func))
+			{
+				printf("\tduplicate!\n");
+				if (func == 0 && !(headt & PHT_MULTIFUNC))
+					break;
+				continue;
+			}
+
 			devind= nr_pcidev;
 			nr_pcidev++;
 			pcidev[devind].pd_baseclass= baseclass;
@@ -574,6 +700,25 @@ printf("probe_bus(%d)\n", busind);
 			pcidev[devind].pd_vid= vid;
 			pcidev[devind].pd_did= did;
 			pcidev[devind].pd_inuse= 0;
+			pcidev[devind].pd_bar_nr= 0;
+			record_irq(devind);
+			switch(headt & PHT_MASK)
+			{
+			case PHT_NORMAL:
+				record_bars(devind);
+				break;
+			case PHT_BRIDGE:
+				record_bars_bridge(devind);
+				break;
+			case PHT_CARDBUS:
+				record_bars_cardbus(devind);
+				break;
+			default:
+				printf("\t%d.%d.%d: unknown header type %d\n",
+					busind, dev, func,
+					headt & PHT_MASK);
+				break;
+			}
 
 			if (nr_pcidev >= NR_PCIDEV)
 			  panic("PCI","too many PCI devices", nr_pcidev);
@@ -586,22 +731,546 @@ printf("probe_bus(%d)\n", busind);
 }
 
 /*===========================================================================*
+ *				is_duplicate				     *
+ *===========================================================================*/
+PRIVATE int is_duplicate(busnr, dev, func)
+u8_t busnr;
+u8_t dev;
+u8_t func;
+{
+	int i;
+
+	for (i= 0; i<nr_pcidev; i++)
+	{
+		if (pcidev[i].pd_busnr == busnr &&
+			pcidev[i].pd_dev == dev &&
+			pcidev[i].pd_func == func)
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+/*===========================================================================*
+ *				record_irq				     *
+ *===========================================================================*/
+PRIVATE void record_irq(devind)
+int devind;
+{
+	int ilr, ipr, busnr, busind, cb_devind;
+
+	ilr= pci_attr_r8(devind, PCI_ILR);
+	ipr= pci_attr_r8(devind, PCI_IPR);
+	if (ilr == 0)
+	{
+		static int first= 1;
+		if (ipr && first && debug)
+		{
+			first= 0;
+			printf("PCI: strange, BIOS assigned IRQ0\n");
+		}
+		ilr= PCI_ILR_UNKNOWN;
+	}
+	pcidev[devind].pd_ilr= ilr;
+	if (ilr == PCI_ILR_UNKNOWN && !ipr)
+	{
+	}
+	else if (ilr != PCI_ILR_UNKNOWN && ipr)
+	{
+		if (debug)
+			printf("\tIRQ %d for INT%c\n", ilr, 'A' + ipr-1);
+	}
+	else if (ilr != PCI_ILR_UNKNOWN)
+	{
+		printf(
+	"PCI: IRQ %d is assigned, but device %d.%d.%d does not need it\n",
+			ilr, pcidev[devind].pd_busnr, pcidev[devind].pd_dev,
+			pcidev[devind].pd_func);
+	}
+	else
+	{
+		/* Check for cardbus devices */
+		busnr= pcidev[devind].pd_busnr;
+		busind= get_busind(busnr);
+		if (pcibus[busind].pb_type == PBT_CARDBUS)
+		{
+			cb_devind= pcibus[busind].pb_devind;
+			ilr= pcidev[cb_devind].pd_ilr;
+			if (ilr != PCI_ILR_UNKNOWN)
+			{
+				if (debug)
+				{
+					printf(
+					"assigning IRQ %d to Cardbus device\n",
+						ilr);
+				}
+				pci_attr_w8(devind, PCI_ILR, ilr);
+				pcidev[devind].pd_ilr= ilr;
+				return;
+			}
+		}
+		printf(
+		"PCI: device %d.%d.%d uses INT%c but is not assigned any IRQ\n",
+			pcidev[devind].pd_busnr, pcidev[devind].pd_dev,
+			pcidev[devind].pd_func, 'A' + ipr-1);
+	}
+}
+
+/*===========================================================================*
+ *				record_bars				     *
+ *===========================================================================*/
+PRIVATE void record_bars(devind)
+int devind;
+{
+	int i, reg, prefetch, type;
+	u32_t bar, bar2;
+
+	for (i= 0, reg= PCI_BAR; reg <= PCI_BAR_6; i++, reg += 4)
+	{
+		record_bar(devind, i);
+	}
+}
+
+/*===========================================================================*
+ *				record_bars_bridge			     *
+ *===========================================================================*/
+PRIVATE void record_bars_bridge(devind)
+int devind;
+{
+	u32_t base, limit, size;
+
+	record_bar(devind, 0);
+	record_bar(devind, 1);
+
+	base= ((pci_attr_r8(devind, PPB_IOBASE) & PPB_IOB_MASK) << 8) |
+		(pci_attr_r16(devind, PPB_IOBASEU16) << 16);
+	limit= 0xff |
+		((pci_attr_r8(devind, PPB_IOLIMIT) & PPB_IOL_MASK) << 8) |
+		((~PPB_IOL_MASK & 0xff) << 8) |
+		(pci_attr_r16(devind, PPB_IOLIMITU16) << 16);
+	size= limit-base + 1;
+	if (debug)
+	{
+		printf("\tI/O window: base 0x%x, limit 0x%x, size %d\n",
+			base, limit, size);
+	}
+
+	base= ((pci_attr_r16(devind, PPB_MEMBASE) & PPB_MEMB_MASK) << 16);
+	limit= 0xffff |
+		((pci_attr_r16(devind, PPB_MEMLIMIT) & PPB_MEML_MASK) << 16) |
+		((~PPB_MEML_MASK & 0xffff) << 16);
+	size= limit-base + 1;
+	if (debug)
+	{
+		printf("\tMemory window: base 0x%x, limit 0x%x, size 0x%x\n",
+			base, limit, size);
+	}
+
+	/* Ignore the upper 32 bits */
+	base= ((pci_attr_r16(devind, PPB_PFMEMBASE) & PPB_PFMEMB_MASK) << 16);
+	limit= 0xffff |
+		((pci_attr_r16(devind, PPB_PFMEMLIMIT) &
+			PPB_PFMEML_MASK) << 16) |
+		((~PPB_PFMEML_MASK & 0xffff) << 16);
+	size= limit-base + 1;
+	if (debug)
+	{
+		printf(
+	"\tPrefetchable memory window: base 0x%x, limit 0x%x, size 0x%x\n",
+			base, limit, size);
+	}
+}
+
+/*===========================================================================*
+ *				record_bars_cardbus			     *
+ *===========================================================================*/
+PRIVATE void record_bars_cardbus(devind)
+int devind;
+{
+	u32_t base, limit, size;
+
+	record_bar(devind, 0);
+
+	base= pci_attr_r32(devind, CBB_MEMBASE_0);
+	limit= pci_attr_r32(devind, CBB_MEMLIMIT_0) |
+		(~CBB_MEML_MASK & 0xffffffff);
+	size= limit-base + 1;
+	if (debug)
+	{
+		printf("\tMemory window 0: base 0x%x, limit 0x%x, size %d\n",
+			base, limit, size);
+	}
+
+	base= pci_attr_r32(devind, CBB_MEMBASE_1);
+	limit= pci_attr_r32(devind, CBB_MEMLIMIT_1) |
+		(~CBB_MEML_MASK & 0xffffffff);
+	size= limit-base + 1;
+	if (debug)
+	{
+		printf("\tMemory window 1: base 0x%x, limit 0x%x, size %d\n",
+			base, limit, size);
+	}
+
+	base= pci_attr_r32(devind, CBB_IOBASE_0);
+	limit= pci_attr_r32(devind, CBB_IOLIMIT_0) |
+		(~CBB_IOL_MASK & 0xffffffff);
+	size= limit-base + 1;
+	if (debug)
+	{
+		printf("\tI/O window 0: base 0x%x, limit 0x%x, size %d\n",
+			base, limit, size);
+	}
+
+	base= pci_attr_r32(devind, CBB_IOBASE_1);
+	limit= pci_attr_r32(devind, CBB_IOLIMIT_1) |
+		(~CBB_IOL_MASK & 0xffffffff);
+	size= limit-base + 1;
+	if (debug)
+	{
+		printf("\tI/O window 1: base 0x%x, limit 0x%x, size %d\n",
+			base, limit, size);
+	}
+}
+
+/*===========================================================================*
+ *				record_bar				     *
+ *===========================================================================*/
+PRIVATE void record_bar(devind, bar_nr)
+int devind;
+int bar_nr;
+{
+	int reg, prefetch, type, dev_bar_nr;
+	u32_t bar, bar2;
+
+	reg= PCI_BAR+4*bar_nr;
+
+	bar= pci_attr_r32(devind, reg);
+	if (bar & PCI_BAR_IO)
+	{
+		/* Size register */
+		pci_attr_w32(devind, reg, 0xffffffff);
+		bar2= pci_attr_r32(devind, reg);
+		pci_attr_w32(devind, reg, bar);
+
+		bar &= ~(u32_t)3;	/* Clear non-address bits */
+		bar2 &= ~(u32_t)3;
+		bar2= (~bar2 & 0xffff)+1;
+		if (debug)
+		{
+			printf("\tbar_%d: %d bytes at 0x%x I/O\n",
+				bar_nr, bar2, bar);
+		}
+
+		dev_bar_nr= pcidev[devind].pd_bar_nr++;
+		assert(dev_bar_nr < BAR_NR);
+		pcidev[devind].pd_bar[dev_bar_nr].pb_flags= PBF_IO;
+		pcidev[devind].pd_bar[dev_bar_nr].pb_base= bar;
+		pcidev[devind].pd_bar[dev_bar_nr].pb_size= bar2;
+		pcidev[devind].pd_bar[dev_bar_nr].pb_nr= bar_nr;
+		if (bar == 0)
+		{
+			pcidev[devind].pd_bar[dev_bar_nr].pb_flags |= 
+				PBF_INCOMPLETE;
+		}
+	}
+	else
+	{
+		/* Size register */
+		pci_attr_w32(devind, reg, 0xffffffff);
+		bar2= pci_attr_r32(devind, reg);
+		pci_attr_w32(devind, reg, bar);
+
+		if (bar2 == 0)
+			return;	/* Reg. is not implemented */
+
+		prefetch= !!(bar & PCI_BAR_PREFETCH);
+		type= (bar & PCI_BAR_TYPE);
+		bar &= ~(u32_t)0xf;	/* Clear non-address bits */
+		bar2 &= ~(u32_t)0xf;
+		bar2= (~bar2)+1;
+		if (debug)
+		{
+			printf("\tbar_%d: 0x%x bytes at 0x%x%s memory\n",
+				bar_nr, bar2, bar,
+				prefetch ? " prefetchable" : "");
+			if (type != 0)
+				printf("type = 0x%x\n", type);
+		}
+
+		dev_bar_nr= pcidev[devind].pd_bar_nr++;
+		assert(dev_bar_nr < BAR_NR);
+		pcidev[devind].pd_bar[dev_bar_nr].pb_flags= 0;
+		pcidev[devind].pd_bar[dev_bar_nr].pb_base= bar;
+		pcidev[devind].pd_bar[dev_bar_nr].pb_size= bar2;
+		pcidev[devind].pd_bar[dev_bar_nr].pb_nr= bar_nr;
+		if (bar == 0)
+		{
+			pcidev[devind].pd_bar[dev_bar_nr].pb_flags |= 
+				PBF_INCOMPLETE;
+		}
+	}
+}
+
+/*===========================================================================*
+ *				complete_bridges			     *
+ *===========================================================================*/
+PRIVATE void complete_bridges()
+{
+	int i, freebus, devind, prim_busnr;
+
+	for (i= 0; i<nr_pcibus; i++)
+	{
+		if (!pcibus[i].pb_needinit)
+			continue;
+		printf("should allocate bus number for bus %d\n", i);
+		freebus= get_freebus();
+		printf("got bus number %d\n", freebus);
+
+		devind= pcibus[i].pb_devind;
+
+		prim_busnr= pcidev[devind].pd_busnr;
+		if (prim_busnr != 0)
+		{
+			printf(
+	"complete_bridge: updating subordinate bus number not implemented\n");
+		}
+
+		pcibus[i].pb_needinit= 0;
+		pcibus[i].pb_busnr= freebus;
+
+		printf("devind = %d\n", devind);
+		printf("prim_busnr= %d\n", prim_busnr);
+
+		pci_attr_w8(devind, PPB_PRIMBN, prim_busnr);
+		pci_attr_w8(devind, PPB_SECBN, freebus);
+		pci_attr_w8(devind, PPB_SUBORDBN, freebus);
+
+		printf("CR = 0x%x\n", pci_attr_r16(devind, PCI_CR));
+		printf("SECBLT = 0x%x\n", pci_attr_r8(devind, PPB_SECBLT));
+		printf("BRIDGECTRL = 0x%x\n",
+			pci_attr_r16(devind, PPB_BRIDGECTRL));
+	}
+}
+
+/*===========================================================================*
+ *				complete_bars				     *
+ *===========================================================================*/
+PRIVATE void complete_bars()
+{
+	int i, j, bar_nr, reg;
+	u32_t mem_top, io_bottom, io_top, io_high, base, size, v32;
+
+	mem_top= 0xfe000000;	/* Leave space for the CPU (APIC) */
+
+	/* Find the lowest memory base */
+	for (i= 0; i<nr_pcidev; i++)
+	{
+		for (j= 0; j<pcidev[i].pd_bar_nr; j++)
+		{
+			if (pcidev[i].pd_bar[j].pb_flags & PBF_IO)
+				continue;
+			if (pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE)
+				continue;
+			base= pcidev[i].pd_bar[j].pb_base;
+			if (base < mem_top)
+				mem_top= base;
+		}
+	}
+
+	/* Should check main memory size */
+	if (mem_top < 0x80000000)
+		panic("pci", "mem_top too low", mem_top);
+
+	io_top= 0x10000;
+	io_bottom= 0x400;
+
+	/* Find the free I/O space */
+	for (i= 0; i<nr_pcidev; i++)
+	{
+		for (j= 0; j<pcidev[i].pd_bar_nr; j++)
+		{
+			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_IO))
+				continue;
+			if (pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE)
+				continue;
+			base= pcidev[i].pd_bar[j].pb_base;
+			size= pcidev[i].pd_bar[j].pb_size;
+			if (base >= io_top)
+				continue;
+			if (base+size <= io_bottom)
+				continue;
+			if (base+size-io_bottom < io_top-base)
+				io_bottom= base+size;
+			else
+				io_top= base;
+		}
+	}
+
+	if (io_top < io_bottom)
+		panic("pci", "io_top too low", io_top);
+	if (debug)
+		printf("I/O range = [0x%x..0x%x>\n", io_bottom, io_top);
+
+	for (i= 0; i<nr_pcidev; i++)
+	{
+		for (j= 0; j<pcidev[i].pd_bar_nr; j++)
+		{
+			if (pcidev[i].pd_bar[j].pb_flags & PBF_IO)
+				continue;
+			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE))
+				continue;
+			size= pcidev[i].pd_bar[j].pb_size;
+			if (size < PAGE_SIZE)
+				size= PAGE_SIZE;
+			base= mem_top-size;
+			base &= ~(u32_t)(size-1);
+			mem_top= base;
+			bar_nr= pcidev[i].pd_bar[j].pb_nr;
+			reg= PCI_BAR + 4*bar_nr;
+			v32= pci_attr_r32(i, reg);
+			pci_attr_w32(i, reg, v32 | base);
+			if (debug)
+			{
+				printf(
+		"complete_bars: allocated 0x%x size %d to %d.%d.%d, bar_%d\n",
+					base, size, pcidev[i].pd_busnr,
+					pcidev[i].pd_dev, pcidev[i].pd_func,
+					bar_nr);
+			}
+			pcidev[i].pd_bar[j].pb_base= base;
+			pcidev[i].pd_bar[j].pb_flags &= ~PBF_INCOMPLETE;
+		}
+
+		io_high= io_top;
+		for (j= 0; j<pcidev[i].pd_bar_nr; j++)
+		{
+			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_IO))
+				continue;
+			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE))
+				continue;
+			size= pcidev[i].pd_bar[j].pb_size;
+			base= io_top-size;
+			base &= ~(u32_t)(size-1);
+
+			/* Assume that ISA compatibility is required. Only
+			 * use the lowest 256 bytes out of every 1024 bytes.
+			 */
+			base &= 0xfcff;
+
+			if (base < io_bottom)
+				panic("pci", "I/O base too low", base);
+
+			io_top= base;
+			bar_nr= pcidev[i].pd_bar[j].pb_nr;
+			reg= PCI_BAR + 4*bar_nr;
+			v32= pci_attr_r32(i, reg);
+			pci_attr_w32(i, reg, v32 | base);
+			if (debug)
+			{
+				printf(
+		"complete_bars: allocated 0x%x size %d to %d.%d.%d, bar_%d\n",
+					base, size, pcidev[i].pd_busnr,
+					pcidev[i].pd_dev, pcidev[i].pd_func,
+					bar_nr);
+			}
+			pcidev[i].pd_bar[j].pb_base= base;
+			pcidev[i].pd_bar[j].pb_flags &= ~PBF_INCOMPLETE;
+
+		}
+		if (io_top != io_high)
+			update_bridge4dev_io(i, io_top, io_high-io_top);
+	}
+
+	for (i= 0; i<nr_pcidev; i++)
+	{
+		for (j= 0; j<pcidev[i].pd_bar_nr; j++)
+		{
+			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE))
+				continue;
+			printf("should allocate resources for device %d\n", i);
+		}
+	}
+}
+
+/*===========================================================================*
+ *				update_bridge4dev_io			     *
+ *===========================================================================*/
+PRIVATE void update_bridge4dev_io(devind, io_base, io_size)
+int devind;
+u32_t io_base;
+u32_t io_size;
+{
+	int busnr, busind, type, br_devind;
+	u16_t v16;
+
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
+	type= pcibus[busind].pb_type;
+	if (type == PBT_INTEL_HOST)
+		return;	/* Nothing to do for host controller */
+	if (type == PBT_PCIBRIDGE)
+	{
+		printf(
+		"update_bridge4dev_io: not implemented for PCI bridges\n");
+		return;	
+	}
+	if (type != PBT_CARDBUS)
+		panic("pci", "update_bridge4dev_io: strange bus type", type);
+
+	if (debug)
+	{
+		printf("update_bridge4dev_io: adding 0x%x at 0x%x\n",
+			io_size, io_base);
+	}
+	br_devind= pcibus[busind].pb_devind;
+	pci_attr_w32(br_devind, CBB_IOLIMIT_0, io_base+io_size-1);
+	pci_attr_w32(br_devind, CBB_IOBASE_0, io_base);
+
+	/* Enable I/O access. Enable busmaster access as well. */
+	v16= pci_attr_r16(devind, PCI_CR);
+	pci_attr_w16(devind, PCI_CR, v16 | PCI_CR_IO_EN | PCI_CR_MAST_EN);
+}
+
+/*===========================================================================*
+ *				get_freebus				     *
+ *===========================================================================*/
+PRIVATE int get_freebus()
+{
+	int i, freebus;
+
+	freebus= 1;
+	for (i= 0; i<nr_pcibus; i++)
+	{
+		if (pcibus[i].pb_needinit)
+			continue;
+		if (pcibus[i].pb_type == PBT_INTEL_HOST)
+			continue;
+		if (pcibus[i].pb_busnr <= freebus)
+			freebus= pcibus[i].pb_busnr+1;
+		printf("get_freebus: should check suboridinate bus number\n");
+	}
+	return freebus;
+}
+
+/*===========================================================================*
  *				do_isabridge				     *
  *===========================================================================*/
 PRIVATE int do_isabridge(busind)
 int busind;
 {
-	int unknown_bridge= -1;
-	int bridge_dev= -1;
-	int i, j, r, type;
+	int i, j, r, type, busnr, unknown_bridge, bridge_dev;
 	u16_t vid, did;
 	char *dstr;
 
+	unknown_bridge= -1;
+	bridge_dev= -1;
 	j= 0;	/* lint */
 	vid= did= 0;	/* lint */
+	busnr= pcibus[busind].pb_busnr;
 	for (i= 0; i< nr_pcidev; i++)
 	{
-		if (pcidev[i].pd_busind != busind)
+		if (pcidev[i].pd_busnr != busnr)
 			continue;
 		if (pcidev[i].pd_baseclass == 0x06 &&
 			pcidev[i].pd_subclass == 0x01 &&
@@ -673,7 +1342,11 @@ int busind;
 
 	if (unknown_bridge == -1)
 	{
-		printf("(warning) no ISA bridge found on bus %d", busind);
+		if (debug)
+		{
+			printf("(warning) no ISA bridge found on bus %d\n",
+				busind);
+		}
 		return 0;
 	}
 	printf("(warning) unsupported ISA bridge %04X/%04X for bus %d\n",
@@ -689,17 +1362,29 @@ int busind;
 PRIVATE void do_pcibridge(busind)
 int busind;
 {
-	int devind, i;
+	int i, devind, busnr;
 	int ind, type;
 	u16_t vid, did;
-	u8_t sbusn, baseclass, subclass, infclass;
+	u8_t sbusn, baseclass, subclass, infclass, headt;
 	u32_t t3;
 
 	vid= did= 0;	/* lint */
+	busnr= pcibus[busind].pb_busnr;
 	for (devind= 0; devind< nr_pcidev; devind++)
 	{
-		if (pcidev[devind].pd_busind != busind)
+#if 0
+		printf("do_pcibridge: trying %u.%u.%u\n",
+			pcidev[devind].pd_busind, pcidev[devind].pd_dev, 
+			pcidev[devind].pd_func);
+#endif
+
+		if (pcidev[devind].pd_busnr != busnr)
+		{
+#if 0
+			printf("wrong bus\n");
+#endif
 			continue;
+		}
 
 		vid= pcidev[devind].pd_vid;
 		did= pcidev[devind].pd_did;
@@ -711,39 +1396,63 @@ int busind;
 				continue;
 			break;
 		}
+		type= pci_pcibridge[i].type;
 		if (pci_pcibridge[i].vid == 0)
 		{
-			if (debug)
+			headt= pci_attr_r8(devind, PCI_HEADT);
+			type= 0;
+			if ((headt & PHT_MASK) == PHT_BRIDGE)
+				type= PCI_PPB_STD;
+			else if ((headt & PHT_MASK) == PHT_CARDBUS)
+				type= PCI_PPB_CB;
+			else
 			{
-				/* Report unsupported bridges */
-				baseclass= pci_attr_r8(devind, PCI_BCR);
-				subclass= pci_attr_r8(devind, PCI_SCR);
-				infclass= pci_attr_r8(devind, PCI_PIFR);
-				t3= ((baseclass << 16) | (subclass << 8) |
-					infclass);
-				if (t3 != PCI_T3_PCI2PCI &&
-					t3 != PCI_T3_PCI2PCI_SUBTR)
-				{
-					/* No a PCI-to-PCI bridge */
-					continue;
-				}
-				printf(
-			"Ignoring unknown PCI-to-PCI bridge: %04X/%04X\n",
-					vid, did);
+#if 0
+				printf("not a bridge\n");
+#endif
+				continue;	/* Not a bridge */
 			}
-			continue;
+
+			baseclass= pci_attr_r8(devind, PCI_BCR);
+			subclass= pci_attr_r8(devind, PCI_SCR);
+			infclass= pci_attr_r8(devind, PCI_PIFR);
+			t3= ((baseclass << 16) | (subclass << 8) | infclass);
+			if (type == PCI_PPB_STD &&
+				t3 != PCI_T3_PCI2PCI &&
+				t3 != PCI_T3_PCI2PCI_SUBTR)
+			{
+				printf(
+"Unknown PCI class %02x:%02x:%02x for PCI-to-PCI bridge, device %04X/%04X\n",
+					baseclass, subclass, infclass,
+					vid, did);
+				continue;
+			 }
+			if (type == PCI_PPB_CB &&
+				t3 != PCI_T3_CARDBUS)
+			{
+				printf(
+"Unknown PCI class %02x:%02x:%02x for Cardbus bridge, device %04X/%04X\n",
+					baseclass, subclass, infclass,
+					vid, did);
+				continue;
+			 }
 		}
-		type= pci_pcibridge[i].type;
 
 		if (debug)
-			printf("PCI-to-PCI bridge: %04X/%04X\n", vid, did);
+		{
+			printf("%u.%u.%u: PCI-to-PCI bridge: %04X/%04X\n",
+				pcidev[devind].pd_busnr,
+				pcidev[devind].pd_dev, 
+				pcidev[devind].pd_func, vid, did);
+		}
 
 		/* Assume that the BIOS initialized the secondary bus
 		 * number.
 		 */
-		sbusn= pci_attr_r8(devind, PPB_SBUSN);
+		sbusn= pci_attr_r8(devind, PPB_SECBN);
 #if DEBUG
 		printf("sbusn = %d\n", sbusn);
+		printf("subordn = %d\n", pci_attr_r8(devind, PPB_SUBORDBN));
 #endif
 
 		if (nr_pcibus >= NR_PCIBUS)
@@ -751,21 +1460,27 @@ int busind;
 		ind= nr_pcibus;
 		nr_pcibus++;
 		pcibus[ind].pb_type= PBT_PCIBRIDGE;
+		pcibus[ind].pb_needinit= 1;
 		pcibus[ind].pb_isabridge_dev= -1;
 		pcibus[ind].pb_isabridge_type= 0;
 		pcibus[ind].pb_devind= devind;
-		pcibus[ind].pb_bus= sbusn;
+		pcibus[ind].pb_busnr= sbusn;
 		pcibus[ind].pb_rreg8= pcibus[busind].pb_rreg8;
 		pcibus[ind].pb_rreg16= pcibus[busind].pb_rreg16;
 		pcibus[ind].pb_rreg32= pcibus[busind].pb_rreg32;
+		pcibus[ind].pb_wreg8= pcibus[busind].pb_wreg8;
 		pcibus[ind].pb_wreg16= pcibus[busind].pb_wreg16;
 		pcibus[ind].pb_wreg32= pcibus[busind].pb_wreg32;
 		switch(type)
 		{
-		case PCI_PCIB_INTEL:
-		case PCI_AGPB_INTEL:
-			pcibus[ind].pb_rsts= pcibr_intel_rsts;
-			pcibus[ind].pb_wsts= pcibr_intel_wsts;
+		case PCI_PPB_STD:
+			pcibus[ind].pb_rsts= pcibr_std_rsts;
+			pcibus[ind].pb_wsts= pcibr_std_wsts;
+			break;
+		case PCI_PPB_CB:
+			pcibus[ind].pb_type= PBT_CARDBUS;
+			pcibus[ind].pb_rsts= pcibr_cb_rsts;
+			pcibus[ind].pb_wsts= pcibr_cb_wsts;
 			break;
 		case PCI_AGPB_VIA:
 			pcibus[ind].pb_rsts= pcibr_via_rsts;
@@ -774,9 +1489,34 @@ int busind;
 		default:
 		    panic("PCI","unknown PCI-PCI bridge type", type);
 		}
+		if (sbusn == 0)
+		{
+			printf("Secondary bus number not initialized\n");
+			continue;
+		}
+		pcibus[ind].pb_needinit= 0;
 
 		probe_bus(ind);
+
+		/* Look for PCI bridges */
+		do_pcibridge(ind);
 	}
+}
+
+/*===========================================================================*
+ *				get_busind					     *
+ *===========================================================================*/
+PRIVATE int get_busind(busnr)
+int busnr;
+{
+	int i;
+
+	for (i= 0; i<nr_pcibus; i++)
+	{
+		if (pcibus[i].pb_busnr == busnr)
+			return i;
+	}
+	panic("pci", "get_busind: can't find bus", busnr);
 }
 
 /*===========================================================================*
@@ -837,20 +1577,20 @@ int devind;
 PRIVATE int do_amd_isabr(devind)
 int devind;
 {
-	int i, bus, dev, func, xdevind, irq, edge;
+	int i, busnr, dev, func, xdevind, irq, edge;
 	u8_t levmask;
 	u16_t pciirq;
 
 	/* Find required function */
 	func= AMD_ISABR_FUNC;
-	bus= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
 	dev= pcidev[devind].pd_dev;
 
 	/* Fake a device with the required function */
 	if (nr_pcidev >= NR_PCIDEV)
 		panic("PCI","too many PCI devices", nr_pcidev);
 	xdevind= nr_pcidev;
-	pcidev[xdevind].pd_busind= bus;
+	pcidev[xdevind].pd_busnr= busnr;
 	pcidev[xdevind].pd_dev= dev;
 	pcidev[xdevind].pd_func= func;
 	pcidev[xdevind].pd_inuse= 1;
@@ -1076,29 +1816,30 @@ char *end;
 PRIVATE u16_t pci_attr_rsts(devind)
 int devind;
 {
-	int busind;
+	int busnr, busind;
 
-	busind= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
 	return pcibus[busind].pb_rsts(busind);
 }
 				
 
 /*===========================================================================*
- *				pcibr_intel_rsts			     *
+ *				pcibr_std_rsts				     *
  *===========================================================================*/
-PRIVATE u16_t pcibr_intel_rsts(busind)
+PRIVATE u16_t pcibr_std_rsts(busind)
 int busind;
 {
 	int devind;
-	devind= pcibus[busind].pb_devind;
 
+	devind= pcibus[busind].pb_devind;
 	return pci_attr_r16(devind, PPB_SSTS);
 }
 
 /*===========================================================================*
- *				pcibr_intel_wsts			     *
+ *				pcibr_std_wsts				     *
  *===========================================================================*/
-PRIVATE void pcibr_intel_wsts(busind, value)
+PRIVATE void pcibr_std_wsts(busind, value)
 int busind;
 u16_t value;
 {
@@ -1106,10 +1847,39 @@ u16_t value;
 	devind= pcibus[busind].pb_devind;
 
 #if 0
-	printf("pcibr_intel_wsts(%d, 0x%X), devind= %d\n", 
+	printf("pcibr_std_wsts(%d, 0x%X), devind= %d\n", 
 		busind, value, devind);
 #endif
 	pci_attr_w16(devind, PPB_SSTS, value);
+}
+
+/*===========================================================================*
+ *				pcibr_cb_rsts				     *
+ *===========================================================================*/
+PRIVATE u16_t pcibr_cb_rsts(busind)
+int busind;
+{
+	int devind;
+	devind= pcibus[busind].pb_devind;
+
+	return pci_attr_r16(devind, CBB_SSTS);
+}
+
+/*===========================================================================*
+ *				pcibr_cb_wsts				     *
+ *===========================================================================*/
+PRIVATE void pcibr_cb_wsts(busind, value)
+int busind;
+u16_t value;
+{
+	int devind;
+	devind= pcibus[busind].pb_devind;
+
+#if 0
+	printf("pcibr_cb_wsts(%d, 0x%X), devind= %d\n", 
+		busind, value, devind);
+#endif
+	pci_attr_w16(devind, CBB_SSTS, value);
 }
 
 /*===========================================================================*
@@ -1147,9 +1917,10 @@ PRIVATE void pci_attr_wsts(devind, value)
 int devind;
 u16_t value;
 {
-	int busind;
+	int busnr, busind;
 
-	busind= pcidev[devind].pd_busind;
+	busnr= pcidev[devind].pd_busnr;
+	busind= get_busind(busnr);
 	pcibus[busind].pb_wsts(busind, value);
 }
 				
@@ -1165,7 +1936,7 @@ int port;
 	u8_t v;
 	int s;
 
-	v= PCII_RREG8_(pcibus[busind].pb_bus, 
+	v= PCII_RREG8_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
 #if USER_SPACE
@@ -1194,7 +1965,7 @@ int port;
 	u16_t v;
 	int s;
 
-	v= PCII_RREG16_(pcibus[busind].pb_bus, 
+	v= PCII_RREG16_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
 #if USER_SPACE
@@ -1223,7 +1994,7 @@ int port;
 	u32_t v;
 	int s;
 
-	v= PCII_RREG32_(pcibus[busind].pb_bus, 
+	v= PCII_RREG32_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port);
 #if USER_SPACE
@@ -1242,6 +2013,33 @@ int port;
 }
 
 /*===========================================================================*
+ *				pcii_wreg8				     *
+ *===========================================================================*/
+PRIVATE void pcii_wreg8(busind, devind, port, value)
+int busind;
+int devind;
+int port;
+u8_t value;
+{
+	int s;
+#if 0
+	printf("pcii_wreg8(%d, %d, 0x%X, 0x%X): %d.%d.%d\n",
+		busind, devind, port, value,
+		pcibus[busind].pb_bus, pcidev[devind].pd_dev,
+		pcidev[devind].pd_func);
+#endif
+	PCII_WREG8_(pcibus[busind].pb_busnr, 
+		pcidev[devind].pd_dev, pcidev[devind].pd_func,
+		port, value);
+#if USER_SPACE
+	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
+		printf("PCI: warning, sys_outl failed: %d\n", s);
+#else
+	outl(PCII_CONFADD, PCII_UNSEL);
+#endif
+}
+
+/*===========================================================================*
  *				pcii_wreg16				     *
  *===========================================================================*/
 PRIVATE void pcii_wreg16(busind, devind, port, value)
@@ -1257,7 +2055,7 @@ u16_t value;
 		pcibus[busind].pb_bus, pcidev[devind].pd_dev,
 		pcidev[devind].pd_func);
 #endif
-	PCII_WREG16_(pcibus[busind].pb_bus, 
+	PCII_WREG16_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port, value);
 #if USER_SPACE
@@ -1284,7 +2082,7 @@ u32_t value;
 		pcibus[busind].pb_bus, pcidev[devind].pd_dev,
 		pcidev[devind].pd_func);
 #endif
-	PCII_WREG32_(pcibus[busind].pb_bus, 
+	PCII_WREG32_(pcibus[busind].pb_busnr, 
 		pcidev[devind].pd_dev, pcidev[devind].pd_func,
 		port, value);
 #if USER_SPACE
@@ -1304,7 +2102,7 @@ int busind;
 	u16_t v;
 	int s;
 
-	v= PCII_RREG16_(pcibus[busind].pb_bus, 0, 0, PCI_PCISTS);
+	v= PCII_RREG16_(pcibus[busind].pb_busnr, 0, 0, PCI_SR);
 #if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);
@@ -1322,7 +2120,7 @@ int busind;
 u16_t value;
 {
 	int s;
-	PCII_WREG16_(pcibus[busind].pb_bus, 0, 0, PCI_PCISTS, value);
+	PCII_WREG16_(pcibus[busind].pb_busnr, 0, 0, PCI_SR, value);
 #if USER_SPACE
 	if (OK != (s=sys_outl(PCII_CONFADD, PCII_UNSEL)))
 		printf("PCI: warning, sys_outl failed: %d\n", s);

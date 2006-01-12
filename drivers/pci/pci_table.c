@@ -32,6 +32,7 @@ struct pci_vendor pci_vendor_table[]=
 	{ 0x105A, "Promise Technology" },
 	{ 0x10B7, "3Com Corporation" },
 	{ 0x10B9, "AcerLabs (ALI)" },
+	{ 0x10C8, "Neomagic Corporation" },
 	{ 0x10DE, "nVidia Corporation" },
 	{ 0x10EC, "Realtek" },
 	{ 0x1106, "VIA" },
@@ -77,6 +78,8 @@ struct pci_device pci_device_table[]=
 	{ 0x10B9, 0x5229, "ALI M5229 (IDE)" },
 	{ 0x10B9, 0x5243, "ALI M5243" },
 	{ 0x10B9, 0x7101, "ALI M7101 PMU" },
+	{ 0x10C8, 0x0005, "Neomagic NM2200 Magic Graph 256AV" },
+	{ 0x10C8, 0x8005, "Neomagic NM2200 Magic Graph 256AV Audio" },
 	{ 0x10DE, 0x0020, "nVidia Riva TnT [NV04]" },
 	{ 0x10DE, 0x0110, "nVidia GeForce2 MX [NV11]" },
 	{ 0x10EC, 0x8029, "Realtek RTL8029" },
@@ -274,15 +277,17 @@ struct pci_isabridge pci_isabridge[]=
 
 struct pci_pcibridge pci_pcibridge[]=
 {
-	{ 0x8086, 0x1A31, PCI_AGPB_INTEL, },	/* Intel 82845B/A AGP Bridge */
+#if 0
+	{ 0x8086, 0x1A31, PCI_PCIB_INTEL, },	/* Intel 82845B/A AGP Bridge */
 	{ 0x8086, 0x2448, PCI_PCIB_INTEL, },	/* Intel 82801 Mobile */
 	{ 0x8086, 0x244e, PCI_PCIB_INTEL, },	/* Intel 82801 PCI Bridge */
-	{ 0x8086, 0x2561, PCI_AGPB_INTEL, },	/* Intel 82845 AGP Bridge */
-	{ 0x8086, 0x7191, PCI_AGPB_INTEL, },	/* Intel 82443BX (AGP bridge) */
-	{ 0x1022, 0x700D, PCI_AGPB_INTEL, },	/* AMD-762 (AGP 4x) */
-	{ 0x10B9, 0x5243, PCI_AGPB_INTEL, },	/* ALI M5243 */
+	{ 0x8086, 0x2561, PCI_PCIB_INTEL, },	/* Intel 82845 AGP Bridge */
+	{ 0x8086, 0x7191, PCI_PCIB_INTEL, },	/* Intel 82443BX (AGP bridge) */
+	{ 0x1022, 0x700D, PCI_PCIB_INTEL, },	/* AMD-762 (AGP 4x) */
+	{ 0x10B9, 0x5243, PCI_PCIB_INTEL, },	/* ALI M5243 */
 	{ 0x1106, 0x8305, PCI_AGPB_VIA, },	/* VIA VT8365 [KM133 AGP] */
 	{ 0x1106, 0xB188, PCI_AGPB_VIA, },	/* VT8237 PCI bridge */
+#endif
 	{ 0x0000, 0x0000, 0, },
 };
 

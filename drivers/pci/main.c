@@ -6,6 +6,16 @@ main.c
 
 #include <ibm/pci.h>
 
+#include "pci.h"
+
+#define NR_DRIVERS	16
+
+PRIVATE struct name
+{
+	char name[M3_STRING];
+	int tasknr;
+} names[NR_DRIVERS];
+
 FORWARD _PROTOTYPE( void do_init, (message *mp)				);
 FORWARD _PROTOTYPE( void do_first_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_next_dev, (message *mp)			);
@@ -15,17 +25,22 @@ FORWARD _PROTOTYPE( void do_dev_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_reserve, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r8, (message *mp)			);
+FORWARD _PROTOTYPE( void do_attr_r16, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r32, (message *mp)			);
+FORWARD _PROTOTYPE( void do_attr_w8, (message *mp)			);
+FORWARD _PROTOTYPE( void do_attr_w16, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_w32, (message *mp)			);
+FORWARD _PROTOTYPE( void do_rescan_bus, (message *mp)			);
 
 int main(void)
 {
-	int r;
+	int i, r;
 	message m;
 
-	printf("PCI says: hello world\n");
-
 	pci_init();
+
+	for (i= 0; i<NR_DRIVERS; i++)
+		names[i].tasknr= ANY;
 
 	for(;;)
 	{
@@ -46,10 +61,14 @@ int main(void)
 		case BUSC_PCI_SLOT_NAME: do_slot_name(&m); break;
 		case BUSC_PCI_RESERVE: do_reserve(&m); break;
 		case BUSC_PCI_ATTR_R8: do_attr_r8(&m); break;
+		case BUSC_PCI_ATTR_R16: do_attr_r16(&m); break;
 		case BUSC_PCI_ATTR_R32: do_attr_r32(&m); break;
+		case BUSC_PCI_ATTR_W8: do_attr_w8(&m); break;
+		case BUSC_PCI_ATTR_W16: do_attr_w16(&m); break;
 		case BUSC_PCI_ATTR_W32: do_attr_w32(&m); break;
+		case BUSC_PCI_RESCAN: do_rescan_bus(&m); break;
 		default:
-			printf("got message from %d, type %d\n",
+			printf("PCI: got message from %d, type %d\n",
 				m.m_source, m.m_type);
 			break;
 		}
@@ -61,9 +80,25 @@ int main(void)
 PRIVATE void do_init(mp)
 message *mp;
 {
-	int r;
+	int i, r, empty;
 
-	/* NOP for the moment */
+	printf("pci_init: called by '%s'\n", mp->m3_ca1);
+	empty= -1;
+	for (i= 0; i<NR_DRIVERS; i++)
+	{
+		if (empty == -1 && names[i].tasknr == ANY)
+			empty= i;
+		if (strcmp(names[i].name, mp->m3_ca1) == 0)
+			break;
+	}
+	if (i < NR_DRIVERS)
+		pci_release(names[i].name);
+	else
+	{
+		i= empty;
+		strcpy(names[i].name, mp->m3_ca1);
+	}
+	names[i].tasknr= mp->m_source;
 
 	mp->m_type= 0;
 	r= send(mp->m_source, mp);
@@ -225,11 +260,24 @@ message *mp;
 PRIVATE void do_reserve(mp)
 message *mp;
 {
-	int r, devind;
+	int i, r, devind;
+
+	/* Find the name of the caller */
+	for (i= 0; i<NR_DRIVERS; i++)
+	{
+		if (names[i].tasknr == mp->m_source)
+			break;
+	}
+	if (i >= NR_DRIVERS)
+	{
+		printf("pci`do_reserve: task %d did not call pci_init\n",
+			mp->m_source);
+		return;
+	}
 
 	devind= mp->m1_i1;
 
-	pci_reserve(devind);
+	pci_reserve2(devind, names[i].name);
 	mp->m_type= OK;
 	r= send(mp->m_source, mp);
 	if (r != 0)
@@ -259,6 +307,26 @@ message *mp;
 	}
 }
 
+PRIVATE void do_attr_r16(mp)
+message *mp;
+{
+	int r, devind, port;
+	u32_t v;
+
+	devind= mp->m2_i1;
+	port= mp->m2_i2;
+
+	v= pci_attr_r16(devind, port);
+	mp->m2_l1= v;
+	mp->m_type= OK;
+	r= send(mp->m_source, mp);
+	if (r != 0)
+	{
+		printf("do_attr_r16: unable to send to %d: %d\n",
+			mp->m_source, r);
+	}
+}
+
 PRIVATE void do_attr_r32(mp)
 message *mp;
 {
@@ -279,6 +347,46 @@ message *mp;
 	}
 }
 
+PRIVATE void do_attr_w8(mp)
+message *mp;
+{
+	int r, devind, port;
+	u8_t v;
+
+	devind= mp->m2_i1;
+	port= mp->m2_i2;
+	v= mp->m2_l1;
+
+	pci_attr_w8(devind, port, v);
+	mp->m_type= OK;
+	r= send(mp->m_source, mp);
+	if (r != 0)
+	{
+		printf("do_attr_w8: unable to send to %d: %d\n",
+			mp->m_source, r);
+	}
+}
+
+PRIVATE void do_attr_w16(mp)
+message *mp;
+{
+	int r, devind, port;
+	u16_t v;
+
+	devind= mp->m2_i1;
+	port= mp->m2_i2;
+	v= mp->m2_l1;
+
+	pci_attr_w16(devind, port, v);
+	mp->m_type= OK;
+	r= send(mp->m_source, mp);
+	if (r != 0)
+	{
+		printf("do_attr_w16: unable to send to %d: %d\n",
+			mp->m_source, r);
+	}
+}
+
 PRIVATE void do_attr_w32(mp)
 message *mp;
 {
@@ -295,6 +403,23 @@ message *mp;
 	if (r != 0)
 	{
 		printf("do_attr_w32: unable to send to %d: %d\n",
+			mp->m_source, r);
+	}
+}
+
+PRIVATE void do_rescan_bus(mp)
+message *mp;
+{
+	int r, busnr;
+
+	busnr= mp->m2_i1;
+
+	pci_rescan_bus(busnr);
+	mp->m_type= OK;
+	r= send(mp->m_source, mp);
+	if (r != 0)
+	{
+		printf("do_rescan_bus: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
