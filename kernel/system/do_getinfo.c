@@ -133,6 +133,12 @@ register message *m_ptr;	/* pointer to request message */
     	src_phys = vir2phys(&bios_buf_vir);
     	break;
 
+    case GET_IRQACTIDS: {
+        length = sizeof(irq_actids);
+        src_phys = vir2phys(irq_actids);
+        break;
+    }
+
     default:
         return(EINVAL);
   }

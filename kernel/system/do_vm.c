@@ -25,7 +25,7 @@ FORWARD _PROTOTYPE( void map_range, (u32_t base, u32_t size,
 							u32_t offset)	);
 
 /*===========================================================================*
- *				do_vm_setbuf				     *
+ *				do_vm_map				     *
  *===========================================================================*/
 PUBLIC int do_vm_map(m_ptr)
 message *m_ptr;			/* pointer to request message */
@@ -43,6 +43,8 @@ message *m_ptr;			/* pointer to request message */
 	}
 
 	proc_nr= m_ptr->m4_l1;
+	if (proc_nr == SELF)
+		proc_nr= m_ptr->m_source;
 	do_map= m_ptr->m4_l2;
 	base= m_ptr->m4_l3;
 	size= m_ptr->m4_l4;
@@ -207,6 +209,9 @@ u32_t offset;
 		}
 		entry= offset | I386_VM_USER | I386_VM_WRITE |
 			I386_VM_PRESENT;
+#if 0	/* Do we need this for memory mapped I/O? */
+		entry |= I386_VM_PCD | I386_VM_PWT;
+#endif
 		phys_put32(curr_pt_addr + pt_ent * I386_VM_PT_ENT_SIZE, entry);
 		offset += PAGE_SIZE;
 		base += PAGE_SIZE;
