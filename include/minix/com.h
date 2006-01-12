@@ -120,6 +120,7 @@
 #define BUSC_PCI_ATTR_W32	(BUSC_RQ_BASE + 13)	/* Write 32-bit
 							 * attribute value
 							 */
+#define BUSC_PCI_RESCAN		(BUSC_RQ_BASE + 14)	/* Rescan bus */
 
 /*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
@@ -382,6 +383,7 @@
 #define I_VAL_LEN      m7_i1	/* max length of value */
 #define I_VAL_PTR2     m7_p2	/* second virtual address */ 
 #define I_VAL_LEN2     m7_i2	/* second length, or proc nr */
+#   define GET_IRQACTIDS  16	/* get the IRQ masks */
 
 /* Field names for SYS_TIMES. */
 #define T_PROC_NR      m4_l1	/* process to request time info for */
