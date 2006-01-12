@@ -711,8 +711,6 @@ PRIVATE void set_leds()
   int s;
   if (! machine.pc_at) return;	/* PC/XT doesn't have LEDs */
 
-  printf("in set_leds\n");
-
   kb_wait();			/* wait for buffer empty  */
   if ((s=sys_outb(KEYBD, LED_CODE)) != OK)
       printf("Warning, sys_outb couldn't prepare for LED values: %d\n", s);
@@ -809,15 +807,15 @@ PRIVATE int kb_wait()
   int s, isaux;
   unsigned char byte;
 
-  printf("in kb_wait\n");
-
   retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
   do {
       s = sys_inb(KB_STATUS, &status);
       if (status & KB_OUT_FULL) {
 	  if (scan_keyboard(&byte, &isaux))
 	  {
+#if 0
 		  printf("ignoring %sbyte in kb_wait\n", isaux ? "AUX " : "");
+#endif
 	  }
       }
       if (! (status & (KB_IN_FULL|KB_OUT_FULL)) )
@@ -836,11 +834,9 @@ PRIVATE int kb_ack()
   int retries, s;
   unsigned long u8val;
 
-  printf("in kb_ack\n");
 
   retries = MAX_KB_ACK_RETRIES + 1;
   do {
-      printf("ignoring byte in kb_ack\n");
       s = sys_inb(KEYBD, &u8val);
       if (u8val == KB_ACK)	
           break;		/* wait for ack */
