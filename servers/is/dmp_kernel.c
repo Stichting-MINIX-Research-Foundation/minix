@@ -133,6 +133,7 @@ PUBLIC void irqtab_dmp()
 {
   int i,r;
   struct irq_hook irq_hooks[NR_IRQ_HOOKS];
+  int irq_actids[NR_IRQ_VECTORS];
   struct irq_hook *e;	/* irq tab entry */
   char *irq[] = {
   	"clock",	/* 00 */
@@ -157,6 +158,15 @@ PUBLIC void irqtab_dmp()
       report("IS","warning: couldn't get copy of irq hooks", r);
       return;
   }
+  if ((r = sys_getirqactids(irq_actids)) != OK) {
+      report("IS","warning: couldn't get copy of irq mask", r);
+      return;
+  }
+
+#if 0
+  for (i= 0; i<NR_IRQ_VECTORS; i++)
+	printf("irq_actids[%d] = 0x%08x\n", i, irq_actids[i]);
+#endif
 
   printf("IRQ policies dump shows use of kernel's IRQ hooks.\n");
   printf("-h.id- -proc.nr- -IRQ vector (nr.)- -policy- -notify id-\n");
@@ -170,7 +180,10 @@ PUBLIC void irqtab_dmp()
   	printf("%10d  ", e->proc_nr); 
   	printf("    %9.9s (%02d) ", irq[e->irq], e->irq); 
   	printf("  %s", (e->policy & IRQ_REENABLE) ? "reenable" : "    -   ");
-  	printf("   %d\n", e->notify_id);
+  	printf("   %d", e->notify_id);
+	if (irq_actids[e->irq] & (1 << i))
+		printf("masked");
+	printf("\n");
   }
   printf("\n");
 }
