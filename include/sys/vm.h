@@ -17,6 +17,8 @@ struct mapreq
 #define I386_VM_PRESENT	0x001	/* Page is present */
 #define I386_VM_WRITE	0x002	/* Read/write access allowed */
 #define I386_VM_USER	0x004	/* User access allowed */
+#define I386_VM_PWT	0x008	/* Write through */
+#define I386_VM_PCD	0x010	/* Cache disable */
 #define I386_VM_ADDR_MASK 0xFFFFF000 /* physical address */
 
 #define I386_VM_PT_ENT_SIZE	4	/* Size of a page table entry */
