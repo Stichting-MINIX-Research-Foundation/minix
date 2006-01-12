@@ -32,6 +32,7 @@ all install depend clean:
 	cd ./sb16 && $(MAKE) $@
 	cd ./lance && $(MAKE) $@
 	cd ./pci && $(MAKE) $@
+	cd ./ti1225 && $(MAKE) $@
 
 image:
 	cd ./libdriver && $(MAKE) build
