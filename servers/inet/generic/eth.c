@@ -157,6 +157,7 @@ select_res_t select_res;
 	eth_fd->ef_get_userdata= get_userdata;
 	eth_fd->ef_put_userdata= put_userdata;
 	eth_fd->ef_put_pkt= put_pkt;
+
 	return i;
 }
 
@@ -572,7 +573,8 @@ PUBLIC int eth_cancel(fd, which_operation)
 int fd;
 int which_operation;
 {
-	eth_fd_t *eth_fd;
+	eth_fd_t *eth_fd, *prev, *loc_fd;
+	eth_port_t *eth_port;
 
 	DBLOCK(2, printf("eth_cancel (%d)\n", fd));
 	eth_fd= &eth_fd_table[fd];
@@ -587,6 +589,25 @@ int which_operation;
 	case SR_CANCEL_WRITE:
 		assert (eth_fd->ef_flags & EFF_WRITE_IP);
 		eth_fd->ef_flags &= ~EFF_WRITE_IP;
+
+		/* Remove fd from send queue */
+		eth_port= eth_fd->ef_port;
+		if (eth_port->etp_vlan_port)
+			eth_port= eth_port->etp_vlan_port;
+		for (prev= 0, loc_fd= eth_port->etp_sendq_head; loc_fd != NULL;
+			prev= loc_fd, loc_fd= loc_fd->ef_send_next)
+		{
+			if (loc_fd == eth_fd)
+				break;
+		}
+		assert(loc_fd == eth_fd);
+		if (prev == NULL)
+			eth_port->etp_sendq_head= loc_fd->ef_send_next;
+		else
+			prev->ef_send_next= loc_fd->ef_send_next;
+		if (loc_fd->ef_send_next == NULL)
+			eth_port->etp_sendq_tail= prev;
+			
 		reply_thr_get(eth_fd, EINTR, FALSE);
 		break;
 	case SR_CANCEL_IOCTL:
@@ -763,6 +784,7 @@ eth_port_t *eth_port;
 			return;
 		eth_port->etp_sendq_head= eth_fd->ef_send_next;
 
+		assert(eth_fd->ef_flags & EFF_WRITE_IP);
 		eth_fd->ef_flags &= ~EFF_WRITE_IP;
 		r= eth_write(eth_fd-eth_fd_table, eth_fd->ef_write_count);
 		assert(r == NW_OK);
