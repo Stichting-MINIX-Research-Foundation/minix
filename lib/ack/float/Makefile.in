@@ -1,0 +1,61 @@
+# Makefile for lib/float.
+
+#CC1	= /bin/sh ./FP.compile
+
+LIBRARIES=libfp
+
+libfp_FILES=" \
+	add_ext.fc \
+	adder.fc \
+	adf4.fc \
+	adf8.fc \
+	cff4.fc \
+	cff8.fc \
+	cfi.fc \
+	cfu.fc \
+	cif4.fc \
+	cif8.fc \
+	cmf4.fc \
+	cmf8.fc \
+	compact.fc \
+	cuf4.fc \
+	cuf8.fc \
+	div_ext.fc \
+	dvf4.fc \
+	dvf8.fc \
+	extend.fc \
+	fef4.fc \
+	fef8.fc \
+	fif4.fc \
+	fif8.fc \
+	fptrp.s \
+	mlf4.fc \
+	mlf8.fc \
+	mul_ext.fc \
+	ngf4.fc \
+	ngf8.fc \
+	nrm_ext.fc \
+	sbf4.fc \
+	sbf8.fc \
+	sft_ext.fc \
+	shifter.fc \
+	sub_ext.fc \
+	zrf4.fc \
+	zrf8.fc \
+	zrf_ext.fc"
+
+TYPE=ack
+
+#extra commands to convert the c files to the correct assembler files
+
+#%.s: %.fc
+#	/bin/sh ./FP.compile $<
+
+#1. make a assembler file of the c file
+#%.fs: %.fc
+#	-cp $< $(<:.fc=.c) && cc -O -I. -D_MINIX -D_POSIX_SOURCE -S $(<:.fc=.c) && cp $(<:.fc=.s) $(<:.fc=.fs)
+#	@rm $(<:.fc=.c) $(<:.fc=.s)
+
+#2. modify the assembler file
+#%.s: %.fs
+#	sed -f FP.script $< > $@

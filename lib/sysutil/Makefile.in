@@ -1,0 +1,21 @@
+# Makefile for lib/utils.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libsysutil
+
+libsysutil_FILES=" \
+	kmalloc.c \
+	kprintf.c \
+	kputc.c \
+	tickdelay.c \
+	getuptime.c \
+	env_get_prm.c \
+	env_parse.c \
+	env_panic.c \
+	env_prefix.c \
+	fkey_ctl.c \
+	panic.c \
+	report.c"
+
+TYPE=both

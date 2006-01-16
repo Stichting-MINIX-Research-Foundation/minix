@@ -1,0 +1,61 @@
+# Makefile for lib/syslib.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libsys
+
+libsys_FILES=" \
+	pci_attr_r16.c \
+	pci_attr_r32.c \
+	pci_attr_r8.c \
+	pci_attr_w16.c \
+	pci_attr_w32.c \
+	pci_attr_w8.c \
+	pci_dev_name.c \
+	pci_find_dev.c \
+	pci_first_dev.c \
+	pci_ids.c \
+	pci_init.c \
+	pci_init1.c \
+	pci_next_dev.c \
+	pci_rescan_bus.c \
+	pci_reserve.c \
+	pci_slot_name.c \
+	sys_abort.c \
+	sys_eniop.c \
+	sys_endsig.c \
+	sys_exec.c \
+	sys_exit.c \
+	sys_fork.c \
+	sys_getinfo.c \
+	sys_getsig.c \
+	sys_in.c \
+	sys_int86.c \
+	sys_irqctl.c \
+	sys_kill.c \
+	sys_memset.c \
+	sys_newmap.c \
+	sys_nice.c \
+	sys_out.c \
+	sys_physcopy.c \
+	sys_sdevio.c \
+	sys_segctl.c \
+	sys_setalarm.c \
+	sys_sigreturn.c \
+	sys_sigsend.c \
+	sys_svrctl.c \
+	sys_times.c \
+	sys_trace.c \
+	sys_umap.c \
+	sys_vinb.c \
+	sys_vinl.c \
+	sys_vinw.c \
+	sys_vircopy.c \
+	sys_vm_map.c \
+	sys_vm_setbuf.c \
+	sys_voutb.c \
+	sys_voutl.c \
+	sys_voutw.c \
+	taskcall.c"
+
+TYPE=both

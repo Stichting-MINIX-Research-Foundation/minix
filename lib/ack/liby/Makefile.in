@@ -1,0 +1,11 @@
+# Makefile for lib/liby.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE -wo"
+
+LIBRARIES=liby
+
+liby_FILES=" \
+	main.c \
+	yyerror.c"
+
+TYPE=ack

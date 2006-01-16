@@ -1,0 +1,13 @@
+# Makefile for lib/regex.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libc
+
+libc_FILES=" \
+	regcomp.c \
+	regerror.c \
+	regexec.c \
+	regfree.c"
+
+TYPE=both

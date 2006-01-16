@@ -1,0 +1,13 @@
+# Makefile for lib/dummy.
+
+# Make a dummy libm library so that -lm works.
+
+
+LIBRARIES=libm
+
+libm_FILES=dummy.c
+
+TYPE=both
+
+#dummy.c:
+#	echo "int __dummy__;" > $@

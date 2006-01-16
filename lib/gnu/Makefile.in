@@ -1,0 +1,7 @@
+
+SUBDIRS=" \
+	end \
+	ieee_float \
+	rts"
+
+TYPE=gnu

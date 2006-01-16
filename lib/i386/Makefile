@@ -1,9 +1,0 @@
-# Makefile for lib/i386.
-
-SUBDIRS = \
-	int64 \
-	misc \
-	rts \
-	string
-
-include ../Makefile.inc

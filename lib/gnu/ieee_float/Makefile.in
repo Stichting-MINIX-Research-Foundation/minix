@@ -1,0 +1,14 @@
+
+CFLAGS="-O -I.."
+
+LIBRARIES=libc
+
+libc_FILES=" \
+	frexp.c \
+	isinf.c \
+	isnan.c \
+	ldexp.c \
+	modf.c \
+	fphook.c"
+
+TYPE=gnu

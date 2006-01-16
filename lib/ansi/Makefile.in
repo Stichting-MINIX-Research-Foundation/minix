@@ -1,0 +1,91 @@
+# Makefile for lib/ansi.
+
+# This Makefile compiles part of the C library, the functions required by the
+# ANSI C standard.  This Makefile, and those in the other subdirectories use
+# a little known feature of make, the ability to refer to a file within a
+# library.  The construct abs.o' names the file 'abs.o' contained
+# in 'libc.a'.  So the rule
+#
+#	abs.o:	abs.c
+#		cc -c abs.c
+#		aal cr libc.a abs.o
+#		rm abs.o
+#
+# compiles abs.c and installs the result abs.o in libc.a if abs.c is newer
+# than the abs.o in the library.  This Makefile does not work like this
+# precisely, it first compiles all changed source files and than installs
+# them all in one 'aal' command.
+
+# Many of the string functions in this directory are not used, because the
+# have fast assembly implementations.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE -D__USG"
+
+LIBRARIES=libc
+libc_FILES=" \
+	abort.c \
+	abs.c \
+	asctime.c \
+	assert.c \
+	atexit.c \
+	atof.c \
+	atoi.c \
+	atol.c \
+	bsearch.c \
+	calloc.c \
+	chartab.c \
+	clock.c \
+	ctime.c \
+	difftime.c \
+	div.c \
+	errlist.c \
+	exit.c \
+	ext_comp.c \
+	getenv.c \
+	gmtime.c \
+	isalnum.c \
+	isalpha.c \
+	isascii.c \
+	iscntrl.c \
+	isdigit.c \
+	isgraph.c \
+	islower.c \
+	isprint.c \
+	ispunct.c \
+	isspace.c \
+	isupper.c \
+	isxdigit.c \
+	labs.c \
+	ldiv.c \
+	localeconv.c \
+	localtime.c \
+	malloc.c \
+	mblen.c \
+	mbstowcs.c \
+	mbtowc.c \
+	misc.c \
+	mktime.c \
+	qsort.c \
+	raise.c \
+	rand.c \
+	setlocale.c \
+	sigmisc.c \
+	signal.c \
+	strcoll.c \
+	strcspn.c \
+	strerror.c \
+	strftime.c \
+	strpbrk.c \
+	strspn.c \
+	strstr.c \
+	strtok.c \
+	strtol.c \
+	strxfrm.c \
+	system.c \
+	tolower.c \
+	toupper.c \
+	tzset.c \
+	wcstombs.c \
+	wctomb.c"
+		
+TYPE=both

@@ -1,0 +1,12 @@
+# Makefile for lib/tmrslib.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libtimers
+
+libtimers_FILES=" \
+	tmrs_set.c \
+	tmrs_clr.c \
+	tmrs_exp.c"
+
+TYPE=both

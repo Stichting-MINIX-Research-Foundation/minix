@@ -11,7 +11,7 @@ EILLINS		= 18
 EODDZ		= 19
 ECASE		= 20
 
-#include <em_abs.h>
+#include "em_abs.h"
 
 .sect .data
 .trppc:

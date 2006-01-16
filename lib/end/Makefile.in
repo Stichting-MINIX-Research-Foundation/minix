@@ -1,0 +1,11 @@
+# Makefile for lib/end.
+
+LIBRARIES=end
+
+end_FILES=" \
+	edata.s \
+	em_end.s \
+	end.s \
+	etext.s"
+
+TYPE=both

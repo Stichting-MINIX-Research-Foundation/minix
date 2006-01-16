@@ -1,2 +1,7 @@
-Libraries are compiled for both ack and gcc. If you want to compile them
-for ack only (gcc takes up a lot of memory), please see ackonly/README.
+make depend  - find dependencies of ack libraries
+make all     - compile ack libraries
+make install - compile and install ack libraries
+
+make depend-gnu  - find dependencies of gnu libraries
+make all-gnu     - compile gnu libraries
+make install-gnu - compile and install gnu libraries

@@ -1,0 +1,109 @@
+# Makefile for lib/posix.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libc
+
+libc_FILES=" \
+	__exit.c \
+	_access.c \
+	_alarm.c \
+	_cfgetispeed.c \
+	_cfgetospeed.c \
+	_cfsetispeed.c \
+	_cfsetospeed.c \
+	_chdir.c \
+	_chmod.c \
+	_chown.c \
+	_chroot.c \
+	_close.c \
+	_closedir.c \
+	_creat.c \
+	_dup.c \
+	_dup2.c \
+	_execl.c \
+	_execle.c \
+	_execlp.c \
+	_execv.c \
+	_execve.c \
+	_execvp.c \
+	_fcntl.c \
+	_fork.c \
+	_fpathconf.c \
+	_fstat.c \
+	_fstatfs.c \
+	_fsync.c \
+	_getcwd.c \
+	_getegid.c \
+	_geteuid.c \
+	_getgid.c \
+	_getgroups.c \
+	_getpgrp.c \
+	_getpid.c \
+	_getppid.c \
+	_getuid.c \
+	_ioctl.c \
+	_isatty.c \
+	_kill.c \
+	_link.c \
+	_lseek.c \
+	_lstat.c \
+	_mkdir.c \
+	_mkfifo.c \
+	_mknod.c \
+	_mount.c \
+	_open.c \
+	_opendir.c \
+	_pathconf.c \
+	_pause.c \
+	_pipe.c \
+	_ptrace.c \
+	_read.c \
+	_readdir.c \
+	_readlink.c \
+	_rename.c \
+	_rewinddir.c \
+	_rmdir.c \
+	_select.c \
+	_setgid.c \
+	_setsid.c \
+	_setuid.c \
+	_sigaction.c \
+	_sigpending.c \
+	_sigprocmask.c \
+	_sigreturn.c \
+	_sigset.c \
+	_sigsetjmp.c \
+	_sigsuspend.c \
+	_sleep.c \
+	_stat.c \
+	_stime.c \
+	_symlink.c \
+	_sync.c \
+	_tcdrain.c \
+	_tcflow.c \
+	_tcflush.c \
+	_tcgetattr.c \
+	_tcsendbreak.c \
+	_tcsetattr.c \
+	_time.c \
+	_times.c \
+	_truncate.c \
+	_umask.c \
+	_umount.c \
+	_uname.c \
+	_unlink.c \
+	_utime.c \
+	_wait.c \
+	_waitpid.c \
+	_write.c \
+	getloadavg.c \
+	getopt.c \
+	gettimeofday.c \
+	priority.c \
+	usleep.c"
+
+TYPE=both
+
+#$(call ADDDEPENDENCIES,_uname.o,/usr/include/minix/config.h)
+

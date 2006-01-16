@@ -1,0 +1,83 @@
+# Makefile for lib/ack/libp.
+
+CFLAGS="-O -I../h -wo"
+#CC1	= $(CC) $(CFLAGS) -c
+
+LIBRARIES=libp
+
+libp_FILES=" \
+	abi.c \
+	abl.c \
+	abr.c \
+	arg.c \
+	ass.c \
+	asz.c \
+	atn.c \
+	bcp.c \
+	bts.e \
+	buff.c \
+	catch.c \
+	clock.c \
+	cls.c \
+	cvt.c \
+	diag.c \
+	dis.c \
+	efl.c \
+	eln.c \
+	encaps.e \
+	exp.c \
+	fef.e \
+	fif.e \
+	get.c \
+	gto.e \
+	head_pc.e \
+	hlt.c \
+	hol0.e \
+	incpt.c \
+	ini.c \
+	log.c \
+	mdi.c \
+	mdl.c \
+	new.c \
+	nfa.c \
+	nobuff.c \
+	notext.c \
+	opn.c \
+	outcpt.c \
+	pac.c \
+	pclose.c \
+	pcreat.c \
+	pentry.c \
+	perrno.c \
+	pexit.c \
+	popen.c \
+	put.c \
+	rcka.c \
+	rdc.c \
+	rdi.c \
+	rdl.c \
+	rdr.c \
+	rf.c \
+	rln.c \
+	rnd.c \
+	sav.e \
+	sig.e \
+	sin.c \
+	sqt.c \
+	string.c \
+	trap.e \
+	trp.e \
+	unp.c \
+	uread.c \
+	uwrite.c \
+	wdw.c \
+	wf.c \
+	wrc.c \
+	wrf.c \
+	wri.c \
+	wrl.c \
+	wrr.c \
+	wrs.c \
+	wrz.c"
+
+TYPE=ack

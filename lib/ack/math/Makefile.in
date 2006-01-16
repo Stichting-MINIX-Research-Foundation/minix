@@ -1,0 +1,13 @@
+# Makefile for lib/ack/math.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libc
+
+libc_FILES=" \
+	frexp.s \
+	modf.s \
+	isnan.c \
+	ldexp.c"
+
+TYPE=ack

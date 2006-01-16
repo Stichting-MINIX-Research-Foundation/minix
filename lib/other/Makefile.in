@@ -1,0 +1,78 @@
+# Makefile for lib/other.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE -I../../servers"
+
+LIBRARIES=libc
+
+libc_FILES=" \
+	_allocmem.c \
+	_brk.c \
+	_devctl.c \
+	_findproc.c \
+	_freemem.c \
+	_getnpid.c \
+	_getnprocnr.c \
+	_getpprocnr.c \
+	_getprocnr.c \
+	_getsysinfo.c \
+	_reboot.c \
+	_seekdir.c \
+	_svrctl.c \
+	asynchio.c \
+	basename.c \
+	bcmp.c \
+	bcopy.c \
+	bzero.c \
+	configfile.c \
+	crypt.c \
+	ctermid.c \
+	cuserid.c \
+	environ.c \
+	errno.c \
+	fdopen.c \
+	ffs.c \
+	flock.c \
+	fslib.c \
+	fsversion.c \
+	getgrent.c \
+	getlogin.c \
+	getpagesize.c \
+	getpass.c \
+	getpwent.c \
+	getttyent.c \
+	getw.c \
+	hypot.c \
+	index.c \
+	itoa.c \
+	loadname.c \
+	lock.c \
+	lrand.c \
+	lsearch.c \
+	memccpy.c \
+	mstats.c \
+	mtab.c \
+	nlist.c \
+	paramvalue.c \
+	peekpoke.c \
+	popen.c \
+	putenv.c \
+	putw.c \
+	random.c \
+	rindex.c \
+	setgroups.c \
+	settimeofday.c \
+	stderr.c \
+	strdup.c \
+	strtok_r.c \
+	swab.c \
+	syscall.c \
+	sysconf.c \
+	syslog.c \
+	telldir.c \
+	termcap.c \
+	ttyname.c \
+	ttyslot.c \
+	v8regexp.c \
+	v8regsub.c"
+
+TYPE=both
