@@ -75,6 +75,13 @@ PRIVATE char dev_zero[ZERO_BUF_SIZE];
 PUBLIC int main(void)
 {
 /* Main program. Initialize the memory driver and start the main loop. */
+  struct sigaction sa;
+
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("MEM","sigaction failed", errno);
+
   m_init();			
   driver_task(&m_dtab);		
   return(OK);				

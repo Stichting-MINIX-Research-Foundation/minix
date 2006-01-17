@@ -97,6 +97,12 @@ PRIVATE struct driver w_dtab = {
 PUBLIC int main()
 {
   long v;
+  struct sigaction sa;
+ 
+  sa.sa_handler = SIG_MESS;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  if (sigaction(SIGTERM,&sa,NULL)<0) panic("BIOS","sigaction failed", errno);
 
   v= 0;
   env_parse("bios_remap_first", "d", 0, &v, 0, 1);
