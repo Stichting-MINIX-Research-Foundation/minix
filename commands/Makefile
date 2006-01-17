@@ -24,8 +24,6 @@ usage:
 	@echo "       make biginstall   # Install all big commands" >&2
 	@echo "       make small        # Install all small commands" >&2
 	@echo "       make smallinstall # Install all small commands" >&2
-	@echo "       make ack          # Make ack" >&2
-	@echo "       make ackinstall   # Install ack" >&2
 	@echo " "
 	@echo "big compiles the commands the require large compiler sizes."
 	@echo "small compiles the rest. all compiles all."
@@ -47,35 +45,35 @@ smallinstall:: small
 big:
 	cd $(FLEX) && /bin/sh makeme.sh 
 	cd $(BZIP2) && /bin/sh makeme.sh 
-	cd $(KERMIT) && /bin/sh makeme.sh
-	cd $(LYNX) && /bin/sh makeme.sh
-	cd $(COREUTILS) && /bin/sh makeme.sh
-	cd $(PERL) && /bin/sh makeme.sh
-	cd $(EMACS) && /bin/sh makeme.sh
-	cd $(PYTHON) && /bin/sh makeme.sh 
-	cd $(VIM) && /bin/sh makeme.sh 
+	#cd $(LYNX) && /bin/sh makeme.sh
+	#cd $(COREUTILS) && /bin/sh makeme.sh
+	#cd $(PERL) && /bin/sh makeme.sh
+	#cd $(EMACS) && /bin/sh makeme.sh
+	#cd $(PYTHON) && /bin/sh makeme.sh 
+	#cd $(VIM) && /bin/sh makeme.sh 
+	#cd $(KERMIT) && /bin/sh makeme.sh
 
 biginstall: big
 	cd $(FLEX) && make install
-	cd $(PYTHON) && make install
+	#cd $(PYTHON) && make install
 	cd $(BZIP2) && make install
-	cd $(KERMIT) && make install
-	cd $(LYNX) && make install
-	cd $(EMACS) && make install
-	cd $(COREUTILS) && make install
-	cd $(PERL) && make install
-	cd $(VIM) && make install
+	#cd $(KERMIT) && make install
+	#cd $(LYNX) && make install
+	#cd $(EMACS) && make install
+	#cd $(COREUTILS) && make install
+	#cd $(PERL) && make install
+	#cd $(VIM) && make install
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
 	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
-	if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
+	#if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
 	cd $(BZIP2) && make clean
-	cd $(KERMIT) && make clean
+	#cd $(KERMIT) && make clean
 	if [ -f $(NVIWORK)/Makefile ]; then cd $(NVIWORK) && make clean; fi
-	if [ -f $(LYNX)/Makefile ] ; then cd $(LYNX) && make clean; fi
-	if [ -f $(EMACS)/Makefile ] ; then cd $(EMACS) && make clean; fi
-	cd $(COREUTILS) && make clean
+	#if [ -f $(LYNX)/Makefile ] ; then cd $(LYNX) && make clean; fi
+	#if [ -f $(EMACS)/Makefile ] ; then cd $(EMACS) && make clean; fi
+	#cd $(COREUTILS) && make clean
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
 
 small::
@@ -83,10 +81,4 @@ small::
 
 smallinstall::
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make install ); done
-
-ack:
-	cd ackpack && make
-
-ackinstall:
-	cd ackpack && make install
 
