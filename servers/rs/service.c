@@ -130,7 +130,8 @@ PRIVATE int parse_arguments(int argc, char **argv)
           exit(EINVAL);
       }
       if (stat(req_path, &stat_buf) == -1) {
-          print_usage(argv[ARG_NAME], "couldn't get status of binary");
+	  perror(req_path);
+          fprintf(stderr, "couldn't get stat binary\n");
           exit(errno);
       }
       if (! (stat_buf.st_mode & S_IFREG)) {
