@@ -1,7 +1,6 @@
 # Master Makefile to compile everything in /usr/src except the system.
 
 MAKE	= exec make -$(MAKEFLAGS)
-GMAKE	= /usr/gnu/bin/gmake
 
 usage:
 	@echo "" 
@@ -38,7 +37,7 @@ includes:
 	cd include && $(MAKE) install gcc
 
 libraries:
-	cd lib && $(GMAKE) all && $(GMAKE) install
+	cd lib && $(MAKE) all install
 
 cmds:
 	if [ -f commands/Makefile ] ; then cd commands && $(MAKE) all; fi
@@ -56,7 +55,7 @@ depend::
 
 
 clean::
-	cd lib && $(GMAKE) $@
+	cd lib && $(MAKE) $@
 	test ! -f commands/Makefile || { cd commands && $(MAKE) $@; }
 
 etcfiles::
