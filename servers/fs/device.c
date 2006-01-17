@@ -50,8 +50,7 @@ int flags;			/* mode bits and flags */
   if (major >= NR_DEVICES) major = 0;
   dp = &dmap[major];
   if (dp->dmap_driver == NONE) {
-	printf("FS: open: no driver for dev %x\n", dev);
-	return EIO;
+	return ENXIO;
   }
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);
