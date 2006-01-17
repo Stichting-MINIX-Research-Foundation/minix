@@ -5,15 +5,20 @@ CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
 LIBRARIES=libsys
 
 libsys_FILES=" \
+	pci_attr_r16.c \
 	pci_attr_r32.c \
 	pci_attr_r8.c \
+	pci_attr_w16.c \
 	pci_attr_w32.c \
+	pci_attr_w8.c \
 	pci_dev_name.c \
 	pci_find_dev.c \
 	pci_first_dev.c \
 	pci_ids.c \
 	pci_init.c \
+	pci_init1.c \
 	pci_next_dev.c \
+	pci_rescan_bus.c \
 	pci_reserve.c \
 	pci_slot_name.c \
 	sys_abort.c \
