@@ -94,7 +94,7 @@ ISO=${ISO}.iso
 ISOGZ=${ISO}.gz
 echo "Making $ISOGZ"
 
-USRMB=600
+USRMB=120
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -109,13 +109,23 @@ then
 	echo ""
 fi
 
-echo "Warning: I'm going to mkfs $RAM! It has to be at least $ROOTKB KB."
-echo ""
-echo "Temporary (sub)partition to use to make the /usr FS image? "
-echo "I need $USRMB MB. It will be mkfsed!"
-echo -n "Device: /dev/"
-read dev || exit 1
-TMPDISK=/dev/$dev
+TD1=.td1
+TD2=.td2
+
+echo " * Warning: I'm going to mkfs $RAM!"
+
+if [ -f $TD1 ]
+then    TMPDISK="`cat $TD1`"
+	echo " * Warning: I'm going to overwrite $TMPDISK!"
+else
+        echo "It has to be at least $ROOTKB KB."
+        echo ""
+        echo "Temporary (sub)partition to use to make the /usr FS image? "
+        echo "I need $USRMB MB. It will be mkfsed!"
+        echo -n "Device: /dev/"
+        read dev || exit 1
+        TMPDISK=/dev/$dev
+fi
 
 if [ -b $TMPDISK ]
 then :
@@ -123,11 +133,18 @@ else	echo "$TMPDISK is not a block device.."
 	exit 1
 fi
 
-echo "Temporary (sub)partition to use for /tmp? "
-echo "It will be mkfsed!"
-echo -n "Device: /dev/"
-read dev || exit 1
-TMPDISK2=/dev/$dev
+echo $TMPDISK >$TD1
+
+if [ -f $TD2 ]
+then    TMPDISK2="`cat $TD2`"
+	echo " * Warning: I'm going to overwrite $TMPDISK2!"
+else
+        echo "Temporary (sub)partition to use for /tmp? "
+        echo "It will be mkfsed!"
+        echo -n "Device: /dev/"
+        read dev || exit 1
+        TMPDISK2=/dev/$dev
+fi
 
 if [ -b $TMPDISK2 ]
 then :
@@ -135,16 +152,25 @@ else	echo "$TMPDISK2 is not a block device.."
 	exit 1
 fi
 
+echo $TMPDISK2 >$TD2
+
 umount $TMPDISK
 umount $TMPDISK2
 umount $RAM
+
+if [ $TMPDISK = $TMPDISK2 ]
+then
+	echo "Temporary devices can't be equal."
+	exit
+fi
+
+echo " * Ready to go, press RETURN if you're sure.."
+read xyzzy
 
 echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
-echo " * Zeroing $RAM"
-dd if=/dev/zero of=$RAM bs=$BS count=$ROOTBLOCKS
 mkfs -B $BS -b $ROOTBLOCKS $RAM || exit
 mkfs $TMPDISK2 || exit
 echo " * mounting $RAM as $RELEASEDIR"
@@ -153,8 +179,6 @@ mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
-echo " * Zeroing $TMPDISK"
-dd if=/dev/zero of=$TMPDISK bs=$BS count=$USRBLOCKS
 mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
 echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
@@ -210,6 +234,14 @@ du -s $RELEASEDIR/usr/src.* | awk '{ t += $1 } END { print t }' >$RELEASEDIR/.ex
 ( for d in $RELEASEDIR/usr/src.*; do find $d; done) | wc -l >$RELEASEDIR/.extrasrcfiles
 find $RELEASEDIR/usr | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
+echo " * Zeroing remainder of temporary areas"
+df $TMPDISK
+df $RAM
+cp /dev/zero $RELEASEDIR/usr/.x
+rm $RELEASEDIR/usr/.x
+cp /dev/zero $RELEASEDIR/.x
+rm $RELEASEDIR/.x
+
 umount $TMPDISK || exit
 umount $TMPDISK2 || exit
 umount $RAM || exit
