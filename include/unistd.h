@@ -139,7 +139,7 @@ _PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
 
 /* Open Group Base Specifications Issue 6 (not complete) */
 _PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
-_PROTOTYPE( int readlink, (const char *, char *, int)			);
+_PROTOTYPE( int readlink, (const char *, char *, size_t)		);
 _PROTOTYPE( int getopt, (int _argc, char **_argv, char *_opts)		);
 extern char *optarg;
 extern int optind, opterr, optopt;
