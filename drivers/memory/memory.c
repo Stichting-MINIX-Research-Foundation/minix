@@ -340,8 +340,10 @@ message *m_ptr;				/* pointer to control message */
 	if (OK != (s = _taskcall(DS_PROC_NR, DS_PUBLISH, &m))) {
       		panic("MEM","Couldn't store RAM disk details at DS.",s);
 	}
+#if DEBUG
 	printf("MEM stored size %u and base %u at DS, status %d\n",
 	    ramdev_size, ramdev_base, s);
+#endif
 
   	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, 
 		(vir_bytes *) &s, ramdev_base, ramdev_size))) {
