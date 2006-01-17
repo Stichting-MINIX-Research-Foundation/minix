@@ -29,13 +29,15 @@ echo "all-ack:"
 echo "all-gnu:"
 echo
 echo "makefiles: Makefile"
+echo "Makedepend-ack Makedepend-gnu: "
+echo "	sh $0 $OBJDIR $ACKBASE $GNUBASE"
 echo
-echo "Makefile: Makefile.in"
+echo "Makefile: Makefile.in Makedepend-ack Makedepend-gnu"
 echo "	sh $0 $OBJDIR $ACKBASE $GNUBASE"
 echo "	@echo"
-echo "	@echo \"*Attention*\""
-echo "	@echo \"Makefile is regenerated... rerun command to see changes\""
-echo "	@echo \"*Attention*\""
+echo "	@echo *Attention*"
+echo "	@echo Makefile is regenerated... rerun command to see changes"
+echo "	@echo *Attention*"
 echo "	@echo"
 echo
 if [ ! -z "$SUBDIRS" ]; then

@@ -65,14 +65,18 @@ libc_FILES=" \
 	strdup.c \
 	strtok_r.c \
 	swab.c \
+	sys_eniop.c \
 	syscall.c \
 	sysconf.c \
 	syslog.c \
+	taskcall.c \
 	telldir.c \
 	termcap.c \
 	ttyname.c \
 	ttyslot.c \
+	v8regerror.c \
 	v8regexp.c \
-	v8regsub.c"
+	v8regsub.c \
+	writev.c"
 
 TYPE=both
