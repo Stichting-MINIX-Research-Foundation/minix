@@ -155,10 +155,14 @@ start)
 ;;
 stop|down)
     	# Save random data.
+	bootcd="`/bin/sysenv bootcd`"
     	if dd if=/dev/random of=$RANDOM_FILE.new bs=1024 count=1 2>/dev/null
     	then
     		mv $RANDOM_FILE.new $RANDOM_FILE
 	else
-		echo 'Failed to save random data.'
+		if [ "$bootcd" != 1 ]
+		then
+			echo 'Failed to save random data.'
+		fi
 	fi
 esac
