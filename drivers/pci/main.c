@@ -82,7 +82,9 @@ message *mp;
 {
 	int i, r, empty;
 
+#if DEBUG
 	printf("pci_init: called by '%s'\n", mp->m3_ca1);
+#endif
 	empty= -1;
 	for (i= 0; i<NR_DRIVERS; i++)
 	{
