@@ -168,7 +168,7 @@ echo " * Ready to go, press RETURN if you're sure.."
 read xyzzy
 
 echo " * Cleanup old files"
-rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES
+rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -B $BS -b $ROOTBLOCKS $RAM || exit
