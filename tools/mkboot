@@ -65,9 +65,15 @@ hdboot)
 	version=`sed 's/[" 	]//g;/^$/d' </tmp/mkb.$$`
 
 	revision=`cat revision 2>/dev/null`
+
+	if [ -z "$revision" ]
+	then	rrevision=""
+	else	rrevision=r$revision
+	fi
+
 	oldrev=$revision
+
 	target="${version}r${revision}"
-	rrevision=r$revision
 
 	if [ -z "$revision" ]
 	then
@@ -82,6 +88,7 @@ hdboot)
 			exit 0
 		fi
 		revision=`expr $revision + 1`
+		rrevision=r$revision
 	fi
 	target="${version}${rrevision}"
 
