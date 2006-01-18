@@ -94,7 +94,7 @@ ISO=${ISO}.iso
 ISOGZ=${ISO}.gz
 echo "Making $ISOGZ"
 
-USRMB=120
+USRMB=100
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
