@@ -90,7 +90,7 @@ start)
     		usrdev="`expr $imagedev + 1`"
     		usr_roflag="-r"
     		usr="`/bin/dev2name $usrdev`"
-    		echo "Setting /usr to mount readonly from cd: $usrdev -> $usr"
+    		echo "Setting /usr on cd is $usr"
     fi
  
     # Mount the /usr partition unless this is a single floppy Minix.
