@@ -32,6 +32,8 @@ u16_t *didp;
 	if (m.m_type != 0)
 		panic("pci", "pci_first_dev: got bad reply from PCI", m.m_type);
 
+#if DEBUG
 	printf("pci_first_dev: got nothing\n");
+#endif
 	return 0;
 }
