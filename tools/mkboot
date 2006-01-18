@@ -67,10 +67,12 @@ hdboot)
 	revision=`cat revision 2>/dev/null`
 	oldrev=$revision
 	target="${version}r${revision}"
+	rrevision=r$revision
 
 	if [ -z "$revision" ]
 	then
 		revision=0
+		rrevision=""
 	elif [ -f $rootdir/boot/image/$target ]
 	then
 		if [ $rootdir/boot/image/$target -newer image ]
@@ -81,7 +83,7 @@ hdboot)
 		fi
 		revision=`expr $revision + 1`
 	fi
-	target="${version}r${revision}"
+	target="${version}${rrevision}"
 
 	set -- `ls -t $rootdir/boot/image`
 
