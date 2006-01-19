@@ -136,6 +136,8 @@ _PROTOTYPE( int tcsetpgrp, (int _fd, pid_t _pgrp_id)			);
 _PROTOTYPE( char *ttyname, (int _fd)					);
 _PROTOTYPE( int unlink, (const char *_path)				);
 _PROTOTYPE( ssize_t write, (int _fd, const void *_buf, size_t _n)	);
+_PROTOTYPE( int truncate, (const char *_path, off_t _length)		);
+_PROTOTYPE( int ftruncate, (int _fd, off_t _length)			);
 
 /* Open Group Base Specifications Issue 6 (not complete) */
 _PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
@@ -174,8 +176,6 @@ _PROTOTYPE( int getpprocnr, (void)					);
 _PROTOTYPE( int findproc, (char *proc_name, int *proc_nr)		);
 _PROTOTYPE( int allocmem, (phys_bytes size, phys_bytes *base)		);
 _PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
-_PROTOTYPE( int truncate, (const char *_path, off_t _length)		);
-_PROTOTYPE( int ftruncate, (int _fd, off_t _length)			);
 #define DEV_MAP 1
 #define DEV_UNMAP 2
 #define mapdriver(driver, device, style) devctl(DEV_MAP, driver, device, style)
