@@ -46,16 +46,17 @@
 #define OP_PRINT        15	/* print name                            */
 #define OP_PRINT0       16	/* print name null terminated            */
 #define OP_NEWER        17	/* compare modification times            */
-#define OP_AND          18	/* logical and (short circuit)           */
-#define OP_OR           19	/* logical or (short circuit)            */
-#define OP_XDEV         20	/* do not cross file-system boundaries   */
-#define OP_DEPTH        21	/* descend directory before testing      */
-#define OP_PRUNE        22	/* don't descend into current directory  */
-#define OP_NOUSER       23	/* check validity of user id             */
-#define OP_NOGROUP      24	/* check validity of group id            */
-#define LPAR            25	/* left parenthesis                      */
-#define RPAR            26	/* right parenthesis                     */
-#define NOT             27	/* logical not                           */
+#define OP_CNEWER       18	/* compare modification times            */
+#define OP_AND          19	/* logical and (short circuit)           */
+#define OP_OR           20	/* logical or (short circuit)            */
+#define OP_XDEV         21	/* do not cross file-system boundaries   */
+#define OP_DEPTH        22	/* descend directory before testing      */
+#define OP_PRUNE        23	/* don't descend into current directory  */
+#define OP_NOUSER       24	/* check validity of user id             */
+#define OP_NOGROUP      25	/* check validity of group id            */
+#define LPAR            26	/* left parenthesis                      */
+#define RPAR            27	/* right parenthesis                     */
+#define NOT             28	/* logical not                           */
 
 /* Some return values: */
 #define EOI             -1	/* end of expression                     */
@@ -143,6 +144,9 @@ struct oper {
   },
   {
 	"newer", OP_NEWER
+  },
+  {
+	"cnewer", OP_CNEWER
   },
   {
 	"a", OP_AND
@@ -352,6 +356,8 @@ register struct node *n;
 	return(st->st_mode & 07777) == (int) n->n_info.n_int.n_val;
     case OP_NEWER:
 	return st->st_mtime > n->n_info.n_int.n_val;
+    case OP_CNEWER:
+	return st->st_ctime > n->n_info.n_int.n_val;
     case OP_TYPE:
 	return(st->st_mode & S_IFMT) == (mode_t) n->n_info.n_int.n_val;
     case OP_LINKS:
@@ -761,6 +767,7 @@ int t;
 		if ((tty = open("/dev/tty", O_RDWR)) < 0)
 			fatal("can't open /dev/tty", "");
 	break;
+    case OP_CNEWER:
     case OP_NEWER:
 	checkarg(*++ipp);
 	if (LSTAT(*ipp, &est) == -1)
