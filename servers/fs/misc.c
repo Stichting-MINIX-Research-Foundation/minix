@@ -496,7 +496,8 @@ PUBLIC int do_svrctl()
 	struct fssignon device;
 	int r, major;
 
-	if (fp->fp_effuid != SU_UID) return(EPERM);
+	if (fp->fp_effuid != SU_UID && fp->fp_effuid != SERVERS_UID)
+		return(EPERM);
 
 	/* Try to copy request structure to FS. */
 	if ((r = sys_datacopy(who, (vir_bytes) m_in.svrctl_argp,
