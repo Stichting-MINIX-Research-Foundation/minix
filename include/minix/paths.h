@@ -12,4 +12,7 @@
 #define _PATH_MOTD	"/etc/motd"
 #define _PATH_HOSTS	"/etc/hosts"
 
+#define    _PATH_DEFTAPE   "/dev/sa0"
+#define    _PATH_TMP       "/tmp"
+
 #endif

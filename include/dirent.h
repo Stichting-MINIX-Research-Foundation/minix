@@ -84,6 +84,9 @@ _PROTOTYPE( void rewinddir, (DIR *_dirp)				);
 #ifdef _MINIX
 _PROTOTYPE( int seekdir, (DIR *_dirp, off_t _loc)			);
 _PROTOTYPE( off_t telldir, (DIR *_dirp)					);
+
+#define   dirfd(dirp)     ((dirp)->_fd)
+
 #endif
 
 #endif /* _DIRENT_H */

@@ -126,4 +126,11 @@ typedef unsigned int	u_int;
 typedef unsigned long	u_long;
 typedef char		*caddr_t;
 
+#ifndef makedev
+#define minor(dev)      (((dev) >> MINOR) & BYTE)
+#define major(dev)      (((dev) >> MAJOR) & BYTE)
+#define makedev(major, minor)   \
+                        ((dev_t) (((major) << MAJOR) | ((minor) << MINOR)))
+#endif
+
 #endif /* _TYPES_H */
