@@ -1,5 +1,6 @@
 #include <lib.h>
 #define chdir	_chdir
+#define fchdir	_fchdir
 #include <unistd.h>
 
 PUBLIC int chdir(name)
@@ -11,7 +12,6 @@ _CONST char *name;
   return(_syscall(FS, CHDIR, &m));
 }
 
-#if 0
 PUBLIC int fchdir(fd)
 int fd;
 {
@@ -20,5 +20,3 @@ int fd;
   m.m1_i1 = fd;
   return(_syscall(FS, FCHDIR, &m));
 }
-#endif
-
