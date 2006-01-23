@@ -10,6 +10,7 @@ LK =	/usr/lib/keymaps
 	@rm -f a.out
 
 all:	\
+	dvorak.map \
 	french.map \
 	german.map \
 	italian.map \
@@ -25,6 +26,7 @@ all:	\
 
 install:	\
 	$(LK) \
+	$(LK)/dvorak.map \
 	$(LK)/french.map \
 	$(LK)/german.map \
 	$(LK)/italian.map \
@@ -43,6 +45,9 @@ clean:
 
 $(LK):
 	install -d $@
+
+$(LK)/dvorak.map:	dvorak.map
+	install -c $? $@
 
 $(LK)/french.map:	french.map
 	install -c $? $@
