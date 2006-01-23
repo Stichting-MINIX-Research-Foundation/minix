@@ -1,4 +1,4 @@
 #!/bin/sh
 make clean
-sh makeme.sh
+bigmake all
 make install

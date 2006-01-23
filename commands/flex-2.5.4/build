@@ -1,4 +1,4 @@
 #!/bin/sh
 make clean
-sh makeme.sh
+CC=cc /bin/sh ./configure --prefix=/usr/local && bigmake all
 make install
