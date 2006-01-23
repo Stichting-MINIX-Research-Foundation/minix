@@ -14,10 +14,8 @@ pax:	$(OBJ)
 	$(CC) $(LDFLAGS) -o $@ $(OBJ)
 	install -S 256k $@
 
-install:	/usr/bin/pax 
-
-/usr/bin/pax:	pax
-	install -cs -o bin pax $@
+install:
+	install -cs -o bin pax /usr/bin/pax
 
 clean:	
 	rm -f *.o *.bak core pax
