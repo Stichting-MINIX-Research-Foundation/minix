@@ -8,4 +8,6 @@ news:*:6:
 ftp:*:7:
 kmem:*:8:
 www:*:9:
+driver:*:10:
+server:*:11:
 nogroup:*:99:

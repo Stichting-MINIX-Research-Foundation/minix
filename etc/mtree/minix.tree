@@ -69,6 +69,7 @@
 755  bin     operator  /usr/src
 1777 root    operator  /usr/tmp
 755  root    operator  /var
+/var/log -> /usr/log
 755  root    operator  /usr/log
 755  root    operator  /var/run
 755	bin	operator	/usr/gnu/
