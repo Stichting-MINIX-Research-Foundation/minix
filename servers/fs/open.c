@@ -504,7 +504,7 @@ PUBLIC int do_slink()
   if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK)
        return(err_code);
 
-  if (m_in.name1_length <= 1 || m_in.name1_length > _MIN_BLOCK_SIZE+1)
+  if (m_in.name1_length <= 1 || m_in.name1_length >= _MIN_BLOCK_SIZE)
        return(ENAMETOOLONG);
 
   /* Create the inode for the symlink. */
@@ -517,10 +517,25 @@ PUBLIC int do_slink()
   if ((r = err_code) == OK) {
        r = (bp = new_block(sip, (off_t) 0)) == NIL_BUF
            ? err_code
-           : ( sip->i_size = m_in.name1_length-1,
-               sys_vircopy(who, D, (vir_bytes) m_in.name1,
+           : sys_vircopy(who, D, (vir_bytes) m_in.name1,
                        SELF, D, (vir_bytes) bp->b_data,
-		       (vir_bytes) m_in.name1_length-1));
+		       (vir_bytes) m_in.name1_length-1);
+
+	if(r == OK) {
+		bp->b_data[_MIN_BLOCK_SIZE-1] = '\0';
+		sip->i_size = strlen(bp->b_data);
+		if(sip->i_size != m_in.name1_length-1) {
+			/* This can happen if the user provides a buffer
+			 * with a \0 in it. This can cause a lot of trouble
+			 * when the symlink is used later. We could just use
+			 * the strlen() value, but we want to let the user
+			 * know he did something wrong. ENAMETOOLONG doesn't
+			 * exactly describe the error, but there is no
+			 * ENAMETOOWRONG.
+			 */
+			r = ENAMETOOLONG;
+		}
+	}
   
        put_block(bp, DIRECTORY_BLOCK); 	/* put_block() accepts NIL_BUF. */
   
