@@ -3,16 +3,9 @@
 MAKE	= exec make -$(MAKEFLAGS)
 FLEX=flex-2.5.4
 GZIP=gzip-1.2.4
-PYTHON=python-1.5.2
 BZIP2=bzip2-1.0.3
-KERMIT=kermit-2.1.1
 NVI=nvi-1.79
 NVIWORK=$(NVI)/minix
-EMACS=emacs-21.4
-LYNX=lynx2-8-5
-COREUTILS=gnu-coreutils-5.2.1
-VIM=vim63
-PERL=perl-5.8.7
 
 SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple talk talkd telnet telnetd urlget yap zmodem
 
