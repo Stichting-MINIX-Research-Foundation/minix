@@ -43,7 +43,7 @@ libsys_FILES=" \
 	sys_setalarm.c \
 	sys_sigreturn.c \
 	sys_sigsend.c \
-	sys_svrctl.c \
+	sys_privctl.c \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \
