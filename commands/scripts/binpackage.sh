@@ -4,6 +4,11 @@ set -e
 
 dir=$1
 
+if [ $# -lt 1 ]
+then	echo "Usage: $0 packagedir"
+	exit 1
+fi
+
 if [ ! -d "$dir" ]
 then	echo "Error: $dir isn't a directory."
 	exit 1
@@ -21,6 +26,12 @@ binsizes big
 touch $packagestart
 sleep 1
 cd $dir
+
+if [ ! -f build ]
+then	echo "Error: No build script in $dir."
+	exit 1
+fi
+
 sh build
 cd /
 echo " * Making file index, writing $targz"

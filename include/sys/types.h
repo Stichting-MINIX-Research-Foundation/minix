@@ -126,9 +126,19 @@ typedef unsigned int	u_int;
 typedef unsigned long	u_long;
 typedef char		*caddr_t;
 
+/* Devices. */   
+#define MAJOR              8    /* major device = (dev>>MAJOR) & 0377 */
+#define MINOR              0    /* minor device = (dev>>MINOR) & 0377 */
+
+#ifndef minor
+#define minor(dev)      (((dev) >> MINOR) & 0xff)
+#endif
+
+#ifndef major
+#define major(dev)      (((dev) >> MAJOR) & 0xff)
+#endif
+
 #ifndef makedev
-#define minor(dev)      (((dev) >> MINOR) & BYTE)
-#define major(dev)      (((dev) >> MAJOR) & BYTE)
 #define makedev(major, minor)   \
                         ((dev_t) (((major) << MAJOR) | ((minor) << MINOR)))
 #endif
