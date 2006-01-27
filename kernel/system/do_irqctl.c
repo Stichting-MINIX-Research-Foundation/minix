@@ -26,7 +26,10 @@ register message *m_ptr;	/* pointer to request message */
   int irq_hook_id;
   int notify_id;
   int r = OK;
+  int i;
   irq_hook_t *hook_ptr;
+  struct proc *rp;
+  struct priv *privp;
 
   /* Hook identifiers start at 1 and end at NR_IRQ_HOOKS. */
   irq_hook_id = (unsigned) m_ptr->IRQ_HOOK_ID - 1;
@@ -54,6 +57,29 @@ register message *m_ptr;	/* pointer to request message */
 
       /* Check if IRQ line is acceptable. */
       if (irq_vec < 0 || irq_vec >= NR_IRQ_VECTORS) return(EINVAL);
+
+      rp= proc_addr(m_ptr->m_source);
+      privp= priv(rp);
+      if (!privp)
+      {
+	kprintf("no priv structure!\n");
+	return EPERM;
+      }
+      if (privp->s_flags & CHECK_IRQ)
+      {
+	for (i= 0; i<privp->s_nr_irq; i++)
+	{
+		if (irq_vec == privp->s_irq_tab[i])
+			break;
+	}
+	if (i >= privp->s_nr_irq)
+	{
+		kprintf(
+		"do_irqctl: IRQ check failed for proc %d, IRQ %d\n",
+			m_ptr->m_source, irq_vec);
+		return EPERM;
+	}
+    }
 
       /* Find a free IRQ hook for this mapping. */
       hook_ptr = NULL;

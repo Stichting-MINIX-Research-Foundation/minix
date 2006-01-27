@@ -15,6 +15,15 @@
 #include "protect.h"
 #include "const.h"
 #include "type.h"
+
+/* Max. number of I/O ranges that can be assigned to a process */
+#define NR_IO_RANGE	10
+
+/* Max. number of device memory ranges that can be assigned to a process */
+#define NR_MEM_RANGE	10
+
+/* Max. number of IRQs that can be assigned to a process */
+#define NR_IRQ	4
  
 struct priv {
   proc_nr_t s_proc_nr;		/* number of associated process */
@@ -33,6 +42,15 @@ struct priv {
   timer_t s_alarm_timer;	/* synchronous alarm timer */ 
   struct far_mem s_farmem[NR_REMOTE_SEGS];  /* remote memory map */
   reg_t *s_stack_guard;		/* stack guard word for kernel tasks */
+
+  int s_nr_io_range;
+  struct io_range s_io_tab[NR_IO_RANGE];
+
+  int s_nr_mem_range;
+  struct mem_range s_mem_tab[NR_MEM_RANGE];
+
+  int s_nr_irq;
+  int s_irq_tab[NR_IRQ];
 };
 
 /* Guard word for task stacks. */
@@ -43,6 +61,11 @@ struct priv {
 #define BILLABLE	0x04	/* some processes are not billable */
 #define SYS_PROC	0x10	/* system processes are privileged */
 #define SENDREC_BUSY	0x20	/* sendrec() in progress */
+#define CHECK_IO_PORT	0x40	/* Check whether an I/O request is allowed */
+#define CHECK_MEM	0x80	/* Check whether a (vm) memory map request is
+				 * allowed
+				 */
+#define CHECK_IRQ	0x100	/* Check whether an IRQ can be used */
 
 /* Magic system structure table addresses. */
 #define BEG_PRIV_ADDR (&priv[0])
