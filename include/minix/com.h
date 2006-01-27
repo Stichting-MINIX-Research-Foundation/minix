@@ -279,6 +279,13 @@
 
 #define NR_SYS_CALLS	31	/* number of system calls */ 
 
+/* Subfunctions for SYS_PRIVCTL */
+#define SYS_PRIV_INIT		1	/* Initialize a privilege structure */
+#define SYS_PRIV_ADD_IO		2	/* Add I/O range (struct io_range) */
+#define SYS_PRIV_ADD_MEM	3	/* Add memory range (struct mem_range)
+					 */
+#define SYS_PRIV_ADD_IRQ	4	/* Add IRQ */
+
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
 #define MEM_PTR		m2_p1	/* base */
 #define MEM_COUNT	m2_l1	/* count */
@@ -393,7 +400,7 @@
 #define T_CHILD_STIME  m4_l4	/* sys time consumed by process' children */
 #define T_BOOT_TICKS   m4_l5	/* number of clock ticks since boot time */
 
-/* Field names for SYS_TRACE, SYS_SVRCTL. */
+/* Field names for SYS_TRACE, SYS_PRIVCTL. */
 #define CTL_PROC_NR    m2_i1	/* process number of the caller */
 #define CTL_REQUEST    m2_i2	/* server control request */
 #define CTL_MM_PRIV    m2_i3	/* privilege as seen by PM */

@@ -34,7 +34,7 @@ _PROTOTYPE( int sys_newmap, (int proc, struct mem_map *ptr));
 _PROTOTYPE( int sys_exit, (int proc));
 _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p));
 
-_PROTOTYPE( int sys_svrctl, (int proc, int req, int priv,vir_bytes argp));
+_PROTOTYPE( int sys_privctl, (int proc, int req, int i, void *p));
 _PROTOTYPE( int sys_nice, (int proc, int priority));
 
 _PROTOTYPE( int sys_int86, (struct reg86u *reg86p));

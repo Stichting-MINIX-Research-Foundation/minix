@@ -134,4 +134,16 @@ struct machine {
   int vdu_vga;
 };
 
+struct io_range
+{
+	unsigned ior_base;	/* Lowest I/O port in range */
+	unsigned ior_limit;	/* Highest I/O port in range */
+};
+
+struct mem_range
+{
+	phys_bytes mr_base;	/* Lowest memory address in range */
+	phys_bytes mr_limit;	/* Highest memory address in range */
+};
+
 #endif /* _TYPE_H */
