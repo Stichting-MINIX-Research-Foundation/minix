@@ -198,6 +198,8 @@ _PROTOTYPE(int chkdots, (Ino_t ino, off_t pos, dir_struct *dp, Ino_t exp));
 _PROTOTYPE(int chkname, (Ino_t ino, dir_struct *dp));
 _PROTOTYPE(int chkentry, (Ino_t ino, off_t pos, dir_struct *dp));
 _PROTOTYPE(int chkdirzone, (Ino_t ino, d_inode *ip, off_t pos, zone_nr zno));
+_PROTOTYPE(int chksymlinkzone, (Ino_t ino, d_inode *ip, off_t pos,
+								zone_nr zno));
 _PROTOTYPE(void errzone, (char *mess, zone_nr zno, int level, off_t pos));
 _PROTOTYPE(int markzone, (zone_nr zno, int level, off_t pos));
 _PROTOTYPE(int chkindzone, (Ino_t ino, d_inode *ip, off_t *pos, zone_nr zno, int level));
@@ -1111,6 +1113,37 @@ zone_nr zno;
   return(1);
 }
 
+
+int chksymlinkzone(ino, ip, pos, zno)
+ino_t ino;
+d_inode *ip;
+off_t pos;
+zone_nr zno;
+{
+	long offset;
+	size_t len;
+	char target[PATH_MAX+1];
+
+	if (ip->i_size > PATH_MAX)
+		fatal("chksymlinkzone: fsck program inconsistency\n");
+	offset = zaddr(zno);
+	devread(offset, target, ip->i_size);
+	target[ip->i_size]= '\0';
+	len= strlen(target);
+	if (len != ip->i_size)
+	{
+		printf("bad size in symbolic link (%d instead of %d) ",
+			ip->i_size, len);
+		printpath(2, 0);
+		if (yes(". update")) {
+			setbit(spec_imap, (bit_nr) ino);
+			ip->i_size = len;
+			devwrite(inoaddr(ino), (char *) ip, INODE_SIZE);
+		}
+	}
+	return 1;
+}
+
 /* There is something wrong with the given zone.  Print some details. */
 void errzone(mess, zno, level, pos)
 char *mess;
@@ -1205,6 +1238,9 @@ int level;
   if (level == 0) {
 	if ((ip->i_mode & I_TYPE) == I_DIRECTORY &&
 	    !chkdirzone(ino, ip, *pos, zno))
+		return(0);
+	if ((ip->i_mode & I_TYPE) == I_SYMBOLIC_LINK &&
+	    !chksymlinkzone(ino, ip, *pos, zno))
 		return(0);
 	*pos += ZONE_SIZE;
 	return(1);
