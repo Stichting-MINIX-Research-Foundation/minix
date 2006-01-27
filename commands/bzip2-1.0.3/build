@@ -1,4 +1,6 @@
 #!/bin/sh
 make clean
 bigmake all
-make install
+if [ $1 != build ]
+then make install
+fi

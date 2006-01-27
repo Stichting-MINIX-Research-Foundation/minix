@@ -14,7 +14,7 @@ COREUTILS=gnu-coreutils-5.2.1
 VIM=vim63
 PERL=perl-5.8.7
 
-SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch ps reboot rlogind scripts sh simple talk talkd telnet telnetd urlget yap zmodem pax
+SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple talk talkd telnet telnetd urlget yap zmodem
 
 usage:
 	@echo "Usage: make all          # Compile all commands" >&2
@@ -43,37 +43,18 @@ smallinstall:: small
 	cd $(NVI) && make install
 
 big:
-	cd $(FLEX) && /bin/sh makeme.sh 
-	cd $(BZIP2) && /bin/sh makeme.sh 
-	#cd $(LYNX) && /bin/sh makeme.sh
-	#cd $(COREUTILS) && /bin/sh makeme.sh
-	#cd $(PERL) && /bin/sh makeme.sh
-	#cd $(EMACS) && /bin/sh makeme.sh
-	#cd $(PYTHON) && /bin/sh makeme.sh 
-	#cd $(VIM) && /bin/sh makeme.sh 
-	#cd $(KERMIT) && /bin/sh makeme.sh
+	cd $(FLEX) && /bin/sh build build
+	cd $(BZIP2) && /bin/sh build build
 
 biginstall: big
 	cd $(FLEX) && make install
-	#cd $(PYTHON) && make install
 	cd $(BZIP2) && make install
-	#cd $(KERMIT) && make install
-	#cd $(LYNX) && make install
-	#cd $(EMACS) && make install
-	#cd $(COREUTILS) && make install
-	#cd $(PERL) && make install
-	#cd $(VIM) && make install
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
 	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
-	#if [ -f $(PYTHON)/Makefile ] ; then cd $(PYTHON) && make $@; fi
 	cd $(BZIP2) && make clean
-	#cd $(KERMIT) && make clean
 	if [ -f $(NVIWORK)/Makefile ]; then cd $(NVIWORK) && make clean; fi
-	#if [ -f $(LYNX)/Makefile ] ; then cd $(LYNX) && make clean; fi
-	#if [ -f $(EMACS)/Makefile ] ; then cd $(EMACS) && make clean; fi
-	#cd $(COREUTILS) && make clean
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
 
 small::
