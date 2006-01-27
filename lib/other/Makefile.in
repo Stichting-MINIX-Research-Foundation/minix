@@ -33,6 +33,7 @@ libc_FILES=" \
 	ffs.c \
 	flock.c \
 	fslib.c \
+	fts.c \
 	fsversion.c \
 	getgrent.c \
 	getlogin.c \
