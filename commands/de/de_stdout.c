@@ -32,8 +32,10 @@
 
 #include "de.h"
 
+#ifndef major
 #define major(x) ( (x>>8) & 0377)
 #define minor(x) (x & 0377)
+#endif
 
 /****************************************************************/
 /*   		Code for handling termcap			*/
