@@ -77,8 +77,8 @@ clean::
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
 
 small::
-	for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
+	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make all ); done
 
 smallinstall::
-	for p in $(SMALLPROGRAMS); do ( cd $$p && make install ); done
+	set -e; for p in $(SMALLPROGRAMS); do ( cd $$p && make install ); done
 
