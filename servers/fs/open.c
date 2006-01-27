@@ -215,8 +215,7 @@ PRIVATE struct inode *new_node(struct inode **ldirp,
   register int r;
   char string[NAME_MAX];
 
-  *ldirp = parse_path(path, string, opaque ? LAST_DIR : LAST_DIR_EATSYM)
-;       
+  *ldirp = parse_path(path, string, opaque ? LAST_DIR : LAST_DIR_EATSYM);       
   if (*ldirp == NIL_INODE) return(NIL_INODE);
 
   /* The final directory is accessible. Get final component of the path. */
@@ -489,7 +488,7 @@ PUBLIC int do_lseek()
 }
 
 /*===========================================================================*
- *                             do_slink                                     *
+ *                             do_slink					     *
  *===========================================================================*/
 PUBLIC int do_slink()
 {

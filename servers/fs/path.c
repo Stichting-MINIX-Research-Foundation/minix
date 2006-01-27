@@ -28,7 +28,7 @@ FORWARD _PROTOTYPE( struct inode *ltraverse, (struct inode *rip,
                        char *path, char *suffix, struct inode *ldip)   );
 
 /*===========================================================================*
- *                             parse_path                                   *
+ *                             parse_path				     *
  *===========================================================================*/
 PUBLIC struct inode *parse_path(path, string, action)
 char *path;                    /* the path name to be parsed */
@@ -125,7 +125,7 @@ int action;                    /* action on last part of path */
 }
 
 /*===========================================================================*
- *                             eat_path                                     *
+ *                             eat_path					     *
  *===========================================================================*/
 PUBLIC struct inode *eat_path(path)
 char *path;                    /* the path name to be parsed */
@@ -138,7 +138,7 @@ char *path;                    /* the path name to be parsed */
 }
 
 /*===========================================================================*
- *                             last_dir                                      *
+ *                             last_dir					     *
  *===========================================================================*/
 PUBLIC struct inode *last_dir(path, string)
 char *path;                    /* the path name to be parsed */
@@ -156,7 +156,7 @@ char string[NAME_MAX];         /* the final component is returned here */
 }
 
 /*===========================================================================*
- *                             ltraverse                                    *
+ *                             ltraverse				     *
  *===========================================================================*/
 PRIVATE struct inode *ltraverse(rip, path, suffix, ldip)
 register struct inode *rip;    /* symbolic link */
