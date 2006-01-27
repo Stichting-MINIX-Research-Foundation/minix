@@ -80,7 +80,7 @@ extern struct pci_isabridge pci_isabridge[];
 extern struct pci_pcibridge pci_pcibridge[];
 
 /* Utility functions */
-_PROTOTYPE( void pci_reserve2, (int devind, char name[M3_STRING])	);
+_PROTOTYPE( void pci_reserve3, (int devind, int proc, char name[M3_STRING]));
 _PROTOTYPE( void pci_release, (char name[M3_STRING])			);
 
 /*

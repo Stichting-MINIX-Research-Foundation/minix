@@ -279,7 +279,7 @@ message *mp;
 
 	devind= mp->m1_i1;
 
-	pci_reserve2(devind, names[i].name);
+	pci_reserve3(devind, mp->m_source, names[i].name);
 	mp->m_type= OK;
 	r= send(mp->m_source, mp);
 	if (r != 0)

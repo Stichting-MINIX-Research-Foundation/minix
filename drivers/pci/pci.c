@@ -292,16 +292,74 @@ u16_t *didp;
 }
 
 /*===========================================================================*
- *				pci_reserve2				     *
+ *				pci_reserve3				     *
  *===========================================================================*/
-PUBLIC void pci_reserve2(devind, name)
+PUBLIC void pci_reserve3(devind, proc, name)
 int devind;
+int proc;
 char *name;
 {
+	int i, r;
+	u8_t ilr;
+	struct io_range ior;
+	struct mem_range mr;
+
 	assert(devind <= nr_pcidev);
 	assert(!pcidev[devind].pd_inuse);
 	pcidev[devind].pd_inuse= 1;
 	strcpy(pcidev[devind].pd_name, name);
+
+	for (i= 0; i<pcidev[devind].pd_bar_nr; i++)
+	{
+		if (pcidev[devind].pd_bar[i].pb_flags & PBF_INCOMPLETE)
+		{
+			printf("pci_reserve3: BAR %d is incomplete\n", i);
+			continue;
+		}
+		if (pcidev[devind].pd_bar[i].pb_flags & PBF_IO)
+		{
+			ior.ior_base= pcidev[devind].pd_bar[i].pb_base;
+			ior.ior_limit= ior.ior_base +
+				pcidev[devind].pd_bar[i].pb_size-1;
+
+			printf(
+		"pci_reserve3: for proc %d, adding I/O range [0x%x..0x%x]\n",
+				proc, ior.ior_base, ior.ior_limit);
+			r= sys_privctl(proc, SYS_PRIV_ADD_IO, 0, &ior);
+			if (r != OK)
+			{
+				printf("sys_privctl failed for proc %d: %d\n",
+					proc, r);
+			}
+		}
+		else
+		{
+			mr.mr_base= pcidev[devind].pd_bar[i].pb_base;
+			mr.mr_limit= mr.mr_base +
+				pcidev[devind].pd_bar[i].pb_size-1;
+
+			printf(
+	"pci_reserve3: for proc %d, should add memory range [0x%x..0x%x]\n",
+				proc, mr.mr_base, mr.mr_limit);
+			r= sys_privctl(proc, SYS_PRIV_ADD_MEM, 0, &mr);
+			if (r != OK)
+			{
+				printf("sys_privctl failed for proc %d: %d\n",
+					proc, r);
+			}
+		}
+	}
+	ilr= pcidev[devind].pd_ilr;
+	if (ilr != PCI_ILR_UNKNOWN)
+	{
+		printf("pci_reserve3: adding IRQ %d\n", ilr);
+		r= sys_privctl(proc, SYS_PRIV_ADD_IRQ, ilr, NULL);
+		if (r != OK)
+		{
+			printf("sys_privctl failed for proc %d: %d\n",
+				proc, r);
+		}
+	}
 }
 
 /*===========================================================================*
@@ -630,7 +688,15 @@ printf("probe_bus(%d)\n", busind);
 #endif
 
 			if (vid == NO_VID)
-				break;	/* Nothing here */
+			{
+				if (func == 0)
+					break;	/* Nothing here */
+
+				/* Scan all functions of a multifunction
+				 * device.
+				 */
+				continue;
+			}
 
 			if (sts & (PSR_SSE|PSR_RMAS|PSR_RTAS))
 			{
@@ -641,7 +707,15 @@ printf("probe_bus(%d)\n", busind);
 					sts & (PSR_SSE|PSR_RMAS|PSR_RTAS));
 				}
 				else
-					break;
+				{
+					if (func == 0)
+						break;	/* Nothing here */
+
+					/* Scan all functions of a
+					 * multifunction device.
+					 */
+					continue;
+				}
 			}
 
 			dstr= pci_dev_name(vid, did);
