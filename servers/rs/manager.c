@@ -372,8 +372,7 @@ struct rproc *rp;
    * Now, set the privilege structure for the child process to let is run.
    * This should succeed: we tested number in use above.
    */
-  m.PR_PROC_NR = child_proc_nr;
-  if ((s = _taskcall(SYSTEM, SYS_PRIVCTL, &m)) < 0) { 	/* set privileges */
+  if ((s = sys_privctl(child_proc_nr, SYS_PRIV_INIT, 0, NULL)) < 0) {
       report("RS","call to SYSTEM failed", s);		/* to let child run */
       if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
       else report("RS", "didn't kill pid", child_pid);
