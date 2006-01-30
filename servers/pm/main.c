@@ -154,7 +154,7 @@ PRIVATE void pm_init()
   register struct boot_image *ip;
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
 			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
-  static char ign_sigs[] = { SIGCHLD, SIGWINCH };
+  static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
   static char mess_sigs[] = { SIGTERM, SIGHUP, SIGABRT, SIGQUIT };
   register struct mproc *rmp;
   register int i;
