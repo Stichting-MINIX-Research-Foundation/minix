@@ -1,6 +1,6 @@
 #!/bin/sh
 make clean
 bigmake all
-if [ $1 != build ]
+if [ "$1" != build ]
 then make install
 fi
