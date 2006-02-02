@@ -17,6 +17,7 @@ usr:	\
 	/usr/bin/bigmake \
 	/usr/bin/adduser \
 	/usr/bin/binpackage \
+	/usr/bin/binpackages \
 	/usr/bin/cd \
 		/usr/bin/[ \
 		/usr/bin/command \
@@ -84,6 +85,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/binpackage:	binpackage.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/binpackages:	binpackages.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/adduser:	adduser.sh

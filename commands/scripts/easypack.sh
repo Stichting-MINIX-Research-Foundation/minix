@@ -95,10 +95,12 @@ do # Check to see if it exists. Don't overwrite unless -o given
 
    # It is now unpacked. Build it
    cd $i
+   binsizes big
    if sh build >>$ORIG_DIR/Log 2>&1
       then echo Package $i installed
       else echo Package $i failed to install, see Log
    fi
+   binsizes normal
 
    # Clean up
    cd ..
