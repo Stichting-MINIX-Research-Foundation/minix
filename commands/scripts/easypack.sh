@@ -66,15 +66,14 @@ do # Check to see if it exists. Don't overwrite unless -o given
    URL=$SOFTWARE_DIR/$i.tar.bz2
    URL1=$URL
    TARBZ=$i.tar.bz2
-   urlget $URL >$TARBZ
-
-   # See if we got the file or an error
-   if grep "<html>" $TARBZ >/dev/null
-      then # It is not in the directory of tested software. Try beta dir.
+   if urlget $URL >$TARBZ
+   then :
+   else # It is not in the directory of tested software. Try beta dir.
 	   URL=$BETA_DIR/$TARBZ
-	   urlget $URL >$TARBZ
-	   if grep "<HTML>" $TARBZ >/dev/null || grep "<html>" $TARBZ  >/dev/null
-	      then echo Cannot get $i.
+	   if urlget $URL >$TARBZ
+	   then :
+	   else
+	   	   echo Cannot get $i.
 		   echo "   " Tried $URL1
 		   echo "   " Tried $URL
 		   echo "   " Skipping this package
