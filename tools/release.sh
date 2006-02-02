@@ -1,5 +1,6 @@
 #!/bin/sh
 
+PACKAGEDIR=/usr/bigports/Packages
 secs=`expr 32 '*' 64`
 
 make_hdimage()
@@ -258,6 +259,20 @@ cp image_big image
 sh mkboot cdfdboot
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES
+
+DESTPACKAGES=`pwd`/release/cd/Packages
+rm -rf $DESTPACKAGES
+mkdir $DESTPACKAGES
+
+( cd $PACKAGEDIR
+  for f in *tar*
+  do
+	shortname="`echo $f | sed 's/\.tar\..*//' | tr -dc '[a-z][A-z][0-9]' | sed 's/^\(........\).*/\1/' | tr '[a-z]' '[A-Z]'`.TBZ"
+	cp $f $DESTPACKAGES/$shortname
+	echo $shortname $f >>$DESTPACKAGES/List
+	echo " * Copied $f to $shortname"
+  done
+)
 
 h_opt=
 bootimage=$IMAGE
