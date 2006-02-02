@@ -1,5 +1,5 @@
 #!/bin/sh
-CC=cc /bin/sh ./configure --prefix=/usr/local && bigmake all
-if [ $1 != build ]
+CC=cc /bin/sh ./configure --prefix=/usr/local && make all
+if [ "$1" != build ]
 then make install
 fi

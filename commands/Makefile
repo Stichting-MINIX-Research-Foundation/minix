@@ -2,7 +2,6 @@
 
 MAKE	= exec make -$(MAKEFLAGS)
 FLEX=flex-2.5.4
-GZIP=gzip-1.2.4
 BZIP2=bzip2-1.0.3
 NVI=nvi-1.79
 NVIWORK=$(NVI)/minix
@@ -28,11 +27,9 @@ install: biginstall smallinstall
 
 small::
 	-mkdir $(NVIWORK)
-	cd $(GZIP) && CC="$(CC)" /bin/sh ./configure --prefix=/usr/local && $(MAKE) all
 	cd $(NVI) && make all
 
 smallinstall:: small
-	cd $(GZIP) && $(MAKE) install 
 	cd $(NVI) && make install
 
 big:
@@ -45,7 +42,6 @@ biginstall: big
 
 clean::
 	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
-	if [ -f $(GZIP)/Makefile ] ; then cd $(GZIP) && make $@; fi
 	cd $(BZIP2) && make clean
 	if [ -f $(NVIWORK)/Makefile ]; then cd $(NVIWORK) && make clean; fi
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
