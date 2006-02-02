@@ -87,7 +87,7 @@ freopen(const char *name, const char *mode, FILE *stream)
 	}
 
 	if ( fstat( fd, &st ) == 0 ) {
-		if ( st.st_mode & S_IFIFO ) flags |= _IOFIFO;
+		if ( S_ISFIFO(st.st_mode) ) flags |= _IOFIFO;
 	} else {
 		goto loser;
 	}

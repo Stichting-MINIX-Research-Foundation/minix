@@ -5,6 +5,7 @@
 
 #include	<sys/types.h>
 #include	<stdio.h>
+#include	<errno.h>
 #include	"loc_incl.h"
 
 ssize_t _write(int d, const char *buf, size_t nbytes);
@@ -36,10 +37,12 @@ fflush(FILE *stream)
 		if (stream->_buf && !io_testflag(stream,_IONBF))
 			adjust = -stream->_count;
 		stream->_count = 0;
-		if (_lseek(fileno(stream), (off_t) adjust, SEEK_CUR) == -1) {
+		if (_lseek(fileno(stream), (off_t) adjust, SEEK_CUR) == -1 &&
+		  errno != ESPIPE) {
 			stream->_flags |= _IOERR;
 			return EOF;
 		}
+		errno = 0;
 		if (io_testflag(stream, _IOWRITE))
 			stream->_flags &= ~(_IOREADING | _IOWRITING);
 		stream->_ptr = stream->_buf;

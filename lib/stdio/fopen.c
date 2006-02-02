@@ -110,7 +110,7 @@ fopen(const char *name, const char *mode)
 		return (FILE *)NULL;
 	}
 	
-	if ( st.st_mode & S_IFIFO ) flags |= _IOFIFO;
+	if ( S_ISFIFO(st.st_mode) ) flags |= _IOFIFO;
 	
 	if (( stream = (FILE *) malloc(sizeof(FILE))) == NULL ) {
 		_close(fd);
