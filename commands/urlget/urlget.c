@@ -240,8 +240,28 @@ int len;
    	write(fd, qs, len);
 
    skip = 1;
-   while((s = read(fd, buffer, sizeof(buffer))) > 0) {
+   while((s = read(fd, buffer, sizeof(buffer)-1)) > 0) {
+	buffer[s] = '\0';
    	if(skip) {
+   		static int firstline = 1;
+		if(firstline) {
+			static char linebuf[1000];
+			int l = 0;
+			int c, v1, v2, e;
+			if(s >= sizeof(linebuf)-l)
+				c = sizeof(linebuf)-1-l;
+			else	c = s;
+			memcpy(linebuf+l, buffer, c);
+			linebuf[l+c] = '\0';
+			if(strchr(buffer, '\n') || strchr(buffer, '\r'))
+				firstline = 0;
+			if(sscanf(linebuf, "HTTP/%d.%d %d ", &v1, &v2, &e) == 3
+				&& e != 200) {
+				fprintf(stderr, "HTTP error %d\n", e);
+				return -1;
+			}
+		}
+
    		s2 = skipit(buffer, s, &skip);
    		if(headers)
    			write(1, buffer, s - s2);
