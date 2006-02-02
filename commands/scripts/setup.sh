@@ -12,6 +12,12 @@ LOCALRC=/usr/etc/rc.local
 MYLOCALRC=/mnt/etc/rc.local
 ROOTMB=16
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
+USRKBFILE=/.usrkb
+if [ ! -f "$USRKBFILE" ]
+then	echo "Are you really running from CD?"
+	echo "No $USRKBFILE file."
+	exit 1
+fi
 USRKB="`cat /.usrkb`"
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
 ROOTFILES="`cat /.rootfiles`"
