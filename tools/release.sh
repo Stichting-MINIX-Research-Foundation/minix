@@ -92,7 +92,7 @@ do
 done
 
 ISO=${ISO}.iso
-ISOBZ=${ISO}.bz
+ISOBZ=${ISO}.bz2
 echo "Making $ISOBZ"
 
 USRMB=100
