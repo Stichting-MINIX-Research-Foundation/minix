@@ -53,7 +53,7 @@ usr_roflag="-r"' > $RELEASEDIR/etc/fstab
 
 HDEMU=1
 
-COPYITEMS="usr/bin bin usr/lib usr/gnu"
+COPYITEMS="usr/bin bin usr/lib"
 RELEASEDIR=/usr/r
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
@@ -204,8 +204,8 @@ else
 fi
 
 echo " * Fixups for owners and modes of dirs and files"
-chown -R bin $RELEASEDIR/usr/src $RELEASEDIR/usr/gnu
-chmod -R u+w $RELEASEDIR/usr/src $RELEASEDIR/usr/gnu
+chown -R bin $RELEASEDIR/usr/src 
+chmod -R u+w $RELEASEDIR/usr/src 
 find $RELEASEDIR/usr/src -type d | xargs chmod 755
 find $RELEASEDIR/usr/src -type f | xargs chmod 644
 find $RELEASEDIR/usr/src -name configure | xargs chmod 755
