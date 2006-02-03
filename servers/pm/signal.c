@@ -524,6 +524,7 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 	if (proc_id == 0 && mp->mp_procgrp != rmp->mp_procgrp) continue;
 	if (proc_id == -1 && rmp->mp_pid <= INIT_PID) continue;
 	if (proc_id < -1 && rmp->mp_procgrp != -proc_id) continue;
+	if (rmp->mp_procgrp == 0) continue;
 
 	/* Check for permission. */
 	if (mp->mp_effuid != SUPER_USER
