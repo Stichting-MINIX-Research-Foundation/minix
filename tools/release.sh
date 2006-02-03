@@ -260,7 +260,7 @@ sh mkboot cdfdboot
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES
 
-DESTPACKAGES=`pwd`/release/cd/Packages
+DESTPACKAGES=`pwd`/release/cd/PACKAGES
 rm -rf $DESTPACKAGES
 mkdir $DESTPACKAGES
 

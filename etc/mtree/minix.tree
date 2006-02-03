@@ -45,6 +45,7 @@
 755  bin    operator  /usr/local/man/man7
 755  bin    operator  /usr/local/man/man8
 755  bin    operator  /usr/local/man/man9
+775  bin     operator  /usr/local/packages
 775  bin     operator  /usr/local/src
 755  bin     operator  /usr/man
 755  bin     operator  /usr/man/man1

@@ -42,6 +42,7 @@ usr:	\
 	/usr/bin/binsizes \
 	/usr/bin/rotate \
 	/usr/bin/floppysetup \
+	/usr/bin/packme \
 	/usr/bin/spell \
 	/usr/bin/srccrc \
 	/usr/bin/svclog \
@@ -135,6 +136,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/binsizes:	binsizes.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/packme:	packme.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/spell:	spell.sh

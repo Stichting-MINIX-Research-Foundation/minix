@@ -618,7 +618,7 @@ edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(1,Start M
 pfile="/mnt/src/tools/fdbootparams"
 echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile
 # Save name of CD drive
-echo "cddrive=`mount | grep usr | awk '{ print $1 }'`" >>/mnt/etc/rc.package
+echo "cddrive=`mount | grep usr | awk '{ print $1 }' | sed 's/p.*//'`" >>/mnt/etc/rc.package
 
 sync
 
