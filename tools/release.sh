@@ -92,8 +92,8 @@ do
 done
 
 ISO=${ISO}.iso
-ISOGZ=${ISO}.gz
-echo "Making $ISOGZ"
+ISOBZ=${ISO}.bz
+echo "Making $ISOBZ"
 
 USRMB=100
 
@@ -169,7 +169,7 @@ echo " * Ready to go, press RETURN if you're sure.."
 read xyzzy
 
 echo " * Cleanup old files"
-rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOGZ $CDFILES image*
+rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOBZ $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -B $BS -b $ROOTBLOCKS $RAM || exit
@@ -301,7 +301,7 @@ then
 	# unreadable.
 	partition -m $ISO 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 fi
-echo " * gzipping $ISO"
-gzip -9 $ISO
-ls -al $ISOGZ
+echo " * bzipping $ISO"
+bzip2 $ISO
+ls -al $ISOBZ
 
