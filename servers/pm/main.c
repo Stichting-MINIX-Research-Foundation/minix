@@ -216,7 +216,7 @@ PRIVATE void pm_init()
   		sigemptyset(&rmp->mp_sigmask);
   		sigemptyset(&rmp->mp_catch);
 		if (ip->proc_nr == INIT_PROC_NR) {	/* user process */
-  			rmp->mp_pid = INIT_PID;
+  			rmp->mp_procgrp = rmp->mp_pid = INIT_PID;
 			rmp->mp_flags |= IN_USE; 
 		}
 		else {					/* system process */
