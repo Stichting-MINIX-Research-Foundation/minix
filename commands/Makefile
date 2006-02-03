@@ -1,7 +1,6 @@
 # Makefile for commands.
 
 MAKE	= exec make -$(MAKEFLAGS)
-FLEX=flex-2.5.4
 BZIP2=bzip2-1.0.3
 NVI=nvi-1.79
 NVIWORK=$(NVI)/minix
@@ -33,15 +32,12 @@ smallinstall:: small
 	cd $(NVI) && make install
 
 big:
-	cd $(FLEX) && /bin/sh build build
 	cd $(BZIP2) && /bin/sh build build
 
 biginstall: big
-	cd $(FLEX) && make install
 	cd $(BZIP2) && make install
 
 clean::
-	if [ -f $(FLEX)/Makefile ] ; then cd $(FLEX) && make $@; fi
 	cd $(BZIP2) && make clean
 	if [ -f $(NVIWORK)/Makefile ]; then cd $(NVIWORK) && make clean; fi
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
