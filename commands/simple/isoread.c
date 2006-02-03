@@ -506,7 +506,7 @@ void list_dir(dir_ptr)
 struct dir_entry *dir_ptr;
 {
   /* List all entries in a directory */
-
+  int tty;
   long block;
   int nr_of_blocks;
   int i,j;
@@ -516,6 +516,7 @@ struct dir_entry *dir_ptr;
   int column = 0;
   int skip = 0;
 
+  tty = isatty(STDOUT_FILENO);
   /* Get first block of directory */
   block = iso_733(dir_ptr->first_block) + iso_711(dir_ptr->ext_attr_length);
   nr_of_blocks = (iso_733(dir_ptr->size) + (BLOCK_SIZE-1)) >> BLOCK_SHIFT;
@@ -552,7 +553,7 @@ struct dir_entry *dir_ptr;
             if (dir_ptr->name[i] == ';') break;
             name[name_len++] = LOWER_CASE(dir_ptr->name[i]);
           }
-          if (IS_DIR(dir_ptr)) name[name_len++] = '/';
+          if (IS_DIR(dir_ptr) && tty) name[name_len++] = '/';
         }
       }
       if (!skip)
@@ -572,13 +573,17 @@ struct dir_entry *dir_ptr;
           print_dir_date(dir_ptr->date);
           fprintf (STDOUT, " ");
         }
-        for(i=name_len; i<(NR_OF_CHARS+NR_OF_BLANKS); i++) name[i] = ' ';
-        name[NR_OF_CHARS+NR_OF_BLANKS] = '\0';
+	if(!tty)
+		name[name_len] = '\0';
+	else {
+	        for(i=name_len; i<(NR_OF_CHARS+NR_OF_BLANKS); i++) name[i] = ' ';
+	        name[NR_OF_CHARS+NR_OF_BLANKS] = '\0';
+	}
         fprintf(STDOUT, "%s", name);
         if (!(Verbose || ByteOffset))
         {
           column++;
-          if (column >= NR_OF_COLS) 
+          if (column >= NR_OF_COLS || !tty) 
           {
             column = 0;
             fprintf(STDOUT,"\n");
