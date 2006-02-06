@@ -641,6 +641,7 @@ fi
 echo "Install is done. Running postinstall script.."
 
 # Now chroot-mount the new system and run the postinstall script
+umount /dev/$usr || exit 1
 mount /dev/$root /mnt || exit 1
 mount /dev/$usr /mnt/usr || exit 1
 chroot /mnt '/bin/sh /usr/src/commands/scripts/postinstall.sh'
