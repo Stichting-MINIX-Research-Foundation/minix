@@ -67,6 +67,7 @@ int main(void)
 		case BUSC_PCI_ATTR_W16: do_attr_w16(&m); break;
 		case BUSC_PCI_ATTR_W32: do_attr_w32(&m); break;
 		case BUSC_PCI_RESCAN: do_rescan_bus(&m); break;
+		case SYS_SIG: /* system signal, ignore it */ break;
 		default:
 			printf("PCI: got message from %d, type %d\n",
 				m.m_source, m.m_type);
