@@ -759,7 +759,9 @@ PRIVATE int kbc_read()
 	struct micro_state ms;
 #endif
 
+#if DEBUG
 	printf("in kbc_read\n");
+#endif
 
 	/* Wait at most 1 second for a byte from the keyboard or
 	* the kbd controller, return -1 on a timeout.
@@ -777,13 +779,17 @@ PRIVATE int kbc_read()
 			sys_inb(KEYBD, &byte);
 			if (st & KB_AUX_BYTE)
 			{
+#if DEBUG
 				printf(
 		"keyboard`kbc_read: ignoring byte (0x%x) from aux device.\n",
 					byte);
+#endif
 				continue;
 			}
+#if DEBUG
 			printf("keyboard`kbc_read: returning byte 0x%x\n",
 				byte);
+#endif
 			return byte;
 		}
 	}
