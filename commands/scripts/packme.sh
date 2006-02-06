@@ -12,11 +12,13 @@ fi
 cd /
 
 if [ -n "$cddrive" ]
-then	isodir "$cddrive" $CDDIR | grep -i tbz | while read package
-	do	echo -n "Install $package (y/n) ? "
+then	for package in `isodir "$cddrive" $CDDIR | grep -i '\.tbz'`
+	do	echo -n "Install $package (y/N) ? "
 		read y
 		if [ "$y" = y ]
-		then	isoread "$cddrive" $CDDIR/$package | bzip2 -d | pax -r -p e '*' / || echo "Extract failed."
+		then	echo "Extracting $CDDIR/$package .."
+			isoread "$cddrive" $CDDIR/$package | smallbunzip2 | pax -r -p e || echo "Extract failed."
 		fi
 	done
 fi
+
