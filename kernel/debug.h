@@ -9,15 +9,6 @@
 
 #include "config.h"
 
-/* It's interesting to measure the time spent withing locked regions, because
- * this is the time that the system is deaf to interrupts.
- */
-#if DEBUG_TIME_LOCKS
-
-#define TIMING_POINTS		20	/* timing resolution */
-#define TIMING_CATEGORIES	20
-#define TIMING_NAME		10
-
 /* Enable prints such as
  *  . send/receive failed due to deadlock or dead source or dead destination
  *  . trap not allowed
@@ -28,6 +19,15 @@
  * are disabled.
  */
 #define DEBUG_ENABLE_IPC_WARNINGS	0
+
+/* It's interesting to measure the time spent withing locked regions, because
+ * this is the time that the system is deaf to interrupts.
+ */
+#if DEBUG_TIME_LOCKS
+
+#define TIMING_POINTS		20	/* timing resolution */
+#define TIMING_CATEGORIES	20
+#define TIMING_NAME		10
 
 /* Definition of the data structure to store lock() timing data. */ 
 struct lock_timingdata {
