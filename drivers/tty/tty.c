@@ -166,6 +166,7 @@ PUBLIC void main(void)
   register struct proc *rp;
   register tty_t *tp;
 
+#if DEBUG
   kputc('H');
   kputc('e');
   kputc('l');
@@ -174,6 +175,7 @@ PUBLIC void main(void)
   kputc(',');
   kputc(' ');
   printf("TTY\n");
+#endif
 
   /* Initialize the TTY driver. */
   tty_init();
@@ -1571,7 +1573,9 @@ PRIVATE void tty_init()
   if (sigaction(SIGKMESS,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
   if (sigaction(SIGKSTOP,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
 #endif
+#if DEBUG
 	printf("end of tty_init\n");
+#endif
 }
 
 /*===========================================================================*
