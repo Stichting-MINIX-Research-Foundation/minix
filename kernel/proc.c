@@ -669,8 +669,15 @@ PUBLIC void lock_dequeue(rp)
 struct proc *rp;		/* this process is no longer runnable */
 {
 /* Safe gateway to dequeue() for tasks. */
-  lock(4, "dequeue");
-  dequeue(rp);
-  unlock(4);
+  if (k_reenter >= 0) {
+	/* We're in an exception or interrupt, so don't lock (and.. 
+	 * don't unlock).
+	 */
+	dequeue(rp);
+  } else {
+	lock(4, "dequeue");
+	dequeue(rp);
+	unlock(4);
+  }
 }
 

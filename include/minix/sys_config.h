@@ -68,4 +68,7 @@ error "In <minix/sys_config.h> please define _MINIX_MACHINE to have a legal valu
 error "_MINIX_MACHINE has incorrect value (0)"
 #endif
 
+/* Kernel debug checks */
+#define DEBUG_LOCK_CHECK 0	/* Interrupt Lock/unlock sanity checking. */
+
 #endif /* _MINIX_SYS_CONFIG_H */

@@ -58,11 +58,19 @@
 #define IF_MASK 0x00000200
 #define IOPL_MASK 0x003000
 
+#if DEBUG_LOCK_CHECK
+#define reallock(c, v)	{ if (!(read_cpu_flags() & X86_FLAG_I)) { kinfo.relocking++; } else { intr_disable(); } }
+#else
+#define reallock(c, v)	intr_disable()
+#endif
+
+#define realunlock(c)	intr_enable()
+
 /* Disable/ enable hardware interrupts. The parameters of lock() and unlock()
  * are used when debugging is enabled. See debug.h for more information.
  */
-#define lock(c, v)	intr_disable(); 
-#define unlock(c)	intr_enable(); 
+#define lock(c, v)	reallock(c, v)
+#define unlock(c)	realunlock(c) 
 
 /* Sizes of memory tables. The boot monitor distinguishes three memory areas, 
  * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed

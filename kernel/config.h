@@ -76,7 +76,6 @@
  * For normal operation all options should be disabled.
  */
 #define DEBUG_SCHED_CHECK  0	/* sanity check of scheduling queues */
-#define DEBUG_LOCK_CHECK   0	/* kernel lock() sanity check */
 #define DEBUG_TIME_LOCKS   0	/* measure time spent in locks */
 
 #endif /* CONFIG_H */
