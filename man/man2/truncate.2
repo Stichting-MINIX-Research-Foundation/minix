@@ -1,0 +1,30 @@
+.TH TRUNCATE 2 "Feb 13, 2006"
+.UC 4
+.SH NAME
+truncate, ftruncate \- truncate a file to a specified length (may extend)
+.SH SYNOPSIS
+.ft B
+.nf
+#include <unistd.h>
+
+int truncate(char *filename, off_t length);
+int ftruncate(int fd, off_t length);
+.fi
+.ft R
+.SH DESCRIPTION
+.B Truncate
+causes the file 
+.B filename
+to be set to the length
+.B length
+causing data after that size to be lost. If the file is set to a 
+length larger than the current file size, the new region can be
+written to but reads as zeroes. There will be no disk blocks reserved
+for it. This is a hole.
+.PP
+.B Ftruncate
+does the same thing as 
+.B truncate
+but operates on a file descriptor instead of a filename.
+.SH "SEE ALSO
+.BR fcntl (2)
