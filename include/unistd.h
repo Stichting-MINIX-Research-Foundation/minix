@@ -185,6 +185,7 @@ _PROTOTYPE( int devctl, (int ctl_req, int driver, int device, int style));
 /* For compatibility with other Unix systems */
 _PROTOTYPE( int getpagesize, (void)					);
 _PROTOTYPE( int setgroups, (int ngroups, const gid_t *gidset)		);
+_PROTOTYPE( int initgroups, (const char *name, gid_t basegid)		);
 
 #endif
 
