@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <utime.h>
 #include <stdio.h>
+#include <limits.h>
 
 #define NOCRASH 1		/* test11(), 2nd pipe */
 #define PDPNOHANG  1		/* test03(), write_standards() */
@@ -25,7 +26,7 @@
 
 #define ARSIZE   256		/* array size */
 #define PIPESIZE 3584		/* max number of bytes to be written on pipe */
-#define MAXOPEN  17		/* maximum number of extra open files */
+#define MAXOPEN  (OPEN_MAX-3)		/* maximum number of extra open files */
 #define MAXLINK 0177		/* maximum number of links per file */
 #define LINKCOUNT 5
 #define MASK    0777		/* selects lower nine bits */
