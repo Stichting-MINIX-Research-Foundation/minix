@@ -404,6 +404,7 @@ off_t newsize;			/* inode must become this size */
 
   /* Next correct the inode size. */
   if(!waspipe) rip->i_size = newsize;
+  else wipe_inode(rip);	/* Pipes can only be truncated to 0. */
   rip->i_dirt = DIRTY;
 
   return OK;
