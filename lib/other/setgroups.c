@@ -43,8 +43,10 @@ int initgroups(const char *name, gid_t basegid)
 	/* Because supplemental groups aren't implemented, this call
 	 * should fail if the user is in any supplemental groups.
 	 */
-	if(found)
-		return EINVAL;
+	if(found) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	return 0;
 }
