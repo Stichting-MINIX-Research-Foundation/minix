@@ -7,14 +7,16 @@
 .TH SETUID 2 "May 9, 1985"
 .UC 4
 .SH NAME
-setuid, setgid \- set user or group ID's
+setuid, seteuid, setgid, setegid \- set (effective) user or group ID's
 .SH SYNOPSIS
 .nf
 .ft B
 #include <sys/types.h>
 
 int setuid(uid_t \fIuid\fP)
+int seteuid(uid_t \fIeuid\fP)
 int setgid(gid_t \fIgid\fP)
+int setegid(gid_t \fIegid\fP)
 .ft R
 .fi
 .SH DESCRIPTION
@@ -45,4 +47,6 @@ The current process is not the super-user and a change
 other than one of the allowed changes was attempted.
 .SH "SEE ALSO"
 .BR getuid (2),
+.BR geteuid (2),
 .BR getgid (2).
+.BR getegid (2).
