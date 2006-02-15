@@ -9,7 +9,7 @@ setgroups.c
 
 int setgroups(int ngroups, const gid_t *gidset)
 {
-	if(!gidset || ngroups > 1) {
+	if(ngroups > 1) {
 		/* Supplementary groups not implemented */
 		errno= EINVAL;
 		return -1;

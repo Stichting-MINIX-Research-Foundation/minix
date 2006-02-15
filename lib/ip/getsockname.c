@@ -21,7 +21,7 @@
 #include <net/gen/udp_io.h>
 
 
-#define DEBUG 1
+#define DEBUG 0
 
 /*
    getsockname...
