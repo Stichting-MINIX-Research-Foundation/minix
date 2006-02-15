@@ -1,7 +1,7 @@
 # Makefile for ramdisk image
 
 PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk newroot \
-	sh service sysenv
+	pci sh service sysenv
 
 all:	image.c
 
@@ -36,6 +36,12 @@ floppy: ../../floppy/floppy
 
 ../../floppy/floppy:
 	cd ../../floppy && make
+
+pci: ../../pci/pci
+	install -s ../../$@/$@ $@
+
+../../pci/pci:
+	cd ../../pci && make
 
 cdprobe:  ../../../commands/simple/cdprobe
 	install -s ../../../commands/simple/$@ $@
@@ -78,4 +84,10 @@ service: ../../../servers/rs/service
 
 ../../../servers/rs/service: 
 	cd ../../../servers/rs && make service
+
+depend: 
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+
+# Include generated dependencies.
+include .depend
 

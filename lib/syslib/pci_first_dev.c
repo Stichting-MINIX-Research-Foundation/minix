@@ -2,6 +2,7 @@
 pci_first_dev.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <minix/sysutil.h>
 
@@ -17,7 +18,7 @@ u16_t *didp;
 	message m;
 
 	m.m_type= BUSC_PCI_FIRST_DEV;
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_first_dev: can't talk to PCI", r);
 	if (m.m_type == 1)

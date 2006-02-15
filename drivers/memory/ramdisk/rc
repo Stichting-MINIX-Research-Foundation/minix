@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+/bin/service up /bin/pci
 /bin/service up /bin/floppy -dev /dev/fd0
 if [ X`/bin/sysenv bios_wini` = Xyes ]
 then

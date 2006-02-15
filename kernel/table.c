@@ -109,8 +109,8 @@ PUBLIC struct boot_image image[] = {
  { LOG_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, DRV_C, "log"   },
 #if 0
  { DRVR_PROC_NR,  0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, DRV_C, "driver"},
-#endif
  { PCI_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, PCI_C, "pci"},
+#endif
  { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     USR_T, USR_M,     0, "init"  },
 };
 

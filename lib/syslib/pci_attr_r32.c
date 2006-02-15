@@ -2,6 +2,7 @@
 pci_attr_r32.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <minix/sysutil.h>
 
@@ -19,7 +20,7 @@ int port;
 	m.m2_i1= devind;
 	m.m2_i2= port;
 
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_attr_r32: can't talk to PCI", r);
 

@@ -2,6 +2,7 @@
 pci_slot_name.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <minix/sysutil.h>
 
@@ -21,7 +22,7 @@ int devind;
 	m.m1_i2= sizeof(name);
 	m.m1_p1= name;
 
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_slot_name: can't talk to PCI", r);
 

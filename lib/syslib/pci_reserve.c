@@ -2,6 +2,7 @@
 pci_reserve.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <minix/sysutil.h>
 
@@ -17,7 +18,7 @@ int devind;
 	m.m_type= BUSC_PCI_RESERVE;
 	m.m1_i1= devind;
 
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_reserve: can't talk to PCI", r);
 

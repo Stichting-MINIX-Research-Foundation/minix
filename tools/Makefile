@@ -19,7 +19,6 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/log/log \
-	../drivers/pci/pci \
 	../servers/init/init
 
 usage:	

@@ -2,6 +2,7 @@
 pci_ids.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <minix/sysutil.h>
 
@@ -19,7 +20,7 @@ u16_t *didp;
 	m.m_type= BUSC_PCI_IDS;
 	m.m1_i1= devind;
 
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_ids: can't talk to PCI", r);
 

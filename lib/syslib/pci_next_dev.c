@@ -2,6 +2,7 @@
 pci_next_dev.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <minix/sysutil.h>
 
@@ -19,7 +20,7 @@ u16_t *didp;
 	m.m_type= BUSC_PCI_NEXT_DEV;
 	m.m1_i1= *devindp;
 
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_next_dev: can't talk to PCI", r);
 

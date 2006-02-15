@@ -2,6 +2,7 @@
 pci_rescan_bus.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <minix/sysutil.h>
 
@@ -17,7 +18,7 @@ u8_t busnr;
 	m.m_type= BUSC_PCI_RESCAN;
 	m.m1_i1= busnr;
 
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_rescan_bus: can't talk to PCI", r);
 

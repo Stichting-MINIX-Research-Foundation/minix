@@ -2,9 +2,13 @@
 pci_init1.c
 */
 
+#include "pci.h"
 #include "syslib.h"
 #include <string.h>
+#include <unistd.h>
 #include <minix/sysutil.h>
+
+int pci_procnr= ANY;
 
 /*===========================================================================*
  *				pci_init1				     *
@@ -16,6 +20,11 @@ char *name;
 	size_t len;
 	message m;
 
+	r= findproc("pci", &pci_procnr);
+	if (r != 0)
+		panic("pci", "pci_init1: findproc failed for 'pci'", r);
+	printf("'pci' is at %d\n", pci_procnr);
+
 	m.m_type= BUSC_PCI_INIT;
 	len= strlen(name);
 	if (len+1 <= sizeof(m.m3_ca1))
@@ -26,7 +35,7 @@ char *name;
 		memcpy(m.m3_ca1, name, len);
 		m.m3_ca1[len]= '\0';
 	}
-	r= sendrec(PCI_PROC_NR, &m);
+	r= sendrec(pci_procnr, &m);
 	if (r != 0)
 		panic("pci", "pci_init1: can't talk to PCI", r);
 	if (m.m_type != 0)
