@@ -7,6 +7,7 @@
 
 #include "fs.h"
 #include <fcntl.h>
+#include <string.h>
 #include <minix/com.h>
 #include <sys/stat.h>
 #include "buf.h"
@@ -15,6 +16,9 @@
 #include "inode.h"
 #include "param.h"
 #include "super.h"
+
+/* Allow the root to be replaced before the first 'real' mount. */
+PRIVATE int allow_newroot= 1;
 
 FORWARD _PROTOTYPE( dev_t name_to_dev, (char *path)			);
 
@@ -30,7 +34,8 @@ PUBLIC int do_mount()
   dev_t dev;
   mode_t bits;
   int rdir, mdir;		/* TRUE iff {root|mount} file is dir */
-  int r, found;
+  int i, r, found;
+  struct fproc *tfp;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -43,10 +48,87 @@ PUBLIC int do_mount()
   sp = NIL_SUPER;
   found = FALSE;
   for (xp = &super_block[0]; xp < &super_block[NR_SUPERS]; xp++) {
-	if (xp->s_dev == dev) found = TRUE;	/* is it mounted already? */
+	if (xp->s_dev == dev)
+	{
+		/* is it mounted already? */
+		found = TRUE;
+		sp= xp;
+		break;
+	}
 	if (xp->s_dev == NO_DEV) sp = xp;	/* record free slot */
   }
-  if (found) return(EBUSY);	/* already mounted */
+  if (found)
+  {
+	printf(
+"do_mount: s_imount = 0x%x (%x, %d), s_isup = 0x%x (%x, %d), fp_rootdir = 0x%x\n",
+		xp->s_imount, xp->s_imount->i_dev, xp->s_imount->i_num,
+		xp->s_isup, xp->s_isup->i_dev, xp->s_isup->i_num,
+		fproc[FS_PROC_NR].fp_rootdir);
+	/* It is possible that we have an old root lying around that 
+	 * needs to be remounted.
+	 */
+	if (xp->s_imount != xp->s_isup ||
+		xp->s_isup == fproc[FS_PROC_NR].fp_rootdir)
+	{
+		/* Normally, s_imount refers to the mount point. For a root
+		 * filesystem, s_imount is equal to the root inode. We assume
+		 * that the root of FS is always the real root. If the two
+		 * inodes are different or if the root of FS is equal two the
+		 * root of the filesystem we found, we found a filesystem that
+		 * is in use.
+		 */
+		return(EBUSY);	/* already mounted */
+	}
+
+	if (root_dev == xp->s_dev)
+	{
+		panic("fs", "inconsistency remounting old root",
+			NO_NUM);
+	}
+
+	/* Now get the inode of the file to be mounted on. */
+	if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
+		return(err_code);
+	}
+
+	if ( (rip = eat_path(user_path)) == NIL_INODE) {
+		return(err_code);
+	}
+
+	r = OK;
+
+	/* It may not be special. */
+	bits = rip->i_mode & I_TYPE;
+	if (bits == I_BLOCK_SPECIAL || bits == I_CHAR_SPECIAL)
+		r = ENOTDIR;
+
+	/* Get the root inode of the mounted file system. */
+	root_ip= sp->s_isup;
+
+	/* File types of 'rip' and 'root_ip' may not conflict. */
+	if (r == OK) {
+		mdir = ((rip->i_mode & I_TYPE) == I_DIRECTORY); 
+						/* TRUE iff dir */
+		rdir = ((root_ip->i_mode & I_TYPE) == I_DIRECTORY);
+		if (!mdir && rdir) r = EISDIR;
+	}
+
+	/* If error, return the mount point. */
+	if (r != OK) {
+		put_inode(rip);
+		return(r);
+	}
+
+	/* Nothing else can go wrong.  Perform the mount. */
+	rip->i_mount = I_MOUNT;	/* this bit says the inode is
+				 * mounted on
+				 */
+	put_inode(sp->s_imount);
+	sp->s_imount = rip;
+	sp->s_rd_only = m_in.rd_only;
+	allow_newroot= 0;		/* The root is now fixed */
+	return(OK);
+  }
   if (sp == NIL_SUPER) return(ENFILE);	/* no super block available */
 
   /* Open the device the file system lives on. */
@@ -74,6 +156,58 @@ PUBLIC int do_mount()
 	sp->s_dev = NO_DEV;
 	return(err_code);
   }
+
+  if (strcmp(user_path, "/") == 0 && allow_newroot)
+  {
+	printf("Replacing root\n");
+
+	/* Get the root inode of the mounted file system. */
+	if ( (root_ip = get_inode(dev, ROOT_INODE)) == NIL_INODE) r = err_code;
+	if (root_ip != NIL_INODE && root_ip->i_mode == 0) {
+		r = EINVAL;
+	}
+
+	/* If error, return the super block and both inodes; release the
+	 * maps.
+	 */
+	if (r != OK) {
+		put_inode(root_ip);
+		(void) do_sync();
+		invalidate(dev);
+		dev_close(dev);
+		sp->s_dev = NO_DEV;
+		return(r);
+	}
+
+	/* Nothing else can go wrong.  Perform the mount. */
+	sp->s_imount = root_ip;
+	dup_inode(root_ip);
+	sp->s_isup = root_ip;
+	sp->s_rd_only = m_in.rd_only;
+	root_dev= dev;
+
+	/* Replace all root and working directories */
+	for (i= 0, tfp= fproc; i<NR_PROCS; i++, tfp++)
+	{
+		if (tfp->fp_pid == PID_FREE)
+			continue;
+		if (tfp->fp_rootdir == NULL)
+			panic("fs", "do_mount: null rootdir", i);
+		put_inode(tfp->fp_rootdir);
+		dup_inode(root_ip);
+		tfp->fp_rootdir= root_ip;
+
+		if (tfp->fp_workdir == NULL)
+			panic("fs", "do_mount: null workdir", i);
+		put_inode(tfp->fp_workdir);
+		dup_inode(root_ip);
+		tfp->fp_workdir= root_ip;
+	}
+
+	/* Leave the old filesystem lying around. */
+	return(OK);
+  }
+
   if ( (rip = eat_path(user_path)) == NIL_INODE) {
 	dev_close(dev);
 	sp->s_dev = NO_DEV;
@@ -120,6 +254,7 @@ PUBLIC int do_mount()
   sp->s_imount = rip;
   sp->s_isup = root_ip;
   sp->s_rd_only = m_in.rd_only;
+  allow_newroot= 0;		/* The root is now fixed */
   return(OK);
 }
 

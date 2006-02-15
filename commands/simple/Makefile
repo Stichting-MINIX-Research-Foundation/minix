@@ -51,6 +51,7 @@ ALL	= \
 	calendar \
 	cat \
 	cdiff \
+	cdprobe \
 	cgrep \
 	chmem \
 	chmod \
@@ -110,6 +111,7 @@ ALL	= \
 	last \
 	leave \
 	life \
+	loadramdisk \
 	login \
 	look \
 	lp \
@@ -128,6 +130,7 @@ ALL	= \
 	mount \
 	mt \
 	nm \
+	newroot \
 	nonamed \
 	nice \
 	od \
@@ -252,6 +255,10 @@ cat:	cat.c
 	@install -S 4kw $@
 
 cdiff:	cdiff.c
+	$(CCLD) -o $@ $?
+	@install -S 28kw $@
+
+cdprobe: cdprobe.c
 	$(CCLD) -o $@ $?
 	@install -S 28kw $@
 
@@ -491,6 +498,10 @@ life:	life.c
 	$(CCLD) -o $@ $? -lcurses
 	@install -S 15kw $@
 
+loadramdisk:	loadramdisk.c
+	$(CCLD) -o $@ $?
+	install -S 4kw $@
+
 login:	login.c
 	$(CCLD) -o $@ $?
 	install -S 4kw $@
@@ -558,6 +569,10 @@ mount:	mount.c
 mt:	mt.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
+
+newroot:	newroot.c
+	$(CCLD) -o $@ $?
+	@install -S 32kw $@
 
 nm:	nm.c
 	$(CCLD) -o $@ $?
@@ -892,6 +907,7 @@ install:	\
 	/usr/bin/calendar \
 	/usr/bin/cat \
 	/usr/bin/cdiff \
+	/usr/bin/cdprobe \
 	/usr/bin/cgrep \
 	/usr/bin/chmem \
 	/usr/bin/chmod \
@@ -970,6 +986,7 @@ install:	\
 		/usr/bin/uptime \
 	/usr/bin/leave \
 	/usr/bin/life \
+	/usr/bin/loadramdisk \
 	/usr/bin/login \
 	/usr/bin/look \
 	/usr/bin/lp \
@@ -987,6 +1004,7 @@ install:	\
 	/usr/bin/modem \
 	/usr/bin/mount \
 	/usr/bin/mt \
+	/usr/bin/newroot \
 	/usr/bin/nm \
 	/usr/bin/nice \
 	/usr/bin/nonamed \
@@ -1124,6 +1142,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/cdiff:	cdiff
+	install -cs -o bin $? $@
+
+/usr/bin/cdprobe: cdprobe
 	install -cs -o bin $? $@
 
 /usr/bin/cgrep:	cgrep
@@ -1334,6 +1355,9 @@ install:	\
 /usr/bin/life:	life
 	install -cs -o bin $? $@
 
+/usr/bin/loadramdisk:	loadramdisk
+	install -cs -o bin $? $@
+
 /usr/bin/login:	login
 	install -cs -o bin $? $@
 
@@ -1383,6 +1407,9 @@ install:	\
 	install -cs -o root -m 4755 $? $@
 
 /usr/bin/mt:	mt
+	install -cs -o bin $? $@
+
+/usr/bin/newroot:	newroot
 	install -cs -o bin $? $@
 
 /usr/bin/nm:	nm

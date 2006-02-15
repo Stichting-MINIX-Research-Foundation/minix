@@ -25,7 +25,9 @@
 
 #include "assert.h"
 
-#define NR_DEVS            6		/* number of minor devices */
+#include "local.h"
+
+#define NR_DEVS            7		/* number of minor devices */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
@@ -191,6 +193,19 @@ unsigned nr_req;		/* length of request vector */
 	    }
 	    break;
 
+	case IMGRD_DEV:
+	    if (position >= dv_size) return(OK); 	/* check for EOF */
+	    if (position + count > dv_size) count = dv_size - position;
+
+	    if (opcode == DEV_GATHER) {			/* copy actual data */
+	        sys_vircopy(SELF, D, (vir_bytes)&imgrd[position],
+			proc_nr, D, user_vir, count);
+	    } else {
+	        sys_vircopy(proc_nr, D, user_vir,
+			SELF, D, (vir_bytes)&imgrd[position], count);
+	    }
+	    break;
+
 	/* Unknown (illegal) minor device. */
 	default:
 	    return(EINVAL);
@@ -278,6 +293,10 @@ PRIVATE void m_init()
 	printf("MEM stored retrieved details as new RAM disk\n");
   }
 
+  /* Ramdisk image built into the memory driver */
+  m_geom[IMGRD_DEV].dv_base= cvul64(0);
+  m_geom[IMGRD_DEV].dv_size= cvul64(imgrd_size);
+
   /* Initialize /dev/zero. Simply write zeros into the buffer. */
   for (i=0; i<ZERO_BUF_SIZE; i++) {
        dev_zero[i] = '\0';
@@ -320,19 +339,31 @@ message *m_ptr;				/* pointer to control message */
 
   switch (m_ptr->REQUEST) {
     case MIOCRAMSIZE: {
-	/* FS wants to create a new RAM disk with the given size. */
-	phys_bytes ramdev_size;
+	/* Someone wants to create a new RAM disk with the given size. */
+	static int first_time= 1;
+
+	u32_t ramdev_size;
 	phys_bytes ramdev_base;
 	message m;
 	int s;
 
-	/* Only FS can create RAM disk, and only on RAM disk device. */
-	if (m_ptr->PROC_NR != FS_PROC_NR) return(EPERM);
+	/* A ramdisk can be created only once, and only on RAM disk device. */
+	if (!first_time) return(EPERM);
 	if (m_ptr->DEVICE != RAM_DEV) return(EINVAL);
         if ((dv = m_prepare(m_ptr->DEVICE)) == NIL_DEV) return(ENXIO);
 
+#if 0
+	ramdev_size= m_ptr->POSITION;
+#else
+	/* Get request structure */
+	s= sys_vircopy(m_ptr->PROC_NR, D, (vir_bytes)m_ptr->ADDRESS,
+		SELF, D, (vir_bytes)&ramdev_size, sizeof(ramdev_size));
+	if (s != OK)
+		return s;
+#endif
+	printf("allocating ramdisk of size 0x%x\n", ramdev_size);
+
 	/* Try to allocate a piece of memory for the RAM disk. */
-	ramdev_size = m_ptr->POSITION;
         if (allocmem(ramdev_size, &ramdev_base) < 0) {
             report("MEM", "warning, allocmem failed", errno);
             return(ENOMEM);
@@ -359,6 +390,7 @@ message *m_ptr;				/* pointer to control message */
 
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
+	/* first_time= 0; */
 	break;
     }
     case MIOCMAP:

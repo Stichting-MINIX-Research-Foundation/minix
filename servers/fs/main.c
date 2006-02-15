@@ -277,6 +277,7 @@ PRIVATE void load_ram(void)
 
   /* Get some boot environment variables. */
   root_dev = igetenv("rootdev", 0);
+  root_dev = DEV_IMGRD;
   image_dev = igetenv("ramimagedev", 0);
   ram_size_kb = igetenv("ramsize", 0);
 
@@ -284,6 +285,7 @@ PRIVATE void load_ram(void)
   if (dev_open(root_dev, FS_PROC_NR, R_BIT|W_BIT) != OK)
 	panic(__FILE__,"Cannot open root device",NO_NUM);
 
+#if 0
   /* If we must initialize a ram disk, get details from the image device. */
   if (root_dev == DEV_RAM) {
   	u32_t fsmax, probedev;
@@ -329,6 +331,7 @@ PRIVATE void load_ram(void)
 	if (ram_size_kb*1024 > fsmax*sp->s_block_size)
 		ram_size_kb = fsmax*sp->s_block_size/1024;
   }
+#endif
 
   /* Tell RAM driver how big the RAM disk must be. */
   m_out.m_type = DEV_IOCTL;
@@ -336,6 +339,7 @@ PRIVATE void load_ram(void)
   m_out.DEVICE = RAM_DEV;
   m_out.REQUEST = MIOCRAMSIZE;			/* I/O control to use */
   m_out.POSITION = (ram_size_kb * 1024);	/* request in bytes */
+#if 0
   if ((s=sendrec(MEM_PROC_NR, &m_out)) != OK)
   	panic("FS","sendrec from MEM failed", s);
   else if (m_out.REP_STATUS != OK) {
@@ -347,6 +351,7 @@ PRIVATE void load_ram(void)
 		panic(__FILE__,"can't set RAM disk size", m_out.REP_STATUS);
   	}
   }
+#endif
 
 #if ENABLE_CACHE2
   /* The RAM disk is a second level block cache while not otherwise used. */
@@ -356,6 +361,8 @@ PRIVATE void load_ram(void)
   /* See if we must load the RAM disk image, otherwise return. */
   if (root_dev != DEV_RAM)
   	return;
+
+#if 0
 
   /* Copy the blocks one at a time from the image to the RAM disk. */
   printf("Loading RAM disk onto /dev/ram:\33[23CLoaded:    0 KB");
@@ -424,6 +431,7 @@ PRIVATE void load_ram(void)
   	sbbuf, SUPER_BLOCK_BYTES, _MIN_BLOCK_SIZE, 0) != _MIN_BLOCK_SIZE) {
   	printf("WARNING: ramdisk write for resizing failed\n");
   }
+#endif
 }
 
 /*===========================================================================*

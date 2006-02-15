@@ -41,12 +41,14 @@ extern struct dmap {
 #  define NULL_DEV    		   3	/* minor device for /dev/null */
 #  define BOOT_DEV    		   4	/* minor device for /dev/boot */
 #  define ZERO_DEV    		   5	/* minor device for /dev/zero */
+#  define IMGRD_DEV   		   6	/* minor device for /dev/imgrd */
 
 #define CTRLR(n) ((n)==0 ? 3 : (8 + 2*((n)-1)))	/* magic formula */
 
 /* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	      0x0100	/* device number of /dev/ram */
 #  define DEV_BOOT	      0x0104	/* device number of /dev/boot */
+#  define DEV_IMGRD	      0x0106	/* device number of /dev/imgrd */
 
 #define FLOPPY_MAJOR	           2	/* major device for floppy disks */
 #define TTY_MAJOR		   4	/* major device for ttys */

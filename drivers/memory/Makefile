@@ -16,29 +16,35 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lsysutil
 
-OBJ = memory.o
+OBJ = memory.o imgrd.o
 LIBDRIVER = $d/libdriver/driver.o
 
 
 # build local binary
 all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) $(LIBDRIVER)
+
+$(DRIVER):	ramdisk_image $(OBJ) $(LIBDRIVER)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
 	install -S 1024w $(DRIVER)
+
+imgrd.o:        ramdisk/image.c
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 
 
+ramdisk_image:
+	cd ramdisk && make
+	binsizes big
 
 # install with other drivers
-install:	/sbin/$(DRIVER)
+install:	# /sbin/$(DRIVER)
 /sbin/$(DRIVER):	$(DRIVER)
 	install -o root -cs $? $@
 
 # clean up local files
 clean:
 	rm -f $(DRIVER) *.o *.bak 
-
+	cd ramdisk && make clean
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend

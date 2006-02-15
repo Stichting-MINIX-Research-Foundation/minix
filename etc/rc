@@ -86,10 +86,10 @@ start)
     # where it is based on sysenv (set by FS when probing for CD).
     if [ "$bootcd" = 1 ]
     then	
-    		imagedev="`/bin/sysenv cdproberoot`"
-    		usrdev="`expr $imagedev + 1`"
+    		#imagedev="`/bin/sysenv cdproberoot`"
+    		#usrdev="`expr $imagedev + 1`"
     		usr_roflag="-r"
-    		usr="`/bin/dev2name $usrdev`"
+    		usr="$cddev"p2
     		echo "Setting /usr on cd is $usr"
     fi
  

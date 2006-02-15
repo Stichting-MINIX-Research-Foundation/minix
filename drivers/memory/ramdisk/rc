@@ -1,0 +1,37 @@
+#!/bin/sh
+set -e
+/bin/service up /bin/floppy -dev /dev/fd0
+if [ X`/bin/sysenv bios_wini` = Xyes ]
+then
+	echo Using bios_wini.
+	/bin/service up /bin/bios_wini -dev /dev/c0d0
+else
+	/bin/service up /bin/at_wini -dev /dev/c0d0
+fi
+
+rootdev=`sysenv rootdev` || echo 'No rootdev?'
+rootdevname=`/bin/dev2name "$rootdev"` ||
+	{ echo 'No device name for root device'; exit 1; }
+
+if sysenv cdproberoot >/dev/null
+then
+	echo 
+	echo 'Looking for boot CD. This may take a minute.'
+	echo 'Please ignore any error messages.'
+	echo
+	cddev=`cdprobe` || { echo 'No CD found'; exit 1; }
+	export cddev
+	echo "Loading ramdisk from ${cddev}p1"
+	loadramdisk "$cddev"p1
+elif [ "$rootdevname" = "/dev/ram" ]
+then
+	ramimagedev=`sysenv ramimagedev` ||
+		{ echo 'ramimagedev not found'; exit 1; }
+	ramimagename=`/bin/dev2name "$ramimagedev"` ||
+		{ echo 'No device name for ramimagedev'; exit 1; }
+	echo "Loading ramdisk from $ramimagename"
+	loadramdisk "$ramimagename"
+fi
+echo "Root device name is $rootdevname"
+/bin/newroot "$rootdevname"
+exec /bin/sh /etc/rc start

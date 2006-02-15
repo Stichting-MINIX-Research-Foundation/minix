@@ -299,19 +299,18 @@ char string[NAME_MAX];		/* component name to look for */
   if (rip->i_num == ROOT_INODE)
 	if (dirp->i_num == ROOT_INODE) {
 	    if (string[1] == '.') {
-		for (sp = &super_block[1]; sp < &super_block[NR_SUPERS]; sp++){
-			if (sp->s_dev == rip->i_dev) {
-				/* Release the root inode.  Replace by the
-				 * inode mounted on. Update parent.
-				 */
-				put_inode(rip);
-				put_inode(dirp);
-				mnt_dev = sp->s_imount->i_dev;
-				inumb = (int) sp->s_imount->i_num;
-				dirp = *pdirp = get_inode(mnt_dev, inumb);
-				rip = advance(pdirp, string);
-				break;
-			}
+		sp= rip->i_sp;
+		if (sp->s_imount != sp->s_isup)
+		{
+			/* Release the root inode.  Replace by the
+			 * inode mounted on. Update parent.
+			 */
+			put_inode(rip);
+			put_inode(dirp);
+			mnt_dev = sp->s_imount->i_dev;
+			inumb = (int) sp->s_imount->i_num;
+			dirp = *pdirp = get_inode(mnt_dev, inumb);
+			rip = advance(pdirp, string);
 		}
 	    }
 	}

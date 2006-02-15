@@ -19,13 +19,8 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/log/log \
-	AT:../drivers/at_wini/at_wini \
-	BIOS:../drivers/bios_wini/bios_wini \
-	FLOPPY:../drivers/floppy/floppy \
 	../drivers/pci/pci \
-	../servers/init/init \
-#	bootdev.img
-
+	../servers/init/init
 
 usage:	
 	@echo " " >&2

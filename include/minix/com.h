@@ -37,10 +37,9 @@
 #define MEM_PROC_NR 	  3  	/* memory driver (RAM disk, null, etc.) */
 #define LOG_PROC_NR	  4	/* log device driver */
 #define TTY_PROC_NR	  5	/* terminal (TTY) driver */
-#define DRVR_PROC_NR      6	/* device driver for boot medium */
-#define DS_PROC_NR	  7    	/* data store server */
-#define PCI_PROC_NR       8	/* driver for PCI controllers */
-#define INIT_PROC_NR	  9    	/* init -- goes multiuser */
+#define DS_PROC_NR	  6    	/* data store server */
+#define PCI_PROC_NR       7	/* driver for PCI controllers */
+#define INIT_PROC_NR	  8    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)

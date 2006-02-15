@@ -423,7 +423,8 @@ char *device;
   struct stat st;
 
   if ((fd = open(device, O_RDONLY)) == -1) {
-  	perror("sizeup open");
+	if (errno != ENOENT)
+		perror("sizeup open");
   	return 0;
   }
   if (ioctl(fd, DIOCGETP, &entry) == -1) {
@@ -1062,8 +1063,24 @@ char *devname;			/* /dev/hd1 or whatever */
 {
 /* Check to see if the special file named in s is mounted. */
 
-  int n;
+  int n, r;
+  struct stat sb;
   char special[PATH_MAX + 1], mounted_on[PATH_MAX + 1], version[10], rw_flag[10];
+
+  r= stat(devname, &sb);
+  if (r == -1)
+  {
+	if (errno == ENOENT)
+		return;	/* Does not exist, and therefore not mounted. */
+	fprintf(stderr, "%s: stat %s failed: %s\n",
+		progname, devname, strerror(errno));
+	exit(1);
+  }
+  if (!S_ISBLK(sb.st_mode))
+  {
+	/* Not a block device and therefore not mounted. */
+	return;
+  }
 
   if (load_mtab("mkfs") < 0) return;
   while (1) {

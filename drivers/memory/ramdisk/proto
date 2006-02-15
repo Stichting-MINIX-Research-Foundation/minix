@@ -1,0 +1,66 @@
+boot 
+200 100
+d--755 0 0
+	bin d--755 0 0
+		at_wini ---755 0 0 at_wini
+		bios_wini ---755 0 0 bios_wini
+		cdprobe ---755 0 0 cdprobe
+		dev2name ---755 0 0 dev2name
+		floppy ---755 0 0 floppy
+		loadramdisk ---755 0 0 loadramdisk
+		newroot ---755 0 0 newroot
+		sh ---755 0 0 sh
+		service ---755 0 0 service
+		sysenv ---755 0 0 sysenv
+	$
+	dev d--755 0 0
+		c0d0 b--222 0 0 3 0
+		c0d1 b--222 0 0 3 5
+		c0d2 b--222 0 0 3 10
+		c0d3 b--222 0 0 3 15
+		c0d0p0 b--222 0 0 3 1
+		c0d0p1 b--222 0 0 3 2
+		c0d0p2 b--222 0 0 3 3
+		c0d0p3 b--222 0 0 3 4
+		c0d1p0 b--222 0 0 3 6
+		c0d1p1 b--222 0 0 3 7
+		c0d1p2 b--222 0 0 3 8
+		c0d1p3 b--222 0 0 3 9
+		c0d2p0 b--222 0 0 3 11
+		c0d2p1 b--222 0 0 3 12
+		c0d2p2 b--222 0 0 3 13
+		c0d2p3 b--222 0 0 3 14
+		c0d3p0 b--222 0 0 3 16
+		c0d3p1 b--222 0 0 3 17
+		c0d3p2 b--222 0 0 3 18
+		c0d3p3 b--222 0 0 3 19
+		c0d0p0s0 b--222 0 0 3 128
+		c0d0p1s0 b--222 0 0 3 132
+		c0d0p2s0 b--222 0 0 3 136
+		c0d0p3s0 b--222 0 0 3 140
+		c0d1p0s0 b--222 0 0 3 144
+		c0d1p1s0 b--222 0 0 3 148
+		c0d1p2s0 b--222 0 0 3 152
+		c0d1p3s0 b--222 0 0 3 156
+		c0d2p0s0 b--222 0 0 3 160
+		c0d2p1s0 b--222 0 0 3 164
+		c0d2p2s0 b--222 0 0 3 168
+		c0d2p3s0 b--222 0 0 3 172
+		c0d3p0s0 b--222 0 0 3 176
+		c0d3p1s0 b--222 0 0 3 180
+		c0d3p2s0 b--222 0 0 3 184
+		c0d3p3s0 b--222 0 0 3 188
+		fd0 b--222 0 0 2 0
+		fd0p0 b--222 0 0 2 112
+		fd0p1 b--222 0 0 2 116
+		fd0p2 b--222 0 0 2 120
+		fd0p3 b--222 0 0 2 124
+		log c--222 0 0 4 15
+		null c--666 0 0 1 3
+		ram b--600 0 0 1 0
+	$
+	etc d--755 0 0
+		mtab ---644 0 0 mtab
+		rc ---755 0 0 rc
+	$
+$

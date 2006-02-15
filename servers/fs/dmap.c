@@ -185,6 +185,7 @@ PUBLIC void build_dmap()
       }
   }
 
+#if 0
   /* Get settings of 'controller' and 'driver' at the boot monitor. */
   if ((s = env_get_param("label", driver, sizeof(driver))) != OK) 
       panic(__FILE__,"couldn't get boot monitor parameter 'driver'", s);
@@ -209,6 +210,7 @@ PUBLIC void build_dmap()
       panic(__FILE__,"map_driver failed",s);
   printf("Boot medium driver: %s driver mapped onto controller %s.\n",
       driver, controller);
+#endif
 }
 
 /*===========================================================================*

@@ -17,3 +17,4 @@ then	cat "$t" | while read line
 	do	awk '{ print "chmem =" $2 " " $1 " >/dev/null 2>&1 "}'
 	done | /bin/sh
 fi
+exit 0
