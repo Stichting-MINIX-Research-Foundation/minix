@@ -35,7 +35,7 @@ make_hdimage()
 
 hdemu_root_changes()
 {
-	$RELEASEDIR/usr/bin/installboot -d $RAM \
+	$RELEASEDIR/usr/bin/installboot -d $TMPDISK3 \
 		$RELEASEDIR/usr/mdec/bootblock boot/boot
 	echo \
 'label=BIOS
@@ -43,7 +43,7 @@ bootcd=2
 disable=inet
 bios_remap_first=1
 ramimagedev=c0d7p0s0
-save'	| $RELEASEDIR/usr/bin/edparams $RAM
+save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
 
 	echo \
 'root=/dev/c0d7p0s0
@@ -62,7 +62,6 @@ sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
 ISO=minix${version}_`date +%Y%m%d-%H%M%S`
-RAM=/dev/ram
 BS=4096
 
 HDEMU=0
@@ -112,15 +111,13 @@ fi
 
 TD1=.td1
 TD2=.td2
+TD3=.td3
 
-echo " * Warning: I'm going to mkfs $RAM!"
 
 if [ -f $TD1 ]
 then    TMPDISK="`cat $TD1`"
 	echo " * Warning: I'm going to overwrite $TMPDISK!"
 else
-        echo "It has to be at least $ROOTKB KB."
-        echo ""
         echo "Temporary (sub)partition to use to make the /usr FS image? "
         echo "I need $USRMB MB. It will be mkfsed!"
         echo -n "Device: /dev/"
@@ -155,11 +152,32 @@ fi
 
 echo $TMPDISK2 >$TD2
 
+if [ -f $TD3 ]
+then    TMPDISK3="`cat $TD3`"
+	echo " * Warning: I'm going to overwrite $TMPDISK3!"
+else
+        echo "It has to be at least $ROOTKB KB."
+        echo ""
+        echo "Temporary (sub)partition to use to make the root FS image? "
+        echo "It will be mkfsed!"
+        echo -n "Device: /dev/"
+        read dev || exit 1
+        TMPDISK3=/dev/$dev
+fi
+
+if [ -b $TMPDISK3 ]
+then :
+else	echo "$TMPDISK3 is not a block device.."
+	exit 1
+fi
+
+echo $TMPDISK3 >$TD3
+
 umount $TMPDISK
 umount $TMPDISK2
-umount $RAM
+umount $TMPDISK3
 
-if [ $TMPDISK = $TMPDISK2 ]
+if [ $TMPDISK = $TMPDISK2  -o $TMPDISK = $TMPDISK3 -o $TMPDISK2 = $TMPDISK3 ]
 then
 	echo "Temporary devices can't be equal."
 	exit
@@ -172,10 +190,10 @@ echo " * Cleanup old files"
 rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOBZ $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
-mkfs -B $BS -b $ROOTBLOCKS $RAM || exit
+mkfs -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
 mkfs $TMPDISK2 || exit
-echo " * mounting $RAM as $RELEASEDIR"
-mount $RAM $RELEASEDIR || exit
+echo " * mounting $TMPDISK3 as $RELEASEDIR"
+mount $TMPDISK3 $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
@@ -237,7 +255,7 @@ find $RELEASEDIR/usr | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 echo " * Zeroing remainder of temporary areas"
 df $TMPDISK
-df $RAM
+df $TMPDISK3
 cp /dev/zero $RELEASEDIR/usr/.x
 rm $RELEASEDIR/usr/.x
 cp /dev/zero $RELEASEDIR/.x
@@ -245,7 +263,7 @@ rm $RELEASEDIR/.x
 
 umount $TMPDISK || exit
 umount $TMPDISK2 || exit
-umount $RAM || exit
+umount $TMPDISK3 || exit
 (cd ../boot && make)
 (cd .. && make depend)
 make clean
@@ -253,10 +271,10 @@ make image || exit 1
 cp image image_big
 make clean
 make image_small || exit 1
-dd if=$RAM of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
+dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 # Prepare image and image_small for cdfdboot
 cp image_big image
-sh mkboot cdfdboot
+sh mkboot cdfdboot $TMPDISK3
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES
 
