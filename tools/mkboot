@@ -9,10 +9,10 @@ mdec=/usr/mdec	# bootstraps
 
 # Check arguments.
 case "$#:$1" in
-1:bootable | 1:hdboot | [12]:fdboot | 1:cdfdboot )
+1:bootable | 1:hdboot | [12]:fdboot | [12]:cdfdboot )
 	action=$1 dev=$2
 	;;
-*)	echo "Usage: $0 [bootable | hdboot | cdfdboot | fdboot [device]]" >&2
+*)	echo "Usage: $0 [bootable | hdboot | cdfdboot | fdboot [device]] | cdfdboot [device]" >&2
 	exit 1
 esac
 
@@ -164,7 +164,10 @@ fdboot)
 
 cdfdboot)
 	# cdfdboot: Make a boot floppy image to go on a CD for booting from.
-	dev=/dev/ram
+	if [ -z "$dev" ]
+	then
+		dev=/dev/ram
+	fi
 	umount $dev 2>/dev/null
 	if mkfs -B 1024 -b 1440 -i 512 $dev || exit 1
 	then :
