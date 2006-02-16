@@ -1340,7 +1340,12 @@ PRIVATE void arp_bufcheck()
 
 	for (i= 0, arp_port= arp_port_table; i<eth_conf_nr; i++, arp_port++)
 	{
-		for (pack= arp_port->ap_reqlist; pack;
+		for (pack= arp_port->ap_reclist; pack;
+			pack= pack->acc_ext_link)
+		{
+			bf_check_acc(pack);
+		}
+		for (pack= arp_port->ap_sendlist; pack;
 			pack= pack->acc_ext_link)
 		{
 			bf_check_acc(pack);

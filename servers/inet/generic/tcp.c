@@ -2269,12 +2269,14 @@ tcp_fd_t *tcp_fd;
 		sizeof(*cookiep), TRUE);
 	if (!data)
 		return EFAULT;
+
 	data= bf_packIffLess(data, sizeof(*cookiep));
 	cookiep= (tcp_cookie_t *)ptr2acc_data(data);
 
 	dst_nr= cookiep->tc_ref;
 	if (dst_nr < 0 || dst_nr >= TCP_FD_NR)
 	{
+		bf_afree(data); data= NULL;
 		printf("tcp_acceptto: bad fd %d\n", dst_nr);
 		tcp_reply_ioctl(tcp_fd, EINVAL);
 		return NW_OK;
@@ -2285,6 +2287,7 @@ tcp_fd_t *tcp_fd;
 		dst_fd->tf_conn != NULL ||
 		!(dst_fd->tf_flags & TFF_COOKIE))
 	{
+		bf_afree(data); data= NULL;
 		printf("tcp_acceptto: bad flags 0x%x or conn %p for fd %d\n",
 			dst_fd->tf_flags, dst_fd->tf_conn, dst_nr);
 		tcp_reply_ioctl(tcp_fd, EINVAL);
@@ -2292,9 +2295,12 @@ tcp_fd_t *tcp_fd;
 	}
 	if (memcmp(cookiep, &dst_fd->tf_cookie, sizeof(*cookiep)) != 0)
 	{
+		bf_afree(data); data= NULL;
 		printf("tcp_acceptto: bad cookie\n");
 		return NW_OK;
 	}
+
+	bf_afree(data); data= NULL;
 
 	/* Move connection */
 	tcp_fd->tf_listenq[i]= NULL;

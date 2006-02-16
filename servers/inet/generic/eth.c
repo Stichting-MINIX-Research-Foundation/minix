@@ -335,9 +335,6 @@ ioreq_t req;
 				return NW_OK;
 			}
 
-			acc= bf_memreq(sizeof(nwio_ethstat_t));
-			compare (bf_bufsize(acc), ==, sizeof(*ethstat));
-
 			if (!(eth_port->etp_flags & EPF_GOT_ADDR))
 			{
 				printf(
@@ -348,6 +345,9 @@ ioreq_t req;
 				eth_fd->ef_flags |= EFF_IOCTL_IP;
 				return NW_SUSPEND;
 			}
+
+			acc= bf_memreq(sizeof(nwio_ethstat_t));
+			compare (bf_bufsize(acc), ==, sizeof(*ethstat));
 
 			ethstat= (nwio_ethstat_t *)ptr2acc_data(acc);
 			ethstat->nwes_addr= eth_port->etp_ethaddr;
