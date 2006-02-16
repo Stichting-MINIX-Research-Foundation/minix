@@ -90,8 +90,6 @@ FLEX_FLAGS = -t $(PERF_REPORT)
 COMPRESSION =
 PERF_REPORT = -p
 
-include ../bigmake.inc
-
 all: $(FLEX)
 
 $(FLEX): .bootstrap $(OBJECTS) $(FLEXLIB)
