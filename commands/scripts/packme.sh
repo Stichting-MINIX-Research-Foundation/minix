@@ -17,7 +17,7 @@ then	for package in `isodir "$cddrive" $CDDIR | grep -i '\.tbz'`
 		read y
 		if [ "$y" = y ]
 		then	echo "Extracting $CDDIR/$package .."
-			isoread "$cddrive" $CDDIR/$package | smallbunzip2 | pax -r -p e || echo "Extract failed."
+			isoread "$cddrive" $CDDIR/$package | packit -
 		fi
 	done
 fi

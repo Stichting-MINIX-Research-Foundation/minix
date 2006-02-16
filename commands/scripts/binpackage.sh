@@ -1,5 +1,7 @@
 #!/bin/sh 
 
+PI=.postinstall
+
 set -e
 
 # No trailing slashes in the directory, because we want to base the
@@ -37,9 +39,8 @@ then	echo "Error: No build script in $dir."
 fi
 
 sh -e build
-cd /
 echo " * Building package"
-find / -cnewer $packagestart | grep -v "^$srcdir" | grep -v "^/dev" | grep -v "^/tmp" | grep -v "^/usr/tmp" | grep -v "^/usr/log" | grep -v "^/usr/adm" | grep -v "^/etc/utmp" | grep -v "^/usr/src" | pax -w -d | bzip2 >$tarbz
+( if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | grep -v "^$srcdir" | grep -v "^/dev" | grep -v "^/tmp" | grep -v "^/usr/tmp" | grep -v "^/usr/log" | grep -v "^/usr/adm" | grep -v "^/etc/utmp" | grep -v "^/usr/src" ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
 binsizes normal
 mv $tarbz $here/$pdir
