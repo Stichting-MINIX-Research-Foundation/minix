@@ -21,8 +21,12 @@ init()
 	sigtrp(M2_UNIXSIG, SIGQUIT);
 	sigtrp(EILLINS, SIGILL);
 	sigtrp(M2_UNIXSIG, SIGTRAP);
+#ifdef SIGIOT
 	sigtrp(M2_UNIXSIG, SIGIOT);
+#endif
+#if SIGEMT
 	sigtrp(M2_UNIXSIG, SIGEMT);
+#endif
 	sigtrp(M2_UNIXSIG, SIGFPE);
 	sigtrp(M2_UNIXSIG, SIGBUS);
 	sigtrp(M2_UNIXSIG, SIGSEGV);
