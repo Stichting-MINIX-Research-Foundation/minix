@@ -1,5 +1,5 @@
 #!/bin/sh
-DRIVERS=/usr/sbin
+DRIVERS=/sbin
 RESCUE=/boot/rescue
 
 if [ "$1" != start ]
@@ -9,7 +9,7 @@ fi
 service up $DRIVERS/rescue -dev /dev/rescue -args 128 -period 4HZ
 mkfs /dev/rescue || exit
 mount /dev/rescue $RESCUE || exit
-cp $DRIVERS/memory $RESCUE
+cp /usr/sbin/memory $RESCUE
 label=`sysenv label`
 case "$label" in
 AT)
