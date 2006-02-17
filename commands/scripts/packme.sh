@@ -15,7 +15,7 @@ if [ -n "$cddrive" ]
 then	for package in `isodir "$cddrive" $CDDIR | grep -i '\.tbz'`
 	do	echo -n "Install $package (y/N) ? "
 		read y
-		if [ "$y" = y ]
+		if [ "$y" = y -o "$y" = Y ]
 		then	echo "Extracting $CDDIR/$package .."
 			isoread "$cddrive" $CDDIR/$package | packit -
 		fi

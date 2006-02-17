@@ -2,6 +2,7 @@
 
 PI=.postinstall
 TMP=/usr/tmp
+PATH=/bin:/usr/bin:/usr/local/bin
 
 if [ "$#" -ne 1  ]
 then
