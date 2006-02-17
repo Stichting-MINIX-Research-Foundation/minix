@@ -165,3 +165,21 @@ stop|down)
 	  fi
 	fi
 esac
+
+d=/usr/local/etc/rc.d
+# Let packages run their own scripts
+if [ -d "$d" ]
+then	if cd $d
+	then
+		echo -n "Local package initialization: "
+		for f in *
+		do
+			if [ -x "$f" ]
+			then	echo -n "$f "
+				sh "$f" "$action"
+			fi
+		done
+		echo " done."
+	fi
+fi
+
