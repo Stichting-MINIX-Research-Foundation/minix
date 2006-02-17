@@ -26,6 +26,7 @@ sys/socket.h
 #define SO_KEEPALIVE	0x0008
 
 #define SO_SNDBUF	0x1001	/* send buffer size */
+#define SO_RCVBUF	0x1002	/* receive buffer size */
 #define SO_ERROR	0x1007	/* get and clear error status */
 
 /* The how argument to shutdown */
