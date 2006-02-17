@@ -6,7 +6,7 @@ su bin -c 'make world install' || exit 1
 cd tools || exit 1
 rm revision
 rm /boot/image/*
-make hdboot || exit 1
+make install || exit 1
 cp ../boot/boot /boot/boot || exit 1
 make clean
 make image_small || exit 1
