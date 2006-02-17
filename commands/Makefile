@@ -2,8 +2,6 @@
 
 MAKE	= exec make -$(MAKEFLAGS)
 BZIP2=bzip2-1.0.3
-NVI=nvi-1.79
-NVIWORK=$(NVI)/minix
 
 SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple talk talkd telnet telnetd urlget yap zmodem
 
@@ -24,13 +22,6 @@ all: small big
 
 install: biginstall smallinstall
 
-small::
-	-mkdir $(NVIWORK)
-	cd $(NVI) && make all
-
-smallinstall:: small
-	cd $(NVI) && make install
-
 big:
 	cd $(BZIP2) && /bin/sh build build
 
@@ -39,7 +30,6 @@ biginstall: big
 
 clean::
 	cd $(BZIP2) && make clean
-	if [ -f $(NVIWORK)/Makefile ]; then cd $(NVIWORK) && make clean; fi
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
 
 small::
