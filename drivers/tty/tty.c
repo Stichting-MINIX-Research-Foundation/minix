@@ -177,13 +177,13 @@ PUBLIC void main(void)
   printf("TTY\n");
 #endif
 
-  /* Initialize the TTY driver. */
-  tty_init();
-
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
   if (OK != (s=sys_getmachine(&machine))) {
     panic("TTY","Couldn't obtain kernel environment.", s);
   }
+
+  /* Initialize the TTY driver. */
+  tty_init();
 
   /* Final one-time keyboard initialization. */
   kb_init_once();
