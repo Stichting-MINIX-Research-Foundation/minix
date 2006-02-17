@@ -1,5 +1,5 @@
 #!/bin/sh
-DRIVERS=/sbin
+DRIVERS=/usr/sbin
 RESCUE=/boot/rescue
 
 if [ "$1" != start ]
