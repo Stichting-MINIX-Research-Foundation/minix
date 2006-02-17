@@ -647,7 +647,7 @@ mount /dev/$usr /mnt/usr || exit 1
 chroot /mnt '/bin/sh /usr/src/commands/scripts/postinstall.sh'
 
 echo "Postinstall script done. Saving random data.."
-dd if=/dev/random of=/mnt/adm/random.dat bs=1024 count=1
+dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
 
 echo "
 Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At
