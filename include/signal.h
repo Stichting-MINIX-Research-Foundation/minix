@@ -31,8 +31,7 @@ typedef unsigned long sigset_t;
 #define SIGILL             4	/* illegal instruction */
 #define SIGTRAP            5	/* trace trap (not reset when caught) */
 #define SIGABRT            6	/* IOT instruction */
-#define SIGIOT             6	/* SIGABRT for people who speak PDP-11 */
-#define SIGUNUSED          7	/* spare code */
+#define SIGBUS             7	/* bus error */
 #define SIGFPE             8	/* floating point exception */
 #define SIGKILL            9	/* kill (cannot be caught or ignored) */
 #define SIGUSR1           10	/* user defined signal # 1 */
@@ -42,9 +41,6 @@ typedef unsigned long sigset_t;
 #define SIGALRM           14	/* alarm clock */
 #define SIGTERM           15	/* software termination signal from kill */
 #define SIGCHLD           17	/* child process terminated or stopped */
-
-#define SIGEMT             7	/* obsolete */
-#define SIGBUS            10	/* obsolete */
 
 /* MINIX specific signals. These signals are not used by user proceses, 
  * but meant to inform system processes, like the PM, about system events.
@@ -66,6 +62,10 @@ typedef unsigned long sigset_t;
 #define SIGTSTP           20	/* interactive stop signal */
 #define SIGTTIN           21	/* background process wants to read */
 #define SIGTTOU           22	/* background process wants to write */
+
+#ifdef _MINIX
+#define SIGIOT             SIGABRT /* for people who speak PDP-11 */
+#endif
 
 /* The sighandler_t type is not allowed unless _POSIX_SOURCE is defined. */
 typedef void _PROTOTYPE( (*__sighandler_t), (int) );
