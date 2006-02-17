@@ -40,6 +40,7 @@ typedef unsigned long sigset_t;
 #define SIGPIPE           13	/* write on a pipe with no one to read it */
 #define SIGALRM           14	/* alarm clock */
 #define SIGTERM           15	/* software termination signal from kill */
+#define SIGEMT		  16	/* EMT instruction */
 #define SIGCHLD           17	/* child process terminated or stopped */
 
 /* MINIX specific signals. These signals are not used by user proceses, 
