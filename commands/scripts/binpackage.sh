@@ -40,7 +40,7 @@ fi
 
 sh -e build
 echo " * Building package"
-( if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | grep -v "^$srcdir" | grep -v "^/dev" | grep -v "^/tmp" | grep -v "^/usr/tmp" | grep -v "^/usr/log" | grep -v "^/usr/adm" | grep -v "^/etc/utmp" | grep -v "^/usr/src" ) | pax -w -d | bzip2 >$tarbz
+( if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(tmp|log|adm|run|src)|/etc/utmp|/var/run)" ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
 binsizes normal
 mv $tarbz $here/$pdir
