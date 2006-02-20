@@ -1308,6 +1308,7 @@ int reply;
 int for_ioctl;
 {
 	acc_t *result;
+
 	result= (*tcp_fd->tf_get_userdata)(tcp_fd->tf_srfd, reply,
 		(size_t)0, for_ioctl);
 	assert (!result);
@@ -2026,6 +2027,13 @@ int which_operation;
 	case SR_CANCEL_IOCTL:
 assert (tcp_fd->tf_flags & TFF_IOCTL_IP);
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
+
+		if (tcp_fd->tf_flags & TFF_IOC_INIT_SP)
+		{
+			tcp_fd->tf_flags &= ~TFF_IOC_INIT_SP;
+			reply_thr_put (tcp_fd, EINTR, TRUE);
+			break;
+		}
 
 		switch (tcp_fd->tf_ioreq)
 		{
