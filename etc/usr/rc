@@ -171,7 +171,7 @@ d=/usr/local/etc/rc.d
 if [ -d "$d" ]
 then	if cd $d
 	then
-		echo -n "Local package initialization: "
+		echo -n "Local packages ($action): "
 		for f in *
 		do
 			if [ -x "$f" ]
