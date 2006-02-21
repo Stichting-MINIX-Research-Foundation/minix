@@ -162,9 +162,9 @@ char **argv;
   }
 
   /* Open DSP */
-  if ((audio = open("/dev/audio", O_RDWR)) < 0) 
+  if ((audio = open("/dev/rec", O_RDWR)) < 0) 
   {
-    fprintf(stderr, "Cannot open /dev/audio\n");
+    fprintf(stderr, "Cannot open /dev/rec\n");
     exit(-1);
   }
 
