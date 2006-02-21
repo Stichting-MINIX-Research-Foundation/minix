@@ -1,0 +1,23 @@
+
+#ifndef _MINIX_ENDPOINT_H
+#define _MINIX_ENDPOINT_H 1
+
+#include <minix/sys_config.h>
+#include <minix/com.h>
+#include <limits.h>
+
+/* The point of the padding in 'generation size' is to 
+ * allow for certain bogus endpoint numbers such as NONE, ANY, etc.
+ * The 207 doesn't mean anything, it's just to make the actual endpoint
+ * numbers irregular.
+ */
+#define _ENDPOINT_MAX_PROC        (_NR_PROCS + 207)
+#define _ENDPOINT_GENERATION_SIZE (NR_TASKS+_ENDPOINT_MAX_PROC+1)
+#define _ENDPOINT_MAX_GENERATION  (INT_MAX/_ENDPOINT_GENERATION_SIZE-1)
+
+/* Generation + Process slot number <-> endpoint. */
+#define _ENDPOINT(g, p) ((g) * _ENDPOINT_GENERATION_SIZE + (p))
+#define _ENDPOINT_G(e) (((e)+NR_TASKS) / _ENDPOINT_GENERATION_SIZE)
+#define _ENDPOINT_P(e) ((((e)+NR_TASKS) % _ENDPOINT_GENERATION_SIZE) - NR_TASKS)
+
+#endif
