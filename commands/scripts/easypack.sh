@@ -66,11 +66,11 @@ do # Check to see if it exists. Don't overwrite unless -o given
    URL=$SOFTWARE_DIR/$i.tar.bz2
    URL1=$URL
    TARBZ=$i.tar.bz2
-   if urlget $URL >$TARBZ
+   if urlget $URL >$TARBZ 2>/dev/null
    then :
    else # It is not in the directory of tested software. Try beta dir.
 	   URL=$BETA_DIR/$TARBZ
-	   if urlget $URL >$TARBZ
+	   if urlget $URL >$TARBZ 2>/dev/null
 	   then :
 	   else
 	   	   echo Cannot get $i.
