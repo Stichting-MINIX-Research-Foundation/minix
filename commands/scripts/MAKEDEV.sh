@@ -228,9 +228,10 @@ do
     audio|mixer)
 	# Audio devices.
 	#
-	$e mknod audio c 13 0
-	$e mknod mixer c 14 0
-	$e chmod 666 audio mixer
+   $e mknod audio c 13 0
+   $e mknod rec c 13 1
+   $e mknod mixer c 13 2
+   $e chmod 666 audio rec mixer
 	;;
     random|urandom)
 	# random data generator.
