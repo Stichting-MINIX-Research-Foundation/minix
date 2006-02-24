@@ -45,7 +45,7 @@ Num Sort   Type
  3  p3   00 None         0    0   0     0    0  -1         0         0         0
 
  */
-#define MAXSIZE		99999999L	/* Will 100 G be enough this year? */
+#define MAXSIZE		999999999L	/* Will 1T be enough this year? */
 #define SECTOR_SIZE	512
 #define DEV_FD0		0x200		/* Device number of /dev/fd0 */
 #define DEV_C0D0	0x300		/* Device number of /dev/c0d0 */
