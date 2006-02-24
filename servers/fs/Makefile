@@ -16,8 +16,7 @@ LIBS = -lsys -lsysutil -ltimers
 OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 	device.o path.o mount.o link.o super.o inode.o \
 	cache.o cache2.o filedes.o stadir.o protect.o time.o \
-	lock.o misc.o utility.o select.o timers.o table.o \
-	cdprobe.o
+	lock.o misc.o utility.o select.o timers.o table.o
 
 # build local binary 
 all build:	$(SERVER)
