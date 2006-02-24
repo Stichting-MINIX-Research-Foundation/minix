@@ -164,8 +164,10 @@ PUBLIC void irqtab_dmp()
   }
 
 #if 0
+  printf("irq_actids:");
   for (i= 0; i<NR_IRQ_VECTORS; i++)
-	printf("irq_actids[%d] = 0x%08x\n", i, irq_actids[i]);
+	printf(" [%d] = 0x%08x", i, irq_actids[i]);
+  printf("\n");
 #endif
 
   printf("IRQ policies dump shows use of kernel's IRQ hooks.\n");
