@@ -26,8 +26,10 @@ u16_t *didp;
 		*devindp= m.m1_i1;
 		*vidp= m.m1_i2;
 		*didp= m.m1_i3;
+#if DEBUG
 		printf("pci_first_dev: got device %d, %04x/%04x\n", 
 			*devindp, *vidp, *didp);
+#endif
 		return 1;
 	}
 	if (m.m_type != 0)

@@ -4,7 +4,7 @@ int sys_privctl(int proc, int request, int i, void *p)
 {
   message m;
 
-  m.CTL_PROC_NR = proc;
+  m.CTL_ENDPT = proc;
   m.CTL_REQUEST = request;
   m.CTL_MM_PRIV = i;
   m.CTL_ARG_PTR = p;

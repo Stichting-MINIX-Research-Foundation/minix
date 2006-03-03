@@ -23,7 +23,6 @@ char *name;
 	r= findproc("pci", &pci_procnr);
 	if (r != 0)
 		panic("pci", "pci_init1: findproc failed for 'pci'", r);
-	printf("'pci' is at %d\n", pci_procnr);
 
 	m.m_type= BUSC_PCI_INIT;
 	len= strlen(name);

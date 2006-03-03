@@ -28,7 +28,7 @@ int c;
 		/* Send the buffer to this output driver. */
 		m.DIAG_BUF_COUNT = buf_count;
 		m.DIAG_PRINT_BUF = print_buf;
-		m.DIAG_PROC_NR = SELF;
+		m.DIAG_ENDPT = SELF;
 		m.m_type = DIAGNOSTICS;
 		(void) _sendrec(procs[p], &m);
 	}

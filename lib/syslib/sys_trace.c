@@ -7,7 +7,7 @@ long addr, *data_p;
   message m;
   int r;
 
-  m.CTL_PROC_NR = proc_nr;
+  m.CTL_ENDPT = proc_nr;
   m.CTL_REQUEST = req;
   m.CTL_ADDRESS = addr;
   if (data_p) m.CTL_DATA = *data_p;

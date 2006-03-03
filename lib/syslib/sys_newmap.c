@@ -8,7 +8,7 @@ struct mem_map *ptr;		/* pointer to new map */
 
   message m;
 
-  m.PR_PROC_NR = proc;
+  m.PR_ENDPT = proc;
   m.PR_MEM_PTR = (char *) ptr;
   return(_taskcall(SYSTASK, SYS_NEWMAP, &m));
 }

@@ -10,7 +10,7 @@ vir_bytes initpc;
 
   message m;
 
-  m.PR_PROC_NR = proc;
+  m.PR_ENDPT = proc;
   m.PR_STACK_PTR = ptr;
   m.PR_NAME_PTR = prog_name;
   m.PR_IP_PTR = (char *)initpc;

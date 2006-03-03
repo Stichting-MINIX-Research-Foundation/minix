@@ -11,7 +11,7 @@ sigset_t *k_sig_map;			/* return signal map here */
     int result;
 
     result = _taskcall(SYSTASK, SYS_GETKSIG, &m);
-    *k_proc_nr = m.SIG_PROC;
+    *k_proc_nr = m.SIG_ENDPT;
     *k_sig_map = (sigset_t) m.SIG_MAP;
     return(result);
 }

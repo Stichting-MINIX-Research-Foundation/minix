@@ -12,6 +12,6 @@ int proc;			/* which process has exited */
  */
   message m;
 
-  m.PR_PROC_NR = proc;
+  m.PR_ENDPT = proc;
   return(_taskcall(SYSTASK, SYS_EXIT, &m));
 }

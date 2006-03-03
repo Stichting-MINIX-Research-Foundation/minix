@@ -13,7 +13,7 @@ phys_bytes *phys_addr;			/* placeholder for result */
     message m;
     int result;
 
-    m.CP_SRC_PROC_NR = proc_nr;
+    m.CP_SRC_ENDPT = proc_nr;
     m.CP_SRC_SPACE = seg;
     m.CP_SRC_ADDR = vir_addr;
     m.CP_NR_BYTES = bytes;

@@ -17,7 +17,7 @@ int count;				/* number of elements */
     m_io.DIO_REQUEST = req;
     m_io.DIO_TYPE = type;
     m_io.DIO_PORT = port;
-    m_io.DIO_VEC_PROC = proc_nr;
+    m_io.DIO_VEC_ENDPT = proc_nr;
     m_io.DIO_VEC_ADDR = buffer;
     m_io.DIO_VEC_SIZE = count;
 

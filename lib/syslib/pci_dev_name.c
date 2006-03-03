@@ -40,7 +40,9 @@ u16_t did;
 					 * terminated.
 					 */
 
+#if DEBUG
 	printf("pci_dev_name: got name %s\n", name);
+#endif
 	return name;
 }
 

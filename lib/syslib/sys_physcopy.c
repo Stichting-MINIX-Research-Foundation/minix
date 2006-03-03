@@ -19,10 +19,10 @@ phys_bytes bytes;		/* how many bytes */
   message copy_mess;
 
   if (bytes == 0L) return(OK);
-  copy_mess.CP_SRC_PROC_NR = src_proc;
+  copy_mess.CP_SRC_ENDPT = src_proc;
   copy_mess.CP_SRC_SPACE = src_seg;
   copy_mess.CP_SRC_ADDR = (long) src_vir;
-  copy_mess.CP_DST_PROC_NR = dst_proc;
+  copy_mess.CP_DST_ENDPT = dst_proc;
   copy_mess.CP_DST_SPACE = dst_seg;
   copy_mess.CP_DST_ADDR = (long) dst_vir;
   copy_mess.CP_NR_BYTES = (long) bytes;

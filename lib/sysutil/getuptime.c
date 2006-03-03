@@ -10,7 +10,7 @@ clock_t *ticks;				/* uptime in ticks */
     int s;
 
     m.m_type = SYS_TIMES;		/* request time information */
-    m.T_PROC_NR = NONE;			/* ignore process times */
+    m.T_ENDPT = NONE;			/* ignore process times */
     s = _taskcall(SYSTASK, SYS_TIMES, &m);
     *ticks = m.T_BOOT_TICKS;
     return(s);
