@@ -54,6 +54,7 @@
  */
 
 #include <minix/config.h>
+#include <minix/endpoint.h>
 #include <limits.h>
 #include <timers.h>
 #include <sys/types.h>
@@ -524,7 +525,7 @@ struct pstat *bufp;
   bufp->ps_data = (off_t) ps_proc[p_ki].p_memmap[D].mem_phys << CLICK_SHIFT;
   bufp->ps_stack = (off_t) ps_proc[p_ki].p_memmap[S].mem_phys << CLICK_SHIFT;
 
-  bufp->ps_recv = ps_proc[p_ki].p_getfrom;
+  bufp->ps_recv = _ENDPOINT_P(ps_proc[p_ki].p_getfrom_e);
 
   bufp->ps_utime = ps_proc[p_ki].p_user_time;
   bufp->ps_stime = ps_proc[p_ki].p_sys_time;
