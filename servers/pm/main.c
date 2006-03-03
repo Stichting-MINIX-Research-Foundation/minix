@@ -69,14 +69,7 @@ PUBLIC int main()
 	else if ((unsigned) call_nr >= NCALLS) {
 		result = ENOSYS;
 	} else {
-#if 0
-		printf("[pm: %s %d %d %d  ",
-			who_p >= 0 ? mproc[who_p].mp_name : "?", who_e, who_p, call_nr);
-#endif
 		result = (*call_vec[call_nr])();
-#if 0
-		printf(" %d] ", result);
-#endif
 	}
 
 	/* Send the results back to the user to indicate completion. */

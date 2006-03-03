@@ -134,7 +134,7 @@ PRIVATE void get_work()
     if(who_p < -NR_TASKS || who_p >= NR_PROCS)
      	panic(__FILE__,"receive process out of range", who_p);
     if(who_p >= 0 && fproc[who_p].fp_endpoint == NONE) {
-    	printf("FS: ignoring request from %d, endpointless slot %d (%d)",
+    	printf("FS: ignoring request from %d, endpointless slot %d (%d)\n",
 		m_in.m_source, who_p, m_in.m_type);
 	continue;
     }
