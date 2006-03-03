@@ -3,7 +3,7 @@
  *
  * The driver supports the following operations (using message format m2):
  *
- *    m_type      DEVICE    PROC_NR     COUNT    POSITION  ADRRESS
+ *    m_type      DEVICE    IO_ENDPT     COUNT    POSITION  ADRRESS
  * ----------------------------------------------------------------
  * |  DEV_OPEN  | device  | proc nr |         |         |         |
  * |------------+---------+---------+---------+---------+---------|
@@ -55,7 +55,7 @@ message mess;
 		receive(ANY, &mess);
 
 		caller = mess.m_source;
-		proc_nr = mess.PROC_NR;
+		proc_nr = mess.IO_ENDPT;
 
 		switch (caller) {
 			case HARDWARE: /* Leftover interrupt. */
@@ -77,7 +77,7 @@ message mess;
 
 		/* Finally, prepare and send the reply message. */
 		mess.m_type = TASK_REPLY;
-		mess.REP_PROC_NR = proc_nr;
+		mess.REP_ENDPT = proc_nr;
 	
 		dprint("%d %d", err, OK);
 		
@@ -191,7 +191,7 @@ int flag;	/* 0 = get, 1 = set */
 	struct volume_level level;
 	int cmd_left, cmd_right, shift, max_level;
 
-	sys_datacopy(m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)&level, (phys_bytes)sizeof(level));
+	sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)&level, (phys_bytes)sizeof(level));
 
 	shift = 3;
 	max_level = 0x1F;
@@ -257,7 +257,7 @@ int flag;	/* 0 = get, 1 = set */
 		level.right >>= shift;
 
 		/* Copy back to user */
-		sys_datacopy(SELF, (vir_bytes)&level, m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, (phys_bytes)sizeof(level));
+		sys_datacopy(SELF, (vir_bytes)&level, m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, (phys_bytes)sizeof(level));
 	}
 
 	return OK;
@@ -276,7 +276,7 @@ int channel;    /* 0 = left, 1 = right */
 	struct inout_ctrl input;
 	int input_cmd, input_mask, mask, del_mask, shift;
 
-	sys_datacopy(m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)&input, (phys_bytes)sizeof(input));
+	sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)&input, (phys_bytes)sizeof(input));
 
 	input_cmd = (channel == 0 ? MIXER_IN_LEFT : MIXER_IN_RIGHT);
 
@@ -322,7 +322,7 @@ int channel;    /* 0 = left, 1 = right */
 		}
 
 		/* Copy back to user */
-		sys_datacopy(SELF, (vir_bytes)&input, m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, (phys_bytes)sizeof(input));
+		sys_datacopy(SELF, (vir_bytes)&input, m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, (phys_bytes)sizeof(input));
 	}
 
 	return OK;
@@ -340,7 +340,7 @@ int flag;	/* 0 = get, 1 = set */
 	struct inout_ctrl output;
 	int output_mask, mask, del_mask, shift;
 
-	sys_datacopy(m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)&output, (phys_bytes)sizeof(output));
+	sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)&output, (phys_bytes)sizeof(output));
 
 	mask = mixer_get(MIXER_OUTPUT_CTRL); 
 
@@ -380,7 +380,7 @@ int flag;	/* 0 = get, 1 = set */
 		}
 
 		/* Copy back to user */
-		sys_datacopy(SELF, (vir_bytes)&output, m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, (phys_bytes)sizeof(output));
+		sys_datacopy(SELF, (vir_bytes)&output, m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, (phys_bytes)sizeof(output));
 	}
 
 	return OK;

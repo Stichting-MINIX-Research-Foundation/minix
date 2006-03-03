@@ -220,7 +220,7 @@ message *m;
 		{
 			/* Should record proc */
 			kbdp->req_size= m->COUNT;
-			kbdp->req_proc= m->PROC_NR;
+			kbdp->req_proc= m->IO_ENDPT;
 			kbdp->req_addr= (vir_bytes)m->ADDRESS;
 			kbdp->incaller= m->m_source;
 			r= SUSPEND;
@@ -236,7 +236,7 @@ message *m;
 		if (n <= 0)
 			panic("TTY", "do_kbd(READ): bad n", n);
 		r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
-			m->PROC_NR, D, (vir_bytes) m->ADDRESS, n);
+			m->IO_ENDPT, D, (vir_bytes) m->ADDRESS, n);
 		if (r == OK)
 		{
 			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
@@ -260,7 +260,7 @@ message *m;
 		 */
 		for (i= 0; i<m->COUNT; i++)
 		{
-			r= sys_vircopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS+i,
+			r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS+i,
 				SELF, D, (vir_bytes)&c, 1);
 			if (r != OK)
 				break;
@@ -274,8 +274,8 @@ message *m;
 		r= OK;
 		break;
 	    case DEV_SELECT:
-		ops = m->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
-		watch = (m->PROC_NR & SEL_NOTIFY) ? 1 : 0;
+		ops = m->IO_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
+		watch = (m->IO_ENDPT & SEL_NOTIFY) ? 1 : 0;
 		
 		r= 0;
 		if (kbdp->avail && (ops & SEL_RD))
@@ -296,7 +296,7 @@ message *m;
 			kio_leds_t leds;
 			unsigned char b;
 
-			r= sys_vircopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS,
+			r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
 				SELF, D, (vir_bytes)&leds, sizeof(leds));
 			if (r != OK)
 				break;
@@ -330,7 +330,7 @@ message *m;
 			kio_bell_t bell;
 			clock_t ticks;
 
-			r= sys_vircopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS,
+			r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
 				SELF, D, (vir_bytes)&bell, sizeof(bell));
 			if (r != OK)
 				break;
@@ -352,7 +352,7 @@ message *m;
 			m->m_type, m->m_source);
 		r= EINVAL;
 	}
-	tty_reply(TASK_REPLY, m->m_source, m->PROC_NR, r);
+	tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
 }
 
 
@@ -386,7 +386,7 @@ message *m;
 		}
 
 		m->m_type = DEV_REVIVE;
-  		m->REP_PROC_NR= kbdp->req_proc;
+  		m->REP_ENDPT= kbdp->req_proc;
   		m->REP_STATUS= r;
 		return 1;
 	}
@@ -927,7 +927,7 @@ message *m;
 {
 /* Load a new keymap. */
   int result;
-  result = sys_vircopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS,
+  result = sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
   	SELF, D, (vir_bytes) keymap, 
   	(vir_bytes) sizeof(keymap));
   return(result);

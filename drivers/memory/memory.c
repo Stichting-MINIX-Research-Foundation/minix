@@ -233,11 +233,11 @@ message *m_ptr;
   if (m_prepare(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
   if (m_device == MEM_DEV)
   {
-	r = sys_enable_iop(m_ptr->PROC_NR);
+	r = sys_enable_iop(m_ptr->IO_ENDPT);
 	if (r != OK)
 	{
 		printf("m_do_open: sys_enable_iop failed for %d: %d\n",
-			m_ptr->PROC_NR, r);
+			m_ptr->IO_ENDPT, r);
 		return r;
 	}
   }
@@ -356,7 +356,7 @@ message *m_ptr;				/* pointer to control message */
 	ramdev_size= m_ptr->POSITION;
 #else
 	/* Get request structure */
-	s= sys_vircopy(m_ptr->PROC_NR, D, (vir_bytes)m_ptr->ADDRESS,
+	s= sys_vircopy(m_ptr->IO_ENDPT, D, (vir_bytes)m_ptr->ADDRESS,
 		SELF, D, (vir_bytes)&ramdev_size, sizeof(ramdev_size));
 	if (s != OK)
 		return s;
@@ -405,11 +405,11 @@ message *m_ptr;				/* pointer to control message */
 	do_map= (m_ptr->REQUEST == MIOCMAP);	/* else unmap */
 
 	/* Get request structure */
-	r= sys_vircopy(m_ptr->PROC_NR, D, (vir_bytes)m_ptr->ADDRESS,
+	r= sys_vircopy(m_ptr->IO_ENDPT, D, (vir_bytes)m_ptr->ADDRESS,
 		SELF, D, (vir_bytes)&mapreq, sizeof(mapreq));
 	if (r != OK)
 		return r;
-	r= sys_vm_map(m_ptr->PROC_NR, do_map,
+	r= sys_vm_map(m_ptr->IO_ENDPT, do_map,
 		(phys_bytes)mapreq.base, mapreq.size, mapreq.offset);
 	return r;
     }

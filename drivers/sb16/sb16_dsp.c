@@ -3,7 +3,7 @@
  *
  * The driver supports the following operations (using message format m2):
  *
- *    m_type      DEVICE    PROC_NR     COUNT    POSITION  ADRRESS
+ *    m_type      DEVICE    IO_ENDPT     COUNT    POSITION  ADRRESS
  * ----------------------------------------------------------------
  * |  DEV_OPEN  | device  | proc nr |         |         |         |
  * |------------+---------+---------+---------+---------+---------|
@@ -95,7 +95,7 @@ PUBLIC void main()
 		receive(ANY, &mess);
 
 		caller = mess.m_source;
-		proc_nr = mess.PROC_NR;
+		proc_nr = mess.IO_ENDPT;
 
 		/* Now carry out the work. */
 		switch(mess.m_type) {
@@ -178,7 +178,7 @@ message *m_ptr;
 
 	/* Get user data */
 	if(m_ptr->REQUEST != DSPIORESET) {
-		sys_vircopy(m_ptr->PROC_NR, D, (vir_bytes)m_ptr->ADDRESS, SELF, D, (vir_bytes)&val, sizeof(val));
+		sys_vircopy(m_ptr->IO_ENDPT, D, (vir_bytes)m_ptr->ADDRESS, SELF, D, (vir_bytes)&val, sizeof(val));
 	}
 
 	dprint("dsp_ioctl: got ioctl %d, argument: %d\n", m_ptr->REQUEST, val);
@@ -191,7 +191,7 @@ message *m_ptr;
 		case DSPIOSIGN:		status = dsp_set_sign(val); break;
 		case DSPIOMAX: 
 			val = DSP_MAX_FRAGMENT_SIZE;
-			sys_vircopy(SELF, D, (vir_bytes)&val, m_ptr->PROC_NR, D, (vir_bytes)m_ptr->ADDRESS, sizeof(val));
+			sys_vircopy(SELF, D, (vir_bytes)&val, m_ptr->IO_ENDPT, D, (vir_bytes)m_ptr->ADDRESS, sizeof(val));
 			status = OK;
 			break;
 		case DSPIORESET:    status = dsp_reset(); break;
@@ -214,20 +214,20 @@ message *m_ptr;
 	dprint("sb16_dsp.c: dsp_write()\n");
 
 	if(m_ptr->COUNT != DspFragmentSize) {
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, EINVAL);
+		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EINVAL);
 		return;
 	}
 	if(m_ptr->m_type != DmaMode && DmaBusy >= 0) {
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, EBUSY);
+		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EBUSY);
 		return;
 	}
 	
-	reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, SUSPEND);
+	reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, SUSPEND);
 
 	if(DmaBusy < 0) { /* Dma tranfer not yet started */
 
 		DmaMode = DEV_WRITE;           /* Dma mode is writing */
-		sys_datacopy(m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)DmaPtr, (phys_bytes)DspFragmentSize);
+		sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)DmaPtr, (phys_bytes)DspFragmentSize);
 		dsp_dma_setup(DmaPhys, DspFragmentSize * DMA_NR_OF_BUFFERS);
 		dsp_setup();
 		DmaBusy = 0;         /* Dma is busy */
@@ -236,13 +236,13 @@ message *m_ptr;
 
 	} else if(DmaBusy != DmaFillNext) { /* Dma transfer started, but Dma buffer not yet full */
 
-		sys_datacopy(m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)DmaPtr + DmaFillNext * DspFragmentSize, (phys_bytes)DspFragmentSize);
+		sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)DmaPtr + DmaFillNext * DspFragmentSize, (phys_bytes)DspFragmentSize);
 		dprint(" filled dma[%d]\n", DmaFillNext);
 		DmaFillNext = (DmaFillNext + 1) % DMA_NR_OF_BUFFERS;
 
 	} else if(BufReadNext < 0) { /* Dma buffer full, fill first element of second buffer */ 
 
-		sys_datacopy(m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)Buffer, (phys_bytes)DspFragmentSize);
+		sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)Buffer, (phys_bytes)DspFragmentSize);
 		dprint(" filled buf[0]\n");
 		BufReadNext = 0;
 		BufFillNext = 1;
@@ -253,7 +253,7 @@ message *m_ptr;
 			receive(HARDWARE, &mess);
 			dsp_hardware_msg();
 		}
-		sys_datacopy(m_ptr->PROC_NR, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)Buffer + BufFillNext * DspFragmentSize, (phys_bytes)DspFragmentSize);
+		sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)Buffer + BufFillNext * DspFragmentSize, (phys_bytes)DspFragmentSize);
 		dprint(" filled buf[%d]\n", BufFillNext);
 		BufFillNext = (BufFillNext + 1) % DSP_NR_OF_BUFFERS;
 
@@ -261,7 +261,7 @@ message *m_ptr;
 	
 	revivePending = 1;
 	reviveStatus = DspFragmentSize;
-	reviveProcNr = m_ptr->PROC_NR;
+	reviveProcNr = m_ptr->IO_ENDPT;
 	notify(m_ptr->m_source);
 }
 
@@ -315,7 +315,7 @@ message *m_ptr;	/* pointer to the newly arrived message */
 {
 	if(revivePending) {
 		m_ptr->m_type = DEV_REVIVE;			/* build message */
-		m_ptr->REP_PROC_NR = reviveProcNr;
+		m_ptr->REP_ENDPT = reviveProcNr;
 		m_ptr->REP_STATUS = reviveStatus;
 
 		revivePending = 0;					/* unmark event */
@@ -340,7 +340,7 @@ int status;
 
 	m.m_type = code;		/* TASK_REPLY or REVIVE */
 	m.REP_STATUS = status;	/* result of device operation */
-	m.REP_PROC_NR = process;	/* which user made the request */
+	m.REP_ENDPT = process;	/* which user made the request */
 
 	send(replyee, &m);
 }

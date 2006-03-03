@@ -54,7 +54,7 @@ PUBLIC void main(void)
       case DEV_OPEN:
       case DEV_CLOSE:
       case CANCEL:
-          reply(TASK_REPLY, m.m_source, m.PROC_NR, OK);
+          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, OK);
           break;
 
       case DEV_PING:
@@ -68,17 +68,17 @@ PUBLIC void main(void)
            * requests at a time. 
            */
           if (suspended != NONE) {
-              reply(TASK_REPLY, m.m_source, m.PROC_NR, EBUSY);
+              reply(TASK_REPLY, m.m_source, m.IO_ENDPT, EBUSY);
               break;
           }
-          suspended = m.PROC_NR;
-          reply(TASK_REPLY, m.m_source, m.PROC_NR, SUSPEND);
+          suspended = m.IO_ENDPT;
+          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, SUSPEND);
 
 	  switch(m.REQUEST) {
 	  case CIOCGETTIME:			/* get CMOS time */ 
           case CIOCGETTIMEY2K:
               y2kflag = (m.REQUEST = CIOCGETTIME) ? 0 : 1;
-              result = gettime(m.PROC_NR, y2kflag, (vir_bytes) m.ADDRESS);
+              result = gettime(m.IO_ENDPT, y2kflag, (vir_bytes) m.ADDRESS);
               break;
           case CIOCSETTIME:
           case CIOCSETTIMEY2K:
@@ -107,7 +107,7 @@ PUBLIC void main(void)
           continue;		
 
       default:
-          reply(TASK_REPLY, m.m_source, m.PROC_NR, EINVAL);
+          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, EINVAL);
       }	
   }
 }
@@ -122,7 +122,7 @@ PRIVATE void reply(int code, int replyee, int process, int status)
 
   m.m_type = code;		/* TASK_REPLY or REVIVE */
   m.REP_STATUS = status;	/* result of device operation */
-  m.REP_PROC_NR = process;	/* which user made the request */
+  m.REP_ENDPT = process;	/* which user made the request */
   if (OK != (s=send(replyee, &m)))
       panic("CMOS", "sending reply failed", s);
 }

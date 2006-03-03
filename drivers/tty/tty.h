@@ -58,26 +58,26 @@ typedef struct tty {
   char tty_reprint;		/* 1 when echoed input messed up, else 0 */
   char tty_escaped;		/* 1 when LNEXT (^V) just seen, else 0 */
   char tty_inhibited;		/* 1 when STOP (^S) just seen (stops output) */
-  char tty_pgrp;		/* slot number of controlling process */
+  int tty_pgrp;			/* slot number of controlling process */
   char tty_openct;		/* count of number of opens of this tty */
 
   /* Information about incomplete I/O requests is stored here. */
   char tty_inrepcode;		/* reply code, TASK_REPLY or REVIVE */
   char tty_inrevived;		/* set to 1 if revive callback is pending */
-  char tty_incaller;		/* process that made the call (usually FS) */
-  char tty_inproc;		/* process that wants to read from tty */
+  int tty_incaller;		/* process that made the call (usually FS) */
+  int tty_inproc;		/* process that wants to read from tty */
   vir_bytes tty_in_vir;		/* virtual address where data is to go */
   int tty_inleft;		/* how many chars are still needed */
   int tty_incum;		/* # chars input so far */
-  char tty_outrepcode;		/* reply code, TASK_REPLY or REVIVE */
-  char tty_outrevived;		/* set to 1 if revive callback is pending */
-  char tty_outcaller;		/* process that made the call (usually FS) */
-  char tty_outproc;		/* process that wants to write to tty */
+  int tty_outrepcode;		/* reply code, TASK_REPLY or REVIVE */
+  int tty_outrevived;		/* set to 1 if revive callback is pending */
+  int tty_outcaller;		/* process that made the call (usually FS) */
+  int tty_outproc;		/* process that wants to write to tty */
   vir_bytes tty_out_vir;	/* virtual address where data comes from */
   int tty_outleft;		/* # chars yet to be output */
   int tty_outcum;		/* # chars output so far */
-  char tty_iocaller;		/* process that made the call (usually FS) */
-  char tty_ioproc;		/* process that wants to do an ioctl */
+  int tty_iocaller;		/* process that made the call (usually FS) */
+  int tty_ioproc;		/* process that wants to do an ioctl */
   int tty_ioreq;		/* ioctl request code */
   vir_bytes tty_iovir;		/* virtual address of ioctl buffer */
 

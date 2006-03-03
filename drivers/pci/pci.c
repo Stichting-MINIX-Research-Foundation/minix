@@ -322,9 +322,11 @@ char *name;
 			ior.ior_limit= ior.ior_base +
 				pcidev[devind].pd_bar[i].pb_size-1;
 
-			printf(
+			if(debug) {
+			   printf(
 		"pci_reserve3: for proc %d, adding I/O range [0x%x..0x%x]\n",
 				proc, ior.ior_base, ior.ior_limit);
+			}
 			r= sys_privctl(proc, SYS_PRIV_ADD_IO, 0, &ior);
 			if (r != OK)
 			{
@@ -338,9 +340,11 @@ char *name;
 			mr.mr_limit= mr.mr_base +
 				pcidev[devind].pd_bar[i].pb_size-1;
 
-			printf(
+			if(debug) {
+			   printf(
 	"pci_reserve3: for proc %d, should add memory range [0x%x..0x%x]\n",
 				proc, mr.mr_base, mr.mr_limit);
+			}
 			r= sys_privctl(proc, SYS_PRIV_ADD_MEM, 0, &mr);
 			if (r != OK)
 			{
@@ -352,7 +356,7 @@ char *name;
 	ilr= pcidev[devind].pd_ilr;
 	if (ilr != PCI_ILR_UNKNOWN)
 	{
-		printf("pci_reserve3: adding IRQ %d\n", ilr);
+		if(debug) printf("pci_reserve3: adding IRQ %d\n", ilr);
 		r= sys_privctl(proc, SYS_PRIV_ADD_IRQ, ilr, NULL);
 		if (r != OK)
 		{
@@ -884,10 +888,12 @@ int devind;
 				return;
 			}
 		}
-		printf(
+		if(debug) {
+			printf(
 		"PCI: device %d.%d.%d uses INT%c but is not assigned any IRQ\n",
 			pcidev[devind].pd_busnr, pcidev[devind].pd_dev,
 			pcidev[devind].pd_func, 'A' + ipr-1);
+		}
 	}
 }
 

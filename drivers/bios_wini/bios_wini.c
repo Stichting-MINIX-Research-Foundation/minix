@@ -500,7 +500,7 @@ message *m;
                 if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
                 count = w_wn->open_ct;
                 if ((r=sys_datacopy(SELF, (vir_bytes)&count,
-                        m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
+                        m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
                         return r;
                 return OK;
         }

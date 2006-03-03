@@ -346,14 +346,14 @@ PRIVATE void do_status(message *m_ptr)
 		if(logdevices[d].log_proc_nr && logdevices[d].log_revive_alerted
 		   && logdevices[d].log_source == m_ptr->m_source) {
 			m.m_type = DEV_REVIVE;
-			m.REP_PROC_NR = logdevices[d].log_proc_nr;
+			m.REP_ENDPT = logdevices[d].log_proc_nr;
 			m.REP_STATUS  = logdevices[d].log_status;
   			send(m_ptr->m_source, &m);
 			logdevices[d].log_proc_nr = 0;
 			logdevices[d].log_revive_alerted = 0;
 #if LOG_DEBUG
     		printf("revived %d with %d bytes\n", 
-			m.REP_PROC_NR, m.REP_STATUS);
+			m.REP_ENDPT, m.REP_STATUS);
 #endif
 			return;
 		}
@@ -447,10 +447,10 @@ message *m_ptr;
   	return EINVAL;
   }
 
-  ops = m_ptr->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
+  ops = m_ptr->IO_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
 
   	/* Read blocks when there is no log. */
-  if((m_ptr->PROC_NR & SEL_RD) && logdevices[d].log_size > 0) {
+  if((m_ptr->IO_ENDPT & SEL_RD) && logdevices[d].log_size > 0) {
 #if LOG_DEBUG
   	printf("log can read; size %d\n", logdevices[d].log_size);
 #endif
@@ -458,13 +458,13 @@ message *m_ptr;
  }
 
   	/* Write never blocks. */
-  if(m_ptr->PROC_NR & SEL_WR) ready_ops |= SEL_WR;
+  if(m_ptr->IO_ENDPT & SEL_WR) ready_ops |= SEL_WR;
 
 	/* Enable select calback if no operations were
 	 * ready to go, but operations were requested,
 	 * and notify was enabled.
 	 */
-  if((m_ptr->PROC_NR & SEL_NOTIFY) && ops && !ready_ops) {
+  if((m_ptr->IO_ENDPT & SEL_NOTIFY) && ops && !ready_ops) {
   	logdevices[d].log_selected |= ops;
   	logdevices[d].log_select_proc = m_ptr->m_source;
 #if LOG_DEBUG

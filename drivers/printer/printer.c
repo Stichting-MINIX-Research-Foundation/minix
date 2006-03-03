@@ -14,7 +14,7 @@
  *   DEV_WRITE:	a process wants to write on a terminal
  *   CANCEL:	terminate a previous incomplete system call immediately
  *
- *    m_type      TTY_LINE   PROC_NR    COUNT    ADDRESS
+ *    m_type      TTY_LINE   IO_ENDPT    COUNT    ADDRESS
  * |-------------+---------+---------+---------+---------|
  * | DEV_OPEN    |         |         |         |         |
  * |-------------+---------+---------+---------+---------|
@@ -135,7 +135,7 @@ PUBLIC void main(void)
                  do_initialize();		/* initialize */
 	        /* fall through */
 	    case DEV_CLOSE:
-		reply(TASK_REPLY, pr_mess.m_source, pr_mess.PROC_NR, OK);
+		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, OK);
 		break;
 	    case DEV_WRITE:	do_write(&pr_mess);	break;
 	    case DEV_STATUS:	do_status(&pr_mess);	break;
@@ -144,7 +144,7 @@ PUBLIC void main(void)
 	    case SYS_SIG:	do_signal(&pr_mess); 	break;
 	    case DEV_PING:  	notify(pr_mess.m_source);	break;
 	    default:
-		reply(TASK_REPLY, pr_mess.m_source, pr_mess.PROC_NR, EINVAL);
+		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, EINVAL);
 	}
   }
 }
@@ -185,14 +185,14 @@ register message *m_ptr;	/* pointer to the newly arrived message */
     else if (m_ptr->COUNT <= 0)  	r = EINVAL;
 
     /* Reply to FS, no matter what happened, possible SUSPEND caller. */
-    reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
+    reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
 
     /* If no errors occurred, continue printing with SUSPENDED caller.
      * First wait until the printer is online to prevent stupid errors.
      */
     if (SUSPEND == r) { 	
 	caller = m_ptr->m_source;
-	proc_nr = m_ptr->PROC_NR;
+	proc_nr = m_ptr->IO_ENDPT;
 	user_left = m_ptr->COUNT;
 	orig_count = m_ptr->COUNT;
 	user_vir = (vir_bytes) m_ptr->ADDRESS;
@@ -261,7 +261,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 {
   if (revive_pending) {
 	m_ptr->m_type = DEV_REVIVE;		/* build message */
-	m_ptr->REP_PROC_NR = proc_nr;
+	m_ptr->REP_ENDPT = proc_nr;
 	m_ptr->REP_STATUS = revive_status;
 
 	writing = FALSE;			/* unmark event */
@@ -284,12 +284,12 @@ register message *m_ptr;	/* pointer to the newly arrived message */
  * but rely on FS to handle the EINTR reply and de-suspension properly.
  */
 
-  if (writing && m_ptr->PROC_NR == proc_nr) {
+  if (writing && m_ptr->IO_ENDPT == proc_nr) {
 	oleft = 0;		/* cancel output by interrupt handler */
 	writing = FALSE;
 	revive_pending = FALSE;
   }
-  reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, EINTR);
+  reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EINTR);
 }
 
 /*===========================================================================*
@@ -307,7 +307,7 @@ int status;			/* number of  chars printed or error code */
 
   pr_mess.m_type = code;		/* TASK_REPLY or REVIVE */
   pr_mess.REP_STATUS = status;		/* count or EIO */
-  pr_mess.REP_PROC_NR = process;	/* which user does this pertain to */
+  pr_mess.REP_ENDPT = process;	/* which user does this pertain to */
   send(replyee, &pr_mess);		/* send the message */
 }
 

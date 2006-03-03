@@ -795,19 +795,19 @@ PUBLIC void do_video(message *m)
 			do_map= (m->REQUEST == MIOCMAP);	/* else unmap */
 
 			/* Get request structure */
-			r= sys_vircopy(m->PROC_NR, D,
+			r= sys_vircopy(m->IO_ENDPT, D,
 				(vir_bytes)m->ADDRESS,
 				SELF, D, (vir_bytes)&mapreq, sizeof(mapreq));
 			if (r != OK)
 			{
-				tty_reply(TASK_REPLY, m->m_source, m->PROC_NR,
+				tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT,
 					r);
 				return;
 			}
-			r= sys_vm_map(m->PROC_NR, do_map,
+			r= sys_vm_map(m->IO_ENDPT, do_map,
 				(phys_bytes)mapreq.base, mapreq.size,
 				mapreq.offset);
-			tty_reply(TASK_REPLY, m->m_source, m->PROC_NR, r);
+			tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
 			return;
 		}
 		r= ENOTTY;
@@ -819,7 +819,7 @@ PUBLIC void do_video(message *m)
 			m->m_type, m->m_source);
 		r= EINVAL;
 	}
-	tty_reply(TASK_REPLY, m->m_source, m->PROC_NR, r);
+	tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
 }
 
 
@@ -1058,7 +1058,7 @@ message *m_ptr;			/* pointer to request message */
   vir_bytes src;
   int count;
   int result = OK;
-  int proc_nr = m_ptr->DIAG_PROC_NR;
+  int proc_nr = m_ptr->DIAG_ENDPT;
   if (proc_nr == SELF) proc_nr = m_ptr->m_source;
 
   src = (vir_bytes) m_ptr->DIAG_PRINT_BUF;
@@ -1204,7 +1204,7 @@ message *m;
   if (!machine.vdu_ega) return(ENOTTY);
   result = ga_program(seq1);	/* bring font memory into view */
 
-  result = sys_physcopy(m->PROC_NR, D, (vir_bytes) m->ADDRESS, 
+  result = sys_physcopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS, 
   	NONE, PHYS_SEG, (phys_bytes) GA_VIDEO_ADDRESS, (phys_bytes)GA_FONT_SIZE);
 
   result = ga_program(seq2);	/* restore */

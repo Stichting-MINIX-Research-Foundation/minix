@@ -438,7 +438,8 @@ PRIVATE void init_params_pci(int skip)
   	   continue;
   	}
 
-	printf("init_params_pci: found device %04x/%04x at index %d\n",
+	if(w_pci_debug)
+		printf("init_params_pci: found device %04x/%04x at index %d\n",
 		vid, did, devind);
 
   	/* Found a controller.
@@ -1661,7 +1662,7 @@ message *m;
 	}
 
 	if (m->REQUEST == DIOCTIMEOUT) {
-		if ((r=sys_datacopy(m->PROC_NR, (vir_bytes)m->ADDRESS,
+		if ((r=sys_datacopy(m->IO_ENDPT, (vir_bytes)m->ADDRESS,
 			SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
 			return r;
 	
@@ -1689,7 +1690,7 @@ message *m;
 			}
 	
 			if ((r=sys_datacopy(SELF, (vir_bytes)&prev, 
-				m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
+				m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
 				return r;
 		}
 	
@@ -1699,7 +1700,7 @@ message *m;
 		if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
 		count = w_wn->open_ct;
 		if ((r=sys_datacopy(SELF, (vir_bytes)&count, 
-			m->PROC_NR, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
+			m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
 			return r;
 		return OK;
 	}

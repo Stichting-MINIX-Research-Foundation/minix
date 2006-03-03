@@ -23,7 +23,7 @@ int c;
   if ((c == 0 && buf_count > 0) || buf_count == sizeof(print_buf)) {
 	m.DIAG_BUF_COUNT = buf_count;
 	m.DIAG_PRINT_BUF = print_buf;
-	m.DIAG_PROC_NR = SELF;
+	m.DIAG_ENDPT = SELF;
 	m.m_type = DIAGNOSTICS;		/* request TTY to output this buffer */
 	_sendrec(TTY_PROC_NR, &m);	/* if it fails, we give up */ 
 	buf_count = 0;			/* clear buffer for next batch */

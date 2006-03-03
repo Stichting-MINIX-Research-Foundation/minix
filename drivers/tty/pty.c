@@ -34,16 +34,16 @@ typedef struct pty {
 
   /* Read call on /dev/ptypX. */
   char		rdsendreply;	/* send a reply (instead of notify) */
-  char		rdcaller;	/* process making the call (usually FS) */
-  char		rdproc;		/* process that wants to read from the pty */
+  int		rdcaller;	/* process making the call (usually FS) */
+  int		rdproc;		/* process that wants to read from the pty */
   vir_bytes	rdvir;		/* virtual address in readers address space */
   int		rdleft;		/* # bytes yet to be read */
   int		rdcum;		/* # bytes written so far */
 
   /* Write call to /dev/ptypX. */
   char		wrsendreply;	/* send a reply (instead of notify) */
-  char		wrcaller;	/* process making the call (usually FS) */
-  char		wrproc;		/* process that wants to write to the pty */
+  int		wrcaller;	/* process making the call (usually FS) */
+  int		wrproc;		/* process that wants to write to the pty */
   vir_bytes	wrvir;		/* virtual address in writers address space */
   int		wrleft;		/* # bytes yet to be written */
   int		wrcum;		/* # bytes written so far */
@@ -103,17 +103,17 @@ message *m_ptr;
 		break;
 	}
 #if DEAD_CODE
-	if (numap_local(m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS,
+	if (numap_local(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS,
 							m_ptr->COUNT) == 0) {
 #else
-	if ((r = sys_umap(m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS,
+	if ((r = sys_umap(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
 		m_ptr->COUNT, &p)) != OK) {
 #endif
 		break;
 	}
 	pp->rdsendreply = TRUE;
 	pp->rdcaller = m_ptr->m_source;
-	pp->rdproc = m_ptr->PROC_NR;
+	pp->rdproc = m_ptr->IO_ENDPT;
 	pp->rdvir = (vir_bytes) m_ptr->ADDRESS;
 	pp->rdleft = m_ptr->COUNT;
 	pty_start(pp);
@@ -144,18 +144,18 @@ message *m_ptr;
 		break;
 	}
 #if DEAD_CODE
-	if (numap_local(m_ptr->PROC_NR, (vir_bytes) m_ptr->ADDRESS,
+	if (numap_local(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS,
 							m_ptr->COUNT) == 0) {
 		r = EFAULT;
 #else
-	if ((r = sys_umap(m_ptr->PROC_NR, D, (vir_bytes) m_ptr->ADDRESS,
+	if ((r = sys_umap(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
 		m_ptr->COUNT, &p)) != OK) {
 #endif
 		break;
 	}
 	pp->wrsendreply = TRUE;
 	pp->wrcaller = m_ptr->m_source;
-	pp->wrproc = m_ptr->PROC_NR;
+	pp->wrproc = m_ptr->IO_ENDPT;
 	pp->wrvir = (vir_bytes) m_ptr->ADDRESS;
 	pp->wrleft = m_ptr->COUNT;
 	handle_events(tp);
@@ -192,11 +192,11 @@ message *m_ptr;
     	break;
 
     case CANCEL:
-	if (m_ptr->PROC_NR == pp->rdproc) {
+	if (m_ptr->IO_ENDPT == pp->rdproc) {
 		/* Cancel a read from a PTY. */
 		pp->rdleft = pp->rdcum = 0;
 	}
-	if (m_ptr->PROC_NR == pp->wrproc) {
+	if (m_ptr->IO_ENDPT == pp->wrproc) {
 		/* Cancel a write to a PTY. */
 		pp->wrleft = pp->wrcum = 0;
 	}
@@ -206,7 +206,7 @@ message *m_ptr;
     default:
 	r = EINVAL;
   }
-  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->PROC_NR, r);
+  tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
 }
 
 /*===========================================================================*
@@ -511,7 +511,7 @@ PUBLIC int pty_status(message *m_ptr)
 			pp->rdcaller == m_ptr->m_source)
 		{
 			m_ptr->m_type = DEV_REVIVE;
-			m_ptr->REP_PROC_NR = pp->rdproc;
+			m_ptr->REP_ENDPT = pp->rdproc;
 			m_ptr->REP_STATUS = pp->rdcum;
 
 			pp->rdleft = pp->rdcum = 0;
@@ -524,7 +524,7 @@ PUBLIC int pty_status(message *m_ptr)
 			pp->wrcaller == m_ptr->m_source)
 		{
 			m_ptr->m_type = DEV_REVIVE;
-			m_ptr->REP_PROC_NR = pp->wrproc;
+			m_ptr->REP_ENDPT = pp->wrproc;
 			if (pp->wrcum == 0)
 				m_ptr->REP_STATUS = EIO;
 			else
@@ -596,8 +596,8 @@ PRIVATE int pty_select(tty_t *tp, message *m)
   	pty_t *pp = tp->tty_priv;
 	int ops, ready_ops = 0, watch;
 
-	ops = m->PROC_NR & (SEL_RD|SEL_WR|SEL_ERR);
-	watch = (m->PROC_NR & SEL_NOTIFY) ? 1 : 0;
+	ops = m->IO_ENDPT & (SEL_RD|SEL_WR|SEL_ERR);
+	watch = (m->IO_ENDPT & SEL_NOTIFY) ? 1 : 0;
 
 	ready_ops = select_try_pty(tp, ops);
 

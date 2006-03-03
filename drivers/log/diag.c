@@ -90,7 +90,7 @@ PUBLIC int do_diagnostics(message *m)
  * user. It also saves a copy in a local buffer so that messages can be 
  * reviewed at a later time.
  */
-  int proc_nr; 
+  int proc_nr_e; 
   vir_bytes src;
   int count;
   char c;
@@ -98,8 +98,8 @@ PUBLIC int do_diagnostics(message *m)
   static char diagbuf[10240];
 
   /* Change SELF to actual process number. */
-  if ((proc_nr = m->DIAG_PROC_NR) == SELF)
-      m->DIAG_PROC_NR = proc_nr = m->m_source;
+  if ((proc_nr_e = m->DIAG_ENDPT) == SELF)
+      m->DIAG_ENDPT = proc_nr_e = m->m_source;
 
   /* Now also make a copy for the private buffer at the LOG server, so
    * that the messages can be reviewed at a later time.
@@ -107,7 +107,7 @@ PUBLIC int do_diagnostics(message *m)
   src = (vir_bytes) m->DIAG_PRINT_BUF;
   count = m->DIAG_BUF_COUNT; 
   while (count > 0 && i < sizeof(diagbuf)-1) {
-      if (sys_datacopy(proc_nr, src, SELF, (vir_bytes) &c, 1) != OK) 
+      if (sys_datacopy(proc_nr_e, src, SELF, (vir_bytes) &c, 1) != OK) 
           break;		/* stop copying on error */
       src ++;
       count --;
