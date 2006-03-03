@@ -265,7 +265,7 @@ struct proc *pt;
   printf("Link to next proc wishing to send:	0x%04.4x\n", pt->p_sendlink);	/* struct proc * */
   printf("Pointer to message buffer:		0x%04.4x\n", pt->p_messbuf);	/* message * */
 #endif
-  printf("Expecting message from:			0x%04.4x\n", pt->p_getfrom);	/* int */
+  printf("Expecting message from:			0x%04.4x\n", pt->p_getfrom_e);	/* int */
 #if 0
   printf("Pointer to next ready process:	0x%04.4x\n", pt->p_nextready);	/* struct proc * */
 #endif
