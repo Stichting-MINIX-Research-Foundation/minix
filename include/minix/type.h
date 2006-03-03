@@ -42,7 +42,7 @@ struct far_mem {
 
 /* Structure for virtual copying by means of a vector with requests. */
 struct vir_addr {
-  int proc_nr;
+  int proc_nr_e;
   int segment;
   vir_bytes offset;
 };

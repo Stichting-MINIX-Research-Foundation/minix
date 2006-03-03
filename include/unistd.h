@@ -33,6 +33,7 @@
 #define RBT_PANIC	   2	/* a server panics */
 #define RBT_MONITOR	   3	/* let the monitor do this */
 #define RBT_RESET	   4	/* hard reset the system */
+#define _PM_SEG_FLAG (1L << 30)	/* for read() and write() to FS by PM */
 #endif
 
 /* What system info to retrieve with sysgetinfo(). */

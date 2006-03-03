@@ -5,9 +5,12 @@
  *          	    		Magic process numbers			     *
  *===========================================================================*/
 
+/* These may not be any valid endpoint (see <minix/endpoint.h>). */
 #define ANY		0x7ace	/* used to indicate 'any process' */
 #define NONE 		0x6ace  /* used to indicate 'no process at all' */
 #define SELF		0x8ace 	/* used to indicate 'own process' */
+#define _MAX_MAGIC_PROC (SELF)	/* used by <minix/endpoint.h> 
+				   to determine generation size */
 
 /*===========================================================================*
  *            	Process numbers of processes in the system image	     *
@@ -149,7 +152,7 @@
 
 /* Field names for messages to block and character device drivers. */
 #define DEVICE    	m2_i1	/* major-minor device */
-#define PROC_NR		m2_i2	/* which (proc) wants I/O? */
+#define IO_ENDPT	m2_i2	/* which (proc/endpoint) wants I/O? */
 #define COUNT   	m2_i3	/* how many bytes to transfer */
 #define REQUEST 	m2_i3	/* ioctl request code */
 #define POSITION	m2_l1	/* file offset */
@@ -161,7 +164,7 @@
 #define DEV_SEL_WATCH	m2_i3	/* request notify if no operations are ready */
 
 /* Field names used in reply messages from tasks. */
-#define REP_PROC_NR	m2_i1	/* # of proc on whose behalf I/O was done */
+#define REP_ENDPT	m2_i1	/* # of proc on whose behalf I/O was done */
 #define REP_STATUS	m2_i2	/* bytes transferred or error number */
 #  define SUSPEND 	 -998 	/* status to suspend caller, reply later */
 
@@ -209,7 +212,7 @@
 
 /* Field names for data link layer messages. */
 #define DL_PORT		m2_i1
-#define DL_PROC		m2_i2
+#define DL_PROC		m2_i2	/* endpoint */
 #define DL_COUNT	m2_i3
 #define DL_MODE		m2_l1
 #define DL_CLCK		m2_l2
@@ -305,13 +308,13 @@
 #define DIO_VALUE	m2_l2	/* single I/O value */
 #define DIO_VEC_ADDR	m2_p1   /* address of buffer or (p,v)-pairs */
 #define DIO_VEC_SIZE	m2_l2   /* number of elements in vector */
-#define DIO_VEC_PROC	m2_i2   /* number of process where vector is */
+#define DIO_VEC_ENDPT	m2_i2   /* number of process where vector is */
 
 /* Field names for SYS_SIGNARLM, SYS_FLAGARLM, SYS_SYNCALRM. */
 #define ALRM_EXP_TIME   m2_l1	/* expire time for the alarm call */
 #define ALRM_ABS_TIME   m2_i2	/* set to 1 to use absolute alarm time */
 #define ALRM_TIME_LEFT  m2_l1	/* how many ticks were remaining */
-#define ALRM_PROC_NR    m2_i1	/* which process wants the alarm? */
+#define ALRM_ENDPT      m2_i1	/* which process wants the alarm? */
 #define ALRM_FLAG_PTR	m2_p1   /* virtual address of timeout flag */ 	
 
 /* Field names for SYS_IRQCTL. */
@@ -326,7 +329,7 @@
 #  define IRQ_BYTE      0x100	/* byte values */      
 #  define IRQ_WORD      0x200	/* word values */
 #  define IRQ_LONG      0x400	/* long values */
-#define IRQ_PROC_NR	m5_i2   /* process number, SELF, NONE */
+#define IRQ_ENDPT	m5_i2   /* endpoint number, SELF, NONE */
 #define IRQ_HOOK_ID	m5_l3   /* id of irq hook at kernel */
 
 /* Field names for SYS_SEGCTL. */
@@ -347,16 +350,16 @@
 
 /* Field names for SYS_ABORT. */
 #define ABRT_HOW	m1_i1	/* RBT_REBOOT, RBT_HALT, etc. */
-#define ABRT_MON_PROC   m1_i2	/* process where monitor params are */
+#define ABRT_MON_ENDPT  m1_i2	/* process where monitor params are */
 #define ABRT_MON_LEN	m1_i3	/* length of monitor params */
 #define ABRT_MON_ADDR   m1_p1	/* virtual address of monitor params */
 
 /* Field names for _UMAP, _VIRCOPY, _PHYSCOPY. */
 #define CP_SRC_SPACE 	m5_c1	/* T or D space (stack is also D) */
-#define CP_SRC_PROC_NR	m5_i1	/* process to copy from */
+#define CP_SRC_ENDPT	m5_i1	/* process to copy from */
 #define CP_SRC_ADDR	m5_l1	/* address where data come from */
 #define CP_DST_SPACE	m5_c2	/* T or D space (stack is also D) */
-#define CP_DST_PROC_NR	m5_i2	/* process to copy to */
+#define CP_DST_ENDPT	m5_i2	/* process to copy to */
 #define CP_DST_ADDR	m5_l2	/* address where data go to */
 #define CP_NR_BYTES	m5_l3	/* number of bytes to copy */
 
@@ -383,23 +386,30 @@
 #   define GET_LOCKTIMING 13	/* get lock()/unlock() latency timing */
 #   define GET_BIOSBUFFER 14	/* get a buffer for BIOS calls */
 #   define GET_LOADINFO   15	/* get load average information */
-#define I_PROC_NR      m7_i4	/* calling process */
+#define I_ENDPT      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */
 #define I_VAL_PTR2     m7_p2	/* second virtual address */ 
-#define I_VAL_LEN2     m7_i2	/* second length, or proc nr */
+#define I_VAL_LEN2_E   m7_i2	/* second length, or proc nr */
 #   define GET_IRQACTIDS  16	/* get the IRQ masks */
 
 /* Field names for SYS_TIMES. */
-#define T_PROC_NR      m4_l1	/* process to request time info for */
+#define T_ENDPT      m4_l1	/* process to request time info for */
 #define T_USER_TIME    m4_l1	/* user time consumed by process */
 #define T_SYSTEM_TIME  m4_l2	/* system time consumed by process */
 #define T_CHILD_UTIME  m4_l3	/* user time consumed by process' children */
 #define T_CHILD_STIME  m4_l4	/* sys time consumed by process' children */
 #define T_BOOT_TICKS   m4_l5	/* number of clock ticks since boot time */
 
+/* vm_map */
+#define VM_MAP_ENDPT		m4_l1
+#define VM_MAP_MAPUNMAP		m4_l2
+#define VM_MAP_BASE		m4_l3
+#define VM_MAP_SIZE		m4_l4
+#define VM_MAP_ADDR		m4_l5
+
 /* Field names for SYS_TRACE, SYS_PRIVCTL. */
-#define CTL_PROC_NR    m2_i1	/* process number of the caller */
+#define CTL_ENDPT    m2_i1	/* process number of the caller */
 #define CTL_REQUEST    m2_i2	/* server control request */
 #define CTL_MM_PRIV    m2_i3	/* privilege as seen by PM */
 #define CTL_ARG_PTR    m2_p1	/* pointer to argument */
@@ -413,16 +423,16 @@
 #define S_SENDSIG   	   2	/* POSIX style signal handling */
 #define S_SIGRETURN	   3 	/* return from POSIX handling */
 #define S_KILL		   4 	/* servers kills process with signal */
-#define SIG_PROC       m2_i1	/* process number for inform */
+#define SIG_ENDPT       m2_i1	/* process number for inform */
 #define SIG_NUMBER     m2_i2	/* signal number to send */
 #define SIG_FLAGS      m2_i3	/* signal flags field */
 #define SIG_MAP        m2_l1	/* used by kernel to pass signal bit map */
 #define SIG_CTXT_PTR   m2_p1	/* pointer to info to restore signal context */
 
 /* Field names for SYS_FORK, _EXEC, _EXIT, _NEWMAP. */
-#define PR_PROC_NR     m1_i1	/* indicates a (child) process */
+#define PR_ENDPT       m1_i1	/* indicates a process */
 #define PR_PRIORITY    m1_i2	/* process priority */
-#define PR_PPROC_NR    m1_i2	/* indicates a (parent) process */
+#define PR_SLOT        m1_i2	/* indicates a process slot */
 #define PR_PID	       m1_i3	/* process id at process manager */
 #define PR_STACK_PTR   m1_p1	/* used for stack ptr in sys_exec, sys_getsp */
 #define PR_TRACING     m1_i3	/* flag to indicate tracing is on/ off */
@@ -490,7 +500,7 @@
 #define DIAGNOSTICS 	100 	/* output a string without FS in between */
 #  define DIAG_PRINT_BUF      m1_p1
 #  define DIAG_BUF_COUNT      m1_i1
-#  define DIAG_PROC_NR        m1_i2
+#  define DIAG_ENDPT          m1_i2
 #define GET_KMESS	101	/* get kmess from TTY */
 #  define GETKM_PTR	      m1_p1
 

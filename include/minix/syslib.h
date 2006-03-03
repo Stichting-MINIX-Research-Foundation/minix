@@ -29,7 +29,7 @@ _PROTOTYPE( int sys_abort, (int how, ...));
 _PROTOTYPE( int sys_enable_iop, (int proc));
 _PROTOTYPE( int sys_exec, (int proc, char *ptr,  
 				char *aout, vir_bytes initpc));
-_PROTOTYPE( int sys_fork, (int parent, int child));
+_PROTOTYPE( int sys_fork, (int parent, int child, int *));
 _PROTOTYPE( int sys_newmap, (int proc, struct mem_map *ptr));
 _PROTOTYPE( int sys_exit, (int proc));
 _PROTOTYPE( int sys_trace, (int req, int proc, long addr, long *data_p));
