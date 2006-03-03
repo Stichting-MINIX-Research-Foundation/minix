@@ -5,3 +5,5 @@
 /usr/lib/em_opt 148044
 /usr/lib/i386/as 45000
 /usr/lib/i386/cg 50655
+/bin/sh 102400
+/usr/bin/make 337920
