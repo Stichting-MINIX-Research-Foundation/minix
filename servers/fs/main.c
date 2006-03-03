@@ -22,6 +22,7 @@ struct super_block;		/* proto.h needs to know this */
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include <minix/const.h>
+#include <minix/endpoint.h>
 #include "buf.h"
 #include "file.h"
 #include "fproc.h"
@@ -49,11 +50,12 @@ PUBLIC int main()
 
   fs_init();
 
+
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
 	get_work();		/* sets who and call_nr */
 
-	fp = &fproc[who];	/* pointer to proc table struct */
+	fp = &fproc[who_p];	/* pointer to proc table struct */
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
  	/* Check for special control messages first. */
@@ -75,17 +77,17 @@ PUBLIC int main()
 		/* Call the internal function that does the work. */
 		if (call_nr < 0 || call_nr >= NCALLS) { 
 			error = ENOSYS;
-			printf("FS, warning illegal %d system call by %d\n", call_nr, who);
+			printf("FS, warning illegal %d system call by %d\n", call_nr, who_e);
 		} else if (fp->fp_pid == PID_FREE) {
 			error = ENOSYS;
-			printf("FS, bad process, who = %d, call_nr = %d, slot1 = %d\n",
-				 who, call_nr, m_in.slot1);
+			printf("FS, bad process, who = %d, call_nr = %d, endpt1 = %d\n",
+				 who_e, call_nr, m_in.endpt1);
 		} else {
 			error = (*call_vec[call_nr])();
 		}
 
 		/* Copy the results back to the user and send reply. */
-		if (error != SUSPEND) { reply(who, error); }
+		if (error != SUSPEND) { reply(who_e, error); }
 		if (rdahed_inode != NIL_INODE) {
 			read_ahead(); /* do block read ahead */
 		}
@@ -103,12 +105,14 @@ PRIVATE void get_work()
    * nonzero, a suspended process must be awakened.
    */
   register struct fproc *rp;
+  int l = 0;
 
   if (reviving != 0) {
 	/* Revive a suspended process. */
 	for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) 
 		if (rp->fp_revived == REVIVING) {
-			who = (int)(rp - fproc);
+			who_p = (int)(rp - fproc);
+			who_e = rp->fp_endpoint;
 			call_nr = rp->fp_fd & BYTE;
 			m_in.fd = (rp->fp_fd >>8) & BYTE;
 			m_in.buffer = rp->fp_buffer;
@@ -121,10 +125,27 @@ PRIVATE void get_work()
 	panic(__FILE__,"get_work couldn't revive anyone", NO_NUM);
   }
 
-  /* Normal case.  No one to revive. */
-  if (receive(ANY, &m_in) != OK) panic(__FILE__,"fs receive error", NO_NUM);
-  who = m_in.m_source;
-  call_nr = m_in.m_type;
+  for(;;) {
+    /* Normal case.  No one to revive. */
+    if (receive(ANY, &m_in) != OK)
+	panic(__FILE__,"fs receive error", NO_NUM);
+    who_e = m_in.m_source;
+    who_p = _ENDPOINT_P(who_e);
+    if(who_p < -NR_TASKS || who_p >= NR_PROCS)
+     	panic(__FILE__,"receive process out of range", who_p);
+    if(who_p >= 0 && fproc[who_p].fp_endpoint == NONE) {
+    	printf("FS: ignoring request from %d, endpointless slot %d (%d)",
+		m_in.m_source, who_p, m_in.m_type);
+	continue;
+    }
+    if(who_p >= 0 && fproc[who_p].fp_endpoint != who_e) {
+    	printf("FS: receive endpoint inconsistent (%d, %d), ignoring %d",
+		fproc[who_p].fp_endpoint, who_e, m_in.m_type);
+	continue;
+    }
+    call_nr = m_in.m_type;
+    return;
+  }
 }
 
 /*===========================================================================*
@@ -168,7 +189,8 @@ int result;			/* result of the call (usually OK or error #) */
   int s;
   m_out.reply_type = result;
   s = send(whom, &m_out);
-  if (s != OK) printf("FS: couldn't send reply %d: %d\n", result, s);
+  if (s != OK) printf("FS: couldn't send reply %d to %d: %d\n",
+	result, whom, s);
 }
 
 /*===========================================================================*
@@ -188,12 +210,14 @@ PRIVATE void fs_init()
    * Then, stop and synchronize with the PM.
    */
   do {
+	int slot;
   	if (OK != (s=receive(PM_PROC_NR, &mess)))
   		panic(__FILE__,"FS couldn't receive from PM", s);
-  	if (NONE == mess.PR_PROC_NR) break; 
+  	if (NONE == mess.PR_ENDPT) break; 
 
-	rfp = &fproc[mess.PR_PROC_NR];
+	rfp = &fproc[mess.PR_SLOT];
 	rfp->fp_pid = mess.PR_PID;
+	rfp->fp_endpoint = mess.PR_ENDPT;
 	rfp->fp_realuid = (uid_t) SYS_UID;
 	rfp->fp_effuid = (uid_t) SYS_UID;
 	rfp->fp_realgid = (gid_t) SYS_GID;
@@ -217,7 +241,7 @@ PRIVATE void fs_init()
 
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;
-  who = FS_PROC_NR;
+  who_e = who_p = FS_PROC_NR;
 
   buf_pool();			/* initialize buffer pool */
   build_dmap();			/* build device table and map boot driver */
@@ -232,7 +256,7 @@ PRIVATE void fs_init()
 		dup_inode(rip);
 		rfp->fp_rootdir = rip;
 		rfp->fp_workdir = rip;
-  	}
+  	} else  rfp->fp_endpoint = NONE;
   }
 }
 
@@ -335,7 +359,7 @@ PRIVATE void load_ram(void)
 
   /* Tell RAM driver how big the RAM disk must be. */
   m_out.m_type = DEV_IOCTL;
-  m_out.PROC_NR = FS_PROC_NR;
+  m_out.PR_ENDPT = FS_PROC_NR;
   m_out.DEVICE = RAM_DEV;
   m_out.REQUEST = MIOCRAMSIZE;			/* I/O control to use */
   m_out.POSITION = (ram_size_kb * 1024);	/* request in bytes */

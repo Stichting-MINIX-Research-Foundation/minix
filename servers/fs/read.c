@@ -13,6 +13,7 @@
 
 #include "fs.h"
 #include <fcntl.h>
+#include <unistd.h>
 #include <minix/com.h>
 #include "buf.h"
 #include "file.h"
@@ -53,20 +54,15 @@ int rw_flag;			/* READING or WRITING */
   int completed, r2 = OK;
   phys_bytes p;
 
-  /* left unfinished rw_chunk()s from previous call! this can't happen.
-   * it means something has gone wrong we can't repair now.
+  /* PM loads segments by putting funny things in other bits of the
+   * message, indicated by a high bit in fd.
    */
-  if (bufs_in_use < 0) {
-  	panic(__FILE__,"start - bufs_in_use negative", bufs_in_use);
-  }
-
-  /* MM loads segments by putting funny things in upper 10 bits of 'fd'. */
-  if (who == PM_PROC_NR && (m_in.fd & (~BYTE)) ) {
-	usr = m_in.fd >> 7;
-	seg = (m_in.fd >> 5) & 03;
-	m_in.fd &= 037;		/* get rid of user and segment bits */
+  if (who_e == PM_PROC_NR && (m_in.fd & _PM_SEG_FLAG)) {
+	seg = (int) m_in.m1_p2;
+	usr = (int) m_in.m1_p3;
+	m_in.fd &= ~(_PM_SEG_FLAG);	/* get rid of flag bit */
   } else {
-	usr = who;		/* normal case */
+	usr = who_e;		/* normal case */
 	seg = D;
   }
 
@@ -83,8 +79,10 @@ int rw_flag;			/* READING or WRITING */
    * if not, copying will fail later.
    * do this after 0-check above because umap doesn't want to map 0 bytes.
    */
-  if ((r = sys_umap(usr, seg, (vir_bytes) m_in.buffer, m_in.nbytes, &p)) != OK)
+  if ((r = sys_umap(usr, seg, (vir_bytes) m_in.buffer, m_in.nbytes, &p)) != OK) {
+	printf("FS: read_write: umap failed for process %d\n", usr);
 	return r;
+  }
   position = f->filp_pos;
   oflags = f->filp_flags;
   rip = f->filp_ino;
@@ -239,9 +237,6 @@ int rw_flag;			/* READING or WRITING */
 	}
 	fp->fp_cum_io_partial = 0;
 	return(cum_io);
-  }
-  if (bufs_in_use < 0) {
-  	panic(__FILE__,"end - bufs_in_use negative", bufs_in_use);
   }
   return(r);
 }

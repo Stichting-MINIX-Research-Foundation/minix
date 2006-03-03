@@ -49,7 +49,7 @@ PUBLIC int do_brk()
 	return(ENOMEM);
   }
   new_clicks -= rmp->mp_seg[D].mem_vir;
-  if ((r=get_stack_ptr(who, &new_sp)) != OK)	/* ask kernel for sp value */
+  if ((r=get_stack_ptr(who_e, &new_sp)) != OK) /* ask kernel for sp value */
   	panic(__FILE__,"couldn't get stack pointer", r);
   r = adjust(rmp, new_clicks, new_sp);
   rmp->mp_reply.reply_ptr = (r == OK ? m_in.addr : (char *) -1);
@@ -121,7 +121,9 @@ vir_bytes sp;			/* new value of sp */
           rmp->mp_seg[S].mem_vir) ? ENOMEM : OK;
 #endif
   if (r == OK) {
-	if (changed) sys_newmap((int)(rmp - mproc), rmp->mp_seg);
+	int r2;
+	if (changed && (r2=sys_newmap(rmp->mp_endpoint, rmp->mp_seg)) != OK)
+  		panic(__FILE__,"couldn't sys_newmap in adjust", r2);
 	return(OK);
   }
 

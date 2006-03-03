@@ -12,7 +12,7 @@ EXTERN struct kinfo kinfo;			/* kernel information */
 
 /* The parameters of the call are kept here. */
 EXTERN message m_in;		/* the incoming message itself is kept here. */
-EXTERN int who;			/* caller's proc number */
+EXTERN int who_p, who_e;	/* caller's proc number, endpoint */
 EXTERN int call_nr;		/* system call number */
 
 extern _PROTOTYPE (int (*call_vec[]), (void) );	/* system call handlers */

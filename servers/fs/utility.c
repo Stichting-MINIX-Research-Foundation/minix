@@ -12,6 +12,7 @@
 
 #include "fs.h"
 #include <minix/com.h>
+#include <minix/endpoint.h>
 #include <unistd.h>
 #include "buf.h"
 #include "file.h"
@@ -72,7 +73,7 @@ int flag;			/* M3 means path may be in message */
 	r = OK;
   } else {
 	/* String is not contained in the message.  Get it from user space. */
-	r = sys_datacopy(who, (vir_bytes) path,
+	r = sys_datacopy(who_e, (vir_bytes) path,
 		FS_PROC_NR, (vir_bytes) user_path, (phys_bytes) len);
   }
   return(r);
@@ -136,5 +137,29 @@ long x;				/* 32-bit long to be byte swapped */
   hi = conv2(FALSE, (int) (x>>16) & 0xFFFF);	/* high-order half, swapped */
   l = ( (long) lo <<16) | hi;
   return(l);
+}
+
+/*===========================================================================*
+ *				isokendpt_f				     *
+ *===========================================================================*/
+PUBLIC int isokendpt_f(char *file, int line, int endpoint, int *proc, int fatal)
+{
+	int failed = 0;
+	*proc = _ENDPOINT_P(endpoint);
+	if(*proc < 0 || *proc >= NR_PROCS) {
+		printf("FS:%s:%d: proc (%d) from endpoint (%d) out of range\n",
+			file, line, *proc, endpoint);
+		failed = 1;
+	} else if(fproc[*proc].fp_endpoint != endpoint) {
+		printf("FS:%s:%d: proc (%d) from endpoint (%d) doesn't match "
+			"known endpoint (%d)\n",
+			file, line, *proc, endpoint, fproc[*proc].fp_endpoint);
+		failed = 1;
+	}
+
+	if(failed && fatal)
+		panic(__FILE__, "isokendpt_f failed", NO_NUM);
+
+	return failed ? EDEADSRCDST : OK;
 }
 

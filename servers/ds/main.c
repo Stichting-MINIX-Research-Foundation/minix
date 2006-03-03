@@ -11,7 +11,7 @@
 #include "inc.h"	/* include master header file */
 
 /* Allocate space for the global variables. */
-int who;		/* caller's proc number */
+int who_e;		/* caller's proc number */
 int callnr;		/* system call number */
 int sys_panic;		/* flag to indicate system-wide panic */
 
@@ -72,7 +72,7 @@ PUBLIC int main(int argc, char **argv)
       /* Finally send reply message, unless disabled. */
       if (result != EDONTREPLY) {
           m.m_type = result;  		/* build reply message */
-	  reply(who, &m);		/* send it away */
+	  reply(who_e, &m);		/* send it away */
       }
   }
   return(OK);				/* shouldn't come here */
@@ -116,19 +116,19 @@ message *m_ptr;				/* message buffer */
     status = receive(ANY, m_ptr);   /* this blocks until message arrives */
     if (OK != status)
         panic("DS","failed to receive message!", status);
-    who = m_ptr->m_source;        /* message arrived! set sender */
+    who_e = m_ptr->m_source;        /* message arrived! set sender */
     callnr = m_ptr->m_type;       /* set function call number */
 }
 
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(who, m_ptr)
-int who;                           	/* destination */
+PRIVATE void reply(who_e, m_ptr)
+int who_e;                           	/* destination */
 message *m_ptr;				/* message buffer */
 {
     int s;
-    s = send(who, m_ptr);    /* send the message */
+    s = send(who_e, m_ptr);    /* send the message */
     if (OK != s)
         panic("DS", "unable to send reply!", s);
 }

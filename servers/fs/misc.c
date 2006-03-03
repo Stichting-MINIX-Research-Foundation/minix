@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>	/* cc runs out of memory with unistd.h :-( */
 #include <minix/callnr.h>
+#include <minix/endpoint.h>
 #include <minix/com.h>
 #include <sys/svrctl.h>
 #include "buf.h"
@@ -59,7 +60,7 @@ PUBLIC int do_getsysinfo()
   }
 
   dst_addr = (vir_bytes) m_in.info_where;
-  if (OK != (s=sys_datacopy(SELF, src_addr, who, dst_addr, len)))
+  if (OK != (s=sys_datacopy(SELF, src_addr, who_e, dst_addr, len)))
   	return(s);
   return(OK);
 
@@ -172,7 +173,7 @@ PUBLIC int do_fcntl()
 	}
 
 	/* Copy flock data from userspace. */
-	if((r = sys_datacopy(who, (vir_bytes) m_in.name1, 
+	if((r = sys_datacopy(who_e, (vir_bytes) m_in.name1, 
 	  SELF, (vir_bytes) &flock_arg,
 	  (phys_bytes) sizeof(flock_arg))) != OK)
 		return r;
@@ -256,10 +257,13 @@ PUBLIC int do_reboot()
   struct inode dummy;
 
   /* Only PM may make this call directly. */
-  if (who != PM_PROC_NR) return(EGENERIC);
+  if (who_e != PM_PROC_NR) return(EGENERIC);
 
   /* Do exit processing for all leftover processes and servers. */
-  for (i = 0; i < NR_PROCS; i++) { m_in.slot1 = i; do_exit(); }
+  for (i = 0; i < NR_PROCS; i++) {
+	if((m_in.endpt1 = fproc[i].fp_endpoint) != NONE)
+		do_exit();
+  }
 
   /* The root file system is mounted onto itself, which keeps it from being
    * unmounted.  Pull an inode out of thin air and put the root on it.
@@ -293,21 +297,35 @@ PUBLIC int do_fork()
  */
 
   register struct fproc *cp;
-  int i;
+  int i, parentno, childno;
 
   /* Only PM may make this call directly. */
-  if (who != PM_PROC_NR) return(EGENERIC);
+  if (who_e != PM_PROC_NR) return(EGENERIC);
+
+  /* Check up-to-dateness of fproc. */
+  okendpt(m_in.parent_endpt, &parentno);
+
+  /* PM gives child endpoint, which implies process slot information.
+   * Don't call isokendpt, because that will verify if the endpoint
+   * number is correct in fproc, which it won't be.
+   */
+  childno = _ENDPOINT_P(m_in.child_endpt);
+  if(childno < 0 || childno >= NR_PROCS)
+	panic(__FILE__, "FS: bogus child for forking", m_in.child_endpt);
+  if(fproc[childno].fp_pid != PID_FREE)
+	panic(__FILE__, "FS: forking on top of in-use child", childno);
 
   /* Copy the parent's fproc struct to the child. */
-  fproc[m_in.child] = fproc[m_in.parent];
+  fproc[childno] = fproc[parentno];
 
   /* Increase the counters in the 'filp' table. */
-  cp = &fproc[m_in.child];
+  cp = &fproc[childno];
   for (i = 0; i < OPEN_MAX; i++)
 	if (cp->fp_filp[i] != NIL_FILP) cp->fp_filp[i]->filp_count++;
 
-  /* Fill in new process id. */
+  /* Fill in new process and endpoint id. */
   cp->fp_pid = m_in.pid;
+  cp->fp_endpoint = m_in.child_endpt;
 
   /* A child is not a process leader. */
   cp->fp_sesldr = 0;
@@ -330,14 +348,15 @@ PUBLIC int do_exec()
  * MM does an EXEC, it calls FS to allow FS to find these files and close them.
  */
 
-  register int i;
+  int i, proc;
   long bitmap;
 
   /* Only PM may make this call directly. */
-  if (who != PM_PROC_NR) return(EGENERIC);
+  if (who_e != PM_PROC_NR) return(EGENERIC);
 
   /* The array of FD_CLOEXEC bits is in the fp_cloexec bit map. */
-  fp = &fproc[m_in.slot1];		/* get_filp() needs 'fp' */
+  okendpt(m_in.endpt1, &proc);
+  fp = &fproc[proc];		/* get_filp() needs 'fp' */
   bitmap = fp->fp_cloexec;
   if (bitmap) {
     /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
@@ -351,10 +370,10 @@ PUBLIC int do_exec()
   fp->fp_execced = 1;
 
   /* Reply to caller (PM) directly. */
-  reply(who, OK);
+  reply(who_e, OK);
 
   /* Check if this is a driver that can now be useful. */
-  dmap_proc_up(fp - fproc);
+  dmap_endpt_up(fp->fp_endpoint);
 
   /* Suppress reply to caller (caller already replied to). */
   return SUSPEND;
@@ -367,23 +386,24 @@ PUBLIC int do_exit()
 {
 /* Perform the file system portion of the exit(status) system call. */
 
-  register int i, exitee, task;
+  int i, exitee_p, exitee_e, task;
   register struct fproc *rfp;
   register struct filp *rfilp;
   register struct inode *rip;
   dev_t dev;
 
   /* Only PM may do the EXIT call directly. */
-  if (who != PM_PROC_NR) return(EGENERIC);
+  if (who_e != PM_PROC_NR) return(EGENERIC);
 
   /* Nevertheless, pretend that the call came from the user. */
-  fp = &fproc[m_in.slot1];		/* get_filp() needs 'fp' */
-  exitee = m_in.slot1;
+  exitee_e = m_in.endpt1;
+  okendpt(exitee_e, &exitee_p);
+  fp = &fproc[exitee_p];		/* get_filp() needs 'fp' */
 
   if (fp->fp_suspended == SUSPENDED) {
 	task = -fp->fp_task;
 	if (task == XPIPE || task == XPOPEN) susp_count--;
-	m_in.pro = exitee;
+	m_in.ENDPT = exitee_e;
 	(void) do_unpause();	/* this always succeeds for MM */
 	fp->fp_suspended = NOT_SUSPENDED;
   }
@@ -405,8 +425,11 @@ PUBLIC int do_exit()
    * (unmapping has to be done after the first step, because the
    * dmap table is used in the first step.)
    */
-  unsuspend_by_proc(exitee);
-  dmap_unmap_by_proc(exitee);
+  unsuspend_by_endpt(exitee_e);
+  dmap_unmap_by_endpt(exitee_e);
+
+  /* Invalidate endpoint number for error and sanity checks. */
+  fp->fp_endpoint = NONE;
 
   /* If a session leader exits then revoke access to its controlling tty from
    * all other processes using it.
@@ -450,11 +473,13 @@ PUBLIC int do_set()
 /* Set uid_t or gid_t field. */
 
   register struct fproc *tfp;
+  int proc;
 
   /* Only PM may make this call directly. */
-  if (who != PM_PROC_NR) return(EGENERIC);
+  if (who_e != PM_PROC_NR) return(EGENERIC);
 
-  tfp = &fproc[m_in.slot1];
+  okendpt(m_in.endpt1, &proc);
+  tfp = &fproc[proc];
   if (call_nr == SETUID) {
 	tfp->fp_realuid = (uid_t) m_in.real_user_id;
 	tfp->fp_effuid =  (uid_t) m_in.eff_user_id;
@@ -480,8 +505,7 @@ PUBLIC int do_revive()
  * 'SUSPEND' pseudo error, and the reply to the blocked process is done
  * explicitly in revive().
  */
-
-  revive(m_in.REP_PROC_NR, m_in.REP_STATUS);
+  revive(m_in.REP_ENDPT, m_in.REP_STATUS);
   return(SUSPEND);		/* don't reply to the TTY task */
 }
 
@@ -500,21 +524,21 @@ PUBLIC int do_svrctl()
 		return(EPERM);
 
 	/* Try to copy request structure to FS. */
-	if ((r = sys_datacopy(who, (vir_bytes) m_in.svrctl_argp,
+	if ((r = sys_datacopy(who_e, (vir_bytes) m_in.svrctl_argp,
 		FS_PROC_NR, (vir_bytes) &device,
 		(phys_bytes) sizeof(device))) != OK) 
 	    return(r);
 
 	/* Try to update device mapping. */
 	major = (device.dev >> MAJOR) & BYTE;
-	r=map_driver(major, who, device.style);
+	r=map_driver(major, who_e, device.style);
 	return(r);
   }
   case FSDEVUNMAP: {
 	struct fsdevunmap fdu;
 	int r, major;
 	/* Try to copy request structure to FS. */
-	if ((r = sys_datacopy(who, (vir_bytes) m_in.svrctl_argp,
+	if ((r = sys_datacopy(who_e, (vir_bytes) m_in.svrctl_argp,
 		FS_PROC_NR, (vir_bytes) &fdu,
 		(phys_bytes) sizeof(fdu))) != OK) 
 	    return(r);

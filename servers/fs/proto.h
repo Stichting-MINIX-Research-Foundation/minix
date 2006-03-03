@@ -52,8 +52,8 @@ _PROTOTYPE( int do_devctl, (void)					);
 _PROTOTYPE( void build_dmap, (void)					);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style)	);
 _PROTOTYPE( int dmap_driver_match, (int proc, int major)		);
-_PROTOTYPE( void dmap_unmap_by_proc, (int proc_nr)			);
-_PROTOTYPE( void dmap_proc_up, (int proc_nr)				);
+_PROTOTYPE( void dmap_unmap_by_endpt, (int proc_nr)			);
+_PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
 
 /* filedes.c */
 _PROTOTYPE( struct filp *find_filp, (struct inode *rip, mode_t bits)	);
@@ -135,7 +135,7 @@ _PROTOTYPE( void suspend, (int task)					);
 _PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
 _PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
 _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
-_PROTOTYPE( void unsuspend_by_proc, (int)				);
+_PROTOTYPE( void unsuspend_by_endpt, (int)				);
 
 /* protect.c */
 _PROTOTYPE( int do_access, (void)					);
@@ -183,7 +183,11 @@ _PROTOTYPE( unsigned conv2, (int norm, int w)				);
 _PROTOTYPE( long conv4, (int norm, long x)				);
 _PROTOTYPE( int fetch_name, (char *path, int len, int flag)		);
 _PROTOTYPE( int no_sys, (void)						);
+_PROTOTYPE( int isokendpt_f, (char *f, int l, int e, int *p, int ft));
 _PROTOTYPE( void panic, (char *who, char *mess, int num)		);
+
+#define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
+#define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)
 
 /* write.c */
 _PROTOTYPE( void clear_zone, (struct inode *rip, off_t pos, int flag)	);
@@ -198,7 +202,7 @@ _PROTOTYPE( int select_callback, (struct filp *, int ops)		);
 _PROTOTYPE( void select_forget, (int fproc)				);
 _PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void init_select, (void)					);
-_PROTOTYPE( void select_unsuspend_by_proc, (int proc)			);
+_PROTOTYPE( void select_unsuspend_by_endpt, (int proc)			);
 _PROTOTYPE( int select_notified, (int major, int minor, int ops)	);
 
 /* timers.c */

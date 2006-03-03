@@ -277,7 +277,7 @@ u32_t offset, size;			/* area on swap file to use */
 
   if (swap_fd != -1) return(EBUSY);	/* already have swap? */
 
-  tell_fs(CHDIR, who, FALSE, 0);	/* be like the caller for open() */
+  tell_fs(CHDIR, who_e, FALSE, 0);	/* be like the caller for open() */
   if ((swap_fd = open(file, O_RDWR)) < 0) return(-errno);
   swap_offset = offset;
   size >>= CLICK_SHIFT;
@@ -374,10 +374,10 @@ PUBLIC void swap_in()
 		rmp->mp_seg[D].mem_phys = new_base;
 		rmp->mp_seg[S].mem_phys = rmp->mp_seg[D].mem_phys + 
 			(rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
-		sys_newmap(proc_nr, rmp->mp_seg);
+		sys_newmap(rmp->mp_endpoint, rmp->mp_seg);
 		off = swap_offset + ((off_t) (old_base-swap_base)<<CLICK_SHIFT);
 		lseek(swap_fd, off, SEEK_SET);
-		rw_seg(0, swap_fd, proc_nr, D, (phys_bytes)size << CLICK_SHIFT);
+		rw_seg(0, swap_fd, rmp->mp_endpoint, D, (phys_bytes)size << CLICK_SHIFT);
 		free_mem(old_base, size);
 		rmp->mp_flags &= ~(ONSWAP|SWAPIN);
 		*pmp = rmp->mp_swapq;
@@ -427,12 +427,12 @@ PRIVATE int swap_out()
 
 	off = swap_offset + ((off_t) (new_base - swap_base) << CLICK_SHIFT);
 	lseek(swap_fd, off, SEEK_SET);
-	rw_seg(1, swap_fd, proc_nr, D, (phys_bytes)size << CLICK_SHIFT);
+	rw_seg(1, swap_fd, rmp->mp_endpoint, D, (phys_bytes)size << CLICK_SHIFT);
 	old_base = rmp->mp_seg[D].mem_phys;
 	rmp->mp_seg[D].mem_phys = new_base;
 	rmp->mp_seg[S].mem_phys = rmp->mp_seg[D].mem_phys + 
 		(rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
-	sys_newmap(proc_nr, rmp->mp_seg);
+	sys_newmap(rmp->mp_endpoint, rmp->mp_seg);
 	free_mem(old_base, size);
 	rmp->mp_flags |= ONSWAP;
 

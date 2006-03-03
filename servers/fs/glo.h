@@ -18,7 +18,7 @@ EXTERN time_t boottime;		/* time in seconds at system boot */
 /* The parameters of the call are kept here. */
 EXTERN message m_in;		/* the input message itself */
 EXTERN message m_out;		/* the output message used for reply */
-EXTERN int who;			/* caller's proc number */
+EXTERN int who_p, who_e;	/* caller's proc number, endpoint */
 EXTERN int call_nr;		/* system call number */
 EXTERN char user_path[PATH_MAX];/* storage for user path name */
 

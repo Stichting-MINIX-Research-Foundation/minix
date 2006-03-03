@@ -31,8 +31,8 @@ PUBLIC void rproc_dmp()
   	rp = &rproc[i];
   	if (! rp->r_flags & RS_IN_USE) continue;
   	if (++n > 22) break;
-  	printf("%3d %5d %s %3d/%2d %3u %8u %8u  %3dx %3d %s (%d)",
-  		rp->r_proc_nr, rp->r_pid, 
+  	printf("%9d %5d %s %3d/%2d %3u %8u %8u  %3dx %3d %s (%d)",
+  		rp->r_proc_nr_e, rp->r_pid, 
 		s_flags_str(rp->r_flags),
   		rp->r_dev_nr, rp->r_dev_style,
 		rp->r_period, 

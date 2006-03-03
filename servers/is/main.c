@@ -16,7 +16,7 @@
 /* Allocate space for the global variables. */
 message m_in;		/* the input message itself */
 message m_out;		/* the output message used for reply */
-int who;		/* caller's proc number */
+int who_e;		/* caller's proc number */
 int callnr;		/* system call number */
 int sys_panic;		/* flag to indicate system-wide panic */
 
@@ -57,7 +57,7 @@ PUBLIC int main(int argc, char **argv)
           }
           continue;
       case PANIC_DUMPS:
-	  printf("Oops ... panic in %d.  ", who);
+	  printf("Oops ... panic in %d.  ", who_e);
 	  printf("Hit F-keys for debug dumps or F12 to shut down.\n");
 	  sys_panic = TRUE;			/* set flag to allow exit */
 	  continue;
@@ -74,7 +74,7 @@ PUBLIC int main(int argc, char **argv)
 
       /* Finally send reply message, unless disabled. */
       if (result != EDONTREPLY) {
-	  reply(who, result);
+	  reply(who_e, result);
       }
   }
   return(OK);				/* shouldn't come here */
@@ -136,7 +136,7 @@ PRIVATE void get_work()
     status = receive(ANY, &m_in);   /* this blocks until message arrives */
     if (OK != status)
         panic("IS","failed to receive message!", status);
-    who = m_in.m_source;        /* message arrived! set sender */
+    who_e = m_in.m_source;        /* message arrived! set sender */
     callnr = m_in.m_type;       /* set function call number */
 }
 

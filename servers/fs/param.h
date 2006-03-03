@@ -2,7 +2,7 @@
 #define acc_time      m2_l1
 #define addr	      m1_i3
 #define buffer	      m1_p1
-#define child	      m1_i2
+#define child_endpt      m1_i2
 #define co_mode	      m1_i1
 #define eff_grp_id    m1_i3
 #define eff_user_id   m1_i3
@@ -26,10 +26,10 @@
 #define name2_length  m1_i2
 #define nbytes        m1_i2
 #define owner	      m1_i2
-#define parent	      m1_i1
+#define parent_endpt      m1_i1
 #define pathname      m3_ca1
 #define pid	      m1_i3
-#define pro	      m1_i1
+#define ENDPT	      m1_i1
 #define ctl_req       m4_l1
 #define driver_nr     m4_l2
 #define dev_nr	      m4_l3
@@ -38,7 +38,7 @@
 #define real_user_id  m1_i2
 #define request       m1_i2
 #define sig	      m1_i2
-#define slot1	      m1_i1
+#define endpt1	      m1_i1
 #define tp	      m2_l1
 #define utime_actime  m2_l1
 #define utime_modtime m2_l2

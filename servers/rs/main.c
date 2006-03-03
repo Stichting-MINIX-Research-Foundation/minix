@@ -9,6 +9,7 @@
  */
 #include "inc.h"
 #include <minix/dmap.h>
+#include <minix/endpoint.h>
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 
@@ -31,7 +32,7 @@ PUBLIC int main(void)
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
   message m;					/* request message */
-  int call_nr, who;				/* call number and caller */
+  int call_nr, who_e,who_p;			/* call number and caller */
   int result;                 			/* result to return */
   sigset_t sigset;				/* system signal set */
   int s;
@@ -44,7 +45,11 @@ PUBLIC int main(void)
 
       /* Wait for request message. */
       get_work(&m);
-      who = m.m_source;
+      who_e = m.m_source;
+      who_p = _ENDPOINT_P(who_e);
+      if(who_p < -NR_TASKS || who_p >= NR_PROCS)
+	panic("RS","message from bogus source", who_e);
+
       call_nr = m.m_type;
 
       /* Now determine what to do.  Three types of requests are expected: 
@@ -68,8 +73,8 @@ PUBLIC int main(void)
               if (sigismember(&sigset, SIGKSTOP)) do_shutdown(NULL);
               continue;				
 	  default:				/* heartbeat notification */
-	      if (rproc_ptr[who] != NULL)	/* mark heartbeat time */ 
-		  rproc_ptr[who]->r_alive_tm = m.NOTIFY_TIMESTAMP;
+	      if (rproc_ptr[who_p] != NULL)	/* mark heartbeat time */ 
+		  rproc_ptr[who_p]->r_alive_tm = m.NOTIFY_TIMESTAMP;
 	  }
       }
 
@@ -92,7 +97,7 @@ PUBLIC int main(void)
 
           /* Finally send reply message, unless disabled. */
           if (result != EDONTREPLY) {
-              reply(who, result);
+              reply(who_e, result);
           }
       }
   }
@@ -134,7 +139,7 @@ PRIVATE void init_server(void)
       if (ip->proc_nr >= 0) {
           nr_in_use ++;
           rproc[s].r_flags = RS_IN_USE;
-          rproc[s].r_proc_nr = ip->proc_nr;
+          rproc[s].r_proc_nr_e = ip->endpoint;
           rproc[s].r_pid = getnpid(ip->proc_nr);
 	  for(t=0; t< NR_DEVICES; t++)
 	      if (dmap[t].dmap_driver == ip->proc_nr)

@@ -132,7 +132,7 @@ PUBLIC int do_mount()
   if (sp == NIL_SUPER) return(ENFILE);	/* no super block available */
 
   /* Open the device the file system lives on. */
-  if (dev_open(dev, who, m_in.rd_only ? R_BIT : (R_BIT|W_BIT)) != OK) 
+  if (dev_open(dev, who_e, m_in.rd_only ? R_BIT : (R_BIT|W_BIT)) != OK) 
   	return(EINVAL);
 
   /* Make the cache forget about blocks it has open on the filesystem */

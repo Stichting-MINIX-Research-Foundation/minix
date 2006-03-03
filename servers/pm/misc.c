@@ -19,6 +19,7 @@
 #include <minix/config.h>
 #include <minix/type.h>
 #include <string.h>
+#include <lib.h>
 #include "mproc.h"
 #include "param.h"
 
@@ -98,7 +99,7 @@ PUBLIC int do_getsysinfo()
   }
 
   dst_addr = (vir_bytes) m_in.info_where;
-  if (OK != (s=sys_datacopy(SELF, src_addr, who, dst_addr, len)))
+  if (OK != (s=sys_datacopy(SELF, src_addr, who_e, dst_addr, len)))
   	return(s);
   return(OK);
 }
@@ -116,29 +117,30 @@ PUBLIC int do_getprocnr()
   if (m_in.pid >= 0) {			/* lookup process by pid */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 		if ((rmp->mp_flags & IN_USE) && (rmp->mp_pid==m_in.pid)) {
-  			mp->mp_reply.procnr = (int) (rmp - mproc);
+  			mp->mp_reply.endpt = rmp->mp_endpoint;
   			return(OK);
 		} 
 	}
   	return(ESRCH);			
   } else if (m_in.namelen > 0) {	/* lookup process by name */
   	key_len = MIN(m_in.namelen, PROC_NAME_LEN);
- 	if (OK != (s=sys_datacopy(who, (vir_bytes) m_in.addr, 
+ 	if (OK != (s=sys_datacopy(who_e, (vir_bytes) m_in.addr, 
  			SELF, (vir_bytes) search_key, key_len))) 
  		return(s);
  	search_key[key_len] = '\0';	/* terminate for safety */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 		if (((rmp->mp_flags & (IN_USE | ZOMBIE)) == IN_USE) && 
 			strncmp(rmp->mp_name, search_key, key_len)==0) {
-  			mp->mp_reply.procnr = (int) (rmp - mproc);
+  			mp->mp_reply.endpt = rmp->mp_endpoint;
   			return(OK);
 		} 
 	}
   	return(ESRCH);			
-  } else {				/* return own/parent process number */
-  	mp->mp_reply.procnr = who;
-	mp->mp_reply.pprocnr = mp->mp_parent;  
+  } else {			/* return own/parent process number */
+  	mp->mp_reply.endpt = who_e;
+	mp->mp_reply.pendpt = mproc[mp->mp_parent].mp_endpoint;
   }
+
   return(OK);
 }
 
@@ -168,7 +170,7 @@ PUBLIC int do_reboot()
   case RBT_MONITOR:
 	code_len = m_in.reboot_strlen + 1;
 	if (code_len > sizeof(monitor_code)) return(EINVAL);
-	if (sys_datacopy(who, (vir_bytes) m_in.reboot_code,
+	if (sys_datacopy(who_e, (vir_bytes) m_in.reboot_code,
 		PM_PROC_NR, (vir_bytes) monitor_code,
 		(phys_bytes) (code_len)) != OK) return(EFAULT);
 	if (monitor_code[code_len-1] != 0) return(EINVAL);
@@ -213,7 +215,7 @@ PUBLIC int do_getsetpriority()
 		return(EINVAL);
 
 	if (arg_who == 0)
-		rmp_nr = who;
+		rmp_nr = who_p;
 	else
 		if ((rmp_nr = proc_from_pid(arg_who)) < 0)
 			return(ESRCH);
@@ -269,7 +271,7 @@ PUBLIC int do_svrctl()
       size_t copy_len;
 
       /* Copy sysgetenv structure to PM. */
-      if (sys_datacopy(who, ptr, SELF, (vir_bytes) &sysgetenv, 
+      if (sys_datacopy(who_e, ptr, SELF, (vir_bytes) &sysgetenv, 
               sizeof(sysgetenv)) != OK) return(EFAULT);  
 
       /* Set a param override? */
@@ -283,11 +285,11 @@ PUBLIC int do_svrctl()
   	 	 sizeof(local_param_overrides[local_params].value))
   		return EINVAL;
   		
-          if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.key,
+          if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
             SELF, (vir_bytes) local_param_overrides[local_params].name,
                sysgetenv.keylen)) != OK)
                	return s;
-          if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.val,
+          if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.val,
             SELF, (vir_bytes) local_param_overrides[local_params].value,
               sysgetenv.keylen)) != OK)
                	return s;
@@ -307,7 +309,7 @@ PUBLIC int do_svrctl()
       	  int p;
           /* Try to get a copy of the requested key. */
           if (sysgetenv.keylen > sizeof(search_key)) return(EINVAL);
-          if ((s = sys_datacopy(who, (vir_bytes) sysgetenv.key,
+          if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
                   SELF, (vir_bytes) search_key, sysgetenv.keylen)) != OK)
               return(s);
 
@@ -333,7 +335,7 @@ PUBLIC int do_svrctl()
       /* Value found, make the actual copy (as far as possible). */
       copy_len = MIN(val_len, sysgetenv.vallen); 
       if ((s=sys_datacopy(SELF, (vir_bytes) val_start, 
-              who, (vir_bytes) sysgetenv.val, copy_len)) != OK)
+              who_e, (vir_bytes) sysgetenv.val, copy_len)) != OK)
           return(s);
 
       return OK;
@@ -345,7 +347,7 @@ PUBLIC int do_svrctl()
 
 	if (mp->mp_effuid != SUPER_USER) return(EPERM);
 
-	if (sys_datacopy(who, (phys_bytes) ptr,
+	if (sys_datacopy(who_e, (phys_bytes) ptr,
 		PM_PROC_NR, (phys_bytes) &swapon,
 		(phys_bytes) sizeof(swapon)) != OK) return(EFAULT);
 
@@ -360,5 +362,45 @@ PUBLIC int do_svrctl()
   default:
 	return(EINVAL);
   }
+}
+
+/*===========================================================================*
+ *				_read_pm				     *
+ *===========================================================================*/
+PUBLIC ssize_t _read_pm(fd, buffer, nbytes, seg, ep)
+int fd;
+void *buffer;
+size_t nbytes;
+int seg;
+int ep;
+{
+  message m;
+
+  m.m1_i1 = _PM_SEG_FLAG | fd;
+  m.m1_i2 = nbytes;
+  m.m1_p1 = (char *) buffer;
+  m.m1_p2 = (char *) seg;
+  m.m1_p3 = (char *) ep;
+  return(_syscall(FS_PROC_NR, READ, &m));
+}
+
+/*===========================================================================*
+ *				_write_pm				     *
+ *===========================================================================*/
+PUBLIC ssize_t _write_pm(fd, buffer, nbytes, seg, ep)
+int fd;
+void *buffer;
+size_t nbytes;
+int seg;
+int ep;
+{
+  message m;
+
+  m.m1_i1 = _PM_SEG_FLAG | fd;
+  m.m1_i2 = nbytes;
+  m.m1_p1 = (char *) buffer;
+  m.m1_p2 = (char *) seg;
+  m.m1_p3 = (char *) ep;
+  return(_syscall(FS_PROC_NR, WRITE, &m));
 }
 

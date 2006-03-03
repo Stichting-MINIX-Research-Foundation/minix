@@ -6,8 +6,8 @@
 #define grp_id		m1_i1
 #define namelen		m1_i2
 #define pid		m1_i1
-#define procnr		m1_i1
-#define pprocnr		m1_i2
+#define endpt		m1_i1
+#define pendpt		m1_i2
 #define seconds		m1_i1
 #define sig		m6_i1
 #define stack_bytes	m1_i2

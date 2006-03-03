@@ -79,9 +79,9 @@ PUBLIC int do_devctl()
 /*===========================================================================*
  *				map_driver		 		     *
  *===========================================================================*/
-PUBLIC int map_driver(major, proc_nr, style)
+PUBLIC int map_driver(major, proc_nr_e, style)
 int major;			/* major number of the device */
-int proc_nr;			/* process number of the driver */
+int proc_nr_e;			/* process number of the driver */
 int style;			/* style of the device */
 {
 /* Set a new device driver mapping in the dmap table. Given that correct 
@@ -93,6 +93,7 @@ int style;			/* style of the device */
  * a system call that tries to dynamically install a new driver.
  */
   struct dmap *dp;
+  int proc_nr_n;
 
   /* Get pointer to device entry in the dmap table. */
   if (major < 0 || major >= NR_DEVICES) return(ENODEV);
@@ -102,7 +103,7 @@ int style;			/* style of the device */
    * if busy or unmutable, as unmap is called when driver has
    * exited.
    */
- if(proc_nr == NONE) {
+ if(proc_nr_e == NONE) {
 	dp->dmap_opcl = no_dev;
 	dp->dmap_io = no_dev_io;
 	dp->dmap_driver = NONE;
@@ -115,7 +116,8 @@ int style;			/* style of the device */
   if (dp->dmap_flags & DMAP_BUSY)  return(EBUSY);
 
   /* Check process number of new driver. */
-  if (! isokprocnr(proc_nr))  return(EINVAL);
+  if (isokendpt(proc_nr_e, &proc_nr_n) != OK)
+	return(EINVAL);
 
   /* Try to update the entry. */
   switch (style) {
@@ -125,10 +127,10 @@ int style;			/* style of the device */
   default:		return(EINVAL);
   }
   dp->dmap_io = gen_io;
-  dp->dmap_driver = proc_nr;
+  dp->dmap_driver = proc_nr_e;
 
   /* If a driver has completed its exec(), it can be announced to be up. */
-  if(fproc[proc_nr].fp_execced) {
+  if(fproc[proc_nr_n].fp_execced) {
 	dev_up(major);
   } else {
 	dp->dmap_flags |= DMAP_BABY;
@@ -138,15 +140,15 @@ int style;			/* style of the device */
 }
 
 /*===========================================================================*
- *				dmap_unmap_by_proc	 		     *
+ *				dmap_unmap_by_endpt	 		     *
  *===========================================================================*/
-PUBLIC void dmap_unmap_by_proc(int proc_nr)
+PUBLIC void dmap_unmap_by_endpt(int proc_nr_e)
 {
 	int i, r;
 	for (i=0; i<NR_DEVICES; i++)
-	  if(dmap[i].dmap_driver && dmap[i].dmap_driver == proc_nr)
+	  if(dmap[i].dmap_driver && dmap[i].dmap_driver == proc_nr_e)
 	    if((r=map_driver(i, NONE, 0)) != OK)
-		printf("FS: unmap of p %d / d %d failed: %d\n", proc_nr, i, r);
+		printf("FS: unmap of p %d / d %d failed: %d\n", proc_nr_e,i,r);
 
 	return;
 
@@ -225,14 +227,14 @@ PUBLIC int dmap_driver_match(int proc, int major)
 }
 
 /*===========================================================================*
- *				dmap_proc_up		 		     *
+ *				dmap_endpt_up		 		     *
  *===========================================================================*/ 
-PUBLIC void dmap_proc_up(int proc)
+PUBLIC void dmap_endpt_up(int proc_e)
 {
 	int i;
 	for (i=0; i<NR_DEVICES; i++) {
 		if(dmap[i].dmap_driver != NONE
-			&& dmap[i].dmap_driver == proc
+			&& dmap[i].dmap_driver == proc_e
 			&& (dmap[i].dmap_flags & DMAP_BABY)) {
 			dmap[i].dmap_flags &= ~DMAP_BABY;
 			dev_up(i);

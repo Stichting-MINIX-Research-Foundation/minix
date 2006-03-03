@@ -26,10 +26,8 @@ $(SERVER):	$(OBJ)
 #	install -S 256w $@
 
 # install with other servers
-install:	/sbin/$(SERVER)
-/sbin/$(SERVER):	$(SERVER)
-	install -o root -c $? $@
-#	install -o root -cs $? $@
+install:	$(SERVER)
+	install -o root -c $? /sbin/$(SERVER) 
 
 # clean up local files
 clean:

@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/endpoint.h>
 #include <fcntl.h>
 #include <signal.h>		/* needed only because mproc.h needs it */
 #include "mproc.h"
@@ -122,6 +123,7 @@ int num;			/* number to go with it */
   if (num != NO_NUM) printf(": %d",num);
   printf("\n");
 
+#if 0
   /* Allow for debug dumps if the IS server is available. */
   m.m_type = PANIC_DUMPS;
   if (OK == (s= nb_send(11, &m))) {
@@ -129,6 +131,8 @@ int num;			/* number to go with it */
   }
   printf("Shutting down: IS is not answering: %d\n", s);
   sys_abort(RBT_PANIC);
+#endif
+  sys_exit(SELF);
 }
 
 /*===========================================================================*
@@ -199,14 +203,14 @@ struct mem_map *mem_map;			/* put memory map here */
 /*===========================================================================*
  *				get_stack_ptr				     *
  *===========================================================================*/
-PUBLIC int get_stack_ptr(proc_nr, sp)
-int proc_nr;					/* process to get sp of */
+PUBLIC int get_stack_ptr(proc_nr_e, sp)
+int proc_nr_e;					/* process to get sp of */
 vir_bytes *sp;					/* put stack pointer here */
 {
   struct proc p;
   int s;
 
-  if ((s=sys_getproc(&p, proc_nr)) != OK)
+  if ((s=sys_getproc(&p, proc_nr_e)) != OK)
   	return(s);
   *sp = p.p_reg.sp;
   return(OK);
@@ -225,5 +229,20 @@ pid_t mp_pid;
 			return rmp;
 
 	return -1;
+}
+
+/*===========================================================================*
+ *				pm_isokendpt			 	     *
+ *===========================================================================*/
+PUBLIC int pm_isokendpt(int endpoint, int *proc)
+{
+	*proc = _ENDPOINT_P(endpoint);
+	if(*proc < -NR_TASKS || *proc >= NR_PROCS)
+		return EINVAL;
+	if(*proc >= 0 && endpoint != mproc[*proc].mp_endpoint)
+		return EDEADSRCDST;
+	if(*proc >= 0 && !(mproc[*proc].mp_flags & IN_USE))
+		return EDEADSRCDST;
+	return OK;
 }
 

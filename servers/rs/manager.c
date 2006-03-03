@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <minix/dmap.h>
+#include <minix/endpoint.h>
 
 /* Allocate variables. */
 struct rproc rproc[NR_SYS_PROCS];		/* system process table */
@@ -191,7 +192,7 @@ PUBLIC void do_exit(message *m_ptr)
   while ( (exit_pid = waitpid(-1, &exit_status, WNOHANG)) != 0 ) {
 
 #if VERBOSE
-      printf("RS: proc %d, pid %d, ", rp->r_proc_nr, exit_pid); 
+      printf("RS: proc %d, pid %d, ", rp->r_proc_nr_e, exit_pid); 
       if (WIFSIGNALED(exit_status)) {
           printf("killed, signal number %d\n", WTERMSIG(exit_status));
       } 
@@ -206,11 +207,11 @@ PUBLIC void do_exit(message *m_ptr)
       for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
           if ((rp->r_flags & RS_IN_USE) && rp->r_pid == exit_pid) {
 
-              rproc_ptr[rp->r_proc_nr] = NULL;		/* invalidate */
+              rproc_ptr[rp->r_proc_nr_e] = NULL;		/* invalidate */
 
               if ((rp->r_flags & RS_EXITING) || shutting_down) {
 		  rp->r_flags = 0;			/* release slot */
-		  rproc_ptr[rp->r_proc_nr] = NULL;
+		  rproc_ptr[rp->r_proc_nr_e] = NULL;
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
 		      rp->r_restarts = -1;		/* reset counter */
@@ -289,7 +290,7 @@ message *m_ptr;
 	          if (now - rp->r_alive_tm > 2*rp->r_period &&
 		      rp->r_pid > 0) { 
 #if VERBOSE
-                      printf("RS: service %d reported late\n", rp->r_proc_nr); 
+                      printf("RS: service %d reported late\n", rp->r_proc_nr_e); 
 #endif
                       kill(rp->r_pid, SIGKILL);		/* simulate crash */
 		  }
@@ -300,9 +301,9 @@ message *m_ptr;
 	       */
 	      else if (now - rp->r_check_tm > rp->r_period) {
 #if VERBOSE
-                  printf("RS: status request sent to %d\n", rp->r_proc_nr); 
+                  printf("RS: status request sent to %d\n", rp->r_proc_nr_e); 
 #endif
-		  notify(rp->r_proc_nr);		/* request status */
+		  notify(rp->r_proc_nr_e);		/* request status */
 		  rp->r_check_tm = now;			/* mark time */
               }
           }
@@ -325,7 +326,7 @@ struct rproc *rp;
  * process will be inhibited from running by the NO_PRIV flag. Only let the
  * child run once its privileges have been set by the parent.
  */
-  int child_proc_nr;				/* child process slot */
+  int child_proc_nr_e, child_proc_nr_n;		/* child process slot */
   pid_t child_pid;				/* child's process id */
   char *file_only;
   int s;
@@ -350,7 +351,7 @@ struct rproc *rp;
       exit(EXEC_FAILED);				/* terminate child */
 
   default:						/* parent process */
-      child_proc_nr = getnprocnr(child_pid);		/* get child slot */ 
+      child_proc_nr_e = getnprocnr(child_pid);		/* get child slot */ 
       break;						/* continue below */
   }
 
@@ -359,11 +360,11 @@ struct rproc *rp;
    * not yet set. First try to set the device driver mapping at the FS.
    */
   if (rp->r_dev_nr > 0) {				/* set driver map */
-      if ((s=mapdriver(child_proc_nr, rp->r_dev_nr, rp->r_dev_style)) < 0) {
+      if ((s=mapdriver(child_proc_nr_e, rp->r_dev_nr, rp->r_dev_style)) < 0) {
           report("RS", "couldn't map driver", errno);
+          rp->r_flags |= RS_EXITING;			/* expect exit */
 	  if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
 	  else report("RS", "didn't kill pid", child_pid);
-          rp->r_flags |= RS_EXITING;			/* expect exit */
 	  return(s);					/* return error */
       }
   }
@@ -372,17 +373,18 @@ struct rproc *rp;
    * Now, set the privilege structure for the child process to let is run.
    * This should succeed: we tested number in use above.
    */
-  if ((s = sys_privctl(child_proc_nr, SYS_PRIV_INIT, 0, NULL)) < 0) {
+  if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_INIT, 0, NULL)) < 0) {
       report("RS","call to SYSTEM failed", s);		/* to let child run */
+      rp->r_flags |= RS_EXITING;			/* expect exit */
       if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
       else report("RS", "didn't kill pid", child_pid);
-      rp->r_flags |= RS_EXITING;			/* expect exit */
       return(s);					/* return error */
   }
 
 #if VERBOSE
-      printf("RS: started '%s', major %d, pid %d, proc_nr %d\n", 
-          rp->r_cmd, rp->r_dev_nr, child_pid, child_proc_nr);
+      printf("RS: started '%s', major %d, pid %d, endpoint %d, proc %d\n", 
+          rp->r_cmd, rp->r_dev_nr, child_pid,
+	  child_proc_nr_e, child_proc_nr_n);
 #endif
 
   /* The system service now has been successfully started. Update the rest
@@ -390,14 +392,15 @@ struct rproc *rp;
    * thing that can go wrong now, is that execution fails at the child. If 
    * that's the case, the child will exit. 
    */
+  child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
   rp->r_flags = RS_IN_USE;			/* mark slot in use */
   rp->r_restarts += 1;				/* raise nr of restarts */
-  rp->r_proc_nr = child_proc_nr;		/* set child details */
+  rp->r_proc_nr_e = child_proc_nr_e;		/* set child details */
   rp->r_pid = child_pid;
   rp->r_check_tm = 0;				/* not check yet */
   getuptime(&rp->r_alive_tm); 			/* currently alive */
   rp->r_stop_tm = 0;				/* not exiting yet */
-  rproc_ptr[child_proc_nr] = rp;		/* mapping for fast access */
+  rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
   return(OK);
 }
 

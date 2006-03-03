@@ -19,6 +19,7 @@
 #include "pm.h"
 #include <sys/stat.h>
 #include <minix/callnr.h>
+#include <minix/endpoint.h>
 #include <minix/com.h>
 #include <a.out.h>
 #include <signal.h>
@@ -53,7 +54,7 @@ PUBLIC int do_exec()
  */
   register struct mproc *rmp;
   struct mproc *sh_mp;
-  int m, r, fd, ft, sn;
+  int m, r, r2, fd, ft, sn;
   static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
   static char name_buf[PATH_MAX]; /* the name of the file to exec */
   char *new_sp, *name, *basename;
@@ -73,14 +74,14 @@ PUBLIC int do_exec()
   /* Get the exec file name and see if the file is executable. */
   src = (vir_bytes) m_in.exec_name;
   dst = (vir_bytes) name_buf;
-  r = sys_datacopy(who, (vir_bytes) src,
+  r = sys_datacopy(who_e, (vir_bytes) src,
 		PM_PROC_NR, (vir_bytes) dst, (phys_bytes) m_in.exec_len);
   if (r != OK) return(r);	/* file name not in user data segment */
 
   /* Fetch the stack from the user before destroying the old core image. */
   src = (vir_bytes) m_in.stack_ptr;
   dst = (vir_bytes) mbuf;
-  r = sys_datacopy(who, (vir_bytes) src,
+  r = sys_datacopy(who_e, (vir_bytes) src,
   			PM_PROC_NR, (vir_bytes) dst, (phys_bytes)stk_bytes);
   /* can't fetch stack (e.g. bad virtual addr) */
   if (r != OK) return(EACCES);	
@@ -89,7 +90,7 @@ PUBLIC int do_exec()
   name = name_buf;	/* name of file to exec. */
   do {
 	s_p = &s_buf[r];
-	tell_fs(CHDIR, who, FALSE, 0);  /* switch to the user's FS environ */
+	tell_fs(CHDIR, who_e, FALSE, 0);  /* switch to the user's FS environ */
 	fd = allowed(name, s_p, X_BIT);	/* is file executable? */
 	if (fd < 0)  return(fd);		/* file was not executable */
 
@@ -128,16 +129,16 @@ PUBLIC int do_exec()
   patch_ptr(mbuf, vsp);
   src = (vir_bytes) mbuf;
   r = sys_datacopy(PM_PROC_NR, (vir_bytes) src,
-  			who, (vir_bytes) vsp, (phys_bytes)stk_bytes);
-  if (r != OK) panic(__FILE__,"do_exec stack copy err on", who);
+  			who_e, (vir_bytes) vsp, (phys_bytes)stk_bytes);
+  if (r != OK) panic(__FILE__,"do_exec stack copy err on", who_e);
 
   /* Read in text and data segments. */
   if (sh_mp != NULL) {
 	lseek(fd, (off_t) text_bytes, SEEK_CUR);  /* shared: skip text */
   } else {
-	rw_seg(0, fd, who, T, text_bytes);
+	rw_seg(0, fd, who_e, T, text_bytes);
   }
-  rw_seg(0, fd, who, D, data_bytes);
+  rw_seg(0, fd, who_e, D, data_bytes);
 
   close(fd);			/* don't need exec file any more */
 
@@ -145,11 +146,11 @@ PUBLIC int do_exec()
   if ((rmp->mp_flags & TRACED) == 0) { /* suppress if tracing */
 	if (s_buf[0].st_mode & I_SET_UID_BIT) {
 		rmp->mp_effuid = s_buf[0].st_uid;
-		tell_fs(SETUID,who, (int)rmp->mp_realuid, (int)rmp->mp_effuid);
+		tell_fs(SETUID, who_e, (int)rmp->mp_realuid, (int)rmp->mp_effuid);
 	}
 	if (s_buf[0].st_mode & I_SET_GID_BIT) {
 		rmp->mp_effgid = s_buf[0].st_gid;
-		tell_fs(SETGID,who, (int)rmp->mp_realgid, (int)rmp->mp_effgid);
+		tell_fs(SETGID,who_e, (int)rmp->mp_realgid, (int)rmp->mp_effgid);
 	}
   }
 
@@ -169,14 +170,16 @@ PUBLIC int do_exec()
   rmp->mp_flags |= ft;		/* turn it on for separate I & D files */
   new_sp = (char *) vsp;
 
-  tell_fs(EXEC, who, 0, 0);	/* allow FS to handle FD_CLOEXEC files */
+  tell_fs(EXEC, who_e, 0, 0);	/* allow FS to handle FD_CLOEXEC files */
 
   /* System will save command line for debugging, ps(1) output, etc. */
   basename = strrchr(name, '/');
   if (basename == NULL) basename = name; else basename++;
   strncpy(rmp->mp_name, basename, PROC_NAME_LEN-1);
   rmp->mp_name[PROC_NAME_LEN] = '\0';
-  sys_exec(who, new_sp, basename, pc);
+  if((r2=sys_exec(who_e, new_sp, basename, pc)) != OK) {
+	panic(__FILE__,"sys_exec failed", r2);
+  }
 
   /* Cause a signal if this process is traced. */
   if (rmp->mp_flags & TRACED) check_sig(rmp->mp_pid, SIGTRAP);
@@ -304,7 +307,7 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
   vir_clicks text_clicks, data_clicks, gap_clicks, stack_clicks, tot_clicks;
   phys_clicks new_base;
   phys_bytes bytes, base, bss_offset;
-  int s;
+  int s, r2;
 
   /* No need to allocate text if it can be shared. */
   if (sh_mp != NULL) text_bytes = 0;
@@ -366,7 +369,10 @@ phys_bytes tot_bytes;		/* total memory to allocate, including gap */
   	+ rmp->mp_seg[D].mem_len + gap_clicks;
 #endif
 
-  sys_newmap(who, rmp->mp_seg);   /* report new map to the kernel */
+  if((r2=sys_newmap(who_e, rmp->mp_seg)) != OK) {
+	/* report new map to the kernel */
+	panic(__FILE__,"sys_newmap failed", r2);
+  }
 
   /* The old memory may have been swapped out, but the new memory is real. */
   rmp->mp_flags &= ~(WAITING|ONSWAP|SWAPIN);
@@ -522,10 +528,10 @@ char *script;			/* name of script to interpret */
 /*===========================================================================*
  *				rw_seg					     *
  *===========================================================================*/
-PUBLIC void rw_seg(rw, fd, proc, seg, seg_bytes0)
+PUBLIC void rw_seg(rw, fd, proc_e, seg, seg_bytes0)
 int rw;				/* 0 = read, 1 = write */
 int fd;				/* file descriptor to read from / write to */
-int proc;			/* process number */
+int proc_e;			/* process number (endpoint) */
 int seg;			/* T, D, or S */
 phys_bytes seg_bytes0;		/* how much is to be transferred? */
 {
@@ -545,21 +551,25 @@ phys_bytes seg_bytes0;		/* how much is to be transferred? */
  * partially initialized.
  */
 
-  int new_fd, bytes, r;
+  int bytes, r, proc_n;
   char *ubuf_ptr;
-  struct mem_map *sp = &mproc[proc].mp_seg[seg];
+  struct mem_map *sp;
   phys_bytes seg_bytes = seg_bytes0;
 
-  new_fd = (proc << 7) | (seg << 5) | fd;
+  if(pm_isokendpt(proc_e, &proc_n) != OK || proc_n < 0)
+	return;
+
+  sp = &mproc[proc_n].mp_seg[seg];
+
   ubuf_ptr = (char *) ((vir_bytes) sp->mem_vir << CLICK_SHIFT);
 
   while (seg_bytes != 0) {
 #define PM_CHUNK_SIZE 8192
 	bytes = MIN((INT_MAX / PM_CHUNK_SIZE) * PM_CHUNK_SIZE, seg_bytes);
-	if (rw == 0) {
-		r = read(new_fd, ubuf_ptr, bytes);
+	if(!rw) {
+		r = _read_pm(fd, ubuf_ptr, bytes, seg, proc_e);
 	} else {
-		r = write(new_fd, ubuf_ptr, bytes);
+		r = _write_pm(fd, ubuf_ptr, bytes, seg, proc_e);
 	}
 	if (r != bytes) break;
 	ubuf_ptr += bytes;

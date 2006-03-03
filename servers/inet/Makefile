@@ -28,10 +28,8 @@ all:	inet
 inet:	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) version.c $(LIBS)
 
-install:	/usr/sbin/inet
-
-/usr/sbin/inet:	inet
-	install -c $? $@
+install: inet
+	install -c $? /usr/sbin/inet
 
 clean:
 	rm -f $(OBJ) inet *.bak

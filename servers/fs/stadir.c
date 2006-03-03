@@ -55,8 +55,11 @@ PUBLIC int do_chdir()
   int r;
   register struct fproc *rfp;
 
-  if (who == PM_PROC_NR) {
-	rfp = &fproc[m_in.slot1];
+  if (who_e == PM_PROC_NR) {
+	int slot;
+	if(isokendpt(m_in.endpt1, &slot) != OK)
+		return EINVAL;
+	rfp = &fproc[slot];
 	put_inode(fp->fp_rootdir);
 	dup_inode(fp->fp_rootdir = rfp->fp_rootdir);
 	put_inode(fp->fp_workdir);
@@ -217,7 +220,7 @@ char *user_addr;		/* user space address where stat buf goes */
 
   /* Copy the struct to user space. */
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) &statbuf,
-  		who, (vir_bytes) user_addr, (phys_bytes) sizeof(statbuf));
+  		who_e, (vir_bytes) user_addr, (phys_bytes) sizeof(statbuf));
   return(r);
 }
 
@@ -237,7 +240,7 @@ PUBLIC int do_fstatfs()
   st.f_bsize = rfilp->filp_ino->i_sp->s_block_size;
 
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) &st,
-  		who, (vir_bytes) m_in.buffer, (phys_bytes) sizeof(st));
+  		who_e, (vir_bytes) m_in.buffer, (phys_bytes) sizeof(st));
 
    return(r);
 }
@@ -283,7 +286,7 @@ PUBLIC int do_rdlink()
        else {
                bp = get_block(rip->i_dev, b, NORMAL);
                r = sys_vircopy(SELF, D, (vir_bytes) bp->b_data,
-		who, D, (vir_bytes) m_in.name2, (vir_bytes) rip->i_size);
+		who_e, D, (vir_bytes) m_in.name2, (vir_bytes) rip->i_size);
 
                if (r == OK) r = rip->i_size;
                put_block(bp, DIRECTORY_BLOCK);

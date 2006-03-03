@@ -37,6 +37,8 @@ PUBLIC int do_fork()
   phys_clicks prog_clicks, child_base;
   phys_bytes prog_bytes, parent_abs, child_abs;	/* Intel only */
   pid_t new_pid;
+  static int next_child;
+  int n = 0, r;
 
  /* If tables might fill up during FORK, don't even start since recovery half
   * way through is such a nuisance.
@@ -64,14 +66,22 @@ PUBLIC int do_fork()
   if (s < 0) panic(__FILE__,"do_fork can't copy", s);
 
   /* Find a slot in 'mproc' for the child process.  A slot must exist. */
-  for (rmc = &mproc[0]; rmc < &mproc[NR_PROCS]; rmc++)
-	if ( (rmc->mp_flags & IN_USE) == 0) break;
+  do {
+        next_child = (next_child+1) % NR_PROCS;
+	n++;
+  } while((mproc[next_child].mp_flags & IN_USE) && n <= NR_PROCS);
+  if(n > NR_PROCS)
+	panic(__FILE__,"do_fork can't find child slot", NO_NUM);
+  if(next_child < 0 || next_child >= NR_PROCS
+ || (mproc[next_child].mp_flags & IN_USE))
+	panic(__FILE__,"do_fork finds wrong child slot", next_child);
 
+  rmc = &mproc[next_child];
   /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
   child_nr = (int)(rmc - mproc);	/* slot number of the child */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
-  rmc->mp_parent = who;			/* record child's parent */
+  rmc->mp_parent = who_p;			/* record child's parent */
   /* inherit only these flags */
   rmc->mp_flags &= (IN_USE|SEPARATE|PRIV_PROC|DONT_SWAP);
   rmc->mp_child_utime = 0;		/* reset administration */
@@ -92,15 +102,20 @@ PUBLIC int do_fork()
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
   /* Tell kernel and file system about the (now successful) FORK. */
-  sys_fork(who, child_nr);
-  tell_fs(FORK, who, child_nr, rmc->mp_pid);
+  if((r=sys_fork(who_e, child_nr, &rmc->mp_endpoint)) != OK) {
+  	panic(__FILE__,"do_fork can't sys_fork", r);
+  }
+  tell_fs(FORK, who_e, rmc->mp_endpoint, rmc->mp_pid);
 
   /* Report child's memory map to kernel. */
-  sys_newmap(child_nr, rmc->mp_seg);
+  if((r=sys_newmap(rmc->mp_endpoint, rmc->mp_seg)) != OK) {
+  	panic(__FILE__,"do_fork can't sys_newmap", r);
+  }
 
   /* Reply to child to wake it up. */
   setreply(child_nr, 0);		/* only parent gets details */
-  rmp->mp_reply.procnr = child_nr;	/* child's process number */
+  rmp->mp_reply.endpt = rmc->mp_endpoint;	/* child's process number */
+
   return(new_pid);		 	/* child's pid */
 }
 
@@ -127,29 +142,33 @@ int exit_status;		/* the process' exit status (for parent) */
  * parent is waiting, release the rest, else keep the process slot and
  * become a zombie.
  */
-  register int proc_nr;
-  int parent_waiting, right_child;
+  register int proc_nr, proc_nr_e;
+  int parent_waiting, right_child, r;
   pid_t pidarg, procgrp;
   struct mproc *p_mp;
   clock_t t[5];
 
   proc_nr = (int) (rmp - mproc);	/* get process slot number */
+  proc_nr_e = rmp->mp_endpoint;
 
   /* Remember a session leader's process group. */
   procgrp = (rmp->mp_pid == mp->mp_procgrp) ? mp->mp_procgrp : 0;
 
   /* If the exited process has a timer pending, kill it. */
-  if (rmp->mp_flags & ALARM_ON) set_alarm(proc_nr, (unsigned) 0);
+  if (rmp->mp_flags & ALARM_ON) set_alarm(proc_nr_e, (unsigned) 0);
 
   /* Do accounting: fetch usage times and accumulate at parent. */
-  sys_times(proc_nr, t);
+  if((r=sys_times(proc_nr_e, t)) != OK)
+  	panic(__FILE__,"pm_exit: sys_times failed", r);
+
   p_mp = &mproc[rmp->mp_parent];			/* process' parent */
   p_mp->mp_child_utime += t[0] + rmp->mp_child_utime;	/* add user time */
   p_mp->mp_child_stime += t[1] + rmp->mp_child_stime;	/* add system time */
 
   /* Tell the kernel and FS that the process is no longer runnable. */
-  tell_fs(EXIT, proc_nr, 0, 0);  /* file system can free the proc slot */
-  sys_exit(proc_nr);
+  tell_fs(EXIT, proc_nr_e, 0, 0);  /* file system can free the proc slot */
+  if((r=sys_exit(proc_nr_e)) != OK)
+  	panic(__FILE__,"pm_exit: sys_exit failed", r);
 
   /* Pending reply messages for the dead process cannot be delivered. */
   rmp->mp_flags &= ~REPLY;
@@ -222,7 +241,7 @@ PUBLIC int do_waitpid()
    */
   children = 0;
   for (rp = &mproc[0]; rp < &mproc[NR_PROCS]; rp++) {
-	if ( (rp->mp_flags & IN_USE) && rp->mp_parent == who) {
+	if ( (rp->mp_flags & IN_USE) && rp->mp_parent == who_p) {
 		/* The value of pidarg determines which children qualify. */
 		if (pidarg  > 0 && pidarg != rp->mp_pid) continue;
 		if (pidarg < -1 && -pidarg != rp->mp_procgrp) continue;

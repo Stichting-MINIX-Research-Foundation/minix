@@ -18,11 +18,12 @@ EXTERN struct fproc {
   int  fp_cum_io_partial;	/* partial byte count if rd/wr can't finish */
   char fp_suspended;		/* set to indicate process hanging */
   char fp_revived;		/* set to indicate process being revived */
-  char fp_task;			/* which task is proc suspended on */
+  int fp_task;			/* which task is proc suspended on */
   char fp_sesldr;		/* true if proc is a session leader */
   char fp_execced;		/* true if proc has exec()ced after fork */
   pid_t fp_pid;			/* process id */
   long fp_cloexec;		/* bit map for POSIX Table 6-2 FD_CLOEXEC */
+  int fp_endpoint;		/* kernel endpoint number of this process */
 } fproc[NR_PROCS];
 
 /* Field values. */

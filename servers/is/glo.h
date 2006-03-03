@@ -12,7 +12,7 @@ extern int sys_panic;		/* if set, shutdown can be done */
 /* The parameters of the call are kept here. */
 extern message m_in;		/* the input message itself */
 extern message m_out;		/* the output message used for reply */
-extern int who;			/* caller's proc number */
+extern int who_e;		/* caller's proc number */
 extern int callnr;		/* system call number */
 extern int dont_reply;		/* normally 0; set to 1 to inhibit reply */
 

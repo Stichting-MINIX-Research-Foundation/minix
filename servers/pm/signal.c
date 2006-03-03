@@ -24,6 +24,7 @@
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <minix/callnr.h>
+#include <minix/endpoint.h>
 #include <minix/com.h>
 #include <signal.h>
 #include <sys/sigcontext.h>
@@ -53,7 +54,7 @@ PUBLIC int do_sigaction()
   svp = &mp->mp_sigact[m_in.sig_nr];
   if ((struct sigaction *) m_in.sig_osa != (struct sigaction *) NULL) {
 	r = sys_datacopy(PM_PROC_NR,(vir_bytes) svp,
-		who, (vir_bytes) m_in.sig_osa, (phys_bytes) sizeof(svec));
+		who_e, (vir_bytes) m_in.sig_osa, (phys_bytes) sizeof(svec));
 	if (r != OK) return(r);
   }
 
@@ -61,7 +62,7 @@ PUBLIC int do_sigaction()
   	return(OK);
 
   /* Read in the sigaction structure. */
-  r = sys_datacopy(who, (vir_bytes) m_in.sig_nsa,
+  r = sys_datacopy(who_e, (vir_bytes) m_in.sig_nsa,
 		PM_PROC_NR, (vir_bytes) &svec, (phys_bytes) sizeof(svec));
   if (r != OK) return(r);
 
@@ -183,7 +184,7 @@ PUBLIC int do_sigreturn()
   mp->mp_sigmask = (sigset_t) m_in.sig_set;
   sigdelset(&mp->mp_sigmask, SIGKILL);
 
-  r = sys_sigreturn(who, (struct sigmsg *) m_in.sig_context);
+  r = sys_sigreturn(who_e, (struct sigmsg *) m_in.sig_context);
   check_pending(mp);
   return(r);
 }
@@ -213,16 +214,27 @@ PUBLIC int ksig_pending()
  * signals until all signals are handled. If there are no more signals,
  * NONE is returned in the process number field.
  */ 
- int proc_nr;
+ int proc_nr_e;
  sigset_t sig_map;
 
  while (TRUE) {
-   sys_getksig(&proc_nr, &sig_map); 	/* get an arbitrary pending signal */
-   if (NONE == proc_nr) {		/* stop if no more pending signals */
+   int r;
+   /* get an arbitrary pending signal */
+   if((r=sys_getksig(&proc_nr_e, &sig_map)) != OK)
+  	panic(__FILE__,"sys_getksig failed", r);
+   if (NONE == proc_nr_e) {		/* stop if no more pending signals */
  	break;
    } else {
-   	handle_sig(proc_nr, sig_map);	/* handle the received signal */
-	sys_endksig(proc_nr);		/* tell kernel it's done */
+ 	int proc_nr_p;
+ 	if(pm_isokendpt(proc_nr_e, &proc_nr_p) != OK)
+  		panic(__FILE__,"sys_getksig strange process", proc_nr_e);
+   	handle_sig(proc_nr_e, sig_map);	/* handle the received signal */
+	/* If the process still exists to the kernel after the signal
+	 * has been handled ...
+	 */
+        if ((mproc[proc_nr_p].mp_flags & (IN_USE | ZOMBIE)) == IN_USE)
+	   if((r=sys_endksig(proc_nr_e)) != OK)	/* ... tell kernel it's done */
+  		panic(__FILE__,"sys_endksig failed", r);
    }
  } 
  return(SUSPEND);			/* prevents sending reply */
@@ -231,16 +243,19 @@ PUBLIC int ksig_pending()
 /*===========================================================================*
  *				handle_sig				     *
  *===========================================================================*/
-PRIVATE void handle_sig(proc_nr, sig_map)
-int proc_nr;
+PRIVATE void handle_sig(proc_nr_e, sig_map)
+int proc_nr_e;
 sigset_t sig_map;
 {
   register struct mproc *rmp;
-  int i;
+  int i, proc_nr;
   pid_t proc_id, id;
 
+  if(pm_isokendpt(proc_nr_e, &proc_nr) != OK || proc_nr < 0)
+	return;
   rmp = &mproc[proc_nr];
-  if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) return;
+  if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE)
+	return;
   proc_id = rmp->mp_pid;
   mp = &mproc[0];			/* pretend signals are from PM */
   mp->mp_procgrp = rmp->mp_procgrp;	/* get process group right */
@@ -275,14 +290,14 @@ sigset_t sig_map;
 PUBLIC int do_alarm()
 {
 /* Perform the alarm(seconds) system call. */
-  return(set_alarm(who, m_in.seconds));
+  return(set_alarm(who_e, m_in.seconds));
 }
 
 /*===========================================================================*
  *				set_alarm				     *
  *===========================================================================*/
-PUBLIC int set_alarm(proc_nr, sec)
-int proc_nr;			/* process that wants the alarm */
+PUBLIC int set_alarm(proc_nr_e, sec)
+int proc_nr_e;			/* process that wants the alarm */
 int sec;			/* how many seconds delay before the signal */
 {
 /* This routine is used by do_alarm() to set the alarm timer.  It is also used
@@ -293,12 +308,16 @@ int sec;			/* how many seconds delay before the signal */
   clock_t uptime;	/* current system time */
   int remaining;	/* previous time left in seconds */
   int s;
+  int proc_nr_n;
+
+  if(pm_isokendpt(proc_nr_e, &proc_nr_n) != OK)
+	return EINVAL;
 
   /* First determine remaining time of previous alarm, if set. */
-  if (mproc[proc_nr].mp_flags & ALARM_ON) {
+  if (mproc[proc_nr_n].mp_flags & ALARM_ON) {
   	if ( (s=getuptime(&uptime)) != OK) 
   		panic(__FILE__,"set_alarm couldn't get uptime", s);
-  	exptime = *tmr_exp_time(&mproc[proc_nr].mp_timer);
+  	exptime = *tmr_exp_time(&mproc[proc_nr_n].mp_timer);
   	remaining = (int) ((exptime - uptime + (HZ-1))/HZ);
   	if (remaining < 0) remaining = 0;	
   } else {
@@ -326,11 +345,12 @@ int sec;			/* how many seconds delay before the signal */
 	ticks = LONG_MAX;	/* eternity (really TMR_NEVER) */
 
   if (ticks != 0) {
-  	pm_set_timer(&mproc[proc_nr].mp_timer, ticks, cause_sigalrm, proc_nr);
-  	mproc[proc_nr].mp_flags |=  ALARM_ON;
-  } else if (mproc[proc_nr].mp_flags & ALARM_ON) {
-  	pm_cancel_timer(&mproc[proc_nr].mp_timer);
-  	mproc[proc_nr].mp_flags &= ~ALARM_ON;
+  	pm_set_timer(&mproc[proc_nr_n].mp_timer, ticks,
+		cause_sigalrm, proc_nr_e);
+  	mproc[proc_nr_n].mp_flags |=  ALARM_ON;
+  } else if (mproc[proc_nr_n].mp_flags & ALARM_ON) {
+  	pm_cancel_timer(&mproc[proc_nr_n].mp_timer);
+  	mproc[proc_nr_n].mp_flags &= ~ALARM_ON;
   }
   return(remaining);
 }
@@ -341,11 +361,17 @@ int sec;			/* how many seconds delay before the signal */
 PRIVATE void cause_sigalrm(tp)
 struct timer *tp;
 {
-  int proc_nr;
+  int proc_nr_e, proc_nr_n;
   register struct mproc *rmp;
 
-  proc_nr = tmr_arg(tp)->ta_int;	/* get process from timer */
-  rmp = &mproc[proc_nr];
+  /* get process from timer */
+  if(pm_isokendpt(tmr_arg(tp)->ta_int, &proc_nr_n) != OK) {
+	printf("PM: ignoring timer for invalid enpoint %d\n",
+		tmr_arg(tp)->ta_int);
+	return;
+  }
+
+  rmp = &mproc[proc_nr_n];
 
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) return;
   if ((rmp->mp_flags & ALARM_ON) == 0) return;
@@ -429,8 +455,8 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	sm.sm_signo = signo;
 	sm.sm_sighandler = (vir_bytes) rmp->mp_sigact[signo].sa_handler;
 	sm.sm_sigreturn = rmp->mp_sigreturn;
-	if ((s=get_stack_ptr(slot, &new_sp)) != OK)
-		panic(__FILE__,"couldn't get new stack pointer",s);
+	if ((s=get_stack_ptr(rmp->mp_endpoint, &new_sp)) != OK)
+		panic(__FILE__,"couldn't get new stack pointer (for sig)",s);
 	sm.sm_stkptr = new_sp;
 
 	/* Make room for the sigcontext and sigframe struct. */
@@ -451,7 +477,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		rmp->mp_sigact[signo].sa_handler = SIG_DFL;
 	}
 
-	if (OK == (s=sys_sigsend(slot, &sm))) {
+	if (OK == (s=sys_sigsend(rmp->mp_endpoint, &sm))) {
 
 		sigdelset(&rmp->mp_sigpending, signo);
 		/* If process is hanging on PAUSE, WAIT, SIGSUSPEND, tty, 
@@ -460,10 +486,10 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		unpause(slot);
 		return;
 	}
-  	panic(__FILE__, "warning, sys_sigsend failed", s);
+  	panic(__FILE__, "sys_sigsend failed", s);
   }
   else if (sigismember(&rmp->mp_sig2mess, signo)) {
-  	if (OK != (s=sys_kill(slot,signo)))
+  	if (OK != (s=sys_kill(rmp->mp_endpoint,signo)))
   		panic(__FILE__, "warning, sys_kill failed", s);
   	return;
   }
@@ -483,7 +509,7 @@ doterminate:
 	}
 #endif
 	/* Switch to the user's FS environment and dump core. */
-	tell_fs(CHDIR, slot, FALSE, 0);
+	tell_fs(CHDIR, rmp->mp_endpoint, FALSE, 0);
 	dump_core(rmp);
   }
   pm_exit(rmp, 0);		/* terminate process */
@@ -607,7 +633,7 @@ int pro;			/* which process number */
   }
 
   /* Process is not hanging on an PM call.  Ask FS to take a look. */
-  tell_fs(UNPAUSE, pro, 0, 0);
+  tell_fs(UNPAUSE, rmp->mp_endpoint, 0, 0);
 }
 
 /*===========================================================================*
@@ -638,8 +664,8 @@ register struct mproc *rmp;	/* whose core is to be dumped */
    * the adjust() for sending a signal to fail due to safety checking.  
    * Maybe make SAFETY_BYTES a parameter.
    */
-  if ((s=get_stack_ptr(slot, &current_sp)) != OK)
-	panic(__FILE__,"couldn't get new stack pointer",s);
+  if ((s=get_stack_ptr(rmp->mp_endpoint, &current_sp)) != OK)
+	panic(__FILE__,"couldn't get new stack pointer (for core)",s);
   adjust(rmp, rmp->mp_seg[D].mem_len, current_sp);
 
   /* Write the memory map of all segments to begin the core file. */
@@ -651,7 +677,7 @@ register struct mproc *rmp;	/* whose core is to be dumped */
 
   /* Write out the whole kernel process table entry to get the regs. */
   trace_off = 0;
-  while (sys_trace(T_GETUSER, slot, trace_off, &trace_data) == OK) {
+  while (sys_trace(T_GETUSER, rmp->mp_endpoint, trace_off, &trace_data) == OK) {
 	if (write(fd, (char *) &trace_data, (unsigned) sizeof (long))
 	    != (unsigned) sizeof (long)) {
 		close(fd);
@@ -662,7 +688,7 @@ register struct mproc *rmp;	/* whose core is to be dumped */
 
   /* Loop through segments and write the segments themselves out. */
   for (seg = 0; seg < NR_LOCAL_SEGS; seg++) {
-	rw_seg(1, fd, slot, seg,
+	rw_seg(1, fd, rmp->mp_endpoint, seg,
 		(phys_bytes) rmp->mp_seg[seg].mem_len << CLICK_SHIFT);
   }
   close(fd);

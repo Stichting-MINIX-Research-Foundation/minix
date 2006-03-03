@@ -4,7 +4,7 @@
  *   do_select:	       perform the SELECT system call
  *   select_callback:  notify select system of possible fd operation 
  *   select_notified:  low-level entry for device notifying select
- *   select_unsuspend_by_proc: cancel a blocking select on exiting driver
+ *   select_unsuspend_by_endpt: cancel a blocking select on exiting driver
  * 
  * Changes:
  *   6 june 2005  Created (Ben Gras)
@@ -27,7 +27,7 @@
 
 PRIVATE struct selectentry {
 	struct fproc *requestor;	/* slot is free iff this is NULL */
-	int req_procnr;
+	int req_endpt;
 	fd_set readfds, writefds, errorfds;
 	fd_set ready_readfds, ready_writefds, ready_errorfds;
 	fd_set *vir_readfds, *vir_writefds, *vir_errorfds;
@@ -176,13 +176,13 @@ PRIVATE void copy_fdsets(struct selectentry *e)
 {
 	if (e->vir_readfds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_readfds,
-		e->req_procnr, D, (vir_bytes) e->vir_readfds, sizeof(fd_set));
+		e->req_endpt, D, (vir_bytes) e->vir_readfds, sizeof(fd_set));
 	if (e->vir_writefds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_writefds,
-		e->req_procnr, D, (vir_bytes) e->vir_writefds, sizeof(fd_set));
+		e->req_endpt, D, (vir_bytes) e->vir_writefds, sizeof(fd_set));
 	if (e->vir_errorfds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_errorfds,
-		e->req_procnr, D, (vir_bytes) e->vir_errorfds, sizeof(fd_set));
+		e->req_endpt, D, (vir_bytes) e->vir_errorfds, sizeof(fd_set));
 
 	return;
 }
@@ -207,7 +207,7 @@ PUBLIC int do_select(void)
 	if (s >= MAXSELECTS)
 		return ENOSPC;
 
-	selecttab[s].req_procnr = who;
+	selecttab[s].req_endpt = who_e;
 	selecttab[s].nfds = 0;
 	selecttab[s].nreadyfds = 0;
 	memset(selecttab[s].filps, 0, sizeof(selecttab[s].filps));
@@ -226,24 +226,24 @@ PUBLIC int do_select(void)
 
 	/* copy args */
 	if (selecttab[s].vir_readfds
-	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_READFDS,
+	 && (r=sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_READFDS,
 		SELF, D, (vir_bytes) &selecttab[s].readfds, sizeof(fd_set))) != OK)
 		return r;
 
 	if (selecttab[s].vir_writefds
-	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_WRITEFDS,
+	 && (r=sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_WRITEFDS,
 		SELF, D, (vir_bytes) &selecttab[s].writefds, sizeof(fd_set))) != OK)
 		return r;
 
 	if (selecttab[s].vir_errorfds
-	 && (r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_ERRORFDS,
+	 && (r=sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_ERRORFDS,
 		SELF, D, (vir_bytes) &selecttab[s].errorfds, sizeof(fd_set))) != OK)
 		return r;
 
 	if (!m_in.SEL_TIMEOUT)
 		is_timeout = nonzero_timeout = 0;
 	else
-		if ((r=sys_vircopy(who, D, (vir_bytes) m_in.SEL_TIMEOUT,
+		if ((r=sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_TIMEOUT,
 			SELF, D, (vir_bytes) &timeout, sizeof(timeout))) != OK)
 			return r;
 
@@ -462,7 +462,7 @@ PRIVATE void select_cancel_all(struct selectentry *e)
  *===========================================================================*/
 PRIVATE void select_wakeup(struct selectentry *e, int r)
 {
-	revive(e->req_procnr, r);
+	revive(e->req_endpt, r);
 }
 
 /*===========================================================================*
@@ -612,7 +612,7 @@ PUBLIC void init_select(void)
 /*===========================================================================*
  *				select_forget			             *
  *===========================================================================*/
-PUBLIC void select_forget(int proc)
+PUBLIC void select_forget(int proc_e)
 {
 	/* something has happened (e.g. signal delivered that interrupts
 	 * select()). totally forget about the select().
@@ -621,7 +621,7 @@ PUBLIC void select_forget(int proc)
 
 	for(s = 0; s < MAXSELECTS; s++) {
 		if (selecttab[s].requestor &&
-			selecttab[s].req_procnr == proc) {
+			selecttab[s].req_endpt == proc_e) {
 			break;
 		}
 
@@ -677,9 +677,9 @@ PUBLIC void select_timeout_check(timer_t *timer)
 }
 
 /*===========================================================================*
- *				select_unsuspend_by_proc  	     	     *
+ *				select_unsuspend_by_endpt  	     	     *
  *===========================================================================*/
-PUBLIC void select_unsuspend_by_proc(int proc)
+PUBLIC void select_unsuspend_by_endpt(int proc_e)
 {
 	int fd, s;
 
@@ -691,7 +691,7 @@ PUBLIC void select_unsuspend_by_proc(int proc)
 	    if (!selecttab[s].filps[fd] || !selecttab[s].filps[fd]->filp_ino)
 		continue;
 	    maj = (selecttab[s].filps[fd]->filp_ino->i_zone[0] >> MAJOR)&BYTE;
-	    if(dmap_driver_match(proc, maj)) {
+	    if(dmap_driver_match(proc_e, maj)) {
 			select_return(&selecttab[s], EAGAIN);
 	    }
 	  }

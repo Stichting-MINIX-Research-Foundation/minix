@@ -141,7 +141,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
      		   case I_BLOCK_SPECIAL:
 			/* Invoke the driver for special processing. */
 			dev = (dev_t) rip->i_zone[0];
-			r = dev_open(dev, who, bits | (oflags & ~O_ACCMODE));
+			r = dev_open(dev, who_e, bits | (oflags & ~O_ACCMODE));
 			break;
 
 		   case I_NAMED_PIPE:
@@ -516,7 +516,7 @@ PUBLIC int do_slink()
   if ((r = err_code) == OK) {
        r = (bp = new_block(sip, (off_t) 0)) == NIL_BUF
            ? err_code
-           : sys_vircopy(who, D, (vir_bytes) m_in.name1,
+           : sys_vircopy(who_e, D, (vir_bytes) m_in.name1,
                        SELF, D, (vir_bytes) bp->b_data,
 		       (vir_bytes) m_in.name1_length-1);
 

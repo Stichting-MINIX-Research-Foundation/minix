@@ -71,7 +71,7 @@ PUBLIC int do_times()
   clock_t t[5];
   int s;
 
-  if (OK != (s=sys_times(who, t)))
+  if (OK != (s=sys_times(who_e, t)))
       panic(__FILE__,"do_times couldn't get times", s);
   rmp->mp_reply.reply_t1 = t[0];		/* user time */
   rmp->mp_reply.reply_t2 = t[1];		/* system time */

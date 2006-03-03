@@ -3,6 +3,7 @@
 #include "inc.h"
 #include <timers.h>
 #include <ibm/interrupt.h>
+#include <minix/endpoint.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/debug.h"
@@ -175,11 +176,11 @@ PUBLIC void irqtab_dmp()
   for (i=0; i<NR_IRQ_HOOKS; i++) {
   	e = &irq_hooks[i];
   	printf("%3d", i);
-  	if (e->proc_nr==NONE) {
+  	if (e->proc_nr_e==NONE) {
   	    printf("    <unused>\n");
   	    continue;
   	}
-  	printf("%10d  ", e->proc_nr); 
+  	printf("%10d  ", e->proc_nr_e); 
   	printf("    %9.9s (%02d) ", irq[e->irq], e->irq); 
   	printf("  %s", (e->policy & IRQ_REENABLE) ? "reenable" : "    -   ");
   	printf("   %d", e->notify_id);
@@ -478,7 +479,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n--nr-name---- -prior-quant- -user---sys- -text---data---size- -rts flags-\n");
+  printf("\n-nr-----endpoint--name--- -prior-quant- -user---sys----size-rts flags-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -490,16 +491,16 @@ PUBLIC void proctab_dmp()
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
-	printf(" %-8.8s %02u/%02u %02d/%02u %6lu%6lu %6uK%6uK%6uK %s",
+	printf(" %10d ", rp->p_endpoint);
+	printf(" %-8.8s %02u/%02u %02d/%02u %6lu%6lu %6uK %s",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 
 	       rp->p_user_time, rp->p_sys_time,
-	       click_to_round_k(text), click_to_round_k(data),
 	       click_to_round_k(size),
 	       p_rts_flags_str(rp->p_rts_flags));
 	if (rp->p_rts_flags & (SENDING|RECEIVING)) {
-		printf(" %-7.7s", proc_name(rp->p_getfrom));
+		printf(" %-7.7s", proc_name(_ENDPOINT_P(rp->p_getfrom_e)));
 	} 
 	printf("\n");
   }

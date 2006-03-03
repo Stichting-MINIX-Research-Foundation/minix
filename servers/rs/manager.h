@@ -12,7 +12,7 @@
  * the servers and drivers, and thus is not directly indexed by slot number.
  */
 extern struct rproc {
-  int r_proc_nr;		/* process slot number */
+  int r_proc_nr_e;		/* process endpoint number */
   pid_t r_pid;			/* process id */
   dev_t r_dev_nr;		/* major device number */
   int r_dev_style;		/* device style */

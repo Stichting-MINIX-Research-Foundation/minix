@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/endpoint.h>
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"
@@ -30,6 +31,7 @@
 #define ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
 extern int dmap_size;
+PRIVATE int dummyproc;
 
 /*===========================================================================*
  *				dev_open				     *
@@ -49,9 +51,8 @@ int flags;			/* mode bits and flags */
   major = (dev >> MAJOR) & BYTE;
   if (major >= NR_DEVICES) major = 0;
   dp = &dmap[major];
-  if (dp->dmap_driver == NONE) {
+  if (dp->dmap_driver == NONE) 
 	return ENXIO;
-  }
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   if (r == SUSPEND) panic(__FILE__,"suspend on open from", dp->dmap_driver);
   return(r);
@@ -99,7 +100,7 @@ PUBLIC void dev_status(message *m)
 
 		switch(st.m_type) {
 			case DEV_REVIVE:
-				revive(st.REP_PROC_NR, st.REP_STATUS);
+				revive(st.REP_ENDPT, st.REP_STATUS);
 				break;
 			case DEV_IO_READY:
 				select_notified(d, st.DEV_MINOR, st.DEV_SEL_OPS);
@@ -119,10 +120,10 @@ PUBLIC void dev_status(message *m)
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
-PUBLIC int dev_io(op, dev, proc, buf, pos, bytes, flags)
+PUBLIC int dev_io(op, dev, proc_e, buf, pos, bytes, flags)
 int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
 dev_t dev;			/* major-minor device number */
-int proc;			/* in whose address space is buf? */
+int proc_e;			/* in whose address space is buf? */
 void *buf;			/* virtual address of the buffer */
 off_t pos;			/* byte position */
 int bytes;			/* how many bytes to transfer */
@@ -138,14 +139,20 @@ int flags;			/* special flags, like O_NONBLOCK */
   /* See if driver is roughly valid. */
   if (dp->dmap_driver == NONE) {
 	printf("FS: dev_io: no driver for dev %x\n", dev);
-	return EIO;
+	return ENXIO;
+  }
+
+  if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
+	printf("FS: dev_io: old driver for dev %x (%d)\n",
+		dev, dp->dmap_driver);
+	return ENXIO;
   }
 
   /* Set up the message passed to task. */
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = (dev >> MINOR) & BYTE;
   dev_mess.POSITION = pos;
-  dev_mess.PROC_NR  = proc;
+  dev_mess.IO_ENDPT = proc_e;
   dev_mess.ADDRESS  = buf;
   dev_mess.COUNT    = bytes;
   dev_mess.TTY_FLAGS = flags;
@@ -153,12 +160,15 @@ int flags;			/* special flags, like O_NONBLOCK */
   /* Call the task. */
   (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 
+  if(dp->dmap_driver == NONE)
+	panic(__FILE__,"dev_io: driver changed to NONE", NO_NUM);
+
   /* Task has completed.  See if call completed. */
   if (dev_mess.REP_STATUS == SUSPEND) {
 	if (flags & O_NONBLOCK) {
 		/* Not supposed to block. */
 		dev_mess.m_type = CANCEL;
-		dev_mess.PROC_NR = proc;
+		dev_mess.IO_ENDPT = proc_e;
 		dev_mess.DEVICE = (dev >> MINOR) & BYTE;
 		(*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 		if (dev_mess.REP_STATUS == EINTR) dev_mess.REP_STATUS = EAGAIN;
@@ -174,10 +184,10 @@ int flags;			/* special flags, like O_NONBLOCK */
 /*===========================================================================*
  *				gen_opcl				     *
  *===========================================================================*/
-PUBLIC int gen_opcl(op, dev, proc, flags)
+PUBLIC int gen_opcl(op, dev, proc_e, flags)
 int op;				/* operation, DEV_OPEN or DEV_CLOSE */
 dev_t dev;			/* device to open or close */
-int proc;			/* process to open/close for */
+int proc_e;			/* process to open/close for */
 int flags;			/* mode bits and flags */
 {
 /* Called from the dmap struct in table.c on opens & closes of special files.*/
@@ -189,8 +199,18 @@ int flags;			/* mode bits and flags */
 
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = (dev >> MINOR) & BYTE;
-  dev_mess.PROC_NR  = proc;
+  dev_mess.IO_ENDPT = proc_e;
   dev_mess.COUNT    = flags;
+
+  if (dp->dmap_driver == NONE) {
+	printf("FS: gen_opcl: no driver for dev %x\n", dev);
+	return ENXIO;
+  }
+  if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
+	printf("FS: gen_opcl: old driver for dev %x (%d)\n",
+		dev, dp->dmap_driver);
+	return ENXIO;
+  }
 
   /* Call the task. */
   (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -201,10 +221,10 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				tty_opcl				     *
  *===========================================================================*/
-PUBLIC int tty_opcl(op, dev, proc, flags)
+PUBLIC int tty_opcl(op, dev, proc_e, flags)
 int op;				/* operation, DEV_OPEN or DEV_CLOSE */
 dev_t dev;			/* device to open or close */
-int proc;			/* process to open/close for */
+int proc_e;			/* process to open/close for */
 int flags;			/* mode bits and flags */
 {
 /* This procedure is called from the dmap struct on tty open/close. */
@@ -224,7 +244,7 @@ int flags;			/* mode bits and flags */
 	}
   }
 
-  r = gen_opcl(op, dev, proc, flags);
+  r = gen_opcl(op, dev, proc_e, flags);
 
   /* Did this call make the tty the controlling tty? */
   if (r == 1) {
@@ -237,10 +257,10 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				ctty_opcl				     *
  *===========================================================================*/
-PUBLIC int ctty_opcl(op, dev, proc, flags)
+PUBLIC int ctty_opcl(op, dev, proc_e, flags)
 int op;				/* operation, DEV_OPEN or DEV_CLOSE */
 dev_t dev;			/* device to open or close */
-int proc;			/* process to open/close for */
+int proc_e;			/* process to open/close for */
 int flags;			/* mode bits and flags */
 {
 /* This procedure is called from the dmap struct in table.c on opening/closing
@@ -259,12 +279,14 @@ PUBLIC int do_setsid()
  * terminal of a process, and make the process a session leader.
  */
   register struct fproc *rfp;
+  int slot;
 
   /* Only MM may do the SETSID call directly. */
-  if (who != PM_PROC_NR) return(ENOSYS);
+  if (who_e != PM_PROC_NR) return(ENOSYS);
 
   /* Make the process a session leader with no controlling tty. */
-  rfp = &fproc[m_in.slot1];
+  okendpt(m_in.endpt1, &slot);
+  rfp = &fproc[slot];
   rfp->fp_sesldr = TRUE;
   rfp->fp_tty = 0;
   return(OK);
@@ -297,10 +319,22 @@ PUBLIC int do_ioctl()
 
 	dev_mess = m;	/* Copy full message with all the weird bits. */
 	dev_mess.m_type   = DEV_IOCTL;
-	dev_mess.PROC_NR  = who;
+	dev_mess.PROC_NR  = who_e;
 	dev_mess.TTY_LINE = (dev >> MINOR) & BYTE;	
 
 	/* Call the task. */
+
+  if (dp->dmap_driver == NONE) {
+	printf("FS: do_ioctl: no driver for dev %x\n", dev);
+	return ENXIO;
+  }
+
+  if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
+	printf("FS: do_ioctl: old driver for dev %x (%d)\n",
+		dev, dp->dmap_driver);
+	return ENXIO;
+  }
+
 	(*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 
 	m_out.TTY_SPEK = dev_mess.TTY_SPEK;	/* erase and kill */
@@ -309,7 +343,7 @@ PUBLIC int do_ioctl()
   }
 #endif
 
-  return(dev_io(DEV_IOCTL, dev, who, m_in.ADDRESS, 0L, 
+  return(dev_io(DEV_IOCTL, dev, who_e, m_in.ADDRESS, 0L, 
   	m_in.REQUEST, f->filp_flags));
 }
 
@@ -324,16 +358,12 @@ message *mess_ptr;		/* pointer to message for task */
  * pairs.  These lead to calls on the following routines via the dmap table.
  */
 
-  int r, proc_nr;
+  int r, proc_e, dummy_proc;
   message local_m;
 
-  proc_nr = mess_ptr->PROC_NR;
-  if (! isokprocnr(proc_nr)) {
-      printf("FS: warning, got illegal process number (%d) from %d\n",
-          mess_ptr->PROC_NR, mess_ptr->m_source);
-      return;
-  }
+  proc_e = mess_ptr->IO_ENDPT;
 
+#if DEAD_CODE
   while ((r = sendrec(task_nr, mess_ptr)) == ELOCKED) {
 	/* sendrec() failed to avoid deadlock. The task 'task_nr' is
 	 * trying to send a REVIVE message for an earlier request.
@@ -347,7 +377,7 @@ message *mess_ptr;		/* pointer to message for task */
 	 * sent a completion reply, ignore the reply and abort the cancel
 	 * request. The caller will do the revive for the process.
 	 */
-	if (mess_ptr->m_type == CANCEL && local_m.REP_PROC_NR == proc_nr) {
+	if (mess_ptr->m_type == CANCEL && local_m.REP_ENDPT == proc_e) {
 		return;
 	}
 
@@ -356,39 +386,43 @@ message *mess_ptr;		/* pointer to message for task */
 		printf(
 		"fs: strange device reply from %d, type = %d, proc = %d (1)\n",
 			local_m.m_source,
-			local_m.m_type, local_m.REP_PROC_NR);
+			local_m.m_type, local_m.REP_ENDPT);
 		continue;
 	}
 
-	revive(local_m.REP_PROC_NR, local_m.REP_STATUS);
+	revive(local_m.REP_ENDPT, local_m.REP_STATUS);
   }
+#endif
 
   /* The message received may be a reply to this call, or a REVIVE for some
    * other process.
    */
-  for (;;) {
+  r = sendrec(task_nr, mess_ptr);
+  for(;;) {
 	if (r != OK) {
-		if (r == EDEADSRCDST) return;	/* give up */
-		if (r == EDSTDIED) return;
-		if (r == ESRCDIED) return;
-		if (r == ELOCKED) return;
-		else panic(__FILE__,"call_task: can't send/receive", r);
+		if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
+			printf("fs: dead driver %d\n", task_nr);
+			return;
+		}
+		if (r == ELOCKED) {
+			printf("fs: ELOCKED talking to %d\n", task_nr);
+			return;
+		}
+		panic(__FILE__,"call_task: can't send/receive", r);
 	}
 
   	/* Did the process we did the sendrec() for get a result? */
-  	if (mess_ptr->REP_PROC_NR == proc_nr) {
+  	if (mess_ptr->REP_ENDPT == proc_e) {
   		break;
 	} else if (mess_ptr->m_type == REVIVE) {
 		/* Otherwise it should be a REVIVE. */
-		revive(mess_ptr->REP_PROC_NR, mess_ptr->REP_STATUS);
+		revive(mess_ptr->REP_ENDPT, mess_ptr->REP_STATUS);
 	} else {
 		printf(
-		"fs: strange device reply from %d, type = %d, proc = %d (2)\n",
+		"fs: strange device reply from %d, type = %d, proc = %d (2) ignored\n",
 			mess_ptr->m_source,
-			mess_ptr->m_type, mess_ptr->REP_PROC_NR);
-		return;
+			mess_ptr->m_type, mess_ptr->REP_ENDPT);
 	}
-
 	r = receive(task_nr, mess_ptr);
   }
 }
@@ -414,6 +448,18 @@ message *mess_ptr;		/* pointer to message for task */
 	/* Substitute the controlling terminal device. */
 	dp = &dmap[(fp->fp_tty >> MAJOR) & BYTE];
 	mess_ptr->DEVICE = (fp->fp_tty >> MINOR) & BYTE;
+
+  if (dp->dmap_driver == NONE) {
+	printf("FS: ctty_io: no driver for dev\n");
+	return;
+  }
+
+	if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
+		printf("FS: ctty_io: old driver %d\n",
+			dp->dmap_driver);
+		return;
+	}
+
 	(*dp->dmap_io)(dp->dmap_driver, mess_ptr);
   }
 }
@@ -444,10 +490,10 @@ PUBLIC void no_dev_io(int proc, message *m)
 /*===========================================================================*
  *				clone_opcl				     *
  *===========================================================================*/
-PUBLIC int clone_opcl(op, dev, proc, flags)
+PUBLIC int clone_opcl(op, dev, proc_e, flags)
 int op;				/* operation, DEV_OPEN or DEV_CLOSE */
 dev_t dev;			/* device to open or close */
-int proc;			/* process to open/close for */
+int proc_e;			/* process to open/close for */
 int flags;			/* mode bits and flags */
 {
 /* Some devices need special processing upon open.  Such a device is "cloned",
@@ -465,8 +511,20 @@ int flags;			/* mode bits and flags */
 
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = minor;
-  dev_mess.PROC_NR  = proc;
+  dev_mess.IO_ENDPT = proc_e;
   dev_mess.COUNT    = flags;
+
+
+  if (dp->dmap_driver == NONE) {
+	printf("FS: clone_opcl: no driver for dev %x\n", dev);
+	return ENXIO;
+  }
+
+  if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
+  	printf("FS: clone_opcl: old driver for dev %x (%d)\n",
+  		dev, dp->dmap_driver);
+  	return ENXIO;
+  }
 
   /* Call the task. */
   (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -484,7 +542,7 @@ int flags;			/* mode bits and flags */
 		ip = alloc_inode(root_dev, ALL_MODES | I_CHAR_SPECIAL);
 		if (ip == NIL_INODE) {
 			/* Oops, that didn't work.  Undo open. */
-			(void) clone_opcl(DEV_CLOSE, dev, proc, 0);
+			(void) clone_opcl(DEV_CLOSE, dev, proc_e, 0);
 			return(err_code);
 		}
 		ip->i_zone[0] = dev;
