@@ -7,6 +7,7 @@
 
 #include "../system.h"
 #include <minix/type.h>
+#include <minix/endpoint.h>
 #include <ibm/int86.h>
 
 struct reg86u reg86;
@@ -17,13 +18,11 @@ struct reg86u reg86;
 PUBLIC int do_int86(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-  int caller;
   vir_bytes caller_vir;
   phys_bytes caller_phys, kernel_phys;
 
-  caller = (int) m_ptr->m_source; 
   caller_vir = (vir_bytes) m_ptr->INT86_REG86;
-  caller_phys = umap_local(proc_addr(caller), D, caller_vir, sizeof(reg86));
+  caller_phys = umap_local(proc_addr(who_p), D, caller_vir, sizeof(reg86));
   if (0 == caller_phys) return(EFAULT);
   kernel_phys = vir2phys(&reg86);
   phys_copy(caller_phys, kernel_phys, (phys_bytes) sizeof(reg86));

@@ -10,6 +10,7 @@
 
 #include "../system.h"
 #include <minix/devio.h>
+#include <minix/endpoint.h>
 
 #if USE_VDEVIO
 
@@ -34,7 +35,6 @@ register message *m_ptr;	/* pointer to request message */
   int vec_size;               /* size of vector */
   int io_in;                  /* true if input */
   size_t bytes;               /* # bytes to be copied */
-  int caller_proc;            /* process number of caller */
   vir_bytes caller_vir;       /* virtual address at caller */
   phys_bytes caller_phys;     /* physical address at caller */
   int i;
@@ -53,9 +53,8 @@ register message *m_ptr;	/* pointer to request message */
   if (bytes > sizeof(vdevio_buf))  return(E2BIG);
 
   /* Calculate physical addresses and copy (port,value)-pairs from user. */
-  caller_proc = m_ptr->m_source; 
   caller_vir = (vir_bytes) m_ptr->DIO_VEC_ADDR;
-  caller_phys = umap_local(proc_addr(caller_proc), D, caller_vir, bytes);
+  caller_phys = umap_local(proc_addr(who_p), D, caller_vir, bytes);
   if (0 == caller_phys) return(EFAULT);
   phys_copy(caller_phys, vir2phys(vdevio_buf), (phys_bytes) bytes);
 

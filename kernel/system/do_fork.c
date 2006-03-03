@@ -2,8 +2,8 @@
  *   m_type:	SYS_FORK
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_PROC_NR	(child's process table slot)	
- *    m1_i2:	PR_PPROC_NR	(parent, process that forked)	
+ *    m1_i1:	PR_SLOT	 (child's process table slot)	
+ *    m1_i2:	PR_ENDPT (parent, process that forked)	
  */
 
 #include "../system.h"
@@ -11,6 +11,8 @@
 #if (CHIP == INTEL)
 #include "../protect.h"
 #endif
+
+#include <minix/endpoint.h>
 
 #if USE_FORK
 
@@ -20,19 +22,23 @@
 PUBLIC int do_fork(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-/* Handle sys_fork().  PR_PPROC_NR has forked.  The child is PR_PROC_NR. */
+/* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
 #if (CHIP == INTEL)
   reg_t old_ldt_sel;
 #endif
   register struct proc *rpc;		/* child process pointer */
   struct proc *rpp;			/* parent process pointer */
-  int i;
+  int i, gen;
+  int p_proc;
 
-  rpp = proc_addr(m_ptr->PR_PPROC_NR);
-  rpc = proc_addr(m_ptr->PR_PROC_NR);
+  if(!isokendpt(m_ptr->PR_ENDPT, &p_proc))
+	return EINVAL;
+  rpp = proc_addr(p_proc);
+  rpc = proc_addr(m_ptr->PR_SLOT);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
 
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
+  gen = _ENDPOINT_G(rpc->p_endpoint);
 #if (CHIP == INTEL)
   old_ldt_sel = rpc->p_ldt_sel;		/* backup local descriptors */
   *rpc = *rpp;				/* copy 'proc' struct */
@@ -40,7 +46,10 @@ register message *m_ptr;	/* pointer to request message */
 #else
   *rpc = *rpp;				/* copy 'proc' struct */
 #endif
-  rpc->p_nr = m_ptr->PR_PROC_NR;	/* this was obliterated by copy */
+  if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
+	gen = 1;			/* generation number wraparound */
+  rpc->p_nr = m_ptr->PR_SLOT;		/* this was obliterated by copy */
+  rpc->p_endpoint = _ENDPOINT(gen, rpc->p_nr);	/* new endpoint of slot */
 
   /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
   rpc->p_rts_flags |= NO_MAP;		/* inhibit process from running */
@@ -66,6 +75,10 @@ register message *m_ptr;	/* pointer to request message */
       rpc->p_priv = priv_addr(USER_PRIV_ID);
       rpc->p_rts_flags |= NO_PRIV;
   }
+
+  /* Calculate endpoint identifier, so caller knows what it is. */
+  m_ptr->PR_ENDPT = rpc->p_endpoint;
+
   return(OK);
 }
 

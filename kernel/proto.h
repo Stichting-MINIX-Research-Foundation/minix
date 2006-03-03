@@ -29,6 +29,13 @@ _PROTOTYPE( int lock_notify, (int src, int dst)				);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
 _PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
+#if DEBUG_ENABLE_IPC_WARNINGS
+_PROTOTYPE( int isokendpt_f, (char *file, int line, int e, int *p, int f));
+#define isokendpt_d(e, p, f) isokendpt_f(__FILE__, __LINE__, (e), (p), (f))
+#else
+_PROTOTYPE( int isokendpt_f, (int e, int *p, int f)			);
+#define isokendpt_d(e, p, f) isokendpt_f((e), (p), (f))
+#endif
 
 /* start.c */
 _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,

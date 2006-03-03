@@ -6,7 +6,7 @@
  *    m1_p1:	I_VAL_PTR 	(where to put it)	
  *    m1_i1:	I_VAL_LEN 	(maximum length expected, optional)	
  *    m1_p2:	I_VAL_PTR2	(second, optional pointer)	
- *    m1_i2:	I_VAL_LEN2	(second length or process nr)	
+ *    m1_i2:	I_VAL_LEN2_E	(second length or process nr)	
  */
 
 #include "../system.h"
@@ -28,7 +28,7 @@ register message *m_ptr;	/* pointer to request message */
   size_t length;
   phys_bytes src_phys; 
   phys_bytes dst_phys; 
-  int proc_nr, nr;
+  int proc_nr, nr_e, nr;
 
   /* Set source address and length based on request type. */
   switch (m_ptr->I_REQUEST) {	
@@ -64,7 +64,8 @@ register message *m_ptr;	/* pointer to request message */
          */
         length = sizeof(struct proc *) * NR_SCHED_QUEUES;
         src_phys = vir2phys(rdy_head);
-        dst_phys = numap_local(m_ptr->m_source, (vir_bytes) m_ptr->I_VAL_PTR2,
+	okendpt(m_ptr->m_source, &proc_nr);
+        dst_phys = numap_local(proc_nr, (vir_bytes) m_ptr->I_VAL_PTR2,
                 length); 
         if (src_phys == 0 || dst_phys == 0) return(EFAULT);
         phys_copy(src_phys, dst_phys, length);
@@ -81,8 +82,9 @@ register message *m_ptr;	/* pointer to request message */
         break;
     }
     case GET_PROC: {
-        nr = (m_ptr->I_VAL_LEN2 == SELF) ? m_ptr->m_source : m_ptr->I_VAL_LEN2;
-        if (! isokprocn(nr)) return(EINVAL);	/* validate request */
+        nr_e = (m_ptr->I_VAL_LEN2_E == SELF) ?
+		m_ptr->m_source : m_ptr->I_VAL_LEN2_E;
+	if(!isokendpt(nr_e, &nr)) return EINVAL; /* validate request */
         length = sizeof(struct proc);
         src_phys = vir2phys(proc_addr(nr));
         break;
@@ -123,8 +125,9 @@ register message *m_ptr;	/* pointer to request message */
 
     	length = sizeof(bios_buf_len);
     	src_phys = vir2phys(&bios_buf_len);
-	if (length != m_ptr->I_VAL_LEN2) return (EINVAL);
-	proc_nr = m_ptr->m_source;	/* only caller can request copy */
+	if (length != m_ptr->I_VAL_LEN2_E) return (EINVAL);
+	if(!isokendpt(m_ptr->m_source, &proc_nr))
+		panic("bogus source", m_ptr->m_source);
 	dst_phys = numap_local(proc_nr, (vir_bytes) m_ptr->I_VAL_PTR2, length); 
 	if (src_phys == 0 || dst_phys == 0) return(EFAULT);
 	phys_copy(src_phys, dst_phys, length);
@@ -145,7 +148,8 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Try to make the actual copy for the requested data. */
   if (m_ptr->I_VAL_LEN > 0 && length > m_ptr->I_VAL_LEN) return (E2BIG);
-  proc_nr = m_ptr->m_source;		/* only caller can request copy */
+  if(!isokendpt(m_ptr->m_source, &proc_nr)) 
+	panic("bogus source", m_ptr->m_source);
   dst_phys = numap_local(proc_nr, (vir_bytes) m_ptr->I_VAL_PTR, length); 
   if (src_phys == 0 || dst_phys == 0) return(EFAULT);
   phys_copy(src_phys, dst_phys, length);

@@ -23,6 +23,10 @@
 #define structof(type, field, ptr) \
 	((type *) (((char *) (ptr)) - offsetof(type, field)))
 
+/* Translate an endpoint number to a process number, return success. */
+#define isokendpt(e,p) isokendpt_d((e),(p),0)
+#define okendpt(e,p)   isokendpt_d((e),(p),1)
+
 /* Constants used in virtual_copy(). Values must be 0 and 1, respectively. */
 #define _SRC_	0
 #define _DST_	1

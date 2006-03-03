@@ -12,6 +12,7 @@
 
 #include "../system.h"
 #include <minix/devio.h>
+#include <minix/endpoint.h>
 
 #if USE_SDEVIO
 
@@ -21,17 +22,20 @@
 PUBLIC int do_sdevio(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-  int proc_nr = m_ptr->DIO_VEC_PROC;
+  int proc_nr, proc_nr_e = m_ptr->DIO_VEC_ENDPT;
   int count = m_ptr->DIO_VEC_SIZE;
   long port = m_ptr->DIO_PORT;
   phys_bytes phys_buf;
 
-  /* Check if process number is OK. A process number is allowed here, because
-   * driver may directly provide a pointer to a buffer at the user-process
+  /* Check if process endpoint is OK. 
+   * A driver may directly provide a pointer to a buffer at the user-process
    * that initiated the device I/O. Kernel processes, of course, are denied.
    */
-  if (proc_nr == SELF) proc_nr = m_ptr->m_source;
-  if (! isokprocn(proc_nr)) return(EINVAL);
+  if (proc_nr_e == SELF)
+	proc_nr = who_p;
+  else
+	if(!isokendpt(proc_nr_e, &proc_nr))
+		return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
 
   /* Get and check physical address. */

@@ -2,7 +2,7 @@
  *   m_type:	SYS_NICE
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_PROC_NR	process number to change priority
+ *    m1_i1:	PR_ENDPT   	process number to change priority
  *    m1_i2:	PR_PRIORITY	the new priority
  */
 
@@ -21,8 +21,7 @@ PUBLIC int do_nice(message *m_ptr)
   register struct proc *rp;
 
   /* Extract the message parameters and do sanity checking. */
-  proc_nr = m_ptr->PR_PROC_NR;
-  if (! isokprocn(proc_nr)) return(EINVAL);
+  if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return EINVAL;
   if (iskerneln(proc_nr)) return(EPERM);
   pri = m_ptr->PR_PRIORITY;
   if (pri < PRIO_MIN || pri > PRIO_MAX) return(EINVAL);

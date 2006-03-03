@@ -2,7 +2,7 @@
  *   m_type:	SYS_SIGSEND
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_PROC  	# process to call signal handler
+ *     m2_i1:	SIG_ENDPT  	# process to call signal handler
  *     m2_p1:	SIG_CTXT_PTR 	# pointer to sigcontext structure
  *     m2_i3:	SIG_FLAGS    	# flags for S_SIGRETURN call	
  *
@@ -28,10 +28,11 @@ message *m_ptr;			/* pointer to request message */
   phys_bytes src_phys, dst_phys;
   struct sigcontext sc, *scp;
   struct sigframe fr, *frp;
+  int proc;
 
-  if (! isokprocn(m_ptr->SIG_PROC)) return(EINVAL);
-  if (iskerneln(m_ptr->SIG_PROC)) return(EPERM);
-  rp = proc_addr(m_ptr->SIG_PROC);
+  if (!isokendpt(m_ptr->SIG_ENDPT, &proc)) return(EINVAL);
+  if (iskerneln(proc)) return(EPERM);
+  rp = proc_addr(proc);
 
   /* Get the sigmsg structure into our address space.  */
   src_phys = umap_local(proc_addr(PM_PROC_NR), D, (vir_bytes) 

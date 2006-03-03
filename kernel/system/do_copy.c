@@ -31,10 +31,10 @@ register message *m_ptr;	/* pointer to request message */
   int i;
 
   /* Dismember the command message. */
-  vir_addr[_SRC_].proc_nr = m_ptr->CP_SRC_PROC_NR;
+  vir_addr[_SRC_].proc_nr_e = m_ptr->CP_SRC_ENDPT;
   vir_addr[_SRC_].segment = m_ptr->CP_SRC_SPACE;
   vir_addr[_SRC_].offset = (vir_bytes) m_ptr->CP_SRC_ADDR;
-  vir_addr[_DST_].proc_nr = m_ptr->CP_DST_PROC_NR;
+  vir_addr[_DST_].proc_nr_e = m_ptr->CP_DST_ENDPT;
   vir_addr[_DST_].segment = m_ptr->CP_DST_SPACE;
   vir_addr[_DST_].offset = (vir_bytes) m_ptr->CP_DST_ADDR;
   bytes = (phys_bytes) m_ptr->CP_NR_BYTES;
@@ -43,10 +43,12 @@ register message *m_ptr;	/* pointer to request message */
    * This is done once for _SRC_, then once for _DST_. 
    */
   for (i=_SRC_; i<=_DST_; i++) {
-
+	int p;
       /* Check if process number was given implictly with SELF and is valid. */
-      if (vir_addr[i].proc_nr == SELF) vir_addr[i].proc_nr = m_ptr->m_source;
-      if (! isokprocn(vir_addr[i].proc_nr) && vir_addr[i].segment != PHYS_SEG) 
+      if (vir_addr[i].proc_nr_e == SELF)
+	vir_addr[i].proc_nr_e = m_ptr->m_source;
+      if (vir_addr[i].segment != PHYS_SEG &&
+	! isokendpt(vir_addr[i].proc_nr_e, &p))
           return(EINVAL); 
 
       /* Check if physical addressing is used without SYS_PHYSCOPY. */

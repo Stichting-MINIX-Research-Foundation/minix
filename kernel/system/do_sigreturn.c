@@ -2,7 +2,7 @@
  *   m_type:	SYS_SIGRETURN
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_PROC  	# process returning from handler
+ *     m2_i1:	SIG_ENDPT  	# process returning from handler
  *     m2_p1:	SIG_CTXT_PTR 	# pointer to sigcontext structure
  *
  */
@@ -26,10 +26,11 @@ message *m_ptr;			/* pointer to request message */
   struct sigcontext sc;
   register struct proc *rp;
   phys_bytes src_phys;
+  int proc;
 
-  if (! isokprocn(m_ptr->SIG_PROC)) return(EINVAL);
-  if (iskerneln(m_ptr->SIG_PROC)) return(EPERM);
-  rp = proc_addr(m_ptr->SIG_PROC);
+  if (! isokendpt(m_ptr->SIG_ENDPT, &proc)) return(EINVAL);
+  if (iskerneln(proc)) return(EPERM);
+  rp = proc_addr(proc);
 
   /* Copy in the sigcontext structure. */
   src_phys = umap_local(rp, D, (vir_bytes) m_ptr->SIG_CTXT_PTR,

@@ -26,7 +26,6 @@ register message *m_ptr;	/* pointer to request message */
  * different kernel calls so that permissions can be checked.
  */
   int nr_req;
-  int caller_pid;
   vir_bytes caller_vir;
   phys_bytes caller_phys;
   phys_bytes kernel_phys;
@@ -40,9 +39,8 @@ register message *m_ptr;	/* pointer to request message */
   bytes = nr_req * sizeof(struct vir_cp_req);
 
   /* Calculate physical addresses and copy (port,value)-pairs from user. */
-  caller_pid = (int) m_ptr->m_source; 
   caller_vir = (vir_bytes) m_ptr->VCP_VEC_ADDR;
-  caller_phys = umap_local(proc_addr(caller_pid), D, caller_vir, bytes);
+  caller_phys = umap_local(proc_addr(who_p), D, caller_vir, bytes);
   if (0 == caller_phys) return(EFAULT);
   kernel_phys = vir2phys(vir_cp_req);
   phys_copy(caller_phys, kernel_phys, (phys_bytes) bytes);

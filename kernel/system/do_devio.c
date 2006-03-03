@@ -10,6 +10,7 @@
 
 #include "../system.h"
 #include <minix/devio.h>
+#include <minix/endpoint.h>
 
 #if USE_DEVIO
 
@@ -25,7 +26,7 @@ register message *m_ptr;	/* pointer to request message */
     struct io_range *iorp;
     int i, size, nr_io_range;
 
-    rp= proc_addr(m_ptr->m_source);
+    rp= proc_addr(who_p);
     privp= priv(rp);
     if (!privp)
     {

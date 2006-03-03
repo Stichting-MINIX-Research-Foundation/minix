@@ -21,6 +21,7 @@ struct boot_image {
   bitchunk_t ipc_to;			/* send mask protection */
   long call_mask;			/* system call protection */
   char proc_name[P_NAME_LEN];		/* name in process table */
+  int endpoint;				/* endpoint number when started */
 };
 
 struct memory {
@@ -94,7 +95,7 @@ typedef struct irq_hook {
   int (*handler)(struct irq_hook *);	/* interrupt handler */
   int irq;				/* IRQ vector number */ 
   int id;				/* id of this hook */
-  int proc_nr;				/* NONE if not in use */
+  int proc_nr_e;			/* (endpoint) NONE if not in use */
   irq_id_t notify_id;			/* id to return on interrupt */
   irq_policy_t policy;			/* bit mask for policy */
 } irq_hook_t;

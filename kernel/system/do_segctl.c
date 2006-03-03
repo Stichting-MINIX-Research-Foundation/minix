@@ -31,7 +31,7 @@ register message *m_ptr;	/* pointer to request message */
   int result;
 
   /* First check if there is a slot available for this segment. */
-  rp = proc_addr(m_ptr->m_source);
+  rp = proc_addr(who_p);
   index = -1;
   for (i=0; i < NR_REMOTE_SEGS; i++) {
       if (! rp->p_priv->s_farmem[i].in_use) {

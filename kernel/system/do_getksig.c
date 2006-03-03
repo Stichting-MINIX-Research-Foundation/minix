@@ -2,13 +2,14 @@
  *   m_type:	SYS_GETKSIG
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_PROC  	# process with pending signals
+ *     m2_i1:	SIG_ENDPT  	# process with pending signals
  *     m2_l1:	SIG_MAP		# bit map with pending signals
  */
 
 #include "../system.h"
 #include <signal.h>
 #include <sys/sigcontext.h>
+#include <minix/endpoint.h>
 
 #if USE_GETKSIG
 
@@ -29,7 +30,8 @@ message *m_ptr;			/* pointer to request message */
   /* Find the next process with pending signals. */
   for (rp = BEG_USER_ADDR; rp < END_PROC_ADDR; rp++) {
       if (rp->p_rts_flags & SIGNALED) {
-          m_ptr->SIG_PROC = rp->p_nr;		/* store signaled process */
+	  /* store signaled process' endpoint */
+          m_ptr->SIG_ENDPT = rp->p_endpoint;
           m_ptr->SIG_MAP = rp->p_pending;	/* pending signals map */
           sigemptyset(&rp->p_pending); 		/* ball is in PM's court */
           rp->p_rts_flags &= ~SIGNALED;		/* blocked by SIG_PENDING */
@@ -38,7 +40,7 @@ message *m_ptr;			/* pointer to request message */
   }
 
   /* No process with pending signals was found. */
-  m_ptr->SIG_PROC = NONE; 
+  m_ptr->SIG_ENDPT = NONE; 
   return(OK);
 }
 #endif /* USE_GETKSIG */

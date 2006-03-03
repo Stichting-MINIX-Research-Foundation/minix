@@ -46,6 +46,7 @@ EXTERN int irq_use;				/* map of all in-use irq's */
 EXTERN reg_t mon_ss, mon_sp;		/* boot monitor stack */
 EXTERN int mon_return;			/* true if we can return to monitor */
 EXTERN int do_serial_debug;
+EXTERN int who_e, who_p;		/* message source endpoint and proc */
 
 /* VM */
 EXTERN phys_bytes vm_base;

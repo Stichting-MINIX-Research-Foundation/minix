@@ -2,10 +2,12 @@
  *   m_type:	SYS_EXIT
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_PROC_NR		(slot number of exiting process)
+ *    m1_i1:	PR_ENDPT		(slot number of exiting process)
  */
 
 #include "../system.h"
+
+#include <minix/endpoint.h>
 
 #if USE_EXIT
 
@@ -23,20 +25,20 @@ message *m_ptr;			/* pointer to request message */
  * possibly removes the process from the message queues, and resets certain 
  * process table fields to the default values.
  */
-  int exit_proc_nr;				
+  int exit_e;				
 
   /* Determine what process exited. User processes are handled here. */
-  if (PM_PROC_NR == m_ptr->m_source) {
-      exit_proc_nr = m_ptr->PR_PROC_NR;		/* get exiting process */
-      if (exit_proc_nr != SELF) { 		/* PM tries to exit self */
-          if (! isokprocn(exit_proc_nr)) return(EINVAL);
-          clear_proc(proc_addr(exit_proc_nr));	/* exit a user process */
+  if (PM_PROC_NR == who_p) {
+      if (m_ptr->PR_ENDPT != SELF) { 		/* PM tries to exit self */
+          if(!isokendpt(m_ptr->PR_ENDPT, &exit_e)) /* get exiting process */
+	     return EINVAL;
+          clear_proc(proc_addr(exit_e));	/* exit a user process */
           return(OK);				/* report back to PM */
       }
   } 
 
   /* The PM or some other system process requested to be exited. */
-  clear_proc(proc_addr(m_ptr->m_source));
+  clear_proc(proc_addr(who_p));
   return(EDONTREPLY);
 }
 
@@ -61,6 +63,15 @@ register struct proc *rc;		/* slot of process to clean up */
   /* Make sure that the exiting process is no longer scheduled. */
   if (rc->p_rts_flags == 0) lock_dequeue(rc);
 
+  /* Check the table with IRQ hooks to see if hooks should be released. */
+  for (i=0; i < NR_IRQ_HOOKS; i++) {
+      int proc;
+      if (rc->p_endpoint == irq_hooks[i].proc_nr_e) { 
+        rm_irq_handler(&irq_hooks[i]);	/* remove interrupt handler */
+        irq_hooks[i].proc_nr_e = NONE;	/* mark hook as free */
+      }
+  }
+
   /* Release the process table slot. If this is a system process, also
    * release its privilege structure.  Further cleanup is not needed at
    * this point. All important fields are reinitialized when the 
@@ -75,13 +86,15 @@ register struct proc *rc;		/* slot of process to clean up */
    * a normal exit), then it must be removed from the message queues.
    */
   if (saved_rts_flags & SENDING) {
-      xpp = &proc[rc->p_sendto].p_caller_q;	/* destination's queue */
+      int target_proc;
+      okendpt(rc->p_sendto_e, &target_proc);
+      xpp = &proc[target_proc].p_caller_q;	/* destination's queue */
       while (*xpp != NIL_PROC) {		/* check entire queue */
           if (*xpp == rc) {			/* process is on the queue */
               *xpp = (*xpp)->p_q_link;		/* replace by next process */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	      kprintf("Proc %d removed from queue at %d\n",
-	          proc_nr(rc), rc->p_sendto);
+	          proc_nr(rc), rc->p_sendto_e);
 #endif
               break;				/* can only be queued once */
           }
@@ -101,7 +114,7 @@ register struct proc *rc;		/* slot of process to clean up */
       unset_sys_bit(priv(rp)->s_notify_pending, priv(rc)->s_id);
 
       /* Check if process is receiving from exiting process. */
-      if ((rp->p_rts_flags & RECEIVING) && rp->p_getfrom == proc_nr(rc)) {
+      if ((rp->p_rts_flags & RECEIVING) && rp->p_getfrom_e == rc->p_endpoint) {
           rp->p_reg.retreg = ESRCDIED;		/* report source died */
 	  rp->p_rts_flags &= ~RECEIVING;	/* no longer receiving */
 #if DEBUG_ENABLE_IPC_WARNINGS
@@ -109,7 +122,7 @@ register struct proc *rc;		/* slot of process to clean up */
 #endif
   	  if (rp->p_rts_flags == 0) lock_enqueue(rp);/* let process run again */
       } 
-      if ((rp->p_rts_flags & SENDING) && rp->p_sendto == proc_nr(rc)) {
+      if ((rp->p_rts_flags & SENDING) && rp->p_sendto_e == rc->p_endpoint) {
           rp->p_reg.retreg = EDSTDIED;		/* report destination died */
 	  rp->p_rts_flags &= ~SENDING;		/* no longer sending */
 #if DEBUG_ENABLE_IPC_WARNINGS
@@ -117,14 +130,6 @@ register struct proc *rc;		/* slot of process to clean up */
 #endif
   	  if (rp->p_rts_flags == 0) lock_enqueue(rp);/* let process run again */
       } 
-  }
-
-  /* Check the table with IRQ hooks to see if hooks should be released. */
-  for (i=0; i < NR_IRQ_HOOKS; i++) {
-      if (irq_hooks[i].proc_nr == proc_nr(rc)) {
-          rm_irq_handler(&irq_hooks[i]);	/* remove interrupt handler */
-          irq_hooks[i].proc_nr = NONE; 		/* mark hook as free */
-      }
   }
 
   /* Clean up virtual memory */

@@ -2,7 +2,7 @@
  *   m_type:	SYS_TRACE
  *
  * The parameters for this kernel call are:
- *    m2_i1:	CTL_PROC_NR	process that is traced
+ *    m2_i1:	CTL_ENDPT	process that is traced
  *    m2_i2:    CTL_REQUEST	trace request
  *    m2_l1:    CTL_ADDRESS     address at traced process' space
  *    m2_l2:    CTL_DATA        data to be written or returned here
@@ -44,10 +44,10 @@ register message *m_ptr;
   vir_bytes tr_addr = (vir_bytes) m_ptr->CTL_ADDRESS;
   long tr_data = m_ptr->CTL_DATA;
   int tr_request = m_ptr->CTL_REQUEST;
-  int tr_proc_nr = m_ptr->CTL_PROC_NR;
+  int tr_proc_nr_e = m_ptr->CTL_ENDPT, tr_proc_nr;
   int i;
 
-  if (! isokprocn(tr_proc_nr)) return(EINVAL);
+  if(!isokendpt(tr_proc_nr_e, &tr_proc_nr)) return(EINVAL);
   if (iskerneln(tr_proc_nr)) return(EPERM);
 
   rp = proc_addr(tr_proc_nr);

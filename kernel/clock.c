@@ -131,7 +131,7 @@ message *m_ptr;				/* pointer to request message */
 PRIVATE void init_clock()
 {
   /* Initialize the CLOCK's interrupt hook. */
-  clock_hook.proc_nr = CLOCK;
+  clock_hook.proc_nr_e = CLOCK;
 
   /* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz. */
   outb(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */

@@ -9,6 +9,8 @@
 
 #include "../system.h"
 
+#include <minix/endpoint.h>
+
 #if USE_SETALARM
 
 FORWARD _PROTOTYPE( void cause_alarm, (timer_t *tp) );
@@ -21,7 +23,6 @@ message *m_ptr;			/* pointer to request message */
 {
 /* A process requests a synchronous alarm, or wants to cancel its alarm. */
   register struct proc *rp;	/* pointer to requesting process */
-  int proc_nr;			/* which process wants the alarm */
   long exp_time;		/* expiration time for this alarm */
   int use_abs_time;		/* use absolute or relative time */
   timer_t *tp;			/* the process' timer structure */
@@ -30,13 +31,12 @@ message *m_ptr;			/* pointer to request message */
   /* Extract shared parameters from the request message. */
   exp_time = m_ptr->ALRM_EXP_TIME;	/* alarm's expiration time */
   use_abs_time = m_ptr->ALRM_ABS_TIME;	/* flag for absolute time */
-  proc_nr = m_ptr->m_source;		/* process to interrupt later */
-  rp = proc_addr(proc_nr);
+  rp = proc_addr(who_p);
   if (! (priv(rp)->s_flags & SYS_PROC)) return(EPERM);
 
   /* Get the timer structure and set the parameters for this alarm. */
   tp = &(priv(rp)->s_alarm_timer);	
-  tmr_arg(tp)->ta_int = proc_nr;	
+  tmr_arg(tp)->ta_int = m_ptr->m_source;
   tp->tmr_func = cause_alarm; 
 
   /* Return the ticks left on the previous alarm. */
@@ -67,8 +67,8 @@ timer_t *tp;
  * alarm. The process number is stored in timer argument 'ta_int'. Notify that
  * process with a notification message from CLOCK.
  */
-  int proc_nr = tmr_arg(tp)->ta_int;		/* get process number */
-  lock_notify(CLOCK, proc_nr);			/* notify process */
+  int proc_nr_e = tmr_arg(tp)->ta_int;		/* get process number */
+  lock_notify(CLOCK, proc_nr_e);		/* notify process */
 }
 
 #endif /* USE_SETALARM */

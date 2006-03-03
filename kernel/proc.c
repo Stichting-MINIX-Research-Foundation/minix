@@ -38,6 +38,8 @@
 
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <minix/endpoint.h>
+#include "debug.h"
 #include "kernel.h"
 #include "proc.h"
 
@@ -45,7 +47,7 @@
  * other parts of the kernel through lock_...(). The lock temporarily disables 
  * interrupts to prevent race conditions. 
  */
-FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst,
+FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst_e,
 		message *m_ptr, unsigned flags));
 FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
 		message *m_ptr, unsigned flags));
@@ -58,7 +60,7 @@ FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
 FORWARD _PROTOTYPE( void pick_proc, (void));
 
 #define BuildMess(m_ptr, src, dst_ptr) \
-	(m_ptr)->m_source = (src); 					\
+	(m_ptr)->m_source = proc_addr(src)->p_endpoint;		\
 	(m_ptr)->m_type = NOTIFY_FROM(src);				\
 	(m_ptr)->NOTIFY_TIMESTAMP = get_uptime();			\
 	switch (src) {							\
@@ -74,8 +76,9 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 
 #if (CHIP == INTEL)
 #define CopyMess(s,sp,sm,dp,dm) \
-	cp_mess(s, (sp)->p_memmap[D].mem_phys,	\
-		 (vir_bytes)sm, (dp)->p_memmap[D].mem_phys, (vir_bytes)dm)
+	cp_mess(proc_addr(s)->p_endpoint, \
+		(sp)->p_memmap[D].mem_phys,	\
+		(vir_bytes)sm, (dp)->p_memmap[D].mem_phys, (vir_bytes)dm)
 #endif /* (CHIP == INTEL) */
 
 #if (CHIP == M68000)
@@ -87,9 +90,9 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 /*===========================================================================*
  *				sys_call				     * 
  *===========================================================================*/
-PUBLIC int sys_call(call_nr, src_dst, m_ptr)
+PUBLIC int sys_call(call_nr, src_dst_e, m_ptr)
 int call_nr;			/* system call number and flags */
-int src_dst;			/* src to receive from or dst to send to */
+int src_dst_e;			/* src to receive from or dst to send to */
 message *m_ptr;			/* pointer to message in the caller's space */
 {
 /* System calls are done by trapping to the kernel with an INT instruction.
@@ -102,7 +105,19 @@ message *m_ptr;			/* pointer to message in the caller's space */
   int mask_entry;				/* bit to check in send mask */
   int group_size;				/* used for deadlock check */
   int result;					/* the system call's result */
+  int src_dst;
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
+  
+  /* Require a valid source and/ or destination process, unless echoing. */
+  if (src_dst_e != ANY && function != ECHO) {
+      if(!isokendpt(src_dst_e, &src_dst)) {
+#if DEBUG_ENABLE_IPC_WARNINGS
+          kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
+              function, proc_nr(caller_ptr), src_dst_e);
+#endif
+	  return EDEADSRCDST;
+      }
+  } else src_dst = src_dst_e;
 
   /* Check if the process has privileges for the requested call. Calls to the 
    * kernel may only be SENDREC, because tasks always reply and may not block 
@@ -110,30 +125,12 @@ message *m_ptr;			/* pointer to message in the caller's space */
    */
   if (! (priv(caller_ptr)->s_trap_mask & (1 << function)) || 
           (iskerneln(src_dst) && function != SENDREC
-           && function != RECEIVE)) { 
+           && function != RECEIVE)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           function, proc_nr(caller_ptr), src_dst);
 #endif
       return(ETRAPDENIED);		/* trap denied by mask or kernel */
-  }
-  
-  /* Require a valid source and/ or destination process, unless echoing. */
-  if (src_dst != ANY && function != ECHO) {
-      if (! isokprocn(src_dst)) { 
-#if DEBUG_ENABLE_IPC_WARNINGS
-          kprintf("sys_call: invalid src_dst, src_dst %d, caller %d\n", 
-              src_dst, proc_nr(caller_ptr));
-#endif
-          return(EBADSRCDST);		/* invalid process number */
-      }
-      if (isemptyn(src_dst)) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-          kprintf("sys_call: dead src_dst; trap %d, from %d, to %d\n", 
-              function, proc_nr(caller_ptr), src_dst);
-#endif
-	  return(EDEADSRCDST);
-      }
   }
 
   /* If the call involves a message buffer, i.e., for SEND, RECEIVE, SENDREC, 
@@ -193,14 +190,14 @@ message *m_ptr;			/* pointer to message in the caller's space */
       priv(caller_ptr)->s_flags |= SENDREC_BUSY;
       /* fall through */
   case SEND:			
-      result = mini_send(caller_ptr, src_dst, m_ptr, flags);
+      result = mini_send(caller_ptr, src_dst_e, m_ptr, flags);
       if (function == SEND || result != OK) {	
           break;				/* done, or SEND failed */
       }						/* fall through for SENDREC */
   case RECEIVE:			
       if (function == RECEIVE)
           priv(caller_ptr)->s_flags &= ~SENDREC_BUSY;
-      result = mini_receive(caller_ptr, src_dst, m_ptr, flags);
+      result = mini_receive(caller_ptr, src_dst_e, m_ptr, flags);
       break;
   case NOTIFY:
       result = mini_notify(caller_ptr, src_dst);
@@ -223,7 +220,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
 PRIVATE int deadlock(function, cp, src_dst) 
 int function;					/* trap number */
 register struct proc *cp;			/* pointer to caller */
-register int src_dst;				/* src or dst process */
+int src_dst;					/* src or dst process */
 {
 /* Check for deadlock. This can happen if 'caller_ptr' and 'src_dst' have
  * a cyclic dependency of blocking send and receive calls. The only cyclic 
@@ -236,6 +233,7 @@ register int src_dst;				/* src or dst process */
   int trap_flags;
 
   while (src_dst != ANY) { 			/* check while process nr */
+      int src_dst_e;
       xp = proc_addr(src_dst);			/* follow chain of processes */
       group_size ++;				/* extra process in group */
 
@@ -243,9 +241,10 @@ register int src_dst;				/* src or dst process */
        * has not, the cycle cannot be closed and we are done.
        */
       if (xp->p_rts_flags & RECEIVING) {	/* xp has dependency */
-          src_dst = xp->p_getfrom;		/* get xp's source */
+	  if(xp->p_getfrom_e == ANY) src_dst = ANY;
+	  else okendpt(xp->p_getfrom_e, &src_dst);
       } else if (xp->p_rts_flags & SENDING) {	/* xp has dependency */
-          src_dst = xp->p_sendto;		/* get xp's destination */
+	  okendpt(xp->p_sendto_e, &src_dst);
       } else {
 	  return(0);				/* not a deadlock */
       }
@@ -270,9 +269,9 @@ register int src_dst;				/* src or dst process */
 /*===========================================================================*
  *				mini_send				     * 
  *===========================================================================*/
-PRIVATE int mini_send(caller_ptr, dst, m_ptr, flags)
+PRIVATE int mini_send(caller_ptr, dst_e, m_ptr, flags)
 register struct proc *caller_ptr;	/* who is trying to send a message? */
-int dst;				/* to whom is message being sent? */
+int dst_e;				/* to whom is message being sent? */
 message *m_ptr;				/* pointer to message buffer */
 unsigned flags;				/* system call flags */
 {
@@ -280,14 +279,19 @@ unsigned flags;				/* system call flags */
  * for this message, copy the message to it and unblock 'dst'. If 'dst' is
  * not waiting at all, or is waiting for another source, queue 'caller_ptr'.
  */
-  register struct proc *dst_ptr = proc_addr(dst);
+  register struct proc *dst_ptr;
   register struct proc **xpp;
+  int dst_p;
+
+  dst_p = _ENDPOINT_P(dst_e);
+  dst_ptr = proc_addr(dst_p);
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
    */
   if ( (dst_ptr->p_rts_flags & (RECEIVING | SENDING)) == RECEIVING &&
-       (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
+       (dst_ptr->p_getfrom_e == ANY
+         || dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
 	/* Destination is indeed waiting for this message. */
 	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 		 dst_ptr->p_messbuf);
@@ -297,7 +301,7 @@ unsigned flags;				/* system call flags */
 	caller_ptr->p_messbuf = m_ptr;
 	if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
 	caller_ptr->p_rts_flags |= SENDING;
-	caller_ptr->p_sendto = dst;
+	caller_ptr->p_sendto_e = dst_e;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
 	xpp = &dst_ptr->p_caller_q;		/* find end of list */
@@ -313,9 +317,9 @@ unsigned flags;				/* system call flags */
 /*===========================================================================*
  *				mini_receive				     * 
  *===========================================================================*/
-PRIVATE int mini_receive(caller_ptr, src, m_ptr, flags)
+PRIVATE int mini_receive(caller_ptr, src_e, m_ptr, flags)
 register struct proc *caller_ptr;	/* process trying to get message */
-int src;				/* which message source is wanted */
+int src_e;				/* which message source is wanted */
 message *m_ptr;				/* pointer to message buffer */
 unsigned flags;				/* system call flags */
 {
@@ -329,7 +333,10 @@ unsigned flags;				/* system call flags */
   int bit_nr;
   sys_map_t *map;
   bitchunk_t *chunk;
-  int i, src_id, src_proc_nr;
+  int i, src_id, src_proc_nr, src_p;
+
+  if(src_e == ANY) src_p = ANY;
+  else okendpt(src_e, &src_p);
 
   /* Check to see if a message from desired source is already available.
    * The caller's SENDING flag may be set if SENDREC couldn't send. If it is
@@ -354,7 +361,7 @@ unsigned flags;				/* system call flags */
 		kprintf("mini_receive: sending notify from NONE\n");
 	    }
 #endif
-            if (src!=ANY && src!=src_proc_nr) continue;	/* source not ok */
+            if (src_e!=ANY && src_p != src_proc_nr) continue;/* source not ok */
             *chunk &= ~(1 << i);			/* no longer pending */
 
             /* Found a suitable source, deliver the notification message. */
@@ -367,7 +374,7 @@ unsigned flags;				/* system call flags */
     /* Check caller queue. Use pointer pointers to keep code simple. */
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
-        if (src == ANY || src == proc_nr(*xpp)) {
+        if (src_e == ANY || src_p == proc_nr(*xpp)) {
 	    /* Found acceptable message. Copy it and update status. */
 	    CopyMess((*xpp)->p_nr, *xpp, (*xpp)->p_messbuf, caller_ptr, m_ptr);
             if (((*xpp)->p_rts_flags &= ~SENDING) == 0) enqueue(*xpp);
@@ -382,7 +389,7 @@ unsigned flags;				/* system call flags */
    * Block the process trying to receive, unless the flags tell otherwise.
    */
   if ( ! (flags & NON_BLOCKING)) {
-      caller_ptr->p_getfrom = src;		
+      caller_ptr->p_getfrom_e = src_e;		
       caller_ptr->p_messbuf = m_ptr;
       if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
       caller_ptr->p_rts_flags |= RECEIVING;		
@@ -408,7 +415,8 @@ int dst;				/* which process to notify */
    */
   if ((dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
       ! (priv(dst_ptr)->s_flags & SENDREC_BUSY) &&
-      (dst_ptr->p_getfrom == ANY || dst_ptr->p_getfrom == caller_ptr->p_nr)) {
+      (dst_ptr->p_getfrom_e == ANY
+       || dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
 
       /* Destination is indeed waiting for a message. Assemble a notification 
        * message and deliver it. Copy from pseudo-source HARDWARE, since the
@@ -434,9 +442,9 @@ int dst;				/* which process to notify */
 /*===========================================================================*
  *				lock_notify				     *
  *===========================================================================*/
-PUBLIC int lock_notify(src, dst)
-int src;			/* sender of the notification */
-int dst;			/* who is to be notified */
+PUBLIC int lock_notify(src_e, dst_e)
+int src_e;			/* (endpoint) sender of the notification */
+int dst_e;			/* (endpoint) who is to be notified */
 {
 /* Safe gateway to mini_notify() for tasks and interrupt handlers. The sender
  * is explicitely given to prevent confusion where the call comes from. MINIX 
@@ -444,7 +452,10 @@ int dst;			/* who is to be notified */
  * the first kernel entry (hardware interrupt, trap, or exception). Locking
  * is done by temporarily disabling interrupts. 
  */
-  int result;
+  int result, src, dst;
+
+  if(!isokendpt(src_e, &src) || !isokendpt(dst_e, &dst))
+	return EDEADSRCDST;
 
   /* Exception or interrupt occurred, thus already locked. */
   if (k_reenter >= 0) {
@@ -638,14 +649,14 @@ PRIVATE void pick_proc()
 /*===========================================================================*
  *				lock_send				     *
  *===========================================================================*/
-PUBLIC int lock_send(dst, m_ptr)
-int dst;			/* to whom is message being sent? */
+PUBLIC int lock_send(dst_e, m_ptr)
+int dst_e;			/* to whom is message being sent? */
 message *m_ptr;			/* pointer to message buffer */
 {
 /* Safe gateway to mini_send() for tasks. */
   int result;
   lock(2, "send");
-  result = mini_send(proc_ptr, dst, m_ptr, NON_BLOCKING);
+  result = mini_send(proc_ptr, dst_e, m_ptr, NON_BLOCKING);
   unlock(2);
   return(result);
 }
@@ -679,5 +690,54 @@ struct proc *rp;		/* this process is no longer runnable */
 	dequeue(rp);
 	unlock(4);
   }
+}
+
+/*===========================================================================*
+ *				isokendpt_f				     *
+ *===========================================================================*/
+#if DEBUG_ENABLE_IPC_WARNINGS
+PUBLIC int isokendpt_f(file, line, e, p, fatalflag)
+char *file;
+int line;
+#else
+PUBLIC int isokendpt_f(e, p, fatalflag)
+#endif
+int e, *p, fatalflag;
+{
+	int ok = 0;
+	/* Convert an endpoint number into a process number.
+	 * Return nonzero if the process is alive with the corresponding
+	 * generation number, zero otherwise.
+	 *
+	 * This function is called with file and line number by the
+	 * isokendpt_d macro if DEBUG_ENABLE_IPC_WARNINGS is defined,
+	 * otherwise without. This allows us to print the where the
+	 * conversion was attempted, making the errors verbose without
+	 * adding code for that at every call.
+	 * 
+	 * If fatalflag is nonzero, we must panic if the conversion doesn't
+	 * succeed.
+	 */
+	*p = _ENDPOINT_P(e);
+	if(!isokprocn(*p)) {
+#if DEBUG_ENABLE_IPC_WARNINGS
+		kprintf("kernel:%s:%d: bad endpoint %d: proc %d out of range\n",
+		file, line, e, *p);
+#endif
+	} else if(isemptyn(*p)) {
+#if DEBUG_ENABLE_IPC_WARNINGS
+	kprintf("kernel:%s:%d: bad endpoint %d: proc %d empty\n", file, line, e, *p);
+#endif
+	} else if(proc_addr(*p)->p_endpoint != e) {
+#if DEBUG_ENABLE_IPC_WARNINGS
+		kprintf("kernel:%s:%d: bad endpoint %d: proc %d has ept %d (generation %d vs. %d)\n", file, line,
+		e, *p, proc_addr(*p)->p_endpoint,
+		_ENDPOINT_G(e), _ENDPOINT_G(proc_addr(*p)->p_endpoint));
+#endif
+	} else ok = 1;
+	if(!ok && fatalflag) {
+		panic("invalid endpoint ", e);
+	}
+	return ok;
 }
 

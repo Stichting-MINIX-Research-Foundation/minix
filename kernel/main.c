@@ -19,6 +19,7 @@
 #include <a.out.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/endpoint.h>
 #include "proc.h"
 
 /* Prototype declarations for PRIVATE functions. */
@@ -51,6 +52,7 @@ PUBLIC void main()
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
   	rp->p_rts_flags = SLOT_FREE;		/* initialize free slot */
 	rp->p_nr = i;				/* proc number from ptr */
+	rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
         (pproc_addr + NR_TASKS)[i] = rp;        /* proc ptr from number */
   }
   for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
@@ -73,6 +75,7 @@ PUBLIC void main()
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	ip = &image[i];				/* process' attributes */
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
+	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
 	rp->p_max_priority = ip->priority;	/* max scheduling priority */
 	rp->p_priority = ip->priority;		/* current priority */
 	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */

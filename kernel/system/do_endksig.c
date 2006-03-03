@@ -2,7 +2,7 @@
  *   m_type:	SYS_ENDKSIG
  *
  * The parameters for this kernel call are:
- *     m2_i1:	SIG_PROC  	# process for which PM is done
+ *     m2_i1:	SIG_ENDPT  	# process for which PM is done
  */
 
 #include "../system.h"
@@ -22,11 +22,15 @@ message *m_ptr;			/* pointer to request message */
  * signal it got with SYS_GETKSIG.
  */
   register struct proc *rp;
+  int proc;
 
   /* Get process pointer and verify that it had signals pending. If the 
    * process is already dead its flags will be reset. 
    */
-  rp = proc_addr(m_ptr->SIG_PROC);
+  if(!isokendpt(m_ptr->SIG_ENDPT, &proc))
+    return EINVAL;
+
+  rp = proc_addr(proc);
   if (! (rp->p_rts_flags & SIG_PENDING)) return(EINVAL);
 
   /* PM has finished one kernel signal. Perhaps process is ready now? */

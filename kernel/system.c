@@ -28,12 +28,14 @@
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
  */
 
+#include "debug.h"
 #include "kernel.h"
 #include "system.h"
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/sigcontext.h>
+#include <minix/endpoint.h>
 #if (CHIP == INTEL)
 #include <ibm/memory.h>
 #include "protect.h"
@@ -72,7 +74,9 @@ PUBLIC void sys_task()
       /* Get work. Block and wait until a request message arrives. */
       receive(ANY, &m);			
       call_nr = (unsigned) m.m_type - KERNEL_CALL;	
-      caller_ptr = proc_addr(m.m_source);	
+      who_e = m.m_source;
+      okendpt(who_e, &who_p);
+      caller_ptr = proc_addr(who_p);
 
       /* See if the caller made a valid request and try to handle it. */
       if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr))) {
@@ -113,7 +117,7 @@ PRIVATE void initialize(void)
 
   /* Initialize IRQ handler hooks. Mark all hooks available. */
   for (i=0; i<NR_IRQ_HOOKS; i++) {
-      irq_hooks[i].proc_nr = NONE;
+      irq_hooks[i].proc_nr_e = NONE;
   }
 
   /* Initialize all alarm timers for all processes. */
@@ -238,19 +242,27 @@ int source;
 /*===========================================================================*
  *				send_sig				     *
  *===========================================================================*/
-PUBLIC void send_sig(proc_nr, sig_nr)
-int proc_nr;			/* system process to be signalled */
-int sig_nr;			/* signal to be sent, 1 to _NSIG */
+PUBLIC void send_sig(int proc_nr, int sig_nr)
 {
 /* Notify a system process about a signal. This is straightforward. Simply
  * set the signal that is to be delivered in the pending signals map and 
  * send a notification with source SYSTEM.
  */ 
   register struct proc *rp;
+  static int n;
+
+  if(!isokprocn(proc_nr)) {
+	panic("Bogus send_sig", proc_nr);
+	return;
+  }
+  if(isemptyn(proc_nr)) {
+	kprintf("kernel send_sig: ignoring sig for empty proc %d\n", proc_nr);
+	return;
+  }
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
-  lock_notify(SYSTEM, proc_nr); 
+  lock_notify(SYSTEM, rp->p_endpoint); 
 }
 
 /*===========================================================================*
@@ -420,22 +432,30 @@ vir_bytes bytes;		/* # of bytes to copy  */
   vir_addr[_SRC_] = src_addr;
   vir_addr[_DST_] = dst_addr;
   for (i=_SRC_; i<=_DST_; i++) {
+	int proc_nr, type;
+	struct proc *p;
+
+ 	type = vir_addr[i]->segment & SEGMENT_TYPE;
+	if(type != PHYS_SEG && isokendpt(vir_addr[i]->proc_nr_e, &proc_nr))
+	   p = proc_addr(proc_nr);
+	else
+	   p = NULL;
 
       /* Get physical address. */
-      switch((vir_addr[i]->segment & SEGMENT_TYPE)) {
+      switch(type) {
       case LOCAL_SEG:
+	  if(!p) return EDEADSRCDST;
           seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
-          phys_addr[i] = umap_local( proc_addr(vir_addr[i]->proc_nr), 
-              seg_index, vir_addr[i]->offset, bytes );
+          phys_addr[i] = umap_local(p, seg_index, vir_addr[i]->offset, bytes);
           break;
       case REMOTE_SEG:
+	  if(!p) return EDEADSRCDST;
           seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
-          phys_addr[i] = umap_remote( proc_addr(vir_addr[i]->proc_nr), 
-              seg_index, vir_addr[i]->offset, bytes );
+          phys_addr[i] = umap_remote(p, seg_index, vir_addr[i]->offset, bytes);
           break;
       case BIOS_SEG:
-          phys_addr[i] = umap_bios( proc_addr(vir_addr[i]->proc_nr),
-              vir_addr[i]->offset, bytes );
+	  if(!p) return EDEADSRCDST;
+          phys_addr[i] = umap_bios(p, vir_addr[i]->offset, bytes );
           break;
       case PHYS_SEG:
           phys_addr[i] = vir_addr[i]->offset;

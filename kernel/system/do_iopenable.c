@@ -2,14 +2,14 @@
  *   m_type:	SYS_IOPENABLE
  *
  * The parameters for this system call are:
- *    m2_i2:	PROC_NR		(process to give I/O Protection Level bits)
+ *    m2_i2:	IO_ENDPT	(process to give I/O Protection Level bits)
  *
  * Author:
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 
-#include "../kernel.h"
 #include "../system.h"
+#include "../kernel.h"
 
 /*===========================================================================*
  *			        do_iopenable				     *
@@ -20,9 +20,10 @@ register message *m_ptr;	/* pointer to request message */
   int proc_nr;
 
 #if 1 /* ENABLE_USERPRIV && ENABLE_USERIOPL */
-  proc_nr= m_ptr->PROC_NR;
-  if (proc_nr == SELF)
-  	proc_nr = m_ptr->m_source;
+  if (m_ptr->IO_ENDPT == SELF) {
+	proc_nr = who_p;
+  } else if(!isokendpt(m_ptr->IO_ENDPT, &proc_nr))
+	return(EINVAL);
   enable_iop(proc_addr(proc_nr));
   return(OK);
 #else

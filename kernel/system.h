@@ -31,6 +31,7 @@
 #define SYSTEM_H
 
 /* Common includes for the system library. */
+#include "debug.h"
 #include "kernel.h"
 #include "proto.h"
 #include "proc.h"

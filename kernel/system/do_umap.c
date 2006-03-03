@@ -24,12 +24,16 @@ register message *m_ptr;	/* pointer to request message */
   int seg_index = m_ptr->CP_SRC_SPACE & SEGMENT_INDEX;
   vir_bytes offset = m_ptr->CP_SRC_ADDR;
   int count = m_ptr->CP_NR_BYTES;
-  int proc_nr = (int) m_ptr->CP_SRC_PROC_NR;
+  int endpt = (int) m_ptr->CP_SRC_ENDPT;
+  int proc_nr;
   phys_bytes phys_addr;
 
   /* Verify process number. */
-  if (proc_nr == SELF) proc_nr = m_ptr->m_source;
-  if (! isokprocn(proc_nr)) return(EINVAL);
+  if (endpt == SELF)
+	proc_nr = who_p;
+  else
+	if (! isokendpt(endpt, &proc_nr))
+		return(EINVAL);
 
   /* See which mapping should be made. */
   switch(seg_type) {

@@ -2,11 +2,11 @@
  *   m_type:	SYS_VM_MAP
  *
  * The parameters for this system call are:
- *    m4_l1:	Process that requests map
- *    m4_l2:	Map (TRUE) or unmap (FALSE)
- *    m4_l3:	Base address
- *    m4_l4:	Size 
- *    m4_l5:	Memory address 
+ *    m4_l1:	Process that requests map (VM_MAP_ENDPT)
+ *    m4_l2:	Map (TRUE) or unmap (FALSE) (VM_MAP_MAPUNMAP)
+ *    m4_l3:	Base address (VM_MAP_BASE)
+ *    m4_l4:	Size  (VM_MAP_SIZE)
+ *    m4_l5:	Memory address  (VM_MAP_ADDR)
  */
 #include "../system.h"
 
@@ -42,13 +42,17 @@ message *m_ptr;			/* pointer to request message */
 		vm_init();
 	}
 
-	proc_nr= m_ptr->m4_l1;
-	if (proc_nr == SELF)
-		proc_nr= m_ptr->m_source;
-	do_map= m_ptr->m4_l2;
-	base= m_ptr->m4_l3;
-	size= m_ptr->m4_l4;
-	offset= m_ptr->m4_l5;
+	if (m_ptr->VM_MAP_ENDPT == SELF) {
+		proc_nr = who_p;
+	} else {
+		if(!isokendpt(m_ptr->VM_MAP_ENDPT, &proc_nr))
+			return EINVAL;
+	}
+
+	do_map= m_ptr->VM_MAP_MAPUNMAP;
+	base= m_ptr->VM_MAP_BASE;
+	size= m_ptr->VM_MAP_SIZE;
+	offset= m_ptr->VM_MAP_ADDR;
 
 	pp= proc_addr(proc_nr);
 	p_phys= umap_local(pp, D, base, size);

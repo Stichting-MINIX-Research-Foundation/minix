@@ -11,6 +11,8 @@
 
 #include "../system.h"
 
+#include <minix/endpoint.h>
+
 #if USE_IRQCTL
 
 FORWARD _PROTOTYPE(int generic_handler, (irq_hook_t *hook));
@@ -41,9 +43,9 @@ register message *m_ptr;	/* pointer to request message */
   /* Enable or disable IRQs. This is straightforward. */
   case IRQ_ENABLE:           
   case IRQ_DISABLE: 
-      if (irq_hook_id >= NR_IRQ_HOOKS ||
-          irq_hooks[irq_hook_id].proc_nr == NONE) return(EINVAL);
-      if (irq_hooks[irq_hook_id].proc_nr != m_ptr->m_source) return(EPERM);
+      if (irq_hook_id >= NR_IRQ_HOOKS || irq_hook_id < 0 ||
+          irq_hooks[irq_hook_id].proc_nr_e == NONE) return(EINVAL);
+      if (irq_hooks[irq_hook_id].proc_nr_e != m_ptr->m_source) return(EPERM);
       if (m_ptr->IRQ_REQUEST == IRQ_ENABLE)
           enable_irq(&irq_hooks[irq_hook_id]);	
       else 
@@ -58,7 +60,7 @@ register message *m_ptr;	/* pointer to request message */
       /* Check if IRQ line is acceptable. */
       if (irq_vec < 0 || irq_vec >= NR_IRQ_VECTORS) return(EINVAL);
 
-      rp= proc_addr(m_ptr->m_source);
+      rp= proc_addr(who_p);
       privp= priv(rp);
       if (!privp)
       {
@@ -84,7 +86,7 @@ register message *m_ptr;	/* pointer to request message */
       /* Find a free IRQ hook for this mapping. */
       hook_ptr = NULL;
       for (irq_hook_id=0; irq_hook_id<NR_IRQ_HOOKS; irq_hook_id++) {
-          if (irq_hooks[irq_hook_id].proc_nr == NONE) {	
+          if (irq_hooks[irq_hook_id].proc_nr_e == NONE) {	
               hook_ptr = &irq_hooks[irq_hook_id];	/* free hook */
               break;
           }
@@ -98,7 +100,7 @@ register message *m_ptr;	/* pointer to request message */
       if (notify_id > CHAR_BIT * sizeof(irq_id_t) - 1) return(EINVAL);
 
       /* Install the handler. */
-      hook_ptr->proc_nr = m_ptr->m_source;	/* process to notify */   	
+      hook_ptr->proc_nr_e = m_ptr->m_source;	/* process to notify */   	
       hook_ptr->notify_id = notify_id;		/* identifier to pass */   	
       hook_ptr->policy = m_ptr->IRQ_POLICY;	/* policy for interrupts */
       put_irq_handler(hook_ptr, irq_vec, generic_handler);
@@ -108,10 +110,10 @@ register message *m_ptr;	/* pointer to request message */
       break;
 
   case IRQ_RMPOLICY:
-      if (irq_hook_id >= NR_IRQ_HOOKS ||
-               irq_hooks[irq_hook_id].proc_nr == NONE) {
+      if (irq_hook_id < 0 || irq_hook_id >= NR_IRQ_HOOKS ||
+               irq_hooks[irq_hook_id].proc_nr_e == NONE) {
            return(EINVAL);
-      } else if (m_ptr->m_source != irq_hooks[irq_hook_id].proc_nr) {
+      } else if (m_ptr->m_source != irq_hooks[irq_hook_id].proc_nr_e) {
            return(EPERM);
       }
       /* Remove the handler and return. */
@@ -134,20 +136,30 @@ irq_hook_t *hook;
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
  */
+  int proc;
 
   /* As a side-effect, the interrupt handler gathers random information by 
    * timestamping the interrupt events. This is used for /dev/random.
    */
   get_randomness(hook->irq);
 
+  /* Check if the handler is still alive. If not, forget about the
+   * interrupt. This should never happen, as processes that die 
+   * automatically get their interrupt hooks unhooked.
+   */
+  if(!isokendpt(hook->proc_nr_e, &proc)) {
+     hook->proc_nr_e = NONE;
+     return 0;
+  }
+
   /* Add a bit for this interrupt to the process' pending interrupts. When 
    * sending the notification message, this bit map will be magically set
    * as an argument. 
    */
-  priv(proc_addr(hook->proc_nr))->s_int_pending |= (1 << hook->notify_id);
+  priv(proc_addr(proc))->s_int_pending |= (1 << hook->notify_id);
 
   /* Build notification message and return. */
-  lock_notify(HARDWARE, hook->proc_nr);
+  lock_notify(HARDWARE, hook->proc_nr_e);
   return(hook->policy & IRQ_REENABLE);
 }
 

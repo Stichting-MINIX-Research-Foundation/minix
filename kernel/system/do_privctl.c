@@ -2,7 +2,7 @@
  *   m_type:	SYS_PRIVCTL
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_PROC_NR 	(process number of caller)	
+ *    m1_i1:	PR_ENDPT 	(process number of caller)	
  */
 
 #include "../system.h"
@@ -38,10 +38,9 @@ message *m_ptr;			/* pointer to request message */
    * running by the NO_PRIV flag. This flag is set when a privileged process
    * forks. 
    */
-  caller_ptr = proc_addr(m_ptr->m_source);
+  caller_ptr = proc_addr(who_p);
   if (! (priv(caller_ptr)->s_flags & SYS_PROC)) return(EPERM); 
-  proc_nr = m_ptr->PR_PROC_NR;
-  if (! isokprocn(proc_nr)) return(EINVAL);
+  if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return(EINVAL);
   rp = proc_addr(proc_nr);
 
   switch(m_ptr->CTL_REQUEST)
@@ -114,9 +113,6 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_io_tab[i].ior_limit= io_range.ior_limit;
 	priv(rp)->s_nr_io_range++;
 
-	kprintf("do_privctl: added I/O range [0x%x..0x%x]\n",
-		io_range.ior_base, io_range.ior_limit);
-
 	return OK;
 
   case SYS_PRIV_ADD_MEM:
@@ -145,9 +141,6 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_nr_mem_range++;
 #endif
 
-	kprintf("do_privctl: should add memory range [0x%x..0x%x]\n",
-		mem_range.mr_base, mem_range.mr_limit);
-
 	return OK;
 
   case SYS_PRIV_ADD_IRQ:
@@ -165,8 +158,6 @@ message *m_ptr;			/* pointer to request message */
 		return ENOMEM;
 	priv(rp)->s_irq_tab[i]= m_ptr->CTL_MM_PRIV;
 	priv(rp)->s_nr_irq++;
-
-	kprintf("do_privctl: adding IRQ %d\n", m_ptr->CTL_MM_PRIV);
 
 	return OK;
 

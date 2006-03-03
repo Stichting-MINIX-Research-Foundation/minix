@@ -46,12 +46,14 @@ struct proc {
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_q_link;	/* link to next proc wishing to send */
   message *p_messbuf;		/* pointer to passed message buffer */
-  proc_nr_t p_getfrom;		/* from whom does process want to receive? */
-  proc_nr_t p_sendto;		/* to whom does process want to send? */
+  int p_getfrom_e;		/* from whom does process want to receive? */
+  int p_sendto_e;		/* to whom does process want to send? */
 
   sigset_t p_pending;		/* bit map for pending kernel signals */
 
   char p_name[P_NAME_LEN];	/* name of the process, including \0 */
+
+  int p_endpoint;		/* endpoint number, generation-aware */
 
 #if DEBUG_SCHED_CHECK
   int p_ready, p_found;
