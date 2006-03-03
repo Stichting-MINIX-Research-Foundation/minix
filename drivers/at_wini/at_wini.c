@@ -32,6 +32,9 @@
 #define REG_CTL_BASE1	0x376	/* control base register of controller 1 */
 
 #define PCI_CTL_OFF	    2	/* Offset of control registers from BAR2 */
+#define PCI_DMA_2ND_OFF	    8	/* Offset of DMA registers from BAR4 for 
+				 * secondary channel
+				 */
 
 #define REG_DATA	    0	/* data register (offset from the base reg.) */
 #define REG_PRECOMP	    1	/* start of write precompensation */
@@ -42,6 +45,7 @@
 #define REG_LDH		    6	/* lba, drive and head */
 #define   LDH_DEFAULT		0xA0	/* ECC enable, 512 bytes per sector */
 #define   LDH_LBA		0x40	/* Use LBA addressing */
+#define	  LDH_DEV		0x10	/* Drive 1 iff set */
 #define   ldh_init(drive)	(LDH_DEFAULT | ((drive) << 4))
 
 /* Read only registers */
@@ -69,13 +73,17 @@
 #define   CMD_RECALIBRATE	0x10	/* recalibrate drive */
 #define   CMD_READ		0x20	/* read data */
 #define   CMD_READ_EXT		0x24	/* read data (LBA48 addressed) */
+#define   CMD_READ_DMA_EXT	0x25	/* read data using DMA (w/ LBA48) */
 #define   CMD_WRITE		0x30	/* write data */
 #define	  CMD_WRITE_EXT		0x34	/* write data (LBA48 addressed) */
+#define   CMD_WRITE_DMA_EXT	0x35	/* write data using DMA (w/ LBA48) */
 #define   CMD_READVERIFY	0x40	/* read verify */
 #define   CMD_FORMAT		0x50	/* format track */
 #define   CMD_SEEK		0x70	/* seek cylinder */
 #define   CMD_DIAG		0x90	/* execute device diagnostics */
 #define   CMD_SPECIFY		0x91	/* specify parameters */
+#define   CMD_READ_DMA		0xC8	/* read data using DMA */
+#define   CMD_WRITE_DMA		0xCA	/* write data using DMA */
 #define   ATA_IDENTIFY		0xEC	/* identify drive */
 /* #define REG_CTL		0x206	*/ /* control register */
 #define REG_CTL		0	/* control register */
@@ -88,9 +96,44 @@
 
 /* Identify words */
 #define ID_CAPABILITIES		0x31	/* Capabilities (49)*/
-#define		ID_CAP_LBA		0x0200
+#define		ID_CAP_LBA		0x0200	/* LBA supported */
+#define		ID_CAP_DMA		0x0100	/* DMA supported */
+#define ID_FIELD_VALIDITY	0x35	/* Field Validity (53) */
+#define		ID_FV_88		0x04	/* Word 88 is valid (UDMA) */
+#define ID_MULTIWORD_DMA	0x3f	/* Multiword DMA (63) */
+#define		ID_MWDMA_2_SEL		0x0400	/* Mode 2 is selected */
+#define		ID_MWDMA_1_SEL		0x0200	/* Mode 1 is selected */
+#define		ID_MWDMA_0_SEL		0x0100	/* Mode 0 is selected */
+#define		ID_MWDMA_2_SUP		0x0004	/* Mode 2 is supported */
+#define		ID_MWDMA_1_SUP		0x0002	/* Mode 1 is supported */
+#define		ID_MWDMA_0_SUP		0x0001	/* Mode 0 is supported */
 #define ID_CSS			0x53	/* Command Sets Supported (83) */
 #define		ID_CSS_LBA48		0x0400
+#define ID_ULTRA_DMA		0x58	/* Ultra DMA (88) */
+#define		ID_UDMA_5_SEL		0x2000	/* Mode 5 is selected */
+#define		ID_UDMA_4_SEL		0x1000	/* Mode 4 is selected */
+#define		ID_UDMA_3_SEL		0x0800	/* Mode 3 is selected */
+#define		ID_UDMA_2_SEL		0x0400	/* Mode 2 is selected */
+#define		ID_UDMA_1_SEL		0x0200	/* Mode 1 is selected */
+#define		ID_UDMA_0_SEL		0x0100	/* Mode 0 is selected */
+#define		ID_UDMA_5_SUP		0x0020	/* Mode 5 is supported */
+#define		ID_UDMA_4_SUP		0x0010	/* Mode 4 is supported */
+#define		ID_UDMA_3_SUP		0x0008	/* Mode 3 is supported */
+#define		ID_UDMA_2_SUP		0x0004	/* Mode 2 is supported */
+#define		ID_UDMA_1_SUP		0x0002	/* Mode 1 is supported */
+#define		ID_UDMA_0_SUP		0x0001	/* Mode 0 is supported */
+
+/* DMA registers */
+#define DMA_COMMAND		0		/* Command register */
+#define		DMA_CMD_WRITE		0x08	/* PCI bus master writes */
+#define		DMA_CMD_START		0x01	/* Start Bus Master */
+#define DMA_STATUS		2		/* Status register */
+#define		DMA_ST_D1_DMACAP	0x40	/* Drive 1 is DMA capable */
+#define		DMA_ST_D0_DMACAP	0x20	/* Drive 0 is DMA capable */
+#define		DMA_ST_INT		0x04	/* Interrupt */
+#define		DMA_ST_ERROR		0x02	/* Error */
+#define		DMA_ST_BM_ACTIVE	0x01	/* Bus Master IDE Active */
+#define DMA_PRDTP		4		/* PRD Table Pointer */
 
 /* Check for the presence of LBA48 only on drives that are 'big'. */
 #define LBA48_CHECK_SIZE	0x0f000000
@@ -224,11 +267,13 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
   unsigned short w_status;	/* device status register */
   unsigned base_cmd;		/* command base register */
   unsigned base_ctl;		/* control base register */
+  unsigned base_dma;		/* dma base register */
   unsigned irq;			/* interrupt request line */
   unsigned irq_mask;		/* 1 << irq */
   unsigned irq_need_ack;	/* irq needs to be acknowledged */
   int irq_hook_id;		/* id of irq hook at the kernel */
   int lba48;			/* supports lba48 */
+  int dma;			/* supports dma */
   unsigned lcylinders;		/* logical number of cylinders (BIOS) */
   unsigned lheads;		/* logical number of heads */
   unsigned lsectors;		/* logical number of sectors per track */
@@ -255,9 +300,37 @@ PRIVATE int w_drive;			/* selected drive */
 PRIVATE int w_controller;		/* selected controller */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
+/* XXX */
+#undef DMA_SECTORS
+#undef DMA_BUF_SIZE
+
+#define DMA_SECTORS	64
+#define DMA_BUF_SIZE	(DMA_SECTORS*SECTOR_SIZE)
+
+PRIVATE char dma_buf[DMA_BUF_SIZE];
+PRIVATE phys_bytes dma_buf_phys;
+
+#define N_PRDTE	1024	/* Should be enough for large requests */
+#if 0
+#undef N_PRDTE
+#define N_PRDTE 4
+#endif
+
+PRIVATE struct prdte
+{
+	u32_t prdte_base;
+	u16_t prdte_count;
+	u8_t prdte_reserved;
+	u8_t prdte_flags;
+} prdt[N_PRDTE];
+PRIVATE phys_bytes prdt_phys;
+
+#define PRDTE_FL_EOT	0x80	/* End of table */
+
 FORWARD _PROTOTYPE( void init_params, (void) 				);
-FORWARD _PROTOTYPE( void init_drive, (struct wini *, int, int, int, 
-					int, int, int));
+FORWARD _PROTOTYPE( void init_drive, (struct wini *w, int base_cmd,
+	int base_ctl, int base_dma, int irq, int ack, int hook,
+							int drive)	);
 FORWARD _PROTOTYPE( void init_params_pci, (int) 			);
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( struct device *w_prepare, (int dev) 		);
@@ -269,6 +342,8 @@ FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
 					iovec_t *iov, unsigned nr_req) 	);
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
 FORWARD _PROTOTYPE( int com_out_ext, (struct command *cmd)		);
+FORWARD _PROTOTYPE( void setup_dma, (unsigned *sizep, int proc_nr,
+			iovec_t *iov, int do_write, int *do_copyoutp)	);
 FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
 FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) 			);
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
@@ -280,6 +355,7 @@ FORWARD _PROTOTYPE( int w_reset, (void) 				);
 FORWARD _PROTOTYPE( void w_intr_wait, (void) 				);
 FORWARD _PROTOTYPE( int at_intr_wait, (void) 				);
 FORWARD _PROTOTYPE( int w_waitfor, (int mask, int value) 		);
+FORWARD _PROTOTYPE( int w_waitfor_dma, (int mask, int value) 		);
 FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry) 		);
 #if ENABLE_ATAPI
 FORWARD _PROTOTYPE( int atapi_sendpacket, (u8_t *packet, unsigned cnt) 	);
@@ -348,6 +424,19 @@ PRIVATE void init_params()
   env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
 
+  s= sys_umap(SELF, D, (vir_bytes)dma_buf, sizeof(dma_buf), &dma_buf_phys);
+  if (s != 0)
+	panic("at_wini", "can't map dma buffer", s);
+  printf("init_params: got phys 0x%x for dma buffer at 0x%x\n",
+	dma_buf_phys, (vir_bytes)dma_buf);
+
+  s= sys_umap(SELF, D, (vir_bytes)prdt, sizeof(prdt), &prdt_phys);
+  if (s != 0)
+	panic("at_wini", "can't map prd table", s);
+  printf("init_params: got phys 0x%x for prd table at 0x%x\n",
+	prdt_phys, (vir_bytes)prdt);
+
+
   if (w_instance == 0) {
 	  /* Get the number of drives from the BIOS data area */
 	  if ((s=sys_vircopy(SELF, BIOS_SEG, NR_HD_DRIVES_ADDR, 
@@ -381,7 +470,7 @@ PRIVATE void init_params()
 		init_drive(wn,
 			drive < 2 ? REG_CMD_BASE0 : REG_CMD_BASE1,
 			drive < 2 ? REG_CTL_BASE0 : REG_CTL_BASE1,
-			NO_IRQ, 0, 0, drive);
+			0 /* no DMA */, NO_IRQ, 0, 0, drive);
 		w_next_drive++;
   	}
   }
@@ -402,12 +491,14 @@ PRIVATE void init_params()
 /*===========================================================================*
  *				init_drive				     *
  *===========================================================================*/
-PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl, int irq, int ack, int hook, int drive)
+PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
+	int base_dma, int irq, int ack, int hook, int drive)
 {
 	w->state = 0;
 	w->w_status = 0;
 	w->base_cmd = base_cmd;
 	w->base_ctl = base_ctl;
+	w->base_dma = base_dma;
 	w->irq = irq;
 	w->irq_mask = 1 << irq;
 	w->irq_need_ack = ack;
@@ -415,6 +506,7 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl, int irq, int
 	w->ldhpref = ldh_init(drive);
 	w->max_count = MAX_SECS << SECTOR_SHIFT;
 	w->lba48 = 0;
+	w->dma = 0;
 }
 
 /*===========================================================================*
@@ -422,13 +514,15 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl, int irq, int
  *===========================================================================*/
 PRIVATE void init_params_pci(int skip)
 {
-  int r, devind, drive;
+  int i, r, devind, drive;
   u16_t vid, did;
+  u32_t base_dma;
+
   pci_init();
   for(drive = w_next_drive; drive < MAX_DRIVES; drive++)
   	wini[drive].state = IGNORING;
-  for(r = pci_first_dev(&devind, &vid, &did);
-  	r != 0 && w_next_drive < MAX_DRIVES; r = pci_next_dev(&devind, &vid, &did)) {
+  for(r = pci_first_dev(&devind, &vid, &did); r != 0;
+	r = pci_next_dev(&devind, &vid, &did)) {
   	int interface, irq, irq_hook;
   	/* Base class must be 01h (mass storage), subclass must
   	 * be 01h (ATA).
@@ -437,10 +531,6 @@ PRIVATE void init_params_pci(int skip)
   	   pci_attr_r8(devind, PCI_SCR) != 0x01) {
   	   continue;
   	}
-
-	if(w_pci_debug)
-		printf("init_params_pci: found device %04x/%04x at index %d\n",
-		vid, did, devind);
 
   	/* Found a controller.
   	 * Programming interface register tells us more.
@@ -451,6 +541,15 @@ PRIVATE void init_params_pci(int skip)
   	/* Any non-compat drives? */
   	if (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2)) {
   		int s;
+
+		if (w_next_drive >= MAX_DRIVES)
+		{
+			/* We can't accept more drives, but have to search for
+			 * controllers operating in compatibility mode.
+			 */
+			continue;
+		}
+
   		irq_hook = irq;
   		if (skip > 0) {
   			if (w_pci_debug) printf("atapci skipping controller (remain %d)\n", skip);
@@ -465,45 +564,66 @@ PRIVATE void init_params_pci(int skip)
 			printf("atapci: couldn't enable IRQ line %d\n", irq);
 		  	continue;
 		}
-  	} else {
-  		/* If not.. this is not the ata-pci controller we're
-  		 * looking for.
-  		 */
-  		if (w_pci_debug) printf("atapci skipping compatability controller\n");
-  		continue;
-  	}
+  	} 
+
+  	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xffffffe0;
 
   	/* Primary channel not in compatability mode? */
   	if (interface & ATA_IF_NOTCOMPAT1) {
   		u32_t base_cmd, base_ctl;
+
   		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
   		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & 0xffffffe0;
   		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
 	  		init_drive(&wini[w_next_drive],
 	  			base_cmd, base_ctl+PCI_CTL_OFF,
-				irq, 1, irq_hook, 0);
+				base_dma, irq, 1, irq_hook, 0);
   			init_drive(&wini[w_next_drive+1],
   				base_cmd, base_ctl+PCI_CTL_OFF,
-				irq, 1, irq_hook, 1);
+				base_dma, irq, 1, irq_hook, 1);
 	  		if (w_pci_debug)
 		  		printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
   		} else printf("atapci: ignored drives on primary channel, base %x\n", base_cmd);
   	}
+	else
+	{
+		/* Update base_dma for compatibility device */
+		for (i= 0; i<MAX_DRIVES; i++)
+		{
+			if (wini[i].base_cmd == REG_CMD_BASE0)
+				wini[i].base_dma= base_dma;
+		}
+	}
 
   	/* Secondary channel not in compatability mode? */
   	if (interface & ATA_IF_NOTCOMPAT2) {
   		u32_t base_cmd, base_ctl;
+
   		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xffffffe0;
   		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & 0xffffffe0;
+		if (base_dma != 0)
+			base_dma += PCI_DMA_2ND_OFF;
   		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
   			init_drive(&wini[w_next_drive+2],
-  				base_cmd, base_ctl, irq, 1, irq_hook, 2);
+  				base_cmd, base_ctl+PCI_CTL_OFF, base_dma,
+				irq, 1, irq_hook, 2);
 	  		init_drive(&wini[w_next_drive+3],
-	  			base_cmd, base_ctl, irq, 1, irq_hook, 3);
+	  			base_cmd, base_ctl+PCI_CTL_OFF, base_dma,
+				irq, 1, irq_hook, 3);
 	  		if (w_pci_debug)
   				printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
   		} else printf("atapci: ignored drives on secondary channel, base %x\n", base_cmd);
   	}
+	else
+	{
+		/* Update base_dma for compatibility device */
+		for (i= 0; i<MAX_DRIVES; i++)
+		{
+			if (wini[i].base_cmd == REG_CMD_BASE1 && base_dma != 0)
+				wini[i].base_dma= base_dma+PCI_DMA_2ND_OFF;
+		}
+	}
+
   	w_next_drive += 4;
   }
 }
@@ -623,7 +743,10 @@ PRIVATE int w_identify()
   struct wini *wn = w_wn;
   struct command cmd;
   int i, s;
+  int id_dma, ultra_dma;
+  u32_t dma_base;
   u16_t w;
+  unsigned long dma_status;
   unsigned long size;
 #define id_byte(n)	(&tmp_buf[2 * (n)])
 #define id_word(n)	(((u16_t) id_byte(n)[0] <<  0) \
@@ -681,6 +804,93 @@ PRIVATE int w_identify()
 			}
 			wn->lba48 = 1;
 		}
+
+		/* Check for DMA. Assume that only LBA capable devices can do
+		 * DMA.
+		 */
+		w= id_word(ID_CAPABILITIES);
+		id_dma= !!(w & ID_CAP_DMA);
+		w= id_byte(ID_FIELD_VALIDITY)[0];
+		ultra_dma= !!(w & ID_FV_88);
+		dma_base= wn->base_dma;
+		if (dma_base)
+		{
+			if (sys_inb(dma_base + DMA_STATUS, &dma_status) != OK)
+			{
+				panic(w_name(),
+					"unable to read DMA status register",
+					NO_NUM);
+			}
+		}
+		if (id_dma && dma_base)
+		{
+			w= id_word(ID_MULTIWORD_DMA);
+			if (w & (ID_MWDMA_2_SUP|ID_MWDMA_1_SUP|ID_MWDMA_0_SUP))
+			{
+				printf(
+				"%s: multiword DMA modes supported:%s%s%s\n",
+					w_name(),
+					(w & ID_MWDMA_0_SUP) ? " 0" : "",
+					(w & ID_MWDMA_1_SUP) ? " 1" : "",
+					(w & ID_MWDMA_2_SUP) ? " 2" : "");
+			}
+			if (w & (ID_MWDMA_0_SEL|ID_MWDMA_1_SEL|ID_MWDMA_2_SEL))
+			{
+				printf(
+				"%s: multiword DMA mode selected:%s%s%s\n",
+					w_name(),
+					(w & ID_MWDMA_0_SEL) ? " 0" : "",
+					(w & ID_MWDMA_1_SEL) ? " 1" : "",
+					(w & ID_MWDMA_2_SEL) ? " 2" : "");
+			}
+			if (ultra_dma) 
+			{
+				w= id_word(ID_ULTRA_DMA);
+				if (w & (ID_UDMA_0_SUP|ID_UDMA_1_SUP|
+					ID_UDMA_2_SUP|ID_UDMA_3_SUP|
+					ID_UDMA_4_SUP|ID_UDMA_5_SUP))
+				{
+					printf(
+				"%s: Ultra DMA modes supported:%s%s%s%s%s%s\n",
+					w_name(),
+					(w & ID_UDMA_0_SUP) ? " 0" : "",
+					(w & ID_UDMA_1_SUP) ? " 1" : "",
+					(w & ID_UDMA_2_SUP) ? " 2" : "",
+					(w & ID_UDMA_3_SUP) ? " 3" : "",
+					(w & ID_UDMA_4_SUP) ? " 4" : "",
+					(w & ID_UDMA_5_SUP) ? " 5" : "");
+				}
+				if (w & (ID_UDMA_0_SEL|ID_UDMA_1_SEL|
+					ID_UDMA_2_SEL|ID_UDMA_3_SEL|
+					ID_UDMA_4_SEL|ID_UDMA_5_SEL))
+				{
+					printf(
+				"%s: Ultra DMA mode selected:%s%s%s%s%s%s\n",
+					w_name(),
+					(w & ID_UDMA_0_SEL) ? " 0" : "",
+					(w & ID_UDMA_1_SEL) ? " 1" : "",
+					(w & ID_UDMA_2_SEL) ? " 2" : "",
+					(w & ID_UDMA_3_SEL) ? " 3" : "",
+					(w & ID_UDMA_4_SEL) ? " 4" : "",
+					(w & ID_UDMA_5_SEL) ? " 5" : "");
+				}
+			}
+			wn->dma= 1;
+		}
+		else if (id_dma || dma_base)
+		{
+			printf("id_dma %d, dma_base 0x%x\n", id_dma, dma_base);
+		}
+		else
+			printf("no DMA support\n");
+
+#if 0
+		if (wn->dma && wn == &wini[0])
+		{
+			printf("disabling DMA for drive 0\n");
+			wn->dma= 0;
+		}
+#endif
 	}
 
 	if (wn->lcylinders == 0) {
@@ -852,7 +1062,8 @@ PRIVATE int w_specify()
  *				do_transfer				     *
  *===========================================================================*/
 PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
-	unsigned int count, unsigned int sector, unsigned int opcode)
+	unsigned int count, unsigned int sector,
+	unsigned int opcode, int do_dma)
 {
   	struct command cmd;
 	unsigned int sector_high;
@@ -875,11 +1086,25 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
 
 	cmd.precomp = precomp;
 	cmd.count   = count;
-	cmd.command = opcode == DEV_SCATTER ? CMD_WRITE : CMD_READ;
+	if (do_dma)
+	{
+		cmd.command = opcode == DEV_SCATTER ? CMD_WRITE_DMA :
+			CMD_READ_DMA;
+	}
+	else
+		cmd.command = opcode == DEV_SCATTER ? CMD_WRITE : CMD_READ;
 
 	if (do_lba48) {
-		cmd.command = ((opcode == DEV_SCATTER) ?
-			CMD_WRITE_EXT : CMD_READ_EXT);
+		if (do_dma)
+		{
+			cmd.command = ((opcode == DEV_SCATTER) ?
+				CMD_WRITE_DMA_EXT : CMD_READ_DMA_EXT);
+		}
+		else
+		{
+			cmd.command = ((opcode == DEV_SCATTER) ?
+				CMD_WRITE_EXT : CMD_READ_EXT);
+		}
 		cmd.count_prev= (count >> 8);
 		cmd.sector  = (sector >>  0) & 0xFF;
 		cmd.cyl_lo  = (sector >>  8) & 0xFF;
@@ -921,10 +1146,11 @@ unsigned nr_req;		/* length of request vector */
 {
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
-  int r, s, errors;
-  unsigned long block, w_status;
+  int n, r, s, errors, do_dma, do_write, do_copyout;
+  unsigned long v, block, w_status;
   unsigned long dv_size = cv64ul(w_dv->dv_size);
   unsigned cylinder, head, sector, nbytes;
+  unsigned dma_buf_offset;
 
 #if ENABLE_ATAPI
   if (w_wn->state & ATAPI) {
@@ -950,6 +1176,9 @@ unsigned nr_req;		/* length of request vector */
 	if (position + nbytes > dv_size) nbytes = dv_size - position;
 	block = div64u(add64ul(w_dv->dv_base, position), SECTOR_SIZE);
 
+	do_dma= wn->dma;
+	do_write= (opcode == DEV_SCATTER);
+	
 	if (nbytes >= wn->max_count) {
 		/* The drive can't do more then max_count at once. */
 		nbytes = wn->max_count;
@@ -958,9 +1187,17 @@ unsigned nr_req;		/* length of request vector */
 	/* First check to see if a reinitialization is needed. */
 	if (!(wn->state & INITIALIZED) && w_specify() != OK) return(EIO);
 
+	if (do_dma)
+	{
+		setup_dma(&nbytes, proc_nr, iov, do_write, &do_copyout);
+#if 0
+		printf("nbytes = %d\n", nbytes);
+#endif
+	}
+
 	/* Tell the controller to transfer nbytes bytes. */
 	r = do_transfer(wn, wn->precomp, (nbytes >> SECTOR_SHIFT),
-		block, opcode);
+		block, opcode, do_dma);
 
 	if (opcode == DEV_SCATTER) {
 		/* The specs call for a 400 ns wait after issuing the command.
@@ -969,6 +1206,80 @@ unsigned nr_req;		/* length of request vector */
 		 */
 		if (sys_inb((wn->base_ctl+REG_CTL_ALTSTAT), &w_status) != OK)
 			panic(w_name(), "couldn't get status", NO_NUM);
+	}
+
+	if (do_dma)
+	{
+		/* Wait for the interrupt, check DMA status and optionally
+		 * copy out.
+		 */
+
+		if ((r = at_intr_wait()) != OK) 
+		{
+			/* Don't retry if sector marked bad or too many
+			 * errors.
+			 */
+			if (r == ERR_BAD_SECTOR || ++errors == max_errors) {
+				w_command = CMD_IDLE;
+				return(EIO);
+			}
+			continue;
+		}
+
+		/* Wait for DMA_ST_INT to get set */
+		w_waitfor_dma(DMA_ST_INT, DMA_ST_INT);
+
+		r= sys_inb(wn->base_dma + DMA_STATUS, &v);
+		if (r != 0) panic("at_wini", "w_transfer: sys_inb failed", r);
+
+#if 0
+		printf("dma_status: 0x%x\n", v);
+#endif
+		if (!(v & DMA_ST_INT))
+		{
+			/* DMA did not complete successfully */
+			if (v & DMA_ST_BM_ACTIVE)
+				panic(w_name(), "DMA did not complete", NO_NUM);
+			else if (v & DMA_ST_ERROR)
+			{
+				printf("at_wini: DMA error\n");
+				r= EIO;
+				break;
+			}
+			else
+				panic(w_name(), "DMA buffer too small", NO_NUM);
+		}
+		else if (v & DMA_ST_BM_ACTIVE)
+			panic(w_name(), "DMA buffer too large", NO_NUM);
+
+		dma_buf_offset= 0;
+		while (r == OK && nbytes > 0)
+		{
+			n= iov->iov_size;
+			if (n > nbytes)
+				n= nbytes;
+
+			if (do_copyout)
+			{
+				s= sys_vircopy(SELF, D,
+					(vir_bytes)dma_buf+dma_buf_offset, 
+					proc_nr, D, iov->iov_addr, n);
+				if (s != OK)
+				{
+					panic(w_name(),
+					"w_transfer: sys_vircopy failed",
+						s);
+				}
+			}
+
+			/* Book the bytes successfully transferred. */
+			nbytes -= n;
+			position += n;
+			iov->iov_addr += n;
+			if ((iov->iov_size -= n) == 0)
+				{ iov++; nr_req--; }
+			dma_buf_offset += n;
+		}
 	}
 
 	while (r == OK && nbytes > 0) {
@@ -1150,6 +1461,230 @@ struct command *cmd;		/* Command block */
 
   return(OK);
 }
+
+/*===========================================================================*
+ *				setup_dma				     *
+ *===========================================================================*/
+PRIVATE void setup_dma(sizep, proc_nr, iov, do_write, do_copyoutp)
+unsigned *sizep;
+int proc_nr;
+iovec_t *iov;
+int do_write;
+int *do_copyoutp;
+{
+	phys_bytes phys, user_phys;
+	unsigned n, offset, size;
+	int i, j, r, bad;
+	unsigned long v;
+	struct wini *wn = w_wn;
+
+	/* First try direct scatter/gather to the supplied buffers */
+	size= *sizep;
+	i= 0;	/* iov index */
+	j= 0;	/* prdt index */
+	bad= 0;
+	offset= 0;	/* Offset in current iov */
+
+#if 0
+	printf("setup_dma: proc_nr %d\n", proc_nr);
+#endif
+
+	while (size > 0)
+	{
+#if 0
+		printf(
+		"setup_dma: iov[%d]: addr 0x%x, size %d offset %d, size %d\n",
+			i, iov[i].iov_addr, iov[i].iov_size, offset, size);
+#endif
+			
+		n= iov[i].iov_size-offset;
+		if (n > size)
+			n= size;
+		if (n == 0 || (n & 1))
+			panic("at_wini", "bad size in iov", iov[i].iov_size);
+		r= sys_umap(proc_nr, D, iov[i].iov_addr+offset, n, &user_phys);
+		if (r != 0)
+			panic("at_wini", "can't map user buffer", r);
+		if (user_phys & 1)
+		{
+			/* Buffer is not aligned */
+			printf("setup_dma: user buffer is not aligned\n");
+			bad= 1;
+			break;
+		}
+
+		/* vector is not allowed to cross a 64K boundary */
+		if (user_phys/0x10000 != (user_phys+n-1)/0x10000)
+			n= ((user_phys/0x10000)+1)*0x10000 - user_phys;
+
+		/* vector is not allowed to be bigger than 64K, but we get that
+		 * for free.
+		 */
+
+		if (j >= N_PRDTE)
+		{
+			/* Too many entries */
+			bad= 1;
+			break;
+		}
+
+		prdt[j].prdte_base= user_phys;
+		prdt[j].prdte_count= n;
+		prdt[j].prdte_reserved= 0;
+		prdt[j].prdte_flags= 0;
+		j++;
+
+		offset += n;
+		if (offset >= iov[i].iov_size)
+		{
+			i++;
+			offset= 0;
+		}
+
+		size -= n;
+	}
+
+	if (!bad)
+	{
+		if (j <= 0 || j > N_PRDTE)
+			panic("at_wini", "bad prdt index", j);
+		prdt[j-1].prdte_flags |= PRDTE_FL_EOT;
+
+#if 0
+		for (i= 0; i<j; i++)
+		{
+			printf("prdt[%d]: base 0x%x, size %d, flags 0x%x\n",
+				i, prdt[i].prdte_base, prdt[i].prdte_count,
+				prdt[i].prdte_flags);
+		}
+#endif
+	}
+
+	/* The caller needs to perform a copy-out from the dma buffer if
+	 * this is a read request and we can't DMA directly to the user's
+	 * buffers.
+	 */
+	*do_copyoutp= (!do_write && bad);
+
+	if (bad)
+	{
+		/* Adjust request size */
+		size= *sizep;
+		if (size > DMA_BUF_SIZE)
+			*sizep= size= DMA_BUF_SIZE;
+
+		if (do_write)
+		{
+			/* Copy-in */
+			for (offset= 0; offset < size; offset += n)
+			{
+				n= size-offset;
+				if (n > iov->iov_size)
+					n= iov->iov_size;
+			
+				r= sys_vircopy(proc_nr, D, iov->iov_addr,
+					SELF, D, (vir_bytes)dma_buf+offset, 
+					n);
+				if (r != OK)
+				{
+					panic(w_name(),
+					"setup_dma: sys_vircopy failed",
+						r);
+				}
+				iov++;
+			}
+		}
+	
+		/* Fill-in the physical region descriptor table */
+		phys= dma_buf_phys;
+		if (phys & 1)
+		{
+			/* Two byte alignment is required */
+			panic("at_wini", "bad buffer alignment in setup_dma",
+				phys);
+		}
+		for (j= 0; j<N_PRDTE; i++)
+		{
+			if (size == 0)
+			{
+				panic("at_wini", "bad size in setup_dma",
+					size);
+			}
+			if (size & 1)
+			{
+				/* Two byte alignment is required for size */
+				panic("at_wini",
+					"bad size alignment in setup_dma",
+					size);
+			}
+			n= size;
+
+			/* Buffer is not allowed to cross a 64K boundary */
+			if (phys / 0x10000 != (phys+n-1) / 0x10000)
+			{
+				n= ((phys/0x10000)+1)*0x10000 - phys;
+			}
+			prdt[j].prdte_base= phys;
+			prdt[j].prdte_count= n;
+			prdt[j].prdte_reserved= 0;
+			prdt[j].prdte_flags= 0;
+
+			size -= n;
+			if (size == 0)
+			{
+				prdt[j].prdte_flags |= PRDTE_FL_EOT;
+				break;
+			}
+		}
+		if (size != 0)
+			panic("at_wini", "size to large for prdt", NO_NUM);
+
+#if 0
+		for (i= 0; i<=j; i++)
+		{
+			printf("prdt[%d]: base 0x%x, size %d, flags 0x%x\n",
+				i, prdt[i].prdte_base, prdt[i].prdte_count,
+				prdt[i].prdte_flags);
+		}
+#endif
+	}
+
+	/* Stop bus master operation */
+	r= sys_outb(wn->base_dma + DMA_COMMAND, 0);
+	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
+
+	/* Verify that the bus master is not active */
+	r= sys_inb(wn->base_dma + DMA_STATUS, &v);
+	if (r != 0) panic("at_wini", "setup_dma: sys_inb failed", r);
+	if (v & DMA_ST_BM_ACTIVE)
+		panic("at_wini", "Bus master IDE active", NO_NUM);
+
+	if (prdt_phys & 3)
+		panic("at_wini", "prdt not aligned", prdt_phys);
+	r= sys_outl(wn->base_dma + DMA_PRDTP, prdt_phys);
+	if (r != 0) panic("at_wini", "setup_dma: sys_outl failed", r);
+
+	/* Clear interrupt and error flags */
+	r= sys_outb(wn->base_dma + DMA_STATUS, DMA_ST_INT | DMA_ST_ERROR);
+	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
+
+	/* Assume disk reads. Start DMA */
+	v= DMA_CMD_START;
+	if (!do_write)
+	{
+		/* Disk reads generate PCI write cycles. */
+		v |= DMA_CMD_WRITE;	
+	}
+	r= sys_outb(wn->base_dma + DMA_COMMAND, v);
+	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
+
+#if 0
+	r= sys_inb(wn->base_dma + DMA_STATUS, &v);
+	if (r != 0) panic("at_wini", "setup_dma: sys_inb failed", r);
+	printf("dma status: 0x%x\n", v);
+#endif
+}
+
 
 /*===========================================================================*
  *				w_need_reset				     *
@@ -1370,6 +1905,35 @@ int value;			/* required status */
   if (OK != s) printf("AT_WINI: warning, get_uptime failed: %d\n",s);
 
   w_need_reset();			/* controller gone deaf */
+  return(0);
+}
+
+/*===========================================================================*
+ *				w_waitfor_dma				     *
+ *===========================================================================*/
+PRIVATE int w_waitfor_dma(mask, value)
+int mask;			/* status mask */
+int value;			/* required status */
+{
+/* Wait until controller is in the required state.  Return zero on timeout.
+ * An alarm that set a timeout flag is used. TIMEOUT is in micros, we need
+ * ticks. Disabling the alarm is not needed, because a static flag is used
+ * and a leftover timeout cannot do any harm.
+ */
+  unsigned long w_status;
+  clock_t t0, t1;
+  int s;
+
+  getuptime(&t0);
+  do {
+	if ((s=sys_inb(w_wn->base_dma + DMA_STATUS, &w_status)) != OK)
+		panic(w_name(),"Couldn't read register",s);
+	if ((w_status & mask) == value) {
+        	return 1;
+	}
+  } while ((s=getuptime(&t1)) == OK && (t1-t0) < timeout_ticks );
+  if (OK != s) printf("AT_WINI: warning, get_uptime failed: %d\n",s);
+
   return(0);
 }
 
