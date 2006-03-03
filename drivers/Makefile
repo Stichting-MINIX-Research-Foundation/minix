@@ -17,7 +17,6 @@ build: all
 all install depend clean:
 	cd ./libdriver && $(MAKE) $@
 	cd ./tty && $(MAKE) $@
-	cd ./memory && $(MAKE) $@
 	cd ./at_wini && $(MAKE) $@
 	cd ./floppy && $(MAKE) $@
 	cd ./printer && $(MAKE) $@
@@ -34,13 +33,14 @@ all install depend clean:
 	cd ./lance && $(MAKE) $@
 	cd ./pci && $(MAKE) $@
 	cd ./ti1225 && $(MAKE) $@
+	cd ./memory && $(MAKE) $@	# Must be last for ramdisk image
 
 image:
 	cd ./libdriver && $(MAKE) build
 	cd ./tty && $(MAKE) build
-	cd ./memory && $(MAKE) build
 	cd ./at_wini && $(MAKE) build
 	cd ./floppy && $(MAKE) build
 	cd ./bios_wini && $(MAKE) build
 	cd ./log && $(MAKE) build
 	cd ./pci && $(MAKE) build
+	cd ./memory && $(MAKE) build	# Must be last for ramdisk image
