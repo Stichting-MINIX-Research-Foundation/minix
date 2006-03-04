@@ -5,8 +5,8 @@
  *   do_svrctl: process manager control
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
  *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
- *   do_memalloc: allocate a chunk of memory  (Jorrit N. Herder)
- *   do_memfree: deallocate a chunk of memory  (Jorrit N. Herder)
+ *   do_allocmem: allocate a chunk of memory  (Jorrit N. Herder)
+ *   do_freemem: deallocate a chunk of memory  (Jorrit N. Herder)
  *   do_getsetpriority: get/set process priority
  */
 
