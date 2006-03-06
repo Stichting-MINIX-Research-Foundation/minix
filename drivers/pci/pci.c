@@ -144,6 +144,7 @@ FORWARD _PROTOTYPE( void pcii_wreg32, (int busind, int devind, int port,
 							u32_t value)	);
 FORWARD _PROTOTYPE( u16_t pcii_rsts, (int busind)			);
 FORWARD _PROTOTYPE( void pcii_wsts, (int busind, U16_t value)		);
+FORWARD _PROTOTYPE( void print_capabilities, (int devind)		);
 
 /*===========================================================================*
  *			helper functions for I/O			     *
@@ -797,6 +798,9 @@ printf("probe_bus(%d)\n", busind);
 					headt & PHT_MASK);
 				break;
 			}
+
+			if (debug)
+				print_capabilities(devind);
 
 			if (nr_pcidev >= NR_PCIDEV)
 			  panic("PCI","too many PCI devices", nr_pcidev);
@@ -2207,6 +2211,45 @@ u16_t value;
 #else
 	outl(PCII_CONFADD, PCII_UNSEL);
 #endif
+}
+
+
+/*===========================================================================*
+ *				print_capabilities			     *
+ *===========================================================================*/
+PRIVATE void print_capabilities(devind)
+int devind;
+{
+	u8_t status, capptr, type, next;
+	char *str;
+
+	/* Check capabilities bit in the device status register */
+	status= pci_attr_r16(devind, PCI_SR);
+	if (!(status & PSR_CAPPTR))
+		return;
+
+	capptr= (pci_attr_r8(devind, PCI_CAPPTR) & PCI_CP_MASK);
+	while (capptr != 0)
+	{
+		type = pci_attr_r8(devind, capptr+CAP_TYPE);
+		next= (pci_attr_r8(devind, capptr+CAP_NEXT) & PCI_CP_MASK);
+		switch(type)
+		{
+		case 1: str= "PCI Power Management"; break;
+		case 2: str= "AGP"; break;
+		case 3: str= "Vital Product Data"; break;
+		case 4:	str= "Slot Identification"; break;
+		case 5: str= "Message Signaled Interrupts"; break;
+		case 6: str= "CompactPCI Hot Swap"; break;
+		case 8: str= "AMD HyperTransport"; break;
+		case 0xf: str= "AMD I/O MMU"; break;
+		defuault: str= "(unknown type)"; break;
+		}
+
+		printf(" @0x%x: capability type 0x%x: %s\n",
+			capptr, type, str);
+		capptr= next;
+	}
 }
 
 /*

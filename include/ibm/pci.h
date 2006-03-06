@@ -14,6 +14,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define		 PSR_SSE	0x4000	/* Signaled System Error */
 #define		 PSR_RMAS	0x2000	/* Received Master Abort Status */
 #define		 PSR_RTAS	0x1000	/* Received Target Abort Status */
+#define		 PSR_CAPPTR	0x0010	/* Capabilities list */
 #define PCI_REV		0x08	/* Revision ID */
 #define PCI_PIFR	0x09	/* Prog. Interface Register */
 #define PCI_SCR		0x0A	/* Sub-Class Register */
@@ -41,8 +42,9 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define PCI_SUBDID	0x2E	/* Subsystem Device ID */
 #define PCI_EXPROM	0x30	/* Expansion ROM Base Address */
 #define PCI_CAPPTR	0x34	/* Capabilities Pointer */
+#define		PCI_CP_MASK	0xfc	/* Lower 2 bits should be ignored */
 #define PCI_ILR		0x3C	/* Interrupt Line Register */
-#define	    PCI_ILR_UNKNOWN	0xFF	/* IRQ is unassigned or unknown */
+#define		PCI_ILR_UNKNOWN	0xFF	/* IRQ is unassigned or unknown */
 #define PCI_IPR		0x3D	/* Interrupt Pin Register */
 #define PCI_MINGNT	0x3E	/* Min Grant */
 #define PCI_MAXLAT	0x3F	/* Max Latency */
@@ -101,6 +103,9 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define CBB_BRIDGECTRL	0x3E	/* Bridge Control */
 #define		CBB_BC_INTEXCA	0x80	/* Interrupt are routed to ExCAs */
 #define		CBB_BC_CRST	0x40	/* Assert reset line */
+
+#define CAP_TYPE	0x00	/* Type field in capability */
+#define CAP_NEXT	0x01	/* Next field in capability */
 
 /* Device type values as ([PCI_BCR] << 16) | ([PCI_SCR] << 8) | [PCI_PIFR] */
 #define	PCI_T3_PCI2PCI		0x060400	/* PCI-to-PCI Bridge device */
