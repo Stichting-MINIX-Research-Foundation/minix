@@ -502,7 +502,9 @@ void initialize(void)
 
 
 	/* Check if data segment crosses a 64K boundary. */
-	if (newaddr + (daddr - caddr) < dma64k) newaddr= dma64k - runsize;
+	if (newaddr + (daddr - caddr) < dma64k)  {
+		newaddr= (dma64k - runsize) & ~0x0FFFFL;
+	}
 #endif
 
 	/* Set the new caddr for relocate. */
