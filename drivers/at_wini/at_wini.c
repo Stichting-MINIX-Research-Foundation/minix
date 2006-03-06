@@ -300,21 +300,16 @@ PRIVATE int w_drive;			/* selected drive */
 PRIVATE int w_controller;		/* selected controller */
 PRIVATE struct device *w_dv;		/* device's base and size */
 
-/* XXX */
-#undef DMA_SECTORS
-#undef DMA_BUF_SIZE
+/* Unfortunately, DMA_SECTORS and DMA_BUF_SIZE are already defined libdriver
+ * for 'tmp_buf'.
+ */
+#define ATA_DMA_SECTORS	64
+#define ATA_DMA_BUF_SIZE	(ATA_DMA_SECTORS*SECTOR_SIZE)
 
-#define DMA_SECTORS	64
-#define DMA_BUF_SIZE	(DMA_SECTORS*SECTOR_SIZE)
-
-PRIVATE char dma_buf[DMA_BUF_SIZE];
+PRIVATE char dma_buf[ATA_DMA_BUF_SIZE];
 PRIVATE phys_bytes dma_buf_phys;
 
 #define N_PRDTE	1024	/* Should be enough for large requests */
-#if 0
-#undef N_PRDTE
-#define N_PRDTE 4
-#endif
 
 PRIVATE struct prdte
 {
@@ -1570,8 +1565,8 @@ int *do_copyoutp;
 	{
 		/* Adjust request size */
 		size= *sizep;
-		if (size > DMA_BUF_SIZE)
-			*sizep= size= DMA_BUF_SIZE;
+		if (size > ATA_DMA_BUF_SIZE)
+			*sizep= size= ATA_DMA_BUF_SIZE;
 
 		if (do_write)
 		{
