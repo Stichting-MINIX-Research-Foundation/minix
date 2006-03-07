@@ -149,6 +149,7 @@ ALL	= \
 	pwdauth \
 	rarpd \
 	rcp \
+	rawspeed \
 	rdate \
 	readall \
 	rev \
@@ -650,6 +651,10 @@ rcp:	rcp.c
 	$(CCLD) -o $@ rcp.c
 	@install -S 8kw $@
 
+rawspeed:	rawspeed.c
+	$(CCLD) -o $@ rawspeed.c
+	@install -S 512k $@
+
 rdate:	rdate.c
 	$(CCLD) -o $@ rdate.c
 	@install -S 8kw $@
@@ -1026,6 +1031,7 @@ install:	\
 	/usr/lib/pwdauth \
 	/usr/bin/rarpd \
 	/usr/bin/rcp \
+	/usr/bin/rawspeed \
 	/usr/bin/rdate \
 	/usr/bin/readall \
 	/usr/bin/readfs \
@@ -1470,6 +1476,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/rcp:	rcp
+	install -cs -o bin $? $@
+
+/usr/bin/rawspeed:	rawspeed
 	install -cs -o bin $? $@
 
 /usr/bin/rdate:	rdate
