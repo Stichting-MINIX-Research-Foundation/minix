@@ -75,7 +75,9 @@ extern struct pci_vendor pci_vendor_table[];
 extern struct pci_device pci_device_table[];
 extern struct pci_baseclass pci_baseclass_table[];
 extern struct pci_subclass pci_subclass_table[];
+#if 0
 extern struct pci_intel_ctrl pci_intel_ctrl[];
+#endif
 extern struct pci_isabridge pci_isabridge[];
 extern struct pci_pcibridge pci_pcibridge[];
 

@@ -555,8 +555,7 @@ PRIVATE void pci_intel_init()
 	/* Try to detect a know PCI controller. Read the Vendor ID and
 	 * the Device ID for function 0 of device 0.
 	 * Two times the value 0xffff suggests a system without a (compatible)
-	 * PCI controller. Only controllers with values listed in the table
-	 * pci_intel_ctrl are actually used.
+	 * PCI controller. 
 	 */
 	u32_t bus, dev, func;
 	u16_t vid, did;
@@ -579,6 +578,7 @@ PRIVATE void pci_intel_init()
 	if (vid == 0xffff && did == 0xffff)
 		return;	/* Nothing here */
 
+#if 0
 	for (i= 0; pci_intel_ctrl[i].vid; i++)
 	{
 		if (pci_intel_ctrl[i].vid == vid &&
@@ -594,6 +594,7 @@ PRIVATE void pci_intel_init()
 			"\tvendor %04X (%s), device %04X\n",
 			vid, pci_vid_name(vid), did);
 	}
+#endif
 
 	if (nr_pcibus >= NR_PCIBUS)
 		panic("PCI","too many PCI busses", nr_pcibus);

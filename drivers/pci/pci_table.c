@@ -233,6 +233,7 @@ struct pci_subclass pci_subclass_table[]=
 	{ 0x00, 0x00, 0x00, NULL }
 };
 
+#if 0
 struct pci_intel_ctrl pci_intel_ctrl[]=
 {
 	{ 0x1022, 0x700C, },	/* AMD-762 */
@@ -256,6 +257,7 @@ struct pci_intel_ctrl pci_intel_ctrl[]=
 	{ 0x8086, 0x7192, },	/* Intel 82443BX - AGP disabled */
 	{ 0x0000, 0x0000, },
 };
+#endif
 
 struct pci_isabridge pci_isabridge[]=
 {
