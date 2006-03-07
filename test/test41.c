@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <minix/endpoint.h>
+#include <minix/sys_config.h>
 
 int main(int argc, char *argv[])
 {
@@ -9,7 +10,7 @@ int main(int argc, char *argv[])
 	printf("Test 41 ");
 
 	for(g = 0; g <= _ENDPOINT_MAX_GENERATION; g++) {
-		for(p = -NR_TASKS; p <= _ENDPOINT_MAX_PROC; p++) {
+		for(p = -NR_TASKS; p < _NR_PROCS; p++) {
 			int e, mg, mp;
 			e = _ENDPOINT(g, p);
 			mg = _ENDPOINT_G(e);
@@ -18,9 +19,14 @@ int main(int argc, char *argv[])
 				printf("%d != %d || %d != %d\n", mg, g, mp, p);
 				return 1;
 			}
+			if(g == 0 && e != p) {
+				printf("%d != %d and g=0\n", e, p);
+				return 1;
+			}
 			if(e == ANY || e == SELF || e == NONE) {
-				printf("endpoint is %d; ANY, SELF or NONE\n",
-					e);
+				printf("endpoint (%d,%d) is %d; ANY, SELF or NONE\n",
+					g, p, e);
+				return 1;
 			}
 		}
 	}
