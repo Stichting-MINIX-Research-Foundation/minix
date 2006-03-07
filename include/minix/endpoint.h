@@ -15,8 +15,7 @@
  * the generation size is big enough to start the next generation
  * above the highest magic number.
  */
-#define _ENDPOINT_MAX_PROC        (_NR_PROCS)
-#define _ENDPOINT_GENERATION_SIZE (NR_TASKS+_ENDPOINT_MAX_PROC+_MAX_MAGIC_PROC+1)
+#define _ENDPOINT_GENERATION_SIZE (NR_TASKS+_MAX_MAGIC_PROC+1)
 #define _ENDPOINT_MAX_GENERATION  (INT_MAX/_ENDPOINT_GENERATION_SIZE-1)
 
 /* Generation + Process slot number <-> endpoint. */
