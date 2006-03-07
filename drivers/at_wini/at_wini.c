@@ -1825,7 +1825,12 @@ PRIVATE void w_intr_wait()
   if (w_wn->irq != NO_IRQ) {
 	/* Wait for an interrupt that sets w_status to "not busy". */
 	while (w_wn->w_status & (STATUS_ADMBSY|STATUS_BSY)) {
-		receive(ANY, &m);		/* expect HARD_INT message */
+		int rr;
+		if((rr=receive(ANY, &m)) != OK) { /* expect HARD_INT message */
+			printf("w_intr_wait: receive from ANY failed (%d)\n",
+				r);
+			continue;	/* try again */
+		}
 		if (m.m_type == SYN_ALARM) { 	/* but check for timeout */
 		    w_timeout();		/* a.o. set w_status */
 		} else if (m.m_type == HARD_INT) {
