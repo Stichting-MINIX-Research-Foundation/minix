@@ -8,8 +8,6 @@
 
 /* The point of the padding in 'generation size' is to 
  * allow for certain bogus endpoint numbers such as NONE, ANY, etc.
- * The 207 doesn't mean anything, it's just to make the actual endpoint
- * numbers irregular.
  *
  * The _MAX_MAGIC_PROC is defined by <minix/com.h>. That include
  * file defines some magic process numbers such as ANY and NONE,
@@ -18,7 +16,7 @@
  * above the highest magic number.
  */
 #define _ENDPOINT_MAX_PROC        (_NR_PROCS)
-#define _ENDPOINT_GENERATION_SIZE (NR_TASKS+_ENDPOINT_MAX_PROC+_MAX_MAGIC_PROC+207)
+#define _ENDPOINT_GENERATION_SIZE (NR_TASKS+_ENDPOINT_MAX_PROC+_MAX_MAGIC_PROC+1)
 #define _ENDPOINT_MAX_GENERATION  (INT_MAX/_ENDPOINT_GENERATION_SIZE-1)
 
 /* Generation + Process slot number <-> endpoint. */
