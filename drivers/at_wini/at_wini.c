@@ -561,14 +561,14 @@ PRIVATE void init_params_pci(int skip)
 		}
   	} 
 
-  	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xffffffe0;
+  	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xfffffffc;
 
   	/* Primary channel not in compatability mode? */
   	if (interface & ATA_IF_NOTCOMPAT1) {
   		u32_t base_cmd, base_ctl;
 
-  		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
-  		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & 0xffffffe0;
+  		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xfffffffc;
+  		base_ctl = pci_attr_r32(devind, PCI_BAR_2) & 0xfffffffc;
   		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
 	  		init_drive(&wini[w_next_drive],
 	  			base_cmd, base_ctl+PCI_CTL_OFF,
@@ -578,6 +578,7 @@ PRIVATE void init_params_pci(int skip)
 				base_dma, irq, 1, irq_hook, 1);
 	  		if (w_pci_debug)
 		  		printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
+			w_next_drive += 2;
   		} else printf("atapci: ignored drives on primary channel, base %x\n", base_cmd);
   	}
 	else
@@ -594,19 +595,20 @@ PRIVATE void init_params_pci(int skip)
   	if (interface & ATA_IF_NOTCOMPAT2) {
   		u32_t base_cmd, base_ctl;
 
-  		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xffffffe0;
-  		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & 0xffffffe0;
+  		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xfffffffc;
+  		base_ctl = pci_attr_r32(devind, PCI_BAR_4) & 0xfffffffc;
 		if (base_dma != 0)
 			base_dma += PCI_DMA_2ND_OFF;
   		if (base_cmd != REG_CMD_BASE0 && base_cmd != REG_CMD_BASE1) {
-  			init_drive(&wini[w_next_drive+2],
+  			init_drive(&wini[w_next_drive],
   				base_cmd, base_ctl+PCI_CTL_OFF, base_dma,
 				irq, 1, irq_hook, 2);
-	  		init_drive(&wini[w_next_drive+3],
+	  		init_drive(&wini[w_next_drive+1],
 	  			base_cmd, base_ctl+PCI_CTL_OFF, base_dma,
 				irq, 1, irq_hook, 3);
 	  		if (w_pci_debug)
   				printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
+			w_next_drive += 2;
   		} else printf("atapci: ignored drives on secondary channel, base %x\n", base_cmd);
   	}
 	else
@@ -618,8 +620,6 @@ PRIVATE void init_params_pci(int skip)
 				wini[i].base_dma= base_dma+PCI_DMA_2ND_OFF;
 		}
 	}
-
-  	w_next_drive += 4;
   }
 }
 
