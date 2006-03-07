@@ -35,4 +35,4 @@ then
 fi
 echo "Root device name is $rootdevname"
 /bin/newroot "$rootdevname"
-exec /bin/sh /etc/rc start
+exec /bin/sh /etc/rc start "$@"
