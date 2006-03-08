@@ -849,7 +849,7 @@ uniq:	uniq.c
 
 update:	update.c
 	$(CCLD) -o $@ $?
-	@install -S 1kw $@
+	@install -S 2kw $@
 
 uud:	uud.c
 	$(CCLD) -o $@ $?
