@@ -48,12 +48,6 @@ start)
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
 
-    # Start crucial system services. The floppy driver *must* be loaded 
-    # first, as it needs memory below 16MB in order to do ISA DMA.
-    if [ ! "`sysenv label`" = "FLOPPY" ]  
-    then up floppy -dev /dev/fd0 -period 5HZ
-    else up at_wini -dev /dev/c0d0 -period 5HZ
-    fi
     up is -period 5HZ
     up cmos -dev /dev/cmos -period 5HZ
     echo .
