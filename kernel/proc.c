@@ -114,7 +114,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
 	kprintf("called by the dead?!?\n");
 	return EINVAL;
   }
-@endif
+#endif
   
   /* Require a valid source and/ or destination process, unless echoing. */
   if (src_dst_e != ANY && function != ECHO) {
