@@ -107,6 +107,14 @@ message *m_ptr;			/* pointer to message in the caller's space */
   int result;					/* the system call's result */
   int src_dst;
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
+
+#if 0
+  if (caller_ptr->p_rts_flags & SLOT_FREE)
+  {
+	kprintf("called by the dead?!?\n");
+	return EINVAL;
+  }
+@endif
   
   /* Require a valid source and/ or destination process, unless echoing. */
   if (src_dst_e != ANY && function != ECHO) {
@@ -375,6 +383,14 @@ unsigned flags;				/* system call flags */
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
+#if 0
+	    if ((*xpp)->p_rts_flags & SLOT_FREE)
+	    {
+		kprintf("listening to the dead?!?\n");
+		return EINVAL;
+	    }
+#endif
+
 	    /* Found acceptable message. Copy it and update status. */
 	    CopyMess((*xpp)->p_nr, *xpp, (*xpp)->p_messbuf, caller_ptr, m_ptr);
             if (((*xpp)->p_rts_flags &= ~SENDING) == 0) enqueue(*xpp);
