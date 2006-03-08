@@ -18,10 +18,6 @@ usage:
 	@echo "" 
 	@echo "Run 'make' in tools/ to create a new MINIX configuration." 
 	@echo "" 
-	@echo "Rebuilding the libraries uses gmake and gcc too, which takes" 
-	@echo "a lot of memory currently. See src/lib/ackonly/README for" 
-	@echo "more information." 
-	@echo "" 
 
 # world has to be able to make a new system, even if there
 # is no complete old system. it has to install commands, for which
