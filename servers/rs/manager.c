@@ -206,12 +206,14 @@ PUBLIC void do_exit(message *m_ptr)
        */
       for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
           if ((rp->r_flags & RS_IN_USE) && rp->r_pid == exit_pid) {
+	      int proc;
+	      proc = _ENDPOINT_P(rp->r_proc_nr_e);
 
-              rproc_ptr[rp->r_proc_nr_e] = NULL;		/* invalidate */
+              rproc_ptr[proc] = NULL;		/* invalidate */
 
               if ((rp->r_flags & RS_EXITING) || shutting_down) {
 		  rp->r_flags = 0;			/* release slot */
-		  rproc_ptr[rp->r_proc_nr_e] = NULL;
+		  rproc_ptr[proc] = NULL;
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
 		      rp->r_restarts = -1;		/* reset counter */
