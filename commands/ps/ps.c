@@ -211,7 +211,7 @@ Dev_t dev_nr;
 char *taskname(p_nr)
 int p_nr;
 {
-  return ps_proc[p_nr + nr_tasks].p_name;
+  return ps_proc[_ENDPOINT_P(p_nr) + nr_tasks].p_name;
 }
 
 /* Prrecv prints the RECV field for process with pstat buffer pointer bufp.
