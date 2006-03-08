@@ -5,7 +5,6 @@ CC=	exec cc
 CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 MDEC=	/usr/mdec
 MAKE=	exec make -$(MAKEFLAGS)
-GMAKE=/usr/gnu/bin/gmake
 
 # Specify the programs that are part of the system image.
 # Multiple boot medium drivers can be included in the image, 
@@ -46,7 +45,7 @@ usage:
 
 # create a fresh configuration or system image
 fresh: 
-	cd ../lib && $(GMAKE) clean
+	cd ../lib && make clean
 	$(MAKE) clean 
 	$(MAKE) libraries services
 
@@ -77,9 +76,9 @@ services: includes
 	cd ../drivers && $(MAKE) install
 
 libraries: includes
-	cd ../lib && $(GMAKE) clean
-	cd ../lib && $(GMAKE) all
-	cd ../lib && $(GMAKE) install
+	cd ../lib && make clean
+	cd ../lib && make all
+	cd ../lib && make install
 
 
 # make bootable and place system images
