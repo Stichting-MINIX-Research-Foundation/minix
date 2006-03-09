@@ -25,7 +25,7 @@ all build:	$(DRIVER)
 
 $(DRIVER):	ramdisk_image $(OBJ) $(LIBDRIVER)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
-	install -S 1024w $(DRIVER)
+	install -S 8k $(DRIVER)
 
 imgrd.o:        ramdisk/image.c
 
