@@ -23,7 +23,7 @@ OBJ = main.o store.o
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 256w $@
+	install -S 16k $@
 
 # install with other servers
 install: $(SERVER)
