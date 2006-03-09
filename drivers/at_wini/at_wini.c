@@ -95,6 +95,8 @@
 #define REG_CTL_ALTSTAT 0	/* alternate status register */
 
 /* Identify words */
+#define ID_GENERAL		0x00	/* General configuration information */
+#define		ID_GEN_NOT_ATA		0x8000	/* Not an ATA device */
 #define ID_CAPABILITIES		0x31	/* Capabilities (49)*/
 #define		ID_CAP_LBA		0x0200	/* LBA supported */
 #define		ID_CAP_DMA		0x0100	/* DMA supported */
@@ -754,13 +756,21 @@ PRIVATE int w_identify()
   /* Try to identify the device. */
   cmd.ldh     = wn->ldhpref;
   cmd.command = ATA_IDENTIFY;
-  if (com_simple(&cmd) == OK) {
-	/* This is an ATA device. */
-	wn->state |= SMART;
+  if (com_simple(&cmd) == OK && w_waitfor(STATUS_DRQ, STATUS_DRQ) &&
+	!(wn->w_status & (STATUS_ERR|STATUS_WF))) {
 
 	/* Device information. */
 	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
+
+	if (id_word(0) & ID_GEN_NOT_ATA)
+	{
+		printf("%s: not an ATA device?\n", w_name());
+		return ERR;
+	}
+
+	/* This is an ATA device. */
+	wn->state |= SMART;
 
 	/* Why are the strings byte swapped??? */
 	for (i = 0; i < 40; i++) w_id_string[i] = id_byte(27)[i^1];
@@ -900,7 +910,9 @@ PRIVATE int w_identify()
 	}
 #if ENABLE_ATAPI
   } else
-  if (cmd.command = ATAPI_IDENTIFY, com_simple(&cmd) == OK) {
+  if (cmd.command = ATAPI_IDENTIFY,
+	com_simple(&cmd) == OK && w_waitfor(STATUS_DRQ, STATUS_DRQ) &&
+	!(wn->w_status & (STATUS_ERR|STATUS_WF))) {
 	/* An ATAPI device. */
 	wn->state |= ATAPI;
 
@@ -1242,7 +1254,12 @@ unsigned nr_req;		/* length of request vector */
 				break;
 			}
 			else
+			{
+#if 0
+				printf("DMA buffer too small\n");
+#endif
 				panic(w_name(), "DMA buffer too small", NO_NUM);
+			}
 		}
 		else if (v & DMA_ST_BM_ACTIVE)
 			panic(w_name(), "DMA buffer too large", NO_NUM);
