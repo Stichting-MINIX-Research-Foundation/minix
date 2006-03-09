@@ -245,7 +245,7 @@ int src_dst;					/* src or dst process */
       xp = proc_addr(src_dst);			/* follow chain of processes */
       group_size ++;				/* extra process in group */
 
-      /* Check whether the last process in the chain has a depency. If it 
+      /* Check whether the last process in the chain has a dependency. If it 
        * has not, the cycle cannot be closed and we are done.
        */
       if (xp->p_rts_flags & RECEIVING) {	/* xp has dependency */
