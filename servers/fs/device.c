@@ -596,10 +596,23 @@ PUBLIC void dev_up(int maj)
 		
 		minor = ((in->i_zone[0] >> MINOR) & BYTE);
 
-		if((r = dev_open(in->i_dev, FS_PROC_NR,
+		printf("FS: reopening special %d/%d..\n", maj, minor);
+
+		if((r = dev_open(in->i_zone[0], FS_PROC_NR,
 		   in->i_mode & (R_BIT|W_BIT))) != OK) {
-			printf("FS: file on dev %d/%d re-open failed: %d.\n",
-				maj, minor, r);
+			int n;
+			/* This function will set the fp_filp[]s of processes
+			 * holding that fp to NULL, but _not_ clear
+			 * fp_filp_inuse, so that fd can't be recycled until
+			 * it's close()d.
+			 */
+			n = inval_filp(fp);
+			if(n != fp->filp_count)
+				printf("FS: warning: invalidate/count "
+				 "discrepancy (%d, %d)\n", n, fp->filp_count);
+			fp->filp_count = 0;
+			printf("FS: file on dev %d/%d re-open failed: %d; "
+				"invalidated %d fd's.\n", maj, minor, r, n);
 		}
 	}
 

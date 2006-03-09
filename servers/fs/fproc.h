@@ -1,3 +1,5 @@
+#include <sys/select.h>
+
 /* This is the per-process information.  A slot is reserved for each potential
  * process. Thus NR_PROCS must be the same as in the kernel. It is not 
  * possible or even necessary to tell when a slot is free here.
@@ -7,6 +9,7 @@ EXTERN struct fproc {
   struct inode *fp_workdir;	/* pointer to working directory's inode */
   struct inode *fp_rootdir;	/* pointer to current root dir (see chroot) */
   struct filp *fp_filp[OPEN_MAX];/* the file descriptor table */
+  fd_set fp_filp_inuse;		/* which fd's are in use? */
   uid_t fp_realuid;		/* real user id */
   uid_t fp_effuid;		/* effective user id */
   gid_t fp_realgid;		/* real group id */

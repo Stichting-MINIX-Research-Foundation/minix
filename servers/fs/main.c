@@ -18,6 +18,7 @@ struct super_block;		/* proto.h needs to know this */
 #include <stdlib.h>
 #include <sys/ioc_memory.h>
 #include <sys/svrctl.h>
+#include <sys/select.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/keymap.h>
@@ -251,6 +252,7 @@ PRIVATE void fs_init()
 
   /* The root device can now be accessed; set process directories. */
   for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+	FD_ZERO(&(rfp->fp_filp_inuse));
   	if (rfp->fp_pid != PID_FREE) {
 		rip = get_inode(root_dev, ROOT_INODE);
 		dup_inode(rip);

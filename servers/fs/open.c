@@ -108,6 +108,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 
   /* Claim the file descriptor and filp slot and fill them in. */
   fp->fp_filp[m_in.fd] = fil_ptr;
+  FD_SET(m_in.fd, &fp->fp_filp_inuse);
   fil_ptr->filp_count = 1;
   fil_ptr->filp_ino = rip;
   fil_ptr->filp_flags = oflags;
@@ -187,6 +188,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   if (r != OK) {
 	if (r == SUSPEND) return(r);		/* Oops, just suspended */
 	fp->fp_filp[m_in.fd] = NIL_FILP;
+  	FD_CLR(m_in.fd, &fp->fp_filp_inuse);
 	fil_ptr->filp_count= 0;
 	put_inode(rip);
 	return(r);
@@ -434,6 +436,7 @@ PUBLIC int do_close()
 
   fp->fp_cloexec &= ~(1L << m_in.fd);	/* turn off close-on-exec bit */
   fp->fp_filp[m_in.fd] = NIL_FILP;
+  FD_CLR(m_in.fd, &fp->fp_filp_inuse);
 
   /* Check to see if the file is locked.  If so, release all locks. */
   if (nr_locks == 0) return(OK);

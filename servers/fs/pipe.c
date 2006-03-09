@@ -47,20 +47,25 @@ PUBLIC int do_pipe()
   rfp = fp;
   if ( (r = get_fd(0, R_BIT, &fil_des[0], &fil_ptr0)) != OK) return(r);
   rfp->fp_filp[fil_des[0]] = fil_ptr0;
+  FD_SET(fil_des[0], &rfp->fp_filp_inuse);
   fil_ptr0->filp_count = 1;
   if ( (r = get_fd(0, W_BIT, &fil_des[1], &fil_ptr1)) != OK) {
 	rfp->fp_filp[fil_des[0]] = NIL_FILP;
+  	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;
 	return(r);
   }
   rfp->fp_filp[fil_des[1]] = fil_ptr1;
+  FD_SET(fil_des[1], &rfp->fp_filp_inuse);
   fil_ptr1->filp_count = 1;
 
   /* Make the inode on the pipe device. */
   if ( (rip = alloc_inode(root_dev, I_REGULAR) ) == NIL_INODE) {
 	rfp->fp_filp[fil_des[0]] = NIL_FILP;
+  	FD_CLR(fil_des[0], &rfp->fp_filp_inuse);
 	fil_ptr0->filp_count = 0;
 	rfp->fp_filp[fil_des[1]] = NIL_FILP;
+  	FD_CLR(fil_des[1], &rfp->fp_filp_inuse);
 	fil_ptr1->filp_count = 0;
 	return(err_code);
   }

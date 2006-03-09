@@ -59,6 +59,7 @@ _PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
 _PROTOTYPE( struct filp *find_filp, (struct inode *rip, mode_t bits)	);
 _PROTOTYPE( int get_fd, (int start, mode_t bits, int *k, struct filp **fpt) );
 _PROTOTYPE( struct filp *get_filp, (int fild)				);
+_PROTOTYPE( int inval_filp, (struct filp *)				);
 
 /* inode.c */
 _PROTOTYPE( struct inode *alloc_inode, (dev_t dev, mode_t bits)		);

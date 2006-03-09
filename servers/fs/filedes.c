@@ -1,10 +1,14 @@
 /* This file contains the procedures that manipulate file descriptors.
  *
  * The entry points into this file are
- *   get_fd:	look for free file descriptor and free filp slots
- *   get_filp:	look up the filp entry for a given file descriptor
- *   find_filp:	find a filp slot that points to a given inode
+ *   get_fd:	 look for free file descriptor and free filp slots
+ *   get_filp:	 look up the filp entry for a given file descriptor
+ *   find_filp:	 find a filp slot that points to a given inode
+ *   inval_filp: invalidate a filp and associated fd's, only let close()
+ *               happen on it
  */
+
+#include <sys/select.h>
 
 #include "fs.h"
 #include "file.h"
@@ -28,7 +32,7 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 
   /* Search the fproc fp_filp table for a free file descriptor. */
   for (i = start; i < OPEN_MAX; i++) {
-	if (fp->fp_filp[i] == NIL_FILP) {
+	if (fp->fp_filp[i] == NIL_FILP && !FD_ISSET(i, &fp->fp_filp_inuse)) {
 		/* A file descriptor has been located. */
 		*k = i;
 		break;
@@ -91,4 +95,22 @@ PUBLIC struct filp *find_filp(register struct inode *rip, mode_t bits)
 
   /* If control passes here, the filp wasn't there.  Report that back. */
   return(NIL_FILP);
+}
+
+/*===========================================================================*
+ *				inval_filp				     *
+ *===========================================================================*/
+PUBLIC int inval_filp(struct filp *fp)
+{
+	int f, fd, n = 0;
+	for(f = 0; f < NR_PROCS; f++) {
+		if(fproc[f].fp_pid == PID_FREE) continue;
+		for(fd = 0; fd < OPEN_MAX; fd++) {
+			if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == fp) {
+				fproc[f].fp_filp[fd] = NIL_FILP;
+			}
+		}
+	}
+
+	return n;
 }

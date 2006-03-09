@@ -101,6 +101,7 @@ PUBLIC int do_dup()
   /* Success. Set up new file descriptors. */
   f->filp_count++;
   fp->fp_filp[m_in.fd2] = f;
+  FD_SET(m_in.fd2, &fp->fp_filp_inuse);
   return(m_in.fd2);
 }
 
