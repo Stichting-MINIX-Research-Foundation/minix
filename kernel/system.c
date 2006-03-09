@@ -247,18 +247,15 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
 /* Notify a system process about a signal. This is straightforward. Simply
  * set the signal that is to be delivered in the pending signals map and 
  * send a notification with source SYSTEM.
+ *
+ * Process number is verified to avoid writing in random places, but we
+ * don't kprintf() or panic() because that causes send_sig() invocations.
  */ 
   register struct proc *rp;
   static int n;
 
-  if(!isokprocn(proc_nr)) {
-	panic("Bogus send_sig", proc_nr);
+  if(!isokprocn(proc_nr) || isemptyn(proc_nr))
 	return;
-  }
-  if(isemptyn(proc_nr)) {
-	kprintf("kernel send_sig: ignoring sig for empty proc %d\n", proc_nr);
-	return;
-  }
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
