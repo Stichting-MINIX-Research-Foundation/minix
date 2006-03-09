@@ -141,7 +141,9 @@ int c;					/* character to append */
   } else {
       int p, outprocs[] = OUTPUT_PROCS_ARRAY;
       for(p = 0; outprocs[p] != NONE; p++) {
-         send_sig(outprocs[p], SIGKMESS);
+	 if(isokprocn(outprocs[p]) && !isemptyn(outprocs[p])) {
+           send_sig(outprocs[p], SIGKMESS);
+	 }
       }
   }
 }
