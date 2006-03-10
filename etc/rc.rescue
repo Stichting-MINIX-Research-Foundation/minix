@@ -11,5 +11,5 @@ service up $DRIVERS/rescue -dev /dev/rescue -args 128 -period 4HZ
 mkfs /dev/rescue
 mount /dev/rescue $RESCUE
 cd $DRIVERS
-cp at_wini floppy bios_wini $RESCUE
+cp -p at_wini floppy bios_wini $RESCUE
 service rescue $RESCUE 
