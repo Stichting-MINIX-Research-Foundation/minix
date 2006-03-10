@@ -140,8 +140,9 @@ PRIVATE void get_work()
 	continue;
     }
     if(who_p >= 0 && fproc[who_p].fp_endpoint != who_e) {
-    	printf("FS: receive endpoint inconsistent (%d, %d), ignoring %d",
-		fproc[who_p].fp_endpoint, who_e, m_in.m_type);
+    	printf("FS: receive endpoint inconsistent (%d, %d, %d).\n",
+		who_e, fproc[who_p].fp_endpoint, who_e);
+	panic(__FILE__, "FS: inconsistent endpoint ", NO_NUM);
 	continue;
     }
     call_nr = m_in.m_type;
