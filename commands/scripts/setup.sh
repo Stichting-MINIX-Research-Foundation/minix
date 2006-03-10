@@ -614,7 +614,7 @@ mount /dev/$usr /mnt >/dev/null || exit
 # Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
 
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(1,Start MINIX 3 (requires at least 16 MB RAM)) { unset image; boot; }; smallminix(2,Start Small MINIX 3 (intended for 8 MB RAM systems)) { image=/boot/image_small; ramsize=0; boot; }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(1,Start MINIX 3 (requires at least 16 MB RAM)) { label=BIG; boot; }; smallminix(2,Start Small MINIX 3 (intended for 8 MB RAM systems)) { label=SMALL; ramsize=0; boot; }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
 pfile="/mnt/src/tools/fdbootparams"
 echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile
 # Save name of CD drive

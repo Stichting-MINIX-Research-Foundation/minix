@@ -4,7 +4,7 @@ u=/usr
 CC=	exec cc
 CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 MDEC=	/usr/mdec
-MAKE=	exec make -$(MAKEFLAGS)
+MAKE=	make -$(MAKEFLAGS)
 
 # Specify the programs that are part of the system image.
 # Multiple boot medium drivers can be included in the image, 
@@ -12,7 +12,8 @@ MAKE=	exec make -$(MAKEFLAGS)
 # determined by the 'label=...' boot monitor parameter. 
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
-	../servers/fs/fs \
+	BIG:../servers/fs/fs \
+	SMALL:../servers/fs/smallfs \
 	../servers/rs/rs \
 	../servers/ds/ds \
 	../drivers/tty/tty \
@@ -53,14 +54,10 @@ all: services image
 
 image:  includes
 	cd ../kernel && $(MAKE) 
+	cd ../servers/fs && $(MAKE) EXTRA_OPTS=-D_MINIX_SMALL=1 clean fs && \
+		mv fs smallfs && make clean
 	cd ../servers && $(MAKE) image
 	cd ../drivers && $(MAKE) image
-	installboot -image $@ $(PROGRAMS)
-
-image_small:  includes
-	cd ../kernel && $(MAKE) 
-	cd ../servers && $(MAKE) EXTRA_OPTS=-D_MINIX_SMALL=1 image
-	cd ../drivers && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) image
 	installboot -image $@ $(PROGRAMS)
 
 # rebuild the program or system libraries
@@ -100,5 +97,5 @@ clean:
 	cd ../kernel && $(MAKE) $@
 	cd ../servers && $(MAKE) $@
 	cd ../drivers && $(MAKE) $@
-	rm -rf *.bak image image_small *.iso *.iso.gz cdfdimage rootimage src
+	rm -rf *.bak image *.iso *.iso.gz cdfdimage rootimage src
 

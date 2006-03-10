@@ -38,11 +38,13 @@ hdemu_root_changes()
 	$RELEASEDIR/usr/bin/installboot -d $TMPDISK3 \
 		$RELEASEDIR/usr/mdec/bootblock boot/boot
 	echo \
-'label=BIOS
-bootcd=2
+'bootcd=2
 disable=inet
 bios_remap_first=1
 ramimagedev=c0d7p0s0
+bootbig(1, Regular MINIX 3) { label=BIG; boot }
+bootsmall(2, Small MINIX 3 (<16MB)) {label=SMALL; boot }
+main() { trap 10000 boot ; menu; }
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
 
 	echo \

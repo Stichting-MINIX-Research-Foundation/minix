@@ -19,15 +19,10 @@ OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 	lock.o misc.o utility.o select.o timers.o table.o
 
 # build local binary 
-all build:	$(SERVER)
+install all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 512w $@
-
-# install with other servers
-install:	/usr/sbin/$(SERVER)
-/usr/sbin/$(SERVER):	$(SERVER)
-	install -o root -cs $? $@	
 
 # clean up local files
 clean:
@@ -38,4 +33,3 @@ depend:
 
 # Include generated dependencies.
 include .depend
-
