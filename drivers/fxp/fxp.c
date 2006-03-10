@@ -328,6 +328,7 @@ int main(int argc, char *argv[])
 			if (sigismember(&sigset, SIGKSTOP)) fxp_stop();
 			break;
 		}
+		case PROC_EVENT: break;
 		case SYN_ALARM:	fxp_expire_timers();		break;
 		default:
 			panic("FXP"," illegal message", m.m_type);
