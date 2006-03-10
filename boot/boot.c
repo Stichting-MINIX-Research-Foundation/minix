@@ -878,8 +878,7 @@ void get_parameters(void)
 	b_setvar(E_SPECIAL|E_VAR, "c0",
 			DOS ? "dosfile" : get_bus() == 1 ? "at" : "bios");
 #else
-	b_setvar(E_SPECIAL|E_VAR, "label", "AT");
-	b_setvar(E_SPECIAL|E_VAR, "controller", "c0");
+	b_setvar(E_SPECIAL|E_VAR, "label", "BIG");
 #endif
 
 #if DOS
