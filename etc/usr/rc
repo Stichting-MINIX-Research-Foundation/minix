@@ -142,7 +142,7 @@ start)
     then
 	# Get the nodename from the DNS and set it.
 	trap '' 2
-	intr -t 10 hostaddr -h || echo "Unable to obtain an IP address."
+	intr -t 20 hostaddr -h || echo "Unable to obtain an IP address."
 	trap 2
     fi
 
