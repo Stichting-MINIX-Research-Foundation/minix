@@ -648,6 +648,8 @@ PUBLIC int main(int argc, char **argv)
 	    case FKEY_PRESSED:	/* Function key pressed */
 		do_dump(&m);
 		break;
+	    case PROC_EVENT:
+		break;
 	    default:		/* Invalid message type */
 		panic(DevName, TypeErrMsg, m.m_type);
 		break;

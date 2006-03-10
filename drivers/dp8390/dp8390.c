@@ -245,6 +245,8 @@ int main(int argc, char *argv[])
 		case SYN_ALARM:
 			printf("dp8390: strange, got SYN_ALARM\n");
 			break;
+		case PROC_EVENT:
+			break;
 		default:
 			panic("", "dp8390: illegal message", m.m_type);
 		}
