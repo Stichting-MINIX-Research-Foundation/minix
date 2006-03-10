@@ -24,11 +24,13 @@ _PROTOTYPE( void kprintf, (const char *fmt, ...)			);
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
 
 /* proc.c */
-_PROTOTYPE( int sys_call, (int function, int src_dest, message *m_ptr)	);
+_PROTOTYPE( int sys_call, (int call_nr, int src_dst, 
+					message *m_ptr, long bit_map)	);
 _PROTOTYPE( int lock_notify, (int src, int dst)				);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
 _PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
+_PROTOTYPE( void balance_queues, (struct timer *tp)			);
 #if DEBUG_ENABLE_IPC_WARNINGS
 _PROTOTYPE( int isokendpt_f, (char *file, int line, int e, int *p, int f));
 #define isokendpt_d(e, p, f) isokendpt_f(__FILE__, __LINE__, (e), (p), (f))

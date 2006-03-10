@@ -203,11 +203,13 @@ int how;
    * run their shutdown code, e.g, to synchronize the FS or to let the TTY
    * switch to the first console. 
    */
+#if DEAD_CODE
   kprintf("Sending SIGKSTOP to system processes ...\n"); 
   for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
       if (!isemptyp(rp) && (priv(rp)->s_flags & SYS_PROC) && !iskernelp(rp))
           send_sig(proc_nr(rp), SIGKSTOP);
   }
+#endif
 
   /* Continue after 1 second, to give processes a chance to get scheduled to 
    * do shutdown work.  Set a watchog timer to call shutdown(). The timer 

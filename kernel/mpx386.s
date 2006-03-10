@@ -358,19 +358,20 @@ _p_s_call:
     o16	push	es
     o16	push	fs
     o16	push	gs
-	mov	dx, ss
-	mov	ds, dx
-	mov	es, dx
-	incb	(_k_reenter)
+	mov	si, ss		! ss is kernel data segment
+	mov	ds, si		! load rest of kernel segments
+	mov	es, si		! kernel does not use fs, gs
+	incb	(_k_reenter)	! increment kernel entry count
 	mov	esi, esp	! assumes P_STACKBASE == 0
 	mov	esp, k_stktop
 	xor	ebp, ebp	! for stacktrace
 				! end of inline save
 				! now set up parameters for sys_call()
+	push	edx		! event set or flags bit map 
 	push	ebx		! pointer to user message
-	push	eax		! src/dest
-	push	ecx		! SEND/RECEIVE/BOTH
-	call	_sys_call	! sys_call(function, src_dest, m_ptr)
+	push	eax		! source / destination
+	push	ecx		! call number (ipc primitive to use)
+	call	_sys_call	! sys_call(call_nr, src_dst, m_ptr, bit_map)
 				! caller is now explicitly in proc_ptr
 	mov	AXREG(esi), eax	! sys_call MUST PRESERVE si
 

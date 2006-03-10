@@ -93,8 +93,7 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 	do_sigreturn,	/* 75 = sigreturn   */
 	do_reboot,	/* 76 = reboot	*/
 	do_svrctl,	/* 77 = svrctl	*/
-
-	no_sys,		/* 78 = unused */
+	do_procstat,	/* 78 = procstat */
 	do_getsysinfo,	/* 79 = getsysinfo */
 	do_getprocnr,	/* 80 = getprocnr */
 	no_sys, 	/* 81 = unused */

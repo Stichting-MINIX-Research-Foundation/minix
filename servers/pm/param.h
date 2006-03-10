@@ -21,6 +21,7 @@
 #define sig_nsa		m1_p1
 #define sig_osa		m1_p2
 #define sig_ret		m1_p3
+#define stat_nr		m2_i1
 #define sig_set		m2_l1
 #define sig_how		m2_i1
 #define sig_flags	m2_i2

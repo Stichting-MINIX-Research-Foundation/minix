@@ -8,6 +8,9 @@
 #define PRIO_MIN	-20
 #define PRIO_MAX	 20
 
+/* Magic, invalid priority to stop the process. */
+#define PRIO_STOP	 76
+
 #define PRIO_PROCESS	0
 #define PRIO_PGRP	1
 #define PRIO_USER	2

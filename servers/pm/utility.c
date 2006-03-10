@@ -111,8 +111,7 @@ int num;			/* number to go with it */
 {
 /* An unrecoverable error has occurred.  Panics are caused when an internal
  * inconsistency is detected, e.g., a programming error or illegal value of a
- * defined constant. The process manager decides to shut down. This results 
- * in a HARD_STOP notification to all system processes to allow local cleanup.
+ * defined constant. The process manager decides to exit.
  */
   message m;
   int s;
@@ -122,16 +121,8 @@ int num;			/* number to go with it */
   printf("PM panic (%s): %s", who, mess);
   if (num != NO_NUM) printf(": %d",num);
   printf("\n");
-
-#if 0
-  /* Allow for debug dumps if the IS server is available. */
-  m.m_type = PANIC_DUMPS;
-  if (OK == (s= nb_send(11, &m))) {
-      return;				/* IS responsible for exit */
-  }
-  printf("Shutting down: IS is not answering: %d\n", s);
-  sys_abort(RBT_PANIC);
-#endif
+   
+  /* Exit PM. */
   sys_exit(SELF);
 }
 

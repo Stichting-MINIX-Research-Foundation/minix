@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <sys/resource.h>
 #include <signal.h>
 #include "mproc.h"
 #include "param.h"
@@ -165,9 +166,15 @@ int exit_status;		/* the process' exit status (for parent) */
   p_mp->mp_child_utime += t[0] + rmp->mp_child_utime;	/* add user time */
   p_mp->mp_child_stime += t[1] + rmp->mp_child_stime;	/* add system time */
 
-  /* Tell the kernel and FS that the process is no longer runnable. */
-  tell_fs(EXIT, proc_nr_e, 0, 0);  /* file system can free the proc slot */
-  if((r=sys_exit(proc_nr_e)) != OK)
+  /* Tell the kernel the process is no longer runnable to prevent it from 
+   * being scheduled in between the following steps. Then tell FS that it 
+   * the process has exited and finally, clean up the process at the kernel.
+   * This order is important so that FS can tell drivers to cancel requests
+   * such as copying to/ from the exiting process, before it is gone.
+   */
+  sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
+  tell_fs(EXIT, proc_nr_e, 0, 0);  	/* tell FS to free the slot */
+  if((r=sys_exit(proc_nr_e)) != OK)	/* destroy the process */
   	panic(__FILE__,"pm_exit: sys_exit failed", r);
 
   /* Pending reply messages for the dead process cannot be delivered. */

@@ -106,7 +106,7 @@ int num;			/* number to go with it */
   printf("FS panic (%s): %s ", who, mess);
   if (num != NO_NUM) printf("%d",num); 
   (void) do_sync();		/* flush everything to the disk */
-  sys_exit(1);
+  sys_exit(SELF);
 }
 
 /*===========================================================================*

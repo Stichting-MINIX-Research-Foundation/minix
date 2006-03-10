@@ -15,6 +15,7 @@
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void init_server, (void)				);
+FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 
@@ -66,11 +67,8 @@ PUBLIC int main(void)
           case SYN_ALARM:
 	      do_period(&m);			/* check drivers status */
 	      continue;				
-          case SYS_SIG:
-              sigset = (sigset_t) m.NOTIFY_ARG;	/* check signals passed */
-              if (sigismember(&sigset, SIGCHLD)) do_exit(&m);
-              if (sigismember(&sigset, SIGTERM)) do_shutdown(NULL);
-              if (sigismember(&sigset, SIGKSTOP)) do_shutdown(NULL);
+          case PROC_EVENT:
+	      sig_handler();
               continue;				
 	  default:				/* heartbeat notification */
 	      if (rproc_ptr[who_p] != NULL)	/* mark heartbeat time */ 
@@ -120,8 +118,6 @@ PRIVATE void init_server(void)
   sa.sa_flags = 0;
   if (sigaction(SIGCHLD,&sa,NULL)<0) panic("RS","sigaction failed", errno);
   if (sigaction(SIGTERM,&sa,NULL)<0) panic("RS","sigaction failed", errno);
-  if (sigaction(SIGABRT,&sa,NULL)<0) panic("RS","sigaction failed", errno);
-  if (sigaction(SIGHUP, &sa,NULL)<0) panic("RS","sigaction failed", errno);
 
   /* Initialize the system process table. Use the boot image from the kernel
    * and the device map from the FS to gather all needed information.
@@ -158,6 +154,21 @@ PRIVATE void init_server(void)
 
 }
 
+/*===========================================================================*
+ *				sig_handler                                  *
+ *===========================================================================*/
+PRIVATE void sig_handler()
+{
+  sigset_t sigset;
+  int sig;
+
+  /* Try to obtain signal set from PM. */
+  if (getsigset(&sigset) != 0) return;
+
+  /* Check for known signals. */
+  if (sigismember(&sigset, SIGCHLD)) do_exit(NULL);
+  if (sigismember(&sigset, SIGTERM)) do_shutdown(NULL);
+}
 
 /*===========================================================================*
  *				get_work                                     *

@@ -133,12 +133,17 @@ PRIVATE void init_clock()
   /* Initialize the CLOCK's interrupt hook. */
   clock_hook.proc_nr_e = CLOCK;
 
-  /* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz. */
+  /* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz, and register
+   * the CLOCK task's interrupt handler to be run on every clock tick. 
+   */
   outb(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */
   outb(TIMER0, TIMER_COUNT);		/* load timer low byte */
   outb(TIMER0, TIMER_COUNT >> 8);	/* load timer high byte */
-  put_irq_handler(&clock_hook, CLOCK_IRQ, clock_handler);/* register handler */
+  put_irq_handler(&clock_hook, CLOCK_IRQ, clock_handler);
   enable_irq(&clock_hook);		/* ready for clock interrupts */
+
+  /* Set a watchdog timer to periodically balance the scheduling queues. */
+  balance_queues(NULL);			/* side-effect sets new timer */
 }
 
 /*===========================================================================*
@@ -146,7 +151,7 @@ PRIVATE void init_clock()
  *===========================================================================*/
 PUBLIC void clock_stop()
 {
-/* Reset the clock to the BIOS rate. (For rebooting) */
+/* Reset the clock to the BIOS rate. (For rebooting.) */
   outb(TIMER_MODE, 0x36);
   outb(TIMER0, 0);
   outb(TIMER0, 0);

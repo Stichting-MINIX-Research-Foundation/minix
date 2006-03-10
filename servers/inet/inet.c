@@ -245,7 +245,7 @@ PUBLIC void main()
 			clck_tick(&mq->mq_mess);
 			mq_free(mq);
 		} 
-		else if (mq->mq_mess.m_type == SYS_SIG)
+		else if (mq->mq_mess.m_type == PROC_EVENT)
 		{
 			/* signaled */ 
 			/* probably SIGTERM */

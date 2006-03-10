@@ -2,12 +2,13 @@
  *								31 Mar 2000
  * The entry points into this file are:
  *   do_reboot: kill all processes, then reboot system
- *   do_svrctl: process manager control
+ *   do_procstat: request process status  (Jorrit N. Herder)
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
  *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
  *   do_allocmem: allocate a chunk of memory  (Jorrit N. Herder)
  *   do_freemem: deallocate a chunk of memory  (Jorrit N. Herder)
  *   do_getsetpriority: get/set process priority
+ *   do_svrctl: process manager control
  */
 
 #include "pm.h"
@@ -49,6 +50,27 @@ PUBLIC int do_freemem()
   mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
   mem_base = (m_in.membase + CLICK_SIZE -1 ) >> CLICK_SHIFT;
   free_mem(mem_base, mem_clicks);
+  return(OK);
+}
+
+/*===========================================================================*
+ *				do_procstat				     *
+ *===========================================================================*/
+PUBLIC int do_procstat()
+{ 
+  /* For the moment, this is only used to return pending signals to 
+   * system processes that request the PM for their own status. 
+   *
+   * Future use might include the FS requesting for process status of
+   * any user process. 
+   */
+  if (m_in.stat_nr == SELF) {
+      mp->mp_reply.sig_set = mp->mp_sigpending;
+      sigemptyset(&mp->mp_sigpending);
+  } 
+  else {
+      return(ENOSYS);
+  }
   return(OK);
 }
 
@@ -147,52 +169,42 @@ PUBLIC int do_getprocnr()
 /*===========================================================================*
  *				do_reboot				     *
  *===========================================================================*/
-#define REBOOT_CODE 	"delay; boot"
 PUBLIC int do_reboot()
 {
   char monitor_code[32*sizeof(char *)];		
-  int code_len;
+  vir_bytes code_addr;
+  int code_size;
   int abort_flag;
 
+  /* Check permission to abort the system. */
   if (mp->mp_effuid != SUPER_USER) return(EPERM);
 
-  switch (m_in.reboot_flag) {
-  case RBT_HALT:
-  case RBT_PANIC:
-  case RBT_RESET:
-	abort_flag = m_in.reboot_flag;
-	break;
-  case RBT_REBOOT:
-	code_len = strlen(REBOOT_CODE) + 1;
-	strncpy(monitor_code, REBOOT_CODE, code_len);        
-	abort_flag = RBT_MONITOR;
-	break;
-  case RBT_MONITOR:
-	code_len = m_in.reboot_strlen + 1;
-	if (code_len > sizeof(monitor_code)) return(EINVAL);
-	if (sys_datacopy(who_e, (vir_bytes) m_in.reboot_code,
-		PM_PROC_NR, (vir_bytes) monitor_code,
-		(phys_bytes) (code_len)) != OK) return(EFAULT);
-	if (monitor_code[code_len-1] != 0) return(EINVAL);
-	abort_flag = RBT_MONITOR;
-	break;
-  default:
-	return(EINVAL);
+  /* See how the system should be aborted. */
+  abort_flag = (unsigned) m_in.reboot_flag;
+  if (abort_flag >= RBT_INVALID) return(EINVAL); 
+  if (RBT_MONITOR == abort_flag) {
+	code_addr = (vir_bytes) m_in.reboot_code;
+	code_size = m_in.reboot_strlen + 1;
   }
 
   /* Order matters here. When FS is told to reboot, it exits all its
    * processes, and then would be confused if they're exited again by
-   * SIGKILL. So first kill, then reboot.
+   * SIGKILL. So first kill, then reboot. 
    */
 
-  check_sig(-1, SIGKILL); 		/* kill all processes except init */
+  printf("check_sig(-1, SIGKILL) ...\n");
+  check_sig(-1, SIGKILL); 		/* kill all users except init */
+  printf("stopping init with PRIO_STOP ...\n");
+  sys_nice(INIT_PROC_NR, PRIO_STOP);	/* stop init, but keep it around */
+  printf("tell_fs to sync() ...\n");
   tell_fs(REBOOT, 0, 0, 0);		/* tell FS to synchronize */
 
+  printf("sys_abort ...\n");
   /* Ask the kernel to abort. All system services, including the PM, will 
    * get a HARD_STOP notification. Await the notification in the main loop.
    */
-  sys_abort(abort_flag, PM_PROC_NR, monitor_code, code_len);
-  return(SUSPEND);			/* don't reply to killed process */
+  sys_abort(abort_flag, who_e, code_addr, code_size);
+  return(SUSPEND);			/* don't reply to caller */
 }
 
 /*===========================================================================*

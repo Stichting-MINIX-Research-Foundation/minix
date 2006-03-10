@@ -33,14 +33,8 @@ message *m_ptr;			/* pointer to request message */
   if (sig_nr > _NSIG) return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
 
-  if (m_ptr->m_source == PM_PROC_NR) {
-      /* Directly send signal notification to a system process. */
-      if (! (priv(proc_addr(proc_nr))->s_flags & SYS_PROC)) return(EPERM);
-      send_sig(proc_nr, sig_nr);
-  } else {
-      /* Set pending signal to be processed by the PM. */
-      cause_sig(proc_nr, sig_nr);
-  }
+  /* Set pending signal to be processed by the PM. */
+  cause_sig(proc_nr, sig_nr);
   return(OK);
 }
 

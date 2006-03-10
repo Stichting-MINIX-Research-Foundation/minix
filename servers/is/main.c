@@ -18,12 +18,12 @@ message m_in;		/* the input message itself */
 message m_out;		/* the output message used for reply */
 int who_e;		/* caller's proc number */
 int callnr;		/* system call number */
-int sys_panic;		/* flag to indicate system-wide panic */
 
 extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void init_server, (int argc, char **argv)		);
+FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void exit_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
@@ -51,16 +51,16 @@ PUBLIC int main(int argc, char **argv)
 
       switch (callnr) {
       case SYS_SIG:
-          sigset = (sigset_t) m_in.NOTIFY_ARG;
-          if (sigismember(&sigset,SIGTERM) || sigismember(&sigset,SIGKSTOP)) {
-              exit_server();
-          }
-          continue;
-      case PANIC_DUMPS:
-	  printf("Oops ... panic in %d.  ", who_e);
-	  printf("Hit F-keys for debug dumps or F12 to shut down.\n");
-	  sys_panic = TRUE;			/* set flag to allow exit */
+	  printf("got SYS_SIG message\n");
+	  sigset = m_in.NOTIFY_ARG;
+	  for ( result=0; result< _NSIG; result++) {
+	      if (sigismember(&sigset, result))
+		  printf("signal %d found\n", result);
+	  }
 	  continue;
+      case PROC_EVENT:
+          sig_handler();
+          continue;
       case FKEY_PRESSED:
           result = do_fkey_pressed(&m_in);
           break;
@@ -103,6 +103,23 @@ PRIVATE void init_server(int argc, char **argv)
   for (i=1; i<= 8; i++) bit_set(sfkeys, i);
   if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
       report("IS", "warning, fkey_map failed:", s);
+}
+
+/*===========================================================================*
+ *				sig_handler                                  *
+ *===========================================================================*/
+PRIVATE void sig_handler()
+{
+  sigset_t sigset;
+  int sig;
+
+  /* Try to obtain signal set from PM. */
+  if (getsigset(&sigset) != 0) return;
+
+  /* Check for known signals. */
+  if (sigismember(&sigset, SIGTERM)) {
+      exit_server();
+  }
 }
 
 /*===========================================================================*

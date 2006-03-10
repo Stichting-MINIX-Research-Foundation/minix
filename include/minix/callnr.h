@@ -69,7 +69,7 @@
 
 /* MINIX specific calls, e.g., to support system services. */
 #define SVRCTL		  77
-				/* unused */
+#define PROCSTAT          78    /* to PM */
 #define GETSYSINFO	  79	/* to PM or FS */
 #define GETPROCNR         80    /* to PM */
 #define DEVCTL		  81    /* to FS */

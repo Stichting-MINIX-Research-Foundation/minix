@@ -25,6 +25,7 @@ typedef unsigned long sigset_t;
 #endif
 #endif
 
+/* Regular signals. */
 #define SIGHUP             1	/* hangup */
 #define SIGINT             2	/* interrupt (DEL) */
 #define SIGQUIT            3	/* quit (ASCII FS) */
@@ -42,27 +43,25 @@ typedef unsigned long sigset_t;
 #define SIGTERM           15	/* software termination signal from kill */
 #define SIGEMT		  16	/* EMT instruction */
 #define SIGCHLD           17	/* child process terminated or stopped */
+#define SIGWINCH    	  21	/* window size has changed */
 
 /* MINIX specific signals. These signals are not used by user proceses, 
  * but meant to inform system processes, like the PM, about system events.
  */
-#define SIGKMESS   	  18	/* new kernel message */
-#define SIGKSIG    	  19	/* kernel signal pending */
-#define SIGKSTOP    	  20	/* kernel shutting down */
+#define SIGKMESS   	  23	/* new kernel message */
+#define SIGKSIG    	  24	/* kernel signal pending */
+#define SIGKSTOP    	  25	/* kernel shutting down */
 
-/* Regular signals. */
-#define SIGWINCH    	  21	/* window size has changed */
-
-#define _NSIG             21	/* number of signals used */
+#define _NSIG             25	/* number of signals used */
 
 /* POSIX requires the following signals to be defined, even if they are
  * not supported.  Here are the definitions, but they are not supported.
  */
-#define SIGCONT           18	/* continue if stopped */
-#define SIGSTOP           19	/* stop signal */
-#define SIGTSTP           20	/* interactive stop signal */
-#define SIGTTIN           21	/* background process wants to read */
-#define SIGTTOU           22	/* background process wants to write */
+#define SIGCONT           28	/* continue if stopped */
+#define SIGSTOP           29	/* stop signal */
+#define SIGTSTP           30	/* interactive stop signal */
+#define SIGTTIN           31	/* background process wants to read */
+#define SIGTTOU           32	/* background process wants to write */
 
 #ifdef _MINIX
 #define SIGIOT             SIGABRT /* for people who speak PDP-11 */

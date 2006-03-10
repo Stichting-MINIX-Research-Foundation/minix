@@ -432,24 +432,17 @@ PUBLIC int do_exit()
   /* Invalidate endpoint number for error and sanity checks. */
   fp->fp_endpoint = NONE;
 
-  /* If a session leader exits then revoke access to its controlling tty from
-   * all other processes using it.
+  /* If a session leader exits and it has a controlling tty, then revoke 
+   * access to its controlling tty from all other processes using it.
    */
-  if (!fp->fp_sesldr) {
-	fp->fp_pid = PID_FREE;
-  	return(OK);		/* not a session leader */
-  }
-  fp->fp_sesldr = FALSE;
-  if (fp->fp_tty == 0) {
-	fp->fp_pid = PID_FREE;
-  	return(OK);		/* no controlling tty */
-  }
-  dev = fp->fp_tty;
+  if (fp->fp_sesldr && fp->fp_tty != 0) {
 
-  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if (rfp->fp_tty == dev) rfp->fp_tty = 0;
+      dev = fp->fp_tty;
 
-	for (i = 0; i < OPEN_MAX; i++) {
+      for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+          if (rfp->fp_tty == dev) rfp->fp_tty = 0;
+
+          for (i = 0; i < OPEN_MAX; i++) {
 		if ((rfilp = rfp->fp_filp[i]) == NIL_FILP) continue;
 		if (rfilp->filp_mode == FILP_CLOSED) continue;
 		rip = rfilp->filp_ino;
@@ -457,12 +450,12 @@ PUBLIC int do_exit()
 		if ((dev_t) rip->i_zone[0] != dev) continue;
 		dev_close(dev);
 		rfilp->filp_mode = FILP_CLOSED;
-	}
+          }
+      }
   }
 
-  /* Mark slot as free. */
+  /* Exit done. Mark slot as free. */
   fp->fp_pid = PID_FREE;
-
   return(OK);
 }
 

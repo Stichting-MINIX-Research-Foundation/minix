@@ -236,12 +236,10 @@ PRIVATE void pm_init()
 		else {					/* system process */
   			rmp->mp_pid = get_free_pid();
 			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
-#if DEAD_CODE
   			for (sig_ptr = mess_sigs; 
 				sig_ptr < mess_sigs+sizeof(mess_sigs); 
 				sig_ptr++)
 			sigaddset(&rmp->mp_sig2mess, *sig_ptr);
-#endif
 		}
 
 		/* Get kernel endpoint identifier. */
@@ -270,8 +268,6 @@ PRIVATE void pm_init()
   mproc[PM_PROC_NR].mp_pid = PM_PID;		/* PM has magic pid */
   mproc[RS_PROC_NR].mp_parent = INIT_PROC_NR;	/* INIT is root */
   sigfillset(&mproc[PM_PROC_NR].mp_ignore); 	/* guard against signals */
-  sigfillset(&mproc[FS_PROC_NR].mp_sig2mess); 	/* forward signals */
-  sigfillset(&mproc[TTY_PROC_NR].mp_sig2mess); 	/* forward signals */
 
   /* Tell FS that no more system processes follow and synchronize. */
   mess.PR_ENDPT = NONE;

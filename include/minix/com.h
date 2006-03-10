@@ -58,6 +58,7 @@
  */
 #define NOTIFY_MESSAGE		  0x1000
 #define NOTIFY_FROM(p_nr)	 (NOTIFY_MESSAGE | ((p_nr) + NR_TASKS)) 
+#  define PROC_EVENT	NOTIFY_FROM(PM_PROC_NR) /* process status change */
 #  define SYN_ALARM	NOTIFY_FROM(CLOCK) 	/* synchronous alarm */
 #  define SYS_SIG	NOTIFY_FROM(SYSTEM) 	/* system signal */
 #  define HARD_INT	NOTIFY_FROM(HARDWARE) 	/* hardware interrupt */
@@ -489,7 +490,6 @@
  *===========================================================================*/
 
 /* Miscellaneous request types and field names, e.g. used by IS server. */
-#define PANIC_DUMPS  		97  	/* debug dumps at the TTY on RBT_PANIC */
 #define FKEY_CONTROL 		98  	/* control a function key at the TTY */
 #  define FKEY_REQUEST	     m2_i1	/* request to perform at TTY */
 #  define    FKEY_MAP		10	/* observe function key */

@@ -43,13 +43,13 @@ struct priv {
   struct far_mem s_farmem[NR_REMOTE_SEGS];  /* remote memory map */
   reg_t *s_stack_guard;		/* stack guard word for kernel tasks */
 
-  int s_nr_io_range;
+  int s_nr_io_range;		/* allowed I/O ports */
   struct io_range s_io_tab[NR_IO_RANGE];
 
-  int s_nr_mem_range;
+  int s_nr_mem_range;		/* allowed memory ranges */
   struct mem_range s_mem_tab[NR_MEM_RANGE];
 
-  int s_nr_irq;
+  int s_nr_irq;			/* allowed IRQ lines */
   int s_irq_tab[NR_IRQ];
 };
 
@@ -57,15 +57,13 @@ struct priv {
 #define STACK_GUARD	((reg_t) (sizeof(reg_t) == 2 ? 0xBEEF : 0xDEADBEEF))
 
 /* Bits for the system property flags. */
-#define PREEMPTIBLE	0x01	/* kernel tasks are not preemptible */
+#define PREEMPTIBLE	0x02	/* kernel tasks are not preemptible */
 #define BILLABLE	0x04	/* some processes are not billable */
-#define SYS_PROC	0x10	/* system processes are privileged */
-#define SENDREC_BUSY	0x20	/* sendrec() in progress */
-#define CHECK_IO_PORT	0x40	/* Check whether an I/O request is allowed */
-#define CHECK_MEM	0x80	/* Check whether a (vm) memory map request is
-				 * allowed
-				 */
-#define CHECK_IRQ	0x100	/* Check whether an IRQ can be used */
+
+#define SYS_PROC	0x10	/* system processes have own priv structure */
+#define CHECK_IO_PORT	0x20	/* check if I/O request is allowed */
+#define CHECK_IRQ	0x40	/* check if IRQ can be used */
+#define CHECK_MEM	0x80	/* check if (VM) mem map request is allowed */
 
 /* Magic system structure table addresses. */
 #define BEG_PRIV_ADDR (&priv[0])

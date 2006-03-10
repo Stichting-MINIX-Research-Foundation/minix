@@ -37,7 +37,7 @@
 
 FORWARD _PROTOTYPE( void dump_core, (struct mproc *rmp)			);
 FORWARD _PROTOTYPE( void unpause, (int pro)				);
-FORWARD _PROTOTYPE( void handle_sig, (int proc_nr, sigset_t sig_map)	);
+FORWARD _PROTOTYPE( void handle_ksig, (int proc_nr, sigset_t sig_map)	);
 FORWARD _PROTOTYPE( void cause_sigalrm, (struct timer *tp)		);
 
 /*===========================================================================*
@@ -228,7 +228,7 @@ PUBLIC int ksig_pending()
  	int proc_nr_p;
  	if(pm_isokendpt(proc_nr_e, &proc_nr_p) != OK)
   		panic(__FILE__,"sys_getksig strange process", proc_nr_e);
-   	handle_sig(proc_nr_e, sig_map);	/* handle the received signal */
+   	handle_ksig(proc_nr_e, sig_map);	/* handle the received signal */
 	/* If the process still exists to the kernel after the signal
 	 * has been handled ...
 	 */
@@ -241,9 +241,9 @@ PUBLIC int ksig_pending()
 }
 
 /*===========================================================================*
- *				handle_sig				     *
+ *				handle_ksig				     *
  *===========================================================================*/
-PRIVATE void handle_sig(proc_nr_e, sig_map)
+PRIVATE void handle_ksig(proc_nr_e, sig_map)
 int proc_nr_e;
 sigset_t sig_map;
 {
@@ -489,8 +489,10 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   	panic(__FILE__, "sys_sigsend failed", s);
   }
   else if (sigismember(&rmp->mp_sig2mess, signo)) {
-  	if (OK != (s=sys_kill(rmp->mp_endpoint,signo)))
-  		panic(__FILE__, "warning, sys_kill failed", s);
+
+	/* Mark event pending in process slot and send notification. */
+	sigaddset(&rmp->mp_sigpending, signo);
+	notify(rmp->mp_endpoint);
   	return;
   }
 
@@ -536,8 +538,8 @@ int signo;			/* signal to send to process (0 to _NSIG) */
   /* Return EINVAL for attempts to send SIGKILL to INIT alone. */
   if (proc_id == INIT_PID && signo == SIGKILL) return(EINVAL);
 
-  /* Search the proc table for processes to signal.  (See forkexit.c about
-   * pid magic.)
+  /* Search the proc table for processes to signal.  
+   * (See forkexit.c aboutpid magic.)
    */
   count = 0;
   error_code = ESRCH;
@@ -550,6 +552,10 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 	if (proc_id == 0 && mp->mp_procgrp != rmp->mp_procgrp) continue;
 	if (proc_id == -1 && rmp->mp_pid <= INIT_PID) continue;
 	if (proc_id < -1 && rmp->mp_procgrp != -proc_id) continue;
+
+	/* Do not kill servers and drivers when broadcasting SIGKILL. */
+	if (proc_id == -1 && signo == SIGKILL &&
+		(rmp->mp_flags & PRIV_PROC)) continue;
 
 	/* Check for permission. */
 	if (mp->mp_effuid != SUPER_USER

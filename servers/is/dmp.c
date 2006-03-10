@@ -12,7 +12,7 @@
 /* Define hooks for the debugging dumps. This table maps function keys
  * onto a specific dump and provides a description for it.
  */
-#define NHOOKS 19
+#define NHOOKS 18
 
 struct hook_entry {
 	int key;
@@ -29,7 +29,6 @@ struct hook_entry {
 	{ F9,	sched_dmp, "Scheduling queues" },
 	{ F10,	kenv_dmp, "Kernel parameters" },
 	{ F11,	timing_dmp, "Timing details (if enabled)" },
-	{ F12,  reboot_dmp, "Reboot system after panic." },
 	{ SF1,	mproc_dmp, "Process manager process table" },
 	{ SF2,	sigaction_dmp, "Signals" },
 	{ SF3,	fproc_dmp, "Filesystem process table" },
@@ -81,14 +80,6 @@ PRIVATE char *key_name(int key)
 	else
 		sprintf(name, "?");
 	return name;
-}
-
-/*===========================================================================*
- *				reboot_dmp				     *
- *===========================================================================*/
-PUBLIC void reboot_dmp(void)
-{
-  if (sys_panic) sys_abort(RBT_HALT);
 }
 
 

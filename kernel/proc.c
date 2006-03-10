@@ -90,10 +90,11 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 /*===========================================================================*
  *				sys_call				     * 
  *===========================================================================*/
-PUBLIC int sys_call(call_nr, src_dst_e, m_ptr)
+PUBLIC int sys_call(call_nr, src_dst_e, m_ptr, bit_map)
 int call_nr;			/* system call number and flags */
 int src_dst_e;			/* src to receive from or dst to send to */
 message *m_ptr;			/* pointer to message in the caller's space */
+long bit_map;			/* notification event set or flags */
 {
 /* System calls are done by trapping to the kernel with an INT instruction.
  * The trap is caught and sys_call() is called to send or receive a message
@@ -195,7 +196,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
   switch(function) {
   case SENDREC:
       /* A flag is set so that notifications cannot interrupt SENDREC. */
-      priv(caller_ptr)->s_flags |= SENDREC_BUSY;
+      caller_ptr->p_misc_flags |= REPLY_PENDING;
       /* fall through */
   case SEND:			
       result = mini_send(caller_ptr, src_dst_e, m_ptr, flags);
@@ -204,7 +205,7 @@ message *m_ptr;			/* pointer to message in the caller's space */
       }						/* fall through for SENDREC */
   case RECEIVE:			
       if (function == RECEIVE)
-          priv(caller_ptr)->s_flags &= ~SENDREC_BUSY;
+          caller_ptr->p_misc_flags &= ~REPLY_PENDING;
       result = mini_receive(caller_ptr, src_dst_e, m_ptr, flags);
       break;
   case NOTIFY:
@@ -353,7 +354,7 @@ unsigned flags;				/* system call flags */
   if (!(caller_ptr->p_rts_flags & SENDING)) {
 
     /* Check if there are pending notifications, except for SENDREC. */
-    if (! (priv(caller_ptr)->s_flags & SENDREC_BUSY)) {
+    if (! (caller_ptr->p_misc_flags & REPLY_PENDING)) {
 
         map = &priv(caller_ptr)->s_notify_pending;
         for (chunk=&map->chunk[0]; chunk<&map->chunk[NR_SYS_CHUNKS]; chunk++) {
@@ -430,9 +431,9 @@ int dst;				/* which process to notify */
    * can be both sending and receiving during a SENDREC system call.
    */
   if ((dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
-      ! (priv(dst_ptr)->s_flags & SENDREC_BUSY) &&
-      (dst_ptr->p_getfrom_e == ANY
-       || dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
+      ! (dst_ptr->p_misc_flags & REPLY_PENDING) &&
+      (dst_ptr->p_getfrom_e == ANY || 
+      dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
 
       /* Destination is indeed waiting for a message. Assemble a notification 
        * message and deliver it. Copy from pseudo-source HARDWARE, since the
@@ -600,32 +601,17 @@ int *front;					/* return: front or back */
  * process must be added to one of the scheduling queues to decide where to
  * insert it.  As a side-effect the process' priority may be updated.  
  */
-  static struct proc *prev_ptr = NIL_PROC;	/* previous without time */
   int time_left = (rp->p_ticks_left > 0);	/* quantum fully consumed */
-  int penalty = 0;				/* change in priority */
 
   /* Check whether the process has time left. Otherwise give a new quantum 
-   * and possibly raise the priority.  Processes using multiple quantums 
-   * in a row get a lower priority to catch infinite loops in high priority
-   * processes (system servers and drivers). 
+   * and lower the process' priority, unless the process already is in the 
+   * lowest queue.  
    */
-  if ( ! time_left) {				/* quantum consumed ? */
+  if (! time_left) {				/* quantum consumed ? */
       rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
-      if (prev_ptr == rp) penalty ++;		/* catch infinite loops */
-      else penalty --; 				/* give slow way back */
-      prev_ptr = rp;				/* store ptr for next */
-  }
-
-  /* Determine the new priority of this process. The bounds are determined
-   * by IDLE's queue and the maximum priority of this process. Kernel task 
-   * and the idle process are never changed in priority.
-   */
-  if (penalty != 0 && ! iskernelp(rp)) {
-      rp->p_priority += penalty;		/* update with penalty */
-      if (rp->p_priority < rp->p_max_priority)  /* check upper bound */ 
-          rp->p_priority=rp->p_max_priority;
-      else if (rp->p_priority > IDLE_Q-1)   	/* check lower bound */
-      	  rp->p_priority = IDLE_Q-1;
+      if (rp->p_priority < (IDLE_Q-1)) {  	 
+          rp->p_priority += 1;			/* lower priority */
+      }
   }
 
   /* If there is time left, the process is added to the front of its queue, 
@@ -663,6 +649,47 @@ PRIVATE void pick_proc()
 }
 
 /*===========================================================================*
+ *				balance_queues				     *
+ *===========================================================================*/
+#define Q_BALANCE_TICKS	 100
+PUBLIC void balance_queues(tp)
+timer_t *tp;					/* watchdog timer pointer */
+{
+/* Check entire process table and give all process a higher priority. This
+ * effectively means giving a new quantum. If a process already is at its 
+ * maximum priority, its quantum will be renewed.
+ */
+  static timer_t queue_timer;			/* timer structure to use */
+  register struct proc* rp;			/* process table pointer  */
+  clock_t next_period;				/* time of next period  */
+  int ticks_added = 0;				/* total time added */
+
+  for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
+      if (! isemptyp(rp)) {				/* check slot use */
+	  lock(5,"balance_queues");
+	  if (rp->p_priority > rp->p_max_priority) {	/* update priority? */
+	      if (rp->p_rts_flags == 0) dequeue(rp);	/* take off queue */
+	      ticks_added += rp->p_quantum_size;	/* do accounting */
+	      rp->p_priority -= 1;			/* raise priority */
+	      if (rp->p_rts_flags == 0) enqueue(rp);	/* put on queue */
+	  }
+	  else {
+	      ticks_added += rp->p_quantum_size - rp->p_ticks_left;
+              rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
+	  }
+	  unlock(5);
+      }
+  }
+  kprintf("ticks_added: %d\n", ticks_added);
+
+  /* Now schedule a new watchdog timer to balance the queues again.  The 
+   * period depends on the total amount of quantum ticks added.
+   */
+  next_period = MAX(Q_BALANCE_TICKS, ticks_added);	/* calculate next */
+  set_timer(&queue_timer, get_uptime() + next_period, balance_queues);
+}
+
+/*===========================================================================*
  *				lock_send				     *
  *===========================================================================*/
 PUBLIC int lock_send(dst_e, m_ptr)
@@ -697,7 +724,7 @@ struct proc *rp;		/* this process is no longer runnable */
 {
 /* Safe gateway to dequeue() for tasks. */
   if (k_reenter >= 0) {
-	/* We're in an exception or interrupt, so don't lock (and.. 
+	/* We're in an exception or interrupt, so don't lock (and ... 
 	 * don't unlock).
 	 */
 	dequeue(rp);

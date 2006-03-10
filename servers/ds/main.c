@@ -20,6 +20,7 @@ extern int errno;	/* error number set by system library */
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void init_server, (int argc, char **argv)		);
 FORWARD _PROTOTYPE(void exit_server, (void)				);
+FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_ptr)			);
 FORWARD _PROTOTYPE(void reply, (int whom, message *m_ptr)		);
 
@@ -46,11 +47,8 @@ PUBLIC int main(int argc, char **argv)
       get_work(&m);
 
       switch (callnr) {
-      case SYS_SIG:
-          sigset = (sigset_t) m.NOTIFY_ARG;
-          if (sigismember(&sigset,SIGTERM) || sigismember(&sigset,SIGKSTOP)) {
-              exit_server();
-          }
+      case PROC_EVENT:
+	  sig_handler();
           continue;
       case DS_PUBLISH:
           result = do_publish(&m);
@@ -93,6 +91,24 @@ PRIVATE void init_server(int argc, char **argv)
   sigact.sa_flags = 0;			/* default behaviour */
   if (sigaction(SIGTERM, &sigact, NULL) < 0) 
       report("DS","warning, sigaction() failed", errno);
+}
+
+/*===========================================================================*
+ *				 sig_handler                                 *
+ *===========================================================================*/
+PRIVATE void sig_handler()
+{
+/* Signal handler. */
+  sigset_t sigset;
+  int sig;
+
+  /* Try to obtain signal set from PM. */
+  if (getsigset(&sigset) != 0) return;
+
+  /* Check for known signals. */
+  if (sigismember(&sigset, SIGTERM)) {
+      exit_server();
+  }
 }
 
 /*===========================================================================*

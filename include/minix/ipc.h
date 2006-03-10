@@ -90,15 +90,22 @@ typedef struct {
 #define sendrec		_sendrec
 #define receive		_receive
 #define send		_send
-#define nb_receive	_nb_receive
-#define nb_send		_nb_send
 
 _PROTOTYPE( int echo, (message *m_ptr)					);
 _PROTOTYPE( int notify, (int dest)					);
 _PROTOTYPE( int sendrec, (int src_dest, message *m_ptr)			);
 _PROTOTYPE( int receive, (int src, message *m_ptr)			);
 _PROTOTYPE( int send, (int dest, message *m_ptr)			);
-_PROTOTYPE( int nb_receive, (int src, message *m_ptr)			);
-_PROTOTYPE( int nb_send, (int dest, message *m_ptr)			);
+
+#define ipc_request	_ipc_request
+#define ipc_reply	_ipc_reply
+#define ipc_notify	_ipc_notify
+#define ipc_select	_ipc_select
+
+_PROTOTYPE( int ipc_request, (int dst, message *m_ptr)			);
+_PROTOTYPE( int ipc_reply, (int dst, message *m_ptr)			);
+_PROTOTYPE( int ipc_notify, (int dst, long event_set)			);
+_PROTOTYPE( int ipc_receive, (int src, long events, message *m_ptr)	);
+
 
 #endif /* _IPC_H */

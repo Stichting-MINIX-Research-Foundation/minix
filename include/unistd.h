@@ -28,11 +28,13 @@
 
 #ifdef _MINIX
 /* How to exit the system or stop a server process. */
-#define RBT_HALT	   0
-#define RBT_REBOOT	   1
+#define RBT_HALT	   0	/* shutdown and return to monitor */
+#define RBT_REBOOT	   1	/* reboot the system through the monitor */
 #define RBT_PANIC	   2	/* a server panics */
 #define RBT_MONITOR	   3	/* let the monitor do this */
 #define RBT_RESET	   4	/* hard reset the system */
+#define RBT_INVALID	   5	/* first invalid reboot flag */
+
 #define _PM_SEG_FLAG (1L << 30)	/* for read() and write() to FS by PM */
 #endif
 
@@ -171,6 +173,7 @@ _PROTOTYPE( int ttyslot, (void)						);
 _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
 _PROTOTYPE( int getsysinfo, (int who, int what, void *where)		);
+_PROTOTYPE( int getsigset, (sigset_t *sigset)				);
 _PROTOTYPE( int getprocnr, (void)					);
 _PROTOTYPE( int getnprocnr, (pid_t pid)					);
 _PROTOTYPE( int getpprocnr, (void)					);
