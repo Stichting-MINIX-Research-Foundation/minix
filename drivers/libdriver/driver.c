@@ -109,6 +109,7 @@ struct driver *dp;	/* Device dependent entry points. */
 					(*dp->dr_hw_int)(dp, &mess);
 				}
 				continue;
+	case PROC_EVENT:
 	case SYS_SIG:		(*dp->dr_signal)(dp, &mess);
 				continue;	/* don't reply */
 	case SYN_ALARM:		(*dp->dr_alarm)(dp, &mess);	

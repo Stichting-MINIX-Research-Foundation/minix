@@ -1178,48 +1178,6 @@ int *isauxp;
 #endif
 }
 
-/*===========================================================================*
- *				do_panic_dumps 				     *
- *===========================================================================*/
-PUBLIC void do_panic_dumps(m)
-message *m;			/* request message to TTY */
-{
-/* Wait for keystrokes for printing debugging info and reboot. */
-  unsigned char code;
-  int isaux;
-
-  /* A panic! Allow debug dumps until user wants to shutdown. */
-  printf("\nHit ESC to reboot, DEL to shutdown, F-keys for debug dumps\n");
-
-  (void) scan_keyboard(NULL, NULL);	/* ack any old input */
-  for (;;) {
-	tickdelay(10);
-	/* See if there are pending request for output, but don't block. 
-	 * Diagnostics can span multiple printf()s, so do it in a loop.
-	 */
-	while (nb_receive(ANY, m) == OK) {
-		switch(m->m_type) {
-		case FKEY_CONTROL: do_fkey_ctl(m);      break;
-		case SYS_SIG:	   do_new_kmess(m);	break;
-		case DIAGNOSTICS:  do_diagnostics(m);	break;
-		default:	;	/* do nothing */ 
-		}
-		tickdelay(1);		/* allow more */
-	}
-	if (!scan_keyboard(&code, &isaux))
-		continue;
-	if (isaux)
-		continue;
-
-	/* A key has been pressed. */
-	switch (code) {			/* possibly abort MINIX */
-	case ESC_SCAN:  sys_abort(RBT_REBOOT); 	return;	
-	case DEL_SCAN:  sys_abort(RBT_HALT); 	return;	
-	}
-	(void) func_key(code);	     	/* check for function key */
-  }
-}
-
 static void micro_delay(unsigned long usecs)
 {
 	tickdelay(MICROS_TO_TICKS(usecs));

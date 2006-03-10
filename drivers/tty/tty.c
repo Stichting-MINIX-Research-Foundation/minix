@@ -228,24 +228,22 @@ PUBLIC void main(void)
 		expire_timers();	/* run watchdogs of expired timers */
 		continue;		/* contine to check for events */
 	}
+	case PROC_EVENT: {
+		cons_stop();		/* switch to primary console */
+		printf("TTY got PROC_EVENT, assuming SIGTERM\n");
+#if DEAD_CODE
+		if (irq_hook_id != -1) {
+			sys_irqdisable(&irq_hook_id);
+			sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
+		}
+#endif
+		continue;
+	}
 	case SYS_SIG: {			/* system signal */
 		sigset_t sigset = (sigset_t) tty_mess.NOTIFY_ARG;
-
-		if (sigismember(&sigset, SIGKSTOP)) {
-			cons_stop();		/* switch to primary console */
-			if (irq_hook_id != -1) {
-				sys_irqdisable(&irq_hook_id);
-				sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
-			}
-		} 
-		if (sigismember(&sigset, SIGTERM)) cons_stop();	
 		if (sigismember(&sigset, SIGKMESS)) do_new_kmess(&tty_mess);
 		continue;
 	}
-	case PANIC_DUMPS:		/* allow panic dumps */
-		cons_stop();		/* switch to primary console */
-		do_panic_dumps(&tty_mess);	
-		continue;
 	case DIAGNOSTICS: 		/* a server wants to print some */
 		do_diagnostics(&tty_mess);
 		continue;
