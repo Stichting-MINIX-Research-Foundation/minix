@@ -11,6 +11,7 @@ libc_FILES=" \
 	_findproc.c \
 	_freemem.c \
 	_getnpid.c \
+	_getsigset.c \
 	_getnprocnr.c \
 	_getpprocnr.c \
 	_getprocnr.c \

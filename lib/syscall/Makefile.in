@@ -47,6 +47,7 @@ libc_FILES=" \
 	getppid.s \
 	getpprocnr.s \
 	getprocnr.s \
+	getsigset.s \
 	getsysinfo.s \
 	getuid.s \
 	ioctl.s \
