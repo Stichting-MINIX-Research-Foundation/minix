@@ -6,22 +6,10 @@ if [ "$1" != start ]
 then	exit
 fi
 
+set -e
 service up $DRIVERS/rescue -dev /dev/rescue -args 128 -period 4HZ
-mkfs /dev/rescue || exit
-mount /dev/rescue $RESCUE || exit
-label=`sysenv label`
-case "$label" in
-AT)
-	d=at_wini
-	;;
-FLOPPY)
-	d=floppy
-	;;
-BIOS)
-	d=bios_wini
-	;;
-*)	exit
-	;;
-esac
-cp $DRIVERS/$d $RESCUE/driver
+mkfs /dev/rescue
+mount /dev/rescue $RESCUE
+cd $DRIVERS
+cp at_wini floppy bios_wini $RESCUE
 service rescue $RESCUE 
