@@ -680,7 +680,9 @@ timer_t *tp;					/* watchdog timer pointer */
 	  unlock(5);
       }
   }
+#if DEBUG
   kprintf("ticks_added: %d\n", ticks_added);
+#endif
 
   /* Now schedule a new watchdog timer to balance the queues again.  The 
    * period depends on the total amount of quantum ticks added.
