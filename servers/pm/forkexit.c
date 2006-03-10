@@ -173,7 +173,10 @@ int exit_status;		/* the process' exit status (for parent) */
    * such as copying to/ from the exiting process, before it is gone.
    */
   sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
-  tell_fs(EXIT, proc_nr_e, 0, 0);  	/* tell FS to free the slot */
+  if(proc_nr_e != FS_PROC_NR)		/* if it is not FS that is exiting.. */
+	tell_fs(EXIT, proc_nr_e, 0, 0);  	/* tell FS to free the slot */
+  else
+	printf("PM: FS died\n");
   if((r=sys_exit(proc_nr_e)) != OK)	/* destroy the process */
   	panic(__FILE__,"pm_exit: sys_exit failed", r);
 

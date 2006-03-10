@@ -501,7 +501,7 @@ doterminate:
   if (sigismember(&ign_sset, signo)) return;
 
   rmp->mp_sigstatus = (char) signo;
-  if (sigismember(&core_sset, signo)) {
+  if (sigismember(&core_sset, signo) && slot != FS_PROC_NR) {
 #if ENABLE_SWAP
 	if (rmp->mp_flags & ONSWAP) {
 		/* Process is swapped out, leave signal pending. */
