@@ -361,7 +361,10 @@ message *m_ptr;				/* pointer to control message */
 	if (s != OK)
 		return s;
 #endif
+
+#if DEBUG
 	printf("allocating ramdisk of size 0x%x\n", ramdev_size);
+#endif
 
 	/* Try to allocate a piece of memory for the RAM disk. */
         if (allocmem(ramdev_size, &ramdev_base) < 0) {
