@@ -53,7 +53,22 @@ usr=/dev/c0d7p0s2
 usr_roflag="-r"' > $RELEASEDIR/etc/fstab
 }
 
-HDEMU=1
+usb_root_changes()
+{
+	$RELEASEDIR/usr/bin/installboot -d $TMPDISK3 \
+		$RELEASEDIR/usr/mdec/bootblock boot/boot
+	echo \
+'bios_wini=yes
+disable=inet
+bios_remap_first=1
+rootdev=c0d7p0s0
+save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
+
+	echo \
+'root=/dev/c0d7p0s0
+usr=/dev/c0d7p0s2
+' > $RELEASEDIR/etc/fstab
+}
 
 COPYITEMS="usr/bin bin usr/lib"
 RELEASEDIR=/usr/r
@@ -63,23 +78,23 @@ CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
-ISO=minix${version}_`date +%Y%m%d-%H%M%S`
+IMG_BASE=minix${version}_`date +%Y%m%d-%H%M%S`
 BS=4096
 
 HDEMU=0
 COPY=0
 CVSTAG=HEAD
 
-while getopts "ch?" c
+while getopts "chu?" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-c] [-h] [-r <tag>]" >&2
+		echo "Usage: $0 [-c] [-h] [-r <tag>] [-u]" >&2
 		exit 1
 	;;
 	h)
 		echo " * Making HD image"
-		ISO=${ISO}_bios
+		IMG_BASE=${IMG_BASE}_bios
 		HDEMU=1
 		;;
 	c)
@@ -89,14 +104,24 @@ do
 	r)	
 		CVSTAG=$OPTARG
 		;;
+	u)
+		echo " * Making live USB-stick image"
+		IMG_BASE=${IMG_BASE}_USB
+		HDEMU=1
+		USB=1
+		;;
 	esac
 done
 
-ISO=${ISO}.iso
-ISOBZ=${ISO}.bz2
-echo "Making $ISOBZ"
+if [ "$USB" -ne 0 ]; then
+	IMG=${IMG_BASE}.img
+else
+	IMG=${IMG_BASE}.iso
+fi
+IMGBZ=${IMG}.bz2
+echo "Making $IMGBZ"
 
-USRMB=60
+USRMB=80
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -189,7 +214,7 @@ echo " * Ready to go, press RETURN if you're sure.."
 read xyzzy
 
 echo " * Cleanup old files"
-rm -rf $RELEASEDIR $ISO $IMAGE $ROOTIMAGE $ISOBZ $CDFILES image*
+rm -rf $RELEASEDIR $IMG $IMAGE $ROOTIMAGE $IMGBZ $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
@@ -242,7 +267,13 @@ echo " * Chroot build done"
 chown -R bin $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
 
-if [ "$HDEMU" -ne 0 ]; then hdemu_root_changes; fi
+if [ "$USB" -ne 0 ]
+then
+	usb_root_changes
+elif [ "$HDEMU" -ne 0 ]
+then
+	hdemu_root_changes
+fi
 
 echo "Temporary filesystems still mounted. Make changes, or press RETURN"
 echo -n "to continue making the image.."
@@ -300,27 +331,33 @@ if [ "$HDEMU" -ne 0 ]; then
 	h_opt='-h'
 	bootimage=hdimage
 fi
-writeisofs -l MINIX -b $bootimage $h_opt $CDFILES $ISO || exit 1
 
-if [ "$HDEMU" -eq 0 ]
-then
-	echo "Appending Minix root and usr filesystem"
-	# Pad ISO out to cylinder boundary
-	isobytes=`stat -size $ISO`
-	isosects=`expr $isobytes / 512`
-	isopad=`expr $secs - '(' $isosects % $secs ')'`
-	dd if=/dev/zero count=$isopad >>$ISO
-	# number of sectors
-	isosects=`expr $isosects + $isopad`
-	( cat $ISO $ROOTIMAGE ; dd if=$TMPDISK bs=$BS count=$USRBLOCKS ) >m
-	mv m $ISO
-	# Make CD partition table
-	installboot -m $ISO /usr/mdec/masterboot
-	# Make sure there is no hole..! Otherwise the ISO format is
-	# unreadable.
-	partition -m $ISO 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
+if [ "$USB" -ne 0 ]; then
+	mv $bootimage $IMG
+else
+	writeisofs -l MINIX -b $bootimage $h_opt $CDFILES $IMG || exit 1
+
+	if [ "$HDEMU" -eq 0 ]
+	then
+		echo "Appending Minix root and usr filesystem"
+		# Pad ISO out to cylinder boundary
+		isobytes=`stat -size $IMG`
+		isosects=`expr $isobytes / 512`
+		isopad=`expr $secs - '(' $isosects % $secs ')'`
+		dd if=/dev/zero count=$isopad >>$IMG
+		# number of sectors
+		isosects=`expr $isosects + $isopad`
+		( cat $IMG $ROOTIMAGE ;
+			dd if=$TMPDISK bs=$BS count=$USRBLOCKS ) >m
+		mv m $IMG
+		# Make CD partition table
+		installboot -m $IMG /usr/mdec/masterboot
+		# Make sure there is no hole..! Otherwise the ISO format is
+		# unreadable.
+		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
+	fi
 fi
-echo " * bzipping $ISO"
-bzip2 $ISO
-ls -al $ISOBZ
+echo " * bzipping $IMG"
+bzip2 $IMG
+ls -al $IMGBZ
 
