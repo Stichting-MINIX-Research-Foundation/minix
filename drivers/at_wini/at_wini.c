@@ -252,7 +252,7 @@ struct command {
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 int wakeup_ticks = WAKEUP;
 long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0,
-	atapi_debug = 0;
+	disable_dma = 0, atapi_debug = 0;
 
 int w_testing = 0, w_silent = 0;
 
@@ -419,20 +419,19 @@ PRIVATE void init_params()
   env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
   env_parse("ata_pci_debug", "d", 0, &w_pci_debug, 0, 1);
   env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
+  env_parse("ata_no_dma", "d", 0, &disable_dma, 0, 1);
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
+
+  if (disable_dma)
+	printf("DMA for ATA devices is disabled.\n");
 
   s= sys_umap(SELF, D, (vir_bytes)dma_buf, sizeof(dma_buf), &dma_buf_phys);
   if (s != 0)
 	panic("at_wini", "can't map dma buffer", s);
-  printf("init_params: got phys 0x%x for dma buffer at 0x%x\n",
-	dma_buf_phys, (vir_bytes)dma_buf);
 
   s= sys_umap(SELF, D, (vir_bytes)prdt, sizeof(prdt), &prdt_phys);
   if (s != 0)
 	panic("at_wini", "can't map prd table", s);
-  printf("init_params: got phys 0x%x for prd table at 0x%x\n",
-	prdt_phys, (vir_bytes)prdt);
-
 
   if (w_instance == 0) {
 	  /* Get the number of drives from the BIOS data area */
@@ -824,7 +823,9 @@ PRIVATE int w_identify()
 					NO_NUM);
 			}
 		}
-		if (id_dma && dma_base)
+		if (disable_dma)
+			;	/* DMA is disabled */
+		else if (id_dma && dma_base)
 		{
 			w= id_word(ID_MULTIWORD_DMA);
 			if (w & (ID_MWDMA_2_SUP|ID_MWDMA_1_SUP|ID_MWDMA_0_SUP))
