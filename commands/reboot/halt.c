@@ -27,6 +27,7 @@ void usage _ARGS(( void ));
 int main _ARGS(( int argc, char *argv[] ));
 
 char *prog;
+char *reboot_code = "delay; boot";
 
 void
 usage()
@@ -59,18 +60,10 @@ char **argv;
     if (*opt == '-' && opt[1] == 0) break;	/* -- */
 
     while (*opt != 0) switch (*opt++) {
-      case 'h':
-	flag = RBT_HALT;
-	break;
-      case 'r':
-	flag = RBT_REBOOT;
-	break;
-      case 'R':
-	flag = RBT_RESET;
-	break;
-      case 'f':
-	fast = 1;
-	break;
+      case 'h': flag = RBT_HALT; 	break;
+      case 'r': flag = RBT_REBOOT; 	break;
+      case 'R': flag = RBT_RESET; 	break;
+      case 'f': fast = 1; break;
       case 'x':
 	flag = RBT_MONITOR;
 	if (*opt == 0) {
@@ -90,6 +83,11 @@ char **argv;
   if (flag == -1) {
     fprintf(stderr, "Don't know what to do when named '%s'\n", prog);
     exit(1);
+  }
+
+  if (flag == RBT_REBOOT) {
+	flag = RBT_MONITOR;		/* set monitor code for reboot */
+	monitor_code = reboot_code;
   }
 
   if (stat("/usr/bin", &dummy) < 0) {
@@ -125,7 +123,7 @@ char **argv;
   /* Give everybody a chance to die peacefully. */
   printf("Sending SIGTERM to all processes ...\n");
   kill(-1, SIGTERM);
-  sleep(2);
+  sleep(1);
 
   sync();
 
