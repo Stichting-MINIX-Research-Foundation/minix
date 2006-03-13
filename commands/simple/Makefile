@@ -147,6 +147,7 @@ ALL	= \
 	proto \
 	pwd \
 	pwdauth \
+	ramdisk \
 	rarpd \
 	rcp \
 	rawspeed \
@@ -643,6 +644,10 @@ pwdauth:	pwdauth.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
 
+ramdisk:	ramdisk.c
+	$(CCLD) -o $@ ramdisk.c
+	@install -S 4kw $@
+
 rarpd:	rarpd.c
 	$(CCLD) -o $@ rarpd.c
 	@install -S 4kw $@
@@ -1029,6 +1034,7 @@ install:	\
 	/usr/bin/proto \
 	/usr/bin/pwd \
 	/usr/lib/pwdauth \
+	/usr/bin/ramdisk \
 	/usr/bin/rarpd \
 	/usr/bin/rcp \
 	/usr/bin/rawspeed \
@@ -1471,6 +1477,9 @@ install:	\
 
 /usr/lib/pwdauth:	pwdauth
 	install -cs -o root -m 4755 $? $@
+
+/usr/bin/ramdisk:	ramdisk
+	install -cs -o bin $? $@
 
 /usr/bin/rarpd:	rarpd
 	install -cs -o bin $? $@
