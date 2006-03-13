@@ -874,13 +874,6 @@ void get_parameters(void)
 	}
 	b_setvar(E_SPECIAL|E_VAR, "memory", params);
 
-#if 0
-	b_setvar(E_SPECIAL|E_VAR, "c0",
-			DOS ? "dosfile" : get_bus() == 1 ? "at" : "bios");
-#else
-	b_setvar(E_SPECIAL|E_VAR, "label", "BIG");
-#endif
-
 #if DOS
 	b_setvar(E_SPECIAL|E_VAR, "dosfile-d0", vdisk);
 #endif
