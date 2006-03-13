@@ -1,6 +1,3 @@
-/* Copyright (C) 2001 by Prentice-Hall, Inc.  See the copyright notice in
- * the file /usr/src/LICENSE.
- */
 
 #ifndef CHIP
 #error CHIP is not defined
@@ -106,9 +103,6 @@
 #define W_BIT           0000002	/* rWx protection bit */
 #define X_BIT           0000001	/* rwX protection bit */
 #define I_NOT_ALLOC     0000000	/* this inode is free */
-
-/* Flag used only in flags argument of dev_open. */
-#define RO_BIT		0200000	/* Open device readonly; fail if writable. */
 
 /* Some limits. */
 #define MAX_BLOCK_NR  ((block_t) 077777777)	/* largest block number */
