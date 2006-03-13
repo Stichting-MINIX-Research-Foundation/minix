@@ -171,10 +171,10 @@ PUBLIC int do_getprocnr()
  *===========================================================================*/
 PUBLIC int do_reboot()
 {
-  static char *monitor_code = "delay;boot";
+  char monitor_code[32*sizeof(char *)];		
   vir_bytes code_addr;
   int code_size;
-  int abort_flag, abort_proc_e;
+  int abort_flag;
 
   /* Check permission to abort the system. */
   if (mp->mp_effuid != SUPER_USER) return(EPERM);
@@ -182,13 +182,7 @@ PUBLIC int do_reboot()
   /* See how the system should be aborted. */
   abort_flag = (unsigned) m_in.reboot_flag;
   if (abort_flag >= RBT_INVALID) return(EINVAL); 
-  abort_proc_e = who_e;
-  if (RBT_REBOOT == abort_flag) {
-	abort_flag = RBT_MONITOR;
-	abort_proc_e = PM_PROC_NR;
-	code_addr = (vir_bytes) monitor_code;
-	code_size = strlen(monitor_code)+1;
-  } else if (RBT_MONITOR == abort_flag) {
+  if (RBT_MONITOR == abort_flag) {
 	code_addr = (vir_bytes) m_in.reboot_code;
 	code_size = m_in.reboot_strlen + 1;
   }
@@ -209,7 +203,7 @@ PUBLIC int do_reboot()
   /* Ask the kernel to abort. All system services, including the PM, will 
    * get a HARD_STOP notification. Await the notification in the main loop.
    */
-  sys_abort(abort_flag, abort_proc_e, code_addr, code_size);
+  sys_abort(abort_flag, who_e, code_addr, code_size);
   return(SUSPEND);			/* don't reply to caller */
 }
 
