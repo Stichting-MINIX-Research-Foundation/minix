@@ -171,7 +171,7 @@ PUBLIC int do_getprocnr()
  *===========================================================================*/
 PUBLIC int do_reboot()
 {
-  char monitor_code[32*sizeof(char *)];		
+  char monitor_code[256];		
   vir_bytes code_addr;
   int code_size;
   int abort_flag;
@@ -183,7 +183,14 @@ PUBLIC int do_reboot()
   abort_flag = (unsigned) m_in.reboot_flag;
   if (abort_flag >= RBT_INVALID) return(EINVAL); 
   if (RBT_MONITOR == abort_flag) {
-	code_addr = (vir_bytes) m_in.reboot_code;
+	int r;
+	if(m_in.reboot_strlen >= sizeof(monitor_code))
+		return EINVAL;
+	if((r = sys_datacopy(who_e, (vir_bytes) m_in.reboot_code,
+		SELF, (vir_bytes) monitor_code, m_in.reboot_strlen)) != OK)
+		return r;
+	code_addr = (vir_bytes) monitor_code;
+	monitor_code[m_in.reboot_strlen] = '\0';
 	code_size = m_in.reboot_strlen + 1;
   }
 
@@ -203,7 +210,8 @@ PUBLIC int do_reboot()
   /* Ask the kernel to abort. All system services, including the PM, will 
    * get a HARD_STOP notification. Await the notification in the main loop.
    */
-  sys_abort(abort_flag, who_e, code_addr, code_size);
+  sys_abort(abort_flag, PM_PROC_NR, code_addr, code_size);
+  printf("sys_abort called\n");
   return(SUSPEND);			/* don't reply to caller */
 }
 

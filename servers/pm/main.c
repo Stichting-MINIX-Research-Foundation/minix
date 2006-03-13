@@ -89,8 +89,9 @@ PUBLIC int main()
 		if ((rmp->mp_flags & (REPLY | ONSWAP | IN_USE | ZOMBIE)) ==
 		   (REPLY | IN_USE)) {
 			if ((s=send(rmp->mp_endpoint, &rmp->mp_reply)) != OK) {
-				panic(__FILE__,"PM can't reply to",
-					rmp->mp_endpoint);
+				printf("PM can't reply to %d (%s)\n",
+					rmp->mp_endpoint, rmp->mp_name);
+				panic(__FILE__, "PM can't reply", NO_NUM);
 			}
 			rmp->mp_flags &= ~REPLY;
 		}
