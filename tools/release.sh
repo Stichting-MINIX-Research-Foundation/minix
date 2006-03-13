@@ -42,8 +42,8 @@ hdemu_root_changes()
 disable=inet
 bios_remap_first=1
 ramimagedev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { label=BIG; boot }
-bootsmall(2, Small MINIX 3 (<16MB)) {label=SMALL; boot }
+bootbig(1, Regular MINIX 3) { unset image; boot }
+bootsmall(2, Small MINIX 3 (<16MB)) {image=/boot/image/image_small; boot }
 main() { trap 10000 boot ; menu; }
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
 
