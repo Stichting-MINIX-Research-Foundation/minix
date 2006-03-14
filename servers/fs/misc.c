@@ -260,6 +260,9 @@ PUBLIC int do_reboot()
   /* Only PM may make this call directly. */
   if (who_e != PM_PROC_NR) return(EGENERIC);
 
+  /* Sync any unwritten buffers, before exiting processes (drivers). */
+  do_sync();
+
   /* Do exit processing for all leftover processes and servers. */
   for (i = 0; i < NR_PROCS; i++) {
 	if((m_in.endpt1 = fproc[i].fp_endpoint) != NONE)
