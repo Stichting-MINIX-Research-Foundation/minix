@@ -922,7 +922,7 @@ install:	\
 	/usr/bin/chmem \
 	/usr/bin/chmod \
 	/usr/bin/chown \
-	/usr/bin/chroot \
+	/bin/chroot \
 		/usr/bin/chgrp \
 	/usr/bin/ci \
 	/usr/bin/cksum \
@@ -1171,7 +1171,7 @@ install:	\
 /usr/bin/chown:	chown
 	install -cs -o bin $? $@
 
-/usr/bin/chroot:	chroot
+/bin/chroot:	chroot
 	install -cs -o bin $? $@
 
 /usr/bin/chgrp:	/usr/bin/chown
