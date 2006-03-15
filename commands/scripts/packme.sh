@@ -6,6 +6,8 @@ RC=/usr/etc/rc.package
 CDDIR=PACKAGES
 MP=/mnt
 CDPACK=${MP}/install/packages
+CDSRC=${MP}/install/package-sources
+SRC=/usr/bigports
 
 if [ -f "$RC" ]
 then	. "$RC"
@@ -27,6 +29,16 @@ then	pack=${cddrive}p2
 			if [ "$y" = y -o "$y" = Y ]
 			then	echo "Extracting $CDPACK/$package .."
 				cat $package | packit -
+				srcname="`echo $package | sed 's/.tar.bz/-src.tar.bz'`"
+				srcarc="$CDSRC/$srcname"
+				if [ -f "$srcarc" ]
+				then	echo -n "Install its source (y/N) ? "
+					read y
+					if [ "$y" = y -o "$y" = Y ]
+					then	echo "Installing $srcarc into $SRC."
+						( cd /usr/bigports && smallbunzip2 "$srcarc" | tar xf - )
+					fi
+				fi
 			fi
 		done
 	else	echo "CD mount failed - skipping CD packages."

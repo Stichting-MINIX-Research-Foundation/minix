@@ -1,6 +1,7 @@
 #!/bin/sh
 
 PACKAGEDIR=/usr/bigports/Packages
+PACKAGESOURCEDIR=/usr/bigports/Sources
 secs=`expr 32 '*' 64`
 
 make_hdimage()
@@ -73,6 +74,7 @@ usr=/dev/c0d7p0s2
 COPYITEMS="usr/bin bin usr/lib"
 RELEASEDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
+RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
@@ -122,7 +124,7 @@ fi
 IMGBZ=${IMG}.bz2
 echo "Making $IMGBZ"
 
-USRMB=128
+USRMB=150
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -232,21 +234,25 @@ mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 mkdir -p $RELEASEPACKAGE
+mkdir -p $RELEASEPACKAGESOURCES
 
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
 
-if [ -d $PACKAGEDIR ]
-then	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
-	cp $PACKAGEDIR/* $RELEASEPACKAGE/
+if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR ]
+then	echo " * Indexing packages"
 	( cd $PACKAGEDIR
-		for p in *.tar.bz
-		do	descr="../`echo $p | sed 's/.tar.bz//'`/.descr"
-			if [ -f "$descr" ]
-			then	printf "%-27s   %s\n" "$p" "`cat $descr`"
-			fi
-		done >List
+	  for p in *.tar.bz
+	  do	descr="../`echo $p | sed 's/.tar.bz//'`/.descr"
+		if [ -f "$descr" ]
+		then	printf "%-32s   %s\n" "$p" "`cat $descr`"
+		fi
+	  done >List
 	)
+	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
+	cp $PACKAGEDIR/* $RELEASEPACKAGE/
+	echo " * Transfering $PACKAGESOURCEDIR to $RELEASEPACKAGESOURCES"
+	cp $PACKAGESOURCEDIR/* $RELEASEPACKAGESOURCES/
 fi
 
 # Make sure compilers and libraries are bin-owned
