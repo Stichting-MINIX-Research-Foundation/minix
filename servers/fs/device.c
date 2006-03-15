@@ -160,8 +160,10 @@ int flags;			/* special flags, like O_NONBLOCK */
   /* Call the task. */
   (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 
-  if(dp->dmap_driver == NONE)
-	panic(__FILE__,"dev_io: driver changed to NONE", NO_NUM);
+  if(dp->dmap_driver == NONE) {
+  	/* Driver has vanished. */
+	return EIO;
+  }
 
   /* Task has completed.  See if call completed. */
   if (dev_mess.REP_STATUS == SUSPEND) {
