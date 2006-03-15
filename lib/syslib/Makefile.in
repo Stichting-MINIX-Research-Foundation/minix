@@ -5,6 +5,8 @@ CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
 LIBRARIES=libsys
 
 libsys_FILES=" \
+	assert.c \
+	panic.c \
 	pci_attr_r16.c \
 	pci_attr_r32.c \
 	pci_attr_r8.c \

@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <signal.h>
+#include <minix/sysutil.h>
 
-#include "sysutil.h"
+#include "syslib.h"
 
 int panicing= 0;
 
@@ -28,8 +30,8 @@ int num;			/* number to go with format string */
       }
   }
 
-  /* Exit nicely through PM. */
-  exit(1);
+  /* Try to signal ourself */
+  sys_kill(SELF, SIGKILL);
 
   /* If exiting nicely through PM fails for some reason, try to
    * commit suicide. E.g., message to PM might fail due to deadlock.

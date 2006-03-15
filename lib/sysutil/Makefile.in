@@ -15,7 +15,6 @@ libsysutil_FILES=" \
 	env_panic.c \
 	env_prefix.c \
 	fkey_ctl.c \
-	panic.c \
 	report.c \
 	taskcall.c"
 
