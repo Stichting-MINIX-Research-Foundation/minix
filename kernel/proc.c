@@ -42,6 +42,7 @@
 #include "debug.h"
 #include "kernel.h"
 #include "proc.h"
+#include <signal.h>
 
 /* Scheduling and message passing functions. The functions are available to 
  * other parts of the kernel through lock_...(). The lock temporarily disables 
@@ -147,7 +148,7 @@ long bit_map;			/* notification event set or flags */
    * anywhere in data or stack or gap. It will have to be made more elaborate 
    * for machines which don't have the gap mapped. 
    */
-  if (function & CHECK_PTR) {	
+  if (function & CHECK_PTR) {
       vlo = (vir_bytes) m_ptr >> CLICK_SHIFT;		
       vhi = ((vir_bytes) m_ptr + MESS_SIZE - 1) >> CLICK_SHIFT;
       if (vlo < caller_ptr->p_memmap[D].mem_vir || vlo > vhi ||
@@ -164,7 +165,7 @@ long bit_map;			/* notification event set or flags */
   /* If the call is to send to a process, i.e., for SEND, SENDREC or NOTIFY,
    * verify that the caller is allowed to send to the given destination. 
    */
-  if (function & CHECK_DST) {	
+  if (function & CHECK_DST) {
       if (! get_sys_bit(priv(caller_ptr)->s_ipc_to, nr_to_id(src_dst))) {
 #if DEBUG_ENABLE_IPC_WARNINGS
           kprintf("sys_call: ipc mask denied trap %d from %d to %d\n",
@@ -295,6 +296,8 @@ unsigned flags;				/* system call flags */
   dst_p = _ENDPOINT_P(dst_e);
   dst_ptr = proc_addr(dst_p);
 
+  if (dst_ptr->p_rts_flags & NO_ENDPOINT) return EDSTDIED;
+
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
    */
@@ -345,7 +348,12 @@ unsigned flags;				/* system call flags */
   int i, src_id, src_proc_nr, src_p;
 
   if(src_e == ANY) src_p = ANY;
-  else okendpt(src_e, &src_p);
+  else
+  {
+	okendpt(src_e, &src_p);
+	if (proc_addr(src_p)->p_rts_flags & NO_ENDPOINT) return ESRCDIED;
+  }
+
 
   /* Check to see if a message from desired source is already available.
    * The caller's SENDING flag may be set if SENDREC couldn't send. If it is

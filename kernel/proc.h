@@ -69,6 +69,7 @@ struct proc {
 #define P_STOP		0x40	/* set when process is being traced */
 #define NO_PRIV		0x80	/* keep forked system process from running */
 #define NO_PRIORITY    0x100	/* process has been stopped */
+#define NO_ENDPOINT    0x200	/* process cannot send or receive messages */
 
 /* Misc flags */
 #define REPLY_PENDING	0x01	/* reply to IPC_REQUEST is pending */
