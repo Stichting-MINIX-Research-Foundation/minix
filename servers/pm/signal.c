@@ -274,8 +274,10 @@ sigset_t sig_map;
 	    case SIGQUIT:
 	    case SIGWINCH:
 		id = 0; break;	/* broadcast to process group */
+#if 0
 	    case SIGKILL:
 		id = -1; break;	/* broadcast to all except INIT */
+#endif
 	    default:
 		id = proc_id;
 		break;
