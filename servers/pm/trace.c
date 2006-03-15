@@ -37,6 +37,7 @@ FORWARD _PROTOTYPE( struct mproc *find_proc, (pid_t lpid) );
 PUBLIC int do_trace()
 {
   register struct mproc *child;
+  int r;
 
   /* the T_OK call is made by the child fork of the debugger before it execs  
    * the process to be traced
@@ -68,8 +69,9 @@ PUBLIC int do_trace()
 	child->mp_flags &= ~STOPPED;
   	break;
   }
-  if (sys_trace(m_in.request,(int)(child-mproc),m_in.taddr,&m_in.data) != OK)
-	return(-errno);
+  r= sys_trace(m_in.request,child->mp_endpoint,m_in.taddr,&m_in.data);
+  if (r != OK) return(r);
+
   mp->mp_reply.reply_trace = m_in.data;
   return(OK);
 }
@@ -88,7 +90,7 @@ pid_t lpid;
 }
 
 /*===========================================================================*
- *				stop_proc  				     *
+ *				stop_proc				     *
  *===========================================================================*/
 PUBLIC void stop_proc(rmp, signo)
 register struct mproc *rmp;
@@ -97,8 +99,11 @@ int signo;
 /* A traced process got a signal so stop it. */
 
   register struct mproc *rpmp = mproc + rmp->mp_parent;
+  int r;
 
-  if (sys_trace(-1, (int) (rmp - mproc), 0L, (long *) 0) != OK) return;
+  r= sys_trace(-1, rmp->mp_endpoint, 0L, (long *) 0);
+  if (r != OK) panic("pm", "sys_trace failed", r);
+ 
   rmp->mp_flags |= STOPPED;
   if (rpmp->mp_flags & WAITING) {
 	rpmp->mp_flags &= ~WAITING;	/* parent is no longer waiting */
