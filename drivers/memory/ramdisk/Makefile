@@ -3,13 +3,16 @@
 PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk newroot \
 	pci sh service sysenv
 
-all:	image.c
+all:	image.c image.s
 
 clean:
 	rm -f $(PROGRAMS) bintoc image image.c
 
 image.c:	bintoc image
 	./bintoc -o $@ image
+
+image.s:	image.c
+	sed < image.c > $@ 's/^/.data1 /;s/,$$//' || { rm -f $@; false; }
 
 # Note for cross compilation: this executable has to be compiled for the
 # host system

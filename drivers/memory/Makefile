@@ -16,7 +16,13 @@ CFLAGS = -I$i
 LDFLAGS = -i
 LIBS = -lsys -lsysutil
 
-OBJ = memory.o imgrd.o
+# imgrd_s.s is the ACK assembler version of the ramdisk. For more portability,
+# use the C version imgrd.c. However, the C compiler takes too much memory
+# compiling imgrd.c.
+IMGRD=imgrd_s.o
+#IMGRD=imgrd.c
+
+OBJ = memory.o $(IMGRD)
 LIBDRIVER = $d/libdriver/driver.o
 
 
@@ -28,13 +34,13 @@ $(DRIVER):	ramdisk_image $(OBJ) $(LIBDRIVER)
 	install -S 8k $(DRIVER)
 
 imgrd.o:        ramdisk/image.c
+imgrd_s.o:      ramdisk/image.s
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 
 
 ramdisk_image:
 	cd ramdisk && make
-	binsizes big
 
 # install with other drivers
 install: /usr/sbin/$(DRIVER)
