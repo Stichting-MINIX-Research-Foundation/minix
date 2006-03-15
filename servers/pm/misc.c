@@ -199,19 +199,14 @@ PUBLIC int do_reboot()
    * SIGKILL. So first kill, then reboot. 
    */
 
-  printf("check_sig(-1, SIGKILL) ...\n");
   check_sig(-1, SIGKILL); 		/* kill all users except init */
-  printf("stopping init with PRIO_STOP ...\n");
   sys_nice(INIT_PROC_NR, PRIO_STOP);	/* stop init, but keep it around */
-  printf("tell_fs to sync() ...\n");
   tell_fs(REBOOT, 0, 0, 0);		/* tell FS to synchronize */
 
-  printf("sys_abort ...\n");
   /* Ask the kernel to abort. All system services, including the PM, will 
    * get a HARD_STOP notification. Await the notification in the main loop.
    */
   sys_abort(abort_flag, PM_PROC_NR, code_addr, code_size);
-  printf("sys_abort called\n");
   return(SUSPEND);			/* don't reply to caller */
 }
 
