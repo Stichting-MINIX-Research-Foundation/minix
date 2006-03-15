@@ -173,10 +173,12 @@ int main(int argc, char **argv)
     while (1) {
 	if ((tcp_fd= open(tcp_device, O_RDWR)) < 0) {
 	    report(tcp_device);
+#if 0
 	    if (errno == ENOENT || errno == ENODEV
 			    || errno == ENXIO) {
 		exit(1);
 	    }
+#endif
 	    goto bad;
 	}
 
