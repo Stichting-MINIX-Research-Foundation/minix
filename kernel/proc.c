@@ -101,13 +101,18 @@ long bit_map;			/* notification event set or flags */
  * (or both). The caller is always given by 'proc_ptr'.
  */
   register struct proc *caller_ptr = proc_ptr;	/* get pointer to caller */
-  int function = call_nr & SYSCALL_FUNC;	/* get system call function */
-  unsigned flags = call_nr & SYSCALL_FLAGS;	/* get flags */
+  int function;					/* get system call function */
+  unsigned flags;				/* get flags */
   int mask_entry;				/* bit to check in send mask */
   int group_size;				/* used for deadlock check */
   int result;					/* the system call's result */
   int src_dst;
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
+
+  if(call_nr == 0x23) call_nr = 0x0203;
+
+  function = call_nr & SYSCALL_FUNC;		/* get system call function */
+  flags = call_nr & SYSCALL_FLAGS;		/* get flags */
 
 #if 0
   if (caller_ptr->p_rts_flags & SLOT_FREE)
