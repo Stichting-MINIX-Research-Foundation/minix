@@ -45,26 +45,27 @@ typedef unsigned long sigset_t;
 #define SIGCHLD           17	/* child process terminated or stopped */
 #define SIGWINCH    	  21	/* window size has changed */
 
-/* MINIX specific signals. These signals are not used by user proceses, 
- * but meant to inform system processes, like the PM, about system events.
- */
-#define SIGKMESS   	  23	/* new kernel message */
-#define SIGKSIG    	  24	/* kernel signal pending */
-#define SIGKSTOP    	  25	/* kernel shutting down */
-
-#define _NSIG             25	/* number of signals used */
-
 /* POSIX requires the following signals to be defined, even if they are
  * not supported.  Here are the definitions, but they are not supported.
  */
-#define SIGCONT           28	/* continue if stopped */
-#define SIGSTOP           29	/* stop signal */
-#define SIGTSTP           30	/* interactive stop signal */
-#define SIGTTIN           31	/* background process wants to read */
-#define SIGTTOU           32	/* background process wants to write */
+#define SIGCONT           18	/* continue if stopped */
+#define SIGSTOP           19	/* stop signal */
+#define SIGTSTP           20	/* interactive stop signal */
+#define SIGTTIN           22	/* background process wants to read */
+#define SIGTTOU           23	/* background process wants to write */
+
+#define _NSIG             23	/* number of signals used */
 
 #ifdef _MINIX
 #define SIGIOT             SIGABRT /* for people who speak PDP-11 */
+
+/* MINIX specific signals. These signals are not used by user proceses, 
+ * but meant to inform system processes, like the PM, about system events.
+ */
+#define SIGKMESS   	  29	/* new kernel message */
+#define SIGKSIG    	  30	/* kernel signal pending */
+#define SIGKSTOP    	  31	/* kernel shutting down */
+
 #endif
 
 /* The sighandler_t type is not allowed unless _POSIX_SOURCE is defined. */
