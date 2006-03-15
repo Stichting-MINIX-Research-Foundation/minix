@@ -143,6 +143,7 @@ char *m;
     outstr(m);
     outstr(": ");
     outstr(strerror(errno));   
+    outstr("\n");
 }
 
 PUBLIC void closestring()

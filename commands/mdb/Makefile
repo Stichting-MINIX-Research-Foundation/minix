@@ -15,7 +15,7 @@ CC		=exec cc
 LD		=exec cc
 LDFLAGS		=-i
 TARGET		=mdb
-STACK		=100000
+STACK		=200000
 #
 # (2) If kernel and mm are not in "/usr/src" change this
 #
