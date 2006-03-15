@@ -20,7 +20,7 @@ _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 
 /* utility.c */
-_PROTOTYPE( void kprintf, (const char *fmt, ...)			);
+_PROTOTYPE( int kprintf, (const char *fmt, ...)				);
 _PROTOTYPE( void panic, (_CONST char *s, int n)				);
 
 /* proc.c */
