@@ -376,7 +376,6 @@ off_t newsize;			/* inode must become this size */
  * writing is done.
  */
   zone_t zone_size;
-  off_t p;
   int scale, file_type, waspipe;
   dev_t dev;
 
@@ -566,8 +565,9 @@ char dir_name[NAME_MAX];		/* name of directory to be removed */
   if (rip->i_num == ROOT_INODE) return(EBUSY); /* can't remove 'root' */
   
   for (rfp = &fproc[INIT_PROC_NR + 1]; rfp < &fproc[NR_PROCS]; rfp++)
-	if (rfp->fp_workdir == rip || rfp->fp_rootdir == rip) return(EBUSY);
-				/* can't remove anybody's working dir */
+	if (rfp->fp_pid != PID_FREE &&
+	     (rfp->fp_workdir == rip || rfp->fp_rootdir == rip))
+		return(EBUSY); /* can't remove anybody's working dir */
 
   /* Actually try to unlink the file; fails if parent is mode 0 etc. */
   if ((r = unlink_file(rldirp, rip, dir_name)) != OK) return r;

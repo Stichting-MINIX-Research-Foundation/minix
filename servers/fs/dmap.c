@@ -173,10 +173,7 @@ PUBLIC void build_dmap()
  * selection. The boot driver and the controller it handles are set at 
  * the boot monitor.  
  */
-  char driver[16];
-  char *controller = "c##";
-  int nr, major = -1;
-  int i,s;
+  int i;
   struct dmap *dp;
 
   /* Build table with device <-> driver mappings. */

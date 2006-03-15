@@ -555,8 +555,8 @@ mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 
 (cd /usr || exit 1
  if [ "$nobigsource" = 1 ]
- then	list="`ls | fgrep -v src.`"
- else	list="`ls`"
+ then	list="`ls | fgrep -v src. | fgrep -v install`"
+ else	list="`ls | fgrep -v install`"
  fi
  for d in $list
  do	

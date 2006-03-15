@@ -240,6 +240,7 @@ int flags;			/* mode bits and flags */
 	flags |= O_NOCTTY;
   } else {
 	for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+		if(rfp->fp_pid == PID_FREE) continue;
 		if (rfp->fp_tty == dev) flags |= O_NOCTTY;
 	}
   }
@@ -358,8 +359,7 @@ message *mess_ptr;		/* pointer to message for task */
  * pairs.  These lead to calls on the following routines via the dmap table.
  */
 
-  int r, proc_e, dummy_proc;
-  message local_m;
+  int r, proc_e;
 
   proc_e = mess_ptr->IO_ENDPT;
 

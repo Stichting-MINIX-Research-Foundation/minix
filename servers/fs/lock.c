@@ -177,6 +177,7 @@ PUBLIC void lock_revive()
   struct fproc *fptr;
 
   for (fptr = &fproc[INIT_PROC_NR + 1]; fptr < &fproc[NR_PROCS]; fptr++){
+	if(fptr->fp_pid == PID_FREE) continue;
 	task = -fptr->fp_task;
 	if (fptr->fp_suspended == SUSPENDED && task == XLOCK) {
 		revive(fptr->fp_endpoint, 0);

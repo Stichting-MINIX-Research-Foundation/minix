@@ -32,7 +32,6 @@ struct super_block;		/* proto.h needs to know this */
 #include "super.h"
 
 FORWARD _PROTOTYPE( void fs_init, (void)				);
-FORWARD _PROTOTYPE( int igetenv, (char *var, int optional)		);
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void init_root, (void)				);
 
@@ -45,7 +44,6 @@ PUBLIC int main()
  * three major activities: getting new work, processing the work, and sending
  * the reply.  This loop never terminates as long as the file system runs.
  */
-  sigset_t sigset;
   int error;
 
   fs_init();
@@ -100,12 +98,11 @@ PRIVATE void get_work()
    * nonzero, a suspended process must be awakened.
    */
   register struct fproc *rp;
-  int l = 0;
 
   if (reviving != 0) {
 	/* Revive a suspended process. */
 	for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) 
-		if (rp->fp_revived == REVIVING) {
+		if (rp->fp_pid != PID_FREE && rp->fp_revived == REVIVING) {
 			who_p = (int)(rp - fproc);
 			who_e = rp->fp_endpoint;
 			call_nr = rp->fp_fd & BYTE;
@@ -203,7 +200,6 @@ PRIVATE void fs_init()
    * Then, stop and synchronize with the PM.
    */
   do {
-	int slot;
   	if (OK != (s=receive(PM_PROC_NR, &mess)))
   		panic(__FILE__,"FS couldn't receive from PM", s);
   	if (NONE == mess.PR_ENDPT) break; 
@@ -254,32 +250,13 @@ PRIVATE void fs_init()
 }
 
 /*===========================================================================*
- *				igetenv					     *
- *===========================================================================*/
-PRIVATE int igetenv(key, optional)
-char *key;
-int optional;
-{
-/* Ask kernel for an integer valued boot environment variable. */
-  char value[64];
-  int i;
-
-  if ((i = env_get_param(key, value, sizeof(value))) != OK) {
-      if (!optional)
-      	printf("FS: Warning, couldn't get monitor param: %d\n", i);
-      return 0;
-  }
-  return(atoi(value));
-}
-
-/*===========================================================================*
  *				init_root				     *
  *===========================================================================*/
 PRIVATE void init_root()
 {
   int bad;
   register struct super_block *sp;
-  register struct inode *rip;
+  register struct inode *rip = NIL_INODE;
   int s;
 
   /* Open the root device. */

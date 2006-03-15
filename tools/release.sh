@@ -72,6 +72,7 @@ usr=/dev/c0d7p0s2
 
 COPYITEMS="usr/bin bin usr/lib"
 RELEASEDIR=/usr/r
+RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 IMAGE=cdfdimage
 ROOTIMAGE=rootimage
 CDFILES=/usr/tmp/cdreleasefiles
@@ -121,7 +122,7 @@ fi
 IMGBZ=${IMG}.bz2
 echo "Making $IMGBZ"
 
-USRMB=80
+USRMB=128
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -230,9 +231,23 @@ echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
+mkdir -p $RELEASEPACKAGE
 
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
+
+if [ -d $PACKAGEDIR ]
+then	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
+	cp $PACKAGEDIR/* $RELEASEPACKAGE/
+	( cd $PACKAGEDIR
+		for p in *.tar.bz
+		do	descr="../`echo $p | sed 's/.tar.bz//'`/.descr"
+			if [ -f "$descr" ]
+			then	printf "%-27s   %s\n" "$p" "`cat $descr`"
+			fi
+		done >List
+	)
+fi
 
 # Make sure compilers and libraries are bin-owned
 chown -R bin $RELEASEDIR/usr/lib
@@ -310,19 +325,6 @@ cp image_big image
 sh mkboot cdfdboot $TMPDISK3
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES
-
-DESTPACKAGES=$CDFILES/PACKAGES
-mkdir -p $DESTPACKAGES
-
-( cd $PACKAGEDIR
-  for f in *tar*
-  do
-	shortname="`echo $f | sed 's/\.tar\..*//' | tr -dc '[a-z][A-z][0-9]' | sed 's/^\(........\).*/\1/' | tr '[a-z]' '[A-Z]'`.TBZ"
-	cp $f $DESTPACKAGES/$shortname
-	echo $shortname $f >>$DESTPACKAGES/List
-	echo " * Copied $f to $shortname"
-  done
-)
 
 h_opt=
 bootimage=$IMAGE

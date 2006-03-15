@@ -108,6 +108,7 @@ PUBLIC int inval_filp(struct filp *fp)
 		for(fd = 0; fd < OPEN_MAX; fd++) {
 			if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == fp) {
 				fproc[f].fp_filp[fd] = NIL_FILP;
+				n++;
 			}
 		}
 	}

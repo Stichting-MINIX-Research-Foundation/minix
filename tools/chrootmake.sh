@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 cd /usr/src || exit 1
 make etcfiles

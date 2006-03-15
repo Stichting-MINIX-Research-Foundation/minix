@@ -216,7 +216,8 @@ PUBLIC void unsuspend_by_endpt(int proc_e)
    * disappeared with return code EAGAIN.
    */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++, client++)
-	if(rp->fp_suspended == SUSPENDED && rp->fp_task == -proc_e) {
+	if(rp->fp_pid != PID_FREE &&
+	   rp->fp_suspended == SUSPENDED && rp->fp_task == -proc_e) {
 		revive(rp->fp_endpoint, EAGAIN);
 	}
 
@@ -265,7 +266,7 @@ int count;			/* max number of processes to release */
 
   /* Search the proc table. */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
-	if (rp->fp_suspended == SUSPENDED &&
+	if (rp->fp_pid != PID_FREE && rp->fp_suspended == SUSPENDED &&
 			rp->fp_revived == NOT_REVIVING &&
 			(rp->fp_fd & BYTE) == call_nr &&
 			rp->fp_filp[rp->fp_fd>>8]->filp_ino == ip) {

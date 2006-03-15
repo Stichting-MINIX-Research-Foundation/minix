@@ -31,6 +31,10 @@
 #include "param.h"
 #include "super.h"
 
+FORWARD _PROTOTYPE( int free_proc, (struct fproc *freed, int flags));
+
+#define FP_EXITING	1
+
 /*===========================================================================*
  *				do_getsysinfo				     *
  *===========================================================================*/
@@ -260,14 +264,13 @@ PUBLIC int do_reboot()
   /* Only PM may make this call directly. */
   if (who_e != PM_PROC_NR) return(EGENERIC);
 
-  /* Sync any unwritten buffers, before exiting processes (drivers). */
-  do_sync();
-
-  /* Do exit processing for all leftover processes and servers. */
-  for (i = 0; i < NR_PROCS; i++) {
+  /* Do exit processing for all leftover processes and servers,
+   * but don't actually exit them (if they were really gone, PM
+   * will tell us about it).
+   */
+  for (i = 0; i < NR_PROCS; i++)
 	if((m_in.endpt1 = fproc[i].fp_endpoint) != NONE)
-		do_exit();
-  }
+		free_proc(&fproc[i], 0);
 
   /* The root file system is mounted onto itself, which keeps it from being
    * unmounted.  Pull an inode out of thin air and put the root on it.
@@ -285,6 +288,9 @@ PUBLIC int do_reboot()
 		if (sp->s_dev != NO_DEV) (void) unmount(sp->s_dev);
 	}
   }
+
+  /* Sync any unwritten buffers. */
+  do_sync();
 
   return(OK);
 }
@@ -387,30 +393,22 @@ PUBLIC int do_exec()
 }
 
 /*===========================================================================*
- *				do_exit					     *
+ *				free_proc				     *
  *===========================================================================*/
-PUBLIC int do_exit()
+PRIVATE int free_proc(struct fproc *exiter, int flags)
 {
-/* Perform the file system portion of the exit(status) system call. */
-
-  int i, exitee_p, exitee_e, task;
+  int i, task;
   register struct fproc *rfp;
   register struct filp *rfilp;
   register struct inode *rip;
   dev_t dev;
 
-  /* Only PM may do the EXIT call directly. */
-  if (who_e != PM_PROC_NR) return(EGENERIC);
-
-  /* Nevertheless, pretend that the call came from the user. */
-  exitee_e = m_in.endpt1;
-  okendpt(exitee_e, &exitee_p);
-  fp = &fproc[exitee_p];		/* get_filp() needs 'fp' */
+  fp = exiter;		/* get_filp() needs 'fp' */
 
   if (fp->fp_suspended == SUSPENDED) {
 	task = -fp->fp_task;
 	if (task == XPIPE || task == XPOPEN) susp_count--;
-	m_in.ENDPT = exitee_e;
+	m_in.ENDPT = fp->fp_endpoint;
 	(void) do_unpause();	/* this always succeeds for MM */
 	fp->fp_suspended = NOT_SUSPENDED;
   }
@@ -432,9 +430,15 @@ PUBLIC int do_exit()
    * (unmapping has to be done after the first step, because the
    * dmap table is used in the first step.)
    */
-  unsuspend_by_endpt(exitee_e);
-  dmap_unmap_by_endpt(exitee_e);
+  unsuspend_by_endpt(fp->fp_endpoint);
 
+  /* The rest of these actions is only done when processes actually
+   * exit.
+   */
+  if(!(flags & FP_EXITING))
+	return OK;
+
+  dmap_unmap_by_endpt(fp->fp_endpoint);
   /* Invalidate endpoint number for error and sanity checks. */
   fp->fp_endpoint = NONE;
 
@@ -446,6 +450,7 @@ PUBLIC int do_exit()
       dev = fp->fp_tty;
 
       for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+	  if(rfp->fp_pid == PID_FREE) continue;
           if (rfp->fp_tty == dev) rfp->fp_tty = 0;
 
           for (i = 0; i < OPEN_MAX; i++) {
@@ -463,6 +468,24 @@ PUBLIC int do_exit()
   /* Exit done. Mark slot as free. */
   fp->fp_pid = PID_FREE;
   return(OK);
+
+}
+
+/*===========================================================================*
+ *				do_exit					     *
+ *===========================================================================*/
+PUBLIC int do_exit()
+{
+  int exitee_p, exitee_e;
+/* Perform the file system portion of the exit(status) system call. */
+
+  /* Only PM may do the EXIT call directly. */
+  if (who_e != PM_PROC_NR) return(EGENERIC);
+
+  /* Nevertheless, pretend that the call came from the user. */
+  exitee_e = m_in.endpt1;
+  okendpt(exitee_e, &exitee_p);
+  return free_proc(&fproc[exitee_p], FP_EXITING);
 }
 
 /*===========================================================================*
