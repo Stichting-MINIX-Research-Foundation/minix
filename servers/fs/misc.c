@@ -336,6 +336,9 @@ PUBLIC int do_fork()
 
   /* This child has not exec()ced yet. */
   cp->fp_execced = 0;
+#if 0
+printf("do_fork: child %d, slot %d\n", m_in.child_endpt, cp-fproc);
+#endif
 
   /* Record the fact that both root and working dir have another user. */
   dup_inode(cp->fp_rootdir);
@@ -515,7 +518,7 @@ PUBLIC int do_svrctl()
   case FSSIGNON: {
 	/* A server in user space calls in to manage a device. */
 	struct fssignon device;
-	int r, major;
+	int r, major, proc_nr_n;
 
 	if (fp->fp_effuid != SU_UID && fp->fp_effuid != SERVERS_UID)
 		return(EPERM);
@@ -526,9 +529,24 @@ PUBLIC int do_svrctl()
 		(phys_bytes) sizeof(device))) != OK) 
 	    return(r);
 
+	if (isokendpt(who_e, &proc_nr_n) != OK)
+		return(EINVAL);
+
 	/* Try to update device mapping. */
 	major = (device.dev >> MAJOR) & BYTE;
 	r=map_driver(major, who_e, device.style);
+	if (r == OK)
+	{
+		/* If a driver has completed its exec(), it can be announced
+		 * to be up.
+		*/
+		if(fproc[proc_nr_n].fp_execced) {
+			dev_up(major);
+		} else {
+			dmap[major].dmap_flags |= DMAP_BABY;
+		}
+	}
+
 	return(r);
   }
   case FSDEVUNMAP: {

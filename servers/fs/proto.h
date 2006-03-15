@@ -32,13 +32,13 @@ _PROTOTYPE( void dev_close, (Dev_t dev)					);
 _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
 			off_t pos, int bytes, int flags)		);
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);
-_PROTOTYPE( void gen_io, (int task_nr, message *mess_ptr)		);
+_PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int no_dev, (int op, Dev_t dev, int proc, int flags)	);
-_PROTOTYPE( void no_dev_io, (int, message *)				);
+_PROTOTYPE( int no_dev_io, (int, message *)				);
 _PROTOTYPE( int tty_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int ctty_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int clone_opcl, (int op, Dev_t dev, int proc, int flags)	);
-_PROTOTYPE( void ctty_io, (int task_nr, message *mess_ptr)		);
+_PROTOTYPE( int ctty_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int do_ioctl, (void)					);
 _PROTOTYPE( int do_setsid, (void)					);
 _PROTOTYPE( void dev_status, (message *)				);

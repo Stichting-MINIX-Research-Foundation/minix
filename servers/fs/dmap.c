@@ -60,12 +60,28 @@ PRIVATE struct dmap init_dmap[] = {
  *===========================================================================*/
 PUBLIC int do_devctl()
 {
-  int result;
+  int result, proc_nr_e, proc_nr_n;
 
   switch(m_in.ctl_req) {
   case DEV_MAP:
+      /* Check process number of new driver. */
+      proc_nr_e= m_in.driver_nr;
+      if (isokendpt(proc_nr_e, &proc_nr_n) != OK)
+	return(EINVAL);
+
       /* Try to update device mapping. */
-      result = map_driver(m_in.dev_nr, m_in.driver_nr, m_in.dev_style);
+      result = map_driver(m_in.dev_nr, proc_nr_e, m_in.dev_style);
+      if (result == OK)
+      {
+	/* If a driver has completed its exec(), it can be announced to be
+	 * up.
+	 */
+	if(fproc[proc_nr_n].fp_execced) {
+		dev_up(m_in.dev_nr);
+	} else {
+		dmap[m_in.dev_nr].dmap_flags |= DMAP_BABY;
+	}
+      }
       break;
   case DEV_UNMAP:
       result = map_driver(m_in.dev_nr, NONE, 0);
@@ -128,13 +144,6 @@ int style;			/* style of the device */
   }
   dp->dmap_io = gen_io;
   dp->dmap_driver = proc_nr_e;
-
-  /* If a driver has completed its exec(), it can be announced to be up. */
-  if(fproc[proc_nr_n].fp_execced) {
-	dev_up(major);
-  } else {
-	dp->dmap_flags |= DMAP_BABY;
-  }
 
   return(OK); 
 }

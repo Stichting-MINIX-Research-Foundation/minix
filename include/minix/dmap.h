@@ -21,7 +21,7 @@ enum dev_style { STYLE_DEV, STYLE_NDEV, STYLE_TTY, STYLE_CLONE };
 
 extern struct dmap {
   int _PROTOTYPE ((*dmap_opcl), (int, Dev_t, int, int) );
-  void _PROTOTYPE ((*dmap_io), (int, message *) );
+  int _PROTOTYPE ((*dmap_io), (int, message *) );
   int dmap_driver;
   int dmap_flags;
 } dmap[];

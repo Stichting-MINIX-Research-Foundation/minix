@@ -350,7 +350,7 @@ PUBLIC int do_ioctl()
 /*===========================================================================*
  *				gen_io					     *
  *===========================================================================*/
-PUBLIC void gen_io(task_nr, mess_ptr)
+PUBLIC int gen_io(task_nr, mess_ptr)
 int task_nr;			/* which task to call */
 message *mess_ptr;		/* pointer to message for task */
 {
@@ -378,7 +378,7 @@ message *mess_ptr;		/* pointer to message for task */
 	 * request. The caller will do the revive for the process.
 	 */
 	if (mess_ptr->m_type == CANCEL && local_m.REP_ENDPT == proc_e) {
-		return;
+		return OK;
 	}
 
 	/* Otherwise it should be a REVIVE. */
@@ -402,11 +402,12 @@ message *mess_ptr;		/* pointer to message for task */
 	if (r != OK) {
 		if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
 			printf("fs: dead driver %d\n", task_nr);
-			return;
+			dmap_unmap_by_endpt(task_nr);
+			return r;
 		}
 		if (r == ELOCKED) {
 			printf("fs: ELOCKED talking to %d\n", task_nr);
-			return;
+			return r;
 		}
 		panic(__FILE__,"call_task: can't send/receive", r);
 	}
@@ -425,12 +426,14 @@ message *mess_ptr;		/* pointer to message for task */
 	}
 	r = receive(task_nr, mess_ptr);
   }
+
+  return OK;
 }
 
 /*===========================================================================*
  *				ctty_io					     *
  *===========================================================================*/
-PUBLIC void ctty_io(task_nr, mess_ptr)
+PUBLIC int ctty_io(task_nr, mess_ptr)
 int task_nr;			/* not used - for compatibility with dmap_t */
 message *mess_ptr;		/* pointer to message for task */
 {
@@ -451,17 +454,18 @@ message *mess_ptr;		/* pointer to message for task */
 
   if (dp->dmap_driver == NONE) {
 	printf("FS: ctty_io: no driver for dev\n");
-	return;
+	return EIO;
   }
 
 	if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
 		printf("FS: ctty_io: old driver %d\n",
 			dp->dmap_driver);
-		return;
+		return EIO;
 	}
 
 	(*dp->dmap_io)(dp->dmap_driver, mess_ptr);
   }
+  return OK;
 }
 
 /*===========================================================================*
@@ -480,11 +484,11 @@ int flags;			/* mode bits and flags */
 /*===========================================================================*
  *				no_dev_io				     *
  *===========================================================================*/
-PUBLIC void no_dev_io(int proc, message *m)
+PUBLIC int no_dev_io(int proc, message *m)
 {
 /* Called when doing i/o on a nonexistent device. */
   printf("FS: I/O on unmapped device number\n");
-  return;
+  return EIO;
 }
 
 /*===========================================================================*
@@ -502,7 +506,7 @@ int flags;			/* mode bits and flags */
  * as a new network connection) that has been allocated within a task.
  */
   struct dmap *dp;
-  int minor;
+  int r, minor;
   message dev_mess;
 
   /* Determine task dmap. */
@@ -527,7 +531,9 @@ int flags;			/* mode bits and flags */
   }
 
   /* Call the task. */
-  (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+  r= (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+  if (r != OK)
+	return r;
 
   if (op == DEV_OPEN && dev_mess.REP_STATUS >= 0) {
 	if (dev_mess.REP_STATUS != minor) {
@@ -590,6 +596,7 @@ PUBLIC void dev_up(int maj)
 	for(fp = filp; fp < &filp[NR_FILPS]; fp++) {
 		struct inode *in;
 		int minor;
+
 		if(fp->filp_count < 1 || !(in=fp->filp_ino)) continue;
 		if(((in->i_zone[0] >> MAJOR) & BYTE) != maj) continue;
 		if(!(in->i_mode & (I_BLOCK_SPECIAL|I_CHAR_SPECIAL))) continue;
