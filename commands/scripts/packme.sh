@@ -31,6 +31,6 @@ then	pack=${cddrive}p2
 		done
 	else	echo "CD mount failed - skipping CD packages."
 	fi
-else	echo "Don't know where the install CD is.
+else	echo "Don't know where the install CD is."
 fi
 

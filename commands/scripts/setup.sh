@@ -618,9 +618,8 @@ edparams /dev/$root "rootdev=$root; ramimagedev=$root; $disable; minix(1,Start M
 pfile="/mnt/src/tools/fdbootparams"
 echo "rootdev=$root; ramimagedev=$root; $disable; save" >$pfile
 # Save name of CD drive
-echo "cddrive=`mount | grep usr | awk '{ print $1 }' | sed 's/p.*//'`" >>/mnt/etc/rc.package
-
-sync
+cddrive="`mount | grep usr | awk '{ print $1 }' | sed 's/p.*//'`" 
+echo "cddrive=$cddrive" >>/mnt/etc/rc.package
 
 bios="`echo $primary | sed 's/d./dX/g'`"
 
@@ -642,9 +641,11 @@ echo "Install is done. Running postinstall script.."
 
 # Now chroot-mount the new system and run the postinstall script
 umount /dev/$usr || exit 1
+umount /dev/${cddrive}p2
 mount /dev/$root /mnt || exit 1
 mount /dev/$usr /mnt/usr || exit 1
 chroot /mnt '/bin/sh /usr/src/commands/scripts/postinstall.sh'
+mount -r /dev/${cddrive}p2 /usr
 
 echo "Postinstall script done. Saving random data.."
 dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
