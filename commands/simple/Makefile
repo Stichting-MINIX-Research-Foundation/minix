@@ -188,6 +188,7 @@ ALL	= \
 	tget \
 	time \
 	touch \
+	top \
 	tr \
 	truncate \
 	treecmp \
@@ -808,6 +809,9 @@ touch:	touch.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
 
+top:	top.c
+	$(CCLD) -o $@ $?
+
 tr:	tr.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
@@ -1077,6 +1081,7 @@ install:	\
 	/usr/bin/termcap \
 	/usr/bin/tget \
 	/usr/bin/time \
+	/usr/bin/top \
 	/usr/bin/touch \
 	/usr/bin/tr \
 	/usr/bin/treecmp \
@@ -1608,6 +1613,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/time:	time
+	install -cs -o bin $? $@
+
+/usr/bin/top:	top
 	install -cs -o bin $? $@
 
 /usr/bin/touch:	touch
