@@ -288,6 +288,8 @@ PUBLIC unsigned long read_clock()
 PRIVATE void load_update(void)
 {
 	u16_t slot;
+	int enqueued = -1, q;	/* -1: special compensation for IDLE. */
+	struct proc *p;
 
 	/* Load average data is stored as a list of numbers in a circular
 	 * buffer. Each slot accumulates _LOAD_UNIT_SECS of samples of
@@ -301,8 +303,12 @@ PRIVATE void load_update(void)
 		kloadinfo.proc_last_slot = slot;
 	}
 
-	/* Cumulation. */
-	kloadinfo.proc_load_history[slot] += kloadinfo.procs_enqueued;
+	/* Cumulation. How many processes are ready now? */
+	for(q = 0; q < NR_SCHED_QUEUES; q++)
+		for(p = rdy_head[q]; p != NIL_PROC; p = p->p_nextready)
+			enqueued++;
+
+	kloadinfo.proc_load_history[slot] += enqueued;
 
 	/* Up-to-dateness. */
 	kloadinfo.last_clock = realtime;

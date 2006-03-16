@@ -46,6 +46,7 @@
 #define SI_MEM_ALLOC	   4	/* get memory allocation data */
 #define SI_DATA_STORE	   5	/* get copy of data store */
 #define SI_LOADINFO	   6	/* get copy of load average structure */
+#define SI_KPROC_TAB	   7	/* copy of kernel process table */
 
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #define NULL    ((void *)0)

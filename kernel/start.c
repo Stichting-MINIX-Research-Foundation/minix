@@ -66,7 +66,6 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   kinfo.kmem_size = (phys_bytes) &end;	
 
   /* Load average data initialization. */
-  kloadinfo.procs_enqueued = 0;
   kloadinfo.proc_last_slot = 0;
   for(h = 0; h < _LOAD_HISTORY; h++)
 	kloadinfo.proc_load_history[h] = 0;

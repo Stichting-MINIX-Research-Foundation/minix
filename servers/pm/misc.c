@@ -23,6 +23,7 @@
 #include <lib.h>
 #include "mproc.h"
 #include "param.h"
+#include "../../kernel/proc.h"
 
 /*===========================================================================*
  *				do_allocmem				     *
@@ -83,6 +84,7 @@ PUBLIC int do_getsysinfo()
   vir_bytes src_addr, dst_addr;
   struct kinfo kinfo;
   struct loadinfo loadinfo;
+  static struct proc proctab[NR_PROCS+NR_TASKS];
   size_t len;
   static struct pm_mem_info pmi;
   int s, r;
@@ -102,6 +104,12 @@ PUBLIC int do_getsysinfo()
   case SI_PROC_TAB:			/* copy entire process table */
         src_addr = (vir_bytes) mproc;
         len = sizeof(struct mproc) * NR_PROCS;
+        break;
+  case SI_KPROC_TAB:			/* copy entire process table */
+	if((r=sys_getproctab(proctab)) != OK)
+		return r;
+	src_addr = (vir_bytes) proctab;
+	len = sizeof(proctab);
         break;
   case SI_MEM_ALLOC:
   	holesize = sizeof(pmi.pmi_holes);
@@ -252,7 +260,7 @@ PUBLIC int do_getsetpriority()
 	
 	/* We're SET, and it's allowed. Do it and tell kernel. */
 	rmp->mp_nice = arg_pri;
-	return sys_nice(rmp_nr, arg_pri);
+	return sys_nice(rmp->mp_endpoint, arg_pri);
 }
 
 /*===========================================================================*
