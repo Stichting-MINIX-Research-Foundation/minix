@@ -114,8 +114,13 @@ void print_procs(int maxlines,
 		if(proc2[p].p_rts_flags & SLOT_FREE)
 			continue;
 		tick_procs[nprocs].p = proc2 + p;
-		tick_procs[nprocs].ticks =
-			proc2[p].p_user_time-proc1[p].p_user_time;
+		if(proc1[p].p_endpoint == proc2[p].p_endpoint) {
+			tick_procs[nprocs].ticks =
+				proc2[p].p_user_time-proc1[p].p_user_time;
+		} else {
+			tick_procs[nprocs].ticks =
+				proc2[p].p_user_time;
+		}
 		if(p-NR_TASKS == IDLE) {
 			idleticks = tick_procs[nprocs].ticks;
 			continue;
