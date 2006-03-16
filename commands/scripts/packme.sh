@@ -9,11 +9,11 @@ CDPACK=${MP}/install/packages
 CDSRC=${MP}/install/package-sources
 SRC=/usr/bigports
 LISTFILE=/etc/packages
-LISTURL=http://www.1st.minix3.org/packages/List
+LISTURL=http://www.minix3.org/packages/List
 TMPDIR=/usr/tmp/packages
 mkdir -p $TMPDIR
-URL1=http://www.1st.minix3.org/packages
-URL2=http://www.1st.minix3.org/beta_packages
+URL1=http://www.minix3.org/packages
+URL2=http://www.minix3.org/beta_packages
 
 if [ -f "$RC" ]
 then	. "$RC"
