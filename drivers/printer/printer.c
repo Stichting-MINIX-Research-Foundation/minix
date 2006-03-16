@@ -143,6 +143,7 @@ PUBLIC void main(void)
 	    case HARD_INT:	do_printer_output();	break;
 	    case SYS_SIG:	do_signal(&pr_mess); 	break;
 	    case DEV_PING:  	notify(pr_mess.m_source);	break;
+	    case PROC_EVENT:	break;
 	    default:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, EINVAL);
 	}

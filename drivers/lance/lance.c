@@ -391,6 +391,8 @@ void main( int argc, char **argv )
               }
           }
         break;
+      case PROC_EVENT:
+	break;
       default:
         panic( "lance", "illegal message", m.m_type);
       }
