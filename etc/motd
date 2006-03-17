@@ -17,3 +17,4 @@ newsgroup: comp.os.minix.
 MINIX 3 supports virtual terminals. Hit ALT+F2, ALT+F3 etc. to see them.
 ALT+<left arrow> and ALT+<right arrow> walks through them.
 
+To install packages from the install CD or the network, type 'packme'.
