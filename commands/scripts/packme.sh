@@ -24,7 +24,7 @@ cd /
 if [ -n "$cddrive" ]
 then	pack=${cddrive}p2
 	umount $pack >/dev/null 2>&1 || true
-	if mount $pack $MP
+	if mount -r $pack $MP
 	then
 		cd $CDPACK
 		for package in `ls *.tar.bz`
