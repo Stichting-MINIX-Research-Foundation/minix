@@ -637,6 +637,9 @@ then	if mount /dev/$home /home 2>/dev/null
 	fi
 fi
 
+echo "Saving random data.."
+dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
+
 # Now chroot-mount the new system and run the postinstall script
 umount /dev/$usr || exit 1
 if umount ${cddrive}p2
@@ -649,9 +652,6 @@ then
 	mount -r ${cddrive}p2 /usr
 else	echo "Skipping post-install."
 fi
-
-echo "Saving random data.."
-dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
 
 echo "
 Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At

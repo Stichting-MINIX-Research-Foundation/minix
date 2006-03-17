@@ -38,7 +38,7 @@ usr:	\
 	/usr/bin/makewhatis \
 	/usr/bin/mkdep \
 	/usr/bin/mkdist \
-	/usr/bin/setup \
+	/bin/setup \
 	/usr/bin/binsizes \
 	/usr/bin/rotate \
 	/usr/bin/floppysetup \
@@ -133,7 +133,7 @@ clean:
 /usr/bin/rotate:	rotate.sh
 	install -m 755 -c -o bin $? $@
 
-/usr/bin/setup:	setup.sh
+/bin/setup:	setup.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/binsizes:	binsizes.sh
