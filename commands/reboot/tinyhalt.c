@@ -16,6 +16,7 @@ int main(int argc, char **argv)
 {
 	int flag;
 	char *prog;
+	char *reboot_code = "delay; boot";
 
 	/* Try to run the real McCoy. */
 #if __minix_vmd
@@ -28,7 +29,8 @@ int main(int argc, char **argv)
 
 	sleep(2);	/* Not too fast. */
 
-	reboot(strcmp(prog, "reboot") == 0 ? RBT_REBOOT : RBT_HALT);
+	reboot(strcmp(prog, "reboot") == 0 ? RBT_MONITOR : RBT_HALT,
+		reboot_code, strlen(reboot_code));
 
 	write(2, "reboot call failed\n", 19);
 	return 1;
