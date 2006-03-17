@@ -154,7 +154,6 @@ ALL	= \
 	rdate \
 	readall \
 	rev \
-	readlink \
 	readfs \
 	remsync \
 	rget \
