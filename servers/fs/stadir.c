@@ -274,6 +274,9 @@ PUBLIC int do_rdlink()
   block_t b;                   /* block containing link text */
   struct buf *bp;              /* buffer containing link text */
   register struct inode *rip;  /* target inode */
+  int copylen;
+  copylen = m_in.m1_i2;
+  if(copylen < 0) return EINVAL;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   if ((rip = parse_path(user_path, (char *) 0, EAT_PATH_OPAQUE)) == NIL_INODE)
@@ -284,11 +287,12 @@ PUBLIC int do_rdlink()
        if (m_in.name2_length <= 0) r = EINVAL;
        else if (m_in.name2_length < rip->i_size) r = ERANGE;
        else {
+	       if(rip->i_size < copylen) copylen = rip->i_size;
                bp = get_block(rip->i_dev, b, NORMAL);
                r = sys_vircopy(SELF, D, (vir_bytes) bp->b_data,
-		who_e, D, (vir_bytes) m_in.name2, (vir_bytes) rip->i_size);
+		who_e, D, (vir_bytes) m_in.name2, (vir_bytes) copylen);
 
-               if (r == OK) r = rip->i_size;
+               if (r == OK) r = copylen;
                put_block(bp, DIRECTORY_BLOCK);
        }
   }
