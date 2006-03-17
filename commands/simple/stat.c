@@ -25,6 +25,7 @@
 # include	<limits.h>
 # include	<stdio.h>
 # include	<stdlib.h>
+# include	<unistd.h>
 # include 	<string.h>
 # include	<time.h>
 # include	<sys/stat.h>
@@ -87,6 +88,8 @@ void printit(struct stat* sb, struct field* f, int n);
 void rwx(mode_t mode, char *bit);
 void usage(void);
 
+int do_readlink=0;
+
 int main(int ac, char** av)
 {
     int      i, j, nprint = 0, files = 0;
@@ -98,6 +101,7 @@ int main(int ac, char** av)
     if ((arg0 = strrchr(av[0], '/')) == NULL) arg0 = av[0]; else arg0++;
 #ifdef S_IFLNK
     if (equal(arg0, "lstat")) sym = 1;
+    if (equal(arg0, "readlink")) do_readlink = 1;
 #endif
 
     if (ac > 1 && equal(av[i = 1], "-"))
@@ -155,6 +159,7 @@ int main(int ac, char** av)
 	files++;	/* We don't know how many files come from stdin. */
 
     if (files == 0) {	/* Stat all file descriptors. */
+	if(do_readlink) return 0;
 	for (i= 0; i<OPEN_MAX; i++) {
 	    err= fstat(i, &sbuf);
 	    if (err == -1 && errno == EBADF)
@@ -177,6 +182,19 @@ int main(int ac, char** av)
 	    while (fgets(buf, sizeof(buf), stdin)) {
 	    	char *p= strchr(buf, '\n');
 	    	if (p) *p= 0;
+#ifdef S_IFLNK
+		if(do_readlink) {
+			char sbuf[300];
+			int n;
+			if((n=readlink(buf, sbuf, sizeof(sbuf)-1)) < 0) {
+				perror(buf);
+				continue;
+			}
+			sbuf[n] = '\0';
+			printf("%s: %s\n", buf, sbuf);
+			continue;
+		}
+#endif
 		if (!sym) err= stat(av[i], &sbuf);
 		if (sym || (err != 0 && errno == ENOENT)) {
 		    err= lstat(av[i], &sbuf);
@@ -214,6 +232,17 @@ int main(int ac, char** av)
 		ret= 1;
 	    }
 	    continue;
+	}
+	if(do_readlink) {
+		char sbuf[300];
+		int n;
+		if((n=err=readlink(av[i], sbuf, sizeof(sbuf)-1)) < 0) {
+			perror(av[i]);
+			continue;
+		}
+		sbuf[n] = '\0';
+		printf("%s: %s\n", av[i], sbuf);
+		continue;
 	}
 	if (!sym) err= stat(av[i], &sbuf);
 	if (sym || (err != 0 && errno == ENOENT)) err= lstat(av[i], &sbuf);

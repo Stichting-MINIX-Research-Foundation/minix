@@ -154,6 +154,7 @@ ALL	= \
 	rdate \
 	readall \
 	rev \
+	readlink \
 	readfs \
 	remsync \
 	rget \
@@ -1044,6 +1045,7 @@ install:	\
 	/usr/bin/rawspeed \
 	/usr/bin/rdate \
 	/usr/bin/readall \
+	/usr/bin/readlink \
 	/usr/bin/readfs \
 	/usr/bin/remsync \
 	/usr/bin/rget \
@@ -1500,6 +1502,9 @@ install:	\
 
 /usr/bin/readall:	readall
 	install -cs -o bin $? $@
+
+/usr/bin/readlink:	/usr/bin/stat
+	install -l $? $@
 
 /usr/bin/readfs:	readfs
 	install -cs -o bin $? $@

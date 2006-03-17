@@ -1,6 +1,6 @@
 .TH STAT 1
 .SH NAME
-stat, lstat \- provide a shell interface to the stat(2) system call
+stat, lstat, readlink \- provide a shell interface to the stat(2) system call
 .SH SYNOPSIS
 .B stat
 .RB [ - ]
@@ -25,8 +25,13 @@ is called as
 .B lstat
 then the
 .BR lstat (2)
-system call is used, otherwise symbolic links are expanded with
+system call is used, if called as 
+.B stat
+symbolic links are expanded with
 .BR stat (2).
+If called as
+.B readlink
+then the output is only the contents of the symbolic link.
 .PP
 If no fields are named then all fields are printed.  If no files are listed
 then all open filedescriptors are printed.
