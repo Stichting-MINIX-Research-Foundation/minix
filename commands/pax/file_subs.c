@@ -709,7 +709,9 @@ set_ids(char *fnm, uid_t uid, gid_t gid)
 int
 set_lids(char *fnm, uid_t uid, gid_t gid)
 {
-	if (chown(fnm, uid, gid) < 0) {
+
+#if 0
+	if (lchown(fnm, uid, gid) < 0) {
 		/*
 		 * ignore EPERM unless in verbose mode or being run by root.
 		 * if running as pax, POSIX requires a warning.
@@ -720,6 +722,9 @@ set_lids(char *fnm, uid_t uid, gid_t gid)
 			    fnm);
 		return(-1);
 	}
+#else
+	return(-1);	/* No lchown() in minix. */
+#endif
 	return(0);
 }
 
