@@ -637,17 +637,20 @@ then	if mount /dev/$home /home 2>/dev/null
 	fi
 fi
 
-echo "Install is done. Running postinstall script.."
-
 # Now chroot-mount the new system and run the postinstall script
 umount /dev/$usr || exit 1
-umount ${cddrive}p2
-mount /dev/$root /mnt || exit 1
-mount /dev/$usr /mnt/usr || exit 1
-chroot /mnt '/bin/sh /usr/src/commands/scripts/postinstall.sh'
-mount -r ${cddrive}p2 /usr
+if umount ${cddrive}p2
+then
+	mount /dev/$root /mnt || exit 1
+	mount /dev/$usr /mnt/usr || exit 1
+	echo "Install is done. Running postinstall script.."
+	chroot /mnt '/bin/sh /usr/src/commands/scripts/postinstall.sh'
+	echo "Postinstall script done."
+	mount -r ${cddrive}p2 /usr
+else	echo "Skipping post-install.
+fi
 
-echo "Postinstall script done. Saving random data.."
+echo "Saving random data.."
 dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
 
 echo "
