@@ -28,8 +28,7 @@ then	pack=${cddrive}p2
 	then
 		cd $CDPACK
 		for package in `ls *.tar.bz`
-		do	echo $package
-			grep $package List
+		do	grep $package List
 			echo -n "Install $package (y/N) ? "
 			read y
 			if [ "$y" = y -o "$y" = Y ]
