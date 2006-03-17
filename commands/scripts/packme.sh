@@ -41,7 +41,7 @@ then	pack=${cddrive}p2
 					read y
 					if [ "$y" = y -o "$y" = Y ]
 					then	echo "Installing $srcarc into $SRC."
-						smallbunzip2 "$srcarc" | (cd $SRC && tar xf - )
+						smallbunzip2 -dc "$srcarc" | (cd $SRC && tar xf - )
 					fi
 				fi
 			fi
