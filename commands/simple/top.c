@@ -1,4 +1,6 @@
 
+/* Author: Ben Gras <beng@few.vu.nl>  17 march 2006 */
+
 #define _MINIX 1
 #define _POSIX_SOURCE 1
 
