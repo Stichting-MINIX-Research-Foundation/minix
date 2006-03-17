@@ -17,5 +17,8 @@ if [ -f $t ]
 then	cat "$t" | while read line
 	do	awk '{ print "chmem =" $2 " " $1 " >/dev/null 2>&1 "}'
 	done | /bin/sh
+else
+	echo "$0: $t does not exist" >&2
+	exit 1
 fi
 exit 0
