@@ -13,7 +13,10 @@ fi
 dir=`pwd`
 if [ "$1" = "-" ]
 then f=""
-else f=$dir/$1
+else	case "$1" in
+	/*) f="$1" ;;
+	*) f="$dir/$1" ;;
+	esac
 fi
 
 set -e

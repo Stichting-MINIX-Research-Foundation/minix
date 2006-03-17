@@ -43,12 +43,13 @@ then	pack=${cddrive}p2
 					then	echo "Installing $srcarc into $SRC."
 						smallbunzip2 -dc "$srcarc" | (cd $SRC && tar xf - )
 					fi
+				else	:
 				fi
 			fi
 		done
 	else	echo "CD mount failed - skipping CD packages."
 	fi
-else	echo "Don't know where the install CD is."
+else	echo "Don't know where the install CD is. You can set it in $RC."
 fi
 
 TMPF=/tmp/list.$$
