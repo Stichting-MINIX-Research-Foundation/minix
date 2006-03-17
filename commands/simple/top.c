@@ -109,8 +109,8 @@ void print_procs(int maxlines,
 	struct proc *proc1, struct proc *proc2, int dt,
 	struct mproc *mproc)
 {
-	int p, nprocs;
-	int idleticks = 0, kernelticks = 0, systemticks = 0, userticks = 0;
+	int p, nprocs, tot=0;
+	int idleticks = 0, kernelticks = 0, systemticks = 0;
 
 	for(p = nprocs = 0; p < PROCS; p++) {
 		if(proc2[p].p_rts_flags & SLOT_FREE)
@@ -133,18 +133,17 @@ void print_procs(int maxlines,
 			kernelticks += tick_procs[nprocs].ticks;
 		else if(mproc[proc2[p].p_nr].mp_procgrp == 0)
 			systemticks += tick_procs[nprocs].ticks;
-		else
-			userticks += tick_procs[nprocs].ticks;
 		nprocs++;
 	}
 
 	qsort(tick_procs, nprocs, sizeof(tick_procs[0]), cmp_ticks);
 
-	printf("CPU states: %5.2f%% user, %5.2f%% system, %5.2f%% kernel, %5.2f%% idle\n\n",
-		100.0*userticks/dt,
+	printf("CPU states: %5.2f%% user, %5.2f%% system, %5.2f%% kernel, %5.2f%% idle",
+		100.0*(dt-systemticks-kernelticks-idleticks)/dt,
 		100.0*systemticks/dt,
 		100.0*kernelticks/dt,
 		100.0*idleticks/dt);
+	printf("\n\n");
 	maxlines -= 2;
 
 	printf("  PID USERNAME PRI NICE   SIZE STATE   TIME    CPU COMMAND\n");
