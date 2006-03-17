@@ -321,8 +321,11 @@ dotcmd(argc, argv)  char **argv; {
 
 
 exitcmd(argc, argv)  char **argv; {
+	extern int oexitstatus;
 	if (argc > 1)
 		exitstatus = number(argv[1]);
+	else
+		exitstatus = oexitstatus;
 	exitshell(exitstatus);
 }
 

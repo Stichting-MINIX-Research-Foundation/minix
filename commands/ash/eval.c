@@ -84,6 +84,7 @@ int funcnest;			/* depth of function calls */
 char *commandname;
 struct strlist *cmdenviron;
 int exitstatus;			/* exit status of last command */
+int oexitstatus;		/* saved exit status */
 
 
 #ifdef __STDC__
@@ -272,8 +273,11 @@ evaltree(n, flags)
 out:
 	if (pendingsigs)
 		dotrap();
-	if ((flags & EV_EXIT) || (eflag == 1 && exitstatus && !(flags & EV_TESTED)))
+	if ((flags & EV_EXIT) || (eflag && exitstatus
+	  && !(flags & EV_TESTED) && (n->type == NCMD ||
+	  n->type == NSUBSHELL))) {
 		exitshell(exitstatus);
+	}
 }
 
 
@@ -326,6 +330,7 @@ evalfor(n)
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	for (argp = n->nfor.args ; argp ; argp = argp->narg.next) {
+		oexitstatus = exitstatus;
 		expandarg(argp, &arglist, 1);
 		if (evalskip)
 			goto out;
@@ -365,6 +370,7 @@ evalcase(n, flags)
 
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
+        oexitstatus = exitstatus;
 	expandarg(n->ncase.expr, &arglist, 0);
 	for (cp = n->ncase.cases ; cp && evalskip == 0 ; cp = cp->nclist.next) {
 		for (patp = cp->nclist.pattern ; patp ; patp = patp->narg.next) {
@@ -421,6 +427,7 @@ expredir(n)
 	register union node *redir;
 
 	for (redir = n ; redir ; redir = redir->nfile.next) {
+		oexitstatus = exitstatus;
 		if (redir->type == NFROM
 		 || redir->type == NTO
 		 || redir->type == NAPPEND) {
@@ -525,6 +532,7 @@ evalbackcmd(n, result)
 		/* `` */
 	} else
 	if (n->type == NCMD) {
+                exitstatus = oexitstatus;
 		evalcommand(n, EV_BACKCMD, result);
 	} else {
 		if (pipe(pip) < 0)
@@ -588,6 +596,8 @@ evalcommand(cmd, flags, backcmd)
 	arglist.lastp = &arglist.list;
 	varlist.lastp = &varlist.list;
 	varflag = 1;
+        oexitstatus = exitstatus;
+	exitstatus = 0;
 	for (argp = cmd->ncmd.args ; argp ; argp = argp->narg.next) {
 		p = argp->narg.text;
 		if (varflag && is_name(*p)) {
@@ -722,7 +732,10 @@ evalcommand(cmd, flags, backcmd)
 		for (sp = varlist.list ; sp ; sp = sp->next)
 			mklocal(sp->text);
 		funcnest++;
-		evaltree(cmdentry.u.func, 0);
+		if (flags & EV_TESTED)
+			evaltree(cmdentry.u.func, EV_TESTED);
+		else
+			evaltree(cmdentry.u.func, 0);
 		funcnest--;
 		INTOFF;
 		poplocalvars();
@@ -895,7 +908,7 @@ breakcmd(argc, argv)  char **argv; {
 returncmd(argc, argv)  char **argv; {
 	int ret;
 
-	ret = exitstatus;
+	ret = oexitstatus;
 	if (argc > 1)
 		ret = number(argv[1]);
 	if (funcnest) {

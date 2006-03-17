@@ -463,7 +463,7 @@ varvalue(name, quoted, allow_split)
 	char temp[32];
 	char *p;
 	int i;
-	extern int exitstatus;
+	extern int oexitstatus;
 	char sep;
 	char **ap;
 	char const *syntax;
@@ -473,7 +473,7 @@ varvalue(name, quoted, allow_split)
 		num = rootpid;
 		goto numvar;
 	case '?':
-		num = exitstatus;
+		num = oexitstatus;
 		goto numvar;
 	case '#':
 		num = shellparam.nparam;
