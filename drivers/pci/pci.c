@@ -118,6 +118,7 @@ FORWARD _PROTOTYPE( int do_piix, (int devind)				);
 FORWARD _PROTOTYPE( int do_amd_isabr, (int devind)			);
 FORWARD _PROTOTYPE( int do_sis_isabr, (int devind)			);
 FORWARD _PROTOTYPE( int do_via_isabr, (int devind)			);
+FORWARD _PROTOTYPE( void report_vga, (int devind)			);
 FORWARD _PROTOTYPE( char *pci_vid_name, (U16_t vid)			);
 FORWARD _PROTOTYPE( char *pci_baseclass_name, (U8_t baseclass)		);
 FORWARD _PROTOTYPE( char *pci_subclass_name, (U8_t baseclass,
@@ -657,7 +658,7 @@ PRIVATE void pci_intel_init()
 PRIVATE void probe_bus(busind)
 int busind;
 {
-	u32_t dev, func;
+	u32_t dev, func, t3;
 	u16_t vid, did, sts;
 	u8_t headt;
 	u8_t baseclass, subclass, infclass;
@@ -799,9 +800,12 @@ printf("probe_bus(%d)\n", busind);
 					headt & PHT_MASK);
 				break;
 			}
-
 			if (debug)
 				print_capabilities(devind);
+
+			t3= ((baseclass << 16) | (subclass << 8) | infclass);
+			if (t3 == PCI_T3_VGA || t3 == PCI_T3_VGA_OLD)
+				report_vga(devind);
 
 			if (nr_pcidev >= NR_PCIDEV)
 			  panic("PCI","too many PCI devices", nr_pcidev);
@@ -1346,6 +1350,7 @@ int busind;
 {
 	int i, j, r, type, busnr, unknown_bridge, bridge_dev;
 	u16_t vid, did;
+	u32_t t3;
 	char *dstr;
 
 	unknown_bridge= -1;
@@ -1357,9 +1362,9 @@ int busind;
 	{
 		if (pcidev[i].pd_busnr != busnr)
 			continue;
-		if (pcidev[i].pd_baseclass == 0x06 &&
-			pcidev[i].pd_subclass == 0x01 &&
-			pcidev[i].pd_infclass == 0x00)
+		t3= ((pcidev[i].pd_baseclass << 16) |
+			(pcidev[i].pd_subclass << 8) | pcidev[i].pd_infclass);
+		if (t3 == PCI_T3_ISA)
 		{
 			/* ISA bridge. Report if no supported bridge is
 			 * found.
@@ -1797,6 +1802,41 @@ int devind;
 	}
 	return 0;
 }
+
+
+/*===========================================================================*
+ *				report_vga				     *
+ *===========================================================================*/
+PRIVATE void report_vga(devind)
+int devind;
+{
+	/* Report the amount of video memory. This is needed by the X11R6
+	 * postinstall script to chmem the X server. Hopefully this can be
+	 * removed when we get virtual memory.
+	 */
+	size_t amount, size;
+	int i;
+
+	amount= 0;
+	for (i= 0; i<pcidev[devind].pd_bar_nr; i++)
+	{
+		if (pcidev[devind].pd_bar[i].pb_flags & PBF_IO)
+			continue;
+		size= pcidev[devind].pd_bar[i].pb_size;
+		if (size < amount)
+			continue;
+		amount= size;
+	}
+	if (size != 0)
+	{
+		printf("PCI: video memory for device at %d.%d.%d: %d bytes\n",
+			pcidev[devind].pd_busnr,
+			pcidev[devind].pd_dev,
+			pcidev[devind].pd_func,
+			amount);
+	}
+}
+
 
 /*===========================================================================*
  *				pci_vid_name				     *
