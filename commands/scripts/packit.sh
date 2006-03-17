@@ -37,3 +37,6 @@ then
 	rm -f $PI
 fi
 
+makewhatis /usr/man
+makewhatis /usr/local/man
+makewhatis /usr/gnu/man
