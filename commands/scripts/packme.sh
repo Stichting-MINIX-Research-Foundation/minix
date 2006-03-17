@@ -34,7 +34,7 @@ then	pack=${cddrive}p2
 			if [ "$y" = y -o "$y" = Y ]
 			then	echo "Extracting $CDPACK/$package .."
 				cat $package | packit -
-				srcname="`echo $package | sed 's/.tar.bz/-src.tar.bz'`"
+				srcname="`echo $package | sed 's/.tar.bz/-src.tar.bz/'`"
 				srcarc="$CDSRC/$srcname"
 				if [ -f "$srcarc" ]
 				then	echo -n "Install its source (y/N) ? "
