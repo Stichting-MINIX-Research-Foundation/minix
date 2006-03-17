@@ -16,7 +16,7 @@ stat, lstat, fstat \- get file status
 
 .ta +54n
 int stat(const char *\fIpath\fP, struct stat *\fIbuf\fP)
-int lstat(const char *\fIpath\fP, struct stat *\fIbuf\fP)	(Minix-vmd)
+int lstat(const char *\fIpath\fP, struct stat *\fIbuf\fP)	
 int fstat(int \fIfd\fP, struct stat *\fIbuf\fP)
 .fi
 .ft R
@@ -36,7 +36,6 @@ returns information about the link,
 while
 .B stat
 returns information about the file the link references.
-(Minix-vmd) (Under minix, lstat behaves like stat.)
 .PP
 .B Fstat
 obtains the same information about an open file
@@ -119,7 +118,7 @@ The file type information in \fBst_mode\fP has bits:
 #define\ \ \ \ S_IFDIR	0040000	/* directory */
 #define\ \ \ \ S_IFBLK	0060000	/* block special */
 #define\ \ \ \ S_IFREG	0100000	/* regular */
-#define\ \ \ \ S_IFLNK	0120000	/* symbolic link (Minix-vmd) */
+#define\ \ \ \ S_IFLNK	0120000	/* symbolic link */
 .fi
 .in -5n
 .PP
@@ -151,7 +150,6 @@ Search permission is denied for a component of the path prefix.
 .TP 15
 [ELOOP]
 Too many symbolic links were encountered in translating the pathname.
-(Minix-vmd)
 .TP 15
 [EFAULT]
 .I Buf

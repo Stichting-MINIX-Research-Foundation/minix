@@ -1,0 +1,54 @@
+.TH READLINK 2 "March 17, 2006"
+.UC 4
+.SH NAME
+readlink \- read the contents of a symlink
+.SH SYNOPSIS
+.nf
+.ft B
+#include <unistd.h>
+
+int readlink(const char *\fIpath\fP, char *\fIbuf\fP, size_t bufsize)
+.fi
+.ft R
+.SH DESCRIPTION
+The 
+.I readlink
+call reads the contents of the symlink
+.I name1
+and returns it in
+.I buf
+up to a maximum of
+.I bufsize
+bytes. A terminating NUL byte is NOT put in the buffer.
+.SH "RETURN VALUE
+Upon successful completion, a value of 0 is returned.  Otherwise,
+a value of \-1 is returned and
+.B errno
+is set to indicate the error.
+.SH "ERRORS
+.B Readlink
+will fail if one or more of the following are true:
+.TP 15
+[ENOTDIR]
+A component of either path prefix is not a directory.
+.TP 15
+[ENAMETOOLONG]
+A path name exceeds PATH_MAX characters.
+.TP 15
+[ENOENT]
+A component of the path does not exist.
+.TP 15
+[EACCES]
+A component of the path denies search permission.
+.TP 15
+[ELOOP]
+Too many symbolic links were encountered in translating one of the pathnames.
+.TP 15
+[ENOENT]
+The link named by \fIpath\fP does not exist.
+.TP 15
+[EFAULT]
+The buffer specified is outside the process's allocated address space.
+.SH "SEE ALSO"
+.BR symlink (2),
+.BR unlink (2).
