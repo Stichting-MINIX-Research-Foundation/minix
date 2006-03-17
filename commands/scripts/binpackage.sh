@@ -19,13 +19,21 @@ then	echo "Error: $dir isn't a directory."
 fi
 
 here=`pwd`
-srcdir=$here/$dir
+
+case "$dir" in
+/*) srcdir="$dir" ;;
+*) srcdir="$here/$dir" ;;
+esac
+
+case $2 in
+/*) pdir="$2" ;;
+*) pdir="$here/$2" ;;
+esac
+
 packagestart=$srcdir/now
 findlist=$srcdir/findlist
-tarfile=${dir}.tar
-tar=$srcdir/$tarfile
+tar=$srcdir/"`basename ${dir}`".tar
 tarbz=$tar.bz
-pdir="$2"
 
 mkdir $pdir 2>/dev/null || true
 binsizes big
@@ -43,5 +51,5 @@ echo " * Building package"
 ( if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(tmp|log|adm|run|src)|/etc/utmp|/var/run)" ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
 binsizes normal
-mv $tarbz $here/$pdir
+mv $tarbz $pdir
 exit 0
