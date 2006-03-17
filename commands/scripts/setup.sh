@@ -647,7 +647,7 @@ then
 	chroot /mnt '/bin/sh /usr/src/commands/scripts/postinstall.sh'
 	echo "Postinstall script done."
 	mount -r ${cddrive}p2 /usr
-else	echo "Skipping post-install.
+else	echo "Skipping post-install."
 fi
 
 echo "Saving random data.."
