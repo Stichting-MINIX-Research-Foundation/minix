@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e 
-
 RC=/usr/etc/rc.package
 CDDIR=PACKAGES
 MP=/mnt

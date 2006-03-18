@@ -19,7 +19,6 @@ else	case "$1" in
 	esac
 fi
 
-set -e
 cd $TMP
 rm -f $PI
 
