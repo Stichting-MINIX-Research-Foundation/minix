@@ -638,7 +638,7 @@ then	if mount /dev/$home /home 2>/dev/null
 fi
 
 echo "Saving random data.."
-dd if=/dev/random of=/mnt/usr/adm/random.dat bs=1024 count=1
+dd if=/dev/random of=/mnt/adm/random.dat bs=1024 count=1
 
 echo "
 Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At
