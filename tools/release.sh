@@ -331,6 +331,7 @@ cp image_big image
 sh mkboot cdfdboot $TMPDISK3
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES
+echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.TXT
 
 h_opt=
 bootimage=$IMAGE
