@@ -18,7 +18,7 @@ all:	\
 	latin-am.map \
 	olivetti.map \
 	polish.map \
-	scandinavn.map \
+	scandinavian.map \
 	spanish.map \
 	uk.map \
 	us-std.map \
