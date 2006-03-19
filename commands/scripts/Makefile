@@ -43,7 +43,7 @@ usr:	\
 	/usr/bin/rotate \
 	/usr/bin/floppysetup \
 	/usr/bin/packit \
-	/usr/bin/packme \
+	/usr/bin/packman \
 	/usr/bin/spell \
 	/usr/bin/srccrc \
 	/usr/bin/svclog \
@@ -142,7 +142,7 @@ clean:
 /usr/bin/packit:	packit.sh
 	install -m 755 -c -o bin $? $@
 
-/usr/bin/packme:	packme.sh
+/usr/bin/packman:	packman.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/spell:	spell.sh
