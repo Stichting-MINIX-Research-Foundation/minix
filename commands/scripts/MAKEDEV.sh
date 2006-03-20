@@ -14,7 +14,11 @@ case $#:$1 in
 	c0d2 c0d2p0 c0d2p0s0 c0d3 c0d3p0 c0d3p0s0 \
 	c0d4 c0d4p0 c0d4p0s0 c0d5 c0d5p0 c0d5p0s0 \
 	c0d6 c0d6p0 c0d6p0s0 c0d7 c0d7p0 c0d7p0s0 \
-	tty ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03 ttyp0 ttyp1 ttyp2 ttyp3 \
+	tty ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03 \
+	ttyp0 ttyp1 ttyp2 ttyp3 ttyp4 ttyp5 ttyp6 ttyp7 ttyp8 ttyp9 \
+	ttypa ttypb ttypc ttypd ttype ttypf \
+	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9 \
+	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf \
 	eth klog random cmos kbd kbdaux rescue video
     ;;
 0:|1:-\?)
