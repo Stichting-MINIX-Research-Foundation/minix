@@ -34,7 +34,7 @@ install:	\
 	$(LK)/latin-am.map \
 	$(LK)/olivetti.map \
 	$(LK)/polish.map \
-	$(LK)/scandinavn.map \
+	$(LK)/scandinavian.map \
 	$(LK)/spanish.map \
 	$(LK)/uk.map \
 	$(LK)/us-std.map \
@@ -70,7 +70,7 @@ $(LK)/olivetti.map:	olivetti.map
 $(LK)/polish.map:	polish.map
 	install -c $? $@
 
-$(LK)/scandinavn.map:	scandinavn.map
+$(LK)/scandinavian.map:	scandinavian.map
 	install -c $? $@
 
 $(LK)/spanish.map:	spanish.map
