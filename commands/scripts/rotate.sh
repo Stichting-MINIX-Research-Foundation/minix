@@ -25,7 +25,7 @@ k="$2"
 $RM "$1.$k" 2>/dev/null || exit 1
 while [ "$k" -ge 2 ]
 do	prev="`expr $k - 1`"
-	$MV $1.$prev.bz $1.$k.bz 2>/dev/null 
+	$MV $1.$prev.bz2 $1.$k.bz2 2>/dev/null 
 	k=$prev
 done
-$BZIP -c $1 >$1.1.bz && : >$1
+$BZIP -c $1 >$1.1.bz2 && : >$1

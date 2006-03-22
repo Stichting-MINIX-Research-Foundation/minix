@@ -33,7 +33,7 @@ esac
 packagestart=$srcdir/now
 findlist=$srcdir/findlist
 tar=$srcdir/"`basename ${dir}`".tar
-tarbz=$tar.bz
+tarbz=$tar.bz2
 
 mkdir $pdir 2>/dev/null || true
 binsizes big

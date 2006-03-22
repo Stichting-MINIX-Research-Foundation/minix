@@ -25,14 +25,14 @@ then	pack=${cddrive}p2
 	if mount -r $pack $MP
 	then
 		cd $CDPACK
-		for package in `ls *.tar.bz`
+		for package in `ls *.tar.bz2`
 		do	grep $package List
 			echo -n "Install $package (y/N) ? "
 			read y
 			if [ "$y" = y -o "$y" = Y ]
 			then	echo "Extracting $CDPACK/$package .."
 				cat $package | packit -
-				srcname="`echo $package | sed 's/.tar.bz/-src.tar.bz/'`"
+				srcname="`echo $package | sed 's/.tar.bz2/-src.tar.bz2/'`"
 				srcarc="$CDSRC/$srcname"
 				if [ -f "$srcarc" ]
 				then	echo -n "Install its source (y/N) ? "
@@ -71,8 +71,8 @@ then	if [ -f $LISTFILE ]
 		read packno
 		if [ -n "$packno" ]
 		then	file="`grep "^$packno|" $LISTFILE | awk -F'|' '{ print $2 }'`"
-			url=$file.tar.bz
-			srcfile=$file-src.tar.bz
+			url=$file.tar.bz2
+			srcfile=$file-src.tar.bz2
 			if [ -n "$url" ]
 			then	echo -n "Try to get source too? (y/N) "
 				read src
