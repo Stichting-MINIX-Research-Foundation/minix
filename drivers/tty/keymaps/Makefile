@@ -15,7 +15,7 @@ all:	\
 	german.map \
 	italian.map \
 	japanese.map \
-	latin-am.map \
+	latin-america.map \
 	olivetti.map \
 	polish.map \
 	scandinavian.map \
@@ -31,7 +31,7 @@ install:	\
 	$(LK)/german.map \
 	$(LK)/italian.map \
 	$(LK)/japanese.map \
-	$(LK)/latin-am.map \
+	$(LK)/latin-america.map \
 	$(LK)/olivetti.map \
 	$(LK)/polish.map \
 	$(LK)/scandinavian.map \
@@ -61,7 +61,7 @@ $(LK)/italian.map:	italian.map
 $(LK)/japanese.map:	japanese.map
 	install -c $? $@
 
-$(LK)/latin-am.map:	latin-am.map
+$(LK)/latin-america.map:	latin-america.map
 	install -c $? $@
 
 $(LK)/olivetti.map:	olivetti.map
