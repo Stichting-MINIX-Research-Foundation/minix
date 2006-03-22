@@ -41,12 +41,16 @@ touch $packagestart
 sleep 1
 cd $dir
 
-if [ ! -f build ]
-then	echo "Error: No build script in $dir."
+if [ ! -f build -a ! -f build.minix ]
+then	echo "Error: No build or build.minix script in $dir."
 	exit 1
 fi
 
-sh -e build
+if [ -f build.minix ]
+then	sh -e build.minix
+else	sh -e build
+fi
+
 echo " * Building package"
 ( if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(tmp|log|adm|run|src)|/etc/utmp|/var/run)" ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd

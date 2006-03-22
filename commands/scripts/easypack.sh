@@ -95,7 +95,13 @@ do # Check to see if it exists. Don't overwrite unless -o given
    # It is now unpacked. Build it
    cd $i
    binsizes big
-   if sh build >>$ORIG_DIR/Log 2>&1
+   if [ -f build.minix ]
+   then	sh build.minix >>$ORIG_DIR/Log 2>&1
+	r=$?
+   else	sh build >>$ORIG_DIR/Log 2>&1
+	r=$?
+   fi
+   if [ $r -eq 0 ] 
       then echo Package $i installed
       else echo Package $i failed to install, see Log
    fi
