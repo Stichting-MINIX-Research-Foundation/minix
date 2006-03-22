@@ -242,8 +242,8 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR ]
 then	echo " * Indexing packages"
 	( cd $PACKAGEDIR
-	  for p in *.tar.bz
-	  do	descr="../`echo $p | sed 's/.tar.bz//'`/.descr"
+	  for p in *.tar.bz2
+	  do	descr="../`echo $p | sed 's/.tar.bz2//'`/.descr"
 		if [ -f "$descr" ]
 		then	printf "%-32s   %s\n" "$p" "`cat $descr`"
 		fi

@@ -7,9 +7,6 @@ MDEC=	/usr/mdec
 MAKE=	exec make -$(MAKEFLAGS)
 
 # Specify the programs that are part of the system image.
-# Multiple boot medium drivers can be included in the image, 
-# but only one is actually be loaded. The driver to load is
-# determined by the 'label=...' boot monitor parameter. 
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/fs/fs \
