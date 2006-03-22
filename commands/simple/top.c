@@ -189,7 +189,7 @@ void print_procs(int maxlines,
 	}
 }
 
-void showtop(void)
+void showtop(int r)
 {
 #define NLOADS 3
 	double loads[NLOADS];
@@ -237,18 +237,22 @@ void showtop(void)
 	lines += print_proc_summary(proc);
 	lines += print_memory(&pmi);
 
-	print_procs(winsize.ws_row - lines - 2, prev_proc,
+	if(winsize.ws_row > 0) r = winsize.ws_row;
+
+	print_procs(r - lines - 2, prev_proc,
 		proc, uptime-prev_uptime, mproc);
 
 	memcpy(prev_proc, proc, sizeof(prev_proc));
 	prev_uptime = uptime;
 }
 
-void init(void)
+void init(int *rows)
 {
 	char  *term;
 	static char   buffer[TC_BUFFER], strings[TC_STRINGS];
-	char *s = strings;
+	char *s = strings, *v;
+
+	*rows = 0;
 
 	if(!(term = getenv("TERM"))) {
 		fprintf(stderr, "No TERM set\n");
@@ -262,14 +266,19 @@ void init(void)
 
 	if ( (Tclr_all = tgetstr( "cl", &s )) == NULL )
 		Tclr_all = "\f";
+
+	if((v = tgetstr ("li", &s)) != NULL)
+		sscanf(v, "%d", rows);
+	if(*rows < 1) *rows = 24;
 }
 
 int main(int argc, char *argv[])
 {
-	init();
+	int r;
+	init(&r);
 
 	while(1) {
-		showtop();
+		showtop(r);
 		sleep(5);
 	}
 }
