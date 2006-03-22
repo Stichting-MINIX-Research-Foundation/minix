@@ -105,6 +105,10 @@ do # Check to see if it exists. Don't overwrite unless -o given
       then echo Package $i installed
       else echo Package $i failed to install, see Log
    fi
+   if [ -f .postinstall ]
+   then	echo Running postinstall script.
+	sh -e .postinstall
+   fi
    binsizes normal
 
    # Clean up

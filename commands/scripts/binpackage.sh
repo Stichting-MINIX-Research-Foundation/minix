@@ -52,7 +52,7 @@ else	sh -e build
 fi
 
 echo " * Building package"
-( if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(tmp|log|adm|run|src)|/etc/utmp|/var/run)" ) | pax -w -d | bzip2 >$tarbz
+( if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(tmp|log|adm|run)|/etc/utmp|/var/run)" ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
 binsizes normal
 mv $tarbz $pdir
