@@ -12,6 +12,8 @@ TMPDIR=/usr/tmp/packages
 mkdir -p $TMPDIR
 URL1=http://www.minix3.org/packages
 URL2=http://www.minix3.org/beta_packages
+SRCURL1=http://www.minix3.org/software
+SRCURL2=http://www.minix3.org/beta_software
 
 if [ -f "$RC" ]
 then	. "$RC"
@@ -72,17 +74,17 @@ then	if [ -f $LISTFILE ]
 		if [ -n "$packno" ]
 		then	file="`grep "^$packno|" $LISTFILE | awk -F'|' '{ print $2 }'`"
 			url=$file.tar.bz2
-			srcfile=$file-src.tar.bz2
+			srcfile=$file.tar.bz2
 			if [ -n "$url" ]
 			then	echo -n "Try to get source too? (y/N) "
 				read src
 				echo "Trying to fetch from $URL1/$url.."
-				srcurl=$URL1/$srcfile
+				srcurl=$SRCURL1/$srcfile
 				if urlget $URL1/$url >$url
 				then	echo Installing.
 					packit $url
 				else	echo "Trying to fetch from $URL2/$url.."
-					srcurl=$URL2/$srcfile
+					srcurl=$SRCURL2/$srcfile
 					if urlget $URL2/$url >$url
 					then	echo Installing Beta.
 						packit $url
