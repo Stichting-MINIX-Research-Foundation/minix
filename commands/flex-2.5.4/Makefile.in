@@ -51,7 +51,7 @@ LN_S = @LN_S@
 YACC = @YACC@
 CC = @CC@
 AR = ar
-RANLIB = @RANLIB@
+RANLIB = true
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -169,6 +169,7 @@ install: $(FLEX) $(FLEXLIB) installdirs install.$(INSTALLMAN)
 	@rm -f $(bindir)/$(FLEX)++
 	cd $(bindir) && $(LN_S) $(FLEX) $(FLEX)++
 	$(INSTALL_DATA) $(FLEXLIB) $(libdir)/$(FLEXLIB)
+	$(INSTALL_DATA) $(FLEXLIB) /usr/lib/i386/
 	-cd $(libdir) && $(RANLIB) $(FLEXLIB)
 	$(INSTALL_DATA) $(srcdir)/FlexLexer.h $(includedir)/FlexLexer.h
 
