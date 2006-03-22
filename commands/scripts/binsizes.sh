@@ -15,8 +15,8 @@ chmem =250000 /usr/lib/* /usr/lib/i386/* >/dev/null 2>&1
 chmem =600000 /usr/lib/ego/*  >/dev/null 2>&1
 if [ -f $t ]
 then	cat "$t" | while read line
-	do	awk '{ print "chmem =" $2 " " $1 " >/dev/null 2>&1 "}'
-	done | /bin/sh
+	do	awk '{ print "chmem =" $2 " " $1 " 2>&1 | grep -v area.changed.from  || exit 1"}'
+	done | /bin/sh -e || exit 1
 else
 	echo "$0: $t does not exist" >&2
 	exit 1
