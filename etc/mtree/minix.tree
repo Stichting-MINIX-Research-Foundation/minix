@@ -70,7 +70,6 @@
 775  root    uucp      /usr/spool/locks
 700  daemon  daemon    /usr/spool/lpd
 755  root    operator  /usr/spool/mail
-755  bin     operator  /usr/bigports
 755  bin     operator  /usr/src
 1777 root    operator  /usr/tmp
 755  root    operator  /var
