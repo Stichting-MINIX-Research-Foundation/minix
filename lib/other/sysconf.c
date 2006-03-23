@@ -45,6 +45,9 @@ int name;			/* property being inspected */
 	case _SC_TZNAME_MAX:
 		return (long) TZNAME_MAX;
 
+	case _SC_PAGESIZE:
+		return getpagesize();
+
 	default:
 		errno = EINVAL;
 		return -1L;

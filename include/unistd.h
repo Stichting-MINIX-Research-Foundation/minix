@@ -63,6 +63,8 @@
 #define _SC_VERSION	   8
 #define _SC_STREAM_MAX	   9
 #define _SC_TZNAME_MAX    10
+#define _SC_PAGESIZE	  11
+#define _SC_PAGE_SIZE	  _SC_PAGESIZE
 
 /* The following relate to configurable pathname variables. POSIX Table 5-2. */
 #define _PC_LINK_MAX	   1	/* link count */
