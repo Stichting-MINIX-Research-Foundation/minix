@@ -44,7 +44,7 @@ install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 	install -lcs $? $@
 
 /bin/bigsh:	/usr/bin/ash
-	install -S 500000 -lcs $? $@
+	install -S 1500000 -lcs $? $@
 
 clean:
 	rm -f $(CLEANFILES) sh core
