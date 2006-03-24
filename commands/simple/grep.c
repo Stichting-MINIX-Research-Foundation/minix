@@ -55,7 +55,7 @@
 static char *program;		/* program name */
 static char flags[26];		/* invocation flags */
 static regexp *expression;	/* compiled search pattern */
-static char *rerr;              /* error message */
+static const char *rerr;              /* error message */
 
 /* External variables. */
 extern int optind;
@@ -66,7 +66,7 @@ _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(static int match, (FILE *input, char *label, char *filename));
 _PROTOTYPE(static char *get_line, (FILE *input));
 _PROTOTYPE(static char *map_nocase, (char *line));
-_PROTOTYPE(void regerror , (char *s ) );
+_PROTOTYPE(void regerror , (const char *s ) );
 _PROTOTYPE(static void tov8, (char *v8pattern, char *pattern));
 
 int main(argc, argv)
@@ -373,7 +373,7 @@ static void tov8(char *v8, char *basic)
 /* Regular expression code calls this routine to print errors. */
 
 void regerror(s)
-char *s;
+const char *s;
 {
   rerr=s;
 }
