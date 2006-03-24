@@ -37,7 +37,9 @@ _PROTOTYPE(int newaccess, (char *file));
 _PROTOTYPE(void grep, (char *file, char *user));
 _PROTOTYPE(int date_exp, (void));
 _PROTOTYPE(char *date_pat, (time_t t));
+/*
 _PROTOTYPE(void regerror, (char *s));
+*/
 _PROTOTYPE(void error, (char *s, char *t));
 
 int main(argc, argv)
@@ -215,9 +217,9 @@ time_t t;
 }
 
 void regerror(s)
-char *s;
+const char *s;
 {				/* regcomp() needs this */
-  error("REGULAR EXPRESSION ERROR (%s)", s);
+  error("REGULAR EXPRESSION ERROR (%s)", (char *) s);
 }
 
 void error(s, t)

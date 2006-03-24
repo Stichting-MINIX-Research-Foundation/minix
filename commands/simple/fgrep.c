@@ -75,7 +75,6 @@ _PROTOTYPE(void usage, (void));
 _PROTOTYPE(char *get_line, (void));
 _PROTOTYPE(void string_file, (void));
 _PROTOTYPE(void add_string, (char *str));
-_PROTOTYPE(int getopt, (int argc, char **argv, char *optstring));
 
 int main(argc, argv)
 int argc;

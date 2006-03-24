@@ -75,7 +75,7 @@ _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void dosrch, (char *ifnm));
 _PROTOTYPE(void shwlin, (char *fnm, int linnum, char *line));
 _PROTOTYPE(int matlin, (char *line));
-_PROTOTYPE(void regerror, (char *s));
+_PROTOTYPE(void regerror, (const char *s));
 
 /* External data */
 
@@ -372,8 +372,8 @@ char *line;			/* Line to match */
 
 
 void regerror(s)
-char *s;
+const char *s;
 {
-  printf("%s\n", s);
+  printf("%s\n", (char *) s);
   exit(1);
 }
