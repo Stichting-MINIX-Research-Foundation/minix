@@ -889,7 +889,8 @@ PRIVATE int fdc_results()
  * interrupts again.
  */
 
-  int s, result_nr, status;
+  int s, result_nr;
+  unsigned long status;
   clock_t t0,t1;
 
   /* Extract bytes from FDC until it says it has no more.  The loop is
@@ -907,9 +908,11 @@ PRIVATE int fdc_results()
 		panic("FLOPPY","Sys_inb in fdc_results() failed", s);
 	status &= (MASTER | DIRECTION | CTL_BUSY);
 	if (status == (MASTER | DIRECTION | CTL_BUSY)) {
+		unsigned long tmp_r;
 		if (result_nr >= MAX_RESULTS) break;	/* too many results */
-		if ((s=sys_inb(FDC_DATA, &f_results[result_nr])) != OK)
+		if ((s=sys_inb(FDC_DATA, &tmp_r)) != OK)
 		   panic("FLOPPY","Sys_inb in fdc_results() failed", s);
+		f_results[result_nr] = tmp_r;
 		result_nr ++;
 		continue;
 	}
@@ -963,7 +966,8 @@ int val;		/* write this byte to floppy disk controller */
  * If the controller refuses to listen, the FDC chip is given a hard reset.
  */
   clock_t t0, t1;
-  int s, status;
+  int s;
+  unsigned long status;
 
   if (need_reset) return;	/* if controller is not listening, return */
 
