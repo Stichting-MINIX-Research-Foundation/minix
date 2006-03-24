@@ -33,7 +33,7 @@ message *m;					/* notification message */
 	message mess;
 
 	/* Ask TTY driver for log output */
-	mess.GETKM_PTR= &kmess;
+	mess.GETKM_PTR= (char *) &kmess;
 	mess.m_type = GET_KMESS;
 	r= sendrec(TTY_PROC_NR, &mess);
 	if (r == OK) r= mess.m_type;

@@ -148,9 +148,9 @@ _PROTOTYPE(int sys_vinl, (pvl_pair_t *pvl_pairs, int nr_ports)		);
 _PROTOTYPE(int sys_out, (int port, unsigned long value, int type)	); 
 
 /* Shorthands for sys_in() system call. */
-#define sys_inb(p,v)	sys_in((p), (v), DIO_BYTE)
-#define sys_inw(p,v)	sys_in((p), (v), DIO_WORD)
-#define sys_inl(p,v)	sys_in((p), (v), DIO_LONG)
+#define sys_inb(p,v)	sys_in((p), (unsigned long *) (v), DIO_BYTE)
+#define sys_inw(p,v)	sys_in((p), (unsigned long *) (v), DIO_WORD)
+#define sys_inl(p,v)	sys_in((p), (unsigned long *) (v), DIO_LONG)
 _PROTOTYPE(int sys_in, (int port, unsigned long *value, int type)	);
 
 /* pci.c */
