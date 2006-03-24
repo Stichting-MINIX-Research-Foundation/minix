@@ -271,12 +271,13 @@ PRIVATE void unlock(void) {}
 
 PRIVATE int my_inb(port_t port)
 {
-	int r, v = 0;
+	int r;
+	unsigned long v = 0;
 	r = sys_inb(port, &v);
 	if (r != OK)
 		printf("RS232 warning: failed inb 0x%x\n", port);
 
-	return v;
+	return (int) v;
 }
 
 /*===========================================================================*
@@ -510,7 +511,7 @@ rs232_t *rs;			/* which line */
 PUBLIC void rs_init(tp)
 tty_t *tp;			/* which TTY */
 {
-  int dummy;
+  unsigned long dummy;
 /* Initialize RS232 for one line. */
 
   register rs232_t *rs;
@@ -746,7 +747,7 @@ int dummy;
 {
 /* Generate a break condition by setting the BREAK bit for 0.4 sec. */
   rs232_t *rs = tp->tty_priv;
-  int line_controls;
+  unsigned long line_controls;
 
   sys_inb(rs->line_ctl_port, &line_controls);
   sys_outb(rs->line_ctl_port, line_controls | LC_BREAK);
@@ -786,7 +787,7 @@ struct rs232 *rs;
 /* Interrupt hander for RS232. */
 
   while (TRUE) {
-  	int v;
+  	unsigned long v;
 	/* Loop to pick up ALL pending interrupts for device.
 	 * This usually just wastes time unless the hardware has a buffer
 	 * (and then we have to worry about being stuck in the loop too long).
@@ -868,7 +869,7 @@ register rs232_t *rs;		/* line with input interrupt */
  * Set a flag for the clock interrupt handler to eventually notify TTY.
  */
 
-  int c;
+  unsigned long c;
 
 #if (MACHINE == IBM_PC)
   sys_inb(rs->recv_port, &c);
@@ -911,8 +912,10 @@ register rs232_t *rs;		/* line with line status interrupt */
 {
 /* Check for and record errors. */
 
+ unsigned long s;
 #if (MACHINE == IBM_PC)
-  sys_inb(rs->line_status_port, &rs->lstatus);
+  sys_inb(rs->line_status_port, &s);
+  rs->lstatus = s;
 #else /* MACHINE == ATARI */
   rs->lstatus = MFP->mf_rsr;
   MFP->mf_rsr &= R_ENA;
