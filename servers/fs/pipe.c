@@ -158,7 +158,8 @@ int notouch;			/* check only */
 				/* Do a partial write. Need to wakeup reader
 				 * since we'll suspend ourself in read_write()
 				 */
-				release(rip, READ, susp_count);
+				if (!notouch)
+					release(rip, READ, susp_count);
 				return(1);
 			}
 		}
@@ -386,24 +387,26 @@ PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
 {
 	int orig_ops, r = 0, err, canwrite;
 	orig_ops = *ops;
-	if ((*ops & SEL_RD)) {
+	if ((*ops & (SEL_RD|SEL_ERR))) {
 		if ((err = pipe_check(f->filp_ino, READING, 0,
-			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
+			1, f->filp_pos, &canwrite, 1)) != SUSPEND && err > 0)
 			r |= SEL_RD;
-		if (err < 0 && err != SUSPEND && (*ops & SEL_ERR))
+		if (err < 0 && err != SUSPEND)
 			r |= SEL_ERR;
 	}
-	if ((*ops & SEL_WR)) {
+	if ((*ops & (SEL_WR|SEL_ERR))) {
 		if ((err = pipe_check(f->filp_ino, WRITING, 0,
-			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
+			1, f->filp_pos, &canwrite, 1)) != SUSPEND &&
+			err > 0 && canwrite > 0)
 			r |= SEL_WR;
-		if (err < 0 && err != SUSPEND && (*ops & SEL_ERR))
+		if (err < 0 && err != SUSPEND)
 			r |= SEL_ERR;
 	}
 
-	*ops = r;
+	/* Some options we collected might not be requested. */
+	*ops = r & orig_ops;
 
-	if (!r && block) {
+	if (!*ops && block) {
 		f->filp_pipe_select_ops |= orig_ops;
 	}
 
