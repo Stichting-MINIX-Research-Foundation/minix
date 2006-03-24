@@ -1905,12 +1905,12 @@ u8_t inb(port_t port)
 u16_t inw(port_t port)
 {
 	int r;
-	u16_t value;
+	unsigned long value;
 
 	r= sys_inw(port, &value);
 	if (r != OK)
 		panic("DP8390", "sys_inw failed", r);
-	return value;
+	return (u16_t) value;
 }
 
 void outb(port_t port, u8_t value)
