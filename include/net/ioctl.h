@@ -44,6 +44,7 @@
 #define NWIOTCPLISTENQ	_IOW('n', 57, int)
 #define NWIOGTCPCOOKIE	_IOR('n', 58, struct tcp_cookie)
 #define NWIOTCPACCEPTTO	_IOW('n', 59, struct tcp_cookie)
+#define NWIOTCPGERROR	_IOR('n', 60, int)
 
 #define NWIOSUDPOPT	_IOW('n', 64, struct nwio_udpopt)
 #define NWIOGUDPOPT	_IOR('n', 65, struct nwio_udpopt)
