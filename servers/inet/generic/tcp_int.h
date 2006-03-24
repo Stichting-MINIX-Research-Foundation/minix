@@ -61,6 +61,7 @@ typedef struct tcp_fd
 	size_t tf_write_count;
 	size_t tf_read_offset;
 	size_t tf_read_count;
+	int tf_error;			/* Error for nonblocking connect */
 	tcp_cookie_t tf_cookie;
 } tcp_fd_t;
 
@@ -73,7 +74,7 @@ typedef struct tcp_fd
 #define TFF_IOC_INIT_SP	   0x20
 #define TFF_LISTENQ	   0x40
 #define TFF_CONNECTING	   0x80
-#define TFF_CONNECTEDx	  0x100
+#define TFF_CONNECTED	  0x100
 #define TFF_WR_URG	  0x200
 #define TFF_PUSH_DATA	  0x400
 #define TFF_RECV_URG	  0x800

@@ -1455,7 +1455,7 @@ int *bytesp;
 
 	*bytesp= 0;	/* The default is that nothing is available */
 
-	if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
+	if (!(tcp_fd->tf_flags & TFF_CONNECTED))
 		return;
 	tcp_conn= tcp_fd->tf_conn;
 

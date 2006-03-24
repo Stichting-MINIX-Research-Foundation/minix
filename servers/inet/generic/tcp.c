@@ -281,7 +281,12 @@ unsigned operations;
 				resops |= SR_SELECT_READ;
 		}
 		if (operations & SR_SELECT_WRITE)
-			return ENOTCONN;	/* Is this right? */
+		{
+			/* We can't handles writes. Just return the error
+			 * when the user tries to write.
+			 */
+			resops |= SR_SELECT_WRITE;
+		}
 		return resops;
 	}
 	if (tcp_fd->tf_flags & TFF_CONNECTING)
@@ -293,23 +298,36 @@ unsigned operations;
 	}
 	if (operations & SR_SELECT_READ)
 	{
-		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
-			return ENOTCONN;	/* Is this right? */
-
 		tcp_conn= tcp_fd->tf_conn;
 
-		if (tcp_conn->tc_state == TCS_CLOSED || tcp_sel_read(tcp_conn))
+		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		{
+			/* We can't handle reads until a connection has been
+			 * established. Return the error when the user tries
+			 * to read.
+			 */
 			resops |= SR_SELECT_READ;
+		}
+		else if (tcp_conn->tc_state == TCS_CLOSED ||
+			tcp_sel_read(tcp_conn))
+		{
+			resops |= SR_SELECT_READ;
+		}
 		else if (!(operations & SR_SELECT_POLL))
-			tcp_fd->tf_flags |= TFF_SEL_READ;
+				tcp_fd->tf_flags |= TFF_SEL_READ;
 	}
 	if (operations & SR_SELECT_WRITE)
 	{
-		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
-			return ENOTCONN;	/* Is this right? */
 		tcp_conn= tcp_fd->tf_conn;
-
-		if (tcp_conn->tc_state == TCS_CLOSED ||
+		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
+		{
+			/* We can't handle writes until a connection has been
+			 * established. Return the error when the user tries
+			 * to write.
+			 */
+			resops |= SR_SELECT_WRITE;
+		}
+		else if (tcp_conn->tc_state == TCS_CLOSED ||
 			tcp_conn->tc_flags & TCF_FIN_SENT ||
 			tcp_sel_write(tcp_conn))
 		{
@@ -727,6 +745,7 @@ select_res_t select_res;
 	tcp_fd->tf_put_userdata= put_userdata;
 	tcp_fd->tf_select_res= select_res;
 	tcp_fd->tf_conn= 0;
+	tcp_fd->tf_error= 0;
 	for (j= 0; j<TFL_LISTEN_MAX; j++)
 		tcp_fd->tf_listenq[j]= NULL;
 	return i;
@@ -766,7 +785,7 @@ ioreq_t req;
 	switch (req)
 	{
 	case NWIOSTCPCONF:
-		if ((tcp_fd->tf_flags & TFF_CONNECTEDx) ||
+		if ((tcp_fd->tf_flags & TFF_CONNECTED) ||
 			(tcp_fd->tf_flags & TFF_CONNECTING) ||
 			(tcp_fd->tf_flags & TFF_LISTENQ))
 		{
@@ -783,7 +802,7 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		tcp_conf= (nwio_tcpconf_t *)ptr2acc_data(conf_acc);
 
 		*tcp_conf= tcp_fd->tf_tcpconf;
-		if (tcp_fd->tf_flags & TFF_CONNECTEDx)
+		if (tcp_fd->tf_flags & TFF_CONNECTED)
 		{
 			tcp_conn= tcp_fd->tf_conn;
 			tcp_conf->nwtc_locport= tcp_conn->tc_locport;
@@ -820,7 +839,7 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 			result= NW_OK;
 			break;
 		}
-		if (tcp_fd->tf_flags & TFF_CONNECTEDx)
+		if (tcp_fd->tf_flags & TFF_CONNECTED)
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, EISCONN, TRUE);
@@ -833,7 +852,7 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		break;
 	case NWIOTCPLISTEN:
 	case NWIOTCPLISTENQ:
-		if ((tcp_fd->tf_flags & TFF_CONNECTEDx) ||
+		if ((tcp_fd->tf_flags & TFF_CONNECTED) ||
 			(tcp_fd->tf_flags & TFF_LISTENQ) ||
 			(tcp_fd->tf_flags & TFF_CONNECTING))
 		{
@@ -845,7 +864,7 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		result= tcp_listen(tcp_fd, (req == NWIOTCPLISTENQ));
 		break;
 	case NWIOTCPSHUTDOWN:
-		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
+		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, ENOTCONN, TRUE);
@@ -866,7 +885,7 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 			result= NW_SUSPEND;
 		break;
 	case NWIOTCPPUSH:
-		if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
+		if (!(tcp_fd->tf_flags & TFF_CONNECTED))
 		{
 			tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
 			reply_thr_get (tcp_fd, ENOTCONN, TRUE);
@@ -915,6 +934,20 @@ assert (conf_acc->acc_length == sizeof(*tcp_conf));
 		acc= bf_memreq(sizeof(*bytesp));
 		bytesp= (int *)ptr2acc_data(acc);
 		tcp_bytesavailable(tcp_fd, bytesp);
+		result= (*tcp_fd->tf_put_userdata)(tcp_fd->tf_srfd,
+			0, acc, TRUE);
+		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
+		reply_thr_put(tcp_fd, result, TRUE);
+		result= NW_OK;
+		break;
+
+	case NWIOTCPGERROR:
+		acc= bf_memreq(sizeof(*bytesp));
+		bytesp= (int *)ptr2acc_data(acc);
+		*bytesp= -tcp_fd->tf_error;	/* Errors are positive in
+						 * user space.
+						 */
+		tcp_fd->tf_error= 0;
 		result= (*tcp_fd->tf_put_userdata)(tcp_fd->tf_srfd,
 			0, acc, TRUE);
 		tcp_fd->tf_flags &= ~TFF_IOCTL_IP;
@@ -1740,7 +1773,7 @@ size_t count;
 
 	assert (tcp_fd->tf_flags & TFF_INUSE);
 
-	if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
+	if (!(tcp_fd->tf_flags & TFF_CONNECTED))
 	{
 		reply_thr_get (tcp_fd, ENOTCONN, FALSE);
 		return NW_OK;
@@ -1794,7 +1827,7 @@ size_t count;
 
 	assert (tcp_fd->tf_flags & TFF_INUSE);
 
-	if (!(tcp_fd->tf_flags & TFF_CONNECTEDx))
+	if (!(tcp_fd->tf_flags & TFF_CONNECTED))
 	{
 		reply_thr_put (tcp_fd, ENOTCONN, FALSE);
 		return NW_OK;
@@ -1860,10 +1893,11 @@ tcp_conn_t *tcp_conn;
 		assert(tcp_conn->tc_fd == tcp_fd);
 		tcp_fd->tf_conn= NULL;
 		tcp_conn->tc_fd= NULL;
+		tcp_fd->tf_error= reply;
 	}
 	else
 	{
-		tcp_fd->tf_flags |= TFF_CONNECTEDx;
+		tcp_fd->tf_flags |= TFF_CONNECTED;
 		reply= NW_OK;
 	}
 
@@ -2085,7 +2119,7 @@ tcp_fd_t *tcp_fd;
 		tcp_reply_ioctl(tcp_fd, EBADMODE);
 		return NW_OK;
 	}
-	assert (!(tcp_fd->tf_flags & TFF_CONNECTEDx) &&
+	assert (!(tcp_fd->tf_flags & TFF_CONNECTED) &&
 		!(tcp_fd->tf_flags & TFF_CONNECTING) &&
 		!(tcp_fd->tf_flags & TFF_LISTENQ));
 	if ((tcp_fd->tf_tcpconf.nwtc_flags & (NWTC_SET_RA|NWTC_SET_RP))
@@ -2206,7 +2240,7 @@ int do_listenq;
 		reply_thr_get(tcp_fd, EBADMODE, TRUE);
 		return NW_OK;
 	}
-	assert (!(tcp_fd->tf_flags & TFF_CONNECTEDx) &&
+	assert (!(tcp_fd->tf_flags & TFF_CONNECTED) &&
 		!(tcp_fd->tf_flags & TFF_CONNECTING) &&
 		!(tcp_fd->tf_flags & TFF_LISTENQ));
 	tcp_conn= tcp_fd->tf_conn;
@@ -2313,7 +2347,7 @@ tcp_fd_t *tcp_fd;
 	tcp_fd->tf_listenq[i]= NULL;
 	tcp_conn->tc_fd= dst_fd;
 	dst_fd->tf_conn= tcp_conn;
-	dst_fd->tf_flags |= TFF_CONNECTEDx;
+	dst_fd->tf_flags |= TFF_CONNECTED;
 
 	tcp_reply_ioctl(tcp_fd, NW_OK);
 	return NW_OK;
