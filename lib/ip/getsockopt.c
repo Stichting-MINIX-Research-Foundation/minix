@@ -61,7 +61,7 @@ int getsockopt(int socket, int level, int option_name,
 static int _tcp_getsockopt(int socket, int level, int option_name,
 	void *_RESTRICT option_value, socklen_t *_RESTRICT option_len)
 {
-	int i;
+	int i, r, err;
 
 	if (level == SOL_SOCKET && option_name == SO_KEEPALIVE)
 	{
@@ -71,6 +71,18 @@ static int _tcp_getsockopt(int socket, int level, int option_name,
 		else
 			memcpy(option_value, &i, sizeof(i));
 		*option_len= sizeof(i);
+		return 0;
+	}
+	if (level == SOL_SOCKET && option_name == SO_ERROR)
+	{
+		r= ioctl(socket, NWIOTCPGERROR, &err);
+		if (r != 0)
+			return r;
+		if (*option_len < sizeof(err))
+			memcpy(option_value, &err, *option_len);
+		else
+			memcpy(option_value, &err, sizeof(err));
+		*option_len= sizeof(err);
 		return 0;
 	}
 	if (level == SOL_SOCKET && option_name == SO_RCVBUF)
