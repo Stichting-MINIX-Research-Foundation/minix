@@ -148,7 +148,7 @@ _PROTOTYPE( int ftruncate, (int _fd, off_t _length)			);
 /* Open Group Base Specifications Issue 6 (not complete) */
 _PROTOTYPE( int symlink, (const char *path1, const char *path2)		);
 _PROTOTYPE( int readlink, (const char *, char *, size_t)		);
-_PROTOTYPE( int getopt, (int _argc, char **_argv, char *_opts)		);
+_PROTOTYPE( int getopt, (int _argc, char * const _argv[], char const *_opts)		);
 extern char *optarg;
 extern int optind, opterr, optopt;
 _PROTOTYPE( int usleep, (useconds_t _useconds)				);

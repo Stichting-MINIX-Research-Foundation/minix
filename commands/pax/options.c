@@ -31,6 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#define _POSIX_SOURCE 1
+#define _MINIX 1
+
 #if 0
 #ifndef lint
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
@@ -48,6 +51,13 @@ static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #include <stdlib.h>
 #include <limits.h>
 #include <minix/paths.h>
+
+#include <sys/types.h>
+#include <string.h>
+#include <strings.h>
+#include <unistd.h>
+
+
 #include "pax.h"
 #include "options.h"
 #include "cpio.h"
@@ -1477,7 +1487,9 @@ str_offt(char *val)
 	return(num);
 }
 
-char *
+char *fgetln(FILE *f, size_t *);
+
+static char *
 getline(FILE *f)
 {
 	char *name, *temp;
@@ -1518,7 +1530,7 @@ no_op(void)
  *	print the usage summary to the user
  */
 
-void
+static void
 pax_usage(void)
 {
 	(void)fputs("usage: pax [-cdnvz] [-E limit] [-f archive] ", stderr);
@@ -1552,7 +1564,7 @@ pax_usage(void)
  *	print the usage summary to the user
  */
 
-void
+static void
 tar_usage(void)
 {
 	(void)fputs("usage: tar [-]{crtux}[-befhjmopqsvwyzHLOPXZ014578] [blocksize] ",
@@ -1567,7 +1579,7 @@ tar_usage(void)
  *	print the usage summary to the user
  */
 
-void
+static void
 cpio_usage(void)
 {
 	(void)fputs("usage: cpio -o [-aABcLvVzZ] [-C bytes] [-H format] [-O archive]\n", stderr);

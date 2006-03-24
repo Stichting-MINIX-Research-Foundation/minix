@@ -80,7 +80,7 @@ _PROTOTYPE( int putenv, (const char *_name)				);
 /* According to POSIX, getopt should be in unistd.h. What do we do with
  * this?
  */
-_PROTOTYPE(int getopt, (int _argc, char **_argv, char *_opts));
+_PROTOTYPE(int getopt, (int _argc, char * const _argv[], const char *_opts));
 extern char *optarg;
 extern int optind, opterr, optopt;
 #endif /* _MINIX */
