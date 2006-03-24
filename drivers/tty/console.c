@@ -722,11 +722,14 @@ int reg;			/* which register pair to set */
 unsigned *val;			/* 16-bit value to set it to */
 {
   char v1, v2;
+  unsigned long v;
 /* Get a register pair inside the 6845.  */
   sys_outb(vid_port + INDEX, reg); 
-  sys_inb(vid_port + DATA, &v1); 
+  sys_inb(vid_port + DATA, &v); 
+  v1 = v;
   sys_outb(vid_port + INDEX, reg+1); 
-  sys_inb(vid_port + DATA, &v2); 
+  sys_inb(vid_port + DATA, &v); 
+  v2 = v;
   *val = (v1 << 8) | v2;
 }
 
@@ -742,7 +745,8 @@ PRIVATE void beep()
   static timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
   clock_t now;
-  int port_b_val, s;
+  unsigned long port_b_val;
+  int s;
   
   /* Fetch current time in advance to prevent beeping delay. */
   if ((s=getuptime(&now)) != OK)
@@ -837,7 +841,8 @@ clock_t dur;
   static timer_t tmr_stop_beep;
   pvb_pair_t char_out[3];
   clock_t now;
-  int port_b_val, s;
+  unsigned long port_b_val;
+  int s;
   
   unsigned long ival= TIMER_FREQ / freq;
   if (ival == 0 || ival > 0xffff)
@@ -873,7 +878,7 @@ PRIVATE void stop_beep(tmrp)
 timer_t *tmrp;
 {
 /* Turn off the beeper by turning off bits 0 and 1 in PORT_B. */
-  int port_b_val;
+  unsigned long port_b_val;
   if (sys_inb(PORT_B, &port_b_val)==OK && 
 	sys_outb(PORT_B, (port_b_val & ~3))==OK)
 		beeping = FALSE;
