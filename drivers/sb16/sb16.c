@@ -23,7 +23,8 @@ int data;
 PUBLIC int sb16_inb(port)
 int port;
 {	
-	int s, value = -1;
+	int s;
+	unsigned long value;
 
 	if ((s=sys_inb(port, &value)) != OK)
 		panic("SB16DSP","sys_inb() failed", s);
