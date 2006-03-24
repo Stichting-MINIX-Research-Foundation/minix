@@ -375,9 +375,7 @@ mq_t *m;
 				(vir_bytes)m->mq_mess.NDEV_BUFFER);
 			r= sr_put_userdata(sr_fd-sr_fd_table, r, NULL, 1);
 			assert(r == OK);
-			assert(sr_fd->srf_flags & first_flag);
-			sr_fd->srf_flags &= ~first_flag;
-			return OK;
+			break;
 		}
 
 		/* And now, we continue with our regular program. */
