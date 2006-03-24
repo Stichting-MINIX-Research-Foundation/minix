@@ -65,20 +65,20 @@
 
 static U8_t in_byte(U16_t port)
 {
-	U8_t value;
+	unsigned long value;
 	int s;
 	if ((s=sys_inb(port, &value)) != OK)
 		printf( "lance: warning, sys_inb failed: %d\n", s );
-	return value;
+	return (U8_t) value;
 }
 
 static U16_t in_word( U16_t port)
 {
-	U16_t value;
+	unsigned long value;
 	int s;
 	if ((s=sys_inw(port, &value)) != OK)
 		printf( "lance: warning, sys_inw failed: %d\n", s );
-	return value;
+	return (U16_t) value;
 }
 /*
 #define in_byte( x ) inb( x )
