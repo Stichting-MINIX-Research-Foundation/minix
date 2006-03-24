@@ -81,7 +81,13 @@ CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
-IMG_BASE=minix${version}_`date +%Y%m%d-%H%M%S`
+subfn="subreleaseno.$version"
+if [ -f "$subfn" ]
+then	sub="`cat $subfn`"
+else	sub=0
+fi
+echo "`expr $sub + 1`" >$subfn
+IMG_BASE=minix${version}_ide_build$sub
 BS=4096
 
 HDEMU=0
@@ -97,7 +103,7 @@ do
 	;;
 	h)
 		echo " * Making HD image"
-		IMG_BASE=${IMG_BASE}_bios
+		IMG_BASE=minix${version}_bios_build$sub
 		HDEMU=1
 		;;
 	c)
@@ -109,7 +115,7 @@ do
 		;;
 	u)
 		echo " * Making live USB-stick image"
-		IMG_BASE=${IMG_BASE}_USB
+		IMG_BASE=minix${version}_usb_build$sub
 		HDEMU=1
 		USB=1
 		;;
