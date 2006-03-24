@@ -790,7 +790,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 * the POSIX spec wants).
 	 */
 	hd->gname[sizeof(hd->gname) - 1] = '\0';
-	if (gid_name(hd->gname, &(arcn->sb.st_gid)) < 0)
+	if (gid_name((char *) hd->gname, (gid_t *) &(arcn->sb.st_gid)) < 0)
 		arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
 	hd->uname[sizeof(hd->uname) - 1] = '\0';
 	if (uid_name(hd->uname, &(arcn->sb.st_uid)) < 0)
