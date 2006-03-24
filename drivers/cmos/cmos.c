@@ -247,7 +247,7 @@ PRIVATE int get_cmostime(struct tm *t, int y2kflag)
 PRIVATE int read_register(int reg_addr)
 {
 /* Read a single CMOS register value. */
-  int r = 0;
+  unsigned long r;
   sys_outb(RTC_INDEX, reg_addr);
   sys_inb(RTC_IO, &r);
   return r;
