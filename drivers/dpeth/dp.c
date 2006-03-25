@@ -579,7 +579,7 @@ PUBLIC int main(int argc, char **argv)
 #endif
 
   /* Try to notify inet that we are present (again) */
-  rc = findproc("inet", &tasknr);
+  rc = _pm_findproc("inet", &tasknr);
   if (rc == OK)
 	notify(tasknr);
 

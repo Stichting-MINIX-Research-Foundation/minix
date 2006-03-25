@@ -46,7 +46,7 @@ PUBLIC void osdep_eth_init()
 #ifdef __minix_vmd
 		r= sys_findproc(ecp->ec_task, &tasknr, 0);
 #else /* Minix 3 */
-		r = findproc(ecp->ec_task, &tasknr);
+		r = _pm_findproc(ecp->ec_task, &tasknr);
 #endif 
 		if (r != OK)
 		{

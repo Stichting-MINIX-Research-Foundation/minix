@@ -8,7 +8,7 @@ libc_FILES=" \
 	_allocmem.c \
 	_brk.c \
 	_devctl.c \
-	_findproc.c \
+	__pm_findproc.c \
 	_freemem.c \
 	_getnpid.c \
 	_getsigset.c \

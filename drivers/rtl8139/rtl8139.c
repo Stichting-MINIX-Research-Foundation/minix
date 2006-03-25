@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 	 * not yet alive.
 	 */
 	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-	r = findproc("inet", &inet_proc_nr);
+	r = _pm_findproc("inet", &inet_proc_nr);
 	if (r == OK) notify(inet_proc_nr);
 
 

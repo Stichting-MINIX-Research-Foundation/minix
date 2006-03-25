@@ -4,6 +4,7 @@ LIBRARIES=libc
 
 libc_FILES=" \
 	_exit.s \
+	_pm_findproc.s \
 	access.s \
 	alarm.s \
 	allocmem.s \
@@ -29,7 +30,6 @@ libc_FILES=" \
 	execve.s \
 	execvp.s \
 	fcntl.s \
-	findproc.s \
 	fork.s \
 	fpathconf.s \
 	freemem.s \

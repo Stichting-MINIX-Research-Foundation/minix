@@ -20,9 +20,9 @@ char *name;
 	size_t len;
 	message m;
 
-	r= findproc("pci", &pci_procnr);
+	r= _pm_findproc("pci", &pci_procnr);
 	if (r != 0)
-		panic("pci", "pci_init1: findproc failed for 'pci'", r);
+		panic("pci", "pci_init1: _pm_findproc failed for 'pci'", r);
 
 	m.m_type= BUSC_PCI_INIT;
 	len= strlen(name);

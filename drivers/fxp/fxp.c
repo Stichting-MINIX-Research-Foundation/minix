@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Try to notify inet that we are present (again) */
-	r = findproc("inet", &tasknr);
+	r = _pm_findproc("inet", &tasknr);
 	if (r == OK)
 		notify(tasknr);
 

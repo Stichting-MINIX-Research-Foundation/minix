@@ -1,10 +1,9 @@
 #include <lib.h>
-#define findproc	_findproc
+#define _pm_findproc	__pm_findproc
 #include <unistd.h>
 #include <string.h>
 
-
-PUBLIC int findproc(proc_name, proc_nr)
+PUBLIC int _pm_findproc(proc_name, proc_nr)
 char *proc_name;		/* name of process to search for */
 int *proc_nr;			/* return process number here */
 {
