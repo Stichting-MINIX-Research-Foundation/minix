@@ -85,9 +85,9 @@ else	cont=y
 			if [ "$in" = 2 ]
 			then
 				cd $SRC || exit
-				echo " * Installing sources .."
+				echo " * Installing sources in $SRC .."
 				for f in $CDSRC/*.tar.bz2
-				do	echo "Installing $f in $SRC .."
+				do	echo "$f .."
 					smallbunzip2 -dc $f | tar xf - 
 				done
 			fi
