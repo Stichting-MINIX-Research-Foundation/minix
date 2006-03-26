@@ -247,19 +247,32 @@ echo " * Transfering $COPYITEMS to $RELEASEDIR"
 
 if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR ]
 then	echo " * Indexing packages"
+	bintotal=0
 	( cd $PACKAGEDIR
 	  for p in *.tar.bz2
-	  do	p="`echo $p | sed 's/.tar.bz2//'`"
+	  do	echo $p >&2
+		p="`echo $p | sed 's/.tar.bz2//'`"
 		descr="../$p/.descr"
 		if [ -f "$descr" ]
 		then	echo "$p|`cat $descr`"
 		fi
 	  done >List
 	)
+	for d in $PACKAGEDIR $PACKAGESOURCEDIR
+	do	echo Counting size of $d
+		f=$d/SizeMB
+		if [ ! -f $f ]
+		then
+			b="`bzip2 -dc $d/*.bz2 | wc -c`"
+			echo "`expr 1 + $b / 1024 / 1024`" >$f
+		fi
+		echo "`cat $f` MB."
+	done
 	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
 	cp $PACKAGEDIR/* $RELEASEPACKAGE/
 	echo " * Transfering $PACKAGESOURCEDIR to $RELEASEPACKAGESOURCES"
 	cp $PACKAGESOURCEDIR/* $RELEASEPACKAGESOURCES/
+
 fi
 
 # Make sure compilers and libraries are bin-owned

@@ -45,18 +45,70 @@ then	pack=${cddrive}p2
 else	echo "Don't know where the install CD is. You can set it in $RC."
 fi
 
+# For local testing
+cdpackages=/usr/bigports/Packages/List
+CDPACK=/usr/bigports/Packages
+CDSRC=/usr/bigports/Sources
+
 if [ "$cdpackages" = "" ]
 then	echo "Skipping CD packages."
+else	cont=y
+	while [ $cont = y ]
+	do	n="`wc -l $cdpackages | awk '{ print $1 }'`"
+		sourcef=$CDSRC/SizeMB
+		if [ -f $sourcef ]
+		then	sourcesize=" (`cat $sourcef` MB uncompressed)"
+		else	sourcesize=""
+		fi
+		binf=$CDPACK/SizeMB
+		if [ -f $binf ]
+		then	binsize=" (`cat $binf` MB uncompressed)"
+		else	binsize=""
+		fi
+
+		echo "There are $n CD packages."
+		echo "Please choose:"
+		echo " 1  Install all $n binary packages$binsize from CD"
+		echo " 2  Install all $n binary packages + sources from CD$sourcesize"
+		echo " 3  Display the list of packages on CD"
+		echo " 4  Let me select individual packages to install from CD"
+		echo -n "Choice: [4] "
+		read in
+		case "$in" in
+		1|2)
+			cd $CDPACK || exit
+			echo " * Installing binaries .."
+			for f in *.tar.bz2
+			do	echo "Installing $f binaries .."
+				packit $f && echo Installed $f
+			done
+			if [ "$in" = 2 ]
+			then
+				cd $SRC || exit
+				echo " * Installing sources .."
+				for f in $CDSRC/*.tar.bz2
+				do	echo "Installing $f in $SRC .."
+					smallbunzip2 -dc $f | tar xf - 
+				done
+			fi
+			;;
+		3)
+			( echo "Displaying list; press q to leave it, space for more."
+			  cat "$CDPACK/List" | awk -F'|' '{ printf "%-20s %s\n", $1, $2 }'
+			) | more
+			;;
+		""|4)
+			echo "Ok, showing packages to install." ; echo
+			cont=n
+		esac
+	done
+	echo -n "Press RETURN to continue .. "
+	read xyzzy
 fi
 
 TMPF=$TMPDIR/.list.$$
 rm -f $TMPF
 rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
-
-# For local testing
-#cdpackages=/usr/bigports/Packages/List
-#CDPACK=/usr/bigports/Packages
-#CDSRC=/usr/bigports/Sources
 
 netpackages=""
 if </dev/tcp
