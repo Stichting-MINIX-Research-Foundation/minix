@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 	nline = ARG_MAX - 4 * 1024;
 #else
 	/* Things are more cramped under standard Minix. */
-	nargs = 100 * sizeof(int);
+	nargs = 80 * sizeof(int);
 	nline = ARG_MAX - 512 * sizeof(int);
 #endif
 	nflag = xflag = zflag = 0;
@@ -354,7 +354,7 @@ void run(char **argv)
 		execvp(argv[0], argv);
 		noinvoke = (errno == ENOENT) ? 127 : 126;
 		(void)fprintf(stderr,
-		    "xargs: %s: %s.\n", argv[0], strerror(errno));
+		    "xargs: %s exec failed: %s.\n", argv[0], strerror(errno));
 
 		/* Modern way of returning noinvoke instead of a dirty vfork()
 		 * trick:					(kjb)
