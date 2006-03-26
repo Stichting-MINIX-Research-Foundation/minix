@@ -25,9 +25,9 @@ $(DRIVER):	$(OBJ)
 	install -S 256w $(DRIVER)
 
 # install with other drivers
-install:	/usr/sbin/$(DRIVER)
+install:	/sbin/$(DRIVER)
 	cd keymaps && $(MAKE) -$(MAKEFLAGS) install
-/usr/sbin/$(DRIVER):	$(DRIVER)
+/sbin/$(DRIVER):	$(DRIVER)
 	install -o root -cs $? $@
 
 # clean up local files
