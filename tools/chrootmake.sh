@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+export SHELL=/bin/sh
 cd /usr/src || exit 1
 make etcfiles
 su bin -c 'make world install' || exit 1

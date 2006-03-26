@@ -3,6 +3,7 @@
 PACKAGEDIR=/usr/bigports/Packages
 PACKAGESOURCEDIR=/usr/bigports/Sources
 secs=`expr 32 '*' 64`
+export SHELL=/bin/sh
 
 make_hdimage()
 {
@@ -130,7 +131,7 @@ fi
 IMGBZ=${IMG}.bz2
 echo "Making $IMGBZ"
 
-USRMB=200
+USRMB=350
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
