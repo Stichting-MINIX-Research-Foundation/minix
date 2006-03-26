@@ -21,6 +21,8 @@ else	echo "Please run $0 as root."
 	exit 1
 fi
 
+chmod 700 $TMPDIR
+
 if [ -f "$RC" ]
 then	. "$RC"
 fi
@@ -47,7 +49,14 @@ if [ "$cdpackages" = "" ]
 then	echo "Skipping CD packages."
 fi
 
-TMPF=/tmp/list.$$
+TMPF=$TMPDIR/.list.$$
+rm -f $TMPF
+rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
+
+# For local testing
+#cdpackages=/usr/bigports/Packages/List
+#CDPACK=/usr/bigports/Packages
+#CDSRC=/usr/bigports/Sources
 
 netpackages=""
 if </dev/tcp
@@ -93,27 +102,35 @@ do	cd $TMPDIR
 		if [ -f "$cdpackages" ]
 		then	sed <$cdpackages 's/^/cdrom\|/'
 		fi
-		) | sort -n -t'|' +2 | awk '{ n++; printf "%d|%s\n", n, $0 }'
+		) | sort -t'|' +1 | awk '{ n++; printf "%d|%s\n", n, $0 }' 
 	) >$TMPF
 	awk -F'|' <$TMPF '{ printf "%3s %-6s %-15s %s\n", $1, $2, $3, $4 }' | more
 	echo -n "Package to install? [RETURN for none] "
 	read packno
-	if [ -n "$packno" ]
-	then	source="`grep "^$packno|" $TMPF | awk -F'|' '{ print $2 }'`"
-		packagename="`grep "^$packno|" $TMPF | awk -F'|' '{ print $3 }'`"
+	ok=y
+	pat="^$packno|"
+	if [ "`grep $pat $TMPF | wc -l | awk '{ print $1 }'`" -ne 1 ]
+	then	if [ "$packno" ]
+		then	echo "Wrong package number."
+		fi
+		ok=n
+	fi
+	if [ $ok = y ]
+	then	source="`grep $pat $TMPF | awk -F'|' '{ print $2 }'`"
+		packagename="`grep $pat $TMPF | awk -F'|' '{ print $3 }'`"
 		file=$packagename.tar.bz2
-		echo -n "Get source of $packagename? (y/N) "
-		read src
 		case $source in
-		net*)	echo "Retrieving binary from primary location into $TMPDIR .."
+		net*)	echo -n "Get source of $packagename? (y/N) "
+			read src
+			echo "Retrieving binary from primary location into $TMPDIR .."
 			srcurl=""
 			if urlget $URL1/$file >$file
-			then	echo "Installing .."
+			then	echo "Retrieved ok. Installing .."
 				packit $file && echo Installed ok.
 				srcurl=$SRCURL1/$file
 			else	echo "Retrying from Beta binary location.."
 				if urlget $URL2/$file >$file
-				then	echo "Installing .."
+				then	echo "Retrieved ok. Installing .."
 					packit $file  && echo Installed ok.
 					srcurl=$SRCURL2/$file
 				else echo "Retrieval failed."
@@ -131,18 +148,28 @@ do	cd $TMPDIR
 			fi
 			;;
 		cdrom*)
-			if -f [ $CDPACK/$file ]
-			then	packit $CDPACK/$file
+			if [ -f $CDPACK/$file ]
+			then	echo "Installing from $CDPACK/$file .."
+				packit $CDPACK/$file
+			else	echo "$CDPACK/$file not found."
 			fi
-			if [ "$src" = y -o "$src" = Y ]
-			then	(	cd $SRC || exit
-					srcfile=$CDSRC/${packagename}-src.tar.bz2
-					smallbunzip2 -dc $srcfile | tar xf - || exit
-					echo "Source $srcfile unpacked in $SRC."
-				)
+			srcfile=$CDSRC/${packagename}-src.tar.bz2
+			if [ -f $srcfile ]
+			then
+				echo -n "Get source of $packagename? (y/N) "
+				read src
+				if [ "$src" = y -o "$src" = Y ]
+				then	(	cd $SRC || exit
+						smallbunzip2 -dc $srcfile | tar xf - || exit
+						echo "Source $srcfile unpacked in $SRC."
+					)
+				fi
+			else	echo "No source on CD for $packagename."
 			fi
 			;;
 		esac
 	else	cont=n
 	fi
 done
+
+rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
