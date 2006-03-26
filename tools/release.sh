@@ -249,7 +249,8 @@ if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR ]
 then	echo " * Indexing packages"
 	( cd $PACKAGEDIR
 	  for p in *.tar.bz2
-	  do	descr="../`echo $p | sed 's/.tar.bz2//'`/.descr"
+	  do	p="`echo $p | sed 's/.tar.bz2//'`"
+		descr="../$p/.descr"
 		if [ -f "$descr" ]
 		then	echo "$p|`cat $descr`"
 		fi
