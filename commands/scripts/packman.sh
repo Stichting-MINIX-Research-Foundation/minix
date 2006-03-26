@@ -46,9 +46,9 @@ else	echo "Don't know where the install CD is. You can set it in $RC."
 fi
 
 # For local testing
-cdpackages=/usr/bigports/Packages/List
-CDPACK=/usr/bigports/Packages
-CDSRC=/usr/bigports/Sources
+#cdpackages=/usr/bigports/Packages/List
+#CDPACK=/usr/bigports/Packages
+#CDSRC=/usr/bigports/Sources
 
 if [ "$cdpackages" = "" ]
 then	echo "Skipping CD packages."
@@ -119,8 +119,8 @@ then	if [ -f $LISTFILE ]
 		y=y
 	fi
 	if [ "$y" = y -o "$y" = Y ]
-	then	echo "Fetching package list."
-		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
+	then	echo "Fetching package list (^C to abort)."
+		intr urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
 	fi
 	netpackages=$LISTFILE
 	if [ ! -f "$netpackages" -o ! `cat "$netpackages" 2>/dev/null | wc -l | awk '{ print $1 }'` -gt 1 ]
