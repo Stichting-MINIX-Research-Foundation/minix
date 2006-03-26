@@ -251,7 +251,7 @@ then	echo " * Indexing packages"
 	  for p in *.tar.bz2
 	  do	descr="../`echo $p | sed 's/.tar.bz2//'`/.descr"
 		if [ -f "$descr" ]
-		then	printf "%-32s   %s\n" "$p" "`cat $descr`"
+		then	echo "$p|`cat $descr`"
 		fi
 	  done >List
 	)

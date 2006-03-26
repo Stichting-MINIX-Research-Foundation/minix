@@ -108,11 +108,13 @@ do	cd $TMPDIR
 		net*)	echo "Retrieving binary from primary location into $TMPDIR .."
 			srcurl=""
 			if urlget $URL1/$file >$file
-			then	packit $file && echo Installed ok.
+			then	echo "Installing .."
+				packit $file && echo Installed ok.
 				srcurl=$SRCURL1/$file
 			else	echo "Retrying from Beta binary location.."
 				if urlget $URL2/$file >$file
-				then	packit $file  && echo Installed ok.
+				then	echo "Installing .."
+					packit $file  && echo Installed ok.
 					srcurl=$SRCURL2/$file
 				else echo "Retrieval failed."
 				fi
