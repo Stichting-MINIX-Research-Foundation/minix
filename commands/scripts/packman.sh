@@ -71,7 +71,7 @@ else	cont=y
 		echo " 1  Install all $n binary packages$binsize from CD"
 		echo " 2  Install all $n binary packages + sources from CD$sourcesize"
 		echo " 3  Display the list of packages on CD"
-		echo " 4  Let me select individual packages to install from CD"
+		echo " 4  Let me select individual packages to install from CD or network."
 		echo -n "Choice: [4] "
 		read in
 		case "$in" in
