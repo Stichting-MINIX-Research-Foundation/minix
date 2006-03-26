@@ -111,7 +111,7 @@ rm -f $TMPF
 rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
 
 netpackages=""
-if </dev/tcp
+if ( : </dev/tcp ) 2>/dev/null
 then	if [ -f $LISTFILE ]
 	then	echo -n "Update package list from network? (y/N) "
 		read y
