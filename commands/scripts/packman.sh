@@ -119,8 +119,10 @@ then	if [ -f $LISTFILE ]
 		y=y
 	fi
 	if [ "$y" = y -o "$y" = Y ]
-	then	echo "Fetching package list."
-		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
+	then	echo "Fetching package list (^C to interrupt)."
+		trap '' 2
+		intr urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
+		trap 2
 	fi
 	netpackages=$LISTFILE
 	if [ ! -f "$netpackages" -o ! `cat "$netpackages" 2>/dev/null | wc -l | awk '{ print $1 }'` -gt 1 ]
