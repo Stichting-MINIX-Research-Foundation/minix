@@ -72,6 +72,7 @@ else	cont=y
 		echo " 2  Install all $n binary packages + sources from CD$sourcesize"
 		echo " 3  Display the list of packages on CD"
 		echo " 4  Let me select individual packages to install from CD or network."
+		echo " 5  Exit."
 		echo -n "Choice: [4] "
 		read in
 		case "$in" in
@@ -100,6 +101,10 @@ else	cont=y
 		""|4)
 			echo "Ok, showing packages to install." ; echo
 			cont=n
+			;;
+		5)
+			exit 0
+			;;
 		esac
 	done
 	echo -n "Press RETURN to continue .. "
@@ -119,10 +124,8 @@ then	if [ -f $LISTFILE ]
 		y=y
 	fi
 	if [ "$y" = y -o "$y" = Y ]
-	then	echo "Fetching package list (^C to interrupt)."
-		trap '' 2
-		intr urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
-		trap 2
+	then	echo "Fetching package list."
+		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
 	fi
 	netpackages=$LISTFILE
 	if [ ! -f "$netpackages" -o ! `cat "$netpackages" 2>/dev/null | wc -l | awk '{ print $1 }'` -gt 1 ]
