@@ -145,8 +145,10 @@ char *argv[];
 	*envp = NULL;
 	(void) chdir(pwd->pw_dir);
 	execve(shell, argv, envv);
+	perror(shell);
   } else {
 	execv(shell, argv);
+	perror(shell);
   }
   fprintf(stderr, "No shell\n");
   return(3);
