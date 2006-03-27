@@ -50,11 +50,10 @@ int openpty(int *amaster, int *aslave, char *name,
 		if((*amaster = open(buff, O_RDWR)) >= 0) {
 		  sprintf(tty_name, "%s/tty%c%c", DEV_DIR,
 			i, (j < 10) ? j + '0' : j + 'a' - 10);
-		  if((*aslave = open(tty_name, O_RDWR)) >= 0) {
+		  if((*aslave = open(tty_name, O_RDWR)) >= 0)
 		  	break;
-		  }
-		  close(*amaster);
 		}
+		close(*amaster);
 
 		j++;
 		if (j == 16) break;
