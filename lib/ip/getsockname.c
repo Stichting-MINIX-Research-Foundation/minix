@@ -58,7 +58,7 @@ int getsockname(int fd, struct sockaddr *_RESTRICT address,
 */
 	memset(&sin, '\0', sizeof(sin));
 	sin.sin_family= AF_INET;
-	sin.sin_addr.s_addr= tcpconf.nwtc_remaddr ;
+	sin.sin_addr.s_addr= tcpconf.nwtc_locaddr ;
 	sin.sin_port= tcpconf.nwtc_locport;
 
 	len= *address_len;
