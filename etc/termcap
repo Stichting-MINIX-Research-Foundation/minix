@@ -58,3 +58,64 @@ d0|vt100|vt100-am|vt100am|dec-vt100|dec vt100:\
 	:ku=\EOA:kd=\EOB:kr=\EOC:kl=\EOD:kb=^H:\
 	:ho=\E[H:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:pt:sr=\EM:vt#3:xn:\
 	:sc=\E7:rc=\E8:cs=\E[%i%d;%dr:
+
+# - copied the following screen* entries from
+# http://www.catb.org/terminfo/termtypes.tc.gz
+#	Version 11.0.1
+#	$Date$
+# ("This file deliberately has no copyright.  It belongs to no one and
+# everyone.")
+#
+# Entries for use by the `screen' program by Juergen Weigert, 
+# Michael Schroeder, Oliver Laumann.  The screen and
+# screen-w entries came with version 3.7.1.  The screen2 and screen3 entries
+# come from University of Wisconsin and may be older.
+# (screen: added :ve: on ANSI model -- esr)
+# (screen: added <el1> -- TD)
+
+screen|VT 100/ANSI X3.64 virtual terminal:\
+	:am:km:mi:ms:xn:\
+	:Co#8:co#80:it#8:li#24:pa#64:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:F1=\E[23~:\
+	:F2=\E[24~:IC=\E[%d@:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:\
+	:ac=++\054\054--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
+	:ae=^O:al=\E[L:as=^N:bl=^G:bt=\E[Z:cb=\E[1K:cd=\E[J:ce=\E[K:\
+	:cl=\E[H\E[J:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:\
+	:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:eA=\E(B\E)0:ei=\E[4l:\
+	:ho=\E[H:im=\E[4h:is=\E)0:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
+	:k5=\E[15~:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:\
+	:k;=\E[21~:kD=\E[3~:kH=\E[4~:kI=\E[2~:kN=\E[6~:kP=\E[5~:\
+	:kb=^H:kd=\EOB:ke=\E[?1l\E>:kh=\E[1~:kl=\EOD:kr=\EOC:\
+	:ks=\E[?1h\E=:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:\
+	:mr=\E[7m:nd=\E[C:nw=\EE:r2=\Ec:rc=\E8:sc=\E7:se=\E[23m:\
+	:sf=^J:so=\E[3m:sr=\EM:st=\EH:ta=^I:ue=\E[24m:up=\EM:\
+	:us=\E[4m:vb=\Eg:ve=\E[34h\E[?25h:vi=\E[?25l:vs=\E[34l:\
+	:tc=ecma+color:
+
+screen-w|VT 100/ANSI X3.64 virtual terminal with 132 cols:\
+	:co#132:tc=screen:
+
+screen2|old VT 100/ANSI X3.64 virtual terminal:\
+	:co#80:it#8:li#24:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
+	:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:al=\E[L:bt=\E[Z:cd=\E[J:\
+	:ce=\E[K:cl=\E[2J\E[H:cm=\E[%i%d;%dH:cr=^M:ct=\E[3g:\
+	:dc=\E[P:dl=\E[M:do=\E[B:ei=\E[4l:ic=:im=\E[4h:k0=\E~:\
+	:k1=\ES:k2=\ET:k3=\EU:k4=\EV:k5=\EW:k6=\EP:k7=\EQ:k8=\ER:\
+	:k9=\E0I:kb=^H:kd=\EB:kh=\EH:kl=\ED:kr=\EC:ku=\EA:le=^H:\
+	:me=\E[m:nd=\E[C:nw=^M^J:r1=\Ec:rc=\E8:sc=\E7:se=\E[23m:\
+	:sf=^J:so=\E[3m:sr=\EM:st=\EH:ta=^I:ue=\E[24m:up=\E[A:\
+	:us=\E[4m:
+# (screen3: removed unknown ":xv:LP:G0:" -- esr)
+screen3|older VT 100/ANSI X3.64 virtual terminal:\
+	:km:mi:ms:\
+	:co#80:it#8:li#24:\
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
+	:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:al=\E[L:bl=^G:bt=\E[Z:\
+	:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:cr=^M:\
+	:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:ei=\E[4l:\
+	:ho=\E[H:im=\E[4h:is=\E)0:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
+	:kb=^H:kd=\EOB:ke=\E>:kl=\EOD:kr=\EOC:ks=\E=:ku=\EOA:le=^H:\
+	:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:nd=\E[C:nw=\EE:r1=\Ec:\
+	:rc=\E8:sc=\E7:se=\E[23m:sf=^J:so=\E[3m:sr=\EM:st=\EH:ta=^I:\
+	:ue=\E[24m:up=\EM:us=\E[4m:
