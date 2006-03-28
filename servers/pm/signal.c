@@ -368,7 +368,7 @@ struct timer *tp;
 
   /* get process from timer */
   if(pm_isokendpt(tmr_arg(tp)->ta_int, &proc_nr_n) != OK) {
-	printf("PM: ignoring timer for invalid enpoint %d\n",
+	printf("PM: ignoring timer for invalid endpoint %d\n",
 		tmr_arg(tp)->ta_int);
 	return;
   }
