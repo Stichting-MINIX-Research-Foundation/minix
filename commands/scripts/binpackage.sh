@@ -36,7 +36,12 @@ tar=$srcdir/"`basename ${dir}`".tar
 tarbz=$tar.bz2
 
 mkdir $pdir 2>/dev/null || true
-binsizes big
+binsizes=big
+rc=$dir/.binpackage
+if [ -f $rc ]
+then	 . $rc
+fi
+binsizes $binsizes
 touch $packagestart
 sleep 1
 cd $dir
