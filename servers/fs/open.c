@@ -287,6 +287,12 @@ PRIVATE int pipe_open(register struct inode *rip, register mode_t bits,
  */
 
   rip->i_pipe = I_PIPE; 
+
+  if((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) {
+	printf("pipe opened RW.\n");
+	return ENXIO;
+  }
+
   if (find_filp(rip, bits & W_BIT ? R_BIT : W_BIT) == NIL_FILP) { 
 	if (oflags & O_NONBLOCK) {
 		if (bits & W_BIT) return(ENXIO);
