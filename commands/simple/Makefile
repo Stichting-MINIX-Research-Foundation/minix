@@ -810,7 +810,7 @@ touch:	touch.c
 	@install -S 4kw $@
 
 top:	top.c
-	$(CCLD) -o $@ $?
+	$(CCLD) -o $@ $? -lcurses
 
 tr:	tr.c
 	$(CCLD) -o $@ $?

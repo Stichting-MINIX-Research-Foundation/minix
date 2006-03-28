@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <pwd.h>
+#include <curses.h>
 #include <timers.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -15,10 +16,14 @@
 #include <time.h>
 #include <string.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <sys/ioc_tty.h>
 #include <sys/times.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/select.h>
 
 #include <minix/ipc.h>
 #include <minix/config.h>
@@ -29,9 +34,10 @@
 #include "../../kernel/const.h"
 #include "../../kernel/proc.h"
 
-char  *Tclr_all;
 #define  TC_BUFFER  1024        /* Size of termcap(3) buffer    */
 #define  TC_STRINGS  200        /* Enough room for cm,cl,so,se  */
+
+char *Tclr_all;
 
 int print_memory(struct pm_mem_info *pmi)
 {
@@ -230,7 +236,6 @@ void showtop(int r)
 	}
 
 
-
 	printf("%s", Tclr_all);
 
 	lines += print_load(loads, NLOADS);
@@ -270,16 +275,68 @@ void init(int *rows)
 	if((v = tgetstr ("li", &s)) != NULL)
 		sscanf(v, "%d", rows);
 	if(*rows < 1) *rows = 24;
+	if(!initscr()) {
+		fprintf(stderr, "initscr() failed\n");
+		exit(1);
+	}
+	cbreak();
+	nl();
 }
+
+void sigwinch(int sig) { }
 
 int main(int argc, char *argv[])
 {
-	int r;
+	int r, c, s = 0, orig;
+
 	init(&r);
 
-	while(1) {
-		showtop(r);
-		sleep(5);
+	while((c=getopt(argc, argv, "s:")) != EOF) {
+		switch(c) {
+			case 's':
+				s = atoi(optarg);
+				break;
+			default:
+				fprintf(stderr,
+					"Usage: %s [-s<secdelay>]\n", argv[0]);
+				return 1;
+		}
 	}
+
+	if(s < 1) 
+		s = 2;
+
+	/* Catch window size changes so display is updated properly right away. */
+	signal(SIGWINCH, sigwinch);
+
+	while(1) {
+		fd_set fds;
+		int ns;
+		struct timeval tv;
+		showtop(r);
+		tv.tv_sec = s;
+		tv.tv_usec = 0;
+
+		FD_ZERO(&fds);
+		FD_SET(STDIN_FILENO, &fds);
+		if((ns=select(STDIN_FILENO+1, &fds, NULL, NULL, &tv)) < 0
+			&& errno != EINTR) {
+			perror("select");
+			sleep(1);
+		}
+
+		if(ns > 0 && FD_ISSET(STDIN_FILENO, &fds)) {
+			char c;
+			if(read(STDIN_FILENO, &c, 1) == 1) {
+				switch(c) {
+					case 'q':
+						return 0;
+						break;
+				}
+			}
+		}
+	}
+
+	return 0;
 }
 
