@@ -6,7 +6,7 @@
 
 #define NR_FILPS         256	/* # slots in filp table */
 #define NR_INODES        256	/* # slots in "in core" inode table */
-#define NR_SUPERS          8	/* # slots in super block table */
+#define NR_SUPERS         12	/* # slots in super block table */
 #define NR_LOCKS           8	/* # slots in the file locking table */
 
 /* The type of sizeof may be (unsigned) long.  Use the following macro for
