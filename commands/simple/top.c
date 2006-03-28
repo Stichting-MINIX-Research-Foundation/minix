@@ -118,6 +118,8 @@ void print_procs(int maxlines,
 	int p, nprocs, tot=0;
 	int idleticks = 0, kernelticks = 0, systemticks = 0;
 
+	if(dt < 1) return;
+
 	for(p = nprocs = 0; p < PROCS; p++) {
 		if(proc2[p].p_rts_flags & SLOT_FREE)
 			continue;
