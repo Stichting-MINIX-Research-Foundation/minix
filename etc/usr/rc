@@ -126,11 +126,10 @@ start)
 	else
 	    # Standard network daemons.
     	    echo -n "Starting networking:"
-	    if grep psip /etc/inet.conf >/dev/null
+	    if grep 'psip0.*default' /etc/inet.conf >/dev/null
 	    then	ifconfig -h 10.0.0.1
 	    else	daemonize dhcpd
 	    fi
-	    daemonize dhcpd
 	    daemonize nonamed
 	    daemonize talkd
 	    daemonize tcpd shell in.rshd
