@@ -613,7 +613,7 @@ echo "rootdev=$root; ramimagedev=$root; save" >$pfile
 cddrive="`mount | grep usr | awk '{ print $1 }' | sed 's/p.*//'`" 
 echo "cddrive=$cddrive" >>/mnt/etc/rc.package
 
-bios="`echo $primary | sed 's/d./dX/g'`"
+bios="`echo $primary | sed -e 's/d./dX/g' -e 's/c.//g'`"
 
 if [ ! "$auto" = "r" ]
 then	if mount /dev/$home /home 2>/dev/null
