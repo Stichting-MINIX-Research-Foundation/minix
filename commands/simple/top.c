@@ -158,10 +158,11 @@ void print_procs(int maxlines,
 	maxlines--;
 	for(p = 0; p < nprocs; p++) {
 		int euid = 0;
-		struct passwd *who = NULL;
 		struct proc *pr;
 		int pnr, ticks;
 		char *name = "";
+		static struct passwd *who = NULL;
+		static int last_who = -1;
 
 		if(maxlines-- <= 0) break;
 
@@ -176,7 +177,10 @@ void print_procs(int maxlines,
 			printf("[%3d] ", pnr);
 			name = pr->p_name;
 		}
-		who = getpwuid(euid);
+		if(last_who != euid || !who) {
+			who = getpwuid(euid);
+			last_who = euid;
+		}
 
 		if(who && who->pw_name) printf("%-8s ", who->pw_name);
 		else if(pnr >= 0) printf("%8d ", mproc[pnr].mp_effuid);
