@@ -16,4 +16,6 @@
 #define    _PATH_RAMDISK   "/dev/ram"
 #define    _PATH_TMP       "/tmp"
 
+#define _PATH_BSHELL	"/bin/sh"
+
 #endif
