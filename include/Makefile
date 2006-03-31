@@ -15,4 +15,4 @@ install::
 	@rm -f $(INC)/Makefile
 
 gcc: install
-	if [ -f $(MKHEADERS) ] ; then sh $(MKHEADERS) ; fi
+	SHELL=/bin/sh; if [ -f $(MKHEADERS) ] ; then sh -e $(MKHEADERS) ; fi
