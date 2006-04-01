@@ -673,6 +673,12 @@ int t;
 	  case 'f':
 		p->n_info.n_int.n_val = S_IFREG;
 		break;
+	  case 'p':
+		p->n_info.n_int.n_val = S_IFIFO;
+		break;
+	  case 's':
+		p->n_info.n_int.n_val = ~0;
+		break;
 	  case 'l':
 #ifdef S_IFLNK
 		p->n_info.n_int.n_val = S_IFLNK;
@@ -681,7 +687,7 @@ int t;
 #endif
 		break;
 	  default:
-		fatal("-type needs b, c, d, f or l", "");
+		fatal("-type needs b, c, d, f, p, s or l", "");
 	}
 	break;
     case OP_USER:
