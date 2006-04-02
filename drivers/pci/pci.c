@@ -33,7 +33,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <string.h>
 #include <minix/sysutil.h>
 
-#define NR_PCIBUS	 6
+#define NR_PCIBUS	10
 #define NR_PCIDEV	40
 
 #define PBT_INTEL_HOST	 1
