@@ -3,6 +3,7 @@
  */
 
 #define _MINIX_SOURCE
+#define _MINIX 1
 
 #define nil ((void*)0)
 #include <sys/types.h>
@@ -189,11 +190,11 @@ static void run_job(cronjob_t *job)
 			setgid(pw->pw_gid);
 			setuid(pw->pw_uid);
 			chdir(pw->pw_dir);
-			if (setenv("USER", pw->pw_name) < 0) goto bad;
-			if (setenv("LOGNAME", pw->pw_name) < 0) goto bad;
-			if (setenv("HOME", pw->pw_dir) < 0) goto bad;
+			if (setenv("USER", pw->pw_name, 1) < 0) goto bad;
+			if (setenv("LOGNAME", pw->pw_name, 1) < 0) goto bad;
+			if (setenv("HOME", pw->pw_dir, 1) < 0) goto bad;
 			if (setenv("SHELL", pw->pw_shell[0] == 0 ? "/bin/sh"
-						: pw->pw_shell) < 0) goto bad;
+						: pw->pw_shell, 1) < 0) goto bad;
 		}
 
 		if (job->atjob) {
