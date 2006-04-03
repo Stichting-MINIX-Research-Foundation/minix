@@ -95,8 +95,6 @@ char **argv;
     fast = 1;
   }
 
-  write_log();
-
   signal(SIGHUP, SIG_IGN);
   signal(SIGTERM, SIG_IGN);
 
@@ -124,6 +122,8 @@ char **argv;
   printf("Sending SIGTERM to all processes ...\n");
   kill(-1, SIGTERM);
   sleep(1);
+
+  write_log();
 
   sync();
 
