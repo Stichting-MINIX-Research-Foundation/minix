@@ -22,6 +22,7 @@ libc_FILES=" \
 	gethnmadr.c \
 	gethostent.c \
 	gethostname.c \
+	getifaddrs.c \
 	getnetbyaddr.c \
 	getnetbyname.c \
 	getnetent.c \
