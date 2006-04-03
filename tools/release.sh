@@ -42,6 +42,7 @@ hdemu_root_changes()
 	echo \
 'bootcd=2
 disable=inet
+bios_wini=yes
 bios_remap_first=1
 ramimagedev=c0d7p0s0
 bootbig(1, Regular MINIX 3) { unset image; boot }
