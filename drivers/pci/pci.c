@@ -1147,10 +1147,49 @@ PRIVATE void complete_bridges()
  *===========================================================================*/
 PRIVATE void complete_bars()
 {
-	int i, j, bar_nr, reg;
-	u32_t mem_top, io_bottom, io_top, io_high, base, size, v32;
+	int i, j, r, bar_nr, reg;
+	u32_t memgap_low, memgap_high, iogap_low, iogap_high, io_high,
+		base, size, v32, diff1, diff2;
+	char *cp, *next;
+	char memstr[256];
 
-	mem_top= 0xfe000000;	/* Leave space for the CPU (APIC) */
+	r= env_get_param("memory", memstr, sizeof(memstr));
+	if (r != OK)
+		panic("pci", "env_get_param failed", r);
+	
+	/* Set memgap_low to just above physical memory */
+	memgap_low= 0;
+	cp= memstr;
+	while (*cp != '\0')
+	{
+		base= strtoul(cp, &next, 16);
+		if (next == cp || *next != ':')
+		{
+			printf("pci: bad memory environment string '%s'\n",
+				memstr);
+			panic(NULL, NULL, NO_NUM);
+		}
+		cp= next+1;
+		size= strtoul(cp, &next, 16);
+		if (next == cp || (*next != ',' && *next != '\0'))
+		{
+			printf("pci: bad memory environment string '%s'\n",
+				memstr);
+			panic(NULL, NULL, NO_NUM);
+		}
+		cp= next+1;
+
+		if (base+size > memgap_low)
+			memgap_low= base+size;
+	}
+
+	memgap_high= 0xfe000000;	/* Leave space for the CPU (APIC) */
+
+	if (debug)
+	{
+		printf("complete_bars: initial gap: [0x%x .. 0x%x>\n",
+			memgap_low, memgap_high);
+	}
 
 	/* Find the lowest memory base */
 	for (i= 0; i<nr_pcidev; i++)
@@ -1162,17 +1201,40 @@ PRIVATE void complete_bars()
 			if (pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE)
 				continue;
 			base= pcidev[i].pd_bar[j].pb_base;
-			if (base < mem_top)
-				mem_top= base;
+			size= pcidev[i].pd_bar[j].pb_size;
+
+			if (base >= memgap_high)
+				continue;	/* Not in the gap */
+			if (base+size <= memgap_low)
+				continue;	/* Not in the gap */
+
+			/* Reduce the gap by the smallest amount */
+			diff1= base+size-memgap_low;
+			diff2= memgap_high-base;
+
+			if (diff1 < diff2)
+				memgap_low= base+size;
+			else
+				memgap_high= base;
 		}
 	}
 
-	/* Should check main memory size */
-	if (mem_top < 0x80000000)
-		panic("pci", "mem_top too low", mem_top);
+	if (debug)
+	{
+		printf("complete_bars: intermediate gap: [0x%x .. 0x%x>\n",
+			memgap_low, memgap_high);
+	}
 
-	io_top= 0x10000;
-	io_bottom= 0x400;
+	/* Should check main memory size */
+	if (memgap_high < memgap_low)
+	{
+		printf("pci: bad memory gap: [0x%x .. 0x%x>\n",
+			memgap_low, memgap_high);
+		panic(NULL, NULL, NO_NUM);
+	}
+
+	iogap_high= 0x10000;
+	iogap_low= 0x400;
 
 	/* Find the free I/O space */
 	for (i= 0; i<nr_pcidev; i++)
@@ -1185,21 +1247,21 @@ PRIVATE void complete_bars()
 				continue;
 			base= pcidev[i].pd_bar[j].pb_base;
 			size= pcidev[i].pd_bar[j].pb_size;
-			if (base >= io_top)
+			if (base >= iogap_high)
 				continue;
-			if (base+size <= io_bottom)
+			if (base+size <= iogap_low)
 				continue;
-			if (base+size-io_bottom < io_top-base)
-				io_bottom= base+size;
+			if (base+size-iogap_low < iogap_high-base)
+				iogap_low= base+size;
 			else
-				io_top= base;
+				iogap_high= base;
 		}
 	}
 
-	if (io_top < io_bottom)
-		panic("pci", "io_top too low", io_top);
+	if (iogap_high < iogap_low)
+		panic("pci", "iogap_high too low", iogap_high);
 	if (debug)
-		printf("I/O range = [0x%x..0x%x>\n", io_bottom, io_top);
+		printf("I/O range = [0x%x..0x%x>\n", iogap_low, iogap_high);
 
 	for (i= 0; i<nr_pcidev; i++)
 	{
@@ -1212,9 +1274,11 @@ PRIVATE void complete_bars()
 			size= pcidev[i].pd_bar[j].pb_size;
 			if (size < PAGE_SIZE)
 				size= PAGE_SIZE;
-			base= mem_top-size;
+			base= memgap_high-size;
 			base &= ~(u32_t)(size-1);
-			mem_top= base;
+			if (base < memgap_low)
+				panic("pci", "memory base too low", base);
+			memgap_high= base;
 			bar_nr= pcidev[i].pd_bar[j].pb_nr;
 			reg= PCI_BAR + 4*bar_nr;
 			v32= pci_attr_r32(i, reg);
@@ -1231,7 +1295,7 @@ PRIVATE void complete_bars()
 			pcidev[i].pd_bar[j].pb_flags &= ~PBF_INCOMPLETE;
 		}
 
-		io_high= io_top;
+		io_high= iogap_high;
 		for (j= 0; j<pcidev[i].pd_bar_nr; j++)
 		{
 			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_IO))
@@ -1239,7 +1303,7 @@ PRIVATE void complete_bars()
 			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE))
 				continue;
 			size= pcidev[i].pd_bar[j].pb_size;
-			base= io_top-size;
+			base= iogap_high-size;
 			base &= ~(u32_t)(size-1);
 
 			/* Assume that ISA compatibility is required. Only
@@ -1247,10 +1311,10 @@ PRIVATE void complete_bars()
 			 */
 			base &= 0xfcff;
 
-			if (base < io_bottom)
+			if (base < iogap_low)
 				panic("pci", "I/O base too low", base);
 
-			io_top= base;
+			iogap_high= base;
 			bar_nr= pcidev[i].pd_bar[j].pb_nr;
 			reg= PCI_BAR + 4*bar_nr;
 			v32= pci_attr_r32(i, reg);
@@ -1267,8 +1331,11 @@ PRIVATE void complete_bars()
 			pcidev[i].pd_bar[j].pb_flags &= ~PBF_INCOMPLETE;
 
 		}
-		if (io_top != io_high)
-			update_bridge4dev_io(i, io_top, io_high-io_top);
+		if (iogap_high != io_high)
+		{
+			update_bridge4dev_io(i, iogap_high,
+				io_high-iogap_high);
+		}
 	}
 
 	for (i= 0; i<nr_pcidev; i++)
