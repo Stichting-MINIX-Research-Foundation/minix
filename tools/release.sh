@@ -344,12 +344,12 @@ umount $TMPDISK3 || exit
 (cd .. && make depend)
 make clean
 make image || exit 1
-cp image image_big
+mv image image_big
 make clean
 make image_small || exit 1
 dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 # Prepare image and image_small for cdfdboot
-cp image_big image
+mv image_big image
 sh mkboot cdfdboot $TMPDISK3
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES
