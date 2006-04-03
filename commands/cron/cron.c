@@ -32,21 +32,6 @@ static volatile int need_reload;/* Set if table reload required. */
 static volatile int need_quit;	/* Set if cron must exit. */
 static volatile int debug;	/* Debug level. */
 
-static int setenv(char *var, char *val)
-/* Set an environment variable.  Return 0/-1 for success/failure. */
-{
-	char *env;
-
-	env= malloc((strlen(var) + strlen(val) + 2) * sizeof(env[0]));
-	if (env == nil) return -1;
-	strcpy(env, var);
-	strcat(env, "=");
-	strcat(env, val);
-	if (putenv(env) < 0) return -1;
-	free(env);
-	return 0;
-}
-
 static void run_job(cronjob_t *job)
 /* Execute a cron job.  Register its pid in the job structure.  If a job's
  * crontab has an owner then its output is mailed to that owner, otherwise
