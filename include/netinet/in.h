@@ -14,6 +14,8 @@ netinet/in.h
 #define    INADDR_ANY              (uint32_t)0x00000000
 #define    INADDR_BROADCAST        (uint32_t)0xFFFFFFFF
 
+#define    IN_LOOPBACKNET          127
+
 #define       IPPORT_RESERVED         1024
 
 typedef uint16_t	in_port_t;
@@ -64,11 +66,18 @@ struct ip_mreq
 /* Definitions that are not part of the Open Group Base Specifications */
 #define IN_CLASSA(i)	(((uint32_t)(i) & 0x80000000) == 0)
 #define IN_CLASSA_NET	0xff000000
+#define IN_CLASSA_NSHIFT 24
 
 #define IN_CLASSB(i)	(((uint32_t)(i) & 0xc0000000) == 0x80000000)
 #define IN_CLASSB_NET	0xffff0000
+#define IN_CLASSB_NSHIFT 16
 
-#define IN_CLASSC(i)	(((u_int32_t)(i) & 0xe0000000) == 0xc0000000)
+#define IN_CLASSC(i)	(((uint32_t)(i) & 0xe0000000) == 0xc0000000)
 #define IN_CLASSC_NET	0xffffff00
+#define IN_CLASSC_NSHIFT 8
+
+#define IN_CLASSD(i)	(((uint32_t)(i) & 0xf0000000) == 0xe0000000)
+#define IN_CLASSD_NET	0xf0000000
+#define IN_CLASSD_NSHIFT 28
 
 #endif /* _NETINET__IN_H */
