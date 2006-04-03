@@ -19,7 +19,7 @@ case $#:$1 in
 	ttypa ttypb ttypc ttypd ttype ttypf \
 	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9 \
 	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf \
-	eth klog random cmos kbd kbdaux rescue video
+	eth klog random cmos rescue
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
