@@ -1,7 +1,8 @@
 #!/bin/sh
+rm -rf t
 mkdir t 2>/dev/null || true
 cd t
-MAKEDEV std 2>/dev/null
+MAKEDEV std 
 rm fd1* fd0p* tcp* eth* ip* udp* tty[pq]* pty*
 sed -n '1,/@DEV/p' <../proto  | grep -v @DEV@
 ls -aln | grep '^[bc]' | \

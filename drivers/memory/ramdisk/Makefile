@@ -22,7 +22,7 @@ bintoc:	bintoc.c
 	$(CC) -o $@ bintoc.c
 
 image:	proto.gen mtab rc $(PROGRAMS)
-	mkfs -B 2048 image proto.gen 2>/dev/null || { rm -f image; false; }
+	mkfs -B 2048 image proto.gen || { rm -f image; false; }
 
 at_wini: ../../at_wini/at_wini
 	install -s ../../$@/$@ $@
@@ -94,7 +94,7 @@ depend:
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 proto.gen: $(MAKEDEV) proto.sh proto
-	sh -e proto.sh <proto >proto.gen
+	sh -e proto.sh >proto.gen
 
 # Include generated dependencies.
 include .depend
