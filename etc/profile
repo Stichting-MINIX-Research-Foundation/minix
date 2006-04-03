@@ -3,3 +3,4 @@ export TZ=GMT0
 if [ -f "$RC_TZ" ]
 then . "$RC_TZ"
 fi
+export MANPATH=/usr/man:/usr/local/man:/usr/gnu/man:/usr/X11R6/man
