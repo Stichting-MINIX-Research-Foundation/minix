@@ -61,6 +61,7 @@ libc_FILES=" \
 	putw.c \
 	random.c \
 	rindex.c \
+	setenv.c \
 	setgroups.c \
 	settimeofday.c \
 	stderr.c \

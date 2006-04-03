@@ -39,14 +39,6 @@
  * Rewritten by Martin Mares <mj@atrey.karlin.mff.cuni.cz> on May 14, 1997
  * Rewritten by G. Falzoni <gfalzoni@inwind.it> for porting to Minix
  *
- * $Log$
- * Revision 1.1  2005/10/31 14:31:05  beng
- * Giovanni's symlink (+syslog+flock) patches.
- *
- * Revision 1.2  2001/01/04 11:54:26  root
- * Removed variable to store PID which is computed
- * at each call to avoid reporting parent's pid.
- *
  * $Id$
  */
 #include <sys/types.h>
@@ -68,6 +60,7 @@
 #include <errno.h>
 #include <net/gen/inet.h>
 
+static int LogPid = (-1);
 static int nfd = (-1);
 static int LogFacility = LOG_USER;
 static int LogFlags = 0;
@@ -86,6 +79,8 @@ void openlog(const char *ident, int option, int facility)
 
   /* Stores logging flags */
   LogFlags = option & (LOG_PID | LOG_PERROR | LOG_CONS);
+  /* Stores process id. if LOG_PID was specified */
+  if (option & LOG_PID) LogPid = getpid();
   /* Stores the requested facility */
   LogFacility = facility;
   /* Stores log tag if supplied */
@@ -134,14 +129,14 @@ void syslog(int lprty, const char *msg,...)
   int len, rc;
   va_list ap;
 
-  /* First log message opens a channel to syslog */
+  /* First log message open chnnel to syslog */
   if (nfd < 0) openlog(TagBuffer, LogFlags | LOG_NDELAY, LogFacility);
   time(&now);
   len = sprintf(buff, "<%d>%.15s %s: ",
 		LogFacility | lprty, ctime(&now) + 4, TagBuffer);
   if (LogFlags & LOG_PID) {
 	len -= 2;
-	len += sprintf(buff + len, "[%d]: ", getpid());
+	len += sprintf(buff + len, "[%d]: ", LogPid);
   }
   va_start(ap, msg);
   len += vsprintf(buff + len, msg, ap);
@@ -163,7 +158,7 @@ void closelog(void)
 {
 
   close(nfd);
-  nfd = -1;
+  LogPid = nfd = -1;
   LogFacility = LOG_USER;
   LogFlags = 0;
   return;
