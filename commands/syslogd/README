@@ -1,0 +1,69 @@
+This is just syslogd and the test programs now. syslog() is in libc 4.2
+syslogd has been changed to use /proc/kmsg for kernel messages. It also
+avoids making any terminal it opens its controlling terminal. Otherwise
+we have a dodgy race condition between processes connecting to terminals
+which can result in the terminal having the wrong group at the wrong time.
+The syslog() in libc 4.2 needs changing to use O_NOCTTY on its opens as
+well.
+
+Mike Jagdis	Internet: jaggy@purplet.demon.co.uk
+		FidoNet:  Mike Jagdis, 2:252/305
+
+---------------------------------------------------------------------------
+
+                           Syslogd and Syslog.o
+
+These are the syslogd and syslog ported from 4.3BSD (that's the new one with
+the *very* flexible config file).  
+
+Syslogd is essentially unchanged from the 4.3BSD, with the exception that
+*nothing* is ever logged to the console (BAD thing to do on a UNIXpc).  You
+can configure it (via /etc/syslog.conf) to log messages in different
+logfiles (depending upon the sender's facility code and the priority), log
+to users' terminals (same dependancies), and if things get real bad, it can
+do a wall (write-all; same dependancies).
+
+Syslog is really only modified in that it uses UDP datagrams because I had
+no luck at all using UNIX domain sockets on the 3B1.  See syslog.h for
+facility codes and priorities that can be used.
+
+
+BUGS:
+Messages from facilities LOG_KERN, LOG_USER, and LOG_PRT never can be
+wall-ed, no matter how high the priority.  I'm still trying to decide if
+this is a bug or a feature. :-)
+
+
+ALSO INCLUDED:
+
+Syslog_test, sendlog (to use from shell scripts) and logger (for use in
+shell script also).
+
+NEEDED:
+
+The resolver routines in libresolv.a are not needed, but allow you to log to
+hosts not present in /etc/hosts and to accept logging from same.
+
+-----------------------------------------------------------------------
+
+Fixed up UNIX domain socket code, added Linux specific code to read messages
+from the kernel.
+
+The #ifdefs are now :-
+
+SYSLOG_INET	listen on a UDP socket (syslogd)
+		log via UDP (syslog library call)
+
+SYSLOG_UNIXAF	listen on a UNIX domain socker (syslogd)
+		log via UNIX domain (syslogd library)
+
+SYSLOG_KERNEL	fork a second copy to read kernel messages using
+		syslog system call.
+
+syslogd should be built with one or more of these flags, libsyslog.a should
+be built with SYSLOG_INET or SYSLOG_UNIXAF, SYSLOG_INET is used in preference
+to SYSLOG_UNIXAF.
+
+readlog is a program which reads from the kernel and records the messages
+it finds in syslogd via the normal library call interface, it can be run
+instead of building syslogd with SYSLOG_KERNEL.
