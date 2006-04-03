@@ -42,3 +42,4 @@ fi
 makewhatis /usr/man
 makewhatis /usr/local/man
 makewhatis /usr/gnu/man
+makewhatis /usr/X11R6/man
