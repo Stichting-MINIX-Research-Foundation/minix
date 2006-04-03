@@ -12,7 +12,7 @@
 
 #define CD_SECTOR	2048
 #define SUPER_OFF	1024
-#define AT_MINORS	4
+#define AT_MINORS	8
 #define MAGIC_OFF	24
 
 #include <errno.h>
