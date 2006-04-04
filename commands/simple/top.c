@@ -146,7 +146,7 @@ void print_procs(int maxlines,
 
 	qsort(tick_procs, nprocs, sizeof(tick_procs[0]), cmp_ticks);
 
-	printf("CPU states: %5.2f%% user, %5.2f%% system, %5.2f%% kernel, %5.2f%% idle",
+	printf("CPU states: %6.2f%% user, %6.2f%% system, %6.2f%% kernel, %6.2f%% idle",
 		100.0*(dt-systemticks-kernelticks-idleticks)/dt,
 		100.0*systemticks/dt,
 		100.0*kernelticks/dt,
@@ -154,7 +154,7 @@ void print_procs(int maxlines,
 	printf("\n\n");
 	maxlines -= 2;
 
-	printf("  PID USERNAME PRI NICE   SIZE STATE   TIME    CPU COMMAND\n");
+	printf("  PID USERNAME PRI NICE   SIZE STATE   TIME     CPU COMMAND\n");
 	maxlines--;
 	for(p = 0; p < nprocs; p++) {
 		int euid = 0;
@@ -196,7 +196,7 @@ void print_procs(int maxlines,
 		printf("%6s", pr->p_rts_flags ? "" : "RUN");
 		printf(" %3d:%02d ", (ticks/HZ/60), (ticks/HZ)%60);
 
-		printf("%5.2f%% %s\n",
+		printf("%6.2f%% %s\n",
 			100.0*tick_procs[p].ticks/dt, name);
 	}
 }
