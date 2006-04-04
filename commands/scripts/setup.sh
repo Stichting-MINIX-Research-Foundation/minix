@@ -582,6 +582,10 @@ mount /dev/$root /mnt >/dev/null || exit
 # Running from the installation CD.
 cpdir -vx / /mnt | progressbar "$ROOTFILES" || exit	
 
+# Fix /var/log
+rm /mnt/var/log
+ln -s /usr/log /mnt/var/log
+
 if [ -n "$driver" ]
 then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 fi
