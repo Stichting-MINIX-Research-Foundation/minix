@@ -67,6 +67,9 @@
 **  Extensive rewriting by G. Falzoni <gfalzoni@inwind.it> for porting to Minix
 ** 
 **  $Log$
+**  Revision 1.3  2006/04/04 14:22:40  beng
+**  Fix
+**
 **  Revision 1.2  2006/04/04 14:18:16  beng
 **  Make syslogd work, even if it can only open klog and not udp or vice versa
 **  (but not neither)
@@ -848,7 +851,8 @@ int main(int argc, char **argv)
 			port == 0 ? sp->s_port : htons(port);
   udpopt.nwuo_remaddr = udpopt.nwuo_locaddr = htonl(0x7F000001L);
   
-  while (nfd >= 0 && ioctl(nfd, NWIOSUDPOPT, &udpopt) < 0 ||
+ if(nfd >= 0) {
+  while (ioctl(nfd, NWIOSUDPOPT, &udpopt) < 0 ||
       ioctl(nfd, NWIOGUDPOPT, &udpopt) < 0) {
 	if (errno == EAGAIN) {
 		sleep(1);
@@ -857,6 +861,7 @@ int main(int argc, char **argv)
 	logerror("Set/Get UDP options failed");
 	return EXIT_FAILURE;
   }
+ }
 
   /* Open kernel log device */
   kfd = open("/dev/klog", O_NONBLOCK | O_RDONLY);
