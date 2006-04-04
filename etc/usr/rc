@@ -116,6 +116,8 @@ start)
 		ln -s /tmp/log /var/log || true
 		. /etc/rc.cd
     fi
+    # syslogd has not been started yet
+    rm /var/run/syslogd.pid
     daemonize syslogd
     echo .
 
