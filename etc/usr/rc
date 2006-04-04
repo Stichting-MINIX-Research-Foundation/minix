@@ -106,7 +106,6 @@ start)
 
     echo -n "Starting daemons:"
     daemonize update
-    daemonize syslogd
 
     # Ugly error message when starting cron from CD.
     # (and cron unnecessary then so..)
@@ -114,6 +113,7 @@ start)
     then	daemonize cron
     else	. /etc/rc.cd
     fi
+    daemonize syslogd
     echo .
 
     if [ "$net" ]
