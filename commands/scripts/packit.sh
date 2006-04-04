@@ -45,7 +45,8 @@ then
 	rm -f $PI
 fi
 
-makewhatis /usr/man
-makewhatis /usr/local/man
-makewhatis /usr/gnu/man
-makewhatis /usr/X11R6/man
+for d in /usr/man /usr/local/man /usr/gnu/man /usr/X11R6/man
+do	if [ -d "$d" ]
+	then makewhatis $d
+	fi
+done
