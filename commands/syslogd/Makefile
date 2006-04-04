@@ -35,16 +35,10 @@ logger: logger.o syslog.o
 clean:
 	$(RM) $(OBJS) $(TARGETS) syslog_test *.BAK core
 
-install:	install-bin install-sys
-
-install-bin:	$(BINDIR)/logger $(BINDIR)/syslog_test $(BINDIR)/syslogd
+install:	$(BINDIR)/logger $(BINDIR)/syslog_test $(BINDIR)/syslogd
 $(BINDIR)/logger:	logger
 	install -cs -m 755 -o bin -g operator $? $@
 $(BINDIR)/syslog_test:	syslog_test
 	install -cs -m 755 -o bin -g operator $? $@
 $(BINDIR)/syslogd:	syslogd
 	install -cs -m 700 -o root -g operator $? $@
-install-sys: /etc/syslog.conf
-/etc/syslog.conf:	syslog.conf
-	install -c -m 644 -o root -g operator $? $@
-
