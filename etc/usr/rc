@@ -109,9 +109,13 @@ start)
 
     # Ugly error message when starting cron from CD.
     # (and cron unnecessary then so..)
+    rm -f /var/log || true
     if [ ! -f /CD ]
-    then	daemonize cron
-    else	. /etc/rc.cd
+    then	ln -s /usr/log /var/log || true
+		daemonize cron
+    else	mkdir /tmp/log
+		ln -s /tmp/log /var/log || true
+		. /etc/rc.cd
     fi
     daemonize syslogd
     echo .
