@@ -107,8 +107,12 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define CAP_TYPE	0x00	/* Type field in capability */
 #define CAP_NEXT	0x01	/* Next field in capability */
 
+#define PCI_BCR_MASS_STORAGE	0x01	/* Mass Storage class */
+#define 	PCI_MS_IDE		0x01	/* IDE storage class */
+
 /* Device type values as ([PCI_BCR] << 16) | ([PCI_SCR] << 8) | [PCI_PIFR] */
 #define PCI_T3_VGA_OLD		0x000100	/* OLD VGA class code */
+#define	PCI_T3_RAID		0x010400	/* RAID controller */
 #define PCI_T3_VGA		0x030000	/* VGA-compatible video card */
 #define PCI_T3_ISA		0x060100	/* ISA bridge */
 #define	PCI_T3_PCI2PCI		0x060400	/* PCI-to-PCI Bridge device */
