@@ -213,9 +213,9 @@ fi
 
 echo $TMPDISK3 >$TD3
 
-umount $TMPDISK
-umount $TMPDISK2
-umount $TMPDISK3
+umount $TMPDISK || true
+umount $TMPDISK2 || true
+umount $TMPDISK3 || true
 
 if [ $TMPDISK = $TMPDISK2  -o $TMPDISK = $TMPDISK3 -o $TMPDISK2 = $TMPDISK3 ]
 then
