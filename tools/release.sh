@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 PACKAGEDIR=/usr/bigports/Packages
 PACKAGESOURCEDIR=/usr/bigports/Sources
 secs=`expr 32 '*' 64`
@@ -221,9 +223,6 @@ then
 	exit
 fi
 
-echo " * Ready to go, press RETURN if you're sure.."
-read xyzzy
-
 echo " * Cleanup old files"
 rm -rf $RELEASEDIR $IMG $IMAGE $ROOTIMAGE $IMGBZ $CDFILES image*
 mkdir -p $CDFILES || exit
@@ -318,10 +317,6 @@ then
 	hdemu_root_changes
 fi
 
-echo "Temporary filesystems still mounted. Make changes, or press RETURN"
-echo -n "to continue making the image.."
-read xyzzy
-
 echo $version_pretty >$RELEASEDIR/etc/version
 echo " * Counting files"
 df $TMPDISK | tail -1 | awk '{ print $4 }' >$RELEASEDIR/.usrkb
@@ -332,9 +327,9 @@ find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 echo " * Zeroing remainder of temporary areas"
 df $TMPDISK
 df $TMPDISK3
-cp /dev/zero $RELEASEDIR/usr/.x
+cp /dev/zero $RELEASEDIR/usr/.x 2>/dev/null || true
 rm $RELEASEDIR/usr/.x
-cp /dev/zero $RELEASEDIR/.x
+cp /dev/zero $RELEASEDIR/.x 2>/dev/null || true
 rm $RELEASEDIR/.x
 
 umount $TMPDISK || exit
