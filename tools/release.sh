@@ -347,7 +347,7 @@ dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 mv image_big image
 sh mkboot cdfdboot $TMPDISK3
 cp $IMAGE $CDFILES/bootflop.img
-cp release/cd/* $CDFILES
+cp release/cd/* $CDFILES || true
 echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.TXT
 
 h_opt=
