@@ -383,7 +383,3 @@ else
 		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 	fi
 fi
-echo " * bzipping $IMG"
-bzip2 $IMG
-ls -al $IMGBZ
-
