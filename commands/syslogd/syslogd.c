@@ -67,6 +67,10 @@
 **  Extensive rewriting by G. Falzoni <gfalzoni@inwind.it> for porting to Minix
 ** 
 **  $Log$
+**  Revision 1.2  2006/04/04 14:18:16  beng
+**  Make syslogd work, even if it can only open klog and not udp or vice versa
+**  (but not neither)
+**
 **  Revision 1.1  2006/04/03 13:07:42  beng
 **  Kick out usyslogd in favour of syslogd Giovanni's syslogd port
 **
@@ -834,10 +838,7 @@ int main(int argc, char **argv)
   alarm(TIMERINTVL);
 
   /* Open UDP device */
-  if ((nfd = open(udpdev, O_NONBLOCK | O_RDONLY)) < 0) {
-	logerror("UDP device not open");
-	return EXIT_FAILURE;
-  }
+  nfd = open(udpdev, O_NONBLOCK | O_RDONLY);
 
   /* Configures the UDP device */
   udpopt.nwuo_flags = NWUO_SHARED | NWUO_LP_SET | NWUO_EN_LOC |
@@ -847,7 +848,7 @@ int main(int argc, char **argv)
 			port == 0 ? sp->s_port : htons(port);
   udpopt.nwuo_remaddr = udpopt.nwuo_locaddr = htonl(0x7F000001L);
   
-  while (ioctl(nfd, NWIOSUDPOPT, &udpopt) < 0 ||
+  while (nfd >= 0 && ioctl(nfd, NWIOSUDPOPT, &udpopt) < 0 ||
       ioctl(nfd, NWIOGUDPOPT, &udpopt) < 0) {
 	if (errno == EAGAIN) {
 		sleep(1);
@@ -858,8 +859,10 @@ int main(int argc, char **argv)
   }
 
   /* Open kernel log device */
-  if ((kfd = open("/dev/klog", O_NONBLOCK | O_RDONLY)) < 0) {
-	logerror("Open /dev/klog failed");
+  kfd = open("/dev/klog", O_NONBLOCK | O_RDONLY);
+
+  if(kfd < 0 && nfd < 0) {
+	logerror("open /dev/klog and udp device failed - can't log anything");
 	return EXIT_FAILURE;
   }
 
@@ -872,15 +875,15 @@ int main(int argc, char **argv)
   for (;;) {			/* Main loop */
 
 	FD_ZERO(&fdset);	/* Setup descriptors for select */
-	FD_SET(nfd, &fdset);
-	FD_SET(kfd, &fdset);
+	if(nfd >= 0) FD_SET(nfd, &fdset);
+	if(kfd >= 0) FD_SET(kfd, &fdset);
 
 	if (select(fdmax, &fdset, NULL, NULL, NULL) <= 0) {
 		sleep(1);
 		continue;
 
 	}
-	if (FD_ISSET(nfd, &fdset)) {
+	if (nfd >= 0 && FD_ISSET(nfd, &fdset)) {
 
 		/* Read a message from application programs */
 		len = read(nfd, line, MAXLINE);
@@ -899,7 +902,7 @@ int main(int argc, char **argv)
 			die(-1);
 		}
 	}
-	if (FD_ISSET(kfd, &fdset)) {
+	if (kfd >= 0 && FD_ISSET(kfd, &fdset)) {
 		static char linebuf[5*1024];
 
 		/* Read a message from kernel (klog) */
