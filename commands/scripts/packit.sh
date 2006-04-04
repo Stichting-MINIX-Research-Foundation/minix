@@ -32,7 +32,13 @@ then	echo "Couldn't find package $f."
 	exit 1
 fi
 
-cat $f | smallbunzip2 | pax -r -p e
+# can we execute bunzip2?
+if bunzip2 --help 2>&1 | grep usage >/dev/null
+then	BUNZIP2=bunzip2
+else	BUNZIP2=smallbunzip2
+fi
+
+cat $f | $BUNZIP2 | pax -r -p e
 if [ -f $PI ]
 then
 	sh -e $PI

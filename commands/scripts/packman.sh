@@ -15,6 +15,12 @@ URL2=http://www.minix3.org/beta_packages
 SRCURL1=http://www.minix3.org/software
 SRCURL2=http://www.minix3.org/beta_software
 
+# can we execute bunzip2?
+if bunzip2 --help 2>&1 | grep usage >/dev/null
+then    BUNZIP2=bunzip2 
+else    BUNZIP2=smallbunzip2
+fi
+
 if id | fgrep "uid=0(" >/dev/null
 then	:
 else	echo "Please run $0 as root."
@@ -89,7 +95,7 @@ else	cont=y
 				echo " * Installing sources in $SRC .."
 				for f in $CDSRC/*.tar.bz2
 				do	echo "$f .."
-					smallbunzip2 -dc $f | tar xf - 
+					$BUNZIP2 -dc $f | tar xf - 
 				done
 			fi
 			;;
@@ -199,7 +205,7 @@ do	cd $TMPDIR
 					echo "Retrieving source from $srcurl .."
 					urlget $srcurl >$srcfile || exit
 					echo "Source retrieved in $SRC/$srcfile."
-					smallbunzip2 -dc $srcfile | tar xf - >/dev/null || exit
+					$BUNZIP2 -dc $srcfile | tar xf - >/dev/null || exit
 					echo "Source unpacked in $SRC."
 				)
 			fi
@@ -217,7 +223,7 @@ do	cd $TMPDIR
 				read src
 				if [ "$src" = y -o "$src" = Y ]
 				then	(	cd $SRC || exit
-						smallbunzip2 -dc $srcfile | tar xf - || exit
+						$BUNZIP2 -dc $srcfile | tar xf - || exit
 						echo "Source $srcfile unpacked in $SRC."
 					)
 				fi
