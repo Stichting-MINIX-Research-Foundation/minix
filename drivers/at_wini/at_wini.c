@@ -324,6 +324,17 @@ PRIVATE phys_bytes prdt_phys;
 
 #define PRDTE_FL_EOT	0x80	/* End of table */
 
+/* Some IDE devices announce themselves as RAID controllers */
+PRIVATE struct
+{
+	u16_t vendor;
+	u16_t device;
+} raid_table[]=
+{
+	{ 0x1106,	0x3149	},	/* VIA VT6420 */
+	{ 0,		0	}	/* end of list */
+};
+
 FORWARD _PROTOTYPE( void init_params, (void) 				);
 FORWARD _PROTOTYPE( void init_drive, (struct wini *w, int base_cmd,
 	int base_ctl, int base_dma, int irq, int ack, int hook,
@@ -511,31 +522,58 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
 PRIVATE void init_params_pci(int skip)
 {
   int i, r, devind, drive;
+  int irq, irq_hook, raid;
+  u8_t bcr, scr, interface;
   u16_t vid, did;
-  u32_t base_dma;
+  u32_t base_dma, t3;
 
   pci_init();
   for(drive = w_next_drive; drive < MAX_DRIVES; drive++)
   	wini[drive].state = IGNORING;
   for(r = pci_first_dev(&devind, &vid, &did); r != 0;
 	r = pci_next_dev(&devind, &vid, &did)) {
-  	int interface, irq, irq_hook;
-  	/* Base class must be 01h (mass storage), subclass must
-  	 * be 01h (ATA).
+
+	raid= 0;
+
+  	/* Except class 01h (mass storage), subclass be 01h (ATA).
+	 * Also check listed RAID controllers.
   	 */
-  	if (pci_attr_r8(devind, PCI_BCR) != 0x01 ||
-  	   pci_attr_r8(devind, PCI_SCR) != 0x01) {
-  	   continue;
-  	}
+	bcr= pci_attr_r8(devind, PCI_BCR);
+	scr= pci_attr_r8(devind, PCI_SCR);
+	interface= pci_attr_r8(devind, PCI_PIFR);
+	t3= ((bcr << 16) | (scr << 8) | interface);
+  	if (bcr == PCI_BCR_MASS_STORAGE && scr == PCI_MS_IDE)
+		;	/* Okay */
+	else if (t3 == PCI_T3_RAID)
+	{
+		for (i= 0; raid_table[i].vendor != 0; i++)
+		{
+			if (raid_table[i].vendor == vid &&
+				raid_table[i].device == did)
+			{
+				break;
+			}
+		}
+		if (raid_table[i].vendor == 0)
+		{
+		  	printf(
+	"atapci skipping unsupported RAID controller 0x%04x / 0x%04x\n",
+				vid, did);
+			continue;
+		}
+		printf("found supported RAID controller\n");
+		raid= 1;
+	}
+	else
+		continue;	/* Unsupported device class */
 
   	/* Found a controller.
   	 * Programming interface register tells us more.
   	 */
-  	interface = pci_attr_r8(devind, PCI_PIFR);
   	irq = pci_attr_r8(devind, PCI_ILR);
 
   	/* Any non-compat drives? */
-  	if (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2)) {
+  	if (raid || (interface & (ATA_IF_NOTCOMPAT1 | ATA_IF_NOTCOMPAT2))) {
   		int s;
 
 		if (w_next_drive >= MAX_DRIVES)
@@ -548,7 +586,12 @@ PRIVATE void init_params_pci(int skip)
 
   		irq_hook = irq;
   		if (skip > 0) {
-  			if (w_pci_debug) printf("atapci skipping controller (remain %d)\n", skip);
+  			if (w_pci_debug)
+			{
+				printf(
+				"atapci skipping controller (remain %d)\n",
+					skip);
+			}
   			skip--;
   			continue;
   		}
@@ -565,7 +608,7 @@ PRIVATE void init_params_pci(int skip)
   	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xfffffffc;
 
   	/* Primary channel not in compatability mode? */
-  	if (interface & ATA_IF_NOTCOMPAT1) {
+  	if (raid || (interface & ATA_IF_NOTCOMPAT1)) {
   		u32_t base_cmd, base_ctl;
 
   		base_cmd = pci_attr_r32(devind, PCI_BAR) & 0xfffffffc;
@@ -593,7 +636,7 @@ PRIVATE void init_params_pci(int skip)
 	}
 
   	/* Secondary channel not in compatability mode? */
-  	if (interface & ATA_IF_NOTCOMPAT2) {
+  	if (raid || (interface & ATA_IF_NOTCOMPAT2)) {
   		u32_t base_cmd, base_ctl;
 
   		base_cmd = pci_attr_r32(devind, PCI_BAR_3) & 0xfffffffc;
