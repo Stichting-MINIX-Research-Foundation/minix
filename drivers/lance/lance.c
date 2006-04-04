@@ -316,8 +316,10 @@ void main( int argc, char **argv )
 	
 	fkeys = sfkeys = 0; bit_set( sfkeys, 7 );
  
+#if 0
 	if ( (r = fkey_map(&fkeys, &sfkeys)) != OK )
 		printf( "Error registering key\n" );
+#endif
 	
 	if((eth_tasknr=getprocnr()) < 0)
 		panic("lance","couldn't get own proc nr", i);
