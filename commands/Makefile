@@ -3,7 +3,7 @@
 MAKE	= exec make -$(MAKEFLAGS)
 BZIP2=bzip2-1.0.3
 
-SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple syslogd talk talkd telnet telnetd urlget yap zmodem
+SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp ftpd ftpd200 httpd ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple syslogd talk talkd telnet telnetd urlget yap zmodem
 
 usage:
 	@echo "Usage: make all          # Compile all commands" >&2

@@ -843,7 +843,7 @@ void get_parameters(void)
 {
 	char params[SECTOR_SIZE + 1];
 	token **acmds;
-	int r, bus;
+	int r, bus, processor;
 	memory *mp;
 	static char bus_type[][4] = {
 		"xt", "at", "mca"
@@ -860,7 +860,9 @@ void get_parameters(void)
 	b_setvar(E_SPECIAL|E_VAR|E_DEV, "ramimagedev", "bootdev");
 	b_setvar(E_SPECIAL|E_VAR, "ramsize", "0");
 #if BIOS
-	b_setvar(E_SPECIAL|E_VAR, "processor", ul2a10(getprocessor()));
+	processor = getprocessor();
+	if(processor == 1586) processor = 686;
+	b_setvar(E_SPECIAL|E_VAR, "processor", ul2a10(processor));
 	b_setvar(E_SPECIAL|E_VAR, "bus", bus_type[get_bus()]);
 	b_setvar(E_SPECIAL|E_VAR, "video", vid_type[get_video()]);
 	b_setvar(E_SPECIAL|E_VAR, "chrome", vid_chrome[get_video() & 1]);
