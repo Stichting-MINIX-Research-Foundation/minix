@@ -64,10 +64,10 @@ install:	/usr/bin/vi \
 		/usr/bin/ctags /usr/bin/ref /usr/bin/fmt \
 		/usr/bin/elvrec /usr/bin/elvprsv
 
-/usr/bin/elvis:	elvis
+/usr/bin/vi:	elvis
 	install -cs -o bin elvis $@
 
-/bin/elvis:	elvis
+/bin/vi:	elvis
 	install -cs -o bin elvis $@
 
 /usr/bin/ctags:	ctags
