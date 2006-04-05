@@ -60,10 +60,14 @@ elvprsv:	elvprsv.c
 	install -S 4kw $@
 
 install:	/usr/bin/elvis \
+		/bin/elvis \
 		/usr/bin/ctags /usr/bin/ref /usr/bin/fmt \
 		/usr/bin/elvrec /usr/bin/elvprsv
 
 /usr/bin/elvis:	elvis
+	install -cs -o bin elvis $@
+
+/bin/elvis:	elvis
 	install -cs -o bin elvis $@
 
 /usr/bin/ctags:	ctags

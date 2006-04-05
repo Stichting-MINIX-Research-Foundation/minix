@@ -260,9 +260,7 @@ extern long lseek();
 #if ANY_UNIX
 # ifndef TMPDIR
 #  if MINIX
-#   define TMPDIR	"/usr/tmp"	/* Keep elvis' temp files off RAM disk! */
-#  else
-#   define TMPDIR	"/tmp"		/* directory where temp files live */
+#   define TMPDIR	"/tmp"
 #  endif
 # endif
 # ifndef PRSVDIR
