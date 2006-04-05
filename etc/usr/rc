@@ -117,7 +117,7 @@ start)
 		. /etc/rc.cd
     fi
     # syslogd has not been started yet
-    rm /var/run/syslogd.pid
+    rm -f /var/run/syslogd.pid
     daemonize syslogd
     echo .
 
