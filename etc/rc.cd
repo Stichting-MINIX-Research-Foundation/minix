@@ -2,9 +2,3 @@
 
 # CD boottime initializations.
 
-PATH=/bin:/usr/bin
-
-# This is so we can get a writable /var/log.
-mkdir /tmp/log
-rm -f /var/log
-ln -s /tmp/log /var/log 
