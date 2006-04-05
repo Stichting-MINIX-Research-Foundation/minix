@@ -27,6 +27,10 @@ _getprocessor:
 	.data1	0x0F, 0xA2	! CPUID instruction tells the processor type
 	andb	ah, 0x0F	! Extract the family (5, 6, ...)
 	movzxb	eax, ah
+	cmp	eax, 15		! 15: extended family
+	jne	direct
+	mov	eax, 6		! Make it 686
+direct:
 	imul	eax, 100	! 500, 600, ...
 	add	eax, 86		! 586, 686, ...
 	mov	7*4(esp), eax	! Pass eax through
