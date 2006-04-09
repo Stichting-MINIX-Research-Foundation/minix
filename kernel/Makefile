@@ -37,6 +37,13 @@ depend:
 	cd system && $(MAKE) -$(MAKEFLAGS) $@
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c *.s > .depend
 
+# How to build it
+.s.o:
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+.c.o:
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 # Include generated dependencies.
 klib.o:	klib386.s klib88.s
 mpx.o:	mpx386.s mpx88.s

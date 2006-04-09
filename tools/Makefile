@@ -4,7 +4,6 @@ u=/usr
 CC=	exec cc
 CFLAGS=	-O -D_MINIX -D_POSIX_SOURCE
 MDEC=	/usr/mdec
-MAKE=	exec make -$(MAKEFLAGS)
 
 # Specify the programs that are part of the system image.
 PROGRAMS=	../kernel/kernel \
@@ -42,7 +41,7 @@ usage:
 
 # create a fresh configuration or system image
 fresh: 
-	cd ../lib && make clean
+	cd ../lib && $(MAKE) clean
 	$(MAKE) clean 
 	$(MAKE) libraries services
 
@@ -73,9 +72,9 @@ services: includes
 	cd ../drivers && $(MAKE) install
 
 libraries: includes
-	cd ../lib && make clean
-	cd ../lib && make all
-	cd ../lib && make install
+	cd ../lib && $(MAKE) clean
+	cd ../lib && $(MAKE) all
+	cd ../lib && $(MAKE) install
 
 
 # make bootable and place system images

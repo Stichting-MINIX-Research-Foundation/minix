@@ -63,12 +63,12 @@ if [ ! -z "$SUBDIRS" ]; then
 	echo "$RECURSIVE_TARGETS:: makefiles"
 	for dir in $SUBDIRS
 	{
-		if [ $TYPE = "both" -o $TYPE = "ack" ]; then
+		#if [ $TYPE = "both" -o $TYPE = "ack" ]; then
 			#echo "	mkdir -p $ACKBASE/$OBJDIR/$dir"
-		fi
-		if [ $TYPE = "both" -o $TYPE = "gnu" ]; then
+		#fi
+		#if [ $TYPE = "both" -o $TYPE = "gnu" ]; then
 			#echo "	mkdir -p $GNUBASE/$OBJDIR/$dir"
-		fi
+		#fi
 		
 		echo "	cd $dir && \$(MAKE) \$@"
 	}
