@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 	execv("/usr/bin/halt", argv);
 #endif
 
-	if ((prog = strrchr(*argv,'/')) == nil) prog= argv[0]; else argv++;
+	if ((prog = strrchr(*argv,'/')) == nil) prog= argv[0]; else prog++;
 
 	sleep(2);	/* Not too fast. */
 
