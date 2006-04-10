@@ -97,12 +97,13 @@ BS=4096
 HDEMU=0
 COPY=0
 CVSTAG=HEAD
+PACKAGES=1
 
-while getopts "chu?" c
+while getopts "pchu?" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-c] [-h] [-r <tag>] [-u]" >&2
+		echo "Usage: $0 [-p] [-c] [-h] [-r <tag>] [-u]" >&2
 		exit 1
 	;;
 	h)
@@ -113,6 +114,9 @@ do
 	c)
 		echo " * Copying, not CVS"
 		COPY=1
+		;;
+	p)
+		PACKAGES=0
 		;;
 	r)	
 		CVSTAG=$OPTARG
@@ -246,7 +250,7 @@ mkdir -p $RELEASEPACKAGESOURCES
 echo " * Transfering $COPYITEMS to $RELEASEDIR"
 ( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
 
-if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR ]
+if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR -a $PACKAGES -ne 0 ]
 then	echo " * Indexing packages"
 	bintotal=0
 	( cd $PACKAGEDIR
@@ -319,10 +323,11 @@ fi
 
 echo $version_pretty >$RELEASEDIR/etc/version
 echo " * Counting files"
-df $TMPDISK | tail -1 | awk '{ print $4 }' >$RELEASEDIR/.usrkb
+extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
+expr `df $TMPDISK | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEDIR/.usrkb
 du -s $RELEASEDIR/usr/src.* | awk '{ t += $1 } END { print t }' >$RELEASEDIR/.extrasrckb
 ( for d in $RELEASEDIR/usr/src.*; do find $d; done) | wc -l >$RELEASEDIR/.extrasrcfiles
-find $RELEASEDIR/usr | wc -l >$RELEASEDIR/.usrfiles
+find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 echo " * Zeroing remainder of temporary areas"
 df $TMPDISK
