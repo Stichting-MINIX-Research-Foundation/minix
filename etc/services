@@ -16,6 +16,8 @@ qotd		17/tcp		quote
 chargen		19/tcp		ttytst source
 chargen		19/udp		ttytst source
 ftp		21/tcp
+ssh             22/tcp    #Secure Shell Login
+ssh             22/udp    #Secure Shell Login
 telnet		23/tcp
 smtp		25/tcp		mail
 time		37/tcp		timserver
