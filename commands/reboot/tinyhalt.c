@@ -11,6 +11,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
 
 int main(int argc, char **argv)
 {
@@ -27,7 +28,12 @@ int main(int argc, char **argv)
 
 	if ((prog = strrchr(*argv,'/')) == nil) prog= argv[0]; else prog++;
 
-	sleep(2);	/* Not too fast. */
+	sleep(1);	/* Not too fast. */
+  	signal(SIGHUP, SIG_IGN);
+  	signal(SIGTERM, SIG_IGN);
+	kill(1, SIGTERM);
+	kill(-1, SIGTERM);
+	sleep(1);
 
 	reboot(strcmp(prog, "reboot") == 0 ? RBT_MONITOR : RBT_HALT,
 		reboot_code, strlen(reboot_code));
