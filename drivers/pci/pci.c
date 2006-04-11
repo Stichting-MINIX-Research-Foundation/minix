@@ -1251,6 +1251,13 @@ PRIVATE void complete_bars()
 				continue;
 			if (base+size <= iogap_low)
 				continue;
+			if (debug)
+			{
+				printf(
+		"pci device %d (%04x/%04x), bar %d: base 0x%x, size 0x%x\n",
+					i, pcidev[i].pd_vid, pcidev[i].pd_did,
+					j, base, size);
+			}
 			if (base+size-iogap_low < iogap_high-base)
 				iogap_low= base+size;
 			else
@@ -1259,7 +1266,14 @@ PRIVATE void complete_bars()
 	}
 
 	if (iogap_high < iogap_low)
-		panic("pci", "iogap_high too low", iogap_high);
+	{
+		if (debug)
+		{
+			printf("iogap_high too low, should panic\n");
+		}
+		else
+			panic("pci", "iogap_high too low", iogap_high);
+	}
 	if (debug)
 		printf("I/O range = [0x%x..0x%x>\n", iogap_low, iogap_high);
 
@@ -1506,10 +1520,13 @@ int busind;
 		}
 		return 0;
 	}
-	printf("(warning) unsupported ISA bridge %04X/%04X for bus %d\n",
-		pcidev[unknown_bridge].pd_vid,
-		pcidev[unknown_bridge].pd_did,
-		busind);
+	if (debug)
+	{
+		printf(
+		"(warning) unsupported ISA bridge %04X/%04X for bus %d\n",
+			pcidev[unknown_bridge].pd_vid,
+			pcidev[unknown_bridge].pd_did, busind);
+	}
 	return 0;
 }
 
