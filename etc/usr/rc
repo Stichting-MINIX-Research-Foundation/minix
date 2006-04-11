@@ -67,6 +67,9 @@ up()
     service up /usr/sbin/$service "$@" 
 }
 
+
+DAEMONS=/etc/rc.daemons
+
 case $action in
 start)
     # Select console font.
@@ -130,16 +133,14 @@ start)
 	else
 	    # Standard network daemons.
     	    echo -n "Starting networking:"
-	    if grep 'psip0.*default' /etc/inet.conf >/dev/null
+	    if grep -s 'psip0.*default' /etc/inet.conf 
 	    then	ifconfig -h 10.0.0.1
 	    else	daemonize dhcpd
 	    fi
 	    daemonize nonamed
-	    daemonize talkd
-	    daemonize tcpd shell in.rshd
-	    daemonize tcpd login in.rlogind
-	    daemonize tcpd telnet in.telnetd
-	    daemonize tcpd ftp in.ftpd
+	    if [ -f "$DAEMONS" ]
+	    then	. "$DAEMONS"
+	    fi
 	    # The last daemon has been started, so close the list:
 	    echo .
 	fi

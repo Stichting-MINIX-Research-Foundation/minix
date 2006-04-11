@@ -1,0 +1,5 @@
+daemonize talkd
+daemonize tcpd shell in.rshd
+daemonize tcpd login in.rlogind
+daemonize tcpd telnet in.telnetd
+daemonize tcpd ftp in.ftpd
