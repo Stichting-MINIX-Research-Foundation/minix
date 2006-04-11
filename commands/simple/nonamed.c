@@ -12,6 +12,7 @@ static const char version[] = "2.7";
 #define nil ((void*)0)
 #include <sys/types.h>
 #include <stdio.h>
+#include <syslog.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -78,6 +79,8 @@ static u32_t stale;		/* Extension time for stale data. */
 static u32_t httl;		/* TTL for /etc/hosts data. */
 static int reinit, done;	/* Reinit config / program is done. */
 static int single;		/* Run single on a nondefault interface. */
+static int localonly;		/* Only accept local queries. */
+#define LOCALHOST	0x7F000001
 
 static void report(const char *label)
 {
@@ -801,7 +804,7 @@ static void init_config(ipaddr_t ifip)
     time_t ht, dt;
 
     /* See if anything really changed. */
-    if (((ifip ^ HTONL(0x7F000000)) & HTONL(0xFF000000)) == 0) ifip= my_ip;
+    if (((ifip ^ HTONL(LOCALHOST)) & HTONL(0xFF000000)) == 0) ifip= my_ip;
     ht= filetime(HOSTS);
     dt= filetime(DHCPCACHE);
     if (ifip == my_ip && ht == hosts_time && dt == dhcp_time) return;
@@ -889,7 +892,7 @@ static int query_hosts(u8_t *qname, unsigned type, dns_t *dp, size_t *pdlen)
     unsigned ancount;
     struct hostent localhost;
     static char *noaliases[]= { nil };
-    static ipaddr_t localaddr= HTONL(0x7F000001L);
+    static ipaddr_t localaddr= HTONL(LOCALHOST);
     static char *localaddrlist[]= { (char *) &localaddr, nil };
 
     if (single) return 0;
@@ -1403,6 +1406,15 @@ static int job_read_udp(void *data, int expired)
     } else {
 	/* A query. */
 	if (udp.dns.hdr.dh_qdcount != HTONS(1)) return 1;
+
+	if(localonly) {
+		/* Check if it's a local query. */
+		if(ntohl(udp.hdr.uih_src_addr) != LOCALHOST) {
+		   	syslog(LOG_WARNING, "nonamed: dropped query from %s",
+		   		inet_ntoa(udp.hdr.uih_src_addr));
+		   	return 1;
+		}
+	}
 
 	/* Try to compose a reply from local data. */
 	if (compose_reply(&udp.dns, &dlen)) {
@@ -2039,6 +2051,9 @@ int main(int argc, char **argv)
 	case 'q':		/* Quit after printing cache contents. */
 	    quit= 1;
 	    break;
+	case 'L':
+	    localonly= 1;
+	    break;
 	default:
 	    usage();
 	}
@@ -2101,6 +2116,9 @@ int main(int argc, char **argv)
     newjob(job_read_udp, NEVER, nil);
     newjob(job_setup_listen, IMMEDIATE, nil);
     newjob(job_find_named, IMMEDIATE, nil);
+
+    /* Open syslog. */
+    openlog("nonamed", LOG_PID, LOG_DAEMON);
 
     while (!done) {
 	/* There is always something in the queue. */
