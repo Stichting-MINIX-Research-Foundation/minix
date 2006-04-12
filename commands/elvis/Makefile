@@ -59,15 +59,15 @@ elvprsv:	elvprsv.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o elvprsv elvprsv.c ctype.o
 	install -S 4kw $@
 
-install:	/usr/bin/vi \
-		/bin/vi \
+install:	/usr/bin/elvis \
+		/bin/elvis \
 		/usr/bin/ctags /usr/bin/ref /usr/bin/fmt \
 		/usr/bin/elvrec /usr/bin/elvprsv
 
-/usr/bin/vi:	elvis
+/usr/bin/elvis:	elvis
 	install -cs -o bin elvis $@
 
-/bin/vi:	elvis
+/bin/elvis:	elvis
 	install -cs -o bin elvis $@
 
 /usr/bin/ctags:	ctags
