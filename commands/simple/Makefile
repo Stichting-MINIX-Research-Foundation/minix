@@ -1001,6 +1001,7 @@ install:	\
 	/usr/bin/lp \
 	/usr/bin/lpd \
 	/usr/bin/ls \
+	/bin/ls \
 	/usr/bin/mail \
 	/usr/bin/man \
 	/usr/bin/mesg \
@@ -1383,6 +1384,9 @@ install:	\
 	install -cs -o daemon -m 4755 $? $@
 
 /usr/bin/ls:	ls
+	install -cs -o bin $? $@
+
+/bin/ls:	ls
 	install -cs -o bin $? $@
 
 /usr/bin/mail:	mail
