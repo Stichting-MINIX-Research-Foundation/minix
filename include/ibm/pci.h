@@ -109,6 +109,12 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 #define PCI_BCR_MASS_STORAGE	0x01	/* Mass Storage class */
 #define 	PCI_MS_IDE		0x01	/* IDE storage class */
+#define			PCI_IDE_PRI_NATIVE	0x01	/* Primary channel is
+							 * in native mode.
+							 */
+#define			PCI_IDE_SEC_NATIVE	0x04	/* Secondary channel is
+							 * in native mode.
+							 */
 
 /* Device type values as ([PCI_BCR] << 16) | ([PCI_SCR] << 8) | [PCI_PIFR] */
 #define PCI_T3_VGA_OLD		0x000100	/* OLD VGA class code */
