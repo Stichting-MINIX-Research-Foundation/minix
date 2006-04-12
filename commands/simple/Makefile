@@ -770,7 +770,7 @@ tail:	tail.c
 
 tar:	tar.c
 	$(CCLD) -o $@ $?
-	@install -S 512kw $@
+	@install -S 256kw $@
 
 tcpd:	tcpd.c
 	$(CCLD) -o $@ -DPARANOID=0 tcpd.c
