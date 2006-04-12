@@ -912,12 +912,61 @@ int devind;
 PRIVATE void record_bars(devind)
 int devind;
 {
-	int i, reg, prefetch, type;
+	int i, j, reg, prefetch, type, clear_01, clear_23, pb_nr;
 	u32_t bar, bar2;
 
 	for (i= 0, reg= PCI_BAR; reg <= PCI_BAR_6; i++, reg += 4)
 	{
 		record_bar(devind, i);
+	}
+
+	/* Special case code for IDE controllers in compatibility mode */
+	if (pcidev[devind].pd_baseclass == PCI_BCR_MASS_STORAGE &&
+		pcidev[devind].pd_subclass == PCI_MS_IDE)
+	{
+		/* IDE device */
+		clear_01= 0;
+		clear_23= 0;
+		if (!(pcidev[devind].pd_infclass & PCI_IDE_PRI_NATIVE))
+		{
+			if (debug)
+			{
+				printf(
+	"primary channel is not in native mode, clearing BARs 0 and 1\n");
+			}
+			clear_01= 1;
+		}
+		if (!(pcidev[devind].pd_infclass & PCI_IDE_SEC_NATIVE))
+		{
+			if (debug)
+			{
+				printf(
+	"primary channel is not in native mode, clearing BARs 2 and 3\n");
+			}
+			clear_23= 1;
+		}
+
+		j= 0;
+		for (i= 0; i<pcidev[devind].pd_bar_nr; i++)
+		{
+			pb_nr= pcidev[devind].pd_bar[i].pb_nr;
+			if ((pb_nr == 0 || pb_nr == 1) && clear_01)
+			{
+				if (debug) printf("skipping bar %d\n", pb_nr);
+				continue;	/* Skip */
+			}
+			if ((pb_nr == 2 || pb_nr == 3) && clear_23)
+			{
+				if (debug) printf("skipping bar %d\n", pb_nr);
+				continue;	/* Skip */
+			}
+			if (i == j)
+				continue;	/* No need to copy */
+			pcidev[devind].pd_bar[j]=
+				pcidev[devind].pd_bar[i];
+			j++;
+		}
+		pcidev[devind].pd_bar_nr= j;
 	}
 }
 
@@ -1251,6 +1300,7 @@ PRIVATE void complete_bars()
 				continue;
 			if (base+size <= iogap_low)
 				continue;
+#if 0
 			if (debug)
 			{
 				printf(
@@ -1258,6 +1308,7 @@ PRIVATE void complete_bars()
 					i, pcidev[i].pd_vid, pcidev[i].pd_did,
 					j, base, size);
 			}
+#endif
 			if (base+size-iogap_low < iogap_high-base)
 				iogap_low= base+size;
 			else
