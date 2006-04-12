@@ -166,7 +166,7 @@ cdfdboot)
 	# cdfdboot: Make a boot floppy image to go on a CD for booting from.
 	if [ -z "$dev" ]
 	then
-		ramdisk `expr 1440*1024` 2>/dev/null
+		ramdisk `expr 1440 \* 1024` 2>/dev/null
 		dev=/dev/ram
 	fi
 	umount $dev 2>/dev/null
