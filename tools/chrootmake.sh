@@ -2,18 +2,19 @@
 set -e
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 export SHELL=/bin/sh
-cd /usr/src || exit 1
+cd /usr/src 
 make etcfiles
-su bin -c 'make world install' || exit 1
-cd tools || exit 1
+su bin -c 'make world install' 
+cd tools 
 rm revision
 rm /boot/image/*
-make install || exit 1
-cp ../boot/boot /boot/boot || exit 1
+make install 
+cp /boot/image/* /boot/image/image  # Make big image accessible by this name
+cp ../boot/boot /boot/boot 
 make clean
-make image_small || exit 1
-#cp image_small /boot || exit 1
-cd /usr/src || exit 1
+make image_small 
+cp image_small /boot/image 
+cd /usr/src 
 make clean
 # Let man find the manpages
 su bin -c 'makewhatis /usr/man'
