@@ -7,3 +7,5 @@ www.minix3.org.
 If you do not have sufficient memory to run X Windows, standard MINIX 3
 supports multiple virtual terminals. Just use ALT+F1, F2, F3 and F4 to
 navigate among them.
+
+To get rid of this message, edit /etc/issue.
