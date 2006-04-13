@@ -1,0 +1,12 @@
+
+To install X Windows, run 'packman' with the install CD still in the
+drive.  To start X Windows after you have installed it, login as root
+and type: 'xdm'. For more information about configuring X Windows, see
+www.minix3.org.
+
+If you do not have sufficient memory to run X Windows, standard MINIX 3
+supports multiple virtual terminals. Just use ALT+F1, F2, F3 and F4 to
+navigate among them.
+
+To get rid of this message, edit /etc/motd.
+
