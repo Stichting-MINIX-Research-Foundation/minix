@@ -591,7 +591,7 @@ then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 fi
 
 # CD remnants that aren't for the installed system
-rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
+rm /mnt/CD /mnt/.* 2>/dev/null
 					# Change /etc/fstab. (No swap.)
 					# ${swap:+swap=/dev/$swap}
 echo >/mnt/etc/fstab "\
