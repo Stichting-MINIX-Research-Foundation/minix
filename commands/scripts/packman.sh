@@ -67,8 +67,10 @@ else	cont=y
 		else	sourcesize=""
 		fi
 		binf=$CDPACK/SizeMB
-		if [ -f $binf ]
-		then	binsize=" (`cat $binf` MB uncompressed)"
+		if [ -f $binf -a -f $sourcef ]
+		then	sourcemb="`cat $sourcef`"
+			binmb="`cat $binf`"
+			binsize=" (`expr $sourcemb + $binmb` MB uncompressed)"
 		else	binsize=""
 		fi
 
