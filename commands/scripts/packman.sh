@@ -62,15 +62,16 @@ else	cont=y
 	while [ $cont = y ]
 	do	n="`wc -l $cdpackages | awk '{ print $1 }'`"
 		sourcef=$CDSRC/SizeMB
-		if [ -f $sourcef ]
-		then	sourcesize=" (`cat $sourcef` MB uncompressed)"
-		else	sourcesize=""
-		fi
-		binf=$CDPACK/SizeMB
 		if [ -f $binf -a -f $sourcef ]
 		then	sourcemb="`cat $sourcef`"
 			binmb="`cat $binf`"
-			binsize=" (`expr $sourcemb + $binmb` MB uncompressed)"
+			sourcesize=" (`expr $binmb + $sourcemb` MB uncompressed)"
+		else	sourcesize=""
+		fi
+		binf=$CDPACK/SizeMB
+		if [ -f $binf ]
+		then	binmb="`cat $binf`"
+			binsize=" ($binmb MB uncompressed)"
 		else	binsize=""
 		fi
 
