@@ -138,7 +138,7 @@ fi
 IMGBZ=${IMG}.bz2
 echo "Making $IMGBZ"
 
-USRMB=450
+USRMB=400
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
