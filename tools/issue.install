@@ -1,3 +1,16 @@
+Welcome to MINIX 3.1.2. The system is now running and many commands work
+normally.  To use MINIX 3.1.2 in a serious way, you need to install it
+to your hard disk, which you can do by typing 'setup' while logged in as
+root.  Then just follow the on-screen directions.
 
-Login as root and run 'setup' to install Minix.
+After setup is complete, type 'shutdown' and when the boot monitor
+starts, boot it by following the instructions at the end of setup.  Keep
+the CD-ROM in the drive, login as root and type 'packman' to begin
+installing the many software packages available.  After you have
+installed the packages, type 'xdm' to start X Windows if you have
+installed it.
+
+It is strongly recommended that you print and read the 'setup.pdf' file
+on the CD-ROM before staring the installation. The file is also
+available at www.minix3.org/doc under the 'Installation' heading.
 
