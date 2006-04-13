@@ -1,21 +1,7 @@
+To start X Windows, login as root and type: 'xdm'. For more information
+about configuring X Windows, see www.minix3.org.
 
-Welcome.  MINIX 3 is still under development and may contain bugs and
-other imperfections.  If you would like to help develop MINIX 3 further
-into a rock solid, reliable operating system, please go to the official
-Website:
-
-www.minix3.org
-
-to see how you can help.  That page also contains additional MINIX 3
-software, documentation, and information about the MINIX community.  If
-you find a bug, please use the "Report a bug" link on that page. Or
-email <bugs@minix3.org>.
-
-For help with MINIX 3 and discussion about it, please subscribe to the
-newsgroup: comp.os.minix.
-
-MINIX 3 supports virtual terminals. Hit ALT+F2, ALT+F3 etc. to see them.
-ALT+<left arrow> and ALT+<right arrow> walks through them.
-
-To install packages from the install CD or the network, type 'packman'.
+If you do not have sufficient memory to run X Windows, standard MINIX 3
+supports multiple virtual terminals. Just use ALT+F1, F2, F3 and F4 to
+navigate among them.
 
