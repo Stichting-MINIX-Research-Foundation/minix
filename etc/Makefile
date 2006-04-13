@@ -1,7 +1,7 @@
 
 ETC=/etc/
 USRETC=/usr/etc/
-FILES1=fstab group hostname.file inet.conf motd mtab passwd profile protocols rc services termcap ttytab utmp rc.cd binary_sizes binary_sizes.big binary_sizes.xxl rc.rescue syslog.conf rc.daemons.dist issue
+FILES1=fstab group hostname.file inet.conf motd mtab passwd profile protocols rc services termcap ttytab utmp rc.cd binary_sizes binary_sizes.big binary_sizes.xxl rc.rescue syslog.conf rc.daemons.dist 
 FILES2=shadow
 FILES3=daily dhcptags.conf rc
 
