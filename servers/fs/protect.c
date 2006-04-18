@@ -2,8 +2,8 @@
  * for four system calls that relate to protection.
  *
  * The entry points into this file are
- *   do_chmod:	perform the CHMOD system call
- *   do_chown:	perform the CHOWN system call
+ *   do_chmod:	perform the CHMOD and FCHMOD system calls
+ *   do_chown:	perform the CHOWN and FCHOWN system calls
  *   do_umask:	perform the UMASK system call
  *   do_access:	perform the ACCESS system call
  *   forbidden:	check to see if a given access is allowed on a given inode
@@ -29,9 +29,15 @@ PUBLIC int do_chmod()
   register struct inode *rip;
   register int r;
 
-  /* Temporarily open the file. */
-  if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  if ( (rip = eat_path(user_path)) == NIL_INODE) return(err_code);
+  if(call_nr == CHMOD) {
+    /* Temporarily open the file. */
+    if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
+    if ( (rip = eat_path(user_path)) == NIL_INODE) return(err_code);
+  } else if(call_nr == FCHMOD) {
+    struct filp *filp;
+    if(!(filp = get_filp(m_in.m3_i1))) return(err_code);
+    rip = filp->filp_ino;
+  } else panic(__FILE__, "do_chmod called with strange call_nr", call_nr);
 
   /* Only the owner or the super_user may change the mode of a file.
    * No one may change the mode of a file on a read-only file system.
@@ -43,7 +49,7 @@ PUBLIC int do_chmod()
 
   /* If error, return inode. */
   if (r != OK)	{
-	put_inode(rip);
+	if(call_nr == CHMOD) put_inode(rip);
 	return(r);
   }
 
@@ -53,7 +59,7 @@ PUBLIC int do_chmod()
   rip->i_update |= CTIME;
   rip->i_dirt = DIRTY;
 
-  put_inode(rip);
+  if(call_nr == CHMOD) put_inode(rip);
   return(OK);
 }
 
@@ -67,9 +73,15 @@ PUBLIC int do_chown()
   register struct inode *rip;
   register int r;
 
-  /* Temporarily open the file. */
-  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  if ( (rip = eat_path(user_path)) == NIL_INODE) return(err_code);
+  if(call_nr == CHOWN) {
+    /* Temporarily open the file. */
+    if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+    if ( (rip = eat_path(user_path)) == NIL_INODE) return(err_code);
+  } else if(call_nr == FCHOWN) {
+    struct filp *filp;
+    if(!(filp = get_filp(m_in.m1_i1))) return(err_code);
+    rip = filp->filp_ino;
+  } else panic(__FILE__, "do_chown called with strange call_nr", call_nr);
 
   /* Not permitted to change the owner of a file on a read-only file sys. */
   r = read_only(rip);
@@ -92,7 +104,7 @@ PUBLIC int do_chown()
 	rip->i_dirt = DIRTY;
   }
 
-  put_inode(rip);
+  if(call_nr == CHOWN) put_inode(rip);
   return(r);
 }
 

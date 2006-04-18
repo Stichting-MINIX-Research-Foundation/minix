@@ -29,6 +29,8 @@ libc_FILES=" \
 	execv.s \
 	execve.s \
 	execvp.s \
+	fchown.s \
+	fchmod.s \
 	fcntl.s \
 	fork.s \
 	fpathconf.s \

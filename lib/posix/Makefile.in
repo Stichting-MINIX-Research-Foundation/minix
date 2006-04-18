@@ -27,6 +27,8 @@ libc_FILES=" \
 	_execv.c \
 	_execve.c \
 	_execvp.c \
+	_fchmod.c \
+	_fchown.c \
 	_fcntl.c \
 	_fork.c \
 	_fpathconf.c \

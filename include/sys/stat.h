@@ -68,6 +68,7 @@ struct stat {
 
 /* Function Prototypes. */
 _PROTOTYPE( int chmod, (const char *_path, _mnx_Mode_t _mode)		);
+_PROTOTYPE( int fchmod, (int fd, _mnx_Mode_t _mode)			);
 _PROTOTYPE( int fstat, (int _fildes, struct stat *_buf)			);
 _PROTOTYPE( int mkdir, (const char *_path, _mnx_Mode_t _mode)		);
 _PROTOTYPE( int mkfifo, (const char *_path, _mnx_Mode_t _mode)		);
