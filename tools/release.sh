@@ -47,8 +47,8 @@ disable=inet
 bios_wini=yes
 bios_remap_first=1
 ramimagedev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image/image; boot }
-bootsmall(2, Small MINIX 3 (<16MB)) {image=/boot/image/image_small; boot }
+bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
+bootsmall(2, Small MINIX 3 (<16MB)) {image=/boot/image_small; boot }
 main() { trap 10000 boot ; menu; }
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
 
@@ -99,7 +99,7 @@ COPY=0
 CVSTAG=HEAD
 PACKAGES=1
 
-while getopts "pchu?" c
+while getopts "pchu?r:" c
 do
 	case "$c" in
 	\?)
