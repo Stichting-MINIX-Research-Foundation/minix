@@ -64,7 +64,6 @@ usb_root_changes()
 		$RELEASEDIR/usr/mdec/bootblock boot/boot
 	echo \
 'bios_wini=yes
-disable=inet
 bios_remap_first=1
 rootdev=c0d7p0s0
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
@@ -304,8 +303,10 @@ find $RELEASEDIR/usr/src/commands -name build | xargs chmod 755
 # Bug tracking system not for on cd
 rm -rf $RELEASEDIR/usr/src/doc/bugs
 
-# Make sure the CD knows it's a CD
-date >$RELEASEDIR/CD
+# Make sure the CD knows it's a CD, unless it's not
+if [ "$USB" -eq 0 ]
+then	date >$RELEASEDIR/CD
+fi
 echo " * Chroot build"
 chroot $RELEASEDIR "/bin/sh -x /usr/src/tools/chrootmake.sh" || exit 1
 echo " * Chroot build done"
