@@ -47,8 +47,8 @@ disable=inet
 bios_wini=yes
 bios_remap_first=1
 ramimagedev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image/image; boot }
-bootsmall(2, Small MINIX 3 (<16MB)) {image=/boot/image/image_small; boot }
+bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
+bootsmall(2, Small MINIX 3 (<16MB)) {image=/boot/image_small; boot }
 main() { trap 10000 boot ; menu; }
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
 
@@ -64,7 +64,6 @@ usb_root_changes()
 		$RELEASEDIR/usr/mdec/bootblock boot/boot
 	echo \
 'bios_wini=yes
-disable=inet
 bios_remap_first=1
 rootdev=c0d7p0s0
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
@@ -99,7 +98,7 @@ COPY=0
 CVSTAG=HEAD
 PACKAGES=1
 
-while getopts "pchu?" c
+while getopts "pchu?r:" c
 do
 	case "$c" in
 	\?)
@@ -304,8 +303,10 @@ find $RELEASEDIR/usr/src/commands -name build | xargs chmod 755
 # Bug tracking system not for on cd
 rm -rf $RELEASEDIR/usr/src/doc/bugs
 
-# Make sure the CD knows it's a CD
-date >$RELEASEDIR/CD
+# Make sure the CD knows it's a CD, unless it's not
+if [ "$USB" -eq 0 ]
+then	date >$RELEASEDIR/CD
+fi
 echo " * Chroot build"
 chroot $RELEASEDIR "/bin/sh -x /usr/src/tools/chrootmake.sh" || exit 1
 echo " * Chroot build done"

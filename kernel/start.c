@@ -37,7 +37,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
    * done below. 
    */
 #if _WORD_SIZE != 2
-  machine.protected = 1;	
+  machine.prot = 1;	
 #endif
 
   /* Record where the kernel and the monitor are. */
@@ -75,9 +75,9 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
    */
   machine.processor=atoi(get_value(params, "processor")); 
 #if _WORD_SIZE == 2
-  machine.protected = machine.processor >= 286;		
+  machine.prot = machine.processor >= 286;		
 #endif
-  if (! machine.protected) mon_return = 0;
+  if (! machine.prot) mon_return = 0;
 
   /* XT, AT or MCA bus? */
   value = get_value(params, "bus");

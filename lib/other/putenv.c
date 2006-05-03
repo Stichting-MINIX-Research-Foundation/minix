@@ -14,7 +14,7 @@ extern _CONST char ***_penviron;
 
 int
 putenv(name)
-_CONST char *name;
+char *name;
 {
 	register _CONST char **v = *_penviron;
 	register char *r;

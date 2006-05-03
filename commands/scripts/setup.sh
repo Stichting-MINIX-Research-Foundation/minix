@@ -93,11 +93,6 @@ warn()
 while getopts '' opt; do usage; done
 shift `expr $OPTIND - 1`
 
-if [ ! -f /CD ]
-then	echo "Please run setup from the CD, not from a live system."
-	exit 1
-fi
-
 if [ "$USER" != root ]
 then	echo "Please run setup as root."
 	exit 1
@@ -581,6 +576,7 @@ mount /dev/$root /mnt >/dev/null || exit
 
 # Running from the installation CD.
 cpdir -vx / /mnt | progressbar "$ROOTFILES" || exit	
+cp /mnt/etc/motd.install /mnt/etc/motd
 
 # Fix /var/log
 rm /mnt/var/log
@@ -591,7 +587,7 @@ then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
 fi
 
 # CD remnants that aren't for the installed system
-rm /mnt/issue /mnt/CD /mnt/.* 2>/dev/null
+rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
 					# Change /etc/fstab. (No swap.)
 					# ${swap:+swap=/dev/$swap}
 echo >/mnt/etc/fstab "\

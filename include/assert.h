@@ -25,8 +25,8 @@
 #else
 /* Debugging enabled -- verify assertions at run time. */
 #ifdef _ANSI
-#define	__str(x)	# x
-#define	__xstr(x)	__str(x)
+#define	__makestr(x)	# x
+#define	__xstr(x)	__makestr(x)
 
 _PROTOTYPE( void __bad_assertion, (const char *_mess) );
 #define	assert(expr)	((expr)? (void)0 : \

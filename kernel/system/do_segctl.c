@@ -44,7 +44,7 @@ register message *m_ptr;	/* pointer to request message */
   }
   if (index < 0) return(ENOSPC);
 
-  if (! machine.protected) {
+  if (! machine.prot) {
       selector = phys / HCLICK_SIZE;
       offset = phys % HCLICK_SIZE;
       result = OK;

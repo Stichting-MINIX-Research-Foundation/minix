@@ -130,7 +130,7 @@ struct machine {
   int pc_at;
   int ps_mca;
   int processor;
-  int protected;
+  int prot;
   int vdu_ega;
   int vdu_vga;
 };

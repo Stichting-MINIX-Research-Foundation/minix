@@ -292,7 +292,7 @@ PUBLIC void kenv_dmp()
     printf("- pc_at:      %3d\n", machine.pc_at); 
     printf("- ps_mca:     %3d\n", machine.ps_mca); 
     printf("- processor:  %3d\n", machine.processor); 
-    printf("- protected:  %3d\n", machine.protected); 
+    printf("- protected:  %3d\n", machine.prot); 
     printf("- vdu_ega:    %3d\n", machine.vdu_ega); 
     printf("- vdu_vga:    %3d\n\n", machine.vdu_vga); 
     printf("Kernel info structure:\n");
