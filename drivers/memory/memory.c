@@ -307,7 +307,7 @@ PRIVATE void m_init()
   if (OK != (s=sys_getmachine(&machine))) {
       panic("MEM","Couldn't get machine information.",s);
   }
-  if (! machine.protected) {
+  if (! machine.prot) {
 	m_geom[MEM_DEV].dv_size =   cvul64(0x100000); /* 1M for 8086 systems */
   } else {
 #if _WORD_SIZE == 2

@@ -49,7 +49,7 @@ int mine;
 
   intr_disable();
 
-  if (machine.protected) {
+  if (machine.prot) {
       /* The AT and newer PS/2 have two interrupt controllers, one master,
        * one slaved at IRQ 2.  (We don't have to deal with the PC that
        * has just one controller, because it must run in real mode.)

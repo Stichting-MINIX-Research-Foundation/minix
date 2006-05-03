@@ -75,7 +75,7 @@ _PROTOTYPE( int getloadavg, (double *, int)				);
 #endif
 
 #ifdef _MINIX
-_PROTOTYPE( int putenv, (const char *_name)				);
+_PROTOTYPE( int putenv, (char *_name)					);
 _PROTOTYPE( int setenv, (const char *name, const char *val, const int f));
 
 /* According to POSIX, getopt should be in unistd.h. What do we do with
