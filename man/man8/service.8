@@ -31,17 +31,9 @@ server or device driver. The device driver will be automatically restarted when
 it unexpectedly exits, e.g., if it is killed because of a bad pointer. 
 Starting requires an absoluate path to the binary to be executed.
 .PP
-When an optional period is specified, the reincarnation server sends a status
-request to the system service after every period. If there the response does 
-not arrive in time, the reincarnation server will kill the misbehaving process
-and restart a new one. The period must be specified in ticks, but can be 
-appended with 'HZ' to make it seconds.
+When an optional period is specified, the reincarnation server sends a status request to the system service after every period. If there the response does not arrive in time, the reincarnation server will kill the misbehaving process and restart a new one. The period must be specified in ticks, but can be appended with HZ to make it seconds.
 .PP
-Stopping a system service requires the process id of a running system service. 
-Issuing a kill command from the shell will not work, since the reincarnation
-server interprets this as an unexpected exit and will automatically restart
-a fresh copy of the process. The clean way to restart a process is using the
-'refresh' option of the service utility.
+Stopping a system service requires the process id of a running system service. Issuing a kill command from the shell will not work, since the reincarnation server interprets this as an unexpected exit and will automatically restart a fresh copy of the process. The clean way to restart a process is using the refresh option of the service utility.
 .PP
 The rescue call can be used to set the current working directory of the reincarnation server. By using a trusted rescue driver to shadow certain binaries in RAM the reincarnation server can check that rescue directory for binaries if the normal execution of the absolute path fails. This allows recovery from failures of the root file system driver.
 .PP
