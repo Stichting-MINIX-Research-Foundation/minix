@@ -122,10 +122,11 @@ main(argc, argv)  char **argv; {
 		reset();
 #if ATTY
 		if (exception == EXINT
-		 && (! attyset() || equal(termval(), "emacs"))) {
+		 && (! attyset() || equal(termval(), "emacs")))
 #else
-		if (exception == EXINT) {
+		if (exception == EXINT)
 #endif
+		{
 			out2c('\n');
 			flushout(&errout);
 		}
