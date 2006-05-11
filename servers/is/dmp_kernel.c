@@ -449,13 +449,14 @@ PUBLIC void sendmask_dmp()
 PRIVATE char *p_rts_flags_str(int flags)
 {
 	static char str[10];
-	str[0] = (flags & NO_MAP) ? 'M' : '-';
+	str[0] = (flags & NO_PRIORITY) ? 's' : '-';
 	str[1] = (flags & SENDING)  ? 'S' : '-';
 	str[2] = (flags & RECEIVING)    ? 'R' : '-';
 	str[3] = (flags & SIGNALED)    ? 'I' : '-';
 	str[4] = (flags & SIG_PENDING)    ? 'P' : '-';
 	str[5] = (flags & P_STOP)    ? 'T' : '-';
-	str[6] = '\0';
+	str[6] = (flags & NO_PRIV) ? 'p' : '-';
+	str[7] = '\0';
 
 	return str;
 }
@@ -479,7 +480,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n-nr-----gen---endpoint--name--- -prior-quant- -user---sys----size-rts flags-\n");
+  printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user---sys----size-rts flags-\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -492,7 +493,7 @@ PUBLIC void proctab_dmp()
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf(" %-8.8s %02u/%02u %02d/%02u %6lu%6lu %6uK %s",
+	printf("%-8.8s %02u/%02u %02d/%02u %6lu%6lu %6uK %s",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 
