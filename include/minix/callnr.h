@@ -54,9 +54,12 @@
 #define GETPGRP		  63
 
 /* The following are not system calls, but are processed like them. */
-#define UNPAUSE		  65	/* to MM or FS: check for EINTR */
+#define UNPAUSE		  65	/* to PM or FS: check for EINTR */
+#define EXEC_NEWMEM	  66	/* from FS to PM: new memory map for exec */
 #define REVIVE	 	  67	/* to FS: revive a sleeping process */
 #define TASK_REPLY	  68	/* to FS: reply code from tty task */
+#define FORK_NB		  69	/* to PM: special fork call for RS */
+#define EXEC_RESTART	  70	/* to PM: final part of exec for RS */
 
 /* Posix signal handling. */
 #define SIGACTION	  71

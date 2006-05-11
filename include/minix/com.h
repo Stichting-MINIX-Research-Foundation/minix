@@ -439,7 +439,9 @@
 #define PR_TRACING     m1_i3	/* flag to indicate tracing is on/ off */
 #define PR_NAME_PTR    m1_p2	/* tells where program name is for dmp */
 #define PR_IP_PTR      m1_p3	/* initial value for ip after exec */
-#define PR_MEM_PTR     m1_p1	/* tells where memory map is for sys_newmap */
+#define PR_MEM_PTR     m1_p1	/* tells where memory map is for sys_newmap
+				 * and sys_fork
+				 */
 
 /* Field names for SYS_INT86 */
 #define INT86_REG86    m1_p1	/* pointer to registers */
@@ -462,6 +464,9 @@
 #define RS_REFRESH	(RS_RQ_BASE + 2)	/* restart system service */
 #define RS_RESCUE	(RS_RQ_BASE + 3)	/* set rescue directory */
 #define RS_SHUTDOWN	(RS_RQ_BASE + 4)	/* alert about shutdown */
+#define RS_UP_COPY	(RS_RQ_BASE + 5)	/* start system service and
+						 * keep the binary in memory
+						 */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */
@@ -503,6 +508,79 @@
 #  define DIAG_ENDPT          m1_i2
 #define GET_KMESS	101	/* get kmess from TTY */
 #  define GETKM_PTR	      m1_p1
+
+#define PM_BASE	0x900
+#define PM_GET_WORK	(PM_BASE + 1)	/* Get work from PM */
+#define PM_IDLE		(PM_BASE + 2)	/* PM doesn't have any more work */
+#define PM_BUSY		(PM_BASE + 3)	/* A reply from FS is needed */
+#define PM_STIME	(PM_BASE + 4)	/* Tell FS about the new system time */
+#define		PM_STIME_TIME	m1_i1		/* boottime */
+#define PM_SETSID	(PM_BASE + 5)	/* Tell FS about the session leader */
+#define		PM_SETSID_PROC	m1_i1		/* process */
+#define PM_SETGID	(PM_BASE + 6)	/* Tell FS about the new group IDs */
+#define		PM_SETGID_PROC	m1_i1		/* process */
+#define		PM_SETGID_EGID	m1_i2		/* effective group id */
+#define		PM_SETGID_RGID	m1_i3		/* real group id */
+#define PM_SETUID	(PM_BASE + 7)	/* Tell FS about the new user IDs */
+#define		PM_SETUID_PROC	m1_i1		/* process */
+#define		PM_SETUID_EGID	m1_i2		/* effective user id */
+#define		PM_SETUID_RGID	m1_i3		/* real user id */
+#define PM_FORK		(PM_BASE + 8)	/* Tell FS about the new process */
+#define		PM_FORK_PPROC	m1_i1		/* parent process */
+#define		PM_FORK_CPROC	m1_i2		/* child process */
+#define		PM_FORK_CPID	m1_i3		/* child pid */
+#define PM_EXIT		(PM_BASE + 9)	/* Tell FS about the exiting process */
+#define		PM_EXIT_PROC	m1_i1		/* process */
+#define PM_UNPAUSE	(PM_BASE + 10)	/* interrupted process */
+#define		PM_UNPAUSE_PROC	m1_i1		/* process */
+#define PM_REBOOT	(PM_BASE + 11)	/* Tell FS that we about to reboot */
+#define PM_EXEC		(PM_BASE + 12)	/* Forward exec call to FS */
+#define		PM_EXEC_PROC		m1_i1	/* process */
+#define		PM_EXEC_PATH		m1_p1	/* executable */
+#define		PM_EXEC_PATH_LEN	m1_i2	/* length of path including
+						 * terminating nul
+						 */
+#define		PM_EXEC_FRAME		m1_p2	/* arguments and environment */
+#define		PM_EXEC_FRAME_LEN	m1_i3	/* size of frame */
+#define PM_FORK_NB	(PM_BASE + 13)	/* Tell FS about the fork_nb call */
+#define PM_DUMPCORE	(PM_BASE + 14)	/* Ask FS to generate a core dump */
+#define		PM_CORE_PROC		m1_i1
+#define		PM_CORE_SEGPTR		m1_p1
+#define PM_UNPAUSE_TR	(PM_BASE + 15)	/* interrupted process (for tracing) */
+#define PM_EXIT_TR	(PM_BASE + 16)	/* Tell FS about the exiting process
+					 * (for tracing)
+					 */
+
+/* Replies */
+#define PM_EXIT_REPLY	(PM_BASE + 20)	/* Reply from FS */
+#define PM_REBOOT_REPLY	(PM_BASE + 21)	/* Reply from FS */
+#define PM_EXEC_REPLY	(PM_BASE + 22)	/* Reply from FS */
+		/* PM_EXEC_PROC m1_i1 */
+#define		PM_EXEC_STATUS m1_i2	/* OK or failure */
+#define PM_CORE_REPLY	(PM_BASE + 23)	/* Reply from FS */
+		/* PM_CORE_PROC m1_i1 */
+#define		PM_CORE_STATUS m1_i2	/* OK or failure */
+#define PM_EXIT_REPLY_TR (PM_BASE + 24)	/* Reply from FS */
+
+/* Parameters for the EXEC_NEWMEM call */
+#define EXC_NM_PROC	m1_i1		/* process that needs new map */
+#define EXC_NM_PTR	m1_p1		/* parameters in struct exec_newmem */
+/* Results:
+ * the status will be in m_type.
+ * the top of the stack will be in m1_i1.
+ * the following flags will be in m1_i2:
+ */
+#define EXC_NM_RF_LOAD_TEXT	1	/* Load text segment (otherwise the
+					 * text segment is already present)
+					 */
+#define EXC_NM_RF_ALLOW_SETUID	2	/* Setuid execution is allowed (tells
+					 * FS to update its uid and gid 
+					 * fields.
+					 */
+
+/* Parameters for the EXEC_RESTART call */
+#define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
+#define EXC_RS_RESULT	m1_i2		/* result of the exec */
 
 
 #endif /* _MINIX_COM_H */ 

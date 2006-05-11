@@ -147,4 +147,21 @@ struct mem_range
 	phys_bytes mr_limit;	/* Highest memory address in range */
 };
 
+/* For EXEC_NEWMEM */
+struct exec_newmem
+{
+	vir_bytes text_bytes;
+	vir_bytes data_bytes;
+	vir_bytes bss_bytes;
+	vir_bytes tot_bytes;
+	vir_bytes args_bytes;
+	int sep_id;
+	dev_t st_dev;
+	ino_t st_ino;
+	time_t st_ctime;
+	uid_t new_uid;
+	gid_t new_gid;
+	char progname[16];	/* Should be at least PROC_NAME_LEN */
+};
+
 #endif /* _TYPE_H */

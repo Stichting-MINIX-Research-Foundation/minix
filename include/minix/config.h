@@ -71,7 +71,7 @@
 #define ENABLE_CACHE2      0
 
 /* Enable or disable swapping processes to disk. */
-#define ENABLE_SWAP	   1
+#define ENABLE_SWAP	   0
 
 /* Include or exclude an image of /dev/boot in the boot image. 
  * Please update the makefile in /usr/src/tools/ as well.
