@@ -50,8 +50,21 @@ PUBLIC int do_getset()
 			return(EPERM);
 		if(call_nr == SETUID) rmp->mp_realuid = (uid_t) m_in.usr_id;
 		rmp->mp_effuid = (uid_t) m_in.usr_id;
-		tell_fs(SETUID, who_e, rmp->mp_realuid, rmp->mp_effuid);
-		r = OK;
+
+		if (rmp->mp_fs_call != PM_IDLE)
+		{
+			panic(__FILE__, "do_getset: not idle",
+				rmp->mp_fs_call);
+		}
+		rmp->mp_fs_call= PM_SETUID;
+		r= notify(FS_PROC_NR);
+		if (r != OK)
+			panic(__FILE__, "do_getset: unable to notify FS", r);
+		
+		/* Do not reply until FS is ready to process the setuid
+		 * request
+		 */
+		r= SUSPEND;
 		break;
 
 	case SETEGID:
@@ -61,15 +74,42 @@ PUBLIC int do_getset()
 			return(EPERM);
 		if(call_nr == SETGID) rmp->mp_realgid = (gid_t) m_in.grp_id;
 		rmp->mp_effgid = (gid_t) m_in.grp_id;
-		tell_fs(SETGID, who_e, rmp->mp_realgid, rmp->mp_effgid);
-		r = OK;
+
+		if (rmp->mp_fs_call != PM_IDLE)
+		{
+			panic(__FILE__, "do_getset: not idle",
+				rmp->mp_fs_call);
+		}
+		rmp->mp_fs_call= PM_SETGID;
+		r= notify(FS_PROC_NR);
+		if (r != OK)
+			panic(__FILE__, "do_getset: unable to notify FS", r);
+
+		/* Do not reply until FS is ready to process the setgid
+		 * request
+		 */
+		r= SUSPEND;
 		break;
 
 	case SETSID:
 		if (rmp->mp_procgrp == rmp->mp_pid) return(EPERM);
 		rmp->mp_procgrp = rmp->mp_pid;
-		tell_fs(SETSID, who_e, 0, 0);
-		/* fall through */
+
+		if (rmp->mp_fs_call != PM_IDLE)
+		{
+			panic(__FILE__, "do_getset: not idle",
+				rmp->mp_fs_call);
+		}
+		rmp->mp_fs_call= PM_SETSID;
+		r= notify(FS_PROC_NR);
+		if (r != OK)
+			panic(__FILE__, "do_getset: unable to notify FS", r);
+
+		/* Do not reply until FS is ready to process the setsid
+		 * request
+		 */
+		r= SUSPEND;
+		break;
 
 	case GETPGRP:
 		r = rmp->mp_procgrp;

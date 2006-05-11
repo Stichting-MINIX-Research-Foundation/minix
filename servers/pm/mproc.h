@@ -40,6 +40,9 @@ EXTERN struct mproc {
   sigset_t mp_sigpending;	/* pending signals to be handled */
   struct sigaction mp_sigact[_NSIG + 1]; /* as in sigaction(2) */
   vir_bytes mp_sigreturn; 	/* address of C library __sigreturn function */
+  struct sigmsg mp_sigmsg;	/* Save the details of the signal until the
+				 * PM_UNPAUSE request is delivered.
+				 */
   struct timer mp_timer;	/* watchdog timer for alarm(2) */
 
   /* Backwards compatibility for signals. */
@@ -49,6 +52,13 @@ EXTERN struct mproc {
   vir_bytes mp_procargs;        /* ptr to proc's initial stack arguments */
   struct mproc *mp_swapq;	/* queue of procs waiting to be swapped in */
   message mp_reply;		/* reply message to be sent to one */
+
+  /* Communication with FS */
+  int mp_fs_call;
+  char *mp_exec_path;		/* Path of executable */
+  vir_bytes mp_exec_path_len;	/* Length of path (including nul) */
+  char *mp_exec_frame;		/* Arguments */
+  vir_bytes mp_exec_frame_len;	/* Length of arguments */
 
   /* Scheduling priority. */
   signed int mp_nice;		/* nice is PRIO_MIN..PRIO_MAX, standard 0. */
@@ -71,6 +81,8 @@ EXTERN struct mproc {
 #define SWAPIN	 	0x800	/* set if on the "swap this in" queue */
 #define DONT_SWAP      0x1000   /* never swap out this process */
 #define PRIV_PROC      0x2000   /* system process, special privileges */
+#define PM_SIG_PENDING 0x4000	/* process got a signal while waiting for FS */
+#define PARTIAL_EXEC   0x8000	/* Process got a new map but no content */
 
 #define NIL_MPROC ((struct mproc *) 0)
 

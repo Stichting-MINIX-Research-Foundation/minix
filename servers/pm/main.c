@@ -34,6 +34,8 @@ FORWARD _PROTOTYPE( void get_mem_chunks, (struct memory *mem_chunks) 	);
 FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks, 
 	struct mem_map *map_ptr) 	);
 FORWARD _PROTOTYPE( void do_x86_vm, (struct memory mem_chunks[NR_MEMS])	);
+FORWARD _PROTOTYPE( void send_work, (void)				);
+FORWARD _PROTOTYPE( void handle_fs_reply, (message *m_ptr)		);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
@@ -55,21 +57,51 @@ PUBLIC int main()
 	get_work();		/* wait for an PM system call */
 
 	/* Check for system notifications first. Special cases. */
-	if (call_nr == SYN_ALARM) {
+	switch(call_nr)
+	{
+	case SYN_ALARM:
 		pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
 		result = SUSPEND;		/* don't reply */
-	} else if (call_nr == SYS_SIG) {	/* signals pending */
+		break;
+	case SYS_SIG:				/* signals pending */
 		sigset = m_in.NOTIFY_ARG;
 		if (sigismember(&sigset, SIGKSIG))  {
 			(void) ksig_pending();
 		} 
 		result = SUSPEND;		/* don't reply */
-	}
-	/* Else, if the system call number is valid, perform the call. */
-	else if ((unsigned) call_nr >= NCALLS) {
-		result = ENOSYS;
-	} else {
-		result = (*call_vec[call_nr])();
+		break;
+	case PM_GET_WORK:
+		if (who_e == FS_PROC_NR)
+		{
+			send_work();
+			result= SUSPEND;		/* don't reply */
+		}
+		else
+			result= ENOSYS;
+		break;
+	case PM_EXIT_REPLY:
+	case PM_REBOOT_REPLY:
+	case PM_EXEC_REPLY:
+	case PM_CORE_REPLY:
+	case PM_EXIT_REPLY_TR:
+		if (who_e == FS_PROC_NR)
+		{
+			handle_fs_reply(&m_in);
+			result= SUSPEND;		/* don't reply */
+		}
+		else
+			result= ENOSYS;
+		break;
+	default:
+		/* Else, if the system call number is valid, perform the
+		 * call.
+		 */
+		if ((unsigned) call_nr >= NCALLS) {
+			result = ENOSYS;
+		} else {
+			result = (*call_vec[call_nr])();
+		}
+		break;
 	}
 
 	/* Send the results back to the user to indicate completion. */
@@ -182,6 +214,8 @@ PRIVATE void pm_init()
   /* Initialize process table, including timers. */
   for (rmp=&mproc[0]; rmp<&mproc[NR_PROCS]; rmp++) {
 	tmr_inittimer(&rmp->mp_timer);
+
+	rmp->mp_fs_call= PM_IDLE;
   }
 
   /* Build the set of signals which cause core dumps, and the set of signals
@@ -470,3 +504,379 @@ struct memory mem_chunks[NR_MEMS];
 	if (r != 0)
 		printf("do_x86_vm: sys_vm_setbuf failed: %d\n", r);
 }
+
+/*=========================================================================*
+ *				send_work				   *
+ *=========================================================================*/
+PRIVATE void send_work()
+{
+	int r, call;
+	struct mproc *rmp;
+	message m;
+
+	m.m_type= PM_IDLE;
+	for (rmp= mproc; rmp < &mproc[NR_PROCS]; rmp++)
+	{
+		call= rmp->mp_fs_call;
+		if (call == PM_IDLE)
+			continue;
+		switch(call)
+		{
+		case PM_STIME:
+			m.m_type= call;
+			m.PM_STIME_TIME= boottime;
+
+			/* FS does not reply */
+			rmp->mp_fs_call= PM_IDLE;
+
+			/* Wakeup the original caller */
+			setreply(rmp-mproc, OK);
+			break;
+
+		case PM_SETSID:
+			m.m_type= call;
+			m.PM_SETSID_PROC= rmp->mp_endpoint;
+
+			/* FS does not reply */
+			rmp->mp_fs_call= PM_IDLE;
+
+			/* Wakeup the original caller */
+			setreply(rmp-mproc, rmp->mp_procgrp);
+			break;
+
+		case PM_SETGID:
+			m.m_type= call;
+			m.PM_SETGID_PROC= rmp->mp_endpoint;
+			m.PM_SETGID_EGID= rmp->mp_effgid;
+			m.PM_SETGID_RGID= rmp->mp_realgid;
+
+			/* FS does not reply */
+			rmp->mp_fs_call= PM_IDLE;
+
+			/* Wakeup the original caller */
+			setreply(rmp-mproc, OK);
+			break;
+
+		case PM_SETUID:
+			m.m_type= call;
+			m.PM_SETUID_PROC= rmp->mp_endpoint;
+			m.PM_SETUID_EGID= rmp->mp_effuid;
+			m.PM_SETUID_RGID= rmp->mp_realuid;
+
+			/* FS does not reply */
+			rmp->mp_fs_call= PM_IDLE;
+
+			/* Wakeup the original caller */
+			setreply(rmp-mproc, OK);
+			break;
+
+		case PM_FORK:
+		{
+			int parent_e, parent_p;
+			struct mproc *parent_mp;
+
+			parent_p = rmp->mp_parent;
+			parent_mp = &mproc[parent_p];
+
+			m.m_type= call;
+			m.PM_FORK_PPROC= parent_mp->mp_endpoint;
+			m.PM_FORK_CPROC= rmp->mp_endpoint;
+			m.PM_FORK_CPID= rmp->mp_pid;
+
+			/* FS does not reply */
+			rmp->mp_fs_call= PM_IDLE;
+
+			/* Wakeup the newly created process */
+			setreply(rmp-mproc, OK);
+
+			/* Wakeup the parent */
+			setreply(parent_mp-mproc, rmp->mp_pid);
+			break;
+		}
+
+		case PM_EXIT:
+		case PM_EXIT_TR:
+			m.m_type= call;
+			m.PM_EXIT_PROC= rmp->mp_endpoint;
+
+			/* Mark the process as busy */
+			rmp->mp_fs_call= PM_BUSY;
+
+			break;
+
+		case PM_UNPAUSE:
+		case PM_UNPAUSE_TR:
+			m.m_type= call;
+			m.PM_UNPAUSE_PROC= rmp->mp_endpoint;
+
+			/* FS does not reply */
+			rmp->mp_fs_call= PM_IDLE;
+
+			if (call == PM_UNPAUSE)
+			{
+				/* Ask the kernel to deliver the signal */
+				r= sys_sigsend(rmp->mp_endpoint,
+					&rmp->mp_sigmsg);
+				if (r != OK)
+					panic(__FILE__,"sys_sigsend failed",r);
+			}
+
+			break;
+
+		case PM_EXEC:
+			m.m_type= call;
+			m.PM_EXEC_PROC= rmp->mp_endpoint;
+			m.PM_EXEC_PATH= rmp->mp_exec_path;
+			m.PM_EXEC_PATH_LEN= rmp->mp_exec_path_len;
+			m.PM_EXEC_FRAME= rmp->mp_exec_frame;
+			m.PM_EXEC_FRAME_LEN= rmp->mp_exec_frame_len;
+
+			/* Mark the process as busy */
+			rmp->mp_fs_call= PM_BUSY;
+
+			break;
+
+		case PM_FORK_NB:
+		{
+			int parent_e, parent_p;
+			struct mproc *parent_mp;
+
+			parent_p = rmp->mp_parent;
+			parent_mp = &mproc[parent_p];
+
+			m.m_type= PM_FORK;
+			m.PM_FORK_PPROC= parent_mp->mp_endpoint;
+			m.PM_FORK_CPROC= rmp->mp_endpoint;
+			m.PM_FORK_CPID= rmp->mp_pid;
+
+			/* FS does not reply */
+			rmp->mp_fs_call= PM_IDLE;
+
+			break;
+		}
+
+		case PM_DUMPCORE:
+			m.m_type= call;
+			m.PM_CORE_PROC= rmp->mp_endpoint;
+			m.PM_CORE_SEGPTR= (char *)rmp->mp_seg;
+
+			/* Mark the process as busy */
+			rmp->mp_fs_call= PM_BUSY;
+
+			break;
+
+		default:
+			printf("send_work: should report call 0x%x to FS\n",
+				call);
+			break;
+		}
+		break;
+	}
+	if (m.m_type != PM_IDLE)
+	{
+		if (rmp->mp_fs_call == PM_IDLE &&
+			(rmp->mp_flags & PM_SIG_PENDING))
+		{
+			rmp->mp_flags &= ~PM_SIG_PENDING;
+			check_pending(rmp);
+			if (!(rmp->mp_flags & PM_SIG_PENDING))
+			{
+				/* Allow the process to be scheduled */
+				sys_nice(rmp->mp_endpoint, rmp->mp_nice);
+			}
+		}
+	}
+	else if (report_reboot)
+	{
+		m.m_type= PM_REBOOT;
+		report_reboot= FALSE;
+	}
+	r= send(FS_PROC_NR, &m);
+	if (r != OK) panic("pm", "send_work: send failed", r);
+
+}
+
+PRIVATE void handle_fs_reply(m_ptr)
+message *m_ptr;
+{
+	int r, proc_e, proc_n;
+	struct mproc *rmp;
+
+	switch(m_ptr->m_type)
+	{
+	case PM_EXIT_REPLY:
+	case PM_EXIT_REPLY_TR:
+		proc_e= m_ptr->PM_EXIT_PROC;
+		if (pm_isokendpt(proc_e, &proc_n) != OK)
+		{
+			panic(__FILE__,
+				"PM_EXIT_REPLY: got bad endpoint from FS",
+				proc_e);
+		}
+		rmp= &mproc[proc_n];
+
+		/* Call is finished */
+		rmp->mp_fs_call= PM_IDLE;
+
+		if (!(rmp->mp_flags & PRIV_PROC))
+		{
+			/* destroy the (user) process */
+			if((r=sys_exit(proc_e)) != OK)
+			{
+				panic(__FILE__,
+					"PM_EXIT_REPLY: sys_exit failed", r);
+			}
+		}
+
+		/* Release the memory occupied by the child. */
+		if (find_share(rmp, rmp->mp_ino, rmp->mp_dev,
+			rmp->mp_ctime) == NULL) {
+			/* No other process shares the text segment,
+			 * so free it.
+			 */
+			free_mem(rmp->mp_seg[T].mem_phys,	
+				rmp->mp_seg[T].mem_len);
+		}
+		/* Free the data and stack segments. */
+		free_mem(rmp->mp_seg[D].mem_phys, rmp->mp_seg[S].mem_vir +
+			rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
+
+		if (m_ptr->m_type == PM_EXIT_REPLY_TR &&
+			rmp->mp_parent != INIT_PROC_NR)
+		{
+			/* Wake up the parent */
+			mproc[rmp->mp_parent].mp_reply.reply_trace = 0;
+			setreply(rmp->mp_parent, OK);
+		}
+
+		/* Clean up if the parent has collected the exit
+		 * status
+		 */
+		if (!(rmp->mp_flags & ZOMBIE))
+			real_cleanup(rmp);
+
+		break;
+
+	case PM_REBOOT_REPLY:
+	{
+		vir_bytes code_addr;
+		size_t code_size;
+
+		/* Ask the kernel to abort. All system services, including
+		 * the PM, will get a HARD_STOP notification. Await the
+		 * notification in the main loop.
+		 */
+		code_addr = (vir_bytes) monitor_code;
+		code_size = strlen(monitor_code) + 1;
+		sys_abort(abort_flag, PM_PROC_NR, code_addr, code_size);
+		break;
+	}
+
+	case PM_EXEC_REPLY:
+		proc_e= m_ptr->PM_EXEC_PROC;
+		if (pm_isokendpt(proc_e, &proc_n) != OK)
+		{
+			panic(__FILE__,
+				"PM_EXIT_REPLY: got bad endpoint from FS",
+				proc_e);
+		}
+		rmp= &mproc[proc_n];
+
+		/* Call is finished */
+		rmp->mp_fs_call= PM_IDLE;
+
+		exec_restart(rmp, m_ptr->PM_EXEC_STATUS);
+
+		if (rmp->mp_flags & PM_SIG_PENDING)
+		{
+			printf("handle_fs_reply: restarting signals\n");
+			rmp->mp_flags &= ~PM_SIG_PENDING;
+			check_pending(rmp);
+			if (!(rmp->mp_flags & PM_SIG_PENDING))
+			{
+				printf("handle_fs_reply: calling sys_nice\n");
+				/* Allow the process to be scheduled */
+				sys_nice(rmp->mp_endpoint, rmp->mp_nice);
+			}
+			else
+				printf("handle_fs_reply: more signals\n");
+		}
+		break;
+
+	case PM_CORE_REPLY:
+	{
+		int parent_waiting, right_child;
+		pid_t pidarg;
+		struct mproc *p_mp;
+
+		proc_e= m_ptr->PM_CORE_PROC;
+		if (pm_isokendpt(proc_e, &proc_n) != OK)
+		{
+			panic(__FILE__,
+				"PM_EXIT_REPLY: got bad endpoint from FS",
+				proc_e);
+		}
+		rmp= &mproc[proc_n];
+
+		if (m_ptr->PM_CORE_STATUS == OK)
+			rmp->mp_sigstatus |= DUMPED;
+
+		/* Call is finished */
+		rmp->mp_fs_call= PM_IDLE;
+
+		p_mp = &mproc[rmp->mp_parent];		/* process' parent */
+		pidarg = p_mp->mp_wpid;		/* who's being waited for? */
+		parent_waiting = p_mp->mp_flags & WAITING;
+		right_child =		/* child meets one of the 3 tests? */
+			(pidarg == -1 || pidarg == rmp->mp_pid ||
+			-pidarg == rmp->mp_procgrp);
+
+		if (parent_waiting && right_child) {
+			tell_parent(rmp);		/* tell parent */
+		} else {
+			/* parent not waiting, zombify child */
+			rmp->mp_flags &= (IN_USE|PRIV_PROC);
+			rmp->mp_flags |= ZOMBIE;
+			/* send parent a "child died" signal */
+			sig_proc(p_mp, SIGCHLD);
+		}
+
+		if (!(rmp->mp_flags & PRIV_PROC))
+		{
+			/* destroy the (user) process */
+			if((r=sys_exit(proc_e)) != OK)
+			{
+				panic(__FILE__,
+					"PM_CORE_REPLY: sys_exit failed", r);
+			}
+		}
+
+		/* Release the memory occupied by the child. */
+		if (find_share(rmp, rmp->mp_ino, rmp->mp_dev,
+			rmp->mp_ctime) == NULL) {
+			/* No other process shares the text segment,
+			 * so free it.
+			 */
+			free_mem(rmp->mp_seg[T].mem_phys,	
+				rmp->mp_seg[T].mem_len);
+		}
+		/* Free the data and stack segments. */
+		free_mem(rmp->mp_seg[D].mem_phys, rmp->mp_seg[S].mem_vir +
+			rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
+
+		/* Clean up if the parent has collected the exit
+		 * status
+		 */
+		if (!(rmp->mp_flags & ZOMBIE))
+			real_cleanup(rmp);
+
+		break;
+	}
+	default:
+		panic(__FILE__, "handle_fs_reply: unknown reply type",
+			m_ptr->m_type);
+		break;
+	}
+
+}
+

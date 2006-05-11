@@ -5,6 +5,7 @@
 /* Structs used in prototypes must be declared as such first. */
 struct buf;
 struct filp;		
+struct fproc;
 struct inode;
 struct super_block;
 
@@ -29,6 +30,8 @@ _PROTOTYPE( void invalidate2, (Dev_t device)				);
 /* device.c */
 _PROTOTYPE( int dev_open, (Dev_t dev, int proc, int flags)		);
 _PROTOTYPE( void dev_close, (Dev_t dev)					);
+_PROTOTYPE( int dev_bio, (int op, Dev_t dev, int proc, void *buf,
+			off_t pos, int bytes, int flags)		);
 _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
 			off_t pos, int bytes, int flags)		);
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);
@@ -40,7 +43,7 @@ _PROTOTYPE( int ctty_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int clone_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int ctty_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int do_ioctl, (void)					);
-_PROTOTYPE( int do_setsid, (void)					);
+_PROTOTYPE( void pm_setsid, (int proc_e)				);
 _PROTOTYPE( void dev_status, (message *)				);
 _PROTOTYPE( void dev_up, (int major)					);
 
@@ -49,16 +52,24 @@ _PROTOTYPE( int do_fkey_pressed, (void)					);
 
 /* dmap.c */
 _PROTOTYPE( int do_devctl, (void)					);
+_PROTOTYPE( int fs_devctl, (int req, int dev, int proc_nr_e, int style,
+	int force)							);
 _PROTOTYPE( void build_dmap, (void)					);
-_PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style)	);
+_PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style,
+	int force)							);
 _PROTOTYPE( int dmap_driver_match, (int proc, int major)		);
 _PROTOTYPE( void dmap_unmap_by_endpt, (int proc_nr)			);
 _PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
+
+/* exec.c */
+_PROTOTYPE( int pm_exec, (int proc_e, char *path, vir_bytes path_len,
+				char *frame, vir_bytes frame_len)	);
 
 /* filedes.c */
 _PROTOTYPE( struct filp *find_filp, (struct inode *rip, mode_t bits)	);
 _PROTOTYPE( int get_fd, (int start, mode_t bits, int *k, struct filp **fpt) );
 _PROTOTYPE( struct filp *get_filp, (int fild)				);
+_PROTOTYPE( struct filp *get_filp2, (struct fproc *rfp, int fild)	);
 _PROTOTYPE( int inval_filp, (struct filp *)				);
 
 /* inode.c */
@@ -90,17 +101,18 @@ _PROTOTYPE( void reply, (int whom, int result)				);
 
 /* misc.c */
 _PROTOTYPE( int do_dup, (void)						);
-_PROTOTYPE( int do_exit, (void)						);
+_PROTOTYPE( void pm_exit, (int proc)					);
 _PROTOTYPE( int do_fcntl, (void)					);
-_PROTOTYPE( int do_fork, (void)						);
-_PROTOTYPE( int do_exec, (void)						);
+_PROTOTYPE( void pm_fork, (int pproc, int cproc, int cpid)		);
 _PROTOTYPE( int do_revive, (void)					);
-_PROTOTYPE( int do_set, (void)						);
+_PROTOTYPE( void pm_setgid, (int proc_e, int egid, int rgid)		);
+_PROTOTYPE( void pm_setuid, (int proc_e, int euid, int ruid)		);
 _PROTOTYPE( int do_sync, (void)						);
 _PROTOTYPE( int do_fsync, (void)					);
-_PROTOTYPE( int do_reboot, (void)					);
+_PROTOTYPE( void pm_reboot, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
+_PROTOTYPE( int pm_dumpcore, (int proc_e, struct mem_map *seg_ptr)	);
 
 /* mount.c */
 _PROTOTYPE( int do_mount, (void)					);
@@ -109,12 +121,15 @@ _PROTOTYPE( int unmount, (Dev_t dev)					);
 
 /* open.c */
 _PROTOTYPE( int do_close, (void)					);
+_PROTOTYPE( int close_fd, (struct fproc *rfp, int fd_nr)		);
 _PROTOTYPE( int do_creat, (void)					);
 _PROTOTYPE( int do_lseek, (void)					);
 _PROTOTYPE( int do_mknod, (void)					);
 _PROTOTYPE( int do_mkdir, (void)					);
 _PROTOTYPE( int do_open, (void)						);
-_PROTOTYPE( int do_slink, (void)                                       );
+_PROTOTYPE( int do_slink, (void)					);
+_PROTOTYPE( struct inode *new_node, (struct inode **ldirp, 
+	char *path, mode_t bits, zone_t z0, int opaque, char *string)	);
 
 /* path.c */
 _PROTOTYPE( struct inode *advance,(struct inode **dirp, char string[NAME_MAX]));
@@ -128,6 +143,7 @@ _PROTOTYPE( struct inode *parse_path, (char *path, char string[NAME_MAX],
 /* pipe.c */
 _PROTOTYPE( int do_pipe, (void)						);
 _PROTOTYPE( int do_unpause, (void)					);
+_PROTOTYPE( int unpause, (int proc_nr_e)				);
 _PROTOTYPE( int pipe_check, (struct inode *rip, int rw_flag,
 			int oflags, int bytes, off_t position, int *canwrite, int notouch));
 _PROTOTYPE( void release, (struct inode *ip, int call_nr, int count)	);
@@ -211,6 +227,3 @@ _PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, tmr_func_t watchdog, int
 _PROTOTYPE( void fs_expire_timers, (clock_t now)			);
 _PROTOTYPE( void fs_cancel_timer, (timer_t *tp)				);
 _PROTOTYPE( void fs_init_timer, (timer_t *tp)				);
-
-/* cdprobe.c */
-_PROTOTYPE( int cdprobe, (void)						);

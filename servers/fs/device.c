@@ -14,7 +14,7 @@
  *   ctty_opcl:  perform controlling-tty-specific processing for open/close
  *   ctty_io:    perform controlling-tty-specific processing for I/O
  *   do_ioctl:	 perform the IOCTL system call
- *   do_setsid:	 perform the SETSID system call (FS side)
+ *   pm_setsid:	 perform the SETSID system call (FS side)
  */
 
 #include "fs.h"
@@ -118,6 +118,91 @@ PUBLIC void dev_status(message *m)
 }
 
 /*===========================================================================*
+ *				dev_bio					     *
+ *===========================================================================*/
+PUBLIC int dev_bio(op, dev, proc_e, buf, pos, bytes, flags)
+int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
+dev_t dev;			/* major-minor device number */
+int proc_e;			/* in whose address space is buf? */
+void *buf;			/* virtual address of the buffer */
+off_t pos;			/* byte position */
+int bytes;			/* how many bytes to transfer */
+int flags;			/* special flags, like O_NONBLOCK */
+{
+/* Read or write from a device.  The parameter 'dev' tells which one. */
+  struct dmap *dp;
+  int r;
+  message m;
+
+  /* Determine task dmap. */
+  dp = &dmap[(dev >> MAJOR) & BYTE];
+
+  for (;;)
+  {
+	/* See if driver is roughly valid. */
+	if (dp->dmap_driver == NONE) {
+		printf("FS: dev_io: no driver for dev %x\n", dev);
+		return ENXIO;
+	}
+
+	/* Set up the message passed to task. */
+	m.m_type   = op;
+	m.DEVICE   = (dev >> MINOR) & BYTE;
+	m.POSITION = pos;
+	m.IO_ENDPT = proc_e;
+	m.ADDRESS  = buf;
+	m.COUNT    = bytes;
+	m.TTY_FLAGS = flags;
+
+	/* Call the task. */
+	(*dp->dmap_io)(dp->dmap_driver, &m);
+
+	if(dp->dmap_driver == NONE) {
+		/* Driver has vanished. Wait for a new one. */
+		for (;;)
+		{
+			r= receive(RS_PROC_NR, &m);
+			if (r != OK)
+			{
+				panic(__FILE__,
+					"dev_bio: unable to receive from RS",
+					r);
+			}
+			if (m.m_type == DEVCTL)
+			{
+				r= fs_devctl(m.ctl_req, m.dev_nr, m.driver_nr,
+					m.dev_style, m.m_force);
+			}
+			else
+			{
+				panic(__FILE__,
+					"dev_bio: got message from RS, type",
+					m.m_type);
+			}
+			m.m_type= r;
+			r= send(RS_PROC_NR, &m);
+			if (r != OK)
+			{
+				panic(__FILE__,
+					"dev_bio: unable to send to RS",
+					r);
+			}
+			if (dp->dmap_driver != NONE)
+				break;
+		}
+		printf("dev_bio: trying new driver\n");
+		continue;
+	}
+
+	/* Task has completed.  See if call completed. */
+	if (m.REP_STATUS == SUSPEND) {
+		panic(__FILE__, "dev_bio: driver returned SUSPEND", NO_NUM);
+	}
+	return(m.REP_STATUS);
+  }
+}
+
+/*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
 PUBLIC int dev_io(op, dev, proc_e, buf, pos, bytes, flags)
@@ -208,11 +293,6 @@ int flags;			/* mode bits and flags */
 	printf("FS: gen_opcl: no driver for dev %x\n", dev);
 	return ENXIO;
   }
-  if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
-	printf("FS: gen_opcl: old driver for dev %x (%d)\n",
-		dev, dp->dmap_driver);
-	return ENXIO;
-  }
 
   /* Call the task. */
   (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -274,9 +354,10 @@ int flags;			/* mode bits and flags */
 }
 
 /*===========================================================================*
- *				do_setsid				     *
+ *				pm_setsid				     *
  *===========================================================================*/
-PUBLIC int do_setsid()
+PUBLIC void pm_setsid(proc_e)
+int proc_e;
 {
 /* Perform the FS side of the SETSID call, i.e. get rid of the controlling
  * terminal of a process, and make the process a session leader.
@@ -284,15 +365,11 @@ PUBLIC int do_setsid()
   register struct fproc *rfp;
   int slot;
 
-  /* Only MM may do the SETSID call directly. */
-  if (who_e != PM_PROC_NR) return(ENOSYS);
-
   /* Make the process a session leader with no controlling tty. */
-  okendpt(m_in.endpt1, &slot);
+  okendpt(proc_e, &slot);
   rfp = &fproc[slot];
   rfp->fp_sesldr = TRUE;
   rfp->fp_tty = 0;
-  return(OK);
 }
 
 /*===========================================================================*

@@ -8,6 +8,7 @@
  *   do_mkdir:	perform the MKDIR system call
  *   do_close:	perform the CLOSE system call
  *   do_lseek:  perform the LSEEK system call
+ *   new_node:  create a new file, directory, etc.
  */
 
 #include "fs.h"
@@ -31,8 +32,6 @@ PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
 FORWARD _PROTOTYPE( int pipe_open, (struct inode *rip,mode_t bits,int oflags));
-FORWARD _PROTOTYPE( struct inode *new_node, (struct inode **ldirp, 
-	char *path, mode_t bits, zone_t z0, int opaque, char *string));
 
 /*===========================================================================*
  *				do_creat				     *
@@ -200,7 +199,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 /*===========================================================================*
  *				new_node				     *
  *===========================================================================*/
-PRIVATE struct inode *new_node(struct inode **ldirp,
+PUBLIC struct inode *new_node(struct inode **ldirp,
 	char *path, mode_t bits, zone_t z0, int opaque, char *parsed)
 {
 /* New_node() is called by common_open(), do_mknod(), and do_mkdir().  
@@ -389,6 +388,17 @@ PUBLIC int do_mkdir()
 PUBLIC int do_close()
 {
 /* Perform the close(fd) system call. */
+  return close_fd(fp, m_in.fd);
+}
+
+/*===========================================================================*
+ *				close_fd				     *
+ *===========================================================================*/
+PUBLIC int close_fd(rfp, fd_nr)
+struct fproc *rfp;
+int fd_nr;
+{
+/* Close a filedescriptor for a process. */
 
   register struct filp *rfilp;
   register struct inode *rip;
@@ -397,7 +407,7 @@ PUBLIC int do_close()
   dev_t dev;
 
   /* First locate the inode that belongs to the file descriptor. */
-  if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+  if ( (rfilp = get_filp2(rfp, fd_nr)) == NIL_FILP) return(err_code);
   rip = rfilp->filp_ino;	/* 'rip' points to the inode */
 
   if (rfilp->filp_count - 1 == 0 && rfilp->filp_mode != FILP_CLOSED) {
@@ -440,16 +450,16 @@ PUBLIC int do_close()
 	put_inode(rip);
   }
 
-  fp->fp_cloexec &= ~(1L << m_in.fd);	/* turn off close-on-exec bit */
-  fp->fp_filp[m_in.fd] = NIL_FILP;
-  FD_CLR(m_in.fd, &fp->fp_filp_inuse);
+  rfp->fp_cloexec &= ~(1L << fd_nr);	/* turn off close-on-exec bit */
+  rfp->fp_filp[fd_nr] = NIL_FILP;
+  FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 
   /* Check to see if the file is locked.  If so, release all locks. */
   if (nr_locks == 0) return(OK);
   lock_count = nr_locks;	/* save count of locks */
   for (flp = &file_lock[0]; flp < &file_lock[NR_LOCKS]; flp++) {
 	if (flp->lock_type == 0) continue;	/* slot not in use */
-	if (flp->lock_inode == rip && flp->lock_pid == fp->fp_pid) {
+	if (flp->lock_inode == rip && flp->lock_pid == rfp->fp_pid) {
 		flp->lock_type = 0;
 		nr_locks--;
 	}

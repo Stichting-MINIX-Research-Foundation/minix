@@ -34,6 +34,7 @@ struct super_block;		/* proto.h needs to know this */
 FORWARD _PROTOTYPE( void fs_init, (void)				);
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void init_root, (void)				);
+FORWARD _PROTOTYPE( void service_pm, (void)				);
 
 /*===========================================================================*
  *				main					     *
@@ -48,23 +49,25 @@ PUBLIC int main()
 
   fs_init();
 
-
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
 	get_work();		/* sets who and call_nr */
 	fp = &fproc[who_p];	/* pointer to proc table struct */
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
+	if (who_e == PM_PROC_NR && call_nr != PROC_EVENT)
+		printf("FS: strange, got message %d from PM\n", call_nr);
+
  	/* Check for special control messages first. */
 	if (call_nr == PROC_EVENT) {
-		/* Assume FS got signal. Synchronize, but don't exit. */
-		do_sync();
+		/* PM tries to get FS to do something */
+		service_pm();
         } else if (call_nr == SYN_ALARM) {
         	/* Alarm timer expired. Used only for select(). Check it. */
         	fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
         } else if ((call_nr & NOTIFY_MESSAGE)) {
-        	/* Device notifies us of an event. */
-        	dev_status(&m_in);
+		/* Device notifies us of an event. */
+		dev_status(&m_in);
         } else {
 		/* Call the internal function that does the work. */
 		if (call_nr < 0 || call_nr >= NCALLS) { 
@@ -123,6 +126,7 @@ PRIVATE void get_work()
 	panic(__FILE__,"fs receive error", NO_NUM);
     who_e = m_in.m_source;
     who_p = _ENDPOINT_P(who_e);
+
     if(who_p < -NR_TASKS || who_p >= NR_PROCS)
      	panic(__FILE__,"receive process out of range", who_p);
     if(who_p >= 0 && fproc[who_p].fp_endpoint == NONE) {
@@ -290,4 +294,124 @@ PRIVATE void init_root()
   sp->s_isup = rip;
   sp->s_rd_only = 0;
   return;
+}
+
+/*===========================================================================*
+ *				service_pm				     *
+ *===========================================================================*/
+PRIVATE void service_pm()
+{
+	int r, call;
+	message m;
+
+	/* Ask PM for work until there is nothing left to do */
+	for (;;)
+	{
+		m.m_type= PM_GET_WORK;
+		r= sendrec(PM_PROC_NR, &m);
+		if (r != OK)
+		{
+			panic("fs", "service_pm: sendrec failed", r);
+		}
+		if (m.m_type == PM_IDLE)
+			break;
+		call= m.m_type;
+		switch(call)
+		{
+		case PM_STIME:
+			boottime= m.PM_STIME_TIME;
+
+			/* No need to report status to PM */
+			break;
+		case PM_SETSID:
+			pm_setsid(m.PM_SETSID_PROC);
+
+			/* No need to report status to PM */
+			break;
+
+		case PM_SETGID:
+			pm_setgid(m.PM_SETGID_PROC, m.PM_SETGID_EGID,
+				m.PM_SETGID_RGID);
+
+			/* No need to report status to PM */
+			break;
+
+		case PM_SETUID:
+			pm_setuid(m.PM_SETUID_PROC, m.PM_SETUID_EGID,
+				m.PM_SETUID_RGID);
+
+			/* No need to report status to PM */
+			break;
+
+		case PM_FORK:
+			pm_fork(m.PM_FORK_PPROC, m.PM_FORK_CPROC,
+				m.PM_FORK_CPID);
+
+			/* No need to report status to PM */
+			break;
+
+		case PM_EXIT:
+		case PM_EXIT_TR:
+			pm_exit(m.PM_EXIT_PROC);
+
+			/* Reply dummy status to PM for synchronization */
+			m.m_type= (call == PM_EXIT_TR ? PM_EXIT_REPLY_TR :
+				PM_EXIT_REPLY);
+			/* Keep m.PM_EXIT_PROC */
+
+			r= send(PM_PROC_NR, &m);
+			if (r != OK)
+				panic(__FILE__, "service_pm: send failed", r);
+			break;
+
+		case PM_UNPAUSE:
+		case PM_UNPAUSE_TR:
+			unpause(m.PM_UNPAUSE_PROC);
+
+			/* No need to report status to PM */
+			break;
+
+		case PM_REBOOT:
+			pm_reboot();
+
+			/* Reply dummy status to PM for synchronization */
+			m.m_type= PM_REBOOT_REPLY;
+			r= send(PM_PROC_NR, &m);
+			if (r != OK)
+				panic(__FILE__, "service_pm: send failed", r);
+			break;
+
+		case PM_EXEC:
+			r= pm_exec(m.PM_EXEC_PROC, m.PM_EXEC_PATH,
+				m.PM_EXEC_PATH_LEN, m.PM_EXEC_FRAME, 
+				m.PM_EXEC_FRAME_LEN);
+
+			/* Reply status to PM */
+			m.m_type= PM_EXEC_REPLY;
+			/* Keep m.PM_EXEC_PROC */
+			m.PM_EXEC_STATUS= r;
+			
+			r= send(PM_PROC_NR, &m);
+			if (r != OK)
+				panic(__FILE__, "service_pm: send failed", r);
+			break;
+
+		case PM_DUMPCORE:
+			r= pm_dumpcore(m.PM_CORE_PROC,
+				(struct mem_map *)m.PM_CORE_SEGPTR);
+
+			/* Reply status to PM */
+			m.m_type= PM_CORE_REPLY;
+			/* Keep m.PM_CORE_PROC */
+			m.PM_CORE_STATUS= r;
+			
+			r= send(PM_PROC_NR, &m);
+			if (r != OK)
+				panic(__FILE__, "service_pm: send failed", r);
+			break;
+
+		default:
+			panic("fs", "service_pm: unknown call", m.m_type);
+		}
+	}
 }

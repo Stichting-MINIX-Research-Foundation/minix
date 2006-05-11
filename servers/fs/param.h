@@ -34,6 +34,7 @@
 #define driver_nr     m4_l2
 #define dev_nr	      m4_l3
 #define dev_style     m4_l4
+#define m_force	      m4_l5
 #define rd_only	      m1_i3
 #define real_user_id  m1_i2
 #define request       m1_i2

@@ -331,15 +331,29 @@ PUBLIC int do_unpause()
 /* A signal has been sent to a user who is paused on the file system.
  * Abort the system call with the EINTR error message.
  */
+  int proc_nr_e;
+
+  if (who_e != PM_PROC_NR) return(EPERM);
+  proc_nr_e = m_in.ENDPT;
+  return unpause(proc_nr_e);
+}
+
+/*===========================================================================*
+ *				unpause					     *
+ *===========================================================================*/
+PUBLIC int unpause(proc_nr_e)
+int proc_nr_e;
+{
+/* A signal has been sent to a user who is paused on the file system.
+ * Abort the system call with the EINTR error message.
+ */
 
   register struct fproc *rfp;
-  int proc_nr_e, proc_nr_p, task, fild;
+  int proc_nr_p, task, fild;
   struct filp *f;
   dev_t dev;
   message mess;
 
-  if (who_e != PM_PROC_NR) return(EPERM);
-  proc_nr_e = m_in.ENDPT;
   okendpt(proc_nr_e, &proc_nr_p);
   rfp = &fproc[proc_nr_p];
   if (rfp->fp_suspended == NOT_SUSPENDED) return(OK);

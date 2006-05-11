@@ -38,16 +38,21 @@ _PROTOTYPE( int do_fkey_pressed, (void)						);
 
 /* exec.c */
 _PROTOTYPE( int do_exec, (void)						);
-_PROTOTYPE( void rw_seg, (int rw, int fd, int proc, int seg,
-						phys_bytes seg_bytes)	);
+_PROTOTYPE( int exec_newmem, (void)					);
+_PROTOTYPE( int do_execrestart, (void)					);
+_PROTOTYPE( void exec_restart, (struct mproc *rmp, int result)		);
 _PROTOTYPE( struct mproc *find_share, (struct mproc *mp_ign, Ino_t ino,
 			Dev_t dev, time_t ctime)			);
 
 /* forkexit.c */
 _PROTOTYPE( int do_fork, (void)						);
+_PROTOTYPE( int do_fork_nb, (void)					);
 _PROTOTYPE( int do_pm_exit, (void)					);
 _PROTOTYPE( int do_waitpid, (void)					);
-_PROTOTYPE( void pm_exit, (struct mproc *rmp, int exit_status)		);
+_PROTOTYPE( void pm_exit, (struct mproc *rmp, int exit_status,
+	int for_trace)							);
+_PROTOTYPE (void tell_parent, (struct mproc *child)			);
+_PROTOTYPE( void real_cleanup, (struct mproc *rmp)			);
 
 /* getset.c */
 _PROTOTYPE( int do_getset, (void)					);
@@ -63,9 +68,7 @@ _PROTOTYPE( int do_getprocnr, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_allocmem, (void)					);
 _PROTOTYPE( int do_freemem, (void)					);
-_PROTOTYPE( int do_getsetpriority, (void)					);
-_PROTOTYPE( ssize_t _read_pm, (int _fd, void *_buf, size_t _n, int s, int e));
-_PROTOTYPE( ssize_t _write_pm, (int _fd, void *_buf, size_t _n, int s, int e));
+_PROTOTYPE( int do_getsetpriority, (void)				);
 
 
 #if (MACHINE == MACINTOSH)
@@ -107,10 +110,8 @@ _PROTOTYPE( void stop_proc, (struct mproc *rmp, int sig_nr)		);
 
 /* utility.c */
 _PROTOTYPE( pid_t get_free_pid, (void)					);
-_PROTOTYPE( int allowed, (char *name_buf, struct stat *s_buf, int mask)	);
 _PROTOTYPE( int no_sys, (void)						);
 _PROTOTYPE( void panic, (char *who, char *mess, int num)		);
-_PROTOTYPE( void tell_fs, (int what, int p1, int p2, int p3)		);
 _PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)		);
 _PROTOTYPE( int get_mem_map, (int proc_nr, struct mem_map *mem_map)	);
 _PROTOTYPE( char *find_param, (const char *key));

@@ -11,6 +11,7 @@
  *   do_pm_exit: perform the EXIT system call (by calling pm_exit())
  *   pm_exit:	 actually do the exiting
  *   do_wait:	 perform the WAITPID or WAIT system call
+ *   tell_parent: tell parent about the death of a child
  */
 
 #include "pm.h"
@@ -103,21 +104,117 @@ PUBLIC int do_fork()
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
   /* Tell kernel and file system about the (now successful) FORK. */
-  if((r=sys_fork(who_e, child_nr, &rmc->mp_endpoint)) != OK) {
+  if((r=sys_fork(who_e, child_nr, &rmc->mp_endpoint, rmc->mp_seg)) != OK) {
   	panic(__FILE__,"do_fork can't sys_fork", r);
   }
-  tell_fs(FORK, who_e, rmc->mp_endpoint, rmc->mp_pid);
 
-  /* Report child's memory map to kernel. */
-  if((r=sys_newmap(rmc->mp_endpoint, rmc->mp_seg)) != OK) {
-  	panic(__FILE__,"do_fork can't sys_newmap", r);
+  if (rmc->mp_fs_call != PM_IDLE)
+	panic("pm", "do_fork: not idle", rmc->mp_fs_call);
+  rmc->mp_fs_call= PM_FORK;
+  r= notify(FS_PROC_NR);
+  if (r != OK) panic("pm", "do_fork: unable to notify FS", r);
+
+  /* Do not reply until FS is ready to process the fork
+  * request
+  */
+  return SUSPEND;
+}
+
+/*===========================================================================*
+ *				do_fork_nb				     *
+ *===========================================================================*/
+PUBLIC int do_fork_nb()
+{
+/* The process pointed to by 'mp' has forked.  Create a child process. */
+  register struct mproc *rmp;	/* pointer to parent */
+  register struct mproc *rmc;	/* pointer to child */
+  int child_nr, s;
+  phys_clicks prog_clicks, child_base;
+  phys_bytes prog_bytes, parent_abs, child_abs;	/* Intel only */
+  pid_t new_pid;
+  static int next_child;
+  int n = 0, r;
+
+  /* Only system processes are allowed to use fork_nb */
+  if (!(mp->mp_flags & PRIV_PROC))
+	return EPERM;
+
+ /* If tables might fill up during FORK, don't even start since recovery half
+  * way through is such a nuisance.
+  */
+  rmp = mp;
+  if ((procs_in_use == NR_PROCS) || 
+  		(procs_in_use >= NR_PROCS-LAST_FEW && rmp->mp_effuid != 0))
+  {
+  	printf("PM: warning, process table is full!\n");
+  	return(EAGAIN);
   }
 
-  /* Reply to child to wake it up. */
-  setreply(child_nr, 0);		/* only parent gets details */
-  rmp->mp_reply.endpt = rmc->mp_endpoint;	/* child's process number */
+  /* Determine how much memory to allocate.  Only the data and stack need to
+   * be copied, because the text segment is either shared or of zero length.
+   */
+  prog_clicks = (phys_clicks) rmp->mp_seg[S].mem_len;
+  prog_clicks += (rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
+  prog_bytes = (phys_bytes) prog_clicks << CLICK_SHIFT;
+  if ( (child_base = alloc_mem(prog_clicks)) == NO_MEM) return(ENOMEM);
 
-  return(new_pid);		 	/* child's pid */
+  /* Create a copy of the parent's core image for the child. */
+  child_abs = (phys_bytes) child_base << CLICK_SHIFT;
+  parent_abs = (phys_bytes) rmp->mp_seg[D].mem_phys << CLICK_SHIFT;
+  s = sys_abscopy(parent_abs, child_abs, prog_bytes);
+  if (s < 0) panic(__FILE__,"do_fork can't copy", s);
+
+  /* Find a slot in 'mproc' for the child process.  A slot must exist. */
+  do {
+        next_child = (next_child+1) % NR_PROCS;
+	n++;
+  } while((mproc[next_child].mp_flags & IN_USE) && n <= NR_PROCS);
+  if(n > NR_PROCS)
+	panic(__FILE__,"do_fork can't find child slot", NO_NUM);
+  if(next_child < 0 || next_child >= NR_PROCS
+ || (mproc[next_child].mp_flags & IN_USE))
+	panic(__FILE__,"do_fork finds wrong child slot", next_child);
+
+  rmc = &mproc[next_child];
+  /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
+  child_nr = (int)(rmc - mproc);	/* slot number of the child */
+  procs_in_use++;
+  *rmc = *rmp;			/* copy parent's process slot to child's */
+  rmc->mp_parent = who_p;			/* record child's parent */
+  /* inherit only these flags */
+  rmc->mp_flags &= (IN_USE|SEPARATE|PRIV_PROC|DONT_SWAP);
+  rmc->mp_child_utime = 0;		/* reset administration */
+  rmc->mp_child_stime = 0;		/* reset administration */
+
+  /* A separate I&D child keeps the parents text segment.  The data and stack
+   * segments must refer to the new copy.
+   */
+  if (!(rmc->mp_flags & SEPARATE)) rmc->mp_seg[T].mem_phys = child_base;
+  rmc->mp_seg[D].mem_phys = child_base;
+  rmc->mp_seg[S].mem_phys = rmc->mp_seg[D].mem_phys + 
+			(rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
+  rmc->mp_exitstatus = 0;
+  rmc->mp_sigstatus = 0;
+
+  /* Find a free pid for the child and put it in the table. */
+  new_pid = get_free_pid();
+  rmc->mp_pid = new_pid;	/* assign pid to child */
+
+  /* Tell kernel and file system about the (now successful) FORK. */
+  if((r=sys_fork(who_e, child_nr, &rmc->mp_endpoint, rmc->mp_seg)) != OK) {
+  	panic(__FILE__,"do_fork can't sys_fork", r);
+  }
+
+  if (rmc->mp_fs_call != PM_IDLE)
+	panic("pm", "do_fork: not idle", rmc->mp_fs_call);
+  rmc->mp_fs_call= PM_FORK_NB;
+  r= notify(FS_PROC_NR);
+  if (r != OK) panic("pm", "do_fork: unable to notify FS", r);
+
+  /* Wakeup the newly created process */
+  setreply(rmc-mproc, OK);
+
+  return rmc->mp_pid;
 }
 
 /*===========================================================================*
@@ -128,16 +225,17 @@ PUBLIC int do_pm_exit()
 /* Perform the exit(status) system call. The real work is done by pm_exit(),
  * which is also called when a process is killed by a signal.
  */
-  pm_exit(mp, m_in.status);
+  pm_exit(mp, m_in.status, FALSE /*!for_trace*/);
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
 
 /*===========================================================================*
  *				pm_exit					     *
  *===========================================================================*/
-PUBLIC void pm_exit(rmp, exit_status)
+PUBLIC void pm_exit(rmp, exit_status, for_trace)
 register struct mproc *rmp;	/* pointer to the process to be terminated */
 int exit_status;		/* the process' exit status (for parent) */
+int for_trace;
 {
 /* A process is done.  Release most of the process' possessions.  If its
  * parent is waiting, release the rest, else keep the process slot and
@@ -173,38 +271,51 @@ int exit_status;		/* the process' exit status (for parent) */
    * such as copying to/ from the exiting process, before it is gone.
    */
   sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
-  if(proc_nr_e != FS_PROC_NR)		/* if it is not FS that is exiting.. */
-	tell_fs(EXIT, proc_nr_e, 0, 0);  	/* tell FS to free the slot */
+
+  if (proc_nr_e == INIT_PROC_NR)
+  {
+	printf("PM: INIT died\n");
+	return;
+  }
   else
+  if(proc_nr_e != FS_PROC_NR)		/* if it is not FS that is exiting.. */
+  {
+	/* Tell FS about the exiting process. */
+	if (rmp->mp_fs_call != PM_IDLE)
+		panic(__FILE__, "pm_exit: not idle", rmp->mp_fs_call);
+	rmp->mp_fs_call= (for_trace ? PM_EXIT_TR : PM_EXIT);
+	r= notify(FS_PROC_NR);
+	if (r != OK) panic(__FILE__, "pm_exit: unable to notify FS", r);
+
+	if (rmp->mp_flags & PRIV_PROC)
+	{
+		/* destroy system processes without waiting for FS */
+		if((r= sys_exit(rmp->mp_endpoint)) != OK)
+			panic(__FILE__, "pm_exit: sys_exit failed", r);
+	}
+  }
+  else
+  {
 	printf("PM: FS died\n");
-  if((r=sys_exit(proc_nr_e)) != OK)	/* destroy the process */
-  	panic(__FILE__,"pm_exit: sys_exit failed", r);
+	return;
+  }
 
   /* Pending reply messages for the dead process cannot be delivered. */
   rmp->mp_flags &= ~REPLY;
+
+  /* Keep the process around until FS is finished with it. */
   
-  /* Release the memory occupied by the child. */
-  if (find_share(rmp, rmp->mp_ino, rmp->mp_dev, rmp->mp_ctime) == NULL) {
-	/* No other process shares the text segment, so free it. */
-	free_mem(rmp->mp_seg[T].mem_phys, rmp->mp_seg[T].mem_len);
-  }
-  /* Free the data and stack segments. */
-  free_mem(rmp->mp_seg[D].mem_phys,
-      rmp->mp_seg[S].mem_vir 
-        + rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
-
-  /* The process slot can only be freed if the parent has done a WAIT. */
   rmp->mp_exitstatus = (char) exit_status;
-
   pidarg = p_mp->mp_wpid;		/* who's being waited for? */
   parent_waiting = p_mp->mp_flags & WAITING;
   right_child =				/* child meets one of the 3 tests? */
 	(pidarg == -1 || pidarg == rmp->mp_pid || -pidarg == rmp->mp_procgrp);
 
   if (parent_waiting && right_child) {
-	cleanup(rmp);			/* tell parent and release child slot */
+	tell_parent(rmp);		/* tell parent */
   } else {
-	rmp->mp_flags = IN_USE|ZOMBIE;	/* parent not waiting, zombify child */
+	rmp->mp_flags &= (IN_USE|PRIV_PROC);
+	rmp->mp_flags |= ZOMBIE;	/* parent not waiting, zombify child */
 	sig_proc(p_mp, SIGCHLD);	/* send parent a "child died" signal */
   }
 
@@ -214,7 +325,8 @@ int exit_status;		/* the process' exit status (for parent) */
 		/* 'rmp' now points to a child to be disinherited. */
 		rmp->mp_parent = INIT_PROC_NR;
 		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
-		if (parent_waiting && (rmp->mp_flags & ZOMBIE)) cleanup(rmp);
+		if (parent_waiting && (rmp->mp_flags & ZOMBIE))
+			cleanup(rmp);
 	}
   }
 
@@ -259,7 +371,9 @@ PUBLIC int do_waitpid()
 		children++;		/* this child is acceptable */
 		if (rp->mp_flags & ZOMBIE) {
 			/* This child meets the pid test and has exited. */
-			cleanup(rp);	/* this child has already exited */
+			tell_parent(rp); /* this child has already exited */
+			if (rp->mp_fs_call == PM_IDLE)
+				real_cleanup(rp);
 			return(SUSPEND);
 		}
 		if ((rp->mp_flags & STOPPED) && rp->mp_sigstatus) {
@@ -293,20 +407,47 @@ register struct mproc *child;	/* tells which process is exiting */
 /* Finish off the exit of a process.  The process has exited or been killed
  * by a signal, and its parent is waiting.
  */
-  struct mproc *parent = &mproc[child->mp_parent];
-  int exitstatus;
+
+  if (child->mp_fs_call != PM_IDLE)
+	panic(__FILE__, "cleanup: not idle", child->mp_fs_call);
+
+  tell_parent(child);
+  real_cleanup(child);
+
+}
+
+/*===========================================================================*
+ *				tell_parent				     *
+ *===========================================================================*/
+PUBLIC void tell_parent(child)
+register struct mproc *child;	/* tells which process is exiting */
+{
+  int exitstatus, mp_parent;
+  struct mproc *parent;
+
+  mp_parent= child->mp_parent;
+  if (mp_parent <= 0)
+	panic(__FILE__, "tell_parent: bad value in mp_parent", mp_parent);
+  parent = &mproc[mp_parent];
 
   /* Wake up the parent by sending the reply message. */
   exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
   parent->mp_reply.reply_res2 = exitstatus;
   setreply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
-
-  /* Release the process table entry and reinitialize some field. */
-  child->mp_pid = 0;
-  child->mp_flags = 0;
-  child->mp_child_utime = 0;
-  child->mp_child_stime = 0;
-  procs_in_use--;
+  child->mp_flags &= ~ZOMBIE;		/* avoid informing parent twice */
 }
 
+/*===========================================================================*
+ *				real_cleanup				     *
+ *===========================================================================*/
+PUBLIC void real_cleanup(rmp)
+register struct mproc *rmp;	/* tells which process is exiting */
+{
+  /* Release the process table entry and reinitialize some field. */
+  rmp->mp_pid = 0;
+  rmp->mp_flags = 0;
+  rmp->mp_child_utime = 0;
+  rmp->mp_child_stime = 0;
+  procs_in_use--;
+}

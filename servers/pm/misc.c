@@ -179,10 +179,7 @@ PUBLIC int do_getprocnr()
  *===========================================================================*/
 PUBLIC int do_reboot()
 {
-  char monitor_code[256];		
-  vir_bytes code_addr;
-  int code_size;
-  int abort_flag;
+  int r;
 
   /* Check permission to abort the system. */
   if (mp->mp_effuid != SUPER_USER) return(EPERM);
@@ -197,10 +194,10 @@ PUBLIC int do_reboot()
 	if((r = sys_datacopy(who_e, (vir_bytes) m_in.reboot_code,
 		SELF, (vir_bytes) monitor_code, m_in.reboot_strlen)) != OK)
 		return r;
-	code_addr = (vir_bytes) monitor_code;
 	monitor_code[m_in.reboot_strlen] = '\0';
-	code_size = m_in.reboot_strlen + 1;
   }
+  else
+	monitor_code[0] = '\0';
 
   /* Order matters here. When FS is told to reboot, it exits all its
    * processes, and then would be confused if they're exited again by
@@ -209,12 +206,11 @@ PUBLIC int do_reboot()
 
   check_sig(-1, SIGKILL); 		/* kill all users except init */
   sys_nice(INIT_PROC_NR, PRIO_STOP);	/* stop init, but keep it around */
-  tell_fs(REBOOT, 0, 0, 0);		/* tell FS to synchronize */
 
-  /* Ask the kernel to abort. All system services, including the PM, will 
-   * get a HARD_STOP notification. Await the notification in the main loop.
-   */
-  sys_abort(abort_flag, PM_PROC_NR, code_addr, code_size);
+  report_reboot= 1;
+  r= notify(FS_PROC_NR);
+  if (r != OK) panic("pm", "do_reboot: unable to notify FS", r);
+  
   return(SUSPEND);			/* don't reply to caller */
 }
 
@@ -386,44 +382,3 @@ PUBLIC int do_svrctl()
 	return(EINVAL);
   }
 }
-
-/*===========================================================================*
- *				_read_pm				     *
- *===========================================================================*/
-PUBLIC ssize_t _read_pm(fd, buffer, nbytes, seg, ep)
-int fd;
-void *buffer;
-size_t nbytes;
-int seg;
-int ep;
-{
-  message m;
-
-  m.m1_i1 = _PM_SEG_FLAG | fd;
-  m.m1_i2 = nbytes;
-  m.m1_p1 = (char *) buffer;
-  m.m1_p2 = (char *) seg;
-  m.m1_p3 = (char *) ep;
-  return(_syscall(FS_PROC_NR, READ, &m));
-}
-
-/*===========================================================================*
- *				_write_pm				     *
- *===========================================================================*/
-PUBLIC ssize_t _write_pm(fd, buffer, nbytes, seg, ep)
-int fd;
-void *buffer;
-size_t nbytes;
-int seg;
-int ep;
-{
-  message m;
-
-  m.m1_i1 = _PM_SEG_FLAG | fd;
-  m.m1_i2 = nbytes;
-  m.m1_p1 = (char *) buffer;
-  m.m1_p2 = (char *) seg;
-  m.m1_p3 = (char *) ep;
-  return(_syscall(FS_PROC_NR, WRITE, &m));
-}
-

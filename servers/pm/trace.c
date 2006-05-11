@@ -55,9 +55,11 @@ PUBLIC int do_trace()
    */
   switch (m_in.request) {
   case T_EXIT:		/* exit */
-	pm_exit(child, (int) m_in.data);
-	mp->mp_reply.reply_trace = 0;
-	return(OK);
+	pm_exit(child, (int) m_in.data, TRUE /*for_trace*/);
+	/* Do not reply to the caller until FS has processed the exit
+	 * request.
+	 */
+	return SUSPEND;
   case T_RESUME: 
   case T_STEP: 		/* resume execution */
 	if (m_in.data < 0 || m_in.data > _NSIG) return(EIO);

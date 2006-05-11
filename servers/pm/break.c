@@ -24,7 +24,7 @@
 #define STACK_CHANGED      2	/* flag value when stack size changed */
 
 /*===========================================================================*
- *				do_brk  				     *
+ *				do_brk	 				     *
  *===========================================================================*/
 PUBLIC int do_brk()
 {
@@ -57,7 +57,7 @@ PUBLIC int do_brk()
 }
 
 /*===========================================================================*
- *				adjust  				     *
+ *				adjust					     *
  *===========================================================================*/
 PUBLIC int adjust(rmp, data_clicks, sp)
 register struct mproc *rmp;	/* whose memory is being adjusted? */
@@ -79,12 +79,13 @@ vir_bytes sp;			/* new value of sp */
   mem_sp = &rmp->mp_seg[S];	/* pointer to stack segment map */
   changed = 0;			/* set when either segment changed */
 
-  if (mem_sp->mem_len == 0) return(OK);	/* don't bother init */
-
   /* See if stack size has gone negative (i.e., sp too close to 0xFFFF...) */
   base_of_stack = (long) mem_sp->mem_vir + (long) mem_sp->mem_len;
   sp_click = sp >> CLICK_SHIFT;	/* click containing sp */
-  if (sp_click >= base_of_stack) return(ENOMEM);	/* sp too high */
+  if (sp_click >= base_of_stack)
+  {
+	return(ENOMEM);	/* sp too high */
+  }
 
   /* Compute size of gap between stack and data segments. */
   delta = (long) mem_sp->mem_vir - (long) sp_click;
@@ -94,7 +95,10 @@ vir_bytes sp;			/* new value of sp */
 #define SAFETY_BYTES  (384 * sizeof(char *))
 #define SAFETY_CLICKS ((SAFETY_BYTES + CLICK_SIZE - 1) / CLICK_SIZE)
   gap_base = mem_dp->mem_vir + data_clicks + SAFETY_CLICKS;
-  if (lower < gap_base) return(ENOMEM);	/* data and stack collided */
+  if (lower < gap_base)
+  {
+	return(ENOMEM);	/* data and stack collided */
+  }
 
   /* Update data length (but not data orgin) on behalf of brk() system call. */
   old_clicks = mem_dp->mem_len;

@@ -81,11 +81,11 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 
 	no_sys,		/* 64 = unused */
 	no_sys,		/* 65 = UNPAUSE	*/
-	no_sys, 	/* 66 = unused  */
+	exec_newmem, 	/* 66 = EXEC_NEWMEM */
 	no_sys,		/* 67 = REVIVE	*/
 	no_sys,		/* 68 = TASK_REPLY  */
-	no_sys,		/* 69 = unused	*/
-	no_sys,		/* 70 = unused	*/
+	do_fork_nb,	/* 69 = FORK_NB	*/
+	do_execrestart,	/* 70 = EXEC_RESTART	*/
 	do_sigaction,	/* 71 = sigaction   */
 	do_sigsuspend,	/* 72 = sigsuspend  */
 	do_sigpending,	/* 73 = sigpending  */

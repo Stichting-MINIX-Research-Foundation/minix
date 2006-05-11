@@ -58,6 +58,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   if (dev != NO_DEV) {
 	b = (int) block & HASH_MASK;
 	bp = buf_hash[b];
+
 	while (bp != NIL_BUF) {
 		if (bp->b_blocknr == block && bp->b_dev == dev) {
 			/* Block needed has been found. */
@@ -84,12 +85,14 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   } else {
 	/* The block just taken is not on the front of its hash chain. */
 	while (prev_ptr->b_hash != NIL_BUF)
+	{
 		if (prev_ptr->b_hash == bp) {
 			prev_ptr->b_hash = bp->b_hash;	/* found it */
 			break;
 		} else {
 			prev_ptr = prev_ptr->b_hash;	/* keep looking */
 		}
+	}
   }
 
   /* If the block taken is dirty, make it clean by writing it to the disk.
@@ -269,7 +272,7 @@ int rw_flag;			/* READING or WRITING */
   if ( (dev = bp->b_dev) != NO_DEV) {
 	pos = (off_t) bp->b_blocknr * block_size;
 	op = (rw_flag == READING ? DEV_READ : DEV_WRITE);
-	r = dev_io(op, dev, FS_PROC_NR, bp->b_data, pos, block_size, 0);
+	r = dev_bio(op, dev, FS_PROC_NR, bp->b_data, pos, block_size, 0);
 	if (r != block_size) {
 	    if (r >= 0) r = END_OF_FILE;
 	    if (r != END_OF_FILE)
@@ -371,7 +374,7 @@ int rw_flag;			/* READING or WRITING */
 		iop->iov_addr = (vir_bytes) bp->b_data;
 		iop->iov_size = block_size;
 	}
-	r = dev_io(rw_flag == WRITING ? DEV_SCATTER : DEV_GATHER,
+	r = dev_bio(rw_flag == WRITING ? DEV_SCATTER : DEV_GATHER,
 		dev, FS_PROC_NR, iovec,
 		(off_t) bufq[0]->b_blocknr * block_size, j, 0);
 
@@ -433,12 +436,123 @@ struct buf *bp;
   next_ptr = bp->b_next;	/* successor on LRU chain */
   prev_ptr = bp->b_prev;	/* predecessor on LRU chain */
   if (prev_ptr != NIL_BUF)
+  {
 	prev_ptr->b_next = next_ptr;
+  }
   else
 	front = next_ptr;	/* this block was at front of chain */
 
   if (next_ptr != NIL_BUF)
+  {
 	next_ptr->b_prev = prev_ptr;
+  }
   else
 	rear = prev_ptr;	/* this block was at rear of chain */
 }
+
+#if 0
+PRIVATE void check_lru()
+{
+	int i;
+	struct buf *bp, *nbp;
+
+	for (i= 0; i<NR_BUFS; i++)
+	{
+		bp= &buf[i];
+		nbp= bp->b_next;
+		if (nbp != NULL && (nbp < buf || nbp >= &buf[NR_BUFS]))
+		{
+			stacktrace();
+			panic(__FILE__, "check_lru: bad next", nbp);
+		}
+		nbp= bp->b_prev;
+		if (nbp != NULL && (nbp < buf || nbp >= &buf[NR_BUFS]))
+		{
+			stacktrace();
+			panic(__FILE__, "check_lru: bad next", nbp);
+		}
+	}
+}
+
+PRIVATE void check_buf(bp)
+struct buf *bp;
+{
+	struct buf *nbp;
+
+	if (bp < buf || bp >= &buf[NR_BUFS])
+	{
+		stacktrace();
+		panic(__FILE__, "check_buf: bad buf", bp);
+	}
+	nbp= bp->b_next;
+	if (nbp != NULL && (nbp < buf || nbp >= &buf[NR_BUFS]))
+	{
+		stacktrace();
+		panic(__FILE__, "check_buf: bad next", nbp);
+	}
+	nbp= bp->b_prev;
+	if (nbp != NULL && (nbp < buf || nbp >= &buf[NR_BUFS]))
+	{
+		stacktrace();
+		panic(__FILE__, "check_buf: bad next", nbp);
+	}
+}
+
+PRIVATE void check_hash_chains()
+{
+	int i;
+	struct buf *bp;
+
+	for (i= 0; i<NR_BUFS; i++)
+	{
+		bp= &buf[i];
+		while (bp)
+		{
+			if (bp < buf || bp >= &buf[NR_BUFS])
+			{
+				panic(__FILE__, "check_hash_chains: bad buf",
+					bp);
+			}
+			bp= bp->b_hash;
+		}
+	}
+}
+
+PUBLIC void check_hash_chainsX(file, line)
+char *file;
+int line;
+{
+	int i;
+	struct buf *bp;
+
+	for (i= 0; i<NR_BUF_HASH; i++)
+	{
+		bp= buf_hash[i];
+		while (bp)
+		{
+			if (bp < buf || bp >= &buf[NR_BUFS])
+			{
+				printf(
+				"check_hash_chainsX: called from %s, %d\n",
+					file, line);
+				panic(__FILE__, "check_hash_chainsX: bad buf",
+					bp);
+			}
+			bp= bp->b_hash;
+		}
+	}
+}
+
+PRIVATE void check_hash_chain(bp)
+struct buf *bp;
+{
+	while (bp)
+	{
+		if (bp < buf || bp >= &buf[NR_BUFS])
+		{
+			panic(__FILE__, "check_hash_chain: bad buf", bp);
+		}
+		bp= bp->b_hash;
+	}
+}
+#endif

@@ -7,14 +7,16 @@
  *   do_fcntl:	  perform the FCNTL system call
  *   do_sync:	  perform the SYNC system call
  *   do_fsync:	  perform the FSYNC system call
- *   do_reboot:	  sync disks and prepare for shutdown
- *   do_fork:	  adjust the tables after MM has performed a FORK system call
+ *   pm_reboot:	  sync disks and prepare for shutdown
+ *   pm_fork:	  adjust the tables after MM has performed a FORK system call
  *   do_exec:	  handle files with FD_CLOEXEC on after MM has done an EXEC
  *   do_exit:	  a process has exited; note that in the tables
- *   do_set:	  set uid or gid for some process
+ *   pm_setgid:	  set group ids for some process
+ *   pm_setuid:	  set user ids for some process
  *   do_revive:	  revive a process that was waiting for something (e.g. TTY)
  *   do_svrctl:	  file system control
  *   do_getsysinfo:	request copy of FS data structure
+ *   pm_dumpcore: create a core dump
  */
 
 #include "fs.h"
@@ -23,6 +25,7 @@
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
+#include <sys/ptrace.h>
 #include <sys/svrctl.h>
 #include "buf.h"
 #include "file.h"
@@ -31,7 +34,15 @@
 #include "param.h"
 #include "super.h"
 
-FORWARD _PROTOTYPE( int free_proc, (struct fproc *freed, int flags));
+#define CORE_NAME	"core"
+#define CORE_MODE	0777	/* mode to use on core image files */
+
+FORWARD _PROTOTYPE( void free_proc, (struct fproc *freed, int flags));
+FORWARD _PROTOTYPE( int dumpcore, (int proc_e, struct mem_map *seg_ptr));
+FORWARD _PROTOTYPE( int write_bytes, (struct inode *rip, off_t off,
+	char *buf, size_t bytes));
+FORWARD _PROTOTYPE( int write_seg, (struct inode *rip, off_t off, int proc_e,
+	int seg, off_t seg_off, phys_bytes seg_bytes));
 
 #define FP_EXITING	1
 
@@ -252,17 +263,14 @@ PUBLIC int do_fsync()
 }
 
 /*===========================================================================*
- *				do_reboot				     *
+ *				pm_reboot				     *
  *===========================================================================*/
-PUBLIC int do_reboot()
+PUBLIC void pm_reboot()
 {
   /* Perform the FS side of the reboot call. */
   int i;
   struct super_block *sp;
   struct inode dummy;
-
-  /* Only PM may make this call directly. */
-  if (who_e != PM_PROC_NR) return(EGENERIC);
 
   /* Do exit processing for all leftover processes and servers,
    * but don't actually exit them (if they were really gone, PM
@@ -291,35 +299,33 @@ PUBLIC int do_reboot()
 
   /* Sync any unwritten buffers. */
   do_sync();
-
-  return(OK);
 }
 
 /*===========================================================================*
- *				do_fork					     *
+ *				pm_fork					     *
  *===========================================================================*/
-PUBLIC int do_fork()
+PUBLIC void pm_fork(pproc, cproc, cpid)
+int pproc;	/* Parent process */
+int cproc;	/* Child process */
+int cpid;	/* Child process id */
 {
 /* Perform those aspects of the fork() system call that relate to files.
  * In particular, let the child inherit its parent's file descriptors.
  * The parent and child parameters tell who forked off whom. The file
- * system uses the same slot numbers as the kernel.  Only MM makes this call.
+ * system uses the same slot numbers as the kernel.
  */
 
   register struct fproc *cp;
   int i, parentno, childno;
 
-  /* Only PM may make this call directly. */
-  if (who_e != PM_PROC_NR) return(EGENERIC);
-
   /* Check up-to-dateness of fproc. */
-  okendpt(m_in.parent_endpt, &parentno);
+  okendpt(pproc, &parentno);
 
   /* PM gives child endpoint, which implies process slot information.
    * Don't call isokendpt, because that will verify if the endpoint
    * number is correct in fproc, which it won't be.
    */
-  childno = _ENDPOINT_P(m_in.child_endpt);
+  childno = _ENDPOINT_P(cproc);
   if(childno < 0 || childno >= NR_PROCS)
 	panic(__FILE__, "FS: bogus child for forking", m_in.child_endpt);
   if(fproc[childno].fp_pid != PID_FREE)
@@ -334,68 +340,24 @@ PUBLIC int do_fork()
 	if (cp->fp_filp[i] != NIL_FILP) cp->fp_filp[i]->filp_count++;
 
   /* Fill in new process and endpoint id. */
-  cp->fp_pid = m_in.pid;
-  cp->fp_endpoint = m_in.child_endpt;
+  cp->fp_pid = cpid;
+  cp->fp_endpoint = cproc;
 
   /* A child is not a process leader. */
   cp->fp_sesldr = 0;
 
   /* This child has not exec()ced yet. */
   cp->fp_execced = 0;
-#if 0
-printf("do_fork: child %d, slot %d\n", m_in.child_endpt, cp-fproc);
-#endif
 
   /* Record the fact that both root and working dir have another user. */
   dup_inode(cp->fp_rootdir);
   dup_inode(cp->fp_workdir);
-  return(OK);
-}
-
-/*===========================================================================*
- *				do_exec					     *
- *===========================================================================*/
-PUBLIC int do_exec()
-{
-/* Files can be marked with the FD_CLOEXEC bit (in fp->fp_cloexec).  When
- * MM does an EXEC, it calls FS to allow FS to find these files and close them.
- */
-
-  int i, proc;
-  long bitmap;
-
-  /* Only PM may make this call directly. */
-  if (who_e != PM_PROC_NR) return(EGENERIC);
-
-  /* The array of FD_CLOEXEC bits is in the fp_cloexec bit map. */
-  okendpt(m_in.endpt1, &proc);
-  fp = &fproc[proc];		/* get_filp() needs 'fp' */
-  bitmap = fp->fp_cloexec;
-  if (bitmap) {
-    /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
-    for (i = 0; i < OPEN_MAX; i++) {
-	  m_in.fd = i;
-	  if ( (bitmap >> i) & 01) (void) do_close();
-    }
-  }
-
-  /* This child has now exec()ced. */
-  fp->fp_execced = 1;
-
-  /* Reply to caller (PM) directly. */
-  reply(who_e, OK);
-
-  /* Check if this is a driver that can now be useful. */
-  dmap_endpt_up(fp->fp_endpoint);
-
-  /* Suppress reply to caller (caller already replied to). */
-  return SUSPEND;
 }
 
 /*===========================================================================*
  *				free_proc				     *
  *===========================================================================*/
-PRIVATE int free_proc(struct fproc *exiter, int flags)
+PRIVATE void free_proc(struct fproc *exiter, int flags)
 {
   int i, task;
   register struct fproc *rfp;
@@ -408,15 +370,13 @@ PRIVATE int free_proc(struct fproc *exiter, int flags)
   if (fp->fp_suspended == SUSPENDED) {
 	task = -fp->fp_task;
 	if (task == XPIPE || task == XPOPEN) susp_count--;
-	m_in.ENDPT = fp->fp_endpoint;
-	(void) do_unpause();	/* this always succeeds for MM */
+	unpause(fp->fp_endpoint);
 	fp->fp_suspended = NOT_SUSPENDED;
   }
 
   /* Loop on file descriptors, closing any that are open. */
   for (i = 0; i < OPEN_MAX; i++) {
-	m_in.fd = i;
-	(void) do_close();
+	(void) close_fd(fp, i);
   }
 
   /* Release root and working directories. */
@@ -436,7 +396,7 @@ PRIVATE int free_proc(struct fproc *exiter, int flags)
    * exit.
    */
   if(!(flags & FP_EXITING))
-	return OK;
+	return;
 
   dmap_unmap_by_endpt(fp->fp_endpoint);
   /* Invalidate endpoint number for error and sanity checks. */
@@ -467,52 +427,59 @@ PRIVATE int free_proc(struct fproc *exiter, int flags)
 
   /* Exit done. Mark slot as free. */
   fp->fp_pid = PID_FREE;
-  return(OK);
-
 }
 
 /*===========================================================================*
- *				do_exit					     *
+ *				pm_exit					     *
  *===========================================================================*/
-PUBLIC int do_exit()
+PUBLIC void pm_exit(proc)
+int proc;
 {
-  int exitee_p, exitee_e;
+  int exitee_p;
 /* Perform the file system portion of the exit(status) system call. */
 
-  /* Only PM may do the EXIT call directly. */
-  if (who_e != PM_PROC_NR) return(EGENERIC);
-
   /* Nevertheless, pretend that the call came from the user. */
-  exitee_e = m_in.endpt1;
-  okendpt(exitee_e, &exitee_p);
-  return free_proc(&fproc[exitee_p], FP_EXITING);
+  okendpt(proc, &exitee_p);
+  free_proc(&fproc[exitee_p], FP_EXITING);
 }
 
 /*===========================================================================*
- *				do_set					     *
+ *				pm_setgid				     *
  *===========================================================================*/
-PUBLIC int do_set()
+PUBLIC void pm_setgid(proc_e, egid, rgid)
+int proc_e;
+int egid;
+int rgid;
 {
-/* Set uid_t or gid_t field. */
-
   register struct fproc *tfp;
-  int proc;
+  int slot;
 
-  /* Only PM may make this call directly. */
-  if (who_e != PM_PROC_NR) return(EGENERIC);
+  okendpt(proc_e, &slot);
+  tfp = &fproc[slot];
 
-  okendpt(m_in.endpt1, &proc);
-  tfp = &fproc[proc];
-  if (call_nr == SETUID) {
-	tfp->fp_realuid = (uid_t) m_in.real_user_id;
-	tfp->fp_effuid =  (uid_t) m_in.eff_user_id;
-  }
-  if (call_nr == SETGID) {
-	tfp->fp_effgid =  (gid_t) m_in.eff_grp_id;
-	tfp->fp_realgid = (gid_t) m_in.real_grp_id;
-  }
-  return(OK);
+  tfp->fp_effgid =  egid;
+  tfp->fp_realgid = rgid;
 }
+
+
+/*===========================================================================*
+ *				pm_setuid				     *
+ *===========================================================================*/
+PUBLIC void pm_setuid(proc_e, euid, ruid)
+int proc_e;
+int euid;
+int ruid;
+{
+  register struct fproc *tfp;
+  int slot;
+
+  okendpt(proc_e, &slot);
+  tfp = &fproc[slot];
+
+  tfp->fp_effuid =  euid;
+  tfp->fp_realuid = ruid;
+}
+
 
 /*===========================================================================*
  *				do_revive				     *
@@ -557,7 +524,7 @@ PUBLIC int do_svrctl()
 
 	/* Try to update device mapping. */
 	major = (device.dev >> MAJOR) & BYTE;
-	r=map_driver(major, who_e, device.style);
+	r=map_driver(major, who_e, device.style, 0 /* !force */);
 	if (r == OK)
 	{
 		/* If a driver has completed its exec(), it can be announced
@@ -581,10 +548,283 @@ PUBLIC int do_svrctl()
 		(phys_bytes) sizeof(fdu))) != OK) 
 	    return(r);
 	major = (fdu.dev >> MAJOR) & BYTE;
-	r=map_driver(major, NONE, 0);
+	r=map_driver(major, NONE, 0, 0);
 	return(r);
   }
   default:
 	return(EINVAL);
   }
 }
+
+
+/*===========================================================================*
+ *				pm_dumpcore				     *
+ *===========================================================================*/
+PUBLIC int pm_dumpcore(proc_e, seg_ptr)
+int proc_e;
+struct mem_map *seg_ptr;
+{
+	int r, proc_s;
+
+	r= dumpcore(proc_e, seg_ptr);
+
+	/* Terminate the process */
+	okendpt(proc_e, &proc_s);
+	free_proc(&fproc[proc_s], FP_EXITING);
+
+	return r;
+}
+
+/*===========================================================================*
+ *				dumpcore				     *
+ *===========================================================================*/
+PRIVATE int dumpcore(proc_e, seg_ptr)
+int proc_e;
+struct mem_map *seg_ptr;
+{
+	int r, seg, proc_s, exists;
+	mode_t omode;
+	vir_bytes len;
+	off_t off, seg_off;
+	long trace_off, trace_data;
+	struct fproc *rfp;
+	struct inode *rip, *ldirp;
+	struct mem_map segs[NR_LOCAL_SEGS];
+
+	okendpt(proc_e, &proc_s);
+	rfp= fp= &fproc[proc_s];
+	who_e= proc_e;
+	who_p= proc_s;
+	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
+
+	/* We need the equivalent of
+	 * open(CORE_NAME, O_WRONLY|O_CREAT|O_TRUNC|O_NONBLOCK, CORE_MODE)
+	 */
+
+  	/* Create a new inode by calling new_node(). */
+        omode = I_REGULAR | (CORE_MODE & ALL_MODES & rfp->fp_umask);
+    	rip = new_node(&ldirp, CORE_NAME, omode, NO_ZONE, 0, NULL);
+    	r = err_code;
+        put_inode(ldirp);
+	exists= (r == EEXIST);
+    	if (r != OK && r != EEXIST) return(r); /* error */
+
+	/* Only do the normal open code if we didn't just create the file. */
+	if (exists) {
+		/* Check protections. */
+		r = forbidden(rip, W_BIT);
+		if (r != OK)
+		{
+			put_inode(rip);
+			return r;
+		}
+
+		/* Make sure it is a regular file */
+		switch (rip->i_mode & I_TYPE) {
+		   case I_REGULAR: 
+			break;
+ 
+		   case I_DIRECTORY: 
+			/* Directories may be read but not written. */
+			r = EISDIR;
+			break;
+
+		   case I_CHAR_SPECIAL:
+		   case I_BLOCK_SPECIAL:
+		   case I_NAMED_PIPE:
+			r = EPERM;
+			break;
+		}
+
+		if (r != OK)
+		{
+			put_inode(rip);
+			return r;
+		}
+
+		/* Truncate the file */
+		truncate_inode(rip, 0);
+		wipe_inode(rip);
+		/* Send the inode from the inode cache to the
+		 * block cache, so it gets written on the next
+		 * cache flush.
+		 */
+		rw_inode(rip, WRITING);
+	}
+
+	/* Copy segments from PM */
+	r= sys_datacopy(PM_PROC_NR, (vir_bytes)seg_ptr,
+		SELF, (vir_bytes)segs, sizeof(segs));
+	if (r != OK) panic(__FILE__, "dumpcore: cannot copy segment info", r);
+
+	off= 0;
+	r= write_bytes(rip, off, (char *)segs, sizeof(segs));
+	if (r != OK)
+	{
+		put_inode(rip);
+		return r;
+	}
+	off += sizeof(segs);
+
+	/* Write out the whole kernel process table entry to get the regs. */
+	for (trace_off= 0;; trace_off += sizeof(long))
+	{
+		r= sys_trace(T_GETUSER, proc_e, trace_off, &trace_data);
+		if  (r != OK) 
+		{
+			printf("dumpcore: sys_trace failed at offset %d: %d\n",
+				trace_off, r);
+			break;
+		}
+		r= write_bytes(rip, off, (char *)&trace_data,
+			sizeof(trace_data));
+		if (r != OK)
+		{
+			put_inode(rip);
+			return r;
+		}
+		off += sizeof(trace_data);
+	}
+
+	/* Loop through segments and write the segments themselves out. */
+	for (seg = 0; seg < NR_LOCAL_SEGS; seg++) {
+		len= segs[seg].mem_len << CLICK_SHIFT;
+		seg_off= segs[seg].mem_vir << CLICK_SHIFT;
+		r= write_seg(rip, off, proc_e, seg, seg_off, len);
+		if (r != OK)
+		{
+			put_inode(rip);
+			return r;
+		}
+		off += len;
+	}
+
+	rip->i_size= off;
+	rip->i_dirt = DIRTY;
+
+	put_inode(rip);
+	return OK;
+}
+
+
+/*===========================================================================*
+ *				write_bytes				     *
+ *===========================================================================*/
+PRIVATE int write_bytes(rip, off, buf, bytes)
+struct inode *rip; 		/* inode descriptor to read from */
+off_t off;			/* offset in file */
+char *buf;
+size_t bytes;			/* how much is to be transferred? */
+{
+	int r, block_size;
+	off_t n, o, b_off;
+	block_t b;
+	struct buf *bp;
+
+	block_size= rip->i_sp->s_block_size;
+	for (o= off - (off % block_size); o < off+bytes; o += block_size)
+	{
+		if (o < off)
+			b_off= off-o;
+		else
+			b_off= 0;
+		n= block_size-b_off;
+		if (o+b_off+n > off+bytes)
+			n= off+bytes-(o+b_off);
+
+		b = read_map(rip, o);
+
+		if (b == NO_BLOCK) {
+			/* Writing to a nonexistent block. Create and enter
+			 * in inode.
+			 */
+			if ((bp= new_block(rip, o)) == NIL_BUF)
+				return(err_code);
+		} 
+		else
+		{
+			/* Just read the block, no need to optimize for
+			 * writing entire blocks.
+			 */
+			bp = get_block(rip->i_dev, b, NORMAL);
+		}
+
+		if (n != block_size && o >= rip->i_size && b_off == 0) {
+			zero_block(bp);
+		}
+
+		/* Copy a chunk from user space to the block buffer. */
+		memcpy((bp->b_data+b_off), buf, n);
+		bp->b_dirt = DIRTY;
+		if (b_off + n == block_size)
+			put_block(bp, FULL_DATA_BLOCK);
+		else
+			put_block(bp, PARTIAL_DATA_BLOCK);
+
+		buf += n;
+	}
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				write_seg				     *
+ *===========================================================================*/
+PRIVATE int write_seg(rip, off, proc_e, seg, seg_off, seg_bytes)
+struct inode *rip; 		/* inode descriptor to read from */
+off_t off;			/* offset in file */
+int proc_e;			/* process number (endpoint) */
+int seg;			/* T, D, or S */
+off_t seg_off;			/* Offset in segment */
+phys_bytes seg_bytes;		/* how much is to be transferred? */
+{
+  int r, block_size, fl;
+  off_t n, o, b_off;
+  block_t b;
+  struct buf *bp;
+
+  block_size= rip->i_sp->s_block_size;
+  for (o= off - (off % block_size); o < off+seg_bytes; o += block_size)
+  {
+	if (o < off)
+		b_off= off-o;
+	else
+		b_off= 0;
+	n= block_size-b_off;
+	if (o+b_off+n > off+seg_bytes)
+		n= off+seg_bytes-(o+b_off);
+
+	b = read_map(rip, o);
+	if (b == NO_BLOCK) {
+		/* Writing to a nonexistent block. Create and enter in inode.*/
+		if ((bp= new_block(rip, o)) == NIL_BUF)
+			return(err_code);
+	} else {
+		/* Normally an existing block to be partially overwritten is
+		 * first read in.  However, a full block need not be read in.
+		 * If it is already in the cache, acquire it, otherwise just
+		 * acquire a free buffer.
+		 */
+		fl = (n == block_size ? NO_READ : NORMAL);
+		bp = get_block(rip->i_dev, b, fl);
+	}
+
+	if (n != block_size && o >= rip->i_size && b_off == 0) {
+		zero_block(bp);
+	}
+
+	/* Copy a chunk from user space to the block buffer. */
+	r = sys_vircopy(proc_e, seg, (phys_bytes) seg_off,
+			FS_PROC_NR, D, (phys_bytes) (bp->b_data+b_off),
+			(phys_bytes) n);
+	bp->b_dirt = DIRTY;
+	fl = (b_off + n == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
+	put_block(bp, fl);
+
+	seg_off += n;
+  }
+
+  return OK;
+}
+
+

@@ -60,31 +60,47 @@ PRIVATE struct dmap init_dmap[] = {
  *===========================================================================*/
 PUBLIC int do_devctl()
 {
-  int result, proc_nr_e, proc_nr_n;
+	return fs_devctl(m_in.ctl_req, m_in.dev_nr, m_in.driver_nr,
+		m_in.dev_style, m_in.m_force);
+}
 
-  switch(m_in.ctl_req) {
+/*===========================================================================*
+ *				fs_devctl		 		     *
+ *===========================================================================*/
+PUBLIC int fs_devctl(req, dev, proc_nr_e, style, force)
+int req;
+int dev;
+int proc_nr_e;
+int style;
+int force;
+{
+  int result, proc_nr_n;
+
+  switch(req) {
   case DEV_MAP:
-      /* Check process number of new driver. */
-      proc_nr_e= m_in.driver_nr;
-      if (isokendpt(proc_nr_e, &proc_nr_n) != OK)
-	return(EINVAL);
+      if (!force)
+      {
+	/* Check process number of new driver. */
+	if (isokendpt(proc_nr_e, &proc_nr_n) != OK)
+		return(EINVAL);
+      }
 
       /* Try to update device mapping. */
-      result = map_driver(m_in.dev_nr, proc_nr_e, m_in.dev_style);
+      result = map_driver(dev, proc_nr_e, style, force);
       if (result == OK)
       {
 	/* If a driver has completed its exec(), it can be announced to be
 	 * up.
 	 */
-	if(fproc[proc_nr_n].fp_execced) {
-		dev_up(m_in.dev_nr);
+	if(force || fproc[proc_nr_n].fp_execced) {
+		dev_up(dev);
 	} else {
-		dmap[m_in.dev_nr].dmap_flags |= DMAP_BABY;
+		dmap[dev].dmap_flags |= DMAP_BABY;
 	}
       }
       break;
   case DEV_UNMAP:
-      result = map_driver(m_in.dev_nr, NONE, 0);
+      result = map_driver(dev, NONE, 0, 0);
       break;
   default:
       result = EINVAL;
@@ -95,10 +111,11 @@ PUBLIC int do_devctl()
 /*===========================================================================*
  *				map_driver		 		     *
  *===========================================================================*/
-PUBLIC int map_driver(major, proc_nr_e, style)
+PUBLIC int map_driver(major, proc_nr_e, style, force)
 int major;			/* major number of the device */
 int proc_nr_e;			/* process number of the driver */
 int style;			/* style of the device */
+int force;
 {
 /* Set a new device driver mapping in the dmap table. Given that correct 
  * arguments are given, this only works if the entry is mutable and the 
@@ -131,9 +148,12 @@ int style;			/* style of the device */
   if (! (dp->dmap_flags & DMAP_MUTABLE))  return(EPERM);
   if (dp->dmap_flags & DMAP_BUSY)  return(EBUSY);
 
-  /* Check process number of new driver. */
-  if (isokendpt(proc_nr_e, &proc_nr_n) != OK)
-	return(EINVAL);
+  if (!force)
+  {
+	/* Check process number of new driver. */
+	if (isokendpt(proc_nr_e, &proc_nr_n) != OK)
+		return(EINVAL);
+  }
 
   /* Try to update the entry. */
   switch (style) {
@@ -156,7 +176,7 @@ PUBLIC void dmap_unmap_by_endpt(int proc_nr_e)
 	int i, r;
 	for (i=0; i<NR_DEVICES; i++)
 	  if(dmap[i].dmap_driver && dmap[i].dmap_driver == proc_nr_e)
-	    if((r=map_driver(i, NONE, 0)) != OK)
+	    if((r=map_driver(i, NONE, 0, 0)) != OK)
 		printf("FS: unmap of p %d / d %d failed: %d\n", proc_nr_e,i,r);
 
 	return;

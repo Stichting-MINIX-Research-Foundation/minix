@@ -68,9 +68,21 @@ int fild;			/* file descriptor */
 {
 /* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
 
+  return get_filp2(fp, fild);
+}
+
+/*===========================================================================*
+ *				get_filp2				     *
+ *===========================================================================*/
+PUBLIC struct filp *get_filp2(rfp, fild)
+register struct fproc *rfp;
+int fild;			/* file descriptor */
+{
+/* See if 'fild' refers to a valid file descr.  If so, return its filp ptr. */
+
   err_code = EBADF;
   if (fild < 0 || fild >= OPEN_MAX ) return(NIL_FILP);
-  return(fp->fp_filp[fild]);	/* may also be NIL_FILP */
+  return(rfp->fp_filp[fild]);	/* may also be NIL_FILP */
 }
 
 /*===========================================================================*

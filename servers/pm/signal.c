@@ -27,16 +27,14 @@
 #include <minix/endpoint.h>
 #include <minix/com.h>
 #include <signal.h>
+#include <sys/resource.h>
 #include <sys/sigcontext.h>
 #include <string.h>
 #include "mproc.h"
 #include "param.h"
 
-#define CORE_MODE	0777	/* mode to use on core image files */
-#define DUMPED          0200	/* bit set in status when core dumped */
-
-FORWARD _PROTOTYPE( void dump_core, (struct mproc *rmp)			);
-FORWARD _PROTOTYPE( void unpause, (int pro)				);
+FORWARD _PROTOTYPE( int dump_core, (struct mproc *rmp)			);
+FORWARD _PROTOTYPE( void unpause, (int pro, int for_trace)		);
 FORWARD _PROTOTYPE( void handle_ksig, (int proc_nr, sigset_t sig_map)	);
 FORWARD _PROTOTYPE( void cause_sigalrm, (struct timer *tp)		);
 
@@ -233,8 +231,10 @@ PUBLIC int ksig_pending()
 	 * has been handled ...
 	 */
         if ((mproc[proc_nr_p].mp_flags & (IN_USE | ZOMBIE)) == IN_USE)
+	{
 	   if((r=sys_endksig(proc_nr_e)) != OK)	/* ... tell kernel it's done */
   		panic(__FILE__,"sys_endksig failed", r);
+	}
    }
  } 
  return(SUSPEND);			/* prevents sending reply */
@@ -274,10 +274,6 @@ sigset_t sig_map;
 	    case SIGQUIT:
 	    case SIGWINCH:
 		id = 0; break;	/* broadcast to process group */
-#if 0
-	    case SIGKILL:
-		id = -1; break;	/* broadcast to all except INIT */
-#endif
 	    default:
 		id = proc_id;
 		break;
@@ -417,7 +413,6 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   int s;
   int slot;
   int sigflags;
-  struct sigmsg sm;
 
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
@@ -425,9 +420,18 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		signo, (rmp->mp_flags & ZOMBIE) ? "zombie" : "dead", slot);
 	panic(__FILE__,"", NO_NUM);
   }
+  if (rmp->mp_fs_call != PM_IDLE)
+  {
+	sigaddset(&rmp->mp_sigpending, signo);
+	rmp->mp_flags |= PM_SIG_PENDING;
+	/* keep the process from running */
+	sys_nice(rmp->mp_endpoint, PRIO_STOP);
+	return;
+		
+  }
   if ((rmp->mp_flags & TRACED) && signo != SIGKILL) {
 	/* A traced process has special handling. */
-	unpause(slot);
+	unpause(slot, TRUE /*for_trace*/);
 	stop_proc(rmp, signo);	/* a signal causes it to stop */
 	return;
   }
@@ -451,15 +455,16 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   sigflags = rmp->mp_sigact[signo].sa_flags;
   if (sigismember(&rmp->mp_catch, signo)) {
 	if (rmp->mp_flags & SIGSUSPENDED)
-		sm.sm_mask = rmp->mp_sigmask2;
+		rmp->mp_sigmsg.sm_mask = rmp->mp_sigmask2;
 	else
-		sm.sm_mask = rmp->mp_sigmask;
-	sm.sm_signo = signo;
-	sm.sm_sighandler = (vir_bytes) rmp->mp_sigact[signo].sa_handler;
-	sm.sm_sigreturn = rmp->mp_sigreturn;
+		rmp->mp_sigmsg.sm_mask = rmp->mp_sigmask;
+	rmp->mp_sigmsg.sm_signo = signo;
+	rmp->mp_sigmsg.sm_sighandler =
+		(vir_bytes) rmp->mp_sigact[signo].sa_handler;
+	rmp->mp_sigmsg.sm_sigreturn = rmp->mp_sigreturn;
 	if ((s=get_stack_ptr(rmp->mp_endpoint, &new_sp)) != OK)
 		panic(__FILE__,"couldn't get new stack pointer (for sig)",s);
-	sm.sm_stkptr = new_sp;
+	rmp->mp_sigmsg.sm_stkptr = new_sp;
 
 	/* Make room for the sigcontext and sigframe struct. */
 	new_sp -= sizeof(struct sigcontext)
@@ -478,17 +483,29 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		sigdelset(&rmp->mp_catch, signo);
 		rmp->mp_sigact[signo].sa_handler = SIG_DFL;
 	}
+	sigdelset(&rmp->mp_sigpending, signo);
 
-	if (OK == (s=sys_sigsend(rmp->mp_endpoint, &sm))) {
+	/* Check to see if process is hanging on a PAUSE, WAIT or SIGSUSPEND
+	 * call.
+	 */
+	if (rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED)) {
+		rmp->mp_flags &= ~(PAUSED | WAITING | SIGSUSPENDED);
+		setreply(slot, EINTR);
 
-		sigdelset(&rmp->mp_sigpending, signo);
-		/* If process is hanging on PAUSE, WAIT, SIGSUSPEND, tty, 
-		 * pipe, etc., release it.
-		 */
-		unpause(slot);
+		/* Ask the kernel to deliver the signal */
+		s= sys_sigsend(rmp->mp_endpoint, &rmp->mp_sigmsg);
+		if (s != OK)
+			panic(__FILE__, "sys_sigsend failed", s);
+
+		/* Done */
 		return;
 	}
-  	panic(__FILE__, "sys_sigsend failed", s);
+
+	/* Ask FS to unpause the process. Deliver the signal when FS is
+	 * ready.
+	 */
+	unpause(slot, FALSE /*!for_trace*/);
+	return;
   }
   else if (sigismember(&rmp->mp_sig2mess, signo)) {
 
@@ -512,11 +529,14 @@ doterminate:
 		return;
 	}
 #endif
-	/* Switch to the user's FS environment and dump core. */
-	tell_fs(CHDIR, rmp->mp_endpoint, FALSE, 0);
-	dump_core(rmp);
+
+	s= dump_core(rmp);
+	if (s == SUSPEND)
+		return;
+
+	/* Not dumping core, just call exit */
   }
-  pm_exit(rmp, 0);		/* terminate process */
+  pm_exit(rmp, 0, FALSE /*!for_trace*/);	/* terminate process */
 }
 
 /*===========================================================================*
@@ -618,8 +638,9 @@ register struct mproc *rmp;
 /*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-PRIVATE void unpause(pro)
+PRIVATE void unpause(pro, for_trace)
 int pro;			/* which process number */
+int for_trace;			/* for tracing */
 {
 /* A signal is to be sent to a process.  If that process is hanging on a
  * system call, the system call must be terminated with EINTR.  Possible
@@ -627,8 +648,8 @@ int pro;			/* which process number */
  * First check if the process is hanging on an PM call.  If not, tell FS,
  * so it can check for READs and WRITEs from pipes, ttys and the like.
  */
-
   register struct mproc *rmp;
+  int r;
 
   rmp = &mproc[pro];
 
@@ -640,30 +661,29 @@ int pro;			/* which process number */
   }
 
   /* Process is not hanging on an PM call.  Ask FS to take a look. */
-  tell_fs(UNPAUSE, rmp->mp_endpoint, 0, 0);
+  if (rmp->mp_fs_call != PM_IDLE)
+	panic("pm", "unpause: not idle", rmp->mp_fs_call);
+  rmp->mp_fs_call= (for_trace ? PM_UNPAUSE_TR : PM_UNPAUSE);
+  r= notify(FS_PROC_NR);
+  if (r != OK) panic("pm", "unpause: unable to notify FS", r);
 }
 
 /*===========================================================================*
  *				dump_core				     *
  *===========================================================================*/
-PRIVATE void dump_core(rmp)
+PRIVATE int dump_core(rmp)
 register struct mproc *rmp;	/* whose core is to be dumped */
 {
 /* Make a core dump on the file "core", if possible. */
 
-  int s, fd, seg, slot;
+  int r, proc_nr, proc_nr_e, parent_waiting;
+  pid_t procgrp;
   vir_bytes current_sp;
-  long trace_data, trace_off;
+  struct mproc *p_mp;
+  clock_t t[5];
 
-  slot = (int) (rmp - mproc);
-
-  /* Can core file be written?  We are operating in the user's FS environment,
-   * so no special permission checks are needed.
-   */
-  if (rmp->mp_realuid != rmp->mp_effuid) return;
-  if ( (fd = open(core_name, O_WRONLY | O_CREAT | O_TRUNC | O_NONBLOCK,
-						CORE_MODE)) < 0) return;
-  rmp->mp_sigstatus |= DUMPED;
+  /* Do not create core files for set uid execution */
+  if (rmp->mp_realuid != rmp->mp_effuid) return OK;
 
   /* Make sure the stack segment is up to date.
    * We don't want adjust() to fail unless current_sp is preposterous,
@@ -671,33 +691,91 @@ register struct mproc *rmp;	/* whose core is to be dumped */
    * the adjust() for sending a signal to fail due to safety checking.  
    * Maybe make SAFETY_BYTES a parameter.
    */
-  if ((s=get_stack_ptr(rmp->mp_endpoint, &current_sp)) != OK)
-	panic(__FILE__,"couldn't get new stack pointer (for core)",s);
+  if ((r= get_stack_ptr(rmp->mp_endpoint, &current_sp)) != OK)
+	panic(__FILE__,"couldn't get new stack pointer (for core)", r);
   adjust(rmp, rmp->mp_seg[D].mem_len, current_sp);
 
-  /* Write the memory map of all segments to begin the core file. */
-  if (write(fd, (char *) rmp->mp_seg, (unsigned) sizeof rmp->mp_seg)
-      != (unsigned) sizeof rmp->mp_seg) {
-	close(fd);
+  /* Tell FS about the exiting process. */
+  if (rmp->mp_fs_call != PM_IDLE)
+	panic(__FILE__, "dump_core: not idle", rmp->mp_fs_call);
+  rmp->mp_fs_call= PM_DUMPCORE;
+  r= notify(FS_PROC_NR);
+  if (r != OK) panic(__FILE__, "dump_core: unable to notify FS", r);
+
+  /* Also perform most of the normal exit processing. Informing the parent
+   * has to wait until we know whether the coredump was successful or not.
+   */
+
+  proc_nr = (int) (rmp - mproc);	/* get process slot number */
+  proc_nr_e = rmp->mp_endpoint;
+
+  /* Remember a session leader's process group. */
+  procgrp = (rmp->mp_pid == mp->mp_procgrp) ? mp->mp_procgrp : 0;
+
+  /* If the exited process has a timer pending, kill it. */
+  if (rmp->mp_flags & ALARM_ON) set_alarm(proc_nr_e, (unsigned) 0);
+
+  /* Do accounting: fetch usage times and accumulate at parent. */
+  if((r=sys_times(proc_nr_e, t)) != OK)
+  	panic(__FILE__,"pm_exit: sys_times failed", r);
+
+  p_mp = &mproc[rmp->mp_parent];			/* process' parent */
+  p_mp->mp_child_utime += t[0] + rmp->mp_child_utime;	/* add user time */
+  p_mp->mp_child_stime += t[1] + rmp->mp_child_stime;	/* add system time */
+
+  /* Tell the kernel the process is no longer runnable to prevent it from 
+   * being scheduled in between the following steps. Then tell FS that it 
+   * the process has exited and finally, clean up the process at the kernel.
+   * This order is important so that FS can tell drivers to cancel requests
+   * such as copying to/ from the exiting process, before it is gone.
+   */
+  sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
+
+  if(proc_nr_e != FS_PROC_NR)		/* if it is not FS that is exiting.. */
+  {
+	if (rmp->mp_flags & PRIV_PROC)
+	{
+		/* destroy system processes without waiting for FS */
+		if((r= sys_exit(rmp->mp_endpoint)) != OK)
+			panic(__FILE__, "pm_exit: sys_exit failed", r);
+
+		/* Just send a SIGCHLD. Dealing with waidpid is too complicated
+		 * here.
+		 */
+		p_mp = &mproc[rmp->mp_parent];		/* process' parent */
+		sig_proc(p_mp, SIGCHLD);
+
+		/* Zombify to avoid calling sys_endksig */
+		rmp->mp_flags |= ZOMBIE;
+	}
+  }
+  else
+  {
+	printf("PM: FS died\n");
 	return;
   }
 
-  /* Write out the whole kernel process table entry to get the regs. */
-  trace_off = 0;
-  while (sys_trace(T_GETUSER, rmp->mp_endpoint, trace_off, &trace_data) == OK) {
-	if (write(fd, (char *) &trace_data, (unsigned) sizeof (long))
-	    != (unsigned) sizeof (long)) {
-		close(fd);
-		return;
+  /* Pending reply messages for the dead process cannot be delivered. */
+  rmp->mp_flags &= ~REPLY;
+
+  /* Keep the process around until FS is finished with it. */
+  
+  /* If the process has children, disinherit them.  INIT is the new parent. */
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+	if (rmp->mp_flags & IN_USE && rmp->mp_parent == proc_nr) {
+		/* 'rmp' now points to a child to be disinherited. */
+		rmp->mp_parent = INIT_PROC_NR;
+		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
+		if (parent_waiting && (rmp->mp_flags & ZOMBIE))
+		{
+			tell_parent(rmp);
+			real_cleanup(rmp);
+		}
 	}
-	trace_off += sizeof (long);
   }
 
-  /* Loop through segments and write the segments themselves out. */
-  for (seg = 0; seg < NR_LOCAL_SEGS; seg++) {
-	rw_seg(1, fd, rmp->mp_endpoint, seg,
-		(phys_bytes) rmp->mp_seg[seg].mem_len << CLICK_SHIFT);
-  }
-  close(fd);
+  /* Send a hangup to the process' process group if it was a session leader. */
+  if (procgrp != 0) check_sig(-procgrp, SIGHUP);
+
+  return SUSPEND;
 }
-

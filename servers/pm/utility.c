@@ -6,7 +6,6 @@
  *   allowed:		see if an access is permitted
  *   no_sys:		called for invalid system call numbers
  *   panic:		PM has run aground of a fatal error 
- *   tell_fs:		interface to FS
  *   get_mem_map:	get memory map of given process
  *   get_stack_ptr:	get stack pointer of given process	
  *   proc_from_pid:	return process pointer from pid number
@@ -52,44 +51,6 @@ PUBLIC pid_t get_free_pid()
   return(next_pid);
 }
 
-/*===========================================================================*
- *				allowed					     *
- *===========================================================================*/
-PUBLIC int allowed(name_buf, s_buf, mask)
-char *name_buf;			/* pointer to file name to be EXECed */
-struct stat *s_buf;		/* buffer for doing and returning stat struct*/
-int mask;			/* R_BIT, W_BIT, or X_BIT */
-{
-/* Check to see if file can be accessed.  Return EACCES or ENOENT if the access
- * is prohibited.  If it is legal open the file and return a file descriptor.
- */
-  int fd;
-  int save_errno;
-
-  /* Use the fact that mask for access() is the same as the permissions mask.
-   * E.g., X_BIT in <minix/const.h> is the same as X_OK in <unistd.h> and
-   * S_IXOTH in <sys/stat.h>.  tell_fs(DO_CHDIR, ...) has set PM's real ids
-   * to the user's effective ids, so access() works right for setuid programs.
-   */
-  if (access(name_buf, mask) < 0) return(-errno);
-
-  /* The file is accessible but might not be readable.  Make it readable. */
-  tell_fs(SETUID, PM_PROC_NR, (int) SUPER_USER, (int) SUPER_USER);
-
-  /* Open the file and fstat it.  Restore the ids early to handle errors. */
-  fd = open(name_buf, O_RDONLY | O_NONBLOCK);
-  save_errno = errno;		/* open might fail, e.g. from ENFILE */
-  tell_fs(SETUID, PM_PROC_NR, (int) mp->mp_effuid, (int) mp->mp_effuid);
-  if (fd < 0) return(-save_errno);
-  if (fstat(fd, s_buf) < 0) panic(__FILE__,"allowed: fstat failed", NO_NUM);
-
-  /* Only regular files can be executed. */
-  if (mask == X_BIT && (s_buf->st_mode & I_TYPE) != I_REGULAR) {
-	close(fd);
-	return(EACCES);
-  }
-  return(fd);
-}
 
 /*===========================================================================*
  *				no_sys					     *
@@ -117,7 +78,6 @@ int num;			/* number to go with it */
   int s;
 
   /* Switch to primary console and print panic message. */
-  check_sig(mproc[TTY_PROC_NR].mp_pid, SIGTERM);
   printf("PM panic (%s): %s", who, mess);
   if (num != NO_NUM) printf(": %d",num);
   printf("\n");
@@ -126,34 +86,6 @@ int num;			/* number to go with it */
   sys_exit(SELF);
 }
 
-/*===========================================================================*
- *				tell_fs					     *
- *===========================================================================*/
-PUBLIC void tell_fs(what, p1, p2, p3)
-int what, p1, p2, p3;
-{
-/* This routine is only used by PM to inform FS of certain events:
- *      tell_fs(CHDIR, slot, dir, 0)
- *      tell_fs(EXEC, proc, 0, 0)
- *      tell_fs(EXIT, proc, 0, 0)
- *      tell_fs(FORK, parent, child, pid)
- *      tell_fs(SETGID, proc, realgid, effgid)
- *      tell_fs(SETSID, proc, 0, 0)
- *      tell_fs(SETUID, proc, realuid, effuid)
- *      tell_fs(UNPAUSE, proc, signr, 0)
- *      tell_fs(STIME, time, 0, 0)
- * Ignore this call if the FS is already dead, e.g. on shutdown.
- */
-  message m;
-
-  if ((mproc[FS_PROC_NR].mp_flags & (IN_USE|ZOMBIE)) != IN_USE)
-      return;
-
-  m.tell_fs_arg1 = p1;
-  m.tell_fs_arg2 = p2;
-  m.tell_fs_arg3 = p3;
-  _taskcall(FS_PROC_NR, what, &m);
-}
 
 /*===========================================================================*
  *				find_param				     *
