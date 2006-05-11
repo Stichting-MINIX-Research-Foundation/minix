@@ -644,7 +644,10 @@ int scode;			/* scan code of key just struck or released */
    */
   if (ctrl && alt && (scode == DEL_SCAN || scode == INS_SCAN))
   {
-	if (++CAD_count == 3) sys_abort(RBT_HALT);
+	if (++CAD_count == 3) {
+		cons_stop();
+		sys_abort(RBT_HALT);
+	}
 	sys_kill(INIT_PROC_NR, SIGABRT);
 	return -1;
   }
