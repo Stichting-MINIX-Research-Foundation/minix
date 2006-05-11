@@ -26,6 +26,9 @@ extern struct rproc {
   clock_t r_alive_tm;		/* timestamp of last heartbeat */
   clock_t r_stop_tm;		/* timestamp of SIGTERM signal */
 
+  char *r_exec;			/* Executable image */ 
+  size_t r_exec_len;		/* Length of image */
+
   char r_cmd[MAX_COMMAND_LEN];	/* raw command plus arguments */
   char *r_argv[MAX_NR_ARGS+2];  /* parsed arguments vector */
   int r_argc;  			/* number of arguments */

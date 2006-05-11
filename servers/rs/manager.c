@@ -4,11 +4,14 @@
  */
 
 #include "inc.h"
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
+#include <lib.h>
 
 /* Allocate variables. */
 struct rproc rproc[NR_SYS_PROCS];		/* system process table */
@@ -19,6 +22,8 @@ extern int errno;				/* error status */
 /* Prototypes for internal functions that do the hard work. */
 FORWARD _PROTOTYPE( int start_service, (struct rproc *rp) );
 FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
+FORWARD _PROTOTYPE( int fork_nb, (void) );
+FORWARD _PROTOTYPE( int read_exec, (struct rproc *rp) );
 
 PRIVATE int shutting_down = FALSE;
 
@@ -27,8 +32,9 @@ PRIVATE int shutting_down = FALSE;
 /*===========================================================================*
  *					do_up				     *
  *===========================================================================*/
-PUBLIC int do_up(m_ptr)
+PUBLIC int do_up(m_ptr, do_copy)
 message *m_ptr;					/* request message pointer */
+int do_copy;					/* keep copy in memory */
 {
 /* A request was made to start a new system service. Dismember the request 
  * message and gather all information needed to start the service. Starting
@@ -77,6 +83,14 @@ message *m_ptr;					/* request message pointer */
   }
   rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
   rp->r_argc = arg_count;
+
+  rp->r_exec= NULL;
+  if (do_copy)
+  {
+	s= read_exec(rp);
+	if (s != OK)
+		return s;
+  }
 
   /* Initialize some fields. */
   rp->r_period = m_ptr->RS_PERIOD;
@@ -192,7 +206,7 @@ PUBLIC void do_exit(message *m_ptr)
   while ( (exit_pid = waitpid(-1, &exit_status, WNOHANG)) != 0 ) {
 
 #if VERBOSE
-      printf("RS: proc %d, pid %d, ", rp->r_proc_nr_e, exit_pid); 
+      printf("RS: pid %d, ", exit_pid); 
       if (WIFSIGNALED(exit_status)) {
           printf("killed, signal number %d\n", WTERMSIG(exit_status));
       } 
@@ -213,6 +227,11 @@ PUBLIC void do_exit(message *m_ptr)
 
               if ((rp->r_flags & RS_EXITING) || shutting_down) {
 		  rp->r_flags = 0;			/* release slot */
+		  if (rp->r_exec)
+		  {
+			free(rp->r_exec);
+			rp->r_exec= NULL;
+		  }
 		  rproc_ptr[proc] = NULL;
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
@@ -231,6 +250,9 @@ PUBLIC void do_exit(message *m_ptr)
 		   * exit, immediately restart this service. Otherwise use
 		   * a binary exponetial backoff.
 		   */
+#if 0
+rp->r_restarts= 0;
+#endif
                   if (rp->r_restarts > 0) {
 		      rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-1));
 		      rp->r_backoff = MIN(rp->r_backoff,MAX_BACKOFF); 
@@ -331,11 +353,17 @@ struct rproc *rp;
   int child_proc_nr_e, child_proc_nr_n;		/* child process slot */
   pid_t child_pid;				/* child's process id */
   char *file_only;
-  int s;
+  int s, use_copy;
   message m;
 
+  use_copy= (rp->r_exec != NULL);
+
   /* Now fork and branch for parent and child process (and check for error). */
-  child_pid = fork();
+  if (use_copy)
+	child_pid= fork_nb();
+  else
+	child_pid = fork();
+
   switch(child_pid) {					/* see fork(2) */
   case -1:						/* fork failed */
       report("RS", "warning, fork() failed", errno);	/* shouldn't happen */
@@ -346,9 +374,12 @@ struct rproc *rp;
        * e.g., because the root file system cannot be read, try to strip of
        * the path, and see if the command is in RS' current working dir.
        */
-      execve(rp->r_argv[0], rp->r_argv, NULL);		/* POSIX execute */
-      file_only = strrchr(rp->r_argv[0], '/') + 1;
-      execve(file_only, rp->r_argv, NULL);		/* POSIX execute */
+      if (!use_copy)
+      {
+	execve(rp->r_argv[0], rp->r_argv, NULL);	/* POSIX execute */
+	file_only = strrchr(rp->r_argv[0], '/') + 1;
+	execve(file_only, rp->r_argv, NULL);		/* POSIX execute */
+      }
       printf("RS: exec failed for %s: %d\n", rp->r_argv[0], errno);
       exit(EXEC_FAILED);				/* terminate child */
 
@@ -357,30 +388,33 @@ struct rproc *rp;
       break;						/* continue below */
   }
 
-  /* Only the parent process (the RS server) gets to this point. The child
-   * is still inhibited from running because it's privilege structure is
-   * not yet set. First try to set the device driver mapping at the FS.
+  if (use_copy)
+  {
+	extern char **environ;
+	dev_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
+		environ);
+  }
+
+  /* Set the privilege structure for the child process to let is run.
+   * This should succeed: we tested number in use above.
    */
+  if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_INIT, 0, NULL)) < 0) {
+      report("RS","sys_privctl call failed", s);	/* to let child run */
+      rp->r_flags |= RS_EXITING;			/* expect exit */
+      if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
+      else report("RS", "didn't kill pid", child_pid);
+      return(s);					/* return error */
+  }
+
   if (rp->r_dev_nr > 0) {				/* set driver map */
-      if ((s=mapdriver(child_proc_nr_e, rp->r_dev_nr, rp->r_dev_style)) < 0) {
+      if ((s=mapdriver(child_proc_nr_e, rp->r_dev_nr, rp->r_dev_style,
+	!!use_copy /* force */)) < 0) {
           report("RS", "couldn't map driver", errno);
           rp->r_flags |= RS_EXITING;			/* expect exit */
 	  if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
 	  else report("RS", "didn't kill pid", child_pid);
 	  return(s);					/* return error */
       }
-  }
-
-  /* The device driver mapping has been set, or the service was not a driver.
-   * Now, set the privilege structure for the child process to let is run.
-   * This should succeed: we tested number in use above.
-   */
-  if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_INIT, 0, NULL)) < 0) {
-      report("RS","call to SYSTEM failed", s);		/* to let child run */
-      rp->r_flags |= RS_EXITING;			/* expect exit */
-      if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
-      else report("RS", "didn't kill pid", child_pid);
-      return(s);					/* return error */
   }
 
 #if VERBOSE
@@ -456,3 +490,52 @@ message *m_ptr;
   return(OK);
 }
 
+PRIVATE pid_t fork_nb()
+{
+  message m;
+
+  return(_syscall(PM_PROC_NR, FORK_NB, &m));
+}
+
+PRIVATE int read_exec(rp)
+struct rproc *rp;
+{
+	int e, r, fd;
+	char *e_name;
+	struct stat sb;
+
+	e_name= rp->r_argv[0];
+	r= stat(e_name, &sb);
+	if (r != 0)
+		return -errno;
+
+	fd= open(e_name, O_RDONLY);
+	if (fd == -1)
+		return -errno;
+
+	rp->r_exec_len= sb.st_size;
+	rp->r_exec= malloc(rp->r_exec_len);
+	if (rp->r_exec == NULL)
+	{
+		printf("read_exec: unable to allocate %d bytes\n",
+			rp->r_exec_len);
+		close(fd);
+		return ENOMEM;
+	}
+
+	r= read(fd, rp->r_exec, rp->r_exec_len);
+	e= errno;
+	close(fd);
+	if (r == rp->r_exec_len)
+		return OK;
+
+	printf("read_exec: read failed %d, errno %d\n", r, e);
+
+	free(rp->r_exec);
+	rp->r_exec= NULL;
+
+	if (r >= 0)
+		return EIO;
+	else
+		return -e;
+}

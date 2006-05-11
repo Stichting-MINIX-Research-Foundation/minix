@@ -81,7 +81,8 @@ PUBLIC int main(void)
        */
       else {	
           switch(call_nr) {
-          case RS_UP: 		result = do_up(&m); 		break;
+          case RS_UP: 		result = do_up(&m, FALSE /*!do_copy*/);	break;
+          case RS_UP_COPY:	result = do_up(&m, TRUE /*do_copy*/);	break;
           case RS_DOWN: 	result = do_down(&m); 		break;
           case RS_REFRESH: 	result = do_refresh(&m); 	break;
           case RS_RESCUE: 	result = do_rescue(&m); 	break;
@@ -127,6 +128,7 @@ PRIVATE void init_server(void)
   if ((s = getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap)) < 0)
       panic("RS","warning: couldn't get copy of dmap table", errno);
   
+#if 0
   /* Now initialize the table with the processes in the system image. 
    * Prepend /sbin/ to the binaries so that we can actually find them. 
    */
@@ -147,6 +149,7 @@ PRIVATE void init_server(void)
           rproc[s].r_argv[1] = NULL;
       }
   }
+#endif
 
   /* Set alarm to periodically check driver status. */
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
