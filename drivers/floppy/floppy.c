@@ -312,6 +312,9 @@ PUBLIC void main()
   if ((s=sys_irqenable(&irq_hook_id)) != OK)
   	panic("FLOPPY", "Couldn't enable IRQs", s);
 
+  /* Ignore signals */
+  signal(SIGHUP, SIG_IGN);
+
   driver_task(&f_dtab);
 }
 
@@ -449,6 +452,12 @@ unsigned nr_req;		/* length of request vector */
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
+
+#if 0	/* XXX hack to create a disk driver that crashes */
+  { static int count= 0; if (++count > 10) {
+	printf("floppy: time to die\n"); *(int *)-1= 42;
+  }}
+#endif
 
   errors = 0;
   while (nr_req > 0) {
