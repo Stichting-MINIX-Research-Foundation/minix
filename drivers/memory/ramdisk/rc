@@ -1,13 +1,13 @@
 #!/bin/sh
 set -e
 /bin/service up /bin/pci
-/bin/service up /bin/floppy -dev /dev/fd0
+/bin/service -c up /bin/floppy -dev /dev/fd0
 if [ X`/bin/sysenv bios_wini` = Xyes ]
 then
 	echo Using bios_wini.
-	/bin/service up /bin/bios_wini -dev /dev/c0d0
+	/bin/service -c up /bin/bios_wini -dev /dev/c0d0
 else
-	/bin/service up /bin/at_wini -dev /dev/c0d0
+	/bin/service -c up /bin/at_wini -dev /dev/c0d0
 fi
 
 rootdev=`sysenv rootdev` || echo 'No rootdev?'
