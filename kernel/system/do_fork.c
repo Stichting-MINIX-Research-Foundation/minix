@@ -28,6 +28,7 @@ register message *m_ptr;	/* pointer to request message */
 #endif
   register struct proc *rpc;		/* child process pointer */
   struct proc *rpp;			/* parent process pointer */
+  struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
   int i, gen;
   int p_proc;
 
@@ -36,6 +37,8 @@ register message *m_ptr;	/* pointer to request message */
   rpp = proc_addr(p_proc);
   rpc = proc_addr(m_ptr->PR_SLOT);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
+
+  map_ptr= (struct mem_map *) m_ptr->PR_MEM_PTR;
 
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
   gen = _ENDPOINT_G(rpc->p_endpoint);
@@ -52,7 +55,6 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_endpoint = _ENDPOINT(gen, rpc->p_nr);	/* new endpoint of slot */
 
   /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
-  rpc->p_rts_flags |= NO_MAP;		/* inhibit process from running */
   rpc->p_rts_flags &= ~(SIGNALED | SIG_PENDING | P_STOP);
   sigemptyset(&rpc->p_pending);
 
@@ -79,7 +81,8 @@ register message *m_ptr;	/* pointer to request message */
   /* Calculate endpoint identifier, so caller knows what it is. */
   m_ptr->PR_ENDPT = rpc->p_endpoint;
 
-  return(OK);
+  /* Install new map */
+  return newmap(rpc, map_ptr);
 }
 
 #endif /* USE_FORK */

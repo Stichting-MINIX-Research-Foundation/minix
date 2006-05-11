@@ -57,6 +57,17 @@ unsigned vec_nr;
    * k_reenter larger than zero.
    */
   if (k_reenter == 0 && ! iskernelp(saved_proc)) {
+#if 0
+	{
+		kprintf(
+		"exception for process %d, pc = 0x%x:0x%x, sp = 0x%x:0x%x\n",
+			proc_nr(saved_proc),
+			saved_proc->p_reg.cs, saved_proc->p_reg.pc,
+			saved_proc->p_reg.ss, saved_proc->p_reg.sp);
+		kprintf("edi = 0x%x\n", saved_proc->p_reg.di);
+	}
+#endif
+
 	cause_sig(proc_nr(saved_proc), ep->signum);
 	return;
   }

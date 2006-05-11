@@ -7,6 +7,7 @@
  * other kernel headers.
  */
 
+#include <ansi.h>
 #include "config.h"
 
 /* Enable prints such as

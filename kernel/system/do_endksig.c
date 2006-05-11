@@ -28,7 +28,7 @@ message *m_ptr;			/* pointer to request message */
    * process is already dead its flags will be reset. 
    */
   if(!isokendpt(m_ptr->SIG_ENDPT, &proc))
-    return EINVAL;
+	return EINVAL;
 
   rp = proc_addr(proc);
   if (! (rp->p_rts_flags & SIG_PENDING)) return(EINVAL);

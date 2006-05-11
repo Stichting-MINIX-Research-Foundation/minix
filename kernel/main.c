@@ -38,7 +38,7 @@ PUBLIC void main()
   register int i, s;
   int hdrindex;			/* index to array of a.out headers */
   phys_clicks text_base;
-  vir_clicks text_clicks, data_clicks;
+  vir_clicks text_clicks, data_clicks, st_clicks;
   reg_t ktsb;			/* kernel task stack base */
   struct exec e_hdr;		/* for a copy of an a.out header */
 
@@ -108,14 +108,21 @@ PUBLIC void main()
 	/* Convert addresses to clicks and build process memory map */
 	text_base = e_hdr.a_syms >> CLICK_SHIFT;
 	text_clicks = (e_hdr.a_text + CLICK_SIZE-1) >> CLICK_SHIFT;
-	if (!(e_hdr.a_flags & A_SEP)) text_clicks = 0;	   /* common I&D */
-	data_clicks = (e_hdr.a_total + CLICK_SIZE-1) >> CLICK_SHIFT;
+	data_clicks = (e_hdr.a_data+e_hdr.a_bss + CLICK_SIZE-1) >> CLICK_SHIFT;
+	st_clicks= (e_hdr.a_total + CLICK_SIZE-1) >> CLICK_SHIFT;
+	if (!(e_hdr.a_flags & A_SEP))
+	{
+		data_clicks= (e_hdr.a_text+e_hdr.a_data+e_hdr.a_bss +
+			CLICK_SIZE-1) >> CLICK_SHIFT;
+		text_clicks = 0;	   /* common I&D */
+	}
 	rp->p_memmap[T].mem_phys = text_base;
 	rp->p_memmap[T].mem_len  = text_clicks;
 	rp->p_memmap[D].mem_phys = text_base + text_clicks;
 	rp->p_memmap[D].mem_len  = data_clicks;
-	rp->p_memmap[S].mem_phys = text_base + text_clicks + data_clicks;
-	rp->p_memmap[S].mem_vir  = data_clicks;	/* empty - stack is in data */
+	rp->p_memmap[S].mem_phys = text_base + text_clicks + st_clicks;
+	rp->p_memmap[S].mem_vir  = st_clicks;
+	rp->p_memmap[S].mem_len  = 0;
 
 	/* Set initial register values.  The processor status word for tasks 
 	 * is different from that of other processes because tasks can
@@ -138,7 +145,7 @@ PUBLIC void main()
 		rp->p_rts_flags = 0;		/* runnable if no flags */
 		lock_enqueue(rp);		/* add to scheduling queues */
 	} else {
-		rp->p_rts_flags = NO_MAP;	/* prevent from running */
+		rp->p_rts_flags = NO_PRIORITY;	/* prevent from running */
 	}
 
 	/* Code and data segments must be allocated in protected mode. */

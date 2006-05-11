@@ -61,15 +61,14 @@ struct proc {
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
 #define SLOT_FREE	0x01	/* process slot is free */
-#define NO_MAP		0x02	/* keeps unmapped forked child from running */
+#define NO_PRIORITY     0x02	/* process has been stopped */
 #define SENDING		0x04	/* process blocked trying to send */
 #define RECEIVING	0x08	/* process blocked trying to receive */
 #define SIGNALED	0x10	/* set when new kernel signal arrives */
 #define SIG_PENDING	0x20	/* unready while signal being processed */
 #define P_STOP		0x40	/* set when process is being traced */
 #define NO_PRIV		0x80	/* keep forked system process from running */
-#define NO_PRIORITY    0x100	/* process has been stopped */
-#define NO_ENDPOINT    0x200	/* process cannot send or receive messages */
+#define NO_ENDPOINT    0x100	/* process cannot send or receive messages */
 
 /* Misc flags */
 #define REPLY_PENDING	0x01	/* reply to IPC_REQUEST is pending */

@@ -49,6 +49,7 @@ PUBLIC int do_nice(message *m_ptr)
        * Put the process back in its new queue if it is runnable.
        */
       lock_dequeue(rp);
+      rp->p_rts_flags &= ~NO_PRIORITY;
       rp->p_max_priority = rp->p_priority = new_q;
       if (! rp->p_rts_flags) lock_enqueue(rp);
 

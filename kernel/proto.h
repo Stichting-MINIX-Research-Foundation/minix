@@ -61,6 +61,9 @@ _PROTOTYPE( phys_bytes umap_bios, (struct proc *rp, vir_bytes vir_addr,
 		vir_bytes bytes)					);
 _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
 
+/* system/do_newmap.c */
+_PROTOTYPE( int newmap, (struct proc *rp, struct mem_map *map_ptr)	);
+
 #if (CHIP == INTEL)
 
 /* exception.c */
