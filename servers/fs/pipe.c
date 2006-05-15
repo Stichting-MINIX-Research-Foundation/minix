@@ -359,6 +359,9 @@ int proc_nr_e;
   if (rfp->fp_suspended == NOT_SUSPENDED) return(OK);
   task = -rfp->fp_task;
 
+  if (rfp->fp_revived == REVIVING)
+	reviving--;
+
   switch (task) {
 	case XPIPE:		/* process trying to read or write a pipe */
 		break;

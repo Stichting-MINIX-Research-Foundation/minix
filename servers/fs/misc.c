@@ -398,7 +398,6 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   if(!(flags & FP_EXITING))
 	return;
 
-  dmap_unmap_by_endpt(fp->fp_endpoint);
   /* Invalidate endpoint number for error and sanity checks. */
   fp->fp_endpoint = NONE;
 
