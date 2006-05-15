@@ -420,7 +420,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		signo, (rmp->mp_flags & ZOMBIE) ? "zombie" : "dead", slot);
 	panic(__FILE__,"", NO_NUM);
   }
-  if (rmp->mp_fs_call != PM_IDLE)
+  if (rmp->mp_fs_call != PM_IDLE || rmp->mp_fs_call2 != PM_IDLE)
   {
 	sigaddset(&rmp->mp_sigpending, signo);
 	rmp->mp_flags |= PM_SIG_PENDING;
@@ -661,9 +661,18 @@ int for_trace;			/* for tracing */
   }
 
   /* Process is not hanging on an PM call.  Ask FS to take a look. */
-  if (rmp->mp_fs_call != PM_IDLE)
-	panic("pm", "unpause: not idle", rmp->mp_fs_call);
-  rmp->mp_fs_call= (for_trace ? PM_UNPAUSE_TR : PM_UNPAUSE);
+  if (for_trace)
+  {
+	  if (rmp->mp_fs_call != PM_IDLE)
+		panic( __FILE__, "unpause: not idle", rmp->mp_fs_call);
+	  rmp->mp_fs_call= PM_UNPAUSE_TR;
+  }
+  else
+  {
+	  if (rmp->mp_fs_call2 != PM_IDLE)
+		panic( __FILE__, "unpause: not idle", rmp->mp_fs_call2);
+	  rmp->mp_fs_call2= PM_UNPAUSE;
+  }
   r= notify(FS_PROC_NR);
   if (r != OK) panic("pm", "unpause: unable to notify FS", r);
 }

@@ -216,6 +216,7 @@ PRIVATE void pm_init()
 	tmr_inittimer(&rmp->mp_timer);
 
 	rmp->mp_fs_call= PM_IDLE;
+	rmp->mp_fs_call2= PM_IDLE;
   }
 
   /* Build the set of signals which cause core dumps, and the set of signals
@@ -519,6 +520,8 @@ PRIVATE void send_work()
 	{
 		call= rmp->mp_fs_call;
 		if (call == PM_IDLE)
+			call= rmp->mp_fs_call2;
+		if (call == PM_IDLE)
 			continue;
 		switch(call)
 		{
@@ -605,21 +608,26 @@ PRIVATE void send_work()
 			break;
 
 		case PM_UNPAUSE:
+			m.m_type= call;
+			m.PM_UNPAUSE_PROC= rmp->mp_endpoint;
+
+			/* FS does not reply */
+			rmp->mp_fs_call2= PM_IDLE;
+
+			/* Ask the kernel to deliver the signal */
+			r= sys_sigsend(rmp->mp_endpoint,
+				&rmp->mp_sigmsg);
+			if (r != OK)
+				panic(__FILE__,"sys_sigsend failed",r);
+
+			break;
+
 		case PM_UNPAUSE_TR:
 			m.m_type= call;
 			m.PM_UNPAUSE_PROC= rmp->mp_endpoint;
 
 			/* FS does not reply */
 			rmp->mp_fs_call= PM_IDLE;
-
-			if (call == PM_UNPAUSE)
-			{
-				/* Ask the kernel to deliver the signal */
-				r= sys_sigsend(rmp->mp_endpoint,
-					&rmp->mp_sigmsg);
-				if (r != OK)
-					panic(__FILE__,"sys_sigsend failed",r);
-			}
 
 			break;
 
@@ -675,6 +683,7 @@ PRIVATE void send_work()
 	if (m.m_type != PM_IDLE)
 	{
 		if (rmp->mp_fs_call == PM_IDLE &&
+			rmp->mp_fs_call2 == PM_IDLE &&
 			(rmp->mp_flags & PM_SIG_PENDING))
 		{
 			rmp->mp_flags &= ~PM_SIG_PENDING;

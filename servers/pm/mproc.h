@@ -54,7 +54,8 @@ EXTERN struct mproc {
   message mp_reply;		/* reply message to be sent to one */
 
   /* Communication with FS */
-  int mp_fs_call;
+  int mp_fs_call;		/* Record the call for normal system calls */
+  int mp_fs_call2;		/* Record the call for signals */
   char *mp_exec_path;		/* Path of executable */
   vir_bytes mp_exec_path_len;	/* Length of path (including nul) */
   char *mp_exec_frame;		/* Arguments */
