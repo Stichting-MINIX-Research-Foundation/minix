@@ -95,7 +95,7 @@ PRIVATE void failure(int num)
 /* Parse and verify correctness of arguments. Report problem and exit if an 
  * error is found. Store needed parameters in global variables.
  */
-PRIVATE int parse_arguments(int argcX, char **argvX)
+PRIVATE int parse_arguments(int argc, char **argv)
 {
   struct stat stat_buf;
   char *hz;
@@ -104,35 +104,35 @@ PRIVATE int parse_arguments(int argcX, char **argvX)
   int c_flag;
 
   c_flag= 0;
-  while (c= getopt(argcX, argvX, "c?"), c != -1)
+  while (c= getopt(argc, argv, "c?"), c != -1)
   {
 	switch(c)
 	{
 	case '?':
-		print_usage(argvX[ARG_NAME], "wrong number of arguments");
+		print_usage(argv[ARG_NAME], "wrong number of arguments");
 		exit(EINVAL);
 	case 'c':
 		c_flag= 1;
 		break;
 	default:
 		fprintf(stderr, "%s: getopt failed: %c\n",
-			argvX[ARG_NAME], c);
+			argv[ARG_NAME], c);
 		exit(1);
 	}
   }
 
   /* Verify argument count. */ 
-  if (argcX < optind+MIN_ARG_COUNT) {
-      print_usage(argvX[ARG_NAME], "wrong number of arguments");
+  if (argc < optind+MIN_ARG_COUNT) {
+      print_usage(argv[ARG_NAME], "wrong number of arguments");
       exit(EINVAL);
   }
 
   /* Verify request type. */
   for (req_type=0; req_type< ILLEGAL_REQUEST; req_type++) {
-      if (strcmp(known_requests[req_type],argvX[optind+ARG_REQUEST])==0) break;
+      if (strcmp(known_requests[req_type],argv[optind+ARG_REQUEST])==0) break;
   }
   if (req_type == ILLEGAL_REQUEST) {
-      print_usage(argvX[ARG_NAME], "illegal request type");
+      print_usage(argv[ARG_NAME], "illegal request type");
       exit(ENOSYS);
   }
   req_nr = RS_RQ_BASE + req_type;
@@ -143,15 +143,15 @@ PRIVATE int parse_arguments(int argcX, char **argvX)
 	req_nr= RS_UP_COPY;
 
       /* Verify argument count. */ 
-      if (argcX - 1 < optind+ARG_PATH) {
-          print_usage(argvX[ARG_NAME], "action requires a binary to start");
+      if (argc - 1 < optind+ARG_PATH) {
+          print_usage(argv[ARG_NAME], "action requires a binary to start");
           exit(EINVAL);
       }
 
       /* Verify the name of the binary of the system service. */
-      req_path = argvX[optind+ARG_PATH];
+      req_path = argv[optind+ARG_PATH];
       if (req_path[0] != '/') {
-          print_usage(argvX[ARG_NAME], "binary should be absolute path");
+          print_usage(argv[ARG_NAME], "binary should be absolute path");
           exit(EINVAL);
       }
       if (stat(req_path, &stat_buf) == -1) {
@@ -160,44 +160,44 @@ PRIVATE int parse_arguments(int argcX, char **argvX)
           exit(errno);
       }
       if (! (stat_buf.st_mode & S_IFREG)) {
-          print_usage(argvX[ARG_NAME], "binary is not a regular file");
+          print_usage(argv[ARG_NAME], "binary is not a regular file");
           exit(EINVAL);
       }
 
       /* Check optional arguments that come in pairs like "-args arglist". */
-      for (i=optind+MIN_ARG_COUNT+1; i<argcX; i=i+2) {
-          if (! (i+1 < argcX)) {
-              print_usage(argvX[ARG_NAME], "optional argument not complete");
+      for (i=optind+MIN_ARG_COUNT+1; i<argc; i=i+2) {
+          if (! (i+1 < argc)) {
+              print_usage(argv[ARG_NAME], "optional argument not complete");
               exit(EINVAL);
           }
-          if (strcmp(argvX[i], ARG_ARGS)==0) {
-              req_args = argvX[i+1];
+          if (strcmp(argv[i], ARG_ARGS)==0) {
+              req_args = argv[i+1];
           }
-          else if (strcmp(argvX[i], ARG_PERIOD)==0) {
-	      req_period = strtol(argvX[i+1], &hz, 10);
+          else if (strcmp(argv[i], ARG_PERIOD)==0) {
+	      req_period = strtol(argv[i+1], &hz, 10);
 	      if (strcmp(hz,"HZ")==0) req_period *= HZ;
 	      if (req_period < 1) {
-                  print_usage(argvX[ARG_NAME],
+                  print_usage(argv[ARG_NAME],
 			"period is at least be one tick");
                   exit(EINVAL);
 	      }
           }
-          else if (strcmp(argvX[i], ARG_DEV)==0) {
-              if (stat(argvX[i+1], &stat_buf) == -1) {
-                  print_usage(argvX[ARG_NAME], "couldn't get status of device");
+          else if (strcmp(argv[i], ARG_DEV)==0) {
+              if (stat(argv[i+1], &stat_buf) == -1) {
+                  print_usage(argv[ARG_NAME], "couldn't get status of device");
                   exit(errno);
               }
 	      if ( ! (stat_buf.st_mode & (S_IFBLK | S_IFCHR))) {
-                  print_usage(argvX[ARG_NAME], "special file is not a device");
+                  print_usage(argv[ARG_NAME], "special file is not a device");
                   exit(EINVAL);
        	      } 
               req_major = (stat_buf.st_rdev >> MAJOR) & BYTE;
           }
-          else if (strcmp(argvX[i], ARG_ARGS)==0) {
-              req_priv = argvX[i+1];
+          else if (strcmp(argv[i], ARG_ARGS)==0) {
+              req_priv = argv[i+1];
           }
           else {
-              print_usage(argvX[ARG_NAME], "unknown optional argument given");
+              print_usage(argv[ARG_NAME], "unknown optional argument given");
               exit(EINVAL);
           }
       }
@@ -205,33 +205,33 @@ PRIVATE int parse_arguments(int argcX, char **argvX)
   else if (req_nr == RS_DOWN || req_nr == RS_REFRESH) {
 
       /* Verify argument count. */ 
-      if (argcX - 1 < optind+ARG_PID) {
-          print_usage(argvX[ARG_NAME], "action requires a pid to stop");
+      if (argc - 1 < optind+ARG_PID) {
+          print_usage(argv[ARG_NAME], "action requires a pid to stop");
           exit(EINVAL);
       }
-      if (! (req_pid = atoi(argvX[optind+ARG_PID])) > 0) {
-          print_usage(argvX[ARG_NAME], "pid must be greater than zero");
+      if (! (req_pid = atoi(argv[optind+ARG_PID])) > 0) {
+          print_usage(argv[ARG_NAME], "pid must be greater than zero");
           exit(EINVAL);
       }
   } 
   else if (req_nr == RS_RESCUE) {
 
       /* Verify argument count. */ 
-      if (argcX - 1 < optind+ARG_PATH) {
-          print_usage(argvX[ARG_NAME], "action requires rescue directory");
+      if (argc - 1 < optind+ARG_PATH) {
+          print_usage(argv[ARG_NAME], "action requires rescue directory");
           exit(EINVAL);
       }
-      req_path = argvX[optind+ARG_PATH];
+      req_path = argv[optind+ARG_PATH];
       if (req_path[0] != '/') {
-          print_usage(argvX[ARG_NAME], "rescue dir should be absolute path");
+          print_usage(argv[ARG_NAME], "rescue dir should be absolute path");
           exit(EINVAL);
       }
-      if (stat(argvX[optind+ARG_PATH], &stat_buf) == -1) {
-          print_usage(argvX[ARG_NAME], "couldn't get status of directory");
+      if (stat(argv[optind+ARG_PATH], &stat_buf) == -1) {
+          print_usage(argv[ARG_NAME], "couldn't get status of directory");
           exit(errno);
       }
       if ( ! (stat_buf.st_mode & S_IFDIR)) {
-          print_usage(argvX[ARG_NAME], "file is not a directory");
+          print_usage(argv[ARG_NAME], "file is not a directory");
           exit(EINVAL);
       } 
   } 

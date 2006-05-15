@@ -254,8 +254,10 @@ PUBLIC void do_exit(message *m_ptr)
 rp->r_restarts= 0;
 #endif
                   if (rp->r_restarts > 0) {
-		      rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-1));
+		      rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-2));
 		      rp->r_backoff = MIN(rp->r_backoff,MAX_BACKOFF); 
+		      if (rp->r_exec != NULL && rp->r_backoff > 1)
+			rp->r_backoff= 1;
 		  }
 		  else {
 		      start_service(rp);		/* direct restart */
