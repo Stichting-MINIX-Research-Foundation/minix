@@ -27,7 +27,6 @@ all install depend clean:
 	cd ./bios_wini && $(MAKE) $@
 	cd ./cmos && $(MAKE) $@
 	cd ./random && $(MAKE) $@
-	cd ./rescue && $(MAKE) $@
 	cd ./dp8390 && $(MAKE) $@
 	cd ./sb16 && $(MAKE) $@
 	cd ./lance && $(MAKE) $@

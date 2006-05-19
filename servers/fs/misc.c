@@ -13,7 +13,6 @@
  *   do_exit:	  a process has exited; note that in the tables
  *   pm_setgid:	  set group ids for some process
  *   pm_setuid:	  set user ids for some process
- *   do_revive:	  revive a process that was waiting for something (e.g. TTY)
  *   do_svrctl:	  file system control
  *   do_getsysinfo:	request copy of FS data structure
  *   pm_dumpcore: create a core dump
@@ -55,6 +54,15 @@ PUBLIC int do_getsysinfo()
   vir_bytes src_addr, dst_addr;
   size_t len;
   int s;
+
+  if (!super_user)
+  {
+	printf("FS: unauthorized call of do_getsysinfo by proc %d\n", who_e);
+	return(EPERM);	/* only su may call do_getsysinfo. This call may leak
+			 * information (and is not stable enough to be part 
+			 * of the API/ABI).
+			 */
+  }
 
   switch(m_in.info_what) {
   case SI_PROC_ADDR:
@@ -479,24 +487,6 @@ int ruid;
   tfp->fp_realuid = ruid;
 }
 
-
-/*===========================================================================*
- *				do_revive				     *
- *===========================================================================*/
-PUBLIC int do_revive()
-{
-/* A driver, typically TTY, has now gotten the characters that were needed for 
- * a previous read.  The process did not get a reply when it made the call.
- * Instead it was suspended.  Now we can send the reply to wake it up.  This
- * business has to be done carefully, since the incoming message is from
- * a driver (to which no reply can be sent), and the reply must go to a process
- * that blocked earlier.  The reply to the caller is inhibited by returning the
- * 'SUSPEND' pseudo error, and the reply to the blocked process is done
- * explicitly in revive().
- */
-  revive(m_in.REP_ENDPT, m_in.REP_STATUS);
-  return(SUSPEND);		/* don't reply to the TTY task */
-}
 
 /*===========================================================================*
  *				do_svrctl				     *

@@ -22,7 +22,7 @@ LIBS = -lsys -lsysutil
 IMGRD=imgrd_s.o
 #IMGRD=imgrd.c
 
-OBJ = memory.o $(IMGRD)
+OBJ = memory.o allocmem.o $(IMGRD)
 LIBDRIVER = $d/libdriver/driver.o
 
 

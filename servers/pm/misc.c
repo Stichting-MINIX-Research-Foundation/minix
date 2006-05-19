@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <sys/svrctl.h>
 #include <sys/resource.h>
+#include <sys/utsname.h>
 #include <minix/com.h>
 #include <minix/config.h>
 #include <minix/type.h>
@@ -25,6 +26,31 @@
 #include "param.h"
 #include "../../kernel/proc.h"
 
+PUBLIC struct utsname uts_val = {
+  "Minix",		/* system name */
+  "noname",		/* node/network name */
+  OS_RELEASE,		/* O.S. release (e.g. 1.5) */
+  OS_VERSION,		/* O.S. version (e.g. 10) */
+  "xyzzy",		/* machine (cpu) type (filled in later) */
+#if __i386
+  "i386",		/* architecture */
+#else
+#error			/* oops, no 'uname -mk' */
+#endif
+};
+
+PRIVATE char *uts_tbl[] = {
+  uts_val.arch,
+  NULL,			/* No kernel architecture */
+  uts_val.machine,
+  NULL,			/* No hostname */
+  uts_val.nodename,
+  uts_val.release,
+  uts_val.version,
+  uts_val.sysname,
+  NULL,			/* No bus */			/* No bus */
+};
+
 /*===========================================================================*
  *				do_allocmem				     *
  *===========================================================================*/
@@ -32,6 +58,16 @@ PUBLIC int do_allocmem()
 {
   vir_clicks mem_clicks;
   phys_clicks mem_base;
+
+  /* This call is dangerous. Memory will be lost of the requesting process
+   * forgets about it.
+   */
+  if (mp->mp_effuid != 0)
+  {
+	printf("PM: unauthorized call of do_allocmem by proc %d\n",
+		mp->mp_endpoint);
+	return EPERM;
+  }
 
   mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
   mem_base = alloc_mem(mem_clicks);
@@ -47,6 +83,16 @@ PUBLIC int do_freemem()
 {
   vir_clicks mem_clicks;
   phys_clicks mem_base;
+
+  /* This call is dangerous. Even memory belonging to other processes can
+   * be freed.
+   */
+  if (mp->mp_effuid != 0)
+  {
+	printf("PM: unauthorized call of do_freemem by proc %d\n",
+		mp->mp_endpoint);
+	return EPERM;
+  }
 
   mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
   mem_base = (m_in.membase + CLICK_SIZE -1 ) >> CLICK_SHIFT;
@@ -65,6 +111,15 @@ PUBLIC int do_procstat()
    * Future use might include the FS requesting for process status of
    * any user process. 
    */
+  
+  /* This call should be removed, or made more general. */
+  if (mp->mp_effuid != 0)
+  {
+	printf("PM: unauthorized call of do_procstat by proc %d\n",
+		mp->mp_endpoint);
+	return EPERM;
+  }
+
   if (m_in.stat_nr == SELF) {
       mp->mp_reply.sig_set = mp->mp_sigpending;
       sigemptyset(&mp->mp_sigpending);
@@ -74,6 +129,70 @@ PUBLIC int do_procstat()
   }
   return(OK);
 }
+
+/*===========================================================================*
+ *				do_sysuname				     *
+ *===========================================================================*/
+PUBLIC int do_sysuname()
+{
+/* Set or get uname strings. */
+
+  int r;
+  size_t n, len;
+  char *string, *t;
+#if 0 /* for updates */
+  char tmp[sizeof(uts_val.nodename)];
+  static short sizes[] = {
+	0,	/* arch, (0 = read-only) */
+	0,	/* kernel */
+	0,	/* machine */
+	0,	/* sizeof(uts_val.hostname), */
+	sizeof(uts_val.nodename),
+	0,	/* release */
+	0,	/* version */
+	0,	/* sysname */
+  };
+#endif
+
+  if ((unsigned) m_in.sysuname_field >= _UTS_MAX) return(EINVAL);
+
+  string = uts_tbl[m_in.sysuname_field];
+  if (string == NULL)
+	return EINVAL;	/* Unsupported field */
+
+  switch (m_in.sysuname_req) {
+  case _UTS_GET:
+	/* Copy an uname string to the user. */
+	n = strlen(string) + 1;
+	if (n > m_in.sysuname_len) n = m_in.sysuname_len;
+	r = sys_vircopy(SELF, D, (phys_bytes) string, 
+		mp->mp_endpoint, D, (phys_bytes) m_in.sysuname_value,
+		(phys_bytes) n);
+	if (r < 0) return(r);
+	break;
+
+#if 0	/* no updates yet */
+  case _UTS_SET:
+	/* Set an uname string, needs root power. */
+	len = sizes[m_in.sysuname_field];
+	if (mp->mp_effuid != 0 || len == 0) return(EPERM);
+	n = len < m_in.sysuname_len ? len : m_in.sysuname_len;
+	if (n <= 0) return(EINVAL);
+	r = sys_vircopy(mp->mp_endpoint, D, (phys_bytes) m_in.sysuname_value,
+		SELF, D, (phys_bytes) tmp, (phys_bytes) n);
+	if (r < 0) return(r);
+	tmp[n-1] = 0;
+	strcpy(string, tmp);
+	break;
+#endif
+
+  default:
+	return(EINVAL);
+  }
+  /* Return the number of bytes moved. */
+  return(n);
+}
+
 
 /*===========================================================================*
  *				do_getsysinfo			       	     *
@@ -89,6 +208,17 @@ PUBLIC int do_getsysinfo()
   static struct pm_mem_info pmi;
   int s, r;
   size_t holesize;
+
+  /* This call leaks important information (the contents of registers).
+   * harmless data (such as the load should get their own calls)
+   */
+  if (mp->mp_effuid != 0)
+  {
+	printf("PM: unauthorized call of do_getsysinfo by proc %d '%s'\n",
+		mp->mp_endpoint, mp->mp_name);
+	sig_proc(mp, SIGEMT);
+	return EPERM;
+  }
 
   switch(m_in.info_what) {
   case SI_KINFO:			/* kernel info is obtained via PM */
@@ -143,6 +273,14 @@ PUBLIC int do_getprocnr()
   static char search_key[PROC_NAME_LEN+1];
   int key_len;
   int s;
+
+  /* This call should be moved to DS. */
+  if (mp->mp_effuid != 0)
+  {
+	printf("PM: unauthorized call of do_procstat by proc %d\n",
+		mp->mp_endpoint);
+	return EPERM;
+  }
 
   if (m_in.pid >= 0) {			/* lookup process by pid */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {

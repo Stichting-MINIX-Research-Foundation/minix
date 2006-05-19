@@ -7,7 +7,6 @@ libc_FILES=" \
 	_pm_findproc.s \
 	access.s \
 	alarm.s \
-	allocmem.s \
 	brk.s \
 	cfgetispeed.s \
 	cfgetospeed.s \
@@ -34,7 +33,6 @@ libc_FILES=" \
 	fcntl.s \
 	fork.s \
 	fpathconf.s \
-	freemem.s \
 	fstat.s \
 	fstatfs.s \
 	getcwd.s \
@@ -96,6 +94,7 @@ libc_FILES=" \
 	svrctl.s \
 	symlink.s \
 	sync.s \
+	sysuname.s \
 	tcdrain.s \
 	tcflow.s \
 	tcflush.s \

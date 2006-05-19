@@ -60,6 +60,14 @@ PRIVATE struct dmap init_dmap[] = {
  *===========================================================================*/
 PUBLIC int do_devctl()
 {
+	if (!super_user)
+	{
+		printf("FS: unauthorized call of do_devctl by proc %d\n",
+			who_e);
+		return(EPERM);	/* only su (should be only RS or some drivers)
+				 * may call do_devctl.
+				 */
+	}
 	return fs_devctl(m_in.ctl_req, m_in.dev_nr, m_in.driver_nr,
 		m_in.dev_style, m_in.m_force);
 }

@@ -57,7 +57,6 @@
  */
 
 #include "../drivers.h"
-#include "../drivers.h"
 #include <termios.h>
 #if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
 #include <sgtty.h>

@@ -991,7 +991,9 @@ int c;
   return;
 #endif
 
+#if 0
   if (panicing)
+#endif
 	cons_putk(c);
   if (c != 0) {
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */

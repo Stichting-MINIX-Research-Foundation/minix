@@ -104,7 +104,6 @@ _PROTOTYPE( int do_dup, (void)						);
 _PROTOTYPE( void pm_exit, (int proc)					);
 _PROTOTYPE( int do_fcntl, (void)					);
 _PROTOTYPE( void pm_fork, (int pproc, int cproc, int cpid)		);
-_PROTOTYPE( int do_revive, (void)					);
 _PROTOTYPE( void pm_setgid, (int proc_e, int egid, int rgid)		);
 _PROTOTYPE( void pm_setuid, (int proc_e, int euid, int ruid)		);
 _PROTOTYPE( int do_sync, (void)						);

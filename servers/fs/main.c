@@ -59,24 +59,45 @@ PUBLIC int main()
 		printf("FS: strange, got message %d from PM\n", call_nr);
 
  	/* Check for special control messages first. */
-	if (call_nr == PROC_EVENT) {
-		/* PM tries to get FS to do something */
-		service_pm();
-        } else if (call_nr == SYN_ALARM) {
-        	/* Alarm timer expired. Used only for select(). Check it. */
-        	fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
-        } else if ((call_nr & NOTIFY_MESSAGE)) {
-		/* Device notifies us of an event. */
-		dev_status(&m_in);
-        } else {
+        if ((call_nr & NOTIFY_MESSAGE)) {
+		if (call_nr == PROC_EVENT)
+		{
+			/* PM tries to get FS to do something */
+			service_pm();
+		}
+		else if (call_nr == SYN_ALARM)
+		{
+			/* Alarm timer expired. Used only for select().
+			 * Check it.
+			 */
+			fs_expire_timers(m_in.NOTIFY_TIMESTAMP);
+		}
+		else
+		{
+			/* Device notifies us of an event. */
+			dev_status(&m_in);
+		}
+		continue;
+	}
+
+	switch(call_nr)
+	{
+	case DEVCTL:
+		error= do_devctl();
+		if (error != SUSPEND) reply(who_e, error);
+		break;
+
+	default:
 		/* Call the internal function that does the work. */
 		if (call_nr < 0 || call_nr >= NCALLS) { 
 			error = ENOSYS;
-		/* Not supposed to happen. */
-			printf("FS, warning illegal %d system call by %d\n", call_nr, who_e);
+			/* Not supposed to happen. */
+			printf("FS, warning illegal %d system call by %d\n",
+				call_nr, who_e);
 		} else if (fp->fp_pid == PID_FREE) {
 			error = ENOSYS;
-			printf("FS, bad process, who = %d, call_nr = %d, endpt1 = %d\n",
+			printf(
+		"FS, bad process, who = %d, call_nr = %d, endpt1 = %d\n",
 				 who_e, call_nr, m_in.endpt1);
 		} else {
 			error = (*call_vec[call_nr])();

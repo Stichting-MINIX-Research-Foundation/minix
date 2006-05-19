@@ -5,11 +5,9 @@ CFLAGS="-O -D_MINIX -D_POSIX_SOURCE -I../../servers"
 LIBRARIES=libc
 
 libc_FILES=" \
-	_allocmem.c \
 	_brk.c \
 	_devctl.c \
 	__pm_findproc.c \
-	_freemem.c \
 	_getnpid.c \
 	_getsigset.c \
 	_getnprocnr.c \
@@ -18,6 +16,7 @@ libc_FILES=" \
 	_getsysinfo.c \
 	_reboot.c \
 	_seekdir.c \
+	_sysuname.c \
 	_svrctl.c \
 	asynchio.c \
 	basename.c \

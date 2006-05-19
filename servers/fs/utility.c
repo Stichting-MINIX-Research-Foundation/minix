@@ -85,6 +85,7 @@ int flag;			/* M3 means path may be in message */
 PUBLIC int no_sys()
 {
 /* Somebody has used an illegal system call number */
+  printf("FS: in no_sys: call %d from %d\n", call_nr, who_e);
   return(EINVAL);
 }
 

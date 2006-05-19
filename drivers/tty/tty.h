@@ -62,7 +62,7 @@ typedef struct tty {
   char tty_openct;		/* count of number of opens of this tty */
 
   /* Information about incomplete I/O requests is stored here. */
-  char tty_inrepcode;		/* reply code, TASK_REPLY or REVIVE */
+  int tty_inrepcode;		/* reply code, TASK_REPLY or REVIVE */
   char tty_inrevived;		/* set to 1 if revive callback is pending */
   int tty_incaller;		/* process that made the call (usually FS) */
   int tty_inproc;		/* process that wants to read from tty */

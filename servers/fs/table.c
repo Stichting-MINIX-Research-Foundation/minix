@@ -78,38 +78,38 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_umask,	/* 60 = umask	*/
 	do_chroot,	/* 61 = chroot	*/
 	no_sys,		/* 62 = (setsid) */
-	no_sys,		/* 63 = getpgrp	*/
+	no_sys,		/* 63 = (getpgrp) */
 
-	no_sys,		/* 64 = KSIG: signals originating in the kernel	*/
-	do_unpause,	/* 65 = UNPAUSE	*/
+	no_sys,		/* 64 = unused	*/
+	no_sys,		/* 65 = unused	*/
 	no_sys, 	/* 66 = unused  */
-	do_revive,	/* 67 = REVIVE	*/
-	no_sys,		/* 68 = TASK_REPLY	*/
+	no_sys,		/* 67 = unused	*/
+	no_sys,		/* 68 = unused	*/
 	no_sys,		/* 69 = unused */
 	no_sys,		/* 70 = unused */
-	no_sys,		/* 71 = si */
-	no_sys,		/* 72 = sigsuspend */
-	no_sys,		/* 73 = sigpending */
-	no_sys,		/* 74 = sigprocmask */
-	no_sys,		/* 75 = sigreturn */
+	no_sys,		/* 71 = (sigaction) */
+	no_sys,		/* 72 = (sigsuspend) */
+	no_sys,		/* 73 = (sigpending) */
+	no_sys,		/* 74 = (sigprocmask) */
+	no_sys,		/* 75 = (sigreturn) */
 	no_sys,		/* 76 = (reboot) */
 	do_svrctl,	/* 77 = svrctl */
 
-	no_sys,		/* 78 = unused */
+	no_sys,		/* 78 = (sysuname) */
 	do_getsysinfo,  /* 79 = getsysinfo */
 	no_sys,		/* 80 = unused */
-	do_devctl,	/* 81 = devctl */
+	no_sys,		/* 81 = unused */
 	do_fstatfs,	/* 82 = fstatfs */
-	no_sys,		/* 83 = memalloc */
-	no_sys,		/* 84 = memfree */
+	no_sys,		/* 83 = unused */
+	no_sys,		/* 84 = unused */
 	do_select,	/* 85 = select */
 	do_fchdir,	/* 86 = fchdir */
 	do_fsync,	/* 87 = fsync */
-	no_sys,		/* 88 = getpriority */
-	no_sys,		/* 89 = setpriority */
-	no_sys,		/* 90 = gettimeofday */
-	no_sys,		/* 91 = seteuid */
-	no_sys,		/* 92 = setegid */
+	no_sys,		/* 88 = (getpriority) */
+	no_sys,		/* 89 = (setpriority) */
+	no_sys,		/* 90 = (gettimeofday) */
+	no_sys,		/* 91 = (seteuid) */
+	no_sys,		/* 92 = (setegid) */
 	do_truncate,	/* 93 = truncate */
 	do_ftruncate,	/* 94 = truncate */
 	do_chmod,	/* 95 = fchmod */
@@ -117,4 +117,3 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
-

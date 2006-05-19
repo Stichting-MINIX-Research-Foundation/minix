@@ -14,10 +14,12 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
+#include <minix/minlib.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <sys/resource.h>
+#include <sys/utsname.h>
 #include <string.h>
 #include "mproc.h"
 #include "param.h"
@@ -91,6 +93,24 @@ PUBLIC int main()
 		}
 		else
 			result= ENOSYS;
+		break;
+	case ALLOCMEM:
+		result= do_allocmem();
+		break;
+	case FORK_NB:
+		result= do_fork_nb();
+		break;
+	case EXEC_NEWMEM:
+		result= exec_newmem();
+		break;
+	case EXEC_RESTART:
+		result= do_execrestart();
+		break;
+	case PROCSTAT:
+		result= do_procstat();
+		break;
+	case GETPROCNR:
+		result= do_getprocnr();
 		break;
 	default:
 		/* Else, if the system call number is valid, perform the
@@ -330,6 +350,10 @@ PRIVATE void pm_init()
   printf(" total %u KB,", click_to_round_k(total_clicks));
   printf(" system %u KB,", click_to_round_k(minix_clicks));
   printf(" free %u KB.\n", click_to_round_k(free_clicks));
+#if (CHIP == INTEL)
+  uts_val.machine[0] = 'i';
+  strcpy(uts_val.machine + 1, itoa(getprocessor()));
+#endif
 }
 
 /*===========================================================================*
@@ -438,9 +462,15 @@ struct mem_map *map_ptr;			/* memory to remove */
   struct memory *memp;
   for (memp = mem_chunks; memp < &mem_chunks[NR_MEMS]; memp++) {
 	if (memp->base == map_ptr[T].mem_phys) {
-		memp->base += map_ptr[T].mem_len + map_ptr[D].mem_len;
-		memp->size -= map_ptr[T].mem_len + map_ptr[D].mem_len;
+		memp->base += map_ptr[T].mem_len + map_ptr[S].mem_vir;
+		memp->size -= map_ptr[T].mem_len + map_ptr[S].mem_vir;
+		break;
 	}
+  }
+  if (memp >= &mem_chunks[NR_MEMS])
+  {
+	panic(__FILE__,"patch_mem_chunks: can't find map in mem_chunks, start",
+		map_ptr[T].mem_phys);
   }
 }
 
@@ -702,7 +732,6 @@ PRIVATE void send_work()
 	}
 	r= send(FS_PROC_NR, &m);
 	if (r != OK) panic("pm", "send_work: send failed", r);
-
 }
 
 PRIVATE void handle_fs_reply(m_ptr)
