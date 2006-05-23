@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,8 +31,23 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)redir.c	5.1 (Berkeley) 3/7/91";
+#if 0
+static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
+#endif
 #endif /* not lint */
+/*
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: src/bin/sh/redir.c,v 1.26 2004/04/06 20:06:51 markm Exp $");
+*/
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <signal.h>
+#include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 /*
  * Code for dealing with input/output redirection.
@@ -47,15 +58,10 @@ static char sccsid[] = "@(#)redir.c	5.1 (Berkeley) 3/7/91";
 #include "jobs.h"
 #include "expand.h"
 #include "redir.h"
-#include "eval.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
-#include <sys/types.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <limits.h>
+#include "options.h"
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
@@ -65,25 +71,21 @@ static char sccsid[] = "@(#)redir.c	5.1 (Berkeley) 3/7/91";
 MKINIT
 struct redirtab {
 	struct redirtab *next;
-	short renamed[10];
+	int renamed[10];
 };
 
 
 MKINIT struct redirtab *redirlist;
 
-/* We keep track of whether or not fd0 has been redirected.  This is for
-   background commands, where we want to redirect fd0 to /dev/null only
-   if it hasn't already been redirected.  */
-int fd0_redirected = 0;
+/*
+ * We keep track of whether or not fd0 has been redirected.  This is for
+ * background commands, where we want to redirect fd0 to /dev/null only
+ * if it hasn't already been redirected.
+*/
+STATIC int fd0_redirected = 0;
 
-#ifdef __STDC__
-STATIC void openredirect(union node *, char *);
+STATIC void openredirect(union node *, char[10 ]);
 STATIC int openhere(union node *);
-#else
-STATIC void openredirect();
-STATIC int openhere();
-#endif
-
 
 
 /*
@@ -95,15 +97,14 @@ STATIC int openhere();
  */
 
 void
-redirect(redir, flags)
-	union node *redir;
-	int flags;
-	{
+redirect(union node *redir, int flags)
+{
 	union node *n;
-	struct redirtab *sv;
+	struct redirtab *sv = NULL;
 	int i;
 	int fd;
-	char memory[10];		/* file descriptors to write to memory */
+	int try;
+	char memory[10];	/* file descriptors to write to memory */
 
 	for (i = 10 ; --i >= 0 ; )
 		memory[i] = 0;
@@ -117,21 +118,38 @@ redirect(redir, flags)
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
+		try = 0;
+		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
+		    n->ndup.dupfd == fd)
+			continue; /* redirect from/to same file descriptor */
+
 		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY) {
 			INTOFF;
-			if ((i = copyfd(fd, 10)) != EMPTY) {
+again:
+			if ((i = fcntl(fd, F_DUPFD, 10)) == -1) {
+				switch (errno) {
+				case EBADF:
+					if (!try) {
+						openredirect(n, memory);
+						try++;
+						goto again;
+					}
+					/* FALLTHROUGH*/
+				default:
+					INTON;
+					error("%d: %s", fd, strerror(errno));
+					break;
+				}
+			}
+			if (!try) {
 				sv->renamed[fd] = i;
-				close(fd);
 			}
 			INTON;
-			if (i == EMPTY)
-				error("Out of file descriptors");
-		} else {
-			close(fd);
 		}
 		if (fd == 0)
 			fd0_redirected++;
-		openredirect(n, memory);
+		if (!try)
+			openredirect(n, memory);
 	}
 	if (memory[1])
 		out1 = &memout;
@@ -141,16 +159,15 @@ redirect(redir, flags)
 
 
 STATIC void
-openredirect(redir, memory)
-	union node *redir;
-	char memory[10];
-	{
+openredirect(union node *redir, char memory[10])
+{
+	struct stat sb;
 	int fd = redir->nfile.fd;
 	char *fname;
 	int f;
 
 	/* Assume redirection succeeds. */
-	exitstatus = 0;
+	{ extern int exitstatus; exitstatus = 0; }
 
 	/*
 	 * We suppress interrupts so that we won't leave open file
@@ -163,34 +180,35 @@ openredirect(redir, memory)
 	case NFROM:
 		fname = redir->nfile.expfname;
 		if ((f = open(fname, O_RDONLY)) < 0)
-			error("cannot open %s: %s", fname, errmsg(errno, E_OPEN));
+			error("cannot open %s: %s", fname, strerror(errno));
 movefd:
 		if (f != fd) {
-			copyfd(f, fd);
+			dup2(f, fd);
 			close(f);
 		}
 		break;
+	case NFROMTO:
+		fname = redir->nfile.expfname;
+		if ((f = open(fname, O_RDWR|O_CREAT, 0666)) < 0)
+			error("cannot create %s: %s", fname, strerror(errno));
+		goto movefd;
 	case NTO:
 		fname = redir->nfile.expfname;
-#ifdef O_CREAT
+		if (Cflag && stat(fname, &sb) != -1 && S_ISREG(sb.st_mode))
+			error("cannot create %s: %s", fname,
+			    strerror(EEXIST));
 		if ((f = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-#else
-		if ((f = creat(fname, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-#endif
+			error("cannot create %s: %s", fname, strerror(errno));
+		goto movefd;
+	case NCLOBBER:
+		fname = redir->nfile.expfname;
+		if ((f = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
+			error("cannot create %s: %s", fname, strerror(errno));
 		goto movefd;
 	case NAPPEND:
 		fname = redir->nfile.expfname;
-#ifdef O_APPEND
 		if ((f = open(fname, O_WRONLY|O_CREAT|O_APPEND, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-#else
-		if ((f = open(fname, O_WRONLY)) < 0
-		 && (f = creat(fname, 0666)) < 0)
-			error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
-		lseek(f, 0L, 2);
-#endif
+			error("cannot create %s: %s", fname, strerror(errno));
 		goto movefd;
 	case NTOFD:
 	case NFROMFD:
@@ -198,7 +216,9 @@ movefd:
 			if (memory[redir->ndup.dupfd])
 				memory[fd] = 1;
 			else
-				copyfd(redir->ndup.dupfd, fd);
+				dup2(redir->ndup.dupfd, fd);
+		} else {
+			close(fd);
 		}
 		break;
 	case NHERE:
@@ -219,14 +239,13 @@ movefd:
  */
 
 STATIC int
-openhere(redir)
-	union node *redir;
-	{
+openhere(union node *redir)
+{
 	int pip[2];
-	int len;
+	int len = 0;
 
 	if (pipe(pip) < 0)
-		error("Pipe call failed");
+		error("Pipe call failed: %s", strerror(errno));
 	if (redir->type == NHERE) {
 		len = strlen(redir->nhere.doc->narg.text);
 		if (len <= PIPESIZE) {
@@ -239,9 +258,7 @@ openhere(redir)
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
 		signal(SIGHUP, SIG_IGN);
-#ifdef SIGTSTP
 		signal(SIGTSTP, SIG_IGN);
-#endif
 		signal(SIGPIPE, SIG_DFL);
 		if (redir->type == NHERE)
 			xwrite(pip[1], redir->nhere.doc->narg.text, len);
@@ -261,18 +278,20 @@ out:
  */
 
 void
-popredir() {
-	register struct redirtab *rp = redirlist;
+popredir(void)
+{
+	struct redirtab *rp = redirlist;
 	int i;
 
 	for (i = 0 ; i < 10 ; i++) {
 		if (rp->renamed[i] != EMPTY) {
-			if (i == 0)
-				fd0_redirected--;
-			close(i);
+                        if (i == 0)
+                                fd0_redirected--;
 			if (rp->renamed[i] >= 0) {
-				copyfd(rp->renamed[i], i);
+				dup2(rp->renamed[i], i);
 				close(rp->renamed[i]);
+			} else {
+				close(i);
 			}
 		}
 	}
@@ -281,8 +300,6 @@ popredir() {
 	ckfree(rp);
 	INTON;
 }
-
-
 
 /*
  * Undo all redirections.  Called on error or interrupt.
@@ -303,14 +320,21 @@ SHELLPROC {
 
 #endif
 
+/* Return true if fd 0 has already been redirected at least once.  */
+int
+fd0_redirected_p(void)
+{
+        return fd0_redirected != 0;
+}
 
 /*
  * Discard all saved file descriptors.
  */
 
 void
-clearredir() {
-	register struct redirtab *rp;
+clearredir(void)
+{
+	struct redirtab *rp;
 	int i;
 
 	for (rp = redirlist ; rp ; rp = rp->next) {
@@ -323,48 +347,6 @@ clearredir() {
 	}
 }
 
-
-
 /*
- * Copy a file descriptor, like the F_DUPFD option of fcntl.  Returns -1
- * if the source file descriptor is closed, EMPTY if there are no unused
- * file descriptors left.
+ * $PchId: redir.c,v 1.5 2006/05/22 12:27:37 philip Exp $
  */
-
-int
-copyfd(from, to) {
-#ifdef F_DUPFD
-	int newfd;
-
-	newfd = fcntl(from, F_DUPFD, to);
-	if (newfd < 0 && errno == EMFILE)
-		return EMPTY;
-	return newfd;
-#else
-	char toclose[32];
-	int i;
-	int newfd;
-	int e;
-
-	for (i = 0 ; i < to ; i++)
-		toclose[i] = 0;
-	INTOFF;
-	while ((newfd = dup(from)) >= 0 && newfd < to)
-		toclose[newfd] = 1;
-	e = errno;
-	for (i = 0 ; i < to ; i++) {
-		if (toclose[i])
-			close(i);
-	}
-	INTON;
-	if (newfd < 0 && e == EMFILE)
-		return EMPTY;
-	return newfd;
-#endif
-}
-
-/* Return true if fd 0 has already been redirected at least once.  */
-int
-fd0_redirected_p () {
-	return fd0_redirected != 0;
-}

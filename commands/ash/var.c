@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,12 +31,26 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)var.c	5.3 (Berkeley) 4/12/91";
+#if 0
+static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
+#endif
 #endif /* not lint */
+/*
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: src/bin/sh/var.c,v 1.26.2.1 2004/09/30 04:41:55 des Exp $");
+*/
+
+#include <unistd.h>
+#include <stdlib.h>
+#ifndef NO_PATHS_H
+#include <paths.h>
+#endif
 
 /*
  * Shell variables.
  */
+
+#include <locale.h>
 
 #include "shell.h"
 #include "output.h"
@@ -55,7 +65,16 @@ static char sccsid[] = "@(#)var.c	5.3 (Berkeley) 4/12/91";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include "parser.h"
+#if !defined(NO_HISTORY) && !defined(EDITLINE)
+#include "myhistedit.h"
+#endif
 
+#include "builtins.h"
+
+#ifndef _PATH_DEFPATH
+#define _PATH_DEFPATH "/usr/bin:/bin"
+#endif
 
 #define VTABSIZE 39
 
@@ -64,48 +83,57 @@ struct varinit {
 	struct var *var;
 	int flags;
 	char *text;
+	void (*func)(const char *);
 };
 
 
-#if ATTY
-struct var vatty;
+#ifndef NO_HISTORY
+struct var vhistsize;
 #endif
 struct var vifs;
 struct var vmail;
 struct var vmpath;
 struct var vpath;
+struct var vppid;
 struct var vps1;
 struct var vps2;
 struct var vpse;
 struct var vvers;
-#if ATTY
-struct var vterm;
-#endif
+STATIC struct var voptind;
 
-const struct varinit varinit[] = {
-#if ATTY
-	{&vatty,	VSTRFIXED|VTEXTFIXED|VUNSET,	"ATTY="},
+STATIC const struct varinit varinit[] = {
+#if !defined(NO_HISTORY) && !defined(EDITLINE)
+	{ &vhistsize,	VSTRFIXED|VTEXTFIXED|VUNSET,	"HISTSIZE=",
+	  sethistsize },
 #endif
-	{&vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n"},
-	{&vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL="},
-	{&vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH="},
-	{&vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=:/bin:/usr/bin"},
-	/* 
+	{ &vifs,	VSTRFIXED|VTEXTFIXED,		"IFS= \t\n",
+	  NULL },
+	{ &vmail,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAIL=",
+	  NULL },
+	{ &vmpath,	VSTRFIXED|VTEXTFIXED|VUNSET,	"MAILPATH=",
+	  NULL },
+	{ &vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=" _PATH_DEFPATH,
+	  changepath },
+	{ &vppid,	VSTRFIXED|VTEXTFIXED|VUNSET,	"PPID=",
+	  NULL },
+	/*
 	 * vps1 depends on uid
 	 */
-	{&vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> "},
-	{&vpse,	VSTRFIXED|VTEXTFIXED,		"PSE=* "},
-#if ATTY
-	{&vterm,	VSTRFIXED|VTEXTFIXED|VUNSET,	"TERM="},
-#endif
-	{NULL,	0,				NULL}
+	{ &vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> ",
+	  NULL },
+	{ &vpse,	VSTRFIXED|VTEXTFIXED|VUNSET,	"PSE=",
+	  NULL },
+	{ &voptind,	VSTRFIXED|VTEXTFIXED,		"OPTIND=1",
+	  getoptsreset },
+	{ NULL,	0,				NULL,
+	  NULL }
 };
 
-struct var *vartab[VTABSIZE];
+STATIC struct var *vartab[VTABSIZE];
 
-STATIC void unsetvar __P((char *));
-STATIC struct var **hashvar __P((char *));
-STATIC int varequal __P((char *, char *));
+STATIC struct var **hashvar(char *);
+STATIC int varequal(char *, char *);
+STATIC int localevar(char *);
 
 /*
  * Initialize the varable symbol tables and import the environment
@@ -133,7 +161,9 @@ INIT {
  */
 
 void
-initvar() {
+initvar(void)
+{
+	char ppid[20];
 	const struct varinit *ip;
 	struct var *vp;
 	struct var **vpp;
@@ -145,6 +175,7 @@ initvar() {
 			*vpp = vp;
 			vp->text = ip->text;
 			vp->flags = ip->flags;
+			vp->func = ip->func;
 		}
 	}
 	/*
@@ -154,20 +185,48 @@ initvar() {
 		vpp = hashvar("PS1=");
 		vps1.next = *vpp;
 		*vpp = &vps1;
-		vps1.text = getuid() ? "PS1=$ " : "PS1=# ";
+		vps1.text = geteuid() ? "PS1=$ " : "PS1=# ";
 		vps1.flags = VSTRFIXED|VTEXTFIXED;
+	}
+	if ((vppid.flags & VEXPORT) == 0) {
+		fmtstr(ppid, sizeof(ppid), "%d", (int)getppid());
+		setvarsafe("PPID", ppid, 0);
 	}
 }
 
 /*
- * Set the value of a variable.  The flags argument is ored with the
+ * Safe version of setvar, returns 1 on success 0 on failure.
+ */
+
+int
+setvarsafe(char *name, char *val, int flags)
+{
+	struct jmploc jmploc;
+	struct jmploc *volatile savehandler = handler;
+	int err = 0;
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &err;
+#endif
+
+	if (setjmp(jmploc.loc))
+		err = 1;
+	else {
+		handler = &jmploc;
+		setvar(name, val, flags);
+	}
+	handler = savehandler;
+	return err;
+}
+
+/*
+ * Set the value of a variable.  The flags argument is tored with the
  * flags of the variable.  If val is NULL, the variable is unset.
  */
 
 void
-setvar(name, val, flags)
-	char *name, *val;
-	{
+setvar(char *name, char *val, int flags)
+{
 	char *p, *q;
 	int len;
 	int namelen;
@@ -176,8 +235,9 @@ setvar(name, val, flags)
 
 	isbad = 0;
 	p = name;
-	if (! is_name(*p++))
+	if (! is_name(*p))
 		isbad = 1;
+	p++;
 	for (;;) {
 		if (! is_in_name(*p)) {
 			if (*p == '\0' || *p == '=')
@@ -188,7 +248,7 @@ setvar(name, val, flags)
 	}
 	namelen = p - name;
 	if (isbad)
-		error("%.*s: is read only", namelen, name);
+		error("%.*s: bad variable name", namelen, name);
 	len = namelen + 2;		/* 2 is space for '=' and '\0' */
 	if (val == NULL) {
 		flags |= VUNSET;
@@ -206,7 +266,26 @@ setvar(name, val, flags)
 	setvareq(nameeq, flags);
 }
 
+STATIC int
+localevar(char *s)
+{
+	static char *lnames[7] = {
+		"ALL", "COLLATE", "CTYPE", "MONETARY",
+		"NUMERIC", "TIME", NULL
+	};
+	char **ss;
 
+	if (*s != 'L')
+		return 0;
+	if (varequal(s + 1, "ANG"))
+		return 1;
+	if (strncmp(s + 1, "C_", 2) != 0)
+		return 0;
+	for (ss = lnames; *ss ; ss++)
+		if (varequal(s + 3, *ss))
+			return 1;
+	return 0;
+}
 
 /*
  * Same as setvar except that the variable and value are passed in
@@ -216,28 +295,42 @@ setvar(name, val, flags)
  */
 
 void
-setvareq(s, flags)
-	char *s;
-	{
+setvareq(char *s, int flags)
+{
 	struct var *vp, **vpp;
+	int len;
 
+	if (aflag)
+		flags |= VEXPORT;
 	vpp = hashvar(s);
 	for (vp = *vpp ; vp ; vp = vp->next) {
 		if (varequal(s, vp->text)) {
 			if (vp->flags & VREADONLY) {
-				int len = strchr(s, '=') - s;
+				len = strchr(s, '=') - s;
 				error("%.*s: is read only", len, s);
 			}
 			INTOFF;
-			if (vp == &vpath)
-				changepath(s + 5);	/* 5 = strlen("PATH=") */
+
+			if (vp->func && (flags & VNOFUNC) == 0)
+				(*vp->func)(strchr(s, '=') + 1);
+
 			if ((vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 				ckfree(vp->text);
-			vp->flags &=~ (VTEXTFIXED|VSTACK|VUNSET);
+
+			vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
 			vp->flags |= flags;
 			vp->text = s;
+
+			/*
+			 * We could roll this to a function, to handle it as
+			 * a regular variable function callback, but why bother?
+			 */
 			if (vp == &vmpath || (vp == &vmail && ! mpathset()))
 				chkmail(1);
+			if ((vp->flags & VEXPORT) && localevar(s)) {
+				putenv(s);
+				(void) setlocale(LC_ALL, "");
+			}
 			INTON;
 			return;
 		}
@@ -247,7 +340,14 @@ setvareq(s, flags)
 	vp->flags = flags;
 	vp->text = s;
 	vp->next = *vpp;
+	vp->func = NULL;
+	INTOFF;
 	*vpp = vp;
+	if ((vp->flags & VEXPORT) && localevar(s)) {
+		putenv(s);
+		(void) setlocale(LC_ALL, "");
+	}
+	INTON;
 }
 
 
@@ -257,9 +357,8 @@ setvareq(s, flags)
  */
 
 void
-listsetvar(list)
-	struct strlist *list;
-	{
+listsetvar(struct strlist *list)
+{
 	struct strlist *lp;
 
 	INTOFF;
@@ -276,9 +375,8 @@ listsetvar(list)
  */
 
 char *
-lookupvar(name)
-	char *name;
-	{
+lookupvar(char *name)
+{
 	struct var *v;
 
 	for (v = *hashvar(name) ; v ; v = v->next) {
@@ -300,9 +398,8 @@ lookupvar(name)
  */
 
 char *
-bltinlookup(name, doall)
-	char *name;
-	{
+bltinlookup(char *name, int doall)
+{
 	struct strlist *sp;
 	struct var *v;
 
@@ -312,8 +409,8 @@ bltinlookup(name, doall)
 	}
 	for (v = *hashvar(name) ; v ; v = v->next) {
 		if (varequal(v->text, name)) {
-			if (v->flags & VUNSET
-			 || ! doall && (v->flags & VEXPORT) == 0)
+			if ((v->flags & VUNSET)
+			 || (!doall && (v->flags & VEXPORT) == 0))
 				return NULL;
 			return strchr(v->text, '=') + 1;
 		}
@@ -329,7 +426,8 @@ bltinlookup(name, doall)
  */
 
 char **
-environment() {
+environment(void)
+{
 	int nenv;
 	struct var **vpp;
 	struct var *vp;
@@ -359,15 +457,14 @@ environment() {
  */
 
 #ifdef mkinit
-MKINIT void shprocvar();
-
 SHELLPROC {
 	shprocvar();
 }
 #endif
 
 void
-shprocvar() {
+shprocvar(void)
+{
 	struct var **vpp;
 	struct var *vp, **prev;
 
@@ -400,14 +497,21 @@ shprocvar() {
  */
 
 int
-showvarscmd(argc, argv)  char **argv; {
+showvarscmd(int argc __unused, char **argv __unused)
+{
 	struct var **vpp;
 	struct var *vp;
+	const char *s;
 
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next) {
-			if ((vp->flags & VUNSET) == 0)
-				out1fmt("%s\n", vp->text);
+			if (vp->flags & VUNSET)
+				continue;
+			for (s = vp->text; *s != '='; s++)
+				out1c(*s);
+			out1c('=');
+			out1qstr(s + 1);
+			out1c('\n');
 		}
 	}
 	return 0;
@@ -420,15 +524,35 @@ showvarscmd(argc, argv)  char **argv; {
  */
 
 int
-exportcmd(argc, argv)  char **argv; {
+exportcmd(int argc, char **argv)
+{
 	struct var **vpp;
 	struct var *vp;
 	char *name;
 	char *p;
+	char *cmdname;
+	int ch, values;
 	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
 
+	cmdname = argv[0];
+	optreset = optind = 1;
+	opterr = 0;
+	values = 0;
+	while ((ch = getopt(argc, argv, "p")) != -1) {
+		switch (ch) {
+		case 'p':
+			values = 1;
+			break;
+		case '?':
+		default:
+			error("unknown option: -%c", optopt);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
 	listsetvar(cmdenviron);
-	if (argc > 1) {
+	if (argc != 0) {
 		while ((name = *argptr++) != NULL) {
 			if ((p = strchr(name, '=')) != NULL) {
 				p++;
@@ -436,7 +560,12 @@ exportcmd(argc, argv)  char **argv; {
 				vpp = hashvar(name);
 				for (vp = *vpp ; vp ; vp = vp->next) {
 					if (varequal(vp->text, name)) {
+
 						vp->flags |= flag;
+						if ((vp->flags & VEXPORT) && localevar(vp->text)) {
+							putenv(vp->text);
+							(void) setlocale(LC_ALL, "");
+						}
 						goto found;
 					}
 				}
@@ -448,8 +577,16 @@ found:;
 		for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 			for (vp = *vpp ; vp ; vp = vp->next) {
 				if (vp->flags & flag) {
+					if (values) {
+						out1str(cmdname);
+						out1c(' ');
+					}
 					for (p = vp->text ; *p != '=' ; p++)
 						out1c(*p);
+					if (values && !(vp->flags & VUNSET)) {
+						out1c('=');
+						out1qstr(p + 1);
+					}
 					out1c('\n');
 				}
 			}
@@ -463,7 +600,9 @@ found:;
  * The "local" command.
  */
 
-localcmd(argc, argv)  char **argv; {
+int
+localcmd(int argc __unused, char **argv __unused)
+{
 	char *name;
 
 	if (! in_function())
@@ -483,9 +622,8 @@ localcmd(argc, argv)  char **argv; {
  */
 
 void
-mklocal(name)
-	char *name;
-	{
+mklocal(char *name)
+{
 	struct localvar *lvp;
 	struct var **vpp;
 	struct var *vp;
@@ -493,8 +631,8 @@ mklocal(name)
 	INTOFF;
 	lvp = ckmalloc(sizeof (struct localvar));
 	if (name[0] == '-' && name[1] == '\0') {
-		lvp->text = ckmalloc(sizeof optval);
-		bcopy(optval, lvp->text, sizeof optval);
+		lvp->text = ckmalloc(sizeof optlist);
+		memcpy(lvp->text, optlist, sizeof optlist);
 		vp = NULL;
 	} else {
 		vpp = hashvar(name);
@@ -527,7 +665,8 @@ mklocal(name)
  */
 
 void
-poplocalvars() {
+poplocalvars(void)
+{
 	struct localvar *lvp;
 	struct var *vp;
 
@@ -535,10 +674,10 @@ poplocalvars() {
 		localvars = lvp->next;
 		vp = lvp->vp;
 		if (vp == NULL) {	/* $- saved */
-			bcopy(lvp->text, optval, sizeof optval);
+			memcpy(optlist, lvp->text, sizeof optlist);
 			ckfree(lvp->text);
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
-			unsetvar(vp->text);
+			(void)unsetvar(vp->text);
 		} else {
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
@@ -550,7 +689,9 @@ poplocalvars() {
 }
 
 
-setvarcmd(argc, argv)  char **argv; {
+int
+setvarcmd(int argc, char **argv)
+{
 	if (argc <= 2)
 		return unsetcmd(argc, argv);
 	else if (argc == 3)
@@ -567,14 +708,31 @@ setvarcmd(argc, argv)  char **argv; {
  * with the same name.
  */
 
-unsetcmd(argc, argv)  char **argv; {
+int
+unsetcmd(int argc __unused, char **argv __unused)
+{
 	char **ap;
+	int i;
+	int flg_func = 0;
+	int flg_var = 0;
+	int ret = 0;
 
-	for (ap = argv + 1 ; *ap ; ap++) {
-		unsetfunc(*ap);
-		unsetvar(*ap);
+	while ((i = nextopt("vf")) != '\0') {
+		if (i == 'f')
+			flg_func = 1;
+		else
+			flg_var = 1;
 	}
-	return 0;
+	if (flg_func == 0 && flg_var == 0)
+		flg_var = 1;
+
+	for (ap = argptr; *ap ; ap++) {
+		if (flg_func)
+			ret |= unsetfunc(*ap);
+		if (flg_var)
+			ret |= unsetvar(*ap);
+	}
+	return ret;
 }
 
 
@@ -582,22 +740,25 @@ unsetcmd(argc, argv)  char **argv; {
  * Unset the specified variable.
  */
 
-STATIC void
-unsetvar(s)
-	char *s;
-	{
+int
+unsetvar(char *s)
+{
 	struct var **vpp;
 	struct var *vp;
 
 	vpp = hashvar(s);
 	for (vp = *vpp ; vp ; vpp = &vp->next, vp = *vpp) {
 		if (varequal(vp->text, s)) {
+			if (vp->flags & VREADONLY)
+				return (1);
 			INTOFF;
-			if (*(strchr(vp->text, '=') + 1) != '\0'
-			 || vp->flags & VREADONLY) {
+			if (*(strchr(vp->text, '=') + 1) != '\0')
 				setvar(s, nullstr, 0);
+			if ((vp->flags & VEXPORT) && localevar(vp->text)) {
+				unsetenv(s);
+				setlocale(LC_ALL, "");
 			}
-			vp->flags &=~ VEXPORT;
+			vp->flags &= ~VEXPORT;
 			vp->flags |= VUNSET;
 			if ((vp->flags & VSTRFIXED) == 0) {
 				if ((vp->flags & VTEXTFIXED) == 0)
@@ -606,9 +767,11 @@ unsetvar(s)
 				ckfree(vp);
 			}
 			INTON;
-			return;
+			return (0);
 		}
 	}
+
+	return (0);
 }
 
 
@@ -618,14 +781,13 @@ unsetvar(s)
  */
 
 STATIC struct var **
-hashvar(p)
-	register char *p;
-	{
+hashvar(char *p)
+{
 	unsigned int hashval;
 
-	hashval = *p << 4;
+	hashval = ((unsigned char) *p) << 4;
 	while (*p && *p != '=')
-		hashval += *p++;
+		hashval += (unsigned char) *p++;
 	return &vartab[hashval % VTABSIZE];
 }
 
@@ -638,9 +800,8 @@ hashvar(p)
  */
 
 STATIC int
-varequal(p, q)
-	register char *p, *q;
-	{
+varequal(char *p, char *q)
+{
 	while (*p == *q++) {
 		if (*p++ == '=')
 			return 1;
@@ -649,3 +810,7 @@ varequal(p, q)
 		return 1;
 	return 0;
 }
+
+/*
+ * $PchId: var.c,v 1.5 2006/05/22 12:28:49 philip Exp $
+ */

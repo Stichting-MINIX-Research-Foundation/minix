@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,39 +29,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mystring.h	5.1 (Berkeley) 3/7/91
+ *	@(#)mystring.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/mystring.h,v 1.8 2004/04/06 20:06:51 markm Exp $
  */
 
-#ifndef SYSV
-#define strchr mystrchr
-#endif
+#include <string.h>
 
-#ifdef __STDC__
 void scopyn(const char *, char *, int);
-char *strchr(const char *, int);
-void mybcopy(const pointer, pointer, int);
 int prefix(const char *, const char *);
 int number(const char *);
 int is_number(const char *);
-int strcmp(const char *, const char *);	/* from C library */
-char *strcpy(char *, const char *);	/* from C library */
-int strlen(const char *);		/* from C library */
-char *strcat(char *, const char *);	/* from C library */
-char *strerror(int);			/* from C library */
-#else
-void scopyn();
-char *strchr();
-void mybcopy();
-int prefix();
-int number();
-int is_number();
-int strcmp();
-char *strcpy();
-int strlen();
-char *strcat();
-char *strerror();
-#endif
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 #define scopy(s1, s2)	((void)strcpy(s2, s1))
-#define bcopy(src, dst, n)	mybcopy((pointer)(src), (pointer)(dst), n)
+
+/*
+ * $PchId: mystring.h,v 1.3 2006/03/29 15:49:08 philip Exp $
+ */

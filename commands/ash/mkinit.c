@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,43 +31,51 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char const copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mkinit.c	5.3 (Berkeley) 3/13/91";
+#if 0
+static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
+#endif
 #endif /* not lint */
+/*
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: src/bin/sh/mkinit.c,v 1.17 2004/04/06 20:06:51 markm Exp $");
+*/
 
 /*
  * This program scans all the source files for code to handle various
  * special events and combines this code into one file.  This (allegedly)
  * improves the structure of the program since there is no need for
  * anyone outside of a module to know that that module performs special
- * operations on particular events.  The command is executed iff init.c
- * is actually changed.
+ * operations on particular events.
  *
- * Usage:  mkinit command sourcefile...
+ * Usage:  mkinit sourcefile...
  */
 
 
-#include <sys/cdefs.h>
-
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 
+#ifdef __minix
+#define __unused
+#endif
 
 /*
  * OUTFILE is the name of the output file.  Output is initially written
- * to the file OUTTEMP, which is then moved to OUTFILE if OUTTEMP and
- * OUTFILE are different.
+ * to the file OUTTEMP, which is then moved to OUTFILE.
  */
 
 #define OUTFILE "init.c"
 #define OUTTEMP "init.c.new"
-#define OUTOBJ "init.o"
 
 
 /*
@@ -89,7 +93,7 @@ struct text {
 	int nleft;
 	struct block *start;
 	struct block *last;
-};      
+};
 
 struct block {
 	struct block *next;
@@ -105,7 +109,7 @@ struct event {
 	char *name;		/* name of event (e.g. INIT) */
 	char *routine;		/* name of routine called on event */
 	char *comment;		/* comment describing routine */
-	struct text code;		/* code for handling event */
+	struct text code;	/* code for handling event */
 };
 
 
@@ -148,42 +152,35 @@ struct text decls;			/* declarations */
 int amiddecls;				/* for formatting */
 
 
-void readfile(), doevent(), doinclude(), dodecl(), output();
-void addstr(), addchar(), writetext();
+static void readfile(char *);
+static int match(char *, char *);
+static int gooddefine(char *);
+static void doevent(struct event *, FILE *, char *);
+static void doinclude(char *);
+static void dodecl(char *, FILE *);
+static void output(void);
+static void addstr(char *, struct text *);
+static void addchar(int, struct text *);
+static void writetext(struct text *, FILE *);
+static FILE *ckfopen(char *, char *);
+static void *ckmalloc(int);
+static char *savestr(char *);
+static void error(char *);
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
-FILE *ckfopen();
-char *savestr();
-void *ckmalloc __P((int));
-void error();
-
-main(argc, argv)
-	char **argv;
-	{
+int
+main(int argc __unused, char *argv[])
+{
 	char **ap;
-	int fd;
-	char c;
 
-	if (argc < 2)
-		error("Usage:  mkinit command file...");
 	header_files[0] = "\"shell.h\"";
 	header_files[1] = "\"mystring.h\"";
-	for (ap = argv + 2 ; *ap ; ap++)
+	for (ap = argv + 1 ; *ap ; ap++)
 		readfile(*ap);
 	output();
-	if (file_changed()) {
-		unlink(OUTFILE);
-		link(OUTTEMP, OUTFILE);
-		unlink(OUTTEMP);
-	} else {
-		unlink(OUTTEMP);
-		if (touch(OUTOBJ))
-			exit(0);		/* no compilation necessary */
-	}
-	printf("%s\n", argv[1]);
-	execl("/bin/sh", "sh", "-c", argv[1], (char *)0);
-	error("Can't exec shell");
+	rename(OUTTEMP, OUTFILE);
+	exit(0);
 }
 
 
@@ -191,10 +188,9 @@ main(argc, argv)
  * Parse an input file.
  */
 
-void
-readfile(fname)
-	char *fname;
-	{
+static void
+readfile(char *fname)
+{
 	FILE *fp;
 	char line[1024];
 	struct event *ep;
@@ -215,19 +211,31 @@ readfile(fname)
 			doinclude(line);
 		if (line[0] == 'M' && match("MKINIT", line))
 			dodecl(line, fp);
-		if (line[0] == '#' && gooddefine(line))
+		if (line[0] == '#' && gooddefine(line)) {
+			char *cp;
+			char line2[1024];
+			static const char undef[] = "#undef ";
+
+			strcpy(line2, line);
+			memcpy(line2, undef, sizeof(undef) - 1);
+			cp = line2 + sizeof(undef) - 1;
+			while(*cp && (*cp == ' ' || *cp == '\t'))
+			        cp++;
+			while(*cp && *cp != ' ' && *cp != '\t' && *cp != '\n')
+			        cp++;
+			*cp++ = '\n'; *cp = '\0';
+			addstr(line2, &defines);
 			addstr(line, &defines);
+		}
 	}
 	fclose(fp);
 }
 
 
-int
-match(name, line)
-	char *name;
-	char *line;
-	{
-	register char *p, *q;
+static int
+match(char *name, char *line)
+{
+	char *p, *q;
 
 	p = name, q = line;
 	while (*p) {
@@ -240,11 +248,10 @@ match(name, line)
 }
 
 
-int
-gooddefine(line)
-	char *line;
-	{
-	register char *p;
+static int
+gooddefine(char *line)
+{
+	char *p;
 
 	if (! match("#define", line))
 		return 0;			/* not a define */
@@ -264,12 +271,9 @@ gooddefine(line)
 }
 
 
-void
-doevent(ep, fp, fname)
-	register struct event *ep;
-	FILE *fp;
-	char *fname;
-	{
+static void
+doevent(struct event *ep, FILE *fp, char *fname)
+{
 	char line[1024];
 	int indent;
 	char *p;
@@ -304,13 +308,12 @@ doevent(ep, fp, fname)
 }
 
 
-void
-doinclude(line)
-	char *line;
-	{
-	register char *p;
+static void
+doinclude(char *line)
+{
+	char *p;
 	char *name;
-	register char **pp;
+	char **pp;
 
 	for (p = line ; *p != '"' && *p != '<' && *p != '\0' ; p++);
 	if (*p == '\0')
@@ -329,13 +332,11 @@ doinclude(line)
 }
 
 
-void
-dodecl(line1, fp)
-	char *line1;
-	FILE *fp;
-	{
+static void
+dodecl(char *line1, FILE *fp)
+{
 	char line[1024];
-	register char *p, *q;
+	char *p, *q;
 
 	if (strcmp(line1, "MKINIT\n") == 0) { /* start of struct/union decl */
 		addchar('\n', &decls);
@@ -350,7 +351,8 @@ dodecl(line1, fp)
 		if (! amiddecls)
 			addchar('\n', &decls);
 		q = NULL;
-		for (p = line1 + 6 ; *p != '=' && *p != '/' ; p++);
+		for (p = line1 + 6 ; *p && strchr("=/\n", *p) == NULL; p++)
+			continue;
 		if (*p == '=') {		/* eliminate initialization */
 			for (q = p ; *q && *q != ';' ; q++);
 			if (*q == '\0')
@@ -375,8 +377,9 @@ dodecl(line1, fp)
  * Write the output to the file OUTTEMP.
  */
 
-void
-output() {
+static void
+output(void)
+{
 	FILE *fp;
 	char **pp;
 	struct event *ep;
@@ -392,7 +395,7 @@ output() {
 	for (ep = event ; ep->name ; ep++) {
 		fputs("\n\n\n", fp);
 		fputs(ep->comment, fp);
-		fprintf(fp, "\nvoid\n%s() {\n", ep->routine);
+		fprintf(fp, "\nvoid\n%s(void) {\n", ep->routine);
 		writetext(&ep->code, fp);
 		fprintf(fp, "}\n");
 	}
@@ -401,61 +404,14 @@ output() {
 
 
 /*
- * Return true if the new output file is different from the old one.
- */
-
-int
-file_changed() {
-	register FILE *f1, *f2;
-	register int c;
-
-	if ((f1 = fopen(OUTFILE, "r")) == NULL
-	 || (f2 = fopen(OUTTEMP, "r")) == NULL)
-		return 1;
-	while ((c = getc(f1)) == getc(f2)) {
-		if (c == EOF)
-			return 0;
-	}
-	return 1;
-}
-
-
-/*
- * Touch a file.  Returns 0 on failure, 1 on success.
- */
-
-int
-touch(file)
-	char *file;
-	{
-	int fd;
-	char c;
-
-	if ((fd = open(file, O_RDWR)) < 0)
-		return 0;
-	if (read(fd, &c, 1) != 1) {
-		close(fd);
-		return 0;
-	}
-	lseek(fd, 0L, 0);
-	write(fd, &c, 1);
-	close(fd);
-	return 1;
-}
-
-
-
-/*
  * A text structure is simply a block of text that is kept in memory.
  * Addstr appends a string to the text struct, and addchar appends a single
  * character.
  */
 
-void
-addstr(s, text)
-	register char *s;
-	register struct text *text;
-	{
+static void
+addstr(char *s, struct text *text)
+{
 	while (*s) {
 		if (--text->nleft < 0)
 			addchar(*s++, text);
@@ -465,10 +421,9 @@ addstr(s, text)
 }
 
 
-void
-addchar(c, text)
-	register struct text *text;
-	{
+static void
+addchar(int c, struct text *text)
+{
 	struct block *bp;
 
 	if (--text->nleft < 0) {
@@ -487,11 +442,9 @@ addchar(c, text)
 /*
  * Write the contents of a text structure to a file.
  */
-void
-writetext(text, fp)
-	struct text *text;
-	FILE *fp;
-	{
+static void
+writetext(struct text *text, FILE *fp)
+{
 	struct block *bp;
 
 	if (text->start != NULL) {
@@ -501,47 +454,47 @@ writetext(text, fp)
 	}
 }
 
-FILE *
-ckfopen(file, mode)
-	char *file;
-	char *mode;
-	{
+static FILE *
+ckfopen(char *file, char *mode)
+{
 	FILE *fp;
 
 	if ((fp = fopen(file, mode)) == NULL) {
-		fprintf(stderr, "Can't open %s\n", file);
+		fprintf(stderr, "Can't open %s: %s\n", file, strerror(errno));
 		exit(2);
 	}
 	return fp;
 }
 
-void *
-ckmalloc(nbytes) {
-	register char *p;
-	char *malloc();
+static void *
+ckmalloc(int nbytes)
+{
+	char *p;
 
 	if ((p = malloc(nbytes)) == NULL)
 		error("Out of space");
 	return p;
 }
 
-char *
-savestr(s)
-	char *s;
-	{
-	register char *p;
+static char *
+savestr(char *s)
+{
+	char *p;
 
 	p = ckmalloc(strlen(s) + 1);
 	strcpy(p, s);
 	return p;
 }
 
-void
-error(msg)
-	char *msg;
-	{
+static void
+error(char *msg)
+{
 	if (curfile != NULL)
 		fprintf(stderr, "%s:%d: ", curfile, linno);
 	fprintf(stderr, "%s\n", msg);
 	exit(2);
 }
+
+/*
+ * $PchId: mkinit.c,v 1.6 2006/05/22 12:16:50 philip Exp $
+ */

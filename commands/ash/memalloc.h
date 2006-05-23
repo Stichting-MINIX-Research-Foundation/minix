@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,13 +29,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)memalloc.h	5.1 (Berkeley) 3/7/91
+ *	@(#)memalloc.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/memalloc.h,v 1.9 2004/04/06 20:06:51 markm Exp $
  */
 
 struct stackmark {
 	struct stack_block *stackp;
 	char *stacknxt;
 	int stacknleft;
+        struct stackmark *marknext;
 };
 
 
@@ -48,10 +46,8 @@ extern int stacknleft;
 extern int sstrnleft;
 extern int herefd;
 
-#ifdef __STDC__
 pointer ckmalloc(int);
 pointer ckrealloc(pointer, int);
-void free(pointer);		/* defined in C library */
 char *savestr(char *);
 pointer stalloc(int);
 void stunalloc(pointer);
@@ -62,21 +58,6 @@ void grabstackblock(int);
 char *growstackstr(void);
 char *makestrspace(void);
 void ungrabstackstr(char *, char *);
-#else
-pointer ckmalloc();
-pointer ckrealloc();
-void free();		/* defined in C library */
-char *savestr();
-pointer stalloc();
-void stunalloc();
-void setstackmark();
-void popstackmark();
-void growstackblock();
-void grabstackblock();
-char *growstackstr();
-char *makestrspace();
-void ungrabstackstr();
-#endif
 
 
 
@@ -84,7 +65,7 @@ void ungrabstackstr();
 #define stackblocksize() stacknleft
 #define STARTSTACKSTR(p)	p = stackblock(), sstrnleft = stackblocksize()
 #define STPUTC(c, p)	(--sstrnleft >= 0? (*p++ = (c)) : (p = growstackstr(), *p++ = (c)))
-#define CHECKSTRSPACE(n, p)	if (sstrnleft < n) p = makestrspace(); else
+#define CHECKSTRSPACE(n, p)	{ if (sstrnleft < n) p = makestrspace(); }
 #define USTPUTC(c, p)	(--sstrnleft, *p++ = (c))
 #define STACKSTRNUL(p)	(sstrnleft == 0? (p = growstackstr(), *p = '\0') : (*p = '\0'))
 #define STUNPUTC(p)	(++sstrnleft, --p)
@@ -93,3 +74,7 @@ void ungrabstackstr();
 #define grabstackstr(p)	stalloc(stackblocksize() - sstrnleft)
 
 #define ckfree(p)	free((pointer)(p))
+
+/*
+ * $PchId: memalloc.h,v 1.3 2006/03/30 11:39:41 philip Exp $
+ */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,7 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)exec.h	5.1 (Berkeley) 3/7/91
+ *	@(#)exec.h	8.3 (Berkeley) 6/8/95
+ * $FreeBSD: src/bin/sh/exec.h,v 1.12 2004/04/06 20:06:51 markm Exp $
  */
 
 /* values of cmdtype */
@@ -53,23 +50,21 @@ struct cmdentry {
 
 
 extern char *pathopt;		/* set by padvance */
+extern int exerrno;		/* last exec error */
 
-#ifdef __STDC__
 void shellexec(char **, char **, char *, int);
 char *padvance(char **, char *);
-void find_command(char *, struct cmdentry *, int);
+int hashcmd(int, char **);
+void find_command(char *, struct cmdentry *, int, char *);
 int find_builtin(char *);
 void hashcd(void);
-void changepath(char *);
+void changepath(const char *);
+void deletefuncs(void);
 void defun(char *, union node *);
-void unsetfunc(char *);
-#else
-void shellexec();
-char *padvance();
-void find_command();
-int find_builtin();
-void hashcd();
-void changepath();
-void defun();
-void unsetfunc();
-#endif
+int unsetfunc(char *);
+int typecmd(int, char **);
+void clearcmdentry(int);
+
+/*
+ * $PchId: exec.h,v 1.5 2006/04/10 14:47:34 philip Exp $
+ */

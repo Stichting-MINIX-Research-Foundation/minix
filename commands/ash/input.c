@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,26 +31,61 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)input.c	5.4 (Berkeley) 7/1/91";
+#if 0
+static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
+#endif
 #endif /* not lint */
+/*
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: src/bin/sh/input.c,v 1.22 2004/04/06 20:06:51 markm Exp $");
+*/
+
+#include <sys/types.h>
+#include <stdio.h>	/* defines BUFSIZ */
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * This file implements the input routines used by the parser.
  */
 
-#include <sys/types.h>
-#include <stdio.h>	/* defines BUFSIZ */
 #include "shell.h"
-#include <fcntl.h>
-#include <errno.h>
+#include "redir.h"
 #include "syntax.h"
 #include "input.h"
 #include "output.h"
+#include "options.h"
 #include "memalloc.h"
 #include "error.h"
+#include "alias.h"
+#include "parser.h"
+#ifdef EDITLINE
+#ifdef __minix_vmd
+#include <readline/readline.h>
+#else
+/* What about other systems? */
+#endif
+#else
+#include "myhistedit.h"
+#endif
+#include "redir.h"
+#include "trap.h"
+
+static void popstring(void);
 
 #define EOF_NLEFT -99		/* value of parsenleft when EOF pushed back */
 
+MKINIT
+struct strpush {
+	struct strpush *prev;	/* preceding string on stack */
+	char *prevstring;
+	int prevnleft;
+	int prevlleft;
+	struct alias *ap;	/* if push was associated with an alias */
+};
 
 /*
  * The parsefile structure pointed to by the global variable parsefile
@@ -63,36 +94,34 @@ static char sccsid[] = "@(#)input.c	5.4 (Berkeley) 7/1/91";
 
 MKINIT
 struct parsefile {
+	struct parsefile *prev;	/* preceding file on stack */
 	int linno;		/* current line */
 	int fd;			/* file descriptor (or -1 if string) */
-	int nleft;		/* number of chars left in buffer */
+	int nleft;		/* number of chars left in this line */
+	int lleft;		/* number of lines left in this buffer */
 	char *nextc;		/* next char in buffer */
-	struct parsefile *prev;	/* preceding file on stack */
 	char *buf;		/* input buffer */
+	struct strpush *strpush; /* for pushing strings at this level */
+	struct strpush basestrpush; /* so pushing one is fast */
 };
 
 
 int plinno = 1;			/* input line number */
 MKINIT int parsenleft;		/* copy of parsefile->nleft */
+MKINIT int parselleft;		/* copy of parsefile->lleft */
 char *parsenextc;		/* copy of parsefile->nextc */
 MKINIT struct parsefile basepf;	/* top level input file */
 char basebuf[BUFSIZ];		/* buffer for top level input file */
-struct parsefile *parsefile = &basepf;	/* current input file */
-char *pushedstring;		/* copy of parsenextc when text pushed back */
-int pushednleft;		/* copy of parsenleft when text pushed back */
+STATIC struct parsefile *parsefile = &basepf;	/* current input file */
+int init_editline = 0;		/* editline library initialized? */
+int whichprompt;		/* -1 == PSE, 1 == PS1, 2 == PS2 */
 
-#if READLINE
-char *readline __P((const char *prompt));
-char *r_use_prompt = NULL;	/* the prompt to use with readline */
+#ifndef EDITLINE
+EditLine *el;			/* cookie for editline package */
 #endif
 
-#ifdef __STDC__
 STATIC void pushfile(void);
-#else
-STATIC void pushfile();
-#endif
-
-
+static int preadfd(void);
 
 #ifdef mkinit
 INCLUDE "input.h"
@@ -106,7 +135,7 @@ INIT {
 
 RESET {
 	if (exception != EXSHELLPROC)
-		parsenleft = 0;            /* clear input buffer */
+		parselleft = parsenleft = 0;	/* clear input buffer */
 	popallfiles();
 }
 
@@ -121,10 +150,9 @@ SHELLPROC {
  */
 
 char *
-pfgets(line, len)
-	char *line;
-	{
-	register char *p = line;
+pfgets(char *line, int len)
+{
+	char *p = line;
 	int nleft = len;
 	int c;
 
@@ -151,64 +179,74 @@ pfgets(line, len)
  */
 
 int
-pgetc() {
+pgetc(void)
+{
 	return pgetc_macro();
 }
 
 
-/*
- * Refill the input buffer and return the next input character:
- *
- * 1) If a string was pushed back on the input, switch back to the regular
- *    buffer.
- * 2) If an EOF was pushed back (parsenleft == EOF_NLEFT) or we are reading
- *    from a string so we can't refill the buffer, return EOF.
- * 3) Call read to read in the characters.
- * 4) Delete all nul characters from the buffer.
- */
+static int
+preadfd(void)
+{
+	int nr;
+	parsenextc = parsefile->buf;
 
-int
-preadbuffer() {
-	register char *p, *q;
-	register int i;
-
-	if (pushedstring) {
-		parsenextc = pushedstring;
-		pushedstring = NULL;
-		parsenleft = pushednleft;
-		if (--parsenleft >= 0)
-			return *parsenextc++;
+#if !defined(NO_HISTORY) && !defined(EDITLINE)
+	if (el != NULL && gotwinch) {
+		gotwinch = 0;
+		el_resize(el);
 	}
-	if (parsenleft == EOF_NLEFT || parsefile->buf == NULL)
-		return PEOF;
-	flushout(&output);
-	flushout(&errout);
-#if READLINE
-    /* Use the readline() call if a prompt is to be printed (interactive). */
-    if (r_use_prompt != NULL) {
-	char *prompt;
-	char *line;
-
-	p = parsenextc = parsefile->buf;
-
-	prompt = r_use_prompt;
-	r_use_prompt = NULL;
-
-	if ((line = readline(prompt)) == NULL) {
-                parsenleft = EOF_NLEFT;
-                return PEOF;
-	}
-	strcpy(p, line);
-	free(line);
-	i = strlen(p);
-	p[i++] = '\n';
-    } else {
 #endif
 retry:
-	p = parsenextc = parsefile->buf;
-	i = read(parsefile->fd, p, BUFSIZ);
-	if (i <= 0) {
-                if (i < 0) {
+#ifndef NO_HISTORY
+#ifdef EDITLINE
+	if (parsefile->fd == 0) {
+		static const char *rl_cp= NULL;
+		static size_t rl_off= 0;
+
+		if (!rl_cp)
+		{
+			rl_cp = readline(getprompt(NULL));
+			if (rl_cp == NULL)
+				nr = 0;
+		}
+		if (rl_cp)
+		{
+			nr= strlen(rl_cp+rl_off);
+			if (nr >= BUFSIZ-1)
+			{
+				nr= BUFSIZ-1;
+				(void) memcpy(parsenextc, rl_cp+rl_off, nr);
+				rl_off += nr;
+			}
+			else
+			{
+				(void) memcpy(parsenextc, rl_cp+rl_off, nr);
+				parsenextc[nr++]= '\n';
+				free(rl_cp);
+				rl_cp= NULL;
+				rl_off= 0;
+			}
+		}
+	} else
+#else /* !EDITLINE */
+	if (parsefile->fd == 0 && el) {
+		const char *rl_cp;
+
+		rl_cp = el_gets(el, &nr);
+		if (rl_cp == NULL)
+			nr = 0;
+		else {
+			/* XXX - BUFSIZE should redesign so not necessary */
+			(void) strcpy(parsenextc, rl_cp);
+		}
+	} else
+#endif /* !EDITLINE */
+#endif
+		nr = read(parsefile->fd, parsenextc, BUFSIZ - 1);
+
+	if (nr <= 0) {
+                if (nr < 0) {
                         if (errno == EINTR)
                                 goto retry;
 #ifdef EWOULDBLOCK
@@ -222,35 +260,106 @@ retry:
                                         }
                                 }
                         }
-#endif
+#endif /* EWOULDBLOCK */
                 }
-                parsenleft = EOF_NLEFT;
-                return PEOF;
+                nr = -1;
 	}
-#if READLINE
-    }
-#endif
-	parsenleft = i - 1;
-
-	/* delete nul characters */
-	for (;;) {
-		if (*p++ == '\0')
-			break;
-		if (--i <= 0)
-			return *parsenextc++;		/* no nul characters */
-	}
-	q = p - 1;
-	while (--i > 0) {
-		if (*p != '\0')
-			*q++ = *p;
-		p++;
-	}
-	if (q == parsefile->buf)
-		goto retry;			/* buffer contained nothing but nuls */
-	parsenleft = q - parsefile->buf - 1;
-	return *parsenextc++;
+	return nr;
 }
 
+/*
+ * Refill the input buffer and return the next input character:
+ *
+ * 1) If a string was pushed back on the input, pop it;
+ * 2) If an EOF was pushed back (parsenleft == EOF_NLEFT) or we are reading
+ *    from a string so we can't refill the buffer, return EOF.
+ * 3) If there is more in this buffer, use it else call read to fill it.
+ * 4) Process input up to the next newline, deleting nul characters.
+ */
+
+int
+preadbuffer(void)
+{
+	char *p, *q;
+	int more;
+	int something;
+	char savec;
+
+	if (parsefile->strpush) {
+		popstring();
+		if (--parsenleft >= 0)
+			return (*parsenextc++);
+	}
+	if (parsenleft == EOF_NLEFT || parsefile->buf == NULL)
+		return PEOF;
+	flushout(&output);
+	flushout(&errout);
+
+again:
+	if (parselleft <= 0) {
+		if ((parselleft = preadfd()) == -1) {
+			parselleft = parsenleft = EOF_NLEFT;
+			return PEOF;
+		}
+	}
+
+	q = p = parsenextc;
+
+	/* delete nul characters */
+	something = 0;
+	for (more = 1; more;) {
+		switch (*p) {
+		case '\0':
+			p++;	/* Skip nul */
+			goto check;
+
+		case '\t':
+		case ' ':
+			break;
+
+		case '\n':
+			parsenleft = q - parsenextc;
+			more = 0; /* Stop processing here */
+			break;
+
+		default:
+			something = 1;
+			break;
+		}
+
+		*q++ = *p++;
+check:
+		if (--parselleft <= 0) {
+			parsenleft = q - parsenextc - 1;
+			if (parsenleft < 0)
+				goto again;
+			*q = '\0';
+			more = 0;
+		}
+	}
+
+	savec = *q;
+	*q = '\0';
+
+#if !defined(NO_HISTORY) && !defined(EDITLINE)
+	if (parsefile->fd == 0 && hist && something) {
+		HistEvent he;
+		INTOFF;
+		history(hist, &he, whichprompt == 1 ? H_ENTER : H_ADD,
+		    parsenextc);
+		INTON;
+	}
+#endif
+
+	if (vflag) {
+		out2str(parsenextc);
+		flushout(out2);
+	}
+
+	*q = savec;
+
+	return *parsenextc++;
+}
 
 /*
  * Undo the last call to pgetc.  Only one character may be pushed back.
@@ -258,28 +367,57 @@ retry:
  */
 
 void
-pungetc() {
+pungetc(void)
+{
 	parsenleft++;
 	parsenextc--;
 }
 
-
 /*
- * Push a string back onto the input.  This code doesn't work if the user
- * tries to push back more than one string at once.
+ * Push a string back onto the input at this current parsefile level.
+ * We handle aliases this way.
  */
-
 void
-ppushback(string, length)
-	char *string;
-	{
-	pushedstring = parsenextc;
-	pushednleft = parsenleft;
-	parsenextc = string;
-	parsenleft = length;
+pushstring(char *s, int len, void *ap)
+{
+	struct strpush *sp;
+
+	INTOFF;
+/*dprintf("*** calling pushstring: %s, %d\n", s, len);*/
+	if (parsefile->strpush) {
+		sp = ckmalloc(sizeof (struct strpush));
+		sp->prev = parsefile->strpush;
+		parsefile->strpush = sp;
+	} else
+		sp = parsefile->strpush = &(parsefile->basestrpush);
+	sp->prevstring = parsenextc;
+	sp->prevnleft = parsenleft;
+	sp->prevlleft = parselleft;
+	sp->ap = (struct alias *)ap;
+	if (ap)
+		((struct alias *)ap)->flag |= ALIASINUSE;
+	parsenextc = s;
+	parsenleft = len;
+	INTON;
 }
 
+static void
+popstring(void)
+{
+	struct strpush *sp = parsefile->strpush;
 
+	INTOFF;
+	parsenextc = sp->prevstring;
+	parsenleft = sp->prevnleft;
+	parselleft = sp->prevlleft;
+/*dprintf("*** calling popstring: restoring to '%s'\n", parsenextc);*/
+	if (sp->ap)
+		sp->ap->flag &= ~ALIASINUSE;
+	parsefile->strpush = sp->prev;
+	if (sp != &(parsefile->basestrpush))
+		ckfree(sp);
+	INTON;
+}
 
 /*
  * Set the input to take input from a file.  If push is set, push the
@@ -287,17 +425,16 @@ ppushback(string, length)
  */
 
 void
-setinputfile(fname, push)
-	char *fname;
-	{
+setinputfile(char *fname, int push)
+{
 	int fd;
 	int fd2;
 
 	INTOFF;
 	if ((fd = open(fname, O_RDONLY)) < 0)
-		error("Can't open %s", fname);
+		error("Can't open %s: %s", fname, strerror(errno));
 	if (fd < 10) {
-		fd2 = copyfd(fd, 10);
+		fd2 = fcntl(fd, F_DUPFD, 10);
 		close(fd);
 		if (fd2 < 0)
 			error("Out of file descriptors");
@@ -314,8 +451,9 @@ setinputfile(fname, push)
  */
 
 void
-setinputfd(fd, push) {
-	(void) fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | FD_CLOEXEC);
+setinputfd(int fd, int push)
+{
+	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 	if (push) {
 		pushfile();
 		parsefile->buf = ckmalloc(BUFSIZ);
@@ -325,7 +463,7 @@ setinputfd(fd, push) {
 	parsefile->fd = fd;
 	if (parsefile->buf == NULL)
 		parsefile->buf = ckmalloc(BUFSIZ);
-	parsenleft = 0;
+	parselleft = parsenleft = 0;
 	plinno = 1;
 }
 
@@ -335,14 +473,13 @@ setinputfd(fd, push) {
  */
 
 void
-setinputstring(string, push)
-	char *string;
-	{
+setinputstring(char *string, int push)
+{
 	INTOFF;
 	if (push)
 		pushfile();
 	parsenextc = string;
-	parsenleft = strlen(string);
+	parselleft = parsenleft = strlen(string);
 	parsefile->buf = NULL;
 	plinno = 1;
 	INTON;
@@ -356,21 +493,26 @@ setinputstring(string, push)
  */
 
 STATIC void
-pushfile() {
+pushfile(void)
+{
 	struct parsefile *pf;
 
 	parsefile->nleft = parsenleft;
+	parsefile->lleft = parselleft;
 	parsefile->nextc = parsenextc;
 	parsefile->linno = plinno;
 	pf = (struct parsefile *)ckmalloc(sizeof (struct parsefile));
 	pf->prev = parsefile;
 	pf->fd = -1;
+	pf->strpush = NULL;
+	pf->basestrpush.prev = NULL;
 	parsefile = pf;
 }
 
 
 void
-popfile() {
+popfile(void)
+{
 	struct parsefile *pf = parsefile;
 
 	INTOFF;
@@ -378,9 +520,12 @@ popfile() {
 		close(pf->fd);
 	if (pf->buf)
 		ckfree(pf->buf);
+	while (pf->strpush)
+		popstring();
 	parsefile = pf->prev;
 	ckfree(pf);
 	parsenleft = parsefile->nleft;
+	parselleft = parsefile->lleft;
 	parsenextc = parsefile->nextc;
 	plinno = parsefile->linno;
 	INTON;
@@ -392,7 +537,8 @@ popfile() {
  */
 
 void
-popallfiles() {
+popallfiles(void)
+{
 	while (parsefile != &basepf)
 		popfile();
 }
@@ -405,10 +551,15 @@ popallfiles() {
  */
 
 void
-closescript() {
+closescript(void)
+{
 	popallfiles();
 	if (parsefile->fd > 0) {
 		close(parsefile->fd);
 		parsefile->fd = 0;
 	}
 }
+
+/*
+ * $PchId: input.c,v 1.6 2006/05/23 12:00:32 philip Exp $
+ */

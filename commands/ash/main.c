@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,18 +31,29 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char const copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.2 (Berkeley) 3/13/91";
+#if 0
+static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/28/95";
+#endif
 #endif /* not lint */
+/*
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: src/bin/sh/main.c,v 1.26 2004/04/06 20:06:51 markm Exp $");
+*/
 
-#include <sys/types.h>
+#include <stdio.h>
 #include <signal.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h>
+#include <locale.h>
+#include <errno.h>
+
 #include "shell.h"
 #include "main.h"
 #include "mail.h"
@@ -54,38 +61,26 @@ static char sccsid[] = "@(#)main.c	5.2 (Berkeley) 3/13/91";
 #include "output.h"
 #include "parser.h"
 #include "nodes.h"
+#include "expand.h"
 #include "eval.h"
 #include "jobs.h"
 #include "input.h"
 #include "trap.h"
-#if ATTY
 #include "var.h"
-#endif
+#include "show.h"
 #include "memalloc.h"
 #include "error.h"
 #include "init.h"
 #include "mystring.h"
-
-#define PROFILE 0
+#include "exec.h"
+#include "cd.h"
+#include "builtins.h"
 
 int rootpid;
 int rootshell;
-STATIC union node *curcmd;
-STATIC union node *prevcmd;
-extern int errno;
-#if PROFILE
-short profile_buf[16384];
-extern int etext();
-#endif
 
-#ifdef __STDC__
 STATIC void read_profile(char *);
-char *getenv(char *);
-#else
-STATIC void read_profile();
-char *getenv();
-#endif
-
+STATIC char *find_dot_file(char *);
 
 /*
  * Main routine.  We initialize things, parse the arguments, execute
@@ -95,16 +90,15 @@ char *getenv();
  * is used to figure out how far we had gotten.
  */
 
-main(argc, argv)  char **argv; {
+int
+main(int argc, char *argv[])
+{
 	struct jmploc jmploc;
 	struct stackmark smark;
 	volatile int state;
-	char *shinit, *home;
-	char *profile = NULL, *ashrc = NULL;
+	char *shinit;
 
-#if PROFILE
-	monitor(4, etext, profile_buf, sizeof profile_buf, 50);
-#endif
+	(void) setlocale(LC_ALL, "");
 	state = 0;
 	if (setjmp(jmploc.loc)) {
 		/*
@@ -112,21 +106,32 @@ main(argc, argv)  char **argv; {
 		 * exception EXSHELLPROC to clean up before executing
 		 * the shell procedure.
 		 */
-		if (exception == EXSHELLPROC) {
+		switch (exception) {
+		case EXSHELLPROC:
 			rootpid = getpid();
 			rootshell = 1;
 			minusc = NULL;
 			state = 3;
-		} else if (state == 0 || iflag == 0 || ! rootshell)
-			exitshell(2);
+			break;
+
+		case EXEXEC:
+			exitstatus = exerrno;
+			break;
+
+		case EXERROR:
+			exitstatus = 2;
+			break;
+
+		default:
+			break;
+		}
+
+		if (exception != EXSHELLPROC) {
+		    if (state == 0 || iflag == 0 || ! rootshell)
+			    exitshell(exitstatus);
+		}
 		reset();
-#if ATTY
-		if (exception == EXINT
-		 && (! attyset() || equal(termval(), "emacs")))
-#else
-		if (exception == EXINT)
-#endif
-		{
+		if (exception == EXINT) {
 			out2c('\n');
 			flushout(&errout);
 		}
@@ -151,57 +156,38 @@ main(argc, argv)  char **argv; {
 	init();
 	setstackmark(&smark);
 	procargs(argc, argv);
-	if (eflag) eflag = 2;	/* Truly enable [ex]flag after init. */
-	if (xflag) xflag = 2;
+	if (getpwd() == NULL && iflag)
+		out2str("sh: cannot determine working directory\n");
 	if (argv[0] && argv[0][0] == '-') {
 		state = 1;
 		read_profile("/etc/profile");
 state1:
 		state = 2;
-		if ((home = getenv("HOME")) != NULL
-		    && (profile = (char *) malloc(strlen(home) + 10)) != NULL)
-		{
-			strcpy(profile, home);
-			strcat(profile, "/.profile");
-			read_profile(profile);
-		} else {
+		if (privileged == 0)
 			read_profile(".profile");
-		}
-	} else if ((sflag || minusc) && (shinit = getenv("SHINIT")) != NULL) {
-		state = 2;
-		evalstring(shinit);
+		else
+			read_profile("/etc/suid_profile");
 	}
 state2:
-	if (profile != NULL) free(profile);
-
 	state = 3;
-	if (!argv[0] || argv[0][0] != '-') {
-		if ((home = getenv("HOME")) != NULL
-			&& (ashrc = (char *) malloc(strlen(home) + 8)) != NULL)
-		{
-			strcpy(ashrc, home);
-			strcat(ashrc, "/.ashrc");
-			read_profile(ashrc);
+	if (!privileged && iflag) {
+		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0') {
+			state = 3;
+			read_profile(shinit);
 		}
 	}
 state3:
-	if (ashrc != NULL) free(ashrc);
-	if (eflag) eflag = 1;	/* Init done, enable [ex]flag */
-	if (xflag) xflag = 1;
-	exitstatus = 0;		/* Init shouldn't influence initial $? */
-
 	state = 4;
 	if (minusc) {
 		evalstring(minusc);
 	}
 	if (sflag || minusc == NULL) {
-state4:
+state4:	/* XXX ??? - why isn't this before the "if" statement */
 		cmdloop(1);
 	}
-#if PROFILE
-	monitor(0);
-#endif
 	exitshell(exitstatus);
+	/*NOTREACHED*/
+	return 0;
 }
 
 
@@ -211,52 +197,49 @@ state4:
  */
 
 void
-cmdloop(top) {
+cmdloop(int top)
+{
 	union node *n;
 	struct stackmark smark;
 	int inter;
-	int numeof;
+	int numeof = 0;
 
 	TRACE(("cmdloop(%d) called\n", top));
 	setstackmark(&smark);
-	numeof = 0;
 	for (;;) {
 		if (pendingsigs)
 			dotrap();
 		inter = 0;
 		if (iflag && top) {
 			inter++;
-			showjobs(1);
+			showjobs(1, 0, 0);
 			chkmail(0);
 			flushout(&output);
 		}
 		n = parsecmd(inter);
-#if DEBUG
-		/* showtree(n); */
-#endif
+		/* showtree(n); DEBUG */
 		if (n == NEOF) {
-			if (Iflag == 0 || numeof >= 50)
+			if (!top || numeof >= 50)
 				break;
-			out2str("\nUse \"exit\" to leave shell.\n");
+			if (!stoppedjobs()) {
+				if (!Iflag)
+					break;
+				out2str("\nUse \"exit\" to leave shell.\n");
+			}
 			numeof++;
 		} else if (n != NULL && nflag == 0) {
-			if (inter) {
-				INTOFF;
-				if (prevcmd)
-					freefunc(prevcmd);
-				prevcmd = curcmd;
-				curcmd = copyfunc(n);
-				INTON;
-			}
+			job_warning = (job_warning == 2) ? 1 : 0;
+			numeof = 0;
 			evaltree(n, 0);
-#ifdef notdef
-			if (exitstatus)				      /*DEBUG*/
-				outfmt(&errout, "Exit status 0x%X\n", exitstatus);
-#endif
 		}
 		popstackmark(&smark);
+		setstackmark(&smark);
+		if (evalskip == SKIPFILE) {
+			evalskip = 0;
+			break;
+		}
 	}
-	popstackmark(&smark);		/* unnecessary */
+	popstackmark(&smark);
 }
 
 
@@ -266,9 +249,8 @@ cmdloop(top) {
  */
 
 STATIC void
-read_profile(name)
-	char *name;
-	{
+read_profile(char *name)
+{
 	int fd;
 
 	INTOFF;
@@ -288,32 +270,63 @@ read_profile(name)
  */
 
 void
-readcmdfile(name)
-	char *name;
-	{
+readcmdfile(char *name)
+{
 	int fd;
 
 	INTOFF;
 	if ((fd = open(name, O_RDONLY)) >= 0)
 		setinputfd(fd, 1);
 	else
-		error("Can't open %s", name);
+		error("Can't open %s: %s", name, strerror(errno));
 	INTON;
 	cmdloop(0);
 	popfile();
 }
 
 
+
 /*
- * Take commands from a file.  To be compatable we should do a path
- * search for the file, but a path search doesn't make any sense.
+ * Take commands from a file.  To be compatible we should do a path
+ * search for the file, which is necessary to find sub-commands.
  */
 
-dotcmd(argc, argv)  char **argv; {
+
+STATIC char *
+find_dot_file(char *basename)
+{
+	static char localname[FILENAME_MAX+1];
+	char *fullname;
+	char *path = pathval();
+	struct stat statb;
+
+	/* don't try this for absolute or relative paths */
+	if( strchr(basename, '/'))
+		return basename;
+
+	while ((fullname = padvance(&path, basename)) != NULL) {
+		strcpy(localname, fullname);
+		stunalloc(fullname);
+		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode))
+			return localname;
+	}
+	return basename;
+}
+
+int
+dotcmd(int argc, char **argv)
+{
+	struct strlist *sp;
 	exitstatus = 0;
+
+	for (sp = cmdenviron; sp ; sp = sp->next)
+		setvareq(savestr(sp->text), VSTRFIXED|VTEXTFIXED);
+
 	if (argc >= 2) {		/* That's what SVR2 does */
-		setinputfile(argv[1], 1);
-		commandname = argv[1];
+		char *fullname = find_dot_file(argv[1]);
+
+		setinputfile(fullname, 1);
+		commandname = fullname;
 		cmdloop(0);
 		popfile();
 	}
@@ -321,40 +334,22 @@ dotcmd(argc, argv)  char **argv; {
 }
 
 
-exitcmd(argc, argv)  char **argv; {
+int
+exitcmd(int argc, char **argv)
+{
 	extern int oexitstatus;
+
+	if (stoppedjobs())
+		return 0;
 	if (argc > 1)
 		exitstatus = number(argv[1]);
 	else
 		exitstatus = oexitstatus;
 	exitshell(exitstatus);
+	/*NOTREACHED*/
+	return 0;
 }
 
-
-lccmd(argc, argv)  char **argv; {
-	if (argc > 1) {
-		defun(argv[1], prevcmd);
-		return 0;
-	} else {
-		INTOFF;
-		freefunc(curcmd);
-		curcmd = prevcmd;
-		prevcmd = NULL;
-		INTON;
-		evaltree(curcmd, 0);
-		return exitstatus;
-	}
-}
-
-
-
-#ifdef notdef
 /*
- * Should never be called.
+ * $PchId: main.c,v 1.5 2006/05/22 12:03:02 philip Exp $
  */
-
-void
-exit(exitstatus) {
-	_exit(exitstatus);
-}
-#endif

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -34,15 +30,20 @@
  * SUCH DAMAGE.
  */
 
+#if 0
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char const copyright[] =
+"@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mknodes.c	5.1 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #endif /* not lint */
+#endif
+/*
+__FBSDID("$FreeBSD: src/bin/sh/mknodes.c,v 1.17 2004/04/06 20:06:51 markm Exp $");
+*/
 
 /*
  * This program reads the nodetypes file and nodes.c.pat file.  It generates
@@ -50,7 +51,10 @@ static char sccsid[] = "@(#)mknodes.c	5.1 (Berkeley) 3/7/91";
  */
 
 #include <stdio.h>
-
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <stdarg.h>
 
 #define MAXTYPES 50		/* max number of node types */
 #define MAXFIELDS 20		/* max fields in a structure */
@@ -80,31 +84,42 @@ struct str {			/* struct representing a node structure */
 };
 
 
-int ntypes;			/* number of node types */
-char *nodename[MAXTYPES];	/* names of the nodes */
-struct str *nodestr[MAXTYPES];	/* type of structure used by the node */
-int nstr;			/* number of structures */
-struct str str[MAXTYPES];	/* the structures */
-struct str *curstr;		/* current structure */
+static int ntypes;			/* number of node types */
+static char *nodename[MAXTYPES];	/* names of the nodes */
+static struct str *nodestr[MAXTYPES];	/* type of structure used by the node */
+static int nstr;			/* number of structures */
+static struct str str[MAXTYPES];	/* the structures */
+static struct str *curstr;		/* current structure */
+static FILE *infp;
+static char line[1024];
+static int linno;
+static char *linep;
+
+#ifndef __printf0like
+#define __printf0like(a,b)
+#endif
+
+static void parsenode(void);
+static void parsefield(void);
+static void output(char *);
+static void outsizes(FILE *);
+static void outfunc(FILE *, int);
+static void indent(int, FILE *);
+static int nextfield(char *);
+static void skipbl(void);
+static int readline(void);
+static void error(const char *, ...) __printf0like(1, 2);
+static char *savestr(const char *);
 
 
-FILE *infp = stdin;
-char line[1024];
-int linno;
-char *linep;
-
-
-char *savestr();
-#define equal(s1, s2)	(strcmp(s1, s2) == 0)
-
-
-main(argc, argv)
-	char **argv;
-	{
+int
+main(int argc, char *argv[])
+{
 	if (argc != 3)
-		error("usage: mknodes file\n");
+		error("usage: mknodes file");
+	infp = stdin;
 	if ((infp = fopen(argv[1], "r")) == NULL)
-		error("Can't open %s", argv[1]);
+		error("Can't open %s: %s", argv[1], strerror(errno));
 	while (readline()) {
 		if (line[0] == ' ' || line[0] == '\t')
 			parsefield();
@@ -112,12 +127,14 @@ main(argc, argv)
 			parsenode();
 	}
 	output(argv[2]);
-	return 0;
+	exit(0);
 }
 
 
 
-parsenode() {
+static void
+parsenode(void)
+{
 	char name[BUFLEN];
 	char tag[BUFLEN];
 	struct str *sp;
@@ -131,7 +148,7 @@ parsenode() {
 		error("Garbage at end of line");
 	nodename[ntypes] = savestr(name);
 	for (sp = str ; sp < str + nstr ; sp++) {
-		if (equal(sp->tag, tag))
+		if (strcmp(sp->tag, tag) == 0)
 			break;
 	}
 	if (sp >= str + nstr) {
@@ -145,7 +162,9 @@ parsenode() {
 }
 
 
-parsefield() {
+static void
+parsefield(void)
+{
 	char name[BUFLEN];
 	char type[BUFLEN];
 	char decl[2 * BUFLEN];
@@ -159,21 +178,21 @@ parsefield() {
 		error("No field type");
 	fp = &curstr->field[curstr->nfields];
 	fp->name = savestr(name);
-	if (equal(type, "nodeptr")) {
+	if (strcmp(type, "nodeptr") == 0) {
 		fp->type = T_NODE;
 		sprintf(decl, "union node *%s", name);
-	} else if (equal(type, "nodelist")) {
+	} else if (strcmp(type, "nodelist") == 0) {
 		fp->type = T_NODELIST;
 		sprintf(decl, "struct nodelist *%s", name);
-	} else if (equal(type, "string")) {
+	} else if (strcmp(type, "string") == 0) {
 		fp->type = T_STRING;
 		sprintf(decl, "char *%s", name);
-	} else if (equal(type, "int")) {
+	} else if (strcmp(type, "int") == 0) {
 		fp->type = T_INT;
 		sprintf(decl, "int %s", name);
-	} else if (equal(type, "other")) {
+	} else if (strcmp(type, "other") == 0) {
 		fp->type = T_OTHER;
-	} else if (equal(type, "temp")) {
+	} else if (strcmp(type, "temp") == 0) {
 		fp->type = T_TEMP;
 	} else {
 		error("Unknown type %s", type);
@@ -196,9 +215,9 @@ char writer[] = "\
  */\n\
 \n";
 
-output(file)
-	char *file;
-	{
+static void
+output(char *file)
+{
 	FILE *hfile;
 	FILE *cfile;
 	FILE *patfile;
@@ -208,9 +227,9 @@ output(file)
 	char *p;
 
 	if ((patfile = fopen(file, "r")) == NULL)
-		error("Can't open %s", file);
+		error("Can't open %s: %s", file, strerror(errno));
 	if ((hfile = fopen("nodes.h", "w")) == NULL)
-		error("Can't create nodes.h");
+		error("Can't create nodes.h: %s", strerror(errno));
 	if ((cfile = fopen("nodes.c", "w")) == NULL)
 		error("Can't create nodes.c");
 	fputs(writer, hfile);
@@ -234,22 +253,17 @@ output(file)
 	fputs("\tstruct nodelist *next;\n", hfile);
 	fputs("\tunion node *n;\n", hfile);
 	fputs("};\n\n\n", hfile);
-	fputs("#ifdef __STDC__\n", hfile);
 	fputs("union node *copyfunc(union node *);\n", hfile);
 	fputs("void freefunc(union node *);\n", hfile);
-	fputs("#else\n", hfile);
-	fputs("union node *copyfunc();\n", hfile);
-	fputs("void freefunc();\n", hfile);
-	fputs("#endif\n", hfile);
 
 	fputs(writer, cfile);
 	while (fgets(line, sizeof line, patfile) != NULL) {
 		for (p = line ; *p == ' ' || *p == '\t' ; p++);
-		if (equal(p, "%SIZES\n"))
+		if (strcmp(p, "%SIZES\n") == 0)
 			outsizes(cfile);
-		else if (equal(p, "%CALCSIZE\n"))
+		else if (strcmp(p, "%CALCSIZE\n") == 0)
 			outfunc(cfile, 1);
-		else if (equal(p, "%COPY\n"))
+		else if (strcmp(p, "%COPY\n") == 0)
 			outfunc(cfile, 0);
 		else
 			fputs(line, cfile);
@@ -258,9 +272,9 @@ output(file)
 
 
 
-outsizes(cfile)
-	FILE *cfile;
-	{
+static void
+outsizes(FILE *cfile)
+{
 	int i;
 
 	fprintf(cfile, "static const short nodesize[%d] = {\n", ntypes);
@@ -271,9 +285,9 @@ outsizes(cfile)
 }
 
 
-outfunc(cfile, calcsize)
-	FILE *cfile;
-	{
+static void
+outfunc(FILE *cfile, int calcsize)
+{
 	struct str *sp;
 	struct field *fp;
 	int i;
@@ -287,8 +301,7 @@ outfunc(cfile, calcsize)
 		fputs("      funcblocksize += nodesize[n->type];\n", cfile);
 	else {
 		fputs("      new = funcblock;\n", cfile);
-		fputs("      *(char **)&funcblock += nodesize[n->type];\n", 
-									cfile);
+		fputs("      funcblock = (char *)funcblock + nodesize[n->type];\n", cfile);
 	}
 	fputs("      switch (n->type) {\n", cfile);
 	for (sp = str ; sp < &str[nstr] ; sp++) {
@@ -351,9 +364,9 @@ outfunc(cfile, calcsize)
 }
 
 
-indent(amount, fp)
-	FILE *fp;
-	{
+static void
+indent(int amount, FILE *fp)
+{
 	while (amount >= 8) {
 		putc('\t', fp);
 		amount -= 8;
@@ -364,11 +377,10 @@ indent(amount, fp)
 }
 
 
-int
-nextfield(buf)
-	char *buf;
-	{
-	register char *p, *q;
+static int
+nextfield(char *buf)
+{
+	char *p, *q;
 
 	p = linep;
 	while (*p == ' ' || *p == '\t')
@@ -382,15 +394,18 @@ nextfield(buf)
 }
 
 
-skipbl() {
+static void
+skipbl(void)
+{
 	while (*linep == ' ' || *linep == '\t')
 		linep++;
 }
 
 
-int
-readline() {
-	register char *p;
+static int
+readline(void)
+{
+	char *p;
 
 	if (fgets(line, 1024, infp) == NULL)
 		return 0;
@@ -407,26 +422,34 @@ readline() {
 
 
 
-error(msg, a1, a2, a3, a4, a5, a6)
-	char *msg;
-	{
-	fprintf(stderr, "line %d: ", linno);
-	fprintf(stderr, msg, a1, a2, a3, a4, a5, a6);
-	putc('\n', stderr);
+static void
+error(const char *msg, ...)
+{
+	va_list va;
+	va_start(va, msg);
+
+	(void) fprintf(stderr, "line %d: ", linno);
+	(void) vfprintf(stderr, msg, va);
+	(void) fputc('\n', stderr);
+
+	va_end(va);
+
 	exit(2);
 }
 
 
 
-char *
-savestr(s)
-	char *s;
-	{
-	register char *p;
-	char *malloc();
+static char *
+savestr(const char *s)
+{
+	char *p;
 
 	if ((p = malloc(strlen(s) + 1)) == NULL)
 		error("Out of space");
-	strcpy(p, s);
+	(void) strcpy(p, s);
 	return p;
 }
+
+/*
+ * $PchId: mknodes.c,v 1.6 2006/05/23 12:05:14 philip Exp $
+ */

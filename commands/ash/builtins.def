@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-# Copyright (c) 1991 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1991, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # This code is derived from software contributed to Berkeley by
 # Kenneth Almquist.
@@ -14,10 +14,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by the University of
-#	California, Berkeley and its contributors.
 # 4. Neither the name of the University nor the names of its contributors
 #    may be used to endorse or promote products derived from this software
 #    without specific prior written permission.
@@ -34,21 +30,23 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)builtins	5.1 (Berkeley) 3/7/91
+#	@(#)builtins.def	8.4 (Berkeley) 5/4/95
+# $FreeBSD: src/bin/sh/builtins.def,v 1.14 2004/04/06 20:06:51 markm Exp $
 
 #
 # This file lists all the builtin commands.  The first column is the name
 # of a C routine.  The -j flag, if present, specifies that this command
-# is to be excluded from systems without job control.  The rest of the line
+# is to be excluded from systems without job control, and the -h flag,
+# if present specifies that this command is to be excluded from systems
+# based on the NO_HISTORY compile-time symbol.  The rest of the line
 # specifies the command name or names used to run the command.  The entry
-# for nullcmd, which is run when the user does not specify a command, must
+# for bltincmd, which is run when the user does not specify a command, must
 # come first.
 #
-# Copyright (C) 1989 by Kenneth Almquist.  All rights reserved.
-# This file is part of ash, which is distributed under the terms specified
-# by the Ash General Public License.  See the file named LICENSE.
+# NOTE: bltincmd must come first!
 
-bltincmd	command
+bltincmd	builtin
+commandcmd	command
 #alloccmd	alloc
 bgcmd -j	bg
 breakcmd	break continue
@@ -59,17 +57,20 @@ echocmd		echo
 evalcmd		eval
 execcmd		exec
 exitcmd		exit
+expcmd		exp let
 exportcmd	export readonly
 exprcmd		expr test [
+falsecmd	false
+histcmd -h	fc
 fgcmd -j	fg
 getoptscmd	getopts
 hashcmd		hash
 jobidcmd	jobid
 jobscmd		jobs
-#lccmd		lc
-#linecmd		line
+#linecmd	line
 localcmd	local
 #nlechocmd	nlecho
+#printfcmd	printf
 pwdcmd		pwd
 readcmd		read
 returncmd	return
@@ -77,7 +78,17 @@ setcmd		set
 setvarcmd	setvar
 shiftcmd	shift
 trapcmd		trap
-truecmd		: true false
+truecmd		: true
+typecmd		type
 umaskcmd	umask
+unaliascmd	unalias
 unsetcmd	unset
 waitcmd		wait
+#foocmd		foo
+aliascmd	alias
+ulimitcmd	ulimit
+bindcmd		bind
+wordexpcmd	wordexp
+
+#
+# $PchId: builtins.def,v 1.5 2006/03/31 10:50:57 philip Exp $

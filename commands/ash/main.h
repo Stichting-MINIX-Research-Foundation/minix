@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,16 +29,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)main.h	5.1 (Berkeley) 3/7/91
+ *	@(#)main.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/main.h,v 1.8 2004/04/06 20:06:51 markm Exp $
  */
 
 extern int rootpid;	/* pid of main shell */
 extern int rootshell;	/* true if we aren't a child of the main shell */
 
-#ifdef __STDC__
 void readcmdfile(char *);
 void cmdloop(int);
-#else
-void readcmdfile();
-void cmdloop();
-#endif
+int dotcmd(int, char **);
+int exitcmd(int, char **);
+
+/*
+ * $PchId: main.h,v 1.3 2006/03/30 11:43:59 philip Exp $
+ */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,38 +29,71 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)options.h	5.1 (Berkeley) 3/7/91
+ *	@(#)options.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/options.h,v 1.13 2004/04/06 20:06:51 markm Exp $
  */
 
 struct shparam {
-	int nparam;	/* number of positional parameters (without $0) */
-	char malloc;	/* true if parameter list dynamicly allocated */
+	int nparam;		/* # of positional parameters (without $0) */
+	unsigned char malloc;	/* if parameter list dynamically allocated */
+	unsigned char reset;	/* if getopts has been reset */
 	char **p;		/* parameter list */
-	char **optnext;	/* next parameter to be processed by getopts */
-	char *optptr;	/* used by getopts */
+	char **optnext;		/* next parameter to be processed by getopts */
+	char *optptr;		/* used by getopts */
 };
 
 
 
-#define eflag optval[0]
-#define fflag optval[1]
-#define Iflag optval[2]
-#define iflag optval[3]
-#define jflag optval[4]
-#define nflag optval[5]
-#define sflag optval[6]
-#define xflag optval[7]
-#define zflag optval[8]
-#define vflag optval[9]
+#define eflag optlist[0].val
+#define fflag optlist[1].val
+#define Iflag optlist[2].val
+#define iflag optlist[3].val
+#define mflag optlist[4].val
+#define nflag optlist[5].val
+#define sflag optlist[6].val
+#define xflag optlist[7].val
+#define vflag optlist[8].val
+#define Vflag optlist[9].val
+#define	Eflag optlist[10].val
+#define	Cflag optlist[11].val
+#define	aflag optlist[12].val
+#define	bflag optlist[13].val
+#define	uflag optlist[14].val
+#define	privileged optlist[15].val
+#define	Tflag optlist[16].val
+#define	Pflag optlist[17].val
 
-#define NOPTS	10
+#define NOPTS	18
+
+struct optent {
+	const char *name;
+	const char letter;
+	char val;
+};
 
 #ifdef DEFINE_OPTIONS
-const char optchar[NOPTS+1] = "efIijnsxzv";       /* shell flags */
-char optval[NOPTS+1];           /* values of option flags */
+struct optent optlist[NOPTS] = {
+	{ "errexit",	'e',	0 },
+	{ "noglob",	'f',	0 },
+	{ "ignoreeof",	'I',	0 },
+	{ "interactive",'i',	0 },
+	{ "monitor",	'm',	0 },
+	{ "noexec",	'n',	0 },
+	{ "stdin",	's',	0 },
+	{ "xtrace",	'x',	0 },
+	{ "verbose",	'v',	0 },
+	{ "vi",		'V',	0 },
+	{ "emacs",	'E',	0 },
+	{ "noclobber",	'C',	0 },
+	{ "allexport",	'a',	0 },
+	{ "notify",	'b',	0 },
+	{ "nounset",	'u',	0 },
+	{ "privileged",	'p',	0 },
+	{ "trapsasync",	'T',	0 },
+	{ "physical",	'P',	0 },
+};
 #else
-extern const char optchar[NOPTS+1];
-extern char optval[NOPTS+1];
+extern struct optent optlist[NOPTS];
 #endif
 
 
@@ -72,19 +101,19 @@ extern char *minusc;		/* argument to -c option */
 extern char *arg0;		/* $0 */
 extern struct shparam shellparam;  /* $@ */
 extern char **argptr;		/* argument list for builtin commands */
-extern char *optarg;		/* set by nextopt */
+extern char *shoptarg;		/* set by nextopt */
 extern char *optptr;		/* used by nextopt */
-extern int editable;		/* isatty(0) && isatty(1) */
 
-
-#ifdef __STDC__
 void procargs(int, char **);
+void optschanged(void);
 void setparam(char **);
 void freeparam(struct shparam *);
+int shiftcmd(int, char **);
+int setcmd(int, char **);
+int getoptscmd(int, char **);
 int nextopt(char *);
-#else
-void procargs();
-void setparam();
-void freeparam();
-int nextopt();
-#endif
+void getoptsreset(const char *);
+
+/*
+ * $PchId: options.h,v 1.4 2006/03/29 15:37:43 philip Exp $
+ */

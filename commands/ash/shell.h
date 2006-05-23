@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,19 +29,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)shell.h	5.4 (Berkeley) 4/12/91
+ *	@(#)shell.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/shell.h,v 1.17 2004/04/06 20:06:51 markm Exp $
  */
+
+#include <sys/types.h>	/* for mode_t */
 
 /*
  * The follow should be set to reflect the type of system you have:
  *	JOBS -> 1 if you have Berkeley job control, 0 otherwise.
- *	SYMLINKS -> 1 if your system includes symbolic links, 0 otherwise.
- *	DIRENT -> 1 if your system has the SVR3 directory(3X) routines.
- *	UDIR -> 1 if you want the shell to simulate the /u directory.
  *	TILDE -> 1 if you want the shell to expand ~logname.
  *	USEGETPW -> 1 if getpwnam() must be used to look up a name.
- *	ATTY -> 1 to include code for atty(1).
- *	SHORTNAMES -> 1 if your linker cannot handle long names.
  *	READLINE -> 1 if line editing by readline() should be enabled.
  *	define BSD if you are running 4.2 BSD or later.
  *	define SYSV if you are running under System V.
@@ -56,52 +50,47 @@
  * a quit signal will generate a core dump.
  */
 
+#ifndef JOBS
+#define	JOBS 1
+#endif
+#ifndef BSD
+#define BSD 1
+#endif
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+#define POSIX 1
 
-#define JOBS	  0
-
-/* Set SYMLINKS to 0 by request of Giovanni Falzoni, who wrote the
- * symlink patches for Minix; email to minix-devel-l of thu 3 nov.
+/*
+ * Type of used arithmetics. SUSv3 requires us to have at least signed long.
  */
+typedef long arith_t;
+#define	ARITH_FORMAT_STR  "%ld"
+#define	atoarith_t(arg)  strtol(arg, NULL, 0)
+#define	strtoarith_t(nptr, endptr, base)  strtol(nptr, endptr, base)
 
-#if 0
-#define SYMLINKS  defined(S_ISLNK)
-#else
-#define SYMLINKS  0
-#endif
-
-#define DIRENT	  1
-#define UDIR	  0
-#define TILDE	  1
-#define USEGETPW  0
-#define ATTY	  0
-#define READLINE  1
-#define HASHBANG  0
-/* #define BSD */
-#define POSIX	  1
-#define DEBUG	  0
-
-#ifdef __STDC__
 typedef void *pointer;
-#ifndef NULL
-#define NULL (void *)0
-#endif
-#else /* not __STDC__ */
-typedef char *pointer;
-#ifndef NULL
-#define NULL 0
-#endif
-#endif /*  not __STDC__ */
-#define STATIC	/* empty */
-#define MKINIT	/* empty */
-
-#include <sys/cdefs.h>
-#include <sys/types.h>
+#define STATIC  static
+#define MKINIT  /* empty */
 
 extern char nullstr[1];		/* null string */
 
-
 #if DEBUG
-#define TRACE(param)	trace param
+#define TRACE(param)  sh_trace param
 #else
 #define TRACE(param)
 #endif
+
+#ifdef __minix
+#define __unused
+
+typedef long quad_t;		/* XXX */
+typedef unsigned long u_quad_t;	/* XXX */
+#endif
+
+mode_t getmode(void *, int /* mode_t */);
+void *setmode(char *);
+
+/*
+ * $PchId: shell.h,v 1.7 2006/05/22 12:47:00 philip Exp $
+ */

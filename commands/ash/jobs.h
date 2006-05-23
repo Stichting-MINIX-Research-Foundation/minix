@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,7 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)jobs.h	5.1 (Berkeley) 3/7/91
+ *	@(#)jobs.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/jobs.h,v 1.18 2004/04/06 20:06:51 markm Exp $
  */
 
 /* Mode argument to forkshell.  Don't change FORK_FG or FORK_BG. */
@@ -41,6 +38,7 @@
 #define FORK_BG 1
 #define FORK_NOJOB 2
 
+#include <signal.h>		/* for sig_atomic_t */
 
 /*
  * A job structure contains information about a job.  A job is either a
@@ -51,7 +49,7 @@
 
 struct procstat {
 	pid_t pid;		/* process id */
-	short status;		/* status flags (defined above) */
+	int status;		/* status flags (defined above) */
 	char *cmd;		/* text of command being run */
 };
 
@@ -64,33 +62,41 @@ struct procstat {
 struct job {
 	struct procstat ps0;	/* status of process */
 	struct procstat *ps;	/* status or processes when more than one */
-	pid_t nprocs;		/* number of processes */
+	short nprocs;		/* number of processes */
 	pid_t pgrp;		/* process group of this job */
 	char state;		/* true if job is finished */
 	char used;		/* true if this entry is in used */
 	char changed;		/* true if status has changed */
+	char foreground;	/* true if running in the foreground */
 #if JOBS
 	char jobctl;		/* job running under job control */
+	struct job *next;	/* job used after this one */
 #endif
 };
 
 extern pid_t backgndpid;	/* pid of last background process */
+extern int job_warning;		/* user was warned about stopped jobs */
+extern int in_waitcmd;		/* are we in waitcmd()? */
+extern int in_dowait;		/* are we in dowait()? */
+extern volatile sig_atomic_t breakwaitcmd; /* break wait to process traps? */
 
-
-#ifdef __STDC__
 void setjobctl(int);
-void showjobs(int);
+int fgcmd(int, char **);
+int bgcmd(int, char **);
+int jobscmd(int, char **);
+void showjobs(int, int, int);
+int waitcmd(int, char **);
+int jobidcmd(int, char **);
 struct job *makejob(union node *, int);
-int forkshell(struct job *, union node *, int);
-int waitforjob(struct job *);
-#else
-void setjobctl();
-void showjobs();
-struct job *makejob();
-int forkshell();
-int waitforjob();
-#endif
+pid_t forkshell(struct job *, union node *, int);
+int waitforjob(struct job *, int *);
+int stoppedjobs(void);
+char *commandtext(union node *);
 
 #if ! JOBS
 #define setjobctl(on)	/* do nothing */
 #endif
+
+/*
+ * $PchId: jobs.h,v 1.4 2006/03/30 12:07:24 philip Exp $
+ */

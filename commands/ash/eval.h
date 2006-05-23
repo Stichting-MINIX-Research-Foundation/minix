@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,7 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)eval.h	5.2 (Berkeley) 4/12/91
+ *	@(#)eval.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/eval.h,v 1.10 2004/04/06 20:06:51 markm Exp $
  */
 
 extern char *commandname;	/* currently executing command */
@@ -48,18 +45,30 @@ struct backcmd {		/* result of evalbackcmd */
 	struct job *jp;		/* job structure for command */
 };
 
-
-#ifdef __STDC__
+int evalcmd(int, char **);
 void evalstring(char *);
 union node;	/* BLETCH for ansi C */
 void evaltree(union node *, int);
 void evalbackcmd(union node *, struct backcmd *);
-#else
-void evalstring();
-void evaltree();
-void evalbackcmd();
-#endif
+int bltincmd(int, char **);
+int breakcmd(int, char **);
+int returncmd(int, char **);
+int falsecmd(int, char **);
+int truecmd(int, char **);
+int execcmd(int, char **);
+int commandcmd(int, char **);
 
 /* in_function returns nonzero if we are currently evaluating a function */
 #define in_function()	funcnest
 extern int funcnest;
+extern int evalskip;
+
+/* reasons for skipping commands (see comment on breakcmd routine) */
+#define SKIPBREAK	1
+#define SKIPCONT	2
+#define SKIPFUNC	3
+#define SKIPFILE	4
+
+/*
+ * $PchId: eval.h,v 1.3 2006/03/30 15:39:25 philip Exp $
+ */

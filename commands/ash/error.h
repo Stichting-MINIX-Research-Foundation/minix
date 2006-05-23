@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,41 +29,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)error.h	5.1 (Berkeley) 3/7/91
+ *	@(#)error.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: src/bin/sh/error.h,v 1.17 2004/04/06 20:06:51 markm Exp $
  */
-
-/*
- * Types of operations (passed to the errmsg routine).
- */
-
-#define E_OPEN 01	/* opening a file */
-#define E_CREAT 02	/* creating a file */
-#define E_EXEC 04	/* executing a program */
-
 
 /*
  * We enclose jmp_buf in a structure so that we can declare pointers to
  * jump locations.  The global variable handler contains the location to
  * jump to when an exception occurs, and the global variable exception
- * contains a code identifying the exeception.  To implement nested
+ * contains a code identifying the exception.  To implement nested
  * exception handlers, the user should save the value of handler on entry
  * to an inner scope, set handler to point to a jmploc structure for the
  * inner scope, and restore handler on exit from the scope.
  */
 
 #include <setjmp.h>
+#include <signal.h>
 
 struct jmploc {
 	jmp_buf loc;
 };
 
 extern struct jmploc *handler;
-extern int exception;
+extern volatile sig_atomic_t exception;
 
 /* exceptions */
 #define EXINT 0		/* SIGINT received */
 #define EXERROR 1	/* a generic error */
 #define EXSHELLPROC 2	/* execute a shell procedure */
+#define EXEXEC 3	/* command execution failed */
 
 
 /*
@@ -77,32 +67,21 @@ extern int exception;
  * more fun than worrying about efficiency and portability. :-))
  */
 
-extern volatile int suppressint;
-extern volatile int intpending;
-extern char *commandname;	/* name of command--printed on error */
+extern volatile sig_atomic_t suppressint;
+extern volatile sig_atomic_t intpending;
 
 #define INTOFF suppressint++
-#define INTON if (--suppressint == 0 && intpending) onint(); else
+#define INTON { if (--suppressint == 0 && intpending) onint(); }
 #define FORCEINTON {suppressint = 0; if (intpending) onint();}
 #define CLEAR_PENDING_INT intpending = 0
 #define int_pending() intpending
 
-#ifdef __STDC__
+#define __printf0like(a,b)
+
 void exraise(int);
 void onint(void);
-void error2(char *, char *);
-void error(char *, ...);
-char *errmsg(int, int);
-#else
-void exraise();
-void onint();
-void error2();
-void error();
-char *errmsg();
-#endif
-
-/* Errmsg uses confusingly different messages.  Prefer strerror().  -- kjb */
-#define errmsg(errno, action)	strerror(errno)
+void error(const char *, ...) __printf0like(1, 2);
+void exerror(int, const char *, ...) __printf0like(2, 3);
 
 
 /*
@@ -111,6 +90,12 @@ char *errmsg();
  */
 
 #ifdef BSD
+#ifndef __minix
 #define setjmp(jmploc)	_setjmp(jmploc)
 #define longjmp(jmploc, val)	_longjmp(jmploc, val)
 #endif
+#endif
+
+/*
+ * $PchId: error.h,v 1.5 2006/04/10 14:36:43 philip Exp $
+ */

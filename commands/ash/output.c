@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,7 +31,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)output.c	5.1 (Berkeley) 3/7/91";
+static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -55,12 +51,16 @@ static char sccsid[] = "@(#)output.c	5.1 (Berkeley) 3/7/91";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "var.h"
 #ifdef __STDC__
 #include "stdarg.h"
 #else
 #include <varargs.h>
 #endif
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 
 #define OUTBUFSIZ BUFSIZ
@@ -115,27 +115,63 @@ open_mem(block, length, file)
 
 void
 out1str(p)
-	char *p;
+	const char *p;
 	{
 	outstr(p, out1);
 }
 
+void
+out1qstr(const char *p)
+{
+	outqstr(p, out1);
+}
+
 
 void
-out2str(p)
-	char *p;
-	{
+out2str(const char *p)
+{
 	outstr(p, out2);
 }
 
 
 void
 outstr(p, file)
-	register char *p;
+	register const char *p;
 	register struct output *file;
 	{
 	while (*p)
 		outc(*p++, file);
+	if (file == out2)
+		flushout(file);
+}
+
+/* Like outstr(), but quote for re-input into the shell. */
+void
+outqstr(const char *p, struct output *file)
+{
+	char ch;
+
+	if (p[strcspn(p, "|&;<>()$`\\\"'")] == '\0' && (!ifsset() ||
+	    p[strcspn(p, ifsval())] == '\0')) {
+		outstr(p, file);
+		return;
+	}
+
+	out1c('\'');
+	while ((ch = *p++) != '\0') {
+		switch (ch) {
+		case '\'':
+			/*
+			 * Can't quote single quotes inside single quotes;
+			 * close them, write escaped single quote, open again.
+			 */
+			outstr("'\\''", file);
+			break;
+		default:
+			outc(ch, file);
+		}
+	}
+	out1c('\'');
 }
 
 
@@ -208,7 +244,8 @@ freestdout() {
 
 #ifdef __STDC__
 void
-outfmt(struct output *file, char *fmt, ...) {
+outfmt(struct output *file, const char *fmt, ...)
+{
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -218,7 +255,8 @@ outfmt(struct output *file, char *fmt, ...) {
 
 
 void
-out1fmt(char *fmt, ...) {
+out1fmt(const char *fmt, ...)
+{
 	va_list ap;
 
 	va_start(ap, fmt);
@@ -226,9 +264,20 @@ out1fmt(char *fmt, ...) {
 	va_end(ap);
 }
 
+void
+dprintf(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	doformat(out2, fmt, ap);
+	va_end(ap);
+	flushout(out2);
+}
 
 void
-fmtstr(char *outbuf, int length, char *fmt, ...) {
+fmtstr(char *outbuf, int length, const char *fmt, ...)
+{
 	va_list ap;
 	struct output strout;
 
@@ -275,6 +324,19 @@ out1fmt(va_alist)
 	va_end(ap);
 }
 
+void
+dprintf(va_alist)
+	va_dcl
+	{
+	va_list ap;
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, char *);
+	doformat(out2, fmt, ap);
+	va_end(ap);
+	flushout(out2);
+}
 
 void
 fmtstr(va_alist)
@@ -325,11 +387,8 @@ static const char digit[17] = "0123456789ABCDEF";
 
 
 void
-doformat(dest, f, ap)
-	register struct output *dest;
-	register char *f;		/* format string */
-	va_list ap;
-	{
+doformat(struct output *dest, const char *f, va_list ap)
+{
 	register char c;
 	char temp[TEMPSIZE];
 	int flushleft;
@@ -517,15 +576,6 @@ xwrite(fd, buf, nbytes)
 	}
 }
 
-
 /*
- * Version of ioctl that retries after a signal is caught.
+ * $PchId: output.c,v 1.6 2006/05/22 12:46:03 philip Exp $
  */
-
-int
-xioctl(fd, request, arg) {
-	int i;
-
-	while ((i = ioctl(fd, request, arg)) == -1 && errno == EINTR);
-	return i;
-}

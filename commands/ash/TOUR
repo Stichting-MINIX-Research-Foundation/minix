@@ -1,4 +1,13 @@
-#	@(#)TOUR	5.1 (Berkeley) 3/7/91
+#	@(#)TOUR	8.1 (Berkeley) 5/31/93
+# $FreeBSD: src/bin/sh/TOUR,v 1.6 1999/08/27 23:15:07 peter Exp $
+
+NOTE -- This is the original TOUR paper distributed with ash and
+does not represent the current state of the shell.  It is provided anyway
+since it provides helpful information for how the shell is structured,
+but be warned that things have changed -- the current shell is
+still under development.
+
+================================================================
 
                        A Tour through Ash
 
@@ -20,7 +29,7 @@ programs is:
         mknodes         nodetypes           nodes.h nodes.c
         mksignames          -               signames.h signames.c
         mksyntax            -               syntax.h syntax.c
-        mktokens            -               token.def
+        mktokens            -               token.h
         bltin/mkexpr    unary_op binary_op  operators.h operators.c
 
 There are undoubtedly too many of these.  Mkinit searches all the
@@ -346,3 +355,6 @@ cause the preprocessor can't handle functions with a variable
 number of arguments.  Defining DEBUG also causes the shell to
 generate a core dump if it is sent a quit signal.  The tracing
 code is in show.c.
+
+#
+# $PchId: TOUR,v 1.3 2006/03/31 11:33:46 philip Exp $

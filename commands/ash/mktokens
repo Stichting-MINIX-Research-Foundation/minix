@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-# Copyright (c) 1991 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1991, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # This code is derived from software contributed to Berkeley by
 # Kenneth Almquist.
@@ -14,10 +14,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by the University of
-#	California, Berkeley and its contributors.
 # 4. Neither the name of the University nor the names of its contributors
 #    may be used to endorse or promote products derived from this software
 #    without specific prior written permission.
@@ -34,7 +30,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)mktokens	5.1 (Berkeley) 3/7/91
+#	@(#)mktokens	8.1 (Berkeley) 5/31/93
+# $FreeBSD: src/bin/sh/mktokens,v 1.9 2004/04/06 20:06:51 markm Exp $
 
 # All calls to awk removed, because Minix bawk is deficient.  (kjb)
 
@@ -42,7 +39,9 @@
 # token marks the end of a list.  The third column is the name to print in
 # error messages.
 
-cat > /tmp/ka$$ <<\!
+#temp=`/usr/bin/mktemp -t ka`
+temp=/tmp/mkt$$
+cat > $temp <<\!
 TEOF	1	end of file
 TNL	0	newline
 TSEMI	0	";"
@@ -70,16 +69,17 @@ TBEGIN	0	"{"
 TEND	1	"}"
 TCASE	0	"case"
 TESAC	1	"esac"
+TNOT	0	"!"
 !
-nl=`wc -l /tmp/ka$$`
-exec > token.def
+nl=`wc -l $temp`
+exec > token.h
 i=0
 while read line
 do
 	set -$- $line
 	echo "#define $1 $i"
 	i=`expr $i + 1`
-done </tmp/ka$$
+done <$temp
 echo '
 /* Array indicating which tokens mark the end of a list */
 const char tokendlist[] = {'
@@ -87,18 +87,18 @@ while read line
 do
 	set -$- $line
 	echo "	$2,"
-done </tmp/ka$$
+done <$temp
 echo '};
 
-char *const tokname[] = {'
+const char *const tokname[] = {'
 sed -e 's/"/\\"/g' \
     -e 's/[^	 ]*[	 ][	 ]*[^	 ]*[	 ][	 ]*\(.*\)/	"\1",/' \
-    /tmp/ka$$
+    $temp
 echo '};
 '
 i=0
 go=
-sed 's/"//g' /tmp/ka$$ |
+sed 's/"//g' $temp |
 	while read line
 	do
 		set -$- $line
@@ -106,7 +106,7 @@ sed 's/"//g' /tmp/ka$$ |
 		then
 			echo "#define KWDOFFSET $i"
 			echo
-			echo "char *const parsekwd[] = {"
+			echo "const char *const parsekwd[] = {"
 			go=true
 		fi
 		if [ "$go" ]
@@ -118,4 +118,7 @@ sed 's/"//g' /tmp/ka$$ |
 echo '	0
 };'
 
-rm /tmp/ka$$
+rm $temp
+
+#
+# $PchId: mktokens,v 1.5 2006/05/22 12:43:35 philip Exp $

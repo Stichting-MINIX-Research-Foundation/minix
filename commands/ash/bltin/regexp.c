@@ -8,7 +8,9 @@
  */
 
 #include "bltin.h"
+#include "myregexp.h"
 
+#include <stdlib.h>
 
 #define RE_END 0		/* end of regular expression */
 #define RE_LITERAL 1		/* normal character follows */
@@ -27,7 +29,7 @@
 char *match_begin[10];
 short match_length[10];
 short number_parens;
-static int match();
+static int match(char *pattern, char *string);
 
 
 
@@ -48,7 +50,6 @@ re_compile(pattern)
 	char stack[10];
 	int paren_num;
 	int i;
-	char *malloc();
 
 	p = pattern;
 	if (*p == '^')
@@ -176,6 +177,7 @@ out:
 
 
 
+int
 re_match(pattern, string)
 	char *pattern;
 	char *string;
@@ -246,7 +248,7 @@ ccl:
 				p++;
 			}
 			p++;
-			if (found == negate || c == 0)
+			if (found == negate)
 				goto bad;
 			break;
 		case RE_LP:

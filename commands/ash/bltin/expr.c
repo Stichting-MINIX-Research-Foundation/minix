@@ -7,17 +7,14 @@
  */
 
 
-#define main exprcmd
-
 #include "bltin.h"
 #include "operators.h"
+#include <regex.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#ifndef S_ISLNK
-#define lstat		stat
-#define S_ISLNK(mode)	(0)
-#endif
 
 #define STACKSIZE 12
 #define NESTINCR 16
@@ -50,7 +47,6 @@ struct operator {
 
 
 struct filestat {
-      int op;			/* OP_FILE or OP_LFILE */
       char *name;		/* name of file */
       int rcode;		/* return code from stat */
       struct stat stat;		/* status info on file */
@@ -63,24 +59,18 @@ extern short number_parens;	/* number of \( \) pairs */
 
 
 #ifdef __STDC__
-int expr_is_false(struct value *);
-void expr_operator(int, struct value *, struct filestat *);
-int lookup_op(char *, char *const*);
-char *re_compile(char *);	/* defined in regexp.c */
-int re_match(char *, char *);	/* defined in regexp.c */
-long atol(const char *);
+static int expr_is_false(struct value *);
+static void expr_operator(int, struct value *, struct filestat *);
+static int lookup_op(char *, char *const*);
 #else
-int expr_is_false();
-void expr_operator();
-int lookup_op();
-char *re_compile();	/* defined in regexp.c */
-int re_match();	/* defined in regexp.c */
-long atol();
+static int expr_is_false();
+static void expr_operator();
+static int lookup_op();
 #endif
 
 
 
-main(argc, argv)  char **argv; {
+exprcmd(argc, argv)  char **argv; {
       char **ap;
       char *opname;
       char c;
@@ -146,6 +136,13 @@ overflow:		error("Expression too complex");
 		  continue;
 
 	    } else {
+		  if (opname[0] == '\'') {
+			for (p = opname ; *++p != '\0' ; );
+			if (--p > opname && *p == '\'') {
+			      *p = '\0';
+			      opname++;
+			}
+		  }
 		  valsp->type = STRING;
 		  valsp->u.string = opname;
 		  valsp++;
@@ -193,19 +190,11 @@ overflow:		error("Expression too complex");
 					  valsp->u.string = "";
 			      }
 			      valsp->type = STRING;
-			      if (c >= OP_FILE
-			       && (fs.op != c
-			           || fs.name == NULL
+			      if (c == OP_FILE
+			       && (fs.name == NULL
 			           || ! equal(fs.name, valsp->u.string))) {
-				    fs.op = c;
 				    fs.name = valsp->u.string;
-				    if (c == OP_FILE) {
-					fs.rcode = stat(valsp->u.string,
-								&fs.stat);
-				    } else {
-					fs.rcode = lstat(valsp->u.string,
-								&fs.stat);
-				    }
+				    fs.rcode = stat(valsp->u.string, &fs.stat);
 			      }
 			}
 			if (binary < FIRST_BINARY_OP)
@@ -250,7 +239,7 @@ done:
 }
 
 
-int
+static int
 expr_is_false(val)
       struct value *val;
       {
@@ -274,14 +263,16 @@ expr_is_false(val)
  * to stat, to avoid repeated stat calls on the same file.
  */
 
-void
+static void
 expr_operator(op, sp, fs)
       int op;
       struct value *sp;
       struct filestat *fs;
       {
-      int i;
+      int i, r;
       struct stat st1, st2;
+      regex_t pat;
+      regmatch_t rm[2];
 
       switch (op) {
       case NOT:
@@ -343,16 +334,16 @@ filebit:
 	    if (fs->stat.st_mode & i && fs->rcode >= 0)
 		  goto true;
 	    goto false;
+      case ISSLINK:
+	    if (lstat(fs->name, &st1) == -1)
+	    	goto false;
+	    if (S_ISLNK(st1.st_mode))
+	    	goto true;
+	    goto false;
       case ISSIZE:
 	    sp->u.num = fs->rcode >= 0? fs->stat.st_size : 0L;
 	    sp->type = INTEGER;
 	    break;
-      case ISLINK1:
-      case ISLINK2:
-	    if (S_ISLNK(fs->stat.st_mode) && fs->rcode >= 0)
-		  goto true;
-	    fs->op = OP_FILE;	/* not a symlink, so expect a -d or so next */
-	    goto false;
       case NEWER:
 	    if (stat(sp->u.string, &st1) != 0) {
 		  sp->u.num = 0;
@@ -439,19 +430,21 @@ filebit:
 	    break;
       case MATCHPAT:
 	    {
-		  char *pat;
-
-		  pat = re_compile((sp + 1)->u.string);
-		  if (re_match(pat, sp->u.string)) {
-			if (number_parens > 0) {
-			      sp->u.string = match_begin[1];
-			      sp->u.string[match_length[1]] = '\0';
+		  r = regcomp(&pat, (sp + 1)->u.string, 0);
+		  if (r)
+			error("Bad regular expression");
+		  if (regexec(&pat, sp->u.string, 2, rm, 0) == 0 &&
+			rm[0].rm_so == 0)
+		  {
+			if (pat.re_nsub > 0) {
+			      sp->u.string[rm[1].rm_eo] = '\0';
+			      sp->u.string = sp->u.string+rm[1].rm_so;
 			} else {
-			      sp->u.num = match_length[0];
+			      sp->u.num = rm[0].rm_eo;
 			      sp->type = INTEGER;
 			}
 		  } else {
-			if (number_parens > 0) {
+			if (pat.re_nsub > 0) {
 			      sp->u.string[0] = '\0';
 			} else {
 			      sp->u.num = 0;
@@ -464,7 +457,7 @@ filebit:
 }
 
 
-int
+static int
 lookup_op(name, table)
       char *name;
       char *const*table;

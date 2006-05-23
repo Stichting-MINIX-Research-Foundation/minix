@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -13,10 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,8 +31,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)mail.c	5.1 (Berkeley) 3/7/91";
+#if 0
+static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
+#endif
 #endif /* not lint */
+/*
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: src/bin/sh/mail.c,v 1.13 2004/04/06 20:06:51 markm Exp $");
+*/
 
 /*
  * Routines to check for mail.  (Perhaps make part of main.c?)
@@ -48,8 +50,10 @@ static char sccsid[] = "@(#)mail.c	5.1 (Berkeley) 3/7/91";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "mail.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 
 #define MAXMBOXES 10
@@ -67,11 +71,12 @@ STATIC time_t mailtime[MAXMBOXES];	/* times of mailboxes */
  */
 
 void
-chkmail(silent) {
-	register int i;
+chkmail(int silent)
+{
+	int i;
 	char *mpath;
 	char *p;
-	register char *q;
+	char *q;
 	struct stackmark smark;
 	struct stat statb;
 
@@ -91,18 +96,28 @@ chkmail(silent) {
 		if (q[-1] != '/')
 			abort();
 		q[-1] = '\0';			/* delete trailing '/' */
+#ifdef notdef /* this is what the System V shell claims to do (it lies) */
 		if (stat(p, &statb) < 0)
 			statb.st_mtime = 0;
-		if (!silent
-			&& statb.st_size > 0
-			&& statb.st_mtime > mailtime[i]
-			&& statb.st_mtime > statb.st_atime
-		) {
-			out2str(pathopt? pathopt : "You have mail");
+		if (statb.st_mtime > mailtime[i] && ! silent) {
+			out2str(pathopt? pathopt : "you have mail");
 			out2c('\n');
 		}
 		mailtime[i] = statb.st_mtime;
+#else /* this is what it should do */
+		if (stat(p, &statb) < 0)
+			statb.st_size = 0;
+		if (statb.st_size > mailtime[i] && ! silent) {
+			out2str(pathopt? pathopt : "you have mail");
+			out2c('\n');
+		}
+		mailtime[i] = statb.st_size;
+#endif
 	}
 	nmboxes = i;
 	popstackmark(&smark);
 }
+
+/*
+ * $PchId: mail.c,v 1.5 2006/05/22 12:02:37 philip Exp $
+ */
