@@ -174,14 +174,14 @@ arg -S
 arg -O
 	OPT_LEVEL = 1
 
-arg -O$n
-	numeric $n
-	OPT_LEVEL = $n
-
 arg -OS				# Optimize for size.
 	ACK_EGO = $ACK_EGO -S
 arg -OT				# Optimize for time.
 	ACK_EGO = $ACK_EGO -T
+
+arg -O$n
+	numeric $n
+	OPT_LEVEL = $n
 
 # Library search path.
 arg -L$dir
@@ -419,7 +419,6 @@ combine (.o .a) .out
 		# Combine to an executable.
 		mktemp EXE
 		$ACK_LED $model -o $EXE $rtso $* $libs $A/$ARCH/end.a
-		cp $EXE ack.out
 		$ACK_CV -x -m$ARCH $EXE $OUT
 
 # Add object files to a library.
