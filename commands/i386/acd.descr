@@ -1,0 +1,479 @@
+# ACD pass description for the ACK compilers.
+#
+# Pre-set variables.
+#   PROGRAM		- Name the compiler driver is called with.
+#   ARCH		- Default target architecture.
+
+# Library directories search path.
+L =	/lib /usr/lib
+
+# ACK Compilers support search path.
+A =	$L $L/ack
+
+# ARCH must be defined.
+ifndef ARCH
+	error "\$ARCH is not predefined"
+
+# Get ARCH from the environment if set.
+import ARCH
+
+# Compiler passes.
+ACK_CPP =	$A/cpp.ansi $CPP_F $PREDEF $NOLINENO
+ACK_CEM =	$A/em_cemcom.ansi -L $CPP_F $PREDEF \
+		    -Vw${W}.${W}i${W}.${W}p${P}.${W}f4.${W}s2.2l4.${W}d8.${W}
+ACK_M2 =	$A/em_m2 -I$MOD_INCL -WR \
+		    -Vw${W}.${W}i${W}.${W}p${P}.${W}l4.${W}f4.${W}d8.${W}
+ACK_PC =	$A/em_pc \
+		    -Vw${W}.${W}i${W}.${W}l4.${W}p${P}.${W}f8.${W}S${W}.${W}
+MOD_INCL =	$A/m2 +
+ACK_DECODE =	$A/em_decode
+ACK_ENCODE =	$A/em_encode
+ACK_OPT =	$A/em_opt
+ACK_EGO =	$A/em_ego -P $A/ego -M$EGO_DESCR
+EGO_DESCR =	$A/ego/${ARCH}descr +
+ACK_OPT2 =	$A/em_opt2
+ACK_CG =	$A/$ARCH/cg
+ACK_AS =	$A/$ARCH/as \-
+ACK_LED =	$A/em_led -a0:$W -a1:$W -a2:$W -a3:$W
+ACK_CV =	$A/cv
+ASMCONV =	$L/asmconv
+AAL =		/usr/bin/aal
+
+# Minix predefined symbols.
+CPP_F =		-D__minix -D__$ARCH
+
+# Library path.
+LIBPATH = $USERLIBPATH $A/$ARCH
+
+# Default output "model".
+MODEL = -sep
+
+# Floating point is done in software.
+LIBS = -fsoft
+
+# Default optimization level.
+OPT_LEVEL = 1
+
+# Call names.
+if $PROGRAM = acc
+	PROGRAM = cc
+if $PROGRAM = apc
+	PROGRAM = pc
+if $PROGRAM = am2
+	PROGRAM = m2
+if $PROGRAM = kcc
+	PROGRAM = cc
+
+# Default transformation target.
+stop .out
+
+# Select the runtime environment by option or program name.
+arg -.c
+if $PROGRAM = cc
+	ifndef RTSO
+		RTSO = -.c
+	LIBS = $LIBS + -.c
+
+arg -.mod
+if $PROGRAM = m2
+	ifndef RTSO
+		RTSO = -.mod
+	LIBS = $LIBS + -.mod
+
+arg -.p
+if $PROGRAM = pc
+	ifndef RTSO
+		RTSO = -.p
+	LIBS = $LIBS + -.p
+
+# Omit the runtime startoff, but keep the libraries.
+arg -.o
+	RTSO =
+
+arg -.$any
+	error ".$any: unknown language"
+
+# Select the target architecture.
+arg -m$arch
+	ARCH = $arch
+
+# Preprocessor directives.
+arg -D$name
+arg -D $name
+	CPP_F = $CPP_F -D$name
+arg -U$name
+arg -U $name
+	CPP_F = $CPP_F -U$name
+arg -I$dir
+arg -I $dir
+	CPP_F = $CPP_F -I$dir
+	ACK_M2 = $ACK_M2 -I$dir
+
+# Debugging.
+arg -g				# Add debugging info.
+	ACK_CEM = $ACK_CEM -g
+	ACK_CG = $ACK_CG -gdb
+
+arg -n				# Suppress line numbers.
+	ACK_M2 = $ACK_M2 -L
+	ACK_PC = $ACK_PC -L
+arg -a				# Enable assertions.
+arg -A				# Enable array bound checks.
+	ACK_M2 = $ACK_M2 $*
+	ACK_PC = $ACK_PC $*
+
+# Language checking.
+arg -w				# No warnings.
+	ACK_CEM = $ACK_CEM $*
+	ACK_M2 = $ACK_M2 $*
+	ACK_PC = $ACK_PC $*
+
+arg -ws				# No strict warnings.
+	ACK_CEM = $ACK_CEM -s
+	ACK_M2 = $ACK_M2 -wR
+
+arg -wa				# No warnings and no strict warnings.
+	ACK_CEM = $ACK_CEM -a
+	ACK_M2 = $ACK_M2 -wR
+
+arg -wo				# No warnings about old style C.
+	ACK_CPP = $ACK_CPP -o
+	ACK_CEM = $ACK_CEM -o
+	ACK_M2 = $ACK_M2 -wO
+
+arg -3				# Only accept 3rd generation Modula-2.
+	ACK_M2 = $ACK_M2 $*
+
+arg -_				# Allow underscores in identifiers.
+	ACK_M2 = $ACK_M2 -U
+	ACK_PC = $ACK_PC -U
+
+arg -w$any
+arg -F
+arg -m
+	# Ignore strange -w flags, and past and present i86 compiler flags.
+
+# Stop suffix.
+arg -c
+	stop .o
+
+arg -c.$stop
+	stop .$stop
+
+arg -E
+	stop .E
+
+arg -P
+	CPP_F = $CPP_F -P
+	stop .i
+
+arg -S
+	stop .s
+
+# Optimization.
+arg -O
+	OPT_LEVEL = 1
+
+arg -O$n
+	numeric $n
+	OPT_LEVEL = $n
+
+arg -OS				# Optimize for size.
+	ACK_EGO = $ACK_EGO -S
+arg -OT				# Optimize for time.
+	ACK_EGO = $ACK_EGO -T
+
+# Library search path.
+arg -L$dir
+arg -L $dir
+	USERLIBPATH = $USERLIBPATH $dir/$ARCH $dir
+
+# -llib must be searched in $LIBPATH later.
+arg -l$lib
+arg -l $lib
+	$> = $LIBPATH/lib$lib.a
+
+# Software floating point, hardware floating point, or no floating point.
+arg -f
+arg -fp
+arg -fsoft
+	LIBS = $LIBS + -fsoft
+
+arg -fhard
+	LIBS = $LIBS - -fsoft
+
+arg -fnone
+	LIBS = $LIBS + -fnone
+
+# Output model.
+arg -com
+	MODEL =			# Common I&D.
+
+arg -sep
+arg -i				# Separate I&D.
+	MODEL = -sep
+
+arg -r				# Relocatable object (combined .o)
+	MODEL = -r
+
+# Strip executable.
+arg -s
+	ACK_LED = $ACK_LED -s
+
+# Size of heap+stack.
+arg -stack $size
+	ACK_CV = $ACK_CV -S $size
+
+# Change output file.
+arg -o$out
+arg -o $out
+	OUT = $out
+
+# Complain about just -D, -U, -I, ...
+arg -D; arg -U; arg -I; arg -L; arg -l; arg -o; arg -stack
+	error "argument expected after '$*'"
+
+arg -R$pass-$flag		# The ACK way of passing options to passes.
+arg -Wack-R$pass-$flag		# The ACD way.
+	if $pass = cpp
+		ACK_CPP = $ACK_CPP -$flag
+	if $pass = cem
+		ACK_CEM = $ACK_CEM -$flag
+	if $pass = m2
+		ACK_M2 = $ACK_M2 -$flag
+	if $pass = pc
+		ACK_PC = $ACK_PC -$flag
+	if $pass = opt
+		ACK_OPT = $ACK_OPT -$flag
+	if $pass = ego
+		ACK_EGO = $ACK_EGO -$flag
+	if $pass = opt2
+		ACK_OPT2 = $ACK_OPT2 -$flag
+	if $pass = cg
+		ACK_CG = $ACK_CG -$flag
+	if $pass = as
+		ACK_AS = $ACK_AS -$flag
+	if $pass = led
+		ACK_LED = $ACK_LED -$flag
+
+arg -Was-$dialect		# Default assembly dialect.
+	ASDIALECT = $dialect
+
+arg -W$any
+	# Ignore any other -W options.
+
+# Complain about unknown options, don't give them to the loader.
+arg -$any
+	error "$*: unknown option"
+
+# Do the scanning phase early, we need to know the architecture.
+scan
+
+# The word and pointer sizes of the target.
+if $ARCH = i86
+	W = 2; P = 2
+if $ARCH = i386
+	W = 4; P = 4
+
+ifndef W
+	error "$ARCH: unsupported architecture"
+
+# Optimize -O2 or higher?
+if (0 1 - $OPT_LEVEL) = (0 1)
+	ACK_EGO = $ACK_EGO -O$OPT_LEVEL
+	ACK_OPT = $ACK_OPT -m0	# Leave multiplication optimization to opt2.
+	prefer .m .gk
+
+# Tell cem to reverse bitfields on the i386 to be compatible with gcc.
+if $ARCH = i386
+	ACK_CEM = $ACK_CEM -Vr
+
+# Predefined preprocessor flags.
+PREDEF = -D_EM_WSIZE=$W -D_EM_PSIZE=$P -D_EM_SSIZE=2 -D_EM_LSIZE=4 \
+	 -D_EM_FSIZE=4 -D_EM_DSIZE=8 -D__ACK__ -D_ACK
+
+# Preprocess C source.
+transform .c .i
+	$ACK_CPP $* > $>
+
+# Preprocess any type of file and send it to standard output or $OUT.
+transform "" .E
+	if $* = "-"
+		file =		# Standard input.
+	else
+		file = $*
+	ifndef OUT
+		$ACK_CPP $file
+	else
+		$ACK_CPP $file > $OUT
+
+# Compile C source to EM-code.
+transform .c .k
+transform .i .k
+	$ACK_CEM $* $>
+	ifndef RTSO
+		RTSO = -.c
+	LIBS = $LIBS + -.c
+
+# Compile Modula-2 source to EM-code.
+transform .mod .k
+	ifhash $*
+		apply .c .i
+	$ACK_M2 $* $>
+	ifndef RTSO
+		RTSO = -.mod
+	LIBS = $LIBS + -.mod
+
+# Compile Pascal source to EM-code.
+transform .p .k
+	ifhash $*
+		apply .c .i
+	$ACK_PC $* $>
+	ifndef RTSO
+		RTSO = -.p
+	LIBS = $LIBS + -.p
+
+# Compact EM to readable EM.
+transform .k .e
+transform .m .e
+transform .gk .e
+transform .g .e
+	$ACK_DECODE $* > $>
+
+# Readable EM to compact EM.
+transform .e .k
+	ifhash $*
+		NOLINENO = -P	# Encode chokes on cpp line directives.
+		apply .c .i
+		unset NOLINENO
+	$ACK_ENCODE $* > $>
+
+# Peephole optimization.
+transform .k .m
+	$ACK_OPT $* > $>
+
+# Global optimization.
+transform .m .gk
+	$ACK_EGO $* > $>
+
+# Second peephole optimization after global optimization.
+transform .gk .g
+	$ACK_OPT2 $* > $>
+
+# EM-code to target machine assembly.
+transform .m .ack.s
+transform .g .ack.s
+transform .m .s
+transform .g .s
+	if $ARCH = i386
+		$ACK_CG -F__fp_hook $* > $>
+	else
+		$ACK_CG $* > $>
+
+# How to treat plain .s?
+ifndef ASDIALECT
+	transform .s .ack.s
+		$> = $*
+
+# Assembly to object file.
+transform .ack.s .o
+	ifhash $*
+		apply .c .i
+	if $> = $<.o
+		ifdef OUT
+			$> = $OUT
+	$ACK_AS -o $> $*
+
+# Combine object files and libraries to an executable.
+combine (.o .a) .out
+	if $MODEL = ()
+		model = -b0:0
+	if $MODEL = (-sep)
+		model = -b0:0 -b1:0
+	rtso =
+	if $RTSO = -.c
+		rtso = $A/$ARCH/crtso.o
+	if $RTSO = -.mod
+		rtso = $A/$ARCH/m2rtso.o
+	if $RTSO = -.p
+		rtso = $A/$ARCH/prtso.o
+	libm2 = ; libp = ; libd = ; libc = ; libfp =
+	if (-.mod - $LIBS) = ()
+		libm2 = $A/$ARCH/libm2.a
+		libc = $A/$ARCH/libc.a
+	if (-.p - $LIBS) = ()
+		libp = $A/$ARCH/libp.a
+		libc = $A/$ARCH/libc.a
+	if (-.c - $LIBS) = ()
+		libd = $A/$ARCH/libd.a
+		libc = $A/$ARCH/libc.a
+	if (-fsoft - $LIBS) = ()
+		libfp = $A/$ARCH/libfp.a
+	libs = $libm2 $libp $libd $libc $libfp $A/$ARCH/libe.a
+	ifndef OUT
+		OUT = a.out
+	if (-r - $MODEL) = ()
+		# Combine to an object file.
+		$ACK_LED -r -o $OUT $*
+	else
+		# Combine to an executable.
+		mktemp EXE
+		$ACK_LED $model -o $EXE $rtso $* $libs $A/$ARCH/end.a
+		cp $EXE ack.out
+		$ACK_CV -x -m$ARCH $EXE $OUT
+
+# Add object files to a library.
+combine (.o) .a
+	if $> = $<.a
+		ifdef OUT
+			$> = $OUT
+	$AAL cr $> $*
+
+# Assembly conversions.
+
+# ACK assembly to ACK Xenix assembly.
+transform .ack.s .ncc.s
+	ifhash $*
+		apply .c .i
+	$ASMCONV -m$ARCH ack ncc $* $>
+
+# ACK assembly to GNU assembly.
+transform .ack.s .gnu.s
+	ifhash $*
+		apply .c .i
+	$ASMCONV -m$ARCH ack gnu $* $>
+
+# ACK Xenix assembly to ACK assembly.
+transform .ncc.s .ack.s
+	ifhash $*
+		apply .c .i
+	$ASMCONV -m$ARCH ncc ack $* $>
+
+# ACK Xenix assembly to GNU assembly.
+transform .ncc.s .gnu.s
+	ifhash $*
+		apply .c .i
+	$ASMCONV -m$ARCH ncc gnu $* $>
+
+# BCC assembly to ACK assembly.
+transform .bas.s .ack.s
+	ifhash $*
+		apply .c .i
+	$ASMCONV -m$ARCH bas ack $* $>
+
+# BCC assembly to ACK Xenix assembly.
+transform .bas.s .ncc.s
+	ifhash $*
+		apply .c .i
+	$ASMCONV -m$ARCH bas ncc $* $>
+
+# BCC assembly to GNU assembly.
+transform .bas.s .gnu.s
+	ifhash $*
+		apply .c .i
+	$ASMCONV -m$ARCH bas gnu $* $>
+
+#ifdef ASDIALECT
+	# Treat plain .s as being in the given dialect.
+	transform .s .$ASDIALECT.s
+		$> = $*
