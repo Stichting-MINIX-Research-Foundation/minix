@@ -200,7 +200,7 @@ preadfd(void)
 retry:
 #ifndef NO_HISTORY
 #ifdef EDITLINE
-	if (parsefile->fd == 0) {
+	if (parsefile->fd == 0 && editable) {
 		static const char *rl_cp= NULL;
 		static size_t rl_off= 0;
 
@@ -561,5 +561,5 @@ closescript(void)
 }
 
 /*
- * $PchId: input.c,v 1.6 2006/05/23 12:00:32 philip Exp $
+ * $PchId: input.c,v 1.7 2006/05/29 13:09:38 philip Exp $
  */

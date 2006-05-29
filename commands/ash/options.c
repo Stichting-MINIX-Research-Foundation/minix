@@ -68,6 +68,7 @@ struct shparam shellparam;	/* current positional parameters */
 char **argptr;			/* argument list for builtin commands */
 char *shoptarg;			/* set by nextopt (like getopt) */
 char *optptr;			/* used by nextopt */
+int editable;			/* isatty(0) && isatty(1) */ 
 
 char *minusc;			/* argument to -c option */
 
@@ -96,7 +97,8 @@ procargs(int argc, char **argv)
 	options(1);
 	if (*argptr == NULL && minusc == NULL)
 		sflag = 1;
-	if (iflag == 2 && sflag == 1 && isatty(0) && isatty(1))
+	editable = (isatty(0) && isatty(1));
+	if (iflag == 2 && sflag == 1 && editable)
 		iflag = 1;
 	if (mflag == 2)
 		mflag = iflag;
@@ -540,5 +542,5 @@ nextopt(char *optstring)
 }
 
 /*
- * $PchId: options.c,v 1.5 2006/05/22 12:23:10 philip Exp $
+ * $PchId: options.c,v 1.6 2006/05/29 13:09:12 philip Exp $
  */

@@ -1555,12 +1555,14 @@ setprompt(int which)
 {
 	whichprompt = which;
 
-#ifndef EDITLINE
 #ifndef NO_HISTORY
+#ifdef EDITLINE
+	if (!editable)
+#else
 	if (!el)
-#endif
-		out2str(getprompt(NULL));
 #endif /* EDITLINE */
+#endif /* !NO_HISTORY */
+		out2str(getprompt(NULL));
 }
 
 /*
@@ -1672,5 +1674,5 @@ getprompt(void *unused __unused)
 }
 
 /*
- * $PchId: parser.c,v 1.5 2006/05/22 12:27:09 philip Exp $
+ * $PchId: parser.c,v 1.6 2006/05/29 13:08:11 philip Exp $
  */

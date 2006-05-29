@@ -103,6 +103,7 @@ extern struct shparam shellparam;  /* $@ */
 extern char **argptr;		/* argument list for builtin commands */
 extern char *shoptarg;		/* set by nextopt */
 extern char *optptr;		/* used by nextopt */
+extern int editable;		/* isatty(0) && isatty(1) */ 
 
 void procargs(int, char **);
 void optschanged(void);
@@ -115,5 +116,5 @@ int nextopt(char *);
 void getoptsreset(const char *);
 
 /*
- * $PchId: options.h,v 1.4 2006/03/29 15:37:43 philip Exp $
+ * $PchId: options.h,v 1.5 2006/05/29 13:08:45 philip Exp $
  */
