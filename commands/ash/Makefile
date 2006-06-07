@@ -50,12 +50,12 @@ all:	sh
 
 sh:	$(OBJS)
 	$(CC) $(CFLAGS) -fnone -o sh $(OBJS) $(LIBS)
+	install -S 100k sh
 
-install:	/usr/bin/ash /usr/bin/sh /bin/sh /usr/man/man1/ash.1 \
-		/usr/man/man1/echo.1 /usr/man/man1/expr.1
+install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 
 /usr/bin/ash:	sh
-	install -c $? $@
+	install -cs -o bin $? $@
 
 /usr/bin/sh:	/usr/bin/ash
 	install -l $? $@
@@ -63,14 +63,8 @@ install:	/usr/bin/ash /usr/bin/sh /bin/sh /usr/man/man1/ash.1 \
 /bin/sh:	/usr/bin/ash
 	install -lcs $? $@
 
-/usr/man/man1/ash.1:	sh.1
-	install -lc $? $@
-
-/usr/man/man1/echo.1:	bltin/echo.1
-	install -lc $? $@
-
-/usr/man/man1/expr.1:	bltin/expr.1
-	install -lc $? $@
+/bin/bigsh:	/usr/bin/ash
+	install -S 1500000 -lcs $? $@
 
 clean:
 	rm -f $(CLEANFILES) sh core
