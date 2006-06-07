@@ -108,6 +108,7 @@ _PROTOTYPE( __sighandler_t signal, (int _sig, __sighandler_t _func)	);
 
 #ifdef _POSIX_SOURCE
 _PROTOTYPE( int kill, (pid_t _pid, int _sig)				);
+_PROTOTYPE( int killpg, (pid_t _pgrp, int _sig)				);
 _PROTOTYPE( int sigaction,
     (int _sig, const struct sigaction *_act, struct sigaction *_oact)	);
 _PROTOTYPE( int sigaddset, (sigset_t *_set, int _sig)			);

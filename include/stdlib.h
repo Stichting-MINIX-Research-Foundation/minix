@@ -71,12 +71,14 @@ _PROTOTYPE( char *initstate, (unsigned _seed, char *_state,
 _PROTOTYPE( long random, (void)						);
 _PROTOTYPE( char *setstate, (const char *state)				);
 _PROTOTYPE( void srandom, (unsigned seed)				);
-_PROTOTYPE( int getloadavg, (double *, int)				);
+_PROTOTYPE( int putenv, (char *string)					);
+_PROTOTYPE( int setenv, (const char *envname, const char *envval,
+							int overwrite)	);
+_PROTOTYPE( int unsetenv, (const char *name)				);
 #endif
 
 #ifdef _MINIX
-_PROTOTYPE( int putenv, (const char *_name)				);
-_PROTOTYPE( int setenv, (const char *name, const char *val, const int f));
+_PROTOTYPE( int getloadavg, (double *, int)				);
 
 /* According to POSIX, getopt should be in unistd.h. What do we do with
  * this?

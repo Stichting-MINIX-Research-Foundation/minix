@@ -158,6 +158,9 @@ _PROTOTYPE( int usleep, (useconds_t _useconds)				);
 #ifndef _TYPE_H
 #include <minix/type.h>
 #endif
+
+extern int optreset;	/* Reset getopt state */
+
 _PROTOTYPE( int brk, (char *_addr)					);
 _PROTOTYPE( int chroot, (const char *_name)				);
 _PROTOTYPE( int mknod, (const char *_name, _mnx_Mode_t _mode, Dev_t _addr)	);
