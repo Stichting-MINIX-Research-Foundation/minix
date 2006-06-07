@@ -53,6 +53,7 @@ libc_FILES=" \
 	ioctl.s \
 	isatty.s \
 	kill.s \
+	killpg.s \
 	link.s \
 	lseek.s \
 	lstat.s \
@@ -84,6 +85,7 @@ libc_FILES=" \
 	sigemptyset.s \
 	sigfillset.s \
 	sigismember.s \
+	siglongjmp.s \
 	sigpending.s \
 	sigprocmask.s \
 	sigreturn.s \

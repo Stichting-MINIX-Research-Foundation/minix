@@ -47,6 +47,7 @@ libc_FILES=" \
 	_ioctl.c \
 	_isatty.c \
 	_kill.c \
+	_killpg.c \
 	_link.c \
 	_lseek.c \
 	_lstat.c \
@@ -75,7 +76,6 @@ libc_FILES=" \
 	_sigprocmask.c \
 	_sigreturn.c \
 	_sigset.c \
-	_sigsetjmp.c \
 	_sigsuspend.c \
 	_sleep.c \
 	_stat.c \
