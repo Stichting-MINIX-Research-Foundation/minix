@@ -38,12 +38,6 @@ PRIVATE struct selectentry {
 	timer_t timer;	/* if expiry > 0 */
 } selecttab[MAXSELECTS];
 
-#define SELFD_FILE	0
-#define SELFD_PIPE	1
-#define SELFD_TTY	2
-#define SELFD_INET	3
-#define SELFD_LOG	4
-#define SEL_FDS		5
 
 FORWARD _PROTOTYPE(int select_reevaluate, (struct filp *fp));
 
@@ -70,18 +64,14 @@ PRIVATE struct fdtype {
 	int (*select_request)(struct filp *, int *ops, int block);	
 	int (*select_match)(struct filp *);
 	int select_major;
-} fdtypes[SEL_FDS] = {
-		/* SELFD_FILE */
+} fdtypes[] = {
 	{ select_request_file, select_match_file, 0 },
-		/* SELFD_TTY (also PTY) */
 	{ select_request_general, NULL, TTY_MAJOR },
-		/* SELFD_INET */
 	{ select_request_general, NULL, INET_MAJOR },
-		/* SELFD_PIPE (pipe(2) pipes and FS FIFOs) */
 	{ select_request_pipe, select_match_pipe, 0 },
-		/* SELFD_LOG (/dev/klog) */
 	{ select_request_general, NULL, LOG_MAJOR },
 };
+#define SEL_FDS		(sizeof(fdtypes) / sizeof(fdtypes[0]))
 
 /* Open Group:
  * "File descriptors associated with regular files shall always select true

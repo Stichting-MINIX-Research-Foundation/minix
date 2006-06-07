@@ -144,7 +144,7 @@ _PROTOTYPE( int do_pipe, (void)						);
 _PROTOTYPE( int do_unpause, (void)					);
 _PROTOTYPE( int unpause, (int proc_nr_e)				);
 _PROTOTYPE( int pipe_check, (struct inode *rip, int rw_flag,
-			int oflags, int bytes, off_t position, int *canwrite, int notouch));
+	int oflags, int bytes, off_t position, int *canwrite, int notouch));
 _PROTOTYPE( void release, (struct inode *ip, int call_nr, int count)	);
 _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);

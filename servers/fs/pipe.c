@@ -406,15 +406,14 @@ PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
 	orig_ops = *ops;
 	if ((*ops & (SEL_RD|SEL_ERR))) {
 		if ((err = pipe_check(f->filp_ino, READING, 0,
-			1, f->filp_pos, &canwrite, 1)) != SUSPEND && err > 0)
+			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
 			r |= SEL_RD;
 		if (err < 0 && err != SUSPEND)
 			r |= SEL_ERR;
 	}
 	if ((*ops & (SEL_WR|SEL_ERR))) {
 		if ((err = pipe_check(f->filp_ino, WRITING, 0,
-			1, f->filp_pos, &canwrite, 1)) != SUSPEND &&
-			err > 0 && canwrite > 0)
+			1, f->filp_pos, &canwrite, 1)) != SUSPEND)
 			r |= SEL_WR;
 		if (err < 0 && err != SUSPEND)
 			r |= SEL_ERR;
