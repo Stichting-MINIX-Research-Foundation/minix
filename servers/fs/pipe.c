@@ -121,7 +121,7 @@ int notouch;			/* check only */
 				r = SUSPEND;
 			}
 			/* If need be, activate sleeping writers. */
-			if (susp_count > 0 && !notouch)
+			if (susp_count > 0)
 				release(rip, WRITE, susp_count);
 		}
 		return(r);
@@ -360,7 +360,10 @@ int proc_nr_e;
   task = -rfp->fp_task;
 
   if (rfp->fp_revived == REVIVING)
+  {
+	rfp->fp_revived = NOT_REVIVING;
 	reviving--;
+  }
 
   switch (task) {
 	case XPIPE:		/* process trying to read or write a pipe */
