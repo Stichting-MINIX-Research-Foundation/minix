@@ -4,6 +4,7 @@
 */
 #include "editline.h"
 #include <signal.h>
+#include <errno.h>
 #include <ctype.h>
 
 /*
@@ -168,6 +169,7 @@ STATIC unsigned int
 TTYget()
 {
     CHAR	c;
+    int r;
 
     TTYflush();
     if (Pushed) {
@@ -176,7 +178,11 @@ TTYget()
     }
     if (*Input)
 	return *Input++;
-    return read(0, &c, (SIZE_T)1) == 1 ? c : EOF;
+    do
+    {
+	r= read(0, &c, (SIZE_T)1);
+    } while (r == -1 && errno == EINTR);
+    return r  == 1 ? c : EOF;
 }
 
 #define TTYback()	(backspace ? TTYputs((CHAR *)backspace) : TTYput('\b'))
