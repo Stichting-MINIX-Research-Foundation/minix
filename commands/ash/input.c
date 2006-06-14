@@ -67,6 +67,7 @@ __FBSDID("$FreeBSD: src/bin/sh/input.c,v 1.22 2004/04/06 20:06:51 markm Exp $");
 #include <readline/readline.h>
 #else
 /* What about other systems? */
+char *readline(char *prompt);
 #endif
 #else
 #include "myhistedit.h"
