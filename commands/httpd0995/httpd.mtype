@@ -1,0 +1,40 @@
+# mime types By Michael Temari 12/29/2002 Ver 0.40
+
+# if a file extension is not found in the configuration below the default
+# mime type will be application/octet-stream.  This default can be changed
+# by entering a line with a mime type only with no extension.
+
+mtype
+	application/octet-stream
+	application/compress		.Z
+	application/msword		.doc
+	application/octet-stream	.bin	.exe
+	application/pdf			.pdf
+	application/postscript		.ps	.ai	.eps
+	application/smil		.smil
+	application/x-gtar		.gtar
+	application/x-gzip		.gz
+	application/x-sh		.sh
+	application/x-pn-realaudio	.ra	.ram
+	application/x-tar		.tar
+	application/zip			.zip
+	audio/basic			.au	.snd
+	audio/mpeg			.mp3
+	audio/x-aiff			.aif	.aiff	.aifc
+	audio/x-midi			.mid
+	audio/x-wav			.wav
+	image/bmp			.bmp
+	image/gif			.gif
+	image/jpeg			.jpg	.jpeg	.jpe
+	image/png			.png
+	image/tiff			.tiff	.tif
+	image/x-rgb			.rgb
+	image/x-xbitmap			.xbm
+	multipart/x-www-form-urlencoded	.wfu
+	text/html			.html	.htm
+	text/plain			.txt	.c	.h
+	text/richtext			.rtf	.rtx
+	video/mpeg			.mpg	.mpeg	.mpe
+	video/quicktime			.qt	.mov
+	video/x-msvideo			.avi
+	video/x-sgi-movie		.movie

@@ -1,0 +1,59 @@
+httpd0995 --- A www server for Minix 2 and Minix 3 
+written by Michael Temari <Michael@TemWare.Com> release 0.995 2006-05-14
+
+Httpd is a World Wide Web (WWW) server.  I wrote it from scratch so
+the setup and configuration will not be like other web servers though
+hopefully by reading this document there will be no problems in getting
+my web server up and running on your Minix system.
+
+Earlier versions of this web server were in use for many years on 
+minix1.hampshire.edu and minix1.bio.umass.edu.
+
+Installation: unpack the tarball in /usr/local/src or another directory 
+of your choice:
+
+  zcat < httpd0995.taz | tar xvfp -
+
+An httpd0995 directory will be created and files will be unpacked
+there.  The README file explains compilation, installation,
+configuration, and use. Please also read the SECURITY file if you plan
+to make your system accessible over the net.   
+
+Changes for release 0.995:
+
+- a redirect capability has been added.  If redirect is defined in the 
+configuration file then all request url's will be redirected to that 
+host with the original request. For instance, if in the configuration 
+file of minix1.hampshire.edu this line appears:
+   redirect http://minix1.woodhull.com/
+a request of http://minix1.hampshire.edu/some/page will return a 301 error 
+which is a redirect permanent to: http://minix.woodhull.com/some/page
+
+- several documentation files and man pages have been updated.
+
+Changes for release 0.994:
+
+- calling CGI programs has been made more secure.
+
+Changes for release 0.993: 
+
+- a new method of authorizing proxy.  You will no longer need the Proxy
+entry in Auth and can remove the http://* entry in vpath.  The old way
+allowed for having different authorizations depending on what URLs were
+asked for via proxy, i.e., you could allow proxy access only to
+http:://www.hampshire.edu/. Now it is just a simple authorization for
+allowing proxy or not.  
+
+- avoids using a Minix 2.0.3 library call that was not present in Minix
+2.0.2, and thus can be compiled with either of the two most recent
+Minix releases.  
+
+- a -v option has been added to display the current version then exit.
+
+- man pages added, other documentation updated.
+
+Changes for release 0.99: You can set a default in the httpd.mtype
+file.  A mime type with no extensions on a line will be the default.
+Previously recompilation was needed to change the default mime type. 
+
+updated 2006-06-01 (ASW)

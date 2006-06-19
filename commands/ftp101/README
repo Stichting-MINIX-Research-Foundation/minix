@@ -1,0 +1,39 @@
+ftp101 --- An FTP client program  for Minix 2.0 
+written by Michael Temari <Michael@TemWare.Com> release 1.01a 2006-06-07
+
+Full download: <a href="/pub/contrib/ftp101.tar.Z">ftp101.tar.Z</a>
+
+FTP is the File Transfer Protocol client that allows you to connect to
+a remote FTP server. 
+
+This version should work equally well with Minix 2 and Minix 3.
+
+Release 1.01a 2006-06-07: minor documentation edits
+Release 1.01  2005-02-07: minor bug fix 
+Release 1.00  2003-12-14: added "ver" command to display current version 
+                          and an ftp(1) man page.
+
+Installation: unpack the tarball, it will create an ftp101 directory. Although
+this is a replacement for the ftp client provided in the Minix 2.0.0 and later
+distributions, it is suggested you unpack and compile in the /usr/local/src
+directory.
+
+zcat < ftp101.tar.Z | tar xvfp -
+
+Invoking make -n will show you what the Makefile will do.
+
+make (or make ftp) compiles a new ftp binary, leaving it in the source
+directory.
+
+make install compiles the binary and installs it in /usr/bin.
+
+make installman installs the man page in /usr/local/man/man1. The
+directory must exist. 
+
+Note: there is a bug in the version of the ftp client distributed with
+Minix 2.0.2 and 2.0.3 that causes a \r (0xd) character to be appended
+to file names in the destination directory when files are downloaded in
+binary mode using the mget command. The bug was corrected in a release 
+prior to 1.00.  
+
+Notes by ASW revised 2006-06-07

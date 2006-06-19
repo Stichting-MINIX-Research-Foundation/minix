@@ -1,0 +1,334 @@
+.TH HTTPD.CONF 5
+.SH NAME
+httpd.conf httpd.mtype \- configuration files for the Minix httpd web server
+.SH SYNOPSIS
+.B /etc/httpd.conf
+.B /etc/httpd.mtype
+.SH DESCRIPTION
+.B /etc/httpd.conf 
+is the configuration file for the Minix httpd web server written by
+Michael Temari.  A sample version is included with the distribution
+archive and is unpacked in the source directory (normally
+.BI /usr/local/src/httpdxxx).
+Also provided is an example
+.B httpd.mtype
+file. This is an extension of the main configuration file which is normally
+included when the main file is read.
+.P
+The makefile does not install 
+.B httpd.conf 
+and 
+.B httpd.mtype
+automatically. The sample files included in the distribution are only  
+examples, you must copy and edit them for the needs of your own 
+installation.
+.SH CONFIGURATION FILE FORMAT
+.B httpd.conf
+is an ascii file which consists of lines of the following form:
+.P
+.B directive LWS [parameters separated by LWS]
+.br
+NOTE: LWS denotes Linear White Space which is spaces and/or tabs
+.SH CONFIGURATION FILE DIRECTIVES
+The following are valid configuration file directives (listed in the order 
+they appear in the sample 
+.B httpd.conf 
+file provided in the distribution):
+.P
+.B serverroot redirect user chroot logfile dbgfile dirsend direxec 
+.B vhost auth proxyauth vpath include mtype 
+.P
+To make the file more readable, for directives which occupy multiple
+lines you may eliminate the directive on lines after the first and begin 
+these lines with LWS.
+
+.SH DESCRIPTIONS OF DIRECTIVES
+.P
+.B serverroot path
+
+The 
+.B serverroot 
+directive sets the translation for 
+.B // 
+to the given 
+.B path.
+
+.B redirect url
+
+The
+.B redirect 
+directive will redirect the entire website via error code 
+"301 MOVED PERM" to specified url and original path of request.
+
+.B user username
+
+The 
+.B user 
+directive causes the server to run as the given 
+.B username 
+otherwise the server will run as whoever started it (normally root).
+
+.B chroot directory
+
+The 
+.B chroot 
+directive causes the server to chroot to the given directory after
+the configuration and log files have been opened.  Normally this will be the
+home directory of the given username in the user directive.
+.br
+NOTE: 
+.B /~user 
+will be translated to the home directory of
+.B user.
+.br
+NOTE:
+.B // 
+will be translated to the serverroot directory.
+.br
+NOTE: if this directive is used then beware of the consequences.
+
+.B logfile filename
+
+The 
+.B logfile 
+directive tells the server where to log http transactions.
+.br
+NOTE: the log file must exist to enable logging.
+
+.B dbgfile filename
+
+The 
+.B dbgfile 
+directive tells the server where to log debugging of http transactions.
+.br
+NOTE: the debug log file must exist to enable debug logging.
+
+.B dirsend filelist
+
+The 
+.B dirsend 
+directive tells the server that when a directory is requested
+that it should send the first file that it finds in the directory from the
+.B filelist 
+for the request.
+
+.B direxec program
+
+The 
+.B direxec 
+directive tells the server that when a directory is requested
+and no file is found from the 
+.B dirsend 
+directive that it should run the given 
+.B program.
+.br
+NOTE: the program normally generates a directory listing on the fly using
+the 
+.B dir2html
+program.
+.br
+NOTE: the program access is considered 
+.B X 
+with no access restrictions.
+
+.B vhost hostname vhostroot
+
+The 
+.B vhost 
+directive is for defining access for virtual hosts.  If none are configured 
+then any host is accepted.  If specified then access is only granted for 
+requests for hosts which are configured here.  In the 
+.B vpath 
+section below the 
+.B /// 
+gets translated to the corresponding 
+.B vhostroot.
+
+
+.B auth authname authdescription access [passwdfile [users]]
+
+The 
+.B auth 
+directive sets up different authorizations with the server.  The
+.B authname 
+is the name given to the authorization and is case insensitive.
+The 
+.B authdescription 
+is the description of the authorization and is what
+the user will see when asked to enter a username and password.  The
+access is one or more of 
+.B (RWX).  
+.B R 
+tells the server the URL can be read.  
+.B W 
+tells the server the URL can be overwritten.  
+.B X 
+tells the server
+that the URL can and should be executed.  Access is in addition to normal
+Unix security considerations.  For instance a file that can be written to
+that does not have the 
+.B W 
+access will have an error returned.  The
+.B passwdfile 
+is the name of the password file to validate users against.  If
+.B passwdfile 
+is given as 
+.B '.' 
+then the system password file
+.B (/etc/passwd)
+will be used.  If no 
+.B passwdfile 
+is given then no authorization is allowed for anyone.  If no 
+.B users 
+are given then any validated user is authorized, otherwise only the given 
+.B users 
+are allowed.
+
+.B proxyauth authname authdescription access [passwdfile [users]]
+
+The 
+.B proxyauth 
+directive defines access authorization to be used for Proxy access.
+.br
+.B authname 
+= Same as auth above
+.br
+.B authdescription 
+= Same as auth above
+.br
+.B access 
+= Must be R to allow proxy
+.br
+.B passwdfile 
+= Same as auth above
+.br
+.B users 
+= Same as auth above
+
+.B vpath from to [auth [access]]
+
+The 
+.B vpath 
+directive sets up URL path translations and authorizations.  A
+requested  URL that matches 
+.B from 
+will be translated to 
+.B to 
+with the given 
+.B auth 
+and 
+.B access.  
+If 
+.B auth 
+does not exist then the URL will have no 
+.B access.
+If 
+.B access 
+is not given then the access is taken from the 
+.B auth 
+record (see above).  A 
+.B '.' 
+in place of the 
+.B to 
+means that the server should use a translation from another 
+.B vpath 
+record, but associate the given 
+.B auth 
+and access with the requested URL.  A 
+.B '*' 
+may be at the end only of the 
+.B from
+to provide a wildcard match.  For example if the 
+.B from 
+has 
+.B /AB* 
+then any of
+.B /ABCDEF 
+or 
+.B /AB 
+or 
+.B /ABmichael 
+will match, but 
+.B /AD or 
+.B /a 
+will not.  The requested URL is first checked against each 
+.B vpath 
+record until an exact match (meaning URL match 
+.B from 
+and 
+.B from 
+had no 
+.B '*') 
+is found or the end of the list.  Therefore a wildcard match will match 
+the last 
+.B from in the list in which it matched.
+.br
+NOTE: if at the beginning of the to field
+.br
+      /~user will get translated to the home directory of the given user
+.br
+      // will get translated to the serverroot directory
+
+.B include filename
+
+The 
+.B include 
+directive tells the server to read configuration information
+from the given filename.
+.br
+NOTE: normally you get 
+.B mtype 
+directives in an included file.
+
+.B mtype mimetype extensions
+
+The 
+.B mtype 
+directive tells the server what 
+.B mimetype 
+to associate with files which have any of the given 
+.B extensions.  
+If no match is found then the file will be treated as 
+.B application/octet-stream.
+
+
+.SH FILES
+.B /etc/httpd.conf
+.B /etc/httpd.mtype
+.B /etc/passwd
+.SH "SEE ALSO"
+.BR httpd (8)
+.BR http_status (5)
+.SH NOTES
+The source directory contains a commented sample 
+.B httpd.conf 
+and 
+.B httpd.mtype
+files.
+.P 
+You can run the server as
+.B httpd -t /etc/httpd.conf
+to see whether the configuration file is being parsed correctly.
+.P
+Although standard Minix does not have a graphical interface to support
+browsers such as Netscape and Microsoft Internet Explorer, the 
+.B lynx
+browser can be used on 32-bit Minix systems with enough memory. You can point 
+lynx to your own site to browse your own pages.
+When debugging a web server there is nothing quite like browsing your own
+pages to see whether things are working right. That said, be aware that
+different web browsers may vary in how they interpet standard web page 
+features, and will certainly vary in how they interpret "extensions" to
+the HTML standards. So checking a page with several browsers on several 
+platforms is always a good idea.
+.SH BUGS
+Not really a bug, but you can get in trouble if a real directory you want
+to access shares the first part of its name with a 
+.B vpath
+definition. You just have to pay attention to the directory names you use.
+.SH AUTHOR
+The Minix httpd server was created by and is maintained by Michael Temari
+<Michael@TemWare.Com>
+.P
+Man page was compiled by Al Woodhull <asw@woodhull.com>
+.\" updated 2006-06-01

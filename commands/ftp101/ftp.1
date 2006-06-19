@@ -1,0 +1,148 @@
+.TH FTP 1
+.SH NAME
+ftp \- a File Transfer Protocol client for Minix
+.SH SYNOPSIS
+.B ftp
+.RI [ server_name ]
+.SH DESCRIPTION
+.B Ftp
+is a File Transfer Protocol client for Minix written by Michael Temari.  
+.P
+There are no command line options for 
+.B ftp
+except for the optional server name, which may be either a numeric IP address 
+or a domain name resolvable by DNS.
+.P
+If a server name is specified a connection attempt will be made, and you 
+will be prompted for a user name and password by the remote system. 
+Following the login (or immediately, if no server name was specified), the
+.br
+.B ftp>
+.br 
+prompt is displayed. The following commands are accepted at the prompt:
+.P
+Command:      Description
+.br
+!             Escape to a shell
+.br
+append        Append a file to remote host
+.br
+ascii         Set file transfer type to ascii
+.br
+binary        Set file transfer type to binary
+.br
+block         Set file transfer mode to block
+.br
+bye           Close connection and exit
+.br
+cd            Change directory on remote host
+.br
+close         Close connection
+.br
+clone         Clone a file
+.br
+del           Remove file on remote host
+.br
+dir           Display long form remote host directory listing
+.br
+exit          Close connection and exit
+.br
+get           Retrieve a file from remote host
+.br
+help          Display this text
+.br
+lcd           Change directory on local host
+.br
+ldir          Display long form local host directory listing
+.br
+lls           Display local host directory listing
+.br
+lmkdir        Create directory on local host
+.br
+lpwd          Display current directory on local host
+.br
+lrmdir        Remove directory on local host
+.br
+ls            Display remote host directory listing
+.br
+mget          Retrieve multiple files from remote host
+.br
+mkdir         Create directory on remote host
+.br
+mod           Get file modification time
+.br
+mput          Send multiple files to remote host
+.br
+noop          Send the ftp NOOP command
+.br
+open          Open connection to remote host
+.br
+pass          Enter remote user password
+.br
+passive       Toggle passive mode
+.br
+put           Send a file to remote host
+.br
+putu          Send a file to remote host(unique)
+.br
+pwd           Display current directory on remote host
+.br
+quit          Close connection and exit
+.br
+quote         Send raw ftp command to remote host
+.br
+reget         Restart a partial file retrieve from remote host
+.br
+remotehelp    Display ftp commands implemented on remote host
+.br
+reput         Restart a partial file send to remote host
+.br
+rm            Remove file on remote host
+.br
+rmdir         Remove directory on remote host
+.br
+site          Send a site specific command
+.br
+size          Get file size information
+.br
+status        Get connection/file status information
+.br
+stream        Set file transfer mode to stream
+.br
+system        Get remote system type information
+.br
+user          Enter remote user information
+.br
+ver           Display client version information
+
+.SH "SEE ALSO"
+.BR ftpd (8),
+.BR ftpget (1).
+.SH NOTES
+The FTP protocol passes unencrypted usernames and passwords to clients,
+so they are potentially exposed to evildoers with network sniffers. So be 
+wary of using this to exchange files between your own accounts. Obviously 
+if you have a root account on another system and the remote system will 
+accept a login as root this is extremely dangerous. (Many ftp servers will
+not allow a connection by root).
+.P
+Text-mode (ASCII) transfers are the default mode, be sure to enter the 
+"binary" command if you are downloading a program file or a compressed 
+archive, in fact anything other than a text file from a machine with a
+different text-file format than Minix uses.
+.P
+If you are behind a firewall you probably need to use passive mode to 
+successfully transfer files.
+ 
+.SH BUGS
+None are known, but there may be some unknown ones. Version 1.00 corrects
+a bug in previous versions that would append a \\r (0xd) character to file
+names on the destination when an mget transfer was used in binary mode.
+
+.SH AUTHOR
+The Minix httpd server was created by and is maintained by Michael Temari
+<Michael@TemWare.Com>. The earliest version was released in 1992, for use
+with Michael's TNet networking extensions for Minix 1.5. 
+.P
+Man page compiled by Al Woodhull <asw@woodhull.com>
+.\" updated 2006-06-18
