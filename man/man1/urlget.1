@@ -1,0 +1,68 @@
+.TH URLGET 1
+.SH NAME
+urlget, ftpget, httpget \- retrieve a file from the internet to stdout
+.SH SYNOPSIS
+.B urlget 
+.RB [ \-h ]
+.RB [ \-d ]
+.RB [ \-p ]
+.RI url
+.P
+.B ftpget 
+.RI host 
+.RI path 
+.RI [user[pass]]
+.P
+.B httpget 
+.RB [ \-h ]
+.RB [ \-d ]
+.RB [ \-p ]
+.RI host
+.RI path
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Urlget 
+gets a file specified by a URL and copies it to standard output.
+.P
+.B Ftpget
+similarly gets a file from a conventional ftp server, a login name
+and password can be specified.
+.P
+.B Httpget
+is similar to 
+.B urlget,
+but the host and path are specified separately without a scheme, as with
+ftpget. 
+.SH OPTIONS
+.TP
+.B \-h
+show the status line and MIME header from the server.
+.P
+.B \-d
+discard the file body.
+.P
+.B \-p
+use POST method, otherwise use GET.
+.SH EXAMPLES
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.TP 15n
+.EX "urlget http://minix1.woodhull.com/pub/contrib/file.tar.Z > file.tar.Z" "Download file.tar.Z"
+.EX "ftpget minix1.woodhull.com /pub/contrib/README.txt > README.txt" "Get a file from an anonymous ftp server"
+.EX "httpget -dh minix1.woodhull.com/index.html" "Inspect the header of a web page"
+.SH NOTES
+These commands execute the same binary under different names. These commands
+provide a lightweight non-interactive command-line method of downloading a 
+file or inspecting the status of a web page. Data retrieved are written 
+to standard output.
+.SH AUTHOR
+Michael Temari <Michael@TemWare.Com>
+.P
+Man page compiled by Al Woodhull <asw@woodhull.com>
+.\" rev 2006-06-16

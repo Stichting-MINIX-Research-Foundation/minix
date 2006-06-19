@@ -1,0 +1,116 @@
+.TH MTOOLS 1
+.SH NAME
+mtools \- tools to access FAT file systems
+.SH SYNOPSIS
+.B mtools
+.RB [ \-V ]
+.B msdos_command 
+.RI [ \-msdos_options ]
+.RI arguments " ..."
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Mtools
+is a collection of utilities to access MS-DOS (FAT) disks from Unix without
+mounting them. It supports the long filenames of Windows NT and Windows 95.
+It does not support NTFS disks.
+.P
+Some versions of mtools for other operating systems provide separate
+commands, such as mdir, mcopy, etc., to emulate similar MS-DOS and Windows
+command line commands. The version ported to Minix takes the MS-DOS
+command (dir, copy, etc.) as its first argument. Supported MS-DOS 
+commands are:
+.B attrib, 
+.B badblocks, 
+.B cat, 
+.B cd, 
+.B copy, 
+.B del, 
+.B deltree, 
+.B dir,
+.B doctorfat, 
+.B du, 
+.B format, 
+.B info, 
+.B label, 
+.B md, 
+.B mkdir, 
+.B partition,
+.B rd, 
+.B rmdir, 
+.B read, 
+.B move, 
+.B ren, 
+.B showfat, 
+.B type, 
+.B write
+.P
+The MS-DOS options are the same as for DOS commands, except they are prefaced
+with "-" instead of "\\".
+.P
+Use 'mtools msdos_command -?' for help per command. (This tells you "-?"
+is an illegal command, but, as with Unix systems, entering an illegal command
+often is the easiest way to find out what are the legal commands.)
+.P
+Note that a disk argument must be terminate by or separated from a path by 
+a colon (":").
+If no disk argument is given mtools assumes you meant "/dev/fd0:", the 
+first floppy disk drive.
+.SH OPTIONS
+.TP
+.B \-V
+Show the mtools version and configuration
+.SH EXAMPLES
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.EX "mtools dir" "show directory of MS-DOS floppy in drive A:."
+.EX "mtools copy /dev/c0d0p0:file.txt ." "copy file.txt from MS-DOS root directory to current Minix directory."
+.SH "SEE ALSO"
+.BR dosdir (1).
+.BR dosread (1).
+.BR doswrite (1).
+.SH NOTES
+.P
+Mtools requires a lot of memory.  The default on a Minix 3 installation
+is over 10 MB.  A default configured mtools would not run on a system
+with only 16 MB RAM.  You may be able to make do by using chmem to
+reduce the memory allocation of mtools. On the 16 MB system mentioned
+mtools still works with a reduction of the memory allocation to half
+the original value.  The amount of memory you need depends upon the
+size of the MS-DOS or Windows file systems you want to access.
+Typically systems with big disks also have large amounts of memory.  If
+mtools won't work for you, you may be able to fall back to the old
+dosdir, dosread, and doswrite Minix utilities if the FAT file system
+you want to access is small enough (the dos* utilities can access FAT16
+partitions up to 256 MB size).
+.P
+This man page does not attempt to be complete. A lot of information is
+available on line. To use mtools well you also need to be familiar with
+the options for the corresponding MS-DOS commands. 
+For more information see the mtools website, http://mtools.linux.lu/.
+.P
+Mtools-3.9.10 was released on 1 March 2005.  The Minix port is of the
+earlier Mtools version 3.9.7, dated 1 June 2000.
+.P
+The Minix port is configured with the following options: disable-xdf
+disable-vold disable-new-vold disable-debug disable-raw-term (read the source
+to understand what these mean).
+.SH BUGS
+Yes, bugs may exist, but as this man page is written we don't know of any.
+Please report any you find.
+.P
+As with any program that accesses a foreign file system, reading is probably
+safe, but you may want to experiment carefully before using these programs to
+write to a Windows system. 
+.SH AUTHOR
+Mtools is maintained by David Niemi and Alain Knaff. 
+.P
+Ported to Minix 2.0.3 by Kees J. Bot <kjb@cs.vu.nl>.
+.P
+This man page compiled by Al Woodhull <asw@woodhull.com>. 
+.\" rev 2006-06-17

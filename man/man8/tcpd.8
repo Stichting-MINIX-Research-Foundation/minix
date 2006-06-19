@@ -1,0 +1,118 @@
+.TH TCPD 8
+.SH NAME
+tcpd, tcpdp \- waits for a TCP connection request and starts a server
+.SH SYNOPSIS
+.B tcpd
+.RB [ \-d ]
+.RB [ \-m 
+.RI maxclients ]
+.RI service 
+.RI program
+.RB [ arg ... ]
+.SH DESCRIPTION
+.de SP
+.if t .sp 0.4
+.if n .sp
+..
+.B Tcpd
+is a daemon, that is, a user-space program that is normally started when the 
+operating system is started and that normally does not terminate until the 
+system is shut down.
+Conceptually, you can think of
+.B tcpd
+as doing nothing but listening to a port for a connection attempt. Several 
+copies of 
+.B tcpd
+will typically be started, one for each service that is to be provided. 
+When a connection is detected the tcpd for that port 
+.IR fork s
+and then the child process 
+.IR exec s
+an instance of the server for that port.
+.P
+The above description is simplified. 
+Normally two versions of the tcpd.c source code are compiled. 
+.B Tcpd
+is the one that waits for a connection. When a connection occurs 
+.B tcpd 
+.IR fork s. 
+If 
+.B tcpd
+was started with options or if the child detects that the access 
+control file 
+.IR /etc/serv.access 
+exists, the child will 
+.IR exec 
+its paranoid twin,
+.B tcpdp,
+which checks that the connection attempt is from an allowed node or network,
+or that it is not from a disallowed node or network. 
+.B Tcpdp
+also tries to look up the name corresponding to an IP address, and denies 
+the connection if a name cannot be found. Finally, 
+.B tcpdp
+determines whether the connection is supposed to be logged. 
+If all is well, the child 
+.B tcpd
+or
+.B tcpdp
+then 
+.IR exec s 
+the server for the service with any arguments specified on the command line 
+for that server.
+.SH OPTIONS
+.TP
+.B \-d 
+turn on debugging.
+.TP
+.B \-m
+allow no more than the specified 
+.IR maxclients 
+to start.
+.SH EXAMPLES
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.TP 15n
+.EX "tcpd telnet in.telnetd &" "wait for a telnet connection on the normal port"
+.EX "tcpd 8000 in.httpd /etc/httpd8000.conf &" "wait for web page request on port 8000 and use a custom config file for the in.httpd program."
+.P
+Note that command lines must be terminated with "&" to return control to the
+calling process, leaving the daemon executing as a background process. 
+.P
+The above examples show how tcpd might be invoked from /etc/rc or
+another script that runs during system initialization.  You will also
+see this in the supplied startup scripts:
+.EX "daemonize tcpd shell in.rshd" "daemonize is a shell function that tests whether a daemon is present and starts it if so, using the & to start it in the background."
+.P
+Another case that should be mentioned is that when a system administrator
+wants to start (or restart) a daemon from a command line,
+.BR intr (8)
+should be used, like this:
+.EX "intr -d tcpd telnet in.telnetd &" "remove the daemon from a process group and connect its input to /dev/null and its output to /dev/log."   
+.SH FILES
+.TP 25n
+.B /etc/serv.access
+The access control file.
+.SH "SEE ALSO"
+.BR execve (2),
+.BR fork (2),
+.BR intr (8),
+.BR serv.access (5).
+.SH NOTES
+That daemons cannot daemonize themselves is a way in which Minix differs from
+most other Unix-like systems. 
+.P
+Allowing access to your system from the net is dangerous. Be sure you 
+know what you are doing. Be sure the owner of your net knows what you are 
+doing. Don't enable services you don't need.  Enable logging and look at your
+logs.
+.SH BUGS
+None known, let us know...
+.SH AUTHOR
+Kees J. Bot <kjb@cs.vu.nl>
+.P
+Man page by Al Woodhull <asw@woodhull.com> 
+.\" rev 2006-06-02
