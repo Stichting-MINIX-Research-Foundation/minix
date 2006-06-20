@@ -70,6 +70,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 			/* This block is not the one sought. */
 			bp = bp->b_hash; /* move to next block on hash chain */
 		}
+
 	}
   }
 
@@ -272,7 +273,7 @@ int rw_flag;			/* READING or WRITING */
   if ( (dev = bp->b_dev) != NO_DEV) {
 	pos = (off_t) bp->b_blocknr * block_size;
 	op = (rw_flag == READING ? DEV_READ : DEV_WRITE);
-	r = dev_bio(op, dev, FS_PROC_NR, bp->b_data, pos, block_size, 0);
+	r = dev_bio(op, dev, FS_PROC_NR, bp->b_data, pos, block_size);
 	if (r != block_size) {
 	    if (r >= 0) r = END_OF_FILE;
 	    if (r != END_OF_FILE)
@@ -376,7 +377,7 @@ int rw_flag;			/* READING or WRITING */
 	}
 	r = dev_bio(rw_flag == WRITING ? DEV_SCATTER : DEV_GATHER,
 		dev, FS_PROC_NR, iovec,
-		(off_t) bufq[0]->b_blocknr * block_size, j, 0);
+		(off_t) bufq[0]->b_blocknr * block_size, j);
 
 	/* Harvest the results.  Dev_io reports the first error it may have
 	 * encountered, but we only care if it's the first block that failed.

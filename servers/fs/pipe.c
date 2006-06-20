@@ -18,6 +18,7 @@
 #include "fs.h"
 #include <fcntl.h>
 #include <signal.h>
+#include <assert.h>
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
@@ -192,6 +193,7 @@ int task;			/* who is proc waiting for? (PIPE = pipe) */
 
   if (task == XPIPE || task == XPOPEN) susp_count++;/* #procs susp'ed on pipe*/
   fp->fp_suspended = SUSPENDED;
+  assert(!GRANT_VALID(fp->fp_grant));
   fp->fp_fd = m_in.fd << 8 | call_nr;
   if(task == NONE)
 	panic(__FILE__,"suspend on NONE",NO_NUM);
@@ -316,8 +318,20 @@ int returned;			/* if hanging on task, how many bytes read */
 	else if (task == XSELECT) {
 		reply(proc_nr_e, returned);
 	} else {
-		/* Revive a process suspended on TTY or other device. */
-		rfp->fp_nbytes = returned;	/*pretend it wants only what there is*/
+		/* Revive a process suspended on TTY or other device. 
+		 * Pretend it wants only what there is.
+		 */
+		rfp->fp_nbytes = returned; 
+		/* If a grant has been issued by FS for this I/O, revoke
+		 * it again now that I/O is done.
+		 */
+		if(GRANT_VALID(rfp->fp_grant)) {
+			if(cpf_revoke(rfp->fp_grant)) {
+				panic(__FILE__,"FS: revoke failed for grant",
+					rfp->fp_grant);
+			} 
+			rfp->fp_grant = GRANT_INVALID;
+		}
 		reply(proc_nr_e, returned);	/* unblock the process */
 	}
   }
@@ -386,13 +400,21 @@ int proc_nr_e;
 		f = rfp->fp_filp[fild];
 		dev = (dev_t) f->filp_ino->i_zone[0];	/* device hung on */
 		mess.TTY_LINE = (dev >> MINOR) & BYTE;
-		mess.IO_ENDPT = proc_nr_e;
+		mess.IO_ENDPT = rfp->fp_ioproc;
+		mess.IO_GRANT = (char *) rfp->fp_grant;
 
 		/* Tell kernel R or W. Mode is from current call, not open. */
 		mess.COUNT = (rfp->fp_fd & BYTE) == READ ? R_BIT : W_BIT;
 		mess.m_type = CANCEL;
 		fp = rfp;	/* hack - ctty_io uses fp */
 		(*dmap[(dev >> MAJOR) & BYTE].dmap_io)(task, &mess);
+		if(GRANT_VALID(rfp->fp_grant)) {
+			if(cpf_revoke(rfp->fp_grant)) {
+				panic(__FILE__,"FS: revoke failed for grant (cancel)",
+					rfp->fp_grant);
+			} 
+			rfp->fp_grant = GRANT_INVALID;
+		}
   }
 
   rfp->fp_suspended = NOT_SUSPENDED;

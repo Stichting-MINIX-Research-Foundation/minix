@@ -20,8 +20,10 @@
 
 #include "fs.h"
 #include <fcntl.h>
+#include <assert.h>
 #include <unistd.h>	/* cc runs out of memory with unistd.h :-( */
 #include <minix/callnr.h>
+#include <minix/safecopies.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
 #include <sys/ptrace.h>
@@ -351,6 +353,12 @@ int cpid;	/* Child process id */
   cp->fp_pid = cpid;
   cp->fp_endpoint = cproc;
 
+  /* A forking process never has an outstanding grant,
+   * as it isn't blocking on i/o.
+   */
+  assert(!GRANT_VALID(fp->fp_grant));
+  assert(!GRANT_VALID(cp->fp_grant));
+
   /* A child is not a process leader. */
   cp->fp_sesldr = 0;
 
@@ -661,8 +669,9 @@ struct mem_map *seg_ptr;
 		r= sys_trace(T_GETUSER, proc_e, trace_off, &trace_data);
 		if  (r != OK) 
 		{
-			printf("dumpcore: sys_trace failed at offset %d: %d\n",
-				trace_off, r);
+			printf("dumpcore pid %d: sys_trace failed "
+				"at offset %d: %d\n",
+				rfp->fp_pid, trace_off, r);
 			break;
 		}
 		r= write_bytes(rip, off, (char *)&trace_data,

@@ -1,4 +1,5 @@
 #include <sys/select.h>
+#include <minix/safecopies.h>
 
 /* This is the per-process information.  A slot is reserved for each potential
  * process. Thus NR_PROCS must be the same as in the kernel. It is not 
@@ -22,11 +23,13 @@ EXTERN struct fproc {
   char fp_suspended;		/* set to indicate process hanging */
   char fp_revived;		/* set to indicate process being revived */
   int fp_task;			/* which task is proc suspended on */
+  endpoint_t fp_ioproc;		/* proc no. in suspended-on i/o message */
+  cp_grant_id_t fp_grant;	/* revoke this grant on unsuspend if > -1 */
   char fp_sesldr;		/* true if proc is a session leader */
   char fp_execced;		/* true if proc has exec()ced after fork */
   pid_t fp_pid;			/* process id */
   long fp_cloexec;		/* bit map for POSIX Table 6-2 FD_CLOEXEC */
-  int fp_endpoint;		/* kernel endpoint number of this process */
+  endpoint_t fp_endpoint;	/* kernel endpoint number of this process */
 } fproc[NR_PROCS];
 
 /* Field values. */

@@ -2,6 +2,8 @@
 
 #include "timers.h"
 
+#include <minix/safecopies.h>
+
 /* Structs used in prototypes must be declared as such first. */
 struct buf;
 struct filp;		
@@ -31,7 +33,7 @@ _PROTOTYPE( void invalidate2, (Dev_t device)				);
 _PROTOTYPE( int dev_open, (Dev_t dev, int proc, int flags)		);
 _PROTOTYPE( void dev_close, (Dev_t dev)					);
 _PROTOTYPE( int dev_bio, (int op, Dev_t dev, int proc, void *buf,
-			off_t pos, int bytes, int flags)		);
+			off_t pos, int bytes)				);
 _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
 			off_t pos, int bytes, int flags)		);
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);

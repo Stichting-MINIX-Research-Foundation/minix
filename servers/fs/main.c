@@ -15,6 +15,7 @@ struct super_block;		/* proto.h needs to know this */
 #include <string.h>
 #include <stdio.h>
 #include <signal.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <sys/ioc_memory.h>
 #include <sys/svrctl.h>
@@ -24,6 +25,7 @@ struct super_block;		/* proto.h needs to know this */
 #include <minix/keymap.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
+#include <minix/safecopies.h>
 #include "buf.h"
 #include "file.h"
 #include "fproc.h"
@@ -136,6 +138,10 @@ PRIVATE void get_work()
 			rp->fp_suspended = NOT_SUSPENDED; /*no longer hanging*/
 			rp->fp_revived = NOT_REVIVING;
 			reviving--;
+			/* This should be a pipe I/O, not a device I/O.
+			 * If it is, it'll 'leak' grants.
+			 */
+			assert(!GRANT_VALID(rp->fp_grant));
 			return;
 		}
 	panic(__FILE__,"get_work couldn't revive anyone", NO_NUM);
@@ -219,6 +225,22 @@ PRIVATE void fs_init()
   message mess;
   int s;
 
+/* Maximum number of outstanding grants is one full i/o
+ * vector, and all processes hanging on SUSPENDed i/o, and
+ * grants for printf() to tty and log.
+ *
+ * Space is declared for it here, and cpf_preallocate()
+ * uses it internally and internally tells the kernel
+ * about it. FS then never touches the data again directly,
+ * only through the cpf_* library routines.
+ */
+#define NGRANTS (NR_PROCS + NR_IOREQS + 10)
+  static cp_grant_t grants[NGRANTS];
+
+  /* Set data copy grant table, as FS can't allocate it dynamically. */
+  if(cpf_preallocate(grants, NGRANTS) != OK)
+  	panic(__FILE__,"cpf_preallocate failed", NO_NUM);
+
   /* Initialize the process table with help of the process manager messages. 
    * Expect one message for each system process with its slot number and pid. 
    * When no more processes follow, the magic process number NONE is sent. 
@@ -237,6 +259,7 @@ PRIVATE void fs_init()
 	rfp->fp_realgid = (gid_t) SYS_GID;
 	rfp->fp_effgid = (gid_t) SYS_GID;
 	rfp->fp_umask = ~0;
+	rfp->fp_grant = GRANT_INVALID;
    
   } while (TRUE);			/* continue until process NONE */
   mess.m_type = OK;			/* tell PM that we succeeded */
@@ -334,8 +357,9 @@ PRIVATE void service_pm()
 		{
 			panic("fs", "service_pm: sendrec failed", r);
 		}
-		if (m.m_type == PM_IDLE)
+		if (m.m_type == PM_IDLE) {
 			break;
+		}
 		call= m.m_type;
 		switch(call)
 		{
