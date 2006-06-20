@@ -65,7 +65,8 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * can be directly copied onto map[0] of the actual send mask. Privilege
  * structure 0 is shared by user processes. 
  */
-#define s(n)		(1 << s_nr_to_id(n))
+#define s(n)	(1 << (s_nr_to_id(n)))
+#define NUL_M   0
 #define SRV_M	(~0)
 #define SYS_M	(~0)
 #define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR) | s(SYSTEM))
@@ -75,16 +76,24 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  * very nice, but we need to define the access rights on a per call basis. 
  * Note that the reincarnation server has all bits on, because it should
  * be allowed to distribute rights to services that it starts. 
+ * 
+ * Calls are unordered lists, converted by the kernel to bitmasks
+ * once at runtime.
  */
-#define c(n)	(1 << ((n)-KERNEL_CALL))
-#define RS_C	~0	
-#define DS_C	~0	
-#define PM_C	~(c(SYS_DEVIO) | c(SYS_SDEVIO) | c(SYS_VDEVIO) | c(SYS_IRQCTL) | c(SYS_INT86))
-#define FS_C	(c(SYS_KILL) | c(SYS_VIRCOPY) | c(SYS_VIRVCOPY) | c(SYS_UMAP) | c(SYS_GETINFO) | c(SYS_EXIT) | c(SYS_TIMES) | c(SYS_SETALARM) | c(SYS_TRACE))
-#define DRV_C (FS_C | c(SYS_SEGCTL) | c(SYS_IRQCTL) | c(SYS_INT86) | c(SYS_DEVIO) | c(SYS_SDEVIO) | c(SYS_VDEVIO))
-#define TTY_C (DRV_C | c(SYS_ABORT) | c(SYS_VM_MAP) | c(SYS_IOPENABLE))
-#define MEM_C	(DRV_C | c(SYS_PHYSCOPY) | c(SYS_PHYSVCOPY) | c(SYS_VM_MAP) | \
-	c(SYS_IOPENABLE))
+#define FS_C SYS_KILL, SYS_VIRCOPY, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, \
+    SYS_VIRVCOPY, SYS_UMAP, SYS_GETINFO, SYS_EXIT, SYS_TIMES, SYS_SETALARM, \
+    SYS_PRIVCTL, SYS_TRACE 
+#define DRV_C	FS_C, SYS_SEGCTL, SYS_IRQCTL, SYS_INT86, SYS_DEVIO, \
+	SYS_SDEVIO, SYS_VDEVIO 
+
+PRIVATE int
+  fs_c[] = { FS_C },
+  pm_c[] = { SYS_ALL_CALLS },
+  rs_c[] = { SYS_ALL_CALLS },
+  ds_c[] = { SYS_ALL_CALLS },
+  drv_c[] = { DRV_C },
+  tty_c[] = { DRV_C, SYS_ABORT, SYS_VM_MAP, SYS_IOPENABLE },
+  mem_c[] = { DRV_C, SYS_PHYSCOPY, SYS_PHYSVCOPY, SYS_VM_MAP, SYS_IOPENABLE };
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
@@ -96,20 +105,23 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  *
  * Note: the quantum size must be positive in all cases! 
  */
+#define c(calls) calls, (sizeof(calls) / sizeof((calls)[0]))
+#define no_c { 0 }, 0
+
 PUBLIC struct boot_image image[] = {
-/* process nr,   pc, flags, qs,  queue, stack, traps, ipcto, call,  name */ 
- { IDLE,  idle_task, IDL_F,  8, IDLE_Q, IDL_S,     0,     0,     0, "idle"  },
- { CLOCK,clock_task, TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0,     0, "clock" },
- { SYSTEM, sys_task, TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0,     0, "system"},
- { HARDWARE,      0, TSK_F,  8, TASK_Q, HRD_S,     0,     0,     0, "kernel"},
- { PM_PROC_NR,    0, SRV_F, 32,      3, 0,     SRV_T, SRV_M,  PM_C, "pm"    },
- { FS_PROC_NR,    0, SRV_F, 32,      4, 0,     SRV_T, SRV_M,  FS_C, "fs"    },
- { RS_PROC_NR,    0, SRV_F,  4,      3, 0,     SRV_T, SYS_M,  RS_C, "rs"    },
- { DS_PROC_NR,    0, SRV_F,  4,      3, 0,     SRV_T, SYS_M,  DS_C, "ds"    },
- { TTY_PROC_NR,   0, SRV_F,  4,      1, 0,     SRV_T, SYS_M, TTY_C, "tty"   },
- { MEM_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, MEM_C, "mem"   },
- { LOG_PROC_NR,   0, SRV_F,  4,      2, 0,     SRV_T, SYS_M, DRV_C, "log"   },
- { INIT_PROC_NR,  0, USR_F,  8, USER_Q, 0,     USR_T, USR_M,     0, "init"  },
+/* process nr, pc,flags, qs,  queue, stack, traps, ipcto, call,  name */ 
+{IDLE,  idle_task,IDL_F,  8, IDLE_Q, IDL_S,     0,     0, no_c,"idle"  },
+{CLOCK,clock_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"clock" },
+{SYSTEM, sys_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"system"},
+{HARDWARE,      0,TSK_F,  8, TASK_Q, HRD_S,     0,     0, no_c,"kernel"},
+{PM_PROC_NR,    0,SRV_F, 32,      3, 0,     SRV_T, SRV_M, c(pm_c),"pm"    },
+{FS_PROC_NR,    0,SRV_F, 32,      4, 0,     SRV_T, SRV_M, c(fs_c),"fs"    },
+{RS_PROC_NR,    0,SRV_F,  4,      3, 0,     SRV_T, SYS_M, c(rs_c),"rs"    },
+{DS_PROC_NR,    0,SRV_F,  4,      3, 0,     SRV_T, SYS_M, c(ds_c),"ds"    },
+{TTY_PROC_NR,   0,SRV_F,  4,      1, 0,     SRV_T, SYS_M,c(tty_c),"tty"   },
+{MEM_PROC_NR,   0,SRV_F,  4,      2, 0,     SRV_T, SYS_M,c(mem_c),"memory"},
+{LOG_PROC_NR,   0,SRV_F,  4,      2, 0,     SRV_T, SYS_M,c(drv_c),"log"   },
+{INIT_PROC_NR,  0,USR_F,  8, USER_Q, 0,     USR_T, USR_M, no_c,"init"  },
 };
 
 /* Verify the size of the system image table at compile time. Also verify that 

@@ -73,6 +73,8 @@ PUBLIC void main()
   ktsb = (reg_t) t_stack;
 
   for (i=0; i < NR_BOOT_PROCS; ++i) {
+	int ci;
+	bitchunk_t fv;
 	ip = &image[i];				/* process' attributes */
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
@@ -84,7 +86,23 @@ PUBLIC void main()
 	(void) get_priv(rp, (ip->flags & SYS_PROC));    /* assign structure */
 	priv(rp)->s_flags = ip->flags;			/* process flags */
 	priv(rp)->s_trap_mask = ip->trap_mask;		/* allowed traps */
-	priv(rp)->s_call_mask = ip->call_mask;		/* kernel call mask */
+
+	/* Initialize call mask bitmap from unordered set.
+	 * A single SYS_ALL_CALLS is a special case - it
+	 * means all calls are allowed.
+	 */
+	if(ip->nr_k_calls == 1 && ip->k_calls[0] == SYS_ALL_CALLS)
+		fv = ~0;		/* fill call mask */
+	else
+		fv = 0;			/* clear call mask */
+
+	for(ci = 0; ci < CALL_MASK_SIZE; ci++) 	/* fill or clear call mask */
+		priv(rp)->s_k_call_mask[ci] = fv;
+	if(!fv)			/* not all full? enter calls bit by bit */
+		for(ci = 0; ci < ip->nr_k_calls; ci++)
+			SET_BIT(priv(rp)->s_k_call_mask,
+				ip->k_calls[ci]-KERNEL_CALL);
+
 	priv(rp)->s_ipc_to.chunk[0] = ip->ipc_to;	/* restrict targets */
 	if (iskerneln(proc_nr(rp))) {		/* part of the kernel? */ 
 		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
@@ -185,7 +203,7 @@ PRIVATE void announce(void)
 #if (CHIP == INTEL)
   /* Real mode, or 16/32-bit protected mode? */
   kprintf("Executing in %s mode.\n\n",
-      machine.protected ? "32-bit protected" : "real");
+      machine.prot ? "32-bit protected" : "real");
 #endif
 }
 

@@ -1,6 +1,8 @@
 #ifndef TYPE_H
 #define TYPE_H
 
+#include <minix/com.h>
+
 typedef _PROTOTYPE( void task_t, (void) );
 
 /* Process table and system property related types. */ 
@@ -19,9 +21,10 @@ struct boot_image {
   int stksize;				/* stack size for tasks */
   short trap_mask;			/* allowed system call traps */
   bitchunk_t ipc_to;			/* send mask protection */
-  long call_mask;			/* system call protection */
+  int *k_calls;				/* kern. call protection */
+  int nr_k_calls;
   char proc_name[P_NAME_LEN];		/* name in process table */
-  int endpoint;				/* endpoint number when started */
+  endpoint_t endpoint;			/* endpoint number when started */
 };
 
 struct memory {
