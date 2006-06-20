@@ -24,7 +24,7 @@ FORWARD _PROTOTYPE( void m_init, (int argc, char **argv) );
 FORWARD _PROTOTYPE( char *m_name, (void) 				);
 FORWARD _PROTOTYPE( struct device *m_prepare, (int device) 		);
 FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) 	);
+				iovec_t *iov, unsigned nr_req, int safe));
 FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( void m_geometry, (struct partition *entry) 		);
 
@@ -84,17 +84,18 @@ int device;
 /*===========================================================================*
  *				m_transfer				     *
  *===========================================================================*/
-PRIVATE int m_transfer(proc_nr, opcode, position, iov, nr_req)
+PRIVATE int m_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
 off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
+int safe;			/* safe copies? */
 {
 /* Read or write one the driver's minor devices. */
   int seg;
   unsigned count, left, chunk;
-  vir_bytes user_vir;
+  vir_bytes user_vir, vir_offset = 0;
   struct device *dv;
   unsigned long dv_size;
   int s;
@@ -111,21 +112,47 @@ unsigned nr_req;		/* length of request vector */
 	user_vir = iov->iov_addr;
 
 	/* Virtual copying. For rescue device. */
-	if (position >= dv_size) return(OK); 	/* check for EOF */
+	if (position >= dv_size) {
+		return(OK); 	/* check for EOF */
+	}
 	if (position + count > dv_size) count = dv_size - position;
 	seg = m_seg[m_device];
 
 	if (opcode == DEV_GATHER) {			/* copy actual data */
-	    sys_vircopy(SELF,seg,position, proc_nr,D,user_vir, count);
+		int r;
+	    if(safe) {
+	    	if((r=sys_safecopyto(proc_nr, user_vir, vir_offset,
+			position, count, seg)) != OK) {
+			printf("rescue: safecopy failed to user (proc %d, grant %d), error %d\n",
+				proc_nr, user_vir, r);
+			return EIO;
+	    	}
+	    } else {
+		    sys_vircopy(SELF,seg,position, proc_nr,D,user_vir, count);
+	    }
 	} else {
+	  if(safe) {
+	    if(sys_safecopyfrom(proc_nr, user_vir, vir_offset,
+		position, count, seg) != OK) {
+		return EIO;
+	    }
+	  } else {
 	    sys_vircopy(proc_nr,D,user_vir, SELF,seg,position, count);
+	  }
 	}
 
 	/* Book the number of bytes transferred. */
+	if(safe) {
+		vir_offset += count;
+	} else {
+		iov->iov_addr += count;
+	}
+  	if ((iov->iov_size -= count) == 0) {
+		iov++;
+		nr_req--;
+		vir_offset = 0;
+	}
 	position += count;
-	iov->iov_addr += count;
-  	if ((iov->iov_size -= count) == 0) { iov++; nr_req--; }
-
   }
   return(OK);
 }
