@@ -52,7 +52,7 @@ struct proc {
 
   char p_name[P_NAME_LEN];	/* name of the process, including \0 */
 
-  int p_endpoint;		/* endpoint number, generation-aware */
+  endpoint_t p_endpoint;	/* endpoint number, generation-aware */
 
 #if DEBUG_SCHED_CHECK
   int p_ready, p_found;
