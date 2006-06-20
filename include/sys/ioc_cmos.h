@@ -6,8 +6,8 @@
 
 #include <minix/ioctl.h>
 
-#define CIOCGETTIME	_IOR('c', 1, u32_t)
-#define CIOCGETTIMEY2K	_IOR('c', 2, u32_t)
+#define CIOCGETTIME	_IOR('c', 1, struct tm)
+#define CIOCGETTIMEY2K	_IOR('c', 2, struct tm)
 #define CIOCSETTIME	_IOW('c', 3, u32_t)
 #define CIOCSETTIMEY2K	_IOW('c', 4, u32_t)
 
