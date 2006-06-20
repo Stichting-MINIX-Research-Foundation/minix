@@ -94,8 +94,11 @@ PRIVATE char *optr;		/* ptr to next char in obuf to print */
 PRIVATE int orig_count;		/* original byte count */
 PRIVATE int port_base;		/* I/O port for printer */
 PRIVATE int proc_nr;		/* user requesting the printing */
+PRIVATE cp_grant_id_t grant_nr;	/* grant on which print happens */
 PRIVATE int user_left;		/* bytes of output left in user buf */
-PRIVATE vir_bytes user_vir;	/* address of remainder of user buf */
+PRIVATE vir_bytes user_vir_g;	/* start of user buf (address or grant) */
+PRIVATE vir_bytes user_vir_d;	/* offset in user buf */
+PRIVATE int user_safe;		/* address or grant? */
 PRIVATE int writing;		/* nonzero while write is in progress */
 PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
 
@@ -103,7 +106,7 @@ extern int errno;		/* error number */
 
 FORWARD _PROTOTYPE( void do_cancel, (message *m_ptr) );
 FORWARD _PROTOTYPE( void output_done, (void) );
-FORWARD _PROTOTYPE( void do_write, (message *m_ptr) );
+FORWARD _PROTOTYPE( void do_write, (message *m_ptr, int safe) );
 FORWARD _PROTOTYPE( void do_status, (message *m_ptr) );
 FORWARD _PROTOTYPE( void prepare_output, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
@@ -137,7 +140,8 @@ PUBLIC void main(void)
 	    case DEV_CLOSE:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, OK);
 		break;
-	    case DEV_WRITE:	do_write(&pr_mess);	break;
+	    case DEV_WRITE:	do_write(&pr_mess, 0);	break;
+	    case DEV_WRITE_S:	do_write(&pr_mess, 1);	break;
 	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL:	do_cancel(&pr_mess);	break;
 	    case HARD_INT:	do_printer_output();	break;
@@ -170,8 +174,9 @@ message *m_ptr;					/* signal message */
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-PRIVATE void do_write(m_ptr)
+PRIVATE void do_write(m_ptr, safe)
 register message *m_ptr;	/* pointer to the newly arrived message */
+int safe;			/* use virtual addresses or grant id's? */
 {
 /* The printer is used by sending DEV_WRITE messages to it. Process one. */
 
@@ -196,8 +201,11 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 	proc_nr = m_ptr->IO_ENDPT;
 	user_left = m_ptr->COUNT;
 	orig_count = m_ptr->COUNT;
-	user_vir = (vir_bytes) m_ptr->ADDRESS;
+	user_vir_g = (vir_bytes) m_ptr->ADDRESS; /* Address or grant id. */
+	user_vir_d = 0;				 /* Offset. */
+	user_safe = safe;			 /* Address or grant? */
 	writing = TRUE;
+	grant_nr = safe ? (cp_grant_id_t) m_ptr->ADDRESS : GRANT_INVALID;
 
         retries = MAX_ONLINE_RETRIES + 1;  
         while (--retries > 0) {
@@ -264,6 +272,7 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 	m_ptr->m_type = DEV_REVIVE;		/* build message */
 	m_ptr->REP_ENDPT = proc_nr;
 	m_ptr->REP_STATUS = revive_status;
+	m_ptr->REP_IO_GRANT = grant_nr;
 
 	writing = FALSE;			/* unmark event */
 	revive_pending = FALSE;			/* unmark event */
@@ -341,11 +350,18 @@ PRIVATE void do_initialize()
 PRIVATE void prepare_output()
 {
 /* Start next chunk of printer output. Fetch the data from user space. */
-
+  int s;
   register int chunk;
 
   if ( (chunk = user_left) > sizeof obuf) chunk = sizeof obuf;
-  if (OK!=sys_datacopy(proc_nr, user_vir, SELF, (vir_bytes) obuf, chunk)) {
+  if(user_safe) {
+    s=sys_safecopyfrom(proc_nr, user_vir_g, user_vir_d,
+    (vir_bytes) obuf, chunk, D);
+  } else {
+    s=sys_datacopy(proc_nr, user_vir_g, SELF, (vir_bytes) obuf, chunk);
+  }
+
+  if(s != OK) {
   	done_status = EFAULT;
   	output_done();
   	return;
@@ -401,7 +417,7 @@ PRIVATE void do_printer_output()
 		pv_set(char_out[2], port_base+2, NEGATE_STROBE);
 		sys_voutb(char_out, 3);	/* request series of port outb */
 
-		user_vir++;
+		user_vir_d++;
 		user_left--;
 	} else {
 		/* Error.  This would be better ignored (treat as busy). */
