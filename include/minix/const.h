@@ -43,6 +43,8 @@
 
 #define PHYS_SEG      0x0400	/* flag indicating entire physical memory */
 
+#define GRANT_SEG     0x0800	/* flag indicating grant for umap */
+
 /* Labels used to disable code sections for different reasons. */
 #define DEAD_CODE	   0	/* unused code in normal configuration */
 #define FUTURE_CODE	   0	/* new code to be activated + tested later */

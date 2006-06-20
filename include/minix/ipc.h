@@ -19,7 +19,7 @@ typedef struct {int m7i1, m7i2, m7i3, m7i4; char *m7p1, *m7p2;} mess_7;
 typedef struct {int m8i1, m8i2; char *m8p1, *m8p2, *m8p3, *m8p4;} mess_8;
 
 typedef struct {
-  int m_source;			/* who sent the message */
+  endpoint_t m_source;		/* who sent the message */
   int m_type;			/* what kind of message is it */
   union {
 	mess_1 m_m1;
@@ -92,10 +92,10 @@ typedef struct {
 #define send		_send
 
 _PROTOTYPE( int echo, (message *m_ptr)					);
-_PROTOTYPE( int notify, (int dest)					);
-_PROTOTYPE( int sendrec, (int src_dest, message *m_ptr)			);
-_PROTOTYPE( int receive, (int src, message *m_ptr)			);
-_PROTOTYPE( int send, (int dest, message *m_ptr)			);
+_PROTOTYPE( int notify, (endpoint_t dest)				);
+_PROTOTYPE( int sendrec, (endpoint_t src_dest, message *m_ptr)		);
+_PROTOTYPE( int receive, (endpoint_t src, message *m_ptr)		);
+_PROTOTYPE( int send, (endpoint_t dest, message *m_ptr)			);
 
 #define ipc_request	_ipc_request
 #define ipc_reply	_ipc_reply

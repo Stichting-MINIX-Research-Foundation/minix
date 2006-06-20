@@ -30,6 +30,13 @@
 				_IOC_IN)
 #define _IORW(x,y,t)	((x << 8) | y | ((sizeof(t) & _IOCPARM_MASK) << 16) |\
 				_IOC_INOUT)
+
+/* Decode an ioctl call. */
+#define _MINIX_IOCTL_SIZE(i)   (((i) >> 16) & _IOCPARM_MASK)
+#define _MINIX_IOCTL_IOR(i)    ((i) & _IOC_OUT)
+#define _MINIX_IOCTL_IORW(i)   ((i) & _IOC_INOUT)
+#define _MINIX_IOCTL_IOW(i)    ((i) & _IOC_IN)
+
 #else
 /* No fancy encoding on a 16-bit machine. */
 

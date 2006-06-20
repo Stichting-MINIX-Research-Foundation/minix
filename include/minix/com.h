@@ -145,6 +145,12 @@
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
 #define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
 
+#define DEV_READ_S	(DEV_RQ_BASE + 20) /* (safecopy) read from minor */
+#define DEV_WRITE_S   	(DEV_RQ_BASE + 21) /* (safecopy) write to minor */
+#define DEV_SCATTER_S  	(DEV_RQ_BASE + 22) /* (safecopy) write from a vector */
+#define DEV_GATHER_S   	(DEV_RQ_BASE + 23) /* (safecopy) read into a vector */
+#define DEV_IOCTL_S    	(DEV_RQ_BASE + 24) /* (safecopy) I/O control code */
+
 #define DEV_REPLY       (DEV_RS_BASE + 0) /* general task reply */
 #define DEV_CLONED      (DEV_RS_BASE + 1) /* return cloned minor */
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
@@ -155,9 +161,11 @@
 #define DEVICE    	m2_i1	/* major-minor device */
 #define IO_ENDPT	m2_i2	/* which (proc/endpoint) wants I/O? */
 #define COUNT   	m2_i3	/* how many bytes to transfer */
-#define REQUEST 	m2_i3	/* ioctl request code */
-#define POSITION	m2_l1	/* file offset */
+#define REQUEST 	m2_i3 	/* ioctl request code */
+#define POSITION	m2_l1	/* file offset (low 4 bytes) */
+#define HIGHPOS		m2_l2	/* file offset (high 4 bytes) */
 #define ADDRESS 	m2_p1	/* core buffer address */
+#define IO_GRANT 	m2_p1	/* grant id (for DEV_*_S variants) */
 
 /* Field names for DEV_SELECT messages to device drivers. */
 #define DEV_MINOR	m2_i1	/* minor device */
@@ -167,13 +175,13 @@
 /* Field names used in reply messages from tasks. */
 #define REP_ENDPT	m2_i1	/* # of proc on whose behalf I/O was done */
 #define REP_STATUS	m2_i2	/* bytes transferred or error number */
+#define REP_IO_GRANT	m2_i3	/* DEV_REVIVE: grant by which I/O was done */
 #  define SUSPEND 	 -998 	/* status to suspend caller, reply later */
 
 /* Field names for messages to TTY driver. */
 #define TTY_LINE	DEVICE	/* message parameter: terminal line */
 #define TTY_REQUEST	COUNT	/* message parameter: ioctl request code */
 #define TTY_SPEK	POSITION/* message parameter: ioctl speed, erasing */
-#define TTY_FLAGS	m2_l2	/* message parameter: ioctl tty mode */
 #define TTY_PGRP 	m2_i3	/* message parameter: process group */	
 
 /* Field names for the QIC 02 status reply from tape driver */
@@ -278,8 +286,13 @@
 #  define SYS_IOPENABLE  (KERNEL_CALL + 28)	/* sys_enable_iop() */
 #  define SYS_VM_SETBUF  (KERNEL_CALL + 29)	/* sys_vm_setbuf() */
 #  define SYS_VM_MAP  	 (KERNEL_CALL + 30)	/* sys_vm_map() */
+#  define SYS_SAFECOPYFROM  (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
+#  define SYS_SAFECOPYTO    (KERNEL_CALL + 32)	/* sys_safecopyto() */
 
-#define NR_SYS_CALLS	31	/* number of system calls */ 
+#define NR_SYS_CALLS	33	/* number of system calls */ 
+
+/* Pseudo call for use in kernel/table.c. */
+#define SYS_ALL_CALLS (NR_SYS_CALLS)
 
 /* Subfunctions for SYS_PRIVCTL */
 #define SYS_PRIV_INIT		1	/* Initialize a privilege structure */
@@ -287,6 +300,7 @@
 #define SYS_PRIV_ADD_MEM	3	/* Add memory range (struct mem_range)
 					 */
 #define SYS_PRIV_ADD_IRQ	4	/* Add IRQ */
+#define SYS_PRIV_SET_GRANTS	5	/* Set grant table */
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
 #define MEM_PTR		m2_p1	/* base */
@@ -299,17 +313,29 @@
 
 /* Field names for SYS_DEVIO, SYS_VDEVIO, SYS_SDEVIO. */
 #define DIO_REQUEST	m2_i3	/* device in or output */
-#   define DIO_INPUT	    0	/* input */
-#   define DIO_OUTPUT	    1	/* output */
-#define DIO_TYPE	m2_i1   /* flag indicating byte, word, or long */ 
-#   define DIO_BYTE	  'b'	/* byte type values */
-#   define DIO_WORD	  'w'	/* word type values */
-#   define DIO_LONG	  'l'	/* long type values */
+#   define _DIO_INPUT		0x001
+#   define _DIO_OUTPUT		0x002
+#   define _DIO_DIRMASK		0x00f
+#   define _DIO_BYTE		0x010
+#   define _DIO_WORD		0x020
+#   define _DIO_LONG		0x030
+#   define _DIO_TYPEMASK	0x0f0
+#   define _DIO_SAFE		0x100
+#   define _DIO_SAFEMASK	0xf00
+#   define DIO_INPUT_BYTE	    (_DIO_INPUT|_DIO_BYTE)
+#   define DIO_INPUT_WORD	    (_DIO_INPUT|_DIO_WORD)
+#   define DIO_OUTPUT_BYTE	    (_DIO_OUTPUT|_DIO_BYTE)
+#   define DIO_OUTPUT_WORD	    (_DIO_OUTPUT|_DIO_WORD)
+#   define DIO_SAFE_INPUT_BYTE      (_DIO_INPUT|_DIO_BYTE|_DIO_SAFE)
+#   define DIO_SAFE_INPUT_WORD      (_DIO_INPUT|_DIO_WORD|_DIO_SAFE)
+#   define DIO_SAFE_OUTPUT_BYTE     (_DIO_OUTPUT|_DIO_BYTE|_DIO_SAFE)
+#   define DIO_SAFE_OUTPUT_WORD     (_DIO_OUTPUT|_DIO_WORD|_DIO_SAFE)
 #define DIO_PORT	m2_l1	/* single port address */
 #define DIO_VALUE	m2_l2	/* single I/O value */
 #define DIO_VEC_ADDR	m2_p1   /* address of buffer or (p,v)-pairs */
 #define DIO_VEC_SIZE	m2_l2   /* number of elements in vector */
 #define DIO_VEC_ENDPT	m2_i2   /* number of process where vector is */
+#define DIO_OFFSET	m2_i1	/* offset from grant */
 
 /* Field names for SYS_SIGNARLM, SYS_FLAGARLM, SYS_SYNCALRM. */
 #define ALRM_EXP_TIME   m2_l1	/* expire time for the alarm call */
@@ -446,6 +472,18 @@
 /* Field names for SYS_INT86 */
 #define INT86_REG86    m1_p1	/* pointer to registers */
 
+/* Field names for SYS_SAFECOPY */
+#define SCP_FROM_TO	m2_i1	/* from/to whom? */
+#define SCP_INFO	m2_i2	/* byte: DDDDSSSS Dest and Src seg */
+#define SCP_GID		m2_i3	/* grant id */
+#define SCP_OFFSET	m2_l1	/* offset within grant */
+#define	SCP_ADDRESS	m2_p1	/* my own address */
+#define	SCP_BYTES	m2_l2	/* bytes from offset */
+
+/* For the SCP_INFO field: encoding and decoding. */
+#define SCP_MAKEINFO(seg)  ((seg) & 0xffff)
+#define SCP_INFO2SEG(info) ((info) & 0xffff)
+
 /* Field names for SELECT (FS). */
 #define SEL_NFDS       m8_i1
 #define SEL_READFDS    m8_p1
@@ -502,11 +540,12 @@
 #  define    FKEY_EVENTS	12	/* request open key presses */
 #  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
 #  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
-#define DIAGNOSTICS 	100 	/* output a string without FS in between */
-#  define DIAG_PRINT_BUF      m1_p1
+#define DIAG_BASE	0xa00
+#define DIAGNOSTICS 	(DIAG_BASE+1) 	/* output a string without FS in between */
+#define DIAGNOSTICS_S 	(DIAG_BASE+2) 	/* grant-based version of DIAGNOSTICS */
+#  define DIAG_PRINT_BUF_G    m1_p1
 #  define DIAG_BUF_COUNT      m1_i1
-#  define DIAG_ENDPT          m1_i2
-#define GET_KMESS	101	/* get kmess from TTY */
+#define GET_KMESS	(DIAG_BASE+3)	/* get kmess from TTY */
 #  define GETKM_PTR	      m1_p1
 
 #define PM_BASE	0x900

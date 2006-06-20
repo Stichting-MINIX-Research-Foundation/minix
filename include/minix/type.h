@@ -13,6 +13,7 @@
 typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
 typedef unsigned long phys_bytes;	/* physical addr/length in bytes */
 typedef unsigned int phys_clicks;	/* physical addr/length in clicks */
+typedef int endpoint_t;			/* process identifier */
 
 #if (_MINIX_CHIP == _CHIP_INTEL)
 typedef unsigned int vir_bytes;	/* virtual addresses and lengths in bytes */
@@ -130,7 +131,7 @@ struct machine {
   int pc_at;
   int ps_mca;
   int processor;
-  int protected;
+  int prot;
   int vdu_ega;
   int vdu_vga;
 };

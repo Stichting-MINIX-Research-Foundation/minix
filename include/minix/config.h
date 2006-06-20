@@ -81,10 +81,6 @@
 /* DMA_SECTORS may be increased to speed up DMA based drivers. */
 #define DMA_SECTORS        1	/* DMA buffer size (must be >= 1) */
 
-/* Include or exclude backwards compatibility code. */
-#define ENABLE_BINCOMPAT   0	/* for binaries using obsolete calls */
-#define ENABLE_SRCCOMPAT   0	/* for sources using obsolete calls */
-
 /* Which processes should receive diagnostics from the kernel and system? 
  * Directly sending it to TTY only displays the output. Sending it to the
  * log driver will cause the diagnostics to be buffered and displayed.
