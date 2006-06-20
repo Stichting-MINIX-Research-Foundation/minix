@@ -15,7 +15,7 @@ f = $u/src/servers/fs
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lsysutil 
+LIBS = -lsysutil  -lsys
 
 OBJ = main.o store.o 
 

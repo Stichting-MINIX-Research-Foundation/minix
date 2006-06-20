@@ -14,7 +14,7 @@ CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
 UTIL_LIBS = -lsys 
-LIBS = -lsys -lsysutil 
+LIBS =  -lsysutil  -lsys
 
 UTIL_OBJ = service.o
 OBJ = exec.o main.o manager.o 

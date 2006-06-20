@@ -13,7 +13,7 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i 
-LIBS = -lsys -lsysutil -ltimers
+LIBS = -lsysutil -lsys -ltimers
 
 OBJ = fxp.o mii.o
 
