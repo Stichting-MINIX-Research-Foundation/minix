@@ -173,6 +173,7 @@ _PROTOTYPE( int do_setalarm, (message *m_ptr) );
 #define do_setalarm do_unused
 #endif
 
+_PROTOTYPE( int do_safecopy, (message *m_ptr) );	
 _PROTOTYPE( int do_iopenable, (message *m_ptr) );	
 
 #endif	/* SYSTEM_H */
