@@ -23,7 +23,8 @@ struct logdevice {
 		log_iosize,
 		log_revive_alerted,
 		log_status;	/* proc that is blocking on read */
-	vir_bytes log_user_vir;
+	vir_bytes log_user_vir_g, log_user_vir_offset;
+	int log_safe;
 #endif
 	int	log_selected, log_select_proc,
 		log_select_alerted, log_select_ready_ops;
@@ -32,6 +33,6 @@ struct logdevice {
 /* Function prototypes. */
 _PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( int do_new_kmess, (message *m)				);
-_PROTOTYPE( int do_diagnostics, (message *m)				);
+_PROTOTYPE( int do_diagnostics, (message *m, int safe)			);
 _PROTOTYPE( void log_append, (char *buf, int len)				);
 

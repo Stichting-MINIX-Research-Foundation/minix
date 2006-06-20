@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <minix/type.h>
+#include <minix/safecopies.h>
 
 #include "log.h"
 #include "../../kernel/const.h"
@@ -83,33 +85,33 @@ message *m;					/* notification message */
 /*===========================================================================*
  *				do_diagnostics				     *
  *===========================================================================*/
-PUBLIC int do_diagnostics(message *m)
+PUBLIC int do_diagnostics(message *m, int safe)
 {
 /* The LOG server handles all diagnostic messages from servers and device 
  * drivers. It forwards the message to the TTY driver to display it to the
  * user. It also saves a copy in a local buffer so that messages can be 
  * reviewed at a later time.
  */
-  int proc_nr_e; 
   vir_bytes src;
   int count;
   char c;
-  int i = 0;
+  int i = 0, offset = 0;
   static char diagbuf[10240];
 
-  /* Change SELF to actual process number. */
-  if ((proc_nr_e = m->DIAG_ENDPT) == SELF)
-      m->DIAG_ENDPT = proc_nr_e = m->m_source;
-
-  /* Now also make a copy for the private buffer at the LOG server, so
+  /* Also make a copy for the private buffer at the LOG server, so
    * that the messages can be reviewed at a later time.
    */
-  src = (vir_bytes) m->DIAG_PRINT_BUF;
+  src = (vir_bytes) m->DIAG_PRINT_BUF_G;
   count = m->DIAG_BUF_COUNT; 
   while (count > 0 && i < sizeof(diagbuf)-1) {
-      if (sys_datacopy(proc_nr_e, src, SELF, (vir_bytes) &c, 1) != OK) 
-          break;		/* stop copying on error */
-      src ++;
+      int r;
+      if(safe) {
+        r = sys_safecopyfrom(m->m_source, src, offset, (vir_bytes) &c, 1, D);
+      } else {
+        r = sys_datacopy(m->m_source, src+offset, SELF, (vir_bytes) &c, 1);
+      }
+      if(r != OK) break;
+      offset ++;
       count --;
       diagbuf[i++] = c;
   }
