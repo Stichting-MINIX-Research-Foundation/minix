@@ -20,11 +20,12 @@
 #include <time.h>
 #include <ibm/cmos.h>
 #include <ibm/bios.h>
+#include <minix/safecopies.h>
 
 extern int errno;			/* error number for PM calls */
 
-FORWARD _PROTOTYPE( int gettime, (int who, int y2kflag, vir_bytes dst_time));
-FORWARD _PROTOTYPE( void reply, (int reply, int replyee, int proc, int s));
+FORWARD _PROTOTYPE( int gettime, (int who, int y2kflag, vir_bytes dst_time, int safe));
+FORWARD _PROTOTYPE( void reply, (int reply, int replyee, int proc, cp_grant_id_t, int s));
 
 FORWARD _PROTOTYPE( int read_register, (int register_address));
 FORWARD _PROTOTYPE( int get_cmostime, (struct tm *tmp, int y2kflag));
@@ -40,9 +41,11 @@ PUBLIC void main(void)
   int y2kflag;
   int result;
   int suspended = NONE;
+  cp_grant_id_t susp_grant = GRANT_INVALID;
   int s;
 
   while(TRUE) {
+      int safe = 0;
 
       /* Get work. */
       if (OK != (s=receive(ANY, &m)))
@@ -54,12 +57,15 @@ PUBLIC void main(void)
       case DEV_OPEN:
       case DEV_CLOSE:
       case CANCEL:
-          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, OK);
+          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, GRANT_INVALID, OK);
           break;
 
       case DEV_PING:
 	  notify(m.m_source);
 	  break;
+      case DEV_IOCTL_S:				
+	  safe=1;
+	  /* Fall through. */
       case DEV_IOCTL:				
 
 	  /* Probably best to SUSPEND the caller, CMOS I/O has nasty timeouts. 
@@ -68,17 +74,18 @@ PUBLIC void main(void)
            * requests at a time. 
            */
           if (suspended != NONE) {
-              reply(TASK_REPLY, m.m_source, m.IO_ENDPT, EBUSY);
+              reply(TASK_REPLY, m.m_source, m.IO_ENDPT, GRANT_INVALID, EBUSY);
               break;
           }
           suspended = m.IO_ENDPT;
-          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, SUSPEND);
+	  susp_grant = (cp_grant_id_t) m.IO_GRANT;
+          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, susp_grant, SUSPEND);
 
 	  switch(m.REQUEST) {
 	  case CIOCGETTIME:			/* get CMOS time */ 
           case CIOCGETTIMEY2K:
-              y2kflag = (m.REQUEST = CIOCGETTIME) ? 0 : 1;
-              result = gettime(m.IO_ENDPT, y2kflag, (vir_bytes) m.ADDRESS);
+              y2kflag = (m.REQUEST == CIOCGETTIME) ? 0 : 1;
+              result = gettime(m.IO_ENDPT, y2kflag, (vir_bytes) m.ADDRESS, safe);
               break;
           case CIOCSETTIME:
           case CIOCSETTIMEY2K:
@@ -96,9 +103,9 @@ PUBLIC void main(void)
            * processes and return the status of reading the CMOS.
            */
 	  if (suspended == NONE)
-              reply(DEV_NO_STATUS, m.m_source, NONE, OK);
+              reply(DEV_NO_STATUS, m.m_source, NONE, GRANT_INVALID, OK);
           else 
-              reply(DEV_REVIVE, m.m_source, suspended, result);
+              reply(DEV_REVIVE, m.m_source, suspended, susp_grant, result);
           suspended = NONE;
           break;
 
@@ -107,7 +114,7 @@ PUBLIC void main(void)
           continue;		
 
       default:
-          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, EINVAL);
+          reply(TASK_REPLY, m.m_source, m.IO_ENDPT, GRANT_INVALID, EINVAL);
       }	
   }
 }
@@ -115,7 +122,7 @@ PUBLIC void main(void)
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(int code, int replyee, int process, int status)
+PRIVATE void reply(int code, int replyee, int process, cp_grant_id_t grantid, int status)
 {
   message m;
   int s;
@@ -123,6 +130,7 @@ PRIVATE void reply(int code, int replyee, int process, int status)
   m.m_type = code;		/* TASK_REPLY or REVIVE */
   m.REP_STATUS = status;	/* result of device operation */
   m.REP_ENDPT = process;	/* which user made the request */
+  m.REP_IO_GRANT = grantid;	/* I/O grant on which to unSUSPEND */
   if (OK != (s=send(replyee, &m)))
       panic("CMOS", "sending reply failed", s);
 }
@@ -130,7 +138,7 @@ PRIVATE void reply(int code, int replyee, int process, int status)
 /*===========================================================================*
  *				gettime					     *
  *===========================================================================*/
-PRIVATE int gettime(int who, int y2kflag, vir_bytes dst_time)
+PRIVATE int gettime(int who, int y2kflag, vir_bytes dst_time, int safe)
 {
   unsigned char mach_id, cmos_state;
   struct tm time1;
@@ -166,8 +174,15 @@ PRIVATE int gettime(int who, int y2kflag, vir_bytes dst_time)
    */
   if (get_cmostime(&time1, y2kflag) != 0)
 	return(EFAULT);
-  sys_datacopy(SELF, (vir_bytes) &time1, 
+
+  /* Copy result back, safely or not. */
+  if(safe) {
+    sys_safecopyto(who, dst_time, 0, (vir_bytes) &time1, 
+      sizeof(struct tm), D);
+  } else {
+    sys_datacopy(SELF, (vir_bytes) &time1, 
   	who, dst_time, sizeof(struct tm));
+  }
 
   return(OK);
 }

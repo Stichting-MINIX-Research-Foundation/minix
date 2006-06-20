@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lsysutil
+LIBS = -lsysutil -lsys
 
 OBJ = cmos.o 
 LIBDRIVER = $d/libdriver/driver.o
