@@ -347,15 +347,15 @@ FORWARD _PROTOTYPE( char *w_name, (void) 				);
 FORWARD _PROTOTYPE( int w_specify, (void) 				);
 FORWARD _PROTOTYPE( int w_io_test, (void) 				);
 FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) 	);
+				iovec_t *iov, unsigned nr_req, int safe));
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
 FORWARD _PROTOTYPE( int com_out_ext, (struct command *cmd)		);
 FORWARD _PROTOTYPE( void setup_dma, (unsigned *sizep, int proc_nr,
-			iovec_t *iov, int do_write, int *do_copyoutp)	);
+		iovec_t *iov, int do_write, int *do_copyoutp, int safe)	);
 FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
 FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) 			);
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
-FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr) 	);
+FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr, int));
 FORWARD _PROTOTYPE( int w_hw_int, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( int com_simple, (struct command *cmd) 		);
 FORWARD _PROTOTYPE( void w_timeout, (void) 				);
@@ -371,7 +371,7 @@ FORWARD _PROTOTYPE( int atapi_intr_wait, (void) 			);
 FORWARD _PROTOTYPE( int atapi_open, (void) 				);
 FORWARD _PROTOTYPE( void atapi_close, (void) 				);
 FORWARD _PROTOTYPE( int atapi_transfer, (int proc_nr, int opcode,
-			off_t position, iovec_t *iov, unsigned nr_req) 	);
+		off_t position, iovec_t *iov, unsigned nr_req, int safe));
 #endif
 
 /* Entry points to this driver. */
@@ -1045,7 +1045,7 @@ PRIVATE int w_io_test(void)
  	if (w_prepare(w_drive * DEV_PER_DRIVE) == NIL_DEV)
  		panic(w_name(), "Couldn't switch devices", NO_NUM);
 
-	r = w_transfer(SELF, DEV_GATHER, 0, &iov, 1);
+	r = w_transfer(SELF, DEV_GATHER, 0, &iov, 1, 0);
 
 	/* Switch back. */
  	if (w_prepare(save_dev) == NIL_DEV)
@@ -1185,12 +1185,13 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
 /*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
-PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req)
+PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
 off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
+int safe;			/* iov contains addresses (0) or grants? */
 {
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
@@ -1199,14 +1200,13 @@ unsigned nr_req;		/* length of request vector */
   unsigned long dv_size = cv64ul(w_dv->dv_size);
   unsigned cylinder, head, sector, nbytes;
   unsigned dma_buf_offset;
+  size_t addr_offset = 0;
 
 #if ENABLE_ATAPI
   if (w_wn->state & ATAPI) {
-	return atapi_transfer(proc_nr, opcode, position, iov, nr_req);
+	return atapi_transfer(proc_nr, opcode, position, iov, nr_req, safe);
   }
 #endif
-
-  
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
@@ -1237,7 +1237,7 @@ unsigned nr_req;		/* length of request vector */
 
 	if (do_dma)
 	{
-		setup_dma(&nbytes, proc_nr, iov, do_write, &do_copyout);
+		setup_dma(&nbytes, proc_nr, iov, do_write, &do_copyout, safe);
 #if 0
 		printf("nbytes = %d\n", nbytes);
 #endif
@@ -1314,9 +1314,16 @@ unsigned nr_req;		/* length of request vector */
 
 			if (do_copyout)
 			{
-				s= sys_vircopy(SELF, D,
+				if(safe) {
+				   s= sys_safecopyto(proc_nr, iov->iov_addr,
+					addr_offset,
+					(vir_bytes)dma_buf+dma_buf_offset, n, D);
+				} else {
+				   s= sys_vircopy(SELF, D,
 					(vir_bytes)dma_buf+dma_buf_offset, 
-					proc_nr, D, iov->iov_addr, n);
+					proc_nr, D,
+					iov->iov_addr + addr_offset, n);
+				}
 				if (s != OK)
 				{
 					panic(w_name(),
@@ -1328,9 +1335,9 @@ unsigned nr_req;		/* length of request vector */
 			/* Book the bytes successfully transferred. */
 			nbytes -= n;
 			position += n;
-			iov->iov_addr += n;
-			if ((iov->iov_size -= n) == 0)
-				{ iov++; nr_req--; }
+			if ((iov->iov_size -= n) == 0) {
+				iov++; nr_req--; addr_offset = 0;
+			}
 			dma_buf_offset += n;
 		}
 	}
@@ -1367,18 +1374,33 @@ unsigned nr_req;		/* length of request vector */
 
 		/* Copy bytes to or from the device's buffer. */
 		if (opcode == DEV_GATHER) {
-			if ((s=sys_insw(wn->base_cmd + REG_DATA, proc_nr, 
-				(void *) iov->iov_addr, SECTOR_SIZE)) != OK)
-			{
-				panic(w_name(),"Call to sys_insw() failed", s);
-			}
+		   if(safe) {
+			s=sys_safe_insw(wn->base_cmd + REG_DATA, proc_nr, 
+				(void *) (iov->iov_addr), addr_offset,
+					SECTOR_SIZE);
+		   } else {
+			s=sys_insw(wn->base_cmd + REG_DATA, proc_nr, 
+				(void *) (iov->iov_addr + addr_offset),
+					SECTOR_SIZE);
+		   }
+		   if(s != OK) {
+			panic(w_name(),"Call to sys_insw() failed", s);
+		   }
 		} else {
-			if ((s=sys_outsw(wn->base_cmd + REG_DATA, proc_nr,
-				(void *) iov->iov_addr, SECTOR_SIZE)) != OK)
-			{
-				panic(w_name(),"Call to sys_outsw() failed",
-					s);
-			}
+		   if(safe) {
+			s=sys_safe_outsw(wn->base_cmd + REG_DATA, proc_nr,
+				(void *) (iov->iov_addr), addr_offset,
+				SECTOR_SIZE);
+		   } else {
+			s=sys_outsw(wn->base_cmd + REG_DATA, proc_nr,
+				(void *) (iov->iov_addr + addr_offset),
+				SECTOR_SIZE);
+		   }
+
+		   if(s != OK) {
+		  	panic(w_name(),"Call to sys_outsw() failed",
+			  	s);
+		   }
 
 			/* Data sent, wait for an interrupt. */
 			if ((r = at_intr_wait()) != OK) break;
@@ -1387,8 +1409,12 @@ unsigned nr_req;		/* length of request vector */
 		/* Book the bytes successfully transferred. */
 		nbytes -= SECTOR_SIZE;
 		position += SECTOR_SIZE;
-		iov->iov_addr += SECTOR_SIZE;
-		if ((iov->iov_size -= SECTOR_SIZE) == 0) { iov++; nr_req--; }
+		addr_offset += SECTOR_SIZE;
+		if ((iov->iov_size -= SECTOR_SIZE) == 0) {
+			iov++;
+			nr_req--;
+			addr_offset = 0;
+		}
 	}
 
 	/* Any errors? */
@@ -1518,12 +1544,13 @@ struct command *cmd;		/* Command block */
 /*===========================================================================*
  *				setup_dma				     *
  *===========================================================================*/
-PRIVATE void setup_dma(sizep, proc_nr, iov, do_write, do_copyoutp)
+PRIVATE void setup_dma(sizep, proc_nr, iov, do_write, do_copyoutp, safe)
 unsigned *sizep;
 int proc_nr;
 iovec_t *iov;
 int do_write;
 int *do_copyoutp;
+int safe;
 {
 	phys_bytes phys, user_phys;
 	unsigned n, offset, size;
@@ -1555,7 +1582,12 @@ int *do_copyoutp;
 			n= size;
 		if (n == 0 || (n & 1))
 			panic("at_wini", "bad size in iov", iov[i].iov_size);
-		r= sys_umap(proc_nr, D, iov[i].iov_addr+offset, n, &user_phys);
+		if(safe) {
+		 r= sys_umap(proc_nr, GRANT_SEG, iov[i].iov_addr, n,&user_phys);
+		 user_phys += offset;
+		} else {
+		 r= sys_umap(proc_nr, D, iov[i].iov_addr+offset, n, &user_phys);
+		}
 		if (r != 0)
 			panic("at_wini", "can't map user buffer", r);
 		if (user_phys & 1)
@@ -1635,9 +1667,14 @@ int *do_copyoutp;
 				if (n > iov->iov_size)
 					n= iov->iov_size;
 			
-				r= sys_vircopy(proc_nr, D, iov->iov_addr,
+				if(safe) {
+				  r= sys_safecopyfrom(proc_nr, iov->iov_addr,
+					0, (vir_bytes)dma_buf+offset, n, D);
+				} else {
+				  r= sys_vircopy(proc_nr, D, iov->iov_addr,
 					SELF, D, (vir_bytes)dma_buf+offset, 
 					n);
+				}
 				if (r != OK)
 				{
 					panic(w_name(),
@@ -2069,12 +2106,13 @@ void sense_request(void)
 /*===========================================================================*
  *				atapi_transfer				     *
  *===========================================================================*/
-PRIVATE int atapi_transfer(proc_nr, opcode, position, iov, nr_req)
+PRIVATE int atapi_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
 off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
+int safe;			/* use safecopies? */
 {
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
@@ -2084,6 +2122,7 @@ unsigned nr_req;		/* length of request vector */
   unsigned long dv_size = cv64ul(w_dv->dv_size);
   unsigned nbytes, nblocks, count, before, chunk;
   static u8_t packet[ATAPI_PACKETSIZE];
+  size_t addr_offset = 0;
 
   errors = fresh = 0;
 
@@ -2161,17 +2200,25 @@ unsigned nr_req;		/* length of request vector */
 			chunk = nbytes;
 			if (chunk > count) chunk = count;
 			if (chunk > iov->iov_size) chunk = iov->iov_size;
-	if ((s=sys_insw(wn->base_cmd + REG_DATA, proc_nr, (void *) iov->iov_addr, chunk)) != OK)
-		panic(w_name(),"Call to sys_insw() failed", s);
+			if(safe) {
+				s=sys_safe_insw(wn->base_cmd + REG_DATA, proc_nr,
+					(void *) iov->iov_addr, addr_offset, chunk);
+			} else {
+				s=sys_insw(wn->base_cmd + REG_DATA, proc_nr,
+					(void *) (iov->iov_addr + addr_offset), chunk);
+			}
+			if (s != OK)
+				panic(w_name(),"Call to sys_insw() failed", s);
 			position += chunk;
 			nbytes -= chunk;
 			count -= chunk;
-			iov->iov_addr += chunk;
+			addr_offset += chunk;
 			fresh = 0;
 			if ((iov->iov_size -= chunk) == 0) {
 				iov++;
 				nr_req--;
 				fresh = 1;	/* new element is optional */
+				addr_offset = 0;
 			}
 		}
 
@@ -2273,20 +2320,28 @@ unsigned cnt;
 /*===========================================================================*
  *				w_other					     *
  *===========================================================================*/
-PRIVATE int w_other(dr, m)
+PRIVATE int w_other(dr, m, safe)
 struct driver *dr;
 message *m;
+int safe;
 {
 	int r, timeout, prev;
 
-	if (m->m_type != DEV_IOCTL ) {
+	if (m->m_type != DEV_IOCTL && m->m_type != DEV_IOCTL_S ) {
 		return EINVAL;
 	}
 
 	if (m->REQUEST == DIOCTIMEOUT) {
-		if ((r=sys_datacopy(m->IO_ENDPT, (vir_bytes)m->ADDRESS,
-			SELF, (vir_bytes)&timeout, sizeof(timeout))) != OK)
-			return r;
+		if(safe) {
+		  r= sys_safecopyfrom(m->IO_ENDPT, (vir_bytes) m->IO_GRANT,
+			0, (vir_bytes)&timeout, sizeof(timeout), D);
+		} else {
+		  r= sys_datacopy(m->IO_ENDPT, (vir_bytes)m->ADDRESS,
+			SELF, (vir_bytes)&timeout, sizeof(timeout));
+		}
+
+		if(r != OK)
+		    return r;
 	
 		if (timeout == 0) {
 			/* Restore defaults. */
@@ -2311,8 +2366,17 @@ message *m;
 					timeout_ticks = timeout;
 			}
 	
-			if ((r=sys_datacopy(SELF, (vir_bytes)&prev, 
-				m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(prev))) != OK)
+			if(safe) {
+		  	   r= sys_safecopyto(m->IO_ENDPT,
+				(vir_bytes) m->IO_GRANT,
+				0, (vir_bytes)&prev, sizeof(prev), D);
+			} else {
+			   r=sys_datacopy(SELF, (vir_bytes)&prev, 
+				m->IO_ENDPT, (vir_bytes)m->ADDRESS,
+				sizeof(prev));
+			}
+
+			if(r != OK)
 				return r;
 		}
 	
@@ -2321,9 +2385,17 @@ message *m;
 		int count;
 		if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
 		count = w_wn->open_ct;
-		if ((r=sys_datacopy(SELF, (vir_bytes)&count, 
-			m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
+		if(safe) {
+		    r= sys_safecopyto(m->IO_ENDPT, (vir_bytes) m->IO_GRANT,
+			0, (vir_bytes)&count, sizeof(count), D);
+		} else {
+		    r=sys_datacopy(SELF, (vir_bytes)&count, 
+			m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(count));
+		} 
+
+		if(r != OK)
 			return r;
+
 		return OK;
 	}
 	return EINVAL;
