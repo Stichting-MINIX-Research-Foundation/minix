@@ -3,6 +3,7 @@
 #define _MINIX 1		/* for proto of the non-POSIX umount() */
 #define _POSIX_SOURCE 1		/* for PATH_MAX from limits.h */
 
+#include <minix/type.h>
 #include <sys/types.h>
 #include <sys/svrctl.h>
 #include <fcntl.h>
