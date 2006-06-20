@@ -45,7 +45,7 @@ static int block_size = 0;
 /* Data about the different processes. */
 
 #define PROCESS_MAX	16	/* Must match the space in kernel/mpx.x */
-#define KERNEL		0	/* The first process is the kernel. */
+#define KERNEL_IDX	0	/* The first process is the kernel. */
 #define FS		2	/* The third must be fs. */
 
 struct process {	/* Per-process memory adresses. */
@@ -194,7 +194,7 @@ void patch_sizes(void)
 
 	/* Patch text and data sizes of the processes into kernel data space.
 	 */
-	doff= process[KERNEL].data + P_SIZ_OFF;
+	doff= process[KERNEL_IDX].data + P_SIZ_OFF;
 
 	for (i= 0; i < n_procs; i++) {
 		procp= &process[i];
@@ -445,7 +445,7 @@ void exec_image(char *image)
 		}
 
 		/* Get the click shift from the kernel text segment. */
-		if (i == KERNEL) {
+		if (i == KERNEL_IDX) {
 			if (!get_clickshift(vsec, &hdr)) return;
 			addr= align(addr, click_size);
 		}
@@ -504,7 +504,7 @@ void exec_image(char *image)
 		if (!get_segment(&vsec, &a_data, &addr, limit)) return;
 
 		/* Make space for bss and stack unless... */
-		if (i != KERNEL && (k_flags & K_CLAIM)) a_bss= a_stack= 0;
+		if (i != KERNEL_IDX && (k_flags & K_CLAIM)) a_bss= a_stack= 0;
 
 		printf("%07lx  %07lx %8ld %8ld %8ld",
 			procp->cs, procp->ds,
@@ -554,7 +554,7 @@ void exec_image(char *image)
 	}
 
 	/* Check the kernel magic number. */
-	if (get_word(process[KERNEL].data + MAGIC_OFF) != KERNEL_D_MAGIC) {
+	if (get_word(process[KERNEL_IDX].data + MAGIC_OFF) != KERNEL_D_MAGIC) {
 		printf("Kernel magic number is incorrect\n");
 		errno= 0;
 		return;
@@ -592,8 +592,8 @@ void exec_image(char *image)
 	(void) dev_close();
 
 	/* Minix. */
-	minix(process[KERNEL].entry, process[KERNEL].cs,
-			process[KERNEL].ds, params, sizeof(params), aout);
+	minix(process[KERNEL_IDX].entry, process[KERNEL_IDX].cs,
+			process[KERNEL_IDX].ds, params, sizeof(params), aout);
 
 	if (!(k_flags & K_BRET)) {
 		extern u32_t reboot_code;
