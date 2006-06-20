@@ -17,6 +17,7 @@
  *   umap_local:	map virtual address in LOCAL_SEG to physical 
  *   umap_remote:	map virtual address in REMOTE_SEG to physical 
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
+ *   umap_grant:        map grant number in a process to physical
  *   virtual_copy:	copy bytes from one virtual address to another 
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
@@ -37,6 +38,7 @@
 #include <unistd.h>
 #include <sys/sigcontext.h>
 #include <minix/endpoint.h>
+#include <minix/safecopies.h>
 #if (CHIP == INTEL)
 #include <ibm/memory.h>
 #include "protect.h"
@@ -65,8 +67,8 @@ PUBLIC void sys_task()
   static message m;
   register int result;
   register struct proc *caller_ptr;
-  unsigned int call_nr;
   int s;
+  int call_nr;
 
   /* Initialize the system task. */
   initialize();
@@ -74,25 +76,29 @@ PUBLIC void sys_task()
   while (TRUE) {
       /* Get work. Block and wait until a request message arrives. */
       receive(ANY, &m);			
-      call_nr = (unsigned) m.m_type - KERNEL_CALL;	
+      sys_call_code = (unsigned) m.m_type;
+      call_nr = sys_call_code - KERNEL_CALL;	
       who_e = m.m_source;
       okendpt(who_e, &who_p);
       caller_ptr = proc_addr(who_p);
 
       /* See if the caller made a valid request and try to handle it. */
-      if (! (priv(caller_ptr)->s_call_mask & (1<<call_nr))) {
+      if (!GET_BIT(priv(caller_ptr)->s_k_call_mask, call_nr)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("SYSTEM: request %d from %d denied.\n", call_nr,m.m_source);
+	  kprintf("SYSTEM: request %d from %d denied.\n",
+		call_nr,m.m_source);
 #endif
 	  result = ECALLDENIED;			/* illegal message type */
-      } else if (call_nr >= NR_SYS_CALLS) {		/* check call number */
+      } /* else */
+      if (call_nr >= NR_SYS_CALLS) {		/* check call number */
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("SYSTEM: illegal request %d from %d.\n", call_nr,m.m_source);
+	  kprintf("SYSTEM: illegal request %d from %d.\n",
+		call_nr,m.m_source);
 #endif
 	  result = EBADREQUEST;			/* illegal message type */
       } 
       else {
-          result = (*call_vec[call_nr])(&m);	/* handle the system call */
+          result = (*call_vec[call_nr])(&m); /* handle the system call */
       }
 
       /* Send a reply, unless inhibited by a handler function. Use the kernel
@@ -170,6 +176,8 @@ PRIVATE void initialize(void)
   map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
   map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
+  map(SYS_SAFECOPYFROM, do_safecopy);	/* copy with pre-granted permission */
+  map(SYS_SAFECOPYTO, do_safecopy);	/* copy with pre-granted permission */
 
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */
@@ -386,6 +394,37 @@ vir_bytes bytes;		/* # of bytes to be copied */
 }
 
 /*===========================================================================*
+ *				umap_grant				     *
+ *===========================================================================*/
+PUBLIC phys_bytes umap_grant(rp, grant, bytes)
+struct proc *rp;		/* pointer to proc table entry for process */
+cp_grant_id_t grant;		/* grant no. */
+vir_bytes bytes;		/* size */
+{
+	int proc_nr;
+	vir_bytes offset;
+	endpoint_t granter;
+
+	/* See if the grant in that process is sensible, and
+	 * find out the virtual address and (optionally) new
+	 * process for that address.
+	 *
+	 * Then convert that process to a slot number.
+	 */
+	if(verify_grant(rp->p_endpoint, ANY, grant, bytes, 0, 0,
+		&offset, &granter) != OK) {
+		return 0;
+	}
+
+	if(!isokendpt(granter, &proc_nr)) { 
+		return 0;
+	}
+
+	/* Do the mapping from virtual to physical. */
+	return umap_local(proc_addr(proc_nr), D, offset, bytes);
+}
+
+/*===========================================================================*
  *				umap_remote				     *
  *===========================================================================*/
 PUBLIC phys_bytes umap_remote(rp, seg, vir_addr, bytes)
@@ -405,6 +444,37 @@ vir_bytes bytes;		/* # of bytes to be copied */
   if (vir_addr + bytes > fm->mem_len) return( (phys_bytes) 0);
 
   return(fm->mem_phys + (phys_bytes) vir_addr); 
+}
+
+/*===========================================================================*
+ *				umap_verify_grant			     *
+ *===========================================================================*/
+PUBLIC phys_bytes umap_verify_grant(rp, grantee, grant, offset, bytes, access)
+struct proc *rp;		/* pointer to proc table entry for process */
+endpoint_t grantee;		/* who wants to do this */
+cp_grant_id_t grant;		/* grant no. */
+vir_bytes offset;		/* offset into grant */
+vir_bytes bytes;		/* size */
+int access;			/* does grantee want to CPF_READ or _WRITE? */
+{
+	int proc_nr;
+	vir_bytes v_offset;
+	endpoint_t granter;
+
+	/* See if the grant in that process is sensible, and
+	 * find out the virtual address and (optionally) new
+	 * process for that address.
+	 *
+	 * Then convert that process to a slot number.
+	 */
+	if(verify_grant(rp->p_endpoint, grantee, grant, bytes, access, offset,
+		&v_offset, &granter) != OK
+	   || !isokendpt(granter, &proc_nr)) {
+		return 0;
+	}
+
+	/* Do the mapping from virtual to physical. */
+	return umap_local(proc_addr(proc_nr), D, v_offset, bytes);
 }
 
 /*===========================================================================*
@@ -458,6 +528,9 @@ vir_bytes bytes;		/* # of bytes to copy  */
       case PHYS_SEG:
           phys_addr[i] = vir_addr[i]->offset;
           break;
+      case GRANT_SEG:
+	  phys_addr[i] = umap_grant(p, vir_addr[i]->offset, bytes);
+	  break;
       default:
           return(EINVAL);
       }
