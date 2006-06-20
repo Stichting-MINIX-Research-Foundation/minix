@@ -263,7 +263,7 @@ U16_t seg;
   phys_bytes base;
   struct segdesc_s *segdp;
 
-  if (! machine.protected) {
+  if (! machine.prot) {
 	base = hclick_to_physb(seg);
   } else {
 	segdp = &gdt[seg >> 3];
@@ -286,7 +286,7 @@ phys_bytes phys;
  * address, for use by a driver doing memory I/O in the A0000 - DFFFF range.
  */
 #if _WORD_SIZE == 2
-  if (! machine.protected) {
+  if (! machine.prot) {
 	*seg = phys / HCLICK_SIZE;
 	*off = phys % HCLICK_SIZE;
   } else {
@@ -350,7 +350,7 @@ register struct proc *rp;
   phys_bytes data_bytes;
   int privilege;
 
-  if (machine.protected) {
+  if (machine.prot) {
       data_bytes = (phys_bytes) (rp->p_memmap[S].mem_vir + 
           rp->p_memmap[S].mem_len) << CLICK_SHIFT;
       if (rp->p_memmap[T].mem_len == 0)
