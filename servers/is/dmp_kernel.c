@@ -292,7 +292,7 @@ PUBLIC void kenv_dmp()
     printf("- pc_at:      %3d\n", machine.pc_at); 
     printf("- ps_mca:     %3d\n", machine.ps_mca); 
     printf("- processor:  %3d\n", machine.processor); 
-    printf("- protected:  %3d\n", machine.protected); 
+    printf("- protected:  %3d\n", machine.prot); 
     printf("- vdu_ega:    %3d\n", machine.vdu_ega); 
     printf("- vdu_vga:    %3d\n\n", machine.vdu_vga); 
     printf("Kernel info structure:\n");
@@ -366,7 +366,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- -ipc_to mask------------------------ \n");
+  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to mask- ----------------- \n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -380,17 +380,17 @@ PUBLIC void privileges_dmp()
         if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
 	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s %s   %s  ",
+	printf("(%02u) %-7.7s %s   %s %7d ",
 	       sp->s_id, rp->p_name,
-	       s_flags_str(sp->s_flags), s_traps_str(sp->s_trap_mask) 
-        );
+	       s_flags_str(sp->s_flags), s_traps_str(sp->s_trap_mask),
+		sp->s_grant_entries);
         for (i=j=0; i < NR_SYS_PROCS; i++, j++) {
        	    ipc_to[j] = get_sys_bit(sp->s_ipc_to, i) ? '1' : '0';
        	    if (i % 8 == 7) ipc_to[++j] = ' ';
        	}
         ipc_to[j] = '\0';
 
-	printf(" %s \n", ipc_to);
+	printf(" %s\n", ipc_to);
   }
   if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
   oldrp = rp;
