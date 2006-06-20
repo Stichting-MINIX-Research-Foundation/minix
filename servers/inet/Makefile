@@ -8,7 +8,7 @@ CC =		cc
 CPPFLAGS =	-I. -D_MINIX
 CFLAGS =	$(OPT) $(CPPFLAGS)
 LDFLAGS =
-LIBS =		-lsys -lsysutil
+LIBS =		 -lsysutil -lsys
 
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<

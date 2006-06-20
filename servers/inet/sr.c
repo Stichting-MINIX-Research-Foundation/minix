@@ -60,7 +60,7 @@
 
 #ifndef __minix_vmd /* Minix 3 */
 #define DEV_CANCEL NW_CANCEL
-#define DEVICE_REPLY REVIVE
+#define DEVICE_REPLY 67	/* old REVIVE */
 #define DEV_IOCTL3 DEV_IOCTL
 #define NDEV_BUFFER ADDRESS
 #define NDEV_COUNT COUNT
