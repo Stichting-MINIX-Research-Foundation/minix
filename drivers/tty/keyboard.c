@@ -110,7 +110,9 @@ PRIVATE struct kbd
 	int avail;
 	int req_size;
 	int req_proc;
-	vir_bytes req_addr;
+	int req_safe;		/* nonzero: safe (req_addr_g is grant) */
+	vir_bytes req_addr_g;	/* Virtual address or grant */
+	vir_bytes req_addr_offset;
 	int incaller;
 	int select_ops;
 	int select_proc;
@@ -188,7 +190,7 @@ PRIVATE void handle_req(kbdp, m)
 struct kbd *kbdp;
 message *m;
 {
-	int i, n, r, ops, watch;
+	int i, n, r, ops, watch, safecopy = 0;
 	unsigned char c;
 
 	/* Execute the requested device driver function. */
@@ -209,6 +211,9 @@ message *m;
 			kbdp->avail= 0;
 		r= OK;
 		break;
+	    case DEV_READ_S:
+	        safecopy = 1;
+		/* Fallthrough. */
 	    case DEV_READ:	 
 		if (kbdp->req_size)
 		{
@@ -221,7 +226,9 @@ message *m;
 			/* Should record proc */
 			kbdp->req_size= m->COUNT;
 			kbdp->req_proc= m->IO_ENDPT;
-			kbdp->req_addr= (vir_bytes)m->ADDRESS;
+			kbdp->req_addr_g= (vir_bytes)m->ADDRESS;
+			kbdp->req_addr_offset= 0;
+			kbdp->req_safe= safecopy;
 			kbdp->incaller= m->m_source;
 			r= SUSPEND;
 			break;
@@ -235,17 +242,27 @@ message *m;
 			n= KBD_BUFSZ-kbdp->offset;
 		if (n <= 0)
 			panic("TTY", "do_kbd(READ): bad n", n);
-		r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
+		if(safecopy) {
+		  r= sys_safecopyto(m->IO_ENDPT, (vir_bytes) m->ADDRESS, 0, 
+			(vir_bytes) &kbdp->buf[kbdp->offset], n, D);
+		} else {
+		  r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
 			m->IO_ENDPT, D, (vir_bytes) m->ADDRESS, n);
+		}
 		if (r == OK)
 		{
 			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
 			kbdp->avail -= n;
 			r= n;
+		} else {
+			printf("copy in read kbd failed: %d\n", r);
 		}
 
 		break;
 
+	    case DEV_WRITE_S:
+	        safecopy = 1;
+		/* Fallthrough. */
 	    case DEV_WRITE:
 		if (kbdp != &kbdaux)
 		{
@@ -260,8 +277,14 @@ message *m;
 		 */
 		for (i= 0; i<m->COUNT; i++)
 		{
-			r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS+i,
+			if(safecopy) {
+		  	  r= sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)
+				m->ADDRESS, i, (vir_bytes)&c, 1, D);
+			} else {
+			  r= sys_vircopy(m->IO_ENDPT, D,
+				(vir_bytes) m->ADDRESS+i,
 				SELF, D, (vir_bytes)&c, 1);
+			}
 			if (r != OK)
 				break;
 			kbc_cmd1(KBC_WRITE_AUX, c);
@@ -290,14 +313,24 @@ message *m;
 			kbdp->select_proc= m->m_source;
 		}
 		break;
+	    case DEV_IOCTL_S:
+		 safecopy=1;
+		 /* Fallthrough. */
 	    case DEV_IOCTL:
 		if (kbdp == &kbd && m->TTY_REQUEST == KIOCSLEDS)
 		{
 			kio_leds_t leds;
 			unsigned char b;
 
-			r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
+			
+			if(safecopy) {
+		  	  r= sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)
+				m->ADDRESS, 0, (vir_bytes)&leds,
+				sizeof(leds), D);
+			} else {
+			 r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
 				SELF, D, (vir_bytes)&leds, sizeof(leds));
+			}
 			if (r != OK)
 				break;
 			b= 0;
@@ -330,8 +363,14 @@ message *m;
 			kio_bell_t bell;
 			clock_t ticks;
 
-			r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
+			if(safecopy) {
+		  	  r= sys_safecopyfrom(m->IO_ENDPT, (vir_bytes)
+				m->ADDRESS, 0, (vir_bytes)&bell,
+				sizeof(bell), D);
+			} else {
+			  r= sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
 				SELF, D, (vir_bytes)&bell, sizeof(bell));
+			}
 			if (r != OK)
 				break;
 
@@ -376,17 +415,23 @@ message *m;
 		if (n <= 0)
 			panic("TTY", "kbd_status: bad n", n);
 		kbdp->req_size= 0;
-		r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
-			kbdp->req_proc, D, kbdp->req_addr, n);
+		if(kbdp->req_safe) {
+		  r= sys_safecopyto(kbdp->req_proc, kbdp->req_addr_g, 0,
+			(vir_bytes)&kbdp->buf[kbdp->offset], n, D);
+		} else {
+		  r= sys_vircopy(SELF, D, (vir_bytes)&kbdp->buf[kbdp->offset], 
+			kbdp->req_proc, D, kbdp->req_addr_g, n);
+		}
 		if (r == OK)
 		{
 			kbdp->offset= (kbdp->offset+n) % KBD_BUFSZ;
 			kbdp->avail -= n;
 			r= n;
-		}
+		} else printf("copy in revive kbd failed: %d\n", r);
 
 		m->m_type = DEV_REVIVE;
   		m->REP_ENDPT= kbdp->req_proc;
+  		m->REP_IO_GRANT= kbdp->req_addr_g;
   		m->REP_STATUS= r;
 		return 1;
 	}
@@ -472,15 +517,18 @@ message *m_ptr;
 	/* raw scan codes or aux data */
 	if (kbdp->avail >= KBD_BUFSZ)
 	{
+#if 0
 		printf("kbd_interrupt: %s buffer is full\n",
 			isaux ? "kbdaux" : "keyboard");
+#endif
 		return;	/* Buffer is full */
 	}
 	 o= (kbdp->offset + kbdp->avail) % KBD_BUFSZ;
 	 kbdp->buf[o]= scode;
 	 kbdp->avail++;
-	 if (kbdp->req_size)
+	 if (kbdp->req_size) {
 		notify(kbdp->incaller);
+	 }
 	 if (kbdp->select_ops & SEL_RD)
 		notify(kbdp->select_proc);
 	 return;
@@ -583,14 +631,18 @@ PRIVATE void kbd_send()
 	if (kbdout.expect_ack)
 		return;
 
-	sys_inb(KB_STATUS, &sb);
+	if((r=sys_inb(KB_STATUS, &sb)) != OK) {
+		printf("kbd_send: 1 sys_inb() failed: %d\n", r);
+	}
 	if (sb & (KB_OUT_FULL|KB_IN_FULL))
 	{
 		printf("not sending 1: sb = 0x%x\n", sb);
 		return;
 	}
 	micro_delay(KBC_IN_DELAY);
-	sys_inb(KB_STATUS, &sb);
+	if((r=sys_inb(KB_STATUS, &sb)) != OK) {
+		printf("kbd_send: 2 sys_inb() failed: %d\n", r);
+	}
 	if (sb & (KB_OUT_FULL|KB_IN_FULL))
 	{
 		printf("not sending 2: sb = 0x%x\n", sb);
@@ -601,7 +653,9 @@ PRIVATE void kbd_send()
 #if 0
 	printf("sending byte 0x%x to keyboard\n", kbdout.buf[kbdout.offset]);
 #endif
-	sys_outb(KEYBD, kbdout.buf[kbdout.offset]);
+	if((r=sys_outb(KEYBD, kbdout.buf[kbdout.offset])) != OK) {
+		printf("kbd_send: 3 sys_inb() failed: %d\n", r);
+	}
 	kbdout.offset++;
 	kbdout.avail--;
 	kbdout.expect_ack= 1;
@@ -734,7 +788,8 @@ PRIVATE void kbc_cmd0(cmd)
 int cmd;
 {
 	kb_wait();
-	sys_outb(KB_COMMAND, cmd);
+	if(sys_outb(KB_COMMAND, cmd) != OK)
+		printf("kbc_cmd0: sys_outb failed\n");
 }
 
 /*===========================================================================*
@@ -745,9 +800,11 @@ int cmd;
 int data;
 {
 	kb_wait();
-	sys_outb(KB_COMMAND, cmd);
+	if(sys_outb(KB_COMMAND, cmd) != OK)
+		printf("kbc_cmd1: 1 sys_outb failed\n");
 	kb_wait();
-	sys_outb(KEYBD, data);
+	if(sys_outb(KEYBD, data) != OK)
+		printf("kbc_cmd1: 2 sys_outb failed\n");
 }
 
 
@@ -775,11 +832,13 @@ PRIVATE int kbc_read()
 	do
 #endif
 	{
-		sys_inb(KB_STATUS, &st);
+		if(sys_inb(KB_STATUS, &st) != OK)
+			printf("kbc_read: 1 sys_inb failed\n");
 		if (st & KB_OUT_FULL)
 		{
 			micro_delay(KBC_IN_DELAY);
-			sys_inb(KEYBD, &byte);
+			if(sys_inb(KEYBD, &byte) != OK)
+				printf("kbc_read: 2 sys_inb failed\n");
 			if (st & KB_AUX_BYTE)
 			{
 #if DEBUG
@@ -819,6 +878,8 @@ PRIVATE int kb_wait()
   retries = MAX_KB_BUSY_RETRIES + 1;	/* wait until not busy */
   do {
       s = sys_inb(KB_STATUS, &status);
+      if(s != OK)
+	printf("kb_wait: sys_inb failed: %d\n", s);
       if (status & KB_OUT_FULL) {
 	  if (scan_keyboard(&byte, &isaux))
 	  {
@@ -847,6 +908,8 @@ PRIVATE int kb_ack()
   retries = MAX_KB_ACK_RETRIES + 1;
   do {
       s = sys_inb(KEYBD, &u8val);
+	if(s != OK)
+		printf("kb_ack: sys_inb failed: %d\n", s);
       if (u8val == KB_ACK)	
           break;		/* wait for ack */
   } while(--retries != 0);	/* continue unless timeout */
@@ -925,14 +988,20 @@ PUBLIC void kb_init_once(void)
 /*===========================================================================*
  *				kbd_loadmap				     *
  *===========================================================================*/
-PUBLIC int kbd_loadmap(m)
+PUBLIC int kbd_loadmap(m, safe)
 message *m;
+int safe;
 {
 /* Load a new keymap. */
   int result;
-  result = sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
+  if(safe) {
+    result = sys_safecopyfrom(m->IO_ENDPT, (vir_bytes) m->ADDRESS,
+  	0, (vir_bytes) keymap, (vir_bytes) sizeof(keymap), D);
+  } else {
+    result = sys_vircopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS,
   	SELF, D, (vir_bytes) keymap, 
   	(vir_bytes) sizeof(keymap));
+  }
   return(result);
 }
 
@@ -1137,30 +1206,35 @@ int *isauxp;
   
   byte_in[0].port = KEYBD;	/* get the scan code for the key struck */
   byte_in[1].port = PORT_B;	/* strobe the keyboard to ack the char */
-  sys_vinb(byte_in, 2);		/* request actual input */
+  if(sys_vinb(byte_in, 2) != OK)	/* request actual input */
+	printf("scan_keyboard: sys_vinb failed\n");
 
   pv_set(byte_out[0], PORT_B, byte_in[1].value | KBIT); /* strobe bit high */
   pv_set(byte_out[1], PORT_B, byte_in[1].value);	/* then strobe low */
-  sys_voutb(byte_out, 2);	/* request actual output */
+  if(sys_voutb(byte_out, 2) != OK)	/* request actual output */
+	printf("scan_keyboard: sys_voutb failed\n");
 
   return(byte_in[0].value);		/* return scan code */
 #else
   unsigned long b, sb;
 
-  sys_inb(KB_STATUS, &sb);
+  if(sys_inb(KB_STATUS, &sb) != OK)
+	printf("scan_keyboard: sys_inb failed\n");
+
   if (!(sb & KB_OUT_FULL))
   {
 	if (kbdout.avail && !kbdout.expect_ack)
 		kbd_send();
 	return 0;
   }
-  sys_inb(KEYBD, &b);
+  if(sys_inb(KEYBD, &b) != OK)
+	printf("scan_keyboard: 2 sys_inb failed\n");
 #if 0
   printf("got byte 0x%x from %s\n", b, (sb & KB_AUX_BYTE) ? "AUX" : "keyboard");
 #endif
   if (!(sb & KB_AUX_BYTE) && b == KB_ACK && kbdout.expect_ack)
   {
-#if 1
+#if 0
 	printf("got ACK from keyboard\n");
 #endif
 	kbdout.expect_ack= 0;

@@ -167,13 +167,20 @@ int try;
    */
   do {
 	if (count > sizeof(buf)) count = sizeof(buf);
-	if ((result = sys_vircopy(tp->tty_outproc, D, tp->tty_out_vir, 
+	if(tp->tty_out_safe) {
+	   if ((result = sys_safecopyfrom(tp->tty_outproc, tp->tty_out_vir_g,
+		tp->tty_out_vir_offset, (vir_bytes) buf, count, D)) != OK)
+		break;
+	    tp->tty_out_vir_offset += count;
+	} else {
+	   if ((result = sys_vircopy(tp->tty_outproc, D, tp->tty_out_vir_g, 
 			SELF, D, (vir_bytes) buf, (vir_bytes) count)) != OK)
 		break;
+	    tp->tty_out_vir_g += count;
+	}
 	tbuf = buf;
 
 	/* Update terminal data structure. */
-	tp->tty_out_vir += count;
 	tp->tty_outcum += count;
 	tp->tty_outleft -= count;
 
@@ -777,7 +784,7 @@ PRIVATE void beep()
  *===========================================================================*/
 PUBLIC void do_video(message *m)
 {
-	int i, n, r, ops, watch;
+	int i, n, r, ops, watch, safe = 0;
 	unsigned char c;
 
 	/* Execute the requested device driver function. */
@@ -790,6 +797,9 @@ PUBLIC void do_video(message *m)
 	    case DEV_CLOSE:
 		r= OK;
 		break;
+	    case DEV_IOCTL_S:
+		safe=1;
+		/* Fallthrough. */
 	    case DEV_IOCTL:
 		if (m->TTY_REQUEST == MIOCMAP || m->TTY_REQUEST == MIOCUNMAP)
 		{
@@ -799,18 +809,30 @@ PUBLIC void do_video(message *m)
 			do_map= (m->REQUEST == MIOCMAP);	/* else unmap */
 
 			/* Get request structure */
-			r= sys_vircopy(m->IO_ENDPT, D,
+			if(safe) {
+	   		   r = sys_safecopyfrom(m->IO_ENDPT,
+				(vir_bytes)m->ADDRESS, 0, (vir_bytes) &mapreq,
+				sizeof(mapreq), D);
+			} else {
+			  r= sys_vircopy(m->IO_ENDPT, D,
 				(vir_bytes)m->ADDRESS,
 				SELF, D, (vir_bytes)&mapreq, sizeof(mapreq));
+			}
 			if (r != OK)
 			{
 				tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT,
 					r);
 				return;
 			}
-			r= sys_vm_map(m->IO_ENDPT, do_map,
-				(phys_bytes)mapreq.base, mapreq.size,
-				mapreq.offset);
+
+			/* In safe ioctl mode, the POSITION field contains
+			 * the endpt number of the original requestor.
+			 * IO_ENDPT is always FS.
+			 */
+
+			r= sys_vm_map(safe ? m->POSITION : m->IO_ENDPT,
+			  do_map, (phys_bytes)mapreq.base, mapreq.size,
+			  mapreq.offset);
 			tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
 			return;
 		}
@@ -1057,20 +1079,27 @@ message *m;
 /*===========================================================================*
  *				do_diagnostics				     *
  *===========================================================================*/
-PUBLIC void do_diagnostics(m_ptr)
+PUBLIC void do_diagnostics(m_ptr, safe)
 message *m_ptr;			/* pointer to request message */
+int safe;
 {
 /* Print a string for a server. */
   char c;
   vir_bytes src;
-  int count;
+  int count, offset = 0;
   int result = OK;
-  int proc_nr = m_ptr->DIAG_ENDPT;
-  if (proc_nr == SELF) proc_nr = m_ptr->m_source;
+  int proc_nr = m_ptr->m_source;
 
-  src = (vir_bytes) m_ptr->DIAG_PRINT_BUF;
+  src = (vir_bytes) m_ptr->DIAG_PRINT_BUF_G;
   for (count = m_ptr->DIAG_BUF_COUNT; count > 0; count--) {
-	if (sys_vircopy(proc_nr, D, src++, SELF, D, (vir_bytes) &c, 1) != OK) {
+	int r;
+	if(safe) {
+	   r = sys_safecopyfrom(proc_nr, src, offset, (vir_bytes) &c, 1, D);
+	} else {
+	   r = sys_vircopy(proc_nr, D, src+offset, SELF, D, (vir_bytes) &c, 1);
+	}
+	offset++;
+	if(r != OK) {
 		result = EFAULT;
 		break;
 	}

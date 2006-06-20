@@ -29,26 +29,26 @@
  *   DEV_STATUS:     FS wants to know status for SELECT or REVIVE
  *   CANCEL:         terminate a previous incomplete system call immediately
  *
- *    m_type      TTY_LINE   IO_ENDPT    COUNT   TTY_SPEK  TTY_FLAGS  ADDRESS
- * ---------------------------------------------------------------------------
- * | HARD_INT    |         |         |         |         |         |         |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | SYS_SIG     | sig set |         |         |         |         |         |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | DEV_READ    |minor dev| proc nr |  count  |         O_NONBLOCK| buf ptr |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | DEV_WRITE   |minor dev| proc nr |  count  |         |         | buf ptr |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | DEV_IOCTL   |minor dev| proc nr |func code|erase etc|  flags  |         |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | DEV_OPEN    |minor dev| proc nr | O_NOCTTY|         |         |         |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | DEV_CLOSE   |minor dev| proc nr |         |         |         |         |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | DEV_STATUS  |         |         |         |         |         |         |
- * |-------------+---------+---------+---------+---------+---------+---------|
- * | CANCEL      |minor dev| proc nr |         |         |         |         |
- * ---------------------------------------------------------------------------
+ *    m_type      TTY_LINE   IO_ENDPT    COUNT   TTY_SPEKS  ADDRESS
+ * -----------------------------------------------------------------
+ * | HARD_INT    |         |         |         |         |         |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | SYS_SIG     | sig set |         |         |         |         |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | DEV_READ    |minor dev| proc nr |  count  |         | buf ptr |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | DEV_WRITE   |minor dev| proc nr |  count  |         | buf ptr |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | DEV_IOCTL   |minor dev| proc nr |func code|erase etc|         |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | DEV_OPEN    |minor dev| proc nr | O_NOCTTY|         |         |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | DEV_CLOSE   |minor dev| proc nr |         |         |         |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | DEV_STATUS  |         |         |         |         |         |
+ * |-------------+---------+---------+---------+---------+---------|
+ * | CANCEL      |minor dev| proc nr |         |         |         |
+ * -----------------------------------------------------------------
  *
  * Changes:
  *   Jan 20, 2004   moved TTY driver to user-space  (Jorrit N. Herder)
@@ -58,9 +58,6 @@
 
 #include "../drivers.h"
 #include <termios.h>
-#if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
-#include <sgtty.h>
-#endif
 #include <sys/ioc_tty.h>
 #include <signal.h>
 #include <minix/callnr.h>
@@ -106,11 +103,11 @@ FORWARD _PROTOTYPE( void tty_timed_out, (timer_t *tp)			);
 FORWARD _PROTOTYPE( void expire_timers, (void)				);
 FORWARD _PROTOTYPE( void settimer, (tty_t *tty_ptr, int enable)		);
 FORWARD _PROTOTYPE( void do_cancel, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_ioctl, (tty_t *tp, message *m_ptr)		);
+FORWARD _PROTOTYPE( void do_ioctl, (tty_t *tp, message *m_ptr, int s)	);
 FORWARD _PROTOTYPE( void do_open, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_close, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr)		);
-FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr)		);
+FORWARD _PROTOTYPE( void do_read, (tty_t *tp, message *m_ptr, int s)	);
+FORWARD _PROTOTYPE( void do_write, (tty_t *tp, message *m_ptr, int s)	);
 FORWARD _PROTOTYPE( void do_select, (tty_t *tp, message *m_ptr)		);
 FORWARD _PROTOTYPE( void do_status, (message *m_ptr)			);
 FORWARD _PROTOTYPE( void in_transfer, (tty_t *tp)			);
@@ -122,17 +119,6 @@ FORWARD _PROTOTYPE( void dev_ioctl, (tty_t *tp)				);
 FORWARD _PROTOTYPE( void setattr, (tty_t *tp)				);
 FORWARD _PROTOTYPE( void tty_icancel, (tty_t *tp)			);
 FORWARD _PROTOTYPE( void tty_init, (void)				);
-#if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
-FORWARD _PROTOTYPE( int compat_getp, (tty_t *tp, struct sgttyb *sg)	);
-FORWARD _PROTOTYPE( int compat_getc, (tty_t *tp, struct tchars *sg)	);
-FORWARD _PROTOTYPE( int compat_setp, (tty_t *tp, struct sgttyb *sg)	);
-FORWARD _PROTOTYPE( int compat_setc, (tty_t *tp, struct tchars *sg)	);
-FORWARD _PROTOTYPE( int tspd2sgspd, (speed_t tspd)			);
-FORWARD _PROTOTYPE( speed_t sgspd2tspd, (int sgspd)			);
-#if ENABLE_BINCOMPAT
-FORWARD _PROTOTYPE( void do_ioctl_compat, (tty_t *tp, message *m_ptr)	);
-#endif
-#endif
 
 /* Default attributes. */
 PRIVATE struct termios termios_defaults = {
@@ -164,17 +150,6 @@ PUBLIC void main(void)
   int r, s;
   register struct proc *rp;
   register tty_t *tp;
-
-#if DEBUG
-  kputc('H');
-  kputc('e');
-  kputc('l');
-  kputc('l');
-  kputc('o');
-  kputc(',');
-  kputc(' ');
-  printf("TTY\n");
-#endif
 
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
   if (OK != (s=sys_getmachine(&machine))) {
@@ -229,13 +204,6 @@ PUBLIC void main(void)
 	}
 	case PROC_EVENT: {
 		cons_stop();		/* switch to primary console */
-		printf("TTY got PROC_EVENT, assuming SIGTERM\n");
-#if DEAD_CODE
-		if (irq_hook_id != -1) {
-			sys_irqdisable(&irq_hook_id);
-			sys_irqrmpolicy(KEYBOARD_IRQ, &irq_hook_id);
-		}
-#endif
 		continue;
 	}
 	case SYS_SIG: {			/* system signal */
@@ -244,7 +212,10 @@ PUBLIC void main(void)
 		continue;
 	}
 	case DIAGNOSTICS: 		/* a server wants to print some */
-		do_diagnostics(&tty_mess);
+		do_diagnostics(&tty_mess, 0);
+		continue;
+	case DIAGNOSTICS_S: 
+		do_diagnostics(&tty_mess, 1);
 		continue;
 	case GET_KMESS:
 		do_get_kmess(&tty_mess);
@@ -284,7 +255,8 @@ PUBLIC void main(void)
 		tp = tty_addr(line - TTYPX_MINOR + NR_CONS + NR_RS_LINES);
 	} else if ((line - PTYPX_MINOR) < NR_PTYS) {
 		tp = tty_addr(line - PTYPX_MINOR + NR_CONS + NR_RS_LINES);
-		if (tty_mess.m_type != DEV_IOCTL) {
+		if (tty_mess.m_type != DEV_IOCTL &&
+		    tty_mess.m_type != DEV_IOCTL_S) {
 			do_pty(tp, &tty_mess);
 			continue;
 		}
@@ -306,9 +278,12 @@ PUBLIC void main(void)
 
 	/* Execute the requested device driver function. */
 	switch (tty_mess.m_type) {
-	    case DEV_READ:	 do_read(tp, &tty_mess);	  break;
-	    case DEV_WRITE:	 do_write(tp, &tty_mess);	  break;
-	    case DEV_IOCTL:	 do_ioctl(tp, &tty_mess);	  break;
+	    case DEV_READ:	 do_read(tp, &tty_mess, 0);	  break;
+	    case DEV_READ_S:	 do_read(tp, &tty_mess, 1);	  break;
+	    case DEV_WRITE:	 do_write(tp, &tty_mess, 0);	  break;
+	    case DEV_WRITE_S:	 do_write(tp, &tty_mess, 1);	  break;
+	    case DEV_IOCTL:	 do_ioctl(tp, &tty_mess, 0);	  break;
+	    case DEV_IOCTL_S:	 do_ioctl(tp, &tty_mess, 1);	  break;
 	    case DEV_OPEN:	 do_open(tp, &tty_mess);	  break;
 	    case DEV_CLOSE:	 do_close(tp, &tty_mess);	  break;
 	    case DEV_SELECT:	 do_select(tp, &tty_mess);	  break;
@@ -356,6 +331,7 @@ message *m_ptr;
 		/* Suspended request finished. Send a REVIVE. */
 		m_ptr->m_type = DEV_REVIVE;
   		m_ptr->REP_ENDPT = tp->tty_inproc;
+  		m_ptr->REP_IO_GRANT = tp->tty_in_vir_g;
   		m_ptr->REP_STATUS = tp->tty_incum;
 
 		tp->tty_inleft = tp->tty_incum = 0;
@@ -368,10 +344,21 @@ message *m_ptr;
 		/* Suspended request finished. Send a REVIVE. */
 		m_ptr->m_type = DEV_REVIVE;
   		m_ptr->REP_ENDPT = tp->tty_outproc;
+  		m_ptr->REP_IO_GRANT = tp->tty_out_vir_g;
   		m_ptr->REP_STATUS = tp->tty_outcum;
 
 		tp->tty_outcum = 0;
 		tp->tty_outrevived = 0;		/* unmark revive event */
+  		event_found = 1;
+  		break;
+	}
+	else if (tp->tty_iorevived && tp->tty_iocaller == m_ptr->m_source) {
+		/* Suspended request finished. Send a REVIVE. */
+		m_ptr->m_type = DEV_REVIVE;
+  		m_ptr->REP_ENDPT = tp->tty_ioproc;
+  		m_ptr->REP_IO_GRANT = tp->tty_iovir_g;
+  		m_ptr->REP_STATUS = tp->tty_iostatus;
+		tp->tty_iorevived = 0;		/* unmark revive event */
   		event_found = 1;
   		break;
 	}
@@ -398,36 +385,30 @@ message *m_ptr;
 /*===========================================================================*
  *				do_read					     *
  *===========================================================================*/
-PRIVATE void do_read(tp, m_ptr)
+PRIVATE void do_read(tp, m_ptr, safe)
 register tty_t *tp;		/* pointer to tty struct */
 register message *m_ptr;	/* pointer to message sent to the task */
+int safe;			/* use safecopies? */
 {
 /* A process wants to read from a terminal. */
   int r, status;
-  phys_bytes phys_addr;
-  int more_verbose= (tp == tty_addr(NR_CONS));
 
   /* Check if there is already a process hanging in a read, check if the
    * parameters are correct, do I/O.
    */
   if (tp->tty_inleft > 0) {
-	if (more_verbose) printf("do_read: EIO\n");
 	r = EIO;
   } else
   if (m_ptr->COUNT <= 0) {
-	if (more_verbose) printf("do_read: EINVAL\n");
 	r = EINVAL;
-  } else
-  if (sys_umap(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS, m_ptr->COUNT,
-		&phys_addr) != OK) {
-	if (more_verbose) printf("do_read: EFAULT\n");
-	r = EFAULT;
   } else {
 	/* Copy information from the message to the tty struct. */
 	tp->tty_inrepcode = TASK_REPLY;
 	tp->tty_incaller = m_ptr->m_source;
 	tp->tty_inproc = m_ptr->IO_ENDPT;
-	tp->tty_in_vir = (vir_bytes) m_ptr->ADDRESS;
+	tp->tty_in_vir_g = (vir_bytes) m_ptr->ADDRESS;
+	tp->tty_in_vir_offset = 0;
+	tp->tty_in_safe = safe;
 	tp->tty_inleft = m_ptr->COUNT;
 
 	if (!(tp->tty_termios.c_lflag & ICANON)
@@ -459,18 +440,12 @@ register message *m_ptr;	/* pointer to message sent to the task */
 		return;			/* already done */
 	}
 
-	/* There were no bytes in the input queue available, so either suspend
-	 * the caller or break off the read if nonblocking.
+	/* There were no bytes in the input queue available, so suspend
+	 * the caller.
 	 */
-	if (m_ptr->TTY_FLAGS & O_NONBLOCK) {
-		r = EAGAIN;				/* cancel the read */
-		tp->tty_inleft = tp->tty_incum = 0;
-	} else {
-		r = SUSPEND;				/* suspend the caller */
-		tp->tty_inrepcode = REVIVE;
-	}
+	r = SUSPEND;				/* suspend the caller */
+	tp->tty_inrepcode = TTY_REVIVE;
   }
-  if (more_verbose) printf("do_read: replying %d\n", r);
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
   if (tp->tty_select_ops)
   	select_retry(tp);
@@ -479,13 +454,13 @@ register message *m_ptr;	/* pointer to message sent to the task */
 /*===========================================================================*
  *				do_write				     *
  *===========================================================================*/
-PRIVATE void do_write(tp, m_ptr)
+PRIVATE void do_write(tp, m_ptr, safe)
 register tty_t *tp;
 register message *m_ptr;	/* pointer to message sent to the task */
+int safe;
 {
 /* A process wants to write on a terminal. */
   int r;
-  phys_bytes phys_addr;
 
   /* Check if there is already a process hanging in a write, check if the
    * parameters are correct, do I/O.
@@ -495,16 +470,14 @@ register message *m_ptr;	/* pointer to message sent to the task */
   } else
   if (m_ptr->COUNT <= 0) {
 	r = EINVAL;
-  } else
-  if (sys_umap(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS, m_ptr->COUNT,
-		&phys_addr) != OK) {
-	r = EFAULT;
   } else {
 	/* Copy message parameters to the tty structure. */
 	tp->tty_outrepcode = TASK_REPLY;
 	tp->tty_outcaller = m_ptr->m_source;
 	tp->tty_outproc = m_ptr->IO_ENDPT;
-	tp->tty_out_vir = (vir_bytes) m_ptr->ADDRESS;
+	tp->tty_out_vir_g = (vir_bytes) m_ptr->ADDRESS;
+	tp->tty_out_vir_offset = 0;
+	tp->tty_out_safe = safe;
 	tp->tty_outleft = m_ptr->COUNT;
 
 	/* Try to write. */
@@ -512,16 +485,11 @@ register message *m_ptr;	/* pointer to message sent to the task */
 	if (tp->tty_outleft == 0) 
 		return;	/* already done */
 
-	/* None or not all the bytes could be written, so either suspend the
-	 * caller or break off the write if nonblocking.
+	/* None or not all the bytes could be written, so suspend the
+	 * caller.
 	 */
-	if (m_ptr->TTY_FLAGS & O_NONBLOCK) {		/* cancel the write */
-		r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
-		tp->tty_outleft = tp->tty_outcum = 0;
-	} else {
-		r = SUSPEND;				/* suspend the caller */
-		tp->tty_outrepcode = REVIVE;
-	}
+	r = SUSPEND;				/* suspend the caller */
+	tp->tty_outrepcode = TTY_REVIVE;
   }
   tty_reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, r);
 }
@@ -529,9 +497,10 @@ register message *m_ptr;	/* pointer to message sent to the task */
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
-PRIVATE void do_ioctl(tp, m_ptr)
+PRIVATE void do_ioctl(tp, m_ptr, safe)
 register tty_t *tp;
 message *m_ptr;			/* pointer to message sent to task */
+int safe;
 {
 /* Perform an IOCTL on this terminal. Posix termios calls are handled
  * by the IOCTL system call
@@ -540,10 +509,6 @@ message *m_ptr;			/* pointer to message sent to task */
   int r;
   union {
 	int i;
-#if ENABLE_SRCCOMPAT
-	struct sgttyb sg;
-	struct tchars tc;
-#endif
   } param;
   size_t size;
 
@@ -569,17 +534,6 @@ message *m_ptr;			/* pointer to message sent to task */
         size = sizeof(struct winsize);
         break;
 
-#if ENABLE_SRCCOMPAT
-    case TIOCGETP:      /* BSD-style get terminal properties */
-    case TIOCSETP:	/* BSD-style set terminal properties */
-	size = sizeof(struct sgttyb);
-	break;
-
-    case TIOCGETC:      /* BSD-style get terminal special characters */ 
-    case TIOCSETC:	/* BSD-style get terminal special characters */ 
-	size = sizeof(struct tchars);
-	break;
-#endif
 #if (MACHINE == IBM_PC)
     case KIOCSMAP:	/* load keymap (Minix extension) */
         size = sizeof(keymap_t);
@@ -598,9 +552,14 @@ message *m_ptr;			/* pointer to message sent to task */
   switch (m_ptr->TTY_REQUEST) {
     case TCGETS:
 	/* Get the termios attributes. */
-	r = sys_vircopy(SELF, D, (vir_bytes) &tp->tty_termios,
+	if(safe) {
+	    r = sys_safecopyto(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+		(vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
+	} else {
+	    r = sys_vircopy(SELF, D, (vir_bytes) &tp->tty_termios,
 		m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS, 
 		(vir_bytes) size);
+	}
 	break;
 
     case TCSETSW:
@@ -611,7 +570,8 @@ message *m_ptr;			/* pointer to message sent to task */
 		tp->tty_iocaller = m_ptr->m_source;
 		tp->tty_ioproc = m_ptr->IO_ENDPT;
 		tp->tty_ioreq = m_ptr->REQUEST;
-		tp->tty_iovir = (vir_bytes) m_ptr->ADDRESS;
+		tp->tty_iovir_g = (vir_bytes) m_ptr->ADDRESS;
+		tp->tty_io_safe = safe;
 		r = SUSPEND;
 		break;
 	}
@@ -620,15 +580,25 @@ message *m_ptr;			/* pointer to message sent to task */
 	/*FALL THROUGH*/
     case TCSETS:
 	/* Set the termios attributes. */
-	r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		SELF, D, (vir_bytes) &tp->tty_termios, (vir_bytes) size);
+	if(safe) {
+	    r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+		(vir_bytes) &tp->tty_termios, (vir_bytes) size, D);
+	} else {
+	    r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
+	        SELF, D, (vir_bytes) &tp->tty_termios, (vir_bytes) size);
+	}
 	if (r != OK) break;
 	setattr(tp);
 	break;
 
     case TCFLSH:
-	r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
+	if(safe) {
+	   r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+		(vir_bytes) &param.i, (vir_bytes) size, D);
+	} else {
+	   r = sys_vircopy(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
 		SELF, D, (vir_bytes) &param.i, (vir_bytes) size);
+	}
 	if (r != OK) break;
 	switch (param.i) {
 	    case TCIFLUSH:	tty_icancel(tp);		 	    break;
@@ -639,8 +609,13 @@ message *m_ptr;			/* pointer to message sent to task */
 	break;
 
     case TCFLOW:
-	r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
+	if(safe) {
+	   r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+		(vir_bytes) &param.i, (vir_bytes) size, D);
+	} else {
+	    r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
 		SELF, D, (vir_bytes) &param.i, (vir_bytes) size);
+	}
 	if (r != OK) break;
 	switch (param.i) {
 	    case TCOOFF:
@@ -664,51 +639,31 @@ message *m_ptr;			/* pointer to message sent to task */
 	break;
 
     case TIOCGWINSZ:
-	r = sys_vircopy(SELF, D, (vir_bytes) &tp->tty_winsize,
+	if(safe) {
+	   r = sys_safecopyto(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+		(vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
+	} else {
+	   r = sys_vircopy(SELF, D, (vir_bytes) &tp->tty_winsize,
 		m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS, 
 		(vir_bytes) size);
+	}
 	break;
 
     case TIOCSWINSZ:
-	r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
+	if(safe) {
+	   r = sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS, 0,
+		(vir_bytes) &tp->tty_winsize, (vir_bytes) size, D);
+	} else {
+	   r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
 		SELF, D, (vir_bytes) &tp->tty_winsize, (vir_bytes) size);
+	}
 	sigchar(tp, SIGWINCH);
 	break;
-
-#if ENABLE_SRCCOMPAT
-    case TIOCGETP:
-	compat_getp(tp, &param.sg);
-	r = sys_vircopy(SELF, D, (vir_bytes) &param.sg,
-		m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		(vir_bytes) size);
-	break;
-
-    case TIOCSETP:
-	r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		SELF, D, (vir_bytes) &param.sg, (vir_bytes) size);
-	if (r != OK) break;
-	compat_setp(tp, &param.sg);
-	break;
-
-    case TIOCGETC:
-	compat_getc(tp, &param.tc);
-	r = sys_vircopy(SELF, D, (vir_bytes) &param.tc,
-		m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS, 
-		(vir_bytes) size);
-	break;
-
-    case TIOCSETC:
-	r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		SELF, D, (vir_bytes) &param.tc, (vir_bytes) size);
-	if (r != OK) break;
-	compat_setc(tp, &param.tc);
-	break;
-#endif
 
 #if (MACHINE == IBM_PC)
     case KIOCSMAP:
 	/* Load a new keymap (only /dev/console). */
-	if (isconsole(tp)) r = kbd_loadmap(m_ptr);
+	if (isconsole(tp)) r = kbd_loadmap(m_ptr, safe);
 	break;
 
     case TIOCSFON:
@@ -729,12 +684,7 @@ message *m_ptr;			/* pointer to message sent to task */
     case TIOCGPGRP:     
     case TIOCSPGRP:	
     default:
-#if ENABLE_BINCOMPAT
-	do_ioctl_compat(tp, m_ptr);
-	return;
-#else
 	r = ENOTTY;
-#endif
   }
 
   /* Send the reply. */
@@ -801,26 +751,33 @@ message *m_ptr;			/* pointer to message sent to task */
 
   int proc_nr;
   int mode;
+  int r = EINTR;
 
   /* Check the parameters carefully, to avoid cancelling twice. */
   proc_nr = m_ptr->IO_ENDPT;
   mode = m_ptr->COUNT;
-  if ((mode & R_BIT) && tp->tty_inleft != 0 && proc_nr == tp->tty_inproc) {
+  if ((mode & R_BIT) && tp->tty_inleft != 0 && proc_nr == tp->tty_inproc &&
+	(!tp->tty_in_safe || tp->tty_in_vir_g==(vir_bytes)m_ptr->IO_GRANT)) {
 	/* Process was reading when killed.  Clean up input. */
-	tty_icancel(tp);
-	tp->tty_inleft = tp->tty_incum = 0;
-  }
-  if ((mode & W_BIT) && tp->tty_outleft != 0 && proc_nr == tp->tty_outproc) {
+	tty_icancel(tp); 
+	r = tp->tty_incum > 0 ? tp->tty_incum : EAGAIN;
+	tp->tty_inleft = tp->tty_incum = tp->tty_inrevived = 0;
+  } 
+  if ((mode & W_BIT) && tp->tty_outleft != 0 && proc_nr == tp->tty_outproc &&
+	(!tp->tty_out_safe || tp->tty_out_vir_g==(vir_bytes)m_ptr->IO_GRANT)) {
 	/* Process was writing when killed.  Clean up output. */
-	(*tp->tty_ocancel)(tp, 0);
-	tp->tty_outleft = tp->tty_outcum = 0;
-  }
+#if DEAD_CODE
+	(*tp->tty_ocancel)(tp, 0); 
+#endif
+	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
+	tp->tty_outleft = tp->tty_outcum = tp->tty_outrevived = 0;
+  } 
   if (tp->tty_ioreq != 0 && proc_nr == tp->tty_ioproc) {
 	/* Process was waiting for output to drain. */
 	tp->tty_ioreq = 0;
   }
   tp->tty_events = 1;
-  tty_reply(TASK_REPLY, m_ptr->m_source, proc_nr, EINTR);
+  tty_reply(TASK_REPLY, m_ptr->m_source, proc_nr, r);
 }
 
 PUBLIC int select_try(struct tty *tp, int ops)
@@ -905,7 +862,7 @@ tty_t *tp;			/* TTY to check for events. */
 
   /* Reply if enough bytes are available. */
   if (tp->tty_incum >= tp->tty_min && tp->tty_inleft > 0) {
-	if (tp->tty_inrepcode == REVIVE) {
+	if (tp->tty_inrepcode == TTY_REVIVE) {
 		notify(tp->tty_incaller);
 		tp->tty_inrevived = 1;
 	} else {
@@ -952,10 +909,18 @@ register tty_t *tp;		/* pointer to terminal to read from */
 		tp->tty_inleft--;
 		if (++bp == bufend(buf)) {
 			/* Temp buffer full, copy to user space. */
-			sys_vircopy(SELF, D, (vir_bytes) buf, 
-				tp->tty_inproc, D, tp->tty_in_vir,
-				(vir_bytes) buflen(buf));
-			tp->tty_in_vir += buflen(buf);
+			if(tp->tty_in_safe) {
+				sys_safecopyto(tp->tty_inproc,
+					tp->tty_in_vir_g, tp->tty_in_vir_offset,
+					(vir_bytes) buf,
+					(vir_bytes) buflen(buf), D);
+				tp->tty_in_vir_offset += buflen(buf);
+			} else {
+				sys_vircopy(SELF, D, (vir_bytes) buf, 
+					tp->tty_inproc, D, tp->tty_in_vir_g,
+					(vir_bytes) buflen(buf));
+				tp->tty_in_vir_g += buflen(buf);
+			}
 			tp->tty_incum += buflen(buf);
 			bp = buf;
 		}
@@ -975,15 +940,22 @@ register tty_t *tp;		/* pointer to terminal to read from */
   if (bp > buf) {
 	/* Leftover characters in the buffer. */
 	count = bp - buf;
-	sys_vircopy(SELF, D, (vir_bytes) buf, 
-		tp->tty_inproc, D, tp->tty_in_vir, (vir_bytes) count);
-	tp->tty_in_vir += count;
+	if(tp->tty_in_safe) {
+		sys_safecopyto(tp->tty_inproc,
+			tp->tty_in_vir_g, tp->tty_in_vir_offset,
+			(vir_bytes) buf, (vir_bytes) count, D);
+		tp->tty_in_vir_offset += count;
+	} else {
+		sys_vircopy(SELF, D, (vir_bytes) buf, 
+			tp->tty_inproc, D, tp->tty_in_vir_g, (vir_bytes) count);
+		tp->tty_in_vir_g += count;
+	}
 	tp->tty_incum += count;
   }
 
   /* Usually reply to the reader, possibly even if incum == 0 (EOF). */
   if (tp->tty_inleft == 0) {
-	if (tp->tty_inrepcode == REVIVE) {
+	if (tp->tty_inrepcode == TTY_REVIVE) {
 		notify(tp->tty_incaller);
 		tp->tty_inrevived = 1;
 	} else {
@@ -1398,13 +1370,21 @@ tty_t *tp;
 
   if (tp->tty_ioreq != TCDRAIN) {
 	if (tp->tty_ioreq == TCSETSF) tty_icancel(tp);
-	result = sys_vircopy(tp->tty_ioproc, D, tp->tty_iovir,
+	if(tp->tty_io_safe) {
+	   result = sys_safecopyfrom(tp->tty_ioproc, tp->tty_iovir_g, 0,
+		(vir_bytes) &tp->tty_termios,
+		(vir_bytes) sizeof(tp->tty_termios), D);
+	} else {
+	    result = sys_vircopy(tp->tty_ioproc, D, tp->tty_iovir_g,
 			SELF, D, (vir_bytes) &tp->tty_termios,
 			(vir_bytes) sizeof(tp->tty_termios));
+	}
 	setattr(tp);
   }
   tp->tty_ioreq = 0;
-  tty_reply(REVIVE, tp->tty_iocaller, tp->tty_ioproc, result);
+  notify(tp->tty_iocaller);
+  tp->tty_iorevived = 1;
+  tp->tty_iostatus = result;
 }
 
 /*===========================================================================*
@@ -1463,7 +1443,11 @@ tty_t *tp;
 /*===========================================================================*
  *				tty_reply				     *
  *===========================================================================*/
-PUBLIC void tty_reply(code, replyee, proc_nr, status)
+PUBLIC void 
+tty_reply_f(
+file, line, code, replyee, proc_nr, status)
+char *file;
+int line;
 int code;			/* TASK_REPLY or REVIVE */
 int replyee;			/* destination address for the reply */
 int proc_nr;			/* to whom should the reply go? */
@@ -1476,8 +1460,17 @@ int status;			/* reply code */
   tty_mess.REP_ENDPT = proc_nr;
   tty_mess.REP_STATUS = status;
 
+  /* TTY is not supposed to send a TTY_REVIVE message. The
+   * REVIVE message is gone, TTY_REVIVE is only used as an internal
+   * placeholder for something that is not supposed to be a message.
+   */
+  if(code == TTY_REVIVE) {
+	panicing = 1;
+	printf("%s:%d: ", file, line);
+	panic("TTY","tty_reply sending TTY_REVIVE", NO_NUM);
+  }
+
   if ((status = send(replyee, &tty_mess)) != OK) {
-	printf("TTY: couldn't reply to %d\n", replyee);
 	panic("TTY","tty_reply failed, status\n", status);
   }
 }
@@ -1496,9 +1489,11 @@ int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
  */
   int status;
 
-  if (tp->tty_pgrp != 0) 
-      if (OK != (status = sys_kill(tp->tty_pgrp, sig)))
+  if (tp->tty_pgrp != 0)  {
+      if (OK != (status = sys_kill(tp->tty_pgrp, sig))) {
         panic("TTY","Error, call to sys_kill failed", status);
+      }
+  }
 
   if (!(tp->tty_termios.c_lflag & NOFLSH)) {
 	tp->tty_incount = tp->tty_eotct = 0;	/* kill earlier input */
@@ -1684,342 +1679,4 @@ register message *m_ptr;	/* pointer to message sent to the task */
 
         return;
 }
-
-#if ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT
-/*===========================================================================*
- *				compat_getp				     *
- *===========================================================================*/
-PRIVATE int compat_getp(tp, sg)
-tty_t *tp;
-struct sgttyb *sg;
-{
-/* Translate an old TIOCGETP to the termios equivalent. */
-  int flgs;
-
-  sg->sg_erase = tp->tty_termios.c_cc[VERASE];
-  sg->sg_kill = tp->tty_termios.c_cc[VKILL];
-  sg->sg_ospeed = tspd2sgspd(cfgetospeed(&tp->tty_termios));
-  sg->sg_ispeed = tspd2sgspd(cfgetispeed(&tp->tty_termios));
-
-  flgs = 0;
-
-  /* XTABS	- if OPOST and XTABS */
-  if ((tp->tty_termios.c_oflag & (OPOST|XTABS)) == (OPOST|XTABS))
-	flgs |= 0006000;
-
-  /* BITS5..BITS8  - map directly to CS5..CS8 */
-  flgs |= (tp->tty_termios.c_cflag & CSIZE) << (8-2);
-
-  /* EVENP	- if PARENB and not PARODD */
-  if ((tp->tty_termios.c_cflag & (PARENB|PARODD)) == PARENB)
-	flgs |= 0000200;
-
-  /* ODDP	- if PARENB and PARODD */
-  if ((tp->tty_termios.c_cflag & (PARENB|PARODD)) == (PARENB|PARODD))
-	flgs |= 0000100;
-
-  /* RAW	- if not ICANON and not ISIG */
-  if (!(tp->tty_termios.c_lflag & (ICANON|ISIG)))
-	flgs |= 0000040;
-
-  /* CRMOD	- if ICRNL */
-  if (tp->tty_termios.c_iflag & ICRNL)
-	flgs |= 0000020;
-
-  /* ECHO	- if ECHO */
-  if (tp->tty_termios.c_lflag & ECHO)
-	flgs |= 0000010;
-
-  /* CBREAK	- if not ICANON and ISIG */
-  if ((tp->tty_termios.c_lflag & (ICANON|ISIG)) == ISIG)
-	flgs |= 0000002;
-
-  sg->sg_flags = flgs;
-  return(OK);
-}
-
-/*===========================================================================*
- *				compat_getc				     *
- *===========================================================================*/
-PRIVATE int compat_getc(tp, tc)
-tty_t *tp;
-struct tchars *tc;
-{
-/* Translate an old TIOCGETC to the termios equivalent. */
-
-  tc->t_intrc = tp->tty_termios.c_cc[VINTR];
-  tc->t_quitc = tp->tty_termios.c_cc[VQUIT];
-  tc->t_startc = tp->tty_termios.c_cc[VSTART];
-  tc->t_stopc = tp->tty_termios.c_cc[VSTOP];
-  tc->t_brkc = tp->tty_termios.c_cc[VEOL];
-  tc->t_eofc = tp->tty_termios.c_cc[VEOF];
-  return(OK);
-}
-
-/*===========================================================================*
- *				compat_setp				     *
- *===========================================================================*/
-PRIVATE int compat_setp(tp, sg)
-tty_t *tp;
-struct sgttyb *sg;
-{
-/* Translate an old TIOCSETP to the termios equivalent. */
-  struct termios termios;
-  int flags;
-
-  termios = tp->tty_termios;
-
-  termios.c_cc[VERASE] = sg->sg_erase;
-  termios.c_cc[VKILL] = sg->sg_kill;
-  cfsetispeed(&termios, sgspd2tspd(sg->sg_ispeed & BYTE));
-  cfsetospeed(&termios, sgspd2tspd(sg->sg_ospeed & BYTE));
-  flags = sg->sg_flags;
-
-  /* Input flags */
-
-  /* BRKINT	- not changed */
-  /* ICRNL	- set if CRMOD is set and not RAW */
-  /*		  (CRMOD also controls output) */
-  termios.c_iflag &= ~ICRNL;
-  if ((flags & 0000020) && !(flags & 0000040))
-	termios.c_iflag |= ICRNL;
-
-  /* IGNBRK	- not changed */
-  /* IGNCR	- forced off (ignoring cr's is not supported) */
-  termios.c_iflag &= ~IGNCR;
-
-  /* IGNPAR	- not changed */
-  /* INLCR	- forced off (mapping nl's to cr's is not supported) */
-  termios.c_iflag &= ~INLCR;
-
-  /* INPCK	- not changed */
-  /* ISTRIP	- not changed */
-  /* IXOFF	- not changed */
-  /* IXON	- forced on if not RAW */
-  termios.c_iflag &= ~IXON;
-  if (!(flags & 0000040))
-	termios.c_iflag |= IXON;
-
-  /* PARMRK	- not changed */
-
-  /* Output flags */
-
-  /* OPOST	- forced on if not RAW */
-  termios.c_oflag &= ~OPOST;
-  if (!(flags & 0000040))
-	termios.c_oflag |= OPOST;
-
-  /* ONLCR	- forced on if CRMOD */
-  termios.c_oflag &= ~ONLCR;
-  if (flags & 0000020)
-	termios.c_oflag |= ONLCR;
-
-  /* XTABS	- forced on if XTABS */
-  termios.c_oflag &= ~XTABS;
-  if (flags & 0006000)
-	termios.c_oflag |= XTABS;
-
-  /* CLOCAL	- not changed */
-  /* CREAD	- forced on (receiver is always enabled) */
-  termios.c_cflag |= CREAD;
-
-  /* CSIZE	- CS5-CS8 correspond directly to BITS5-BITS8 */
-  termios.c_cflag = (termios.c_cflag & ~CSIZE) | ((flags & 0001400) >> (8-2));
-
-  /* CSTOPB	- not changed */
-  /* HUPCL	- not changed */
-  /* PARENB	- set if EVENP or ODDP is set */
-  termios.c_cflag &= ~PARENB;
-  if (flags & (0000200|0000100))
-	termios.c_cflag |= PARENB;
-
-  /* PARODD	- set if ODDP is set */
-  termios.c_cflag &= ~PARODD;
-  if (flags & 0000100)
-	termios.c_cflag |= PARODD;
-
-  /* Local flags */
-
-  /* ECHO		- set if ECHO is set */
-  termios.c_lflag &= ~ECHO;
-  if (flags & 0000010)
-	termios.c_lflag |= ECHO;
-
-  /* ECHOE	- not changed */
-  /* ECHOK	- not changed */
-  /* ECHONL	- not changed */
-  /* ICANON	- set if neither CBREAK nor RAW */
-  termios.c_lflag &= ~ICANON;
-  if (!(flags & (0000002|0000040)))
-	termios.c_lflag |= ICANON;
-
-  /* IEXTEN	- set if not RAW */
-  /* ISIG	- set if not RAW */
-  termios.c_lflag &= ~(IEXTEN|ISIG);
-  if (!(flags & 0000040))
-	termios.c_lflag |= (IEXTEN|ISIG);
-
-  /* NOFLSH	- not changed */
-  /* TOSTOP	- not changed */
-
-  tp->tty_termios = termios;
-  setattr(tp);
-  return(OK);
-}
-
-/*===========================================================================*
- *				compat_setc				     *
- *===========================================================================*/
-PRIVATE int compat_setc(tp, tc)
-tty_t *tp;
-struct tchars *tc;
-{
-/* Translate an old TIOCSETC to the termios equivalent. */
-  struct termios termios;
-
-  termios = tp->tty_termios;
-
-  termios.c_cc[VINTR] = tc->t_intrc;
-  termios.c_cc[VQUIT] = tc->t_quitc;
-  termios.c_cc[VSTART] = tc->t_startc;
-  termios.c_cc[VSTOP] = tc->t_stopc;
-  termios.c_cc[VEOL] = tc->t_brkc;
-  termios.c_cc[VEOF] = tc->t_eofc;
-
-  tp->tty_termios = termios;
-  setattr(tp);
-  return(OK);
-}
-
-/* Table of termios line speed to sgtty line speed translations.   All termios
- * speeds are present even if sgtty didn't know about them.  (Now it does.)
- */
-PRIVATE struct s2s {
-  speed_t	tspd;
-  u8_t		sgspd;
-} ts2sgs[] = {
-  { B0,		  0 },
-  { B50,	 50 },
-  { B75,	 75 },
-  { B110,	  1 },
-  { B134,	134 },
-  { B200,	  2 },
-  { B300,	  3 },
-  { B600,	  6 },
-  { B1200,	 12 },
-  { B1800,	 18 },
-  { B2400,	 24 },
-  { B4800,	 48 },
-  { B9600,	 96 },
-  { B19200,	192 },
-  { B38400,	195 },
-  { B57600,	194 },
-  { B115200,	193 },
-};
-
-/*===========================================================================*
- *				tspd2sgspd				     *
- *===========================================================================*/
-PRIVATE int tspd2sgspd(tspd)
-speed_t tspd;
-{
-/* Translate a termios speed to sgtty speed. */
-  struct s2s *s;
-
-  for (s = ts2sgs; s < ts2sgs + sizeof(ts2sgs)/sizeof(ts2sgs[0]); s++) {
-	if (s->tspd == tspd) return(s->sgspd);
-  }
-  return 96;
-}
-
-/*===========================================================================*
- *				sgspd2tspd				     *
- *===========================================================================*/
-PRIVATE speed_t sgspd2tspd(sgspd)
-int sgspd;
-{
-/* Translate a sgtty speed to termios speed. */
-  struct s2s *s;
-
-  for (s = ts2sgs; s < ts2sgs + sizeof(ts2sgs)/sizeof(ts2sgs[0]); s++) {
-	if (s->sgspd == sgspd) return(s->tspd);
-  }
-  return B9600;
-}
-
-#if ENABLE_BINCOMPAT
-/*===========================================================================*
- *				do_ioctl_compat				     *
- *===========================================================================*/
-PRIVATE void do_ioctl_compat(tp, m_ptr)
-tty_t *tp;
-message *m_ptr;
-{
-/* Handle the old sgtty ioctl's that packed the sgtty or tchars struct into
- * the Minix message.  Efficient then, troublesome now.
- */
-  int minor, proc, func, result, r;
-  long flags, erki, spek;
-  u8_t erase, kill, intr, quit, xon, xoff, brk, eof, ispeed, ospeed;
-  struct sgttyb sg;
-  struct tchars tc;
-  message reply_mess;
-
-  minor = m_ptr->TTY_LINE;
-  proc = m_ptr->IO_ENDPT;
-  func = m_ptr->REQUEST;
-  spek = m_ptr->m2_l1;
-  flags = m_ptr->m2_l2;
-
-  switch(func)
-  {
-    case (('t'<<8) | 8):	/* TIOCGETP */
-	r = compat_getp(tp, &sg);
-	erase = sg.sg_erase;
-	kill = sg.sg_kill;
-	ispeed = sg.sg_ispeed;
-	ospeed = sg.sg_ospeed;
-	flags = sg.sg_flags;
-	erki = ((long)ospeed<<24) | ((long)ispeed<<16) | ((long)erase<<8) |kill;
-	break;
-    case (('t'<<8) | 18):	/* TIOCGETC */
-	r = compat_getc(tp, &tc);
-	intr = tc.t_intrc;
-	quit = tc.t_quitc;
-	xon = tc.t_startc;
-	xoff = tc.t_stopc;
-	brk = tc.t_brkc;
-	eof = tc.t_eofc;
-	erki = ((long)intr<<24) | ((long)quit<<16) | ((long)xon<<8) | xoff;
-	flags = (eof << 8) | brk;
-	break;
-    case (('t'<<8) | 17):	/* TIOCSETC */
-	tc.t_stopc = (spek >> 0) & 0xFF;
-	tc.t_startc = (spek >> 8) & 0xFF;
-	tc.t_quitc = (spek >> 16) & 0xFF;
-	tc.t_intrc = (spek >> 24) & 0xFF;
-	tc.t_brkc = (flags >> 0) & 0xFF;
-	tc.t_eofc = (flags >> 8) & 0xFF;
-	r = compat_setc(tp, &tc);
-	break;
-    case (('t'<<8) | 9):	/* TIOCSETP */
-	sg.sg_erase = (spek >> 8) & 0xFF;
-	sg.sg_kill = (spek >> 0) & 0xFF;
-	sg.sg_ispeed = (spek >> 16) & 0xFF;
-	sg.sg_ospeed = (spek >> 24) & 0xFF;
-	sg.sg_flags = flags;
-	r = compat_setp(tp, &sg);
-	break;
-    default:
-	r = ENOTTY;
-  }
-  reply_mess.m_type = TASK_REPLY;
-  reply_mess.REP_ENDPT = m_ptr->IO_ENDPT;
-  reply_mess.REP_STATUS = r;
-  reply_mess.m2_l1 = erki;
-  reply_mess.m2_l2 = flags;
-  send(m_ptr->m_source, &reply_mess);
-}
-#endif /* ENABLE_BINCOMPAT */
-#endif /* ENABLE_SRCCOMPAT || ENABLE_BINCOMPAT */
 

@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lsysutil -ltimers
+LIBS = -lsysutil -lsys -ltimers
 
 OBJ = tty.o console.o vidcopy.o keyboard.o pty.o rs232.o 
 

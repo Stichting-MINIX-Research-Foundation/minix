@@ -7,6 +7,8 @@
 #undef lock
 #undef unlock
 
+#define TTY_REVIVE	6767
+
 /* First minor numbers for the various classes of TTY devices. */
 #define CONS_MINOR	   0
 #define LOG_MINOR	  15
@@ -66,20 +68,27 @@ typedef struct tty {
   char tty_inrevived;		/* set to 1 if revive callback is pending */
   int tty_incaller;		/* process that made the call (usually FS) */
   int tty_inproc;		/* process that wants to read from tty */
-  vir_bytes tty_in_vir;		/* virtual address where data is to go */
+  vir_bytes tty_in_vir_g;	/* address or grant where data is to go */
+  vir_bytes tty_in_vir_offset;	/* offset into grant */
+  int tty_in_safe;		/* nonzero: safecopies (in_vir is grantid) */
   int tty_inleft;		/* how many chars are still needed */
   int tty_incum;		/* # chars input so far */
   int tty_outrepcode;		/* reply code, TASK_REPLY or REVIVE */
   int tty_outrevived;		/* set to 1 if revive callback is pending */
   int tty_outcaller;		/* process that made the call (usually FS) */
   int tty_outproc;		/* process that wants to write to tty */
-  vir_bytes tty_out_vir;	/* virtual address where data comes from */
+  vir_bytes tty_out_vir_g;	/* address or grant where data comes from */
+  vir_bytes tty_out_vir_offset;	/* offset into grant */
+  int tty_out_safe;		/* nonzero: safecopies (out_vir is grantid) */
   int tty_outleft;		/* # chars yet to be output */
   int tty_outcum;		/* # chars output so far */
   int tty_iocaller;		/* process that made the call (usually FS) */
+  int tty_iorevived;		/* set to 1 if revive callback is pending */
   int tty_ioproc;		/* process that wants to do an ioctl */
+  int tty_iostatus;		/* result */
   int tty_ioreq;		/* ioctl request code */
-  vir_bytes tty_iovir;		/* virtual address of ioctl buffer */
+  int tty_io_safe;		/* safe copy mode? (iovir is grant id) */
+  vir_bytes tty_iovir_g;	/* virtual address of ioctl buffer or grant */
 
   /* select() data */
   int tty_select_ops;		/* which operations are interesting */
@@ -146,7 +155,8 @@ _PROTOTYPE( int in_process, (struct tty *tp, char *buf, int count)	);
 _PROTOTYPE( void out_process, (struct tty *tp, char *bstart, char *bpos,
 				char *bend, int *icount, int *ocount)	);
 _PROTOTYPE( void tty_wakeup, (clock_t now)				);
-_PROTOTYPE( void tty_reply, (int code, int replyee, int proc_nr,
+#define tty_reply(c, r, p, s) tty_reply_f(__FILE__, __LINE__, (c), (r), (p), (s))
+_PROTOTYPE( void tty_reply_f, (char *f, int l, int code, int replyee, int proc_nr,
 							int status)	);
 _PROTOTYPE( int tty_devnop, (struct tty *tp, int try)			);
 _PROTOTYPE( int select_try, (struct tty *tp, int ops)			);
@@ -161,7 +171,7 @@ _PROTOTYPE( void rs_interrupt, (message *m)				);
 _PROTOTYPE( void kputc, (int c)						);
 _PROTOTYPE( void cons_stop, (void)					);
 _PROTOTYPE( void do_new_kmess, (message *m)				);
-_PROTOTYPE( void do_diagnostics, (message *m)				);
+_PROTOTYPE( void do_diagnostics, (message *m, int safe)			);
 _PROTOTYPE( void do_get_kmess, (message *m)				);
 _PROTOTYPE( void scr_init, (struct tty *tp)				);
 _PROTOTYPE( void toggle_scroll, (void)					);
@@ -173,7 +183,7 @@ _PROTOTYPE( void do_video, (message *m)					);
 /* keyboard.c */
 _PROTOTYPE( void kb_init, (struct tty *tp)				);
 _PROTOTYPE( void kb_init_once, (void)					);
-_PROTOTYPE( int kbd_loadmap, (message *m)				);
+_PROTOTYPE( int kbd_loadmap, (message *m, int safe)			);
 _PROTOTYPE( void do_panic_dumps, (message *m)				);
 _PROTOTYPE( void do_fkey_ctl, (message *m)				);
 _PROTOTYPE( void kbd_interrupt, (message *m)				);
