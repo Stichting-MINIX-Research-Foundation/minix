@@ -11,8 +11,7 @@ int type;				/* byte, word, long */
     message m_io;
     int result;
 
-    m_io.DIO_TYPE = type;
-    m_io.DIO_REQUEST = DIO_INPUT;
+    m_io.DIO_REQUEST = _DIO_INPUT | type;
     m_io.DIO_PORT = port;
 
     result = _taskcall(SYSTASK, SYS_DEVIO, &m_io);

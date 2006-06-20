@@ -10,8 +10,7 @@ int type;				/* byte, word, long */
 {
     message m_io;
 
-    m_io.DIO_TYPE = type;
-    m_io.DIO_REQUEST = DIO_OUTPUT;
+    m_io.DIO_REQUEST = _DIO_OUTPUT | type;
     m_io.DIO_PORT = port;
     m_io.DIO_VALUE = value;
 

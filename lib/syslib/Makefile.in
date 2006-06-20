@@ -23,6 +23,7 @@ libsys_FILES=" \
 	pci_rescan_bus.c \
 	pci_reserve.c \
 	pci_slot_name.c \
+	safecopies.c \
 	sys_abort.c \
 	sys_endsig.c \
 	sys_eniop.c \
@@ -40,6 +41,7 @@ libsys_FILES=" \
 	sys_nice.c \
 	sys_out.c \
 	sys_physcopy.c \
+	sys_safecopy.c \
 	sys_sdevio.c \
 	sys_segctl.c \
 	sys_setalarm.c \
