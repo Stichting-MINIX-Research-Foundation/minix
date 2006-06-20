@@ -248,7 +248,7 @@ FORWARD _PROTOTYPE( struct device *f_prepare, (int device) 		);
 FORWARD _PROTOTYPE( char *f_name, (void) 				);
 FORWARD _PROTOTYPE( void f_cleanup, (void) 				);
 FORWARD _PROTOTYPE( int f_transfer, (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) 	);
+					iovec_t *iov, unsigned nr_req, int) 	);
 FORWARD _PROTOTYPE( int dma_setup, (int opcode) 			);
 FORWARD _PROTOTYPE( void start_motor, (void) 				);
 FORWARD _PROTOTYPE( int seek, (void) 					);
@@ -433,21 +433,24 @@ PRIVATE void f_cleanup()
 /*===========================================================================*
  *				f_transfer				     *
  *===========================================================================*/
-PRIVATE int f_transfer(proc_nr, opcode, position, iov, nr_req)
+PRIVATE int f_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
 off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
+int safe;
 {
+#define NO_OFFSET -1
   struct floppy *fp = f_fp;
   iovec_t *iop, *iov_end = iov + nr_req;
-  int s, r, errors;
+  int s, r, errors, nr;
   unsigned block;	/* Seen any 32M floppies lately? */
   unsigned nbytes, count, chunk, sector;
   unsigned long dv_size = cv64ul(f_dv->dv_size);
-  vir_bytes user_addr;
-  vir_bytes uaddrs[MAX_SECTORS], *up;
+  vir_bytes user_offset, iov_offset = 0, iop_offset;
+  signed long uoffsets[MAX_SECTORS], *up;
+  cp_grant_id_t ugrants[MAX_SECTORS], *ug;
   u8_t cmd[3];
 
   /* Check disk address. */
@@ -478,10 +481,19 @@ unsigned nr_req;		/* length of request vector */
 		if (iov->iov_size < SECTOR_SIZE + sizeof(fmt_param))
 			return(EINVAL);
 
-		if ((s=sys_datacopy(proc_nr, iov->iov_addr + SECTOR_SIZE,
+		if(safe) {
+		   s=sys_safecopyfrom(proc_nr, iov->iov_addr,
+			SECTOR_SIZE + iov_offset, (vir_bytes) &fmt_param,
+			(phys_bytes) sizeof(fmt_param), D);
+		} else {
+		   s=sys_datacopy(proc_nr, iov->iov_addr +
+			SECTOR_SIZE + iov_offset,
 			SELF, (vir_bytes) &fmt_param, 
-			(phys_bytes) sizeof(fmt_param))) != OK)
-			panic("FLOPPY", "Sys_vircopy failed", s);
+			(phys_bytes) sizeof(fmt_param));
+		}
+
+		if(s != OK)
+			panic("FLOPPY", "Sys_*copy failed", s);
 
 		/* Check that the number of sectors in the data is reasonable,
 		 * to avoid division by 0.  Leave checking of other data to
@@ -504,23 +516,28 @@ unsigned nr_req;		/* length of request vector */
 	/* For each sector on this track compute the user address it is to
 	 * go or to come from.
 	 */
-	for (up = uaddrs; up < uaddrs + MAX_SECTORS; up++) *up = 0;
+	for (up = uoffsets; up < uoffsets + MAX_SECTORS; up++) *up = NO_OFFSET;
 	count = 0;
 	iop = iov;
 	sector = block % f_sectors;
+	nr = 0;
+	iop_offset = iov_offset;
 	for (;;) {
-		user_addr = iop->iov_addr;
+		nr++;
+		user_offset = iop_offset;
 		chunk = iop->iov_size;
 		if ((chunk & SECTOR_MASK) != 0) return(EINVAL);
 
 		while (chunk > 0) {
-			uaddrs[sector++] = user_addr;
+			ugrants[sector] = iop->iov_addr;
+			uoffsets[sector++] = user_offset;
 			chunk -= SECTOR_SIZE;
-			user_addr += SECTOR_SIZE;
+			user_offset += SECTOR_SIZE;
 			count += SECTOR_SIZE;
 			if (sector == f_sectors || count == nbytes)
 				goto track_set_up;
 		}
+		iop_offset = 0;
 		iop++;
 	}
   track_set_up:
@@ -557,24 +574,32 @@ unsigned nr_req;		/* length of request vector */
 			if (r == OK && read_id() != OK) r = read_id();
 		}
 
-		/* Look for the next job in uaddrs[] */
+		/* Look for the next job in uoffsets[] */
 		if (r == OK) {
 			for (;;) {
 				if (fp->fl_sector >= f_sectors)
 					fp->fl_sector = 0;
 
-				up = &uaddrs[fp->fl_sector];
-				if (*up != 0) break;
+				up = &uoffsets[fp->fl_sector];
+				ug = &ugrants[fp->fl_sector];
+				if (*up != NO_OFFSET) break;
 				fp->fl_sector++;
 			}
 		}
 
 		if (r == OK && opcode == DEV_SCATTER) {
 			/* Copy the user bytes to the DMA buffer. */
-			if ((s=sys_datacopy(proc_nr, *up,  SELF, 
+			if(safe) {
+		   	   s=sys_safecopyfrom(proc_nr, *ug, *up,
 				(vir_bytes) tmp_buf,
-				(phys_bytes) SECTOR_SIZE)) != OK)
-			panic("FLOPPY", "Sys_vircopy failed", s);
+			  	 (phys_bytes) SECTOR_SIZE, D);
+			} else {
+			   s=sys_datacopy(proc_nr, *ug + *up,  SELF, 
+				(vir_bytes) tmp_buf,
+				(phys_bytes) SECTOR_SIZE);
+			}
+			if(s != OK)
+				panic("FLOPPY", "Sys_vircopy failed", s);
 		}
 
 		/* Set up the DMA chip and perform the transfer. */
@@ -591,10 +616,17 @@ unsigned nr_req;		/* length of request vector */
 
 		if (r == OK && opcode == DEV_GATHER) {
 			/* Copy the DMA buffer to user space. */
-			if ((s=sys_datacopy(SELF, (vir_bytes) tmp_buf, 
-				proc_nr, *up, 
-				(phys_bytes) SECTOR_SIZE)) != OK)
-			panic("FLOPPY", "Sys_vircopy failed", s);
+			if(safe) {
+		   	   s=sys_safecopyto(proc_nr, *ug, *up,
+				(vir_bytes) tmp_buf,
+			  	 (phys_bytes) SECTOR_SIZE, D);
+			} else {
+			   s=sys_datacopy(SELF, (vir_bytes) tmp_buf, 
+				proc_nr, *ug + *up, 
+				(phys_bytes) SECTOR_SIZE);
+			}
+			if(s != OK)
+				panic("FLOPPY", "Sys_vircopy failed", s);
 		}
 
 		if (r != OK) {
@@ -617,12 +649,12 @@ unsigned nr_req;		/* length of request vector */
 	for (;;) {
 		if (nbytes < iov->iov_size) {
 			/* Not done with this one yet. */
-			iov->iov_addr += nbytes;
+			iov_offset += nbytes;
 			iov->iov_size -= nbytes;
 			break;
 		}
+		iov_offset = 0;
 		nbytes -= iov->iov_size;
-		iov->iov_addr += iov->iov_size;
 		iov->iov_size = 0;
 		if (nbytes == 0) {
 			/* The rest is optional, so we return to give FS a
@@ -1275,7 +1307,7 @@ int density;
   position = (off_t) f_dp->test << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) tmp_buf;
   iovec1.iov_size = SECTOR_SIZE;
-  result = f_transfer(SELF, DEV_GATHER, position, &iovec1, 1);
+  result = f_transfer(SELF, DEV_GATHER, position, &iovec1, 1, 0);
 
   if (iovec1.iov_size != 0) return(EIO);
 
