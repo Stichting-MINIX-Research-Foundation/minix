@@ -46,6 +46,9 @@ register message *m_ptr;	/* pointer to request message */
   case BIOS_SEG:
       phys_addr = umap_bios(proc_addr(proc_nr), offset, count); 
       break;
+  case GRANT_SEG:
+      phys_addr = umap_grant(proc_addr(proc_nr), offset, count); 
+      break;
   default:
       return(EINVAL);
   }

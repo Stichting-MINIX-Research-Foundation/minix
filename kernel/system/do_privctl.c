@@ -40,7 +40,8 @@ message *m_ptr;			/* pointer to request message */
    */
   caller_ptr = proc_addr(who_p);
   if (! (priv(caller_ptr)->s_flags & SYS_PROC)) return(EPERM); 
-  if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return(EINVAL);
+  if(m_ptr->PR_ENDPT == SELF) proc_nr = who_p;
+  else if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return(EINVAL);
   rp = proc_addr(proc_nr);
 
   switch(m_ptr->CTL_REQUEST)
@@ -79,10 +80,12 @@ message *m_ptr;			/* pointer to request message */
 	    }
 	}
 
-	/* No I/O resources, no memory resources, no IRQs */
+	/* No I/O resources, no memory resources, no IRQs, no grant table */
 	priv(rp)->s_nr_io_range= 0;
 	priv(rp)->s_nr_mem_range= 0;
 	priv(rp)->s_nr_irq= 0;
+	priv(rp)->s_grant_table= 0;
+	priv(rp)->s_grant_entries= 0;
 
 	/* Done. Privileges have been set. Allow process to run again. */
 	old_flags = rp->p_rts_flags;		/* save value of the flags */
@@ -159,6 +162,11 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_irq_tab[i]= m_ptr->CTL_MM_PRIV;
 	priv(rp)->s_nr_irq++;
 
+	return OK;
+  case SYS_PRIV_SET_GRANTS:
+	if ((rp->p_rts_flags & NO_PRIV) || !(priv(rp))) return(EPERM);
+	_K_SET_GRANT_TABLE(rp, 
+		(vir_bytes) m_ptr->CTL_ARG_PTR, m_ptr->CTL_MM_PRIV);
 	return OK;
 
   default:

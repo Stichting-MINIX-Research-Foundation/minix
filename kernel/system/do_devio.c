@@ -3,7 +3,6 @@
  *
  * The parameters for this kernel call are:
  *   m2_i3:	DIO_REQUEST	(request input or output)	
- *   m2_i1:	DIO_TYPE	(flag indicating byte, word, or long)
  *   m2_l1:	DIO_PORT	(port to read/ write)	
  *   m2_l2:	DIO_VALUE	(value to write/ return value read)	
  */
@@ -25,6 +24,10 @@ register message *m_ptr;	/* pointer to request message */
     port_t port;
     struct io_range *iorp;
     int i, size, nr_io_range;
+    int io_type, io_dir;
+
+    io_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
+    io_dir  = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
 
     rp= proc_addr(who_p);
     privp= priv(rp);
@@ -35,11 +38,11 @@ register message *m_ptr;	/* pointer to request message */
     }
     if (privp->s_flags & CHECK_IO_PORT)
     {
-	switch (m_ptr->DIO_TYPE)
+	switch (io_type)
 	{
-	case DIO_BYTE: size= 1; break;
-	case DIO_WORD: size= 2; break;
-	case DIO_LONG: size= 4; break;
+	case _DIO_BYTE: size= 1; break;
+	case _DIO_WORD: size= 2; break;
+	case _DIO_LONG: size= 4; break;
 	default: size= 4; break;	/* Be conservative */
 	}
 	port= m_ptr->DIO_PORT;
@@ -61,18 +64,18 @@ register message *m_ptr;	/* pointer to request message */
 doit:
 
 /* Process a single I/O request for byte, word, and long values. */
-    if (m_ptr->DIO_REQUEST == DIO_INPUT) { 
-      switch (m_ptr->DIO_TYPE) {
-        case DIO_BYTE: m_ptr->DIO_VALUE = inb(m_ptr->DIO_PORT); break; 
-        case DIO_WORD: m_ptr->DIO_VALUE = inw(m_ptr->DIO_PORT); break; 
-        case DIO_LONG: m_ptr->DIO_VALUE = inl(m_ptr->DIO_PORT); break; 
+    if (io_dir == _DIO_INPUT) { 
+      switch (io_type) {
+        case _DIO_BYTE: m_ptr->DIO_VALUE = inb(m_ptr->DIO_PORT); break; 
+        case _DIO_WORD: m_ptr->DIO_VALUE = inw(m_ptr->DIO_PORT); break; 
+        case _DIO_LONG: m_ptr->DIO_VALUE = inl(m_ptr->DIO_PORT); break; 
     	default: return(EINVAL);
       } 
     } else { 
-      switch (m_ptr->DIO_TYPE) {
-        case DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-        case DIO_WORD: outw(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-        case DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
+      switch (io_type) {
+        case _DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
+        case _DIO_WORD: outw(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
+        case _DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
     	default: return(EINVAL);
       } 
     }

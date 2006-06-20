@@ -38,16 +38,19 @@ register message *m_ptr;	/* pointer to request message */
   vir_bytes caller_vir;       /* virtual address at caller */
   phys_bytes caller_phys;     /* physical address at caller */
   int i;
+  int io_dir, io_type;
     
   /* Get the request, size of the request vector, and check the values. */
-  if (m_ptr->DIO_REQUEST == DIO_INPUT) io_in = TRUE;
-  else if (m_ptr->DIO_REQUEST == DIO_OUTPUT) io_in = FALSE;
+  io_dir = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
+  io_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
+  if (io_dir == _DIO_INPUT) io_in = TRUE;
+  else if (io_dir == _DIO_OUTPUT) io_in = FALSE;
   else return(EINVAL);
   if ((vec_size = m_ptr->DIO_VEC_SIZE) <= 0) return(EINVAL);
-  switch (m_ptr->DIO_TYPE) {
-      case DIO_BYTE: bytes = vec_size * sizeof(pvb_pair_t); break;
-      case DIO_WORD: bytes = vec_size * sizeof(pvw_pair_t); break;
-      case DIO_LONG: bytes = vec_size * sizeof(pvl_pair_t); break;
+  switch (io_type) {
+      case _DIO_BYTE: bytes = vec_size * sizeof(pvb_pair_t); break;
+      case _DIO_WORD: bytes = vec_size * sizeof(pvw_pair_t); break;
+      case _DIO_LONG: bytes = vec_size * sizeof(pvl_pair_t); break;
       default:  return(EINVAL);   /* check type once and for all */
   }
   if (bytes > sizeof(vdevio_buf))  return(E2BIG);
@@ -63,12 +66,12 @@ register message *m_ptr;	/* pointer to request message */
    * batch from being interrupted. 
    */  
   lock(13, "do_vdevio");
-  switch (m_ptr->DIO_TYPE) {
-  case DIO_BYTE: 					 /* byte values */
+  switch (io_type) {
+  case _DIO_BYTE: 					 /* byte values */
       if (io_in) for (i=0; i<vec_size; i++)  pvb[i].value = inb(pvb[i].port); 
       else       for (i=0; i<vec_size; i++)  outb(pvb[i].port, pvb[i].value); 
       break; 
-  case DIO_WORD:					  /* word values */
+  case _DIO_WORD:					  /* word values */
       if (io_in) for (i=0; i<vec_size; i++)  pvw[i].value = inw(pvw[i].port);  
       else       for (i=0; i<vec_size; i++)  outw(pvw[i].port, pvw[i].value); 
       break; 
