@@ -24,6 +24,7 @@
 #include "../libdriver/driver.h"
 #include "../libdriver/drvlib.h"
 #include <minix/sysutil.h>
+#include <minix/safecopies.h>
 #include <minix/keymap.h>
 #include <sys/ioc_disk.h>
 #include <ibm/int86.h>
@@ -61,17 +62,21 @@ PRIVATE struct device *w_dv;		/* device's base and size */
 PRIVATE vir_bytes bios_buf_vir, bios_buf_size;
 PRIVATE phys_bytes bios_buf_phys;
 PRIVATE int remap_first = 0;		/* Remap drives for CD HD emulation */
+PRIVATE char my_bios_buf[16384];
+PRIVATE cp_grant_id_t my_bios_grant_id;
 
 _PROTOTYPE(int main, (void) );
 FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );
 FORWARD _PROTOTYPE( char *w_name, (void) );
 FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) );
+				iovec_t *iov, unsigned nr_req, int safe) );
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void w_init, (void) );
 FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry));
-FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr)    );
+FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr, int)    );
+FORWARD _PROTOTYPE( int my_vircopy, (endpoint_t, int, vir_bytes, endpoint_t,
+	int, vir_bytes, size_t, size_t));
 
 /* Entry points to this driver. */
 PRIVATE struct driver w_dtab = {
@@ -153,12 +158,54 @@ PRIVATE char *w_name()
 /*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
-PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req)
+PRIVATE int my_vircopy(from_proc, from_seg, from_vir, to_proc, to_seg,
+  to_vir, grant_offset, size)
+endpoint_t from_proc;
+int from_seg;
+vir_bytes from_vir;
+endpoint_t to_proc;
+int to_seg;
+vir_bytes to_vir;
+vir_bytes grant_offset;
+size_t size;
+{
+	phys_bytes addr;
+	int r;
+
+	if(from_seg == GRANT_SEG) {
+  		if((r=sys_umap(from_proc, GRANT_SEG,
+			(vir_bytes)from_vir, (phys_bytes)size+grant_offset,
+  			&addr)) != OK) {
+			panic(ME, "sys_umap in my_vircopy failed", r);
+		}
+		from_seg = PHYS_SEG;
+		from_vir = addr + grant_offset;
+	}
+
+	if(to_seg == GRANT_SEG) {
+  		if((r=sys_umap(to_proc, GRANT_SEG,
+			(vir_bytes)to_vir, (phys_bytes)size+grant_offset,
+  			&addr)) != OK) {
+			panic(ME, "sys_umap in my_vircopy failed", r);
+		}
+		to_seg = PHYS_SEG;
+		to_vir = addr + grant_offset;
+	}
+
+	return sys_physcopy(from_proc, from_seg, from_vir,
+		to_proc, to_seg, to_vir, size);
+}
+
+/*===========================================================================*
+ *				w_transfer				     *
+ *===========================================================================*/
+PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
 off_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
+int safe;			/* use safecopies? */
 {
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
@@ -166,6 +213,7 @@ unsigned nr_req;		/* length of request vector */
   unsigned nbytes, count, chunk;
   unsigned long block;
   vir_bytes i13e_rw_off, rem_buf_size;
+  size_t vir_offset = 0;
   unsigned long dv_size = cv64ul(w_dv->dv_size);
   unsigned secspcyl = wn->heads * wn->sectors;
   struct int13ext_rw {
@@ -214,11 +262,12 @@ unsigned nr_req;		/* length of request vector */
 			chunk = iov->iov_size;
 			if (count + chunk > nbytes) chunk = nbytes - count;
 			assert(chunk <= rem_buf_size);
-			r= sys_vircopy(proc_nr, D, iop->iov_addr,
+			r= my_vircopy(proc_nr, safe ? GRANT_SEG : D,
+				(vir_bytes) iop->iov_addr,
 				SYSTEM, D, bios_buf_vir+count, 
-				chunk);
+				vir_offset, chunk);
 			if (r != OK)
-				panic(ME, "sys_vircopy failed", r);
+				panic(ME, "copy failed", r);
 			count += chunk;
 		}
 	}
@@ -278,9 +327,9 @@ unsigned nr_req;		/* length of request vector */
 			chunk = iov->iov_size;
 			if (count + chunk > nbytes) chunk = nbytes - count;
 			assert(chunk <= rem_buf_size);
-			r= sys_vircopy(SYSTEM, D, bios_buf_vir+count, 
-				proc_nr, D, iop->iov_addr,
-				chunk);
+			r = my_vircopy(SYSTEM, D, bios_buf_vir+count, 
+				proc_nr, safe ? GRANT_SEG : D,
+				iop->iov_addr, vir_offset, chunk);
 			if (r != OK)
 				panic(ME, "sys_vircopy failed", r);
 			count += chunk;
@@ -292,12 +341,12 @@ unsigned nr_req;		/* length of request vector */
 	for (;;) {
 		if (nbytes < iov->iov_size) {
 			/* Not done with this one yet. */
-			iov->iov_addr += nbytes;
+			vir_offset += nbytes;
 			iov->iov_size -= nbytes;
 			break;
 		}
 		nbytes -= iov->iov_size;
-		iov->iov_addr += iov->iov_size;
+		vir_offset = 0;
 		iov->iov_size = 0;
 		if (nbytes == 0) {
 			/* The rest is optional, so we return to give FS a
@@ -374,6 +423,13 @@ PRIVATE void w_init()
   r= sys_getbiosbuffer(&bios_buf_vir, &bios_buf_size);
   if (r != OK)
   	panic(ME, "sys_getbiosbuffer failed", r);
+
+  if(bios_buf_size >= sizeof(my_bios_buf)) {
+        printf("bios_wini: truncating buffer %d -> %d\n",
+		bios_buf_size, sizeof(my_bios_buf));
+	bios_buf_size = sizeof(my_bios_buf);
+  }
+
   r= sys_umap(SYSTEM, D, (vir_bytes)bios_buf_vir, (phys_bytes)bios_buf_size,
   	&bios_buf_phys);
   if (r != OK)
@@ -485,13 +541,14 @@ struct partition *entry;
 /*============================================================================*
  *				w_other				      *
  *============================================================================*/
-PRIVATE int w_other(dr, m)
+PRIVATE int w_other(dr, m, safe)
 struct driver *dr;
 message *m;
+int safe;
 {
         int r, timeout, prev;
 
-        if (m->m_type != DEV_IOCTL ) {
+        if (m->m_type != DEV_IOCTL && m->m_type != DEV_IOCTL_S ) {
                 return EINVAL;
         }
 
@@ -499,8 +556,15 @@ message *m;
                 int count;
                 if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
                 count = w_wn->open_ct;
-                if ((r=sys_datacopy(SELF, (vir_bytes)&count,
-                        m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(count))) != OK)
+		if(safe) {
+		   r=sys_safecopyto(m->IO_ENDPT, (vir_bytes)m->ADDRESS,
+		       0, (vir_bytes)&count, sizeof(count), D);
+		} else {
+                   r=sys_datacopy(SELF, (vir_bytes)&count,
+                        m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(count));
+		}
+
+		if(r != OK)
                         return r;
                 return OK;
         }
