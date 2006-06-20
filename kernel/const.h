@@ -7,6 +7,8 @@
 #include <ibm/bios.h>		/* BIOS addresses, sizes and magic numbers */
 #include <ibm/cpu.h>		/* BIOS addresses, sizes and magic numbers */
 #include <minix/config.h>
+#include <minix/bitmap.h>
+
 #include "config.h"
 
 /* To translate an address in kernel space to a physical address.  This is
@@ -33,15 +35,6 @@
 
 /* Number of random sources */
 #define RANDOM_SOURCES	16
-
-/* Constants and macros for bit map manipulation. */
-#define BITCHUNK_BITS   (sizeof(bitchunk_t) * CHAR_BIT)
-#define BITMAP_CHUNKS(nr_bits) (((nr_bits)+BITCHUNK_BITS-1)/BITCHUNK_BITS)  
-#define MAP_CHUNK(map,bit) (map)[((bit)/BITCHUNK_BITS)]
-#define CHUNK_OFFSET(bit) ((bit)%BITCHUNK_BITS))
-#define GET_BIT(map,bit) ( MAP_CHUNK(map,bit) & (1 << CHUNK_OFFSET(bit) )
-#define SET_BIT(map,bit) ( MAP_CHUNK(map,bit) |= (1 << CHUNK_OFFSET(bit) )
-#define UNSET_BIT(map,bit) ( MAP_CHUNK(map,bit) &= ~(1 << CHUNK_OFFSET(bit) )
 
 #define get_sys_bit(map,bit) \
 	( MAP_CHUNK(map.chunk,bit) & (1 << CHUNK_OFFSET(bit) )
