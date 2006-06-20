@@ -95,7 +95,3 @@
 #define TASK_REPLY	121	/* to FS: reply code from drivers, not 
 				 * really a standalone call.
 				 */
-
-#define REVIVE	 	150	/* to FS: revive a sleeping process, to be
-				 * removed
-				 */
