@@ -19,7 +19,7 @@ OBJ = 	main.o forkexit.o break.o exec.o time.o timers.o \
 # build local binary
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsys -lsysutil -ltimers
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsysutil  -lsys -ltimers
 	install -S 256w $@
 
 # install with other servers
