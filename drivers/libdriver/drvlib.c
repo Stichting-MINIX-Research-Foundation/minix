@@ -164,7 +164,7 @@ struct part_entry *table;	/* four entries */
   iovec1.iov_addr = (vir_bytes) partbuf;
   iovec1.iov_size = CD_SECTOR_SIZE;
   if ((*dp->dr_prepare)(device) != NIL_DEV) {
-	(void) (*dp->dr_transfer)(SELF, DEV_GATHER, position, &iovec1, 1);
+	(void) (*dp->dr_transfer)(SELF, DEV_GATHER, position, &iovec1, 1, 0);
   }
   if (iovec1.iov_size != 0) {
 	return 0;

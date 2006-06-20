@@ -31,17 +31,17 @@ struct driver {
   _PROTOTYPE( char *(*dr_name), (void) );
   _PROTOTYPE( int (*dr_open), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_close), (struct driver *dp, message *m_ptr) );
-  _PROTOTYPE( int (*dr_ioctl), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( int (*dr_ioctl), (struct driver *dp, message *m_ptr, int safe) );
   _PROTOTYPE( struct device *(*dr_prepare), (int device) );
   _PROTOTYPE( int (*dr_transfer), (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req) );
+					iovec_t *iov, unsigned nr_req, int safe) );
   _PROTOTYPE( void (*dr_cleanup), (void) );
   _PROTOTYPE( void (*dr_geometry), (struct partition *entry) );
   _PROTOTYPE( void (*dr_signal), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( void (*dr_alarm), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_cancel), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_select), (struct driver *dp, message *m_ptr) );
-  _PROTOTYPE( int (*dr_other), (struct driver *dp, message *m_ptr) );
+  _PROTOTYPE( int (*dr_other), (struct driver *dp, message *m_ptr, int safe) );
   _PROTOTYPE( int (*dr_hw_int), (struct driver *dp, message *m_ptr) );
 };
 
@@ -72,7 +72,8 @@ _PROTOTYPE( void nop_signal, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( void nop_alarm, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_cancel, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_select, (struct driver *dp, message *m_ptr) );
-_PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr) );
+_PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr, int safe) );
+_PROTOTYPE( int nop_ioctl, (struct driver *dp, message *m_ptr, int safe) );
 
 /* Parameters for the disk drive. */
 #define SECTOR_SIZE      512	/* physical sector size in bytes */

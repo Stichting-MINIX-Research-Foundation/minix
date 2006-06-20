@@ -28,6 +28,8 @@
  * |  CANCEL    | device  | proc nr | r/w     |         |         |
  * |------------+---------+---------+---------+---------+---------|
  * |  HARD_STOP |         |         |         |         |         |
+ * |------------+---------+---------+---------+---------+---------|
+ * |  DEV_*_S   | variants using safecopies of above              |
  * ----------------------------------------------------------------
  *
  * The file contains one entry point:
@@ -62,8 +64,8 @@ phys_bytes tmp_phys;		/* phys address of DMA buffer */
 #endif /* CHIP != INTEL */
 
 FORWARD _PROTOTYPE( void init_buffer, (void) );
-FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp) );
-FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp) );
+FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp, int safe) );
+FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp, int safe) );
 
 int device_caller;
 
@@ -96,13 +98,18 @@ struct driver *dp;	/* Device dependent entry points. */
 	switch(mess.m_type) {
 	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;	
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
-	case DEV_IOCTL:		r = (*dp->dr_ioctl)(dp, &mess);	break;
+	case DEV_IOCTL:		r = (*dp->dr_ioctl)(dp, &mess, 0); break;
+	case DEV_IOCTL_S:	r = (*dp->dr_ioctl)(dp, &mess, 1); break;
 	case CANCEL:		r = (*dp->dr_cancel)(dp, &mess);break;
 	case DEV_SELECT:	r = (*dp->dr_select)(dp, &mess);break;
 	case DEV_READ:	
-	case DEV_WRITE:	  	r = do_rdwt(dp, &mess);	break;
+	case DEV_WRITE:	  	r = do_rdwt(dp, &mess, 0); break;
+	case DEV_READ_S:	
+	case DEV_WRITE_S:  	r = do_rdwt(dp, &mess, 1); break;
 	case DEV_GATHER: 
-	case DEV_SCATTER: 	r = do_vrdwt(dp, &mess);	break;
+	case DEV_SCATTER: 	r = do_vrdwt(dp, &mess, 0); break;
+	case DEV_GATHER_S: 
+	case DEV_SCATTER_S: 	r = do_vrdwt(dp, &mess, 1); break;
 
 	case HARD_INT:		/* leftover interrupt or expired timer. */
 				if(dp->dr_hw_int) {
@@ -118,7 +125,7 @@ struct driver *dp;	/* Device dependent entry points. */
 				continue;
 	default:		
 		if(dp->dr_other)
-			r = (*dp->dr_other)(dp, &mess);
+			r = (*dp->dr_other)(dp, &mess, 0);
 		else	
 			r = EINVAL;
 		break;
@@ -166,9 +173,10 @@ PRIVATE void init_buffer()
 /*===========================================================================*
  *				do_rdwt					     *
  *===========================================================================*/
-PRIVATE int do_rdwt(dp, mp)
+PRIVATE int do_rdwt(dp, mp, safe)
 struct driver *dp;		/* device dependent entry points */
 message *mp;			/* pointer to read or write message */
+int safe;			/* use safecopies? */
 {
 /* Carry out a single read or write request. */
   iovec_t iovec1;
@@ -178,20 +186,24 @@ message *mp;			/* pointer to read or write message */
   /* Disk address?  Address and length of the user buffer? */
   if (mp->COUNT < 0) return(EINVAL);
 
-  /* Check the user buffer. */
-  sys_umap(mp->IO_ENDPT, D, (vir_bytes) mp->ADDRESS, mp->COUNT, &phys_addr);
-  if (phys_addr == 0) return(EFAULT);
+  /* Check the user buffer (not relevant for safe copies). */
+  if(!safe) {
+	  sys_umap(mp->IO_ENDPT, D, (vir_bytes) mp->ADDRESS, mp->COUNT, &phys_addr);
+	  if (phys_addr == 0) return(EFAULT);
+  }
 
   /* Prepare for I/O. */
   if ((*dp->dr_prepare)(mp->DEVICE) == NIL_DEV) return(ENXIO);
 
   /* Create a one element scatter/gather vector for the buffer. */
-  opcode = mp->m_type == DEV_READ ? DEV_GATHER : DEV_SCATTER;
+  if(mp->m_type == DEV_READ || mp->m_type == DEV_READ_S) opcode = DEV_GATHER;
+  else	opcode =  DEV_SCATTER;
+
   iovec1.iov_addr = (vir_bytes) mp->ADDRESS;
   iovec1.iov_size = mp->COUNT;
 
   /* Transfer bytes from/to the device. */
-  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, mp->POSITION, &iovec1, 1);
+  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, mp->POSITION, &iovec1, 1, safe);
 
   /* Return the number of bytes transferred or an error code. */
   return(r == OK ? (mp->COUNT - iovec1.iov_size) : r);
@@ -200,9 +212,10 @@ message *mp;			/* pointer to read or write message */
 /*==========================================================================*
  *				do_vrdwt				    *
  *==========================================================================*/
-PRIVATE int do_vrdwt(dp, mp)
+PRIVATE int do_vrdwt(dp, mp, safe)
 struct driver *dp;	/* device dependent entry points */
 message *mp;		/* pointer to read or write message */
+int safe;		/* use safecopies? */
 {
 /* Carry out an device read or write to/from a vector of user addresses.
  * The "user addresses" are assumed to be safe, i.e. FS transferring to/from
@@ -212,24 +225,28 @@ message *mp;		/* pointer to read or write message */
   iovec_t *iov;
   phys_bytes iovec_size;
   unsigned nr_req;
-  int r;
+  int r, j, opcode;
+
 
   nr_req = mp->COUNT;	/* Length of I/O vector */
 
-#if 0
-  if (mp->m_source < 0) {
-    /* Called by a task, no need to copy vector. */
-    iov = (iovec_t *) mp->ADDRESS;
-  } else
-#endif
   {
     /* Copy the vector from the caller to kernel space. */
     if (nr_req > NR_IOREQS) nr_req = NR_IOREQS;
     iovec_size = (phys_bytes) (nr_req * sizeof(iovec[0]));
 
-    if (OK != sys_datacopy(mp->m_source, (vir_bytes) mp->ADDRESS, 
-    		SELF, (vir_bytes) iovec, iovec_size))
-        panic((*dp->dr_name)(),"bad I/O vector by", mp->m_source);
+    if(safe) {
+	    if (OK != sys_safecopyfrom(mp->m_source, (vir_bytes) mp->IO_GRANT, 
+    			0, (vir_bytes) iovec, iovec_size, D)) {
+        	panic((*dp->dr_name)(),"bad (safe) I/O vector by", mp->m_source);
+	    }
+    } else {
+	    if (OK != sys_datacopy(mp->m_source, (vir_bytes) mp->ADDRESS, 
+    			SELF, (vir_bytes) iovec, iovec_size)) {
+        	panic((*dp->dr_name)(),"bad I/O vector by", mp->m_source);
+	    }
+    }
+
     iov = iovec;
   }
 
@@ -237,14 +254,23 @@ message *mp;		/* pointer to read or write message */
   if ((*dp->dr_prepare)(mp->DEVICE) == NIL_DEV) return(ENXIO);
 
   /* Transfer bytes from/to the device. */
-  r = (*dp->dr_transfer)(mp->IO_ENDPT, mp->m_type, mp->POSITION, iov, nr_req);
+  opcode = mp->m_type;
+  if(opcode == DEV_GATHER_S) opcode = DEV_GATHER;
+  if(opcode == DEV_SCATTER_S) opcode = DEV_SCATTER;
+  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, mp->POSITION, iov,
+	nr_req, safe);
 
   /* Copy the I/O vector back to the caller. */
-#if 0
-  if (mp->m_source >= 0) {
-#endif
+  if(safe) {
+    if (OK != sys_safecopyto(mp->m_source, (vir_bytes) mp->IO_GRANT, 
+    		0, (vir_bytes) iovec, iovec_size, D)) {
+        panic((*dp->dr_name)(),"couldn't return I/O vector", mp->m_source);
+    }
+  } else {
     sys_datacopy(SELF, (vir_bytes) iovec, 
     	mp->m_source, (vir_bytes) mp->ADDRESS, iovec_size);
+  }
+
   return(r);
 }
 
@@ -276,8 +302,19 @@ message *mp;
   case DEV_OPEN:	return(ENODEV);
   case DEV_CLOSE:	return(OK);
   case DEV_IOCTL:	return(ENOTTY);
-  default:		return(EIO);
+  default:		printf("nop: ignoring code %d\n", mp->m_type); return(EIO);
   }
+}
+
+/*============================================================================*
+ *				nop_ioctl				      *
+ *============================================================================*/
+PUBLIC int nop_ioctl(dp, mp, safe)
+struct driver *dp;
+message *mp;
+int safe;
+{
+  return(ENOTTY);
 }
 
 /*============================================================================*
@@ -338,9 +375,10 @@ PUBLIC int nop_select(struct driver *dr, message *m)
 /*============================================================================*
  *				do_diocntl				      *
  *============================================================================*/
-PUBLIC int do_diocntl(dp, mp)
+PUBLIC int do_diocntl(dp, mp, safe)
 struct driver *dp;
 message *mp;			/* pointer to ioctl request */
+int safe;			/* addresses or grants? */
 {
 /* Carry out a partition setting/getting request. */
   struct device *dv;
@@ -349,7 +387,7 @@ message *mp;			/* pointer to ioctl request */
 
   if (mp->REQUEST != DIOCSETP && mp->REQUEST != DIOCGETP) {
   	if(dp->dr_other) {
-  		return dp->dr_other(dp, mp);
+  		return dp->dr_other(dp, mp, safe);
   	} else return(ENOTTY);
   }
 
@@ -358,8 +396,14 @@ message *mp;			/* pointer to ioctl request */
 
   if (mp->REQUEST == DIOCSETP) {
 	/* Copy just this one partition table entry. */
-	if (OK != (s=sys_datacopy(mp->IO_ENDPT, (vir_bytes) mp->ADDRESS,
-		SELF, (vir_bytes) &entry, sizeof(entry))))
+	if(safe) {
+	  s=sys_safecopyfrom(mp->IO_ENDPT, (vir_bytes) mp->IO_GRANT, 
+    			0, (vir_bytes) &entry, sizeof(entry), D);
+	} else{
+	  s=sys_datacopy(mp->IO_ENDPT, (vir_bytes) mp->ADDRESS,
+		SELF, (vir_bytes) &entry, sizeof(entry));
+	}
+	if(s != OK)
 	    return s;
 	dv->dv_base = entry.base;
 	dv->dv_size = entry.size;
@@ -368,8 +412,14 @@ message *mp;			/* pointer to ioctl request */
 	entry.base = dv->dv_base;
 	entry.size = dv->dv_size;
 	(*dp->dr_geometry)(&entry);
-	if (OK != (s=sys_datacopy(SELF, (vir_bytes) &entry,
-		mp->IO_ENDPT, (vir_bytes) mp->ADDRESS, sizeof(entry))))
+	if(safe) {
+	  s=sys_safecopyto(mp->IO_ENDPT, (vir_bytes) mp->IO_GRANT, 
+    			0, (vir_bytes) &entry, sizeof(entry), D);
+	} else {
+	  s=sys_datacopy(SELF, (vir_bytes) &entry,
+		mp->IO_ENDPT, (vir_bytes) mp->ADDRESS, sizeof(entry));
+	}
+        if (OK != s) 
 	    return s;
   }
   return(OK);
