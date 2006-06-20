@@ -1945,7 +1945,7 @@ static void do_vir_insb(port_t port, int proc, vir_bytes buf, size_t size)
 {
 	int r;
 
-	r= sys_sdevio(DIO_INPUT, port, DIO_BYTE, proc, (void *)buf, size);
+	r= sys_insb(port, proc, (void *) buf, size);
 	if (r != OK)
 		panic("DP8390", "sys_sdevio failed", r);
 }
@@ -1954,7 +1954,7 @@ static void do_vir_insw(port_t port, int proc, vir_bytes buf, size_t size)
 {
 	int r;
 
-	r= sys_sdevio(DIO_INPUT, port, DIO_WORD, proc, (void *)buf, size);
+	r= sys_insw(port, proc, (void *) buf, size);
 	if (r != OK)
 		panic("DP8390", "sys_sdevio failed", r);
 }
@@ -1963,7 +1963,7 @@ static void do_vir_outsb(port_t port, int proc, vir_bytes buf, size_t size)
 {
 	int r;
 
-	r= sys_sdevio(DIO_OUTPUT, port, DIO_BYTE, proc, (void *)buf, size);
+	r= sys_outsb(port, proc, (void *) buf, size);
 	if (r != OK)
 		panic("DP8390", "sys_sdevio failed", r);
 }
@@ -1972,7 +1972,7 @@ static void do_vir_outsw(port_t port, int proc, vir_bytes buf, size_t size)
 {
 	int r;
 
-	r= sys_sdevio(DIO_OUTPUT, port, DIO_WORD, proc, (void *)buf, size);
+	r= sys_outsw(port, proc, (void *) buf, size);
 	if (r != OK)
 		panic("DP8390", "sys_sdevio failed", r);
 }
