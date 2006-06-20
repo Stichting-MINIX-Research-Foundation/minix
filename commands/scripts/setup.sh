@@ -93,11 +93,6 @@ warn()
 while getopts '' opt; do usage; done
 shift `expr $OPTIND - 1`
 
-if [ ! -f /CD ]
-then	echo "Please run setup from the CD, not from a live system."
-	exit 1
-fi
-
 if [ "$USER" != root ]
 then	echo "Please run setup as root."
 	exit 1
