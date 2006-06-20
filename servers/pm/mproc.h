@@ -11,7 +11,7 @@ EXTERN struct mproc {
   char mp_exitstatus;		/* storage for status when process exits */
   char mp_sigstatus;		/* storage for signal # for killed procs */
   pid_t mp_pid;			/* process id */
-  int mp_endpoint;		/* kernel endpoint id */
+  endpoint_t mp_endpoint;	/* kernel endpoint id */
   pid_t mp_procgrp;		/* pid of process group (used for signals) */
   pid_t mp_wpid;		/* pid this process is waiting for */
   int mp_parent;		/* index of parent process */
