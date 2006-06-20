@@ -749,7 +749,8 @@ int line;
 #else
 PUBLIC int isokendpt_f(e, p, fatalflag)
 #endif
-int e, *p, fatalflag;
+endpoint_t e;
+int *p, fatalflag;
 {
 	int ok = 0;
 	/* Convert an endpoint number into a process number.

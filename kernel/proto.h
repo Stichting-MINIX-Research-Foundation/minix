@@ -3,6 +3,8 @@
 #ifndef PROTO_H
 #define PROTO_H
 
+#include <minix/safecopies.h>
+
 /* Struct declarations. */
 struct proc;
 struct timer;
@@ -32,10 +34,10 @@ _PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
 _PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);
 #if DEBUG_ENABLE_IPC_WARNINGS
-_PROTOTYPE( int isokendpt_f, (char *file, int line, int e, int *p, int f));
+_PROTOTYPE( int isokendpt_f, (char *file, int line, endpoint_t e, int *p, int f));
 #define isokendpt_d(e, p, f) isokendpt_f(__FILE__, __LINE__, (e), (p), (f))
 #else
-_PROTOTYPE( int isokendpt_f, (int e, int *p, int f)			);
+_PROTOTYPE( int isokendpt_f, (endpoint_t e, int *p, int f)		);
 #define isokendpt_d(e, p, f) isokendpt_f((e), (p), (f))
 #endif
 
@@ -50,7 +52,7 @@ _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void sys_task, (void)					);
 _PROTOTYPE( void get_randomness, (int source)				);
 _PROTOTYPE( int virtual_copy, (struct vir_addr *src, struct vir_addr *dst, 
-				vir_bytes bytes) 			);
+				vir_bytes bytes)			);
 #define numap_local(proc_nr, vir_addr, bytes) \
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 _PROTOTYPE( phys_bytes umap_local, (struct proc *rp, int seg, 
@@ -59,6 +61,10 @@ _PROTOTYPE( phys_bytes umap_remote, (struct proc *rp, int seg,
 		vir_bytes vir_addr, vir_bytes bytes)			);
 _PROTOTYPE( phys_bytes umap_bios, (struct proc *rp, vir_bytes vir_addr,
 		vir_bytes bytes)					);
+_PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t,
+	vir_bytes));
+_PROTOTYPE( phys_bytes umap_verify_grant, (struct proc *, endpoint_t,
+	cp_grant_id_t, vir_bytes, vir_bytes, int));
 _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
 
 /* system/do_newmap.c */
@@ -160,6 +166,10 @@ _PROTOTYPE( void alloc_segments, (struct proc *rp)			);
 
 /* system/do_vm.c */
 _PROTOTYPE( void vm_map_default, (struct proc *pp)			);
+
+/* system/do_safecopy.c */
+_PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
+	int, vir_bytes, vir_bytes *, endpoint_t *));
 
 #endif /* (CHIP == INTEL) */
 
