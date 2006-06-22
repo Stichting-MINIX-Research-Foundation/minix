@@ -40,7 +40,7 @@ ASMCONV =	$L/asmconv
 AAL =		/usr/bin/aal
 
 # Minix predefined symbols.
-CPP_F =		-D__minix -D__$ARCH
+CPP_F =		-D__minix -D__minix3 -D__$ARCH
 
 # Library path.
 LIBPATH = $USERLIBPATH $A/$ARCH
