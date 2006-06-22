@@ -60,6 +60,8 @@ _PROTOTYPE( int strcasecmp, (const char *_s1, const char *_s2)		);
 _PROTOTYPE( int strncasecmp, (const char *_s1, const char *_s2,
 							size_t _len)	);
 _PROTOTYPE( size_t strnlen, (const char *_s, size_t _n)			);
+_PROTOTYPE( size_t strlcat, (char *_dst, const char *_src, size_t _siz) );
+_PROTOTYPE( size_t strlcpy, (char *_dst, const char *_src, size_t _siz) );
 #endif
 
 #endif /* _STRING_H */

@@ -65,6 +65,8 @@ libc_FILES=" \
 	settimeofday.c \
 	stderr.c \
 	strdup.c \
+	strlcat.c \
+	strlcpy.c \
 	strtok_r.c \
 	swab.c \
 	sys_eniop.c \
