@@ -492,7 +492,8 @@ int endpoints;
 	bufp->ps_pgrp = ps_mproc[p_nr].mp_procgrp;
 	bufp->ps_mflags = ps_mproc[p_nr].mp_flags;
   } else {
-	bufp->ps_pid = 0;
+	if(endpoints) bufp->ps_pid = ps_proc[p_ki].p_endpoint;
+	else bufp->ps_pid = 0;
 	bufp->ps_ppid = 0;
 	bufp->ps_ruid = bufp->ps_euid = 0;
 	bufp->ps_pgrp = 0;
