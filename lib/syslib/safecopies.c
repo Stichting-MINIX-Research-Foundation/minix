@@ -66,19 +66,26 @@ cpf_grow(void)
 	new_size = (1+ngrants)*2;
 	assert(new_size > ngrants);
 
-	/* Grow block to new size. */
-	if(!(new_grants=realloc(grants, new_size * sizeof(grants[0]))))
+	/* Allocate a block of new size. */
+	if(!(new_grants=malloc(new_size * sizeof(grants[0]))))
 		return;
+
+	/* Copy old block to new block. */
+	if(grants && ngrants > 0)
+		memcpy(new_grants, grants, ngrants * sizeof(grants[0]));
 
 	/* Make sure new slots are marked unused (CPF_USED is clear). */
 	for(g = ngrants; g < new_size; g++)
-		grants[g].cp_flags = 0;
+		new_grants[g].cp_flags = 0;
 
 	/* Inform kernel about new size (and possibly new location). */
-	if(sys_privctl(SELF, SYS_PRIV_SET_GRANTS, new_size, new_grants))
+	if(sys_privctl(SELF, SYS_PRIV_SET_GRANTS, new_size, new_grants)) {
+		free(new_grants);
 		return;	/* Failed - don't grow then. */
+	}
 
 	/* Update internal data. */
+	if(grants && ngrants > 0) free(grants);
 	grants = new_grants;
 	ngrants = new_size;
 }
