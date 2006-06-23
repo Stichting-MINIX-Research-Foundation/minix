@@ -179,7 +179,7 @@ _PROTOTYPE(char *prrecv, (struct pstat *bufp ));
 _PROTOTYPE(void disaster, (int sig ));
 _PROTOTYPE(int main, (int argc, char *argv []));
 _PROTOTYPE(char *get_args, (struct pstat *bufp ));
-_PROTOTYPE(int pstat, (int p_nr, struct pstat *bufp ));
+_PROTOTYPE(int pstat, (int p_nr, struct pstat *bufp, int Eflag ));
 _PROTOTYPE(int addrread, (int fd, phys_clicks base, vir_bytes addr, 
 						    char *buf, int nbytes ));
 _PROTOTYPE(void usage, (char *pname ));
@@ -280,6 +280,7 @@ char *argv[];
   int opt_all = FALSE;		/* -a */
   int opt_long = FALSE;		/* -l */
   int opt_notty = FALSE;	/* -x */
+  int opt_endpoint = FALSE;	/* -E */
   char *ke_path;		/* paths of kernel, */
   char *mm_path;		/* mm, */
   char *fs_path;		/* and fs used in ps -U */
@@ -297,6 +298,7 @@ char *argv[];
 	if (opt[0] == '-') opt++;
 	while (*opt != 0) switch (*opt++) {
 		case 'a':	opt_all = TRUE;			break;
+		case 'E':	opt_endpoint = TRUE;		break;
 		case 'e':	opt_all = opt_notty = TRUE;	break;
 		case 'f':
 		case 'l':	opt_long = TRUE;		break;
@@ -352,7 +354,7 @@ char *argv[];
   /* Now loop through process table and handle each entry */
   printf("%s", opt_long ? L_HEADER : S_HEADER);
   for (i = -nr_tasks; i < nr_procs; i++) {
-	if (pstat(i, &buf) != -1 &&
+	if (pstat(i, &buf, opt_endpoint) != -1 &&
 	    (opt_all || buf.ps_euid == uid || buf.ps_ruid == uid) &&
 	    (opt_notty || majdev(buf.ps_dev) == TTY_MAJ)) {
 		if (buf.ps_pid == 0 && i != PM_PROC_NR) {
@@ -458,9 +460,10 @@ struct pstat *bufp;
 /* Pstat collects info on process number p_nr and returns it in buf.
  * It is assumed that tasks do not have entries in fproc/mproc.
  */
-int pstat(p_nr, bufp)
+int pstat(p_nr, bufp, endpoints)
 int p_nr;
 struct pstat *bufp;
+int endpoints;
 {
   int p_ki = p_nr + nr_tasks;	/* kernel proc index */
 
@@ -483,7 +486,8 @@ struct pstat *bufp;
   if (p_nr >= 0) {
 	bufp->ps_ruid = ps_mproc[p_nr].mp_realuid;
 	bufp->ps_euid = ps_mproc[p_nr].mp_effuid;
-	bufp->ps_pid = ps_mproc[p_nr].mp_pid;
+	if(endpoints) bufp->ps_pid = ps_proc[p_ki].p_endpoint;
+	else bufp->ps_pid = ps_mproc[p_nr].mp_pid;
 	bufp->ps_ppid = ps_mproc[ps_mproc[p_nr].mp_parent].mp_pid;
 	bufp->ps_pgrp = ps_mproc[p_nr].mp_procgrp;
 	bufp->ps_mflags = ps_mproc[p_nr].mp_flags;

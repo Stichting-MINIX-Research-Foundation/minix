@@ -2,7 +2,7 @@
 .SH NAME
 ps \- process status
 .SH SYNOPSIS
-\fBps \fR[\fR[\fB\-\fR]\fBalx\fR] 
+\fBps \fR[\fR[\fB\-\fR]\fBalxE\fR] 
 .br
 .de FL
 .TP
@@ -18,10 +18,11 @@ ps \- process status
 .FL "\-a" "Print all processes with controlling terminals"
 .FL "\-l" "Give long listing"
 .FL "\-x" "Include processes without a terminal"
+.FL "\-E" "Print kernel endpoint numbers where pids are normally printed"
 .SH EXAMPLES
 .EX "ps " "Show user's own processes in short format"
-.EX "ps \-axl" "Print all processes and tasks in long format"
-.EX "ps \axl" "Same -- the '\-' is optional"
+.EX "ps \-axlE" "Print all processes and tasks in long format"
+.EX "ps \axlE" "Same -- the '\-' is optional"
 .SH DESCRIPTION
 .PP
 \fIPs\fR prints the status of active processes.  Normally only the caller's own
