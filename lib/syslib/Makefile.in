@@ -42,6 +42,7 @@ libsys_FILES=" \
 	sys_out.c \
 	sys_physcopy.c \
 	sys_safecopy.c \
+	sys_vsafecopy.c \
 	sys_sdevio.c \
 	sys_segctl.c \
 	sys_setalarm.c \
