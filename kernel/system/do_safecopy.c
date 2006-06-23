@@ -8,6 +8,10 @@
  *    	SCP_OFFSET	offset within granted space
  *	SCP_ADDRESS	address in own address space
  *    	SCP_BYTES	bytes to be copied
+ *
+ * For the vectored variant (do_vsafecopy): 
+ *      VSCP_VEC_ADDR   address of vector
+ *      VSCP_VEC_SIZE   number of significant elements in vector
  */
 
 #include "../system.h"
@@ -15,6 +19,8 @@
 #include <minix/safecopies.h>
 
 #define MEM_TOP 0xFFFFFFFFUL
+
+FORWARD _PROTOTYPE(int safecopy, (endpoint_t, endpoint_t, cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
 
 /*===========================================================================*
  *				verify_grant				     *
@@ -129,9 +135,6 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		/* Currently, it is hardcoded that only FS may do
 		 * magic grants.
 		 */
-#if 0
-		kprintf("magic grant ..\n");
-#endif
 		if(granter != FS_PROC_NR) {
 			kprintf("magic grant verify failed: granter (%d) "
 				"is not FS (%d)\n", granter, FS_PROC_NR);
@@ -171,58 +174,42 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 		return EPERM;
 	}
 
-#if 0
-	kprintf("grant verify successful %d -> %d (grant %d): %d bytes\n",
-		granter, grantee, grant, bytes);
-#endif
-
 	return OK;
 }
 
 /*===========================================================================*
- *				do_safecopy				     *
+ *				safecopy				     *
  *===========================================================================*/
-PUBLIC int do_safecopy(m_ptr)
-register message *m_ptr;	/* pointer to request message */
+PRIVATE int safecopy(granter, grantee, grantid, src_seg, dst_seg, bytes,
+	g_offset, addr, access)
+endpoint_t granter, grantee;
+cp_grant_id_t grantid;
+int src_seg, dst_seg;
+size_t bytes;
+vir_bytes g_offset, addr;
+int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
+				 * for a copy from grantee to granter.
+				 */
 {
-	static endpoint_t granter, grantee, *src, *dst, new_granter;
-	static int access, r, src_seg, dst_seg;
 	static struct vir_addr v_src, v_dst;
-	static vir_bytes offset, bytes;
+	static vir_bytes v_offset;
+	int r;
+	endpoint_t new_granter, *src, *dst;
 
-	granter = m_ptr->SCP_FROM_TO;
-	grantee = who_e;
-
-	/* Set src and dst. One of these is always the caller (who_e),
-	 * depending on whether the call was SYS_SAFECOPYFROM or 
-	 * SYS_SAFECOPYTO. The caller's seg is encoded in the SCP_INFO
-	 * field.
-	 */
-	if(sys_call_code == SYS_SAFECOPYFROM) {
+	/* Decide who is src and who is dst. */
+	if(access & CPF_READ) {
 		src = &granter;
 		dst = &grantee;
-		src_seg = D;
-		dst_seg = SCP_INFO2SEG(m_ptr->SCP_INFO);
-		access = CPF_READ;
-	} else if(sys_call_code == SYS_SAFECOPYTO) {
+	} else {
 		src = &grantee;
 		dst = &granter;
-		src_seg = SCP_INFO2SEG(m_ptr->SCP_INFO);
-		dst_seg = D;
-		access = CPF_WRITE;
-	} else panic("Impossible system call nr. ", sys_call_code);
-
-#if 0
-	kprintf("safecopy: %d -> %d\n", *src, *dst);
-#endif
-
-	bytes = m_ptr->SCP_BYTES;
+	}
 
 	/* Verify permission exists. */
-	if((r=verify_grant(granter, grantee, m_ptr->SCP_GID, bytes, access,
-	    m_ptr->SCP_OFFSET, &offset, &new_granter)) != OK) {
+	if((r=verify_grant(granter, grantee, grantid, bytes, access,
+	    g_offset, &v_offset, &new_granter)) != OK) {
 		kprintf("grant %d verify to copy %d->%d by %d failed: err %d\n",
-		 m_ptr->SCP_GID, *src, *dst, grantee, r);
+		 grantid, *src, *dst, grantee, r);
 		return r;
 	}
 
@@ -230,9 +217,6 @@ register message *m_ptr;	/* pointer to request message */
 	 * meaning the source or destination changes.
 	 */
 	granter = new_granter;
-#if 0
-	kprintf("verified safecopy: %d -> %d\n", *src, *dst);
-#endif
 
 	/* Now it's a regular copy. */
 	v_src.segment = src_seg;
@@ -241,29 +225,97 @@ register message *m_ptr;	/* pointer to request message */
 	v_dst.proc_nr_e = *dst;
 
 	/* Now the offset in virtual addressing is known in 'offset'.
-	 * Depending on the call, this is the source or destination
+	 * Depending on the access, this is the source or destination
 	 * address.
 	 */
-	if(sys_call_code == SYS_SAFECOPYFROM) {
-		v_src.offset = offset;
-		v_dst.offset = (vir_bytes) m_ptr->SCP_ADDRESS;
+	if(access & CPF_READ) {
+		v_src.offset = v_offset;
+		v_dst.offset = (vir_bytes) addr;
 	} else {
-		v_src.offset = (vir_bytes) m_ptr->SCP_ADDRESS;
-		v_dst.offset = offset;
+		v_src.offset = (vir_bytes) addr;
+		v_dst.offset = v_offset;
 	}
-
-#if 0
-	kprintf("copy 0x%lx (%d) in %d to 0x%lx (%d) in %d (%d bytes)\n",
-		v_src.offset, v_src.segment, *src,
-		v_dst.offset, v_dst.segment, *dst,
-		bytes);
-#endif
-
-#if DEBUG_SAFE_COUNT
-	unsafe_copy_log(0,0);
-#endif
 
 	/* Do the regular copy. */
 	return virtual_copy(&v_src, &v_dst, bytes);
+
+}
+
+/*===========================================================================*
+ *				do_safecopy				     *
+ *===========================================================================*/
+PUBLIC int do_safecopy(m_ptr)
+register message *m_ptr;	/* pointer to request message */
+{
+	static endpoint_t new_granter;
+	static int access, src_seg, dst_seg;
+
+	/* Set src and dst parameters.
+	 * The caller's seg is encoded in the SCP_INFO field.
+	 */
+	if(sys_call_code == SYS_SAFECOPYFROM) {
+		src_seg = D;
+		dst_seg = SCP_INFO2SEG(m_ptr->SCP_INFO);
+		access = CPF_READ;
+	} else if(sys_call_code == SYS_SAFECOPYTO) {
+		src_seg = SCP_INFO2SEG(m_ptr->SCP_INFO);
+		dst_seg = D;
+		access = CPF_WRITE;
+	} else panic("Impossible system call nr. ", sys_call_code);
+
+	return safecopy(m_ptr->SCP_FROM_TO, who_e, m_ptr->SCP_GID,
+		src_seg, dst_seg, m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
+		(vir_bytes) m_ptr->SCP_ADDRESS, access);
+}
+
+/*===========================================================================*
+ *				do_vsafecopy				     *
+ *===========================================================================*/
+PUBLIC int do_vsafecopy(m_ptr)
+register message *m_ptr;	/* pointer to request message */
+{
+	static struct vscp_vec vec[SCPVEC_NR];
+	static struct vir_addr src, dst;
+	int r, i, els;
+
+	/* Set vector copy parameters. */
+	src.proc_nr_e = who_e;
+	src.offset = (vir_bytes) m_ptr->VSCP_VEC_ADDR;
+	src.segment = dst.segment = D;
+	dst.proc_nr_e = SYSTEM;
+	dst.offset = (vir_bytes) vec;
+
+	/* No. of vector elements. */
+	els = m_ptr->VSCP_VEC_SIZE;
+
+	/* Obtain vector of copies. */
+	if((r=virtual_copy(&src, &dst, els * sizeof(struct vscp_vec))) != OK)
+		return r;
+
+	/* Perform safecopies. */
+	for(i = 0; i < els; i++) {
+		int access;
+		endpoint_t granter;
+		if(vec[i].v_from == SELF) {
+			access = CPF_WRITE;
+			granter = vec[i].v_to;
+		} else if(vec[i].v_to == SELF) {
+			access = CPF_READ;
+			granter = vec[i].v_from;
+		} else {
+			kprintf("vsafecopy: %d: element %d/%d: no SELF found\n",
+				who_e, i, els);
+			return EINVAL;
+		}
+
+		/* Do safecopy for this element. */
+		if((r=safecopy(granter, who_e, vec[i].v_gid, D, D,
+			vec[i].v_bytes, vec[i].v_offset,
+			vec[i].v_addr, access)) != OK) {
+			return r;
+		}
+	}
+
+	return OK;
 }
 

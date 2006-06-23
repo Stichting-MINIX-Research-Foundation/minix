@@ -178,6 +178,7 @@ PRIVATE void initialize(void)
   map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
   map(SYS_SAFECOPYFROM, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_SAFECOPYTO, do_safecopy);	/* copy with pre-granted permission */
+  map(SYS_VSAFECOPY, do_vsafecopy);	/* vectored safecopy */
 
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */

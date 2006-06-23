@@ -288,8 +288,9 @@
 #  define SYS_VM_MAP  	 (KERNEL_CALL + 30)	/* sys_vm_map() */
 #  define SYS_SAFECOPYFROM  (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
 #  define SYS_SAFECOPYTO    (KERNEL_CALL + 32)	/* sys_safecopyto() */
+#  define SYS_VSAFECOPY  (KERNEL_CALL + 33)	/* sys_vsafecopy() */
 
-#define NR_SYS_CALLS	33	/* number of system calls */ 
+#define NR_SYS_CALLS	34	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -472,13 +473,17 @@
 /* Field names for SYS_INT86 */
 #define INT86_REG86    m1_p1	/* pointer to registers */
 
-/* Field names for SYS_SAFECOPY */
+/* Field names for SYS_SAFECOPY* */
 #define SCP_FROM_TO	m2_i1	/* from/to whom? */
 #define SCP_INFO	m2_i2	/* byte: DDDDSSSS Dest and Src seg */
 #define SCP_GID		m2_i3	/* grant id */
 #define SCP_OFFSET	m2_l1	/* offset within grant */
 #define	SCP_ADDRESS	m2_p1	/* my own address */
 #define	SCP_BYTES	m2_l2	/* bytes from offset */
+
+/* Field names for SYS_VSAFECOPY* */
+#define VSCP_VEC_ADDR	m2_p1	/* start of vector */
+#define VSCP_VEC_SIZE	m2_l2	/* elements in vector */
 
 /* For the SCP_INFO field: encoding and decoding. */
 #define SCP_MAKEINFO(seg)  ((seg) & 0xffff)

@@ -174,6 +174,7 @@ _PROTOTYPE( int do_setalarm, (message *m_ptr) );
 #endif
 
 _PROTOTYPE( int do_safecopy, (message *m_ptr) );	
+_PROTOTYPE( int do_vsafecopy, (message *m_ptr) );	
 _PROTOTYPE( int do_iopenable, (message *m_ptr) );	
 
 #endif	/* SYSTEM_H */

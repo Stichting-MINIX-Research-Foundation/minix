@@ -37,6 +37,18 @@ typedef struct {
 	char cp_reserved[8];				/* future use */
 } cp_grant_t;
 
+/* Vectored safecopy. */
+struct vscp_vec {
+        /* Exactly one of the following must be SELF. */
+        endpoint_t      v_from;         /* source */
+        endpoint_t      v_to;           /* destination */
+  
+        cp_grant_id_t   v_gid;          /* grant id of other process */
+        size_t          v_offset;       /* offset in other grant */
+        vir_bytes       v_addr;         /* address in copier's space */
+        size_t          v_bytes;        /* no. of bytes */
+};
+
 /* Invalid grant number. */
 #define GRANT_INVALID	-1
 #define GRANT_VALID(g)	((g) > GRANT_INVALID)

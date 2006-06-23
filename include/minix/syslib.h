@@ -97,10 +97,12 @@ _PROTOTYPE(int sys_physcopy, (endpoint_t src_proc, int src_seg, vir_bytes src_vi
 	endpoint_t dst_proc, int dst_seg, vir_bytes dst_vir, phys_bytes bytes));
 
 
-_PROTOTYPE(int sys_safecopyfrom, (endpoint_t, cp_grant_id_t,
-	vir_bytes, vir_bytes, size_t, int));
-_PROTOTYPE(int sys_safecopyto, (endpoint_t, cp_grant_id_t,
-	vir_bytes, vir_bytes, size_t, int));
+/* Grant-based copy functions. */
+_PROTOTYPE(int sys_safecopyfrom, (endpoint_t source, cp_grant_id_t grant,
+	vir_bytes grant_offset, vir_bytes my_address, size_t bytes, int my_seg));
+_PROTOTYPE(int sys_safecopyto, (endpoint_t dest, cp_grant_id_t grant,
+	vir_bytes grant_offset, vir_bytes my_address, size_t bytes, int my_seg));
+_PROTOTYPE(int sys_vsafecopy, (struct vscp_vec *copyvec, int elements));
 
 _PROTOTYPE(int sys_memset, (unsigned long pattern, 
 		phys_bytes base, phys_bytes bytes));
