@@ -37,6 +37,7 @@ _PROTOTYPE( int sys_exit, (endpoint_t proc));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc, long addr, long *data_p));
 
 _PROTOTYPE( int sys_privctl, (endpoint_t proc, int req, int i, void *p));
+_PROTOTYPE( int sys_paramctl, (int req, int int1, void *addr1, int int2));
 _PROTOTYPE( int sys_nice, (endpoint_t proc, int priority));
 
 _PROTOTYPE( int sys_int86, (struct reg86u *reg86p));

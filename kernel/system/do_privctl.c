@@ -163,12 +163,6 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_nr_irq++;
 
 	return OK;
-  case SYS_PRIV_SET_GRANTS:
-	if ((rp->p_rts_flags & NO_PRIV) || !(priv(rp))) return(EPERM);
-	_K_SET_GRANT_TABLE(rp, 
-		(vir_bytes) m_ptr->CTL_ARG_PTR, m_ptr->CTL_MM_PRIV);
-	return OK;
-
   default:
 	kprintf("do_privctl: bad request %d\n", m_ptr->CTL_REQUEST);
 	return EINVAL;

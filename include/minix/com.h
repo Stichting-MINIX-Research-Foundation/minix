@@ -286,11 +286,12 @@
 #  define SYS_IOPENABLE  (KERNEL_CALL + 28)	/* sys_enable_iop() */
 #  define SYS_VM_SETBUF  (KERNEL_CALL + 29)	/* sys_vm_setbuf() */
 #  define SYS_VM_MAP  	 (KERNEL_CALL + 30)	/* sys_vm_map() */
-#  define SYS_SAFECOPYFROM  (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
-#  define SYS_SAFECOPYTO    (KERNEL_CALL + 32)	/* sys_safecopyto() */
+#  define SYS_SAFECOPYFROM (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
+#  define SYS_SAFECOPYTO   (KERNEL_CALL + 32)	/* sys_safecopyto() */
 #  define SYS_VSAFECOPY  (KERNEL_CALL + 33)	/* sys_vsafecopy() */
+#  define SYS_PARAMCTL   (KERNEL_CALL + 34)	/* sys_paramctl() */
 
-#define NR_SYS_CALLS	34	/* number of system calls */ 
+#define NR_SYS_CALLS	35	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -301,7 +302,9 @@
 #define SYS_PRIV_ADD_MEM	3	/* Add memory range (struct mem_range)
 					 */
 #define SYS_PRIV_ADD_IRQ	4	/* Add IRQ */
-#define SYS_PRIV_SET_GRANTS	5	/* Set grant table */
+
+/* Subfunctions for SYS_PARAMCTL */
+#define SYS_PARAM_SET_GRANT	1	/* Set address and size of grant table */
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
 #define MEM_PTR		m2_p1	/* base */
@@ -443,6 +446,12 @@
 #define CTL_ARG_PTR    m2_p1	/* pointer to argument */
 #define CTL_ADDRESS    m2_l1	/* address at traced process' space */
 #define CTL_DATA       m2_l2	/* data field for tracing */
+
+/* Field names for SYS_PARAMCTL */
+#define PCTL_REQ	m2_i1	/* request code */
+#define PCTL_INT1	m2_i2	/* int param 1 */
+#define PCTL_INT2	m2_i3	/* int param 2 */
+#define PCTL_ADDR1	m2_p1	/* address param 1 */
 
 /* Field names for SYS_KILL, SYS_SIGCTL */
 #define SIG_REQUEST    m2_l2	/* PM signal control request */

@@ -1,5 +1,5 @@
 /* The kernel call implemented in this file:
- *   m_type:	SYS_SAFECOPYFROM or SYS_SAFECOPYTO
+ *   m_type:	SYS_SAFECOPYFROM or SYS_SAFECOPYTO or SYS_VSAFECOPY
  *
  * The parameters for this kernel call are:
  *    	SCP_FROM_TO	other endpoint
