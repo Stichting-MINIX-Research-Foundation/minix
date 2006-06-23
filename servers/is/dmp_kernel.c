@@ -353,8 +353,7 @@ PUBLIC void privileges_dmp()
   register struct proc *rp;
   static struct proc *oldrp = BEG_PROC_ADDR;
   register struct priv *sp;
-  static char ipc_to[NR_SYS_PROCS + 1 + NR_SYS_PROCS/8];
-  int r, i,j, n = 0;
+  int r, i, n = 0;
 
   /* First obtain a fresh copy of the current process and system table. */
   if ((r = sys_getprivtab(priv)) != OK) {
@@ -366,7 +365,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to mask- ----------------- \n");
+  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -system calls--\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -380,17 +379,20 @@ PUBLIC void privileges_dmp()
         if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
 	    sp = &priv[USER_PRIV_ID];
         }
-	printf("(%02u) %-7.7s %s   %s %7d ",
+	printf("(%02u) %-7.7s %s   %s %7d",
 	       sp->s_id, rp->p_name,
 	       s_flags_str(sp->s_flags), s_traps_str(sp->s_trap_mask),
 		sp->s_grant_entries);
-        for (i=j=0; i < NR_SYS_PROCS; i++, j++) {
-       	    ipc_to[j] = get_sys_bit(sp->s_ipc_to, i) ? '1' : '0';
-       	    if (i % 8 == 7) ipc_to[++j] = ' ';
+        for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
+	    printf(" %04x", get_sys_bits(sp->s_ipc_to, i));
        	}
-        ipc_to[j] = '\0';
 
-	printf(" %s\n", ipc_to);
+	printf(" ");
+        for (i=0; i < NR_SYS_CALLS; i += BITCHUNK_BITS) {
+	    printf(" %04x", sp->s_k_call_mask[i/BITCHUNK_BITS]);
+       	}
+	printf("\n");
+
   }
   if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
   oldrp = rp;
