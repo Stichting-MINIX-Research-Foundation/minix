@@ -38,6 +38,8 @@
 
 #define get_sys_bit(map,bit) \
 	( MAP_CHUNK(map.chunk,bit) & (1 << CHUNK_OFFSET(bit) )
+#define get_sys_bits(map,bit) \
+	( MAP_CHUNK(map.chunk,bit) )
 #define set_sys_bit(map,bit) \
 	( MAP_CHUNK(map.chunk,bit) |= (1 << CHUNK_OFFSET(bit) )
 #define unset_sys_bit(map,bit) \
