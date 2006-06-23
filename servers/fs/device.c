@@ -623,42 +623,7 @@ message *mess_ptr;		/* pointer to message for task */
 
   proc_e = mess_ptr->IO_ENDPT;
 
-#if DEAD_CODE
-  while ((r = sendrec(task_nr, mess_ptr)) == ELOCKED) {
-	/* sendrec() failed to avoid deadlock. The task 'task_nr' is
-	 * trying to send a REVIVE message for an earlier request.
-	 * Handle it and go try again.
-	 */
-	if ((r = receive(task_nr, &local_m)) != OK) {
-		break;
-	}
-
-	/* If we're trying to send a cancel message to a task which has just
-	 * sent a completion reply, ignore the reply and abort the cancel
-	 * request. The caller will do the revive for the process.
-	 */
-	if (mess_ptr->m_type == CANCEL && local_m.REP_ENDPT == proc_e) {
-		return OK;
-	}
-
-	/* Otherwise it should be a REVIVE. */
-	if (local_m.m_type != REVIVE) {
-		printf(
-		"fs: strange device reply from %d, type = %d, proc = %d (1)\n",
-			local_m.m_source,
-			local_m.m_type, local_m.REP_ENDPT);
-		continue;
-	}
-
-	revive(local_m.REP_ENDPT, local_m.REP_STATUS);
-  }
-#endif
-
-  /* The message received may be a reply to this call, or a REVIVE for some
-   * other process.
-   */
   r = sendrec(task_nr, mess_ptr);
-  for(;;) {
 	if (r != OK) {
 		if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
 			printf("fs: dead driver %d\n", task_nr);
@@ -673,23 +638,15 @@ message *mess_ptr;		/* pointer to message for task */
 	}
 
   	/* Did the process we did the sendrec() for get a result? */
-  	if (mess_ptr->REP_ENDPT == proc_e) {
-  		break;
-	} 
-#if 0
-	else if (mess_ptr->m_type == REVIVE) {
-		/* Otherwise it should be a REVIVE. */
-		revive(mess_ptr->REP_ENDPT, mess_ptr->REP_STATUS);
-	}
-#endif
-	else {
+  	if (mess_ptr->REP_ENDPT != proc_e) {
 		printf(
-		"fs: strange device reply from %d, type = %d, proc = %d (2) ignored\n",
+		"fs: strange device reply from %d, type = %d, proc = %d (not %d) (2) ignored\n",
 			mess_ptr->m_source,
-			mess_ptr->m_type, mess_ptr->REP_ENDPT);
+			mess_ptr->m_type,
+			proc_e,
+			mess_ptr->REP_ENDPT);
+		return EIO;
 	}
-	r = receive(task_nr, mess_ptr);
-  }
 
   return OK;
 }

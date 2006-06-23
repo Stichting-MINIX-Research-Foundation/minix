@@ -363,7 +363,7 @@ int proc_nr_e;
  */
 
   register struct fproc *rfp;
-  int proc_nr_p, task, fild;
+  int proc_nr_p, task, fild, status = EINTR;
   struct filp *f;
   dev_t dev;
   message mess;
@@ -408,6 +408,8 @@ int proc_nr_e;
 		mess.m_type = CANCEL;
 		fp = rfp;	/* hack - ctty_io uses fp */
 		(*dmap[(dev >> MAJOR) & BYTE].dmap_io)(task, &mess);
+		status = mess.REP_STATUS;
+		if(status == EAGAIN) status = EINTR;
 		if(GRANT_VALID(rfp->fp_grant)) {
 			if(cpf_revoke(rfp->fp_grant)) {
 				panic(__FILE__,"FS: revoke failed for grant (cancel)",
@@ -418,7 +420,7 @@ int proc_nr_e;
   }
 
   rfp->fp_suspended = NOT_SUSPENDED;
-  reply(proc_nr_e, EINTR);	/* signal interrupted call */
+  reply(proc_nr_e, status);	/* signal interrupted call */
   return(OK);
 }
 
