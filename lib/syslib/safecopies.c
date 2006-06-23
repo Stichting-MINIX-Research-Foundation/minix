@@ -35,7 +35,7 @@ cpf_preallocate(cp_grant_t *new_grants, int new_ngrants)
 	}
 
 	/* Update kernel about the table. */
-	if((s=sys_paramctl(SYS_PARAM_SET_GRANT, new_ngrants, new_grants, 0))) {
+	if((s=sys_setgrant(new_grants, new_ngrants))) {
 		return -1;
 	}
 
@@ -80,7 +80,7 @@ cpf_grow(void)
 		new_grants[g].cp_flags = 0;
 
 	/* Inform kernel about new size (and possibly new location). */
-	if((sys_paramctl(SYS_PARAM_SET_GRANT, new_size, new_grants, 0))) {
+	if((sys_setgrant(new_grants, new_size))) {
 		free(new_grants);
 		return;	/* Failed - don't grow then. */
 	}

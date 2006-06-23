@@ -289,7 +289,7 @@
 #  define SYS_SAFECOPYFROM (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
 #  define SYS_SAFECOPYTO   (KERNEL_CALL + 32)	/* sys_safecopyto() */
 #  define SYS_VSAFECOPY  (KERNEL_CALL + 33)	/* sys_vsafecopy() */
-#  define SYS_PARAMCTL   (KERNEL_CALL + 34)	/* sys_paramctl() */
+#  define SYS_SETGRANT   (KERNEL_CALL + 34)	/* sys_setgrant() */
 
 #define NR_SYS_CALLS	35	/* number of system calls */ 
 
@@ -303,7 +303,7 @@
 					 */
 #define SYS_PRIV_ADD_IRQ	4	/* Add IRQ */
 
-/* Subfunctions for SYS_PARAMCTL */
+/* Subfunctions for SYS_SETGRANT */
 #define SYS_PARAM_SET_GRANT	1	/* Set address and size of grant table */
 
 /* Field names for SYS_MEMSET, SYS_SEGCTL. */
@@ -447,11 +447,9 @@
 #define CTL_ADDRESS    m2_l1	/* address at traced process' space */
 #define CTL_DATA       m2_l2	/* data field for tracing */
 
-/* Field names for SYS_PARAMCTL */
-#define PCTL_REQ	m2_i1	/* request code */
-#define PCTL_INT1	m2_i2	/* int param 1 */
-#define PCTL_INT2	m2_i3	/* int param 2 */
-#define PCTL_ADDR1	m2_p1	/* address param 1 */
+/* Field names for SYS_SETGRANT */
+#define SG_ADDR		m2_p1	/* address */
+#define SG_SIZE		m2_i2	/* no. of entries */
 
 /* Field names for SYS_KILL, SYS_SIGCTL */
 #define SIG_REQUEST    m2_l2	/* PM signal control request */
