@@ -3,7 +3,9 @@
 #endif
 
 /* sbbcpy.c */
+#ifndef _MINIX
 _PROTOTYPE( int bcopy, (SBMA from, SBMA to, unsigned cnt) );
+#endif
 _PROTOTYPE( int sbm_wcpy, (int *from, int *to, unsigned cnt) );
 
 /* sberr.c */

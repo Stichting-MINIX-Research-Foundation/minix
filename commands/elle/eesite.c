@@ -8,6 +8,8 @@
  *	routine is TS_INP for detection of TTY input.
  */
 
+#define _MINIX 1
+
 #include "elle.h"
 
 #if !(V6)
@@ -21,6 +23,7 @@ int tsf_pause = 0;	/* Set if ts_pause works.  Ref'd by equit in e_main */
 #if !(SYSV || BBN)	/* SYSV and BBN have weird tty calls */
 
 #if MINIX
+#include <sys/ioctl.h>
 #include <termios.h>
 struct termios origterm, newterm;
 #else
