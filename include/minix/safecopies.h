@@ -71,6 +71,14 @@ _PROTOTYPE( int cpf_revoke, (cp_grant_id_t grant_id));
 _PROTOTYPE( int cpf_preallocate, (cp_grant_t *, int));
 _PROTOTYPE( int cpf_lookup, (cp_grant_id_t g, endpoint_t *ep, endpoint_t *ep2));
 
+_PROTOTYPE( int cpf_getgrants, (cp_grant_id_t *grant_ids, int n));
+_PROTOTYPE( int cpf_setgrant_direct, (cp_grant_id_t g, endpoint_t who,
+	vir_bytes addr, size_t size, int access));
+_PROTOTYPE( int cpf_setgrant_indirect, (cp_grant_id_t g, endpoint_t who_to,
+	endpoint_t who_from, cp_grant_id_t his_g));
+_PROTOTYPE( int cpf_setgrant_magic, (cp_grant_id_t g, endpoint_t who_to,
+	endpoint_t who_from, vir_bytes addr, size_t bytes, int access));
+
 /* Set a process' grant table location and size (in-kernel only). */
 #define _K_SET_GRANT_TABLE(rp, ptr, entries)	\
 	priv(rp)->s_grant_table= (ptr);		\

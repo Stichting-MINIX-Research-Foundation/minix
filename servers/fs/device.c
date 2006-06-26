@@ -178,14 +178,6 @@ off_t *pos;
 	int m, j;
 	iovec_t *v;
 
-	/* Is this device driver (identified by major number)
-	 * ready to accept *_S commands?
-	 */
-#if 0
-	if(major(dev) == 7)	/* major number of inet. */
-		return 0;	/* inet is not safe-capable. */
-#endif
-
 	/* Number of grants allocated in vector I/O. */
 	*vec_grants = 0;
 
@@ -239,13 +231,15 @@ off_t *pos;
 			if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
 			if(_MINIX_IOCTL_IOW(m_in.REQUEST)) access |= CPF_READ;
 			size = _MINIX_IOCTL_SIZE(m_in.REQUEST);
-			if(access && size > 0) {
-				if((*gid=cpf_grant_magic(driver, *io_ept,
-					(vir_bytes) buf, size, access)) < 0) {
-					panic(__FILE__,
-					"cpf_grant_magic failed (ioctl)\n",
-					NO_NUM);
-				}
+
+			/* Do this even if no I/O happens with the ioctl, in
+			 * order to disambiguate requests with DEV_IOCTL_S.
+			 */
+			if((*gid=cpf_grant_magic(driver, *io_ept,
+				(vir_bytes) buf, size, access)) < 0) {
+				panic(__FILE__,
+				"cpf_grant_magic failed (ioctl)\n",
+				NO_NUM);
 			}
 	}
 
