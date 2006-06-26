@@ -60,7 +60,7 @@
 
 #ifndef __minix_vmd /* Minix 3 */
 #define DEV_CANCEL NW_CANCEL
-#define DEVICE_REPLY 67	/* old REVIVE */
+#define DEVICE_REPLY TASK_REPLY
 #define DEV_IOCTL3 DEV_IOCTL
 #define NDEV_BUFFER ADDRESS
 #define NDEV_COUNT COUNT
@@ -83,6 +83,7 @@ PRIVATE struct vir_cp_req vir_cp_req[CPVEC_NR];
 FORWARD _PROTOTYPE ( int sr_open, (message *m) );
 FORWARD _PROTOTYPE ( void sr_close, (message *m) );
 FORWARD _PROTOTYPE ( int sr_rwio, (mq_t *m) );
+FORWARD _PROTOTYPE ( int sr_rwio_s, (mq_t *m) );
 FORWARD _PROTOTYPE ( int sr_restart_read, (sr_fd_t *fdp) );
 FORWARD _PROTOTYPE ( int sr_restart_write, (sr_fd_t *fdp) );
 FORWARD _PROTOTYPE ( int sr_restart_ioctl, (sr_fd_t *fdp) );
@@ -111,6 +112,10 @@ FORWARD _PROTOTYPE ( void sr_event, (event_t *evp, ev_arg_t arg) );
 FORWARD _PROTOTYPE ( int cp_u2b, (int proc, char *src, acc_t **var_acc_ptr,
 								 int size) );
 FORWARD _PROTOTYPE ( int cp_b2u, (acc_t *acc_ptr, int proc, char *dest) );
+FORWARD _PROTOTYPE ( int cp_u2b_s, (int proc, int gid, vir_bytes offset,
+	acc_t **var_acc_ptr, int size) );
+FORWARD _PROTOTYPE ( int cp_b2u_s, (acc_t *acc_ptr, int proc, int gid,
+	vir_bytes offset) );
 
 PUBLIC void sr_init()
 {
@@ -141,7 +146,8 @@ mq_t *m;
 				m->mq_mess.NDEV_REF, 
 				m->mq_mess.NDEV_OPERATION);
 #else /* Minix 3 */
-			result= sr_repl_queue(m->mq_mess.IO_ENDPT, 0, 0);
+			result= sr_repl_queue(m->mq_mess.IO_ENDPT, 
+				(int)m->mq_mess.IO_GRANT, 0);
 #endif
 			if (result)
 			{
@@ -172,6 +178,14 @@ mq_t *m;
 	case DEV_WRITE:
 	case DEV_IOCTL3:
 		result= sr_rwio(m);
+		assert(result == OK || result == SUSPEND);
+		send_reply= (result == SUSPEND);
+		free_mess= 0;
+		break;
+	case DEV_READ_S:
+	case DEV_WRITE_S:
+	case DEV_IOCTL_S:
+		result= sr_rwio_s(m);
 		assert(result == OK || result == SUSPEND);
 		send_reply= (result == SUSPEND);
 		free_mess= 0;
@@ -408,6 +422,115 @@ mq_t *m;
 	return r;
 }
 
+PRIVATE int sr_rwio_s(m)
+mq_t *m;
+{
+	sr_fd_t *sr_fd;
+	mq_t **q_head_ptr, **q_tail_ptr;
+	int ip_flag, susp_flag, first_flag;
+	int r;
+	ioreq_t request;
+	size_t size;
+
+	sr_fd= sr_getchannel(m->mq_mess.NDEV_MINOR);
+	assert (sr_fd);
+
+	switch(m->mq_mess.m_type)
+	{
+	case DEV_READ_S:
+		q_head_ptr= &sr_fd->srf_read_q;
+		q_tail_ptr= &sr_fd->srf_read_q_tail;
+		ip_flag= SFF_READ_IP;
+		susp_flag= SFF_READ_SUSP;
+		first_flag= SFF_READ_FIRST;
+		break;
+	case DEV_WRITE_S:
+		q_head_ptr= &sr_fd->srf_write_q;
+		q_tail_ptr= &sr_fd->srf_write_q_tail;
+		ip_flag= SFF_WRITE_IP;
+		susp_flag= SFF_WRITE_SUSP;
+		first_flag= SFF_WRITE_FIRST;
+		break;
+	case DEV_IOCTL_S:
+		q_head_ptr= &sr_fd->srf_ioctl_q;
+		q_tail_ptr= &sr_fd->srf_ioctl_q_tail;
+		ip_flag= SFF_IOCTL_IP;
+		susp_flag= SFF_IOCTL_SUSP;
+		first_flag= SFF_IOCTL_FIRST;
+		break;
+	default:
+		ip_panic(("illegal case entry"));
+	}
+
+	if (sr_fd->srf_flags & ip_flag)
+	{
+		assert(sr_fd->srf_flags & susp_flag);
+		assert(*q_head_ptr);
+
+		(*q_tail_ptr)->mq_next= m;
+		*q_tail_ptr= m;
+		return SUSPEND;
+	}
+	assert(!*q_head_ptr);
+
+	*q_tail_ptr= *q_head_ptr= m;
+	sr_fd->srf_flags |= ip_flag;
+	assert(!(sr_fd->srf_flags & first_flag));
+	sr_fd->srf_flags |= first_flag;
+
+	switch(m->mq_mess.m_type)
+	{
+	case DEV_READ_S:
+		r= (*sr_fd->srf_read)(sr_fd->srf_fd, 
+			m->mq_mess.NDEV_COUNT);
+		break;
+	case DEV_WRITE_S:
+		r= (*sr_fd->srf_write)(sr_fd->srf_fd, 
+			m->mq_mess.NDEV_COUNT);
+		break;
+	case DEV_IOCTL_S:
+		request= m->mq_mess.NDEV_IOCTL;
+
+		/* There should be a better way to do this... */
+		if (request == NWIOQUERYPARAM)
+		{
+			r= qp_query_s(m->mq_mess.NDEV_PROC,
+				(vir_bytes)m->mq_mess.NDEV_BUFFER);
+			r= sr_put_userdata(sr_fd-sr_fd_table, r, NULL, 1);
+			assert(r == OK);
+			break;
+		}
+
+		/* And now, we continue with our regular program. */
+		size= (request >> 16) & _IOCPARM_MASK;
+		if (size>MAX_IOCTL_S)
+		{
+			DBLOCK(1, printf("replying EINVAL\n"));
+			r= sr_put_userdata(sr_fd-sr_fd_table, EINVAL, 
+				NULL, 1);
+			assert(r == OK);
+			assert(sr_fd->srf_flags & first_flag);
+			sr_fd->srf_flags &= ~first_flag;
+			return OK;
+		}
+		r= (*sr_fd->srf_ioctl)(sr_fd->srf_fd, request);
+		break;
+	default:
+		ip_panic(("illegal case entry"));
+	}
+
+	assert(sr_fd->srf_flags & first_flag);
+	sr_fd->srf_flags &= ~first_flag;
+
+	assert(r == OK || r == SUSPEND || 
+		(printf("r= %d\n", r), 0));
+	if (r == SUSPEND)
+		sr_fd->srf_flags |= susp_flag;
+	else
+		mq_free(m);
+	return r;
+}
+
 PRIVATE int sr_restart_read(sr_fd)
 sr_fd_t *sr_fd;
 {
@@ -499,7 +622,7 @@ message *m;
 	ref=  m->NDEV_REF;
 	operation= m->NDEV_OPERATION;
 #else /* Minix 3 */
-	ref=  0;
+	ref=  (int)m->IO_GRANT;
 	operation= 0;
 #endif
 	sr_fd= sr_getchannel(m->NDEV_MINOR);
@@ -542,9 +665,9 @@ message *m;
 		m->NDEV_PROC, m->NDEV_REF, m->NDEV_OPERATION));
 #else /* Minix 3 */
 	ip_panic((
-"request not found: from %d, type %d, MINOR= %d, PROC= %d",
+"request not found: from %d, type %d, MINOR= %d, PROC= %d, REF= %d",
 		m->m_source, m->m_type, m->NDEV_MINOR,
-		m->NDEV_PROC));
+		m->NDEV_PROC, m->IO_GRANT));
 #endif
 }
 
@@ -664,6 +787,9 @@ int first_flag;
 #ifdef __minix_vmd
 		if (q_ptr->mq_mess.NDEV_REF != ref)
 			continue;
+#else
+		if ((int)q_ptr->mq_mess.IO_GRANT != ref)
+			continue;
 #endif
 		if (!q_ptr_prv)
 		{
@@ -718,7 +844,7 @@ int is_revive;
 #ifdef __minix_vmd
 	ref= mq->mq_mess.NDEV_REF;
 #else /* Minix 3 */
-	ref= 0;
+	ref= (int)mq->mq_mess.IO_GRANT;
 #endif
 	operation= mq->mq_mess.m_type;
 #ifdef __minix_vmd
@@ -736,6 +862,8 @@ int is_revive;
 #ifdef __minix_vmd
 	mp->REP_REF= ref;
 	mp->REP_OPERATION= operation;
+#else
+	mp->REP_IO_GRANT= ref;
 #endif
 	if (is_revive)
 	{
@@ -743,7 +871,9 @@ int is_revive;
 		result= ELOCKED;
 	}
 	else
+	{
 		result= send(mq->mq_mess.m_source, mp);
+	}
 
 	if (result == ELOCKED && is_revive)
 	{
@@ -769,7 +899,7 @@ int for_ioctl;
 {
 	sr_fd_t *loc_fd;
 	mq_t **head_ptr, *m, *mq;
-	int ip_flag, susp_flag, first_flag;
+	int ip_flag, susp_flag, first_flag, m_type, safe_copy;
 	int result, suspended, is_revive;
 	char *src;
 	acc_t *acc;
@@ -818,8 +948,31 @@ assert (loc_fd->srf_flags & ip_flag);
 		return NULL;
 	}
 
-	src= (*head_ptr)->mq_mess.NDEV_BUFFER + offset;
-	result= cp_u2b ((*head_ptr)->mq_mess.NDEV_PROC, src, &acc, count);
+	m_type= (*head_ptr)->mq_mess.m_type;
+	if (m_type == DEV_READ_S || m_type == DEV_WRITE_S ||
+		m_type == DEV_IOCTL_S)
+	{
+		safe_copy= 1;
+	}
+	else
+	{
+		assert(m_type == DEV_READ || m_type == DEV_WRITE ||
+			m_type == DEV_IOCTL);
+		safe_copy= 0;
+	}
+
+	if (safe_copy)
+	{
+		result= cp_u2b_s ((*head_ptr)->mq_mess.NDEV_PROC,
+			(int)(*head_ptr)->mq_mess.NDEV_BUFFER, offset, &acc,
+			count);
+	}
+	else
+	{
+		src= (*head_ptr)->mq_mess.NDEV_BUFFER + offset;
+		result= cp_u2b ((*head_ptr)->mq_mess.NDEV_PROC, src, &acc,
+			count);
+	}
 
 	return result<0 ? NULL : acc;
 }
@@ -832,7 +985,7 @@ int for_ioctl;
 {
 	sr_fd_t *loc_fd;
 	mq_t **head_ptr, *m, *mq;
-	int ip_flag, susp_flag, first_flag;
+	int ip_flag, susp_flag, first_flag, m_type, safe_copy;
 	int result, suspended, is_revive;
 	char *dst;
 	event_t *evp;
@@ -880,8 +1033,29 @@ int for_ioctl;
 		return OK;
 	}
 
-	dst= (*head_ptr)->mq_mess.NDEV_BUFFER + offset;
-	return cp_b2u (data, (*head_ptr)->mq_mess.NDEV_PROC, dst);
+	m_type= (*head_ptr)->mq_mess.m_type;
+	if (m_type == DEV_READ_S || m_type == DEV_WRITE_S ||
+		m_type == DEV_IOCTL_S)
+	{
+		safe_copy= 1;
+	}
+	else
+	{
+		assert(m_type == DEV_READ || m_type == DEV_WRITE ||
+			m_type == DEV_IOCTL);
+		safe_copy= 0;
+	}
+
+	if (safe_copy)
+	{
+		return cp_b2u_s (data, (*head_ptr)->mq_mess.NDEV_PROC, 
+			(int)(*head_ptr)->mq_mess.NDEV_BUFFER, offset);
+	}
+	else
+	{
+		dst= (*head_ptr)->mq_mess.NDEV_BUFFER + offset;
+		return cp_b2u (data, (*head_ptr)->mq_mess.NDEV_PROC, dst);
+	}
 }
 
 #ifndef __minix_vmd /* Minix 3 */
@@ -1095,25 +1269,237 @@ char *dest;
 	return OK;
 }
 
+#if 0
+PRIVATE int cp_u2b_s (proc, src, var_acc_ptr, size)
+int proc;
+char *src;
+acc_t **var_acc_ptr;
+int size;
+{
+	static message mess;
+	acc_t *acc;
+	int i;
+
+	acc= bf_memreq(size);
+
+	*var_acc_ptr= acc;
+	i=0;
+
+	while (acc)
+	{
+		size= (vir_bytes)acc->acc_length;
+
+#ifdef __minix_vmd
+		cpvec[i].cpv_src= (vir_bytes)src;
+		cpvec[i].cpv_dst= (vir_bytes)ptr2acc_data(acc);
+		cpvec[i].cpv_size= size;
+#else /* Minix 3 */
+		vir_cp_req[i].count= size;
+		vir_cp_req[i].src.proc_nr_e = proc;
+		vir_cp_req[i].src.segment = D;
+		vir_cp_req[i].src.offset = (vir_bytes) src;
+		vir_cp_req[i].dst.proc_nr_e = this_proc;
+		vir_cp_req[i].dst.segment = D;
+		vir_cp_req[i].dst.offset = (vir_bytes) ptr2acc_data(acc);
+#endif
+
+		src += size;
+		acc= acc->acc_next;
+		i++;
+
+		if (i == CPVEC_NR || acc == NULL)
+		{
+#ifdef __minix_vmd
+			mess.m_type= SYS_VCOPY;
+			mess.m1_i1= proc;
+			mess.m1_i2= this_proc;
+			mess.m1_i3= i;
+			mess.m1_p1= (char *)cpvec;
+#else /* Minix 3 */
+			mess.m_type= SYS_VIRVCOPY;
+			mess.VCP_VEC_SIZE= i;
+			mess.VCP_VEC_ADDR= (char *)vir_cp_req;
+#endif
+			if (sendrec(SYSTASK, &mess) <0)
+				ip_panic(("unable to sendrec"));
+			if (mess.m_type <0)
+			{
+				bf_afree(*var_acc_ptr);
+				*var_acc_ptr= 0;
+				return mess.m_type;
+			}
+			i= 0;
+		}
+	}
+	return OK;
+}
+#else
+PRIVATE int cp_u2b_s (proc, gid, offset, var_acc_ptr, size)
+int proc;
+int gid;
+vir_bytes offset;
+acc_t **var_acc_ptr;
+int size;
+{
+	static message mess;
+	acc_t *acc;
+	int r;
+
+	acc= bf_memreq(size);
+
+	*var_acc_ptr= acc;
+
+	while (acc)
+	{
+		size= (vir_bytes)acc->acc_length;
+
+		r= sys_safecopyfrom(proc, gid, 
+			offset, (vir_bytes)ptr2acc_data(acc),
+			size, D);
+		if (r != OK)
+		{
+			printf("cp_u2b_s: sys_safecopyfrom failed: %d\n",
+				r);
+			bf_afree(*var_acc_ptr);
+			*var_acc_ptr= 0;
+			return r;
+		}
+		offset += size;
+
+		acc= acc->acc_next;
+	}
+	return OK;
+}
+#endif
+
+#if 0
+PRIVATE int cp_b2u_s(acc_ptr, proc, dest, offset)
+acc_t *acc_ptr;
+int proc;
+char *dest;
+vir_bytes offset;
+{
+	static message mess;
+	acc_t *acc;
+	int i, size;
+
+	acc= acc_ptr;
+	i=0;
+
+	while (acc)
+	{
+		size= (vir_bytes)acc->acc_length;
+
+		if (size)
+		{
+#ifdef __minix_vmd
+			cpvec[i].cpv_src= (vir_bytes)ptr2acc_data(acc);
+			cpvec[i].cpv_dst= (vir_bytes)dest;
+			cpvec[i].cpv_size= size;
+#else /* Minix 3 */
+			vir_cp_req[i].src.proc_nr_e = this_proc;
+			vir_cp_req[i].src.segment = D;
+			vir_cp_req[i].src.offset= (vir_bytes)ptr2acc_data(acc);
+			vir_cp_req[i].dst.proc_nr_e = proc;
+			vir_cp_req[i].dst.segment = D;
+			vir_cp_req[i].dst.offset= (vir_bytes)dest;
+			vir_cp_req[i].count= size;
+#endif
+			i++;
+		}
+
+		dest += size;
+		acc= acc->acc_next;
+
+		if (i == CPVEC_NR || acc == NULL)
+		{
+#ifdef __minix_vmd
+			mess.m_type= SYS_VCOPY;
+			mess.m1_i1= this_proc;
+			mess.m1_i2= proc;
+			mess.m1_i3= i;
+			mess.m1_p1= (char *)cpvec;
+#else /* Minix 3 */
+			mess.m_type= SYS_VIRVCOPY;
+			mess.VCP_VEC_SIZE= i;
+			mess.VCP_VEC_ADDR= (char *) vir_cp_req;
+#endif
+			if (sendrec(SYSTASK, &mess) <0)
+				ip_panic(("unable to sendrec"));
+			if (mess.m_type <0)
+			{
+				bf_afree(acc_ptr);
+				return mess.m_type;
+			}
+			i= 0;
+		}
+	}
+	bf_afree(acc_ptr);
+	return OK;
+}
+#else
+PRIVATE int cp_b2u_s(acc_ptr, proc, gid, offset)
+acc_t *acc_ptr;
+int proc;
+int gid;
+vir_bytes offset;
+{
+	static message mess;
+	acc_t *acc;
+	int r, size;
+
+	acc= acc_ptr;
+
+	while (acc)
+	{
+		size= (vir_bytes)acc->acc_length;
+
+		if (size)
+		{
+			r= sys_safecopyto(proc, gid, 
+				offset, (vir_bytes)ptr2acc_data(acc),
+				size, D);
+			if (r != OK)
+			{
+				printf("cp_b2u_s: sys_safecopyto failed: %d\n",
+					r);
+				bf_afree(acc_ptr);
+				return r;
+			}
+			offset += size;
+		}
+
+		acc= acc->acc_next;
+	}
+	bf_afree(acc_ptr);
+	return OK;
+}
+#endif
+
 PRIVATE int sr_repl_queue(proc, ref, operation)
 int proc;
 int ref;
 int operation;
 {
 	mq_t *m, *m_cancel, *m_tmp;
+#ifndef __minix_vmd
+	mq_t *new_queue;
+#endif
 	int result;
 
 	m_cancel= NULL;
+	new_queue= NULL;
 
 	for (m= repl_queue; m;)
 	{
 #ifdef __minix_vmd
 		if (m->mq_mess.REP_ENDPT == proc && 
-			m->mq_mess.REP_REF ==ref &&
+			m->mq_mess.REP_REF == ref &&
 			(m->mq_mess.REP_OPERATION == operation ||
 				operation == CANCEL_ANY))
 #else /* Minix 3 */
-		if (m->mq_mess.REP_ENDPT == proc)
+		if (m->mq_mess.REP_ENDPT == proc &&
+			m->mq_mess.REP_IO_GRANT == ref)
 #endif
 		{
 assert(!m_cancel);
@@ -1121,14 +1507,24 @@ assert(!m_cancel);
 			m= m->mq_next;
 			continue;
 		}
+#ifdef __minix_vmd
 		result= send(m->mq_mess.m_source, &m->mq_mess);
 		if (result != OK)
 			ip_panic(("unable to send: %d", result));
 		m_tmp= m;
 		m= m->mq_next;
 		mq_free(m_tmp);
+#else /* Minix 3 */
+		m_tmp= m;
+		m= m->mq_next;
+		m_tmp->mq_next= new_queue;
+		new_queue= m_tmp;
+#endif
 	}
 	repl_queue= NULL;
+#ifndef __minix_vmd /* Minix 3 */
+	repl_queue= new_queue;
+#endif
 	if (m_cancel)
 	{
 		result= send(m_cancel->mq_mess.m_source, &m_cancel->mq_mess);

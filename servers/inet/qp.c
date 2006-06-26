@@ -29,6 +29,8 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 FORWARD int get_userdata ARGS(( int proc, vir_bytes vaddr, vir_bytes vlen,
 	void *buffer ));
+FORWARD int get_userdata_s ARGS(( int proc, int gid, vir_bytes vlen,
+	void *buffer ));
 FORWARD int put_userdata ARGS(( int proc, vir_bytes vaddr, vir_bytes vlen,
 	void *buffer ));
 FORWARD int iqp_getc ARGS(( void ));
@@ -75,6 +77,39 @@ vir_bytes argp;
 	static char hex[]= "0123456789ABCDEF";
 
 	qv.r= get_userdata(proc, argp, sizeof(qv.qpar), &qv.qpar);
+
+	/* Export these to mq_getc() and mq_putc(). */
+	qvars= &qv;
+	qv.proc= proc;
+	qv.param= qv.parbuf + sizeof(qv.parbuf);
+	qv.value= qv.valbuf;
+
+	do {
+		more= queryparam(iqp_getc, &addr, &size);
+		for (n= 0; n < size; n++) {
+			byte= ((u8_t *) addr)[n];
+			iqp_putc(hex[byte >> 4]);
+			iqp_putc(hex[byte & 0x0F]);
+		}
+		iqp_putc(more ? ',' : 0);
+	} while (more);
+	return qv.r;
+}
+
+PUBLIC int qp_query_s(proc, gid)
+int proc;
+int gid;
+{
+	/* Return values, sizes, or addresses of variables in MM space. */
+
+	struct queryvars qv;
+	void *addr;
+	size_t n, size;
+	int byte;
+	int more;
+	static char hex[]= "0123456789ABCDEF";
+
+	qv.r= get_userdata_s(proc, gid, sizeof(qv.qpar), &qv.qpar);
 
 	/* Export these to mq_getc() and mq_putc(). */
 	qvars= &qv;
@@ -150,6 +185,16 @@ void *buffer;
 #else /* Minix 3 */
 	return sys_vircopy(proc, D, vaddr, SELF, D, (vir_bytes)buffer, vlen);
 #endif
+}
+
+
+PRIVATE int get_userdata_s(proc, gid, vlen, buffer)
+int proc;
+int gid;
+vir_bytes vlen;
+void *buffer;
+{
+	return sys_safecopyfrom(proc, gid, 0, (vir_bytes)buffer, vlen, D);
 }
 
 
