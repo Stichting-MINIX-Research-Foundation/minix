@@ -78,6 +78,7 @@ PRIVATE mq_t *repl_queue, *repl_queue_tail;
 PRIVATE cpvec_t cpvec[CPVEC_NR];
 #else /* Minix 3 */
 PRIVATE struct vir_cp_req vir_cp_req[CPVEC_NR];
+PRIVATE struct vscp_vec s_cp_req[CPVEC_NR];
 #endif
 
 FORWARD _PROTOTYPE ( int sr_open, (message *m) );
@@ -1269,186 +1270,80 @@ char *dest;
 	return OK;
 }
 
-#if 0
-PRIVATE int cp_u2b_s (proc, src, var_acc_ptr, size)
-int proc;
-char *src;
-acc_t **var_acc_ptr;
-int size;
-{
-	static message mess;
-	acc_t *acc;
-	int i;
-
-	acc= bf_memreq(size);
-
-	*var_acc_ptr= acc;
-	i=0;
-
-	while (acc)
-	{
-		size= (vir_bytes)acc->acc_length;
-
-#ifdef __minix_vmd
-		cpvec[i].cpv_src= (vir_bytes)src;
-		cpvec[i].cpv_dst= (vir_bytes)ptr2acc_data(acc);
-		cpvec[i].cpv_size= size;
-#else /* Minix 3 */
-		vir_cp_req[i].count= size;
-		vir_cp_req[i].src.proc_nr_e = proc;
-		vir_cp_req[i].src.segment = D;
-		vir_cp_req[i].src.offset = (vir_bytes) src;
-		vir_cp_req[i].dst.proc_nr_e = this_proc;
-		vir_cp_req[i].dst.segment = D;
-		vir_cp_req[i].dst.offset = (vir_bytes) ptr2acc_data(acc);
-#endif
-
-		src += size;
-		acc= acc->acc_next;
-		i++;
-
-		if (i == CPVEC_NR || acc == NULL)
-		{
-#ifdef __minix_vmd
-			mess.m_type= SYS_VCOPY;
-			mess.m1_i1= proc;
-			mess.m1_i2= this_proc;
-			mess.m1_i3= i;
-			mess.m1_p1= (char *)cpvec;
-#else /* Minix 3 */
-			mess.m_type= SYS_VIRVCOPY;
-			mess.VCP_VEC_SIZE= i;
-			mess.VCP_VEC_ADDR= (char *)vir_cp_req;
-#endif
-			if (sendrec(SYSTASK, &mess) <0)
-				ip_panic(("unable to sendrec"));
-			if (mess.m_type <0)
-			{
-				bf_afree(*var_acc_ptr);
-				*var_acc_ptr= 0;
-				return mess.m_type;
-			}
-			i= 0;
-		}
-	}
-	return OK;
-}
-#else
-PRIVATE int cp_u2b_s (proc, gid, offset, var_acc_ptr, size)
+PRIVATE int cp_u2b_s(proc, gid, offset, var_acc_ptr, size)
 int proc;
 int gid;
 vir_bytes offset;
 acc_t **var_acc_ptr;
 int size;
 {
-	static message mess;
 	acc_t *acc;
-	int r;
+	int i, r;
 
 	acc= bf_memreq(size);
 
 	*var_acc_ptr= acc;
-
-	while (acc)
-	{
-		size= (vir_bytes)acc->acc_length;
-
-		r= sys_safecopyfrom(proc, gid, 
-			offset, (vir_bytes)ptr2acc_data(acc),
-			size, D);
-		if (r != OK)
-		{
-			printf("cp_u2b_s: sys_safecopyfrom failed: %d\n",
-				r);
-			bf_afree(*var_acc_ptr);
-			*var_acc_ptr= 0;
-			return r;
-		}
-		offset += size;
-
-		acc= acc->acc_next;
-	}
-	return OK;
-}
-#endif
-
-#if 0
-PRIVATE int cp_b2u_s(acc_ptr, proc, dest, offset)
-acc_t *acc_ptr;
-int proc;
-char *dest;
-vir_bytes offset;
-{
-	static message mess;
-	acc_t *acc;
-	int i, size;
-
-	acc= acc_ptr;
 	i=0;
 
 	while (acc)
 	{
 		size= (vir_bytes)acc->acc_length;
 
-		if (size)
-		{
-#ifdef __minix_vmd
-			cpvec[i].cpv_src= (vir_bytes)ptr2acc_data(acc);
-			cpvec[i].cpv_dst= (vir_bytes)dest;
-			cpvec[i].cpv_size= size;
-#else /* Minix 3 */
-			vir_cp_req[i].src.proc_nr_e = this_proc;
-			vir_cp_req[i].src.segment = D;
-			vir_cp_req[i].src.offset= (vir_bytes)ptr2acc_data(acc);
-			vir_cp_req[i].dst.proc_nr_e = proc;
-			vir_cp_req[i].dst.segment = D;
-			vir_cp_req[i].dst.offset= (vir_bytes)dest;
-			vir_cp_req[i].count= size;
-#endif
-			i++;
-		}
+		s_cp_req[i].v_from= proc;
+		s_cp_req[i].v_to= SELF;
+		s_cp_req[i].v_gid= gid;
+		s_cp_req[i].v_offset= offset;
+		s_cp_req[i].v_addr= (vir_bytes) ptr2acc_data(acc);
+		s_cp_req[i].v_bytes= size;
 
-		dest += size;
+		offset += size;
 		acc= acc->acc_next;
+		i++;
 
+		if (acc == NULL && i == 1)
+		{
+			r= sys_safecopyfrom(s_cp_req[0].v_from,
+				s_cp_req[0].v_gid, s_cp_req[0].v_offset,
+				s_cp_req[0].v_addr, s_cp_req[0].v_bytes, D);
+			if (r <0)
+			{
+				printf("sys_safecopyfrom failed: %d\n", r);
+				bf_afree(*var_acc_ptr);
+				*var_acc_ptr= 0;
+				return r;
+			}
+			i= 0;
+			continue;
+		}
 		if (i == CPVEC_NR || acc == NULL)
 		{
-#ifdef __minix_vmd
-			mess.m_type= SYS_VCOPY;
-			mess.m1_i1= this_proc;
-			mess.m1_i2= proc;
-			mess.m1_i3= i;
-			mess.m1_p1= (char *)cpvec;
-#else /* Minix 3 */
-			mess.m_type= SYS_VIRVCOPY;
-			mess.VCP_VEC_SIZE= i;
-			mess.VCP_VEC_ADDR= (char *) vir_cp_req;
-#endif
-			if (sendrec(SYSTASK, &mess) <0)
-				ip_panic(("unable to sendrec"));
-			if (mess.m_type <0)
+			r= sys_vsafecopy(s_cp_req, i);
+
+			if (r <0)
 			{
-				bf_afree(acc_ptr);
-				return mess.m_type;
+				printf("cp_u2b_s: sys_vsafecopy failed: %d\n",
+					r);
+				bf_afree(*var_acc_ptr);
+				*var_acc_ptr= 0;
+				return r;
 			}
 			i= 0;
 		}
 	}
-	bf_afree(acc_ptr);
 	return OK;
 }
-#else
+
 PRIVATE int cp_b2u_s(acc_ptr, proc, gid, offset)
 acc_t *acc_ptr;
 int proc;
 int gid;
 vir_bytes offset;
 {
-	static message mess;
 	acc_t *acc;
-	int r, size;
+	int i, r, size;
 
 	acc= acc_ptr;
+	i=0;
 
 	while (acc)
 	{
@@ -1456,25 +1351,50 @@ vir_bytes offset;
 
 		if (size)
 		{
-			r= sys_safecopyto(proc, gid, 
-				offset, (vir_bytes)ptr2acc_data(acc),
-				size, D);
-			if (r != OK)
+			s_cp_req[i].v_from= SELF;
+			s_cp_req[i].v_to= proc;
+			s_cp_req[i].v_gid= gid;
+			s_cp_req[i].v_offset= offset;
+			s_cp_req[i].v_addr= (vir_bytes) ptr2acc_data(acc);
+			s_cp_req[i].v_bytes= size;
+
+			i++;
+		}
+
+		offset += size;
+		acc= acc->acc_next;
+
+		if (acc == NULL && i == 1)
+		{
+			r= sys_safecopyto(s_cp_req[0].v_to,
+				s_cp_req[0].v_gid, s_cp_req[0].v_offset,
+				s_cp_req[0].v_addr, s_cp_req[0].v_bytes, D);
+			if (r <0)
 			{
-				printf("cp_b2u_s: sys_safecopyto failed: %d\n",
+				printf("sys_safecopyto failed: %d\n", r);
+				bf_afree(acc_ptr);
+				return r;
+			}
+			i= 0;
+			continue;
+		}
+		if (i == CPVEC_NR || acc == NULL)
+		{
+			r= sys_vsafecopy(s_cp_req, i);
+
+			if (r <0)
+			{
+				printf("cp_b2u_s: sys_vsafecopy failed: %d\n",
 					r);
 				bf_afree(acc_ptr);
 				return r;
 			}
-			offset += size;
+			i= 0;
 		}
-
-		acc= acc->acc_next;
 	}
 	bf_afree(acc_ptr);
 	return OK;
 }
-#endif
 
 PRIVATE int sr_repl_queue(proc, ref, operation)
 int proc;
