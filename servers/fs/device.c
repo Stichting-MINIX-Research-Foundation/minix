@@ -181,8 +181,10 @@ off_t *pos;
 	/* Is this device driver (identified by major number)
 	 * ready to accept *_S commands?
 	 */
+#if 0
 	if(major(dev) == 7)	/* major number of inet. */
 		return 0;	/* inet is not safe-capable. */
+#endif
 
 	/* Number of grants allocated in vector I/O. */
 	*vec_grants = 0;
