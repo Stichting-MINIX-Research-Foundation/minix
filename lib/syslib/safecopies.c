@@ -305,7 +305,7 @@ int access;
 	GID_CHECK(gid);
 	ACCESS_CHECK(access);
 
-	grants[gid].cp_flags = access | CPF_DIRECT | CPF_USED;
+	grants[gid].cp_flags = access | CPF_DIRECT | CPF_USED | CPF_VALID;
 	grants[gid].cp_u.cp_direct.cp_who_to = who;
 	grants[gid].cp_u.cp_direct.cp_start = addr;
 	grants[gid].cp_u.cp_direct.cp_len = bytes;
@@ -322,7 +322,7 @@ cp_grant_id_t his_gid;
 	GID_CHECK(gid);
 
 	/* Fill in new slot data. */
-	grants[gid].cp_flags = CPF_USED | CPF_INDIRECT;
+	grants[gid].cp_flags = CPF_USED | CPF_INDIRECT | CPF_VALID;
 	grants[gid].cp_u.cp_indirect.cp_who_to = who_to;
 	grants[gid].cp_u.cp_indirect.cp_who_from = who_from;
 	grants[gid].cp_u.cp_indirect.cp_grant = his_gid;
@@ -342,11 +342,23 @@ int access;
 	ACCESS_CHECK(access);
 
 	/* Fill in new slot data. */
-	grants[gid].cp_flags = CPF_USED | CPF_MAGIC | access;
+	grants[gid].cp_flags = CPF_USED | CPF_MAGIC | CPF_VALID | access;
 	grants[gid].cp_u.cp_magic.cp_who_to = who_to;
 	grants[gid].cp_u.cp_magic.cp_who_from = who_from;
 	grants[gid].cp_u.cp_magic.cp_start = addr;
 	grants[gid].cp_u.cp_magic.cp_len = bytes;
+
+	return 0;
+}
+
+PUBLIC int
+cpf_setgrant_disable(gid)
+cp_grant_id_t gid;
+{
+	GID_CHECK(gid);
+
+	/* Grant is now no longer valid, but still in use. */
+	grants[gid].cp_flags = CPF_USED;
 
 	return 0;
 }

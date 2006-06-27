@@ -62,6 +62,7 @@ struct vscp_vec {
 #define CPF_DIRECT	0x000200 /* Grant from this process to another. */
 #define CPF_INDIRECT	0x000400 /* Grant from grant to another. */
 #define CPF_MAGIC	0x000800 /* Grant from any to any. */
+#define CPF_VALID	0x001000 /* Grant slot contains valid grant. */
 
 /* Prototypes for functions in libsys. */
 _PROTOTYPE( cp_grant_id_t cpf_grant_direct, (endpoint_t, vir_bytes, size_t, int));
@@ -78,6 +79,7 @@ _PROTOTYPE( int cpf_setgrant_indirect, (cp_grant_id_t g, endpoint_t who_to,
 	endpoint_t who_from, cp_grant_id_t his_g));
 _PROTOTYPE( int cpf_setgrant_magic, (cp_grant_id_t g, endpoint_t who_to,
 	endpoint_t who_from, vir_bytes addr, size_t bytes, int access));
+_PROTOTYPE( int cpf_setgrant_disable, (cp_grant_id_t grant_id));
 
 /* Set a process' grant table location and size (in-kernel only). */
 #define _K_SET_GRANT_TABLE(rp, ptr, entries)	\

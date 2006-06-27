@@ -90,8 +90,8 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 	phys_copy(phys_grant, vir2phys(&g), sizeof(g));
 
 	/* Check validity. */
-	if(!(g.cp_flags & CPF_USED)) {
-		kprintf("grant verify failed: invalid\n");
+	if((g.cp_flags & (CPF_USED | CPF_VALID)) != (CPF_USED | CPF_VALID)) {
+		kprintf("grant verify failed: unused or invalid\n");
 		return EPERM;
 	}
 
