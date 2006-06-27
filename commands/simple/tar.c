@@ -551,6 +551,7 @@ char *file;
 	}
 	if (uid == -1) uid = (int) convert(header.member.m_uid, INT_TYPE);
 	if (gid == -1) gid = (int) convert(header.member.m_gid, INT_TYPE);
+	if((gid_t)gid < 0) gid = 0;
 	chown(file, uid, gid);
   }
   chmod(file, u_mask & (int) convert(header.member.m_mode, INT_TYPE));
