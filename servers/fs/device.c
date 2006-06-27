@@ -175,7 +175,7 @@ vir_bytes bytes;
 off_t *pos;
 {
 	int access = 0, size;
-	int m, j;
+	int j;
 	iovec_t *v;
 
 	/* Number of grants allocated in vector I/O. */

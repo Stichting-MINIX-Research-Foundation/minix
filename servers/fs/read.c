@@ -50,7 +50,7 @@ int rw_flag;			/* READING or WRITING */
   int regular, partial_pipe = 0, partial_cnt = 0;
   mode_t mode_word;
   struct filp *wf;
-  int block_size;
+  int block_size = 0;
   int completed, r2 = OK;
   phys_bytes p;
 

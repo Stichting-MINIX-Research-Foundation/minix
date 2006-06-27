@@ -450,7 +450,7 @@ int fd_nr;
 	put_inode(rip);
   }
 
-  rfp->fp_cloexec &= ~(1L << fd_nr);	/* turn off close-on-exec bit */
+  FD_CLR(fd_nr, &rfp->fp_cloexec_set);
   rfp->fp_filp[fd_nr] = NIL_FILP;
   FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 

@@ -45,7 +45,8 @@ int op;				/* special actions */
  * Also free the double indirect block if that was the last entry in the
  * double indirect block.
  */
-  int scale, ind_ex, new_ind, new_dbl, zones, nr_indirects, single, zindex, ex;
+  int scale, ind_ex = 0, new_ind, new_dbl,
+	zones, nr_indirects, single, zindex, ex;
   zone_t z, z1, z2 = NO_ZONE, old_zone;
   register block_t b;
   long excess, zone;

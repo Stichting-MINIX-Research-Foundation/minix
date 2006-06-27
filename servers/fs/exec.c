@@ -606,17 +606,12 @@ struct fproc *rfp;
 {
 /* Files can be marked with the FD_CLOEXEC bit (in fp->fp_cloexec).  
  */
-  int i, proc;
-  long bitmap;
+  int i;
 
-  /* The array of FD_CLOEXEC bits is in the fp_cloexec bit map. */
-  bitmap = rfp->fp_cloexec;
-  if (bitmap) {
     /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
-    for (i = 0; i < OPEN_MAX; i++) {
-	  if ( (bitmap >> i) & 01) (void) close_fd(rfp, i);
-    }
-  }
+    for (i = 0; i < OPEN_MAX; i++)
+	  if ( FD_ISSET(i, &rfp->fp_cloexec_set))
+		(void) close_fd(rfp, i);
 }
 
 

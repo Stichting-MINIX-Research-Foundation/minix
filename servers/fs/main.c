@@ -273,8 +273,6 @@ PRIVATE void fs_init()
   if (NR_BUFS < 6) panic(__FILE__,"NR_BUFS < 6", NO_NUM);
   if (V1_INODE_SIZE != 32) panic(__FILE__,"V1 inode size != 32", NO_NUM);
   if (V2_INODE_SIZE != 64) panic(__FILE__,"V2 inode size != 64", NO_NUM);
-  if (OPEN_MAX > 8 * sizeof(long))
-  	 panic(__FILE__,"Too few bits in fp_cloexec", NO_NUM);
 
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;

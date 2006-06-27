@@ -139,8 +139,6 @@ PUBLIC int do_fcntl()
 
   register struct filp *f;
   int new_fd, r, fl;
-  long cloexec_mask;		/* bit map for the FD_CLOEXEC flag */
-  long clo_value;		/* FD_CLOEXEC flag in proper position */
   struct filp *dummy;
 
   /* Is the file descriptor valid? */
@@ -157,13 +155,14 @@ PUBLIC int do_fcntl()
 
      case F_GETFD:
 	/* Get close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
-	return( ((fp->fp_cloexec >> m_in.fd) & 01) ? FD_CLOEXEC : 0);
+	return( FD_ISSET(m_in.fd, &fp->fp_cloexec_set) ? FD_CLOEXEC : 0);
 
      case F_SETFD:
 	/* Set close-on-exec flag (FD_CLOEXEC in POSIX Table 6-2). */
-	cloexec_mask = 1L << m_in.fd;	/* singleton set position ok */
-	clo_value = (m_in.addr & FD_CLOEXEC ? cloexec_mask : 0L);
-	fp->fp_cloexec = (fp->fp_cloexec & ~cloexec_mask) | clo_value;
+	if(m_in.addr & FD_CLOEXEC)
+		FD_SET(m_in.fd, &fp->fp_cloexec_set);
+	else
+		FD_CLR(m_in.fd, &fp->fp_cloexec_set);
 	return(OK);
 
      case F_GETFL:
@@ -670,7 +669,7 @@ struct mem_map *seg_ptr;
 		if  (r != OK) 
 		{
 			printf("dumpcore pid %d: sys_trace failed "
-				"at offset %d: %d\n",
+				"at offset %ld: %d\n",
 				rfp->fp_pid, trace_off, r);
 			break;
 		}
@@ -714,7 +713,7 @@ off_t off;			/* offset in file */
 char *buf;
 size_t bytes;			/* how much is to be transferred? */
 {
-	int r, block_size;
+	int block_size;
 	off_t n, o, b_off;
 	block_t b;
 	struct buf *bp;

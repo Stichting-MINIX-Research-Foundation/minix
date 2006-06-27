@@ -28,7 +28,7 @@ EXTERN struct fproc {
   char fp_sesldr;		/* true if proc is a session leader */
   char fp_execced;		/* true if proc has exec()ced after fork */
   pid_t fp_pid;			/* process id */
-  long fp_cloexec;		/* bit map for POSIX Table 6-2 FD_CLOEXEC */
+  fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
   endpoint_t fp_endpoint;	/* kernel endpoint number of this process */
 } fproc[NR_PROCS];
 

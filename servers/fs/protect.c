@@ -26,7 +26,7 @@ PUBLIC int do_chmod()
 {
 /* Perform the chmod(name, mode) system call. */
 
-  register struct inode *rip;
+  register struct inode *rip = NULL;
   register int r;
 
   if(call_nr == CHMOD) {
@@ -70,7 +70,7 @@ PUBLIC int do_chown()
 {
 /* Perform the chown(name, owner, group) system call. */
 
-  register struct inode *rip;
+  register struct inode *rip = NULL;
   register int r;
 
   if(call_nr == CHOWN) {
