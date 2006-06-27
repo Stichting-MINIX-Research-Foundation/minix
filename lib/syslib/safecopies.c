@@ -120,38 +120,23 @@ cpf_new_grantslot(void)
  * necessary. If no free slot is found and the grow failed,
  * return -1. Otherwise, return grant slot number.
  */
-	static cp_grant_id_t i = 0;
 	cp_grant_id_t g;
-	int n = 0;
-
-	/* Any slots at all? */
-	if(ngrants < 1) {
-		errno = ENOSPC;
-		return -1;
-	}
 
 	/* Find free slot. */
-	for(g = i % ngrants;
-	    n < ngrants && (grants[g].cp_flags & CPF_USED); n++)
-		g = (g+1) % ngrants;
-
-	/* Where to start searching next time. */
-	i = g+1;
+	for(g = 0; g < ngrants && (grants[g].cp_flags & CPF_USED); g++)
+		;
 
 	assert(g <= ngrants);
-	assert(n <= ngrants);
 
 	/* No free slot found? */
-	if(n == ngrants) {
+	if(g == ngrants) {
 		cpf_grow();
-		assert(n <= ngrants); /* ngrants can't shrink. */
-		if(n == ngrants) {
+		assert(g <= ngrants); /* ngrants can't shrink. */
+		if(g == ngrants) {
 			/* ngrants hasn't increased. */
 			errno = ENOSPC;
 			return -1;
 		}
-		/* The new grant is the first available new grant slot. */
-		g = n;
 	}
 
 	/* Basic sanity checks - if we get this far, g must be a valid,
@@ -287,7 +272,7 @@ int n;
 	for(i = 0; i < n; i++) {
 	  if((grant_ids[i] = cpf_new_grantslot()) < 0)
 		break;
-	  cpf_revoke(grant_ids[i]);
+	  grants[grant_ids[i]].cp_flags = CPF_USED;
 	}
 
 	/* return however many grants were assigned. */
