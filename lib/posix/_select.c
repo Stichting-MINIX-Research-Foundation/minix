@@ -1,4 +1,6 @@
 
+#define select _select
+
 #include <lib.h>
 #include <sys/time.h>
 #include <sys/select.h>
