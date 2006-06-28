@@ -177,6 +177,7 @@ off_t *pos;
 	int access = 0, size;
 	int j;
 	iovec_t *v;
+  	static iovec_t new_iovec[NR_IOREQS];
 
 	/* Number of grants allocated in vector I/O. */
 	*vec_grants = 0;
@@ -204,9 +205,9 @@ off_t *pos;
 			/* Change to safe op. */
 			*op = *op == DEV_GATHER ? DEV_GATHER_S : DEV_SCATTER_S;
 
-			/* Grant access to i/o vector. */
+			/* Grant access to my new i/o vector. */
 			if((*gid = cpf_grant_direct(driver, (vir_bytes)
-			  buf, bytes * sizeof(iovec_t),
+			  new_iovec, bytes * sizeof(iovec_t),
 			  CPF_READ | CPF_WRITE)) < 0) {
 				panic(__FILE__,
 				"cpf_grant_direct of vector failed", NO_NUM);
@@ -214,7 +215,7 @@ off_t *pos;
 			v = (iovec_t *) buf;
 			/* Grant access to i/o buffers. */
 			for(j = 0; j < bytes; j++) {
-			   gids[j] = v[j].iov_addr =
+			   new_iovec[j].iov_addr = gids[j] =
 			     cpf_grant_direct(driver, (vir_bytes)
 			     v[j].iov_addr, v[j].iov_size,
 			     *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
@@ -222,6 +223,7 @@ off_t *pos;
 				panic(__FILE__, "grant to iovec buf failed",
 				 NO_NUM);
 			   }
+			   new_iovec[j].iov_size = v[j].iov_size;
 			   (*vec_grants)++;
 			}
 			break;
