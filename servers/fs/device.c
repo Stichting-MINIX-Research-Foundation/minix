@@ -297,6 +297,7 @@ int bytes;			/* how many bytes to transfer */
 
   for (;;)
   {
+	int op_used;
         static cp_grant_id_t gids[NR_IOREQS];
         cp_grant_id_t gid = GRANT_INVALID;
 	int vec_grants;
@@ -312,12 +313,14 @@ int bytes;			/* how many bytes to transfer */
         m.ADDRESS  = buf;
 
 	/* Convert parameters to 'safe mode'. */
+	op_used = op;
         safe = safe_io_conversion(dp->dmap_driver, dev, &gid,
-          &op, gids, NR_IOREQS, &m.IO_ENDPT, buf, &vec_grants, bytes, &pos);
+          &op_used, gids, NR_IOREQS, &m.IO_ENDPT, buf,
+	  &vec_grants, bytes, &pos);
 
 	/* Set up rest of the message. */
 	if(safe) m.IO_GRANT = (char *) gid;
-	m.m_type   = op;
+	m.m_type   = op_used;
 	m.DEVICE   = (dev >> MINOR) & BYTE;
 	m.POSITION = pos;
 	m.COUNT    = bytes;
