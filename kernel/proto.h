@@ -74,9 +74,7 @@ _PROTOTYPE( int newmap, (struct proc *rp, struct mem_map *map_ptr)	);
 
 /* exception.c */
 _PROTOTYPE( void exception, (unsigned vec_nr)				);
-#if DEBUG_STACK_TRACE
 _PROTOTYPE( void stacktrace, (struct proc *)				);
-#endif
 
 /* i8259.c */
 _PROTOTYPE( void intr_init, (int mine)					);
