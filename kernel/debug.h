@@ -20,6 +20,7 @@
  * are disabled.
  */
 #define DEBUG_ENABLE_IPC_WARNINGS	0
+#define DEBUG_STACKTRACE		1
 
 /* It's interesting to measure the time spent withing locked regions, because
  * this is the time that the system is deaf to interrupts.

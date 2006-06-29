@@ -65,6 +65,10 @@ unsigned vec_nr;
 			saved_proc->p_reg.cs, saved_proc->p_reg.pc,
 			saved_proc->p_reg.ss, saved_proc->p_reg.sp);
 		kprintf("edi = 0x%x\n", saved_proc->p_reg.di);
+
+#if DEBUG_STACKTRACE
+		stacktrace(saved_proc);
+#endif
 	}
 #endif
 
@@ -84,4 +88,35 @@ unsigned vec_nr;
 
   panic("exception in a kernel task", NO_NUM);
 }
+
+#if DEBUG_STACKTRACE
+/*===========================================================================*
+ *				stacktrace				     *
+ *===========================================================================*/
+PUBLIC void stacktrace(proc)
+struct proc *proc;
+{
+	reg_t bp, v_bp, v_pc, v_hbp;
+
+	v_bp = proc->p_reg.fp;
+
+	kprintf("stacktrace: ");
+	while(v_bp) {
+		phys_bytes p;
+		if(!(p = umap_local(proc, D, v_bp, sizeof(v_bp)))) {
+			kprintf("(bad bp %lx)", v_bp);
+			break;
+		}
+		phys_copy(p+sizeof(v_pc), vir2phys(&v_pc), sizeof(v_pc));
+		phys_copy(p, vir2phys(&v_hbp), sizeof(v_hbp));
+		kprintf("0x%lx ", (unsigned long) v_pc);
+		if(v_hbp != 0 && v_hbp <= v_bp) {
+			kprintf("(bad hbp %lx)", v_hbp);
+			break;
+		}
+		v_bp = v_hbp;
+	}
+	kprintf("\n");
+}
+#endif
 
