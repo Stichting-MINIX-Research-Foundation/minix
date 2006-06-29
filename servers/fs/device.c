@@ -32,10 +32,11 @@
 
 #define ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
-FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t, int,
+FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t,
   cp_grant_id_t *, int *, cp_grant_id_t *, int, endpoint_t *,
-  void *, int *, vir_bytes, off_t *));
-FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *, int));
+  void **, int *, vir_bytes, off_t *));
+FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
+	int));
 
 extern int dmap_size;
 PRIVATE int dummyproc;
@@ -143,10 +144,12 @@ PUBLIC void dev_status(message *m)
 				revive(endpt, st.REP_STATUS);
 				break;
 			case DEV_IO_READY:
-				select_notified(d, st.DEV_MINOR, st.DEV_SEL_OPS);
+				select_notified(d, st.DEV_MINOR,
+					st.DEV_SEL_OPS);
 				break;
 			default:
-				printf("FS: unrecognized reply %d to DEV_STATUS\n", st.m_type);
+				printf("FS: unrecognized reply %d to "
+					"DEV_STATUS\n", st.m_type);
 				/* Fall through. */
 			case DEV_NO_STATUS:
 				get_more = 0;
@@ -160,16 +163,15 @@ PUBLIC void dev_status(message *m)
 /*===========================================================================*
  *				safe_io_conversion			     *
  *===========================================================================*/
-PRIVATE int safe_io_conversion(driver, dev, gid, op, gids, gids_size,
+PRIVATE int safe_io_conversion(driver, gid, op, gids, gids_size,
 	io_ept, buf, vec_grants, bytes, pos)
 endpoint_t driver;
-int dev;
 cp_grant_id_t *gid;
 int *op;
 cp_grant_id_t *gids;
 int gids_size;
 endpoint_t *io_ept;
-void *buf;
+void **buf;
 int *vec_grants;
 vir_bytes bytes;
 off_t *pos;
@@ -177,7 +179,7 @@ off_t *pos;
 	int access = 0, size;
 	int j;
 	iovec_t *v;
-  	static iovec_t new_iovec[NR_IOREQS];
+	static iovec_t new_iovec[NR_IOREQS];
 
 	/* Number of grants allocated in vector I/O. */
 	*vec_grants = 0;
@@ -193,7 +195,7 @@ off_t *pos;
 			*op = *op == DEV_READ ? DEV_READ_S : DEV_WRITE_S;
 
 			if((*gid=cpf_grant_magic(driver, *io_ept,
-			  (vir_bytes) buf, bytes,
+			  (vir_bytes) *buf, bytes,
 			  *op == DEV_READ_S ? CPF_WRITE : CPF_READ)) < 0) {
 				panic(__FILE__,
 				 "cpf_grant_magic of buffer failed\n", NO_NUM);
@@ -206,15 +208,17 @@ off_t *pos;
 			*op = *op == DEV_GATHER ? DEV_GATHER_S : DEV_SCATTER_S;
 
 			/* Grant access to my new i/o vector. */
-			if((*gid = cpf_grant_direct(driver, (vir_bytes)
-			  new_iovec, bytes * sizeof(iovec_t),
+			if((*gid = cpf_grant_direct(driver,
+			  (vir_bytes) new_iovec, bytes * sizeof(iovec_t),
 			  CPF_READ | CPF_WRITE)) < 0) {
 				panic(__FILE__,
 				"cpf_grant_direct of vector failed", NO_NUM);
 			}
-			v = (iovec_t *) buf;
+			v = (iovec_t *) *buf;
 			/* Grant access to i/o buffers. */
 			for(j = 0; j < bytes; j++) {
+			   if(j >= NR_IOREQS) 
+				panic(__FILE__, "vec too big", bytes);
 			   new_iovec[j].iov_addr = gids[j] =
 			     cpf_grant_direct(driver, (vir_bytes)
 			     v[j].iov_addr, v[j].iov_size,
@@ -226,6 +230,9 @@ off_t *pos;
 			   new_iovec[j].iov_size = v[j].iov_size;
 			   (*vec_grants)++;
 			}
+
+			/* Set user's vector to the new one. */
+			*buf = new_iovec;
 			break;
 		case DEV_IOCTL:
 			*pos = *io_ept;	/* Old endpoint in POSITION field. */
@@ -238,7 +245,7 @@ off_t *pos;
 			 * order to disambiguate requests with DEV_IOCTL_S.
 			 */
 			if((*gid=cpf_grant_magic(driver, *io_ept,
-				(vir_bytes) buf, size, access)) < 0) {
+				(vir_bytes) *buf, size, access)) < 0) {
 				panic(__FILE__,
 				"cpf_grant_magic failed (ioctl)\n",
 				NO_NUM);
@@ -293,13 +300,21 @@ int bytes;			/* how many bytes to transfer */
   struct dmap *dp;
   int r, safe;
   message m;
+  iovec_t *v;
+  cp_grant_id_t gid = GRANT_INVALID;
+	int vec_grants;
 
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
 
+  /* The io vector copying relies on this I/O being for FS itself. */
+  if(proc_e != FS_PROC_NR)
+	panic(__FILE__, "doing dev_bio for non-self", proc_e);
+
   for (;;)
   {
 	int op_used;
+	void *buf_used;
         static cp_grant_id_t gids[NR_IOREQS];
         cp_grant_id_t gid = GRANT_INVALID;
 	int vec_grants;
@@ -311,17 +326,19 @@ int bytes;			/* how many bytes to transfer */
 	}
 
         /* By default, these are right. */
-        m.IO_ENDPT = proc_e;
-        m.ADDRESS  = buf;
+	m.IO_ENDPT = proc_e;
+	m.ADDRESS  = buf;
+	buf_used = buf;
 
 	/* Convert parameters to 'safe mode'. */
 	op_used = op;
-        safe = safe_io_conversion(dp->dmap_driver, dev, &gid,
-          &op_used, gids, NR_IOREQS, &m.IO_ENDPT, buf,
+        safe = safe_io_conversion(dp->dmap_driver, &gid,
+          &op_used, gids, NR_IOREQS, &m.IO_ENDPT, &buf_used,
 	  &vec_grants, bytes, &pos);
 
 	/* Set up rest of the message. */
 	if(safe) m.IO_GRANT = (char *) gid;
+
 	m.m_type   = op_used;
 	m.DEVICE   = (dev >> MINOR) & BYTE;
 	m.POSITION = pos;
@@ -377,6 +394,11 @@ int bytes;			/* how many bytes to transfer */
 	if (m.REP_STATUS == SUSPEND) {
 		panic(__FILE__, "dev_bio: driver returned SUSPEND", NO_NUM);
 	}
+
+	if(buf != buf_used) {
+		memcpy(buf, buf_used, bytes * sizeof(iovec_t));
+	}
+
 	return(m.REP_STATUS);
   }
 }
@@ -399,6 +421,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   cp_grant_id_t gid = GRANT_INVALID;
   static cp_grant_id_t gids[NR_IOREQS];
   int vec_grants = 0, orig_op, safe;
+  void *buf_used;
 
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
@@ -421,8 +444,13 @@ int flags;			/* special flags, like O_NONBLOCK */
   dev_mess.ADDRESS  = buf;
 
   /* Convert DEV_* to DEV_*_S variants. */
-  safe = safe_io_conversion(dp->dmap_driver, dev, &gid,
-    &op, gids, NR_IOREQS, &dev_mess.IO_ENDPT, buf, &vec_grants, bytes, &pos);
+  buf_used = buf;
+  safe = safe_io_conversion(dp->dmap_driver, &gid,
+    &op, gids, NR_IOREQS, &dev_mess.IO_ENDPT, &buf_used,
+    &vec_grants, bytes, &pos);
+
+  if(buf != buf_used)
+	panic(__FILE__,"dev_io: safe_io_conversion changed buffer", NO_NUM);
 
   /* If the safe conversion was done, set the ADDRESS to
    * the grant id.
