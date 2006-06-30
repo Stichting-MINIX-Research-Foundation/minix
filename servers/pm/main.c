@@ -271,7 +271,6 @@ PRIVATE void pm_init()
   if (OK != (s=sys_getimage(image))) 
   	panic(__FILE__,"couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
-  printf("Building process table:");		/* show what's happening */
   for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {		
   	if (ip->proc_nr >= 0) {			/* task have negative nrs */
   		procs_in_use += 1;		/* found user process */
@@ -315,10 +314,8 @@ PRIVATE void pm_init()
 		mess.PR_ENDPT = rmp->mp_endpoint;
   		if (OK != (s=send(FS_PROC_NR, &mess)))
 			panic(__FILE__,"can't sync up with FS", s);
-  		printf(" %s", ip->proc_name);	/* display process name */
   	}
   }
-  printf(".\n");				/* last process done */
 
   /* Override some details. INIT, PM, FS and RS are somewhat special. */
   mproc[PM_PROC_NR].mp_pid = PM_PID;		/* PM has magic pid */

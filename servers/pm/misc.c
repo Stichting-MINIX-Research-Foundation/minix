@@ -11,6 +11,8 @@
  *   do_svrctl: process manager control
  */
 
+#define brk _brk
+
 #include "pm.h"
 #include <minix/callnr.h>
 #include <signal.h>
@@ -520,3 +522,20 @@ PUBLIC int do_svrctl()
 	return(EINVAL);
   }
 }
+
+/*===========================================================================*
+ *				_brk				             *
+ *===========================================================================*/
+
+extern char *_brksize;
+PUBLIC int brk(brk_addr)
+char *brk_addr;
+{
+/* PM wants to call brk() itself. */
+	if(real_brk(&mproc[PM_PROC_NR], (vir_bytes) brk_addr) != OK) {
+		return -1;
+	}
+	_brksize = brk_addr;
+	return 0;
+}
+

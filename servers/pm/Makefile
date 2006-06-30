@@ -20,7 +20,7 @@ OBJ = 	main.o forkexit.o break.o exec.o time.o timers.o \
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsysutil  -lsys -ltimers
-	install -S 256w $@
+	install -S 8k $@
 
 # install with other servers
 install:	/usr/sbin/$(SERVER)
