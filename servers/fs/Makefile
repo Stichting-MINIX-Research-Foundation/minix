@@ -22,7 +22,7 @@ OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 install all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 1024w $@
+	install -S 16k $@
 
 # clean up local files
 clean:

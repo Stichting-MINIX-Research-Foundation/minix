@@ -212,6 +212,7 @@ PUBLIC void main(void)
 		continue;
 	}
 	case DIAGNOSTICS: 		/* a server wants to print some */
+		printf("WARNING: old DIAGNOSTICS from %d\n", tty_mess.m_source);
 		do_diagnostics(&tty_mess, 0);
 		continue;
 	case DIAGNOSTICS_S: 

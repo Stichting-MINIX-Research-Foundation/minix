@@ -225,22 +225,6 @@ PRIVATE void fs_init()
   message mess;
   int s;
 
-/* Maximum number of outstanding grants is one full i/o
- * vector, and all processes hanging on SUSPENDed i/o, and
- * grants for printf() to tty and log.
- *
- * Space is declared for it here, and cpf_preallocate()
- * uses it internally and internally tells the kernel
- * about it. FS then never touches the data again directly,
- * only through the cpf_* library routines.
- */
-#define NGRANTS (NR_PROCS + NR_IOREQS + 10)
-  static cp_grant_t grants[NGRANTS];
-
-  /* Set data copy grant table, as FS can't allocate it dynamically. */
-  if(cpf_preallocate(grants, NGRANTS) != OK)
-  	panic(__FILE__,"cpf_preallocate failed", NO_NUM);
-
   /* Initialize the process table with help of the process manager messages. 
    * Expect one message for each system process with its slot number and pid. 
    * When no more processes follow, the magic process number NONE is sent. 

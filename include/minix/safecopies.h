@@ -69,7 +69,6 @@ _PROTOTYPE( cp_grant_id_t cpf_grant_direct, (endpoint_t, vir_bytes, size_t, int)
 _PROTOTYPE( cp_grant_id_t cpf_grant_indirect, (endpoint_t, endpoint_t, cp_grant_id_t));
 _PROTOTYPE( cp_grant_id_t cpf_grant_magic, (endpoint_t, endpoint_t, vir_bytes, size_t, int));
 _PROTOTYPE( int cpf_revoke, (cp_grant_id_t grant_id));
-_PROTOTYPE( int cpf_preallocate, (cp_grant_t *, int));
 _PROTOTYPE( int cpf_lookup, (cp_grant_id_t g, endpoint_t *ep, endpoint_t *ep2));
 
 _PROTOTYPE( int cpf_getgrants, (cp_grant_id_t *grant_ids, int n));

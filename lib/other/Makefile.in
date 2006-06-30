@@ -6,6 +6,7 @@ LIBRARIES=libc
 
 libc_FILES=" \
 	_brk.c \
+	_sbrk.c \
 	_devctl.c \
 	__pm_findproc.c \
 	_getnpid.c \

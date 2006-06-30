@@ -21,7 +21,7 @@ OBJ = main.o pci.o pci_table.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 4096 $(DRIVER)
+	install -S 16k $(DRIVER)
 
 # install with other drivers
 install:	/usr/sbin/$(DRIVER)

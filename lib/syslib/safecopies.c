@@ -38,53 +38,15 @@
    }
 
 PRIVATE cp_grant_t *grants = NULL;
-PRIVATE int ngrants = 0, dynamic = 1;
-
-PUBLIC int
-cpf_preallocate(cp_grant_t *new_grants, int new_ngrants)
-{
-/* Use a statically allocated block of grants as our grant table.
- * This means we can't grow it dynamically any more.
- *
- * This function is used in processes that can't safely call realloc().
- */
-	int s;
-
-	/* If any table is already in place, we can't change it. */
-	if(ngrants > 0) {
-		errno = EBUSY;
-		return -1;
-	}
-
-	/* Update kernel about the table. */
-	if((s=sys_setgrant(new_grants, new_ngrants))) {
-		return -1;
-	}
-
-	/* Update internal data. dynamic = 0 means no realloc()ing will be done
-	 * and we can't grow beyond this size.
-	 */
-	grants = new_grants;
-	ngrants = new_ngrants;
-	dynamic = 0;
-
-	return 0;
-}
+PRIVATE int ngrants = 0;
 
 PRIVATE void
 cpf_grow(void)
 {
-/* Grow the grants table if possible. If a preallocated block has been
- * submitted ('dynamic' is clear), we can't grow it. Otherwise, realloc().
- * Caller is expected to check 'ngrants' to see if the call was successful.
- */
+/* Grow the grants table if possible. */
 	cp_grant_t *new_grants;
 	cp_grant_id_t g;
 	int new_size;
-
-	/* Can't grow if static block already assigned. */
-	if(!dynamic)
-		return;
 
 	new_size = (1+ngrants)*2;
 	assert(new_size > ngrants);

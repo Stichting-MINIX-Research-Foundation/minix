@@ -25,21 +25,24 @@ int c;
 #define PRINTPROCS (sizeof(procs)/sizeof(procs[0]))
 	int procs[] = OUTPUT_PROCS_ARRAY;
 	static int firstprint = 1;
-	static cp_grant_t printgrant_buffer[PRINTPROCS];
 	static cp_grant_id_t printgrants[PRINTPROCS];
 	int p;
 
 	if(firstprint) {
+		for(p = 0; procs[p] != NONE; p++) {
+			printgrants[p] = GRANT_INVALID;
+		}
+
+		firstprint = 0;
+
 		/* First time? Initialize grant table;
 		 * Grant printing processes read copy access to our
-		 * print buffer. (So buffer can't be on stack!)
+		 * print buffer forever. (So buffer can't be on stack!)
 		 */
-		cpf_preallocate(printgrant_buffer, PRINTPROCS);
 		for(p = 0; procs[p] != NONE; p++) {
 			printgrants[p] = cpf_grant_direct(procs[p], print_buf,
 				sizeof(print_buf), CPF_READ);
 		}
-		firstprint = 0;
 	}
 
 	for(p = 0; procs[p] != NONE; p++) {
