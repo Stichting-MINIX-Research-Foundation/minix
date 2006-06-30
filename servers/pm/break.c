@@ -28,31 +28,42 @@
  *===========================================================================*/
 PUBLIC int do_brk()
 {
+/* Entry point to brk(addr) system call. real_brk() does the real work,
+ * as that is called from elsewhere too.
+ */
+  int r;
+  r = real_brk(mp, (vir_bytes) m_in.addr);
+  mp->mp_reply.reply_ptr = (r == OK ? m_in.addr : (char *) -1);
+  return r;
+}
+
+/*===========================================================================*
+ *				do_brk	 				     *
+ *===========================================================================*/
+PUBLIC int real_brk(struct mproc *rmp, vir_bytes v)
+{
 /* Perform the brk(addr) system call.
  *
  * The call is complicated by the fact that on some machines (e.g., 8088),
  * the stack pointer can grow beyond the base of the stack segment without
  * anybody noticing it.
  * The parameter, 'addr' is the new virtual address in D space.
+ *
+ * This call can also be performed on PM itself from brk() in misc.c.
  */
-
-  register struct mproc *rmp;
   int r;
-  vir_bytes v, new_sp;
+  vir_bytes new_sp;
   vir_clicks new_clicks;
 
-  rmp = mp;
-  v = (vir_bytes) m_in.addr;
   new_clicks = (vir_clicks) ( ((long) v + CLICK_SIZE - 1) >> CLICK_SHIFT);
   if (new_clicks < rmp->mp_seg[D].mem_vir) {
 	rmp->mp_reply.reply_ptr = (char *) -1;
 	return(ENOMEM);
   }
   new_clicks -= rmp->mp_seg[D].mem_vir;
-  if ((r=get_stack_ptr(who_e, &new_sp)) != OK) /* ask kernel for sp value */
+  if ((r=get_stack_ptr(rmp->mp_endpoint, &new_sp)) != OK) /* get sp value */
   	panic(__FILE__,"couldn't get stack pointer", r);
   r = adjust(rmp, new_clicks, new_sp);
-  rmp->mp_reply.reply_ptr = (r == OK ? m_in.addr : (char *) -1);
   return(r);			/* return new address or -1 */
 }
 

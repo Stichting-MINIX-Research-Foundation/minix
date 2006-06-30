@@ -26,6 +26,7 @@ _PROTOTYPE(int mem_holes_copy, (struct hole *, size_t *, u32_t *)	);
 _PROTOTYPE( int adjust, (struct mproc *rmp,
 			vir_clicks data_clicks, vir_bytes sp)		);
 _PROTOTYPE( int do_brk, (void)						);
+_PROTOTYPE( int real_brk, (struct mproc *pr, vir_bytes v)		);
 _PROTOTYPE( int size_ok, (int file_type, vir_clicks tc, vir_clicks dc,
 			vir_clicks sc, vir_clicks dvir, vir_clicks s_vir) );
 
