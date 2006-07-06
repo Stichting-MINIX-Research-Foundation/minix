@@ -8,7 +8,7 @@ MAKEDEV=/usr/bin/MAKEDEV
 all:	image.c image.s
 
 clean:
-	rm -rf $(PROGRAMS) bintoc image image.c t proto.gen
+	rm -rf $(PROGRAMS) bintoc image image.c image.s t proto.gen
 
 image.c:	bintoc image
 	./bintoc -o $@ image
