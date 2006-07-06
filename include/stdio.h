@@ -49,7 +49,7 @@ typedef struct __iobuf {
 #define	stdout		(&__stdout)
 #define	stderr		(&__stderr)
 
-#define	BUFSIZ		1024
+#define	BUFSIZ		4096
 #define	NULL		((void *)0)
 #define	EOF		(-1)
 
