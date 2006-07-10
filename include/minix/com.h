@@ -123,6 +123,13 @@
 							 * attribute value
 							 */
 #define BUSC_PCI_RESCAN		(BUSC_RQ_BASE + 14)	/* Rescan bus */
+#define BUSC_PCI_DEV_NAME_S	(BUSC_RQ_BASE + 15)	/* Get the name of a
+							 * PCI device
+							 * (safecopy)
+							 */
+#define BUSC_PCI_SLOT_NAME_S	(BUSC_RQ_BASE + 16)	/* Get the name of a
+							 * PCI slot (safecopy)
+							 */
 
 /*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
@@ -209,13 +216,16 @@
 #define DL_WRITEV	(DL_RQ_BASE + 4)
 #define DL_READ		(DL_RQ_BASE + 5)
 #define DL_READV	(DL_RQ_BASE + 6)
-#define DL_INIT		(DL_RQ_BASE + 7)
+#define DL_CONF		(DL_RQ_BASE + 7)
 #define DL_STOP		(DL_RQ_BASE + 8)
 #define DL_GETSTAT	(DL_RQ_BASE + 9)
 #define DL_GETNAME	(DL_RQ_BASE +10)
+#define DL_WRITEV_S	(DL_RQ_BASE +11)
+#define DL_READV_S	(DL_RQ_BASE +12)
+#define DL_GETSTAT_S	(DL_RQ_BASE +13)
 
 /* Message type for data link layer replies. */
-#define DL_INIT_REPLY	(DL_RS_BASE + 20)
+#define DL_CONF_REPLY	(DL_RS_BASE + 20)
 #define DL_TASK_REPLY	(DL_RS_BASE + 21)
 #define DL_NAME_REPLY	(DL_RS_BASE + 22)
 
@@ -227,6 +237,7 @@
 #define DL_CLCK		m2_l2
 #define DL_ADDR		m2_p1
 #define DL_STAT		m2_l1
+#define DL_GRANT	m2_l2
 #define DL_NAME		m3_ca1
 
 /* Bits in 'DL_STAT' field of DL replies. */
@@ -290,8 +301,9 @@
 #  define SYS_SAFECOPYTO   (KERNEL_CALL + 32)	/* sys_safecopyto() */
 #  define SYS_VSAFECOPY  (KERNEL_CALL + 33)	/* sys_vsafecopy() */
 #  define SYS_SETGRANT   (KERNEL_CALL + 34)	/* sys_setgrant() */
+#  define SYS_READBIOS   (KERNEL_CALL + 35)	/* sys_readbios() */
 
-#define NR_SYS_CALLS	35	/* number of system calls */ 
+#define NR_SYS_CALLS	36	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -503,6 +515,11 @@
 #define SEL_ERRORFDS   m8_p3
 #define SEL_TIMEOUT    m8_p4
 
+/* Message for SYS_READBIOS */
+#define RDB_SIZE	m2_i1
+#define RDB_ADDR	m2_l1
+#define RDB_BUF		m2_p1
+
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
  *===========================================================================*/
@@ -559,6 +576,8 @@
 #  define DIAG_BUF_COUNT      m1_i1
 #define GET_KMESS	(DIAG_BASE+3)	/* get kmess from TTY */
 #  define GETKM_PTR	      m1_p1
+#define GET_KMESS_S	(DIAG_BASE+4)	/* get kmess from TTY */
+#  define GETKM_GRANT	      m1_i1
 
 #define PM_BASE	0x900
 #define PM_GET_WORK	(PM_BASE + 1)	/* Get work from PM */

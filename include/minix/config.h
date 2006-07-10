@@ -99,6 +99,9 @@
 #define	NR_RS_LINES	   4	/* # rs232 terminals (0 to 4) */
 #define	NR_PTYS		   32	/* # pseudo terminals (0 to 64) */
 
+/* This feature enable the counting of system calls in PM and FS */
+#define ENABLE_SYSCALL_STATS	0
+
 /*===========================================================================*
  *	There are no user-settable parameters after this line		     *
  *===========================================================================*/

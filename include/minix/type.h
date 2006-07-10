@@ -73,6 +73,11 @@ typedef struct {
   vir_bytes iov_size;		/* sizeof an I/O buffer */
 } iovec_t;
 
+typedef struct {
+  int iov_grant;		/* grant ID of an I/O buffer */
+  vir_bytes iov_size;		/* sizeof an I/O buffer */
+} iovec_s_t;
+
 /* PM passes the address of a structure of this type to KERNEL when
  * sys_sendsig() is invoked as part of the signal catching mechanism.
  * The structure contain all the information that KERNEL needs to build

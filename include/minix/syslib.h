@@ -46,6 +46,8 @@ _PROTOTYPE( int sys_vm_setbuf, (phys_bytes base, phys_bytes size,
 _PROTOTYPE( int sys_vm_map, (endpoint_t proc_nr, int do_map,
 	phys_bytes base, phys_bytes size, phys_bytes offset));
 
+_PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
+
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_nr, buffer, count) \
   sys_sdevio(DIO_INPUT_BYTE, port, proc_nr, buffer, count, 0)
@@ -55,6 +57,10 @@ _PROTOTYPE( int sys_vm_map, (endpoint_t proc_nr, int do_map,
   sys_sdevio(DIO_OUTPUT_BYTE, port, proc_nr, buffer, count, 0)
 #define sys_outsw(port, proc_nr, buffer, count) \
   sys_sdevio(DIO_OUTPUT_WORD, port, proc_nr, buffer, count, 0)
+#define sys_safe_insb(port, ept, grant, offset, count) \
+  sys_sdevio(DIO_SAFE_INPUT_BYTE, port, ept, (void*)grant, count, offset)
+#define sys_safe_outsb(port, ept, grant, offset, count) \
+  sys_sdevio(DIO_SAFE_OUTPUT_BYTE, port, ept, (void*)grant, count, offset)
 #define sys_safe_insw(port, ept, grant, offset, count) \
   sys_sdevio(DIO_SAFE_INPUT_WORD, port, ept, (void*)grant, count, offset)
 #define sys_safe_outsw(port, ept, grant, offset, count) \
