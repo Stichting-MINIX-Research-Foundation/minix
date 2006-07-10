@@ -21,7 +21,7 @@ OBJ = fxp.o mii.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 4096 $(DRIVER)
+	install -S 8k $(DRIVER)
 
 # install with other drivers
 install:	/usr/sbin/$(DRIVER)

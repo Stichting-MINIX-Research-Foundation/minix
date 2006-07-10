@@ -111,8 +111,8 @@ PUBLIC void mem2user(dpeth_t *dep, buff_t *rxbuff)
 {
   phys_bytes phys_user;
   int bytes, ix = 0;
-  iovec_dat_t *iovp = &dep->de_read_iovec;
-  int pktsize = rxbuff->size;
+  iovec_dat_s_t *iovp = &dep->de_read_iovec;
+  int r, pktsize = rxbuff->size;
   char *buffer = rxbuff->buffer;
 
   do {				/* Reads chuncks of packet into user buffers */
@@ -121,8 +121,10 @@ PUBLIC void mem2user(dpeth_t *dep, buff_t *rxbuff)
 	if (bytes > pktsize) bytes = pktsize;
 
 	/* Reads from Rx buffer to user area */
-	sys_datacopy(SELF, (vir_bytes)buffer, iovp->iod_proc_nr,
-		     iovp->iod_iovec[ix].iov_addr, bytes);
+	r= sys_safecopyto(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 0,
+		(vir_bytes)buffer, bytes, D);
+	if (r != OK)
+		panic(__FILE__, "mem2user: sys_safecopyto failed", r);
 	buffer += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
@@ -142,16 +144,18 @@ PUBLIC void user2mem(dpeth_t *dep, buff_t *txbuff)
 {
   phys_bytes phys_user;
   int bytes, ix = 0;
-  iovec_dat_t *iovp = &dep->de_write_iovec;
-  int pktsize = txbuff->size;
+  iovec_dat_s_t *iovp = &dep->de_write_iovec;
+  int r, pktsize = txbuff->size;
   char *buffer = txbuff->buffer;
 
   do {				/* Reads chuncks of packet from user buffers */
 
 	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of buffer */
 	if (bytes > pktsize) bytes = pktsize;
-	sys_datacopy(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_addr,
-		     SELF, (vir_bytes)buffer, bytes);
+	r= sys_safecopyfrom(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant,
+		0, (vir_bytes)buffer, bytes, D);
+	if (r != OK)
+		panic(__FILE__, "user2mem: sys_safecopyfrom failed", r);
 	buffer += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */

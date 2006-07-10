@@ -1,3 +1,4 @@
+#include <assert.h>
 /*
 **  File:	8390.c		May  02, 2000
 **
@@ -25,14 +26,18 @@
 
 #include "8390.h"
 
+#if 0
 #define	sys_nic2mem(srcOffs,dstProc,dstOffs,length) \
 	sys_vircopy(SELF,dep->de_memsegm,(vir_bytes)(srcOffs),\
 		    (dstProc),D,(vir_bytes)(dstOffs),length)
-#define	sys_user2nic(srcProc,srcOffs,dstOffs,length) \
-	sys_vircopy((srcProc),D,(vir_bytes)(srcOffs),\
-		    SELF,dep->de_memsegm,(vir_bytes)(dstOffs),length)
+#endif
+#if 0
+#define	sys_user2nic_s(srcProc,grant,dstOffs,length) \
+	sys_safecopyfrom((srcProc),(grant),0, \
+		    (vir_bytes)(dstOffs),length,dep->de_memsegm)
+#endif
 
-static const char RdmaErrMsg[] = "remote dma failed to complete";
+static char RdmaErrMsg[] = "remote dma failed to complete";
 
 /*
 **  Name:	void ns_rw_setup(dpeth_t *dep, int mode, int size, u16_t offset);
@@ -72,9 +77,11 @@ static void ns_start_xmit(dpeth_t * dep, int size, int pageno)
 */
 static void mem_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 {
-
+  panic(__FILE__, "mem_getblock: not converted to safecopies", NO_NUM);
+#if 0
   sys_nic2mem(dep->de_linmem + offset, SELF, dst, size);
   return;
+#endif
 }
 
 /*
@@ -84,8 +91,11 @@ static void mem_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 {
   phys_bytes offset, phys_user;
-  iovec_dat_t *iovp = &dep->de_read_iovec;
+  iovec_dat_s_t *iovp = &dep->de_read_iovec;
   int bytes, ix = 0;
+
+  panic(__FILE__, "mem_nic2user: not converted to safecopies", NO_NUM);
+#if 0
 
   /* Computes shared memory address (skipping receive header) */
   offset = pageno * DP_PAGESIZE + sizeof(dp_rcvhdr_t);
@@ -100,16 +110,16 @@ static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 
 		/* Circular buffer wrap-around */
 		bytes = dep->de_stoppage * DP_PAGESIZE - offset;
-		sys_nic2mem(dep->de_linmem + offset, iovp->iod_proc_nr,
-			    iovp->iod_iovec[ix].iov_addr, bytes);
+		sys_nic2mem_s(dep->de_linmem + offset, iovp->iod_proc_nr,
+			    iovp->iod_iovec[ix].iov_grant, bytes);
 		pktsize -= bytes;
 		phys_user += bytes;
 		bytes = iovp->iod_iovec[ix].iov_size - bytes;
 		if (bytes > pktsize) bytes = pktsize;
 		offset = dep->de_startpage * DP_PAGESIZE;
 	}
-	sys_nic2mem(dep->de_linmem + offset, iovp->iod_proc_nr,
-		    iovp->iod_iovec[ix].iov_addr, bytes);
+	sys_nic2mem_s(dep->de_linmem + offset, iovp->iod_proc_nr,
+		    iovp->iod_iovec[ix].iov_grant, bytes);
 	offset += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
@@ -119,6 +129,7 @@ static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 	/* Till packet done */
   } while ((pktsize -= bytes) > 0);
   return;
+#endif
 }
 
 /*
@@ -128,8 +139,11 @@ static void mem_nic2user(dpeth_t * dep, int pageno, int pktsize)
 static void mem_user2nic(dpeth_t *dep, int pageno, int pktsize)
 {
   phys_bytes offset, phys_user;
-  iovec_dat_t *iovp = &dep->de_write_iovec;
+  iovec_dat_s_t *iovp = &dep->de_write_iovec;
   int bytes, ix = 0;
+
+  panic(__FILE__, "mem_user2nic: not converted to safecopies", NO_NUM);
+#if 0
 
   /* Computes shared memory address */
   offset = pageno * DP_PAGESIZE;
@@ -140,7 +154,7 @@ static void mem_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	if (bytes > pktsize) bytes = pktsize;
 
 	/* Reads from user area to board (shared memory) */
-	sys_user2nic(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_addr, 
+	sys_user2nic_s(iovp->iod_proc_nr, iovp->iod_iovec[ix].iov_grant, 
 		     dep->de_linmem + offset, bytes);
 	offset += bytes;
 
@@ -151,6 +165,7 @@ static void mem_user2nic(dpeth_t *dep, int pageno, int pktsize)
 	/* Till packet done */
   } while ((pktsize -= bytes) > 0);
   return;
+#endif
 }
 
 /*
@@ -183,8 +198,8 @@ static void pio_getblock(dpeth_t *dep, u16_t offset, int size, void *dst)
 static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
 {
   phys_bytes phys_user;
-  iovec_dat_t *iovp = &dep->de_read_iovec;
-  unsigned offset; int bytes, ix = 0;
+  iovec_dat_s_t *iovp = &dep->de_read_iovec;
+  unsigned offset, iov_offset; int r, bytes, ix = 0;
 
   /* Computes memory address (skipping receive header) */
   offset = pageno * DP_PAGESIZE + sizeof(dp_rcvhdr_t);
@@ -192,6 +207,7 @@ static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
   ns_rw_setup(dep, CR_DM_RR, ((offset + pktsize) > (dep->de_stoppage * DP_PAGESIZE)) ?
 	(dep->de_stoppage * DP_PAGESIZE) - offset : pktsize, offset);
 
+  iov_offset= 0;
   do {				/* Reads chuncks of packet into user area */
 
 	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of a chunck */
@@ -201,21 +217,31 @@ static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
 
 		/* Circular buffer wrap-around */
 		bytes = dep->de_stoppage * DP_PAGESIZE - offset;
-		insb(dep->de_data_port, iovp->iod_proc_nr, (void*)(iovp->iod_iovec[ix].iov_addr), bytes);
+		r= sys_safe_insb(dep->de_data_port, iovp->iod_proc_nr, 
+			iovp->iod_iovec[ix].iov_grant, iov_offset, bytes);
+		if (r != OK)
+		{
+			panic(__FILE__, "pio_nic2user: sys_safe_insb failed",
+				r);
+		}
 		pktsize -= bytes;
-		iovp->iod_iovec[ix].iov_addr += bytes;
+		iov_offset += bytes;
 		bytes = iovp->iod_iovec[ix].iov_size - bytes;
 		if (bytes > pktsize) bytes = pktsize;
 		offset = dep->de_startpage * DP_PAGESIZE;
   		ns_rw_setup(dep, CR_DM_RR, pktsize, offset);
 	}
-	insb(dep->de_data_port, iovp->iod_proc_nr, (void*)(iovp->iod_iovec[ix].iov_addr), bytes);
+	r= sys_safe_insb(dep->de_data_port, iovp->iod_proc_nr,
+		iovp->iod_iovec[ix].iov_grant, iov_offset, bytes);
+	if (r != OK)
+		panic(__FILE__, "pio_nic2user: sys_safe_insb failed", r);
 	offset += bytes;
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
 		dp_next_iovec(iovp);
 		ix = 0;
 	}
+	iov_offset= 0;
 	/* Till packet done */
   } while ((pktsize -= bytes) > 0);
   return;
@@ -228,8 +254,8 @@ static void pio_nic2user(dpeth_t *dep, int pageno, int pktsize)
 static void pio_user2nic(dpeth_t *dep, int pageno, int pktsize)
 {
   phys_bytes phys_user;
-  iovec_dat_t *iovp = &dep->de_write_iovec;
-  int bytes, ix = 0;
+  iovec_dat_s_t *iovp = &dep->de_write_iovec;
+  int r, bytes, ix = 0;
 
   /* Sets up board for writing */
   ns_rw_setup(dep, CR_DM_RW, pktsize, pageno * DP_PAGESIZE);
@@ -238,8 +264,10 @@ static void pio_user2nic(dpeth_t *dep, int pageno, int pktsize)
 
 	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of chunck */
 	if (bytes > pktsize) bytes = pktsize;
-	outsb(dep->de_data_port, iovp->iod_proc_nr,
-	      (void*)(iovp->iod_iovec[ix].iov_addr), bytes);
+	r= sys_safe_outsb(dep->de_data_port, iovp->iod_proc_nr,
+	      iovp->iod_iovec[ix].iov_grant, 0, bytes);
+	if (r != OK)
+		panic(__FILE__, "pio_user2nic: sys_safe_outsb failed", r);
 
 	if (++ix >= IOVEC_NR) {	/* Next buffer of I/O vector */
 		dp_next_iovec(iovp);

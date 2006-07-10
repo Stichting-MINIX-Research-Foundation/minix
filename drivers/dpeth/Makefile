@@ -2,6 +2,9 @@
 ##  Makefile for ISA ethernet drivers	May  02, 2000
 ##
 ##  $Log$
+##  Revision 1.4  2006/07/10 12:43:38  philip
+##  Safecopy support in ethernet drivers.
+##
 ##  Revision 1.3  2005/07/19 13:21:48  jnherder
 ##  Renamed src/lib/utils to src/lib/sysutil --- because of new src/lib/util
 ##
@@ -26,7 +29,7 @@ debug	= 0
 CC	= exec cc
 LD	= $(CC)
 CPPFLAGS= -I.. -I/usr/include -Ddebug=$(debug)
-CFLAGS	= -ws $(CPPFLAGS)
+CFLAGS	= $(CPPFLAGS)
 LDFLAGS	= -i -o $@
 
 SRCS	= 3c501.c 3c509.c 3c503.c ne.c wd.c 8390.c devio.c netbuff.c dp.c

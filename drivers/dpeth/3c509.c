@@ -122,16 +122,19 @@ static void el3_write_fifo(dpeth_t * dep, int pktsize)
 {
   phys_bytes phys_user;
   int bytes, ix = 0;
-  iovec_dat_t *iovp = &dep->de_write_iovec;
-  int padding = pktsize;
+  iovec_dat_s_t *iovp = &dep->de_write_iovec;
+  int r, padding = pktsize;
 
   do {				/* Writes chuncks of packet from user buffers */
 
 	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of buffer */
 	if (bytes > pktsize) bytes = pktsize;
 	/* Writes from user buffer to Tx FIFO */
-        outsb(dep->de_data_port, iovp->iod_proc_nr,
-              (void*)(iovp->iod_iovec[ix].iov_addr), bytes);
+	r= sys_safe_insb(dep->de_data_port, iovp->iod_proc_nr,
+		iovp->iod_iovec[ix].iov_grant, 0, bytes);
+	if (r != OK)
+		panic(__FILE__, "el3_write_fifo: sys_safe_insb failed", r);
+		
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
 		dp_next_iovec(iovp);
 		ix = 0;

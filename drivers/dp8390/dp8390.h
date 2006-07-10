@@ -172,13 +172,20 @@ typedef struct dp_rcvhdr
 
 struct dpeth;
 struct iovec_dat;
+struct iovec_dat_s;
 _PROTOTYPE( typedef void (*dp_initf_t), (struct dpeth *dep)		);
 _PROTOTYPE( typedef void (*dp_stopf_t), (struct dpeth *dep)		);
 _PROTOTYPE( typedef void (*dp_user2nicf_t), (struct dpeth *dep,
 			struct iovec_dat *iovp, vir_bytes offset,
 			int nic_addr, vir_bytes count)			);
+_PROTOTYPE( typedef void (*dp_user2nicf_s_t), (struct dpeth *dep,
+			struct iovec_dat_s *iovp, vir_bytes offset,
+			int nic_addr, vir_bytes count)			);
 _PROTOTYPE( typedef void (*dp_nic2userf_t), (struct dpeth *dep,
 			int nic_addr, struct iovec_dat *iovp,
+			vir_bytes offset, vir_bytes count)		);
+_PROTOTYPE( typedef void (*dp_nic2userf_s_t), (struct dpeth *dep,
+			int nic_addr, struct iovec_dat_s *iovp,
 			vir_bytes offset, vir_bytes count)		);
 #if 0
 _PROTOTYPE( typedef void (*dp_getheaderf_t), (struct dpeth *dep,
@@ -200,6 +207,15 @@ typedef struct iovec_dat
   vir_bytes iod_iovec_addr;
 } iovec_dat_t;
 
+typedef struct iovec_dat_s
+{
+  iovec_s_t iod_iovec[IOVEC_NR];
+  int iod_iovec_s;
+  int iod_proc_nr;
+  cp_grant_id_t iod_grant;
+  vir_bytes iod_iovec_offset;
+} iovec_dat_s_t;
+
 #define SENDQ_NR	2	/* Maximum size of the send queue */
 #define SENDQ_PAGES	6	/* 6 * DP_PAGESIZE >= 1514 bytes */
 
@@ -215,6 +231,7 @@ typedef struct dpeth
 	 */
 	port_t de_base_port;
 	phys_bytes de_linmem;
+	char *de_locmem;
 	int de_irq;
 	int de_int_pending;
 	irq_hook_t de_hook;
@@ -261,13 +278,19 @@ typedef struct dpeth
 	int de_mode;
 	eth_stat_t de_stat;
 	iovec_dat_t de_read_iovec;
+	iovec_dat_s_t de_read_iovec_s;
+	int de_safecopy_read;
 	iovec_dat_t de_write_iovec;
+	iovec_dat_s_t de_write_iovec_s;
 	iovec_dat_t de_tmp_iovec;
+	iovec_dat_s_t de_tmp_iovec_s;
 	vir_bytes de_read_s;
 	int de_client;
 	message de_sendmsg;
 	dp_user2nicf_t de_user2nicf; 
+	dp_user2nicf_s_t de_user2nicf_s; 
 	dp_nic2userf_t de_nic2userf; 
+	dp_nic2userf_s_t de_nic2userf_s; 
 	dp_getblock_t de_getblockf; 
 } dpeth_t;
 

@@ -53,10 +53,11 @@
 #define IOVEC_NR        16
 typedef struct iovec_dat
 {
-  iovec_t iod_iovec[IOVEC_NR];
+  iovec_s_t iod_iovec[IOVEC_NR];
   int iod_iovec_s;
   int iod_proc_nr;
-  vir_bytes iod_iovec_addr;
+  cp_grant_id_t iod_grant;
+  vir_bytes iod_iovec_offset;
 } iovec_dat_t;
 
 #define ETH0_SELECTOR  0x61

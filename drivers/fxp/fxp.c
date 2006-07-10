@@ -6,24 +6,30 @@
  *
  * The valid messages and their parameters are:
  *
- *   m_type	  DL_PORT    DL_PROC   DL_COUNT   DL_MODE   DL_ADDR
- * |------------+----------+---------+----------+---------+---------|
- * | HARDINT	|          |         |          |         |         |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_WRITE	| port nr  | proc nr | count    | mode    | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_WRITEV	| port nr  | proc nr | count    | mode    | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_READ	| port nr  | proc nr | count    |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_READV	| port nr  | proc nr | count    |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_INIT	| port nr  | proc nr | mode     |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_GETSTAT	| port nr  | proc nr |          |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_STOP	| port_nr  |         |          |         |	    |
- * |------------|----------|---------|----------|---------|---------|
+ *   m_type	  DL_PORT    DL_PROC   DL_COUNT   DL_MODE   DL_ADDR   DL_GRANT
+ * |------------+----------+---------+----------+---------+---------+---------|
+ * | HARDINT	|          |         |          |         |         |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_WRITE	| port nr  | proc nr | count    | mode    | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_WRITEV	| port nr  | proc nr | count    | mode    | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_WRITEV_S| port nr  | proc nr | count    | mode    |	    |  grant  |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_READ	| port nr  | proc nr | count    |         | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_READV	| port nr  | proc nr | count    |         | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_READV_S	| port nr  | proc nr | count    |         |	    |  grant  |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_CONF	| port nr  | proc nr |		| mode    | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_GETSTAT	| port nr  | proc nr |          |         | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * |DL_GETSTAT_S| port nr  | proc nr |          |         |	    |  grant  |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_STOP	| port_nr  |         |          |         |	    |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
  *
  * The messages sent are:
  *
@@ -34,7 +40,7 @@
  *
  *   m_type	   m3_i1     m3_i2       m3_ca1
  * |-------------+---------+-----------+---------------|
- * |DL_INIT_REPLY| port nr | last port | ethernet addr |
+ * |DL_CONF_REPLY| port nr | last port | ethernet addr |
  * |-------------+---------+-----------+---------------|
  *
  * Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
@@ -169,6 +175,7 @@ typedef struct fxp
 	u8_t fxp_conf_bytes[CC_BYTES_NR];
 	char fxp_name[sizeof("fxp#n")];
 	iovec_t fxp_iovec[IOVEC_NR];
+	iovec_s_t fxp_iovec_s[IOVEC_NR];
 }
 fxp_t;
 
@@ -223,8 +230,10 @@ _PROTOTYPE( static void fxp_confaddr, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_rec_mode, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_writev, (message *mp, int from_int,
 							int vectored)	);
+_PROTOTYPE( static void fxp_writev_s, (message *mp, int from_int)	);
 _PROTOTYPE( static void fxp_readv, (message *mp, int from_int, 
 							int vectored)	);
+_PROTOTYPE( static void fxp_readv_s, (message *mp, int from_int)	);
 _PROTOTYPE( static void fxp_do_conf, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_cu_ptr_cmd, (fxp_t *fp, int cmd,
 				phys_bytes bus_addr, int check_idle)	);
@@ -232,6 +241,7 @@ _PROTOTYPE( static void fxp_ru_ptr_cmd, (fxp_t *fp, int cmd,
 				phys_bytes bus_addr, int check_idle)	);
 _PROTOTYPE( static void fxp_restart_ru, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_getstat, (message *mp)			);
+_PROTOTYPE( static void fxp_getstat_s, (message *mp)			);
 _PROTOTYPE( static void fxp_getname, (message *mp)			);
 _PROTOTYPE( static int fxp_handler, (fxp_t *fp)				);
 _PROTOTYPE( static void fxp_check_ints, (fxp_t *fp)			);
@@ -241,8 +251,6 @@ _PROTOTYPE( static void fxp_report_link, (fxp_t *fp)			);
 _PROTOTYPE( static void fxp_stop, (void));
 _PROTOTYPE( static void reply, (fxp_t *fp, int err, int may_block)	);
 _PROTOTYPE( static void mess_reply, (message *req, message *reply)	);
-_PROTOTYPE( static void put_userdata, (int user_proc,
-		vir_bytes user_addr, vir_bytes count, void *loc_addr)	);
 _PROTOTYPE( static u16_t eeprom_read, (fxp_t *fp, int reg)		);
 _PROTOTYPE( static void eeprom_addrsize, (fxp_t *fp)			);
 _PROTOTYPE( static u16_t mii_read, (fxp_t *fp, int reg)			);
@@ -298,12 +306,13 @@ int main(int argc, char *argv[])
 		case DEV_PING:  notify(m.m_source);		continue;
 		case DL_WRITEV:	fxp_writev(&m, FALSE, TRUE);	break;
 		case DL_WRITE:	fxp_writev(&m, FALSE, FALSE);	break;
-#if 0
-		case DL_READ:	fxp_vread(&m, FALSE);		break;
-#endif
+		case DL_WRITEV_S: fxp_writev_s(&m, FALSE);	break;
+		case DL_READ:	fxp_readv(&m, FALSE, FALSE);	break;
 		case DL_READV:	fxp_readv(&m, FALSE, TRUE);	break;
-		case DL_INIT:	fxp_init(&m);			break;
+		case DL_READV_S: fxp_readv_s(&m, FALSE);	break;
+		case DL_CONF:	fxp_init(&m);			break;
 		case DL_GETSTAT: fxp_getstat(&m);		break;
+		case DL_GETSTAT_S: fxp_getstat_s(&m);		break;
 		case DL_GETNAME: fxp_getname(&m); 		break;
 		case HARD_INT:
 			for (i= 0, fp= &fxp_table[0]; i<FXP_PORT_NR; i++, fp++)
@@ -361,7 +370,7 @@ message *mp;
 	port = mp->DL_PORT;
 	if (port < 0 || port >= FXP_PORT_NR)
 	{
-		reply_mess.m_type= DL_INIT_REPLY;
+		reply_mess.m_type= DL_CONF_REPLY;
 		reply_mess.m3_i1= ENXIO;
 		mess_reply(mp, &reply_mess);
 		return;
@@ -374,7 +383,7 @@ message *mp;
 		if (fp->fxp_mode == FM_DISABLED)
 		{
 			/* Probe failed, or the device is configured off. */
-			reply_mess.m_type= DL_INIT_REPLY;
+			reply_mess.m_type= DL_CONF_REPLY;
 			reply_mess.m3_i1= ENXIO;
 			mess_reply(mp, &reply_mess);
 			return;
@@ -399,7 +408,7 @@ message *mp;
 	fp->fxp_client = mp->m_source;
 	fxp_rec_mode(fp);
 
-	reply_mess.m_type = DL_INIT_REPLY;
+	reply_mess.m_type = DL_CONF_REPLY;
 	reply_mess.m3_i1 = mp->DL_PORT;
 	reply_mess.m3_i2 = FXP_PORT_NR;
 	*(ether_addr_t *) reply_mess.m3_ca1 = fp->fxp_address;
@@ -1195,6 +1204,152 @@ suspend:
 }
 
 /*===========================================================================*
+ *				fxp_writev_s				     *
+ *===========================================================================*/
+static void fxp_writev_s(mp, from_int)
+message *mp;
+int from_int;
+{
+	cp_grant_id_t iov_grant;
+	vir_bytes iov_offset;
+	int i, j, n, o, r, s, dl_port, count, size, prev_head;
+	int fxp_client, fxp_tx_nbuf, fxp_tx_head;
+	u16_t tx_command;
+	fxp_t *fp;
+	iovec_s_t *iovp;
+	struct tx *txp, *prev_txp;
+
+	dl_port = mp->DL_PORT;
+	count = mp->DL_COUNT;
+	if (dl_port < 0 || dl_port >= FXP_PORT_NR)
+		panic("FXP","fxp_writev: illegal port", dl_port);
+	fp= &fxp_table[dl_port];
+	fxp_client= mp->DL_PROC;
+	fp->fxp_client= fxp_client;
+
+	assert(fp->fxp_mode == FM_ENABLED);
+	assert(fp->fxp_flags & FF_ENABLED);
+
+	if (from_int)
+	{
+		assert(fp->fxp_flags & FF_SEND_AVAIL);
+		fp->fxp_flags &= ~FF_SEND_AVAIL;
+		fp->fxp_tx_alive= TRUE;
+	}
+
+	if (fp->fxp_tx_idle)
+	{
+		txp= fp->fxp_tx_buf;
+		fxp_tx_head= 0;	/* lint */
+		prev_txp= NULL;	/* lint */
+	}
+	else
+	{	
+		fxp_tx_nbuf= fp->fxp_tx_nbuf;
+		prev_head= fp->fxp_tx_head;
+		fxp_tx_head= prev_head+1;
+		if (fxp_tx_head == fxp_tx_nbuf)
+			fxp_tx_head= 0;
+		assert(fxp_tx_head < fxp_tx_nbuf);
+
+		if (fxp_tx_head == fp->fxp_tx_tail)
+		{
+			/* Send queue is full */
+			assert(!(fp->fxp_flags & FF_SEND_AVAIL));
+			fp->fxp_flags |= FF_SEND_AVAIL;
+			goto suspend;
+		}
+
+		prev_txp= &fp->fxp_tx_buf[prev_head];
+		txp= &fp->fxp_tx_buf[fxp_tx_head];
+	}
+
+	assert(!(fp->fxp_flags & FF_SEND_AVAIL));
+	assert(!(fp->fxp_flags & FF_PACK_SENT));
+
+	iov_grant= mp->DL_GRANT;
+
+	size= 0;
+	o= 0;
+	iov_offset= 0;
+	for (i= 0; i<count; i += IOVEC_NR,
+		iov_offset += IOVEC_NR * sizeof(fp->fxp_iovec_s[0]))
+	{
+		n= IOVEC_NR;
+		if (i+n > count)
+			n= count-i;
+		r= sys_safecopyfrom(fxp_client, iov_grant, iov_offset,
+			(vir_bytes)fp->fxp_iovec_s,
+			n * sizeof(fp->fxp_iovec_s[0]), D);
+		if (r != OK)
+			panic("FXP","fxp_writev: sys_safecopyfrom failed", r);
+
+		for (j= 0, iovp= fp->fxp_iovec_s; j<n; j++, iovp++)
+		{
+			s= iovp->iov_size;
+			if (size + s > ETH_MAX_PACK_SIZE_TAGGED)
+			{
+				panic("FXP","fxp_writev: invalid packet size",
+					size + s);
+			}
+
+			r= sys_safecopyfrom(fxp_client, iovp->iov_grant,
+				0, (vir_bytes)(txp->tx_buf+o), s, D);
+			if (r != OK)
+			{
+				panic("FXP",
+				"fxp_writev_s: sys_safecopyfrom failed",
+					r);
+			}
+			size += s;
+			o += s;
+		}
+	}
+	if (size < ETH_MIN_PACK_SIZE)
+		panic("FXP","fxp_writev: invalid packet size", size);
+
+	txp->tx_status= 0;
+	txp->tx_command= TXC_EL | CBL_XMIT;
+	txp->tx_tbda= TX_TBDA_NIL;
+	txp->tx_size= TXSZ_EOF | size;
+	txp->tx_tthresh= fp->fxp_tx_threshold;
+	txp->tx_ntbd= 0;
+	if (fp->fxp_tx_idle)
+	{
+		fp->fxp_tx_idle= 0;
+		fp->fxp_tx_head= fp->fxp_tx_tail= 0;
+
+		fxp_cu_ptr_cmd(fp, SC_CU_START, fp->fxp_tx_busaddr,
+			TRUE /* check idle */);
+	}
+	else
+	{
+		/* Link new request in transmit list */
+		tx_command= prev_txp->tx_command;
+		assert(tx_command == (TXC_EL | CBL_XMIT));
+		prev_txp->tx_command= CBL_XMIT;
+		fp->fxp_tx_head= fxp_tx_head;
+	}
+
+	fp->fxp_flags |= FF_PACK_SENT;
+
+	/* If the interrupt handler called, don't send a reply. The reply
+	 * will be sent after all interrupts are handled. 
+	 */
+	if (from_int)
+		return;
+	reply(fp, OK, FALSE);
+	return;
+
+suspend:
+	if (from_int)
+		panic("FXP","fxp: should not be sending\n", NO_NUM);
+
+	fp->fxp_tx_mess= *mp;
+	reply(fp, OK, FALSE);
+}
+
+/*===========================================================================*
  *				fxp_readv				     *
  *===========================================================================*/
 static void fxp_readv(mp, from_int, vectored)
@@ -1305,6 +1460,179 @@ int vectored;
 	}
 	else
 	{  
+		assert(0);
+	}
+
+	fp->fxp_read_s= packlen;
+	fp->fxp_flags= (fp->fxp_flags & ~FF_READING) | FF_PACK_RECV;
+
+	/* Re-init the current buffer */
+	rfdp->rfd_status= 0;
+	rfdp->rfd_command= RFDC_EL;
+	rfdp->rfd_reserved= 0;
+	rfdp->rfd_res= 0;
+	rfdp->rfd_size= sizeof(rfdp->rfd_buf);
+
+	fxp_rx_nbuf= fp->fxp_rx_nbuf;
+	if (fxp_rx_head == 0)
+	{
+		prev_rfdp= &fp->fxp_rx_buf[fxp_rx_nbuf-1];
+	}
+	else
+		prev_rfdp= &rfdp[-1];
+
+	assert(prev_rfdp->rfd_command & RFDC_EL);
+	prev_rfdp->rfd_command &= ~RFDC_EL;
+
+	fxp_rx_head++;
+	if (fxp_rx_head == fxp_rx_nbuf)
+		fxp_rx_head= 0;
+	assert(fxp_rx_head < fxp_rx_nbuf);
+	fp->fxp_rx_head= fxp_rx_head;
+
+	if (!from_int)
+		reply(fp, OK, FALSE);
+
+	return;
+
+suspend:
+	if (fp->fxp_rx_need_restart)
+	{
+		fp->fxp_rx_need_restart= 0;
+
+		/* Check the status of the RU */
+		scb_status= fxp_inb(port, SCB_STATUS);
+		if ((scb_status & SS_RUS_MASK) != SS_RU_NORES)
+		{
+			/* Race condition? */
+			printf("fxp_readv: restart race: 0x%x\n",
+				scb_status);
+			assert((scb_status & SS_RUS_MASK) == SS_RU_READY);
+		}
+		else
+		{
+			fxp_restart_ru(fp);
+		}
+	}
+	if (from_int)
+	{
+		assert(fp->fxp_flags & FF_READING);
+
+		/* No need to store any state */
+		return;
+	}
+
+	fp->fxp_rx_mess= *mp;
+	assert(!(fp->fxp_flags & FF_READING));
+	fp->fxp_flags |= FF_READING;
+
+	reply(fp, OK, FALSE);
+}
+
+/*===========================================================================*
+ *				fxp_readv_s				     *
+ *===========================================================================*/
+static void fxp_readv_s(mp, from_int)
+message *mp;
+int from_int;
+{
+	int i, j, n, o, r, s, dl_port, fxp_client, count, size,
+		fxp_rx_head, fxp_rx_nbuf;
+	cp_grant_id_t iov_grant;
+	port_t port;
+	unsigned packlen;
+	vir_bytes iov_offset;
+	u16_t rfd_status;
+	u16_t rfd_res;
+	u8_t scb_status;
+	fxp_t *fp;
+	iovec_s_t *iovp;
+	struct rfd *rfdp, *prev_rfdp;
+
+	dl_port = mp->DL_PORT;
+	count = mp->DL_COUNT;
+	if (dl_port < 0 || dl_port >= FXP_PORT_NR)
+		panic("FXP","fxp_readv: illegal port", dl_port);
+	fp= &fxp_table[dl_port];
+	fxp_client= mp->DL_PROC;
+	fp->fxp_client= fxp_client;
+
+	assert(fp->fxp_mode == FM_ENABLED);
+	assert(fp->fxp_flags & FF_ENABLED);
+
+	port= fp->fxp_base_port;
+
+	fxp_rx_head= fp->fxp_rx_head;
+	rfdp= &fp->fxp_rx_buf[fxp_rx_head];
+
+	rfd_status= rfdp->rfd_status;
+	if (!(rfd_status & RFDS_C))
+	{
+		/* Receive buffer is empty, suspend */
+		goto suspend;
+	}
+
+	if (!rfd_status & RFDS_OK)
+	{
+		/* Not OK? What happened? */
+		assert(0);
+	}
+	else
+	{
+		assert(!(rfd_status & (RFDS_CRCERR | RFDS_ALIGNERR |
+			RFDS_OUTOFBUF | RFDS_DMAOVR | RFDS_TOOSHORT | 
+			RFDS_RXERR)));
+	}
+	rfd_res= rfdp->rfd_res;
+	assert(rfd_res & RFDR_EOF);
+	assert(rfd_res & RFDR_F);
+
+	packlen= rfd_res & RFDSZ_SIZE;
+
+	iov_grant = mp->DL_GRANT;
+
+	size= 0;
+	o= 0;
+	iov_offset= 0;
+	for (i= 0; i<count; i += IOVEC_NR,
+		iov_offset += IOVEC_NR * sizeof(fp->fxp_iovec_s[0]))
+	{
+		n= IOVEC_NR;
+		if (i+n > count)
+			n= count-i;
+		r= sys_safecopyfrom(fxp_client, iov_grant, iov_offset,
+			(vir_bytes)fp->fxp_iovec_s,
+			n * sizeof(fp->fxp_iovec_s[0]), D);
+		if (r != OK)
+			panic("FXP","fxp_readv_s: sys_safecopyfrom failed", r);
+
+		for (j= 0, iovp= fp->fxp_iovec_s; j<n; j++, iovp++)
+		{
+			s= iovp->iov_size;
+			if (size + s > packlen)
+			{
+				assert(packlen > size);
+				s= packlen-size;
+			}
+
+			r= sys_safecopyto(fxp_client, iovp->iov_grant,
+				0, (vir_bytes)(rfdp->rfd_buf+o), s, D);
+			if (r != OK)
+			{
+				panic("FXP","fxp_readv: sys_safecopyto failed",
+					r);
+			}
+
+			size += s;
+			if (size == packlen)
+				break;
+			o += s;
+		}
+		if (size == packlen)
+			break;
+	}
+	if (size < packlen)
+	{
 		assert(0);
 	}
 
@@ -1529,7 +1857,7 @@ static void fxp_getstat(mp)
 message *mp;
 {
 	clock_t t0,t1;
-	int dl_port;
+	int r, dl_port;
 	port_t port;
 	fxp_t *fp;
 	u32_t *p;
@@ -1592,8 +1920,88 @@ message *mp;
 	stats.ets_CDheartbeat= 0;
 	stats.ets_OWC= fp->fxp_stat.sc_tx_latecol;
 
-	put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-		(vir_bytes) sizeof(stats), &stats);
+	r= sys_vircopy(SELF, D, (vir_bytes)&stats,
+		mp->DL_PROC, D, (vir_bytes) mp->DL_ADDR, sizeof(stats));
+	if (r != OK)
+		panic(__FILE__,"fxp_getstat: sys_vircopy failed", r);
+	reply(fp, OK, FALSE);
+}
+
+
+/*===========================================================================*
+ *				fxp_getstat_s				     *
+ *===========================================================================*/
+static void fxp_getstat_s(mp)
+message *mp;
+{
+	clock_t t0,t1;
+	int r, dl_port;
+	port_t port;
+	fxp_t *fp;
+	u32_t *p;
+	eth_stat_t stats;
+
+	dl_port = mp->DL_PORT;
+	if (dl_port < 0 || dl_port >= FXP_PORT_NR)
+		panic("FXP","fxp_getstat: illegal port", dl_port);
+	fp= &fxp_table[dl_port];
+	fp->fxp_client= mp->DL_PROC;
+
+	assert(fp->fxp_mode == FM_ENABLED);
+	assert(fp->fxp_flags & FF_ENABLED);
+
+	port= fp->fxp_base_port;
+
+	p= &fp->fxp_stat.sc_tx_fcp;
+	*p= 0;
+
+	/* The dump commmand doesn't take a pointer. Setting a pointer
+	 * doesn't hurt though.
+	 */
+	fxp_cu_ptr_cmd(fp, SC_CU_DUMP_SC, 0, FALSE /* do not check idle */);
+
+	getuptime(&t0);
+	do {
+		/* Wait for CU command to complete */
+		if (*p != 0)
+			break;
+	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
+
+	if (*p == 0)
+		panic("FXP","fxp_getstat: CU command failed to complete", NO_NUM);
+	if (*p != SCM_DSC)
+		panic("FXP","fxp_getstat: bad magic", NO_NUM);
+
+	stats.ets_recvErr=
+		fp->fxp_stat.sc_rx_crc +
+		fp->fxp_stat.sc_rx_align +
+		fp->fxp_stat.sc_rx_resource +
+		fp->fxp_stat.sc_rx_overrun +
+		fp->fxp_stat.sc_rx_cd +
+		fp->fxp_stat.sc_rx_short;
+	stats.ets_sendErr=
+		fp->fxp_stat.sc_tx_maxcol +
+		fp->fxp_stat.sc_tx_latecol +
+		fp->fxp_stat.sc_tx_crs;
+	stats.ets_OVW= fp->fxp_stat.sc_rx_overrun;
+	stats.ets_CRCerr= fp->fxp_stat.sc_rx_crc;
+	stats.ets_frameAll= fp->fxp_stat.sc_rx_align;
+	stats.ets_missedP= fp->fxp_stat.sc_rx_resource;
+	stats.ets_packetR= fp->fxp_stat.sc_rx_good;
+	stats.ets_packetT= fp->fxp_stat.sc_tx_good;
+	stats.ets_transDef= fp->fxp_stat.sc_tx_defered;
+	stats.ets_collision= fp->fxp_stat.sc_tx_totcol;
+	stats.ets_transAb= fp->fxp_stat.sc_tx_maxcol;
+	stats.ets_carrSense= fp->fxp_stat.sc_tx_crs;
+	stats.ets_fifoUnder= fp->fxp_stat.sc_tx_underrun;
+	stats.ets_fifoOver= fp->fxp_stat.sc_rx_overrun;
+	stats.ets_CDheartbeat= 0;
+	stats.ets_OWC= fp->fxp_stat.sc_tx_latecol;
+
+	r= sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0, (vir_bytes)&stats,
+		sizeof(stats), D);
+	if (r != OK)
+		panic(__FILE__,"fxp_getstat_s: sys_safecopyto failed", r);
 	reply(fp, OK, FALSE);
 }
 
@@ -1696,6 +2104,11 @@ fxp_t *fp;
 		{
 			fxp_readv(&fp->fxp_rx_mess, TRUE /* from int */,
 				TRUE /* vectored */);
+		}
+		else if (fp->fxp_rx_mess.m_type == DL_READV_S)
+		{
+			fxp_readv_s(&fp->fxp_rx_mess, TRUE /* from int */);
+				
 		}
 		else
 		{
@@ -1802,6 +2215,11 @@ fxp_t *fp;
 					fxp_writev(&fp->fxp_tx_mess,
 						TRUE /* from int */,
 						TRUE /* vectored */);
+				}
+				else if (fp->fxp_tx_mess.m_type == DL_WRITEV_S)
+				{
+					fxp_writev_s(&fp->fxp_tx_mess,
+						TRUE /* from int */);
 				}
 				else
 				{
@@ -2210,23 +2628,6 @@ message *reply_mess;
 {
 	if (send(req->m_source, reply_mess) != OK)
 		panic("FXP","fxp: unable to mess_reply", NO_NUM);
-}
-
-/*===========================================================================*
- *				put_userdata				     *
- *===========================================================================*/
-static void put_userdata(user_proc, user_addr, count, loc_addr)
-int user_proc;
-vir_bytes user_addr;
-vir_bytes count;
-void *loc_addr;
-{
-	int r;
-
-	r= sys_vircopy(SELF, D, (vir_bytes)loc_addr,
-		user_proc, D, user_addr, count);
-	if (r != OK)
-		panic("FXP","put_userdata: sys_vircopy failed", r);
 }
 
 /*===========================================================================*

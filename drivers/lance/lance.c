@@ -6,24 +6,30 @@
  *
  * The valid messages and their parameters are:
  *
- *   m_type       DL_PORT    DL_PROC   DL_COUNT   DL_MODE   DL_ADDR
- * |------------+----------+---------+----------+---------+---------|
- * | HARDINT    |          |         |          |         |         |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_WRITE   | port nr  | proc nr | count    | mode    | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_WRITEV  | port nr  | proc nr | count    | mode    | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_READ    | port nr  | proc nr | count    |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_READV   | port nr  | proc nr | count    |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_INIT    | port nr  | proc nr | mode     |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_GETSTAT | port nr  | proc nr |          |         | address |
- * |------------|----------|---------|----------|---------|---------|
- * | DL_STOP    | port_nr  |         |          |         |         |
- * |------------|----------|---------|----------|---------|---------|
+ *   m_type	  DL_PORT    DL_PROC   DL_COUNT   DL_MODE   DL_ADDR   DL_GRANT
+ * |------------+----------+---------+----------+---------+---------+---------|
+ * | HARDINT	|          |         |          |         |         |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_WRITE	| port nr  | proc nr | count    | mode    | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_WRITEV	| port nr  | proc nr | count    | mode    | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_WRITEV_S| port nr  | proc nr | count    | mode    |	    |  grant  |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_READ	| port nr  | proc nr | count    |         | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_READV	| port nr  | proc nr | count    |         | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_READV_S	| port nr  | proc nr | count    |         |	    |  grant  |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_CONF	| port nr  | proc nr |		| mode    | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_GETSTAT	| port nr  | proc nr |          |         | address |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * |DL_GETSTAT_S| port nr  | proc nr |          |         |	    |  grant  |
+ * |------------|----------|---------|----------|---------|---------|---------|
+ * | DL_STOP	| port_nr  |         |          |         |	    |	      |
+ * |------------|----------|---------|----------|---------|---------|---------|
  *
  * The messages sent are:
  *
@@ -34,7 +40,7 @@
  *
  *   m_type       m3_i1     m3_i2       m3_ca1
  * |------------+---------+-----------+---------------|
- * |DL_INIT_REPL| port nr | last port | ethernet addr |
+ * |DL_CONF_REPL| port nr | last port | ethernet addr |
  * |------------|---------|-----------|---------------|
  *
  * Created: Jul 27, 2002 by Kazuya Kodama <kazuya@nii.ac.jp>
@@ -144,11 +150,11 @@ _PROTOTYPE( static void reply,
 _PROTOTYPE( static void ec_reset, (ether_card_t *ec)                    );
 _PROTOTYPE( static void ec_send, (ether_card_t *ec)                     );
 _PROTOTYPE( static void ec_recv, (ether_card_t *ec)                     );
-_PROTOTYPE( static void do_vwrite, 
-	    (message *mp, int from_int, int vectored)                   );
-_PROTOTYPE( static void do_vread, (message *mp, int vectored)           );
-_PROTOTYPE( static void get_userdata, 
-	    (int user_proc, vir_bytes user_addr, 
+_PROTOTYPE( static void do_vwrite_s, 
+	    (message *mp, int from_int)		                        );
+_PROTOTYPE( static void do_vread_s, (message *mp)	                );
+_PROTOTYPE( static void get_userdata_s, 
+	    (int user_proc, cp_grant_id_t grant, vir_bytes offset,
 	     vir_bytes count, void *loc_addr)                           );
 _PROTOTYPE( static void ec_user2nic, 
 	    (ether_card_t *dep, iovec_dat_t *iovp, 
@@ -160,11 +166,10 @@ _PROTOTYPE( static void ec_nic2user,
 	     vir_bytes count)                                           );
 _PROTOTYPE( static int calc_iovec_size, (iovec_dat_t *iovp)             );
 _PROTOTYPE( static void ec_next_iovec, (iovec_dat_t *iovp)              );
-_PROTOTYPE( static void do_getstat, (message *mp)                       );
-_PROTOTYPE( static void put_userdata, 
-	    (int user_proc,
-	     vir_bytes user_addr, vir_bytes count, 
-	     void *loc_addr)                                            );
+_PROTOTYPE( static void do_getstat_s, (message *mp)                     );
+_PROTOTYPE( static void put_userdata_s, 
+	    (int user_proc, cp_grant_id_t grant,
+	     void *loc_addr, vir_bytes count)                           );
 _PROTOTYPE( static void do_stop, (message *mp)                          );
 _PROTOTYPE( static void do_getname, (message *mp)                       );
 
@@ -356,14 +361,12 @@ void main( int argc, char **argv )
 
       switch (m.m_type){
       case DEV_PING:   notify(m.m_source);		continue;
-      case DL_WRITE:   do_vwrite(&m, FALSE, FALSE);    break;
-      case DL_WRITEV:  do_vwrite(&m, FALSE, TRUE);     break;
-      case DL_READ:    do_vread(&m, FALSE);            break;
-      case DL_READV:   do_vread(&m, TRUE);             break;
-      case DL_INIT:    do_init(&m);                    break;
-      case DL_GETSTAT: do_getstat(&m);                 break;
+      case DL_WRITEV_S: do_vwrite_s(&m, FALSE);       break;
+      case DL_READV_S: do_vread_s(&m);	               break;
+      case DL_CONF:    do_init(&m);                    break;
+      case DL_GETSTAT_S: do_getstat_s(&m);             break;
       case DL_STOP:    do_stop(&m);                    break;
-      case DL_GETNAME: do_getname(&m); 			break;
+      case DL_GETNAME: do_getname(&m); 		       break;
       case FKEY_PRESSED: lance_dump();                 break;
       /*case HARD_STOP:  lance_stop();                   break;*/
       case SYS_SIG:
@@ -493,7 +496,7 @@ pci_init();
   port = mp->DL_PORT;
   if (port < 0 || port >= EC_PORT_NR_MAX)
     {
-      reply_mess.m_type= DL_INIT_REPLY;
+      reply_mess.m_type= DL_CONF_REPLY;
       reply_mess.m3_i1= ENXIO;
       mess_reply(mp, &reply_mess);
       return;
@@ -517,7 +520,7 @@ pci_init();
       if (ec->mode == EC_DISABLED)
 	{
 	  /* Probe failed, or the device is configured off. */
-	  reply_mess.m_type= DL_INIT_REPLY;
+	  reply_mess.m_type= DL_CONF_REPLY;
 	  reply_mess.m3_i1= ENXIO;
 	  mess_reply(mp, &reply_mess);
 	  return;
@@ -535,7 +538,7 @@ pci_init();
 	ec->mac_address.ea_addr[4] = 
 	ec->mac_address.ea_addr[5] = 0;
       ec_confaddr(ec);
-      reply_mess.m_type = DL_INIT_REPLY;
+      reply_mess.m_type = DL_CONF_REPLY;
       reply_mess.m3_i1 = mp->DL_PORT;
       reply_mess.m3_i2 = EC_PORT_NR_MAX;
       *(ether_addr_t *) reply_mess.m3_ca1 = ec->mac_address;
@@ -557,7 +560,7 @@ pci_init();
   ec->client = mp->m_source;
   ec_reinit(ec);
 
-  reply_mess.m_type = DL_INIT_REPLY;
+  reply_mess.m_type = DL_CONF_REPLY;
   reply_mess.m3_i1 = mp->DL_PORT;
   reply_mess.m3_i2 = EC_PORT_NR_MAX;
   *(ether_addr_t *) reply_mess.m3_ca1 = ec->mac_address;
@@ -1071,8 +1074,7 @@ ether_card_t *ec;
   ec->flags &= ~ECF_SEND_AVAIL;
   switch(ec->sendmsg.m_type)
     {
-    case DL_WRITE:  do_vwrite(&ec->sendmsg, TRUE, FALSE);       break;
-    case DL_WRITEV: do_vwrite(&ec->sendmsg, TRUE, TRUE);        break;
+    case DL_WRITEV_S: do_vwrite_s(&ec->sendmsg, TRUE);        break;
     default:
       panic( "lance", "wrong type:", ec->sendmsg.m_type);
       break;
@@ -1080,11 +1082,10 @@ ether_card_t *ec;
 }
 
 /*===========================================================================*
- *                              do_vread                                     *
+ *                              do_vread_s                                   *
  *===========================================================================*/
-static void do_vread(mp, vectored)
+static void do_vread_s(mp)
 message *mp;
-int vectored;
 {
   int port, count, size;
   ether_card_t *ec;
@@ -1094,28 +1095,17 @@ int vectored;
   ec= &ec_table[port];
   ec->client= mp->DL_PROC;
 
-  if (vectored)
-    {
-      get_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-                   (count > IOVEC_NR ? IOVEC_NR : count) *
-                   sizeof(iovec_t), ec->read_iovec.iod_iovec);
-      ec->read_iovec.iod_iovec_s    = count;
-      ec->read_iovec.iod_proc_nr    = mp->DL_PROC;
-      ec->read_iovec.iod_iovec_addr = (vir_bytes) mp->DL_ADDR;
-      
-      ec->tmp_iovec = ec->read_iovec;
-      size= calc_iovec_size(&ec->tmp_iovec);
-    }
-  else
-    {
-      ec->read_iovec.iod_iovec[0].iov_addr = (vir_bytes) mp->DL_ADDR;
-      ec->read_iovec.iod_iovec[0].iov_size = mp->DL_COUNT;
-      ec->read_iovec.iod_iovec_s           = 1;
-      ec->read_iovec.iod_proc_nr           = mp->DL_PROC;
-      ec->read_iovec.iod_iovec_addr        = 0;
+  get_userdata_s(mp->DL_PROC, (vir_bytes) mp->DL_GRANT, 0,
+	   (count > IOVEC_NR ? IOVEC_NR : count) *
+	   sizeof(iovec_s_t), ec->read_iovec.iod_iovec);
+  ec->read_iovec.iod_iovec_s    = count;
+  ec->read_iovec.iod_proc_nr    = mp->DL_PROC;
+  ec->read_iovec.iod_grant = (vir_bytes) mp->DL_GRANT;
+  ec->read_iovec.iod_iovec_offset = 0;
 
-      size= count;
-    }
+  ec->tmp_iovec = ec->read_iovec;
+  size= calc_iovec_size(&ec->tmp_iovec);
+
   ec->flags |= ECF_READING;
 
   ec_recv(ec);
@@ -1195,12 +1185,11 @@ ether_card_t *ec;
 }
 
 /*===========================================================================*
- *                              do_vwrite                                    *
+ *                              do_vwrite_s                                  *
  *===========================================================================*/
-static void do_vwrite(mp, from_int, vectored)
+static void do_vwrite_s(mp, from_int)
 message *mp;
 int from_int;
-int vectored;
 {
   int port, count, check;
   ether_card_t *ec;
@@ -1221,30 +1210,17 @@ int vectored;
     }
 
   /* convert the message to write_iovec */
-  if (vectored)
-    {
-      get_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-                   (count > IOVEC_NR ? IOVEC_NR : count) *
-                   sizeof(iovec_t), ec->write_iovec.iod_iovec);
+  get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
+	   (count > IOVEC_NR ? IOVEC_NR : count) *
+	   sizeof(iovec_s_t), ec->write_iovec.iod_iovec);
 
-      ec->write_iovec.iod_iovec_s    = count;
-      ec->write_iovec.iod_proc_nr    = mp->DL_PROC;
-      ec->write_iovec.iod_iovec_addr = (vir_bytes) mp->DL_ADDR;
+  ec->write_iovec.iod_iovec_s    = count;
+  ec->write_iovec.iod_proc_nr    = mp->DL_PROC;
+  ec->write_iovec.iod_grant      = mp->DL_GRANT;
+  ec->write_iovec.iod_iovec_offset = 0;
 
-      ec->tmp_iovec = ec->write_iovec;
-      ec->write_s = calc_iovec_size(&ec->tmp_iovec);
-    }
-  else
-    {  
-      ec->write_iovec.iod_iovec[0].iov_addr = (vir_bytes) mp->DL_ADDR;
-      ec->write_iovec.iod_iovec[0].iov_size = mp->DL_COUNT;
-
-      ec->write_iovec.iod_iovec_s    = 1;
-      ec->write_iovec.iod_proc_nr    = mp->DL_PROC;
-      ec->write_iovec.iod_iovec_addr = 0;
-
-      ec->write_s = mp->DL_COUNT;
-    }
+  ec->tmp_iovec = ec->write_iovec;
+  ec->write_s = calc_iovec_size(&ec->tmp_iovec);
 
   /* copy write_iovec to the slot on DMA address */
   ec_user2nic(ec, &ec->write_iovec, 0,
@@ -1279,26 +1255,21 @@ int vectored;
 
 
 /*===========================================================================*
- *                              get_userdata                                 *
+ *                              get_userdata_s                               *
  *===========================================================================*/
-static void get_userdata(user_proc, user_addr, count, loc_addr)
+static void get_userdata_s(user_proc, grant, offset, count, loc_addr)
 int user_proc;
-vir_bytes user_addr;
+cp_grant_id_t grant;
+vir_bytes offset;
 vir_bytes count;
 void *loc_addr;
 {
-	/*
-  phys_bytes src;
-
-  src = numap_local(user_proc, user_addr, count);
-  if (!src)
-    panic( "lance", "umap failed", NO_NUM);
-
-  phys_copy(src, vir2phys(loc_addr), (phys_bytes) count);
-  */
 	int cps;
-	cps = sys_datacopy(user_proc, user_addr, SELF, (vir_bytes) loc_addr, count);
-	if (cps != OK) printf("lance: warning, scopy failed: %d\n", cps);
+	cps = sys_safecopyfrom(user_proc, grant, offset,
+		(vir_bytes)loc_addr, count, D);
+	if (cps != OK)
+		panic(__FILE__,
+			"get_userdata_s: sys_safecopyfrom failed: %d\n", cps);
 }
 
 /*===========================================================================*
@@ -1311,12 +1282,8 @@ vir_bytes offset;
 int nic_addr;
 vir_bytes count;
 {
-  /*phys_bytes phys_hw, phys_user;*/
   int bytes, i, r;
 
-  /*
-  phys_hw = vir2phys(nic_addr);
-  */
   i= 0;
   while (count > 0)
     {
@@ -1336,15 +1303,10 @@ vir_bytes count;
       if (bytes > count)
         bytes = count;
       
-      /*
-      phys_user = numap_local(iovp->iod_proc_nr,
-                        iovp->iod_iovec[i].iov_addr + offset, bytes);
-      
-      phys_copy(phys_user, phys_hw, (phys_bytes) bytes);
-      */
-      if ( (r=sys_datacopy(iovp->iod_proc_nr, iovp->iod_iovec[i].iov_addr + offset,
-      	SELF, nic_addr, count )) != OK )
-      	panic( "lance", "sys_datacopy failed", r );
+      if ( (r=sys_safecopyfrom(iovp->iod_proc_nr,
+	iovp->iod_iovec[i].iov_grant, offset,
+      	nic_addr, bytes, D )) != OK )
+      	panic( __FILE__, "ec_user2nic: sys_safecopyfrom failed", r );
       	
       count -= bytes;
       nic_addr += bytes;
@@ -1362,10 +1324,7 @@ iovec_dat_t *iovp;
 vir_bytes offset;
 vir_bytes count;
 {
-  /*phys_bytes phys_hw, phys_user;*/
   int bytes, i, r;
-
-  /*phys_hw = vir2phys(nic_addr);*/
 
   i= 0;
   while (count > 0)
@@ -1385,14 +1344,9 @@ vir_bytes count;
       bytes = iovp->iod_iovec[i].iov_size - offset;
       if (bytes > count)
         bytes = count;
-      /*
-      phys_user = numap_local(iovp->iod_proc_nr,
-                        iovp->iod_iovec[i].iov_addr + offset, bytes);
-
-      phys_copy(phys_hw, phys_user, (phys_bytes) bytes);
-      */
-      if ( (r=sys_datacopy( SELF, nic_addr, iovp->iod_proc_nr, iovp->iod_iovec[i].iov_addr + offset, bytes )) != OK )
-      	panic( "lance", "sys_datacopy failed: ", r );
+      if ( (r=sys_safecopyto( iovp->iod_proc_nr, iovp->iod_iovec[i].iov_grant,
+		offset, nic_addr, bytes, D )) != OK )
+      	panic( __FILE__, "ec_nic2user: sys_safecopyto failed: ", r );
       
       count -= bytes;
       nic_addr += bytes;
@@ -1433,19 +1387,20 @@ static void ec_next_iovec(iovp)
 iovec_dat_t *iovp;
 {
   iovp->iod_iovec_s -= IOVEC_NR;
-  iovp->iod_iovec_addr += IOVEC_NR * sizeof(iovec_t);
+  iovp->iod_iovec_offset += IOVEC_NR * sizeof(iovec_s_t);
 
-  get_userdata(iovp->iod_proc_nr, iovp->iod_iovec_addr, 
+  get_userdata_s(iovp->iod_proc_nr, iovp->iod_grant, 
+		iovp->iod_iovec_offset,
                (iovp->iod_iovec_s > IOVEC_NR ? 
-                IOVEC_NR : iovp->iod_iovec_s) * sizeof(iovec_t), 
+                IOVEC_NR : iovp->iod_iovec_s) * sizeof(iovec_s_t), 
                iovp->iod_iovec); 
 }
 
 
 /*===========================================================================*
- *                              do_getstat                                   *
+ *                              do_getstat_s                                 *
  *===========================================================================*/
-static void do_getstat(mp)
+static void do_getstat_s(mp)
 message *mp;
 {
   int port;
@@ -1458,31 +1413,26 @@ message *mp;
   ec= &ec_table[port];
   ec->client= mp->DL_PROC;
 
-  put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-               (vir_bytes) sizeof(ec->eth_stat), &ec->eth_stat);
+  put_userdata_s(mp->DL_PROC, mp->DL_GRANT,
+               &ec->eth_stat, sizeof(ec->eth_stat));
   reply(ec, OK, FALSE);
 }
 
 /*===========================================================================*
- *                              put_userdata                                 *
+ *                              put_userdata_s                               *
  *===========================================================================*/
-static void put_userdata(user_proc, user_addr, count, loc_addr)
+static void put_userdata_s(user_proc, grant, loc_addr, count)
 int user_proc;
-vir_bytes user_addr;
-vir_bytes count;
+cp_grant_id_t grant;
 void *loc_addr;
+vir_bytes count;
 {
-  /*phys_bytes dst;
-
-  dst = numap_local(user_proc, user_addr, count);
-  if (!dst)
-    panic( "lance", "umap failed", NO_NUM);
-
-  phys_copy(vir2phys(loc_addr), dst, (phys_bytes) count);
-  */
 	int cps;
-	cps = sys_datacopy(SELF, (vir_bytes) loc_addr, user_proc, user_addr, count);
-	if (cps != OK) printf("lance: warning, scopy failed: %d\n", cps);
+	cps = sys_safecopyto(user_proc, grant, 0,
+		(vir_bytes) loc_addr, count, D);
+	if (cps != OK)
+		panic(__FILE__,
+			"put_userdata_s: sys_safecopyto failed: %d\n", cps);
 }
 
 /*===========================================================================*

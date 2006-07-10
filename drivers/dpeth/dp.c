@@ -1,3 +1,4 @@
+#include <assert.h>
 /*
 **  File:	eth.c	Version 1.00,	Jan. 14, 1997
 **
@@ -29,7 +30,7 @@
 **  +------------+---------+---------+--------+-------+---------+
 **  | DL_READV   | port nr | proc nr | count  |       | address | (6)
 **  +------------+---------+---------+--------+-------+---------+
-**  | DL_INIT    | port nr | proc nr |        | mode  | address | (7)
+**  | DL_CONF    | port nr | proc nr |        | mode  | address | (7)
 **  +------------+---------+---------+--------+-------+---------+
 **  | DL_STOP    | port_nr |         |        |       |         | (8)
 **  +------------+---------+---------+--------+-------+---------+
@@ -45,7 +46,7 @@
 **
 **    m_type       m3_i1     m3_i2      m3_ca1
 **  +------------+---------+---------+---------------+
-**  |DL_INIT_REPL| port nr |last port| ethernet addr | (20)
+**  |DL_CONF_REPL| port nr |last port| ethernet addr | (20)
 **  +------------+---------+---------+---------------+
 **
 **  $Id$
@@ -80,13 +81,13 @@ static dp_conf_t dp_conf[DE_PORT_NR] = {
   {     0x280,  10,   0xCC000,	"DPETH1", },
 };
 
-static const char CopyErrMsg[] = "unable to read/write user data";
-static const char PortErrMsg[] = "illegal port";
-static const char RecvErrMsg[] = "receive failed";
-static const char SendErrMsg[] = "send failed";
-static const char SizeErrMsg[] = "illegal packet size";
-static const char TypeErrMsg[] = "illegal message type";
-static const char DevName[] = "eth#?";
+static char CopyErrMsg[] = "unable to read/write user data";
+static char PortErrMsg[] = "illegal port";
+static char RecvErrMsg[] = "receive failed";
+static char SendErrMsg[] = "send failed";
+static char SizeErrMsg[] = "illegal packet size";
+static char TypeErrMsg[] = "illegal message type";
+static char DevName[] = "eth#?";
 
 static void do_getname(message *mp);
 
@@ -223,16 +224,17 @@ static void do_dump(message *mp)
 }
 
 /*
-**  Name:	void get_userdata(int user_proc, vir_bytes user_addr, int count, void *loc_addr)
+**  Name:	void get_userdata_s(int user_proc, vir_bytes user_addr, int count, void *loc_addr)
 **  Function:	Copies data from user area.
 */
-static void get_userdata(int user_proc, vir_bytes user_addr, int count, void *loc_addr)
+static void get_userdata_s(int user_proc, cp_grant_id_t grant,
+	vir_bytes offset, int count, void *loc_addr)
 {
   int rc;
   vir_bytes len;
 
   len = (count > IOVEC_NR ? IOVEC_NR : count) * sizeof(iovec_t);
-  if ((rc = sys_datacopy(user_proc, user_addr, SELF, (vir_bytes)loc_addr, len)) != OK)
+  if ((rc = sys_safecopyfrom(user_proc, grant, 0, (vir_bytes)loc_addr, len, D)) != OK)
 	panic(DevName, CopyErrMsg, rc);
   return;
 }
@@ -339,7 +341,7 @@ static void do_init(message * mp)
   } else			/* Port number is out of range */
 	port = ENXIO;
 
-  reply_mess.m_type = DL_INIT_REPLY;
+  reply_mess.m_type = DL_CONF_REPLY;
   reply_mess.m3_i1 = port;
   reply_mess.m3_i2 = DE_PORT_NR;
   DEBUG(printf("\t reply %d\n", reply_mess.m_type));
@@ -353,12 +355,12 @@ static void do_init(message * mp)
 **  Name:	void dp_next_iovec(iovec_dat_t *iovp)
 **  Function:	Retrieves data from next iovec element.
 */
-PUBLIC void dp_next_iovec(iovec_dat_t * iovp)
+PUBLIC void dp_next_iovec(iovec_dat_s_t * iovp)
 {
 
   iovp->iod_iovec_s -= IOVEC_NR;
-  iovp->iod_iovec_addr += IOVEC_NR * sizeof(iovec_t);
-  get_userdata(iovp->iod_proc_nr, iovp->iod_iovec_addr,
+  iovp->iod_iovec_offset += IOVEC_NR * sizeof(iovec_t);
+  get_userdata_s(iovp->iod_proc_nr, iovp->iod_grant, iovp->iod_iovec_offset,
 	     iovp->iod_iovec_s, iovp->iod_iovec);
   return;
 }
@@ -367,7 +369,7 @@ PUBLIC void dp_next_iovec(iovec_dat_t * iovp)
 **  Name:	int calc_iovec_size(iovec_dat_t *iovp)
 **  Function:	Compute the size of a request.
 */
-static int calc_iovec_size(iovec_dat_t * iovp)
+static int calc_iovec_size(iovec_dat_s_t * iovp)
 {
   int size, ix;
 
@@ -385,10 +387,10 @@ static int calc_iovec_size(iovec_dat_t * iovp)
 }
 
 /*
-**  Name:	void do_vwrite(message *mp, int vectored)
+**  Name:	void do_vwrite_s(message *mp, int vectored)
 **  Function:
 */
-static void do_vwrite(message * mp, int vectored)
+static void do_vwrite_s(message * mp)
 {
   int port, size;
   dpeth_t *dep;
@@ -406,18 +408,12 @@ static void do_vwrite(message * mp, int vectored)
 		panic(dep->de_name, "send already in progress ", NO_NUM);
 
 	dep->de_write_iovec.iod_proc_nr = mp->DL_PROC;
-	if (vectored) {
-		get_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-		       mp->DL_COUNT, dep->de_write_iovec.iod_iovec);
-		dep->de_write_iovec.iod_iovec_s = mp->DL_COUNT;
-		dep->de_write_iovec.iod_iovec_addr = (vir_bytes) mp->DL_ADDR;
-		size = calc_iovec_size(&dep->de_write_iovec);
-	} else {
-		dep->de_write_iovec.iod_iovec[0].iov_addr = (vir_bytes) mp->DL_ADDR;
-		dep->de_write_iovec.iod_iovec[0].iov_size = size = mp->DL_COUNT;
-		dep->de_write_iovec.iod_iovec_s = 1;
-		dep->de_write_iovec.iod_iovec_addr = 0;
-	}
+	get_userdata_s(mp->DL_PROC, mp->DL_GRANT, 0,
+	       mp->DL_COUNT, dep->de_write_iovec.iod_iovec);
+	dep->de_write_iovec.iod_iovec_s = mp->DL_COUNT;
+	dep->de_write_iovec.iod_grant = (vir_bytes) mp->DL_GRANT;
+	dep->de_write_iovec.iod_iovec_offset = 0;
+	size = calc_iovec_size(&dep->de_write_iovec);
 	if (size < ETH_MIN_PACK_SIZE || size > ETH_MAX_PACK_SIZE)
 		panic(dep->de_name, SizeErrMsg, size);
 
@@ -432,10 +428,10 @@ static void do_vwrite(message * mp, int vectored)
 }
 
 /*
-**  Name:	void do_vread(message *mp, int vectored)
+**  Name:	void do_vread_s(message *mp, int vectored)
 **  Function:
 */
-static void do_vread(message * mp, int vectored)
+static void do_vread_s(message * mp)
 {
   int port, size;
   dpeth_t *dep;
@@ -453,18 +449,12 @@ static void do_vread(message * mp, int vectored)
 		panic(dep->de_name, "read already in progress", NO_NUM);
 
 	dep->de_read_iovec.iod_proc_nr = mp->DL_PROC;
-	if (vectored) {
-		get_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
-			mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
-		dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
-		dep->de_read_iovec.iod_iovec_addr = (vir_bytes) mp->DL_ADDR;
-		size = calc_iovec_size(&dep->de_read_iovec);
-	} else {
-		dep->de_read_iovec.iod_iovec[0].iov_addr = (vir_bytes) mp->DL_ADDR;
-		dep->de_read_iovec.iod_iovec[0].iov_size = size = mp->DL_COUNT;
-		dep->de_read_iovec.iod_iovec_s = 1;
-		dep->de_read_iovec.iod_iovec_addr = 0;
-	}
+	get_userdata_s(mp->DL_PROC, (vir_bytes) mp->DL_GRANT, 0,
+		mp->DL_COUNT, dep->de_read_iovec.iod_iovec);
+	dep->de_read_iovec.iod_iovec_s = mp->DL_COUNT;
+	dep->de_read_iovec.iod_grant = (vir_bytes) mp->DL_GRANT;
+	dep->de_read_iovec.iod_iovec_offset = 0;
+	size = calc_iovec_size(&dep->de_read_iovec);
 	if (size < ETH_MAX_PACK_SIZE) panic(dep->de_name, SizeErrMsg, size);
 
 	dep->de_flags |= DEF_READING;
@@ -481,10 +471,10 @@ static void do_vread(message * mp, int vectored)
 }
 
 /*
-**  Name:	void do_getstat(message *mp)
+**  Name:	void do_getstat_s(message *mp)
 **  Function:	Reports device statistics.
 */
-static void do_getstat(message * mp)
+static void do_getstat_s(message * mp)
 {
   int port, rc;
   dpeth_t *dep;
@@ -497,9 +487,9 @@ static void do_getstat(message * mp)
   dep->de_client = mp->DL_PROC;
 
   if (dep->de_mode == DEM_ENABLED) (*dep->de_getstatsf) (dep);
-  if ((rc = sys_datacopy(SELF, (vir_bytes)&dep->de_stat,
-	                 mp->DL_PROC, (vir_bytes)mp->DL_ADDR,
-			 (vir_bytes) sizeof(dep->de_stat))) != OK)
+  if ((rc = sys_safecopyto(mp->DL_PROC, mp->DL_GRANT, 0,
+			(vir_bytes)&dep->de_stat,
+			(vir_bytes) sizeof(dep->de_stat), 0)) != OK)
         panic(DevName, CopyErrMsg, rc);
   reply(dep, OK);
   return;
@@ -592,23 +582,17 @@ PUBLIC int main(int argc, char **argv)
 	    case DEV_PING:	/* Status request from RS */
 		notify(m.m_source);
 		continue;
-	    case DL_WRITE:	/* Write message to device */
-		do_vwrite(&m, FALSE);
+	    case DL_WRITEV_S:	/* Write message to device */
+		do_vwrite_s(&m);
 		break;
-	    case DL_WRITEV:	/* Write message to device */
-		do_vwrite(&m, TRUE);
+	    case DL_READV_S:	/* Read message from device */
+		do_vread_s(&m);
 		break;
-	    case DL_READ:	/* Read message from device */
-		do_vread(&m, FALSE);
-		break;
-	    case DL_READV:	/* Read message from device */
-		do_vread(&m, TRUE);
-		break;
-	    case DL_INIT:	/* Initialize device */
+	    case DL_CONF:	/* Initialize device */
 		do_init(&m);
 		break;
-	    case DL_GETSTAT:	/* Get device statistics */
-		do_getstat(&m);
+	    case DL_GETSTAT_S:	/* Get device statistics */
+		do_getstat_s(&m);
 		break;
 	    case DL_GETNAME:
 		do_getname(&m);

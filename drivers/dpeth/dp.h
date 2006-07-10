@@ -6,6 +6,9 @@
 **  Interface description for ethernet device driver
 **
 **  $Log$
+**  Revision 1.5  2006/07/10 12:43:38  philip
+**  Safecopy support in ethernet drivers.
+**
 **  Revision 1.4  2005/09/04 18:52:16  beng
 **  Giovanni's fixes to dpeth:
 **  Date: Sat, 03 Sep 2005 11:05:22 +0200
@@ -83,12 +86,13 @@ typedef void (*dp_getblock_t) (struct dpeth *, u16_t, int, void *);
 #define SENDQ_NR	2	/* Size of the send queue	 */
 #define IOVEC_NR	16	/* Number of IOVEC entries at a time */
 
-typedef struct iovec_dat {
-  iovec_t iod_iovec[IOVEC_NR];
+typedef struct iovec_dat_s {
+  iovec_s_t iod_iovec[IOVEC_NR];
   int iod_iovec_s;
   int iod_proc_nr;
-  vir_bytes iod_iovec_addr;
-} iovec_dat_t;
+  cp_grant_id_t iod_grant;
+  vir_bytes iod_iovec_offset;
+} iovec_dat_s_t;
 
 typedef struct dpeth {
   /* The de_base_port field is the starting point of the probe. The
@@ -161,8 +165,8 @@ typedef struct dpeth {
 #define DEM_ENABLED	0x0002
 
   /* Temporary storage for RECV/SEND requests */
-  iovec_dat_t de_read_iovec;
-  iovec_dat_t de_write_iovec;
+  iovec_dat_s_t de_read_iovec;
+  iovec_dat_s_t de_write_iovec;
   vir_bytes de_read_s;
   vir_bytes de_send_s;
   int de_client;
@@ -216,7 +220,7 @@ typedef struct dpeth {
  */
 
 /* dp.c */
-void dp_next_iovec(iovec_dat_t * iovp);
+void dp_next_iovec(iovec_dat_s_t * iovp);
 
 /* devio.c */
 #if defined USE_IOPL
