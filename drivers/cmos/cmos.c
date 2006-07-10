@@ -147,10 +147,13 @@ PRIVATE int gettime(int who, int y2kflag, vir_bytes dst_time, int safe)
   /* First obtain the machine ID to see if we can read the CMOS clock. Only
    * for PS_386 and PC_AT this is possible. Otherwise, return an error.  
    */
-  sys_vircopy(SELF, BIOS_SEG, (vir_bytes) MACHINE_ID_ADDR, 
-  	SELF, D, (vir_bytes) &mach_id, MACHINE_ID_SIZE);
+  s = sys_readbios( MACHINE_ID_ADDR, &mach_id, MACHINE_ID_SIZE);
+  if (s != 0) {
+	printf("gettime: sys_readbios failed: %d\n", s);
+	return EINVAL;
+  }
   if (mach_id != PS_386_MACHINE && mach_id != PC_AT_MACHINE) {
-	printf("IS: Machine ID unknown. ID byte = %02x.\n", mach_id);
+	printf("gettime: machine ID unknown. ID byte = %02x.\n", mach_id);
 	return(EFAULT);
   }
 
