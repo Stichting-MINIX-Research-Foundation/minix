@@ -23,7 +23,9 @@ FORWARD _PROTOTYPE( void do_next_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_find_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_ids, (message *mp)				);
 FORWARD _PROTOTYPE( void do_dev_name, (message *mp)			);
+FORWARD _PROTOTYPE( void do_dev_name_s, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name, (message *mp)			);
+FORWARD _PROTOTYPE( void do_slot_name_s, (message *mp)			);
 FORWARD _PROTOTYPE( void do_reserve, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r8, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r16, (message *mp)			);
@@ -68,6 +70,8 @@ int main(void)
 		case BUSC_PCI_ATTR_W16: do_attr_w16(&m); break;
 		case BUSC_PCI_ATTR_W32: do_attr_w32(&m); break;
 		case BUSC_PCI_RESCAN: do_rescan_bus(&m); break;
+		case BUSC_PCI_DEV_NAME_S: do_dev_name_s(&m); break;
+		case BUSC_PCI_SLOT_NAME_S: do_slot_name_s(&m); break;
 		case PROC_EVENT: do_sig_handler(); break;
 		default:
 			printf("PCI: got message from %d, type %d\n",
@@ -112,13 +116,19 @@ message *mp;
 		if (strcmp(names[i].name, mp->m3_ca1) == 0)
 			break;
 	}
-	if (i < NR_DRIVERS)
-		pci_release(names[i].name);
-	else
+	if (i >= NR_DRIVERS)
 	{
+		if (empty == -1)
+			panic("pci", "do_init: too many clients", NR_DRIVERS);
 		i= empty;
 		strcpy(names[i].name, mp->m3_ca1);
 	}
+	else if (names[i].tasknr == mp->m_source)
+	{
+		/* Ignore all init calls for a process after the first one */
+	}
+	else
+		pci_release(names[i].name);
 	names[i].tasknr= mp->m_source;
 
 	mp->m_type= 0;
@@ -238,8 +248,46 @@ message *mp;
 		len= strlen(name)+1;
 		if (len > name_len)
 			len= name_len;
+		printf("pci`do_dev_name: calling do_vircopy\n");
 		r= sys_vircopy(SELF, D, (vir_bytes)name, mp->m_source, D,
 			(vir_bytes)name_ptr, len);
+	}
+
+	mp->m_type= r;
+	r= send(mp->m_source, mp);
+	if (r != 0)
+	{
+		printf("do_dev_name: unable to send to %d: %d\n",
+			mp->m_source, r);
+	}
+}
+
+PRIVATE void do_dev_name_s(mp)
+message *mp;
+{
+	int r, name_len, len;
+	u16_t vid, did;
+	cp_grant_id_t name_gid;
+	char *name;
+
+	vid= mp->m7_i1;
+	did= mp->m7_i2;
+	name_len= mp->m7_i3;
+	name_gid= mp->m7_i4;
+
+	name= pci_dev_name(vid, did);
+	if (name == NULL)
+	{
+		/* No name */
+		r= ENOENT;
+	}
+	else
+	{
+		len= strlen(name)+1;
+		if (len > name_len)
+			len= name_len;
+		r= sys_safecopyto(mp->m_source, name_gid, 0, (vir_bytes)name,
+			len, D);
 	}
 
 	mp->m_type= r;
@@ -266,8 +314,36 @@ message *mp;
 	len= strlen(name)+1;
 	if (len > name_len)
 		len= name_len;
+	printf("pci`do_slot_name: calling do_vircopy\n");
 	r= sys_vircopy(SELF, D, (vir_bytes)name, mp->m_source, D,
 		(vir_bytes)name_ptr, len);
+
+	mp->m_type= r;
+	r= send(mp->m_source, mp);
+	if (r != 0)
+	{
+		printf("do_slot_name: unable to send to %d: %d\n",
+			mp->m_source, r);
+	}
+}
+
+PRIVATE void do_slot_name_s(mp)
+message *mp;
+{
+	int r, devind, name_len, len;
+	cp_grant_id_t gid;
+	char *name;
+
+	devind= mp->m1_i1;
+	name_len= mp->m1_i2;
+	gid= mp->m1_i3;
+
+	name= pci_slot_name(devind);
+
+	len= strlen(name)+1;
+	if (len > name_len)
+		len= name_len;
+	r= sys_safecopyto(mp->m_source, gid, 0, (vir_bytes)name, len, D);
 
 	mp->m_type= r;
 	r= send(mp->m_source, mp);
