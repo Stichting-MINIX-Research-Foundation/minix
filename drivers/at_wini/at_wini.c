@@ -446,31 +446,33 @@ PRIVATE void init_params()
 
   if (w_instance == 0) {
 	  /* Get the number of drives from the BIOS data area */
-	  if ((s=sys_vircopy(SELF, BIOS_SEG, NR_HD_DRIVES_ADDR, 
- 		 	SELF, D, (vir_bytes) params, NR_HD_DRIVES_SIZE)) != OK)
+	  s=sys_readbios(NR_HD_DRIVES_ADDR, params, NR_HD_DRIVES_SIZE);
+	  if (s != OK)
   		panic(w_name(), "Couldn't read BIOS", s);
 	  if ((nr_drives = params[0]) > 2) nr_drives = 2;
 
 	  for (drive = 0, wn = wini; drive < COMPAT_DRIVES; drive++, wn++) {
 		if (drive < nr_drives) {
 		    /* Copy the BIOS parameter vector */
-		    vector = (drive == 0) ? BIOS_HD0_PARAMS_ADDR:BIOS_HD1_PARAMS_ADDR;
-		    size = (drive == 0) ? BIOS_HD0_PARAMS_SIZE:BIOS_HD1_PARAMS_SIZE;
-		    if ((s=sys_vircopy(SELF, BIOS_SEG, vector,
-					SELF, D, (vir_bytes) parv, size)) != OK)
-  				panic(w_name(), "Couldn't read BIOS", s);
+		    vector = (drive == 0) ? BIOS_HD0_PARAMS_ADDR :
+			BIOS_HD1_PARAMS_ADDR;
+		    size = (drive == 0) ? BIOS_HD0_PARAMS_SIZE :
+			BIOS_HD1_PARAMS_SIZE;
+		    s=sys_readbios(vector, parv, size);
+		    if (s != OK)
+			panic(w_name(), "Couldn't read BIOS", s);
 	
-			/* Calculate the address of the parameters and copy them */
-  			if ((s=sys_vircopy(
-  				SELF, BIOS_SEG, hclick_to_physb(parv[1]) + parv[0],
-  				SELF, D, (phys_bytes) params, 16L))!=OK)
-  			    panic(w_name(),"Couldn't copy parameters", s);
+		    /* Calculate the address of the parameters and copy them */
+		    s=sys_readbios(hclick_to_physb(parv[1]) + parv[0],
+			params, 16L);
+		    if (s != OK)
+			panic(w_name(),"Couldn't copy parameters", s);
 	
-			/* Copy the parameters to the structures of the drive */
-			wn->lcylinders = bp_cylinders(params);
-			wn->lheads = bp_heads(params);
-			wn->lsectors = bp_sectors(params);
-			wn->precomp = bp_precomp(params) >> 2;
+		    /* Copy the parameters to the structures of the drive */
+		    wn->lcylinders = bp_cylinders(params);
+		    wn->lheads = bp_heads(params);
+		    wn->lsectors = bp_sectors(params);
+		    wn->precomp = bp_precomp(params) >> 2;
 		}
 
 		/* Fill in non-BIOS parameters. */
