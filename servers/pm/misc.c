@@ -53,6 +53,10 @@ PRIVATE char *uts_tbl[] = {
   NULL,			/* No bus */			/* No bus */
 };
 
+#if ENABLE_SYSCALL_STATS
+PUBLIC unsigned long calls_stats[NCALLS];
+#endif
+
 /*===========================================================================*
  *				do_allocmem				     *
  *===========================================================================*/
@@ -256,6 +260,12 @@ PUBLIC int do_getsysinfo()
         src_addr = (vir_bytes) &loadinfo;
         len = sizeof(struct loadinfo);
         break;
+#if ENABLE_SYSCALL_STATS
+  case SI_CALL_STATS:
+  	src_addr = (vir_bytes) calls_stats;
+  	len = sizeof(calls_stats);
+  	break; 
+#endif
   default:
   	return(EINVAL);
   }

@@ -33,6 +33,10 @@ struct super_block;		/* proto.h needs to know this */
 #include "param.h"
 #include "super.h"
 
+#if ENABLE_SYSCALL_STATS
+EXTERN unsigned long calls_stats[NCALLS];
+#endif
+
 FORWARD _PROTOTYPE( void fs_init, (void)				);
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void init_root, (void)				);
@@ -102,6 +106,9 @@ PUBLIC int main()
 		"FS, bad process, who = %d, call_nr = %d, endpt1 = %d\n",
 				 who_e, call_nr, m_in.endpt1);
 		} else {
+#if ENABLE_SYSCALL_STATS
+			calls_stats[call_nr]++;
+#endif
 			error = (*call_vec[call_nr])();
 		}
 

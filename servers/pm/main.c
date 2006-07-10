@@ -29,6 +29,10 @@
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 
+#if ENABLE_SYSCALL_STATS
+EXTERN unsigned long calls_stats[NCALLS];
+#endif
+
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void pm_init, (void)				);
 FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
@@ -119,6 +123,9 @@ PUBLIC int main()
 		if ((unsigned) call_nr >= NCALLS) {
 			result = ENOSYS;
 		} else {
+#if ENABLE_SYSCALL_STATS
+			calls_stats[call_nr]++;
+#endif
 			result = (*call_vec[call_nr])();
 		}
 		break;

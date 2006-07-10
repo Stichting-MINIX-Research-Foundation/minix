@@ -38,6 +38,10 @@
 #define CORE_NAME	"core"
 #define CORE_MODE	0777	/* mode to use on core image files */
 
+#if ENABLE_SYSCALL_STATS
+PUBLIC unsigned long calls_stats[NCALLS];
+#endif
+
 FORWARD _PROTOTYPE( void free_proc, (struct fproc *freed, int flags));
 FORWARD _PROTOTYPE( int dumpcore, (int proc_e, struct mem_map *seg_ptr));
 FORWARD _PROTOTYPE( int write_bytes, (struct inode *rip, off_t off,
@@ -80,6 +84,12 @@ PUBLIC int do_getsysinfo()
   	src_addr = (vir_bytes) dmap;
   	len = sizeof(struct dmap) * NR_DEVICES;
   	break; 
+#if ENABLE_SYSCALL_STATS
+  case SI_CALL_STATS:
+  	src_addr = (vir_bytes) calls_stats;
+  	len = sizeof(calls_stats);
+  	break; 
+#endif
   default:
   	return(EINVAL);
   }
