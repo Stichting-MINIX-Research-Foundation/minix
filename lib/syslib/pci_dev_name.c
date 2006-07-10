@@ -16,15 +16,26 @@ u16_t did;
 	static char name[80];	/* We need a better interface for this */
 
 	int r;
+	cp_grant_id_t gid;
 	message m;
 
-	m.m_type= BUSC_PCI_DEV_NAME;
-	m.m1_i1= vid;
-	m.m1_i2= did;
-	m.m1_i3= sizeof(name);
-	m.m1_p1= name;
+	gid= cpf_grant_direct(pci_procnr, (vir_bytes)name, sizeof(name),
+		CPF_WRITE);
+	if (gid == -1)
+	{
+		printf("pci_dev_name: cpf_grant_direct failed: %d\n",
+			errno);
+		return NULL;
+	}
+
+	m.m_type= BUSC_PCI_DEV_NAME_S;
+	m.m7_i1= vid;
+	m.m7_i2= did;
+	m.m7_i3= sizeof(name);
+	m.m7_i4= gid;
 
 	r= sendrec(pci_procnr, &m);
+	cpf_revoke(gid);
 	if (r != 0)
 		panic("pci", "pci_dev_name: can't talk to PCI", r);
 

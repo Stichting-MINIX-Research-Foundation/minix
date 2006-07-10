@@ -11,6 +11,8 @@
 
 static char print_buf[80];	/* output is buffered here */
 
+int kputc_use_private_grants= 0;
+
 /*===========================================================================*
  *				kputc					     *
  *===========================================================================*/
@@ -28,6 +30,12 @@ int c;
 	static cp_grant_id_t printgrants[PRINTPROCS];
 	int p;
 
+	if (kputc_use_private_grants)
+	{
+		for (p= 0; p<PRINTPROCS; p++)
+			printgrants[p]= GRANT_INVALID;
+		firstprint= 0;
+	}
 	if(firstprint) {
 		for(p = 0; procs[p] != NONE; p++) {
 			printgrants[p] = GRANT_INVALID;

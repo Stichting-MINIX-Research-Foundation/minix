@@ -41,6 +41,7 @@ libsys_FILES=" \
 	sys_nice.c \
 	sys_out.c \
 	sys_physcopy.c \
+	sys_readbios.c \
 	sys_safecopy.c \
 	sys_vsafecopy.c \
 	sys_sdevio.c \
