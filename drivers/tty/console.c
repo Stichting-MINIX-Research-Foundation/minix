@@ -938,14 +938,14 @@ tty_t *tp;
   if (! vdu_initialized++) {
 
 	/* How about error checking? What to do on failure??? */
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_SCREEN_COLS_ADDR,
-  		SELF, D, (vir_bytes) &bios_columns, VDU_SCREEN_COLS_SIZE);
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_CRT_BASE_ADDR, 
-  		SELF, D, (vir_bytes) &bios_crtbase, VDU_CRT_BASE_SIZE);
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_SCREEN_ROWS_ADDR, 
-  		SELF, D, (vir_bytes) &bios_rows, VDU_SCREEN_ROWS_SIZE);
-  	s=sys_vircopy(SELF, BIOS_SEG, (vir_bytes) VDU_FONTLINES_ADDR, 
-  		SELF, D, (vir_bytes) &bios_fontlines, VDU_FONTLINES_SIZE);
+  	s=sys_readbios(VDU_SCREEN_COLS_ADDR, &bios_columns,
+		VDU_SCREEN_COLS_SIZE);
+  	s=sys_readbios(VDU_CRT_BASE_ADDR, &bios_crtbase,
+		VDU_CRT_BASE_SIZE);
+  	s=sys_readbios( VDU_SCREEN_ROWS_ADDR, &bios_rows,
+		VDU_SCREEN_ROWS_SIZE);
+  	s=sys_readbios(VDU_FONTLINES_ADDR, &bios_fontlines,
+		VDU_FONTLINES_SIZE);
 
   	vid_port = bios_crtbase;
   	scr_width = bios_columns;
@@ -1124,6 +1124,26 @@ message *m_ptr;			/* pointer to request message */
   r= OK;
   if (sys_vircopy(SELF, D, (vir_bytes)&kmess, m_ptr->m_source, D,
 	dst, sizeof(kmess)) != OK) {
+	r = EFAULT;
+  }
+  m_ptr->m_type = r;
+  send(m_ptr->m_source, m_ptr);
+}
+
+/*===========================================================================*
+ *				do_get_kmess_s				     *
+ *===========================================================================*/
+PUBLIC void do_get_kmess_s(m_ptr)
+message *m_ptr;			/* pointer to request message */
+{
+/* Provide the log device with debug output */
+  cp_grant_id_t gid;
+  int r;
+
+  gid = m_ptr->GETKM_GRANT;
+  r= OK;
+  if (sys_safecopyto(m_ptr->m_source, gid, 0, (vir_bytes)&kmess, sizeof(kmess),
+	D) != OK) {
 	r = EFAULT;
   }
   m_ptr->m_type = r;

@@ -221,6 +221,9 @@ PUBLIC void main(void)
 	case GET_KMESS:
 		do_get_kmess(&tty_mess);
 		continue;
+	case GET_KMESS_S:
+		do_get_kmess_s(&tty_mess);
+		continue;
 	case FKEY_CONTROL:		/* (un)register a fkey observer */
 		do_fkey_ctl(&tty_mess);
 		continue;

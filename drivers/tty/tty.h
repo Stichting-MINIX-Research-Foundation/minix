@@ -173,6 +173,7 @@ _PROTOTYPE( void cons_stop, (void)					);
 _PROTOTYPE( void do_new_kmess, (message *m)				);
 _PROTOTYPE( void do_diagnostics, (message *m, int safe)			);
 _PROTOTYPE( void do_get_kmess, (message *m)				);
+_PROTOTYPE( void do_get_kmess_s, (message *m)				);
 _PROTOTYPE( void scr_init, (struct tty *tp)				);
 _PROTOTYPE( void toggle_scroll, (void)					);
 _PROTOTYPE( int con_loadfont, (message *m)				);
