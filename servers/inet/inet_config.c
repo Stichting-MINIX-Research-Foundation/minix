@@ -359,7 +359,7 @@ void *alloc(size_t size)
 {
 	/* Allocate memory on the heap with sbrk(). */
 
-	return sbrk((size + (sizeof(char *) - 1)) & ~(sizeof(char *) - 1));
+	return malloc(size);
 }
 
 /*

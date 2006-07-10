@@ -1127,6 +1127,8 @@ eth_port_t *eth_port;
 	u32_t flags;
 	eth_port_t *vp;
 
+	assert(eth_port);
+
 	if (eth_port->etp_vlan)
 	{
 		/* Configure underlying device */

@@ -19,8 +19,10 @@ typedef struct osdep_eth_port
 	int etp_task;
 	int etp_port;
 	int etp_recvconf;
-	iovec_t etp_wr_iovec[IOVEC_NR];
-	iovec_t etp_rd_iovec[RD_IOVEC];
+	iovec_s_t etp_wr_iovec[IOVEC_NR];
+	cp_grant_id_t etp_wr_vec_grant;
+	iovec_s_t etp_rd_iovec[RD_IOVEC];
+	cp_grant_id_t etp_rd_vec_grant;
 	event_t etp_recvev;
 	message etp_sendrepl;
 	message etp_recvrepl;

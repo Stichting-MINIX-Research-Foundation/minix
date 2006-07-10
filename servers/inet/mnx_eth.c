@@ -7,6 +7,7 @@ Copyright 1995 Philip Homburg
 */
 
 #include "inet.h"
+#include <minix/safecopies.h>
 #include "proto.h"
 #include "osdep_eth.h"
 #include "generic/type.h"
@@ -32,17 +33,63 @@ FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port, int tasknr) );
 
 PUBLIC void osdep_eth_init()
 {
-	int i, r, tasknr, rport;
+	int i, j, r, tasknr, rport;
 	struct eth_conf *ecp;
 	eth_port_t *eth_port, *rep;
 	message mess;
+	cp_grant_id_t gid;
 
 	/* First initialize normal ethernet interfaces */
 	for (i= 0, ecp= eth_conf, eth_port= eth_port_table;
 		i<eth_conf_nr; i++, ecp++, eth_port++)
 	{
+		/* Set all grants to invalid */
+		for (j= 0; j<IOVEC_NR; j++)
+			eth_port->etp_osdep.etp_wr_iovec[j].iov_grant= -1;
+		eth_port->etp_osdep.etp_wr_vec_grant= -1;
+		for (j= 0; j<RD_IOVEC; j++)
+			eth_port->etp_osdep.etp_rd_iovec[j].iov_grant= -1;
+		eth_port->etp_osdep.etp_rd_vec_grant= -1;
+
 		if (eth_is_vlan(ecp))
 			continue;
+
+		/* Allocate grants */
+		for (j= 0; j<IOVEC_NR; j++)
+		{
+			if (cpf_getgrants(&gid, 1) != 1)
+			{
+				ip_panic((
+			"osdep_eth_init: cpf_getgrants failed: %d\n",
+					errno));
+			}
+			eth_port->etp_osdep.etp_wr_iovec[j].iov_grant= gid;
+		}
+		if (cpf_getgrants(&gid, 1) != 1)
+		{
+			ip_panic((
+		"osdep_eth_init: cpf_getgrants failed: %d\n",
+				errno));
+		}
+		eth_port->etp_osdep.etp_wr_vec_grant= gid;
+		for (j= 0; j<RD_IOVEC; j++)
+		{
+			if (cpf_getgrants(&gid, 1) != 1)
+			{
+				ip_panic((
+			"osdep_eth_init: cpf_getgrants failed: %d\n",
+					errno));
+			}
+			eth_port->etp_osdep.etp_rd_iovec[j].iov_grant= gid;
+		}
+		if (cpf_getgrants(&gid, 1) != 1)
+		{
+			ip_panic((
+		"osdep_eth_init: cpf_getgrants failed: %d\n",
+				errno));
+		}
+		eth_port->etp_osdep.etp_rd_vec_grant= gid;
+
 #ifdef __minix_vmd
 		r= sys_findproc(ecp->ec_task, &tasknr, 0);
 #else /* Minix 3 */
@@ -63,7 +110,7 @@ PUBLIC void osdep_eth_init()
 		eth_port->etp_osdep.etp_task= tasknr;
 		ev_init(&eth_port->etp_osdep.etp_recvev);
 
-		mess.m_type= DL_INIT;
+		mess.m_type= DL_CONF;
 		mess.DL_PORT= eth_port->etp_osdep.etp_port;
 		mess.DL_PROC= this_proc;
 		mess.DL_MODE= DL_NOMODE;
@@ -191,7 +238,7 @@ acc_t *pack;
 	message mess1, block_msg;
 	int i, pack_size;
 	acc_t *pack_ptr;
-	iovec_t *iovec;
+	iovec_s_t *iovec;
 	u8_t *eth_dst_ptr;
 	int multicast, r;
 	ev_arg_t ev_arg;
@@ -207,7 +254,17 @@ acc_t *pack;
 	for (i=0, pack_ptr= pack; i<IOVEC_NR && pack_ptr; i++,
 		pack_ptr= pack_ptr->acc_next)
 	{
-		iovec[i].iov_addr= (vir_bytes)ptr2acc_data(pack_ptr);
+		r= cpf_setgrant_direct(iovec[i].iov_grant,
+			eth_port->etp_osdep.etp_task,
+			(vir_bytes)ptr2acc_data(pack_ptr),
+			(vir_bytes)pack_ptr->acc_length,
+			CPF_READ);
+		if (r != 0)
+		{
+			ip_panic((
+		"eth_write_port: cpf_setgrant_direct failed: %d\n",
+				errno));
+		}
 		pack_size += iovec[i].iov_size= pack_ptr->acc_length;
 	}
 	if (i>= IOVEC_NR)
@@ -218,28 +275,39 @@ acc_t *pack;
 		for (i=0, pack_ptr= pack; i<IOVEC_NR && pack_ptr;
 			i++, pack_ptr= pack_ptr->acc_next)
 		{
-			iovec[i].iov_addr= (vir_bytes)ptr2acc_data(pack_ptr);
+			r= cpf_setgrant_direct(iovec[i].iov_grant,
+				eth_port->etp_osdep.etp_task,
+				(vir_bytes)ptr2acc_data(pack_ptr),
+				(vir_bytes)pack_ptr->acc_length,
+				CPF_READ);
+			if (r != 0)
+			{
+				ip_panic((
+			"eth_write_port: cpf_setgrant_direct failed: %d\n",
+					errno));
+			}
 			pack_size += iovec[i].iov_size= pack_ptr->acc_length;
 		}
 	}
 	assert (i< IOVEC_NR);
 	assert (pack_size >= ETH_MIN_PACK_SIZE);
 
-	if (i == 1)
+
+	r= cpf_setgrant_direct(eth_port->etp_osdep.etp_wr_vec_grant,
+		eth_port->etp_osdep.etp_task,
+		(vir_bytes)iovec,
+		(vir_bytes)(i * sizeof(iovec[0])),
+		CPF_READ);
+	if (r != 0)
 	{
-		/* simple packets can be sent using DL_WRITE instead of 
-		 * DL_WRITEV.
-		 */
-		mess1.DL_COUNT= iovec[0].iov_size;
-		mess1.DL_ADDR= (char *)iovec[0].iov_addr;
-		mess1.m_type= DL_WRITE;
+		ip_panic((
+	"eth_write_port: cpf_setgrant_direct failed: %d\n",
+			errno));
 	}
-	else
-	{
-		mess1.DL_COUNT= i;
-		mess1.DL_ADDR= (char *)iovec;
-		mess1.m_type= DL_WRITEV;
-	}
+	mess1.DL_COUNT= i;
+	mess1.DL_GRANT= eth_port->etp_osdep.etp_wr_vec_grant;
+	mess1.m_type= DL_WRITEV_S;
+
 	mess1.DL_PORT= eth_port->etp_osdep.etp_port;
 	mess1.DL_PROC= this_proc;
 	mess1.DL_MODE= DL_NOMODE;
@@ -426,14 +494,23 @@ eth_port_t *eth_port;
 eth_stat_t *eth_stat;
 {
 	int r;
+	cp_grant_id_t gid;
 	message mess, mlocked;
 
 	assert(!eth_port->etp_vlan);
 
-	mess.m_type= DL_GETSTAT;
+	gid= cpf_grant_direct(eth_port->etp_osdep.etp_task,
+		(vir_bytes)eth_stat, sizeof(*eth_stat), CPF_WRITE);
+	if (gid == -1)
+	{
+		ip_panic(( "eth_get_stat: cpf_grant_direct failed: %d\n",
+			errno));
+	}
+
+	mess.m_type= DL_GETSTAT_S;
 	mess.DL_PORT= eth_port->etp_osdep.etp_port;
 	mess.DL_PROC= this_proc;
-	mess.DL_ADDR= (char *)eth_stat;
+	mess.DL_GRANT= gid;
 
 	for (;;)
 	{
@@ -447,6 +524,7 @@ eth_stat_t *eth_stat;
 		compare(mlocked.m_type, ==, DL_TASK_REPLY);
 		eth_rec(&mlocked);
 	}
+	cpf_revoke(gid);
 
 	if (r != OK)
 	{
@@ -493,7 +571,7 @@ u32_t flags;
 	if (flags & NWEO_EN_PROMISC)
 		dl_flags |= DL_PROMISC_REQ;
 
-	mess.m_type= DL_INIT;
+	mess.m_type= DL_CONF;
 	mess.DL_PORT= eth_port->etp_osdep.etp_port;
 	mess.DL_PROC= this_proc;
 	mess.DL_MODE= dl_flags;
@@ -522,7 +600,7 @@ u32_t flags;
 		return;
 	}
 
-	assert (mess.m_type == DL_INIT_REPLY);
+	assert (mess.m_type == DL_CONF_REPLY);
 	if (mess.m3_i1 != eth_port->etp_osdep.etp_port)
 	{
 		ip_panic(("got reply for wrong port"));
@@ -583,7 +661,7 @@ eth_port_t *eth_port;
 	eth_port_t *loc_port;
 	acc_t *pack, *pack_ptr;
 	message mess1, block_msg;
-	iovec_t *iovec;
+	iovec_s_t *iovec;
 	ev_arg_t ev_arg;
 	int i, r;
 
@@ -600,22 +678,44 @@ eth_port_t *eth_port;
 		for (i=0, pack_ptr= pack; i<RD_IOVEC && pack_ptr;
 			i++, pack_ptr= pack_ptr->acc_next)
 		{
-			iovec[i].iov_addr= (vir_bytes)ptr2acc_data(pack_ptr);
+			r= cpf_setgrant_direct(iovec[i].iov_grant,
+				eth_port->etp_osdep.etp_task,
+				(vir_bytes)ptr2acc_data(pack_ptr),
+				(vir_bytes)pack_ptr->acc_length,
+				CPF_WRITE);
+			if (r != 0)
+			{
+				ip_panic((
+			"mnx_eth`setup_read: cpf_setgrant_direct failed: %d\n",
+					errno));
+			}
 			iovec[i].iov_size= (vir_bytes)pack_ptr->acc_length;
 		}
 		assert (!pack_ptr);
 
-		mess1.m_type= DL_READV;
+		r= cpf_setgrant_direct(eth_port->etp_osdep.etp_rd_vec_grant,
+			eth_port->etp_osdep.etp_task,
+			(vir_bytes)iovec,
+			(vir_bytes)(i * sizeof(iovec[0])),
+			CPF_READ);
+		if (r != 0)
+		{
+			ip_panic((
+		"mnx_eth`setup_read: cpf_setgrant_direct failed: %d\n",
+				errno));
+		}
+
+		mess1.m_type= DL_READV_S;
 		mess1.DL_PORT= eth_port->etp_osdep.etp_port;
 		mess1.DL_PROC= this_proc;
 		mess1.DL_COUNT= i;
-		mess1.DL_ADDR= (char *)iovec;
+		mess1.DL_GRANT= eth_port->etp_osdep.etp_rd_vec_grant;
 
 		for (;;)
 		{
 			if (recv_debug)
 			{
-				printf("eth%d: sending DL_READV\n",
+				printf("eth%d: sending DL_READV_S\n",
 					mess1.DL_PORT);
 			}
 			r= sendrec(eth_port->etp_osdep.etp_task, &mess1);
@@ -795,7 +895,7 @@ int tasknr;
 		dl_flags |= DL_MULTI_REQ;
 	if (flags & NWEO_EN_PROMISC)
 		dl_flags |= DL_PROMISC_REQ;
-	mess.m_type= DL_INIT;
+	mess.m_type= DL_CONF;
 	mess.DL_PORT= eth_port->etp_osdep.etp_port;
 	mess.DL_PROC= this_proc;
 	mess.DL_MODE= dl_flags;
