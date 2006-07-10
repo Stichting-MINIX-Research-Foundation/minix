@@ -1094,6 +1094,11 @@ name_split(char *name, int len)
 	 * prefix we can find)
 	 */
 	start = name + len - TNMSZ - 1;
+
+	/* Don't split at first '/'. */
+	if (start == name && *start == '/')
+		++start;
+
 	while ((*start != '\0') && (*start != '/'))
 		++start;
 
