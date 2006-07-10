@@ -32,12 +32,23 @@ message *m;					/* notification message */
 
   if (m->m_source == TTY_PROC_NR)
   {
+	cp_grant_id_t gid;
 	message mess;
 
+	gid= cpf_grant_direct(TTY_PROC_NR, (vir_bytes)&kmess, sizeof(kmess),
+		CPF_WRITE);
+	if (gid == -1)
+	{
+		report("LOG","cpf_grant_direct failed for TTY", errno);
+		return EDONTREPLY;
+	}
+
 	/* Ask TTY driver for log output */
-	mess.GETKM_PTR= (char *) &kmess;
-	mess.m_type = GET_KMESS;
+	mess.GETKM_GRANT= gid;
+	mess.m_type = GET_KMESS_S;
 	r= sendrec(TTY_PROC_NR, &mess);
+	cpf_revoke(gid);
+
 	if (r == OK) r= mess.m_type;
 	if (r != OK)
 	{
