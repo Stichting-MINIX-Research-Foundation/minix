@@ -28,6 +28,16 @@ register message *m_ptr;	/* pointer to request message */
   phys_bytes phys_buf;
   int req_type, req_dir;
 
+  if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE)
+  {
+	static int first= 1;
+	if (first)
+	{
+		first= 0;
+		kprintf("do_sdevio: for %d\n", m_ptr->m_source);
+	}
+  }
+
   /* Check if process endpoint is OK. 
    * A driver may directly provide a pointer to a buffer at the user-process
    * that initiated the device I/O. Kernel processes, of course, are denied.

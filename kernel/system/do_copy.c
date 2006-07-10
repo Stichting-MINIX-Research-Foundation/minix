@@ -30,6 +30,23 @@ register message *m_ptr;	/* pointer to request message */
   phys_bytes bytes;		/* number of bytes to copy */
   int i;
 
+  if (m_ptr->m_source != 0 && m_ptr->m_source != 1 &&
+	m_ptr->m_source != 2 && m_ptr->m_source != 3)
+  {
+	static int first=1;
+	if (first)
+	{
+		first= 0;
+		kprintf(
+"do_copy: got request from %d (source %d, seg %d, destination %d, seg %d)\n",
+			m_ptr->m_source,
+			m_ptr->CP_SRC_ENDPT,
+			m_ptr->CP_SRC_SPACE,
+			m_ptr->CP_DST_ENDPT,
+			m_ptr->CP_DST_SPACE);
+	}
+  }
+
   /* Dismember the command message. */
   vir_addr[_SRC_].proc_nr_e = m_ptr->CP_SRC_ENDPT;
   vir_addr[_SRC_].segment = m_ptr->CP_SRC_SPACE;

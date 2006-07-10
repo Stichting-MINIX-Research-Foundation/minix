@@ -42,6 +42,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_getksig.o) \
 	$(SYSTEM)(do_endksig.o) \
 	$(SYSTEM)(do_kill.o) \
+	$(SYSTEM)(do_readbios.o) \
 	$(SYSTEM)(do_sigsend.o) \
 	$(SYSTEM)(do_sigreturn.o) \
 	$(SYSTEM)(do_abort.o) \
@@ -137,6 +138,9 @@ $(SYSTEM)(do_getinfo.o):	do_getinfo.c
 
 $(SYSTEM)(do_abort.o):	do_abort.c
 	$(CC) do_abort.c
+
+$(SYSTEM)(do_readbios.o):	do_readbios.c
+	$(CC) do_readbios.c
 
 $(SYSTEM)(do_setgrant.o):	do_setgrant.c
 	$(CC) do_setgrant.c

@@ -180,6 +180,7 @@ PRIVATE void initialize(void)
   map(SYS_SAFECOPYFROM, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_SAFECOPYTO, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_VSAFECOPY, do_vsafecopy);	/* vectored safecopy */
+  map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
 
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */

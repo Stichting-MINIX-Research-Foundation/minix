@@ -33,6 +33,14 @@ register message *m_ptr;	/* pointer to request message */
   int i,s;
   struct vir_cp_req *req;
 
+  { static int first=1;
+	if (first)
+	{
+		first= 0;
+		kprintf("do_vcopy: got request from %d\n", m_ptr->m_source);
+	}
+  }
+
   /* Check if request vector size is ok. */
   nr_req = (unsigned) m_ptr->VCP_VEC_SIZE;
   if (nr_req > VCOPY_VEC_SIZE) return(EINVAL);

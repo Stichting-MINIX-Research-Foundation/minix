@@ -177,6 +177,7 @@ _PROTOTYPE( int do_safecopy, (message *m_ptr) );
 _PROTOTYPE( int do_vsafecopy, (message *m_ptr) );	
 _PROTOTYPE( int do_iopenable, (message *m_ptr) );	
 _PROTOTYPE( int do_setgrant, (message *m_ptr) );	
+_PROTOTYPE( int do_readbios, (message *m_ptr) );	
 
 #endif	/* SYSTEM_H */
 
