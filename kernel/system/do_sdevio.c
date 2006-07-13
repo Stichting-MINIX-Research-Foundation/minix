@@ -28,13 +28,16 @@ register message *m_ptr;	/* pointer to request message */
   phys_bytes phys_buf;
   int req_type, req_dir;
 
-  if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE)
+  /* Allow safe copies and accesses to SELF */
+  if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
+	proc_nr_e != SELF)
   {
 	static int first= 1;
 	if (first)
 	{
 		first= 0;
-		kprintf("do_sdevio: for %d\n", m_ptr->m_source);
+		kprintf("do_sdevio: for %d, req %d\n",
+			m_ptr->m_source, m_ptr->DIO_REQUEST);
 	}
   }
 
