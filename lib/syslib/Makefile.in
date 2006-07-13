@@ -63,6 +63,7 @@ libsys_FILES=" \
 	sys_voutb.c \
 	sys_voutl.c \
 	sys_voutw.c \
-	taskcall.c"
+	taskcall.c \
+	ds.c"
 
 TYPE=both

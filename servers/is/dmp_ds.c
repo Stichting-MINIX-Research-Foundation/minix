@@ -20,26 +20,32 @@ FORWARD _PROTOTYPE( char *s_flags_str, (int flags)		);
 PUBLIC void data_store_dmp()
 {
   struct data_store *dsp;
-  int i,j, n=0;
+  int i,j, n=0, s;
   static int prev_i=0;
 
 
   printf("Data Store (DS) contents dump\n");
 
-  getsysinfo(DS_PROC_NR, SI_DATA_STORE, store);
+  if((s=getsysinfo(DS_PROC_NR, SI_DATA_STORE, store)) != OK) {
+	printf("Couldn't talk to DS: %d.\n", s);
+	return;
+  }
 
-  printf("-slot- -key- -flags- -val_l1- -val_l2-\n");
+  printf("slot key                  type value\n");
 
   for (i=prev_i; i<NR_DS_KEYS; i++) {
   	dsp = &store[i];
   	if (! dsp->ds_flags & DS_IN_USE) continue;
   	if (++n > 22) break;
-  	printf("%3d %8d %s  [%8d] [%8d] \n",
-		i, dsp->ds_key,
-		s_flags_str(dsp->ds_flags),
-		dsp->ds_val_l1,
-		dsp->ds_val_l2
-  	);
+  	printf("%3d  %-20s ",
+		i, dsp->ds_key);
+	if(dsp->ds_flags & DS_TYPE_U32) {
+		printf("u32  %lu\n", dsp->ds_val.ds_val_u32);
+	} else if(dsp->ds_flags & DS_TYPE_STR) {
+		printf("str  \"%s\"\n", dsp->ds_val.ds_val_str);
+	} else {
+		printf("Bogus type\n");
+	}
   }
   if (i >= NR_DS_KEYS) i = 0;
   else printf("--more--\r");

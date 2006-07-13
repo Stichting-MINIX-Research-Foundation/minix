@@ -59,6 +59,9 @@ PUBLIC int main(int argc, char **argv)
       case DS_SUBSCRIBE:
 	  result = do_subscribe(&m);
 	  break;
+      case DS_CHECK:
+	  result = do_check(&m);
+	  break;
       case GETSYSINFO:
 	  result = do_getsysinfo(&m);
 	  break;
@@ -91,6 +94,9 @@ PRIVATE void init_server(int argc, char **argv)
   sigact.sa_flags = 0;			/* default behaviour */
   if (sigaction(SIGTERM, &sigact, NULL) < 0) 
       report("DS","warning, sigaction() failed", errno);
+
+  /* Initialize DS. */
+  ds_init();
 }
 
 /*===========================================================================*

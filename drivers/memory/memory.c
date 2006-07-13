@@ -17,9 +17,13 @@
 #include "../drivers.h"
 #include "../libdriver/driver.h"
 #include <sys/ioc_memory.h>
+#include <minix/ds.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
+
+#define MY_DS_NAME_BASE "dev:memory:ramdisk_base"
+#define MY_DS_NAME_SIZE "dev:memory:ramdisk_size"
 
 #include <sys/vm.h>
 
@@ -291,8 +295,8 @@ message *m_ptr;
 PRIVATE void m_init()
 {
   /* Initialize this task. All minor devices are initialized one by one. */
-  phys_bytes ramdev_size;
-  phys_bytes ramdev_base;
+  u32_t ramdev_size;
+  u32_t ramdev_base;
   message m;
   int i, s;
 
@@ -319,10 +323,8 @@ PRIVATE void m_init()
   }
 
   /* See if there are already RAM disk details at the Data Store server. */
-  m.DS_KEY = MEMORY_MAJOR;
-  if (OK == (s = _taskcall(DS_PROC_NR, DS_RETRIEVE, &m))) {
-  	ramdev_size = m.DS_VAL_L1;
- 	ramdev_base = m.DS_VAL_L2;
+  if(ds_retrieve_u32(MY_DS_NAME_BASE, &ramdev_base) == OK &&
+     ds_retrieve_u32(MY_DS_NAME_SIZE, &ramdev_size) == OK) {
   	printf("MEM retrieved size %u and base %u from DS, status %d\n",
     		ramdev_size, ramdev_base, s);
   	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, 
@@ -423,15 +425,14 @@ int safe;
 	/* Store the values we got in the data store so we can retrieve
 	 * them later on, in the unfortunate event of a crash.
 	 */
-	m.DS_KEY = MEMORY_MAJOR;
-	m.DS_VAL_L1 = ramdev_size;
-	m.DS_VAL_L2 = ramdev_base;
-	if (OK != (s = _taskcall(DS_PROC_NR, DS_PUBLISH, &m))) {
+	if(ds_publish_u32(MY_DS_NAME_BASE, ramdev_base) != OK ||
+	   ds_publish_u32(MY_DS_NAME_SIZE, ramdev_size) != OK) {
       		panic("MEM","Couldn't store RAM disk details at DS.",s);
 	}
+
 #if DEBUG
-	printf("MEM stored size %u and base %u at DS, status %d\n",
-	    ramdev_size, ramdev_base, s);
+	printf("MEM stored size %u and base %u at DS, names %s and %s\n",
+	    ramdev_size, ramdev_base, MY_DS_NAME_BASE, MY_DS_NAME_SIZE);
 #endif
 
   	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, 

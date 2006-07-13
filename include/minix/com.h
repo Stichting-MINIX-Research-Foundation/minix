@@ -65,6 +65,7 @@
 #  define NEW_KSIG	NOTIFY_FROM(HARDWARE)  	/* new kernel signal */
 #  define FKEY_PRESSED	NOTIFY_FROM(TTY_PROC_NR)/* function key press */
 #  define DEV_PING	NOTIFY_FROM(RS_PROC_NR) /* driver liveness ping */
+#  define DS_UPDATE	NOTIFY_FROM(DS_PROC_NR) /* subscription update */
 
 /* Shorthands for message parameters passed with notifications. */
 #define NOTIFY_SOURCE		m_source
@@ -548,14 +549,18 @@
 #define DS_RQ_BASE		0x800
 
 #define DS_PUBLISH	(DS_RQ_BASE + 0)	/* publish information */
-#define DS_RETRIEVE	(DS_RQ_BASE + 1)	/* retrieve information */
-#define DS_SUBSCRIBE	(DS_RQ_BASE + 2)	/* subscribe to information */
+#define DS_SUBSCRIBE	(DS_RQ_BASE + 1)	/* subscribe to information */
+#define DS_RETRIEVE	(DS_RQ_BASE + 2)	/* retrieve information by name */
+#define DS_CHECK	(DS_RQ_BASE + 3)	/* retrieve updated information */
 
-#  define DS_KEY		m2_i1		/* key for the information */
+/* DS field names: DS_SUBSCRIBE, DS_PUBLISH, DS_RETRIEVE */
+#  define DS_KEY_GRANT		m2_p1		/* key for the information */
+#  define DS_KEY_LEN		m2_i1		/* length of key incl. '\0' */
 #  define DS_FLAGS		m2_i2		/* flags provided by caller */
-#  define DS_AUTH		m2_p1		/* authorization of caller */
-#  define DS_VAL_L1		m2_l1		/* first long data value */
-#  define DS_VAL_L2		m2_l2		/* second long data value */
+
+/* DS_PUBLISH, DS_RETRIEVE */
+#  define DS_VAL		m2_l1		/* data (u32, char *, etc.) */
+#  define DS_VAL_LEN		m2_l2		/* data length */
 
 /*===========================================================================*
  *                Miscellaneous messages used by TTY			     *

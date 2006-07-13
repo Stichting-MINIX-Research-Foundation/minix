@@ -12,7 +12,7 @@
 /* Define hooks for the debugging dumps. This table maps function keys
  * onto a specific dump and provides a description for it.
  */
-#define NHOOKS 19
+#define NHOOKS 18
 
 struct hook_entry {
 	int key;
