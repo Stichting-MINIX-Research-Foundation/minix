@@ -48,10 +48,10 @@ void usage(void);
 
 int main(int argc, char*argv[])
 {
-	char *udp_device;
-	int fd, i;
-	struct svrqueryparam qpar;
-	char *pval;
+	char *ipstat_device;
+	int fd, i, r;
+	size_t psize;
+	char *pval, *param;
 	struct timeval uptime;
 	clock_t now;
 	int fl;
@@ -82,11 +82,11 @@ int main(int argc, char*argv[])
 	inclSel= !!a_flag;
 	numerical= !!n_flag;
 
-	udp_device= UDP_DEVICE;
-	if ((fd= open(udp_device, O_RDWR)) == -1)
+	ipstat_device= IPSTAT_DEVICE;
+	if ((fd= open(ipstat_device, O_RDWR)) == -1)
 	{
 		fprintf(stderr, "%s: unable to open '%s': %s\n", prog_name,
-			udp_device, strerror(errno));
+			ipstat_device, strerror(errno));
 		exit(1);
 	}
 
@@ -99,14 +99,21 @@ int main(int argc, char*argv[])
 		exit(1);
 	}
 
-	qpar.param = "udp_fd_table";
-	qpar.psize = strlen(qpar.param);
-	qpar.value = valuesl;
-	qpar.vsize = v_size;
-	if (ioctl(fd, NWIOQUERYPARAM, &qpar) == -1)
+	param= "udp_fd_table";
+	psize= strlen(param);
+	r= write(fd, param, psize);
+	if (r != psize)
 	{
-		fprintf(stderr, "%s: queryparam failed: %s\n", prog_name,
-			strerror(errno));
+		fprintf(stderr, "%s: write to %s failed: %s\n", prog_name,
+			ipstat_device,
+			r < 0 ?  strerror(errno) : "short write");
+		exit(1);
+	}
+	r= read(fd, valuesl, v_size);
+	if (r < 0)
+	{
+		fprintf(stderr, "%s: read from %s failed: %s\n", prog_name,
+			ipstat_device, strerror(errno));
 		exit(1);
 	}
 	pval= valuesl;
@@ -120,14 +127,21 @@ int main(int argc, char*argv[])
 	}
 
 	/* Get address, size, and element size of the UDP port table */
-	qpar.param = "&udp_port_table,$udp_port_table,$udp_port_table[0]";
-	qpar.psize = strlen(qpar.param);
-	qpar.value = values;
-	qpar.vsize = sizeof(values);
-	if (ioctl(fd, NWIOQUERYPARAM, &qpar) == -1)
+	param = "&udp_port_table,$udp_port_table,$udp_port_table[0]";
+	psize = strlen(param);
+	r= write(fd, param, psize);
+	if (r != psize)
 	{
-		fprintf(stderr, "%s: queryparam failed: %s\n", prog_name,
-			strerror(errno));
+		fprintf(stderr, "%s: write to %s failed: %s\n", prog_name,
+			ipstat_device,
+			r < 0 ?  strerror(errno) : "short write");
+		exit(1);
+	}
+	r= read(fd, values, sizeof(values));
+	if (r < 0)
+	{
+		fprintf(stderr, "%s: read from %s failed: %s\n", prog_name,
+			ipstat_device, strerror(errno));
 		exit(1);
 	}
 	pval= values;
@@ -170,14 +184,21 @@ int main(int argc, char*argv[])
 		exit(1);
 	}
 
-	qpar.param = "udp_port_table";
-	qpar.psize = strlen(qpar.param);
-	qpar.value = valuesl;
-	qpar.vsize = v_size;
-	if (ioctl(fd, NWIOQUERYPARAM, &qpar) == -1)
+	param = "udp_port_table";
+	psize = strlen(param);
+	r= write(fd, param, psize);
+	if (r != psize)
 	{
-		fprintf(stderr, "%s: queryparam failed: %s\n", prog_name,
-			strerror(errno));
+		fprintf(stderr, "%s: write to %s failed: %s\n", prog_name,
+			ipstat_device,
+			r < 0 ?  strerror(errno) : "short write");
+		exit(1);
+	}
+	r= read(fd, valuesl, v_size);
+	if (r < 0)
+	{
+		fprintf(stderr, "%s: read from %s failed: %s\n", prog_name,
+			ipstat_device, strerror(errno));
 		exit(1);
 	}
 	pval= valuesl;

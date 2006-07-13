@@ -282,10 +282,10 @@ PRIVATE void nw_conf()
 PRIVATE void nw_init()
 {
 	mq_init();
-	qp_init();
 	bf_init();
 	clck_init();
 	sr_init();
+	qp_init();
 	eth_init();
 	arp_init();
 	psip_init();

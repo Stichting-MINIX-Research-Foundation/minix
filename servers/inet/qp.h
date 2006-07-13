@@ -12,8 +12,6 @@ Copyright 1995 Philip Homburg
 #define INET__QP_H
 
 void qp_init ARGS(( void ));
-int qp_query ARGS(( int proc, vir_bytes argp ));
-int qp_query_s ARGS(( int proc, int gid ));
 
 #endif /* INET__QP_H */
 

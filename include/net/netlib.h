@@ -14,6 +14,7 @@ _PROTOTYPE (int iruserok, (unsigned long raddr, int superuser,
 _PROTOTYPE (int rcmd, (char **ahost, int rport, const char *locuser, 
 		const char *remuser, const char *cmd, int *fd2p) );
 
+#define IPSTAT_DEVICE	"/dev/ipstat"
 #define ETH_DEVICE	"/dev/eth"
 #define IP_DEVICE	"/dev/ip"
 #define TCP_DEVICE	"/dev/tcp"

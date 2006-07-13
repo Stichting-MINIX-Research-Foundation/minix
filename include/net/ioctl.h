@@ -53,8 +53,6 @@
 #define NWIOSPSIPOPT	_IOW('n', 80, struct nwio_psipopt)
 #define NWIOGPSIPOPT	_IOR('n', 81, struct nwio_psipopt)
 
-#define NWIOQUERYPARAM	_IORW('n',96, struct svrqueryparam)
-
 #endif /* _NET__IOCTL_H */
 
 /*

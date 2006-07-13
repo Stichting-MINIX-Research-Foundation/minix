@@ -41,10 +41,10 @@ void usage(void);
 
 int main(int argc, char*argv[])
 {
-	char *tcp_device;
-	int fd, i;
-	struct svrqueryparam qpar;
-	char *pval;
+	char *ipstat_device;
+	int fd, i, r;
+	char *query, *pval;
+	size_t len;
 	struct timeval uptime;
 	clock_t now;
 	int fl;
@@ -80,22 +80,29 @@ int main(int argc, char*argv[])
 	numerical= !!n_flag;
 	verbose= !!v_flag;
 
-	tcp_device= TCP_DEVICE;
-	if ((fd= open(tcp_device, O_RDWR)) == -1)
+	ipstat_device= IPSTAT_DEVICE;
+	if ((fd= open(ipstat_device, O_RDWR)) == -1)
 	{
 		fprintf(stderr, "%s: unable to open '%s': %s\n", prog_name,
-			tcp_device, strerror(errno));
+			ipstat_device, strerror(errno));
 		exit(1);
 	}
 
-	qpar.param = "tcp_conn_table";
-	qpar.psize = strlen(qpar.param);
-	qpar.value = values;
-	qpar.vsize = sizeof(values);
-	if (ioctl(fd, NWIOQUERYPARAM, &qpar) == -1)
+	query= "tcp_conn_table";
+	len= strlen(query);
+	r= write(fd, query, len);
+	if (r != len)
 	{
-		fprintf(stderr, "%s: queryparam failed: %s\n", prog_name,
-			strerror(errno));
+		fprintf(stderr, "%s: write to %s failed: %s\n",
+			prog_name, ipstat_device, r < 0 ? strerror(errno) :
+			"short write");
+		exit(1);
+	}
+	r= read(fd, values, sizeof(values));
+	if (r == -1)
+	{
+		fprintf(stderr, "%s: read from %s failed: %s\n", prog_name,
+			ipstat_device, strerror(errno));
 		exit(1);
 	}
 	pval= values;

@@ -774,7 +774,7 @@ tar:	tar.c
 
 tcpd:	tcpd.c
 	$(CCLD) -o $@ -DPARANOID=0 tcpd.c
-	@install -S 4kw $@
+	@install -S 8kw $@
 
 tcpdp:	tcpd.c
 	$(CCLD) -o $@ -DPARANOID=1 tcpd.c

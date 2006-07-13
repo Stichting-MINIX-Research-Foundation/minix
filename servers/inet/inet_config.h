@@ -60,7 +60,11 @@ struct udp_conf
 #define NETTYPE_PSIP	2
 
 /* To compute the minor device number for a device on an interface. */
-#define if2minor(ifno, dev)	((ifno) * 8 + (dev))
+#define if2minor(ifno, dev)	(1 + (ifno) * 8 + (dev))
+
+#define IPSTAT_DEV	"/dev/ipstat"
+#define IPSTAT_MODE	0666	/* Is this right? What about just setuid apps */
+#define IPSTAT_MINOR	0	/* Minor number of /dev/ipstat */
 
 /* Offsets of the minor device numbers within a group per interface. */
 #define ETH_DEV_OFF	0

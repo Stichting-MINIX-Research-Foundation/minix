@@ -32,7 +32,7 @@ THIS_FILE
 #endif
 
 #define ACC_NR		((BUF512_NR+BUF2K_NR+BUF32K_NR)*3)
-#define CLIENT_NR	7
+#define CLIENT_NR	10
 
 #define DECLARE_TYPE(Tag, Type, Size)					\
 	typedef struct Tag						\

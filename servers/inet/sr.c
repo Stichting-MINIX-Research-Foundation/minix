@@ -382,18 +382,6 @@ mq_t *m;
 		break;
 	case DEV_IOCTL3:
 		request= m->mq_mess.NDEV_IOCTL;
-
-		/* There should be a better way to do this... */
-		if (request == NWIOQUERYPARAM)
-		{
-			r= qp_query(m->mq_mess.NDEV_PROC,
-				(vir_bytes)m->mq_mess.NDEV_BUFFER);
-			r= sr_put_userdata(sr_fd-sr_fd_table, r, NULL, 1);
-			assert(r == OK);
-			break;
-		}
-
-		/* And now, we continue with our regular program. */
 		size= (request >> 16) & _IOCPARM_MASK;
 		if (size>MAX_IOCTL_S)
 		{
@@ -491,18 +479,6 @@ mq_t *m;
 		break;
 	case DEV_IOCTL_S:
 		request= m->mq_mess.NDEV_IOCTL;
-
-		/* There should be a better way to do this... */
-		if (request == NWIOQUERYPARAM)
-		{
-			r= qp_query_s(m->mq_mess.NDEV_PROC,
-				(vir_bytes)m->mq_mess.NDEV_BUFFER);
-			r= sr_put_userdata(sr_fd-sr_fd_table, r, NULL, 1);
-			assert(r == OK);
-			break;
-		}
-
-		/* And now, we continue with our regular program. */
 		size= (request >> 16) & _IOCPARM_MASK;
 		if (size>MAX_IOCTL_S)
 		{

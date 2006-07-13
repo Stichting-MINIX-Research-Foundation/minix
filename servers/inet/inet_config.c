@@ -139,6 +139,7 @@ static void check_dev(int type, int ifno)
 			if (ifno == ifdefault) check_ln(device, dvp->defname);
 		}
 	}
+	check_mknod(IPSTAT_DEV, IPSTAT_MODE, IPSTAT_MINOR);
 }
 
 static int cfg_fd;

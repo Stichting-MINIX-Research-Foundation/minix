@@ -5,7 +5,7 @@ g = generic
 
 # Programs, flags, and libraries
 CC =		cc
-CPPFLAGS =	-I. -D_MINIX
+CPPFLAGS =	-I. -D_MINIX -DBUF_TRACK_ALLOC_FREE -DBUF_CONSISTENCY_CHECK
 CFLAGS =	$(OPT) $(CPPFLAGS)
 LDFLAGS =
 LIBS =		 -lsysutil -lsys
