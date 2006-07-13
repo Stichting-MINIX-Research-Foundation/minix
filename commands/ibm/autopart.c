@@ -2502,7 +2502,6 @@ scribble_region(region_t *reg, struct part_entry **pe, int *made_new)
 		reg->used_part.size = MAX_REGION_SECTORS;
 		trunc = 1;
 		changed = 1;
-		cylinderalign(reg);
 	}
 	if(!reg->is_used_part) {
 		ex = reg->free_sec_last - reg->free_sec_start + 1;
