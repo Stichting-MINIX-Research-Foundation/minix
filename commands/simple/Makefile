@@ -462,7 +462,7 @@ in.fingerd:	in.fingerd.c
 
 in.rshd:	in.rshd.c
 	$(CCLD) -o $@ in.rshd.c
-	@install -S 4kw $@
+	@install -S 8kw $@
 
 installx:	install.c	# Note: avoided confict with 'install' rule.
 	$(CCLD) -o $@ $?
