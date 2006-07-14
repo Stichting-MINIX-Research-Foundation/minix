@@ -12,6 +12,7 @@
  */
 
 #include <sys/types.h>
+#include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -177,7 +178,12 @@ int iruserok(unsigned long raddr, int superuser,
 	    (void)strcat(pbuf, "/.rhosts");
 	}
 
-	if ((hostf = fopen(pbuf, "r")) == NULL) return (-1);
+	if ((hostf = fopen(pbuf, "r")) == NULL)
+	{
+		if (errno == ENOENT)
+			continue;
+		return (-1);
+	}
 
 	r = __ivaliduser(hostf, raddr, luser, ruser);
 	(void)fclose(hostf);
