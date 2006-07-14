@@ -173,12 +173,14 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
 
     switch (fdtype) {
     case FT_ETHERNET:
+	/* Set NONBLOCK to avoid waiting for a device driver to become ready */
 	fcntl(np->fdp->fd, F_SETFL, fcntl(np->fdp->fd, F_GETFL) | O_NONBLOCK);
 	if (ioctl(np->fdp->fd, NWIOGETHSTAT, &ethstat) < 0) {
 	    /* Not an Ethernet. */
 	    close(fdp->fd);
 	    return 0;
 	}
+	fcntl(np->fdp->fd, F_SETFL, fcntl(np->fdp->fd, F_GETFL) & ~O_NONBLOCK);
 	np->eth= ethstat.nwes_addr;
 	ethopt.nweo_flags= NWEO_COPY | NWEO_EN_LOC | NWEO_EN_BROAD
 			| NWEO_REMANY | NWEO_TYPEANY | NWEO_RWDATALL;
