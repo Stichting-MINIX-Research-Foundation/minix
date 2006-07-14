@@ -68,6 +68,12 @@ static ssize_t _udp_sendto(int socket, const void *message, size_t length,
 	if ((udpoptp->nwuo_flags & NWUO_RP_ANY) ||
 		(udpoptp->nwuo_flags & NWUO_RA_ANY))
 	{
+		if (!dest_addr)
+		{
+			errno= ENOTCONN;
+			return -1;
+		}
+
 		/* Check destination address */
 		if (dest_len < sizeof(*sinp))
 		{

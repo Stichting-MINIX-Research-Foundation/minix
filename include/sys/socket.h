@@ -65,9 +65,13 @@ _PROTOTYPE( int setsockopt,(int _socket, int _level, int _option_name,
 _PROTOTYPE( int getsockopt, (int _socket, int _level, int _option_name,
         void *_RESTRICT _option_value, socklen_t *_RESTRICT _option_len));
 _PROTOTYPE( int listen, (int _socket, int _backlog)			);
+_PROTOTYPE( ssize_t recv, (int _socket, void *_buffer, size_t _length,
+							int _flags)	);
 _PROTOTYPE( ssize_t recvfrom, (int _socket, void *_RESTRICT _buffer,
 	size_t _length, int _flags, struct sockaddr *_RESTRICT _address,
 				socklen_t *_RESTRICT _address_len)	);
+_PROTOTYPE( ssize_t send, (int _socket, const void *_buffer,
+					size_t _length, int _flags)	);
 _PROTOTYPE( ssize_t sendto, (int _socket, const void *_message,
 	size_t _length, int _flags, const struct sockaddr *_dest_addr,
 						socklen_t _dest_len)	);
