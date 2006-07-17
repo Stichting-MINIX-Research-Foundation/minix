@@ -4,7 +4,7 @@ MAKE	= exec make -$(MAKEFLAGS)
 BZIP2=bzip2-1.0.3
 FLEX=flex-2.5.4
 
-SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp101 ftpd200 ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple syslogd talk talkd telnet telnetd urlget yap zmodem
+SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp101 ftpd200 ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple syslogd talk talkd telnet telnetd urlget yap 
 
 usage:
 	@echo "Usage: make all          # Compile all commands" >&2
@@ -25,11 +25,13 @@ install: big biginstall small smallinstall
 
 big:
 	binsizes big
+	cd zmodem && make
 	cd $(BZIP2) && /bin/sh build build
 	cd $(FLEX) && /bin/sh build build
 	binsizes normal
 
 biginstall: big
+	cd zmodem && make install
 	cd $(BZIP2) && make install
 	cd $(FLEX) && make install
 

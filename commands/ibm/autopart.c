@@ -34,13 +34,13 @@
 #include <stdarg.h>
 
 /* Declare prototype. */
-static void printstep(int step, char *message);
+void printstep(int step, char *message);
 
 /* True if a partition is an extended partition. */
 #define ext_part(s)	((s) == 0x05 || (s) == 0x0F)
 
 /* Minix master bootstrap code. */
-static char MASTERBOOT[] = "/usr/mdec/masterboot";
+char MASTERBOOT[] = "/usr/mdec/masterboot";
 
 /* Template:
                       ----first----  --geom/last--  ------sectors-----
@@ -131,12 +131,6 @@ void fatal(const char *label)
 
 struct termios termios;
 
-void save_ttyflags(void)
-/* Save tty attributes for later restoration. */
-{
-	if (tcgetattr(0, &termios) < 0) fatal("");
-}
-
 void restore_ttyflags(void)
 /* Reset the tty flags to how we got 'em. */
 {
@@ -157,35 +151,7 @@ void tty_raw(void)
 #define ctrl(c)		((c) == '?' ? '\177' : ((c) & '\37'))
 
 char t_cd[16], t_cm[32], t_so[16], t_se[16], t_md[16], t_me[16];
-int t_li, t_co;
 #define STATUSROW	10
-
-void init_tty(void)
-/* Get terminal capabilities and set the tty to "editor" mode. */
-{
-	char *term;
-	static char termbuf[1024];
-	char *tp;
-
-	if ((term= getenv("TERM")) == nil || tgetent(termbuf, term) != 1) {
-		fprintf(stderr, "part: Can't get terminal capabilities\n");
-		exit(1);
-	}
-	if (tgetstr("cd", (tp= t_cd, &tp)) == nil
-				|| tgetstr("cm", (tp= t_cm, &tp)) == nil) {
-		fprintf(stderr, "part: This terminal is too dumb\n");
-		exit(1);
-	}
-	t_li= tgetnum("li");
-	t_co= tgetnum("co");
-	(void) tgetstr("so", (tp= t_so, &tp));
-	(void) tgetstr("se", (tp= t_se, &tp));
-	(void) tgetstr("md", (tp= t_md, &tp));
-	(void) tgetstr("me", (tp= t_me, &tp));
-
-	save_ttyflags();
-	tty_raw();
-}
 
 void putchr(int c)
 {
@@ -373,7 +339,7 @@ void newdevice(char *name, int scanning, int disk_only)
 	if (curdev->rdev != DEV_C0D0) curdev= firstdev;
 }
 
-void getdevices(int disk_only)
+void getdevices()
 /* Get all block devices from /dev that look interesting. */
 {
 	DIR *d;
@@ -385,7 +351,7 @@ void getdevices(int disk_only)
 	while ((e= readdir(d)) != nil) {
 		strcpy(name, "/dev/");
 		strcpy(name + 5, e->d_name);
-		newdevice(name, 1, disk_only);
+		newdevice(name, 1, 1);
 	}
 	(void) closedir(d);
 }
@@ -643,8 +609,8 @@ void geometry(void)
 
 		if (heads != alt_heads || sectors != alt_secs) {
 printf(
-"The %ux%ux%u geometry obtained from the driver\n"
-"does not match the %ux%ux%u geometry implied by the partition\n"
+"The geometry obtained from the driver\n"
+"does not match the geometry implied by the partition\n"
 "table. Please use expert mode instead.\n");
 exit(1);
 		}
@@ -809,219 +775,6 @@ unsigned long entry2last(struct part_entry *pe)
 unsigned long entry2size(struct part_entry *pe)
 {
 	return pe->sysind == NO_PART ? 0 : pe->size;
-}
-
-int overlap(unsigned long sec)
-/* See if sec is part of another partition. */
-{
-	struct part_entry *pe;
-
-	for (pe= table + 1; pe <= table + NR_PARTITIONS; pe++) {
-		if (pe->sysind == NO_PART) continue;
-
-		if (pe->lowsec < sec && sec < pe->lowsec + pe->size)
-			return 1;
-	}
-	return 0;
-}
-
-int aligned(unsigned long sec, unsigned unit)
-/* True if sec is aligned to unit or if it is no problem if it is unaligned. */
-{
-	return (offset != 0 && extbase == 0) || (sec % unit == 0);
-}
-
-void print(object_t *op)
-/* Print an object's value if it changed. */
-{
-	struct part_entry *pe= op->entry;
-	int n;
-	unsigned long t;
-	char *name;
-	int oldflags;
-	char oldvalue[20];
-
-	/* Remember the old flags and value. */
-	oldflags= op->flags;
-	strcpy(oldvalue, op->value);
-
-	op->flags&= ~(OF_ODD | OF_BAD);
-
-	switch (op->type) {
-	case O_INFO:		{
-				/* Current field. */
-		static struct field { int type; char *name; } fields[]= {
-			{ O_DEV,	"Select device"		},
-			{ O_NUM,	"Active flag"		},
-			{ O_TYPHEX,	"Hex partition type"	},
-			{ O_TYPTXT,	"Partition type"	},
-			{ O_SCYL,	"Start cylinder"	},
-			{ O_SHEAD,	"Start head"		},
-			{ O_SSEC,	"Start sector"		},
-			{ O_CYL,	"Number of cylinders"	},
-			{ O_HEAD,	"Number of heads"	},
-			{ O_SEC,	"Sectors per track"	},
-			{ O_LCYL,	"Last cylinder"		},
-			{ O_LHEAD,	"Last head"		},
-			{ O_LSEC,	"Last sector"		},
-			{ O_BASE,	"Base sector"		},
-			{ O_SIZE,	"Size in sectors"	},
-			{ O_KB,		"Size in kilobytes"	},
-			{ -1,		"?"			},
-		};
-		struct field *fp= fields;
-
-		while (fp->type >= 0 && fp->type != curobj->type) fp++;
-		strcpy(op->value, fp->name);
-		op->flags|= OF_ODD;
-		break;		}
-	case O_TEXT:
-				/* Simple text field. */
-		strcpy(op->value, op->text);
-		break;
-	case O_DEV:
-	case O_SUB:
-				/* Name of currently edited device. */
-		name= op->type == O_DEV ? curdev->name :
-					offset == 0 ? "" : curdev->subname;
-		if ((n= strlen(name)) < op->len) n= op->len;
-		strcpy(op->value, name + (n - op->len));
-		if (device < 0 && op->type == O_DEV) op->flags|= OF_BAD;
-		break;
-	case O_NUM:
-				/* Position and active flag. */
-		sprintf(op->value, "%d%c", (int) (pe - table - 1),
-					pe->bootind & ACTIVE_FLAG ? '*' : ' ');
-		break;
-	case O_SORT:
-				/* Position if the driver sorts the table. */
-		sprintf(op->value, "%s%d",
-			curdev->parttype >= PRIMARY ? "p" :
-				curdev->parttype == SUBPART ? "s" : "",
-			(curdev->parttype == SUBPART ||
-				curdev->parttype == FLOPPY ? pe - table
-					: sort_index[pe - table]) - 1);
-		break;
-	case O_TYPHEX:
-				/* Hex partition type indicator. */
-		sprintf(op->value, "%02X", pe->sysind);
-		break;
-	case O_TYPTXT:
-				/* Ascii partition type indicator. */
-		strcpy(op->value, typ2txt(pe->sysind));
-		break;
-	case O_SCYL:
-				/* Partition's start cylinder. */
-		sprintf(op->value, "%lu", entry2base(pe) / secpcyl);
-		break;
-	case O_SHEAD:
-				/* Start head. */
-		t= entry2base(pe);
-		sprintf(op->value, "%lu", t % secpcyl / sectors);
-		if (!aligned(t, secpcyl) && t != table[0].lowsec + sectors)
-			op->flags|= OF_ODD;
-		break;
-	case O_SSEC:
-				/* Start sector. */
-		t= entry2base(pe);
-		sprintf(op->value, "%lu", t % sectors);
-		if (!aligned(t, sectors)) op->flags|= OF_ODD;
-		break;
-	case O_CYL:
-				/* Number of cylinders. */
-		sprintf(op->value, "%u", cylinders);
-		break;
-	case O_HEAD:
-				/* Number of heads. */
-		sprintf(op->value, "%u", heads);
-		break;
-	case O_SEC:
-				/* Number of sectors per track. */
-		sprintf(op->value, "%u", sectors);
-		break;
-	case O_LCYL:
-				/* Partition's last cylinder. */
-		t= entry2last(pe);
-		sprintf(op->value, "%lu", t == -1 ? 0 : t / secpcyl);
-		break;
-	case O_LHEAD:
-				/* Partition's last head. */
-		t= entry2last(pe);
-		sprintf(op->value, "%lu", t == -1 ? 0 : t % secpcyl / sectors);
-		if (!aligned(t + 1, secpcyl)) op->flags|= OF_ODD;
-		break;
-	case O_LSEC:
-				/* Partition's last sector. */
-		t= entry2last(pe);
-		sprintf(op->value, t == -1 ? "-1" : "%lu", t % sectors);
-		if (!aligned(t + 1, sectors)) op->flags|= OF_ODD;
-		break;
-	case O_BASE:
-				/* Partition's base sector. */
-		sprintf(op->value, "%lu", entry2base(pe));
-		if (pe->sysind != NO_PART && pe != &table[0]
-		   && (pe->lowsec <= table[0].lowsec || overlap(pe->lowsec)))
-			op->flags|= OF_BAD;
-		break;
-	case O_SIZE:
-				/* Size of partitition in sectors. */
-		t= howend == SIZE ? entry2size(pe) : entry2last(pe);
-		sprintf(op->value, "%lu", pe->sysind == NO_PART ? 0 : t);
-		if (pe->sysind != NO_PART && (pe->size == 0
-		    || pe->lowsec + pe->size > table[0].lowsec + table[0].size
-		    || overlap(pe->lowsec + pe->size)))
-			op->flags|= OF_BAD;
-		break;
-	case O_KB:
-				/* Size of partitition in kilobytes. */
-		sprintf(op->value, "%lu", entry2size(pe) / 2);
-		break;
-	default:
-		sprintf(op->value, "?? %d ??", op->type);
-	}
-
-	if (device < 0 && computed(op->type)) strcpy(op->value, "?");
-
-	/* If a value overflows the print field then show a blank
-	 * reverse video field.
-	 */
-	if ((n= strlen(op->value)) > op->len) {
-		n= 0;
-		op->flags|= OF_BAD;
-	}
-
-	/* Right or left justified? */
-	if (rjust(op->type)) {
-		memmove(op->value + (op->len - n), op->value, n);
-		memset(op->value, ' ', op->len - n);
-	} else {
-		memset(op->value + n, ' ', op->len - n);
-	}
-	op->value[op->len]= 0;
-
-	if ((op->flags & (OF_ODD | OF_BAD)) == (oldflags & (OF_ODD | OF_BAD))
-				&& strcmp(op->value, oldvalue) == 0) {
-		/* The value did not change. */
-		return;
-	}
-
-	set_cursor(op->row, rjust(op->type) ? op->col - (op->len-1) : op->col);
-
-	if (op->flags & OF_BAD) tputs(t_so, 1, putchr);
-	else
-	if (op->flags & OF_ODD) tputs(t_md, 1, putchr);
-	putstr(op->value);
-	if (op->flags & OF_BAD) tputs(t_se, 1, putchr);
-	else
-	if (op->flags & OF_ODD) tputs(t_me, 1, putchr);
-}
-
-void display(void)
-/* Repaint all objects that changed. */
-{
-	object_t *op;
-
-	for (op= world; op != nil; op= op->next) print(op);
 }
 
 int typing;	/* Set if a digit has been typed to set a value. */
@@ -1677,7 +1430,7 @@ ssize_t boot_readwrite(int rw)
 /* Read (0) or write (1) the boot sector. */
 {
 	u64_t off64 = mul64u(offset, SECTOR_SIZE);
-	int r;
+	int r = 0;
 
 #if __minix_vmd
 	/* Minix-vmd has a 64 bit seek. */
@@ -1830,7 +1583,7 @@ void regionize(void)
 void m_read(int ev, int *biosdrive)
 /* Read the partition table from the current device. */
 {
-	int si, i, mode, n, r, v;
+	int i, mode, n, v;
 	struct part_entry *pe;
 
 	if (ev != 'r' || device >= 0) return;
@@ -1910,7 +1663,6 @@ void m_read(int ev, int *biosdrive)
 void m_write(int ev, object_t *op)
 /* Write the partition table back if modified. */
 {
-	int c;
 	struct part_entry new_table[NR_PARTITIONS], *pe;
 
 	if (ev != 'w' && ev != E_WRITE) return;
@@ -2000,31 +1752,6 @@ void m_shell(int ev, object_t *op)
 		stat_start(0);	/* Match the stat_start in the child. */
 	else
 		event(ctrl('L'), op);
-}
-
-void m_dump(struct part_entry *print_table)
-/* Raw dump of the partition table. */
-{
-	struct part_entry *pe;
-	int i;
-	unsigned chs[3];
-
-printf(" Partition + type      Cyl Head Sec   Cyl Head Sec      Base      Size       Kb\n");
-	for (i= 1; i <= NR_PARTITIONS; i++) {
-		pe= &print_table[i];
-		dos2chs(&pe->start_head, chs);
-		printf("%2d%c      %02X%15d%5d%4d",
-			i,
-			pe->bootind & ACTIVE_FLAG ? '*' : ' ',
-			pe->sysind,
-			chs[0], chs[1], chs[2]);
-		dos2chs(&pe->last_head, chs);
-		printf("%6d%5d%4d%10lu%10ld%9lu\n",
-			chs[0], chs[1], chs[2],
-			pe->lowsec,
-			howend == SIZE ? pe->size : pe->size + pe->lowsec - 1,
-			pe->size / 2);
-	}
 }
 
 int quitting= 0;
@@ -2123,76 +1850,6 @@ void event(int ev, object_t *op)
 	m_write(ev, op);
 	m_shell(ev, op);
 	m_quit(ev, op);
-}
-
-int keypress(void)
-/* Get a single keypress.  Translate compound keypresses (arrow keys) to
- * their simpler equivalents.
- */
-{
-	char ch;
-	int c;
-	int esc= 0;
-
-	set_cursor(curobj->row, curobj->col);
-	fflush(stdout);
-
-	do {
-		if (read(0, &ch, sizeof(ch)) < 0) fatal("stdin");
-		c= (unsigned char) ch;
-		switch (esc) {
-		case 0:
-			switch (c) {
-			case ctrl('['):	esc= 1; break;
-			case '_':	c= '-'; break;
-			case '=':	c= '+'; break;
-			}
-			break;
-		case 1:
-			esc= c == '[' ? 2 : 0;
-			break;
-		case 2:
-			switch (c) {
-			case 'D':	c= 'h';	break;
-			case 'B':	c= 'j';	break;
-			case 'A':	c= 'k';	break;
-			case 'C':	c= 'l';	break;
-			case 'H':	c= 'H';	break;
-			case 'U':
-			case 'S':	c= '-';	break;
-			case 'V':
-			case 'T':	c= '+';	break;
-			}
-			/*FALL THROUGH*/
-		default:
-			esc= 0;
-		}
-	} while (esc > 0);
-
-	switch (c) {
-	case ctrl('B'):	c= 'h';	break;
-	case ctrl('N'):	c= 'j';	break;
-	case ctrl('P'):	c= 'k';	break;
-	case ctrl('F'):	c= 'l';	break;
-	}
-
-	return c;
-}
-
-void mainloop(void)
-/* Get keypress, handle event, display results, reset screen, ad infinitum. */
-{
-	int key;
-
-	while (!quitting) {
-		stat_reset();
-
-		key= keypress();
-
-		event(key, curobj);
-
-		display();
-	}
 }
 
 char *
@@ -2335,9 +1992,8 @@ may_kill_region(void)
 region_t *
 select_region(void)
 {
-	int r, rem, rn, done = 0;
+	int rn, done = 0;
 	static char line[100];
-	region_t *reg;
 	int nofree = 0;
 
 	printstep(2, "Select a disk region");
@@ -2403,7 +2059,7 @@ select_region(void)
 	return(&regions[rn]);
 }
 
-static void printstep(int step, char *str)
+void printstep(int step, char *str)
 {
 	int n;
 	n = printf("\n --- Substep 4.%d: %s ---", step, str);
@@ -2496,28 +2152,22 @@ select_disk(void)
 int
 scribble_region(region_t *reg, struct part_entry **pe, int *made_new)
 {
-	int ex, trunc = 0, changed = 0, i;
+	int ex, changed = 0, i;
 	struct part_entry *newpart;
 	if(reg->is_used_part && reg->used_part.size > MAX_REGION_SECTORS) {
 		reg->used_part.size = MAX_REGION_SECTORS;
-		trunc = 1;
 		changed = 1;
+		cylinderalign(reg);
 	}
 	if(!reg->is_used_part) {
 		ex = reg->free_sec_last - reg->free_sec_start + 1;
 		if(ex > MAX_REGION_SECTORS) {
 			reg->free_sec_last -= ex - MAX_REGION_SECTORS;
-			trunc = 1;
 			changed = 1;
 			cylinderalign(reg);
 		}
 		if(made_new) *made_new = 1;
 	} else if(made_new) *made_new = 0;
-#if 0
-	if(trunc) {
-		printf("\nWill only use %dMB.\n", MAX_REGION_MB);
-	}
-#endif
 	if(!reg->is_used_part) {
 		for(i = 1; i <= NR_PARTITIONS; i++)
 			if(table[i].sysind == NO_PART)
@@ -2588,9 +2238,8 @@ do_autopart(int resultfd)
 	int confirmation;
 	region_t *r;
 	struct part_entry *pe;
-	char sure[50];
 	struct part_entry orig_table[1 + NR_PARTITIONS];
-	int region, disk, newp;
+	int region, newp;
 
 	nordonly = 1; 
 
@@ -2618,7 +2267,7 @@ do_autopart(int resultfd)
 		char *name;
 		int i, found = -1;
 		char partbuf[100], devname[100];
-		struct part_entry *tpe;
+		struct part_entry *tpe = NULL;
 
 		printstep(3, "Confirm your choices");
 
@@ -2714,71 +2363,10 @@ do_autopart(int resultfd)
 
 int main(int argc, char **argv)
 {
-	object_t *op;
-	int i, r, key;
-	struct part_entry *pe;
-	char *name;
-	int autopart = 0;
+     	int c;
+	int i, key;
 	int resultfd = -1;
 
-	/* Autopilot mode if invoked as autopart. */
-	if(!(name = strrchr(argv[0], '/'))) name = argv[0];
-	else name++;
-	if(!strcmp(name, "autopart"))
-		autopart = 1;
-
-    if(!autopart) {
-	/* Define a few objects to show on the screen.  First text: */
-	op= newobject(O_INFO, 0, 0,  2, 19);
-	op= newobject(O_TEXT, 0, 0, 22, 13); op->text= "----first----";
-	op= newobject(O_TEXT, 0, 0, 37, 13); op->text= "--geom/last--";
-	op= newobject(O_TEXT, 0, 0, 52, 18); op->text= "------sectors-----";
-	op= newobject(O_TEXT, 0, 1,  4,  6); op->text= "Device";
-	op= newobject(O_TEXT, 0, 1, 23, 12); op->text= "Cyl Head Sec";
-	op= newobject(O_TEXT, 0, 1, 38, 12); op->text= "Cyl Head Sec";
-	op= newobject(O_TEXT, 0, 1, 56,  4); op->text= "Base";
-	op= newobject(O_TEXT, 0, 1, 66,  4); op->text= size_last;
-	op= newobject(O_TEXT, 0, 1, 78,  2); op->text= "Kb";
-	op= newobject(O_TEXT, 0, 4,  0, 15); op->text= "Num Sort   Type";
-
-	/* The device is the current object: */
-    curobj= newobject(O_DEV,  OF_MOD, 2,  4, 15);
-	op= newobject(O_SUB,       0, 3,  4, 15);
-
-	/* Geometry: */
-	op= newobject(O_CYL,  OF_MOD, 2, 40,  5); op->entry= &table[0];
-	op= newobject(O_HEAD, OF_MOD, 2, 45,  3); op->entry= &table[0];
-	op= newobject(O_SEC,  OF_MOD, 2, 49,  2); op->entry= &table[0];
-
-	/* Objects for the device: */
-	op= newobject(O_SCYL,  0, 3, 25,  5); op->entry= &table[0];
-	op= newobject(O_SHEAD, 0, 3, 30,  3); op->entry= &table[0];
-	op= newobject(O_SSEC,  0, 3, 34,  2); op->entry= &table[0];
-	op= newobject(O_LCYL,  0, 3, 40,  5); op->entry= &table[0];
-	op= newobject(O_LHEAD, 0, 3, 45,  3); op->entry= &table[0];
-	op= newobject(O_LSEC,  0, 3, 49,  2); op->entry= &table[0];
-	op= newobject(O_BASE,  0, 3, 59,  9); op->entry= &table[0];
-	op= newobject(O_SIZE,  0, 3, 69,  9); op->entry= &table[0];
-	op= newobject(O_KB,    0, 3, 79,  9); op->entry= &table[0];
-
-	/* Objects for each partition: */
-	for (r= 5, pe= table+1; pe <= table+NR_PARTITIONS; r++, pe++) {
-		op= newobject(O_NUM,    OF_MOD, r,  1,  2); op->entry= pe;
-		op= newobject(O_SORT,        0, r,  5,  2); op->entry= pe;
-		op= newobject(O_TYPHEX, OF_MOD, r, 10,  2); op->entry= pe;
-		op= newobject(O_TYPTXT, OF_MOD, r, 12,  9); op->entry= pe;
-		op= newobject(O_SCYL,   OF_MOD, r, 25,  5); op->entry= pe;
-		op= newobject(O_SHEAD,  OF_MOD, r, 30,  3); op->entry= pe;
-		op= newobject(O_SSEC,   OF_MOD, r, 34,  2); op->entry= pe;
-		op= newobject(O_LCYL,   OF_MOD, r, 40,  5); op->entry= pe;
-		op= newobject(O_LHEAD,  OF_MOD, r, 45,  3); op->entry= pe;
-		op= newobject(O_LSEC,   OF_MOD, r, 49,  2); op->entry= pe;
-		op= newobject(O_BASE,   OF_MOD, r, 59,  9); op->entry= pe;
-		op= newobject(O_SIZE,   OF_MOD, r, 69,  9); op->entry= pe;
-		op= newobject(O_KB,     OF_MOD, r, 79,  9); op->entry= pe;
-	}
-     } else {
-     	int c;
      	/* autopart uses getopt() */
      	while((c = getopt(argc, argv, "m:f:")) != EOF) {
      		switch(c) {
@@ -2799,7 +2387,7 @@ int main(int argc, char **argv)
      				return 1;
      		}
      	}
-     }
+
      argc -= optind;
      argv += optind;
 
@@ -2808,13 +2396,13 @@ int main(int argc, char **argv)
 	 }
 
 	if (firstdev == nil) {
-		getdevices(autopart);
+		getdevices();
 		key= ctrl('L');
 	} else {
 		key= 'r';
 	}
 
-	if(autopart) {
+        {
 		int r;
 		if (firstdev == nil) {
 			fprintf(stderr, "autopart couldn't find any devices.\n");
@@ -2825,13 +2413,5 @@ int main(int argc, char **argv)
 		return r;
 	}
 
-	if (firstdev != nil) {
-		init_tty();
-		clear_screen();
-		event(key, curobj);
-		display();
-		mainloop();
-		reset_tty();
-	}
 	exit(0);
 }
