@@ -1,5 +1,20 @@
 #!/bin/sh
-CC=cc /bin/sh ./configure --prefix=/usr && make all
+
+CCACHE=config.cache
+rm -f $CCACHE
+RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./configure --prefix=/usr
+make clean all
+
 if [ "$1" != build ]
-then make install
+then	make install
+fi
+
+if [ -f /usr/gnu/bin/gcc ]
+then	PATH=/usr/gnu/bin:$PATH
+	rm -f $CCACHE
+	CC=gcc CONFIG_SHELL=/bin/bigsh  AR=gar /bin/bigsh ./configure --prefix=/usr/local/gnu
+	make clean libfl.a
+	if [ "$1" != build ]
+	then make installlib
+	fi
 fi
