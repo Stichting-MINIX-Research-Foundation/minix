@@ -83,6 +83,13 @@ PRIVATE unsigned scr_width;	/* # characters on a line */
 PRIVATE unsigned scr_lines;	/* # lines on the screen */
 PRIVATE unsigned scr_size;	/* # characters on the screen */
 
+PRIVATE int disabled_vc = -1;	/* Virtual console that was active when 
+				 * disable_console was called.
+				 */
+PRIVATE int disabled_sm;	/* Scroll mode to be restored when re-enabling
+				 * console
+				 */
+
 /* Per console data. */
 typedef struct console {
   tty_t *c_tty;			/* associated TTY struct */
@@ -133,9 +140,11 @@ FORWARD _PROTOTYPE( void set_6845, (int reg, unsigned val)		);
 FORWARD _PROTOTYPE( void get_6845, (int reg, unsigned *val)		);
 FORWARD _PROTOTYPE( void stop_beep, (timer_t *tmrp)			);
 FORWARD _PROTOTYPE( void cons_org0, (void)				);
+FORWARD _PROTOTYPE( void disable_console, (void)			);
+FORWARD _PROTOTYPE( void reenable_console, (void)			);
 FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
 FORWARD _PROTOTYPE( int cons_ioctl, (tty_t *tp, int)			);
-PRIVATE _PROTOTYPE( void ser_putc, (char c)				);
+FORWARD _PROTOTYPE( void ser_putc, (char c)				);
 
 /*===========================================================================*
  *				cons_write				     *
@@ -792,9 +801,11 @@ PUBLIC void do_video(message *m)
 	switch (m->m_type) {
 	    case DEV_OPEN:
 		/* Should grant IOPL */
+		disable_console();
 		r= OK;
 		break;
 	    case DEV_CLOSE:
+		reenable_console();
 		r= OK;
 		break;
 	    case DEV_IOCTL_S:
@@ -1212,6 +1223,37 @@ PRIVATE void cons_org0()
 	flush(cons);
   }
   select_console(ccurrent);
+}
+
+/*===========================================================================*
+ *				disable_console				     *
+ *===========================================================================*/
+PRIVATE void disable_console()
+{
+	if (disabled_vc != -1)
+		return;
+	
+	disabled_vc = ccurrent;
+	disabled_sm = softscroll;
+
+	cons_org0();
+	softscroll = 1;
+	select_console(0);
+
+	/* Should also disable further output to virtual consoles */
+}
+
+/*===========================================================================*
+ *				reenable_console			     *
+ *===========================================================================*/
+PRIVATE void reenable_console()
+{
+	if (disabled_vc == -1)
+		return;
+
+	softscroll = disabled_sm;
+	select_console(disabled_vc);
+	disabled_vc = -1;
 }
 
 /*===========================================================================*
