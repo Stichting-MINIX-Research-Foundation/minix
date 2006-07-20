@@ -82,7 +82,8 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define PM_C	~(c(SYS_DEVIO) | c(SYS_SDEVIO) | c(SYS_VDEVIO) | c(SYS_IRQCTL) | c(SYS_INT86))
 #define FS_C	(c(SYS_KILL) | c(SYS_VIRCOPY) | c(SYS_VIRVCOPY) | c(SYS_UMAP) | c(SYS_GETINFO) | c(SYS_EXIT) | c(SYS_TIMES) | c(SYS_SETALARM))
 #define DRV_C (FS_C | c(SYS_SEGCTL) | c(SYS_IRQCTL) | c(SYS_INT86) | c(SYS_DEVIO) | c(SYS_SDEVIO) | c(SYS_VDEVIO))
-#define TTY_C (DRV_C | c(SYS_ABORT) | c(SYS_VM_MAP) | c(SYS_IOPENABLE))
+#define TTY_C (DRV_C | c(SYS_ABORT) | c(SYS_VM_MAP) | c(SYS_IOPENABLE) | \
+		c(SYS_PHYSCOPY))
 #define MEM_C	(DRV_C | c(SYS_PHYSCOPY) | c(SYS_PHYSVCOPY) | c(SYS_VM_MAP) | \
 	c(SYS_IOPENABLE))
 
