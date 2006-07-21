@@ -374,7 +374,7 @@ eject:	eject.c
 
 env:	env.c
 	$(CCLD) -o $@ $?
-	@install -S 4kw $@
+	@install -S 50k $@
 
 expand:	expand.c
 	$(CCLD) -o $@ $?
