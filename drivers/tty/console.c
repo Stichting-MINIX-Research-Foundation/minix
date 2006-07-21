@@ -1302,7 +1302,7 @@ message *m;
   if (!machine.vdu_ega) return(ENOTTY);
   result = ga_program(seq1);	/* bring font memory into view */
 
-  result = sys_physcopy(m->IO_ENDPT, D, (vir_bytes) m->ADDRESS, 
+  result = sys_physcopy(m->IO_ENDPT, GRANT_SEG, (vir_bytes) m->ADDRESS, 
   	NONE, PHYS_SEG, (phys_bytes) GA_VIDEO_ADDRESS, (phys_bytes)GA_FONT_SIZE);
 
   result = ga_program(seq2);	/* restore */
