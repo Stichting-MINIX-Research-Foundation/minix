@@ -2,6 +2,7 @@
 
 CCACHE=config.cache
 rm -f $CCACHE
+make distclean
 RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./configure --prefix=/usr
 make clean all install
 
