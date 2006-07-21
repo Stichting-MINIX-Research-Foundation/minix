@@ -3,18 +3,11 @@
 CCACHE=config.cache
 rm -f $CCACHE
 RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./configure --prefix=/usr
-make clean all
-
-if [ "$1" != build ]
-then	make install
-fi
+make clean all install
 
 if [ -f /usr/gnu/bin/gcc ]
 then	PATH=/usr/gnu/bin:$PATH
 	rm -f $CCACHE
 	CC=gcc CONFIG_SHELL=/bin/bigsh  AR=gar /bin/bigsh ./configure --prefix=/usr/local/gnu
-	make clean libfl.a
-	if [ "$1" != build ]
-	then make installlib
-	fi
+	make clean libfl.a install
 fi
