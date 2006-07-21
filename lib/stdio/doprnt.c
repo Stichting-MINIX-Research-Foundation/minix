@@ -80,7 +80,7 @@ o_print(va_list *ap, int flags, char *s, char c, int precision, int is_signed)
 		unsigned_val = signed_val;
 	}
 	if ((flags & FL_ALT) && (c == 'o')) *s++ = '0';
-	if (!unsigned_val) {
+	if (!unsigned_val && c != 'p') {
 		 if (!precision)
 			return s;
 	} else if (((flags & FL_ALT) && (c == 'x' || c == 'X'))
@@ -268,7 +268,7 @@ _doprnt(register const char *fmt, va_list ap, FILE *stream)
 		 */
 		between_fill = 0;
 		if ((flags & FL_ZEROFILL)
-		    && (((c == 'x' || c == 'X') && (flags & FL_ALT))
+		    && (((c == 'x' || c == 'X') && (flags & FL_ALT) && j > 1)
 			|| (c == 'p')
 			|| ((flags & FL_SIGNEDCONV)
 			    && ( *s1 == '+' || *s1 == '-' || *s1 == ' '))))
