@@ -17,7 +17,6 @@ usage:
 	@echo " "
 	@echo "big compiles the commands the require large compiler sizes."
 	@echo "small compiles the rest. all compiles all."
-	@false
 
 all: big  small
 
@@ -27,13 +26,12 @@ big:
 	binsizes big
 	cd zmodem && make
 	cd $(BZIP2) && /bin/sh build build
-	cd $(FLEX) && /bin/sh build build
 	binsizes normal
 
 biginstall: big
 	cd zmodem && make install
 	cd $(BZIP2) && make install
-	cd $(FLEX) && make install
+	cd $(FLEX) && sh build
 
 clean::
 	cd $(BZIP2) && make clean
