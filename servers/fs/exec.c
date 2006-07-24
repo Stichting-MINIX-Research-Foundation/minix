@@ -574,9 +574,12 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
   {
 	b= read_map(rip, o);
 	if (b == NO_BLOCK)
-		return EIO;	/* Executables don't have holes */
-
-	bp = get_block(rip->i_dev, b, NORMAL);	/* get block */
+	{
+		bp = get_block(NO_DEV, NO_BLOCK, NORMAL);    /* get a buffer */
+		zero_block(bp);
+	}
+	else
+		bp = get_block(rip->i_dev, b, NORMAL);	/* get block */
 	if (o < off)
 		b_off= off-o;
 	else
