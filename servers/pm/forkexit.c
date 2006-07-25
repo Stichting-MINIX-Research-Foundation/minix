@@ -325,8 +325,10 @@ int for_trace;
 		/* 'rmp' now points to a child to be disinherited. */
 		rmp->mp_parent = INIT_PROC_NR;
 		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
-		if (parent_waiting && (rmp->mp_flags & ZOMBIE))
+		if (parent_waiting && (rmp->mp_flags & ZOMBIE) &&
+			rmp->mp_fs_call != PM_EXIT) {
 			cleanup(rmp);
+		}
 	}
   }
 
