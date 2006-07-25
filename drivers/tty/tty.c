@@ -670,6 +670,9 @@ int safe;
 	if (isconsole(tp)) r = kbd_loadmap(m_ptr, safe);
 	break;
 
+    case TIOCSFON_OLD:
+	printf("TTY: old TIOCSFON ignored.\n");
+	break;
     case TIOCSFON:
 	/* Load a font into an EGA or VGA card (hs@hck.hr) */
 	if (isconsole(tp)) r = con_loadfont(m_ptr);

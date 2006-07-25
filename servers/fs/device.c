@@ -24,6 +24,7 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include <minix/ioctl.h>
+#include <sys/ioc_tty.h>
 #include "file.h"
 #include "fproc.h"
 #include "inode.h"
@@ -239,7 +240,10 @@ off_t *pos;
 			*op = DEV_IOCTL_S;
 			if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
 			if(_MINIX_IOCTL_IOW(m_in.REQUEST)) access |= CPF_READ;
-			size = _MINIX_IOCTL_SIZE(m_in.REQUEST);
+			if(_MINIX_IOCTL_BIG(m_in.REQUEST))
+				size = _MINIX_IOCTL_SIZE_BIG(m_in.REQUEST);
+			else
+				size = _MINIX_IOCTL_SIZE(m_in.REQUEST);
 
 			/* Do this even if no I/O happens with the ioctl, in
 			 * order to disambiguate requests with DEV_IOCTL_S.
