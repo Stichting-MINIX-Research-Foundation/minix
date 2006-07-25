@@ -3,12 +3,14 @@
 CCACHE=config.cache
 rm -f $CCACHE
 make distclean
-RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./configure --prefix=/usr
+L=libfl.a
+YACC=/usr/bin/yacc RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./configure --prefix=/usr
 make clean all install
+mv /usr/lib/$L /usr/lib/i386
 
 if [ -f /usr/gnu/bin/gcc ]
 then	PATH=/usr/gnu/bin:$PATH
 	rm -f $CCACHE
-	CC=gcc CONFIG_SHELL=/bin/bigsh  AR=gar /bin/bigsh ./configure --prefix=/usr/local/gnu
+	YACC=/usr/bin/yacc CC=gcc CONFIG_SHELL=/bin/bigsh  AR=gar /bin/bigsh ./configure --prefix=/usr/local/gnu
 	make clean libfl.a install
 fi
