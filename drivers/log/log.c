@@ -369,6 +369,7 @@ PRIVATE void do_status(message *m_ptr)
 			m.m_type = DEV_REVIVE;
 			m.REP_ENDPT = logdevices[d].log_proc_nr;
 			m.REP_STATUS  = logdevices[d].log_status;
+			m.REP_IO_GRANT  = logdevices[d].log_user_vir_g;
   			send(m_ptr->m_source, &m);
 			logdevices[d].log_proc_nr = 0;
 			logdevices[d].log_revive_alerted = 0;
