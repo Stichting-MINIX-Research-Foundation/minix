@@ -16,7 +16,7 @@ ps:	ps.c /usr/include/minix/config.h /usr/include/minix/const.h \
 	install -S 32kw $@
 install:	/usr/bin/ps
 /usr/bin/ps:	ps
-	install -cs -o bin -g kmem -m 2755 $? $@
+	install -cs -o root -m 4755 $? $@
 
 
 
