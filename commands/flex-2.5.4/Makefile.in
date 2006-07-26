@@ -94,7 +94,7 @@ all: $(FLEX)
 
 $(FLEX): .bootstrap $(OBJECTS) $(FLEXLIB)
 	$(CC) $(CFLAGS) -o $(FLEX) $(LDFLAGS) $(OBJECTS) $(FLEXLIB) $(LIBS)
-	install -S256k $(FLEX)
+	/usr/bin/install -S256k $(FLEX)
 
 .bootstrap: initscan.c
 	@rm -f scan.c
