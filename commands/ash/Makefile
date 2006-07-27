@@ -64,7 +64,7 @@ install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 	install -lcs $? $@
 
 /bin/bigsh:	/usr/bin/ash
-	install -S 1500000 -lcs $? $@
+	install -S 6600k -lcs $? $@
 
 clean:
 	rm -f $(CLEANFILES) sh core
