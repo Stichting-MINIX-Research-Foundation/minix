@@ -29,9 +29,11 @@ big:
 	binsizes normal
 
 biginstall: big
+	binsizes big
 	cd zmodem && make install
 	cd $(BZIP2) && make install
 	cd $(FLEX) && sh build
+	binsizes normal
 
 clean::
 	cd $(BZIP2) && make clean
