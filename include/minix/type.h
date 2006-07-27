@@ -116,10 +116,10 @@ struct kinfo {
 };
 
 /* Load data accounted every this no. of seconds. */
-#define _LOAD_UNIT_SECS		 6 
+#define _LOAD_UNIT_SECS		 6 	/* Changing this breaks ABI. */
 
 /* Load data history is kept for this long. */
-#define _LOAD_HISTORY_MINUTES	15
+#define _LOAD_HISTORY_MINUTES	15	/* Changing this breaks ABI. */
 #define _LOAD_HISTORY_SECONDS	(60*_LOAD_HISTORY_MINUTES)
 
 /* We need this many slots to store the load history. */

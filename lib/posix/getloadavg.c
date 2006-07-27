@@ -1,5 +1,6 @@
 
 #include <sys/types.h>
+#include <minix/sysinfo.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <lib.h>
@@ -11,12 +12,17 @@ int getloadavg(double *loadavg, int nelem)
   int h, p, unfilled_ticks;
 #define PERIODS 3
   int minutes[3] = { 1, 5, 15 };
+  size_t loadsize;
+  ssize_t l;
   if(nelem < 1) {
 	errno = ENOSPC;
 	return -1;
   }
 
-  if(getsysinfo(PM_PROC_NR, SI_LOADINFO, &loadinfo) < 0)
+  loadsize = sizeof(loadinfo);
+  if((l=getsysinfo_up(PM_PROC_NR, SIU_LOADINFO, loadsize, &loadinfo)) < 0)
+	return -1;
+  if(l != sizeof(loadinfo))
 	return -1;
   if(nelem > PERIODS)
 	nelem = PERIODS;

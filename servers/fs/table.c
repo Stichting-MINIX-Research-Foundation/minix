@@ -114,6 +114,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	do_ftruncate,	/* 94 = truncate */
 	do_chmod,	/* 95 = fchmod */
 	do_chown,	/* 96 = fchown */
+	no_sys,		/* 97 = (getsysinfo_up) */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

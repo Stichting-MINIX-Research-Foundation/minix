@@ -516,6 +516,11 @@
 #define SEL_ERRORFDS   m8_p3
 #define SEL_TIMEOUT    m8_p4
 
+/* Field names for GETSYSINFO_UP (PM). */
+#define SIU_WHAT	m2_i1
+#define SIU_LEN		m2_i2
+#define SIU_WHERE	m2_p1
+
 /* Message for SYS_READBIOS */
 #define RDB_SIZE	m2_i1
 #define RDB_ADDR	m2_l1

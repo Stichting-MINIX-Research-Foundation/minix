@@ -21,6 +21,7 @@
 #include <sys/utsname.h>
 #include <minix/com.h>
 #include <minix/config.h>
+#include <minix/sysinfo.h>
 #include <minix/type.h>
 #include <string.h>
 #include <lib.h>
@@ -274,6 +275,37 @@ PUBLIC int do_getsysinfo()
   if (OK != (s=sys_datacopy(SELF, src_addr, who_e, dst_addr, len)))
   	return(s);
   return(OK);
+}
+
+/*===========================================================================*
+ *				do_getsysinfo_up		       	     *
+ *===========================================================================*/
+PUBLIC int do_getsysinfo_up()
+{
+  vir_bytes src_addr, dst_addr;
+  struct loadinfo loadinfo;
+  size_t len, real_len;
+  int s, r;
+
+  switch(m_in.SIU_WHAT) {
+  case SIU_LOADINFO:			/* loadinfo is obtained via PM */
+        sys_getloadinfo(&loadinfo);
+        src_addr = (vir_bytes) &loadinfo;
+        real_len = sizeof(struct loadinfo);
+        break;
+  default:
+  	return(EINVAL);
+  }
+
+  /* Let application know what the length was. */
+  len = real_len;
+  if(len > m_in.SIU_LEN)
+	len = m_in.SIU_LEN;
+
+  dst_addr = (vir_bytes) m_in.SIU_WHERE;
+  if (OK != (s=sys_datacopy(SELF, src_addr, who_e, dst_addr, len)))
+  	return(s);
+  return(real_len);
 }
 
 /*===========================================================================*

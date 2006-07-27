@@ -66,6 +66,7 @@ _PROTOTYPE( int do_reboot, (void)					);
 _PROTOTYPE( int do_procstat, (void)					);
 _PROTOTYPE( int do_sysuname, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
+_PROTOTYPE( int do_getsysinfo_up, (void)					);
 _PROTOTYPE( int do_getprocnr, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_allocmem, (void)					);
