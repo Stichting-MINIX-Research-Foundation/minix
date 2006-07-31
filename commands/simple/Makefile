@@ -1618,7 +1618,7 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/top:	top
-	install -cs -o bin $? $@
+	install -cs -o root -S 4755 $? $@
 
 /usr/bin/touch:	touch
 	install -cs -o bin $? $@
