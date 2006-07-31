@@ -42,6 +42,7 @@
 775 bin     operator /usr/local/lib/ack
 775 bin     operator /usr/local/lib/gcc
 775 bin     operator /usr/local/man
+775 bin     operator /usr/local/src
 755  bin    operator  /usr/local/man/man1
 755  bin    operator  /usr/local/man/man2
 755  bin    operator  /usr/local/man/man3
