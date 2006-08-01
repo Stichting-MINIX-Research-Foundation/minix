@@ -1,7 +1,7 @@
 
 INC=/usr/include
-GCCVERSION=3.4.3
-MKHEADERS=/usr/gnu//libexec/gcc/i386-pc-minix/$(GCCVERSION)/install-tools/mkheaders
+MKHEADERS343=/usr/gnu//libexec/gcc/i386-pc-minix/3.4.3/install-tools/mkheaders
+MKHEADERS411=/usr/gnu//libexec/gcc/i386-pc-minix/4.1.1/install-tools/mkheaders
 
 all::
 
@@ -15,4 +15,5 @@ install::
 	@rm -f $(INC)/Makefile
 
 gcc: install
-	SHELL=/bin/sh; if [ -f $(MKHEADERS) ] ; then sh -e $(MKHEADERS) ; fi
+	SHELL=/bin/sh; if [ -f $(MKHEADERS343) ] ; then sh -e $(MKHEADERS343) ; fi
+	SHELL=/bin/sh; if [ -f $(MKHEADERS411) ] ; then sh -e $(MKHEADERS411) ; fi
