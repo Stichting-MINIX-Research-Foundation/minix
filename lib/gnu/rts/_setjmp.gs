@@ -11,7 +11,6 @@ ___setjmp:
 	movl	%ebx, 8(%eax)		# save program counter
 	movl	%esp, 12(%eax)		# save stack pointer
 	movl	%ebp, 16(%eax)		# save frame pointer
-	movl	20(%eax), %ebx 		# restore ebx
 	movl	%ecx, 24(%eax)
 	movl	%edx, 28(%eax)
 	movl	%esi, 32(%eax)
@@ -19,6 +18,9 @@ ___setjmp:
 	
 	movl	8(%esp), %ebx		# save mask?
 	movl	%ebx, 0(%eax)		# save whether to restore mask
+
+	pushl	20(%eax)		# save ebx
+
 	testl	%ebx, %ebx
 	jz		1f
 	leal	4(%eax), %ebx		# pointer to sigset_t
@@ -26,6 +28,7 @@ ___setjmp:
 	call	___newsigset		# save mask	
 	addl	$4, %esp
 1:
+	popl	%ebx
 	movl	$0, %eax
 	ret
 
