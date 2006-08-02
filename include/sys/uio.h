@@ -15,9 +15,11 @@ struct iovec
 	size_t	iov_len;
 };
 
+#if 0
 _PROTOTYPE(ssize_t readv, (int _fildes, const struct iovec *_iov,
 							int _iovcnt)	);
 _PROTOTYPE(ssize_t writev, (int _fildes, const struct iovec *_iov,
 							int iovcnt)	);
+#endif
 
 #endif /* _SYS_UIO_H */
