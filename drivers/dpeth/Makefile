@@ -2,6 +2,10 @@
 ##  Makefile for ISA ethernet drivers	May  02, 2000
 ##
 ##  $Log$
+##  Revision 1.5  2006/08/02 22:51:46  beng
+##  At least 8k stack for all drivers so that malloc() works, for grants,
+##  for printf().
+##
 ##  Revision 1.4  2006/07/10 12:43:38  philip
 ##  Safecopy support in ethernet drivers.
 ##
@@ -41,7 +45,7 @@ all build:	$(DRIVER)
 
 $(DRIVER):	$(OBJS)
 	$(CC) $(OBJS) $(LIBS) $(LDFLAGS)
-	install -S 4kw $(DRIVER)
+	install -S 16k $(DRIVER)
 
 ##  Install with other drivers
 install:	/usr/sbin/$(DRIVER)

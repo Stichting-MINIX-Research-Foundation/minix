@@ -22,7 +22,7 @@ OBJ = tty.o console.o vidcopy.o keyboard.o pty.o rs232.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 256w $(DRIVER)
+	install -S 8k $(DRIVER)
 
 # install with other drivers
 install:	
