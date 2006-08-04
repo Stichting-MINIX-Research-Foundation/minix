@@ -137,7 +137,8 @@ PUBLIC void dev_status(message *m)
 						st.REP_IO_GRANT);
 					if(endpt == NONE) {
 						printf("FS: proc with "
-					"grant %d not found (revive)\n",
+					"grant %d from %d not found (revive)\n",
+					st.m_source,
 					st.REP_IO_GRANT);
 						continue;
 					}
