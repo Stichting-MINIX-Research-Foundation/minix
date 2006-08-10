@@ -233,7 +233,7 @@ int main(int argc, char **argv)
 		/* Check if access to this service allowed. */
 		if (ioctl(client_fd, NWIOGTCPCONF, &tcpconf) == 0
 		    && tcpconf.nwtc_remaddr != tcpconf.nwtc_locaddr
-		    && !servxcheck(tcpconf.nwtc_remaddr, argv[1], NULL)
+		    && !servxcheck(tcpconf.nwtc_remaddr, service, NULL)
 		) {
 		    exit(1);
 		}
