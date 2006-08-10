@@ -83,20 +83,20 @@ PUBLIC void sys_task()
       caller_ptr = proc_addr(who_p);
 
       /* See if the caller made a valid request and try to handle it. */
-      if (!GET_BIT(priv(caller_ptr)->s_k_call_mask, call_nr)) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("SYSTEM: request %d from %d denied.\n",
-		call_nr,m.m_source);
-#endif
-	  result = ECALLDENIED;			/* illegal message type */
-      } /* else */
-      if (call_nr >= NR_SYS_CALLS) {		/* check call number */
+      if (call_nr < 0 || call_nr >= NR_SYS_CALLS) {	/* check call number */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("SYSTEM: illegal request %d from %d.\n",
 		call_nr,m.m_source);
 #endif
 	  result = EBADREQUEST;			/* illegal message type */
       } 
+      else if (!GET_BIT(priv(caller_ptr)->s_k_call_mask, call_nr)) {
+#if DEBUG_ENABLE_IPC_WARNINGS
+	  kprintf("SYSTEM: request %d from %d denied.\n",
+		call_nr,m.m_source);
+#endif
+	  result = ECALLDENIED;			/* illegal message type */
+      }
       else {
           result = (*call_vec[call_nr])(&m); /* handle the system call */
       }

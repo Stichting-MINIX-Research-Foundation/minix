@@ -82,9 +82,9 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  */
 #define FS_C SYS_KILL, SYS_VIRCOPY, SYS_SAFECOPYFROM, SYS_SAFECOPYTO, \
     SYS_VIRVCOPY, SYS_UMAP, SYS_GETINFO, SYS_EXIT, SYS_TIMES, SYS_SETALARM, \
-    SYS_PRIVCTL, SYS_TRACE 
+    SYS_PRIVCTL, SYS_TRACE , SYS_SETGRANT
 #define DRV_C	FS_C, SYS_SEGCTL, SYS_IRQCTL, SYS_INT86, SYS_DEVIO, \
-	SYS_SDEVIO, SYS_VDEVIO 
+	SYS_SDEVIO, SYS_VDEVIO, SYS_SETGRANT
 
 PRIVATE int
   fs_c[] = { FS_C },
@@ -92,7 +92,7 @@ PRIVATE int
   rs_c[] = { SYS_ALL_CALLS },
   ds_c[] = { SYS_ALL_CALLS },
   drv_c[] = { DRV_C },
-  tty_c[] = { DRV_C, SYS_ABORT, SYS_VM_MAP, SYS_IOPENABLE },
+  tty_c[] = { DRV_C, SYS_ABORT, SYS_VM_MAP, SYS_IOPENABLE, SYS_READBIOS },
   mem_c[] = { DRV_C, SYS_PHYSCOPY, SYS_PHYSVCOPY, SYS_VM_MAP, SYS_IOPENABLE };
 
 /* The system image table lists all programs that are part of the boot image. 
