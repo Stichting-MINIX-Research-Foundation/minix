@@ -139,7 +139,7 @@ int notouch;			/* check only */
 
 	if (position + bytes > PIPE_SIZE(rip->i_sp->s_block_size)) {
 		if ((oflags & O_NONBLOCK)
-		 && bytes < PIPE_SIZE(rip->i_sp->s_block_size))
+		 && bytes <= PIPE_SIZE(rip->i_sp->s_block_size))
 			return(EAGAIN);
 		else if ((oflags & O_NONBLOCK)
 		&& bytes > PIPE_SIZE(rip->i_sp->s_block_size)) {

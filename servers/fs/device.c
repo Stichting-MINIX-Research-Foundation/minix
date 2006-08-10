@@ -427,6 +427,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   static cp_grant_id_t gids[NR_IOREQS];
   int vec_grants = 0, orig_op, safe;
   void *buf_used;
+  endpoint_t ioproc;
 
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
@@ -469,8 +470,8 @@ int flags;			/* special flags, like O_NONBLOCK */
   dev_mess.COUNT    = bytes;
   dev_mess.HIGHPOS  = 0;
 
-  /* This field will be used if the i/o is suspended. */
-  fp->fp_ioproc = dev_mess.IO_ENDPT;
+  /* This will be used if the i/o is suspended. */
+  ioproc = dev_mess.IO_ENDPT;
 
   /* Call the task. */
   (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
@@ -487,10 +488,13 @@ int flags;			/* special flags, like O_NONBLOCK */
 	if(vec_grants > 0) {
 		panic(__FILE__,"SUSPEND on vectored i/o", NO_NUM);
 	}
+	/* fp is uninitialized at init time. */
+	if(!fp)
+		panic(__FILE__,"SUSPEND on NULL fp", NO_NUM);
 	if (flags & O_NONBLOCK) {
 		/* Not supposed to block. */
 		dev_mess.m_type = CANCEL;
-		dev_mess.IO_ENDPT = fp->fp_ioproc;
+		dev_mess.IO_ENDPT = ioproc;
 		dev_mess.IO_GRANT = (char *) gid;
 
 		/* This R_BIT/W_BIT check taken from suspend()/unpause()
@@ -507,6 +511,7 @@ int flags;			/* special flags, like O_NONBLOCK */
 		suspend(dp->dmap_driver);
 		assert(!GRANT_VALID(fp->fp_grant));
 		fp->fp_grant = gid;	/* revoke this when unsuspended. */
+		fp->fp_ioproc = ioproc;
 		return(SUSPEND);
 	}
   }
