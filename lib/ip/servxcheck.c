@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
@@ -214,7 +215,7 @@ int servxcheck(ipaddr_t peer, const char *service,
 
 	    if (c != '-' && c != '+') {
 		if (logf == nil) {
-		    fprintf(stderr, "%s: strange check word '%s'\n",
+		    syslog(LOG_ERR, "%s: strange check word '%s'\n",
 			path_servacces, word);
 		}
 		continue;
@@ -264,28 +265,8 @@ int servxcheck(ipaddr_t peer, const char *service,
 	if (logf != nil) {
 	    (*logf)(state == PASS, name);
 	} else {
-	    int lfd;
-	    char line[128+WLEN];
-	    time_t t;
-	    struct tm *tm;
-	    char month[][4]= {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-	    };
-
-	    if ((lfd= open("/usr/adm/log", O_WRONLY|O_APPEND)) != -1) {
-		time(&t);
-		tm= localtime(&t);
-		sprintf(line, "%s %02d %02d:%02d:%02d service '%s' %s to %s\n",
-		    month[tm->tm_mon],
-		    tm->tm_mday,
-		    tm->tm_hour, tm->tm_min, tm->tm_sec,
-		    service,
-		    state == PASS ? "granted" : "denied",
-		    name);
-		(void) write(lfd, line, strlen(line));
-		close(lfd);
-	    }
+	    syslog(LOG_NOTICE, "service '%s' %s to %s\n",
+		service, state == PASS ? "granted" : "denied", name);
 	}
     }
     return state == PASS;
