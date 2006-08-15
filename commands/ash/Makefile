@@ -17,7 +17,7 @@ OBJS=	alias.o builtins.o cd.o error.o eval.o exec.o expand.o histedit.o \
 	arith.o arith_lex.o
 
 LEX=flex
-YACC=yacc
+YACC=/usr/bin/yacc
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $@
 
