@@ -540,6 +540,7 @@
 #define RS_UP_COPY	(RS_RQ_BASE + 5)	/* start system service and
 						 * keep the binary in memory
 						 */
+#define RS_RUN		(RS_RQ_BASE + 6)	/* run without restart */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */
