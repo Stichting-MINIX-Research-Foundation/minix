@@ -20,7 +20,7 @@ int nr_in_use; 					/* number of services */
 extern int errno;				/* error status */
 
 /* Prototypes for internal functions that do the hard work. */
-FORWARD _PROTOTYPE( int start_service, (struct rproc *rp) );
+FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags) );
 FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
 FORWARD _PROTOTYPE( int fork_nb, (void) );
 FORWARD _PROTOTYPE( int read_exec, (struct rproc *rp) );
@@ -32,9 +32,10 @@ PRIVATE int shutting_down = FALSE;
 /*===========================================================================*
  *					do_up				     *
  *===========================================================================*/
-PUBLIC int do_up(m_ptr, do_copy)
+PUBLIC int do_up(m_ptr, do_copy, flags)
 message *m_ptr;					/* request message pointer */
 int do_copy;					/* keep copy in memory */
+int flags;					/* extra flags, if any */
 {
 /* A request was made to start a new system service. Dismember the request 
  * message and gather all information needed to start the service. Starting
@@ -99,7 +100,7 @@ int do_copy;					/* keep copy in memory */
   rp->r_restarts = -1; 				/* will be incremented */
   
   /* All information was gathered. Now try to start the system service. */
-  return(start_service(rp));
+  return(start_service(rp, flags));
 }
 
 
@@ -236,7 +237,7 @@ PUBLIC void do_exit(message *m_ptr)
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
 		      rp->r_restarts = -1;		/* reset counter */
-		      start_service(rp);		/* direct restart */
+		      start_service(rp, 0);		/* direct restart */
 	      }
               else if (WIFEXITED(exit_status) &&
 		      WEXITSTATUS(exit_status) == EXEC_FAILED) {
@@ -260,7 +261,7 @@ rp->r_restarts= 0;
 			rp->r_backoff= 1;
 		  }
 		  else {
-		      start_service(rp);		/* direct restart */
+		      start_service(rp, 0);		/* direct restart */
 		  }
               }
 	      break;
@@ -290,7 +291,7 @@ message *m_ptr;
 	  if (rp->r_backoff > 0) {
               rp->r_backoff -= 1;
 	      if (rp->r_backoff == 0) {
-		  start_service(rp);
+		  start_service(rp, 0);
 	      }
 	  }
 
@@ -345,8 +346,9 @@ message *m_ptr;
 /*===========================================================================*
  *				start_service				     *
  *===========================================================================*/
-PRIVATE int start_service(rp)
+PRIVATE int start_service(rp, flags)
 struct rproc *rp;
+int flags;
 {
 /* Try to execute the given system service. Fork a new process. The child
  * process will be inhibited from running by the NO_PRIV flag. Only let the
@@ -431,7 +433,7 @@ struct rproc *rp;
    * that's the case, the child will exit. 
    */
   child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
-  rp->r_flags = RS_IN_USE;			/* mark slot in use */
+  rp->r_flags = RS_IN_USE | flags;		/* mark slot in use */
   rp->r_restarts += 1;				/* raise nr of restarts */
   rp->r_proc_nr_e = child_proc_nr_e;		/* set child details */
   rp->r_pid = child_pid;

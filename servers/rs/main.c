@@ -81,8 +81,9 @@ PUBLIC int main(void)
        */
       else {	
           switch(call_nr) {
-          case RS_UP: 		result = do_up(&m, FALSE /*!do_copy*/);	break;
-          case RS_UP_COPY:	result = do_up(&m, TRUE /*do_copy*/);	break;
+          case RS_UP: 		result = do_up(&m, FALSE, 0); break;
+          case RS_UP_COPY:	result = do_up(&m, TRUE, 0); break;
+	  case RS_RUN:		result = do_up(&m, FALSE, RS_EXITING);	break;
           case RS_DOWN: 	result = do_down(&m); 		break;
           case RS_REFRESH: 	result = do_refresh(&m); 	break;
           case RS_RESCUE: 	result = do_rescue(&m); 	break;

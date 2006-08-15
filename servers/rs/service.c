@@ -27,6 +27,8 @@ PRIVATE char *known_requests[] = {
   "refresh", 
   "rescue", 
   "shutdown", 
+  "upcopy",	/* fill for RS_UP_COPY */
+  "run", 
   "catch for illegal requests"
 };
 #define ILLEGAL_REQUEST  sizeof(known_requests)/sizeof(char *)
@@ -74,7 +76,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
 {
   printf("Warning, %s\n", problem);
   printf("Usage:\n");
-  printf("    %s [-c] up <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
+  printf("    %s [-c] (up|run) <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
 	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD);
   printf("    %s down <pid>\n", app_name);
   printf("    %s refresh <pid>\n", app_name);
@@ -137,9 +139,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
   }
   req_nr = RS_RQ_BASE + req_type;
 
-  if (req_nr == RS_UP) {
+  if (req_nr == RS_UP || req_nr == RS_RUN) {
 
-      if (c_flag)
+      if (req_nr == RS_UP && c_flag)
 	req_nr= RS_UP_COPY;
 
       /* Verify argument count. */ 
@@ -266,6 +268,7 @@ PUBLIC int main(int argc, char **argv)
   switch(request) {
   case RS_UP:
   case RS_UP_COPY:
+  case RS_RUN:
       /* Build space-separated command string to be passed to RS server. */
       strcpy(command, req_path);
       command[strlen(req_path)] = ' ';
