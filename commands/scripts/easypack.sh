@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # This script gets and installs a package from the Website.
-# It is called by getpack package1 ...
+# It is called by easypack package1 ...
 # A package must be in the form of pack.tar.bz2 and must
 # include a build script that makes and installs it.
 # The build script should succeed if installation works, else fail
@@ -10,10 +10,9 @@
 #	easypack awk elle telnet	# fetch and install 3 packages
 #	easypack -o awk elle telnet	# fetch and replace existing packs
 
-SOURCE_DIR=/usr/src/commands		# where the source is deposited
+SOURCE_DIR=/usr/local/src		# where the source is deposited
 OVERWRITE=0				# can an installed package be overwritten?
-SOFTWARE_DIR="http://www.minix3.org/software"	# Tested and approved S/W
-BETA_DIR="http://www.minix3.org/beta_software"	# Untested software
+SOFTWARE_DIR="http://www.minix3.org/software"
 
 
 # Check for at least one parameter
@@ -25,6 +24,7 @@ esac
 # Change to source directory
 ORIG_DIR=`pwd`
 rm -f Log			# remove old debugging log
+mkdir $SOURCE_DIR || true
 cd $SOURCE_DIR || exit
 
 if [ "`id -u`" -ne 0 ]
@@ -64,28 +64,21 @@ do # Check to see if it exists. Don't overwrite unless -o given
 
    # Get the package
    URL=$SOFTWARE_DIR/$i.tar.bz2
-   URL1=$URL
    TARBZ=$i.tar.bz2
    if urlget $URL >$TARBZ 2>/dev/null
    then :
-   else # It is not in the directory of tested software. Try beta dir.
-	   URL=$BETA_DIR/$TARBZ
-	   if urlget $URL >$TARBZ 2>/dev/null
-	   then :
-	   else
-	   	   echo Cannot get $i.
-		   echo "   " Tried $URL1
-		   echo "   " Tried $URL
-		   echo "   " Skipping this package
-		   rm -f $TARBZ
-		   continue
-	   fi
+   else 
+	echo Cannot get $i.
+	echo "   " Tried $URL
+	echo "   " Skipping this package
+	rm -f $TARBZ
+	continue
    fi
 
    # We got it. Unpack it.
    echo Package $i fetched
    bunzip2 $TARBZ || smallbunzip2 $TARBZ
-   tar xf $i.tar
+   pax -r <$i.tar
    if test ! -d $i
       then echo Unable to unpack $i
 	   continue
