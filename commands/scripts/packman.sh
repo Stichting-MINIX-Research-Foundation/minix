@@ -1,5 +1,6 @@
 #!/bin/sh
 
+PACKDIR=`uname -p`/`uname -r`.`uname -v`
 RC=/usr/etc/rc.package
 CDDIR=PACKAGES
 CDMP=/mnt
@@ -10,10 +11,8 @@ LISTFILE=/etc/packages
 LISTURL=http://www.minix3.org/packages/List
 TMPDIR=/usr/tmp/packages
 mkdir -p $TMPDIR
-URL1=http://www.minix3.org/packages
-URL2=http://www.minix3.org/beta_packages
+URL1=http://www.minix3.org/packages/$PACKDIR
 SRCURL1=http://www.minix3.org/software
-SRCURL2=http://www.minix3.org/beta_software
 
 # can we execute bunzip2?
 if bunzip2 --help 2>&1 | grep usage >/dev/null
@@ -127,12 +126,12 @@ rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
 netpackages=""
 if ( : </dev/tcp ) 2>/dev/null
 then	if [ -f $LISTFILE ]
-	then	echo -n "Update package list from network? (y/N) "
+	then	echo -n "Update package list from network? (Y/n) "
 		read y
 	else	echo "No package list found - retrieving initial version."
 		y=y
 	fi
-	if [ "$y" = y -o "$y" = Y ]
+	if [ "$y" != n -a "$y" != n ]
 	then	echo "Fetching package list."
 		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
 	fi
@@ -194,13 +193,7 @@ do	cd $TMPDIR
 			then	echo "Retrieved ok. Installing .."
 				packit $file && echo Installed ok.
 				srcurl=$SRCURL1/$file
-			else	echo "Retrying from Beta binary location.."
-				if urlget $URL2/$file >$file
-				then	echo "Retrieved ok. Installing .."
-					packit $file  && echo Installed ok.
-					srcurl=$SRCURL2/$file
-				else echo "Retrieval failed."
-				fi
+			else	echo "Retrieval failed."
 			fi
 			if [ "$src" = y -o "$src" = Y ]
 			then	(	cd $SRC || exit
