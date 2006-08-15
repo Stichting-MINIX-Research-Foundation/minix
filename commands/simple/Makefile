@@ -77,6 +77,7 @@ ALL	= \
 	diff \
 	dirname \
 	du \
+	dumpcore \
 	ed \
 	eject \
 	env \
@@ -363,6 +364,10 @@ dirname:	dirname.c
 du:	du.c
 	$(CCLD) -o $@ $?
 	@install -S 256kw $@
+
+dumpcore:	dumpcore.c
+	$(CCLD) -D_SYSTEM=1 -o $@ $? -lsysutil -lsys 
+	@install -S 32k $@
 
 ed:	ed.c
 	$(CCLD) -o $@ $?
@@ -955,6 +960,7 @@ install:	\
 	/usr/bin/diff \
 	/usr/bin/dirname \
 	/usr/bin/du \
+	/usr/bin/dumpcore \
 	/usr/bin/ed \
 	/usr/bin/eject \
 	/usr/bin/env \
@@ -1249,6 +1255,9 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/du:	du
+	install -cs -o bin $? $@
+
+/usr/bin/dumpcore:	dumpcore
 	install -cs -o bin $? $@
 
 /usr/bin/ed:	ed

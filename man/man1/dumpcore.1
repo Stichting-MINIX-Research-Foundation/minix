@@ -1,0 +1,26 @@
+.TH DUMPCORE 1
+.SH NAME
+dumpcore \- generate core file of running process
+.SH SYNOPSIS
+service run /usr/bin/dumpcore -args \fIendpoint\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.de EX
+.TP 20
+\\fB\\$1\\fR
+# \\$2
+..
+.SH DESCRIPTION
+\fIDumpcore\fR executes the same code that FS executes in order to
+generate a core dump of a currently running process, identified by
+endpoint number. Obtain an endpoint number by using the F1 debug
+dump, or ps with -E option.
+.SH BUGS
+\fIDumpcore\fR has duplicate code with FS, and has to be started with
+the service command.
+.SH "SEE ALSO"
+.BR ps (1).
