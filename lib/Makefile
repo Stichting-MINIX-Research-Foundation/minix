@@ -191,10 +191,10 @@ clean::
 install: install-ack
 
 install-ack: all-ack
-	cp obj-ack//*.[ao] /usr/lib/i386
+	install -o bin obj-ack//*.[ao] /usr/lib/i386
 
 install-gnu: all-gnu
-	cp obj-gnu/*.[ao] /usr/gnu/lib
+	install -o bin obj-gnu/*.[ao] /usr/gnu/lib
 
 include Makedepend-ack
 include .depend-ack
