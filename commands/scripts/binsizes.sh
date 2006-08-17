@@ -1,5 +1,7 @@
 #!/bin/sh
 
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
 t=/etc/binary_sizes
 
 if [ "$#" -ne 1 ]
