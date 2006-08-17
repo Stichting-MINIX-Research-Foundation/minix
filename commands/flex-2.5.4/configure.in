@@ -9,6 +9,7 @@ AC_PROG_CC
 AC_PROG_RANLIB
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
+AC_CHECK_PROG(AR, ar, , ar)
 AC_CONST
 AC_TYPE_SIZE_T
 AC_HEADER_STDC
@@ -22,3 +23,7 @@ esac
 
 AC_OUTPUT(Makefile,
 [test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h])
+
+AC_SUBST(AR)
+AC_SUBST(ARFLAGS)
+

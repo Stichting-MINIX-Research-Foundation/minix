@@ -2,15 +2,17 @@
 
 CCACHE=config.cache
 rm -f $CCACHE
-make distclean
+if [ -f Makefile ] 
+then	make distclean
+fi
 L=libfl.a
-YACC=/usr/bin/yacc RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./configure --prefix=/usr
+INSTALL="/usr/bin/install -o bin" YACC=/usr/bin/yacc RANLIB=true AR=ar CONFIG_SHELL=/bin/bigsh CC=cc /bin/bigsh ./configure --prefix=/usr --libdir=/usr/lib/i386 --includedir=/usr/local/include
 make clean all install
-mv /usr/lib/$L /usr/lib/i386
 
 if [ -f /usr/gnu/bin/gcc ]
 then	PATH=/usr/gnu/bin:$PATH
 	rm -f $CCACHE
-	YACC=/usr/bin/yacc CC=gcc CONFIG_SHELL=/bin/bigsh  AR=gar /bin/bigsh ./configure --prefix=/usr/local/gnu
-	make clean libfl.a install
+	INSTALL="/usr/bin/install -o bin" YACC=/usr/bin/yacc CC=gcc CONFIG_SHELL=/bin/bigsh  AR=gar /bin/bigsh ./configure 
+	make clean $L
+	install -o bin -m 644 $L /usr/local/lib/gcc
 fi

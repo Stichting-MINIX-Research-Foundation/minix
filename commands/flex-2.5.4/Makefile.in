@@ -31,8 +31,8 @@ LIBS = @LIBS@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = $(exec_prefix)/bin
-libdir = $(exec_prefix)/lib
-includedir = $(prefix)/include
+libdir = @libdir@
+includedir = /usr/local/include
 manext = 1
 mandir = $(prefix)/man/man$(manext)
 
