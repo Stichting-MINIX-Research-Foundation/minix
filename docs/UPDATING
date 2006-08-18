@@ -1,0 +1,9 @@
+
+20060818:
+	You need flex in your $PATH, which has become part of the base
+	system. This needs bigger binaries.
+	If you don't have flex yet, you can compile it first by doing:
+	# cp /usr/src/etc/binary_sizes* /etc
+	# binsizes big
+	# cd /usr/src/commands/flex-2.5.4 
+	# sh build
