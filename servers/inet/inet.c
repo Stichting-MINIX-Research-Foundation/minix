@@ -258,10 +258,15 @@ PUBLIC void main()
 			mq_free(mq);
 		}
 #endif
+		else if (mq->mq_mess.m_type == DL_TASK_REPLY)
+		{
+			eth_rec(&mq->mq_mess);
+			mq_free(mq);
+		}
 		else
 		{
-compare(mq->mq_mess.m_type, ==, DL_TASK_REPLY);
-			eth_rec(&mq->mq_mess);
+			printf("inet: got bad message type 0x%x from %d\n",
+				mq->mq_mess.m_type, mq->mq_mess.m_source);
 			mq_free(mq);
 		}
 	}

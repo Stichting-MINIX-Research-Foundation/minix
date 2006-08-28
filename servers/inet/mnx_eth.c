@@ -108,6 +108,7 @@ PUBLIC void osdep_eth_init()
 
  		eth_port->etp_osdep.etp_port= ecp->ec_port;
 		eth_port->etp_osdep.etp_task= tasknr;
+		eth_port->etp_osdep.etp_send_ev= 0;
 		ev_init(&eth_port->etp_osdep.etp_recvev);
 
 		mess.m_type= DL_CONF;
@@ -335,6 +336,8 @@ acc_t *pack;
 			assert(loc_port != eth_port);
 			loc_port->etp_osdep.etp_sendrepl= block_msg;
 			ev_arg.ev_ptr= loc_port;
+			assert(!loc_port->etp_osdep.etp_send_ev);
+			loc_port->etp_osdep.etp_send_ev= 1;
 			ev_enqueue(&loc_port->etp_sendev, eth_sendev, ev_arg);
 		}
 		if (block_msg.DL_STAT & DL_PACK_RECV)
@@ -356,6 +359,17 @@ acc_t *pack;
 	{
 		printf("eth_write_port: sendrec to %d failed: %d\n",
 			eth_port->etp_osdep.etp_task, r);
+		return;
+	}
+
+	if (mess1.m_type != DL_TASK_REPLY ||
+		mess1.DL_PORT != eth_port->etp_osdep.etp_port ||
+		mess1.DL_PROC != this_proc)
+	{
+		printf(
+"eth_write_port: ignoring bad message (type = 0x%x, port = %d, proc = %d) from %d\n",
+			mess1.m_type, mess1.DL_PORT, mess1.DL_PROC,
+			mess1.m_source);
 		return;
 	}
 
@@ -392,6 +406,8 @@ acc_t *pack;
 	{
 		eth_port->etp_osdep.etp_sendrepl= mess1;
 		ev_arg.ev_ptr= eth_port;
+		assert(!eth_port->etp_osdep.etp_send_ev);
+		eth_port->etp_osdep.etp_send_ev= 1;
 		ev_enqueue(&eth_port->etp_sendev, eth_sendev, ev_arg);
 
 		/* Pretend that we didn't get a reply. */
@@ -428,7 +444,8 @@ message *m;
 
 	stat= m->DL_STAT & 0xffff;
 
-	assert(stat & (DL_PACK_SEND|DL_PACK_RECV));
+	if (!(stat & (DL_PACK_SEND|DL_PACK_RECV)))
+		printf("eth_rec: neither DL_PACK_SEND nor DL_PACK_RECV\n");
 	if (stat & DL_PACK_SEND)
 		write_int(loc_port);
 	if (stat & DL_PACK_RECV)
@@ -615,6 +632,14 @@ eth_port_t *eth_port;
 	u8_t *eth_dst_ptr;
 
 	pack= eth_port->etp_wr_pack;
+	if (pack == NULL)
+	{
+		printf("write_int: strange no packet on eth port %d\n",
+			eth_port-eth_port_table);
+		eth_restart_write(eth_port);
+		return;
+	}
+
 	eth_port->etp_wr_pack= NULL;
 
 	eth_dst_ptr= (u8_t *)ptr2acc_data(pack);
@@ -642,14 +667,29 @@ int count;
 	pack= eth_port->etp_rd_pack;
 	eth_port->etp_rd_pack= NULL;
 
-	cut_pack= bf_cut(pack, 0, count);
-	bf_afree(pack);
+	if (count < ETH_MIN_PACK_SIZE)
+	{
+		printf("mnx_eth`read_int: packet size too small (%d)\n",
+			count);
+		bf_afree(pack);
+	}
+	else if (count > ETH_MAX_PACK_SIZE_TAGGED)
+	{
+		printf("mnx_eth`read_int: packet size too big (%d)\n",
+			count);
+		bf_afree(pack);
+	}
+	else
+	{
+		cut_pack= bf_cut(pack, 0, count);
+		bf_afree(pack);
 
-	assert(!no_ethWritePort);
-	no_ethWritePort= 1;
-	eth_arrive(eth_port, cut_pack, count);
-	assert(no_ethWritePort);
-	no_ethWritePort= 0;
+		assert(!no_ethWritePort);
+		no_ethWritePort= 1;
+		eth_arrive(eth_port, cut_pack, count);
+		assert(no_ethWritePort);
+		no_ethWritePort= 0;
+	}
 	
 	eth_port->etp_flags &= ~(EPF_READ_IP|EPF_READ_SP);
 	setup_read(eth_port);
@@ -738,10 +778,13 @@ eth_port_t *eth_port;
 				(DL_PACK_SEND|DL_PACK_RECV));
 			if (block_msg.DL_STAT & DL_PACK_SEND)
 			{
-				loc_port->etp_osdep.etp_sendrepl= block_msg;
+				loc_port->etp_osdep.etp_sendrepl=
+					block_msg;
 				ev_arg.ev_ptr= loc_port;
-				ev_enqueue(&loc_port->etp_sendev, eth_sendev,
-					ev_arg);
+				assert(!loc_port->etp_osdep.etp_send_ev);
+				loc_port->etp_osdep.etp_send_ev= 1;
+				ev_enqueue(&loc_port->etp_sendev,
+					eth_sendev, ev_arg);
 			}
 			if (block_msg.DL_STAT & DL_PACK_RECV)
 			{
@@ -768,10 +811,23 @@ eth_port_t *eth_port;
 			continue;
 		}
 
-		assert (mess1.m_type == DL_TASK_REPLY &&
-			mess1.DL_PORT == mess1.DL_PORT &&
-			mess1.DL_PROC == this_proc);
-		compare((mess1.DL_STAT >> 16), ==, OK);
+		if (mess1.m_type != DL_TASK_REPLY ||
+			mess1.DL_PORT !=  eth_port->etp_osdep.etp_port ||
+			mess1.DL_PROC != this_proc)
+		{
+			printf("mnx_eth`setup_read: bad type, port or proc\n");
+			printf("got type %d, port %d, proc %d\n",
+				mess1.m_type, mess1.DL_PORT, mess1.DL_PROC);
+			continue;
+		}
+
+		if ((mess1.DL_STAT >> 16) != OK)
+		{
+			printf(
+			"mnx_eth`setup_read: bad value in DL_STAT: 0x%x\n",
+				mess1.DL_STAT);
+			mess1.DL_STAT= 0;
+		}
 
 		if (mess1.DL_STAT & DL_PACK_RECV)
 		{
@@ -781,15 +837,26 @@ eth_port_t *eth_port;
 			"setup_read(mess1): eth%d: got DL_PACK_RECV\n",
 					mess1.DL_PORT);
 			}
-			/* packet received */
-			pack_ptr= bf_cut(pack, 0, mess1.DL_COUNT);
-			bf_afree(pack);
 
-			assert(!no_ethWritePort);
-			no_ethWritePort= 1;
-			eth_arrive(eth_port, pack_ptr, mess1.DL_COUNT);
-			assert(no_ethWritePort);
-			no_ethWritePort= 0;
+			if (mess1.DL_COUNT < ETH_MIN_PACK_SIZE)
+			{
+				printf(
+			"mnx_eth`setup_read: packet size too small (%d)\n",
+					mess1.DL_COUNT);
+				bf_afree(pack);
+			}
+			else
+			{
+				/* packet received */
+				pack_ptr= bf_cut(pack, 0, mess1.DL_COUNT);
+				bf_afree(pack);
+
+				assert(!no_ethWritePort);
+				no_ethWritePort= 1;
+				eth_arrive(eth_port, pack_ptr, mess1.DL_COUNT);
+				assert(no_ethWritePort);
+				no_ethWritePort= 0;
+			}
 		}
 		else
 		{
@@ -800,9 +867,20 @@ eth_port_t *eth_port;
 
 		if (mess1.DL_STAT & DL_PACK_SEND)
 		{
-			eth_port->etp_osdep.etp_sendrepl= mess1;
-			ev_arg.ev_ptr= eth_port;
-			ev_enqueue(&eth_port->etp_sendev, eth_sendev, ev_arg);
+			if (eth_port->etp_osdep.etp_send_ev)
+			{
+				printf(
+	"mnx_eth`setup_read: etp_send_ev is set, ignoring DL_PACK_SEND\n");
+			}
+			else
+			{
+				eth_port->etp_osdep.etp_sendrepl= mess1;
+				ev_arg.ev_ptr= eth_port;
+				assert(!eth_port->etp_osdep.etp_send_ev);
+				eth_port->etp_osdep.etp_send_ev= 1;
+				ev_enqueue(&eth_port->etp_sendev, eth_sendev,
+					ev_arg);
+			}
 		}
 	} while (!(eth_port->etp_flags & EPF_READ_IP));
 	eth_port->etp_flags |= EPF_READ_SP;
@@ -851,6 +929,8 @@ ev_arg_t ev_arg;
 
 	assert(m_ptr->DL_STAT & DL_PACK_SEND);
 	m_ptr->DL_STAT &= ~DL_PACK_SEND;
+	assert(eth_port->etp_osdep.etp_send_ev);
+	eth_port->etp_osdep.etp_send_ev= 0;
 
 	/* packet is sent */
 	write_int(eth_port);
