@@ -111,8 +111,6 @@ PUBLIC void main()
 		}
 		ktsb += ip->stksize;	/* point to high end of stack */
 		rp->p_reg.sp = ktsb;	/* this task's initial stack ptr */
-		text_base = kinfo.code_base >> CLICK_SHIFT;
-					/* processes that are in the kernel */
 		hdrindex = 0;		/* all use the first a.out header */
 	} else {
 		hdrindex = 1 + i-NR_TASKS;	/* servers, drivers, INIT */
