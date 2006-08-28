@@ -45,6 +45,7 @@ register message *m_ptr;
   long tr_data = m_ptr->CTL_DATA;
   int tr_request = m_ptr->CTL_REQUEST;
   int tr_proc_nr_e = m_ptr->CTL_ENDPT, tr_proc_nr;
+  unsigned char ub;
   int i;
 
   if(!isokendpt(tr_proc_nr_e, &tr_proc_nr)) return(EINVAL);
@@ -134,6 +135,32 @@ register message *m_ptr;
 	rp->p_reg.psw |= TRACEBIT;
 	rp->p_rts_flags &= ~P_STOP;
 	if (rp->p_rts_flags == 0) lock_enqueue(rp);
+	m_ptr->CTL_DATA = 0;
+	break;
+
+  case T_READB_INS:		/* get value from instruction space */
+	if (rp->p_memmap[T].mem_len != 0) {
+		if ((dst = umap_local(rp, T, tr_addr, 1)) == 0) return(EFAULT);
+		phys_copy(dst, vir2phys(&ub), (phys_bytes) 1);
+		m_ptr->CTL_DATA = ub;
+		break;
+	}
+  
+	if ((dst = umap_local(rp, D, tr_addr, 1)) == 0) return(EFAULT);
+	phys_copy(dst, vir2phys(&ub), (phys_bytes) 1);
+	m_ptr->CTL_DATA = ub;
+	break;
+
+  case T_WRITEB_INS:		/* set value in instruction space */
+	if (rp->p_memmap[T].mem_len != 0) {
+		if ((dst = umap_local(rp, T, tr_addr, 1)) == 0) return(EFAULT);
+		phys_copy(vir2phys(&tr_data), dst, (phys_bytes) 1);
+		m_ptr->CTL_DATA = 0;
+		break;
+	}
+  
+	if ((dst = umap_local(rp, D, tr_addr, 1)) == 0) return(EFAULT);
+	phys_copy(vir2phys(&tr_data), dst, (phys_bytes) 1);
 	m_ptr->CTL_DATA = 0;
 	break;
 
