@@ -1478,7 +1478,7 @@ int status;			/* reply code */
   }
 
   if ((status = send(replyee, &tty_mess)) != OK) {
-	panic("TTY","tty_reply failed, status\n", status);
+	printf("tty: tty_reply to %d failed: %d\n", replyee, status);
   }
 }
 
