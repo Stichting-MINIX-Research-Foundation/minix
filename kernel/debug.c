@@ -27,7 +27,7 @@ void timer_start(int cat, char *name)
 
 	for(i = 0; i < sizeof(timingdata[0].names) && *name; i++)
 		timingdata[cat].names[i] = *name++;
-	timingdata[0].names[sizeof(timingdata[0].names)-1] = '\0';
+	timingdata[cat].names[sizeof(timingdata[0].names)-1] = '\0';
 
 	if (starttimes[cat][HIGHCOUNT]) {  return; }
 
