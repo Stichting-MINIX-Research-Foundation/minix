@@ -2169,6 +2169,7 @@ int safe;			/* use safecopies? */
 	packet[3] = (block >> 16) & 0xFF;
 	packet[4] = (block >>  8) & 0xFF;
 	packet[5] = (block >>  0) & 0xFF;
+	packet[6] = 0;
 	packet[7] = (nblocks >> 8) & 0xFF;
 	packet[8] = (nblocks >> 0) & 0xFF;
 	packet[9] = 0;
