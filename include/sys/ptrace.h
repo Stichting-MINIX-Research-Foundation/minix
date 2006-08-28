@@ -17,6 +17,13 @@
 #define T_EXIT		8	/* exit */
 #define T_STEP		9	/* set trace bit */
 
+#define T_READB_INS	100	/* Read a byte from the text segment of an
+				 * untraced process (only for root)
+				 */
+#define T_WRITEB_INS	101	/* Write a byte in the text segment of an
+				 * untraced process (only for root)
+				 */
+
 /* Function Prototypes. */
 #ifndef _ANSI_H
 #include <ansi.h>
