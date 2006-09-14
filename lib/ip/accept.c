@@ -23,15 +23,30 @@ int accept(int socket, struct sockaddr *_RESTRICT address,
 	socklen_t *_RESTRICT address_len)
 {
 	int r;
+	nwio_udpopt_t udpopt;
 
 	r= _tcp_accept(socket, address, address_len);
-	return r;
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+		return r;
 
-#if DEBUG
-	fprintf(stderr, "accept: not implemented for fd %d\n", socket);
-#endif
-	errno= ENOSYS;
-	return -1;
+	/* Unfortunately, we have to return EOPNOTSUPP for a socket that
+	 * does not support accept (such as a UDP socket) and ENOTSOCK for
+	 * filedescriptors that do not refer to a socket.
+	 */
+	r= ioctl(socket, NWIOGUDPOPT, &udpopt);
+	if (r == 0)
+	{
+		/* UDP socket */
+		errno= EOPNOTSUPP;
+		return -1;
+	}
+	if ((errno == ENOTTY || errno == EBADIOCTL))
+	{
+		errno= ENOTSOCK;
+		return -1;
+	}
+
+	return r;
 }
 
 static int _tcp_accept(int socket, struct sockaddr *_RESTRICT address,

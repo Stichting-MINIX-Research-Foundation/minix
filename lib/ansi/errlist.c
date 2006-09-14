@@ -85,6 +85,7 @@ const char *_sys_errlist[] = {
 	"Message too long",		/* EMSGSIZE */
 	"Socket operation on non-socket", /* ENOTSOCK */
 	"Protocol not available",	/* ENOPROTOOPT */
+	"Operation not supported",	/* EOPNOTSUPP */
 };
 
 const int _sys_nerr = sizeof(_sys_errlist) / sizeof(_sys_errlist[0]);
