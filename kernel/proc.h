@@ -29,7 +29,7 @@ struct proc {
   proc_nr_t p_nr;		/* number of this process (for fast access) */
   struct priv *p_priv;		/* system privileges structure */
   short p_rts_flags;		/* process is runnable only if zero */
-  short p_misc_flags;		/* flags that do suspend the process */
+  short p_misc_flags;		/* flags that do not suspend the process */
 
   char p_priority;		/* current scheduling priority */
   char p_max_priority;		/* maximum scheduling priority */
