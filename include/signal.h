@@ -54,7 +54,7 @@ typedef unsigned long sigset_t;
 #define SIGTTIN           22	/* background process wants to read */
 #define SIGTTOU           23	/* background process wants to write */
 
-#define _NSIG             23	/* number of signals used */
+#define _NSIG             24	/* highest signal number plus one */
 
 #ifdef _MINIX
 #define SIGIOT             SIGABRT /* for people who speak PDP-11 */
