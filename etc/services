@@ -76,6 +76,7 @@ netnews		532/tcp		readnews
 netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 rdist		541/tcp		rdistd		# rdist daemon
+kshell		544/tcp		krcmd		# Kerberos remote shell
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 ingreslock	1524/tcp
 #
@@ -89,4 +90,5 @@ klogin		543/tcp				# Kerberos rlogin
 rsync		873/tcp
 rsync		873/udp
 eklogin		2105/tcp			# Kerberos encrypted rlogin
-kshell		544/tcp		krcmd		# Kerberos remote shell
+svn		3690/tcp			# Subversion
+svn		3690/udp			# Subversion
