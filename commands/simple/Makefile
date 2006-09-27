@@ -1468,7 +1468,7 @@ install:	\
 	install -cs -o root -m 4755 $? $@
 
 /usr/bin/progressbar:	progressbar
-	install -cs -o root -m 4755 $? $@
+	install -cs -o root -m 755 $? $@
 
 /usr/bin/prep:	prep
 	install -cs -o bin $? $@
