@@ -31,8 +31,8 @@ PRIVATE struct selectentry {
 	fd_set readfds, writefds, errorfds;
 	fd_set ready_readfds, ready_writefds, ready_errorfds;
 	fd_set *vir_readfds, *vir_writefds, *vir_errorfds;
-	struct filp *filps[FD_SETSIZE];
-	int type[FD_SETSIZE];
+	struct filp *filps[OPEN_MAX];
+	int type[OPEN_MAX];
 	int nfds, nreadyfds;
 	clock_t expiry;
 	timer_t timer;	/* if expiry > 0 */
@@ -164,15 +164,22 @@ PRIVATE void ops2tab(int ops, int fd, struct selectentry *e)
  *===========================================================================*/
 PRIVATE void copy_fdsets(struct selectentry *e)
 {
+	int fd_setsize;
+	if(e->nfds < 0 || e->nfds > OPEN_MAX)
+		panic(__FILE__, "select copy_fdsets: e->nfds wrong", e->nfds);
+
+	/* Only copy back as many bits as the user expects. */
+	fd_setsize = _FDSETWORDS(e->nfds)*_FDSETBITSPERWORD/8;
+
 	if (e->vir_readfds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_readfds,
-		e->req_endpt, D, (vir_bytes) e->vir_readfds, sizeof(fd_set));
+		e->req_endpt, D, (vir_bytes) e->vir_readfds, fd_setsize);
 	if (e->vir_writefds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_writefds,
-		e->req_endpt, D, (vir_bytes) e->vir_writefds, sizeof(fd_set));
+		e->req_endpt, D, (vir_bytes) e->vir_writefds, fd_setsize);
 	if (e->vir_errorfds)
 		sys_vircopy(SELF, D, (vir_bytes) &e->ready_errorfds,
-		e->req_endpt, D, (vir_bytes) e->vir_errorfds, sizeof(fd_set));
+		e->req_endpt, D, (vir_bytes) e->vir_errorfds, fd_setsize);
 
 	return;
 }
@@ -183,11 +190,11 @@ PRIVATE void copy_fdsets(struct selectentry *e)
 PUBLIC int do_select(void)
 {
 	int r, nfds, is_timeout = 1, nonzero_timeout = 0,
-		fd, s, block = 0;
+		fd, s, block = 0, fd_setsize;
 	struct timeval timeout;
 	nfds = m_in.SEL_NFDS;
 
-	if (nfds < 0 || nfds > FD_SETSIZE)
+	if (nfds < 0 || nfds > OPEN_MAX)
 		return EINVAL;
 
 	for(s = 0; s < MAXSELECTS; s++)
@@ -214,20 +221,26 @@ PUBLIC int do_select(void)
 	selecttab[s].vir_writefds = (fd_set *) m_in.SEL_WRITEFDS;
 	selecttab[s].vir_errorfds = (fd_set *) m_in.SEL_ERRORFDS;
 
-	/* copy args */
+	/* Copy args. Our storage size is zeroed above. Only copy
+	 * as many bits as user has supplied (nfds).
+	 * Could be compiled with a different OPEN_MAX or FD_SETSIZE.
+	 * If nfds is too large, we have already returned above.
+	 */
+
+	fd_setsize = _FDSETWORDS(nfds)*_FDSETBITSPERWORD/8;
 	if (selecttab[s].vir_readfds
 	 && (r=sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_READFDS,
-		SELF, D, (vir_bytes) &selecttab[s].readfds, sizeof(fd_set))) != OK)
+		SELF, D, (vir_bytes) &selecttab[s].readfds, fd_setsize)) != OK)
 		return r;
 
 	if (selecttab[s].vir_writefds
 	 && (r=sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_WRITEFDS,
-		SELF, D, (vir_bytes) &selecttab[s].writefds, sizeof(fd_set))) != OK)
+		SELF, D, (vir_bytes) &selecttab[s].writefds, fd_setsize)) != OK)
 		return r;
 
 	if (selecttab[s].vir_errorfds
 	 && (r=sys_vircopy(who_e, D, (vir_bytes) m_in.SEL_ERRORFDS,
-		SELF, D, (vir_bytes) &selecttab[s].errorfds, sizeof(fd_set))) != OK)
+		SELF, D, (vir_bytes) &selecttab[s].errorfds, fd_setsize)) != OK)
 		return r;
 
 	if (!m_in.SEL_TIMEOUT)
