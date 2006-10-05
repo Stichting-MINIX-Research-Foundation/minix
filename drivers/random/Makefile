@@ -42,7 +42,7 @@ install:	/usr/sbin/$(DRIVER)
 
 # clean up local files
 clean:
-	rm -f $(DRIVER) *.o *.bak 
+	rm -f $(DRIVER) *.o *.bak aes/*.o
 
 
 depend: 
