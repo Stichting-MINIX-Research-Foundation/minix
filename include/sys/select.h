@@ -26,15 +26,15 @@ typedef u32_t fd_mask;
 #endif
 
 /* We want to store FD_SETSIZE bits. */
-#define _FDSETWORDS	((FD_SETSIZE+_FDSETBITSPERWORD-1)/_FDSETBITSPERWORD)
+#define _FDSETWORDS(b)	(((b)+_FDSETBITSPERWORD-1)/_FDSETBITSPERWORD)
 
 typedef struct {
-	fd_mask	fds_bits[_FDSETWORDS];
+	fd_mask	fds_bits[_FDSETWORDS(FD_SETSIZE)];
 } fd_set;
 
 _PROTOTYPE( int select, (int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, struct timeval *timeout) );
 
-#define FD_ZERO(s) do { int _i; for(_i = 0; _i < _FDSETWORDS; _i++) { (s)->fds_bits[_i] = 0; } } while(0)
+#define FD_ZERO(s) do { int _i; for(_i = 0; _i < _FDSETWORDS(FD_SETSIZE); _i++) { (s)->fds_bits[_i] = 0; } } while(0)
 #define FD_SET(f, s) do { (s)->fds_bits[_FD_BITWORD(f)] |= _FD_BITMASK(f); } while(0)
 #define FD_CLR(f, s) do { (s)->fds_bits[_FD_BITWORD(f)] &= ~(_FD_BITMASK(f)); } while(0)
 #define FD_ISSET(f, s) ((s)->fds_bits[_FD_BITWORD(f)] & _FD_BITMASK(f))
