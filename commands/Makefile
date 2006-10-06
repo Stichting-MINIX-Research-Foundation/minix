@@ -37,7 +37,8 @@ biginstall: big
 
 clean::
 	cd $(BZIP2) && make clean
-	cd ibm && make clean
+	cd $(FLEX) && make clean
+	cd zmodem && make clean
 	if [ -f $(FLEX)/Makefile ]; then cd $(FLEX) && make clean ; fi
 	for p in $(SMALLPROGRAMS); do ( cd $$p && make clean ); done
 
