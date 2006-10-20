@@ -34,7 +34,9 @@ $(DRIVER):	ramdisk_image $(OBJ) $(LIBDRIVER)
 	install -S 8k $(DRIVER)
 
 imgrd.o:        ramdisk/image.c
+
 imgrd_s.o:      ramdisk/image.s
+	TMPDIR=/usr/tmp $(CC) -T /usr/tmp -c imgrd_s.s
 
 $(LIBDRIVER): 
 	cd $d/libdriver && $(MAKE) 
