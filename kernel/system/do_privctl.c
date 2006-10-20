@@ -32,6 +32,7 @@ message *m_ptr;			/* pointer to request message */
   phys_bytes caller_phys, kernel_phys;
   struct io_range io_range;
   struct mem_range mem_range;
+  struct priv priv;
 
   /* Check whether caller is allowed to make this call. Privileged proceses 
    * can only update the privileges of processes that are inhibited from 
@@ -87,11 +88,70 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_grant_table= 0;
 	priv(rp)->s_grant_entries= 0;
 
+	if (m_ptr->CTL_ARG_PTR)
+	{
+		/* Copy privilege structure from caller */
+		caller_phys = umap_local(caller_ptr, D,
+			(vir_bytes) m_ptr->CTL_ARG_PTR, sizeof(priv));
+		if (caller_phys == 0)
+			return EFAULT;
+		kernel_phys = vir2phys(&priv);
+		phys_copy(caller_phys, kernel_phys, sizeof(priv));
+
+		/* Copy the call mask */
+		for (i= 0; i<CALL_MASK_SIZE; i++)
+			priv(rp)->s_k_call_mask[i]= priv.s_k_call_mask[i];
+
+		/* Copy IRQs */
+		if (priv.s_nr_irq < 0 || priv.s_nr_irq > NR_IRQ)
+			return EINVAL;
+		priv(rp)->s_nr_irq= priv.s_nr_irq;
+		for (i= 0; i<priv.s_nr_irq; i++)
+		{
+			priv(rp)->s_irq_tab[i]= priv.s_irq_tab[i];
+			kprintf("do_privctl: adding IRQ %d\n",
+				priv(rp)->s_irq_tab[i]);
+		}
+
+		priv(rp)->s_flags |= CHECK_IRQ;	/* Check requests for IRQs */
+
+		/* Copy I/O ranges */
+		if (priv.s_nr_io_range < 0 || priv.s_nr_io_range > NR_IO_RANGE)
+			return EINVAL;
+		priv(rp)->s_nr_io_range= priv.s_nr_io_range;
+		for (i= 0; i<priv.s_nr_io_range; i++)
+		{
+			priv(rp)->s_io_tab[i]= priv.s_io_tab[i];
+			kprintf("do_privctl: adding I/O range [%x..%x]\n",
+				priv(rp)->s_io_tab[i].ior_base,
+				priv(rp)->s_io_tab[i].ior_limit);
+		}
+
+		/* Check requests for IRQs */
+		priv(rp)->s_flags |= CHECK_IO_PORT;
+
+		memcpy(priv(rp)->s_k_call_mask, priv.s_k_call_mask,
+			sizeof(priv(rp)->s_k_call_mask));
+	}
+
 	/* Done. Privileges have been set. Allow process to run again. */
 	old_flags = rp->p_rts_flags;		/* save value of the flags */
 	rp->p_rts_flags &= ~NO_PRIV; 		
 	if (old_flags != 0 && rp->p_rts_flags == 0) lock_enqueue(rp);
 	return(OK);
+  case SYS_PRIV_USER:
+	if (! (rp->p_rts_flags & NO_PRIV)) return(EPERM);
+
+	/* Make this process an ordinary user process.
+	 */
+	if ((i=get_priv(rp, 0)) != OK) return(i);
+
+	/* Done. Privileges have been set. Allow process to run again. */
+	old_flags = rp->p_rts_flags;		/* save value of the flags */
+	rp->p_rts_flags &= ~NO_PRIV; 		
+	if (old_flags != 0 && rp->p_rts_flags == 0) lock_enqueue(rp);
+	return(OK);
+
   case SYS_PRIV_ADD_IO:
 	if (rp->p_rts_flags & NO_PRIV)
 		return(EPERM);

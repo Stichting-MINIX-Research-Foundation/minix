@@ -315,6 +315,9 @@
 #define SYS_PRIV_ADD_MEM	3	/* Add memory range (struct mem_range)
 					 */
 #define SYS_PRIV_ADD_IRQ	4	/* Add IRQ */
+#define SYS_PRIV_USER		5	/* Make a process an oridinary user 
+					 * process.
+					 */
 
 /* Subfunctions for SYS_SETGRANT */
 #define SYS_PARAM_SET_GRANT	1	/* Set address and size of grant table */
