@@ -102,6 +102,7 @@ libc_FILES=" \
 	getloadavg.c \
 	getopt.c \
 	gettimeofday.c \
+	nice.c \
 	priority.c \
 	usleep.c"
 
