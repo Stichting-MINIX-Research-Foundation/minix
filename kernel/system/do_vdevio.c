@@ -37,8 +37,12 @@ register message *m_ptr;	/* pointer to request message */
   size_t bytes;               /* # bytes to be copied */
   vir_bytes caller_vir;       /* virtual address at caller */
   phys_bytes caller_phys;     /* physical address at caller */
-  int i;
+  port_t port;
+  int i, j, io_size, nr_io_range;
   int io_dir, io_type;
+  struct proc *rp;
+  struct priv *privp;
+  struct io_range *iorp;
     
   /* Get the request, size of the request vector, and check the values. */
   io_dir = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
@@ -48,9 +52,18 @@ register message *m_ptr;	/* pointer to request message */
   else return(EINVAL);
   if ((vec_size = m_ptr->DIO_VEC_SIZE) <= 0) return(EINVAL);
   switch (io_type) {
-      case _DIO_BYTE: bytes = vec_size * sizeof(pvb_pair_t); break;
-      case _DIO_WORD: bytes = vec_size * sizeof(pvw_pair_t); break;
-      case _DIO_LONG: bytes = vec_size * sizeof(pvl_pair_t); break;
+      case _DIO_BYTE:
+	bytes = vec_size * sizeof(pvb_pair_t);
+	io_size= sizeof(u8_t);
+	break;
+      case _DIO_WORD:
+	bytes = vec_size * sizeof(pvw_pair_t);
+	io_size= sizeof(u16_t);
+	break;
+      case _DIO_LONG:
+	bytes = vec_size * sizeof(pvl_pair_t);
+	io_size= sizeof(u32_t);
+	break;
       default:  return(EINVAL);   /* check type once and for all */
   }
   if (bytes > sizeof(vdevio_buf))  return(E2BIG);
@@ -60,6 +73,37 @@ register message *m_ptr;	/* pointer to request message */
   caller_phys = umap_local(proc_addr(who_p), D, caller_vir, bytes);
   if (0 == caller_phys) return(EFAULT);
   phys_copy(caller_phys, vir2phys(vdevio_buf), (phys_bytes) bytes);
+
+  rp= proc_addr(who_p);
+  privp= priv(rp);
+  if (privp && (privp->s_flags & CHECK_IO_PORT))
+  {
+	/* Check whether the I/O is allowed */
+	nr_io_range= privp->s_nr_io_range;
+	for (i=0; i<vec_size; i++)
+	{
+		switch (io_type) {
+		case _DIO_BYTE: port= pvb[i].port; break;
+		case _DIO_WORD: port= pvw[i].port; break;
+		default:	port= pvl[i].port; break;
+		}
+		for (j= 0, iorp= privp->s_io_tab; j<nr_io_range; j++, iorp++)
+		{
+			if (port >= iorp->ior_base &&
+				port+io_size-1 <= iorp->ior_limit)
+			{
+				break;
+			}
+		}
+		if (j >= nr_io_range)
+		{
+			kprintf(
+		"do_vdevio: I/O port check failed for proc %d, port 0x%x\n",
+				m_ptr->m_source, port);
+			return EPERM;
+		}
+	}
+  }
 
   /* Perform actual device I/O for byte, word, and long values. Note that 
    * the entire switch is wrapped in lock() and unlock() to prevent the I/O

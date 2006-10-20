@@ -26,7 +26,10 @@ register message *m_ptr;	/* pointer to request message */
   int count = m_ptr->DIO_VEC_SIZE;
   long port = m_ptr->DIO_PORT;
   phys_bytes phys_buf;
-  int req_type, req_dir;
+  int i, req_type, req_dir, io_type, size, nr_io_range;
+  struct proc *rp;
+  struct priv *privp;
+  struct io_range *iorp;
 
   /* Allow safe copies and accesses to SELF */
   if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
@@ -71,6 +74,32 @@ register message *m_ptr;	/* pointer to request message */
      if ((phys_buf = numap_local(proc_nr,
 	 (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
          return(EFAULT);
+  }
+
+  rp= proc_addr(who_p);
+  if (privp && privp->s_flags & CHECK_IO_PORT)
+  {
+	switch (io_type)
+	{
+	case _DIO_BYTE: size= 1; break;
+	case _DIO_WORD: size= 2; break;
+	case _DIO_LONG: size= 4; break;
+	default: size= 4; break;	/* Be conservative */
+	}
+	port= m_ptr->DIO_PORT;
+	nr_io_range= privp->s_nr_io_range;
+	for (i= 0, iorp= privp->s_io_tab; i<nr_io_range; i++, iorp++)
+	{
+		if (port >= iorp->ior_base && port+size-1 <= iorp->ior_limit)
+			break;
+	}
+	if (i >= nr_io_range)
+	{
+		kprintf(
+		"do_sdevio: I/O port check failed for proc %d, port 0x%x\n",
+			m_ptr->m_source, port);
+		return EPERM;
+	}
   }
 
   /* Perform device I/O for bytes and words. Longs are not supported. */
