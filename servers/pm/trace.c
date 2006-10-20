@@ -47,6 +47,35 @@ PUBLIC int do_trace()
 	mp->mp_reply.reply_trace = 0;
 	return(OK);
   }
+  if (m_in.request == T_READB_INS)
+  {
+	/* Special hack for reading text segments */
+	if (mp->mp_effuid != SUPER_USER)
+		return(EPERM);
+	if ((child=find_proc(m_in.pid))==NIL_MPROC)
+		return(ESRCH);
+
+	r= sys_trace(m_in.request,child->mp_endpoint,m_in.taddr,&m_in.data);
+	if (r != OK) return(r);
+
+	mp->mp_reply.reply_trace = m_in.data;
+	return(OK);
+  }
+  if (m_in.request == T_WRITEB_INS)
+  {
+	/* Special hack for patching text segments */
+	if (mp->mp_effuid != SUPER_USER)
+		return(EPERM);
+	if ((child=find_proc(m_in.pid))==NIL_MPROC)
+		return(ESRCH);
+
+	r= sys_trace(m_in.request,child->mp_endpoint,m_in.taddr,&m_in.data);
+	if (r != OK) return(r);
+
+	mp->mp_reply.reply_trace = m_in.data;
+	return(OK);
+  }
+
   if ((child=find_proc(m_in.pid))==NIL_MPROC || !(child->mp_flags & STOPPED)) {
 	return(ESRCH);
   }
