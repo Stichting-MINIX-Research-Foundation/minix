@@ -19,6 +19,7 @@
 
 /* Forward declaration */
 struct reg86u;
+struct rs_pci;
 
 #define SYSTASK SYSTEM
 
@@ -194,6 +195,7 @@ _PROTOTYPE( void pci_attr_w16, (int devind, int port, U16_t value)	);
 _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 _PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
 _PROTOTYPE( char *pci_slot_name, (int devind)				);
+_PROTOTYPE( int pci_set_acl, (struct rs_pci *rs_pci)			);
 
 #endif /* _SYSLIB_H */
 

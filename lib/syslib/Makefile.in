@@ -22,6 +22,7 @@ libsys_FILES=" \
 	pci_next_dev.c \
 	pci_rescan_bus.c \
 	pci_reserve.c \
+	pci_set_acl.c \
 	pci_slot_name.c \
 	safecopies.c \
 	sys_abort.c \

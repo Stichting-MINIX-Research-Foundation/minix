@@ -13,6 +13,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <ibm/pci.h>
 #include <sys/vm.h>
 #include <minix/com.h>
+#include <minix/rs.h>
 #include <minix/syslib.h>
 
 #include "pci.h"
@@ -146,6 +147,7 @@ FORWARD _PROTOTYPE( void pcii_wreg32, (int busind, int devind, int port,
 FORWARD _PROTOTYPE( u16_t pcii_rsts, (int busind)			);
 FORWARD _PROTOTYPE( void pcii_wsts, (int busind, U16_t value)		);
 FORWARD _PROTOTYPE( void print_capabilities, (int devind)		);
+FORWARD _PROTOTYPE( int visible, (struct rs_pci *aclp, int devind)	);
 
 /*===========================================================================*
  *			helper functions for I/O			     *
@@ -248,19 +250,23 @@ int *devindp;
 }
 
 /*===========================================================================*
- *				pci_first_dev				     *
+ *				pci_first_dev_a				     *
  *===========================================================================*/
-PUBLIC int pci_first_dev(devindp, vidp, didp)
+PUBLIC int pci_first_dev_a(aclp, devindp, vidp, didp)
+struct rs_pci *aclp;
 int *devindp;
 u16_t *vidp;
 u16_t *didp;
 {
-	int devind;
+	int i, devind;
 
 	for (devind= 0; devind < nr_pcidev; devind++)
 	{
-		if (!pcidev[devind].pd_inuse)
-			break;
+		if (pcidev[devind].pd_inuse)
+			continue;
+		if (!visible(aclp, devind))
+			continue;
+		break;
 	}
 	if (devind >= nr_pcidev)
 		return 0;
@@ -273,7 +279,8 @@ u16_t *didp;
 /*===========================================================================*
  *				pci_next_dev				     *
  *===========================================================================*/
-PUBLIC int pci_next_dev(devindp, vidp, didp)
+PUBLIC int pci_next_dev_a(aclp, devindp, vidp, didp)
+struct rs_pci *aclp;
 int *devindp;
 u16_t *vidp;
 u16_t *didp;
@@ -282,8 +289,11 @@ u16_t *didp;
 
 	for (devind= *devindp+1; devind < nr_pcidev; devind++)
 	{
-		if (!pcidev[devind].pd_inuse)
-			break;
+		if (pcidev[devind].pd_inuse)
+			continue;
+		if (!visible(aclp, devind))
+			continue;
+		break;
 	}
 	if (devind >= nr_pcidev)
 		return 0;
@@ -2426,6 +2436,48 @@ int devind;
 			capptr, type, str);
 		capptr= next;
 	}
+}
+
+
+/*===========================================================================*
+ *				visible					     *
+ *===========================================================================*/
+PRIVATE int visible(aclp, devind)
+struct rs_pci *aclp;
+int devind;
+{
+	int i;
+	u32_t class_id;
+
+	if (!aclp)
+		return TRUE;	/* Should be changed when ACLs become
+				 * mandatory.
+				 */
+	/* Check whether the caller is allowed to get this device. */
+	for (i= 0; i<aclp->rsp_nr_device; i++)
+	{
+		if (aclp->rsp_device[i].vid == pcidev[devind].pd_vid &&
+			aclp->rsp_device[i].did == pcidev[devind].pd_did)
+		{
+			return TRUE;
+		}
+	}
+	if (!aclp->rsp_nr_class)
+		return FALSE;
+
+	class_id= (pcidev[devind].pd_baseclass << 16) |
+		(pcidev[devind].pd_subclass << 8) |
+		pcidev[devind].pd_infclass;
+	for (i= 0; i<aclp->rsp_nr_class; i++)
+	{
+		if (aclp->rsp_class[i].class ==
+			(class_id & aclp->rsp_class[i].mask))
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 /*

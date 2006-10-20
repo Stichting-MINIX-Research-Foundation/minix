@@ -5,6 +5,7 @@ main.c
 #include "../drivers.h"
 
 #include <ibm/pci.h>
+#include <minix/rs.h>
 
 #include "pci.h"
 
@@ -16,6 +17,12 @@ PRIVATE struct name
 	int tasknr;
 } names[NR_DRIVERS];
 
+PRIVATE struct acl
+{
+	int inuse;
+	struct rs_pci acl;
+} acl[NR_DRIVERS];
+
 FORWARD _PROTOTYPE( void do_init, (message *mp)				);
 FORWARD _PROTOTYPE( void do_sig_handler, (void)				);
 FORWARD _PROTOTYPE( void do_first_dev, (message *mp)			);
@@ -26,6 +33,7 @@ FORWARD _PROTOTYPE( void do_dev_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_dev_name_s, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name_s, (message *mp)			);
+FORWARD _PROTOTYPE( void do_acl, (message *mp)				);
 FORWARD _PROTOTYPE( void do_reserve, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r8, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r16, (message *mp)			);
@@ -34,6 +42,8 @@ FORWARD _PROTOTYPE( void do_attr_w8, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_w16, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_w32, (message *mp)			);
 FORWARD _PROTOTYPE( void do_rescan_bus, (message *mp)			);
+FORWARD _PROTOTYPE( void reply, (message *mp, int result)		);
+FORWARD _PROTOTYPE( struct rs_pci *find_acl, (int endpoint)		);
 
 int main(void)
 {
@@ -72,6 +82,7 @@ int main(void)
 		case BUSC_PCI_RESCAN: do_rescan_bus(&m); break;
 		case BUSC_PCI_DEV_NAME_S: do_dev_name_s(&m); break;
 		case BUSC_PCI_SLOT_NAME_S: do_slot_name_s(&m); break;
+		case BUSC_PCI_ACL: do_acl(&m); break;
 		case PROC_EVENT: do_sig_handler(); break;
 		default:
 			printf("PCI: got message from %d, type %d\n",
@@ -140,10 +151,16 @@ message *mp;
 PRIVATE void do_first_dev(mp)
 message *mp;
 {
-	int r, devind;
+	int i, r, devind;
 	u16_t vid, did;
+	struct rs_pci *aclp;
 
-	r= pci_first_dev(&devind, &vid, &did);
+	aclp= find_acl(mp->m_source);
+
+	if (!aclp)
+		printf("do_first_dev: no acl for caller %d\n", mp->m_source);
+
+	r= pci_first_dev_a(aclp, &devind, &vid, &did);
 	if (r == 1)
 	{
 		mp->m1_i1= devind;
@@ -164,10 +181,12 @@ message *mp;
 {
 	int r, devind;
 	u16_t vid, did;
+	struct rs_pci *aclp;
 
 	devind= mp->m1_i1;
+	aclp= find_acl(mp->m_source);
 
-	r= pci_next_dev(&devind, &vid, &did);
+	r= pci_next_dev_a(aclp, &devind, &vid, &did);
 	if (r == 1)
 	{
 		mp->m1_i1= devind;
@@ -354,6 +373,48 @@ message *mp;
 	}
 }
 
+PRIVATE void do_acl(mp)
+message *mp;
+{
+	int i, r, gid;
+
+	if (mp->m_source != RS_PROC_NR)
+	{
+printf("do_acl: not from RS\n");
+		reply(mp, EPERM);
+		return;
+	}
+
+	for (i= 0; i<NR_DRIVERS; i++)
+	{
+		if (!acl[i].inuse)
+			break;
+	}
+	if (i >= NR_DRIVERS)
+	{
+printf("do_acl: table is full\n");
+		reply(mp, ENOMEM);
+		return;
+	}
+
+	gid= mp->m1_i1;
+
+	r= sys_safecopyfrom(mp->m_source, gid, 0, (vir_bytes)&acl[i].acl,
+		sizeof(acl[i].acl), D);
+	if (r != OK)
+	{
+printf("do_acl: safecopyfrom failed\n");
+		reply(mp, r);
+		return;
+	}
+	acl[i].inuse= 1;
+	printf("do_acl: setting ACL for %d ('%s') at entry %d\n",
+		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label,
+		i);
+
+	reply(mp, OK);
+}
+
 PRIVATE void do_reserve(mp)
 message *mp;
 {
@@ -521,3 +582,33 @@ message *mp;
 	}
 }
 
+
+PRIVATE void reply(mp, result)
+message *mp;
+int result;
+{
+	int r;
+	message m;
+
+	m.m_type= result;
+	r= send(mp->m_source, &m);
+	if (r != 0)
+		printf("reply: unable to send to %d: %d\n", mp->m_source, r);
+}
+
+
+PRIVATE struct rs_pci *find_acl(endpoint)
+int endpoint;
+{
+	int i;
+
+	/* Find ACL entry for caller */
+	for (i= 0; i<NR_DRIVERS; i++)
+	{
+		if (!acl[i].inuse)
+			continue;
+		if (acl[i].acl.rsp_endpoint == endpoint)
+			return &acl[i].acl;
+	}
+	return NULL;
+}

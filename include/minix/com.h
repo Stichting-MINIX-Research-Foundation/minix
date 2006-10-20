@@ -131,6 +131,9 @@
 #define BUSC_PCI_SLOT_NAME_S	(BUSC_RQ_BASE + 16)	/* Get the name of a
 							 * PCI slot (safecopy)
 							 */
+#define BUSC_PCI_ACL		(BUSC_RQ_BASE + 17)	/* Set the ACL for a
+							 * driver (safecopy)
+							 */
 
 /*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
@@ -537,13 +540,18 @@
 
 #define RS_UP		(RS_RQ_BASE + 0)	/* start system service */
 #define RS_DOWN		(RS_RQ_BASE + 1)	/* stop system service */
-#define RS_REFRESH	(RS_RQ_BASE + 2)	/* restart system service */
-#define RS_RESCUE	(RS_RQ_BASE + 3)	/* set rescue directory */
-#define RS_SHUTDOWN	(RS_RQ_BASE + 4)	/* alert about shutdown */
-#define RS_UP_COPY	(RS_RQ_BASE + 5)	/* start system service and
+#define RS_REFRESH	(RS_RQ_BASE + 2)	/* refresh system service */
+#define RS_RESTART	(RS_RQ_BASE + 3)	/* restart system service */
+#define RS_RESCUE	(RS_RQ_BASE + 4)	/* set rescue directory */
+#define RS_SHUTDOWN	(RS_RQ_BASE + 5)	/* alert about shutdown */
+#define RS_UP_COPY	(RS_RQ_BASE + 6)	/* start system service and
 						 * keep the binary in memory
 						 */
-#define RS_RUN		(RS_RQ_BASE + 6)	/* run without restart */
+#define RS_RUN		(RS_RQ_BASE + 7)	/* run without restart */
+#define RS_START	(RS_RQ_BASE + 8)	/* start a driver/service
+						 * arguments are passed in 
+						 * a struct rs_start
+						 */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */

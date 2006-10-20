@@ -84,6 +84,10 @@ extern struct pci_pcibridge pci_pcibridge[];
 /* Utility functions */
 _PROTOTYPE( void pci_reserve3, (int devind, int proc, char name[M3_STRING]));
 _PROTOTYPE( void pci_release, (char name[M3_STRING])			);
+_PROTOTYPE( int pci_first_dev_a, (struct rs_pci *aclp, int *devindp,
+					u16_t *vidp, u16_t *didp)	);
+_PROTOTYPE( int pci_next_dev_a, (struct rs_pci *aclp, int *devindp,
+					u16_t *vidp, u16_t *didp)	);
 
 /*
  * $PchId: pci.h,v 1.4 2001/12/06 20:21:22 philip Exp $

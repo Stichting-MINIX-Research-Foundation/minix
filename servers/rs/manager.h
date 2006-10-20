@@ -5,15 +5,23 @@
 
 /* Space reserved for program and arguments. */
 #define MAX_COMMAND_LEN     512		/* maximum argument string length */
+#define MAX_LABEL_LEN	     16		/* Unique name of (this instance of)
+					 * the driver
+					 */
+#define MAX_SCRIPT_LEN      256		/* maximum restart script name length */
 #define MAX_NR_ARGS	      4		/* maximum number of arguments */
 #define MAX_RESCUE_DIR_LEN   64		/* maximum rescue dir length */
+
+#define MAX_NR_PCI_ID	      4		/* maximum number of PCI device IDs */
+#define MAX_NR_PCI_CLASS      4		/* maximum number of PCI class IDs */
+#define MAX_NR_SYSTEM	      2		/* should match RSS_NR_SYSTEM */
 
 /* Definition of the system process table. This table only has entries for
  * the servers and drivers, and thus is not directly indexed by slot number.
  */
 extern struct rproc {
   int r_proc_nr_e;		/* process endpoint number */
-  pid_t r_pid;			/* process id */
+  pid_t r_pid;			/* process id, -1 if the process is not there */
   dev_t r_dev_nr;		/* major device number */
   int r_dev_style;		/* device style */
 
@@ -29,9 +37,25 @@ extern struct rproc {
   char *r_exec;			/* Executable image */ 
   size_t r_exec_len;		/* Length of image */
 
+  char r_label[MAX_LABEL_LEN];	/* unique name of this driver */
   char r_cmd[MAX_COMMAND_LEN];	/* raw command plus arguments */
+  char r_script[MAX_SCRIPT_LEN]; /* name of the restart script executable */
   char *r_argv[MAX_NR_ARGS+2];  /* parsed arguments vector */
   int r_argc;  			/* number of arguments */
+
+  /* Resources */
+  int r_set_resources;
+  struct priv r_priv;		/* Privilege structure to be passed to the
+				 * kernel.
+				 */
+  uid_t r_uid;
+  int r_nice;
+  int r_nr_pci_id;		/* Number of PCI devices IDs */
+  struct { u16_t vid; u16_t did; } r_pci_id[MAX_NR_PCI_ID];
+  int r_nr_pci_class;		/* Number of PCI class IDs */
+  struct { u32_t class; u32_t mask; } r_pci_class[MAX_NR_PCI_CLASS];
+
+  u32_t r_call_mask[MAX_NR_SYSTEM];
 } rproc[NR_SYS_PROCS];
 
 /* Mapping for fast access to the system process table. */ 
@@ -40,8 +64,11 @@ extern int nr_in_use;
 
 /* Flag values. */
 #define RS_IN_USE       0x001	/* set when process slot is in use */
-#define RS_EXITING      0x002	/* set when exit is expected */
-#define RS_REFRESHING   0x004	/* set when refresh must be done */
+#define RS_EXITING      0x004	/* set when exit is expected */
+#define RS_REFRESHING   0x008	/* set when refresh must be done */
+#define RS_NOPINGREPLY 	0x010	/* driver failed to reply to a ping request */
+#define RS_KILLED 	0x020	/* driver is killed */
+#define RS_CRASHED 	0x040	/* driver crashed */
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_DELTA_T       60			/* check every T ticks */

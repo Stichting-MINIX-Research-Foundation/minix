@@ -5,19 +5,23 @@
  *   Jul 22, 2005:	Created  (Jorrit N. Herder)
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <pwd.h>
 #include <unistd.h>
 #include <minix/config.h>
 #include <minix/com.h>
 #include <minix/const.h>
 #include <minix/type.h>
 #include <minix/ipc.h>
+#include <minix/rs.h>
 #include <minix/syslib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <configfile.h>
 
 
 /* This array defines all known requests. */
@@ -25,6 +29,7 @@ PRIVATE char *known_requests[] = {
   "up", 
   "down",
   "refresh", 
+  "restart",
   "rescue", 
   "shutdown", 
   "upcopy",	/* fill for RS_UP_COPY */
@@ -46,7 +51,7 @@ extern int errno;
 /* The following are relative to optind */
 #define ARG_REQUEST	0		/* request to perform */
 #define ARG_PATH	1		/* rescue dir or system service */
-#define ARG_PID		1		/* pid of system service */
+#define ARG_LABEL	1		/* name of system service */
 
 #define MIN_ARG_COUNT	1		/* require an action */
 
@@ -54,21 +59,36 @@ extern int errno;
 #define ARG_DEV		"-dev"		/* major device number for drivers */
 #define ARG_PRIV	"-priv"		/* required privileges */
 #define ARG_PERIOD	"-period"	/* heartbeat period in ticks */
+#define ARG_SCRIPT	"-script"	/* name of the script to restart a
+					 * driver 
+					 */
+#define ARG_CONFIG	"-config"	/* name of the file with the resource
+					 * configuration 
+					 */
+
+#define DRIVER_LOGIN	"driver"	/* Passwd file entry for drivers */
+
+#define MAX_CLASS_RECURS	100	/* Max nesting level for classes */
 
 /* The function parse_arguments() verifies and parses the command line 
  * parameters passed to this utility. Request parameters that are needed
  * are stored globally in the following variables:
  */
 PRIVATE int req_type;
-PRIVATE int req_pid;
+PRIVATE char *req_label;
 PRIVATE char *req_path;
 PRIVATE char *req_args;
 PRIVATE int req_major;
 PRIVATE long req_period;
-PRIVATE char *req_priv;
+PRIVATE char *req_script;
+PRIVATE char *req_config;
+PRIVATE int class_recurs;	/* Nesting level of class statements */
 
 /* Buffer to build "/command arg1 arg2 ..." string to pass to RS server. */
 PRIVATE char command[4096];	
+
+/* Arguments for RS to start a new service */
+PRIVATE struct rs_start rs_start;
 
 /* An error occurred. Report the problem, print the usage, and exit. 
  */
@@ -78,8 +98,9 @@ PRIVATE void print_usage(char *app_name, char *problem)
   printf("Usage:\n");
   printf("    %s [-c] (up|run) <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
 	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD);
-  printf("    %s down <pid>\n", app_name);
-  printf("    %s refresh <pid>\n", app_name);
+  printf("    %s down label\n", app_name);
+  printf("    %s refresh label\n", app_name);
+  printf("    %s restart label\n", app_name);
   printf("    %s rescue <dir>\n", app_name);
   printf("    %s shutdown\n", app_name);
   printf("\n");
@@ -141,6 +162,10 @@ PRIVATE int parse_arguments(int argc, char **argv)
 
   if (req_nr == RS_UP || req_nr == RS_RUN) {
 
+      rs_start.rss_flags= 0;
+      if (c_flag)
+	rs_start.rss_flags |= RF_COPY;
+
       if (req_nr == RS_UP && c_flag)
 	req_nr= RS_UP_COPY;
 
@@ -195,8 +220,13 @@ PRIVATE int parse_arguments(int argc, char **argv)
        	      } 
               req_major = (stat_buf.st_rdev >> MAJOR) & BYTE;
           }
-          else if (strcmp(argv[i], ARG_ARGS)==0) {
-              req_priv = argv[i+1];
+          else if (strcmp(argv[i], ARG_SCRIPT)==0) {
+              req_script = argv[i+1];
+	      req_nr = RS_START;
+          }
+          else if (strcmp(argv[i], ARG_CONFIG)==0) {
+              req_config = argv[i+1];
+	      req_nr = RS_START;
           }
           else {
               print_usage(argv[ARG_NAME], "unknown optional argument given");
@@ -204,17 +234,14 @@ PRIVATE int parse_arguments(int argc, char **argv)
           }
       }
   }
-  else if (req_nr == RS_DOWN || req_nr == RS_REFRESH) {
+  else if (req_nr == RS_DOWN || req_nr == RS_REFRESH || req_nr == RS_RESTART) {
 
       /* Verify argument count. */ 
-      if (argc - 1 < optind+ARG_PID) {
-          print_usage(argv[ARG_NAME], "action requires a pid to stop");
+      if (argc - 1 < optind+ARG_LABEL) {
+          print_usage(argv[ARG_NAME], "action requires a label to stop");
           exit(EINVAL);
       }
-      if (! (req_pid = atoi(argv[optind+ARG_PID])) > 0) {
-          print_usage(argv[ARG_NAME], "pid must be greater than zero");
-          exit(EINVAL);
-      }
+      req_label= argv[optind+ARG_LABEL];
   } 
   else if (req_nr == RS_RESCUE) {
 
@@ -245,6 +272,574 @@ PRIVATE int parse_arguments(int argc, char **argv)
   return(req_nr);
 }
 
+PRIVATE void fatal(char *fmt, ...)
+{
+	va_list ap;
+
+	fprintf(stderr, "fatal error: ");
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
+
+	exit(1);
+}
+
+#define KW_DRIVER	"driver"
+#define KW_UID		"uid"
+#define KW_NICE		"nice"
+#define KW_IRQ		"irq"
+#define KW_IO		"io"
+#define KW_PCI		"pci"
+#define KW_DEVICE	"device"
+#define KW_CLASS	"class"
+#define KW_SYSTEM	"system"
+
+FORWARD void do_driver(config_t *cpe, config_t *config);
+
+PRIVATE void do_class(config_t *cpe, config_t *config)
+{
+	config_t *cp, *cp1;
+
+	if (class_recurs > MAX_CLASS_RECURS)
+	{
+		fatal(
+		"do_class: nesting level too high for class '%s' at %s:%d",
+			cpe->word, cpe->file, cpe->line);
+	}
+	class_recurs++;
+
+	/* Process classes */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_class: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_uid: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+
+		/* Find entry for the class */
+		for (cp= config; cp; cp= cp->next)
+		{
+			if (!(cp->flags & CFG_SUBLIST))
+			{
+				fatal("do_class: expected list at %s:%d\n",
+					cp->file, cp->line);
+			}
+			cp1= cp->list;
+			if ((cp1->flags & CFG_STRING) ||
+				(cp1->flags & CFG_SUBLIST))
+			{
+				fatal("do_class: expected word at %s:%d\n",
+					cp1->file, cp1->line);
+			}
+
+			/* At this place we expect the word 'driver' */
+			if (strcmp(cp1->word, KW_DRIVER) != 0)
+				fatal("do_class: exected word '%S' at %s:%d\n",
+					KW_DRIVER, cp1->file, cp1->line);
+
+			cp1= cp1->next;
+			if ((cp1->flags & CFG_STRING) ||
+				(cp1->flags & CFG_SUBLIST))
+			{
+				fatal("do_class: expected word at %s:%d\n",
+					cp1->file, cp1->line);
+			}
+
+			/* At this place we expect the name of the driver */
+			if (strcmp(cp1->word, cpe->word) == 0)
+				break;
+		}
+		if (cp == NULL)
+		{
+			fatal(
+			"do_class: no entry found for class '%s' at %s:%d\n",
+				cpe->word, cpe->file, cpe->line);
+		}
+		do_driver(cp1->next, config);
+	}
+
+	class_recurs--;
+}
+
+PRIVATE void do_uid(config_t *cpe)
+{
+	uid_t uid;
+	struct passwd *pw;
+	char *check;
+
+	/* Process a uid */
+	if (cpe->next != NULL)
+	{
+		fatal("do_uid: just one uid/login expected at %s:%d",
+			cpe->file, cpe->line);
+	}	
+
+	if (cpe->flags & CFG_SUBLIST)
+	{
+		fatal("do_uid: unexpected sublist at %s:%d",
+			cpe->file, cpe->line);
+	}
+	if (cpe->flags & CFG_STRING)
+	{
+		fatal("do_uid: unexpected string at %s:%d",
+			cpe->file, cpe->line);
+	}
+	pw= getpwnam(cpe->word);
+	if (pw != NULL)
+		uid= pw->pw_uid;
+	else
+	{
+		uid= strtol(cpe->word, &check, 0);
+		if (check[0] != '\0')
+		{
+			fatal("do_uid: bad uid/login '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		}
+	}
+
+	rs_start.rss_uid= uid;
+}
+
+PRIVATE void do_nice(config_t *cpe)
+{
+	int nice_val;
+	char *check;
+
+	/* Process a nice value */
+	if (cpe->next != NULL)
+	{
+		fatal("do_nice: just one nice value expected at %s:%d",
+			cpe->file, cpe->line);
+	}	
+	
+
+	if (cpe->flags & CFG_SUBLIST)
+	{
+		fatal("do_nice: unexpected sublist at %s:%d",
+			cpe->file, cpe->line);
+	}
+	if (cpe->flags & CFG_STRING)
+	{
+		fatal("do_nice: unexpected string at %s:%d",
+			cpe->file, cpe->line);
+	}
+	nice_val= strtol(cpe->word, &check, 0);
+	if (check[0] != '\0')
+	{
+		fatal("do_nice: bad nice value '%s' at %s:%d",
+			cpe->word, cpe->file, cpe->line);
+	}
+	/* Check range? */
+
+	rs_start.rss_nice= nice_val;
+}
+
+PRIVATE void do_irq(config_t *cpe)
+{
+	int irq;
+	char *check;
+
+	/* Process a list of IRQs */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_irq: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_irq: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+		irq= strtoul(cpe->word, &check, 0);
+		if (check[0] != '\0')
+		{
+			fatal("do_irq: bad irq '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		}
+		if (rs_start.rss_nr_irq >= RSS_NR_IRQ)
+			fatal("do_irq: too many IRQs (max %d)", RSS_NR_IRQ);
+		rs_start.rss_irq[rs_start.rss_nr_irq]= irq;
+		rs_start.rss_nr_irq++;
+	}
+}
+
+PRIVATE void do_io(config_t *cpe)
+{
+	int irq;
+	unsigned base, len;
+	char *check;
+
+	/* Process a list of I/O ranges */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_io: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_io: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+		base= strtoul(cpe->word, &check, 0x10);
+		len= 1;
+		if (check[0] == ':')
+		{
+			len= strtoul(check+1, &check, 0x10);
+		}
+		if (check[0] != '\0')
+		{
+			fatal("do_io: bad I/O range '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		}
+
+		if (rs_start.rss_nr_io >= RSS_NR_IO)
+			fatal("do_io: too many I/O ranges (max %d)", RSS_NR_IO);
+		rs_start.rss_io[rs_start.rss_nr_io].base= base;
+		rs_start.rss_io[rs_start.rss_nr_io].len= len;
+		rs_start.rss_nr_io++;
+	}
+}
+
+PRIVATE void do_pci_device(config_t *cpe)
+{
+	u16_t vid, did;
+	char *check, *check2;
+
+	/* Process a list of PCI device IDs */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_pci_device: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_pci_device: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+		vid= strtoul(cpe->word, &check, 0x10);
+		if (check[0] == '/')
+			did= strtoul(check+1, &check2, 0x10);
+		if (check[0] != '/' || check2[0] != '\0')
+		{
+			fatal("do_pci_device: bad ID '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		}
+		if (rs_start.rss_nr_pci_id >= RSS_NR_PCI_ID)
+		{
+			fatal("do_pci_device: too many device IDs (max %d)",
+				RSS_NR_PCI_ID);
+		}
+		rs_start.rss_pci_id[rs_start.rss_nr_pci_id].vid= vid;
+		rs_start.rss_pci_id[rs_start.rss_nr_pci_id].did= did;
+		rs_start.rss_nr_pci_id++;
+	}
+}
+
+PRIVATE void do_pci_class(config_t *cpe)
+{
+	u8_t baseclass, subclass, interface;
+	u32_t class_id, mask;
+	char *check;
+
+	/* Process a list of PCI device class IDs */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_pci_device: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_pci_device: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+
+		baseclass= strtoul(cpe->word, &check, 0x10);
+		subclass= 0;
+		interface= 0;
+		mask= 0xff0000;
+		if (check[0] == '/')
+		{
+			subclass= strtoul(check+1, &check, 0x10);
+			mask= 0xffff00;
+			if (check[0] == '/')
+			{
+				interface= strtoul(check+1, &check, 0x10);
+				mask= 0xffffff;
+			}
+		}
+
+		if (check[0] != '\0')
+		{
+			fatal("do_pci_class: bad class ID '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		}
+		class_id= (baseclass << 16) | (subclass << 8) | interface;
+		if (rs_start.rss_nr_pci_class >= RSS_NR_PCI_CLASS)
+		{
+			fatal("do_pci_class: too many class IDs (max %d)",
+				RSS_NR_PCI_CLASS);
+		}
+		rs_start.rss_pci_class[rs_start.rss_nr_pci_class].class=
+			class_id;
+		rs_start.rss_pci_class[rs_start.rss_nr_pci_class].mask= mask;
+		rs_start.rss_nr_pci_class++;
+	}
+}
+
+PRIVATE void do_pci(config_t *cpe)
+{
+	int i, call_nr, word, bits_per_word;
+	unsigned long mask;
+
+	if (cpe == NULL)
+		return;	/* Empty PCI statement */
+
+	if (cpe->flags & CFG_SUBLIST)
+	{
+		fatal("do_pci: unexpected sublist at %s:%d",
+			cpe->file, cpe->line);
+	}
+	if (cpe->flags & CFG_STRING)
+	{
+		fatal("do_pci: unexpected string at %s:%d",
+			cpe->file, cpe->line);
+	}
+
+	if (strcmp(cpe->word, KW_DEVICE) == 0)
+	{
+		do_pci_device(cpe->next);
+		return;
+	}
+	if (strcmp(cpe->word, KW_CLASS) == 0)
+	{
+		do_pci_class(cpe->next);
+		return;
+	}
+	fatal("do_pci: unexpected word '%s' at %s:%d",
+		cpe->word, cpe->file, cpe->line);
+}
+
+struct
+{
+	char *label;
+	int call_nr;
+} system_tab[]=
+{
+	{ "KILL",		SYS_KILL },
+	{ "UMAP",		SYS_UMAP },
+	{ "VIRCOPY",		SYS_VIRCOPY },
+	{ "IRQCTL",		SYS_IRQCTL },
+	{ "DEVIO",		SYS_DEVIO },
+	{ "SDEVIO",		SYS_SDEVIO },
+	{ "VDEVIO",		SYS_VDEVIO },
+	{ "SETALARM",		SYS_SETALARM },
+	{ "TIMES",		SYS_TIMES },
+	{ "GETINFO",		SYS_GETINFO },
+	{ "SAFECOPYFROM",	SYS_SAFECOPYFROM },
+	{ "SAFECOPYTO",		SYS_SAFECOPYTO },
+	{ "SETGRANT",		SYS_SETGRANT },
+	{ NULL,		0 }
+};
+
+PRIVATE void do_system(config_t *cpe)
+{
+	int i, call_nr, word, bits_per_word;
+	unsigned long mask;
+
+	bits_per_word= sizeof(rs_start.rss_system[0])*8;
+
+	/* Process a list of 'system' calls that are allowed */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_system: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_system: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+
+		/* Get call number */
+		for (i= 0; system_tab[i].label != NULL; i++)
+		{
+			if (strcmp(cpe->word, system_tab[i].label) == 0)
+				break;
+		}
+		if (system_tab[i].label == NULL)
+		{
+			fatal("do_system: unknown call '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		}
+		call_nr= system_tab[i].call_nr;
+
+		/* Subtract KERNEL_CALL */
+		if (call_nr < KERNEL_CALL)
+		{
+			fatal(
+		"do_system: bad call number %d in system tab for '%s'\n",
+				call_nr, system_tab[i].label);
+		}
+		call_nr -= KERNEL_CALL;
+
+		word= call_nr / bits_per_word;
+		mask= (1UL << (call_nr % bits_per_word));
+
+		if (word >= RSS_NR_SYSTEM)
+		{
+			fatal(
+			"do_system: RSS_NR_SYSTEM is too small (%d needed)\n",
+				word+1);
+		}
+		rs_start.rss_system[word] |= mask;
+	}
+}
+
+PRIVATE void do_driver(config_t *cpe, config_t *config)
+{
+	config_t *cp;
+
+	/* At this point we expect one sublist that contains the varios
+	 * resource allocations
+	 */
+	if (!(cpe->flags & CFG_SUBLIST))
+	{
+		fatal("do_driver: expected list at %s:%d\n",
+			cpe->file, cpe->line);
+	}
+	if (cpe->next != NULL)
+	{
+		cpe= cpe->next;
+		fatal("do_driver: expected end of list at %s:%d\n",
+			cpe->file, cpe->line);
+	}
+	cpe= cpe->list;
+
+	/* Process the list */
+	for (cp= cpe; cp; cp= cp->next)
+	{
+		if (!(cp->flags & CFG_SUBLIST))
+		{
+			fatal("do_driver: expected list at %s:%d\n",
+				cp->file, cp->line);
+		}
+		cpe= cp->list;
+		if ((cpe->flags & CFG_STRING) || (cpe->flags & CFG_SUBLIST))
+		{
+			fatal("do_driver: expected word at %s:%d\n",
+				cpe->file, cpe->line);
+		}
+
+		if (strcmp(cpe->word, KW_CLASS) == 0)
+		{
+			do_class(cpe->next, config);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_UID) == 0)
+		{
+			do_uid(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_NICE) == 0)
+		{
+			do_nice(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_IRQ) == 0)
+		{
+			do_irq(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_IO) == 0)
+		{
+			do_io(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_PCI) == 0)
+		{
+			do_pci(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_SYSTEM) == 0)
+		{
+			do_system(cpe->next);
+			continue;
+		}
+
+		printf("found word '%s'\n", cpe->word);
+	}
+}
+
+PRIVATE void do_config(char *label, char *filename)
+{
+	config_t *config, *cp, *cpe;
+
+	config= config_read(filename, 0, NULL);
+	if (config == NULL)
+	{
+		fprintf(stderr, "config_read failed for '%s': %s\n",
+			filename, strerror(errno));
+		exit(1);
+	}
+
+	/* Find an entry for our driver */
+	for (cp= config; cp; cp= cp->next)
+	{
+		if (!(cp->flags & CFG_SUBLIST))
+		{
+			fatal("do_config: expected list at %s:%d\n",
+				cp->file, cp->line);
+		}
+		cpe= cp->list;
+		if ((cpe->flags & CFG_STRING) || (cpe->flags & CFG_SUBLIST))
+		{
+			fatal("do_config: expected word at %s:%d\n",
+				cpe->file, cpe->line);
+		}
+
+		/* At this place we expect the word 'driver' */
+		if (strcmp(cpe->word, KW_DRIVER) != 0)
+			fatal("do_config: exected word '%S' at %s:%d\n",
+				KW_DRIVER, cpe->file, cpe->line);
+
+		cpe= cpe->next;
+		if ((cpe->flags & CFG_STRING) || (cpe->flags & CFG_SUBLIST))
+		{
+			fatal("do_config: expected word at %s:%d\n",
+				cpe->file, cpe->line);
+		}
+
+		/* At this place we expect the name of the driver */
+		if (strcmp(cpe->word, label) == 0)
+			break;
+	}
+	if (cp == NULL)
+	{
+		printf("driver '%s' not found\n", label);
+		return;
+	}
+
+	cpe= cpe->next;
+
+	do_driver(cpe, config);
+}
 
 /* Main program. 
  */
@@ -253,7 +848,9 @@ PUBLIC int main(int argc, char **argv)
   message m;
   int result;
   int request;
-  int s;
+  int i, s;
+  char *label;
+  struct passwd *pw;
 
   /* Verify and parse the command line arguments. All arguments are checked
    * here. If an error occurs, the problem is reported and exit(2) is called. 
@@ -283,9 +880,47 @@ PUBLIC int main(int argc, char **argv)
           failure(-s);
       result = m.m_type;
       break;
+  case RS_START:
+      /* Build space-separated command string to be passed to RS server. */
+      strcpy(command, req_path);
+      command[strlen(req_path)] = ' ';
+      strcpy(command+strlen(req_path)+1, req_args);
+
+      rs_start.rss_cmd= command;
+      rs_start.rss_cmdlen= strlen(command);
+      rs_start.rss_major= req_major;
+      rs_start.rss_period= req_period;
+      rs_start.rss_script= req_script;
+      if (req_script)
+	      rs_start.rss_scriptlen= strlen(req_script);
+      else
+	      rs_start.rss_scriptlen= 0;
+
+      pw= getpwnam(DRIVER_LOGIN);
+      if (pw == NULL)
+	fatal("no passwd file entry for '%s'", DRIVER_LOGIN);
+      rs_start.rss_uid= pw->pw_uid;
+
+      /* The name of the driver */
+      (label= strrchr(req_path, '/')) ? label++ : (label= req_path);
+
+      if (req_config)
+	do_config(label, req_config);
+
+      m.RS_CMD_ADDR = (char *) &rs_start;
+
+      /* Build request message and send the request. */
+      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
+          failure(-s);
+      result = m.m_type;
+      break;
+
   case RS_DOWN:
   case RS_REFRESH:
-      m.RS_PID = req_pid;
+  case RS_RESTART:
+      m.RS_CMD_ADDR = req_label;
+      m.RS_CMD_LEN = strlen(req_label);
+printf("RS_CMD_LEN = %d\n", m.RS_CMD_LEN);
       if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(-s);
       break;
