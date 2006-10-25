@@ -8,6 +8,8 @@
  */
 
 #include "inc.h"
+#include <timers.h>
+#include "../../kernel/priv.h"
 #include "../rs/manager.h"
 
 PUBLIC struct rproc rproc[NR_SYS_PROCS];
