@@ -794,7 +794,7 @@ message *m_ptr;
 		/* Clean up if the parent has collected the exit
 		 * status
 		 */
-		if (!(rmp->mp_flags & ZOMBIE))
+		if (rmp->mp_flags & TOLD_PARENT)
 			real_cleanup(rmp);
 
 		break;
@@ -909,7 +909,7 @@ message *m_ptr;
 		/* Clean up if the parent has collected the exit
 		 * status
 		 */
-		if (!(rmp->mp_flags & ZOMBIE))
+		if (rmp->mp_flags & TOLD_PARENT)
 			real_cleanup(rmp);
 
 		break;

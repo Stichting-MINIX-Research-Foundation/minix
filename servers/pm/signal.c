@@ -454,6 +454,8 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 #endif
   sigflags = rmp->mp_sigact[signo].sa_flags;
   if (sigismember(&rmp->mp_catch, signo)) {
+	/* Stop process from running before we do stack calculations. */
+	sys_nice(rmp->mp_endpoint, PRIO_STOP);
 	if (rmp->mp_flags & SIGSUSPENDED)
 		rmp->mp_sigmsg.sm_mask = rmp->mp_sigmask2;
 	else

@@ -84,6 +84,7 @@ EXTERN struct mproc {
 #define PRIV_PROC      0x2000   /* system process, special privileges */
 #define PM_SIG_PENDING 0x4000	/* process got a signal while waiting for FS */
 #define PARTIAL_EXEC   0x8000	/* Process got a new map but no content */
+#define TOLD_PARENT   0x10000	/* Parent wait() completed, ZOMBIE off */
 
 #define NIL_MPROC ((struct mproc *) 0)
 

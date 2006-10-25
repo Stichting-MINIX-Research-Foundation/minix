@@ -326,6 +326,7 @@ int for_trace;
 		rmp->mp_parent = INIT_PROC_NR;
 		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
 		if (parent_waiting && (rmp->mp_flags & ZOMBIE) &&
+			!(rmp->mp_flags & TOLD_PARENT) &&
 			rmp->mp_fs_call != PM_EXIT) {
 			cleanup(rmp);
 		}
@@ -369,6 +370,7 @@ PUBLIC int do_waitpid()
 		/* The value of pidarg determines which children qualify. */
 		if (pidarg  > 0 && pidarg != rp->mp_pid) continue;
 		if (pidarg < -1 && -pidarg != rp->mp_procgrp) continue;
+		if (rp->mp_flags & TOLD_PARENT) continue; /* post-ZOMBIE  */
 
 		children++;		/* this child is acceptable */
 		if (rp->mp_flags & ZOMBIE) {
@@ -430,6 +432,8 @@ register struct mproc *child;	/* tells which process is exiting */
   mp_parent= child->mp_parent;
   if (mp_parent <= 0)
 	panic(__FILE__, "tell_parent: bad value in mp_parent", mp_parent);
+  if(child->mp_flags & TOLD_PARENT)
+	panic(__FILE__, "tell_parent: telling parent again", NO_NUM);
   parent = &mproc[mp_parent];
 
   /* Wake up the parent by sending the reply message. */
@@ -437,7 +441,7 @@ register struct mproc *child;	/* tells which process is exiting */
   parent->mp_reply.reply_res2 = exitstatus;
   setreply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
-  child->mp_flags &= ~ZOMBIE;		/* avoid informing parent twice */
+  child->mp_flags |= TOLD_PARENT;	/* avoid informing parent twice */
 }
 
 /*===========================================================================*
