@@ -18,10 +18,10 @@
 
 #include <minix/const.h>
 #include <minix/type.h>
-#include "../../servers/fs/const.h"
-#include "../../servers/fs/type.h"
-#include "../../servers/fs/super.h"
-#include "../../servers/fs/inode.h"
+#include "../../servers/mfs/const.h"
+#include "../../servers/mfs/type.h"
+#include "../../servers/mfs/super.h"
+#include "../../servers/mfs/inode.h"
 #include <minix/fslib.h>
 
 #include "de.h"

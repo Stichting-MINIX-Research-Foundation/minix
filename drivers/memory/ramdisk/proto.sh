@@ -1,4 +1,5 @@
 #!/bin/sh
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
 sed -n '1,/@DEV/p' <proto  | grep -v @DEV@
 (
 cd /dev

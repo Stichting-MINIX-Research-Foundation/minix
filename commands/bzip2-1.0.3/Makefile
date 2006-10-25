@@ -12,7 +12,7 @@ BIGFILES=#-D_FILE_OFFSET_BITS=64
 CFLAGS=-Wall -Winline -O -g $(BIGFILES) -Dlstat=stat -D_POSIX_SOURCE=1
 
 # Where you want it installed when you do 'make install'
-PREFIX=/usr/local
+PREFIX=/usr
 PREFIX_BIN=$(PREFIX)/bin
 PREFIX_LIB=$(PREFIX)/lib
 PREFIX_MAN=$(PREFIX)/man

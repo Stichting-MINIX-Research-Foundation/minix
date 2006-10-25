@@ -41,10 +41,10 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/type.h>
-#include "../../servers/fs/const.h"
-#include "../../servers/fs/type.h"
-#include "../../servers/fs/buf.h"
-#include "../../servers/fs/super.h"
+#include "../../servers/mfs/const.h"
+#include "../../servers/mfs/type.h"
+#include "../../servers/mfs/buf.h"
+#include "../../servers/mfs/super.h"
 
 #undef printf			/* Definition used only in the kernel */
 #include <stdio.h>

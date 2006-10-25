@@ -17,7 +17,7 @@
 FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m)				);
-FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
+FORWARD _PROTOTYPE(void reply, (int whom, message *m_out)		);
 
 /* Data buffers to retrieve info during initialization. */
 PRIVATE struct boot_image image[NR_BOOT_PROCS];
@@ -99,7 +99,8 @@ PUBLIC int main(void)
 
           /* Finally send reply message, unless disabled. */
           if (result != EDONTREPLY) {
-              reply(who_e, result);
+	      m.m_type = result;
+              reply(who_e, &m);
           }
       }
   }
@@ -191,17 +192,18 @@ message *m_in;				/* pointer to message */
 /*===========================================================================*
  *				reply					     *
  *===========================================================================*/
-PRIVATE void reply(who, result)
+PRIVATE void reply(who, m_out)
 int who;                           	/* replyee */
-int result;                           	/* report result */
+message *m_out;                         /* reply message */
 {
-    message m_out;			/* reply message */
+    /*message m_out;*/			/* reply message */
     int s;				/* send status */
 
-    m_out.m_type = result;  		/* build reply message */
-    if (OK != (s=send(who, &m_out)))    /* send the message */
+    /*m_out.m_type = result;*/    	/* build reply message */
+    if (OK != (s=send(who, m_out)))     /* send the message */
         panic("RS", "unable to send reply", s);
 }
+
 
 
 

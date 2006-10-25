@@ -47,9 +47,9 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/type.h>
-#include "../../servers/fs/const.h"
-#include "../../servers/fs/inode.h"
-#include "../../servers/fs/type.h"
+#include "../../servers/mfs/const.h"
+#include "../../servers/mfs/inode.h"
+#include "../../servers/mfs/type.h"
 #include <minix/fslib.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -87,7 +87,7 @@ unsigned int fs_version = 2, block_size = 0;
 #define ZONE_CT 	360	/* default zones  (when making file system) */
 #define INODE_CT	 95	/* default inodes (when making file system) */
 
-#include "../../servers/fs/super.h"
+#include "../../servers/mfs/super.h"
 static struct super_block sb;
 
 #define STICKY_BIT	01000	/* not defined anywhere else */

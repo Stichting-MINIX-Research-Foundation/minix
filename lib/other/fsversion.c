@@ -17,9 +17,9 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "fs/const.h"
-#include "fs/type.h"
-#include "fs/super.h"
+#include "mfs/const.h"
+#include "mfs/type.h"
+#include "mfs/super.h"
 
 static struct super_block super, *sp;
 

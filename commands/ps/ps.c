@@ -81,8 +81,8 @@
 #include "../../kernel/proc.h"
 
 #include "../../servers/pm/mproc.h"
-#include "../../servers/fs/fproc.h"
-#include "../../servers/fs/const.h"
+#include "../../servers/vfs/fproc.h"
+#include "../../servers/mfs/const.h"
 
 
 /*----- ps's local stuff below this line ------*/

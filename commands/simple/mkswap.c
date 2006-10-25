@@ -19,9 +19,9 @@
 #include <minix/u64.h>
 #include <minix/partition.h>
 #include <minix/swap.h>
-#include <servers/fs/const.h>
-#include <servers/fs/type.h>
-#include <servers/fs/super.h>
+#include <servers/mfs/const.h>
+#include <servers/mfs/type.h>
+#include <servers/mfs/super.h>
 
 static void usage(void)
 {

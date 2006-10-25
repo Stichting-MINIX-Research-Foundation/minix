@@ -28,15 +28,15 @@
 #include <dirent.h>
 #include <stdlib.h>
 
-#include "../../servers/fs/const.h"	/* must be included before stdio.h */
+#include "../../servers/mfs/const.h"	/* must be included before stdio.h */
 #undef printf			/* so its define of printf can be undone */
-#include "../../servers/fs/type.h"
+#include "../../servers/mfs/type.h"
 
 #include <string.h>
 #include <stdio.h>
 
 #define EXTERN extern
-#include "../../servers/fs/super.h"
+#include "../../servers/mfs/super.h"
 
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void rw_super, (int flag));

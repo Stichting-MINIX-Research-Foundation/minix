@@ -8,12 +8,13 @@ MDEC=	/usr/mdec
 # Specify the programs that are part of the system image.
 PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
-	../servers/fs/fs \
+	../servers/vfs/vfs \
 	../servers/rs/rs \
 	../servers/ds/ds \
 	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/log/log \
+	../servers/mfs/mfs \
 	../servers/init/init
 
 usage:	

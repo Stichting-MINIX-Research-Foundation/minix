@@ -9,6 +9,7 @@
 #endif
 #include	<stdlib.h>
 #include	<signal.h>
+#include	<limits.h>
 
 extern pid_t _fork(void);
 extern pid_t _wait(int *);
@@ -35,7 +36,7 @@ system(const char *str)
 	if ((pid = _fork()) < 0) return str ? -1 : 0;
 
 	if (pid == 0) {
-		for (i = 3; i <= 20; i++)
+		for (i = 3; i <= OPEN_MAX; i++)
 			_close(i);
 		if (!str) str = "cd .";		/* just testing for a shell */
 		exec_tab[2] = str;		/* fill in command */

@@ -7,10 +7,10 @@
 #include <sys/types.h>
 #include <minix/const.h>
 #include <minix/type.h>		/* for unshort :-( */
-#include "fs/const.h"		/* depends of -I flag in Makefile */
-#include "fs/type.h"		/* ditto */
-#include "fs/inode.h"		/* ditto */
-#include "fs/super.h"
+#include "mfs/const.h"		/* depends of -I flag in Makefile */
+#include "mfs/type.h"		/* ditto */
+#include "mfs/inode.h"		/* ditto */
+#include "mfs/super.h"
 #include <minix/fslib.h>
 
 /* The next routine is copied from fsck.c and mkfs.c...  (Re)define some

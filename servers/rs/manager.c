@@ -24,7 +24,8 @@ int nr_in_use; 					/* number of services */
 extern int errno;				/* error status */
 
 /* Prototypes for internal functions that do the hard work. */
-FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags) );
+FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags,
+	endpoint_t *ep) );
 FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
 FORWARD _PROTOTYPE( int fork_nb, (void) );
 FORWARD _PROTOTYPE( int read_exec, (struct rproc *rp) );
@@ -56,6 +57,8 @@ int flags;					/* extra flags, if any */
   enum dev_style dev_style;			/* device style */
   int s;					/* status variable */
   int len;					/* length of string */
+  int r;
+  endpoint_t ep;				/* new endpoint no. */
 
   /* See if there is a free entry in the table with system processes. */
   if (nr_in_use >= NR_SYS_PROCS) return(EAGAIN); 
@@ -128,7 +131,10 @@ int flags;					/* extra flags, if any */
   rp->r_set_resources= 0;			/* old style */
   
   /* All information was gathered. Now try to start the system service. */
-  return(start_service(rp, flags));
+
+  r = start_service(rp, flags, &ep);
+  m_ptr->RS_ENDPOINT = ep;
+  return r;
 }
 
 
@@ -149,6 +155,8 @@ message *m_ptr;					/* request message pointer */
   int s;					/* status variable */
   int len;					/* length of string */
   int i;
+  int r;
+  endpoint_t ep;
   struct rproc *tmp_rp;
   struct rs_start rs_start;
 
@@ -322,7 +330,9 @@ message *m_ptr;					/* request message pointer */
 						 */
   
   /* All information was gathered. Now try to start the system service. */
-  return(start_service(rp, 0));
+  r = start_service(rp, 0, &ep);
+  m_ptr->RS_ENDPOINT = ep;
+  return r;
 }
 
 
@@ -380,8 +390,9 @@ PUBLIC int do_restart(message *m_ptr)
 {
   register struct rproc *rp;
   size_t len;
-  int s, proc;
+  int s, proc, r;
   char label[MAX_LABEL_LEN];
+  endpoint_t ep;
 
   len= m_ptr->RS_CMD_LEN;
   if (len >= sizeof(label))
@@ -404,8 +415,9 @@ PUBLIC int do_restart(message *m_ptr)
 		return EBUSY;
 	  }
 	  rp->r_flags &= ~(RS_EXITING|RS_REFRESHING|RS_NOPINGREPLY);
-	  start_service(rp, 0);	
-	  return(OK);
+	  r = start_service(rp, 0, &ep);	
+	  m_ptr->RS_ENDPOINT = ep;
+	  return(r);
       }
   }
 #if VERBOSE
@@ -491,7 +503,8 @@ PUBLIC void do_exit(message *m_ptr)
 {
   register struct rproc *rp;
   pid_t exit_pid;
-  int exit_status;
+  int exit_status, r;
+  endpoint_t ep;
 
 #if VERBOSE
   printf("RS: got SIGCHLD signal, doing wait to get exited child.\n");
@@ -538,8 +551,10 @@ PUBLIC void do_exit(message *m_ptr)
 		      rp->r_restarts = -1;		/* reset counter */
 		      if (rp->r_script[0] != '\0')
 			run_script(rp);
-		      else
-		        start_service(rp, 0);		/* direct restart */
+		      else {
+		        start_service(rp, 0, &ep); /* direct restart */
+	  		m_ptr->RS_ENDPOINT = ep;
+		      }
 	      }
               else if (WIFEXITED(exit_status) &&
 		      WEXITSTATUS(exit_status) == EXEC_FAILED) {
@@ -575,7 +590,11 @@ rp->r_restarts= 0;
 			rp->r_backoff= 1;
 		  }
 		  else {
-		      start_service(rp, 0);		/* direct restart */
+		      start_service(rp, 0, &ep);	/* direct restart */
+	  	      m_ptr->RS_ENDPOINT = ep;
+			/* Do this even if no I/O happens with the ioctl, in
+			 * order to disambiguate requests with DEV_IOCTL_S.
+			 */
 		  }
               }
 	      break;
@@ -593,6 +612,7 @@ message *m_ptr;
   register struct rproc *rp;
   clock_t now = m_ptr->NOTIFY_TIMESTAMP;
   int s;
+  endpoint_t ep;
 
   /* Search system services table. Only check slots that are in use. */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
@@ -605,7 +625,8 @@ message *m_ptr;
 	  if (rp->r_backoff > 0) {
               rp->r_backoff -= 1;
 	      if (rp->r_backoff == 0) {
-		  start_service(rp, 0);
+		  start_service(rp, 0, &ep);
+	  	  m_ptr->RS_ENDPOINT = ep;
 	      }
 	  }
 
@@ -661,9 +682,10 @@ message *m_ptr;
 /*===========================================================================*
  *				start_service				     *
  *===========================================================================*/
-PRIVATE int start_service(rp, flags)
+PRIVATE int start_service(rp, flags, endpoint)
 struct rproc *rp;
 int flags;
+endpoint_t *endpoint;
 {
 /* Try to execute the given system service. Fork a new process. The child
  * process will be inhibited from running by the NO_PRIV flag. Only let the
@@ -771,6 +793,8 @@ int flags;
   getuptime(&rp->r_alive_tm); 			/* currently alive */
   rp->r_stop_tm = 0;				/* not exiting yet */
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
+
+  if(endpoint) *endpoint = child_proc_nr_e;	/* send back child endpoint */
   return(OK);
 }
 

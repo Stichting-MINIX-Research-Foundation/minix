@@ -13,6 +13,7 @@ TMPDIR=/usr/tmp/packages
 mkdir -p $TMPDIR
 URL1=http://www.minix3.org/packages/$PACKDIR
 SRCURL1=http://www.minix3.org/software
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
 # can we execute bunzip2?
 if bunzip2 --help 2>&1 | grep usage >/dev/null

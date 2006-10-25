@@ -9,8 +9,8 @@
  */
 
 #include "inc.h"
-#include "../fs/const.h"
-#include "../fs/fproc.h"
+#include "../mfs/const.h"
+#include "../vfs/fproc.h"
 #include <minix/dmap.h>
 
 PUBLIC struct fproc fproc[NR_PROCS];

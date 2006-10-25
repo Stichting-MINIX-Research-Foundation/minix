@@ -41,7 +41,8 @@
 #define LOG_PROC_NR	  4	/* log device driver */
 #define TTY_PROC_NR	  5	/* terminal (TTY) driver */
 #define DS_PROC_NR	  6    	/* data store server */
-#define INIT_PROC_NR	  7    	/* init -- goes multiuser */
+#define MFS_PROC_NR       7     /* minix root filesystem */
+#define INIT_PROC_NR	  8    	/* init -- goes multiuser */
 
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
@@ -558,6 +559,8 @@
 #  define RS_PID		m1_i1		/* pid of system service */
 #  define RS_PERIOD 	        m1_i2		/* heartbeat period */
 #  define RS_DEV_MAJOR          m1_i3           /* major device number */
+
+#  define RS_ENDPOINT		m1_i1		/* endpoint number in reply */
 
 /*===========================================================================*
  *                Messages for the Data Store Server			     *

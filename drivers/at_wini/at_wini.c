@@ -1923,7 +1923,7 @@ PRIVATE void w_intr_wait()
 	/* Wait for an interrupt that sets w_status to "not busy". */
 	while (w_wn->w_status & (STATUS_ADMBSY|STATUS_BSY)) {
 		int rr;
-		if((rr=receive(ANY, &m)) != OK) { /* expect HARD_INT message */
+		if((rr=receive(HARDWARE, &m)) != OK) { /* expect HARD_INT message */
 			printf("w_intr_wait: receive from ANY failed (%d)\n",
 				r);
 			continue;	/* try again */

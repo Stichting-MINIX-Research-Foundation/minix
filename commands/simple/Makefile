@@ -355,7 +355,7 @@ dhrystone:	dhrystone.c
 
 diff:	diff.c
 	$(CCLD) -o $@ $?
-	@install -S 40kw $@
+	@install -S 512kw $@
 
 dirname:	dirname.c
 	$(CCLD) -o $@ $?

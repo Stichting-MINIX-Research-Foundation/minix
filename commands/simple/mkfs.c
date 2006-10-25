@@ -23,7 +23,7 @@
 #include <minix/const.h>
 #include <minix/type.h>
 #include <minix/minlib.h>
-#include "../../servers/fs/const.h"
+#include "../../servers/mfs/const.h"
 #if (MACHINE == IBM_PC)
 #include <minix/partition.h>
 #include <minix/u64.h>
@@ -35,8 +35,8 @@
 
 #undef EXTERN
 #define EXTERN			/* get rid of EXTERN by making it null */
-#include "../../servers/fs/type.h"
-#include "../../servers/fs/super.h"
+#include "../../servers/mfs/type.h"
+#include "../../servers/mfs/super.h"
 #include <minix/fslib.h>
 
 #ifndef max
