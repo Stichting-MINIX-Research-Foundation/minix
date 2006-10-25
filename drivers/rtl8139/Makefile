@@ -22,7 +22,7 @@ OBJ = rtl8139.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 50kw $(DRIVER)
+	install -S 64kw $(DRIVER)
 
 # install with other drivers
 install:	/usr/sbin/$(DRIVER)
