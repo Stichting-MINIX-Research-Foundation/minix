@@ -19,7 +19,7 @@ case $# in
 # Create .depend files ...
 1)
 	echo "Creating .depend files in $1"
-	for dir in `find $1 -type d ! -name CVS`
+	for dir in `find $1 -type d ! -name CVS ! -name .svn`
 	do
 		touch $dir/.depend
 	done
