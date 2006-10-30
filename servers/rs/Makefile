@@ -11,10 +11,10 @@ b = $i/ibm
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
-UTIL_LIBS = -lsys 
-LIBS =  -lsysutil  -lsys
+UTIL_LIBS = -lsysutil  -lsys 
+LIBS = -lsysutil -lsys
 
 UTIL_OBJ = service.o
 OBJ = exec.o main.o manager.o 

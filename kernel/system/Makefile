@@ -6,9 +6,11 @@ i = $u/include
 
 # Programs, flags, etc.
 CC =	exec cc $(CFLAGS) -c
+CCNOPROF =      exec cc $(CFLAGSNOPROF) -c      # no call profiling for these
 CPP =	$l/cpp
 LD =	$(CC) -.o
-CFLAGS = -I$i
+CFLAGS = -I$i $(CPROFILE)
+CFLAGSNOPROF = -I$i
 LDFLAGS = -i
 
 SYSTEM	= ../system.a
@@ -50,6 +52,9 @@ OBJECTS	= \
 	$(SYSTEM)(do_iopenable.o) \
 	$(SYSTEM)(do_vm.o) \
 	$(SYSTEM)(do_vm_setbuf.o) \
+	$(SYSTEM)(do_sprofile.o) \
+	$(SYSTEM)(do_cprofile.o) \
+	$(SYSTEM)(do_profbuf.o)
 
 $(SYSTEM):	$(OBJECTS)
 	aal cr $@ *.o
@@ -163,3 +168,12 @@ do_vm.o:	do_vm.c
 
 $(SYSTEM)(do_vm_setbuf.o):	do_vm_setbuf.c
 	$(CC) do_vm_setbuf.c
+
+$(SYSTEM)(do_sprofile.o):       do_sprofile.c
+	$(CC) do_sprofile.c
+
+$(SYSTEM)(do_cprofile.o):       do_cprofile.c
+	$(CC) do_cprofile.c
+
+$(SYSTEM)(do_profbuf.o):        do_profbuf.c
+	$(CC) do_profbuf.c

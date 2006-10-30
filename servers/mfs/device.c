@@ -125,7 +125,7 @@ off_t *pos;
 			     v[j].iov_addr, v[j].iov_size,
 			     *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
 			   if(!GRANT_VALID(gids[j])) {
-				panic(__FILE__, "grant to iovec buf failed",
+				panic(__FILE__, "mfs: grant to iovec buf failed",
 				 NO_NUM);
 			   }
 			   new_iovec[j].iov_size = v[j].iov_size;

@@ -1,0 +1,73 @@
+.TH PROFILE 1
+.SH NAME
+profile \- MINIX system profiling control command
+.SH SYNOPSIS
+Statistical profiling:
+.PP
+.B "profile start"
+[
+.B -m 
+.I memsize
+]
+[
+.B "-o" 
+.I outfile
+]
+[
+.B -f
+.I frequency
+] 
+.br
+.B "profile stop "
+.br
+.B "sprofalyze.pl"
+.PP
+Call profiling:
+.PP
+.B "profile get"
+[
+.B "-m" 
+.I memsize
+]
+[
+.B "-o" 
+.I outfile
+]
+.br
+.B "profile reset"
+.br
+.B "cprofalyze.pl"
+.SH DESCRIPTION
+This command controls MINIX system profiling. There is support for
+statistical profiling, which causes a CMOS interrupt to regularly sample
+the position of the program counter, and call profiling, which uses
+compiler hooks to measure the time and frequency of call paths.
+
+For statistical profiling support, recompile the kernel with SPROFILE in
+<minix/config.h> set to 1. For call profiling support, recompile the
+system with new libraries with CPROFILE <minix/config.h> set to 1 and
+environment variable CPROFILE set to -Rcem-p.
+.SH OPTIONS
+.IP start
+start measuring using statistical profiling. 
+.IP stop
+stop measuring using statistical profiling. 
+.IP get
+retrieve call profiling data
+.IP reset
+reset call profiling data
+.IP "-m"
+memory buffer size used to store profiling data in, allocated by the
+profile command.
+.IP "-o outfile"
+output file.
+.IP "-f frequency"
+frequency for statistical sampling.
+.PP
+After you have the output file, analysis can be done using the
+.B sprofalyze.pl
+and
+.B cprofalyze.pl
+commands.
+.SH AUTHOR
+Rogier Meurs

@@ -113,6 +113,8 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 	no_sys,		/* 95 = (fchmod) */
 	no_sys,		/* 96 = (fchown) */
 	do_getsysinfo_up,/* 97 = getsysinfo_up */
+	do_sprofile,	/* 98 = sprofile */
+	do_cprofile,	/* 99 = cprofile */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

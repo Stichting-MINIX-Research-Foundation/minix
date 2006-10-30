@@ -18,6 +18,7 @@ libc_FILES=" \
 	chroot.s \
 	close.s \
 	closedir.s \
+	cprofile.s \
 	creat.s \
 	devctl.s \
 	dup.s \
@@ -92,6 +93,7 @@ libc_FILES=" \
 	sigreturn.s \
 	sigsuspend.s \
 	sleep.s \
+	sprofile.s \
 	stat.s \
 	stime.s \
 	svrctl.s \

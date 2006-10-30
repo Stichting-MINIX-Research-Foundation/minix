@@ -5,7 +5,7 @@ LK =	/usr/lib/keymaps
 .SUFFIXES:	.src .map
 
 .src.map:
-	$(CC) -DKEYSRC=\"$<\" genmap.c
+	$(CC) -DKEYSRC=\"$<\" $(CPROFILE) genmap.c -lsysutil -lsys
 	./a.out > $@
 	@rm -f a.out
 

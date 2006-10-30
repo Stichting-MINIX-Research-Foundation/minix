@@ -11,7 +11,7 @@ b = $i/ibm
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
 UTIL_LIBS = -lsys 
 LIBS = -lsys -lsysutil 

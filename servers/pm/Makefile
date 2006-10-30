@@ -10,11 +10,12 @@ k = $u/src/kernel
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
 
 OBJ = 	main.o forkexit.o break.o exec.o time.o timers.o \
-	signal.o alloc.o utility.o table.o trace.o getset.o misc.o
+	signal.o alloc.o utility.o table.o trace.o getset.o misc.o \
+	profile.o
 
 # build local binary
 all build:	$(SERVER)

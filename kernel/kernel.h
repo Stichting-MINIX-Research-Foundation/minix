@@ -29,6 +29,7 @@
 #include "proto.h"		/* function prototypes */
 #include "glo.h"		/* global variables */
 #include "ipc.h"		/* IPC constants */
+#include "profile.h"		/* system profiling */
 #include "debug.h"		/* debugging, MUST be last kernel header */
 
 #endif /* KERNEL_H */

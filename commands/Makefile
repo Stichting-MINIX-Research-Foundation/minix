@@ -4,7 +4,7 @@ MAKE	= exec make -$(MAKEFLAGS)
 BZIP2=bzip2-1.0.3
 FLEX=flex-2.5.4
 
-SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp101 ftpd200 ibm indent m4 make mdb mined patch pax ps reboot rlogind scripts sh simple syslogd talk talkd telnet telnetd urlget yap 
+SMALLPROGRAMS=`arch` aal advent ash autil awk bc byacc cawf cron de dhcpd dis88 elle elvis ftp101 ftpd200 ibm indent m4 make mdb mined patch pax profile ps reboot rlogind scripts sh simple syslogd talk talkd telnet telnetd urlget yap 
 
 usage:
 	@echo "Usage: make all          # Compile all commands" >&2

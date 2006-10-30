@@ -80,6 +80,10 @@ _PROTOTYPE( phys_clicks start_click, (void)				);
 
 _PROTOTYPE( void setreply, (int proc_nr, int result)			);
 
+/* profile.c */
+_PROTOTYPE( int do_sprofile, (void)                                    );
+_PROTOTYPE( int do_cprofile, (void)                                    );
+
 /* signal.c */
 _PROTOTYPE( int do_alarm, (void)					);
 _PROTOTYPE( int do_kill, (void)						);

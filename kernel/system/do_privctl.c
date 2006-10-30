@@ -8,6 +8,7 @@
 #include "../system.h"
 #include "../ipc.h"
 #include <signal.h>
+#include <string.h>
 
 #if USE_PRIVCTL
 

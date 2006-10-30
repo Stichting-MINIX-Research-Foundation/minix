@@ -181,6 +181,13 @@ PUBLIC void main()
   }
 #endif
 
+#if SPROFILE
+  sprofiling = 0;      /* we're not profiling until instructed to */
+#endif /* SPROFILE */
+#if CPROFILE
+  cprof_procs_no = 0;  /* init nr of hash table slots used */
+#endif /* CPROFILE */
+
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */

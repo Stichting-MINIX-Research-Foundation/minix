@@ -10,7 +10,7 @@ d = ..
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
 LIBS = -lsysutil -lsys
 

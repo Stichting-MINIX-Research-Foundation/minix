@@ -1,4 +1,4 @@
-#define NCALLS		  98	/* number of system calls allowed */
+#define NCALLS		 100	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 
@@ -78,6 +78,8 @@
 #define FCHMOD		  95	/* to FS */
 #define FCHOWN		  96	/* to FS */
 #define GETSYSINFO_UP	  97	/* to PM or FS */
+#define SPROF             98    /* to PM */
+#define CPROF             99    /* to PM */
 
 /* Calls provided by PM and FS that are not part of the API */
 #define EXEC_NEWMEM	100	/* from FS or RS to PM: new memory map for

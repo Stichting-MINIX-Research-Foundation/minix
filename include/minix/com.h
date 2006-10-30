@@ -308,7 +308,11 @@
 #  define SYS_SETGRANT   (KERNEL_CALL + 34)	/* sys_setgrant() */
 #  define SYS_READBIOS   (KERNEL_CALL + 35)	/* sys_readbios() */
 
-#define NR_SYS_CALLS	36	/* number of system calls */ 
+#  define SYS_SPROF      (KERNEL_CALL + 36)     /* sys_sprof() */ 
+#  define SYS_CPROF      (KERNEL_CALL + 37)     /* sys_cprof() */
+#  define SYS_PROFBUF    (KERNEL_CALL + 38)     /* sys_profbuf() */
+
+#define NR_SYS_CALLS	39	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -522,6 +526,14 @@
 #define SEL_WRITEFDS   m8_p2
 #define SEL_ERRORFDS   m8_p3
 #define SEL_TIMEOUT    m8_p4
+
+/* Field names for SYS_SPROF, _CPROF, _PROFBUF. */
+#define PROF_ACTION    m7_i1    /* start/stop/reset/get */
+#define PROF_MEM_SIZE  m7_i2    /* available memory for data */ 
+#define PROF_FREQ      m7_i3    /* sample frequency */
+#define PROF_ENDPT     m7_i4    /* endpoint of caller */
+#define PROF_CTL_PTR   m7_p1    /* location of info struct */
+#define PROF_MEM_PTR   m7_p2    /* location of profiling data */
 
 /* Field names for GETSYSINFO_UP (PM). */
 #define SIU_WHAT	m2_i1

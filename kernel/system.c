@@ -190,6 +190,11 @@ PRIVATE void initialize(void)
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
   map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
+
+  /* Profiling. */
+  map(SYS_SPROF, do_sprofile);         /* start/stop statistical profiling */
+  map(SYS_CPROF, do_cprofile);         /* get/reset call profiling data */
+  map(SYS_PROFBUF, do_profbuf);        /* announce locations to kernel */
 }
 
 /*===========================================================================*

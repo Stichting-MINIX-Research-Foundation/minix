@@ -10,14 +10,14 @@ s = system
 CC =	exec cc
 CPP =	$l/cpp
 LD =	$(CC) -.o
-CFLAGS = -I$i 
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i 
 
 HEAD =	mpx.o
 OBJS =	start.o protect.o klib.o table.o kprintf.o main.o proc.o \
-	i8259.o exception.o system.o clock.o utility.o debug.o
+	i8259.o exception.o system.o clock.o utility.o debug.o profile.o
 SYSTEM = system.a
-LIBS = -ltimers 
+LIBS = -ltimers -lsysutil
 
 
 # What to make.

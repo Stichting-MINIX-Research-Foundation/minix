@@ -13,9 +13,9 @@ f = $u/src/servers/fs
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i
+CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
-LIBS =  -lsysutil  -lsys
+LIBS = -lsysutil -lsys
 
 OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o dmp_rs.o dmp_ds.o 
 

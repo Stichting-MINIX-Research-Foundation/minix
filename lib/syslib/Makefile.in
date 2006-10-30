@@ -26,6 +26,7 @@ libsys_FILES=" \
 	pci_slot_name.c \
 	safecopies.c \
 	sys_abort.c \
+	sys_cprof.c \
 	sys_endsig.c \
 	sys_eniop.c \
 	sys_exec.c \
@@ -45,6 +46,7 @@ libsys_FILES=" \
 	sys_readbios.c \
 	sys_safecopy.c \
 	sys_vsafecopy.c \
+	sys_profbuf.c \
 	sys_sdevio.c \
 	sys_segctl.c \
 	sys_setalarm.c \
@@ -52,6 +54,7 @@ libsys_FILES=" \
 	sys_sigsend.c \
 	sys_privctl.c \
 	sys_setgrant.c \
+	sys_sprof.c \
 	sys_times.c \
 	sys_trace.c \
 	sys_umap.c \

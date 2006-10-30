@@ -197,5 +197,13 @@ _PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
 _PROTOTYPE( char *pci_slot_name, (int devind)				);
 _PROTOTYPE( int pci_set_acl, (struct rs_pci *rs_pci)			);
 
+/* Profiling. */
+_PROTOTYPE( int sys_sprof, (int action, int size, int freq, int endpt,
+                                       void *ctl_ptr, void *mem_ptr)   );
+_PROTOTYPE( int sys_cprof, (int action, int size, int endpt,
+                                       void *ctl_ptr, void *mem_ptr)   );
+_PROTOTYPE( int sys_profbuf, (void *ctl_ptr, void *mem_ptr)            );
+
+
 #endif /* _SYSLIB_H */
 

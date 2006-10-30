@@ -9,9 +9,9 @@ h = $i/minix
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i $(EXTRA_OPTS)
+CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE)
 LDFLAGS = -i
-LIBS = -lsys -lsysutil -ltimers
+LIBS = -lsysutil -lsys -ltimers
 
 OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 	path.o device.o mount.o link.o exec.o \
@@ -21,6 +21,7 @@ OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 
 # build local binary 
 install all build:	$(SERVER)
+
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 16k $@

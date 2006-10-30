@@ -6,9 +6,9 @@ g = generic
 # Programs, flags, and libraries
 CC =		cc
 CPPFLAGS =	-I. -D_MINIX
-CFLAGS =	$(OPT) $(CPPFLAGS)
+CFLAGS =	$(OPT) $(CPPFLAGS) $(CPROFILE)
 LDFLAGS =
-LIBS =		 -lsysutil -lsys
+LIBS =          -lsysutil -lsys
 
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<

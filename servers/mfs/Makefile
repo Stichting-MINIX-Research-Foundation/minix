@@ -9,9 +9,9 @@ h = $i/minix
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i $(EXTRA_OPTS)
+CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE)
 LDFLAGS = -i
-LIBS = -lsys -lsysutil -ltimers
+LIBS = -lsysutil  -lsys -ltimers
 
 OBJ =	cache.o device.o link.o \
 	mount.o misc.o open.o pipe.o protect.o read.o \
@@ -19,10 +19,13 @@ OBJ =	cache.o device.o link.o \
 	write.o inode.o main.o path.o super.o
 
 # build local binary 
-install all build:	$(SERVER)
+all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 16k $@ /sbin
+	install -S 64k $(SERVER)
+
+install: $(SERVER)
+	install $(SERVER) /sbin/$(SERVER)
 
 # clean up local files
 clean:

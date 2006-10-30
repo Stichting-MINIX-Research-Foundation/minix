@@ -12,6 +12,6 @@ install::
 	chown -R bin $(MAN)
 	chgrp -R operator $(MAN)
 	@rm -f $(MAN)/Makefile
-	find /usr/man -type f | xargs chmod 644
-	find /usr/man -type d | xargs chmod 755
+	find /usr/man -type f | xargs -n 20 chmod 644
+	find /usr/man -type d | xargs -n 20 chmod 755
 	makewhatis $(MAN)
