@@ -33,14 +33,15 @@ PRIVATE char *known_requests[] = {
   "rescue", 
   "shutdown", 
   "upcopy",	/* fill for RS_UP_COPY */
-  "run", 
   "catch for illegal requests"
 };
 #define ILLEGAL_REQUEST  sizeof(known_requests)/sizeof(char *)
 
 /* Global error number set for failed system calls. */
 #define OK 0
-extern int errno;
+
+#define RUN_CMD		"run"
+#define RUN_SCRIPT	"/etc/rs.single"	/* Default script for 'run' */
 
 /* Define names for arguments provided to this utility. The first few 
  * arguments are required and have a known index. Thereafter, some optional
@@ -75,6 +76,7 @@ extern int errno;
  * are stored globally in the following variables:
  */
 PRIVATE int req_type;
+PRIVATE int do_run= 0;		/* 'run' command instead of 'up' */
 PRIVATE char *req_label;
 PRIVATE char *req_path;
 PRIVATE char *req_args;
@@ -150,21 +152,37 @@ PRIVATE int parse_arguments(int argc, char **argv)
       exit(EINVAL);
   }
 
-  /* Verify request type. */
-  for (req_type=0; req_type< ILLEGAL_REQUEST; req_type++) {
-      if (strcmp(known_requests[req_type],argv[optind+ARG_REQUEST])==0) break;
+  if (strcmp(argv[optind+ARG_REQUEST], RUN_CMD) == 0)
+  {
+	req_nr= RS_UP;
+	do_run= TRUE;
   }
-  if (req_type == ILLEGAL_REQUEST) {
-      print_usage(argv[ARG_NAME], "illegal request type");
-      exit(ENOSYS);
+  else
+  {
+  	/* Verify request type. */
+	for (req_type=0; req_type< ILLEGAL_REQUEST; req_type++) {
+	    if (strcmp(known_requests[req_type],argv[optind+ARG_REQUEST])==0)
+		break;
+	}
+	if (req_type == ILLEGAL_REQUEST) {
+	    print_usage(argv[ARG_NAME], "illegal request type");
+	    exit(ENOSYS);
+	}
+	req_nr = RS_RQ_BASE + req_type;
   }
-  req_nr = RS_RQ_BASE + req_type;
 
-  if (req_nr == RS_UP || req_nr == RS_RUN) {
+  if (req_nr == RS_UP) {
 
       rs_start.rss_flags= 0;
       if (c_flag)
 	rs_start.rss_flags |= RF_COPY;
+
+      if (do_run)
+      {
+	/* Set default recovery script for RUN */
+        req_script = RUN_SCRIPT;
+	req_nr = RS_START;
+      }
 
       if (req_nr == RS_UP && c_flag)
 	req_nr= RS_UP_COPY;
@@ -640,6 +658,8 @@ struct
 	int call_nr;
 } system_tab[]=
 {
+	{ "PRIVCTL",		SYS_PRIVCTL },
+	{ "TRACE",		SYS_TRACE },
 	{ "KILL",		SYS_KILL },
 	{ "UMAP",		SYS_UMAP },
 	{ "VIRCOPY",		SYS_VIRCOPY },
@@ -652,7 +672,9 @@ struct
 	{ "GETINFO",		SYS_GETINFO },
 	{ "SAFECOPYFROM",	SYS_SAFECOPYFROM },
 	{ "SAFECOPYTO",		SYS_SAFECOPYTO },
+	{ "VSAFECOPY",		SYS_VSAFECOPY },
 	{ "SETGRANT",		SYS_SETGRANT },
+	{ "READBIOS",		SYS_READBIOS },
 	{ NULL,		0 }
 };
 
@@ -865,7 +887,6 @@ PUBLIC int main(int argc, char **argv)
   switch(request) {
   case RS_UP:
   case RS_UP_COPY:
-  case RS_RUN:
       /* Build space-separated command string to be passed to RS server. */
       strcpy(command, req_path);
       command[strlen(req_path)] = ' ';

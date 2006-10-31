@@ -2,13 +2,14 @@
 
 PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk newroot \
 	pci sh service sysenv mfs
+EXTRA=drivers.conf passwd
 
 MAKEDEV=/usr/bin/MAKEDEV
 
 all:	image.c image.s
 
 clean:
-	rm -rf $(PROGRAMS) bintoc image image.c image.s t proto.gen
+	rm -rf $(PROGRAMS) $(EXTRA) bintoc image image.c image.s t proto.gen
 
 image.c:	bintoc image
 	./bintoc -o $@ image
@@ -21,7 +22,7 @@ image.s:	image.c
 bintoc:	bintoc.c
 	$(CC) -o $@ bintoc.c
 
-image:	proto.gen mtab rc $(PROGRAMS)
+image:	proto.gen mtab rc $(PROGRAMS) $(EXTRA)
 	mkfs -B 2048 image proto.gen || { rm -f image; false; }
 
 at_wini: ../../at_wini/at_wini
@@ -95,6 +96,12 @@ mfs: ../../../servers/mfs/mfs
 
 ../../../servers/mfs/mfs: 
 	cd ../../../servers/mfs && make
+
+drivers.conf: ../../../etc/drivers.conf
+	install -s ../../../etc/$@ $@
+
+passwd: ../../../etc/passwd
+	install -s ../../../etc/$@ $@
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend

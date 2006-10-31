@@ -60,7 +60,6 @@ extern struct rproc {
 
 /* Mapping for fast access to the system process table. */ 
 extern struct rproc *rproc_ptr[NR_PROCS];
-extern int nr_in_use;
 
 /* Flag values. */
 #define RS_IN_USE       0x001	/* set when process slot is in use */

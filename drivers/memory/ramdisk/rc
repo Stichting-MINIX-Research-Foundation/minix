@@ -1,13 +1,13 @@
 #!/bin/sh
 set -e
-/bin/service up /bin/pci
-/bin/service -c up /bin/floppy -dev /dev/fd0
+/bin/service up /bin/pci -config /etc/drivers.conf
+/bin/service -c up /bin/floppy -config /etc/drivers.conf -dev /dev/fd0
 if [ X`/bin/sysenv bios_wini` = Xyes ]
 then
 	echo Using bios_wini.
 	/bin/service -c up /bin/bios_wini -dev /dev/c0d0
 else
-	/bin/service -c up /bin/at_wini -dev /dev/c0d0
+	/bin/service -c up /bin/at_wini -dev /dev/c0d0 -script /etc/rs.single -config /etc/drivers.conf
 fi
 
 rootdev=`sysenv rootdev` || echo 'No rootdev?'

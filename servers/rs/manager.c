@@ -20,8 +20,6 @@
 /* Allocate variables. */
 struct rproc rproc[NR_SYS_PROCS];		/* system process table */
 struct rproc *rproc_ptr[NR_PROCS];		/* mapping for fast access */
-int nr_in_use; 					/* number of services */
-extern int errno;				/* error status */
 
 /* Prototypes for internal functions that do the hard work. */
 FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags,
@@ -61,13 +59,11 @@ int flags;					/* extra flags, if any */
   endpoint_t ep;				/* new endpoint no. */
 
   /* See if there is a free entry in the table with system processes. */
-  if (nr_in_use >= NR_SYS_PROCS) return(EAGAIN); 
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
       rp = &rproc[slot_nr];			/* get pointer to slot */
       if (! rp->r_flags & RS_IN_USE) 		/* check if available */
 	  break;
   }
-  nr_in_use ++;					/* update administration */
 
   /* Obtain command name and parameters. This is a space-separated string
    * that looks like "/sbin/service arg1 arg2 ...". Arguments are optional.
@@ -166,13 +162,11 @@ message *m_ptr;					/* request message pointer */
   if (s != OK) return(s);
 
   /* See if there is a free entry in the table with system processes. */
-  if (nr_in_use >= NR_SYS_PROCS) return(EAGAIN); 
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
       rp = &rproc[slot_nr];			/* get pointer to slot */
       if (! rp->r_flags & RS_IN_USE) 		/* check if available */
 	  break;
   }
-  nr_in_use ++;					/* update administration */
 
   /* Obtain command name and parameters. This is a space-separated string
    * that looks like "/sbin/service arg1 arg2 ...". Arguments are optional.
@@ -977,8 +971,8 @@ struct priv *privp;
 		src_bit, call_nr;
 	unsigned long mask;
 
-	/* Clear the privilege structure */
-	memset(privp, '\0', sizeof(*privp));
+	/* Clear s_k_call_mask */
+	memset(privp->s_k_call_mask, '\0', sizeof(privp->s_k_call_mask));
 
 	src_bits_per_word= 8*sizeof(rp->r_call_mask[0]);
 	dst_bits_per_word= 8*sizeof(privp->s_k_call_mask[0]);
@@ -1016,6 +1010,12 @@ int endpoint;
 	size_t len;
 	int i, r;
 	struct rs_pci rs_pci;
+
+	if (strcmp(rp->r_label, "pci") == 0)
+	{
+		printf("init_pci: not when starting 'pci'\n");
+		return;
+	}
 
 	len= strlen(rp->r_label);
 	if (len+1 > sizeof(rs_pci.rsp_label))

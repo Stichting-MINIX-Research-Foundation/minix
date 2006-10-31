@@ -560,8 +560,7 @@
 #define RS_UP_COPY	(RS_RQ_BASE + 6)	/* start system service and
 						 * keep the binary in memory
 						 */
-#define RS_RUN		(RS_RQ_BASE + 7)	/* run without restart */
-#define RS_START	(RS_RQ_BASE + 8)	/* start a driver/service
+#define RS_START	(RS_RQ_BASE + 7)	/* start a driver/service
 						 * arguments are passed in 
 						 * a struct rs_start
 						 */

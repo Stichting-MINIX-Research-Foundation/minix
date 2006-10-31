@@ -19,7 +19,9 @@ d--755 0 0
 @DEV@
 	$
 	etc d--755 0 0
+		drivers.conf ---644 0 0 drivers.conf
 		mtab ---644 0 0 mtab
+		passwd ---644 0 0 passwd
 		rc ---755 0 0 rc
 	$
 $

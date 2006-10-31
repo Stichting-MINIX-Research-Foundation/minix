@@ -83,7 +83,6 @@ PUBLIC int main(void)
           switch(call_nr) {
           case RS_UP: 		result = do_up(&m, FALSE, 0); break;
           case RS_UP_COPY:	result = do_up(&m, TRUE, 0); break;
-	  case RS_RUN:		result = do_up(&m, FALSE, RS_EXITING);	break;
 	  case RS_START:	result = do_start(&m);		break;
           case RS_DOWN: 	result = do_down(&m); 		break;
           case RS_REFRESH: 	result = do_refresh(&m); 	break;
@@ -139,7 +138,6 @@ PRIVATE void init_server(void)
   for (s=0; s< NR_BOOT_PROCS; s++) {
       ip = &image[s];
       if (ip->proc_nr >= 0) {
-          nr_in_use ++;
           rproc[s].r_flags = RS_IN_USE;
           rproc[s].r_proc_nr_e = ip->endpoint;
           rproc[s].r_pid = getnpid(ip->proc_nr);
