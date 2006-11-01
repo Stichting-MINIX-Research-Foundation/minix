@@ -33,8 +33,6 @@
 #define offset m2_l1
  
 
-PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
-
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
 FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp,mode_t bits,int oflags));
 
@@ -90,6 +88,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   struct vnode *vp, *vp2;
   struct vmnt *vmp;
   char lastc[NAME_MAX];
+  int m;
 
   /* Request and response structures */
   struct lookup_req lookup_req;
@@ -97,7 +96,13 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   struct node_details res;
 
   /* Remap the bottom two bits of oflags. */
-  bits = (mode_t) mode_map[oflags & O_ACCMODE];
+  m = oflags & O_ACCMODE;
+  switch(m) {
+	case O_RDONLY:	bits = R_BIT; break;
+	case O_WRONLY:	bits = W_BIT; break;
+	case O_RDWR:	bits = R_BIT | W_BIT; break;
+	default:	return EINVAL;
+  }
 
   /* See if file descriptor and filp slots are available. */
   if ((r = get_fd(0, bits, &m_in.fd, &fil_ptr)) != OK) return(r);
