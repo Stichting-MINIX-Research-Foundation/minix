@@ -971,7 +971,10 @@ int devind;
 				continue;	/* Skip */
 			}
 			if (i == j)
+			{
+				j++;
 				continue;	/* No need to copy */
+			}
 			pcidev[devind].pd_bar[j]=
 				pcidev[devind].pd_bar[i];
 			j++;

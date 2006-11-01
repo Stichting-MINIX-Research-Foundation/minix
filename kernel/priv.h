@@ -17,7 +17,7 @@
 #include "type.h"
 
 /* Max. number of I/O ranges that can be assigned to a process */
-#define NR_IO_RANGE	10
+#define NR_IO_RANGE	32
 
 /* Max. number of device memory ranges that can be assigned to a process */
 #define NR_MEM_RANGE	10

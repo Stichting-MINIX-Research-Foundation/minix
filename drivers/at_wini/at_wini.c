@@ -569,6 +569,8 @@ PRIVATE void init_params_pci(int skip)
 	else
 		continue;	/* Unsupported device class */
 
+	pci_reserve(devind);
+
   	/* Found a controller.
   	 * Programming interface register tells us more.
   	 */
