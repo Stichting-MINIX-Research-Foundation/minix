@@ -1,0 +1,10 @@
+
+So far no regression over the historic sed are known. If you find a bug,
+please provide a test-case (.sed, .in and .out, look into tests/) - if
+possible try to debug the problem and propose a patch.
+
+We will focus on POSIX conformance and small size - GNU sed extensions are
+most likely not accepted.
+
+Please report issues to: Rene Rebe <rene@exactcode.de>
+
