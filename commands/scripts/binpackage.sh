@@ -1,5 +1,6 @@
 #!/bin/sh 
 
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
 PI=.postinstall
 INFO=.minixpackage
 
@@ -59,7 +60,7 @@ fi
 
 echo " * Building package"
 echo "Minix package $dir built `date`." >$INFO
-( echo $INFO ; if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(tmp|log|adm|run)|/etc/utmp|/var/run)" ) | pax -w -d | bzip2 >$tarbz
+( echo $INFO ; if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(tmp|log|adm|run)|/etc/utmp|/var/(run|log))" ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
 binsizes normal
 mv $tarbz $pdir
