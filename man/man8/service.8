@@ -29,7 +29,7 @@ service \- Start or stop an operating system server or device driver.
 Tells the reincarnation server to start or stop a system service, such as a
 server or device driver. The device driver will be automatically restarted when
 it unexpectedly exits, e.g., if it is killed because of a bad pointer. 
-Starting requires an absoluate path to the binary to be executed.
+Starting requires an absolute path to the binary to be executed.
 .PP
 When an optional period is specified, the reincarnation server sends a status request to the system service after every period. If there the response does not arrive in time, the reincarnation server will kill the misbehaving process and restart a new one. The period must be specified in ticks, but can be appended with HZ to make it seconds.
 .PP
