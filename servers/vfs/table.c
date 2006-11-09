@@ -98,7 +98,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 
 	no_sys,		/* 78 = (sysuname) */
 	do_getsysinfo,  /* 79 = getsysinfo */
-	no_sys,		/* 80 = unused */
+	do_getdents,	/* 80 = getdents */
 	no_sys,		/* 81 = unused */
 	do_fstatfs,	/* 82 = fstatfs */
 	no_sys,		/* 83 = unused */

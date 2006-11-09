@@ -64,6 +64,7 @@
 #define SVRCTL		  77
 #define SYSUNAME	  78
 #define GETSYSINFO	  79	/* to PM or FS */
+#define GETDENTS	  80	/* to FS */
 #define FSTATFS	 	  82	/* to FS */
 #define SELECT            85	/* to FS */
 #define FCHDIR            86	/* to FS */

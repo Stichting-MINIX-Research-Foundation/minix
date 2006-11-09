@@ -37,6 +37,7 @@ libc_FILES=" \
 	fstat.s \
 	fstatfs.s \
 	getcwd.s \
+	getdents.s \
 	getegid.s \
 	geteuid.s \
 	getgid.s \

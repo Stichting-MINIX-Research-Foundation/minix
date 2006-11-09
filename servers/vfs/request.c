@@ -831,6 +831,27 @@ readwrite_res_t *res;
 }
 
 
+PUBLIC int req_getdents(fs_e, inode_nr, pos, gid, size, pos_change)
+endpoint_t fs_e;
+ino_t inode_nr;
+off_t pos;
+cp_grant_id_t gid;
+size_t size;
+off_t *pos_change;
+{
+	int r;
+	message m;
+
+	m.m_type= REQ_GETDENTS;
+	m.REQ_GDE_INODE= inode_nr;
+	m.REQ_GDE_GRANT= gid;
+	m.REQ_GDE_SIZE= size;
+	m.REQ_GDE_POS= pos;
+
+	r = fs_sendrec(fs_e, &m);
+	*pos_change= m.RES_GDE_POS_CHANGE;
+	return r;
+}
 
 
 #if 0           
@@ -949,6 +970,5 @@ PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqm)
   /* Return message type */
   return r;
 }
-
 
 

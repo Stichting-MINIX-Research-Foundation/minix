@@ -5,6 +5,7 @@
  *
  * The entry points into this file are
  *   do_read:	 perform the READ system call by calling read_write
+ *   do_getdents: read entries from a directory (GETDENTS)
  *   read_write: actually do the work of READ and WRITE
  *
  * Changes for VFS:
@@ -289,4 +290,44 @@ int rw_flag;			/* READING or WRITING */
 	r = OK;
   }        
 #endif        
+
+
+/*===========================================================================*
+ *				do_getdents				     *
+ *===========================================================================*/
+PUBLIC int do_getdents()
+{
+/* Perform the getdents(fd, buf, size) system call. */
+  int r;
+  off_t pos_change;
+  cp_grant_id_t gid;
+  register struct filp *rfilp;
+
+  /* Is the file descriptor valid? */
+  if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) {
+	  return(err_code);
+  }
+  
+  if (!(rfilp->filp_mode & R_BIT))
+	return EBADF;
+
+  if ((rfilp->filp_vno->v_mode & I_TYPE) != I_DIRECTORY)
+	return EBADF;
+
+  gid=cpf_grant_magic(rfilp->filp_vno->v_fs_e, who_e, (vir_bytes) m_in.buffer,
+	m_in.nbytes, CPF_WRITE);
+  if (gid < 0) panic(__FILE__, "cpf_grant_magic failed", gid);
+
+  /* Issue request */
+  r= req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr, 
+	rfilp->filp_pos, gid, m_in.nbytes, &pos_change);
+
+  cpf_revoke(gid);
+
+  if (r > 0)
+	rfilp->filp_pos += pos_change;
+  return r;
+}
+
+
 

@@ -19,14 +19,8 @@ int seekdir(DIR *dp, off_t pos)
 	if (dp == nil) { errno= EBADF; return -1; }
 
 	dp->_count= 0;
-	dp->_ptr= dp->_buf;
 
-	off= pos & (sizeof(dp->_buf) - 1);
-	dp->_pos= pos - off;
-
-	if (lseek(dp->_fd, dp->_pos, SEEK_SET) == -1) return -1;
-
-	while (dp->_pos < pos && readdir(dp) != nil) {}
+	if (lseek(dp->_fd, pos, SEEK_SET) == -1) return -1;
 
 	return 0;
 }

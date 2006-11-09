@@ -58,5 +58,6 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         fs_new_driver,      /* 37  */
         fs_breadwrite,       /* 38  */
         fs_breadwrite,       /* 39  */
+        fs_getdents,	     /* 40  */
 };
 

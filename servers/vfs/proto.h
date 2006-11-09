@@ -122,6 +122,7 @@ _PROTOTYPE( int do_umask, (void)					);
 
 /* read.c */
 _PROTOTYPE( int do_read, (void)						);
+_PROTOTYPE( int do_getdents, (void)					);
 _PROTOTYPE( int read_write, (int rw_flag)				);
 
 /* request.c */
@@ -165,6 +166,8 @@ _PROTOTYPE( int req_newdriver, (endpoint_t fs_e, Dev_t dev,
             endpoint_t driver_e)                                        );
 _PROTOTYPE( int req_breadwrite, (breadwrite_req_t *req, 
             readwrite_res_t *res)                                       );
+_PROTOTYPE( int req_getdents, (endpoint_t fs_e, ino_t inode_nr,
+	off_t pos, cp_grant_id_t gid, size_t size, off_t *pos_change)	);
 
 /* stadir.c */
 _PROTOTYPE( int do_chdir, (void)					);

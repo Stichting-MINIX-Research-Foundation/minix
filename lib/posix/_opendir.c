@@ -44,7 +44,6 @@ DIR *opendir(const char *name)
 	}
 
 	dp->_fd= d;
-	dp->_v7= -1;
 	dp->_count= 0;
 	dp->_pos= 0;
 

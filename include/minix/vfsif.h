@@ -128,7 +128,9 @@
 #define REQ_BREAD                38
 #define REQ_BWRITE               39
 
-#define NREQS                    40
+#define REQ_GETDENTS		 40
+
+#define NREQS                    41
 
 #define FS_READY                 57
 

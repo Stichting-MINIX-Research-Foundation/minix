@@ -46,6 +46,7 @@ int lookup(void);
 int fs_slink(void);
 int fs_rdlink(void);
 int fs_breadwrite(void);
+int fs_getdents(void);
 
 void init_inode_cache(void);
 

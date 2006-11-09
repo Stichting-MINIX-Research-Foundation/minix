@@ -2,6 +2,8 @@
 
 #include "fs.h"
 #include <fcntl.h>
+#include <stddef.h>
+#include <string.h>
 #include <unistd.h>
 #include <minix/com.h>
 #include "buf.h"
@@ -556,3 +558,155 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
   return(get_block(dev, baseblock, NORMAL));
 }
 
+
+#define GETDENTS_BUFSIZ	257
+
+PRIVATE char getdents_buf[GETDENTS_BUFSIZ];
+
+/*===========================================================================*
+ *				fs_getdents				     *
+ *===========================================================================*/
+PUBLIC int fs_getdents(void)
+{
+  register struct inode *rip;
+  int o, r, block_size, len, reclen, done;
+  ino_t ino;
+  block_t b;
+  cp_grant_id_t gid;
+  size_t size, tmpbuf_off, userbuf_off;
+  off_t pos, off, block_pos, new_pos, ent_pos;
+  struct buf *bp;
+  struct direct *dp;
+  struct dirent *dep;
+  char *cp;
+
+  ino= fs_m_in.REQ_GDE_INODE;
+  gid= fs_m_in.REQ_GDE_GRANT;
+  size= fs_m_in.REQ_GDE_SIZE;
+  pos= fs_m_in.REQ_GDE_POS;
+
+  /* Check whether the position is properly aligned */
+  if (pos % DIR_ENTRY_SIZE)
+	return ENOENT;
+  
+  if ( (rip = get_inode(fs_dev, ino)) == NIL_INODE) {
+printf("MFS(%d) get_inode by fs_getdents() failed\n", SELF_E);
+        return(EINVAL);
+  }
+
+  block_size= rip->i_sp->s_block_size;
+  off= (pos % block_size);		/* Offset in block */
+  block_pos= pos-off;
+  done= FALSE;				/* Stop processing directory blocks
+					 * when done is set.
+					 */
+
+  tmpbuf_off= 0;	/* Offset in getdents_buf */
+  memset(getdents_buf, '\0', GETDENTS_BUFSIZ);	/* Avoid leaking any data */
+  userbuf_off= 0;	/* Offset in the user's buffer */
+
+  /* The default position for the next request is EOF. If the user's buffer
+   * fills up before EOF, new_pos will be modified.
+   */
+  new_pos= rip->i_size;
+
+  for (; block_pos < rip->i_size; block_pos += block_size) {
+	b = read_map(rip, block_pos);	/* get block number */
+
+	/* Since directories don't have holes, 'b' cannot be NO_BLOCK. */
+	bp = get_block(rip->i_dev, b, NORMAL);	/* get a dir block */
+
+	if (bp == NO_BLOCK)
+		panic(__FILE__,"get_block returned NO_BLOCK", NO_NUM);
+
+	/* Search a directory block. */
+	if (block_pos < pos)
+		dp = &bp->b_dir[off / DIR_ENTRY_SIZE];
+	else
+		dp = &bp->b_dir[0];
+	for (; dp < &bp->b_dir[NR_DIR_ENTRIES(block_size)]; dp++) {
+		if (dp->d_ino == 0)
+			continue;	/* Entry is not in use */
+
+		/* Compute the length of the name */
+		cp= memchr(dp->d_name, '\0', NAME_MAX);
+		if (cp == NULL)
+			len= NAME_MAX;
+		else
+			len= cp-dp->d_name;
+		
+
+		/* Compute record length */
+		reclen= offsetof(struct dirent, d_name) + len + 1;
+		o= (reclen % sizeof(long));
+		if (o != 0)
+			reclen += sizeof(long)-o;
+
+		/* Need the postition of this entry in the directory */
+		ent_pos= block_pos + ((char *)dp - bp->b_data);
+
+		if (tmpbuf_off + reclen > GETDENTS_BUFSIZ)
+		{
+			r= sys_safecopyto(FS_PROC_NR, gid, userbuf_off, 
+				(vir_bytes)getdents_buf, tmpbuf_off, D);
+			if (r != OK)
+			{
+				panic(__FILE__,
+					"fs_getdents: sys_safecopyto failed\n",
+					r);
+			}
+
+			userbuf_off += tmpbuf_off;
+			tmpbuf_off= 0;
+		}
+
+		if (userbuf_off + tmpbuf_off + reclen > size)
+		{
+			/* The user has no space for one more record */
+			done= TRUE;
+
+			/* Record the postion of this entry, it is the
+			 * starting point of the next request (unless the
+			 * postion is modified with lseek).
+			 */
+			new_pos= ent_pos;
+			break;
+		}
+
+		dep= (struct dirent *)&getdents_buf[tmpbuf_off];
+		dep->d_ino= dp->d_ino;
+		dep->d_off= ent_pos;
+		dep->d_reclen= reclen;
+		memcpy(dep->d_name, dp->d_name, len);
+		dep->d_name[len]= '\0';
+		tmpbuf_off += reclen;
+	}
+	put_block(bp, DIRECTORY_BLOCK);
+	if (done)
+		break;
+  }
+
+  if (tmpbuf_off != 0)
+  {
+	r= sys_safecopyto(FS_PROC_NR, gid, userbuf_off, 
+		(vir_bytes)getdents_buf, tmpbuf_off, D);
+	if (r != OK)
+		panic(__FILE__, "fs_getdents: sys_safecopyto failed\n", r);
+
+	userbuf_off += tmpbuf_off;
+  }
+
+  r= ENOSYS;
+  fs_m_out.RES_GDE_POS_CHANGE= 0;	/* No change in case of an error */
+  if (done && userbuf_off == 0)
+	r= EINVAL;		/* The user's buffer is too small */
+  else
+  {
+	r= userbuf_off;
+	if (new_pos >= pos)
+		fs_m_out.RES_GDE_POS_CHANGE= new_pos-pos;
+  }
+
+  put_inode(rip);		/* release the inode */
+  return(r);
+}

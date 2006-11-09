@@ -59,20 +59,23 @@ struct _v7_direct {
 /* Definitions for the directory(3) routines: */
 typedef struct {
 	char		_fd;	/* Filedescriptor of open directory */
-	char		_v7;	/* Directory is Version 7 */
-	short		_count;	/* This many objects in buf */
-	off_t		_pos;	/* Position in directory file */
-	struct _fl_direct  *_ptr;	/* Next slot in buf */
-	struct _fl_direct  _buf[_FLEX_PER_BLOCK]; /* One block of a directory file */
-	struct _fl_direct  _v7f[_FLEX_PER_V7];	 /* V7 entry transformed to flex */
+	unsigned	_count;	/* This many bytes in _buf */
+	unsigned	_pos;	/* Position in _buf */
+	char		 _buf[_MAX_BLOCK_SIZE]; /* The size does not really
+						 * matter as long as the
+						 * buffer is big enough 
+						 * to contain at least one 
+						 * entry.
+						 */
 } DIR;
 
 #define _DIRENT_NAME_LEN 61
 
 struct dirent {		/* Largest entry (8 slots) */
 	ino_t		d_ino;		/* I-node number */
-	unsigned char	d_extent;	/* Extended with this many slots */
-	char		d_name[_DIRENT_NAME_LEN];	/* Null terminated name */
+	off_t 		d_off;		/* Offset in directory */
+	unsigned short	d_reclen;	/* Length of this record */
+	char		d_name[1];	/* Null terminated name */
 };
 
 /* Function Prototypes. */
@@ -86,6 +89,9 @@ _PROTOTYPE( int seekdir, (DIR *_dirp, off_t _loc)			);
 _PROTOTYPE( off_t telldir, (DIR *_dirp)					);
 
 #define   dirfd(dirp)     ((dirp)->_fd)
+
+_PROTOTYPE( int getdents, (int _fildes, struct dirent *_buf,
+							size_t _nbyte)	);
 
 #endif
 

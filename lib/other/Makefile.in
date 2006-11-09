@@ -10,6 +10,7 @@ libc_FILES=" \
 	_cprofile.c \
 	_devctl.c \
 	__pm_findproc.c \
+	_getdents.c \
 	_getnpid.c \
 	_getsigset.c \
 	_getnprocnr.c \
