@@ -14,8 +14,7 @@ char *prefix;		/* prefix to test for */
  */
   char value[EP_BUF_SIZE];
   char punct[] = ":,;.";
-  int i, s, keylen;
-  char *val;
+  int s;
   size_t n;
 
   if ((s = env_get_param(env, value, sizeof(value))) != 0) {

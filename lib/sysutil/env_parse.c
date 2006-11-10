@@ -29,7 +29,7 @@ long min, max;		/* minimum and maximum values for the parameter */
   char value[EP_BUF_SIZE];
   char PUNCT[] = ":,;.";
   long newpar;
-  int s, i, radix, r, keylen;
+  int s, i, radix, r;
 
   if ((s=env_get_param(env, value, sizeof(value))) != 0) { 
       if (s == ESRCH) return(EP_UNSET);		/* only error allowed */ 
@@ -85,6 +85,7 @@ long min, max;		/* minimum and maximum values for the parameter */
   }
 badenv:
   env_panic(env);
+  return -1;
 }
 
 
