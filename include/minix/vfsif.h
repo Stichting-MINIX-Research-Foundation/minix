@@ -56,6 +56,12 @@
 #define REQ_FD_BDRIVER_E         m2_i1
 #define REQ_FD_BDEV              m2_l2
 
+/* For REQ_GETDENTS */
+#define REQ_GDE_INODE		 m2_i1
+#define REQ_GDE_GRANT		 m2_i2
+#define REQ_GDE_SIZE		 m2_i3
+#define REQ_GDE_POS		 m2_l1
+
 /* Fields of VFS/FS respons messages */
 #define RES_MOUNTED              m6_s1
 #define RES_OFFSET               m6_s2
@@ -82,6 +88,8 @@
 #define RES_MAXSIZE              m6_l3
 #define RES_BLOCKSIZE            m6_s2
 
+/* For REQ_GETDENTS */
+#define RES_GDE_POS_CHANGE	 m2_l1
 
 /* Request numbers (offset in the fs callvector) */
 #define REQ_GETNODE              1
