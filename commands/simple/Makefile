@@ -161,6 +161,7 @@ ALL	= \
 	rlogin \
 	rmdir \
 	rsh \
+	sed \
 	shar \
 	size \
 	sleep \
@@ -700,6 +701,10 @@ rsh:	rsh.c
 	$(CCLD) -o $@ rsh.c
 	@install -S 8kw $@
 
+sed:	sed.c
+	$(CCLD) -o $@ $?
+	@install -S 8kw $@
+
 shar:	shar.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
@@ -1049,6 +1054,8 @@ install:	\
 	/usr/bin/rlogin \
 	/usr/bin/rmdir \
 	/usr/bin/rsh \
+	/usr/bin/sed \
+	/bin/sed \
 	/usr/bin/shar \
 	/usr/bin/size \
 	/usr/bin/sleep \
@@ -1527,6 +1534,12 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/rsh:	rsh
+	install -cs -o bin $? $@
+
+/usr/bin/sed:	sed
+	install -cs -o bin $? $@
+
+/bin/sed:	sed
 	install -cs -o bin $? $@
 
 /usr/bin/shar:	shar
