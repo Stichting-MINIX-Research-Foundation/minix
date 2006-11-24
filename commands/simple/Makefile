@@ -275,7 +275,7 @@ chmem:	chmem.c
 
 chmod:	chmod.c
 	$(CCLD) -o $@ $?
-	@install -S 4kw $@
+	@install -S 16kw $@
 
 chown:	chown.c
 	$(CCLD) -o $@ $?
