@@ -13,37 +13,31 @@ PUBLIC int mount(special, name, rwflag)
 char *name, *special;
 int rwflag;
 {
+  int r;
   struct stat stat_buf;
   message m;
   
   m.RS_CMD_ADDR = "/sbin/mfs";
   if (stat(m.RS_CMD_ADDR, &stat_buf) == -1) {
-	  printf("MOUNT: /sbin/mfs doesn't exist\n");
-	  m.RS_CMD_ADDR = 0;
-  }
-  
-  if (!m.RS_CMD_ADDR) {
-	  m.RS_CMD_ADDR = "/bin/mfs";
-	  if (stat(m.RS_CMD_ADDR, &stat_buf) == -1) {
-		  printf("MOUNT: /bin/mfs doesn't exist\n");
-		  m.RS_CMD_ADDR = 0;
+	/* /sbin/mfs does not exist, try /bin/mfs as well */
+	m.RS_CMD_ADDR = "/bin/mfs";
+	if (stat(m.RS_CMD_ADDR, &stat_buf) == -1) {
+		/* /bin/mfs does not exist either, give up */
+		return -1;
 	  }
   } 
   
-  if (m.RS_CMD_ADDR) { 
-	  if (!(stat_buf.st_mode & S_IFREG)) {
-		  printf("MOUNT: FS binary is not a regular file\n");
-	  }
-	  m.RS_CMD_LEN = strlen(m.RS_CMD_ADDR);
-	  m.RS_DEV_MAJOR = 0;
-	  m.RS_PERIOD = 0;
-	  if (OK != _taskcall(RS_PROC_NR, RS_UP, &m)) {
-		  printf("MOUNT: error sending request to RS\n");
-	  } 
-	  else {
-		  /* copy endpointnumber */
-		  m.m1_p3 = (char*)(unsigned long)m.RS_ENDPOINT;   
-	  }
+  if (m.RS_CMD_ADDR) {
+	m.RS_CMD_LEN = strlen(m.RS_CMD_ADDR);
+	m.RS_DEV_MAJOR = 0;
+	m.RS_PERIOD = 0;
+	r= _taskcall(RS_PROC_NR, RS_UP, &m);
+	if (r != OK) {
+		errno= -r;
+		return -1;
+	} 
+	/* copy endpointnumber */
+	m.m1_p3 = (char*)(unsigned long)m.RS_ENDPOINT;   
   }
   
   m.m1_i1 = strlen(special) + 1;
