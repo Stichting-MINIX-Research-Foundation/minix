@@ -157,10 +157,10 @@ struct part_entry *table;	/* four entries */
  * errors.
  */
   iovec_t iovec1;
-  off_t position;
+  u64_t position;
   static unsigned char partbuf[CD_SECTOR_SIZE];
 
-  position = offset << SECTOR_SHIFT;
+  position = mul64u(offset, SECTOR_SIZE);
   iovec1.iov_addr = (vir_bytes) partbuf;
   iovec1.iov_size = CD_SECTOR_SIZE;
   if ((*dp->dr_prepare)(device) != NIL_DEV) {

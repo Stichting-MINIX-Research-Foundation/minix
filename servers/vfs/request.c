@@ -17,6 +17,7 @@
 #include <minix/keymap.h>
 #include <minix/const.h>
 #include <minix/endpoint.h>
+#include <minix/u64.h>
 #include <unistd.h>
 
 #include <minix/vfsif.h>
@@ -118,13 +119,16 @@ readwrite_res_t *res;
 {
     int r;
     message m;
+
+    if (ex64hi(req->pos) != 0)
+	panic(__FILE__, "req_readwrite: pos too large", NO_NUM);
     
     /* Fill in request message */
     m.m_type = req->rw_flag == READING ? REQ_READ : REQ_WRITE;
     m.REQ_FD_INODE_NR = req->inode_nr;
     m.REQ_FD_WHO_E = req->user_e;
     m.REQ_FD_SEG = req->seg;
-    m.REQ_FD_POS = req->pos;
+    m.REQ_FD_POS = ex64lo(req->pos);
     m.REQ_FD_NBYTES = req->num_of_bytes;
     m.REQ_FD_USER_ADDR = req->user_addr;
     m.REQ_FD_INODE_INDEX = req->inode_index;
@@ -133,7 +137,7 @@ readwrite_res_t *res;
     if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
 
     /* Fill in response structure */
-    res->new_pos = m.RES_FD_POS;
+    res->new_pos = cvul64(m.RES_FD_POS);
     res->cum_io = m.RES_FD_CUM_IO;
 
     return OK;
@@ -810,22 +814,23 @@ readwrite_res_t *res;
 {
     int r;
     message m;
-    
+
     /* Fill in request message */
     m.m_type = req->rw_flag == READING ? REQ_BREAD : REQ_BWRITE;
-    m.REQ_FD_BDEV = req->dev;
-    m.REQ_FD_BLOCK_SIZE = req->blocksize;
-    m.REQ_FD_WHO_E = req->user_e;
-    m.REQ_FD_POS = req->pos;
-    m.REQ_FD_NBYTES = req->num_of_bytes;
-    m.REQ_FD_USER_ADDR = req->user_addr;
+    m.REQ_XFD_BDEV = req->dev;
+    m.REQ_XFD_BLOCK_SIZE = req->blocksize;
+    m.REQ_XFD_WHO_E = req->user_e;
+    m.REQ_XFD_POS_LO = ex64lo(req->pos);
+    m.REQ_XFD_POS_HI = ex64hi(req->pos);
+    m.REQ_XFD_NBYTES = req->num_of_bytes;
+    m.REQ_XFD_USER_ADDR = req->user_addr;
     
     /* Send/rec request */
     if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
 
     /* Fill in response structure */
-    res->new_pos = m.RES_FD_POS;
-    res->cum_io = m.RES_FD_CUM_IO;
+    res->new_pos = make64(m.RES_XFD_POS_LO, m.RES_XFD_POS_HI);
+    res->cum_io = m.RES_XFD_CUM_IO;
 
     return OK;
 }
@@ -851,6 +856,24 @@ off_t *pos_change;
 	r = fs_sendrec(fs_e, &m);
 	*pos_change= m.RES_GDE_POS_CHANGE;
 	return r;
+}
+
+
+/*===========================================================================*
+ *				req_flush         			     *
+ *===========================================================================*/
+PUBLIC int req_flush(fs_e, dev)
+endpoint_t fs_e; 
+dev_t dev;
+{
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_FLUSH;
+    m.REQ_DEV = dev;
+    
+    /* Send/rec request */
+    return fs_sendrec(fs_e, &m);
 }
 
 

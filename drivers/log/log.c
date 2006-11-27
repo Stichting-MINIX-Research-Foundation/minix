@@ -25,7 +25,7 @@ PRIVATE int log_device = -1;	 		/* current device */
 
 FORWARD _PROTOTYPE( char *log_name, (void) );
 FORWARD _PROTOTYPE( struct device *log_prepare, (int device) );
-FORWARD _PROTOTYPE( int log_transfer, (int proc_nr, int opcode, off_t position,
+FORWARD _PROTOTYPE( int log_transfer, (int proc_nr, int opcode, u64_t position,
 			iovec_t *iov, unsigned nr_req, int safe) );
 FORWARD _PROTOTYPE( int log_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int log_cancel, (struct driver *dp, message *m_ptr) );
@@ -227,7 +227,7 @@ subread(struct logdevice *log, int count, int proc_nr,
 PRIVATE int log_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
-off_t position;			/* offset on device to read or write */
+u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 int safe;			/* safe copies? */

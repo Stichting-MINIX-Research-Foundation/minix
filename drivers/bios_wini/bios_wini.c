@@ -68,7 +68,7 @@ PRIVATE cp_grant_id_t my_bios_grant_id;
 _PROTOTYPE(int main, (void) );
 FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );
 FORWARD _PROTOTYPE( char *w_name, (void) );
-FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
+FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, u64_t position,
 				iovec_t *iov, unsigned nr_req, int safe) );
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
@@ -199,10 +199,10 @@ size_t size;
 /*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
-PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req, safe)
+PRIVATE int w_transfer(proc_nr, opcode, pos64, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
-off_t position;			/* offset on device to read or write */
+u64_t pos64;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 int safe;			/* use safecopies? */
@@ -216,6 +216,7 @@ int safe;			/* use safecopies? */
   size_t vir_offset = 0;
   unsigned long dv_size = cv64ul(w_dv->dv_size);
   unsigned secspcyl = wn->heads * wn->sectors;
+  off_t position;
   struct int13ext_rw {
 	u8_t	len;
 	u8_t	res1;
@@ -224,6 +225,10 @@ int safe;			/* use safecopies? */
 	u32_t	block[2];
   } i13e_rw;
   struct reg86u reg86;
+
+  if (ex64hi(pos64))
+	panic(__FILE__, "should handle 64-bit offsets", NO_NUM);
+  position= ex64lo(pos64);
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);

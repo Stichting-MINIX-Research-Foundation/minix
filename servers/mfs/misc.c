@@ -1,6 +1,7 @@
 
 #include "fs.h"
 #include <fcntl.h>
+#include <minix/vfsif.h>
 
 #include "buf.h"
 #include "inode.h"
@@ -29,6 +30,29 @@ PUBLIC int fs_sync()
             flushall(bp->b_dev);
 
   return(OK);		/* sync() can't fail */
+}
+
+
+/*===========================================================================*
+ *				fs_flush				     *
+ *===========================================================================*/
+PUBLIC int fs_flush()
+{
+/* Flush the blocks of a device from the cache after writing any dirty blocks
+ * to disk.
+ */
+  dev_t dev;
+
+  dev= fs_m_in.REQ_DEV;
+  if (dev == fs_dev)
+  {
+	printf("fs_flush: not flushing block for mounted filsystem\n");
+	return EBUSY;
+  }
+  flushall(dev);
+  invalidate(dev);
+
+  return(OK);
 }
 
 

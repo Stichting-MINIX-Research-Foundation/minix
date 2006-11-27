@@ -16,6 +16,7 @@
 
 #include "fs.h"
 #include <minix/com.h>
+#include <minix/u64.h>
 #include "buf.h"
 #include "super.h"
 
@@ -259,14 +260,14 @@ int rw_flag;			/* READING or WRITING */
  * from the cache, it is not clear what the caller could do about it anyway.
  */
   int r, op;
-  off_t pos;
+  u64_t pos;
   dev_t dev;
   int block_size;
 
   block_size = get_block_size(bp->b_dev);
 
   if ( (dev = bp->b_dev) != NO_DEV) {
-	  pos = (off_t) bp->b_blocknr * block_size;
+	  pos = mul64u(bp->b_blocknr, block_size);
 	  op = (rw_flag == READING ? DEV_READ : DEV_WRITE);
 	  r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, block_size, 0);
 	  if (r != block_size) {
@@ -374,7 +375,7 @@ int rw_flag;			/* READING or WRITING */
 	}
 	r = block_dev_io(rw_flag == WRITING ? DEV_SCATTER : DEV_GATHER,
 		dev, SELF_E, iovec,
-		(off_t) bufq[0]->b_blocknr * block_size, j, 0);
+		mul64u(bufq[0]->b_blocknr, block_size), j, 0);
 
 	/* Harvest the results.  Dev_io reports the first error it may have
 	 * encountered, but we only care if it's the first block that failed.

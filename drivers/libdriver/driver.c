@@ -182,6 +182,7 @@ int safe;			/* use safecopies? */
   iovec_t iovec1;
   int r, opcode;
   phys_bytes phys_addr;
+  u64_t position;
 
   /* Disk address?  Address and length of the user buffer? */
   if (mp->COUNT < 0) return(EINVAL);
@@ -203,7 +204,8 @@ int safe;			/* use safecopies? */
   iovec1.iov_size = mp->COUNT;
 
   /* Transfer bytes from/to the device. */
-  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, mp->POSITION, &iovec1, 1, safe);
+  position= make64(mp->POSITION, mp->HIGHPOS);
+  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, position, &iovec1, 1, safe);
 
   /* Return the number of bytes transferred or an error code. */
   return(r == OK ? (mp->COUNT - iovec1.iov_size) : r);
@@ -226,7 +228,7 @@ int safe;		/* use safecopies? */
   phys_bytes iovec_size;
   unsigned nr_req;
   int r, j, opcode;
-
+  u64_t position;
 
   nr_req = mp->COUNT;	/* Length of I/O vector */
 
@@ -257,7 +259,8 @@ int safe;		/* use safecopies? */
   opcode = mp->m_type;
   if(opcode == DEV_GATHER_S) opcode = DEV_GATHER;
   if(opcode == DEV_SCATTER_S) opcode = DEV_SCATTER;
-  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, mp->POSITION, iov,
+  position= make64(mp->POSITION, mp->HIGHPOS);
+  r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, position, iov,
 	nr_req, safe);
 
   /* Copy the I/O vector back to the caller. */

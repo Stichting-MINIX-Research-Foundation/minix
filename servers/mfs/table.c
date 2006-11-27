@@ -59,5 +59,6 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         fs_breadwrite,       /* 38  */
         fs_breadwrite,       /* 39  */
         fs_getdents,	     /* 40  */
+        fs_flush,	     /* 41  */
 };
 

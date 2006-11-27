@@ -77,7 +77,7 @@ PUBLIC int do_mount()
 	
   /* FS process' endpoint number */ 
   fs_e = (unsigned long)m_in.m1_p3;
-  
+
   /* Do the actual job */
   r = mount_fs(fs_e);
 

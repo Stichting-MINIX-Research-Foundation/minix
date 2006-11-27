@@ -52,9 +52,15 @@
 #define REQ_FD_START             m2_i2
 #define REQ_FD_END               m2_i3
 
-#define REQ_FD_BLOCK_SIZE        m2_s1
 #define REQ_FD_BDRIVER_E         m2_i1
-#define REQ_FD_BDEV              m2_l2
+
+#define REQ_XFD_BDEV              m2_i1
+#define REQ_XFD_WHO_E             m2_i2
+#define REQ_XFD_NBYTES            m2_i3
+#define REQ_XFD_POS_LO            m2_l1
+#define REQ_XFD_POS_HI            m2_l2
+#define REQ_XFD_USER_ADDR         m2_p1
+#define REQ_XFD_BLOCK_SIZE        m2_s1
 
 /* For REQ_GETDENTS */
 #define REQ_GDE_INODE		 m2_i1
@@ -81,6 +87,10 @@
 #define RES_FD_POS               m2_i1
 #define RES_FD_CUM_IO            m2_i2
 #define RES_FD_SIZE              m2_i3
+
+#define RES_XFD_POS_LO           m2_l1
+#define RES_XFD_POS_HI           m2_l2
+#define RES_XFD_CUM_IO           m2_i1
 
 #define RES_DIR                  m6_l1
 #define RES_FILE                 m6_l2
@@ -135,10 +145,10 @@
 
 #define REQ_BREAD                38
 #define REQ_BWRITE               39
-
 #define REQ_GETDENTS		 40
+#define REQ_FLUSH		 41
 
-#define NREQS                    41
+#define NREQS                    42
 
 #define FS_READY                 57
 

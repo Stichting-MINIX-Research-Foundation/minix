@@ -43,7 +43,7 @@ extern int errno;			/* error number for PM calls */
 
 FORWARD _PROTOTYPE( char *m_name, (void) 				);
 FORWARD _PROTOTYPE( struct device *m_prepare, (int device) 		);
-FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, off_t position,
+FORWARD _PROTOTYPE( int m_transfer, (int proc_nr, int opcode, u64_t position,
 				iovec_t *iov, unsigned nr_req, int safe));
 FORWARD _PROTOTYPE( int m_do_open, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( void m_init, (void) );
@@ -119,10 +119,10 @@ int device;
 /*===========================================================================*
  *				m_transfer				     *
  *===========================================================================*/
-PRIVATE int m_transfer(proc_nr, opcode, position, iov, nr_req, safe)
+PRIVATE int m_transfer(proc_nr, opcode, pos64, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
-off_t position;			/* offset on device to read or write */
+u64_t pos64;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 int safe;			/* safe copies */
@@ -136,8 +136,13 @@ int safe;			/* safe copies */
   struct device *dv;
   unsigned long dv_size;
   int s, r;
+  off_t position;
 
   static int n = 0;
+
+  if (ex64hi(pos64) != 0)
+	return OK;	/* Beyond EOF */
+  position= cv64ul(pos64);
 
   /* Get minor device number and check for /dev/null. */
   dv = &m_geom[m_device];

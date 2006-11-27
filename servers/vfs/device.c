@@ -24,6 +24,7 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include <minix/ioctl.h>
+#include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
 
@@ -415,23 +416,28 @@ int bytes;			/* how many bytes to transfer */
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
-PUBLIC int dev_io(op, dev, proc_e, buf, pos, bytes, flags)
+PUBLIC int dev_io(op, dev, proc_e, buf, posX, bytes, flags)
 int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
 dev_t dev;			/* major-minor device number */
 int proc_e;			/* in whose address space is buf? */
 void *buf;			/* virtual address of the buffer */
-off_t pos;			/* byte position */
+u64_t posX;			/* byte position */
 int bytes;			/* how many bytes to transfer */
 int flags;			/* special flags, like O_NONBLOCK */
 {
 /* Read or write from a device.  The parameter 'dev' tells which one. */
   struct dmap *dp;
+  off_t pos;
   message dev_mess;
   cp_grant_id_t gid = GRANT_INVALID;
   static cp_grant_id_t gids[NR_IOREQS];
   int vec_grants = 0, orig_op, safe;
   void *buf_used;
   endpoint_t ioproc;
+
+  if (ex64hi(posX) != 0)
+	panic(__FILE__, "dev_io: postition too high", NO_NUM);
+  pos= ex64lo(posX);
 
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
@@ -648,7 +654,7 @@ PUBLIC int do_ioctl()
 	&& (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) return(ENOTTY);
   dev = (dev_t) vp->v_sdev;
 
-  return(dev_io(DEV_IOCTL, dev, who_e, m_in.ADDRESS, 0L, 
+  return(dev_io(DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0), 
   	m_in.REQUEST, f->filp_flags));
 }
 

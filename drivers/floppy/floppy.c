@@ -247,7 +247,7 @@ FORWARD _PROTOTYPE( void f_timeout, (timer_t *tp) 			);
 FORWARD _PROTOTYPE( struct device *f_prepare, (int device) 		);
 FORWARD _PROTOTYPE( char *f_name, (void) 				);
 FORWARD _PROTOTYPE( void f_cleanup, (void) 				);
-FORWARD _PROTOTYPE( int f_transfer, (int proc_nr, int opcode, off_t position,
+FORWARD _PROTOTYPE( int f_transfer, (int proc_nr, int opcode, u64_t position,
 					iovec_t *iov, unsigned nr_req, int) 	);
 FORWARD _PROTOTYPE( int dma_setup, (int opcode) 			);
 FORWARD _PROTOTYPE( void start_motor, (void) 				);
@@ -433,10 +433,10 @@ PRIVATE void f_cleanup()
 /*===========================================================================*
  *				f_transfer				     *
  *===========================================================================*/
-PRIVATE int f_transfer(proc_nr, opcode, position, iov, nr_req, safe)
+PRIVATE int f_transfer(proc_nr, opcode, pos64, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
-off_t position;			/* offset on device to read or write */
+u64_t pos64;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 int safe;
@@ -449,9 +449,14 @@ int safe;
   unsigned nbytes, count, chunk, sector;
   unsigned long dv_size = cv64ul(f_dv->dv_size);
   vir_bytes user_offset, iov_offset = 0, iop_offset;
+  off_t position;
   signed long uoffsets[MAX_SECTORS], *up;
   cp_grant_id_t ugrants[MAX_SECTORS], *ug;
   u8_t cmd[3];
+
+  if (ex64hi(pos64) != 0)
+	return OK;	/* Way beyond EOF */
+  position= cv64ul(pos64);
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
@@ -1307,7 +1312,7 @@ int density;
   position = (off_t) f_dp->test << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) tmp_buf;
   iovec1.iov_size = SECTOR_SIZE;
-  result = f_transfer(SELF, DEV_GATHER, position, &iovec1, 1, 0);
+  result = f_transfer(SELF, DEV_GATHER, cvul64(position), &iovec1, 1, 0);
 
   if (iovec1.iov_size != 0) return(EIO);
 

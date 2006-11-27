@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include <string.h>
 #include "file.h"
 #include "fproc.h"
@@ -257,7 +258,12 @@ PUBLIC int do_fstat()
   /* If we read from a pipe, send position too */
   if (rfilp->filp_vno->v_pipe == I_PIPE) {
 	if (rfilp->filp_mode & R_BIT) 
-		pipe_pos = rfilp->filp_pos;
+		if (ex64hi(rfilp->filp_pos) != 0)
+		{
+			panic(__FILE__, "do_fstat: bad position in pipe",
+				NO_NUM);
+		}
+		pipe_pos = ex64lo(rfilp->filp_pos);
   }
 
   /* Fill in request message */

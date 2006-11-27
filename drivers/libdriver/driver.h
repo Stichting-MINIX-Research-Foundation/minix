@@ -33,8 +33,8 @@ struct driver {
   _PROTOTYPE( int (*dr_close), (struct driver *dp, message *m_ptr) );
   _PROTOTYPE( int (*dr_ioctl), (struct driver *dp, message *m_ptr, int safe) );
   _PROTOTYPE( struct device *(*dr_prepare), (int device) );
-  _PROTOTYPE( int (*dr_transfer), (int proc_nr, int opcode, off_t position,
-					iovec_t *iov, unsigned nr_req, int safe) );
+  _PROTOTYPE( int (*dr_transfer), (int proc_nr, int opcode, u64_t position,
+				iovec_t *iov, unsigned nr_req, int safe) );
   _PROTOTYPE( void (*dr_cleanup), (void) );
   _PROTOTYPE( void (*dr_geometry), (struct partition *entry) );
   _PROTOTYPE( void (*dr_signal), (struct driver *dp, message *m_ptr) );

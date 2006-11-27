@@ -346,7 +346,7 @@ FORWARD _PROTOTYPE( int w_identify, (void) 				);
 FORWARD _PROTOTYPE( char *w_name, (void) 				);
 FORWARD _PROTOTYPE( int w_specify, (void) 				);
 FORWARD _PROTOTYPE( int w_io_test, (void) 				);
-FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, off_t position,
+FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, u64_t position,
 				iovec_t *iov, unsigned nr_req, int safe));
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
 FORWARD _PROTOTYPE( int com_out_ext, (struct command *cmd)		);
@@ -371,7 +371,7 @@ FORWARD _PROTOTYPE( int atapi_intr_wait, (void) 			);
 FORWARD _PROTOTYPE( int atapi_open, (void) 				);
 FORWARD _PROTOTYPE( void atapi_close, (void) 				);
 FORWARD _PROTOTYPE( int atapi_transfer, (int proc_nr, int opcode,
-		off_t position, iovec_t *iov, unsigned nr_req, int safe));
+		u64_t position, iovec_t *iov, unsigned nr_req, int safe));
 #endif
 
 /* Entry points to this driver. */
@@ -806,11 +806,13 @@ PRIVATE int w_identify()
 	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, SECTOR_SIZE)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 
+#if 0
 	if (id_word(0) & ID_GEN_NOT_ATA)
 	{
 		printf("%s: not an ATA device?\n", w_name());
 		return ERR;
 	}
+#endif
 
 	/* This is an ATA device. */
 	wn->state |= SMART;
@@ -1049,7 +1051,7 @@ PRIVATE int w_io_test(void)
  	if (w_prepare(w_drive * DEV_PER_DRIVE) == NIL_DEV)
  		panic(w_name(), "Couldn't switch devices", NO_NUM);
 
-	r = w_transfer(SELF, DEV_GATHER, 0, &iov, 1, 0);
+	r = w_transfer(SELF, DEV_GATHER, cvu64(0), &iov, 1, 0);
 
 	/* Switch back. */
  	if (w_prepare(save_dev) == NIL_DEV)
@@ -1192,7 +1194,7 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
 PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
-off_t position;			/* offset on device to read or write */
+u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 int safe;			/* iov contains addresses (0) or grants? */
@@ -1201,7 +1203,7 @@ int safe;			/* iov contains addresses (0) or grants? */
   iovec_t *iop, *iov_end = iov + nr_req;
   int n, r, s, errors, do_dma, do_write, do_copyout;
   unsigned long v, block, w_status;
-  unsigned long dv_size = cv64ul(w_dv->dv_size);
+  u64_t dv_size = w_dv->dv_size;
   unsigned cylinder, head, sector, nbytes;
   unsigned dma_buf_offset;
   size_t addr_offset = 0;
@@ -1213,7 +1215,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 #endif
 
   /* Check disk address. */
-  if ((position & SECTOR_MASK) != 0) return(EINVAL);
+  if (rem64u(position, SECTOR_SIZE) != 0) return(EINVAL);
 
   errors = 0;
 
@@ -1224,9 +1226,10 @@ int safe;			/* iov contains addresses (0) or grants? */
 	if ((nbytes & SECTOR_MASK) != 0) return(EINVAL);
 
 	/* Which block on disk and how close to EOF? */
-	if (position >= dv_size) return(OK);		/* At EOF */
-	if (position + nbytes > dv_size) nbytes = dv_size - position;
-	block = div64u(add64ul(w_dv->dv_base, position), SECTOR_SIZE);
+	if (cmp64(position, dv_size) >= 0) return(OK);		/* At EOF */
+	if (cmp64(add64ul(position, nbytes), dv_size) > 0)
+		nbytes = diff64(dv_size, position);
+	block = div64u(add64(w_dv->dv_base, position), SECTOR_SIZE);
 
 	do_dma= wn->dma;
 	do_write= (opcode == DEV_SCATTER);
@@ -1338,7 +1341,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 
 			/* Book the bytes successfully transferred. */
 			nbytes -= n;
-			position += n;
+			position= add64ul(position, n);
 			if ((iov->iov_size -= n) == 0) {
 				iov++; nr_req--; addr_offset = 0;
 			}
@@ -1412,7 +1415,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 
 		/* Book the bytes successfully transferred. */
 		nbytes -= SECTOR_SIZE;
-		position += SECTOR_SIZE;
+		position= add64u(position, SECTOR_SIZE);
 		addr_offset += SECTOR_SIZE;
 		if ((iov->iov_size -= SECTOR_SIZE) == 0) {
 			iov++;
@@ -2113,7 +2116,7 @@ void sense_request(void)
 PRIVATE int atapi_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
-off_t position;			/* offset on device to read or write */
+u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 int safe;			/* use safecopies? */
@@ -2123,7 +2126,7 @@ int safe;			/* use safecopies? */
   int r, s, errors, fresh;
   u64_t pos;
   unsigned long block;
-  unsigned long dv_size = cv64ul(w_dv->dv_size);
+  u64_t dv_size = w_dv->dv_size;
   unsigned nbytes, nblocks, count, before, chunk;
   static u8_t packet[ATAPI_PACKETSIZE];
   size_t addr_offset = 0;
@@ -2134,7 +2137,7 @@ int safe;			/* use safecopies? */
 	/* The Minix block size is smaller than the CD block size, so we
 	 * may have to read extra before or after the good data.
 	 */
-	pos = add64ul(w_dv->dv_base, position);
+	pos = add64(w_dv->dv_base, position);
 	block = div64u(pos, CD_SECTOR_SIZE);
 	before = rem64u(pos, CD_SECTOR_SIZE);
 
@@ -2152,8 +2155,9 @@ int safe;			/* use safecopies? */
 	if ((before | nbytes) & 1) return(EINVAL);
 
 	/* Which block on disk and how close to EOF? */
-	if (position >= dv_size) return(OK);		/* At EOF */
-	if (position + nbytes > dv_size) nbytes = dv_size - position;
+	if (cmp64(position, dv_size) >= 0) return(OK);		/* At EOF */
+	if (cmp64(add64ul(position, nbytes), dv_size) > 0)
+		nbytes = diff64(dv_size, position);
 
 	nblocks = (before + nbytes + CD_SECTOR_SIZE - 1) / CD_SECTOR_SIZE;
 	if (ATAPI_DEBUG) {
@@ -2214,7 +2218,7 @@ int safe;			/* use safecopies? */
 			}
 			if (s != OK)
 				panic(w_name(),"Call to sys_insw() failed", s);
-			position += chunk;
+			position= add64ul(position, chunk);
 			nbytes -= chunk;
 			count -= chunk;
 			addr_offset += chunk;

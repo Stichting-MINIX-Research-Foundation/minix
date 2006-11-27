@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include <sys/select.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include <string.h>
 
 /* max. number of simultaneously pending select() calls */
@@ -103,7 +104,8 @@ PRIVATE int select_request_general(struct filp *f, int *ops, int block)
 {
 	int rops = *ops;
 	if (block) rops |= SEL_NOTIFY;
-	*ops = dev_io(DEV_SELECT, f->filp_vno->v_sdev, rops, NULL, 0, 0, 0);
+	*ops = dev_io(DEV_SELECT, f->filp_vno->v_sdev, rops, NULL, cvu64(0),
+		0, 0);
 	if (*ops < 0)
 		return SEL_ERR;
 	return SEL_OK;

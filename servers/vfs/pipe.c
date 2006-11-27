@@ -25,6 +25,7 @@
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include "file.h"
@@ -136,7 +137,7 @@ register struct vnode *vp;	/* the inode of the pipe */
 int rw_flag;			/* READING or WRITING */
 int oflags;			/* flags set by open or fcntl */
 register int bytes;		/* bytes to be read or written (all chunks) */
-register off_t position;	/* current file position */
+u64_t position;			/* current file position */
 int *canwrite;			/* return: number of bytes we can write */
 int notouch;			/* check only */
 {
@@ -145,10 +146,15 @@ int notouch;			/* check only */
  * and there is no writer, return 0 bytes.  If a process is writing to a
  * pipe and no one is reading from it, give a broken pipe error.
  */
+  off_t pos;
+
+  if (ex64hi(position) != 0)
+	panic(__FILE__, "pipe_check: position too large in pipe", NO_NUM);
+  pos= ex64lo(position);
 
   /* If reading, check for empty pipe. */
   if (rw_flag == READING) {
-	if (position >= vp->v_size) {
+	if (pos >= vp->v_size) {
 		/* Process is reading from an empty pipe. */
 		int r = 0;
 		if (find_filp(vp, W_BIT) != NIL_FILP) {
@@ -176,7 +182,7 @@ int notouch;			/* check only */
 		return(EPIPE);
 	}
 
-	if (position + bytes > PIPE_SIZE(vp->v_vmnt->m_block_size)) {
+	if (pos + bytes > PIPE_SIZE(vp->v_vmnt->m_block_size)) {
 		if ((oflags & O_NONBLOCK)
 		 && bytes <= PIPE_SIZE(vp->v_vmnt->m_block_size)) {
 			return(EAGAIN);
@@ -184,7 +190,7 @@ int notouch;			/* check only */
 		else if ((oflags & O_NONBLOCK)
 		&& bytes > PIPE_SIZE(vp->v_vmnt->m_block_size)) {
 		if ( (*canwrite = (PIPE_SIZE(vp->v_vmnt->m_block_size) 
-			- position)) > 0)  {
+			- pos)) > 0)  {
 				/* Do a partial write. Need to wakeup reader */
 				if (!notouch)
 					release(vp, READ, susp_count);
@@ -195,7 +201,7 @@ int notouch;			/* check only */
 		     }
 		if (bytes > PIPE_SIZE(vp->v_vmnt->m_block_size)) {
 			if ((*canwrite = PIPE_SIZE(vp->v_vmnt->m_block_size) 
-				- position) > 0) {
+				- pos) > 0) {
 				/* Do a partial write. Need to wakeup reader
 				 * since we'll suspend ourself in read_write()
 				 */
@@ -210,7 +216,7 @@ int notouch;			/* check only */
 	}
 
 	/* Writing to an empty pipe.  Search for suspended reader. */
-	if (position == 0 && !notouch)
+	if (pos == 0 && !notouch)
 		release(vp, READ, susp_count);
   }
 

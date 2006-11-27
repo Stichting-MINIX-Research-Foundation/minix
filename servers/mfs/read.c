@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -14,7 +15,7 @@
 
 
 
-FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, off_t position,
+FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, u64_t position,
 	unsigned off, int chunk, unsigned left, int rw_flag,
 	char *buff, int seg, int usr, int block_size, int *completed));
 
@@ -98,7 +99,7 @@ PUBLIC int fs_readwrite(void)
       }
 
       /* Read or write 'chunk' bytes. */
-      r = rw_chunk(rip, position, off, chunk, (unsigned) nrbytes,
+      r = rw_chunk(rip, cvul64(position), off, chunk, (unsigned) nrbytes,
               rw_flag, user_addr, seg, usr, block_size, &completed);
 
       if (r != OK) break;	/* EOF reached */
@@ -166,7 +167,7 @@ PUBLIC int fs_breadwrite(void)
 {
   int r, usr, rw_flag, chunk, block_size;
   int nrbytes;
-  off_t position, f_size, bytes_left;
+  u64_t position;
   unsigned int off, cum_io;
   mode_t mode_word;
   int completed, r2 = OK;
@@ -176,36 +177,29 @@ PUBLIC int fs_breadwrite(void)
   struct inode rip;
   
   r = OK;
-  f_size = ULONG_MAX;
   
   /* Get the values from the request message */ 
   rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
-  usr = fs_m_in.REQ_FD_WHO_E;
-  position = fs_m_in.REQ_FD_POS;
-  nrbytes = (unsigned) fs_m_in.REQ_FD_NBYTES;
-  user_addr = fs_m_in.REQ_FD_USER_ADDR;
+  usr = fs_m_in.REQ_XFD_WHO_E;
+  position = make64(fs_m_in.REQ_XFD_POS_LO, fs_m_in.REQ_XFD_POS_HI);
+  nrbytes = (unsigned) fs_m_in.REQ_XFD_NBYTES;
+  user_addr = fs_m_in.REQ_XFD_USER_ADDR;
   
-  block_size = get_block_size(fs_m_in.REQ_FD_BDEV);
+  block_size = get_block_size(fs_m_in.REQ_XFD_BDEV);
 
-  rip.i_zone[0] = fs_m_in.REQ_FD_BDEV;
+  rip.i_zone[0] = fs_m_in.REQ_XFD_BDEV;
   rip.i_mode = I_BLOCK_SPECIAL;
-  rip.i_size = f_size;
+  rip.i_size = 0;
 
   rdwt_err = OK;		/* set to EIO if disk error occurs */
   
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes != 0) {
-      off = (unsigned int) (position % block_size);/* offset in blk*/
+      off = rem64u(position, block_size);	/* offset in blk*/
         
       chunk = MIN(nrbytes, block_size - off);
       if (chunk < 0) chunk = block_size - off;
-
-      if (rw_flag == READING) {
-          bytes_left = f_size - position;
-          if (position >= f_size) break;	/* we are beyond EOF */
-          if (chunk > bytes_left) chunk = (int) bytes_left;
-      }
 
       /* Read or write 'chunk' bytes. */
       r = rw_chunk(&rip, position, off, chunk, (unsigned) nrbytes,
@@ -218,16 +212,16 @@ PUBLIC int fs_breadwrite(void)
       user_addr += chunk;	/* user buffer address */
       nrbytes -= chunk;	        /* bytes yet to be read */
       cum_io += chunk;	        /* bytes read so far */
-      position += chunk;	/* position within the file */
+      position= add64ul(position, chunk);	/* position within the file */
   }
   
-  fs_m_out.RES_FD_POS = position; 
+  fs_m_out.RES_XFD_POS_LO = ex64lo(position); 
+  fs_m_out.RES_XFD_POS_HI = ex64hi(position); 
   
   if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
   if (rdwt_err == END_OF_FILE) r = OK;
 
-  fs_m_out.RES_FD_CUM_IO = cum_io;
-  fs_m_out.RES_FD_SIZE = rip.i_size;
+  fs_m_out.RES_XFD_CUM_IO = cum_io;
   
   return(r);
 }
@@ -239,7 +233,7 @@ PUBLIC int fs_breadwrite(void)
 PRIVATE int rw_chunk(rip, position, off, chunk, left, rw_flag, buff,
  seg, usr, block_size, completed)
 register struct inode *rip;	/* pointer to inode for file to be rd/wr */
-off_t position;			/* position within file to read or write */
+u64_t position;			/* position within file to read or write */
 unsigned off;			/* off within the current block */
 int chunk;			/* number of bytes to read or write */
 unsigned left;			/* max number of bytes wanted after position */
@@ -263,11 +257,13 @@ int *completed;			/* number of bytes copied */
   block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
 
   if (block_spec) {
-	b = position/block_size;
+	b = div64u(position, block_size);
 	dev = (dev_t) rip->i_zone[0];
   } 
   else {
-	b = read_map(rip, position);
+	if (ex64hi(position) != 0)
+		panic(__FILE__, "rw_chunk: position too high", NO_NUM);
+	b = read_map(rip, ex64lo(position));
 	dev = rip->i_dev;
   }
 
@@ -279,7 +275,8 @@ int *completed;			/* number of bytes copied */
 	} 
         else {
 		/* Writing to a nonexistent block. Create and enter in inode.*/
-		if ((bp= new_block(rip, position)) == NIL_BUF)return(err_code);
+		if ((bp= new_block(rip, ex64lo(position))) == NIL_BUF)
+			return(err_code);
 	}
   } 
   else if (rw_flag == READING) {
@@ -292,7 +289,8 @@ int *completed;			/* number of bytes copied */
 	 * the cache, acquire it, otherwise just acquire a free buffer.
 	 */
 	n = (chunk == block_size ? NO_READ : NORMAL);
-	if (!block_spec && off == 0 && position >= rip->i_size) n = NO_READ;
+	if (!block_spec && off == 0 && ex64lo(position) >= rip->i_size) 
+		n = NO_READ;
 	bp = get_block(dev, b, n);
   }
 
@@ -302,7 +300,7 @@ int *completed;			/* number of bytes copied */
   }
   
   if (rw_flag == WRITING && chunk != block_size && !block_spec &&
-					position >= rip->i_size && off == 0) {
+				ex64lo(position) >= rip->i_size && off == 0) {
 	zero_block(bp);
   }
 
@@ -439,7 +437,7 @@ PUBLIC void read_ahead()
   block_size = get_block_size(rip->i_dev);
   rdahed_inode = NIL_INODE;	/* turn off read ahead */
   if ( (b = read_map(rip, rdahedpos)) == NO_BLOCK) return;	/* at EOF */
-  bp = rahead(rip, b, rdahedpos, block_size);
+  bp = rahead(rip, b, cvul64(rdahedpos), block_size);
   put_block(bp, PARTIAL_DATA_BLOCK);
 }
 
@@ -449,7 +447,7 @@ PUBLIC void read_ahead()
 PUBLIC struct buf *rahead(rip, baseblock, position, bytes_ahead)
 register struct inode *rip;	/* pointer to inode for file to be read */
 block_t baseblock;		/* block at current position */
-off_t position;			/* position within file */
+u64_t position;			/* position within file */
 unsigned bytes_ahead;		/* bytes beyond position for immediate use */
 {
 /* Fetch a block from the cache or the device.  If a physical read is
@@ -502,8 +500,8 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
    * indirect blocks (but don't call read_map!).
    */
 
-  fragment = position % block_size;
-  position -= fragment;
+  fragment = rem64u(position, block_size);
+  position= sub64u(position, fragment);
   bytes_ahead += fragment;
 
   blocks_ahead = (bytes_ahead + block_size - 1) / block_size;
@@ -511,13 +509,14 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
   if (block_spec && rip->i_size == 0) {
 	blocks_left = NR_IOREQS;
   } else {
-	blocks_left = (rip->i_size - position + block_size - 1) / block_size;
+	blocks_left = (rip->i_size - ex64lo(position) + block_size - 1) /
+		block_size;
 
 	/* Go for the first indirect block if we are in its neighborhood. */
 	if (!block_spec) {
 		scale = rip->i_sp->s_log_zone_size;
 		ind1_pos = (off_t) rip->i_ndzones * (block_size << scale);
-		if (position <= ind1_pos && rip->i_size > ind1_pos) {
+		if (ex64lo(position) <= ind1_pos && rip->i_size > ind1_pos) {
 			blocks_ahead++;
 			blocks_left++;
 		}

@@ -52,7 +52,7 @@ typedef char           gid_t;	   /* group id */
 typedef unsigned long  ino_t; 	   /* i-node number (V3 filesystem) */
 typedef unsigned short mode_t;	   /* file type and permissions bits */
 typedef short        nlink_t;	   /* number of links to a file */
-typedef unsigned long  off_t;	   /* offset within a file */
+typedef long	       off_t;	   /* offset within a file */
 typedef int            pid_t;	   /* process id (must be signed) */
 typedef short          uid_t;	   /* user id */
 typedef unsigned long zone_t;	   /* zone number */

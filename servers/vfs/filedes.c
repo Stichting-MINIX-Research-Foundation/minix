@@ -9,6 +9,7 @@
  */
 
 #include <sys/select.h>
+#include <minix/u64.h>
 
 #include "fs.h"
 #include "file.h"
@@ -47,7 +48,7 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
 	if (f->filp_count == 0) {
 		f->filp_mode = bits;
-		f->filp_pos = 0L;
+		f->filp_pos = cvu64(0);
 		f->filp_selectors = 0;
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;

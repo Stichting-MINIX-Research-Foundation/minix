@@ -7,6 +7,7 @@
 #include <minix/endpoint.h>
 #include <minix/ioctl.h>
 #include <minix/safecopies.h>
+#include <minix/u64.h>
 #include <string.h>
 #include "inode.h"
 #include "super.h"
@@ -19,7 +20,7 @@ PRIVATE int dummyproc;
 
 FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t,
   cp_grant_id_t *, int *, cp_grant_id_t *, int, endpoint_t *,
-  void **, int *, vir_bytes, off_t *));
+  void **, int *, vir_bytes));
 FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
 	int));
 
@@ -65,7 +66,7 @@ PUBLIC int fs_new_driver(void)
  *				safe_io_conversion			     *
  *===========================================================================*/
 PRIVATE int safe_io_conversion(driver, gid, op, gids, gids_size,
-	io_ept, buf, vec_grants, bytes, pos)
+	io_ept, buf, vec_grants, bytes)
 endpoint_t driver;
 cp_grant_id_t *gid;
 int *op;
@@ -75,7 +76,6 @@ endpoint_t *io_ept;
 void **buf;
 int *vec_grants;
 vir_bytes bytes;
-off_t *pos;
 {
 	int access = 0, size;
 	int j;
@@ -135,21 +135,6 @@ off_t *pos;
 			/* Set user's vector to the new one. */
 			*buf = new_iovec;
 			break;
-		/*	
-		case DEV_IOCTL:
-			*pos = *io_ept;	
-			*op = DEV_IOCTL_S;
-			if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
-			if(_MINIX_IOCTL_IOW(m_in.REQUEST)) access |= CPF_READ;
-			size = _MINIX_IOCTL_SIZE(m_in.REQUEST);
-
-			if((*gid=cpf_grant_magic(driver, *io_ept,
-				(vir_bytes) *buf, size, access)) < 0) {
-				panic(__FILE__,
-				"cpf_grant_magic failed (ioctl)\n",
-				NO_NUM);
-			}
-		*/
 	}
 
 	/* If we have converted to a safe operation, I/O
@@ -193,7 +178,7 @@ int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
 dev_t dev;			/* major-minor device number */
 int proc_e;			/* in whose address space is buf? */
 void *buf;			/* virtual address of the buffer */
-off_t pos;			/* byte position */
+u64_t pos;			/* byte position */
 int bytes;			/* how many bytes to transfer */
 int flags;			/* special flags, like O_NONBLOCK */
 {
@@ -208,7 +193,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   void *buf_used;
   static cp_grant_id_t gids[NR_IOREQS];
   endpoint_t driver_e;
- 
+
   /* Determine driver endpoint for this device */
   driver_e = driver_endpoints[(dev >> MAJOR) & BYTE].driver_e;
   
@@ -233,16 +218,16 @@ int flags;			/* special flags, like O_NONBLOCK */
   op_used = op;
   safe = safe_io_conversion(driver_e, &gid,
           &op_used, gids, NR_IOREQS, &m.IO_ENDPT, &buf_used,
-          &vec_grants, bytes, &pos);
+          &vec_grants, bytes);
 
   /* Set up rest of the message. */
   if (safe) m.IO_GRANT = (char *) gid;
 
   m.m_type   = op_used;
   m.DEVICE   = (dev >> MINOR) & BYTE;
-  m.POSITION = pos;
+  m.POSITION = ex64lo(pos);
   m.COUNT    = bytes;
-  m.HIGHPOS  = 0;
+  m.HIGHPOS  = ex64hi(pos);
 
   /* Call the task. */
   r = sendrec(driver_e, &m);

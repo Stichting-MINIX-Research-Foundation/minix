@@ -10,7 +10,7 @@ EXTERN struct filp {
 
   struct vnode *filp_vno;
   
-  off_t filp_pos;		/* file position */
+  u64_t filp_pos;		/* file position */
 
   /* the following fields are for select() and are owned by the generic
    * select() code (i.e., fd-type-specific select() code can't touch these).

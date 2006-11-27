@@ -47,6 +47,7 @@
 #include <minix/config.h>
 #include <minix/const.h>
 #include <minix/type.h>
+#include <minix/u64.h>
 #include "../../servers/mfs/const.h"
 #include "../../servers/mfs/inode.h"
 #include "../../servers/mfs/type.h"
@@ -93,10 +94,10 @@ static struct super_block sb;
 #define STICKY_BIT	01000	/* not defined anywhere else */
 
 /* Ztob gives the block address of a zone
- * btoa gives the byte address of a block
+ * btoa64 gives the byte address of a block
  */
 #define ztob(z)		((block_nr) (z) << sb.s_log_zone_size)
-#define btoa(b)		((long) (b) * block_size)
+#define btoa64(b)	(mul64u(b, block_size))
 #define SCALE		((int) ztob(1))	/* # blocks in a zone */
 #define FIRST		((zone_nr) sb.s_firstdatazone)	/* as the name says */
 
@@ -116,8 +117,8 @@ static struct super_block sb;
 #define NLEVEL		(NR_ZONE_NUMS - NR_DZONE_NUM + 1)
 
 /* Byte address of a zone/of an inode */
-#define zaddr(z)	btoa(ztob(z))
-#define cinoaddr(i)	((long) (i - 1) * INODE_SIZE + (long) btoa(BLK_ILIST))
+#define cinoblock(i)	(((i - 1)*INODE_SIZE) / block_size + BLK_ILIST)
+#define cinooff(i)	(((i - 1)*INODE_SIZE) % block_size)
 #define INDCHUNK	((int) (CINDIR * ZONE_NUM_SIZE))
 #define DIRCHUNK	((int) (CDIRECT * DIR_ENTRY_SIZE))
 
@@ -166,8 +167,8 @@ _PROTOTYPE(void printpath, (int mode, int nlcr));
 _PROTOTYPE(void devopen, (void));
 _PROTOTYPE(void devclose, (void));
 _PROTOTYPE(void devio, (block_nr bno, int dir));
-_PROTOTYPE(void devread, (long offset, char *buf, int size));
-_PROTOTYPE(void devwrite, (long offset, char *buf, int size));
+_PROTOTYPE(void devread, (long block, long offset, char *buf, int size));
+_PROTOTYPE(void devwrite, (long block, long offset, char *buf, int size));
 _PROTOTYPE(void pr, (char *fmt, int cnt, char *s, char *p));
 _PROTOTYPE(void lpr, (char *fmt, long cnt, char *s, char *p));
 _PROTOTYPE(bit_nr getnumber, (char *s));
@@ -394,6 +395,8 @@ void devio(bno, dir)
 block_nr bno;
 int dir;
 {
+  int r;
+
   if(!block_size) fatal("devio() with unknown block size");
   if (dir == READING && bno == thisblk) return;
   thisblk = bno;
@@ -401,7 +404,9 @@ int dir;
 #if 0
 printf("%s at block %5d\n", dir == READING ? "reading " : "writing", bno);
 #endif
-  lseek(dev, (off_t) btoa(bno), SEEK_SET);
+  r= lseek64(dev, btoa64(bno), SEEK_SET, NULL);
+  if (r != 0)
+	fatal("lseek64 failed");
   if (dir == READING) {
 	if (read(dev, rwbuf, block_size) == block_size)
 		return;
@@ -420,28 +425,44 @@ printf("%s at block %5d\n", dir == READING ? "reading " : "writing", bno);
   fatal("");
 }
 
-/* Read `size' bytes from the disk starting at byte `offset'. */
-void devread(offset, buf, size)
+/* Read `size' bytes from the disk starting at block 'block' and
+ * byte `offset'.
+ */
+void devread(block, offset, buf, size)
+long block;
 long offset;
 char *buf;
 int size;
 {
   if(!block_size) fatal("devread() with unknown block size");
-  devio((block_nr) (offset / block_size), READING);
-  memmove(buf, &rwbuf[(int) (offset % block_size)], (size_t)size);  /* lint but OK */
+  if (offset >= block_size)
+  {
+	block += offset/block_size;
+	offset %= block_size;
+  }
+  devio(block, READING);
+  memmove(buf, &rwbuf[offset], size);
 }
 
-/* Write `size' bytes to the disk starting at byte `offset'. */
-void devwrite(offset, buf, size)
+/* Write `size' bytes to the disk starting at block 'block' and
+ * byte `offset'.
+ */
+void devwrite(block, offset, buf, size)
+long block;
 long offset;
 char *buf;
 int size;
 {
   if(!block_size) fatal("devwrite() with unknown block size");
   if (!repair) fatal("internal error (devwrite)");
-  if (size != block_size) devio((block_nr) (offset / block_size), READING);
-  memmove(&rwbuf[(int) (offset % block_size)], buf, (size_t)size);  /* lint but OK */
-  devio((block_nr) (offset / block_size), WRITING);
+  if (offset >= block_size)
+  {
+	block += offset/block_size;
+	offset %= block_size;
+  }
+  if (size != block_size) devio(block, READING);
+  memmove(&rwbuf[offset], buf, size);
+  devio(block, WRITING);
   changed = 1;
 }
 
@@ -518,7 +539,7 @@ void lsuper()
 	printf("block size    = %ld", sb.s_block_size);
 	if (input(buf, 80)) sb.s_block_size = atol(buf);
 	if (yes("ok now")) {
-		devwrite(OFFSET_SUPER_BLOCK, (char *) &sb, sizeof(sb));
+		devwrite(0, OFFSET_SUPER_BLOCK, (char *) &sb, sizeof(sb));
 		return;
 	}
   } while (yes("Do you want to try again"));
@@ -601,10 +622,17 @@ void chksuper()
   }
 }
 
-int inoaddr(int inn)
+int inoblock(int inn)
 {
 	int a;
-	a = cinoaddr(inn);
+	a = cinoblock(inn);
+	return a;
+}
+
+int inooff(int inn)
+{
+	int a;
+	a = cinooff(inn);
 	return a;
 }
 
@@ -624,7 +652,7 @@ char **clist;
 	setbit(spec_imap, bit);
 	ino = bit;
 	do {
-		devread(inoaddr(ino), (char *) ip, INODE_SIZE);
+		devread(inoblock(ino), inooff(ino), (char *) ip, INODE_SIZE);
 		printf("inode %u:\n", ino);
 		printf("    mode   = %6o", ip->i_mode);
 		if (input(buf, 80)) ip->i_mode = atoo(buf);
@@ -633,7 +661,8 @@ char **clist;
 		printf("    size   = %6ld", ip->i_size);
 		if (input(buf, 80)) ip->i_size = atol(buf);
 		if (yes("Write this back")) {
-			devwrite(inoaddr(ino), (char *) ip, INODE_SIZE);
+			devwrite(inoblock(ino), inooff(ino), (char *) ip,
+				INODE_SIZE);
 			break;
 		}
 	} while (yes("Do you want to change it again"));
@@ -662,7 +691,7 @@ int nblk;
 
   p = bitmap;
   for (i = 0; i < nblk; i++, bno++, p += WORDS_PER_BLOCK)
-	devread(btoa(bno), (char *) p, block_size);
+	devread(bno, 0, (char *) p, block_size);
   *bitmap |= 1;
 }
 
@@ -676,7 +705,7 @@ int nblk;
   register bitchunk_t *p = bitmap;
 
   for (i = 0; i < nblk; i++, bno++, p += WORDS_PER_BLOCK)
-	devwrite(btoa(bno), (char *) p, block_size);
+	devwrite(bno, 0, (char *) p, block_size);
 }
 
 /* Set the bits given by `list' in the bitmap. */
@@ -787,11 +816,12 @@ void chkilist()
   printf("Checking inode list\n");
   do
 	if (!bitset(imap, (bit_nr) ino)) {
-		devread(inoaddr(ino), (char *) &mode, sizeof(mode));
+		devread(inoblock(ino), inooff(ino), (char *) &mode,
+			sizeof(mode));
 		if (mode != I_NOT_ALLOC) {
 			printf("mode inode %u not cleared", ino);
-			if (yes(". clear")) devwrite(inoaddr(ino), nullbuf,
-					 INODE_SIZE);
+			if (yes(". clear")) devwrite(inoblock(ino),
+				inooff(ino), nullbuf, INODE_SIZE);
 		}
 	}
   while (++ino <= sb.s_ninodes && ino != 0);
@@ -814,7 +844,7 @@ ino_t ino;
 	printf("INODE NLINK COUNT\n");
 	firstcnterr = 0;
   }
-  devread(inoaddr(ino), (char *) &inode, INODE_SIZE);
+  devread(inoblock(ino), inooff(ino), (char *) &inode, INODE_SIZE);
   count[ino] += inode.i_nlinks;	/* it was already subtracted; add it back */
   printf("%5u %5u %5u", ino, (unsigned) inode.i_nlinks, count[ino]);
   if (yes(" adjust")) {
@@ -823,7 +853,7 @@ ino_t ino;
 		inode.i_mode = I_NOT_ALLOC;
 		clrbit(imap, (bit_nr) ino);
 	}
-	devwrite(inoaddr(ino), (char *) &inode, INODE_SIZE);
+	devwrite(inoblock(ino), inooff(ino), (char *) &inode, INODE_SIZE);
   }
 }
 
@@ -1083,12 +1113,13 @@ zone_nr zno;
   dir_struct dirblk[CDIRECT];
   register dir_struct *dp;
   register n, dirty;
-  register long offset = zaddr(zno);
+  long block= ztob(zno);
+  register long offset = 0;
   register off_t size = 0;
   n = SCALE * (NR_DIR_ENTRIES(block_size) / CDIRECT);
 
   do {
-	devread(offset, (char *) dirblk, DIRCHUNK);
+	devread(block, offset, (char *) dirblk, DIRCHUNK);
 	dirty = 0;
 	for (dp = dirblk; dp < &dirblk[CDIRECT]; dp++) {
 		if (dp->d_inum != NO_ENTRY && !chkentry(ino, pos, dp))
@@ -1096,7 +1127,7 @@ zone_nr zno;
 		pos += DIR_ENTRY_SIZE;
 		if (dp->d_inum != NO_ENTRY) size = pos;
 	}
-	if (dirty) devwrite(offset, (char *) dirblk, DIRCHUNK);
+	if (dirty) devwrite(block, offset, (char *) dirblk, DIRCHUNK);
 	offset += DIRCHUNK;
 	n--;
   } while (n > 0);
@@ -1107,7 +1138,7 @@ zone_nr zno;
 	if (yes(". extend")) {
 		setbit(spec_imap, (bit_nr) ino);
 		ip->i_size = size;
-		devwrite(inoaddr(ino), (char *) ip, INODE_SIZE);
+		devwrite(inoblock(ino), inooff(ino), (char *) ip, INODE_SIZE);
 	}
   }
   return(1);
@@ -1120,14 +1151,14 @@ d_inode *ip;
 off_t pos;
 zone_nr zno;
 {
-	long offset;
+	long block;
 	size_t len;
 	char target[PATH_MAX+1];
 
 	if (ip->i_size > PATH_MAX)
 		fatal("chksymlinkzone: fsck program inconsistency\n");
-	offset = zaddr(zno);
-	devread(offset, target, ip->i_size);
+	block= ztob(zno);
+	devread(block, 0, target, ip->i_size);
 	target[ip->i_size]= '\0';
 	len= strlen(target);
 	if (len != ip->i_size)
@@ -1138,7 +1169,8 @@ zone_nr zno;
 		if (yes(". update")) {
 			setbit(spec_imap, (bit_nr) ino);
 			ip->i_size = len;
-			devwrite(inoaddr(ino), (char *) ip, INODE_SIZE);
+			devwrite(inoblock(ino), inooff(ino), 
+				(char *) ip, INODE_SIZE);
 		}
 	}
 	return 1;
@@ -1201,10 +1233,11 @@ int level;
 {
   zone_nr indirect[CINDIR];
   register n = NR_INDIRECTS / CINDIR;
-  register long offset = zaddr(zno);
+  long block= ztob(zno);
+  register long offset = 0;
 
   do {
-	devread(offset, (char *) indirect, INDCHUNK);
+	devread(block, offset, (char *) indirect, INDCHUNK);
 	if (!chkzones(ino, ip, pos, indirect, CINDIR, level - 1)) return(0);
 	offset += INDCHUNK;
   } while (--n && *pos < ip->i_size);
@@ -1442,14 +1475,15 @@ dir_struct *dp;
   }
   visited = bitset(imap, (bit_nr) ino);
   if (!visited || listing) {
-	devread(inoaddr(ino), (char *) &inode, INODE_SIZE);
+	devread(inoblock(ino), inooff(ino), (char *) &inode, INODE_SIZE);
 	if (listing) list(ino, &inode);
 	if (!visited && !chkinode(ino, &inode)) {
 		setbit(spec_imap, (bit_nr) ino);
 		if (yes("remove")) {
 			count[ino] += inode.i_nlinks - 1;
 			clrbit(imap, (bit_nr) ino);
-			devwrite(inoaddr(ino), nullbuf, INODE_SIZE);
+			devwrite(inoblock(ino), inooff(ino),
+				nullbuf, INODE_SIZE);
 			memset((void *) dp, 0, sizeof(dir_struct));
 			ftop = ftop->st_next;
 			return(0);

@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
 #include "param.h"
@@ -44,7 +45,8 @@ int rw_flag;			/* READING or WRITING */
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
   register struct filp *f;
   register struct vnode *vp;
-  off_t bytes_left, f_size, position;
+  off_t bytes_left, f_size;
+  u64_t position;
   unsigned int off, cum_io;
   int op, oflags, r, chunk, usr, seg, block_spec, char_spec;
   int regular, partial_pipe = 0, partial_cnt = 0;
@@ -85,10 +87,12 @@ int rw_flag;			/* READING or WRITING */
   /* check if user process has the memory it needs.
    * if not, copying will fail later.
    * do this after 0-check above because umap doesn't want to map 0 bytes. */
-  if ((r = sys_umap(usr, seg, (vir_bytes) m_in.buffer, m_in.nbytes, &p)) != OK) {
+  if ((r = sys_umap(usr, seg, (vir_bytes) m_in.buffer, m_in.nbytes, &p)) != OK)
+  {
       printf("VFS: read_write: umap failed for process %d\n", usr);
       return r;
   }
+
   position = f->filp_pos;
   oflags = f->filp_flags;
 
@@ -129,7 +133,7 @@ int rw_flag;			/* READING or WRITING */
       r = dev_io(op, dev, usr, m_in.buffer, position, m_in.nbytes, oflags);
       if (r >= 0) {
           cum_io = r;
-          position += r;
+          position = add64ul(position, r);
           r = OK;
       }
   } 
@@ -154,12 +158,13 @@ int rw_flag;			/* READING or WRITING */
   /* Regular files */
   else {
       if (rw_flag == WRITING && block_spec == 0) {
+          /* Check for O_APPEND flag. */
+          if (oflags & O_APPEND) position = cvul64(f_size);
+
           /* Check in advance to see if file will grow too big. */
-          if (position > vp->v_vmnt->m_max_file_size - m_in.nbytes) 
+          if (cmp64ul(position, vp->v_vmnt->m_max_file_size - m_in.nbytes) > 0)
               return(EFBIG);
 
-          /* Check for O_APPEND flag. */
-          if (oflags & O_APPEND) position = f_size;
       }
 
       /* Pipes are a little different. Check. */
@@ -190,24 +195,39 @@ int rw_flag;			/* READING or WRITING */
       /* Issue request */
       r = req_readwrite(&req, &res);
 
-      position = res.new_pos;
-      cum_io += res.cum_io;
+      if (r >= 0)
+      {
+	if (ex64hi(res.new_pos))
+		panic(__FILE__, "read_write: bad new pos", NO_NUM);
+
+	position = res.new_pos;
+	cum_io += res.cum_io;
+      }
   }
 
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
       if (regular || mode_word == I_DIRECTORY) {
-          if (position > f_size) vp->v_size = position;
+          if (cmp64ul(position, f_size) > 0)
+	  {
+		if (ex64hi(position) != 0)
+		{
+			panic(__FILE__,
+				"read_write: file size too big for v_size",
+				NO_NUM);
+		}
+		vp->v_size = ex64lo(position);
+	  }
       }
   }
   else {
       if (vp->v_pipe == I_PIPE) {
-          if (position >= vp->v_size) {
+          if (cmp64ul(position, vp->v_size) >= 0) {
               /* Reset pipe pointers */
               vp->v_size = 0;
-              position = 0;
+              position = cvu64(0);
               wf = find_filp(vp, W_BIT);
-              if (wf != NIL_FILP) wf->filp_pos = 0;
+              if (wf != NIL_FILP) wf->filp_pos = cvu64(0);
           }
       }
   }
@@ -319,13 +339,16 @@ PUBLIC int do_getdents()
   if (gid < 0) panic(__FILE__, "cpf_grant_magic failed", gid);
 
   /* Issue request */
+  if (ex64hi(rfilp->filp_pos) != 0)
+	panic(__FILE__, "do_getdents: should handle large offsets", NO_NUM);
+	
   r= req_getdents(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr, 
-	rfilp->filp_pos, gid, m_in.nbytes, &pos_change);
+	ex64lo(rfilp->filp_pos), gid, m_in.nbytes, &pos_change);
 
   cpf_revoke(gid);
 
   if (r > 0)
-	rfilp->filp_pos += pos_change;
+	rfilp->filp_pos= add64ul(rfilp->filp_pos, pos_change);
   return r;
 }
 

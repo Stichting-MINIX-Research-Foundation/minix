@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
 #include "lock.h"
@@ -30,7 +31,8 @@
 #include "vnode.h"
 #include "vmnt.h"
 
-#define offset m2_l1
+#define offset_lo	m2_l1
+#define offset_high	m2_l2
  
 
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
@@ -248,9 +250,9 @@ printf("the root FS...\n");
                   /* Nobody else found.  Restore filp. */
                   fil_ptr->filp_count = 1;
 		  if (fil_ptr->filp_mode == R_BIT)
-			fil_ptr->filp_pos = vp->v_pipe_rd_pos; 
+			fil_ptr->filp_pos = cvul64(vp->v_pipe_rd_pos);
 		  else
-			fil_ptr->filp_pos = vp->v_pipe_wr_pos;
+			fil_ptr->filp_pos = cvul64(vp->v_pipe_wr_pos);
               }
           }
           break;
@@ -399,7 +401,61 @@ PUBLIC int do_lseek()
 {
 /* Perform the lseek(ls_fd, offset, whence) system call. */
   register struct filp *rfilp;
-  register off_t pos;
+  int r;
+  long offset;
+  u64_t pos, newpos;
+  struct node_req req;
+
+  /* Check to see if the file descriptor is valid. */
+  if ( (rfilp = get_filp(m_in.ls_fd)) == NIL_FILP) return(err_code);
+
+  /* No lseek on pipes. */
+  if (rfilp->filp_vno->v_pipe == I_PIPE) return(ESPIPE);
+
+  /* The value of 'whence' determines the start position to use. */
+  switch(m_in.whence) {
+      case SEEK_SET: pos = cvu64(0);	break;
+      case SEEK_CUR: pos = rfilp->filp_pos;	break;
+      case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
+      default: return(EINVAL);
+  }
+
+  offset= m_in.offset_lo;
+  if (offset >= 0)
+	newpos= add64ul(pos, offset);
+  else
+	newpos= sub64ul(pos, -offset);
+
+  /* Check for overflow. */
+  if (ex64hi(newpos) != 0)
+	return EINVAL;
+
+  if (cmp64(newpos, rfilp->filp_pos) != 0) { /* Inhibit read ahead request */
+      /* Fill in request message */
+      req.fs_e = rfilp->filp_vno->v_fs_e;
+      req.inode_nr = rfilp->filp_vno->v_inode_nr;
+
+      /* Issue request */
+      if ((r = req_inhibread(&req)) != OK) return r;
+  }
+
+  rfilp->filp_pos = newpos;
+
+  /* insert the new position into the output message */
+  m_out.reply_l1 = ex64lo(newpos);
+
+  return(OK);
+}
+
+
+/*===========================================================================*
+ *				do_llseek				     *
+ *===========================================================================*/
+PUBLIC int do_llseek()
+{
+/* Perform the llseek(ls_fd, offset, whence) system call. */
+  register struct filp *rfilp;
+  u64_t pos, newpos;
   struct node_req req;
   int r;
 
@@ -411,20 +467,21 @@ PUBLIC int do_lseek()
 
   /* The value of 'whence' determines the start position to use. */
   switch(m_in.whence) {
-      case SEEK_SET: pos = 0;	break;
+      case SEEK_SET: pos = cvu64(0);	break;
       case SEEK_CUR: pos = rfilp->filp_pos;	break;
-      case SEEK_END: pos = rfilp->filp_vno->v_size;	break;
+      case SEEK_END: pos = cvul64(rfilp->filp_vno->v_size);	break;
       default: return(EINVAL);
   }
 
-  /* Check for overflow. */
-  if (((long)m_in.offset > 0) && ((long)(pos + m_in.offset) < (long)pos)) 
-      return(EINVAL);
-  if (((long)m_in.offset < 0) && ((long)(pos + m_in.offset) > (long)pos)) 
-      return(EINVAL);
-  pos = pos + m_in.offset;
+  newpos= add64(pos, make64(m_in.offset_lo, m_in.offset_high));
 
-  if (pos != rfilp->filp_pos) {         /* Inhibit read ahead request */
+  /* Check for overflow. */
+  if (((long)m_in.offset_high > 0) && cmp64(newpos, pos) < 0) 
+      return(EINVAL);
+  if (((long)m_in.offset_high < 0) && cmp64(newpos, pos) > 0) 
+      return(EINVAL);
+
+  if (cmp64(newpos, rfilp->filp_pos) != 0) { /* Inhibit read ahead request */
       /* Fill in request message */
       req.fs_e = rfilp->filp_vno->v_fs_e;
       req.inode_nr = rfilp->filp_vno->v_inode_nr;
@@ -433,8 +490,9 @@ PUBLIC int do_lseek()
       if ((r = req_inhibread(&req)) != OK) return r;
   }
 
-  rfilp->filp_pos = pos;
-  m_out.reply_l1 = pos;		/* insert the long into the output message */
+  rfilp->filp_pos = newpos;
+  m_out.reply_l1 = ex64lo(newpos);
+  m_out.reply_l2 = ex64hi(newpos);
   return(OK);
 }
 
@@ -474,11 +532,16 @@ int fd_nr;
 	if (mode_word == I_CHAR_SPECIAL || mode_word == I_BLOCK_SPECIAL) {
 		dev = (dev_t) vp->v_sdev;
 		if (mode_word == I_BLOCK_SPECIAL)  {
-			/* Invalidate cache entries unless special is mounted
-			 * or ROOT
-			 */
-          		req_sync(vp->v_bfs_e);
-printf("VFSclose: closed block spec %d\n", dev);		
+printf("VFSclose: closing block spec 0x%x\n", dev);		
+			if (vp->v_bfs_e == ROOT_FS_E)
+			{
+				/* Invalidate the cache unless the special is
+				 * mounted. Assume that the root filesystem's
+				 * is open only for fsck.
+			 	 */
+printf("VFSclose: flushing block spec 0x%x\n", dev);		
+          			req_flush(vp->v_bfs_e, dev);
+			}
 		}
 		/* Do any special processing on device close. */
 		dev_close(dev);
@@ -498,9 +561,9 @@ printf("VFSclose: closed block spec %d\n", dev);
 		 * The read and write positions are saved separately.  
 		 */
 		if (rfilp->filp_mode == R_BIT)
-			vp->v_pipe_rd_pos = rfilp->filp_pos;
+			vp->v_pipe_rd_pos = ex64lo(rfilp->filp_pos);
 		else
-			vp->v_pipe_wr_pos = rfilp->filp_pos;
+			vp->v_pipe_wr_pos = ex64lo(rfilp->filp_pos);
 		
 	}
 	else {

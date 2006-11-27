@@ -15,7 +15,7 @@ _PROTOTYPE( void dev_close, (Dev_t dev)					);
 _PROTOTYPE( int dev_bio, (int op, Dev_t dev, int proc, void *buf,
 			off_t pos, int bytes)				);
 _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
-			off_t pos, int bytes, int flags)		);
+			u64_t pos, int bytes, int flags)		);
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int no_dev, (int op, Dev_t dev, int proc, int flags)	);
@@ -92,6 +92,7 @@ _PROTOTYPE( int do_close, (void)					);
 _PROTOTYPE( int close_fd, (struct fproc *rfp, int fd_nr)		);
 _PROTOTYPE( int do_creat, (void)					);
 _PROTOTYPE( int do_lseek, (void)					);
+_PROTOTYPE( int do_llseek, (void)					);
 _PROTOTYPE( int do_mknod, (void)					);
 _PROTOTYPE( int do_mkdir, (void)					);
 _PROTOTYPE( int do_open, (void)						);
@@ -105,7 +106,7 @@ _PROTOTYPE( int do_pipe, (void)						);
 _PROTOTYPE( int do_unpause, (void)					);
 _PROTOTYPE( int unpause, (int proc_nr_e)				);
 _PROTOTYPE( int pipe_check, (struct vnode *vp, int rw_flag,
-      int oflags, int bytes, off_t position, int *canwrite, int notouch));
+      int oflags, int bytes, u64_t position, int *canwrite, int notouch));
 _PROTOTYPE( void release, (struct vnode *vp, int call_nr, int count)	);
 _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);
@@ -168,6 +169,7 @@ _PROTOTYPE( int req_breadwrite, (breadwrite_req_t *req,
             readwrite_res_t *res)                                       );
 _PROTOTYPE( int req_getdents, (endpoint_t fs_e, ino_t inode_nr,
 	off_t pos, cp_grant_id_t gid, size_t size, off_t *pos_change)	);
+_PROTOTYPE( int req_flush, (endpoint_t fs_e, Dev_t)                     );
 
 /* stadir.c */
 _PROTOTYPE( int do_chdir, (void)					);

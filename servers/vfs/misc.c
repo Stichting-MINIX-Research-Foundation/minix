@@ -26,6 +26,7 @@
 #include <minix/safecopies.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include <sys/ptrace.h>
 #include <sys/svrctl.h>
 #include "file.h"
@@ -231,7 +232,14 @@ PUBLIC int do_fcntl()
 	/* Figure out starting position base. */
 	switch(flock_arg.l_whence) {
 		case SEEK_SET: start = 0; if(offset < 0) return EINVAL; break;
-		case SEEK_CUR: start = f->filp_pos; break;
+		case SEEK_CUR:
+			if (ex64hi(f->filp_pos) != 0)
+			{
+				panic(__FILE__,
+					"do_fcntl: position in file too high",
+					NO_NUM);
+			}
+			start = ex64lo(f->filp_pos); break;
 		case SEEK_END: start = f->filp_vno->v_size; break;
 		default: return EINVAL;
 	}

@@ -14,6 +14,7 @@
 #include "fs.h"
 #include <string.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include "buf.h"
 #include "inode.h"
 #include "super.h"
@@ -224,7 +225,7 @@ register struct super_block *sp; /* pointer to a superblock */
   	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
   
   r = block_dev_io(DEV_READ, dev, SELF_E,
-  	sbbuf, SUPER_BLOCK_BYTES, _MIN_BLOCK_SIZE, 0);
+  	sbbuf, cvu64(SUPER_BLOCK_BYTES), _MIN_BLOCK_SIZE, 0);
   if (r != _MIN_BLOCK_SIZE) {
 printf("MFSread_super r != _MIN_BLOCK_SIZE\n");
   	return EINVAL;
@@ -310,6 +311,13 @@ printf("MFSread_super block_size < SUPER_SIZE \n");
      (sp->s_block_size % V1_INODE_SIZE) != 0) {
 printf("MFSread_super block_sizr % INODE_SIZE notOK \n");
   	return EINVAL;
+  }
+
+  /* Limit s_max_size to LONG_MAX */
+  if ((unsigned long)sp->s_max_size > LONG_MAX)
+  {
+	printf("read_super: reducing s_max_size to LONG_MAX\n");
+	sp->s_max_size= LONG_MAX;
   }
 
   sp->s_isearch = 0;		/* inode searches initially start at 0 */

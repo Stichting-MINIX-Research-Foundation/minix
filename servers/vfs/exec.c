@@ -22,6 +22,7 @@
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
+#include <minix/u64.h>
 #include <a.out.h>
 #include <signal.h>
 #include <string.h>
@@ -400,7 +401,7 @@ int *hdrlenp;
   req.inode_nr = vp->v_inode_nr;
   req.user_e = FS_PROC_NR;
   req.seg = D;
-  req.pos = pos;
+  req.pos = cvul64(pos);
   req.num_of_bytes = sizeof(hdr);
   req.user_addr = (char*)&hdr;
   req.inode_index = vp->v_index;
@@ -475,7 +476,7 @@ vir_bytes *stk_bytes;		/* size of initial stack */
   req.inode_nr = vp->v_inode_nr;
   req.user_e = FS_PROC_NR;
   req.seg = D;
-  req.pos = pos;
+  req.pos = cvul64(pos);
   req.num_of_bytes = _MAX_BLOCK_SIZE;
   req.user_addr = buf;
   req.inode_index = vp->v_index;
@@ -636,7 +637,7 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
   req.inode_nr = vp->v_inode_nr;
   req.user_e = proc_e;
   req.seg = seg;
-  req.pos = off;
+  req.pos = cvul64(off);
   req.num_of_bytes = seg_bytes;
   req.user_addr = 0;
   req.inode_index = vp->v_index;

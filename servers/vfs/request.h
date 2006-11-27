@@ -51,7 +51,7 @@ typedef struct readwrite_req {
 	ino_t inode_nr;
 	unsigned short inode_index;
 	int seg;
-	off_t pos;
+	u64_t pos;
 	unsigned int num_of_bytes;
 	char *user_addr;
 } readwrite_req_t;
@@ -59,7 +59,7 @@ typedef struct readwrite_req {
 
 /* Structure for response of REQ_READ and REQ_WRITE */
 typedef struct readwrite_res {
-	off_t new_pos;
+	u64_t new_pos;
 	unsigned int cum_io;
 } readwrite_res_t;
 
@@ -311,7 +311,7 @@ typedef struct breadwrite_req {
         endpoint_t user_e;
         endpoint_t driver_e;
         dev_t dev;
-	off_t pos;
+	u64_t pos;
 	unsigned int num_of_bytes;
 	char *user_addr;
 } breadwrite_req_t;

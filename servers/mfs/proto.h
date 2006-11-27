@@ -47,6 +47,7 @@ int fs_slink(void);
 int fs_rdlink(void);
 int fs_breadwrite(void);
 int fs_getdents(void);
+int fs_flush(void);
 
 void init_inode_cache(void);
 
@@ -70,7 +71,7 @@ _PROTOTYPE( void invalidate2, (Dev_t device)				);
 
 /* device.c */
 _PROTOTYPE( int block_dev_io, (int op, Dev_t dev, int proc, void *buf,
-			off_t pos, int bytes, int flags)		);
+			u64_t pos, int bytes, int flags)		);
 
 
 /* inode.c */
@@ -146,7 +147,7 @@ _PROTOTYPE( int read_only, (struct inode *ip)				);
 /* read.c */
 _PROTOTYPE( int do_read, (void)						);
 _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,
-			off_t position, unsigned bytes_ahead)		);
+			u64_t position, unsigned bytes_ahead)		);
 _PROTOTYPE( void read_ahead, (void)					);
 _PROTOTYPE( block_t read_map, (struct inode *rip, off_t pos)		);
 _PROTOTYPE( int read_write, (int rw_flag)				);
