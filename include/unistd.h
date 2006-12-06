@@ -165,6 +165,8 @@ extern int optreset;	/* Reset getopt state */
 
 _PROTOTYPE( int brk, (char *_addr)					);
 _PROTOTYPE( int chroot, (const char *_name)				);
+_PROTOTYPE( int lseek64, (int _fd, u64_t _offset, int _whence,
+						u64_t *_newpos)		);
 _PROTOTYPE( int mknod, (const char *_name, _mnx_Mode_t _mode, Dev_t _addr)	);
 _PROTOTYPE( int mknod4, (const char *_name, _mnx_Mode_t _mode, Dev_t _addr,
 	    long _size)							);

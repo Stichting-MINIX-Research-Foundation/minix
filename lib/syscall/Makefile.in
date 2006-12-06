@@ -58,6 +58,7 @@ libc_FILES=" \
 	killpg.s \
 	link.s \
 	lseek.s \
+	lseek64.s \
 	lstat.s \
 	mkdir.s \
 	mkfifo.s \

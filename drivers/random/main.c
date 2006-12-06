@@ -25,7 +25,7 @@ extern int errno;			/* error number for PM calls */
 
 FORWARD _PROTOTYPE( char *r_name, (void) );
 FORWARD _PROTOTYPE( struct device *r_prepare, (int device) );
-FORWARD _PROTOTYPE( int r_transfer, (int proc_nr, int opcode, off_t position,
+FORWARD _PROTOTYPE( int r_transfer, (int proc_nr, int opcode, u64_t position,
 				iovec_t *iov, unsigned nr_req, int safe) );
 FORWARD _PROTOTYPE( int r_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void r_init, (void) );
@@ -95,7 +95,7 @@ int device;
 PRIVATE int r_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
-off_t position;			/* offset on device to read or write */
+u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
 int safe;			/* safe copies? */
@@ -105,6 +105,7 @@ int safe;			/* safe copies? */
   vir_bytes user_vir;
   struct device *dv;
   unsigned long dv_size;
+  int r;
   size_t vir_offset = 0;
 
   /* Get minor device number and check for /dev/null. */
@@ -129,16 +130,30 @@ int safe;			/* safe copies? */
  	        if (opcode == DEV_GATHER) {
 		    random_getbytes(random_buf, chunk);
 		    if(safe) {
-		      sys_safecopyto(proc_nr, user_vir, vir_offset,
-			(vir_bytes) random_buf, chunk, D);
+			r= sys_safecopyto(proc_nr, user_vir, vir_offset,
+				(vir_bytes) random_buf, chunk, D);
+			if (r != OK)
+			{
+				printf(
+		"random: sys_safecopyto failed for proc %d, grant %d\n",
+					proc_nr, user_vir);
+				return r;
+			}
 		    } else {
 	    	      sys_vircopy(SELF, D, (vir_bytes) random_buf, 
 	    	        proc_nr, D, user_vir + vir_offset, chunk);
 		    }
  	        } else if (opcode == DEV_SCATTER) {
 		    if(safe) {
-		      sys_safecopyfrom(proc_nr, user_vir, vir_offset,
-			(vir_bytes) random_buf, chunk, D);
+			r= sys_safecopyfrom(proc_nr, user_vir, vir_offset,
+				(vir_bytes) random_buf, chunk, D);
+			if (r != OK)
+			{
+				printf(
+		"random: sys_safecopyfrom failed for proc %d, grant %d\n",
+					proc_nr, user_vir);
+				return r;
+			}
 		    } else {
 	    	      sys_vircopy(proc_nr, D, user_vir + vir_offset, 
 	    	        SELF, D, (vir_bytes) random_buf, chunk);
@@ -156,7 +171,7 @@ int safe;			/* safe copies? */
 	}
 
 	/* Book the number of bytes transferred. */
-	position += count;
+	position= add64u(position, count);
   	if ((iov->iov_size -= count) == 0) { iov++; nr_req--; vir_offset = 0; }
 
   }

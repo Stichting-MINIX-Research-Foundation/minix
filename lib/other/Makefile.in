@@ -17,6 +17,7 @@ libc_FILES=" \
 	_getpprocnr.c \
 	_getprocnr.c \
 	_getsysinfo.c \
+	_lseek64.c \
 	_reboot.c \
 	_seekdir.c \
 	_sysuname.c \

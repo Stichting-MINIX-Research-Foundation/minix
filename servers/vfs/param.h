@@ -56,6 +56,7 @@
 /* The following names are synonyms for the variables in the output message. */
 #define reply_type    m_type
 #define reply_l1      m2_l1
+#define reply_l2      m2_l2
 #define reply_i1      m1_i1
 #define reply_i2      m1_i2
 #define reply_t1      m4_l1
