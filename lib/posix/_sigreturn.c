@@ -1,41 +1,9 @@
 #include <lib.h>
 #define sigfillset	_sigfillset
-#define sigjmp		_sigjmp
 #define sigprocmask	_sigprocmask
 #define sigreturn	_sigreturn
 #include <sys/sigcontext.h>
-#include <setjmp.h>
 #include <signal.h>
-
-_PROTOTYPE( int sigjmp, (jmp_buf jb, int retval));
-
-#if (_SETJMP_SAVES_REGS == 0)
-/* 'sigreturn' using a short format jmp_buf (no registers saved). */
-PUBLIC int sigjmp(jb, retval)
-jmp_buf jb;
-int retval;
-{
-  struct sigcontext sc;
-
-  sc.sc_flags = jb[0].__flags;
-  sc.sc_mask = jb[0].__mask;
-
-#if (CHIP == INTEL)
-  sc.sc_pc = (int) jb[0].__pc;
-  sc.sc_sp = (int) jb[0].__sp;
-  sc.sc_fp = (int) jb[0].__lb;
-#endif
-
-#if (CHIP == M68000)
-  sc.sc_pc = (long) jb[0].__pc;
-  sc.sc_sp = (long) jb[0].__sp;
-  sc.sc_fp = (long) jb[0].__lb;
-#endif
-
-  sc.sc_retreg = retval;
-  return sigreturn(&sc);
-}
-#endif
 
 PUBLIC int sigreturn(scp)
 register struct sigcontext *scp;

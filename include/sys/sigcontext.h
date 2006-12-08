@@ -136,11 +136,6 @@ struct sigcontext {
 #define sc_psw sc_regs.sr_psw
 #endif /* _MINIX_CHIP == M68000 */
 
-/* Values for sc_flags.  Must agree with <minix/jmp_buf.h>. */
-#define SC_SIGCONTEXT	2	/* nonzero when signal context is included */
-#define SC_NOREGLOCALS	4	/* nonzero when registers are not to be
-					saved and restored */
-
 _PROTOTYPE( int sigreturn, (struct sigcontext *_scp)			);
 
 #endif /* _SIGCONTEXT_H */

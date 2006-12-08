@@ -89,7 +89,6 @@ libc_FILES=" \
 	sigemptyset.s \
 	sigfillset.s \
 	sigismember.s \
-	siglongjmp.s \
 	sigpending.s \
 	sigprocmask.s \
 	sigreturn.s \

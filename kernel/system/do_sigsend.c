@@ -47,7 +47,7 @@ message *m_ptr;			/* pointer to request message */
   memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(struct sigregs));
 
   /* Finish the sigcontext initialization. */
-  sc.sc_flags = SC_SIGCONTEXT;
+  sc.sc_flags = 0;	/* unused at this time */
   sc.sc_mask = smsg.sm_mask;
 
   /* Copy the sigcontext structure to the user's stack. */

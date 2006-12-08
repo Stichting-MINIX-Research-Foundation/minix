@@ -38,19 +38,6 @@ message *m_ptr;			/* pointer to request message */
   if (src_phys == 0) return(EFAULT);
   phys_copy(src_phys, vir2phys(&sc), (phys_bytes) sizeof(struct sigcontext));
 
-  /* Make sure that this is not just a jump buffer. */
-  if ((sc.sc_flags & SC_SIGCONTEXT) == 0) return(EINVAL);
-
-  /* Fix up only certain key registers if the compiler doesn't use
-   * register variables within functions containing setjmp.
-   */
-  if (sc.sc_flags & SC_NOREGLOCALS) {
-      rp->p_reg.retreg = sc.sc_retreg;
-      rp->p_reg.fp = sc.sc_fp;
-      rp->p_reg.pc = sc.sc_pc;
-      rp->p_reg.sp = sc.sc_sp;
-      return(OK);
-  }
   sc.sc_psw  = rp->p_reg.psw;
 
 #if (CHIP == INTEL)

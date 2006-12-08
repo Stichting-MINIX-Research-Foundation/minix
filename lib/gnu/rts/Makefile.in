@@ -2,9 +2,7 @@
 LIBRARIES=libc
 
 libc_FILES=" \
-	_longjmp.gs \
-	_setjmp.gs \
-	longjmp.gs \
-	setjmp.gs"
+	__setjmp.gs \
+	longjmp.gs"
 
 TYPE=gnu

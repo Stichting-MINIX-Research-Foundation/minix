@@ -1,0 +1,69 @@
+.TH SETJMP 3	"June 22, 2006"
+.UC 4
+.SH NAME
+setjmp, longjmp, _setjmp, _longjmp, sigsetjmp, siglongjmp \- save and restore execution contexts
+.SH SYNOPSIS
+.nf
+.ft B
+#include <setjmp.h>
+
+int setjmp(jmp_buf env);
+void longjmp(jmp_buf env, int val);
+
+int _setjmp(jmp_buf env);
+void _longjmp(jmp_buf env, int val);
+
+#define _POSIX_SOURCE
+int sigsetjmp(sigjmp_buf env, int savemask);
+void siglongjmp(sigjmp_buf env, int val);
+.SH DESCRIPTION
+These calls provide a way for a process to save an execution context into a
+buffer, and later resume execution from that context, effectively performing
+a non-local jump. The
+.B setjmp
+family of functions store the context into the \fIenv\fP data structure,
+and return the value 0. The
+.B longjmp
+family of functions jump to the context saved in the given \fIenv\fP data
+structure, causing the process to continue as if it returned from the
+corresponding
+.B setjmp
+call again, but this time with the non-zero return value in \fIval\fP.
+.PP
+The difference between the three pairs of setjmp/longjmp functions lies in the
+behaviour with respect to saving/restoring the process signal mask. POSIX does
+not require the process signal mask to be saved and restored during
+.B setjmp
+/
+.B longjmp
+\. However, the current implementation does this in order to agree with OSF/1
+and other BSD derived systems.
+.PP
+The pair of functions
+.B _setjmp
+/
+.B _longjmp
+, traditional in BSD systems, may be used when the signal mask is not to be
+saved/restored.
+.PP
+Finally, the POSIX
+.B sigsetjmp
+/
+.B siglongjmp
+functions allow the programmer to specify explicitly whether the signal mask
+is to be saved/restored, by means of the \fIsavemask\fP parameter. If this
+parameter is zero, the signal mask will not be saved/restored, otherwise it
+will.
+.SH NOTES
+After the function calling
+.B setjmp
+has returned, the saved context may not be used in a call to
+.B longjmp
+anymore, since the relevant portion of the stack may already have been wiped
+out at that point.
+.PP
+Using these functions to return to a previous state from a signal handler
+is possible but should be done with extreme care, as some interrupted library
+routines may not be reentrant and/or temporarily allocate resources. 
+.PP
+See the setjmp.h header file for more implementation details specific to Minix.
