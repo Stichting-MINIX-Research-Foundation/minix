@@ -5,9 +5,10 @@
 
 #include <minix/config.h>
 #include <minix/const.h>
-#include "const.h"
+#include <ibm/interrupt.h>
+#include <archconst.h>
+#include "../../const.h"
 #include "sconst.h"
-#include "protect.h"
 
 ! This file contains a number of assembly code utility routines needed by the
 ! kernel.  They are:
@@ -23,8 +24,8 @@
 .define	_phys_insb	! likewise byte by byte
 .define	_phys_outsw	! transfer data from memory to (disk controller) port
 .define	_phys_outsb	! likewise byte by byte
-.define	_enable_irq	! enable an irq at the 8259 controller
-.define	_disable_irq	! disable an irq
+.define	_intr_unmask	! enable an irq at the 8259 controller
+.define	_intr_mask	! disable an irq
 .define	_phys_copy	! copy data from anywhere to anywhere in memory
 .define	_phys_memset	! write pattern anywhere in memory
 .define	_mem_rdw	! copy one word from [segment:offset]
@@ -319,16 +320,16 @@ _phys_outsb:
 
 
 !*==========================================================================*
-!*				enable_irq				    *
+!*				intr_unmask				    *
 !*==========================================================================*/
-! PUBLIC void enable_irq(irq_hook_t *hook)
+! PUBLIC void intr_unmask(irq_hook_t *hook)
 ! Enable an interrupt request line by clearing an 8259 bit.
 ! Equivalent C code for hook->irq < 8:
 !   if ((irq_actids[hook->irq] &= ~hook->id) == 0)
 !	outb(INT_CTLMASK, inb(INT_CTLMASK) & ~(1 << irq));
 
 	.align	16
-_enable_irq:
+_intr_unmask:
 	push	ebp
 	mov	ebp, esp
 	pushf
@@ -354,9 +355,9 @@ en_done:popf
 
 
 !*==========================================================================*
-!*				disable_irq				    *
+!*				intr_mask				    *
 !*==========================================================================*/
-! PUBLIC int disable_irq(irq_hook_t *hook)
+! PUBLIC int intr_mask(irq_hook_t *hook)
 ! Disable an interrupt request line by setting an 8259 bit.
 ! Equivalent C code for irq < 8:
 !   irq_actids[hook->irq] |= hook->id;
@@ -364,7 +365,7 @@ en_done:popf
 ! Returns true iff the interrupt was not already disabled.
 
 	.align	16
-_disable_irq:
+_intr_mask:
 	push	ebp
 	mov	ebp, esp
 	pushf

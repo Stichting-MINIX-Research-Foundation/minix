@@ -18,10 +18,6 @@
 #include <timers.h>		/* watchdog timer management */
 #include <errno.h>		/* return codes and error numbers */
 
-#if (CHIP == INTEL)
-#include <ibm/portio.h>		/* device I/O and toggle interrupts */ 
-#endif
-
 /* Important kernel header files. */
 #include "config.h"		/* configuration, MUST be first */
 #include "const.h"		/* constants, MUST be second */

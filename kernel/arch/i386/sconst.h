@@ -3,13 +3,9 @@ W		=	_WORD_SIZE	! Machine word size.
 
 ! Offsets in struct proc. They MUST match proc.h.
 P_STACKBASE	=	0
-#if _WORD_SIZE == 2
-ESREG		=	P_STACKBASE
-#else
 GSREG		=	P_STACKBASE
 FSREG		=	GSREG + 2	! 386 introduces FS and GS segments
 ESREG		=	FSREG + 2
-#endif
 DSREG		=	ESREG + 2
 DIREG		=	DSREG + 2
 SIREG		=	DIREG + W
@@ -28,9 +24,4 @@ SSREG		=	SPREG + W
 P_STACKTOP	=	SSREG + W
 P_LDT_SEL	=	P_STACKTOP
 P_LDT		=	P_LDT_SEL + W
-
-#if _WORD_SIZE == 2
-Msize		=	12		! size of a message in 16-bit words
-#else
 Msize		=	9		! size of a message in 32-bit words
-#endif

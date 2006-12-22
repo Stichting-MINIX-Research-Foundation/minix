@@ -2,19 +2,10 @@
 #ifndef CONST_H
 #define CONST_H
 
-#include <ibm/interrupt.h>	/* interrupt numbers and hardware vectors */
-#include <ibm/ports.h>		/* port addresses and magic numbers */
-#include <ibm/bios.h>		/* BIOS addresses, sizes and magic numbers */
-#include <ibm/cpu.h>		/* BIOS addresses, sizes and magic numbers */
 #include <minix/config.h>
 #include <minix/bitmap.h>
 
 #include "config.h"
-
-/* To translate an address in kernel space to a physical address.  This is
- * the same as umap_local(proc_ptr, D, vir, sizeof(*vir)), but less costly.
- */
-#define vir2phys(vir)	(kinfo.data_base + (vir_bytes) (vir))
 
 /* Map a process number to a privilege structure id. */
 #define s_nr_to_id(n)	(NR_TASKS + (n) + 1)
@@ -46,41 +37,27 @@
 	( MAP_CHUNK(map.chunk,bit) &= ~(1 << CHUNK_OFFSET(bit) )
 #define NR_SYS_CHUNKS	BITMAP_CHUNKS(NR_SYS_PROCS)
 
-#if (CHIP == INTEL)
-
-/* Program stack words and masks. */
-#define INIT_PSW      0x0200	/* initial psw */
-#define INIT_TASK_PSW 0x1200	/* initial psw for tasks (with IOPL 1) */
-#define TRACEBIT      0x0100	/* OR this with psw in proc[] for tracing */
-#define SETPSW(rp, new)		/* permits only certain bits to be set */ \
-	((rp)->p_reg.psw = (rp)->p_reg.psw & ~0xCD5 | (new) & 0xCD5)
-#define IF_MASK 0x00000200
-#define IOPL_MASK 0x003000
-
 #if DEBUG_LOCK_CHECK
-#define reallock(c, v)	{ if (!(read_cpu_flags() & X86_FLAG_I)) { kinfo.relocking++; } else { intr_disable(); } }
+#define reallock(c, v)  { if(intr_disabled()) { kinfo.relocking++; } else { intr_disable(); } }
 #else
-#define reallock(c, v)	intr_disable()
+#define reallock(c, v)  intr_disable()
 #endif
 
-#define realunlock(c)	intr_enable()
+#define realunlock(c)   intr_enable()
 
+#if DEBUG_TIME_LOCKS
+#define lock(c, v)    do { reallock(c, v); locktimestart(c, v); } while(0)
+#define unlock(c)     do { locktimeend(c); realunlock(c); } while(0)
+#else
 /* Disable/ enable hardware interrupts. The parameters of lock() and unlock()
  * are used when debugging is enabled. See debug.h for more information.
  */
-#define lock(c, v)	reallock(c, v)
-#define unlock(c)	realunlock(c) 
+#define lock(c, v)      reallock(c, v)
+#define unlock(c)       realunlock(c)
+#endif
 
-/* Sizes of memory tables. The boot monitor distinguishes three memory areas, 
- * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed
- * for DOS MINIX.
- */
-#define NR_MEMS            8	
-
-#endif /* (CHIP == INTEL) */
-
-#if (CHIP == M68000)
-/* M68000 specific constants go here. */
-#endif /* (CHIP == M68000) */
+/* args to intr_init() */
+#define INTS_ORIG	0	/* restore interrupts */
+#define INTS_MINIX	1	/* initialize interrupts for minix */
 
 #endif /* CONST_H */

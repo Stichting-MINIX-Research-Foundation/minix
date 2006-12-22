@@ -21,6 +21,8 @@
 #include <sys/resource.h>
 #include <sys/utsname.h>
 #include <string.h>
+#include <archconst.h>
+#include <archtypes.h>
 #include "mproc.h"
 #include "param.h"
 

@@ -8,9 +8,6 @@
 
 #include "../system.h"
 #include <signal.h>
-#if (CHIP == INTEL)
-#include "../protect.h"
-#endif
 
 #include <minix/endpoint.h>
 
@@ -23,7 +20,7 @@ PUBLIC int do_fork(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
 /* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
   reg_t old_ldt_sel;
 #endif
   register struct proc *rpc;		/* child process pointer */
@@ -42,10 +39,10 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Copy parent 'proc' struct to child. And reinitialize some fields. */
   gen = _ENDPOINT_G(rpc->p_endpoint);
-#if (CHIP == INTEL)
-  old_ldt_sel = rpc->p_ldt_sel;		/* backup local descriptors */
+#if (_MINIX_CHIP == _CHIP_INTEL)
+  old_ldt_sel = rpc->p_seg.p_ldt_sel;	/* backup local descriptors */
   *rpc = *rpp;				/* copy 'proc' struct */
-  rpc->p_ldt_sel = old_ldt_sel;		/* restore descriptors */
+  rpc->p_seg.p_ldt_sel = old_ldt_sel;	/* restore descriptors */
 #else
   *rpc = *rpp;				/* copy 'proc' struct */
 #endif

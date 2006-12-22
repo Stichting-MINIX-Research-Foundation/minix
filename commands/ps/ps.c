@@ -76,6 +76,7 @@
 #include <stdio.h>
 #include <ttyent.h>
 
+#include "../../kernel/arch/i386/include/archtypes.h"
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"

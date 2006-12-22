@@ -102,7 +102,7 @@ register message *m_ptr;
 	     tr_addr > sizeof(struct stackframe_s) - sizeof(reg_t))
 		return(EIO);
 	i = (int) tr_addr;
-#if (CHIP == INTEL)
+#if (_MINIX_CHIP == _CHIP_INTEL)
 	/* Altering segment registers might crash the kernel when it
 	 * tries to load them prior to restarting a process, so do
 	 * not allow it.

@@ -1,6 +1,10 @@
 #!/bin/sh
 # called with parameters: 1:dir 2:ackbase 3:gnubase
 
+set -e
+
+. /etc/make.conf
+
 exec  >Makefile
 exec 3>Makedepend-ack
 exec 4>Makedepend-gnu
@@ -243,7 +247,8 @@ if [ $OBJDIR = "." ]; then
 	echo "install: install-ack"
 	echo
 	echo "install-ack: all-ack"
-	echo "	cp $ACKBASE/*.[ao] /usr/lib/i386"
+	# $ARCH is from /etc/make.conf
+	echo "	cp $ACKBASE/*.[ao] /usr/lib/$ARCH"
 	echo
 	echo "install-gnu: all-gnu"
 	echo "	cp $GNUBASE/*.[ao] /usr/gnu/lib"

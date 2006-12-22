@@ -693,6 +693,8 @@ register struct mproc *rmp;	/* whose core is to be dumped */
   struct mproc *p_mp;
   clock_t t[5];
 
+  printf("dumpcore for %d / %s\n", rmp->mp_pid, rmp->mp_name);
+
   /* Do not create core files for set uid execution */
   if (rmp->mp_realuid != rmp->mp_effuid) return OK;
 

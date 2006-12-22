@@ -64,7 +64,7 @@
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
-#include <ibm/portio.h>
+#include <minix/portio.h>
 #include <ibm/cmos.h>
 #include <sys/svrctl.h>
 

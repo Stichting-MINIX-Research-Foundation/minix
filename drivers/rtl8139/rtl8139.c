@@ -62,7 +62,6 @@
 #include <minix/type.h>
 #include <minix/sysutil.h>
 #include <timers.h>
-#include <ibm/portio.h>
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>

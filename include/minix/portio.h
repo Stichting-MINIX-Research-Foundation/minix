@@ -1,5 +1,5 @@
 /*
-ibm/portio.h
+minix/portio.h
 
 Created:	Jan 15, 1992 by Philip Homburg
 */

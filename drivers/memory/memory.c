@@ -355,21 +355,7 @@ PRIVATE void m_init()
   if (OK != (s=sys_getmachine(&machine))) {
       panic("MEM","Couldn't get machine information.",s);
   }
-  if (! machine.prot) {
-	m_geom[MEM_DEV].dv_size =   cvul64(0x100000); /* 1M for 8086 systems */
-  } else {
-#if _WORD_SIZE == 2
-	m_geom[MEM_DEV].dv_size =  cvul64(0x1000000); /* 16M for 286 systems */
-#else
-	m_geom[MEM_DEV].dv_size = cvul64(0xFFFFFFFF); /* 4G-1 for 386 systems */
-#endif
-  }
-#else /* !(CHIP == INTEL) */
-#if (CHIP == M68000)
-  m_geom[MEM_DEV].dv_size = cvul64(MEM_BYTES);
-#else /* !(CHIP == M68000) */
-#error /* memory limit not set up */
-#endif /* !(CHIP == M68000) */
+  m_geom[MEM_DEV].dv_size = cvul64(0xFFFFFFFF); /* 4G-1 for 386 systems */
 #endif /* !(CHIP == INTEL) */
 }
 

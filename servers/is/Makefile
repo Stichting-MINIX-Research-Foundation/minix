@@ -1,6 +1,8 @@
 # Makefile for Information Server (IS)
 SERVER = is
 
+include /etc/make.conf
+
 # directories
 u = /usr
 i = $u/include
@@ -13,7 +15,8 @@ f = $u/src/servers/fs
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
+CPPFLAGS=-I../../kernel/arch/$(ARCH)/include -I$i 
+CFLAGS = $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
 LIBS = -lsysutil -lsys
 

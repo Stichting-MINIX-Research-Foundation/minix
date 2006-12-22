@@ -8,8 +8,10 @@
  *    Jorrit N. Herder <jnherder@cs.vu.nl>
  */
 
-#include "../system.h"
-#include "../kernel.h"
+#include "../../system.h"
+#include "../../kernel.h"
+
+#include "proto.h"
 
 /*===========================================================================*
  *			        do_iopenable				     *

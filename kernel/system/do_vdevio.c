@@ -11,6 +11,7 @@
 #include "../system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
+#include <minix/portio.h>
 
 #if USE_VDEVIO
 
@@ -112,16 +113,22 @@ register message *m_ptr;	/* pointer to request message */
   lock(13, "do_vdevio");
   switch (io_type) {
   case _DIO_BYTE: 					 /* byte values */
-      if (io_in) for (i=0; i<vec_size; i++)  pvb[i].value = inb(pvb[i].port); 
-      else       for (i=0; i<vec_size; i++)  outb(pvb[i].port, pvb[i].value); 
+      if (io_in) for (i=0; i<vec_size; i++) 
+		pvb[i].value = inb( pvb[i].port); 
+      else      for (i=0; i<vec_size; i++)
+		outb( pvb[i].port, pvb[i].value); 
       break; 
   case _DIO_WORD:					  /* word values */
-      if (io_in) for (i=0; i<vec_size; i++)  pvw[i].value = inw(pvw[i].port);  
-      else       for (i=0; i<vec_size; i++)  outw(pvw[i].port, pvw[i].value); 
+      if (io_in) for (i=0; i<vec_size; i++)  
+		pvw[i].value = inw( pvw[i].port);  
+      else       for (i=0; i<vec_size; i++) 
+		outw( pvw[i].port, pvw[i].value); 
       break; 
   default:            					  /* long values */
-      if (io_in) for (i=0; i<vec_size; i++) pvl[i].value = inl(pvl[i].port);  
-      else       for (i=0; i<vec_size; i++) outl(pvb[i].port, pvl[i].value); 
+      if (io_in) for (i=0; i<vec_size; i++)
+	pvl[i].value = inl(pvl[i].port);  
+      else       for (i=0; i<vec_size; i++)
+		outl( pvb[i].port, pvl[i].value); 
   }
   unlock(13);
     

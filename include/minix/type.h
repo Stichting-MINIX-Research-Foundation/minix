@@ -136,7 +136,7 @@ struct machine {
   int pc_at;
   int ps_mca;
   int processor;
-  int prot;
+  int padding;	/* used to be protected */
   int vdu_ega;
   int vdu_vga;
 };

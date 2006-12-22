@@ -7,10 +7,6 @@
  * The entries into this file are:
  *   main:	    	MINIX main program
  *   prepare_shutdown:	prepare to take MINIX down
- *
- * Changes:
- *   Nov 24, 2004   simplified main() with system image  (Jorrit N. Herder)
- *   Aug 20, 2004   new prepare_shutdown() and shutdown()  (Jorrit N. Herder)
  */
 #include "kernel.h"
 #include <signal.h>
@@ -24,7 +20,7 @@
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
-FORWARD _PROTOTYPE( void shutdown, (timer_t *tp));
+FORWARD _PROTOTYPE( void shutdown, (timer_t *));	
 
 /*===========================================================================*
  *				main                                         *
@@ -41,9 +37,6 @@ PUBLIC void main()
   vir_clicks text_clicks, data_clicks, st_clicks;
   reg_t ktsb;			/* kernel task stack base */
   struct exec e_hdr;		/* for a copy of an a.out header */
-
-  /* Initialize the interrupt controller. */
-  intr_init(1);
 
   /* Clear the process table. Anounce each slot as empty and set up mappings 
    * for proc_addr() and proc_nr() macros. Do the same for the table with 
@@ -168,19 +161,6 @@ PUBLIC void main()
 	alloc_segments(rp);
   }
 
-#if ENABLE_BOOTDEV 
-  /* Expect an image of the boot device to be loaded into memory as well. 
-   * The boot device is the last module that is loaded into memory, and, 
-   * for example, can contain the root FS (useful for embedded systems). 
-   */
-  hdrindex ++;
-  phys_copy(aout + hdrindex * A_MINHDR,vir2phys(&e_hdr),(phys_bytes) A_MINHDR);
-  if (e_hdr.a_flags & A_IMG) {
-  	kinfo.bootdev_base = e_hdr.a_syms; 
-  	kinfo.bootdev_size = e_hdr.a_data; 
-  }
-#endif
-
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
@@ -205,11 +185,6 @@ PRIVATE void announce(void)
   kprintf("\nMINIX %s.%s. "
       "Copyright 2006, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
-#if (CHIP == INTEL)
-  /* Real mode, or 16/32-bit protected mode? */
-  kprintf("Executing in %s mode.\n\n",
-      machine.prot ? "32-bit protected" : "real");
-#endif
 }
 
 /*===========================================================================*
@@ -246,6 +221,7 @@ int how;
   tmr_arg(&shutdown_timer)->ta_int = how;
   set_timer(&shutdown_timer, get_uptime() + HZ, shutdown);
 }
+
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/
@@ -256,30 +232,8 @@ timer_t *tp;
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
  * monitor), RBT_MONITOR (execute given code), RBT_RESET (hard reset). 
  */
-  int how = tmr_arg(tp)->ta_int;
-  u16_t magic; 
-
-  /* Now mask all interrupts, including the clock, and stop the clock. */
-  outb(INT_CTLMASK, ~0); 
+  intr_init(INTS_ORIG);
   clock_stop();
-
-  if (mon_return && how != RBT_RESET) {
-	/* Reinitialize the interrupt controllers to the BIOS defaults. */
-	intr_init(0);
-	outb(INT_CTLMASK, 0);
-	outb(INT2_CTLMASK, 0);
-
-	/* Return to the boot monitor. Set the program if not already done. */
-	if (how != RBT_MONITOR) phys_copy(vir2phys(""), kinfo.params_base, 1); 
-	level0(monitor);
-  }
-
-  /* Reset the system by jumping to the reset address (real mode), or by
-   * forcing a processor shutdown (protected mode). First stop the BIOS 
-   * memory test by setting a soft reset flag. 
-   */
-  magic = STOP_MEM_CHECK;
-  phys_copy(vir2phys(&magic), SOFT_RESET_FLAG_ADDR, SOFT_RESET_FLAG_SIZE);
-  level0(reset);
+  arch_shutdown(tmr_arg(tp)->ta_int);
 }
 

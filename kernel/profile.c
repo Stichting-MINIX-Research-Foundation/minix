@@ -3,7 +3,7 @@
  * profiling.
  *
  * Statistical Profiling:
- *   The interrupt handler and control functions for the CMOS clock. 
+ *   The interrupt handler for profiling clock. 
  *
  * Call Profiling:
  *   The table used for profiling data and a function to get its size.
@@ -20,6 +20,7 @@
 #if SPROFILE || CPROFILE
 
 #include <minix/profile.h>
+#include <minix/portio.h>
 #include "kernel.h"
 #include "profile.h"
 #include "proc.h"
@@ -29,70 +30,50 @@
 #if SPROFILE
 
 #include <string.h>
-#include <ibm/cmos.h>
 
-/* Function prototype for the CMOS clock handler. */ 
-FORWARD _PROTOTYPE( int cmos_clock_handler, (irq_hook_t *hook) );
+/* Function prototype for the profiling clock handler. */ 
+FORWARD _PROTOTYPE( int profile_clock_handler, (irq_hook_t *hook) );
 
-/* A hook for the CMOS clock interrupt handler. */
-PRIVATE irq_hook_t cmos_clock_hook;
+/* A hook for the profiling clock interrupt handler. */
+PRIVATE irq_hook_t profile_clock_hook;
 
 /*===========================================================================*
- *				init_cmos_clock				     *
+ *			init_profile_clock				     *
  *===========================================================================*/
-PUBLIC void init_cmos_clock(unsigned freq)
+PUBLIC void init_profile_clock(u32_t freq)
 {
-  int r;
-  /* Register interrupt handler for statistical system profiling.
-   * This uses the CMOS timer.
-   */
-  cmos_clock_hook.proc_nr_e = CLOCK;
-  put_irq_handler(&cmos_clock_hook, CMOS_CLOCK_IRQ, cmos_clock_handler);
-  enable_irq(&cmos_clock_hook);
+  int r, irq;
 
   intr_disable();
 
-  /* Set CMOS timer frequency. */
-  outb(RTC_INDEX, RTC_REG_A);
-  outb(RTC_IO, RTC_A_DV_OK | freq);
-  /* Enable CMOS timer interrupts. */
-  outb(RTC_INDEX, RTC_REG_B);
-  r = inb(RTC_IO);
-  outb(RTC_INDEX, RTC_REG_B);
-  outb(RTC_IO, r | RTC_B_PIE);
-  /* Mandatory read of CMOS register to enable timer interrupts. */
-  outb(RTC_INDEX, RTC_REG_C);
-  inb(RTC_IO);
+  if((irq = arch_init_profile_clock(freq)) >= 0) {
+	/* Register interrupt handler for statistical system profiling.  */
+	profile_clock_hook.proc_nr_e = CLOCK;
+	put_irq_handler(&profile_clock_hook, irq, profile_clock_handler);
+	enable_irq(&profile_clock_hook);
+  }
 
   intr_enable();
 }
 
 /*===========================================================================*
- *				cmos_clock_stop				     *
+ *			profile_clock_stop				     *
  *===========================================================================*/
-PUBLIC void stop_cmos_clock()
+PUBLIC void stop_profile_clock()
 {
-  int r;
-
   intr_disable();
-
-  /* Disable CMOS timer interrupts. */
-  outb(RTC_INDEX, RTC_REG_B);
-  r = inb(RTC_IO);
-  outb(RTC_INDEX, RTC_REG_B);
-  outb(RTC_IO, r & !RTC_B_PIE);
-
+  arch_stop_profile_clock();
   intr_enable();
 
   /* Unregister interrupt handler. */
-  disable_irq(&cmos_clock_hook);
-  rm_irq_handler(&cmos_clock_hook);
+  disable_irq(&profile_clock_hook);
+  rm_irq_handler(&profile_clock_hook);
 }
 
 /*===========================================================================*
- *				cmos_clock_handler                           *
+ *			profile_clock_handler                           *
  *===========================================================================*/
-PRIVATE int cmos_clock_handler(hook)
+PRIVATE int profile_clock_handler(hook)
 irq_hook_t *hook;
 {
 /* This executes on every tick of the CMOS timer. */
@@ -136,9 +117,8 @@ irq_hook_t *hook;
   
   sprof_info.total_samples++;
 
-  /* Mandatory read of CMOS register to re-enable timer interrupts. */
-  outb(RTC_INDEX, RTC_REG_C);
-  inb(RTC_IO);
+  /* Acknowledge interrupt if necessary. */
+  arch_ack_profile_clock();
 
   return(1);                                    /* reenable interrupts */
 }

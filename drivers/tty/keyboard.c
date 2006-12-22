@@ -14,6 +14,7 @@
 #include <termios.h>
 #include <signal.h>
 #include <unistd.h>
+#include <archtypes.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/keymap.h>

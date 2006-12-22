@@ -163,7 +163,7 @@ PRIVATE struct density {
 	u8_t	steps;		/* steps per cylinder (2 = double step) */
 	u8_t	test;		/* sector to try for density test */
 	u8_t	rate;		/* data rate (2=250, 1=300, 0=500 kbps) */
-	u8_t	start;		/* motor start (clock ticks) */
+	clock_t	start;	/* motor start (clock ticks) */
 	u8_t	gap;		/* gap size */
 	u8_t	spec1;		/* first specify byte (SRT/HUT) */
 } fdensity[NT] = {

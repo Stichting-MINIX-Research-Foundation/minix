@@ -56,8 +56,8 @@ begbss:
 #include <minix/const.h>
 #include <minix/com.h>
 #include <ibm/interrupt.h>
-#include "const.h"
-#include "protect.h"
+#include <archconst.h>
+#include "../../const.h"
 #include "sconst.h"
 
 /* Selected 386 tss offsets. */

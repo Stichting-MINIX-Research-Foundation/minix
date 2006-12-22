@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <archtypes.h>
 #include "proto.h"
 #include "glo.h"
 

@@ -247,7 +247,6 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 PUBLIC int do_safecopy(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-	static endpoint_t new_granter;
 	static int access, src_seg, dst_seg;
 
 	/* Set src and dst parameters.

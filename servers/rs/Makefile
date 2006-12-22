@@ -2,6 +2,8 @@
 SERVER = rs
 UTIL = service
 
+include /etc/make.conf
+
 # directories
 u = /usr
 i = $u/include
@@ -11,7 +13,8 @@ b = $i/ibm
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
+CPPFLAGS = -I../../kernel/arch/$(ARCH)/include
+CFLAGS = -I$i $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
 UTIL_LIBS = -lsysutil  -lsys 
 LIBS = -lsysutil -lsys

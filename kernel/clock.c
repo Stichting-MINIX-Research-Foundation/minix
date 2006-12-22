@@ -6,6 +6,7 @@
  * CLOCK task thus is hidden from the outside world.  
  *
  * Changes:
+ *   Aug 18, 2006   removed direct hardware access etc, MinixPPC (Ingmar Alting)
  *   Oct 08, 2005   reordering and comment editing (A. S. Woodhull)
  *   Mar 18, 2004   clock interface moved to SYSTEM task (Jorrit N. Herder) 
  *   Sep 30, 2004   source code documentation updated  (Jorrit N. Herder)
@@ -34,21 +35,12 @@
 #include <signal.h>
 #include <minix/com.h>
 
-/* Function prototype for PRIVATE functions. */ 
+/* Function prototype for PRIVATE functions.
+ */ 
 FORWARD _PROTOTYPE( void init_clock, (void) );
 FORWARD _PROTOTYPE( int clock_handler, (irq_hook_t *hook) );
 FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
 FORWARD _PROTOTYPE( void load_update, (void));
-
-/* Clock parameters. */
-#define COUNTER_FREQ (2*TIMER_FREQ) /* counter frequency using square wave */
-#define LATCH_COUNT     0x00	/* cc00xxxx, c = channel, x = any */
-#define SQUARE_WAVE     0x36	/* ccaammmb, a = access, m = mode, b = BCD */
-				/*   11x11, 11 = LSB then MSB, x11 = sq wave */
-#define TIMER_COUNT ((unsigned) (TIMER_FREQ/HZ)) /* initial value for counter*/
-#define TIMER_FREQ  1193182L	/* clock frequency for timer in PC and AT */
-
-#define CLOCK_ACK_BIT	0x80	/* PS/2 clock interrupt acknowledge bit */
 
 /* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
  * Each system process possesses a single synchronous alarm timer. If other 
@@ -57,11 +49,12 @@ FORWARD _PROTOTYPE( void load_update, (void));
  * via (re)set_timer().
  * When a timer expires its watchdog function is run by the CLOCK task. 
  */
-PRIVATE timer_t *clock_timers;		/* queue of CLOCK timers */
-PRIVATE clock_t next_timeout;		/* realtime that next timer expires */
+PRIVATE timer_t *clock_timers;	/* queue of CLOCK timers */
+PRIVATE clock_t next_timeout;	/* realtime that next timer expires */
 
-/* The time is incremented by the interrupt handler on each clock tick. */
-PRIVATE clock_t realtime;		/* real time clock */
+/* The time is incremented by the interrupt handler on each clock tick.
+ */
+PRIVATE clock_t realtime = 0;		      /* real time clock */
 PRIVATE irq_hook_t clock_hook;		/* interrupt handler hook */
 
 /*===========================================================================*
@@ -71,25 +64,25 @@ PUBLIC void clock_task()
 {
 /* Main program of clock task. If the call is not HARD_INT it is an error.
  */
-  message m;			/* message buffer for both input and output */
-  int result;			/* result returned by the handler */
+  message m;       /* message buffer for both input and output */
+  int result;      /* result returned by the handler */
 
-  init_clock();			/* initialize clock task */
-
+  init_clock();    /* initialize clock task */
+    
   /* Main loop of the clock task.  Get work, process it. Never reply. */
-  while (TRUE) {
+  while(TRUE) {
+	/* Go get a message. */
+	result = receive(ANY, &m);
 
-      /* Go get a message. */
-      receive(ANY, &m);	
-
-      /* Handle the request. Only clock ticks are expected. */
-      switch (m.m_type) {
-      case HARD_INT:
-          result = do_clocktick(&m);	/* handle clock tick */
-          break;
-      default:				/* illegal request type */
-          kprintf("CLOCK: illegal request %d from %d.\n", m.m_type,m.m_source);
-      }
+	/* Handle the request. Only clock ticks are expected. */
+	switch (m.m_type) {
+	case HARD_INT:      
+		result = do_clocktick(&m); /* handle clock tick */
+		break;
+	default: /* illegal request type */
+		kprintf("CLOCK: illegal request %d from %d.\n",
+			m.m_type, m.m_source);
+    }
   }
 }
 
@@ -102,7 +95,7 @@ message *m_ptr;				/* pointer to request message */
 /* Despite its name, this routine is not called on every clock tick. It
  * is called on those clock ticks when a lot of work needs to be done.
  */
-
+  
   /* A process used up a full quantum. The interrupt handler stored this
    * process in 'prev_ptr'.  First make sure that the process is not on the 
    * scheduling queues.  Then announce the process ready again. Since it has 
@@ -110,15 +103,16 @@ message *m_ptr;				/* pointer to request message */
    * place in the queues.  As a side-effect a new process will be scheduled.
    */ 
   if (prev_ptr->p_ticks_left <= 0 && priv(prev_ptr)->s_flags & PREEMPTIBLE) {
-      lock_dequeue(prev_ptr);		/* take it off the queues */
+      if(prev_ptr->p_rts_flags == 0)	/* if it was runnable .. */
+	      lock_dequeue(prev_ptr);	/* take it off the queues */
       lock_enqueue(prev_ptr);		/* and reinsert it again */ 
   }
 
   /* Check if a clock timer expired and run its watchdog function. */
-  if (next_timeout <= realtime) { 
-  	tmrs_exptimers(&clock_timers, realtime, NULL);
-  	next_timeout = clock_timers == NULL ? 
-		TMR_NEVER : clock_timers->tmr_exp_time;
+  if (next_timeout <= realtime) {
+  	tmrs_exptimers(&clock_timers, realtime, NULL);  	
+	next_timeout = (clock_timers == NULL) ?
+		 TMR_NEVER : clock_timers->tmr_exp_time;	
   }
 
   /* Inhibit sending a reply. */
@@ -130,31 +124,23 @@ message *m_ptr;				/* pointer to request message */
  *===========================================================================*/
 PRIVATE void init_clock()
 {
+  /* First of all init the clock system.
+   *
+   * Here the (a) clock is set to produce a interrupt at
+   * every 1/60 second (ea. 60Hz).
+   *
+   * Running right away.
+   */
+  arch_init_clock();	/* architecture-dependent initialization. */
+   
   /* Initialize the CLOCK's interrupt hook. */
   clock_hook.proc_nr_e = CLOCK;
-
-  /* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz, and register
-   * the CLOCK task's interrupt handler to be run on every clock tick. 
-   */
-  outb(TIMER_MODE, SQUARE_WAVE);	/* set timer to run continuously */
-  outb(TIMER0, TIMER_COUNT);		/* load timer low byte */
-  outb(TIMER0, TIMER_COUNT >> 8);	/* load timer high byte */
+ 
   put_irq_handler(&clock_hook, CLOCK_IRQ, clock_handler);
   enable_irq(&clock_hook);		/* ready for clock interrupts */
-
+    
   /* Set a watchdog timer to periodically balance the scheduling queues. */
   balance_queues(NULL);			/* side-effect sets new timer */
-}
-
-/*===========================================================================*
- *				clock_stop				     *
- *===========================================================================*/
-PUBLIC void clock_stop()
-{
-/* Reset the clock to the BIOS rate. (For rebooting.) */
-  outb(TIMER_MODE, 0x36);
-  outb(TIMER0, 0);
-  outb(TIMER0, 0);
 }
 
 /*===========================================================================*
@@ -189,9 +175,6 @@ irq_hook_t *hook;
  */
   register unsigned ticks;
 
-  /* Acknowledge the PS/2 clock interrupt. */
-  if (machine.ps_mca) outb(PORT_B, inb(PORT_B) | CLOCK_ACK_BIT);
-
   /* Get number of ticks and update realtime. */
   ticks = lost_ticks + 1;
   lost_ticks = 0;
@@ -202,6 +185,7 @@ irq_hook_t *hook;
    * process is running, charge the billable process for system time as well.
    * Thus the unbillable process' user time is the billable user's system time.
    */
+  
   proc_ptr->p_user_time += ticks;
   if (priv(proc_ptr)->s_flags & PREEMPTIBLE) {
       proc_ptr->p_ticks_left -= ticks;
@@ -213,7 +197,7 @@ irq_hook_t *hook;
 
   /* Update load average. */
   load_update();
-
+  
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
@@ -227,9 +211,9 @@ irq_hook_t *hook;
 /*===========================================================================*
  *				get_uptime				     *
  *===========================================================================*/
-PUBLIC clock_t get_uptime()
+PUBLIC clock_t get_uptime(void)
 {
-/* Get and return the current clock uptime in ticks. */
+  /* Get and return the current clock uptime in ticks. */
   return(realtime);
 }
 
@@ -264,25 +248,6 @@ struct timer *tp;		/* pointer to timer structure */
 }
 
 /*===========================================================================*
- *				read_clock				     *
- *===========================================================================*/
-PUBLIC unsigned long read_clock()
-{
-/* Read the counter of channel 0 of the 8253A timer.  This counter counts
- * down at a rate of TIMER_FREQ and restarts at TIMER_COUNT-1 when it
- * reaches zero. A hardware interrupt (clock tick) occurs when the counter
- * gets to zero and restarts its cycle.  
- */
-  unsigned count;
-
-  outb(TIMER_MODE, LATCH_COUNT);
-  count = inb(TIMER0);
-  count |= (inb(TIMER0) << 8);
-  
-  return count;
-}
-
-/*===========================================================================*
  *				load_update				     * 
  *===========================================================================*/
 PRIVATE void load_update(void)
@@ -313,4 +278,6 @@ PRIVATE void load_update(void)
 	/* Up-to-dateness. */
 	kloadinfo.last_clock = realtime;
 }
+
+
 

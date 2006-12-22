@@ -2,7 +2,7 @@
 
 CC=cc
 
-CFLAGS=-O
+CFLAGS="-O -D_POSIX_SOURCE -D_MINIX"
 
 LIBRARIES=libz
 

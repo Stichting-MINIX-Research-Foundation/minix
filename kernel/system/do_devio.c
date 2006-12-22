@@ -10,6 +10,7 @@
 #include "../system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
+#include <minix/portio.h>
 
 #if USE_DEVIO
 
@@ -66,16 +67,17 @@ doit:
 /* Process a single I/O request for byte, word, and long values. */
     if (io_dir == _DIO_INPUT) { 
       switch (io_type) {
+	/* maybe "it" should not be called ports */
         case _DIO_BYTE: m_ptr->DIO_VALUE = inb(m_ptr->DIO_PORT); break; 
         case _DIO_WORD: m_ptr->DIO_VALUE = inw(m_ptr->DIO_PORT); break; 
-        case _DIO_LONG: m_ptr->DIO_VALUE = inl(m_ptr->DIO_PORT); break; 
+        case _DIO_LONG: m_ptr->DIO_VALUE = inl(m_ptr->DIO_PORT); break;
     	default: return(EINVAL);
       } 
     } else { 
       switch (io_type) {
-        case _DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
+	case _DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
         case _DIO_WORD: outw(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-        case _DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
+        case _DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
     	default: return(EINVAL);
       } 
     }

@@ -4,6 +4,7 @@
 #define PROTO_H
 
 #include <minix/safecopies.h>
+#include <archtypes.h>
 
 /* Struct declarations. */
 struct proc;
@@ -11,15 +12,14 @@ struct timer;
 
 /* clock.c */
 _PROTOTYPE( void clock_task, (void)					);
-_PROTOTYPE( void clock_stop, (void)					);
 _PROTOTYPE( clock_t get_uptime, (void)					);
-_PROTOTYPE( unsigned long read_clock, (void)				);
 _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
 _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
+_PROTOTYPE( void idle_task, (void)					);
 
 /* utility.c */
 _PROTOTYPE( int kprintf, (const char *fmt, ...)				);
@@ -55,115 +55,29 @@ _PROTOTYPE( int virtual_copy, (struct vir_addr *src, struct vir_addr *dst,
 				vir_bytes bytes)			);
 #define numap_local(proc_nr, vir_addr, bytes) \
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
-_PROTOTYPE( phys_bytes umap_local, (struct proc *rp, int seg, 
-		vir_bytes vir_addr, vir_bytes bytes)			);
-_PROTOTYPE( phys_bytes umap_remote, (struct proc *rp, int seg, 
-		vir_bytes vir_addr, vir_bytes bytes)			);
-_PROTOTYPE( phys_bytes umap_bios, (struct proc *rp, vir_bytes vir_addr,
-		vir_bytes bytes)					);
 _PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t,
 	vir_bytes));
 _PROTOTYPE( phys_bytes umap_verify_grant, (struct proc *, endpoint_t,
 	cp_grant_id_t, vir_bytes, vir_bytes, int));
 _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
+_PROTOTYPE( phys_bytes umap_bios, (struct proc *rp, vir_bytes vir_addr,
+	vir_bytes bytes));
 
 /* system/do_newmap.c */
 _PROTOTYPE( int newmap, (struct proc *rp, struct mem_map *map_ptr)	);
 
-#if (CHIP == INTEL)
-
-/* exception.c */
-_PROTOTYPE( void exception, (unsigned vec_nr)				);
-_PROTOTYPE( void stacktrace, (struct proc *)				);
-
-/* i8259.c */
-_PROTOTYPE( void intr_init, (int mine)					);
-_PROTOTYPE( void intr_handle, (irq_hook_t *hook)			);
+/* interrupt.c */
+_PROTOTYPE( void intr_handle,     (irq_hook_t *hook)		          );
 _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
-						irq_handler_t handler)	);
-_PROTOTYPE( void rm_irq_handler, (irq_hook_t *hook)			);
+						 irq_handler_t handler)  );
+_PROTOTYPE( void rm_irq_handler, (irq_hook_t *hook)                      );
+_PROTOTYPE( void enable_irq, (irq_hook_t *hook)                        	);
+_PROTOTYPE( int disable_irq, (irq_hook_t *hook)                        );
 
-/* klib*.s */
-_PROTOTYPE( void int86, (void)						);
-_PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,vir_bytes src_offset,
-		phys_clicks dst_clicks, vir_bytes dst_offset)		);
-_PROTOTYPE( void enable_irq, (irq_hook_t *hook)				);
-_PROTOTYPE( int disable_irq, (irq_hook_t *hook)				);
-_PROTOTYPE( u16_t mem_rdw, (U16_t segm, vir_bytes offset)		);
-_PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
-		phys_bytes count)					);
-_PROTOTYPE( void phys_memset, (phys_bytes source, unsigned long pattern,
-		phys_bytes count)					);
-_PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)	);
-_PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)	);
-_PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count)	);
-_PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count)	);
-_PROTOTYPE( void reset, (void)						);
-_PROTOTYPE( void level0, (void (*func)(void))				);
-_PROTOTYPE( void monitor, (void)					);
-_PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)	);
-_PROTOTYPE( unsigned long read_cr0, (void)				);
-_PROTOTYPE( void write_cr0, (unsigned long value)			);
-_PROTOTYPE( void write_cr3, (unsigned long value)			);
-_PROTOTYPE( unsigned long read_cpu_flags, (void)			);
-
-/* mpx*.s */
-_PROTOTYPE( void idle_task, (void)					);
-_PROTOTYPE( void restart, (void)					);
-
-/* The following are never called from C (pure asm procs). */
-
-/* Exception handlers (real or protected mode), in numerical order. */
-void _PROTOTYPE( int00, (void) ), _PROTOTYPE( divide_error, (void) );
-void _PROTOTYPE( int01, (void) ), _PROTOTYPE( single_step_exception, (void) );
-void _PROTOTYPE( int02, (void) ), _PROTOTYPE( nmi, (void) );
-void _PROTOTYPE( int03, (void) ), _PROTOTYPE( breakpoint_exception, (void) );
-void _PROTOTYPE( int04, (void) ), _PROTOTYPE( overflow, (void) );
-void _PROTOTYPE( int05, (void) ), _PROTOTYPE( bounds_check, (void) );
-void _PROTOTYPE( int06, (void) ), _PROTOTYPE( inval_opcode, (void) );
-void _PROTOTYPE( int07, (void) ), _PROTOTYPE( copr_not_available, (void) );
-void				  _PROTOTYPE( double_fault, (void) );
-void				  _PROTOTYPE( copr_seg_overrun, (void) );
-void				  _PROTOTYPE( inval_tss, (void) );
-void				  _PROTOTYPE( segment_not_present, (void) );
-void				  _PROTOTYPE( stack_exception, (void) );
-void				  _PROTOTYPE( general_protection, (void) );
-void				  _PROTOTYPE( page_fault, (void) );
-void				  _PROTOTYPE( copr_error, (void) );
-
-/* Hardware interrupt handlers. */
-_PROTOTYPE( void hwint00, (void) );
-_PROTOTYPE( void hwint01, (void) );
-_PROTOTYPE( void hwint02, (void) );
-_PROTOTYPE( void hwint03, (void) );
-_PROTOTYPE( void hwint04, (void) );
-_PROTOTYPE( void hwint05, (void) );
-_PROTOTYPE( void hwint06, (void) );
-_PROTOTYPE( void hwint07, (void) );
-_PROTOTYPE( void hwint08, (void) );
-_PROTOTYPE( void hwint09, (void) );
-_PROTOTYPE( void hwint10, (void) );
-_PROTOTYPE( void hwint11, (void) );
-_PROTOTYPE( void hwint12, (void) );
-_PROTOTYPE( void hwint13, (void) );
-_PROTOTYPE( void hwint14, (void) );
-_PROTOTYPE( void hwint15, (void) );
-
-/* Software interrupt handlers, in numerical order. */
-_PROTOTYPE( void trp, (void) );
-_PROTOTYPE( void s_call, (void) ), _PROTOTYPE( p_s_call, (void) );
-_PROTOTYPE( void level0_call, (void) );
-
-/* protect.c */
-_PROTOTYPE( void prot_init, (void)					);
-_PROTOTYPE( void init_codeseg, (struct segdesc_s *segdp, phys_bytes base,
-		vir_bytes size, int privilege)				);
-_PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
-		vir_bytes size, int privilege)				);
-_PROTOTYPE( phys_bytes seg2phys, (U16_t seg)				);
-_PROTOTYPE( void phys2seg, (u16_t *seg, vir_bytes *off, phys_bytes phys));
-_PROTOTYPE( void enable_iop, (struct proc *pp)				);
-_PROTOTYPE( void alloc_segments, (struct proc *rp)			);
+/* debug.c */
+#if DEBUG_SCHED_CHECK
+_PROTOTYPE( void check_runqueues, (char *when) );
+#endif
 
 /* system/do_vm.c */
 _PROTOTYPE( void vm_map_default, (struct proc *pp)			);
@@ -172,10 +86,46 @@ _PROTOTYPE( void vm_map_default, (struct proc *pp)			);
 _PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
 	int, vir_bytes, vir_bytes *, endpoint_t *));
 
-#endif /* (CHIP == INTEL) */
+#if SPROFILE
+/* profile.c */
+_PROTOTYPE( void init_profile_clock, (u32_t)				);
+_PROTOTYPE( void stop_profile_clock, (void)				);
+#endif
 
-#if (CHIP == M68000)
-/* M68000 specific prototypes go here. */
-#endif /* (CHIP == M68000) */
+/* functions defined in architecture-dependent files. */
+_PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
+                phys_bytes count)                                       );
+_PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
+_PROTOTYPE( void vm_init, (void)                       			);
+_PROTOTYPE( void vm_map_range, (u32_t base, u32_t size, u32_t offset)   );
+_PROTOTYPE( phys_bytes umap_local, (register struct proc *rp, int seg,
+	vir_bytes vir_addr, vir_bytes bytes));
+_PROTOTYPE( void cp_mess, (int src,phys_clicks src_clicks,
+        vir_bytes src_offset, phys_clicks dst_clicks, vir_bytes dst_offset));
+_PROTOTYPE( phys_bytes umap_remote, (struct proc* rp, int seg,
+        vir_bytes vir_addr, vir_bytes bytes)				);
+_PROTOTYPE( phys_bytes seg2phys, (U16_t)                                );
+_PROTOTYPE( void phys_memset, (phys_bytes source, unsigned long pattern,
+                phys_bytes count)                                       );
+_PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
+        int, phys_bytes, vir_bytes, int));
+_PROTOTYPE( int arch_init_clock, (void)					);
+_PROTOTYPE( clock_t read_clock, (void)					);
+_PROTOTYPE( void clock_stop, (void)    					);
+_PROTOTYPE( int intr_init, (int)					);
+_PROTOTYPE( int intr_disabled, (void)					);
+_PROTOTYPE( int intr_unmask, (irq_hook_t* hook)                     );
+_PROTOTYPE( int intr_mask, (irq_hook_t* hook)                    );
+_PROTOTYPE( void idle_task, (void)                                     );
+_PROTOTYPE( void system_init, (void)                                     );
+_PROTOTYPE( void ser_putc, (char)						);
+_PROTOTYPE( void arch_shutdown, (int)					);
+_PROTOTYPE( void restart, (void)                                        );
+_PROTOTYPE( void idle_task, (void)                                     );
+_PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)    );
+_PROTOTYPE( int arch_init_profile_clock, (u32_t freq)			);
+_PROTOTYPE( void arch_stop_profile_clock, (void)			);
+_PROTOTYPE( void arch_ack_profile_clock, (void)				);
+
 
 #endif /* PROTO_H */

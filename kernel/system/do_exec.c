@@ -33,23 +33,18 @@ register message *m_ptr;	/* pointer to request message */
   rp = proc_addr(proc);
   sp = (reg_t) m_ptr->PR_STACK_PTR;
   rp->p_reg.sp = sp;		/* set the stack pointer */
-#if (CHIP == M68000)
-  rp->p_splow = sp;		/* set the stack pointer low water */
-#ifdef FPP
-  /* Initialize fpp for this process */
-  fpp_new_state(rp);
-#endif
-#endif
-#if (CHIP == INTEL)		/* wipe extra LDT entries */
-  phys_memset(vir2phys(&rp->p_ldt[EXTRA_LDT_INDEX]), 0,
-	(LDT_SIZE - EXTRA_LDT_INDEX) * sizeof(rp->p_ldt[0]));
+  
+#if (_MINIX_CHIP == _CHIP_INTEL)		
+  /* wipe extra LDT entries */
+  phys_memset(vir2phys(&rp->p_seg.p_ldt[EXTRA_LDT_INDEX]), 0,
+	(LDT_SIZE - EXTRA_LDT_INDEX) * sizeof(rp->p_seg.p_ldt[0]));
 #endif
   rp->p_reg.pc = (reg_t) m_ptr->PR_IP_PTR;	/* set pc */
   rp->p_rts_flags &= ~RECEIVING;	/* PM does not reply to EXEC call */
   if (rp->p_rts_flags == 0) lock_enqueue(rp);
   /* Save command name for debugging, ps(1) output, etc. */
   phys_name = numap_local(who_p, (vir_bytes) m_ptr->PR_NAME_PTR,
-					(vir_bytes) P_NAME_LEN - 1);
+					(vir_bytes) P_NAME_LEN - 1);  
   if (phys_name != 0) {
 	phys_copy(phys_name, vir2phys(rp->p_name), (phys_bytes) P_NAME_LEN - 1);
 	for (np = rp->p_name; (*np & BYTE) >= ' '; np++) {}
@@ -57,6 +52,7 @@ register message *m_ptr;	/* pointer to request message */
   } else {
   	strncpy(rp->p_name, "<unset>", P_NAME_LEN);
   }
+  
   return(OK);
 }
 #endif /* USE_EXEC */

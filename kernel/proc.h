@@ -10,22 +10,12 @@
  * struct proc, be sure to change sconst.h to match.
  */
 #include <minix/com.h>
-#include "protect.h"
 #include "const.h"
 #include "priv.h"
  
 struct proc {
   struct stackframe_s p_reg;	/* process' registers saved in stack frame */
-
-#if (CHIP == INTEL)
-  reg_t p_ldt_sel;		/* selector in gdt with ldt base and limit */
-  struct segdesc_s p_ldt[2+NR_REMOTE_SEGS]; /* CS, DS and remote segments */
-#endif 
-
-#if (CHIP == M68000)
-/* M68000 specific registers and FPU details go here. */
-#endif 
-
+  struct segframe p_seg;	/* segment descriptors */
   proc_nr_t p_nr;		/* number of this process (for fast access) */
   struct priv *p_priv;		/* system privileges structure */
   short p_rts_flags;		/* process is runnable only if zero */

@@ -32,7 +32,6 @@
 #include "proc.h"
 #include "ipc.h"
 #include <minix/com.h>
-#include <ibm/int86.h>
 
 /* Define stack sizes for the kernel tasks included in the system image. */
 #define NO_STACK	0

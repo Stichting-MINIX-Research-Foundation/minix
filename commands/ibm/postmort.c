@@ -33,6 +33,7 @@
 
 #undef EXTERN			/* <minix/const.h> defined this */
 #define EXTERN			/* so we get proc & mproc */
+#include "../../kernel/arch/i386/include/archtypes.h"
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"

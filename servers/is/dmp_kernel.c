@@ -4,6 +4,7 @@
 #include <timers.h>
 #include <ibm/interrupt.h>
 #include <minix/endpoint.h>
+#include <minix/sys_config.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/debug.h"
@@ -292,7 +293,6 @@ PUBLIC void kenv_dmp()
     printf("- pc_at:      %3d\n", machine.pc_at); 
     printf("- ps_mca:     %3d\n", machine.ps_mca); 
     printf("- processor:  %3d\n", machine.processor); 
-    printf("- protected:  %3d\n", machine.prot); 
     printf("- vdu_ega:    %3d\n", machine.vdu_ega); 
     printf("- vdu_vga:    %3d\n\n", machine.vdu_vga); 
     printf("Kernel info structure:\n");
@@ -482,7 +482,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user---sys----size-rts flags-\n");
+  printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user----sys----size-rts flags\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -495,7 +495,7 @@ PUBLIC void proctab_dmp()
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %02u/%02u %02d/%02u %6lu%6lu %6uK %s",
+	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu %5uK %s",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 

@@ -4,6 +4,7 @@ pci_set_acl.c
 
 #include "pci.h"
 #include "syslib.h"
+#include <unistd.h>
 #include <minix/rs.h>
 #include <minix/sysutil.h>
 

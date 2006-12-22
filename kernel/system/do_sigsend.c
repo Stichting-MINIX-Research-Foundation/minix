@@ -45,6 +45,11 @@ message *m_ptr;			/* pointer to request message */
 
   /* Copy the registers to the sigcontext structure. */
   memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(struct sigregs));
+#ifdef POWERPC
+  memcpy(&sc.sc_regs, (char *) &rp->p_reg, struct(stackframe_s));
+#else
+  memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(struct sigregs));
+#endif
 
   /* Finish the sigcontext initialization. */
   sc.sc_flags = 0;	/* unused at this time */
@@ -72,6 +77,16 @@ message *m_ptr;			/* pointer to request message */
       (vir_bytes) sizeof(struct sigframe));
   if (dst_phys == 0) return(EFAULT);
   phys_copy(vir2phys(&fr), dst_phys, (phys_bytes) sizeof(struct sigframe));
+
+#if ( _MINIX_CHIP == _CHIP_POWERPC )  /* stuff that can't be done in the assembler code. */  
+  /* When the signal handlers C code is called it will write this value
+   * into the signal frame (over the sf_retadr value).
+   */   
+  rp->p_reg.lr = smsg.sm_sigreturn;  
+  /* The first (and only) parameter for the user signal handler function.
+   */  
+  rp->p_reg.retreg = smsg.sm_signo;  /* note the retreg == first argument */
+#endif
 
   /* Reset user registers to execute the signal handler. */
   rp->p_reg.sp = (reg_t) frp;

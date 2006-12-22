@@ -14,10 +14,7 @@
  *   get_priv:		assign privilege structure to user or system process
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via PM
- *   umap_local:	map virtual address in LOCAL_SEG to physical 
- *   umap_remote:	map virtual address in REMOTE_SEG to physical 
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
- *   umap_grant:        map grant number in a process to physical
  *   virtual_copy:	copy bytes from one virtual address to another 
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
@@ -39,10 +36,6 @@
 #include <sys/sigcontext.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
-#if (CHIP == INTEL)
-#include <ibm/memory.h>
-#include "protect.h"
-#endif
 
 /* Declaration of the call vector that defines the mapping of system calls 
  * to handler functions. The vector is initialized in sys_init() with map(), 
@@ -160,9 +153,7 @@ PRIVATE void initialize(void)
   /* Device I/O. */
   map(SYS_IRQCTL, do_irqctl);  		/* interrupt control operations */ 
   map(SYS_DEVIO, do_devio);   		/* inb, inw, inl, outb, outw, outl */ 
-  map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
   map(SYS_VDEVIO, do_vdevio);  		/* vector with devio requests */ 
-  map(SYS_INT86, do_int86);  		/* real-mode BIOS calls */ 
 
   /* Memory management. */
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
@@ -180,7 +171,6 @@ PRIVATE void initialize(void)
   map(SYS_SAFECOPYFROM, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_SAFECOPYTO, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_VSAFECOPY, do_vsafecopy);	/* vectored safecopy */
-  map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
 
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */
@@ -189,12 +179,19 @@ PRIVATE void initialize(void)
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
-  map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
 
   /* Profiling. */
   map(SYS_SPROF, do_sprofile);         /* start/stop statistical profiling */
   map(SYS_CPROF, do_cprofile);         /* get/reset call profiling data */
   map(SYS_PROFBUF, do_profbuf);        /* announce locations to kernel */
+
+  /* i386-specific. */
+#if _MINIX_CHIP == _CHIP_INTEL
+  map(SYS_INT86, do_int86);  		/* real-mode BIOS calls */ 
+  map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
+  map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
+  map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
+#endif
 }
 
 /*===========================================================================*
@@ -230,26 +227,16 @@ int proc_type;				/* system or user process flag */
 PUBLIC void get_randomness(source)
 int source;
 {
-/* On machines with the RDTSC (cycle counter read instruction - pentium
- * and up), use that for high-resolution raw entropy gathering. Otherwise,
- * use the realtime clock (tick resolution).
- *
- * Unfortunately this test is run-time - we don't want to bother with
- * compiling different kernels for different machines.
- *
- * On machines without RDTSC, we use read_clock().
+/* Use architecture-dependent high-resolution clock for
+ * raw entropy gathering.
  */
   int r_next;
   unsigned long tsc_high, tsc_low;
 
   source %= RANDOM_SOURCES;
   r_next= krandom.bin[source].r_next;
-  if (machine.processor > 486) {
-      read_tsc(&tsc_high, &tsc_low);
-      krandom.bin[source].r_buf[r_next] = tsc_low;
-  } else {
-      krandom.bin[source].r_buf[r_next] = read_clock();
-  }
+  read_tsc(&tsc_high, &tsc_low);
+  krandom.bin[source].r_buf[r_next] = tsc_low;
   if (krandom.bin[source].r_size < RANDOM_ELEMENTS) {
   	krandom.bin[source].r_size ++;
   }
@@ -313,6 +300,8 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   }
 }
 
+#if _MINIX_CHIP == _CHIP_INTEL
+
 /*===========================================================================*
  *				umap_bios				     *
  *===========================================================================*/
@@ -322,7 +311,7 @@ vir_bytes vir_addr;		/* virtual address in BIOS segment */
 vir_bytes bytes;		/* # of bytes to be copied */
 {
 /* Calculate the physical memory address at the BIOS. Note: currently, BIOS
- * address zero (the first BIOS interrupt vector) is not considered, as an 
+ * address zero (the first BIOS interrupt vector) is not considered as an 
  * error here, but since the physical address will be zero as well, the 
  * calling function will think an error occurred. This is not a problem,
  * since no one uses the first BIOS interrupt vector.  
@@ -334,125 +323,10 @@ vir_bytes bytes;		/* # of bytes to be copied */
   else if (vir_addr >= BASE_MEM_TOP && vir_addr + bytes <= UPPER_MEM_END)
   	return (phys_bytes) vir_addr;
 
-#if DEAD_CODE	/* brutal fix, if the above is too restrictive */
-  if (vir_addr >= BIOS_MEM_BEGIN && vir_addr + bytes <= UPPER_MEM_END)
-  	return (phys_bytes) vir_addr;
-#endif
-
   kprintf("Warning, error in umap_bios, virtual address 0x%x\n", vir_addr);
   return 0;
 }
-
-/*===========================================================================*
- *				umap_local				     *
- *===========================================================================*/
-PUBLIC phys_bytes umap_local(rp, seg, vir_addr, bytes)
-register struct proc *rp;	/* pointer to proc table entry for process */
-int seg;			/* T, D, or S segment */
-vir_bytes vir_addr;		/* virtual address in bytes within the seg */
-vir_bytes bytes;		/* # of bytes to be copied */
-{
-/* Calculate the physical memory address for a given virtual address. */
-  vir_clicks vc;		/* the virtual address in clicks */
-  phys_bytes pa;		/* intermediate variables as phys_bytes */
-#if (CHIP == INTEL)
-  phys_bytes seg_base;
 #endif
-
-  /* If 'seg' is D it could really be S and vice versa.  T really means T.
-   * If the virtual address falls in the gap,  it causes a problem. On the
-   * 8088 it is probably a legal stack reference, since "stackfaults" are
-   * not detected by the hardware.  On 8088s, the gap is called S and
-   * accepted, but on other machines it is called D and rejected.
-   * The Atari ST behaves like the 8088 in this respect.
-   */
-
-  if (bytes <= 0) return( (phys_bytes) 0);
-  if (vir_addr + bytes <= vir_addr) return 0;	/* overflow */
-  vc = (vir_addr + bytes - 1) >> CLICK_SHIFT;	/* last click of data */
-
-#if (CHIP == INTEL) || (CHIP == M68000)
-  if (seg != T)
-	seg = (vc < rp->p_memmap[D].mem_vir + rp->p_memmap[D].mem_len ? D : S);
-#else
-  if (seg != T)
-	seg = (vc < rp->p_memmap[S].mem_vir ? D : S);
-#endif
-
-  if ((vir_addr>>CLICK_SHIFT) >= rp->p_memmap[seg].mem_vir + 
-  	rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
-
-  if (vc >= rp->p_memmap[seg].mem_vir + 
-  	rp->p_memmap[seg].mem_len) return( (phys_bytes) 0 );
-
-#if (CHIP == INTEL)
-  seg_base = (phys_bytes) rp->p_memmap[seg].mem_phys;
-  seg_base = seg_base << CLICK_SHIFT;	/* segment origin in bytes */
-#endif
-  pa = (phys_bytes) vir_addr;
-#if (CHIP != M68000)
-  pa -= rp->p_memmap[seg].mem_vir << CLICK_SHIFT;
-  return(seg_base + pa);
-#endif
-#if (CHIP == M68000)
-  pa -= (phys_bytes)rp->p_memmap[seg].mem_vir << CLICK_SHIFT;
-  pa += (phys_bytes)rp->p_memmap[seg].mem_phys << CLICK_SHIFT;
-  return(pa);
-#endif
-}
-
-/*===========================================================================*
- *				umap_grant				     *
- *===========================================================================*/
-PUBLIC phys_bytes umap_grant(rp, grant, bytes)
-struct proc *rp;		/* pointer to proc table entry for process */
-cp_grant_id_t grant;		/* grant no. */
-vir_bytes bytes;		/* size */
-{
-	int proc_nr;
-	vir_bytes offset;
-	endpoint_t granter;
-
-	/* See if the grant in that process is sensible, and
-	 * find out the virtual address and (optionally) new
-	 * process for that address.
-	 *
-	 * Then convert that process to a slot number.
-	 */
-	if(verify_grant(rp->p_endpoint, ANY, grant, bytes, 0, 0,
-		&offset, &granter) != OK) {
-		return 0;
-	}
-
-	if(!isokendpt(granter, &proc_nr)) { 
-		return 0;
-	}
-
-	/* Do the mapping from virtual to physical. */
-	return umap_local(proc_addr(proc_nr), D, offset, bytes);
-}
-
-/*===========================================================================*
- *				umap_remote				     *
- *===========================================================================*/
-PUBLIC phys_bytes umap_remote(rp, seg, vir_addr, bytes)
-register struct proc *rp;	/* pointer to proc table entry for process */
-int seg;			/* index of remote segment */
-vir_bytes vir_addr;		/* virtual address in bytes within the seg */
-vir_bytes bytes;		/* # of bytes to be copied */
-{
-/* Calculate the physical memory address for a given virtual address. */
-  struct far_mem *fm;
-
-  if (bytes <= 0) return( (phys_bytes) 0);
-  if (seg < 0 || seg >= NR_REMOTE_SEGS) return( (phys_bytes) 0);
-
-  fm = &rp->p_priv->s_farmem[seg];
-  if (! fm->in_use) return( (phys_bytes) 0);
-  if (vir_addr + bytes > fm->mem_len) return( (phys_bytes) 0);
-
-  return(fm->mem_phys + (phys_bytes) vir_addr); 
-}
 
 /*===========================================================================*
  *				umap_verify_grant			     *
@@ -483,6 +357,37 @@ int access;			/* does grantee want to CPF_READ or _WRITE? */
 
 	/* Do the mapping from virtual to physical. */
 	return umap_local(proc_addr(proc_nr), D, v_offset, bytes);
+}
+
+/*===========================================================================*
+ *                              umap_grant                                   *
+ *===========================================================================*/
+PUBLIC phys_bytes umap_grant(rp, grant, bytes)
+struct proc *rp;                /* pointer to proc table entry for process */
+cp_grant_id_t grant;            /* grant no. */
+vir_bytes bytes;                /* size */
+{
+        int proc_nr;
+        vir_bytes offset;
+        endpoint_t granter;
+ 
+        /* See if the grant in that process is sensible, and 
+         * find out the virtual address and (optionally) new
+         * process for that address.
+         *
+         * Then convert that process to a slot number.
+         */
+        if(verify_grant(rp->p_endpoint, ANY, grant, bytes, 0, 0,
+                &offset, &granter) != OK) {
+                return 0;
+        }
+
+        if(!isokendpt(granter, &proc_nr)) {
+                return 0;
+        }
+ 
+        /* Do the mapping from virtual to physical. */
+        return umap_local(proc_addr(proc_nr), D, offset, bytes);
 }
 
 /*===========================================================================*
@@ -529,10 +434,12 @@ vir_bytes bytes;		/* # of bytes to copy  */
           seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
           phys_addr[i] = umap_remote(p, seg_index, vir_addr[i]->offset, bytes);
           break;
+#if _MINIX_CHIP == _CHIP_INTEL
       case BIOS_SEG:
 	  if(!p) return EDEADSRCDST;
           phys_addr[i] = umap_bios(p, vir_addr[i]->offset, bytes );
           break;
+#endif
       case PHYS_SEG:
           phys_addr[i] = vir_addr[i]->offset;
           break;
@@ -562,8 +469,6 @@ register struct proc *rc;		/* slot of process to clean up */
 {
   register struct proc *rp;		/* iterate over process table */
   register struct proc **xpp;		/* iterate over caller queue */
-  int i;
-  int sys_id;
 
   if(isemptyp(rc)) panic("clear_proc: empty process", proc_nr(rc));
 

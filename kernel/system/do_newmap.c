@@ -48,13 +48,10 @@ struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
   src_phys = umap_local(proc_addr(who_p), D, (vir_bytes) map_ptr, 
       sizeof(rp->p_memmap));
   if (src_phys == 0) return(EFAULT);
-  phys_copy(src_phys,vir2phys(rp->p_memmap),(phys_bytes)sizeof(rp->p_memmap));
+  phys_copy(src_phys,vir2phys(rp->p_memmap),
+	(phys_bytes)sizeof(rp->p_memmap));
 
-#if (CHIP != M68000)
   alloc_segments(rp);
-#else
-  pmmu_init_proc(rp);
-#endif
   old_flags = rp->p_rts_flags;	/* save the previous value of the flags */
   if (old_flags != 0 && rp->p_rts_flags == 0) lock_enqueue(rp);
 

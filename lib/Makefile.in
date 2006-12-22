@@ -4,6 +4,8 @@
 
 #OBJDIR=.
 
+. /etc/make.conf
+
 SUBDIRS="ansi \
 	curses \
 	dummy \
@@ -20,7 +22,7 @@ SUBDIRS="ansi \
 	util \
 	sysutil \
 	timers \
-	i386 \
+	$ARCH \
 	zlib-1.2.3 \
 	ack
 	gnu"

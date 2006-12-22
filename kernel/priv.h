@@ -12,7 +12,6 @@
  *   Jul 01, 2005	Created.  (Jorrit N. Herder)	
  */
 #include <minix/com.h>
-#include "protect.h"
 #include "const.h"
 #include "type.h"
 

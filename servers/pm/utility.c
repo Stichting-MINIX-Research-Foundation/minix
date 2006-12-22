@@ -24,6 +24,8 @@
 #include <minix/config.h>
 #include <timers.h>
 #include <string.h>
+#include <archconst.h>
+#include <archtypes.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"

@@ -7,9 +7,6 @@
 
 #if SPROFILE	/* statistical profiling */
 
-_PROTOTYPE( void init_cmos_clock, (unsigned freq)                       );
-_PROTOTYPE( void stop_cmos_clock, (void)                                );
-
 EXTERN int sprofiling;			/* whether profiling is running */
 EXTERN int sprof_mem_size;		/* available user memory for data */
 EXTERN struct sprof_info_s sprof_info;	/* profiling info for user program */

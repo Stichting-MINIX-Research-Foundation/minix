@@ -30,7 +30,7 @@ PUBLIC int do_nice(message *m_ptr)
   if (pri == PRIO_STOP) {
 
       /* Take process off the scheduling queues. */
-      lock_dequeue(rp);
+      if(rp->p_rts_flags == 0) lock_dequeue(rp);
       rp->p_rts_flags |= NO_PRIORITY;
       return(OK);
   }
@@ -48,7 +48,7 @@ PUBLIC int do_nice(message *m_ptr)
       /* Make sure the process is not running while changing its priority. 
        * Put the process back in its new queue if it is runnable.
        */
-      lock_dequeue(rp);
+      if(rp->p_rts_flags == 0) lock_dequeue(rp);
       rp->p_rts_flags &= ~NO_PRIORITY;
       rp->p_max_priority = rp->p_priority = new_q;
       if (! rp->p_rts_flags) lock_enqueue(rp);

@@ -1,18 +1,13 @@
-/* This file contains the C startup code for Minix on Intel processors.
- * It cooperates with mpx.s to set up a good environment for main().
- *
- * This code runs in real mode for a 16 bit kernel and may have to switch
- * to protected mode for a 286.
- * For a 32 bit kernel this already runs in protected mode, but the selectors
- * are still those given by the BIOS with interrupts disabled, so the
- * descriptors need to be reloaded and interrupt descriptors made.
- */
+
+/* First C file used by the kernel. */
 
 #include "kernel.h"
-#include "protect.h"
 #include "proc.h"
 #include <stdlib.h>
 #include <string.h>
+#include <archconst.h>
+
+PRIVATE char params[K_PARAM_SIZE];
 
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 /*===========================================================================*
@@ -31,28 +26,20 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   extern int etext, end;
   int h;
 
-  /* Decide if mode is protected; 386 or higher implies protected mode.
-   * This must be done first, because it is needed for, e.g., seg2phys().
-   * For 286 machines we cannot decide on protected mode, yet. This is 
-   * done below. 
-   */
-#if _WORD_SIZE != 2
-  machine.prot = 1;	
-#endif
-
   /* Record where the kernel and the monitor are. */
   kinfo.code_base = seg2phys(cs);
   kinfo.code_size = (phys_bytes) &etext;	/* size of code segment */
   kinfo.data_base = seg2phys(ds);
   kinfo.data_size = (phys_bytes) &end;		/* size of data segment */
 
-  /* Initialize protected mode descriptors. */
-  prot_init();
+  /* Architecture-dependent initialization. */
+  system_init();
 
   /* Copy the boot parameters to the local buffer. */
   kinfo.params_base = seg2phys(mds) + parmoff;
   kinfo.params_size = MIN(parmsize,sizeof(params)-2);
-  phys_copy(kinfo.params_base, vir2phys(params), kinfo.params_size);
+  phys_copy(kinfo.params_base,
+	vir2phys(params), kinfo.params_size);
 
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
@@ -70,14 +57,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   for(h = 0; h < _LOAD_HISTORY; h++)
 	kloadinfo.proc_load_history[h] = 0;
 
-  /* Processor?  86, 186, 286, 386, ... 
-   * Decide if mode is protected for older machines. 
-   */
+  /* Processor? Decide if mode is protected for older machines. */
   machine.processor=atoi(get_value(params, "processor")); 
-#if _WORD_SIZE == 2
-  machine.prot = machine.processor >= 286;		
-#endif
-  if (! machine.prot) mon_return = 0;
 
   /* XT, AT or MCA bus? */
   value = get_value(params, "bus");
@@ -95,6 +76,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   /* Return to assembler code to switch to protected mode (if 286), 
    * reload selectors and call main().
    */
+
+  intr_init(INTS_MINIX);
 }
 
 /*===========================================================================*

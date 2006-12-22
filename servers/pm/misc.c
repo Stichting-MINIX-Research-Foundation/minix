@@ -24,6 +24,8 @@
 #include <minix/sysinfo.h>
 #include <minix/type.h>
 #include <string.h>
+#include <archconst.h>
+#include <archtypes.h>
 #include <lib.h>
 #include "mproc.h"
 #include "param.h"

@@ -43,6 +43,7 @@
 #include "kernel.h"
 #include "proc.h"
 #include <signal.h>
+#include <minix/portio.h>
 
 /* Scheduling and message passing functions. The functions are available to 
  * other parts of the kernel through lock_...(). The lock temporarily disables 
@@ -75,18 +76,10 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 		break;							\
 	}
 
-#if (CHIP == INTEL)
 #define CopyMess(s,sp,sm,dp,dm) \
 	cp_mess(proc_addr(s)->p_endpoint, \
-		(sp)->p_memmap[D].mem_phys,	\
+		(sp)->p_memmap[D].mem_phys,     \
 		(vir_bytes)sm, (dp)->p_memmap[D].mem_phys, (vir_bytes)dm)
-#endif /* (CHIP == INTEL) */
-
-#if (CHIP == M68000)
-/* M68000 does not have cp_mess() in assembly like INTEL. Declare prototype
- * for cp_mess() here and define the function below. Also define CopyMess. 
- */
-#endif /* (CHIP == M68000) */
 
 /*===========================================================================*
  *				sys_call				     * 
@@ -110,7 +103,7 @@ long bit_map;			/* notification event set or flags */
   int src_dst;
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
 
-#if 0
+#if 1
   if (caller_ptr->p_rts_flags & SLOT_FREE)
   {
 	kprintf("called by the dead?!?\n");
@@ -392,7 +385,7 @@ unsigned flags;				/* system call flags */
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
-#if 0
+#if 1
 	    if ((*xpp)->p_rts_flags & SLOT_FREE)
 	    {
 		kprintf("listening to the dead?!?\n");
@@ -511,7 +504,7 @@ register struct proc *rp;	/* this process is now runnable */
   int front;					/* add to front or back */
 
 #if DEBUG_SCHED_CHECK
-  check_runqueues("enqueue");
+  check_runqueues("enqueue1");
   if (rp->p_ready) kprintf("enqueue() already ready process\n");
 #endif
 
@@ -538,7 +531,7 @@ register struct proc *rp;	/* this process is now runnable */
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 1;
-  check_runqueues("enqueue");
+  check_runqueues("enqueue2");
 #endif
 }
 
@@ -563,8 +556,9 @@ register struct proc *rp;	/* this process is no longer runnable */
   }
 
 #if DEBUG_SCHED_CHECK
-  check_runqueues("dequeue");
-  if (! rp->p_ready) kprintf("dequeue() already unready process\n");
+  check_runqueues("dequeue1");
+  if (! rp->p_ready) kprintf("%s:%d: dequeue() already unready process\n",
+	f_str, f_line);
 #endif
 
   /* Now make sure that the process is not in its ready queue. Remove the 
@@ -587,7 +581,7 @@ register struct proc *rp;	/* this process is no longer runnable */
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 0;
-  check_runqueues("dequeue");
+  check_runqueues("dequeue2");
 #endif
 }
 

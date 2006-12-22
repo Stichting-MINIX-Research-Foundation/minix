@@ -10,9 +10,11 @@
  *    m2_i2:	DIO_VEC_PROC	(process where buffer is)	
  */
 
-#include "../system.h"
+#include "../../system.h"
 #include <minix/devio.h>
 #include <minix/endpoint.h>
+
+#include "proto.h"
 
 #if USE_SDEVIO
 

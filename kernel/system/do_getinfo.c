@@ -11,8 +11,13 @@
 
 #include "../system.h"
 
+#if !( POWERPC )
+
 static unsigned long bios_buf[1024];	/* 4K, what about alignment */
 static vir_bytes bios_buf_vir, bios_buf_len;
+
+#endif /* #if !( POWERPC ) */
+
 
 #if USE_GETINFO
 
@@ -119,6 +124,8 @@ register message *m_ptr;	/* pointer to request message */
     break;
     }
 #endif
+
+#if !( POWERPC )        
     case GET_BIOSBUFFER:
     	bios_buf_vir = (vir_bytes)bios_buf;
     	bios_buf_len = sizeof(bios_buf);
@@ -135,7 +142,8 @@ register message *m_ptr;	/* pointer to request message */
     	length = sizeof(bios_buf_vir);
     	src_phys = vir2phys(&bios_buf_vir);
     	break;
-
+#endif /* #if !( POWERPC ) */
+	
     case GET_IRQACTIDS: {
         length = sizeof(irq_actids);
         src_phys = vir2phys(irq_actids);

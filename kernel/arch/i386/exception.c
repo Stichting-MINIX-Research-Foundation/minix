@@ -3,15 +3,14 @@
  * a panic.
  */
 
-#include "kernel.h"
+#include "../../kernel.h"
 #include <signal.h>
-#include "proc.h"
+#include "../../proc.h"
 
 /*===========================================================================*
  *				exception				     *
  *===========================================================================*/
-PUBLIC void exception(vec_nr)
-unsigned vec_nr;
+PUBLIC void exception(unsigned vec_nr)
 {
 /* An exception or unexpected interrupt has occurred. */
 
@@ -93,8 +92,7 @@ unsigned vec_nr;
 /*===========================================================================*
  *				stacktrace				     *
  *===========================================================================*/
-PUBLIC void stacktrace(proc)
-struct proc *proc;
+PUBLIC void stacktrace(struct proc *proc)
 {
 	reg_t bp, v_bp, v_pc, v_hbp;
 

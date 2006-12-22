@@ -59,7 +59,7 @@ register message *m_ptr;    /* pointer to request message */
 
 	sprof_mem_size = m_ptr->PROF_MEM_SIZE;
 
-	init_cmos_clock(m_ptr->PROF_FREQ);
+	init_profile_clock(m_ptr->PROF_FREQ);
 	
 	sprofiling = 1;
 
@@ -78,7 +78,7 @@ register message *m_ptr;    /* pointer to request message */
 
 	sprofiling = 0;
 
-	stop_cmos_clock();
+	stop_profile_clock();
 
 	phys_copy(vir2phys((vir_bytes) &sprof_info),
 		sprof_info_addr, (phys_bytes) sizeof(sprof_info));

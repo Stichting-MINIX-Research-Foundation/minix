@@ -1,6 +1,8 @@
 # Makefile for Process Manager (PM)
 SERVER = pm
 
+include /etc/make.conf
+
 # directories
 u = /usr
 i = $u/include
@@ -10,7 +12,8 @@ k = $u/src/kernel
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
+CPPFLAGS=-I../../kernel/arch/$(ARCH)/include -I$i 
+CFLAGS = $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
 
 OBJ = 	main.o forkexit.o break.o exec.o time.o timers.o \

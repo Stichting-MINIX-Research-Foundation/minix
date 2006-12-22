@@ -17,5 +17,6 @@ abort(void)
 {
 	if (_clean) _clean();		/* flush all output files */
 	raise(SIGABRT);
+	/* NORETURN */
 }
 

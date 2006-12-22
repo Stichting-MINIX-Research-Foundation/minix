@@ -1,6 +1,8 @@
 # Makefile for terminal driver (TTY)
 DRIVER = tty
 
+include /etc/make.conf
+
 # directories
 u = /usr
 i = $u/include
@@ -12,7 +14,8 @@ d = ..
 # programs, flags, etc.
 MAKE = exec make
 CC =	exec cc
-CFLAGS = -I$i 
+CPPFLAGS = -I$i -I../../kernel/arch/$(ARCH)/include
+CFLAGS = $(CPPFLAGS)
 LDFLAGS = -i
 LIBS = -lsysutil -lsys -ltimers
 

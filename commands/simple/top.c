@@ -30,6 +30,7 @@
 #include <minix/type.h>
 #include <minix/const.h>
 
+#include "../../kernel/arch/i386/include/archtypes.h"
 #include "../../servers/pm/mproc.h"
 #include "../../kernel/const.h"
 #include "../../kernel/proc.h"

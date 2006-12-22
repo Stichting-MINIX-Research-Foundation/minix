@@ -43,9 +43,11 @@ register message *m_ptr;	/* pointer to request message */
   case REMOTE_SEG:
       phys_addr = umap_remote(proc_addr(proc_nr), seg_index, offset, count); 
       break;
+#if _MINIX_CHIP == _CHIP_INTEL
   case BIOS_SEG:
       phys_addr = umap_bios(proc_addr(proc_nr), offset, count); 
       break;
+#endif
   case GRANT_SEG:
       phys_addr = umap_grant(proc_addr(proc_nr), offset, count); 
       break;

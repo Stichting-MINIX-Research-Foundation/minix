@@ -128,7 +128,7 @@
 #define FASTLOAD _FASTLOAD
 
 /* Enable or disable system profiling. */
-#define SPROFILE          0    /* statistical profiling */
+#define SPROFILE          1    /* statistical profiling */
 #define CPROFILE          0    /* call profiling */
 
 #endif /* _CONFIG_H */

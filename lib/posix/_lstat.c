@@ -1,5 +1,6 @@
 #include <lib.h>
 #define lstat	_lstat
+#define stat	_stat
 #include <sys/stat.h>
 #include <string.h>
 

@@ -53,22 +53,4 @@ _PROTOTYPE( void timer_end, (int cat) );
 #define locktimeend(c)
 #endif /* DEBUG_TIME_LOCKS */
 
-/* This check makes sure that the scheduling queues are in a consistent state.
- * The check is run when the queues are updated with ready() and unready().
- */ 
-#if DEBUG_SCHED_CHECK 					
-_PROTOTYPE( void check_runqueues, (char *when) );
-#endif /* DEBUG_SCHED_CHECK */
-
-/* The timing and checking of kernel locking requires a redefine of the lock()
- * and unlock() macros. That's done here. This redefine requires that this 
- * header is included after the other kernel headers.
- */
-#if (DEBUG_TIME_LOCKS || DEBUG_LOCK_CHECK)
-#  undef lock
-#  define lock(c, v)	do { reallock(c, v); locktimestart(c, v); } while(0)
-#  undef unlock
-#  define unlock(c)	do { locktimeend(c); realunlock(c); } while(0)
-#endif
-
 #endif /* DEBUG_H */

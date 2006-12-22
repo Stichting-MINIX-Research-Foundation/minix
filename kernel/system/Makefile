@@ -1,15 +1,18 @@
 # Makefile for system library implementation
 
+include /etc/make.conf
+
 # Directories
 u = /usr
 i = $u/include
+a = ../arch
 
 # Programs, flags, etc.
 CC =	exec cc $(CFLAGS) -c
 CCNOPROF =      exec cc $(CFLAGSNOPROF) -c      # no call profiling for these
 CPP =	$l/cpp
 LD =	$(CC) -.o
-CFLAGS = -I$i $(CPROFILE)
+CFLAGS = -I$i $(CPROFILE) -I$a/$(ARCH)/include
 CFLAGSNOPROF = -I$i
 LDFLAGS = -i
 
@@ -31,8 +34,6 @@ OBJECTS	= \
 	$(SYSTEM)(do_irqctl.o) \
 	$(SYSTEM)(do_devio.o) \
 	$(SYSTEM)(do_vdevio.o) \
-	$(SYSTEM)(do_int86.o) \
-	$(SYSTEM)(do_sdevio.o) \
 	$(SYSTEM)(do_copy.o) \
 	$(SYSTEM)(do_vcopy.o) \
 	$(SYSTEM)(do_umap.o) \
@@ -44,19 +45,17 @@ OBJECTS	= \
 	$(SYSTEM)(do_getksig.o) \
 	$(SYSTEM)(do_endksig.o) \
 	$(SYSTEM)(do_kill.o) \
-	$(SYSTEM)(do_readbios.o) \
 	$(SYSTEM)(do_sigsend.o) \
 	$(SYSTEM)(do_sigreturn.o) \
 	$(SYSTEM)(do_abort.o) \
 	$(SYSTEM)(do_getinfo.o) \
-	$(SYSTEM)(do_iopenable.o) \
 	$(SYSTEM)(do_vm.o) \
 	$(SYSTEM)(do_vm_setbuf.o) \
 	$(SYSTEM)(do_sprofile.o) \
 	$(SYSTEM)(do_cprofile.o) \
 	$(SYSTEM)(do_profbuf.o)
 
-$(SYSTEM):	$(OBJECTS)
+build $(SYSTEM):	$(OBJECTS)
 	aal cr $@ *.o
 
 clean:
@@ -102,14 +101,8 @@ $(SYSTEM)(do_irqctl.o):	do_irqctl.c
 $(SYSTEM)(do_devio.o):	do_devio.c
 	$(CC) do_devio.c
 
-$(SYSTEM)(do_sdevio.o):	do_sdevio.c
-	$(CC) do_sdevio.c
-
 $(SYSTEM)(do_vdevio.o):	do_vdevio.c
 	$(CC) do_vdevio.c
-
-$(SYSTEM)(do_int86.o):	do_int86.c
-	$(CC) do_int86.c
 
 $(SYSTEM)(do_copy.o):	do_copy.c
 	$(CC) do_copy.c
@@ -144,9 +137,6 @@ $(SYSTEM)(do_getinfo.o):	do_getinfo.c
 $(SYSTEM)(do_abort.o):	do_abort.c
 	$(CC) do_abort.c
 
-$(SYSTEM)(do_readbios.o):	do_readbios.c
-	$(CC) do_readbios.c
-
 $(SYSTEM)(do_setgrant.o):	do_setgrant.c
 	$(CC) do_setgrant.c
 
@@ -158,9 +148,6 @@ $(SYSTEM)(do_safecopy.o):	do_safecopy.c
 
 $(SYSTEM)(do_segctl.o):	do_segctl.c
 	$(CC) do_segctl.c
-
-$(SYSTEM)(do_iopenable.o):	do_iopenable.c
-	$(CC) do_iopenable.c
 
 $(SYSTEM)(do_vm.o):	do_vm.o
 do_vm.o:	do_vm.c

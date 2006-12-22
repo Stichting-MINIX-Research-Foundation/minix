@@ -26,6 +26,7 @@
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
 
+#include <archtypes.h>
 #include <timers.h>				/* For priv.h */
 #include "../../kernel/priv.h"
 

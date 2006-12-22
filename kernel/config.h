@@ -72,6 +72,8 @@
 /* How many bytes for the kernel stack. Space allocated in mpx.s. */
 #define K_STACK_BYTES   1024	
 
+#define K_PARAM_SIZE     512
+
 /* This section allows to enable kernel debugging and timing functionality.
  * For normal operation all options should be disabled.
  */

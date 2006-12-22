@@ -7,7 +7,7 @@
  *    m2_p1:	RDB_BUF			buffer address in requesting process
  */
 
-#include "../system.h"
+#include "../../system.h"
 #include <minix/type.h>
 
 /*===========================================================================*
