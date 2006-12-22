@@ -7,3 +7,22 @@
 	# binsizes big
 	# cd /usr/src/commands/flex-2.5.4 
 	# sh build
+20061222:
+	Install binaries in the right order because the new readdir
+	implementation and the new mount program are incompatible
+	with older kernels and the new kernels require the new mount.
+	# cd /usr/src
+	# make includes
+	# make libraries
+	# make cmds
+	# make depend
+	# cd /usr/src/tools
+	# make hdboot
+	# make install
+	# cd ..
+	# make install
+	Installing fails for boot. Reboot the system
+	# reboot -x 'unset image; boot'
+	Now install everything
+	# cd /usr/src
+	# make install
