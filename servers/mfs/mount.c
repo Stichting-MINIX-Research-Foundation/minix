@@ -76,9 +76,6 @@ printf("MFS(%d)readsuper read_super() ERROR\n", SELF_E);
   fs_m_out.RES_MAXSIZE = sp->s_max_size;
   fs_m_out.RES_BLOCKSIZE = sp->s_block_size;
   
-if (r == OK) 
-	printf("MFS(%d)readsuper DEV: %d driver_e: %d BOOTT: %d\n", 
-		SELF_E, fs_dev, fs_m_in.REQ_DRIVER_E, boottime);  
   return r;
 }
 

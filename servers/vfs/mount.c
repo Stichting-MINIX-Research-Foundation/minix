@@ -43,7 +43,6 @@ PUBLIC int do_fslogin()
   /* Login before mount request */
   if ((unsigned long)mount_m_in.m1_p3 != who_e) {
       last_login_fs_e = who_e;
-printf("VFS: FS_e %d logged in\n", last_login_fs_e); 
       return SUSPEND;
   }
   /* Login after a suspended mount */
@@ -62,7 +61,6 @@ printf("VFS: FS_e %d logged in\n", last_login_fs_e);
       super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
       
       
-printf("VFS: FS_e %d logged in. Mount WAKEN UP\n", (unsigned int)m_in.m1_p3);
       return do_mount();
   }
 }
@@ -119,7 +117,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* If FS not yet logged in, save message and suspend mount */
   if (last_login_fs_e != fs_e) {
       mount_m_in = m_in; 
-      printf("VFS: FS_e %d not yet logged in. Mount SUSPENDED\n", fs_e); 
       return SUSPEND;
   }
   
@@ -150,7 +147,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   for (bspec = &vnode[0]; bspec < &vnode[NR_VNODES]; ++bspec) {
       if (bspec->v_count > 0 && bspec->v_sdev == dev) {
           /* Found, sync the buffer cache */
-printf("VFSmount: minor is opened as a block spec file, sync cache...\n");          
           req_sync(bspec->v_fs_e);          
           break;
           /* Note: there are probably some blocks in the FS process' buffer
@@ -286,9 +282,6 @@ printf("VFSmount: minor is opened as a block spec file, sync cache...\n");
         return(EINVAL);
   }
 
-printf("VFSmount: FS_e: %d mp: %s D_e: %d\n", fs_e, user_fullpath,
-                dp->dmap_driver); 
-
   /* Request for reading superblock and root inode */
   sreq.fs_e = fs_e;
   sreq.readonly = m_in.rd_only;
@@ -302,7 +295,7 @@ printf("VFSmount: FS_e: %d mp: %s D_e: %d\n", fs_e, user_fullpath,
  
   /* Issue request */
   if ((r = req_readsuper(&sreq, &sres)) != OK) {
-printf("VFSmount: reading superb error dev: %d\n", dev);          
+      printf("VFSmount: reading superblock error dev: %d\n", dev);          
       dev_close(dev);
       return r;
   }
@@ -586,8 +579,6 @@ endpoint_t fs_e;
       printf("VFS: couldn't find pid for fs_e: %d\n", fs_e);
       return -1;
   }
-
-printf("VFSfs_exit: Bringing down FS endp: %d (pid: %d)\n", fs_e, fs_pid);  
 
   /* Ask RS to stop process */
   m.RS_PID = fs_pid;

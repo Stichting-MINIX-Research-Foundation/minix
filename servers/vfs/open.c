@@ -184,7 +184,6 @@ PRIVATE int common_open(register int oflags, mode_t omode)
           /* Check whether the device is mounted or not */
           found = 0;
           if (r == OK) {
-printf("VFS: opening block spec %d, handled by ", vp->v_sdev); 
               for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
                   if (vmp->m_dev == vp->v_sdev) {
                       found = 1;
@@ -194,12 +193,10 @@ printf("VFS: opening block spec %d, handled by ", vp->v_sdev);
              
               /* Who is going to be responsible for this device? */
               if (found) {
-printf("the FS of the mounted partition...\n"); 
                   vp->v_bfs_e = vmp->m_fs_e;
                   vp->v_blocksize - vmp->m_block_size;
               }
               else { /* To be handled in the root FS proc if not mounted */ 
-printf("the root FS...\n");
                   vp->v_bfs_e = ROOT_FS_E;
                   vp->v_blocksize = _MIN_BLOCK_SIZE;
               }
@@ -532,14 +529,12 @@ int fd_nr;
 	if (mode_word == I_CHAR_SPECIAL || mode_word == I_BLOCK_SPECIAL) {
 		dev = (dev_t) vp->v_sdev;
 		if (mode_word == I_BLOCK_SPECIAL)  {
-printf("VFSclose: closing block spec 0x%x\n", dev);		
 			if (vp->v_bfs_e == ROOT_FS_E)
 			{
 				/* Invalidate the cache unless the special is
 				 * mounted. Assume that the root filesystem's
 				 * is open only for fsck.
 			 	 */
-printf("VFSclose: flushing block spec 0x%x\n", dev);		
           			req_flush(vp->v_bfs_e, dev);
 			}
 		}

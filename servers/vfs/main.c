@@ -287,7 +287,6 @@ PRIVATE void init_root()
   
   /* Wait FS login message */
   if (last_login_fs_e != ROOT_FS_E) {
-	  printf("VFS: Waiting for login from FS_e %d\n", ROOT_FS_E);
 	  /* Wait FS login message */
 	  if (receive(ROOT_FS_E, &m) != OK) {
 		  printf("VFS: Error receiving login request from FS_e %d\n", 
@@ -299,7 +298,6 @@ PRIVATE void init_root()
 				  ROOT_FS_E);
 		  panic(__FILE__, "Error receiving login request from root filesystem\n", ROOT_FS_E);
 	  }
-	  printf("VFS: FS_e %d logged in\n", ROOT_FS_E);
   }
   last_login_fs_e = 0;
   

@@ -33,7 +33,6 @@ PUBLIC int main(void)
   /* Initialize the server, then go to work. */
   init_server();	
 
-  printf("\nMFS(%d): STARTED: Logging in to VFS\n", SELF_E);
   fs_m_in.m_type = FS_READY;
 
   if (sendrec(FS_PROC_NR, &fs_m_in) != OK) {
@@ -50,7 +49,6 @@ PUBLIC int main(void)
       reply(FS_PROC_NR, &fs_m_out);
       if (fs_m_out.m_type != OK) return -1;
   }
-  printf("MFS(%d): Login + Readsuper OK\n", SELF_E);
 
 
   for (;;) {

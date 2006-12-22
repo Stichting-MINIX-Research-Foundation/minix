@@ -50,7 +50,6 @@ printf("MFS(%d) get_inode by fs_utime() failed\n", SELF_E);
 PUBLIC int fs_stime()
 {
   boottime = fs_m_in.REQ_BOOTTIME;
-printf("MFS(%d) boottime: %d\n", SELF_E, boottime);	
   return OK;
 }
 

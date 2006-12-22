@@ -158,7 +158,7 @@ vir_bytes frame_len;
             
 	    /* Issue request */
 	    if ((r = req_access(&access_req)) != OK) {
-                printf("VFSexec: access failed\n");		
+                printf("VFSexec: access failed for %s\n", progname);
 		return r;
 	    }
         }
