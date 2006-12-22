@@ -26,3 +26,8 @@
 	Now install everything
 	# cd /usr/src
 	# make install
+20061222:
+	The archictecture-dependent/-independent split needs ARCH=<arch>
+	in /etc/make.conf, included by some Makefiles and sourced by
+	some shell scripts. To install it, type 'make install' in
+	src/etc, or simply copy the file over.

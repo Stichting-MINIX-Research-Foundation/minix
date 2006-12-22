@@ -21,7 +21,7 @@ install::
 	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh null 
 	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh std  2>/dev/null
 	@echo "Making user homedirs.."
-	for u in /usr/ast ~root; do cp ast/.* $$u ; done
+	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
 
 postinstall:
 	binsizes normal
