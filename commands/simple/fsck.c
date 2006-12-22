@@ -573,8 +573,11 @@ void getsuper()
   if (sb.s_zmap_blocks <= 0) fatal("no zmap");
   if (sb.s_firstdatazone <= 4) fatal("first data zone too small");
   if (sb.s_log_zone_size < 0) fatal("zone size < block size");
-  if (sb.s_max_size <= 0) fatal("max. file size <= 0");
-
+  if (sb.s_max_size <= 0) {
+	printf("max file size %ld ", sb.s_max_size);
+  	sb.s_max_size = LONG_MAX;
+	printf("set to %ld\n", sb.s_max_size);
+  }
 }
 
 /* Check the super block for reasonable contents. */
@@ -616,6 +619,8 @@ void chksuper()
   maxsize = MAX_FILE_POS;
   if (((maxsize - 1) >> sb.s_log_zone_size) / block_size >= MAX_ZONES)
 	maxsize = ((long) MAX_ZONES * block_size) << sb.s_log_zone_size;
+  if(maxsize <= 0)
+	maxsize = LONG_MAX;
   if (sb.s_max_size != maxsize) {
 	printf("warning: expected max size to be %ld ", maxsize);
 	printf("instead of %ld\n", sb.s_max_size);

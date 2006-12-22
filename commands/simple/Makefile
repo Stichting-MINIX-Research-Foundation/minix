@@ -419,7 +419,7 @@ fortune:	fortune.c
 
 fsck:	fsck.c
 	$(CCLD) -o $@ $?
-	@install -S 4096k $@
+	@install -S 5120k $@
 
 fsck1:	fsck1.c
 	$(CCLD) -o $@ $?
