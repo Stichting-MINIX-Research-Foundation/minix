@@ -95,7 +95,7 @@ BS=4096
 
 HDEMU=0
 COPY=0
-CVSTAG=HEAD
+SVNREV=""
 PACKAGES=1
 
 while getopts "pchu?r:" c
@@ -111,14 +111,14 @@ do
 		HDEMU=1
 		;;
 	c)
-		echo " * Copying, not CVS"
+		echo " * Copying, not SVN"
 		COPY=1
 		;;
 	p)
 		PACKAGES=0
 		;;
 	r)	
-		CVSTAG=$OPTARG
+		SVNREV=-r$OPTARG
 		;;
 	u)
 		echo " * Making live USB-stick image"
@@ -147,9 +147,7 @@ ROOTBLOCKS="`expr $ROOTKB \* 1024 / $BS`"
 
 if [ "$COPY" -ne 1 ]
 then
-	echo "Note: this script wants to do cvs operations, so it's necessary"
-	echo "to have \$CVSROOT set and cvs login done."
-	echo ""
+	echo "Note: this script wants to do svn operations."
 fi
 
 TD1=.td1
@@ -285,8 +283,8 @@ chmod -R u+w $RELEASEDIR/usr/lib
 
 if [ "$COPY" -ne 1 ]
 then
-	echo " * Doing new cvs export"
-	( cd $RELEASEDIR/usr && mkdir src && cvs export -r$CVSTAG src )
+	echo " * Doing new svn export"
+	( cd $RELEASEDIR/usr && svn export $SVNREV https://gforge.cs.vu.nl/svn/minix/trunk/src )
 else
 	( cd .. && make depend && make clean )
 	srcdir=/usr/src
