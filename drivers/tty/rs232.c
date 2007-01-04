@@ -351,15 +351,26 @@ int try;
 	tp->tty_outcum += count;
 	if ((tp->tty_outleft -= count) == 0) {
 		/* Output is finished, reply to the writer. */
-		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
+		if(tp->tty_outrepcode == TTY_REVIVE) {
+			notify(tp->tty_outcaller);
+			tp->tty_outrevived = 1;
+		} else {
+			tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
 					tp->tty_outproc, tp->tty_outcum);
-		tp->tty_outcum = 0;
+			tp->tty_outcum = 0;
+		}
 	}
   }
   if (tp->tty_outleft > 0 && tp->tty_termios.c_ospeed == B0) {
 	/* Oops, the line has hung up. */
-	tty_reply(tp->tty_outrepcode, tp->tty_outcaller, tp->tty_outproc, EIO);
-	tp->tty_outleft = tp->tty_outcum = 0;
+	if(tp->tty_outrepcode == TTY_REVIVE) {
+		notify(tp->tty_outcaller);
+		tp->tty_outrevived = 1;
+	} else {
+		tty_reply(tp->tty_outrepcode, tp->tty_outcaller,
+			tp->tty_outproc, EIO);
+		tp->tty_outleft = tp->tty_outcum = 0;
+	}
   }
 
   return 1;
