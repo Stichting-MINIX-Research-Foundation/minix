@@ -31,14 +31,13 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         fs_mkdir,           /* 13  */
         fs_inhibread,       /* 14  */       /* for lseek() */
         fs_stat,            /* 15  */
-        fs_fstat,           /* 16  */
+        fs_create,          /* 16  */
         fs_unlink,          /* 17  */       /* unlink() */
         fs_unlink,          /* 18  */       /* rmdir() */
         fs_utime,           /* 19  */
-        fs_fstatfs,         /* 20  */
-        fs_lstat,           /* 21  */
-        fs_getdir,          /* 22  */       /* chdir(), chroot() */
-
+        no_sys,             /* 20  */
+        fs_fstatfs,         /* 21  */
+        no_sys,             /* 22  */
         no_sys,             /* 23  */
         no_sys,             /* 24  */    
         fs_link,            /* 25  */

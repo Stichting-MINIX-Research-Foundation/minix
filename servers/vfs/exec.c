@@ -79,20 +79,16 @@ vir_bytes frame_len;
     uid_t new_uid;
     gid_t new_gid;
     struct fproc *rfp;
-    struct vnode vn;
-    struct vmnt *vmp;
+    struct vnode *vp;
     time_t v_ctime;
-    uid_t v_uid;
-    gid_t v_gid;
     char *cp;
+    struct stat sb;
     char progname[PROC_NAME_LEN];
     static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
 
     /* Request and response structures */
     struct lookup_req lookup_req;
-    struct access_req access_req;
-    struct open_req open_req;
-    struct node_details res;
+    struct node_details Xres;
     
     okendpt(proc_e, &proc_s);
     rfp= fp= &fproc[proc_s];
@@ -105,6 +101,7 @@ vir_bytes frame_len;
     if (r != OK)
     {
         printf("pm_exec: fetch_name failed\n");
+printf("return at %s, %d\n", __FILE__, __LINE__);
         return(r);	/* file name not in user data segment */
     }
 
@@ -112,6 +109,7 @@ vir_bytes frame_len;
     if (frame_len > ARG_MAX)
     {
         printf("pm_exec: bad frame_len\n");
+printf("return at %s, %d\n", __FILE__, __LINE__);
         return(ENOMEM);	/* stack too big */
     }
     r = sys_datacopy(proc_e, (vir_bytes) frame,
@@ -120,6 +118,7 @@ vir_bytes frame_len;
     if (r != OK)
     {
         printf("pm_exec: sys_datacopy failed\n");
+printf("return at %s, %d\n", __FILE__, __LINE__);
         return(r);	
     }
 
@@ -142,70 +141,48 @@ vir_bytes frame_len;
         lookup_req.flags = EAT_PATH;
         
         /* Request lookup */
-        if ((r = lookup(&lookup_req, &res)) != OK) return r;
+        if ((r = lookup_vp(&lookup_req, &vp)) != OK)
+	{
+		put_vnode(vp);
+		return r;
+	}
         
-        if ((res.fmode & I_TYPE) != I_REGULAR) {
+        if ((vp->v_mode & I_TYPE) != I_REGULAR) {
+printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
+	    put_vnode(vp);
+printf("return at %s, %d\n", __FILE__, __LINE__);
             return ENOEXEC;
         }
-        else {
-            /* Fill in request fields */
-            access_req.fs_e = res.fs_e;
-            access_req.amode = X_BIT;
-            access_req.inode_nr = res.inode_nr;
-	    access_req.uid = fp->fp_effuid;
-	    access_req.gid = fp->fp_effgid;
 
-            
-	    /* Issue request */
-	    if ((r = req_access(&access_req)) != OK) {
-                printf("VFSexec: access failed for %s\n", progname);
-		return r;
-	    }
-        }
-
-        /* Open request. */
-        open_req.inode_nr = res.inode_nr;
-        open_req.fs_e = res.fs_e;
-        open_req.oflags = 0;
-        open_req.omode = 0;
-        open_req.lastc = NULL;
-        open_req.uid = 0;
-        open_req.gid = 0;
-        
-        /* Issue request */
-        if ((r = req_open(&open_req, &res)) != OK) {
-            printf("VFSexec: open failed\n");		
+	/* Check access. */
+	if ((r = forbidden(vp, X_BIT)) != OK)
+	{
+printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
+	    put_vnode(vp);
+printf("return at %s, %d\n", __FILE__, __LINE__);
 	    return r;
 	}
 
-        /* Use the vnode to store file details */
-        vn.v_inode_nr = res.inode_nr;
-        vn.v_mode = res.fmode;
-        vn.v_index = res.inode_index;
-        vn.v_size = res.fsize;
-        vn.v_fs_e = res.fs_e;
-        vn.v_count = 1;
-        if ( (vmp = find_vmnt(vn.v_fs_e)) == NIL_VMNT)
-            printf("VFS: vmnt not found by exec()");
-      
-        vn.v_dev = vmp->m_dev;
-        vn.v_vmnt = vmp;
-        
-        v_ctime = res.ctime;
-        v_uid = res.uid;
-        v_gid = res.gid;
+	/* Get ctime */
+	r= req_stat(vp->v_fs_e, vp->v_inode_nr, FS_PROC_NR, (char *)&sb, 0);
+	if (r != OK)
+	{
+	    put_vnode(vp);
+	    return r;
+	}
+        v_ctime = sb.st_ctime;
         
         if (round == 0)
         {
             /* Deal with setuid/setgid executables */
-            if (vn.v_mode & I_SET_UID_BIT)
-                new_uid = v_uid;
-            if (vn.v_mode & I_SET_GID_BIT)
-                new_gid = v_gid;
+            if (vp->v_mode & I_SET_UID_BIT)
+                new_uid = vp->v_uid;
+            if (vp->v_mode & I_SET_GID_BIT)
+                new_gid = vp->v_gid;
         }
 
         /* Read the file header and extract the segment sizes. */
-        r = read_header(&vn, &sep_id, &text_bytes, &data_bytes, &bss_bytes, 
+        r = read_header(vp, &sep_id, &text_bytes, &data_bytes, &bss_bytes, 
                 &tot_bytes, &pc, &hdrlen);
         if (r != ESCRIPT || round != 0)
             break;
@@ -215,14 +192,17 @@ vir_bytes frame_len;
         if (r != OK)
         {
             printf("pm_exec: 2nd fetch_name failed\n");
-            put_vnode(&vn);
+printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
+            put_vnode(vp);
+printf("return at %s, %d\n", __FILE__, __LINE__);
             return(r);	/* strange */
         }
-        r= patch_stack(&vn, mbuf, &frame_len);
-        put_vnode(&vn);
+        r= patch_stack(vp, mbuf, &frame_len);
+        put_vnode(vp);
         if (r != OK)
         {
             printf("pm_exec: patch stack\n");
+printf("return at %s, %d\n", __FILE__, __LINE__);
             return r;
         }
     }
@@ -230,16 +210,20 @@ vir_bytes frame_len;
     if (r != OK)
     {
         printf("pm_exec: returning ENOEXEC, r = %d\n", r);
+	printf("pm_exec: progname = '%s'\n", progname);
+        put_vnode(vp);
         return ENOEXEC;
     }
 
     r= exec_newmem(proc_e, text_bytes, data_bytes, bss_bytes, tot_bytes,
-            frame_len, sep_id, vn.v_dev, vn.v_inode_nr, v_ctime, 
+            frame_len, sep_id, vp->v_dev, vp->v_inode_nr, v_ctime, 
             progname, new_uid, new_gid, &stack_top, &load_text, &allow_setuid);
     if (r != OK)
     {
         printf("pm_exec: exec_newmap failed: %d\n", r);
-        put_vnode(&vn);
+printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
+        put_vnode(vp);
+printf("return at %s, %d\n", __FILE__, __LINE__);
         return r;
     }
 
@@ -255,15 +239,19 @@ vir_bytes frame_len;
 
     /* Read in text and data segments. */
     if (load_text) {
-        r= read_seg(&vn, off, proc_e, T, text_bytes);
+        r= read_seg(vp, off, proc_e, T, text_bytes);
     }
     off += text_bytes;
     if (r == OK)
-        r= read_seg(&vn, off, proc_e, D, data_bytes);
+        r= read_seg(vp, off, proc_e, D, data_bytes);
 
-    put_vnode(&vn);
+    put_vnode(vp);
 
-    if (r != OK) return r;
+    if (r != OK)
+    {
+printf("return at %s, %d\n", __FILE__, __LINE__);
+	return r;
+    }
 
     clo_exec(rfp);
 

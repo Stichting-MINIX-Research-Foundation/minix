@@ -270,6 +270,8 @@ PUBLIC int do_truncate()
   struct lookup_req lookup_req;
   struct node_details res;
   int r;
+
+  printf("in do_truncate\n");
   
   if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1) != OK) return err_code;
   
@@ -309,25 +311,39 @@ PUBLIC int do_truncate()
 PUBLIC int do_ftruncate()
 {
 /* As with do_truncate(), truncate_inode() does the actual work. */
-  int r;
   struct filp *rfilp;
-  struct ftrunc_req req;
   
   if ( (rfilp = get_filp(m_in.m2_i1)) == NIL_FILP)
         return err_code;
-  if ( (rfilp->filp_vno->v_mode & I_TYPE) != I_REGULAR)
+  return truncate_vn(rfilp->filp_vno, m_in.m2_l1);
+}
+
+
+/*===========================================================================*
+ *				truncate_vn				     *
+ *===========================================================================*/
+PUBLIC int truncate_vn(vp, newsize)
+struct vnode *vp;
+off_t newsize;
+{
+  int r;
+  struct ftrunc_req req;
+
+  if ( (vp->v_mode & I_TYPE) != I_REGULAR &&
+	(vp->v_mode & I_TYPE) != I_NAMED_PIPE) {
 	return EINVAL;
+  }
         
   /* Fill in FS request */
-  req.fs_e = rfilp->filp_vno->v_fs_e; 
-  req.inode_nr = rfilp->filp_vno->v_inode_nr;
-  req.start = m_in.m2_l1;
+  req.fs_e = vp->v_fs_e; 
+  req.inode_nr = vp->v_inode_nr;
+  req.start = newsize;
   req.end = 0;     /* Indicate trunc in fs_freesp_trunc */
 
   /* Issue request */
   if ((r = req_ftrunc(&req)) != OK) return r;
 	  
-  rfilp->filp_vno->v_size = m_in.m2_l1;
+  vp->v_size = newsize;
   return OK;
 }
 

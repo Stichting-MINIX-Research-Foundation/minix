@@ -10,9 +10,11 @@
 #define REQ_FLAGS                m6_l3
 #define REQ_DEV                  m6_l3
 #define REQ_WHO_E                m6_l3
+#define REQ_GRANT                m6_l3
 #define REQ_USER_ADDR            m6_p2
 #define REQ_LENGTH               m6_l3
 #define REQ_SYMLOOP              m6_c2
+#define REQ_COUNT		 m6_l2
 
 #define REQ_NEW_UID              m6_s3
 #define REQ_NEW_GID              m6_c2
@@ -75,7 +77,6 @@
 #define RES_MODE                 m6_s1
 #define RES_FILE_SIZE            m6_l2
 #define RES_DEV                  m6_l3
-#define RES_POS                  m6_l3
 #define RES_INODE_INDEX          m6_s2
 #define RES_NLINKS               m6_s3
 #define RES_SYMLOOP              m6_c1
@@ -110,7 +111,6 @@
 #define REQ_WRITE                6
 #define REQ_CLONE_OPCL           7
 #define REQ_FTRUNC               8
-
 #define REQ_CHOWN                9
 #define REQ_CHMOD                10
 #define REQ_ACCESS               11
@@ -118,13 +118,14 @@
 #define REQ_MKDIR                13
 #define REQ_INHIBREAD            14
 #define REQ_STAT                 15
-#define REQ_FSTAT                16
+
+#define REQ_CREATE		 16
+
 #define REQ_UNLINK               17
 #define REQ_RMDIR                18
 #define REQ_UTIME                19
-#define REQ_FSTATFS              20
-#define REQ_LSTAT                21      /* NO POINT !!! */
-#define REQ_GETDIR               22
+
+#define REQ_FSTATFS              21
 
 #define REQ_LINK                 25
 
@@ -155,12 +156,4 @@
 #define EENTERMOUNT              301 
 #define ELEAVEMOUNT              302
 #define ESYMLINK                 303
-
-
-
-
-
-
-
-
 

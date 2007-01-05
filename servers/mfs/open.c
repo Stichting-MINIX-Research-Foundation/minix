@@ -15,7 +15,7 @@
 
 PRIVATE char mode_map[] = {R_BIT, W_BIT, R_BIT|W_BIT, 0};
 FORWARD _PROTOTYPE( struct inode *new_node, (struct inode *ldirp, 
-	char *string, mode_t bits, zone_t z0, int opaque, char *parsed));
+	char *string, mode_t bits, zone_t z0));
 
 
 /*===========================================================================*
@@ -61,7 +61,7 @@ printf("MFS(%d) get_inode for parent dir by creat() failed\n", SELF_E);
 	  }
 
 	  /* Create a new inode by calling new_node(). */
-	  rip = new_node(ldirp, lastc, omode, NO_ZONE, oflags&O_EXCL, NULL);
+	  rip = new_node(ldirp, lastc, omode, NO_ZONE);
 	  r = err_code;
 	  if (r == OK) exist = FALSE;      /* we just created the file */
 	  else if (r != EEXIST) {
@@ -113,15 +113,70 @@ printf("MFS(%d) get_inode by open() failed\n", SELF_E);
                         
                    case I_NAMED_PIPE:
 			rip->i_pipe = I_PIPE;
-                        b = (bits & R_BIT ? R_BIT : W_BIT);
-                        if (b == R_BIT)
-                            fs_m_out.RES_POS = rip->i_zone[V2_NR_DZONES+0];
-                        else
-                            fs_m_out.RES_POS = rip->i_zone[V2_NR_DZONES+1];
                         break;
  		}
   	}
   }
+
+  /* If error, release inode. */
+  if (r != OK) {
+        put_inode(ldirp);
+	put_inode(rip);
+	return(r);
+  }
+
+  /* Reply message */
+  fs_m_out.m_source = rip->i_dev;  /* filled with FS endpoint by the system */
+  fs_m_out.RES_INODE_NR = rip->i_num;
+  fs_m_out.RES_MODE = rip->i_mode;
+  fs_m_out.RES_FILE_SIZE = rip->i_size;
+  fs_m_out.RES_INODE_INDEX = (rip - &inode[0]) / sizeof(struct inode);
+
+  /* This values are needed for the execution */
+  fs_m_out.RES_UID = rip->i_uid;
+  fs_m_out.RES_GID = rip->i_gid;
+  if ((rip->i_mode & I_TYPE) == I_REGULAR) fs_m_out.RES_CTIME = rip->i_ctime;
+
+  /* Drop parent dir */
+  put_inode(ldirp);
+  
+  return OK;
+}
+
+/*===========================================================================*
+ *				fs_create 				     *
+ *===========================================================================*/
+PUBLIC int fs_create()
+{
+  int r, b;
+  struct inode *ldirp;
+  struct inode *rip;
+  mode_t omode;
+  char lastc[NAME_MAX];
+  
+  /* Read request message */
+  omode = fs_m_in.REQ_MODE;
+  
+  caller_uid = fs_m_in.REQ_UID;
+  caller_gid = fs_m_in.REQ_GID;
+  
+  /* Try to make the file. */ 
+
+  /* Copy the last component */
+  err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, 
+	SELF, (vir_bytes) lastc, (phys_bytes) fs_m_in.REQ_PATH_LEN);
+
+  if (err_code != OK) return err_code;
+
+  /* Get last directory inode */
+  if ((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
+printf("MFS(%d) get_inode for parent dir by creat() failed\n", SELF_E);
+	  return ENOENT;
+  }
+
+  /* Create a new inode by calling new_node(). */
+  rip = new_node(ldirp, lastc, omode, NO_ZONE);
+  r = err_code;
 
   /* If error, release inode. */
   if (r != OK) {
@@ -172,8 +227,7 @@ printf("MFS(%d) get_inode for parent dir by mknod() failed\n", SELF_E);
   }
   
   /* Try to create the new node */
-  ip = new_node(ldirp, lastc, fs_m_in.REQ_MODE, (zone_t) fs_m_in.REQ_DEV, 
-          TRUE, NULL);
+  ip = new_node(ldirp, lastc, fs_m_in.REQ_MODE, (zone_t) fs_m_in.REQ_DEV);
 
   put_inode(ip);
   put_inode(ldirp);
@@ -208,7 +262,7 @@ printf("MFS(%d) get_inode for parent dir by mkdir() failed\n", SELF_E);
   }
   
   /* Next make the inode. If that fails, return error code. */
-  rip = new_node(ldirp, lastc, fs_m_in.REQ_MODE, (zone_t) 0, TRUE, NULL);
+  rip = new_node(ldirp, lastc, fs_m_in.REQ_MODE, (zone_t) 0);
 
   if (rip == NIL_INODE || err_code == EEXIST) {
 	put_inode(rip);		/* can't make dir: it already exists */
@@ -275,7 +329,7 @@ PUBLIC int fs_slink()
   
   /* Create the inode for the symlink. */
   sip = new_node(ldirp, string, (mode_t) (I_SYMBOLIC_LINK | RWX_MODES),
-                 (zone_t) 0, TRUE, NULL);
+                 (zone_t) 0);
 
   /* Allocate a disk block for the contents of the symlink.
    * Copy contents of symlink (the name pointed to) into first disk block.
@@ -325,7 +379,7 @@ PUBLIC int fs_slink()
  *				new_node				     *
  *===========================================================================*/
 PRIVATE struct inode *new_node(struct inode *ldirp,
-	char *string, mode_t bits, zone_t z0, int opaque, char *parsed)
+	char *string, mode_t bits, zone_t z0)
 {
 /* New_node() is called by fs_open(), fs_mknod(), and fs_mkdir().  
  * In all cases it allocates a new inode, makes a directory entry for it in
@@ -341,11 +395,6 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
   register struct inode *rip;
   register int r;
 
-  /*
-  *ldirp = parse_path(path, string, opaque ? LAST_DIR : LAST_DIR_EATSYM);       
-  if (*ldirp == NIL_INODE) return(NIL_INODE);
-  */
-  
   /* Get final component of the path. */
   rip = advance(&ldirp, string);
 
@@ -389,11 +438,6 @@ PRIVATE struct inode *new_node(struct inode *ldirp,
 		r = EEXIST;
 	else
 		r = err_code;
-  }
-
-  if(parsed) { /* Give the caller the parsed string if requested. */
-	strncpy(parsed, string, NAME_MAX-1);
-	parsed[NAME_MAX-1] = '\0';
   }
 
   /* The caller has to return the directory inode (*ldirp).  */

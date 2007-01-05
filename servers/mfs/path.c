@@ -36,7 +36,7 @@ PUBLIC int lookup()
 {
   char string[NAME_MAX];
   struct inode *rip;
-  int s_error;
+  int s_error, flags;
 
   string[0] = '\0';
   
@@ -48,13 +48,16 @@ PUBLIC int lookup()
 
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
+  flags = fs_m_in.REQ_FLAGS;
+
+  /* Clear RES_OFFSET for ENOENT */
+  fs_m_out.RES_OFFSET= 0;
 
   /* Lookup inode */
-  rip = parse_path(user_path, string, fs_m_in.REQ_FLAGS);
+  rip = parse_path(user_path, string, flags);
   
   /* Copy back the last name if it is required */
-  if ((fs_m_in.REQ_FLAGS & LAST_DIR || fs_m_in.REQ_FLAGS & LAST_DIR_EATSYM)
-		  && err_code != ENAMETOOLONG) {
+  if (err_code != OK || (flags & PATH_PENULTIMATE)) {
       	s_error = sys_datacopy(SELF_E, (vir_bytes) string, FS_PROC_NR, 
               (vir_bytes) fs_m_in.REQ_USER_ADDR, (phys_bytes) 
               MIN(strlen(string)+1, NAME_MAX));
@@ -63,7 +66,11 @@ PUBLIC int lookup()
 
   /* Error or mount point encountered */
   if (rip == NIL_INODE)
-      return err_code;
+  {
+	if (err_code != EENTERMOUNT)
+		fs_m_out.RES_INODE_NR = 0;		/* signal no inode */
+	return err_code;
+  }
 
   fs_m_out.RES_INODE_NR = rip->i_num;
   fs_m_out.RES_MODE = rip->i_mode;
@@ -77,7 +84,7 @@ PUBLIC int lookup()
   /* Drop inode (path parse increased the counter) */
   put_inode(rip);
 
-  return OK;
+  return err_code;
 }
 
 
@@ -107,6 +114,7 @@ int action;                    /* action on last part of path */
         printf("FS: couldn't find starting inode req_nr: %d %s\n", req_nr,
 			user_path);
         err_code = ENOENT;
+printf("%s, %d\n", __FILE__, __LINE__);
         return NIL_INODE;
   }
 
@@ -116,6 +124,7 @@ int action;                    /* action on last part of path */
 			  == NIL_INODE) {
 		  printf("FS: couldn't find chroot inode\n");
 		  err_code = ENOENT;
+printf("%s, %d\n", __FILE__, __LINE__);
 		  return NIL_INODE;
 	  }
   }
@@ -135,6 +144,7 @@ int action;                    /* action on last part of path */
   /* Note: empty (start) path is checked in the VFS process */
   if (rip->i_nlinks == 0/* || *path == '\0'*/) {
 	err_code = ENOENT;
+printf("%s, %d\n", __FILE__, __LINE__);
 	return(NIL_INODE);
   }
 
@@ -148,7 +158,11 @@ int action;                    /* action on last part of path */
   if (rip->i_mount == I_MOUNT && rip->i_num != ROOT_INODE) {
 	dir_ip = rip;
 	rip = advance(&dir_ip, "..");
-  	if (rip == NIL_INODE) return rip;
+  	if (rip == NIL_INODE)
+	{
+printf("%s, %d\n", __FILE__, __LINE__);
+		return NIL_INODE;
+	}
 	put_inode(rip);  	/* advance() increased the counter */
   }
 
@@ -166,8 +180,10 @@ int action;                    /* action on last part of path */
   /* Scan the path component by component. */
   while (TRUE) {
 	/* Extract one component. */
+	fs_m_out.RES_OFFSET = path_processed;	/* For ENOENT */
 	if ( (new_name = get_name(path, string)) == (char*) 0) {
 		put_inode(rip);	/* bad path in user space */
+printf("%s, %d\n", __FILE__, __LINE__);
 		return(NIL_INODE);
 	}
 	if (*new_name == '\0' && (action & PATH_PENULTIMATE)) {
@@ -177,6 +193,7 @@ int action;                    /* action on last part of path */
 			/* last file of path prefix is not a directory */
 			put_inode(rip);
 			err_code = ENOTDIR;			
+printf("%s, %d\n", __FILE__, __LINE__);
 			return(NIL_INODE);
 		}
         }
@@ -194,9 +211,17 @@ int action;                    /* action on last part of path */
 
 	if (rip == NIL_INODE) {
 		if (*new_name == '\0' && (action & PATH_NONSYMBOLIC) != 0)
+		{
+printf("%s, %d\n", __FILE__, __LINE__);
 			return(dir_ip);
+		}
+		else if (err_code == ENOENT)
+		{
+			return(dir_ip);
+		}
 		else {
 			put_inode(dir_ip);
+printf("%s, %d\n", __FILE__, __LINE__);
 			return(NIL_INODE);
 		}
 	}
@@ -211,6 +236,7 @@ int action;                    /* action on last part of path */
                        if (ltraverse(rip, user_path, new_name) != OK) {
                            put_inode(dir_ip);
                            err_code = ENOENT;
+printf("%s, %d\n", __FILE__, __LINE__);
                            return NIL_INODE;
                        }
 
@@ -218,6 +244,7 @@ int action;                    /* action on last part of path */
                        if (++symloop > SYMLOOP) {
                            put_inode(dir_ip);
                            err_code = ELOOP;
+printf("%s, %d\n", __FILE__, __LINE__);
                            return NIL_INODE;
                        }
 
@@ -250,6 +277,7 @@ int action;                    /* action on last part of path */
        /* Either last name reached or symbolic link is opaque */
        if ((action & PATH_NONSYMBOLIC) != 0) {
                put_inode(rip);
+printf("%s, %d\n", __FILE__, __LINE__);
                return(dir_ip);
        } else {
                put_inode(dir_ip);

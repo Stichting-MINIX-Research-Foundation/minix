@@ -326,7 +326,8 @@ PUBLIC void pm_reboot()
   put_vnode(vmnt[0].m_mounted_on);
   vmnt[0].m_mounted_on = &vdummy;
   vmnt[0].m_root_node = &vdummy;
-  vdummy.v_count = 1;
+  vdummy.v_fs_count = 0;	/* Is this right? */
+  vdummy.v_ref_count = 1;
 
   /* Unmount all filesystems.  File systems are mounted on other file systems,
    * so you have to pull off the loose bits repeatedly to get it all undone.

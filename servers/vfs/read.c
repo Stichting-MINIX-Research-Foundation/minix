@@ -192,6 +192,13 @@ int rw_flag;			/* READING or WRITING */
       req.user_addr = m_in.buffer;
       req.inode_index = vp->v_index;
 
+      if (vp->v_isfifo)
+      {
+	printf("read_write: %s for FIFO @ %u size %u\n",
+		(rw_flag == READING) ? "read" : "write",
+		ex64lo(position), m_in.nbytes);
+      }
+
       /* Issue request */
       r = req_readwrite(&req, &res);
 

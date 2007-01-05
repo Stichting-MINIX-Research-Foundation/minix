@@ -12,6 +12,8 @@
 
 #include "fs.h"
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/keymap.h>
@@ -50,6 +52,8 @@ node_details_t *res;
     res->fmode = m.RES_MODE;
     res->fsize = m.RES_FILE_SIZE;
     res->dev = m.RES_DEV;
+    res->uid = m.RES_UID;
+    res->gid = m.RES_GID;
 
     return OK;
 }
@@ -58,17 +62,20 @@ node_details_t *res;
 /*===========================================================================*
  *				req_putnode				     *
  *===========================================================================*/
-PUBLIC int req_putnode(req)
-node_req_t *req; 
+PUBLIC int req_putnode(fs_e, inode_nr, count)
+int fs_e;
+ino_t inode_nr;
+int count;
 {
     message m;
 
     /* Fill in request message */
     m.m_type = REQ_PUTNODE;
-    m.REQ_INODE_NR = req->inode_nr;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_COUNT = count;
 
     /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
+    return fs_sendrec(fs_e, &m);
 }
 
 /*===========================================================================*
@@ -93,6 +100,49 @@ node_details_t *res;
 
     /* Send/rec request */
     if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
+
+    /* Fill in response structure */
+    res->fs_e = m.m_source;
+    res->inode_nr = m.RES_INODE_NR;
+    res->fmode = m.RES_MODE;
+    res->fsize = m.RES_FILE_SIZE;
+    res->dev = m.RES_DEV;
+    res->inode_index = m.RES_INODE_INDEX;
+    /* For exec */
+    res->uid = m.RES_UID;
+    res->gid = m.RES_GID;
+    res->ctime = m.RES_CTIME;
+
+    return OK;
+}
+
+
+/*===========================================================================*
+ *				req_create    				     *
+ *===========================================================================*/
+int req_create(fs_e, inode_nr, omode, uid, gid, path, res)
+int fs_e;
+ino_t inode_nr;
+int omode;
+uid_t uid;
+gid_t gid;
+char *path;
+node_details_t *res; 
+{
+    int r;
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_CREATE;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_MODE = omode;
+    m.REQ_UID = uid;
+    m.REQ_GID = gid;
+    m.REQ_PATH = path;
+    m.REQ_PATH_LEN = strlen(path) + 1;
+
+    /* Send/rec request */
+    if ((r = fs_sendrec(fs_e, &m)) != OK) return r;
 
     /* Fill in response structure */
     res->fs_e = m.m_source;
@@ -351,60 +401,81 @@ node_req_t *req;
 /*===========================================================================*
  *				req_stat          			     *
  *===========================================================================*/
-PUBLIC int req_stat(req)
-stat_req_t *req;
+PUBLIC int req_stat(fs_e, inode_nr, who_e, buf, pos)
+int fs_e;
+ino_t inode_nr;
+int who_e;
+char *buf;
+int pos;
 {
-    message m;
+  cp_grant_id_t gid;
+  int r;
+  message m;
+  struct stat sb;
 
-    /* Fill in request message */
-    m.m_type = REQ_STAT;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_WHO_E = req->who_e;
-    m.REQ_USER_ADDR = req->buf;
+  if (pos != 0)
+  {
+	gid= cpf_grant_direct(fs_e, (vir_bytes)&sb, sizeof(struct stat),
+		CPF_WRITE);
+  }
+  else
+  {
+	gid= cpf_grant_magic(fs_e, who_e, (vir_bytes)buf, sizeof(struct stat),
+		CPF_WRITE);
+  }
+  if (gid < 0)
+	return gid;
 
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
+  /* Fill in request message */
+  m.m_type = REQ_STAT;
+  m.REQ_INODE_NR = inode_nr;
+  m.REQ_GRANT = gid;
 
+  /* Send/rec request */
+  r= fs_sendrec(fs_e, &m);
 
-/*===========================================================================*
- *				req_fstat          			     *
- *===========================================================================*/
-PUBLIC int req_fstat(req)
-stat_req_t *req;
-{
-    message m;
+  cpf_revoke(gid);
 
-    /* Fill in request message */
-    m.m_type = REQ_FSTAT;
-    m.REQ_FD_INODE_NR = req->inode_nr;
-    m.REQ_FD_WHO_E = req->who_e;
-    m.REQ_FD_USER_ADDR = req->buf;
-    m.REQ_FD_POS = req->pos;
+  if (r == OK && pos != 0)
+  {
+	sb.st_size -= pos;
+	r= sys_vircopy(SELF, D, (vir_bytes)&sb, who_e, D, (vir_bytes)buf, 
+		sizeof(struct stat));
+  }
 
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
+  return r;
 }
 
 
 /*===========================================================================*
  *				req_fstatfs        			     *
  *===========================================================================*/
-PUBLIC int req_fstatfs(req)
-stat_req_t *req;
+PUBLIC int req_fstatfs(fs_e, inode_nr, who_e, buf)
+int fs_e;
+ino_t inode_nr;
+int who_e;
+char *buf;
 {
-    message m;
+  int r;
+  cp_grant_id_t gid;
+  message m;
 
-    /* Fill in request message */
-    m.m_type = REQ_FSTATFS;
-    m.REQ_FD_INODE_NR = req->inode_nr;
-    m.REQ_FD_WHO_E = req->who_e;
-    m.REQ_FD_USER_ADDR = req->buf;
+  gid= cpf_grant_magic(fs_e, who_e, (vir_bytes)buf, sizeof(struct statfs),
+		CPF_WRITE);
+  if (gid < 0)
+	return gid;
 
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
+  /* Fill in request message */
+  m.m_type = REQ_FSTATFS;
+  m.REQ_INODE_NR = inode_nr;
+  m.REQ_GRANT = gid;
+
+  /* Send/rec request */
+  r= fs_sendrec(fs_e, &m);
+
+  cpf_revoke(gid);
+
+  return r;
 }
 
 
@@ -502,35 +573,6 @@ endpoint_t fs_e;
     
     /* Send/rec request */
     return fs_sendrec(fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_getdir 				     *
- *===========================================================================*/
-PUBLIC int req_getdir(req, res)
-getdir_req_t *req; 
-node_details_t *res;
-{
-    int r;
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_GETDIR;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-
-    /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
-
-    /* Fill in response structure */
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
-
-    return OK;
 }
 
 
@@ -787,10 +829,14 @@ lookup_res_t *res;
     res->fs_e = m.m_source;
     switch (r) {
         case OK:
+	default:
             res->inode_nr = m.RES_INODE_NR;
             res->fmode = m.RES_MODE;
             res->fsize = m.RES_FILE_SIZE;
             res->dev = m.RES_DEV;
+	    res->uid= m.RES_UID;
+	    res->gid= m.RES_GID;
+            res->char_processed = m.RES_OFFSET;		/* For ENOENT */
             break;
         case EENTERMOUNT:
             res->inode_nr = m.RES_INODE_NR;

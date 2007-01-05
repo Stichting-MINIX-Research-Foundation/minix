@@ -163,3 +163,76 @@ PUBLIC int do_access()
   return req_access(&req);
 }
 
+
+/*===========================================================================*
+ *				forbidden				     *
+ *===========================================================================*/
+PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
+{
+/* Given a pointer to an inode, 'rip', and the access desired, determine
+ * if the access is allowed, and if not why not.  The routine looks up the
+ * caller's uid in the 'fproc' table.  If access is allowed, OK is returned
+ * if it is forbidden, EACCES is returned.
+ */
+
+  register struct super_block *sp;
+  register mode_t bits, perm_bits;
+  int r, shift, type;
+
+  if (vp->v_uid == (uid_t)-1 || vp->v_gid == (gid_t)-1)
+  {
+	printf("forbidden: bad uid/gid in vnode\n");
+	printf("forbidden: last allocated at %s, %d\n", vp->v_file, vp->v_line);
+	return EACCES;
+  }
+
+  /* Isolate the relevant rwx bits from the mode. */
+  bits = vp->v_mode;
+  if (fp->fp_effuid == SU_UID) {
+	/* Grant read and write permission.  Grant search permission for
+	 * directories.  Grant execute permission (for non-directories) if
+	 * and only if one of the 'X' bits is set.
+	 */
+	if ( (bits & I_TYPE) == I_DIRECTORY ||
+	     bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
+		perm_bits = R_BIT | W_BIT | X_BIT;
+	else
+		perm_bits = R_BIT | W_BIT;
+  } else {
+	if (fp->fp_effuid == vp->v_uid) shift = 6;	/* owner */
+	else if (fp->fp_effgid == vp->v_gid ) shift = 3;	/* group */
+	else shift = 0;					/* other */
+	perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT);
+  }
+
+  /* If access desired is not a subset of what is allowed, it is refused. */
+  r = OK;
+  if ((perm_bits | access_desired) != perm_bits) r = EACCES;
+
+  /* Check to see if someone is trying to write on a file system that is
+   * mounted read-only.
+   */
+  if (r == OK)
+	if (access_desired & W_BIT)
+	 	r = read_only(vp);
+
+  return(r);
+}
+
+
+/*===========================================================================*
+ *				read_only				     *
+ *===========================================================================*/
+PUBLIC int read_only(vp)
+struct vnode *vp;		/* ptr to inode whose file sys is to be cked */
+{
+/* Check to see if the file system on which the inode 'ip' resides is mounted
+ * read only.  If so, return EROFS, else return OK.
+ */
+  register struct vmnt *mp;
+
+  mp = vp->v_vmnt;
+  return(mp->m_flags ? EROFS : OK);
+}
+
+

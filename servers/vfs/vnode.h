@@ -4,8 +4,12 @@ EXTERN struct vnode {
   endpoint_t v_fs_e;            /* FS process' endpoint number */
   ino_t v_inode_nr;		/* inode number on its (minor) device */
   mode_t v_mode;		/* file type, protection, etc. */
+  uid_t v_uid;
+  gid_t v_gid;
   off_t v_size;			/* current file size in bytes */
-  int v_count;			/* # times vnode used; 0 means slot is free */
+  int v_ref_count;		/* # times vnode used; 0 means slot is free */
+  int v_fs_count;		/* # reference at the underlying FS */
+  int v_ref_check;		/* for consistency checks */
   char v_pipe;			/* set to I_PIPE if pipe */
   off_t v_pipe_rd_pos;
   off_t v_pipe_wr_pos;
@@ -19,6 +23,11 @@ EXTERN struct vnode {
   int v_blocksize;              /* block size of the filesys */
   unsigned short v_index;       /* inode's index in the FS inode table */
   struct vmnt *v_vmnt;          /* vmnt object of the partition */
+
+  /* For debugging */
+  char *v_file;
+  int v_line;
+  int v_isfifo;	
 } vnode[NR_VNODES];
 
 #define NIL_VNODE (struct vnode *) 0	/* indicates absence of vnode slot */

@@ -180,7 +180,7 @@ PRIVATE void cch_check(void)
   for (i = 0; i < NR_INODES; ++i) {
 	  if (inode[i].i_count != cch[i] &&
 		req_nr != REQ_OPEN && req_nr != REQ_GETNODE &&
-		req_nr != REQ_PUTNODE && req_nr != REQ_GETDIR &&
+		req_nr != REQ_PUTNODE &&
 		req_nr != REQ_CLONE_OPCL && req_nr != REQ_READSUPER &&
 		req_nr != REQ_MOUNTPOINT && req_nr != REQ_UNMOUNT &&
 		req_nr != REQ_PIPE && req_nr != REQ_SYNC && 

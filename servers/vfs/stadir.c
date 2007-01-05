@@ -37,8 +37,6 @@ PUBLIC int do_fchdir()
 {
   /* Change directory on already-opened fd. */
   struct filp *rfilp;
-  struct getdir_req req;
-  struct node_details res;
   int r;
 
   /* Is the file descriptor valid? */
@@ -48,17 +46,11 @@ PUBLIC int do_fchdir()
   if ((rfilp->filp_vno->v_mode & I_TYPE) != I_DIRECTORY)
       return ENOTDIR;
   
-  /* Fill in request message fields.*/
-  req.fs_e = rfilp->filp_vno->v_fs_e;
-  req.inode_nr = rfilp->filp_vno->v_inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  
   /* Issue request and handle error */
-  if ((r = req_getdir(&req, &res)) != OK) return r;
+  r = forbidden(rfilp->filp_vno, X_BIT);
+  if (r != OK) return r;
   
-  /* GETDIR increased the counter in the FS proc */
-  rfilp->filp_vno->v_count++;
+  rfilp->filp_vno->v_ref_count++;	/* change_into expects a reference  */
   
   return change_into(&fp->fp_wd, rfilp->filp_vno);
 }
@@ -129,63 +121,27 @@ char *name_ptr;			/* pointer to the directory name to change to */
 int len;			/* length of the directory name string */
 {
 /* Do the actual work for chdir() and chroot(). */
-  struct vnode *vp, *vp2;
-  struct vmnt *vmp;
-  struct getdir_req req;
-  struct node_details res;
+  struct vnode *vp;
   struct lookup_req lookup_req;
   int r;
 
   if (fetch_name(name_ptr, len, M3) != OK) return(err_code);
   
-  /* See if free vnode is available */
-  if ((vp = get_free_vnode()) == NIL_VNODE) {
-      printf("VFSchange: no free vnode available\n");
-      return EINVAL;
-  }
-
   /* Fill in lookup request fields */
   lookup_req.path = user_fullpath;
   lookup_req.lastc = NULL;
   lookup_req.flags = EAT_PATH;
         
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  if ((r = lookup_vp(&lookup_req, &vp)) != OK) return r;
 
   /* Is it a dir? */
-  if ((res.fmode & I_TYPE) != I_DIRECTORY)
+  if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
+  {
+      put_vnode(vp);
       return ENOTDIR;
-  
-  /* Fill in request message fields.*/
-  req.fs_e = res.fs_e;
-  req.inode_nr = res.inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
- 
-  /* Issue request */
-  if ((r = req_getdir(&req, &res)) != OK) return r;
-  
-  /* Check whether vnode is already in use or not */
-  if ((vp2 = find_vnode(res.fs_e, res.inode_nr)) 
-          != NIL_VNODE) {
-        vp2->v_count++;
-        vp = vp2;
   }
-  else {
-        /* Fill in the free vnode's fields */
-        vp->v_fs_e = res.fs_e;
-        vp->v_inode_nr = res.inode_nr;
-        vp->v_mode = res.fmode;
-        vp->v_size = res.fsize;
-
-          if ( (vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT)
-              printf("VFSchange: vmnt not found");
-
-        vp->v_vmnt = vmp; 
-        vp->v_dev = vmp->m_dev;
-        vp->v_count = 1;
-  }
-
+  
   return change_into(iip, vp);
 }
 
@@ -211,7 +167,6 @@ struct vnode *vp;		/* this is what the inode has to become */
 PUBLIC int do_stat()
 {
 /* Perform the stat(name, buf) system call. */
-  struct stat_req req;
   struct node_details res;
   struct lookup_req lookup_req;
   int r;
@@ -226,16 +181,8 @@ PUBLIC int do_stat()
   /* Request lookup */
   if ((r = lookup(&lookup_req, &res)) != OK) return r;
 
-  /* Fill in request message fields.*/
-  req.fs_e = res.fs_e;
-  req.who_e = who_e;
-  req.buf = m_in.name2;
-  req.inode_nr = res.inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  
   /* Issue request */
-  return req_stat(&req);
+  return req_stat(res.fs_e, res.inode_nr, who_e, m_in.name2, 0);
 }
 
 
@@ -248,7 +195,6 @@ PUBLIC int do_fstat()
 /* Perform the fstat(fd, buf) system call. */
   register struct filp *rfilp;
   int pipe_pos = 0;
-  struct stat_req req;
 
   /* Is the file descriptor valid? */
   if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) {
@@ -256,6 +202,7 @@ PUBLIC int do_fstat()
   }
   
   /* If we read from a pipe, send position too */
+  pipe_pos= 0;
   if (rfilp->filp_vno->v_pipe == I_PIPE) {
 	if (rfilp->filp_mode & R_BIT) 
 		if (ex64hi(rfilp->filp_pos) != 0)
@@ -266,15 +213,9 @@ PUBLIC int do_fstat()
 		pipe_pos = ex64lo(rfilp->filp_pos);
   }
 
-  /* Fill in request message */
-  req.fs_e = rfilp->filp_vno->v_fs_e;
-  req.inode_nr = rfilp->filp_vno->v_inode_nr;
-  req.pos = pipe_pos;
-  req.who_e = who_e;
-  req.buf = m_in.buffer;
-
   /* Issue request */
-  return req_fstat(&req);
+  return req_stat(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
+	who_e, m_in.buffer, pipe_pos);
 }
 
 
@@ -286,19 +227,13 @@ PUBLIC int do_fstatfs()
 {
   /* Perform the fstatfs(fd, buf) system call. */
   register struct filp *rfilp;
-  struct stat_req req;
 
   /* Is the file descriptor valid? */
   if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
 
-  /* Send FS request */
-  req.fs_e = rfilp->filp_vno->v_fs_e;
-  req.inode_nr = rfilp->filp_vno->v_inode_nr;
-  req.who_e = who_e;
-  req.buf = m_in.buffer;
-  
   /* Issue request */
-  return req_fstatfs(&req);
+  return req_fstatfs(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
+	who_e, m_in.buffer);
 }
 
 
@@ -309,7 +244,6 @@ PUBLIC int do_fstatfs()
 PUBLIC int do_lstat()
 {
 /* Perform the lstat(name, buf) system call. */
-  struct stat_req req;
   struct node_details res;
   struct lookup_req lookup_req;
   int r;
@@ -324,16 +258,8 @@ PUBLIC int do_lstat()
   /* Request lookup */
   if ((r = lookup(&lookup_req, &res)) != OK) return r;
 
-  /* Fill in request message fields.*/
-  req.fs_e = res.fs_e;
-  req.who_e = who_e;
-  req.buf = m_in.name2;
-  req.inode_nr = res.inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  
   /* Issue request */
-  return req_stat(&req);
+  return req_stat(res.fs_e, res.inode_nr, who_e, m_in.name2, 0);
 }
 
 

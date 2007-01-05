@@ -654,7 +654,7 @@ PUBLIC int do_ioctl()
 	&& (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) return(ENOTTY);
   dev = (dev_t) vp->v_sdev;
 
-  return(dev_io(DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0), 
+  return (dev_io(DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0), 
   	m_in.REQUEST, f->filp_flags));
 }
 
@@ -837,7 +837,7 @@ int flags;			/* mode bits and flags */
                 vp = fp->fp_filp[m_in.fd]->filp_vno;
 		
                 put_vnode(vp);
-		if ((vp = get_free_vnode()) == NIL_VNODE) {
+		if ((vp = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
 			printf("VFSclone_opcl: failed to get a free vnode..\n");
 			vp = fp->fp_filp[m_in.fd]->filp_vno;
 		}
@@ -852,7 +852,8 @@ int flags;			/* mode bits and flags */
                 vp->v_inode_nr = res.inode_nr;
                 vp->v_mode = res.fmode; 
                 vp->v_sdev = dev;
-                vp->v_count = 1;
+                vp->v_fs_count = 1;
+                vp->v_ref_count = 1;
 		fp->fp_filp[m_in.fd]->filp_vno = vp;
 	}
 	dev_mess.REP_STATUS = OK;

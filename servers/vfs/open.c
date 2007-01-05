@@ -34,7 +34,8 @@
 #define offset_lo	m2_l1
 #define offset_high	m2_l2
  
-
+FORWARD _PROTOTYPE( int x_open, (int bits, int oflags, int omode,
+			char *lastc, struct vnode **vpp)		);
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
 FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp,mode_t bits,int oflags));
 
@@ -89,13 +90,13 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   struct filp *fil_ptr, *filp2;
   struct vnode *vp, *vp2;
   struct vmnt *vmp;
-  char lastc[NAME_MAX];
+  char Xlastc[NAME_MAX];
+  char *pathrem;
   int m;
 
   /* Request and response structures */
-  struct lookup_req lookup_req;
-  struct open_req req;
-  struct node_details res;
+  struct lookup_req Xlookup_req;
+  struct open_req Xreq;
 
   /* Remap the bottom two bits of oflags. */
   m = oflags & O_ACCMODE;
@@ -109,26 +110,74 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   /* See if file descriptor and filp slots are available. */
   if ((r = get_fd(0, bits, &m_in.fd, &fil_ptr)) != OK) return(r);
 
-  /* See if a free vnode is available */
-  if ((vp = get_free_vnode()) == NIL_VNODE) {
-      printf("VFS: no vnode available!\n");
-      return err_code;
-  }
-
   /* If O_CREATE, set umask */ 
   if (oflags & O_CREAT) {
         omode = I_REGULAR | (omode & ALL_MODES & fp->fp_umask);
   }
 
+  vp= NULL;
+
+#if 0
+  printf("common_open: for '%s'\n", user_fullpath);
+#endif
+
   /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = lastc;
-  lookup_req.flags = oflags&O_CREAT ? (oflags&O_EXCL ? LAST_DIR : 
+  Xlookup_req.path = user_fullpath;
+  Xlookup_req.lastc = Xlastc;
+  Xlookup_req.flags = oflags&O_CREAT ? (oflags&O_EXCL ? LAST_DIR : 
               LAST_DIR_EATSYM) : EAT_PATH;
+  Xlookup_req.flags = ((oflags & (O_CREAT|O_EXCL)) == (O_CREAT|O_EXCL)) ?
+	LAST_DIR : EAT_PATH;
+  Xlastc[0]= '\0';	/* Clear lastc, it will be filled with the part of the
+			 * path that cannot be resolved.
+			 */
   
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  r = Xlookup_vp(&Xlookup_req, &vp, &pathrem);
 
+  if (r == OK && ((oflags & (O_CREAT|O_EXCL)) != (O_CREAT|O_EXCL)))
+  {
+	/* Clear lastc */
+	Xlastc[0]= '\0';
+  }
+
+  /* Hide ENOENT for O_CREAT */
+  if (r == ENOENT && (oflags & O_CREAT))
+  {
+	if (pathrem == NULL)
+		panic(__FILE__, "no pathrem", NO_NUM);
+	if (strchr(pathrem, '/') == 0)
+		r= OK;
+	else
+	{
+		printf("common_open: / in pathrem");
+	}
+  }
+
+  if (r != OK)
+  {
+	if (vp)
+	{
+		put_vnode(vp);
+		vp= NULL;
+	}
+	return r;
+  }
+
+  if (!vp) panic(__FILE__, "common_open: no vp", NO_NUM);
+
+  r= x_open(bits, oflags, omode, Xlastc, &vp);
+  if (r != OK)
+  {
+	if (vp)
+	{
+		put_vnode(vp);
+		vp= NULL;
+	}
+	return r;
+  }
+
+#if 0
   /* Lookup was okay, fill in request fields for 
    * the actual open request. */
   req.inode_nr = res.inode_nr;
@@ -145,8 +194,9 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   /* Check whether the vnode is already in use */
   if ((vp2 = find_vnode(res.fs_e, res.inode_nr)) != NIL_VNODE) {
       vp = vp2;
-      vp->v_size = res.fsize;; /* In case of trunc... */
-      vp->v_count++;
+      vp->v_size = res.fsize; /* In case of trunc... */
+      vp->v_ref_count++;
+      vp->v_fs_count++;
   }
   /* Otherwise use the free one */
   else {
@@ -157,12 +207,16 @@ PRIVATE int common_open(register int oflags, mode_t omode)
       vp->v_dev = vmp->m_dev;
       vp->v_inode_nr = res.inode_nr;
       vp->v_mode = res.fmode;
+      vp->v_uid = res.uid;
+      vp->v_gid = res.gid;
       vp->v_size = res.fsize;
       vp->v_sdev = res.dev; 
-      vp->v_count = 1;
+      vp->v_fs_count = 1;
+      vp->v_ref_count = 1;
       vp->v_vmnt = vmp; 
       vp->v_index = res.inode_index;
   }
+#endif
 
   /* Claim the file descriptor and filp slot and fill them in. */
   fp->fp_filp[m_in.fd] = fil_ptr;
@@ -171,6 +225,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   fil_ptr->filp_flags = oflags;
   fil_ptr->filp_vno = vp;
   
+  vp->v_isfifo= FALSE;
   switch (vp->v_mode & I_TYPE) {
       case I_CHAR_SPECIAL:
           /* Invoke the driver for special processing. */
@@ -180,6 +235,8 @@ PRIVATE int common_open(register int oflags, mode_t omode)
       case I_BLOCK_SPECIAL:
           /* Invoke the driver for special processing. */
           r = dev_open(vp->v_sdev, who_e, bits | (oflags & ~O_ACCMODE));
+	  if (r != OK)
+		panic(__FILE__, "common_open: dev_open failed", r);
           
           /* Check whether the device is mounted or not */
           found = 0;
@@ -219,7 +276,10 @@ PRIVATE int common_open(register int oflags, mode_t omode)
           break;
 
       case I_NAMED_PIPE:
+	  printf("common_open: setting I_PIPE, inode %d on dev 0x%x\n",
+		vp->v_inode_nr, vp->v_dev);
 	  vp->v_pipe = I_PIPE;
+		vp->v_isfifo= TRUE;
           oflags |= O_APPEND;	/* force append mode */
           fil_ptr->filp_flags = oflags;
           r = pipe_open(vp, bits, oflags);
@@ -269,6 +329,126 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   return(m_in.fd);
 }
 
+/*===========================================================================*
+ *				x_open	 				     *
+ *===========================================================================*/
+PRIVATE int x_open(bits, oflags, omode, lastc, vpp)
+mode_t bits;
+int oflags;
+mode_t omode;
+char *lastc;
+struct vnode **vpp;
+{
+  int r, b, exist = TRUE;
+  struct vnode *vp, *dvp, *tmp_vp;
+  struct vmnt *vmp;
+  struct node_details res;
+
+  /* If O_CREATE is set, try to make the file. */ 
+  if ((oflags & O_CREAT) && lastc[0] != '\0') {
+	dvp= *vpp;	/* Parent directory */
+
+	/* See if a free vnode is available */
+	if ((vp = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
+		printf("VFS x_open: no free vnode available\n");
+		return EINVAL;
+	}
+
+	r= req_create(dvp->v_fs_e, dvp->v_inode_nr, omode, fp->fp_effuid,
+		fp->fp_effgid, lastc, &res);
+	if (r != OK)
+		return r;
+	exist = FALSE;
+
+	/* Check whether vnode is already in use or not */
+	if ((tmp_vp = find_vnode(res.fs_e, res.inode_nr)) != NIL_VNODE) {
+		vp= tmp_vp;
+		vp->v_ref_count++;
+		vp->v_fs_count++;
+	}
+	else
+	{
+		/* Fill in the free vnode's fields */
+		vp->v_fs_e = res.fs_e;
+		vp->v_inode_nr = res.inode_nr;
+		vp->v_mode = res.fmode;
+		vp->v_size = res.fsize;
+		vp->v_uid = res.uid;
+		vp->v_gid = res.gid;
+		vp->v_sdev = res.dev;
+
+		if ( (vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT)
+		panic(__FILE__, "lookup_vp: vmnt not found", NO_NUM);
+
+		vp->v_vmnt = vmp; 
+		vp->v_dev = vmp->m_dev;
+		vp->v_fs_count = 1;
+		vp->v_ref_count = 1;
+	}
+
+	/* Release dvp */
+	put_vnode(dvp);
+
+	/* Update *vpp */
+	*vpp= vp;
+  } 
+  else {
+	vp= *vpp;
+  }
+
+  /* Only do the normal open code if we didn't just create the file. */
+  if (!exist)
+	return OK;
+
+  /* Check protections. */
+  if ((r = forbidden(vp, bits)) != OK)
+	return r;
+
+  /* Opening reg. files directories and special files differ. */
+  switch (vp->v_mode & I_TYPE) {
+  case I_REGULAR: 
+	/* Truncate regular file if O_TRUNC. */
+	if (oflags & O_TRUNC) {
+		if ((r = forbidden(vp, W_BIT)) !=OK) break;
+		truncate_vn(vp, 0);
+	}
+	break;
+
+  case I_DIRECTORY: 
+	/* Directories may be read but not written. */
+	r = (bits & W_BIT ? EISDIR : OK);
+	break;
+
+  case I_CHAR_SPECIAL:
+  case I_BLOCK_SPECIAL:
+	if (vp->v_sdev == (dev_t)-1)
+		panic(__FILE__, "x_open: bad special", NO_NUM);
+	break;
+
+  case I_NAMED_PIPE:
+	printf("x_open (fifo): reference count %d, fd %d\n",
+		vp->v_ref_count, vp->v_fs_count);
+	if (vp->v_ref_count == 1)
+	{
+		printf("x_open (fifo): first reference, size %u\n",
+			vp->v_size);
+		if (vp->v_size != 0)
+		{
+			printf("x_open (fifo): clearing\n");
+			r= truncate_vn(vp, 0);
+			if (r != OK)
+			{
+				printf(
+				"x_open (fifo): truncate_vn failed: %d\n",
+					r);
+			}
+		}
+	}
+	break;
+  }
+
+  return(r);
+}
 
 
 /*===========================================================================*
@@ -283,6 +463,8 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
  *  processes hanging on the pipe.
  */
 
+	  printf("pipe_open: setting I_PIPE, inode %d on dev 0x%x\n",
+		vp->v_inode_nr, vp->v_dev);
   vp->v_pipe = I_PIPE; 
 
   if((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) {
@@ -551,7 +733,7 @@ int fd_nr;
 
   /* If a write has been done, the inode is already marked as DIRTY. */
   if (--rfilp->filp_count == 0) {
-	if (vp->v_pipe == I_PIPE && vp->v_count > 1) {
+	if (vp->v_pipe == I_PIPE && vp->v_ref_count > 1) {
 		/* Save the file position in the v-node in case needed later.
 		 * The read and write positions are saved separately.  
 		 */

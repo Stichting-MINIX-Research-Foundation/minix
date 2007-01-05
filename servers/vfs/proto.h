@@ -58,6 +58,7 @@ _PROTOTYPE( int do_unlink, (void)					);
 _PROTOTYPE( int do_rename, (void)					);
 _PROTOTYPE( int do_truncate, (void)					);
 _PROTOTYPE( int do_ftruncate, (void)					);
+_PROTOTYPE( int truncate_vn, (struct vnode *vp, off_t newsize)		);
 
 /* lock.c */
 _PROTOTYPE( int lock_op, (struct filp *f, int req)			);
@@ -100,6 +101,9 @@ _PROTOTYPE( int do_slink, (void)                                        );
 
 /* path.c */
 _PROTOTYPE( int lookup, (lookup_req_t *request, node_details_t *node)   );
+_PROTOTYPE( int lookup_vp, (lookup_req_t *request, struct vnode **vpp)	);
+_PROTOTYPE( int Xlookup_vp, (lookup_req_t *request, struct vnode **vpp,
+							char **pathrem)	);
 
 /* pipe.c */
 _PROTOTYPE( int do_pipe, (void)						);
@@ -120,6 +124,8 @@ _PROTOTYPE( int do_access, (void)					);
 _PROTOTYPE( int do_chmod, (void)					);
 _PROTOTYPE( int do_chown, (void)					);
 _PROTOTYPE( int do_umask, (void)					);
+_PROTOTYPE( int forbidden, (struct vnode *vp, mode_t access_desired)	);
+_PROTOTYPE( int read_only, (struct vnode *vp)				);
 
 /* read.c */
 _PROTOTYPE( int do_read, (void)						);
@@ -129,8 +135,10 @@ _PROTOTYPE( int read_write, (int rw_flag)				);
 /* request.c */
 _PROTOTYPE( int fs_sendrec, (endpoint_t fs_e, message *reqm)            );
 _PROTOTYPE( int req_getnode, (node_req_t *req, node_details_t *res)     );
-_PROTOTYPE( int req_putnode, (node_req_t *req)                          );
+_PROTOTYPE( int req_putnode, (int fs_e, ino_t inode_nr, int count)	);
 _PROTOTYPE( int req_open, (open_req_t *req, node_details_t *res)        ); 
+_PROTOTYPE( int req_create, (int fs_e, ino_t inode_nr, int omode,
+		int uid, int gid, char *path, node_details_t *res)	); 
 _PROTOTYPE( int req_readwrite, (readwrite_req_t *req, 
             readwrite_res_t *res)                                       );
 _PROTOTYPE( int req_pipe, (pipe_req_t *req, node_details_t *res)        );
@@ -143,15 +151,15 @@ _PROTOTYPE( int req_access, (access_req_t *req)                         );
 _PROTOTYPE( int req_mknod, (mknod_req_t *req)                           );
 _PROTOTYPE( int req_mkdir, (mkdir_req_t *req)                           );
 _PROTOTYPE( int req_inhibread, (node_req_t *req)                        );
-_PROTOTYPE( int req_stat, (stat_req_t *req)                             );
-_PROTOTYPE( int req_fstat, (stat_req_t *req)                            );
-_PROTOTYPE( int req_fstatfs, (stat_req_t *req)                          );
+_PROTOTYPE( int req_stat, (int fs_e, ino_t inode_nr, int who_e,
+						char *buf, int pos)	);
+_PROTOTYPE( int req_fstatfs, (int fs_e, ino_t inode_nr, int who_e,
+							char *buf)	);
 _PROTOTYPE( int req_unlink, (unlink_req_t *req)                         );
 _PROTOTYPE( int req_rmdir, (unlink_req_t *req)                          );
 _PROTOTYPE( int req_utime, (utime_req_t *req)                           );
 _PROTOTYPE( int req_stime, (endpoint_t fs_e, time_t boottime)           );
 _PROTOTYPE( int req_sync, (endpoint_t fs_e)                             );
-_PROTOTYPE( int req_getdir, (getdir_req_t *req, node_details_t *res)    );
 _PROTOTYPE( int req_link, (link_req_t *req)                             );
 _PROTOTYPE( int req_slink, (slink_req_t *req)                           );
 _PROTOTYPE( int req_rdlink, (rdlink_req_t *req)                         );
@@ -202,11 +210,17 @@ _PROTOTYPE( struct vmnt *get_free_vmnt, (short *index)                  );
 _PROTOTYPE( struct vmnt *find_vmnt, (int fs_e)                          );
 
 /* vnode.c */
-_PROTOTYPE( struct vnode *get_free_vnode, (void)                        );
+_PROTOTYPE( struct vnode *get_free_vnode, (char *file, int line)	);
 _PROTOTYPE( struct vnode *find_vnode, (int fs_e, int numb)              );
 _PROTOTYPE( void dup_vnode, (struct vnode *vp)                          );
 _PROTOTYPE( void put_vnode, (struct vnode *vp)                          );
+_PROTOTYPE( void vnode_clean_refs, (struct vnode *vp)                   );
 _PROTOTYPE( struct vnode *get_vnode, (int fs_e, int inode_nr)           );
+_PROTOTYPE( struct vnode *get_vnode_x, (int fs_e, int inode_nr)		);
+#if 0
+_PROTOTYPE( void mark_vn, (struct vnode *vp, char *file, int line)	);
+_PROTOTYPE( int check_vrefs, (void)					);
+#endif
 
 /* write.c */
 _PROTOTYPE( int do_write, (void)					);

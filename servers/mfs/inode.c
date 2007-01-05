@@ -27,6 +27,7 @@ FORWARD _PROTOTYPE( void old_icopy, (struct inode *rip, d1_inode *dip,
 						int direction, int norm));
 FORWARD _PROTOTYPE( void new_icopy, (struct inode *rip, d2_inode *dip,
 						int direction, int norm));
+FORWARD _PROTOTYPE( void put_inode2, (struct inode *rip, int count));
 
 
 /*===========================================================================*
@@ -37,6 +38,7 @@ PUBLIC int fs_putnode()
 /* Find the inode specified by the request message and decrease its counter.
  */
   struct inode *rip;
+  int count;
   
   /* Sanity check for the direct index */
   if (fs_m_in.REQ_INODE_INDEX >= 0 && 
@@ -50,10 +52,27 @@ PUBLIC int fs_putnode()
   }
 
   if (!rip)
+  {
       printf("FSput_inode: inode #%d dev: %d couldn't be put, req_nr: %d\n", 
             fs_m_in.REQ_INODE_NR, fs_dev, req_nr);
+	panic(__FILE__, "fs_putnode failed", NO_NUM);
+  }
 
-  put_inode(rip);
+  count= fs_m_in.REQ_COUNT;
+  if (count <= 0)
+  {
+	printf("put_inode: bad value for count: %d\n", count);
+	panic(__FILE__, "fs_putnode failed", NO_NUM);
+	return EINVAL;
+  }
+  if (count > rip->i_count)
+  {
+	printf("put_inode: count too high: %d > %d\n", count, rip->i_count);
+	panic(__FILE__, "fs_putnode failed", NO_NUM);
+	return EINVAL;
+  }
+
+  put_inode2(rip, count);
   return OK;
 }
 
@@ -80,6 +99,8 @@ PUBLIC int fs_getnode()
   fs_m_out.RES_MODE = rip->i_mode;
   fs_m_out.RES_FILE_SIZE = rip->i_size;
   fs_m_out.RES_DEV = (Dev_t) rip->i_zone[0];
+  fs_m_out.RES_UID = rip->i_uid;
+  fs_m_out.RES_GID = rip->i_gid;
 
   return OK;
 }
@@ -183,6 +204,10 @@ int numb;			/* inode number (ANSI: may not be unshort) */
   rip->i_count = 1;
   if (dev != NO_DEV) rw_inode(rip, READING);	/* get inode from disk */
   rip->i_update = 0;		/* all the times are initially up-to-date */
+  if ((rip->i_mode & I_TYPE) == I_NAMED_PIPE)
+	rip->i_pipe = I_PIPE;
+  else
+	rip->i_pipe = NO_PIPE;
 
   /* Add to hash */
   addhash_inode(rip);
@@ -240,7 +265,52 @@ register struct inode *rip;	/* pointer to inode to be released */
 		if (rip->i_pipe == I_PIPE) truncate_inode(rip, 0);
 	}
         rip->i_mount = NO_MOUNT;
-	rip->i_pipe = NO_PIPE;  /* should always be cleared */
+	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
+
+	if (rip->i_nlinks == 0) {
+		/* free, put at the front of the LRU list */
+		unhash_inode(rip);
+		rip->i_num = 0;
+		TAILQ_INSERT_HEAD(&unused_inodes, rip, i_unused);
+	}
+	else {
+		/* unused, put at the back of the LRU (cache it) */
+		TAILQ_INSERT_TAIL(&unused_inodes, rip, i_unused);
+	}
+  }
+}
+
+
+/*===========================================================================*
+ *				put_inode2				     *
+ *===========================================================================*/
+PRIVATE void put_inode2(rip, count)
+register struct inode *rip;	/* pointer to inode to be released */
+int count;
+{
+/* The caller is no longer using this inode.  If no one else is using it either
+ * write it back to the disk immediately.  If it has no links, truncate it and
+ * return it to the pool of available inodes.
+ */
+
+  if (rip == NIL_INODE) return;	/* checking here is easier than in caller */
+
+  if (rip->i_count < count)
+	panic(__FILE__, "put_inode2: bad value for count", count);
+  rip->i_count -= count;
+  if (rip->i_count == 0) {	/* i_count == 0 means no one is using it now */
+	if (rip->i_nlinks == 0) {
+		/* i_nlinks == 0 means free the inode. */
+		truncate_inode(rip, 0);	/* return all the disk blocks */
+		rip->i_mode = I_NOT_ALLOC;	/* clear I_TYPE field */
+		rip->i_dirt = DIRTY;
+		free_inode(rip->i_dev, rip->i_num);
+	} 
+        else {
+		if (rip->i_pipe == I_PIPE)
+			truncate_inode(rip, 0);
+	}
+        rip->i_mount = NO_MOUNT;
 	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
 
 	if (rip->i_nlinks == 0) {

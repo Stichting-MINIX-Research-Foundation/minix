@@ -57,7 +57,6 @@ PUBLIC int main()
 
   fs_init();
 
-
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
 	get_work();		/* sets who and call_nr */
@@ -86,6 +85,14 @@ PUBLIC int main()
 			/* Device notifies us of an event. */
 			dev_status(&m_in);
 		}
+#if 0
+		if (!check_vrefs())
+		{
+			printf("after call %d from %d/%d\n",
+				call_nr, who_p, who_e);
+			panic(__FILE__, "check_vrefs failed at line", __LINE__);
+		}
+#endif
 		continue;
 	}
 
@@ -119,6 +126,13 @@ PUBLIC int main()
 		if (error != SUSPEND) { reply(who_e, error); }
 		
 	}
+#if 0
+	if (!check_vrefs())
+	{
+		printf("after call %d from %d/%d\n", call_nr, who_p, who_e);
+		panic(__FILE__, "check_vrefs failed at line", __LINE__);
+	}
+#endif
   }
   return(OK);				/* shouldn't come here */
 }
@@ -261,8 +275,8 @@ PRIVATE void fs_init()
 	FD_ZERO(&(rfp->fp_filp_inuse));
   	if (rfp->fp_pid != PID_FREE) {
                 
-                rfp->fp_rd = get_vnode(ROOT_FS_E, ROOT_INODE);
-                rfp->fp_wd = get_vnode(ROOT_FS_E, ROOT_INODE);
+                rfp->fp_rd = get_vnode_x(ROOT_FS_E, ROOT_INODE);
+                rfp->fp_wd = get_vnode_x(ROOT_FS_E, ROOT_INODE);
 		
   	} else  rfp->fp_endpoint = NONE;
   }
@@ -308,7 +322,7 @@ PRIVATE void init_root()
   vmp = &vmnt[0];
  
   /* We'll need a vnode for the root inode, check whether there is one */
-  if ((root_node = get_free_vnode()) == NIL_VNODE) {
+  if ((root_node = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
 	panic(__FILE__,"Cannot get free vnode", r);
   }
   
@@ -344,7 +358,8 @@ PRIVATE void init_root()
   root_node->v_mode = sres.fmode;
   root_node->v_size = sres.fsize;
   root_node->v_sdev = NO_DEV;
-  root_node->v_count = 1;
+  root_node->v_fs_count = 0;	/* Is this correct? */
+  root_node->v_ref_count = 1;
 
   /* Fill in max file size and blocksize for the vmnt */
   vmp->m_fs_e = sres.fs_e;
@@ -360,6 +375,7 @@ PRIVATE void init_root()
 
   /* Root directory is mounted on itself */
   vmp->m_mounted_on = root_node;
+  root_node->v_ref_count++;
   vmp->m_root_node = root_node;
 }
 

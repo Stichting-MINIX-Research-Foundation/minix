@@ -110,6 +110,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   struct readsuper_req sreq;
   struct readsuper_res sres;
   struct lookup_req lookup_req;
+  node_req_t node_req;
   
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -131,13 +132,13 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   
   /* Get free vnode for the mountpoint */
-  if ((mounted_on = get_free_vnode()) == NIL_VNODE) {
+  if ((mounted_on = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
         printf("VFSmount: not free vnode available\n");
         return ENFILE;
   }
   
   /* Mark it as used so that we won't find the same for the root_node */
-  mounted_on->v_count = 1;
+  mounted_on->v_ref_count = 1;
   
   /* Convert name to device number */
   if ((dev = name_to_dev()) == NO_DEV) return(err_code);
@@ -145,7 +146,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* Check whether there is a block special file open which uses the 
    * same device (partition) */
   for (bspec = &vnode[0]; bspec < &vnode[NR_VNODES]; ++bspec) {
-      if (bspec->v_count > 0 && bspec->v_sdev == dev) {
+      if (bspec->v_ref_count > 0 && bspec->v_sdev == dev) {
           /* Found, sync the buffer cache */
           req_sync(bspec->v_fs_e);          
           break;
@@ -187,7 +188,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
            * vnodes are different or if the root of FS is equal two the
            * root of the filesystem we found, we found a filesystem that
            * is in use. */
-          mounted_on->v_count = 0;
+          mounted_on->v_ref_count = 0;
           return EBUSY;   /* already mounted */
       }
 
@@ -221,7 +222,8 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       mounted_on->v_mode = res.fmode;
       mounted_on->v_size = res.fsize;
       mounted_on->v_sdev = NO_DEV;
-      mounted_on->v_count = 1;
+      mounted_on->v_fs_count = 1;
+      mounted_on->v_ref_count = 1;
 
       /* Find the vmnt for the vnode */
       if ( (vmp2 = find_vmnt(mounted_on->v_fs_e)) == NIL_VMNT)
@@ -257,13 +259,13 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   }
 
   /* We'll need a vnode for the root inode, check whether there is one */
-  if ((root_node = get_free_vnode()) == NIL_VNODE) {
+  if ((root_node = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
         printf("VFSmount: no free vnode available\n");
         return ENFILE;
   }
   
   /* Set it back to zero so that if st goes wrong it won't be kept in use */
-  mounted_on->v_count = 0;
+  mounted_on->v_ref_count = 0;
   
   /* Fetch the name of the mountpoint */
   if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
@@ -300,13 +302,28 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       return r;
   }
 
+  /* Fill in request message fields.*/
+  node_req.fs_e = sres.fs_e;
+  node_req.inode_nr = sres.inode_nr;
+
+  /* Issue request */
+  if ((r = req_getnode(&node_req, &res)) != OK)
+  {
+	printf("mount: req_getnode failed: %d\n", r);
+        dev_close(dev);
+	return r;
+  }
+  
   /* Fill in root node's fields */
-  root_node->v_fs_e = sres.fs_e;
-  root_node->v_inode_nr = sres.inode_nr;
-  root_node->v_mode = sres.fmode;
-  root_node->v_size = sres.fsize;
+  root_node->v_fs_e = res.fs_e;
+  root_node->v_inode_nr = res.inode_nr;
+  root_node->v_mode = res.fmode;
+  root_node->v_uid = res.uid;
+  root_node->v_gid = res.gid;
+  root_node->v_size = res.fsize;
   root_node->v_sdev = NO_DEV;
-  root_node->v_count = 1;
+  root_node->v_fs_count = 2;
+  root_node->v_ref_count = 1;
 
   /* Fill in max file size and blocksize for the vmnt */
   vmp->m_fs_e = sres.fs_e;
@@ -326,6 +343,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       /* Superblock and root node already read. 
        * Nothing else can go wrong. Perform the mount. */
       vmp->m_root_node = root_node;
+      root_node->v_ref_count++;
       vmp->m_mounted_on = root_node;
       root_dev = dev;
       ROOT_FS_E = fs_e;
@@ -380,7 +398,8 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   mounted_on->v_mode = res.fmode;
   mounted_on->v_size = res.fsize;
   mounted_on->v_sdev = NO_DEV;
-  mounted_on->v_count = 1;
+  mounted_on->v_fs_count = 1;
+  mounted_on->v_ref_count = 1;
 
   /* Find the vmnt for the vnode */
   if ( (vmp2 = find_vmnt(mounted_on->v_fs_e)) == NIL_VMNT)
@@ -464,8 +483,8 @@ Dev_t dev;
    */
   count = 0;
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
-      if (vp->v_count > 0 && vp->v_dev == dev) {
-          count += vp->v_count;
+      if (vp->v_ref_count > 0 && vp->v_dev == dev) {
+          count += vp->v_ref_count;
       }
   }
 
@@ -473,6 +492,8 @@ Dev_t dev;
       printf("VFSunmount: %d filesystem is busy count: %d\n", dev, count);
       return(EBUSY);    /* can't umount a busy file system */
   }
+
+  vnode_clean_refs(vmp->m_root_node);
 
   /* Request FS the unmount */
   if ((r = req_unmount(vmp->m_fs_e)) != OK) return r;
@@ -509,10 +530,10 @@ Dev_t dev;
   /* Root device is mounted on itself */
   if (vmp->m_root_node != vmp->m_mounted_on) {
       put_vnode(vmp->m_mounted_on);
-      vmp->m_root_node->v_count = 0;
+      vmp->m_root_node->v_ref_count = 0;
   }
   else {
-      vmp->m_mounted_on->v_count--;
+      vmp->m_mounted_on->v_fs_count--;
   }
 
   fs_e = vmp->m_fs_e;

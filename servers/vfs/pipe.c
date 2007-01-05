@@ -59,7 +59,7 @@ PUBLIC int do_pipe()
   struct node_details res;
 
   /* See if a free vnode is available */
-  if ( (vp = get_free_vnode()) == NIL_VNODE) {
+  if ( (vp = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
       printf("VFS: no vnode available!\n");
       return err_code;
   }
@@ -105,7 +105,8 @@ PUBLIC int do_pipe()
   vp->v_mode = res.fmode;
   vp->v_index = res.inode_index;
   vp->v_pipe = I_PIPE;
-  vp->v_count = 2;              /* Double usage */
+  vp->v_fs_count = 2;           /* Double usage */
+  vp->v_ref_count = 2;          /* Double usage */
   vp->v_size = 0;
 
   if ( (vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT) {

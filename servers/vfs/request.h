@@ -142,17 +142,6 @@ typedef struct mkdir_req {
 } mkdir_req_t;
 
 
-/* Structure for REQ_STAT, REQ_FSTAT, REQ_FSTATFS requests */
-typedef struct stat_req {
-        int fs_e;
-        ino_t inode_nr;
-        uid_t uid;
-        gid_t gid;
-        int who_e;
-        char *buf;
-        int pos;
-} stat_req_t;
-
 /* Structure for REQ_UNLINK request */
 typedef struct unlink_req {
         int fs_e;
@@ -172,15 +161,6 @@ typedef struct utime_req {
         time_t actime;
         time_t modtime;
 } utime_req_t;
-
-
-/* Structure for REQ_GETDIR request */
-typedef struct getdir_req {
-	endpoint_t fs_e;
-	ino_t inode_nr;
-        uid_t uid;
-        gid_t gid;
-} getdir_req_t;
 
 
 /* Structure for REQ_LINK request */
@@ -294,6 +274,8 @@ typedef struct lookup_res {
 	ino_t inode_nr;
 	mode_t fmode;
 	off_t fsize;
+	uid_t uid;
+	gid_t gid;
 	/* For char/block special files */
 	dev_t dev;
 	
