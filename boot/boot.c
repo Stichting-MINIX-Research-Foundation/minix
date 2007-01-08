@@ -1369,6 +1369,9 @@ void boot_device(char *devname)
 
 void ctty(char *line)
 {
+	if (line == nil) {
+		serial_init(-1);
+	} else
 	if (between('0', line[0], '3') && line[1] == 0) {
 		serial_init(line[0] - '0');
 	} else {
@@ -1793,6 +1796,7 @@ void execute(void)
 		case R_HELP:	help();		ok= 1;	break;
 		case R_EXIT:	exit(0);
 		case R_OFF:	off();		ok= 1;	break;
+		case R_CTTY:	ctty(nil);	ok= 1;	break;
 		}
 
 		/* Command to check bootparams: */

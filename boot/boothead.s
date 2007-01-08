@@ -854,6 +854,9 @@ restore_video:			! To restore the video mode on exit
 _serial_init:
 	mov	bx, sp
 	mov	dx, 2(bx)	! Line number
+	mov	line, #0
+	test	dx, dx		! Off if line number < 0
+	js	0f
 	push	ds
 	xor	ax, ax
 	mov	ds, ax		! Vector and BIOS data segment
