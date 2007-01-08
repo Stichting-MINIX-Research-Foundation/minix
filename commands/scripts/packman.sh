@@ -1,5 +1,6 @@
 #!/bin/sh
 
+TAG=`uname -p`-`uname -r`.`uname -v`
 PACKDIR=`uname -p`/`uname -r`.`uname -v`
 RC=/usr/etc/rc.package
 CDDIR=PACKAGES
@@ -7,8 +8,8 @@ CDMP=/mnt
 CDPACK=${CDMP}/install/packages
 CDSRC=${CDMP}/install/package-sources
 SRC=/usr/src/commands
-LISTFILE=/etc/packages
-LISTURL=http://www.minix3.org/packages/List
+LISTFILE=/etc/packages-$TAG
+LISTURL=http://www.minix3.org/packages/$PACKDIR/List
 TMPDIR=/usr/tmp/packages
 mkdir -p $TMPDIR
 URL1=http://www.minix3.org/packages/$PACKDIR
@@ -133,7 +134,7 @@ then	if [ -f $LISTFILE ]
 		y=y
 	fi
 	if [ "$y" != n -a "$y" != n ]
-	then	echo "Fetching package list."
+	then	echo "Fetching package list from $LISTURL."
 		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
 	fi
 	netpackages=$LISTFILE
