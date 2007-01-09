@@ -23,7 +23,6 @@ SUBDIRS="ansi \
 	sysutil \
 	timers \
 	$ARCH \
-	zlib-1.2.3 \
 	ack
 	gnu"
 	

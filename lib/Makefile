@@ -51,8 +51,6 @@ all-ack: makefiles
 	cd timers && $(MAKE) $@
 	mkdir -p obj-ack//./i386
 	cd i386 && $(MAKE) $@
-	mkdir -p obj-ack//./zlib-1.2.3
-	cd zlib-1.2.3 && $(MAKE) $@
 	mkdir -p obj-ack//./ack
 	cd ack && $(MAKE) $@
 	mkdir -p obj-ack//./gnu
@@ -93,8 +91,6 @@ all-gnu: makefiles
 	cd timers && $(MAKE) $@
 	mkdir -p obj-gnu/./i386
 	cd i386 && $(MAKE) $@
-	mkdir -p obj-gnu/./zlib-1.2.3
-	cd zlib-1.2.3 && $(MAKE) $@
 	mkdir -p obj-gnu/./ack
 	cd ack && $(MAKE) $@
 	mkdir -p obj-gnu/./gnu
@@ -118,7 +114,6 @@ clean depend depend-ack depend-gnu:: makefiles
 	cd sysutil && $(MAKE) $@
 	cd timers && $(MAKE) $@
 	cd i386 && $(MAKE) $@
-	cd zlib-1.2.3 && $(MAKE) $@
 	cd ack && $(MAKE) $@
 	cd gnu && $(MAKE) $@
 
@@ -139,7 +134,6 @@ makefiles: util/Makefile
 makefiles: sysutil/Makefile
 makefiles: timers/Makefile
 makefiles: i386/Makefile
-makefiles: zlib-1.2.3/Makefile
 makefiles: ack/Makefile
 makefiles: gnu/Makefile
 
@@ -177,8 +171,6 @@ timers/Makefile: timers/Makefile.in
 	cd timers && sh ../generate.sh ./timers ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 i386/Makefile: i386/Makefile.in
 	cd i386 && sh ../generate.sh ./i386 ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
-zlib-1.2.3/Makefile: zlib-1.2.3/Makefile.in
-	cd zlib-1.2.3 && sh ../generate.sh ./zlib-1.2.3 ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 ack/Makefile: ack/Makefile.in
 	cd ack && sh ../generate.sh ./ack ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 gnu/Makefile: gnu/Makefile.in
@@ -191,10 +183,10 @@ clean::
 install: install-ack
 
 install-ack: all-ack
-	install -o bin obj-ack//*.[ao] /usr/lib/i386
+	cp obj-ack//*.[ao] /usr/lib/i386
 
 install-gnu: all-gnu
-	install -o bin obj-gnu/*.[ao] /usr/gnu/lib
+	cp obj-gnu/*.[ao] /usr/gnu/lib
 
 include Makedepend-ack
 include .depend-ack
