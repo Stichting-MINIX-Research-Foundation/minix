@@ -127,13 +127,9 @@ rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
 
 netpackages=""
 if ( : </dev/tcp ) 2>/dev/null
-then	if [ -f $LISTFILE ]
-	then	echo -n "Update package list from network? (Y/n) "
-		read y
-	else	echo "No package list found - retrieving initial version."
-		y=y
-	fi
-	if [ "$y" != n -a "$y" != n ]
+then	echo -n "Update package list from network? (Y/n) "
+	read y
+	if [ "$y" != n -a "$y" != N ]
 	then	echo "Fetching package list from $LISTURL."
 		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
 	fi
