@@ -39,6 +39,7 @@
 
 #include "../drivers.h"
 #include <sys/ioc_disk.h>
+#include <minix/mq.h>
 #include "driver.h"
 
 #if (CHIP == INTEL)
@@ -68,6 +69,7 @@ FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp, int safe) );
 FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp, int safe) );
 
 int device_caller;
+PRIVATE mq_t *queue_head = NULL;
 
 /*===========================================================================*
  *				driver_task				     *
@@ -80,6 +82,9 @@ struct driver *dp;	/* Device dependent entry points. */
   int r, proc_nr;
   message mess;
 
+  /* Init MQ library. */
+  mq_init();
+
   /* Get a DMA buffer. */
   init_buffer();
 
@@ -87,9 +92,19 @@ struct driver *dp;	/* Device dependent entry points. */
    * it out, and sends a reply.
    */
   while (TRUE) {
-
-	/* Wait for a request to read or write a disk block. */
-	if (receive(ANY, &mess) != OK) continue;
+	/* Any queued messages? Oldest are at the head. */
+	if(queue_head) {
+		mq_t *mq;
+		mq = queue_head;
+		memcpy(&mess, &mq->mq_mess, sizeof(mess));
+		queue_head = queue_head->mq_next;
+		mq_free(mq);
+	} else {
+		int s;
+		/* Wait for a request to read or write a disk block. */
+		if ((s=receive(ANY, &mess)) != OK)
+        		panic((*dp->dr_name)(),"receive() failed", s);
+	}
 
 	device_caller = mess.m_source;
 	proc_nr = mess.IO_ENDPT;
@@ -427,3 +442,26 @@ int safe;			/* addresses or grants? */
   }
   return(OK);
 }
+
+/*===========================================================================*
+ *				mq_queue				     *
+ *===========================================================================*/
+PUBLIC int mq_queue(message *m)
+{
+	mq_t *mq, *mi;
+
+	if(!(mq = mq_get()))
+        	panic("libdriver","mq_queue: mq_get failed", NO_NUM);
+	memcpy(&mq->mq_mess, m, sizeof(mq->mq_mess));
+	mq->mq_next = NULL;
+	if(!queue_head) {
+		queue_head = mq;
+	} else {
+		for(mi = queue_head; mi->mq_next; mi = mi->mq_next)
+			;
+		mi->mq_next = mq;
+	}
+
+	return OK;
+}
+

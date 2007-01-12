@@ -13,21 +13,16 @@ d = ..
 MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i
-LIBS = -lsysutil  -lsys
+LDFLAGS = -i -L../libdriver
+LIBS = -lsysutil -ldriver -lsys 
 
 OBJ = main.o random.o sha2.o aes/rijndael_api.o aes/rijndael_alg.o
-LIBDRIVER = $d/libdriver/driver.o
-
 
 # build local binary
 all build:	$(DRIVER)
-$(DRIVER):	$(OBJ) $(LIBDRIVER)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
+$(DRIVER):	$(OBJ)
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 8k $(DRIVER)
-
-$(LIBDRIVER): 
-	cd $d/libdriver && $(MAKE) 
 
 aes/rijndael_api.o:
 	$(CC) -c -o $@ aes/rijndael_api.c

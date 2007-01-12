@@ -74,6 +74,7 @@ _PROTOTYPE( int nop_cancel, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int nop_select, (struct driver *dp, message *m_ptr) );
 _PROTOTYPE( int do_diocntl, (struct driver *dp, message *m_ptr, int safe) );
 _PROTOTYPE( int nop_ioctl, (struct driver *dp, message *m_ptr, int safe) );
+_PROTOTYPE( int mq_queue, (message *m_ptr) );
 
 /* Parameters for the disk drive. */
 #define SECTOR_SIZE      512	/* physical sector size in bytes */

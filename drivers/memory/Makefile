@@ -13,8 +13,8 @@ d = ..
 MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i
-LDFLAGS = -i
-LIBS =  -lsysutil -lsys
+LDFLAGS = -i -L../libdriver
+LIBS =  -lsysutil -ldriver -lsys
 
 # imgrd_s.s is the ACK assembler version of the ramdisk. For more portability,
 # use the C version imgrd.c. However, the C compiler takes too much memory
@@ -23,23 +23,18 @@ IMGRD=imgrd_s.o
 #IMGRD=imgrd.c
 
 OBJ = memory.o allocmem.o $(IMGRD)
-LIBDRIVER = $d/libdriver/driver.o
-
 
 # build local binary
 all build:	$(DRIVER)
 
-$(DRIVER):	ramdisk_image $(OBJ) $(LIBDRIVER)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
+$(DRIVER):	ramdisk_image $(OBJ)
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 8k $(DRIVER)
 
 imgrd.o:        ramdisk/image.c
 
 imgrd_s.o:      ramdisk/image.s
 	TMPDIR=/usr/tmp $(CC) -T /usr/tmp -c imgrd_s.s
-
-$(LIBDRIVER): 
-	cd $d/libdriver && $(MAKE) 
 
 ramdisk_image:
 	cd ramdisk && make

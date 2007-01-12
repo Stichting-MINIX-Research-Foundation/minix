@@ -13,22 +13,16 @@ d = ..
 MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i
-LIBS = -lsysutil -lsys
+LDFLAGS = -i -L../libdriver
+LIBS = -lsysutil -lsys -ldriver
 
 OBJ = cmos.o 
-LIBDRIVER = $d/libdriver/driver.o
-
 
 # build local binary
 all build:	$(DRIVER) 
-$(DRIVER):	$(OBJ) $(LIBDRIVER) 
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBDRIVER) $(LIBS)
+$(DRIVER):	$(OBJ)
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 8k $(DRIVER)
-
-$(LIBDRIVER): 
-	cd $d/libdriver && $(MAKE) 
-
 
 # install with other drivers
 install:	/sbin/$(DRIVER)

@@ -1925,28 +1925,36 @@ PRIVATE void w_intr_wait()
   message m;
 
   if (w_wn->irq != NO_IRQ) {
-	/* Wait for an interrupt that sets w_status to "not busy". */
+	/* Wait for an interrupt that sets w_status to "not busy".
+	 * (w_timeout() also clears w_status.)
+	 */
 	while (w_wn->w_status & (STATUS_ADMBSY|STATUS_BSY)) {
 		int rr;
-		if((rr=receive(HARDWARE, &m)) != OK) { /* expect HARD_INT message */
-			printf("w_intr_wait: receive from ANY failed (%d)\n",
-				r);
-			continue;	/* try again */
+		if((rr=receive(ANY, &m)) != OK)
+			panic("at_wini", "receive(ANY) failed", rr);
+		switch(m.m_type) {
+		  case SYN_ALARM:
+			/* Timeout. */
+			w_timeout();	      /* a.o. set w_status */
+			break;
+		  case HARD_INT:
+			/* Interrupt. */
+			r= sys_inb(w_wn->base_cmd + REG_STATUS, &w_status);
+			if (r != 0)
+				panic("at_wini", "sys_inb failed", r);
+			w_wn->w_status= w_status;
+			ack_irqs(m.NOTIFY_ARG);
+			break;
+		  case DEV_PING:
+			/* RS monitor ping. */
+			notify(m.m_source);
+			break;
+		  default:
+			/* unhandled message.
+			 * queue it and handle it in the libdriver loop.
+			 */
+			mq_queue(&m);
 		}
-		if (m.m_type == SYN_ALARM) { 	/* but check for timeout */
-		    w_timeout();		/* a.o. set w_status */
-		} else if (m.m_type == HARD_INT) {
-		    r= sys_inb(w_wn->base_cmd + REG_STATUS, &w_status);
-		    if (r != 0)
-			panic("at_wini", "sys_inb failed", r);
-		    w_wn->w_status= w_status;
-		    ack_irqs(m.NOTIFY_ARG);
-		} else if (m.m_type == DEV_PING) {
-		    notify(m.m_source);
-	        } else {
-	        	printf("AT_WINI got unexpected message %d from %d\n",
-	        		m.m_type, m.m_source);
-	        }
 	}
   } else {
 	/* Interrupt not yet allocated; use polling. */
@@ -2563,4 +2571,6 @@ PRIVATE int atapi_intr_wait()
   wn->w_status |= STATUS_ADMBSY;	/* Assume not done yet. */
   return(r);
 }
+
 #endif /* ENABLE_ATAPI */
+

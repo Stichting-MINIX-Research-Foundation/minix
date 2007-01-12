@@ -12,15 +12,19 @@ CC = exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
 LIBS = -lsysutil -lsys
+LIB = libdriver.a
 
-OBJECTS = driver.o drvlib.o
+OBJECTS = driver.o drvlib.o mq.o
 
-all build install: $(OBJECTS)	
+all build install: $(LIB)
+
+$(LIB): $(OBJECTS)	
+	ar rc $(LIB) $(OBJECTS)
 
 # $(CC) -c $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
 clean:
-	rm -f *.o *.bak 
+	rm -f *.o *.bak *.a
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
