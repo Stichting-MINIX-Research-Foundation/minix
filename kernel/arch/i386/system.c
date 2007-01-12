@@ -89,7 +89,7 @@ PUBLIC void arch_stop_profile_clock(void)
   outb(RTC_INDEX, RTC_REG_B);
   r = inb(RTC_IO);
   outb(RTC_INDEX, RTC_REG_B);  
-  outb(RTC_IO, r & !RTC_B_PIE);
+  outb(RTC_IO, r & ~RTC_B_PIE);
 }
 
 PUBLIC void arch_ack_profile_clock(void)
