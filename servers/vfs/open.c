@@ -235,8 +235,10 @@ PRIVATE int common_open(register int oflags, mode_t omode)
       case I_BLOCK_SPECIAL:
           /* Invoke the driver for special processing. */
           r = dev_open(vp->v_sdev, who_e, bits | (oflags & ~O_ACCMODE));
+#if 0
 	  if (r != OK)
 		panic(__FILE__, "common_open: dev_open failed", r);
+#endif
           
           /* Check whether the device is mounted or not */
           found = 0;
