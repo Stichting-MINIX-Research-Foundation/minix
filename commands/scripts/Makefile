@@ -38,6 +38,7 @@ usr:	\
 	/usr/bin/makewhatis \
 	/usr/bin/mkdep \
 	/usr/bin/mkdist \
+	/bin/readclock \
 	/bin/setup \
 	/usr/bin/binsizes \
 	/usr/bin/rotate \
@@ -131,6 +132,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/rotate:	rotate.sh
+	install -m 755 -c -o bin $? $@
+
+/bin/readclock:	readclock.sh
 	install -m 755 -c -o bin $? $@
 
 /bin/setup:	setup.sh

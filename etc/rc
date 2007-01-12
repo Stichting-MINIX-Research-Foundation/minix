@@ -49,7 +49,6 @@ start)
     test -f /etc/keymap && loadkeys /etc/keymap
 
     up is -period 5HZ
-    up cmos -dev /dev/cmos -period 5HZ
     echo .
 
     # Set timezone.

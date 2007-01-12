@@ -20,7 +20,6 @@ ALL	= \
 	partition \
 	playwave \
 	postmort \
-	readclock \
 	recwave \
 	repartition \
 	screendump \
@@ -76,10 +75,6 @@ postmort:	postmort.c
 	$(CCLD) -o $@ $?
 	install -S 4kw $@
 
-readclock:	readclock.c
-	$(CCLD) -o $@ $?
-	install -S 4kw $@
-
 recwave:	recwave.c
 	$(CCLD) -o $@ $?
 	install -S 16kw $@
@@ -111,13 +106,11 @@ install:	\
 	/usr/bin/partition \
 	/usr/bin/playwave \
 	/usr/bin/postmort \
-	/usr/bin/readclock \
 	/usr/bin/recwave \
 	/usr/bin/repartition \
 	/usr/bin/screendump \
 	/usr/bin/sdump \
 	/bin/loadkeys \
-	/bin/readclock \
 
 /usr/bin/atnormalize:	atnormalize
 	install -cs -o bin $? $@
@@ -158,9 +151,6 @@ install:	\
 /usr/bin/postmort:	postmort
 	install -cs -o bin $? $@
 
-/usr/bin/readclock:	readclock
-	install -cs -o bin $? $@
-
 /usr/bin/recwave:	recwave
 	install -cs -o bin $? $@
 
@@ -174,9 +164,6 @@ install:	\
 	install -cs -o bin $? $@
 
 /bin/loadkeys:	/usr/bin/loadkeys
-	install -lcs $? $@
-
-/bin/readclock:	/usr/bin/readclock
 	install -lcs $? $@
 
 clean:

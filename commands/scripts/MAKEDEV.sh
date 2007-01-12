@@ -19,7 +19,7 @@ case $#:$1 in
 	ttypa ttypb ttypc ttypd ttype ttypf \
 	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9 \
 	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf \
-	eth klog random cmos rescue
+	eth klog random rescue
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -41,7 +41,6 @@ Where key is one of the following:
   audio mixer		  # Make audio devices
   klog                    # Make /dev/klog
   random                  # Make /dev/random, /dev/urandom
-  cmos                    # Make /dev/cmos
   kbd                     # Make /dev/kbd
   kbdaux                  # Make /dev/kbdaux
   rescue                  # Make /dev/rescue
@@ -242,11 +241,6 @@ do
 	$e mknod random c 16 0;	$e chmod 644 random
 	$e mknod urandom c 16 0; $e chmod 644 urandom
 	$e chgrp operator random urandom
-	;;
-    cmos)
-    	# cmos device (set/get system time).
-    	$e mknod cmos c 17 0
-	$e chmod 600 cmos
 	;;
     rescue)
     	# rescue device

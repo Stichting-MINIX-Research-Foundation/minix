@@ -1,25 +1,17 @@
-# Makefile for the CMOS driver 
-DRIVER = cmos
-
-# directories
-u = /usr
-i = $u/include
-s = $i/sys
-m = $i/minix
-b = $i/ibm
-d = ..
+# Makefile for readclock 'driver'
+DRIVER = readclock.drv
 
 # programs, flags, etc.
 MAKE = exec make
 CC =	exec cc
-CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i -L../libdriver
-LIBS = -lsysutil -lsys -ldriver
+CFLAGS=-D_MINIX=1 -D_POSIX_SOURCE=1 -D_SYSTEM=1
+LDFLAGS = -i
+LIBS = -lsysutil -lsys
 
-OBJ = cmos.o 
+OBJ = readclock.o 
 
 # build local binary
-all build:	$(DRIVER) 
+all build:	$(DRIVER)
 $(DRIVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 8k $(DRIVER)
@@ -33,9 +25,8 @@ install:	/sbin/$(DRIVER)
 clean:
 	rm -f $(DRIVER) *.o *.bak 
 
-
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c ../libdriver/*.c > .depend
+	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 # Include generated dependencies.
 include .depend
