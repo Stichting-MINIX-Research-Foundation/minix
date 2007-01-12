@@ -35,8 +35,9 @@
 
 #undef EXTERN
 #define EXTERN			/* get rid of EXTERN by making it null */
-#include "../../servers/mfs/type.h"
 #include "../../servers/mfs/super.h"
+#include "../../servers/mfs/type.h"
+#include "../../servers/mfs/inode.h"
 #include <minix/fslib.h>
 
 #ifndef max
@@ -493,7 +494,7 @@ ino_t inodes;
 		sup->s_magic = SUPER_V3;
   		sup->s_block_size = block_size;
   		sup->s_disk_version = 0;
-#define MAX_MAX_SIZE 	((unsigned long) 0xffffffff)
+#define MAX_MAX_SIZE 	((unsigned long) LONG_MAX)
   		if(MAX_MAX_SIZE/block_size < zo) {
 	  		sup->s_max_size = MAX_MAX_SIZE;
   		}
