@@ -776,9 +776,9 @@ bit_nr phys;
 		*report = 0;
 	else if (*report)
 		if ((w1 & 1) && !(w2 & 1))
-			printf("%s %ld (%ld) is missing\n", type, bit, phys);
+			printf("%s %ld is missing\n", type, bit);
 		else if (!(w1 & 1) && (w2 & 1))
-			printf("%s %ld (%ld) is not free\n", type, bit, phys);
+			printf("%s %ld is not free\n", type, bit);
 }
 
 /* Check if the given (correct) bitmap is identical with the one that is
