@@ -72,9 +72,18 @@ PUBLIC int do_mount()
 {
   endpoint_t fs_e; 
   int r;
+
+  /* Only the super-user may do MOUNT. */
+  if (!super_user) return(EPERM);
 	
   /* FS process' endpoint number */ 
   fs_e = (unsigned long)m_in.m1_p3;
+
+  /* Sanity check on process number. */
+  if(fs_e <= 0) {
+	printf("vfs: warning: got process number %d for mount call.\n", fs_e);
+	return EINVAL;
+  }
 
   /* Do the actual job */
   r = mount_fs(fs_e);
@@ -123,10 +132,10 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   
   /* Mount request got after FS login or 
    * FS login arrived after a suspended mount */
-  last_login_fs_e = 0;
+  last_login_fs_e = NONE;
   
   /* Clear endpoint field */
-  mount_m_in.m1_p3 = 0;
+  mount_m_in.m1_p3 = (char *) NONE;
 
   /* If 'name' is not for a block special file, return error. */
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
@@ -466,17 +475,22 @@ PUBLIC int unmount(dev)
 Dev_t dev;
 {
   struct vnode *vp;
-  struct vmnt *vmp;
+  struct vmnt *vmp_i = NULL, *vmp = NULL;
   struct dmap *dp;
   int count, r;
   int fs_e;
 
   /* Find vmnt */
-  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
-      if (vmp->m_dev == dev) break;
-      else if (vmp == &vmnt[NR_MNTS])
-          return EINVAL;
+  for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
+      if (vmp->m_dev == dev) {
+	if(vmp) panic(__FILE__, "device mounted more than once", dev);
+	vmp = vmp_i;
+      }
   }
+
+  /* Device mounted? */
+  if(!vmp)
+	return EINVAL;
 
   /* See if the mounted device is busy.  Only 1 vnode using it should be
    * open -- the root vnode -- and that inode only 1 time.
@@ -496,6 +510,8 @@ Dev_t dev;
   vnode_clean_refs(vmp->m_root_node);
 
   /* Request FS the unmount */
+  if(vmp->m_fs_e <= 0)
+	panic(__FILE__, "unmount: strange fs endpoint", vmp->m_fs_e);
   if ((r = req_unmount(vmp->m_fs_e)) != OK) return r;
 
   /* Close the device the file system lives on. */
@@ -541,8 +557,8 @@ Dev_t dev;
   vmp->m_root_node = NIL_VNODE;
   vmp->m_mounted_on = NIL_VNODE;
   vmp->m_dev = NO_DEV;
-  vmp->m_fs_e = 0;
-  vmp->m_driver_e = 0;
+  vmp->m_fs_e = NONE;
+  vmp->m_driver_e = NONE;
 
   /* Ask RS to bring down FS */
   if (-1 == fs_exit(fs_e)) {

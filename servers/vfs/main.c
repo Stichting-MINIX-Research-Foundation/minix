@@ -222,8 +222,8 @@ PRIVATE void fs_init()
   int s;
 
   /* Clear endpoint field */
-  last_login_fs_e = 0;
-  mount_m_in.m1_p3 = 0;
+  last_login_fs_e = NONE;
+  mount_m_in.m1_p3 = (char *) NONE;
 
   /* Initialize the process table with help of the process manager messages. 
    * Expect one message for each system process with its slot number and pid. 
@@ -313,7 +313,7 @@ PRIVATE void init_root()
 		  panic(__FILE__, "Error receiving login request from root filesystem\n", ROOT_FS_E);
 	  }
   }
-  last_login_fs_e = 0;
+  last_login_fs_e = NONE;
   
   /* Initialize vmnt table */
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp)

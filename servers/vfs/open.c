@@ -150,7 +150,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 		r= OK;
 	else
 	{
-		printf("common_open: / in pathrem");
+		printf("common_open: / in pathrem\n");
 	}
   }
 

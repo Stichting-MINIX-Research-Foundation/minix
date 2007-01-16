@@ -133,7 +133,6 @@ _PROTOTYPE( int do_getdents, (void)					);
 _PROTOTYPE( int read_write, (int rw_flag)				);
 
 /* request.c */
-_PROTOTYPE( int fs_sendrec, (endpoint_t fs_e, message *reqm)            );
 _PROTOTYPE( int req_getnode, (node_req_t *req, node_details_t *res)     );
 _PROTOTYPE( int req_putnode, (int fs_e, ino_t inode_nr, int count)	);
 _PROTOTYPE( int req_open, (open_req_t *req, node_details_t *res)        ); 

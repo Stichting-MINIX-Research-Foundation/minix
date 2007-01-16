@@ -28,6 +28,7 @@
 #include "vnode.h"
 #include "param.h"
 
+FORWARD _PROTOTYPE(int fs_sendrec, (endpoint_t fs_e, message *reqm));
 
 /*===========================================================================*
  *				req_getnode				     *
@@ -954,7 +955,7 @@ _t *res;
 /*===========================================================================*
  *				fs_sendrec				     *
  *===========================================================================*/
-PUBLIC int fs_sendrec(endpoint_t fs_e, message *reqm)
+PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
 {
 /* This is the low level function that sends requests to FS processes.
  * It also handles driver recovery mechanism and reissuing the
