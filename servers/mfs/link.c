@@ -45,7 +45,7 @@ PUBLIC int fs_link()
   /* Copy the link name's last component */
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
           SELF, (vir_bytes) string, 
-          (phys_bytes) fs_m_in.REQ_PATH_LEN);
+          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
   
   /* Temporarily open the file. */
   if ( (rip = get_inode(fs_dev, fs_m_in.REQ_LINKED_FILE)) == NIL_INODE) {
@@ -124,7 +124,7 @@ PUBLIC int fs_unlink()
   /* Copy the last component */
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
           SELF, (vir_bytes) string, 
-          (phys_bytes) fs_m_in.REQ_PATH_LEN);
+          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
 
   if (r != OK) return r;
   
@@ -305,7 +305,7 @@ PUBLIC int fs_rename()
   /* Copy the last component of the old name */
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
           SELF, (vir_bytes) old_name, 
-          (phys_bytes) fs_m_in.REQ_PATH_LEN);
+          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(old_name)));
   if (r != OK) return r;
   
   /* Copy the last component of the new name */

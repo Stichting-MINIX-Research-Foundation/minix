@@ -106,3 +106,5 @@
 #define V2_INODE_SIZE             usizeof (d2_inode)  /* bytes in V2 dsk ino */
 #define V2_INDIRECTS(b)   ((b)/V2_ZONE_NUM_SIZE)  /* # zones/indir block */
 #define V2_INODES_PER_BLOCK(b) ((b)/V2_INODE_SIZE)/* # V2 dsk inodes/blk */
+
+#define MFS_MIN(a,b) mfs_min_f(__FILE__,__LINE__,(a), (b))

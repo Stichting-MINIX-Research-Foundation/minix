@@ -50,7 +50,9 @@ PUBLIC int fs_open()
   if (oflags & O_CREAT) {
 	  /* Copy the last component */
 	  err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, 
-		  SELF, (vir_bytes) lastc, (phys_bytes) fs_m_in.REQ_PATH_LEN);
+		  SELF, (vir_bytes) lastc,
+			(phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN,
+				sizeof(lastc)));
 
 	  if (err_code != OK) return err_code;
 
@@ -164,7 +166,7 @@ PUBLIC int fs_create()
 
   /* Copy the last component */
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, 
-	SELF, (vir_bytes) lastc, (phys_bytes) fs_m_in.REQ_PATH_LEN);
+	SELF, (vir_bytes) lastc, (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc)));
 
   if (err_code != OK) return err_code;
 
@@ -213,7 +215,8 @@ PUBLIC int fs_mknod()
 
   /* Copy the last component and set up caller's user and group id */
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, SELF, 
-            (vir_bytes) lastc, (phys_bytes) fs_m_in.REQ_PATH_LEN);
+            (vir_bytes) lastc,
+	    (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc)));
 
   if (err_code != OK) return err_code;
   
@@ -248,7 +251,7 @@ PUBLIC int fs_mkdir()
   /* Copy the last component and set up caller's user and group id */
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, SELF, 
             (vir_bytes) lastc, (phys_bytes) 
-	    MIN(fs_m_in.REQ_PATH_LEN, NAME_MAX));
+	    MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc)));
 
   if (err_code != OK) return err_code;
   
@@ -323,7 +326,7 @@ PUBLIC int fs_slink()
   /* Copy the link name's last component */
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
           SELF, (vir_bytes) string, 
-          (phys_bytes) fs_m_in.REQ_PATH_LEN);
+          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
   
   if (r != OK) return r;
   

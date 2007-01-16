@@ -193,20 +193,3 @@ _PROTOTYPE( struct buf *new_block, (struct inode *rip, off_t position)	);
 _PROTOTYPE( void zero_block, (struct buf *bp)				);
 _PROTOTYPE( int write_map, (struct inode *, off_t, zone_t, int)		);
 
-/* select.c */
-_PROTOTYPE( int do_select, (void)					);
-_PROTOTYPE( int select_callback, (struct filp *, int ops)		);
-_PROTOTYPE( void select_forget, (int fproc)				);
-_PROTOTYPE( void select_timeout_check, (timer_t *)			);
-_PROTOTYPE( void init_select, (void)					);
-_PROTOTYPE( void select_unsuspend_by_endpt, (int proc)			);
-_PROTOTYPE( int select_notified, (int major, int minor, int ops)	);
-
-/* timers.c */
-_PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta, tmr_func_t watchdog, int arg));
-_PROTOTYPE( void fs_expire_timers, (clock_t now)			);
-_PROTOTYPE( void fs_cancel_timer, (timer_t *tp)				);
-_PROTOTYPE( void fs_init_timer, (timer_t *tp)				);
-
-/* cdprobe.c */
-_PROTOTYPE( int cdprobe, (void)						);

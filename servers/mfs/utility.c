@@ -90,4 +90,10 @@ PUBLIC time_t clock_time()
   return( (time_t) (boottime + (uptime/HZ)));
 }
 
-
+int mfs_min_f(char *file, int line, int v1, int v2)
+{
+	if(v2 >= v1) return v1;
+	printf("mfs:%s:%d: truncated %d to %d\n",
+		file, line, v1, v2);
+	return v2;
+}

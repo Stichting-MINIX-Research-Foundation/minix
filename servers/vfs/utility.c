@@ -35,6 +35,10 @@ int flag;			/* M3 means path may be in message */
   register char *rpu, *rpm;
   int r;
 
+  if(len >= sizeof(user_fullpath)) {
+	panic(__FILE__, "fetch_name: len too much for user_fullpath", len);
+  }
+
   /* Check name length for validity. */
   if (len <= 0) {
 	err_code = EINVAL;
@@ -56,6 +60,16 @@ int flag;			/* M3 means path may be in message */
 	/* String is not contained in the message.  Get it from user space. */
 	r = sys_datacopy(who_e, (vir_bytes) path,
 		FS_PROC_NR, (vir_bytes) user_fullpath, (phys_bytes) len);
+  }
+
+  if(user_fullpath[len-1] != '\0') {
+	int i;
+	printf("fetch_name: name not null-terminated: ");
+	for(i = 0; i < len; i++) {
+		printf("%c", user_fullpath[i]);
+	}
+	printf("\n");
+	user_fullpath[len-1] = '\0';
   }
 
   return(r);

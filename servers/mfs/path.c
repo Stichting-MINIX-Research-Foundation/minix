@@ -34,7 +34,7 @@ FORWARD _PROTOTYPE( int ltraverse, (struct inode *rip, char *path,
  *===========================================================================*/
 PUBLIC int lookup()
 {
-  char string[NAME_MAX];
+  char string[PATH_MAX];
   struct inode *rip;
   int s_error, flags;
 
@@ -42,7 +42,8 @@ PUBLIC int lookup()
   
   /* Copy the pathname and set up caller's user and group id */
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, SELF, 
-            (vir_bytes) user_path, (phys_bytes) fs_m_in.REQ_PATH_LEN);
+            (vir_bytes) user_path,
+	(phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
 
   if (err_code != OK) return err_code;
 
@@ -60,7 +61,7 @@ PUBLIC int lookup()
   if (err_code != OK || (flags & PATH_PENULTIMATE)) {
       	s_error = sys_datacopy(SELF_E, (vir_bytes) string, FS_PROC_NR, 
               (vir_bytes) fs_m_in.REQ_USER_ADDR, (phys_bytes) 
-              MIN(strlen(string)+1, NAME_MAX));
+              MFS_MIN(strlen(string)+1, NAME_MAX));
       if (s_error != OK) return s_error;
   }
 
@@ -622,7 +623,7 @@ int flag;			 /* LOOK_UP, ENTER, DELETE or IS_EMPTY */
 
   /* 'bp' now points to a directory block with space. 'dp' points to slot. */
   (void) memset(dp->d_name, 0, (size_t) NAME_MAX); /* clear entry */
-  for (i = 0; string[i] && i < NAME_MAX; i++) dp->d_name[i] = string[i];
+  for (i = 0; i < NAME_MAX && string[i]; i++) dp->d_name[i] = string[i];
   sp = ldir_ptr->i_sp; 
   dp->d_ino = conv4(sp->s_native, (int) *numb);
   bp->b_dirt = DIRTY;
@@ -668,3 +669,4 @@ char string[NAME_MAX];         /* the final component is returned here */
   
   return parse_path(path, string, LAST_DIR);
 }
+
