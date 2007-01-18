@@ -107,6 +107,7 @@ PRIVATE struct pcitab
 } pcitab[]=
 {
 	{ 0x10ec, 0x8139, 0 },		/* Realtek RTL8139 */
+	{ 0x1113, 0x1211, 0 },		/* Accton SMC2-1211TX */
 	{ 0x1186, 0x1300, 0 },		/* D-Link RTL8139 */
 
 	{ 0x0000, 0x0000, 0 }
