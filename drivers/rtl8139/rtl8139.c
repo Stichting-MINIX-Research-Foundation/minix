@@ -106,9 +106,25 @@ PRIVATE struct pcitab
 	int checkclass;
 } pcitab[]=
 {
-	{ 0x10ec, 0x8139, 0 },		/* Realtek RTL8139 */
-	{ 0x1113, 0x1211, 0 },		/* Accton SMC2-1211TX */
-	{ 0x1186, 0x1300, 0 },		/* D-Link RTL8139 */
+	{ 0x10ec, 0x8139, 0 },	/* Realtek RTL8139 */
+
+	/* Alternative IDs */
+	{ 0x02ac, 0x1012, 0 },	/* SpeedStream 1012 PCMCIA 10/100 */
+	{ 0x1065, 0x8139, 0 },	/* Texas Microsystems 8139C Network Card */
+	{ 0x1113, 0x1211, 0 },	/* Accton MPX5030 or SMC1211TX EZCard 10/100 */
+	{ 0x1186, 0x1300, 0 },	/* D-Link DFE530TX+/DFE538TX */
+	{ 0x1186, 0x1340, 0 },	/* D-Link DFE690TXD */
+	{ 0x11db, 0x1234, 0 },	/* Sega Dreamcast HIT-400 */
+	{ 0x1259, 0xa117, 0 },	/* Allied Telesyn 8139 */
+	{ 0x1259, 0xa11e, 0 },	/* Allied Telesyn 8139 */
+	{ 0x126c, 0x1211, 0 },	/* Northern Telecom 10/100BaseTX*/
+	{ 0x13d1, 0xab06, 0 },	/* AboCom FE2000VX */
+	{ 0x1432, 0x9130, 0 },	/* Edimax Computer Co. RTL81xx */
+	{ 0x14ea, 0xab06, 0 },	/* Planex FNW-3603-TX */
+	{ 0x14ea, 0xab07, 0 },	/* Planex FNW-3800-TX */
+	{ 0x1500, 0x1360, 0 },	/* Delta Electronics RealTek Ethernet */
+	{ 0x1743, 0x8139, 0 },	/* Peppercon AG 8139  ROL/F-100 */
+	{ 0x4033, 0x1360, 0 },	/* Addtron Technology 8139 */
 
 	{ 0x0000, 0x0000, 0 }
 };
