@@ -185,7 +185,6 @@ PUBLIC int fs_unmount()
   sp->s_dev = NO_DEV;
   
 
-printf("MFS(%d) DEV %d unmounted\n", SELF_E, fs_dev);  
   return OK;
 }
 

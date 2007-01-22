@@ -48,13 +48,13 @@ PUBLIC int fs_open()
 
   /* If O_CREATE is set, try to make the file. */ 
   if (oflags & O_CREAT) {
+	  phys_bytes len;
 	  /* Copy the last component */
+	  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc));
 	  err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, 
-		  SELF, (vir_bytes) lastc,
-			(phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN,
-				sizeof(lastc)));
-
+		  SELF, (vir_bytes) lastc, (phys_bytes) len);
 	  if (err_code != OK) return err_code;
+ 	  MFS_NUL(lastc, len, sizeof(lastc));
 
 	  /* Get last directory inode */
 	  if ((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
@@ -150,6 +150,7 @@ printf("MFS(%d) get_inode by open() failed\n", SELF_E);
  *===========================================================================*/
 PUBLIC int fs_create()
 {
+  phys_bytes len;
   int r, b;
   struct inode *ldirp;
   struct inode *rip;
@@ -165,10 +166,11 @@ PUBLIC int fs_create()
   /* Try to make the file. */ 
 
   /* Copy the last component */
+  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc));
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, 
-	SELF, (vir_bytes) lastc, (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc)));
-
+	SELF, (vir_bytes) lastc, (phys_bytes) len);
   if (err_code != OK) return err_code;
+  MFS_NUL(lastc, len, sizeof(lastc));
 
   /* Get last directory inode */
   if ((ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
@@ -212,13 +214,14 @@ PUBLIC int fs_mknod()
 {
   struct inode *ip, *ldirp;
   char lastc[NAME_MAX];
+  phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
+  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc));
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, SELF, 
-            (vir_bytes) lastc,
-	    (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc)));
-
+            (vir_bytes) lastc, (phys_bytes) len);
   if (err_code != OK) return err_code;
+  MFS_NUL(lastc, len, sizeof(lastc));
   
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
@@ -247,13 +250,14 @@ PUBLIC int fs_mkdir()
   ino_t dot, dotdot;		/* inode numbers for . and .. */
   struct inode *rip, *ldirp;
   char lastc[NAME_MAX];         /* last component */
+  phys_bytes len;
 
   /* Copy the last component and set up caller's user and group id */
+  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc));
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, SELF, 
-            (vir_bytes) lastc, (phys_bytes) 
-	    MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(lastc)));
-
+            (vir_bytes) lastc, (phys_bytes) len);
   if (err_code != OK) return err_code;
+  MFS_NUL(lastc, len, sizeof(lastc));
   
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
@@ -309,6 +313,7 @@ printf("MFS(%d) get_inode for parent dir by mkdir() failed\n", SELF_E);
  *===========================================================================*/
 PUBLIC int fs_slink()
 {
+  phys_bytes len;
   struct inode *sip;           /* inode containing symbolic link */
   struct inode *ldirp;         /* directory containing link */
   register int r;              /* error code */
@@ -324,11 +329,11 @@ PUBLIC int fs_slink()
   }
   
   /* Copy the link name's last component */
+  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
-          SELF, (vir_bytes) string, 
-          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
-  
+          SELF, (vir_bytes) string, (phys_bytes) len);
   if (r != OK) return r;
+  MFS_NUL(string, len, sizeof(string));
   
   /* Create the inode for the symlink. */
   sip = new_node(ldirp, string, (mode_t) (I_SYMBOLIC_LINK | RWX_MODES),

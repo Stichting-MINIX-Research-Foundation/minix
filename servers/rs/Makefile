@@ -16,8 +16,7 @@ CC =	exec cc
 CPPFLAGS = -I../../kernel/arch/$(ARCH)/include
 CFLAGS = -I$i $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
-UTIL_LIBS = -lsysutil  -lsys 
-LIBS = -lsysutil -lsys
+LIBS = -lsys -lsysutil 
 
 UTIL_OBJ = service.o
 OBJ = exec.o main.o manager.o 

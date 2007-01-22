@@ -92,7 +92,6 @@ libc_FILES=" \
 	_times.c \
 	_truncate.c \
 	_umask.c \
-	_umount.c \
 	_uname.c \
 	_unlink.c \
 	_utime.c \

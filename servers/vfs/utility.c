@@ -64,7 +64,7 @@ int flag;			/* M3 means path may be in message */
 
   if(user_fullpath[len-1] != '\0') {
 	int i;
-	printf("fetch_name: name not null-terminated: ");
+	printf("vfs: fetch_name: name not null-terminated: ");
 	for(i = 0; i < len; i++) {
 		printf("%c", user_fullpath[i]);
 	}
@@ -115,11 +115,11 @@ PUBLIC int isokendpt_f(char *file, int line, int endpoint, int *proc, int fatal)
     int failed = 0;
     *proc = _ENDPOINT_P(endpoint);
     if(*proc < 0 || *proc >= NR_PROCS) {
-        printf("FS:%s:%d: proc (%d) from endpoint (%d) out of range\n",
+        printf("vfs:%s:%d: proc (%d) from endpoint (%d) out of range\n",
                 file, line, *proc, endpoint);
         failed = 1;
     } else if(fproc[*proc].fp_endpoint != endpoint) {
-        printf("FS:%s:%d: proc (%d) from endpoint (%d) doesn't match "
+        printf("vfs:%s:%d: proc (%d) from endpoint (%d) doesn't match "
                 "known endpoint (%d)\n",
                 file, line, *proc, endpoint, fproc[*proc].fp_endpoint);
         failed = 1;

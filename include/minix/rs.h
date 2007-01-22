@@ -31,6 +31,8 @@ struct rs_start
 	int rss_nr_pci_class;
 	struct { u32_t class; u32_t mask; } rss_pci_class[RSS_NR_PCI_CLASS];
 	u32_t rss_system[RSS_NR_SYSTEM];
+	char *rss_label;
+	size_t rss_labellen;
 };
 
 #define RF_COPY		0x01	/* Copy the brinary into RS to make it possible
@@ -51,3 +53,4 @@ struct rs_pci
 	int rsp_nr_class;
 	struct { u32_t class; u32_t mask; } rsp_class[RSP_NR_CLASS];
 };
+

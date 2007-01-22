@@ -182,6 +182,8 @@ _PROTOTYPE( int fetch_name, (char *path, int len, int flag)		);
 _PROTOTYPE( int no_sys, (void)						);
 _PROTOTYPE( int isokendpt_f, (char *f, int l, int e, int *p, int ft));
 _PROTOTYPE( void panic, (char *who, char *mess, int num)		);
+_PROTOTYPE( void mfs_nul_f, (char *file, int line, char *str, int len, int maxlen));
+_PROTOTYPE( int mfs_min_f, (char *file, int line, int len1, int len2)	);
 
 #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
 #define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)

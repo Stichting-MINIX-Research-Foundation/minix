@@ -32,7 +32,6 @@
 PRIVATE int allow_newroot = 1;
 
 FORWARD _PROTOTYPE( dev_t name_to_dev, (void)                           );
-FORWARD _PROTOTYPE( int fs_exit, (endpoint_t fs_e)                      );
 FORWARD _PROTOTYPE( int mount_fs, (endpoint_t fs_e)                     );
 
 /*===========================================================================*
@@ -71,7 +70,6 @@ PUBLIC int do_fslogin()
 PUBLIC int do_mount()
 {
   endpoint_t fs_e; 
-  int r;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -86,17 +84,7 @@ PUBLIC int do_mount()
   }
 
   /* Do the actual job */
-  r = mount_fs(fs_e);
-
-  /* If not OK and not suspended, bring down FS proc.. */
-  if (r != OK && r != SUSPEND) {
-      /* Ask RS to bring down FS */
-      if (-1 == fs_exit(fs_e)) {
-          printf("VFSmount: WARNING: couldn't stop FS endp: %d\n", fs_e);
-      }
-  }
-  
-  return r; 
+  return mount_fs(fs_e);
 }
 
 
@@ -482,7 +470,7 @@ Dev_t dev;
 
   /* Find vmnt */
   for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
-      if (vmp->m_dev == dev) {
+      if (vmp_i->m_dev == dev) {
 	if(vmp) panic(__FILE__, "device mounted more than once", dev);
 	vmp = vmp_i;
       }
@@ -560,12 +548,6 @@ Dev_t dev;
   vmp->m_fs_e = NONE;
   vmp->m_driver_e = NONE;
 
-  /* Ask RS to bring down FS */
-  if (-1 == fs_exit(fs_e)) {
-      printf("VFSunmount: WARNING: couldn't stop FS endp: %d\n", fs_e);
-  }
-
-  printf("VFSunmount: DEV: %d unmounted\n", dev);  
   return(OK);
 }
 
@@ -595,36 +577,4 @@ PRIVATE dev_t name_to_dev()
   
   return res.dev;
 }
-
-
-/*===========================================================================*
- *                              fs_exit                                      *
- *===========================================================================*/
-PRIVATE int fs_exit(fs_e)
-endpoint_t fs_e;
-{
-/* Build a message for stoping a FS server and ask RS to do it */
-  message m;
-  pid_t fs_pid;
-  int r;
-
-  /* Don't need to stop the one in the bootimage */
-  if (fs_e == MFS_PROC_NR) return OK;
-  
-  /* Get pid for this endpoint */
-  if (-1 == (fs_pid = getnpid(fs_e))) {
-      printf("VFS: couldn't find pid for fs_e: %d\n", fs_e);
-      return -1;
-  }
-
-  /* Ask RS to stop process */
-  m.RS_PID = fs_pid;
-  if (OK != (r = _taskcall(RS_PROC_NR, RS_DOWN, &m))) {
-      printf("VFSfs_exit: couldn't bring FS down pid: %d\n", fs_pid);
-      return -1;
-  }
-
-  return OK;
-}
-
 

@@ -106,7 +106,7 @@ int flags;					/* extra flags, if any */
 	len= MAX_LABEL_LEN-1;	/* truncate name */
   memcpy(rp->r_label, label, len);
   rp->r_label[len]= '\0';
-  printf("using label '%s'\n", rp->r_label);
+  printf("RS: do_up: using label '%s'\n", rp->r_label);
 
   rp->r_uid= 0;
   rp->r_nice= 0;
@@ -197,18 +197,31 @@ message *m_ptr;					/* request message pointer */
   rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
   rp->r_argc = arg_count;
 
-  /* Default label for the driver */
-  label= strrchr(rp->r_argv[0], '/');
-  if (label)
-	label++;
-  else
-	label= rp->r_argv[0];
-  len= strlen(label);
-  if (len > MAX_LABEL_LEN-1)
-	len= MAX_LABEL_LEN-1;	/* truncate name */
-  memcpy(rp->r_label, label, len);
-  rp->r_label[len]= '\0';
-  printf("using label '%s'\n", rp->r_label);
+  if(rs_start.rss_label) {
+	int len;
+	/* RS_START caller has supplied a custom label for this driver. */
+	len = MIN(sizeof(rp->r_label)-1, rs_start.rss_labellen);
+        s=sys_datacopy(m_ptr->m_source, (vir_bytes) rs_start.rss_label,
+        	SELF, (vir_bytes) rp->r_label, len);
+	if(s != OK)
+		return s;
+	rp->r_label[len] = '\0';
+        printf("RS: do_start: using label (custom) '%s'\n", rp->r_label);
+  } else {
+	/* Default label for the driver. */
+	label= strrchr(rp->r_argv[0], '/');
+	if (label)
+		label++;
+	else
+		label= rp->r_argv[0];
+  	len= strlen(label);
+  	if (len > MAX_LABEL_LEN-1)
+		len= MAX_LABEL_LEN-1;	/* truncate name */
+  	memcpy(rp->r_label, label, len);
+  	rp->r_label[len]= '\0';
+        printf("RS: do_start: using label (from binary %s) '%s'\n",
+		rp->r_argv[0], rp->r_label);
+  }
 
   /* Check for duplicates */
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
@@ -453,31 +466,6 @@ PUBLIC int do_refresh(message *m_ptr)
   printf("do_refresh: '%s' not found\n", label);
 #endif
   return(ESRCH);
-}
-
-/*===========================================================================*
- *				do_rescue				     *
- *===========================================================================*/
-PUBLIC int do_rescue(message *m_ptr)
-{
-  char rescue_dir[MAX_RESCUE_DIR_LEN];
-  int s;
-
-  /* Copy rescue directory from user. */
-  if (m_ptr->RS_CMD_LEN > MAX_RESCUE_DIR_LEN) return(E2BIG);
-  if (OK!=(s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
-  	SELF, (vir_bytes) rescue_dir, m_ptr->RS_CMD_LEN))) return(s);
-  rescue_dir[m_ptr->RS_CMD_LEN] = '\0';		/* ensure it is terminated */
-  if (rescue_dir[0] != '/') return(EINVAL);	/* insist on absolute path */
-
-  /* Change RS' directory to the rescue directory. Provided that the needed
-   * binaries are in the rescue dir, this makes recovery possible even if the 
-   * (root) file system is no longer available, because no directory lookups
-   * are required. Thus if an absolute path fails, we can try to strip the 
-   * path an see if the command is in the rescue dir. 
-   */
-  if (chdir(rescue_dir) != 0) return(errno);
-  return(OK);
 }
 
 /*===========================================================================*

@@ -38,14 +38,17 @@ PUBLIC int fs_link()
   register int r;
   char string[NAME_MAX];
   struct inode *new_ip;
+  phys_bytes len;
 
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
   
+  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
   /* Copy the link name's last component */
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
-          SELF, (vir_bytes) string, 
-          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
+          SELF, (vir_bytes) string, (phys_bytes) len);
+  if (r != OK) return r;
+  MFS_NUL(string, len, sizeof(string));
   
   /* Temporarily open the file. */
   if ( (rip = get_inode(fs_dev, fs_m_in.REQ_LINKED_FILE)) == NIL_INODE) {
@@ -117,16 +120,17 @@ PUBLIC int fs_unlink()
   struct inode *rldirp;
   int r;
   char string[NAME_MAX];
+  phys_bytes len;
   
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
   
   /* Copy the last component */
+  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
-          SELF, (vir_bytes) string, 
-          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
-
+          SELF, (vir_bytes) string, (phys_bytes) len);
   if (r != OK) return r;
+  MFS_NUL(string, len, sizeof(string));
   
   /* Temporarily open the dir. */
   if ( (rldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
@@ -297,22 +301,25 @@ PUBLIC int fs_rename()
   int same_pdir;			/* TRUE iff parent dirs are the same */
   char old_name[NAME_MAX], new_name[NAME_MAX];
   ino_t numb;
+  phys_bytes len;
   int r1;
   
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
   
   /* Copy the last component of the old name */
+  len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(old_name));
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
-          SELF, (vir_bytes) old_name, 
-          (phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(old_name)));
+          SELF, (vir_bytes) old_name, (phys_bytes) len);
   if (r != OK) return r;
+  MFS_NUL(old_name, len, sizeof(old_name));
   
   /* Copy the last component of the new name */
+  len = MFS_MIN(fs_m_in.REQ_SLENGTH, sizeof(new_name));
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_USER_ADDR,
-          SELF, (vir_bytes) new_name, 
-          (phys_bytes) fs_m_in.REQ_SLENGTH);
+          SELF, (vir_bytes) new_name, (phys_bytes) len);
   if (r != OK) return r;
+  MFS_NUL(new_name, len, sizeof(new_name));
 
   /* Get old dir inode */ 
   if ( (old_dirp = get_inode(fs_dev, fs_m_in.REQ_OLD_DIR)) == NIL_INODE) 

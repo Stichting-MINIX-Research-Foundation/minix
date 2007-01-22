@@ -86,7 +86,6 @@ PUBLIC int main(void)
 	  case RS_START:	result = do_start(&m);		break;
           case RS_DOWN: 	result = do_down(&m); 		break;
           case RS_REFRESH: 	result = do_refresh(&m); 	break;
-          case RS_RESCUE: 	result = do_rescue(&m); 	break;
           case RS_RESTART: 	result = do_restart(&m); 	break;
           case RS_SHUTDOWN: 	result = do_shutdown(&m); 	break;
           case GETSYSINFO: 	result = do_getsysinfo(&m); 	break;

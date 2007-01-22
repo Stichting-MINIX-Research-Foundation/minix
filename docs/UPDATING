@@ -31,3 +31,6 @@
 	in /etc/make.conf, included by some Makefiles and sourced by
 	some shell scripts. To install it, type 'make install' in
 	src/etc, or simply copy the file over.
+20070118:
+	drivers.conf has been updated to include an ACL for mfs. it has
+	to be installed before rebooting after an update of the mount command.

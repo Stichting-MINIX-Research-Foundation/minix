@@ -6,6 +6,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +31,7 @@ PRIVATE char *known_requests[] = {
   "down",
   "refresh", 
   "restart",
-  "rescue", 
+  "-unused",
   "shutdown", 
   "upcopy",	/* fill for RS_UP_COPY */
   "catch for illegal requests"
@@ -63,9 +64,11 @@ PRIVATE char *known_requests[] = {
 #define ARG_SCRIPT	"-script"	/* name of the script to restart a
 					 * driver 
 					 */
+#define ARG_LABELNAME	"-label"	/* custom label name */
 #define ARG_CONFIG	"-config"	/* name of the file with the resource
 					 * configuration 
 					 */
+#define ARG_PRINTEP	"-printep"	/* print endpoint number after start */
 
 #define DRIVER_LOGIN	"driver"	/* Passwd file entry for drivers */
 
@@ -83,7 +86,9 @@ PRIVATE char *req_args;
 PRIVATE int req_major;
 PRIVATE long req_period;
 PRIVATE char *req_script;
+PRIVATE char *req_label;
 PRIVATE char *req_config;
+PRIVATE int req_printep;
 PRIVATE int class_recurs;	/* Nesting level of class statements */
 
 /* Buffer to build "/command arg1 arg2 ..." string to pass to RS server. */
@@ -199,6 +204,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
           print_usage(argv[ARG_NAME], "binary should be absolute path");
           exit(EINVAL);
       }
+
       if (stat(req_path, &stat_buf) == -1) {
 	  perror(req_path);
           fprintf(stderr, "couldn't get stat binary\n");
@@ -242,9 +248,16 @@ PRIVATE int parse_arguments(int argc, char **argv)
               req_script = argv[i+1];
 	      req_nr = RS_START;
           }
+          else if (strcmp(argv[i], ARG_LABELNAME)==0) {
+              req_label = argv[i+1];
+	      req_nr = RS_START;
+          }
           else if (strcmp(argv[i], ARG_CONFIG)==0) {
               req_config = argv[i+1];
 	      req_nr = RS_START;
+          }
+          else if (strcmp(argv[i], ARG_PRINTEP)==0) {
+              req_printep = 1;
           }
           else {
               print_usage(argv[ARG_NAME], "unknown optional argument given");
@@ -260,27 +273,6 @@ PRIVATE int parse_arguments(int argc, char **argv)
           exit(EINVAL);
       }
       req_label= argv[optind+ARG_LABEL];
-  } 
-  else if (req_nr == RS_RESCUE) {
-
-      /* Verify argument count. */ 
-      if (argc - 1 < optind+ARG_PATH) {
-          print_usage(argv[ARG_NAME], "action requires rescue directory");
-          exit(EINVAL);
-      }
-      req_path = argv[optind+ARG_PATH];
-      if (req_path[0] != '/') {
-          print_usage(argv[ARG_NAME], "rescue dir should be absolute path");
-          exit(EINVAL);
-      }
-      if (stat(argv[optind+ARG_PATH], &stat_buf) == -1) {
-          print_usage(argv[ARG_NAME], "couldn't get status of directory");
-          exit(errno);
-      }
-      if ( ! (stat_buf.st_mode & S_IFDIR)) {
-          print_usage(argv[ARG_NAME], "file is not a directory");
-          exit(EINVAL);
-      } 
   } 
   else if (req_nr == RS_SHUTDOWN) {
         /* no extra arguments required */
@@ -658,6 +650,7 @@ struct
 	int call_nr;
 } system_tab[]=
 {
+	{ "EXIT",		SYS_EXIT },
 	{ "PRIVCTL",		SYS_PRIVCTL },
 	{ "TRACE",		SYS_TRACE },
 	{ "KILL",		SYS_KILL },
@@ -871,7 +864,7 @@ PUBLIC int main(int argc, char **argv)
   int result;
   int request;
   int i, s;
-  char *label;
+  char *label, *progname = NULL;
   struct passwd *pw;
 
   /* Verify and parse the command line arguments. All arguments are checked
@@ -880,6 +873,13 @@ PUBLIC int main(int argc, char **argv)
    * global variables. 
    */
   request = parse_arguments(argc, argv);
+
+  if(req_path) {
+	/* Obtain binary name. */
+	progname = strrchr(req_path, '/');
+	assert(progname);	/* an absolute path was required */
+	progname++;	/* skip last slash */
+  }
 
   /* Arguments seem fine. Try to perform the request. Only valid requests 
    * should end up here. The default is used for not yet supported requests. 
@@ -912,6 +912,13 @@ PUBLIC int main(int argc, char **argv)
       rs_start.rss_major= req_major;
       rs_start.rss_period= req_period;
       rs_start.rss_script= req_script;
+      if(req_label) {
+      	rs_start.rss_label = req_label;
+      	rs_start.rss_labellen = strlen(req_label);
+      } else {
+        rs_start.rss_label = progname;
+        rs_start.rss_labellen = strlen(progname);
+      }
       if (req_script)
 	      rs_start.rss_scriptlen= strlen(req_script);
       else
@@ -925,14 +932,18 @@ PUBLIC int main(int argc, char **argv)
       /* The name of the driver */
       (label= strrchr(req_path, '/')) ? label++ : (label= req_path);
 
-      if (req_config)
-	do_config(label, req_config);
+      if (req_config) {
+	assert(progname);
+	do_config(progname, req_config);
+      }
 
       m.RS_CMD_ADDR = (char *) &rs_start;
 
       /* Build request message and send the request. */
       if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(-s);
+      else if(req_printep)
+	printf("%d\n", m.RS_ENDPOINT);	
       result = m.m_type;
       break;
 
@@ -941,13 +952,6 @@ PUBLIC int main(int argc, char **argv)
   case RS_RESTART:
       m.RS_CMD_ADDR = req_label;
       m.RS_CMD_LEN = strlen(req_label);
-printf("RS_CMD_LEN = %d\n", m.RS_CMD_LEN);
-      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
-          failure(-s);
-      break;
-  case RS_RESCUE:
-      m.RS_CMD_ADDR = req_path;
-      m.RS_CMD_LEN = strlen(req_path);
       if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(-s);
       break;

@@ -555,7 +555,6 @@
 #define RS_DOWN		(RS_RQ_BASE + 1)	/* stop system service */
 #define RS_REFRESH	(RS_RQ_BASE + 2)	/* refresh system service */
 #define RS_RESTART	(RS_RQ_BASE + 3)	/* restart system service */
-#define RS_RESCUE	(RS_RQ_BASE + 4)	/* set rescue directory */
 #define RS_SHUTDOWN	(RS_RQ_BASE + 5)	/* alert about shutdown */
 #define RS_UP_COPY	(RS_RQ_BASE + 6)	/* start system service and
 						 * keep the binary in memory
@@ -567,7 +566,6 @@
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */
-#  define RS_PID		m1_i1		/* pid of system service */
 #  define RS_PERIOD 	        m1_i2		/* heartbeat period */
 #  define RS_DEV_MAJOR          m1_i3           /* major device number */
 

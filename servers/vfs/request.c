@@ -792,7 +792,7 @@ endpoint_t driver_e;
 
     /* Issue request */
     if ((r = sendrec(fs_e, &m)) != OK) {
-        printf("VFSreq_newdriver: error sending message to %d\n", fs_e);
+        printf("VFSreq_newdriver: error sending message to %d: %d\n", fs_e, r);
         return r;
     }
 
@@ -971,17 +971,19 @@ PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
   
   for (;;) {
       /* Do the actual send, receive */
-      if (OK != sendrec(fs_e, reqm)) {
-          printf("VFS: error sending message. FS_e: %d req_nr: %d\n", 
-                  fs_e, reqm->m_type);
+      if (OK != (r=sendrec(fs_e, reqm))) {
+          printf("VFS: error sending message. FS_e: %d req_nr: %d err: %d\n", 
+                  fs_e, reqm->m_type, r);
       }
 
-      /* Get response type */
-      r = reqm->m_type;
+      if(r == OK) {
+      	/* Sendrec was okay */
+      	break;
+      }
 
       /* Dead driver */
       if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
-          old_driver_e = 0;
+          old_driver_e = NONE;
           /* Find old driver enpoint */
           for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
               if (vmp->m_fs_e == reqm->m_source) {   /* found FS */
@@ -992,7 +994,7 @@ PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
           }
          
           /* No FS ?? */
-          if (!old_driver_e) {
+          if (old_driver_e == NONE) {
               panic(__FILE__, "VFSdead_driver: couldn't find FS\n", 
 			      old_driver_e);
           }
@@ -1033,12 +1035,13 @@ PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
           *reqm = origm;  
           continue;
       }
-      
-      /* Sendrec was okay */
-      break;
+
+       printf("fs_sendrec: unhandled error %d sending to %d\n", r, fs_e);
+       panic(__FILE__, "fs_sendrec: unhandled error", NO_NUM);
   }
+
   /* Return message type */
-  return r;
+  return reqm->m_type;
 }
 
 

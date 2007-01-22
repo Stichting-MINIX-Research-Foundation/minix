@@ -26,7 +26,7 @@ PUBLIC char dot2[3] = "..";	/* permissions for . and ..		    */
 
 FORWARD _PROTOTYPE( char *get_name, (char *old_name, char string [NAME_MAX]) );
 FORWARD _PROTOTYPE( int ltraverse, (struct inode *rip, char *path, 
-                    char *suffix)                                           );
+                    char *suffix, int pathlen)                         );
 
 
 /*===========================================================================*
@@ -37,15 +37,26 @@ PUBLIC int lookup()
   char string[PATH_MAX];
   struct inode *rip;
   int s_error, flags;
+  int len;
 
   string[0] = '\0';
   
+  /* Check length. */
+  len = fs_m_in.REQ_PATH_LEN;
+  if(len > sizeof(string)) return E2BIG;	/* too big for buffer */
+  if(len < 1) return EINVAL;			/* too small for \0 */
+
   /* Copy the pathname and set up caller's user and group id */
   err_code = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH, SELF, 
-            (vir_bytes) user_path,
-	(phys_bytes) MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string)));
+            (vir_bytes) user_path, (phys_bytes) len);
+  if (err_code != OK) {
+	printf("mfs:%s:%d: sys_datacopy failed: %d\n", __FILE__, __LINE__, err_code);
+	return err_code;
+  }
 
-  if (err_code != OK) return err_code;
+  /* Verify this is a null-terminated path. */
+  if(user_path[len-1] != '\0')
+	return EINVAL;
 
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
@@ -60,9 +71,12 @@ PUBLIC int lookup()
   /* Copy back the last name if it is required */
   if (err_code != OK || (flags & PATH_PENULTIMATE)) {
       	s_error = sys_datacopy(SELF_E, (vir_bytes) string, FS_PROC_NR, 
-              (vir_bytes) fs_m_in.REQ_USER_ADDR, (phys_bytes) 
-              MFS_MIN(strlen(string)+1, NAME_MAX));
-      if (s_error != OK) return s_error;
+              (vir_bytes) fs_m_in.REQ_USER_ADDR, (phys_bytes) NAME_MAX);
+      if (s_error != OK) {
+	printf("mfs:%s:%d: sys_datacopy failed: %d\n",
+		__FILE__, __LINE__, s_error);
+	return s_error;
+      }
   }
 
   /* Error or mount point encountered */
@@ -234,7 +248,8 @@ printf("%s, %d\n", __FILE__, __LINE__);
                        if (*new_name != '\0') new_name--;
 
                        /* Extract path name from the symlink file */
-                       if (ltraverse(rip, user_path, new_name) != OK) {
+                       if (ltraverse(rip, user_path, new_name,
+			sizeof(user_path)) != OK) {
                            put_inode(dir_ip);
                            err_code = ENOENT;
 printf("%s, %d\n", __FILE__, __LINE__);
@@ -290,10 +305,11 @@ printf("%s, %d\n", __FILE__, __LINE__);
 /*===========================================================================*
  *                             ltraverse				     *
  *===========================================================================*/
-PRIVATE int ltraverse(rip, path, suffix)
+PRIVATE int ltraverse(rip, path, suffix, pathlen)
 register struct inode *rip;    /* symbolic link */
 char *path;                    /* path containing link */
 char *suffix;                  /* suffix following link within path */
+int pathlen;
 {
 /* Traverse a symbolic link. Copy the link text from the inode and insert
  * the text into the path. Return error code or report success. Base 
@@ -318,18 +334,25 @@ char *suffix;                  /* suffix following link within path */
        /* Insert symbolic text into path name. */
        tl = strlen(suffix);
        if (sl > 0 && sl + tl <= PATH_MAX-1) {
+	   if(sl+tl >= pathlen)
+		panic(__FILE__,"path too small for symlink", sl+tl);
            memmove(path+sl, suffix, tl);
            memmove(path, sp, sl);
            path[sl+tl] = 0;
            
-           /* Copy back to VFS layer   THIS SHOULD BE IN parse_path */
+           /* Copy back to VFS layer   THIS SHOULD BE IN parse_path.
+	    * sys_datacopy() error, if any, gets returned as r later.
+	    */
            r = sys_datacopy(SELF_E, (vir_bytes) path, FS_PROC_NR, 
                    (vir_bytes) vfs_slink_storage, (phys_bytes) sl+tl+1);
-           
            /*
            dup_inode(bip = path[0] == '/' ? chroot_dir : ldip);
            */
-       }
+	   if(r != OK) {
+		printf("mfs:%s:%d: sys_datacopy failed: %d\n",
+			__FILE__, __LINE__, r);
+	   }
+       } else panic(__FILE__,"didn't copy symlink", sl+tl);
   }
   else {
        r = ENOENT;

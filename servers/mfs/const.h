@@ -108,3 +108,4 @@
 #define V2_INODES_PER_BLOCK(b) ((b)/V2_INODE_SIZE)/* # V2 dsk inodes/blk */
 
 #define MFS_MIN(a,b) mfs_min_f(__FILE__,__LINE__,(a), (b))
+#define MFS_NUL(str,l,m) mfs_nul_f(__FILE__,__LINE__,(str), (l), (m))

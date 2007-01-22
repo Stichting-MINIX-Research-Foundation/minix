@@ -17,5 +17,7 @@
 #define    _PATH_TMP       "/tmp"
 
 #define _PATH_BSHELL	"/bin/sh"
+#define _PATH_SERVICE	"/bin/service"
+#define _PATH_DRIVERS_CONF	"/etc/drivers.conf"
 
 #endif
