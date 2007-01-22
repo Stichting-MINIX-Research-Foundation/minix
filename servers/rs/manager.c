@@ -379,8 +379,13 @@ PUBLIC int do_down(message *m_ptr)
 		}
 		proc = _ENDPOINT_P(rp->r_proc_nr_e);
 		rproc_ptr[proc] = NULL;
+	  	return(OK);
 	  }
-	  return(OK);
+
+	  /* Late reply - send a reply when process dies. */
+	  rp->r_flags |= RS_LATEREPLY;
+	  rp->r_caller = m_ptr->m_source;
+	  return EDONTREPLY;
       }
   }
 #if VERBOSE
@@ -521,13 +526,22 @@ PUBLIC void do_exit(message *m_ptr)
 	      rp->r_pid= -1;
 
               if ((rp->r_flags & RS_EXITING) || shutting_down) {
-		  rp->r_flags = 0;			/* release slot */
+		  /* No reply sent to RS_DOWN yet. */
+		  if(rp->r_flags & RS_LATEREPLY) {
+			message rsm;
+			rsm.m_type = OK;
+			send(rp->r_caller, &rsm);
+		  }
+
+		  /* Release slot. */
+		  rp->r_flags = 0;
 		  if (rp->r_exec)
 		  {
 			free(rp->r_exec);
 			rp->r_exec= NULL;
 		  }
 		  rproc_ptr[proc] = NULL;
+
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
 		      rp->r_restarts = -1;		/* reset counter */

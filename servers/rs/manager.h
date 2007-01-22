@@ -33,6 +33,7 @@ extern struct rproc {
   clock_t r_check_tm;		/* timestamp of last check */
   clock_t r_alive_tm;		/* timestamp of last heartbeat */
   clock_t r_stop_tm;		/* timestamp of SIGTERM signal */
+  endpoint_t r_caller;		/* RS_LATEREPLY caller */
 
   char *r_exec;			/* Executable image */ 
   size_t r_exec_len;		/* Length of image */
@@ -68,6 +69,7 @@ extern struct rproc *rproc_ptr[NR_PROCS];
 #define RS_NOPINGREPLY 	0x010	/* driver failed to reply to a ping request */
 #define RS_KILLED 	0x020	/* driver is killed */
 #define RS_CRASHED 	0x040	/* driver crashed */
+#define RS_LATEREPLY	0x080	/* no reply sent to RS_DOWN caller yet */
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_DELTA_T       60			/* check every T ticks */
