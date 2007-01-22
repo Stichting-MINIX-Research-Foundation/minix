@@ -324,8 +324,6 @@ echo $version_pretty >$RELEASEDIR/etc/version
 echo " * Counting files"
 extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
 expr `df $TMPDISK | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEDIR/.usrkb
-du -s $RELEASEDIR/usr/src.* | awk '{ t += $1 } END { print t }' >$RELEASEDIR/.extrasrckb
-( for d in $RELEASEDIR/usr/src.*; do find $d; done) | wc -l >$RELEASEDIR/.extrasrcfiles
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 echo " * Zeroing remainder of temporary areas"

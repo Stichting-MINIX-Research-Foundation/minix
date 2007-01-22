@@ -22,26 +22,6 @@ USRKB="`cat /.usrkb`"
 TOTALMB="`expr 3 + $USRKB / 1024 + $ROOTMB`"
 ROOTFILES="`cat /.rootfiles`"
 USRFILES="`cat /.usrfiles`"
-EXTRASRCFILES="`cat /.extrasrcfiles`"
-EXTRASRCKB="`cat /.extrasrckb`"
-
-# Install size without extra sources (rounded up)
-NOSRCMB="`expr $TOTALMB - $EXTRASRCKB / 1024`"
-NOSRCUSRFILES="`expr $USRFILES - $EXTRASRCFILES`"
-
-if [ "$EXTRASRCKB" -lt 1 ]
-then	 
-	echo "Are you really running from CD?"
-	echo "Something wrong with the extra-source-kb on CD."
-	exit 1
-fi
-
-if [ "$EXTRASRCFILES" -lt 1 ]
-then	 
-	echo "Are you really running from CD?"
-	echo "Something wrong with the extra-source-files estimate on CD."
-	exit 1
-fi
 
 if [ "$TOTALMB" -lt 1 ]
 then	 
@@ -199,29 +179,34 @@ done
 # end Step 2
 
 # begin Step 3
-step3=""
-while [ "$step3" != ok ]
-do
-	echo ""
-	echo " --- Step 3: Select minimal or full distribution -----------------------"
-	echo ""
-	echo "You can install MINIX as (M)inimal or (F)ull. (M)inimal"
-	echo "includes only the binary system and basic system sources."
-	echo "(F)ull also includes commands sources."
-	echo ""
-	echo "Please select:"
-	echo "  (M)inimal install (only basic sources) ($NOSRCMB MB required)"
-	echo "  (F)ull install (full install) ($TOTALMB MB required)"
-	echo " "
-	echo -n "Basic (M)inimal or (F)ull install? [F] "
-	read conf
-	case "$conf" in
-	"") 	step3="ok"; nobigsource="" ;;
-	[Ff]*)	step3="ok"; nobigsource="" ;;
-	[Mm]*)	step3="ok"; nobigsource="1"; TOTALMB=$NOSRCMB; USRFILES=$NOSRCUSRFILES ;;
-	esac
-done
+#step3=""
+#while [ "$step3" != ok ]
+#do
+#	echo ""
+#	echo " --- Step 3: Select minimal or full distribution -----------------------"
+#	echo ""
+#	echo "You can install MINIX as (M)inimal or (F)ull. (M)inimal"
+#	echo "includes only the binary system and basic system sources."
+#	echo "(F)ull also includes commands sources."
+#	echo ""
+#	echo "Please select:"
+#	echo "  (M)inimal install (only basic sources) ($NOSRCMB MB required)"
+#	echo "  (F)ull install (full install) ($TOTALMB MB required)"
+#	echo " "
+#	echo -n "Basic (M)inimal or (F)ull install? [F] "
+#	read conf
+#	case "$conf" in
+#	"") 	step3="ok"; nobigsource="" ;;
+#	[Ff]*)	step3="ok"; nobigsource="" ;;
+#	[Mm]*)	step3="ok"; nobigsource="1"; TOTALMB=$NOSRCMB; USRFILES=$NOSRCUSRFILES ;;
+#	esac
+#done
 # end Step 3
+
+echo ""
+echo " --- Step 3: Selecting full distribution -------------------------------"
+echo ""
+nobigsource=""
 
 # begin Step 4
 step4=""
@@ -549,24 +534,13 @@ echo ""
 mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
 
 (cd /usr || exit 1
- if [ "$nobigsource" = 1 ]
- then	list="`ls | fgrep -v src. | fgrep -v install`"
- else	list="`ls | fgrep -v install`"
- fi
+ list="`ls | fgrep -v install`"
  for d in $list
  do	
  	cpdir -v $d /mnt/$d
  done
 ) | progressbar "$USRFILES" || exit	# Copy the usr floppy.
 
-if [ -d /mnt/src.commands ]
-then	mv /mnt/src.commands /mnt/src/commands
-fi
-
-if [ -d /mnt/src.contrib ]
-then	mv /mnt/src.contrib /mnt/src/contrib
-fi
-					# Set inet.conf to correct driver
 if [ -n "$driver" ]
 then	echo "$driverargs" >$MYLOCALRC
 fi
