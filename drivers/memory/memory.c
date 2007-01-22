@@ -433,7 +433,7 @@ int safe;
 
 	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
-	/* first_time= 0; */
+	first_time= 0;
 	break;
     }
     case MIOCMAP:
