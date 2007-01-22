@@ -7,7 +7,7 @@ CDDIR=PACKAGES
 CDMP=/mnt
 CDPACK=${CDMP}/install/packages
 CDSRC=${CDMP}/install/package-sources
-SRC=/usr/src/commands
+SRC=/usr/bigsrc
 LISTFILE=/etc/packages-$TAG
 LISTURL=http://www.minix3.org/packages/$PACKDIR/List
 TMPDIR=/usr/tmp/packages
@@ -56,6 +56,10 @@ fi
 #cdpackages=/usr/bigports/Packages/List
 #CDPACK=/usr/bigports/Packages
 #CDSRC=/usr/bigports/Sources
+
+if [ ! -d "$SRC" ]
+then	mkdir $SRC || exit
+fi
 
 if [ "$cdpackages" = "" ]
 then	echo "Skipping CD packages."
