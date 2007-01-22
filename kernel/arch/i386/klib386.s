@@ -552,6 +552,7 @@ _level0:
 !*===========================================================================*
 ! PUBLIC void read_tsc(unsigned long *high, unsigned long *low);
 ! Read the cycle counter of the CPU. Pentium and up. 
+! This function clobbers edx and eax.
 .align 16
 _read_tsc:
 .data1 0x0f		! this is the RDTSC instruction 
