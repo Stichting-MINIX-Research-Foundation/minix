@@ -13,6 +13,8 @@ d--755 0 0
 		sh ---755 0 0 sh
 		service ---755 0 0 service
 		sysenv ---755 0 0 sysenv
+	$
+	sbin d--755 0 0
 		mfs ---755 0 0 mfs
 	$
 	dev d--755 0 0
