@@ -71,8 +71,10 @@ install:	/usr/bin/elvis \
 /bin/elvis:	elvis
 	install -cs -o bin elvis $@
 
-/usr/bin/vi:	elvis
-	install -cs -o bin elvis $@
+/usr/bin/vi:	/usr/bin/elvis
+	if [ ! -f $@ -a ! -s $@ ];	\
+	then	install -l $? $@ ;	\
+	fi
 
 /usr/bin/ctags:	ctags
 	install -cs -o bin ctags $@
