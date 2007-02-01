@@ -26,7 +26,7 @@ register message *m_ptr;	/* pointer to request message */
   register struct proc *rpc;		/* child process pointer */
   struct proc *rpp;			/* parent process pointer */
   struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
-  int i, gen;
+  int i, gen, r;
   int p_proc;
 
   if(!isokendpt(m_ptr->PR_ENDPT, &p_proc))
@@ -50,10 +50,6 @@ register message *m_ptr;	/* pointer to request message */
 	gen = 1;			/* generation number wraparound */
   rpc->p_nr = m_ptr->PR_SLOT;		/* this was obliterated by copy */
   rpc->p_endpoint = _ENDPOINT(gen, rpc->p_nr);	/* new endpoint of slot */
-
-  /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
-  rpc->p_rts_flags &= ~(SIGNALED | SIG_PENDING | P_STOP);
-  sigemptyset(&rpc->p_pending);
 
   rpc->p_reg.retreg = 0;	/* child sees pid = 0 to know it is child */
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
@@ -79,7 +75,13 @@ register message *m_ptr;	/* pointer to request message */
   m_ptr->PR_ENDPT = rpc->p_endpoint;
 
   /* Install new map */
-  return newmap(rpc, map_ptr);
+  r = newmap(rpc, map_ptr);
+
+  /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
+  RTS_LOCK_UNSET(rpc, (SIGNALED | SIG_PENDING | P_STOP));
+  sigemptyset(&rpc->p_pending);
+
+  return r;
 }
 
 #endif /* USE_FORK */

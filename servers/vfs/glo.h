@@ -24,7 +24,7 @@ EXTERN int who_p, who_e;	/* caller's proc number, endpoint */
 EXTERN int call_nr;		/* system call number */
 EXTERN message mount_m_in;	/* the input message itself */
 
-EXTERN char user_fullpath[PATH_MAX];    /* storage for user path name */
+EXTERN char user_fullpath[PATH_MAX+1];    /* storage for user path name */
 EXTERN short cum_path_processed;        /* number of characters processed */
 
 /* The following variables are used for returning results to the caller. */

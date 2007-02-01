@@ -52,7 +52,6 @@ register struct proc *rc;		/* slot of process to clean up */
   register struct proc **xpp;		/* iterate over caller queue */
   int i;
   int sys_id;
-  char saved_rts_flags;
 
   /* Don't clear if already cleared. */
   if(isemptyp(rc)) return;
@@ -63,8 +62,10 @@ register struct proc *rc;		/* slot of process to clean up */
   /* Turn off any alarm timers at the clock. */   
   reset_timer(&priv(rc)->s_alarm_timer);
 
-  /* Make sure that the exiting process is no longer scheduled. */
-  if (rc->p_rts_flags == 0) lock_dequeue(rc);
+  /* Make sure that the exiting process is no longer scheduled,
+   * and mark slot as FREE.
+   */
+  RTS_LOCK_SETFLAGS(rc, SLOT_FREE);
 
   /* Check the table with IRQ hooks to see if hooks should be released. */
   for (i=0; i < NR_IRQ_HOOKS; i++) {
@@ -80,8 +81,6 @@ register struct proc *rc;		/* slot of process to clean up */
    * this point. All important fields are reinitialized when the 
    * slots are assigned to another, new process. 
    */
-  saved_rts_flags = rc->p_rts_flags;
-  rc->p_rts_flags = SLOT_FREE;		
   if (priv(rc)->s_flags & SYS_PROC) priv(rc)->s_proc_nr = NONE;
 
   /* Clean up virtual memory */

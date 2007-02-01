@@ -141,7 +141,14 @@ int len;			/* length of the directory name string */
       put_vnode(vp);
       return ENOTDIR;
   }
-  
+
+  /* Access check */
+  r = forbidden(vp, X_BIT);
+  if (r != OK) {
+        put_vnode(vp);
+	return r;
+  }
+
   return change_into(iip, vp);
 }
 

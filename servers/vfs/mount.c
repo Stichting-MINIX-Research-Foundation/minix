@@ -491,7 +491,6 @@ Dev_t dev;
   }
 
   if (count > 1) {
-      printf("VFSunmount: %d filesystem is busy count: %d\n", dev, count);
       return(EBUSY);    /* can't umount a busy file system */
   }
 

@@ -12,7 +12,7 @@
 #include <minix/com.h>
 #include "const.h"
 #include "priv.h"
- 
+
 struct proc {
   struct stackframe_s p_reg;	/* process' registers saved in stack frame */
   struct segframe p_seg;	/* segment descriptors */
@@ -59,6 +59,50 @@ struct proc {
 #define P_STOP		0x40	/* set when process is being traced */
 #define NO_PRIV		0x80	/* keep forked system process from running */
 #define NO_ENDPOINT    0x100	/* process cannot send or receive messages */
+
+/* These runtime flags can be tested and manipulated by these macros. */
+
+#define RTS_ISSET(rp, f) (((rp)->p_rts_flags & (f)) == (f))
+
+
+/* Set flag and dequeue if the process was runnable. */
+#define RTS_SET(rp, f)							\
+	do {								\
+		if(!(rp)->p_rts_flags) { dequeue(rp); }			\
+		(rp)->p_rts_flags |=  (f);				\
+	} while(0)
+
+/* Clear flag and enqueue if the process was not runnable but is now. */
+#define RTS_UNSET(rp, f) 						\
+	do {								\
+		int rts;						\
+		rts = (rp)->p_rts_flags;					\
+		(rp)->p_rts_flags &= ~(f);				\
+		if(rts && !(rp)->p_rts_flags) { enqueue(rp); }		\
+	} while(0)
+
+/* Set flag and dequeue if the process was runnable. */
+#define RTS_LOCK_SET(rp, f)						\
+	do {								\
+		if(!(rp)->p_rts_flags) { lock_dequeue(rp); }		\
+		(rp)->p_rts_flags |=  (f);				\
+	} while(0)
+
+/* Clear flag and enqueue if the process was not runnable but is now. */
+#define RTS_LOCK_UNSET(rp, f) 						\
+	do {								\
+		int rts;						\
+		rts = (rp)->p_rts_flags;					\
+		(rp)->p_rts_flags &= ~(f);				\
+		if(rts && !(rp)->p_rts_flags) { lock_enqueue(rp); }	\
+	} while(0)
+
+/* Set flags to this value. */
+#define RTS_LOCK_SETFLAGS(rp, f)					\
+	do {								\
+		if(!(rp)->p_rts_flags && (f)) { lock_dequeue(rp); }	\
+		(rp)->p_rts_flags = (f);					\
+	} while(0)
 
 /* Misc flags */
 #define REPLY_PENDING	0x01	/* reply to IPC_REQUEST is pending */

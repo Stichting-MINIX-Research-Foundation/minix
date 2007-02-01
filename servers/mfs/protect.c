@@ -50,6 +50,9 @@ printf("MFS(%d) get_inode by fs_chmod() failed\n", SELF_E);
   rip->i_update |= CTIME;
   rip->i_dirt = DIRTY;
 
+  /* Return full new mode to caller. */
+  fs_m_out.RES_MODE = rip->i_mode;
+
   put_inode(rip);
   return(OK);
 }
@@ -94,7 +97,11 @@ printf("MFS(%d) get_inode by fs_chown() failed\n", SELF_E);
 	rip->i_dirt = DIRTY;
   }
 
+  /* Update caller on current mode, as it may have changed. */
+  fs_m_out.RES_MODE = rip->i_mode;
+
   put_inode(rip);
+
   return(r);
 }
 

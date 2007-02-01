@@ -3,13 +3,14 @@
  * The entry points into this file are
  *   get_fd:	 look for free file descriptor and free filp slots
  *   get_filp:	 look up the filp entry for a given file descriptor
- *   find_filp:	 find a filp slot that points to a given inode
+ *   find_filp:	 find a filp slot that points to a given vnode
  *   inval_filp: invalidate a filp and associated fd's, only let close()
  *               happen on it
  */
 
 #include <sys/select.h>
 #include <minix/u64.h>
+#include <assert.h>
 
 #include "fs.h"
 #include "file.h"
@@ -30,8 +31,6 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
   register struct filp *f;
   register int i;
 
-  *k = -1;			/* we need a way to tell if file desc found */
-
   /* Search the fproc fp_filp table for a free file descriptor. */
   for (i = start; i < OPEN_MAX; i++) {
 	if (fp->fp_filp[i] == NIL_FILP && !FD_ISSET(i, &fp->fp_filp_inuse)) {
@@ -42,10 +41,11 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
   }
 
   /* Check to see if a file descriptor has been found. */
-  if (*k < 0) return(EMFILE);	/* this is why we initialized k to -1 */
+  if (i >= OPEN_MAX) return(EMFILE);
 
   /* Now that a file descriptor has been found, look for a free filp slot. */
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
+	assert(f->filp_count >= 0);
 	if (f->filp_count == 0) {
 		f->filp_mode = bits;
 		f->filp_pos = cvu64(0);
@@ -92,7 +92,7 @@ int fild;			/* file descriptor */
  *===========================================================================*/
 PUBLIC struct filp *find_filp(register struct vnode *vp, mode_t bits)
 {
-/* Find a filp slot that refers to the inode 'rip' in a way as described
+/* Find a filp slot that refers to the vnode 'vp' in a way as described
  * by the mode bit 'bits'. Used for determining whether somebody is still
  * interested in either end of a pipe.  Also used when opening a FIFO to
  * find partners to share a filp field with (to shared the file position).
@@ -103,6 +103,7 @@ PUBLIC struct filp *find_filp(register struct vnode *vp, mode_t bits)
 
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
 	if (f->filp_count != 0 && f->filp_vno == vp && (f->filp_mode & bits)){
+		assert(f->filp_count > 0);
 		return(f);
 	}
   }

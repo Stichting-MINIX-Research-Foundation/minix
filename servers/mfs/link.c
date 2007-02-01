@@ -586,6 +586,7 @@ off_t newsize;			/* inode must become this size */
   /* Next correct the inode size. */
   if(!waspipe) rip->i_size = newsize;
   else wipe_inode(rip);	/* Pipes can only be truncated to 0. */
+  rip->i_update |= CTIME | MTIME;
   rip->i_dirt = DIRTY;
 
   return OK;
@@ -641,6 +642,9 @@ off_t start, end;		/* range of bytes to free (end uninclusive) */
 	if(end == rip->i_size && (end % zone_size)) e++;
 	for(p = nextblock(start, zone_size)/zone_size; p < e; p ++)
 		write_map(rip, p*zone_size, NO_ZONE, WMAP_FREE);
+
+        rip->i_update |= CTIME | MTIME;
+        rip->i_dirt = DIRTY;
 
 	return OK;
 }

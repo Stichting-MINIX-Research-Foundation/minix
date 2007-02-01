@@ -93,10 +93,10 @@ message *m_ptr;			/* pointer to request message */
   rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
 
   /* Reschedule if necessary. */
-  if(rp->p_rts_flags & NO_PRIORITY) {
-	rp->p_rts_flags &= ~NO_PRIORITY;
-	if (rp->p_rts_flags == 0) lock_enqueue(rp);
-  } else kprintf("system: warning: sigsend a running process\n");
+  if(RTS_ISSET(rp, NO_PRIORITY))
+	RTS_LOCK_UNSET(rp, NO_PRIORITY);
+  else
+	kprintf("system: warning: sigsend a running process\n");
 
   return(OK);
 }

@@ -28,12 +28,16 @@
 #include "vnode.h"
 #include "param.h"
 
-FORWARD _PROTOTYPE(int fs_sendrec, (endpoint_t fs_e, message *reqm));
+FORWARD _PROTOTYPE(int fs_sendrec_f, (char *file, int line, endpoint_t fs_e, message *reqm));
+
+#define fs_sendrec(e, m) fs_sendrec_f(__FILE__, __LINE__, (e), (m))
 
 /*===========================================================================*
  *				req_getnode				     *
  *===========================================================================*/
-PUBLIC int req_getnode(req, res)
+PUBLIC int req_getnode_f(file, line, req, res)
+char *file;
+int line;
 node_req_t *req; 
 node_details_t *res;
 {
@@ -278,10 +282,12 @@ ftrunc_req_t *req;
 /*===========================================================================*
  *				req_chmod          			     *
  *===========================================================================*/
-PUBLIC int req_chmod(req)
+PUBLIC int req_chmod(req, ch_mode)
 chmod_req_t *req;
+int *ch_mode;
 {
     message m;
+    int r;
 
     /* Fill in request message */
     m.m_type = REQ_CHMOD;
@@ -291,17 +297,24 @@ chmod_req_t *req;
     m.REQ_GID = req->gid;
 
     /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
+    r = fs_sendrec(req->fs_e, &m);
+
+    /* Copy back actual mode. */
+    if(ch_mode) *ch_mode = m.RES_MODE;
+
+    return r;
 }
 
 
 /*===========================================================================*
  *				req_chown          			     *
  *===========================================================================*/
-PUBLIC int req_chown(req)
+PUBLIC int req_chown(req, ch_mode)
 chown_req_t *req;
+int *ch_mode;
 {
     message m;
+    int r;
 
     /* Fill in request message */
     m.m_type = REQ_CHOWN;
@@ -312,7 +325,12 @@ chown_req_t *req;
     m.REQ_NEW_GID = req->newgid;
 
     /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
+    r = fs_sendrec(req->fs_e, &m);
+
+    /* Return new mode to caller. */
+    if(ch_mode) *ch_mode = m.RES_MODE;
+
+    return r;
 }
 
 
@@ -955,7 +973,7 @@ _t *res;
 /*===========================================================================*
  *				fs_sendrec				     *
  *===========================================================================*/
-PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
+PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
 {
 /* This is the low level function that sends requests to FS processes.
  * It also handles driver recovery mechanism and reissuing the
@@ -964,7 +982,7 @@ PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
   int r, old_driver_e, new_driver_e;
   message origm, m;
   struct vmnt *vmp;
-  
+
   /* Make a copy of the request so that we can load it back in
    * case of a dead driver */
   origm = *reqm;
@@ -972,8 +990,8 @@ PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
   for (;;) {
       /* Do the actual send, receive */
       if (OK != (r=sendrec(fs_e, reqm))) {
-          printf("VFS: error sending message. FS_e: %d req_nr: %d err: %d\n", 
-                  fs_e, reqm->m_type, r);
+          printf("VFS:fs_sendrec:%s:%d: error sending message. FS_e: %d req_nr: %d err: %d\n", 
+                  file, line, fs_e, reqm->m_type, r);
       }
 
       if(r == OK) {
@@ -984,9 +1002,9 @@ PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
       /* Dead driver */
       if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
           old_driver_e = NONE;
-          /* Find old driver enpoint */
+          /* Find old driver by endpoint */
           for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
-              if (vmp->m_fs_e == reqm->m_source) {   /* found FS */
+              if (vmp->m_fs_e == fs_e) {   /* found FS */
                   old_driver_e = vmp->m_driver_e;
                   dmap_unmap_by_endpt(old_driver_e); /* unmap driver */
                   break;
@@ -994,10 +1012,8 @@ PRIVATE int fs_sendrec(endpoint_t fs_e, message *reqm)
           }
          
           /* No FS ?? */
-          if (old_driver_e == NONE) {
-              panic(__FILE__, "VFSdead_driver: couldn't find FS\n", 
-			      old_driver_e);
-          }
+          if (old_driver_e == NONE)
+              panic(__FILE__, "VFSdead_driver: couldn't find FS\n", fs_e);
 
           /* Wait for a new driver. */
           for (;;) {

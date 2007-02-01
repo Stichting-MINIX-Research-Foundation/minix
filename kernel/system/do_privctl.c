@@ -28,7 +28,6 @@ message *m_ptr;			/* pointer to request message */
   register struct priv *sp;
   int proc_nr;
   int priv_id;
-  int old_flags;
   int i;
   phys_bytes caller_phys, kernel_phys;
   struct io_range io_range;
@@ -49,7 +48,7 @@ message *m_ptr;			/* pointer to request message */
   switch(m_ptr->CTL_REQUEST)
   {
   case SYS_PRIV_INIT:
-	if (! (rp->p_rts_flags & NO_PRIV)) return(EPERM);
+	if (! RTS_ISSET(rp, NO_PRIV)) return(EPERM);
 
 	/* Make sure this process has its own privileges structure. This may
 	 * fail, since there are only a limited number of system processes.
@@ -136,25 +135,17 @@ message *m_ptr;			/* pointer to request message */
 	}
 
 	/* Done. Privileges have been set. Allow process to run again. */
-	old_flags = rp->p_rts_flags;		/* save value of the flags */
-	rp->p_rts_flags &= ~NO_PRIV; 		
-	if (old_flags != 0 && rp->p_rts_flags == 0) lock_enqueue(rp);
+	RTS_LOCK_UNSET(rp, NO_PRIV);
 	return(OK);
   case SYS_PRIV_USER:
-	if (! (rp->p_rts_flags & NO_PRIV)) return(EPERM);
-
-	/* Make this process an ordinary user process.
-	 */
+	/* Make this process an ordinary user process. */
+	if (!RTS_ISSET(rp, NO_PRIV)) return(EPERM);
 	if ((i=get_priv(rp, 0)) != OK) return(i);
-
-	/* Done. Privileges have been set. Allow process to run again. */
-	old_flags = rp->p_rts_flags;		/* save value of the flags */
-	rp->p_rts_flags &= ~NO_PRIV; 		
-	if (old_flags != 0 && rp->p_rts_flags == 0) lock_enqueue(rp);
+	RTS_LOCK_UNSET(rp, NO_PRIV);
 	return(OK);
 
   case SYS_PRIV_ADD_IO:
-	if (rp->p_rts_flags & NO_PRIV)
+	if (RTS_ISSET(rp, NO_PRIV))
 		return(EPERM);
 
 	/* Only system processes get I/O resources? */
@@ -180,7 +171,7 @@ message *m_ptr;			/* pointer to request message */
 	return OK;
 
   case SYS_PRIV_ADD_MEM:
-	if (rp->p_rts_flags & NO_PRIV)
+	if (RTS_ISSET(rp, NO_PRIV))
 		return(EPERM);
 
 	/* Only system processes get memory resources? */
@@ -208,7 +199,7 @@ message *m_ptr;			/* pointer to request message */
 	return OK;
 
   case SYS_PRIV_ADD_IRQ:
-	if (rp->p_rts_flags & NO_PRIV)
+	if (RTS_ISSET(rp, NO_PRIV))
 		return(EPERM);
 
 	/* Only system processes get IRQs? */

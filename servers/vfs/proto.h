@@ -133,7 +133,8 @@ _PROTOTYPE( int do_getdents, (void)					);
 _PROTOTYPE( int read_write, (int rw_flag)				);
 
 /* request.c */
-_PROTOTYPE( int req_getnode, (node_req_t *req, node_details_t *res)     );
+#define req_getnode(req, res) req_getnode_f(__FILE__, __LINE__, (req), (res))
+_PROTOTYPE( int req_getnode_f, (char *file, int line, node_req_t *req, node_details_t *res)     );
 _PROTOTYPE( int req_putnode, (int fs_e, ino_t inode_nr, int count)	);
 _PROTOTYPE( int req_open, (open_req_t *req, node_details_t *res)        ); 
 _PROTOTYPE( int req_create, (int fs_e, ino_t inode_nr, int omode,
@@ -144,8 +145,8 @@ _PROTOTYPE( int req_pipe, (pipe_req_t *req, node_details_t *res)        );
 _PROTOTYPE( int req_clone_opcl, (clone_opcl_req_t *req, 
             node_details_t *res)                                        );
 _PROTOTYPE( int req_ftrunc, (ftrunc_req_t *req)                         );
-_PROTOTYPE( int req_chown, (chown_req_t *req)                           );
-_PROTOTYPE( int req_chmod, (chmod_req_t *req)                           );
+_PROTOTYPE( int req_chown, (chown_req_t *req, int *mode)                );
+_PROTOTYPE( int req_chmod, (chmod_req_t *req, int *mode)                );
 _PROTOTYPE( int req_access, (access_req_t *req)                         );
 _PROTOTYPE( int req_mknod, (mknod_req_t *req)                           );
 _PROTOTYPE( int req_mkdir, (mkdir_req_t *req)                           );
@@ -239,4 +240,5 @@ _PROTOTYPE( void fs_set_timer, (timer_t *tp, int delta,
 _PROTOTYPE( void fs_expire_timers, (clock_t now)			);
 _PROTOTYPE( void fs_cancel_timer, (timer_t *tp)				);
 _PROTOTYPE( void fs_init_timer, (timer_t *tp)				);
+
 

@@ -21,6 +21,7 @@
 #include "fproc.h"
 #include "param.h"
 #include <dirent.h>
+#include <assert.h>
 
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -45,7 +46,7 @@ int rw_flag;			/* READING or WRITING */
 /* Perform read(fd, buffer, nbytes) or write(fd, buffer, nbytes) call. */
   register struct filp *f;
   register struct vnode *vp;
-  off_t bytes_left, f_size;
+  off_t bytes_left;
   u64_t position;
   unsigned int off, cum_io;
   int op, oflags, r, chunk, usr, seg, block_spec, char_spec;
@@ -97,7 +98,6 @@ int rw_flag;			/* READING or WRITING */
   oflags = f->filp_flags;
 
   vp = f->filp_vno;
-  f_size = vp->v_size;
 
   r = OK;
   if (vp->v_pipe == I_PIPE) {
@@ -119,7 +119,6 @@ int rw_flag;			/* READING or WRITING */
   }
 
   if ((block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0))) {
-      f_size = ULONG_MAX;
       if (vp->v_sdev == NO_DEV)
           panic(__FILE__,"read_write tries to read from "
                   " block device NO_DEV", NO_NUM);
@@ -155,11 +154,11 @@ int rw_flag;			/* READING or WRITING */
       position = res.new_pos;
       cum_io += res.cum_io;
   }
-  /* Regular files */
+  /* Regular files (and pipes) */
   else {
       if (rw_flag == WRITING && block_spec == 0) {
           /* Check for O_APPEND flag. */
-          if (oflags & O_APPEND) position = cvul64(f_size);
+          if (oflags & O_APPEND) position = cvul64(vp->v_size);
 
           /* Check in advance to see if file will grow too big. */
           if (cmp64ul(position, vp->v_vmnt->m_max_file_size - m_in.nbytes) > 0)
@@ -175,8 +174,9 @@ int rw_flag;			/* READING or WRITING */
       }
 
       if (partial_cnt > 0) {
-          /* So taht we don't need to deal with partial count 
-           * in the FS process */
+          /* So that we don't need to deal with partial count 
+           * in the FS process.
+	   */
           m_in.nbytes = MIN(m_in.nbytes, partial_cnt);
           partial_pipe = 1;
       }
@@ -192,11 +192,17 @@ int rw_flag;			/* READING or WRITING */
       req.user_addr = m_in.buffer;
       req.inode_index = vp->v_index;
 
-      if (vp->v_isfifo)
-      {
-	printf("read_write: %s for FIFO @ %u size %u\n",
-		(rw_flag == READING) ? "read" : "write",
-		ex64lo(position), m_in.nbytes);
+      /* Truncate read request at size (mustn't do this for special files). */
+      if((rw_flag == READING) &&
+	cmp64ul(add64ul(position, req.num_of_bytes), vp->v_size) > 0) {
+	/* Position always should fit in an off_t (LONG_MAX). */
+	off_t pos32;
+	assert(cmp64ul(position, LONG_MAX) <= 0);
+	pos32 = cv64ul(position);
+	assert(pos32 >= 0);
+	assert(pos32 <= LONG_MAX);
+	req.num_of_bytes = vp->v_size - pos32;
+	assert(req.num_of_bytes >= 0);
       }
 
       /* Issue request */
@@ -215,7 +221,7 @@ int rw_flag;			/* READING or WRITING */
   /* On write, update file size and access time. */
   if (rw_flag == WRITING) {
       if (regular || mode_word == I_DIRECTORY) {
-          if (cmp64ul(position, f_size) > 0)
+          if (cmp64ul(position, vp->v_size) > 0)
 	  {
 		if (ex64hi(position) != 0)
 		{

@@ -40,8 +40,7 @@ register message *m_ptr;	/* pointer to request message */
 	(LDT_SIZE - EXTRA_LDT_INDEX) * sizeof(rp->p_seg.p_ldt[0]));
 #endif
   rp->p_reg.pc = (reg_t) m_ptr->PR_IP_PTR;	/* set pc */
-  rp->p_rts_flags &= ~RECEIVING;	/* PM does not reply to EXEC call */
-  if (rp->p_rts_flags == 0) lock_enqueue(rp);
+  RTS_LOCK_UNSET(rp, RECEIVING);	/* PM does not reply to EXEC call */
   /* Save command name for debugging, ps(1) output, etc. */
   phys_name = numap_local(who_p, (vir_bytes) m_ptr->PR_NAME_PTR,
 					(vir_bytes) P_NAME_LEN - 1);  

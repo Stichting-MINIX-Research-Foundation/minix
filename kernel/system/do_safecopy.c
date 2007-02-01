@@ -61,7 +61,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 	 * EINVAL for grant-out-of-range, in case this turns out to be
 	 * interesting information.)
 	 */
-	if((granter_proc->p_rts_flags & NO_PRIV) || !(priv(granter_proc)) ||
+	if(RTS_ISSET(granter_proc, NO_PRIV) || !(priv(granter_proc)) ||
 	  priv(granter_proc)->s_grant_table < 1) {
 		kprintf("grant verify failed in ep %d proc %d: "
 		"no priv table, or no grant table\n",

@@ -33,7 +33,7 @@ EXTERN int SELF_E;
 EXTERN struct inode *chroot_dir;
 
 EXTERN short path_processed;      /* number of characters processed */
-EXTERN char user_path[PATH_MAX];  /* pathname to be processed */
+EXTERN char user_path[PATH_MAX+1];  /* pathname to be processed */
 EXTERN char *vfs_slink_storage;
 EXTERN int symloop;
 

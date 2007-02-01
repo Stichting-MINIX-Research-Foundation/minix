@@ -39,7 +39,7 @@
  */ 
 FORWARD _PROTOTYPE( void init_clock, (void) );
 FORWARD _PROTOTYPE( int clock_handler, (irq_hook_t *hook) );
-FORWARD _PROTOTYPE( int do_clocktick, (message *m_ptr) );
+FORWARD _PROTOTYPE( void do_clocktick, (message *m_ptr) );
 FORWARD _PROTOTYPE( void load_update, (void));
 
 /* The CLOCK's timers queue. The functions in <timers.h> operate on this. 
@@ -74,10 +74,13 @@ PUBLIC void clock_task()
 	/* Go get a message. */
 	result = receive(ANY, &m);
 
+	if(result != OK)
+		panic("receive() failed", result);
+
 	/* Handle the request. Only clock ticks are expected. */
 	switch (m.m_type) {
 	case HARD_INT:      
-		result = do_clocktick(&m); /* handle clock tick */
+		do_clocktick(&m); /* handle clock tick */
 		break;
 	default: /* illegal request type */
 		kprintf("CLOCK: illegal request %d from %d.\n",
@@ -89,7 +92,7 @@ PUBLIC void clock_task()
 /*===========================================================================*
  *				do_clocktick				     *
  *===========================================================================*/
-PRIVATE int do_clocktick(m_ptr)
+PRIVATE void do_clocktick(m_ptr)
 message *m_ptr;				/* pointer to request message */
 {
 /* Despite its name, this routine is not called on every clock tick. It
@@ -103,9 +106,10 @@ message *m_ptr;				/* pointer to request message */
    * place in the queues.  As a side-effect a new process will be scheduled.
    */ 
   if (prev_ptr->p_ticks_left <= 0 && priv(prev_ptr)->s_flags & PREEMPTIBLE) {
-      if(prev_ptr->p_rts_flags == 0)	/* if it was runnable .. */
-	      lock_dequeue(prev_ptr);	/* take it off the queues */
-      lock_enqueue(prev_ptr);		/* and reinsert it again */ 
+      if(prev_ptr->p_rts_flags == 0) {	/* if it was runnable .. */
+	lock_dequeue(prev_ptr);		/* take it off the queues */
+      	lock_enqueue(prev_ptr);		/* and reinsert it again */ 
+      }
   }
 
   /* Check if a clock timer expired and run its watchdog function. */
@@ -115,8 +119,7 @@ message *m_ptr;				/* pointer to request message */
 		 TMR_NEVER : clock_timers->tmr_exp_time;	
   }
 
-  /* Inhibit sending a reply. */
-  return(EDONTREPLY);
+  return;
 }
 
 /*===========================================================================*

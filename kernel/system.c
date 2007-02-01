@@ -30,6 +30,7 @@
 #include "debug.h"
 #include "kernel.h"
 #include "system.h"
+#include "proc.h"
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
@@ -67,8 +68,9 @@ PUBLIC void sys_task()
   initialize();
 
   while (TRUE) {
+      int r;
       /* Get work. Block and wait until a request message arrives. */
-      receive(ANY, &m);			
+      if((r=receive(ANY, &m)) != OK) panic("system: receive() failed", r);
       sys_call_code = (unsigned) m.m_type;
       call_nr = sys_call_code - KERNEL_CALL;	
       who_e = m.m_source;
@@ -216,7 +218,8 @@ int proc_type;				/* system or user process flag */
   } else {
       rc->p_priv = &priv[USER_PRIV_ID];		/* use shared slot */
       rc->p_priv->s_proc_nr = INIT_PROC_NR;	/* set association */
-      rc->p_priv->s_flags = 0;			/* no initial flags */
+
+      /* s_flags of this shared structure are to be once at system startup. */
   }
   return(OK);
 }
@@ -292,9 +295,8 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   rp = proc_addr(proc_nr);
   if (! sigismember(&rp->p_pending, sig_nr)) {
       sigaddset(&rp->p_pending, sig_nr);
-      if (! (rp->p_rts_flags & SIGNALED)) {		/* other pending */
-          if (rp->p_rts_flags == 0) lock_dequeue(rp);	/* make not ready */
-          rp->p_rts_flags |= SIGNALED | SIG_PENDING;	/* update flags */
+      if (! (RTS_ISSET(rp, SIGNALED))) {		/* other pending */
+	  RTS_LOCK_SET(rp, SIGNALED | SIG_PENDING);
           send_sig(PM_PROC_NR, SIGKSIG);
       }
   }
@@ -473,13 +475,12 @@ register struct proc *rc;		/* slot of process to clean up */
   if(isemptyp(rc)) panic("clear_proc: empty process", proc_nr(rc));
 
   /* Make sure that the exiting process is no longer scheduled. */
-  if (rc->p_rts_flags == 0) lock_dequeue(rc);
-  rc->p_rts_flags |= NO_ENDPOINT;
+  RTS_LOCK_SET(rc, NO_ENDPOINT);
 
   /* If the process happens to be queued trying to send a
    * message, then it must be removed from the message queues.
    */
-  if (rc->p_rts_flags & SENDING) {
+  if (RTS_ISSET(rc, SENDING)) {
       int target_proc;
 
       okendpt(rc->p_sendto_e, &target_proc);
@@ -511,21 +512,20 @@ register struct proc *rc;		/* slot of process to clean up */
       unset_sys_bit(priv(rp)->s_notify_pending, priv(rc)->s_id);
 
       /* Check if process is receiving from exiting process. */
-      if ((rp->p_rts_flags & RECEIVING) && rp->p_getfrom_e == rc->p_endpoint) {
+      if (RTS_ISSET(rp, RECEIVING) && rp->p_getfrom_e == rc->p_endpoint) {
           rp->p_reg.retreg = ESRCDIED;		/* report source died */
-	  rp->p_rts_flags &= ~RECEIVING;	/* no longer receiving */
+	  RTS_LOCK_UNSET(rp, RECEIVING);	/* no longer receiving */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("Proc %d receive dead src %d\n", proc_nr(rp), proc_nr(rc));
 #endif
-  	  if (rp->p_rts_flags == 0) lock_enqueue(rp);/* let process run again */
       } 
-      if ((rp->p_rts_flags & SENDING) && rp->p_sendto_e == rc->p_endpoint) {
+      if (RTS_ISSET(rp, SENDING) &&
+	  rp->p_sendto_e == rc->p_endpoint) {
           rp->p_reg.retreg = EDSTDIED;		/* report destination died */
-	  rp->p_rts_flags &= ~SENDING;		/* no longer sending */
+	  RTS_LOCK_UNSET(rp, SENDING);
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("Proc %d send dead dst %d\n", proc_nr(rp), proc_nr(rc));
 #endif
-  	  if (rp->p_rts_flags == 0) lock_enqueue(rp);/* let process run again */
       } 
   }
 }

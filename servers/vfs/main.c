@@ -133,6 +133,8 @@ PUBLIC int main()
 		panic(__FILE__, "check_vrefs failed at line", __LINE__);
 	}
 #endif
+	
+	
   }
   return(OK);				/* shouldn't come here */
 }
@@ -170,9 +172,10 @@ PRIVATE void get_work()
   }
 
   for(;;) {
+    int r;
     /* Normal case.  No one to revive. */
-    if (receive(ANY, &m_in) != OK)
-	panic(__FILE__,"fs receive error", NO_NUM);
+    if ((r=receive(ANY, &m_in)) != OK)
+	panic(__FILE__,"fs receive error", r);
     who_e = m_in.m_source;
     who_p = _ENDPOINT_P(who_e);
 

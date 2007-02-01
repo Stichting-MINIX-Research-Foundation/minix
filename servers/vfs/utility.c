@@ -17,6 +17,7 @@
 #include "file.h"
 #include "fproc.h"
 #include "param.h"
+#include "vmnt.h"
 
 PRIVATE int panicking;		/* inhibits recursive panics during sync */
 
@@ -35,6 +36,11 @@ int flag;			/* M3 means path may be in message */
   register char *rpu, *rpm;
   int r;
 
+  if (len > PATH_MAX) {
+	err_code = ENAMETOOLONG;
+	return(EGENERIC);
+  }
+
   if(len >= sizeof(user_fullpath)) {
 	panic(__FILE__, "fetch_name: len too much for user_fullpath", len);
   }
@@ -42,11 +48,7 @@ int flag;			/* M3 means path may be in message */
   /* Check name length for validity. */
   if (len <= 0) {
 	err_code = EINVAL;
-	return(EGENERIC);
-  }
-
-  if (len > PATH_MAX) {
-	err_code = ENAMETOOLONG;
+	printf("vfs: fetch_name: len %d?\n", len);
 	return(EGENERIC);
   }
 
@@ -100,7 +102,7 @@ int num;			/* number to go with it */
   if (panicking) return;	/* do not panic during a sync */
   panicking = TRUE;		/* prevent another panic during the sync */
 
-  printf("FS panic (%s): %s ", who, mess);
+  printf("VFS panic (%s): %s ", who, mess);
   if (num != NO_NUM) printf("%d",num); 
   (void) do_sync();		/* flush everything to the disk */
   sys_exit(SELF);
@@ -147,5 +149,4 @@ PUBLIC time_t clock_time()
   if ( (k=getuptime(&uptime)) != OK) panic(__FILE__,"clock_time err", k);
   return( (time_t) (boottime + (uptime/HZ)));
 }
-
 

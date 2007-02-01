@@ -22,7 +22,7 @@ message *m_ptr;
 	rp = proc_addr(who_p);
 
 	/* Copy grant table set in priv. struct. */
-	if ((rp->p_rts_flags & NO_PRIV) || !(priv(rp))) {
+	if (RTS_ISSET(rp, NO_PRIV) || !(priv(rp))) {
 		r = EPERM;
 	} else {
 		_K_SET_GRANT_TABLE(rp, 

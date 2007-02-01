@@ -137,24 +137,6 @@ PUBLIC void irqtab_dmp()
   struct irq_hook irq_hooks[NR_IRQ_HOOKS];
   int irq_actids[NR_IRQ_VECTORS];
   struct irq_hook *e;	/* irq tab entry */
-  char *irq[] = {
-  	"clock",	/* 00 */
-  	"keyboard",	/* 01 */
-  	"cascade",	/* 02 */
-  	"rs232",	/* 03 */
-  	"rs232",	/* 04 */
-  	"NIC(eth)",	/* 05 */
-  	"floppy",	/* 06 */
-  	"printer",	/* 07 */
-  	"",	/* 08 */
-  	"",	/* 09 */
-  	"",	/* 10 */
-  	"",	/* 11 */
-  	"",	/* 12 */
-  	"",	/* 13 */
-  	"at_wini_0",	/* 14 */
-  	"at_wini_1",	/* 15 */
-  };
 
   if ((r = sys_getirqhooks(irq_hooks)) != OK) {
       report("IS","warning: couldn't get copy of irq hooks", r);
@@ -173,7 +155,7 @@ PUBLIC void irqtab_dmp()
 #endif
 
   printf("IRQ policies dump shows use of kernel's IRQ hooks.\n");
-  printf("-h.id- -proc.nr- -IRQ vector (nr.)- -policy- -notify id-\n");
+  printf("-h.id- -proc.nr- -irq nr- -policy- -notify id-\n");
   for (i=0; i<NR_IRQ_HOOKS; i++) {
   	e = &irq_hooks[i];
   	printf("%3d", i);
@@ -182,7 +164,7 @@ PUBLIC void irqtab_dmp()
   	    continue;
   	}
   	printf("%10d  ", e->proc_nr_e); 
-  	printf("    %9.9s (%02d) ", irq[e->irq], e->irq); 
+  	printf("    (%02d) ", e->irq); 
   	printf("  %s", (e->policy & IRQ_REENABLE) ? "reenable" : "    -   ");
   	printf("   %d", e->notify_id);
 	if (irq_actids[e->irq] & (1 << i))

@@ -26,6 +26,7 @@
 #include "lock.h"
 #include "param.h"
 #include <dirent.h>
+#include <assert.h>
 
 #include <minix/vfsif.h>
 #include "vnode.h"
@@ -117,10 +118,6 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 
   vp= NULL;
 
-#if 0
-  printf("common_open: for '%s'\n", user_fullpath);
-#endif
-
   /* Fill in lookup request fields */
   Xlookup_req.path = user_fullpath;
   Xlookup_req.lastc = Xlastc;
@@ -146,11 +143,18 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   {
 	if (pathrem == NULL)
 		panic(__FILE__, "no pathrem", NO_NUM);
-	if (strchr(pathrem, '/') == 0)
+
+	/* If any path remains, but no '/', O_CREAT can continue.
+	 * If no path remains, a null filename was provided so ENOENT
+	 * remains.
+	 */
+	if(*pathrem) {
+	   if (strchr(pathrem, '/') == 0)
 		r= OK;
-	else
-	{
+	   else
+	   {
 		printf("common_open: / in pathrem\n");
+	   }
 	}
   }
 
@@ -278,8 +282,6 @@ PRIVATE int common_open(register int oflags, mode_t omode)
           break;
 
       case I_NAMED_PIPE:
-	  printf("common_open: setting I_PIPE, inode %d on dev 0x%x\n",
-		vp->v_inode_nr, vp->v_dev);
 	  vp->v_pipe = I_PIPE;
 		vp->v_isfifo= TRUE;
           oflags |= O_APPEND;	/* force append mode */
@@ -291,6 +293,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
                * file position will be automatically shared.
                */
               b = (bits & R_BIT ? R_BIT : W_BIT);
+	      assert(fil_ptr->filp_count == 1);
               fil_ptr->filp_count = 0; /* don't find self */
               if ((filp2 = find_filp(vp, b)) != NIL_FILP) {
                   /* Co-reader or writer found. Use it.*/
@@ -428,15 +431,10 @@ struct vnode **vpp;
 	break;
 
   case I_NAMED_PIPE:
-	printf("x_open (fifo): reference count %d, fd %d\n",
-		vp->v_ref_count, vp->v_fs_count);
 	if (vp->v_ref_count == 1)
 	{
-		printf("x_open (fifo): first reference, size %u\n",
-			vp->v_size);
 		if (vp->v_size != 0)
 		{
-			printf("x_open (fifo): clearing\n");
 			r= truncate_vn(vp, 0);
 			if (r != OK)
 			{
@@ -465,8 +463,6 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
  *  processes hanging on the pipe.
  */
 
-	  printf("pipe_open: setting I_PIPE, inode %d on dev 0x%x\n",
-		vp->v_inode_nr, vp->v_dev);
   vp->v_pipe = I_PIPE; 
 
   if((bits & (R_BIT|W_BIT)) == (R_BIT|W_BIT)) {
@@ -735,6 +731,12 @@ int fd_nr;
 
   /* If a write has been done, the inode is already marked as DIRTY. */
   if (--rfilp->filp_count == 0) {
+	if (vp->v_pipe == I_PIPE) {
+		/* Last reader or writer is going. Tell MFS about latest
+		 * pipe size.
+		 */
+		truncate_vn(vp, vp->v_size);
+	}
 	if (vp->v_pipe == I_PIPE && vp->v_ref_count > 1) {
 		/* Save the file position in the v-node in case needed later.
 		 * The read and write positions are saved separately.  

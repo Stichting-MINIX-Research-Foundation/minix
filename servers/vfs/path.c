@@ -43,6 +43,7 @@ node_details_t *node;
 
   /* Empty (start) path? */
   if (fullpath[0] == '\0') {
+      node->inode_nr = 0;
       return ENOENT;
   }
 
@@ -178,6 +179,8 @@ char **pathrem;
 
   /* Empty (start) path? */
   if (fullpath[0] == '\0') {
+      node->inode_nr = 0;
+      *pathrem = fullpath;
       return ENOENT;
   }
 
@@ -314,7 +317,7 @@ struct vnode **vpp;
   if (res.inode_nr == 0)
   {
 	printf("lookup_vp: lookup returned no inode\n");
-	printf("lookup_res = %d, last = '%s'\n",
+	printf("lookup_res = %d, last = '%s'\n\n",
 		lookup_res, lookup_req->lastc);
 	*vpp= NULL;
 	return lookup_res;
@@ -386,7 +389,7 @@ char **pathrem;
   if (res.inode_nr == 0)
   {
 	printf("Xlookup_vp: lookup returned no inode\n");
-	printf("lookup_res = %d, last = '%s'\n",
+	printf("lookup_res = %d, last = '%s'\n\n",
 		lookup_res, lookup_req->lastc);
 	*vpp= NULL;
 	return lookup_res;

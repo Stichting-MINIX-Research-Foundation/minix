@@ -150,12 +150,8 @@ PUBLIC void main()
 	}
 	
 	/* Set ready. The HARDWARE task is never ready. */
-	if (rp->p_nr != HARDWARE) {
-		rp->p_rts_flags = 0;		/* runnable if no flags */
-		lock_enqueue(rp);		/* add to scheduling queues */
-	} else {
-		rp->p_rts_flags = NO_PRIORITY;	/* prevent from running */
-	}
+	if (rp->p_nr == HARDWARE) RTS_LOCK_SET(rp, NO_PRIORITY);
+	RTS_LOCK_UNSET(rp, SLOT_FREE); /* remove SLOT_FREE and schedule */
 
 	/* Code and data segments must be allocated in protected mode. */
 	alloc_segments(rp);

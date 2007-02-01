@@ -104,7 +104,7 @@ long bit_map;			/* notification event set or flags */
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
 
 #if 1
-  if (caller_ptr->p_rts_flags & SLOT_FREE)
+  if (RTS_ISSET(caller_ptr, SLOT_FREE))
   {
 	kprintf("called by the dead?!?\n");
 	return EINVAL;
@@ -243,10 +243,10 @@ int src_dst;					/* src or dst process */
       /* Check whether the last process in the chain has a dependency. If it 
        * has not, the cycle cannot be closed and we are done.
        */
-      if (xp->p_rts_flags & RECEIVING) {	/* xp has dependency */
+      if (RTS_ISSET(xp, RECEIVING)) {	/* xp has dependency */
 	  if(xp->p_getfrom_e == ANY) src_dst = ANY;
 	  else okendpt(xp->p_getfrom_e, &src_dst);
-      } else if (xp->p_rts_flags & SENDING) {	/* xp has dependency */
+      } else if (RTS_ISSET(xp, SENDING)) {	/* xp has dependency */
 	  okendpt(xp->p_sendto_e, &src_dst);
       } else {
 	  return(0);				/* not a deadlock */
@@ -289,23 +289,22 @@ unsigned flags;				/* system call flags */
   dst_p = _ENDPOINT_P(dst_e);
   dst_ptr = proc_addr(dst_p);
 
-  if (dst_ptr->p_rts_flags & NO_ENDPOINT) return EDSTDIED;
+  if (RTS_ISSET(dst_ptr, NO_ENDPOINT)) return EDSTDIED;
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
    */
-  if ( (dst_ptr->p_rts_flags & (RECEIVING | SENDING)) == RECEIVING &&
+  if ( (RTS_ISSET(dst_ptr, RECEIVING) && !RTS_ISSET(dst_ptr, SENDING)) &&
        (dst_ptr->p_getfrom_e == ANY
          || dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
 	/* Destination is indeed waiting for this message. */
 	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 		 dst_ptr->p_messbuf);
-	if ((dst_ptr->p_rts_flags &= ~RECEIVING) == 0) enqueue(dst_ptr);
+	RTS_UNSET(dst_ptr, RECEIVING);
   } else if ( ! (flags & NON_BLOCKING)) {
 	/* Destination is not waiting.  Block and dequeue caller. */
 	caller_ptr->p_messbuf = m_ptr;
-	if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
-	caller_ptr->p_rts_flags |= SENDING;
+	RTS_SET(caller_ptr, SENDING);
 	caller_ptr->p_sendto_e = dst_e;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
@@ -344,7 +343,7 @@ unsigned flags;				/* system call flags */
   else
   {
 	okendpt(src_e, &src_p);
-	if (proc_addr(src_p)->p_rts_flags & NO_ENDPOINT) return ESRCDIED;
+	if (RTS_ISSET(proc_addr(src_p), NO_ENDPOINT)) return ESRCDIED;
   }
 
 
@@ -352,7 +351,7 @@ unsigned flags;				/* system call flags */
    * The caller's SENDING flag may be set if SENDREC couldn't send. If it is
    * set, the process should be blocked.
    */
-  if (!(caller_ptr->p_rts_flags & SENDING)) {
+  if (!RTS_ISSET(caller_ptr, SENDING)) {
 
     /* Check if there are pending notifications, except for SENDREC. */
     if (! (caller_ptr->p_misc_flags & REPLY_PENDING)) {
@@ -386,7 +385,7 @@ unsigned flags;				/* system call flags */
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
 #if 1
-	    if ((*xpp)->p_rts_flags & SLOT_FREE)
+	    if (RTS_ISSET(*xpp, SLOT_FREE))
 	    {
 		kprintf("listening to the dead?!?\n");
 		return EINVAL;
@@ -395,7 +394,7 @@ unsigned flags;				/* system call flags */
 
 	    /* Found acceptable message. Copy it and update status. */
 	    CopyMess((*xpp)->p_nr, *xpp, (*xpp)->p_messbuf, caller_ptr, m_ptr);
-            if (((*xpp)->p_rts_flags &= ~SENDING) == 0) enqueue(*xpp);
+	    RTS_UNSET(*xpp, SENDING);
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
 	}
@@ -409,8 +408,7 @@ unsigned flags;				/* system call flags */
   if ( ! (flags & NON_BLOCKING)) {
       caller_ptr->p_getfrom_e = src_e;		
       caller_ptr->p_messbuf = m_ptr;
-      if (caller_ptr->p_rts_flags == 0) dequeue(caller_ptr);
-      caller_ptr->p_rts_flags |= RECEIVING;		
+      RTS_SET(caller_ptr, RECEIVING);
       return(OK);
   } else {
       return(ENOTREADY);
@@ -431,7 +429,7 @@ int dst;				/* which process to notify */
   /* Check to see if target is blocked waiting for this message. A process 
    * can be both sending and receiving during a SENDREC system call.
    */
-  if ((dst_ptr->p_rts_flags & (RECEIVING|SENDING)) == RECEIVING &&
+  if ( (RTS_ISSET(dst_ptr, RECEIVING) && !RTS_ISSET(dst_ptr, SENDING)) &&
       ! (dst_ptr->p_misc_flags & REPLY_PENDING) &&
       (dst_ptr->p_getfrom_e == ANY || 
       dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
@@ -443,8 +441,7 @@ int dst;				/* which process to notify */
       BuildMess(&m, proc_nr(caller_ptr), dst_ptr);
       CopyMess(proc_nr(caller_ptr), proc_addr(HARDWARE), &m, 
           dst_ptr, dst_ptr->p_messbuf);
-      dst_ptr->p_rts_flags &= ~RECEIVING;	/* deblock destination */
-      if (dst_ptr->p_rts_flags == 0) enqueue(dst_ptr);
+      RTS_UNSET(dst_ptr, RECEIVING);
       return(OK);
   } 
 

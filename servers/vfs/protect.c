@@ -34,7 +34,8 @@ PUBLIC int do_chmod()
   struct chmod_req req;
   struct lookup_req lookup_req;
   struct node_details res;
-  int r;
+  struct vnode *vp;
+  int r, ch_mode;
     
   if (call_nr == CHMOD) {
       /* Perform the chmod(name, mode) system call. */
@@ -58,13 +59,21 @@ PUBLIC int do_chmod()
   }
   else panic(__FILE__, "do_chmod called with strange call_nr", call_nr);
 
+  /* Find vnode, if it's in use. */
+  vp = find_vnode(req.fs_e, req.inode_nr);
+
   /* Fill in request message fields.*/
   req.uid = fp->fp_effuid;
   req.gid = fp->fp_effgid;
   req.rmode = m_in.mode;
   
   /* Issue request */
-  return req_chmod(&req);
+  if((r = req_chmod(&req, &ch_mode)) != OK) return r;
+
+  if(vp != NIL_VNODE)
+  	vp->v_mode = ch_mode;
+
+  return OK;
 }
 
 /*===========================================================================*
@@ -78,7 +87,8 @@ PUBLIC int do_chown()
   struct chown_req req;
   struct lookup_req lookup_req;
   struct node_details res;
-  int r;
+  struct vnode *vp;
+  int r, ch_mode;
   
   if (call_nr == CHOWN) {
       /* Perform the chmod(name, mode) system call. */
@@ -102,6 +112,9 @@ PUBLIC int do_chown()
   }
   else panic(__FILE__, "do_chmod called with strange call_nr", call_nr);
 
+  /* Find vnode, if it's in use. */
+  vp = find_vnode(req.fs_e, req.inode_nr);
+
   /* Fill in request message fields.*/
   req.uid = fp->fp_effuid;
   req.gid = fp->fp_effgid;
@@ -109,7 +122,15 @@ PUBLIC int do_chown()
   req.newgid = m_in.group;
   
   /* Issue request */
-  return req_chown(&req);
+  r = req_chown(&req, &ch_mode);
+
+  if(r == OK && vp) {
+  	vp->v_uid = m_in.owner;
+  	vp->v_gid = m_in.group;
+  	vp->v_mode = ch_mode;
+  }
+
+  return r;
 }
 
 
@@ -207,7 +228,9 @@ PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
 
   /* If access desired is not a subset of what is allowed, it is refused. */
   r = OK;
-  if ((perm_bits | access_desired) != perm_bits) r = EACCES;
+  if ((perm_bits | access_desired) != perm_bits) {
+  	r = EACCES;
+  	}
 
   /* Check to see if someone is trying to write on a file system that is
    * mounted read-only.

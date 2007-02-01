@@ -29,12 +29,12 @@ message *m_ptr;			/* pointer to request message */
 
   /* Find the next process with pending signals. */
   for (rp = BEG_USER_ADDR; rp < END_PROC_ADDR; rp++) {
-      if (rp->p_rts_flags & SIGNALED) {
+      if (RTS_ISSET(rp, SIGNALED)) {
 	  /* store signaled process' endpoint */
           m_ptr->SIG_ENDPT = rp->p_endpoint;
           m_ptr->SIG_MAP = rp->p_pending;	/* pending signals map */
           sigemptyset(&rp->p_pending); 		/* ball is in PM's court */
-          rp->p_rts_flags &= ~SIGNALED;		/* blocked by SIG_PENDING */
+	  RTS_LOCK_UNSET(rp, SIGNALED);		/* blocked by SIG_PENDING */
           return(OK);
       }
   }

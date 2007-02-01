@@ -91,6 +91,8 @@ printf("MFS(%d) get_inode by open() failed\n", SELF_E);
     		   case I_REGULAR: 
 			/* Truncate regular file if O_TRUNC. */
 			if (oflags & O_TRUNC) {
+				panic(__FILE__, "O_TRUNC in mfs.", oflags);
+#if 0
 				if ((r = forbidden(rip, W_BIT)) !=OK) break;
 				truncate_inode(rip, 0);
 				wipe_inode(rip);
@@ -99,6 +101,7 @@ printf("MFS(%d) get_inode by open() failed\n", SELF_E);
 				 * cache flush.
 				 */
 				rw_inode(rip, WRITING);
+#endif
 			}
 			break;
  

@@ -43,7 +43,7 @@ PUBLIC int lookup()
   
   /* Check length. */
   len = fs_m_in.REQ_PATH_LEN;
-  if(len > sizeof(string)) return E2BIG;	/* too big for buffer */
+  if(len > sizeof(user_path)) return E2BIG;	/* too big for buffer */
   if(len < 1) return EINVAL;			/* too small for \0 */
 
   /* Copy the pathname and set up caller's user and group id */
@@ -55,8 +55,10 @@ PUBLIC int lookup()
   }
 
   /* Verify this is a null-terminated path. */
-  if(user_path[len-1] != '\0')
+  if(user_path[len-1] != '\0') {
+	printf("mfs:lookup: didn't get null-terminated string.\n");
 	return EINVAL;
+  }
 
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;

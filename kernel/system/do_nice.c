@@ -28,10 +28,8 @@ PUBLIC int do_nice(message *m_ptr)
   rp = proc_addr(proc_nr);
 
   if (pri == PRIO_STOP) {
-
       /* Take process off the scheduling queues. */
-      if(rp->p_rts_flags == 0) lock_dequeue(rp);
-      rp->p_rts_flags |= NO_PRIORITY;
+      RTS_LOCK_SET(rp, NO_PRIORITY);
       return(OK);
   }
   else if (pri >= PRIO_MIN && pri <= PRIO_MAX) {
@@ -48,10 +46,9 @@ PUBLIC int do_nice(message *m_ptr)
       /* Make sure the process is not running while changing its priority. 
        * Put the process back in its new queue if it is runnable.
        */
-      if(rp->p_rts_flags == 0) lock_dequeue(rp);
-      rp->p_rts_flags &= ~NO_PRIORITY;
+      RTS_LOCK_SET(rp, NO_PRIORITY);
       rp->p_max_priority = rp->p_priority = new_q;
-      if (! rp->p_rts_flags) lock_enqueue(rp);
+      RTS_LOCK_UNSET(rp, NO_PRIORITY);
 
       return(OK);
   }
