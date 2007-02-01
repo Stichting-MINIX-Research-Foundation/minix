@@ -72,7 +72,7 @@ install:	/usr/bin/elvis \
 	install -cs -o bin elvis $@
 
 /usr/bin/vi:	/usr/bin/elvis
-	if [ ! -f $@ -a ! -s $@ ];	\
+	if [ ! -x $@ ];	\
 	then	install -l $? $@ ;	\
 	fi
 
