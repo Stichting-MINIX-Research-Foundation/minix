@@ -810,8 +810,6 @@ PUBLIC void do_video(message *m)
 		break;
 	    case DEV_IOCTL_S:
 		safe=1;
-		/* Fallthrough. */
-	    case DEV_IOCTL:
 		if (m->TTY_REQUEST == MIOCMAP || m->TTY_REQUEST == MIOCUNMAP)
 		{
 			int r, do_map;

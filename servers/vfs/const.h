@@ -108,3 +108,11 @@
 #define V2_INODE_SIZE             usizeof (d2_inode)  /* bytes in V2 dsk ino */
 #define V2_INDIRECTS(b)   ((b)/V2_ZONE_NUM_SIZE)  /* # zones/indir block */
 #define V2_INODES_PER_BLOCK(b) ((b)/V2_INODE_SIZE)/* # V2 dsk inodes/blk */
+
+/* Args to dev_bio/dev_io */
+#define VFS_DEV_READ	2001
+#define	VFS_DEV_WRITE	2002
+#define VFS_DEV_SCATTER	2003
+#define VFS_DEV_GATHER	2004
+#define VFS_DEV_IOCTL	2005
+#define VFS_DEV_SELECT	2006

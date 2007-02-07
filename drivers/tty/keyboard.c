@@ -214,8 +214,6 @@ message *m;
 		break;
 	    case DEV_READ_S:
 	        safecopy = 1;
-		/* Fallthrough. */
-	    case DEV_READ:	 
 		if (kbdp->req_size)
 		{
 			/* We handle only request at a time */
@@ -263,8 +261,6 @@ message *m;
 
 	    case DEV_WRITE_S:
 	        safecopy = 1;
-		/* Fallthrough. */
-	    case DEV_WRITE:
 		if (kbdp != &kbdaux)
 		{
 			printf("write to keyboard not implemented\n");
@@ -316,8 +312,6 @@ message *m;
 		break;
 	    case DEV_IOCTL_S:
 		 safecopy=1;
-		 /* Fallthrough. */
-	    case DEV_IOCTL:
 		if (kbdp == &kbd && m->TTY_REQUEST == KIOCSLEDS)
 		{
 			kio_leds_t leds;

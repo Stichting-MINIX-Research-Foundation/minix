@@ -140,7 +140,6 @@ PUBLIC void main(void)
 	    case DEV_CLOSE:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, OK);
 		break;
-	    case DEV_WRITE:	do_write(&pr_mess, 0);	break;
 	    case DEV_WRITE_S:	do_write(&pr_mess, 1);	break;
 	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL:	do_cancel(&pr_mess);	break;

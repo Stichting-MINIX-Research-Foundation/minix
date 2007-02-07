@@ -435,7 +435,7 @@ PRIVATE void f_cleanup()
  *===========================================================================*/
 PRIVATE int f_transfer(proc_nr, opcode, pos64, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
+int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 u64_t pos64;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
@@ -482,7 +482,7 @@ int safe;
 
 	/* Using a formatting device? */
 	if (f_device & FORMAT_DEV_BIT) {
-		if (opcode != DEV_SCATTER) return(EIO);
+		if (opcode != DEV_SCATTER_S) return(EIO);
 		if (iov->iov_size < SECTOR_SIZE + sizeof(fmt_param))
 			return(EINVAL);
 
@@ -592,7 +592,7 @@ int safe;
 			}
 		}
 
-		if (r == OK && opcode == DEV_SCATTER) {
+		if (r == OK && opcode == DEV_SCATTER_S) {
 			/* Copy the user bytes to the DMA buffer. */
 			if(safe) {
 		   	   s=sys_safecopyfrom(proc_nr, *ug, *up,
@@ -619,7 +619,7 @@ int safe;
 			r = fdc_transfer(opcode);
 		}
 
-		if (r == OK && opcode == DEV_GATHER) {
+		if (r == OK && opcode == DEV_GATHER_S) {
 			/* Copy the DMA buffer to user space. */
 			if(safe) {
 		   	   s=sys_safecopyto(proc_nr, *ug, *up,
@@ -678,7 +678,7 @@ int safe;
  *				dma_setup				     *
  *===========================================================================*/
 PRIVATE int dma_setup(opcode)
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
+int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 {
 /* The IBM PC can perform DMA operations by using the DMA chip.  To use it,
  * the DMA (Direct Memory Access) chip is loaded with the 20-bit memory address
@@ -706,7 +706,7 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
    */
   pv_set(byte_out[0], DMA_INIT, DMA_RESET_VAL);	/* reset the dma controller */
   pv_set(byte_out[1], DMA_FLIPFLOP, 0);		/* write anything to reset it */
-  pv_set(byte_out[2], DMA_MODE, opcode == DEV_SCATTER ? DMA_WRITE : DMA_READ);
+  pv_set(byte_out[2], DMA_MODE, opcode == DEV_SCATTER_S ? DMA_WRITE : DMA_READ);
   pv_set(byte_out[3], DMA_ADDR, (unsigned) tmp_phys >>  0);
   pv_set(byte_out[4], DMA_ADDR, (unsigned) tmp_phys >>  8);
   pv_set(byte_out[5], DMA_TOP, (unsigned) (tmp_phys >> 16));
@@ -857,7 +857,7 @@ PRIVATE int seek()
  *				fdc_transfer				     *
  *===========================================================================*/
 PRIVATE int fdc_transfer(opcode)
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
+int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 {
 /* The drive is now on the proper cylinder.  Read, write or format 1 block. */
 
@@ -880,7 +880,7 @@ int opcode;			/* DEV_GATHER or DEV_SCATTER */
 	cmd[5] = fmt_param.fill_byte_for_format;
 	if (fdc_command(cmd, 6) != OK) return(ERR_TRANSFER);
   } else {
-	cmd[0] = opcode == DEV_SCATTER ? FDC_WRITE : FDC_READ;
+	cmd[0] = opcode == DEV_SCATTER_S ? FDC_WRITE : FDC_READ;
 	cmd[1] = (fp->fl_head << 2) | f_drive;
 	cmd[2] = fp->fl_cylinder;
 	cmd[3] = fp->fl_head;
@@ -1312,7 +1312,7 @@ int density;
   position = (off_t) f_dp->test << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) tmp_buf;
   iovec1.iov_size = SECTOR_SIZE;
-  result = f_transfer(SELF, DEV_GATHER, cvul64(position), &iovec1, 1, 0);
+  result = f_transfer(SELF, DEV_GATHER_S, cvul64(position), &iovec1, 1, 0);
 
   if (iovec1.iov_size != 0) return(EIO);
 

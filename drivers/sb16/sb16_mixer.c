@@ -71,7 +71,9 @@ message mess;
 		switch(mess.m_type) {
 			case DEV_OPEN:      err = mixer_open(&mess); break;	
 			case DEV_CLOSE:     err = mixer_close(&mess); break; 
+#ifdef DEV_IOCTL
 			case DEV_IOCTL:     err = mixer_ioctl(&mess); break;
+#endif
 			default:		err = EINVAL; break;
 		}
 

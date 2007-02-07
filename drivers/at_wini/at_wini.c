@@ -1051,7 +1051,7 @@ PRIVATE int w_io_test(void)
  	if (w_prepare(w_drive * DEV_PER_DRIVE) == NIL_DEV)
  		panic(w_name(), "Couldn't switch devices", NO_NUM);
 
-	r = w_transfer(SELF, DEV_GATHER, cvu64(0), &iov, 1, 0);
+	r = w_transfer(SELF, DEV_GATHER_S, cvu64(0), &iov, 1, 0);
 
 	/* Switch back. */
  	if (w_prepare(save_dev) == NIL_DEV)
@@ -1142,21 +1142,21 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
 	cmd.count   = count;
 	if (do_dma)
 	{
-		cmd.command = opcode == DEV_SCATTER ? CMD_WRITE_DMA :
+		cmd.command = opcode == DEV_SCATTER_S ? CMD_WRITE_DMA :
 			CMD_READ_DMA;
 	}
 	else
-		cmd.command = opcode == DEV_SCATTER ? CMD_WRITE : CMD_READ;
+		cmd.command = opcode == DEV_SCATTER_S ? CMD_WRITE : CMD_READ;
 
 	if (do_lba48) {
 		if (do_dma)
 		{
-			cmd.command = ((opcode == DEV_SCATTER) ?
+			cmd.command = ((opcode == DEV_SCATTER_S) ?
 				CMD_WRITE_DMA_EXT : CMD_READ_DMA_EXT);
 		}
 		else
 		{
-			cmd.command = ((opcode == DEV_SCATTER) ?
+			cmd.command = ((opcode == DEV_SCATTER_S) ?
 				CMD_WRITE_EXT : CMD_READ_EXT);
 		}
 		cmd.count_prev= (count >> 8);
@@ -1193,7 +1193,7 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
  *===========================================================================*/
 PRIVATE int w_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
+int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
@@ -1232,7 +1232,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 	block = div64u(add64(w_dv->dv_base, position), SECTOR_SIZE);
 
 	do_dma= wn->dma;
-	do_write= (opcode == DEV_SCATTER);
+	do_write= (opcode == DEV_SCATTER_S);
 	
 	if (nbytes >= wn->max_count) {
 		/* The drive can't do more then max_count at once. */
@@ -1254,7 +1254,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 	r = do_transfer(wn, wn->precomp, (nbytes >> SECTOR_SHIFT),
 		block, opcode, do_dma);
 
-	if (opcode == DEV_SCATTER) {
+	if (opcode == DEV_SCATTER_S) {
 		/* The specs call for a 400 ns wait after issuing the command.
 		 * Reading the alternate status register is the suggested 
 		 * way to implement this wait.
@@ -1355,7 +1355,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 		 * interrupt (write).
 		 */
 
-		if (opcode == DEV_GATHER) {
+		if (opcode == DEV_GATHER_S) {
 			/* First an interrupt, then data. */
 			if ((r = at_intr_wait()) != OK) {
 				/* An error, send data to the bit bucket. */
@@ -1380,7 +1380,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 		if (!w_waitfor(STATUS_DRQ, STATUS_DRQ)) { r = ERR; break; }
 
 		/* Copy bytes to or from the device's buffer. */
-		if (opcode == DEV_GATHER) {
+		if (opcode == DEV_GATHER_S) {
 		   if(safe) {
 			s=sys_safe_insw(wn->base_cmd + REG_DATA, proc_nr, 
 				(void *) (iov->iov_addr), addr_offset,
@@ -2123,7 +2123,7 @@ void sense_request(void)
  *===========================================================================*/
 PRIVATE int atapi_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
+int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
@@ -2344,9 +2344,8 @@ int safe;
 {
 	int r, timeout, prev;
 
-	if (m->m_type != DEV_IOCTL && m->m_type != DEV_IOCTL_S ) {
+	if (m->m_type != DEV_IOCTL_S )
 		return EINVAL;
-	}
 
 	if (m->REQUEST == DIOCTIMEOUT) {
 		if(safe) {

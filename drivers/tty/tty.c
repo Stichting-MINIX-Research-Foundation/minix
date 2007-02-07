@@ -259,8 +259,7 @@ PUBLIC void main(void)
 		tp = tty_addr(line - TTYPX_MINOR + NR_CONS + NR_RS_LINES);
 	} else if ((line - PTYPX_MINOR) < NR_PTYS) {
 		tp = tty_addr(line - PTYPX_MINOR + NR_CONS + NR_RS_LINES);
-		if (tty_mess.m_type != DEV_IOCTL &&
-		    tty_mess.m_type != DEV_IOCTL_S) {
+		if (tty_mess.m_type != DEV_IOCTL_S) {
 			do_pty(tp, &tty_mess);
 			continue;
 		}
@@ -282,11 +281,8 @@ PUBLIC void main(void)
 
 	/* Execute the requested device driver function. */
 	switch (tty_mess.m_type) {
-	    case DEV_READ:	 do_read(tp, &tty_mess, 0);	  break;
 	    case DEV_READ_S:	 do_read(tp, &tty_mess, 1);	  break;
-	    case DEV_WRITE:	 do_write(tp, &tty_mess, 0);	  break;
 	    case DEV_WRITE_S:	 do_write(tp, &tty_mess, 1);	  break;
-	    case DEV_IOCTL:	 do_ioctl(tp, &tty_mess, 0);	  break;
 	    case DEV_IOCTL_S:	 do_ioctl(tp, &tty_mess, 1);	  break;
 	    case DEV_OPEN:	 do_open(tp, &tty_mess);	  break;
 	    case DEV_CLOSE:	 do_close(tp, &tty_mess);	  break;

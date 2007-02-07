@@ -268,7 +268,7 @@ int rw_flag;			/* READING or WRITING */
 
   if ( (dev = bp->b_dev) != NO_DEV) {
 	  pos = mul64u(bp->b_blocknr, block_size);
-	  op = (rw_flag == READING ? DEV_READ : DEV_WRITE);
+	  op = (rw_flag == READING ? MFS_DEV_READ : MFS_DEV_WRITE);
 	  r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, block_size, 0);
 	  if (r != block_size) {
 		  if (r >= 0) r = END_OF_FILE;
@@ -373,7 +373,7 @@ int rw_flag;			/* READING or WRITING */
 		iop->iov_addr = (vir_bytes) bp->b_data;
 		iop->iov_size = block_size;
 	}
-	r = block_dev_io(rw_flag == WRITING ? DEV_SCATTER : DEV_GATHER,
+	r = block_dev_io(rw_flag == WRITING ? MFS_DEV_SCATTER : MFS_DEV_GATHER,
 		dev, SELF_E, iovec,
 		mul64u(bufq[0]->b_blocknr, block_size), j, 0);
 

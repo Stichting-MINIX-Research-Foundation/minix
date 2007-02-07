@@ -224,7 +224,7 @@ register struct super_block *sp; /* pointer to a superblock */
   if (dev == NO_DEV)
   	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
   
-  r = block_dev_io(DEV_READ, dev, SELF_E,
+  r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
   	sbbuf, cvu64(SUPER_BLOCK_BYTES), _MIN_BLOCK_SIZE, 0);
   if (r != _MIN_BLOCK_SIZE) {
 printf("MFSread_super r != _MIN_BLOCK_SIZE\n");

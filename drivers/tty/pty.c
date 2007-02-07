@@ -95,8 +95,6 @@ message *m_ptr;
   switch (m_ptr->m_type) {
     case DEV_READ_S:
 	safe=1;
-	/* fallthrough */
-    case DEV_READ:
 	/* Check, store information on the reader, do I/O. */
 	if (pp->state & TTY_CLOSED) {
 		r = 0;
@@ -146,8 +144,6 @@ message *m_ptr;
 
     case DEV_WRITE_S:
 	safe=1;
-	/* fallthrough */
-    case DEV_WRITE:
 	/* Check, store information on the writer, do I/O. */
 	if (pp->state & TTY_CLOSED) {
 		r = EIO;

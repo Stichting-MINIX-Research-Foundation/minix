@@ -175,6 +175,7 @@ mq_t *m;
 		send_reply= 1;
 		free_mess= 1;
 		break;
+#ifdef DEV_READ
 	case DEV_READ:
 	case DEV_WRITE:
 	case DEV_IOCTL3:
@@ -183,6 +184,7 @@ mq_t *m;
 		send_reply= (result == SUSPEND);
 		free_mess= 0;
 		break;
+#endif
 	case DEV_READ_S:
 	case DEV_WRITE_S:
 	case DEV_IOCTL_S:
@@ -329,6 +331,7 @@ mq_t *m;
 
 	switch(m->mq_mess.m_type)
 	{
+#ifdef DEV_READ
 	case DEV_READ:
 		q_head_ptr= &sr_fd->srf_read_q;
 		q_tail_ptr= &sr_fd->srf_read_q_tail;
@@ -350,6 +353,7 @@ mq_t *m;
 		susp_flag= SFF_IOCTL_SUSP;
 		first_flag= SFF_IOCTL_FIRST;
 		break;
+#endif
 	default:
 		ip_panic(("illegal case entry"));
 	}
@@ -372,6 +376,7 @@ mq_t *m;
 
 	switch(m->mq_mess.m_type)
 	{
+#ifdef DEV_READ
 	case DEV_READ:
 		r= (*sr_fd->srf_read)(sr_fd->srf_fd, 
 			m->mq_mess.NDEV_COUNT);
@@ -395,6 +400,7 @@ mq_t *m;
 		}
 		r= (*sr_fd->srf_ioctl)(sr_fd->srf_fd, request);
 		break;
+#endif
 	default:
 		ip_panic(("illegal case entry"));
 	}
@@ -933,8 +939,12 @@ assert (loc_fd->srf_flags & ip_flag);
 	}
 	else
 	{
+#ifdef DEV_READ
 		assert(m_type == DEV_READ || m_type == DEV_WRITE ||
 			m_type == DEV_IOCTL);
+#else
+		ip_panic(("sr_get_userdata: m_type not *_S\n"));
+#endif
 		safe_copy= 0;
 	}
 
@@ -1018,8 +1028,12 @@ int for_ioctl;
 	}
 	else
 	{
+#ifdef DEV_READ
 		assert(m_type == DEV_READ || m_type == DEV_WRITE ||
 			m_type == DEV_IOCTL);
+#else
+		ip_panic(("sr_put_userdata: m_type not *_S\n"));
+#endif
 		safe_copy= 0;
 	}
 

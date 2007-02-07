@@ -122,12 +122,12 @@ int safe;			/* safe copies? */
 
 	/* Random number generator. Character instead of block device. */
 	case RANDOM_DEV:
-	    if (opcode == DEV_GATHER && !random_isseeded())
+	    if (opcode == DEV_GATHER_S && !random_isseeded())
 		    return(EAGAIN);
 	    left = count;
 	    while (left > 0) {
 	    	chunk = (left > RANDOM_BUF_SIZE) ? RANDOM_BUF_SIZE : left;
- 	        if (opcode == DEV_GATHER) {
+ 	        if (opcode == DEV_GATHER_S) {
 		    random_getbytes(random_buf, chunk);
 		    if(safe) {
 			r= sys_safecopyto(proc_nr, user_vir, vir_offset,
@@ -143,7 +143,7 @@ int safe;			/* safe copies? */
 	    	      sys_vircopy(SELF, D, (vir_bytes) random_buf, 
 	    	        proc_nr, D, user_vir + vir_offset, chunk);
 		    }
- 	        } else if (opcode == DEV_SCATTER) {
+ 	        } else if (opcode == DEV_SCATTER_S) {
 		    if(safe) {
 			r= sys_safecopyfrom(proc_nr, user_vir, vir_offset,
 				(vir_bytes) random_buf, chunk, D);

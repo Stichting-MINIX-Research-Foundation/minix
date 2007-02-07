@@ -90,10 +90,10 @@ vir_bytes bytes;
 	*gid = GRANT_INVALID;
 
 	switch(*op) {
-		case DEV_READ:
-		case DEV_WRITE:
+		case MFS_DEV_READ:
+		case MFS_DEV_WRITE:
 			/* Change to safe op. */
-			*op = *op == DEV_READ ? DEV_READ_S : DEV_WRITE_S;
+			*op = *op == MFS_DEV_READ ? DEV_READ_S : DEV_WRITE_S;
 
 			if((*gid=cpf_grant_direct(driver, (vir_bytes) *buf, 
 				bytes, *op == DEV_READ_S ? CPF_WRITE : 
@@ -103,10 +103,11 @@ vir_bytes bytes;
 			}
 
 			break;
-		case DEV_GATHER:
-		case DEV_SCATTER:
+		case MFS_DEV_GATHER:
+		case MFS_DEV_SCATTER:
 			/* Change to safe op. */
-			*op = *op == DEV_GATHER ? DEV_GATHER_S : DEV_SCATTER_S;
+			*op = *op == MFS_DEV_GATHER ?
+				DEV_GATHER_S : DEV_SCATTER_S;
 
 			/* Grant access to my new i/o vector. */
 			if((*gid = cpf_grant_direct(driver,
@@ -174,7 +175,7 @@ int gids_size;
  *			block_dev_io					     *
  *===========================================================================*/
 PUBLIC int block_dev_io(op, dev, proc_e, buf, pos, bytes, flags)
-int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
+int op;				/* MFS_DEV_READ, MFS_DEV_WRITE, etc. */
 dev_t dev;			/* major-minor device number */
 int proc_e;			/* in whose address space is buf? */
 void *buf;			/* virtual address of the buffer */

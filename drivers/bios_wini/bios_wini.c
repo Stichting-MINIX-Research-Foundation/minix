@@ -260,7 +260,7 @@ int safe;			/* use safecopies? */
 	/* Degrade to per-sector mode if there were errors. */
 	if (errors > 0) nbytes = SECTOR_SIZE;
 
-	if (opcode == DEV_SCATTER) {
+	if (opcode == DEV_SCATTER_S) {
 		/* Copy from user space to the DMA buffer. */
 		count = 0;
 		for (iop = iov; count < nbytes; iop++) {
@@ -294,7 +294,7 @@ int safe;			/* use safecopies? */
 
 		/* Set up an extended read or write BIOS call. */
 		reg86.u.b.intno = 0x13;
-		reg86.u.w.ax = opcode == DEV_SCATTER ? 0x4300 : 0x4200;
+		reg86.u.w.ax = opcode == DEV_SCATTER_S ? 0x4300 : 0x4200;
 		reg86.u.b.dl = wn->drive_id;
 		reg86.u.w.si = (bios_buf_phys + i13e_rw_off) % HCLICK_SIZE;
 		reg86.u.w.ds = (bios_buf_phys + i13e_rw_off) / HCLICK_SIZE;
@@ -305,7 +305,7 @@ int safe;			/* use safecopies? */
 		unsigned head = (block % secspcyl) / wn->sectors;
 
 		reg86.u.b.intno = 0x13;
-		reg86.u.b.ah = opcode == DEV_SCATTER ? 0x03 : 0x02;
+		reg86.u.b.ah = opcode == DEV_SCATTER_S ? 0x03 : 0x02;
 		reg86.u.b.al = nbytes >> SECTOR_SHIFT;
 		reg86.u.w.bx = bios_buf_phys % HCLICK_SIZE;
 		reg86.u.w.es = bios_buf_phys / HCLICK_SIZE;
@@ -325,7 +325,7 @@ int safe;			/* use safecopies? */
 		continue;
 	}
 
-	if (opcode == DEV_GATHER) {
+	if (opcode == DEV_GATHER_S) {
 		/* Copy from the DMA buffer to user space. */
 		count = 0;
 		for (iop = iov; count < nbytes; iop++) {
@@ -553,9 +553,8 @@ int safe;
 {
         int r, timeout, prev;
 
-        if (m->m_type != DEV_IOCTL && m->m_type != DEV_IOCTL_S ) {
+        if (m->m_type != DEV_IOCTL_S )
                 return EINVAL;
-        }
 
 	if (m->REQUEST == DIOCOPENCT) {
                 int count;

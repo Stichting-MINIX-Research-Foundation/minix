@@ -121,7 +121,7 @@ int device;
  *===========================================================================*/
 PRIVATE int m_transfer(proc_nr, opcode, pos64, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
+int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 u64_t pos64;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
@@ -158,7 +158,7 @@ int safe;			/* safe copies */
 
 	/* No copying; ignore request. */
 	case NULL_DEV:
-	    if (opcode == DEV_GATHER) return(OK);	/* always at EOF */
+	    if (opcode == DEV_GATHER_S) return(OK);	/* always at EOF */
 	    break;
 
 	/* Virtual copying. For RAM disk, kernel memory and boot device. */
@@ -169,7 +169,7 @@ int safe;			/* safe copies */
 	    if (position + count > dv_size) count = dv_size - position;
 	    seg = m_seg[m_device];
 
-	    if (opcode == DEV_GATHER) {			/* copy actual data */
+	    if (opcode == DEV_GATHER_S) {			/* copy actual data */
 	      if(safe) {
 	        r=sys_safecopyto(proc_nr, user_vir, vir_offset,
 	  	  position, count, seg);
@@ -201,7 +201,7 @@ int safe;			/* safe copies */
                     panic("MEM","sys_umap failed in m_transfer",r);
 	    }
 
-	    if (opcode == DEV_GATHER) {			/* copy data */
+	    if (opcode == DEV_GATHER_S) {			/* copy data */
 	        sys_physcopy(NONE, PHYS_SEG, mem_phys, 
 	        	NONE, PHYS_SEG, user_phys + vir_offset, count);
 	    } else {
@@ -212,7 +212,7 @@ int safe;			/* safe copies */
 
 	/* Null byte stream generator. */
 	case ZERO_DEV:
-	    if (opcode == DEV_GATHER) {
+	    if (opcode == DEV_GATHER_S) {
 		size_t suboffset = 0;
 	        left = count;
 	    	while (left > 0) {
@@ -237,7 +237,7 @@ int safe;			/* safe copies */
 	    if (position >= dv_size) return(OK); 	/* check for EOF */
 	    if (position + count > dv_size) count = dv_size - position;
 
-	    if (opcode == DEV_GATHER) {			/* copy actual data */
+	    if (opcode == DEV_GATHER_S) {	/* copy actual data */
 	      if(safe) {
 	          s=sys_safecopyto(proc_nr, user_vir, vir_offset,
 	  	     (vir_bytes)&imgrd[position], count, D);

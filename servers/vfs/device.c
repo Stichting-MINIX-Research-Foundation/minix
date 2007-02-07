@@ -195,10 +195,10 @@ off_t *pos;
 	*gid = GRANT_INVALID;
 
 	switch(*op) {
-		case DEV_READ:
-		case DEV_WRITE:
+		case VFS_DEV_READ:
+		case VFS_DEV_WRITE:
 			/* Change to safe op. */
-			*op = *op == DEV_READ ? DEV_READ_S : DEV_WRITE_S;
+			*op = *op == VFS_DEV_READ ? DEV_READ_S : DEV_WRITE_S;
 
 			if((*gid=cpf_grant_magic(driver, *io_ept,
 			  (vir_bytes) *buf, bytes,
@@ -208,10 +208,11 @@ off_t *pos;
 			}
 
 			break;
-		case DEV_GATHER:
-		case DEV_SCATTER:
+		case VFS_DEV_GATHER:
+		case VFS_DEV_SCATTER:
 			/* Change to safe op. */
-			*op = *op == DEV_GATHER ? DEV_GATHER_S : DEV_SCATTER_S;
+			*op = *op == VFS_DEV_GATHER ?
+				DEV_GATHER_S : DEV_SCATTER_S;
 
 			/* Grant access to my new i/o vector. */
 			if((*gid = cpf_grant_direct(driver,
@@ -240,7 +241,7 @@ off_t *pos;
 			/* Set user's vector to the new one. */
 			*buf = new_iovec;
 			break;
-		case DEV_IOCTL:
+		case VFS_DEV_IOCTL:
 			*pos = *io_ept;	/* Old endpoint in POSITION field. */
 			*op = DEV_IOCTL_S;
 			if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
@@ -260,6 +261,13 @@ off_t *pos;
 				"cpf_grant_magic failed (ioctl)\n",
 				NO_NUM);
 			}
+			break;
+		case VFS_DEV_SELECT:
+			*op = DEV_SELECT;
+			break;
+		default:
+			panic(__FILE__,"safe_io_conversion: unknown operation",
+				*op);
 	}
 
 	/* If we have converted to a safe operation, I/O
@@ -654,7 +662,7 @@ PUBLIC int do_ioctl()
 	&& (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) return(ENOTTY);
   dev = (dev_t) vp->v_sdev;
 
-  return (dev_io(DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0), 
+  return (dev_io(VFS_DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0), 
   	m_in.REQUEST, f->filp_flags));
 }
 

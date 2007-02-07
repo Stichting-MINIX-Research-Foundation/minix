@@ -37,6 +37,7 @@
  *   driver_task:	called by the device dependent task entry
  */
 
+
 #include "../drivers.h"
 #include <sys/ioc_disk.h>
 #include <minix/mq.h>
@@ -113,16 +114,22 @@ struct driver *dp;	/* Device dependent entry points. */
 	switch(mess.m_type) {
 	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;	
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
+#ifdef DEV_IOCTL
 	case DEV_IOCTL:		r = (*dp->dr_ioctl)(dp, &mess, 0); break;
+#endif
 	case DEV_IOCTL_S:	r = (*dp->dr_ioctl)(dp, &mess, 1); break;
 	case CANCEL:		r = (*dp->dr_cancel)(dp, &mess);break;
 	case DEV_SELECT:	r = (*dp->dr_select)(dp, &mess);break;
+#ifdef DEV_READ
 	case DEV_READ:	
 	case DEV_WRITE:	  	r = do_rdwt(dp, &mess, 0); break;
+#endif
 	case DEV_READ_S:	
 	case DEV_WRITE_S:  	r = do_rdwt(dp, &mess, 1); break;
+#ifdef DEV_GATHER
 	case DEV_GATHER: 
 	case DEV_SCATTER: 	r = do_vrdwt(dp, &mess, 0); break;
+#endif
 	case DEV_GATHER_S: 
 	case DEV_SCATTER_S: 	r = do_vrdwt(dp, &mess, 1); break;
 
@@ -212,8 +219,12 @@ int safe;			/* use safecopies? */
   if ((*dp->dr_prepare)(mp->DEVICE) == NIL_DEV) return(ENXIO);
 
   /* Create a one element scatter/gather vector for the buffer. */
-  if(mp->m_type == DEV_READ || mp->m_type == DEV_READ_S) opcode = DEV_GATHER;
-  else	opcode =  DEV_SCATTER;
+  if(
+#ifdef DEV_READ
+  mp->m_type == DEV_READ || 
+#endif
+  mp->m_type == DEV_READ_S) opcode = DEV_GATHER_S;
+  else	opcode =  DEV_SCATTER_S;
 
   iovec1.iov_addr = (vir_bytes) mp->ADDRESS;
   iovec1.iov_size = mp->COUNT;
@@ -272,8 +283,6 @@ int safe;		/* use safecopies? */
 
   /* Transfer bytes from/to the device. */
   opcode = mp->m_type;
-  if(opcode == DEV_GATHER_S) opcode = DEV_GATHER;
-  if(opcode == DEV_SCATTER_S) opcode = DEV_SCATTER;
   position= make64(mp->POSITION, mp->HIGHPOS);
   r = (*dp->dr_transfer)(mp->IO_ENDPT, opcode, position, iov,
 	nr_req, safe);
@@ -319,7 +328,10 @@ message *mp;
   switch (mp->m_type) {
   case DEV_OPEN:	return(ENODEV);
   case DEV_CLOSE:	return(OK);
+  case DEV_IOCTL_S:	
+#ifdef DEV_IOCTL
   case DEV_IOCTL:	return(ENOTTY);
+#endif
   default:		printf("nop: ignoring code %d\n", mp->m_type); return(EIO);
   }
 }

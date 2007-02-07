@@ -226,7 +226,7 @@ subread(struct logdevice *log, int count, int proc_nr,
  *===========================================================================*/
 PRIVATE int log_transfer(proc_nr, opcode, position, iov, nr_req, safe)
 int proc_nr;			/* process doing the request */
-int opcode;			/* DEV_GATHER or DEV_SCATTER */
+int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 u64_t position;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
@@ -258,7 +258,7 @@ int safe;			/* safe copies? */
 	switch (log_device) {
 
 	case MINOR_KLOG:
-	    if (opcode == DEV_GATHER) {
+	    if (opcode == DEV_GATHER_S) {
 	    	if (log->log_proc_nr || count < 1) {
 	    		/* There's already someone hanging to read, or
 	    		 * no real I/O requested.

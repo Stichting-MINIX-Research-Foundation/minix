@@ -145,13 +145,8 @@
 #define DEV_RS_BASE   0x500	/* base for device response types */
 
 #define CANCEL       	(DEV_RQ_BASE +  0) /* force a task to cancel */
-#define DEV_READ	(DEV_RQ_BASE +  3) /* read from minor device */
-#define DEV_WRITE   	(DEV_RQ_BASE +  4) /* write to minor device */
-#define DEV_IOCTL    	(DEV_RQ_BASE +  5) /* I/O control code */
 #define DEV_OPEN     	(DEV_RQ_BASE +  6) /* open a minor device */
 #define DEV_CLOSE    	(DEV_RQ_BASE +  7) /* close a minor device */
-#define DEV_SCATTER  	(DEV_RQ_BASE +  8) /* write from a vector */
-#define DEV_GATHER   	(DEV_RQ_BASE +  9) /* read into a vector */
 #define TTY_SETPGRP 	(DEV_RQ_BASE + 10) /* set process group */
 #define TTY_EXIT	(DEV_RQ_BASE + 11) /* process group leader exited */	
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */

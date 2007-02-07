@@ -108,7 +108,7 @@ int rw_flag;			/* READING or WRITING */
       cum_io = 0;
   }
 
-  op = (rw_flag == READING ? DEV_READ : DEV_WRITE);
+  op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
   mode_word = vp->v_mode & I_TYPE;
   regular = mode_word == I_REGULAR || mode_word == I_NAMED_PIPE;
 
@@ -279,8 +279,8 @@ int rw_flag;			/* READING or WRITING */
        
         while (bleft) {
             /* First read the whole block */
-            r = dev_bio(DEV_READ, dev, FS_PROC_NR, buf, b * _MIN_BLOCK_SIZE, 
-                    _MIN_BLOCK_SIZE);
+            r = dev_bio(VFS_DEV_READ, dev, FS_PROC_NR, buf,
+		b * _MIN_BLOCK_SIZE, _MIN_BLOCK_SIZE);
 
             if (r != _MIN_BLOCK_SIZE)
                 break;
