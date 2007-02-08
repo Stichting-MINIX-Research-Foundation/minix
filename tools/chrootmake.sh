@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-export PATH="$1"
 export SHELL=/bin/sh
 cd /usr/src 
 make etcfiles
