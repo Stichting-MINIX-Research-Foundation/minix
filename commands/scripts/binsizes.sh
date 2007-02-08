@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PATH=/bin:/sbin:/usr/bin:/usr/sbin
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/xbin
 
 t=/etc/binary_sizes
 
