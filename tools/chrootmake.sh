@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+export PATH="$1"
 export SHELL=/bin/sh
 cd /usr/src 
 make etcfiles
@@ -21,5 +21,3 @@ su bin -c 'makewhatis /usr/man'
 su bin -c 'makewhatis /usr/gnu/man'
 su bin -c 'makewhatis /usr/local/man'
 binsizes normal
-exit 0
-

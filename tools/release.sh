@@ -2,6 +2,8 @@
 
 set -e
 
+XBIN=usr/xbin
+
 PACKAGEDIR=/usr/bigports/Packages
 PACKAGESOURCEDIR=/usr/bigports/Sources
 secs=`expr 32 '*' 64`
@@ -74,7 +76,6 @@ usr=/dev/c0d7p0s2
 ' > $RELEASEDIR/etc/fstab
 }
 
-COPYITEMS="usr/bin bin usr/lib"
 RELEASEDIR=/usr/r
 RELEASEPACKAGE=${RELEASEDIR}/usr/install/packages
 RELEASEPACKAGESOURCES=${RELEASEDIR}/usr/install/package-sources
@@ -241,11 +242,16 @@ echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
+mkdir -p $RELEASEDIR/$XBIN
+mkdir -p $RELEASEDIR/usr
+mkdir -p $RELEASEDIR/bin
 mkdir -p $RELEASEPACKAGE
 mkdir -p $RELEASEPACKAGESOURCES
 
-echo " * Transfering $COPYITEMS to $RELEASEDIR"
-( cd / && tar cf - $COPYITEMS ) | ( cd $RELEASEDIR && tar xf - ) || exit 1
+echo " * Transfering bootstrap dirs to $RELEASEDIR"
+cp -p /bin/* /usr/bin/* $RELEASEDIR/$XBIN
+cp -rp /usr/lib $RELEASEDIR/usr
+cp -rp /bin/sh $RELEASEDIR/bin
 
 if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR -a $PACKAGES -ne 0 ]
 then	echo " * Indexing packages"
@@ -306,8 +312,10 @@ if [ "$USB" -eq 0 ]
 then	date >$RELEASEDIR/CD
 fi
 echo " * Chroot build"
-chroot $RELEASEDIR "/bin/sh -x /usr/src/tools/chrootmake.sh" || exit 1
+chroot $RELEASEDIR "/$XBIN/sh -x /usr/src/tools/chrootmake.sh $XBIN" || exit 1
 echo " * Chroot build done"
+echo " * Removing bootstrap files"
+rm -rf $RELEASEDIR/$XBIN
 # The build process leaves some file in src as root.
 chown -R bin $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
