@@ -395,7 +395,7 @@ PRIVATE struct driver w_dtab = {
 /*===========================================================================*
  *				at_winchester_task			     *
  *===========================================================================*/
-PUBLIC int main()
+PUBLIC int main(int argc, char *argv[])
 {
 /* Install signal handlers. Ask PM to transform signal into message. */
   struct sigaction sa;
@@ -406,6 +406,7 @@ PUBLIC int main()
   if (sigaction(SIGTERM,&sa,NULL)<0) panic("AT","sigaction failed", errno);
 
   /* Set special disk parameters then call the generic main loop. */
+  env_setargs(argc, argv);
   init_params();
   signal(SIGTERM, SIG_IGN);
   driver_task(&w_dtab);
