@@ -1011,9 +1011,10 @@ PRIVATE int w_identify()
 PRIVATE char *w_name()
 {
 /* Return a name for the current device. */
-  static char name[] = "AT-D0";
+  static char name[] = "AT0-D0";
 
-  name[4] = '0' + w_drive;
+  name[2] = '0' + w_instance;
+  name[5] = '0' + w_drive;
   return name;
 }
 

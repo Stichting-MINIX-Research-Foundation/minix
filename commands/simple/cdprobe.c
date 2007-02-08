@@ -31,15 +31,22 @@ char pvd[CD_SECTOR];
  *===========================================================================*/
 int main(void)
 {
-	int i, r, fd, minor, found;
+	int controller, disk, r, fd, minor, found;
 	off_t pos;
 	u16_t *magicp;
 	char name1[]= "/dev/c0dX";
 	char name2[]= "/dev/c0dXpY";
+	int probelist[AT_MINORS] = { 2, 3, 1, 0, 6, 7, 5, 4 };
 
 	found= 0;
-	for(i = 0; i < AT_MINORS; i++) {
-		name1[8]= '0' + i;
+	for(controller = 0; controller <= 1; controller++) {
+	   name1[6] = '0' + controller;
+	   name2[6] = '0' + controller;
+	   for(disk = 0; disk < AT_MINORS; disk++) {
+		name1[8]= '0' + probelist[disk];
+
+		fprintf(stderr, "Trying %s  \r", name1);
+		fflush(stderr);
 
 		fd = open(name1, O_RDONLY);
 		if (fd < 0)
@@ -78,10 +85,10 @@ int main(void)
 		   	continue;
 		}
 
-		/* 3. Both c0dXp1 and p2 should have a superblock. */
+		/* 3. Both cXdYp1 and p2 should have a superblock. */
 		found= 1;	/* Assume everything is okay */
 		for (minor = 1; minor <= 2; minor++) {
-			name2[8]= '0' + i;
+			name2[8]= '0' + probelist[disk];
 			name2[10]= '0' + minor;
 
 			fd = open(name2, O_RDONLY);
@@ -120,10 +127,13 @@ int main(void)
 
 		if (found)
 		{
+			fprintf(stderr, "\nFound.\n");
 			printf("%s\n", name1);
 			exit(0);
 		}
+	   }
 	}
+	fprintf(stderr, "\nNot found.\n");
 
 	return 1;
 }
