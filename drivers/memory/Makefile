@@ -50,7 +50,7 @@ clean:
 	cd ramdisk && make clean
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" memory.c ../libdriver/*.c > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" memory.c ../libdriver/*.c > .depend
 	cd ramdisk && make depend
 
 # Include generated dependencies.

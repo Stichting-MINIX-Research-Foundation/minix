@@ -44,7 +44,7 @@ clean:
 depend: 
 	cd system && $(MAKE) -$(MAKEFLAGS) $@
 	cd $a && $(MAKE) $@
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 # How to build it
 .c.o:

@@ -312,7 +312,7 @@ if [ "$USB" -eq 0 ]
 then	date >$RELEASEDIR/CD
 fi
 echo " * Chroot build"
-chroot $RELEASEDIR "/$XBIN/sh -x /usr/src/tools/chrootmake.sh $XBIN" || exit 1
+chroot $RELEASEDIR "/$XBIN/sh -x /usr/src/tools/chrootmake.sh /$XBIN" || exit 1
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN

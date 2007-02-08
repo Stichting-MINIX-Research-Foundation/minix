@@ -104,7 +104,7 @@ passwd: ../../../etc/passwd
 	install -s ../../../etc/$@ $@
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 proto.gen: $(MAKEDEV) proto.sh proto
 	sh -e proto.sh >proto.gen

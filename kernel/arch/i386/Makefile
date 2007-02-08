@@ -29,7 +29,7 @@ $(ARCHAR): $(OBJS)
 	aal cr $@ *.o
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c *.s > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c *.s > .depend
 
 clean:
 	rm -f *.a *.o *~

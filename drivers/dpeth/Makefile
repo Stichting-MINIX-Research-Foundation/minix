@@ -32,7 +32,7 @@ install:	/usr/sbin/$(DRIVER)
 ##  Generate dependencies
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 ##  Clean directory
 clean:
