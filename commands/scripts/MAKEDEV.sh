@@ -14,6 +14,10 @@ case $#:$1 in
 	c0d2 c0d2p0 c0d2p0s0 c0d3 c0d3p0 c0d3p0s0 \
 	c0d4 c0d4p0 c0d4p0s0 c0d5 c0d5p0 c0d5p0s0 \
 	c0d6 c0d6p0 c0d6p0s0 c0d7 c0d7p0 c0d7p0s0 \
+	c1d0 c1d0p0 c1d0p0s0 c1d1 c1d1p0 c1d1p0s0 \
+	c1d2 c1d2p0 c1d2p0s0 c1d3 c1d3p0 c1d3p0s0 \
+	c1d4 c1d4p0 c1d4p0s0 c1d5 c1d5p0 c1d5p0s0 \
+	c1d6 c1d6p0 c1d6p0s0 c1d7 c1d7p0 c1d7p0s0 \
 	tty ttyc1 ttyc2 ttyc3 tty00 tty01 tty02 tty03 \
 	ttyp0 ttyp1 ttyp2 ttyp3 ttyp4 ttyp5 ttyp6 ttyp7 ttyp8 ttyp9 \
 	ttypa ttypb ttypc ttypd ttype ttypf \
@@ -132,7 +136,7 @@ do
 	    $e mknod $n$p b $maj $m
 	    alldev="$alldev $n$p"
 	done
-	$e chmod 600 $alldev
+	echo $alldev | xargs $e chmod 600
 	;;
     c[0-3]d[0-7]p[0-3]s[0-3])
 	# Disk subpartition.
@@ -149,7 +153,7 @@ do
 		alldev="$alldev ${n}${p}s${s}"
 	    done
 	done
-	$e chmod 600 $alldev
+	echo $alldev | xargs $e chmod 600
 	;;
     c[0-3]t[0-7]|c[0-3]t[0-7]n)
 	# Tape devices.
@@ -206,7 +210,7 @@ do
 	g=`echo $g | tr 'pqrs' '0123'`
 	n=`expr $dev : '.\\(.\\)'`	# Which pty in the group.
 	case $n in
-	[a-f])	n=1`echo $n | tr 'abcdef' '012345'`
+	[a-f])	n=1`/bin/echo $n | tr 'abcdef' '012345'`
 	esac
 
 	$e mknod tty$dev c 4 `expr $g '*' 16 + $n + 128`

@@ -50,7 +50,7 @@ all:	sh
 
 sh:	$(OBJS)
 	$(CC) $(CFLAGS) -fnone -o sh $(OBJS) $(LIBS)
-	install -S 100k sh
+	install -S 116k sh
 
 install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 
