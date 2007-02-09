@@ -218,7 +218,8 @@ struct command {
 #define ERR_BAD_SECTOR	 (-2)	/* block marked bad detected */
 
 /* Some controllers don't interrupt, the clock will wake us up. */
-#define WAKEUP		(32*HZ)	/* drive may be out for 31 seconds max */
+#define WAKEUP_SECS	32			/* drive may be out for 31 seconds max */
+#define WAKEUP_TICKS	(WAKEUP_SECS*HZ)
 
 /* Miscellaneous. */
 #define MAX_DRIVES         8
@@ -250,9 +251,9 @@ struct command {
 
 /* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
-int wakeup_ticks = WAKEUP;
 long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0,
-	disable_dma = 0, atapi_debug = 0;
+	disable_dma = 0, atapi_debug = 0, w_identify_wakeup_ticks = WAKEUP_TICKS,
+	wakeup_ticks = WAKEUP_TICKS;
 
 int w_testing = 0, w_silent = 0;
 
@@ -342,7 +343,7 @@ FORWARD _PROTOTYPE( void init_drive, (struct wini *w, int base_cmd,
 FORWARD _PROTOTYPE( void init_params_pci, (int) 			);
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) 	);
 FORWARD _PROTOTYPE( struct device *w_prepare, (int dev) 		);
-FORWARD _PROTOTYPE( int w_identify, (void) 				);
+FORWARD _PROTOTYPE( int w_identify, (void)				);
 FORWARD _PROTOTYPE( char *w_name, (void) 				);
 FORWARD _PROTOTYPE( int w_specify, (void) 				);
 FORWARD _PROTOTYPE( int w_io_test, (void) 				);
@@ -426,13 +427,23 @@ PRIVATE void init_params()
   struct wini *wn;
   u8_t params[16];
   int s;
+  long wakeup_secs;
 
   /* Boot variables. */
   env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
   env_parse("ata_pci_debug", "d", 0, &w_pci_debug, 0, 1);
   env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
   env_parse("ata_no_dma", "d", 0, &disable_dma, 0, 1);
+  env_parse("ata_id_timeout", "d", 0, &wakeup_secs, 1, 60);
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
+
+  w_identify_wakeup_ticks = wakeup_secs * HZ;
+
+  if(w_identify_wakeup_ticks <= 0) {
+	printf("changing wakeup from %d to %d ticks.\n",
+		w_identify_wakeup_ticks, WAKEUP_TICKS);
+	w_identify_wakeup_ticks = WAKEUP_TICKS;
+  }
 
   if (disable_dma)
 	printf("DMA for ATA devices is disabled.\n");
@@ -789,6 +800,8 @@ PRIVATE int w_identify()
   u16_t w;
   unsigned long dma_status;
   unsigned long size;
+  int prev_wakeup;
+  int r;
 #define id_byte(n)	(&tmp_buf[2 * (n)])
 #define id_word(n)	(((u16_t) id_byte(n)[0] <<  0) \
 			|((u16_t) id_byte(n)[1] <<  8))
@@ -800,7 +813,13 @@ PRIVATE int w_identify()
   /* Try to identify the device. */
   cmd.ldh     = wn->ldhpref;
   cmd.command = ATA_IDENTIFY;
-  if (com_simple(&cmd) == OK && w_waitfor(STATUS_DRQ, STATUS_DRQ) &&
+
+  /* Execute *_IDENTIFY with configured *_IDENTIFY timeout. */
+  prev_wakeup = wakeup_ticks;
+  wakeup_ticks = w_identify_wakeup_ticks;
+  r = com_simple(&cmd);
+
+  if (r == OK && w_waitfor(STATUS_DRQ, STATUS_DRQ) &&
 	!(wn->w_status & (STATUS_ERR|STATUS_WF))) {
 
 	/* Device information. */
@@ -811,6 +830,7 @@ PRIVATE int w_identify()
 	if (id_word(0) & ID_GEN_NOT_ATA)
 	{
 		printf("%s: not an ATA device?\n", w_name());
+  		wakeup_ticks = prev_wakeup;
 		return ERR;
 	}
 #endif
@@ -977,12 +997,18 @@ PRIVATE int w_identify()
 	/* Not an ATA device; no translations, no special features.  Don't
 	 * touch it unless the BIOS knows about it.
 	 */
-	if (wn->lcylinders == 0) { return(ERR); }	/* no BIOS parameters */
+	if (wn->lcylinders == 0) { 
+  		wakeup_ticks = prev_wakeup;
+		return(ERR);
+	}	/* no BIOS parameters */
 	wn->pcylinders = wn->lcylinders;
 	wn->pheads = wn->lheads;
 	wn->psectors = wn->lsectors;
 	size = (u32_t) wn->pcylinders * wn->pheads * wn->psectors;
   }
+
+  /* Restore wakeup_ticks. */
+  wakeup_ticks = prev_wakeup;
 
   /* Size of the whole drive */
   wn->part[0].dv_size = mul64u(size, SECTOR_SIZE);
@@ -2365,7 +2391,7 @@ int safe;
 			/* Restore defaults. */
 			timeout_ticks = DEF_TIMEOUT_TICKS;
 			max_errors = MAX_ERRORS;
-			wakeup_ticks = WAKEUP;
+			wakeup_ticks = WAKEUP_TICKS;
 			w_silent = 0;
 		} else if (timeout < 0) {
 			return EINVAL;
