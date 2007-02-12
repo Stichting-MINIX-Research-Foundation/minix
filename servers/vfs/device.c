@@ -903,7 +903,7 @@ PUBLIC void dev_up(int maj)
         }
 
         /* Send new driver endpoint */
-        printf("VFS: sending new dirver for dev: %d, endpoint: %d, FS_e: %d\n", 
+        printf("VFS: sending new driver for dev: %d, endpoint: %d, FS_e: %d\n", 
                 vmp->m_dev, new_driver_e, vmp->m_fs_e);
         
         if (OK != req_newdriver(vmp->m_fs_e, vmp->m_dev, new_driver_e))

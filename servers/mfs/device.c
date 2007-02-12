@@ -240,7 +240,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   /* RECOVERY:
    * - send back dead driver number
    * - VFS unmaps it, waits for new driver
-   * - VFS sends the new dirver endp for the FS proc and the request again 
+   * - VFS sends the new driver endp for the FS proc and the request again 
    */
   if (r != OK) {
       if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
