@@ -814,6 +814,9 @@ PRIVATE int w_identify()
   cmd.ldh     = wn->ldhpref;
   cmd.command = ATA_IDENTIFY;
 
+  /* In testing mode, a drive will get ignored at the first timeout. */
+  w_testing = 1;
+
   /* Execute *_IDENTIFY with configured *_IDENTIFY timeout. */
   prev_wakeup = wakeup_ticks;
   wakeup_ticks = w_identify_wakeup_ticks;
@@ -831,6 +834,7 @@ PRIVATE int w_identify()
 	{
 		printf("%s: not an ATA device?\n", w_name());
   		wakeup_ticks = prev_wakeup;
+		w_testing = 0;
 		return ERR;
 	}
 #endif
@@ -999,6 +1003,7 @@ PRIVATE int w_identify()
 	 */
 	if (wn->lcylinders == 0) { 
   		wakeup_ticks = prev_wakeup;
+		w_testing = 0;
 		return(ERR);
 	}	/* no BIOS parameters */
 	wn->pcylinders = wn->lcylinders;
@@ -1007,8 +1012,9 @@ PRIVATE int w_identify()
 	size = (u32_t) wn->pcylinders * wn->pheads * wn->psectors;
   }
 
-  /* Restore wakeup_ticks. */
+  /* Restore wakeup_ticks and unset testing mode. */
   wakeup_ticks = prev_wakeup;
+  w_testing = 0;
 
   /* Size of the whole drive */
   wn->part[0].dv_size = mul64u(size, SECTOR_SIZE);
