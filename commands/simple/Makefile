@@ -551,7 +551,7 @@ mkfifo:	mkfifo.c
 
 mkfs:	mkfs.c
 	$(CCLD) -o $@ $?
-	@install -S 20kw $@
+	@install -S 25kw $@
 
 mknod:	mknod.c
 	$(CCLD) -o $@ $?
