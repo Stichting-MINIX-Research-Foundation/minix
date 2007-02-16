@@ -45,6 +45,8 @@ FORWARD _PROTOTYPE( void do_rescan_bus, (message *mp)			);
 FORWARD _PROTOTYPE( void reply, (message *mp, int result)		);
 FORWARD _PROTOTYPE( struct rs_pci *find_acl, (int endpoint)		);
 
+extern int debug;
+
 int main(void)
 {
 	int i, r;
@@ -117,7 +119,7 @@ message *mp;
 	int i, r, empty;
 
 #if DEBUG
-	printf("pci_init: called by '%s'\n", mp->m3_ca1);
+	printf("PCI: pci_init: called by '%s'\n", mp->m3_ca1);
 #endif
 	empty= -1;
 	for (i= 0; i<NR_DRIVERS; i++)
@@ -145,7 +147,8 @@ message *mp;
 	mp->m_type= 0;
 	r= send(mp->m_source, mp);
 	if (r != 0)
-		printf("do_init: unable to send to %d: %d\n", mp->m_source, r);
+		printf("PCI: do_init: unable to send to %d: %d\n",
+			mp->m_source, r);
 }
 
 PRIVATE void do_first_dev(mp)
@@ -157,8 +160,9 @@ message *mp;
 
 	aclp= find_acl(mp->m_source);
 
-	if (!aclp)
-		printf("do_first_dev: no acl for caller %d\n", mp->m_source);
+	if (!aclp && debug)
+		printf("PCI: do_first_dev: no acl for caller %d\n",
+			mp->m_source);
 
 	r= pci_first_dev_a(aclp, &devind, &vid, &did);
 	if (r == 1)
@@ -171,7 +175,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_first_dev: unable to send to %d: %d\n",
+		printf("PCI: do_first_dev: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -197,7 +201,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_next_dev: unable to send to %d: %d\n",
+		printf("PCI: do_next_dev: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -219,7 +223,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_find_dev: unable to send to %d: %d\n",
+		printf("PCI: do_find_dev: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -239,7 +243,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_ids: unable to send to %d: %d\n",
+		printf("PCI: do_ids: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -267,7 +271,7 @@ message *mp;
 		len= strlen(name)+1;
 		if (len > name_len)
 			len= name_len;
-		printf("pci`do_dev_name: calling do_vircopy\n");
+		printf("PCI: pci`do_dev_name: calling do_vircopy\n");
 		r= sys_vircopy(SELF, D, (vir_bytes)name, mp->m_source, D,
 			(vir_bytes)name_ptr, len);
 	}
@@ -276,7 +280,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_dev_name: unable to send to %d: %d\n",
+		printf("PCI: do_dev_name: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -313,7 +317,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_dev_name: unable to send to %d: %d\n",
+		printf("PCI: do_dev_name: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -333,7 +337,7 @@ message *mp;
 	len= strlen(name)+1;
 	if (len > name_len)
 		len= name_len;
-	printf("pci`do_slot_name: calling do_vircopy\n");
+	printf("PCI: pci`do_slot_name: calling do_vircopy\n");
 	r= sys_vircopy(SELF, D, (vir_bytes)name, mp->m_source, D,
 		(vir_bytes)name_ptr, len);
 
@@ -341,7 +345,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_slot_name: unable to send to %d: %d\n",
+		printf("PCI: do_slot_name: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -368,7 +372,7 @@ message *mp;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
-		printf("do_slot_name: unable to send to %d: %d\n",
+		printf("PCI: do_slot_name: unable to send to %d: %d\n",
 			mp->m_source, r);
 	}
 }
@@ -380,7 +384,7 @@ message *mp;
 
 	if (mp->m_source != RS_PROC_NR)
 	{
-printf("do_acl: not from RS\n");
+		printf("PCI: do_acl: not from RS\n");
 		reply(mp, EPERM);
 		return;
 	}
@@ -392,7 +396,7 @@ printf("do_acl: not from RS\n");
 	}
 	if (i >= NR_DRIVERS)
 	{
-printf("do_acl: table is full\n");
+		printf("PCI: do_acl: table is full\n");
 		reply(mp, ENOMEM);
 		return;
 	}
@@ -403,12 +407,13 @@ printf("do_acl: table is full\n");
 		sizeof(acl[i].acl), D);
 	if (r != OK)
 	{
-printf("do_acl: safecopyfrom failed\n");
+		printf("PCI: do_acl: safecopyfrom failed\n");
 		reply(mp, r);
 		return;
 	}
 	acl[i].inuse= 1;
-	printf("do_acl: setting ACL for %d ('%s') at entry %d\n",
+	if(debug)
+	  printf("PCI: do_acl: setting ACL for %d ('%s') at entry %d\n",
 		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label,
 		i);
 

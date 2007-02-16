@@ -43,7 +43,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 #define BAM_NR		6	/* Number of base-address registers */
 
-PRIVATE int debug= 0;
+int debug= 0;
 
 PRIVATE struct pcibus
 {
@@ -720,7 +720,7 @@ printf("probe_bus(%d)\n", busind);
 				if (qemu_pci)
 				{
 					printf(
-			"pci: ignoring bad value 0x%x in sts for QEMU\n",
+			"PCI: ignoring bad value 0x%x in sts for QEMU\n",
 					sts & (PSR_SSE|PSR_RMAS|PSR_RTAS));
 				}
 				else
@@ -1227,7 +1227,7 @@ PRIVATE void complete_bars()
 		base= strtoul(cp, &next, 16);
 		if (next == cp || *next != ':')
 		{
-			printf("pci: bad memory environment string '%s'\n",
+			printf("PCI: bad memory environment string '%s'\n",
 				memstr);
 			panic(NULL, NULL, NO_NUM);
 		}
@@ -1235,7 +1235,7 @@ PRIVATE void complete_bars()
 		size= strtoul(cp, &next, 16);
 		if (next == cp || (*next != ',' && *next != '\0'))
 		{
-			printf("pci: bad memory environment string '%s'\n",
+			printf("PCI: bad memory environment string '%s'\n",
 				memstr);
 			panic(NULL, NULL, NO_NUM);
 		}
@@ -1290,7 +1290,7 @@ PRIVATE void complete_bars()
 	/* Should check main memory size */
 	if (memgap_high < memgap_low)
 	{
-		printf("pci: bad memory gap: [0x%x .. 0x%x>\n",
+		printf("PCI: bad memory gap: [0x%x .. 0x%x>\n",
 			memgap_low, memgap_high);
 		panic(NULL, NULL, NO_NUM);
 	}
