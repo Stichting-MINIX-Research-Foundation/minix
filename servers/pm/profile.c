@@ -34,7 +34,7 @@ PUBLIC int do_sprofile(void)
   switch(m_in.PROF_ACTION) {
 
   case PROF_START:
-	if (r = check_addrs(sizeof(sprof_info_inst))) /* check user pointers */
+	if ((r = check_addrs(sizeof(sprof_info_inst)))) /* check pointers */
 		return r;
 
 	return sys_sprof(PROF_START, m_in.PROF_MEM_SIZE, m_in.PROF_FREQ,

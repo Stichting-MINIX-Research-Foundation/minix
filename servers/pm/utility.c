@@ -76,10 +76,6 @@ int num;			/* number to go with it */
  * inconsistency is detected, e.g., a programming error or illegal value of a
  * defined constant. The process manager decides to exit.
  */
-  message m;
-  int s;
-
-  /* Switch to primary console and print panic message. */
   printf("PM panic (%s): %s", who, mess);
   if (num != NO_NUM) printf(": %d",num);
   printf("\n");

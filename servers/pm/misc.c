@@ -147,8 +147,8 @@ PUBLIC int do_sysuname()
 /* Set or get uname strings. */
 
   int r;
-  size_t n, len;
-  char *string, *t;
+  size_t n;
+  char *string;
 #if 0 /* for updates */
   char tmp[sizeof(uts_val.nodename)];
   static short sizes[] = {
@@ -287,7 +287,7 @@ PUBLIC int do_getsysinfo_up()
   vir_bytes src_addr, dst_addr;
   struct loadinfo loadinfo;
   size_t len, real_len;
-  int s, r;
+  int s;
 
   switch(m_in.SIU_WHAT) {
   case SIU_LOADINFO:			/* loadinfo is obtained via PM */

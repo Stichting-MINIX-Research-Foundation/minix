@@ -359,7 +359,7 @@ int sec;			/* how many seconds delay before the signal */
 PRIVATE void cause_sigalrm(tp)
 struct timer *tp;
 {
-  int proc_nr_e, proc_nr_n;
+  int proc_nr_n;
   register struct mproc *rmp;
 
   /* get process from timer */
@@ -765,7 +765,7 @@ register struct mproc *rmp;	/* whose core is to be dumped */
   else
   {
 	printf("PM: FS died\n");
-	return;
+	return SUSPEND;
   }
 
   /* Pending reply messages for the dead process cannot be delivered. */

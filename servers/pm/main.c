@@ -15,6 +15,7 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include <minix/minlib.h>
+#include <minix/type.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -23,12 +24,12 @@
 #include <string.h>
 #include <archconst.h>
 #include <archtypes.h>
+#include <env.h>
 #include "mproc.h"
 #include "param.h"
 
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
-#include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 
 #if ENABLE_SYSCALL_STATS
@@ -233,7 +234,6 @@ PRIVATE void pm_init()
   static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
   static char mess_sigs[] = { SIGTERM, SIGHUP, SIGABRT, SIGQUIT };
   register struct mproc *rmp;
-  register int i;
   register char *sig_ptr;
   phys_clicks total_clicks, minix_clicks, free_clicks;
   message mess;
@@ -379,16 +379,6 @@ int queue;				/* store mem chunks here */
   return nice_val;
 }
 
-#if _WORD_SIZE == 2
-/* In real mode only 1M can be addressed, and in 16-bit protected we can go
- * no further than we can count in clicks.  (The 286 is further limited by
- * its 24 bit address bus, but we can assume in that case that no more than
- * 16M memory is reported by the BIOS.)
- */
-#define MAX_REAL	0x00100000L
-#define MAX_16BIT	(0xFFF0L << CLICK_SHIFT)
-#endif
-
 /*===========================================================================*
  *				get_mem_chunks				     *
  *===========================================================================*/
@@ -396,59 +386,30 @@ PRIVATE void get_mem_chunks(mem_chunks)
 struct memory *mem_chunks;			/* store mem chunks here */
 {
 /* Initialize the free memory list from the 'memory' boot variable.  Translate
- * the byte offsets and sizes in this list to clicks, properly truncated. Also
- * make sure that we don't exceed the maximum address space of the 286 or the
- * 8086, i.e. when running in 16-bit protected mode or real mode.
+ * the byte offsets and sizes in this list to clicks, properly truncated.
  */
   long base, size, limit;
-  char *s, *end;			/* use to parse boot variable */ 
-  int i, done = 0;
+  int i;
   struct memory *memp;
-#if _WORD_SIZE == 2
-  unsigned long max_address;
-  struct machine machine;
-  if (OK != (i=sys_getmachine(&machine)))
-	panic(__FILE__, "sys_getmachine failed", i);
-#endif
+  
+  /* Obtain and parse memory from system environment. */
+  if(env_memory_parse(mem_chunks, NR_MEMS) != OK)
+	panic(__FILE__,"couldn't obtain memory chunks", NO_NUM);
 
-  /* Initialize everything to zero. */
+  /* Round physical memory to clicks. */
   for (i = 0; i < NR_MEMS; i++) {
 	memp = &mem_chunks[i];		/* next mem chunk is stored here */
-	memp->base = memp->size = 0;
-  }
-  
-  /* The available memory is determined by MINIX' boot loader as a list of 
-   * (base:size)-pairs in boothead.s. The 'memory' boot variable is set in
-   * in boot.s.  The format is "b0:s0,b1:s1,b2:s2", where b0:s0 is low mem,
-   * b1:s1 is mem between 1M and 16M, b2:s2 is mem above 16M. Pairs b1:s1 
-   * and b2:s2 are combined if the memory is adjacent. 
-   */
-  s = find_param("memory");		/* get memory boot variable */
-  for (i = 0; i < NR_MEMS && !done; i++) {
-	memp = &mem_chunks[i];		/* next mem chunk is stored here */
-	base = size = 0;		/* initialize next base:size pair */
-	if (*s != 0) {			/* get fresh data, unless at end */	
-
-	    /* Read fresh base and expect colon as next char. */ 
-	    base = strtoul(s, &end, 0x10);		/* get number */
-	    if (end != s && *end == ':') s = ++end;	/* skip ':' */ 
-	    else *s=0;			/* terminate, should not happen */
-
-	    /* Read fresh size and expect comma or assume end. */ 
-	    size = strtoul(s, &end, 0x10);		/* get number */
-	    if (end != s && *end == ',') s = ++end;	/* skip ',' */
-	    else done = 1;
-	}
+	base = mem_chunks[i].base;
+	size = mem_chunks[i].size;
 	limit = base + size;	
-#if _WORD_SIZE == 2
-	max_address = machine.protected ? MAX_16BIT : MAX_REAL;
-	if (limit > max_address) limit = max_address;
-#endif
 	base = (base + CLICK_SIZE-1) & ~(long)(CLICK_SIZE-1);
 	limit &= ~(long)(CLICK_SIZE-1);
-	if (limit <= base) continue;
-	memp->base = base >> CLICK_SHIFT;
-	memp->size = (limit - base) >> CLICK_SHIFT;
+	if (limit <= base) {
+		memp->base = memp->size = 0;
+	} else {
+		memp->base = base >> CLICK_SHIFT;
+		memp->size = (limit - base) >> CLICK_SHIFT;
+	}
   }
 }
 
@@ -611,7 +572,7 @@ PRIVATE void send_work()
 
 		case PM_FORK:
 		{
-			int parent_e, parent_p;
+			int parent_p;
 			struct mproc *parent_mp;
 
 			parent_p = rmp->mp_parent;
@@ -682,7 +643,7 @@ PRIVATE void send_work()
 
 		case PM_FORK_NB:
 		{
-			int parent_e, parent_p;
+			int parent_p;
 			struct mproc *parent_mp;
 
 			parent_p = rmp->mp_parent;
