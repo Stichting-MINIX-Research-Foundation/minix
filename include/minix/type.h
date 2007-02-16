@@ -170,4 +170,10 @@ struct exec_newmem
 	char progname[16];	/* Should be at least PROC_NAME_LEN */
 };
 
+/* Memory chunks. */
+struct memory {
+	phys_bytes	base;
+	phys_bytes	size;
+};
+
 #endif /* _TYPE_H */

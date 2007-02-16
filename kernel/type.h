@@ -27,11 +27,6 @@ struct boot_image {
   endpoint_t endpoint;			/* endpoint number when started */
 };
 
-struct memory {
-  phys_clicks base;			/* start address of chunk */
-  phys_clicks size;			/* size of memory chunk */
-};
-
 /* The kernel outputs diagnostic messages in a circular buffer. */
 struct kmessages {
   int km_next;				/* next index to write */
