@@ -46,7 +46,6 @@ PUBLIC int fs_readsuper()
 
   /* Is it recognized as a Minix filesystem? */
   if (r != OK) {
-printf("MFS(%d)readsuper read_super() ERROR\n", SELF_E);
 	sp->s_dev = NO_DEV;
 	return(r);
   }

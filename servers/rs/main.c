@@ -23,6 +23,8 @@ FORWARD _PROTOTYPE(void reply, (int whom, message *m_out)		);
 PRIVATE struct boot_image image[NR_BOOT_PROCS];
 PUBLIC struct dmap dmap[NR_DEVICES];
 
+int rs_verbose = 0;
+
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
@@ -156,6 +158,8 @@ PRIVATE void init_server(void)
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("RS", "couldn't set alarm", s);
 
+  /* See if we run in verbose mode. */
+  env_parse("rs_verbose", "d", 0, &rs_verbose, 0, 1); 
 }
 
 /*===========================================================================*

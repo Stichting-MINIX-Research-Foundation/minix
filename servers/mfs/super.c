@@ -227,7 +227,6 @@ register struct super_block *sp; /* pointer to a superblock */
   r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
   	sbbuf, cvu64(SUPER_BLOCK_BYTES), _MIN_BLOCK_SIZE, 0);
   if (r != _MIN_BLOCK_SIZE) {
-printf("MFSread_super r != _MIN_BLOCK_SIZE\n");
   	return EINVAL;
   }
   memcpy(sp, sbbuf, sizeof(*sp));
@@ -245,7 +244,6 @@ printf("MFSread_super r != _MIN_BLOCK_SIZE\n");
 	version = V3;
   	native = 1;
   } else {
-printf("MFSread_super invalid version\n");
 	return(EINVAL);
   }
 
@@ -281,7 +279,6 @@ printf("MFSread_super invalid version\n");
   	if (version == V2)
   		sp->s_block_size = _STATIC_BLOCK_SIZE;
   	if (sp->s_block_size < _MIN_BLOCK_SIZE) {
-printf("MFSread_super block size ERROR1\n");
   		return EINVAL;
 	}
 	sp->s_inodes_per_block = V2_INODES_PER_BLOCK(sp->s_block_size);
@@ -290,7 +287,6 @@ printf("MFSread_super block size ERROR1\n");
   }
 
   if (sp->s_block_size < _MIN_BLOCK_SIZE) {
-printf("MFSread_super block size ERROR2\n");
   	return EINVAL;
   }
   if (sp->s_block_size > _MAX_BLOCK_SIZE) {
@@ -300,16 +296,13 @@ printf("MFSread_super block size ERROR2\n");
   	return EINVAL;
   }
   if ((sp->s_block_size % 512) != 0) {
-printf("MFSread_super block_size !% 512 \n");
   	return EINVAL;
   }
   if (SUPER_SIZE > sp->s_block_size) {
-printf("MFSread_super block_size < SUPER_SIZE \n");
   	return EINVAL;
   }
   if ((sp->s_block_size % V2_INODE_SIZE) != 0 ||
      (sp->s_block_size % V1_INODE_SIZE) != 0) {
-printf("MFSread_super block_sizr % INODE_SIZE notOK \n");
   	return EINVAL;
   }
 

@@ -46,7 +46,6 @@ PUBLIC int fs_flush()
   dev= fs_m_in.REQ_DEV;
   if (dev == fs_dev)
   {
-	printf("fs_flush: not flushing block for mounted filsystem\n");
 	return EBUSY;
   }
   flushall(dev);
