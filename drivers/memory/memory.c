@@ -17,6 +17,7 @@
 #include "../drivers.h"
 #include "../libdriver/driver.h"
 #include <sys/ioc_memory.h>
+#include <env.h>
 #include <minix/ds.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
@@ -140,6 +141,11 @@ int safe;			/* safe copies */
 
   static int n = 0;
 
+  if(!safe) {
+	printf("m_transfer: unsafe?\n");
+	return EPERM;
+  }
+
   if (ex64hi(pos64) != 0)
 	return OK;	/* Beyond EOF */
   position= cv64ul(pos64);
@@ -170,21 +176,11 @@ int safe;			/* safe copies */
 	    seg = m_seg[m_device];
 
 	    if (opcode == DEV_GATHER_S) {			/* copy actual data */
-	      if(safe) {
 	        r=sys_safecopyto(proc_nr, user_vir, vir_offset,
 	  	  position, count, seg);
-	      } else {
-	        r=sys_vircopy(SELF,seg,position, 
-			proc_nr,D,user_vir+vir_offset, count);
-	      }
 	    } else {
-	      if(safe) {
 	        r=sys_safecopyfrom(proc_nr, user_vir, vir_offset,
 	  	  position, count, seg);
-	      } else {
-	        r=sys_vircopy(proc_nr,D,user_vir+vir_offset,
-			SELF,seg,position, count);
-	      }
 	    }
 	    if(r != OK) {
               panic("MEM","I/O copy failed",r);
@@ -193,10 +189,18 @@ int safe;			/* safe copies */
 
 	/* Physical copying. Only used to access entire memory. */
 	case MEM_DEV:
-	    if (position >= dv_size) return(OK); 	/* check for EOF */
-	    if (position + count > dv_size) count = dv_size - position;
+	    if (position >= dv_size) {
+		printf("memory: read 0x%lx beyond physical memory of 0x%lx\n",
+			position, dv_size);
+		return(OK); 	/* check for EOF */
+	    }
+	    if (position + count > dv_size) {
+		printf("memory: truncating count from %d to ", count);
+		count = dv_size - position;
+		printf("%d (size %d)\n", count, dv_size);
+	    }
 	    mem_phys = cv64ul(dv->dv_base) + position;
-	    if((r=sys_umap(proc_nr, safe ? GRANT_SEG : D, user_vir,
+	    if((r=sys_umap(proc_nr, GRANT_SEG, user_vir,
 		count + vir_offset, &user_phys)) != OK) {
                     panic("MEM","sys_umap failed in m_transfer",r);
 	    }
@@ -217,14 +221,8 @@ int safe;			/* safe copies */
 	        left = count;
 	    	while (left > 0) {
 	    	    chunk = (left > ZERO_BUF_SIZE) ? ZERO_BUF_SIZE : left;
-		    if(safe) {
 	             s=sys_safecopyto(proc_nr, user_vir,
 		       vir_offset+suboffset, (vir_bytes) dev_zero, chunk, D);
-		    } else {
-	    	      s=sys_vircopy(SELF, D, (vir_bytes) dev_zero, 
-	    	            proc_nr, D, user_vir + vir_offset+suboffset,
-			    chunk);
-		    }
 		    if(s != OK)
 	    	        report("MEM","sys_vircopy failed", s);
 	    	    left -= chunk;
@@ -238,21 +236,11 @@ int safe;			/* safe copies */
 	    if (position + count > dv_size) count = dv_size - position;
 
 	    if (opcode == DEV_GATHER_S) {	/* copy actual data */
-	      if(safe) {
 	          s=sys_safecopyto(proc_nr, user_vir, vir_offset,
 	  	     (vir_bytes)&imgrd[position], count, D);
-	      } else {
-	        s=sys_vircopy(SELF, D, (vir_bytes)&imgrd[position],
-			proc_nr, D, user_vir+vir_offset, count);
-	      }
 	    } else {
-	      if(safe) {
 	          s=sys_safecopyfrom(proc_nr, user_vir, vir_offset,
 	  	     (vir_bytes)&imgrd[position], count, D);
-	      } else {
-	          s=sys_vircopy(proc_nr, D, user_vir+vir_offset,
-			SELF, D, (vir_bytes)&imgrd[position], count);
-	      }
 	    }
 	    break;
 
@@ -304,9 +292,26 @@ PRIVATE void m_init()
   u32_t ramdev_base;
   message m;
   int i, s;
+  phys_bytes mem_top = 0;
+
+  /* Physical memory, to check validity of /dev/mem access. */
+#define MAX_MEM_RANGES 10
+  struct memory mem_chunks[MAX_MEM_RANGES];
 
   if (OK != (s=sys_getkinfo(&kinfo))) {
       panic("MEM","Couldn't get kernel information.",s);
+  }
+
+  /* Obtain physical memory chunks for /dev/mem memory. */
+  if(env_memory_parse(mem_chunks, MAX_MEM_RANGES) != OK)
+	printf("memory driver: no memory layout, /dev/mem won't work\n");
+  else {
+	for(i = 0; i < MAX_MEM_RANGES; i++) {
+		phys_bytes top;
+		top = mem_chunks[i].base + mem_chunks[i].size;
+		if(top > mem_top)
+			mem_top = top;
+	}
   }
 
   /* Install remote segment for /dev/kmem memory. */
@@ -350,13 +355,8 @@ PRIVATE void m_init()
        dev_zero[i] = '\0';
   }
 
-  /* Set up memory ranges for /dev/mem. */
-#if (CHIP == INTEL)
-  if (OK != (s=sys_getmachine(&machine))) {
-      panic("MEM","Couldn't get machine information.",s);
-  }
-  m_geom[MEM_DEV].dv_size = cvul64(0xFFFFFFFF); /* 4G-1 for 386 systems */
-#endif /* !(CHIP == INTEL) */
+  /* Set up memory range for /dev/mem. */
+  m_geom[MEM_DEV].dv_size = cvul64(mem_top);
 }
 
 /*===========================================================================*
@@ -371,6 +371,11 @@ int safe;
  * - MIOCRAMSIZE: to set the size of the RAM disk.
  */
   struct device *dv;
+
+  if(!safe) {
+	printf("m_transfer: unsafe?\n");
+	return EPERM;
+  }
 
   switch (m_ptr->REQUEST) {
     case MIOCRAMSIZE: {
@@ -391,14 +396,8 @@ int safe;
 	ramdev_size= m_ptr->POSITION;
 #else
 	/* Get request structure */
-	if(safe) {
 	   s= sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->IO_GRANT,
 		0, (vir_bytes)&ramdev_size, sizeof(ramdev_size), D);
-	} else {
-	   s= sys_vircopy(m_ptr->IO_ENDPT, D, (vir_bytes)m_ptr->ADDRESS,
-		SELF, D, (vir_bytes)&ramdev_size, sizeof(ramdev_size));
-	}
-
 	if (s != OK)
 		return s;
 #endif
@@ -448,13 +447,8 @@ int safe;
 	do_map= (m_ptr->REQUEST == MIOCMAP);	/* else unmap */
 
 	/* Get request structure */
-	if(safe) {
 	   r= sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->IO_GRANT,
 		0, (vir_bytes)&mapreq, sizeof(mapreq), D);
-	} else {
-	   r= sys_vircopy(m_ptr->IO_ENDPT, D, (vir_bytes)m_ptr->ADDRESS,
-		SELF, D, (vir_bytes)&mapreq, sizeof(mapreq));
-	}
 
 	if (r != OK)
 		return r;
@@ -480,4 +474,3 @@ struct partition *entry;
   entry->heads = 64;
   entry->sectors = 32;
 }
-
