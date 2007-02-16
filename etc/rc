@@ -160,6 +160,9 @@ Mount $usr /usr failed -- Single user."
     ;;
 down|stop)
     sync
+    # Update CMOS
+    echo -n 'Updating CMOS.. '
+    readclock -w && echo Done || echo Failed
     # Tell RS server we're going down.
     service shutdown
     ;;
