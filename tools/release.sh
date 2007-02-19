@@ -3,6 +3,7 @@
 set -e
 
 XBIN=usr/xbin
+SRC=src
 
 PACKAGEDIR=/usr/bigports/Packages
 PACKAGESOURCEDIR=/usr/bigports/Sources
@@ -85,18 +86,13 @@ CDFILES=/usr/tmp/cdreleasefiles
 sh tell_config OS_RELEASE . OS_VERSION >/tmp/rel.$$
 version_pretty=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$`
 version=`sed 's/["      ]//g;/^$/d' </tmp/rel.$$ | tr . _`
-subfn="subreleaseno.$version"
-if [ -f "$subfn" ]
-then	sub="`cat $subfn`"
-else	sub=0
-fi
-echo "`expr $sub + 1`" >$subfn
-IMG_BASE=minix${version}_ide_build$sub
+IMG_BASE=minix${version}_ide
 BS=4096
 
 HDEMU=0
 COPY=0
 SVNREV=""
+REVTAG=""
 PACKAGES=1
 
 while getopts "pchu?r:" c
@@ -108,7 +104,7 @@ do
 	;;
 	h)
 		echo " * Making HD image"
-		IMG_BASE=minix${version}_bios_build$sub
+		IMG_BASE=minix${version}_bios
 		HDEMU=1
 		;;
 	c)
@@ -123,20 +119,12 @@ do
 		;;
 	u)
 		echo " * Making live USB-stick image"
-		IMG_BASE=minix${version}_usb_build$sub
+		IMG_BASE=minix${version}_usb
 		HDEMU=1
 		USB=1
 		;;
 	esac
 done
-
-if [ "$USB" -ne 0 ]; then
-	IMG=${IMG_BASE}.img
-else
-	IMG=${IMG_BASE}.iso
-fi
-IMGBZ=${IMG}.bz2
-echo "Making $IMGBZ"
 
 USRMB=400
 
@@ -291,33 +279,46 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
-	( cd $RELEASEDIR/usr && svn export $SVNREV https://gforge.cs.vu.nl/svn/minix/trunk/src )
+	REPO=https://gforge.cs.vu.nl/svn/minix/trunk/$SRC
+	REVISION="`svn info $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
+	echo "Doing export of revision $REVISION from $REPO."
+	( cd $RELEASEDIR/usr && svn export -r$REVISION $REPO )
+	REVTAG=r$REVISION
 else
 	( cd .. && make depend && make clean )
-	srcdir=/usr/src
-	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir src && cd src && tar xf - )
+	srcdir=/usr/$SRC
+	( cd $srcdir && tar cf - . ) | ( cd $RELEASEDIR/usr && mkdir $SRC && cd $SRC && tar xf - )
+	REVTAG=copy
 fi
 
+if [ "$USB" -ne 0 ]; then
+	IMG=${IMG_BASE}_${REVTAG}.img
+else
+	IMG=${IMG_BASE}_${REVTAG}.iso
+fi
+IMGBZ=${IMG}.bz2
+echo "Making $IMGBZ"
+
 echo " * Fixups for owners and modes of dirs and files"
-chown -R bin $RELEASEDIR/usr/src 
-chmod -R u+w $RELEASEDIR/usr/src 
-find $RELEASEDIR/usr/src -type d | xargs chmod 755
-find $RELEASEDIR/usr/src -type f | xargs chmod 644
-find $RELEASEDIR/usr/src -name configure | xargs chmod 755
-find $RELEASEDIR/usr/src/commands -name build | xargs chmod 755
+chown -R bin $RELEASEDIR/usr/$SRC 
+chmod -R u+w $RELEASEDIR/usr/$SRC 
+find $RELEASEDIR/usr/$SRC -type d | xargs chmod 755
+find $RELEASEDIR/usr/$SRC -type f | xargs chmod 644
+find $RELEASEDIR/usr/$SRC -name configure | xargs chmod 755
+find $RELEASEDIR/usr/$SRC/commands -name build | xargs chmod 755
 # Bug tracking system not for on cd
-rm -rf $RELEASEDIR/usr/src/doc/bugs
+rm -rf $RELEASEDIR/usr/$SRC/doc/bugs
 
 # Make sure the CD knows it's a CD, unless it's not
 if [ "$USB" -eq 0 ]
 then	date >$RELEASEDIR/CD
 fi
 echo " * Chroot build"
-chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/src/tools/chrootmake.sh" || exit 1
+chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN
-# The build process leaves some file in src as root.
+# The build process leaves some file in $SRC as root.
 chown -R bin $RELEASEDIR/usr/src*
 cp issue.install $RELEASEDIR/etc/issue
 
