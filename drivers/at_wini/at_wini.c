@@ -535,7 +535,7 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
  *===========================================================================*/
 PRIVATE void init_params_pci(int skip)
 {
-  int i, r, devind, drive;
+  int i, r, devind, drive, pci_compat = 0;
   int irq, irq_hook, raid;
   u8_t bcr, scr, interface;
   u16_t vid, did;
@@ -650,8 +650,10 @@ PRIVATE void init_params_pci(int skip)
 		/* Update base_dma for compatibility device */
 		for (i= 0; i<MAX_DRIVES; i++)
 		{
-			if (wini[i].base_cmd == REG_CMD_BASE0)
+			if (wini[i].base_cmd == REG_CMD_BASE0) {
 				wini[i].base_dma= base_dma;
+				pci_compat = 1;
+			}
 		}
 	}
 
@@ -680,8 +682,17 @@ PRIVATE void init_params_pci(int skip)
 		/* Update base_dma for compatibility device */
 		for (i= 0; i<MAX_DRIVES; i++)
 		{
-			if (wini[i].base_cmd == REG_CMD_BASE1 && base_dma != 0)
+			if (wini[i].base_cmd == REG_CMD_BASE1 && base_dma != 0) {
 				wini[i].base_dma= base_dma+PCI_DMA_2ND_OFF;
+				pci_compat = 1;
+			}
+		}
+	}
+
+	if(pci_compat) {
+		if(pci_reserve_ok(devind) != OK) {
+			printf("at_wini%d (compat): pci_reserve %d failed!\n",
+				w_instance, devind);
 		}
 	}
   }
