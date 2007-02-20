@@ -140,8 +140,10 @@ message *mp;
 	{
 		/* Ignore all init calls for a process after the first one */
 	}
+#if 0
 	else
 		pci_release(names[i].name);
+#endif
 	names[i].tasknr= mp->m_source;
 
 	mp->m_type= 0;
@@ -440,8 +442,8 @@ message *mp;
 
 	devind= mp->m1_i1;
 
-	pci_reserve3(devind, mp->m_source, names[i].name);
-	mp->m_type= OK;
+	
+	mp->m_type= pci_reserve3(devind, mp->m_source, names[i].name);
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{

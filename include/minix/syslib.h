@@ -185,6 +185,7 @@ _PROTOTYPE( int pci_next_dev, (int *devindp, u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( int pci_find_dev, (U8_t bus, U8_t dev, U8_t func,
 							int *devindp)	);
 _PROTOTYPE( void pci_reserve, (int devind)				);
+_PROTOTYPE( int pci_reserve_ok, (int devind)				);
 _PROTOTYPE( void pci_ids, (int devind, u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( void pci_rescan_bus, (U8_t busnr)				);
 _PROTOTYPE( u8_t pci_attr_r8, (int devind, int port)			);

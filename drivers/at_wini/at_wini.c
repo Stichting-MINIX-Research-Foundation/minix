@@ -581,8 +581,6 @@ PRIVATE void init_params_pci(int skip)
 	else
 		continue;	/* Unsupported device class */
 
-	pci_reserve(devind);
-
   	/* Found a controller.
   	 * Programming interface register tells us more.
   	 */
@@ -611,6 +609,12 @@ PRIVATE void init_params_pci(int skip)
   			skip--;
   			continue;
   		}
+		if(pci_reserve_ok(devind) != OK) {
+			printf("at_wini%d: pci_reserve %d failed - "
+				"ignoring controller!\n",
+				w_instance, devind);
+			continue;
+		}
   		if ((s=sys_irqsetpolicy(irq, 0, &irq_hook)) != OK) {
 		  	printf("atapci: couldn't set IRQ policy %d\n", irq);
 		  	continue;

@@ -243,8 +243,10 @@ int *devindp;
 	}
 	if (devind >= nr_pcidev)
 		return 0;
+#if 0
 	if (pcidev[devind].pd_inuse)
 		return 0;
+#endif
 	*devindp= devind;
 	return 1;
 }
@@ -262,8 +264,10 @@ u16_t *didp;
 
 	for (devind= 0; devind < nr_pcidev; devind++)
 	{
+#if 0
 		if (pcidev[devind].pd_inuse)
 			continue;
+#endif
 		if (!visible(aclp, devind))
 			continue;
 		break;
@@ -289,8 +293,10 @@ u16_t *didp;
 
 	for (devind= *devindp+1; devind < nr_pcidev; devind++)
 	{
+#if 0
 		if (pcidev[devind].pd_inuse)
 			continue;
+#endif
 		if (!visible(aclp, devind))
 			continue;
 		break;
@@ -306,7 +312,7 @@ u16_t *didp;
 /*===========================================================================*
  *				pci_reserve3				     *
  *===========================================================================*/
-PUBLIC void pci_reserve3(devind, proc, name)
+PUBLIC int pci_reserve3(devind, proc, name)
 int devind;
 int proc;
 char *name;
@@ -317,7 +323,8 @@ char *name;
 	struct mem_range mr;
 
 	assert(devind <= nr_pcidev);
-	assert(!pcidev[devind].pd_inuse);
+	if(pcidev[devind].pd_inuse)
+		return EBUSY;
 	pcidev[devind].pd_inuse= 1;
 	strcpy(pcidev[devind].pd_name, name);
 
@@ -376,8 +383,11 @@ char *name;
 				proc, r);
 		}
 	}
+
+	return OK;
 }
 
+#if 0
 /*===========================================================================*
  *				pci_release				     *
  *===========================================================================*/
@@ -395,6 +405,7 @@ char *name;
 		pcidev[i].pd_inuse= 0;
 	}
 }
+#endif
 
 /*===========================================================================*
  *				pci_ids					     *

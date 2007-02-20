@@ -26,3 +26,17 @@ int devind;
 		panic("pci", "pci_reserve: got bad reply from PCI", m.m_type);
 }
 
+/*===========================================================================*
+ *                              pci_reserve_ok                               *
+ *===========================================================================*/
+PUBLIC int pci_reserve_ok(devind)
+int devind;
+{
+        int r;
+        message m;
+
+        m.m1_i1= devind;
+
+        return(_taskcall(pci_procnr, BUSC_PCI_RESERVE, &m));
+}
+
