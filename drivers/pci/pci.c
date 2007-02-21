@@ -962,7 +962,7 @@ int devind;
 			if (debug)
 			{
 				printf(
-	"primary channel is not in native mode, clearing BARs 2 and 3\n");
+	"secondary channel is not in native mode, clearing BARs 2 and 3\n");
 			}
 			clear_23= 1;
 		}
