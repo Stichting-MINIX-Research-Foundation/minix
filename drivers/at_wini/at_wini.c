@@ -375,6 +375,9 @@ FORWARD _PROTOTYPE( int atapi_transfer, (int proc_nr, int opcode,
 		u64_t position, iovec_t *iov, unsigned nr_req, int safe));
 #endif
 
+#define panic(f,m,n) at_panic(__LINE__, (f), (m), (n))
+FORWARD _PROTOTYPE( void at_panic, (int line, char *h, char *msg, int n));
+
 /* Entry points to this driver. */
 PRIVATE struct driver w_dtab = {
   w_name,		/* current device's name */
@@ -520,6 +523,9 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
 	w->base_cmd = base_cmd;
 	w->base_ctl = base_ctl;
 	w->base_dma = base_dma;
+	if(w_pci_debug)
+	   printf("at_wini%d: drive %d: base_cmd 0x%x, base_ctl 0x%x, base_dma 0x%x\n",
+		w_instance, w-wini, w->base_cmd, w->base_ctl, w->base_dma);
 	w->irq = irq;
 	w->irq_mask = 1 << irq;
 	w->irq_need_ack = ack;
@@ -623,7 +629,7 @@ PRIVATE void init_params_pci(int skip)
 			printf("atapci: couldn't enable IRQ line %d\n", irq);
 		  	continue;
 		}
-  	} 
+  	} else if(w_pci_debug) printf("at_wini%d: dev %d: only compat drives\n", w_instance, devind); 
 
   	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xfffffffc;
 
@@ -641,9 +647,9 @@ PRIVATE void init_params_pci(int skip)
   				base_cmd, base_ctl+PCI_CTL_OFF,
 				base_dma, irq, 1, irq_hook, 1);
 	  		if (w_pci_debug)
-		  		printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
+		  		printf("at_wini%d: atapci %d: 0x%x 0x%x irq %d\n", w_instance, devind, base_cmd, base_ctl, irq);
 			w_next_drive += 2;
-  		} else printf("atapci: ignored drives on primary channel, base %x\n", base_cmd);
+  		} else printf("at_wini%d: atapci: ignored drives on primary channel, base %x\n", w_instance, base_cmd);
   	}
 	else
 	{
@@ -652,6 +658,9 @@ PRIVATE void init_params_pci(int skip)
 		{
 			if (wini[i].base_cmd == REG_CMD_BASE0) {
 				wini[i].base_dma= base_dma;
+				if(w_pci_debug)
+	   			  printf("at_wini%d: drive %d: base_dma 0x%x\n",
+					w_instance, i, wini[i].base_dma);
 				pci_compat = 1;
 			}
 		}
@@ -673,9 +682,11 @@ PRIVATE void init_params_pci(int skip)
 	  			base_cmd, base_ctl+PCI_CTL_OFF, base_dma,
 				irq, 1, irq_hook, 3);
 	  		if (w_pci_debug)
-  				printf("atapci %d: 0x%x 0x%x irq %d\n", devind, base_cmd, base_ctl, irq);
+  			  printf("at_wini%d: atapci %d: 0x%x 0x%x irq %d\n",
+				w_instance, devind, base_cmd, base_ctl, irq);
 			w_next_drive += 2;
-  		} else printf("atapci: ignored drives on secondary channel, base %x\n", base_cmd);
+  		} else printf("at_wini%d: atapci: ignored drives on "
+			"secondary channel, base %x\n", w_instance, base_cmd);
   	}
 	else
 	{
@@ -684,6 +695,9 @@ PRIVATE void init_params_pci(int skip)
 		{
 			if (wini[i].base_cmd == REG_CMD_BASE1 && base_dma != 0) {
 				wini[i].base_dma= base_dma+PCI_DMA_2ND_OFF;
+	  			if (w_pci_debug)
+	   			  printf("at_wini%d: drive %d: base_dma 0x%x\n",
+					w_instance, i, wini[i].base_dma);
 				pci_compat = 1;
 			}
 		}
@@ -2621,4 +2635,16 @@ PRIVATE int atapi_intr_wait()
 }
 
 #endif /* ENABLE_ATAPI */
+
+#undef panic
+
+PRIVATE void at_panic(line, h, msg, n)
+int line;
+char *h;
+char *msg;
+int n;
+{
+	printf("at_wini%d: panic at line %d: ", w_instance, line);
+	panic(h, msg, n);
+}
 

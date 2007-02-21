@@ -110,8 +110,8 @@ message *m_ptr;			/* pointer to request message */
 		{
 			priv(rp)->s_irq_tab[i]= priv.s_irq_tab[i];
 #if 0
-			kprintf("do_privctl: adding IRQ %d\n",
-				priv(rp)->s_irq_tab[i]);
+			kprintf("do_privctl: adding IRQ %d for %d\n",
+				priv(rp)->s_irq_tab[i], rp->p_endpoint);
 #endif
 		}
 
@@ -124,11 +124,10 @@ message *m_ptr;			/* pointer to request message */
 		for (i= 0; i<priv.s_nr_io_range; i++)
 		{
 			priv(rp)->s_io_tab[i]= priv.s_io_tab[i];
-#if 0
-			kprintf("do_privctl: adding I/O range [%x..%x]\n",
+			kprintf("do_privctl: adding I/O range [%x..%x] for %d\n",
 				priv(rp)->s_io_tab[i].ior_base,
-				priv(rp)->s_io_tab[i].ior_limit);
-#endif
+				priv(rp)->s_io_tab[i].ior_limit,
+				rp->p_endpoint);
 		}
 
 		/* Check requests for IRQs */
