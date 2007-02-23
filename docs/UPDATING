@@ -34,3 +34,7 @@
 20070118:
 	drivers.conf has been updated to include an ACL for mfs. it has
 	to be installed before rebooting after an update of the mount command.
+20070212 (r2751):
+	mkfs needs more memory to make an image; chmem it or do
+	# touch mkfs.c ; make /usr/bin/mkfs
+	in /usr/src/commands/simple.
