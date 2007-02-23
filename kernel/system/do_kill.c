@@ -30,22 +30,15 @@ message *m_ptr;			/* pointer to request message */
   int sig_nr = m_ptr->SIG_NUMBER;
 
   proc_nr_e= m_ptr->SIG_ENDPT;
-	
-  if (proc_nr_e == SELF)
-	proc_nr_e= m_ptr->m_source;
 
   if (!isokendpt(proc_nr_e, &proc_nr)) return(EINVAL);
-
   if (sig_nr > _NSIG) return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
 
   /* Set pending signal to be processed by the PM. */
   cause_sig(proc_nr, sig_nr);
-  if (sig_nr == SIGKILL) {
+  if (sig_nr == SIGKILL)
 	clear_endpoint(proc_addr(proc_nr));
-	if(m_ptr->SIG_ENDPT == SELF)
-		return EDONTREPLY;
-  }
   return(OK);
 }
 
