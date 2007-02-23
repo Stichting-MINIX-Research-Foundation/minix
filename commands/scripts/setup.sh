@@ -276,6 +276,11 @@ Please finish the name of the primary partition you have created:
 		echo "selection to install MINIX."
 		echo ""
 		confirmation=""
+
+		if [ ! -b "/dev/$primary" ]
+		then	echo "/dev/$primary is not a block device."
+		fi
+
 		while [ -z "$confirmation" -o "$confirmation" != yes -a "$confirmation" != no ]
 		do
 			echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
@@ -314,7 +319,7 @@ Please finish the name of the primary partition you have created:
 	fi
 
 	if [ ! -b "/dev/$primary" ]
-	then	echo "/dev/$primary is not a block device."
+	then	echo Doing step 4 again.
 		step4=""
 	else
 		devsize="`devsize /dev/$primary`"
