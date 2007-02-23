@@ -24,8 +24,17 @@ typedef struct { u16_t port; u16_t value; } pvw_pair_t;
 typedef struct { u16_t port; u32_t value; } pvl_pair_t;
 
 /* Macro shorthand to set (port,value)-pair. */
-#define pv_set(pv, p, v) ((pv).port = (p), (pv).value = (v))
-#define pv_ptr_set(pv_ptr, p, v) ((pv_ptr)->port = (p), (pv_ptr)->value = (v))
+#define pv_set(pv, p, v) do {					\
+	u32_t _p = (p), _v = (v);				\
+	(pv).port = _p;						\
+	(pv).value = _v;					\
+	if((pv).port != _p || (pv).value != _v) {		\
+		printf("%s:%d: actual port: %x != %x || "	\
+			"actual value: %x != %x\n",		\
+			__FILE__, __LINE__, (pv).port, _p, (pv).value, _v); \
+		panic(__FILE__, "pv_set(" #pv ", " #p ", " #v ")", NO_NUM); \
+	}							\
+} while(0)
 
 #if 0	/* no longer in use !!! */
 /* Define a number of flags to indicate granularity we are using. */

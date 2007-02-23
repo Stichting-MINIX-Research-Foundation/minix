@@ -235,6 +235,7 @@ PRIVATE int parse_arguments(int argc, char **argv)
           }
           else if (strcmp(argv[i], ARG_DEV)==0) {
               if (stat(argv[i+1], &stat_buf) == -1) {
+		  perror(argv[i+1]);
                   print_usage(argv[ARG_NAME], "couldn't get status of device");
                   exit(errno);
               }
