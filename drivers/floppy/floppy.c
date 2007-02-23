@@ -707,10 +707,10 @@ int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
   pv_set(byte_out[0], DMA_INIT, DMA_RESET_VAL);	/* reset the dma controller */
   pv_set(byte_out[1], DMA_FLIPFLOP, 0);		/* write anything to reset it */
   pv_set(byte_out[2], DMA_MODE, opcode == DEV_SCATTER_S ? DMA_WRITE : DMA_READ);
-  pv_set(byte_out[3], DMA_ADDR, (unsigned) tmp_phys >>  0);
-  pv_set(byte_out[4], DMA_ADDR, (unsigned) tmp_phys >>  8);
-  pv_set(byte_out[5], DMA_TOP, (unsigned) (tmp_phys >> 16));
-  pv_set(byte_out[6], DMA_COUNT, (((SECTOR_SIZE - 1) >> 0) & 0xff));
+  pv_set(byte_out[3], DMA_ADDR, (unsigned) (tmp_phys >>  0) & 0xff);
+  pv_set(byte_out[4], DMA_ADDR, (unsigned) (tmp_phys >>  8) & 0xff);
+  pv_set(byte_out[5], DMA_TOP,  (unsigned) (tmp_phys >> 16) & 0xff);
+  pv_set(byte_out[6], DMA_COUNT, (((SECTOR_SIZE - 1) >> 0)) & 0xff);
   pv_set(byte_out[7], DMA_COUNT, (SECTOR_SIZE - 1) >> 8);
   pv_set(byte_out[8], DMA_INIT, 2);		/* some sort of enable */
 
