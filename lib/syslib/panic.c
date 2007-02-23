@@ -30,9 +30,6 @@ int num;			/* number to go with format string */
       }
   }
 
-  /* Try to signal ourself */
-  sys_kill(SELF, SIGKILL);
-
   /* If exiting nicely through PM fails for some reason, try to
    * commit suicide. E.g., message to PM might fail due to deadlock.
    */
