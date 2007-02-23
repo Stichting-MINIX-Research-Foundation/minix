@@ -1633,9 +1633,8 @@ struct command *cmd;		/* Command block */
   pv_set(outbyte[6], base_cmd + REG_SECTOR, cmd->sector);
   pv_set(outbyte[7], base_cmd + REG_CYL_LO, cmd->cyl_lo);
   pv_set(outbyte[8], base_cmd + REG_CYL_HI, cmd->cyl_hi);
-
-  pv_set(outbyte[10], base_cmd + REG_COMMAND, cmd->command);
-  if ((s=sys_voutb(outbyte, 11)) != OK)
+  pv_set(outbyte[9], base_cmd + REG_COMMAND, cmd->command);
+  if ((s=sys_voutb(outbyte, 10)) != OK)
   	panic(w_name(),"Couldn't write registers with sys_voutb()",s);
 
   return(OK);
