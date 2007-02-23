@@ -378,6 +378,30 @@ FORWARD _PROTOTYPE( int atapi_transfer, (int proc_nr, int opcode,
 #define panic(f,m,n) at_panic(__LINE__, (f), (m), (n))
 FORWARD _PROTOTYPE( void at_panic, (int line, char *h, char *msg, int n));
 
+#define sys_voutb(out, n) at_voutb(__LINE__, (out), (n))
+FORWARD _PROTOTYPE( int at_voutb, (int line, pvb_pair_t *, int n));
+#define sys_vinb(in, n) at_vinb(__LINE__, (in), (n))
+FORWARD _PROTOTYPE( int at_vinb, (int line, pvb_pair_t *, int n));
+
+#undef sys_outb
+#undef sys_inb
+#undef sys_outw
+#undef sys_inw
+#undef sys_outl
+#undef sys_inl
+
+FORWARD _PROTOTYPE( int at_out, (int line, u32_t port, u32_t value,
+	char *typename, int type));
+FORWARD _PROTOTYPE( int at_in, (int line, u32_t port, u32_t *value,
+	char *typename, int type));
+
+#define sys_outb(p, v) at_out(__LINE__, (p), (v), "outb", _DIO_BYTE)
+#define sys_inb(p, v) at_in(__LINE__, (p), (v), "inb", _DIO_BYTE)
+#define sys_outw(p, v) at_out(__LINE__, (p), (v), "outw", _DIO_WORD)
+#define sys_inw(p, v) at_in(__LINE__, (p), (v), "inw", _DIO_WORD)
+#define sys_outl(p, v) at_out(__LINE__, (p), (v), "outl", _DIO_LONG)
+#define sys_inl(p, v) at_in(__LINE__, (p), (v), "inl", _DIO_LONG)
+
 /* Entry points to this driver. */
 PRIVATE struct driver w_dtab = {
   w_name,		/* current device's name */
@@ -441,6 +465,9 @@ PRIVATE void init_params()
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
 
   w_identify_wakeup_ticks = wakeup_secs * HZ;
+
+  if(atapi_debug)
+	panic("at_wini", "atapi_debug", NO_NUM);
 
   if(w_identify_wakeup_ticks <= 0) {
 	printf("changing wakeup from %d to %d ticks.\n",
@@ -632,6 +659,9 @@ PRIVATE void init_params_pci(int skip)
   	} else if(w_pci_debug) printf("at_wini%d: dev %d: only compat drives\n", w_instance, devind); 
 
   	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xfffffffc;
+
+	printf("at_wini%d: dev %d: base_dma = %x\n",
+		w_instance, devind, base_dma);
 
   	/* Primary channel not in compatability mode? */
   	if (raid || (interface & ATA_IF_NOTCOMPAT1)) {
@@ -2636,15 +2666,64 @@ PRIVATE int atapi_intr_wait()
 
 #endif /* ENABLE_ATAPI */
 
-#undef panic
+#undef sys_voutb
+#undef sys_vinb
 
+PRIVATE int at_voutb(int line, pvb_pair_t *pvb, int n)
+{
+  int s, i;
+  if ((s=sys_voutb(pvb,n)) == OK)
+	return OK;
+  printf("at_wini%d: sys_voutb failed: %d pvb (%d):\n", w_instance, s, n);
+  for(i = 0; i < n; i++)
+	printf("%2d: %4x -> %4x\n", i, pvb[i].value, pvb[i].port);
+  panic(w_name(), "sys_voutb failed", NO_NUM);
+}
+
+PRIVATE int at_vinb(int line, pvb_pair_t *pvb, int n)
+{
+  int s, i;
+  if ((s=sys_vinb(pvb,n)) == OK)
+	return OK;
+  printf("at_wini%d: sys_vinb failed: %d pvb (%d):\n", w_instance, s, n);
+  for(i = 0; i < n; i++)
+	printf("%2d: %4x\n", i, pvb[i].port);
+  panic(w_name(), "sys_vinb failed", NO_NUM);
+}
+
+PRIVATE int at_out(int line, u32_t port, u32_t value,
+	char *typename, int type)
+{
+	int s;
+	s = sys_out(port, value, type);
+	if(s == OK)
+		return OK;
+	printf("at_wini%d: line %d: %s failed: %d; %x -> %x\n", 
+		w_instance, line, typename, s, value, port);
+        panic(w_name(), "sys_out failed", NO_NUM);
+}
+
+
+PRIVATE int at_in(int line, u32_t port, u32_t *value,
+	char *typename, int type)
+{
+	int s;
+	s = sys_in(port, value, type);
+	if(s == OK)
+		return OK;
+	printf("at_wini%d: line %d: %s failed: %d; port %x\n", 
+		w_instance, line, typename, s, value, port);
+        panic(w_name(), "sys_out failed", NO_NUM);
+}
+
+#undef panic
 PRIVATE void at_panic(line, h, msg, n)
 int line;
 char *h;
 char *msg;
 int n;
 {
-	printf("at_wini%d: panic at line %d: ", w_instance, line);
-	panic(h, msg, n);
+	printf("at_wini%d: panic at line %d: %s: %s %d\n",
+		w_instance, line, h, msg, n);
+	while(1);
 }
-
