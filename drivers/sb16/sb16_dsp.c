@@ -584,11 +584,11 @@ int count;
 		/* set DMA mode */
 		pv_set(pvb[2], DMA8_MODE, (DmaMode == DEV_WRITE_S ? DMA8_AUTO_PLAY : DMA8_AUTO_REC)); 
 
-		pv_set(pvb[3], DMA8_ADDR, address >>  0);        /* Low_byte of address */
-		pv_set(pvb[4], DMA8_ADDR, address >>  8);        /* High byte of address */
-		pv_set(pvb[5], DMA8_PAGE, address >> 16);        /* 64K page number */
-		pv_set(pvb[6], DMA8_COUNT, count >> 0);          /* Low byte of count */
-		pv_set(pvb[7], DMA8_COUNT, count >> 8);          /* High byte of count */
+		pv_set(pvb[3], DMA8_ADDR, (address >>  0) & 0xff);        /* Low_byte of address */
+		pv_set(pvb[4], DMA8_ADDR, (address >>  8) & 0xff);        /* High byte of address */
+		pv_set(pvb[5], DMA8_PAGE, (address >> 16) & 0xff);        /* 64K page number */
+		pv_set(pvb[6], DMA8_COUNT, (count >> 0) & 0xff);          /* Low byte of count */
+		pv_set(pvb[7], DMA8_COUNT, (count >> 8) & 0xff);          /* High byte of count */
 		pv_set(pvb[8], DMA8_MASK, SB_DMA_8);	       /* Enable DMA channel */
 
 		sys_voutb(pvb, 9);
@@ -605,8 +605,8 @@ int count;
 		pv_set(pvb[3], DMA16_ADDR, (address >> 1) & 0xFF);  /* Low_byte of address */
 		pv_set(pvb[4], DMA16_ADDR, (address >> 9) & 0xFF);  /* High byte of address */
 		pv_set(pvb[5], DMA16_PAGE, (address >> 16) & 0xFE); /* 128K page number */
-		pv_set(pvb[6], DMA16_COUNT, count >> 1);            /* Low byte of count */
-		pv_set(pvb[7], DMA16_COUNT, count >> 9);            /* High byte of count */
+		pv_set(pvb[6], DMA16_COUNT, (count >> 1) & 0xff);            /* Low byte of count */
+		pv_set(pvb[7], DMA16_COUNT, (count >> 9) & 0xff);            /* High byte of count */
 		pv_set(pvb[8], DMA16_MASK, SB_DMA_16 & 3);          /* Enable DMA channel */
 
 		sys_voutb(pvb, 9);
