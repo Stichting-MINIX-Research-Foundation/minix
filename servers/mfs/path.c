@@ -196,9 +196,14 @@ printf("%s, %d\n", __FILE__, __LINE__);
 
   /* Scan the path component by component. */
   while (TRUE) {
-	/* Extract one component. */
+	int slashes = 0;
+	/* Extract one component. Skip slashes first. */
+	while (path[slashes] == '/') {
+	  slashes++;
+	  path_processed++;
+  	}
 	fs_m_out.RES_OFFSET = path_processed;	/* For ENOENT */
-	if ( (new_name = get_name(path, string)) == (char*) 0) {
+	if ( (new_name = get_name(path+slashes, string)) == (char*) 0) {
 		put_inode(rip);	/* bad path in user space */
 printf("%s, %d\n", __FILE__, __LINE__);
 		return(NIL_INODE);
@@ -487,11 +492,8 @@ char string[NAME_MAX];		/* component extracted from 'old_name' */
 
   np = string;			/* 'np' points to current position */
   rnp = old_name;		/* 'rnp' points to unparsed string */
-  while ( (c = *rnp) == '/') {
-	  rnp++;	/* skip leading slashes */
-	  path_processed++; /* count characters */
-  }
 
+  c = *rnp;
   /* Copy the unparsed path, 'old_name', to the array, 'string'. */
   while ( rnp < &old_name[PATH_MAX]  &&  c != '/'   &&  c != '\0') {
 	  if (np < &string[NAME_MAX]) *np++ = c;
