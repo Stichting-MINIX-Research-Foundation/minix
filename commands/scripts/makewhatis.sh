@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# makewhatis 2.0 - make whatis(5) database.	Author: Kees J. Bot.
+# makewhatis 2.2 - make whatis(5) database.	Author: Kees J. Bot.
 #
 # Make the whatis database of a man directory from the manual pages.
 
@@ -19,9 +19,9 @@ cd $1 || exit
 {
 	# First pass, gathering the .SH NAME lines in various forms.
 
-	# First the man[1-8] directories, the titles are under the .SH NAME
+	# First the man[1-9] directories, the titles are under the .SH NAME
 	# section header.
-	for chap in 1 2 3 4 5 6 7 8
+	for chap in 1 2 3 4 5 6 7 8 9
 	do
 		for page in man$chap/*.$chap
 		do
@@ -31,7 +31,7 @@ cd $1 || exit
 				s/"NAME"/NAME/g
 				/^\.SH NAME/,/^\.SH /!d
 				/^\.SH /d
-				s/\\f.//g	# should not be needed
+				s/\\f.//g
 				s/\\s[+-].//g
 				s/\\s.//g
 				s/\\//
@@ -41,7 +41,7 @@ cd $1 || exit
 	done
 
 	# The Minix "Book style" documents, look for .CD
-	for page in man9/*.9
+	for page in man1x/*.1x
 	do
 	   if	test -f "$page"; then
 
@@ -55,7 +55,7 @@ cd $1 || exit
 			s/\\s.//g
 			s/\\\*(M2/MINIX/g
 			s/\\//
-			'"s/ - / (9) - /" < "$page"
+			'"s/ - / (1x) - /" < "$page"
 	   fi
 	done
 

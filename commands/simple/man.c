@@ -1,4 +1,4 @@
-/*	man 2.4 - display online manual pages		Author: Kees J. Bot
+/*	man 2.5 - display online manual pages		Author: Kees J. Bot
  *								17 Mar 1993
  */
 #define nil NULL
@@ -26,11 +26,11 @@ char TBL_MAGIC[] = ".\\\"t\n";
 #define arraylimit(a)	((a) + arraysize(a))
 #define between(a, c, z) ((unsigned) ((c) - (a)) <= (unsigned) ((z) - (a)))
 
-/* Section 9 uses special macros under Minix. */
+/* Section 1x uses special macros under Minix. */
 #if __minix
-#define SEC9SPECIAL	1
+#define SEC1xSPECIAL	1
 #else
-#define SEC9SPECIAL	0
+#define SEC1xSPECIAL	0
 #endif
 
 int searchwhatis(FILE *wf, char *title, char **ppage, char **psection)
@@ -521,7 +521,7 @@ int trymandir(char *mandir, char *title, char *section)
 		mandir, wsection, wpage, wsection);
 
 	    rsp= showpage(pagename, sp->ptype,
-		(SEC9SPECIAL && strcmp(wsection, "9") == 0) ? "-mnx" : "-man");
+		(SEC1xSPECIAL && strcmp(wsection, "1x") == 0) ? "-mnx" : "-man");
 	} while (sp++, !rsp && --ntries != 0);
 
 	if (all) rsp= 0;
@@ -664,8 +664,8 @@ int main(int argc, char **argv)
 
 	if (i >= argc) usage();
 
-	if (between('0', argv[i][0], '9') && argv[i][1] == 0) {
-	    /* Allow single digit section designations. */
+	if (between('0', argv[i][0], '9') && i+1 < argc) {
+	    /* Old BSD style section designation? */
 	    section= argv[i++];
 	}
 	if (i == argc) usage();
