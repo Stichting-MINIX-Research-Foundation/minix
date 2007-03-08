@@ -2,6 +2,7 @@
 755 bin     operator /bin
 755 bin     operator /sbin
 755 root    operator /dev
+/dev/mouse -> /dev/kbdaux
 755 root    operator /etc
 755 root    operator /lib
 755 root    operator /lib/i386
