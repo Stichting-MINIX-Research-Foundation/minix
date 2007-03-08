@@ -48,6 +48,7 @@ This CD contains:
    - README.TXT      This file
    - SETUP.PS:       setup guide in PostScript
    - SETUP.PDF:      setup guide in PDF (requires Adobe Acrobat reader)
+   - SETUP-RU.PDF:   setup guide in PDF, in Russian
    - PRESZ134.ZIP    Windows utility to resize FAT partitions
    - BOOTFLOP.IMG    If you cannot boot from CD-ROMs, insert the CD-ROM
                      anyway, then copy this floppy image raw to a floppy
