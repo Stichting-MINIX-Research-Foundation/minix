@@ -11,6 +11,8 @@
 #include <minix/ipc.h>
 #endif
 
+#include <minix/u64.h>
+
 #ifndef _DEVIO_H
 #include <minix/devio.h>
 #endif
@@ -205,6 +207,9 @@ _PROTOTYPE( int sys_cprof, (int action, int size, int endpt,
                                        void *ctl_ptr, void *mem_ptr)   );
 _PROTOTYPE( int sys_profbuf, (void *ctl_ptr, void *mem_ptr)            );
 
+/* read_tsc() and friends. */
+_PROTOTYPE( void read_tsc_64, (u64_t *t)				);
+_PROTOTYPE( void read_tsc, (u32_t *hi, u32_t *lo)			);
 
 #endif /* _SYSLIB_H */
 

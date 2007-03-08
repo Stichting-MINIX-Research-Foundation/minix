@@ -18,6 +18,7 @@ libsysutil_FILES=" \
 	report.c \
 	taskcall.c \
 	read_tsc.s \
+	read_tsc_64.c \
 	profile_extern.c \
 	profile.c"
 

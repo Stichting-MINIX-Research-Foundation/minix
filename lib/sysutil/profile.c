@@ -20,7 +20,6 @@
 #include <minix/profile.h>
 #include <minix/syslib.h>
 #include <minix/u64.h>
-#include "read_tsc.h"
 
 #define U64_LO 0
 #define U64_HI 1
