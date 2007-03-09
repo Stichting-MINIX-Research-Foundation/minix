@@ -38,7 +38,6 @@ PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
 PRIVATE int m_device;			/* current device */
 PRIVATE struct kinfo kinfo;		/* kernel information */ 
-PRIVATE struct machine machine;		/* machine information */ 
 
 extern int errno;			/* error number for PM calls */
 
@@ -68,6 +67,12 @@ PRIVATE struct driver m_dtab = {
   NULL,
   NULL
 };
+
+/* One page of temporary mapping area - enough to be able to page-align
+ * one page.
+ */
+static char pagedata_buf[2*PAGE_SIZE];
+vir_bytes pagedata_aligned;
 
 /* Buffer for the /dev/zero null byte feed. */
 #define ZERO_BUF_SIZE 			1024
@@ -133,13 +138,10 @@ int safe;			/* safe copies */
   int seg;
   unsigned count, left, chunk;
   vir_bytes user_vir, vir_offset = 0;
-  phys_bytes user_phys;
   struct device *dv;
   unsigned long dv_size;
   int s, r;
   off_t position;
-
-  static int n = 0;
 
   if(!safe) {
 	printf("m_transfer: unsafe?\n");
@@ -187,32 +189,56 @@ int safe;			/* safe copies */
 	    }
 	    break;
 
-	/* Physical copying. Only used to access entire memory. */
+	/* Physical copying. Only used to access entire memory.
+	 * Transfer one 'page window' at a time.
+	 */
 	case MEM_DEV:
-	    if (position >= dv_size) {
-		printf("memory: read 0x%lx beyond physical memory of 0x%lx\n",
-			position, dv_size);
+	{
+	    u32_t pagestart, page_off;
+	    static u32_t pagestart_mapped;
+	    static int any_mapped = 0;
+	    int r;
+	    u32_t subcount;
+
+	    if (position >= dv_size)
 		return(OK); 	/* check for EOF */
-	    }
-	    if (position + count > dv_size) {
-		printf("memory: truncating count from %d to ", count);
+	    if (position + count > dv_size)
 		count = dv_size - position;
-		printf("%d (size %d)\n", count, dv_size);
-	    }
 	    mem_phys = cv64ul(dv->dv_base) + position;
-	    if((r=sys_umap(proc_nr, GRANT_SEG, user_vir,
-		count + vir_offset, &user_phys)) != OK) {
-                    panic("MEM","sys_umap failed in m_transfer",r);
-	    }
+
+	    page_off = mem_phys % PAGE_SIZE;
+	    pagestart = mem_phys - page_off; 
+
+	    /* All memory to the map call has to be page-aligned.
+	     * Don't have to map same page over and over.
+	     */
+	    if(!any_mapped || pagestart_mapped != pagestart) {
+	      if((r=sys_vm_map(SELF, 1, pagedata_aligned,
+		PAGE_SIZE, pagestart)) != OK) {
+		printf("memory: sys_vm_map failed: %d\n", r);
+		return r;
+	     }
+	     any_mapped = 1;
+	     pagestart_mapped = pagestart;
+	   }
+
+	    /* how much to be done within this page. */
+	    subcount = PAGE_SIZE-page_off;
+	    if(subcount > count)
+		subcount = count;
 
 	    if (opcode == DEV_GATHER_S) {			/* copy data */
-	        sys_physcopy(NONE, PHYS_SEG, mem_phys, 
-	        	NONE, PHYS_SEG, user_phys + vir_offset, count);
+	           s=sys_safecopyto(proc_nr, user_vir,
+		       vir_offset, pagedata_aligned+page_off, subcount, D);
 	    } else {
-	        sys_physcopy(NONE, PHYS_SEG, user_phys + vir_offset, 
-	        	NONE, PHYS_SEG, mem_phys, count);
+	           s=sys_safecopyfrom(proc_nr, user_vir,
+		       vir_offset, pagedata_aligned+page_off, subcount, D);
 	    }
+	    if(s != OK)
+		return s;
+	    count = subcount;
 	    break;
+	}
 
 	/* Null byte stream generator. */
 	case ZERO_DEV:
@@ -224,7 +250,7 @@ int safe;			/* safe copies */
 	             s=sys_safecopyto(proc_nr, user_vir,
 		       vir_offset+suboffset, (vir_bytes) dev_zero, chunk, D);
 		    if(s != OK)
-	    	        report("MEM","sys_vircopy failed", s);
+	    	        report("MEM","sys_safecopyto failed", s);
 	    	    left -= chunk;
  	            suboffset += chunk;
 	    	}
@@ -290,28 +316,10 @@ PRIVATE void m_init()
   /* Initialize this task. All minor devices are initialized one by one. */
   u32_t ramdev_size;
   u32_t ramdev_base;
-  message m;
   int i, s;
-  phys_bytes mem_top = 0;
-
-  /* Physical memory, to check validity of /dev/mem access. */
-#define MAX_MEM_RANGES 10
-  struct memory mem_chunks[MAX_MEM_RANGES];
 
   if (OK != (s=sys_getkinfo(&kinfo))) {
       panic("MEM","Couldn't get kernel information.",s);
-  }
-
-  /* Obtain physical memory chunks for /dev/mem memory. */
-  if(env_memory_parse(mem_chunks, MAX_MEM_RANGES) != OK)
-	printf("memory driver: no memory layout, /dev/mem won't work\n");
-  else {
-	for(i = 0; i < MAX_MEM_RANGES; i++) {
-		phys_bytes top;
-		top = mem_chunks[i].base + mem_chunks[i].size;
-		if(top > mem_top)
-			mem_top = top;
-	}
   }
 
   /* Install remote segment for /dev/kmem memory. */
@@ -355,8 +363,12 @@ PRIVATE void m_init()
        dev_zero[i] = '\0';
   }
 
+  /* Page-align page pointer. */
+  pagedata_aligned = (u32_t) pagedata_buf + PAGE_SIZE;
+  pagedata_aligned -= pagedata_aligned % PAGE_SIZE;
+
   /* Set up memory range for /dev/mem. */
-  m_geom[MEM_DEV].dv_size = cvul64(mem_top);
+  m_geom[MEM_DEV].dv_size = cvul64(0xffffffff);
 }
 
 /*===========================================================================*
@@ -384,7 +396,6 @@ int safe;
 
 	u32_t ramdev_size;
 	phys_bytes ramdev_base;
-	message m;
 	int s;
 
 	/* A ramdisk can be created only once, and only on RAM disk device. */
