@@ -36,6 +36,12 @@ fi
 
 cd /
 
+# Make sure there is a $SRC dir
+if [ ! -d "$SRC" ]
+then	mkdir $SRC || exit
+fi
+
+# Is there a usable CD to install packages from?
 cdpackages=""
 if [ -n "$cddrive" ]
 then	pack=${cddrive}p2
@@ -52,83 +58,11 @@ then	pack=${cddrive}p2
 else	echo "Don't know where the install CD is. You can set it in $RC."
 fi
 
-# For local testing
-#cdpackages=/usr/bigports/Packages/List
-#CDPACK=/usr/bigports/Packages
-#CDSRC=/usr/bigports/Sources
-
-if [ ! -d "$SRC" ]
-then	mkdir $SRC || exit
-fi
-
-if [ "$cdpackages" = "" ]
-then	echo "Skipping CD packages."
-else	cont=y
-	while [ $cont = y ]
-	do	n="`wc -l $cdpackages | awk '{ print $1 }'`"
-		sourcef=$CDSRC/SizeMB
-		binf=$CDPACK/SizeMB
-		if [ -f $binf -a -f $sourcef ]
-		then	sourcemb="`cat $sourcef`"
-			binmb="`cat $binf`"
-			sourcesize=" (`expr $binmb + $sourcemb` MB uncompressed)"
-		else	sourcesize=""
-		fi
-		if [ -f $binf ]
-		then	binmb="`cat $binf`"
-			binsize=" ($binmb MB uncompressed)"
-		else	binsize=""
-		fi
-
-		echo "There are $n CD packages."
-		echo "Please choose:"
-		echo " 1  Install all $n binary packages$binsize from CD"
-		echo " 2  Install all $n binary packages + sources from CD$sourcesize"
-		echo " 3  Display the list of packages on CD"
-		echo " 4  Let me select individual packages to install from CD or network."
-		echo " 5  Exit."
-		echo -n "Choice: [4] "
-		read in
-		case "$in" in
-		1|2)
-			cd $CDPACK || exit
-			echo " * Installing binaries .."
-			for f in *.tar.bz2
-			do	echo "Installing $f binaries .."
-				packit $f && echo Installed $f
-			done
-			if [ "$in" = 2 ]
-			then
-				cd $SRC || exit
-				echo " * Installing sources in $SRC .."
-				for f in $CDSRC/*.tar.bz2
-				do	echo "$f .."
-					$BUNZIP2 -dc $f | tar xf - 
-				done
-			fi
-			;;
-		3)
-			( echo "Displaying list; press q to leave it, space for more."
-			  cat "$CDPACK/List" | awk -F'|' '{ printf "%-20s %s\n", $1, $2 }'
-			) | more
-			;;
-		""|4)
-			echo "Ok, showing packages to install." ; echo
-			cont=n
-			;;
-		5)
-			exit 0
-			;;
-		esac
-	done
-	echo -n "Press RETURN to continue .. "
-	read xyzzy
-fi
-
 TMPF=$TMPDIR/.list.$$
 rm -f $TMPF
 rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
 
+# Check for network packages too
 netpackages=""
 if ( : </dev/tcp ) 2>/dev/null
 then	echo -n "Update package list from network? (Y/n) "
@@ -144,12 +78,25 @@ then	echo -n "Update package list from network? (Y/n) "
 else	echo "No working network detected."
 fi
 
-if [ "$netpackages" = "" ]
-then	echo "Skipping network packages."
-	if [ "$cdpackages" = "" ]
-	then	echo "No packages found."
-		exit 1
+# Is there at least one package type?
+if [ ! -n "$netpackages" -a ! -n "$cdpackages"  ]
+then	echo "No packages found."
+	exit 1
+fi
+
+# Is there more than one package type?
+if [ -n "$netpackages" -a -n "$cdpackages"  ]
+then	echo -n "Would you like to install from (C)D or (N)etwork? [C] "
+	read whichsrc
+	if [ "$whichsrc" = N -o "$whichsrc" = n ]
+	then	unset cdpackages
+	else	unset netpackages
 	fi
+fi
+
+if [ -n "$netpackages" ]
+then	source=net
+else	source=cdrom
 fi
 
 cont=y
@@ -161,35 +108,63 @@ do	cd $TMPDIR
 	echo -n "Press RETURN to continue.."
 	read xyzzy
 	echo "Package list:"
-	(	echo "No.|Source|Package|Description"
+	(	echo "No.|Package|Description"
 		(
 		if [ -f "$netpackages" ]
-		then	sed <$netpackages 's/^/net\|/'
+		then	cat $netpackages
 		fi
 		if [ -f "$cdpackages" ]
-		then	sed <$cdpackages 's/^/cdrom\|/'
+		then	cat $cdpackages
 		fi
 		) | sort -t'|' +1 | awk '{ n++; printf "%d|%s\n", n, $0 }' 
 	) >$TMPF
-	awk -F'|' <$TMPF '{ printf "%3s %-6s %-15s %s\n", $1, $2, $3, $4 }' | more
-	echo -n "Package to install? [RETURN for none] "
-	read packno
+	highest="`wc -l $TMPF | awk '{ print $1 }'`"
+	awk -F'|' <$TMPF '{ printf "%3s %-15s %s\n", $1, $2, $3 }' | more
+	echo "Format examples: '3', '3,6', '3-9', '3-9,11-15', 'all'"
+	echo -n "Package(s) to install?  "
+	read packnolist
+	if [ "$packnolist" = all ]
+	then	packnolist=1-$highest
+	fi
+	IFS=','
+	set $packnolist
+	echo -n "Get source(s) too? (y/N) "
+	read getsources
+   for packrange in $packnolist
+   do
+	# Get a-b range.
+	IFS='-'
+	set $packrange
+	start=$1
+	if [ $# = 2 ]
+	then	end=$2
+	else	end=$1
+	fi
+	IFS=' '
+      # use awk to make the range list
+      for packno in `awk </dev/null "BEGIN { for(i=$start; i<=$end; i++) { printf \"%d \", i } }"`
+      do
 	ok=y
 	pat="^$packno|"
-	if [ "`grep $pat $TMPF | wc -l | awk '{ print $1 }'`" -ne 1 ]
+	if [ "`grep -c $pat $TMPF`" -ne 1 ]
 	then	if [ "$packno" ]
-		then	echo "Wrong package number."
+		then	echo "$packno: Wrong package number."
 		fi
 		ok=n
 	fi
 	if [ $ok = y ]
-	then	source="`grep $pat $TMPF | awk -F'|' '{ print $2 }'`"
-		packagename="`grep $pat $TMPF | awk -F'|' '{ print $3 }'`"
-		file=$packagename.tar.bz2
+	then	
+	packagename="`grep $pat $TMPF | awk -F'|' '{ print $2 }'`"
+	file=$packagename.tar.bz2
+
+	echo ""
+
+	if [ -f $file ]
+	then	echo "Skipping $file - it's already in $TMPDIR."
+		echo "Remove that file if you want to re-retrieve and install this package."
+	else
 		case $source in
-		net*)	echo -n "Get source of $packagename? (y/N) "
-			read src
-			echo "Retrieving binary from primary location into $TMPDIR .."
+		net*)   echo "Retrieving $packno ($packagename) from primary location into $TMPDIR .."
 			srcurl=""
 			if urlget $URL1/$file >$file
 			then	echo "Retrieved ok. Installing .."
@@ -197,7 +172,7 @@ do	cd $TMPDIR
 				srcurl=$SRCURL1/$file
 			else	echo "Retrieval failed."
 			fi
-			if [ "$src" = y -o "$src" = Y ]
+			if [ "$getsources" = y -o "$getsources" = Y ]
 			then	(	cd $SRC || exit
 					srcfile=${packagename}-src.tar.bz2
 					echo "Retrieving source from $srcurl .."
@@ -211,26 +186,24 @@ do	cd $TMPDIR
 		cdrom*)
 			if [ -f $CDPACK/$file ]
 			then	echo "Installing from $CDPACK/$file .."
-				packit $CDPACK/$file
+				packit $CDPACK/$file && echo Installed ok.
 			else	echo "$CDPACK/$file not found."
 			fi
 			srcfile=$CDSRC/${packagename}-src.tar.bz2
-			if [ -f $srcfile ]
-			then
-				echo -n "Get source of $packagename? (y/N) "
-				read src
-				if [ "$src" = y -o "$src" = Y ]
-				then	(	cd $SRC || exit
+			if [ -f $srcfile -a $getsources = y ]
+			then 
+					(	cd $SRC || exit
 						$BUNZIP2 -dc $srcfile | tar xf - || exit
 						echo "Source $srcfile unpacked in $SRC."
 					)
-				fi
-			else	echo "No source on CD for $packagename."
 			fi
 			;;
 		esac
+	fi
 	else	cont=n
 	fi
+     done # Iterate package range
+   done # Iterate package range list
 done
 
 rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
