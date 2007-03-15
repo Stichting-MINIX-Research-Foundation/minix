@@ -24,7 +24,7 @@ int nr;
   if (mess != NULL) {
 	kprintf("\nKernel panic: %s", mess);
 	if (nr != NO_NUM) kprintf(" %d", nr);
-	kprintf("\n",NO_NUM);
+	kprintf("\n");
   }
 
   /* Abort MINIX. */
