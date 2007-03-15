@@ -104,7 +104,7 @@ void timer_end(int cat)
 
 #if DEBUG_SCHED_CHECK		/* only include code if enabled */
 
-#define PROCLIMIT 10000
+#define MAX_LOOP (NR_PROCS + NR_TASKS)
 
 PUBLIC void
 check_runqueues(char *when)
@@ -114,51 +114,55 @@ check_runqueues(char *when)
 
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	xp->p_found = 0;
-	if (l++ > PROCLIMIT) {  panic("check error", NO_NUM); }
+	if (l++ > MAX_LOOP) {  panic("check error", NO_NUM); }
   }
 
-  for (q=0; q < NR_SCHED_QUEUES; q++) {
+  for (q=l=0; q < NR_SCHED_QUEUES; q++) {
     if (rdy_head[q] && !rdy_tail[q]) {
-	kprintf("head but no tail: %s", when);
+	kprintf("head but no tail in %d: %s", q, when);
 		 panic("scheduling error", NO_NUM);
     }
     if (!rdy_head[q] && rdy_tail[q]) {
-	kprintf("tail but no head: %s", when);
+	kprintf("tail but no head in %d: %s", q, when);
 		 panic("scheduling error", NO_NUM);
     }
     if (rdy_tail[q] && rdy_tail[q]->p_nextready != NIL_PROC) {
-	kprintf("tail and tail->next not null; %s", when);
+	kprintf("tail and tail->next not null in %d: %s", q, when);
 		 panic("scheduling error", NO_NUM);
     }
     for(xp = rdy_head[q]; xp != NIL_PROC; xp = xp->p_nextready) {
         if (!xp->p_ready) {
-		kprintf("scheduling error: unready on runq: %s\n", when);
-		
+		kprintf("scheduling error: unready on runq %d proc %d: %s\n",
+			q, xp->p_nr, when);
   		panic("found unready process on run queue", NO_NUM);
         }
         if (xp->p_priority != q) {
-		kprintf("scheduling error: wrong priority: %s\n", when);
-		
+		kprintf("scheduling error: wrong priority q %d proc %d: %s\n",
+			q, xp->p_nr, when);
 		panic("wrong priority", NO_NUM);
 	}
 	if (xp->p_found) {
-		kprintf("scheduling error: double scheduling: %s\n", when);
+		kprintf("scheduling error: double sched q %d proc %d: %s\n",
+			q, xp->p_nr, when);
 		panic("proc more than once on scheduling queue", NO_NUM);
 	}
 	xp->p_found = 1;
 	if (xp->p_nextready == NIL_PROC && rdy_tail[q] != xp) {
-		kprintf("scheduling error: last element not tail: %s\n", when);
+		kprintf("sched err: last element not tail q %d proc %d: %s\n",
+			q, xp->p_nr, when);
 		panic("scheduling error", NO_NUM);
 	}
-	if (l++ > PROCLIMIT) panic("loop in schedule queue?", NO_NUM);
+	if (l++ > MAX_LOOP) panic("loop in schedule queue?", NO_NUM);
     }
   }	
 
+  l = 0;
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	if (! isemptyp(xp) && xp->p_ready && ! xp->p_found) {
-		kprintf("scheduling error: ready not on queue: %s\n", when);
+		kprintf("sched error: ready proc %d not on queue: %s\n",
+			xp->p_nr, when);
 		panic("ready proc not on scheduling queue", NO_NUM);
-		if (l++ > PROCLIMIT) { panic("loop in proc.t?", NO_NUM); }
+		if (l++ > MAX_LOOP) { panic("loop in proc.t?", NO_NUM); }
 	}
   }
 }
