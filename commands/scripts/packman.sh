@@ -121,8 +121,11 @@ do	cd $TMPDIR
 	highest="`wc -l $TMPF | awk '{ print $1 }'`"
 	awk -F'|' <$TMPF '{ printf "%3s %-15s %s\n", $1, $2, $3 }' | more
 	echo "Format examples: '3', '3,6', '3-9', '3-9,11-15', 'all'"
-	echo -n "Package(s) to install?  "
+	echo -n "Package(s) to install (RETURN to exit) ?  "
 	read packnolist
+	if [ "$packnolist" = "" ]
+	then	exit 0
+	fi
 	if [ "$packnolist" = all ]
 	then	packnolist=1-$highest
 	fi
