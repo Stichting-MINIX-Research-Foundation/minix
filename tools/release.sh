@@ -284,6 +284,13 @@ then
 	echo "Doing export of revision $REVISION from $REPO."
 	( cd $RELEASEDIR/usr && svn export -r$REVISION $REPO )
 	REVTAG=r$REVISION
+	echo "
+
+/* Added by release script  */
+#ifndef SVN_REVISION
+#define SVN_REVISION \"$REVISION\"
+#endif" >>$RELEASEDIR/usr/src/include/minix/sys_config.h
+
 else
 	( cd .. && make depend && make clean )
 	srcdir=/usr/$SRC
