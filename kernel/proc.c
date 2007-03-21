@@ -523,8 +523,14 @@ register struct proc *rp;	/* this process is now runnable */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   }
 
-  /* Now select the next process to run. */
-  pick_proc();			
+  /* Now select the next process to run, if there isn't a current
+   * process yet or current process isn't ready any more, or
+   * it's PREEMPTIBLE.
+   */
+  if(!proc_ptr || proc_ptr->p_rts_flags ||
+    (priv(proc_ptr)->s_flags & PREEMPTIBLE)) {
+     pick_proc();
+  }
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 1;
@@ -554,8 +560,7 @@ register struct proc *rp;	/* this process is no longer runnable */
 
 #if DEBUG_SCHED_CHECK
   check_runqueues("dequeue1");
-  if (! rp->p_ready) kprintf("%s:%d: dequeue() already unready process\n",
-	f_str, f_line);
+  if (! rp->p_ready) kprintf("dequeue() already unready process\n");
 #endif
 
   /* Now make sure that the process is not in its ready queue. Remove the 
@@ -639,6 +644,7 @@ PRIVATE void pick_proc()
           return;				 
       }
   }
+  panic("no ready process", NO_NUM);
 }
 
 /*===========================================================================*
