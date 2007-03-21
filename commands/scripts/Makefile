@@ -48,6 +48,7 @@ usr:	\
 	/usr/bin/spell \
 	/usr/bin/srccrc \
 	/usr/bin/svclog \
+	/usr/bin/unstack \
 	/usr/bin/version \
 	/usr/bin/whatis \
 		/usr/bin/apropos \
@@ -159,6 +160,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/version:	version.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/unstack:	unstack.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/whatis:	whatis.sh
