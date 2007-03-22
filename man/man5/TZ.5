@@ -27,7 +27,7 @@ A three or more letter name for the time zone in normal (winter) time.
 A signed time telling the offset of the time zone westwards from Greenwich.
 The time has the form
 .I hh[:mm[:ss]]
-with a one of two digit hour, and optional two digit minutes and seconds.
+with a one or two digit hour, and optional two digit minutes and seconds.
 .TP
 .I dst
 The name of the time zone when daylight saving is in effect.  It may
@@ -87,7 +87,7 @@ field indicates the time the changeover occurs on the given day.
 Greenwich Mean Time:
 .PP
 .RS
-.B TZ=GMT0
+.B TZ='GMT0'
 .RE
 .PP
 Central European Time, 1 hour east from Greenwich, daylight saving starts on
@@ -102,18 +102,18 @@ British time, daylight saving starts and ends at the same moment as CET,
 but in an earlier time zone:
 .PP
 .RS
-.B TZ=GMT0BST,M3.5.0/1,M10.5.0/2
+.B TZ='GMT0BST,M3.5.0/1,M10.5.0/2'
 .RE
 .PP
 The eastern european time zones also have the changeovers at the same
 absolute time as British time and CET.
 .PP
 U.S. Eastern Standard Time, 5 hours west from Greenwich, daylight saving
-starts on the second Sunday in March at 2 AM and ends on the first Sunday
-in November at 2 AM:
+starts on the second Sunday in March at 2 AM and ends on the first Sunday in
+November at 2 AM:
 .PP
 .RS
-.B TZ=EST5EDT,M3.2.0/2,M11.1.0/2
+.B TZ='EST5EDT,M3.2.0/2,M11.1.0/2'
 .RE
 .PP
 It shouldn't surprise you that daylight saving in New Zealand is observed
@@ -121,7 +121,7 @@ in the months opposite from the previous examples.  It starts on the first
 Sunday in October at 2 AM and ends on the third Sunday in March at 3 AM:
 .PP
 .RS
-.B TZ=NZST\-12NZDT,M10.1.0/2,M3.3.0/3
+.B TZ='NZST\-12NZDT,M10.1.0/2,M3.3.0/3'
 .RE
 .SH "SEE ALSO"
 .BR readclock (8),
@@ -136,3 +136,5 @@ West is negative, east is positive, ask any sailor.
 Next year's time zone and daylight saving time are determined by politicians.
 .SH AUTHOR
 Kees J. Bot (kjb@cs.vu.nl)
+
+.\" corrected for US/Canada 2007 changes by ASW 2007-02-20
