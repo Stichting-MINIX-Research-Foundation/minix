@@ -91,7 +91,8 @@ PRIVATE int
   rs_c[] = { SYS_ALL_CALLS },
   ds_c[] = { SYS_ALL_CALLS },
   drv_c[] = { DRV_C },
-  tty_c[] = { DRV_C, SYS_ABORT, SYS_VM_MAP, SYS_IOPENABLE, SYS_READBIOS },
+  tty_c[] = { DRV_C, SYS_PHYSCOPY, SYS_ABORT, SYS_VM_MAP, SYS_IOPENABLE,
+		SYS_READBIOS },
   mem_c[] = { DRV_C, SYS_PHYSCOPY, SYS_PHYSVCOPY, SYS_VM_MAP, SYS_IOPENABLE };
 
 /* The system image table lists all programs that are part of the boot image. 
