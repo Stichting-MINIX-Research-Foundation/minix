@@ -214,20 +214,20 @@ environment variable does not specify a
 and cannot be interpreted as a direct specification,
 UTC is used.
 .SH FILES
-.ta \w'/usr/local/etc/zoneinfo/posixrules\0\0'u
-/usr/local/etc/zoneinfo	time zone information directory
+.ta \w'/usr/share/zoneinfo/posixrules\0\0'u
+/usr/share/zoneinfo	time zone information directory
 .br
-/usr/local/etc/zoneinfo/localtime	local time zone file
+/usr/share/zoneinfo/localtime	local time zone file
 .br
-/usr/local/etc/zoneinfo/posixrules	used with POSIX-style TZ's
+/usr/share/zoneinfo/posixrules	used with POSIX-style TZ's
 .br
-/usr/local/etc/zoneinfo/GMT	for UTC leap seconds
+/usr/share/zoneinfo/GMT	for UTC leap seconds
 .sp
 If
-.B /usr/local/etc/zoneinfo/GMT
+.B /usr/share/zoneinfo/GMT
 is absent,
 UTC leap seconds are loaded from
-.BR /usr/local/etc/zoneinfo/posixrules .
+.BR /usr/share/zoneinfo/posixrules .
 .SH SEE ALSO
 getenv(3),
 newctime(3),

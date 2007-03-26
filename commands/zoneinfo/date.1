@@ -156,20 +156,20 @@ On BSD-based systems,
 the adjustment is made by changing the rate at which time advances;
 on System-V-based systems, the adjustment is made by changing the time.
 .SH FILES
-.ta \w'/usr/local/etc/zoneinfo/posixrules\0\0'u
+.ta \w'/usr/share/zoneinfo/posixrules\0\0'u
 /usr/lib/locale/\f2L\fP/LC_TIME	description of time locale \f2L\fP
 .br
-/usr/local/etc/zoneinfo	time zone information directory
+/usr/share/zoneinfo	time zone information directory
 .br
-/usr/local/etc/zoneinfo/localtime	local time zone file
+/usr/share/zoneinfo/localtime	local time zone file
 .br
-/usr/local/etc/zoneinfo/posixrules	used with POSIX-style TZ's
+/usr/share/zoneinfo/posixrules	used with POSIX-style TZ's
 .br
-/usr/local/etc/zoneinfo/GMT	for UTC leap seconds
+/usr/share/zoneinfo/GMT	for UTC leap seconds
 .sp
 If
-.B /usr/local/etc/zoneinfo/GMT
+.B /usr/share/zoneinfo/GMT
 is absent,
 UTC leap seconds are loaded from
-.BR /usr/local/etc/zoneinfo/posixrules .
+.BR /usr/share/zoneinfo/posixrules .
 .\" @(#)date.1	7.4
