@@ -319,8 +319,6 @@ dogmt()
 {
 	static char **	fakeenv;
 
-	printf("dogmt wtf\n");
-
 	if (fakeenv == NULL) {
 		register int	from;
 		register int	to;
