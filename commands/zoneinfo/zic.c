@@ -437,8 +437,7 @@ const char * const	string;
 }
 
 static void
-warning(string)
-const char * const	string;
+warning(const char * const	string)
 {
 	char *	cp;
 
@@ -467,9 +466,7 @@ static const char *	yitcommand;
 static int		sflag = FALSE;
 
 int
-main(argc, argv)
-int	argc;
-char *	argv[];
+main( int	argc, char *	argv[])
 {
 	register int	i;
 	register int	j;
@@ -1445,9 +1442,7 @@ FILE * const	fp;
 }
 
 static int
-atcomp(avp, bvp)
-void *	avp;
-void *	bvp;
+atcomp(const void *	avp, const void *	bvp)
 {
 	if (((struct attype *) avp)->at < ((struct attype *) bvp)->at)
 		return -1;

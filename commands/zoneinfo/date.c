@@ -24,6 +24,8 @@ static char	elsieid[] = "@(#)date.c	7.45";
  * WARRANTIES OF MERCHANT[A]BILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <fcntl.h>	/* for O_WRONLY, O_APPEND */
+
 #ifndef lint
 char copyright[] =
 "@(#) Copyright (c) 1985, 1987, 1988 The Regents of the University of California.\n\
@@ -63,8 +65,9 @@ static char sccsid[] = "@(#)date.c	4.23 (Berkeley) 9/20/88";
 #define SECSPERMIN	60
 #endif /* !defined SECSPERMIN */
 
-extern double		atof();
 extern char **		environ;
+#if 0
+extern double		atof();
 extern char *		getlogin();
 extern time_t		mktime();
 extern char *		optarg;
@@ -72,6 +75,7 @@ extern int		optind;
 extern char *		strchr();
 extern time_t		time();
 extern char *		tzname[2];
+#endif
 
 static int		retval = EXIT_SUCCESS;
 
@@ -315,6 +319,8 @@ dogmt()
 {
 	static char **	fakeenv;
 
+	printf("dogmt wtf\n");
+
 	if (fakeenv == NULL) {
 		register int	from;
 		register int	to;
@@ -347,8 +353,6 @@ dogmt()
 ** should write System-V-format utmp entries,
 ** and don't have network notification to worry about.
 */
-
-#include "fcntl.h"	/* for O_WRONLY, O_APPEND */
 
 /*ARGSUSED*/
 static void
@@ -448,9 +452,10 @@ const int	nflag;
 #include "netinet/in.h"
 #include "netdb.h"
 #define TSPTYPES
-#include "protocols/timed.h"
 
+#if 0
 extern int		logwtmp();
+#endif
 
 #if HAVE_SETTIMEOFDAY == 1
 #define settimeofday(t, tz) (settimeofday)(t)
@@ -563,7 +568,9 @@ const char * const	format;
 	exit(retval);
 }
 
+#if 0
 extern size_t	strftime();
+#endif
 
 #define INCR	1024
 

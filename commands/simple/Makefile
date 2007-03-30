@@ -67,7 +67,6 @@ ALL	= \
 	cp \
 	crc \
 	cut \
-	date \
 	dd \
 	decomp16 \
 	dev2name \
@@ -322,10 +321,6 @@ crc:	crc.c
 	@install -S 8kw $@
 
 cut:	cut.c
-	$(CCLD) -o $@ $?
-	@install -S 4kw $@
-
-date:	date.c
 	$(CCLD) -o $@ $?
 	@install -S 4kw $@
 
@@ -950,7 +945,6 @@ install:	\
 		/bin/rm \
 	/usr/bin/crc \
 	/usr/bin/cut \
-	/usr/bin/date \
 	/usr/bin/dd \
 	/usr/bin/decomp16 \
 	/bin/dev2name \
@@ -1114,7 +1108,6 @@ install:	\
 	/usr/bin/yes \
 	/usr/bin/udpstat \
 	/bin/cat \
-	/bin/date \
 	/bin/fsck \
 	/bin/intr \
 	/bin/mount \
@@ -1225,9 +1218,6 @@ install:	\
 	install -cs -o bin $? $@
 
 /usr/bin/cut:	cut
-	install -cs -o bin $? $@
-
-/usr/bin/date:	date
 	install -cs -o bin $? $@
 
 /usr/bin/dd:	dd
@@ -1711,9 +1701,6 @@ install:	\
 	install -cs -o bin $? $@
 
 /bin/cat:	/usr/bin/cat
-	install -lcs $? $@
-
-/bin/date:	/usr/bin/date
 	install -lcs $? $@
 
 /bin/fsck:	/usr/bin/fsck

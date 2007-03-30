@@ -81,6 +81,8 @@ static char	privatehid[] = "@(#)private.h	7.55";
 #define ctime_r _incompatible_ctime_r
 #endif /* HAVE_INCOMPATIBLE_CTIME_R */
 
+void logwtmp(char *, char *, char *);
+
 /*
 ** Nested includes
 */
@@ -203,7 +205,7 @@ extern int errno;
 */
 
 #ifndef asctime_r
-extern char *	asctime_r();
+extern char *	asctime_r(register const struct tm *, char *);
 #endif
 
 /*

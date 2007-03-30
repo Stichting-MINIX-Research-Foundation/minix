@@ -29,7 +29,12 @@ static char sccsid[] = "@(#)logwtmp.c	5.2 (Berkeley) 9/20/88";
 #endif /* !defined lint */
 
 #include <sys/types.h>
+#include <time.h>
 #include <utmp.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
 #ifdef OLD_TIME
 
@@ -45,14 +50,11 @@ char dummy_to_keep_linker_happy;
 
 #define WTMPFILE	"/usr/adm/wtmp"
 
-logwtmp(line, name, host)
-	char *line, *name, *host;
+void logwtmp( char *line, char *name, char *host)
 {
 	struct utmp ut;
 	struct stat buf;
 	int fd;
-	time_t time();
-	char *strncpy();
 
 	if ((fd = open(WTMPFILE, O_WRONLY|O_APPEND, 0)) < 0)
 		return;

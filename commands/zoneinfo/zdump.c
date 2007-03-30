@@ -236,9 +236,7 @@ const char * const	zone;
 }
 
 int
-main(argc, argv)
-int	argc;
-char *	argv[];
+main( int	argc, char *	argv[])
 {
 	register int		i;
 	register int		c;
@@ -400,6 +398,7 @@ _("%s: usage is %s [ --version ] [ -v ] [ -c [loyear,]hiyear ] zonename ...\n"),
 static void
 setabsolutes()
 {
+#if 0
 	if (0.5 == (time_t) 0.5) {
 		/*
 		** time_t is floating.
@@ -416,7 +415,9 @@ _("%s: use of -v on system with floating time_t other than float or double\n"),
 				progname);
 			exit(EXIT_FAILURE);
 		}
-	} else if (0 > (time_t) -1) {
+	} else
+#endif
+	if (0 > (time_t) -1) {
 		/*
 		** time_t is signed.  Assume overflow wraps around.
 		*/

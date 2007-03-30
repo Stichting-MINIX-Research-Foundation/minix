@@ -9,7 +9,7 @@
 #	make zonenames
 # to get a list of the values you can use for LOCALTIME.
 
-LOCALTIME=	Factory
+LOCALTIME=	GMT
 
 # If you want something other than Eastern United States time as a template
 # for handling POSIX-style time zone environment variables,
@@ -34,30 +34,25 @@ POSIXRULES=	America/New_York
 
 # Everything gets put in subdirectories of. . .
 
-TOPDIR=		/usr/local
+TOPDIR=		/usr
 
 # "Compiled" time zone information is placed in the "TZDIR" directory
 # (and subdirectories).
 # Use an absolute path name for TZDIR unless you're just testing the software.
 
-TZDIR=		$(TOPDIR)/etc/zoneinfo
+TZDIR=		$(TOPDIR)/share/zoneinfo
 
 # The "tzselect", "zic", and "zdump" commands get installed in. . .
 
-ETCDIR=		$(TOPDIR)/etc
+ETCDIR=		$(TOPDIR)/bin
 
 # If you "make INSTALL", the "date" command gets installed in. . .
 
 BINDIR=		$(TOPDIR)/bin
 
-# Manual pages go in subdirectories of. . .
-
-MANDIR=		$(TOPDIR)/man
-
 # Library functions are put in an archive in LIBDIR.
 
 LIBDIR=		$(TOPDIR)/lib
-TZLIB=		$(LIBDIR)/libtz.a
 
 # If you always want time values interpreted as "seconds since the epoch
 # (not counting leap seconds)", use
@@ -210,7 +205,7 @@ GCC_DEBUG_FLAGS = -Dlint -g -O -fno-common \
 # before the first Monday in January when a "%V" format is used and January 1
 # falls on a Friday, Saturday, or Sunday.
 
-CFLAGS=
+CFLAGS=-DHAVE_ADJTIME=0 -D_POSIX_SOURCE=1 -D_MINIX=1
 
 # If you want zic's -s option used when installing, uncomment the next line
 # ZFLAGS=	-s
@@ -255,9 +250,7 @@ HEADERS=	tzfile.h private.h
 NONLIBSRCS=	zic.c zdump.c scheck.c ialloc.c
 NEWUCBSRCS=	date.c logwtmp.c strftime.c
 SOURCES=	$(HEADERS) $(LIBSRCS) $(NONLIBSRCS) $(NEWUCBSRCS) tzselect.ksh
-MANS=		newctime.3 newstrftime.3 newtzset.3 time2posix.3 \
-			tzfile.5 tzselect.8 zic.8 zdump.8
-DOCS=		README Theory $(MANS) date.1 Makefile
+DOCS=		README Theory date.1 Makefile
 PRIMARY_YDATA=	africa antarctica asia australasia \
 		europe northamerica southamerica
 YDATA=		$(PRIMARY_YDATA) pacificnew etcetera factory backward
@@ -280,37 +273,28 @@ all:		tzselect zic zdump $(LIBOBJS)
 
 ALL:		all date
 
-install:	all $(DATA) $(REDO) $(TZLIB) $(MANS) $(TABDATA)
+install:	ALL $(DATA) $(REDO) $(TABDATA)
 		$(ZIC) -y $(YEARISTYPE) \
 			-d $(TZDIR) -l $(LOCALTIME) -p $(POSIXRULES)
 		-rm -f $(TZDIR)/iso3166.tab $(TZDIR)/zone.tab
-		cp iso3166.tab zone.tab $(TZDIR)/.
-		-mkdir $(TOPDIR) $(ETCDIR)
-		cp tzselect zic zdump $(ETCDIR)/.
-		-mkdir $(TOPDIR) $(MANDIR) \
-			$(MANDIR)/man3 $(MANDIR)/man5 $(MANDIR)/man8
-		-rm -f $(MANDIR)/man3/newctime.3 \
-			$(MANDIR)/man3/newtzset.3 \
-			$(MANDIR)/man5/tzfile.5 \
-			$(MANDIR)/man8/tzselect.8 \
-			$(MANDIR)/man8/zdump.8 \
-			$(MANDIR)/man8/zic.8
-		cp newctime.3 newtzset.3 $(MANDIR)/man3/.
-		cp tzfile.5 $(MANDIR)/man5/.
-		cp tzselect.8 zdump.8 zic.8 $(MANDIR)/man8/.
+		install -m 644 iso3166.tab zone.tab $(TZDIR)/.
+		-mkdir $(TOPDIR) $(ETCDIR) 2>/dev/null
+		install -m 755 tzselect zic zdump $(ETCDIR)/.
+		-mkdir $(TOPDIR) 2>/dev/null
+		install -m 755 date /bin
 
 INSTALL:	ALL install date.1
-		-mkdir $(TOPDIR) $(BINDIR)
+		-mkdir $(TOPDIR) $(BINDIR) 2>/dev/null
 		cp date $(BINDIR)/.
-		-mkdir $(TOPDIR) $(MANDIR) $(MANDIR)/man1
-		-rm -f $(MANDIR)/man1/date.1
-		cp date.1 $(MANDIR)/man1/.
+		-mkdir $(TOPDIR)  2>/dev/null
 
 zdump:		$(TZDOBJS)
 		$(CC) $(CFLAGS) $(LFLAGS) $(TZDOBJS) $(LDLIBS) -o $@
+		install -S768k $@
 
 zic:		$(TZCOBJS) yearistype
 		$(CC) $(CFLAGS) $(LFLAGS) $(TZCOBJS) $(LDLIBS) -o $@
+		install -S1M $@
 
 yearistype:	yearistype.sh
 		cp yearistype.sh yearistype
@@ -342,21 +326,11 @@ right_posix:	right_only other_two
 
 zones:		$(REDO)
 
-$(TZLIB):	$(LIBOBJS)
-		-mkdir $(TOPDIR) $(LIBDIR)
-		ar ru $@ $(LIBOBJS)
-		if [ -x /usr/ucb/ranlib -o -x /usr/bin/ranlib ] ; \
-			then ranlib $@ ; fi
-
 # We use the system's logwtmp in preference to ours if available.
 
-date:		$(DATEOBJS)
-		ar r ,lib.a logwtmp.o
-		if [ -x /usr/ucb/ranlib -o -x /usr/bin/ranlib ] ; \
-			then ranlib ,lib.a ; fi
-		$(CC) $(CFLAGS) date.o localtime.o asctime.o strftime.o \
-			$(LDLIBS) -lc ,lib.a -o $@
-		rm -f ,lib.a
+date:		$(DATEOBJS) logwtmp.o
+		$(CC) $(CFLAGS) date.o logwtmp.o localtime.o asctime.o \
+			strftime.o $(LDLIBS) -o $@
 
 tzselect:	tzselect.ksh
 		sed \
@@ -390,7 +364,7 @@ names:
 public:		$(ENCHILADA)
 		make maintainer-clean
 		make "CFLAGS=$(GCC_DEBUG_FLAGS)"
-		-mkdir /tmp/,tzpublic
+		-mkdir /tmp/,tzpublic 2>/dev/null
 		-for i in $(TDATA) ; do zic -v -d /tmp/,tzpublic $$i 2>&1 | grep -v "starting year" ; done
 		for i in $(TDATA) ; do zic -d /tmp/,tzpublic $$i || exit; done
 		zic -v -d /tmp/,tzpublic $(TDATA) || exit

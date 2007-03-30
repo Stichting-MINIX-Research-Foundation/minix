@@ -2,6 +2,9 @@
 
 /*LINTLIBRARY*/
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "stdio.h"
 
 #ifndef lint
@@ -20,13 +23,15 @@ static char	sccsid[] = "@(#)ialloc.c	7.14";
 #define NULLMAL(x)	((x) == NULL)
 #endif /* !MAL */
 
+#if 0
 extern char *	calloc();
 extern char *	malloc();
 extern char *	realloc();
 extern char *	strcpy();
+#endif
 
 char *
-imalloc(n)
+imalloc(int n)
 {
 #ifdef MAL
 	register char *	result;
@@ -43,7 +48,7 @@ imalloc(n)
 }
 
 char *
-icalloc(nelem, elsize)
+icalloc(int nelem, int elsize)
 {
 	if (nelem == 0 || elsize == 0)
 		nelem = elsize = 1;
@@ -51,8 +56,7 @@ icalloc(nelem, elsize)
 }
 
 char *
-irealloc(pointer, size)
-char *	pointer;
+irealloc(char *pointer, int size)
 {
 	if (NULLMAL(pointer))
 		return imalloc(size);
@@ -62,9 +66,7 @@ char *	pointer;
 }
 
 char *
-icatalloc(old, new)
-char *	old;
-char *	new;
+icatalloc(char *old, char *new)
 {
 	register char *	result;
 	register	oldsize, newsize;
@@ -78,21 +80,18 @@ char *	new;
 }
 
 char *
-icpyalloc(string)
-char *	string;
+icpyalloc(char *string)
 {
 	return icatalloc((char *) NULL, string);
 }
 
-ifree(p)
-char *	p;
+ifree(char *p)
 {
 	if (!NULLMAL(p))
 		free(p);
 }
 
-icfree(p)
-char *	p;
+icfree(char *p)
 {
 	if (!NULLMAL(p))
 		free(p);

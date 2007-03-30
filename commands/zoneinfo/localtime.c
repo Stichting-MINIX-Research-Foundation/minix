@@ -311,8 +311,10 @@ register struct state * const	sp;
 	register int		i;
 	register int		fid;
 
-	if (name == NULL && (name = TZDEFAULT) == NULL)
+	if (name == NULL && (name = TZDEFAULT) == NULL) {
 		return -1;
+	}
+
 	{
 		register int	doaccess;
 		/*
@@ -1058,8 +1060,9 @@ tzset P((void))
 		return;
 	}
 
-	if (lcl_is_set > 0 && strcmp(lcl_TZname, name) == 0)
+	if (lcl_is_set > 0 && strcmp(lcl_TZname, name) == 0) {
 		return;
+	}
 	lcl_is_set = strlen(name) < sizeof lcl_TZname;
 	if (lcl_is_set)
 		(void) strcpy(lcl_TZname, name);
@@ -1159,9 +1162,7 @@ const time_t * const	timep;
 */
 
 struct tm *
-localtime_r(timep, tmp)
-const time_t * const	timep;
-struct tm *		tmp;
+localtime_r(const time_t * const	timep, struct tm *		tmp)
 {
 	return localsub(timep, 0L, tmp);
 }
@@ -1221,9 +1222,7 @@ const time_t * const	timep;
 */
 
 struct tm *
-gmtime_r(timep, tmp)
-const time_t * const	timep;
-struct tm *		tmp;
+gmtime_r(const time_t * const	timep, struct tm *		tmp)
 {
 	return gmtsub(timep, 0L, tmp);
 }
@@ -1401,9 +1400,7 @@ const time_t * const	timep;
 }
 
 char *
-ctime_r(timep, buf)
-const time_t * const	timep;
-char *			buf;
+ctime_r(const time_t * const	timep, char *			buf)
 {
 	struct tm	mytm;
 
@@ -1590,12 +1587,16 @@ const int		do_norm_secs;
 	if (!TYPE_SIGNED(time_t)) {
 		lo = 0;
 		hi = lo - 1;
-	} else if (!TYPE_INTEGRAL(time_t)) {
+	}
+#if 0
+	else if (!TYPE_INTEGRAL(time_t)) {
 		if (sizeof(time_t) > sizeof(float))
 			hi = (time_t) DBL_MAX;
 		else	hi = (time_t) FLT_MAX;
 		lo = -hi;
-	} else {
+	}
+#endif
+	else {
 		lo = 1;
 		for (i = 0; i < (int) TYPE_BIT(time_t) - 1; ++i)
 			lo *= 2;

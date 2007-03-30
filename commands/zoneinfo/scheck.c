@@ -2,6 +2,9 @@
 
 /*LINTLIBRARY*/
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "stdio.h"
 
 #ifndef lint
@@ -11,13 +14,12 @@ static char	sccsid[] = "@(#)scheck.c	7.15";
 #endif /* !lint */
 
 #include "ctype.h"
+#include "private.h"
 
-extern char *	imalloc();
-
-char *
+const char *
 scheck(string, format)
-char *	string;
-char *	format;
+const char *	string;
+const char *	format;
 {
 	register char *	fbuf;
 	register char *	fp;
@@ -32,8 +34,8 @@ char *	format;
 	fbuf = imalloc(2 * strlen(format) + 4);
 	if (fbuf == NULL)
 		return result;
-	fp = format;
-	tp = fbuf;
+	fp = (char *) format;
+	tp = (char *) fbuf;
 	while ((*tp++ = c = *fp++) != '\0') {
 		if (c != '%')
 			continue;
@@ -58,7 +60,7 @@ char *	format;
 	*tp++ = 'c';
 	*tp = '\0';
 	if (sscanf(string, fbuf, &dummy) != 1)
-		result = format;
+		result = (char *) format;
 	free(fbuf);
 	return result;
 }
