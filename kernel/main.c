@@ -179,8 +179,8 @@ PRIVATE void announce(void)
 {
   /* Display the MINIX startup banner. */
   kprintf("\nMINIX %s.%s. "
-#ifdef SVN_REVISION
-	"(" SVN_REVISION ")\n"
+#ifdef _SVN_REVISION
+	"(" _SVN_REVISION ")\n"
 #endif
       "Copyright 2006, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);

@@ -287,8 +287,8 @@ then
 	echo "
 
 /* Added by release script  */
-#ifndef SVN_REVISION
-#define SVN_REVISION \"$REVISION\"
+#ifndef _SVN_REVISION
+#define _SVN_REVISION \"$REVISION\"
 #endif" >>$RELEASEDIR/usr/src/include/minix/sys_config.h
 
 else
