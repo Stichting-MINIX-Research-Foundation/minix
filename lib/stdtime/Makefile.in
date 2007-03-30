@@ -1,0 +1,14 @@
+# Makefile for lib/stdtime.
+
+Z=../../commands/zoneinfo
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE -D__USG -I$Z"
+
+LIBRARIES=libc
+libc_FILES="
+	$Z/asctime.c
+	$Z/localtime.c
+	$Z/strftime.c
+	"
+		
+TYPE=both

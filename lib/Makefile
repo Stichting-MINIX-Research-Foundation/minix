@@ -39,6 +39,8 @@ all-ack: makefiles
 	cd regex && $(MAKE) $@
 	mkdir -p obj-ack//./stdio
 	cd stdio && $(MAKE) $@
+	mkdir -p obj-ack//./stdtime
+	cd stdtime && $(MAKE) $@
 	mkdir -p obj-ack//./syscall
 	cd syscall && $(MAKE) $@
 	mkdir -p obj-ack//./syslib
@@ -79,6 +81,8 @@ all-gnu: makefiles
 	cd regex && $(MAKE) $@
 	mkdir -p obj-gnu/./stdio
 	cd stdio && $(MAKE) $@
+	mkdir -p obj-gnu/./stdtime
+	cd stdtime && $(MAKE) $@
 	mkdir -p obj-gnu/./syscall
 	cd syscall && $(MAKE) $@
 	mkdir -p obj-gnu/./syslib
@@ -108,6 +112,7 @@ clean depend depend-ack depend-gnu:: makefiles
 	cd posix && $(MAKE) $@
 	cd regex && $(MAKE) $@
 	cd stdio && $(MAKE) $@
+	cd stdtime && $(MAKE) $@
 	cd syscall && $(MAKE) $@
 	cd syslib && $(MAKE) $@
 	cd util && $(MAKE) $@
@@ -128,6 +133,7 @@ makefiles: other/Makefile
 makefiles: posix/Makefile
 makefiles: regex/Makefile
 makefiles: stdio/Makefile
+makefiles: stdtime/Makefile
 makefiles: syscall/Makefile
 makefiles: syslib/Makefile
 makefiles: util/Makefile
@@ -159,6 +165,8 @@ regex/Makefile: regex/Makefile.in
 	cd regex && sh ../generate.sh ./regex ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 stdio/Makefile: stdio/Makefile.in
 	cd stdio && sh ../generate.sh ./stdio ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
+stdtime/Makefile: stdtime/Makefile.in
+	cd stdtime && sh ../generate.sh ./stdtime ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 syscall/Makefile: syscall/Makefile.in
 	cd syscall && sh ../generate.sh ./syscall ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 syslib/Makefile: syslib/Makefile.in

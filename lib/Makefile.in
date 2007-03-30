@@ -17,6 +17,7 @@ SUBDIRS="ansi \
 	posix \
 	regex \
 	stdio \
+	stdtime \
 	syscall \
 	syslib \
 	util \

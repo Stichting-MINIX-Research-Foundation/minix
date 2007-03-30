@@ -25,7 +25,6 @@ LIBRARIES=libc
 libc_FILES=" \
 	abort.c \
 	abs.c \
-	asctime.c \
 	assert.c \
 	atexit.c \
 	atof.c \
@@ -35,14 +34,12 @@ libc_FILES=" \
 	calloc.c \
 	chartab.c \
 	clock.c \
-	ctime.c \
 	difftime.c \
 	div.c \
 	errlist.c \
 	exit.c \
 	ext_comp.c \
 	getenv.c \
-	gmtime.c \
 	isalnum.c \
 	isalpha.c \
 	isascii.c \
@@ -58,13 +55,11 @@ libc_FILES=" \
 	labs.c \
 	ldiv.c \
 	localeconv.c \
-	localtime.c \
 	malloc.c \
 	mblen.c \
 	mbstowcs.c \
 	mbtowc.c \
 	misc.c \
-	mktime.c \
 	qsort.c \
 	raise.c \
 	rand.c \
@@ -74,7 +69,6 @@ libc_FILES=" \
 	strcoll.c \
 	strcspn.c \
 	strerror.c \
-	strftime.c \
 	strpbrk.c \
 	strspn.c \
 	strstr.c \
@@ -84,7 +78,6 @@ libc_FILES=" \
 	system.c \
 	tolower.c \
 	toupper.c \
-	tzset.c \
 	wcstombs.c \
 	wctomb.c"
 		

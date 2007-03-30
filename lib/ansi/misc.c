@@ -49,10 +49,8 @@ static char dststr[TZ_LEN + 1] = "GDT";	/* string for daylight saving */
 long	_timezone = 0;
 long	_dst_off = 60 * 60;
 int	_daylight = 0;
-char	*_tzname[2] = {ntstr, dststr};
 
 #if	defined(__USG) || defined(_POSIX_SOURCE)
-char	*tzname[2] = {ntstr, dststr};
 
 #if	defined(__USG)
 long	timezone = 0;
@@ -219,106 +217,6 @@ parseRule(register char *buf, register const char *p)
 	return p;
 }
 
-/* The following routine parses timezone information in POSIX-format. For
- * the requirements, see IEEE Std 1003.1-1988 section 8.1.1.
- * The function returns as soon as it spots an error.
- */
-static void
-parseTZ(const char *p)
-{
-	long tz, dst = 60 * 60, sign = 1;
-	static char lastTZ[2 * RULE_LEN];
-	static char buffer[RULE_LEN];
-
-	if (!p) return;
-
-	if (*p == ':') {
-		/*
-		 * According to POSIX, this is implementation defined.
-		 * Since it depends on the particular operating system, we
-		 * can do nothing.
-		 */
-		return;
-	}
-
-	if (!strcmp(lastTZ, p)) return;		/* nothing changed */
-
-	*_tzname[0] = '\0';
-	*_tzname[1] = '\0';
-	dststart.ds_type = 'U';
-	dststart.ds_sec = 2 * 60 * 60;
-	dstend.ds_type = 'U';
-	dstend.ds_sec = 2 * 60 * 60;
-
-	if (strlen(p) > 2 * RULE_LEN) return;
-	strcpy(lastTZ, p);
-
-	if (!(p = parseZoneName(buffer, p))) return;
-
-	if (*p == '-') {
-		sign = -1;
-		p++;
-	} else if (*p == '+') p++;
-
-	if (!(p = parseTime(&tz, p, NULL))) return;
-	tz *= sign;
-	_timezone = tz;
-	strncpy(_tzname[0], buffer, TZ_LEN);
-
-	if (!(_daylight = (*p != '\0'))) return;
-
-	buffer[0] = '\0';
-	if (!(p = parseZoneName(buffer, p))) return;
-	strncpy(_tzname[1], buffer, TZ_LEN);
-
-	buffer[0] = '\0';
-	if (*p && (*p != ','))
-		if (!(p = parseTime(&dst, p, NULL))) return;
-	_dst_off = dst;			/* dst was initialized to 1 hour */
-	if (*p) {
-		if (*p != ',') return;
-		p++;
-		if (strlen(p) > RULE_LEN) return;
-		if (!(p = parseRule(buffer, p))) return;
-	}
-}
-
-void
-_tzset(void)
-{
-#if	defined(__BSD4_2)
-
-	struct timeval tv;
-	struct timezone tz;
-
-	_gettimeofday(&tv, &tz);
-	_daylight = tz.tz_dsttime;
-	_timezone = tz.tz_minuteswest * 60L;
-
-#elif	!defined(_POSIX_SOURCE) && !defined(__USG)
-
-#if	!defined(_MINIX)		/* MINIX has no ftime() */
-	struct timeb time;
-
-	_ftime(&time);
-	_timezone = time.timezone * 60L;
-	_daylight = time.dstflag;
-#endif
-
-#endif	/* !_POSIX_SOURCE && !__USG */
-
-	parseTZ(getenv("TZ"));		/* should go inside #if */
-
-#if	defined(__USG) || defined(_POSIX_SOURCE)
-	tzname[0] = _tzname[0];
-	tzname[1] = _tzname[1];
-#if	defined(__USG)
-	timezone = _timezone;
-	daylight = _daylight;
-#endif
-#endif	/* __USG || _POSIX_SOURCE */
-}
-
 static int
 last_sunday(register int day, register struct tm *timep)
 {
@@ -356,55 +254,3 @@ date_of(register struct dsttype *dst, struct tm *timep)
 	return day;
 }
 
-/*
- * The default dst transitions are those for Western Europe (except Great
- * Britain). 
- */
-unsigned
-_dstget(register struct tm *timep)
-{
-	int begindst, enddst;
-	register struct dsttype *dsts = &dststart, *dste = &dstend;
-	int do_dst = 0;
-
-	if (_daylight == -1)
-		_tzset();
-
-	timep->tm_isdst = _daylight;
-	if (!_daylight) return 0;
-
-	if (dsts->ds_type != 'U')
-		begindst = date_of(dsts, timep);
-	else begindst = last_sunday(89, timep);	/* last Sun before Apr */
-	if (dste->ds_type != 'U')
-		enddst = date_of(dste, timep);
-	else enddst = last_sunday(272, timep);	/* last Sun in Sep */
-
-	/* assume begindst != enddst (otherwise it would be no use) */
-	if (begindst < enddst) {		/* northern hemisphere */
-		if (timep->tm_yday > begindst && timep->tm_yday < enddst)
-			do_dst = 1;
-	} else {				/* southern hemisphere */
-		if (timep->tm_yday > begindst || timep->tm_yday < enddst)
-			do_dst = 1;
-	}
-
-	if (!do_dst
-	    && (timep->tm_yday == begindst || timep->tm_yday == enddst)) {
-		long dsttranssec;	/* transition when day is this old */
-		long cursec;
-
-		if (timep->tm_yday == begindst)
-			dsttranssec = dsts->ds_sec;
-		else	dsttranssec = dste->ds_sec;
-		cursec = ((timep->tm_hour * 60) + timep->tm_min) * 60L
-			    + timep->tm_sec;
-
-		if ((timep->tm_yday == begindst && cursec >= dsttranssec)
-		    || (timep->tm_yday == enddst && cursec < dsttranssec))
-			do_dst = 1;
-	}
-	if (do_dst) return _dst_off;
-	timep->tm_isdst = 0;
-	return 0;
-}
