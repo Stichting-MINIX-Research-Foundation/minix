@@ -20,6 +20,7 @@ install::
 	@echo "Making devices.."
 	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh null 
 	p=`pwd` && cd /dev && sh $$p/../commands/scripts/MAKEDEV.sh std  2>/dev/null
+	install -o bin -g operator -m 755 crontab /usr/lib
 	@echo "Making user homedirs.."
 	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
 
