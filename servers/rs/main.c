@@ -23,7 +23,7 @@ FORWARD _PROTOTYPE(void reply, (int whom, message *m_out)		);
 PRIVATE struct boot_image image[NR_BOOT_PROCS];
 PUBLIC struct dmap dmap[NR_DEVICES];
 
-int rs_verbose = 0;
+long rs_verbose = 0;
 
 /*===========================================================================*
  *				main                                         *
