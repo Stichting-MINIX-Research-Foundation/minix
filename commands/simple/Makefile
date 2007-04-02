@@ -566,7 +566,7 @@ modem:	modem.c
 
 mount:	mount.c
 	$(CCLD) -o $@ $?
-	@install -S 4kw $@
+	@install -S 12kw $@
 
 mt:	mt.c
 	$(CCLD) -o $@ $?
