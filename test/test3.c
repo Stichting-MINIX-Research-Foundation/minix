@@ -164,13 +164,13 @@ void test3c()
 
   subtest = 3;
   errno = -3000;		/* None of these calls set errno. */
-  if ( (p = getenv("HOME")) == NULL) e(1);
-  if (*p != '/') e(2);		/* path must be absolute */
-  if ( (p = getenv("PATH")) == NULL) e(3);
-  if ( (p = getenv("LOGNAME")) == NULL) e(5);
+  if ( (p = getenv("HOME")) == NULL) { fprintf(stderr, "Please have $HOME set properly.\n"); e(1); }
+  if (*p != '/') { fprintf(stderr, "Please have $HOME point to an abolute path.\n"); e(2); }		/* path must be absolute */
+  if ( (p = getenv("PATH")) == NULL) { fprintf(stderr, "Please have $PATH set properly.\n"); e(3); }
+  if ( (p = getenv("LOGNAME")) == NULL) { fprintf(stderr, "Please have $LOGNAME set properly.\n"); e(5); }
   strcpy(name, p);		/* save it, since getlogin might wipe it out */
   p = getlogin();
-  if (strcmp(p, name) != 0) e(6);
+  if (strcmp(p, name) != 0) { fprintf(stderr, "Please have $LOGNAME set to your real username. (su - instead of su?)\n"); e(6); }
 
   /* The following test could fail in a legal POSIX system.  However, if it
    * does, you deserve it to fail.
