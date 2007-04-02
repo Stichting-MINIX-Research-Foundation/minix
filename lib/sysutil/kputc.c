@@ -48,7 +48,8 @@ int c;
 		 * print buffer forever. (So buffer can't be on stack!)
 		 */
 		for(p = 0; procs[p] != NONE; p++) {
-			printgrants[p] = cpf_grant_direct(procs[p], print_buf,
+			printgrants[p] = cpf_grant_direct(procs[p],
+				(vir_bytes) print_buf,
 				sizeof(print_buf), CPF_READ);
 		}
 	}
@@ -58,7 +59,7 @@ int c;
 		m.DIAG_BUF_COUNT = buf_count;
 		if(GRANT_VALID(printgrants[p])) {
 			m.m_type = DIAGNOSTICS_S;
-			m.DIAG_PRINT_BUF_G = printgrants[p];
+			m.DIAG_PRINT_BUF_G = (char *) printgrants[p];
 		} else {
 			m.m_type = DIAGNOSTICS;
 			m.DIAG_PRINT_BUF_G = print_buf;

@@ -13,7 +13,7 @@ struct mem_map *map_ptr;
 
   m.PR_ENDPT = parent;
   m.PR_SLOT = child;
-  m.PR_MEM_PTR = map_ptr;
+  m.PR_MEM_PTR = (char *) map_ptr;
   r = _taskcall(SYSTASK, SYS_FORK, &m);
   *child_endpoint = m.PR_ENDPT;
   return r;
