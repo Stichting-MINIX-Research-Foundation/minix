@@ -116,7 +116,7 @@ do	cd $TMPDIR
 		if [ -f "$cdpackages" ]
 		then	cat $cdpackages
 		fi
-		) | sort -t'|' +1 | awk '{ n++; printf "%d|%s\n", n, $0 }' 
+		) | sort -f -t'|' +0 | awk '{ n++; printf "%d|%s\n", n, $0 }' 
 	) >$TMPF
 	highest="`wc -l $TMPF | awk '{ print $1 - 1 }'`"
 	awk -F'|' <$TMPF '{ printf "%3s %-15s %s\n", $1, $2, $3 }' | more
