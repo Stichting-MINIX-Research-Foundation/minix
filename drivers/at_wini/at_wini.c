@@ -660,9 +660,6 @@ PRIVATE void init_params_pci(int skip)
 
   	base_dma = pci_attr_r32(devind, PCI_BAR_5) & 0xfffffffc;
 
-	printf("at_wini%d: dev %d: base_dma = %x\n",
-		w_instance, devind, base_dma);
-
   	/* Primary channel not in compatability mode? */
   	if (raid || (interface & ATA_IF_NOTCOMPAT1)) {
   		u32_t base_cmd, base_ctl;
