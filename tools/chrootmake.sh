@@ -17,6 +17,5 @@ cd /usr/src
 make clean
 # Let man find the manpages
 su bin -c 'makewhatis /usr/man'
-su bin -c 'makewhatis /usr/gnu/man'
 su bin -c 'makewhatis /usr/local/man'
 binsizes normal
