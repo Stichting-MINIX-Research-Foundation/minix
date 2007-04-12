@@ -225,7 +225,6 @@ PUBLIC void vnode_clean_refs(struct vnode *vp)
 
   if (vp->v_fs_count <= 1)
 	return;	/* Nothing to do */
-  printf("vnode_clean_refs: dropping some references at FS\n");
   if (req_putnode(vp->v_fs_e, vp->v_inode_nr, vp->v_fs_count-1) != OK)
 	printf("vnode_clean_refs: req_putnode failed\n"); 
   vp->v_fs_count= 1;
