@@ -238,17 +238,17 @@ VALIDATE_ENV = \
 cc=		cc
 CC=		$(cc) -DTZDIR=\"$(TZDIR)\"
 
-TZCSRCS=	zic.c localtime.c asctime.c scheck.c ialloc.c
-TZCOBJS=	zic.o localtime.o asctime.o scheck.o ialloc.o
-TZDSRCS=	zdump.c localtime.c ialloc.c
-TZDOBJS=	zdump.o localtime.o ialloc.o
-DATESRCS=	date.c localtime.c logwtmp.c strftime.c asctime.c
-DATEOBJS=	date.o localtime.o logwtmp.o strftime.o asctime.o
-LIBSRCS=	localtime.c asctime.c difftime.c
-LIBOBJS=	localtime.o asctime.o difftime.o
+TZCSRCS=	zic.c scheck.c ialloc.c
+TZCOBJS=	zic.o scheck.o ialloc.o
+TZDSRCS=	zdump.c ialloc.c
+TZDOBJS=	zdump.o ialloc.o
+DATESRCS=	date.c logwtmp.c
+DATEOBJS=	date.o logwtmp.o
+LIBSRCS=	difftime.c
+LIBOBJS=	difftime.o
 HEADERS=	tzfile.h private.h
 NONLIBSRCS=	zic.c zdump.c scheck.c ialloc.c
-NEWUCBSRCS=	date.c logwtmp.c strftime.c
+NEWUCBSRCS=	date.c logwtmp.c
 SOURCES=	$(HEADERS) $(LIBSRCS) $(NONLIBSRCS) $(NEWUCBSRCS) tzselect.ksh
 DOCS=		README Theory date.1 Makefile
 PRIMARY_YDATA=	africa antarctica asia australasia \
@@ -329,8 +329,8 @@ zones:		$(REDO)
 # We use the system's logwtmp in preference to ours if available.
 
 date:		$(DATEOBJS) logwtmp.o
-		$(CC) $(CFLAGS) date.o logwtmp.o localtime.o asctime.o \
-			strftime.o $(LDLIBS) -o $@
+		$(CC) $(CFLAGS) date.o logwtmp.o \
+			$(LDLIBS) -o $@
 
 tzselect:	tzselect.ksh
 		sed \
@@ -386,13 +386,10 @@ typecheck:
 zonenames:	$(TDATA)
 		@$(AWK) '/^Zone/ { print $$2 } /^Link/ { print $$3 }' $(TDATA)
 
-asctime.o:	private.h tzfile.h
 date.o:		private.h
 difftime.o:	private.h
 ialloc.o:	private.h
-localtime.o:	private.h tzfile.h
 scheck.o:	private.h
-strftime.o:	tzfile.h
 zic.o:		private.h tzfile.h
 
 .KEEP_STATE:

@@ -167,7 +167,7 @@ for lib in $LIBRARIES
 		echo
 		for f in $FILES
 		{
-			o=`basename $f | sed -e 's/\\..\$/\.o/'`
+			o=`echo $f | sed -e 's/\\..*\$/\.o/'`
 			echo "$ACKBASE/$lib.a: $ACKBASE/$lib.a($o)"
 		}
 		echo
@@ -177,7 +177,7 @@ for lib in $LIBRARIES
 		echo
 		for f in $FILES
 		{
-			o=`basename $f | sed -e 's/\\..\$/\.o/'`
+			o=`echo $f | sed -e 's/\\..*\$/\.o/'`
 			echo "$ACKBASE/$lib.a($o): $f"
 			
 			ackCommands $ACKBASE/$OBJDIR/$o $f
@@ -191,7 +191,7 @@ for lib in $LIBRARIES
 		echo
 		for f in $FILES
 		{
-			o=`basename $f | sed -e 's/\\..\$/\.o/'`
+			o=`echo $f | sed -e 's/\\..*\$/\.o/'`
 			echo "$GNUBASE/$lib.a: $GNUBASE/$OBJDIR/$o"
 		}
 		echo
@@ -200,7 +200,7 @@ for lib in $LIBRARIES
 		echo
 		for f in $FILES
 		{
-			o=`basename $f | sed -e 's/\\..\$/\.o/'`
+			o=`echo $f | sed -e 's/\\..*\$/\.o/'`
 			
 			echo "$GNUBASE/$OBJDIR/$o: $f"
 			
@@ -214,7 +214,7 @@ echo
 #start files
 for f in $STARTFILES
 {
-	o=`basename $f | sed -e 's/\\..\$/\.o/'`
+	o=`echo $f | sed -e 's/\\..*\$/\.o/'`
 	
 	if [ $TYPE = "both" -o $TYPE = "ack" ]; then
 		echo "all-ack: $ACKBASE/$o"
