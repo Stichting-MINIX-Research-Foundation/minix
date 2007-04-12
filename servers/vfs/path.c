@@ -316,9 +316,11 @@ struct vnode **vpp;
 
   if (res.inode_nr == 0)
   {
+#if 0
 	printf("lookup_vp: lookup returned no inode\n");
 	printf("lookup_res = %d, last = '%s'\n\n",
 		lookup_res, lookup_req->lastc);
+#endif
 	*vpp= NULL;
 	return lookup_res;
   }

@@ -46,14 +46,16 @@ cdpackages=""
 if [ -n "$cddrive" ]
 then	pack=${cddrive}p2
 	umount $pack >/dev/null 2>&1 || true
-	if mount -r $pack $CDMP
+	echo "Checking for CD in $pack."
+	if mount -r $pack $CDMP 2>/dev/null
 	then	fn="$CDPACK/List"
+		echo "Found."
 		cdpackages=$fn
 		if [ ! -f $cdpackages ]
 		then	cdpackages=""
 			echo "No package list found on CD in $fn."
 		fi
-	else	echo "CD mount failed."
+	else	echo "Not found."
 	fi
 else	echo "Don't know where the install CD is. You can set it in $RC."
 fi

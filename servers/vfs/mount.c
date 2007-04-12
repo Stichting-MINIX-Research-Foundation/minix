@@ -294,7 +294,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
  
   /* Issue request */
   if ((r = req_readsuper(&sreq, &sres)) != OK) {
-      printf("VFSmount: reading superblock error dev: %d\n", dev);          
       dev_close(dev);
       return r;
   }

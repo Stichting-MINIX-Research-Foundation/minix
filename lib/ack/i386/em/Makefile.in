@@ -5,39 +5,21 @@ CFLAGS="-O -D_MINIX -D_POSIX_SOURCE -Was-ack"
 LIBRARIES=libe
 
 libe_FILES=" \
-	em_adf4.s \
-	em_adf8.s \
 	em_adi.s \
 	em_and.s \
 	em_blm.s \
-	em_cff4.s \
-	em_cff8.s \
-	em_cfi.s \
-	em_cfu.s \
-	em_cif4.s \
-	em_cif8.s \
 	em_cii.s \
-	em_cmf4.s \
-	em_cmf8.s \
 	em_cms.s \
 	em_com.s \
 	em_csa4.s \
 	em_csb4.s \
-	em_cuf4.s \
-	em_cuf8.s \
 	em_cuu.s \
 	em_dup.s \
-	em_dvf4.s \
-	em_dvf8.s \
 	em_dvi.s \
 	em_dvu.s \
 	em_error.s \
 	em_exg.s \
 	em_fat.s \
-	em_fef4.s \
-	em_fef8.s \
-	em_fif4.s \
-	em_fif8.s \
 	em_fp8087.s \
 	em_gto.s \
 	em_hol0.s \
@@ -48,12 +30,8 @@ libe_FILES=" \
 	em_isar.s \
 	em_lar4.s \
 	em_loi.s \
-	em_mlf4.s \
-	em_mlf8.s \
 	em_mli.s \
 	em_mon.s \
-	em_ngf4.s \
-	em_ngf8.s \
 	em_ngi.s \
 	em_nop.s \
 	em_print.s \
@@ -63,8 +41,6 @@ libe_FILES=" \
 	em_rol.s \
 	em_ror.s \
 	em_sar4.s \
-	em_sbf4.s \
-	em_sbf8.s \
 	em_sbi.s \
 	em_set.s \
 	em_sli.s \

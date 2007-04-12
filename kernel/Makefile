@@ -14,7 +14,7 @@ CC =	exec cc
 CPP =	$l/cpp
 LD =	$(CC) -.o
 CPPFLAGS=-I$i -I$a/include
-CFLAGS=$(CPROFILE) $(CPPFLAGS)
+CFLAGS=$(CPROFILE) $(CPPFLAGS) $(EXTRA_OPTS)
 LDFLAGS=-i 
 
 # first-stage, arch-dependent startup code

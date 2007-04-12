@@ -243,7 +243,6 @@ printf("%s, %d\n", __FILE__, __LINE__);
 		}
 		else {
 			put_inode(dir_ip);
-printf("%s, %d\n", __FILE__, __LINE__);
 			return(NIL_INODE);
 		}
 	}
