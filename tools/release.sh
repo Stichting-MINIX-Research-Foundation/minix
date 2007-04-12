@@ -357,10 +357,11 @@ umount $TMPDISK3 || exit
 (cd ../boot && make)
 (cd .. && make depend)
 make clean
-make image || exit 1
+SVNVAR=EXTRA_OPTS=-D_SVN_REVISION='\\\"'$REVISION'\\\"'
+make "$SVNVAR" image || exit 1
 mv image image_big
 make clean
-make image_small || exit 1
+make "$SVNVAR" image_small || exit 1
 dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
 # Prepare image and image_small for cdfdboot
 mv image_big image

@@ -49,13 +49,13 @@ fresh:
 all: services image
 
 image:  includes
-	cd ../kernel && $(MAKE) 
+	cd ../kernel && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS)
 	cd ../servers && $(MAKE) image
 	cd ../drivers && $(MAKE) image
 	installboot -image $@ $(PROGRAMS)
 
 image_small:  includes
-	cd ../kernel && $(MAKE) 
+	cd ../kernel && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS)
 	cd ../servers && $(MAKE) EXTRA_OPTS=-D_MINIX_SMALL=1 image
 	cd ../drivers && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) image
 	installboot -image $@ $(PROGRAMS)
