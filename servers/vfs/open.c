@@ -151,10 +151,12 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 	if(*pathrem) {
 	   if (strchr(pathrem, '/') == 0)
 		r= OK;
+#if 0
 	   else
 	   {
 		printf("common_open: / in pathrem\n");
 	   }
+#endif
 	}
   }
 

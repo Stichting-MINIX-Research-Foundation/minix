@@ -148,18 +148,14 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
 	}
         
         if ((vp->v_mode & I_TYPE) != I_REGULAR) {
-printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
 	    put_vnode(vp);
-printf("return at %s, %d\n", __FILE__, __LINE__);
             return ENOEXEC;
         }
 
 	/* Check access. */
 	if ((r = forbidden(vp, X_BIT)) != OK)
 	{
-printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
 	    put_vnode(vp);
-printf("return at %s, %d\n", __FILE__, __LINE__);
 	    return r;
 	}
 
@@ -192,9 +188,7 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
         if (r != OK)
         {
             printf("pm_exec: 2nd fetch_name failed\n");
-printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
             put_vnode(vp);
-printf("return at %s, %d\n", __FILE__, __LINE__);
             return(r);	/* strange */
         }
         r= patch_stack(vp, mbuf, &frame_len);
@@ -221,9 +215,7 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
     if (r != OK)
     {
         printf("pm_exec: exec_newmap failed: %d\n", r);
-printf("put_vnode at %s, %d\n", __FILE__, __LINE__);
         put_vnode(vp);
-printf("return at %s, %d\n", __FILE__, __LINE__);
         return r;
     }
 

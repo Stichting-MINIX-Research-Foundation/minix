@@ -594,7 +594,6 @@ struct mem_map *seg_ptr;
 	okendpt(proc_e, &proc_s);
 	free_proc(&fproc[proc_s], FP_EXITING);
         
-	printf("VFSdumpcore: not implemented\n");
 	return OK;
 }
 

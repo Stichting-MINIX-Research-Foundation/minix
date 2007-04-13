@@ -205,7 +205,6 @@ printf("%s, %d\n", __FILE__, __LINE__);
 	fs_m_out.RES_OFFSET = path_processed;	/* For ENOENT */
 	if ( (new_name = get_name(path+slashes, string)) == (char*) 0) {
 		put_inode(rip);	/* bad path in user space */
-printf("%s, %d\n", __FILE__, __LINE__);
 		return(NIL_INODE);
 	}
 	if (*new_name == '\0' && (action & PATH_PENULTIMATE)) {
@@ -215,7 +214,6 @@ printf("%s, %d\n", __FILE__, __LINE__);
 			/* last file of path prefix is not a directory */
 			put_inode(rip);
 			err_code = ENOTDIR;			
-printf("%s, %d\n", __FILE__, __LINE__);
 			return(NIL_INODE);
 		}
         }
@@ -234,7 +232,6 @@ printf("%s, %d\n", __FILE__, __LINE__);
 	if (rip == NIL_INODE) {
 		if (*new_name == '\0' && (action & PATH_NONSYMBOLIC) != 0)
 		{
-printf("%s, %d\n", __FILE__, __LINE__);
 			return(dir_ip);
 		}
 		else if (err_code == ENOENT)
@@ -258,7 +255,6 @@ printf("%s, %d\n", __FILE__, __LINE__);
 			sizeof(user_path)) != OK) {
                            put_inode(dir_ip);
                            err_code = ENOENT;
-printf("%s, %d\n", __FILE__, __LINE__);
                            return NIL_INODE;
                        }
 
@@ -266,7 +262,6 @@ printf("%s, %d\n", __FILE__, __LINE__);
                        if (++symloop > SYMLOOP) {
                            put_inode(dir_ip);
                            err_code = ELOOP;
-printf("%s, %d\n", __FILE__, __LINE__);
                            return NIL_INODE;
                        }
 
@@ -299,7 +294,6 @@ printf("%s, %d\n", __FILE__, __LINE__);
        /* Either last name reached or symbolic link is opaque */
        if ((action & PATH_NONSYMBOLIC) != 0) {
                put_inode(rip);
-printf("%s, %d\n", __FILE__, __LINE__);
                return(dir_ip);
        } else {
                put_inode(dir_ip);

@@ -98,8 +98,10 @@ int mfs_min_f(char *file, int line, int v1, int v2)
 		panic(file, "strange string lengths", NO_NUM);
 	}
 	if(v2 >= v1) return v1;
+#if 0
 	printf("mfs:%s:%d: truncated %d to %d\n",
 		file, line, v1, v2);
+#endif
 	return v2;
 }
 
