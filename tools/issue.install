@@ -1,8 +1,13 @@
 
-Welcome to MINIX 3.1.2. The system is now running and many commands work
-normally.  To use MINIX 3.1.2 in a serious way, you need to install it
-to your hard disk, which you can do by typing 'setup' while logged in as
-root.  Then just follow the on-screen directions.
+Welcome to MINIX 3.1.3.
+
+This is an interim release, not final release quality. It is intended as
+a prerelease for developers.
+
+The system is now running and many commands work normally.  To use MINIX
+in a serious way, you need to install it to your hard disk, which you
+can do by typing 'setup' while logged in as root.  Then just follow the
+on-screen directions.
 
 After setup is complete, type 'shutdown' and when the boot monitor
 starts, boot your new system by following the instructions at the end of
