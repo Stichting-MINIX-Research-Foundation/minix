@@ -112,10 +112,10 @@ do	cd $TMPDIR
 	echo "Package list:"
 	(	echo "No.|Package|Description"
 		(
-		if [ -f "$netpackages" ]
+		if [ -f "$netpackages" -a "$source" = net ]
 		then	cat $netpackages
 		fi
-		if [ -f "$cdpackages" ]
+		if [ -f "$cdpackages" -a "$source" = cdrom ]
 		then	cat $cdpackages
 		fi
 		) | sort -f -t'|' +0 | awk '{ n++; printf "%d|%s\n", n, $0 }' 
@@ -194,8 +194,8 @@ do	cd $TMPDIR
 				packit $CDPACK/$file && echo Installed ok.
 			else	echo "$CDPACK/$file not found."
 			fi
-			srcfile=$CDSRC/${packagename}-src.tar.bz2
-			if [ -f $srcfile -a $getsources = y ]
+			srcfile=$CDSRC/${packagename}.tar.bz2
+			if [ -f $srcfile -a "$getsources" = y ]
 			then 
 					(	cd $SRC || exit
 						$BUNZIP2 -dc $srcfile | tar xf - || exit
