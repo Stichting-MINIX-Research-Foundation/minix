@@ -337,7 +337,7 @@ then
 	hdemu_root_changes
 fi
 
-echo $version_pretty >$RELEASEDIR/etc/version
+echo $version_pretty, SVN revision $SVNREV, generated `date` >$RELEASEDIR/etc/version
 echo " * Counting files"
 extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
 expr `df $TMPDISK | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEDIR/.usrkb
