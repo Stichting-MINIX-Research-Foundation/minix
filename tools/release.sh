@@ -95,11 +95,13 @@ SVNREV=""
 REVTAG=""
 PACKAGES=1
 
-while getopts "pchu?r:" c
+FILENAMEOUT=""
+
+while getopts "s:pchu?r:f:" c
 do
 	case "$c" in
 	\?)
-		echo "Usage: $0 [-p] [-c] [-h] [-r <tag>] [-u]" >&2
+		echo "Usage: $0 [-p] [-c] [-h] [-r <tag>] [-u] [-f <filename>] [-s <username>]" >&2
 		exit 1
 	;;
 	h)
@@ -122,6 +124,11 @@ do
 		IMG_BASE=minix${version}_usb
 		HDEMU=1
 		USB=1
+		;;
+	f)
+		FILENAMEOUT="$OPTARG"
+		;;
+	s)	USERNAME="--username=$OPTARG"
 		;;
 	esac
 done
@@ -214,7 +221,7 @@ then
 fi
 
 echo " * Cleanup old files"
-rm -rf $RELEASEDIR $IMG $IMAGE $ROOTIMAGE $IMGBZ $CDFILES image*
+rm -rf $RELEASEDIR $IMG $IMAGE $ROOTIMAGE $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
 mkfs -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
@@ -280,9 +287,9 @@ if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
 	REPO=https://gforge.cs.vu.nl/svn/minix/trunk/$SRC
-	REVISION="`svn info $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
+	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
 	echo "Doing export of revision $REVISION from $REPO."
-	( cd $RELEASEDIR/usr && svn export -r$REVISION $REPO )
+	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO )
 	REVTAG=r$REVISION
 	echo "
 
@@ -303,8 +310,6 @@ if [ "$USB" -ne 0 ]; then
 else
 	IMG=${IMG_BASE}_${REVTAG}.iso
 fi
-IMGBZ=${IMG}.bz2
-echo "Making $IMGBZ"
 
 echo " * Fixups for owners and modes of dirs and files"
 chown -R bin $RELEASEDIR/usr/$SRC 
@@ -402,4 +407,8 @@ else
 		# unreadable.
 		partition -m $IMG 0 81:$isosects 81:$ROOTSECTS 81:$USRSECTS
 	fi
+fi
+
+if [ "$FILENAMEOUT" ]
+then	echo "$IMG" >$FILENAMEOUT
 fi
