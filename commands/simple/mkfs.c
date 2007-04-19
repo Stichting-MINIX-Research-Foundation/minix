@@ -233,8 +233,7 @@ char *argv[];
   	 * reporting a 0-sized device (displays usage).
   	 */
   	if(blocks < 1) {
-  		fprintf(stderr, "%s: this device can't hold a filesystem.\n",
-  			progname);
+  		fprintf(stderr, "%s: zero size device.\n", progname);
   		return 1;
   	}
   }
