@@ -28,4 +28,3 @@ clean::
 
 all install clean::
 	cd asmconv && $(MAKE) $@
-	cd mtools-3.9.7 && $(MAKE) $@
