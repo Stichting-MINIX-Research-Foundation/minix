@@ -317,8 +317,8 @@ PRIVATE char *s_flags_str(int flags)
 PRIVATE char *s_traps_str(int flags)
 {
 	static char str[10];
-	str[0] = (flags & (1 << ECHO)) ? 'E' : '-';
-	str[1] = (flags & (1 << SEND))  ? 'S' : '-';
+	str[0] = (flags & (1 << SEND))  ? 'S' : '-';
+	str[1] = (flags & (1 << SENDA)) ? 'A' : '-';
 	str[2] = (flags & (1 << RECEIVE))  ? 'R' : '-';
 	str[3] = (flags & (1 << SENDREC))  ? 'B' : '-';
 	str[4] = (flags & (1 << NOTIFY)) ? 'N' : '-';
@@ -347,7 +347,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -system calls--\n");
+  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -ipc_sr-- -system calls--\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
@@ -367,6 +367,9 @@ PUBLIC void privileges_dmp()
 		sp->s_grant_entries);
         for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
 	    printf(" %04x", get_sys_bits(sp->s_ipc_to, i));
+       	}
+        for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
+	    printf(" %04x", get_sys_bits(sp->s_ipc_sendrec, i));
        	}
 
 	printf(" ");
