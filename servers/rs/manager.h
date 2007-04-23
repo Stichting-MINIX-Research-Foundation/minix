@@ -62,6 +62,13 @@ extern struct rproc {
 /* Mapping for fast access to the system process table. */ 
 extern struct rproc *rproc_ptr[NR_PROCS];
 
+/* Pipe for detection of exec failures. The pipe is close-on-exec, and
+ * no data will be written to the pipe if the exec succeeds. After an 
+ * exec failure, the slot number is written to the pipe. After each exit,
+ * a non-blocking read retrieves the slot number from the pipe.
+ */
+int exec_pipe[2];
+
 /* Flag values. */
 #define RS_IN_USE       0x001	/* set when process slot is in use */
 #define RS_EXITING      0x004	/* set when exit is expected */
@@ -70,6 +77,8 @@ extern struct rproc *rproc_ptr[NR_PROCS];
 #define RS_KILLED 	0x020	/* driver is killed */
 #define RS_CRASHED 	0x040	/* driver crashed */
 #define RS_LATEREPLY	0x080	/* no reply sent to RS_DOWN caller yet */
+#define RS_SIGNALED 	0x100	/* driver crashed */
+#define RS_EXECFAILED 	0x200	/* exec failed */
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_DELTA_T       60			/* check every T ticks */
