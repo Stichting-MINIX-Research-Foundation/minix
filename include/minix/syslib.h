@@ -146,6 +146,7 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
 #define sys_getbiosbuffer(virp, sizep) \
 	sys_getinfo(GET_BIOSBUFFER, virp, sizeof(*virp), sizep, sizeof(*sizep))
+#define sys_getprivid(nr)	sys_getinfo(GET_PRIVID, 0, 0,0, nr)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *val_ptr2, int val_len2)		);
 
@@ -199,6 +200,7 @@ _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 _PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
 _PROTOTYPE( char *pci_slot_name, (int devind)				);
 _PROTOTYPE( int pci_set_acl, (struct rs_pci *rs_pci)			);
+_PROTOTYPE( int pci_del_acl, (endpoint_t proc_nr)			);
 
 /* Profiling. */
 _PROTOTYPE( int sys_sprof, (int action, int size, int freq, int endpt,
