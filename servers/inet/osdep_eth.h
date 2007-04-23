@@ -16,6 +16,8 @@ Copyright 1995 Philip Homburg
 
 typedef struct osdep_eth_port
 {
+	int etp_state;
+	int etp_flags;
 	int etp_task;
 	int etp_port;
 	int etp_recvconf;
@@ -27,7 +29,30 @@ typedef struct osdep_eth_port
 	event_t etp_recvev;
 	message etp_sendrepl;
 	message etp_recvrepl;
+	cp_grant_id_t etp_stat_gid;
+	eth_stat_t *etp_stat_buf;
 } osdep_eth_port_t;
+
+#define OEPS_INIT		0	/* Not initialized */
+#define OEPS_CONF_SENT		1	/* Conf. request has been sent */
+#define OEPS_IDLE		2	/* Device is ready to accept requests */
+#define OEPS_RECV_SENT		3	/* Recv. request has been sent */
+#define OEPS_SEND_SENT		4	/* Send request has been sent */
+#define OEPS_GETSTAT_SENT	5	/* GETSTAT request has been sent */
+
+#define OEPF_EMPTY	0
+#define OEPF_NEED_RECV	1	/* Issue recv. request when the state becomes
+				 * idle
+				 */
+#define OEPF_NEED_SEND	2	/* Issue send request when the state becomes
+				 * idle
+				 */
+#define OEPF_NEED_CONF	4	/* Issue conf request when the state becomes
+				 * idle
+				 */
+#define OEPF_NEED_STAT	8	/* Issue getstat request when the state becomes
+				 * idle
+				 */
 
 #endif /* INET__OSDEP_ETH_H */
 

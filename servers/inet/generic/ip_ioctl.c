@@ -426,6 +426,15 @@ ioreq_t req;
 			return (*ip_fd->if_put_userdata)(ip_fd->if_srfd, 
 				EBADIOCTL, (acc_t *)0, TRUE);
 		}
+
+		if (!(ip_port->ip_flags & IPF_IPADDRSET))
+		{
+			ip_fd->if_ioctl= req;
+			ip_fd->if_flags |= IFF_IOCTL_IP;
+			printf("ip_ioctl: suspending ARP request\n");
+			return NW_SUSPEND;
+		}
+
 		result= arp_ioctl(ip_port->ip_dl.dl_eth.de_port,
 			ip_fd->if_srfd, req, ip_fd->if_get_userdata,
 			ip_fd->if_put_userdata);

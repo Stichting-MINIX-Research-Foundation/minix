@@ -35,7 +35,7 @@ from DL_ETH:
 | m_type	|  DL_PORT  | DL_PROC |	DL_COUNT |  DL_STAT   | DL_TIME |
 |_______________|___________|_________|__________|____________|_________|
 |		|           |         |          |            |         |
-| DL_INIT_REPLY	| minor dev | proc nr | rd_count |  0  | stat |  time   |
+| DL_CONF_REPLY	| minor dev | proc nr | rd_count |  0  | stat |  time   |
 |_______________|___________|_________|__________|____________|_________|
 |		|           |         |          |            |         |
 | DL_TASK_REPLY	| minor dev | proc nr | rd_count | err | stat |  time   |
@@ -95,7 +95,7 @@ PUBLIC void main()
 {
 	mq_t *mq;
 	int r;
-	int source, timerand, fd;
+	int source, m_type, timerand, fd;
 	struct fssignon device;
 #ifdef __minix_vmd
 	struct systaskinfo info;
@@ -229,6 +229,7 @@ PUBLIC void main()
 		}
 		reset_time();
 		source= mq->mq_mess.m_source;
+		m_type= mq->mq_mess.m_type;
 		if (source == FS_PROC_NR)
 		{
 			sr_rec(mq);
@@ -240,25 +241,26 @@ PUBLIC void main()
 			mq_free(mq);
 		}
 #else /* Minix 3 */
-		else if (mq->mq_mess.m_type == SYN_ALARM)
+		else if (m_type == SYN_ALARM)
 		{
 			clck_tick(&mq->mq_mess);
 			mq_free(mq);
 		} 
-		else if (mq->mq_mess.m_type == PROC_EVENT)
+		else if (m_type == PROC_EVENT)
 		{
 			/* signaled */ 
 			/* probably SIGTERM */
 			mq_free(mq);
 		} 
-		else if (mq->mq_mess.m_type & NOTIFY_MESSAGE)
+		else if (m_type & NOTIFY_MESSAGE)
 		{
 			/* A driver is (re)started. */
 			eth_check_drivers(&mq->mq_mess);
 			mq_free(mq);
 		}
 #endif
-		else if (mq->mq_mess.m_type == DL_TASK_REPLY)
+		else if (m_type == DL_CONF_REPLY || m_type == DL_TASK_REPLY ||
+			m_type == DL_NAME_REPLY || m_type == DL_STAT_REPLY)
 		{
 			eth_rec(&mq->mq_mess);
 			mq_free(mq);

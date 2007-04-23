@@ -21,6 +21,7 @@ typedef struct eth_port
 	int etp_flags;
 	ether_addr_t etp_ethaddr;
 	acc_t *etp_wr_pack, *etp_rd_pack;
+	acc_t *etp_getstat;
 	struct eth_fd *etp_sendq_head;
 	struct eth_fd *etp_sendq_tail;
 	struct eth_fd *etp_type_any;

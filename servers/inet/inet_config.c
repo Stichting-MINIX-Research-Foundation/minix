@@ -23,6 +23,9 @@ Copyright 1995 Philip Homburg
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include "inet_config.h"
+#include "inet.h"
+
+THIS_FILE
 
 struct eth_conf eth_conf[IP_PORT_MAX];
 struct psip_conf psip_conf[IP_PORT_MAX];
@@ -212,6 +215,13 @@ void read_conf(void)
 	struct psip_conf *pcp;
 	struct ip_conf *icp;
 	struct stat st;
+
+	{ static int first= 1; 
+		if (!first) ip_panic(( "read_conf: called a second time" ));
+		first= 0;
+		*(u8_t *)0 = 0xcc;	/* INT 3 */
+	}
+
 
 	/* Open the configuration file. */
 	if ((cfg_fd= open(PATH_INET_CONF, O_RDONLY)) == -1)

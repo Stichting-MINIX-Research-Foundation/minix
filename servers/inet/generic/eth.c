@@ -100,7 +100,8 @@ PUBLIC void eth_init()
 		eth_fd_table[i].ef_flags= EFF_EMPTY;
 	for (i=0; i<eth_conf_nr; i++)
 	{
-		eth_port_table[i].etp_flags= EFF_EMPTY;
+		eth_port_table[i].etp_flags= EPF_EMPTY;
+		eth_port_table[i].etp_getstat= NULL;
 		eth_port_table[i].etp_sendq_head= NULL;
 		eth_port_table[i].etp_sendq_tail= NULL;
 		eth_port_table[i].etp_type_any= NULL;
@@ -346,6 +347,15 @@ ioreq_t req;
 				return NW_SUSPEND;
 			}
 
+			if (eth_port->etp_getstat)
+			{
+				printf(
+	"eth_ioctl: pending eth_get_stat request, suspending caller\n");
+				assert(!(eth_fd->ef_flags & EFF_IOCTL_IP));
+				eth_fd->ef_flags |= EFF_IOCTL_IP;
+				return NW_SUSPEND;
+			}
+
 			acc= bf_memreq(sizeof(nwio_ethstat_t));
 			compare (bf_bufsize(acc), ==, sizeof(*ethstat));
 
@@ -356,6 +366,20 @@ ioreq_t req;
 			{
 				result= eth_get_stat(eth_port,
 					&ethstat->nwes_stat);
+				if (result == SUSPEND)
+				{
+					printf(
+				"eth_ioctl: eth_get_stat returned SUSPEND\n");
+					eth_fd->ef_ioctl_req= req;
+					assert(!(eth_fd->ef_flags &
+						EFF_IOCTL_IP));
+					eth_fd->ef_flags |= EFF_IOCTL_IP;
+printf("eth_ioctl: setting etp_getstat in port %d to %p\n",
+	eth_port-eth_port_table, acc);
+					eth_port->etp_getstat= acc;
+					acc= NULL;
+					return NW_SUSPEND;
+				}
 				if (result != NW_OK)
 				{
 					bf_afree(acc);
@@ -993,8 +1017,18 @@ eth_port_t *vlan_port;
 PUBLIC void eth_restart_ioctl(eth_port)
 eth_port_t *eth_port;
 {
-	int i;
+	int i, r;
 	eth_fd_t *eth_fd;
+	acc_t *acc;
+
+	printf("in eth_restart_ioctl\n");
+
+	/* eth_restart_ioctl is called on too occasions: when a device
+	 * driver registers with inet and when a eth_get_stat call has
+	 * completed. We assume the second option when etp_getstat is
+	 * not equal to zero at the start of the call.
+	 */
+	acc= eth_port->etp_getstat;
 
 	for (i= 0, eth_fd= eth_fd_table; i<ETH_FD_NR; i++, eth_fd++)
 	{
@@ -1007,8 +1041,35 @@ eth_port_t *eth_port;
 		if (eth_fd->ef_ioctl_req != NWIOGETHSTAT)
 			continue;
 
+printf("eth_restart_ioctl: etp_getstat in port %d is %p\n",
+	eth_port-eth_port_table, acc);
+
+		if (acc != NULL)
+		{
+			printf("eth_restart_ioctl: completed getstat\n");
+			acc->acc_linkC++;
+			r= (*eth_fd->ef_put_userdata)(eth_fd->ef_srfd, 0,
+				acc, TRUE);
+			if (r >= 0)
+				reply_thr_put(eth_fd, NW_OK, TRUE);
+			eth_fd->ef_flags &= ~EFF_IOCTL_IP;
+			continue;
+		}
+
+ { static int count; if (++count > 5) ip_panic(("too many restarts")); }
+
 		eth_fd->ef_flags &= ~EFF_IOCTL_IP;
 		eth_ioctl(i, eth_fd->ef_ioctl_req);
+	}
+
+	if (acc != NULL)
+	{
+printf("eth_restart_ioctl: clearing etp_getstat in port %d\n",
+	eth_port-eth_port_table);
+		assert(acc == eth_port->etp_getstat);
+
+		bf_afree(acc);
+		eth_port->etp_getstat= NULL;
 	}
 }
 
