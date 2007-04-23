@@ -30,6 +30,14 @@ register message *m_ptr;	/* pointer to request message */
     io_type = m_ptr->DIO_REQUEST & _DIO_TYPEMASK;
     io_dir  = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
 
+	switch (io_type)
+	{
+	case _DIO_BYTE: size= 1; break;
+	case _DIO_WORD: size= 2; break;
+	case _DIO_LONG: size= 4; break;
+	default: size= 4; break;	/* Be conservative */
+	}
+
     rp= proc_addr(who_p);
     privp= priv(rp);
     if (!privp)
@@ -55,14 +63,17 @@ register message *m_ptr;	/* pointer to request message */
 	}
 	if (i >= nr_io_range)
 	{
-		kprintf(
-		"do_devio: I/O port check failed for proc %d, port 0x%x\n",
-			m_ptr->m_source, port);
 		return EPERM;
 	}
     }
 
 doit:
+    if (m_ptr->DIO_PORT & (size-1))
+    {
+	kprintf("do_devio: unaligned port 0x%x (size %d)\n",
+		m_ptr->DIO_PORT, size);
+	return EPERM;
+    }
 
 /* Process a single I/O request for byte, word, and long values. */
     if (io_dir == _DIO_INPUT) { 
