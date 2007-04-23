@@ -211,10 +211,14 @@ int proc_type;				/* system or user process flag */
   if (proc_type == SYS_PROC) {			/* find a new slot */
       for (sp = BEG_PRIV_ADDR; sp < END_PRIV_ADDR; ++sp) 
           if (sp->s_proc_nr == NONE && sp->s_id != USER_PRIV_ID) break;	
-      if (sp->s_proc_nr != NONE) return(ENOSPC);
+      if (sp >= END_PRIV_ADDR) return(ENOSPC);
       rc->p_priv = sp;				/* assign new slot */
       rc->p_priv->s_proc_nr = proc_nr(rc);	/* set association */
       rc->p_priv->s_flags = SYS_PROC;		/* mark as privileged */
+
+      /* Clear some fields */
+      sp->s_asyntab= -1;	
+      sp->s_asynsize= 0;
   } else {
       rc->p_priv = &priv[USER_PRIV_ID];		/* use shared slot */
       rc->p_priv->s_proc_nr = INIT_PROC_NR;	/* set association */
@@ -290,6 +294,9 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
  * process level, which runs to completion.
  */
   register struct proc *rp;
+
+  if (proc_nr == PM_PROC_NR)
+	panic("cause_sig: PM gets signal", NO_NUM);
 
   /* Check if the signal is already pending. Process it otherwise. */
   rp = proc_addr(proc_nr);
@@ -476,6 +483,12 @@ register struct proc *rc;		/* slot of process to clean up */
 
   /* Make sure that the exiting process is no longer scheduled. */
   RTS_LOCK_SET(rc, NO_ENDPOINT);
+  if (priv(rc)->s_flags & SYS_PROC)
+  {
+	if (priv(rc)->s_asynsize)
+		kprintf("clear_endpoint: clearing s_asynsize\n");
+	priv(rc)->s_asynsize= 0;
+  }
 
   /* If the process happens to be queued trying to send a
    * message, then it must be removed from the message queues.
@@ -529,5 +542,3 @@ register struct proc *rc;		/* slot of process to clean up */
       } 
   }
 }
-
-
