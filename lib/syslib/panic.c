@@ -30,13 +30,21 @@ int num;			/* number to go with format string */
       }
   }
 
+  /* Try exit */
+  _exit(1);
+
+  /* Try to signal ourself */
+  abort();
+
   /* If exiting nicely through PM fails for some reason, try to
    * commit suicide. E.g., message to PM might fail due to deadlock.
    */
+  printf("panic: trying exception\n");
   suicide = (void (*)(void)) -1;
   suicide();
 
   /* If committing suicide fails for some reason, hang. */
+  printf("panic: for ever and ever\n");
   for(;;) { }
 }
 
