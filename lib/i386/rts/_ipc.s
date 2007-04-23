@@ -1,23 +1,24 @@
 .sect .text; .sect .rom; .sect .data; .sect .bss
-.define __echo, __notify, __send, __receive, __sendrec 
+.define __notify, __send, __senda, __sendnb, __receive, __sendrec 
 
 ! See src/kernel/ipc.h for C definitions
 SEND = 1
 RECEIVE = 2
 SENDREC = 3 
 NOTIFY = 4
-ECHO = 8
+SENDNB = 5
+SENDA = 16
 SYSVEC = 33			! trap to kernel 
 
 SRC_DST = 8			! source/ destination process 
-ECHO_MESS = 8			! echo doesn't have SRC_DST 
+MSGTAB = 8			! message table
 MESSAGE = 12			! message pointer 
+TABCOUNT = 12			! number of entries in message table
 
 !*========================================================================*
 !                           IPC assembly routines			  *
 !*========================================================================*
 ! all message passing routines save ebp, but destroy eax and ecx.
-.define __echo, __notify, __send, __receive, __sendrec 
 .sect .text
 __send:
 	push	ebp
@@ -66,14 +67,26 @@ __notify:
 	pop	ebp
 	ret
 
-__echo:
+__sendnb:
 	push	ebp
 	mov	ebp, esp
 	push	ebx
-	mov	ebx, ECHO_MESS(ebp)	! ebx = message pointer
-	mov	ecx, ECHO		! _echo(srcdest, ptr)
+	mov	eax, SRC_DST(ebp)	! eax = dest-src
+	mov	ebx, MESSAGE(ebp)	! ebx = message pointer
+	mov	ecx, SENDNB		! _sendnb(dest, ptr)
 	int	SYSVEC			! trap to the kernel
 	pop	ebx
 	pop	ebp
 	ret
 
+__senda:
+	push	ebp
+	mov	ebp, esp
+	push	ebx
+	mov	eax, TABCOUNT(ebp)	! eax = count
+	mov	ebx, MSGTAB(ebp)	! ebx = table
+	mov	ecx, SENDA		! _senda(table, count)
+	int	SYSVEC			! trap to the kernel
+	pop	ebx
+	pop	ebp
+	ret
