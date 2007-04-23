@@ -59,7 +59,6 @@ PRIVATE char *known_requests[] = {
 
 #define ARG_ARGS	"-args"		/* list of arguments to be passed */
 #define ARG_DEV		"-dev"		/* major device number for drivers */
-#define ARG_PRIV	"-priv"		/* required privileges */
 #define ARG_PERIOD	"-period"	/* heartbeat period in ticks */
 #define ARG_SCRIPT	"-script"	/* name of the script to restart a
 					 * driver 
@@ -101,23 +100,24 @@ PRIVATE struct rs_start rs_start;
  */
 PRIVATE void print_usage(char *app_name, char *problem) 
 {
-  printf("Warning, %s\n", problem);
-  printf("Usage:\n");
-  printf("    %s [-c] (up|run) <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
+  fprintf(stderr, "Warning, %s\n", problem);
+  fprintf(stderr, "Usage:\n");
+  fprintf(stderr,
+  "    %s [-c] (up|run) <binary> [%s <args>] [%s <special>] [%s <ticks>]\n", 
 	app_name, ARG_ARGS, ARG_DEV, ARG_PERIOD);
-  printf("    %s down label\n", app_name);
-  printf("    %s refresh label\n", app_name);
-  printf("    %s restart label\n", app_name);
-  printf("    %s rescue <dir>\n", app_name);
-  printf("    %s shutdown\n", app_name);
-  printf("\n");
+  fprintf(stderr, "    %s down label\n", app_name);
+  fprintf(stderr, "    %s refresh label\n", app_name);
+  fprintf(stderr, "    %s restart label\n", app_name);
+  fprintf(stderr, "    %s rescue <dir>\n", app_name);
+  fprintf(stderr, "    %s shutdown\n", app_name);
+  fprintf(stderr, "\n");
 }
 
 /* A request to the RS server failed. Report and exit. 
  */
 PRIVATE void failure(int num) 
 {
-  printf("Request to RS failed: %s (error %d)\n", strerror(num), num);
+  fprintf(stderr, "Request to RS failed: %s (error %d)\n", strerror(num), num);
   exit(num);
 }
 
@@ -799,7 +799,6 @@ PRIVATE void do_driver(config_t *cpe, config_t *config)
 			continue;
 		}
 
-		printf("found word '%s'\n", cpe->word);
 	}
 }
 
@@ -848,7 +847,7 @@ PRIVATE void do_config(char *label, char *filename)
 	}
 	if (cp == NULL)
 	{
-		printf("driver '%s' not found\n", label);
+		fprintf(stderr, "driver '%s' not found\n", label);
 		return;
 	}
 
