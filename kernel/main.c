@@ -31,7 +31,7 @@ PUBLIC void main()
   struct boot_image *ip;	/* boot image pointer */
   register struct proc *rp;	/* process pointer */
   register struct priv *sp;	/* privilege structure pointer */
-  register int i, s;
+  register int i, j, s;
   int hdrindex;			/* index to array of a.out headers */
   phys_clicks text_base;
   vir_clicks text_clicks, data_clicks, st_clicks;
@@ -97,6 +97,12 @@ PUBLIC void main()
 				ip->k_calls[ci]-KERNEL_CALL);
 
 	priv(rp)->s_ipc_to.chunk[0] = ip->ipc_to;	/* restrict targets */
+
+	for (j=0; j<BITMAP_CHUNKS(NR_SYS_PROCS); j++) {
+		rp->p_priv->s_ipc_sendrec.chunk[j] = ~0L;
+	}
+	unset_sys_bit(rp->p_priv->s_ipc_sendrec, USER_PRIV_ID);
+
 	if (iskerneln(proc_nr(rp))) {		/* part of the kernel? */ 
 		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
 			rp->p_priv->s_stack_guard = (reg_t *) ktsb;
