@@ -119,22 +119,54 @@ register message *m_ptr;	/* pointer to request message */
 		outb( pvb[i].port, pvb[i].value); 
       break; 
   case _DIO_WORD:					  /* word values */
-      if (io_in) for (i=0; i<vec_size; i++)  
+      if (io_in)
+      {
+	for (i=0; i<vec_size; i++)  
+	{
+		port= pvw[i].port;
+		if (port & 1) goto bad;
 		pvw[i].value = inw( pvw[i].port);  
-      else       for (i=0; i<vec_size; i++) 
+	}
+      }
+      else
+      {
+	for (i=0; i<vec_size; i++) 
+	{
+		port= pvw[i].port;
+		if (port & 1) goto bad;
 		outw( pvw[i].port, pvw[i].value); 
+	}
+      }
       break; 
   default:            					  /* long values */
-      if (io_in) for (i=0; i<vec_size; i++)
-	pvl[i].value = inl(pvl[i].port);  
-      else       for (i=0; i<vec_size; i++)
+      if (io_in)
+      {
+	for (i=0; i<vec_size; i++)
+	{
+		port= pvl[i].port;
+		if (port & 3) goto bad;
+		pvl[i].value = inl(pvl[i].port);  
+	}
+      }
+      else
+      {
+	for (i=0; i<vec_size; i++)
+	{
+		port= pvl[i].port;
+		if (port & 3) goto bad;
 		outl( pvb[i].port, pvl[i].value); 
+	}
+      }
   }
   unlock(13);
     
   /* Almost done, copy back results for input requests. */
   if (io_in) phys_copy(vir2phys(vdevio_buf), caller_phys, (phys_bytes) bytes);
   return(OK);
+
+bad:
+	panic("do_vdevio: unaligned port\n", port);
+	return EPERM;
 }
 
 #endif /* USE_VDEVIO */
