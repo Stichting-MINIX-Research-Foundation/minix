@@ -241,46 +241,42 @@ PRIVATE int common_open(register int oflags, mode_t omode)
       case I_BLOCK_SPECIAL:
           /* Invoke the driver for special processing. */
           r = dev_open(vp->v_sdev, who_e, bits | (oflags & ~O_ACCMODE));
-#if 0
 	  if (r != OK)
-		panic(__FILE__, "common_open: dev_open failed", r);
-#endif
+		break;
           
           /* Check whether the device is mounted or not */
           found = 0;
-          if (r == OK) {
-              for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
-                  if (vmp->m_dev == vp->v_sdev) {
-                      found = 1;
-                      break;
-                  }
-              }
-             
-              /* Who is going to be responsible for this device? */
-              if (found) {
-                  vp->v_bfs_e = vmp->m_fs_e;
-                  vp->v_blocksize - vmp->m_block_size;
-              }
-              else { /* To be handled in the root FS proc if not mounted */ 
-                  vp->v_bfs_e = ROOT_FS_E;
-                  vp->v_blocksize = _MIN_BLOCK_SIZE;
-              }
-              
-              /* Get the driver endpoint of the block spec device */
-              dp = &dmap[(vp->v_sdev >> MAJOR) & BYTE];
-              if (dp->dmap_driver == NONE) {
-                  printf("VFSblock_spec_open: driver not found for device %d\n", 
-                          vp->v_sdev);
-                  r = EINVAL;
-                  break;
-              }
+	  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
+	      if (vmp->m_dev == vp->v_sdev) {
+		  found = 1;
+		  break;
+	      }
+	  }
+	 
+	  /* Who is going to be responsible for this device? */
+	  if (found) {
+	      vp->v_bfs_e = vmp->m_fs_e;
+	      vp->v_blocksize - vmp->m_block_size;
+	  }
+	  else { /* To be handled in the root FS proc if not mounted */ 
+	      vp->v_bfs_e = ROOT_FS_E;
+	      vp->v_blocksize = _MIN_BLOCK_SIZE;
+	  }
+	  
+	  /* Get the driver endpoint of the block spec device */
+	  dp = &dmap[(vp->v_sdev >> MAJOR) & BYTE];
+	  if (dp->dmap_driver == NONE) {
+	      printf("VFSblock_spec_open: driver not found for device %d\n", 
+		      vp->v_sdev);
+	      r = EINVAL;
+	      break;
+	  }
 
-              /* Send the driver endpoint (even if it is known already...) */
-              if ((r = req_newdriver(vp->v_bfs_e, vp->v_sdev, dp->dmap_driver))
-                      != OK) {
-                  printf("VFSblock_spec_open: error sending driver endpoint\n");
-              }
-          }
+	  /* Send the driver endpoint (even if it is known already...) */
+	  if ((r = req_newdriver(vp->v_bfs_e, vp->v_sdev, dp->dmap_driver))
+		  != OK) {
+	      printf("VFSblock_spec_open: error sending driver endpoint\n");
+	  }
           break;
 
       case I_NAMED_PIPE:
