@@ -211,6 +211,10 @@ irq_hook_t *hook;
       prev_ptr = proc_ptr;			/* store running process */
       lock_notify(HARDWARE, CLOCK);		/* send notification */
   } 
+
+  if (do_serial_debug)
+	do_ser_debug();
+
   return(1);					/* reenable interrupts */
 }
 
@@ -284,6 +288,4 @@ PRIVATE void load_update(void)
 	/* Up-to-dateness. */
 	kloadinfo.last_clock = realtime;
 }
-
-
 
