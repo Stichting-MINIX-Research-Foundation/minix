@@ -233,7 +233,8 @@ void fprintlog(struct filed * fLog, int flags, char *message)
 	} else
 		message = fLog->f_prevline;
   }
-  sprintf(line, "%s %s %s", fLog->f_lasttime, fLog->f_prevhost, message);
+  snprintf(line, sizeof(line), "%s %s %s",
+	fLog->f_lasttime, fLog->f_prevhost, message);
   DEBUG(dprintf("Logging to %s", TypeNames[fLog->f_type]);)
   fLog->f_time = now;
   switch (fLog->f_type) {
@@ -640,7 +641,7 @@ void printkline(char *hname, char *msg)
   int ch, pri = DEFUPRI;
 
   /* Copies message to local buffer, adding source program tag */
-  sprintf(line, "kernel: %s", msg);
+  snprintf(line, sizeof(line), "kernel: %s", msg);
 
   logmsg(LOG_KERN | LOG_INFO, line, hname, ADDDATE);
   return;
