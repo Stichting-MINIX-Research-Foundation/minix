@@ -52,7 +52,6 @@ int c;					/* character to append */
 	if(c == '\n')
       		ser_putc('\r');
       	ser_putc(c);
-
       }
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
       if (kmess.km_size < KMESS_BUF_SIZE)
@@ -67,4 +66,3 @@ int c;					/* character to append */
       }
   }
 }
-
