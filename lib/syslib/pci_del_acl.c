@@ -1,5 +1,5 @@
 /*
-pci_set_acl.c
+pci_del_acl.c
 */
 
 #include "pci.h"
@@ -9,13 +9,12 @@ pci_set_acl.c
 #include <minix/sysutil.h>
 
 /*===========================================================================*
- *				pci_set_acl				     *
+ *				pci_del_acl				     *
  *===========================================================================*/
-PUBLIC int pci_set_acl(rs_pci)
-struct rs_pci *rs_pci;
+PUBLIC int pci_del_acl(proc_nr)
+endpoint_t proc_nr;
 {
 	int r;
-	cp_grant_id_t gid;
 	message m;
 
 	if (pci_procnr == ANY)
@@ -24,28 +23,18 @@ struct rs_pci *rs_pci;
 		if (r != 0)
 		{
 			panic("pci",
-				"pci_set_acl: _pm_findproc failed for 'pci'",
+				"pci_del_acl: _pm_findproc failed for 'pci'",
 				r);
 		}
 	}
 
 
-	gid= cpf_grant_direct(pci_procnr, (vir_bytes)rs_pci, sizeof(*rs_pci),
-		CPF_READ);
-	if (gid == -1)
-	{
-		printf("pci_set_acl: cpf_grant_direct failed: %d\n",
-			errno);
-		return EINVAL;
-	}
-
-	m.m_type= BUSC_PCI_SET_ACL;
-	m.m1_i1= gid;
+	m.m_type= BUSC_PCI_DEL_ACL;
+	m.m1_i1= proc_nr;
 
 	r= sendrec(pci_procnr, &m);
-	cpf_revoke(gid);
 	if (r != 0)
-		panic("pci", "pci_set_acl: can't talk to PCI", r);
+		panic("pci", "pci_del_acl: can't talk to PCI", r);
 
 	return m.m_type;
 }

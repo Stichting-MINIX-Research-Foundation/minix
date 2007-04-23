@@ -13,6 +13,7 @@ libsys_FILES=" \
 	pci_attr_w16.c \
 	pci_attr_w32.c \
 	pci_attr_w8.c \
+	pci_del_acl.c \
 	pci_dev_name.c \
 	pci_find_dev.c \
 	pci_first_dev.c \
