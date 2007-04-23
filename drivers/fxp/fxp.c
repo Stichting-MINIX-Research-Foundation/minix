@@ -29,7 +29,7 @@
  * |DL_GETSTAT_S| port nr  | proc nr |          |         |	    |  grant  |
  * |------------|----------|---------|----------|---------|---------|---------|
  * | DL_STOP	| port_nr  |         |          |         |	    |	      |
- * |------------|----------|---------|----------|---------|---------|---------|
+ * |------------+----------+---------+----------+---------+---------+---------|
  *
  * The messages sent are:
  *
@@ -42,6 +42,12 @@
  * |-------------+---------+-----------+---------------|
  * |DL_CONF_REPLY| port nr | last port | ethernet addr |
  * |-------------+---------+-----------+---------------|
+ *
+ *   m_type	  DL_PORT    DL_STAT       
+ * |------------|---------|-----------|
+ * |DL_STAT_REPL| port nr |   err     |
+ * |------------|---------|-----------|
+ *
  *
  * Created:	Nov 2004 by Philip Homburg <philip@f-mnx.phicoh.com>
  */
@@ -1924,7 +1930,13 @@ message *mp;
 		mp->DL_PROC, D, (vir_bytes) mp->DL_ADDR, sizeof(stats));
 	if (r != OK)
 		panic(__FILE__,"fxp_getstat: sys_vircopy failed", r);
-	reply(fp, OK, FALSE);
+
+	mp->m_type= DL_STAT_REPLY;
+	mp->DL_PORT= dl_port;
+	mp->DL_STAT= OK;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic(__FILE__, "fxp_getstat: send failed: %d\n", r);
 }
 
 
@@ -2002,7 +2014,13 @@ message *mp;
 		sizeof(stats), D);
 	if (r != OK)
 		panic(__FILE__,"fxp_getstat_s: sys_safecopyto failed", r);
-	reply(fp, OK, FALSE);
+
+	mp->m_type= DL_STAT_REPLY;
+	mp->DL_PORT= dl_port;
+	mp->DL_STAT= OK;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic(__FILE__, "fxp_getstat_s: send failed: %d\n", r);
 }
 
 

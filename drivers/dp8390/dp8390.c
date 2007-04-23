@@ -398,7 +398,10 @@ static void pci_conf()
 		for (i= 0, dep= de_table; i<DE_PORT_NR; i++, dep++)
 		{
 			if (!dep->de_pci)
+			{
+				printf("pci: no pci for port %d\n", i);
 				continue;
+			}
 			if (((dep->de_pcibus | dep->de_pcidev |
 				dep->de_pcifunc) != 0) != h)
 			{
@@ -821,7 +824,7 @@ dpeth_t *dep;
 static void do_getstat(mp)
 message *mp;
 {
-	int port;
+	int port, r;
 	dpeth_t *dep;
 
 	port = mp->DL_PORT;
@@ -833,7 +836,13 @@ message *mp;
 	{
 		put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
 			(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
-		reply(dep, OK, FALSE);
+		
+		mp->m_type= DL_STAT_REPLY;
+		mp->DL_PORT= port;
+		mp->DL_STAT= OK;
+		r= send(mp->m_source, mp);
+		if (r != OK)
+			panic(__FILE__, "do_getstat: send failed: %d\n", r);
 		return;
 	}
 	assert(dep->de_mode == DEM_ENABLED);
@@ -845,7 +854,13 @@ message *mp;
 
 	put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
 		(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
-	reply(dep, OK, FALSE);
+
+	mp->m_type= DL_STAT_REPLY;
+	mp->DL_PORT= port;
+	mp->DL_STAT= OK;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic(__FILE__, "do_getstat: send failed: %d\n", r);
 }
 
 /*===========================================================================*
@@ -854,7 +869,7 @@ message *mp;
 static void do_getstat_s(mp)
 message *mp;
 {
-	int port;
+	int port, r;
 	dpeth_t *dep;
 
 	port = mp->DL_PORT;
@@ -866,7 +881,13 @@ message *mp;
 	{
 		put_userdata(mp->DL_PROC, (vir_bytes) mp->DL_ADDR,
 			(vir_bytes) sizeof(dep->de_stat), &dep->de_stat);
-		reply(dep, OK, FALSE);
+
+		mp->m_type= DL_STAT_REPLY;
+		mp->DL_PORT= port;
+		mp->DL_STAT= OK;
+		r= send(mp->m_source, mp);
+		if (r != OK)
+			panic(__FILE__, "do_getstat: send failed: %d\n", r);
 		return;
 	}
 	assert(dep->de_mode == DEM_ENABLED);
@@ -878,7 +899,13 @@ message *mp;
 
 	put_userdata_s(mp->DL_PROC, mp->DL_GRANT,
 		sizeof(dep->de_stat), &dep->de_stat);
-	reply(dep, OK, FALSE);
+
+	mp->m_type= DL_STAT_REPLY;
+	mp->DL_PORT= port;
+	mp->DL_STAT= OK;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic(__FILE__, "do_getstat: send failed: %d\n", r);
 }
 
 /*===========================================================================*
@@ -2714,7 +2741,10 @@ u8_t inb(port_t port)
 
 	r= sys_inb(port, &value);
 	if (r != OK)
+	{
+		printf("inb failed for port 0x%x\n", port);
 		panic("DP8390","sys_inb failed", r);
+	}
 	return value;
 }
 

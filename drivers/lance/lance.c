@@ -1403,7 +1403,7 @@ iovec_dat_t *iovp;
 static void do_getstat_s(mp)
 message *mp;
 {
-  int port;
+  int r, port;
   ether_card_t *ec;
 
   port = mp->DL_PORT;
@@ -1415,7 +1415,13 @@ message *mp;
 
   put_userdata_s(mp->DL_PROC, mp->DL_GRANT,
                &ec->eth_stat, sizeof(ec->eth_stat));
-  reply(ec, OK, FALSE);
+
+  mp->m_type= DL_STAT_REPLY;
+  mp->DL_PORT= port;
+  mp->DL_STAT= OK;
+  r= send(mp->m_source, mp);
+  if (r != OK)
+	panic(__FILE__, "do_getstat_s: send failed: %d\n", r);
 }
 
 /*===========================================================================*

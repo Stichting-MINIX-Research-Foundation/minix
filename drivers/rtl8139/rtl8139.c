@@ -33,15 +33,20 @@
  *
  * The messages sent are:
  *
- *   m-type	  DL_POR T   DL_PROC   DL_COUNT   DL_STAT   DL_CLCK
+ *   m_type	  DL_PORT    DL_PROC   DL_COUNT   DL_STAT   DL_CLCK
  * |------------|----------|---------|----------|---------|---------|
  * |DL_TASK_REPL| port nr  | proc nr | rd-count | err|stat| clock   |
  * |------------|----------|---------|----------|---------|---------|
  *
  *   m_type	  m3_i1     m3_i2       m3_ca1
- * |------------+---------+-----------+---------------|
+ * |------------|---------|-----------|---------------|
  * |DL_CONF_REPL| port nr | last port | ethernet addr |
  * |------------|---------|-----------|---------------|
+ *
+ *   m_type	  DL_PORT    DL_STAT       
+ * |------------|---------|-----------|
+ * |DL_STAT_REPL| port nr |   err     |
+ * |------------|---------|-----------|
  *
  * Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
  * Changes:
@@ -427,7 +432,7 @@ static void rtl8139_stop()
 			continue;
 		rl_outb(rep->re_base_port, RL_CR, 0);
 	}
-	sys_exit(0);
+	exit(0);
 }
 
 /*===========================================================================*
@@ -1877,6 +1882,10 @@ re_t *rep;
 			rl_writev(&rep->re_tx_mess, TRUE /* from int */,
 				TRUE /* vectored */);
 		}
+		else if (rep->re_tx_mess.m_type == DL_WRITEV_S)
+		{
+			rl_writev_s(&rep->re_tx_mess, TRUE /* from int */);
+		}
 		else
 		{
 			assert(rep->re_tx_mess.m_type == DL_WRITE);
@@ -2271,7 +2280,13 @@ message *mp;
 		(vir_bytes) mp->DL_ADDR, sizeof(stats));
 	if (r != OK)
 		panic(__FILE__, "rl_getstat: sys_datacopy failed", r);
-	reply(rep, OK, FALSE);
+
+	mp->m_type= DL_STAT_REPLY;
+	mp->DL_PORT= port;
+	mp->DL_STAT= OK;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic("RTL8139", "rl_getstat: send failed: %d\n", r);
 }
 
 /*===========================================================================*
@@ -2299,7 +2314,13 @@ message *mp;
 		(vir_bytes) &stats, sizeof(stats), D);
 	if (r != OK)
 		panic(__FILE__, "rl_getstat_s: sys_safecopyto failed", r);
-	reply(rep, OK, FALSE);
+
+	mp->m_type= DL_STAT_REPLY;
+	mp->DL_PORT= port;
+	mp->DL_STAT= OK;
+	r= send(mp->m_source, mp);
+	if (r != OK)
+		panic("RTL8139", "rl_getstat_s: send failed: %d\n", r);
 }
 
 
