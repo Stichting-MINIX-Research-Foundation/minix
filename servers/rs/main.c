@@ -8,6 +8,7 @@
  *   Jul 22, 2005	by Jorrit N. Herder
  */
 #include "inc.h"
+#include <fcntl.h>
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
 #include "../../kernel/const.h"
@@ -160,6 +161,25 @@ PRIVATE void init_server(void)
 
   /* See if we run in verbose mode. */
   env_parse("rs_verbose", "d", 0, &rs_verbose, 0, 1); 
+
+  /* Initialize the exec pipe. */
+  if (pipe(exec_pipe) == -1)
+	panic("RS", "pipe failed", errno);
+  if (fcntl(exec_pipe[0], F_SETFD,
+	fcntl(exec_pipe[0], F_GETFD) | FD_CLOEXEC) == -1)
+  {
+	panic("RS", "fcntl set FD_CLOEXEC on pipe input failed", errno);
+  }
+  if (fcntl(exec_pipe[1], F_SETFD,
+	fcntl(exec_pipe[1], F_GETFD) | FD_CLOEXEC) == -1)
+  {
+	panic("RS", "fcntl set FD_CLOEXEC on pipe output failed", errno);
+  }
+  if (fcntl(exec_pipe[0], F_SETFL,
+	fcntl(exec_pipe[0], F_GETFL) | O_NONBLOCK) == -1)
+  {
+	panic("RS", "fcntl set O_NONBLOCK on pipe input failed", errno);
+  }
 }
 
 /*===========================================================================*
