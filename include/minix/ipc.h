@@ -101,18 +101,37 @@ typedef struct {
  * Minix run-time system (IPC). 					    *
  *==========================================================================*/ 
 
+/* Datastructure for asynchronous sends */
+typedef struct asynmsg
+{
+	unsigned flags;
+	endpoint_t dst;
+	int result;
+	message msg;
+} asynmsg_t;
+
+/* Defines for flags field */
+#define AMF_EMPTY	0	/* slot is not inuse */
+#define AMF_VALID	1	/* slot contains message */
+#define AMF_DONE	2	/* Kernel has processed the message. The
+				 * result is stored in 'result'
+				 */
+#define AMF_NOTIFY	4	/* Send a notification when AMF_DONE is set */
+
 /* Hide names to avoid name space pollution. */
 #define echo		_echo
 #define notify		_notify
 #define sendrec		_sendrec
 #define receive		_receive
 #define send		_send
+#define senda		_senda
 
 _PROTOTYPE( int echo, (message *m_ptr)					);
 _PROTOTYPE( int notify, (endpoint_t dest)				);
 _PROTOTYPE( int sendrec, (endpoint_t src_dest, message *m_ptr)		);
 _PROTOTYPE( int receive, (endpoint_t src, message *m_ptr)	        );
 _PROTOTYPE( int send, (endpoint_t dest, message *m_ptr)			);
+_PROTOTYPE( int senda, (asynmsg_t *table, size_t count)			);
 
 #define ipc_request	_ipc_request
 #define ipc_reply	_ipc_reply
