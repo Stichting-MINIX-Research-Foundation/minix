@@ -33,7 +33,8 @@ FORWARD _PROTOTYPE( void do_dev_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_dev_name_s, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name_s, (message *mp)			);
-FORWARD _PROTOTYPE( void do_acl, (message *mp)				);
+FORWARD _PROTOTYPE( void do_set_acl, (message *mp)			);
+FORWARD _PROTOTYPE( void do_del_acl, (message *mp)			);
 FORWARD _PROTOTYPE( void do_reserve, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r8, (message *mp)			);
 FORWARD _PROTOTYPE( void do_attr_r16, (message *mp)			);
@@ -84,7 +85,8 @@ int main(void)
 		case BUSC_PCI_RESCAN: do_rescan_bus(&m); break;
 		case BUSC_PCI_DEV_NAME_S: do_dev_name_s(&m); break;
 		case BUSC_PCI_SLOT_NAME_S: do_slot_name_s(&m); break;
-		case BUSC_PCI_ACL: do_acl(&m); break;
+		case BUSC_PCI_SET_ACL: do_set_acl(&m); break;
+		case BUSC_PCI_DEL_ACL: do_del_acl(&m); break;
 		case PROC_EVENT: do_sig_handler(); break;
 		default:
 			printf("PCI: got message from %d, type %d\n",
@@ -379,14 +381,14 @@ message *mp;
 	}
 }
 
-PRIVATE void do_acl(mp)
+PRIVATE void do_set_acl(mp)
 message *mp;
 {
 	int i, r, gid;
 
 	if (mp->m_source != RS_PROC_NR)
 	{
-		printf("PCI: do_acl: not from RS\n");
+		printf("PCI: do_set_acl: not from RS\n");
 		reply(mp, EPERM);
 		return;
 	}
@@ -398,7 +400,7 @@ message *mp;
 	}
 	if (i >= NR_DRIVERS)
 	{
-		printf("PCI: do_acl: table is full\n");
+		printf("PCI: do_set_acl: table is full\n");
 		reply(mp, ENOMEM);
 		return;
 	}
@@ -409,7 +411,7 @@ message *mp;
 		sizeof(acl[i].acl), D);
 	if (r != OK)
 	{
-		printf("PCI: do_acl: safecopyfrom failed\n");
+		printf("PCI: do_set_acl: safecopyfrom failed\n");
 		reply(mp, r);
 		return;
 	}
@@ -418,6 +420,42 @@ message *mp;
 	  printf("PCI: do_acl: setting ACL for %d ('%s') at entry %d\n",
 		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label,
 		i);
+
+	reply(mp, OK);
+}
+
+PRIVATE void do_del_acl(mp)
+message *mp;
+{
+	int i, r, proc_nr;
+
+	if (mp->m_source != RS_PROC_NR)
+	{
+		printf("do_del_acl: not from RS\n");
+		reply(mp, EPERM);
+		return;
+	}
+
+	proc_nr= mp->m1_i1;
+
+	for (i= 0; i<NR_DRIVERS; i++)
+	{
+		if (!acl[i].inuse)
+			continue;
+		if (acl[i].acl.rsp_endpoint == proc_nr)
+			break;
+	}
+
+	if (i >= NR_DRIVERS)
+	{
+		printf("do_del_acl: nothing found for %d\n", proc_nr);
+		reply(mp, EINVAL);
+		return;
+	}
+
+	acl[i].inuse= 0;
+	printf("do_acl: deleting ACL for %d ('%s') at entry %d\n",
+		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label, i);
 
 	reply(mp, OK);
 }

@@ -715,7 +715,7 @@ printf("probe_bus(%d)\n", busind);
 				vid, did, headt, sts);
 #endif
 
-			if (vid == NO_VID)
+			if (vid == NO_VID && did == NO_VID)
 			{
 				if (func == 0)
 					break;	/* Nothing here */
@@ -2420,7 +2420,7 @@ u16_t value;
 PRIVATE void print_capabilities(devind)
 int devind;
 {
-	u8_t status, capptr, type, next;
+	u8_t status, capptr, type, next, subtype;
 	char *str;
 
 	/* Check capabilities bit in the device status register */
@@ -2442,12 +2442,24 @@ int devind;
 		case 5: str= "Message Signaled Interrupts"; break;
 		case 6: str= "CompactPCI Hot Swap"; break;
 		case 8: str= "AMD HyperTransport"; break;
-		case 0xf: str= "AMD I/O MMU"; break;
-		defuault: str= "(unknown type)"; break;
+		case 0xf: str= "Secure Device"; break;
+		default: str= "(unknown type)"; break;
 		}
 
-		printf(" @0x%x: capability type 0x%x: %s\n",
+		printf(" @0x%x: capability type 0x%x: %s",
 			capptr, type, str);
+		if (type == 0x0f)
+		{
+			subtype= (pci_attr_r8(devind, capptr+2) & 0x07);
+			switch(subtype)
+			{
+			case 2: str= "Device Exclusion Vector"; break;
+			case 3: str= "IOMMU"; break;
+			default: str= "(unknown type)"; break;
+			}
+			printf(", sub type 0%o: %s", subtype, str);
+		}
+		printf("\n");
 		capptr= next;
 	}
 }
