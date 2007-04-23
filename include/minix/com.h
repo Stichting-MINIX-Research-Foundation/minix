@@ -132,8 +132,11 @@
 #define BUSC_PCI_SLOT_NAME_S	(BUSC_RQ_BASE + 16)	/* Get the name of a
 							 * PCI slot (safecopy)
 							 */
-#define BUSC_PCI_ACL		(BUSC_RQ_BASE + 17)	/* Set the ACL for a
+#define BUSC_PCI_SET_ACL	(BUSC_RQ_BASE + 17)	/* Set the ACL for a
 							 * driver (safecopy)
+							 */
+#define BUSC_PCI_DEL_ACL	(BUSC_RQ_BASE + 18)	/* Delete the ACL of a
+							 * driver 
 							 */
 
 /*===========================================================================*
@@ -228,6 +231,7 @@
 #define DL_CONF_REPLY	(DL_RS_BASE + 20)
 #define DL_TASK_REPLY	(DL_RS_BASE + 21)
 #define DL_NAME_REPLY	(DL_RS_BASE + 22)
+#define DL_STAT_REPLY	(DL_RS_BASE + 23)
 
 /* Field names for data link layer messages. */
 #define DL_PORT		m2_i1
@@ -436,12 +440,13 @@
 #   define GET_LOCKTIMING 13	/* get lock()/unlock() latency timing */
 #   define GET_BIOSBUFFER 14	/* get a buffer for BIOS calls */
 #   define GET_LOADINFO   15	/* get load average information */
+#   define GET_IRQACTIDS  16	/* get the IRQ masks */
+#   define GET_PRIVID	  17	/* get ID of privilege structure */
 #define I_ENDPT      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */
 #define I_VAL_PTR2     m7_p2	/* second virtual address */ 
 #define I_VAL_LEN2_E   m7_i2	/* second length, or proc nr */
-#   define GET_IRQACTIDS  16	/* get the IRQ masks */
 
 /* Field names for SYS_TIMES. */
 #define T_ENDPT      m4_l1	/* process to request time info for */
