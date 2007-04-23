@@ -36,7 +36,7 @@ register message *m_ptr;	/* pointer to request message */
   int proc_nr, nr_e, nr;
 
   /* Set source address and length based on request type. */
-  switch (m_ptr->I_REQUEST) {	
+  switch (m_ptr->I_REQUEST) {
     case GET_MACHINE: {
         length = sizeof(struct machine);
         src_phys = vir2phys(&machine);
@@ -150,7 +150,13 @@ register message *m_ptr;	/* pointer to request message */
         break;
     }
 
+    case GET_PRIVID:
+	if (!isokendpt(m_ptr->I_VAL_LEN2_E, &proc_nr)) 
+		return EINVAL;
+	return proc_addr(proc_nr)->p_priv->s_id;
+
     default:
+	kprintf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);
         return(EINVAL);
   }
 
