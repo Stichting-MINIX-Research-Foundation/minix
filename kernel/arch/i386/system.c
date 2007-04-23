@@ -9,6 +9,9 @@
 
 #include "proto.h"
 
+FORWARD _PROTOTYPE( void do_ser_debug, (void));
+FORWARD _PROTOTYPE( void ser_debug, (int c));
+
 PUBLIC void arch_shutdown(int how)
 {
 	/* Mask all interrupts, including the clock. */
@@ -47,6 +50,14 @@ PUBLIC void system_init(void)
 #define   LSR_THRE      0x20
 #define COM1_LSR        (COM1_BASE + 5)
 
+#define REG_RBR	0
+#define REG_LSR	5
+#define		LSR_DR	0x1
+
+#define COM1_RBR (COM1_BASE + REG_RBR)
+#define COM1_LSR (COM1_BASE + REG_LSR)
+
+
 PUBLIC void ser_putc(char c)
 {
         int i;
@@ -60,6 +71,52 @@ PUBLIC void ser_putc(char c)
                         break;
         }
         outb( thr, c);
+}
+
+/*===========================================================================*
+ *				do_ser_debug				     * 
+ *===========================================================================*/
+PRIVATE void do_ser_debug()
+{
+	u8_t c, lsr;
+
+	lsr= inb(COM1_LSR);
+	if (!(lsr & LSR_DR))
+		return;
+	c = inb(COM1_RBR);
+	ser_debug(c);
+}
+
+PRIVATE void ser_debug(int c)
+{
+	do_serial_debug++;
+	kprintf("ser_debug: %d\n", c);
+	switch(c)
+	{
+	case '1':
+		ser_dump_proc();
+		break;
+	}
+	do_serial_debug--;
+}
+
+PUBLIC void ser_dump_proc()
+{
+	struct proc *pp;
+
+	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
+	{
+		if (pp->p_rts_flags & SLOT_FREE)
+			continue;
+		kprintf(
+	"%d: 0x%02x %s e %d src %d dst %d prio %d/%d time %d/%d EIP 0x%x\n",
+			proc_nr(pp),
+			pp->p_rts_flags, pp->p_name,
+			pp->p_endpoint, pp->p_getfrom_e, pp->p_sendto_e,
+			pp->p_priority, pp->p_max_priority,
+			pp->p_user_time, pp->p_sys_time, 
+			pp->p_reg.pc);
+	}
 }
 
 #if SPROFILE
@@ -100,3 +157,22 @@ PUBLIC void arch_ack_profile_clock(void)
 }
 
 #endif
+
+#define COLOR_BASE	0xB8000L
+
+PUBLIC void cons_setc(int pos, int c)
+{
+	char ch;
+
+	ch= c;
+	phys_copy(vir2phys((vir_bytes)&ch), COLOR_BASE+(20*80+pos)*2, 1);
+}
+
+PUBLIC void cons_seth(int pos, int n)
+{
+	n &= 0xf;
+	if (n < 10)
+		cons_setc(pos, '0'+n);
+	else
+		cons_setc(pos, 'A'+(n-10));
+}
