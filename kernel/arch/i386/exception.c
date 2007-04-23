@@ -4,13 +4,19 @@
  */
 
 #include "../../kernel.h"
+#include "proto.h"
 #include <signal.h>
 #include "../../proc.h"
 
 /*===========================================================================*
  *				exception				     *
  *===========================================================================*/
-PUBLIC void exception(unsigned vec_nr)
+PUBLIC void exception(vec_nr, trap_errno, old_eip, old_cs, old_eflags)
+unsigned vec_nr;
+u32_t trap_errno;
+u32_t old_eip;
+U16_t old_cs;
+u32_t old_eflags;
 {
 /* An exception or unexpected interrupt has occurred. */
 
@@ -84,6 +90,10 @@ PUBLIC void exception(unsigned vec_nr)
   kprintf("process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);
   kprintf("pc = %u:0x%x", (unsigned) saved_proc->p_reg.cs,
   (unsigned) saved_proc->p_reg.pc);
+  kprintf(
+  "vec_nr= %d, trap_errno= 0x%lx, eip= 0x%lx, cs= 0x%x, eflags= 0x%lx\n",
+	vec_nr, (unsigned long)trap_errno,
+	(unsigned long)old_eip, old_cs, (unsigned long)old_eflags);
 
   panic("exception in a kernel task", NO_NUM);
 }
