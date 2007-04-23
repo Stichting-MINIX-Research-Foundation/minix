@@ -79,6 +79,7 @@ _PROTOTYPE( int cpf_setgrant_indirect, (cp_grant_id_t g, endpoint_t who_to,
 _PROTOTYPE( int cpf_setgrant_magic, (cp_grant_id_t g, endpoint_t who_to,
 	endpoint_t who_from, vir_bytes addr, size_t bytes, int access));
 _PROTOTYPE( int cpf_setgrant_disable, (cp_grant_id_t grant_id));
+_PROTOTYPE( void cpf_reload, (void));
 
 /* Set a process' grant table location and size (in-kernel only). */
 #define _K_SET_GRANT_TABLE(rp, ptr, entries)	\
