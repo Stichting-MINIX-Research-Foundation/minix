@@ -71,14 +71,27 @@ register message *m_ptr;	/* pointer to request message */
          return(EPERM);
   } else {
      if(proc_nr != who_p)
-	kprintf("unsafe sdevio by %d in %d\n", who_e, proc_nr_e);
+     {
+	kprintf("do_sdevio: unsafe sdevio by %d in %d denied\n",
+		who_e, proc_nr_e);
+	return EPERM;
+     }
      /* Get and check physical address. */
      if ((phys_buf = numap_local(proc_nr,
 	 (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
          return(EFAULT);
   }
 
+	switch (io_type)
+	{
+	case _DIO_BYTE: size= 1; break;
+	case _DIO_WORD: size= 2; break;
+	case _DIO_LONG: size= 4; break;
+	default: size= 4; break;	/* Be conservative */
+	}
+
   rp= proc_addr(who_p);
+  privp= priv(rp);
   if (privp && privp->s_flags & CHECK_IO_PORT)
   {
 	switch (io_type)
@@ -104,6 +117,12 @@ register message *m_ptr;	/* pointer to request message */
 	}
   }
 
+  if (port & (size-1))
+  {
+	kprintf("do_devio: unaligned port 0x%x (size %d)\n", port, size);
+	return EPERM;
+  }
+
   /* Perform device I/O for bytes and words. Longs are not supported. */
   if (req_dir == _DIO_INPUT) { 
       switch (req_type) {
@@ -125,4 +144,3 @@ register message *m_ptr;	/* pointer to request message */
 }
 
 #endif /* USE_SDEVIO */
-
