@@ -442,6 +442,7 @@ struct mem_map *map_ptr;			/* memory to remove */
 }
 
 #define PAGE_SIZE	4096
+#define PAGE_DIR_SIZE	(1024*PAGE_SIZE)	
 #define PAGE_TABLE_COVER (1024*PAGE_SIZE)
 /*=========================================================================*
  *				do_x86_vm				   *
@@ -468,6 +469,9 @@ struct memory mem_chunks[NR_MEMS];
 #if VERBOSE_VM
 	printf("do_x86_vm: found high 0x%x\n", high);
 #endif
+	
+	/* Rounding up */
+	high= (high-1+PAGE_DIR_SIZE) & ~(PAGE_DIR_SIZE-1);
 
 	/* The number of pages we need is one for the page directory, enough
 	 * page tables to cover the memory, and one page for alignement.
