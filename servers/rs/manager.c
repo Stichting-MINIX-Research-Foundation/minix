@@ -33,8 +33,6 @@ FORWARD _PROTOTYPE( void init_pci, (struct rproc *rp, int endpoint) );
 
 PRIVATE int shutting_down = FALSE;
 
-#define EXEC_FAILED	49			/* recognizable status */
-
 extern int rs_verbose;
 
 /*===========================================================================*
@@ -166,8 +164,13 @@ message *m_ptr;					/* request message pointer */
   /* See if there is a free entry in the table with system processes. */
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
       rp = &rproc[slot_nr];			/* get pointer to slot */
-      if (! rp->r_flags & RS_IN_USE) 		/* check if available */
+      if (!(rp->r_flags & RS_IN_USE)) 		/* check if available */
 	  break;
+  }
+  if (slot_nr >= NR_SYS_PROCS)
+  {
+	printf("rs`do_start: driver table full\n");
+	return ENOMEM;
   }
 
   /* Obtain command name and parameters. This is a space-separated string
@@ -422,7 +425,7 @@ PUBLIC int do_restart(message *m_ptr)
   label[len]= '\0';
 
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if (rp->r_flags & RS_IN_USE && strcmp(rp->r_label, label) == 0) {
+      if ((rp->r_flags & RS_IN_USE) && strcmp(rp->r_label, label) == 0) {
 	  if(rs_verbose) printf("RS: restarting '%s' (%d)\n", label, rp->r_pid);
 	  if (rp->r_pid >= 0)
 	  {
@@ -433,6 +436,7 @@ PUBLIC int do_restart(message *m_ptr)
 	  }
 	  rp->r_flags &= ~(RS_EXITING|RS_REFRESHING|RS_NOPINGREPLY);
 	  r = start_service(rp, 0, &ep);	
+	  if (r != OK) printf("do_restart: start_service failed: %d\n", r);
 	  m_ptr->RS_ENDPOINT = ep;
 	  return(r);
       }
@@ -495,7 +499,7 @@ PUBLIC void do_exit(message *m_ptr)
 {
   register struct rproc *rp;
   pid_t exit_pid;
-  int exit_status, r;
+  int exit_status, r, slot_nr;
   endpoint_t ep;
 
   if(rs_verbose)
@@ -518,6 +522,32 @@ PUBLIC void do_exit(message *m_ptr)
       }
     }
 
+	/* Read from the exec pipe */
+	for (;;)
+	{
+		r= read(exec_pipe[0], &slot_nr, sizeof(slot_nr));
+		if (r == -1)
+		{
+			if (errno == -EAGAIN)	/* Negative error defines */
+				break;	/* No data */
+			panic("RS", "do_exit: read from exec pipe failed",
+				errno);
+		}
+		if (r != sizeof(slot_nr))
+		{
+			panic("RS", "do_exit: unaligned read from exec pipe",
+				r);
+		}
+		printf("do_exit: got slot %d\n", slot_nr);
+		if (slot_nr < 0 || slot_nr >= NR_SYS_PROCS)
+		{
+			panic("RS", "do_exit: bad slot number from exec pipe",
+				slot_nr);
+		}
+		rp= &rproc[slot_nr];
+		rp->r_flags |= RS_EXECFAILED;
+	}
+
       /* Search the system process table to see who exited. 
        * This should always succeed. 
        */
@@ -528,6 +558,8 @@ PUBLIC void do_exit(message *m_ptr)
 
               rproc_ptr[proc] = NULL;		/* invalidate */
 	      rp->r_pid= -1;
+
+	      pci_del_acl(rp->r_proc_nr_e);	/* Ignore errors */
 
               if ((rp->r_flags & RS_EXITING) || shutting_down) {
 		  /* No reply sent to RS_DOWN yet. */
@@ -556,8 +588,7 @@ PUBLIC void do_exit(message *m_ptr)
 	  		m_ptr->RS_ENDPOINT = ep;
 		      }
 	      }
-              else if (WIFEXITED(exit_status) &&
-		      WEXITSTATUS(exit_status) == EXEC_FAILED) {
+              else if (rp->r_flags & RS_EXECFAILED) {
 		  rp->r_flags = 0;			/* release slot */
               }
 	      else {
@@ -574,7 +605,7 @@ rp->r_restarts= 0;
 			switch(WTERMSIG(exit_status))
 			{
 			case SIGKILL:	rp->r_flags |= RS_KILLED; break;
-			default: 	rp->r_flags |= RS_CRASHED; break;
+			default: 	rp->r_flags |= RS_SIGNALED; break;
 			}
 		  } 
 		  else
@@ -692,7 +723,7 @@ endpoint_t *endpoint;
   int child_proc_nr_e, child_proc_nr_n;		/* child process slot */
   pid_t child_pid;				/* child's process id */
   char *file_only;
-  int s, use_copy;
+  int s, use_copy, slot_nr;
   struct priv *privp;
   message m;
 
@@ -718,6 +749,7 @@ endpoint_t *endpoint;
 				 * nice values.
 				 */
       setuid(rp->r_uid);
+      cpf_reload();			/* Tell kernel about grant table  */
       if (!use_copy)
       {
 	execve(rp->r_argv[0], rp->r_argv, NULL);	/* POSIX execute */
@@ -725,7 +757,11 @@ endpoint_t *endpoint;
 	execve(file_only, rp->r_argv, NULL);		/* POSIX execute */
       }
       printf("RS: exec failed for %s: %d\n", rp->r_argv[0], errno);
-      exit(EXEC_FAILED);				/* terminate child */
+      slot_nr= rp-rproc;
+      s= write(exec_pipe[1], &slot_nr, sizeof(slot_nr));
+      if (s != sizeof(slot_nr))
+	printf("RS: write to exec pipe failed: %d/%d\n", s, errno);
+      exit(1);						/* terminate child */
 
   default:						/* parent process */
       child_proc_nr_e = getnprocnr(child_pid);		/* get child slot */ 
@@ -914,6 +950,8 @@ struct rproc *rp;
 		reason= "killed";
 	else if (rp->r_flags & RS_CRASHED)
 		reason= "crashed";
+	else if (rp->r_flags & RS_SIGNALED)
+		reason= "signaled";
 	else
 	{
 		printf(
@@ -969,8 +1007,9 @@ struct rproc *rp;
 struct priv *privp;
 {
 	int i, src_bits_per_word, dst_bits_per_word, src_word, dst_word,
-		src_bit, call_nr;
+		src_bit, call_nr, chunk, bit, priv_id, slot_nr;
 	unsigned long mask;
+	struct rproc *tmp_rp;
 
 	/* Clear s_k_call_mask */
 	memset(privp->s_k_call_mask, '\0', sizeof(privp->s_k_call_mask));
@@ -996,6 +1035,144 @@ struct priv *privp;
 					call_nr);
 			}
 			privp->s_k_call_mask[dst_word] |= mask;
+		}
+	}
+
+	/* Clear s_ipc_to and s_ipc_sendrec */
+	memset(&privp->s_ipc_to, '\0', sizeof(privp->s_ipc_to));
+	memset(&privp->s_ipc_sendrec, '\0', sizeof(privp->s_ipc_sendrec));
+
+	if (strcmp(rp->r_label, "dp8390") == 0)
+	{
+		printf("init_privs: special code for dp8390\n");
+
+		/* Try to find inet */
+		for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++)
+		{
+		      tmp_rp = &rproc[slot_nr];
+		      if (!(tmp_rp->r_flags & RS_IN_USE))
+			  continue;
+		      if (strcmp(tmp_rp->r_label, "inet") == 0)
+			break;
+		}
+		if (slot_nr >= NR_SYS_PROCS)
+		{
+			printf("init_privs: unable to find inet\n");
+			return;
+		}
+
+		priv_id= sys_getprivid(tmp_rp->r_proc_nr_e);
+		if (priv_id < 0)
+		{
+			printf(
+			"init_privs: unable to get priv_id for inet: %d\n",
+				priv_id);
+			return;
+		}
+		chunk= (priv_id / (sizeof(bitchunk_t)*8));
+		bit= (priv_id % (sizeof(bitchunk_t)*8));
+		privp->s_ipc_to.chunk[chunk] |= (1 << bit);
+
+		priv_id= sys_getprivid(RS_PROC_NR);
+		if (priv_id < 0)
+		{
+			printf(
+			"init_privs: unable to get priv_id for RS: %d\n",
+				priv_id);
+			return;
+		}
+		chunk= (priv_id / (sizeof(bitchunk_t)*8));
+		bit= (priv_id % (sizeof(bitchunk_t)*8));
+		privp->s_ipc_to.chunk[chunk] |= (1 << bit);
+
+		priv_id= sys_getprivid(SYSTEM);
+		if (priv_id < 0)
+		{
+			printf(
+			"init_privs: unable to get priv_id for SYSTEM: %d\n",
+				priv_id);
+			return;
+		}
+		chunk= (priv_id / (sizeof(bitchunk_t)*8));
+		bit= (priv_id % (sizeof(bitchunk_t)*8));
+		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
+
+		priv_id= sys_getprivid(PM_PROC_NR);
+		if (priv_id < 0)
+		{
+			printf(
+			"init_privs: unable to get priv_id for PM: %d\n",
+				priv_id);
+			return;
+		}
+		chunk= (priv_id / (sizeof(bitchunk_t)*8));
+		bit= (priv_id % (sizeof(bitchunk_t)*8));
+		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
+
+		priv_id= sys_getprivid(LOG_PROC_NR);
+		if (priv_id < 0)
+		{
+			printf(
+			"init_privs: unable to get priv_id for LOG: %d\n",
+				priv_id);
+			return;
+		}
+		chunk= (priv_id / (sizeof(bitchunk_t)*8));
+		bit= (priv_id % (sizeof(bitchunk_t)*8));
+		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
+
+		priv_id= sys_getprivid(TTY_PROC_NR);
+		if (priv_id < 0)
+		{
+			printf(
+			"init_privs: unable to get priv_id for TTY: %d\n",
+				priv_id);
+			return;
+		}
+		chunk= (priv_id / (sizeof(bitchunk_t)*8));
+		bit= (priv_id % (sizeof(bitchunk_t)*8));
+		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
+
+		/* Try to find PCI */
+		for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++)
+		{
+		      tmp_rp = &rproc[slot_nr];
+		      if (!(tmp_rp->r_flags & RS_IN_USE))
+			  continue;
+		      if (strcmp(tmp_rp->r_label, "pci") == 0)
+			break;
+		}
+		if (slot_nr >= NR_SYS_PROCS)
+		{
+			printf("init_privs: unable to find PCI\n");
+			return;
+		}
+
+		priv_id= sys_getprivid(tmp_rp->r_proc_nr_e);
+		if (priv_id < 0)
+		{
+			printf(
+			"init_privs: unable to get priv_id for PCI: %d\n",
+				priv_id);
+			return;
+		}
+		chunk= (priv_id / (sizeof(bitchunk_t)*8));
+		bit= (priv_id % (sizeof(bitchunk_t)*8));
+		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
+	}
+	else
+	{
+		for (i= 0; i<sizeof(privp->s_ipc_to)*8; i++)
+		{
+			chunk= (i / (sizeof(bitchunk_t)*8));
+			bit= (i % (sizeof(bitchunk_t)*8));
+			privp->s_ipc_to.chunk[chunk] |= (1 << bit);
+		}
+		for (i= 0; i<sizeof(privp->s_ipc_sendrec)*8; i++)
+		{
+			chunk= (i / (sizeof(bitchunk_t)*8));
+			bit= (i % (sizeof(bitchunk_t)*8));
+			privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
 		}
 	}
 }
