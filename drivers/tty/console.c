@@ -1170,6 +1170,9 @@ int c;				/* character to print */
   if (c != 0) {
 	if (c == '\n') cons_putk('\r');
 	out_char(&cons_table[0], (int) c);
+#if 0
+	ser_putc(c);
+#endif
   } else {
 	flush(&cons_table[0]);
   }

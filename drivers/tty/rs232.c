@@ -891,6 +891,10 @@ register rs232_t *rs;		/* line with input interrupt */
 
   unsigned long c;
 
+#if 0	/* Enable this if you want serial input in the kernel */
+  return;
+#endif
+
 #if (MACHINE == IBM_PC)
   sys_inb(rs->recv_port, &c);
 #else /* MACHINE == ATARI */
