@@ -129,6 +129,6 @@ _PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)    );
 _PROTOTYPE( int arch_init_profile_clock, (u32_t freq)			);
 _PROTOTYPE( void arch_stop_profile_clock, (void)			);
 _PROTOTYPE( void arch_ack_profile_clock, (void)				);
-
+_PROTOTYPE( void do_ser_debug, (void)					);
 
 #endif /* PROTO_H */

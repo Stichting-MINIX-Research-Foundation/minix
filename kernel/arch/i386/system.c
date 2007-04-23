@@ -8,8 +8,8 @@
 #include <minix/portio.h>
 
 #include "proto.h"
+#include "../../proc.h"
 
-FORWARD _PROTOTYPE( void do_ser_debug, (void));
 FORWARD _PROTOTYPE( void ser_debug, (int c));
 
 PUBLIC void arch_shutdown(int how)
@@ -47,16 +47,10 @@ PUBLIC void system_init(void)
 
 #define COM1_BASE       0x3F8
 #define COM1_THR        (COM1_BASE + 0)
-#define   LSR_THRE      0x20
+#define COM1_RBR (COM1_BASE + 0)
 #define COM1_LSR        (COM1_BASE + 5)
-
-#define REG_RBR	0
-#define REG_LSR	5
-#define		LSR_DR	0x1
-
-#define COM1_RBR (COM1_BASE + REG_RBR)
-#define COM1_LSR (COM1_BASE + REG_LSR)
-
+#define		LSR_DR		0x01
+#define		LSR_THRE	0x20
 
 PUBLIC void ser_putc(char c)
 {
@@ -76,7 +70,7 @@ PUBLIC void ser_putc(char c)
 /*===========================================================================*
  *				do_ser_debug				     * 
  *===========================================================================*/
-PRIVATE void do_ser_debug()
+PUBLIC void do_ser_debug()
 {
 	u8_t c, lsr;
 
