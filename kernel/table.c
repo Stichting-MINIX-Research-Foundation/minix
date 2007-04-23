@@ -55,7 +55,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
  */
 #define TSK_T	(1 << RECEIVE)			/* clock and system */
 #define SRV_T	(~0)				/* system services */
-#define USR_T   ((1 << SENDREC) | (1 << ECHO))	/* user processes */
+#define USR_T   ((1 << SENDREC))		/* user processes */
 
 /* Send masks determine to whom processes can send messages or notifications. 
  * The values here are used for the processes in the boot image. We rely on 
