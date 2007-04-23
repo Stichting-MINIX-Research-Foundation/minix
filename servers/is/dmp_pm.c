@@ -20,7 +20,7 @@ PUBLIC struct mproc mproc[NR_PROCS];
  *===========================================================================*/
 PRIVATE char *flags_str(int flags)
 {
-	static char str[10];
+	static char str[13];
 	str[0] = (flags & WAITING) ? 'W' : '-';
 	str[1] = (flags & ZOMBIE)  ? 'Z' : '-';
 	str[2] = (flags & PAUSED)  ? 'P' : '-';
