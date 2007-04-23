@@ -310,4 +310,13 @@ cp_grant_id_t gid;
 	return 0;
 }
 
+PUBLIC void
+cpf_reload(void)
+{
+/* Inform the kernel about the location of the grant table. This is needed
+ * after a fork.
+ */
+	if (grants)
+		sys_setgrant(grants, ngrants);	/* Do we need error checking? */
+}
 
