@@ -107,6 +107,7 @@ struct proc {
 /* Misc flags */
 #define REPLY_PENDING	0x01	/* reply to IPC_REQUEST is pending */
 #define MF_VM		0x08	/* process uses VM */
+#define MF_ASYNMSG	0x10	/* Asynchrous message pending */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 
