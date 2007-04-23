@@ -15,6 +15,7 @@ _PROTOTYPE( void clock_task, (void)					);
 _PROTOTYPE( clock_t get_uptime, (void)					);
 _PROTOTYPE( void set_timer, (struct timer *tp, clock_t t, tmr_func_t f)	);
 _PROTOTYPE( void reset_timer, (struct timer *tp)			);
+_PROTOTYPE( void ser_dump_proc, (void)					);
 
 /* main.c */
 _PROTOTYPE( void main, (void)						);
@@ -73,6 +74,8 @@ _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
 _PROTOTYPE( void rm_irq_handler, (irq_hook_t *hook)                      );
 _PROTOTYPE( void enable_irq, (irq_hook_t *hook)                        	);
 _PROTOTYPE( int disable_irq, (irq_hook_t *hook)                        );
+_PROTOTYPE( void cons_setc, (int pos, int c)				);
+_PROTOTYPE( void cons_seth, (int pos, int n)				);
 
 /* debug.c */
 #if DEBUG_SCHED_CHECK
