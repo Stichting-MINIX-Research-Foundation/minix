@@ -29,9 +29,16 @@ struct priv {
   sys_id_t s_id;		/* index of this system structure */
   short s_flags;		/* PREEMTIBLE, BILLABLE, etc. */
 
+  /* Asynchronous sends */
+  vir_bytes s_asyntab;		/* addr. of table in process' address space */
+  size_t s_asynsize;		/* number of elements in table. 0 when not in
+				 * use
+				 */
+
   short s_trap_mask;		/* allowed system call traps */
   sys_map_t s_ipc_from;		/* allowed callers to receive from */
   sys_map_t s_ipc_to;		/* allowed destination processes */
+  sys_map_t s_ipc_sendrec;	/* allowed sendrec processes */
 
   /* allowed kernel calls */
 #define CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
