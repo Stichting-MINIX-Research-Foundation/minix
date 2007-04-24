@@ -76,7 +76,9 @@ PRIVATE struct pcidev
 	u16_t pd_vid;
 	u16_t pd_did;
 	u8_t pd_ilr;
+
 	u8_t pd_inuse;
+	endpoint_t pd_proc;
 
 	struct bar
 	{
@@ -86,8 +88,6 @@ PRIVATE struct pcidev
 		u32_t pb_size;
 	} pd_bar[BAM_NR];
 	int pd_bar_nr;
-
-	char pd_name[M3_STRING];
 } pcidev[NR_PCIDEV];
 
 /* pb_flags */
@@ -312,10 +312,9 @@ u16_t *didp;
 /*===========================================================================*
  *				pci_reserve3				     *
  *===========================================================================*/
-PUBLIC int pci_reserve3(devind, proc, name)
+PUBLIC int pci_reserve2(devind, proc)
 int devind;
 int proc;
-char *name;
 {
 	int i, r;
 	u8_t ilr;
@@ -326,7 +325,7 @@ char *name;
 	if(pcidev[devind].pd_inuse)
 		return EBUSY;
 	pcidev[devind].pd_inuse= 1;
-	strcpy(pcidev[devind].pd_name, name);
+	pcidev[devind].pd_proc= proc;
 
 	for (i= 0; i<pcidev[devind].pd_bar_nr; i++)
 	{
@@ -387,12 +386,11 @@ char *name;
 	return OK;
 }
 
-#if 0
 /*===========================================================================*
  *				pci_release				     *
  *===========================================================================*/
-PUBLIC void pci_release(name)
-char *name;
+PUBLIC void pci_release(proc)
+endpoint_t proc;
 {
 	int i;
 
@@ -400,12 +398,11 @@ char *name;
 	{
 		if (!pcidev[i].pd_inuse)
 			continue;
-		if (strcmp(pcidev[i].pd_name, name) != 0)
+		if (pcidev[i].pd_proc != proc)
 			continue;
 		pcidev[i].pd_inuse= 0;
 	}
 }
-#endif
 
 /*===========================================================================*
  *				pci_ids					     *

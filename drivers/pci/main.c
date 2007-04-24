@@ -11,12 +11,6 @@ main.c
 
 #define NR_DRIVERS	16
 
-PRIVATE struct name
-{
-	char name[M3_STRING];
-	int tasknr;
-} names[NR_DRIVERS];
-
 PRIVATE struct acl
 {
 	int inuse;
@@ -54,9 +48,6 @@ int main(void)
 	message m;
 
 	pci_init();
-
-	for (i= 0; i<NR_DRIVERS; i++)
-		names[i].tasknr= ANY;
 
 	for(;;)
 	{
@@ -118,35 +109,11 @@ PRIVATE void do_sig_handler()
 PRIVATE void do_init(mp)
 message *mp;
 {
-	int i, r, empty;
+	int r;
 
 #if DEBUG
-	printf("PCI: pci_init: called by '%s'\n", mp->m3_ca1);
+	printf("PCI: pci_init: called by '%d'\n", mp->m_source);
 #endif
-	empty= -1;
-	for (i= 0; i<NR_DRIVERS; i++)
-	{
-		if (empty == -1 && names[i].tasknr == ANY)
-			empty= i;
-		if (strcmp(names[i].name, mp->m3_ca1) == 0)
-			break;
-	}
-	if (i >= NR_DRIVERS)
-	{
-		if (empty == -1)
-			panic("pci", "do_init: too many clients", NR_DRIVERS);
-		i= empty;
-		strcpy(names[i].name, mp->m3_ca1);
-	}
-	else if (names[i].tasknr == mp->m_source)
-	{
-		/* Ignore all init calls for a process after the first one */
-	}
-#if 0
-	else
-		pci_release(names[i].name);
-#endif
-	names[i].tasknr= mp->m_source;
 
 	mp->m_type= 0;
 	r= send(mp->m_source, mp);
@@ -457,6 +424,9 @@ message *mp;
 	printf("do_acl: deleting ACL for %d ('%s') at entry %d\n",
 		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label, i);
 
+	/* Also release all devices held by this process */
+	pci_release(proc_nr);
+
 	reply(mp, OK);
 }
 
@@ -465,23 +435,9 @@ message *mp;
 {
 	int i, r, devind;
 
-	/* Find the name of the caller */
-	for (i= 0; i<NR_DRIVERS; i++)
-	{
-		if (names[i].tasknr == mp->m_source)
-			break;
-	}
-	if (i >= NR_DRIVERS)
-	{
-		printf("pci`do_reserve: task %d did not call pci_init\n",
-			mp->m_source);
-		return;
-	}
-
 	devind= mp->m1_i1;
-
 	
-	mp->m_type= pci_reserve3(devind, mp->m_source, names[i].name);
+	mp->m_type= pci_reserve2(devind, mp->m_source);
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{

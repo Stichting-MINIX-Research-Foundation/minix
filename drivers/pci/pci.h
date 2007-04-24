@@ -82,8 +82,8 @@ extern struct pci_isabridge pci_isabridge[];
 extern struct pci_pcibridge pci_pcibridge[];
 
 /* Utility functions */
-_PROTOTYPE( int pci_reserve3, (int devind, int proc, char name[M3_STRING]));
-_PROTOTYPE( void pci_release, (char name[M3_STRING])			);
+_PROTOTYPE( int pci_reserve2, (int devind, endpoint_t proc)		);
+_PROTOTYPE( void pci_release, (endpoint_t proc)				);
 _PROTOTYPE( int pci_first_dev_a, (struct rs_pci *aclp, int *devindp,
 					u16_t *vidp, u16_t *didp)	);
 _PROTOTYPE( int pci_next_dev_a, (struct rs_pci *aclp, int *devindp,
