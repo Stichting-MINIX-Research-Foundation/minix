@@ -118,7 +118,8 @@ struct dpeth *dep;
 		dname= "unknown device";
 	printf("%s: %s (%04X/%04X) at %s\n",
 		dep->de_name, dname, vid, did, pci_slot_name(devind));
-	pci_reserve(devind);
+        if(pci_reserve_ok(devind) != OK)
+               return 0;
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
 
