@@ -246,7 +246,6 @@ do
 		echo -n "
 MINIX needs one primary partition of $TOTALMB MB for a full install,
 plus what you want for /home.
-The maximum file system currently supported is 4 GB.
 
 If there is no free space on your disk then you have to choose an option:
    (1) Delete one or more partitions
