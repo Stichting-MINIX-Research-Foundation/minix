@@ -148,7 +148,8 @@ int safe;			/* safe copies */
 	return EPERM;
   }
 
-  if (ex64hi(pos64) != 0)
+  /* ZERO_DEV and NULL_DEV are infinite in size. */
+  if (m_device != ZERO_DEV && m_device != NULL_DEV && ex64hi(pos64) != 0)
 	return OK;	/* Beyond EOF */
   position= cv64ul(pos64);
 

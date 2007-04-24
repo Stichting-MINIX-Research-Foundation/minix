@@ -37,7 +37,7 @@
 
 FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t,
   cp_grant_id_t *, int *, cp_grant_id_t *, int, endpoint_t *,
-  void **, int *, vir_bytes, off_t *));
+  void **, int *, vir_bytes, u32_t *));
 FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
 	int));
 
@@ -170,7 +170,7 @@ PUBLIC void dev_status(message *m)
  *				safe_io_conversion			     *
  *===========================================================================*/
 PRIVATE int safe_io_conversion(driver, gid, op, gids, gids_size,
-	io_ept, buf, vec_grants, bytes, pos)
+	io_ept, buf, vec_grants, bytes, pos_lo)
 endpoint_t driver;
 cp_grant_id_t *gid;
 int *op;
@@ -180,7 +180,7 @@ endpoint_t *io_ept;
 void **buf;
 int *vec_grants;
 vir_bytes bytes;
-off_t *pos;
+u32_t *pos_lo;
 {
 	int access = 0, size;
 	int j;
@@ -242,7 +242,7 @@ off_t *pos;
 			*buf = new_iovec;
 			break;
 		case VFS_DEV_IOCTL:
-			*pos = *io_ept;	/* Old endpoint in POSITION field. */
+			*pos_lo = *io_ept; /* Old endpoint in POSITION field. */
 			*op = DEV_IOCTL_S;
 			if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
 			if(_MINIX_IOCTL_IOW(m_in.REQUEST)) access |= CPF_READ;
@@ -303,6 +303,7 @@ int gids_size;
 	return;
 }
 
+#if 0
 /*===========================================================================*
  *				dev_bio					     *
  *===========================================================================*/
@@ -420,22 +421,23 @@ int bytes;			/* how many bytes to transfer */
 	return(m.REP_STATUS);
   }
 }
+#endif
 
 /*===========================================================================*
  *				dev_io					     *
  *===========================================================================*/
-PUBLIC int dev_io(op, dev, proc_e, buf, posX, bytes, flags)
+PUBLIC int dev_io(op, dev, proc_e, buf, pos, bytes, flags)
 int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
 dev_t dev;			/* major-minor device number */
 int proc_e;			/* in whose address space is buf? */
 void *buf;			/* virtual address of the buffer */
-u64_t posX;			/* byte position */
+u64_t pos;			/* byte position */
 int bytes;			/* how many bytes to transfer */
 int flags;			/* special flags, like O_NONBLOCK */
 {
 /* Read or write from a device.  The parameter 'dev' tells which one. */
   struct dmap *dp;
-  off_t pos;
+  u32_t pos_lo, pos_high;
   message dev_mess;
   cp_grant_id_t gid = GRANT_INVALID;
   static cp_grant_id_t gids[NR_IOREQS];
@@ -443,9 +445,8 @@ int flags;			/* special flags, like O_NONBLOCK */
   void *buf_used;
   endpoint_t ioproc;
 
-  if (ex64hi(posX) != 0)
-	panic(__FILE__, "dev_io: postition too high", NO_NUM);
-  pos= ex64lo(posX);
+  pos_lo= ex64lo(pos);
+  pos_high= ex64hi(pos);
 
   /* Determine task dmap. */
   dp = &dmap[(dev >> MAJOR) & BYTE];
@@ -471,7 +472,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   buf_used = buf;
   safe = safe_io_conversion(dp->dmap_driver, &gid,
     &op, gids, NR_IOREQS, &dev_mess.IO_ENDPT, &buf_used,
-    &vec_grants, bytes, &pos);
+    &vec_grants, bytes, &pos_lo);
 
   if(buf != buf_used)
 	panic(__FILE__,"dev_io: safe_io_conversion changed buffer", NO_NUM);
@@ -484,9 +485,9 @@ int flags;			/* special flags, like O_NONBLOCK */
   /* Set up the rest of the message passed to task. */
   dev_mess.m_type   = op;
   dev_mess.DEVICE   = (dev >> MINOR) & BYTE;
-  dev_mess.POSITION = pos;
+  dev_mess.POSITION = pos_lo;
   dev_mess.COUNT    = bytes;
-  dev_mess.HIGHPOS  = 0;
+  dev_mess.HIGHPOS  = pos_high;
 
   /* This will be used if the i/o is suspended. */
   ioproc = dev_mess.IO_ENDPT;

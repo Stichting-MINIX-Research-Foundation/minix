@@ -124,8 +124,8 @@ char *argv[];
   /* Read the entire file. Try it in large chunks, but if an error
    * occurs, go to single reads for a while. */
   while (1) {
-	if(lseek(fd, BLOCK_SIZE * b, SEEK_SET) < 0) {
-		perror("lseek");
+	if(lseek64(fd, mul64u(BLOCK_SIZE, b), SEEK_SET, NULL) < 0) {
+		perror("lseek64");
 		return 1;
 	}
 	s = read(fd, a, BLOCK_SIZE * chunk);
