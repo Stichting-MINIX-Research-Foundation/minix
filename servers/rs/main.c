@@ -40,6 +40,7 @@ PUBLIC int main(void)
   int result;                 			/* result to return */
   sigset_t sigset;				/* system signal set */
   int s;
+  uid_t euid;
 
   /* Initialize the server, then go to work. */
   init_server();	
@@ -83,6 +84,17 @@ PUBLIC int main(void)
        * Handle the request and send a reply to the caller. 
        */
       else {	
+	  /* Only root can make calls to rs */
+	  euid= getpeuid(m.m_source);
+	  if (euid != 0)
+	  {
+		printf("RS: got unauthorized request from endpoint %d\n",
+			m.m_source);
+		m.m_type = EPERM;
+		reply(who_e, &m);
+		continue;
+	  }
+
           switch(call_nr) {
           case RS_UP: 		result = do_up(&m, FALSE, 0); break;
           case RS_UP_COPY:	result = do_up(&m, TRUE, 0); break;
