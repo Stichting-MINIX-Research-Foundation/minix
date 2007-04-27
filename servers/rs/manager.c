@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <minix/dmap.h>
+#include <minix/ds.h>
 #include <minix/endpoint.h>
 #include <minix/rs.h>
 #include <lib.h>
@@ -828,6 +829,11 @@ endpoint_t *endpoint;
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
 
   if(endpoint) *endpoint = child_proc_nr_e;	/* send back child endpoint */
+
+  s= ds_publish_u32(rp->r_label, child_proc_nr_e);
+  if (s != OK)
+	printf("start_service: ds_publish_u32 failed: %d\n", s);
+
   return(OK);
 }
 
