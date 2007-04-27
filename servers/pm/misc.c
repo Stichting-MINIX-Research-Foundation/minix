@@ -5,6 +5,7 @@
  *   do_procstat: request process status  (Jorrit N. Herder)
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
  *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
+ *   do_getpuid: get the uid/euid of a process given it's endpoint
  *   do_allocmem: allocate a chunk of memory  (Jorrit N. Herder)
  *   do_freemem: deallocate a chunk of memory  (Jorrit N. Herder)
  *   do_getsetpriority: get/set process priority
@@ -356,6 +357,35 @@ PUBLIC int do_getprocnr()
   }
 
   return(OK);
+}
+
+/*===========================================================================*
+ *				do_getpuid			             *
+ *===========================================================================*/
+PUBLIC int do_getpuid()
+{
+  register struct mproc *rmp;
+  endpoint_t ep;
+
+  /* This call should be moved to DS. */
+  if (mp->mp_effuid != 0)
+  {
+	printf("PM: unauthorized call of do_getpuid by proc %d\n",
+		mp->mp_endpoint);
+	return EPERM;
+  }
+
+  ep= m_in.endpt;
+
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
+		mp->mp_reply.reply_res2 = rmp->mp_effuid;
+		return(rmp->mp_realuid);
+	}
+  } 
+
+  /* Process not found */
+  return(ESRCH);			
 }
 
 /*===========================================================================*

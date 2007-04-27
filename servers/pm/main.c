@@ -119,6 +119,9 @@ PUBLIC int main()
 	case GETPROCNR:
 		result= do_getprocnr();
 		break;
+	case GETPUID:
+		result= do_getpuid();
+		break;
 	default:
 		/* Else, if the system call number is valid, perform the
 		 * call.

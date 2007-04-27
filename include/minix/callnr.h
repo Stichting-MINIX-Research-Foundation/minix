@@ -95,6 +95,7 @@
 #if 0
 #define FREEMEM		106	/* to PM, not used, not implemented */
 #endif
+#define GETPUID		107	/* to PM: get the uid of a process (endpoint) */
 
 #define DEVCTL		120	/* to FS, map or unmap a device */
 #define TASK_REPLY	121	/* to FS: reply code from drivers, not 
