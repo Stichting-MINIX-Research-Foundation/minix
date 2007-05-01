@@ -82,7 +82,7 @@ int flags;					/* extra flags, if any */
    * arguments vector is: path, arguments, NULL. 
    */
   arg_count = 0;				/* initialize arg count */
-  rp->r_argv[arg_count++] = rp->r_cmd;		/* start with path */
+  rp->r_file = rp->r_argv[arg_count++] = rp->r_cmd;	/* start with path */
   cmd_ptr = rp->r_cmd;				/* do some parsing */ 
   while(*cmd_ptr != '\0') {			/* stop at end of string */
       if (*cmd_ptr == ' ') {			/* next argument */
@@ -184,7 +184,7 @@ message *m_ptr;					/* request message pointer */
    * arguments vector is: path, arguments, NULL. 
    */
   arg_count = 0;				/* initialize arg count */
-  rp->r_argv[arg_count++] = rp->r_cmd;		/* start with path */
+  rp->r_file = rp->r_argv[arg_count++] = rp->r_cmd;	/* start with path */
   cmd_ptr = rp->r_cmd;				/* do some parsing */ 
   while(*cmd_ptr != '\0') {			/* stop at end of string */
       if (*cmd_ptr == ' ') {			/* next argument */
@@ -720,8 +720,9 @@ endpoint_t *endpoint;
       setuid(rp->r_uid);
       if (!use_copy)
       {
-	execve(rp->r_argv[0], rp->r_argv, NULL);	/* POSIX execute */
-	file_only = strrchr(rp->r_argv[0], '/') + 1;
+	rp->r_argv[0] = rp->r_label;
+	execve(rp->r_file, rp->r_argv, NULL);	/* POSIX execute */
+	file_only = strrchr(rp->r_file, '/') + 1;
 	execve(file_only, rp->r_argv, NULL);		/* POSIX execute */
       }
       printf("RS: exec failed for %s: %d\n", rp->r_argv[0], errno);

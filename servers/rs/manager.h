@@ -42,6 +42,7 @@ extern struct rproc {
   char r_cmd[MAX_COMMAND_LEN];	/* raw command plus arguments */
   char r_script[MAX_SCRIPT_LEN]; /* name of the restart script executable */
   char *r_argv[MAX_NR_ARGS+2];  /* parsed arguments vector */
+  char *r_file;                 /* path to binary to exec */
   int r_argc;  			/* number of arguments */
 
   /* Resources */

@@ -37,10 +37,12 @@ PRIVATE struct pcitab
 };
 
 _PROTOTYPE( static void rtl_init, (struct dpeth *dep)			);
+#if 0
 _PROTOTYPE( static u16_t get_ee_word, (dpeth_t *dep, int a)		);
 _PROTOTYPE( static void ee_wen, (dpeth_t *dep)				);
 _PROTOTYPE( static void set_ee_word, (dpeth_t *dep, int a, U16_t w)	);
 _PROTOTYPE( static void ee_wds, (dpeth_t *dep)				);
+#endif
 _PROTOTYPE( static void micro_delay, (unsigned long usecs)		);
 
 PUBLIC int rtl_probe(dep)
@@ -79,7 +81,7 @@ struct dpeth *dep;
 
 	for(;;)
 	{
-		for (i= 0; pcitab[i].vid != 0; i++)
+		for (i= 0; pcitab[i].vid != 0 || pcitab[i].did != 0; i++)
 		{
 			if (pcitab[i].vid != vid)
 				continue;
@@ -93,7 +95,7 @@ struct dpeth *dep;
 			}
 			break;
 		}
-		if (pcitab[i].vid != 0)
+		if (pcitab[i].vid != 0 || pcitab[i].did != 0)
 			break;
 
 		if (just_one)
@@ -116,7 +118,8 @@ struct dpeth *dep;
 		dname= "unknown device";
 	printf("%s: %s (%04X/%04X) at %s\n",
 		dep->de_name, dname, vid, did, pci_slot_name(devind));
-	pci_reserve(devind);
+        if(pci_reserve_ok(devind) != OK)
+               return 0;
 	/* printf("cr = 0x%x\n", pci_attr_r16(devind, PCI_CR)); */
 	bar= pci_attr_r32(devind, PCI_BAR) & 0xffffffe0;
 
@@ -199,6 +202,7 @@ dpeth_t *dep;
 	printf("\n");
 #endif
 
+#if 0
 	if (getenv("RTL8029MN"))
 	{
 		ee_wen(dep);
@@ -226,8 +230,10 @@ dpeth_t *dep;
 
 		assert(get_ee_word(dep, 0x76/2) == 0x8029);
 	}
+#endif
 }
 
+#if 0
 static u16_t get_ee_word(dep, a)
 dpeth_t *dep;
 int a;
@@ -365,6 +371,7 @@ dpeth_t *dep;
 	outb_reg3(dep, 1, 0x00);		/* back to normal */
 	outb_reg0(dep, DP_CR, CR_PS_P0);	/* back to bank 0 */
 }
+#endif
 
 static void micro_delay(unsigned long usecs)
 {
