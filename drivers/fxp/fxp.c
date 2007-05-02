@@ -59,6 +59,7 @@
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
 #include <ibm/pci.h>
+#include <minix/ds.h>
 
 #include <timers.h>
 
@@ -211,7 +212,6 @@ fxp_t;
 
 static fxp_t fxp_table[FXP_PORT_NR];
 
-static int fxp_tasknr= ANY;
 static u16_t eth_ign_proto;
 static tmra_ut fxp_watchdog;
 static char *progname;
@@ -274,12 +274,10 @@ _PROTOTYPE( static void do_outl, (port_t port, u32_t v)			);
 int main(int argc, char *argv[])
 {
 	message m;
-	int i, r, tasknr;
+	int i, r;
+	u32_t tasknr;
 	fxp_t *fp;
 	long v;
-
-	if ((fxp_tasknr= getprocnr())<0)
-		panic("FXP", "couldn't get proc nr", errno);
 
 	if (argc < 1)
 		panic("FXP", "A head which at this time has no name", NO_NUM);
@@ -298,9 +296,12 @@ int main(int argc, char *argv[])
 #endif
 
 	/* Try to notify inet that we are present (again) */
-	r = _pm_findproc("inet", &tasknr);
+	r= ds_retrieve_u32("inet", &tasknr);
 	if (r == OK)
 		notify(tasknr);
+	else if (r != ESRCH)
+		printf("fxp: ds_retrieve_u32 failed for 'inet': %d\n", r);
+
 
 	while (TRUE)
 	{
@@ -329,7 +330,10 @@ int main(int argc, char *argv[])
 
 				r= sys_irqenable(&fp->fxp_hook);
 				if (r != OK)
-					panic("FXP","unable enable interrupts", r);
+				{
+					panic("FXP",
+						"unable enable interrupts", r);
+				}
 
 				if (!fp->fxp_got_int)
 					continue;
