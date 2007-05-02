@@ -59,6 +59,8 @@ int flags;					/* extra flags, if any */
   int r;
   endpoint_t ep;				/* new endpoint no. */
 
+printf("RS: in do_up\n");
+
   /* See if there is a free entry in the table with system processes. */
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
       rp = &rproc[slot_nr];			/* get pointer to slot */

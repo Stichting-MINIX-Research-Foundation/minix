@@ -43,6 +43,7 @@ PRIVATE char *known_requests[] = {
 
 #define RUN_CMD		"run"
 #define RUN_SCRIPT	"/etc/rs.single"	/* Default script for 'run' */
+#define PATH_CONFIG	"/etc/drivers.conf"	/* Default config file */
 
 /* Define names for arguments provided to this utility. The first few 
  * arguments are required and have a known index. Thereafter, some optional
@@ -86,7 +87,7 @@ PRIVATE int req_major;
 PRIVATE long req_period;
 PRIVATE char *req_script;
 PRIVATE char *req_label;
-PRIVATE char *req_config;
+PRIVATE char *req_config = PATH_CONFIG;
 PRIVATE int req_printep;
 PRIVATE int class_recurs;	/* Nesting level of class statements */
 
@@ -177,6 +178,8 @@ PRIVATE int parse_arguments(int argc, char **argv)
   }
 
   if (req_nr == RS_UP) {
+
+	req_nr= RS_START;
 
       rs_start.rss_flags= 0;
       if (c_flag)
