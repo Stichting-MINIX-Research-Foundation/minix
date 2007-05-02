@@ -62,6 +62,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <minix/com.h>
+#include <minix/ds.h>
 #include <minix/keymap.h>
 #include <minix/syslib.h>
 #include <minix/type.h>
@@ -305,10 +306,12 @@ extern int errno;
 int main(int argc, char *argv[])
 {
 	int fkeys, sfkeys;
-	int inet_proc_nr;
+	u32_t inet_proc_nr;
 	int i, r;
 	re_t *rep;
 	long v;
+
+	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
 	env_setargs(argc, argv);
 
@@ -329,10 +332,11 @@ int main(int argc, char *argv[])
 	 * be found, assume this is the first time we started and INET is
 	 * not yet alive.
 	 */
-	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
-	r = _pm_findproc("inet", &inet_proc_nr);
-	if (r == OK) notify(inet_proc_nr);
-
+	r= ds_retrieve_u32("inet", &inet_proc_nr);
+	if (r == OK)
+		notify(inet_proc_nr);
+	else if (r != ESRCH)
+		printf("rtl8139: ds_retrieve_u32 failed for 'inet': %d\n", r);
 
 	while (TRUE)
 	{
