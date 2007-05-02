@@ -17,12 +17,14 @@ PUBLIC void pci_init1(name)
 char *name;
 {
 	int r;
+	u32_t u32;
 	size_t len;
 	message m;
 
-	r= _pm_findproc("pci", &pci_procnr);
+	r= ds_retrieve_u32("pci", &u32);
 	if (r != 0)
-		panic("pci", "pci_init1: _pm_findproc failed for 'pci'", r);
+		panic("pci", "pci_init1: ds_retrieve_u32 failed for 'pci'", r);
+	pci_procnr= u32;
 
 	m.m_type= BUSC_PCI_INIT;
 	len= strlen(name);
