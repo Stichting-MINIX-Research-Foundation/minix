@@ -50,6 +50,7 @@ from DL_ETH:
 #include <time.h>
 #include <unistd.h>
 #include <sys/svrctl.h>
+#include <minix/ds.h>
 
 #include "mq.h"
 #include "qp.h"
@@ -96,6 +97,7 @@ PUBLIC void main()
 	mq_t *mq;
 	int r;
 	int source, m_type, timerand, fd;
+	u32_t tasknr;
 	struct fssignon device;
 #ifdef __minix_vmd
 	struct systaskinfo info;
@@ -157,8 +159,10 @@ PUBLIC void main()
 #else /* Minix 3 */
 
 	/* Our new identity as a server. */
-	if ((this_proc = getprocnr()) < 0)
-		ip_panic(( "unable to get own process nr\n"));
+	r= ds_retrieve_u32("inet", &tasknr);
+	if (r != OK)
+		ip_panic(("inet: ds_retrieve_u32 failed for 'inet': %d", r));
+	this_proc= tasknr;
 #endif
 
 	/* Register the device group. */

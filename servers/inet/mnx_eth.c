@@ -7,6 +7,7 @@ Copyright 1995 Philip Homburg
 */
 
 #include "inet.h"
+#include <minix/ds.h>
 #include <minix/safecopies.h>
 #include "proto.h"
 #include "osdep_eth.h"
@@ -37,7 +38,8 @@ FORWARD _PROTOTYPE( int asynsend, (endpoint_t dst, message *mp) );
 
 PUBLIC void osdep_eth_init()
 {
-	int i, j, r, tasknr, rport;
+	int i, j, r, rport;
+	u32_t tasknr;
 	struct eth_conf *ecp;
 	eth_port_t *eth_port, *rep;
 	message mess;
@@ -102,7 +104,12 @@ PUBLIC void osdep_eth_init()
 #ifdef __minix_vmd
 		r= sys_findproc(ecp->ec_task, &tasknr, 0);
 #else /* Minix 3 */
-		r = _pm_findproc(ecp->ec_task, &tasknr);
+		r= ds_retrieve_u32(ecp->ec_task, &tasknr);
+		if (r != OK && r != ESRCH)
+		{
+			printf("inet: ds_retrieve_u32 failed for '%s': %d\n",
+				ecp->ec_task, r);
+		}
 #endif 
 		if (r != OK)
 		{
