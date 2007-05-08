@@ -10,6 +10,7 @@
 #include "../system.h"
 #include <string.h>
 #include <signal.h>
+#include <ibm/cpu.h>
 #include <sys/sigcontext.h>
 
 #if USE_SIGRETURN 
@@ -38,7 +39,9 @@ message *m_ptr;			/* pointer to request message */
   if (src_phys == 0) return(EFAULT);
   phys_copy(src_phys, vir2phys(&sc), (phys_bytes) sizeof(struct sigcontext));
 
-  sc.sc_psw  = rp->p_reg.psw;
+  /* Restore user bits of psw from sc, maintain system bits from proc. */
+  sc.sc_psw  =  (sc.sc_psw & X86_FLAGS_USER) |
+                (rp->p_reg.psw & ~X86_FLAGS_USER);
 
 #if (_MINIX_CHIP == _CHIP_INTEL)
   /* Don't panic kernel if user gave bad selectors. */
