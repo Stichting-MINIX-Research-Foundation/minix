@@ -23,6 +23,8 @@ install::
 	install -o bin -g operator -m 755 crontab /usr/lib
 	@echo "Making user homedirs.."
 	for u in /usr/ast ~root; do cp ast/.[aepv]* $$u ; done
+	@echo "Installing fonts.."
+	install -m 644 -o bin -g operator fonts/*.fnt /usr/lib/fonts/
 
 postinstall:
 	binsizes normal
