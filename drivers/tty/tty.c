@@ -1530,6 +1530,7 @@ PRIVATE void tty_init()
   register tty_t *tp;
   int s;
   struct sigaction sa;
+  char env[100];
 
   /* Initialize the terminal lines. */
   for (tp = FIRST_TTY,s=0; tp < END_TTY; tp++,s++) {
@@ -1559,6 +1560,12 @@ PRIVATE void tty_init()
 		tp->tty_minor = s - (NR_CONS+NR_RS_LINES) + TTYPX_MINOR;
   	}
   }
+
+  if(env_get_param("sticky_alt", env, sizeof(env)-1) == OK
+   && atoi(env) == 1) {
+	sticky_alt_mode = 1;
+  }
+
 
 #if DEAD_CODE
   /* Install signal handlers. Ask PM to transform signal into message. */

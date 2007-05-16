@@ -87,12 +87,14 @@ PRIVATE int shift;		/* either shift key */
 PRIVATE int num_down;		/* num lock key depressed */
 PRIVATE int caps_down;		/* caps lock key depressed */
 PRIVATE int scroll_down;	/* scroll lock key depressed */
+PRIVATE int alt_down;	        /* alt key depressed */
 PRIVATE int locks[NR_CONS];	/* per console lock keys state */
 
 /* Lock key active bits.  Chosen to be equal to the keyboard LED bits. */
 #define SCROLL_LOCK	0x01
 #define NUM_LOCK	0x02
 #define CAPS_LOCK	0x04
+#define ALT_LOCK	0x08
 
 PRIVATE char numpad_map[] =
 		{'H', 'Y', 'A', 'B', 'D', 'C', 'V', 'U', 'G', 'S', 'T', '@'};
@@ -133,6 +135,8 @@ PRIVATE struct kbd_outack
 PRIVATE int kbd_watchdog_set= 0;
 PRIVATE int kbd_alive= 1;
 PRIVATE timer_t tmr_kbd_wd;
+
+int sticky_alt_mode = 0;
 
 FORWARD _PROTOTYPE( void handle_req, (struct kbd *kbdp, message *m)	);
 FORWARD _PROTOTYPE( int handle_status, (struct kbd *kbdp, message *m)	);
@@ -477,9 +481,14 @@ int scode;
 	if (ctrl || alt_r) column = 3;	/* Ctrl + Alt == AltGr */
 	if (caps) column = 4;
   } else {
-	column = 0;
-	if (caps) column = 1;
-	if (ctrl) column = 5;
+	if (sticky_alt_mode && (lk & ALT_LOCK)) {
+		column = 2;
+		if (caps) column = 4;
+        } else {
+		column = 0;
+		if (caps) column = 1;
+		if (ctrl) column = 5;
+        }
   }
   return keyrow[column] & ~HASCAPS;
 }
@@ -721,6 +730,10 @@ int scode;			/* scan code of key just struck or released */
   	case ALT:		/* Left or right alt key */
 		*(escape ? &alt_r : &alt_l) = make;
 		alt = alt_l | alt_r;
+		if (sticky_alt_mode && (alt_r && (alt_down < make))) {
+			locks[ccurrent] ^= ALT_LOCK;
+		}
+		alt_down = make;
 		break;
   	case CALOCK:		/* Caps lock - toggle on 0 -> 1 transition */
 		if (caps_down < make) {

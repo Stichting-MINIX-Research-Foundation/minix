@@ -115,6 +115,8 @@ extern unsigned long rs_irq_set;
 
 extern int panicing;	/* From panic.c in sysutil */
 
+extern int sticky_alt_mode;	/* right-alt sticky to switch codepages */
+
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */
 #define ESCAPED            1	/* previous character was LNEXT (^V) */
