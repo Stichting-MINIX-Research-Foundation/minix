@@ -1026,7 +1026,7 @@ PRIVATE int w_identify()
 #endif
 	}
 
-	if (wn->lcylinders == 0) {
+	if (wn->lcylinders == 0 || wn->lheads == 0 || wn->lsectors == 0) {
 		/* No BIOS parameters?  Then make some up. */
 		wn->lcylinders = wn->pcylinders;
 		wn->lheads = wn->pheads;
