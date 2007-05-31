@@ -319,8 +319,10 @@ PRIVATE void init_root()
   last_login_fs_e = NONE;
   
   /* Initialize vmnt table */
-  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp)
+  for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
       vmp->m_dev = NO_DEV;
+      vmp->m_fs_e = NONE;
+  }
   
   vmp = &vmnt[0];
  
@@ -411,7 +413,7 @@ PRIVATE void service_pm()
                        
                         /* Send new time for all FS processes */
                         for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) { 
-                            if (vmp->m_fs_e)
+                            if (vmp->m_fs_e != NONE)
                                 req_stime(vmp->m_fs_e, boottime);
                         }
 			/* No need to report status to PM */

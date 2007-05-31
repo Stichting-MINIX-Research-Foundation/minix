@@ -3,6 +3,8 @@
  *   Jul 2006 (Balazs Gerofi)
  */
 
+#include <minix/com.h>
+
 #include "fs.h"
 #include "vmnt.h"
 
@@ -27,6 +29,8 @@ PUBLIC struct vmnt *get_free_vmnt(short *index)
 PUBLIC struct vmnt *find_vmnt(int fs_e) 
 {
   struct vmnt *vp;
+  if(fs_e == NONE)
+	panic(__FILE__, "find_vmnt: find for NONE", NO_NUM);
   for (vp = &vmnt[0]; vp < &vmnt[NR_MNTS]; ++vp) {
       if (vp->m_fs_e == fs_e) return vp;
   }

@@ -72,7 +72,7 @@ PUBLIC int do_stime()
     
   /* Send new time for all FS processes */
   for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) { 
-      if (vmp->m_fs_e) req_stime(vmp->m_fs_e, boottime);
+      if (vmp->m_fs_e != NONE) req_stime(vmp->m_fs_e, boottime);
   }
 
   return OK;
