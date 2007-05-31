@@ -350,12 +350,10 @@ PUBLIC int fs_rename()
 			}
 			next_new_superdirp = advance(&new_superdirp, dot2);
 			put_inode(new_superdirp);
-			/*
 			if (next_new_superdirp == new_superdirp) {
 				put_inode(new_superdirp);
 				break;	
 			}
-			*/
 			if (err_code == ELEAVEMOUNT) {
 				/* imitate that we are back at the root,
 				 * cross device checked already on VFS */
