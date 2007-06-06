@@ -450,6 +450,7 @@ ino_t inodes;
   unsigned int i;
   int inodeblks;
   int initblks;
+  zone_t zi, zz, zd;
 
   zone_t initzones, nrzones, v1sq, v2sq;
   zone_t zo;
@@ -468,14 +469,14 @@ ino_t inodes;
 	sup->s_nzones = 0;	/* not used in V2 - 0 forces errors early */
 	sup->s_zones = zones;
   }
-  sup->s_imap_blocks = bitmapsize((bit_t) (1 + inodes), block_size);
-  sup->s_zmap_blocks = bitmapsize((bit_t) zones, block_size);
+  sup->s_imap_blocks = zi = bitmapsize((bit_t) (1 + inodes), block_size);
+  sup->s_zmap_blocks = zz = bitmapsize((bit_t) zones, block_size);
   inode_offset = sup->s_imap_blocks + sup->s_zmap_blocks + 2;
   inodeblks = (inodes + inodes_per_block - 1) / inodes_per_block;
   initblks = inode_offset + inodeblks;
   initzones = (initblks + (1 << zone_shift) - 1) >> zone_shift;
   nrzones = nrblocks >> zone_shift;
-  sup->s_firstdatazone = (initblks + (1 << zone_shift) - 1) >> zone_shift;
+  sup->s_firstdatazone = zd = (initblks + (1 << zone_shift) - 1) >> zone_shift;
   zoff = sup->s_firstdatazone - 1;
   sup->s_log_zone_size = zone_shift;
   if (fs_version == 1) {
@@ -501,6 +502,16 @@ ino_t inodes;
 	  		sup->s_max_size = zo * block_size;
 	  	}
 	}
+  }
+
+  /* checks for size */
+  if(zi != sup->s_imap_blocks || sup->s_zmap_blocks != zz) {
+  	fprintf(stderr, "imap blocks or zmap blocks fields too small?\n");
+	exit(1);
+  }
+  if(sup->s_firstdatazone != zd) {
+  	fprintf(stderr, "firstdatazone field too small?\n");
+	exit(1);
   }
 
   zone_size = 1 << zone_shift;	/* nr of blocks per zone */
