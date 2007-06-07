@@ -131,7 +131,7 @@ void test23a()
   if (chdir(".//.//") != 0) e(39);	/* .//.// == current dir */
   if (getcwd(buf, PATH_MAX) != buf) e(40);
   if (strcmp(buf, cwd) != 0) e(41);	/* we might be at '/' */
-#ifdef _MINIX
+#if 0
   /* XXX - my_getcwd() is old rubbish.  It reads the directory directly instead
    * of through the directory library.  It uses a fixed size buffer instead of
    * a size related to PATH_MAX, NAME_MAX or the size required.
