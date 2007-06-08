@@ -133,7 +133,7 @@ do
 	esac
 done
 
-USRMB=400
+USRMB=650
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -286,10 +286,11 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
-	REPO=https://gforge.cs.vu.nl/svn/minix/trunk/$SRC
+	REPO="`cd ../ && svn info | grep '^URL: ' | awk '{ print $2 }'`"
+	DIRNAME=`basename $REPO`
 	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
 	echo "Doing export of revision $REVISION from $REPO."
-	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO )
+	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO && mv $DIRNAME $SRC )
 	REVTAG=r$REVISION
 	echo "
 
