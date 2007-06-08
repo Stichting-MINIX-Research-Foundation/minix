@@ -174,9 +174,7 @@ int opendev(network_t *np, fdtype_t fdtype, int compete)
     switch (fdtype) {
     case FT_ETHERNET:
 	/* Set NONBLOCK to avoid waiting for a device driver to become ready */
-	/* Outcommented again to make the orinoco driver work. See doc of 
-	   orinoco */
-	fcntl(np->fdp->fd, F_SETFL, fcntl(np->fdp->fd, F_GETFL) /*| O_NONBLOCK*/);
+	fcntl(np->fdp->fd, F_SETFL, fcntl(np->fdp->fd, F_GETFL) | O_NONBLOCK);
 	if (ioctl(np->fdp->fd, NWIOGETHSTAT, &ethstat) < 0) {
 	    /* Not an Ethernet. */
 	    close(fdp->fd);
