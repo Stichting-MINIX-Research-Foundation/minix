@@ -38,10 +38,10 @@ char *extra;			/* If non-nil, why is the shutdown */
   struct utsname utsname;
   struct stat con_st, tty_st;
 
-  if (ourtty = ttyname(1)) {
-	if (ourname = strrchr(ourtty, '/')) ourtty = ourname+1;
+  if ((ourtty = ttyname(1))) {
+	if ((ourname = strrchr(ourtty, '/'))) ourtty = ourname+1;
   } else ourtty = "system task";
-  if (pw = getpwuid(getuid())) ourname = pw->pw_name;
+  if ((pw = getpwuid(getuid()))) ourname = pw->pw_name;
   else ourname = "unknown";
 
   time(&now);
@@ -96,7 +96,7 @@ char *message, *more;
   char *m = more;
   char *end = message + 1024 - 1;
 
-  while (p < end && *p != 0) *p++;
+  while (p < end && *p != 0) p++;
 
   while (p < end && *m != 0) {
     if (*m == '\n' && (p == message || p[-1] != '\n')) {

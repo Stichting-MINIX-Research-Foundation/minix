@@ -15,7 +15,6 @@
 
 int main(int argc, char **argv)
 {
-	int flag;
 	char *prog;
 	char *reboot_code = "delay; boot";
 

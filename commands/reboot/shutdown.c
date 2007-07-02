@@ -55,7 +55,7 @@ void wall _ARGS(( char *when, char *extra ));
 int crash_check _ARGS(( void ));
 void parse_time _ARGS(( char *arg ));
 void get_message _ARGS(( void ));
-void main _ARGS(( int argc, char *argv[] ));
+int main _ARGS(( int argc, char *argv[] ));
 char *itoa _ARGS(( int n ));
 
 long wait_time=0L;
@@ -123,7 +123,7 @@ char *arg;
   return;
 }
 
-void main(argc,argv)
+int main(argc,argv)
 int argc;
 char *argv[];
 {
@@ -265,7 +265,8 @@ char *argv[];
   sleep(2);
   reboot(RBT_HALT);
   fprintf(stderr, "Reboot call failed: %s\n", strerror(errno));
-  exit(1);
+
+  return(1);
 }
 
 void usage()
@@ -289,7 +290,6 @@ void terminate()
   FILE *in;
   pid_t pid;
   char c_pid[5];
-  char buf[80];
 
   in = fopen(SHUT_PID,"r");
   if (in == (FILE *)0) {
@@ -305,21 +305,12 @@ void terminate()
     puts("Shutdown process terminated");
   unlink(SHUT_PID);
   unlink(NOLOGIN);
-#ifdef not_very_useful
-  in = fopen (SHUT_LOG,"a");
-  if (in == (FILE *)0)
-    exit(0);
-  sprintf (buf, "Shutdown with pid %d terminated\n",pid);
-  fputs(buf,in);
-  fclose(in);
-#endif
   exit(0);
 }
 
 void get_message()
 {
   char line[80];
-  int max_lines=12;
 
   puts ("Type your message. End with ^D at an empty line");
   fputs ("shutdown> ",stdout);fflush(stdout);
@@ -367,7 +358,7 @@ void inform_user()
   else
   if (wait_time > 1)
     sprintf(mes,
-    "\nThe system will shutdown in %d seconds\n\n",
+    "\nThe system will shutdown in %ld seconds\n\n",
     wait_time);
   else
     sprintf(mes,
