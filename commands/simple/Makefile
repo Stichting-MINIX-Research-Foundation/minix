@@ -222,7 +222,6 @@ add_route:	add_route.c
 
 arp:	arp.c
 	$(CCLD) -o $@ arp.c
-	@install -S 4kw $@
 
 at:	at.c
 	$(CCLD) -o $@ $?
@@ -466,7 +465,6 @@ in.rshd:	in.rshd.c
 
 installx:	install.c	# Note: avoided confict with 'install' rule.
 	$(CCLD) -o $@ $?
-	@install -S 4kw $@
 
 intr:	intr.c
 	$(CCLD) -o $@ intr.c
