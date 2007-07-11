@@ -23,8 +23,6 @@ extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void init_server, (int argc, char **argv)		);
-FORWARD _PROTOTYPE(void sig_handler, (void)				);
-FORWARD _PROTOTYPE(void exit_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 
@@ -59,8 +57,8 @@ PUBLIC int main(int argc, char **argv)
 	  }
 	  continue;
       case PROC_EVENT:
-          sig_handler();
-          continue;
+          result = EDONTREPLY;
+      	  break;
       case FKEY_PRESSED:
           result = do_fkey_pressed(&m_in);
           break;
@@ -68,8 +66,9 @@ PUBLIC int main(int argc, char **argv)
 	  notify(m_in.m_source);
 	  continue;
       default: 
-          report("IS","warning, got illegal request from:", m_in.m_source);
-          result = EINVAL;
+          printf("IS: warning, got illegal request %d from %d\n",
+          	callnr, m_in.m_source);
+          result = EDONTREPLY;
       }
 
       /* Finally send reply message, unless disabled. */
@@ -103,45 +102,6 @@ PRIVATE void init_server(int argc, char **argv)
   for (i=1; i<= 8; i++) bit_set(sfkeys, i);
   if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
       report("IS", "warning, fkey_map failed:", s);
-}
-
-/*===========================================================================*
- *				sig_handler                                  *
- *===========================================================================*/
-PRIVATE void sig_handler()
-{
-  sigset_t sigset;
-  int sig;
-
-  /* Try to obtain signal set from PM. */
-  if (getsigset(&sigset) != 0) return;
-
-  /* Check for known signals. */
-  if (sigismember(&sigset, SIGTERM)) {
-      exit_server();
-  }
-}
-
-/*===========================================================================*
- *				exit_server                                  *
- *===========================================================================*/
-PRIVATE void exit_server()
-{
-/* Shut down the information service. */
-  int fkeys, sfkeys;
-  int i,s;
-
-  /* Release the function key mappings requested in init_server(). 
-   * IS took all of F1-F12 and Shift+F1-F6. 
-   */
-  fkeys = sfkeys = 0;
-  for (i=1; i<=12; i++) bit_set(fkeys, i);
-  for (i=1; i<= 7; i++) bit_set(sfkeys, i);
-  if ((s=fkey_unmap(&fkeys, &sfkeys)) != OK)
-      report("IS", "warning, unfkey_map failed:", s);
-
-  /* Done. Now exit. */
-  exit(0);
 }
 
 /*===========================================================================*
