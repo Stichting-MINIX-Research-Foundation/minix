@@ -672,6 +672,7 @@ struct
 	{ "VSAFECOPY",		SYS_VSAFECOPY },
 	{ "SETGRANT",		SYS_SETGRANT },
 	{ "READBIOS",		SYS_READBIOS },
+	{ "VM_MAP",		SYS_VM_MAP },
 	{ NULL,		0 }
 };
 
