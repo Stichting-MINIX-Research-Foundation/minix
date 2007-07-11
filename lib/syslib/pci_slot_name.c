@@ -35,10 +35,10 @@ int devind;
 	r= sendrec(pci_procnr, &m);
 	cpf_revoke(gid);
 	if (r != 0)
-		panic("pci", "pci_slot_name: can't talk to PCI", r);
+		panic("syslib/" __FILE__, "pci_slot_name: can't talk to PCI", r);
 
 	if (m.m_type != 0)
-		panic("pci", "pci_slot_name: got bad reply from PCI", m.m_type);
+		panic("syslib/" __FILE__, "pci_slot_name: got bad reply from PCI", m.m_type);
 
 	name[sizeof(name)-1]= '\0';	/* Make sure that the string is NUL
 					 * terminated.

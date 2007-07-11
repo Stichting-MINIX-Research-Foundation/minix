@@ -22,7 +22,7 @@ u16_t *didp;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("pci", "pci_next_dev: can't talk to PCI", r);
+		panic("syslib/" __FILE__, "pci_next_dev: can't talk to PCI", r);
 
 	if (m.m_type == 1)
 	{
@@ -36,7 +36,7 @@ u16_t *didp;
 		return 1;
 	}
 	if (m.m_type != 0)
-		panic("pci", "pci_next_dev: got bad reply from PCI", m.m_type);
+		panic("syslib/" __FILE__, "pci_next_dev: got bad reply from PCI", m.m_type);
 
 	return 0;
 }

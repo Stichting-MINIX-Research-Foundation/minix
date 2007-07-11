@@ -6,6 +6,7 @@ pci_set_acl.c
 #include "syslib.h"
 #include <unistd.h>
 #include <minix/rs.h>
+#include <minix/ds.h>
 #include <minix/sysutil.h>
 
 /*===========================================================================*
@@ -17,16 +18,18 @@ struct rs_pci *rs_pci;
 	int r;
 	cp_grant_id_t gid;
 	message m;
+	u32_t u32;
 
 	if (pci_procnr == ANY)
 	{
-		r= _pm_findproc("pci", &pci_procnr);
+		r= ds_retrieve_u32("pci", &u32);
 		if (r != 0)
 		{
-			panic("pci",
-				"pci_set_acl: _pm_findproc failed for 'pci'",
+			panic("syslib/" __FILE__,
+				"pci_set_acl: ds_retrieve_u32 failed for 'pci'",
 				r);
 		}
+		pci_procnr = u32;
 	}
 
 
@@ -45,7 +48,7 @@ struct rs_pci *rs_pci;
 	r= sendrec(pci_procnr, &m);
 	cpf_revoke(gid);
 	if (r != 0)
-		panic("pci", "pci_set_acl: can't talk to PCI", r);
+		panic("syslib/" __FILE__, "pci_set_acl: can't talk to PCI", r);
 
 	return m.m_type;
 }

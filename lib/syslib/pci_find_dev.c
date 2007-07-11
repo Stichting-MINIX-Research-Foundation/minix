@@ -25,7 +25,7 @@ int *devindp;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("pci", "pci_find_dev: can't talk to PCI", r);
+		panic("syslib/" __FILE__, "pci_find_dev: can't talk to PCI", r);
 
 	if (m.m_type == 1)
 	{
@@ -35,7 +35,7 @@ int *devindp;
 		return 1;
 	}
 	if (m.m_type != 0)
-		panic("pci", "pci_find_dev: got bad reply from PCI", m.m_type);
+		panic("syslib/" __FILE__, "pci_find_dev: got bad reply from PCI", m.m_type);
 
 	printf("pci_find_dev: got nothing\n");
 	return 0;

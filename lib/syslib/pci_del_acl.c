@@ -6,6 +6,7 @@ pci_del_acl.c
 #include "syslib.h"
 #include <unistd.h>
 #include <minix/rs.h>
+#include <minix/ds.h>
 #include <minix/sysutil.h>
 
 /*===========================================================================*
@@ -16,16 +17,18 @@ endpoint_t proc_nr;
 {
 	int r;
 	message m;
+	u32_t u32;
 
 	if (pci_procnr == ANY)
 	{
-		r= _pm_findproc("pci", &pci_procnr);
+		r= ds_retrieve_u32("pci", &u32);
 		if (r != 0)
 		{
-			panic("pci",
+			panic("syslib/" __FILE__,
 				"pci_del_acl: _pm_findproc failed for 'pci'",
 				r);
 		}
+		pci_procnr = u32;
 	}
 
 
@@ -34,7 +37,7 @@ endpoint_t proc_nr;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)
-		panic("pci", "pci_del_acl: can't talk to PCI", r);
+		panic("syslib/" __FILE__, "pci_del_acl: can't talk to PCI", r);
 
 	return m.m_type;
 }
