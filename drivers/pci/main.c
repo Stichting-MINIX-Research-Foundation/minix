@@ -18,7 +18,6 @@ PRIVATE struct acl
 } acl[NR_DRIVERS];
 
 FORWARD _PROTOTYPE( void do_init, (message *mp)				);
-FORWARD _PROTOTYPE( void do_sig_handler, (void)				);
 FORWARD _PROTOTYPE( void do_first_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_next_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_find_dev, (message *mp)			);
@@ -78,7 +77,7 @@ int main(void)
 		case BUSC_PCI_SLOT_NAME_S: do_slot_name_s(&m); break;
 		case BUSC_PCI_SET_ACL: do_set_acl(&m); break;
 		case BUSC_PCI_DEL_ACL: do_del_acl(&m); break;
-		case PROC_EVENT: do_sig_handler(); break;
+		case PROC_EVENT: break;
 		default:
 			printf("PCI: got message from %d, type %d\n",
 				m.m_source, m.m_type);
@@ -87,23 +86,6 @@ int main(void)
 	}
 
 	return 0;
-}
-
-/*===========================================================================*
- *				do_sig_handler                               *
- *===========================================================================*/
-PRIVATE void do_sig_handler()
-{
-  sigset_t sigset;
-  int sig;
-
-  /* Try to obtain signal set from PM. */
-  if (getsigset(&sigset) != 0) return;
-
-  /* Check for known signals. */
-  if (sigismember(&sigset, SIGTERM)) {
-      exit(0);
-  }
 }
 
 PRIVATE void do_init(mp)
