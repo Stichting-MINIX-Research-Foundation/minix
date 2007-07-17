@@ -111,7 +111,7 @@ Created:	Aug 2003 by Philip Homburg <philip@cs.vu.nl>
 				 * Note: RL_CR_RE has to be set to
 				 * set/change RL_RCR.
 				 */
-#define		RL_RCR_RES0	0xF0000000 /& Reserved */
+#define		RL_RCR_RES0	0xF0000000 /* Reserved */
 #define		RL_RCR_ERTH_M	0x0F000000 /* Early Rx Threshold */
 #define			RL_RCR_ERTH_0		0x00000000 /* No threshold */
 #define			RL_RCR_ERTH_1		0x01000000 /* 1/16 */
