@@ -15,6 +15,7 @@ libsysutil_FILES=" \
 	env_panic.c \
 	env_prefix.c \
 	fkey_ctl.c \
+	micro_delay.c \
 	report.c \
 	taskcall.c \
 	read_tsc.s \

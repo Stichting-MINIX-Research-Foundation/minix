@@ -112,12 +112,8 @@ typedef int irq_hook_t;
 #define structof(type, field, ptr) \
 	((type *) (((char *) (ptr)) - offsetof(type, field)))
 
-#define MICROS_TO_TICKS(m)  (((m)*HZ/1000000)+1)
-
 static timer_t *fxp_timers= NULL;
 static clock_t fxp_next_timeout= 0;
-
-static void micro_delay(unsigned long usecs);
 
 /* ignore interrupt for the moment */
 #define interrupt(x)	0
@@ -294,6 +290,9 @@ int main(int argc, char *argv[])
 	for (fp= &fxp_table[0]; fp < fxp_table+FXP_PORT_NR; fp++)
 		fxp_init_buf(fp);
 #endif
+
+	if((r=micro_delay_calibrate()) != OK)
+		panic("FXP","rmicro_delay_calibrate failed", r);
 
 	/* Try to notify inet that we are present (again) */
 	r= ds_retrieve_u32("inet", &tasknr);
@@ -2873,11 +2872,6 @@ PRIVATE void fxp_expire_timers()
   	if (r != OK)
  		panic("FXP","Unable to set synchronous alarm.", r);
   }
-}
-
-static void micro_delay(unsigned long usecs)
-{
-	tickdelay(MICROS_TO_TICKS(usecs));
 }
 
 static u8_t do_inb(port_t port)

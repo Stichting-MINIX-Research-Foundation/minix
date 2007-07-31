@@ -14,8 +14,6 @@ Created:	Dec 2005 by Philip Homburg
 /* The use of interrupts is not yet ready for prime time */
 #define USE_INTS	0
 
-#define MICROS_TO_TICKS(m)  (((m)*HZ/1000000)+1)
-
 #define NR_PORTS 2
 
 PRIVATE struct port
@@ -59,7 +57,6 @@ FORWARD _PROTOTYPE( void do_int, (struct port *pp)			);
 FORWARD _PROTOTYPE( u8_t read_exca, (struct port *pp, int socket, int reg) );
 FORWARD _PROTOTYPE( void do_outb, (port_t port, u8_t value)		);
 FORWARD _PROTOTYPE( u8_t do_inb, (port_t port)				);
-FORWARD _PROTOTYPE( void micro_delay, (unsigned long usecs)		);
 
 int main(int argc, char *argv[])
 {
@@ -67,6 +64,9 @@ int main(int argc, char *argv[])
 	message m;
 
 	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
+
+	if((r=micro_delay_calibrate()) != OK)
+		panic("ti1225", "micro_delay_calibrate failed", r);
 
 	debug= 0;
 	while (c= getopt(argc, argv, "d?"), c != -1)
@@ -492,8 +492,4 @@ PRIVATE void do_outb(port_t port, u8_t value)
 		panic("ti1225","sys_outb failed", r);
 }
 
-PRIVATE void micro_delay(unsigned long usecs)
-{
-	tickdelay(MICROS_TO_TICKS(usecs));
-}
 

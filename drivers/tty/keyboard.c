@@ -65,8 +65,6 @@ int aux_irq_hook_id = -1;
 				 * keyboard.
 				 */
 
-#define MICROS_TO_TICKS(m)  (((m)*HZ/1000000)+1)
-
 #define CONSOLE		   0	/* line number for console */
 #define KB_IN_BYTES	  32	/* size of keyboard input buffer */
 PRIVATE char ibuf[KB_IN_BYTES];	/* input buffer */
@@ -153,7 +151,6 @@ FORWARD _PROTOTYPE( void set_leds, (void) 				);
 FORWARD _PROTOTYPE( void show_key_mappings, (void) 			);
 FORWARD _PROTOTYPE( int kb_read, (struct tty *tp, int try) 		);
 FORWARD _PROTOTYPE( unsigned map_key, (int scode) 			);
-FORWARD _PROTOTYPE( void micro_delay, (unsigned long usecs)		);
 FORWARD _PROTOTYPE( void kbd_watchdog, (timer_t *tmrp)			);
 
 /*===========================================================================*
@@ -1263,9 +1260,10 @@ int *isauxp;
 #endif
 }
 
-static void micro_delay(unsigned long usecs)
+int micro_delay(u32_t usecs)
 {
 	tickdelay(MICROS_TO_TICKS(usecs));
+	return OK;
 }
 
 /*===========================================================================*

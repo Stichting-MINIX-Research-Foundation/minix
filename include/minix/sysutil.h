@@ -1,5 +1,5 @@
-#ifndef _EXTRALIB_H
-#define _EXTRALIB_H
+#ifndef _MINIX_SYSUTIL_H
+#define _MINIX_SYSUTIL_H 1
 
 /* Extra system library definitions to support device drivers and servers.
  *
@@ -46,6 +46,10 @@ _PROTOTYPE( void report, (char *who, char *mess, int num));
 _PROTOTYPE( void panic, (char *who, char *mess, int num));
 _PROTOTYPE( int getuptime, (clock_t *ticks));
 _PROTOTYPE( int tickdelay, (clock_t ticks));
+_PROTOTYPE( int micro_delay_calibrate, (void));
+_PROTOTYPE( int micro_delay, (u32_t micros));
 
-#endif /* _EXTRALIB_H */
+#define MICROS_TO_TICKS(m)  (((m)*HZ/1000000)+1)
+
+#endif /* _MINIX_SYSUTIL_H */
 

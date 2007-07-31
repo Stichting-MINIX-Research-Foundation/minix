@@ -49,24 +49,6 @@ int this_proc;
 /*****************************************************************************
  *            milli_delay                                                    *
  *                                                                           *
- * Wait usecs micro seconds. Clearly needs revision                          *
- *****************************************************************************/
-static void micro_delay(unsigned long usecs)
-{
-	int i, j;
-
-	if(usecs >= 100) {
-		/* If the delay is long, we might as well use ticks */
-		tickdelay(MICROS_TO_TICKS(usecs));
-	} else {
-		/* use another type of hack :-), or a proper implementation */
-		for(i=0; i < 1000 * usecs; i++){j+=1;}
-	}
-}
-
-/*****************************************************************************
- *            milli_delay                                                    *
- *                                                                           *
  * Wait msecs milli seconds                                                  *
  *****************************************************************************/
 void milli_delay(unsigned int msecs)
