@@ -118,7 +118,6 @@ PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
   {
 	printf(
 	"forbidden: warning caller_uid and caller_gid not initialized\n");
-	stacktrace();
   }
 
   /*
