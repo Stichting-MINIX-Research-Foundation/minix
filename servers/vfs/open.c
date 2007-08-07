@@ -38,7 +38,7 @@
 FORWARD _PROTOTYPE( int x_open, (int bits, int oflags, int omode,
 			char *lastc, struct vnode **vpp)		);
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
-FORWARD _PROTOTYPE( int create_open, (_mnx_Mode_t omode,
+FORWARD _PROTOTYPE( int create_open, (_mnx_Mode_t omode, int excl,
 				struct vnode **vpp, int *created)	);
 FORWARD _PROTOTYPE( int y_open, (struct vnode *vp, _mnx_Mode_t bits,
 	int oflags));
@@ -112,7 +112,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   }
 
   if (oflags & O_CREAT)
-	r= create_open(omode, &vp, &created);
+	r= create_open(omode, !!(oflags & O_EXCL), &vp, &created);
   else
   {
 #if 0
@@ -244,8 +244,9 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 /*===========================================================================*
  *				create_open				     *
  *===========================================================================*/
-PRIVATE int create_open(omode, vpp, created)
+PRIVATE int create_open(omode, excl, vpp, created)
 mode_t omode;
+int excl;
 struct vnode **vpp;
 int *created;
 {
@@ -332,6 +333,14 @@ int *created;
 
 			return OK;
 			
+		}
+
+		if (r == EEXIST && excl)
+		{
+			printf(
+		"vfs:create_open: creating existing file with O_EXCL\n");
+			put_vnode(dir_vp);
+			return r;
 		}
 
 		/* Try a regular lookup */
