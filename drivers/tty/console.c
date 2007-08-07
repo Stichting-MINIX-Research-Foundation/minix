@@ -28,6 +28,11 @@
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
+/* Set this to 1 if you want console output duplicated on the first
+ * serial line.
+  */
+#define DUP_CONS_TO_SER	0
+
 /* Definitions used by the console driver. */
 #define MONO_BASE    0xB0000L	/* base of mono video memory */
 #define COLOR_BASE   0xB8000L	/* base of color video memory */
@@ -204,6 +209,9 @@ int try;
 		{
 			out_char(cons, *tbuf++);
 		} else {
+#if DUP_CONS_TO_SER
+			if (cons == &cons_table[0]) ser_putc(*tbuf);
+#endif
 			cons->c_ramqueue[cons->c_rwords++] =
 					cons->c_attr | (*tbuf++ & BYTE);
 			cons->c_column++;
@@ -248,6 +256,15 @@ int c;				/* character to be output */
 	parse_escape(cons, c);
 	return;
   }
+
+#if DUP_CONS_TO_SER
+  if (cons == &cons_table[0] && c != '\0')
+  {
+	if (c == '\n')
+		ser_putc('\r');
+	ser_putc(c);
+  }
+#endif
 
   switch(c) {
 	case 000:		/* null is typically used for padding */
@@ -1355,7 +1372,7 @@ PRIVATE void ser_putc(char c)
 
 	lsr= COM1_LSR;
 	thr= COM1_THR;
-	for (i= 0; i<100; i++)
+	for (i= 0; i<10000; i++)
 	{
 		sys_inb(lsr, &b);
 		if (b & LSR_THRE)
