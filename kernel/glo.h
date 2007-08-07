@@ -48,6 +48,7 @@ EXTERN int do_serial_debug;
 EXTERN endpoint_t who_e;		/* message source endpoint */
 EXTERN int who_p;			/* message source proc */
 EXTERN int sys_call_code;		/* kernel call number in SYSTEM */
+EXTERN time_t boottime;
 
 /* VM */
 EXTERN phys_bytes vm_base;

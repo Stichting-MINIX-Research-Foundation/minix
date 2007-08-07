@@ -177,6 +177,7 @@ PRIVATE void initialize(void)
   /* Clock functionality. */
   map(SYS_TIMES, do_times);		/* get uptime and process times */
   map(SYS_SETALARM, do_setalarm);	/* schedule a synchronous alarm */
+  map(SYS_STIME, do_stime);		/* set the boottime */
 
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
