@@ -141,15 +141,6 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 			return EPERM;
 		}
 
-		/* Don't fiddle around with grants that wrap, arithmetic
-		 * below may be confused.
-		 */
-		if(MEM_TOP - g.cp_u.cp_magic.cp_len <
-			g.cp_u.cp_magic.cp_start - 1) {
-			kprintf("magic grant verify failed: len too long\n");
-			return EPERM;
-		}
-
 		/* Verify actual grantee. */
 		if(g.cp_u.cp_magic.cp_who_to != grantee && grantee != ANY) {
 			kprintf("magic grant verify failed: bad grantee\n");
