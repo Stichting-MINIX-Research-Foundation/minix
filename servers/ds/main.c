@@ -88,13 +88,6 @@ PRIVATE void init_server(int argc, char **argv)
   int i, s;
   struct sigaction sigact;
 
-  /* Install signal handler. Ask PM to transform signal into message. */
-  sigact.sa_handler = SIG_MESS;
-  sigact.sa_mask = ~0;			/* block all other signals */
-  sigact.sa_flags = 0;			/* default behaviour */
-  if (sigaction(SIGTERM, &sigact, NULL) < 0) 
-      report("DS","warning, sigaction() failed", errno);
-
   /* Initialize DS. */
   ds_init();
 }
