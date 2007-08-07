@@ -198,6 +198,8 @@ _PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
 #define unmapdriver(device) devctl(DEV_UNMAP, 0, device, 0)
 _PROTOTYPE( int devctl, (int ctl_req, int driver, int device, int style, 
 	int force)							);
+_PROTOTYPE( int mapdriver5, (char *label, size_t len, int major,
+	int style, int force)						);
 _PROTOTYPE( uid_t getpeuid, (endpoint_t ep)				);
 
 /* For compatibility with other Unix systems */
