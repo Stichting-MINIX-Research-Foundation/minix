@@ -20,33 +20,14 @@ PUBLIC int fs_chmod()
   register struct inode *rip;
   register int r;
   
-  caller_uid = fs_m_in.REQ_UID;
-  caller_gid = fs_m_in.REQ_GID;
-  
   /* Temporarily open the file. */
   if ( (rip = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
 printf("MFS(%d) get_inode by fs_chmod() failed\n", SELF_E);
         return(EINVAL);
   }
 
-  /* Only the owner or the super_user may change the mode of a file.
-   * No one may change the mode of a file on a read-only file system.
-   */
-  if (rip->i_uid != caller_uid && caller_uid != SU_UID)
-	r = EPERM;
-  else
-	r = read_only(rip);
-
-  /* If error, return inode. */
-  if (r != OK)	{
-	put_inode(rip);
-	return(r);
-  }
-
   /* Now make the change. Clear setgid bit if file is not in caller's grp */
   rip->i_mode = (rip->i_mode & ~ALL_MODES) | (fs_m_in.REQ_MODE & ALL_MODES);
-  if (caller_uid != SU_UID && rip->i_gid != caller_gid) 
-	  rip->i_mode &= ~I_SET_GID_BIT;
   rip->i_update |= CTIME;
   rip->i_dirt = DIRTY;
 
@@ -78,19 +59,7 @@ printf("MFS(%d) get_inode by fs_chown() failed\n", SELF_E);
   /* Not permitted to change the owner of a file on a read-only file sys. */
   r = read_only(rip);
   if (r == OK) {
-	/* FS is R/W.  Whether call is allowed depends on ownership, etc. */
-	if (caller_uid == SU_UID) {
-		/* The super user can do anything. */
-		rip->i_uid = fs_m_in.REQ_NEW_UID;	/* others later */
-	} else {
-		/* Regular users can only change groups of their own files. */
-		if (rip->i_uid != caller_uid) r = EPERM;
-		if (rip->i_uid != fs_m_in.REQ_NEW_UID) 
-                    r = EPERM;  /* no giving away */
-		if (caller_gid != fs_m_in.REQ_NEW_GID) r = EPERM;
-	}
-  }
-  if (r == OK) {
+	rip->i_uid = fs_m_in.REQ_NEW_UID;
 	rip->i_gid = fs_m_in.REQ_NEW_GID;
 	rip->i_mode &= ~(I_SET_UID_BIT | I_SET_GID_BIT);
 	rip->i_update |= CTIME;
@@ -106,9 +75,9 @@ printf("MFS(%d) get_inode by fs_chown() failed\n", SELF_E);
 }
 
 /*===========================================================================*
- *				fs_access				     *
+ *				fs_access_o				     *
  *===========================================================================*/
-PUBLIC int fs_access()
+PUBLIC int fs_access_o()
 {
   struct inode *rip;
   register int r;
@@ -144,6 +113,13 @@ PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
   register struct super_block *sp;
   register mode_t bits, perm_bits;
   int r, shift, type;
+
+  if (caller_uid == (uid_t)-1 && caller_gid == (uid_t)-1)
+  {
+	printf(
+	"forbidden: warning caller_uid and caller_gid not initialized\n");
+	stacktrace();
+  }
 
   /*
   if (rip->i_mount == I_MOUNT)	
@@ -185,9 +161,14 @@ PUBLIC int forbidden(register struct inode *rip, mode_t access_desired)
 	if (access_desired & W_BIT)
 	 	r = read_only(rip);
 
+#if 0
+  if (r != OK) printf(
+  "forbidden: caller uid/gid %d/%d object uid/gid %d/%d, returning %d\n",
+	caller_uid, caller_gid, rip->i_uid, rip->i_gid, r);
+#endif
+
   if (rip != old_rip) put_inode(rip);
 
-/*printf("FSforbidden: %s %s\n", user_path, (r == OK ? "OK" : "notOK")); */
   return(r);
 }
 

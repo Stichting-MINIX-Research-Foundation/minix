@@ -65,7 +65,6 @@
 #define LAST_DIR         PATH_PENULTIMATE
 #define LAST_DIR_NOTDOT  PATH_PENULTIMATE | PATH_STRIPDOT
 #define LAST_DIR_EATSYM  PATH_NONSYMBOLIC
-#define SYMLOOP		16
 
 #define CLEAN              0	/* disk and memory copies identical */
 #define DIRTY              1	/* disk and memory copies differ */

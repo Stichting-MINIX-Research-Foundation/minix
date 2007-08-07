@@ -208,6 +208,7 @@ int numb;			/* inode number (ANSI: may not be unshort) */
 	rip->i_pipe = I_PIPE;
   else
 	rip->i_pipe = NO_PIPE;
+  rip->i_mountpoint= FALSE;
 
   /* Add to hash */
   addhash_inode(rip);
@@ -264,7 +265,7 @@ register struct inode *rip;	/* pointer to inode to be released */
         else {
 		if (rip->i_pipe == I_PIPE) truncate_inode(rip, 0);
 	}
-        rip->i_mount = NO_MOUNT;
+        rip->i_mountpoint = FALSE;
 	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
 
 	if (rip->i_nlinks == 0) {
@@ -310,7 +311,7 @@ int count;
 		if (rip->i_pipe == I_PIPE)
 			truncate_inode(rip, 0);
 	}
-        rip->i_mount = NO_MOUNT;
+        rip->i_mountpoint = FALSE;
 	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
 
 	if (rip->i_nlinks == 0) {

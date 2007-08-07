@@ -19,6 +19,7 @@ static int panicking;
 PUBLIC int no_sys()
 {
 /* Somebody has used an illegal system call number */
+  printf("no_sys: invalid call %d\n", req_nr);
   return(EINVAL);
 }
 
@@ -86,7 +87,16 @@ PUBLIC time_t clock_time()
   register int k;
   clock_t uptime;
 
-  if ( (k=getuptime(&uptime)) != OK) panic(__FILE__,"clock_time err", k);
+  if (use_getuptime2)
+  {
+	if ( (k=getuptime2(&uptime,&boottime)) != OK)
+		panic(__FILE__,"clock_time: getuptme2 failed", k);
+  }
+  else
+  {
+	if ( (k=getuptime(&uptime)) != OK)
+		panic(__FILE__,"clock_time err", k);
+  }
   return( (time_t) (boottime + (uptime/HZ)));
 }
 

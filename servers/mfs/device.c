@@ -23,6 +23,9 @@ FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t,
   void **, int *, vir_bytes));
 FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
 	int));
+FORWARD _PROTOTYPE( int gen_opcl, (endpoint_t driver_e, int op,
+				Dev_t dev, int proc_e, int flags)	);
+FORWARD _PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr)	);
 
 /*===========================================================================*
  *				fs_clone_opcl   			     *
@@ -276,10 +279,107 @@ int flags;			/* special flags, like O_NONBLOCK */
   return(m.REP_STATUS);
 }
 
+/*===========================================================================*
+ *				dev_open				     *
+ *===========================================================================*/
+PUBLIC int dev_open(driver_e, dev, proc, flags)
+endpoint_t driver_e;
+dev_t dev;			/* device to open */
+int proc;			/* process to open for */
+int flags;			/* mode bits and flags */
+{
+  int major, r;
+
+  /* Determine the major device number call the device class specific
+   * open/close routine.  (This is the only routine that must check the
+   * device number for being in range.  All others can trust this check.)
+   */
+  major = (dev >> MAJOR) & BYTE;
+  if (major >= NR_DEVICES) major = 0;
+  r = gen_opcl(driver_e, DEV_OPEN, dev, proc, flags);
+  if (r == SUSPEND) panic(__FILE__,"suspend on open from", NO_NUM);
+  return(r);
+}
 
 
+/*===========================================================================*
+ *				dev_close				     *
+ *===========================================================================*/
+PUBLIC void dev_close(driver_e, dev)
+endpoint_t driver_e;
+dev_t dev;			/* device to close */
+{
+  (void) gen_opcl(driver_e, DEV_CLOSE, dev, 0, 0);
+}
 
 
+/*===========================================================================*
+ *				gen_opcl				     *
+ *===========================================================================*/
+PRIVATE int gen_opcl(driver_e, op, dev, proc_e, flags)
+endpoint_t driver_e;
+int op;				/* operation, DEV_OPEN or DEV_CLOSE */
+dev_t dev;			/* device to open or close */
+int proc_e;			/* process to open/close for */
+int flags;			/* mode bits and flags */
+{
+/* Called from the dmap struct in table.c on opens & closes of special files.*/
+  message dev_mess;
+
+  dev_mess.m_type   = op;
+  dev_mess.DEVICE   = (dev >> MINOR) & BYTE;
+  dev_mess.IO_ENDPT = proc_e;
+  dev_mess.COUNT    = flags;
+
+  /* Call the task. */
+  gen_io(driver_e, &dev_mess);
+
+  return(dev_mess.REP_STATUS);
+}
 
 
+/*===========================================================================*
+ *				gen_io					     *
+ *===========================================================================*/
+PRIVATE int gen_io(task_nr, mess_ptr)
+int task_nr;			/* which task to call */
+message *mess_ptr;		/* pointer to message for task */
+{
+/* All file system I/O ultimately comes down to I/O on major/minor device
+ * pairs.  These lead to calls on the following routines via the dmap table.
+ */
+
+  int r, proc_e;
+
+  proc_e = mess_ptr->IO_ENDPT;
+
+  r = sendrec(task_nr, mess_ptr);
+	if (r != OK) {
+		if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
+			printf("fs: dead driver %d\n", task_nr);
+			panic(__FILE__, "should handle crashed drivers",
+				NO_NUM);
+			/* dmap_unmap_by_endpt(task_nr); */
+			return r;
+		}
+		if (r == ELOCKED) {
+			printf("fs: ELOCKED talking to %d\n", task_nr);
+			return r;
+		}
+		panic(__FILE__,"call_task: can't send/receive", r);
+	}
+
+  	/* Did the process we did the sendrec() for get a result? */
+  	if (mess_ptr->REP_ENDPT != proc_e) {
+		printf(
+		"fs: strange device reply from %d, type = %d, proc = %d (not %d) (2) ignored\n",
+			mess_ptr->m_source,
+			mess_ptr->m_type,
+			proc_e,
+			mess_ptr->REP_ENDPT);
+		return EIO;
+	}
+
+  return OK;
+}
 

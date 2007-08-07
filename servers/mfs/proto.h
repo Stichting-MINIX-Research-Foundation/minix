@@ -9,41 +9,24 @@ struct inode;
 struct super_block;
 
 
-int fs_open(void);
 int fs_putnode(void);
 int fs_getnode(void);
 int fs_pipe(void);
-int fs_readwrite(void);
 int fs_clone_opcl(void);
 int fs_new_driver(void);
 int fs_ftrunc(void);
 int fs_chown(void);
 int fs_chmod(void);
-int fs_access(void);
-int fs_mknod(void);
-int fs_mkdir(void);
 int fs_inhibread(void);
 int fs_stat(void);
-int fs_create(void);
-int fs_unlink(void);
 int fs_utime(void);
 int fs_fstatfs(void);
-int fs_link(void);
-int fs_lookup_rn_old(void);
-int fs_lookup_rn_new(void);
-int fs_rename(void);
 
-int fs_mountpoint(void);
-int fs_readsuper(void);
 int fs_unmount(void);
 int fs_trunc(void);
 int fs_sync(void);
 int fs_stime(void);
-int lookup(void);
 
-int fs_slink(void);
-int fs_rdlink(void);
-int fs_breadwrite(void);
 int fs_getdents(void);
 int fs_flush(void);
 
@@ -70,6 +53,9 @@ _PROTOTYPE( void invalidate2, (Dev_t device)				);
 /* device.c */
 _PROTOTYPE( int block_dev_io, (int op, Dev_t dev, int proc, void *buf,
 			u64_t pos, int bytes, int flags)		);
+_PROTOTYPE( int dev_open, (endpoint_t driver_e, Dev_t dev, int proc,
+							int flags)	);
+_PROTOTYPE( void dev_close, (endpoint_t driver_e, Dev_t dev)		);
 
 
 /* inode.c */
@@ -85,6 +71,14 @@ _PROTOTYPE( void rw_inode, (struct inode *rip, int rw_flag)		);
 _PROTOTYPE( void wipe_inode, (struct inode *rip)			);
 
 /* link.c */
+int fs_link_o(void);
+int fs_link_s(void);
+int fs_rdlink_o(void);
+int fs_rdlink_s(void);
+int fs_rename_o(void);
+int fs_rename_s(void);
+int fs_unlink_o(void);
+int fs_unlink_s(void);
 _PROTOTYPE( int truncate_inode, (struct inode *rip, off_t len)		);
 _PROTOTYPE( int freesp_inode, (struct inode *rip, off_t st, off_t end)	);
 
@@ -111,11 +105,24 @@ _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
 
 /* mount.c */
+int fs_mountpoint_o(void);
+int fs_mountpoint_s(void);
+int fs_readsuper_o(void);
+int fs_readsuper_s(void);
 _PROTOTYPE( int do_mount, (void)					);
 _PROTOTYPE( int do_umount, (void)					);
 _PROTOTYPE( int unmount, (Dev_t dev)					);
 
 /* open.c */
+int fs_create_o(void);
+int fs_create_s(void);
+int fs_mkdir_o(void);
+int fs_mkdir_s(void);
+int fs_mknod_o(void);
+int fs_mknod_s(void);
+int fs_slink_o(void);
+int fs_slink_s(void);
+int fs_newnode(void);
 _PROTOTYPE( int do_close, (void)					);
 _PROTOTYPE( int do_creat, (void)					);
 _PROTOTYPE( int do_lseek, (void)					);
@@ -125,16 +132,24 @@ _PROTOTYPE( int do_open, (void)						);
 _PROTOTYPE( int do_slink, (void)                                       );
 
 /* path.c */
-_PROTOTYPE( struct inode *advance,(struct inode **dirp, char string[NAME_MAX]));
+int lookup_o(void);
+int fs_lookup_s(void);
+_PROTOTYPE( struct inode *advance_o,(struct inode **dirp,
+						char string[NAME_MAX])	);
+_PROTOTYPE( struct inode *advance_nocheck,(struct inode **dirp,
+						char string[NAME_MAX])	);
 _PROTOTYPE( int search_dir, (struct inode *ldir_ptr,
 			char string [NAME_MAX], ino_t *numb, int flag)	);
-_PROTOTYPE( struct inode *eat_path, (char *path)			);
-_PROTOTYPE( struct inode *last_dir, (char *path, char string [NAME_MAX]));
-_PROTOTYPE( struct inode *parse_path, (char *path, char string[NAME_MAX], 
-                                                       int action)     );
+_PROTOTYPE( int search_dir_nocheck, (struct inode *ldir_ptr,
+			char string [NAME_MAX], ino_t *numb, int flag)	);
+_PROTOTYPE( struct inode *eat_path_o, (char *path)			);
+_PROTOTYPE( struct inode *last_dir_o, (char *path, char string [NAME_MAX]));
+_PROTOTYPE( struct inode *parse_path_o, (char *path,
+				char string[NAME_MAX], int action)	);
 
 
 /* protect.c */
+int fs_access_o(void);
 _PROTOTYPE( int do_access, (void)					);
 _PROTOTYPE( int do_chmod, (void)					);
 _PROTOTYPE( int do_chown, (void)					);
@@ -143,6 +158,10 @@ _PROTOTYPE( int forbidden, (struct inode *rip, mode_t access_desired)	);
 _PROTOTYPE( int read_only, (struct inode *ip)				);
 
 /* read.c */
+int fs_breadwrite_o(void);
+int fs_breadwrite_s(void);
+int fs_readwrite_o(void);
+int fs_readwrite_s(void);
 _PROTOTYPE( int do_read, (void)						);
 _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,
 			u64_t position, unsigned bytes_ahead)		);

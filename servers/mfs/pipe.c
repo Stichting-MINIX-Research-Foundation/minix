@@ -30,18 +30,12 @@ PUBLIC int fs_pipe(void)
         return err_code;
   }
 
-  /* !!! already checked in alloc_inode 
-  if (read_only(rip) != OK) 
-  	panic(__FILE__,"pipe device is read only", NO_NUM); 
-  */
-  
   /* Fill in the fields of the inode */
   rip->i_pipe = I_PIPE;
   rip->i_mode &= ~I_REGULAR;
   rip->i_mode |= I_NAMED_PIPE;	/* pipes and FIFOs have this bit set */
   
   /* We'll need it twice, nothing can go wrong here */
-  dup_inode(rip);
   rw_inode(rip, WRITING);	/* mark inode as allocated */
   rip->i_update = ATIME | CTIME | MTIME;
   
@@ -50,6 +44,9 @@ PUBLIC int fs_pipe(void)
   fs_m_out.RES_INODE_NR = rip->i_num;
   fs_m_out.RES_MODE = rip->i_mode;
   fs_m_out.RES_INODE_INDEX = (rip - &inode[0]) / sizeof(struct inode);
+  fs_m_out.RES_FILE_SIZE = rip->i_size;
+  fs_m_out.RES_UID = rip->i_uid;
+  fs_m_out.RES_GID = rip->i_gid;
 
   return OK;
 }

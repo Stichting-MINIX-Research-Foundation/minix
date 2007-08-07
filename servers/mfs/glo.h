@@ -26,6 +26,8 @@ EXTERN uid_t caller_uid;
 EXTERN gid_t caller_gid;
 
 EXTERN time_t boottime;		/* time in seconds at system boot */
+EXTERN int use_getuptime2;	/* Should be removed togetherwith boottime */
+
 EXTERN int req_nr;
 
 EXTERN int SELF_E;
@@ -35,9 +37,11 @@ EXTERN struct inode *chroot_dir;
 EXTERN short path_processed;      /* number of characters processed */
 EXTERN char user_path[PATH_MAX+1];  /* pathname to be processed */
 EXTERN char *vfs_slink_storage;
-EXTERN int symloop;
+EXTERN int Xsymloop;
 
-EXTERN dev_t fs_dev;    /* the device that is handled by this FS proc */
-
-
+EXTERN dev_t fs_dev;    	/* The device that is handled by this FS proc.
+				 */
+EXTERN char fs_dev_label[16];	/* Name of the device driver that is handled
+				 * by this FS proc.
+				 */
 

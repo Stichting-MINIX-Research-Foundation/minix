@@ -18,12 +18,15 @@
 FORWARD _PROTOTYPE( int rw_chunk, (struct inode *rip, u64_t position,
 	unsigned off, int chunk, unsigned left, int rw_flag,
 	char *buff, int seg, int usr, int block_size, int *completed));
+FORWARD _PROTOTYPE( int rw_chunk_s, (struct inode *rip, u64_t position,
+	unsigned off, int chunk, unsigned left, int rw_flag,
+	cp_grant_id_t gid, unsigned buf_off, int block_size, int *completed));
 
 
 /*===========================================================================*
- *				fs_readwrite				     *
+ *				fs_readwrite_o				     *
  *===========================================================================*/
-PUBLIC int fs_readwrite(void)
+PUBLIC int fs_readwrite_o(void)
 {
   int r, usr, seg, rw_flag, chunk, block_size, block_spec;
   int partial_cnt, regular, partial_pipe, nrbytes;
@@ -64,7 +67,7 @@ PUBLIC int fs_readwrite(void)
   f_size = (block_spec ? ULONG_MAX : rip->i_size);
   
   /* Get the values from the request message */ 
-  rw_flag = (fs_m_in.m_type == REQ_READ ? READING : WRITING);
+  rw_flag = (fs_m_in.m_type == REQ_READ_O ? READING : WRITING);
   usr = fs_m_in.REQ_FD_WHO_E;
   seg = fs_m_in.REQ_FD_SEG;
   position = fs_m_in.REQ_FD_POS;
@@ -161,9 +164,150 @@ PUBLIC int fs_readwrite(void)
 
 
 /*===========================================================================*
- *				fs_breadwrite				     *
+ *				fs_readwrite_s				     *
  *===========================================================================*/
-PUBLIC int fs_breadwrite(void)
+PUBLIC int fs_readwrite_s(void)
+{
+  int r, rw_flag, chunk, block_size, block_spec;
+  int partial_cnt, regular, partial_pipe, nrbytes;
+  cp_grant_id_t gid;
+  off_t position, f_size, bytes_left;
+  unsigned int off, cum_io;
+  mode_t mode_word;
+  int completed, r2 = OK;
+  struct inode *rip;
+  
+  partial_pipe = 0;
+  r = OK;
+  
+  /* Try to get inode according to its index */
+  if (fs_m_in.REQ_FD_INODE_INDEX >= 0 && 
+          fs_m_in.REQ_FD_INODE_INDEX < NR_INODES &&
+          inode[fs_m_in.REQ_FD_INODE_INDEX].i_num == fs_m_in.REQ_FD_INODE_NR) {
+      rip = &inode[fs_m_in.REQ_FD_INODE_INDEX];
+  }
+  else { 
+      /* Find the inode referred */
+      rip = find_inode(fs_dev, fs_m_in.REQ_FD_INODE_NR);
+      if (!rip) {
+          printf("FS: unavaliable inode by fs_readwrite(), nr: %d\n", 
+                  fs_m_in.REQ_FD_INODE_NR);
+          return EINVAL; 
+      }
+  }
+
+  mode_word = rip->i_mode & I_TYPE;
+  regular = (mode_word == I_REGULAR || mode_word == I_NAMED_PIPE);
+  block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
+  
+  /* Determine blocksize */
+  block_size = (block_spec ? get_block_size(rip->i_zone[0]) 
+      : rip->i_sp->s_block_size);
+
+  f_size = (block_spec ? ULONG_MAX : rip->i_size);
+  
+  /* Get the values from the request message */ 
+  rw_flag = (fs_m_in.m_type == REQ_READ_S ? READING : WRITING);
+  gid = fs_m_in.REQ_FD_GID;
+  position = fs_m_in.REQ_FD_POS;
+  nrbytes = (unsigned) fs_m_in.REQ_FD_NBYTES;
+  /*partial_cnt = fs_m_in.REQ_FD_PARTIAL;*/
+
+  /*if (partial_cnt > 0) partial_pipe = 1;*/
+  
+  rdwt_err = OK;		/* set to EIO if disk error occurs */
+  
+  if (rw_flag == WRITING && block_spec == 0) {
+      /* Check in advance to see if file will grow too big. */
+      if (position > rip->i_sp->s_max_size - nrbytes)
+		return(EFBIG);
+
+      /* Clear the zone containing present EOF if hole about
+       * to be created.  This is necessary because all unwritten
+       * blocks prior to the EOF must read as zeros.
+       */
+      if (position > f_size) clear_zone(rip, f_size, 0);
+  }
+	      
+  cum_io = 0;
+  /* Split the transfer into chunks that don't span two blocks. */
+  while (nrbytes != 0) {
+      off = (unsigned int) (position % block_size);/* offset in blk*/
+          
+      chunk = MIN(nrbytes, block_size - off);
+      if (chunk < 0) chunk = block_size - off;
+
+      if (rw_flag == READING) {
+          bytes_left = f_size - position;
+          if (position >= f_size) break;	/* we are beyond EOF */
+          if (chunk > bytes_left) chunk = (int) bytes_left;
+      }
+
+      /* Read or write 'chunk' bytes. */
+      r = rw_chunk_s(rip, cvul64(position), off, chunk, (unsigned) nrbytes,
+              rw_flag, gid, cum_io, block_size, &completed);
+
+      if (r != OK) break;	/* EOF reached */
+      if (rdwt_err < 0) break;
+
+      /* Update counters and pointers. */
+      nrbytes -= chunk;	/* bytes yet to be read */
+      cum_io += chunk;	/* bytes read so far */
+      position += chunk;	/* position within the file */
+  }
+
+  fs_m_out.RES_FD_POS = position; /* It might change later and the VFS has
+				     to know this value */
+  
+  /* On write, update file size and access time. */
+  if (rw_flag == WRITING) {
+	if (regular || mode_word == I_DIRECTORY) {
+		if (position > f_size) rip->i_size = position;
+	}
+  } 
+  else {
+	if (rip->i_pipe == I_PIPE) {
+		if ( position >= rip->i_size) {
+			/* Reset pipe pointers. */
+			rip->i_size = 0;	/* no data left */
+			position = 0;		/* reset reader(s) */
+		}
+	}
+  }
+
+  /* Check to see if read-ahead is called for, and if so, set it up. */
+  if (rw_flag == READING && rip->i_seek == NO_SEEK && position % block_size == 0
+		&& (regular || mode_word == I_DIRECTORY)) {
+	rdahed_inode = rip;
+	rdahedpos = position;
+  }
+  rip->i_seek = NO_SEEK;
+
+  if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
+  if (rdwt_err == END_OF_FILE) r = OK;
+
+  /* if user-space copying failed, read/write failed. */
+  if (r == OK && r2 != OK) {
+	r = r2;
+  }
+  
+  if (r == OK) {
+	if (rw_flag == READING) rip->i_update |= ATIME;
+	if (rw_flag == WRITING) rip->i_update |= CTIME | MTIME;
+	rip->i_dirt = DIRTY;		/* inode is thus now dirty */
+  }
+  
+  fs_m_out.RES_FD_CUM_IO = cum_io;
+  fs_m_out.RES_FD_SIZE = rip->i_size;
+  
+  return(r);
+}
+
+
+/*===========================================================================*
+ *				fs_breadwrite_o				     *
+ *===========================================================================*/
+PUBLIC int fs_breadwrite_o(void)
 {
   int r, usr, rw_flag, chunk, block_size;
   int nrbytes;
@@ -179,7 +323,7 @@ PUBLIC int fs_breadwrite(void)
   r = OK;
   
   /* Get the values from the request message */ 
-  rw_flag = (fs_m_in.m_type == REQ_BREAD ? READING : WRITING);
+  rw_flag = (fs_m_in.m_type == REQ_BREAD_O ? READING : WRITING);
   usr = fs_m_in.REQ_XFD_WHO_E;
   position = make64(fs_m_in.REQ_XFD_POS_LO, fs_m_in.REQ_XFD_POS_HI);
   nrbytes = (unsigned) fs_m_in.REQ_XFD_NBYTES;
@@ -210,6 +354,71 @@ PUBLIC int fs_breadwrite(void)
 
       /* Update counters and pointers. */
       user_addr += chunk;	/* user buffer address */
+      nrbytes -= chunk;	        /* bytes yet to be read */
+      cum_io += chunk;	        /* bytes read so far */
+      position= add64ul(position, chunk);	/* position within the file */
+  }
+  
+  fs_m_out.RES_XFD_POS_LO = ex64lo(position); 
+  fs_m_out.RES_XFD_POS_HI = ex64hi(position); 
+  
+  if (rdwt_err != OK) r = rdwt_err;	/* check for disk error */
+  if (rdwt_err == END_OF_FILE) r = OK;
+
+  fs_m_out.RES_XFD_CUM_IO = cum_io;
+  
+  return(r);
+}
+
+
+/*===========================================================================*
+ *				fs_breadwrite_s				     *
+ *===========================================================================*/
+PUBLIC int fs_breadwrite_s(void)
+{
+  int r, rw_flag, chunk, block_size;
+  cp_grant_id_t gid;
+  int nrbytes;
+  u64_t position;
+  unsigned int off, cum_io;
+  mode_t mode_word;
+  int completed, r2 = OK;
+
+  /* Pseudo inode for rw_chunk */
+  struct inode rip;
+  
+  r = OK;
+  
+  /* Get the values from the request message */ 
+  rw_flag = (fs_m_in.m_type == REQ_BREAD_S ? READING : WRITING);
+  gid = fs_m_in.REQ_XFD_GID;
+  position = make64(fs_m_in.REQ_XFD_POS_LO, fs_m_in.REQ_XFD_POS_HI);
+  nrbytes = (unsigned) fs_m_in.REQ_XFD_NBYTES;
+  
+  block_size = get_block_size(fs_m_in.REQ_XFD_BDEV);
+
+  rip.i_zone[0] = fs_m_in.REQ_XFD_BDEV;
+  rip.i_mode = I_BLOCK_SPECIAL;
+  rip.i_size = 0;
+
+  rdwt_err = OK;		/* set to EIO if disk error occurs */
+  
+  cum_io = 0;
+  /* Split the transfer into chunks that don't span two blocks. */
+  while (nrbytes != 0) {
+      off = rem64u(position, block_size);	/* offset in blk*/
+        
+      chunk = MIN(nrbytes, block_size - off);
+      if (chunk < 0) chunk = block_size - off;
+
+      /* Read or write 'chunk' bytes. */
+      r = rw_chunk_s(&rip, position, off, chunk, (unsigned) nrbytes,
+              rw_flag, gid, cum_io, block_size, &completed);
+
+      if (r != OK) break;	/* EOF reached */
+      if (rdwt_err < 0) break;
+
+      /* Update counters and pointers. */
       nrbytes -= chunk;	        /* bytes yet to be read */
       cum_io += chunk;	        /* bytes read so far */
       position= add64ul(position, chunk);	/* position within the file */
@@ -315,6 +524,104 @@ int *completed;			/* number of bytes copied */
 	r = sys_vircopy(usr, seg, (phys_bytes) buff,
 			SELF_E, D, (phys_bytes) (bp->b_data+off),
 			(phys_bytes) chunk);
+	bp->b_dirt = DIRTY;
+  }
+  n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
+  put_block(bp, n);
+
+  return(r);
+}
+
+
+/*===========================================================================*
+ *				rw_chunk_s				     *
+ *===========================================================================*/
+PRIVATE int rw_chunk_s(rip, position, off, chunk, left, rw_flag, gid,
+ buf_off, block_size, completed)
+register struct inode *rip;	/* pointer to inode for file to be rd/wr */
+u64_t position;			/* position within file to read or write */
+unsigned off;			/* off within the current block */
+int chunk;			/* number of bytes to read or write */
+unsigned left;			/* max number of bytes wanted after position */
+int rw_flag;			/* READING or WRITING */
+cp_grant_id_t gid;		/* grant */
+unsigned buf_off;		/* offset in grant */
+int block_size;			/* block size of FS operating on */
+int *completed;			/* number of bytes copied */
+{
+/* Read or write (part of) a block. */
+
+  register struct buf *bp;
+  register int r = OK;
+  int n, block_spec;
+  block_t b;
+  dev_t dev;
+
+  *completed = 0;
+
+  block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
+
+  if (block_spec) {
+	b = div64u(position, block_size);
+	dev = (dev_t) rip->i_zone[0];
+  } 
+  else {
+	if (ex64hi(position) != 0)
+		panic(__FILE__, "rw_chunk: position too high", NO_NUM);
+	b = read_map(rip, ex64lo(position));
+	dev = rip->i_dev;
+  }
+
+  if (!block_spec && b == NO_BLOCK) {
+	if (rw_flag == READING) {
+		/* Reading from a nonexistent block.  Must read as all zeros.*/
+		bp = get_block(NO_DEV, NO_BLOCK, NORMAL);    /* get a buffer */
+		zero_block(bp);
+	} 
+        else {
+		/* Writing to a nonexistent block. Create and enter in inode.*/
+		if ((bp= new_block(rip, ex64lo(position))) == NIL_BUF)
+			return(err_code);
+	}
+  } 
+  else if (rw_flag == READING) {
+	/* Read and read ahead if convenient. */
+	bp = rahead(rip, b, position, left);
+  } 
+  else {
+	/* Normally an existing block to be partially overwritten is first read
+	 * in.  However, a full block need not be read in.  If it is already in
+	 * the cache, acquire it, otherwise just acquire a free buffer.
+	 */
+	n = (chunk == block_size ? NO_READ : NORMAL);
+	if (!block_spec && off == 0 && ex64lo(position) >= rip->i_size) 
+		n = NO_READ;
+	bp = get_block(dev, b, n);
+  }
+
+  /* In all cases, bp now points to a valid buffer. */
+  if (bp == NIL_BUF) {
+  	panic(__FILE__,"bp not valid in rw_chunk, this can't happen", NO_NUM);
+  }
+  
+  if (rw_flag == WRITING && chunk != block_size && !block_spec &&
+				ex64lo(position) >= rip->i_size && off == 0) {
+	zero_block(bp);
+  }
+
+  if (rw_flag == READING) {
+	/* Copy a chunk from the block buffer to user space. */
+#if 0
+	printf("sys_safecopyto: proc %d, gid %d, off %d, size %d\n",
+		FS_PROC_NR, gid, buf_off, chunk);
+#endif
+	r = sys_safecopyto(FS_PROC_NR, gid, buf_off,
+		(vir_bytes) (bp->b_data+off), (phys_bytes) chunk, D);
+  } 
+  else {
+	/* Copy a chunk from user space to the block buffer. */
+	r = sys_safecopyfrom(FS_PROC_NR, gid, buf_off,
+		(vir_bytes) (bp->b_data+off), (phys_bytes) chunk, D);
 	bp->b_dirt = DIRTY;
   }
   n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);

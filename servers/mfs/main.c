@@ -27,7 +27,7 @@ PUBLIC int main(void)
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
   int who_e;				        /* caller */
-  int error;
+  int error, ind;
   message m;
 
   /* Initialize the server, then go to work. */
@@ -35,26 +35,34 @@ PUBLIC int main(void)
 
   fs_m_in.m_type = FS_READY;
 
-  if (sendrec(FS_PROC_NR, &fs_m_in) != OK) {
+  if (send(FS_PROC_NR, &fs_m_in) != OK) {
       printf("MFS(%d): Error sending login to VFS\n", SELF_E);
       return -1;
   }
 
-  if (fs_m_in.m_type != REQ_READSUPER) {
+#if 0
+  if (fs_m_in.m_type != REQ_READSUPER_O && fs_m_in.m_type != REQ_READSUPER_S) {
       printf("MFS(%d): Invalid login reply\n", SELF_E);
       return -1;
   }
   else {
-      fs_m_out.m_type = fs_readsuper();
+      if (fs_m_in.m_type == REQ_READSUPER_S)
+	      fs_m_out.m_type = fs_readsuper_s();
+      else
+	      fs_m_out.m_type = fs_readsuper_o();
       reply(FS_PROC_NR, &fs_m_out);
       if (fs_m_out.m_type != OK) return -1;
   }
+#endif
 
 
   for (;;) {
       /* Wait for request message. */
       get_work(&fs_m_in);
       error = OK;
+
+      caller_uid = -1;	/* To trap errors */
+      caller_gid = -1;
 
       who_e = fs_m_in.m_source;
       if (who_e != FS_PROC_NR) {
@@ -71,11 +79,20 @@ PUBLIC int main(void)
 
       req_nr = fs_m_in.m_type;
 
-      if (req_nr < 0 || req_nr >= NREQS) {
+      if (req_nr < VFS_BASE)
+      {
+      	fs_m_in.m_type += VFS_BASE;
+      	req_nr = fs_m_in.m_type;
+      }
+      ind= req_nr-VFS_BASE;
+
+      if (ind < 0 || ind >= NREQS) {
+	  printf("mfs: bad request %d\n", req_nr); 
+	  printf("ind = %d\n", ind);
           error = EINVAL; 
       }
       else {
-          error = (*fs_call_vec[req_nr])();
+          error = (*fs_call_vec[ind])();
 	  /*cch_check();*/
       }
 
@@ -151,7 +168,7 @@ PRIVATE void init_server(void)
 }
 
 /*===========================================================================*
- *				get_work                                     *
+ *				get_work				     *
  *===========================================================================*/
 PRIVATE void get_work(m_in)
 message *m_in;				/* pointer to message */
@@ -179,12 +196,12 @@ PRIVATE void cch_check(void)
 
   for (i = 0; i < NR_INODES; ++i) {
 	  if (inode[i].i_count != cch[i] &&
-		req_nr != REQ_OPEN && req_nr != REQ_GETNODE &&
+		req_nr != REQ_GETNODE &&
 		req_nr != REQ_PUTNODE &&
-		req_nr != REQ_CLONE_OPCL && req_nr != REQ_READSUPER &&
-		req_nr != REQ_MOUNTPOINT && req_nr != REQ_UNMOUNT &&
+		req_nr != REQ_CLONE_OPCL && req_nr != REQ_READSUPER_S &&
+		req_nr != REQ_MOUNTPOINT_S && req_nr != REQ_UNMOUNT &&
 		req_nr != REQ_PIPE && req_nr != REQ_SYNC && 
-		req_nr != REQ_LOOKUP)
+		req_nr != REQ_LOOKUP_S)
 printf("MFS(%d) inode(%d) cc: %d req_nr: %d\n",
 	SELF_E, inode[i].i_num, inode[i].i_count - cch[i], req_nr);
 	  

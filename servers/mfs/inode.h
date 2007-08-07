@@ -31,8 +31,7 @@ EXTERN struct inode {
   char i_dirt;			/* CLEAN or DIRTY */
   char i_pipe;			/* set to I_PIPE if pipe */
   
-  char i_mount;			/* this bit is set if file mounted on */
-  short i_vmnt_ind;             /* index of the vmnt mounted on */
+  char i_mountpoint;		/* true if mounted on */
 
   char i_seek;			/* set on LSEEK, cleared on READ/WRITE */
   char i_update;		/* the ATIME, CTIME, and MTIME bits are here */
@@ -56,7 +55,5 @@ EXTERN unsigned int inode_cache_miss;
 /* Field values.  Note that CLEAN and DIRTY are defined in "const.h" */
 #define NO_PIPE            0	/* i_pipe is NO_PIPE if inode is not a pipe */
 #define I_PIPE             1	/* i_pipe is I_PIPE if inode is a pipe */
-#define NO_MOUNT           0	/* i_mount is NO_MOUNT if file not mounted on*/
-#define I_MOUNT            1	/* i_mount is I_MOUNT if file mounted on */
 #define NO_SEEK            0	/* i_seek = NO_SEEK if last op was not SEEK */
 #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
