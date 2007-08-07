@@ -11,6 +11,7 @@
 #include "inc.h"
 #include "../mfs/const.h"
 #include "../vfs/fproc.h"
+#include "../vfs/dmap.h"
 #include <minix/dmap.h>
 
 PUBLIC struct fproc fproc[NR_PROCS];
