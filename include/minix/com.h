@@ -311,7 +311,9 @@
 #  define SYS_CPROF      (KERNEL_CALL + 37)     /* sys_cprof() */
 #  define SYS_PROFBUF    (KERNEL_CALL + 38)     /* sys_profbuf() */
 
-#define NR_SYS_CALLS	39	/* number of system calls */ 
+#  define SYS_STIME	(KERNEL_CALL + 39)	/* sys_stime() */
+
+#define NR_SYS_CALLS	40	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -449,12 +451,13 @@
 #define I_VAL_LEN2_E   m7_i2	/* second length, or proc nr */
 
 /* Field names for SYS_TIMES. */
-#define T_ENDPT      m4_l1	/* process to request time info for */
-#define T_USER_TIME    m4_l1	/* user time consumed by process */
-#define T_SYSTEM_TIME  m4_l2	/* system time consumed by process */
-#define T_CHILD_UTIME  m4_l3	/* user time consumed by process' children */
-#define T_CHILD_STIME  m4_l4	/* sys time consumed by process' children */
-#define T_BOOT_TICKS   m4_l5	/* number of clock ticks since boot time */
+#define T_ENDPT		m4_l1	/* process to request time info for */
+#define T_USER_TIME	m4_l1	/* user time consumed by process */
+#define T_SYSTEM_TIME	m4_l2	/* system time consumed by process */
+#define T_BOOTTIME	m4_l3	/* Boottime in seconds (also for SYS_STIME) */
+#define T_BOOT_TICKS	m4_l5	/* number of clock ticks since boot time */
+
+
 
 /* vm_map */
 #define VM_MAP_ENDPT		m4_l1
@@ -617,8 +620,6 @@
 #define PM_GET_WORK	(PM_BASE + 1)	/* Get work from PM */
 #define PM_IDLE		(PM_BASE + 2)	/* PM doesn't have any more work */
 #define PM_BUSY		(PM_BASE + 3)	/* A reply from FS is needed */
-#define PM_STIME	(PM_BASE + 4)	/* Tell FS about the new system time */
-#define		PM_STIME_TIME	m1_i1		/* boottime */
 #define PM_SETSID	(PM_BASE + 5)	/* Tell FS about the session leader */
 #define		PM_SETSID_PROC	m1_i1		/* process */
 #define PM_SETGID	(PM_BASE + 6)	/* Tell FS about the new group IDs */
@@ -686,5 +687,8 @@
 #define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
 #define EXC_RS_RESULT	m1_i2		/* result of the exec */
 
+#define VFS_BASE	0xA00		/* Requests sent by VFS to filesystem
+					 * implementations. See <minix/vfsif.h>
+					 */
 
 #endif /* _MINIX_COM_H */ 
