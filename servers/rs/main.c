@@ -9,7 +9,6 @@
  */
 #include "inc.h"
 #include <fcntl.h>
-#include <minix/dmap.h>
 #include <minix/endpoint.h>
 #include "../../kernel/const.h"
 #include "../../kernel/type.h"
@@ -22,7 +21,6 @@ FORWARD _PROTOTYPE(void reply, (int whom, message *m_out)		);
 
 /* Data buffers to retrieve info during initialization. */
 PRIVATE struct boot_image image[NR_BOOT_PROCS];
-PUBLIC struct dmap dmap[NR_DEVICES];
 
 long rs_verbose = 0;
 
@@ -142,31 +140,7 @@ PRIVATE void init_server(void)
    */
   if ((s = sys_getimage(image)) != OK) 
       panic("RS","warning: couldn't get copy of image table", s);
-  if ((s = getsysinfo(FS_PROC_NR, SI_DMAP_TAB, dmap)) < 0)
-      panic("RS","warning: couldn't get copy of dmap table", errno);
   
-#if 0
-  /* Now initialize the table with the processes in the system image. 
-   * Prepend /sbin/ to the binaries so that we can actually find them. 
-   */
-  for (s=0; s< NR_BOOT_PROCS; s++) {
-      ip = &image[s];
-      if (ip->proc_nr >= 0) {
-          rproc[s].r_flags = RS_IN_USE;
-          rproc[s].r_proc_nr_e = ip->endpoint;
-          rproc[s].r_pid = getnpid(ip->proc_nr);
-	  for(t=0; t< NR_DEVICES; t++)
-	      if (dmap[t].dmap_driver == ip->proc_nr)
-                  rproc[s].r_dev_nr = t;
-	  strcpy(rproc[s].r_cmd, "/sbin/");
-          strcpy(rproc[s].r_cmd+6, ip->proc_name);
-          rproc[s].r_argc = 1;
-          rproc[s].r_argv[0] = rproc[s].r_cmd;
-          rproc[s].r_argv[1] = NULL;
-      }
-  }
-#endif
-
   /* Set alarm to periodically check driver status. */
   if (OK != (s=sys_setalarm(RS_DELTA_T, 0)))
       panic("RS", "couldn't set alarm", s);

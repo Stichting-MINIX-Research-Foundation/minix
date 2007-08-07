@@ -799,9 +799,13 @@ endpoint_t *endpoint;
       return(s);					/* return error */
   }
 
+  s= ds_publish_u32(rp->r_label, child_proc_nr_e);
+  if (s != OK)
+	printf("start_service: ds_publish_u32 failed: %d\n", s);
+
   if (rp->r_dev_nr > 0) {				/* set driver map */
-      if ((s=mapdriver(child_proc_nr_e, rp->r_dev_nr, rp->r_dev_style,
-	!!use_copy /* force */)) < 0) {
+      if ((s=mapdriver5(rp->r_label, strlen(rp->r_label),
+	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {
           report("RS", "couldn't map driver", errno);
           rp->r_flags |= RS_EXITING;			/* expect exit */
 	  if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
@@ -831,10 +835,6 @@ endpoint_t *endpoint;
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
 
   if(endpoint) *endpoint = child_proc_nr_e;	/* send back child endpoint */
-
-  s= ds_publish_u32(rp->r_label, child_proc_nr_e);
-  if (s != OK)
-	printf("start_service: ds_publish_u32 failed: %d\n", s);
 
   return(OK);
 }
