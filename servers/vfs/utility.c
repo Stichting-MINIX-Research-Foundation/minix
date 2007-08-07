@@ -143,10 +143,14 @@ PUBLIC time_t clock_time()
  * rate and that such things as leap seconds do not exist.
  */
 
-  register int k;
+  register int r;
   clock_t uptime;
+  time_t boottime;
 
-  if ( (k=getuptime(&uptime)) != OK) panic(__FILE__,"clock_time err", k);
+  r= getuptime2(&uptime, &boottime);
+  if (r != OK)
+	panic(__FILE__,"clock_time err", r);
+
   return( (time_t) (boottime + (uptime/HZ)));
 }
 

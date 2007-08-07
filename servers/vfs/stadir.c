@@ -47,7 +47,7 @@ PUBLIC int do_fchdir()
       return ENOTDIR;
   
   /* Issue request and handle error */
-  r = forbidden(rfilp->filp_vno, X_BIT);
+  r = forbidden(rfilp->filp_vno, X_BIT, 0 /*!use_realuid*/);
   if (r != OK) return r;
   
   rfilp->filp_vno->v_ref_count++;	/* change_into expects a reference  */
@@ -122,18 +122,12 @@ int len;			/* length of the directory name string */
 {
 /* Do the actual work for chdir() and chroot(). */
   struct vnode *vp;
-  struct lookup_req lookup_req;
   int r;
 
   if (fetch_name(name_ptr, len, M3) != OK) return(err_code);
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH;
-        
   /* Request lookup */
-  if ((r = lookup_vp(&lookup_req, &vp)) != OK) return r;
+  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) return r;
 
   /* Is it a dir? */
   if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
@@ -143,7 +137,7 @@ int len;			/* length of the directory name string */
   }
 
   /* Access check */
-  r = forbidden(vp, X_BIT);
+  r = forbidden(vp, X_BIT, 0 /*!use_realuid*/);
   if (r != OK) {
         put_vnode(vp);
 	return r;
@@ -174,22 +168,19 @@ struct vnode *vp;		/* this is what the inode has to become */
 PUBLIC int do_stat()
 {
 /* Perform the stat(name, buf) system call. */
-  struct node_details res;
-  struct lookup_req lookup_req;
   int r;
-    
+  struct vnode *vp;
+
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH;
-        
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK)
+	return r;
 
   /* Issue request */
-  return req_stat(res.fs_e, res.inode_nr, who_e, m_in.name2, 0);
+  r= req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0);
+  put_vnode(vp);
+  return r;
 }
 
 
@@ -246,13 +237,13 @@ PUBLIC int do_fstatfs()
 
 
 /*===========================================================================*
- *                             do_lstat                                      *
+ *                             do_lstat					     *
  *===========================================================================*/
 PUBLIC int do_lstat()
 {
 /* Perform the lstat(name, buf) system call. */
-  struct node_details res;
   struct lookup_req lookup_req;
+  struct vnode *vp;
   int r;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
@@ -263,10 +254,15 @@ PUBLIC int do_lstat()
   lookup_req.flags = EAT_PATH_OPAQUE;
         
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  if ((r = lookup_vp(PATH_RET_SYMLINK, 0 /*!use_realuid*/, &vp)) != OK)
+	return r;
 
   /* Issue request */
-  return req_stat(res.fs_e, res.inode_nr, who_e, m_in.name2, 0);
+  r= req_stat(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, 0);
+
+  put_vnode(vp);
+
+  return r;
 }
 
 

@@ -1,4 +1,278 @@
 
+/* This file deals with protection in the file system.  It contains the code
+ * for four system calls that relate to protection.
+ *
+ * The entry points into this file are
+ *   do_chmod:	perform the CHMOD and FCHMOD system calls
+ *   do_chown:	perform the CHOWN and FCHOWN system calls
+ *   do_umask:	perform the UMASK system call
+ *   do_access:	perform the ACCESS system call
+ *
+ * Changes for VFS:
+ *   Jul 2006 (Balazs Gerofi)
+ */
+
+#include "fs.h"
+#include <unistd.h>
+#include <minix/callnr.h>
+#include "file.h"
+#include "fproc.h"
+#include "param.h"
+
+#include <minix/vfsif.h>
+#include "vnode.h"
+#include "vmnt.h"
+
+
+
+/*===========================================================================*
+ *				do_chmod				     *
+ *===========================================================================*/
+PUBLIC int do_chmod()
+{
+  struct filp *flp;
+  struct vnode *vp;
+  int r;
+  uid_t uid;
+  gid_t gid;
+  mode_t new_mode;
+    
+  if (call_nr == CHMOD) {
+      /* Perform the chmod(name, mode) system call. */
+      if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
+
+      /* Request lookup */
+      r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp);
+      if (r != OK) return r;
+  } 
+  else if (call_nr == FCHMOD) {
+      if (!(flp = get_filp(m_in.m3_i1))) return err_code;
+      vp= flp->filp_vno;
+      dup_vnode(vp);
+  }
+  else panic(__FILE__, "do_chmod called with strange call_nr", call_nr);
+
+  uid= fp->fp_effuid;
+  gid= fp->fp_effgid;
+
+  /* Only the owner or the super_user may change the mode of a file.
+   * No one may change the mode of a file on a read-only file system.
+   */
+  if (vp->v_uid != uid && uid != SU_UID)
+	r = EPERM;
+  else
+	r = read_only(vp);
+
+  /* If error, return inode. */
+  if (r != OK)	{
+	put_vnode(vp);
+	return(r);
+  }
+
+  /* Now make the change. Clear setgid bit if file is not in caller's grp */
+  if (uid != SU_UID && vp->v_gid != gid) 
+	  m_in.mode &= ~I_SET_GID_BIT;
+
+  /* Issue request */
+  r = req_chmod(vp->v_fs_e, vp->v_inode_nr, m_in.mode, &new_mode);
+
+  if (r == OK)
+  	vp->v_mode = new_mode;
+  put_vnode(vp);
+
+  return OK;
+}
+
+/*===========================================================================*
+ *				do_chown				     *
+ *===========================================================================*/
+PUBLIC int do_chown()
+{
+  int inode_nr;
+  int fs_e;
+  struct filp *flp;
+  struct vnode *vp;
+  int r;
+  uid_t uid;
+  gid_t gid;
+  mode_t new_mode;
+  
+  if (call_nr == CHOWN) {
+      /* Perform the chmod(name, mode) system call. */
+      if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+      
+      /* Request lookup */
+      r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp);
+      if (r != OK) return r;
+  } 
+  else if (call_nr == FCHOWN) {
+      if (!(flp = get_filp(m_in.m1_i1))) return err_code;
+      vp= flp->filp_vno;
+      dup_vnode(vp);
+  }
+  else panic(__FILE__, "do_chmod called with strange call_nr", call_nr);
+
+  uid= fp->fp_effuid;
+  gid= fp->fp_effgid;
+
+  r= OK;
+  if (uid == SU_UID) {
+	/* The super user can do anything. */
+  } else {
+	/* Regular users can only change groups of their own files. */
+	if (vp->v_uid != uid)
+		r = EPERM;	/* File does not belong to the caller */
+	if (vp->v_uid != m_in.owner) 
+		r = EPERM;	/* no giving away */
+	if (gid != m_in.group)
+		r = EPERM;	/* only change to the current gid */
+  }
+  if (r != OK) {
+	put_vnode(vp);
+	return r;
+  }
+
+  /* Issue request */
+  r = req_chown(vp->v_fs_e, vp->v_inode_nr, m_in.owner, m_in.group, &new_mode);
+
+  if(r == OK) {
+  	vp->v_uid = m_in.owner;
+  	vp->v_gid = m_in.group;
+  	vp->v_mode = new_mode;
+  }
+
+  put_vnode(vp);
+
+  return r;
+}
+
+
+/*===========================================================================*
+ *				do_umask				     *
+ *===========================================================================*/
+PUBLIC int do_umask()
+{
+/* Perform the umask(co_mode) system call. */
+  register mode_t r;
+
+  r = ~fp->fp_umask;		/* set 'r' to complement of old mask */
+  fp->fp_umask = ~(m_in.co_mode & RWX_MODES);
+  return(r);			/* return complement of old mask */
+}
+
+
+/*===========================================================================*
+ *				do_access				     *
+ *===========================================================================*/
+PUBLIC int do_access()
+{
+/* Perform the access(name, mode) system call. */
+  int r;
+  struct vnode *vp;
+    
+  /* First check to see if the mode is correct. */
+  if ( (m_in.mode & ~(R_OK | W_OK | X_OK)) != 0 && m_in.mode != F_OK)
+	return(EINVAL);
+
+  if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
+
+  /* Request lookup */
+  r = lookup_vp(0 /*flags*/, TRUE /*use_realuid*/, &vp);
+  if (r != OK) return r;
+
+  r= forbidden(vp, m_in.mode, 1 /*use_realuid*/);
+  put_vnode(vp);
+  return r;
+}
+
+
+/*===========================================================================*
+ *				forbidden				     *
+ *===========================================================================*/
+PUBLIC int forbidden(struct vnode *vp, mode_t access_desired, int use_realuid)
+{
+/* Given a pointer to an inode, 'rip', and the access desired, determine
+ * if the access is allowed, and if not why not.  The routine looks up the
+ * caller's uid in the 'fproc' table.  If access is allowed, OK is returned
+ * if it is forbidden, EACCES is returned.
+ */
+
+  register struct super_block *sp;
+  register mode_t bits, perm_bits;
+  uid_t uid;
+  gid_t gid;
+  int r, shift, type;
+
+  if (vp->v_uid == (uid_t)-1 || vp->v_gid == (gid_t)-1)
+  {
+	printf("forbidden: bad uid/gid in vnode: inode %d on dev 0x%x\n",
+		vp->v_inode_nr, vp->v_dev);
+	printf("forbidden: last allocated at %s, %d\n", vp->v_file, vp->v_line);
+	return EACCES;
+  }
+
+  /* Isolate the relevant rwx bits from the mode. */
+  bits = vp->v_mode;
+  if (use_realuid)
+  {
+	uid= fp->fp_realuid;
+	gid= fp->fp_realgid;
+  }
+  else
+  {
+	uid= fp->fp_effuid;
+	gid= fp->fp_effgid;
+  }
+  if (uid == SU_UID) {
+	/* Grant read and write permission.  Grant search permission for
+	 * directories.  Grant execute permission (for non-directories) if
+	 * and only if one of the 'X' bits is set.
+	 */
+	if ( (bits & I_TYPE) == I_DIRECTORY ||
+	     bits & ((X_BIT << 6) | (X_BIT << 3) | X_BIT))
+		perm_bits = R_BIT | W_BIT | X_BIT;
+	else
+		perm_bits = R_BIT | W_BIT;
+  } else {
+	if (uid == vp->v_uid) shift = 6;	/* owner */
+	else if (gid == vp->v_gid ) shift = 3;	/* group */
+	else shift = 0;					/* other */
+	perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT);
+  }
+
+  /* If access desired is not a subset of what is allowed, it is refused. */
+  r = OK;
+  if ((perm_bits | access_desired) != perm_bits) {
+  	r = EACCES;
+  	}
+
+  /* Check to see if someone is trying to write on a file system that is
+   * mounted read-only.
+   */
+  if (r == OK)
+	if (access_desired & W_BIT)
+	 	r = read_only(vp);
+
+  return(r);
+}
+
+
+/*===========================================================================*
+ *				read_only				     *
+ *===========================================================================*/
+PUBLIC int read_only(vp)
+struct vnode *vp;		/* ptr to inode whose file sys is to be cked */
+{
+/* Check to see if the file system on which the inode 'ip' resides is mounted
+ * read only.  If so, return EROFS, else return OK.
+ */
+  register struct vmnt *mp;
+
+  mp = vp->v_vmnt;
+  return(mp->m_flags ? EROFS : OK);
+}
+
+
 /* This file contains the wrapper functions for issueing a request
  * and receiving response from FS processes.
  * Each function builds a request message according to the request
@@ -32,35 +306,552 @@ FORWARD _PROTOTYPE(int fs_sendrec_f, (char *file, int line, endpoint_t fs_e, mes
 
 #define fs_sendrec(e, m) fs_sendrec_f(__FILE__, __LINE__, (e), (m))
 
+
 /*===========================================================================*
- *				req_getnode				     *
+ *			req_breadwrite					     *
  *===========================================================================*/
-PUBLIC int req_getnode_f(file, line, req, res)
-char *file;
-int line;
-node_req_t *req; 
-node_details_t *res;
+PUBLIC int req_breadwrite(fs_e, user_e, dev, pos, num_of_bytes, user_addr,
+	rw_flag, new_posp, cum_iop)
+endpoint_t fs_e;
+endpoint_t user_e;
+dev_t dev;
+u64_t pos;
+unsigned int num_of_bytes;
+char *user_addr;
+int rw_flag;
+u64_t *new_posp;
+unsigned int *cum_iop;
 {
     int r;
+    cp_grant_id_t gid;
     message m;
 
+    gid= cpf_grant_magic(fs_e, user_e, (vir_bytes)user_addr,
+	num_of_bytes, (rw_flag == READING ? CPF_WRITE : CPF_READ));
+    if (gid == -1)
+	panic(__FILE__, "req_breadwrite: cpf_grant_magic failed", NO_NUM);
+
     /* Fill in request message */
-    m.m_type = REQ_GETNODE;
-    m.REQ_INODE_NR = req->inode_nr;
+    m.m_type = rw_flag == READING ? REQ_BREAD_S : REQ_BWRITE_S;
+    m.REQ_XFD_BDEV = dev;
+    m.REQ_XFD_GID = gid;
+    m.REQ_XFD_POS_LO = ex64lo(pos);
+    m.REQ_XFD_POS_HI = ex64hi(pos);
+    m.REQ_XFD_NBYTES = num_of_bytes;
 
     /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(gid);
+
+    if (r != OK) return r;
+
+    /* Fill in response structure */
+    *new_posp = make64(m.RES_XFD_POS_LO, m.RES_XFD_POS_HI);
+    *cum_iop = m.RES_XFD_CUM_IO;
+
+    return OK;
+}
+
+
+/*===========================================================================*
+ *				req_chmod	      			     *
+ *===========================================================================*/
+PUBLIC int req_chmod(fs_e, inode_nr, rmode, new_modep)
+int fs_e;
+ino_t inode_nr;
+mode_t rmode;
+mode_t *new_modep;
+{
+    message m;
+    int r;
+
+    /* Fill in request message */
+    m.m_type = REQ_CHMOD;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_MODE = rmode;
+    m.REQ_UID = fp->fp_effuid;
+    m.REQ_GID = fp->fp_effgid;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    /* Copy back actual mode. */
+    if (r == OK)
+	*new_modep = m.RES_MODE;
+
+    return r;
+}
+
+
+/* Structure for REQ_CHOWN request */
+typedef struct chown_req {
+        int fs_e;
+        ino_t inode_nr;
+        uid_t uid;
+        gid_t gid;
+        uid_t newuid;
+        gid_t newgid;
+} chown_req_t;
+
+
+/*===========================================================================*
+ *				req_chown          			     *
+ *===========================================================================*/
+PUBLIC int req_chown(fs_e, inode_nr, newuid, newgid, new_modep)
+endpoint_t fs_e;
+ino_t inode_nr;
+uid_t newuid;
+gid_t newgid;
+mode_t *new_modep;
+{
+    message m;
+    int r;
+
+    /* Fill in request message */
+    m.m_type = REQ_CHOWN;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_UID = fp->fp_effuid;
+    m.REQ_GID = fp->fp_effgid;
+    m.REQ_NEW_UID = newuid;
+    m.REQ_NEW_GID = newgid;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    /* Return new mode to caller. */
+    *new_modep = m.RES_MODE;
+
+    return r;
+}
+
+
+/*===========================================================================*
+ *				req_create				     *
+ *===========================================================================*/
+int req_create(fs_e, inode_nr, omode, uid, gid, path, res)
+int fs_e;
+ino_t inode_nr;
+int omode;
+uid_t uid;
+gid_t gid;
+char *path;
+node_details_t *res; 
+{
+    int r;
+    cp_grant_id_t grant_id;
+    size_t len;
+    message m;
+
+    len= strlen(path) + 1;
+    grant_id= cpf_grant_direct(fs_e, (vir_bytes)path, len, CPF_READ);
+    if (grant_id == -1)
+	panic(__FILE__, "req_create: cpf_grant_direct failed", NO_NUM);
+
+    /* Fill in request message */
+    m.m_type = REQ_CREATE_S;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_MODE = omode;
+    m.REQ_UID = uid;
+    m.REQ_GID = gid;
+    m.REQ_GRANT = grant_id;
+    m.REQ_PATH_LEN = len;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(grant_id);
+
+    if (r != OK) return r;
 
     /* Fill in response structure */
     res->fs_e = m.m_source;
     res->inode_nr = m.RES_INODE_NR;
     res->fmode = m.RES_MODE;
     res->fsize = m.RES_FILE_SIZE;
-    res->dev = m.RES_DEV;
     res->uid = m.RES_UID;
     res->gid = m.RES_GID;
+    res->dev = m.RES_DEV;
+    res->inode_index = m.RES_INODE_INDEX;
 
     return OK;
+}
+
+
+/*===========================================================================*
+ *				req_flush	      			     *
+ *===========================================================================*/
+PUBLIC int req_flush(fs_e, dev)
+endpoint_t fs_e; 
+dev_t dev;
+{
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_FLUSH;
+    m.REQ_DEV = dev;
+    
+    /* Send/rec request */
+    return fs_sendrec(fs_e, &m);
+}
+
+
+/*===========================================================================*
+ *				req_fstatfs	    			     *
+ *===========================================================================*/
+PUBLIC int req_fstatfs(fs_e, inode_nr, who_e, buf)
+int fs_e;
+ino_t inode_nr;
+int who_e;
+char *buf;
+{
+  int r;
+  cp_grant_id_t gid;
+  message m;
+
+  gid= cpf_grant_magic(fs_e, who_e, (vir_bytes)buf, sizeof(struct statfs),
+		CPF_WRITE);
+  if (gid < 0)
+	return gid;
+
+  /* Fill in request message */
+  m.m_type = REQ_FSTATFS;
+  m.REQ_INODE_NR = inode_nr;
+  m.REQ_GRANT = gid;
+
+  /* Send/rec request */
+  r= fs_sendrec(fs_e, &m);
+
+  cpf_revoke(gid);
+
+  return r;
+}
+
+
+/*===========================================================================*
+ *				req_ftrunc	     			     *
+ *===========================================================================*/
+PUBLIC int req_ftrunc(fs_e, inode_nr, start, end)
+endpoint_t fs_e;
+ino_t inode_nr;
+off_t start;
+off_t end;
+{
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_FTRUNC;
+    m.REQ_FD_INODE_NR = inode_nr;
+    m.REQ_FD_START = start;
+    m.REQ_FD_END = end;
+
+    /* Send/rec request */
+    return fs_sendrec(fs_e, &m);
+}
+
+
+/*===========================================================================*
+ *				req_getdents	     			     *
+ *===========================================================================*/
+PUBLIC int req_getdents(fs_e, inode_nr, pos, gid, size, pos_change)
+endpoint_t fs_e;
+ino_t inode_nr;
+off_t pos;
+cp_grant_id_t gid;
+size_t size;
+off_t *pos_change;
+{
+	int r;
+	message m;
+
+	m.m_type= REQ_GETDENTS;
+	m.REQ_GDE_INODE= inode_nr;
+	m.REQ_GDE_GRANT= gid;
+	m.REQ_GDE_SIZE= size;
+	m.REQ_GDE_POS= pos;
+
+	r = fs_sendrec(fs_e, &m);
+	*pos_change= m.RES_GDE_POS_CHANGE;
+	return r;
+}
+
+
+/*===========================================================================*
+ *				req_inhibread	  			     *
+ *===========================================================================*/
+PUBLIC int req_inhibread(fs_e, inode_nr)
+endpoint_t fs_e;
+ino_t inode_nr;
+{
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_INHIBREAD;
+    m.REQ_INODE_NR = inode_nr;
+
+    /* Send/rec request */
+    return fs_sendrec(fs_e, &m);
+}
+
+
+/*===========================================================================*
+ *				req_link	       			     *
+ *===========================================================================*/
+PUBLIC int req_link(fs_e, link_parent, lastc, linked_file)
+endpoint_t fs_e;
+ino_t link_parent;
+char *lastc;
+ino_t linked_file;
+{
+    int r;
+    cp_grant_id_t gid;
+    size_t len;
+    message m;
+
+    len= strlen(lastc) + 1;
+    gid= cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+    if (gid == -1)
+	panic(__FILE__, "req_link: cpf_grant_direct failed", NO_NUM);
+
+    /* Fill in request message */
+    m.m_type = REQ_LINK_S;
+    m.REQ_LINKED_FILE = linked_file;
+    m.REQ_LINK_PARENT = link_parent;
+    m.REQ_GRANT = gid;
+    m.REQ_PATH_LEN = len;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(gid);
+
+    return r;
+}
+    
+
+/*===========================================================================*
+ *				req_lookup	                   	     *
+ *===========================================================================*/
+PUBLIC int req_lookup(fs_e, path_off, dir_ino, root_ino, uid, gid, flags, res)
+endpoint_t fs_e;
+size_t path_off;
+ino_t dir_ino;
+ino_t root_ino;
+uid_t uid;
+gid_t gid;
+int flags;
+lookup_res_t *res;
+{
+    int r;
+    size_t len;
+    cp_grant_id_t grant_id;
+    message m;
+
+#if 0
+    printf("req_lookup_s: fs %d, ino %d, root %d, string (off %d) '%s'\n",
+	fs_e, dir_ino, root_ino, path_off, user_fullpath+path_off);
+#endif
+
+    grant_id= cpf_grant_direct(fs_e, (vir_bytes)user_fullpath,
+	sizeof(user_fullpath), CPF_READ|CPF_WRITE);
+    if (grant_id == -1)
+	panic(__FILE__, "req_lookup_s: cpf_grant_direct failed", NO_NUM);
+    len= strlen(user_fullpath+path_off) + 1;
+
+    /* Fill in request message */
+    m.m_type = REQ_LOOKUP_S;
+    m.REQ_L_GRANT = grant_id;
+    m.REQ_L_PATH_LEN = len;
+    m.REQ_L_PATH_SIZE = sizeof(user_fullpath);
+    m.REQ_L_PATH_OFF = path_off;
+    m.REQ_L_DIR_INO = dir_ino;
+    m.REQ_L_ROOT_INO = root_ino;
+    m.REQ_L_FLAGS = flags;
+    m.REQ_L_UID = uid;
+    m.REQ_L_GID = gid;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(grant_id);
+
+    /* Fill in response according to the return value */
+    res->fs_e = m.m_source;
+    switch (r) {
+        case OK:
+            res->inode_nr = m.RES_INODE_NR;
+            res->fmode = m.RES_MODE;
+            res->fsize = m.RES_FILE_SIZE;
+            res->dev = m.RES_DEV;
+	    res->uid= m.RES_UID;
+	    res->gid= m.RES_GID;
+            break;
+        case EENTERMOUNT:
+            res->inode_nr = m.RES_INODE_NR;
+            res->char_processed = m.RES_OFFSET;
+	    res->symloop = m.RES_SYMLOOP2;
+	    break;
+        case ELEAVEMOUNT:
+            res->char_processed = m.RES_OFFSET;
+	    res->symloop = m.RES_SYMLOOP2;
+	    break;
+        case ESYMLINK:
+            res->char_processed = m.RES_OFFSET;
+            res->symloop = m.RES_SYMLOOP2;
+            break;
+	default:
+	    break;
+    }
+
+    return r;
+}
+
+
+/*===========================================================================*
+ *				req_mkdir	      			     *
+ *===========================================================================*/
+PUBLIC int req_mkdir(fs_e, inode_nr, lastc, uid, gid, dmode)
+endpoint_t fs_e;
+ino_t inode_nr;
+char *lastc;
+uid_t uid;
+gid_t gid;
+mode_t dmode;
+{
+    int r;
+    cp_grant_id_t grant_id;
+    size_t len;
+    message m;
+
+    len= strlen(lastc) + 1;
+    grant_id= cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+    if (gid == -1)
+	panic(__FILE__, "req_mkdir: cpf_grant_direct failed", NO_NUM);
+
+    /* Fill in request message */
+    m.m_type = REQ_MKDIR_S;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_MODE = dmode;
+    m.REQ_UID = uid;
+    m.REQ_GID = gid;
+    m.REQ_GRANT = grant_id;
+    m.REQ_PATH_LEN = len;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(grant_id);
+
+    return r;
+}
+
+
+/* Structure for REQ_MKNOD request */
+typedef struct mknod_req {
+        int fs_e;
+        ino_t inode_nr;
+        uid_t uid;
+        gid_t gid;
+        mode_t rmode;
+        dev_t dev;
+        char *lastc;
+} mknod_req_t;
+
+
+
+/*===========================================================================*
+ *				req_newnode	      			     *
+ *===========================================================================*/
+PUBLIC int req_newnode(fs_e, uid, gid, dmode, dev, res)
+endpoint_t fs_e;
+uid_t uid;
+gid_t gid;
+mode_t dmode;
+dev_t dev;
+struct node_details *res;
+{
+    int r;
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_NEWNODE;
+    m.REQ_MODE = dmode;
+    m.REQ_DEVx = dev;
+    m.REQ_UID = uid;
+    m.REQ_GID = gid;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    res->fs_e = m.m_source;
+    res->inode_nr = m.RES_INODE_NR;
+    res->fmode = m.RES_MODE;
+    res->fsize = m.RES_FILE_SIZE;
+    res->dev = m.RES_DEV;
+    res->uid= m.RES_UID;
+    res->gid= m.RES_GID;
+
+    return r;
+}
+
+
+/*===========================================================================*
+ *				req_mountpoint	                 	     *
+ *===========================================================================*/
+PUBLIC int req_mountpoint(fs_e, inode_nr)
+endpoint_t fs_e;
+ino_t inode_nr;
+{
+    int r;
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_MOUNTPOINT_S;
+    m.REQ_INODE_NR = inode_nr;
+
+    /* Send/rec request */
+    return fs_sendrec(fs_e, &m);
+}
+
+
+/*===========================================================================*
+ *				req_mknod	      			     *
+ *===========================================================================*/
+PUBLIC int req_mknod(fs_e, inode_nr, lastc, uid, gid, dmode, dev)
+endpoint_t fs_e;
+ino_t inode_nr;
+char *lastc;
+uid_t uid;
+gid_t gid;
+mode_t dmode;
+dev_t dev;
+{
+    int r;
+    size_t len;
+    cp_grant_id_t grant_id;
+    message m;
+
+    len= strlen(lastc) + 1;
+    grant_id= cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+    if (gid == -1)
+	panic(__FILE__, "req_mknod: cpf_grant_direct failed", NO_NUM);
+
+    /* Fill in request message */
+    m.m_type = REQ_MKNOD_S;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_MODE = dmode;
+    m.REQ_DEVx = dev;
+    m.REQ_UID = uid;
+    m.REQ_GID = gid;
+    m.REQ_GRANT = grant_id;
+    m.REQ_PATH_LEN = len;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(grant_id);
+
+    return r;
 }
 
 
@@ -83,342 +874,281 @@ int count;
     return fs_sendrec(fs_e, &m);
 }
 
+
 /*===========================================================================*
- *				req_open    				     *
+ *				req_rdlink	     			     *
  *===========================================================================*/
-int req_open(req, res)
-open_req_t *req; 
-node_details_t *res; 
+PUBLIC int req_rdlink(fs_e, inode_nr, who_e, buf, len)
+endpoint_t fs_e;
+ino_t inode_nr;
+endpoint_t who_e;
+vir_bytes buf;
+size_t len;
 {
-    int r;
     message m;
+    int r;
+    cp_grant_id_t gid;
+
+    gid= cpf_grant_magic(fs_e, who_e, buf, len, CPF_WRITE);
+    if (gid == -1)
+	panic(__FILE__, "req_rdlink: cpf_grant_magic failed", NO_NUM);
 
     /* Fill in request message */
-    m.m_type = REQ_OPEN;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_FLAGS = req->oflags;
-    m.REQ_MODE = req->omode;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->lastc;
-    m.REQ_PATH_LEN = strlen(req->lastc) + 1;
+    m.m_type = REQ_RDLINK_S;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_GRANT = gid;
+    m.REQ_SLENGTH = len;
 
     /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
+    r= fs_sendrec(fs_e, &m);
 
-    /* Fill in response structure */
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
-    res->dev = m.RES_DEV;
-    res->inode_index = m.RES_INODE_INDEX;
-    /* For exec */
-    res->uid = m.RES_UID;
-    res->gid = m.RES_GID;
-    res->ctime = m.RES_CTIME;
+    cpf_revoke(gid);
 
-    return OK;
+    return r;
 }
 
 
 /*===========================================================================*
- *				req_create    				     *
+ *				req_readsuper	                  	     *
  *===========================================================================*/
-int req_create(fs_e, inode_nr, omode, uid, gid, path, res)
-int fs_e;
-ino_t inode_nr;
-int omode;
-uid_t uid;
-gid_t gid;
-char *path;
-node_details_t *res; 
+PUBLIC int req_readsuper(fs_e, label, dev, readonly, isroot, res_nodep)
+endpoint_t fs_e;
+char *label;
+dev_t dev;
+int readonly;
+int isroot;
+struct node_details *res_nodep;
 {
     int r;
+    cp_grant_id_t gid;
+    size_t len;
     message m;
 
+    len= strlen(label)+1;
+    gid= cpf_grant_direct(fs_e, (vir_bytes)label, len, CPF_READ);
+    if (gid == -1)
+	panic(__FILE__, "req_req_readsuper: cpf_grant_direct failed", NO_NUM);
+
     /* Fill in request message */
-    m.m_type = REQ_CREATE;
-    m.REQ_INODE_NR = inode_nr;
-    m.REQ_MODE = omode;
-    m.REQ_UID = uid;
-    m.REQ_GID = gid;
-    m.REQ_PATH = path;
-    m.REQ_PATH_LEN = strlen(path) + 1;
+    m.m_type = REQ_READSUPER_S;
+    m.REQ_READONLY = readonly;
+    m.REQ_GRANT2 = gid;
+    m.REQ_DEV = dev;
+    m.REQ_ISROOT = isroot;
+    m.REQ_PATH_LEN = len;
 
     /* Send/rec request */
     if ((r = fs_sendrec(fs_e, &m)) != OK) return r;
 
     /* Fill in response structure */
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
-    res->dev = m.RES_DEV;
-    res->inode_index = m.RES_INODE_INDEX;
-    /* For exec */
-    res->uid = m.RES_UID;
-    res->gid = m.RES_GID;
-    res->ctime = m.RES_CTIME;
+    res_nodep->fs_e = m.m_source;
+    res_nodep->inode_nr = m.RES_INODE_NR;
+    res_nodep->fmode = m.RES_MODE;
+    res_nodep->fsize = m.RES_FILE_SIZE;
+    res_nodep->uid = m.RES_UID;
+    res_nodep->gid = m.RES_GID;
 
     return OK;
 }
 
+/* Structure for REQ_READ and REQ_WRITE request */
+typedef struct readwrite_req {
+	int rw_flag;
+	endpoint_t fs_e;
+        endpoint_t user_e;
+	ino_t inode_nr;
+	unsigned short inode_index;
+	int seg;
+	u64_t pos;
+	unsigned int num_of_bytes;
+	char *user_addr;
+} readwrite_req_t;
+
 
 /*===========================================================================*
- *				req_readwrite  				     *
+ *				req_readwrite				     *
  *===========================================================================*/
-int req_readwrite(req, res)
-readwrite_req_t *req; 
-readwrite_res_t *res; 
+PUBLIC int req_readwrite(fs_e, inode_nr, inode_index, pos, rw_flag, user_e,
+	user_addr, num_of_bytes, new_posp, cum_iop)
+endpoint_t fs_e;
+ino_t inode_nr;
+unsigned short inode_index;
+u64_t pos;
+int rw_flag;
+endpoint_t user_e;
+char *user_addr;
+unsigned int num_of_bytes;
+u64_t *new_posp;
+unsigned int *cum_iop;
 {
     int r;
+    cp_grant_id_t gid;
     message m;
 
-    if (ex64hi(req->pos) != 0)
+    if (ex64hi(pos) != 0)
 	panic(__FILE__, "req_readwrite: pos too large", NO_NUM);
-    
+
+    gid= cpf_grant_magic(fs_e, user_e, (vir_bytes)user_addr,
+	num_of_bytes, (rw_flag == READING ? CPF_WRITE : CPF_READ));
+    if (gid == -1)
+	panic(__FILE__, "req_readwrite: cpf_grant_magic failed", NO_NUM);
+
     /* Fill in request message */
-    m.m_type = req->rw_flag == READING ? REQ_READ : REQ_WRITE;
-    m.REQ_FD_INODE_NR = req->inode_nr;
-    m.REQ_FD_WHO_E = req->user_e;
-    m.REQ_FD_SEG = req->seg;
-    m.REQ_FD_POS = ex64lo(req->pos);
-    m.REQ_FD_NBYTES = req->num_of_bytes;
-    m.REQ_FD_USER_ADDR = req->user_addr;
-    m.REQ_FD_INODE_INDEX = req->inode_index;
+    m.m_type = rw_flag == READING ? REQ_READ_S : REQ_WRITE_S;
+    m.REQ_FD_INODE_NR = inode_nr;
+    m.REQ_FD_GID = gid;
+    m.REQ_FD_POS = ex64lo(pos);
+    m.REQ_FD_NBYTES = num_of_bytes;
+    m.REQ_FD_INODE_INDEX = inode_index;
     
     /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(gid);
+
+    if (r != OK) return r;
 
     /* Fill in response structure */
-    res->new_pos = cvul64(m.RES_FD_POS);
-    res->cum_io = m.RES_FD_CUM_IO;
+    *new_posp = cvul64(m.RES_FD_POS);
+    *cum_iop = m.RES_FD_CUM_IO;
 
     return OK;
 }
 
 
-
 /*===========================================================================*
- *				req_pipe   				     *
+ *				req_rename	     			     *
  *===========================================================================*/
-PUBLIC int req_pipe(req, res)
-pipe_req_t *req; 
-node_details_t *res;
+PUBLIC int req_rename(fs_e, old_dir, old_name, new_dir, new_name)
+endpoint_t fs_e;
+ino_t old_dir;
+char *old_name;
+ino_t new_dir;
+char *new_name;
 {
     int r;
+    cp_grant_id_t gid_old, gid_new;
+    size_t len_old, len_new;
     message m;
 
-    /* Fill in request message */
-    m.m_type = REQ_PIPE;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-
-    /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
-
-    /* Fill in response structure */
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
-    res->dev = m.RES_DEV;
-    res->inode_index = m.RES_INODE_INDEX;
-    
-    return OK;
-}
-
-
-/*===========================================================================*
- *				req_clone_opcl  			     *
- *===========================================================================*/
-PUBLIC int req_clone_opcl(req, res)
-clone_opcl_req_t *req;
-node_details_t *res;
-{
-    int r;
-    message m;
+    len_old= strlen(old_name) + 1;
+    gid_old= cpf_grant_direct(fs_e, (vir_bytes)old_name, len_old,
+	CPF_READ);
+    if (gid_old == -1)
+	panic(__FILE__, "req_rename: cpf_grant_direct failed", NO_NUM);
+    len_new= strlen(new_name) + 1;
+    gid_new= cpf_grant_direct(fs_e, (vir_bytes)new_name, len_new,
+	CPF_READ);
+    if (gid_new == -1)
+	panic(__FILE__, "req_rename: cpf_grant_direct failed", NO_NUM);
 
     /* Fill in request message */
-    m.m_type = REQ_CLONE_OPCL;
-    m.REQ_DEV = req->dev;
+    m.m_type = REQ_RENAME_S;
+    m.REQ_REN_OLD_DIR = old_dir;
+    m.REQ_REN_NEW_DIR = new_dir;
+    m.REQ_REN_GRANT_OLD = gid_old;
+    m.REQ_REN_LEN_OLD = len_old;
+    m.REQ_REN_GRANT_NEW = gid_new;
+    m.REQ_REN_LEN_NEW = len_new;
 
     /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
-    
-    /* Fill in response structure */
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
-    res->dev = m.RES_DEV;
-    res->inode_index = m.RES_INODE_INDEX;
-    
-    return OK;
-}
+    r = fs_sendrec(fs_e, &m);
 
-
-
-/*===========================================================================*
- *				req_ftrunc          			     *
- *===========================================================================*/
-PUBLIC int req_ftrunc(req)
-ftrunc_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_FTRUNC;
-    m.REQ_FD_INODE_NR = req->inode_nr;
-    m.REQ_FD_START = req->start;
-    m.REQ_FD_END = req->end;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_chmod          			     *
- *===========================================================================*/
-PUBLIC int req_chmod(req, ch_mode)
-chmod_req_t *req;
-int *ch_mode;
-{
-    message m;
-    int r;
-
-    /* Fill in request message */
-    m.m_type = REQ_CHMOD;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_MODE = req->rmode;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-
-    /* Send/rec request */
-    r = fs_sendrec(req->fs_e, &m);
-
-    /* Copy back actual mode. */
-    if(ch_mode) *ch_mode = m.RES_MODE;
+    cpf_revoke(gid_old);
+    cpf_revoke(gid_new);
 
     return r;
 }
 
 
 /*===========================================================================*
- *				req_chown          			     *
+ *				req_rmdir	      			     *
  *===========================================================================*/
-PUBLIC int req_chown(req, ch_mode)
-chown_req_t *req;
-int *ch_mode;
+PUBLIC int req_rmdir(fs_e, inode_nr, lastc)
+endpoint_t fs_e;
+ino_t inode_nr;
+char *lastc;
 {
-    message m;
     int r;
+    cp_grant_id_t gid;
+    size_t len;
+    message m;
+
+    len= strlen(lastc) + 1;
+    gid= cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+    if (gid == -1)
+	panic(__FILE__, "req_rmdir: cpf_grant_direct failed", NO_NUM);
 
     /* Fill in request message */
-    m.m_type = REQ_CHOWN;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_NEW_UID = req->newuid;
-    m.REQ_NEW_GID = req->newgid;
+    m.m_type = REQ_RMDIR_S;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_GRANT = gid;
+    m.REQ_PATH_LEN = len;
 
     /* Send/rec request */
-    r = fs_sendrec(req->fs_e, &m);
+    r = fs_sendrec(fs_e, &m);
 
-    /* Return new mode to caller. */
-    if(ch_mode) *ch_mode = m.RES_MODE;
+    cpf_revoke(gid);
 
     return r;
 }
 
 
 /*===========================================================================*
- *				req_access         			     *
+ *				req_slink	      			     *
  *===========================================================================*/
-PUBLIC int req_access(req)
-access_req_t *req;
+PUBLIC int req_slink(fs_e, inode_nr, lastc, who_e, path_addr, path_length,
+	uid, gid)
+endpoint_t fs_e;
+ino_t inode_nr;
+char *lastc;
+endpoint_t who_e;
+char *path_addr;
+unsigned short path_length;
+uid_t uid;
+gid_t gid;
 {
+    int r;
+    size_t len;
+    cp_grant_id_t gid_name, gid_buf;
     message m;
 
+    len= strlen(lastc) + 1;
+    gid_name= cpf_grant_direct(fs_e, (vir_bytes)lastc, len,
+	CPF_READ);
+    if (gid_name == -1)
+	panic(__FILE__, "req_slink: cpf_grant_direct failed", NO_NUM);
+
+    gid_buf= cpf_grant_magic(fs_e, who_e, (vir_bytes)path_addr,
+	path_length, CPF_READ);
+    if (gid_buf == -1)
+    {
+	cpf_revoke(gid_buf);
+	panic(__FILE__, "req_slink: cpf_grant_magic failed", NO_NUM);
+    }
+
     /* Fill in request message */
-    m.m_type = REQ_ACCESS;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_MODE = req->amode;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
+    m.m_type = REQ_SLINK_S;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_UID = uid;
+    m.REQ_GID = gid;
+    m.REQ_GRANT = gid_name;
+    m.REQ_PATH_LEN = len;
+    m.REQ_GRANT2 = gid_buf;
+    m.REQ_SLENGTH = path_length;
 
     /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(gid_name);
+    cpf_revoke(gid_buf);
+
+    return r;
 }
 
 
 /*===========================================================================*
- *				req_mknod          			     *
- *===========================================================================*/
-PUBLIC int req_mknod(req)
-mknod_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_MKNOD;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_MODE = req->rmode;
-    m.REQ_DEV = req->dev;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->lastc;
-    m.REQ_PATH_LEN = strlen(req->lastc) + 1;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_mkdir          			     *
- *===========================================================================*/
-PUBLIC int req_mkdir(req)
-mkdir_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_MKDIR;
-    m.REQ_INODE_NR = req->d_inode_nr;
-    m.REQ_MODE = req->rmode;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->lastc;
-    m.REQ_PATH_LEN = strlen(req->lastc) + 1;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-
-/*===========================================================================*
- *				req_inhibread         			     *
- *===========================================================================*/
-PUBLIC int req_inhibread(req)
-node_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_INHIBREAD;
-    m.REQ_INODE_NR = req->inode_nr;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_stat          			     *
+ *				req_stat	       			     *
  *===========================================================================*/
 PUBLIC int req_stat(fs_e, inode_nr, who_e, buf, pos)
 int fs_e;
@@ -467,120 +1197,7 @@ int pos;
 
 
 /*===========================================================================*
- *				req_fstatfs        			     *
- *===========================================================================*/
-PUBLIC int req_fstatfs(fs_e, inode_nr, who_e, buf)
-int fs_e;
-ino_t inode_nr;
-int who_e;
-char *buf;
-{
-  int r;
-  cp_grant_id_t gid;
-  message m;
-
-  gid= cpf_grant_magic(fs_e, who_e, (vir_bytes)buf, sizeof(struct statfs),
-		CPF_WRITE);
-  if (gid < 0)
-	return gid;
-
-  /* Fill in request message */
-  m.m_type = REQ_FSTATFS;
-  m.REQ_INODE_NR = inode_nr;
-  m.REQ_GRANT = gid;
-
-  /* Send/rec request */
-  r= fs_sendrec(fs_e, &m);
-
-  cpf_revoke(gid);
-
-  return r;
-}
-
-
-/*===========================================================================*
- *				req_unlink        			     *
- *===========================================================================*/
-PUBLIC int req_unlink(req)
-unlink_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_UNLINK;
-    m.REQ_INODE_NR = req->d_inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->lastc;
-    m.REQ_PATH_LEN = strlen(req->lastc) + 1;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_rmdir        			     *
- *===========================================================================*/
-PUBLIC int req_rmdir(req)
-unlink_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_RMDIR;
-    m.REQ_INODE_NR = req->d_inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->lastc;
-    m.REQ_PATH_LEN = strlen(req->lastc) + 1;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_utime        			     *
- *===========================================================================*/
-PUBLIC int req_utime(req)
-utime_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_UTIME;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_ACTIME = req->actime;
-    m.REQ_MODTIME = req->modtime;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_stime        			     *
- *===========================================================================*/
-PUBLIC int req_stime(fs_e, boottime)
-endpoint_t fs_e; 
-time_t boottime;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_STIME;
-    m.REQ_BOOTTIME = boottime;
-    
-    /* Send/rec request */
-    return fs_sendrec(fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_sync         			     *
+ *				req_sync	       			     *
  *===========================================================================*/
 PUBLIC int req_sync(fs_e)
 endpoint_t fs_e; 
@@ -594,164 +1211,52 @@ endpoint_t fs_e;
     return fs_sendrec(fs_e, &m);
 }
 
+/* Structure for REQ_UNLINK request */
+typedef struct unlink_req {
+        int fs_e;
+        ino_t d_inode_nr;
+        uid_t uid;
+        gid_t gid;
+        char *lastc;
+} unlink_req_t;
 
-/*===========================================================================*
- *				req_link        			     *
- *===========================================================================*/
-PUBLIC int req_link(req)
-link_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_LINK;
-    m.REQ_LINKED_FILE = req->linked_file;
-    m.REQ_LINK_PARENT = req->link_parent;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->lastc;
-    m.REQ_PATH_LEN = strlen(req->lastc) + 1;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-    
-
-/*===========================================================================*
- *				req_slink        			     *
- *===========================================================================*/
-PUBLIC int req_slink(req)
-slink_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_SLINK;
-    m.REQ_INODE_NR = req->parent_dir;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->lastc;
-    m.REQ_PATH_LEN = strlen(req->lastc) + 1;
-    m.REQ_WHO_E = req->who_e;
-    m.REQ_USER_ADDR = req->path_addr;
-    m.REQ_SLENGTH = req->path_length;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
 
 
 /*===========================================================================*
- *				req_rdlink       			     *
+ *				req_unlink	     			     *
  *===========================================================================*/
-PUBLIC int req_rdlink(req)
-rdlink_req_t *req;
+PUBLIC int req_unlink(fs_e, inode_nr, lastc)
+endpoint_t fs_e;
+ino_t inode_nr;
+char *lastc;
 {
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_RDLINK;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_WHO_E = req->who_e;
-    m.REQ_USER_ADDR = req->path_buffer;
-    m.REQ_SLENGTH = req->max_length;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_rename       			     *
- *===========================================================================*/
-PUBLIC int req_rename(req)
-rename_req_t *req;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_RENAME;
-    m.REQ_OLD_DIR = req->old_dir;
-    m.REQ_NEW_DIR = req->new_dir;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_PATH = req->old_name;
-    m.REQ_PATH_LEN = strlen(req->old_name) + 1;
-    m.REQ_USER_ADDR = req->new_name;
-    m.REQ_SLENGTH = strlen(req->new_name) + 1;
-
-    /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
-}
-
-
-/*===========================================================================*
- *				req_mountpoint                  	     *
- *===========================================================================*/
-PUBLIC int req_mountpoint(req, res)
-mountpoint_req_t *req; 
-node_details_t *res;
-{
+    cp_grant_id_t gid;
+    size_t len;
     int r;
     message m;
 
+    len= strlen(lastc) + 1;
+    gid= cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
+    if (gid == -1)
+	panic(__FILE__, "req_unlink: cpf_grant_direct failed", NO_NUM);
+
     /* Fill in request message */
-    m.m_type = REQ_MOUNTPOINT;
-    m.REQ_INODE_NR = req->inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
+    m.m_type = REQ_UNLINK_S;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_GRANT = gid;
+    m.REQ_PATH_LEN = len;
 
     /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
+    r = fs_sendrec(fs_e, &m);
 
-    /* Fill in response structure */
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
+    cpf_revoke(gid);
 
-    return OK;
+    return r;
 }
 
 
 /*===========================================================================*
- *				req_readsuper                   	     *
- *===========================================================================*/
-PUBLIC int req_readsuper(req, res)
-readsuper_req_t *req; 
-readsuper_res_t *res;
-{
-    int r;
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_READSUPER;
-    m.REQ_READONLY = req->readonly;
-    m.REQ_BOOTTIME = req->boottime;
-    m.REQ_DRIVER_E = req->driver_e;
-    m.REQ_DEV = req->dev;
-    m.REQ_SLINK_STORAGE = req->slink_storage;
-    m.REQ_ISROOT = req->isroot;
-
-    /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
-
-    /* Fill in response structure */
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
-    res->blocksize = m.RES_BLOCKSIZE;
-    res->maxsize = m.RES_MAXSIZE;
-
-    return OK;
-}
-
-
-/*===========================================================================*
- *				req_unmount      			     *
+ *				req_unmount	    			     *
  *===========================================================================*/
 PUBLIC int req_unmount(fs_e)
 endpoint_t fs_e; 
@@ -767,24 +1272,25 @@ endpoint_t fs_e;
 
 
 /*===========================================================================*
- *				req_trunc          			     *
+ *				req_utime	      			     *
  *===========================================================================*/
-PUBLIC int req_trunc(req)
-trunc_req_t *req;
+PUBLIC int req_utime(fs_e, inode_nr, actime, modtime)
+endpoint_t fs_e;
+ino_t inode_nr;
+time_t actime;
+time_t modtime;
 {
     message m;
 
     /* Fill in request message */
-    m.m_type = REQ_TRUNC;
-    m.REQ_FD_INODE_NR = req->inode_nr;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_LENGTH = req->length;
+    m.m_type = REQ_UTIME;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_ACTIME = actime;
+    m.REQ_MODTIME = modtime;
 
     /* Send/rec request */
-    return fs_sendrec(req->fs_e, &m);
+    return fs_sendrec(fs_e, &m);
 }
-
 
 
 /*===========================================================================*
@@ -818,155 +1324,6 @@ endpoint_t driver_e;
 }
 
 
-/*===========================================================================*
- *				req_lookup                      	     *
- *===========================================================================*/
-PUBLIC int req_lookup(req, res)
-lookup_req_t *req; 
-lookup_res_t *res;
-{
-    int r;
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_LOOKUP;
-    m.REQ_PATH = req->path;
-    m.REQ_PATH_LEN = strlen(req->path) + 1;
-    m.REQ_USER_ADDR = req->lastc;
-    m.REQ_FLAGS = req->flags;
-    
-    m.REQ_INODE_NR = req->start_dir;
-    m.REQ_CHROOT_NR = req->root_dir;
-    m.REQ_UID = req->uid;
-    m.REQ_GID = req->gid;
-    m.REQ_SYMLOOP = req->symloop;
-
-    /* Send/rec request */
-    r = fs_sendrec(req->fs_e, &m);
-
-    /* Fill in response according to the return value */
-    res->fs_e = m.m_source;
-    switch (r) {
-        case OK:
-	default:
-            res->inode_nr = m.RES_INODE_NR;
-            res->fmode = m.RES_MODE;
-            res->fsize = m.RES_FILE_SIZE;
-            res->dev = m.RES_DEV;
-	    res->uid= m.RES_UID;
-	    res->gid= m.RES_GID;
-            res->char_processed = m.RES_OFFSET;		/* For ENOENT */
-            break;
-        case EENTERMOUNT:
-            res->inode_nr = m.RES_INODE_NR;
-        case ELEAVEMOUNT:
-        case ESYMLINK:
-            res->char_processed = m.RES_OFFSET;
-            res->symloop = m.RES_SYMLOOP;
-            break;
-    }
-
-    return r;
-}
-
-
-/*===========================================================================*
- *			req_breadwrite  				     *
- *===========================================================================*/
-int req_breadwrite(req, res)
-breadwrite_req_t *req; 
-readwrite_res_t *res; 
-{
-    int r;
-    message m;
-
-    /* Fill in request message */
-    m.m_type = req->rw_flag == READING ? REQ_BREAD : REQ_BWRITE;
-    m.REQ_XFD_BDEV = req->dev;
-    m.REQ_XFD_BLOCK_SIZE = req->blocksize;
-    m.REQ_XFD_WHO_E = req->user_e;
-    m.REQ_XFD_POS_LO = ex64lo(req->pos);
-    m.REQ_XFD_POS_HI = ex64hi(req->pos);
-    m.REQ_XFD_NBYTES = req->num_of_bytes;
-    m.REQ_XFD_USER_ADDR = req->user_addr;
-    
-    /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
-
-    /* Fill in response structure */
-    res->new_pos = make64(m.RES_XFD_POS_LO, m.RES_XFD_POS_HI);
-    res->cum_io = m.RES_XFD_CUM_IO;
-
-    return OK;
-}
-
-
-PUBLIC int req_getdents(fs_e, inode_nr, pos, gid, size, pos_change)
-endpoint_t fs_e;
-ino_t inode_nr;
-off_t pos;
-cp_grant_id_t gid;
-size_t size;
-off_t *pos_change;
-{
-	int r;
-	message m;
-
-	m.m_type= REQ_GETDENTS;
-	m.REQ_GDE_INODE= inode_nr;
-	m.REQ_GDE_GRANT= gid;
-	m.REQ_GDE_SIZE= size;
-	m.REQ_GDE_POS= pos;
-
-	r = fs_sendrec(fs_e, &m);
-	*pos_change= m.RES_GDE_POS_CHANGE;
-	return r;
-}
-
-
-/*===========================================================================*
- *				req_flush         			     *
- *===========================================================================*/
-PUBLIC int req_flush(fs_e, dev)
-endpoint_t fs_e; 
-dev_t dev;
-{
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_FLUSH;
-    m.REQ_DEV = dev;
-    
-    /* Send/rec request */
-    return fs_sendrec(fs_e, &m);
-}
-
-
-#if 0           
-/*                 Wrapper pattern:                                          */
-/*===========================================================================*
- *				req_          			     *
- *===========================================================================*/
-PUBLIC int req_(req, res)
-_req_t *req;
-_t *res;
-{
-    int r;
-    message m;
-
-    /* Fill in request message */
-
-
-    /* Send/rec request */
-    if ((r = fs_sendrec(req->fs_e, &m)) != OK) return r;
-    
-    /* Fill in response structure */
-
-
-    return OK;
-}
-#endif 
-
 
 
 
@@ -982,6 +1339,12 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
   int r, old_driver_e, new_driver_e;
   message origm, m;
   struct vmnt *vmp;
+
+  if (fs_e == PM_PROC_NR)
+  {
+	printf("from %s, %d\n", file, line);
+	panic(__FILE__, "talking to PM", NO_NUM);
+  }
 
   /* Make a copy of the request so that we can load it back in
    * case of a dead driver */

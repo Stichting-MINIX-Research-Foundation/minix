@@ -19,86 +19,6 @@
 
 #include <minix/vfsif.h>
 
-/*===========================================================================*
- *				get_vnode				     *
- *===========================================================================*/
-PUBLIC struct vnode *get_vnode(int fs_e, int inode_nr)
-{
-/* get_vnode() is called to get the details of the specified inode.
- * Note that inode's usage counter in the FS is supposed to be incremented.
- */
-  struct vnode *vp, *vp2;
-  struct vmnt *vmp;
-
-  /* Request & response structures */
-  struct node_req req;
-  struct node_details res;
-
-  /* XXX remove this when debugging is complete */
-  if (find_vnode(fs_e, inode_nr) != NULL)
-	panic(__FILE__, "get_vnode: vnode already present", NO_NUM);
-  
-  /* Check whether a free vnode is avaliable */
-  if ((vp = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
-        printf("VFSget_vnode: no vnode available\n");
-        return NIL_VNODE;
-  }
-  
-  /* Fill req struct */
-  req.inode_nr = inode_nr;
-  req.fs_e = fs_e;
-
-  /* Send request to FS */
-  if (req_getnode(&req, &res) != OK) {
-        printf("VFSget_vnode: couldn't find vnode\n"); 
-        return NIL_VNODE;
-  }
-
-  /* Fill in the free vnode's fields and return it */
-  vp->v_fs_e = res.fs_e;
-  vp->v_inode_nr = res.inode_nr;
-  vp->v_mode = res.fmode;
-  vp->v_size = res.fsize;
-  vp->v_sdev = res.dev;
-  
-  /* Find corresponding virtual mount object */
-  if ( (vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT)
-        printf("VFS: vmnt not found by get_vnode()\n");
-  
-  vp->v_vmnt = vmp; 
-  vp->v_dev = vmp->m_dev;
-  vp->v_fs_count = 1;
-  vp->v_ref_count = 1;
-  
-  return vp; 
-}
-
-
-/*===========================================================================*
- *				get_vnode				     *
- *===========================================================================*/
-PUBLIC struct vnode *get_vnode_x(int fs_e, int inode_nr)
-{
-/* get_vnode() is called to get the details of the specified inode.
- * Note that inode's usage counter in the FS is supposed to be incremented.
- */
-  struct vnode *vp, *vp2;
-  struct vmnt *vmp;
-
-  /* Request & response structures */
-  struct node_req req;
-  struct node_details res;
-
-  vp= find_vnode(fs_e, inode_nr);
-  if (vp)
-  {
-	vp->v_ref_count++;
-	return vp;
-  }
-
-  return get_vnode(fs_e, inode_nr);
-}
-
 
 /*===========================================================================*
  *				get_free_vnode				     *
@@ -114,6 +34,7 @@ int line;
 	if (vp->v_ref_count == 0)
 	{
 		vp->v_pipe= NO_PIPE;
+		vp->v_w_pipe_busy= FALSE;
 		vp->v_uid= -1;
 		vp->v_gid= -1;
 		vp->v_sdev= -1;

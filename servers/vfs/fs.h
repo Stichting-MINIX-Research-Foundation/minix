@@ -22,5 +22,6 @@
 #include <minix/sysutil.h>
 
 #include "const.h"
+#include "dmap.h"
 #include "proto.h"
 #include "glo.h"

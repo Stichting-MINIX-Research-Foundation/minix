@@ -159,7 +159,6 @@ PUBLIC int do_fcntl()
   long cloexec_mask;		/* bit map for the FD_CLOEXEC flag */
   long clo_value;		/* FD_CLOEXEC flag in proper position */
   struct filp *dummy;
-  struct ftrunc_req req;
 
   /* Is the file descriptor valid? */
   if ((f = get_filp(m_in.fd)) == NIL_FILP) {
@@ -258,14 +257,9 @@ PUBLIC int do_fcntl()
                 end = 0;
 	}
   
-        /* Fill in FS request */
-        req.fs_e = f->filp_vno->v_fs_e; 
-        req.inode_nr = f->filp_vno->v_inode_nr;
-        req.start = start;
-        req.end = end;
-
         /* Issue request */
-        return req_ftrunc(&req);
+        return req_ftrunc(f->filp_vno->v_fs_e, f->filp_vno->v_inode_nr, 
+		start, end);
      }
 
      default:

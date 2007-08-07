@@ -95,19 +95,15 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 {
 /* Perform the mount(name, mfile, rd_only) system call. */
   int rdir, mdir;               /* TRUE iff {root|mount} file is dir */
-  int i, r, found;
+  int i, r, found, isroot, replace_root;
   struct fproc *tfp;
   struct dmap *dp;
   dev_t dev;
   message m;
-  struct vnode *vp, *root_node, *mounted_on, *bspec;
+  struct vnode *vp, *root_node, *Xmounted_on, *bspec;
   struct vmnt *vmp, *vmp2;
-  struct mountpoint_req mreq;
-  struct node_details res;
-  struct readsuper_req sreq;
-  struct readsuper_res sres;
-  struct lookup_req lookup_req;
-  node_req_t node_req;
+  char *label;
+  struct node_details resX;
   
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -127,15 +123,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   /* If 'name' is not for a block special file, return error. */
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  
-  /* Get free vnode for the mountpoint */
-  if ((mounted_on = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
-        printf("VFSmount: not free vnode available\n");
-        return ENFILE;
-  }
-  
-  /* Mark it as used so that we won't find the same for the root_node */
-  mounted_on->v_ref_count = 1;
   
   /* Convert name to device number */
   if ((dev = name_to_dev()) == NO_DEV) return(err_code);
@@ -175,84 +162,101 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   /* Partition was/is already mounted */
   if (found) {
-      /* It is possible that we have an old root lying around that 
-       * needs to be remounted. */
-      if (vmp->m_mounted_on != vmp->m_root_node ||
-              vmp->m_mounted_on == fproc[FS_PROC_NR].fp_rd) {
-          /* Normally, m_mounted_on refers to the mount point. For a root
-           * filesystem, m_mounted_on is equal to the root vnode. We assume
-           * that the root of FS is always the real root. If the two
-           * vnodes are different or if the root of FS is equal two the
-           * root of the filesystem we found, we found a filesystem that
-           * is in use. */
-          mounted_on->v_ref_count = 0;
-          return EBUSY;   /* already mounted */
-      }
+	/* It is possible that we have an old root lying around that 
+	 * needs to be remounted. */
+	if (vmp->m_mounted_on != vmp->m_root_node ||
+		vmp->m_mounted_on == fproc[FS_PROC_NR].fp_rd) {
+		/* Normally, m_mounted_on refers to the mount point. For a
+		 * root filesystem, m_mounted_on is equal to the root vnode.
+		 * We assume that the root of FS is always the real root. If
+		 * the two vnodes are different or if the root of FS is equal
+		 * to the root of the filesystem we found, we found a
+		 * filesystem that is in use.
+		 */
+		return EBUSY;   /* already mounted */
+	}
 
-      if (root_dev == vmp->m_dev)
-          panic("fs", "inconsistency remounting old root", NO_NUM);
+	if (root_dev == vmp->m_dev)
+		panic("fs", "inconsistency remounting old root", NO_NUM);
 
-      /* Now get the inode of the file to be mounted on. */
-      if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
-          return(err_code);
-      }
+	/* Now get the inode of the file to be mounted on. */
+	if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
+		return(err_code);
+	}
 
-      /* Fill in lookup request fields */
-      lookup_req.path = user_fullpath;
-      lookup_req.lastc = NULL;
-      lookup_req.flags = EAT_PATH;
+	/* Request lookup */
+	r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &Xmounted_on);
+	if (r != OK) return r;
 
-      /* Request lookup */
-      if ((r = lookup(&lookup_req, &res)) != OK) return r;
+	if (vp->v_ref_count != 1)
+	{
+		put_vnode(vp);
+		printf("vfs:mount_fs: mount point is busy\n");
+		return EBUSY;
+	}
 
-      /* Fill in request message fields.*/
-      mreq.fs_e = res.fs_e;
-      mreq.inode_nr = res.inode_nr;
-      mreq.uid = fp->fp_effuid;
-      mreq.gid = fp->fp_effgid;
+	/* Issue mountpoint request */
+	r = req_mountpoint(Xmounted_on->v_fs_e, Xmounted_on->v_inode_nr);
+	if (r != OK)
+	{
+		put_vnode(Xmounted_on);
+		printf("vfs:mount_fs: req_mountpoint_s failed with %d\n", r);
+		return r;
+	}
 
-      /* Issue request */
-      if ((r = req_mountpoint(&mreq, &res)) != OK) return r;
+	/* Get the root inode of the mounted file system. */
+	root_node = vmp->m_root_node;
 
-      mounted_on->v_fs_e = res.fs_e;  
-      mounted_on->v_inode_nr = res.inode_nr;
-      mounted_on->v_mode = res.fmode;
-      mounted_on->v_size = res.fsize;
-      mounted_on->v_sdev = NO_DEV;
-      mounted_on->v_fs_count = 1;
-      mounted_on->v_ref_count = 1;
+	/* File types may not conflict. */
+	if (r == OK) {
+		mdir = ((Xmounted_on->v_mode & I_TYPE) == I_DIRECTORY); 
+		/* TRUE iff dir */
+		rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
+		if (!mdir && rdir) r = EISDIR;
+	}
 
-      /* Find the vmnt for the vnode */
-      if ( (vmp2 = find_vmnt(mounted_on->v_fs_e)) == NIL_VMNT)
-          printf("VFS: vmnt not found by mount()\n");
-      mounted_on->v_vmnt = vmp2; 
-      mounted_on->v_dev = vmp2->m_dev;  
+	/* If error, return the mount point. */
+	if (r != OK) {
+		put_vnode(Xmounted_on);
 
-      /* Get the root inode of the mounted file system. */
-      root_node = vmp->m_root_node;
+		return(r);
+	}
 
-      /* File types may not conflict. */
-      if (r == OK) {
-          mdir = ((mounted_on->v_mode & I_TYPE) == I_DIRECTORY); 
-          /* TRUE iff dir */
-          rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
-          if (!mdir && rdir) r = EISDIR;
-      }
+	/* Nothing else can go wrong.  Perform the mount. */
+	put_vnode(vmp->m_mounted_on);
+	vmp->m_mounted_on = Xmounted_on;
+	vmp->m_flags = m_in.rd_only;
+	allow_newroot = 0;              /* The root is now fixed */
 
-      /* If error, return the mount point. */
-      if (r != OK) {
-          put_vnode(mounted_on);
+	return(OK);
+  }
 
-          return(r);
-      }
+  /* Fetch the name of the mountpoint */
+  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
+	return(err_code);
+  }
 
-      /* Nothing else can go wrong.  Perform the mount. */
-      put_vnode(vmp->m_mounted_on);
-      vmp->m_mounted_on = mounted_on;
-      vmp->m_flags = m_in.rd_only;
-      allow_newroot = 0;              /* The root is now fixed */
+  isroot= (strcmp(user_fullpath, "/") == 0);
+  replace_root= (isroot && allow_newroot);
 
-      return(OK);
+  if (!replace_root)
+  {
+	/* Get mount point and inform the FS it is on. */
+#if 0
+	printf("vfs:mount_fs: mount point at '%s'\n", user_fullpath);
+#endif
+
+	r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &Xmounted_on);
+	if (r != OK)
+		return r;
+
+	/* Issue mountpoint request */
+	r = req_mountpoint(Xmounted_on->v_fs_e, Xmounted_on->v_inode_nr);
+	if (r != OK) {
+		put_vnode(Xmounted_on);
+		printf("vfs:mount_fs: req_mountpoint_s failed with %d\n", r);
+		return r;
+	}
   }
 
   /* We'll need a vnode for the root inode, check whether there is one */
@@ -261,13 +265,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
         return ENFILE;
   }
   
-  /* Set it back to zero so that if st goes wrong it won't be kept in use */
-  mounted_on->v_ref_count = 0;
-  
-  /* Fetch the name of the mountpoint */
-  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
-        return(err_code);
-  }
 
   /* Get driver process' endpoint */  
   dp = &dmap[(dev >> MAJOR) & BYTE];
@@ -275,57 +272,35 @@ PRIVATE int mount_fs(endpoint_t fs_e)
         printf("VFSmount: no driver for dev %x\n", dev);
         return(EINVAL);
   }
-
-  /* Open the device the file system lives on. */
-  if (dev_open(dev, fs_e, m_in.rd_only ? R_BIT : (R_BIT|W_BIT)) != OK) {
-        return(EINVAL);
+  label= dp->dmap_label;
+  if (strlen(label) == 0)
+  {
+	panic(__FILE__, "vfs:mount_fs: no label for major", dev >> MAJOR);
   }
+#if 0
+  printf("vfs:mount_fs: label = '%s'\n", label);
+#endif
 
-  /* Request for reading superblock and root inode */
-  sreq.fs_e = fs_e;
-  sreq.readonly = m_in.rd_only;
-  sreq.boottime = boottime;
-  sreq.driver_e = dp->dmap_driver;
-  sreq.dev = dev;
-  sreq.slink_storage = user_fullpath;
-  
-  if (!strcmp(user_fullpath, "/")) sreq.isroot = 1;
-  else sreq.isroot = 0;
- 
   /* Issue request */
-  if ((r = req_readsuper(&sreq, &sres)) != OK) {
-      dev_close(dev);
+  r = req_readsuper(fs_e, label, dev, m_in.rd_only, isroot, &resX);
+  if (r != OK) {
       return r;
   }
 
-  /* Fill in request message fields.*/
-  node_req.fs_e = sres.fs_e;
-  node_req.inode_nr = sres.inode_nr;
-
-  /* Issue request */
-  if ((r = req_getnode(&node_req, &res)) != OK)
-  {
-	printf("mount: req_getnode failed: %d\n", r);
-        dev_close(dev);
-	return r;
-  }
-  
   /* Fill in root node's fields */
-  root_node->v_fs_e = res.fs_e;
-  root_node->v_inode_nr = res.inode_nr;
-  root_node->v_mode = res.fmode;
-  root_node->v_uid = res.uid;
-  root_node->v_gid = res.gid;
-  root_node->v_size = res.fsize;
+  root_node->v_fs_e = resX.fs_e;
+  root_node->v_inode_nr = resX.inode_nr;
+  root_node->v_mode = resX.fmode;
+  root_node->v_uid = resX.uid;
+  root_node->v_gid = resX.gid;
+  root_node->v_size = resX.fsize;
   root_node->v_sdev = NO_DEV;
-  root_node->v_fs_count = 2;
+  root_node->v_fs_count = 1;
   root_node->v_ref_count = 1;
 
   /* Fill in max file size and blocksize for the vmnt */
-  vmp->m_fs_e = sres.fs_e;
+  vmp->m_fs_e = resX.fs_e;
   vmp->m_dev = dev;
-  vmp->m_block_size = sres.blocksize;
-  vmp->m_max_file_size = sres.maxsize;
   vmp->m_flags = m_in.rd_only;
   vmp->m_driver_e = dp->dmap_driver;
   
@@ -333,7 +308,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   root_node->v_vmnt = vmp;
   root_node->v_dev = vmp->m_dev;
   
-  if (strcmp(user_fullpath, "/") == 0 && allow_newroot) {
+  if (replace_root) {
       printf("Replacing root\n");
 
       /* Superblock and root node already read. 
@@ -365,63 +340,24 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       return(OK);
   }
 
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH;
-
-  /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) {
-      put_vnode(root_node);
-      return r;
-  }
-
-  /* Fill in request fields.*/
-  mreq.fs_e = res.fs_e;
-  mreq.inode_nr = res.inode_nr;
-  mreq.uid = fp->fp_effuid;
-  mreq.gid = fp->fp_effgid;
-
-  /* Issue request */
-  if ((r = req_mountpoint(&mreq, &res)) != OK) {
-      put_vnode(root_node);
-      return r;
-  }
-  
-  /* Fill in vnode's fields */
-  mounted_on->v_fs_e = res.fs_e;  
-  mounted_on->v_inode_nr = res.inode_nr;
-  mounted_on->v_mode = res.fmode;
-  mounted_on->v_size = res.fsize;
-  mounted_on->v_sdev = NO_DEV;
-  mounted_on->v_fs_count = 1;
-  mounted_on->v_ref_count = 1;
-
-  /* Find the vmnt for the vnode */
-  if ( (vmp2 = find_vmnt(mounted_on->v_fs_e)) == NIL_VMNT)
-      printf("VFS: vmnt not found by mount()");
-  mounted_on->v_vmnt = vmp2; 
-  mounted_on->v_dev = vmp2->m_dev;
-
   /* File types may not conflict. */
   if (r == OK) {
-      mdir = ((mounted_on->v_mode & I_TYPE) == I_DIRECTORY);/* TRUE iff dir */
+      mdir = ((Xmounted_on->v_mode & I_TYPE) == I_DIRECTORY);/* TRUE iff dir */
       rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
       if (!mdir && rdir) r = EISDIR;
   }
 
   /* If error, return the super block and both inodes; release the vmnt. */
   if (r != OK) {
-      put_vnode(mounted_on);
+      put_vnode(Xmounted_on);
       put_vnode(root_node);
 
       vmp->m_dev = NO_DEV;
-      dev_close(dev);
       return(r);
   }
 
   /* Nothing else can go wrong.  Perform the mount. */
-  vmp->m_mounted_on = mounted_on;
+  vmp->m_mounted_on = Xmounted_on;
   vmp->m_root_node = root_node;
 
   /* The root is now fixed */
@@ -500,9 +436,6 @@ Dev_t dev;
 	panic(__FILE__, "unmount: strange fs endpoint", vmp->m_fs_e);
   if ((r = req_unmount(vmp->m_fs_e)) != OK) return r;
 
-  /* Close the device the file system lives on. */
-  dev_close(dev);
-
   /* Is there a block special file that was handled by that partition? */
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
       if ((vp->v_mode & I_TYPE) == I_BLOCK_SPECIAL && 
@@ -519,7 +452,6 @@ Dev_t dev;
 
           printf("VFSunmount: moving block spec %d to root FS\n", dev);
           vp->v_bfs_e = ROOT_FS_E;
-          vp->v_blocksize = _MIN_BLOCK_SIZE;
 
           /* Send the driver endpoint (even if it is known already...) */
           if ((r = req_newdriver(vp->v_bfs_e, vp->v_sdev, dp->dmap_driver))
@@ -556,23 +488,22 @@ PRIVATE dev_t name_to_dev()
 {
 /* Convert the block special file 'path' to a device number.  If 'path'
  * is not a block special file, return error code in 'err_code'. */
-  struct lookup_req lookup_req;
-  struct node_details res;
   int r;
+  dev_t dev;
+  struct vnode *vp;
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH;
-
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) return r;
 
-  if ((res.fmode & I_TYPE) != I_BLOCK_SPECIAL) {
+  if ((vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) {
   	err_code = ENOTBLK;
-	return NO_DEV;
+	dev= NO_DEV;
   }
+  else
+	dev= vp->v_sdev;
+
+  put_vnode(vp);
   
-  return res.dev;
+  return dev;
 }
 

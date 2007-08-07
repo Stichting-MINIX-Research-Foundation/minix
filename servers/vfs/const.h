@@ -87,7 +87,6 @@
 #define DIR_ENTRY_SIZE       usizeof (struct direct)  /* # bytes/dir entry   */
 #define NR_DIR_ENTRIES(b)   ((b)/DIR_ENTRY_SIZE)  /* # dir entries/blk   */
 #define SUPER_SIZE      usizeof (struct super_block)  /* super_block size    */
-#define PIPE_SIZE(b)          (V1_NR_DZONES*(b))  /* pipe size in bytes  */
 
 #define FS_BITMAP_CHUNKS(b) ((b)/usizeof (bitchunk_t))/* # map chunks/blk   */
 #define FS_BITCHUNK_BITS		(usizeof(bitchunk_t) * CHAR_BIT)
@@ -109,7 +108,7 @@
 #define V2_INDIRECTS(b)   ((b)/V2_ZONE_NUM_SIZE)  /* # zones/indir block */
 #define V2_INODES_PER_BLOCK(b) ((b)/V2_INODE_SIZE)/* # V2 dsk inodes/blk */
 
-/* Args to dev_bio/dev_io */
+/* Args to dev_io */
 #define VFS_DEV_READ	2001
 #define	VFS_DEV_WRITE	2002
 #define VFS_DEV_SCATTER	2003

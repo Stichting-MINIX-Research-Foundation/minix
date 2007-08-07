@@ -21,3 +21,13 @@ typedef struct {		/* V2.x disk inode */
   time_t d2_ctime;		/* when was inode data last changed */
   zone_t d2_zone[V2_NR_TZONES];	/* block nums for direct, ind, and dbl ind */
 } d2_inode;
+
+#if 1
+extern struct dmap {
+  int _PROTOTYPE ((*dmap_opcl), (int, Dev_t, int, int) );
+  int _PROTOTYPE ((*dmap_io), (int, message *) );
+  int dmap_driver;
+  int dmap_flags;
+} dmap[];
+#endif
+

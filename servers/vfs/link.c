@@ -33,59 +33,54 @@
 PUBLIC int do_link()
 {
 /* Perform the link(name1, name2) system call. */
-  int linked_fs_e;
-  int linked_inode_nr;
-  int link_lastdir_fs_e;
-  int link_lastdir_inode_nr;
-  char string[NAME_MAX];
-  struct link_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
   int r;
+  endpoint_t linked_fs_e, link_lastdir_fs_e;
+  struct vnode *vp_o, *vp_d;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) 
         return(err_code);
         
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH;
-        
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp_o)) != OK) return r;
 
-  linked_fs_e = res.fs_e;
-  req.linked_file = res.inode_nr;
+  linked_fs_e = vp_o->v_fs_e;
 
   /* Does the final directory of 'name2' exist? */
   if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
+	put_vnode(vp_o);
 	return(err_code);
   }
 
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = string;
-  lookup_req.flags = LAST_DIR;
-        
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp_d)) != OK)
+  {
+	put_vnode(vp_o);
+	return r;
+  }
 
-  link_lastdir_fs_e = res.fs_e;
-  req.link_parent = res.inode_nr;
-  
+  link_lastdir_fs_e = vp_d->v_fs_e;
+
   /* Check for links across devices. */
   if (linked_fs_e != link_lastdir_fs_e) 
+  {
+	put_vnode(vp_o);
+	put_vnode(vp_d);
         return EXDEV;
+  }
 
-  /* Send link request. */
-  req.fs_e = linked_fs_e;
-  /* Send the last component of the link name */
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  req.lastc = string;
+  r= forbidden(vp_d, W_BIT|X_BIT, 0 /*!use_realuid*/);
+  if (r != OK)
+  {
+	put_vnode(vp_o);
+	put_vnode(vp_d);
+        return r;
+  }
   
   /* Issue request */
-  return req_link(&req);
+  r= req_link(linked_fs_e, vp_d->v_inode_nr, user_fullpath, vp_o->v_inode_nr);
+  put_vnode(vp_o);
+  put_vnode(vp_d);
+  return r;
 }
 
 
@@ -100,65 +95,35 @@ PUBLIC int do_unlink()
  * may be used by the superuser to do dangerous things; rmdir() may not.
  */
   register struct fproc *rfp;
-  char string[NAME_MAX];
   struct vnode *vp;
-  struct unlink_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
   int r;
-  string[0] = '\0';
   
   if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH_OPAQUE;
-        
-  /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+
+  r= lookup_lastdir(0 /*!use_realuid*/, &vp);
+  if (r != OK)
+	return r;
+
+  /* The caller must have both search and execute permission */
+  r= forbidden(vp, X_BIT|W_BIT, 0 /*!use_realuid*/);
+  if (r != OK)
+  {
+	put_vnode(vp);
+	return r;
+  }
   
   /* If a directory file has to be removed the following conditions have to met:
    *	- The directory must not be the root of a mounted file system
    *	- The directory must not be anybody's root/working directory
    */
-  if ((res.fmode & I_TYPE) == I_DIRECTORY) {
-      /* Only root can unlink a directory */
-      if (call_nr == UNLINK && !super_user) return EPERM; 
-
-      /* Can't remove a root directory */
-      if (res.inode_nr == ROOT_INODE) return EBUSY;
-
-      /* Can't remove anybody's working directory */
-      if ((vp = find_vnode(res.fs_e, res.inode_nr)) != 
-              NIL_VNODE) {
-          /* Check directories */
-          for (rfp = &fproc[INIT_PROC_NR + 1]; rfp < &fproc[NR_PROCS]; 
-                  rfp++) {
-              if (rfp->fp_pid != PID_FREE && 
-                      (rfp->fp_wd == vp || rfp->fp_rd == vp))
-                  return(EBUSY); 
-          }
-      }
-  }
-  
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = string;
-  lookup_req.flags = LAST_DIR;
-        
-  /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
-  
-  /* Fill in request fields. */
-  req.fs_e = res.fs_e;
-  req.d_inode_nr = res.inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  req.lastc = string;
   
   /* Issue request */
-  return (call_nr == UNLINK) ? req_unlink(&req) : req_rmdir(&req);
+  r= ((call_nr == UNLINK) ? req_unlink : req_rmdir)(vp->v_fs_e,
+	vp->v_inode_nr, user_fullpath);
+
+  put_vnode(vp);
+
+  return r;
 }
 
 
@@ -168,90 +133,81 @@ PUBLIC int do_unlink()
 PUBLIC int do_rename()
 {
 /* Perform the rename(name1, name2) system call. */
+  int r;
   int old_dir_inode;
   int old_fs_e;
   int new_dir_inode;
   int new_fs_e;
-  char old_name[NAME_MAX];
-  char new_name[NAME_MAX];
-  struct vnode *vp;
-  struct fproc *rfp;
-  struct rename_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
-  int r;
+  size_t len;
+  struct vnode *vp_od, *vp_nd;
+  char old_name[PATH_MAX+1];
   
   /* See if 'name1' (existing file) exists.  Get dir and file inodes. */
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = old_name;
-  lookup_req.flags = LAST_DIR;
-        
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
-  
-  /* Remeber inode number and FS endpoint */
-  old_fs_e = res.fs_e;
-  req.old_dir = res.inode_nr;
+  if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp_od)) != OK) return r;
 
-  /* See if 'name2' (new name) exists.  Get dir inode */
-  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) r = err_code;
-  
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH_OPAQUE;
-        
-  /* Request lookup */
-  r = lookup(&lookup_req, &res);
-  
-  /* If a directory file has to be removed the following conditions have to met:
-   *	- The directory must not be the root of a mounted file system
-   *	- The directory must not be anybody's root/working directory
-   */
-  if (r == OK && ((res.fmode & I_TYPE) == I_DIRECTORY)) {
-      /* Can't remove a root directory */
-      if (res.inode_nr == ROOT_INODE) return EBUSY;
-
-      /* Can't remove anybody's working directory */
-      if ((vp = find_vnode(res.fs_e, res.inode_nr)) != 
-              NIL_VNODE) {
-          /* Check directories */
-          for (rfp = &fproc[INIT_PROC_NR + 1]; rfp < &fproc[NR_PROCS]; 
-                  rfp++) {
-              if (rfp->fp_pid != PID_FREE && 
-                      (rfp->fp_wd == vp || rfp->fp_rd == vp))
-                  return(EBUSY); 
-          }
-      }
+  r= forbidden(vp_od, W_BIT|X_BIT, 0 /*!use_realuid*/);
+  if (r != OK)
+  {
+	put_vnode(vp_od);
+	return r;
   }
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = new_name;
-  lookup_req.flags = LAST_DIR;
-        
-  /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  /* Remeber FS endpoint */
+  old_fs_e = vp_od->v_fs_e;
+
+  /* Save the last component of the old name */
+  len= strlen(user_fullpath);
+  if (len >= sizeof(old_name))
+  {
+	put_vnode(vp_od);
+	return ENAMETOOLONG;
+  }
+  memcpy(old_name, user_fullpath, len+1);
+
+  /* See if 'name2' (new name) exists.  Get dir inode */
+  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK)
+  {
+	put_vnode(vp_od);
+	return err_code;
+  }
   
-  /* Remeber inode number and FS endpoint */
-  new_fs_e = res.fs_e;
-  req.new_dir = res.inode_nr;
+  /* Request lookup */
+  r = lookup_lastdir(0 /*!use_realuid*/, &vp_nd);
+  if (r != OK)
+  {
+	put_vnode(vp_od);
+	return r;
+  }
+
+  r= forbidden(vp_nd, W_BIT|X_BIT, 0 /*!use_realuid*/);
+  if (r != OK)
+  {
+	put_vnode(vp_od);
+	put_vnode(vp_nd);
+	return r;
+  }
+  
+  
+  /* Remeber FS endpoint */
+  new_fs_e = vp_nd->v_fs_e;
   
   /* Both parent directories must be on the same device. */
-  if (old_fs_e != new_fs_e) return EXDEV;
+  if (old_fs_e != new_fs_e)
+  {
+	put_vnode(vp_od);
+	put_vnode(vp_nd);
+	return EXDEV;
+  }
 
-  /* Send actual rename request */
-  req.fs_e = old_fs_e;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  req.old_name = &old_name[0];
-  req.new_name = &new_name[0];
- 
   /* Issue request */
-  return req_rename(&req);
+  r= req_rename(old_fs_e, vp_od->v_inode_nr, old_name, vp_nd->v_inode_nr,
+	user_fullpath);
+  put_vnode(vp_od);
+  put_vnode(vp_nd);
+  return r;
 }
   
 
@@ -266,41 +222,20 @@ PUBLIC int do_truncate()
  * work.
  */
   struct vnode *vp;
-  struct trunc_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
   int r;
 
   printf("in do_truncate\n");
   
   if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1) != OK) return err_code;
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH;
-        
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) return r;
   
-  /* Check whether the file is in use or not */
-  vp = find_vnode(res.fs_e, res.inode_nr);
+  r= truncate_vn(vp, m_in.m2_l1);
 
-  /* Fill in request message fields.*/
-  req.fs_e = res.fs_e;
-  req.length = m_in.m2_l1;
-  req.inode_nr = res.inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  
-  /* Issue request */
-  if ((r = req_trunc(&req)) != OK) return r;
-	  
-  /* Change vnode's size if found */
-  if (vp != NIL_VNODE)
-	  vp->v_size = m_in.m2_l1;
-  
-  return OK;
+  put_vnode(vp);
+
+  return r;
 }
 
 
@@ -327,21 +262,14 @@ struct vnode *vp;
 off_t newsize;
 {
   int r;
-  struct ftrunc_req req;
 
   if ( (vp->v_mode & I_TYPE) != I_REGULAR &&
 	(vp->v_mode & I_TYPE) != I_NAMED_PIPE) {
 	return EINVAL;
   }
         
-  /* Fill in FS request */
-  req.fs_e = vp->v_fs_e; 
-  req.inode_nr = vp->v_inode_nr;
-  req.start = newsize;
-  req.end = 0;     /* Indicate trunc in fs_freesp_trunc */
-
   /* Issue request */
-  if ((r = req_ftrunc(&req)) != OK) return r;
+  if ((r = req_ftrunc(vp->v_fs_e, vp->v_inode_nr, newsize, 0)) != OK) return r;
 	  
   vp->v_size = newsize;
   return OK;
@@ -353,38 +281,40 @@ off_t newsize;
 PUBLIC int do_slink()
 {
 /* Perform the symlink(name1, name2) system call. */
-  char string[NAME_MAX];       /* last component of the new dir's path name */
-  struct slink_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
   int r;
+  struct vnode *vp;
+  char string[NAME_MAX];       /* last component of the new dir's path name */
 
   if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK)
        return(err_code);
 
   if (m_in.name1_length <= 1 || m_in.name1_length >= _MIN_BLOCK_SIZE)
        return(ENAMETOOLONG);
-  
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = string;
-  lookup_req.flags = LAST_DIR;
-        
-  /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
 
-  /* Fill in request message */
-  req.fs_e = res.fs_e;
-  req.parent_dir = res.inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  req.lastc = string;
-  req.who_e = who_e;
-  req.path_addr = m_in.name1;
-  req.path_length = m_in.name1_length - 1;
+  /* Request lookup */
+  if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp)) != OK)
+  {
+	printf("vfs:do_slink: lookup_lastdir failed with %d\n", r);
+	return r;
+  }
+
+  printf("vfs:do_slink: got dir inode %d on dev 0x%x, fs %d\n",
+	vp->v_inode_nr, vp->v_dev, vp->v_fs_e);
+
+  r= forbidden(vp, W_BIT|X_BIT, 0 /*!use_realuid*/);
+  if (r != OK)
+  {
+	put_vnode(vp);
+        return r;
+  }
 
   /* Issue request */
-  return req_slink(&req);
+  r= req_slink(vp->v_fs_e, vp->v_inode_nr, user_fullpath, who_e, m_in.name1, 
+	m_in.name1_length - 1, fp->fp_effuid, fp->fp_effgid);
+
+  put_vnode(vp);
+
+  return r;
 }
 
 /*===========================================================================*
@@ -393,36 +323,25 @@ PUBLIC int do_slink()
 PUBLIC int do_rdlink()
 {
 /* Perform the readlink(name, buf) system call. */
-  int copylen;
-  struct rdlink_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
-  int r;
+  int r, copylen;
+  struct vnode *vp;
   
   copylen = m_in.m1_i2;
   if(copylen < 0) return EINVAL;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH_OPAQUE;
-        
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
-  
-  /* Fill in request message */
-  req.fs_e = res.fs_e;
-  req.inode_nr = res.inode_nr;
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  req.who_e = who_e;
-  req.path_buffer = m_in.name2;
-  req.max_length = copylen;
+  r = lookup_vp(PATH_RET_SYMLINK, 0 /*!use_realuid*/, &vp);
+  if (r != OK) return r;
 
   /* Issue request */
-  return req_rdlink(&req);
+  r= req_rdlink(vp->v_fs_e, vp->v_inode_nr, who_e, (vir_bytes)m_in.name2,
+	copylen);
+
+  put_vnode(vp);
+
+  return r;
 }
 
 

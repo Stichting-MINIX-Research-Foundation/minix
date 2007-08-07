@@ -86,10 +86,6 @@ vir_bytes frame_len;
     char progname[PROC_NAME_LEN];
     static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
 
-    /* Request and response structures */
-    struct lookup_req lookup_req;
-    struct node_details Xres;
-    
     okendpt(proc_e, &proc_s);
     rfp= fp= &fproc[proc_s];
     who_e= proc_e;
@@ -129,23 +125,19 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
     for (round= 0; round < 2; round++)
         /* round = 0 (first attempt), or 1 (interpreted script) */
     {
+#if 0
+	printf("vfs:pm_exec: round %d, name '%s'\n", round, user_fullpath);
+#endif
+
         /* Save the name of the program */
         (cp= strrchr(user_fullpath, '/')) ? cp++ : (cp= user_fullpath);
 
         strncpy(progname, cp, PROC_NAME_LEN-1);
         progname[PROC_NAME_LEN-1] = '\0';
 
-        /* Fill in lookup request fields */
-        lookup_req.path = user_fullpath;
-        lookup_req.lastc = NULL;
-        lookup_req.flags = EAT_PATH;
-        
         /* Request lookup */
-        if ((r = lookup_vp(&lookup_req, &vp)) != OK)
-	{
-		put_vnode(vp);
+        if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK)
 		return r;
-	}
         
         if ((vp->v_mode & I_TYPE) != I_REGULAR) {
 	    put_vnode(vp);
@@ -153,7 +145,7 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
         }
 
 	/* Check access. */
-	if ((r = forbidden(vp, X_BIT)) != OK)
+	if ((r = forbidden(vp, X_BIT, 0 /*!use_realuid*/)) != OK)
 	{
 	    put_vnode(vp);
 	    return r;
@@ -168,6 +160,10 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
 	}
         v_ctime = sb.st_ctime;
         
+#if 0
+	printf("vfs:pm_exec: round %d, mode 0%o, uid %d, gid %d\n",
+		round, vp->v_mode, vp->v_uid, vp->v_gid);
+#endif
         if (round == 0)
         {
             /* Deal with setuid/setgid executables */
@@ -340,6 +336,9 @@ int *hdrlenp;
 {
 /* Read the header and extract the text, data, bss and total sizes from it. */
   off_t pos;
+  int r;
+  u64_t new_pos;
+  unsigned int cum_io_incr;
   struct exec hdr;		/* a.out header is read in here */
 
   /* Read the header and check the magic number.  The standard MINIX header 
@@ -368,26 +367,14 @@ int *hdrlenp;
    * used here only. The symbol table is for the benefit of a debugger and 
    * is ignored here.
    */
-
-  struct readwrite_req req;
-  struct readwrite_res res;
-  int r;
   
   pos= 0;	/* Read from the start of the file */
 
-  /* Fill in request structure */
-  req.fs_e = vp->v_fs_e;
-  req.rw_flag = READING;
-  req.inode_nr = vp->v_inode_nr;
-  req.user_e = FS_PROC_NR;
-  req.seg = D;
-  req.pos = cvul64(pos);
-  req.num_of_bytes = sizeof(hdr);
-  req.user_addr = (char*)&hdr;
-  req.inode_index = vp->v_index;
-
   /* Issue request */
-  if ((r = req_readwrite(&req, &res)) != OK) return r;
+  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, 
+	cvul64(pos), READING, FS_PROC_NR, (char*)&hdr, sizeof(hdr), &new_pos,
+	&cum_io_incr);
+  if (r != OK) return r;
 
   /* Interpreted script? */
   if (((char*)&hdr)[0] == '#' && ((char*)&hdr)[1] == '!' && vp->v_size >= 2)
@@ -441,32 +428,23 @@ vir_bytes *stk_bytes;		/* size of initial stack */
   int n, r;
   off_t pos;
   char *sp, *interp = NULL;
+  u64_t new_pos;
+  unsigned int cum_io_incr;
   char buf[_MAX_BLOCK_SIZE];
-  struct readwrite_req req;
-  struct readwrite_res res;
 
   /* Make user_path the new argv[0]. */
   if (!insert_arg(stack, stk_bytes, user_fullpath, REPLACE)) return(ENOMEM);
 
   pos = 0;	/* Read from the start of the file */
 
-  /* Fill in request structure */
-  req.fs_e = vp->v_fs_e;
-  req.rw_flag = READING;
-  req.inode_nr = vp->v_inode_nr;
-  req.user_e = FS_PROC_NR;
-  req.seg = D;
-  req.pos = cvul64(pos);
-  req.num_of_bytes = _MAX_BLOCK_SIZE;
-  req.user_addr = buf;
-  req.inode_index = vp->v_index;
-
   /* Issue request */
-  if ((r = req_readwrite(&req, &res)) != OK) return r;
+  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, cvul64(pos),
+	READING, FS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io_incr);
+  if (r != OK) return r;
   
   n = vp->v_size;
-  if (n > vp->v_vmnt->m_block_size)
-	n = vp->v_vmnt->m_block_size;
+  if (n > _MAX_BLOCK_SIZE)
+	n = _MAX_BLOCK_SIZE;
   if (n < 2) return ENOEXEC;
   
   sp = &(buf[2]);				/* just behind the #! */
@@ -604,28 +582,64 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
  * a segment is padded out to a click multiple, and the data segment is only
  * partially initialized.
  */
-  struct readwrite_req req;
-  struct readwrite_res res;
   int r;
+  unsigned n, o;
+  u64_t new_pos;
+  unsigned int cum_io_incr;
+  char buf[1024];
 
   /* Make sure that the file is big enough */
   if (vp->v_size < off+seg_bytes) return EIO;
+
+  if (seg != D)
+  {
+	/* We have to use a copy loop until safecopies support segments */
+	o= 0;
+	while (o < seg_bytes)
+	{
+		n= seg_bytes-o;
+		if (n > sizeof(buf))
+			n= sizeof(buf);
+
+#if 0
+printf("read_seg for user %d, seg %d: buf 0x%x, size %d, pos %d\n",
+	proc_e, seg, buf, n, off+o);
+#endif
+
+		/* Issue request */
+		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index,
+			cvul64(off+o), READING, FS_PROC_NR, buf, n, &new_pos,
+			&cum_io_incr);
+		if (r != OK) return r;
+
+		if (cum_io_incr != n)
+		{
+			printf(
+		"VFSread_seg segment has not been read properly by exec() \n");
+			return EIO;
+		}
+
+		r= sys_vircopy(FS_PROC_NR, D, (vir_bytes)buf, proc_e, seg, o,
+			n);
+		if (r != OK)
+			return r;
+
+		o += n;
+	}
+	return OK;
+  }
   
-  /* Fill in request structure */
-  req.fs_e = vp->v_fs_e;
-  req.rw_flag = READING;
-  req.inode_nr = vp->v_inode_nr;
-  req.user_e = proc_e;
-  req.seg = seg;
-  req.pos = cvul64(off);
-  req.num_of_bytes = seg_bytes;
-  req.user_addr = 0;
-  req.inode_index = vp->v_index;
+#if 0
+printf("read_seg for user %d, seg %d: buf 0x%x, size %d, pos %d\n",
+	proc_e, seg, 0, seg_bytes, off);
+#endif
 
   /* Issue request */
-  if ((r = req_readwrite(&req, &res)) != OK) return r;
+  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, cvul64(off),
+	READING, proc_e, 0, seg_bytes, &new_pos, &cum_io_incr);
+  if (r != OK) return r;
   
-  if (r == OK && res.cum_io != seg_bytes)
+  if (r == OK && cum_io_incr != seg_bytes)
       printf("VFSread_seg segment has not been read properly by exec() \n");
 
   return r; 

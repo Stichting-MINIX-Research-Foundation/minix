@@ -303,125 +303,6 @@ int gids_size;
 	return;
 }
 
-#if 0
-/*===========================================================================*
- *				dev_bio					     *
- *===========================================================================*/
-PUBLIC int dev_bio(op, dev, proc_e, buf, pos, bytes)
-int op;				/* DEV_READ, DEV_WRITE, DEV_IOCTL, etc. */
-dev_t dev;			/* major-minor device number */
-int proc_e;			/* in whose address space is buf? */
-void *buf;			/* virtual address of the buffer */
-off_t pos;			/* byte position */
-int bytes;			/* how many bytes to transfer */
-{
-/* Read or write from a device.  The parameter 'dev' tells which one. */
-  struct dmap *dp;
-  int r, safe;
-  message m;
-  iovec_t *v;
-  cp_grant_id_t gid = GRANT_INVALID;
-	int vec_grants;
-
-  /* Determine task dmap. */
-  dp = &dmap[(dev >> MAJOR) & BYTE];
-
-  /* The io vector copying relies on this I/O being for FS itself. */
-  if(proc_e != FS_PROC_NR)
-	panic(__FILE__, "doing dev_bio for non-self", proc_e);
-
-  for (;;)
-  {
-	int op_used;
-	void *buf_used;
-        static cp_grant_id_t gids[NR_IOREQS];
-        cp_grant_id_t gid = GRANT_INVALID;
-	int vec_grants;
-
-	/* See if driver is roughly valid. */
-	if (dp->dmap_driver == NONE) {
-		printf("FS: dev_io: no driver for dev %x\n", dev);
-		return ENXIO;
-	}
-
-        /* By default, these are right. */
-	m.IO_ENDPT = proc_e;
-	m.ADDRESS  = buf;
-	buf_used = buf;
-
-	/* Convert parameters to 'safe mode'. */
-	op_used = op;
-        safe = safe_io_conversion(dp->dmap_driver, &gid,
-          &op_used, gids, NR_IOREQS, &m.IO_ENDPT, &buf_used,
-	  &vec_grants, bytes, &pos);
-
-	/* Set up rest of the message. */
-	if(safe) m.IO_GRANT = (char *) gid;
-
-	m.m_type   = op_used;
-	m.DEVICE   = (dev >> MINOR) & BYTE;
-	m.POSITION = pos;
-	m.COUNT    = bytes;
-	m.HIGHPOS  = 0;
-
-	/* Call the task. */
-	(*dp->dmap_io)(dp->dmap_driver, &m);
-
-	/* As block I/O never SUSPENDs, safe cleanup must be done whether
-	 * the I/O succeeded or not.
-	 */
-	if(safe) safe_io_cleanup(gid, gids, vec_grants);
-
-	if(dp->dmap_driver == NONE) {
-		/* Driver has vanished. Wait for a new one. */
-		for (;;)
-		{
-			r= receive(RS_PROC_NR, &m);
-			if (r != OK)
-			{
-				panic(__FILE__,
-					"dev_bio: unable to receive from RS",
-					r);
-			}
-			if (m.m_type == DEVCTL)
-			{
-				r= fs_devctl(m.ctl_req, m.dev_nr, m.driver_nr,
-					m.dev_style, m.m_force);
-			}
-			else
-			{
-				panic(__FILE__,
-					"dev_bio: got message from RS, type",
-					m.m_type);
-			}
-			m.m_type= r;
-			r= send(RS_PROC_NR, &m);
-			if (r != OK)
-			{
-				panic(__FILE__,
-					"dev_bio: unable to send to RS",
-					r);
-			}
-			if (dp->dmap_driver != NONE)
-				break;
-		}
-		printf("dev_bio: trying new driver\n");
-		continue;
-	}
-
-	/* Task has completed.  See if call completed. */
-	if (m.REP_STATUS == SUSPEND) {
-		panic(__FILE__, "dev_bio: driver returned SUSPEND", NO_NUM);
-	}
-
-	if(buf != buf_used) {
-		memcpy(buf, buf_used, bytes * sizeof(iovec_t));
-	}
-
-	return(m.REP_STATUS);
-  }
-}
-#endif
 
 /*===========================================================================*
  *				dev_io					     *
@@ -803,12 +684,12 @@ int flags;			/* mode bits and flags */
 
 
   if (dp->dmap_driver == NONE) {
-	printf("FS: clone_opcl: no driver for dev %x\n", dev);
+	printf("vfs:clone_opcl: no driver for dev %x\n", dev);
 	return ENXIO;
   }
 
   if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
-  	printf("FS: clone_opcl: old driver for dev %x (%d)\n",
+  	printf("vfs:clone_opcl: bad driver endpoint for dev %x (%d)\n",
   		dev, dp->dmap_driver);
   	return ENXIO;
   }
@@ -822,22 +703,21 @@ int flags;			/* mode bits and flags */
 	if (dev_mess.REP_STATUS != minor) {
                 struct vnode *vp;
                 struct vmnt *vmp;
-
-                struct clone_opcl_req req;
                 struct node_details res;
+
 		/* A new minor device number has been returned.
-                 * Request root FS to create a temporary device file to hold it. 
+                 * Request the root FS to create a temporary device file to
+		 * hold it. 
                  */
 		
                 /* Device number of the new device. */
-		dev = (dev & ~(BYTE << MINOR)) | (dev_mess.REP_STATUS << MINOR);
-		
-                /* Fill in request */
-                req.fs_e = ROOT_FS_E;
-                req.dev = dev;
+		dev = (dev & ~(BYTE << MINOR)) |
+			(dev_mess.REP_STATUS << MINOR);
 
                 /* Issue request */
-                if ((r = req_clone_opcl(&req, &res)) != OK) {
+                r = req_newnode(ROOT_FS_E, fp->fp_effuid, fp->fp_effgid,
+			ALL_MODES | I_CHAR_SPECIAL, dev, &res);
+                if (r != OK) {
                     (void) clone_opcl(DEV_CLOSE, dev, proc_e, 0);
                     return r;
                 }
@@ -847,17 +727,19 @@ int flags;			/* mode bits and flags */
 		
                 put_vnode(vp);
 		if ((vp = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
-			printf("VFSclone_opcl: failed to get a free vnode..\n");
+			printf(
+			"vfs:clone_opcl: failed to get a free vnode..\n");
 			vp = fp->fp_filp[m_in.fd]->filp_vno;
 		}
 		
                 vp->v_fs_e = res.fs_e;
                 if ((vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT) 
-                    printf("VFSclone_opcl: no vmnt found\n");
+                    printf("vfs:clone_opcl: no vmnt found\n");
 
                 vp->v_vmnt = vmp;
                 vp->v_dev = vmp->m_dev;
                 
+		vp->v_fs_e = res.fs_e;
                 vp->v_inode_nr = res.inode_nr;
                 vp->v_mode = res.fmode; 
                 vp->v_sdev = dev;
@@ -869,6 +751,7 @@ int flags;			/* mode bits and flags */
   }
   return(dev_mess.REP_STATUS);
 }
+
 
 /*===========================================================================*
  *				dev_up					     *

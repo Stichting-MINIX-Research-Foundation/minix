@@ -18,6 +18,7 @@
  * A super_block slot is free if s_dev == NO_DEV. 
  */
 
+#if 0
 EXTERN struct super_block {
   ino_t s_ninodes;		/* # usable inodes on the minor device */
   zone1_t  s_nzones;		/* total device size, including bit maps etc */
@@ -53,6 +54,7 @@ EXTERN struct super_block {
   bit_t s_isearch;		/* inodes below this bit number are in use */
   bit_t s_zsearch;		/* all zones below this bit number are in use*/
 } super_block[NR_SUPERS];
+#endif
 
 #define NIL_SUPER (struct super_block *) 0
 #define IMAP		0	/* operating on the inode bit map */

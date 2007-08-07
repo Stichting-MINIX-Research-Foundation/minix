@@ -31,47 +31,54 @@
 PUBLIC int do_chmod()
 {
   struct filp *flp;
-  struct chmod_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
   struct vnode *vp;
-  int r, ch_mode;
+  int r;
+  uid_t uid;
+  gid_t gid;
+  mode_t new_mode;
     
   if (call_nr == CHMOD) {
       /* Perform the chmod(name, mode) system call. */
       if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
 
-      /* Fill in lookup request fields */
-      lookup_req.path = user_fullpath;
-      lookup_req.lastc = NULL;
-      lookup_req.flags = EAT_PATH;
-
       /* Request lookup */
-      if ((r = lookup(&lookup_req, &res)) != OK) return r;
-
-      req.inode_nr = res.inode_nr;
-      req.fs_e = res.fs_e;
+      r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp);
+      if (r != OK) return r;
   } 
   else if (call_nr == FCHMOD) {
       if (!(flp = get_filp(m_in.m3_i1))) return err_code;
-      req.inode_nr = flp->filp_vno->v_inode_nr;
-      req.fs_e = flp->filp_vno->v_fs_e;
+      vp= flp->filp_vno;
+      dup_vnode(vp);
   }
   else panic(__FILE__, "do_chmod called with strange call_nr", call_nr);
 
-  /* Find vnode, if it's in use. */
-  vp = find_vnode(req.fs_e, req.inode_nr);
+  uid= fp->fp_effuid;
+  gid= fp->fp_effgid;
 
-  /* Fill in request message fields.*/
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  req.rmode = m_in.mode;
-  
+  /* Only the owner or the super_user may change the mode of a file.
+   * No one may change the mode of a file on a read-only file system.
+   */
+  if (vp->v_uid != uid && uid != SU_UID)
+	r = EPERM;
+  else
+	r = read_only(vp);
+
+  /* If error, return inode. */
+  if (r != OK)	{
+	put_vnode(vp);
+	return(r);
+  }
+
+  /* Now make the change. Clear setgid bit if file is not in caller's grp */
+  if (uid != SU_UID && vp->v_gid != gid) 
+	  m_in.mode &= ~I_SET_GID_BIT;
+
   /* Issue request */
-  if((r = req_chmod(&req, &ch_mode)) != OK) return r;
+  r = req_chmod(vp->v_fs_e, vp->v_inode_nr, m_in.mode, &new_mode);
 
-  if(vp != NIL_VNODE)
-  	vp->v_mode = ch_mode;
+  if (r == OK)
+  	vp->v_mode = new_mode;
+  put_vnode(vp);
 
   return OK;
 }
@@ -84,51 +91,57 @@ PUBLIC int do_chown()
   int inode_nr;
   int fs_e;
   struct filp *flp;
-  struct chown_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
   struct vnode *vp;
-  int r, ch_mode;
+  int r;
+  uid_t uid;
+  gid_t gid;
+  mode_t new_mode;
   
   if (call_nr == CHOWN) {
       /* Perform the chmod(name, mode) system call. */
       if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
       
-      /* Fill in lookup request fields */
-      lookup_req.path = user_fullpath;
-      lookup_req.lastc = NULL;
-      lookup_req.flags = EAT_PATH;
-
       /* Request lookup */
-      if ((r = lookup(&lookup_req, &res)) != OK) return r;
-
-      req.inode_nr = res.inode_nr;
-      req.fs_e = res.fs_e;
+      r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp);
+      if (r != OK) return r;
   } 
   else if (call_nr == FCHOWN) {
       if (!(flp = get_filp(m_in.m1_i1))) return err_code;
-      req.inode_nr = flp->filp_vno->v_inode_nr;
-      req.fs_e = flp->filp_vno->v_fs_e;
+      vp= flp->filp_vno;
+      dup_vnode(vp);
   }
   else panic(__FILE__, "do_chmod called with strange call_nr", call_nr);
 
-  /* Find vnode, if it's in use. */
-  vp = find_vnode(req.fs_e, req.inode_nr);
+  uid= fp->fp_effuid;
+  gid= fp->fp_effgid;
 
-  /* Fill in request message fields.*/
-  req.uid = fp->fp_effuid;
-  req.gid = fp->fp_effgid;
-  req.newuid = m_in.owner;
-  req.newgid = m_in.group;
-  
+  r= OK;
+  if (uid == SU_UID) {
+	/* The super user can do anything. */
+  } else {
+	/* Regular users can only change groups of their own files. */
+	if (vp->v_uid != uid)
+		r = EPERM;	/* File does not belong to the caller */
+	if (vp->v_uid != m_in.owner) 
+		r = EPERM;	/* no giving away */
+	if (gid != m_in.group)
+		r = EPERM;	/* only change to the current gid */
+  }
+  if (r != OK) {
+	put_vnode(vp);
+	return r;
+  }
+
   /* Issue request */
-  r = req_chown(&req, &ch_mode);
+  r = req_chown(vp->v_fs_e, vp->v_inode_nr, m_in.owner, m_in.group, &new_mode);
 
-  if(r == OK && vp) {
+  if(r == OK) {
   	vp->v_uid = m_in.owner;
   	vp->v_gid = m_in.group;
-  	vp->v_mode = ch_mode;
+  	vp->v_mode = new_mode;
   }
+
+  put_vnode(vp);
 
   return r;
 }
@@ -154,10 +167,8 @@ PUBLIC int do_umask()
 PUBLIC int do_access()
 {
 /* Perform the access(name, mode) system call. */
-  struct access_req req;
-  struct lookup_req lookup_req;
-  struct node_details res;
   int r;
+  struct vnode *vp;
     
   /* First check to see if the mode is correct. */
   if ( (m_in.mode & ~(R_OK | W_OK | X_OK)) != 0 && m_in.mode != F_OK)
@@ -165,30 +176,20 @@ PUBLIC int do_access()
 
   if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
 
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH;
-
   /* Request lookup */
-  if ((r = lookup(&lookup_req, &res)) != OK) return r;
+  r = lookup_vp(0 /*flags*/, TRUE /*use_realuid*/, &vp);
+  if (r != OK) return r;
 
-  /* Fill in request fields */
-  req.fs_e = res.fs_e;
-  req.amode = m_in.mode;
-  req.inode_nr = res.inode_nr;
-  req.uid = fp->fp_realuid;         /* real user and group id */
-  req.gid = fp->fp_realgid;
-  
-  /* Issue request */
-  return req_access(&req);
+  r= forbidden(vp, m_in.mode, 1 /*use_realuid*/);
+  put_vnode(vp);
+  return r;
 }
 
 
 /*===========================================================================*
  *				forbidden				     *
  *===========================================================================*/
-PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
+PUBLIC int forbidden(struct vnode *vp, mode_t access_desired, int use_realuid)
 {
 /* Given a pointer to an inode, 'rip', and the access desired, determine
  * if the access is allowed, and if not why not.  The routine looks up the
@@ -198,18 +199,31 @@ PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
 
   register struct super_block *sp;
   register mode_t bits, perm_bits;
+  uid_t uid;
+  gid_t gid;
   int r, shift, type;
 
   if (vp->v_uid == (uid_t)-1 || vp->v_gid == (gid_t)-1)
   {
-	printf("forbidden: bad uid/gid in vnode\n");
+	printf("forbidden: bad uid/gid in vnode: inode %d on dev 0x%x\n",
+		vp->v_inode_nr, vp->v_dev);
 	printf("forbidden: last allocated at %s, %d\n", vp->v_file, vp->v_line);
 	return EACCES;
   }
 
   /* Isolate the relevant rwx bits from the mode. */
   bits = vp->v_mode;
-  if (fp->fp_effuid == SU_UID) {
+  if (use_realuid)
+  {
+	uid= fp->fp_realuid;
+	gid= fp->fp_realgid;
+  }
+  else
+  {
+	uid= fp->fp_effuid;
+	gid= fp->fp_effgid;
+  }
+  if (uid == SU_UID) {
 	/* Grant read and write permission.  Grant search permission for
 	 * directories.  Grant execute permission (for non-directories) if
 	 * and only if one of the 'X' bits is set.
@@ -220,8 +234,8 @@ PUBLIC int forbidden(struct vnode *vp, mode_t access_desired)
 	else
 		perm_bits = R_BIT | W_BIT;
   } else {
-	if (fp->fp_effuid == vp->v_uid) shift = 6;	/* owner */
-	else if (fp->fp_effgid == vp->v_gid ) shift = 3;	/* group */
+	if (uid == vp->v_uid) shift = 6;	/* owner */
+	else if (gid == vp->v_gid ) shift = 3;	/* group */
 	else shift = 0;					/* other */
 	perm_bits = (bits >> shift) & (R_BIT | W_BIT | X_BIT);
   }

@@ -12,8 +12,6 @@ struct vnode;
 /* device.c */
 _PROTOTYPE( int dev_open, (Dev_t dev, int proc, int flags)		);
 _PROTOTYPE( void dev_close, (Dev_t dev)					);
-_PROTOTYPE( int dev_bio, (int op, Dev_t dev, int proc, void *buf,
-			off_t pos, int bytes)				);
 _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
 			u64_t pos, int bytes, int flags)		);
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);
@@ -33,6 +31,7 @@ _PROTOTYPE( void dev_up, (int major)					);
 _PROTOTYPE( int do_devctl, (void)					);
 _PROTOTYPE( int fs_devctl, (int req, int dev, int proc_nr_e, int style,
 	int force)							);
+_PROTOTYPE( int do_mapdriver, (void)					);
 _PROTOTYPE( void build_dmap, (void)					);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style,
 	int force)							);
@@ -100,20 +99,25 @@ _PROTOTYPE( int do_open, (void)						);
 _PROTOTYPE( int do_slink, (void)                                        );
 
 /* path.c */
-_PROTOTYPE( int lookup, (lookup_req_t *request, node_details_t *node)   );
-_PROTOTYPE( int lookup_vp, (lookup_req_t *request, struct vnode **vpp)	);
-_PROTOTYPE( int Xlookup_vp, (lookup_req_t *request, struct vnode **vpp,
-							char **pathrem)	);
+_PROTOTYPE( int lookup_rel_vp, (struct vnode *start_node, int flags,
+				int use_realuid, struct vnode **vpp)	);
+_PROTOTYPE( int lookup_vp, (int flags, int use_realuid,
+						struct vnode **vpp)	);
+_PROTOTYPE( int lookup_lastdir_rel, (struct vnode *start_node,
+				int use_realuid, struct vnode **vpp)	);
+_PROTOTYPE( int lookup_lastdir, (int use_realuid, struct vnode **vpp)	);
 
 /* pipe.c */
 _PROTOTYPE( int do_pipe, (void)						);
 _PROTOTYPE( int do_unpause, (void)					);
 _PROTOTYPE( int unpause, (int proc_nr_e)				);
-_PROTOTYPE( int pipe_check, (struct vnode *vp, int rw_flag,
-      int oflags, int bytes, u64_t position, int *canwrite, int notouch));
+_PROTOTYPE( int Xpipe_check, (struct vnode *vp, int rw_flag,
+	      int oflags, int bytes, u64_t position, int notouch)	);
 _PROTOTYPE( void release, (struct vnode *vp, int call_nr, int count)	);
 _PROTOTYPE( void revive, (int proc_nr, int bytes)			);
 _PROTOTYPE( void suspend, (int task)					);
+_PROTOTYPE( void pipe_suspend, (int rw_flag, int fd_nr, char *buf,
+							size_t size)	);
 _PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
 _PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
 _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
@@ -124,60 +128,78 @@ _PROTOTYPE( int do_access, (void)					);
 _PROTOTYPE( int do_chmod, (void)					);
 _PROTOTYPE( int do_chown, (void)					);
 _PROTOTYPE( int do_umask, (void)					);
-_PROTOTYPE( int forbidden, (struct vnode *vp, mode_t access_desired)	);
+_PROTOTYPE( int forbidden, (struct vnode *vp,
+				mode_t access_desired, int use_realuid)	);
 _PROTOTYPE( int read_only, (struct vnode *vp)				);
 
 /* read.c */
 _PROTOTYPE( int do_read, (void)						);
 _PROTOTYPE( int do_getdents, (void)					);
 _PROTOTYPE( int read_write, (int rw_flag)				);
+_PROTOTYPE( int rw_pipe, (int rw_flag, endpoint_t usr,
+		int fd_nr, struct filp *f, char *buf, size_t req_size)	);
 
 /* request.c */
-#define req_getnode(req, res) req_getnode_f(__FILE__, __LINE__, (req), (res))
-_PROTOTYPE( int req_getnode_f, (char *file, int line, node_req_t *req, node_details_t *res)     );
-_PROTOTYPE( int req_putnode, (int fs_e, ino_t inode_nr, int count)	);
-_PROTOTYPE( int req_open, (open_req_t *req, node_details_t *res)        ); 
+_PROTOTYPE( int req_breadwrite, (endpoint_t fs_e, endpoint_t user_e,
+			Dev_t dev, u64_t pos, unsigned int num_of_bytes,
+			char *user_addr, int rw_flag,
+			u64_t *new_posp, unsigned int *cum_iop)		);
+_PROTOTYPE( int req_chmod, (int fs_e, ino_t inode_nr, _mnx_Mode_t rmode,
+						mode_t *new_modep)	);
+_PROTOTYPE( int req_chown, (endpoint_t fs_e, ino_t inode_nr,
+	_mnx_Uid_t newuid, _mnx_Gid_t newgid, mode_t *new_modep)	);
 _PROTOTYPE( int req_create, (int fs_e, ino_t inode_nr, int omode,
 		int uid, int gid, char *path, node_details_t *res)	); 
-_PROTOTYPE( int req_readwrite, (readwrite_req_t *req, 
-            readwrite_res_t *res)                                       );
-_PROTOTYPE( int req_pipe, (pipe_req_t *req, node_details_t *res)        );
-_PROTOTYPE( int req_clone_opcl, (clone_opcl_req_t *req, 
-            node_details_t *res)                                        );
-_PROTOTYPE( int req_ftrunc, (ftrunc_req_t *req)                         );
-_PROTOTYPE( int req_chown, (chown_req_t *req, int *mode)                );
-_PROTOTYPE( int req_chmod, (chmod_req_t *req, int *mode)                );
-_PROTOTYPE( int req_access, (access_req_t *req)                         );
-_PROTOTYPE( int req_mknod, (mknod_req_t *req)                           );
-_PROTOTYPE( int req_mkdir, (mkdir_req_t *req)                           );
-_PROTOTYPE( int req_inhibread, (node_req_t *req)                        );
-_PROTOTYPE( int req_stat, (int fs_e, ino_t inode_nr, int who_e,
-						char *buf, int pos)	);
+_PROTOTYPE( int req_flush, (endpoint_t fs_e, Dev_t dev)			);
 _PROTOTYPE( int req_fstatfs, (int fs_e, ino_t inode_nr, int who_e,
 							char *buf)	);
-_PROTOTYPE( int req_unlink, (unlink_req_t *req)                         );
-_PROTOTYPE( int req_rmdir, (unlink_req_t *req)                          );
-_PROTOTYPE( int req_utime, (utime_req_t *req)                           );
-_PROTOTYPE( int req_stime, (endpoint_t fs_e, time_t boottime)           );
-_PROTOTYPE( int req_sync, (endpoint_t fs_e)                             );
-_PROTOTYPE( int req_link, (link_req_t *req)                             );
-_PROTOTYPE( int req_slink, (slink_req_t *req)                           );
-_PROTOTYPE( int req_rdlink, (rdlink_req_t *req)                         );
-_PROTOTYPE( int req_rename, (rename_req_t *req)                         );
-_PROTOTYPE( int req_mountpoint, (mountpoint_req_t *req, 
-            node_details_t *res)                                        );
-_PROTOTYPE( int req_readsuper, (readsuper_req_t *req, 
-            readsuper_res_t *res)                                       );
-_PROTOTYPE( int req_unmount, (endpoint_t fs_e)                          );
-_PROTOTYPE( int req_trunc, (trunc_req_t *req)                           );
-_PROTOTYPE( int req_lookup, (lookup_req_t *req, lookup_res_t *res)      );
-_PROTOTYPE( int req_newdriver, (endpoint_t fs_e, Dev_t dev, 
-            endpoint_t driver_e)                                        );
-_PROTOTYPE( int req_breadwrite, (breadwrite_req_t *req, 
-            readwrite_res_t *res)                                       );
+_PROTOTYPE( int req_ftrunc, (endpoint_t fs_e, ino_t inode_nr,
+						off_t start, off_t end)	);
 _PROTOTYPE( int req_getdents, (endpoint_t fs_e, ino_t inode_nr,
 	off_t pos, cp_grant_id_t gid, size_t size, off_t *pos_change)	);
-_PROTOTYPE( int req_flush, (endpoint_t fs_e, Dev_t)                     );
+_PROTOTYPE( int req_inhibread, (endpoint_t fs_e, ino_t inode_nr)	);
+_PROTOTYPE( int req_link, (endpoint_t fs_e, ino_t link_parent,
+					char *lastc, ino_t linked_file)	);
+_PROTOTYPE( int req_lookup, (endpoint_t fs_e, size_t path_off,
+			ino_t dir_ino, ino_t root_ino, _mnx_Uid_t uid,
+			_mnx_Gid_t gid, int flags, lookup_res_t *res)	);
+_PROTOTYPE( int req_mkdir, (endpoint_t fs_e, ino_t inode_nr,
+	char *lastc, _mnx_Uid_t uid, _mnx_Gid_t gid, _mnx_Mode_t dmode)	);
+_PROTOTYPE( int req_mknod, (endpoint_t fs_e, ino_t inode_nr,
+			char *lastc, _mnx_Uid_t uid, _mnx_Gid_t gid,
+			_mnx_Mode_t dmode, Dev_t dev)			);
+_PROTOTYPE( int req_mountpoint, (endpoint_t fs_e, ino_t inode_nr)	);
+_PROTOTYPE( int req_newnode, (endpoint_t fs_e, _mnx_Uid_t uid,
+				_mnx_Gid_t gid, _mnx_Mode_t dmode,
+				Dev_t dev, struct node_details *res)	);
+_PROTOTYPE( int req_putnode, (int fs_e, ino_t inode_nr, int count)	);
+_PROTOTYPE( int req_rdlink, (endpoint_t fs_e, ino_t inode_nr,
+			endpoint_t who_e, vir_bytes buf, size_t len)	);
+_PROTOTYPE( int req_readsuper, (endpoint_t fs_e, char *driver_name,
+				Dev_t dev, int readonly, int isroot,
+				struct node_details *res_nodep)		);
+_PROTOTYPE( int req_readwrite, (endpoint_t fs_e, ino_t inode_nr,
+		int inode_index, u64_t pos, int rw_flag,
+		endpoint_t user_e, char *user_addr,
+		unsigned int num_of_bytes, u64_t *new_posp,
+		unsigned int *cum_iop)					); 
+_PROTOTYPE( int req_rename, (endpoint_t fs_e, ino_t old_dir,
+			char *old_name, ino_t new_dir, char *new_name)	);
+_PROTOTYPE( int req_rmdir, (endpoint_t fs_e, ino_t inode_nr,
+							char *lastc)	);
+_PROTOTYPE(int req_slink, (endpoint_t fs_e, ino_t inode_nr, char *lastc,
+		endpoint_t who_e, char *path_addr,
+		int path_length, _mnx_Uid_t uid, _mnx_Gid_t gid)	);
+_PROTOTYPE( int req_stat, (int fs_e, ino_t inode_nr, int who_e,
+						char *buf, int pos)	);
+_PROTOTYPE( int req_sync, (endpoint_t fs_e)                             );
+_PROTOTYPE( int req_unlink, (endpoint_t fs_e, ino_t inode_nr,
+							char *lastc)	);
+_PROTOTYPE( int req_unmount, (endpoint_t fs_e)                          );
+_PROTOTYPE( int req_utime, (endpoint_t fs_e, ino_t inode_nr,
+					time_t actime, time_t modtime)	);
+_PROTOTYPE( int req_newdriver, (endpoint_t fs_e, Dev_t dev, 
+            endpoint_t driver_e)                                        );
 
 /* stadir.c */
 _PROTOTYPE( int do_chdir, (void)					);
@@ -190,7 +212,6 @@ _PROTOTYPE( int do_rdlink, (void)                                      );
 _PROTOTYPE( int do_lstat, (void)                                       );
 
 /* time.c */
-_PROTOTYPE( int do_stime, (void)					);
 _PROTOTYPE( int do_utime, (void)					);
 
 /* utility.c */
@@ -215,8 +236,10 @@ _PROTOTYPE( struct vnode *find_vnode, (int fs_e, int numb)              );
 _PROTOTYPE( void dup_vnode, (struct vnode *vp)                          );
 _PROTOTYPE( void put_vnode, (struct vnode *vp)                          );
 _PROTOTYPE( void vnode_clean_refs, (struct vnode *vp)                   );
+#if 0
 _PROTOTYPE( struct vnode *get_vnode, (int fs_e, int inode_nr)           );
 _PROTOTYPE( struct vnode *get_vnode_x, (int fs_e, int inode_nr)		);
+#endif
 #if 0
 _PROTOTYPE( void mark_vn, (struct vnode *vp, char *file, int line)	);
 _PROTOTYPE( int check_vrefs, (void)					);
