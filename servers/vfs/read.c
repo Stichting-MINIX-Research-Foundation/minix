@@ -91,19 +91,12 @@ int rw_flag;			/* READING or WRITING */
   {
   	if (rw_flag == WRITING)
   	{
-  		if (vp->v_w_pipe_busy)
-  		{
-			panic(__FILE__,
-				"read_write: pipe already has a writer",
-				NO_NUM);
-		}
 		if (fp->fp_cum_io_partial != 0)
 		{
 			panic(__FILE__,
 		"read_write: fp_cum_io_partial not clear for new pipe writer",
 				NO_NUM);
 		}
-		vp->v_w_pipe_busy= TRUE;
 	}
 	return rw_pipe(rw_flag, usr, m_in.fd, f, m_in.buffer, m_in.nbytes);
   }
@@ -369,8 +362,6 @@ size_t req_size;
 		}
 	}
 	fp->fp_cum_io_partial = 0;
-	if (rw_flag == WRITING)
-		vp->v_w_pipe_busy= FALSE;
 	return cum_io;
   }
 

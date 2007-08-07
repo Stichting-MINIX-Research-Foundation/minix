@@ -11,7 +11,6 @@ EXTERN struct vnode {
   int v_fs_count;		/* # reference at the underlying FS */
   int v_ref_check;		/* for consistency checks */
   char v_pipe;			/* set to I_PIPE if pipe */
-  char v_w_pipe_busy;		/* true iff writer suspended */
   off_t v_pipe_rd_pos;
   off_t v_pipe_wr_pos;
   endpoint_t v_bfs_e;		/* endpoint number for the FS proces in case

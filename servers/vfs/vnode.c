@@ -34,7 +34,6 @@ int line;
 	if (vp->v_ref_count == 0)
 	{
 		vp->v_pipe= NO_PIPE;
-		vp->v_w_pipe_busy= FALSE;
 		vp->v_uid= -1;
 		vp->v_gid= -1;
 		vp->v_sdev= -1;
