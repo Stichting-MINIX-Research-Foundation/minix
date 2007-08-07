@@ -55,6 +55,10 @@
 #define _POSIX_STREAM_MAX    8	/* at least 8 FILEs can be open at once */
 #define _POSIX_TZNAME_MAX    3	/* time zone names can be at least 3 chars */
 #define _POSIX_SSIZE_MAX 32767	/* read() must support 32767 byte reads */
+#define _POSIX_SYMLOOP_MAX   8	/* The number of symbolic links that can be
+				 * traversed in the resolution of a pathname
+				 * in the absence of a loop.
+				 */
 
 /* Values actually implemented by MINIX (Tables 2-4, 2-5, 2-6, and 2-7). */
 /* Some of these old names had better be defined when not POSIX. */
@@ -81,6 +85,10 @@
 #define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */
 #define TZNAME_MAX           3	/* maximum bytes in a time zone name is 3 */
 #define SSIZE_MAX        32767	/* max defined byte count for read() */
+#define SYMLOOP_MAX	    16	/* maximum number of symbolic links that can
+				 * be reliably traversed in the resolution of
+				 * a pathname in the absence of a loop.
+				 */
 
 #endif /* _POSIX_SOURCE */
 
