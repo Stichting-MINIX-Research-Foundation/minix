@@ -2443,8 +2443,8 @@ int devind;
 		default: str= "(unknown type)"; break;
 		}
 
-		printf(" @0x%x: capability type 0x%x: %s",
-			capptr, type, str);
+		printf(" @0x%x (0x%08x): capability type 0x%x: %s",
+			capptr, pci_attr_r32(devind, capptr), type, str);
 		if (type == 0x0f)
 		{
 			subtype= (pci_attr_r8(devind, capptr+2) & 0x07);
