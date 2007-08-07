@@ -60,6 +60,7 @@ libc_FILES=" \
 	lseek.s \
 	lseek64.s \
 	lstat.s \
+	mapdriver5.s \
 	mkdir.s \
 	mkfifo.s \
 	mknod.s \
