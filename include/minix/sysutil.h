@@ -45,6 +45,7 @@ _PROTOTYPE( void kputc, (int c));
 _PROTOTYPE( void report, (char *who, char *mess, int num));
 _PROTOTYPE( void panic, (char *who, char *mess, int num));
 _PROTOTYPE( int getuptime, (clock_t *ticks));
+_PROTOTYPE( int getuptime2, (clock_t *ticks, time_t *boottime));
 _PROTOTYPE( int tickdelay, (clock_t ticks));
 _PROTOTYPE( int micro_delay_calibrate, (void));
 _PROTOTYPE( int micro_delay, (u32_t micros));

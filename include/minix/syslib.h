@@ -50,6 +50,7 @@ _PROTOTYPE( int sys_vm_map, (endpoint_t proc_nr, int do_map,
 	phys_bytes base, phys_bytes size, phys_bytes offset));
 
 _PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
+_PROTOTYPE( int sys_stime, (time_t boottime));
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_nr, buffer, count) \
