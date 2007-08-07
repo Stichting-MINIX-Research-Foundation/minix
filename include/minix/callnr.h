@@ -47,6 +47,7 @@
 #define LSTAT		  50
 #define IOCTL		  54
 #define FCNTL		  55
+#define FS_READY	  57
 #define EXEC		  59
 #define UMASK		  60 
 #define CHROOT		  61 
@@ -101,3 +102,4 @@
 #define TASK_REPLY	121	/* to FS: reply code from drivers, not 
 				 * really a standalone call.
 				 */
+#define MAPDRIVER	122	/* to FS, map a device */
