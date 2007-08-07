@@ -329,6 +329,8 @@ PUBLIC int do_getprocnr()
 	return EPERM;
   }
 
+  printf("PM: do_getprocnr call from endpoint %d\n", mp->mp_endpoint);
+
   if (m_in.pid >= 0) {			/* lookup process by pid */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 		if ((rmp->mp_flags & IN_USE) && (rmp->mp_pid==m_in.pid)) {

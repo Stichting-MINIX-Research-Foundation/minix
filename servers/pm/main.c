@@ -13,6 +13,8 @@
 #include <minix/keymap.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/ds.h>
+#include <minix/type.h>
 #include <minix/endpoint.h>
 #include <minix/minlib.h>
 #include <minix/type.h>
@@ -326,6 +328,15 @@ PRIVATE void pm_init()
 		mess.PR_ENDPT = rmp->mp_endpoint;
   		if (OK != (s=send(FS_PROC_NR, &mess)))
 			panic(__FILE__,"can't sync up with FS", s);
+
+		/* Register proces with ds */
+		s= ds_publish_u32(rmp->mp_name, rmp->mp_endpoint);
+		if (s != OK)
+		{
+			printf(
+			"pm_init: unable to register '%s' with ds: %d\n",
+				rmp->mp_name, s);
+		}
   	}
   }
 
@@ -529,17 +540,6 @@ PRIVATE void send_work()
 			continue;
 		switch(call)
 		{
-		case PM_STIME:
-			m.m_type= call;
-			m.PM_STIME_TIME= boottime;
-
-			/* FS does not reply */
-			rmp->mp_fs_call= PM_IDLE;
-
-			/* Wakeup the original caller */
-			setreply(rmp-mproc, OK);
-			break;
-
 		case PM_SETSID:
 			m.m_type= call;
 			m.PM_SETSID_PROC= rmp->mp_endpoint;

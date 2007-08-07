@@ -53,14 +53,11 @@ PUBLIC int do_stime()
       panic(__FILE__,"do_stime couldn't get uptime", s);
   boottime = (long) m_in.stime - (uptime/HZ);
 
-  if (mp->mp_fs_call != PM_IDLE)
-	panic("pm", "do_stime: not idle", mp->mp_fs_call);
-  mp->mp_fs_call= PM_STIME;
-  s= notify(FS_PROC_NR);
-  if (s != OK) panic("pm", "do_stime: unable to notify FS", s);
+  s= sys_stime(boottime);		/* Tell kernel about boottime */
+  if (s != OK)
+	panic(__FILE__, "pm: sys_stime failed", s);
 
-  /* Do not reply until FS is ready to process the stime request */
-  return(SUSPEND);
+  return(OK);
 }
 
 /*===========================================================================*
