@@ -5,6 +5,7 @@
  *    m4_l1:	T_ENDPT		(get info for this process)	
  *    m4_l1:	T_USER_TIME		(return values ...)	
  *    m4_l2:	T_SYSTEM_TIME	
+ *    m4_l3:	T_BOOTTIME
  *    m4_l5:	T_BOOT_TICKS	
  */
 
@@ -35,6 +36,7 @@ register message *m_ptr;	/* pointer to request message */
       m_ptr->T_SYSTEM_TIME = rp->p_sys_time;
   }
   m_ptr->T_BOOT_TICKS = get_uptime();  
+  m_ptr->T_BOOTTIME = boottime;  
   return(OK);
 }
 

@@ -31,6 +31,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_nice.o) \
 	$(SYSTEM)(do_times.o) \
 	$(SYSTEM)(do_setalarm.o) \
+	$(SYSTEM)(do_stime.o) \
 	$(SYSTEM)(do_irqctl.o) \
 	$(SYSTEM)(do_devio.o) \
 	$(SYSTEM)(do_vdevio.o) \
@@ -94,6 +95,9 @@ $(SYSTEM)(do_times.o):	do_times.c
 
 $(SYSTEM)(do_setalarm.o):	do_setalarm.c
 	$(CC) do_setalarm.c
+
+$(SYSTEM)(do_stime.o):	do_stime.c
+	$(CC) do_stime.c
 
 $(SYSTEM)(do_irqctl.o):	do_irqctl.c
 	$(CC) do_irqctl.c
