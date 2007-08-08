@@ -694,7 +694,6 @@ PUBLIC int do_mkdir()
   int r;
   struct vnode *vp;
 
-/*printf("VFS: mkdir() START:");*/
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
 
   bits = I_DIRECTORY | (m_in.mode & RWX_MODES & fp->fp_umask);

@@ -21,9 +21,18 @@
 #include "vnode.h"
 #include "param.h"
 
+/* Set to following define to 1 if you really want to use the POSIX definition
+ * (IEEE Std 1003.1, 2004) of pathname resolution. POSIX requires pathnames
+ * with a traling slash (and that do not entirely consist of slash characters)
+ * to be treated as if a single dot is appended. This means that for example
+ * mkdir("dir/", ...) and rmdir("dir/") will fail because the call tries to
+ * create or remove the directory '.'. Historically, Unix systems just ignore
+ * trailing slashes.
+ */
+#define DO_POSIX_PATHNAME_RES	0
+
 FORWARD _PROTOTYPE( int lookup_rel, (struct vnode *start_node,
 		int flags, int use_realuid, node_details_t *node)	);
-
 
 /*===========================================================================*
  *				lookup_rel_vp				     *
@@ -122,14 +131,25 @@ struct vnode **vpp;
 	 * The lookup starts at start_node.
 	 */
 	int r;
+	size_t len;
 	char *cp;
 	char dir_entry[PATH_MAX+1];
 
-	if (strlen(user_fullpath) == 0)
+	len= strlen(user_fullpath);
+	if (len == 0)
 	{
 		/* Empty path, always fail */
 		return ENOENT;
 	}
+
+#if !DO_POSIX_PATHNAME_RES
+	/* Remove trailing slashes */
+	while (len > 1 && user_fullpath[len-1] == '/')
+	{
+		len--;
+		user_fullpath[len]= '\0';
+	}
+#endif
 
 	cp= strrchr(user_fullpath, '/');
 	if (cp == NULL)
@@ -143,6 +163,7 @@ struct vnode **vpp;
 	else if (cp[1] == '\0')
 	{
 		/* Path ends in a slash. The directory entry is '.' */
+		strcpy(dir_entry, ".");
 	}
 	else
 	{
