@@ -68,6 +68,14 @@ PUBLIC int do_link()
         return EXDEV;
   }
 
+  /* Make sure that the object is a directory */
+  if ((vp_d->v_mode & I_TYPE) != I_DIRECTORY)
+  {
+	put_vnode(vp_o);
+	put_vnode(vp_d);
+	return ENOTDIR;
+  }
+
   r= forbidden(vp_d, W_BIT|X_BIT, 0 /*!use_realuid*/);
   if (r != OK)
   {
