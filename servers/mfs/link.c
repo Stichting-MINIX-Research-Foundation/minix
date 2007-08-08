@@ -830,12 +830,7 @@ printf("fs_rename_s: next_new_superdirp: %d on 0x%x\n",
 				r = EINVAL;
 				break;
 			}
-			{	static int count= 0;
-				if (++count > 20)
-					panic(__FILE__, "too deep", NO_NUM);
-			}
 		} 	
-		/*put_inode(new_superdirp);*/
 	}	
 
 	/* The old or new name must not be . or .. */
@@ -845,14 +840,6 @@ printf("fs_rename_s: next_new_superdirp: %d on 0x%x\n",
 	}
 	/* Both parent directories must be on the same device. 
 	if (old_dirp->i_dev != new_dirp->i_dev) r = EXDEV; */
-
-#if 0
-	/* Parent dirs must be writable, searchable and on a writable device */
-	if ((r1 = forbidden(old_dirp, W_BIT | X_BIT)) != OK ||
-	    (r1 = forbidden(new_dirp, W_BIT | X_BIT)) != OK) {
-		r = r1;
-	}
-#endif
 
 	/* Some tests apply only if the new path exists. */
 	if (new_ip == NIL_INODE) {
