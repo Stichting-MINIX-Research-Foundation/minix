@@ -35,12 +35,10 @@
 #define offset_lo	m2_l1
 #define offset_high	m2_l2
  
-FORWARD _PROTOTYPE( int x_open, (int bits, int oflags, int omode,
-			char *lastc, struct vnode **vpp)		);
 FORWARD _PROTOTYPE( int common_open, (int oflags, mode_t omode)		);
 FORWARD _PROTOTYPE( int create_open, (_mnx_Mode_t omode, int excl,
 				struct vnode **vpp, int *created)	);
-FORWARD _PROTOTYPE( int y_open, (struct vnode *vp, _mnx_Mode_t bits,
+FORWARD _PROTOTYPE( int exists_open, (struct vnode *vp, _mnx_Mode_t bits,
 	int oflags));
 FORWARD _PROTOTYPE( int pipe_open, (struct vnode *vp,mode_t bits,int oflags));
 
@@ -126,7 +124,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 
   if (!created)
   {
-	r= y_open(vp, bits, oflags);
+	r= exists_open(vp, bits, oflags);
 	if (r != OK)
 	{
 		put_vnode(vp);
@@ -141,7 +139,6 @@ PRIVATE int common_open(register int oflags, mode_t omode)
   fil_ptr->filp_flags = oflags;
   fil_ptr->filp_vno = vp;
   
-  vp->v_isfifo= FALSE;
   switch (vp->v_mode & I_TYPE) {
       case I_CHAR_SPECIAL:
           /* Invoke the driver for special processing. */
@@ -189,7 +186,6 @@ PRIVATE int common_open(register int oflags, mode_t omode)
 
       case I_NAMED_PIPE:
 	  vp->v_pipe = I_PIPE;
-		vp->v_isfifo= TRUE;
           oflags |= O_APPEND;	/* force append mode */
           fil_ptr->filp_flags = oflags;
           r = pipe_open(vp, bits, oflags);
@@ -215,12 +211,8 @@ PRIVATE int common_open(register int oflags, mode_t omode)
                    */
                   put_vnode(vp);
 	      } else {
-                  /* Nobody else found.  Restore filp. */
+                  /* Nobody else found.  Claim filp. */
                   fil_ptr->filp_count = 1;
-		  if (fil_ptr->filp_mode == R_BIT)
-			fil_ptr->filp_pos = cvul64(vp->v_pipe_rd_pos);
-		  else
-			fil_ptr->filp_pos = cvul64(vp->v_pipe_wr_pos);
               }
           }
           break;
@@ -430,143 +422,14 @@ int *created;
 
 
 /*===========================================================================*
- *				x_open	 				     *
+ *				exists_open 				     *
  *===========================================================================*/
-PRIVATE int x_open(bits, oflags, omode, lastc, vpp)
-mode_t bits;
-int oflags;
-mode_t omode;
-char *lastc;
-struct vnode **vpp;
-{
-  int r, b, exist = TRUE;
-  struct vnode *vp, *dvp, *tmp_vp;
-  struct vmnt *vmp;
-  struct node_details res;
-
-  /* If O_CREATE is set, try to make the file. */ 
-  if ((oflags & O_CREAT) && lastc[0] != '\0') {
-	dvp= *vpp;	/* Parent directory */
-
-	/* See if a free vnode is available */
-	if ((vp = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
-		printf("VFS x_open: no free vnode available\n");
-		return EINVAL;
-	}
-
-	r= req_create(dvp->v_fs_e, dvp->v_inode_nr, omode, fp->fp_effuid,
-		fp->fp_effgid, lastc, &res);
-	if (r != OK)
-		return r;
-	exist = FALSE;
-
-	/* Check whether vnode is already in use or not */
-	if ((tmp_vp = find_vnode(res.fs_e, res.inode_nr)) != NIL_VNODE) {
-		vp= tmp_vp;
-		vp->v_ref_count++;
-		vp->v_fs_count++;
-	}
-	else
-	{
-		/* Fill in the free vnode's fields */
-		vp->v_fs_e = res.fs_e;
-		vp->v_inode_nr = res.inode_nr;
-		vp->v_mode = res.fmode;
-		vp->v_size = res.fsize;
-		vp->v_uid = res.uid;
-		vp->v_gid = res.gid;
-		vp->v_sdev = res.dev;
-
-		if ( (vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT)
-			panic(__FILE__, "x_open: vmnt not found", NO_NUM);
-
-		vp->v_vmnt = vmp; 
-		vp->v_dev = vmp->m_dev;
-		vp->v_fs_count = 1;
-		vp->v_ref_count = 1;
-	}
-
-	/* Release dvp */
-	put_vnode(dvp);
-
-	/* Update *vpp */
-	*vpp= vp;
-  } 
-  else {
-	vp= *vpp;
-  }
-
-  /* Only do the normal open code if we didn't just create the file. */
-  if (!exist)
-	return OK;
-
-  /* Check protections. */
-  if ((r = forbidden(vp, bits, 0 /*!use_realuid*/)) != OK)
-	return r;
-
-  /* Opening reg. files directories and special files differ. */
-  switch (vp->v_mode & I_TYPE) {
-  case I_REGULAR: 
-	/* Truncate regular file if O_TRUNC. */
-	if (oflags & O_TRUNC) {
-		if ((r = forbidden(vp, W_BIT, 0 /*!use_realuid*/)) !=OK) break;
-		truncate_vn(vp, 0);
-	}
-	break;
-
-  case I_DIRECTORY: 
-	/* Directories may be read but not written. */
-	r = (bits & W_BIT ? EISDIR : OK);
-	break;
-
-  case I_CHAR_SPECIAL:
-  case I_BLOCK_SPECIAL:
-	if (vp->v_sdev == (dev_t)-1)
-		panic(__FILE__, "x_open: bad special", NO_NUM);
-	break;
-
-  case I_NAMED_PIPE:
-	if (vp->v_ref_count == 1)
-	{
-		if (vp->v_size != 0)
-		{
-			r= truncate_vn(vp, 0);
-			if (r != OK)
-			{
-				printf(
-				"x_open (fifo): truncate_vn failed: %d\n",
-					r);
-			}
-		}
-	}
-	break;
-  }
-
-  return(r);
-}
-
-
-/*===========================================================================*
- *				y_open	 				     *
- *===========================================================================*/
-PRIVATE int y_open(vp, bits, oflags /*, omode, lastc, vpp */)
+PRIVATE int exists_open(vp, bits, oflags /*, omode, lastc, vpp */)
 struct vnode *vp;
 mode_t bits;
 int oflags;
-
-#if 0
-mode_t omode;
-char *lastc;
-struct vnode **vpp;
-#endif
 {
   int r;
-#if 0
-  int r, b, exist = TRUE;
-  struct vnode *vp, *dvp, *tmp_vp;
-  struct vmnt *vmp;
-  struct node_details res;
-#endif
 
   /* Check protections. */
   if ((r = forbidden(vp, bits, 0 /*!use_realuid*/)) != OK)
@@ -590,22 +453,20 @@ struct vnode **vpp;
   case I_CHAR_SPECIAL:
   case I_BLOCK_SPECIAL:
 	if (vp->v_sdev == (dev_t)-1)
-		panic(__FILE__, "y_open: bad special", NO_NUM);
+		panic(__FILE__, "vfs:exists_open: bad special", NO_NUM);
 	break;
 
   case I_NAMED_PIPE:
+#if 0
+	printf("vfs:exists_open: fifo vp 0x%x, for %s\n",
+		vp, ((bits & W_BIT) ? "writing" : "reading"));
+#endif
 	if (vp->v_ref_count == 1)
 	{
+		vp->v_pipe_rd_pos= 0;
+		vp->v_pipe_wr_pos= 0;
 		if (vp->v_size != 0)
-		{
 			r= truncate_vn(vp, 0);
-			if (r != OK)
-			{
-				printf(
-				"x_open (fifo): truncate_vn failed: %d\n",
-					r);
-			}
-		}
 	}
 	break;
   }
@@ -669,6 +530,13 @@ PUBLIC int do_mknod()
   /* Request lookup */
   if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp)) != OK) return r;
 
+  /* Make sure that the object is a directory */
+  if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
+  {
+	put_vnode(vp);
+	return ENOTDIR;
+  }
+
   r= forbidden(vp, W_BIT|X_BIT, 0 /*!use_realuid*/);
   if (r != OK)
   {
@@ -700,6 +568,13 @@ PUBLIC int do_mkdir()
 
   /* Request lookup */
   if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp)) != OK) return r;
+
+  /* Make sure that the object is a directory */
+  if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
+  {
+	put_vnode(vp);
+	return ENOTDIR;
+  }
 
   r= forbidden(vp, W_BIT|X_BIT, 0 /*!use_realuid*/);
   if (r != OK)
@@ -873,21 +748,6 @@ int fd_nr;
 		 * pipe size.
 		 */
 		truncate_vn(vp, vp->v_size);
-	}
-	if (vp->v_pipe == I_PIPE && vp->v_ref_count > 1) {
-		/* Save the file position in the v-node in case needed later.
-		 * The read and write positions are saved separately.  
-		 */
-		if (rfilp->filp_mode == R_BIT)
-			vp->v_pipe_rd_pos = ex64lo(rfilp->filp_pos);
-		else
-			vp->v_pipe_wr_pos = ex64lo(rfilp->filp_pos);
-		
-	}
-	else {
-		/* Otherwise zero the pipe position fields */
-		vp->v_pipe_rd_pos = 0;
-		vp->v_pipe_wr_pos = 0;
 	}
 		
 	put_vnode(rfilp->filp_vno);

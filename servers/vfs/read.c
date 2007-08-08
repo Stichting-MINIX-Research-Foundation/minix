@@ -89,14 +89,10 @@ int rw_flag;			/* READING or WRITING */
 
   if (vp->v_pipe)
   {
-  	if (rw_flag == WRITING)
-  	{
-		if (fp->fp_cum_io_partial != 0)
-		{
-			panic(__FILE__,
-		"read_write: fp_cum_io_partial not clear for new pipe writer",
-				NO_NUM);
-		}
+	if (fp->fp_cum_io_partial != 0)
+	{
+		panic(__FILE__, "read_write: fp_cum_io_partial not clear",
+			NO_NUM);
 	}
 	return rw_pipe(rw_flag, usr, m_in.fd, f, m_in.buffer, m_in.nbytes);
   }
@@ -260,19 +256,19 @@ size_t req_size;
 {
   int r, oflags, op, partial_pipe;
   size_t size, cum_io, cum_io_incr;
-  struct filp *wf;
   struct vnode *vp;
   u64_t position, new_pos;
 
-  position = f->filp_pos;
   oflags = f->filp_flags;
 
   vp = f->filp_vno;
+  position = cvu64((rw_flag == READING) ? vp->v_pipe_rd_pos :
+	vp->v_pipe_wr_pos);
 
 #if 0
-  printf("vfs:rw_pipe: pipe %s, buf 0x%x, size %d\n",
-	rw_flag == READING ? "read" : "write", buf, req_size);
-  printf("vfs:rw_pipe: pipe vp 00x%x, dev/num 0x%x/%d size %d, pos 0x%x:%08x\n",
+  printf("vfs:rw_pipe: filp 0x%x pipe %s, buf 0x%x, size %d\n",
+	f, rw_flag == READING ? "read" : "write", buf, req_size);
+  printf("vfs:rw_pipe: pipe vp 0x%x, dev/num 0x%x/%d size %d, pos 0x%x:%08x\n",
   	vp, vp->v_dev, vp->v_inode_nr, 
   	vp->v_size, ex64hi(position), ex64lo(position));
 #endif
@@ -339,14 +335,20 @@ size_t req_size;
   else {
 	if (cmp64ul(position, vp->v_size) >= 0) {
 		/* Reset pipe pointers */
+#if 0
+		printf("vfs:rw_pipe: resetting pipe size/positions\n");
+#endif
 		vp->v_size = 0;
+		vp->v_pipe_rd_pos= 0;
+		vp->v_pipe_wr_pos= 0;
 		position = cvu64(0);
-		wf = find_filp(vp, W_BIT);
-		if (wf != NIL_FILP) wf->filp_pos = cvu64(0);
 	}
   }
 
-  f->filp_pos = position;
+  if (rw_flag == READING)
+	vp->v_pipe_rd_pos= cv64ul(position);
+  else
+	vp->v_pipe_wr_pos= cv64ul(position);
 
   if (r == OK) {
 	if (partial_pipe) {

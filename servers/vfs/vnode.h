@@ -26,7 +26,6 @@ EXTERN struct vnode {
   /* For debugging */
   char *v_file;
   int v_line;
-  int v_isfifo;	
 } vnode[NR_VNODES];
 
 #define NIL_VNODE (struct vnode *) 0	/* indicates absence of vnode slot */

@@ -103,7 +103,6 @@ PUBLIC struct filp *find_filp(register struct vnode *vp, mode_t bits)
 
   for (f = &filp[0]; f < &filp[NR_FILPS]; f++) {
 	if (f->filp_count != 0 && f->filp_vno == vp && (f->filp_mode & bits)){
-		assert(f->filp_count > 0);
 		return(f);
 	}
   }

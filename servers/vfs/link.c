@@ -104,6 +104,13 @@ PUBLIC int do_unlink()
   if (r != OK)
 	return r;
 
+  /* Make sure that the object is a directory */
+  if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
+  {
+	put_vnode(vp);
+	return ENOTDIR;
+  }
+
   /* The caller must have both search and execute permission */
   r= forbidden(vp, X_BIT|W_BIT, 0 /*!use_realuid*/);
   if (r != OK)
