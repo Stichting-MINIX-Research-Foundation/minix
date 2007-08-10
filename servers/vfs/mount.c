@@ -100,10 +100,10 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   struct dmap *dp;
   dev_t dev;
   message m;
-  struct vnode *vp, *root_node, *Xmounted_on, *bspec;
+  struct vnode *vp, *root_node, *mounted_on, *bspec;
   struct vmnt *vmp, *vmp2;
   char *label;
-  struct node_details resX;
+  struct node_details res;
   
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -185,7 +185,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	}
 
 	/* Request lookup */
-	r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &Xmounted_on);
+	r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &mounted_on);
 	if (r != OK) return r;
 
 	if (vp->v_ref_count != 1)
@@ -196,10 +196,10 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	}
 
 	/* Issue mountpoint request */
-	r = req_mountpoint(Xmounted_on->v_fs_e, Xmounted_on->v_inode_nr);
+	r = req_mountpoint(mounted_on->v_fs_e, mounted_on->v_inode_nr);
 	if (r != OK)
 	{
-		put_vnode(Xmounted_on);
+		put_vnode(mounted_on);
 		printf("vfs:mount_fs: req_mountpoint_s failed with %d\n", r);
 		return r;
 	}
@@ -209,7 +209,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
 	/* File types may not conflict. */
 	if (r == OK) {
-		mdir = ((Xmounted_on->v_mode & I_TYPE) == I_DIRECTORY); 
+		mdir = ((mounted_on->v_mode & I_TYPE) == I_DIRECTORY); 
 		/* TRUE iff dir */
 		rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
 		if (!mdir && rdir) r = EISDIR;
@@ -217,14 +217,14 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
 	/* If error, return the mount point. */
 	if (r != OK) {
-		put_vnode(Xmounted_on);
+		put_vnode(mounted_on);
 
 		return(r);
 	}
 
 	/* Nothing else can go wrong.  Perform the mount. */
 	put_vnode(vmp->m_mounted_on);
-	vmp->m_mounted_on = Xmounted_on;
+	vmp->m_mounted_on = mounted_on;
 	vmp->m_flags = m_in.rd_only;
 	allow_newroot = 0;              /* The root is now fixed */
 
@@ -246,14 +246,14 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	printf("vfs:mount_fs: mount point at '%s'\n", user_fullpath);
 #endif
 
-	r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &Xmounted_on);
+	r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &mounted_on);
 	if (r != OK)
 		return r;
 
 	/* Issue mountpoint request */
-	r = req_mountpoint(Xmounted_on->v_fs_e, Xmounted_on->v_inode_nr);
+	r = req_mountpoint(mounted_on->v_fs_e, mounted_on->v_inode_nr);
 	if (r != OK) {
-		put_vnode(Xmounted_on);
+		put_vnode(mounted_on);
 		printf("vfs:mount_fs: req_mountpoint_s failed with %d\n", r);
 		return r;
 	}
@@ -282,24 +282,26 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 #endif
 
   /* Issue request */
-  r = req_readsuper(fs_e, label, dev, m_in.rd_only, isroot, &resX);
+  r = req_readsuper(fs_e, label, dev, m_in.rd_only, isroot, &res);
   if (r != OK) {
-      return r;
+	put_vnode(mounted_on);
+	printf("vfs:mount_fs: req_readsuper failed with %d\n", r);
+	return r;
   }
 
   /* Fill in root node's fields */
-  root_node->v_fs_e = resX.fs_e;
-  root_node->v_inode_nr = resX.inode_nr;
-  root_node->v_mode = resX.fmode;
-  root_node->v_uid = resX.uid;
-  root_node->v_gid = resX.gid;
-  root_node->v_size = resX.fsize;
+  root_node->v_fs_e = res.fs_e;
+  root_node->v_inode_nr = res.inode_nr;
+  root_node->v_mode = res.fmode;
+  root_node->v_uid = res.uid;
+  root_node->v_gid = res.gid;
+  root_node->v_size = res.fsize;
   root_node->v_sdev = NO_DEV;
   root_node->v_fs_count = 1;
   root_node->v_ref_count = 1;
 
   /* Fill in max file size and blocksize for the vmnt */
-  vmp->m_fs_e = resX.fs_e;
+  vmp->m_fs_e = res.fs_e;
   vmp->m_dev = dev;
   vmp->m_flags = m_in.rd_only;
   vmp->m_driver_e = dp->dmap_driver;
@@ -342,14 +344,14 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
   /* File types may not conflict. */
   if (r == OK) {
-      mdir = ((Xmounted_on->v_mode & I_TYPE) == I_DIRECTORY);/* TRUE iff dir */
+      mdir = ((mounted_on->v_mode & I_TYPE) == I_DIRECTORY);/* TRUE iff dir */
       rdir = ((root_node->v_mode & I_TYPE) == I_DIRECTORY);
       if (!mdir && rdir) r = EISDIR;
   }
 
   /* If error, return the super block and both inodes; release the vmnt. */
   if (r != OK) {
-      put_vnode(Xmounted_on);
+      put_vnode(mounted_on);
       put_vnode(root_node);
 
       vmp->m_dev = NO_DEV;
@@ -357,7 +359,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   }
 
   /* Nothing else can go wrong.  Perform the mount. */
-  vmp->m_mounted_on = Xmounted_on;
+  vmp->m_mounted_on = mounted_on;
   vmp->m_root_node = root_node;
 
   /* The root is now fixed */
