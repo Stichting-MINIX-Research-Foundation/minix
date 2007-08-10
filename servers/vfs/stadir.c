@@ -242,17 +242,11 @@ PUBLIC int do_fstatfs()
 PUBLIC int do_lstat()
 {
 /* Perform the lstat(name, buf) system call. */
-  struct lookup_req lookup_req;
   struct vnode *vp;
   int r;
 
   if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
   
-  /* Fill in lookup request fields */
-  lookup_req.path = user_fullpath;
-  lookup_req.lastc = NULL;
-  lookup_req.flags = EAT_PATH_OPAQUE;
-        
   /* Request lookup */
   if ((r = lookup_vp(PATH_RET_SYMLINK, 0 /*!use_realuid*/, &vp)) != OK)
 	return r;

@@ -102,22 +102,10 @@ mode_t *new_modep;
     r = fs_sendrec(fs_e, &m);
 
     /* Copy back actual mode. */
-    if (r == OK)
-	*new_modep = m.RES_MODE;
+    *new_modep = m.RES_MODE;
 
     return r;
 }
-
-
-/* Structure for REQ_CHOWN request */
-typedef struct chown_req {
-        int fs_e;
-        ino_t inode_nr;
-        uid_t uid;
-        gid_t gid;
-        uid_t newuid;
-        gid_t newgid;
-} chown_req_t;
 
 
 /*===========================================================================*
@@ -471,74 +459,6 @@ mode_t dmode;
 }
 
 
-/* Structure for REQ_MKNOD request */
-typedef struct mknod_req {
-        int fs_e;
-        ino_t inode_nr;
-        uid_t uid;
-        gid_t gid;
-        mode_t rmode;
-        dev_t dev;
-        char *lastc;
-} mknod_req_t;
-
-
-
-/*===========================================================================*
- *				req_newnode	      			     *
- *===========================================================================*/
-PUBLIC int req_newnode(fs_e, uid, gid, dmode, dev, res)
-endpoint_t fs_e;
-uid_t uid;
-gid_t gid;
-mode_t dmode;
-dev_t dev;
-struct node_details *res;
-{
-    int r;
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_NEWNODE;
-    m.REQ_MODE = dmode;
-    m.REQ_DEVx = dev;
-    m.REQ_UID = uid;
-    m.REQ_GID = gid;
-
-    /* Send/rec request */
-    r = fs_sendrec(fs_e, &m);
-
-    res->fs_e = m.m_source;
-    res->inode_nr = m.RES_INODE_NR;
-    res->fmode = m.RES_MODE;
-    res->fsize = m.RES_FILE_SIZE;
-    res->dev = m.RES_DEV;
-    res->uid= m.RES_UID;
-    res->gid= m.RES_GID;
-
-    return r;
-}
-
-
-/*===========================================================================*
- *				req_mountpoint	                 	     *
- *===========================================================================*/
-PUBLIC int req_mountpoint(fs_e, inode_nr)
-endpoint_t fs_e;
-ino_t inode_nr;
-{
-    int r;
-    message m;
-
-    /* Fill in request message */
-    m.m_type = REQ_MOUNTPOINT_S;
-    m.REQ_INODE_NR = inode_nr;
-
-    /* Send/rec request */
-    return fs_sendrec(fs_e, &m);
-}
-
-
 /*===========================================================================*
  *				req_mknod	      			     *
  *===========================================================================*/
@@ -578,6 +498,93 @@ dev_t dev;
 
     return r;
 }
+
+
+/*===========================================================================*
+ *				req_mountpoint	                 	     *
+ *===========================================================================*/
+PUBLIC int req_mountpoint(fs_e, inode_nr)
+endpoint_t fs_e;
+ino_t inode_nr;
+{
+    int r;
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_MOUNTPOINT_S;
+    m.REQ_INODE_NR = inode_nr;
+
+    /* Send/rec request */
+    return fs_sendrec(fs_e, &m);
+}
+
+
+/*===========================================================================*
+ *				req_newnode	      			     *
+ *===========================================================================*/
+PUBLIC int req_newnode(fs_e, uid, gid, dmode, dev, res)
+endpoint_t fs_e;
+uid_t uid;
+gid_t gid;
+mode_t dmode;
+dev_t dev;
+struct node_details *res;
+{
+    int r;
+    message m;
+
+    /* Fill in request message */
+    m.m_type = REQ_NEWNODE;
+    m.REQ_MODE = dmode;
+    m.REQ_DEVx = dev;
+    m.REQ_UID = uid;
+    m.REQ_GID = gid;
+
+    /* Send/rec request */
+    r = fs_sendrec(fs_e, &m);
+
+    res->fs_e = m.m_source;
+    res->inode_nr = m.RES_INODE_NR;
+    res->fmode = m.RES_MODE;
+    res->fsize = m.RES_FILE_SIZE;
+    res->dev = m.RES_DEV;
+    res->uid= m.RES_UID;
+    res->gid= m.RES_GID;
+
+    return r;
+}
+
+
+/*===========================================================================*
+ *				req_newdriver          			     *
+ *===========================================================================*/
+PUBLIC int req_newdriver(fs_e, dev, driver_e)
+endpoint_t fs_e;
+Dev_t dev;
+endpoint_t driver_e;
+{
+/* Note: this is the only request function that doesn't use the 
+ * fs_sendrec internal routine, since we want to avoid the dead
+ * driver recovery mechanism here. This function is actually called 
+ * during the recovery.
+ */
+    message m;
+    int r;
+
+    /* Fill in request message */
+    m.m_type = REQ_NEW_DRIVER;
+    m.REQ_DEV = dev;
+    m.REQ_DRIVER_E = driver_e;
+
+    /* Issue request */
+    if ((r = sendrec(fs_e, &m)) != OK) {
+        printf("VFSreq_newdriver: error sending message to %d: %d\n", fs_e, r);
+        return r;
+    }
+
+    return OK;
+}
+
 
 
 /*===========================================================================*
@@ -675,19 +682,6 @@ struct node_details *res_nodep;
 
     return OK;
 }
-
-/* Structure for REQ_READ and REQ_WRITE request */
-typedef struct readwrite_req {
-	int rw_flag;
-	endpoint_t fs_e;
-        endpoint_t user_e;
-	ino_t inode_nr;
-	unsigned short inode_index;
-	int seg;
-	u64_t pos;
-	unsigned int num_of_bytes;
-	char *user_addr;
-} readwrite_req_t;
 
 
 /*===========================================================================*
@@ -936,16 +930,6 @@ endpoint_t fs_e;
     return fs_sendrec(fs_e, &m);
 }
 
-/* Structure for REQ_UNLINK request */
-typedef struct unlink_req {
-        int fs_e;
-        ino_t d_inode_nr;
-        uid_t uid;
-        gid_t gid;
-        char *lastc;
-} unlink_req_t;
-
-
 
 /*===========================================================================*
  *				req_unlink	     			     *
@@ -1016,38 +1000,6 @@ time_t modtime;
     /* Send/rec request */
     return fs_sendrec(fs_e, &m);
 }
-
-
-/*===========================================================================*
- *				req_newdriver          			     *
- *===========================================================================*/
-PUBLIC int req_newdriver(fs_e, dev, driver_e)
-endpoint_t fs_e;
-Dev_t dev;
-endpoint_t driver_e;
-{
-/* Note: this is the only request function that doesn't use the 
- * fs_sendrec internal routine, since we want to avoid the dead
- * driver recovery mechanism here. This function is actually called 
- * during the recovery.
- */
-    message m;
-    int r;
-
-    /* Fill in request message */
-    m.m_type = REQ_NEW_DRIVER;
-    m.REQ_DEV = dev;
-    m.REQ_DRIVER_E = driver_e;
-
-    /* Issue request */
-    if ((r = sendrec(fs_e, &m)) != OK) {
-        printf("VFSreq_newdriver: error sending message to %d: %d\n", fs_e, r);
-        return r;
-    }
-
-    return OK;
-}
-
 
 
 
