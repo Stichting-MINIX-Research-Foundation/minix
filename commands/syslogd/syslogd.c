@@ -900,7 +900,11 @@ int main(int argc, char **argv)
 
 		} else if (len < 0) {	/* Got an error or signal while reading */
 			if (errno != EINTR)	/* */
+			{
 				logerror("Receive error from UDP channel");
+				close(nfd);
+				nfd= -1;
+			}
 
 		} else {	/* (len == 0) Channel has been closed */
 			logerror("UDP channel has closed");
