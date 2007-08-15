@@ -100,7 +100,7 @@ start)
             eval up $driver $arg -period 5HZ
         fi
     done
-    up inet 
+    up inet -script /etc/rs.inet
     up printer -dev /dev/lp -period 10HZ
     echo .
 

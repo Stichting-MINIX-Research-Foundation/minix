@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# 'Recovery' script that doesn't. This script is to be used for drivers that
+# should not be restarted. Instead, the scripts configures the driver 'down'.
+
+kill_by_name()
+{
+	label="$1"
+	pid=`ps ax | grep "$label" | grep -v grep |
+		sed 's,[ 	]*\([0-9]*\).*,\1,`
+	if [ X"$pid" = X ]
+	then
+		return 1	# No such process
+	fi
+	echo "killing pid $pid for $label"
+	kill -9 $pid
+}
+
+daemonize()
+{
+    # Function to start a daemon, if it exists.
+    local IFS=':'
+    local name="$1"
+    test "$1" = tcpd && name="$2"
+
+    for dir in $PATH
+    do
+	if [ -f "$dir/$1" ]
+	then
+
+            # check if this service is disabled at the boot monitor.
+            if disabled $name; then return; fi
+
+	    echo -n " $name"
+	    "$@" &
+	    return
+	fi
+    done
+}
+
+disabled()
+{
+    ifs="$IFS"; IFS=,
+    for skip in `sysenv disable`
+    do 
+        if [ "$skip" = "$1" ]
+	then 	 
+                IFS="$ifs"; unset ifs
+		return 0
+	fi
+    done
+    IFS="$ifs"; unset ifs
+    return 1
+}
+
+exec > /dev/console
+echo "Arguments: $@"
+
+kill_by_name dhcpd
+kill_by_name nonamed
+kill_by_name syslogd
+sleep 1
+service restart "$1"
+sleep 1
+daemonize dhcpd
+daemonize nonamed -L
+daemonize syslogd
