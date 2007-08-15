@@ -550,7 +550,11 @@ PUBLIC int do_svrctl()
 		 * to be up.
 		*/
 		if(fproc[proc_nr_n].fp_execced) {
+			/* Reply before calling dev_up */
+			printf("do_svrctl: replying before dev_up\n");
+			reply(who_e, r);
 			dev_up(major);
+			r= SUSPEND;
 		} else {
 			dmap[major].dmap_flags |= DMAP_BABY;
 		}

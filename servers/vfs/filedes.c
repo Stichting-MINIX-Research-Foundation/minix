@@ -84,6 +84,13 @@ int fild;			/* file descriptor */
 
   err_code = EBADF;
   if (fild < 0 || fild >= OPEN_MAX ) return(NIL_FILP);
+  if (rfp->fp_filp[fild] == NIL_FILP && FD_ISSET(fild, &rfp->fp_filp_inuse))
+  {
+	printf("get_filp2: setting err_code to EIO for proc %d fd %d\n",
+		rfp->fp_endpoint, fild);
+	err_code = EIO;	/* The filedes is not there, but is not closed either.
+			 */
+  }
   return(rfp->fp_filp[fild]);	/* may also be NIL_FILP */
 }
 

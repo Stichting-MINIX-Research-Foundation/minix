@@ -278,9 +278,17 @@ PUBLIC int do_select(void)
 	
 		if (!(orig_ops = ops = tab2ops(fd, &selecttab[s])))
 			continue;
-		if (!(filp = selecttab[s].filps[fd] = get_filp(fd))) {
-			select_cancel_all(&selecttab[s]);
-			return EBADF;
+		filp = selecttab[s].filps[fd] = get_filp(fd);
+		if (filp == NULL) {
+			if (err_code == EBADF) {
+				select_cancel_all(&selecttab[s]);
+				return EBADF;
+			}
+
+			/* File descriptor is 'ready' to return EIO */
+			printf("vfs:do_select: EIO after driver failure\n");
+			ops2tab(SEL_RD|SEL_WR|SEL_ERR, fd, &selecttab[s]);
+			continue;
 		}
 
 		for(t = 0; t < SEL_FDS; t++) {

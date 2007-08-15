@@ -807,10 +807,12 @@ printf("VFSdev_up: error sending new driver endpoint. FS_e: %d req_nr: %d\n",
 
         minor = ((vp->v_sdev >> MINOR) & BYTE);
 
-        printf("VFS: reopening special %d/%d..\n", maj, minor);
+        printf("vfs:dev_up: reopening special %d/%d..\n", maj, minor);
 
-        if((r = dev_open(vp->v_sdev, FS_PROC_NR,
-                        vp->v_mode & (R_BIT|W_BIT))) != OK) {
+	printf("vfs:dev_up: before dev_open\n");
+        r = dev_open(vp->v_sdev, FS_PROC_NR, vp->v_mode & (R_BIT|W_BIT));
+	printf("vfs:dev_up: after dev_open: result = %d\n", r);
+        if (r != OK) {
             int n;
             /* This function will set the fp_filp[]s of processes
              * holding that fp to NULL, but _not_ clear
