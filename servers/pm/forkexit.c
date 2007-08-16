@@ -245,7 +245,7 @@ int for_trace;
   int parent_waiting, right_child, r;
   pid_t pidarg, procgrp;
   struct mproc *p_mp;
-  clock_t t[5];
+  clock_t user_time, sys_time;
 
   proc_nr = (int) (rmp - mproc);	/* get process slot number */
   proc_nr_e = rmp->mp_endpoint;
@@ -257,12 +257,12 @@ int for_trace;
   if (rmp->mp_flags & ALARM_ON) set_alarm(proc_nr_e, (unsigned) 0);
 
   /* Do accounting: fetch usage times and accumulate at parent. */
-  if((r=sys_times(proc_nr_e, t)) != OK)
+  if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL)) != OK)
   	panic(__FILE__,"pm_exit: sys_times failed", r);
 
   p_mp = &mproc[rmp->mp_parent];			/* process' parent */
-  p_mp->mp_child_utime += t[0] + rmp->mp_child_utime;	/* add user time */
-  p_mp->mp_child_stime += t[1] + rmp->mp_child_stime;	/* add system time */
+  p_mp->mp_child_utime += user_time + rmp->mp_child_utime; /* add user time */
+  p_mp->mp_child_stime += sys_time + rmp->mp_child_stime; /* add system time */
 
   /* Tell the kernel the process is no longer runnable to prevent it from 
    * being scheduled in between the following steps. Then tell FS that it 

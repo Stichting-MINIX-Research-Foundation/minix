@@ -73,7 +73,8 @@ _PROTOTYPE( int sys_sdevio, (int req, long port, endpoint_t proc_nr,
 	void *buffer, int count, vir_bytes offset));
 
 /* Clock functionality: get system times or (un)schedule an alarm call. */
-_PROTOTYPE( int sys_times, (endpoint_t proc_nr, clock_t *ptr));
+_PROTOTYPE( int sys_times, (endpoint_t proc_nr, clock_t *user_time,
+	clock_t *sys_time, clock_t *uptime));
 _PROTOTYPE(int sys_setalarm, (clock_t exp_time, int abs_time));
 
 /* Shorthands for sys_irqctl() system call. */

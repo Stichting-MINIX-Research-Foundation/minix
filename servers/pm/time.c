@@ -67,16 +67,16 @@ PUBLIC int do_times()
 {
 /* Perform the times(buffer) system call. */
   register struct mproc *rmp = mp;
-  clock_t t[5];
+  clock_t user_time, sys_time, uptime;
   int s;
 
-  if (OK != (s=sys_times(who_e, t)))
+  if (OK != (s=sys_times(who_e, &user_time, &sys_time, &uptime)))
       panic(__FILE__,"do_times couldn't get times", s);
-  rmp->mp_reply.reply_t1 = t[0];		/* user time */
-  rmp->mp_reply.reply_t2 = t[1];		/* system time */
+  rmp->mp_reply.reply_t1 = user_time;		/* user time */
+  rmp->mp_reply.reply_t2 = sys_time;		/* system time */
   rmp->mp_reply.reply_t3 = rmp->mp_child_utime;	/* child user time */
   rmp->mp_reply.reply_t4 = rmp->mp_child_stime;	/* child system time */
-  rmp->mp_reply.reply_t5 = t[4];		/* uptime since boot */
+  rmp->mp_reply.reply_t5 = uptime;		/* uptime since boot */
 
   return(OK);
 }
