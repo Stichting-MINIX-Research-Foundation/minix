@@ -151,8 +151,7 @@ _PROTOTYPE( int req_chown, (endpoint_t fs_e, ino_t inode_nr,
 _PROTOTYPE( int req_create, (int fs_e, ino_t inode_nr, int omode,
 		int uid, int gid, char *path, node_details_t *res)	); 
 _PROTOTYPE( int req_flush, (endpoint_t fs_e, Dev_t dev)			);
-_PROTOTYPE( int req_fstatfs, (int fs_e, ino_t inode_nr, int who_e,
-							char *buf)	);
+_PROTOTYPE( int req_fstatfs, (int fs_e, int who_e, char *buf)		);
 _PROTOTYPE( int req_ftrunc, (endpoint_t fs_e, ino_t inode_nr,
 						off_t start, off_t end)	);
 _PROTOTYPE( int req_getdents, (endpoint_t fs_e, ino_t inode_nr,

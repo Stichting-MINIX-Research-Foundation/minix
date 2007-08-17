@@ -230,8 +230,7 @@ PUBLIC int do_fstatfs()
   if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
 
   /* Issue request */
-  return req_fstatfs(rfilp->filp_vno->v_fs_e, rfilp->filp_vno->v_inode_nr,
-	who_e, m_in.buffer);
+  return req_fstatfs(rfilp->filp_vno->v_fs_e, who_e, m_in.buffer);
 }
 
 

@@ -212,9 +212,8 @@ dev_t dev;
 /*===========================================================================*
  *				req_fstatfs	    			     *
  *===========================================================================*/
-PUBLIC int req_fstatfs(fs_e, inode_nr, who_e, buf)
+PUBLIC int req_fstatfs(fs_e, who_e, buf)
 int fs_e;
-ino_t inode_nr;
 int who_e;
 char *buf;
 {
@@ -229,7 +228,6 @@ char *buf;
 
   /* Fill in request message */
   m.m_type = REQ_FSTATFS;
-  m.REQ_INODE_NR = inode_nr;
   m.REQ_GRANT = gid;
 
   /* Send/rec request */

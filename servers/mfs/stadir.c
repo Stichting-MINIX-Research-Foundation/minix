@@ -75,9 +75,8 @@ PUBLIC int fs_fstatfs()
   struct inode *rip;
   int r;
 
-  if ((rip = find_inode(fs_dev, fs_m_in.REQ_FD_INODE_NR))
-          == NIL_INODE) {
-      printf("FSfstatfs: couldn't find inode %d\n", fs_m_in.REQ_FD_INODE_NR);
+  if ((rip = find_inode(fs_dev, ROOT_INODE)) == NIL_INODE) {
+      printf("mfs:fstatfs: couldn't find inode %d\n", ROOT_INODE);
       return EINVAL;
   }
   
