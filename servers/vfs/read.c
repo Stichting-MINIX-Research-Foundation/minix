@@ -150,7 +150,9 @@ int rw_flag;			/* READING or WRITING */
       /* Fill in request structure */
       num_of_bytes = m_in.nbytes;
 
-      /* Truncate read request at size (mustn't do this for special files). */
+#if 0  /* Don't truncate read request at size. The filesystem process will
+	* do this itself.
+	*/
       if((rw_flag == READING) &&
 	cmp64ul(add64ul(position, num_of_bytes), vp->v_size) > 0) {
 		/* Position always should fit in an off_t (LONG_MAX). */
@@ -162,6 +164,7 @@ int rw_flag;			/* READING or WRITING */
 		num_of_bytes = vp->v_size - pos32;
 		assert(num_of_bytes >= 0);
       }
+#endif
 
       /* Issue request */
       r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, position,
