@@ -127,8 +127,8 @@ char *argv[];
 	exit(1);
   }
 
-  system("rm -rf DIR_18; mkdir DIR_18");
-  chdir("DIR_18");
+  system("rm -rf DIR_17; mkdir DIR_17");
+  chdir("DIR_17");
 
   mask = (argc == 2 ? atoi(argv[1]) : 0xFFFF);
 
