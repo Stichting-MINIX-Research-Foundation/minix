@@ -90,7 +90,7 @@ PRIVATE int revive_status;	/* revive status */
 PRIVATE int done_status;	/* status of last output completion */
 PRIVATE int oleft;		/* bytes of output left in obuf */
 PRIVATE char obuf[128];		/* output buffer */
-PRIVATE char *optr;		/* ptr to next char in obuf to print */
+PRIVATE unsigned char *optr;		/* ptr to next char in obuf to print */
 PRIVATE int orig_count;		/* original byte count */
 PRIVATE int port_base;		/* I/O port for printer */
 PRIVATE int proc_nr;		/* user requesting the printing */
@@ -432,7 +432,8 @@ PRIVATE void do_printer_output()
 	}
 	if ((status & STATUS_MASK) == NORMAL_STATUS) {
 		/* Everything is all right.  Output another character. */
-		pv_set(char_out[0], port_base, *optr++);	
+		pv_set(char_out[0], port_base, *optr);	
+		optr++;
 		pv_set(char_out[1], port_base+2, ASSERT_STROBE);
 		pv_set(char_out[2], port_base+2, NEGATE_STROBE);
 		if(sys_voutb(char_out, 3) != OK) {
