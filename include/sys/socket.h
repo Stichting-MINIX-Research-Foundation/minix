@@ -78,4 +78,10 @@ _PROTOTYPE( ssize_t sendto, (int _socket, const void *_message,
 _PROTOTYPE( int shutdown, (int _socket, int _how)			);
 _PROTOTYPE( int socket, (int _domain, int _type, int _protocol)		);
 
+/* The following constants are often used in applications, but are not defined
+ * by POSIX.
+ */
+#define PF_UNIX	AF_UNIX
+#define PF_INET	AF_INET
+
 #endif /* SYS_SOCKET_H */
