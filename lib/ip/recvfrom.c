@@ -28,7 +28,9 @@ ssize_t recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	int r;
 	nwio_udpopt_t udpopt;
 
+#if DEBUG
 	fprintf(stderr, "recvfrom: for fd %d\n", socket);
+#endif
 
 	r= ioctl(socket, NWIOGUDPOPT, &udpopt);
 	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
