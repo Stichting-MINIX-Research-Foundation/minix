@@ -91,15 +91,21 @@ PUBLIC int fs_readsuper_s()
   /* Is it recognized as a Minix filesystem? */
   if (r != OK) {
 	sp->s_dev = NO_DEV;
+  	dev_close(driver_e, fs_dev);
 	return(r);
   }
   
   /* Get the root inode of the mounted file system. */
-  if ( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NIL_INODE) 
+  if ( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NIL_INODE)  {
+	sp->s_dev = NO_DEV;
+  	dev_close(driver_e, fs_dev);
 	return err_code;
+  }
   
   if (root_ip != NIL_INODE && root_ip->i_mode == 0) {
         put_inode(root_ip);
+	sp->s_dev = NO_DEV;
+  	dev_close(driver_e, fs_dev);
   	return EINVAL;
   }
 
