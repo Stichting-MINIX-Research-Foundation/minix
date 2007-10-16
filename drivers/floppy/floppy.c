@@ -24,6 +24,7 @@
 
 #include "floppy.h"
 #include <timers.h>
+#include <assert.h>
 #include <ibm/diskparm.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
@@ -458,6 +459,12 @@ int safe;
 	return OK;	/* Way beyond EOF */
   position= cv64ul(pos64);
 
+  /* internally, floppy uses f_transfer without grant id, with safe set to
+   * 0. This is OK, as long as proc_nr is SELF.
+   */
+  if(!safe && proc_nr != SELF)
+	panic("FLOPPY", "f_transfer: not safe and proc_nr not SELF", proc_nr);
+
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
 
@@ -490,15 +497,14 @@ int safe;
 		   s=sys_safecopyfrom(proc_nr, iov->iov_addr,
 			SECTOR_SIZE + iov_offset, (vir_bytes) &fmt_param,
 			(phys_bytes) sizeof(fmt_param), D);
+		   if(s != OK)
+			panic("FLOPPY", "sys_safecopyfrom failed", s);
 		} else {
-		   s=sys_datacopy(proc_nr, iov->iov_addr +
-			SECTOR_SIZE + iov_offset,
-			SELF, (vir_bytes) &fmt_param, 
-			(phys_bytes) sizeof(fmt_param));
+			assert(proc_nr == SELF);
+			memcpy(&fmt_param, (void *) (iov->iov_addr +
+				SECTOR_SIZE + iov_offset),
+				(phys_bytes) sizeof(fmt_param));
 		}
-
-		if(s != OK)
-			panic("FLOPPY", "Sys_*copy failed", s);
 
 		/* Check that the number of sectors in the data is reasonable,
 		 * to avoid division by 0.  Leave checking of other data to
@@ -598,13 +604,12 @@ int safe;
 		   	   s=sys_safecopyfrom(proc_nr, *ug, *up,
 				(vir_bytes) tmp_buf,
 			  	 (phys_bytes) SECTOR_SIZE, D);
+			   if(s != OK)
+				panic("FLOPPY", "sys_safecopyfrom failed", s);
 			} else {
-			   s=sys_datacopy(proc_nr, *ug + *up,  SELF, 
-				(vir_bytes) tmp_buf,
-				(phys_bytes) SECTOR_SIZE);
+			   assert(proc_nr == SELF);
+			   memcpy(tmp_buf, (void *) (*ug + *up), SECTOR_SIZE);
 			}
-			if(s != OK)
-				panic("FLOPPY", "Sys_vircopy failed", s);
 		}
 
 		/* Set up the DMA chip and perform the transfer. */
@@ -625,13 +630,12 @@ int safe;
 		   	   s=sys_safecopyto(proc_nr, *ug, *up,
 				(vir_bytes) tmp_buf,
 			  	 (phys_bytes) SECTOR_SIZE, D);
-			} else {
-			   s=sys_datacopy(SELF, (vir_bytes) tmp_buf, 
-				proc_nr, *ug + *up, 
-				(phys_bytes) SECTOR_SIZE);
-			}
 			if(s != OK)
-				panic("FLOPPY", "Sys_vircopy failed", s);
+				panic("FLOPPY", "sys_safecopyto failed", s);
+			} else {
+			   assert(proc_nr == SELF);
+			   memcpy((void *) (*ug + *up), tmp_buf, SECTOR_SIZE);
+			}
 		}
 
 		if (r != OK) {
