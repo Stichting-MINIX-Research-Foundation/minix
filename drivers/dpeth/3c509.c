@@ -130,10 +130,10 @@ static void el3_write_fifo(dpeth_t * dep, int pktsize)
 	bytes = iovp->iod_iovec[ix].iov_size;	/* Size of buffer */
 	if (bytes > pktsize) bytes = pktsize;
 	/* Writes from user buffer to Tx FIFO */
-	r= sys_safe_insb(dep->de_data_port, iovp->iod_proc_nr,
+	r= sys_safe_outsb(dep->de_data_port, iovp->iod_proc_nr,
 		iovp->iod_iovec[ix].iov_grant, 0, bytes);
 	if (r != OK)
-		panic(__FILE__, "el3_write_fifo: sys_safe_insb failed", r);
+		panic(__FILE__, "el3_write_fifo: sys_safe_outsb failed", r);
 		
 	if (++ix >= IOVEC_NR) {	/* Next buffer of IO vector */
 		dp_next_iovec(iovp);
