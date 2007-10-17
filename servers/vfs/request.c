@@ -436,7 +436,7 @@ mode_t dmode;
 
     len= strlen(lastc) + 1;
     grant_id= cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
-    if (gid == -1)
+    if (grant_id == -1)
 	panic(__FILE__, "req_mkdir: cpf_grant_direct failed", NO_NUM);
 
     /* Fill in request message */
@@ -476,7 +476,7 @@ dev_t dev;
 
     len= strlen(lastc) + 1;
     grant_id= cpf_grant_direct(fs_e, (vir_bytes)lastc, len, CPF_READ);
-    if (gid == -1)
+    if (grant_id == -1)
 	panic(__FILE__, "req_mknod: cpf_grant_direct failed", NO_NUM);
 
     /* Fill in request message */
@@ -668,7 +668,11 @@ struct node_details *res_nodep;
     m.REQ_PATH_LEN = len;
 
     /* Send/rec request */
-    if ((r = fs_sendrec(fs_e, &m)) != OK) return r;
+    r = fs_sendrec(fs_e, &m);
+
+    cpf_revoke(gid);
+
+    if(r != OK) return r;
 
     /* Fill in response structure */
     res_nodep->fs_e = m.m_source;
@@ -840,7 +844,7 @@ gid_t gid;
 	path_length, CPF_READ);
     if (gid_buf == -1)
     {
-	cpf_revoke(gid_buf);
+	cpf_revoke(gid_name);
 	panic(__FILE__, "req_slink: cpf_grant_magic failed", NO_NUM);
     }
 
@@ -890,7 +894,7 @@ int pos;
 		CPF_WRITE);
   }
   if (gid < 0)
-	return gid;
+	panic(__FILE__, "req_stat: cpf_grant_* failed", NO_NUM);
 
   /* Fill in request message */
   m.m_type = REQ_STAT;
