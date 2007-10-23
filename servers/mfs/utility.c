@@ -4,6 +4,7 @@
 #include <string.h>
 #include <minix/com.h>
 #include <minix/callnr.h>
+#include <stdlib.h>
 
 #include "buf.h"
 #include "inode.h"
@@ -35,13 +36,15 @@ int num;			/* number to go with it */
  * inconsistency is detected, e.g., a programming error or illegal value of a
  * defined constant.
  */
-  if (panicking) return;	/* do not panic during a sync */
-  panicking = TRUE;		/* prevent another panic during the sync */
+  if (!panicking) {		/* do not panic during a sync */
+	panicking = TRUE;		/* prevent another panic during the sync */
 
-  printf("FS panic (%s): %s ", who, mess);
-  if (num != NO_NUM) printf("%d",num); 
-  (void) fs_sync();		/* flush everything to the disk */
-  sys_exit(SELF);
+	printf("MFS panic (%s): %s ", who, mess);
+	if (num != NO_NUM) printf("%d",num); 
+	printf("\n"); 
+	(void) fs_sync();		/* flush everything to the disk */
+  } else printf("MFS re-panic\n");
+  exit(1);
 }
 
 /*===========================================================================*
