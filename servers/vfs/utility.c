@@ -14,6 +14,7 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "file.h"
 #include "fproc.h"
 #include "param.h"
