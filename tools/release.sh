@@ -50,7 +50,7 @@ disable=inet
 bios_wini=yes
 bios_remap_first=1
 ramimagedev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
+bootbig(1, MINIX 3) { image=/boot/image_big; boot }
 main() { trap 10000 boot ; menu; }
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
 
@@ -132,7 +132,7 @@ do
 	esac
 done
 
-USRMB=500
+USRMB=580
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -286,10 +286,11 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
-	REPO=https://gforge.cs.vu.nl/svn/minix/branches/r3.1.3
+	BRANCH=r3.1.3
+	REPO=https://gforge.cs.vu.nl/svn/minix/branches/$BRANCH
 	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
 	echo "Doing export of revision $REVISION from $REPO."
-	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO )
+	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO && mv $BRANCH $SRC )
 	REVTAG=r$REVISION
 	echo "
 
