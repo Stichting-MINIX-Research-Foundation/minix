@@ -228,6 +228,7 @@
 #define DL_CONF_REPLY	(DL_RS_BASE + 20)
 #define DL_TASK_REPLY	(DL_RS_BASE + 21)
 #define DL_NAME_REPLY	(DL_RS_BASE + 22)
+#define DL_STAT_REPLY	(DL_RS_BASE + 23)
 
 /* Field names for data link layer messages. */
 #define DL_PORT		m2_i1

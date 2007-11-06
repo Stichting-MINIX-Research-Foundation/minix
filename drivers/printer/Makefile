@@ -21,7 +21,7 @@ OBJ = printer.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 8k $(DRIVER)
+	install $(DRIVER)
 
 # install with other drivers
 install:	/usr/sbin/$(DRIVER)

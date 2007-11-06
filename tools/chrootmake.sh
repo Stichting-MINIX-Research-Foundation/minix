@@ -10,9 +10,6 @@ rm /boot/image/*
 make install 
 cp /boot/image/* /boot/image_big  # Make big image accessible by this name
 cp ../boot/boot /boot/boot 
-make clean
-make image_small 
-cp image_small /boot 
 cd /usr/src 
 make clean
 # Let man find the manpages
