@@ -128,6 +128,6 @@ char **argv;
   sync();
 
   reboot(flag, monitor_code, strlen(monitor_code));
-  fprintf(stderr, "%s: reboot(): %s\n", strerror(errno));
+  fprintf(stderr, "%s: reboot(): %s\n", prog, strerror(errno));
   return 1;
 }

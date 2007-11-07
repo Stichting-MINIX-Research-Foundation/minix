@@ -59,8 +59,8 @@ PUBLIC int main(int argc, char **argv)
 	  }
 	  continue;
       case PROC_EVENT:
-          sig_handler();
-          continue;
+	  result = EDONTREPLY;
+          break;
       case FKEY_PRESSED:
           result = do_fkey_pressed(&m_in);
           break;

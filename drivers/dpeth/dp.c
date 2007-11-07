@@ -1,6 +1,7 @@
 #include <assert.h>
 /*
-**  File:	eth.c	Version 1.00,	Jan. 14, 1997
+**  File:	dp.c	Version 1.01,	Oct. 17, 2007
+**  Original:	eth.c	Version 1.00,	Jan. 14, 1997
 **
 **  Author:	Giovanni Falzoni <gfalzoni@inwind.it>
 **
@@ -50,6 +51,11 @@
 **  +------------+---------+---------+---------------+
 **
 **  $Id$
+**
+**  2007-10-17: modified by jfdsmit@gmail.com
+**   added a third argument to the reply() function because not
+**   every reply should be of DL_TASK_REPLY (one should be
+**   DL_STAT_REPLY)
 */
 
 #include "drivers.h"
@@ -92,10 +98,10 @@ static char DevName[] = "eth#?";
 static void do_getname(message *mp);
 
 /*
-**  Name:	void reply(dpeth_t *dep, int err)
-**  Function:	Fills a DL_TASK_REPLY reply message and sends it.
+**  Name:	void reply(dpeth_t *dep, int err, int m_type)
+**  Function:	Fills a reply message and sends it.
 */
-static void reply(dpeth_t * dep, int err)
+static void reply(dpeth_t * dep, int err, int m_type)
 {
   message reply;
   int status = FALSE;
@@ -103,7 +109,7 @@ static void reply(dpeth_t * dep, int err)
   if (dep->de_flags & DEF_ACK_SEND) status |= DL_PACK_SEND;
   if (dep->de_flags & DEF_ACK_RECV) status |= DL_PACK_RECV;
 
-  reply.m_type = DL_TASK_REPLY;
+  reply.m_type = m_type;
   reply.DL_PORT = dep - de_table;
   reply.DL_PROC = dep->de_client;
   reply.DL_STAT = status /* | ((u32_t) err << 16) */;
@@ -423,7 +429,7 @@ static void do_vwrite_s(message * mp)
   } else if (dep->de_mode == DEM_SINK)
 	dep->de_flags |= DEF_ACK_SEND;
 
-  reply(dep, OK);
+  reply(dep, OK, DL_TASK_REPLY);
   return;
 }
 
@@ -466,7 +472,7 @@ static void do_vread_s(message * mp)
 	dep->de_flags &= NOT(DEF_STOPPED);
 #endif
   }
-  reply(dep, OK);
+  reply(dep, OK, DL_TASK_REPLY);
   return;
 }
 
@@ -491,7 +497,7 @@ static void do_getstat_s(message * mp)
 			(vir_bytes)&dep->de_stat,
 			(vir_bytes) sizeof(dep->de_stat), 0)) != OK)
         panic(DevName, CopyErrMsg, rc);
-  reply(dep, OK);
+  reply(dep, OK, DL_STAT_REPLY);
   return;
 }
 
@@ -623,7 +629,7 @@ PUBLIC int main(int argc, char **argv)
 				dep->de_int_pending = TRUE;
 				(*dep->de_interruptf) (dep);
 				if (dep->de_flags & (DEF_ACK_SEND | DEF_ACK_RECV))
-					reply(dep, !OK);
+					reply(dep, !OK, DL_TASK_REPLY);
 				dep->de_int_pending = FALSE;
 				sys_irqenable(&dep->de_hook);
 			}

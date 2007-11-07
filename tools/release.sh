@@ -50,8 +50,7 @@ disable=inet
 bios_wini=yes
 bios_remap_first=1
 ramimagedev=c0d7p0s0
-bootbig(1, Regular MINIX 3) { image=/boot/image_big; boot }
-bootsmall(2, Small MINIX 3 (<16MB)) {image=/boot/image_small; boot }
+bootbig(1, MINIX 3) { image=/boot/image_big; boot }
 main() { trap 10000 boot ; menu; }
 save'	| $RELEASEDIR/usr/bin/edparams $TMPDISK3
 
@@ -133,7 +132,7 @@ do
 	esac
 done
 
-USRMB=400
+USRMB=580
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -232,6 +231,7 @@ mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
+echo making /usr
 mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
 echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
 mount $TMPDISK $RELEASEDIR/usr || exit
@@ -286,10 +286,11 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
-	REPO=https://gforge.cs.vu.nl/svn/minix/trunk/$SRC
+	BRANCH=r3.1.3
+	REPO=https://gforge.cs.vu.nl/svn/minix/branches/$BRANCH
 	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
 	echo "Doing export of revision $REVISION from $REPO."
-	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO )
+	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO && mv $BRANCH $SRC )
 	REVTAG=r$REVISION
 	echo "
 
@@ -326,7 +327,10 @@ if [ "$USB" -eq 0 ]
 then	date >$RELEASEDIR/CD
 fi
 echo " * Chroot build"
+cp chrootmake.sh $RELEASEDIR/usr/$SRC/tools/chrootmake.sh
 chroot $RELEASEDIR "PATH=/$XBIN sh -x /usr/$SRC/tools/chrootmake.sh" || exit 1
+# Copy built images for cd booting
+cp $RELEASEDIR/boot/image_big image
 echo " * Chroot build done"
 echo " * Removing bootstrap files"
 rm -rf $RELEASEDIR/$XBIN
@@ -359,17 +363,9 @@ rm $RELEASEDIR/.x
 umount $TMPDISK || exit
 umount $TMPDISK2 || exit
 umount $TMPDISK3 || exit
+
 (cd ../boot && make)
-(cd .. && make depend)
-make clean
-SVNVAR=EXTRA_OPTS=-D_SVN_REVISION='\\\"'$REVISION'\\\"'
-make "$SVNVAR" image || exit 1
-mv image image_big
-make clean
-make "$SVNVAR" image_small || exit 1
 dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
-# Prepare image and image_small for cdfdboot
-mv image_big image
 sh mkboot cdfdboot $TMPDISK3
 cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES || true

@@ -183,12 +183,24 @@ cdfdboot)
 	mkdir /mnt/boot
 	mkdir /mnt/boot/image
 	( cd /mnt/dev && sh /usr/src/commands/scripts/MAKEDEV.sh std )
-	#cp -p image image_* /mnt/boot/image || exit 1
 	cp -p image /mnt/boot/image || exit 1
 	cp -p ../boot/boot /mnt/boot/boot || exit 1
 	umount $dev || exit 1
 	installboot -d $dev ../boot/bootblock boot/boot || exit 1
-	edparams $dev 'unset bootopts; unset servers; disable=inet; image=/boot/image/image; bootbig(1, Regular MINIX 3) { image=/boot/image/image ; boot } bootsmall(2, Small MINIX 3 (uses less memory)) { image=/boot/image/image_small ; boot } cdproberoot=1; ata_id_timeout=2; unset rootdev; unset leader; leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n }; bootcd=1; main(){trap 10000 boot; menu; }; save' || exit
+	edparams $dev '
+unset bootopts;
+unset servers;
+unset rootdev;
+unset leader;
+unset image;
+disable=inet;
+bootcd=1;
+cdproberoot=1;
+ata_id_timeout=2;
+bootbig(1, MINIX 3) { unset image; boot }
+leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n };
+main(){trap 10000 boot; menu; };
+save' || exit
 
 	# copy image
 	dd if=$dev of=cdfdimage bs=8192 count=180

@@ -33,6 +33,8 @@
 #include <tools.h>
 #include <dirent.h>
 
+#define MAX_INODES (2*1024*1024)
+
 #undef EXTERN
 #define EXTERN			/* get rid of EXTERN by making it null */
 #include "../../servers/mfs/super.h"
@@ -315,6 +317,11 @@ char *argv[];
 	usrid = BIN;
 	grpid = BINGRP;
 	simple = 1;
+  }
+
+  if(inodes > MAX_INODES) {
+	inodes = MAX_INODES;
+	fprintf(stderr, "capping no. of inodes to %lu.\n", inodes);
   }
 
   nrblocks = blocks;

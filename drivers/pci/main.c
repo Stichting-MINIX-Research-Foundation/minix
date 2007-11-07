@@ -85,7 +85,7 @@ int main(void)
 		case BUSC_PCI_DEV_NAME_S: do_dev_name_s(&m); break;
 		case BUSC_PCI_SLOT_NAME_S: do_slot_name_s(&m); break;
 		case BUSC_PCI_ACL: do_acl(&m); break;
-		case PROC_EVENT: do_sig_handler(); break;
+		case PROC_EVENT: break;
 		default:
 			printf("PCI: got message from %d, type %d\n",
 				m.m_source, m.m_type);
