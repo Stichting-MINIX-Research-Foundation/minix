@@ -197,7 +197,7 @@ disable=inet;
 bootcd=1;
 cdproberoot=1;
 ata_id_timeout=2;
-bootbig(1, Regular MINIX 3) { unset image; boot }
+bootbig(1, MINIX 3) { unset image; boot }
 leader() { echo \n--- Welcome to MINIX 3. This is the boot monitor. ---\n\nChoose an option from the menu or press ESC if you need to do anything special.\nOtherwise I will boot with my defaults in 10 seconds.\n\n };
 main(){trap 10000 boot; menu; };
 save' || exit
