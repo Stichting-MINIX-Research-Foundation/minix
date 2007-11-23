@@ -18,6 +18,7 @@ all install depend clean:
 	cd ./libdriver && $(MAKE) $@
 	cd ./tty && $(MAKE) $@
 	cd ./at_wini && $(MAKE) $@
+	cd ./audio && $(MAKE) $@
 	cd ./floppy && $(MAKE) $@
 	cd ./printer && $(MAKE) $@
 	cd ./rtl8139 && $(MAKE) $@

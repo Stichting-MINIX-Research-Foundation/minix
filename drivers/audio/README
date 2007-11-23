@@ -2,34 +2,11 @@
 
 Directories:
 framework/         Generic driver framework
-sb16/              SB16 ISA driver
 es1370/            ES1370 driver
 es1371/            ES1371 driver
 
+Needs updating:
+sb16/              SB16 ISA driver
 
-Install driver:
-* select the directory corresponding to the card you own
-* run make install
-
-
-Creating special files:
-* cd /dev
-* mknod audio c 13 0
-* mknod rec c 13 1
-* mknod mixer c 13 2
-* chmod 666 audio rec mixer
-(one can add a special file for the second DAC-channel, major 13, minor 3)
-
-
-Running the driver:
-* service up /usr/sbin/sb16 -dev /dev/audio
-* service up /usr/sbin/es1370 -dev /dev/audio
-or:
-* service up /usr/sbin/es1371 -dev /dev/audio
-
-
-Minix audio tools:
-recwave
-playwave
-mixer
-(available from /usr/src/commands/ibm)
+Running the drivers:
+* service up /usr/sbin/es137{0,1} -dev /dev/audio
