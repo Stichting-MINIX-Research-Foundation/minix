@@ -9,13 +9,17 @@
 #include <minix/ioctl.h>
 
 /* Soundcard DSP ioctls. */
-#define	DSPIORATE	_IOR('s', 1, unsigned int)
-#define DSPIOSTEREO	_IOR('s', 2, unsigned int)
-#define DSPIOSIZE	_IOR('s', 3, unsigned int)
-#define DSPIOBITS	_IOR('s', 4, unsigned int)
-#define DSPIOSIGN	_IOR('s', 5, unsigned int)
-#define DSPIOMAX	_IOW('s', 6, unsigned int)
-#define DSPIORESET	_IO ('s', 7)
+#define	DSPIORATE		_IOW('s', 1, unsigned int)
+#define DSPIOSTEREO		_IOW('s', 2, unsigned int)
+#define DSPIOSIZE		_IOW('s', 3, unsigned int)
+#define DSPIOBITS		_IOW('s', 4, unsigned int)
+#define DSPIOSIGN		_IOW('s', 5, unsigned int)
+#define DSPIOMAX		_IOR('s', 6, unsigned int)
+#define DSPIORESET		_IO ('s', 7)
+#define DSPIOFREEBUF 		_IOR('s', 30, unsigned int)
+#define DSPIOSAMPLESINBUF	_IOR('s', 31, unsigned int)
+#define DSPIOPAUSE		_IO ('s', 32)
+#define DSPIORESUME		_IO ('s', 33)
 
 /* Soundcard mixer ioctls. */
 #define MIXIOGETVOLUME		_IORW('s', 10, struct volume_level)
@@ -26,8 +30,5 @@
 #define MIXIOSETINPUTLEFT	_IORW('s', 21, struct inout_ctrl)
 #define MIXIOSETINPUTRIGHT	_IORW('s', 22, struct inout_ctrl)
 #define MIXIOSETOUTPUT		_IORW('s', 23, struct inout_ctrl)
-
-#define AC97READ _IOW('s', 8, u16_t[2])
-#define AC97WRITE _IOR('s', 9, u16_t[2])
 
 #endif /* _S_I_SOUND_H */

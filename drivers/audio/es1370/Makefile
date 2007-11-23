@@ -6,50 +6,33 @@ i = $u/include
 s = $i/sys
 m = $i/minix
 b = $i/ibm
+gen_drv_dir = ../../gen_drivers/cyclic_dma
 
 # programs, flags, etc.
-CC 		= exec cc
-CFLAGS 	= -I$i
+CC =	exec cc
+CFLAGS = -I$i
 LDFLAGS = -i
-LIBS 	= -lsys -lsysutil 
-
-PROGRAM_NAME 	= es1371
-INSTALL_BIN		= /usr/sbin/$(PROGRAM_NAME)
-OBJ				= es1371.o AC97.o audio_fw.o pci_helper.o wait.o sample_rate_converter.o
-
-
+LIBS = -lsys -lsysutil 
 
 # build local binary
-all: $(PROGRAM_NAME)
+all:	es1370
 
-
-$(PROGRAM_NAME): $(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-
+es1370:	es1370.o ak4531.o audio_fw.o pci_helper.o
+	$(CC) -o $@ $(LDFLAGS) es1370.o ak4531.o audio_fw.o pci_helper.o $(LIBS)
 
 audio_fw.o: ../framework/audio_fw.c ../framework/audio_fw.h
 	$(CC) -c ../framework/audio_fw.c
 	
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c $<
-
-
-install: $(INSTALL_BIN)
-
-
-$(INSTALL_BIN):	$(PROGRAM_NAME)
+install: /usr/sbin/es1370
+/usr/sbin/es1370:	es1370
 	install -o root -S 1024k -c $? $@
-
 
 # clean up local files
 clean:
-	rm -f $(OBJ) $(PROGRAM_NAME) core 
-
+	rm -f *.o *.bak core es1370
 
 depend: 
 	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
-
 
 # Include generated dependencies.
 include .depend

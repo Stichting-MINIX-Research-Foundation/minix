@@ -5,8 +5,15 @@
 #include <sys/ioc_sound.h>
 
 
-/* change '(void)' to 'printf' to print debug info and error messages */
-#define dprint (void)
+/* change to DEBUG to 1 to print debug info and error messages */
+
+#define DEBUG 0
+
+#if DEBUG
+#define dprint printf 
+#else
+#define dprint (void) 
+#endif
 #define error printf
 
 
@@ -51,6 +58,7 @@ typedef struct {
 	int RevivePending;                        /* process waiting for this dev? */
 	int ReviveStatus;                         /* return val when proc unblocked */
 	int ReviveProcNr;                         /* the process to unblock */
+	cp_grant_id_t ReviveGrant;		  /* grant id associated with io */
 	void *UserBuf;                            /* address of user's data buffer */
 	int ReadyToRevive;                        /* are we ready to revive process?*/
 	int NotifyProcNr;                         /* process to send notify to (FS) */

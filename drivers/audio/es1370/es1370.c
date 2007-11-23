@@ -1,31 +1,25 @@
 /* Best viewed with tabsize 4 */
 
-/* Original:
- * November 2005    ES1371 driver (Laurens Bronwasser)
- */
-
-/* Ensoniq ES1371 driver
+/* Ensoniq ES1370 driver
  *
  * aka AudioPCI '97
  *
- * This is the main file of the ES1371 sound driver. There is no main function
+ * This is the main file of the ES1370 sound driver. There is no main function
  * over here, instead the main function is located in the generic dma driver.
  * All this driver does is implement the interface audio/audio_fw.h. All
  * functions having the prefix 'drv_' are dictated by audio/audio_fw.h. The
  * function prototypes you see below define a set of private helper functions.
- * Control over the AC97 codec is delegated AC97.c.  
+ * Control over the AK4531 codec is delegated ak4531.c.  
  *
- * October 2007    ES1371 driver (Pieter Hijma), 
- * based on ES1370 driver which is based on the ES1371 driver 
- * by Laurens Bronwasser
+ * September 2007    ES1370 driver (Pieter Hijma), 
+ * based on ES1371 driver by Laurens Bronwasser
  */
 
 #include <ibm/pci.h>
 
 #include "../framework/audio_fw.h"
-#include "es1371.h"
-#include "AC97.h"
-#include "sample_rate_converter.h"
+#include "es1370.h"
+#include "ak4531.h"
 #include "pci_helper.h"
 
 
@@ -48,7 +42,7 @@ FORWARD _PROTOTYPE( int free_buf, (u32_t *val, int *len, int sub_dev) );
 FORWARD _PROTOTYPE( int get_samples_in_buf, 
 		(u32_t *val, int *len, int sub_dev) );
 FORWARD _PROTOTYPE( int get_set_volume, (struct volume_level *level, int *len, 
-			int sub_dev, int flag) );
+		int sub_dev, int flag) );
 FORWARD _PROTOTYPE( int reset, (int sub_dev) );
 
 
@@ -138,20 +132,23 @@ PUBLIC int drv_init_hw (void) {
 	/*pci_outl(reg(SERIAL_INTERFACE_CTRL), 0x3UL);*/
 
 
+	/* enable the codec */
+	chip_sel_ctrl_reg = pci_inw(reg(CHIP_SEL_CTRL));
+	chip_sel_ctrl_reg |= XCTL0 | CDC_EN; 
+	pci_outw(reg(CHIP_SEL_CTRL), chip_sel_ctrl_reg);
+
+	/* initialize the codec */
+	if (ak4531_init(reg(CODEC_WRITE_ADDRESS), 
+				reg(INTERRUPT_STATUS), CWRIP, reg(0)) < 0) {
+		return EINVAL;
+	}
+
 	/* clear all the memory */
 	for (i = 0; i < 0x10; ++i) {
 		pci_outb(reg(MEM_PAGE), i);
 		for (j = 0; j < 0x10; j += 4) {
 			pci_outl  (reg(MEMORY) + j, 0x0UL);
 		}
-	}
-
-	/* Sample Rate Converter initialization */
-	if (src_init(&dev) != OK) {
-		return EIO;
-	}
-	if (AC97_init(&dev) != OK) {
-		return EIO;
 	}
 
 	/* initialize variables for each sub_device */
@@ -263,7 +260,7 @@ int drv_start(int sub_dev, int DmaMode) {
 
 	aud_conf[sub_dev].busy = 1;
 
-	return OK;
+		return OK;
 }
 
 
@@ -342,7 +339,7 @@ int drv_get_frag_size(u32_t *frag_size, int sub_dev) {
 
 int drv_set_dma(u32_t dma, u32_t length, int chan) {
 	/* dma length in bytes, 
-	   max is 64k long words for es1371 = 256k bytes */
+	   max is 64k long words for es1370 = 256k bytes */
 	u32_t page, frame_count_reg, dma_add_reg;
 
 	switch(chan) {
@@ -522,20 +519,19 @@ PRIVATE int set_frag_size(u32_t fragment_size, int sub_dev_nr) {
 
 
 PRIVATE int set_sample_rate(u32_t rate, int sub_dev) {
-	u32_t src_base_reg;
+	/* currently only 44.1kHz */
+	u32_t controlRegister;
 
 	if (rate > MAX_RATE || rate < MIN_RATE) {
 		return EINVAL;
 	}
-	/* set the sample rate for the specified channel*/
-	switch(sub_dev) {
-		case ADC1_CHAN: src_base_reg = SRC_ADC_BASE;break;
-		case DAC1_CHAN: src_base_reg = SRC_SYNTH_BASE;break;
-		case DAC2_CHAN: src_base_reg = SRC_DAC_BASE;break;    
-		default: return EINVAL;
-	}
-	src_set_rate(&dev, src_base_reg, rate);
+
+	controlRegister = pci_inl(reg(CHIP_SEL_CTRL));
+	controlRegister |= FREQ_44K100;
+	pci_outl(reg(CHIP_SEL_CTRL), controlRegister);
+
 	aud_conf[sub_dev].sample_rate = rate;
+
 	return OK;
 }
 
@@ -649,7 +645,7 @@ PRIVATE int get_set_volume(struct volume_level *level, int *len, int sub_dev,
 		int flag) {
 	*len = sizeof(struct volume_level);
 	if (sub_dev == MIXER) {
-		return AC97_get_set_volume(level, flag);
+		return ak4531_get_set_volume(level, flag);
 	}
 	else {
 		return EINVAL;

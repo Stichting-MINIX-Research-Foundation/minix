@@ -1,17 +1,16 @@
-#ifndef ES1371_H
-#define ES1371_H
+#ifndef ES1370_H
+#define ES1370_H
 /* best viewed with tabsize=4 */
-	
+
 #include <sys/types.h>
 #include "../../drivers.h"
 #include <sys/ioc_sound.h>
-#include <minix/sound.h>
 
 
 /* set your vendor and device ID's here */
 #define VENDOR_ID				0x1274
-#define DEVICE_ID				0x1371
-#define DRIVER_NAME				"ES1371"
+#define DEVICE_ID				0x5000
+#define DRIVER_NAME				"ES1370"
 
 
 /* channels or subdevices */
@@ -29,9 +28,12 @@
 
 /* Interrupt/Chip Select Control */
 #define CHIP_SEL_CTRL			0x00		
+#define FREQ_44K100				0x3000		/* 44.1 Khz */
+#define CDC_EN					0x0002		/* codec enable */
 #define ADC1_EN					0x0010
 #define DAC1_EN					0x0040
 #define DAC2_EN					0x0020
+#define XCTL0					0x0100
 #define CCB_INTRM				0x0400	
 
 
@@ -40,16 +42,13 @@
 #define ADC						0x0001
 #define DAC2					0x0002
 #define DAC1					0x0004
+#define CSTAT					0x0400		/* == CBUSY || CWRIP */
+#define CWRIP					0x0100		/* == CBUSY || CWRIP */
 #define INTR					0x80000000
 
 
-/* Sample Rate Converter */
-#define SAMPLE_RATE_CONV		0x10
-
-
-/* CODEC Write/Read register */
-#define CODEC_WRITE				0x14
-#define CODEC_READ				0x14
+/* AK4531 address */
+#define CODEC_WRITE_ADDRESS		0x10
 
 
 /* Legacy address */
@@ -122,7 +121,5 @@ typedef struct DEVSTRUCT {
 	char      revision;						/* version of the device */
 } DEV_STRUCT;
 
-#define SRC_ERR_NOT_BUSY_TIMEOUT            -1       /* SRC not busy */
-#define SRC_SUCCESS							0
 
-#endif /* ES1371_H */
+#endif /* ES1370_H */

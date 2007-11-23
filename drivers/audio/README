@@ -1,9 +1,9 @@
-
 ***** Minix 3 Audio drivers *****
 
 Directories:
 framework/         Generic driver framework
 sb16/              SB16 ISA driver
+es1370/            ES1370 driver
 es1371/            ES1371 driver
 
 
@@ -18,11 +18,12 @@ Creating special files:
 * mknod rec c 13 1
 * mknod mixer c 13 2
 * chmod 666 audio rec mixer
-(for es1371 one can add a special file for the second DAC-channel, major 13, minor 3)
+(one can add a special file for the second DAC-channel, major 13, minor 3)
 
 
 Running the driver:
 * service up /usr/sbin/sb16 -dev /dev/audio
+* service up /usr/sbin/es1370 -dev /dev/audio
 or:
 * service up /usr/sbin/es1371 -dev /dev/audio
 

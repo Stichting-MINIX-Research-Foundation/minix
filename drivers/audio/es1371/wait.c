@@ -1,7 +1,8 @@
 #include "../../drivers.h"
 #include <sys/types.h>
 #include <time.h>
-#include "../../libpci/pci.h"
+#include "pci_helper.h"
+
 
 int WaitBitd (int paddr, int bitno, int state, long tmout)
 {
