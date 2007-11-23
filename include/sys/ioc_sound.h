@@ -27,4 +27,7 @@
 #define MIXIOSETINPUTRIGHT	_IORW('s', 22, struct inout_ctrl)
 #define MIXIOSETOUTPUT		_IORW('s', 23, struct inout_ctrl)
 
+#define AC97READ _IOW('s', 8, u16_t[2])
+#define AC97WRITE _IOR('s', 9, u16_t[2])
+
 #endif /* _S_I_SOUND_H */
