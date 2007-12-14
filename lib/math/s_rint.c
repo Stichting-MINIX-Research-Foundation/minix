@@ -10,10 +10,6 @@
  * ====================================================
  */
 
-#ifndef lint
-static char rcsid[] = "$FreeBSD: src/lib/msun/src/s_rint.c,v 1.11.2.1 2007/06/14 05:16:44 bde Exp $";
-#endif
-
 /*
  * rint(x)
  * Return x rounded to integral value according to the prevailing
@@ -24,7 +20,6 @@ static char rcsid[] = "$FreeBSD: src/lib/msun/src/s_rint.c,v 1.11.2.1 2007/06/14
  *	Inexact flag raised if x not equal to rint(x).
  */
 
-#include "math.h"
 #include "math_private.h"
 
 static const double
@@ -36,8 +31,8 @@ TWO52[2]={
 double
 rint(double x)
 {
-	int32_t i0,j0,sx;
-	u_int32_t i,i1;
+	i32_t i0,j0,sx;
+	u32_t i,i1;
 	double w,t;
 	EXTRACT_WORDS(i0,i1,x);
 	sx = (i0>>31)&1;
@@ -76,7 +71,7 @@ rint(double x)
 	    if(j0==0x400) return x+x;	/* inf or NaN */
 	    else return x;		/* x is integral */
 	} else {
-	    i = ((u_int32_t)(0xffffffff))>>(j0-20);
+	    i = ((u32_t)(0xffffffff))>>(j0-20);
 	    if((i1&i)==0) return x;	/* x is integral */
 	    i>>=1;
 	    if((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(j0-20));

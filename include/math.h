@@ -30,6 +30,7 @@ _PROTOTYPE( double log,   (double _x)					);
 _PROTOTYPE( double log10, (double _x)					);
 _PROTOTYPE( double modf,  (double _x, double *_iptr)			);
 _PROTOTYPE( double pow,   (double _x, double _y)			);
+_PROTOTYPE( double rint,  (double _x)					);
 _PROTOTYPE( double sin,   (double _x)					);
 _PROTOTYPE( double sinh,  (double _x)					);
 _PROTOTYPE( double sqrt,  (double _x)					);

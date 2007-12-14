@@ -17,6 +17,7 @@ libc_FILES=" \
 	log.c \
 	log10.c \
 	pow.c \
+	s_rint.c \
 	sin.c \
 	sinh.c \
 	sqrt.c \

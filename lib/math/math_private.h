@@ -18,7 +18,7 @@
 #define	_MATH_PRIVATE_H_
 
 #include <sys/types.h>
-#include <machine/endian.h>
+#include <net/hton.h>
 
 /*
  * The original fdlibm code used statements like:
@@ -38,29 +38,29 @@
  * ints.
  */
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if BIG_ENDIAN
 
 typedef union
 {
   double value;
   struct
   {
-    u_int32_t msw;
-    u_int32_t lsw;
+    u32_t msw;
+    u32_t lsw;
   } parts;
 } ieee_double_shape_type;
 
 #endif
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if LITTLE_ENDIAN
 
 typedef union
 {
   double value;
   struct
   {
-    u_int32_t lsw;
-    u_int32_t msw;
+    u32_t lsw;
+    u32_t msw;
   } parts;
 } ieee_double_shape_type;
 
@@ -153,6 +153,8 @@ do {								\
   sf_u.word = (i);						\
   (d) = sf_u.value;						\
 } while (0)
+
+#if 0
 
 #ifdef _COMPLEX_H
 /*
@@ -268,5 +270,7 @@ float	__kernel_sindf(double);
 float	__kernel_cosdf(double);
 float	__kernel_tandf(double,int);
 int	__kernel_rem_pio2f(float*,float*,int,int,int,const int*);
+
+#endif
 
 #endif /* !_MATH_PRIVATE_H_ */
