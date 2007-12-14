@@ -503,6 +503,13 @@ PRIVATE void msg_hardware(void) {
 			}
 		}
 	}
+
+	/* As IRQ_REENABLE is not on in sys_irqsetpolicy, we must
+	 * re-enable out interrupt after every interrupt.
+	 */
+	if ((sys_irqenable(&irq_hook_id)) != OK) {
+	  error("%s: msg_hardware: Couldn't enable IRQ\n", drv.DriverName);
+	}
 }
 
 
@@ -610,10 +617,12 @@ PRIVATE void handle_int_write(int sub_dev_nr)
 
 	/* confirm and reenable interrupt from this sub dev */
 	drv_reenable_int(sub_dev_nr);
+#if 0
 	/* reenable irq_hook*/
 	if ((r=sys_irqenable(&irq_hook_id)) != OK) {
 		error("%s Couldn't enable IRQ\n", drv.DriverName);
 	}
+#endif
 }
 
 
@@ -663,10 +672,12 @@ PRIVATE void handle_int_read(int sub_dev_nr)
 	/* confirm interrupt, and reenable interrupt from this sub dev*/
 	drv_reenable_int(sub_dev_ptr->Nr);
 
+#if 0
 	/* reenable irq_hook*/
 	if ((r=sys_irqenable(&irq_hook_id)) != OK) {
 		error("%s: Couldn't reenable IRQ", drv.DriverName);
 	}
+#endif
 }
 
 
@@ -690,7 +701,8 @@ PRIVATE int get_started(sub_dev_t *sub_dev_ptr) {
 }
 
 
-PRIVATE void data_from_user(sub_dev_t *subdev) {
+PRIVATE void data_from_user(sub_dev_t *subdev)
+{
 
 	if (subdev->DmaLength == subdev->NrOfDmaFragments &&
 			subdev->BufLength == subdev->NrOfExtraBuffers) return;/* no space */
