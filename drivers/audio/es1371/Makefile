@@ -48,7 +48,7 @@ clean:
 
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 
 # Include generated dependencies.

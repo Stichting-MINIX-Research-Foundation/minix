@@ -32,7 +32,7 @@ clean:
 	rm -f *.o *.bak core es1370
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 # Include generated dependencies.
 include .depend

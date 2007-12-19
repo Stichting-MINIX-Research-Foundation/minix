@@ -34,7 +34,7 @@ clean:
 	rm -f *.o *.bak sb16 
 
 depend: 
-	/usr/bin/mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c > .depend
 
 # Include generated dependencies.
 include .depend
