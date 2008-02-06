@@ -19,6 +19,7 @@ all:	\
 	olivetti.map \
 	polish.map \
 	russian.map \
+	russian-cp866.map \
 	scandinavian.map \
 	spanish.map \
 	uk.map \
@@ -36,6 +37,7 @@ install:	\
 	$(LK)/olivetti.map \
 	$(LK)/polish.map \
 	$(LK)/russian.map \
+	$(LK)/russian-cp866.map \
 	$(LK)/scandinavian.map \
 	$(LK)/spanish.map \
 	$(LK)/uk.map \
@@ -75,6 +77,9 @@ $(LK)/polish.map:	polish.map
 $(LK)/russian.map:	russian.map
 	install -c $? $@
 
+$(LK)/russian-cp866.map:	russian-cp866.map
+	install -c $? $@
+	
 $(LK)/scandinavian.map:	scandinavian.map
 	install -c $? $@
 
