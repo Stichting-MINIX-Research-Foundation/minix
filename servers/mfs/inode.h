@@ -6,6 +6,9 @@
  * disk; the second part holds fields not present on the disk.
  * The disk inode part is also declared in "type.h" as 'd1_inode' for V1
  * file systems and 'd2_inode' for V2 file systems.
+ *
+ * Updates:
+ * 2007-01-06: jfdsmit@gmail.com added i_zsearch
  */
 
 #include "queue.h"
@@ -30,6 +33,7 @@ EXTERN struct inode {
   struct super_block *i_sp;	/* pointer to super block for inode's device */
   char i_dirt;			/* CLEAN or DIRTY */
   char i_pipe;			/* set to I_PIPE if pipe */
+  bit_t i_zsearch;		/* where to start search for new zones */
   
   char i_mountpoint;		/* true if mounted on */
 

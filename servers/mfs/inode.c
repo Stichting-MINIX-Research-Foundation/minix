@@ -14,6 +14,9 @@
  *   old_icopy:	   copy to/from in-core inode struct and disk inode (V1.x)
  *   new_icopy:	   copy to/from in-core inode struct and disk inode (V2.x)
  *   dup_inode:	   indicate that someone else is using an inode table entry
+ *
+ * Updates:
+ * 2007-06-01:	jfdsmit@gmail.com added i_zsearch initialization
  */
 
 #include "fs.h"
@@ -204,6 +207,7 @@ int numb;			/* inode number (ANSI: may not be unshort) */
   rip->i_count = 1;
   if (dev != NO_DEV) rw_inode(rip, READING);	/* get inode from disk */
   rip->i_update = 0;		/* all the times are initially up-to-date */
+  rip->i_zsearch = NO_ZONE;	/* no zones searched for yet */
   if ((rip->i_mode & I_TYPE) == I_NAMED_PIPE)
 	rip->i_pipe = I_PIPE;
   else

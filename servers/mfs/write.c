@@ -6,6 +6,9 @@
  *   do_write:     call read_write to perform the WRITE system call
  *   clear_zone:   erase a zone in the middle of a file
  *   new_block:    acquire a new block
+ *
+ * Updates:
+ * 2007-06-01:	jfdsmit@gmail.com added i_zsearch optimalization
  */
 
 #include "fs.h"
@@ -287,18 +290,20 @@ off_t position;			/* file pointer */
 
   /* Is another block available in the current zone? */
   if ( (b = read_map(rip, position)) == NO_BLOCK) {
-	/* Choose first zone if possible. */
-	/* Lose if the file is nonempty but the first zone number is NO_ZONE
-	 * corresponding to a zone full of zeros.  It would be better to
-	 * search near the last real zone.
-	 */
-	if (rip->i_zone[0] == NO_ZONE) {
-		sp = rip->i_sp;
-		z = sp->s_firstdatazone;
+	if (rip->i_zsearch == NO_ZONE) {
+		/* First search for this file. Start looking from
+		 * the file's first data zone to prevent fragmentation
+		 */
+		 if ( (z = rip->i_zone[0]) == NO_ZONE) {
+		 	/* no first zone for file either */
+			z = rip->i_sp->s_firstdatazone; /* let alloc_zone decide */
+		}
 	} else {
-		z = rip->i_zone[0];	/* hunt near first zone */
+		/* searched before, start from last find */
+		z = rip->i_zsearch;
 	}
 	if ( (z = alloc_zone(rip->i_dev, z)) == NO_ZONE) return(NIL_BUF);
+	rip->i_zsearch = z;	/* store for next lookup */
 	if ( (r = write_map(rip, position, z, 0)) != OK) {
 		free_zone(rip->i_dev, z);
 		err_code = r;
