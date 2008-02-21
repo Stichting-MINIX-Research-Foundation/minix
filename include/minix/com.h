@@ -154,6 +154,7 @@
 #define TTY_EXIT	(DEV_RQ_BASE + 11) /* process group leader exited */	
 #define DEV_SELECT	(DEV_RQ_BASE + 12) /* request select() attention */
 #define DEV_STATUS   	(DEV_RQ_BASE + 13) /* request driver status */
+#define DEV_REOPEN     	(DEV_RQ_BASE + 14) /* reopen a minor device */
 
 #define DEV_READ_S	(DEV_RQ_BASE + 20) /* (safecopy) read from minor */
 #define DEV_WRITE_S   	(DEV_RQ_BASE + 21) /* (safecopy) write to minor */
@@ -166,6 +167,10 @@
 #define DEV_REVIVE      (DEV_RS_BASE + 2) /* driver revives process */
 #define DEV_IO_READY    (DEV_RS_BASE + 3) /* selected device ready */
 #define DEV_NO_STATUS   (DEV_RS_BASE + 4) /* empty status reply */
+#define DEV_REOPEN_REPL (DEV_RS_BASE + 5) /* reply to DEV_REOPEN */
+#define DEV_CLOSE_REPL	(DEV_RS_BASE + 6) /* reply to DEV_CLOSE */
+#define DEV_SEL_REPL1	(DEV_RS_BASE + 7) /* first reply to DEV_SELECT */
+#define DEV_SEL_REPL2	(DEV_RS_BASE + 8) /* (opt) second reply to DEV_SELECT */
 
 /* Field names for messages to block and character device drivers. */
 #define DEVICE    	m2_i1	/* major-minor device */
@@ -180,7 +185,6 @@
 /* Field names for DEV_SELECT messages to device drivers. */
 #define DEV_MINOR	m2_i1	/* minor device */
 #define DEV_SEL_OPS	m2_i2	/* which select operations are requested */
-#define DEV_SEL_WATCH	m2_i3	/* request notify if no operations are ready */
 
 /* Field names used in reply messages from tasks. */
 #define REP_ENDPT	m2_i1	/* # of proc on whose behalf I/O was done */
@@ -313,7 +317,9 @@
 
 #  define SYS_STIME	(KERNEL_CALL + 39)	/* sys_stime() */
 
-#define NR_SYS_CALLS	40	/* number of system calls */ 
+#  define SYS_MAPDMAx	(KERNEL_CALL + 42)	/* sys_mapdmax() */
+
+#define NR_SYS_CALLS	43	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -615,6 +621,8 @@
 #  define GETKM_PTR	      m1_p1
 #define GET_KMESS_S	(DIAG_BASE+4)	/* get kmess from TTY */
 #  define GETKM_GRANT	      m1_i1
+
+#define DIAG_REPL 	(DIAG_BASE+0x80+0) 	/* reply to DIAGNOSTICS(_S) */
 
 #define PM_BASE	0x900
 #define PM_GET_WORK	(PM_BASE + 1)	/* Get work from PM */
