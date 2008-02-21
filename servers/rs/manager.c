@@ -4,6 +4,7 @@
  */
 
 #include "inc.h"
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -259,6 +260,21 @@ message *m_ptr;					/* request message pointer */
   }
   rp->r_uid= rs_start.rss_uid;
   rp->r_nice= rs_start.rss_nice;
+
+  if (rs_start.rss_flags & RF_IPC_VALID)
+  {
+	if (rs_start.rss_ipclen+1 > sizeof(rp->r_ipc_list))
+	{
+		printf("rs: ipc list too long for '%s'\n", rp->r_label);
+		return EINVAL;
+	}
+	s=sys_datacopy(m_ptr->m_source, (vir_bytes) rs_start.rss_ipc, 
+		SELF, (vir_bytes) rp->r_ipc_list, rs_start.rss_ipclen);
+	if (s != OK) return(s);
+	rp->r_ipc_list[rs_start.rss_ipclen]= '\0';
+  }
+  else
+	rp->r_ipc_list[0]= '\0';
 
   rp->r_exec= NULL;
   if (rs_start.rss_flags & RF_COPY)
@@ -806,11 +822,13 @@ endpoint_t *endpoint;
   if (rp->r_dev_nr > 0) {				/* set driver map */
       if ((s=mapdriver5(rp->r_label, strlen(rp->r_label),
 	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {
-          report("RS", "couldn't map driver", errno);
+          report("RS", "couldn't map driver (continuing)", errno);
+#if 0
           rp->r_flags |= RS_EXITING;			/* expect exit */
 	  if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
 	  else report("RS", "didn't kill pid", child_pid);
 	  return(s);					/* return error */
+#endif
       }
   }
 
@@ -970,7 +988,7 @@ struct rproc *rp;
 	sprintf(incarnation_str, "%d", rp->r_restarts);
 
  	if(rs_verbose) {
-	  printf("RS: should call script '%s'\n", rp->r_script);
+	  printf("RS: calling script '%s'\n", rp->r_script);
 	  printf("RS: sevice name: '%s'\n", rp->r_label);
 	  printf("RS: reason: '%s'\n", reason);
 	  printf("RS: incarnation: '%s'\n", incarnation_str);
@@ -1016,8 +1034,12 @@ struct priv *privp;
 {
 	int i, src_bits_per_word, dst_bits_per_word, src_word, dst_word,
 		src_bit, call_nr, chunk, bit, priv_id, slot_nr;
+	endpoint_t proc_nr_e;
+	size_t len;
 	unsigned long mask;
+	char *p, *q;
 	struct rproc *tmp_rp;
+	char label[MAX_LABEL_LEN+1];
 
 	/* Clear s_k_call_mask */
 	memset(privp->s_k_call_mask, '\0', sizeof(privp->s_k_call_mask));
@@ -1050,123 +1072,80 @@ struct priv *privp;
 	memset(&privp->s_ipc_to, '\0', sizeof(privp->s_ipc_to));
 	memset(&privp->s_ipc_sendrec, '\0', sizeof(privp->s_ipc_sendrec));
 
-	if (strcmp(rp->r_label, "dp8390") == 0)
+	if (strlen(rp->r_ipc_list) != 0)
 	{
-		printf("init_privs: special code for dp8390\n");
+		for (p= rp->r_ipc_list; p[0] != '\0'; p= q)
+		{
+			/* Skip leading space */
+			while (p[0] != '\0' && isspace((unsigned char)p[0]))
+				p++;
 
-		/* Try to find inet */
-		for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++)
-		{
-		      tmp_rp = &rproc[slot_nr];
-		      if (!(tmp_rp->r_flags & RS_IN_USE))
-			  continue;
-		      if (strcmp(tmp_rp->r_label, "inet") == 0)
-			break;
-		}
-		if (slot_nr >= NR_SYS_PROCS)
-		{
-			printf("init_privs: unable to find inet\n");
-			return;
-		}
+			/* Find start of next word */
+			q= p;
+			while (q[0] != '\0' && !isspace((unsigned char)q[0]))
+				q++;
+			if (q == p)
+				continue;
+			len= q-p;
+			if (len+1 > sizeof(label))
+			{
+				printf(
+		"rs:init_privs: bad ipc list entry '.*s' for %s: too long\n",
+					len, p, rp->r_label);
+				continue;
+			}
+			memcpy(label, p, len);
+			label[len]= '\0';
 
-		priv_id= sys_getprivid(tmp_rp->r_proc_nr_e);
-		if (priv_id < 0)
-		{
-			printf(
-			"init_privs: unable to get priv_id for inet: %d\n",
-				priv_id);
-			return;
-		}
-		chunk= (priv_id / (sizeof(bitchunk_t)*8));
-		bit= (priv_id % (sizeof(bitchunk_t)*8));
-		privp->s_ipc_to.chunk[chunk] |= (1 << bit);
+			if (strcmp(label, "SYSTEM") == 0)
+				proc_nr_e= SYSTEM;
+			else if (strcmp(label, "PM") == 0)
+				proc_nr_e= PM_PROC_NR;
+			else if (strcmp(label, "VFS") == 0)
+				proc_nr_e= FS_PROC_NR;
+			else if (strcmp(label, "RS") == 0)
+				proc_nr_e= RS_PROC_NR;
+			else if (strcmp(label, "LOG") == 0)
+				proc_nr_e= LOG_PROC_NR;
+			else if (strcmp(label, "TTY") == 0)
+				proc_nr_e= TTY_PROC_NR;
+			else if (strcmp(label, "DS") == 0)
+				proc_nr_e= DS_PROC_NR;
+			else
+			{
+				/* Try to find process */
+				for (slot_nr = 0; slot_nr < NR_SYS_PROCS;
+					slot_nr++)
+				{
+					tmp_rp = &rproc[slot_nr];
+					if (!(tmp_rp->r_flags & RS_IN_USE))
+						continue;
+					if (strcmp(tmp_rp->r_label, label) == 0)
+						break;
+				}
+				if (slot_nr >= NR_SYS_PROCS)
+				{
+					printf(
+					"init_privs: unable to find '%s'\n",
+						label);
+					continue;
+				}
+				proc_nr_e= tmp_rp->r_proc_nr_e;
+			}
 
-		priv_id= sys_getprivid(RS_PROC_NR);
-		if (priv_id < 0)
-		{
-			printf(
-			"init_privs: unable to get priv_id for RS: %d\n",
-				priv_id);
-			return;
+			priv_id= sys_getprivid(proc_nr_e);
+			if (priv_id < 0)
+			{
+				printf(
+			"init_privs: unable to get priv_id for '%s': %d\n",
+					label, priv_id);
+				continue;
+			}
+			chunk= (priv_id / (sizeof(bitchunk_t)*8));
+			bit= (priv_id % (sizeof(bitchunk_t)*8));
+			privp->s_ipc_to.chunk[chunk] |= (1 << bit);
+			privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
 		}
-		chunk= (priv_id / (sizeof(bitchunk_t)*8));
-		bit= (priv_id % (sizeof(bitchunk_t)*8));
-		privp->s_ipc_to.chunk[chunk] |= (1 << bit);
-
-		priv_id= sys_getprivid(SYSTEM);
-		if (priv_id < 0)
-		{
-			printf(
-			"init_privs: unable to get priv_id for SYSTEM: %d\n",
-				priv_id);
-			return;
-		}
-		chunk= (priv_id / (sizeof(bitchunk_t)*8));
-		bit= (priv_id % (sizeof(bitchunk_t)*8));
-		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
-
-		priv_id= sys_getprivid(PM_PROC_NR);
-		if (priv_id < 0)
-		{
-			printf(
-			"init_privs: unable to get priv_id for PM: %d\n",
-				priv_id);
-			return;
-		}
-		chunk= (priv_id / (sizeof(bitchunk_t)*8));
-		bit= (priv_id % (sizeof(bitchunk_t)*8));
-		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
-
-		priv_id= sys_getprivid(LOG_PROC_NR);
-		if (priv_id < 0)
-		{
-			printf(
-			"init_privs: unable to get priv_id for LOG: %d\n",
-				priv_id);
-			return;
-		}
-		chunk= (priv_id / (sizeof(bitchunk_t)*8));
-		bit= (priv_id % (sizeof(bitchunk_t)*8));
-		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
-
-		priv_id= sys_getprivid(TTY_PROC_NR);
-		if (priv_id < 0)
-		{
-			printf(
-			"init_privs: unable to get priv_id for TTY: %d\n",
-				priv_id);
-			return;
-		}
-		chunk= (priv_id / (sizeof(bitchunk_t)*8));
-		bit= (priv_id % (sizeof(bitchunk_t)*8));
-		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
-
-		/* Try to find PCI */
-		for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++)
-		{
-		      tmp_rp = &rproc[slot_nr];
-		      if (!(tmp_rp->r_flags & RS_IN_USE))
-			  continue;
-		      if (strcmp(tmp_rp->r_label, "pci") == 0)
-			break;
-		}
-		if (slot_nr >= NR_SYS_PROCS)
-		{
-			printf("init_privs: unable to find PCI\n");
-			return;
-		}
-
-		priv_id= sys_getprivid(tmp_rp->r_proc_nr_e);
-		if (priv_id < 0)
-		{
-			printf(
-			"init_privs: unable to get priv_id for PCI: %d\n",
-				priv_id);
-			return;
-		}
-		chunk= (priv_id / (sizeof(bitchunk_t)*8));
-		bit= (priv_id % (sizeof(bitchunk_t)*8));
-		privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
 	}
 	else
 	{

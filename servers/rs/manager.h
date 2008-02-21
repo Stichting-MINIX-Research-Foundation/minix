@@ -15,6 +15,9 @@
 #define MAX_NR_PCI_ID	      4		/* maximum number of PCI device IDs */
 #define MAX_NR_PCI_CLASS      4		/* maximum number of PCI class IDs */
 #define MAX_NR_SYSTEM	      2		/* should match RSS_NR_SYSTEM */
+#define MAX_IPC_LIST	    256		/* Max size of list for IPC target
+					 * process names
+					 */
 
 /* Definition of the system process table. This table only has entries for
  * the servers and drivers, and thus is not directly indexed by slot number.
@@ -57,6 +60,7 @@ extern struct rproc {
   struct { u32_t class; u32_t mask; } r_pci_class[MAX_NR_PCI_CLASS];
 
   u32_t r_call_mask[MAX_NR_SYSTEM];
+  char r_ipc_list[MAX_IPC_LIST];
 } rproc[NR_SYS_PROCS];
 
 /* Mapping for fast access to the system process table. */ 

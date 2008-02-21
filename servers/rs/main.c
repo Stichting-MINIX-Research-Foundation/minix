@@ -81,13 +81,21 @@ PUBLIC int main(void)
       /* If this is not a notification message, it is a normal request. 
        * Handle the request and send a reply to the caller. 
        */
-      else {	
+      else {
+	  if (call_nr < RS_RQ_BASE || call_nr >= RS_RQ_BASE+0x100)
+	  {
+		/* Ignore invalid requests. Do not try to reply. */
+		printf("RS: got invalid request %d from endpoint %d\n",
+			call_nr, m.m_source);
+		continue;
+	  }
+
 	  /* Only root can make calls to rs */
 	  euid= getpeuid(m.m_source);
 	  if (euid != 0)
 	  {
-		printf("RS: got unauthorized request from endpoint %d\n",
-			m.m_source);
+		printf("RS: got unauthorized request %d from endpoint %d\n",
+			call_nr, m.m_source);
 		m.m_type = EPERM;
 		reply(who_e, &m);
 		continue;
@@ -203,12 +211,11 @@ PRIVATE void reply(who, m_out)
 int who;                           	/* replyee */
 message *m_out;                         /* reply message */
 {
-    /*message m_out;*/			/* reply message */
     int s;				/* send status */
 
-    /*m_out.m_type = result;*/    	/* build reply message */
-    if (OK != (s=send(who, m_out)))     /* send the message */
-        panic("RS", "unable to send reply", s);
+    s = sendnb(who, m_out);		/* send the message */
+    if (s != OK)
+        printf("RS: unable to send reply to %d: %d\n", who, s);
 }
 
 

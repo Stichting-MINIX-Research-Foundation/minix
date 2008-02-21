@@ -87,6 +87,7 @@ PRIVATE int req_major;
 PRIVATE long req_period;
 PRIVATE char *req_script;
 PRIVATE char *req_label;
+PRIVATE char *req_ipc;
 PRIVATE char *req_config = PATH_CONFIG;
 PRIVATE int req_printep;
 PRIVATE int class_recurs;	/* Nesting level of class statements */
@@ -133,9 +134,10 @@ PRIVATE int parse_arguments(int argc, char **argv)
   int req_nr;
   int c, i;
   int c_flag;
+  int i_flag=0;
 
   c_flag= 0;
-  while (c= getopt(argc, argv, "c?"), c != -1)
+  while (c= getopt(argc, argv, "ci?"), c != -1)
   {
 	switch(c)
 	{
@@ -144,6 +146,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
 		exit(EINVAL);
 	case 'c':
 		c_flag= 1;
+		break;
+	case 'i':
+		i_flag= 1;
 		break;
 	default:
 		fprintf(stderr, "%s: getopt failed: %c\n",
@@ -184,6 +189,8 @@ PRIVATE int parse_arguments(int argc, char **argv)
       rs_start.rss_flags= 0;
       if (c_flag)
 	rs_start.rss_flags |= RF_COPY;
+      if (i_flag)
+	rs_start.rss_flags |= RF_IPC_VALID;
 
       if (do_run)
       {
@@ -308,6 +315,7 @@ PRIVATE void fatal(char *fmt, ...)
 #define KW_DEVICE	"device"
 #define KW_CLASS	"class"
 #define KW_SYSTEM	"system"
+#define KW_IPC		"ipc"
 
 FORWARD void do_driver(config_t *cpe, config_t *config);
 
@@ -673,8 +681,56 @@ struct
 	{ "SETGRANT",		SYS_SETGRANT },
 	{ "READBIOS",		SYS_READBIOS },
 	{ "VM_MAP",		SYS_VM_MAP },
+	{ "MAPDMAx",		SYS_MAPDMAx },
 	{ NULL,		0 }
 };
+
+PRIVATE void do_ipc(config_t *cpe)
+{
+	char *list;
+	size_t listsize, wordlen;
+
+	list= NULL;
+	listsize= 1;
+	list= malloc(listsize);
+	if (list == NULL)
+		fatal("do_ipc: unable to malloc %d bytes", listsize);
+	list[0]= '\0';
+
+	/* Process a list of process names that are allowed to be
+	 * contacted
+	 */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_ipc: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_ipc: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+
+		wordlen= strlen(cpe->word);
+
+		listsize += 1 + wordlen;
+		list= realloc(list, listsize);
+		if (list == NULL)
+		{
+			fatal("do_ipc: unable to realloc %d bytes",
+				listsize);
+		}
+		strcat(list, " ");
+		strcat(list, cpe->word);
+	}
+	printf("do_ipc: got list '%s'\n", list);
+
+	if (req_ipc)
+		fatal("do_ipc: req_ipc is set");
+	req_ipc= list;
+}
 
 PRIVATE void do_system(config_t *cpe)
 {
@@ -800,6 +856,11 @@ PRIVATE void do_driver(config_t *cpe, config_t *config)
 		if (strcmp(cpe->word, KW_SYSTEM) == 0)
 		{
 			do_system(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_IPC) == 0)
+		{
+			do_ipc(cpe->next);
 			continue;
 		}
 
@@ -939,6 +1000,17 @@ PUBLIC int main(int argc, char **argv)
       if (req_config) {
 	assert(progname);
 	do_config(progname, req_config);
+      }
+
+      if (req_ipc)
+      {
+	      rs_start.rss_ipc= req_ipc+1;	/* Skip initial space */
+	      rs_start.rss_ipclen= strlen(rs_start.rss_ipc);
+      }
+      else
+      {
+	      rs_start.rss_ipc= NULL;
+	      rs_start.rss_ipclen= 0;
       }
 
       m.RS_CMD_ADDR = (char *) &rs_start;
