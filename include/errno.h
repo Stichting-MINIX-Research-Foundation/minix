@@ -74,6 +74,7 @@ extern int errno;		  /* place where the error numbers go */
 #define ENOSYS        (_SIGN 38)  /* function not implemented */
 #define ENOTEMPTY     (_SIGN 39)  /* directory not empty */
 #define ELOOP         (_SIGN 40)  /* too many levels of symlinks detected */
+#define ERESTART      (_SIGN 41)  /* driver restarted */
 
 /* The following errors relate to networking. */
 #define EPACKSIZE     (_SIGN 50)  /* invalid packet size for some protocol */
