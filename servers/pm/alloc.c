@@ -266,6 +266,215 @@ PUBLIC int mem_holes_copy(struct hole *holecopies, size_t *bytes, u32_t *hi)
 	return OK;
 }
 
+#define NR_DMA	16
+
+PRIVATE struct dmatab
+{
+	int dt_flags;
+	endpoint_t dt_proc;
+	phys_bytes dt_base;
+	phys_bytes dt_size;
+	phys_clicks dt_seg_base;
+	phys_clicks dt_seg_size;
+} dmatab[NR_DMA];
+
+#define DTF_INUSE	1
+#define DTF_RELEASE_DMA	2
+#define DTF_RELEASE_SEG	4
+
+PRIVATE endpoint_t iommu_proc_e= ANY;
+
+/*===========================================================================*
+ *				do_adddma				     *
+ *===========================================================================*/
+PUBLIC int do_adddma()
+{
+	endpoint_t req_proc_e, target_proc_e;
+	int i, proc_n;
+	phys_bytes base, size;
+	struct mproc *rmp;
+
+	if (mp->mp_effuid != SUPER_USER)
+		return EPERM;
+
+	req_proc_e= m_in.m_source;
+	target_proc_e= m_in.m2_i1;
+	base= m_in.m2_l1;
+	size= m_in.m2_l2;
+
+	iommu_proc_e= req_proc_e;
+
+	/* Find empty slot */
+	for (i= 0; i<NR_DMA; i++)
+	{
+		if (!(dmatab[i].dt_flags & DTF_INUSE))
+			break;
+	}
+	if (i >= NR_DMA)
+	{
+		printf("pm:do_adddma: dma table full\n");
+		for (i= 0; i<NR_DMA; i++)
+		{
+			printf("%d: flags 0x%x proc %d base 0x%x size 0x%x\n",
+				i, dmatab[i].dt_flags,
+				dmatab[i].dt_proc,
+				dmatab[i].dt_base,
+				dmatab[i].dt_size);
+		}
+		panic(__FILE__, "adddma: table full", NO_NUM);
+		return ENOSPC;
+	}
+
+	/* Find target process */
+	if (pm_isokendpt(target_proc_e, &proc_n) != OK)
+	{
+		printf("pm:do_adddma: endpoint %d not found\n", target_proc_e);
+		return EINVAL;
+	}
+	rmp= &mproc[proc_n];
+	rmp->mp_flags |= HAS_DMA;
+
+	dmatab[i].dt_flags= DTF_INUSE;
+	dmatab[i].dt_proc= target_proc_e;
+	dmatab[i].dt_base= base;
+	dmatab[i].dt_size= size;
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				do_deldma				     *
+ *===========================================================================*/
+PUBLIC int do_deldma()
+{
+	endpoint_t req_proc_e, target_proc_e;
+	int i, j, proc_n;
+	phys_bytes base, size;
+	struct mproc *rmp;
+
+	if (mp->mp_effuid != SUPER_USER)
+		return EPERM;
+
+	req_proc_e= m_in.m_source;
+	target_proc_e= m_in.m2_i1;
+	base= m_in.m2_l1;
+	size= m_in.m2_l2;
+
+	iommu_proc_e= req_proc_e;
+
+	/* Find slot */
+	for (i= 0; i<NR_DMA; i++)
+	{
+		if (!(dmatab[i].dt_flags & DTF_INUSE))
+			continue;
+		if (dmatab[i].dt_proc == target_proc_e &&
+			dmatab[i].dt_base == base &&
+			dmatab[i].dt_size == size)
+		{
+			break;
+		}
+	}
+	if (i >= NR_DMA)
+	{
+		printf("pm:do_deldma: slot not found\n");
+		return ESRCH;
+	}
+
+	if (dmatab[i].dt_flags & DTF_RELEASE_SEG)
+	{
+		/* Check if we have to release the segment */
+		for (j= 0; j<NR_DMA; j++)
+		{
+			if (j == i)
+				continue;
+			if (!(dmatab[j].dt_flags & DTF_INUSE))
+				continue;
+			if (!(dmatab[j].dt_flags & DTF_RELEASE_SEG))
+				continue;
+			if (dmatab[i].dt_proc == target_proc_e)
+				break;
+		}
+		if (j >= NR_DMA)
+		{
+			/* Last segment */
+			free_mem(dmatab[i].dt_seg_base,
+				dmatab[i].dt_seg_size);
+		}
+	}
+
+	dmatab[i].dt_flags &= ~DTF_INUSE;
+
+	return OK;
+}
+
+/*===========================================================================*
+ *				do_getdma				     *
+ *===========================================================================*/
+PUBLIC int do_getdma()
+{
+	endpoint_t req_proc_e, target_proc_e;
+	int i, proc_n;
+	phys_bytes base, size;
+	struct mproc *rmp;
+
+	if (mp->mp_effuid != SUPER_USER)
+		return EPERM;
+
+	req_proc_e= m_in.m_source;
+	iommu_proc_e= req_proc_e;
+
+	/* Find slot to report */
+	for (i= 0; i<NR_DMA; i++)
+	{
+		if (!(dmatab[i].dt_flags & DTF_INUSE))
+			continue;
+		if (!(dmatab[i].dt_flags & DTF_RELEASE_DMA))
+			continue;
+
+		printf("do_getdma: setting reply to 0x%x@0x%x proc %d\n",
+			dmatab[i].dt_size, dmatab[i].dt_base,
+			dmatab[i].dt_proc);
+		mp->mp_reply.m2_i1= dmatab[i].dt_proc;
+		mp->mp_reply.m2_l1= dmatab[i].dt_base;
+		mp->mp_reply.m2_l2= dmatab[i].dt_size;
+
+		return OK;
+	}
+
+	/* Nothing */
+	return EAGAIN;
+}
+
+
+
+/*===========================================================================*
+ *				release_dma				     *
+ *===========================================================================*/
+PUBLIC void release_dma(proc_e, base, size)
+endpoint_t proc_e;
+phys_clicks base;
+phys_clicks size;
+{
+	int i, found_one;;
+
+	found_one= FALSE;
+	for (i= 0; i<NR_DMA; i++)
+	{
+		if (!(dmatab[i].dt_flags & DTF_INUSE))
+			continue;
+		if (dmatab[i].dt_proc != proc_e)
+			continue;
+		dmatab[i].dt_flags |= DTF_RELEASE_DMA | DTF_RELEASE_SEG;
+		dmatab[i].dt_seg_base= base;
+		dmatab[i].dt_seg_size= size;
+		found_one= TRUE;
+	}
+	if (found_one)
+		notify(iommu_proc_e);
+	else
+		free_mem(base, size);
+}
+
 #if ENABLE_SWAP
 /*===========================================================================*
  *				swap_on					     *

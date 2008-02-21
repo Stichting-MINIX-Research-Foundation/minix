@@ -11,6 +11,11 @@ struct memory;
 _PROTOTYPE( phys_clicks alloc_mem, (phys_clicks clicks)			);
 _PROTOTYPE( void free_mem, (phys_clicks base, phys_clicks clicks)	);
 _PROTOTYPE( void mem_init, (struct memory *chunks, phys_clicks *free)	);
+_PROTOTYPE( int do_adddma, (void)					);
+_PROTOTYPE( int do_deldma, (void)					);
+_PROTOTYPE( int do_getdma, (void)					);
+_PROTOTYPE( void release_dma, (endpoint_t proc_e, phys_clicks base,
+						phys_clicks size)	);
 #if ENABLE_SWAP
 _PROTOTYPE( int swap_on, (char *file, u32_t offset, u32_t size)	);
 _PROTOTYPE( int swap_off, (void)					);

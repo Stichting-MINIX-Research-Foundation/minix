@@ -155,10 +155,10 @@ PUBLIC int main()
 		 */
 		if ((rmp->mp_flags & (REPLY | ONSWAP | IN_USE | ZOMBIE)) ==
 		   (REPLY | IN_USE)) {
-			if ((s=send(rmp->mp_endpoint, &rmp->mp_reply)) != OK) {
-				printf("PM can't reply to %d (%s)\n",
-					rmp->mp_endpoint, rmp->mp_name);
-				panic(__FILE__, "PM can't reply", NO_NUM);
+			s=sendnb(rmp->mp_endpoint, &rmp->mp_reply);
+			if (s != OK) {
+				printf("PM can't reply to %d (%s): %d\n",
+					rmp->mp_endpoint, rmp->mp_name, s);
 			}
 			rmp->mp_flags &= ~REPLY;
 		}
@@ -713,6 +713,7 @@ message *m_ptr;
 {
 	int r, proc_e, proc_n;
 	struct mproc *rmp;
+	phys_clicks base, size;
 
 	switch(m_ptr->m_type)
 	{
@@ -749,9 +750,23 @@ message *m_ptr;
 			free_mem(rmp->mp_seg[T].mem_phys,	
 				rmp->mp_seg[T].mem_len);
 		}
-		/* Free the data and stack segments. */
-		free_mem(rmp->mp_seg[D].mem_phys, rmp->mp_seg[S].mem_vir +
-			rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
+
+		base= rmp->mp_seg[D].mem_phys;
+		size= rmp->mp_seg[S].mem_vir + rmp->mp_seg[S].mem_len -
+			rmp->mp_seg[D].mem_vir;
+
+		if (rmp->mp_flags & HAS_DMA)
+		{
+			/* Delay freeing the memory segmented until the
+			 * DMA buffers have been released.
+			 */
+			release_dma(rmp->mp_endpoint, base, size);
+		}
+		else
+		{
+			/* Free the data and stack segments. */
+			free_mem(base, size);
+		}
 
 		if (m_ptr->m_type == PM_EXIT_REPLY_TR &&
 			rmp->mp_parent != INIT_PROC_NR)
@@ -847,7 +862,7 @@ message *m_ptr;
 			tell_parent(rmp);		/* tell parent */
 		} else {
 			/* parent not waiting, zombify child */
-			rmp->mp_flags &= (IN_USE|PRIV_PROC);
+			rmp->mp_flags &= (IN_USE|PRIV_PROC|HAS_DMA);
 			rmp->mp_flags |= ZOMBIE;
 			/* send parent a "child died" signal */
 			sig_proc(p_mp, SIGCHLD);
@@ -872,9 +887,23 @@ message *m_ptr;
 			free_mem(rmp->mp_seg[T].mem_phys,	
 				rmp->mp_seg[T].mem_len);
 		}
-		/* Free the data and stack segments. */
-		free_mem(rmp->mp_seg[D].mem_phys, rmp->mp_seg[S].mem_vir +
-			rmp->mp_seg[S].mem_len - rmp->mp_seg[D].mem_vir);
+
+		base= rmp->mp_seg[D].mem_phys;
+		size= rmp->mp_seg[S].mem_vir + rmp->mp_seg[S].mem_len -
+			rmp->mp_seg[D].mem_vir;
+
+		if (rmp->mp_flags & HAS_DMA)
+		{
+			/* Delay freeing the memory segmented until the
+			 * DMA buffers have been released.
+			 */
+			release_dma(rmp->mp_endpoint, base, size);
+		}
+		else
+		{
+			/* Free the data and stack segments. */
+			free_mem(base, size);
+		}
 
 		/* Clean up if the parent has collected the exit
 		 * status

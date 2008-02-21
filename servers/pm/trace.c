@@ -69,6 +69,15 @@ PUBLIC int do_trace()
 	if ((child=find_proc(m_in.pid))==NIL_MPROC)
 		return(ESRCH);
 
+	/* Should check for shared text */
+
+	/* Make sure the text segment is not used as a source for shared
+	 * text.
+	 */
+	child->mp_ino= 0;
+	child->mp_dev= 0;
+	child->mp_ctime= 0;
+
 	r= sys_trace(m_in.request,child->mp_endpoint,m_in.taddr,&m_in.data);
 	if (r != OK) return(r);
 

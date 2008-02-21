@@ -314,7 +314,7 @@ int for_trace;
   if (parent_waiting && right_child) {
 	tell_parent(rmp);		/* tell parent */
   } else {
-	rmp->mp_flags &= (IN_USE|PRIV_PROC);
+	rmp->mp_flags &= (IN_USE|PRIV_PROC|HAS_DMA);
 	rmp->mp_flags |= ZOMBIE;	/* parent not waiting, zombify child */
 	sig_proc(p_mp, SIGCHLD);	/* send parent a "child died" signal */
   }

@@ -13,7 +13,7 @@
 /* Miscellaneous */
 char core_name[] = "core";	/* file name where core images are produced */
 
-_PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
+_PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/*  0 = unused	*/
 	do_pm_exit,	/*  1 = exit	*/
 	do_fork,	/*  2 = fork	*/
@@ -115,6 +115,17 @@ _PROTOTYPE (int (*call_vec[NCALLS]), (void) ) = {
 	do_getsysinfo_up,/* 97 = getsysinfo_up */
 	do_sprofile,	/* 98 = sprofile */
 	do_cprofile,	/* 99 = cprofile */
+	no_sys,		/* 100 = unused */
+	no_sys,		/* 101 = unused */
+	no_sys,		/* 102 = unused */
+	no_sys,		/* 103 = unused */
+	no_sys,		/* 104 = unused */
+	no_sys,		/* 105 = unused */
+	no_sys,		/* 106 = unused */
+	no_sys,		/* 107 = unused */
+	do_adddma,	/* 108 = adddma */
+	do_deldma,	/* 109 = deldma */
+	do_getdma,	/* 110 = getdma */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
