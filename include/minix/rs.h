@@ -33,11 +33,14 @@ struct rs_start
 	u32_t rss_system[RSS_NR_SYSTEM];
 	char *rss_label;
 	size_t rss_labellen;
+	char *rss_ipc;
+	size_t rss_ipclen;
 };
 
 #define RF_COPY		0x01	/* Copy the brinary into RS to make it possible
 				 * to restart the driver without accessing FS
 				 */
+#define RF_IPC_VALID	0x02	/* rss_ipc and rss_ipclen are valid */
 
 #define RSP_LABEL_SIZE	16
 #define RSP_NR_DEVICE	16
