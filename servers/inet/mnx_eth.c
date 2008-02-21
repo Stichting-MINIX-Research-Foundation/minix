@@ -464,7 +464,6 @@ message *m;
 	if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
 		(loc_port->etp_osdep.etp_flags & OEPF_NEED_RECV))
 	{
-		printf("eth_rec: OEPF_NEED_RECV is set\n");
 		loc_port->etp_osdep.etp_flags &= ~OEPF_NEED_RECV;
 		if (!(loc_port->etp_flags & EPF_READ_IP))
 			setup_read (loc_port);
@@ -758,7 +757,6 @@ eth_port_t *eth_port;
 
 	if (eth_port->etp_osdep.etp_state != OEPS_IDLE)
 	{
-		printf("setup_read: setting OEPF_NEED_RECV\n");
 		eth_port->etp_osdep.etp_flags |= OEPF_NEED_RECV;
 
 		return;
