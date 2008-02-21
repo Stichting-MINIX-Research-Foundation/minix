@@ -6,6 +6,7 @@ libc_FILES=" \
 	_exit.s \
 	_pm_findproc.s \
 	access.s \
+	adddma.s \
 	alarm.s \
 	brk.s \
 	cfgetispeed.s \
@@ -20,6 +21,7 @@ libc_FILES=" \
 	closedir.s \
 	cprofile.s \
 	creat.s \
+	deldma.s \
 	devctl.s \
 	dup.s \
 	dup2.s \
@@ -38,6 +40,7 @@ libc_FILES=" \
 	fstatfs.s \
 	getcwd.s \
 	getdents.s \
+	getdma.s \
 	getegid.s \
 	geteuid.s \
 	getgid.s \

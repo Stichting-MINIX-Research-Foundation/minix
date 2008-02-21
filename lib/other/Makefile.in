@@ -6,10 +6,13 @@ LIBRARIES=libc
 
 libc_FILES=" \
 	__pm_findproc.c \
+	_adddma.c \
 	_brk.c \
 	_cprofile.c \
+	_deldma.c \
 	_devctl.c \
 	_getdents.c \
+	_getdma.c \
 	_getnpid.c \
 	_getnprocnr.c \
 	_getpprocnr.c \
