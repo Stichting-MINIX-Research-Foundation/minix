@@ -42,6 +42,9 @@
 /* File status flags for open() and fcntl().  POSIX Table 6-5. */
 #define O_APPEND       02000	/* set append mode */
 #define O_NONBLOCK     04000	/* no delay */
+#define O_REOPEN      010000	/* automatically re-open device after driver
+				 * restart
+				 */
 
 /* File access modes for open() and fcntl().  POSIX Table 6-6. */
 #define O_RDONLY           0	/* open(name, O_RDONLY) opens read only */
