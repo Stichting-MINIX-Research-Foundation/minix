@@ -38,14 +38,7 @@
 #define NO_READ            1	/* prevents get_block from doing disk read */
 #define PREFETCH           2	/* tells get_block not to read or mark dev */
 
-#define XPIPE   (-NR_TASKS-1)	/* used in fp_task when susp'd on pipe */
-#define XLOCK   (-NR_TASKS-2)	/* used in fp_task when susp'd on lock */
-#define XPOPEN  (-NR_TASKS-3)	/* used in fp_task when susp'd on pipe open */
-#define XSELECT (-NR_TASKS-4)	/* used in fp_task when susp'd on select */
-
 #define NO_BIT   ((bit_t) 0)	/* returned by alloc_bit() to signal failure */
-
-#define DUP_MASK        0100	/* mask to distinguish dup2 from dup */
 
 #define LOOK_UP            0 /* tells search_dir to lookup string */
 #define ENTER              1 /* tells search_dir to make dir entry */
