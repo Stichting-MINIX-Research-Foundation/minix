@@ -201,6 +201,12 @@ _PROTOTYPE( int devctl, (int ctl_req, int driver, int device, int style,
 _PROTOTYPE( int mapdriver5, (char *label, size_t len, int major,
 	int style, int force)						);
 _PROTOTYPE( uid_t getpeuid, (endpoint_t ep)				);
+_PROTOTYPE(int adddma, (endpoint_t proc_e,
+				phys_bytes start, phys_bytes size)	);
+_PROTOTYPE(int deldma, (endpoint_t proc_e,
+				phys_bytes start, phys_bytes size)	);
+_PROTOTYPE(int getdma, (endpoint_t *procp, phys_bytes *basep, 
+						phys_bytes *sizep)	);
 
 /* For compatibility with other Unix systems */
 _PROTOTYPE( int getpagesize, (void)					);
