@@ -50,7 +50,7 @@ const char *_sys_errlist[] = {
 	"Function not implemented",	/* ENOSYS */
 	"Directory not empty",		/* ENOTEMPTY */
 	"Too many levels of symbolic links",	/* ELOOP */
-	unknown,			/* 41 */
+	"Driver restarted",		/* ERESTART */
 	unknown,			/* 42 */
 	unknown,			/* 43 */
 	unknown,			/* 44 */
