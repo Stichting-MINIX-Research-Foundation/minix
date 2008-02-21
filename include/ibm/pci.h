@@ -127,6 +127,14 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 
 #define NO_VID		0xffff	/* No PCI card present */
 
+/* Capabilities */
+#define CAP_T_SECURE_DEV	0x0f		/* (AMD) Secure device
+						 * capability
+						 */
+#define CAP_SD_INFO		2		/* Offset from CAP ptr */
+#define 	CAP_SD_SUBTYPE_MASK	0x0f	/* Mask for subtype */
+#define			CAP_T_SD_DEV		0 /* AMD DEV */
+
 /*
  * $PchId: pci.h,v 1.4 2001/12/06 20:21:22 philip Exp $
  */
