@@ -1,4 +1,4 @@
-#define NCALLS		 100	/* number of system calls allowed */
+#define NCALLS		 111	/* number of system calls allowed */
 
 #define EXIT		   1 
 #define FORK		   2 
@@ -97,6 +97,16 @@
 #define FREEMEM		106	/* to PM, not used, not implemented */
 #endif
 #define GETPUID		107	/* to PM: get the uid of a process (endpoint) */
+#define ADDDMA		108	/* to PM: inform PM about a region of memory
+				 * that is used for bus-master DMA
+				 */
+#define DELDMA		109	/* to PM: inform PM that a region of memory
+				 * that is no longer used for bus-master DMA
+				 */
+#define GETDMA		110	/* to PM: ask PM for a region of memory
+				 * that should not be used for bus-master DMA
+				 * any longer
+				 */
 
 #define DEVCTL		120	/* to FS, map or unmap a device */
 #define TASK_REPLY	121	/* to FS: reply code from drivers, not 
