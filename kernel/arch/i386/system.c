@@ -6,11 +6,15 @@
 #include <ibm/cmos.h>
 #include <ibm/bios.h>
 #include <minix/portio.h>
+#include <minix/u64.h>
 
 #include "proto.h"
 #include "../../proc.h"
 
+#define CR0_EM	0x0004		/* set to enable trap on any FP instruction */
+
 FORWARD _PROTOTYPE( void ser_debug, (int c));
+FORWARD _PROTOTYPE( void ser_dump_stats, (void));
 
 PUBLIC void arch_shutdown(int how)
 {
@@ -43,6 +47,11 @@ PUBLIC void arch_shutdown(int how)
 PUBLIC void system_init(void)
 {
 	prot_init();
+
+#if 0
+	/* Set CR0_EM until we get FP context switching */
+	write_cr0(read_cr0() | CR0_EM);
+#endif
 }
 
 #define COM1_BASE       0x3F8
@@ -90,6 +99,9 @@ PRIVATE void ser_debug(int c)
 	case '1':
 		ser_dump_proc();
 		break;
+	case '2':
+		ser_dump_stats();
+		break;
 	}
 	do_serial_debug--;
 }
@@ -110,7 +122,44 @@ PUBLIC void ser_dump_proc()
 			pp->p_priority, pp->p_max_priority,
 			pp->p_user_time, pp->p_sys_time, 
 			pp->p_reg.pc);
+		stacktrace(pp);
 	}
+}
+
+PRIVATE void ser_dump_stats()
+{
+	kprintf("ipc_stats:\n");
+	kprintf("deadproc: %d\n", ipc_stats.deadproc);
+	kprintf("bad_endpoint: %d\n", ipc_stats.bad_endpoint);
+	kprintf("dst_not_allowed: %d\n", ipc_stats.dst_not_allowed);
+	kprintf("bad_call: %d\n", ipc_stats.bad_call);
+	kprintf("call_not_allowed: %d\n", ipc_stats.call_not_allowed);
+	kprintf("bad_buffer: %d\n", ipc_stats.bad_buffer);
+	kprintf("deadlock: %d\n", ipc_stats.deadlock);
+	kprintf("not_ready: %d\n", ipc_stats.not_ready);
+	kprintf("src_died: %d\n", ipc_stats.src_died);
+	kprintf("dst_died: %d\n", ipc_stats.dst_died);
+	kprintf("no_priv: %d\n", ipc_stats.no_priv);
+	kprintf("bad_size: %d\n", ipc_stats.bad_size);
+	kprintf("bad_senda: %d\n", ipc_stats.bad_senda);
+	if (ex64hi(ipc_stats.total))
+	{
+		kprintf("total: %x:%08x\n", ex64hi(ipc_stats.total),
+			ex64lo(ipc_stats.total));
+	}
+	else
+		kprintf("total: %u\n", ex64lo(ipc_stats.total));
+
+	kprintf("sys_stats:\n");
+	kprintf("bad_req: %d\n", sys_stats.bad_req);
+	kprintf("not_allowed: %d\n", sys_stats.not_allowed);
+	if (ex64hi(sys_stats.total))
+	{
+		kprintf("total: %x:%08x\n", ex64hi(sys_stats.total),
+			ex64lo(sys_stats.total));
+	}
+	else
+		kprintf("total: %u\n", ex64lo(sys_stats.total));
 }
 
 #if SPROFILE
