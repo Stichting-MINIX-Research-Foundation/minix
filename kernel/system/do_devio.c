@@ -63,6 +63,19 @@ register message *m_ptr;	/* pointer to request message */
 	}
 	if (i >= nr_io_range)
 	{
+		static int curr= 0, limit= 100, extra= 20;
+
+		if (curr < limit+extra)
+		{
+			kprintf("do_devio: port 0x%x (size %d) not allowed\n",
+				m_ptr->DIO_PORT, size);
+		} else if (curr == limit+extra)
+		{
+			kprintf("do_devio: no debug output for a while\n");
+		}
+		else if (curr == 2*limit-1)
+			limit *= 2;
+		curr++;
 		return EPERM;
 	}
     }
@@ -70,8 +83,19 @@ register message *m_ptr;	/* pointer to request message */
 doit:
     if (m_ptr->DIO_PORT & (size-1))
     {
-	kprintf("do_devio: unaligned port 0x%x (size %d)\n",
-		m_ptr->DIO_PORT, size);
+	static int curr= 0, limit= 100, extra= 20;
+
+	if (curr < limit+extra)
+	{
+		kprintf("do_devio: unaligned port 0x%x (size %d)\n",
+			m_ptr->DIO_PORT, size);
+	} else if (curr == limit+extra)
+	{
+		kprintf("do_devio: no debug output for a while\n");
+	}
+	else if (curr == 2*limit-1)
+		limit *= 2;
+	curr++;
 	return EPERM;
     }
 
