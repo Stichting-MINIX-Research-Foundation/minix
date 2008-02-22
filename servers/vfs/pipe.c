@@ -245,11 +245,14 @@ int task;			/* who is proc waiting for? (PIPE = pipe) */
 
   if (task == XPOPEN) susp_count++;/* #procs susp'ed on pipe*/
   fp->fp_suspended = SUSPENDED;
-  assert(!GRANT_VALID(fp->fp_grant));
+  assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
   fp->fp_fd = m_in.fd << 8 | call_nr;
   if(task == NONE)
 	panic(__FILE__,"suspend on NONE",NO_NUM);
   fp->fp_task = -task;
+  fp->fp_flags &= ~SUSP_REOPEN;			/* Clear this flag. The caller
+						 * can set it when needed.
+						 */
   if (task == XLOCK) {
 	fp->fp_buffer = (char *) m_in.name1;	/* third arg to fcntl() */
 	fp->fp_nbytes = m_in.request;		/* second arg to fcntl() */
@@ -371,10 +374,10 @@ int returned;			/* if hanging on task, how many bytes read */
 /* Revive a previously blocked process. When a process hangs on tty, this
  * is the way it is eventually released.
  */
-
   register struct fproc *rfp;
   register int task;
-  int proc_nr;
+  int fd_nr, proc_nr;
+  struct filp *fil_ptr;
 
   if(isokendpt(proc_nr_e, &proc_nr) != OK)
 	return;
@@ -392,13 +395,37 @@ int returned;			/* if hanging on task, how many bytes read */
 	/* Revive a process suspended on a pipe or lock. */
 	rfp->fp_revived = REVIVING;
 	reviving++;		/* process was waiting on pipe or lock */
-  } else {
+  }
+  else if (task == XDOPEN)
+  {
+	rfp->fp_suspended = NOT_SUSPENDED;
+	fd_nr= rfp->fp_fd>>8;
+	if (returned < 0)
+	{
+		fil_ptr= rfp->fp_filp[fd_nr];
+		rfp->fp_filp[fd_nr] = NIL_FILP;
+		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
+		if (fil_ptr->filp_count != 1)
+		{
+			panic(__FILE__, "revive: bad count in filp",
+				fil_ptr->filp_count);
+		}
+		fil_ptr->filp_count= 0;
+		put_vnode(fil_ptr->filp_vno);     
+		fil_ptr->filp_vno = NIL_VNODE;
+		reply(proc_nr_e, returned);
+	}
+	else
+		reply(proc_nr_e, fd_nr);
+  }
+  else {
 	rfp->fp_suspended = NOT_SUSPENDED;
 	if (task == XPOPEN) /* process blocked in open or create */
 		reply(proc_nr_e, rfp->fp_fd>>8);
 	else if (task == XSELECT) {
 		reply(proc_nr_e, returned);
-	} else {
+	}
+	else {
 		/* Revive a process suspended on TTY or other device. 
 		 * Pretend it wants only what there is.
 		 */
@@ -420,24 +447,9 @@ int returned;			/* if hanging on task, how many bytes read */
 
 
 /*===========================================================================*
- *				do_unpause				     *
- *===========================================================================*/
-PUBLIC int do_unpause()
-{
-/* A signal has been sent to a user who is paused on the file system.
- * Abort the system call with the EINTR error message.
- */
-  int proc_nr_e;
-
-  if (who_e != PM_PROC_NR) return(EPERM);
-  proc_nr_e = m_in.ENDPT;
-  return unpause(proc_nr_e);
-}
-
-/*===========================================================================*
  *				unpause					     *
  *===========================================================================*/
-PUBLIC int unpause(proc_nr_e)
+PUBLIC void unpause(proc_nr_e)
 int proc_nr_e;
 {
 /* A signal has been sent to a user who is paused on the file system.
@@ -452,7 +464,8 @@ int proc_nr_e;
 
   okendpt(proc_nr_e, &proc_nr_p);
   rfp = &fproc[proc_nr_p];
-  if (rfp->fp_suspended == NOT_SUSPENDED) return(OK);
+  if (rfp->fp_suspended == NOT_SUSPENDED)
+	return;
   task = -rfp->fp_task;
 
   if (rfp->fp_revived == REVIVING)
@@ -475,7 +488,21 @@ int proc_nr_e;
 	case XPOPEN:		/* process trying to open a fifo */
 		break;
 
+	case XDOPEN:		/* process trying to open a device */
+		/* Don't cancel OPEN. Just wait until the open completes. */
+		return;	
+
 	default:		/* process trying to do device I/O (e.g. tty)*/
+		if (rfp->fp_flags & SUSP_REOPEN)
+		{
+			/* Process is suspended while waiting for a reopen.
+			 * Just reply EINTR.
+			 */
+			rfp->fp_flags &= ~SUSP_REOPEN;
+			status= EINTR;
+			break;
+		}
+		
 		fild = (rfp->fp_fd >> 8) & BYTE;/* extract file descriptor */
 		if (fild < 0 || fild >= OPEN_MAX)
 			panic(__FILE__,"unpause err 2",NO_NUM);
@@ -491,6 +518,11 @@ int proc_nr_e;
 		fp = rfp;	/* hack - ctty_io uses fp */
 		(*dmap[(dev >> MAJOR) & BYTE].dmap_io)(task, &mess);
 		status = mess.REP_STATUS;
+		if (status == SUSPEND)
+			return;		/* Process will be revived at a
+					 * later time.
+					 */
+
 		if(status == EAGAIN) status = EINTR;
 		if(GRANT_VALID(rfp->fp_grant)) {
 			if(cpf_revoke(rfp->fp_grant)) {
@@ -503,7 +535,6 @@ int proc_nr_e;
 
   rfp->fp_suspended = NOT_SUSPENDED;
   reply(proc_nr_e, status);	/* signal interrupted call */
-  return(OK);
 }
 
 
