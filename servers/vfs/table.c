@@ -118,6 +118,17 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 97 = getsysinfo_up */
 	no_sys,		/* 98 = (sprofile) */
 	no_sys,		/* 99 = (cprofile) */
+	no_sys,		/* 100 = unused */
+	no_sys,		/* 101 = unused */
+	no_sys,		/* 102 = unused */
+	no_sys,		/* 103 = unused */
+	no_sys,		/* 104 = unused */
+	no_sys,		/* 105 = unused */
+	no_sys,		/* 106 = unused */
+	no_sys,		/* 107 = unused */
+	no_sys,		/* 108 = (adddma) */
+	no_sys,		/* 109 = unused */
+	no_sys,		/* 110 = unused */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];
