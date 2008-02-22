@@ -1132,7 +1132,8 @@ int safe;
 	cons_putk(c);
   }
   cons_putk(0);			/* always terminate, even with EFAULT */
-  m_ptr->m_type = result;
+  m_ptr->m_type = DIAG_REPL;
+  m_ptr->REP_STATUS = result;
   send(m_ptr->m_source, m_ptr);
 }
 

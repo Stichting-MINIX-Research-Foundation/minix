@@ -212,7 +212,11 @@ PUBLIC void main(void)
 		continue;
 	}
 	case DIAGNOSTICS: 		/* a server wants to print some */
-		printf("WARNING: old DIAGNOSTICS from %d\n", tty_mess.m_source);
+		if (tty_mess.m_source != LOG_PROC_NR)
+		{
+			printf("WARNING: old DIAGNOSTICS from %d\n",
+				tty_mess.m_source);
+		}
 		do_diagnostics(&tty_mess, 0);
 		continue;
 	case DIAGNOSTICS_S: 
@@ -377,8 +381,10 @@ message *m_ptr;
   }
 
   /* Almost done. Send back the reply message to the caller. */
-  if ((status = send(m_ptr->m_source, m_ptr)) != OK) {
-	panic("TTY","send in do_status failed, status\n", status);
+  status = sendnb(m_ptr->m_source, m_ptr);
+  if (status != OK) {
+	printf("tty`do_status: send to %d failed: %d\n",
+		m_ptr->m_source, status);
   }
 }
 
@@ -1473,9 +1479,9 @@ int status;			/* reply code */
 	panic("TTY","tty_reply sending TTY_REVIVE", NO_NUM);
   }
 
-  if ((status = send(replyee, &tty_mess)) != OK) {
-	printf("tty: tty_reply to %d failed: %d\n", replyee, status);
-  }
+  status = sendnb(replyee, &tty_mess);
+  if (status != OK)
+	printf("tty`tty_reply: send to %d failed: %d\n", replyee, status);
 }
 
 /*===========================================================================*
