@@ -6,16 +6,15 @@
  * possible or even necessary to tell when a slot is free here.
  */
 EXTERN struct fproc {
+  unsigned fp_flags;
+
   mode_t fp_umask;		/* mask set by umask system call */
  
-/*  struct inode *fp_workdir;*/	/* pointer to working directory's inode */
-/*  struct inode *fp_rootdir;*/	/* pointer to current root dir (see chroot) */
-
+  struct vnode *fp_wd;		/* working directory */
+  struct vnode *fp_rd;		/* root directory */
+  
   struct filp *fp_filp[OPEN_MAX];/* the file descriptor table */
 
-  struct vnode *fp_wd;
-  struct vnode *fp_rd;
-  
   fd_set fp_filp_inuse;		/* which fd's are in use? */
   uid_t fp_realuid;		/* real user id */
   uid_t fp_effuid;		/* effective user id */
@@ -40,6 +39,12 @@ EXTERN struct fproc {
   fd_set fp_cloexec_set;	/* bit map for POSIX Table 6-2 FD_CLOEXEC */
   endpoint_t fp_endpoint;	/* kernel endpoint number of this process */
 } fproc[NR_PROCS];
+
+/* fp_flags */
+#define NO_FLAGS	0
+#define SUSP_REOPEN	1	/* Process is suspended until the reopens are
+				 * completed (after the restart of a driver).
+				 */
 
 /* Field values. */
 #define NOT_SUSPENDED      0	/* process is not suspended on pipe or task */
