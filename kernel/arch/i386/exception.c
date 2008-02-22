@@ -65,12 +65,16 @@ u32_t old_eflags;
 #if 0
 	{
 		kprintf(
-		"exception for process %d, pc = 0x%x:0x%x, sp = 0x%x:0x%x\n",
-			proc_nr(saved_proc),
+"exception for process %d, endpoint %d ('%s'), pc = 0x%x:0x%x, sp = 0x%x:0x%x\n",
+			proc_nr(saved_proc), saved_proc->p_endpoint,
+			saved_proc->p_name,
 			saved_proc->p_reg.cs, saved_proc->p_reg.pc,
 			saved_proc->p_reg.ss, saved_proc->p_reg.sp);
-		kprintf("edi = 0x%x\n", saved_proc->p_reg.di);
-
+  		kprintf(
+  "vec_nr= %d, trap_errno= 0x%lx, eip= 0x%lx, cs= 0x%x, eflags= 0x%lx\n",
+			vec_nr, (unsigned long)trap_errno,
+			(unsigned long)old_eip, old_cs,
+			(unsigned long)old_eflags);
 #if DEBUG_STACKTRACE
 		stacktrace(saved_proc);
 #endif
