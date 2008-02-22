@@ -54,7 +54,11 @@ message *m_ptr;			/* pointer to request message */
 	 * fail, since there are only a limited number of system processes.
 	 * Then copy the privileges from the caller and restore some defaults.
 	 */
-	if ((i=get_priv(rp, SYS_PROC)) != OK) return(i);
+	if ((i=get_priv(rp, SYS_PROC)) != OK)
+	{
+		kprintf("do_privctl: out of priv structures\n");
+		return(i);
+	}
 	priv_id = priv(rp)->s_id;		/* backup privilege id */
 	*priv(rp) = *priv(caller_ptr);		/* copy from caller */
 	priv(rp)->s_id = priv_id;		/* restore privilege id */
@@ -165,6 +169,15 @@ message *m_ptr;			/* pointer to request message */
 	/* Only system processes get I/O resources? */
 	if (!(priv(rp)->s_flags & SYS_PROC))
 		return EPERM;
+
+#if 0 /* XXX -- do we need a call for this? */
+	if (strcmp(rp->p_name, "fxp") == 0 ||
+		strcmp(rp->p_name, "rtl8139") == 0)
+	{
+		kprintf("setting ipc_stats_target to %d\n", rp->p_endpoint);
+		ipc_stats_target= rp->p_endpoint;
+	}
+#endif
 
 	/* Get the I/O range */
 	caller_phys = umap_local(caller_ptr, D, (vir_bytes) m_ptr->CTL_ARG_PTR,
