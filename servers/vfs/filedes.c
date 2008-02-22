@@ -53,6 +53,8 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
 		f->filp_select_ops = 0;
 		f->filp_pipe_select_ops = 0;
 		f->filp_flags = 0;
+		f->filp_state = FS_NORMAL;
+		f->filp_select_flags = 0;
 		*fpt = f;
 		return(OK);
 	}
