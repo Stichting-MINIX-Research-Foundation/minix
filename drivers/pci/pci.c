@@ -8,7 +8,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 */
 
 #include "../drivers.h"
-#define	NDEBUG			/* disable assertions */
 #include <assert.h>
 #include <ibm/pci.h>
 #include <sys/vm.h>
@@ -125,6 +124,10 @@ FORWARD _PROTOTYPE( char *pci_baseclass_name, (U8_t baseclass)		);
 FORWARD _PROTOTYPE( char *pci_subclass_name, (U8_t baseclass,
 					U8_t subclass, U8_t infclass)	);
 FORWARD _PROTOTYPE( void ntostr, (unsigned n, char **str, char *end)	);
+
+FORWARD _PROTOTYPE( u8_t pci_attr_r8_u, (int devind, int port)		);
+FORWARD _PROTOTYPE( u32_t pci_attr_r32_u, (int devind, int port)	);
+
 FORWARD _PROTOTYPE( u16_t pci_attr_rsts, (int devind)			);
 FORWARD _PROTOTYPE( void pci_attr_wsts, (int devind, U16_t value)	);
 FORWARD _PROTOTYPE( u16_t pcibr_std_rsts, (int busind)		);
@@ -148,6 +151,7 @@ FORWARD _PROTOTYPE( u16_t pcii_rsts, (int busind)			);
 FORWARD _PROTOTYPE( void pcii_wsts, (int busind, U16_t value)		);
 FORWARD _PROTOTYPE( void print_capabilities, (int devind)		);
 FORWARD _PROTOTYPE( int visible, (struct rs_pci *aclp, int devind)	);
+FORWARD _PROTOTYPE( void print_hyper_cap, (int devind, U8_t capptr)	);
 
 /*===========================================================================*
  *			helper functions for I/O			     *
@@ -310,7 +314,7 @@ u16_t *didp;
 }
 
 /*===========================================================================*
- *				pci_reserve3				     *
+ *				pci_reserve2				     *
  *===========================================================================*/
 PUBLIC int pci_reserve2(devind, proc)
 int devind;
@@ -321,7 +325,11 @@ int proc;
 	struct io_range ior;
 	struct mem_range mr;
 
-	assert(devind <= nr_pcidev);
+	if (devind < 0 || devind >= nr_pcidev)
+	{
+		printf("pci:pci_reserve2: bad devind: %d\n", devind);
+		return EINVAL;
+	}
 	if(pcidev[devind].pd_inuse)
 		return EBUSY;
 	pcidev[devind].pd_inuse= 1;
@@ -405,16 +413,19 @@ endpoint_t proc;
 }
 
 /*===========================================================================*
- *				pci_ids					     *
+ *				pci_ids_s				     *
  *===========================================================================*/
-PUBLIC void pci_ids(devind, vidp, didp)
+PUBLIC int pci_ids_s(devind, vidp, didp)
 int devind;
 u16_t *vidp;
 u16_t *didp;
 {
-	assert(devind <= nr_pcidev);
+	if (devind < 0 || devind >= nr_pcidev)
+		return EINVAL;
+
 	*vidp= pcidev[devind].pd_vid;
 	*didp= pcidev[devind].pd_did;
+	return OK;
 }
 
 /*===========================================================================*
@@ -436,14 +447,18 @@ u8_t busnr;
 }
 
 /*===========================================================================*
- *				pci_slot_name				     *
+ *				pci_slot_name_s				     *
  *===========================================================================*/
-PUBLIC char *pci_slot_name(devind)
+PUBLIC int pci_slot_name_s(devind, cpp)
 int devind;
+char **cpp;
 {
 	static char label[]= "ddd.ddd.ddd";
 	char *end;
 	char *p;
+
+	if (devind < 0 || devind >= nr_pcidev)
+		return EINVAL;
 
 	p= label;
 	end= label+sizeof(label);
@@ -456,7 +471,8 @@ int devind;
 
 	ntostr(pcidev[devind].pd_func, &p, end);
 
-	return label;
+	*cpp= label;
+	return OK;
 }
 
 /*===========================================================================*
@@ -480,9 +496,26 @@ u16_t did;
 }
 
 /*===========================================================================*
- *				pci_attr_r8				     *
+ *				pci_attr_r8_s				     *
  *===========================================================================*/
-PUBLIC u8_t pci_attr_r8(devind, port)
+PUBLIC int pci_attr_r8_s(devind, port, vp)
+int devind;
+int port;
+u8_t *vp;
+{
+	if (devind < 0 || devind >= nr_pcidev)
+		return EINVAL;
+	if (port < 0 || port > 255)
+		return EINVAL;
+
+	*vp= pci_attr_r8_u(devind, port);
+	return OK;
+}
+
+/*===========================================================================*
+ *				pci_attr_r8_u				     *
+ *===========================================================================*/
+PRIVATE u8_t pci_attr_r8_u(devind, port)
 int devind;
 int port;
 {
@@ -508,9 +541,26 @@ int port;
 }
 
 /*===========================================================================*
- *				pci_attr_r32				     *
+ *				pci_attr_r32_s				     *
  *===========================================================================*/
-PUBLIC u32_t pci_attr_r32(devind, port)
+PUBLIC int pci_attr_r32_s(devind, port, vp)
+int devind;
+int port;
+u32_t *vp;
+{
+	if (devind < 0 || devind >= nr_pcidev)
+		return EINVAL;
+	if (port < 0 || port > 256-4)
+		return EINVAL;
+
+	*vp= pci_attr_r32_u(devind, port);
+	return OK;
+}
+
+/*===========================================================================*
+ *				pci_attr_r32_u				     *
+ *===========================================================================*/
+PRIVATE u32_t pci_attr_r32_u(devind, port)
 int devind;
 int port;
 {
@@ -704,7 +754,7 @@ printf("probe_bus(%d)\n", busind);
 				PSR_SSE|PSR_RMAS|PSR_RTAS);
 			vid= pci_attr_r16(devind, PCI_VID);
 			did= pci_attr_r16(devind, PCI_DID);
-			headt= pci_attr_r8(devind, PCI_HEADT);
+			headt= pci_attr_r8_u(devind, PCI_HEADT);
 			sts= pci_attr_rsts(devind);
 
 #if 0
@@ -767,9 +817,9 @@ printf("probe_bus(%d)\n", busind);
 					pci_attr_r16(devind, PCI_SUBDID));
 			}
 
-			baseclass= pci_attr_r8(devind, PCI_BCR);
-			subclass= pci_attr_r8(devind, PCI_SCR);
-			infclass= pci_attr_r8(devind, PCI_PIFR);
+			baseclass= pci_attr_r8_u(devind, PCI_BCR);
+			subclass= pci_attr_r8_u(devind, PCI_SCR);
+			infclass= pci_attr_r8_u(devind, PCI_PIFR);
 			s= pci_subclass_name(baseclass, subclass, infclass);
 			if (!s)
 				s= pci_baseclass_name(baseclass);
@@ -865,8 +915,8 @@ int devind;
 {
 	int ilr, ipr, busnr, busind, cb_devind;
 
-	ilr= pci_attr_r8(devind, PCI_ILR);
-	ipr= pci_attr_r8(devind, PCI_IPR);
+	ilr= pci_attr_r8_u(devind, PCI_ILR);
+	ipr= pci_attr_r8_u(devind, PCI_IPR);
 	if (ilr == 0)
 	{
 		static int first= 1;
@@ -1002,10 +1052,10 @@ int devind;
 	record_bar(devind, 0);
 	record_bar(devind, 1);
 
-	base= ((pci_attr_r8(devind, PPB_IOBASE) & PPB_IOB_MASK) << 8) |
+	base= ((pci_attr_r8_u(devind, PPB_IOBASE) & PPB_IOB_MASK) << 8) |
 		(pci_attr_r16(devind, PPB_IOBASEU16) << 16);
 	limit= 0xff |
-		((pci_attr_r8(devind, PPB_IOLIMIT) & PPB_IOL_MASK) << 8) |
+		((pci_attr_r8_u(devind, PPB_IOLIMIT) & PPB_IOL_MASK) << 8) |
 		((~PPB_IOL_MASK & 0xff) << 8) |
 		(pci_attr_r16(devind, PPB_IOLIMITU16) << 16);
 	size= limit-base + 1;
@@ -1051,8 +1101,8 @@ int devind;
 
 	record_bar(devind, 0);
 
-	base= pci_attr_r32(devind, CBB_MEMBASE_0);
-	limit= pci_attr_r32(devind, CBB_MEMLIMIT_0) |
+	base= pci_attr_r32_u(devind, CBB_MEMBASE_0);
+	limit= pci_attr_r32_u(devind, CBB_MEMLIMIT_0) |
 		(~CBB_MEML_MASK & 0xffffffff);
 	size= limit-base + 1;
 	if (debug)
@@ -1061,8 +1111,8 @@ int devind;
 			base, limit, size);
 	}
 
-	base= pci_attr_r32(devind, CBB_MEMBASE_1);
-	limit= pci_attr_r32(devind, CBB_MEMLIMIT_1) |
+	base= pci_attr_r32_u(devind, CBB_MEMBASE_1);
+	limit= pci_attr_r32_u(devind, CBB_MEMLIMIT_1) |
 		(~CBB_MEML_MASK & 0xffffffff);
 	size= limit-base + 1;
 	if (debug)
@@ -1071,8 +1121,8 @@ int devind;
 			base, limit, size);
 	}
 
-	base= pci_attr_r32(devind, CBB_IOBASE_0);
-	limit= pci_attr_r32(devind, CBB_IOLIMIT_0) |
+	base= pci_attr_r32_u(devind, CBB_IOBASE_0);
+	limit= pci_attr_r32_u(devind, CBB_IOLIMIT_0) |
 		(~CBB_IOL_MASK & 0xffffffff);
 	size= limit-base + 1;
 	if (debug)
@@ -1081,8 +1131,8 @@ int devind;
 			base, limit, size);
 	}
 
-	base= pci_attr_r32(devind, CBB_IOBASE_1);
-	limit= pci_attr_r32(devind, CBB_IOLIMIT_1) |
+	base= pci_attr_r32_u(devind, CBB_IOBASE_1);
+	limit= pci_attr_r32_u(devind, CBB_IOLIMIT_1) |
 		(~CBB_IOL_MASK & 0xffffffff);
 	size= limit-base + 1;
 	if (debug)
@@ -1104,12 +1154,12 @@ int bar_nr;
 
 	reg= PCI_BAR+4*bar_nr;
 
-	bar= pci_attr_r32(devind, reg);
+	bar= pci_attr_r32_u(devind, reg);
 	if (bar & PCI_BAR_IO)
 	{
 		/* Size register */
 		pci_attr_w32(devind, reg, 0xffffffff);
-		bar2= pci_attr_r32(devind, reg);
+		bar2= pci_attr_r32_u(devind, reg);
 		pci_attr_w32(devind, reg, bar);
 
 		bar &= ~(u32_t)3;	/* Clear non-address bits */
@@ -1122,7 +1172,6 @@ int bar_nr;
 		}
 
 		dev_bar_nr= pcidev[devind].pd_bar_nr++;
-		assert(dev_bar_nr < BAR_NR);
 		pcidev[devind].pd_bar[dev_bar_nr].pb_flags= PBF_IO;
 		pcidev[devind].pd_bar[dev_bar_nr].pb_base= bar;
 		pcidev[devind].pd_bar[dev_bar_nr].pb_size= bar2;
@@ -1137,7 +1186,7 @@ int bar_nr;
 	{
 		/* Size register */
 		pci_attr_w32(devind, reg, 0xffffffff);
-		bar2= pci_attr_r32(devind, reg);
+		bar2= pci_attr_r32_u(devind, reg);
 		pci_attr_w32(devind, reg, bar);
 
 		if (bar2 == 0)
@@ -1158,7 +1207,6 @@ int bar_nr;
 		}
 
 		dev_bar_nr= pcidev[devind].pd_bar_nr++;
-		assert(dev_bar_nr < BAR_NR);
 		pcidev[devind].pd_bar[dev_bar_nr].pb_flags= 0;
 		pcidev[devind].pd_bar[dev_bar_nr].pb_base= bar;
 		pcidev[devind].pd_bar[dev_bar_nr].pb_size= bar2;
@@ -1206,7 +1254,7 @@ PRIVATE void complete_bridges()
 		pci_attr_w8(devind, PPB_SUBORDBN, freebus);
 
 		printf("CR = 0x%x\n", pci_attr_r16(devind, PCI_CR));
-		printf("SECBLT = 0x%x\n", pci_attr_r8(devind, PPB_SECBLT));
+		printf("SECBLT = 0x%x\n", pci_attr_r8_u(devind, PPB_SECBLT));
 		printf("BRIDGECTRL = 0x%x\n",
 			pci_attr_r16(devind, PPB_BRIDGECTRL));
 	}
@@ -1367,7 +1415,7 @@ PRIVATE void complete_bars()
 			memgap_high= base;
 			bar_nr= pcidev[i].pd_bar[j].pb_nr;
 			reg= PCI_BAR + 4*bar_nr;
-			v32= pci_attr_r32(i, reg);
+			v32= pci_attr_r32_u(i, reg);
 			pci_attr_w32(i, reg, v32 | base);
 			if (debug)
 			{
@@ -1403,7 +1451,7 @@ PRIVATE void complete_bars()
 			iogap_high= base;
 			bar_nr= pcidev[i].pd_bar[j].pb_nr;
 			reg= PCI_BAR + 4*bar_nr;
-			v32= pci_attr_r32(i, reg);
+			v32= pci_attr_r32_u(i, reg);
 			pci_attr_w32(i, reg, v32 | base);
 			if (debug)
 			{
@@ -1645,7 +1693,7 @@ int busind;
 		type= pci_pcibridge[i].type;
 		if (pci_pcibridge[i].vid == 0)
 		{
-			headt= pci_attr_r8(devind, PCI_HEADT);
+			headt= pci_attr_r8_u(devind, PCI_HEADT);
 			type= 0;
 			if ((headt & PHT_MASK) == PHT_BRIDGE)
 				type= PCI_PPB_STD;
@@ -1659,9 +1707,9 @@ int busind;
 				continue;	/* Not a bridge */
 			}
 
-			baseclass= pci_attr_r8(devind, PCI_BCR);
-			subclass= pci_attr_r8(devind, PCI_SCR);
-			infclass= pci_attr_r8(devind, PCI_PIFR);
+			baseclass= pci_attr_r8_u(devind, PCI_BCR);
+			subclass= pci_attr_r8_u(devind, PCI_SCR);
+			infclass= pci_attr_r8_u(devind, PCI_PIFR);
 			t3= ((baseclass << 16) | (subclass << 8) | infclass);
 			if (type == PCI_PPB_STD &&
 				t3 != PCI_T3_PCI2PCI &&
@@ -1695,11 +1743,7 @@ int busind;
 		/* Assume that the BIOS initialized the secondary bus
 		 * number.
 		 */
-		sbusn= pci_attr_r8(devind, PPB_SECBN);
-#if DEBUG
-		printf("sbusn = %d\n", sbusn);
-		printf("subordn = %d\n", pci_attr_r8(devind, PPB_SUBORDBN));
-#endif
+		sbusn= pci_attr_r8_u(devind, PPB_SECBN);
 
 		if (nr_pcibus >= NR_PCIBUS)
 			panic("PCI","too many PCI busses", nr_pcibus);
@@ -1734,6 +1778,12 @@ int busind;
 			break;
 		default:
 		    panic("PCI","unknown PCI-PCI bridge type", type);
+		}
+		if (debug)
+		{
+			printf(
+			"bus(table) = %d, bus(sec) = %d, bus(subord) = %d\n",
+				ind, sbusn, pci_attr_r8_u(devind, PPB_SUBORDBN));
 		}
 		if (sbusn == 0)
 		{
@@ -1791,7 +1841,7 @@ int devind;
 	elcr= elcr1 | (elcr2 << 8);
 	for (i= 0; i<4; i++)
 	{
-		irqrc= pci_attr_r8(devind, PIIX_PIRQRCA+i);
+		irqrc= pci_attr_r8_u(devind, PIIX_PIRQRCA+i);
 		if (irqrc & PIIX_IRQ_DI)
 		{
 			if (debug)
@@ -1842,7 +1892,7 @@ int devind;
 	pcidev[xdevind].pd_inuse= 1;
 	nr_pcidev++;
 
-	levmask= pci_attr_r8(xdevind, AMD_ISABR_PCIIRQ_LEV);
+	levmask= pci_attr_r8_u(xdevind, AMD_ISABR_PCIIRQ_LEV);
 	pciirq= pci_attr_r16(xdevind, AMD_ISABR_PCIIRQ_ROUTE);
 	for (i= 0; i<4; i++)
 	{
@@ -1883,7 +1933,7 @@ int devind;
 	irq= 0;	/* lint */
 	for (i= 0; i<4; i++)
 	{
-		irq= pci_attr_r8(devind, SIS_ISABR_IRQ_A+i);
+		irq= pci_attr_r8_u(devind, SIS_ISABR_IRQ_A+i);
 		if (irq & SIS_IRQ_DISABLED)
 		{
 			if (debug)
@@ -1911,7 +1961,7 @@ int devind;
 
 	dev= pcidev[devind].pd_dev;
 	func= pcidev[devind].pd_func;
-	levmask= pci_attr_r8(devind, VIA_ISABR_EL);
+	levmask= pci_attr_r8_u(devind, VIA_ISABR_EL);
 	irq= 0;	/* lint */
 	edge= 0; /* lint */
 	for (i= 0; i<4; i++)
@@ -1920,19 +1970,19 @@ int devind;
 		{
 		case 0:
 			edge= (levmask & VIA_ISABR_EL_INTA);
-			irq= pci_attr_r8(devind, VIA_ISABR_IRQ_R2) >> 4;
+			irq= pci_attr_r8_u(devind, VIA_ISABR_IRQ_R2) >> 4;
 			break;
 		case 1:
 			edge= (levmask & VIA_ISABR_EL_INTB);
-			irq= pci_attr_r8(devind, VIA_ISABR_IRQ_R2);
+			irq= pci_attr_r8_u(devind, VIA_ISABR_IRQ_R2);
 			break;
 		case 2:
 			edge= (levmask & VIA_ISABR_EL_INTC);
-			irq= pci_attr_r8(devind, VIA_ISABR_IRQ_R3) >> 4;
+			irq= pci_attr_r8_u(devind, VIA_ISABR_IRQ_R3) >> 4;
 			break;
 		case 3:
 			edge= (levmask & VIA_ISABR_EL_INTD);
-			irq= pci_attr_r8(devind, VIA_ISABR_IRQ_R1) >> 4;
+			irq= pci_attr_r8_u(devind, VIA_ISABR_IRQ_R1) >> 4;
 			break;
 		default:
 			assert(0);
@@ -2425,11 +2475,11 @@ int devind;
 	if (!(status & PSR_CAPPTR))
 		return;
 
-	capptr= (pci_attr_r8(devind, PCI_CAPPTR) & PCI_CP_MASK);
+	capptr= (pci_attr_r8_u(devind, PCI_CAPPTR) & PCI_CP_MASK);
 	while (capptr != 0)
 	{
-		type = pci_attr_r8(devind, capptr+CAP_TYPE);
-		next= (pci_attr_r8(devind, capptr+CAP_NEXT) & PCI_CP_MASK);
+		type = pci_attr_r8_u(devind, capptr+CAP_TYPE);
+		next= (pci_attr_r8_u(devind, capptr+CAP_NEXT) & PCI_CP_MASK);
 		switch(type)
 		{
 		case 1: str= "PCI Power Management"; break;
@@ -2444,13 +2494,15 @@ int devind;
 		}
 
 		printf(" @0x%x (0x%08x): capability type 0x%x: %s",
-			capptr, pci_attr_r32(devind, capptr), type, str);
-		if (type == 0x0f)
+			capptr, pci_attr_r32_u(devind, capptr), type, str);
+		if (type == 0x08)
+			print_hyper_cap(devind, capptr);
+		else if (type == 0x0f)
 		{
-			subtype= (pci_attr_r8(devind, capptr+2) & 0x07);
+			subtype= (pci_attr_r8_u(devind, capptr+2) & 0x07);
 			switch(subtype)
 			{
-			case 2: str= "Device Exclusion Vector"; break;
+			case 0: str= "Device Exclusion Vector"; break;
 			case 3: str= "IOMMU"; break;
 			default: str= "(unknown type)"; break;
 			}
@@ -2501,6 +2553,75 @@ int devind;
 	}
 
 	return FALSE;
+}
+
+/*===========================================================================*
+ *				print_hyper_cap				     *
+ *===========================================================================*/
+PRIVATE void print_hyper_cap(devind, capptr)
+int devind;
+u8_t capptr;
+{ 
+	u32_t v;
+	u16_t cmd;
+	int type0, type1;
+
+	printf("\n");
+	v= pci_attr_r32_u(devind, capptr);
+	printf("print_hyper_cap: @0x%x, off 0 (cap):", capptr);
+	cmd= (v >> 16) & 0xffff;
+#if 0
+	if (v & 0x10000)
+	{
+		printf(" WarmReset");
+		v &= ~0x10000;
+	}
+	if (v & 0x20000)
+	{
+		printf(" DblEnded");
+		v &= ~0x20000;
+	}
+	printf(" DevNum %d", (v & 0x7C0000) >> 18);
+	v &= ~0x7C0000;
+#endif
+	type0= (cmd & 0xE000) >> 13;
+	type1= (cmd & 0xF800) >> 11;
+	if (type0 == 0 || type0 == 1)
+	{
+		printf("Capability Type: %s\n",
+			type0 == 0 ? "Slave or Primary Interface" :
+			"Host or Secondary Interface");
+		cmd &= ~0xE000;
+	}
+	else
+	{
+		printf(" Capability Type 0x%x", type1);
+		cmd &= ~0xF800;
+	}
+	if (cmd)
+		printf(" undecoded 0x%x\n", cmd);
+
+#if 0
+	printf("print_hyper_cap: off 4 (ctl): 0x%x\n", 
+		pci_attr_r32_u(devind, capptr+4));
+	printf("print_hyper_cap: off 8 (freq/rev): 0x%x\n", 
+		pci_attr_r32_u(devind, capptr+8));
+	printf("print_hyper_cap: off 12 (cap): 0x%x\n", 
+		pci_attr_r32_u(devind, capptr+12));
+	printf("print_hyper_cap: off 16 (buf count): 0x%x\n", 
+		pci_attr_r32_u(devind, capptr+16));
+	v= pci_attr_r32_u(devind, capptr+20);
+	printf("print_hyper_cap: @0x%x, off 20 (bus nr): ", 
+		capptr+20);
+	printf("prim %d", v & 0xff);
+	printf(", sec %d", (v >> 8) & 0xff);
+	printf(", sub %d", (v >> 16) & 0xff);
+	if (v >> 24)
+		printf(", reserved %d", (v >> 24) & 0xff);
+	printf("\n");
+	printf("print_hyper_cap: off 24 (type): 0x%x\n", 
+		pci_attr_r32_u(devind, capptr+24));
+#endif
 }
 
 /*
