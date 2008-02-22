@@ -17,7 +17,7 @@ OBJ =	main.o open.o read.o write.o pipe.o dmap.o \
 	path.o device.o mount.o link.o exec.o \
 	filedes.o stadir.o protect.o time.o \
 	lock.o misc.o utility.o select.o timers.o table.o \
-	vnode.o vmnt.o request.o
+	vnode.o vmnt.o request.o kputc.o
 
 # build local binary 
 install all build:	$(SERVER)
