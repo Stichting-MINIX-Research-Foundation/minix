@@ -119,15 +119,19 @@ int rw_flag;			/* READING or WRITING */
 
   /* Character special files. */
   if (char_spec) {
-      dev_t dev;
-      /*dev = (dev_t) f->filp_ino->i_zone[0];*/
-      dev = (dev_t) vp->v_sdev;
-      r = dev_io(op, dev, usr, m_in.buffer, position, m_in.nbytes, oflags);
-      if (r >= 0) {
-          cum_io = r;
-          position = add64ul(position, r);
-          r = OK;
-      }
+	dev_t dev;
+	int suspend_reopen;
+
+	suspend_reopen= (f->filp_state != FS_NORMAL);
+
+	dev = (dev_t) vp->v_sdev;
+	r = dev_io(op, dev, usr, m_in.buffer, position, m_in.nbytes, oflags,
+		suspend_reopen);
+	if (r >= 0) {
+		cum_io = r;
+		position = add64ul(position, r);
+		r = OK;
+	}
   } 
   /* Block special files. */
   else if (block_spec) {
