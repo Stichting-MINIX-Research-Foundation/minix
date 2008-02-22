@@ -70,6 +70,49 @@ PUBLIC int main()
 	printf("VFS: got call %d from %d\n", call_nr, who_e);
 #endif
 
+	if (call_nr == DEV_REVIVE)
+	{
+		endpoint_t endpt;
+
+		endpt = m_in.REP_ENDPT;
+		if(endpt == FS_PROC_NR) {
+			endpt = suspended_ep(m_in.m_source, m_in.REP_IO_GRANT);
+			if(endpt == NONE) {
+				printf("FS: proc with "
+			"grant %d from %d not found (revive)\n",
+					m_in.REP_IO_GRANT, m_in.m_source);
+				continue;
+			}
+		}
+		revive(endpt, m_in.REP_STATUS);
+		continue;
+	}
+	if (call_nr == DEV_REOPEN_REPL)
+	{
+		reopen_reply();
+		continue;
+	}
+	if (call_nr == DEV_CLOSE_REPL)
+	{
+		close_reply();
+		continue;
+	}
+	if (call_nr == DEV_SEL_REPL1)
+	{
+		select_reply1();
+		continue;
+	}
+	if (call_nr == DEV_SEL_REPL2)
+	{
+		select_reply2();
+		continue;
+	}
+	if (call_nr == DIAG_REPL)
+	{
+		diag_repl();
+		continue;
+	}
+
  	/* Check for special control messages first. */
         if ((call_nr & NOTIFY_MESSAGE)) {
 		if (call_nr == PROC_EVENT)
@@ -243,7 +286,7 @@ int result;			/* result of the call (usually OK or error #) */
 	printf("vfs:reply: replying %d for call %d\n", result, call_nr);
 
   m_out.reply_type = result;
-  s = send(whom, &m_out);
+  s = sendnb(whom, &m_out);
   if (s != OK) printf("VFS: couldn't send reply %d to %d: %d\n",
 	result, whom, s);
 }
