@@ -54,7 +54,8 @@ OBJECTS	= \
 	$(SYSTEM)(do_vm_setbuf.o) \
 	$(SYSTEM)(do_sprofile.o) \
 	$(SYSTEM)(do_cprofile.o) \
-	$(SYSTEM)(do_profbuf.o)
+	$(SYSTEM)(do_profbuf.o) \
+	$(SYSTEM)(do_mapdma.o) 
 
 build $(SYSTEM):	$(OBJECTS)
 	aal cr $@ *.o
@@ -168,3 +169,6 @@ $(SYSTEM)(do_cprofile.o):       do_cprofile.c
 
 $(SYSTEM)(do_profbuf.o):        do_profbuf.c
 	$(CC) do_profbuf.c
+
+$(SYSTEM)(do_mapdma.o):        do_mapdma.c
+	$(CC) do_mapdma.c
