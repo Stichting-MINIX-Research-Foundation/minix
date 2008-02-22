@@ -194,7 +194,7 @@ PUBLIC int do_fcntl()
 
      case F_SETFL:
 	/* Set file status flags (O_NONBLOCK and O_APPEND). */
-	fl = O_NONBLOCK | O_APPEND;
+	fl = O_NONBLOCK | O_APPEND | O_REOPEN;
 	f->filp_flags = (f->filp_flags & ~fl) | (m_in.addr & fl);
 	return(OK);
 
@@ -457,7 +457,10 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
 		vp = rfilp->filp_vno;
 		if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;
 		if ((dev_t) vp->v_sdev != dev) continue;
-		dev_close(dev);
+
+		(void) dev_close(dev, rfilp-filp);
+		/* Ignore any errors, even SUSPEND. */
+
 		rfilp->filp_mode = FILP_CLOSED;
           }
       }
