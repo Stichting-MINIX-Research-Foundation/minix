@@ -143,6 +143,8 @@ PRIVATE int common_open(register int oflags, mode_t omode)
       case I_CHAR_SPECIAL:
           /* Invoke the driver for special processing. */
           r = dev_open(vp->v_sdev, who_e, bits | (oflags & ~O_ACCMODE));
+	  if (r == SUSPEND)
+		suspend(XDOPEN);	/* suspend caller */
           break;
 
       case I_BLOCK_SPECIAL:
@@ -509,8 +511,6 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
 }
 
 
-
-
 /*===========================================================================*
  *				do_mknod				     *
  *===========================================================================*/
@@ -707,51 +707,12 @@ int fd_nr;
   register struct filp *rfilp;
   register struct vnode *vp;
   struct file_lock *flp;
-  int rw, mode_word, lock_count;
-  dev_t dev;
+  int lock_count;
 
   /* First locate the vnode that belongs to the file descriptor. */
   if ( (rfilp = get_filp2(rfp, fd_nr)) == NIL_FILP) return(err_code);
-
   vp = rfilp->filp_vno;
-
-  if (rfilp->filp_count - 1 == 0 && rfilp->filp_mode != FILP_CLOSED) {
-	/* Check to see if the file is special. */
-	mode_word = vp->v_mode & I_TYPE;
-	if (mode_word == I_CHAR_SPECIAL || mode_word == I_BLOCK_SPECIAL) {
-		dev = (dev_t) vp->v_sdev;
-		if (mode_word == I_BLOCK_SPECIAL)  {
-			if (vp->v_bfs_e == ROOT_FS_E)
-			{
-				/* Invalidate the cache unless the special is
-				 * mounted. Assume that the root filesystem's
-				 * is open only for fsck.
-			 	 */
-          			req_flush(vp->v_bfs_e, dev);
-			}
-		}
-		/* Do any special processing on device close. */
-		dev_close(dev);
-	}
-  }
-
-  /* If the inode being closed is a pipe, release everyone hanging on it. */
-  if (vp->v_pipe == I_PIPE) {
-	rw = (rfilp->filp_mode & R_BIT ? WRITE : READ);
-	release(vp, rw, NR_PROCS);
-  }
-
-  /* If a write has been done, the inode is already marked as DIRTY. */
-  if (--rfilp->filp_count == 0) {
-	if (vp->v_pipe == I_PIPE) {
-		/* Last reader or writer is going. Tell MFS about latest
-		 * pipe size.
-		 */
-		truncate_vn(vp, vp->v_size);
-	}
-		
-	put_vnode(rfilp->filp_vno);
-  }
+  close_filp(rfilp);
 
   FD_CLR(fd_nr, &rfp->fp_cloexec_set);
   rfp->fp_filp[fd_nr] = NIL_FILP;
@@ -769,6 +730,68 @@ int fd_nr;
   }
   if (nr_locks < lock_count) lock_revive();	/* lock released */
   return(OK);
+}
+
+
+/*===========================================================================*
+ *				close_filp				     *
+ *===========================================================================*/
+PUBLIC void close_filp(fp)
+struct filp *fp;
+{
+  int mode_word, rw;
+  dev_t dev;
+  struct vnode *vp;
+
+  vp = fp->filp_vno;
+  if (fp->filp_count - 1 == 0 && fp->filp_mode != FILP_CLOSED) {
+	/* Check to see if the file is special. */
+	mode_word = vp->v_mode & I_TYPE;
+	if (mode_word == I_CHAR_SPECIAL || mode_word == I_BLOCK_SPECIAL) {
+		dev = (dev_t) vp->v_sdev;
+		if (mode_word == I_BLOCK_SPECIAL)  {
+			if (vp->v_bfs_e == ROOT_FS_E)
+			{
+				/* Invalidate the cache unless the special is
+				 * mounted. Assume that the root filesystem's
+				 * is open only for fsck.
+			 	 */
+          			req_flush(vp->v_bfs_e, dev);
+			}
+		}
+		/* Do any special processing on device close. */
+		(void) dev_close(dev, fp-filp);
+
+		/* Ignore any errors, even SUSPEND. */
+	}
+  }
+
+  /* If the inode being closed is a pipe, release everyone hanging on it. */
+  if (vp->v_pipe == I_PIPE) {
+	rw = (fp->filp_mode & R_BIT ? WRITE : READ);
+	release(vp, rw, NR_PROCS);
+  }
+
+  /* If a write has been done, the inode is already marked as DIRTY. */
+  if (--fp->filp_count == 0) {
+	if (vp->v_pipe == I_PIPE) {
+		/* Last reader or writer is going. Tell MFS about latest
+		 * pipe size.
+		 */
+		truncate_vn(vp, vp->v_size);
+	}
+		
+	put_vnode(fp->filp_vno);
+  }
+
+}
+
+/*===========================================================================*
+ *				close_reply				     *
+ *===========================================================================*/
+PUBLIC void close_reply()
+{
+	/* No need to do anything */
 }
 
 
