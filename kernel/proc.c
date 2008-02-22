@@ -45,6 +45,7 @@
 #include <stddef.h>
 #include <signal.h>
 #include <minix/portio.h>
+#include <minix/u64.h>
 
 /* Scheduling and message passing functions. The functions are available to 
  * other parts of the kernel through lock_...(). The lock temporarily disables 
@@ -106,10 +107,15 @@ long bit_map;			/* notification event set or flags */
   int src_dst_p;				/* Process slot number */
   vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
 
+  if (caller_ptr->p_endpoint == ipc_stats_target)
+	ipc_stats.total= add64u(ipc_stats.total, 1);
+
 #if 1
   if (RTS_ISSET(caller_ptr, SLOT_FREE))
   {
 	kprintf("called by the dead?!?\n");
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.deadproc++;
 	return EINVAL;
   }
 #endif
@@ -134,6 +140,8 @@ long bit_map;			/* notification event set or flags */
 		kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
 			call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
+  		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.bad_endpoint++;
 		return EINVAL;
 	}
 	src_dst_p = src_dst_e;
@@ -147,6 +155,8 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 		kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
 			call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
+  		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.bad_endpoint++;
 		return EDEADSRCDST;
 	}
 
@@ -160,9 +170,12 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 			nr_to_id(src_dst_p))) {
 #if DEBUG_ENABLE_IPC_WARNINGS
 			kprintf(
-		"sys_call: ipc sendrec mask denied trap %d from %d to %d\n",
-				call_nr, proc_nr(caller_ptr), src_dst_p);
+	"sys_call: ipc sendrec mask denied trap %d from %d ('%s') to %d\n",
+				call_nr, proc_nr(caller_ptr),
+				caller_ptr->p_name, src_dst_p);
 #endif
+			if (caller_ptr->p_endpoint == ipc_stats_target)
+				ipc_stats.dst_not_allowed++;
 			return(ECALLDENIED);	/* call denied by ipc mask */
 		}
 	}
@@ -175,6 +188,8 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 			"sys_call: ipc mask denied trap %d from %d to %d\n",
 				call_nr, proc_nr(caller_ptr), src_dst_p);
 #endif
+			if (caller_ptr->p_endpoint == ipc_stats_target)
+				ipc_stats.dst_not_allowed++;
 			return(ECALLDENIED);	/* call denied by ipc mask */
 		}
 	}
@@ -187,7 +202,9 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_p);
 #endif
-      return(ETRAPDENIED);		/* trap denied by mask or kernel */
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.bad_call++;
+	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
   /* Check if the process has privileges for the requested call. Calls to the 
@@ -199,19 +216,21 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_p);
 #endif
-      return(ETRAPDENIED);		/* trap denied by mask or kernel */
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.call_not_allowed++;
+	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
-#if 0
   if ((iskerneln(src_dst_p) && _function != SENDREC
            && _function != RECEIVE)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           function, proc_nr(caller_ptr), src_dst);
 #endif
-      return(ETRAPDENIED);		/* trap denied by mask or kernel */
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.call_not_allowed++;
+	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
-#endif
 
   /* If the call involves a message buffer, i.e., for SEND, SENDNB, SENDREC, 
    * or RECEIVE, check the message pointer. This check allows a message to be 
@@ -230,6 +249,8 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 		"sys_call: invalid message pointer, trap %d, caller %d\n",
 			call_nr, proc_nr(caller_ptr));
 #endif
+		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.bad_buffer++;
 		return(EFAULT); 		/* invalid message pointer */
 	}
   }
@@ -241,7 +262,9 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
           kprintf("sys_call: trap %d from %d to %d deadlocked, group size %d\n",
               call_nr, proc_nr(caller_ptr), src_dst_p, group_size);
 #endif
-          return(ELOCKED);
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.deadlock++;
+        return(ELOCKED);
       }
   }
 
@@ -359,7 +382,12 @@ unsigned flags;				/* system call flags */
   dst_p = _ENDPOINT_P(dst_e);
   dst_ptr = proc_addr(dst_p);
 
-  if (RTS_ISSET(dst_ptr, NO_ENDPOINT)) return EDSTDIED;
+  if (RTS_ISSET(dst_ptr, NO_ENDPOINT))
+  {
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.dst_died++;
+	return EDSTDIED;
+  }
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
@@ -383,6 +411,8 @@ unsigned flags;				/* system call flags */
 	*xpp = caller_ptr;			/* add caller to end */
 	caller_ptr->p_q_link = NIL_PROC;	/* mark new end of list */
   } else {
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.not_ready++;
 	return(ENOTREADY);
   }
   return(OK);
@@ -413,7 +443,12 @@ unsigned flags;				/* system call flags */
   else
   {
 	okendpt(src_e, &src_p);
-	if (RTS_ISSET(proc_addr(src_p), NO_ENDPOINT)) return ESRCDIED;
+	if (RTS_ISSET(proc_addr(src_p), NO_ENDPOINT))
+	{
+		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.src_died++;
+		return ESRCDIED;
+	}
   }
 
 
@@ -458,6 +493,8 @@ unsigned flags;				/* system call flags */
 	    if (RTS_ISSET(*xpp, SLOT_FREE))
 	    {
 		kprintf("listening to the dead?!?\n");
+		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.deadproc++;
 		return EINVAL;
 	    }
 #endif
@@ -499,7 +536,9 @@ unsigned flags;				/* system call flags */
       RTS_SET(caller_ptr, RECEIVING);
       return(OK);
   } else {
-      return(ENOTREADY);
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		ipc_stats.not_ready++;
+	return(ENOTREADY);
   }
 }
 
@@ -564,6 +603,8 @@ size_t size;
 	{
 		kprintf(
 		"mini_senda: warning caller has no privilege structure\n");
+		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.no_priv++;
 		return EPERM;
 	}
 
@@ -581,7 +622,11 @@ size_t size;
 	 * times the number of process table entries.
 	 */
 	if (size > 16*(NR_TASKS + NR_PROCS))
+	{
+		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.bad_size++;
 		return EDOM;
+	}
 	
 	/* Map table */
 	tab_phys= umap_local(caller_ptr, D, (vir_bytes)table,
@@ -589,6 +634,8 @@ size_t size;
 	if (tab_phys == 0)
 	{
 		kprintf("mini_senda: got bad table pointer/size\n");
+		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.bad_buffer++;
 		return EFAULT;
 	}
 
@@ -611,6 +658,8 @@ size_t size;
 		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY) ||
 			!(flags & AMF_VALID))
 		{
+			if (caller_ptr->p_endpoint == ipc_stats_target)
+				ipc_stats.bad_senda++;
 			return EINVAL;
 		}
 
@@ -784,6 +833,8 @@ struct proc *dst_ptr;
 	{
 		kprintf("try_one: got bad table pointer/size\n");
 		privp->s_asynsize= 0;
+		if (src_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.bad_buffer++;
 		return EFAULT;
 	}
 
@@ -810,6 +861,8 @@ struct proc *dst_ptr;
 		{
 			kprintf("try_one: bad bits in table\n");
 			privp->s_asynsize= 0;
+			if (src_ptr->p_endpoint == ipc_stats_target)
+				ipc_stats.bad_senda++;
 			return EINVAL;
 		}
 
@@ -831,15 +884,8 @@ struct proc *dst_ptr;
 
 		if (tabent.dst != dst_e)
 		{
-			kprintf("try_one: wrong dst %d, looking for %d\n",
-				tabent.dst, dst_e);
 			continue;
 		}
-
-#if 0
-		kprintf("try_one: entry[%d]: flags 0x%x dst %d\n",
-			i, tabent.flags, tabent.dst);
-#endif
 
 		/* Deliver message */
 		table_ptr= (asynmsg_t *)privp->s_asyntab;

@@ -41,6 +41,32 @@ EXTERN irq_hook_t irq_hooks[NR_IRQ_HOOKS];	/* hooks for general use */
 EXTERN int irq_actids[NR_IRQ_VECTORS];		/* IRQ ID bits active */
 EXTERN int irq_use;				/* map of all in-use irq's */
 
+EXTERN struct ipc_stats
+{
+	unsigned long deadproc;
+	unsigned long bad_endpoint;
+	unsigned long dst_not_allowed;
+	unsigned long bad_call;
+	unsigned long call_not_allowed;
+	unsigned long bad_buffer;
+	unsigned long deadlock;
+	unsigned long not_ready;
+	unsigned long src_died;
+	unsigned long dst_died;
+	unsigned long no_priv;
+	unsigned long bad_size;
+	unsigned long bad_senda;
+	u64_t total;
+} ipc_stats;
+extern endpoint_t ipc_stats_target;
+
+EXTERN struct system_stats
+{
+	unsigned long bad_req;
+	unsigned long not_allowed;
+	u64_t total;
+} sys_stats;
+
 /* Miscellaneous. */
 EXTERN reg_t mon_ss, mon_sp;		/* boot monitor stack */
 EXTERN int mon_return;			/* true if we can return to monitor */
