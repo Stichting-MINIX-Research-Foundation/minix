@@ -19,7 +19,7 @@ EXTERN struct vnode {
   dev_t v_dev;                  /* device number on which the corresponding 
                                    inode resides */
   
-  Dev_t v_sdev;                 /* device number for special files */
+  dev_t v_sdev;                 /* device number for special files */
   unsigned short v_index;       /* inode's index in the FS inode table */
   struct vmnt *v_vmnt;          /* vmnt object of the partition */
 
