@@ -162,7 +162,12 @@ struct driver *dp;	/* Device dependent entry points. */
 		mess.REP_ENDPT = proc_nr;
 		/* Status is # of bytes transferred or error code. */
 		mess.REP_STATUS = r;	
-		send(device_caller, &mess);
+		r= sendnb(device_caller, &mess);
+		if (r != OK)
+		{
+			printf("driver_task: unable to sendnb to %d: %d\n",
+				device_caller, r);
+		}
 	}
   }
 }
