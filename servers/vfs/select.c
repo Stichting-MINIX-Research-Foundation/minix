@@ -34,7 +34,10 @@ PRIVATE struct selectentry {
 	fd_set *vir_readfds, *vir_writefds, *vir_errorfds;
 	struct filp *filps[OPEN_MAX];
 	int type[OPEN_MAX];
+	int deferred;		/* awaiting initial reply from driver */
+	int deferred_fd;	/* fd awaiting initial reply from driver */
 	int nfds, nreadyfds;
+	int dontblock;
 	clock_t expiry;
 	timer_t timer;	/* if expiry > 0 */
 } selecttab[MAXSELECTS];
@@ -47,12 +50,17 @@ FORWARD _PROTOTYPE(int select_match_file, (struct filp *f));
 
 FORWARD _PROTOTYPE(int select_request_general,
 	 (struct filp *f, int *ops, int block));
+FORWARD _PROTOTYPE(int select_request_asynch,
+	 (struct filp *f, int *ops, int block));
 FORWARD _PROTOTYPE(int select_major_match,
 	(int match_major, struct filp *file));
 
 FORWARD _PROTOTYPE(void select_cancel_all, (struct selectentry *e));
 FORWARD _PROTOTYPE(void select_wakeup, (struct selectentry *e, int r));
 FORWARD _PROTOTYPE(void select_return, (struct selectentry *, int));
+FORWARD _PROTOTYPE(void sel_restart_dev, (void));
+FORWARD _PROTOTYPE(void filp_status, (struct filp *fp, int status));
+FORWARD _PROTOTYPE(void restart_proc, (int slot));
 
 /* The Open Group:
  * "The pselect() and select() functions shall support
@@ -69,7 +77,7 @@ PRIVATE struct fdtype {
 	{ select_request_general, NULL, TTY_MAJOR },
 	{ select_request_general, NULL, INET_MAJOR },
 	{ select_request_pipe, select_match_pipe, 0 },
-	{ select_request_general, NULL, LOG_MAJOR },
+	{ select_request_asynch, NULL, LOG_MAJOR },
 };
 #define SEL_FDS		(sizeof(fdtypes) / sizeof(fdtypes[0]))
 
@@ -105,10 +113,49 @@ PRIVATE int select_request_general(struct filp *f, int *ops, int block)
 	int rops = *ops;
 	if (block) rops |= SEL_NOTIFY;
 	*ops = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL,
-		cvu64(0), 0, 0);
+		cvu64(0), 0, 0, FALSE);
 	if (*ops < 0)
 		return SEL_ERR;
 	return SEL_OK;
+}
+
+/*===========================================================================*
+ *				select_request_asynch			     *
+ *===========================================================================*/
+PRIVATE int select_request_asynch(struct filp *f, int *ops, int block)
+{
+	int r, rops;
+	struct dmap *dp;
+
+	rops = *ops;
+	f->filp_select_flags |= FSF_UPDATE;
+	if (block)
+	{
+		rops |= SEL_NOTIFY;
+		f->filp_select_flags |= FSF_BLOCK;
+	}
+	if (f->filp_select_flags & FSF_BUSY)
+		return SEL_DEFERRED;
+
+	dp = &dmap[((f->filp_vno->v_sdev) >> MAJOR) & BYTE];
+	if (dp->dmap_sel_filp)
+		return SEL_DEFERRED;
+
+	f->filp_select_flags &= ~FSF_UPDATE;
+	r = dev_io(VFS_DEV_SELECT, f->filp_vno->v_sdev, rops, NULL,
+		cvu64(0), 0, 0, FALSE);
+	if (r < 0 && r != SUSPEND)
+		return SEL_ERR;
+
+	if (r != SUSPEND)
+	{
+		panic(__FILE__, "select_request_asynch: expected SUSPEND got",
+			r);
+	}
+	f->filp_count++;
+	dp->dmap_sel_filp= f;
+	f->filp_select_flags |= FSF_BUSY;
+	return SEL_DEFERRED;
 }
 
 /*===========================================================================*
@@ -269,6 +316,8 @@ PUBLIC int do_select(void)
 	else
 		block = 0; /* timeout set as (0,0) - this effects a poll */
 
+	selecttab[s].dontblock= !block;
+
 	/* no timeout set (yet) */
 	selecttab[s].expiry = 0;
 
@@ -338,11 +387,19 @@ PUBLIC int do_select(void)
 #if DEBUG_SELECT
 			printf("%d\n", selecttab[s].filps[fd]->filp_select_ops);
 #endif
-			if ((r = fdtypes[type].select_request(filp,
-				&wantops, block)) != SEL_OK) {
+			r = fdtypes[type].select_request(filp, &wantops,
+				block);
+			if (r != SEL_OK) {
+				if (r == SEL_DEFERRED)
+				{
+					selecttab[s].deferred= TRUE;
+					selecttab[s].deferred_fd= 0;
+					continue;
+				}
 				/* error or bogus return code.. backpaddle */
 				select_cancel_all(&selecttab[s]);
-				printf("select: select_request returned error\n");
+				printf(
+				"select: select_request returned error\n");
 				return EINVAL;
 			}
 			if (wantops) {
@@ -375,7 +432,7 @@ PUBLIC int do_select(void)
 #endif
 	}
 
-	if (selecttab[s].nreadyfds > 0 || !block) {
+	if (selecttab[s].nreadyfds > 0 || (!block && !selecttab[s].deferred)) {
 		/* fd's were found that were ready to go right away, and/or
 		 * we were instructed not to block at all. Must return
 		 * immediately.
@@ -714,3 +771,272 @@ PUBLIC void select_unsuspend_by_endpt(int proc_e)
 	return;
 }
 
+/*===========================================================================*
+ *				select_reply1				     *
+ *===========================================================================*/
+PUBLIC void select_reply1()
+{
+	int i, s, minor, status;
+	endpoint_t driver_e;
+	dev_t dev;
+	struct filp *fp;
+	struct dmap *dp;
+	struct vnode *vp;
+
+	driver_e= m_in.m_source;
+	minor= m_in.DEV_MINOR;
+	status= m_in.DEV_SEL_OPS;
+
+	/* Locate dmap entry */
+	for (i= 0, dp= dmap; i<NR_DEVICES; i++, dp++)
+	{
+		if (dp->dmap_driver == driver_e)
+			break;
+	}
+	if (i >= NR_DEVICES)
+	{
+		printf("select_reply1: proc %d is not a recoqnized driver\n",
+			driver_e);
+		return;
+	}
+	dev= (i << MAJOR) | (minor & BYTE);
+
+	fp= dp->dmap_sel_filp;
+	if (!fp)
+	{
+		printf("select_reply1: strange, no dmap_sel_filp\n");
+		return;
+	}
+
+	if (!(fp->filp_select_flags & FSF_BUSY))
+		panic(__FILE__, "select_reply1: strange, not FSF_BUSY", NO_NUM);
+
+	vp= fp->filp_vno;
+	if (!vp)
+		panic(__FILE__, "select_reply1: FSF_BUSY but no vp", NO_NUM);
+
+	if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL)
+	{
+		panic(__FILE__, "select_reply1: FSF_BUSY but not char special",
+			NO_NUM);
+	}
+
+	if (vp->v_sdev != dev)
+	{
+		printf("select_reply1: strange, reply from wrong dev\n");
+		return;
+	}
+
+	dp->dmap_sel_filp= NULL;
+	fp->filp_select_flags &= ~FSF_BUSY;
+	if (!(fp->filp_select_flags & (FSF_UPDATE|FSF_BLOCK)))
+		fp->filp_select_ops= 0;
+	if (status != 0)
+	{
+		if (status > 0)
+		{
+			/* Clear the replied bits from the request mask unless
+			 * FSF_UPDATE is set.
+			 */
+			if (!(fp->filp_select_flags & FSF_UPDATE))
+				fp->filp_select_ops &= ~status;
+		}
+		filp_status(fp, status);
+	}
+	if (fp->filp_count > 1)
+		fp->filp_count--;
+	else
+	{
+		if (fp->filp_count != 1)
+		{
+			panic(__FILE__, "select_reply1: bad filp_count",
+				fp->filp_count);
+		}
+		close_filp(fp);
+	}
+	sel_restart_dev();
+}
+
+
+/*===========================================================================*
+ *				select_reply2				     *
+ *===========================================================================*/
+PUBLIC void select_reply2()
+{
+	int i, s, minor, status;
+	endpoint_t driver_e;
+	dev_t dev;
+	struct filp *fp;
+	struct dmap *dp;
+	struct vnode *vp;
+
+	driver_e= m_in.m_source;
+	minor= m_in.DEV_MINOR;
+	status= m_in.DEV_SEL_OPS;
+
+	/* Locate dmap entry */
+	for (i= 0, dp= dmap; i<NR_DEVICES; i++, dp++)
+	{
+		if (dp->dmap_driver == driver_e)
+			break;
+	}
+	if (i >= NR_DEVICES)
+	{
+		printf("select_reply2: proc %d is not a recognized driver\n",
+			driver_e);
+		return;
+	}
+	dev= (i << MAJOR) | (minor & BYTE);
+
+	/* Find filedescriptors for this device */
+	for (s= 0; s<MAXSELECTS; s++)
+	{
+		if (!selecttab[s].requestor)
+			continue;	/* empty slot */
+					 
+		for (i= 0; i<OPEN_MAX; i++)
+		{
+			fp= selecttab[s].filps[i];
+			if (!fp)
+				continue;
+			vp= fp->filp_vno;
+			if (!vp)
+				continue;
+			if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL)
+				continue;
+
+			if (vp->v_sdev != dev)
+				continue;
+
+			if (status < 0)
+			{
+				printf("select_reply2: should handle error\n");
+			}
+			else 
+			{
+				/* Clear the replied bits from the request
+				 * mask unless FSF_UPDATE is set.
+				 */
+				if (!(fp->filp_select_flags & FSF_UPDATE))
+					fp->filp_select_ops &= ~status;
+				ops2tab(status, i, &selecttab[s]);
+			}
+		}
+		if (selecttab[s].nreadyfds > 0)
+			restart_proc(s);
+	}
+}
+
+
+PRIVATE void sel_restart_dev()
+{
+	int i, s;
+	struct filp *fp;
+	struct vnode *vp;
+	struct dmap *dp;
+
+	/* Locate filps that can be restarted */
+	for (s= 0; s<MAXSELECTS; s++)
+	{
+		if (!selecttab[s].requestor)
+			continue;	/* empty slot */
+		if (!selecttab[s].deferred)
+			continue;	/* process is not waiting for an
+					 * initial reply.
+					 */
+		for (i= 0; i<OPEN_MAX; i++)
+		{
+			fp= selecttab[s].filps[i];
+			if (!fp)
+				continue;
+			if (fp->filp_select_flags & FSF_BUSY)
+				continue;
+			if (!(fp->filp_select_flags & FSF_UPDATE))
+				continue;
+
+			vp= fp->filp_vno;
+			if (!vp)
+			{
+				panic(__FILE__,
+					"sel_restart_dev: FSF_UPDATE but no vp",
+					NO_NUM);
+			}
+			if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL)
+			{
+				panic(__FILE__,
+			"sel_restart_dev: FSF_UPDATE but not char special",
+					NO_NUM);
+			}
+
+			dp = &dmap[((vp->v_sdev) >> MAJOR) & BYTE];
+			if (dp->dmap_sel_filp)
+				continue;
+
+			printf(
+			"sel_restart_dev: should consider fd %d in slot %d\n",
+				i, s);
+		}
+	}
+}
+
+PRIVATE void filp_status(fp, status)
+struct filp *fp;
+int status;
+{
+	int i, s;
+
+	/* Locate processes that need to know about this result */
+	for (s= 0; s<MAXSELECTS; s++)
+	{
+		if (!selecttab[s].requestor)
+			continue;	/* empty slot */
+
+		for (i= 0; i<OPEN_MAX; i++)
+		{
+			if (selecttab[s].filps[i] != fp)
+				continue;
+
+			if (status < 0)
+			{
+				printf("filp_status: should handle error\n");
+			}
+			else 
+				ops2tab(status, i, &selecttab[s]);
+
+			restart_proc(s);
+		}
+	}
+}
+
+PRIVATE void restart_proc(slot)
+int slot;
+{
+	int fd;
+	struct selectentry *se;
+	struct filp *fp;
+
+	se= &selecttab[slot];
+	if (se->deferred)
+	{
+		for (fd= se->deferred_fd; fd < OPEN_MAX; fd++)
+		{
+			fp= se->filps[fd];
+			if (!fp)
+				continue;
+			if (fp->filp_select_flags & (FSF_UPDATE|FSF_BUSY))
+				break;
+		}
+		if (fd < OPEN_MAX)
+		{
+			se->deferred_fd= fd;
+			return;
+		}
+		se->deferred= FALSE;
+	}
+	if (se->nreadyfds > 0 || se->dontblock)
+	{
+		copy_fdsets(se);
+		select_wakeup(se, se->nreadyfds);
+		se->requestor= NULL;
+	}
+}
