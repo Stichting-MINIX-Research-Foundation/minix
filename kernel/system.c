@@ -37,6 +37,7 @@
 #include <sys/sigcontext.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
+#include <minix/u64.h>
 
 /* Declaration of the call vector that defines the mapping of system calls 
  * to handler functions. The vector is initialized in sys_init() with map(), 
@@ -77,19 +78,37 @@ PUBLIC void sys_task()
       okendpt(who_e, &who_p);
       caller_ptr = proc_addr(who_p);
 
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		sys_stats.total= add64u(sys_stats.total, 1);
+
       /* See if the caller made a valid request and try to handle it. */
       if (call_nr < 0 || call_nr >= NR_SYS_CALLS) {	/* check call number */
 #if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("SYSTEM: illegal request %d from %d.\n",
 		call_nr,m.m_source);
 #endif
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		sys_stats.bad_req++;
 	  result = EBADREQUEST;			/* illegal message type */
       } 
       else if (!GET_BIT(priv(caller_ptr)->s_k_call_mask, call_nr)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("SYSTEM: request %d from %d denied.\n",
-		call_nr,m.m_source);
+	static int curr= 0, limit= 100, extra= 20;
+
+	if (curr < limit+extra)
+	{
+		kprintf("SYSTEM: request %d from %d denied.\n",
+			call_nr, m.m_source);
+	} else if (curr == limit+extra)
+	{
+		kprintf("sys_task: no debug output for a while\n");
+	}
+	else if (curr == 2*limit-1)
+		limit *= 2;
+	curr++;
 #endif
+	if (caller_ptr->p_endpoint == ipc_stats_target)
+		sys_stats.not_allowed++;
 	  result = ECALLDENIED;			/* illegal message type */
       }
       else {
@@ -194,6 +213,7 @@ PRIVATE void initialize(void)
   map(SYS_READBIOS, do_readbios);	/* read from BIOS locations */
   map(SYS_IOPENABLE, do_iopenable); 	/* Enable I/O */
   map(SYS_SDEVIO, do_sdevio);		/* phys_insb, _insw, _outsb, _outsw */
+  map(SYS_MAPDMA, do_mapdma);		
 #endif
 }
 
