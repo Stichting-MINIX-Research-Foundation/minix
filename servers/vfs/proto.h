@@ -11,11 +11,13 @@ struct vnode;
 
 /* device.c */
 _PROTOTYPE( int dev_open, (Dev_t dev, int proc, int flags)		);
-_PROTOTYPE( void dev_close, (Dev_t dev)					);
+_PROTOTYPE( int dev_reopen, (Dev_t dev, int filp_no, int flags)		);
+_PROTOTYPE( int dev_close, (Dev_t dev, int filp_no)			);
 _PROTOTYPE( int dev_io, (int op, Dev_t dev, int proc, void *buf,
-			u64_t pos, int bytes, int flags)		);
+		u64_t pos, int bytes, int flags, int suspend_reopen)	);
 _PROTOTYPE( int gen_opcl, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr)		);
+_PROTOTYPE( int asyn_io, (int task_nr, message *mess_ptr)		);
 _PROTOTYPE( int no_dev, (int op, Dev_t dev, int proc, int flags)	);
 _PROTOTYPE( int no_dev_io, (int, message *)				);
 _PROTOTYPE( int tty_opcl, (int op, Dev_t dev, int proc, int flags)	);
@@ -26,6 +28,10 @@ _PROTOTYPE( int do_ioctl, (void)					);
 _PROTOTYPE( void pm_setsid, (int proc_e)				);
 _PROTOTYPE( void dev_status, (message *)				);
 _PROTOTYPE( void dev_up, (int major)					);
+_PROTOTYPE( endpoint_t suspended_ep, (endpoint_t driver,
+						cp_grant_id_t g)	);
+_PROTOTYPE( void reopen_reply, (void)					);
+_PROTOTYPE( int asynsend, (endpoint_t dst, message *mp)			);
 
 /* dmap.c */
 _PROTOTYPE( int do_devctl, (void)					);
@@ -50,6 +56,9 @@ _PROTOTYPE( int get_fd, (int start, mode_t bits, int *k,
 _PROTOTYPE( struct filp *get_filp, (int fild)				);
 _PROTOTYPE( struct filp *get_filp2, (struct fproc *rfp, int fild)	);
 _PROTOTYPE( int inval_filp, (struct filp *)				);
+
+/* kputc.c */
+_PROTOTYPE( void diag_repl, (void)					);
 
 /* link.c */
 _PROTOTYPE( int do_link, (void)						);
@@ -90,6 +99,8 @@ _PROTOTYPE( int unmount, (Dev_t dev)					);
 /* open.c */
 _PROTOTYPE( int do_close, (void)					);
 _PROTOTYPE( int close_fd, (struct fproc *rfp, int fd_nr)		);
+_PROTOTYPE( void close_filp, (struct filp *fp)				);
+_PROTOTYPE( void close_reply, (void)					);
 _PROTOTYPE( int do_creat, (void)					);
 _PROTOTYPE( int do_lseek, (void)					);
 _PROTOTYPE( int do_llseek, (void)					);
@@ -109,8 +120,7 @@ _PROTOTYPE( int lookup_lastdir, (int use_realuid, struct vnode **vpp)	);
 
 /* pipe.c */
 _PROTOTYPE( int do_pipe, (void)						);
-_PROTOTYPE( int do_unpause, (void)					);
-_PROTOTYPE( int unpause, (int proc_nr_e)				);
+_PROTOTYPE( void unpause, (int proc_nr_e)				);
 _PROTOTYPE( int Xpipe_check, (struct vnode *vp, int rw_flag,
 	      int oflags, int bytes, u64_t position, int notouch)	);
 _PROTOTYPE( void release, (struct vnode *vp, int call_nr, int count)	);
@@ -122,6 +132,8 @@ _PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
 _PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
 _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
 _PROTOTYPE( void unsuspend_by_endpt, (int)				);
+_PROTOTYPE( void select_reply1, (void)					);
+_PROTOTYPE( void select_reply2, (void)					);
 
 /* protect.c */
 _PROTOTYPE( int do_access, (void)					);
