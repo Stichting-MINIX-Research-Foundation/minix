@@ -24,7 +24,6 @@ FORWARD _PROTOTYPE( void do_find_dev, (message *mp)			);
 FORWARD _PROTOTYPE( void do_ids, (message *mp)				);
 FORWARD _PROTOTYPE( void do_dev_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_dev_name_s, (message *mp)			);
-FORWARD _PROTOTYPE( void do_slot_name, (message *mp)			);
 FORWARD _PROTOTYPE( void do_slot_name_s, (message *mp)			);
 FORWARD _PROTOTYPE( void do_set_acl, (message *mp)			);
 FORWARD _PROTOTYPE( void do_del_acl, (message *mp)			);
@@ -64,7 +63,6 @@ int main(void)
 		case BUSC_PCI_FIND_DEV: do_find_dev(&m); break;
 		case BUSC_PCI_IDS: do_ids(&m); break;
 		case BUSC_PCI_DEV_NAME: do_dev_name(&m); break;
-		case BUSC_PCI_SLOT_NAME: do_slot_name(&m); break;
 		case BUSC_PCI_RESERVE: do_reserve(&m); break;
 		case BUSC_PCI_ATTR_R8: do_attr_r8(&m); break;
 		case BUSC_PCI_ATTR_R16: do_attr_r16(&m); break;
@@ -189,10 +187,16 @@ message *mp;
 
 	devind= mp->m1_i1;
 
-	pci_ids(devind, &vid, &did);
+	r= pci_ids_s(devind, &vid, &did);
+	if (r != OK)
+	{
+		printf("pci:do_ids: failed for devind %d: %d\n",
+			devind, r);
+	}
+
 	mp->m1_i1= vid;
 	mp->m1_i2= did;
-	mp->m_type= OK;
+	mp->m_type= r;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
@@ -275,34 +279,6 @@ message *mp;
 	}
 }
 
-PRIVATE void do_slot_name(mp)
-message *mp;
-{
-	int r, devind, name_len, len;
-	char *name_ptr, *name;
-
-	devind= mp->m1_i1;
-	name_len= mp->m1_i2;
-	name_ptr= mp->m1_p1;
-
-	name= pci_slot_name(devind);
-
-	len= strlen(name)+1;
-	if (len > name_len)
-		len= name_len;
-	printf("PCI: pci`do_slot_name: calling do_vircopy\n");
-	r= sys_vircopy(SELF, D, (vir_bytes)name, mp->m_source, D,
-		(vir_bytes)name_ptr, len);
-
-	mp->m_type= r;
-	r= send(mp->m_source, mp);
-	if (r != 0)
-	{
-		printf("PCI: do_slot_name: unable to send to %d: %d\n",
-			mp->m_source, r);
-	}
-}
-
 PRIVATE void do_slot_name_s(mp)
 message *mp;
 {
@@ -314,12 +290,21 @@ message *mp;
 	name_len= mp->m1_i2;
 	gid= mp->m1_i3;
 
-	name= pci_slot_name(devind);
+	r= pci_slot_name_s(devind, &name);
+	if (r != OK)
+	{
+		printf("pci:do_slot_name_s: failed for devind %d: %d\n",
+			devind, r);
+	}
 
-	len= strlen(name)+1;
-	if (len > name_len)
-		len= name_len;
-	r= sys_safecopyto(mp->m_source, gid, 0, (vir_bytes)name, len, D);
+	if (r == OK)
+	{
+		len= strlen(name)+1;
+		if (len > name_len)
+			len= name_len;
+		r= sys_safecopyto(mp->m_source, gid, 0,
+			(vir_bytes)name, len, D);
+	}
 
 	mp->m_type= r;
 	r= send(mp->m_source, mp);
@@ -437,9 +422,15 @@ message *mp;
 	devind= mp->m2_i1;
 	port= mp->m2_i2;
 
-	v= pci_attr_r8(devind, port);
+	r= pci_attr_r8_s(devind, port, &v);
+	if (r != OK)
+	{
+		printf(
+		"pci:do_attr_r8: pci_attr_r8_s(%d, %d, ...) failed: %d\n",
+			devind, port, r);
+	}
 	mp->m2_l1= v;
-	mp->m_type= OK;
+	mp->m_type= r;
 	r= send(mp->m_source, mp);
 	if (r != 0)
 	{
@@ -477,7 +468,13 @@ message *mp;
 	devind= mp->m2_i1;
 	port= mp->m2_i2;
 
-	v= pci_attr_r32(devind, port);
+	r= pci_attr_r32_s(devind, port, &v);
+	if (r != OK)
+	{
+		printf(
+		"pci:do_attr_r32: pci_attr_r32_s(%d, %d, ...) failed: %d\n",
+			devind, port, r);
+	}
 	mp->m2_l1= v;
 	mp->m_type= OK;
 	r= send(mp->m_source, mp);

@@ -89,6 +89,11 @@ _PROTOTYPE( int pci_first_dev_a, (struct rs_pci *aclp, int *devindp,
 _PROTOTYPE( int pci_next_dev_a, (struct rs_pci *aclp, int *devindp,
 					u16_t *vidp, u16_t *didp)	);
 
+_PROTOTYPE( int pci_attr_r8_s, (int devind, int port, u8_t *vp)		);
+_PROTOTYPE( int pci_attr_r32_s, (int devind, int port, u32_t *vp)	);
+_PROTOTYPE( int pci_slot_name_s, (int devind, char **cpp)		);
+_PROTOTYPE( int pci_ids_s, (int devind, u16_t *vidp, u16_t *didp)	);
+
 /*
  * $PchId: pci.h,v 1.4 2001/12/06 20:21:22 philip Exp $
  */
