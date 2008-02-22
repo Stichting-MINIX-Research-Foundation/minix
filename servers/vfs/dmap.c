@@ -16,7 +16,7 @@
 /* Some devices may or may not be there in the next table. */
 #define DT(enable, opcl, io, driver, flags, label) \
   { (enable?(opcl):no_dev), (enable?(io):0), \
-  	(enable?(driver):0), (flags), label },
+  	(enable?(driver):0), (flags), label, FALSE },
 #define NC(x) (NR_CTRLRS >= (x))
 
 /* The order of the entries here determines the mapping between major device
@@ -49,10 +49,10 @@ PRIVATE struct dmap init_dmap[] = {
   DT(0, 0,        0,       0,   	DMAP_MUTABLE, "")   /*11 = not used   */
   DT(0, no_dev,   0,       NONE,     	DMAP_MUTABLE, "")   /*12 = /dev/c3    */
   DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE, "")   /*13 = /dev/audio */
-  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE, "")   /*14 = /dev/mixer */
-  DT(1, gen_opcl, gen_io,  LOG_PROC_NR, 0, "")  	        /*15 = /dev/klog  */
+  DT(0, 0,   	  0,       0,		DMAP_MUTABLE, "")   /*14 = not used   */
+  DT(1, gen_opcl, gen_io,  LOG_PROC_NR, 0, "")  	    /*15 = /dev/klog  */
   DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE, "")   /*16 = /dev/random*/
-  DT(0, no_dev,   0,       NONE,	DMAP_MUTABLE, "")   /*17 = /dev/cmos  */
+  DT(0, 0,	  0,       0,		DMAP_MUTABLE, "")   /*17 = not used   */
 #endif /* IBM_PC */
 };
 
@@ -169,7 +169,10 @@ PUBLIC int do_mapdriver()
 	}
 
 	if (isokendpt(tasknr, &proc_nr_n) != OK)
+	{
+		printf("vfs:do_mapdriver: bad endpoint %d\n", tasknr);
 		return(EINVAL);
+	}
 
 	/* Try to update device mapping. */
 	major= m_in.md_major;
@@ -316,6 +319,9 @@ int force;
   dp->dmap_io = gen_io;
   dp->dmap_driver = proc_nr_e;
 
+  if (dp->dmap_async_driver)
+	dp->dmap_io= asyn_io;
+
   return(OK); 
 }
 
@@ -357,6 +363,7 @@ PUBLIC void build_dmap()
           dp->dmap_driver = init_dmap[i].dmap_driver;
           dp->dmap_flags = init_dmap[i].dmap_flags;
 	  strcpy(dp->dmap_label, init_dmap[i].dmap_label);
+	  dp->dmap_async_driver= FALSE;
       } else {						/* no default */
           dp->dmap_opcl = no_dev;
           dp->dmap_io = no_dev_io;
@@ -365,32 +372,11 @@ PUBLIC void build_dmap()
       }
   }
 
-#if 0
-  /* Get settings of 'controller' and 'driver' at the boot monitor. */
-  if ((s = env_get_param("label", driver, sizeof(driver))) != OK) 
-      panic(__FILE__,"couldn't get boot monitor parameter 'driver'", s);
-  if ((s = env_get_param("controller", controller, sizeof(controller))) != OK) 
-      panic(__FILE__,"couldn't get boot monitor parameter 'controller'", s);
+  dmap[13].dmap_async_driver= TRUE;	/* Audio */
+  dmap[15].dmap_async_driver= TRUE;	/* Log */
+  dmap[15].dmap_io= asyn_io;
+  dmap[16].dmap_async_driver= TRUE;	/* Random */
 
-  /* Determine major number to map driver onto. */
-  if (controller[0] == 'f' && controller[1] == 'd') {
-      major = FLOPPY_MAJOR;
-  } 
-  else if (controller[0] == 'c' && isdigit(controller[1])) {
-      if ((nr = (unsigned) atoi(&controller[1])) > NR_CTRLRS)
-          panic(__FILE__,"monitor 'controller' maximum 'c#' is", NR_CTRLRS);
-      major = CTRLR(nr);
-  } 
-  else {
-      panic(__FILE__,"monitor 'controller' syntax is 'c#' of 'fd'", NO_NUM); 
-  }
-  
-  /* Now try to set the actual mapping and report to the user. */
-  if ((s=map_driver(major, DRVR_PROC_NR, STYLE_DEV)) != OK)
-      panic(__FILE__,"map_driver failed",s);
-  printf("Boot medium driver: %s driver mapped onto controller %s.\n",
-      driver, controller);
-#endif
 }
 
 /*===========================================================================*
