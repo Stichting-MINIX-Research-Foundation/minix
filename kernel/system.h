@@ -196,5 +196,7 @@ _PROTOTYPE( int do_profbuf, (message *m_ptr) );
 #define do_profbuf do_unused
 #endif
 
+_PROTOTYPE( int do_mapdma, (message *m_ptr) );
+
 #endif	/* SYSTEM_H */
 
