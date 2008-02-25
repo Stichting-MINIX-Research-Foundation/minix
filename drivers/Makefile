@@ -40,6 +40,7 @@ all install depend clean:
 
 image:
 	cd ./libdriver && $(MAKE) build
+	cd ./libdriver_asyn && $(MAKE) build
 	cd ./tty && $(MAKE) build
 	cd ./at_wini && $(MAKE) build
 	cd ./floppy && $(MAKE) build
