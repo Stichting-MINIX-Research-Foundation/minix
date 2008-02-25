@@ -69,7 +69,7 @@ void usage()
 
 void main ( int argc, char *argv[] )
 {
-  int i, audio, file;
+  int i, r, audio, file;
   char *buffer, *file_name;
   unsigned int sign;
   unsigned int fragment_size;
@@ -92,9 +92,9 @@ void main ( int argc, char *argv[] )
   else file_name = argv[1];
 
   /* Open DSP */
-  if ((audio = open("/dev/audio", O_RDWR)) < 0) 
+  if ((audio = open("/dev/audio", O_RDWR | O_REOPEN)) < 0) 
   {
-    printf("Cannot open /dev/audio\n");
+    printf("Cannot open /dev/audio: %s\n", strerror(errno));
     exit(-1);
   }
 
@@ -196,6 +196,19 @@ void main ( int argc, char *argv[] )
     }
 
     /* Copy data to DSP */
-    write(audio, buffer,  fragment_size);
+    r= write(audio, buffer,  fragment_size);
+    if (r != fragment_size)
+    {
+	if (r < 0)
+	{
+		fprintf(stderr, "playwave: write to audio device failed: %s\n",
+			strerror(errno));
+	}
+	else
+	{
+		fprintf(stderr, "playwave: partial write %d instead of %d\n",
+			r, fragment_size);
+	}
+    }
   }
 }
