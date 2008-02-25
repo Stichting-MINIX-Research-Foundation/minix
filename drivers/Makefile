@@ -16,7 +16,9 @@ usage:
 build: all
 all install depend clean:
 	cd ./libdriver && $(MAKE) $@
+	cd ./libdriver_asyn && $(MAKE) $@
 	cd ./tty && $(MAKE) $@
+	cd ./amddev && $(MAKE) $@
 	cd ./at_wini && $(MAKE) $@
 	cd ./audio && $(MAKE) $@
 	cd ./floppy && $(MAKE) $@
