@@ -290,6 +290,8 @@ _PROTOTYPE( static void dump_phy, (re_t *rep)				);
 #endif
 _PROTOTYPE( static int rl_handler, (re_t *rep)			);
 _PROTOTYPE( static void rl_watchdog_f, (timer_t *tp)			);
+_PROTOTYPE( static void tell_dev, (vir_bytes start, size_t size,
+				int pci_bus, int pci_dev, int pci_func)	);
 
 /* The message used in the main loop is made global, so that rl_watchdog_f()
  * can change its message type to fake a HARD_INT message.
@@ -757,7 +759,6 @@ re_t *rep;
 	size_t rx_bufsize, tx_bufsize, tot_bufsize;
 	phys_bytes buf;
 	char *mallocbuf;
-	static struct memory chunk;
 	int fd, s, i, off;
 
 	/* Allocate receive and transmit buffers */
@@ -767,8 +768,8 @@ re_t *rep;
 	rx_bufsize= RX_BUFSIZE;
 	tot_bufsize= N_TX_BUF*tx_bufsize + rx_bufsize;
 
-	/* Now try to allocate a kernel memory buffer. */
-	chunk.size = tot_bufsize;
+	if (tot_bufsize % 4096)
+		tot_bufsize += 4096-(tot_bufsize % 4096);
 
 #define BUF_ALIGNMENT (64*1024)
 
@@ -787,6 +788,9 @@ re_t *rep;
 		mallocbuf += BUF_ALIGNMENT - off;
 		buf += BUF_ALIGNMENT - off;
 	}
+
+	tell_dev((vir_bytes)mallocbuf, tot_bufsize, rep->re_pcibus, 
+		rep->re_pcidev, rep->re_pcifunc);
 
 	for (i= 0; i<N_TX_BUF; i++)
 	{
@@ -1457,7 +1461,7 @@ int from_int;
 					(vir_bytes) rep->v_re_rx_buf+o, s, D);
 				if (cps != OK)
 					panic(__FILE__,
-					"rl_readv_s: sys_vircopy failed",
+					"rl_readv_s: sys_safecopyto failed",
 						cps);
 			}
 
@@ -3064,6 +3068,51 @@ dpeth_t *dep;
 	outb_reg0(dep, DP_CR, CR_PS_P0);	/* back to bank 0 */
 }
 #endif
+
+PRIVATE void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
+vir_bytes buf;
+size_t size;
+int pci_bus;
+int pci_dev;
+int pci_func;
+{
+	int r;
+	endpoint_t dev_e;
+	u32_t u32;
+	message m;
+
+	r= ds_retrieve_u32("amddev", &u32);
+	if (r != OK)
+	{
+		printf(
+		"rtl8139`tell_dev: ds_retrieve_u32 failed for 'amddev': %d\n",
+			r);
+		return;
+	}
+
+	dev_e= u32;
+
+	m.m_type= IOMMU_MAP;
+	m.m2_i1= pci_bus;
+	m.m2_i2= pci_dev;
+	m.m2_i3= pci_func;
+	m.m2_l1= buf;
+	m.m2_l2= size;
+
+	r= sendrec(dev_e, &m);
+	if (r != OK)
+	{
+		printf("rtl8139`tell_dev: sendrec to %d failed: %d\n",
+			dev_e, r);
+		return;
+	}
+	if (m.m_type != OK)
+	{
+		printf("rtl8139`tell_dev: dma map request failed: %d\n",
+			m.m_type);
+		return;
+	}
+}
 
 /*
  * $PchId: rtl8139.c,v 1.3 2003/09/11 14:15:15 philip Exp $
