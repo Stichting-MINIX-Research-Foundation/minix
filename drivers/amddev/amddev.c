@@ -84,7 +84,7 @@ int main(void)
 			do_pm_notify(&m);
 			continue;
 
-		case IOMMU_ADD:
+		case IOMMU_MAP:
 			r= do_add4pci(&m);
 			m.m_type= r;
 			send(m.m_source, &m);

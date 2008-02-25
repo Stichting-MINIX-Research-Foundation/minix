@@ -138,6 +138,11 @@
 #define BUSC_PCI_DEL_ACL	(BUSC_RQ_BASE + 18)	/* Delete the ACL of a
 							 * driver 
 							 */
+#define IOMMU_MAP		(BUSC_RQ_BASE + 32)	/* Ask IOMMU to map
+							 * a segment of memory
+							 */
+
+
 
 /*===========================================================================*
  *                Messages for BLOCK and CHARACTER device drivers	     *
@@ -317,7 +322,7 @@
 
 #  define SYS_STIME	(KERNEL_CALL + 39)	/* sys_stime() */
 
-#  define SYS_MAPDMAx	(KERNEL_CALL + 42)	/* sys_mapdmax() */
+#  define SYS_MAPDMA	(KERNEL_CALL + 42)	/* sys_mapdma() */
 
 #define NR_SYS_CALLS	43	/* number of system calls */ 
 
