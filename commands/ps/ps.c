@@ -83,7 +83,7 @@
 
 #include "../../servers/pm/mproc.h"
 #include "../../servers/vfs/fproc.h"
-#include "../../servers/mfs/const.h"
+#include "../../servers/vfs/const.h"
 
 
 /*----- ps's local stuff below this line ------*/
@@ -242,6 +242,8 @@ struct pstat *bufp;
 		blkstr = "pipe";
 	else if (-bufp->ps_ftask == XPOPEN)
 		blkstr = "popen";
+	else if (-bufp->ps_ftask == XDOPEN)
+		blkstr = "dopen";
 	else if (-bufp->ps_ftask == XLOCK)
 		blkstr = "flock";
 	else if(-bufp->ps_ftask == XSELECT)
