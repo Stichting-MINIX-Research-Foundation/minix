@@ -43,6 +43,8 @@
 
 
 #include "audio_fw.h"
+#include <sys/vm.h>
+#include <minix/ds.h>
 
 
 FORWARD _PROTOTYPE( int msg_open, (int minor_dev_nr) );
@@ -65,7 +67,8 @@ FORWARD _PROTOTYPE( int get_started, (sub_dev_t *sub_dev_ptr) );
 FORWARD _PROTOTYPE( void reply,(int code, int replyee, int process,int status));
 FORWARD _PROTOTYPE( int io_ctl_length, (int io_request) );
 FORWARD _PROTOTYPE( special_file_t* get_special_file, (int minor_dev_nr) );
-
+FORWARD _PROTOTYPE( void tell_dev, (vir_bytes buf, size_t size, int pci_bus,
+					int pci_dev, int pci_func) );
 
 PRIVATE char io_ctl_buf[_IOCPARM_MASK];
 PRIVATE int irq_hook_id = 0;	/* id of irq hook at the kernel */
@@ -76,7 +79,7 @@ PRIVATE device_available = 0;/*todo*/
 PUBLIC void main(void) 
 {	
 	int r, caller, proc_nr, chan;
-	message mess;
+	message mess, repl_mess;
 
 	drv_init();
 
@@ -89,32 +92,74 @@ PUBLIC void main(void)
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
 
+		if (caller == RS_PROC_NR && mess.m_type == DEV_PING)
+		{
+			/* Got ping from RS. Just notify RS */
+			notify(RS_PROC_NR);
+			continue;
+		}
 
 		/* Now carry out the work. */
 		switch(mess.m_type) {
-			case DEV_OPEN:		/* open the special file ( = parameter) */
-				r = msg_open(mess.DEVICE);break;
-			case DEV_CLOSE:		/* close the special file ( = parameter) */
-				r = msg_close(mess.DEVICE); break;
+			case DEV_OPEN:
+				/* open the special file ( = parameter) */
+				r = msg_open(mess.DEVICE);
+				repl_mess.m_type = DEV_REVIVE;
+				repl_mess.REP_ENDPT = mess.IO_ENDPT;
+				repl_mess.REP_STATUS = r;
+				send(caller, &repl_mess);
+
+				continue;
+
+			case DEV_CLOSE:
+				/* close the special file ( = parameter) */
+				r = msg_close(mess.DEVICE);
+				repl_mess.m_type = DEV_CLOSE_REPL;
+				repl_mess.REP_ENDPT = mess.IO_ENDPT;
+				repl_mess.REP_STATUS = r;
+				send(caller, &repl_mess);
+
+				continue;
+
 			case DEV_IOCTL_S:		
-				r = msg_ioctl(&mess); break; 
+				r = msg_ioctl(&mess);
+
+				if (r != SUSPEND)
+				{
+					repl_mess.m_type = DEV_REVIVE;
+					repl_mess.REP_ENDPT = mess.IO_ENDPT;
+					repl_mess.REP_IO_GRANT =
+						(unsigned)mess.IO_GRANT;
+					repl_mess.REP_STATUS = r;
+					send(caller, &repl_mess);
+				}
+				continue;
+
 			case DEV_READ_S:		
 				msg_read(&mess); continue; /* don't reply */
 			case DEV_WRITE_S:		
 				msg_write(&mess); continue; /* don't reply */
 			case DEV_STATUS:	
 				msg_status(&mess);continue; /* don't reply */
+			case DEV_REOPEN:
+				/* reopen the special file ( = parameter) */
+				r = msg_open(mess.DEVICE);
+				repl_mess.m_type = DEV_REOPEN_REPL;
+				repl_mess.REP_ENDPT = mess.IO_ENDPT;
+				repl_mess.REP_STATUS = r;
+				send(caller, &repl_mess);
+				continue;
 			case HARD_INT:
 				msg_hardware();continue;  /* don't reply */
 			case SYS_SIG:		  
 				msg_sig_stop(); continue; /* don't reply */
 			default:          
-				r = EINVAL;	
-				dprint("%s: %d uncaught msg!\n", drv.DriverName, mess.m_type);
-				break;
+				dprint("%s: %d uncaught msg!\n",
+					drv.DriverName, mess.m_type);
+				continue;
 		}
-		/* Finally, prepare and send the reply message. */
-		reply(TASK_REPLY, caller, proc_nr, r);
+
+		/* Should not be here. Just continue. */
 	}
 }
 
@@ -274,6 +319,8 @@ PRIVATE int msg_close(int minor_dev_nr) {
 	write_chan = special_file_ptr->write_chan;
 	io_ctl = special_file_ptr->io_ctl;
 
+	r= OK;
+
 	/* close all sub devices */
 	if (write_chan != NO_CHANNEL) {
 		if (close_sub_dev(write_chan) != OK) r = EIO;
@@ -392,7 +439,7 @@ PRIVATE void msg_write(message *m_ptr)
 
 	if (chan == NO_CHANNEL) {
 		error("%s: No write channel specified!\n", drv.DriverName);
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);
 		return;
 	}
 	/* get pointer to sub device data */
@@ -406,17 +453,16 @@ PRIVATE void msg_write(message *m_ptr)
 	}
 	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
 		error("Fragment size does not match user's buffer length\n");
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EINVAL);		
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EINVAL);		
 		return;
 	}
 	/* if we are busy with something else than writing, return EBUSY */
 	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != DEV_WRITE_S) {
 		error("Already busy with something else then writing\n");
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EBUSY);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EBUSY);
 		return;
 	}
-	/* unblock the FileSystem, but keep user process blocked until REVIVE*/
-	reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, SUSPEND);
+
 	sub_dev_ptr->RevivePending = TRUE;
 	sub_dev_ptr->ReviveProcNr = m_ptr->IO_ENDPT;
 	sub_dev_ptr->ReviveGrant = (cp_grant_id_t) m_ptr->ADDRESS;
@@ -444,7 +490,7 @@ PRIVATE void msg_read(message *m_ptr)
 
 	if (chan == NO_CHANNEL) {
 		error("%s: No read channel specified!\n", drv.DriverName);
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);
 		return;
 	}
 	/* get pointer to sub device data */
@@ -453,22 +499,21 @@ PRIVATE void msg_read(message *m_ptr)
 	if (!sub_dev_ptr->DmaBusy) { /* get fragment size on first read */
 		if (drv_get_frag_size(&(sub_dev_ptr->FragSize), sub_dev_ptr->Nr) != OK){
 			error("%s: Could not retrieve fragment size!\n", drv.DriverName);
-			reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);      	
+			reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EIO);      	
 			return;
 		}
 	}
 	if(m_ptr->COUNT != sub_dev_ptr->FragSize) {
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EINVAL);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EINVAL);
 		error("fragment size does not match message size\n");
 		return;
 	}
 	/* if we are busy with something else than reading, reply EBUSY */
 	if(sub_dev_ptr->DmaBusy && sub_dev_ptr->DmaMode != DEV_READ_S) {
-		reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, EBUSY);
+		reply(DEV_REVIVE, m_ptr->m_source, m_ptr->IO_ENDPT, EBUSY);
 		return;
 	}
-	/* unblock the FileSystem, but keep user process blocked until REVIVE*/
-	reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, SUSPEND);
+
 	sub_dev_ptr->RevivePending = TRUE;
 	sub_dev_ptr->ReviveProcNr = m_ptr->IO_ENDPT;
 	sub_dev_ptr->ReviveGrant = (cp_grant_id_t) m_ptr->ADDRESS;
@@ -703,6 +748,8 @@ PRIVATE int get_started(sub_dev_t *sub_dev_ptr) {
 
 PRIVATE void data_from_user(sub_dev_t *subdev)
 {
+	int r;
+	message m;
 
 	if (subdev->DmaLength == subdev->NrOfDmaFragments &&
 			subdev->BufLength == subdev->NrOfExtraBuffers) return;/* no space */
@@ -753,11 +800,29 @@ PRIVATE void data_from_user(sub_dev_t *subdev)
 
 	subdev->ReviveStatus = subdev->FragSize;
 	subdev->ReadyToRevive = TRUE;
-	notify(subdev->NotifyProcNr);
+
+	m.m_type = DEV_REVIVE;			/* build message */
+	m.REP_ENDPT = subdev->ReviveProcNr;
+	m.REP_IO_GRANT = subdev->ReviveGrant;
+	m.REP_STATUS = subdev->ReviveStatus;
+	r= send(subdev->NotifyProcNr, &m);		/* send the message */
+	if (r != OK)
+	{
+		printf("audio_fw: send to %d failed: %d\n",
+			subdev->NotifyProcNr, r);
+	}
+
+	/* reset variables */
+	subdev->ReadyToRevive = FALSE;
+	subdev->RevivePending = 0;
 }
 
 
-PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr) {
+PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr)
+{
+	int r;
+	message m;
+
 	if (!sub_dev_ptr->RevivePending) return; /* nobody is wating for data */
 	if (sub_dev_ptr->ReadyToRevive) return;/* we already filled user's buffer */
 	if (sub_dev_ptr->BufLength == 0 && sub_dev_ptr->DmaLength == 0) return; 
@@ -797,63 +862,89 @@ PRIVATE void data_to_user(sub_dev_t *sub_dev_ptr) {
 	sub_dev_ptr->ReviveStatus = sub_dev_ptr->FragSize;
 	sub_dev_ptr->ReadyToRevive = TRUE; 
 		/* drv_status will send REVIVE mess to FS*/	
-	notify(sub_dev_ptr->NotifyProcNr);     /* notify the File Systam to make it 
-											  send DEV_STATUS messages*/
+
+	m.m_type = DEV_REVIVE;			/* build message */
+	m.REP_ENDPT = sub_dev_ptr->ReviveProcNr;
+	m.REP_IO_GRANT = sub_dev_ptr->ReviveGrant;
+	m.REP_STATUS = sub_dev_ptr->ReviveStatus;
+	r= send(sub_dev_ptr->NotifyProcNr, &m);		/* send the message */
+	if (r != OK)
+	{
+		printf("audio_fw: send to %d failed: %d\n",
+			sub_dev_ptr->NotifyProcNr, r);
+	}
+
+	/* reset variables */
+	sub_dev_ptr->ReadyToRevive = FALSE;
+	sub_dev_ptr->RevivePending = 0;
 }
 
-
-	PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr) {
+PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
+{
 #if (CHIP == INTEL)
-		unsigned left;
-		u32_t i;
+	char *base;
+	size_t size, off;
+	unsigned left;
+	u32_t i;
 
-		/* allocate dma buffer space */
-		if (!(sub_dev_ptr->DmaBuf = malloc(sub_dev_ptr->DmaSize + 64 * 1024))) {
-			error("%s: failed to allocate dma buffer for channel %d\n", 
-					drv.DriverName,i);
-			return EIO;
-		}
-		/* allocate extra buffer space */
-		if (!(sub_dev_ptr->ExtraBuf = malloc(sub_dev_ptr->NrOfExtraBuffers * 
-						sub_dev_ptr->DmaSize / 
-						sub_dev_ptr->NrOfDmaFragments))) {
-			error("%s failed to allocate extra buffer for channel %d\n", 
-					drv.DriverName,i);
-			return EIO;
-		}
+	/* allocate dma buffer space */
+	size= sub_dev_ptr->DmaSize + 64 * 1024;
+	base= malloc(size + PAGE_SIZE);
+	if (!base) {
+		error("%s: failed to allocate dma buffer for channel %d\n", 
+				drv.DriverName,i);
+		return EIO;
+	}
+	/* Align base */
+	off= ((size_t)base % PAGE_SIZE);
+	if (off)
+		base += PAGE_SIZE-off;
+	sub_dev_ptr->DmaBuf= base;
 
-		sub_dev_ptr->DmaPtr = sub_dev_ptr->DmaBuf;
-		i = sys_umap(SELF, D, 
-				(vir_bytes) sub_dev_ptr->DmaBuf, 
-				(phys_bytes) sizeof(sub_dev_ptr->DmaBuf), 
-				&(sub_dev_ptr->DmaPhys));
+	tell_dev((vir_bytes)base, size, 0, 0, 0);
 
-		if (i != OK) {
-			return EIO;
-		}
-		if ((left = dma_bytes_left(sub_dev_ptr->DmaPhys)) < 
-				sub_dev_ptr->DmaSize) {
-			/* First half of buffer crosses a 64K boundary,
-			 * can't DMA into that */
-			sub_dev_ptr->DmaPtr += left;
-			sub_dev_ptr->DmaPhys += left;
-		}
-		/* write the physical dma address and size to the device */
-		drv_set_dma(sub_dev_ptr->DmaPhys, 
-				sub_dev_ptr->DmaSize, sub_dev_ptr->Nr);
-		return OK;
+	/* allocate extra buffer space */
+	if (!(sub_dev_ptr->ExtraBuf = malloc(sub_dev_ptr->NrOfExtraBuffers * 
+					sub_dev_ptr->DmaSize / 
+					sub_dev_ptr->NrOfDmaFragments))) {
+		error("%s failed to allocate extra buffer for channel %d\n", 
+				drv.DriverName,i);
+		return EIO;
+	}
+
+	sub_dev_ptr->DmaPtr = sub_dev_ptr->DmaBuf;
+	i = sys_umap(SELF, D, 
+			(vir_bytes) sub_dev_ptr->DmaBuf, 
+			(phys_bytes) sizeof(sub_dev_ptr->DmaBuf), 
+			&(sub_dev_ptr->DmaPhys));
+
+	if (i != OK) {
+		return EIO;
+	}
+
+	if ((left = dma_bytes_left(sub_dev_ptr->DmaPhys)) < 
+			sub_dev_ptr->DmaSize) {
+		/* First half of buffer crosses a 64K boundary,
+		 * can't DMA into that */
+		sub_dev_ptr->DmaPtr += left;
+		sub_dev_ptr->DmaPhys += left;
+	}
+	/* write the physical dma address and size to the device */
+	drv_set_dma(sub_dev_ptr->DmaPhys, 
+			sub_dev_ptr->DmaSize, sub_dev_ptr->Nr);
+	return OK;
 
 #else /* CHIP != INTEL */
-		error("%s: init_buffer() failed, CHIP != INTEL", drv.DriverName);
-		return EIO;
+	error("%s: init_buffer() failed, CHIP != INTEL", drv.DriverName);
+	return EIO;
 #endif /* CHIP == INTEL */
-	}
+}
 
 
 PRIVATE void reply(int code, int replyee, int process, int status) {
 	message m;
 
-	m.m_type = code;		/* TASK_REPLY or REVIVE */
+	m.m_type = code;		/* DEV_REVIVE */
 	m.REP_STATUS = status;	/* result of device operation */
 	m.REP_ENDPT = process;	/* which user made the request */
 	send(replyee, &m);
@@ -879,4 +970,46 @@ PRIVATE special_file_t* get_special_file(int minor_dev_nr) {
 			drv.DriverName, minor_dev_nr);
 
 	return NULL;
+}
+
+PRIVATE void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
+vir_bytes buf;
+size_t size;
+int pci_bus;
+int pci_dev;
+int pci_func;
+{
+	int r;
+	endpoint_t dev_e;
+	u32_t u32;
+	message m;
+
+	r= ds_retrieve_u32("amddev", &u32);
+	if (r != OK)
+	{
+		printf("tell_dev: ds_retrieve_u32 failed for 'amddev': %d\n",
+			r);
+		return;
+	}
+
+	dev_e= u32;
+
+	m.m_type= IOMMU_MAP;
+	m.m2_i1= pci_bus;
+	m.m2_i2= pci_dev;
+	m.m2_i3= pci_func;
+	m.m2_l1= buf;
+	m.m2_l2= size;
+
+	r= sendrec(dev_e, &m);
+	if (r != OK)
+	{
+		printf("tell_dev: sendrec to %d failed: %d\n", dev_e, r);
+		return;
+	}
+	if (m.m_type != OK)
+	{
+		printf("tell_dev: dma map request failed: %d\n", m.m_type);
+		return;
+	}
 }
