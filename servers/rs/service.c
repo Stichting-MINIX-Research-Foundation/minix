@@ -681,7 +681,7 @@ struct
 	{ "SETGRANT",		SYS_SETGRANT },
 	{ "READBIOS",		SYS_READBIOS },
 	{ "VM_MAP",		SYS_VM_MAP },
-	{ "MAPDMAx",		SYS_MAPDMAx },
+	{ "MAPDMA",		SYS_MAPDMA },
 	{ NULL,		0 }
 };
 
