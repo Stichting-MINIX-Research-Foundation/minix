@@ -221,11 +221,10 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
-  if ((iskerneln(src_dst_p) && _function != SENDREC
-           && _function != RECEIVE)) {
+  if ((iskerneln(src_dst_p) && call_nr != SENDREC && call_nr != RECEIVE)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
-          function, proc_nr(caller_ptr), src_dst);
+          call_nr, proc_nr(caller_ptr), src_dst);
 #endif
 	if (caller_ptr->p_endpoint == ipc_stats_target)
 		ipc_stats.call_not_allowed++;
