@@ -118,7 +118,12 @@ static clock_t fxp_next_timeout= 0;
 /* ignore interrupt for the moment */
 #define interrupt(x)	0
 
-char buffer[70*1024];
+union tmpbuf
+{
+	char pad[4096];
+	struct cbl_conf cc;
+	struct ias ias;
+} *tmpbufp;
 
 typedef struct fxp
 {
@@ -263,6 +268,8 @@ _PROTOTYPE( static u8_t do_inb, (port_t port)				);
 _PROTOTYPE( static u32_t do_inl, (port_t port)				);
 _PROTOTYPE( static void do_outb, (port_t port, u8_t v)			);
 _PROTOTYPE( static void do_outl, (port_t port, u32_t v)			);
+_PROTOTYPE( static void tell_dev, (vir_bytes start, size_t size,
+				int pci_bus, int pci_dev, int pci_func)	);
 
 /*===========================================================================*
  *				main					     *
@@ -284,12 +291,6 @@ int main(int argc, char *argv[])
 	(void) env_parse("ETH_IGN_PROTO", "x", 0, &v, 0x0000L, 0xFFFFL);
 #endif
 	eth_ign_proto= htons((u16_t) v);
-
-#if 0	/* What about memory allocation? */
-	/* Claim buffer memory now under Minix, before MM takes it all. */
-	for (fp= &fxp_table[0]; fp < fxp_table+FXP_PORT_NR; fp++)
-		fxp_init_buf(fp);
-#endif
 
 	if((r=micro_delay_calibrate()) != OK)
 		panic("FXP","rmicro_delay_calibrate failed", r);
@@ -828,7 +829,8 @@ fxp_t *fp;
 static void fxp_init_buf(fp)
 fxp_t *fp;
 {
-	size_t rx_totbufsize, tx_totbufsize, tot_bufsize;
+	size_t rx_totbufsize, tx_totbufsize, tot_bufsize, alloc_bufsize;
+	char *alloc_buf;
 	phys_bytes buf;
 	int i, r;
 	struct rfd *rfdp;
@@ -842,26 +844,34 @@ fxp_t *fp;
 	tx_totbufsize= fp->fxp_tx_nbuf * sizeof(struct tx);
 	fp->fxp_tx_bufsize= tx_totbufsize;
 
-	tot_bufsize= tx_totbufsize + rx_totbufsize;
-
-	/* What about memory allocation? */
-	{
-		static int first_time= 1;
-
-		assert(first_time);
-		first_time= 0;
-
 #define BUFALIGN	4096
-		assert(tot_bufsize <= sizeof(buffer)-BUFALIGN); 
-		buf= (phys_bytes)buffer;
-		buf += BUFALIGN - (buf % BUFALIGN);
+	tot_bufsize= sizeof(*tmpbufp) + tx_totbufsize + rx_totbufsize;
+	if (tot_bufsize % 4096)
+		tot_bufsize += 4096 - (tot_bufsize % 4096);
+	alloc_bufsize= tot_bufsize+BUFALIGN;
+	alloc_buf= malloc(alloc_bufsize);
+	if (alloc_buf == NULL)
+	{
+		panic(__FILE__, "fxp_init_buf: unable to malloc size",
+			alloc_bufsize);
 	}
 
-	fp->fxp_rx_buf= (struct rfd *)buf;
-	r= sys_umap(SELF, D, (vir_bytes)buf, rx_totbufsize,
+	buf= (phys_bytes)alloc_buf;
+	buf += BUFALIGN - (buf % BUFALIGN);
+
+	tell_dev((vir_bytes)buf, tot_bufsize, 0, 0, 0);
+
+	tmpbufp= (union tmpbuf *)buf;
+
+	fp->fxp_rx_buf= (struct rfd *)&tmpbufp[1];
+	r= sys_umap(SELF, D, (vir_bytes)fp->fxp_rx_buf, rx_totbufsize,
 		&fp->fxp_rx_busaddr);
 	if (r != OK)
 		panic("FXP","sys_umap failed", r);
+
+	printf("fxp_init_buf: got phys 0x%x for vir 0x%x\n",
+		fp->fxp_rx_busaddr, fp->fxp_rx_buf);
+
 	for (i= 0, rfdp= fp->fxp_rx_buf; i<fp->fxp_rx_nbuf; i++, rfdp++)
 	{
 		rfdp->rfd_status= 0;
@@ -885,7 +895,7 @@ fxp_t *fp;
 	}
 	fp->fxp_rx_head= 0;
 
-	fp->fxp_tx_buf= (struct tx *)(buf+rx_totbufsize);
+	fp->fxp_tx_buf= (struct tx *)((char *)fp->fxp_rx_buf+rx_totbufsize);
 	r= sys_umap(SELF, D, (vir_bytes)fp->fxp_tx_buf,
 		(phys_bytes)tx_totbufsize, &fp->fxp_tx_busaddr);
 	if (r != OK)
@@ -953,27 +963,20 @@ fxp_t *fp;
 	port_t port;
 	u32_t bus_addr;
 	long v;
-	struct ias ias;
 
 	port= fp->fxp_base_port;
 
 	/* User defined ethernet address? */
 	eakey[sizeof(FXP_ENVVAR)-1]= '0' + (fp-fxp_table);
 
-#if 0
 	for (i= 0; i < 6; i++)
 	{
 		if (env_parse(eakey, eafmt, i, &v, 0x00L, 0xFFL) != EP_SET)
 			break;
 		fp->fxp_address.ea_addr[i]= v;
 	}
-#else
-	i= 0;
-#endif
 
-#if 0
 	if (i != 0 && i != 6) env_panic(eakey);	/* It's all or nothing */
-#endif
 
 	if (i == 0)
 	{
@@ -987,13 +990,13 @@ fxp_t *fp;
 	}
 
 	/* Tell NIC about ethernet address */
-	ias.ias_status= 0;
-	ias.ias_command= CBL_C_EL | CBL_AIS;
-	ias.ias_linkaddr= 0;
-	memcpy(ias.ias_ethaddr, fp->fxp_address.ea_addr,
-		sizeof(ias.ias_ethaddr));
-	r= sys_umap(SELF, D, (vir_bytes)&ias, (phys_bytes)sizeof(ias),
-		&bus_addr);
+	tmpbufp->ias.ias_status= 0;
+	tmpbufp->ias.ias_command= CBL_C_EL | CBL_AIS;
+	tmpbufp->ias.ias_linkaddr= 0;
+	memcpy(tmpbufp->ias.ias_ethaddr, fp->fxp_address.ea_addr,
+		sizeof(tmpbufp->ias.ias_ethaddr));
+	r= sys_umap(SELF, D, (vir_bytes)&tmpbufp->ias,
+		(phys_bytes)sizeof(tmpbufp->ias), &bus_addr);
 	if (r != OK)
 		panic("FXP","sys_umap failed", r);
 
@@ -1002,13 +1005,13 @@ fxp_t *fp;
 	getuptime(&t0);
 	do {
 		/* Wait for CU command to complete */
-		if (ias.ias_status & CBL_F_C)
+		if (tmpbufp->ias.ias_status & CBL_F_C)
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(1000));
 
-	if (!(ias.ias_status & CBL_F_C))
+	if (!(tmpbufp->ias.ias_status & CBL_F_C))
 		panic("FXP","fxp_confaddr: CU command failed to complete", NO_NUM);
-	if (!(ias.ias_status & CBL_F_OK))
+	if (!(tmpbufp->ias.ias_status & CBL_F_OK))
 		panic("FXP","fxp_confaddr: CU command failed", NO_NUM);
 
 #if VERBOSE
@@ -1719,17 +1722,17 @@ fxp_t *fp;
 {
 	int r;
 	u32_t bus_addr;
-	struct cbl_conf cc;
 	clock_t t0,t1;
 
 	/* Configure device */
-	cc.cc_status= 0;
-	cc.cc_command= CBL_C_EL | CBL_CONF;
-	cc.cc_linkaddr= 0;
-	memcpy(cc.cc_bytes, fp->fxp_conf_bytes, sizeof(cc.cc_bytes));
+	tmpbufp->cc.cc_status= 0;
+	tmpbufp->cc.cc_command= CBL_C_EL | CBL_CONF;
+	tmpbufp->cc.cc_linkaddr= 0;
+	memcpy(tmpbufp->cc.cc_bytes, fp->fxp_conf_bytes,
+		sizeof(tmpbufp->cc.cc_bytes));
 
-	r= sys_umap(SELF, D, (vir_bytes)&cc, (phys_bytes)sizeof(cc),
-		&bus_addr);
+	r= sys_umap(SELF, D, (vir_bytes)&tmpbufp->cc,
+		(phys_bytes)sizeof(tmpbufp->cc), &bus_addr);
 	if (r != OK)
 		panic("FXP","sys_umap failed", r);
 
@@ -1738,13 +1741,13 @@ fxp_t *fp;
 	getuptime(&t0);
 	do {
 		/* Wait for CU command to complete */
-		if (cc.cc_status & CBL_F_C)
+		if (tmpbufp->cc.cc_status & CBL_F_C)
 			break;
 	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(100000));
 
-	if (!(cc.cc_status & CBL_F_C))
+	if (!(tmpbufp->cc.cc_status & CBL_F_C))
 		panic("FXP","fxp_do_conf: CU command failed to complete", NO_NUM);
-	if (!(cc.cc_status & CBL_F_OK))
+	if (!(tmpbufp->cc.cc_status & CBL_F_OK))
 		panic("FXP","fxp_do_conf: CU command failed", NO_NUM);
 
 }
@@ -2912,6 +2915,51 @@ static void do_outl(port_t port, u32_t value)
 	r= sys_outl(port, value);
 	if (r != OK)
 		panic("FXP","sys_outl failed", r);
+}
+
+PRIVATE void tell_dev(buf, size, pci_bus, pci_dev, pci_func)
+vir_bytes buf;
+size_t size;
+int pci_bus;
+int pci_dev;
+int pci_func;
+{
+	int r;
+	endpoint_t dev_e;
+	u32_t u32;
+	message m;
+
+	r= ds_retrieve_u32("amddev", &u32);
+	if (r != OK)
+	{
+		printf(
+		"fxp`tell_dev: ds_retrieve_u32 failed for 'amddev': %d\n",
+			r);
+		return;
+	}
+
+	dev_e= u32;
+
+	m.m_type= IOMMU_MAP;
+	m.m2_i1= pci_bus;
+	m.m2_i2= pci_dev;
+	m.m2_i3= pci_func;
+	m.m2_l1= buf;
+	m.m2_l2= size;
+
+	r= sendrec(dev_e, &m);
+	if (r != OK)
+	{
+		printf("fxp`tell_dev: sendrec to %d failed: %d\n",
+			dev_e, r);
+		return;
+	}
+	if (m.m_type != OK)
+	{
+		printf("fxp`tell_dev: dma map request failed: %d\n",
+			m.m_type);
+		return;
+	}
 }
 
 /*
