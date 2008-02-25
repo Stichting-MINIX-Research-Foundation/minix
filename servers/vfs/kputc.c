@@ -7,9 +7,9 @@
  * kputc() to directly call the TTY instead of going through this library.
  */
 
-#include "sysutil.h"
-#include "proto.h"
-#include "glo.h"
+#include "fs.h"
+#include <string.h>
+#include <minix/com.h>
 
 #define OVERFLOW_STR "[...]\n"
 
