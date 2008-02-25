@@ -12,14 +12,15 @@ d = ..
 MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i -L../libdriver
+LDFLAGS = -i -L../libdriver_asyn
 LIBS = -lsysutil -ldriver  -lsys
+LIB_DEP = ../libdriver_asyn/libdriver.a
 
 OBJ = log.o diag.o kputc.o
 
 # build local binary
 all build:	$(DRIVER)
-$(DRIVER):	$(OBJ)
+$(DRIVER):	$(OBJ) $(LIB_DEP)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 	install -S 16kb $(DRIVER)
 

@@ -107,8 +107,10 @@ PRIVATE int
 subwrite(struct logdevice *log, int count, int proc_nr,
 	vir_bytes user_vir, size_t offset, int safe)
 {
+	int d, r;
 	char *buf;
-	int r;
+	message m;
+
 	if (log->log_write + count > LOG_SIZE)
 		count = LOG_SIZE - log->log_write;
 	buf = log->log_buffer + log->log_write;
@@ -145,8 +147,18 @@ subwrite(struct logdevice *log, int count, int proc_nr,
     		log->log_status = subread(log, log->log_iosize,
     			log->log_proc_nr, log->log_user_vir_g,
 			log->log_user_vir_offset, log->log_safe);
-    		notify(log->log_source); 
-    		log->log_revive_alerted = 1;
+
+		m.m_type = DEV_REVIVE;
+		m.REP_ENDPT = log->log_proc_nr;
+		m.REP_STATUS  = log->log_status;
+		m.REP_IO_GRANT  = log->log_user_vir_g;
+  		r= send(log->log_source, &m);
+		if (r != OK)
+		{
+			printf("log`subwrite: send to %d failed: %d\n",
+				log->log_source, r);
+		}
+		log->log_proc_nr = 0;
  	} 
 
 	if(log->log_size > 0)
@@ -160,11 +172,21 @@ subwrite(struct logdevice *log, int count, int proc_nr,
   		 * swallow all the data (log_size > 0).
   		 */
   		if(log->log_selected & SEL_RD) {
-    			notify(log->log_select_proc);
-    			log->log_select_alerted = 1;
+			d= log-logdevices;
+			m.m_type = DEV_SEL_REPL2;
+			m.DEV_SEL_OPS = log->log_select_ready_ops;
+			m.DEV_MINOR   = d;
 #if LOG_DEBUG
-			printf("log notified %d\n", log->log_select_proc);
+			printf("select sending DEV_SEL_REPL2\n");
 #endif
+  			r= send(log->log_select_proc, &m);
+			if (r != OK)
+			{
+				printf(	
+				"log`subwrite: send to %d failed: %d\n",
+					log->log_select_proc, r);
+			}
+			log->log_selected &= ~log->log_select_ready_ops;
   		}
   	}
 
@@ -283,7 +305,7 @@ int safe;			/* safe copies? */
 	    		printf("blocked %d (%d)\n", 
 	    			log->log_source, log->log_proc_nr);
 #endif
-	    		return(SUSPEND);
+	    		return(EDONTREPLY);
 	    	}
 	    	count = subread(log, count, proc_nr, user_vir, vir_offset, safe);
 	    	if(count < 0) {
@@ -348,63 +370,6 @@ message *m_ptr;
   return(OK);
 }
 
-/*============================================================================*
- *				do_status				      *
- *============================================================================*/
-PRIVATE void do_status(message *m_ptr)
-{
-	int d; 
-	message m;
-
-	/* Caller has requested pending status information, which currently
-	 * can be pending available select()s, or REVIVE events. One message
-	 * is returned for every event, or DEV_NO_STATUS if no (more) events
-	 * are to be returned.
-	 */
-
-	for(d = 0; d < NR_DEVS; d++) {
-		/* Check for revive callback. */
-		if(logdevices[d].log_proc_nr && logdevices[d].log_revive_alerted
-		   && logdevices[d].log_source == m_ptr->m_source) {
-			m.m_type = DEV_REVIVE;
-			m.REP_ENDPT = logdevices[d].log_proc_nr;
-			m.REP_STATUS  = logdevices[d].log_status;
-			m.REP_IO_GRANT  = logdevices[d].log_user_vir_g;
-  			send(m_ptr->m_source, &m);
-			logdevices[d].log_proc_nr = 0;
-			logdevices[d].log_revive_alerted = 0;
-#if LOG_DEBUG
-    		printf("revived %d with %d bytes\n", 
-			m.REP_ENDPT, m.REP_STATUS);
-#endif
-			return;
-		}
-
-		/* Check for select callback. */
-		if(logdevices[d].log_selected && logdevices[d].log_select_proc == m_ptr->m_source 
-			&& logdevices[d].log_select_alerted) {
-			m.m_type = DEV_IO_READY;
-			m.DEV_SEL_OPS = logdevices[d].log_select_ready_ops;
-			m.DEV_MINOR   = d;
-#if LOG_DEBUG
-    		printf("select sending sent\n");
-#endif
-  			send(m_ptr->m_source, &m);
-			logdevices[d].log_selected &= ~logdevices[d].log_select_ready_ops;
-			logdevices[d].log_select_alerted = 0;
-#if LOG_DEBUG
-    		printf("select send sent\n");
-#endif
-			return;
-		}
-	}
-
-	/* No event found. */
-	m.m_type = DEV_NO_STATUS;
-  	send(m_ptr->m_source, &m);
-
-	return;
-}
 
 /*============================================================================*
  *				log_signal				      *
@@ -443,7 +408,7 @@ int safe;
 		break;
 	}
 	case DEV_STATUS: {
-		do_status(m_ptr);
+		printf("log_other: unexpected DEV_STATUS request\n");
 		r = EDONTREPLY;
 		break;
 	}
