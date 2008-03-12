@@ -36,6 +36,7 @@ typedef struct eth_fd
 	get_userdata_t ef_get_userdata;
 	put_userdata_t ef_put_userdata;
 	put_pkt_t ef_put_pkt;
+	select_res_t ef_select_res;
 	time_t ef_exp_time;
 	size_t ef_write_count;
 	ioreq_t ef_ioctl_req;
@@ -49,6 +50,7 @@ typedef struct eth_fd
 #		define 	EFF_WRITE_IP	0x4
 #		define 	EFF_IOCTL_IP	0x8
 #	define EFF_OPTSET       0x10
+#   define EFF_SEL_READ	0x20
 
 /* Note that the vh_type field is normally considered part of the ethernet
  * header.
@@ -66,6 +68,7 @@ FORWARD void eth_buffree ARGS(( int priority ));
 #ifdef BUF_CONSISTENCY_CHECK
 FORWARD void eth_bufcheck ARGS(( void ));
 #endif
+FORWARD int eth_sel_read ARGS(( eth_fd_t * ));
 FORWARD void packet2user ARGS(( eth_fd_t *fd, acc_t *pack, time_t exp_time ));
 FORWARD void reply_thr_get ARGS(( eth_fd_t *eth_fd,
 	size_t result, int for_ioctl ));
@@ -158,6 +161,7 @@ select_res_t select_res;
 	eth_fd->ef_get_userdata= get_userdata;
 	eth_fd->ef_put_userdata= put_userdata;
 	eth_fd->ef_put_pkt= put_pkt;
+	eth_fd->ef_select_res= select_res;
 
 	return i;
 }
@@ -649,8 +653,32 @@ PUBLIC int eth_select(fd, operations)
 int fd;
 unsigned operations;
 {
-	printf("eth_select: not implemented\n");
-	return 0;
+	int i;
+	unsigned resops;
+	eth_fd_t *eth_fd;
+
+	eth_fd= &eth_fd_table[fd];
+	assert (eth_fd->ef_flags & EFF_INUSE);
+
+	resops= 0;
+
+	if (operations & SR_SELECT_READ)
+	{
+		if (eth_sel_read(eth_fd))
+			resops |= SR_SELECT_READ;
+		else if (!(operations & SR_SELECT_POLL))
+			eth_fd->ef_flags |= EFF_SEL_READ;
+	}
+	if (operations & SR_SELECT_WRITE)
+	{
+		/* Should handle special case when the interface is down */
+		resops |= SR_SELECT_WRITE;
+	}
+	if (operations & SR_SELECT_EXCEPTION)
+	{
+		printf("eth_select: not implemented for exceptions\n");
+	}
+	return resops;
 }
 
 PUBLIC void eth_close(fd)
@@ -1073,6 +1101,32 @@ printf("eth_restart_ioctl: clearing etp_getstat in port %d\n",
 	}
 }
 
+PRIVATE int eth_sel_read (eth_fd)
+eth_fd_t *eth_fd;
+{
+	acc_t *pack, *tmp_acc, *next_acc;
+	int result;
+
+	if (!(eth_fd->ef_flags & EFF_OPTSET))
+		return 1;	/* Read will not block */
+
+	if (eth_fd->ef_rdbuf_head)
+	{
+		if (get_time() <= eth_fd->ef_exp_time)
+			return 1;
+		
+		tmp_acc= eth_fd->ef_rdbuf_head;
+		while (tmp_acc)
+		{
+			next_acc= tmp_acc->acc_ext_link;
+			bf_afree(tmp_acc);
+			tmp_acc= next_acc;
+		}
+		eth_fd->ef_rdbuf_head= NULL;
+	}
+	return 0;
+}
+
 PRIVATE void packet2user (eth_fd, pack, exp_time)
 eth_fd_t *eth_fd;
 acc_t *pack;
@@ -1101,6 +1155,15 @@ time_t exp_time;
 		else
 			eth_fd->ef_rdbuf_tail->acc_ext_link= pack;
 		eth_fd->ef_rdbuf_tail= pack;
+
+		if (eth_fd->ef_flags & EFF_SEL_READ)
+		{
+			eth_fd->ef_flags &= ~EFF_SEL_READ;
+			if (eth_fd->ef_select_res)
+				eth_fd->ef_select_res(eth_fd->ef_srfd, SR_SELECT_READ);
+			else
+				printf("packet2user: no select_res\n");
+		}
 		return;
 	}
 
