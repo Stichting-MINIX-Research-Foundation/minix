@@ -16,6 +16,10 @@ URL1=http://www.minix3.org/packages/$PACKDIR
 SRCURL1=http://www.minix3.org/software
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
+if [ ! "$PAGER" ]
+then	PAGER=more
+fi
+
 # can we execute bunzip2?
 if bunzip2 --help 2>&1 | grep usage >/dev/null
 then    BUNZIP2=bunzip2 
@@ -105,7 +109,7 @@ cont=y
 while [ "$cont" = y ]
 do	cd $TMPDIR
 	echo ""
-	echo "Showing you a list of packages using more. Press q when"
+	echo "Showing you a list of packages using $PAGER. Press q when"
 	echo "you want to leave the list."
 	echo -n "Press RETURN to continue.."
 	read xyzzy
@@ -121,7 +125,7 @@ do	cd $TMPDIR
 		) | sort -f -t'|' +0 | awk '{ n++; printf "%d|%s\n", n, $0 }' 
 	) >$TMPF
 	highest="`wc -l $TMPF | awk '{ print $1 - 1 }'`"
-	awk -F'|' <$TMPF '{ printf "%3s %-15s %s\n", $1, $2, $3 }' | more
+	awk -F'|' <$TMPF '{ printf "%3s %-15s %s\n", $1, $2, $3 }' | $PAGER
 	echo "Format examples: '3', '3,6', '3-9', '3-9,11-15', 'all'"
 	echo -n "Package(s) to install (RETURN or q to exit)? "
 	read packnolist
