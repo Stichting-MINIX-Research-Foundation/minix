@@ -27,6 +27,9 @@ _PROTOTYPE( void swap_inqueue, (struct mproc *rmp)			);
 #endif /* !SWAP */
 _PROTOTYPE(int mem_holes_copy, (struct hole *, size_t *, u32_t *)	);
 
+/* asynsend.c */
+_PROTOTYPE( int asynsend, (endpoint_t dst, message *mp)			);
+
 /* break.c */
 _PROTOTYPE( int adjust, (struct mproc *rmp,
 			vir_clicks data_clicks, vir_bytes sp)		);
@@ -62,6 +65,9 @@ _PROTOTYPE( void real_cleanup, (struct mproc *rmp)			);
 
 /* getset.c */
 _PROTOTYPE( int do_getset, (void)					);
+
+/* kputc.c */
+_PROTOTYPE( void diag_repl, (void)					);
 
 /* main.c */
 _PROTOTYPE( int main, (void)						);

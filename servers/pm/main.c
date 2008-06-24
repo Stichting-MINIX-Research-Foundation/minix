@@ -124,6 +124,10 @@ PUBLIC int main()
 	case GETPUID:
 		result= do_getpuid();
 		break;
+	case DIAG_REPL :
+		diag_repl();
+		result= SUSPEND;
+		break;
 	default:
 		/* Else, if the system call number is valid, perform the
 		 * call.
