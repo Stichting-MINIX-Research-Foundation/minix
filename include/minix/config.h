@@ -3,7 +3,7 @@
 
 /* Minix release and version numbers. */
 #define OS_RELEASE "3"
-#define OS_VERSION "1.3b"
+#define OS_VERSION "1.3c"
 
 /* This file sets configuration parameters for the MINIX kernel, FS, and PM.
  * It is divided up into two main sections.  The first section contains
@@ -53,7 +53,7 @@
 #endif
 
 #if (MACHINE == IBM_PC && _WORD_SIZE == 4)
-#define NR_BUFS         1200	/* # blocks in the buffer cache */
+#define NR_BUFS          500	/* # blocks in the buffer cache */
 #define NR_BUF_HASH     2048	/* size of buf hash table; MUST BE POWER OF 2*/
 #endif
 
