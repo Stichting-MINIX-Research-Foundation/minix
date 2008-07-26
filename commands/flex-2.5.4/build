@@ -16,7 +16,7 @@ $INSTALL FlexLexer.h /usr/local/include
 $INSTALL libfl.a /usr/lib/i386
 
 if [ -f /usr/gnu/bin/gcc ]
-then	PATH=/usr/gnu/bin:$PATH
+then	export PATH=/usr/gnu/bin:$PATH
 	rm -f $CCACHE
 	YACC=/usr/bin/yacc CC=gcc CONFIG_SHELL=/bin/bigsh  AR=gar /bin/bigsh ./configure 
 	make clean $L
