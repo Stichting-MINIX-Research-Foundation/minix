@@ -195,7 +195,6 @@ int main(int ac, char** av)
 			continue;
 		}
 #endif
-fprintf(stderr, "stat: buffer at %p\n", &sbuf);
 		if (!sym) err= stat(av[i], &sbuf);
 		if (sym || (err != 0 && errno == ENOENT)) {
 		    err= lstat(av[i], &sbuf);
@@ -245,7 +244,6 @@ fprintf(stderr, "stat: buffer at %p\n", &sbuf);
 		printf("%s: %s\n", av[i], sbuf);
 		continue;
 	}
-fprintf(stderr, "stat: buffer at %p\n", &sbuf);
 	if (!sym) err= stat(av[i], &sbuf);
 	if (sym || (err != 0 && errno == ENOENT)) err= lstat(av[i], &sbuf);
 	if (err != -1) {
