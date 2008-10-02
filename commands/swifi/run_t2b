@@ -1,0 +1,15 @@
+#!/bin/sh
+
+run=0
+
+./run_t2a interface $run
+exit
+
+./run_t2a source $run
+./run_t2a destination $run
+./run_t2a pointer $run
+#./run_t2a interface $run
+./run_t2a loop $run
+#./run_t2a text $run
+#./run_t2a nop $run
+#./run_t2a random $run

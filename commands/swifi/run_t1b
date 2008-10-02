@@ -1,0 +1,14 @@
+#!/bin/sh
+
+run=0
+
+./run_t1a interface $run
+
+./run_t1a source $run
+./run_t1a destination $run
+./run_t1a pointer $run
+./run_t1a interface $run
+./run_t1a loop $run
+./run_t1a text $run
+./run_t1a nop $run
+./run_t1a random $run

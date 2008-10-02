@@ -44,6 +44,7 @@
  * - use after free
  */
 
+#if 0
 #include <linux/kernel.h>
 #include <linux/kallsyms.h>
 #include <linux/module.h>
@@ -54,9 +55,12 @@
 #include <asm/uaccess.h>
 #include <asm/delay.h>
 #include <asm/page.h>
+#endif
 #include "ddb.h"
 #include "db_sym.h"
 #include "swifi.h"
+
+#include "extra.h"
 
 
 #define CRASH_INTERVAL	8192
@@ -75,7 +79,7 @@ unsigned long faultType;
 unsigned long numFaults;
 char *crashAddr=0;		        /* track current malloc */
 int crashToggle=1;
-int text_fault(struct module * module, pswifi_result_t res);
+int text_fault(char *mod_name, pswifi_result_t res);
 int stack_fault(pswifi_result_t res);
 int heap_fault(pswifi_result_t res);
 int direct_fault(int fault_address, int fault_content, pswifi_result_t res);
@@ -90,12 +94,15 @@ do { \
       printk( KERN_ALERT "SWIFI: " fmt, ## args); \
 } while (0)
 #else
-#define PDEBUG(fmt, args...)
+#include <stdio.h>
+#define PDEBUG(args) /* (printf args) */
 #endif
 
+#define inline
 
 #ifdef CONFIG_SWIFI
 
+#if 0
 static inline long
 get_mod_name(const char *user_name, char **buf)
 {
@@ -125,6 +132,7 @@ put_mod_name(char *buf)
 {
 	free_page((unsigned long)buf);
 }
+#endif
 
 long 
 sys_inject_fault(char * module_name,
@@ -138,7 +146,9 @@ sys_inject_fault(char * module_name,
   unsigned long fault_address = 0; 
   unsigned long fault_data = 0 ; 
   char * kern_name = NULL;
+#if 0
   struct module * mod = NULL;
+#endif
   int found = 0;
   pswifi_result_t res = NULL;
 
@@ -146,27 +156,30 @@ sys_inject_fault(char * module_name,
     result = -E2BIG;
     goto Cleanup;
   }
-  res = (pswifi_result_t) kmalloc((1+argNumFaults) * sizeof(swifi_result_t), 
-				  GFP_KERNEL);
+  res = (pswifi_result_t) malloc((1+argNumFaults) * sizeof(swifi_result_t));
   if (res == NULL) {
     result = -ENOMEM;
     goto Cleanup;
   }
   memset(res, 0, (1 + argNumFaults) * sizeof(swifi_result_t));
   
-  //
+  /*
   // Capture the name of the module from usermode
-  //
+  */
 
+#if 0
   result = get_mod_name(module_name, &kern_name);
   if (result < 0) {
     goto Cleanup;
   }
+#endif
+
+  kern_name= module_name;
 
 
 
 
-
+#if 0
     lock_kernel();
 
     for (mod = module_list; mod ; mod = mod->next) {
@@ -180,6 +193,7 @@ sys_inject_fault(char * module_name,
       result = -ENOENT;
       goto Cleanup;
     }
+#endif
 		
   numFaults = argNumFaults;
   faultType = argFaultType;
@@ -204,16 +218,16 @@ sys_inject_fault(char * module_name,
   } else if (faultType == DIRECT_FAULT) {
     fault_address = numFaults;
     fault_data = randomSeed;
-    PDEBUG("sys inject fault, type %ld, addr=%lx, flip bit%lx\n", 
-	   faultType, fault_address, fault_data);
+    PDEBUG(("sys inject fault, type %ld, addr=%lx, flip bit%lx\n", 
+	   faultType, fault_address, fault_data));
   } else if (faultType == DIRECT_FAULT1) {
     fault_address = numFaults;
     fault_data = randomSeed;
-    PDEBUG("sys inject fault, type %ld, addr=%lx, zero bytes %lx\n", 
-	   faultType, fault_address, fault_data);
+    PDEBUG(("sys inject fault, type %ld, addr=%lx, zero bytes %lx\n", 
+	   faultType, fault_address, fault_data));
   } else {
-    PDEBUG("sys inject fault, type %ld, seed=%ld, fault=%ld, config=%ld\n", 
-	   faultType, randomSeed, numFaults, config);
+    PDEBUG(("sys inject fault, type %ld, seed=%ld, fault=%ld\n", 
+	   faultType, randomSeed, numFaults));
   }
   faultInjected=1;
   
@@ -232,7 +246,7 @@ sys_inject_fault(char * module_name,
   switch(faultType)
     {
     case TEXT_FAULT: 
-      result = text_fault(mod, res); 
+      result = text_fault(module_name, res); 
       break;
     case STACK_FAULT: 
       result = stack_fault(res); 
@@ -249,7 +263,7 @@ sys_inject_fault(char * module_name,
     case LOOP_FAULT: 
     case INTERFACE_FAULT: 
     case IRQ_FAULT:
-      result = text_fault(mod, res); 
+      result = text_fault(module_name, res); 
       break;
     case FREE_FAULT: 
     case BCOPY_FAULT: 
@@ -295,36 +309,38 @@ sys_inject_fault(char * module_name,
 	
 	addr1 = (unsigned long *) 0xf0212000;
 	addr2 = (unsigned long *) 0xf0212010;
-	PDEBUG("%p=%lx, %p=%lx\n", addr1, *addr1, addr2, *addr2);
+	PDEBUG(("%p=%lx, %p=%lx\n", addr1, *addr1, addr2, *addr2));
 	__asm__ ("movl $0xf0212000, %eax\n\t" \
 		 "movl $6, 0(%eax)\n\t" \
 		 "movl $6, 4(%eax)\n\t");
 	addr1 = (unsigned long *) 0xf0212000;
 	addr2 = (unsigned long *) 0xf0212010;
-	PDEBUG("after injecting fault\n");
-	PDEBUG("%p=%lx, %p=%lx\n", addr1, *addr1, addr2, *addr2);
+	PDEBUG(("after injecting fault\n"));
+	PDEBUG(("%p=%lx, %p=%lx\n", addr1, *addr1, addr2, *addr2));
 	result = 0;
 	break;
       }
     
     case DEBUGGER_FAULT: 
-      PDEBUG("Debugger fault"); 
+      PDEBUG(("Debugger fault"));
       __asm__ ("movl %cr4, %ecx\n\t" \
 	       "movl $42, %ecx; .byte 0x0f, 0x32\n\t" \
 	       "movl $377, %ecx; .byte 0x0f, 0x32\n\t");
       result = 0;
       break;
-    default: PDEBUG("unknown fault type %ld\n", faultType); break;
+    default: PDEBUG(("unknown fault type %ld\n", faultType)); break;
     }
   if (copy_to_user(result_record, res, argNumFaults * sizeof(swifi_result_t))) {
     result = -EFAULT;
   }
  Cleanup:
+#if 0
   if (kern_name != NULL) {
     put_mod_name(kern_name);
   }
+#endif
   if (res != NULL) {
-    kfree(res);
+    free(res);
   }
 
   return (result);
@@ -334,10 +350,10 @@ int while1(void)
 {
   int i=0;
 
-  PDEBUG("entering into while 1 loop\n");
+  PDEBUG(("entering into while 1 loop\n"));
   while(1) { 
     udelay(20000); 
-    PDEBUG("delay %4d secs, cpl=0x%x, ipend=0x%x\n", i+=5, 20, 30); 
+    PDEBUG(("delay %4d secs, cpl=0x%x, ipend=0x%x\n", i+=5, 20, 30)); 
     if(i>(100 * 2500)) 
       break;
   }
@@ -353,7 +369,7 @@ int direct_fault(int fault_address, int fault_content, pswifi_result_t res)
 
   addr = (unsigned long *) (PAGE_OFFSET + fault_address);
 
-  PDEBUG("%p:0x%lx => ", addr, *addr);
+  PDEBUG(("%p:0x%lx => ", addr, *addr));
   
   flip_bit = 1 << fault_content;
 
@@ -364,7 +380,7 @@ int direct_fault(int fault_address, int fault_content, pswifi_result_t res)
   if (injectFault) {
     *addr = (*addr) ^ flip_bit; 
   }
-  PDEBUG("%lx\n", *addr);
+  PDEBUG(("%lx\n", *addr));
   return(0);
 }
 
@@ -375,7 +391,7 @@ int direct_fault1(int fault_address, int fault_content, pswifi_result_t res)
 
   addr = (unsigned long *) (PAGE_OFFSET + fault_address);
   
-  PDEBUG("%p:%lx => ", addr, *addr);
+  PDEBUG(("%p:%lx => ", addr, *addr));
   
   
   data = *addr;
@@ -398,7 +414,7 @@ int direct_fault1(int fault_address, int fault_content, pswifi_result_t res)
     *addr = data;
   }
 
-  PDEBUG("%lx\n", *addr);
+  PDEBUG(("%lx\n", *addr));
   
     
   return(0);
@@ -407,7 +423,9 @@ int direct_fault1(int fault_address, int fault_content, pswifi_result_t res)
 
 
 
+/*
 #include <linux/sched.h>
+*/
 
 #define MAX_NUM_TASKS 20
 
@@ -421,14 +439,18 @@ find_task(void)
 
   
   do {
+#if 0
     read_lock(&tasklist_lock);
+#endif
     for_each_task(task) { 
       if (--i == 0) {
 	result = task;
 	break;
       }
     }
+#if 0
     read_unlock(&tasklist_lock);
+#endif
   } while ((i > 0) && (i != j));
 
   return(result);
@@ -450,15 +472,15 @@ stack_fault(pswifi_result_t res)
 
     size = (unsigned long) task + TASK_SIZE - task->thread.esp; 
 
-    PDEBUG("stack range=%lx-%lx\n", 
+    PDEBUG(("stack range=%lx-%lx\n", 
 	   (unsigned long) task->thread.esp, 
-	   (unsigned long) task + TASK_SIZE);
+	   (unsigned long) task + TASK_SIZE));
 
     addr = (unsigned long *) ((long) task->thread.esp + 
 			      (random()&~0x3)%size);  
     taddr=(unsigned long) addr;
     flip_bit = random() & 0x1f;
-    PDEBUG("%lx:%lx flip bit %d => ", taddr, *addr, flip_bit);
+    PDEBUG(("%lx:%lx flip bit %d => ", taddr, *addr, flip_bit));
     flip_bit = 1 << flip_bit;
     res[count].address = taddr;
     res[count].old = *addr;
@@ -466,17 +488,18 @@ stack_fault(pswifi_result_t res)
     if (injectFault) {
       *addr = ((*addr)^flip_bit); 
     }
-    PDEBUG("%lx\n", *addr);
+    PDEBUG(("%lx\n", *addr));
     count++;
   }
   return(0);
 }
 
 
-//
+
+/*
 // Instead of dealing with heaps directly, we look at the area cache of pages 
 // and vm pages and find an address there.
-//
+*/
 
 
 int heap_fault(pswifi_result_t res)
@@ -538,8 +561,8 @@ do_fault_copy_from_user (void *kaddr, const void *udaddr, unsigned long len,
 	  i = random() & 0xc00; 
 	}
       }
-      PDEBUG("copyin: %p to %p, len=%ld overrun=%d, Intvl=%ld, inj=%ld\n", 
-	     udaddr, kaddr, len, i, crashInterval, faultInjected);
+      PDEBUG(("copyin: %p to %p, len=%ld overrun=%d, Intvl=%ld, inj=%ld\n", 
+	     udaddr, kaddr, len, i, crashInterval, faultInjected));
       if (faultInjected++ <numFaults) {
 	len += i;
       } else {
@@ -581,8 +604,8 @@ do_fault_copy_to_user(void *udaddr, const void *kaddr, unsigned long len,
 	  i = random() & 0xc00; 
 	}
       }
-      PDEBUG("copyout: %p to %p, len=%ld overrun=%d, Intvl=%ld, inj=%ld\n",
-	     kaddr, udaddr, len, i, crashInterval, faultInjected);
+      PDEBUG(("copyout: %p to %p, len=%ld overrun=%d, Intvl=%ld, inj=%ld\n",
+	     kaddr, udaddr, len, i, crashInterval, faultInjected));
       if (faultInjected++ <numFaults) {
 	len+=i;
       } else  {
@@ -642,8 +665,8 @@ swifi_memcpy_fn (void *to, void *from, size_t len)
 	}
       }
     
-      PDEBUG("memcpy: %p to %p, len=%d overrun=%d, Intvl=%ld, inj=%ld\n", 
-	     from, to, len, i, crashInterval, faultInjected);
+      PDEBUG(("memcpy: %p to %p, len=%d overrun=%d, Intvl=%ld, inj=%ld\n", 
+	     from, to, len, i, crashInterval, faultInjected));
       if(faultInjected++ <numFaults) len+=i;
       else faultInjected=0;
       i=1;
@@ -680,8 +703,8 @@ swifi_memmove_fn (void *to, void *from, size_t len)
 	}
       }
     
-      PDEBUG("memmove: %p to %p, len=%d overrun=%d, Intvl=%ld, inj=%ld\n", 
-	     from, to, len, i, crashInterval, faultInjected);
+      PDEBUG(("memmove: %p to %p, len=%d overrun=%d, Intvl=%ld, inj=%ld\n", 
+	     from, to, len, i, crashInterval, faultInjected));
       if(faultInjected++ <numFaults) len+=i;
       else faultInjected=0;
       i=1;
@@ -723,8 +746,8 @@ do_fault_kfree(void *addr, void (* kfree_fn)(const void *))
       /* alternate between premature freeing and non-free */
       if(crashToggle) {
 	if(crashAddr) { 
-	  PDEBUG("malloc : freeing %p prematurely\n", 
-		 crashAddr);
+	  PDEBUG(("malloc : freeing %p prematurely\n", 
+		 crashAddr));
 	  kfree_fn(crashAddr);
 	  kfree_fn(addr);
 	  crashAddr=0;
@@ -736,7 +759,7 @@ do_fault_kfree(void *addr, void (* kfree_fn)(const void *))
 	  }
 	} 
       } else {
-	PDEBUG("free: don't free %p\n", addr); 
+	PDEBUG(("free: don't free %p\n", addr));
 	if(faultInjected++ > numFaults) {
 	  faultInjected=0;
 	}
@@ -752,11 +775,13 @@ do_fault_kfree(void *addr, void (* kfree_fn)(const void *))
   }
 }
 
+#if 0
 void
 swifi_kfree(const void *addr)
 {
   do_fault_kfree((void *) addr, kfree);
 }
+#endif
 
 
 void do_vfree(const void * addr)
@@ -782,7 +807,7 @@ do_fault_kmalloc(size_t size,
   if (faultInjected && (faultType==ALLOC_FAULT)) {
     crashCount++;
     if(crashCount>=crashInterval) {   
-      PDEBUG("kmalloc : returning null\n");
+      PDEBUG(("kmalloc : returning null\n"));
       crashCount=0;
       crashInterval = CRASH_INTERVAL + (random()&FI_MASK);
       if (faultInjected++ > numFaults) {
@@ -797,11 +822,13 @@ do_fault_kmalloc(size_t size,
 }
 
 
+#if 0
 void *
 swifi_kmalloc(size_t size, int flags)
 {
   return(do_fault_kmalloc(size, flags, kmalloc));
 }
+#endif
 
 
 
@@ -815,7 +842,7 @@ void * do_fault_vmalloc(unsigned long size,
   if (faultInjected && (faultType==ALLOC_FAULT)) {
     crashCount++;
     if(crashCount>=crashInterval) {   
-      PDEBUG("vmalloc : returning null\n");
+      PDEBUG(("vmalloc : returning null\n"));
       crashCount=0;
       crashInterval = CRASH_INTERVAL + (random()&FI_MASK);
       if (faultInjected++ > numFaults) {
@@ -836,6 +863,7 @@ swifi___vmalloc(unsigned long size, int gfp_mask, pgprot_t prot)
  
 
 
+#if 0
 typedef struct section_callback {
   const char * module_name;
   const char * section_name;
@@ -861,22 +889,20 @@ text_section_callback(void *token,
   }
   return(0);
 }
+#endif
 
 
-
-
-
-int text_fault(struct module * mod, pswifi_result_t res)
+int text_fault(char *mod_name, pswifi_result_t res)
 {   
   unsigned long *addr, text_size, offset, page, taddr;
   unsigned long btext, etext;
 
   int count, flip_bit=0, len, rc;
   unsigned char *c;
+#if 0
   struct module * module;
   section_callback_t info;
-
-  //
+#endif
 
 #define MAX_NUM_MODULES 10
 
@@ -885,21 +911,30 @@ int text_fault(struct module * mod, pswifi_result_t res)
   for(count=0; count<numFaults; count++) {
     int i = 1 + (random() % MAX_NUM_MODULES);
     int j = i;
+#if 0
     module = mod;
+#endif
 
+#if 0
     info.module_name = module->name;
+    info.module_name = "<module-name>";
     info.section_name = ".text";
 
     kallsyms_sections(&info, text_section_callback);
     if (info.sec_start == 0 ) {
       return(-1);
     }
+#endif
 
+    load_nlist(mod_name, &btext, &etext);
+
+#if 0
     btext = info.sec_start;
     etext = info.sec_end;
+#endif
     text_size = etext - btext;
     
-    PDEBUG("text=%lx-%lx, size=%lx\n", btext, etext, text_size);
+    PDEBUG(("text=%lx-%lx, size=%lx\n", btext, etext, text_size));
     
     addr = (unsigned long *) 
       (btext + ((unsigned long) (random()&~0xf) % text_size)); 
@@ -923,7 +958,11 @@ int text_fault(struct module * mod, pswifi_result_t res)
 	continue;
       }
     }
-    PDEBUG("target addr=%lx, instr addr=%p, %lx=>", taddr, addr, *addr); 
+
+printf("len = %d\n", len);
+
+    PDEBUG(("target addr=%lx, instr addr=%p, %lx=>", taddr, addr,
+	text_read_ul(addr))); 
       
     offset = (unsigned long) addr&PAGE_MASK;
     page = (unsigned long) addr&~PAGE_MASK;
@@ -933,19 +972,19 @@ int text_fault(struct module * mod, pswifi_result_t res)
      */
       
     res[count].address = taddr;
-    res[count].old = *addr;
-    res[count].new = *addr;
+    res[count].old = text_read_ul(addr);
+    res[count].new = text_read_ul(addr);
 
     if (faultType==TEXT_FAULT) {
 
       flip_bit = random() & 0x1f;
-      PDEBUG("flip bit %d => ", flip_bit);
+      PDEBUG(("flip bit %d => ", flip_bit));
       flip_bit = 1 << flip_bit;
 
-      res[count].new = (*addr) ^ flip_bit;
+      res[count].new = text_read_ul(addr) ^ flip_bit;
       
       if (injectFault) {
-	*addr = ((*addr)^flip_bit); 
+	text_write_ul(addr, text_read_ul(addr)^flip_bit); 
       }
 
     } else if (faultType==NOP_FAULT || 
@@ -961,7 +1000,7 @@ int text_fault(struct module * mod, pswifi_result_t res)
 	  ((unsigned char *) &res[count].new)[j] = NOP;
 	}
 	if (injectFault) {
-	  *c=NOP;
+	  text_write_ub(c, NOP);
 	}	
 
 	c++;
@@ -971,7 +1010,7 @@ int text_fault(struct module * mod, pswifi_result_t res)
       int prefix;
       c=(unsigned char *) addr;
       do {
-	switch (*c) {
+	switch (text_read_ub(c)) {
 	case 0x66: case 0x67: case 0x26: case 0x36:
 	case 0x2e: case 0x3e: case 0x64: case 0x65:
 	case 0xf0: case 0xf2: case 0xf3:
@@ -985,35 +1024,56 @@ int text_fault(struct module * mod, pswifi_result_t res)
 	  c++;
 	}
       } while (prefix);
-      if(*c>=0xd8 && *c<=0xdf) {
+      if(text_read_ub(c)>=0xd8 && text_read_ub(c)<=0xdf) {
 	/* don't mess with fp instruction, yet.
 	 * but there shouldn't be any fp instr in kernel.
 	 */
-	PDEBUG("floating point instruction, bailing out\n");
+	PDEBUG(("floating point instruction, bailing out\n"));
 	i--;
 	continue;
-      } else if(*c==0x0f) {
+      } else if(text_read_ub(c)==0x0f) {
 	c++;
       }
-      if(*c==0x0f) {
+      if(text_read_ub(c)==0x0f) {
 	c++;
       }
       c++;
       len = len-((long) c - (long) addr);
+      if (len == 0)
+      {
+	printf("tex_fault: len = %d\n", len);
+	count--;
+	continue;
+      }
+if (len == 0)
+{
+	int i;
+
+	printf(
+	"text_fault: bad length at address 0x%x, c = 0x%x, fault type %d\n",
+		addr, c, faultType);
+	printf("bytes:");
+	for (i= 0; i<16; i++)
+		printf(" 0x%02x", text_read_ub((char *)addr+i));
+	printf("\n");
+	abort();
+	*(int *)-4 = 0;
+}
       flip_bit = random() % (len*8);
-      PDEBUG("flip bit %d (len=%d) => ", flip_bit, len);
+      PDEBUG(("flip bit %d (len=%d) => ", flip_bit, len));
       for(j=0; j<len; j++) {
 	/* go to the right byte */
 	if(flip_bit<8) {
 	  flip_bit = 1 << flip_bit;
 
 	  if (j < sizeof(unsigned long)) {
-	    ((unsigned char *) &res[count].new)[j] = (*c) ^ flip_bit;
+	    ((unsigned char *) &res[count].new)[j] =
+		(text_read_ub(c) ^ flip_bit);
 	  }
 
 
 	  if (injectFault) {
-	    *c=(*c^flip_bit);
+	    text_write_ub(c, (text_read_ub(c)^flip_bit));
 	  }
 
 	  j=len;
@@ -1029,7 +1089,7 @@ int text_fault(struct module * mod, pswifi_result_t res)
       int prefix;
       c=(unsigned char *) addr;
       do {
-	switch (*c) {
+	switch (text_read_ub(c)) {
 	case 0x66: case 0x67: case 0x26: case 0x36:
 	case 0x2e: case 0x3e: case 0x64: case 0x65:
 	case 0xf0: case 0xf2: case 0xf3:
@@ -1043,21 +1103,21 @@ int text_fault(struct module * mod, pswifi_result_t res)
 	  c++;
 	}
       } while (prefix);
-      if(*c>=0xd8 && *c<=0xdf) {
+      if(text_read_ub(c)>=0xd8 && text_read_ub(c)<=0xdf) {
 	/* don't mess with fp instruction, yet */
-	PDEBUG("floating point instruction, bailing out\n");
+	PDEBUG(("floating point instruction, bailing out\n"));
 	i--;
 	continue;
-      } else if(*c==0x0f) {
+      } else if(text_read_ub(c)==0x0f) {
 	c++;
       }
-      if(*c==0x0f) {
+      if(text_read_ub(c)==0x0f) {
 	c++;
       }
       c++;
       len = len-((long) c - (long) addr);
       flip_bit = random() % (len*8-4);
-      PDEBUG("flip bit %d (len=%d) => ", flip_bit, len);
+      PDEBUG(("flip bit %d (len=%d) => ", flip_bit, len));
 
       /* mod/rm byte is special */
 
@@ -1066,11 +1126,11 @@ int text_fault(struct module * mod, pswifi_result_t res)
 
 	rc = c - (unsigned char *) addr;
 	if (rc < sizeof(unsigned long)) {
-	  ((unsigned char *) &res[count].new)[rc] = (*c) ^ flip_bit;
+	  ((unsigned char *) &res[count].new)[rc] = text_read_ub(c) ^ flip_bit;
 	  
 	}
 	if (injectFault) {
-	  *c=(*c^flip_bit);
+	  text_write_ub(c, text_read_ub(c)^flip_bit);
 	}
 
       }
@@ -1084,11 +1144,12 @@ int text_fault(struct module * mod, pswifi_result_t res)
 
 	  rc = (c - (unsigned char *) addr);
 	  if (rc < sizeof(unsigned long)) {
-	    ((unsigned char *) &res[count].new)[rc] = (*c) ^ flip_bit;
+	    ((unsigned char *) &res[count].new)[rc] =
+		text_read_ub(c) ^ flip_bit;
 	    
 	  }
 	  if (injectFault) {
-	    *c=(*c^flip_bit);
+	    text_write_ub(c, text_read_ub(c)^flip_bit);
 	  }
 
 	  j=len;
@@ -1099,7 +1160,7 @@ int text_fault(struct module * mod, pswifi_result_t res)
     } else if(faultType==LOOP_FAULT) {
       c=(unsigned char *) addr;
       /* replace rep with repe, and vice versa */
-	if(*c==0xf3) {
+	if(text_read_ub(c)==0xf3) {
 	  if (j < sizeof(unsigned long)) {
 	    ((unsigned char *) &res[count].new)[j] = NOP;
 	  }
@@ -1110,81 +1171,82 @@ int text_fault(struct module * mod, pswifi_result_t res)
 	    
 	  }
 	  if (injectFault) {
-	    *c=0xf2;
+	    text_write_ub(c, 0xf2);
 	  }
-	} else if(*c==0xf2) {
+	} else if(text_read_ub(c)==0xf2) {
 	  rc = (c - (unsigned char *) addr);
 	  if (rc < sizeof(unsigned long)) {
 	    ((unsigned char *) &res[count].new)[rc] = 0xf3;
 	    
 	  }
 	  if (injectFault) {
-	    *c=0xf3;
+	    text_write_ub(c, 0xf3);
 	  }
-	} else if( ((*c)&0xf0)==0x70 ) {
+	} else if( (text_read_ub(c)&0xf0)==0x70 ) {
 	  /* if we've jxx imm8 instruction, 
 	   * incl even byte instruction, eg jo (70) to jno (71)
 	   * decl odd byte instruction,  eg jnle (7f) to jle (7e)
 	   */ 
-	  if(*c%2 == 0) { 
+	  if(text_read_ub(c)%2 == 0) { 
 	    rc = (c - (unsigned char *) addr);
 	    if (rc < sizeof(unsigned long)) {
-	      ((unsigned char *) &res[count].new)[rc] = (*c) + 1;
+	      ((unsigned char *) &res[count].new)[rc] = text_read_ub(c) + 1;
 	    
 	    }
 
 	    if (injectFault) {
-	      *c = *c+1;
+	      text_write_ub(c, text_read_ub(c)+1);
 	    }
 	  }  else {
 
 	    rc = (c - (unsigned char *) addr);
 	    if (rc < sizeof(unsigned long)) {
-	      ((unsigned char *) &res[count].new)[rc] = (*c) - 1;
+	      ((unsigned char *) &res[count].new)[rc] = text_read_ub(c) - 1;
 	      
 	    }
 
 	    if (injectFault) {
-	      *c = *c-1;
+	      text_write_ub(c, text_read_ub(c)-1);
 	    }
 	  }
-	} else if(*c==0x66 || *c==0x67)	{ 	/* override prefix */
+	} else if(text_read_ub(c)==0x66 || text_read_ub(c)==0x67)	{ 
+		/* override prefix */
 	  c++;
-	} else if(*(c++)==0xf && ((*c)&0xf0)==0x80 ) {
+	} else if(text_read_ub(c++)==0xf && (text_read_ub(c)&0xf0)==0x80 ) {
 	  /* if we've jxx imm16/32 instruction, 
 	   * incl even byte instruction, eg jo (80) to jno (81)
 	   * decl odd byte instruction,  eg jnle (8f) to jle (8e)
 	   */ 
-	  if(*c%2 == 0) {
+	  if(text_read_ub(c)%2 == 0) {
 	    rc = (c - (unsigned char *) addr);
 	    if (rc < sizeof(unsigned long)) {
-	      ((unsigned char *) &res[count].new)[rc] = (*c) + 1;
+	      ((unsigned char *) &res[count].new)[rc] = text_read_ub(c) + 1;
 	      
 	    }
 	    if (injectFault) {
-	      *c = *c+1;
+	      text_write_ub(c, text_read_ub(c)+1);
 	    }
 	  } else {
 	    rc = (c - (unsigned char *) addr);
 	    if (rc < sizeof(unsigned long)) {
-	      ((unsigned char *) &res[count].new)[rc] = (*c) -1;
+	      ((unsigned char *) &res[count].new)[rc] = text_read_ub(c) -1;
 	      
 	    }
 
 	    if (injectFault) {
-	      *c = *c-1;
+	      text_write_ub(c, text_read_ub(c)-1);
 	    }
 	  }
 	}
       
     }
-    PDEBUG("%lx\n", *addr);
+    PDEBUG(("%lx\n", text_read_ul(addr)));
   }
   return(0);
 }
 
 
-#else // CONFIG_SWIFI
+#else /* CONFIG_SWIFI */
 
 long
 sys_inject_fault(char * module_name,
@@ -1197,5 +1259,4 @@ sys_inject_fault(char * module_name,
   return(0);
 }
 
-#endif // CONFIG_SWIFI
-
+#endif /* CONFIG_SWIFI */

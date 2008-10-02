@@ -1,25 +1,20 @@
-#
-# Makefile for the nooks.
-#
-# Note! Dependencies are done automagically by 'make dep', which also
-# removes any old dependencies. DON'T put your own dependencies here
-# unless it's something special (ie not a .c file).
-#
-# Note 2! The CFLAGS definitions are now in the main makefile...
+OBJ=systest.o fault_model.o extra.o db_sym.o db_disasm.o db_access.o read_nlist.o
+OBJ_RND=rnd.o
+OBJ_SOCKET=socket.o
 
-O_TARGET := swifi.o
+DEFINES=-DCONFIG_SWIFI
+CFLAGS=$(DEFINES)
 
-# All of the (potential) objects that export symbols.
-# This list comes from 'grep -l EXPORT_SYMBOL *.[hc]'.
+all:	swifi rnd socket
 
-export-objs = swifi-ksyms.o
+swifi:	$(OBJ)
+	$(CC) -o swifi $(OBJ)
 
-obj-$(CONFIG_SWIFI) +=  db_sym.o db_disasm.o db_access.o \
-			random.o fault_model.o swifi-ksyms.o
+rnd:	$(OBJ_RND)
+	$(CC) -o $@ $(OBJ_RND)
 
-# db_interface.o 
+socket:	$(OBJ_SOCKET)
+	$(CC) -o $@ $(OBJ_SOCKET)
 
-include $(TOPDIR)/Rules.make
-
-fastdep:
-
+clean:
+	rm -f swifi $(OBJ)

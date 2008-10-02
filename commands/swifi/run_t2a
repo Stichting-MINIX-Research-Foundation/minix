@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -x
+
+if [ $# -ne 2 ]; then usage; fi
+type="$1"
+run="$2"
+
+count=10000
+
+# Rotate syslog
+LOGFILE=/var/log/messages
+mv $LOGFILE $LOGFILE.prev
+(cd /var/log && : > messages)
+kill -1 `ps ax | grep syslogd | grep -v grep |
+	sed 's,^[	 ]*,,;s,[	 ].*,,'`
+
+./run_t2 $count $type `expr $run \* 1000` 2>&1 | 
+	tee results/2.$type.$run.out
+
+cp $LOGFILE results/2.$type.$run.log
+
+

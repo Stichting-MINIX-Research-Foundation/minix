@@ -1,0 +1,39 @@
+#!/bin/sh
+do_one()
+{
+	# $1 = test-nr, $2 = count, $3 = seed
+	pid=''
+	while [ X"$pid" = X ]
+	do
+		pid=`ps ax | grep dp8390 | grep usr.sbin |
+			sed 's,^[ 	]*,,;s,[ 	].*,,`
+		sleep 1
+	done
+	echo pid = $pid
+	./swifi -f /usr/build/drivers/dp8390/dp8390 $pid $1 $2 $3 >/tmp/out
+	sleep 5
+	kill -0 $pid &&
+		echo "driver failed to die, params: test $1, count $2, seed $3"
+}
+
+one_round()
+{
+	# $1 = count, $2 = seed
+	count=$1
+	seed=$2
+	do_one 6 $count $seed	# Source fault
+	do_one 5 $count $seed	# Destination fault
+	do_one 8 $count $seed	# Pointer fault
+	do_one 14 $count $seed	# Interface fault
+	do_one 12 $count $seed	# Loop fault
+	do_one 0 $count $seed	# Text fault
+	do_one 4 $count $seed	# Nop fault
+}
+
+i=4
+while [ $i -lt 100 ]
+do
+	echo "Seed: $i"
+	one_round 100 $i
+	i=`expr $i + 1`
+done
