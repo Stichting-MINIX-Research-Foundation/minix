@@ -88,7 +88,9 @@ void		db_check_interrupt __P((void));
 void		db_clear_watchpoints __P((void));
 db_addr_t	db_disasm __P((db_addr_t loc, boolean_t altfmt));
 				/* instruction disassembler */
+#if 0
 //void		db_error __P((char *s));
+#endif
 #define db_error printk
 int		db_expression __P((db_expr_t *valuep));
 int		db_get_variable __P((db_expr_t *valuep));

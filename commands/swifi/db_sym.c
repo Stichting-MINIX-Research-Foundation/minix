@@ -30,14 +30,20 @@
  * 	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
  */
+#if 0
 //#include <sys/param.h>
 //#include <sys/systm.h>
+#endif
+#if 0
 #include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/kallsyms.h>
+#endif
 #include "ddb.h"
 #include "db_sym.h"
 #include "swifi.h"
+
+#include "extra.h"
 
 /*
  * Multiple symbol tables
@@ -382,13 +388,17 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
   cur_value = value;
   while(cur_value < sec_end) {
     if(verbose) { 
+#if 0
       //	db_printsym(cur_value, DB_STGY_PROC); 
       //	printk(":\t");
+#endif
     }
     prev_value=cur_value;
     modAddr=0;
     if(verbose) {
+#if 0
       //cur_value=db_disasm(prev_value, FALSE); 
+#endif
     } else {
       cur_value=my_disasm(prev_value, FALSE); 
     }
@@ -397,7 +407,7 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
     if(cur_value-prev_value == 1) {
       unsigned char *c;
       c=(char *) prev_value;
-      if(*c==0xc9)	{
+      if(text_read_ub(c)==0xc9)	{
 	if(verbose) printk("bailing out as we hit a leave\n");
 	found=0;
 	break;
@@ -452,22 +462,24 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
 
       /* look for repX prefix */
 
-      if(*c==0xf3 || *c==0xf2) {	
+      if(text_read_ub(c)==0xf3 || text_read_ub(c)==0xf2) {	
 	if(verbose) 
 	  printk("found repX prefix\n");
 	/* take out repX prefix only */
 	found=1;	
 	cur_value=prev_value+1;		
 	break;
-      } else if( ((*c)&0xf0)==0x70 || (*c>=0xe0 && *c<=0xe2) ) {	
+      } else if( (text_read_ub(c)&0xf0)==0x70 ||
+		(text_read_ub(c)>=0xe0 && text_read_ub(c)<=0xe2) ) {	
 	/* look for jXX 8 (7X), loop,jcx (e0-3), jXX 16/32 (0f 8X) */
 	found=1;	
 	if(verbose) 
 	  printk("found jXX rel8, loop or jcx\n");
 	break;
-      } else if(*c==0x66 || *c==0x67)	{ 	/* override prefix */
+      } else if(text_read_ub(c)==0x66 ||
+		text_read_ub(c)==0x67)	{ 	/* override prefix */
 	c++;
-      } else if(*(c++)==0xf && ((*c)&0xf0)==0x80 ) {
+      } else if(text_read_ub(c++)==0xf && (text_read_ub(c)&0xf0)==0x80 ) {
 	found=1;	/* 0x0f 0x8X */
 	if(verbose) printk("found branch!\n");
 	break;
@@ -481,7 +493,8 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
       if(cur_value>off && modAddr) {
 	unsigned char *c;
 	c=(char *) modAddr;
-	if( (*c)>0x3f && (*c)<0xc0 && (((*c)&7)!=5) ) {
+	if( text_read_ub(c)>0x3f && text_read_ub(c)<0xc0 &&
+		(text_read_ub(c)&7)!=5 ) {
 	  found=1;
 	  break;
 	}
@@ -493,9 +506,9 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
        */
       unsigned char *c;
       c=(char *) prev_value;
-      if( *c==0x8a || *c==0x8b) {
+      if( text_read_ub(c)==0x8a || text_read_ub(c)==0x8b) {
 	c++;
-	if( ((*(c++))&0xc7)==0x45 && ((*c)&0x80)==0 ) {
+	if( ((text_read_ub(c++))&0xc7)==0x45 && (text_read_ub(c)&0x80)==0 ) {
 	  /* 75% chance that we'll choose the next arg */
 	  if(random()&0x3) {
 	    found=1;
@@ -512,26 +525,28 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
        */
       unsigned char *c;
       c=(char *) prev_value;
-      if (((*c & 0xf8) == 0x50) || 
-	  (*c == 0xff)) {
-	if (*c == 0xff) {
+      if (((text_read_ub(c) & 0xf8) == 0x50) || 
+	  (text_read_ub(c) == 0xff)) {
+	if (text_read_ub(c) == 0xff) {
 	  c++;
+#if 0
 	  //
 	  // Look for push x(ebp)
-	  if ((*c & 0x78) != 0x70) {
+#endif
+	  if ((text_read_ub(c) & 0x78) != 0x70) {
 	    continue;
 	  }
-	  // 
+	  /* 
 	  // Skip the offset
-	  //
+	  */
 	  c++;
 	}
 	c++;
-	if (*c == 0x9d) {
-	  //
+	if (text_read_ub(c) == 0x9d) {
+	  /*
 	  // Increment cur_value to include the 
 	  // popf instruction
-	  //
+	  */
 	  cur_value++;
 	  found = 1;
 	  break;
@@ -545,12 +560,14 @@ find_faulty_instr(db_expr_t off, int type, int *instr_len)
   if(found) {
     *instr_len=cur_value-prev_value;
     off=prev_value;
-    if(1 || verbose) {
+    if(verbose) {
       printk("%s", name);
       if (d) printk("+0x%x", d);
       printk(" @ %x, ", value);
       printk("instr @ %x, len=%d, ", off, *instr_len);
+#if 0
 				// db_disasm(prev_value, FALSE); 
+#endif
     }
     return off;
   } else {

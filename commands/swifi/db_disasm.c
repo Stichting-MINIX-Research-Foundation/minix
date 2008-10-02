@@ -30,7 +30,9 @@
  * Instruction disassembler.
  */
 
+#if 0
 #include <linux/kernel.h>
+#endif
 #include "ddb.h"
 
 #include "db_access.h"
@@ -861,11 +863,12 @@ static const int db_lengths[] = {
 	result = db_get_value((loc), (size), (is_signed)); \
 	(loc) += (size);
 
-//static db_addr_t
+/*static db_addr_t
 //		db_disasm_esc __P((db_addr_t loc, int inst, int short_addr,
 //				   int size, const char *seg));
 //static void	db_print_address __P((const char *seg, int size,
 //				      struct i_addr *addrp));
+*/
 static db_addr_t
 		db_read_address __P((db_addr_t loc, int short_addr,
 				     int regmodrm, struct i_addr *addrp));
@@ -1099,13 +1102,19 @@ my_disasm(db_addr_t	loc,
 		    seg = "%gs";
 		    break;
 		case 0xf0:
+#if 0
 		    // db_printf("lock ");
+#endif
 		    break;
 		case 0xf2:
+#if 0
 		    // db_printf("repne ");
+#endif
 		    break;
 		case 0xf3:
+#if 0
 		    // db_printf("repe ");	/* XXX repe VS rep */
+#endif
 		    break;
 		default:
 		    prefix = FALSE;
@@ -1141,7 +1150,9 @@ my_disasm(db_addr_t	loc,
 	    get_value_inc(regmodrm, loc, 1, FALSE);
 	    loc = db_read_address(loc, short_addr, regmodrm, &address);
 		modAddr=prev_loc;
+#if 0
 //	    printf("modrm at %x, offset %d\n", loc, loc-prev_loc);
+#endif
 	}
 
 	i_name = ip->i_name;
@@ -1187,51 +1198,75 @@ my_disasm(db_addr_t	loc,
 	    switch (i_mode & 0xFF) {
 
 		case E:
+#if 0
 		    // db_print_address(seg, size, &address);
+#endif
 		    break;
 
 		case Eind:
+#if 0
 		    // db_print_address(seg, size, &address);
+#endif
 		    break;
 
 		case El:
+#if 0
 		    // db_print_address(seg, LONG, &address);
+#endif
 		    break;
 
 		case Ew:
+#if 0
 		    // db_print_address(seg, WORD, &address);
+#endif
 		    break;
 
 		case Eb:
+#if 0
 		    // db_print_address(seg, BYTE, &address);
+#endif
 		    break;
 
 		case R:
+#if 0
 		    // db_printf("%s", db_reg[size][f_reg(regmodrm)]);
+#endif
 		    break;
 
 		case Rw:
+#if 0
 		    // db_printf("%s", db_reg[WORD][f_reg(regmodrm)]);
+#endif
 		    break;
 
 		case Ri:
+#if 0
 		    // db_printf("%s", db_reg[size][f_rm(inst)]);
+#endif
 		    break;
 
 		case Ril:
+#if 0
 		    // db_printf("%s", db_reg[LONG][f_rm(inst)]);
+#endif
 		    break;
 
 		case S:
+#if 0
 		    // db_printf("%s", db_seg_reg[f_reg(regmodrm)]);
+#endif
 		    break;
 
 		case Si:
+#if 0
 		    // db_printf("%s", db_seg_reg[f_reg(inst)]);
+#endif
 		    break;
 
 		case A:
+#if 0
 		    // db_printf("%s", db_reg[size][0]);	/* acc */
+#endif
 		    break;
 
 		case BX:
@@ -1295,7 +1330,9 @@ my_disasm(db_addr_t	loc,
 		    get_value_inc(displ, loc, len, FALSE);
 		    if (seg) ;
 		    else
+#if 0
 //			db_printsym((db_addr_t)displ, DB_STGY_ANY);
+#endif
 		    break;
 
 		case Db:
@@ -1303,7 +1340,9 @@ my_disasm(db_addr_t	loc,
 		    displ += loc;
 		    if (size == WORD)
 			displ &= 0xFFFF;
+#if 0
 //		    db_printsym((db_addr_t)displ, DB_STGY_XTRN);
+#endif
 		    break;
 
 		case Dl:
@@ -1312,7 +1351,9 @@ my_disasm(db_addr_t	loc,
 		    displ += loc;
 		    if (size == WORD)
 			displ &= 0xFFFF;
+#if 0
 //		    db_printsym((db_addr_t)displ, DB_STGY_XTRN);
+#endif
 		    break;
 
 		case o1:
@@ -1328,6 +1369,8 @@ my_disasm(db_addr_t	loc,
 		    break;
 	    }
 	}
+#if 0
 //	db_printf("\n");
+#endif
 	return (loc);
 }

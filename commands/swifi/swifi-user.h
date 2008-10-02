@@ -40,7 +40,14 @@ typedef struct swifi_result {
   unsigned long new;
 } swifi_result_t, *pswifi_result_t;
 
+long 
+sys_inject_fault(char * module,
+		 unsigned long argFaultType,
+		 unsigned long argRandomSeed,
+		 unsigned long argNumFaults,
+		 pswifi_result_t result_record,
+		 unsigned long argInjectFault);
  
 
-#endif // _SWIFI_USER_H
+#endif /* _SWIFI_USER_H */
 

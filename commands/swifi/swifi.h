@@ -1,6 +1,8 @@
 #ifndef _LINUX_SWIFI_H
 #define _LINUX_SWIFI_H
 
+#include <stdlib.h>
+
 #include "swifi-user.h"
 
 long
@@ -53,9 +55,10 @@ void *
 swifi_kmalloc(size_t size, int flags);
 
 
+#if 0
 void *
 swifi___vmalloc(unsigned long size, int gfp_mask, pgprot_t prot);
- 
+#endif
 
-#endif // _LINUX_SWIFI_H
+#endif /* _LINUX_SWIFI_H */
 

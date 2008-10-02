@@ -33,6 +33,8 @@
 #include "ddb.h"
 #include "db_access.h"
 
+#include "extra.h"
+
 /*
  * Access unaligned data items on aligned (longword)
  * boundaries.
@@ -55,7 +57,7 @@ db_read_bytes(addr, size, data)
 
 	src = (char *)addr;
 	while (--size >= 0)
-	    *data++ = *src++;
+	    *data++ = text_read_ub(src++);
 
 }
 

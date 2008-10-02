@@ -29,8 +29,10 @@
 #ifndef _MACHINE_DB_MACHDEP_H_
 #define	_MACHINE_DB_MACHDEP_H_
 
+#if 0
 //#include <machine/frame.h>
 //#include <machine/psl.h>
+#endif
 
 #ifndef TRUE
 #define TRUE 1
