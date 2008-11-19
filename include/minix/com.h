@@ -837,7 +837,7 @@
 #	define VMUM_LEN			m1_i1
 
 #define VM_ALLOCMEM		(VM_RQ_BASE+18)
-#	define VMAM_CLICKS		m1_p1
+#	define VMAM_BYTES		m1_p1
 #	define VMAM_MEMBASE		m1_i1
 
 /* Calls from VFS. */

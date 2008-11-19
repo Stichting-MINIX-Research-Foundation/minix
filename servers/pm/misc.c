@@ -72,7 +72,9 @@ PUBLIC int do_allocmem()
 	r = vm_allocmem(m_in.memsize, &retmembase);
 	if(r == OK)
 		mp->mp_reply.membase = retmembase;
+#if 0
 	printf("PM: do_allocmem: %d\n", r);
+#endif
 	return r;
 }
 

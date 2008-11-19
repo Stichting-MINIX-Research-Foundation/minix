@@ -1873,9 +1873,6 @@ void monitor(void)
 
 #if BIOS
 
-unsigned char cdspec[25];
-void bootcdinfo(u32_t, int *, int drive);
-
 void boot(void)
 /* Load Minix and start it, among other things. */
 {
