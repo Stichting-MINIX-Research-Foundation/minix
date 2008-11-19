@@ -67,7 +67,7 @@ PUBLIC int main(void)
 #endif
 	SANITYCHECK(SCL_TOP);
 
-  vm_paged = 0;
+  vm_paged = 1;
   env_parse("vm_paged", "d", 0, &vm_paged, 0, 1);
 #if SANITYCHECKS
   env_parse("vm_sanitychecklevel", "d", 0, &vm_sanitychecklevel, 0, SCL_MAX);
