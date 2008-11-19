@@ -60,7 +60,7 @@ PUBLIC void arch_shutdown(int how)
 					c != '\'' && c != '"' &&
 					c != '\\' && c != ';') {
 					mybuffer[dest] = c;
-				} else	mybuffer[dest] = '|';
+				} else	mybuffer[dest] = ' ';
 
 				DECSOURCE;
 				dest--;

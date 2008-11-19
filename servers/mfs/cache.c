@@ -65,6 +65,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 			/* Block needed has been found. */
 			if (bp->b_count == 0) rm_lru(bp);
 			bp->b_count++;	/* record that block is in use */
+			ASSERT(bp->b_bytes == fs_block_size);
 			ASSERT(bp->b_dev == dev);
 			ASSERT(bp->b_dev != NO_DEV);
 			ASSERT(bp->bp);
@@ -112,9 +113,8 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   if(bp->b_bytes < fs_block_size) {
 	static int n = 0;
 	phys_bytes ph;
-	if(bp->b_bytes > 0)
-		printf("MFS: WARNING: throwing away %d bytes!\n",
-			bp->b_bytes);
+	ASSERT(!bp->bp);
+	ASSERT(bp->b_bytes == 0);
 	if(!(bp->bp = alloc_contig(fs_block_size, 0, &ph)))
 		panic(__FILE__,"couldn't allocate FS buffer", n);
   	bp->b_bytes = fs_block_size;

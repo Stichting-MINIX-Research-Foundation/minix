@@ -132,7 +132,7 @@ do
 	esac
 done
 
-USRMB=400
+USRMB=150
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"

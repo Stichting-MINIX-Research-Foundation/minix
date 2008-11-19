@@ -78,13 +78,6 @@ PUBLIC void sys_task()
   while (TRUE) {
       struct proc *restarting;
 
-#if 0
-if(!(n++ % 100000)) {
-	int i;
-	kprintf("switch %8d reload %8d\n", cr3switch, cr3reload);
-}
-#endif
-
       restarting = vmrestart_check(&m);
       softnotify_check();
 	if(softnotify)
