@@ -29,9 +29,6 @@ PRIVATE char *flags_str(int flags)
 	str[5] = (flags & STOPPED)  ? 'S' : '-';
 	str[6] = (flags & SIGSUSPENDED)  ? 'U' : '-';
 	str[7] = (flags & REPLY)  ? 'R' : '-';
-	str[8] = (flags & ONSWAP)  ? 'O' : '-';
-	str[9] = (flags & SWAPIN)  ? 'I' : '-';
-	str[10] = (flags & DONT_SWAP)  ? 'D' : '-';
 	str[11] = (flags & PRIV_PROC)  ? 'P' : '-';
 	str[12] = '\0';
 
@@ -48,14 +45,14 @@ PUBLIC void mproc_dmp()
 
   getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc);
 
-  printf("-process- -nr-prnt- -pid/ppid/grp- -uid--gid- -nice- -flags------\n");
+  printf("-process- -nr-prnt- -pid   ppid   grp-  -uid--gid-        -nice- -flags------\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	mp = &mproc[i];
   	if (mp->mp_pid == 0 && i != PM_PROC_NR) continue;
   	if (++n > 22) break;
-  	printf("%8.8s %4d%4d  %4d%4d%4d    ", 
+  	printf("%8.8s %4d%4d  %5d %5d %5d     ", 
   		mp->mp_name, i, mp->mp_parent, mp->mp_pid, mproc[mp->mp_parent].mp_pid, mp->mp_procgrp);
-  	printf("%d(%d)  %d(%d)  ",
+  	printf("%2d(%2d)  %2d(%2d)  ",
   		mp->mp_realuid, mp->mp_effuid, mp->mp_realgid, mp->mp_effgid);
   	printf(" %3d  %s  ", 
   		mp->mp_nice, flags_str(mp->mp_flags)); 
@@ -99,42 +96,4 @@ PUBLIC void sigaction_dmp()
   prev_i = i;
 }
 
-/*===========================================================================*
- *				holes_dmp				     *
- *===========================================================================*/
-PUBLIC void holes_dmp(void)
-{
-	static struct pm_mem_info pmi;
-	int h;
-	int largest_bytes = 0, total_bytes = 0;
-
-	if(getsysinfo(PM_PROC_NR, SI_MEM_ALLOC, &pmi) != OK) {
-		printf("Obtaining memory hole list failed.\n");
-		return;
-	}
-	printf("Available memory stats\n");
-
-	for(h = 0; h < _NR_HOLES; h++) {
-		if(pmi.pmi_holes[h].h_base && pmi.pmi_holes[h].h_len) {
-			int bytes;
-			bytes = (pmi.pmi_holes[h].h_len << CLICK_SHIFT);
-			printf("%08lx: %6d kB\n",
-				pmi.pmi_holes[h].h_base << CLICK_SHIFT, bytes / 1024);
-			if(bytes > largest_bytes) largest_bytes = bytes;
-			total_bytes += bytes;
-		}
-	}
-	printf("\n"
-		"Total memory free:     %7d kB\n"
-		"Largest chunk:         %7d kB\n"
-		"Uncontiguous rest:     %7d kB (%d%% of total free)\n"
-		"Memory high watermark: %7d kB\n",
-		total_bytes/1024,
-		largest_bytes/1024,
-		(total_bytes-largest_bytes)/1024,
-		100*(total_bytes/100-largest_bytes/100)/total_bytes,
-		(pmi.pmi_hi_watermark/1024 << CLICK_SHIFT));
-
-	return;
-}
 

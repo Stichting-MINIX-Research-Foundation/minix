@@ -93,7 +93,7 @@ static tmra_ut or_watchdog;
 #include	<net/hton.h>
 #include	<net/gen/ether.h>
 #include	<net/gen/eth_io.h>
-#include	<sys/vm.h>
+#include	<sys/vm_i386.h>
 #include	<sys/types.h>
 #include	<fcntl.h>
 #include 	<unistd.h>
@@ -738,23 +738,28 @@ static void map_hw_buffer(t_or *orp) {
 	char *buf, *abuf;	
 	hermes_t *hw = &(orp->hw);	
 
-	/* This way, the buffer will be at least PAGE_SIZE big: see 
+	/* This way, the buffer will be at least I386_PAGE_SIZE big: see 
 	 * calculation with the offset */
-	size = 2 * PAGE_SIZE;	
+	size = 2 * I386_PAGE_SIZE;	
 
 	buf = (char *)malloc(size);
 	if(buf == NULL) 
 		panic(__FILE__, "map_hw_buffer: cannot malloc size:", size);
 
-	/* Let the mapped memory by PAGE_SIZE aligned */
-	o = PAGE_SIZE - ((vir_bytes)buf % PAGE_SIZE);
+	/* Let the mapped memory by I386_PAGE_SIZE aligned */
+	o = I386_PAGE_SIZE - ((vir_bytes)buf % I386_PAGE_SIZE);
 	abuf = buf + o;
 
+#if 0
 	r = sys_vm_map(SELF, 1, (vir_bytes)abuf, 
-			1 * PAGE_SIZE, (phys_bytes)orp->or_base_port);
+			1 * I386_PAGE_SIZE, (phys_bytes)orp->or_base_port);
+#else
+	r = ENOSYS;
+#endif
 
 	if(r!=OK) 
 		panic(__FILE__, "map_hw_buffer: sys_vm_map failed:", r);
+
 
 	hw->locmem = abuf;
 }

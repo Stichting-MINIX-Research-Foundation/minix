@@ -34,7 +34,9 @@ FORWARD _PROTOTYPE( eth_port_t *find_port, (message *m) );
 FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port, int tasknr) );
 FORWARD _PROTOTYPE( void send_getstat, (eth_port_t *eth_port) );
 
+#if 0
 FORWARD _PROTOTYPE( int asynsend, (endpoint_t dst, message *mp) );
+#endif
 
 PUBLIC void osdep_eth_init()
 {
@@ -339,7 +341,9 @@ message *m;
 		if (!(loc_port->etp_flags & EPF_GOT_ADDR))
 		{
 			loc_port->etp_flags |= EPF_GOT_ADDR;
+#if 0
 			printf("eth_rec: calling eth_restart_ioctl\n");
+#endif
 			eth_restart_ioctl(loc_port);
 
 			/* Also update any VLANs on this device */
@@ -359,6 +363,7 @@ message *m;
 		if (!(loc_port->etp_flags & EPF_READ_IP))
 			setup_read (loc_port);
 
+#if 0
 		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_SEND)
 		{
 			printf("eth_rec(conf): OEPF_NEED_SEND is set\n");
@@ -371,6 +376,7 @@ message *m;
 		{
 			printf("eth_rec(conf): OEPF_NEED_STAT is set\n");
 		}
+#endif
 
 		return;
 	}
@@ -404,6 +410,7 @@ message *m;
 		assert(loc_port->etp_flags & EPF_GOT_ADDR);
 		eth_restart_ioctl(loc_port);
 
+#if 0
 		if (loc_port->etp_osdep.etp_flags & OEPF_NEED_SEND)
 		{
 			printf("eth_rec(stat): OEPF_NEED_SEND is set\n");
@@ -416,6 +423,8 @@ message *m;
 		{
 			printf("eth_rec(stat): OEPF_NEED_CONF is set\n");
 		}
+#endif
+
 #if 0
 		if (loc_port->etp_osdep.etp_state == OEPS_IDLE &&
 			(loc_port->etp_osdep.etp_flags & OEPF_NEED_CONF))
@@ -549,7 +558,9 @@ u32_t flags;
 	if (!(eth_port->etp_flags & EPF_GOT_ADDR))
 	{
 		/* We have never seen the device. */
+#if 0
 		printf("eth_set_rec_conf: waiting for device to appear\n");
+#endif
 		return;
 	}
 
@@ -1002,6 +1013,7 @@ eth_port_t *eth_port;
 		ip_panic(( "eth_get_stat: asynsend failed: %d", r));
 }
 
+#if 0
 PRIVATE asynmsg_t *msgtable= NULL;
 PRIVATE size_t msgtable_n= 0;
 
@@ -1050,6 +1062,7 @@ message *mp;
 	/* Tell the kernel to rescan the table */
 	return senda(msgtable, msgtable_n);
 }
+#endif
 
 /*
  * $PchId: mnx_eth.c,v 1.16 2005/06/28 14:24:37 philip Exp $

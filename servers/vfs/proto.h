@@ -31,7 +31,6 @@ _PROTOTYPE( void dev_up, (int major)					);
 _PROTOTYPE( endpoint_t suspended_ep, (endpoint_t driver,
 						cp_grant_id_t g)	);
 _PROTOTYPE( void reopen_reply, (void)					);
-_PROTOTYPE( int asynsend, (endpoint_t dst, message *mp)			);
 
 /* dmap.c */
 _PROTOTYPE( int do_devctl, (void)					);
@@ -52,7 +51,7 @@ _PROTOTYPE( int pm_exec, (int proc_e, char *path, vir_bytes path_len,
 /* filedes.c */
 _PROTOTYPE( struct filp *find_filp, (struct vnode *vp, mode_t bits)	);
 _PROTOTYPE( int get_fd, (int start, mode_t bits, int *k, 
-            struct filp **fpt)                                          );
+            struct filp **fpt)				                    );
 _PROTOTYPE( struct filp *get_filp, (int fild)				);
 _PROTOTYPE( struct filp *get_filp2, (struct fproc *rfp, int fild)	);
 _PROTOTYPE( int inval_filp, (struct filp *)				);
@@ -90,6 +89,9 @@ _PROTOTYPE( int do_svrctl, (void)					);
 _PROTOTYPE( int do_getsysinfo, (void)					);
 _PROTOTYPE( int pm_dumpcore, (int proc_e, struct mem_map *seg_ptr)	);
 
+/* mmap.c */
+_PROTOTYPE( int do_vm_mmap, (void)					);
+
 /* mount.c */
 _PROTOTYPE( int do_fslogin, (void)                                      );
 _PROTOTYPE( int do_mount, (void)					);
@@ -108,14 +110,16 @@ _PROTOTYPE( int do_mknod, (void)					);
 _PROTOTYPE( int do_mkdir, (void)					);
 _PROTOTYPE( int do_open, (void)						);
 _PROTOTYPE( int do_slink, (void)                                        );
+_PROTOTYPE( int do_vm_open, (void)					);
+_PROTOTYPE( int do_vm_close, (void)					);
 
 /* path.c */
 _PROTOTYPE( int lookup_rel_vp, (struct vnode *start_node, int flags,
-				int use_realuid, struct vnode **vpp)	);
+			int use_realuid, struct vnode **vpp)	);
 _PROTOTYPE( int lookup_vp, (int flags, int use_realuid,
-						struct vnode **vpp)	);
+			struct vnode **vpp)	);
 _PROTOTYPE( int lookup_lastdir_rel, (struct vnode *start_node,
-				int use_realuid, struct vnode **vpp)	);
+			int use_realuid, struct vnode **vpp)	);
 _PROTOTYPE( int lookup_lastdir, (int use_realuid, struct vnode **vpp)	);
 
 /* pipe.c */

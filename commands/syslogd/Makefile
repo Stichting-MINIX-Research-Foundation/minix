@@ -22,7 +22,7 @@ all: $(TARGETS)
 
 syslogd:	syslogd.o
 	$(CC) $? $(LDFLAGS)
-	@install -S 8kw $@
+	@install $@
 
 syslog_test: syslog_test.o syslog.o
 	$(CC) syslog_test.o syslog.o $(LDFLAGS)

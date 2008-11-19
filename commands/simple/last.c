@@ -479,3 +479,4 @@ char *argv[];
   printf("\nwtmp begins %.16s \n", ctime(&wtmp_buffer[0].ut_time));
   return(0);
 }
+

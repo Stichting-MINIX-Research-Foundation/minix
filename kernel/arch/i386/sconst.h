@@ -23,5 +23,6 @@ SPREG		=	PSWREG + W
 SSREG		=	SPREG + W
 P_STACKTOP	=	SSREG + W
 P_LDT_SEL	=	P_STACKTOP
-P_LDT		=	P_LDT_SEL + W
+P_CR3		=	P_LDT_SEL + W
+P_LDT		=	P_CR3 + W
 Msize		=	9		! size of a message in 32-bit words

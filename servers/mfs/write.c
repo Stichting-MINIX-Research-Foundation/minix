@@ -330,7 +330,9 @@ PUBLIC void zero_block(bp)
 register struct buf *bp;	/* pointer to buffer to zero */
 {
 /* Zero a block. */
-  memset(bp->b_data, 0, _MAX_BLOCK_SIZE);
+  ASSERT(bp->b_bytes > 0);
+  ASSERT(bp->bp);
+  memset(bp->b_data, 0, bp->b_bytes);
   bp->b_dirt = DIRTY;
 }
 

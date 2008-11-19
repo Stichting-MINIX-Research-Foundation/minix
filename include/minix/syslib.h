@@ -34,7 +34,8 @@ _PROTOTYPE( int sys_abort, (int how, ...));
 _PROTOTYPE( int sys_enable_iop, (endpoint_t proc));
 _PROTOTYPE( int sys_exec, (endpoint_t proc, char *ptr,  
 				char *aout, vir_bytes initpc));
-_PROTOTYPE( int sys_fork, (int parent, int child, int *, struct mem_map *ptr));
+_PROTOTYPE( int sys_fork, (endpoint_t parent, endpoint_t child, int *,
+	struct mem_map *ptr, u32_t vm));
 _PROTOTYPE( int sys_newmap, (endpoint_t proc, struct mem_map *ptr));
 _PROTOTYPE( int sys_exit, (endpoint_t proc));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc, long addr, long *data_p));
@@ -48,6 +49,13 @@ _PROTOTYPE( int sys_vm_setbuf, (phys_bytes base, phys_bytes size,
 							phys_bytes high));
 _PROTOTYPE( int sys_vm_map, (endpoint_t proc_nr, int do_map,
 	phys_bytes base, phys_bytes size, phys_bytes offset));
+_PROTOTYPE( int sys_vmctl, (endpoint_t who, int param, u32_t value));
+_PROTOTYPE( int sys_vmctl_get_pagefault_i386, (endpoint_t *who, u32_t *cr2, u32_t *err));
+_PROTOTYPE( int sys_vmctl_get_cr3_i386, (endpoint_t who, u32_t *cr3)  );
+_PROTOTYPE( int sys_vmctl_get_memreq, (endpoint_t *who, vir_bytes *mem,
+        vir_bytes *len, int *wrflag) );
+
+
 
 _PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
 _PROTOTYPE( int sys_stime, (time_t boottime));
@@ -71,6 +79,9 @@ _PROTOTYPE( int sys_stime, (time_t boottime));
   sys_sdevio(DIO_SAFE_OUTPUT_WORD, port, ept, (void*)grant, count, offset)
 _PROTOTYPE( int sys_sdevio, (int req, long port, endpoint_t proc_nr,
 	void *buffer, int count, vir_bytes offset));
+_PROTOTYPE(void *alloc_contig, (size_t len, int flags, phys_bytes *phys));
+#define AC_ALIGN4K	0x01
+#define AC_LOWER16M	0x02
 
 /* Clock functionality: get system times or (un)schedule an alarm call. */
 _PROTOTYPE( int sys_times, (endpoint_t proc_nr, clock_t *user_time,
@@ -128,6 +139,8 @@ _PROTOTYPE(int sys_physvcopy, (phys_cp_req *vec_ptr,int vec_size,int *nr_ok));
 
 _PROTOTYPE(int sys_umap, (endpoint_t proc_nr, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr));
+_PROTOTYPE(int sys_umap_data_fb, (endpoint_t proc_nr, vir_bytes vir_addr,
+	 vir_bytes bytes, phys_bytes *phys_addr));
 _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 	phys_bytes phys, vir_bytes size));
 
@@ -151,6 +164,7 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getprivid(nr)	sys_getinfo(GET_PRIVID, 0, 0,0, nr)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *val_ptr2, int val_len2)		);
+_PROTOTYPE(int sys_whoami, (endpoint_t *ep, char *name, int namelen));
 
 /* Signal control. */
 _PROTOTYPE(int sys_kill, (endpoint_t proc, int sig) );

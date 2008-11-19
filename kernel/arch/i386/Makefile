@@ -8,17 +8,19 @@ ARCHAR=$(ARCH).a
 # the HEAD variable is passed as an argument to this Makefile
 # by an upper level Makefile.
 
-OBJS=$(ARCHAR)(exception.o) \
-	$(ARCHAR)(i8259.o) \
-	$(ARCHAR)(memory.o) \
-	$(ARCHAR)(protect.o) \
-	$(ARCHAR)(system.o) \
-	$(ARCHAR)(clock.o) \
-	$(ARCHAR)(klib386.o) \
-	$(ARCHAR)(do_readbios.o) \
-	$(ARCHAR)(do_int86.o) \
-	$(ARCHAR)(do_sdevio.o) \
-	$(ARCHAR)(do_iopenable.o)
+OBJS=	arch_do_vmctl.o \
+	clock.o \
+	do_int86.o \
+	do_iopenable.o \
+	do_readbios.o \
+	do_sdevio.o \
+	exception.o \
+	i8259.o \
+	klib386.o \
+	memory.o \
+	mpx386.o \
+	protect.o \
+	system.o
 
 CPPFLAGS=-Iinclude
 CFLAGS=$(CPPFLAGS) -Wall
@@ -54,6 +56,9 @@ $(ARCHAR)(do_int86.o): do_int86.c
 	$(CC) $(CFLAGS) -c $<
 
 $(ARCHAR)(do_iopenable.o): do_iopenable.c
+	$(CC) $(CFLAGS) -c $<
+
+$(ARCHAR)(arch_do_vmctl.o): arch_do_vmctl.c
 	$(CC) $(CFLAGS) -c $<
 
 $(ARCHAR)(do_readbios.o): do_readbios.c

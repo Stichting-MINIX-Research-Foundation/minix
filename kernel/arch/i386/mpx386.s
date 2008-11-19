@@ -1,4 +1,4 @@
-# 
+#
 ! This file, mpx386.s, is included by mpx.s when Minix is compiled for 
 ! 32-bit Intel CPUs. The alternative mpx88.s is compiled for 16-bit CPUs.
 
@@ -58,6 +58,7 @@ begbss:
 #include <ibm/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
+#include "vm.h"
 #include "sconst.h"
 
 /* Selected 386 tss offsets. */
@@ -71,6 +72,13 @@ begbss:
 
 .define	_restart
 .define	save
+.define	_kernel_cr3
+.define	_pagefault_cr2
+.define _pagefault_count
+
+.define errexception
+.define exception1
+.define exception
 
 .define	_divide_error
 .define	_single_step_exception
@@ -88,6 +96,9 @@ begbss:
 .define	_general_protection
 .define	_page_fault
 .define	_copr_error
+.define	_params_size
+.define _params_offset
+.define _mon_ds
 
 .define	_hwint00	! handlers for hardware interrupts
 .define	_hwint01
@@ -173,6 +184,11 @@ copygdt:
 	mov	ss, ax
 	mov	esp, k_stktop	! set sp to point to the top of kernel stack
 
+! Save boot parameters into these global variables for i386 code
+	mov	(_params_size), edx
+	mov	(_params_offset), ebx
+	mov	(_mon_ds), SS_SELECTOR
+
 ! Call C startup code to set up a proper environment to run main().
 	push	edx
 	push	ebx
@@ -216,6 +232,7 @@ csinit:
 #define hwint_master(irq)	\
 	call	save			/* save interrupted process state */;\
 	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
+	LOADCR3WITHEAX(irq, (_kernel_cr3))	/* switch to kernel page table	  */;\
 	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
@@ -267,6 +284,7 @@ _hwint07:		! Interrupt routine for irq 7 (printer)
 #define hwint_slave(irq)	\
 	call	save			/* save interrupted process state */;\
 	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
+	LOADCR3WITHEAX(irq, (_kernel_cr3))	/* switch to kernel page table	  */;\
 	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
@@ -358,6 +376,7 @@ _p_s_call:
     o16	push	es
     o16	push	fs
     o16	push	gs
+
 	mov	si, ss		! ss is kernel data segment
 	mov	ds, si		! load rest of kernel segments
 	mov	es, si		! kernel does not use fs, gs
@@ -371,6 +390,9 @@ _p_s_call:
 	push	ebx		! pointer to user message
 	push	eax		! source / destination
 	push	ecx		! call number (ipc primitive to use)
+
+!	LOADCR3WITHEAX(0x20, (_kernel_cr3))
+
 	call	_sys_call	! sys_call(call_nr, src_dst, m_ptr, bit_map)
 				! caller is now explicitly in proc_ptr
 	mov	AXREG(esi), eax	! sys_call MUST PRESERVE si
@@ -391,6 +413,7 @@ _restart:
 	mov	(_next_ptr), 0
 0:	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
 	lldt	P_LDT_SEL(esp)		! enable process' segment descriptors 
+	LOADCR3WITHEAX(0x21, P_CR3(esp))	! switch to process page table
 	lea	eax, P_STACKTOP(esp)	! arrange for next interrupt
 	mov	(_tss+TSS3_S_SP0), eax	! to save state in process table
 restart1:
@@ -464,6 +487,11 @@ _general_protection:
 
 _page_fault:
 	push	PAGE_FAULT_VECTOR
+	push	eax
+	mov	eax, cr2
+sseg	mov	(_pagefault_cr2), eax
+sseg	inc	(_pagefault_count)
+	pop	eax
 	jmp	errexception
 
 _copr_error:
@@ -492,12 +520,16 @@ errexception:
  sseg	pop	(trap_errno)
 exception1:				! Common for all exceptions.
 	push	eax			! eax is scratch register
+
 	mov	eax, 0+4(esp)		! old eip
  sseg	mov	(old_eip), eax
 	movzx	eax, 4+4(esp)		! old cs
  sseg	mov	(old_cs), eax
 	mov	eax, 8+4(esp)		! old eflags
  sseg	mov	(old_eflags), eax
+
+	LOADCR3WITHEAX(0x24, (_kernel_cr3))
+
 	pop	eax
 	call	save
 	push	(old_eflags)
@@ -518,6 +550,15 @@ _level0_call:
 	jmp	(_level0_func)
 
 !*===========================================================================*
+!*				load_kernel_cr3				     *
+!*===========================================================================*
+.align 16
+_load_kernel_cr3:
+ 	mov	eax, (_kernel_cr3)
+ 	mov	cr3, eax
+	ret
+
+!*===========================================================================*
 !*				data					     *
 !*===========================================================================*
 
@@ -533,3 +574,4 @@ k_stktop:			! top of kernel stack
 	.comm	old_eip, 4
 	.comm	old_cs, 4
 	.comm	old_eflags, 4
+

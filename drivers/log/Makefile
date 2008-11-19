@@ -13,7 +13,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i -L../libdriver_asyn
-LIBS = -lsysutil -ldriver  -lsys
+LIBS = -ldriver  -lsys 
 LIB_DEP = ../libdriver_asyn/libdriver.a
 
 OBJ = log.o diag.o kputc.o
@@ -22,11 +22,11 @@ OBJ = log.o diag.o kputc.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) $(LIB_DEP)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 16kb $(DRIVER)
+	install -S 32kb $(DRIVER)
 
 # install with other drivers
 install:	$(DRIVER)
-	install -o root -cs $? /sbin/$(DRIVER) 
+	install -o root -cs $< /sbin/$(DRIVER) 
 
 # clean up local files
 clean:

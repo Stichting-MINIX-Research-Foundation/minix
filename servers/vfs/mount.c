@@ -311,8 +311,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   root_node->v_dev = vmp->m_dev;
   
   if (replace_root) {
-      printf("Replacing root\n");
-
       /* Superblock and root node already read. 
        * Nothing else can go wrong. Perform the mount. */
       vmp->m_root_node = root_node;

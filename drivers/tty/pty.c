@@ -89,7 +89,6 @@ message *m_ptr;
 /* Perform an open/close/read/write call on a /dev/ptypX device. */
   pty_t *pp = tp->tty_priv;
   int r;
-  phys_bytes p;
   int safe = 0;
 
   switch (m_ptr->m_type) {
@@ -108,15 +107,6 @@ message *m_ptr;
 		r = EINVAL;
 		break;
 	}
-#if DEAD_CODE
-	if (numap_local(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS,
-							m_ptr->COUNT) == 0) {
-#else
-	if ((r = sys_umap(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		m_ptr->COUNT, &p)) != OK) {
-#endif
-		break;
-	}
 	pp->rdsendreply = TRUE;
 	pp->rdcaller = m_ptr->m_source;
 	pp->rdproc = m_ptr->IO_ENDPT;
@@ -130,12 +120,6 @@ message *m_ptr;
 		return;			/* already done */
 	}
 
-#if DEAD_CODE
-	if (m_ptr->TTY_FLAGS & O_NONBLOCK) {
-		r = EAGAIN;				/* don't suspend */
-		pp->rdleft = pp->rdcum = 0;
-	} else
-#endif
 	{
 		r = SUSPEND;				/* do suspend */
 		pp->rdsendreply = FALSE;
@@ -157,16 +141,6 @@ message *m_ptr;
 		r = EINVAL;
 		break;
 	}
-#if DEAD_CODE
-	if (numap_local(m_ptr->IO_ENDPT, (vir_bytes) m_ptr->ADDRESS,
-							m_ptr->COUNT) == 0) {
-		r = EFAULT;
-#else
-	if ((r = sys_umap(m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
-		m_ptr->COUNT, &p)) != OK) {
-#endif
-		break;
-	}
 	pp->wrsendreply = TRUE;
 	pp->wrcaller = m_ptr->m_source;
 	pp->wrproc = m_ptr->IO_ENDPT;
@@ -179,12 +153,6 @@ message *m_ptr;
 		return;			/* already done */
 	}
 
-#if DEAD_CODE
-	if (m_ptr->TTY_FLAGS & O_NONBLOCK) {		/* don't suspend */
-		r = pp->wrcum > 0 ? pp->wrcum : EAGAIN;
-		pp->wrleft = pp->wrcum = 0;
-	} else
-#endif
 	{
 		pp->wrsendreply = FALSE;			/* do suspend */
 		r = SUSPEND;
@@ -244,7 +212,7 @@ int try;
  */
   pty_t *pp = tp->tty_priv;
   int count, ocount, s;
-  phys_bytes user_phys;
+
 
   /* PTY closed down? */
   if (pp->state & PTY_CLOSED) {
@@ -259,7 +227,7 @@ int try;
 			tp->tty_outleft = tp->tty_outcum = 0;
 		}
 	}
-	return;
+	return 0;
   }
 
   /* While there is something to do. */
@@ -473,6 +441,8 @@ int try;
 			notify(pp->wrcaller);
 	}
   }
+
+  return 0;
 }
 
 /*===========================================================================*
@@ -485,7 +455,7 @@ int try;
 /* The tty side has closed, so shut down the pty side. */
   pty_t *pp = tp->tty_priv;
 
-  if (!(pp->state & PTY_ACTIVE)) return;
+  if (!(pp->state & PTY_ACTIVE)) return 0;
 
   if (pp->rdleft > 0) {
   	assert(!pp->rdsendreply);
@@ -498,6 +468,8 @@ int try;
   }
 
   if (pp->state & PTY_CLOSED) pp->state = 0; else pp->state |= TTY_CLOSED;
+
+  return 0;
 }
 
 /*===========================================================================*
@@ -515,6 +487,8 @@ int try;
   	pp->wrleft= 0;
   	notify(pp->wrcaller);
   }
+
+  return 0;
 }
 
 /*===========================================================================*
@@ -529,6 +503,8 @@ int try;
 
   pp->ocount = 0;
   pp->otail = pp->ohead;
+
+  return 0;
 }
 
 /*===========================================================================*

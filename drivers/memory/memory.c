@@ -27,6 +27,7 @@
 #define MY_DS_NAME_SIZE "dev:memory:ramdisk_size"
 
 #include <sys/vm.h>
+#include <sys/vm_i386.h>
 
 #include "assert.h"
 
@@ -71,7 +72,7 @@ PRIVATE struct driver m_dtab = {
 /* One page of temporary mapping area - enough to be able to page-align
  * one page.
  */
-static char pagedata_buf[2*PAGE_SIZE];
+static char pagedata_buf[2*I386_PAGE_SIZE];
 vir_bytes pagedata_aligned;
 
 /* Buffer for the /dev/zero null byte feed. */
@@ -171,8 +172,10 @@ int safe;			/* safe copies */
 	    break;
 
 	/* Virtual copying. For RAM disk, kernel memory and boot device. */
-	case RAM_DEV:
 	case KMEM_DEV:
+		return EIO;
+		break;
+	case RAM_DEV:
 	case BOOT_DEV:
 	    if (position >= dv_size) return(OK); 	/* check for EOF */
 	    if (position + count > dv_size) count = dv_size - position;
@@ -207,15 +210,19 @@ int safe;			/* safe copies */
 		count = dv_size - position;
 	    mem_phys = cv64ul(dv->dv_base) + position;
 
-	    page_off = mem_phys % PAGE_SIZE;
+	    page_off = mem_phys % I386_PAGE_SIZE;
 	    pagestart = mem_phys - page_off; 
 
 	    /* All memory to the map call has to be page-aligned.
 	     * Don't have to map same page over and over.
 	     */
 	    if(!any_mapped || pagestart_mapped != pagestart) {
+#if 0
 	      if((r=sys_vm_map(SELF, 1, pagedata_aligned,
-		PAGE_SIZE, pagestart)) != OK) {
+		I386_PAGE_SIZE, pagestart)) != OK) {
+#else
+		if(1) {
+#endif
 		printf("memory: sys_vm_map failed: %d\n", r);
 		return r;
 	     }
@@ -224,7 +231,7 @@ int safe;			/* safe copies */
 	   }
 
 	    /* how much to be done within this page. */
-	    subcount = PAGE_SIZE-page_off;
+	    subcount = I386_PAGE_SIZE-page_off;
 	    if(subcount > count)
 		subcount = count;
 
@@ -324,12 +331,14 @@ PRIVATE void m_init()
   }
 
   /* Install remote segment for /dev/kmem memory. */
+#if 0
   m_geom[KMEM_DEV].dv_base = cvul64(kinfo.kmem_base);
   m_geom[KMEM_DEV].dv_size = cvul64(kinfo.kmem_size);
   if (OK != (s=sys_segctl(&m_seg[KMEM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
   		kinfo.kmem_base, kinfo.kmem_size))) {
       panic("MEM","Couldn't install remote segment.",s);
   }
+#endif
 
   /* Install remote segment for /dev/boot memory, if enabled. */
   m_geom[BOOT_DEV].dv_base = cvul64(kinfo.bootdev_base);
@@ -365,8 +374,8 @@ PRIVATE void m_init()
   }
 
   /* Page-align page pointer. */
-  pagedata_aligned = (u32_t) pagedata_buf + PAGE_SIZE;
-  pagedata_aligned -= pagedata_aligned % PAGE_SIZE;
+  pagedata_aligned = (u32_t) pagedata_buf + I386_PAGE_SIZE;
+  pagedata_aligned -= pagedata_aligned % I386_PAGE_SIZE;
 
   /* Set up memory range for /dev/mem. */
   m_geom[MEM_DEV].dv_size = cvul64(0xffffffff);
@@ -404,15 +413,11 @@ int safe;
 	if (m_ptr->DEVICE != RAM_DEV) return(EINVAL);
         if ((dv = m_prepare(m_ptr->DEVICE)) == NIL_DEV) return(ENXIO);
 
-#if 0
-	ramdev_size= m_ptr->POSITION;
-#else
 	/* Get request structure */
 	   s= sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->IO_GRANT,
 		0, (vir_bytes)&ramdev_size, sizeof(ramdev_size), D);
 	if (s != OK)
 		return s;
-#endif
 
 #if DEBUG
 	printf("allocating ramdisk of size 0x%x\n", ramdev_size);
@@ -446,27 +451,6 @@ int safe;
 	dv->dv_size = cvul64(ramdev_size);
 	first_time= 0;
 	break;
-    }
-    case MIOCMAP:
-    case MIOCUNMAP: {
-    	int r, do_map;
-    	struct mapreq mapreq;
-
-	if ((*dp->dr_prepare)(m_ptr->DEVICE) == NIL_DEV) return(ENXIO);
-    	if (m_device != MEM_DEV)
-    		return ENOTTY;
-
-	do_map= (m_ptr->REQUEST == MIOCMAP);	/* else unmap */
-
-	/* Get request structure */
-	   r= sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->IO_GRANT,
-		0, (vir_bytes)&mapreq, sizeof(mapreq), D);
-
-	if (r != OK)
-		return r;
-	r= sys_vm_map(m_ptr->IO_ENDPT, do_map,
-		(phys_bytes)mapreq.base, mapreq.size, mapreq.offset);
-	return r;
     }
 
     default:

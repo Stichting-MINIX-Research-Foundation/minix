@@ -28,8 +28,7 @@ message *m_ptr;			/* pointer to request message */
   register struct priv *sp;
   int proc_nr;
   int priv_id;
-  int i;
-  phys_bytes caller_phys, kernel_phys;
+  int i, r;
   struct io_range io_range;
   struct mem_range mem_range;
   struct priv priv;
@@ -100,12 +99,9 @@ message *m_ptr;			/* pointer to request message */
 	if (m_ptr->CTL_ARG_PTR)
 	{
 		/* Copy privilege structure from caller */
-		caller_phys = umap_local(caller_ptr, D,
-			(vir_bytes) m_ptr->CTL_ARG_PTR, sizeof(priv));
-		if (caller_phys == 0)
-			return EFAULT;
-		kernel_phys = vir2phys(&priv);
-		phys_copy(caller_phys, kernel_phys, sizeof(priv));
+		if((r=data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+			SYSTEM, (vir_bytes) &priv, sizeof(priv))) != OK)
+			return r;
 
 		/* Copy the call mask */
 		for (i= 0; i<CALL_MASK_SIZE; i++)
@@ -180,12 +176,8 @@ message *m_ptr;			/* pointer to request message */
 #endif
 
 	/* Get the I/O range */
-	caller_phys = umap_local(caller_ptr, D, (vir_bytes) m_ptr->CTL_ARG_PTR,
-		sizeof(io_range));
-	if (caller_phys == 0)
-		return EFAULT;
-	kernel_phys = vir2phys(&io_range);
-	phys_copy(caller_phys, kernel_phys, sizeof(io_range));
+	data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+		SYSTEM, (vir_bytes) &io_range, sizeof(io_range));
 	priv(rp)->s_flags |= CHECK_IO_PORT;	/* Check I/O accesses */
 	i= priv(rp)->s_nr_io_range;
 	if (i >= NR_IO_RANGE)
@@ -206,12 +198,9 @@ message *m_ptr;			/* pointer to request message */
 		return EPERM;
 
 	/* Get the memory range */
-	caller_phys = umap_local(caller_ptr, D, (vir_bytes) m_ptr->CTL_ARG_PTR,
-		sizeof(mem_range));
-	if (caller_phys == 0)
-		return EFAULT;
-	kernel_phys = vir2phys(&mem_range);
-	phys_copy(caller_phys, kernel_phys, sizeof(mem_range));
+	if((r=data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+		SYSTEM, (vir_bytes) &mem_range, sizeof(mem_range))) != OK)
+		return r;
 	priv(rp)->s_flags |= CHECK_MEM;	/* Check I/O accesses */
 	i= priv(rp)->s_nr_mem_range;
 	if (i >= NR_MEM_RANGE)

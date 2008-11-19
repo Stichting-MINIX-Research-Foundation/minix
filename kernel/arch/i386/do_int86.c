@@ -21,28 +21,23 @@ struct reg86u reg86;
 PUBLIC int do_int86(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-  vir_bytes caller_vir;
-  phys_bytes caller_phys, kernel_phys;
-
-  caller_vir = (vir_bytes) m_ptr->INT86_REG86;
-  caller_phys = umap_local(proc_addr(who_p), D, caller_vir, sizeof(reg86));
-  if (0 == caller_phys) return(EFAULT);
-  kernel_phys = vir2phys(&reg86);
-  phys_copy(caller_phys, kernel_phys, (phys_bytes) sizeof(reg86));
+  data_copy(who_e, (vir_bytes) m_ptr->INT86_REG86,
+	SYSTEM, (vir_bytes) &reg86, sizeof(reg86));
 
   level0(int86);
 
   /* Copy results back to the caller */
-  phys_copy(kernel_phys, caller_phys, (phys_bytes) sizeof(reg86));
+  data_copy(SYSTEM, (vir_bytes) &reg86,
+	who_e, (vir_bytes) m_ptr->INT86_REG86, sizeof(reg86));
 
   /* The BIOS call eats interrupts. Call get_randomness to generate some
    * entropy. Normally, get_randomness is called from an interrupt handler.
    * Figuring out the exact source is too complicated. CLOCK_IRQ is normally
    * not very random.
    */
-  lock(0, "do_int86");
+  lock;
   get_randomness(CLOCK_IRQ);
-  unlock(0);
+  unlock;
 
   return(OK);
 }

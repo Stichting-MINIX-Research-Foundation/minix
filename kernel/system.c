@@ -15,7 +15,6 @@
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via PM
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
- *   virtual_copy:	copy bytes from one virtual address to another 
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
  *
@@ -31,13 +30,16 @@
 #include "kernel.h"
 #include "system.h"
 #include "proc.h"
+#include "vm.h"
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <string.h>
 #include <sys/sigcontext.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
 #include <minix/u64.h>
+#include <sys/vm_i386.h>
 
 /* Declaration of the call vector that defines the mapping of system calls 
  * to handler functions. The vector is initialized in sys_init() with map(), 
@@ -46,12 +48,16 @@
  * array size will be negative and this won't compile. 
  */
 PUBLIC int (*call_vec[NR_SYS_CALLS])(message *m_ptr);
+char *callnames[NR_SYS_CALLS];
 
 #define map(call_nr, handler) \
     {extern int dummy[NR_SYS_CALLS>(unsigned)(call_nr-KERNEL_CALL) ? 1:-1];} \
+    callnames[(call_nr-KERNEL_CALL)] = #call_nr;	\
     call_vec[(call_nr-KERNEL_CALL)] = (handler)  
 
 FORWARD _PROTOTYPE( void initialize, (void));
+FORWARD _PROTOTYPE( void softnotify_check, (void));
+FORWARD _PROTOTYPE( struct proc *vmrestart_check, (message *));
 
 /*===========================================================================*
  *				sys_task				     *
@@ -64,14 +70,39 @@ PUBLIC void sys_task()
   register struct proc *caller_ptr;
   int s;
   int call_nr;
+  int n = 0;
 
   /* Initialize the system task. */
   initialize();
 
   while (TRUE) {
-      int r;
-      /* Get work. Block and wait until a request message arrives. */
-      if((r=receive(ANY, &m)) != OK) panic("system: receive() failed", r);
+      struct proc *restarting;
+
+#if 0
+if(!(n++ % 100000)) {
+	int i;
+	kprintf("switch %8d reload %8d\n", cr3switch, cr3reload);
+}
+#endif
+
+      restarting = vmrestart_check(&m);
+      softnotify_check();
+	if(softnotify)
+		minix_panic("softnotify non-NULL before receive (1)", NO_NUM);
+
+      if(!restarting) {
+        int r;
+	/* Get work. Block and wait until a request message arrives. */
+	if(softnotify)
+		minix_panic("softnotify non-NULL before receive (2)", NO_NUM);
+	if((r=receive(ANY, &m)) != OK)
+		minix_panic("receive() failed", r);
+	if(m.m_source == SYSTEM)
+		continue;
+	if(softnotify)
+		minix_panic("softnotify non-NULL after receive", NO_NUM);
+      }
+
       sys_call_code = (unsigned) m.m_type;
       call_nr = sys_call_code - KERNEL_CALL;	
       who_e = m.m_source;
@@ -115,16 +146,34 @@ PUBLIC void sys_task()
           result = (*call_vec[call_nr])(&m); /* handle the system call */
       }
 
-      /* Send a reply, unless inhibited by a handler function. Use the kernel
-       * function lock_send() to prevent a system call trap. The destination
-       * is known to be blocked waiting for a message.
-       */
-      if (result != EDONTREPLY) {
-  	  m.m_type = result;			/* report status of call */
-          if (OK != (s=lock_send(m.m_source, &m))) {
-              kprintf("SYSTEM, reply to %d failed: %d\n", m.m_source, s);
-          }
-      }
+      if(result == VMSUSPEND) {
+	/* Special case: message has to be saved for handling
+	 * until VM tells us it's allowed. VM has been notified
+	 * and we must wait for its reply to restart the call.
+	 */
+	memcpy(&caller_ptr->p_vmrequest.saved.reqmsg, &m, sizeof(m));
+	caller_ptr->p_vmrequest.type = VMSTYPE_SYS_MESSAGE;
+#if 0
+	kprintf("SYSTEM: suspending call from %d\n", m.m_source);
+#endif
+      } else if (result != EDONTREPLY) {
+	/* Send a reply, unless inhibited by a handler function.
+	 * Use the kernel function lock_send() to prevent a system
+	 * call trap.
+	 */
+		if(restarting)
+			RTS_LOCK_UNSET(restarting, VMREQUEST);
+		m.m_type = result;		/* report status of call */
+		if(WILLRECEIVE(caller_ptr, SYSTEM)) {
+		  if (OK != (s=lock_send(m.m_source, &m))) {
+			kprintf("SYSTEM, reply to %d failed: %d\n",
+			m.m_source, s);
+		  }
+		} else {
+			kprintf("SYSTEM: not replying to %d; not ready\n", 
+				caller_ptr->p_endpoint);
+		}
+	}
   }
 }
 
@@ -153,6 +202,7 @@ PRIVATE void initialize(void)
    */
   for (i=0; i<NR_SYS_CALLS; i++) {
       call_vec[i] = do_unused;
+      callnames[i] = "unused";
   }
 
   /* Process management. */
@@ -181,14 +231,14 @@ PRIVATE void initialize(void)
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
   map(SYS_VM_SETBUF, do_vm_setbuf); 	/* PM passes buffer for page tables */
-  map(SYS_VM_MAP, do_vm_map); 		/* Map/unmap physical (device) memory */
+  map(SYS_VMCTL, do_vmctl);		/* various VM process settings */
 
   /* Copying. */
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
   map(SYS_VIRCOPY, do_vircopy); 	/* use pure virtual addressing */
-  map(SYS_PHYSCOPY, do_physcopy); 	/* use physical addressing */
+  map(SYS_PHYSCOPY, do_copy);	 	/* use physical addressing */
   map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
-  map(SYS_PHYSVCOPY, do_physvcopy);	/* vector with copy requests */
+  map(SYS_PHYSVCOPY, do_vcopy);		/* vector with copy requests */
   map(SYS_SAFECOPYFROM, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_SAFECOPYTO, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_VSAFECOPY, do_vsafecopy);	/* vectored safecopy */
@@ -279,19 +329,16 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
 /* Notify a system process about a signal. This is straightforward. Simply
  * set the signal that is to be delivered in the pending signals map and 
  * send a notification with source SYSTEM.
- *
- * Process number is verified to avoid writing in random places, but we
- * don't kprintf() or panic() because that causes send_sig() invocations.
  */ 
   register struct proc *rp;
   static int n;
 
   if(!isokprocn(proc_nr) || isemptyn(proc_nr))
-	return;
+	minix_panic("send_sig to empty process", proc_nr);
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
-  lock_notify(SYSTEM, rp->p_endpoint); 
+  soft_notify(rp->p_endpoint); 
 }
 
 /*===========================================================================*
@@ -317,7 +364,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
   register struct proc *rp;
 
   if (proc_nr == PM_PROC_NR)
-	panic("cause_sig: PM gets signal", NO_NUM);
+	minix_panic("cause_sig: PM gets signal", NO_NUM);
 
   /* Check if the signal is already pending. Process it otherwise. */
   rp = proc_addr(proc_nr);
@@ -335,8 +382,7 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
 /*===========================================================================*
  *				umap_bios				     *
  *===========================================================================*/
-PUBLIC phys_bytes umap_bios(rp, vir_addr, bytes)
-register struct proc *rp;	/* pointer to proc table entry for process */
+PUBLIC phys_bytes umap_bios(vir_addr, bytes)
 vir_bytes vir_addr;		/* virtual address in BIOS segment */
 vir_bytes bytes;		/* # of bytes to be copied */
 {
@@ -359,37 +405,6 @@ vir_bytes bytes;		/* # of bytes to be copied */
 #endif
 
 /*===========================================================================*
- *				umap_verify_grant			     *
- *===========================================================================*/
-PUBLIC phys_bytes umap_verify_grant(rp, grantee, grant, offset, bytes, access)
-struct proc *rp;		/* pointer to proc table entry for process */
-endpoint_t grantee;		/* who wants to do this */
-cp_grant_id_t grant;		/* grant no. */
-vir_bytes offset;		/* offset into grant */
-vir_bytes bytes;		/* size */
-int access;			/* does grantee want to CPF_READ or _WRITE? */
-{
-	int proc_nr;
-	vir_bytes v_offset;
-	endpoint_t granter;
-
-	/* See if the grant in that process is sensible, and
-	 * find out the virtual address and (optionally) new
-	 * process for that address.
-	 *
-	 * Then convert that process to a slot number.
-	 */
-	if(verify_grant(rp->p_endpoint, grantee, grant, bytes, access, offset,
-		&v_offset, &granter) != OK
-	   || !isokendpt(granter, &proc_nr)) {
-		return 0;
-	}
-
-	/* Do the mapping from virtual to physical. */
-	return umap_local(proc_addr(proc_nr), D, v_offset, bytes);
-}
-
-/*===========================================================================*
  *                              umap_grant                                   *
  *===========================================================================*/
 PUBLIC phys_bytes umap_grant(rp, grant, bytes)
@@ -398,9 +413,9 @@ cp_grant_id_t grant;            /* grant no. */
 vir_bytes bytes;                /* size */
 {
         int proc_nr;
-        vir_bytes offset;
+        vir_bytes offset, ret;
         endpoint_t granter;
- 
+
         /* See if the grant in that process is sensible, and 
          * find out the virtual address and (optionally) new
          * process for that address.
@@ -409,87 +424,24 @@ vir_bytes bytes;                /* size */
          */
         if(verify_grant(rp->p_endpoint, ANY, grant, bytes, 0, 0,
                 &offset, &granter) != OK) {
+		kprintf("SYSTEM: umap_grant: verify_grant failed\n");
                 return 0;
         }
 
         if(!isokendpt(granter, &proc_nr)) {
+		kprintf("SYSTEM: umap_grant: isokendpt failed\n");
                 return 0;
         }
  
         /* Do the mapping from virtual to physical. */
-        return umap_local(proc_addr(proc_nr), D, offset, bytes);
+        ret = umap_virtual(proc_addr(proc_nr), D, offset, bytes);
+	if(!ret) {
+		kprintf("SYSTEM:umap_grant:umap_virtual failed; grant %s:%d -> %s: vir 0x%lx\n",
+			rp->p_name, grant, 
+			proc_addr(proc_nr)->p_name, offset);
+	}
+	return ret;
 }
-
-/*===========================================================================*
- *				virtual_copy				     *
- *===========================================================================*/
-PUBLIC int virtual_copy(src_addr, dst_addr, bytes)
-struct vir_addr *src_addr;	/* source virtual address */
-struct vir_addr *dst_addr;	/* destination virtual address */
-vir_bytes bytes;		/* # of bytes to copy  */
-{
-/* Copy bytes from virtual address src_addr to virtual address dst_addr. 
- * Virtual addresses can be in ABS, LOCAL_SEG, REMOTE_SEG, or BIOS_SEG.
- */
-  struct vir_addr *vir_addr[2];	/* virtual source and destination address */
-  phys_bytes phys_addr[2];	/* absolute source and destination */ 
-  int seg_index;
-  int i;
-
-  /* Check copy count. */
-  if (bytes <= 0) return(EDOM);
-
-  /* Do some more checks and map virtual addresses to physical addresses. */
-  vir_addr[_SRC_] = src_addr;
-  vir_addr[_DST_] = dst_addr;
-  for (i=_SRC_; i<=_DST_; i++) {
-	int proc_nr, type;
-	struct proc *p;
-
- 	type = vir_addr[i]->segment & SEGMENT_TYPE;
-	if(type != PHYS_SEG && isokendpt(vir_addr[i]->proc_nr_e, &proc_nr))
-	   p = proc_addr(proc_nr);
-	else
-	   p = NULL;
-
-      /* Get physical address. */
-      switch(type) {
-      case LOCAL_SEG:
-	  if(!p) return EDEADSRCDST;
-          seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
-          phys_addr[i] = umap_local(p, seg_index, vir_addr[i]->offset, bytes);
-          break;
-      case REMOTE_SEG:
-	  if(!p) return EDEADSRCDST;
-          seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
-          phys_addr[i] = umap_remote(p, seg_index, vir_addr[i]->offset, bytes);
-          break;
-#if _MINIX_CHIP == _CHIP_INTEL
-      case BIOS_SEG:
-	  if(!p) return EDEADSRCDST;
-          phys_addr[i] = umap_bios(p, vir_addr[i]->offset, bytes );
-          break;
-#endif
-      case PHYS_SEG:
-          phys_addr[i] = vir_addr[i]->offset;
-          break;
-      case GRANT_SEG:
-	  phys_addr[i] = umap_grant(p, vir_addr[i]->offset, bytes);
-	  break;
-      default:
-          return(EINVAL);
-      }
-
-      /* Check if mapping succeeded. */
-      if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG) 
-          return(EFAULT);
-  }
-
-  /* Now copy bytes between physical addresseses. */
-  phys_copy(phys_addr[_SRC_], phys_addr[_DST_], (phys_bytes) bytes);
-  return(OK);
-}
-
 
 /*===========================================================================*
  *			         clear_endpoint				     *
@@ -499,8 +451,22 @@ register struct proc *rc;		/* slot of process to clean up */
 {
   register struct proc *rp;		/* iterate over process table */
   register struct proc **xpp;		/* iterate over caller queue */
+  struct proc *np;
 
-  if(isemptyp(rc)) panic("clear_proc: empty process", proc_nr(rc));
+  if(isemptyp(rc)) minix_panic("clear_proc: empty process", proc_nr(rc));
+
+#if 1
+  if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR) {
+	/* This test is great for debugging system processes dying,
+	 * but as this happens normally on reboot, not good permanent code.
+	 */
+	kprintf("process %s / %d died; stack: ", rc->p_name, rc->p_endpoint);
+	proc_stacktrace(rc);
+	kprintf("kernel trace: ");
+	util_stacktrace();
+	minix_panic("clear_proc: system process died", rc->p_endpoint);
+  }
+#endif
 
   /* Make sure that the exiting process is no longer scheduled. */
   RTS_LOCK_SET(rc, NO_ENDPOINT);
@@ -550,7 +516,8 @@ register struct proc *rc;		/* slot of process to clean up */
           rp->p_reg.retreg = ESRCDIED;		/* report source died */
 	  RTS_LOCK_UNSET(rp, RECEIVING);	/* no longer receiving */
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("Proc %d receive dead src %d\n", proc_nr(rp), proc_nr(rc));
+	  kprintf("Proc %d (%s) receiving from dead src %d (%s)\n",
+		proc_nr(rp), rp->p_name, proc_nr(rc), rc->p_name);
 #endif
       } 
       if (RTS_ISSET(rp, SENDING) &&
@@ -558,8 +525,147 @@ register struct proc *rc;		/* slot of process to clean up */
           rp->p_reg.retreg = EDSTDIED;		/* report destination died */
 	  RTS_LOCK_UNSET(rp, SENDING);
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("Proc %d send dead dst %d\n", proc_nr(rp), proc_nr(rc));
+	  kprintf("Proc %d (%s) send to dying dst %d (%s)\n",
+		proc_nr(rp), rp->p_name, proc_nr(rc), rc->p_name);
 #endif
       } 
   }
+
+  /* No pending soft notifies. */
+  for(np = softnotify; np; np = np->next_soft_notify) {
+    if(np == rc) {
+	minix_panic("dying proc was on next_soft_notify", np->p_endpoint);
+    }
+  }
+}
+
+/*===========================================================================*
+ *                              umap_verify_grant                            *
+ *===========================================================================*/
+PUBLIC phys_bytes umap_verify_grant(rp, grantee, grant, offset, bytes, access)
+struct proc *rp;                /* pointer to proc table entry for process */
+endpoint_t grantee;             /* who wants to do this */ 
+cp_grant_id_t grant;            /* grant no. */
+vir_bytes offset;               /* offset into grant */
+vir_bytes bytes;                /* size */
+int access;                     /* does grantee want to CPF_READ or _WRITE? */
+{  
+        int proc_nr;
+        vir_bytes v_offset;
+        endpoint_t granter;
+    
+        /* See if the grant in that process is sensible, and
+         * find out the virtual address and (optionally) new
+         * process for that address. 
+         *
+         * Then convert that process to a slot number.
+         */
+        if(verify_grant(rp->p_endpoint, grantee, grant, bytes, access, offset, 
+                &v_offset, &granter) != OK
+           || !isokendpt(granter, &proc_nr)) {
+                return 0;
+        }
+  
+        /* Do the mapping from virtual to physical. */
+        return umap_virtual(proc_addr(proc_nr), D, v_offset, bytes);
+} 
+
+/*===========================================================================*
+ *                              softnotify_check                            *
+ *===========================================================================*/
+PRIVATE void softnotify_check(void)
+{  
+	struct proc *np, *nextnp;
+
+	if(!softnotify) 
+		return;
+
+	for(np = softnotify; np; np = nextnp) {
+		if(!np->p_softnotified)
+			minix_panic("softnotify but no p_softnotified", NO_NUM);
+		lock_notify(SYSTEM, np->p_endpoint);
+		nextnp = np->next_soft_notify;
+		np->next_soft_notify = NULL;
+		np->p_softnotified = 0;
+	}
+
+	softnotify = NULL;
+}
+
+/*===========================================================================*
+ *                              vmrestart_check                            *
+ *===========================================================================*/
+PRIVATE struct proc *vmrestart_check(message *m)
+{
+	int type, r;
+	struct proc *restarting;
+
+      /* Anyone waiting to be vm-restarted? */
+
+	if(!(restarting = vmrestart))
+		return NULL;
+
+	if(restarting->p_rts_flags & SLOT_FREE)
+	   minix_panic("SYSTEM: VMREQUEST set for empty process", NO_NUM);
+
+	type = restarting->p_vmrequest.type;
+	restarting->p_vmrequest.type = VMSTYPE_SYS_NONE;
+	vmrestart = restarting->p_vmrequest.nextrestart;
+
+	if(!RTS_ISSET(restarting, VMREQUEST))
+	   minix_panic("SYSTEM: VMREQUEST not set for process on vmrestart queue",
+		restarting->p_endpoint);
+
+	switch(type) {
+		case VMSTYPE_SYS_MESSAGE:
+			memcpy(m, &restarting->p_vmrequest.saved.reqmsg, sizeof(*m));
+#if 0
+			kprintf("SYSTEM: restart sys_message type %d / %lx source %d\n",
+				m->m_type, m->m_type, m->m_source);
+#endif
+			if(m->m_source != restarting->p_endpoint)
+			   minix_panic("SYSTEM: vmrestart source doesn't match",
+				NO_NUM);
+			/* Original caller could've disappeared in the meantime. */
+		        if(!isokendpt(m->m_source, &who_p)) {
+				kprintf("SYSTEM: ignoring call %d from dead %d\n",
+					m->m_type, m->m_source);
+				return NULL;
+			}
+			{ int i;
+				i = m->m_type - KERNEL_CALL;
+				if(i >= 0 && i < NR_SYS_CALLS) {
+#if 0
+					kprintf("SYSTEM: restart %s from %d\n",
+					callnames[i], m->m_source);
+#endif
+				} else {
+	   				minix_panic("call number out of range", i);
+				}
+			}
+			return restarting;
+		case VMSTYPE_SYS_CALL:
+			kprintf("SYSTEM: restart sys_call\n");
+			/* Restarting a kernel trap. */
+			sys_call_restart(restarting);
+
+			/* Handled; restart system loop. */
+			return NULL;
+		case VMSTYPE_MSGCOPY:
+			/* Do delayed message copy. */
+			if((r=data_copy(SYSTEM,
+				(vir_bytes) &restarting->p_vmrequest.saved.msgcopy.msgbuf,
+				restarting->p_vmrequest.saved.msgcopy.dst->p_endpoint,
+				(vir_bytes) restarting->p_vmrequest.saved.msgcopy.dst_v,
+				sizeof(message))) != OK) {
+	   			minix_panic("SYSTEM: delayed msgcopy failed", r);
+			}
+			RTS_LOCK_UNSET(restarting, VMREQUEST);
+
+			/* Handled; restart system loop. */
+			return NULL;
+		default:
+	   		minix_panic("strange restart type", type);
+	}
+	minix_panic("fell out of switch", NO_NUM);
 }

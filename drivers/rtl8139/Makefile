@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
-LIBS = -lsysutil -lsys -ltimers
+LIBS = -lsys   -ltimers 
 
 OBJ = rtl8139.o 
 

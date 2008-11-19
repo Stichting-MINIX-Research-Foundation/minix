@@ -43,29 +43,13 @@
 #include <minix/mq.h>
 #include "driver.h"
 
-#if (CHIP == INTEL)
-
-#if USE_EXTRA_DMA_BUF && DMA_BUF_SIZE < 2048
-/* A bit extra scratch for the Adaptec driver. */
-#define BUF_EXTRA	(2048 - DMA_BUF_SIZE)
-#else
-#define BUF_EXTRA	0
-#endif
-
 /* Claim space for variables. */
-PRIVATE u8_t buffer[(unsigned) 2 * DMA_BUF_SIZE + BUF_EXTRA];
+#if 0
+PRIVATE u8_t buffer[(unsigned) 2 * DMA_BUF_SIZE];
+#endif
 u8_t *tmp_buf;			/* the DMA buffer eventually */
 phys_bytes tmp_phys;		/* phys address of DMA buffer */
 
-#else /* CHIP != INTEL */
-
-/* Claim space for variables. */
-u8_t tmp_buf[DMA_BUF_SIZE];	/* the DMA buffer */
-phys_bytes tmp_phys;		/* phys address of DMA buffer */
-
-#endif /* CHIP != INTEL */
-
-FORWARD _PROTOTYPE( void init_buffer, (void) );
 FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp, int safe) );
 FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp, int safe) );
 
@@ -85,9 +69,6 @@ struct driver *dp;	/* Device dependent entry points. */
 
   /* Init MQ library. */
   mq_init();
-
-  /* Get a DMA buffer. */
-  init_buffer();
 
   /* Here is the main loop of the disk task.  It waits for a message, carries
    * it out, and sends a reply.
@@ -176,25 +157,17 @@ struct driver *dp;	/* Device dependent entry points. */
 /*===========================================================================*
  *				init_buffer				     *
  *===========================================================================*/
-PRIVATE void init_buffer()
+PUBLIC void init_buffer(void)
 {
 /* Select a buffer that can safely be used for DMA transfers.  It may also
  * be used to read partition tables and such.  Its absolute address is
  * 'tmp_phys', the normal address is 'tmp_buf'.
  */
 
-#if (CHIP == INTEL)
   unsigned left;
 
-  tmp_buf = buffer;
-  sys_umap(SELF, D, (vir_bytes)buffer, (phys_bytes)sizeof(buffer), &tmp_phys);
-
-  if ((left = dma_bytes_left(tmp_phys)) < DMA_BUF_SIZE) {
-	/* First half of buffer crosses a 64K boundary, can't DMA into that */
-	tmp_buf += left;
-	tmp_phys += left;
-  }
-#endif /* CHIP == INTEL */
+  if(!(tmp_buf = alloc_contig(2*DMA_BUF_SIZE, AC_ALIGN4K, &tmp_phys)))
+	panic(__FILE__, "can't allocate tmp_buf", DMA_BUF_SIZE);
 }
 
 /*===========================================================================*
@@ -216,8 +189,8 @@ int safe;			/* use safecopies? */
 
   /* Check the user buffer (not relevant for safe copies). */
   if(!safe) {
-	  sys_umap(mp->IO_ENDPT, D, (vir_bytes) mp->ADDRESS, mp->COUNT, &phys_addr);
-	  if (phys_addr == 0) return(EFAULT);
+	  printf("libdriver_asyn: do_rdwt: no support for non-safe command.\n");
+	  return EINVAL;
   }
 
   /* Prepare for I/O. */

@@ -294,6 +294,8 @@ PUBLIC void main()
   struct floppy *fp;
   int s;
 
+  init_buffer();
+
   f_next_timeout = TMR_NEVER;
   tmr_inittimer(&f_tmr_timeout);
 

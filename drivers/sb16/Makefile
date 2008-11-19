@@ -12,7 +12,7 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
-LIBS = -lsysutil -lsys
+LIBS = -lsys
 
 
 # build local binary

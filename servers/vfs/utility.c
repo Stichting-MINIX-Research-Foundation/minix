@@ -15,12 +15,11 @@
 #include <minix/endpoint.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "file.h"
 #include "fproc.h"
 #include "param.h"
 #include "vmnt.h"
-
-PRIVATE int panicking;		/* inhibits recursive panics during sync */
 
 /*===========================================================================*
  *				fetch_name				     *
@@ -30,7 +29,7 @@ char *path;			/* pointer to the path in user space */
 int len;			/* path length, including 0 byte */
 int flag;			/* M3 means path may be in message */
 {
-/* Go get path and put it in 'user_path'.
+/* Go get path and put it in 'user_fullpath'.
  * If 'flag' = M3 and 'len' <= M3_STRING, the path is present in 'message'.
  * If it is not, go copy it from user space.
  */
@@ -38,6 +37,8 @@ int flag;			/* M3 means path may be in message */
   int r;
 
   if (len > PATH_MAX) {
+	printf("VFS: fetch_name: len (%d) > %d\n", len, PATH_MAX);
+	util_stacktrace();
 	err_code = ENAMETOOLONG;
 	return(EGENERIC);
   }
@@ -50,11 +51,12 @@ int flag;			/* M3 means path may be in message */
   if (len <= 0) {
 	err_code = EINVAL;
 	printf("vfs: fetch_name: len %d?\n", len);
+	util_stacktrace();
 	return(EGENERIC);
   }
 
   if (flag == M3 && len <= M3_STRING) {
-	/* Just copy the path from the message to 'user_path'. */
+	/* Just copy the path from the message to 'user_fullpath'. */
 	rpu = &user_fullpath[0];
 	rpm = m_in.pathname;		/* contained in input message */
 	do { *rpu++ = *rpm++; } while (--len);
@@ -89,39 +91,31 @@ PUBLIC int no_sys()
 }
 
 /*===========================================================================*
- *                              panic                                        *
- *===========================================================================*/
-PUBLIC void panic(who, mess, num)
-char *who;                      /* who caused the panic */
-char *mess;                     /* panic message string */
-int num;                        /* number to go with it */
-{
-  if (!panicking) {             /* do not panic during a sync */
-        panicking = TRUE;       /* prevent another panic during the sync */
-
-        printf("VFS panic (%s): %s ", who, mess);
-        if (num != NO_NUM) printf("%d",num); 
-        printf("\n"); 
-        (void) do_sync();               /* flush everything to the disk */
-  } else printf("VFS re-panic\n");
-  exit(1);
-}
-
-/*===========================================================================*
  *				isokendpt_f				     *
  *===========================================================================*/
 PUBLIC int isokendpt_f(char *file, int line, int endpoint, int *proc, int fatal)
 {
     int failed = 0;
+    endpoint_t ke;
     *proc = _ENDPOINT_P(endpoint);
-    if(*proc < 0 || *proc >= NR_PROCS) {
+    if(endpoint == NONE) {
+        printf("vfs:%s: endpoint is NONE\n", file, line, endpoint);
+        failed = 1;
+    } else if(*proc < 0 || *proc >= NR_PROCS) {
         printf("vfs:%s:%d: proc (%d) from endpoint (%d) out of range\n",
                 file, line, *proc, endpoint);
         failed = 1;
-    } else if(fproc[*proc].fp_endpoint != endpoint) {
-        printf("vfs:%s:%d: proc (%d) from endpoint (%d) doesn't match "
-                "known endpoint (%d)\n",
-                file, line, *proc, endpoint, fproc[*proc].fp_endpoint);
+    } else if((ke=fproc[*proc].fp_endpoint) != endpoint) {
+	if(ke == NONE) {
+        	printf("vfs:%s:%d: endpoint (%d) points to NONE slot (%d)\n",
+                	file, line, endpoint, *proc);
+		assert(fproc[*proc].fp_pid == PID_FREE);
+	} else {
+	        printf("vfs:%s:%d: proc (%d) from endpoint (%d) doesn't match "
+       	         "known endpoint (%d)\n",
+       	         file, line, *proc, endpoint, fproc[*proc].fp_endpoint);
+		assert(fproc[*proc].fp_pid != PID_FREE);
+	}
         failed = 1;
     }
 

@@ -20,7 +20,6 @@
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
-FORWARD _PROTOTYPE( void shutdown, (timer_t *));	
 
 /*===========================================================================*
  *				main                                         *
@@ -115,11 +114,11 @@ PUBLIC void main()
 		hdrindex = 1 + i-NR_TASKS;	/* servers, drivers, INIT */
 	}
 
-	/* The bootstrap loader created an array of the a.out headers at
-	 * absolute address 'aout'. Get one element to e_hdr.
+	/* Architecture-specific way to find out aout header of this
+	 * boot process.
 	 */
-	phys_copy(aout + hdrindex * A_MINHDR, vir2phys(&e_hdr),
-						(phys_bytes) A_MINHDR);
+	arch_get_aout_headers(hdrindex, &e_hdr);
+
 	/* Convert addresses to clicks and build process memory map */
 	text_base = e_hdr.a_syms >> CLICK_SHIFT;
 	text_clicks = (e_hdr.a_text + CLICK_SIZE-1) >> CLICK_SHIFT;
@@ -156,8 +155,8 @@ PUBLIC void main()
 	}
 	
 	/* Set ready. The HARDWARE task is never ready. */
-	if (rp->p_nr == HARDWARE) RTS_LOCK_SET(rp, NO_PRIORITY);
-	RTS_LOCK_UNSET(rp, SLOT_FREE); /* remove SLOT_FREE and schedule */
+	if (rp->p_nr == HARDWARE) RTS_SET(rp, NO_PRIORITY);
+	RTS_UNSET(rp, SLOT_FREE); /* remove SLOT_FREE and schedule */
 
 	/* Code and data segments must be allocated in protected mode. */
 	alloc_segments(rp);
@@ -169,6 +168,8 @@ PUBLIC void main()
 #if CPROFILE
   cprof_procs_no = 0;  /* init nr of hash table slots used */
 #endif /* CPROFILE */
+
+  vm_running = 0;
 
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
@@ -203,34 +204,19 @@ int how;
   register struct proc *rp; 
   message m;
 
-  /* Send a signal to all system processes that are still alive to inform 
-   * them that the MINIX kernel is shutting down. A proper shutdown sequence
-   * should be implemented by a user-space server. This mechanism is useful
-   * as a backup in case of system panics, so that system processes can still
-   * run their shutdown code, e.g, to synchronize the FS or to let the TTY
-   * switch to the first console. 
-   */
-#if DEAD_CODE
-  kprintf("Sending SIGKSTOP to system processes ...\n"); 
-  for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
-      if (!isemptyp(rp) && (priv(rp)->s_flags & SYS_PROC) && !iskernelp(rp))
-          send_sig(proc_nr(rp), SIGKSTOP);
-  }
-#endif
-
   /* Continue after 1 second, to give processes a chance to get scheduled to 
    * do shutdown work.  Set a watchog timer to call shutdown(). The timer 
    * argument passes the shutdown status. 
    */
   kprintf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-  set_timer(&shutdown_timer, get_uptime() + HZ, shutdown);
+  set_timer(&shutdown_timer, get_uptime() + 5*HZ, minix_shutdown);
 }
 
 /*===========================================================================*
  *				shutdown 				     *
  *===========================================================================*/
-PRIVATE void shutdown(tp)
+PUBLIC void minix_shutdown(tp)
 timer_t *tp;
 {
 /* This function is called from prepare_shutdown or stop_sequence to bring 
@@ -239,6 +225,6 @@ timer_t *tp;
  */
   intr_init(INTS_ORIG);
   clock_stop();
-  arch_shutdown(tmr_arg(tp)->ta_int);
+  arch_shutdown(tp ? tmr_arg(tp)->ta_int : RBT_PANIC);
 }
 

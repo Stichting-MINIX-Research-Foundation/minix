@@ -14,10 +14,15 @@
 #define RECEIVE		   2	/* blocking receive */
 #define SENDREC	 	   3  	/* SEND + RECEIVE */
 #define NOTIFY		   4	/* asynchronous notify */
-#define SENDNB		   5	/* nonblocking send */
+#define SENDNB             5    /* nonblocking send */
 #define SENDA		   16	/* asynchronous send */
 
 /* The following bit masks determine what checks that should be done. */
 #define CHECK_DEADLOCK  0x03	/* 0000 0011 : check for deadlock */
+
+#define WILLRECEIVE(target, source_ep) \
+  ((RTS_ISSET(target, RECEIVING) && !RTS_ISSET(target, SENDING)) &&	\
+    (target->p_getfrom_e == ANY || target->p_getfrom_e == source_ep))
+
 
 #endif /* IPC_H */

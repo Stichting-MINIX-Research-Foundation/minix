@@ -54,7 +54,7 @@ EXTERN struct super_block {
   bit_t s_isearch;		/* inodes below this bit number are in use */
   bit_t s_zsearch;		/* all zones below this bit number are in use*/
   char s_is_root;
-} super_block[NR_SUPERS];
+} superblock;
 
 #define NIL_SUPER (struct super_block *) 0
 #define IMAP		0	/* operating on the inode bit map */

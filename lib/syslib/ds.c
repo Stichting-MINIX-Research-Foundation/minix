@@ -4,6 +4,8 @@
 
 #include "syslib.h"
 
+#define GRANTBAD -1001
+
 int
 ds_subscribe(ds_name_regexp, type, flags)
 char *ds_name_regexp;
@@ -20,7 +22,7 @@ int flags;
 		(vir_bytes) ds_name_regexp, len, CPF_READ);
 
 	if(!GRANT_VALID(g)) 
-		return -1;
+		return GRANTBAD;
 
 	flags &= DS_INITIAL;
 
@@ -49,7 +51,7 @@ u32_t value;
 		(vir_bytes) ds_name, len, CPF_READ);
 
 	if(!GRANT_VALID(g)) 
-		return -1;
+		return GRANTBAD;
 
 	m.DS_KEY_GRANT = (char *) g;
 	m.DS_KEY_LEN = len;
@@ -78,7 +80,7 @@ char *value;
 	g_key = cpf_grant_direct(DS_PROC_NR,
 		(vir_bytes) ds_name, len_key, CPF_READ);
 	if(!GRANT_VALID(g_key)) 
-		return -1;
+		return GRANTBAD;
 
 	/* Grant for value. */
 	len_str = strlen(value)+1;
@@ -87,7 +89,7 @@ char *value;
 
 	if(!GRANT_VALID(g_str))  {
 		cpf_revoke(g_key);
-		return -1;
+		return GRANTBAD;
 	}
 
 	m.DS_KEY_GRANT = (char *) g_key;
@@ -118,7 +120,7 @@ u32_t *value;
 	g_key = cpf_grant_direct(DS_PROC_NR,
 		(vir_bytes) ds_name, len_key, CPF_READ);
 	if(!GRANT_VALID(g_key)) 
-		return -1;
+		return GRANTBAD;
 
 	/* Do request. */
 	m.DS_KEY_GRANT = (char *) g_key;
@@ -150,7 +152,7 @@ size_t len_str;
 	g_key = cpf_grant_direct(DS_PROC_NR,
 		(vir_bytes) ds_name, len_key, CPF_READ);
 	if(!GRANT_VALID(g_key)) 
-		return -1;
+		return GRANTBAD;
 
 	/* Grant for value. */
 	g_str = cpf_grant_direct(DS_PROC_NR,
@@ -158,7 +160,7 @@ size_t len_str;
 
 	if(!GRANT_VALID(g_str))  {
 		cpf_revoke(g_key);
-		return -1;
+		return GRANTBAD;
 	}
 
 	/* Do request. */
@@ -187,13 +189,13 @@ size_t len_str;
 	message m;
 	cp_grant_id_t g_key, g_str;
 
-	if(len_key < 1 || len_str < 1) return -1;
+	if(len_key < 1 || len_str < 1) return -1002;
 
 	/* Grant for key. */
 	g_key = cpf_grant_direct(DS_PROC_NR,
 		(vir_bytes) ds_key, len_key, CPF_WRITE);
 	if(!GRANT_VALID(g_key)) 
-		return -1;
+		return GRANTBAD;
 
 	/* Grant for value. */
 	g_str = cpf_grant_direct(DS_PROC_NR,
@@ -201,7 +203,7 @@ size_t len_str;
 
 	if(!GRANT_VALID(g_str))  {
 		cpf_revoke(g_key);
-		return -1;
+		return GRANTBAD;
 	}
 
 	/* Do request. */
@@ -238,7 +240,7 @@ u32_t *value;
 	g_key = cpf_grant_direct(DS_PROC_NR,
 		(vir_bytes) ds_key, len_key, CPF_WRITE);
 	if(!GRANT_VALID(g_key)) 
-		return -1;
+		return GRANTBAD;
 
 	/* Do request. */
 	m.DS_KEY_GRANT = (char *) g_key;

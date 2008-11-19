@@ -193,7 +193,7 @@ unsigned long vir2phys( unsigned long x )
 	int r;
 	unsigned long value;
 	
-	if ( (r=sys_umap( SELF, D, x, 4, &value )) != OK )
+	if ( (r=sys_umap( SELF, VM_D, x, 4, &value )) != OK )
 		panic( "lance", "sys_umap failed", r );
 	
 	return value;
@@ -202,7 +202,7 @@ unsigned long vir2phys( unsigned long x )
 /* DMA limitations */
 #define DMA_ADDR_MASK  0xFFFFFF	/* mask to verify DMA address is 24-bit */
 
-#define CORRECT_DMA_MEM() ( (virt_to_bus(lance + sizeof(lance)) & ~DMA_ADDR_MASK) == 0 )
+#define CORRECT_DMA_MEM() ( (virt_to_bus(lance_buf + sizeof(struct lance_interface)) & ~DMA_ADDR_MASK) == 0 )
 
 #define ETH_FRAME_LEN           1518
 
@@ -297,7 +297,8 @@ struct lance_interface
 
 /* =============== global variables =============== */
 static struct lance_interface  *lp;
-static char lance[sizeof(struct lance_interface)+8];
+#define LANCE_BUF_SIZE (sizeof(struct lance_interface))
+static char *lance_buf = NULL;
 static int rx_slot_nr = 0;          /* Rx-slot number */
 static int tx_slot_nr = 0;          /* Tx-slot number */
 static int cur_tx_slot_nr = 0;      /* Tx-slot number */
@@ -1682,8 +1683,11 @@ ether_card_t *ec;
   unsigned short ioaddr = ec->ec_port;
 
   /* ============= setup init_block(cf. lance_probe1) ================ */
-  /* make sure data structure is 8-byte aligned */
-  l = ((Address)lance + 7) & ~7;
+  /* make sure data structure is 8-byte aligned and below 16MB (for DMA) */
+  assert(!lance_buf);
+  if(!(lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M, &l))) {
+	panic( "lance", "alloc_contig failed", LANCE_BUF_SIZE);
+  }
   lp = (struct lance_interface *)l;
   lp->init_block.mode = 0x3;      /* disable Rx and Tx */
   lp->init_block.filter[0] = lp->init_block.filter[1] = 0x0;

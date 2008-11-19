@@ -18,7 +18,7 @@ CC =	exec cc
 CPPFLAGS=-I../../kernel/arch/$(ARCH)/include -I$i 
 CFLAGS = $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
-LIBS = -lsysutil -lsys
+LIBS = -lsys 
 
 OBJ = main.o dmp.o dmp_kernel.o dmp_pm.o dmp_fs.o dmp_rs.o dmp_ds.o 
 
@@ -30,7 +30,7 @@ $(SERVER):	$(OBJ)
 
 # install with other servers
 install:	$(SERVER)
-	install -o root -c $? /sbin/$(SERVER) 
+	install -o root -c $< /sbin/$(SERVER) 
 
 # clean up local files
 clean:

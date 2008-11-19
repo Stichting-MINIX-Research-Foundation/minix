@@ -7,40 +7,19 @@ struct memory;
 
 #include <timers.h>
 
-/* alloc.c */
-_PROTOTYPE( phys_clicks alloc_mem, (phys_clicks clicks)			);
-_PROTOTYPE( void free_mem, (phys_clicks base, phys_clicks clicks)	);
-_PROTOTYPE( void mem_init, (struct memory *chunks, phys_clicks *free)	);
+/* break.c */
+_PROTOTYPE( int do_brk, (void)						);
+
+/* devio.c */
+_PROTOTYPE( int do_dev_io, (void) );
+_PROTOTYPE( int do_dev_io, (void) );
+
+/* dma.c */
 _PROTOTYPE( int do_adddma, (void)					);
 _PROTOTYPE( int do_deldma, (void)					);
 _PROTOTYPE( int do_getdma, (void)					);
 _PROTOTYPE( void release_dma, (endpoint_t proc_e, phys_clicks base,
 						phys_clicks size)	);
-#if ENABLE_SWAP
-_PROTOTYPE( int swap_on, (char *file, u32_t offset, u32_t size)	);
-_PROTOTYPE( int swap_off, (void)					);
-_PROTOTYPE( void swap_in, (void)					);
-_PROTOTYPE( void swap_inqueue, (struct mproc *rmp)			);
-#else /* !SWAP */
-#define swap_in()			((void)0)
-#define swap_inqueue(rmp)		((void)0)
-#endif /* !SWAP */
-_PROTOTYPE(int mem_holes_copy, (struct hole *, size_t *, u32_t *)	);
-
-/* asynsend.c */
-_PROTOTYPE( int asynsend, (endpoint_t dst, message *mp)			);
-
-/* break.c */
-_PROTOTYPE( int adjust, (struct mproc *rmp,
-			vir_clicks data_clicks, vir_bytes sp)		);
-_PROTOTYPE( int do_brk, (void)						);
-_PROTOTYPE( int real_brk, (struct mproc *pr, vir_bytes v)		);
-_PROTOTYPE( int size_ok, (int file_type, vir_clicks tc, vir_clicks dc,
-			vir_clicks sc, vir_clicks dvir, vir_clicks s_vir) );
-
-/* devio.c */
-_PROTOTYPE( int do_dev_io, (void) );
-_PROTOTYPE( int do_dev_io, (void) );
 
 /* dmp.c */
 _PROTOTYPE( int do_fkey_pressed, (void)						);
@@ -50,8 +29,6 @@ _PROTOTYPE( int do_exec, (void)						);
 _PROTOTYPE( int exec_newmem, (void)					);
 _PROTOTYPE( int do_execrestart, (void)					);
 _PROTOTYPE( void exec_restart, (struct mproc *rmp, int result)		);
-_PROTOTYPE( struct mproc *find_share, (struct mproc *mp_ign, Ino_t ino,
-			Dev_t dev, time_t ctime)			);
 
 /* forkexit.c */
 _PROTOTYPE( int do_fork, (void)						);
@@ -131,8 +108,6 @@ _PROTOTYPE( void stop_proc, (struct mproc *rmp, int sig_nr)		);
 _PROTOTYPE( pid_t get_free_pid, (void)					);
 _PROTOTYPE( int no_sys, (void)						);
 _PROTOTYPE( void panic, (char *who, char *mess, int num)		);
-_PROTOTYPE( int get_stack_ptr, (int proc_nr, vir_bytes *sp)		);
-_PROTOTYPE( int get_mem_map, (int proc_nr, struct mem_map *mem_map)	);
 _PROTOTYPE( char *find_param, (const char *key));
 _PROTOTYPE( int proc_from_pid, (pid_t p));
 _PROTOTYPE( int pm_isokendpt, (int ep, int *proc));

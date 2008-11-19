@@ -1,10 +1,11 @@
-# Makefile for lib/utils.
+# Makefile for lib/sysutil.
 
 CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
 
-LIBRARIES=libsysutil
+LIBRARIES=libsys
 
-libsysutil_FILES=" \
+libsys_FILES=" \
+	asynsend.c \
 	kmalloc.c \
 	kprintf.c \
 	kputc.c \
@@ -21,6 +22,8 @@ libsysutil_FILES=" \
 	taskcall.c \
 	read_tsc.s \
 	read_tsc_64.c \
+	stacktrace.c \
+	sys_hz.c \
 	profile_extern.c \
 	profile.c"
 

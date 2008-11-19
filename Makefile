@@ -27,7 +27,7 @@ usage:
 # 'make install' target.
 # 
 # etcfiles has to be done first.
-world: includes depend libraries cmds install postinstall
+world: includes depend cmds install postinstall
 
 includes:
 	cd include && $(MAKE) install gcc

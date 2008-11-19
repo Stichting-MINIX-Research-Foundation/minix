@@ -171,7 +171,11 @@ static void do_exec(int proc_e, char *exec, size_t exec_len, char *progname,
 	patch_ptr(frame, vsp);
 	r = sys_datacopy(SELF, (vir_bytes) frame,
 		proc_e, (vir_bytes) vsp, (phys_bytes)frame_len);
-	if (r != OK) panic(__FILE__,"pm_exec stack copy err on", proc_e);
+	if (r != OK) {
+		printf("RS: stack_top is 0x%lx; tried to copy to 0x%lx in %d\n",
+			stack_top, vsp);
+		panic("RS", "do_exec: stack copy err on", proc_e);
+	}
 
 	off = hdrlen;
 
@@ -261,8 +265,8 @@ int *allow_setuidp;
 	*load_textp= !!(m.m1_i2 & EXC_NM_RF_LOAD_TEXT);
 	*allow_setuidp= !!(m.m1_i2 & EXC_NM_RF_ALLOW_SETUID);
 #if 0
-	printf("exec_newmem: stack_top = 0x%x\n", *stack_topp);
-	printf("exec_newmem: load_text = %d\n", *load_textp);
+	printf("RS: exec_newmem: stack_top = 0x%x\n", *stack_topp);
+	printf("RS: exec_newmem: load_text = %d\n", *load_textp);
 #endif
 	return m.m_type;
 }

@@ -633,6 +633,10 @@ message *mess_ptr;		/* pointer to message for task */
 
   int r, proc_e;
 
+  if(task_nr == SYSTEM) {
+	printf("VFS: sending %d to SYSTEM\n", mess_ptr->m_type);
+  }
+
   proc_e = mess_ptr->IO_ENDPT;
 
   r = sendrec(task_nr, mess_ptr);
@@ -1117,6 +1121,7 @@ PUBLIC void reopen_reply()
 	restart_reopen(maj);
 }
 
+#if 0
 #define ASYN_NR	100
 PRIVATE asynmsg_t msgtable[ASYN_NR];
 PRIVATE int first_slot= 0, next_slot= 0;
@@ -1203,4 +1208,5 @@ message *mp;
 	/* Tell the kernel to rescan the table */
 	return senda(msgtable+first_slot, next_slot-first_slot);
 }
+#endif
 

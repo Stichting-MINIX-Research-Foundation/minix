@@ -40,13 +40,32 @@ register message *m_ptr;
  */
 
   register struct proc *rp;
-  phys_bytes src, dst;
   vir_bytes tr_addr = (vir_bytes) m_ptr->CTL_ADDRESS;
   long tr_data = m_ptr->CTL_DATA;
   int tr_request = m_ptr->CTL_REQUEST;
   int tr_proc_nr_e = m_ptr->CTL_ENDPT, tr_proc_nr;
   unsigned char ub;
   int i;
+
+#define COPYTOPROC(seg, addr, myaddr, length) {		\
+	struct vir_addr fromaddr, toaddr;		\
+	fromaddr.proc_nr_e = SYSTEM;			\
+	toaddr.proc_nr_e = tr_proc_nr_e;		\
+	fromaddr.offset = (myaddr);			\
+	toaddr.offset = (addr);				\
+	fromaddr.segment = D;				\
+	toaddr.segment = (seg);				\
+}
+
+#define COPYFROMPROC(seg, addr, myaddr, length) {	\
+	struct vir_addr fromaddr, toaddr;		\
+	fromaddr.proc_nr_e = tr_proc_nr_e;		\
+	toaddr.proc_nr_e = SYSTEM;			\
+	fromaddr.offset = (addr);			\
+	toaddr.offset = (myaddr);			\
+	fromaddr.segment = (seg);			\
+	toaddr.segment = D;				\
+}
 
   if(!isokendpt(tr_proc_nr_e, &tr_proc_nr)) return(EINVAL);
   if (iskerneln(tr_proc_nr)) return(EPERM);
@@ -61,16 +80,14 @@ register message *m_ptr;
 
   case T_GETINS:		/* return value from instruction space */
 	if (rp->p_memmap[T].mem_len != 0) {
-		if ((src = umap_local(rp, T, tr_addr, TR_VLSIZE)) == 0) return(EIO);
-		phys_copy(src, vir2phys(&tr_data), (phys_bytes) sizeof(long));
+		COPYTOPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 		m_ptr->CTL_DATA = tr_data;
 		break;
 	}
 	/* Text space is actually data space - fall through. */
 
   case T_GETDATA:		/* return value from data space */
-	if ((src = umap_local(rp, D, tr_addr, TR_VLSIZE)) == 0) return(EIO);
-	phys_copy(src, vir2phys(&tr_data), (phys_bytes) sizeof(long));
+	COPYTOPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA= tr_data;
 	break;
 
@@ -83,16 +100,14 @@ register message *m_ptr;
 
   case T_SETINS:		/* set value in instruction space */
 	if (rp->p_memmap[T].mem_len != 0) {
-		if ((dst = umap_local(rp, T, tr_addr, TR_VLSIZE)) == 0) return(EIO);
-		phys_copy(vir2phys(&tr_data), dst, (phys_bytes) sizeof(long));
+		COPYFROMPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 		m_ptr->CTL_DATA = 0;
 		break;
 	}
 	/* Text space is actually data space - fall through. */
 
   case T_SETDATA:			/* set value in data space */
-	if ((dst = umap_local(rp, D, tr_addr, TR_VLSIZE)) == 0) return(EIO);
-	phys_copy(vir2phys(&tr_data), dst, (phys_bytes) sizeof(long));
+	COPYFROMPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA = 0;
 	break;
 
@@ -136,28 +151,12 @@ register message *m_ptr;
 	break;
 
   case T_READB_INS:		/* get value from instruction space */
-	if (rp->p_memmap[T].mem_len != 0) {
-		if ((dst = umap_local(rp, T, tr_addr, 1)) == 0) return(EFAULT);
-		phys_copy(dst, vir2phys(&ub), (phys_bytes) 1);
-		m_ptr->CTL_DATA = ub;
-		break;
-	}
-  
-	if ((dst = umap_local(rp, D, tr_addr, 1)) == 0) return(EFAULT);
-	phys_copy(dst, vir2phys(&ub), (phys_bytes) 1);
+	COPYFROMPROC(rp->p_memmap[T].mem_len > 0 ? T : D, tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->CTL_DATA = ub;
 	break;
 
   case T_WRITEB_INS:		/* set value in instruction space */
-	if (rp->p_memmap[T].mem_len != 0) {
-		if ((dst = umap_local(rp, T, tr_addr, 1)) == 0) return(EFAULT);
-		phys_copy(vir2phys(&tr_data), dst, (phys_bytes) 1);
-		m_ptr->CTL_DATA = 0;
-		break;
-	}
-  
-	if ((dst = umap_local(rp, D, tr_addr, 1)) == 0) return(EFAULT);
-	phys_copy(vir2phys(&tr_data), dst, (phys_bytes) 1);
+	COPYTOPROC(rp->p_memmap[T].mem_len > 0 ? T : D,tr_addr, (vir_bytes) &tr_data, 1);
 	m_ptr->CTL_DATA = 0;
 	break;
 

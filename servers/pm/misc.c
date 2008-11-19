@@ -24,6 +24,7 @@
 #include <minix/config.h>
 #include <minix/sysinfo.h>
 #include <minix/type.h>
+#include <minix/vm.h>
 #include <string.h>
 #include <archconst.h>
 #include <archtypes.h>
@@ -66,24 +67,13 @@ PUBLIC unsigned long calls_stats[NCALLS];
  *===========================================================================*/
 PUBLIC int do_allocmem()
 {
-  vir_clicks mem_clicks;
-  phys_clicks mem_base;
-
-  /* This call is dangerous. Memory will be lost of the requesting process
-   * forgets about it.
-   */
-  if (mp->mp_effuid != 0)
-  {
-	printf("PM: unauthorized call of do_allocmem by proc %d\n",
-		mp->mp_endpoint);
-	return EPERM;
-  }
-
-  mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
-  mem_base = alloc_mem(mem_clicks);
-  if (mem_base == NO_MEM) return(ENOMEM);
-  mp->mp_reply.membase =  (phys_bytes) (mem_base << CLICK_SHIFT);
-  return(OK);
+	int r;
+	phys_bytes retmembase;
+	r = vm_allocmem(m_in.memsize, &retmembase);
+	if(r == OK)
+		mp->mp_reply.membase = retmembase;
+	printf("PM: do_allocmem: %d\n", r);
+	return r;
 }
 
 /*===========================================================================*
@@ -91,6 +81,9 @@ PUBLIC int do_allocmem()
  *===========================================================================*/
 PUBLIC int do_freemem()
 {
+#if 1
+	return ENOSYS;
+#else
   vir_clicks mem_clicks;
   phys_clicks mem_base;
 
@@ -108,6 +101,7 @@ PUBLIC int do_freemem()
   mem_base = (m_in.membase + CLICK_SIZE -1 ) >> CLICK_SHIFT;
   free_mem(mem_base, mem_clicks);
   return(OK);
+#endif
 }
 
 /*===========================================================================*
@@ -215,9 +209,7 @@ PUBLIC int do_getsysinfo()
   struct loadinfo loadinfo;
   static struct proc proctab[NR_PROCS+NR_TASKS];
   size_t len;
-  static struct pm_mem_info pmi;
   int s, r;
-  size_t holesize;
 
   /* This call leaks important information (the contents of registers).
    * harmless data (such as the load should get their own calls)
@@ -251,14 +243,6 @@ PUBLIC int do_getsysinfo()
 	src_addr = (vir_bytes) proctab;
 	len = sizeof(proctab);
         break;
-  case SI_MEM_ALLOC:
-  	holesize = sizeof(pmi.pmi_holes);
-	if((r=mem_holes_copy(pmi.pmi_holes, &holesize,
-	   &pmi.pmi_hi_watermark)) != OK)
-		return r;
-	src_addr = (vir_bytes) &pmi;
-	len = sizeof(pmi);
-	break;
   case SI_LOADINFO:			/* loadinfo is obtained via PM */
         sys_getloadinfo(&loadinfo);
         src_addr = (vir_bytes) &loadinfo;
@@ -329,12 +313,18 @@ PUBLIC int do_getprocnr()
 	return EPERM;
   }
 
-  printf("PM: do_getprocnr call from endpoint %d\n", mp->mp_endpoint);
+#if 0
+  printf("PM: do_getprocnr(%d) call from endpoint %d, %s\n",
+	m_in.pid, mp->mp_endpoint, mp->mp_name);
+#endif
 
   if (m_in.pid >= 0) {			/* lookup process by pid */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 		if ((rmp->mp_flags & IN_USE) && (rmp->mp_pid==m_in.pid)) {
   			mp->mp_reply.endpt = rmp->mp_endpoint;
+#if 0
+  			printf("PM: pid result: %d\n", rmp->mp_endpoint);
+#endif
   			return(OK);
 		} 
 	}
@@ -349,11 +339,17 @@ PUBLIC int do_getprocnr()
 		if (((rmp->mp_flags & (IN_USE | ZOMBIE)) == IN_USE) && 
 			strncmp(rmp->mp_name, search_key, key_len)==0) {
   			mp->mp_reply.endpt = rmp->mp_endpoint;
+  			printf("PM: name %s result: %d\n", search_key, 
+					rmp->mp_endpoint);
   			return(OK);
 		} 
 	}
+	printf("PM: name %s result: ESRCH\n", search_key);
   	return(ESRCH);			
   } else {			/* return own/parent process number */
+#if 0
+	printf("PM: endpt result: %d\n", mp->mp_reply.endpt);
+#endif
   	mp->mp_reply.endpt = who_e;
 	mp->mp_reply.pendpt = mproc[mp->mp_parent].mp_endpoint;
   }
@@ -526,7 +522,7 @@ PUBLIC int do_svrctl()
                	return s;
           if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.val,
             SELF, (vir_bytes) local_param_overrides[local_params].value,
-              sysgetenv.keylen)) != OK)
+              sysgetenv.vallen)) != OK)
                	return s;
             local_param_overrides[local_params].name[sysgetenv.keylen] = '\0';
             local_param_overrides[local_params].value[sysgetenv.vallen] = '\0';
@@ -576,24 +572,6 @@ PUBLIC int do_svrctl()
       return OK;
   }
 
-#if ENABLE_SWAP
-  case MMSWAPON: {
-	struct mmswapon swapon;
-
-	if (mp->mp_effuid != SUPER_USER) return(EPERM);
-
-	if (sys_datacopy(who_e, (phys_bytes) ptr,
-		PM_PROC_NR, (phys_bytes) &swapon,
-		(phys_bytes) sizeof(swapon)) != OK) return(EFAULT);
-
-	return(swap_on(swapon.file, swapon.offset, swapon.size)); }
-
-  case MMSWAPOFF: {
-	if (mp->mp_effuid != SUPER_USER) return(EPERM);
-
-	return(swap_off()); }
-#endif /* SWAP */
-
   default:
 	return(EINVAL);
   }
@@ -607,8 +585,13 @@ extern char *_brksize;
 PUBLIC int brk(brk_addr)
 char *brk_addr;
 {
+	int r;
 /* PM wants to call brk() itself. */
-	if(real_brk(&mproc[PM_PROC_NR], (vir_bytes) brk_addr) != OK) {
+	if((r=vm_brk(PM_PROC_NR, brk_addr)) != OK) {
+#if 0
+		printf("PM: own brk(%p) failed: vm_brk() returned %d\n",
+			brk_addr, r);
+#endif
 		return -1;
 	}
 	_brksize = brk_addr;

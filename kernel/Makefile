@@ -18,21 +18,20 @@ CFLAGS=$(CPROFILE) $(CPPFLAGS) $(EXTRA_OPTS)
 LDFLAGS=-i 
 
 # first-stage, arch-dependent startup code
-HEAD =	head.o
-FULLHEAD = $a/$(HEAD)
+HEAD =	$a/mpx386.o
 
 OBJS =	start.o table.o main.o proc.o \
 	system.o clock.o utility.o debug.o profile.o interrupt.o
 SYSTEM = system.a
 ARCHLIB = $a/$(ARCH).a
-LIBS = -ltimers -lsysutil
+LIBS = -ltimers -lsys
 
 # What to make.
 all: build 
-kernel build install: $(HEAD) $(OBJS) 
+kernel build install: $(OBJS) 
 	cd system && $(MAKE) $@
 	cd $a && $(MAKE) $@
-	$(LD) $(CFLAGS) $(LDFLAGS) -o kernel $(FULLHEAD) $(OBJS) \
+	$(LD) $(CFLAGS) $(LDFLAGS) -o kernel $(HEAD) $(OBJS) \
 		$(SYSTEM) $(ARCHLIB) $(LIBS)
 	install -S 0 kernel
 
@@ -49,9 +48,6 @@ depend:
 # How to build it
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(HEAD): 
-	cd $a && make HEAD=$(HEAD) $(HEAD)
 
 # Include generated dependencies.
 include .depend

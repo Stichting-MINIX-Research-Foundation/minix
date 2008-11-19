@@ -25,8 +25,8 @@ PUBLIC int do_cprofile(m_ptr)
 register message *m_ptr;    /* pointer to request message */
 {
   int proc_nr, i, err = 0, k = 0;
-  vir_bytes vir_dst;
-  phys_bytes phys_src, phys_dst, len;
+  phys_bytes len;
+  vir_bytes vir_dst, vir_src;
 
   switch (m_ptr->PROF_ACTION) {
 
@@ -50,10 +50,9 @@ register message *m_ptr;    /* pointer to request message */
 		}
 
 		/* Set reset flag. */
-		phys_src = vir2phys((vir_bytes) &cprof_ctl_inst.reset);
-		phys_dst = (phys_bytes) cprof_proc_info[i].ctl;
-		len = (phys_bytes) sizeof(cprof_ctl_inst.reset);
-		phys_copy(phys_src, phys_dst, len);
+		data_copy(SYSTEM, (vir_bytes) &cprof_ctl_inst.reset,
+			cprof_proc_info[i].endpt, cprof_proc_info[i].ctl_v,
+			sizeof(cprof_ctl_inst.reset));
 	}
 	kprintf("\n");
 	
@@ -70,14 +69,6 @@ register message *m_ptr;    /* pointer to request message */
 
 	if(!isokendpt(m_ptr->PROF_ENDPT, &proc_nr))
 		return EINVAL;
-
-	vir_dst = (vir_bytes) m_ptr->PROF_CTL_PTR;
-	len = (phys_bytes) sizeof (int *);
-	cprof_info_addr = numap_local(proc_nr, vir_dst, len);
-
-	vir_dst = (vir_bytes) m_ptr->PROF_MEM_PTR;
-	len = (phys_bytes) sizeof (char *);
-	cprof_data_addr = numap_local(proc_nr, vir_dst, len);
 
 	cprof_mem_size = m_ptr->PROF_MEM_SIZE;
 
@@ -101,10 +92,9 @@ register message *m_ptr;    /* pointer to request message */
 		}
 
 		/* Copy control struct from proc to local variable. */
-		phys_src = cprof_proc_info[i].ctl;
-		phys_dst = vir2phys((vir_bytes) &cprof_ctl_inst);
-		len = (phys_bytes) sizeof(cprof_ctl_inst);
-		phys_copy(phys_src, phys_dst, len);
+		data_copy(cprof_proc_info[i].endpt, cprof_proc_info[i].ctl_v,
+			SYSTEM, (vir_bytes) &cprof_ctl_inst,
+			sizeof(cprof_ctl_inst));
 
 	       	/* Calculate memory used. */
 		cprof_proc_info[i].slots_used = cprof_ctl_inst.slots_used;
@@ -121,32 +111,33 @@ register message *m_ptr;    /* pointer to request message */
 	if (cprof_mem_size < cprof_info.mem_used) cprof_info.mem_used = -1;
 
 	/* Copy the info struct to the user process. */
-	phys_copy(vir2phys((vir_bytes) &cprof_info), cprof_info_addr,
-					(phys_bytes) sizeof(cprof_info));
+	data_copy(SYSTEM, (vir_bytes) &cprof_info,
+		m_ptr->PROF_ENDPT, (vir_bytes) m_ptr->PROF_CTL_PTR,
+		sizeof(cprof_info));
 
 	/* If there is no space or errors occurred, don't bother copying. */
 	if (cprof_info.mem_used == -1 || cprof_info.err) return OK;
 
 	/* For each profiled process, copy its name, slots_used and profiling
 	 * table to the user process. */
-	phys_dst = cprof_data_addr;
+	vir_dst = (vir_bytes) m_ptr->PROF_MEM_PTR;
 	for (i=0; i<cprof_procs_no; i++) {
-		phys_src = vir2phys((vir_bytes) cprof_proc_info[i].name);
 		len = (phys_bytes) strlen(cprof_proc_info[i].name);
-		phys_copy(phys_src, phys_dst, len);
-		phys_dst += CPROF_PROCNAME_LEN;
+		data_copy(SYSTEM, (vir_bytes) cprof_proc_info[i].name,
+			m_ptr->PROF_ENDPT, vir_dst, len);
+		vir_dst += CPROF_PROCNAME_LEN;
 
-		phys_src = cprof_proc_info[i].ctl +
-						sizeof(cprof_ctl_inst.reset);
 		len = (phys_bytes) sizeof(cprof_ctl_inst.slots_used);
-		phys_copy(phys_src, phys_dst, len);
-		phys_dst += len;
+		data_copy(cprof_proc_info[i].endpt,
+		  cprof_proc_info[i].ctl_v + sizeof(cprof_ctl_inst.reset),
+		  m_ptr->PROF_ENDPT, vir_dst, len);
+		vir_dst += len;
 
-		phys_src = cprof_proc_info[i].buf;
 		len = (phys_bytes)
 		(sizeof(cprof_tbl_inst) * cprof_proc_info[i].slots_used);
-		phys_copy(phys_src, phys_dst, len);
-		phys_dst += len;
+		data_copy(cprof_proc_info[i].endpt, cprof_proc_info[i].buf_v,
+		  m_ptr->PROF_ENDPT, vir_dst, len);
+		vir_dst += len;
 	}
 
 	return OK;

@@ -28,7 +28,7 @@ int getloadavg(double *loadavg, int nelem)
 	nelem = PERIODS;
 
   /* How many ticks are missing from the newest-filled slot? */
-#define TICKSPERSLOT (_LOAD_UNIT_SECS * HZ)
+#define TICKSPERSLOT (_LOAD_UNIT_SECS * sys_hz())
   unfilled_ticks = TICKSPERSLOT - (loadinfo.last_clock % TICKSPERSLOT);
 
   for(p = 0; p < nelem; p++) {

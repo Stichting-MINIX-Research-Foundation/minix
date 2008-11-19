@@ -30,11 +30,11 @@ servers/inet/inet
 servers/is/is
 servers/pm/pm
 servers/rs/rs
+servers/vm/vm
 servers/rs/service
 
 drivers/at_wini/at_wini
 drivers/bios_wini/bios_wini
-drivers/cmos/cmos
 drivers/dp8390/dp8390
 drivers/dpeth/dpeth
 drivers/floppy/floppy

@@ -52,8 +52,9 @@ cpf_grow(void)
 	assert(new_size > ngrants);
 
 	/* Allocate a block of new size. */
-	if(!(new_grants=malloc(new_size * sizeof(grants[0]))))
+	if(!(new_grants=malloc(new_size * sizeof(grants[0])))) {
 		return;
+	}
 
 	/* Copy old block to new block. */
 	if(grants && ngrants > 0)

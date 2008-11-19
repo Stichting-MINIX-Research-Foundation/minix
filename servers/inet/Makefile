@@ -8,7 +8,7 @@ CC =		cc
 CPPFLAGS =	-I. -D_MINIX
 CFLAGS =	$(OPT) $(CPPFLAGS) $(CPROFILE)
 LDFLAGS =
-LIBS =          -lsysutil -lsys
+LIBS =           -lsys 
 
 .c.o:
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -29,7 +29,7 @@ inet:	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) version.c $(LIBS)
 
 install: inet
-	install -c $? /usr/sbin/inet
+	install -c $< /usr/sbin/inet
 
 clean:
 	rm -f $(OBJ) inet *.bak

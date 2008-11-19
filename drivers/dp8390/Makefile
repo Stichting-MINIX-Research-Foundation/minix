@@ -13,7 +13,7 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i 
-LIBS = -lsysutil -lsys -ltimers
+LIBS = -lsys -ltimers
 
 OBJ = 3c503.o dp8390.o ne2000.o rtl8029.o wdeth.o
 

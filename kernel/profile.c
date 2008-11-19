@@ -98,14 +98,14 @@ irq_hook_t *hook;
 	/* Note: k_reenter is always 0 here. */
 
 	/* Store sample (process name and program counter). */
-	phys_copy(vir2phys(proc_ptr->p_name),
-		(phys_bytes) (sprof_data_addr + sprof_info.mem_used),
-		(phys_bytes) strlen(proc_ptr->p_name));
+	data_copy(SYSTEM, (vir_bytes) proc_ptr->p_name,
+		sprof_ep, sprof_data_addr_vir + sprof_info.mem_used,
+		strlen(proc_ptr->p_name));
 
-	phys_copy(vir2phys(&proc_ptr->p_reg.pc),
-		(phys_bytes) (sprof_data_addr+sprof_info.mem_used +
+	data_copy(SYSTEM, (vir_bytes) &proc_ptr->p_reg.pc, sprof_ep,
+		(vir_bytes) (sprof_data_addr_vir + sprof_info.mem_used +
 					sizeof(proc_ptr->p_name)),
-		(phys_bytes) sizeof(proc_ptr->p_reg.pc));
+		(vir_bytes) sizeof(proc_ptr->p_reg.pc));
 
 	sprof_info.mem_used += sizeof(sprof_sample);
 
@@ -159,26 +159,20 @@ PUBLIC void profile_register(ctl_ptr, tbl_ptr)
 void *ctl_ptr;
 void *tbl_ptr;
 {
-  int len, proc_nr;
+  int proc_nr;
   vir_bytes vir_dst;
   struct proc *rp;                          
 
+  if(cprof_procs_no >= NR_SYS_PROCS)
+	return;
+
   /* Store process name, control struct, table locations. */
-  proc_nr = KERNEL;
-  rp = proc_addr(proc_nr);
+  rp = proc_addr(SYSTEM);
 
   cprof_proc_info[cprof_procs_no].endpt = rp->p_endpoint;
   cprof_proc_info[cprof_procs_no].name = rp->p_name;
-
-  len = (phys_bytes) sizeof (void *);
-
-  vir_dst = (vir_bytes) ctl_ptr;
-  cprof_proc_info[cprof_procs_no].ctl =
-	  numap_local(proc_nr, vir_dst, len);
-
-  vir_dst = (vir_bytes) tbl_ptr;
-  cprof_proc_info[cprof_procs_no].buf =
-	  numap_local(proc_nr, vir_dst, len);
+  cprof_proc_info[cprof_procs_no].ctl_v = (vir_bytes) ctl_ptr;
+  cprof_proc_info[cprof_procs_no].buf_v = (vir_bytes) tbl_ptr;
 
   cprof_procs_no++;
 }

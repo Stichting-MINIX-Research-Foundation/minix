@@ -27,13 +27,6 @@ struct boot_image {
   endpoint_t endpoint;			/* endpoint number when started */
 };
 
-/* The kernel outputs diagnostic messages in a circular buffer. */
-struct kmessages {
-  int km_next;				/* next index to write */
-  int km_size;				/* current size in buffer */
-  char km_buf[KMESS_BUF_SIZE];		/* buffer for messages */
-};
-
 struct randomness {
   struct {
 	int r_next;				/* next index to write */
@@ -56,5 +49,15 @@ typedef struct irq_hook {
 } irq_hook_t;
 
 typedef int (*irq_handler_t)(struct irq_hook *);
+
+/* Timing measurements. */
+struct lock_timingdata {
+        char names[TIMING_NAME];
+        unsigned long lock_timings[TIMING_POINTS];
+        unsigned long lock_timings_range[2];
+        unsigned long binsize, resets, misses, measurements;
+};
+EXTERN struct lock_timingdata timingdata[TIMING_CATEGORIES];
+
 
 #endif /* TYPE_H */

@@ -15,7 +15,7 @@ f = $u/src/servers/fs
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
-LIBS = -lsysutil -lsys
+LIBS = -lsys 
 
 OBJ = main.o store.o 
 
@@ -27,8 +27,6 @@ $(SERVER):	$(OBJ)
 
 # install with other servers
 install: $(SERVER)
-	install -o root -c $? /sbin/$(SERVER)
-#	install -o root -cs $? $@
 
 # clean up local files
 clean:

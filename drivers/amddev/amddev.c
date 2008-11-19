@@ -15,7 +15,7 @@ Driver for the AMD Device Exclusion Vector (DEV)
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/vm.h>
+#include <sys/vm_i386.h>
 #include <minix/com.h>
 #include <minix/const.h>
 #include <minix/ipc.h>
@@ -213,17 +213,13 @@ static void write_reg(int function, int index, u32_t value)
 
 static void init_domain(int index)
 {
-	int r;
 	size_t o, size, memsize;
 	phys_bytes busaddr;
 
 	size= 0x100000 / 8;
-	table= malloc(size + PAGE_SIZE);
+	table= alloc_contig(size, AC_ALIGN4K, &busaddr);
 	if (table == NULL)
 		panic("AMDDEV","malloc failed", NO_NUM);
-	o= (unsigned)table & (PAGE_SIZE-1);
-	if (o)
-		table += PAGE_SIZE-o;
 	if (index == 0)
 	{
 		memset(table, 0, size);
@@ -237,9 +233,6 @@ static void init_domain(int index)
 		memset(table, 0x00, size);
 	}
 
-	r= sys_umap(SELF, D, (vir_bytes)table, size, &busaddr);
-	if (r != OK)
-		panic("AMDDEV","sys_umap failed", r);
 printf("init_domain: busaddr = %p\n", busaddr);
 
 	write_reg(DEVF_BASE_HI, index, 0);
@@ -265,6 +258,7 @@ static void init_map(int index)
 	printf("after write: DEVF_MAP: 0x%x\n", read_reg(DEVF_MAP, index));
 }
 
+#if 0
 static int do_add(message *m)
 {
 	int r;
@@ -282,19 +276,19 @@ static int do_add(message *m)
 		size, start, proc);
 #endif
 
-	if (start % PAGE_SIZE)
+	if (start % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_add: bad start 0x%x from proc %d\n",
 			start, proc);
 		return EINVAL;
 	}
-	if (size % PAGE_SIZE)
+	if (size % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_add: bad size 0x%x from proc %d\n",
 			size, proc);
 		return EINVAL;
 	}
-	r= sys_umap(proc, D, (vir_bytes)start, size, &busaddr);
+	r= sys_umap(proc, VM_D, (vir_bytes)start, size, &busaddr);
 	if (r != OK)
 	{
 		printf("amddev`do_add: umap failed for 0x%x@0x%x, proc %d\n",
@@ -304,6 +298,7 @@ static int do_add(message *m)
 	add_range(busaddr, size);
 
 }
+#endif
 
 static int do_add_phys(message *m)
 {
@@ -319,12 +314,12 @@ static int do_add_phys(message *m)
 		size, start);
 #endif
 
-	if (start % PAGE_SIZE)
+	if (start % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_add_phys: bad start 0x%x\n", start);
 		return EINVAL;
 	}
-	if (size % PAGE_SIZE)
+	if (size % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_add_phys: bad size 0x%x\n", size);
 		return EINVAL;
@@ -355,12 +350,12 @@ static int do_del_phys(message *m)
 		size, start);
 #endif
 
-	if (start % PAGE_SIZE)
+	if (start % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_del_phys: bad start 0x%x\n", start);
 		return EINVAL;
 	}
-	if (size % PAGE_SIZE)
+	if (size % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_del_phys: bad size 0x%x\n", size);
 		return EINVAL;
@@ -391,13 +386,13 @@ static int do_add4pci(message *m)
 "amddev`do_add4pci: got request for 0x%x@0x%x from %d for pci dev %u.%u.%u\n",
 		size, start, proc, pci_bus, pci_dev, pci_func);
 
-	if (start % PAGE_SIZE)
+	if (start % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_add4pci: bad start 0x%x from proc %d\n",
 			start, proc);
 		return EINVAL;
 	}
-	if (size % PAGE_SIZE)
+	if (size % I386_PAGE_SIZE)
 	{
 		printf("amddev`do_add4pci: bad size 0x%x from proc %d\n",
 			size, proc);
@@ -406,7 +401,7 @@ static int do_add4pci(message *m)
 
 	printf("amddev`do_add4pci: should check with PCI\n");
 
-	r= sys_umap(proc, D, (vir_bytes)start, size, &busaddr);
+	r= sys_umap(proc, VM_D, (vir_bytes)start, size, &busaddr);
 	if (r != OK)
 	{
 		printf(
@@ -415,7 +410,7 @@ static int do_add4pci(message *m)
 		return r;
 	}
 
-	r= adddma(proc, busaddr, size);
+	r= adddma(proc, start, size);
 	if (r != 0)
 	{
 		r= -errno;
@@ -439,9 +434,9 @@ static void add_range(u32_t busaddr, u32_t size)
 	printf("add_range: mapping 0x%x@0x%x\n", size, busaddr);
 #endif
 
-	for (o= 0; o<size; o += PAGE_SIZE)
+	for (o= 0; o<size; o += I386_PAGE_SIZE)
 	{
-		bit= (busaddr+o)/PAGE_SIZE;
+		bit= (busaddr+o)/I386_PAGE_SIZE;
 		table[bit/8] &= ~(1 << (bit % 8));
 	}
 }
@@ -454,9 +449,9 @@ static void del_range(u32_t busaddr, u32_t size)
 	printf("del_range: mapping 0x%x@0x%x\n", size, busaddr);
 #endif
 
-	for (o= 0; o<size; o += PAGE_SIZE)
+	for (o= 0; o<size; o += I386_PAGE_SIZE)
 	{
-		bit= (busaddr+o)/PAGE_SIZE;
+		bit= (busaddr+o)/I386_PAGE_SIZE;
 		table[bit/8] |= (1 << (bit % 8));
 	}
 }

@@ -25,20 +25,18 @@ message *m_ptr;			/* pointer to request message */
 
   struct sigmsg smsg;
   register struct proc *rp;
-  phys_bytes src_phys, dst_phys;
   struct sigcontext sc, *scp;
   struct sigframe fr, *frp;
-  int proc;
+  int proc, r;
 
   if (!isokendpt(m_ptr->SIG_ENDPT, &proc)) return(EINVAL);
   if (iskerneln(proc)) return(EPERM);
   rp = proc_addr(proc);
 
   /* Get the sigmsg structure into our address space.  */
-  src_phys = umap_local(proc_addr(PM_PROC_NR), D, (vir_bytes) 
-      m_ptr->SIG_CTXT_PTR, (vir_bytes) sizeof(struct sigmsg));
-  if (src_phys == 0) return(EFAULT);
-  phys_copy(src_phys,vir2phys(&smsg),(phys_bytes) sizeof(struct sigmsg));
+  if((r=data_copy(PM_PROC_NR, (vir_bytes) m_ptr->SIG_CTXT_PTR,
+	SYSTEM, (vir_bytes) &smsg, (phys_bytes) sizeof(struct sigmsg))) != OK)
+	return r;
 
   /* Compute the user stack pointer where sigcontext will be stored. */
   scp = (struct sigcontext *) smsg.sm_stkptr - 1;
@@ -56,10 +54,9 @@ message *m_ptr;			/* pointer to request message */
   sc.sc_mask = smsg.sm_mask;
 
   /* Copy the sigcontext structure to the user's stack. */
-  dst_phys = umap_local(rp, D, (vir_bytes) scp,
-      (vir_bytes) sizeof(struct sigcontext));
-  if (dst_phys == 0) return(EFAULT);
-  phys_copy(vir2phys(&sc), dst_phys, (phys_bytes) sizeof(struct sigcontext));
+  if((r=data_copy(SYSTEM, (vir_bytes) &sc, m_ptr->SIG_ENDPT, (vir_bytes) scp,
+      (vir_bytes) sizeof(struct sigcontext))) != OK)
+      return r;
 
   /* Initialize the sigframe structure. */
   frp = (struct sigframe *) scp - 1;
@@ -73,10 +70,10 @@ message *m_ptr;			/* pointer to request message */
   fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
 
   /* Copy the sigframe structure to the user's stack. */
-  dst_phys = umap_local(rp, D, (vir_bytes) frp, 
-      (vir_bytes) sizeof(struct sigframe));
-  if (dst_phys == 0) return(EFAULT);
-  phys_copy(vir2phys(&fr), dst_phys, (phys_bytes) sizeof(struct sigframe));
+  if((r=data_copy(SYSTEM, (vir_bytes) &fr, m_ptr->SIG_ENDPT, (vir_bytes) frp, 
+      (vir_bytes) sizeof(struct sigframe))) != OK)
+      return r;
+
 
 #if ( _MINIX_CHIP == _CHIP_POWERPC )  /* stuff that can't be done in the assembler code. */  
   /* When the signal handlers C code is called it will write this value
@@ -95,8 +92,13 @@ message *m_ptr;			/* pointer to request message */
   /* Reschedule if necessary. */
   if(RTS_ISSET(rp, NO_PRIORITY))
 	RTS_LOCK_UNSET(rp, NO_PRIORITY);
-  else
+  else {
+	struct proc *caller;
+	caller = proc_addr(who_p);
 	kprintf("system: warning: sigsend a running process\n");
+	kprintf("caller stack: ");
+	proc_stacktrace(caller);
+  }
 
   return(OK);
 }

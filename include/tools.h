@@ -1,3 +1,6 @@
+#ifndef _INCLUDE_TOOLS_H
+#define _INCLUDE_TOOLS_H 1
+
 /* Constants describing the disk */
 #define SECTOR_SIZE	512
 #define SECTOR_SHIFT	9
@@ -121,3 +124,4 @@ _PROTOTYPE( void relocate, (void));
 _PROTOTYPE( int writesectors, (int _off, int _seg, off_t _adr, int _ct));
 #endif
 
+#endif

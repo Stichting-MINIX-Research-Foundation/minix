@@ -166,7 +166,7 @@ vir_bytes from_vir;
 endpoint_t to_proc;
 int to_seg;
 vir_bytes to_vir;
-vir_bytes grant_offset;
+size_t grant_offset;
 size_t size;
 {
 	phys_bytes addr;

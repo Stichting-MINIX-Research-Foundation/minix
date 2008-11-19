@@ -36,4 +36,8 @@
 #define KIOCSLEDS       _IOW('k', 2, struct kio_leds)
 #define KIOCSMAP	_IOW('k', 3, keymap_t)
 
+/* /dev/video ioctls. */
+#define TIOCMAPMEM	_IORW('v', 1, struct mapreqvm)
+#define TIOCUNMAPMEM	_IORW('v', 2, struct mapreqvm)
+
 #endif /* _S_I_TTY_H */

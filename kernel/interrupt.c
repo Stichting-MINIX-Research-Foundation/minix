@@ -30,7 +30,7 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq, irq_handler_t handler)
   irq_hook_t **line;
   
   if( irq < 0 || irq >= NR_IRQ_VECTORS )
-	panic("invalid call to put_irq_handler", irq);
+	minix_panic("invalid call to put_irq_handler", irq);
 
   line = &irq_handlers[irq];
   id = 1;
@@ -42,7 +42,7 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq, irq_handler_t handler)
   }
   
   if(id == 0)
-	panic("Too many handlers for irq", irq);
+	minix_panic("Too many handlers for irq", irq);
 
   hook->next = NULL;
   hook->handler = handler;
@@ -68,7 +68,7 @@ PUBLIC void rm_irq_handler( irq_hook_t* hook ) {
   irq_hook_t **line;
 
   if( irq < 0 || irq >= NR_IRQ_VECTORS ) 
-	panic("invalid call to rm_irq_handler", irq);
+	minix_panic("invalid call to rm_irq_handler", irq);
 
   /* disable the irq.  */
   intr_mask(hook);

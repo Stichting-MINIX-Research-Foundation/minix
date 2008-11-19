@@ -8,6 +8,7 @@
 #include <ibm/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
+#include "vm.h"
 #include "sconst.h"
 
 ! This file contains a number of assembly code utility routines needed by the
@@ -15,7 +16,7 @@
 
 .define	_monitor	! exit Minix and return to the monitor
 .define	_int86		! let the monitor make an 8086 interrupt call
-.define	_cp_mess	! copies messages from source to destination
+!.define	_cp_mess	! copies messages from source to destination
 .define	_exit		! dummy for library routines
 .define	__exit		! dummy for library routines
 .define	___exit		! dummy for library routines
@@ -34,8 +35,11 @@
 .define	_level0		! call a function at level 0
 .define	_read_cpu_flags	! read the cpu flags
 .define	_read_cr0	! read cr0
+.define	_write_cr3	! write cr3
+.define _last_cr3
 .define	_write_cr0	! write a value in cr0
-.define	_write_cr3	! write a value in cr3 (root of the page table)
+
+.define	_kernel_cr3	
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -162,42 +166,42 @@ csinit:	mov	eax, DS_SELECTOR
 ! Note that the message size, "Msize" is in DWORDS (not bytes) and must be set
 ! correctly.  Changing the definition of message in the type file and not
 ! changing it here will lead to total disaster.
-
-CM_ARGS	=	4 + 4 + 4 + 4 + 4	! 4 + 4 + 4 + 4 + 4
-!		es  ds edi esi eip	proc scl sof dcl dof
-
-	.align	16
-_cp_mess:
-	cld
-	push	esi
-	push	edi
-	push	ds
-	push	es
-
-	mov	eax, FLAT_DS_SELECTOR
-	mov	ds, ax
-	mov	es, ax
-
-	mov	esi, CM_ARGS+4(esp)		! src clicks
-	shl	esi, CLICK_SHIFT
-	add	esi, CM_ARGS+4+4(esp)		! src offset
-	mov	edi, CM_ARGS+4+4+4(esp)		! dst clicks
-	shl	edi, CLICK_SHIFT
-	add	edi, CM_ARGS+4+4+4+4(esp)	! dst offset
-
-	mov	eax, CM_ARGS(esp)	! process number of sender
-	stos				! copy number of sender to dest message
-	add	esi, 4			! do not copy first word
-	mov	ecx, Msize - 1		! remember, first word does not count
-	rep
-	movs				! copy the message
-
-	pop	es
-	pop	ds
-	pop	edi
-	pop	esi
-	ret				! that is all folks!
-
+!
+!CM_ARGS	=	4 + 4 + 4 + 4 + 4	! 4 + 4 + 4 + 4 + 4
+!!		es  ds edi esi eip	proc scl sof dcl dof
+!
+!	.align	16
+!_cp_mess:
+!	cld
+!	push	esi
+!	push	edi
+!	push	ds
+!	push	es
+!
+!	mov	eax, FLAT_DS_SELECTOR
+!	mov	ds, ax
+!	mov	es, ax
+!
+!	mov	esi, CM_ARGS+4(esp)		! src clicks
+!	shl	esi, CLICK_SHIFT
+!	add	esi, CM_ARGS+4+4(esp)		! src offset
+!	mov	edi, CM_ARGS+4+4+4(esp)		! dst clicks
+!	shl	edi, CLICK_SHIFT
+!	add	edi, CM_ARGS+4+4+4+4(esp)	! dst offset
+!
+!	mov	eax, CM_ARGS(esp)	! process number of sender
+!	stos				! copy number of sender to dest message
+!	add	esi, 4			! do not copy first word
+!	mov	ecx, Msize - 1		! remember, first word does not count
+!	rep
+!	movs				! copy the message
+!
+!	pop	es
+!	pop	ds
+!	pop	edi
+!	pop	esi
+!	ret				! that is all folks!
+!
 
 !*===========================================================================*
 !*				exit					     *
@@ -229,6 +233,9 @@ _phys_insw:
 	cld
 	push	edi
 	push	es
+
+	LOADKERNELCR3
+
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	es, cx
 	mov	edx, 8(ebp)		! port to read from
@@ -254,6 +261,9 @@ _phys_insb:
 	cld
 	push	edi
 	push	es
+
+	LOADKERNELCR3
+
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	es, cx
 	mov	edx, 8(ebp)		! port to read from
@@ -280,6 +290,9 @@ _phys_outsw:
 	cld
 	push	esi
 	push	ds
+
+	LOADKERNELCR3
+
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	ds, cx
 	mov	edx, 8(ebp)		! port to write to
@@ -306,6 +319,9 @@ _phys_outsb:
 	cld
 	push	esi
 	push	ds
+
+	LOADKERNELCR3
+
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	ds, cx
 	mov	edx, 8(ebp)		! port to write to
@@ -412,6 +428,8 @@ _phys_copy:
 	push	edi
 	push	es
 
+	LOADKERNELCR3
+
 	mov	eax, FLAT_DS_SELECTOR
 	mov	es, ax
 
@@ -456,6 +474,9 @@ _phys_memset:
 	push	esi
 	push	ebx
 	push	ds
+
+	LOADKERNELCR3
+
 	mov	esi, 8(ebp)
 	mov	eax, 16(ebp)
 	mov	ebx, FLAT_DS_SELECTOR
@@ -485,6 +506,7 @@ fill_done:
 	pop	esi
 	pop	ebp
 	ret
+	
 
 !*===========================================================================*
 !*				mem_rdw					     *
@@ -585,14 +607,13 @@ _write_cr0:
 	ret
 
 !*===========================================================================*
-!*			      write_cr3					     *
+!*				write_cr3				*
 !*===========================================================================*
 ! PUBLIC void write_cr3(unsigned long value);
 _write_cr3:
-	push	ebp
-	mov	ebp, esp
-	mov	eax, 8(ebp)
-	mov	cr3, eax
-	pop	ebp
+	push    ebp
+	mov     ebp, esp
+	LOADCR3WITHEAX(0x22, 8(ebp))
+	pop     ebp
 	ret
 

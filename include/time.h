@@ -9,7 +9,7 @@
 #ifndef _TIME_H
 #define _TIME_H
 
-#define CLOCKS_PER_SEC    60	/* MINIX always uses 60 Hz, even in Europe */
+#define CLOCKS_PER_SEC    60
 
 #ifdef _POSIX_SOURCE
 #define CLK_TCK CLOCKS_PER_SEC	/* obsolescent mame for CLOCKS_PER_SEC */

@@ -17,6 +17,9 @@
 
 #if SPROFILE
 
+/* user address to write info struct */
+PRIVATE vir_bytes sprof_info_addr_vir;
+
 /*===========================================================================*
  *				do_sprofile				     *
  *===========================================================================*/
@@ -41,15 +44,14 @@ register message *m_ptr;    /* pointer to request message */
 		return EBUSY;
 	}
 
-	isokendpt(m_ptr->PROF_ENDPT, &proc_nr);
+	/* Test endpoint number. */
+	if(!isokendpt(m_ptr->PROF_ENDPT, &proc_nr))
+		return EINVAL;
 
-	vir_dst = (vir_bytes) m_ptr->PROF_CTL_PTR;
-	length = (phys_bytes) sizeof (int *);
-	sprof_info_addr = numap_local(proc_nr, vir_dst, length);
-
-	vir_dst = (vir_bytes) m_ptr->PROF_MEM_PTR;
-	length = (phys_bytes) sizeof (char *);
-	sprof_data_addr = numap_local(proc_nr, vir_dst, length);
+	/* Set parameters for statistical profiler. */
+	sprof_ep = m_ptr->PROF_ENDPT;
+	sprof_info_addr_vir = (vir_bytes) m_ptr->PROF_CTL_PTR;
+	sprof_data_addr_vir = (vir_bytes) m_ptr->PROF_MEM_PTR;
 
 	sprof_info.mem_used = 0;
 	sprof_info.total_samples = 0;
@@ -80,8 +82,8 @@ register message *m_ptr;    /* pointer to request message */
 
 	stop_profile_clock();
 
-	phys_copy(vir2phys((vir_bytes) &sprof_info),
-		sprof_info_addr, (phys_bytes) sizeof(sprof_info));
+	data_copy(SYSTEM, (vir_bytes) &sprof_info,
+		sprof_ep, sprof_info_addr_vir, sizeof(sprof_info));
 
   	return OK;
 

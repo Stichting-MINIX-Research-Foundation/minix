@@ -5,8 +5,7 @@ DRIVER = amddev
 CC =	exec cc
 CFLAGS = $(CPROFILE)
 LDFLAGS = -i 
-#LIBS = -lsysutil -lsys -ltimers
-LIBS = -lsysutil -lsys 
+LIBS = -lsys 
 
 OBJ = amddev.o
 

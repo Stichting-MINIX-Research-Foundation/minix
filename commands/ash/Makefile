@@ -55,16 +55,16 @@ sh:	$(OBJS)
 install:	/usr/bin/ash /usr/bin/sh /bin/sh /bin/bigsh
 
 /usr/bin/ash:	sh
-	install -cs -o bin $? $@
+	install -cs -o bin $< $@
 
 /usr/bin/sh:	/usr/bin/ash
-	install -l $? $@
+	install -l $< $@
 
 /bin/sh:	/usr/bin/ash
-	install -lcs $? $@
+	install -lcs $< $@
 
 /bin/bigsh:	/usr/bin/ash
-	install -S 6600k -lcs $? $@
+	install -S 6600k -lcs $< $@
 
 clean:
 	rm -f $(CLEANFILES) sh core
@@ -75,7 +75,7 @@ token.def: mktokens
 	sh mktokens
 
 arith.c:	arith.y
-	$(YACC) -d $?
+	$(YACC) -d $<
 	mv y.tab.c $@
 	mv y.tab.h arith_y.h
 

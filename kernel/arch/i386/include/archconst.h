@@ -135,12 +135,6 @@
 #define IF_MASK 0x00000200
 #define IOPL_MASK 0x003000
 
-/* Sizes of memory tables. The boot monitor distinguishes three memory areas,
- * namely low mem below 1M, 1M-16M, and mem after 16M. More chunks are needed
- * for DOS MINIX.
- */
-#define NR_MEMS            8
-
 #define vir2phys(vir)   (kinfo.data_base + (vir_bytes) (vir))
 
 #endif /* _I386_ACONST_H */

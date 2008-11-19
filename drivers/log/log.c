@@ -9,8 +9,6 @@
 #include "log.h"
 #include <sys/time.h>
 #include <sys/select.h>
-#include "../../kernel/const.h"
-#include "../../kernel/type.h"
 
 #define LOG_DEBUG		0	/* enable/ disable debugging */
 
@@ -403,10 +401,10 @@ int safe;
 		r = do_diagnostics(m_ptr, 0);
 		break;
 	}
-	case DIAGNOSTICS_S: {
+	case ASYN_DIAGNOSTICS:
+	case DIAGNOSTICS_S:
 		r = do_diagnostics(m_ptr, 1);
 		break;
-	}
 	case DEV_STATUS: {
 		printf("log_other: unexpected DEV_STATUS request\n");
 		r = EDONTREPLY;

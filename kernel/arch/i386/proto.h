@@ -44,10 +44,16 @@ _PROTOTYPE( void trp, (void) );
 _PROTOTYPE( void s_call, (void) ), _PROTOTYPE( p_s_call, (void) ); 
 _PROTOTYPE( void level0_call, (void) );
 
+/* memory.c */
+_PROTOTYPE( void vir_insb, (u16_t port, struct proc *proc, u32_t vir, size_t count));
+_PROTOTYPE( void vir_outsb, (u16_t port, struct proc *proc, u32_t vir, size_t count));
+_PROTOTYPE( void vir_insw, (u16_t port, struct proc *proc, u32_t vir, size_t count));
+_PROTOTYPE( void vir_outsw, (u16_t port, struct proc *proc, u32_t vir, size_t count));
+
+
 /* exception.c */
 _PROTOTYPE( void exception, (unsigned vec_nr, u32_t trap_errno,
 	u32_t old_eip, U16_t old_cs, u32_t old_eflags)			);
-_PROTOTYPE( void stacktrace, (struct proc *proc)			);
 
 /* klib386.s */
 _PROTOTYPE( void level0, (void (*func)(void))                           );
@@ -62,6 +68,7 @@ _PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count) );
 _PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count) );
+_PROTOTYPE( void i386_invlpg, (U32_t addr) );
 
 /* protect.c */
 _PROTOTYPE( void prot_init, (void)                     			);

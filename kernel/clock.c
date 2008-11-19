@@ -75,7 +75,7 @@ PUBLIC void clock_task()
 	result = receive(ANY, &m);
 
 	if(result != OK)
-		panic("receive() failed", result);
+		minix_panic("receive() failed", result);
 
 	/* Handle the request. Only clock ticks are expected. */
 	switch (m.m_type) {
@@ -181,6 +181,8 @@ irq_hook_t *hook;
  */
   register unsigned ticks;
 
+  if(minix_panicing) return;
+
   /* Get number of ticks and update realtime. */
   ticks = lost_ticks + 1;
   lost_ticks = 0;
@@ -201,8 +203,10 @@ irq_hook_t *hook;
       bill_ptr->p_ticks_left -= ticks;
   }
 
+#if 0
   /* Update load average. */
   load_update();
+#endif
   
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 

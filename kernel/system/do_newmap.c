@@ -16,10 +16,10 @@
 PUBLIC int do_newmap(m_ptr)
 message *m_ptr;			/* pointer to request message */
 {
-/* Handle sys_newmap().  Fetch the memory map from PM. */
+/* Handle sys_newmap().  Fetch the memory map. */
   register struct proc *rp;	/* process whose map is to be loaded */
-  struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
-  phys_bytes src_phys;		/* physical address of map at the PM */
+  struct mem_map *map_ptr;	/* virtual address of map inside caller */
+  phys_bytes src_phys;		/* physical address of map at the */
   int proc;
 
   map_ptr = (struct mem_map *) m_ptr->PR_MEM_PTR;
@@ -36,18 +36,15 @@ message *m_ptr;			/* pointer to request message */
  *===========================================================================*/
 PUBLIC int newmap(rp, map_ptr)
 struct proc *rp;		/* process whose map is to be loaded */
-struct mem_map *map_ptr;	/* virtual address of map inside caller (PM) */
+struct mem_map *map_ptr;	/* virtual address of map inside caller */
 {
-/* Fetch the memory map from PM. */
-  phys_bytes src_phys;		/* physical address of map at the PM */
-  int proc;
-
-  /* Copy the map from PM. */
-  src_phys = umap_local(proc_addr(who_p), D, (vir_bytes) map_ptr, 
-      sizeof(rp->p_memmap));
-  if (src_phys == 0) return(EFAULT);
-  phys_copy(src_phys,vir2phys(rp->p_memmap),
-	(phys_bytes)sizeof(rp->p_memmap));
+  int r;
+/* Fetch the memory map. */
+  if((r=data_copy(who_e, (vir_bytes) map_ptr,
+	SYSTEM, (vir_bytes) rp->p_memmap, sizeof(rp->p_memmap))) != OK) {
+	kprintf("newmap: data_copy failed! (%d)\n", r);
+	return r;
+  }
 
   alloc_segments(rp);
 

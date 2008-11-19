@@ -41,10 +41,10 @@ register message *m_ptr;	/* pointer to request message */
   gen = _ENDPOINT_G(rpc->p_endpoint);
 #if (_MINIX_CHIP == _CHIP_INTEL)
   old_ldt_sel = rpc->p_seg.p_ldt_sel;	/* backup local descriptors */
+#endif
   *rpc = *rpp;				/* copy 'proc' struct */
+#if (_MINIX_CHIP == _CHIP_INTEL)
   rpc->p_seg.p_ldt_sel = old_ldt_sel;	/* restore descriptors */
-#else
-  *rpc = *rpp;				/* copy 'proc' struct */
 #endif
   if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
 	gen = 1;			/* generation number wraparound */
@@ -76,6 +76,11 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Install new map */
   r = newmap(rpc, map_ptr);
+
+  /* Don't schedule process in VM mode until it has a new pagetable. */
+  if(m_ptr->PR_FORK_FLAGS & PFF_VMINHIBIT) {
+  	RTS_LOCK_SET(rpc, VMINHIBIT);
+  }
 
   /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
   RTS_LOCK_UNSET(rpc, (SIGNALED | SIG_PENDING | P_STOP));

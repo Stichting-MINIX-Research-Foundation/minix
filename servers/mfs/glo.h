@@ -45,3 +45,10 @@ EXTERN char fs_dev_label[16];	/* Name of the device driver that is handled
 				 * by this FS proc.
 				 */
 
+/* our block size. */
+EXTERN int fs_block_size;
+
+/* Buffer cache. */
+EXTERN struct buf buf[NR_BUFS];
+EXTERN struct buf *buf_hash[NR_BUFS];   /* the buffer hash table */
+

@@ -25,13 +25,13 @@ register message *m_ptr;	/* pointer to request message */
  * requests. Although a single handler function is used, there are two
  * different kernel calls so that permissions can be checked.
  */
-  int nr_req;
+  int nr_req, r;
   vir_bytes caller_vir;
-  phys_bytes caller_phys;
-  phys_bytes kernel_phys;
   phys_bytes bytes;
   int i,s;
   struct vir_cp_req *req;
+  struct vir_addr src, dst;
+  struct proc *pr;
 
   { static int first=1;
 	if (first)
@@ -41,17 +41,23 @@ register message *m_ptr;	/* pointer to request message */
 	}
   }
 
+  if(!(pr = endpoint_lookup(who_e)))
+	minix_panic("do_vcopy: caller doesn't exist", who_e);
+
   /* Check if request vector size is ok. */
   nr_req = (unsigned) m_ptr->VCP_VEC_SIZE;
   if (nr_req > VCOPY_VEC_SIZE) return(EINVAL);
   bytes = nr_req * sizeof(struct vir_cp_req);
 
   /* Calculate physical addresses and copy (port,value)-pairs from user. */
-  caller_vir = (vir_bytes) m_ptr->VCP_VEC_ADDR;
-  caller_phys = umap_local(proc_addr(who_p), D, caller_vir, bytes);
-  if (0 == caller_phys) return(EFAULT);
-  kernel_phys = vir2phys(vir_cp_req);
-  phys_copy(caller_phys, kernel_phys, (phys_bytes) bytes);
+  src.segment = dst.segment = D;
+  src.proc_nr_e = who_e;
+  dst.proc_nr_e = SYSTEM;
+  dst.offset = (vir_bytes) vir_cp_req;
+  src.offset = (vir_bytes) m_ptr->VCP_VEC_ADDR;
+
+  if((r=virtual_copy_vmcheck(&src, &dst, bytes)) != OK)
+	return r;
 
   /* Assume vector with requests is correct. Try to copy everything. */
   m_ptr->VCP_NR_OK = 0;
@@ -62,7 +68,7 @@ register message *m_ptr;	/* pointer to request message */
       /* Check if physical addressing is used without SYS_PHYSVCOPY. */
       if (((req->src.segment | req->dst.segment) & PHYS_SEG) &&
               m_ptr->m_type != SYS_PHYSVCOPY) return(EPERM);
-      if ((s=virtual_copy(&req->src, &req->dst, req->count)) != OK) 
+      if ((s=virtual_copy_vmcheck(&req->src, &req->dst, req->count)) != OK) 
           return(s);
       m_ptr->VCP_NR_OK ++;
   }

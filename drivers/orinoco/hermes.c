@@ -44,8 +44,6 @@
 #include "string.h"
 int this_proc;
 
-#define MICROS_TO_TICKS(m)  (((m)*HZ/1000000)+1)	
-
 /*****************************************************************************
  *            milli_delay                                                    *
  *                                                                           *

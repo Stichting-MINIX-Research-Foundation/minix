@@ -118,33 +118,6 @@ PUBLIC int main(void)
 }
 
 /*===========================================================================*
- *				buf_pool				     *
- *===========================================================================*/
-PRIVATE void buf_pool(void)
-{
-/* Initialize the buffer pool. */
-  register struct buf *bp;
-
-  bufs_in_use = 0;
-  front = &buf[0];
-  rear = &buf[NR_BUFS - 1];
-
-  for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++) {
-	bp->b_blocknr = NO_BLOCK;
-	bp->b_dev = NO_DEV;
-	bp->b_next = bp + 1;
-	bp->b_prev = bp - 1;
-  }
-  buf[0].b_prev = NIL_BUF;
-  buf[NR_BUFS - 1].b_next = NIL_BUF;
-
-  for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++) bp->b_hash = bp->b_next;
-  buf_hash[0] = front;
-
-}
-
-
-/*===========================================================================*
  *				init_server                                  *
  *===========================================================================*/
 PRIVATE void init_server(void)
@@ -165,6 +138,7 @@ PRIVATE void init_server(void)
 	
    SELF_E = getprocnr();
    buf_pool();
+   fs_block_size = _MIN_BLOCK_SIZE;
 }
 
 /*===========================================================================*

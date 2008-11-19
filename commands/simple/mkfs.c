@@ -56,16 +56,7 @@
 #define BIN                  2
 #define BINGRP               2
 #define BIT_MAP_SHIFT       13
-#define N_BLOCKS         MAX_BLOCK_NR
-#define N_BLOCKS16	  (128L * 1024)
 #define INODE_MAX       ((unsigned) 65535)
-
-/* You can make a really large file system on a 16-bit system, but the array
- * of bits that get_block()/putblock() needs gets a bit big, so we can only
- * prefill MAX_INIT blocks.  (16-bit fsck can't check a file system larger
- * than N_BLOCKS16 anyway.)
- */
-#define MAX_INIT	 (sizeof(char *) == 2 ? N_BLOCKS16 : N_BLOCKS)
 
 
 #ifdef DOS
@@ -90,12 +81,12 @@ char *progname;
 
 long current_time, bin_time;
 char *zero, *lastp;
-char umap[MAX_INIT / 8];	/* bit map tells if block read yet */
+char *umap_array;	/* bit map tells if block read yet */
+int umap_array_elements = 0;
 block_t zone_map;		/* where is zone map? (depends on # inodes) */
 int inodes_per_block;
 int fs_version;
 unsigned int block_size;
-block_t max_nrblocks;
 
 FILE *proto;
 
@@ -167,14 +158,12 @@ char *argv[];
   i = 0;
   fs_version = 3;
   inodes_per_block = 0;
-  max_nrblocks = N_BLOCKS;
   block_size = 0;
   while ((ch = getopt(argc, argv, "12b:di:lotB:")) != EOF)
 	switch (ch) {
 	    case '1':
 		fs_version = 1;
 		inodes_per_block = V1_INODES_PER_BLOCK;
-		max_nrblocks = 0xFFFF;
 		break;
 	    case '2':
 	    	fs_version = 2;
@@ -262,12 +251,6 @@ char *argv[];
 	/* Read the line with the block and inode counts. */
 	getline(line, token);
 	blocks = atol(token[0]);
-	if (blocks > max_nrblocks) pexit("Block count too large");
-	if (sizeof(char *) == 2 && blocks > N_BLOCKS16) {
-		fprintf(stderr,
-		"%s: warning: FS is larger than the %dM that fsck can check!\n",
-			progname, (int) (N_BLOCKS16 / (1024L * 1024)));
-	}
 	inodes = atoi(token[1]);
 
 	/* Process mode line for root directory. */
@@ -305,7 +288,6 @@ char *argv[];
 
 	}
 	if (blocks < 5) pexit("Block count too small");
-	if (blocks > max_nrblocks) pexit("Block count too large");
 	if (i < 1) pexit("Inode count too small");
 	if (i > INODE_MAX && fs_version < 3) pexit("Inode count too large");
 	inodes = (ino_t) i;
@@ -319,6 +301,17 @@ char *argv[];
 
   nrblocks = blocks;
   nrinodes = inodes;
+
+{
+  size_t bytes;
+  bytes = 1 + blocks/8;
+  if(!(umap_array = malloc(bytes))) {
+	fprintf(stderr, "mkfs: can't allocate block bitmap (%d bytes).\n",
+		bytes);
+	exit(1);
+  }
+  umap_array_elements = bytes;
+}
 
   /* Open special. */
   special(argv[--optind]);
@@ -336,7 +329,7 @@ char *argv[];
 	}
 	testb[0] = 0x3245;
 	testb[1] = 0x11FF;
-	testb[block_size-1] = 0x1F2F;
+	testb[block_size/2-1] = 0x1F2F;
 	if ((w=write(fd, (char *) testb, block_size)) != block_size) {
 		if(w < 0) perror("write");
 		printf("%d/%d\n", w, block_size);
@@ -350,7 +343,7 @@ char *argv[];
 	testb[1] = 0;
 	nread = read(fd, (char *) testb, block_size);
 	if (nread != block_size || testb[0] != 0x3245 || testb[1] != 0x11FF ||
-		testb[block_size-1] != 0x1F2F) {
+		testb[block_size/2-1] != 0x1F2F) {
 		if(nread < 0) perror("read");
 printf("nread = %d\n", nread);
 printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
@@ -369,24 +362,6 @@ printf("testb = 0x%x 0x%x 0x%x\n", testb[0], testb[1], testb[block_size-1]);
   /* Make the file-system */
 
   cache_init();
-
-#if (MACHINE == ATARI)
-  if (isdev) {
-	char block0[BLOCK_SIZE];
-	get_block((block_t) 0, block0);
-	/* Need to read twice; first time gets an empty block */
-	get_block((block_t) 0, block0);
-	/* Zero parts of the boot block so the disk won't be
-	 * recognized as a tos disk any more. */
-	block0[0] = block0[1] = 0;	/* branch code to boot code    */
-	strncpy(&block0[2], "MINIX ", (size_t) 6);
-	block0[16] = 0;		/* number of FATS              */
-	block0[17] = block0[18] = 0;	/* number of dir entries       */
-	block0[22] = block0[23] = 0;	/* sectors/FAT                 */
-	bzero(&block0[30], 480);/* boot code                   */
-	put_block((block_t) 0, block0);
-  } else
-#endif
 
 	put_block((block_t) 0, zero);	/* Write a null boot block. */
 
@@ -1229,12 +1204,14 @@ block_t n;
 
   int w, s, mask, r;
 
-  if (sizeof(char *) == 2 && n >= MAX_INIT) pexit("can't initialize past 128M");
   w = n / 8;
+  if(w >= umap_array_elements) {
+	pexit("umap array too small - this can't happen");
+  }
   s = n % 8;
   mask = 1 << s;
-  r = (umap[w] & mask ? 1 : 0);
-  umap[w] |= mask;
+  r = (umap_array[w] & mask ? 1 : 0);
+  umap_array[w] |= mask;
   return(r);
 }
 

@@ -39,16 +39,10 @@ _PROTOTYPE( void free_zone, (Dev_t dev, zone_t numb)			);
 _PROTOTYPE( struct buf *get_block, (Dev_t dev, block_t block,int only_search));
 _PROTOTYPE( void invalidate, (Dev_t device)				);
 _PROTOTYPE( void put_block, (struct buf *bp, int block_type)		);
+_PROTOTYPE( void set_blocksize, (int blocksize)				);
 _PROTOTYPE( void rw_scattered, (Dev_t dev,
 			struct buf **bufq, int bufqsize, int rw_flag)	);
-
-#if ENABLE_CACHE2
-/* cache2.c */
-_PROTOTYPE( void init_cache2, (unsigned long size)			);
-_PROTOTYPE( int get_block2, (struct buf *bp, int only_search)		);
-_PROTOTYPE( void put_block2, (struct buf *bp)				);
-_PROTOTYPE( void invalidate2, (Dev_t device)				);
-#endif
+_PROTOTYPE( void buf_pool, (void)				);
 
 /* device.c */
 _PROTOTYPE( int block_dev_io, (int op, Dev_t dev, int proc, void *buf,
@@ -200,9 +194,11 @@ _PROTOTYPE( long conv4, (int norm, long x)				);
 _PROTOTYPE( int fetch_name, (char *path, int len, int flag)		);
 _PROTOTYPE( int no_sys, (void)						);
 _PROTOTYPE( int isokendpt_f, (char *f, int l, int e, int *p, int ft));
-_PROTOTYPE( void panic, (char *who, char *mess, int num)		);
 _PROTOTYPE( void mfs_nul_f, (char *file, int line, char *str, int len, int maxlen));
 _PROTOTYPE( int mfs_min_f, (char *file, int line, int len1, int len2)	);
+_PROTOTYPE( void sanitycheck, (char *file, int line)	);
+
+#define SANITYCHECK sanitycheck(__FILE__, __LINE__)
 
 #define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
 #define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)

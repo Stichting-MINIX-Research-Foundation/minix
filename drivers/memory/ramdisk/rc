@@ -9,7 +9,6 @@ then
 else
 	/bin/service -c up /bin/at_wini -dev /dev/c0d0 -config /etc/drivers.conf -label at_wini_0
 	/bin/service -c up /bin/at_wini -dev /dev/c1d0 -config /etc/drivers.conf -label at_wini_1 -args ata_instance=1
-	#/bin/service -c up /bin/at_wini -dev /dev/c0d0 -script /etc/rs.single -config /etc/drivers.conf
 fi
 
 rootdev=`sysenv rootdev` || echo 'No rootdev?'

@@ -462,7 +462,11 @@ int proc_nr_e;
   dev_t dev;
   message mess;
 
-  okendpt(proc_nr_e, &proc_nr_p);
+  if(isokendpt(proc_nr_e, &proc_nr_p) != OK) {
+	printf("VFS: ignoring unpause for bogus endpoint %d\n", proc_nr_e);
+	return;
+  }
+
   rfp = &fproc[proc_nr_p];
   if (rfp->fp_suspended == NOT_SUSPENDED)
 	return;

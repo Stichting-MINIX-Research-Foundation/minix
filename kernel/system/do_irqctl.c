@@ -46,8 +46,9 @@ register message *m_ptr;	/* pointer to request message */
       if (irq_hook_id >= NR_IRQ_HOOKS || irq_hook_id < 0 ||
           irq_hooks[irq_hook_id].proc_nr_e == NONE) return(EINVAL);
       if (irq_hooks[irq_hook_id].proc_nr_e != m_ptr->m_source) return(EPERM);
-      if (m_ptr->IRQ_REQUEST == IRQ_ENABLE)
+      if (m_ptr->IRQ_REQUEST == IRQ_ENABLE) {
           enable_irq(&irq_hooks[irq_hook_id]);	
+      }
       else 
           disable_irq(&irq_hooks[irq_hook_id]);	
       break;
@@ -64,7 +65,7 @@ register message *m_ptr;	/* pointer to request message */
       privp= priv(rp);
       if (!privp)
       {
-	kprintf("no priv structure!\n");
+	kprintf("do_irqctl: no priv structure!\n");
 	return EPERM;
       }
       if (privp->s_flags & CHECK_IRQ)
@@ -143,14 +144,12 @@ irq_hook_t *hook;
    */
   get_randomness(hook->irq);
 
-  /* Check if the handler is still alive. If not, forget about the
-   * interrupt. This should never happen, as processes that die 
+  /* Check if the handler is still alive.
+   * If it's dead, this should never happen, as processes that die 
    * automatically get their interrupt hooks unhooked.
    */
-  if(!isokendpt(hook->proc_nr_e, &proc)) {
-     hook->proc_nr_e = NONE;
-     return 0;
-  }
+  if(!isokendpt(hook->proc_nr_e, &proc))
+     minix_panic("invalid interrupt handler", hook->proc_nr_e);
 
   /* Add a bit for this interrupt to the process' pending interrupts. When 
    * sending the notification message, this bit map will be magically set

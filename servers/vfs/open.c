@@ -795,3 +795,77 @@ PUBLIC void close_reply()
 }
 
 
+/*===========================================================================*
+ *				do_vm_open				     *
+ *===========================================================================*/
+PUBLIC int do_vm_open()
+{
+	int len, r, n;
+	endpoint_t ep;
+
+	len = m_in.VMVO_NAME_LENGTH;
+	m_out.VMV_ENDPOINT = ep = m_in.VMVO_ENDPOINT;
+
+	/* Do open() call on behalf of any process, performed by VM. */ 
+	if(len < 2 || len > sizeof(user_fullpath)) {
+		printf("do_vm_open: strange length %d\n", len);
+		m_out.VMVRO_FD = EINVAL;
+		return VM_VFS_REPLY_OPEN;
+	}
+
+	/* Do open on behalf of which process? */
+	if(isokendpt(ep, &n) != OK) {
+		printf("do_vm_open: strange endpoint %d\n", ep);
+		m_out.VMVRO_FD = EINVAL;
+		return VM_VFS_REPLY_OPEN;
+	}
+
+	/* XXX - do open on behalf of this process */
+	fp = &fproc[n];
+
+	/* Get path name from VM address space. */
+	if((r=sys_safecopyfrom(VM_PROC_NR, m_in.VMVO_NAME_GRANT, 0,
+		(vir_bytes) user_fullpath, len, D)) != OK) {
+		printf("do_vm_open: sys_safecopyfrom failed: %d\n", r);
+		m_out.VMVRO_FD = EPERM;
+		return VM_VFS_REPLY_OPEN;
+	}
+
+	/* Check if path is null-terminated. */
+	if(user_fullpath[len-1] != '\0') {
+		printf("do_vm_open: name (len %d) not 0-terminated\n", len);
+		m_out.VMVRO_FD = EINVAL;
+		return VM_VFS_REPLY_OPEN;
+	}
+
+	/* Perform open(). */
+	m_out.VMVRO_FD = common_open(m_in.VMVO_FLAGS, m_in.VMVO_MODE);
+	m_out.VMV_ENDPOINT = ep;
+
+	/* Send open() reply. */
+	return VM_VFS_REPLY_OPEN;
+}
+
+/*===========================================================================*
+ *				do_vm_close				     *
+ *===========================================================================*/
+PUBLIC int do_vm_close()
+{
+	int len, r, n;
+	endpoint_t ep;
+
+	len = m_in.VMVO_NAME_LENGTH;
+
+	/* Do close() call on behalf of any process, performed by VM. */ 
+	m_out.VMV_ENDPOINT = ep = m_in.VMVC_ENDPOINT;
+	if(isokendpt(ep, &n) != OK) {
+		printf("do_vm_close: strange endpoint %d\n", ep);
+		return VM_VFS_REPLY_CLOSE;
+	}
+
+	/* Perform close(). */
+	r = close_fd(&fproc[n], m_in.VMVC_FD);
+
+	return VM_VFS_REPLY_CLOSE;
+}
+

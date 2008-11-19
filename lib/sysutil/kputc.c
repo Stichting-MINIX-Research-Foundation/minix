@@ -9,7 +9,7 @@
 
 #include "sysutil.h"
 
-static char print_buf[80];	/* output is buffered here */
+static char print_buf[80*25];	/* output is buffered here */
 
 int kputc_use_private_grants= 0;
 
@@ -56,15 +56,22 @@ int c;
 
 	for(p = 0; procs[p] != NONE; p++) {
 		/* Send the buffer to this output driver. */
+		int may_asyn = 0;
 		m.DIAG_BUF_COUNT = buf_count;
 		if(GRANT_VALID(printgrants[p])) {
 			m.m_type = DIAGNOSTICS_S;
 			m.DIAG_PRINT_BUF_G = (char *) printgrants[p];
+			may_asyn = 1;
 		} else {
 			m.m_type = DIAGNOSTICS;
 			m.DIAG_PRINT_BUF_G = print_buf;
 		}
-		(void) _sendrec(procs[p], &m);
+		if(may_asyn && procs[p] == LOG_PROC_NR) {
+			m.m_type = ASYN_DIAGNOSTICS;
+			(void) asynsend(procs[p], &m);
+		} else {
+			sendrec(procs[p], &m);
+		}
 	}
 
 	buf_count = 0;

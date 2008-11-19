@@ -680,8 +680,8 @@ struct
 	{ "VSAFECOPY",		SYS_VSAFECOPY },
 	{ "SETGRANT",		SYS_SETGRANT },
 	{ "READBIOS",		SYS_READBIOS },
-	{ "VM_MAP",		SYS_VM_MAP },
 	{ "MAPDMA",		SYS_MAPDMA },
+	{ "VMCTL",		SYS_VMCTL },
 	{ NULL,		0 }
 };
 
@@ -725,7 +725,9 @@ PRIVATE void do_ipc(config_t *cpe)
 		strcat(list, " ");
 		strcat(list, cpe->word);
 	}
+#if 0
 	printf("do_ipc: got list '%s'\n", list);
+#endif
 
 	if (req_ipc)
 		fatal("do_ipc: req_ipc is set");

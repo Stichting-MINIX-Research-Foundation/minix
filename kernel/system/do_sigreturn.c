@@ -26,18 +26,16 @@ message *m_ptr;			/* pointer to request message */
  */
   struct sigcontext sc;
   register struct proc *rp;
-  phys_bytes src_phys;
-  int proc;
+  int proc, r;
 
   if (! isokendpt(m_ptr->SIG_ENDPT, &proc)) return(EINVAL);
   if (iskerneln(proc)) return(EPERM);
   rp = proc_addr(proc);
 
   /* Copy in the sigcontext structure. */
-  src_phys = umap_local(rp, D, (vir_bytes) m_ptr->SIG_CTXT_PTR,
-      (vir_bytes) sizeof(struct sigcontext));
-  if (src_phys == 0) return(EFAULT);
-  phys_copy(src_phys, vir2phys(&sc), (phys_bytes) sizeof(struct sigcontext));
+  if((r=data_copy(m_ptr->SIG_ENDPT, (vir_bytes) m_ptr->SIG_CTXT_PTR,
+	SYSTEM, (vir_bytes) &sc, sizeof(struct sigcontext))) != OK)
+	return r;
 
   /* Restore user bits of psw from sc, maintain system bits from proc. */
   sc.sc_psw  =  (sc.sc_psw & X86_FLAGS_USER) |

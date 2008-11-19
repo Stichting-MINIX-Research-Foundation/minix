@@ -1,8 +1,6 @@
 /*	tty.h - Terminals	*/
 
 #include <timers.h>
-#include "../../kernel/const.h"
-#include "../../kernel/type.h"
 
 #undef lock
 #undef unlock
@@ -114,8 +112,6 @@ extern unsigned long kbd_irq_set;
 extern unsigned long rs_irq_set;
 
 extern int panicing;	/* From panic.c in sysutil */
-
-extern int sticky_alt_mode;	/* right-alt sticky to switch codepages */
 
 /* Values for the fields. */
 #define NOT_ESCAPED        0	/* previous character is not LNEXT (^V) */

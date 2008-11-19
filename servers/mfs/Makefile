@@ -1,5 +1,8 @@
 # Makefile for File System (FS)
 SERVER = mfs
+DEST=/sbin/$(SERVER)
+NR_BUFS=1024
+BS=4096
 
 # directories
 u = /usr
@@ -9,9 +12,9 @@ h = $i/minix
 
 # programs, flags, etc.
 CC =	exec cc
-CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE)
+CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE) -DNR_BUFS=$(NR_BUFS)
 LDFLAGS = -i
-LIBS = -lsysutil  -lsys -ltimers
+LIBS =  -lsys -ltimers
 
 OBJ =	cache.o device.o link.o \
 	mount.o misc.o open.o pipe.o protect.o read.o \
@@ -22,10 +25,11 @@ OBJ =	cache.o device.o link.o \
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 64k $(SERVER)
+	install -S `expr $(NR_BUFS) \* $(BS) \* 2.2` $(SERVER)
 
 install: $(SERVER)
-	install $(SERVER) /sbin/$(SERVER)
+	-mv $(DEST) $(DEST).prev
+	install $(SERVER) $(DEST)
 
 # clean up local files
 clean:

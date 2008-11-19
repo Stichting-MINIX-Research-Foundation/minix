@@ -67,6 +67,7 @@ libc_FILES=" \
 	mkdir.s \
 	mkfifo.s \
 	mknod.s \
+	mmap.s \
 	mount.s \
 	open.s \
 	opendir.s \
@@ -119,6 +120,7 @@ libc_FILES=" \
 	uname.s \
 	unlink.s \
 	utime.s \
+	vm_dmacalls.s \
 	wait.s \
 	waitpid.s \
 	write.s"

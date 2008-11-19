@@ -388,8 +388,10 @@ message *mp;
 	}
 
 	acl[i].inuse= 0;
+#if 0
 	printf("do_acl: deleting ACL for %d ('%s') at entry %d\n",
 		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label, i);
+#endif
 
 	/* Also release all devices held by this process */
 	pci_release(proc_nr);

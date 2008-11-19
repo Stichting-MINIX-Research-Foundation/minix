@@ -22,7 +22,6 @@ register message *m_ptr;	/* pointer to request message */
 {
 /* Handle sys_exec().  A process has done a successful EXEC. Patch it up. */
   register struct proc *rp;
-  reg_t sp;			/* new sp */
   phys_bytes phys_name;
   char *np;
   int proc;
@@ -31,27 +30,18 @@ register message *m_ptr;	/* pointer to request message */
 	return EINVAL;
 
   rp = proc_addr(proc);
-  sp = (reg_t) m_ptr->PR_STACK_PTR;
-  rp->p_reg.sp = sp;		/* set the stack pointer */
-  
-#if (_MINIX_CHIP == _CHIP_INTEL)		
-  /* wipe extra LDT entries */
-  phys_memset(vir2phys(&rp->p_seg.p_ldt[EXTRA_LDT_INDEX]), 0,
-	(LDT_SIZE - EXTRA_LDT_INDEX) * sizeof(rp->p_seg.p_ldt[0]));
-#endif
-  rp->p_reg.pc = (reg_t) m_ptr->PR_IP_PTR;	/* set pc */
-  RTS_LOCK_UNSET(rp, RECEIVING);	/* PM does not reply to EXEC call */
+
   /* Save command name for debugging, ps(1) output, etc. */
-  phys_name = numap_local(who_p, (vir_bytes) m_ptr->PR_NAME_PTR,
-					(vir_bytes) P_NAME_LEN - 1);  
-  if (phys_name != 0) {
-	phys_copy(phys_name, vir2phys(rp->p_name), (phys_bytes) P_NAME_LEN - 1);
-	for (np = rp->p_name; (*np & BYTE) >= ' '; np++) {}
-	*np = 0;					/* mark end */
-  } else {
+  if(data_copy(who_e, (vir_bytes) m_ptr->PR_NAME_PTR,
+	SYSTEM, (vir_bytes) rp->p_name, (phys_bytes) P_NAME_LEN - 1) != OK)
   	strncpy(rp->p_name, "<unset>", P_NAME_LEN);
-  }
-  
+
+  /* Do architecture-specific exec() stuff. */
+  arch_pre_exec(rp, (u32_t) m_ptr->PR_IP_PTR, (u32_t) m_ptr->PR_STACK_PTR);
+
+  /* No reply to EXEC call */
+  RTS_LOCK_UNSET(rp, RECEIVING);
+
   return(OK);
 }
 #endif /* USE_EXEC */

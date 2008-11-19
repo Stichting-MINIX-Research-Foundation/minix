@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i -L../libdriver_asyn
-LIBS = -lsysutil -ldriver -lsys 
+LIBS =  -ldriver -lsys 
 LIB_DEPS=../libdriver_asyn/libdriver.a
 
 OBJ = main.o random.o sha2.o aes/rijndael_api.o aes/rijndael_alg.o

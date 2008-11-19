@@ -5,7 +5,6 @@
 #define V2_NR_TZONES      10	/* total # zone numbers in a V2 inode */
 
 #define NR_INODES        256	/* # slots in "in core" inode table */
-#define NR_SUPERS          1	/* # slots in super block table */
 
 #define INODE_HASH_LOG2   7     /* 2 based logarithm of the inode hash size */
 #define INODE_HASH_SIZE   ((unsigned long)1<<INODE_HASH_LOG2)

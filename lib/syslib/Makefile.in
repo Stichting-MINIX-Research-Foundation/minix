@@ -5,6 +5,7 @@ CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
 LIBRARIES=libsys
 
 libsys_FILES=" \
+	alloc_util.c \
 	assert.c \
 	panic.c \
 	pci_attr_r16.c \
@@ -64,12 +65,20 @@ libsys_FILES=" \
 	sys_vinl.c \
 	sys_vinw.c \
 	sys_vircopy.c \
-	sys_vm_map.c \
 	sys_vm_setbuf.c \
+	sys_vmctl.c \
 	sys_voutb.c \
 	sys_voutl.c \
 	sys_voutw.c \
 	taskcall.c \
-	ds.c"
+	ds.c	\
+	vm_allocmem.c \
+	vm_brk.c \
+	vm_exec_newmem.c \
+	vm_exit.c \
+	vm_fork.c \
+	vm_map_phys.c \
+	vm_umap.c \
+	vm_push_sig.c"
 
 TYPE=both

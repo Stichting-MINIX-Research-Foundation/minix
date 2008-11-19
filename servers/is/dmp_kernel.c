@@ -12,6 +12,8 @@
 #include "../../kernel/proc.h"
 #include "../../kernel/ipc.h"
 
+#define LINES 22
+
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
@@ -34,9 +36,6 @@ PUBLIC struct boot_image image[NR_BOOT_PROCS];
  *===========================================================================*/
 PUBLIC void timing_dmp()
 {
-#if ! DEBUG_TIME_LOCKS
-  printf("Enable the DEBUG_TIME_LOCKS definition in src/kernel/config.h\n");
-#else
   static struct lock_timingdata timingdata[TIMING_CATEGORIES];
   int r, c, f, skipped = 0, printed = 0, maxlines = 23, x = 0;
   static int offsetlines = 0;
@@ -66,7 +65,6 @@ PUBLIC void timing_dmp()
 	}
   	if (x > 0) printf("\n");
   }
-#endif
 }
 
 /*===========================================================================*
@@ -75,7 +73,7 @@ PUBLIC void timing_dmp()
 PUBLIC void kmessages_dmp()
 {
   struct kmessages kmess;		/* get copy of kernel messages */
-  char print_buf[KMESS_BUF_SIZE+1];	/* this one is used to print */
+  char print_buf[_KMESS_BUF_SIZE+1];	/* this one is used to print */
   int start;				/* calculate start of messages */
   int r;
 
@@ -89,10 +87,10 @@ PUBLIC void kmessages_dmp()
    * buffer into a print-buffer. This is done because the messages in the
    * copy may wrap (the kernel buffer is circular).
    */
-  start = ((kmess.km_next + KMESS_BUF_SIZE) - kmess.km_size) % KMESS_BUF_SIZE;
+  start = ((kmess.km_next + _KMESS_BUF_SIZE) - kmess.km_size) % _KMESS_BUF_SIZE;
   r = 0;
   while (kmess.km_size > 0) {
-  	print_buf[r] = kmess.km_buf[(start+r) % KMESS_BUF_SIZE];
+  	print_buf[r] = kmess.km_buf[(start+r) % _KMESS_BUF_SIZE];
   	r ++;
   	kmess.km_size --;
   }
@@ -283,14 +281,10 @@ PUBLIC void kenv_dmp()
     printf("- data_base:  %5u\n", kinfo.data_base); 
     printf("- data_size:  %5u\n", kinfo.data_size); 
     printf("- proc_addr:  %5u\n", kinfo.proc_addr); 
-    printf("- kmem_base:  %5u\n", kinfo.kmem_base); 
-    printf("- kmem_size:  %5u\n", kinfo.kmem_size); 
     printf("- bootdev_base:  %5u\n", kinfo.bootdev_base); 
     printf("- bootdev_size:  %5u\n", kinfo.bootdev_size); 
     printf("- ramdev_base:   %5u\n", kinfo.ramdev_base); 
     printf("- ramdev_size:   %5u\n", kinfo.ramdev_size); 
-    printf("- params_base:   %5u\n", kinfo.params_base); 
-    printf("- params_size:   %5u\n", kinfo.params_size); 
     printf("- nr_procs:     %3u\n", kinfo.nr_procs); 
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- release:      %.6s\n", kinfo.release); 
@@ -351,7 +345,7 @@ PUBLIC void privileges_dmp()
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
-	if (++n > 23) break;
+	if (++n > LINES) break;
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
@@ -414,7 +408,7 @@ PUBLIC void sendmask_dmp()
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
         if (isemptyp(rp)) continue;
-        if (++n > 20) break;
+        if (++n > LINES) break;
 
     	printf("%8s ", rp->p_name);
 	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
@@ -467,11 +461,11 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user----sys----size-rts flags\n");
+  printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user----sys--rts flags\n");
 
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
-	if (++n > 23) break;
+	if (++n > LINES) break;
 	text = rp->p_memmap[T].mem_phys;
 	data = rp->p_memmap[D].mem_phys;
 	size = rp->p_memmap[T].mem_len
@@ -480,12 +474,11 @@ PUBLIC void proctab_dmp()
 	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
 	else 				printf(" %2d  ", proc_nr(rp));
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu %5uK %s",
+	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu %s",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 
 	       rp->p_user_time, rp->p_sys_time,
-	       click_to_round_k(size),
 	       p_rts_flags_str(rp->p_rts_flags));
 	if (rp->p_rts_flags & (SENDING|RECEIVING)) {
 		printf(" %-7.7s", proc_name(_ENDPOINT_P(rp->p_getfrom_e)));
@@ -513,22 +506,22 @@ PUBLIC void memmap_dmp()
       return;
   }
 
-  printf("\n-nr/name--- --pc-- --sp-- -----text----- -----data----- ----stack----- --size-\n");
+  printf("\n-nr/name--- --pc--   --sp-- -text---- -data---- -stack--- -cr3-\n");
   for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
 	if (isemptyp(rp)) continue;
-	if (++n > 23) break;
+	if (++n > LINES) break;
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len)
 						- rp->p_memmap[D].mem_phys);
-	printf("%3d %-7.7s%7lx%7lx %4x %4x %4x %4x %4x %4x %4x %4x %4x %5uK\n",
+	printf("%3d %-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8lx\n",
 	       proc_nr(rp),
 	       rp->p_name,
 	       (unsigned long) rp->p_reg.pc,
 	       (unsigned long) rp->p_reg.sp,
-	       rp->p_memmap[T].mem_vir, rp->p_memmap[T].mem_phys, rp->p_memmap[T].mem_len,
-	       rp->p_memmap[D].mem_vir, rp->p_memmap[D].mem_phys, rp->p_memmap[D].mem_len,
-	       rp->p_memmap[S].mem_vir, rp->p_memmap[S].mem_phys, rp->p_memmap[S].mem_len,
-	       click_to_round_k(size));
+	       rp->p_memmap[T].mem_phys, rp->p_memmap[T].mem_len,
+	       rp->p_memmap[D].mem_phys, rp->p_memmap[D].mem_len,
+	       rp->p_memmap[S].mem_phys, rp->p_memmap[S].mem_len,
+	       rp->p_seg.p_cr3);
   }
   if (rp == END_PROC_ADDR) rp = proc; 
   else printf("--more--\r");
@@ -542,6 +535,11 @@ PRIVATE char *proc_name(proc_nr)
 int proc_nr;
 {
   if (proc_nr == ANY) return "ANY";
+  /*
+  if(proc_nr < 0 || proc_nr >= NR_TASKS+NR_PROCS) {
+	return "BAD";
+  }
+  */
   return cproc_addr(proc_nr)->p_name;
 }
 

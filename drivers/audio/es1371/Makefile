@@ -11,7 +11,7 @@ b = $i/ibm
 CC 		= exec cc
 CFLAGS 	= -I$i
 LDFLAGS = -i
-LIBS 	= -lsys -lsysutil 
+LIBS 	= -lsys 
 
 PROGRAM_NAME 	= es1371
 INSTALL_BIN		= /usr/sbin/$(PROGRAM_NAME)

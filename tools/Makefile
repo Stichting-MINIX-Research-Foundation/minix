@@ -15,6 +15,7 @@ PROGRAMS=	../kernel/kernel \
 	../drivers/memory/memory \
 	../drivers/log/log \
 	../servers/mfs/mfs \
+	../servers/vm/vm \
 	../servers/init/init
 
 usage:	

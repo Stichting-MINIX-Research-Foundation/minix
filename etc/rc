@@ -42,7 +42,6 @@ esac
 
 case $action in
 start)
-    echo ""
     echo -n "Multiuser startup in progress ...:"
 
     # National keyboard?

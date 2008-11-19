@@ -25,7 +25,7 @@ PUBLIC int fs_readsuper_s()
  * so that the VFS knows that it has to find the vnode on which this FS 
  * process' partition is mounted on.
  */
-  struct super_block *xp, *sp;
+  struct super_block *xp;
   struct inode *root_ip;
   cp_grant_id_t label_gid;
   size_t label_len;
@@ -60,11 +60,6 @@ PUBLIC int fs_readsuper_s()
 	return EINVAL;
   }
 
-#if 0
-  printf("mfs:fs_readsuper: got tasknr %d for label '%s'\n",
-	tasknr, fs_dev_label);
-#endif
-
   driver_e= tasknr;
 
   /* Map the driver endpoint for this major */
@@ -76,8 +71,6 @@ PUBLIC int fs_readsuper_s()
 						 * with old lookup code.
 						 */;
 
-  sp = &super_block[0];
-
   /* Open the device the file system lives on. */
   if (dev_open(driver_e, fs_dev, driver_e,
 	fs_m_in.REQ_READONLY ? R_BIT : (R_BIT|W_BIT)) != OK) {
@@ -85,32 +78,37 @@ PUBLIC int fs_readsuper_s()
   }
   
   /* Fill in the super block. */
-  sp->s_dev = fs_dev;		/* read_super() needs to know which dev */
-  r = read_super(sp);
+  superblock.s_dev = fs_dev;	/* read_super() needs to know which dev */
+  r = read_super(&superblock);
 
   /* Is it recognized as a Minix filesystem? */
   if (r != OK) {
-	sp->s_dev = NO_DEV;
+	printf("MFS: bad superblock\n");
+	superblock.s_dev = NO_DEV;
   	dev_close(driver_e, fs_dev);
 	return(r);
   }
+
+  set_blocksize(superblock.s_block_size);
   
   /* Get the root inode of the mounted file system. */
   if ( (root_ip = get_inode(fs_dev, ROOT_INODE)) == NIL_INODE)  {
-	sp->s_dev = NO_DEV;
+	printf("MFS: couldn't get root inode?!\n");
+	superblock.s_dev = NO_DEV;
   	dev_close(driver_e, fs_dev);
-	return err_code;
+	return EINVAL;
   }
   
   if (root_ip != NIL_INODE && root_ip->i_mode == 0) {
+	printf("MFS: zero mode for root inode?!\n");
         put_inode(root_ip);
-	sp->s_dev = NO_DEV;
+	superblock.s_dev = NO_DEV;
   	dev_close(driver_e, fs_dev);
   	return EINVAL;
   }
 
-  sp->s_rd_only = fs_m_in.REQ_READONLY;
-  sp->s_is_root = fs_m_in.REQ_ISROOT;
+  superblock.s_rd_only = fs_m_in.REQ_READONLY;
+  superblock.s_is_root = fs_m_in.REQ_ISROOT;
   
   /* Root inode properties */
   fs_m_out.RES_INODE_NR = root_ip->i_num;
@@ -135,9 +133,10 @@ PUBLIC int fs_readsuper_o()
  * so that the VFS knows that it has to find the vnode on which this FS 
  * process' partition is mounted on.
  */
-  struct super_block *xp, *sp;
+  struct super_block *xp;
   struct inode *root_ip;
   int r = OK;
+  phys_bytes ph;
 
   fs_dev = fs_m_in.REQ_DEV;
 
@@ -146,17 +145,17 @@ PUBLIC int fs_readsuper_o()
   boottime = fs_m_in.REQ_BOOTTIME;
   vfs_slink_storage = fs_m_in.REQ_SLINK_STORAGE;
 
-  sp = &super_block[0];
-  
   /* Fill in the super block. */
-  sp->s_dev = fs_dev;		/* read_super() needs to know which dev */
-  r = read_super(sp);
+  superblock.s_dev = fs_dev;		/* read_super() needs to know which dev */
+  r = read_super(&superblock);
 
   /* Is it recognized as a Minix filesystem? */
   if (r != OK) {
-	sp->s_dev = NO_DEV;
+	superblock.s_dev = NO_DEV;
 	return(r);
   }
+
+  set_blocksize(superblock.s_block_size);
   
   /* Get the root inode of the mounted file system. */
   root_ip = NIL_INODE;		/* if 'r' not OK, make sure this is defined */
@@ -171,8 +170,8 @@ PUBLIC int fs_readsuper_o()
   }
 
   if (r != OK) return r;
-  sp->s_rd_only = fs_m_in.REQ_READONLY;
-  sp->s_is_root = fs_m_in.REQ_ISROOT;
+  superblock.s_rd_only = fs_m_in.REQ_READONLY;
+  superblock.s_is_root = fs_m_in.REQ_ISROOT;
   
   /* Root inode properties */
   fs_m_out.RES_INODE_NR = root_ip->i_num;
@@ -180,8 +179,8 @@ PUBLIC int fs_readsuper_o()
   fs_m_out.RES_FILE_SIZE = root_ip->i_size;
 
   /* Partition properties */
-  fs_m_out.RES_MAXSIZE = sp->s_max_size;
-  fs_m_out.RES_BLOCKSIZE = sp->s_block_size;
+  fs_m_out.RES_MAXSIZE = superblock.s_max_size;
+  fs_m_out.RES_BLOCKSIZE = superblock.s_block_size;
   
   return r;
 }
@@ -280,26 +279,15 @@ printf("MFS(%d) get_inode by fs_mountpoint() failed\n", SELF_E);
 PUBLIC int fs_unmount()
 {
 /* Unmount a file system by device number. */
-  struct super_block *sp, *sp1;
+  struct super_block *sp1;
   int count;
   register struct inode *rip;
 
   /* Close the device the file system lives on. */
   dev_close(driver_endpoints[(fs_dev >> MAJOR) & BYTE].driver_e, fs_dev);
 
-  /* !!!!!!!!!!!!! REMOVE THIS LATER !!!!!!!!!!!!!!!!!!!!!!! */
-  /* Find the super block. */
-  sp = NIL_SUPER;
-  for (sp1 = &super_block[0]; sp1 < &super_block[NR_SUPERS]; sp1++) {
-	if (sp1->s_dev == fs_dev) {
-		sp = sp1;
-		break;
-	}
-  }
-  if (sp == NIL_SUPER) {
-  	return(EINVAL);
-  }
-  /* !!!!!!!!!!!!! REMOVE THIS LATER !!!!!!!!!!!!!!!!!!!!!!! */
+  if(superblock.s_dev != fs_dev)
+	return EINVAL;
   
   /* See if the mounted device is busy.  Only 1 inode using it should be
    * open -- the root inode -- and that inode only 1 time.
@@ -314,7 +302,6 @@ PUBLIC int fs_unmount()
   }
   
   if (count > 1) {
-      printf("MFS(%d) unmount: filesystem is busy %d\n", SELF_E, count);
       return(EBUSY);	/* can't umount a busy file system */
   }
 
@@ -325,10 +312,9 @@ PUBLIC int fs_unmount()
 
   /* Sync the disk, and invalidate cache. */
   (void) fs_sync();		/* force any cached blocks out of memory */
-  /*invalidate(fs_dev);*/	/* invalidate cache entries for this dev */
 
   /* Finish off the unmount. */
-  sp->s_dev = NO_DEV;
+  superblock.s_dev = NO_DEV;
   
 
   return OK;

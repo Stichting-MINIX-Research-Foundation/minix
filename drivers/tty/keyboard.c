@@ -14,16 +14,11 @@
 #include <termios.h>
 #include <signal.h>
 #include <unistd.h>
-#include <archtypes.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include "tty.h"
 #include "keymaps/us-std.src"
-#include "../../kernel/const.h"
-#include "../../kernel/config.h"
-#include "../../kernel/type.h"
-#include "../../kernel/proc.h"
 
 int irq_hook_id = -1;
 int aux_irq_hook_id = -1;
@@ -132,9 +127,8 @@ PRIVATE struct kbd_outack
 
 PRIVATE int kbd_watchdog_set= 0;
 PRIVATE int kbd_alive= 1;
+PRIVATE int sticky_alt_mode = 0;
 PRIVATE timer_t tmr_kbd_wd;
-
-int sticky_alt_mode = 0;
 
 FORWARD _PROTOTYPE( void handle_req, (struct kbd *kbdp, message *m)	);
 FORWARD _PROTOTYPE( int handle_status, (struct kbd *kbdp, message *m)	);
@@ -152,6 +146,13 @@ FORWARD _PROTOTYPE( void show_key_mappings, (void) 			);
 FORWARD _PROTOTYPE( int kb_read, (struct tty *tp, int try) 		);
 FORWARD _PROTOTYPE( unsigned map_key, (int scode) 			);
 FORWARD _PROTOTYPE( void kbd_watchdog, (timer_t *tmrp)			);
+
+int micro_delay(u32_t usecs)
+{
+	/* TTY can't use the library micro_delay() as that calls PM. */
+	tickdelay(micros_to_ticks(usecs));
+	return OK;
+}
 
 /*===========================================================================*
  *				do_kbd					     *
@@ -500,7 +501,6 @@ message *m_ptr;
   int o, isaux;
   unsigned char scode;
   struct kbd *kbdp;
-  static timer_t timer;		/* timer must be static! */
 
   /* Fetch the character from the keyboard hardware and acknowledge it. */
   if (!scan_keyboard(&scode, &isaux))
@@ -637,7 +637,7 @@ PRIVATE void kbd_send()
 	}
 	if (sb & (KB_OUT_FULL|KB_IN_FULL))
 	{
-		printf("not sending 1: sb = 0x%x\n", sb);
+		printf("not sending 1: sb = 0x%lx\n", sb);
 		return;
 	}
 	micro_delay(KBC_IN_DELAY);
@@ -646,7 +646,7 @@ PRIVATE void kbd_send()
 	}
 	if (sb & (KB_OUT_FULL|KB_IN_FULL))
 	{
-		printf("not sending 2: sb = 0x%x\n", sb);
+		printf("not sending 2: sb = 0x%lx\n", sb);
 		return;
 	}
 
@@ -864,8 +864,8 @@ PRIVATE int kbc_read()
 	while (micro_elapsed(&ms) < 1000000);
 #endif
 	panic("TTY", "kbc_read failed to complete", NO_NUM);
+	return EINVAL;
 }
-
 
 
 /*===========================================================================*
@@ -876,7 +876,7 @@ PRIVATE int kb_wait()
 /* Wait until the controller is ready; return zero if this times out. */
 
   int retries;
-  unsigned long status, temp;
+  unsigned long status;
   int s, isaux;
   unsigned char byte;
 
@@ -940,6 +940,12 @@ PUBLIC void kb_init_once(void)
 {
   int i;
   u8_t ccb;
+  char env[100];
+
+  if(env_get_param("sticky_alt", env, sizeof(env)-1) == OK
+   && atoi(env) == 1) {
+        sticky_alt_mode = 1; 
+  }
 
   set_leds();			/* turn off numlock led */
   scan_keyboard(NULL, NULL);	/* discard leftover keystroke */
@@ -1020,7 +1026,7 @@ message *m_ptr;			/* pointer to the request message */
  * notifications if it is pressed. At most one binding per key can exist.
  */
   int i; 
-  int result;
+  int result = EINVAL;
 
   switch (m_ptr->FKEY_REQUEST) {	/* see what we must do */
   case FKEY_MAP:			/* request for new mapping */
@@ -1104,8 +1110,6 @@ message *m_ptr;			/* pointer to the request message */
           }
       }
       break;
-  default:
-          result =  EINVAL;		/* key cannot be observed */
   }
 
   /* Almost done, return result to caller. */
@@ -1128,7 +1132,6 @@ int scode;			/* scan code for a function key */
   message m;
   int key;
   int proc_nr;
-  int i,s;
 
   /* Ignore key releases. If this is a key press, get full key code. */
   if (scode & KEY_RELEASE) return(FALSE);	/* key release */
@@ -1166,31 +1169,17 @@ int scode;			/* scan code for a function key */
  *===========================================================================*/
 PRIVATE void show_key_mappings()
 {
-    int i,s;
-    struct proc proc;
-
+    int i;
     printf("\n");
     printf("System information.   Known function key mappings to request debug dumps:\n");
     printf("-------------------------------------------------------------------------\n");
     for (i=0; i<12; i++) {
 
       printf(" %sF%d: ", i+1<10? " ":"", i+1);
-      if (fkey_obs[i].proc_nr != NONE) {
-          if ((s=sys_getproc(&proc, fkey_obs[i].proc_nr))!=OK)
-              printf("sys_getproc: %d\n", s);
-          printf("%-14.14s", proc.p_name);
-      } else {
-          printf("%-14.14s", "<none>");
-      }
+      printf("%-14.14s", "<none>");
 
       printf("    %sShift-F%d: ", i+1<10? " ":"", i+1);
-      if (sfkey_obs[i].proc_nr != NONE) {
-          if ((s=sys_getproc(&proc, sfkey_obs[i].proc_nr))!=OK)
-              printf("sys_getproc: %d\n", s);
-          printf("%-14.14s", proc.p_name);
-      } else {
-          printf("%-14.14s", "<none>");
-      }
+      printf("%-14.14s", "<none>");
       printf("\n");
     }
     printf("\n");
@@ -1258,12 +1247,6 @@ int *isauxp;
   }
   return 1;
 #endif
-}
-
-int micro_delay(u32_t usecs)
-{
-	tickdelay(MICROS_TO_TICKS(usecs));
-	return OK;
 }
 
 /*===========================================================================*

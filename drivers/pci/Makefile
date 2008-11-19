@@ -13,7 +13,7 @@ d = ..
 CC =	cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i 
-LIBS = -lsysutil  -lsys -ltimers
+LIBS =  -lsys -ltimers 
 
 OBJ = main.o pci.o pci_table.o
 

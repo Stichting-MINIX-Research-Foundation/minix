@@ -5,9 +5,9 @@
  * of corresponding slots referring to the same process in all three.
  */
 #include <timers.h>
+#include <signal.h>
 
 EXTERN struct mproc {
-  struct mem_map mp_seg[NR_LOCAL_SEGS]; /* points to text, data, stack */
   char mp_exitstatus;		/* storage for status when process exits */
   char mp_sigstatus;		/* storage for signal # for killed procs */
   pid_t mp_pid;			/* process id */
@@ -25,11 +25,6 @@ EXTERN struct mproc {
   uid_t mp_effuid;		/* process' effective uid */
   gid_t mp_realgid;		/* process' real gid */
   gid_t mp_effgid;		/* process' effective gid */
-
-  /* File identification for sharing. */
-  ino_t mp_ino;			/* inode number of file */
-  dev_t mp_dev;			/* device number of file system */
-  time_t mp_ctime;		/* inode changed time */
 
   /* Signal handling information. */
   sigset_t mp_ignore;		/* 1 means ignore the signal, 0 means don't */
@@ -73,14 +68,10 @@ EXTERN struct mproc {
 #define ZOMBIE          0x004	/* set by EXIT, cleared by WAIT */
 #define PAUSED          0x008	/* set by PAUSE system call */
 #define ALARM_ON        0x010	/* set when SIGALRM timer started */
-#define SEPARATE	0x020	/* set if file is separate I & D space */
 #define	TRACED		0x040	/* set if process is to be traced */
 #define STOPPED		0x080	/* set if process stopped for tracing */
 #define SIGSUSPENDED 	0x100	/* set by SIGSUSPEND system call */
 #define REPLY	 	0x200	/* set if a reply message is pending */
-#define ONSWAP	 	0x400	/* set if data segment is swapped out */
-#define SWAPIN	 	0x800	/* set if on the "swap this in" queue */
-#define DONT_SWAP      0x1000   /* never swap out this process */
 #define PRIV_PROC      0x2000   /* system process, special privileges */
 #define PM_SIG_PENDING 0x4000	/* process got a signal while waiting for FS */
 #define PARTIAL_EXEC   0x8000	/* Process got a new map but no content */

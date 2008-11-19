@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i -L../libdriver
-LIBS = -lsysutil -ldriver  -lsys -ltimers
+LIBS = -ldriver -lsys  -ltimers
 
 OBJ = floppy.o 
 

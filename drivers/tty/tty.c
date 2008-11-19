@@ -61,9 +61,9 @@
 #include <sys/ioc_tty.h>
 #include <signal.h>
 #include <minix/callnr.h>
-#if (CHIP == INTEL)
+#include <minix/sys_config.h>
+#include <minix/tty.h>
 #include <minix/keymap.h>
-#endif
 #include "tty.h"
 
 #include <sys/time.h>
@@ -92,6 +92,7 @@ unsigned long rs_irq_set = 0;
 #if NR_RS_LINES == 0
 #define rs_init(tp)	((void) 0)
 #endif
+
 #if NR_PTYS == 0
 #define pty_init(tp)	((void) 0)
 #define do_pty(tp, mp)	((void) 0)
@@ -138,17 +139,21 @@ PUBLIC timer_t *tty_timers;		/* queue of TTY timers */
 PUBLIC clock_t tty_next_timeout;	/* time that the next alarm is due */
 PUBLIC struct machine machine;		/* kernel environment variables */
 
+extern PUBLIC unsigned info_location;
+extern PUBLIC phys_bytes vid_size;     /* 0x2000 for color or 0x0800 for mono */
+extern PUBLIC phys_bytes vid_base;
+
+
 /*===========================================================================*
  *				tty_task				     *
  *===========================================================================*/
-PUBLIC void main(void)
+PUBLIC int main(void)
 {
 /* Main routine of the terminal task. */
 
   message tty_mess;		/* buffer for all incoming messages */
   unsigned line;
   int r, s;
-  register struct proc *rp;
   register tty_t *tp;
 
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
@@ -162,9 +167,8 @@ PUBLIC void main(void)
   /* Final one-time keyboard initialization. */
   kb_init_once();
 
-  printf("\n");
-
   while (TRUE) {
+	int adflag = 0;
 
 	/* Check for and handle any events on any of the ttys. */
 	for (tp = FIRST_TTY; tp < END_TTY; tp++) {
@@ -212,14 +216,16 @@ PUBLIC void main(void)
 		continue;
 	}
 	case DIAGNOSTICS: 		/* a server wants to print some */
+#if 0
 		if (tty_mess.m_source != LOG_PROC_NR)
 		{
-			printf("WARNING: old DIAGNOSTICS from %d\n",
-				tty_mess.m_source);
+			printf("[%d ", tty_mess.m_source);
 		}
+#endif
 		do_diagnostics(&tty_mess, 0);
 		continue;
 	case DIAGNOSTICS_S: 
+	case ASYN_DIAGNOSTICS: 
 		do_diagnostics(&tty_mess, 1);
 		continue;
 	case GET_KMESS:
@@ -299,6 +305,8 @@ PUBLIC void main(void)
 						tty_mess.IO_ENDPT, EINVAL);
 	}
   }
+
+  return 0;
 }
 
 /*===========================================================================*
@@ -397,7 +405,7 @@ register message *m_ptr;	/* pointer to message sent to the task */
 int safe;			/* use safecopies? */
 {
 /* A process wants to read from a terminal. */
-  int r, status;
+  int r;
 
   /* Check if there is already a process hanging in a read, check if the
    * parameters are correct, do I/O.
@@ -775,9 +783,6 @@ message *m_ptr;			/* pointer to message sent to task */
   if ((mode & W_BIT) && tp->tty_outleft != 0 && proc_nr == tp->tty_outproc &&
 	(!tp->tty_out_safe || tp->tty_out_vir_g==(vir_bytes)m_ptr->IO_GRANT)) {
 	/* Process was writing when killed.  Clean up output. */
-#if DEAD_CODE
-	(*tp->tty_ocancel)(tp, 0); 
-#endif
 	r = tp->tty_outcum > 0 ? tp->tty_outcum : EAGAIN;
 	tp->tty_outleft = tp->tty_outcum = tp->tty_outrevived = 0;
   } 
@@ -849,9 +854,6 @@ tty_t *tp;			/* TTY to check for events. */
  * messages (in proc.c).  This is handled by explicitly checking each line
  * for fresh input and completed output on each interrupt.
  */
-  char *buf;
-  unsigned count;
-  int status;
 
   do {
 	tp->tty_events = 0;
@@ -989,7 +991,6 @@ int count;			/* number of input characters */
 
   int ch, sig, ct;
   int timeset = FALSE;
-  static unsigned char csize_mask[] = { 0x1F, 0x3F, 0x7F, 0xFF };
 
   for (ct = 0; ct < count; ct++) {
 	/* Take one character. */
@@ -1373,7 +1374,7 @@ tty_t *tp;
  * sure that an attribute change doesn't affect the processing of current
  * output.  Once output finishes the ioctl is executed as in do_ioctl().
  */
-  int result;
+  int result = EINVAL;
 
   if (tp->tty_outleft > 0) return;		/* output not finished */
 
@@ -1535,8 +1536,6 @@ PRIVATE void tty_init()
 
   register tty_t *tp;
   int s;
-  struct sigaction sa;
-  char env[100];
 
   /* Initialize the terminal lines. */
   for (tp = FIRST_TTY,s=0; tp < END_TTY; tp++,s++) {
@@ -1566,25 +1565,6 @@ PRIVATE void tty_init()
 		tp->tty_minor = s - (NR_CONS+NR_RS_LINES) + TTYPX_MINOR;
   	}
   }
-
-  if(env_get_param("sticky_alt", env, sizeof(env)-1) == OK
-   && atoi(env) == 1) {
-	sticky_alt_mode = 1;
-  }
-
-
-#if DEAD_CODE
-  /* Install signal handlers. Ask PM to transform signal into message. */
-  sa.sa_handler = SIG_MESS;
-  sigemptyset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  if (sigaction(SIGTERM,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
-  if (sigaction(SIGKMESS,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
-  if (sigaction(SIGKSTOP,&sa,NULL)<0) panic("TTY","sigaction failed", errno);
-#endif
-#if DEBUG
-	printf("end of tty_init\n");
-#endif
 }
 
 /*===========================================================================*
@@ -1670,6 +1650,7 @@ tty_t *tp;
 int try;
 {
   /* Some functions need not be implemented at the device level. */
+  return 0;
 }
 
 /*===========================================================================*

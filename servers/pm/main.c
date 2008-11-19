@@ -18,6 +18,7 @@
 #include <minix/endpoint.h>
 #include <minix/minlib.h>
 #include <minix/type.h>
+#include <minix/vm.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -41,10 +42,6 @@ EXTERN unsigned long calls_stats[NCALLS];
 FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void pm_init, (void)				);
 FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
-FORWARD _PROTOTYPE( void get_mem_chunks, (struct memory *mem_chunks) 	);
-FORWARD _PROTOTYPE( void patch_mem_chunks, (struct memory *mem_chunks, 
-	struct mem_map *map_ptr) 	);
-FORWARD _PROTOTYPE( void do_x86_vm, (struct memory mem_chunks[NR_MEMS])	);
 FORWARD _PROTOTYPE( void send_work, (void)				);
 FORWARD _PROTOTYPE( void handle_fs_reply, (message *m_ptr)		);
 
@@ -138,7 +135,9 @@ PUBLIC int main()
 #if ENABLE_SYSCALL_STATS
 			calls_stats[call_nr]++;
 #endif
+
 			result = (*call_vec[call_nr])();
+
 		}
 		break;
 	}
@@ -146,10 +145,8 @@ PUBLIC int main()
 	/* Send the results back to the user to indicate completion. */
 	if (result != SUSPEND) setreply(who_p, result);
 
-	swap_in();		/* maybe a process can be swapped in? */
-
 	/* Send out all pending reply messages, including the answer to
-	 * the call just made above.  The processes must not be swapped out.
+	 * the call just made above.
 	 */
 	for (proc_nr=0, rmp=mproc; proc_nr < NR_PROCS; proc_nr++, rmp++) {
 		/* In the meantime, the process may have been killed by a
@@ -157,7 +154,7 @@ PUBLIC int main()
 		 * without the PM realizing it. If the slot is no longer in
 		 * use or just a zombie, don't try to reply.
 		 */
-		if ((rmp->mp_flags & (REPLY | ONSWAP | IN_USE | ZOMBIE)) ==
+		if ((rmp->mp_flags & (REPLY | IN_USE | ZOMBIE)) ==
 		   (REPLY | IN_USE)) {
 			s=sendnb(rmp->mp_endpoint, &rmp->mp_reply);
 			if (s != OK) {
@@ -213,9 +210,6 @@ int result;			/* result of call (usually OK or error #) */
 
   rmp->mp_reply.reply_res = result;
   rmp->mp_flags |= REPLY;	/* reply pending */
-
-  if (rmp->mp_flags & ONSWAP)
-	swap_inqueue(rmp);	/* must swap this process back in */
 }
 
 /*===========================================================================*
@@ -223,6 +217,8 @@ int result;			/* result of call (usually OK or error #) */
  *===========================================================================*/
 PRIVATE void pm_init()
 {
+	int failed = 0;
+	int f = 0;
 /* Initialize the process manager. 
  * Memory use info is collected from the boot monitor, the kernel, and
  * all processes compiled into the system image. Initially this information
@@ -244,10 +240,7 @@ PRIVATE void pm_init()
   static char mess_sigs[] = { SIGTERM, SIGHUP, SIGABRT, SIGQUIT };
   register struct mproc *rmp;
   register char *sig_ptr;
-  phys_clicks total_clicks, minix_clicks, free_clicks;
   message mess;
-  struct mem_map mem_map[NR_LOCAL_SEGS];
-  struct memory mem_chunks[NR_MEMS];
 
   /* Initialize process table, including timers. */
   for (rmp=&mproc[0]; rmp<&mproc[NR_PROCS]; rmp++) {
@@ -273,15 +266,8 @@ PRIVATE void pm_init()
    */
   if ((s=sys_getmonparams(monitor_params, sizeof(monitor_params))) != OK)
       panic(__FILE__,"get monitor params failed",s);
-  get_mem_chunks(mem_chunks);
   if ((s=sys_getkinfo(&kinfo)) != OK)
       panic(__FILE__,"get kernel info failed",s);
-
-  /* Get the memory map of the kernel to see how much memory it uses. */
-  if ((s=get_mem_map(SYSTASK, mem_map)) != OK)
-  	panic(__FILE__,"couldn't get memory map of SYSTASK",s);
-  minix_clicks = (mem_map[S].mem_phys+mem_map[S].mem_len)-mem_map[T].mem_phys;
-  patch_mem_chunks(mem_chunks, mem_map);
 
   /* Initialize PM's process table. Request a copy of the system image table 
    * that is defined at the kernel level to see which slots to fill in.
@@ -289,14 +275,16 @@ PRIVATE void pm_init()
   if (OK != (s=sys_getimage(image))) 
   	panic(__FILE__,"couldn't get image table: %d\n", s);
   procs_in_use = 0;				/* start populating table */
-  for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {		
+  for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
   	if (ip->proc_nr >= 0) {			/* task have negative nrs */
   		procs_in_use += 1;		/* found user process */
 
 		/* Set process details found in the image table. */
 		rmp = &mproc[ip->proc_nr];	
   		strncpy(rmp->mp_name, ip->proc_name, PROC_NAME_LEN); 
+#if 0
 		rmp->mp_parent = RS_PROC_NR;
+#endif
 		rmp->mp_nice = get_nice_value(ip->priority);
   		sigemptyset(&rmp->mp_sig2mess);
   		sigemptyset(&rmp->mp_ignore);	
@@ -308,7 +296,7 @@ PRIVATE void pm_init()
 		}
 		else {					/* system process */
   			rmp->mp_pid = get_free_pid();
-			rmp->mp_flags |= IN_USE | DONT_SWAP | PRIV_PROC; 
+			rmp->mp_flags |= IN_USE | PRIV_PROC; 
   			for (sig_ptr = mess_sigs; 
 				sig_ptr < mess_sigs+sizeof(mess_sigs); 
 				sig_ptr++)
@@ -317,14 +305,6 @@ PRIVATE void pm_init()
 
 		/* Get kernel endpoint identifier. */
 		rmp->mp_endpoint = ip->endpoint;
-
-  		/* Get memory map for this process from the kernel. */
-		if ((s=get_mem_map(ip->proc_nr, rmp->mp_seg)) != OK)
-  			panic(__FILE__,"couldn't get process entry",s);
-		if (rmp->mp_seg[T].mem_len != 0) rmp->mp_flags |= SEPARATE;
-		minix_clicks += rmp->mp_seg[S].mem_phys + 
-			rmp->mp_seg[S].mem_len - rmp->mp_seg[T].mem_phys;
-  		patch_mem_chunks(mem_chunks, rmp->mp_seg);
 
 		/* Tell FS about this system process. */
 		mess.PR_SLOT = ip->proc_nr;
@@ -336,17 +316,19 @@ PRIVATE void pm_init()
 		/* Register proces with ds */
 		s= ds_publish_u32(rmp->mp_name, rmp->mp_endpoint);
 		if (s != OK)
-		{
-			printf(
-			"pm_init: unable to register '%s' with ds: %d\n",
-				rmp->mp_name, s);
-		}
+			failed++;
   	}
   }
 
+  if(failed > 0)
+	printf("PM: failed to register %d/%d boot processes\n",
+		failed, NR_BOOT_PROCS);
+
   /* Override some details. INIT, PM, FS and RS are somewhat special. */
   mproc[PM_PROC_NR].mp_pid = PM_PID;		/* PM has magic pid */
+#if 0
   mproc[RS_PROC_NR].mp_parent = INIT_PROC_NR;	/* INIT is root */
+#endif
   sigfillset(&mproc[PM_PROC_NR].mp_ignore); 	/* guard against signals */
 
   /* Tell FS that no more system processes follow and synchronize. */
@@ -354,30 +336,12 @@ PRIVATE void pm_init()
   if (sendrec(FS_PROC_NR, &mess) != OK || mess.m_type != OK)
 	panic(__FILE__,"can't sync up with FS", NO_NUM);
 
-#if ENABLE_BOOTDEV
-  /* Possibly we must correct the memory chunks for the boot device. */
-  if (kinfo.bootdev_size > 0) {
-      mem_map[T].mem_phys = kinfo.bootdev_base >> CLICK_SHIFT;
-      mem_map[T].mem_len = 0;
-      mem_map[D].mem_len = (kinfo.bootdev_size+CLICK_SIZE-1) >> CLICK_SHIFT;
-      patch_mem_chunks(mem_chunks, mem_map);
-  }
-#endif /* ENABLE_BOOTDEV */
-
-  /* Withhold some memory from x86 VM */
-  do_x86_vm(mem_chunks);
-
-  /* Initialize tables to all physical memory and print memory information. */
-  printf("Physical memory:");
-  mem_init(mem_chunks, &free_clicks);
-  total_clicks = minix_clicks + free_clicks;
-  printf(" total %u KB,", click_to_round_k(total_clicks));
-  printf(" system %u KB,", click_to_round_k(minix_clicks));
-  printf(" free %u KB.\n", click_to_round_k(free_clicks));
 #if (CHIP == INTEL)
-  uts_val.machine[0] = 'i';
-  strcpy(uts_val.machine + 1, itoa(getprocessor()));
-#endif
+        uts_val.machine[0] = 'i';
+        strcpy(uts_val.machine + 1, itoa(getprocessor()));
+#endif  
+
+ if(f > 0) printf("PM: failed to register %d processes with DS.\n", f);
 }
 
 /*===========================================================================*
@@ -397,132 +361,24 @@ int queue;				/* store mem chunks here */
   return nice_val;
 }
 
-/*===========================================================================*
- *				get_mem_chunks				     *
- *===========================================================================*/
-PRIVATE void get_mem_chunks(mem_chunks)
-struct memory *mem_chunks;			/* store mem chunks here */
+void checkme(char *str, int line)
 {
-/* Initialize the free memory list from the 'memory' boot variable.  Translate
- * the byte offsets and sizes in this list to clicks, properly truncated.
- */
-  long base, size, limit;
-  int i;
-  struct memory *memp;
-  
-  /* Obtain and parse memory from system environment. */
-  if(env_memory_parse(mem_chunks, NR_MEMS) != OK)
-	panic(__FILE__,"couldn't obtain memory chunks", NO_NUM);
-
-  /* Round physical memory to clicks. */
-  for (i = 0; i < NR_MEMS; i++) {
-	memp = &mem_chunks[i];		/* next mem chunk is stored here */
-	base = mem_chunks[i].base;
-	size = mem_chunks[i].size;
-	limit = base + size;	
-	base = (base + CLICK_SIZE-1) & ~(long)(CLICK_SIZE-1);
-	limit &= ~(long)(CLICK_SIZE-1);
-	if (limit <= base) {
-		memp->base = memp->size = 0;
-	} else {
-		memp->base = base >> CLICK_SHIFT;
-		memp->size = (limit - base) >> CLICK_SHIFT;
+	struct mproc *trmp;
+	int boned = 0;
+	int proc_nr;
+	for (proc_nr=0, trmp=mproc; proc_nr < NR_PROCS; proc_nr++, trmp++) {
+		if ((trmp->mp_flags & (REPLY | IN_USE | ZOMBIE)) ==
+		   (REPLY | IN_USE)) {
+			int tp;
+  			if(pm_isokendpt(trmp->mp_endpoint, &tp) != OK) {
+			   printf("PM: %s:%d: reply %d to %s is bogus endpoint %d after call %d by %d\n",
+				str, line, trmp->mp_reply.m_type,
+				trmp->mp_name, trmp->mp_endpoint, call_nr, who_e);
+			   boned=1;
+			}
+		}
+		if(boned) panic(__FILE__, "corrupt mp_endpoint?", NO_NUM);
 	}
-  }
-}
-
-/*===========================================================================*
- *				patch_mem_chunks			     *
- *===========================================================================*/
-PRIVATE void patch_mem_chunks(mem_chunks, map_ptr)
-struct memory *mem_chunks;			/* store mem chunks here */
-struct mem_map *map_ptr;			/* memory to remove */
-{
-/* Remove server memory from the free memory list. The boot monitor
- * promises to put processes at the start of memory chunks. The 
- * tasks all use same base address, so only the first task changes
- * the memory lists. The servers and init have their own memory
- * spaces and their memory will be removed from the list. 
- */
-  struct memory *memp;
-  for (memp = mem_chunks; memp < &mem_chunks[NR_MEMS]; memp++) {
-	if (memp->base == map_ptr[T].mem_phys) {
-		memp->base += map_ptr[T].mem_len + map_ptr[S].mem_vir;
-		memp->size -= map_ptr[T].mem_len + map_ptr[S].mem_vir;
-		break;
-	}
-  }
-  if (memp >= &mem_chunks[NR_MEMS])
-  {
-	panic(__FILE__,"patch_mem_chunks: can't find map in mem_chunks, start",
-		map_ptr[T].mem_phys);
-  }
-}
-
-#define PAGE_SIZE	4096
-#define PAGE_DIR_SIZE	(1024*PAGE_SIZE)	
-#define PAGE_TABLE_COVER (1024*PAGE_SIZE)
-/*=========================================================================*
- *				do_x86_vm				   *
- *=========================================================================*/
-PRIVATE void do_x86_vm(mem_chunks)
-struct memory mem_chunks[NR_MEMS];
-{
-	phys_bytes high, bytes;
-	phys_clicks clicks, base_click;
-	unsigned pages;
-	int i, r;
-
-	/* Compute the highest memory location */
-	high= 0;
-	for (i= 0; i<NR_MEMS; i++)
-	{
-		if (mem_chunks[i].size == 0)
-			continue;
-		if (mem_chunks[i].base + mem_chunks[i].size > high)
-			high= mem_chunks[i].base + mem_chunks[i].size;
-	}
-
-	high <<= CLICK_SHIFT;
-#if VERBOSE_VM
-	printf("do_x86_vm: found high 0x%x\n", high);
-#endif
-	
-	/* Rounding up */
-	high= (high-1+PAGE_DIR_SIZE) & ~(PAGE_DIR_SIZE-1);
-
-	/* The number of pages we need is one for the page directory, enough
-	 * page tables to cover the memory, and one page for alignement.
-	 */
-	pages= 1 + (high + PAGE_TABLE_COVER-1)/PAGE_TABLE_COVER + 1;
-	bytes= pages*PAGE_SIZE;
-	clicks= (bytes + CLICK_SIZE-1) >> CLICK_SHIFT;
-
-#if VERBOSE_VM
-	printf("do_x86_vm: need %d pages\n", pages);
-	printf("do_x86_vm: need %d bytes\n", bytes);
-	printf("do_x86_vm: need %d clicks\n", clicks);
-#endif
-
-	for (i= 0; i<NR_MEMS; i++)
-	{
-		if (mem_chunks[i].size <= clicks)
-			continue;
-		break;
-	}
-	if (i >= NR_MEMS)
-		panic("PM", "not enough memory for VM page tables?", NO_NUM);
-	base_click= mem_chunks[i].base;
-	mem_chunks[i].base += clicks;
-	mem_chunks[i].size -= clicks;
-
-#if VERBOSE_VM
-	printf("do_x86_vm: using 0x%x clicks @ 0x%x\n", clicks, base_click);
-#endif
-	r= sys_vm_setbuf(base_click << CLICK_SHIFT, clicks << CLICK_SHIFT,
-		high);
-	if (r != 0)
-		printf("do_x86_vm: sys_vm_setbuf failed: %d\n", r);
 }
 
 /*=========================================================================*
@@ -625,8 +481,14 @@ PRIVATE void send_work()
 			/* Ask the kernel to deliver the signal */
 			r= sys_sigsend(rmp->mp_endpoint,
 				&rmp->mp_sigmsg);
-			if (r != OK)
+			if (r != OK) {
+#if 0
 				panic(__FILE__,"sys_sigsend failed",r);
+#else
+				printf("PM: PM_UNPAUSE: sys_sigsend failed to %d: %d\n",
+					rmp->mp_endpoint, r);
+#endif
+			}
 
 			break;
 
@@ -674,7 +536,9 @@ PRIVATE void send_work()
 		case PM_DUMPCORE:
 			m.m_type= call;
 			m.PM_CORE_PROC= rmp->mp_endpoint;
+			/* XXX
 			m.PM_CORE_SEGPTR= (char *)rmp->mp_seg;
+			*/
 
 			/* Mark the process as busy */
 			rmp->mp_fs_call= PM_BUSY;
@@ -715,9 +579,8 @@ PRIVATE void send_work()
 PRIVATE void handle_fs_reply(m_ptr)
 message *m_ptr;
 {
-	int r, proc_e, proc_n;
+	int r, proc_e, proc_n, s;
 	struct mproc *rmp;
-	phys_clicks base, size;
 
 	switch(m_ptr->m_type)
 	{
@@ -746,30 +609,8 @@ message *m_ptr;
 		}
 
 		/* Release the memory occupied by the child. */
-		if (find_share(rmp, rmp->mp_ino, rmp->mp_dev,
-			rmp->mp_ctime) == NULL) {
-			/* No other process shares the text segment,
-			 * so free it.
-			 */
-			free_mem(rmp->mp_seg[T].mem_phys,	
-				rmp->mp_seg[T].mem_len);
-		}
-
-		base= rmp->mp_seg[D].mem_phys;
-		size= rmp->mp_seg[S].mem_vir + rmp->mp_seg[S].mem_len -
-			rmp->mp_seg[D].mem_vir;
-
-		if (rmp->mp_flags & HAS_DMA)
-		{
-			/* Delay freeing the memory segmented until the
-			 * DMA buffers have been released.
-			 */
-			release_dma(rmp->mp_endpoint, base, size);
-		}
-		else
-		{
-			/* Free the data and stack segments. */
-			free_mem(base, size);
+		if((s=vm_exit(rmp->mp_endpoint)) != OK) {
+			panic(__FILE__, "vm_exit() failed", s);
 		}
 
 		if (m_ptr->m_type == PM_EXIT_REPLY_TR &&
@@ -883,30 +724,8 @@ message *m_ptr;
 		}
 
 		/* Release the memory occupied by the child. */
-		if (find_share(rmp, rmp->mp_ino, rmp->mp_dev,
-			rmp->mp_ctime) == NULL) {
-			/* No other process shares the text segment,
-			 * so free it.
-			 */
-			free_mem(rmp->mp_seg[T].mem_phys,	
-				rmp->mp_seg[T].mem_len);
-		}
-
-		base= rmp->mp_seg[D].mem_phys;
-		size= rmp->mp_seg[S].mem_vir + rmp->mp_seg[S].mem_len -
-			rmp->mp_seg[D].mem_vir;
-
-		if (rmp->mp_flags & HAS_DMA)
-		{
-			/* Delay freeing the memory segmented until the
-			 * DMA buffers have been released.
-			 */
-			release_dma(rmp->mp_endpoint, base, size);
-		}
-		else
-		{
-			/* Free the data and stack segments. */
-			free_mem(base, size);
+		if((s=vm_exit(rmp->mp_endpoint)) != OK) {
+			panic(__FILE__, "vm_exit() failed", s);
 		}
 
 		/* Clean up if the parent has collected the exit

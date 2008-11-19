@@ -221,7 +221,10 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
     patch_ptr(mbuf, vsp);
     r = sys_datacopy(SELF, (vir_bytes) mbuf,
             proc_e, (vir_bytes) vsp, (phys_bytes)frame_len);
-    if (r != OK) panic(__FILE__,"pm_exec stack copy err on", proc_e);
+    if (r != OK) {
+	printf("vfs: datacopy returns %d trying to copy to %p\n", r, vsp);
+	panic(__FILE__,"pm_exec stack copy err on", proc_e);
+    }
 
     off = hdrlen;
 
@@ -255,7 +258,6 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
     /* Check if this is a driver that can now be useful. */
     dmap_endpt_up(rfp->fp_endpoint);
 
-/*printf("VFSpm_exec: %s OK\n", user_fullpath);*/
     return OK;
 }
 
@@ -432,7 +434,7 @@ vir_bytes *stk_bytes;		/* size of initial stack */
   unsigned int cum_io_incr;
   char buf[_MAX_BLOCK_SIZE];
 
-  /* Make user_path the new argv[0]. */
+  /* Make user_fullpath the new argv[0]. */
   if (!insert_arg(stack, stk_bytes, user_fullpath, REPLACE)) return(ENOMEM);
 
   pos = 0;	/* Read from the start of the file */
@@ -451,7 +453,7 @@ vir_bytes *stk_bytes;		/* size of initial stack */
   n -= 2;
   if (n > PATH_MAX) n = PATH_MAX;
 
-  /* Use the user_path variable for temporary storage */
+  /* Use the user_fullpath variable for temporary storage */
   memcpy(user_fullpath, sp, n);
 
   if ((sp = memchr(user_fullpath, '\n', n)) == NULL) /* must be a proper line */

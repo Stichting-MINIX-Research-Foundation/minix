@@ -13,7 +13,7 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i 
-LIBS = -lsysutil -lsys -ltimers
+LIBS = -lsys  -ltimers
 
 OBJ = fxp.o mii.o
 
@@ -21,7 +21,7 @@ OBJ = fxp.o mii.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 96k $(DRIVER)
+	install -S 128k $(DRIVER)
 
 # install with other drivers
 install:	/usr/sbin/$(DRIVER)

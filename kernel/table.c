@@ -68,7 +68,8 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define NUL_M   0
 #define SRV_M	(~0)
 #define SYS_M	(~0)
-#define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR) | s(SYSTEM))
+#define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR) | s(SYSTEM) | \
+	s(VM_PROC_NR))
 #define DRV_M (USR_M | s(SYSTEM) | s(CLOCK) | s(DS_PROC_NR) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
 
 /* Define kernel calls that processes are allowed to make. This is not looking
@@ -90,10 +91,11 @@ PRIVATE int
   pm_c[] = { SYS_ALL_CALLS },
   rs_c[] = { SYS_ALL_CALLS },
   ds_c[] = { SYS_ALL_CALLS },
+  vm_c[] = { SYS_ALL_CALLS },
   drv_c[] = { DRV_C },
-  tty_c[] = { DRV_C, SYS_PHYSCOPY, SYS_ABORT, SYS_VM_MAP, SYS_IOPENABLE,
+  tty_c[] = { DRV_C, SYS_PHYSCOPY, SYS_ABORT, SYS_IOPENABLE,
 		SYS_READBIOS },
-  mem_c[] = { DRV_C, SYS_PHYSCOPY, SYS_PHYSVCOPY, SYS_VM_MAP, SYS_IOPENABLE };
+  mem_c[] = { DRV_C, SYS_PHYSCOPY, SYS_PHYSVCOPY, SYS_IOPENABLE };
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
@@ -122,6 +124,7 @@ PUBLIC struct boot_image image[] = {
 {MEM_PROC_NR,   0,SRV_F,  4,      2, 0,     SRV_T, SYS_M,c(mem_c),"memory"},
 {LOG_PROC_NR,   0,SRV_F,  4,      2, 0,     SRV_T, SYS_M,c(drv_c),"log"   },
 {MFS_PROC_NR,   0,SRV_F, 32,      4, 0,     SRV_T, SRV_M, c(fs_c),"mfs"   },
+{VM_PROC_NR,    0,SRV_F, 32,      3, 0,     SRV_T, SRV_M, c(vm_c),"vm"    },
 {INIT_PROC_NR,  0,USR_F,  8, USER_Q, 0,     USR_T, USR_M, no_c,"init"  },
 };
 

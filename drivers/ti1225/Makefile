@@ -13,7 +13,7 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i 
-LIBS = -lsysutil  -lsys -ltimers
+LIBS = -lsys -ltimers
 
 OBJ = ti1225.o
 

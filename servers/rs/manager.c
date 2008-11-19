@@ -309,10 +309,12 @@ message *m_ptr;					/* request message pointer */
 	rp->r_priv.s_io_tab[i].ior_base= rs_start.rss_io[i].base;
 	rp->r_priv.s_io_tab[i].ior_limit=
 		rs_start.rss_io[i].base+rs_start.rss_io[i].len-1;
+#if 0
 	if(rs_verbose)
 	   printf("RS: do_start: I/O [%x..%x]\n",
 		rp->r_priv.s_io_tab[i].ior_base,
 		rp->r_priv.s_io_tab[i].ior_limit);
+#endif
   }
 
   if (rs_start.rss_nr_pci_id > MAX_NR_PCI_ID)
@@ -532,12 +534,18 @@ PUBLIC void do_exit(message *m_ptr)
   while ( (exit_pid = waitpid(-1, &exit_status, WNOHANG)) != 0 ) {
 
     if(rs_verbose) {
+#if 0
       printf("RS: pid %d, ", exit_pid); 
+#endif
       if (WIFSIGNALED(exit_status)) {
+#if 0
           printf("killed, signal number %d\n", WTERMSIG(exit_status));
+#endif
       } 
       else if (WIFEXITED(exit_status)) {
+#if 0
           printf("normal exit, status %d\n", WEXITSTATUS(exit_status));
+#endif
       }
     }
 
@@ -649,7 +657,7 @@ rp->r_restarts= 0;
 	      break;
 	  }
       }
-  }
+  } 
 }
 
 /*===========================================================================*
@@ -748,11 +756,15 @@ endpoint_t *endpoint;
 
   use_copy= (rp->r_exec != NULL);
 
+
   /* Now fork and branch for parent and child process (and check for error). */
-  if (use_copy)
+  if (use_copy) {
+  if(rs_verbose) printf("RS: fork_nb..\n");
 	child_pid= fork_nb();
-  else
+  } else {
+  if(rs_verbose) printf("RS: fork regular..\n");
 	child_pid = fork();
+  }
 
   switch(child_pid) {					/* see fork(2) */
   case -1:						/* fork failed */
@@ -783,7 +795,13 @@ endpoint_t *endpoint;
       exit(1);						/* terminate child */
 
   default:						/* parent process */
+#if 0
+  if(rs_verbose) printf("RS: parent forked, pid %d..\n", child_pid);
+#endif
       child_proc_nr_e = getnprocnr(child_pid);		/* get child slot */ 
+#if 0
+  if(rs_verbose) printf("RS: forked into %d..\n", child_proc_nr_e);
+#endif
       break;						/* continue below */
   }
 
@@ -817,7 +835,10 @@ endpoint_t *endpoint;
 
   s= ds_publish_u32(rp->r_label, child_proc_nr_e);
   if (s != OK)
-	printf("start_service: ds_publish_u32 failed: %d\n", s);
+	printf("RS: start_service: ds_publish_u32 failed: %d\n", s);
+ else if(rs_verbose)
+	printf("RS: start_service: ds_publish_u32 done: %s -> %d\n", 
+  		rp->r_label, child_proc_nr_e);
 
   if (rp->r_dev_nr > 0) {				/* set driver map */
       if ((s=mapdriver5(rp->r_label, strlen(rp->r_label),
@@ -1054,8 +1075,10 @@ struct priv *privp;
 			if (!(rp->r_call_mask[src_word] & mask))
 				continue;
 			call_nr= src_word*src_bits_per_word+src_bit;
+#if 0
 			if(rs_verbose)
 			  printf("RS: init_privs: system call %d\n", call_nr);
+#endif
 			dst_word= call_nr / dst_bits_per_word;
 			mask= (1UL << (call_nr % dst_bits_per_word));
 			if (dst_word >= CALL_MASK_SIZE)

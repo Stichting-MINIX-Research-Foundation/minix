@@ -1,4 +1,4 @@
-/* This file contains the main program of the File System.  It consists of
+/*
  * a loop that gets messages requesting work, carries out the work, and sends
  * replies.
  *
@@ -60,8 +60,6 @@ PUBLIC int main()
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
 	get_work();		/* sets who and call_nr */
-	fp = &fproc[who_p];	/* pointer to proc table struct */
-	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
 	if (who_e == PM_PROC_NR && call_nr != PROC_EVENT)
 		printf("FS: strange, got message %d from PM\n", call_nr);
@@ -143,24 +141,60 @@ PUBLIC int main()
 		continue;
 	}
 
-	switch(call_nr)
-	{
-	case DEVCTL:
+	/* We only expect notify()s from tasks. */
+	if(who_p < 0) {
+    		printf("FS: ignoring message from %d (%d)\n",
+			who_e, m_in.m_type);
+		continue;
+	}
+
+	/* Now it's safe to set and check fp. */
+	fp = &fproc[who_p];	/* pointer to proc table struct */
+	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
+
+	/* Calls from VM. */
+	if(who_e == VM_PROC_NR) {
+	    int caught = 1;
+	    switch(call_nr)
+	    {
+		case VM_VFS_OPEN:
+			error = do_vm_open();
+			break;
+		case VM_VFS_CLOSE:
+			error = do_vm_close();
+			break;
+		case VM_VFS_MMAP:
+			error = do_vm_mmap();
+			break;
+		default:
+			caught = 0;
+			break;
+	   }
+	   if(caught) {
+		reply(who_e, error);
+		continue;
+	   }
+	}
+
+	  /* Other calls. */
+	  switch(call_nr)
+	  {
+	      case DEVCTL:
 		error= do_devctl();
 		if (error != SUSPEND) reply(who_e, error);
 		break;
 
-	case MAPDRIVER:
+	      case MAPDRIVER:
 		error= do_mapdriver();
 		if (error != SUSPEND) reply(who_e, error);
 		break;
 
-	default:
+	      default:
 		/* Call the internal function that does the work. */
 		if (call_nr < 0 || call_nr >= NCALLS) { 
 			error = SUSPEND;
 			/* Not supposed to happen. */
-			printf("FS, warning illegal %d system call by %d\n",
+			printf("VFS: illegal %d system call by %d\n",
 				call_nr, who_e);
 		} else if (fp->fp_pid == PID_FREE) {
 			error = ENOSYS;
@@ -176,7 +210,6 @@ PUBLIC int main()
 
 		/* Copy the results back to the user and send reply. */
 		if (error != SUSPEND) { reply(who_e, error); }
-		
 	}
 #if 0
 	if (!check_vrefs())
@@ -336,13 +369,6 @@ PRIVATE void fs_init()
    * extra block_size requirements are checked at super-block-read-in time.
    */
   if (OPEN_MAX > 127) panic(__FILE__,"OPEN_MAX > 127", NO_NUM);
-  /*
-  if (NR_BUFS < 6) panic(__FILE__,"NR_BUFS < 6", NO_NUM);
-  if (V1_INODE_SIZE != 32) panic(__FILE__,"V1 inode size != 32", NO_NUM);
-  if (V2_INODE_SIZE != 64) panic(__FILE__,"V2 inode size != 64", NO_NUM);
-  if (OPEN_MAX > 8 * sizeof(long))
-  	 panic(__FILE__,"Too few bits in fp_cloexec", NO_NUM);
-  */
   
   /* The following initializations are needed to let dev_opcl succeed .*/
   fp = (struct fproc *) NULL;

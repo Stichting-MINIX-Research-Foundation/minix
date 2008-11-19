@@ -219,6 +219,9 @@ PUBLIC int do_fcntl()
 		return EINVAL;
 	}
 
+	if ( (r = forbidden(f->filp_vno, W_BIT, 0 /*!use_realuid*/)) != OK)
+	  return r;
+
 	/* Copy flock data from userspace. */
 	if((r = sys_datacopy(who_e, (vir_bytes) m_in.name1, 
 	  SELF, (vir_bytes) &flock_arg,
@@ -369,6 +372,7 @@ int cpid;	/* Child process id */
 
   /* Increase the counters in the 'filp' table. */
   cp = &fproc[childno];
+  fp = &fproc[parentno];
   for (i = 0; i < OPEN_MAX; i++)
 	if (cp->fp_filp[i] != NIL_FILP) cp->fp_filp[i]->filp_count++;
 
@@ -379,8 +383,14 @@ int cpid;	/* Child process id */
   /* A forking process never has an outstanding grant,
    * as it isn't blocking on i/o.
    */
-  assert(!GRANT_VALID(fp->fp_grant));
-  assert(!GRANT_VALID(cp->fp_grant));
+  if(GRANT_VALID(fp->fp_grant)) {
+	printf("vfs: fork: fp (endpoint %d) has grant %d\n", fp->fp_endpoint, fp->fp_grant);
+	panic(__FILE__, "fp contains valid grant", NO_NUM);
+  }
+  if(GRANT_VALID(cp->fp_grant)) {
+	printf("vfs: fork: cp (endpoint %d) has grant %d\n", cp->fp_endpoint, cp->fp_grant);
+	panic(__FILE__, "cp contains valid grant", NO_NUM);
+  }
 
   /* A child is not a process leader. */
   cp->fp_sesldr = 0;
@@ -554,7 +564,9 @@ PUBLIC int do_svrctl()
 		*/
 		if(fproc[proc_nr_n].fp_execced) {
 			/* Reply before calling dev_up */
+#if 0
 			printf("do_svrctl: replying before dev_up\n");
+#endif
 			reply(who_e, r);
 			dev_up(major);
 			r= SUSPEND;

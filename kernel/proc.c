@@ -39,22 +39,24 @@
 #include <minix/com.h>
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
-#include "debug.h"
-#include "kernel.h"
-#include "proc.h"
 #include <stddef.h>
 #include <signal.h>
 #include <minix/portio.h>
 #include <minix/u64.h>
+
+#include "debug.h"
+#include "kernel.h"
+#include "proc.h"
+#include "vm.h"
 
 /* Scheduling and message passing functions. The functions are available to 
  * other parts of the kernel through lock_...(). The lock temporarily disables 
  * interrupts to prevent race conditions. 
  */
 FORWARD _PROTOTYPE( int mini_send, (struct proc *caller_ptr, int dst_e,
-		message *m_ptr, unsigned flags));
+		message *m_ptr, int flags));
 FORWARD _PROTOTYPE( int mini_receive, (struct proc *caller_ptr, int src,
-		message *m_ptr, unsigned flags));
+		message *m_ptr, int flags));
 FORWARD _PROTOTYPE( int mini_notify, (struct proc *caller_ptr, int dst));
 FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
 	asynmsg_t *table, size_t size));
@@ -62,8 +64,6 @@ FORWARD _PROTOTYPE( int deadlock, (int function,
 		register struct proc *caller, int src_dst));
 FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
 FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr));
-FORWARD _PROTOTYPE( void enqueue, (struct proc *rp));
-FORWARD _PROTOTYPE( void dequeue, (struct proc *rp));
 FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
 FORWARD _PROTOTYPE( void pick_proc, (void));
 
@@ -82,10 +82,51 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 		break;							\
 	}
 
-#define CopyMess(s,sp,sm,dp,dm) \
-	cp_mess(proc_addr(s)->p_endpoint, \
-		(sp)->p_memmap[D].mem_phys,     \
-		(vir_bytes)sm, (dp)->p_memmap[D].mem_phys, (vir_bytes)dm)
+#define CopyMess(s,sp,sm,dp,dm) do { 			\
+	vir_bytes dstlin;				\
+	endpoint_t e = proc_addr(s)->p_endpoint;	\
+	struct vir_addr src, dst;			\
+	int r;						\
+	timer_start(0, "copymess");			\
+	if((dstlin = umap_local((dp), D, (vir_bytes) dm, sizeof(message))) == 0){\
+		minix_panic("CopyMess: umap_local failed", __LINE__);	\
+	}						\
+			\
+	if(vm_running &&	\
+	 (r=vm_checkrange((dp), (dp), dstlin, sizeof(message), 1, 0)) != OK) { \
+		if(r != VMSUSPEND) 			\
+		  minix_panic("CopyMess: vm_checkrange error", __LINE__); \
+		(dp)->p_vmrequest.saved.msgcopy.dst = (dp);	\
+		(dp)->p_vmrequest.saved.msgcopy.dst_v = (vir_bytes) dm;	\
+  		if(data_copy((sp)->p_endpoint,	\
+			(vir_bytes) (sm), SYSTEM,	\
+			(vir_bytes) &(dp)->p_vmrequest.saved.msgcopy.msgbuf, \
+			sizeof(message)) != OK) {		\
+				minix_panic("CopyMess: data_copy failed", __LINE__);\
+			}				\
+			(dp)->p_vmrequest.saved.msgcopy.msgbuf.m_source = e; \
+			(dp)->p_vmrequest.type = VMSTYPE_MSGCOPY; \
+	} else 	{					\
+		src.proc_nr_e = (sp)->p_endpoint;		\
+		dst.proc_nr_e = (dp)->p_endpoint;		\
+		src.segment = dst.segment = D;			\
+		src.offset = (vir_bytes) (sm);			\
+		dst.offset = (vir_bytes) (dm);			\
+		if(virtual_copy(&src, &dst, sizeof(message)) != OK) {	\
+			kprintf("copymess: copy %d:%lx to %d:%lx failed\n",\
+				(sp)->p_endpoint, (sm), (dp)->p_endpoint, dm);\
+			minix_panic("CopyMess: virtual_copy (1) failed", __LINE__); \
+		}		\
+		src.proc_nr_e = SYSTEM;				\
+		src.offset = (vir_bytes) &e;			\
+		if(virtual_copy(&src, &dst, sizeof(e)) != OK) {		\
+			kprintf("copymess: copy %d:%lx to %d:%lx\n",	\
+				(sp)->p_endpoint, (sm), (dp)->p_endpoint, dm);\
+			minix_panic("CopyMess: virtual_copy (2) failed", __LINE__); \
+		}					\
+	}	\
+	timer_end(0);	\
+} while(0)
 
 /*===========================================================================*
  *				sys_call				     * 
@@ -105,10 +146,24 @@ long bit_map;			/* notification event set or flags */
   int group_size;				/* used for deadlock check */
   int result;					/* the system call's result */
   int src_dst_p;				/* Process slot number */
-  vir_clicks vlo, vhi;		/* virtual clicks containing message to send */
+  size_t msg_size;
 
   if (caller_ptr->p_endpoint == ipc_stats_target)
 	ipc_stats.total= add64u(ipc_stats.total, 1);
+
+#if 0
+  if(src_dst_e != 4 && src_dst_e != 5 &&
+	caller_ptr->p_endpoint != 4 && caller_ptr->p_endpoint != 5) {
+	if(call_nr == SEND)
+		kprintf("(%d SEND to %d) ", caller_ptr->p_endpoint, src_dst_e);
+	else if(call_nr == RECEIVE)
+		kprintf("(%d RECEIVE from %d) ", caller_ptr->p_endpoint, src_dst_e);
+	else if(call_nr == SENDREC)
+		kprintf("(%d SENDREC to %d) ", caller_ptr->p_endpoint, src_dst_e);
+	else
+		kprintf("(%d %d to/from %d) ", caller_ptr->p_endpoint, call_nr, src_dst_e);
+  }
+#endif
 
 #if 1
   if (RTS_ISSET(caller_ptr, SLOT_FREE))
@@ -122,10 +177,10 @@ long bit_map;			/* notification event set or flags */
 
   /* Check destination. SENDA is special because its argument is a table and
    * not a single destination. RECEIVE is the only call that accepts ANY (in
-   * addition to a real endpoint). The other calls (SEND, SENDNB, SENDREC,
+   * addition to a real endpoint). The other calls (SEND, SENDREC,
    * and NOTIFY) require an endpoint to corresponds to a process. In addition,
-   * it is necessary to check whether a process is allow to send to a given
-   * destination. For SENDREC we check s_ipc_sendrec, and for SEND, SENDNB,
+   * it is necessary to check whether a process is allowed to send to a given
+   * destination. For SENDREC we check s_ipc_sendrec, and for SEND,
    * and NOTIFY we check s_ipc_to.
    */
   if (call_nr == SENDA)
@@ -150,7 +205,6 @@ long bit_map;			/* notification event set or flags */
   {
 	/* Require a valid source and/or destination process. */
 	if(!isokendpt(src_dst_e, &src_dst_p)) {
-if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 #if DEBUG_ENABLE_IPC_WARNINGS
 		kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
 			call_nr, proc_nr(caller_ptr), src_dst_e);
@@ -160,7 +214,7 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 		return EDEADSRCDST;
 	}
 
-	/* If the call is to send to a process, i.e., for SEND, SENDNB,
+	/* If the call is to send to a process, i.e., for SEND,
 	 * SENDREC or NOTIFY, verify that the caller is allowed to send to
 	 * the given destination. 
 	 */
@@ -224,40 +278,85 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
   if ((iskerneln(src_dst_p) && call_nr != SENDREC && call_nr != RECEIVE)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
-          call_nr, proc_nr(caller_ptr), src_dst);
+          call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
 	if (caller_ptr->p_endpoint == ipc_stats_target)
 		ipc_stats.call_not_allowed++;
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
-  /* If the call involves a message buffer, i.e., for SEND, SENDNB, SENDREC, 
+  /* Get and check the size of the argument in bytes.
+   * Normally this is just the size of a regular message, but in the
+   * case of SENDA the argument is a table.
+   */
+  if(call_nr == SENDA) {
+	msg_size = (size_t) src_dst_e;
+
+	/* Limit size to something reasonable. An arbitrary choice is 16
+	 * times the number of process table entries.
+	 */
+	if (msg_size > 16*(NR_TASKS + NR_PROCS))
+		return EDOM;
+	msg_size *= sizeof(asynmsg_t);	/* convert to bytes */
+  } else {
+	msg_size = sizeof(*m_ptr);
+  }
+
+  /* If the call involves a message buffer, i.e., for SEND, SENDREC, 
    * or RECEIVE, check the message pointer. This check allows a message to be 
    * anywhere in data or stack or gap. It will have to be made more elaborate 
    * for machines which don't have the gap mapped. 
+   *
+   * We use msg_size decided above.
    */
-  if (call_nr == SEND || call_nr == SENDNB || call_nr == SENDREC ||
-	call_nr == RECEIVE) {
-	vlo = (vir_bytes) m_ptr >> CLICK_SHIFT;		
-	vhi = ((vir_bytes) m_ptr + MESS_SIZE - 1) >> CLICK_SHIFT;
-	if (vlo < caller_ptr->p_memmap[D].mem_vir || vlo > vhi ||
-		vhi >= caller_ptr->p_memmap[S].mem_vir + 
-		caller_ptr->p_memmap[S].mem_len) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-		kprintf(
-		"sys_call: invalid message pointer, trap %d, caller %d\n",
-			call_nr, proc_nr(caller_ptr));
-#endif
-		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.bad_buffer++;
-		return(EFAULT); 		/* invalid message pointer */
+  if (call_nr == SEND || call_nr == SENDREC ||
+	call_nr == RECEIVE || call_nr == SENDA || call_nr == SENDNB) {
+	int r;
+	phys_bytes lin;
+
+	/* Map to linear address. */
+	if((lin = umap_local(caller_ptr, D, (vir_bytes) m_ptr, msg_size)) == 0)
+		return EFAULT;
+
+	/* Check if message pages in calling process are mapped.
+	 * We don't have to check the recipient if this is a send,
+	 * because this code will do that before its receive() starts.
+	 *
+	 * It is important the range is verified as _writable_, because
+	 * the kernel will want to write to the SENDA buffer in the future,
+	 * and those pages may not be shared between processes.
+	 */
+
+	if(vm_running &&
+	 (r=vm_checkrange(caller_ptr, caller_ptr, lin, msg_size, 1, 0)) != OK) {
+		if(r != VMSUSPEND) {
+			kprintf("SYSTEM:sys_call:vm_checkrange: err %d\n", r);
+			return r;
+		}
+		minix_panic("vmsuspend", __LINE__);
+		
+		/* We can't go ahead with this call. Caller is suspended
+		 * and we have to save the state in its process struct.
+		 */
+		caller_ptr->p_vmrequest.saved.sys_call.call_nr = call_nr;
+		caller_ptr->p_vmrequest.saved.sys_call.m_ptr = m_ptr;
+		caller_ptr->p_vmrequest.saved.sys_call.src_dst_e = src_dst_e;
+		caller_ptr->p_vmrequest.saved.sys_call.bit_map = bit_map;
+		caller_ptr->p_vmrequest.type = VMSTYPE_SYS_CALL;
+
+		kprintf("SYSTEM: %s:%d: suspending call 0x%lx on ipc buffer 0x%lx\n",
+			caller_ptr->p_name, caller_ptr->p_endpoint, call_nr, m_ptr);
+
+		/* vm_checkrange() will have suspended caller with VMREQUEST. */
+		return OK;
 	}
-  }
+
+  } 
 
   /* Check for a possible deadlock for blocking SEND(REC) and RECEIVE. */
   if (call_nr == SEND || call_nr == SENDREC || call_nr == RECEIVE) {
       if (group_size = deadlock(call_nr, caller_ptr, src_dst_p)) {
-#if DEBUG_ENABLE_IPC_WARNINGS
+#if 0
           kprintf("sys_call: trap %d from %d to %d deadlocked, group size %d\n",
               call_nr, proc_nr(caller_ptr), src_dst_p, group_size);
 #endif
@@ -273,7 +372,6 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
    *   - SEND:    sender blocks until its message has been delivered
    *   - RECEIVE: receiver blocks until an acceptable message has arrived
    *   - NOTIFY:  asynchronous call; deliver notification or mark pending
-   *   - SENDNB:  nonblocking send
    *   - SENDA:   list of asynchronous send requests
    */
   switch(call_nr) {
@@ -282,21 +380,21 @@ if (src_dst_e == 0) panic("sys_call: no PM", NO_NUM);
 	caller_ptr->p_misc_flags |= REPLY_PENDING;
 	/* fall through */
   case SEND:			
-	result = mini_send(caller_ptr, src_dst_e, m_ptr, 0 /*flags*/);
+	result = mini_send(caller_ptr, src_dst_e, m_ptr, 0);
 	if (call_nr == SEND || result != OK)
 		break;				/* done, or SEND failed */
 	/* fall through for SENDREC */
   case RECEIVE:			
 	if (call_nr == RECEIVE)
 		caller_ptr->p_misc_flags &= ~REPLY_PENDING;
-	result = mini_receive(caller_ptr, src_dst_e, m_ptr, 0 /*flags*/);
+	result = mini_receive(caller_ptr, src_dst_e, m_ptr, 0);
 	break;
   case NOTIFY:
 	result = mini_notify(caller_ptr, src_dst_p);
 	break;
-  case SENDNB:			
-	result = mini_send(caller_ptr, src_dst_e, m_ptr, NON_BLOCKING);
-	break;
+  case SENDNB:
+        result = mini_send(caller_ptr, src_dst_e, m_ptr, NON_BLOCKING);
+        break;
   case SENDA:
 	result = mini_senda(caller_ptr, (asynmsg_t *)m_ptr, (size_t)src_dst_e);
 	break;
@@ -325,10 +423,17 @@ int src_dst;					/* src or dst process */
   register struct proc *xp;			/* process pointer */
   int group_size = 1;				/* start with only caller */
   int trap_flags;
+#if DEBUG_ENABLE_IPC_WARNINGS
+  static struct proc *processes[NR_PROCS + NR_TASKS];
+  processes[0] = cp;
+#endif
 
   while (src_dst != ANY) { 			/* check while process nr */
       int src_dst_e;
       xp = proc_addr(src_dst);			/* follow chain of processes */
+#if DEBUG_ENABLE_IPC_WARNINGS
+      processes[group_size] = xp;
+#endif
       group_size ++;				/* extra process in group */
 
       /* Check whether the last process in the chain has a dependency. If it 
@@ -354,12 +459,38 @@ int src_dst;					/* src or dst process */
 	          return(0);			/* not a deadlock */
 	      }
 	  }
+#if DEBUG_ENABLE_IPC_WARNINGS
+	  {
+		int i;
+		kprintf("deadlock between these processes:\n");
+		for(i = 0; i < group_size; i++) {
+			kprintf(" %10s ", processes[i]->p_name);
+			proc_stacktrace(processes[i]);
+		}
+	  }
+#endif
           return(group_size);			/* deadlock found */
       }
   }
   return(0);					/* not a deadlock */
 }
 
+/*===========================================================================*
+ *				sys_call_restart			     * 
+ *===========================================================================*/
+PUBLIC void sys_call_restart(caller)
+struct proc *caller;
+{
+	int r;
+	minix_panic("sys_call_restart", NO_NUM);
+	kprintf("restarting sys_call code 0x%lx, "
+		"m_ptr 0x%lx, srcdst %d, bitmap 0x%lx, but not really\n",
+		caller->p_vmrequest.saved.sys_call.call_nr,
+		caller->p_vmrequest.saved.sys_call.m_ptr,
+		caller->p_vmrequest.saved.sys_call.src_dst_e,
+		caller->p_vmrequest.saved.sys_call.bit_map);
+	caller->p_reg.retreg = r;
+}
 
 /*===========================================================================*
  *				mini_send				     * 
@@ -368,7 +499,7 @@ PRIVATE int mini_send(caller_ptr, dst_e, m_ptr, flags)
 register struct proc *caller_ptr;	/* who is trying to send a message? */
 int dst_e;				/* to whom is message being sent? */
 message *m_ptr;				/* pointer to message buffer */
-unsigned flags;				/* system call flags */
+int flags;
 {
 /* Send a message from 'caller_ptr' to 'dst'. If 'dst' is blocked waiting
  * for this message, copy the message to it and unblock 'dst'. If 'dst' is
@@ -391,14 +522,18 @@ unsigned flags;				/* system call flags */
   /* Check if 'dst' is blocked waiting for this message. The destination's 
    * SENDING flag may be set when its SENDREC call blocked while sending.  
    */
-  if ( (RTS_ISSET(dst_ptr, RECEIVING) && !RTS_ISSET(dst_ptr, SENDING)) &&
-       (dst_ptr->p_getfrom_e == ANY
-         || dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
+  if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint)) {
 	/* Destination is indeed waiting for this message. */
 	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 		 dst_ptr->p_messbuf);
 	RTS_UNSET(dst_ptr, RECEIVING);
-  } else if ( ! (flags & NON_BLOCKING)) {
+  } else {
+	if(flags & NON_BLOCKING) {
+		if (caller_ptr->p_endpoint == ipc_stats_target)
+			ipc_stats.not_ready++;
+		return(ENOTREADY);
+	}
+
 	/* Destination is not waiting.  Block and dequeue caller. */
 	caller_ptr->p_messbuf = m_ptr;
 	RTS_SET(caller_ptr, SENDING);
@@ -409,10 +544,6 @@ unsigned flags;				/* system call flags */
 	while (*xpp != NIL_PROC) xpp = &(*xpp)->p_q_link;	
 	*xpp = caller_ptr;			/* add caller to end */
 	caller_ptr->p_q_link = NIL_PROC;	/* mark new end of list */
-  } else {
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.not_ready++;
-	return(ENOTREADY);
   }
   return(OK);
 }
@@ -424,11 +555,11 @@ PRIVATE int mini_receive(caller_ptr, src_e, m_ptr, flags)
 register struct proc *caller_ptr;	/* process trying to get message */
 int src_e;				/* which message source is wanted */
 message *m_ptr;				/* pointer to message buffer */
-unsigned flags;				/* system call flags */
+int flags;
 {
 /* A process or task wants to get a message.  If a message is already queued,
  * acquire it and deblock the sender.  If no message from the desired source
- * is available block the caller, unless the flags don't allow blocking.  
+ * is available block the caller.
  */
   register struct proc **xpp;
   register struct notification **ntf_q_pp;
@@ -491,7 +622,9 @@ unsigned flags;				/* system call flags */
 #if 1
 	    if (RTS_ISSET(*xpp, SLOT_FREE))
 	    {
-		kprintf("listening to the dead?!?\n");
+		kprintf("%d: receive from %d; found dead %d (%s)?\n",
+			caller_ptr->p_endpoint, src_e, (*xpp)->p_endpoint,
+			(*xpp)->p_name);
 		if (caller_ptr->p_endpoint == ipc_stats_target)
 			ipc_stats.deadproc++;
 		return EINVAL;
@@ -580,6 +713,28 @@ int dst;				/* which process to notify */
   return(OK);
 }
 
+#define ASCOMPLAIN(caller, entry, field)	\
+	kprintf("kernel:%s:%d: asyn failed for %s in %s "	\
+	"(%d/%d, tab 0x%lx)\n",__FILE__,__LINE__,	\
+field, caller->p_name, entry, priv(caller)->s_asynsize, priv(caller)->s_asyntab)
+
+#define A_RETRIEVE(entry, field)	\
+  if(data_copy(caller_ptr->p_endpoint,	\
+	 table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
+		SYSTEM, (vir_bytes) &tabent.field,	\
+			sizeof(tabent.field)) != OK) {\
+		ASCOMPLAIN(caller_ptr, entry, #field);	\
+		return EFAULT; \
+	}
+
+#define A_INSERT(entry, field)	\
+  if(data_copy(SYSTEM, (vir_bytes) &tabent.field, \
+	caller_ptr->p_endpoint,	\
+ 	table_v + (entry)*sizeof(asynmsg_t) + offsetof(struct asynmsg,field),\
+		sizeof(tabent.field)) != OK) {\
+		ASCOMPLAIN(caller_ptr, entry, #field);	\
+		return EFAULT; \
+	}
 
 /*===========================================================================*
  *				mini_senda				     *
@@ -591,11 +746,11 @@ size_t size;
 {
 	int i, dst_p, done, do_notify;
 	unsigned flags;
-	phys_bytes tab_phys;
 	struct proc *dst_ptr;
 	struct priv *privp;
 	message *m_ptr;
 	asynmsg_t tabent;
+	vir_bytes table_v = (vir_bytes) table;
 
 	privp= priv(caller_ptr);
 	if (!(privp->s_flags & SYS_PROC))
@@ -619,6 +774,9 @@ size_t size;
 
 	/* Limit size to something reasonable. An arbitrary choice is 16
 	 * times the number of process table entries.
+	 *
+	 * (this check has been duplicated in sys_call but is left here
+	 * as a sanity check)
 	 */
 	if (size > 16*(NR_TASKS + NR_PROCS))
 	{
@@ -627,26 +785,14 @@ size_t size;
 		return EDOM;
 	}
 	
-	/* Map table */
-	tab_phys= umap_local(caller_ptr, D, (vir_bytes)table,
-		size*sizeof(table[0]));
-	if (tab_phys == 0)
-	{
-		kprintf("mini_senda: got bad table pointer/size\n");
-		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.bad_buffer++;
-		return EFAULT;
-	}
-
 	/* Scan the table */
 	do_notify= FALSE;	
 	done= TRUE;
 	for (i= 0; i<size; i++)
 	{
+
 		/* Read status word */
-		phys_copy(tab_phys + i*sizeof(table[0]) +
-			offsetof(struct asynmsg, flags),
-			vir2phys(&tabent.flags), sizeof(tabent.flags));
+		A_RETRIEVE(i, flags);
 		flags= tabent.flags;
 
 		/* Skip empty entries */
@@ -662,28 +808,20 @@ size_t size;
 			return EINVAL;
 		}
 
-		/* Skip entry is AMF_DONE is already set */
+		/* Skip entry if AMF_DONE is already set */
 		if (flags & AMF_DONE)
 			continue;
 
 		/* Get destination */
-		phys_copy(tab_phys + i*sizeof(table[0]) +
-			offsetof(struct asynmsg, dst),
-			vir2phys(&tabent.dst), sizeof(tabent.dst));
+		A_RETRIEVE(i, dst);
 
 		if (!isokendpt(tabent.dst, &dst_p))
 		{
 			/* Bad destination, report the error */
 			tabent.result= EDEADSRCDST;
-			phys_copy(vir2phys(&tabent.result),
-				tab_phys + i*sizeof(table[0]) +
-				offsetof(struct asynmsg, result),
-				sizeof(tabent.result));
+			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
-			phys_copy(vir2phys(&tabent.flags),
-				tab_phys + i*sizeof(table[0]) +
-				offsetof(struct asynmsg, flags),
-				sizeof(tabent.flags));
+			A_INSERT(i, flags);
 
 			if (flags & AMF_NOTIFY)
 				do_notify= 1;
@@ -701,15 +839,9 @@ size_t size;
 		if (dst_ptr->p_rts_flags & NO_ENDPOINT)
 		{
 			tabent.result= EDSTDIED;
-			phys_copy(vir2phys(&tabent.result),
-				tab_phys + i*sizeof(table[0]) +
-				offsetof(struct asynmsg, result),
-				sizeof(tabent.result));
+			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
-			phys_copy(vir2phys(&tabent.flags),
-				tab_phys + i*sizeof(table[0]) +
-				offsetof(struct asynmsg, flags),
-				sizeof(tabent.flags));
+			A_INSERT(i, flags);
 
 			if (flags & AMF_NOTIFY)
 				do_notify= TRUE;
@@ -732,19 +864,12 @@ size_t size;
 			CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
 				dst_ptr->p_messbuf);
 
-			if ((dst_ptr->p_rts_flags &= ~RECEIVING) == 0)
-				enqueue(dst_ptr);
+			RTS_UNSET(dst_ptr, RECEIVING);
 
 			tabent.result= OK;
-			phys_copy(vir2phys(&tabent.result),
-				tab_phys + i*sizeof(table[0]) +
-				offsetof(struct asynmsg, result),
-				sizeof(tabent.result));
+			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
-			phys_copy(vir2phys(&tabent.flags),
-				tab_phys + i*sizeof(table[0]) +
-				offsetof(struct asynmsg, flags),
-				sizeof(tabent.flags));
+			A_INSERT(i, flags);
 
 			if (flags & AMF_NOTIFY)
 				do_notify= 1;
@@ -759,11 +884,18 @@ size_t size;
 		} 
 	}
 	if (do_notify)
-		kprintf("mini_senda: should notifiy caller\n");
+		kprintf("mini_senda: should notify caller\n");
 	if (!done)
 	{
 		privp->s_asyntab= (vir_bytes)table;
 		privp->s_asynsize= size;
+#if 0
+		if(caller_ptr->p_endpoint > INIT_PROC_NR) {
+			kprintf("kernel: %s (%d) asynsend table at 0x%lx, %d\n", 
+				caller_ptr->p_name, caller_ptr->p_endpoint,
+				table, size);
+		}
+#endif
 	}
 	return OK;
 }
@@ -814,28 +946,19 @@ struct proc *dst_ptr;
 	unsigned flags;
 	size_t size;
 	endpoint_t dst_e;
-	phys_bytes tab_phys;
 	asynmsg_t *table_ptr;
 	message *m_ptr;
 	struct priv *privp;
 	asynmsg_t tabent;
+	vir_bytes table_v;
+	struct proc *caller_ptr;
 
 	privp= priv(src_ptr);
 	size= privp->s_asynsize;
+	table_v = privp->s_asyntab;
+	caller_ptr = src_ptr;
 
 	dst_e= dst_ptr->p_endpoint;
-
-	/* Map table */
-	tab_phys= umap_local(src_ptr, D, privp->s_asyntab,
-		size*sizeof(tabent));
-	if (tab_phys == 0)
-	{
-		kprintf("try_one: got bad table pointer/size\n");
-		privp->s_asynsize= 0;
-		if (src_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.bad_buffer++;
-		return EFAULT;
-	}
 
 	/* Scan the table */
 	do_notify= FALSE;	
@@ -843,9 +966,7 @@ struct proc *dst_ptr;
 	for (i= 0; i<size; i++)
 	{
 		/* Read status word */
-		phys_copy(tab_phys + i*sizeof(tabent) +
-			offsetof(struct asynmsg, flags),
-			vir2phys(&tabent.flags), sizeof(tabent.flags));
+		A_RETRIEVE(i, flags);
 		flags= tabent.flags;
 
 		/* Skip empty entries */
@@ -877,9 +998,7 @@ struct proc *dst_ptr;
 		done= FALSE;
 
 		/* Get destination */
-		phys_copy(tab_phys + i*sizeof(tabent) +
-			offsetof(struct asynmsg, dst),
-			vir2phys(&tabent.dst), sizeof(tabent.dst));
+		A_RETRIEVE(i, dst);
 
 		if (tabent.dst != dst_e)
 		{
@@ -895,15 +1014,9 @@ struct proc *dst_ptr;
 			dst_ptr->p_messbuf);
 
 		tabent.result= OK;
-		phys_copy(vir2phys(&tabent.result),
-			tab_phys + i*sizeof(tabent) +
-			offsetof(struct asynmsg, result),
-			sizeof(tabent.result));
+		A_INSERT(i, result);
 		tabent.flags= flags | AMF_DONE;
-		phys_copy(vir2phys(&tabent.flags),
-			tab_phys + i*sizeof(tabent) +
-			offsetof(struct asynmsg, flags),
-			sizeof(tabent.flags));
+		A_INSERT(i, flags);
 
 		if (flags & AMF_NOTIFY)
 		{
@@ -941,17 +1054,54 @@ int dst_e;			/* (endpoint) who is to be notified */
 
   /* Call from task level, locking is required. */
   else {
-      lock(0, "notify");
+      lock;
       result = mini_notify(proc_addr(src), dst); 
-      unlock(0);
+      unlock;
   }
   return(result);
 }
 
 /*===========================================================================*
+ *				soft_notify				     *
+ *===========================================================================*/
+PUBLIC int soft_notify(dst_e)
+int dst_e;			/* (endpoint) who is to be notified */
+{
+	int dst, u = 0;
+	struct proc *dstp, *sys = proc_addr(SYSTEM);
+
+/* Delayed interface to notify() from SYSTEM that is safe/easy to call
+ * from more places than notify().
+ */
+	if(!intr_disabled()) { lock; u = 1; }
+
+	{
+		if(!isokendpt(dst_e, &dst))
+			minix_panic("soft_notify to dead ep", dst_e);
+
+		dstp = proc_addr(dst);
+
+		if(!dstp->p_softnotified) {
+			dstp->next_soft_notify = softnotify;
+			softnotify = dstp;
+			dstp->p_softnotified = 1;
+	
+			if (RTS_ISSET(sys, RECEIVING)) {
+				sys->p_messbuf->m_source = SYSTEM;
+				RTS_UNSET(sys, RECEIVING);
+			}
+		}
+	}
+
+	if(u) { unlock; }
+
+	return OK;
+}
+
+/*===========================================================================*
  *				enqueue					     * 
  *===========================================================================*/
-PRIVATE void enqueue(rp)
+PUBLIC void enqueue(rp)
 register struct proc *rp;	/* this process is now runnable */
 {
 /* Add 'rp' to one of the queues of runnable processes.  This function is 
@@ -963,8 +1113,9 @@ register struct proc *rp;	/* this process is now runnable */
   int front;					/* add to front or back */
 
 #if DEBUG_SCHED_CHECK
-  check_runqueues("enqueue1");
-  if (rp->p_ready) kprintf("enqueue() already ready process\n");
+  if(!intr_disabled()) { minix_panic("enqueue with interrupts enabled", NO_NUM); }
+  CHECK_RUNQUEUES;
+  if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
 #endif
 
   /* Determine where to insert to process. */
@@ -996,14 +1147,14 @@ register struct proc *rp;	/* this process is now runnable */
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 1;
-  check_runqueues("enqueue2");
+  CHECK_RUNQUEUES;
 #endif
 }
 
 /*===========================================================================*
  *				dequeue					     * 
  *===========================================================================*/
-PRIVATE void dequeue(rp)
+PUBLIC void dequeue(rp)
 register struct proc *rp;	/* this process is no longer runnable */
 {
 /* A process must be removed from the scheduling queues, for example, because
@@ -1017,12 +1168,13 @@ register struct proc *rp;	/* this process is no longer runnable */
   /* Side-effect for kernel: check if the task's stack still is ok? */
   if (iskernelp(rp)) { 				
 	if (*priv(rp)->s_stack_guard != STACK_GUARD)
-		panic("stack overrun by task", proc_nr(rp));
+		minix_panic("stack overrun by task", proc_nr(rp));
   }
 
 #if DEBUG_SCHED_CHECK
-  check_runqueues("dequeue1");
-  if (! rp->p_ready) kprintf("dequeue() already unready process\n");
+  CHECK_RUNQUEUES;
+  if(!intr_disabled()) { minix_panic("dequeue with interrupts enabled", NO_NUM); }
+  if (! rp->p_ready) minix_panic("dequeue() already unready process", NO_NUM);
 #endif
 
   /* Now make sure that the process is not in its ready queue. Remove the 
@@ -1045,7 +1197,7 @@ register struct proc *rp;	/* this process is no longer runnable */
 
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 0;
-  check_runqueues("dequeue2");
+  CHECK_RUNQUEUES;
 #endif
 }
 
@@ -1101,12 +1253,16 @@ PRIVATE void pick_proc()
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
       if ( (rp = rdy_head[q]) != NIL_PROC) {
           next_ptr = rp;			/* run process 'rp' next */
+#if 0
+	  if(rp->p_endpoint != 4 && rp->p_endpoint != 5 && rp->p_endpoint != IDLE && rp->p_endpoint != SYSTEM)
+	  	kprintf("[run %s]",  rp->p_name);
+#endif
           if (priv(rp)->s_flags & BILLABLE)	 	
               bill_ptr = rp;			/* bill for system time */
           return;				 
       }
   }
-  panic("no ready process", NO_NUM);
+  minix_panic("no ready process", NO_NUM);
 }
 
 /*===========================================================================*
@@ -1127,7 +1283,7 @@ timer_t *tp;					/* watchdog timer pointer */
 
   for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
       if (! isemptyp(rp)) {				/* check slot use */
-	  lock(5,"balance_queues");
+	  lock;
 	  if (rp->p_priority > rp->p_max_priority) {	/* update priority? */
 	      if (rp->p_rts_flags == 0) dequeue(rp);	/* take off queue */
 	      ticks_added += rp->p_quantum_size;	/* do accounting */
@@ -1138,7 +1294,7 @@ timer_t *tp;					/* watchdog timer pointer */
 	      ticks_added += rp->p_quantum_size - rp->p_ticks_left;
               rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
 	  }
-	  unlock(5);
+	  unlock;
       }
   }
 #if DEBUG
@@ -1161,9 +1317,9 @@ message *m_ptr;			/* pointer to message buffer */
 {
 /* Safe gateway to mini_send() for tasks. */
   int result;
-  lock(2, "send");
-  result = mini_send(proc_ptr, dst_e, m_ptr, NON_BLOCKING);
-  unlock(2);
+  lock;
+  result = mini_send(proc_ptr, dst_e, m_ptr, 0);
+  unlock;
   return(result);
 }
 
@@ -1174,9 +1330,9 @@ PUBLIC void lock_enqueue(rp)
 struct proc *rp;		/* this process is now runnable */
 {
 /* Safe gateway to enqueue() for tasks. */
-  lock(3, "enqueue");
+  lock;
   enqueue(rp);
-  unlock(3);
+  unlock;
 }
 
 /*===========================================================================*
@@ -1192,10 +1348,22 @@ struct proc *rp;		/* this process is no longer runnable */
 	 */
 	dequeue(rp);
   } else {
-	lock(4, "dequeue");
+	lock;
 	dequeue(rp);
-	unlock(4);
+	unlock;
   }
+}
+
+/*===========================================================================*
+ *				endpoint_lookup				     *
+ *===========================================================================*/
+PUBLIC struct proc *endpoint_lookup(endpoint_t e)
+{
+	int n;
+
+	if(!isokendpt(e, &n)) return NULL;
+
+	return proc_addr(n);
 }
 
 /*===========================================================================*
@@ -1228,22 +1396,29 @@ int *p, fatalflag;
 	*p = _ENDPOINT_P(e);
 	if(!isokprocn(*p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
+#if 0
 		kprintf("kernel:%s:%d: bad endpoint %d: proc %d out of range\n",
 		file, line, e, *p);
 #endif
+#endif
 	} else if(isemptyn(*p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
+#if 0
 	kprintf("kernel:%s:%d: bad endpoint %d: proc %d empty\n", file, line, e, *p);
+#endif
 #endif
 	} else if(proc_addr(*p)->p_endpoint != e) {
 #if DEBUG_ENABLE_IPC_WARNINGS
+#if 0
 		kprintf("kernel:%s:%d: bad endpoint %d: proc %d has ept %d (generation %d vs. %d)\n", file, line,
 		e, *p, proc_addr(*p)->p_endpoint,
 		_ENDPOINT_G(e), _ENDPOINT_G(proc_addr(*p)->p_endpoint));
 #endif
+#endif
 	} else ok = 1;
 	if(!ok && fatalflag) {
-		panic("invalid endpoint ", e);
+		minix_panic("invalid endpoint ", e);
 	}
 	return ok;
 }
+

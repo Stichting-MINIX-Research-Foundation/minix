@@ -50,12 +50,12 @@ OBJECTS	= \
 	$(SYSTEM)(do_sigreturn.o) \
 	$(SYSTEM)(do_abort.o) \
 	$(SYSTEM)(do_getinfo.o) \
-	$(SYSTEM)(do_vm.o) \
 	$(SYSTEM)(do_vm_setbuf.o) \
 	$(SYSTEM)(do_sprofile.o) \
 	$(SYSTEM)(do_cprofile.o) \
 	$(SYSTEM)(do_profbuf.o) \
-	$(SYSTEM)(do_mapdma.o) 
+	$(SYSTEM)(do_mapdma.o) \
+	$(SYSTEM)(do_vmctl.o)
 
 build $(SYSTEM):	$(OBJECTS)
 	aal cr $@ *.o
@@ -172,3 +172,6 @@ $(SYSTEM)(do_profbuf.o):        do_profbuf.c
 
 $(SYSTEM)(do_mapdma.o):        do_mapdma.c
 	$(CC) do_mapdma.c
+
+$(SYSTEM)(do_vmctl.o):        do_vmctl.c
+	$(CC) do_vmctl.c

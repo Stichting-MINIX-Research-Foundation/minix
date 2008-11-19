@@ -15,7 +15,7 @@
 
 #define PRINTPROCS (sizeof(procs)/sizeof(procs[0]))
 
-static char print_buf[80];	/* output is buffered here */
+static char print_buf[800];	/* output is buffered here */
 
 int kputc_use_private_grants= 0;
 

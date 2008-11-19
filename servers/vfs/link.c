@@ -261,10 +261,13 @@ PUBLIC int do_truncate()
 PUBLIC int do_ftruncate()
 {
 /* As with do_truncate(), truncate_inode() does the actual work. */
+  int r;
   struct filp *rfilp;
   
   if ( (rfilp = get_filp(m_in.m2_i1)) == NIL_FILP)
         return err_code;
+  if ( (r = forbidden(rfilp->filp_vno, W_BIT, 0 /*!use_realuid*/)) != OK)
+	return r;
   return truncate_vn(rfilp->filp_vno, m_in.m2_l1);
 }
 

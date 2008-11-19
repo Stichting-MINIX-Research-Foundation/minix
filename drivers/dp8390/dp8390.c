@@ -59,6 +59,7 @@
 #include <net/hton.h>
 #include <net/gen/ether.h>
 #include <net/gen/eth_io.h>
+#include <sys/vm_i386.h>
 #include <sys/vm.h>
 #include "assert.h"
 
@@ -2540,18 +2541,22 @@ dpeth_t *dep;
 		return;
 	}
 
-	size = dep->de_ramsize + PAGE_SIZE;	/* Add PAGE_SIZE for
+	size = dep->de_ramsize + I386_PAGE_SIZE;	/* Add I386_PAGE_SIZE for
 						 * alignment
 						 */
 	buf= malloc(size);
 	if (buf == NULL)
 		panic(__FILE__, "map_hw_buffer: cannot malloc size", size);
-	o= PAGE_SIZE - ((vir_bytes)buf % PAGE_SIZE);
+	o= I386_PAGE_SIZE - ((vir_bytes)buf % I386_PAGE_SIZE);
 	abuf= buf + o;
 	printf("buf at 0x%x, abuf at 0x%x\n", buf, abuf);
 
+#if 0
 	r= sys_vm_map(SELF, 1 /* map */, (vir_bytes)abuf,
 			dep->de_ramsize, (phys_bytes)dep->de_linmem);
+#else
+	r = ENOSYS;
+#endif
 	if (r != OK)
 		panic(__FILE__, "map_hw_buffer: sys_vm_map failed", r);
 	dep->de_locmem = abuf;

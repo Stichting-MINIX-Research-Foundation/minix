@@ -7,6 +7,7 @@ Created:	Dec 2005 by Philip Homburg
 #include "../drivers.h"
 #include <ibm/pci.h>
 #include <sys/vm.h>
+#include <sys/vm_i386.h>
 
 #include "ti1225.h"
 #include "i82365.h"
@@ -29,7 +30,7 @@ PRIVATE struct port
 	char *base_ptr;
 	volatile struct csr *csr_ptr;
 
-	char buffer[2*PAGE_SIZE];
+	char buffer[2*I386_PAGE_SIZE];
 } ports[NR_PORTS];
 
 #define PF_PRESENT	1
@@ -257,8 +258,8 @@ u32_t base;
 	vir_bytes buf_base;
 
 	buf_base= (vir_bytes)pp->buffer;
-	if (buf_base % PAGE_SIZE)
-		buf_base += PAGE_SIZE-(buf_base % PAGE_SIZE);
+	if (buf_base % I386_PAGE_SIZE)
+		buf_base += I386_PAGE_SIZE-(buf_base % I386_PAGE_SIZE);
 	pp->base_ptr= (char *)buf_base;
 	if (debug)
 	{
@@ -269,8 +270,12 @@ u32_t base;
 	/* Clear low order bits in base */
 	base &= ~(u32_t)0xF;
 
+#if 0
 	r= sys_vm_map(SELF, 1 /* map */, (vir_bytes)pp->base_ptr,
-		PAGE_SIZE, (phys_bytes)base);
+		I386_PAGE_SIZE, (phys_bytes)base);
+#else
+	r = ENOSYS;
+#endif
 	if (r != OK)
 		panic("ti1225", "map_regs: sys_vm_map failed", r);
 }
@@ -422,7 +427,7 @@ struct port *pp;
 		csr_present= pp->csr_ptr->csr_present;
 		if (csr_present & CP_PWRCYCLE)
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < MICROS_TO_TICKS(100000));
+	} while (getuptime(&t1)==OK && (t1-t0) < micros_to_ticks(100000));
 
 	if (!(csr_present & CP_PWRCYCLE))
 	{

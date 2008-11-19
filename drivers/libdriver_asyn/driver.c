@@ -43,27 +43,9 @@
 #include <minix/mq.h>
 #include "driver.h"
 
-#if (CHIP == INTEL)
-
-#if USE_EXTRA_DMA_BUF && DMA_BUF_SIZE < 2048
-/* A bit extra scratch for the Adaptec driver. */
-#define BUF_EXTRA	(2048 - DMA_BUF_SIZE)
-#else
-#define BUF_EXTRA	0
-#endif
-
 /* Claim space for variables. */
-PRIVATE u8_t buffer[(unsigned) 2 * DMA_BUF_SIZE + BUF_EXTRA];
-u8_t *tmp_buf;			/* the DMA buffer eventually */
+u8_t *tmp_buf = NULL;		/* the DMA buffer eventually */
 phys_bytes tmp_phys;		/* phys address of DMA buffer */
-
-#else /* CHIP != INTEL */
-
-/* Claim space for variables. */
-u8_t tmp_buf[DMA_BUF_SIZE];	/* the DMA buffer */
-phys_bytes tmp_phys;		/* phys address of DMA buffer */
-
-#endif /* CHIP != INTEL */
 
 FORWARD _PROTOTYPE( void init_buffer, (void) );
 FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp, int safe) );
@@ -88,9 +70,6 @@ struct driver *dp;	/* Device dependent entry points. */
   /* Init MQ library. */
   mq_init();
 
-  /* Get a DMA buffer. */
-  init_buffer();
-
   /* Here is the main loop of the disk task.  It waits for a message, carries
    * it out, and sends a reply.
    */
@@ -112,6 +91,7 @@ struct driver *dp;	/* Device dependent entry points. */
 	device_caller = mess.m_source;
 	proc_nr = mess.IO_ENDPT;
 
+#if 0
 	if (mess.m_type != SYN_ALARM && mess.m_type != DEV_PING &&
 		mess.m_type != 4105 /* notify from TTY */ &&
 		mess.m_type != DEV_SELECT &&
@@ -119,9 +99,10 @@ struct driver *dp;	/* Device dependent entry points. */
 		mess.m_type != DIAGNOSTICS_S &&
 		mess.m_type != CANCEL)
 	{
-		printf("libdriver_asyn`driver_task: message %d\n",
-			mess.m_type);
+		printf("libdriver_asyn`driver_task: msg %d / 0x%x from %d\n",
+			mess.m_type, mess.m_type, mess.m_source);
 	}
+#endif
 
 	if (mess.m_type == DEV_SELECT)
 	{
@@ -129,9 +110,11 @@ struct driver *dp;	/* Device dependent entry points. */
 		if (first)
 		{
 			first= 0;
+#if 0
 			printf(
 	"libdriver_asyn`driver_task: first DEV_SELECT: minor 0x%x, ops 0x%x\n",
 				mess.DEVICE, mess.IO_ENDPT);
+#endif
 		}
 	}
 
@@ -223,15 +206,19 @@ struct driver *dp;	/* Device dependent entry points. */
 		}
 		else if (mess.m_type == DIAGNOSTICS_S)
 		{
+#if 0
 			if (device_caller == FS_PROC_NR)
 				printf("driver_task: sending DIAG_REPL to FS\n");
+#endif
 			reply_mess.m_type = DIAG_REPL;
 			reply_mess.REP_STATUS = r;	
 		}
 		else
 		{
+#if 0
 			printf("driver_task: TASK_REPLY to req %d\n",
 				mess.m_type);
+#endif
 			reply_mess.m_type = TASK_REPLY;
 			reply_mess.REP_ENDPT = proc_nr;
 			/* Status is # of bytes transferred or error code. */
@@ -258,18 +245,11 @@ PRIVATE void init_buffer()
  * 'tmp_phys', the normal address is 'tmp_buf'.
  */
 
-#if (CHIP == INTEL)
   unsigned left;
 
-  tmp_buf = buffer;
-  sys_umap(SELF, D, (vir_bytes)buffer, (phys_bytes)sizeof(buffer), &tmp_phys);
-
-  if ((left = dma_bytes_left(tmp_phys)) < DMA_BUF_SIZE) {
-	/* First half of buffer crosses a 64K boundary, can't DMA into that */
-	tmp_buf += left;
-	tmp_phys += left;
+  if(!(tmp_buf = alloc_contig(2*DMA_BUF_SIZE, 0, &tmp_phys))) {
+	panic(__FILE__, "can't allocate tmp_buf", NO_NUM);
   }
-#endif /* CHIP == INTEL */
 }
 
 /*===========================================================================*
@@ -557,6 +537,8 @@ PUBLIC int mq_queue(message *m)
 	return OK;
 }
 
+#if 0
+
 #define ASYN_NR	100
 PRIVATE asynmsg_t msgtable[ASYN_NR];
 PRIVATE int first_slot= 0, next_slot= 0;
@@ -644,3 +626,4 @@ message *mp;
 	return senda(msgtable+first_slot, next_slot-first_slot);
 }
 
+#endif

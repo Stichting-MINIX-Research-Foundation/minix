@@ -1,5 +1,5 @@
 /* This file contains a collection of miscellaneous procedures:
- *   panic:	    abort MINIX due to a fatal error
+ *   minix_panic:    abort MINIX due to a fatal error
  *   kprintf:       (from lib/sysutil/kprintf.c)
  *   kputc:         buffered putc used by kernel kprintf
  */
@@ -9,26 +9,32 @@
 
 #include <unistd.h>
 #include <signal.h>
+#include <string.h>
+
+#include <minix/sysutil.h>
+#include <minix/sys_config.h>
 
 /*===========================================================================*
- *				panic                                        *
+ *			minix_panic                                        *
  *===========================================================================*/
-PUBLIC void panic(mess,nr)
-_CONST char *mess;
+PUBLIC void minix_panic(mess,nr)
+char *mess;
 int nr;
 {
 /* The system has run aground of a fatal kernel error. Terminate execution. */
-  static int panicking = 0;
-  if (panicking ++) return;		/* prevent recursive panics */
+  if (minix_panicing ++) return;		/* prevent recursive panics */
 
   if (mess != NULL) {
-	kprintf("\nKernel panic: %s", mess);
-	if (nr != NO_NUM) kprintf(" %d", nr);
+	kprintf("kernel panic: %s", mess);
+	if(nr != NO_NUM)
+		kprintf(" %d", nr);
 	kprintf("\n");
+	kprintf("kernel stacktrace: ");
+	util_stacktrace();
   }
 
   /* Abort MINIX. */
-  prepare_shutdown(RBT_PANIC);
+  minix_shutdown(NULL);
 }
 
 
@@ -36,6 +42,7 @@ int nr;
 
 #define printf kprintf
 #include "../lib/sysutil/kprintf.c"
+
 #define END_OF_KMESS 	0
 
 /*===========================================================================*
@@ -54,11 +61,12 @@ int c;					/* character to append */
       	ser_putc(c);
       }
       kmess.km_buf[kmess.km_next] = c;	/* put normal char in buffer */
-      if (kmess.km_size < KMESS_BUF_SIZE)
+      if (kmess.km_size < sizeof(kmess.km_buf))
           kmess.km_size += 1;		
-      kmess.km_next = (kmess.km_next + 1) % KMESS_BUF_SIZE;
+      kmess.km_next = (kmess.km_next + 1) % _KMESS_BUF_SIZE;
   } else {
       int p, outprocs[] = OUTPUT_PROCS_ARRAY;
+      if(minix_panicing) return;
       for(p = 0; outprocs[p] != NONE; p++) {
 	 if(isokprocn(outprocs[p]) && !isemptyn(outprocs[p])) {
            send_sig(outprocs[p], SIGKMESS);

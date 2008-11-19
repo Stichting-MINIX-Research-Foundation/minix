@@ -12,7 +12,7 @@ gen_drv_dir = ../../gen_drivers/cyclic_dma
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i
-LIBS = -lsys -lsysutil 
+LIBS = -lsys
 
 # build local binary
 all:	es1370

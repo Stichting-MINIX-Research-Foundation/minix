@@ -83,7 +83,9 @@ vir_bytes bytes;
 	int access = 0, size;
 	int j;
 	iovec_t *v;
-	static iovec_t new_iovec[NR_IOREQS];
+	static iovec_t *new_iovec;
+
+	STATICINIT(new_iovec, NR_IOREQS);
 
 	/* Number of grants allocated in vector I/O. */
 	*vec_grants = 0;
@@ -195,8 +197,10 @@ int flags;			/* special flags, like O_NONBLOCK */
   int vec_grants;
   int op_used;
   void *buf_used;
-  static cp_grant_id_t gids[NR_IOREQS];
+  static cp_grant_id_t *gids;
   endpoint_t driver_e;
+
+  STATICINIT(gids, NR_IOREQS);
 
   /* Determine driver endpoint for this device */
   driver_e = driver_endpoints[(dev >> MAJOR) & BYTE].driver_e;

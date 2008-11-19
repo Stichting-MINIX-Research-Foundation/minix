@@ -16,24 +16,14 @@
 PUBLIC int do_readbios(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-  int proc_nr;
-  struct proc *p;
-  phys_bytes address, phys_buf, phys_bios;
-  vir_bytes buf;
-  size_t size;
+  struct vir_addr src, dst;     
+        
+  src.segment = BIOS_SEG;
+  dst.segment = D;
+  src.offset = m_ptr->RDB_ADDR;
+  dst.offset = (vir_bytes) m_ptr->RDB_BUF;
+  src.proc_nr_e = NONE;
+  dst.proc_nr_e = m_ptr->m_source;      
 
-  address = m_ptr->RDB_ADDR;
-  buf = (vir_bytes)m_ptr->RDB_BUF;
-  size = m_ptr->RDB_SIZE;
-
-  okendpt(m_ptr->m_source, &proc_nr);
-  p = proc_addr(proc_nr);
-  phys_buf = umap_local(p, D, buf, size);
-  if (phys_buf == 0)
-	return EFAULT;
-  phys_bios = umap_bios(p, address, size);
-  if (phys_bios == 0)
-	return EPERM;
-  phys_copy(phys_bios, phys_buf, size);
-  return 0;
+  return virtual_copy_vmcheck(&src, &dst, m_ptr->RDB_SIZE);
 }

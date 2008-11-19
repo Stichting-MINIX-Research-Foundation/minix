@@ -14,10 +14,10 @@ d = ..
 # programs, flags, etc.
 MAKE = exec make
 CC =	exec cc
-CPPFLAGS = -I$i -I../../kernel/arch/$(ARCH)/include
+CPPFLAGS = -I$i 
 CFLAGS = $(CPPFLAGS)
 LDFLAGS = -i
-LIBS = -lsysutil -lsys -ltimers
+LIBS =  -lsys -ltimers
 
 OBJ = tty.o console.o vidcopy.o keyboard.o pty.o rs232.o 
 
@@ -25,7 +25,7 @@ OBJ = tty.o console.o vidcopy.o keyboard.o pty.o rs232.o
 all build:	$(DRIVER)
 $(DRIVER):	$(OBJ) 
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 8k $(DRIVER)
+	install -S 16k $(DRIVER)
 
 # install with other drivers
 install:	

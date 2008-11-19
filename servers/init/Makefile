@@ -18,7 +18,7 @@ OBJ = 	init.o
 # build local binary
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $(OBJ) -lsysutil
+	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $(OBJ) -lsys
 	install -S 8k $@
 
 # install with other servers

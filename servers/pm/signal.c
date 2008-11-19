@@ -26,6 +26,7 @@
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
 #include <minix/com.h>
+#include <minix/vm.h>
 #include <signal.h>
 #include <sys/resource.h>
 #include <sys/sigcontext.h>
@@ -251,11 +252,15 @@ sigset_t sig_map;
   int i, proc_nr;
   pid_t proc_id, id;
 
-  if(pm_isokendpt(proc_nr_e, &proc_nr) != OK || proc_nr < 0)
+  if(pm_isokendpt(proc_nr_e, &proc_nr) != OK || proc_nr < 0) {
+	printf("PM: handle_ksig: %d?? not ok\n", proc_nr_e);
 	return;
+  }
   rmp = &mproc[proc_nr];
-  if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE)
+  if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
+	printf("PM: handle_ksig: %d?? zombie / not in use\n", proc_nr_e);
 	return;
+}
   proc_id = rmp->mp_pid;
   mp = &mproc[0];			/* pretend signals are from PM */
   mp->mp_procgrp = rmp->mp_procgrp;	/* get process group right */
@@ -269,6 +274,10 @@ sigset_t sig_map;
    */
   for (i = 1; i <= _NSIG; i++) {
 	if (!sigismember(&sig_map, i)) continue;
+#if 0
+	printf("PM: sig %d for %d from kernel\n", 
+		i, proc_nr_e);
+#endif
 	switch (i) {
 	    case SIGINT:
 	    case SIGQUIT:
@@ -409,7 +418,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
  * If there is insufficient stack space, kill the process.
  */
 
-  vir_bytes new_sp;
+  vir_bytes cur_sp;
   int s;
   int slot;
   int sigflags;
@@ -444,18 +453,8 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	sigaddset(&rmp->mp_sigpending, signo);
 	return;
   }
-#if ENABLE_SWAP
-  if (rmp->mp_flags & ONSWAP) {
-	/* Process is swapped out, leave signal pending. */
-	sigaddset(&rmp->mp_sigpending, signo);
-	swap_inqueue(rmp);
-	return;
-  }
-#endif
   sigflags = rmp->mp_sigact[signo].sa_flags;
   if (sigismember(&rmp->mp_catch, signo)) {
-	/* Stop process from running before we do stack calculations. */
-	sys_nice(rmp->mp_endpoint, PRIO_STOP);
 	if (rmp->mp_flags & SIGSUSPENDED)
 		rmp->mp_sigmsg.sm_mask = rmp->mp_sigmask2;
 	else
@@ -464,18 +463,8 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	rmp->mp_sigmsg.sm_sighandler =
 		(vir_bytes) rmp->mp_sigact[signo].sa_handler;
 	rmp->mp_sigmsg.sm_sigreturn = rmp->mp_sigreturn;
-	if ((s=get_stack_ptr(rmp->mp_endpoint, &new_sp)) != OK)
-		panic(__FILE__,"couldn't get new stack pointer (for sig)",s);
-	rmp->mp_sigmsg.sm_stkptr = new_sp;
-
-	/* Make room for the sigcontext and sigframe struct. */
-	new_sp -= sizeof(struct sigcontext)
-				 + 3 * sizeof(char *) + 2 * sizeof(int);
-
-	if (adjust(rmp, rmp->mp_seg[D].mem_len, new_sp) != OK)
-		goto doterminate;
-
 	rmp->mp_sigmask |= rmp->mp_sigact[signo].sa_mask;
+
 	if (sigflags & SA_NODEFER)
 		sigdelset(&rmp->mp_sigmask, signo);
 	else
@@ -486,6 +475,13 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 		rmp->mp_sigact[signo].sa_handler = SIG_DFL;
 	}
 	sigdelset(&rmp->mp_sigpending, signo);
+
+	/* Stop process from running before we fiddle with its stack. */
+	sys_nice(rmp->mp_endpoint, PRIO_STOP);
+	if(vm_push_sig(rmp->mp_endpoint, &cur_sp) != OK)
+		goto doterminate;
+
+        rmp->mp_sigmsg.sm_stkptr = cur_sp;
 
 	/* Check to see if process is hanging on a PAUSE, WAIT or SIGSUSPEND
 	 * call.
@@ -519,22 +515,24 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 
 doterminate:
   /* Signal should not or cannot be caught.  Take default action. */
-  if (sigismember(&ign_sset, signo)) return;
+  if (sigismember(&ign_sset, signo)) {
+	return;
+}
+
+  /* This process will exit, with or without dumping core. 
+   * Announce this fact to VM.
+   */
+  if((s=vm_willexit(rmp->mp_endpoint)) != OK) {
+	panic(__FILE__,"sig_proc: vm_willexit failed", s);
+  }
 
   rmp->mp_sigstatus = (char) signo;
   if (sigismember(&core_sset, signo) && slot != FS_PROC_NR) {
-#if ENABLE_SWAP
-	if (rmp->mp_flags & ONSWAP) {
-		/* Process is swapped out, leave signal pending. */
-		sigaddset(&rmp->mp_sigpending, signo);
-		swap_inqueue(rmp);
+	printf("PM: signal %d for %d / %s\n", signo, rmp->mp_pid, rmp->mp_name);
+	s= dump_core(rmp);
+	if (s == SUSPEND) {
 		return;
 	}
-#endif
-
-	s= dump_core(rmp);
-	if (s == SUSPEND)
-		return;
 
 	/* Not dumping core, just call exit */
   }
@@ -689,13 +687,13 @@ register struct mproc *rmp;	/* whose core is to be dumped */
 
   int r, proc_nr, proc_nr_e, parent_waiting;
   pid_t procgrp;
+#if 0
   vir_bytes current_sp;
+#endif
   struct mproc *p_mp;
   clock_t user_time, sys_time;
 
-#if 0
   printf("dumpcore for %d / %s\n", rmp->mp_pid, rmp->mp_name);
-#endif
 
   /* Do not create core files for set uid execution */
   if (rmp->mp_realuid != rmp->mp_effuid) return OK;
@@ -706,9 +704,11 @@ register struct mproc *rmp;	/* whose core is to be dumped */
    * the adjust() for sending a signal to fail due to safety checking.  
    * Maybe make SAFETY_BYTES a parameter.
    */
+#if 0
   if ((r= get_stack_ptr(rmp->mp_endpoint, &current_sp)) != OK)
 	panic(__FILE__,"couldn't get new stack pointer (for core)", r);
   adjust(rmp, rmp->mp_seg[D].mem_len, current_sp);
+#endif
 
   /* Tell FS about the exiting process. */
   if (rmp->mp_fs_call != PM_IDLE)
@@ -732,7 +732,7 @@ register struct mproc *rmp;	/* whose core is to be dumped */
 
   /* Do accounting: fetch usage times and accumulate at parent. */
   if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL)) != OK)
-  	panic(__FILE__,"pm_exit: sys_times failed", r);
+  	panic(__FILE__,"dump_core: sys_times failed", r);
 
   p_mp = &mproc[rmp->mp_parent];			/* process' parent */
   p_mp->mp_child_utime += user_time + rmp->mp_child_utime; /* add user time */
@@ -752,7 +752,7 @@ register struct mproc *rmp;	/* whose core is to be dumped */
 	{
 		/* destroy system processes without waiting for FS */
 		if((r= sys_exit(rmp->mp_endpoint)) != OK)
-			panic(__FILE__, "pm_exit: sys_exit failed", r);
+			panic(__FILE__, "dump_core: sys_exit failed", r);
 
 		/* Just send a SIGCHLD. Dealing with waidpid is too complicated
 		 * here.

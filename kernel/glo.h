@@ -20,7 +20,6 @@ EXTERN char kernel_exception;		/* TRUE after system exceptions */
 EXTERN char shutdown_started;		/* TRUE after shutdowns / reboots */
 
 /* Kernel information structures. This groups vital kernel information. */
-EXTERN phys_bytes aout;			/* address of a.out headers */
 EXTERN struct kinfo kinfo;		/* kernel information for users */
 EXTERN struct machine machine;		/* machine information for users */
 EXTERN struct kmessages kmess;  	/* diagnostic messages in kernel */
@@ -32,6 +31,10 @@ EXTERN struct proc *prev_ptr;	/* previously running process */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
 EXTERN struct proc *next_ptr;	/* next process to run after restart() */
 EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
+EXTERN struct proc *vmrestart;  /* first process on vmrestart queue */
+EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
+EXTERN struct proc *pagefaults; /* first process on pagefault queue */
+EXTERN struct proc *softnotify;	/* first process on softnotify queue */
 EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
@@ -75,11 +78,25 @@ EXTERN endpoint_t who_e;		/* message source endpoint */
 EXTERN int who_p;			/* message source proc */
 EXTERN int sys_call_code;		/* kernel call number in SYSTEM */
 EXTERN time_t boottime;
+EXTERN char params_buffer[512];		/* boot monitor parameters */
+EXTERN int minix_panicing;
+EXTERN int locklevel;
+
+EXTERN unsigned long cr3switch;
+EXTERN unsigned long cr3reload;
 
 /* VM */
 EXTERN phys_bytes vm_base;
 EXTERN phys_bytes vm_size;
 EXTERN phys_bytes vm_mem_high;
+EXTERN int vm_running;
+EXTERN int must_notify_vm;
+
+/* Verbose flags (debugging). */
+EXTERN int verbose_vm;
+
+/* Timing measurements. */
+EXTERN struct lock_timingdata timingdata[TIMING_CATEGORIES];
 
 /* Variables that are initialized elsewhere are just extern here. */
 extern struct boot_image image[]; 	/* system image processes */

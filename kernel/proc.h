@@ -27,6 +27,8 @@ struct proc {
   char p_quantum_size;		/* quantum size in ticks */
 
   struct mem_map p_memmap[NR_LOCAL_SEGS];   /* memory map (T, D, S) */
+  struct pagefault p_pagefault;	/* valid if PAGEFAULT in p_rts_flags set */
+  struct proc *p_nextpagefault;	/* next on PAGEFAULT chain */
 
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
@@ -44,6 +46,62 @@ struct proc {
 
   endpoint_t p_endpoint;	/* endpoint number, generation-aware */
 
+  /* If handler functions detect a process wants to do something with
+   * memory that isn't present, VM has to fix it. Until it has asked
+   * what needs to be done and fixed it, save necessary state here.
+   *
+   * The requester gets a copy of its request message in reqmsg and gets
+   * VMREQUEST set.
+   */
+  struct {
+	struct proc	*nextrestart;	/* next in vmrestart chain */
+	struct proc	*nextrequestor;	/* next in vmrequest chain */
+#define VMSTYPE_SYS_NONE	0
+#define VMSTYPE_SYS_MESSAGE	1
+#define VMSTYPE_SYS_CALL	2
+#define VMSTYPE_MSGCOPY		3
+	int		type;		/* suspended operation */
+	union {
+		/* VMSTYPE_SYS_MESSAGE */
+		message		reqmsg;	/* suspended request message */
+
+		/* VMSTYPE_SYS_CALL */
+		struct {
+                	int call_nr;
+                	message *m_ptr;
+                	int src_dst_e;
+                	long bit_map;
+		} sys_call;
+
+		/* VMSTYPE_MSGCOPY */
+		struct {
+			struct proc	*dst;
+			vir_bytes	dst_v;
+			message		msgbuf;
+		} msgcopy;
+	} saved;
+
+	/* Parameters of request to VM */
+	vir_bytes 	start, length;	/* memory range */
+	u8_t		writeflag;	/* nonzero for write access */
+	endpoint_t	who;
+
+	/* VM result when available */
+	int		vmresult;
+
+	/* Target gets this set. (But caller and target can be
+	 * the same, so we can't put this in the 'saved' union.)
+	*/
+	struct proc	*requestor;
+
+	/* If the suspended operation is a sys_call, its details are
+	 * stored here.
+	 */
+  } p_vmrequest;
+
+  struct proc *next_soft_notify;
+  int p_softnotified;
+
 #if DEBUG_SCHED_CHECK
   int p_ready, p_found;
 #endif
@@ -59,6 +117,9 @@ struct proc {
 #define P_STOP		0x40	/* set when process is being traced */
 #define NO_PRIV		0x80	/* keep forked system process from running */
 #define NO_ENDPOINT    0x100	/* process cannot send or receive messages */
+#define VMINHIBIT      0x200	/* not scheduled until released by VM */
+#define PAGEFAULT      0x400	/* process has unhandled pagefault */
+#define VMREQUEST      0x800	/* originator of vm memory request */
 
 /* These runtime flags can be tested and manipulated by these macros. */
 
@@ -108,6 +169,7 @@ struct proc {
 #define REPLY_PENDING	0x01	/* reply to IPC_REQUEST is pending */
 #define MF_VM		0x08	/* process uses VM */
 #define MF_ASYNMSG	0x10	/* Asynchrous message pending */
+#define MF_FULLVM	0x20
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 

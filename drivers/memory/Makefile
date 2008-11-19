@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i
 LDFLAGS = -i -L../libdriver
-LIBS =  -lsysutil -ldriver -lsys
+LIBS =  -ldriver -lsys  
 
 # imgrd_s.s is the ACK assembler version of the ramdisk. For more portability,
 # use the C version imgrd.c. However, the C compiler takes too much memory

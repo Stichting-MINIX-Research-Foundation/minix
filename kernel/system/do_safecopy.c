@@ -14,13 +14,18 @@
  *      VSCP_VEC_SIZE   number of significant elements in vector
  */
 
-#include "../system.h"
 #include <minix/type.h>
 #include <minix/safecopies.h>
+
+#include "../system.h"
+#include "../vm.h"
 
 #define MEM_TOP 0xFFFFFFFFUL
 
 FORWARD _PROTOTYPE(int safecopy, (endpoint_t, endpoint_t, cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
+
+#define HASGRANTTABLE(gr) \
+	(!RTS_ISSET(gr, NO_PRIV) && priv(gr) && priv(gr)->s_grant_table > 0)
 
 /*===========================================================================*
  *				verify_grant				     *
@@ -38,7 +43,7 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 	static cp_grant_t g;
 	static int proc_nr;
 	static struct proc *granter_proc;
-	static phys_bytes phys_grant;
+	int r;
 
 	/* Get granter process slot (if valid), and check range of
 	 * grant id.
@@ -51,23 +56,9 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 
 	/* If there is no priv. structure, or no grant table in the
 	 * priv. structure, or the grant table in the priv. structure
-	 * is too small for the grant,
-	 *
-	 * then there exists no such grant, so
-	 *
-	 * return EPERM.
-	 *
-	 * (Don't leak how big the grant table is by returning
-	 * EINVAL for grant-out-of-range, in case this turns out to be
-	 * interesting information.)
+	 * is too small for the grant, return EPERM.
 	 */
-	if(RTS_ISSET(granter_proc, NO_PRIV) || !(priv(granter_proc)) ||
-	  priv(granter_proc)->s_grant_table < 1) {
-		kprintf("verify_grant: grant verify failed in ep %d proc %d: "
-		"no priv table, or no grant table\n",
-			granter, proc_nr);
-		return(EPERM);
-	}
+	if(!HASGRANTTABLE(granter_proc)) return EPERM;
 
 	if(priv(granter_proc)->s_grant_entries <= grant) {
 		static int curr= 0, limit= 100, extra= 20;
@@ -94,25 +85,25 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 	 * (presumably) set an invalid grant table entry by returning
 	 * EPERM, just like with an invalid grant id.
 	 */
-	if(!(phys_grant = umap_local(granter_proc, D,
-	  priv(granter_proc)->s_grant_table + sizeof(g)*grant, sizeof(g)))) {
-		kprintf("verify_grant: grant verify failed: umap failed\n");
+	if((r=data_copy(granter,
+		priv(granter_proc)->s_grant_table + sizeof(g)*grant,
+		SYSTEM, (vir_bytes) &g, sizeof(g))) != OK) {
+		kprintf("verify_grant: grant verify: data_copy failed\n");
 		return EPERM;
 	}
-
-	phys_copy(phys_grant, vir2phys(&g), sizeof(g));
 
 	/* Check validity. */
 	if((g.cp_flags & (CPF_USED | CPF_VALID)) != (CPF_USED | CPF_VALID)) {
 		kprintf(
-		"verify_grant: grant verify failed: unused or invalid\n");
+		"verify_grant: grant failed: invalid (%d flags 0x%lx)\n",
+			grant, g.cp_flags);
 		return EPERM;
 	}
 
 	/* Check access of grant. */
 	if(((g.cp_flags & access) != access)) {
 		kprintf(
-	"verify_grant: grant verify failed: access invalid; want %x, have %x\n",
+	"verify_grant: grant verify failed: access invalid; want 0x%x, have 0x%x\n",
 			access, g.cp_flags);
 		return EPERM;
 	}
@@ -210,6 +201,11 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	static vir_bytes v_offset;
 	int r;
 	endpoint_t new_granter, *src, *dst;
+	struct proc *granter_p;
+
+	/* See if there is a reasonable grant table. */
+	if(!(granter_p = endpoint_lookup(granter))) return EINVAL;
+	if(!HASGRANTTABLE(granter_p)) return EPERM;
 
 	/* Decide who is src and who is dst. */
 	if(access & CPF_READ) {
@@ -227,9 +223,11 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 
 		if (curr < limit+extra)
 		{
+#if 0
 			kprintf(
 		"grant %d verify to copy %d->%d by %d failed: err %d\n",
 				grantid, *src, *dst, grantee, r);
+#endif
 		} else if (curr == limit+extra)
 		{
 			kprintf(
@@ -265,7 +263,7 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	}
 
 	/* Do the regular copy. */
-	return virtual_copy(&v_src, &v_dst, bytes);
+	return virtual_copy_vmcheck(&v_src, &v_dst, bytes);
 
 }
 
@@ -288,7 +286,7 @@ register message *m_ptr;	/* pointer to request message */
 		src_seg = SCP_INFO2SEG(m_ptr->SCP_INFO);
 		dst_seg = D;
 		access = CPF_WRITE;
-	} else panic("Impossible system call nr. ", sys_call_code);
+	} else minix_panic("Impossible system call nr. ", sys_call_code);
 
 	return safecopy(m_ptr->SCP_FROM_TO, who_e, m_ptr->SCP_GID,
 		src_seg, dst_seg, m_ptr->SCP_BYTES, m_ptr->SCP_OFFSET,
@@ -304,6 +302,7 @@ register message *m_ptr;	/* pointer to request message */
 	static struct vscp_vec vec[SCPVEC_NR];
 	static struct vir_addr src, dst;
 	int r, i, els;
+	size_t bytes;
 
 	/* Set vector copy parameters. */
 	src.proc_nr_e = who_e;
@@ -314,9 +313,10 @@ register message *m_ptr;	/* pointer to request message */
 
 	/* No. of vector elements. */
 	els = m_ptr->VSCP_VEC_SIZE;
+	bytes = els * sizeof(struct vscp_vec);
 
 	/* Obtain vector of copies. */
-	if((r=virtual_copy(&src, &dst, els * sizeof(struct vscp_vec))) != OK)
+	if((r=virtual_copy_vmcheck(&src, &dst, bytes)) != OK)
 		return r;
 
 	/* Perform safecopies. */

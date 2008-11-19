@@ -77,7 +77,7 @@ register message *m_ptr;	/* pointer to request message */
 	return EPERM;
      }
      /* Get and check physical address. */
-     if ((phys_buf = numap_local(proc_nr,
+     if ((phys_buf = umap_virtual(proc_addr(proc_nr), D,
 	 (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
          return(EFAULT);
   }

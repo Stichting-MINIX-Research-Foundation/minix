@@ -1,6 +1,8 @@
 #ifndef _MINIX_SYSUTIL_H
 #define _MINIX_SYSUTIL_H 1
 
+#include <minix/ipc.h>
+
 /* Extra system library definitions to support device drivers and servers.
  *
  * Created:
@@ -48,9 +50,15 @@ _PROTOTYPE( int getuptime, (clock_t *ticks));
 _PROTOTYPE( int getuptime2, (clock_t *ticks, time_t *boottime));
 _PROTOTYPE( int tickdelay, (clock_t ticks));
 _PROTOTYPE( int micro_delay_calibrate, (void));
+_PROTOTYPE( u32_t sys_hz, (void));
+_PROTOTYPE( void util_stacktrace, (void));
+_PROTOTYPE( void util_nstrcat, (char *str, unsigned long n) );
+_PROTOTYPE( void util_stacktrace_strcat, (char *));
 _PROTOTYPE( int micro_delay, (u32_t micros));
+_PROTOTYPE( u32_t micros_to_ticks, (u32_t micros));
+_PROTOTYPE( int asynsend, (endpoint_t ep, message *msg));
 
-#define MICROS_TO_TICKS(m)  (((m)*HZ/1000000)+1)
+#define ASSERT(c) if(!(c)) { panic(__FILE__, "assert " #c " failed at line", __LINE__); }
 
 #endif /* _MINIX_SYSUTIL_H */
 

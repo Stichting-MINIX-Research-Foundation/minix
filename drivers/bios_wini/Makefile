@@ -14,7 +14,7 @@ MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i -L../libdriver 
-LIBS = -lsysutil -lsys -ltimers -ldriver 
+LIBS = -ldriver    -lsys  -lsys -ltimers 
 
 OBJ = bios_wini.o 
 

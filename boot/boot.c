@@ -18,6 +18,7 @@ char version[]=		"2.20";
 #include <string.h>
 #include <errno.h>
 #include <ibm/partition.h>
+#include <ibm/bios.h>
 #include <minix/config.h>
 #include <minix/type.h>
 #include <minix/com.h>
@@ -28,6 +29,7 @@ char version[]=		"2.20";
 #if BIOS
 #include <kernel/const.h>
 #include <kernel/type.h>
+#include <sys/video.h>
 #endif
 #if UNIX
 #include <stdio.h>
@@ -45,6 +47,10 @@ char version[]=		"2.20";
 #define arraysize(a)		(sizeof(a) / sizeof((a)[0]))
 #define arraylimit(a)		((a) + arraysize(a))
 #define between(a, c, z)	((unsigned) ((c) - (a)) <= ((z) - (a)))
+
+u16_t vid_port;		/* Video i/o port. */
+u32_t vid_mem_base;	/* Video memory base address. */
+u32_t vid_mem_size;	/* Video memory size. */
 
 int fsok= -1;		/* File system state.  Initially unknown. */
 
@@ -589,6 +595,19 @@ void initialize(void)
 		strcat(bootdev.name, "s0");
 		bootdev.name[5] += bootdev.secondary;
 	}
+
+	/* Find out about the video hardware. */
+        raw_copy(mon2abs(&vid_port), VDU_CRT_BASE_ADDR, sizeof(vid_port));
+	if(vid_port == C_6845) {
+		vid_mem_base = COLOR_BASE;
+		vid_mem_size = COLOR_SIZE;
+	} else {
+		vid_mem_base = MONO_BASE;
+		vid_mem_size = MONO_SIZE;
+	}
+
+	if(get_video() >= 3)
+		vid_mem_size = EGA_SIZE;
 
 #else /* DOS */
 	/* Take the monitor out of the memory map if we have memory to spare,
@@ -1959,3 +1978,4 @@ void main(int argc, char **argv)
 /*
  * $PchId: boot.c,v 1.14 2002/02/27 19:46:14 philip Exp $
  */
+

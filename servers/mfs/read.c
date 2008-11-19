@@ -675,8 +675,11 @@ off_t position;			/* position in file whose blk wanted */
 	if ( (z = rip->i_zone[dzones+1]) == NO_ZONE) return(NO_BLOCK);
 	excess -= nr_indirects;			/* single indir doesn't count*/
 	b = (block_t) z << scale;
+	ASSERT(rip->i_dev != NO_DEV);
 	bp = get_block(rip->i_dev, b, NORMAL);	/* get double indirect block */
 	index = (int) (excess/nr_indirects);
+	ASSERT(bp->b_dev != NO_DEV);
+	ASSERT(bp->b_dev == rip->i_dev);
 	z = rd_indir(bp, index);		/* z= zone for single*/
 	put_block(bp, INDIRECT_BLOCK);		/* release double ind block */
 	excess = excess % nr_indirects;		/* index into single ind blk */
@@ -773,7 +776,9 @@ unsigned bytes_ahead;		/* bytes beyond position for immediate use */
   off_t ind1_pos;
   dev_t dev;
   struct buf *bp;
-  static struct buf *read_q[NR_BUFS];
+  static struct buf **read_q;
+
+  STATICINIT(read_q, NR_BUFS);
 
   block_spec = (rip->i_mode & I_TYPE) == I_BLOCK_SPECIAL;
   if (block_spec) {

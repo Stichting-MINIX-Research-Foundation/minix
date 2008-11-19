@@ -10,7 +10,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include "../drivers.h"
 #include <assert.h>
 #include <ibm/pci.h>
-#include <sys/vm.h>
+#include <sys/vm_i386.h>
 #include <minix/com.h>
 #include <minix/rs.h>
 #include <minix/syslib.h>
@@ -118,7 +118,9 @@ FORWARD _PROTOTYPE( int do_piix, (int devind)				);
 FORWARD _PROTOTYPE( int do_amd_isabr, (int devind)			);
 FORWARD _PROTOTYPE( int do_sis_isabr, (int devind)			);
 FORWARD _PROTOTYPE( int do_via_isabr, (int devind)			);
+#if 0
 FORWARD _PROTOTYPE( void report_vga, (int devind)			);
+#endif
 FORWARD _PROTOTYPE( char *pci_vid_name, (U16_t vid)			);
 FORWARD _PROTOTYPE( char *pci_baseclass_name, (U8_t baseclass)		);
 FORWARD _PROTOTYPE( char *pci_subclass_name, (U8_t baseclass,
@@ -872,8 +874,10 @@ printf("probe_bus(%d)\n", busind);
 				print_capabilities(devind);
 
 			t3= ((baseclass << 16) | (subclass << 8) | infclass);
+#if 0
 			if (t3 == PCI_T3_VGA || t3 == PCI_T3_VGA_OLD)
 				report_vga(devind);
+#endif
 
 			if (nr_pcidev >= NR_PCIDEV)
 			  panic("PCI","too many PCI devices", nr_pcidev);
@@ -1406,8 +1410,8 @@ PRIVATE void complete_bars()
 			if (!(pcidev[i].pd_bar[j].pb_flags & PBF_INCOMPLETE))
 				continue;
 			size= pcidev[i].pd_bar[j].pb_size;
-			if (size < PAGE_SIZE)
-				size= PAGE_SIZE;
+			if (size < I386_PAGE_SIZE)
+				size= I386_PAGE_SIZE;
 			base= memgap_high-size;
 			base &= ~(u32_t)(size-1);
 			if (base < memgap_low)
@@ -2010,6 +2014,7 @@ int devind;
 }
 
 
+#if 0
 /*===========================================================================*
  *				report_vga				     *
  *===========================================================================*/
@@ -2042,6 +2047,7 @@ int devind;
 			amount);
 	}
 }
+#endif
 
 
 /*===========================================================================*

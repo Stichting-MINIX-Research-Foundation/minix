@@ -18,6 +18,7 @@
 #include <sys/wait.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
+#include <minix/vm.h>
 #include <sys/resource.h>
 #include <signal.h>
 #include "mproc.h"
@@ -35,12 +36,10 @@ PUBLIC int do_fork()
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
   register struct mproc *rmc;	/* pointer to child */
-  int child_nr, s;
-  phys_clicks prog_clicks, child_base;
-  phys_bytes prog_bytes, parent_abs, child_abs;	/* Intel only */
   pid_t new_pid;
   static int next_child;
-  int n = 0, r;
+  int n = 0, r, s;
+  endpoint_t child_ep;
 
  /* If tables might fill up during FORK, don't even start since recovery half
   * way through is such a nuisance.
@@ -53,20 +52,6 @@ PUBLIC int do_fork()
   	return(EAGAIN);
   }
 
-  /* Determine how much memory to allocate.  Only the data and stack need to
-   * be copied, because the text segment is either shared or of zero length.
-   */
-  prog_clicks = (phys_clicks) rmp->mp_seg[S].mem_len;
-  prog_clicks += (rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
-  prog_bytes = (phys_bytes) prog_clicks << CLICK_SHIFT;
-  if ( (child_base = alloc_mem(prog_clicks)) == NO_MEM) return(ENOMEM);
-
-  /* Create a copy of the parent's core image for the child. */
-  child_abs = (phys_bytes) child_base << CLICK_SHIFT;
-  parent_abs = (phys_bytes) rmp->mp_seg[D].mem_phys << CLICK_SHIFT;
-  s = sys_abscopy(parent_abs, child_abs, prog_bytes);
-  if (s < 0) panic(__FILE__,"do_fork can't copy", s);
-
   /* Find a slot in 'mproc' for the child process.  A slot must exist. */
   do {
         next_child = (next_child+1) % NR_PROCS;
@@ -78,35 +63,30 @@ PUBLIC int do_fork()
  || (mproc[next_child].mp_flags & IN_USE))
 	panic(__FILE__,"do_fork finds wrong child slot", next_child);
 
+  /* Memory part of the forking. */
+  if((s=vm_fork(rmp->mp_endpoint, next_child, &child_ep)) != OK) {
+	printf("PM: vm_fork failed: %d\n", s);
+	return s;
+  }
+
+  /* PM may not fail fork after call to vm_fork(), as VM calls sys_fork(). */
+
   rmc = &mproc[next_child];
   /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
-  child_nr = (int)(rmc - mproc);	/* slot number of the child */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
   rmc->mp_parent = who_p;			/* record child's parent */
   /* inherit only these flags */
-  rmc->mp_flags &= (IN_USE|SEPARATE|PRIV_PROC|DONT_SWAP);
+  rmc->mp_flags &= (IN_USE|PRIV_PROC);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
-
-  /* A separate I&D child keeps the parents text segment.  The data and stack
-   * segments must refer to the new copy.
-   */
-  if (!(rmc->mp_flags & SEPARATE)) rmc->mp_seg[T].mem_phys = child_base;
-  rmc->mp_seg[D].mem_phys = child_base;
-  rmc->mp_seg[S].mem_phys = rmc->mp_seg[D].mem_phys + 
-			(rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
   rmc->mp_exitstatus = 0;
   rmc->mp_sigstatus = 0;
+  rmc->mp_endpoint = child_ep;		/* passed back by VM */
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
-
-  /* Tell kernel and file system about the (now successful) FORK. */
-  if((r=sys_fork(who_e, child_nr, &rmc->mp_endpoint, rmc->mp_seg)) != OK) {
-  	panic(__FILE__,"do_fork can't sys_fork", r);
-  }
 
   if (rmc->mp_fs_call != PM_IDLE)
 	panic("pm", "do_fork: not idle", rmc->mp_fs_call);
@@ -128,12 +108,11 @@ PUBLIC int do_fork_nb()
 /* The process pointed to by 'mp' has forked.  Create a child process. */
   register struct mproc *rmp;	/* pointer to parent */
   register struct mproc *rmc;	/* pointer to child */
-  int child_nr, s;
-  phys_clicks prog_clicks, child_base;
-  phys_bytes prog_bytes, parent_abs, child_abs;	/* Intel only */
+  int s;
   pid_t new_pid;
   static int next_child;
   int n = 0, r;
+  endpoint_t child_ep;
 
   /* Only system processes are allowed to use fork_nb */
   if (!(mp->mp_flags & PRIV_PROC))
@@ -150,20 +129,6 @@ PUBLIC int do_fork_nb()
   	return(EAGAIN);
   }
 
-  /* Determine how much memory to allocate.  Only the data and stack need to
-   * be copied, because the text segment is either shared or of zero length.
-   */
-  prog_clicks = (phys_clicks) rmp->mp_seg[S].mem_len;
-  prog_clicks += (rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
-  prog_bytes = (phys_bytes) prog_clicks << CLICK_SHIFT;
-  if ( (child_base = alloc_mem(prog_clicks)) == NO_MEM) return(ENOMEM);
-
-  /* Create a copy of the parent's core image for the child. */
-  child_abs = (phys_bytes) child_base << CLICK_SHIFT;
-  parent_abs = (phys_bytes) rmp->mp_seg[D].mem_phys << CLICK_SHIFT;
-  s = sys_abscopy(parent_abs, child_abs, prog_bytes);
-  if (s < 0) panic(__FILE__,"do_fork can't copy", s);
-
   /* Find a slot in 'mproc' for the child process.  A slot must exist. */
   do {
         next_child = (next_child+1) % NR_PROCS;
@@ -175,35 +140,25 @@ PUBLIC int do_fork_nb()
  || (mproc[next_child].mp_flags & IN_USE))
 	panic(__FILE__,"do_fork finds wrong child slot", next_child);
 
+  if((s=vm_fork(rmp->mp_endpoint, next_child, &child_ep)) != OK) {
+	printf("PM: vm_fork failed: %d\n", s);
+	return s;
+  }
+
   rmc = &mproc[next_child];
   /* Set up the child and its memory map; copy its 'mproc' slot from parent. */
-  child_nr = (int)(rmc - mproc);	/* slot number of the child */
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
   rmc->mp_parent = who_p;			/* record child's parent */
   /* inherit only these flags */
-  rmc->mp_flags &= (IN_USE|SEPARATE|PRIV_PROC|DONT_SWAP);
+  rmc->mp_flags &= (IN_USE|PRIV_PROC);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
-
-  /* A separate I&D child keeps the parents text segment.  The data and stack
-   * segments must refer to the new copy.
-   */
-  if (!(rmc->mp_flags & SEPARATE)) rmc->mp_seg[T].mem_phys = child_base;
-  rmc->mp_seg[D].mem_phys = child_base;
-  rmc->mp_seg[S].mem_phys = rmc->mp_seg[D].mem_phys + 
-			(rmp->mp_seg[S].mem_vir - rmp->mp_seg[D].mem_vir);
-  rmc->mp_exitstatus = 0;
-  rmc->mp_sigstatus = 0;
+  rmc->mp_endpoint = child_ep;		/* passed back by VM */
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
-
-  /* Tell kernel and file system about the (now successful) FORK. */
-  if((r=sys_fork(who_e, child_nr, &rmc->mp_endpoint, rmc->mp_seg)) != OK) {
-  	panic(__FILE__,"do_fork can't sys_fork", r);
-  }
 
   if (rmc->mp_fs_call != PM_IDLE)
 	panic("pm", "do_fork: not idle", rmc->mp_fs_call);
@@ -271,6 +226,9 @@ int for_trace;
    * such as copying to/ from the exiting process, before it is gone.
    */
   sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
+  if(vm_willexit(proc_nr_e) != OK) {
+	panic(__FILE__, "pm_exit: vm_willexit failed", proc_nr_e);
+  }
 
   if (proc_nr_e == INIT_PROC_NR)
   {
@@ -392,7 +350,9 @@ PUBLIC int do_waitpid()
   /* No qualifying child has exited.  Wait for one, unless none exists. */
   if (children > 0) {
 	/* At least 1 child meets the pid test exists, but has not exited. */
-	if (options & WNOHANG) return(0);    /* parent does not want to wait */
+	if (options & WNOHANG) {
+		return(0);    /* parent does not want to wait */
+	}
 	mp->mp_flags |= WAITING;	     /* parent wants to wait */
 	mp->mp_wpid = (pid_t) pidarg;	     /* save pid for later */
 	return(SUSPEND);		     /* do not reply, let it wait */

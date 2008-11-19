@@ -12,6 +12,7 @@
  */
 
 #include "../system.h"
+#include "../vm.h"
 #include <minix/type.h>
 
 #if (USE_VIRCOPY || USE_PHYSCOPY)
@@ -30,8 +31,9 @@ register message *m_ptr;	/* pointer to request message */
   phys_bytes bytes;		/* number of bytes to copy */
   int i;
 
-  if (m_ptr->m_source != 0 && m_ptr->m_source != 1 &&
-	m_ptr->m_source != 2 && m_ptr->m_source != 3)
+  if (m_ptr->m_source != PM_PROC_NR && m_ptr->m_source != VFS_PROC_NR &&
+	m_ptr->m_source != RS_PROC_NR && m_ptr->m_source != MEM_PROC_NR &&
+	m_ptr->m_source != VM_PROC_NR)
   {
 	static int first=1;
 	if (first)
@@ -64,9 +66,13 @@ register message *m_ptr;	/* pointer to request message */
       /* Check if process number was given implictly with SELF and is valid. */
       if (vir_addr[i].proc_nr_e == SELF)
 	vir_addr[i].proc_nr_e = m_ptr->m_source;
-      if (vir_addr[i].segment != PHYS_SEG &&
-	! isokendpt(vir_addr[i].proc_nr_e, &p))
+      if (vir_addr[i].segment != PHYS_SEG) {
+	if(! isokendpt(vir_addr[i].proc_nr_e, &p)) {
+	  kprintf("do_copy: %d: seg 0x%x, %d not ok endpoint\n",
+		i, vir_addr[i].segment, vir_addr[i].proc_nr_e);
           return(EINVAL); 
+        }
+      }
 
       /* Check if physical addressing is used without SYS_PHYSCOPY. */
       if ((vir_addr[i].segment & PHYS_SEG) &&
@@ -79,7 +85,7 @@ register message *m_ptr;	/* pointer to request message */
   if (bytes != (vir_bytes) bytes) return(E2BIG);
 
   /* Now try to make the actual virtual copy. */
-  return( virtual_copy(&vir_addr[_SRC_], &vir_addr[_DST_], bytes) );
+  return( virtual_copy_vmcheck(&vir_addr[_SRC_], &vir_addr[_DST_], bytes) );
 }
 #endif /* (USE_VIRCOPY || USE_PHYSCOPY) */
 

@@ -45,6 +45,7 @@
 #include "audio_fw.h"
 #include <sys/vm.h>
 #include <minix/ds.h>
+#include <sys/vm_i386.h>
 
 
 FORWARD _PROTOTYPE( int msg_open, (int minor_dev_nr) );
@@ -85,7 +86,6 @@ PUBLIC void main(void)
 
 	/* Here is the main loop of the dma driver.  It waits for a message, 
 	   carries it out, and sends a reply. */
-	printf("%s up and running\n", drv.DriverName);
 
 	while(1) {
 		receive(ANY, &mess);
@@ -886,19 +886,16 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 	size_t size, off;
 	unsigned left;
 	u32_t i;
+	phys_bytes ph;
 
 	/* allocate dma buffer space */
 	size= sub_dev_ptr->DmaSize + 64 * 1024;
-	base= malloc(size + PAGE_SIZE);
+	off = base= alloc_contig(size, AC_ALIGN4K, &ph);
 	if (!base) {
 		error("%s: failed to allocate dma buffer for channel %d\n", 
 				drv.DriverName,i);
 		return EIO;
 	}
-	/* Align base */
-	off= ((size_t)base % PAGE_SIZE);
-	if (off)
-		base += PAGE_SIZE-off;
 	sub_dev_ptr->DmaBuf= base;
 
 	tell_dev((vir_bytes)base, size, 0, 0, 0);

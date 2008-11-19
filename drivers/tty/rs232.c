@@ -11,21 +11,6 @@
 
 #if NR_RS_LINES > 0
 
-#if (MACHINE != IBM_PC) && (MACHINE != ATARI)
-#error				/* rs232.c only supports PC and Atari ST */
-#endif
-
-#if (MACHINE == ATARI)
-#include "staddr.h"
-#include "stsound.h"
-#include "stmfp.h"
-#if (NR_RS_LINES > 1)
-#error				/* Only one physical RS232 line available */
-#endif
-#endif
-
-#if (MACHINE == IBM_PC)		/* PC/AT 8250/16450 chip combination */
-
 /* 8250 constants. */
 #define UART_FREQ         115200L	/* timer frequency */
 
@@ -65,46 +50,25 @@
 #define MS_RLSD              0x80       /* Received Line Signal Detect */
 #define MS_DRLSD             0x08       /* RLSD Delta */
 
-#else /* MACHINE == ATARI */		/* Atari ST 68901 USART */
+#define DATA_BITS_SHIFT         8      /* amount data bits shifted in mode */
+#define DEF_BAUD             1200      /* default baud rate */
 
-/* Most of the USART constants are already defined in stmfp.h . The local
- * definitions made here are for keeping C code changes smaller.   --kub
- */
-
-#define UART_FREQ          19200L	/* timer frequency */
-
-/* Line status bits. */
-#define LS_OVERRUN_ERR       R_OE
-#define LS_PARITY_ERR        R_PE
-#define LS_FRAMING_ERR       R_FE
-#define LS_BREAK_INTERRUPT   R_BREAK
-
-/* Modem status bits. */
-#define MS_CTS               IO_SCTS	/* 0x04 */
-
-#endif /* MACHINE == ATARI */
-
-#define DATA_BITS_SHIFT         8	/* amount data bits shifted in mode */
-#define DEF_BAUD             1200	/* default baud rate */
-
-#define RS_IBUFSIZE          1024	/* RS232 input buffer size */
-#define RS_OBUFSIZE          1024	/* RS232 output buffer size */
+#define RS_IBUFSIZE          1024      /* RS232 input buffer size */
+#define RS_OBUFSIZE          1024      /* RS232 output buffer size */
 
 /* Input buffer watermarks.
  * The external device is asked to stop sending when the buffer
  * exactly reaches high water, or when TTY requests it.  Sending restarts
  * when the input buffer empties below the low watermark.
  */
-#define RS_ILOWWATER	(1 * RS_IBUFSIZE / 4)
-#define RS_IHIGHWATER	(3 * RS_IBUFSIZE / 4)
+#define RS_ILOWWATER   (1 * RS_IBUFSIZE / 4)
+#define RS_IHIGHWATER  (3 * RS_IBUFSIZE / 4)
 
 /* Output buffer low watermark.
  * TTY is notified when the output buffer empties below the low watermark, so
  * it may continue filling the buffer if doing a large write.
  */
-#define RS_OLOWWATER	(1 * RS_OBUFSIZE / 4)
-
-#if (MACHINE == IBM_PC)
+#define RS_OLOWWATER   (1 * RS_OBUFSIZE / 4)
 
 /* Macros to handle flow control.
  * Interrupts must be off when they are used.
@@ -140,36 +104,6 @@
  */
 #define devhup(rs)	\
 	((my_inb(rs->modem_status_port) & (MS_RLSD|MS_DRLSD)) == MS_DRLSD)
-
-#else /* MACHINE == ATARI */
-
-/* Macros to handle flow control.
- * Time is critical - already the function call for lock()/restore() is
- * annoying.
- * istart() tells external device we are ready by raising RTS.
- * istop() tells external device we are not ready by dropping RTS.
- * DTR is kept high all the time (it probably should be raised by open and
- * dropped by close of the device). NOTE: The modem lines are active low.
- */
-#define set_porta(msk,val) { register int s = lock();		\
-			     SOUND->sd_selr = YM_IOA;		\
-			     SOUND->sd_wdat =			\
-				SOUND->sd_rdat & (msk) | (val);	\
-			     restore(s);	}
-#define istart(rs)         { set_porta( ~(PA_SRTS|PA_SDTR),0 ); \
-			     (rs)->idevready = TRUE;	}
-#define istop(rs)          { set_porta( ~PA_SDTR, PA_SRTS );	\
-			     (rs)->idevready = FALSE;	}
-
-/* Macro to tell if device is ready.  The rs->cts field is set to MS_CTS if
- * CLOCAL is in effect for a line without a CTS wire.
- */
-#define devready(rs)         ((~MFP->mf_gpip | rs->cts) & MS_CTS)
-
-/* Transmitter ready test */
-#define txready(rs)          (MFP->mf_tsr & (T_EMPTY | T_UE))
-
-#endif /* MACHINE == ATARI */
 
 /* Types. */
 typedef unsigned char bool_t;	/* boolean */
@@ -233,11 +167,6 @@ typedef struct rs232 {
 } rs232_t;
 
 PUBLIC rs232_t rs_lines[NR_RS_LINES];
-
-/* Table and macro to translate an RS232 line number to its rs_lines entry. */
-PRIVATE rs232_t *p_rs_addr[NR_RS_LINES];
-
-#define rs_addr(line)	(p_rs_addr[line])
 
 #if (MACHINE == IBM_PC)
 /* 8250 base addresses. */
@@ -472,7 +401,6 @@ rs232_t *rs;			/* which line */
   }
   if (divisor == 0) return;	/* B0? */
 
-#if (MACHINE == IBM_PC)
   /* Compute line control flag bits. */
   line_controls = 0;
   if (tp->tty_termios.c_cflag & PARENB) {
@@ -502,27 +430,6 @@ rs232_t *rs;			/* which line */
 	rs->ostate &= ~ORAW;
 
   unlock();
-
-#else /* MACHINE == ATARI */
-
-  line_controls = U_Q16;
-  if (tp->tty_termios.c_cflag & PARENB) {
-	line_controls |= U_PAR;
-	if (!(tp->tty_termios.c_cflag & PARODD)) line_controls |= U_EVEN;
-  }
-  line_controls |= (divisor >= (UART_FREQ / 110)) ? U_ST2 : U_ST1;
-
-  switch (tp->tty_termios.c_cflag & CSIZE) {	/* XXX - are U_Dn like CSn? */
-	case CS5:	line_controls |= U_D5; break;
-	case CS5:	line_controls |= U_D6; break;
-	case CS5:	line_controls |= U_D7; break;
-	case CS5:	line_controls |= U_D8; break;
-  }
-  lock();
-  MFP->mf_ucr = line_controls;
-  MFP->mf_tddr = divisor;
-  unlock();
-#endif /* MACHINE == ATARI */
 }
 
 /*===========================================================================*
@@ -536,11 +443,8 @@ tty_t *tp;			/* which TTY */
 
   register rs232_t *rs;
   int line;
-#if (MACHINE == IBM_PC)
   port_t this_8250;
   int irq;
-  long v;
-#endif
 
   /* Associate RS232 and TTY structures. */
   line = tp - &tty_table[NR_CONS];
@@ -550,7 +454,6 @@ tty_t *tp;			/* which TTY */
   /* Set up input queue. */
   rs->ihead = rs->itail = rs->ibuf;
 
-#if (MACHINE == IBM_PC)
   /* Precalculate port numbers for speed. Magic numbers in the code (once). */
   this_8250 = addr_8250[line];
   rs->xmit_port = this_8250 + 0;
@@ -563,7 +466,6 @@ tty_t *tp;			/* which TTY */
   rs->modem_ctl_port = this_8250 + 4;
   rs->line_status_port = this_8250 + 5;
   rs->modem_status_port = this_8250 + 6;
-#endif
 
   /* Set up the hardware to a base state, in particular
    *	o turn off DTR (MC_DTR) to try to stop the external device.
@@ -580,22 +482,17 @@ tty_t *tp;			/* which TTY */
    */
   istop(rs);			/* sets modem_ctl_port */
   rs_config(rs);
-#if (MACHINE == IBM_PC)
   sys_outb(rs->int_enab_port, 0);
-#endif
 
   /* Clear any harmful leftover interrupts.  An output interrupt is harmless
    * and will occur when interrupts are enabled anyway.  Set up the output
    * queue using the status from clearing the modem status interrupt.
    */
-#if (MACHINE == IBM_PC)
   sys_inb(rs->line_status_port, &dummy);
   sys_inb(rs->recv_port, &dummy);
-#endif
   rs->ostate = devready(rs) | ORAW | OSWREADY;	/* reads modem_ctl_port */
   rs->ohead = rs->otail = rs->obuf;
 
-#if (MACHINE == IBM_PC)
   /* Enable interrupts for both interrupt controller and device. */
   irq = (line & 1) == 0 ? RS232_IRQ : SECONDARY_IRQ;
 
@@ -613,20 +510,6 @@ tty_t *tp;			/* which TTY */
 
   sys_outb(rs->int_enab_port, IE_LINE_STATUS_CHANGE | IE_MODEM_STATUS_CHANGE
 				| IE_RECEIVER_READY | IE_TRANSMITTER_READY);
-#else /* MACHINE == ATARI */
-  /* Initialize the 68901 chip, then enable interrupts. */
-  MFP->mf_scr = 0x00;
-  MFP->mf_tcdcr |= T_Q004;
-  MFP->mf_rsr = R_ENA;
-  MFP->mf_tsr = T_ENA;
-  MFP->mf_aer = (MFP->mf_aer | (IO_SCTS|IO_SDCD)) ^
-		 (MFP->mf_gpip & (IO_SCTS|IO_SDCD));
-  MFP->mf_ddr = (MFP->mf_ddr & ~ (IO_SCTS|IO_SDCD));
-  MFP->mf_iera |= (IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
-  MFP->mf_imra |= (IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
-  MFP->mf_ierb |= (IB_SCTS|IB_SDCD);
-  MFP->mf_imrb |= (IB_SCTS|IB_SDCD);
-#endif /* MACHINE == ATARI */
 
   /* Fill in TTY function hooks. */
   tp->tty_devread = rs_read;
@@ -721,7 +604,7 @@ int try;
 	if (ostate & ODEVHUP) {
 		sigchar(tp, SIGHUP);
 		tp->tty_termios.c_ospeed = B0;	/* Disable further I/O. */
-		return;
+		return 0;
 	}
   }
 
@@ -744,6 +627,8 @@ int try;
 	unlock();
 	if ((rs->itail += count) == bufend(rs->ibuf)) rs->itail = rs->ibuf;
   }
+
+  return 0;
 }
 
 /*===========================================================================*
@@ -787,7 +672,6 @@ int dummy;
 {
 /* The line is closed; optionally hang up. */
   rs232_t *rs = tp->tty_priv;
-  int r;
 
   if (tp->tty_termios.c_cflag & HUPCL) {
 	sys_outb(rs->modem_ctl_port, MC_OUT2 | MC_RTS);
@@ -797,7 +681,6 @@ int dummy;
 
 /* Low level (interrupt) routines. */
 
-#if (MACHINE == IBM_PC)
 /*===========================================================================*
  *				rs232_handler				     *
  *===========================================================================*/
@@ -831,50 +714,6 @@ struct rs232 *rs;
 	return;
   }
 }
-#endif /* MACHINE == IBM_PC */
-
-#if (MACHINE == ATARI)
-/*===========================================================================*
- *				siaint					     *
- *===========================================================================*/
-PRIVATE void siaint(type)
-int    type;	       /* interrupt type */
-{
-/* siaint is the rs232 interrupt procedure for Atari ST's. For ST there are
- * as much as 5 interrupt lines used for rs232. The trap type byte left on the
- * stack by the assembler interrupt handler identifies the interrupt cause.
- */
-
-  register unsigned char  code;
-  register rs232_t *rs = &rs_lines[0];
-  int s = lock();
-
-  switch (type & 0x00FF)
-  {
-	case 0x00:	       /* receive buffer full */
-		in_int(rs);
-		break;
-	case 0x01:	       /* receive error */
-		line_int(rs);
-		break;
-	case 0x02:	       /* transmit buffer empty */
-		out_int(rs);
-		break;
-	case 0x03:	       /* transmit error */
-		code = MFP->mf_tsr;
-		if (code & ~(T_ENA | T_UE | T_EMPTY))
-		{
-		    printf("sia: transmit error: status=%x\r\n", code);
-		    /* MFP->mf_udr = lastchar; */ /* retry */
-		}
-		break;
-	case 0x04:		/* modem lines change */
-		modem_int(rs);
-		break;
-  }
-  restore(s);
-}
-#endif /* MACHINE == ATARI */
 
 /*===========================================================================*
  *				in_int					     *
@@ -895,11 +734,7 @@ register rs232_t *rs;		/* line with input interrupt */
   return;
 #endif
 
-#if (MACHINE == IBM_PC)
   sys_inb(rs->recv_port, &c);
-#else /* MACHINE == ATARI */
-  c = MFP->mf_udr;
-#endif
 
   if (!(rs->ostate & ORAW)) {
 	if (c == rs->oxoff) {
@@ -937,14 +772,8 @@ register rs232_t *rs;		/* line with line status interrupt */
 /* Check for and record errors. */
 
  unsigned long s;
-#if (MACHINE == IBM_PC)
   sys_inb(rs->line_status_port, &s);
   rs->lstatus = s;
-#else /* MACHINE == ATARI */
-  rs->lstatus = MFP->mf_rsr;
-  MFP->mf_rsr &= R_ENA;
-  rs->pad = MFP->mf_udr;	/* discard char in case of LS_OVERRUN_ERR */
-#endif /* MACHINE == ATARI */
   if (rs->lstatus & LS_FRAMING_ERR) ++rs->framing_errors;
   if (rs->lstatus & LS_OVERRUN_ERR) ++rs->overrun_errors;
   if (rs->lstatus & LS_PARITY_ERR) ++rs->parity_errors;
@@ -960,12 +789,6 @@ register rs232_t *rs;		/* line with modem interrupt */
 /* Get possibly new device-ready status, and clear ODEVREADY if necessary.
  * If the device just became ready, restart output.
  */
-
-#if (MACHINE == ATARI)
-  /* Set active edge interrupt so that next change causes a new interrupt */
-  MFP->mf_aer = (MFP->mf_aer | (IO_SCTS|IO_SDCD)) ^
-		 (MFP->mf_gpip & (IO_SCTS|IO_SDCD));
-#endif
 
   if (devhup(rs)) {
 	rs->ostate |= ODEVHUP;
@@ -994,11 +817,7 @@ register rs232_t *rs;		/* line with output interrupt */
 
   if (rs->ostate >= (ODEVREADY | OQUEUED | OSWREADY)) {
 	/* Bit test allows ORAW and requires the others. */
-#if (MACHINE == IBM_PC)
 	sys_outb(rs->xmit_port, *rs->otail);
-#else /* MACHINE == ATARI */
-	MFP->mf_udr = *rs->otail;
-#endif
 	if (++rs->otail == bufend(rs->obuf)) rs->otail = rs->obuf;
 	if (--rs->ocount == 0) {
 		rs->ostate ^= (ODONE | OQUEUED);  /* ODONE on, OQUEUED off */

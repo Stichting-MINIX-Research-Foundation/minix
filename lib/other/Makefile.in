@@ -27,6 +27,7 @@ libc_FILES=" \
 	_sprofile.c \
 	_svrctl.c \
 	_sysuname.c \
+	_vm_dmacalls.c \
 	asynchio.c \
 	basename.c \
 	bcmp.c \

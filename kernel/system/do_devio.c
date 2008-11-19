@@ -110,9 +110,9 @@ doit:
       } 
     } else { 
       switch (io_type) {
-	case _DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-        case _DIO_WORD: outw(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;  
-        case _DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
+	case _DIO_BYTE: outb(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
+	case _DIO_WORD: outw(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
+	case _DIO_LONG: outl(m_ptr->DIO_PORT, m_ptr->DIO_VALUE); break;
     	default: return(EINVAL);
       } 
     }

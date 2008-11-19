@@ -18,8 +18,10 @@
 
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
+#include <minix/type.h>
 #include <sys/ioc_disk.h>
 #include <ibm/pci.h>
+#include <sys/mman.h>
 
 #define ATAPI_DEBUG	    0	/* To debug ATAPI code. */
 
@@ -294,7 +296,6 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
 PRIVATE int w_device = -1;
 PRIVATE int w_controller = -1;
 PRIVATE int w_major = -1;
-PRIVATE char w_id_string[40];
 
 PRIVATE int win_tasknr;			/* my task number */
 PRIVATE int w_command;			/* current command in execution */
@@ -309,7 +310,7 @@ PRIVATE struct device *w_dv;		/* device's base and size */
 #define ATA_DMA_SECTORS	64
 #define ATA_DMA_BUF_SIZE	(ATA_DMA_SECTORS*SECTOR_SIZE)
 
-PRIVATE char dma_buf[ATA_DMA_BUF_SIZE];
+PRIVATE char *dma_buf;
 PRIVATE phys_bytes dma_buf_phys;
 
 #define N_PRDTE	1024	/* Should be enough for large requests */
@@ -320,7 +321,10 @@ PRIVATE struct prdte
 	u16_t prdte_count;
 	u8_t prdte_reserved;
 	u8_t prdte_flags;
-} prdt[N_PRDTE];
+};
+
+#define PRDT_BYTES (sizeof(struct prdte) * N_PRDTE)
+PRIVATE struct prdte *prdt;
 PRIVATE phys_bytes prdt_phys;
 
 #define PRDTE_FL_EOT	0x80	/* End of table */
@@ -428,6 +432,8 @@ PUBLIC int main(int argc, char *argv[])
 /* Install signal handlers. Ask PM to transform signal into message. */
   struct sigaction sa;
 
+  init_buffer();
+
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
@@ -475,16 +481,34 @@ PRIVATE void init_params()
 	w_identify_wakeup_ticks = WAKEUP_TICKS;
   }
 
-  if (disable_dma)
-	printf("DMA for ATA devices is disabled.\n");
+  if (disable_dma) {
+	printf("at_wini%d: DMA for ATA devices is disabled.\n", w_instance);
+  } else {
+	/* Ask for anonymous memory for DMA, that is physically contiguous. */
+	dma_buf = mmap(0, ATA_DMA_BUF_SIZE, PROT_READ|PROT_WRITE,
+		MAP_PREALLOC | MAP_CONTIG | MAP_ANON, -1, 0);
+	prdt = mmap(0, PRDT_BYTES,
+		PROT_READ|PROT_WRITE, MAP_CONTIG | MAP_ANON, -1, 0);
+	if(dma_buf == MAP_FAILED || prdt == MAP_FAILED) {
+		disable_dma = 1;
+		printf("at_wini%d: no dma\n", w_instance);
+	} else {
+		s= sys_umap(SELF, VM_D, (vir_bytes)dma_buf,
+			ATA_DMA_BUF_SIZE, &dma_buf_phys);
+		if (s != 0)
+			panic("at_wini", "can't map dma buffer", s);
 
-  s= sys_umap(SELF, D, (vir_bytes)dma_buf, sizeof(dma_buf), &dma_buf_phys);
-  if (s != 0)
-	panic("at_wini", "can't map dma buffer", s);
-
-  s= sys_umap(SELF, D, (vir_bytes)prdt, sizeof(prdt), &prdt_phys);
-  if (s != 0)
-	panic("at_wini", "can't map prd table", s);
+		s= sys_umap(SELF, VM_D, (vir_bytes)prdt,
+			PRDT_BYTES, &prdt_phys);
+		if (s != 0)
+			panic("at_wini", "can't map prd table", s);
+#if 0
+		printf("at_wini%d: physical dma_buf: 0x%lx, "
+			"prdt tab: 0x%lx\n",
+			w_instance, dma_buf_phys, prdt_phys);
+#endif
+	}
+  }
 
   if (w_instance == 0) {
 	  /* Get the number of drives from the BIOS data area */
@@ -524,7 +548,7 @@ PRIVATE void init_params()
 			0 /* no DMA */, NO_IRQ, 0, 0, drive);
 		w_next_drive++;
   	}
-  }
+  } 
 
   /* Look for controllers on the pci bus. Skip none the first instance,
    * skip one and then 2 for every instance, for every next instance.
@@ -779,15 +803,6 @@ message *m_ptr;
   		wn->state |= IGNORING;
 	  	return(ENXIO);
 	  }
-
-#if VERBOSE
-	  printf("%s: AT driver detected ", w_name());
-	  if (wn->state & (SMART|ATAPI)) {
-		printf("%.40s\n", w_id_string);
-	  } else {
-		printf("%ux%ux%u\n", wn->pcylinders, wn->pheads, wn->psectors);
-	  }
-#endif
   }
 
 #if ENABLE_ATAPI
@@ -898,9 +913,6 @@ PRIVATE int w_identify()
 	/* This is an ATA device. */
 	wn->state |= SMART;
 
-	/* Why are the strings byte swapped??? */
-	for (i = 0; i < 40; i++) w_id_string[i] = id_byte(27)[i^1];
-
 	/* Preferred CHS translation mode. */
 	wn->pcylinders = id_word(1);
 	wn->pheads = id_word(3);
@@ -958,7 +970,8 @@ PRIVATE int w_identify()
 		else if (id_dma && dma_base)
 		{
 			w= id_word(ID_MULTIWORD_DMA);
-			if (w & (ID_MWDMA_2_SUP|ID_MWDMA_1_SUP|ID_MWDMA_0_SUP))
+			if (w_pci_debug &&
+			(w & (ID_MWDMA_2_SUP|ID_MWDMA_1_SUP|ID_MWDMA_0_SUP)))
 			{
 				printf(
 				"%s: multiword DMA modes supported:%s%s%s\n",
@@ -967,7 +980,8 @@ PRIVATE int w_identify()
 					(w & ID_MWDMA_1_SUP) ? " 1" : "",
 					(w & ID_MWDMA_2_SUP) ? " 2" : "");
 			}
-			if (w & (ID_MWDMA_0_SEL|ID_MWDMA_1_SEL|ID_MWDMA_2_SEL))
+			if (w_pci_debug &&
+			(w & (ID_MWDMA_0_SEL|ID_MWDMA_1_SEL|ID_MWDMA_2_SEL)))
 			{
 				printf(
 				"%s: multiword DMA mode selected:%s%s%s\n",
@@ -976,7 +990,7 @@ PRIVATE int w_identify()
 					(w & ID_MWDMA_1_SEL) ? " 1" : "",
 					(w & ID_MWDMA_2_SEL) ? " 2" : "");
 			}
-			if (ultra_dma) 
+			if (w_pci_debug && ultra_dma) 
 			{
 				w= id_word(ID_ULTRA_DMA);
 				if (w & (ID_UDMA_0_SUP|ID_UDMA_1_SUP|
@@ -1048,9 +1062,6 @@ PRIVATE int w_identify()
 	if ((s=sys_insw(wn->base_cmd + REG_DATA, SELF, tmp_buf, 512)) != OK)
 		panic(w_name(),"Call to sys_insw() failed", s);
 
-	/* Why are the strings byte swapped??? */
-	for (i = 0; i < 40; i++) w_id_string[i] = id_byte(27)[i^1];
-
 	size = 0;	/* Size set later. */
 #endif
   } else {
@@ -1114,14 +1125,17 @@ PRIVATE int w_io_test(void)
 	int r, save_dev;
 	int save_timeout, save_errors, save_wakeup;
 	iovec_t iov;
+	static char *buf;
+
 #ifdef CD_SECTOR_SIZE
-	static char buf[CD_SECTOR_SIZE];
+#define BUFSIZE CD_SECTOR_SIZE
 #else
-	static char buf[SECTOR_SIZE];
+#define BUFSIZE SECTOR_SIZE
 #endif
+	STATICINIT(buf, BUFSIZE);
 
 	iov.iov_addr = (vir_bytes) buf;
-	iov.iov_size = sizeof(buf);
+	iov.iov_size = BUFSIZE;
 	save_dev = w_device;
 
 	/* Reduce timeout values for this test transaction. */
@@ -1321,8 +1335,8 @@ int safe;			/* iov contains addresses (0) or grants? */
 		nbytes = diff64(dv_size, position);
 	block = div64u(add64(w_dv->dv_base, position), SECTOR_SIZE);
 
-	do_dma= wn->dma;
 	do_write= (opcode == DEV_SCATTER_S);
+	do_dma= wn->dma;
 	
 	if (nbytes >= wn->max_count) {
 		/* The drive can't do more then max_count at once. */
@@ -1475,13 +1489,16 @@ int safe;			/* iov contains addresses (0) or grants? */
 			s=sys_safe_insw(wn->base_cmd + REG_DATA, proc_nr, 
 				(void *) (iov->iov_addr), addr_offset,
 					SECTOR_SIZE);
+		   if(s != OK) {
+			panic(w_name(),"Call to sys_safe_insw() failed", s);
+		   }
 		   } else {
 			s=sys_insw(wn->base_cmd + REG_DATA, proc_nr, 
 				(void *) (iov->iov_addr + addr_offset),
 					SECTOR_SIZE);
-		   }
 		   if(s != OK) {
 			panic(w_name(),"Call to sys_insw() failed", s);
+		   }
 		   }
 		} else {
 		   if(safe) {
@@ -1662,14 +1679,14 @@ int safe;
 	offset= 0;	/* Offset in current iov */
 
 #if 0
-	printf("setup_dma: proc_nr %d\n", proc_nr);
+	printf("at_wini: setup_dma: proc_nr %d\n", proc_nr);
 #endif
 
 	while (size > 0)
 	{
 #if 0
 		printf(
-		"setup_dma: iov[%d]: addr 0x%x, size %d offset %d, size %d\n",
+		"at_wini: setup_dma: iov[%d]: addr 0x%x, size %d offset %d, size %d\n",
 			i, iov[i].iov_addr, iov[i].iov_size, offset, size);
 #endif
 			
@@ -1679,13 +1696,15 @@ int safe;
 		if (n == 0 || (n & 1))
 			panic("at_wini", "bad size in iov", iov[i].iov_size);
 		if(safe) {
-		 r= sys_umap(proc_nr, GRANT_SEG, iov[i].iov_addr, n,&user_phys);
+		 r= sys_umap(proc_nr, VM_GRANT, iov[i].iov_addr, n,&user_phys);
+		if (r != 0)
+			panic("at_wini", "can't map user buffer (VM_GRANT)", r);
 		 user_phys += offset;
 		} else {
-		 r= sys_umap(proc_nr, D, iov[i].iov_addr+offset, n, &user_phys);
-		}
+		 r= sys_umap(proc_nr, VM_D, iov[i].iov_addr+offset, n, &user_phys);
 		if (r != 0)
-			panic("at_wini", "can't map user buffer", r);
+			panic("at_wini", "can't map user buffer (VM_D)", r);
+		}
 		if (user_phys & 1)
 		{
 			/* Buffer is not aligned */
@@ -2709,7 +2728,7 @@ PRIVATE int at_in(int line, u32_t port, u32_t *value,
 		return OK;
 	printf("at_wini%d: line %d: %s failed: %d; port %x\n", 
 		w_instance, line, typename, s, value, port);
-        panic(w_name(), "sys_out failed", NO_NUM);
+        panic(w_name(), "sys_in failed", NO_NUM);
 }
 
 #undef panic

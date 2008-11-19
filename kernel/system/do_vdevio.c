@@ -36,14 +36,13 @@ register message *m_ptr;	/* pointer to request message */
   int vec_size;               /* size of vector */
   int io_in;                  /* true if input */
   size_t bytes;               /* # bytes to be copied */
-  vir_bytes caller_vir;       /* virtual address at caller */
-  phys_bytes caller_phys;     /* physical address at caller */
   port_t port;
   int i, j, io_size, nr_io_range;
   int io_dir, io_type;
   struct proc *rp;
   struct priv *privp;
   struct io_range *iorp;
+  int r;
     
   /* Get the request, size of the request vector, and check the values. */
   io_dir = m_ptr->DIO_REQUEST & _DIO_DIRMASK;
@@ -69,11 +68,10 @@ register message *m_ptr;	/* pointer to request message */
   }
   if (bytes > sizeof(vdevio_buf))  return(E2BIG);
 
-  /* Calculate physical addresses and copy (port,value)-pairs from user. */
-  caller_vir = (vir_bytes) m_ptr->DIO_VEC_ADDR;
-  caller_phys = umap_local(proc_addr(who_p), D, caller_vir, bytes);
-  if (0 == caller_phys) return(EFAULT);
-  phys_copy(caller_phys, vir2phys(vdevio_buf), (phys_bytes) bytes);
+  /* Copy (port,value)-pairs from user. */
+  if((r=data_copy(who_e, (vir_bytes) m_ptr->DIO_VEC_ADDR,
+    SYSTEM, (vir_bytes) vdevio_buf, bytes)) != OK)
+	return r;
 
   rp= proc_addr(who_p);
   privp= priv(rp);
@@ -110,7 +108,20 @@ register message *m_ptr;	/* pointer to request message */
    * the entire switch is wrapped in lock() and unlock() to prevent the I/O
    * batch from being interrupted. 
    */  
-  lock(13, "do_vdevio");
+#if 0
+  if(who_e == 71091)  {
+	static int vd = 0;
+	if(vd++ < 100) {
+		  kprintf("proc %d does vdevio no %d; type %d, direction %s\n",
+		who_e, vd, io_type, io_in ? "input" : "output");
+		kprintf("(");
+		for (i=0; i<vec_size; i++) 
+			kprintf("%2d:0x%x,0x%x  ", i, pvb[i].port, pvb[i].value); 
+		kprintf(")\n");
+	}
+  }
+#endif
+  lock;
   switch (io_type) {
   case _DIO_BYTE: 					 /* byte values */
       if (io_in) for (i=0; i<vec_size; i++) 
@@ -158,14 +169,18 @@ register message *m_ptr;	/* pointer to request message */
 	}
       }
   }
-  unlock(13);
+  unlock;
     
   /* Almost done, copy back results for input requests. */
-  if (io_in) phys_copy(vir2phys(vdevio_buf), caller_phys, (phys_bytes) bytes);
+  if (io_in) 
+	if((r=data_copy(SYSTEM, (vir_bytes) vdevio_buf, 
+	  who_e, (vir_bytes) m_ptr->DIO_VEC_ADDR,
+	  (phys_bytes) bytes)) != OK)
+		return r;
   return(OK);
 
 bad:
-	panic("do_vdevio: unaligned port\n", port);
+	minix_panic("do_vdevio: unaligned port", port);
 	return EPERM;
 }
 

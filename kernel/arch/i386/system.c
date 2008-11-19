@@ -3,10 +3,14 @@
 #include "../../kernel.h"
 
 #include <unistd.h>
+#include <ctype.h>
+#include <string.h>
 #include <ibm/cmos.h>
 #include <ibm/bios.h>
 #include <minix/portio.h>
 #include <minix/u64.h>
+#include <minix/sysutil.h>
+#include <a.out.h>
 
 #include "proto.h"
 #include "../../proc.h"
@@ -31,7 +35,39 @@ PUBLIC void arch_shutdown(int how)
 		 * the program if not already done.
 		 */
 		if (how != RBT_MONITOR)
-			phys_copy(vir2phys(""), kinfo.params_base, 1);
+			arch_set_params("", 1);
+		if(minix_panicing) {
+			int source, dest;
+			static char mybuffer[sizeof(params_buffer)];
+			char *lead = "echo \\n*** kernel messages:\\n";
+			int leadlen = strlen(lead);
+			strcpy(mybuffer, lead);
+
+#define DECSOURCE source = (source - 1 + _KMESS_BUF_SIZE) % _KMESS_BUF_SIZE
+
+			dest = sizeof(mybuffer)-1;
+			mybuffer[dest--] = '\0';
+
+			source = kmess.km_next;
+			DECSOURCE; 
+
+			while(dest >= leadlen) {
+				char c = kmess.km_buf[source];
+				if(c == '\n') {
+					mybuffer[dest--] = 'n';
+					mybuffer[dest] = '\\';
+				} else if(isprint(c) &&
+					c != '\'' && c != '"' &&
+					c != '\\' && c != ';') {
+					mybuffer[dest] = c;
+				} else	mybuffer[dest] = '|';
+
+				DECSOURCE;
+				dest--;
+			}
+
+			arch_set_params(mybuffer, strlen(mybuffer)+1);
+		}
 		level0(monitor);
 	} else {
 		/* Reset the system by forcing a processor shutdown. First stop
@@ -42,6 +78,17 @@ PUBLIC void arch_shutdown(int how)
        	 	SOFT_RESET_FLAG_SIZE);
 		level0(reset);
 	}
+}
+
+/* address of a.out headers, set in mpx386.s */
+phys_bytes aout;
+
+PUBLIC void arch_get_aout_headers(int i, struct exec *h)
+{
+	/* The bootstrap loader created an array of the a.out headers at
+	 * absolute address 'aout'. Get one element to h.
+	 */
+	phys_copy(aout + i * A_MINHDR, vir2phys(h), (phys_bytes) A_MINHDR);
 }
 
 PUBLIC void system_init(void)
@@ -122,7 +169,7 @@ PUBLIC void ser_dump_proc()
 			pp->p_priority, pp->p_max_priority,
 			pp->p_user_time, pp->p_sys_time, 
 			pp->p_reg.pc);
-		stacktrace(pp);
+		proc_stacktrace(pp);
 	}
 }
 
@@ -219,3 +266,23 @@ PUBLIC void cons_seth(int pos, int n)
 	else
 		cons_setc(pos, 'A'+(n-10));
 }
+
+/* Saved by mpx386.s into these variables. */
+u32_t params_size, params_offset, mon_ds;
+
+PUBLIC int arch_get_params(char *params, int maxsize)
+{
+	phys_copy(seg2phys(mon_ds) + params_offset, vir2phys(params),
+		MIN(maxsize, params_size));
+	params[maxsize-1] = '\0';
+	return OK;
+}
+
+PUBLIC int arch_set_params(char *params, int size)
+{
+	if(size > params_size)
+		return E2BIG;
+	phys_copy(vir2phys(params), seg2phys(mon_ds) + params_offset, size);
+	return OK;
+}
+

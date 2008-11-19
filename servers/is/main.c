@@ -9,10 +9,6 @@
 
 #include "inc.h"
 
-/* Set debugging level to 0, 1, or 2 to see no, some, all debug output. */
-#define DEBUG_LEVEL	1
-#define DPRINTF		if (DEBUG_LEVEL > 0) printf
-
 /* Allocate space for the global variables. */
 message m_in;		/* the input message itself */
 message m_out;		/* the output message used for reply */
@@ -43,7 +39,6 @@ PUBLIC int main(int argc, char **argv)
 
   /* Main loop - get work and do it, forever. */         
   while (TRUE) {              
-
       /* Wait for incoming message, sets 'callnr' and 'who'. */
       get_work();
 

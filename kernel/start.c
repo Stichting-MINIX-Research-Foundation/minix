@@ -7,8 +7,6 @@
 #include <string.h>
 #include <archconst.h>
 
-PRIVATE char params[K_PARAM_SIZE];
-
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 /*===========================================================================*
  *				cstart					     *
@@ -21,7 +19,6 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 /* Perform system initializations prior to calling main(). Most settings are
  * determined with help of the environment strings passed by MINIX' loader.
  */
-  char params[128*sizeof(char *)];		/* boot monitor parameters */
   register char *value;				/* value in key=value pair */
   extern int etext, end;
   int h;
@@ -36,10 +33,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   system_init();
 
   /* Copy the boot parameters to the local buffer. */
-  kinfo.params_base = seg2phys(mds) + parmoff;
-  kinfo.params_size = MIN(parmsize,sizeof(params)-2);
-  phys_copy(kinfo.params_base,
-	vir2phys(params), kinfo.params_size);
+  arch_get_params(params_buffer, sizeof(params_buffer));
 
   /* Record miscellaneous information for user-space servers. */
   kinfo.nr_procs = NR_PROCS;
@@ -49,8 +43,6 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   strncpy(kinfo.version, OS_VERSION, sizeof(kinfo.version));
   kinfo.version[sizeof(kinfo.version)-1] = '\0';
   kinfo.proc_addr = (vir_bytes) proc;
-  kinfo.kmem_base = vir2phys(0);
-  kinfo.kmem_size = (phys_bytes) &end;	
 
   /* Load average data initialization. */
   kloadinfo.proc_last_slot = 0;
@@ -58,10 +50,10 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 	kloadinfo.proc_load_history[h] = 0;
 
   /* Processor? Decide if mode is protected for older machines. */
-  machine.processor=atoi(get_value(params, "processor")); 
+  machine.processor=atoi(get_value(params_buffer, "processor")); 
 
   /* XT, AT or MCA bus? */
-  value = get_value(params, "bus");
+  value = get_value(params_buffer, "bus");
   if (value == NIL_PTR || strcmp(value, "at") == 0) {
       machine.pc_at = TRUE;			/* PC-AT compatible hardware */
   } else if (strcmp(value, "mca") == 0) {
@@ -69,7 +61,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   }
 
   /* Type of VDU: */
-  value = get_value(params, "video");		/* EGA or VGA video unit */
+  value = get_value(params_buffer, "video");	/* EGA or VGA video unit */
   if (strcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
   if (strcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
 

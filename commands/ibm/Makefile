@@ -22,8 +22,7 @@ ALL	= \
 	postmort \
 	recwave \
 	repartition \
-	screendump \
-	sdump \
+	screendump
 
 all:	$(ALL)
 
@@ -109,7 +108,6 @@ install:	\
 	/usr/bin/recwave \
 	/usr/bin/repartition \
 	/usr/bin/screendump \
-	/usr/bin/sdump \
 	/bin/loadkeys \
 
 /usr/bin/atnormalize:	atnormalize

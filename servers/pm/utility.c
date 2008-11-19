@@ -6,7 +6,6 @@
  *   allowed:		see if an access is permitted
  *   no_sys:		called for invalid system call numbers
  *   panic:		PM has run aground of a fatal error 
- *   get_mem_map:	get memory map of given process
  *   get_stack_ptr:	get stack pointer of given process	
  *   proc_from_pid:	return process pointer from pid number
  */
@@ -103,38 +102,6 @@ const char *name;
 		;
   }
   return(NULL);
-}
-
-/*===========================================================================*
- *				get_mem_map				     *
- *===========================================================================*/
-PUBLIC int get_mem_map(proc_nr, mem_map)
-int proc_nr;					/* process to get map of */
-struct mem_map *mem_map;			/* put memory map here */
-{
-  struct proc p;
-  int s;
-
-  if ((s=sys_getproc(&p, proc_nr)) != OK)
-  	return(s);
-  memcpy(mem_map, p.p_memmap, sizeof(p.p_memmap));
-  return(OK);
-}
-
-/*===========================================================================*
- *				get_stack_ptr				     *
- *===========================================================================*/
-PUBLIC int get_stack_ptr(proc_nr_e, sp)
-int proc_nr_e;					/* process to get sp of */
-vir_bytes *sp;					/* put stack pointer here */
-{
-  struct proc p;
-  int s;
-
-  if ((s=sys_getproc(&p, proc_nr_e)) != OK)
-  	return(s);
-  *sp = p.p_reg.sp;
-  return(OK);
 }
 
 /*===========================================================================*

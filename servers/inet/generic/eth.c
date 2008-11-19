@@ -342,8 +342,10 @@ ioreq_t req;
 
 			if (!(eth_port->etp_flags & EPF_GOT_ADDR))
 			{
+#if 0
 				printf(
 				"eth_ioctl: suspending NWIOGETHSTAT ioctl\n");
+#endif
 
 				eth_fd->ef_ioctl_req= req;
 				assert(!(eth_fd->ef_flags & EFF_IOCTL_IP));
@@ -372,14 +374,18 @@ ioreq_t req;
 					&ethstat->nwes_stat);
 				if (result == SUSPEND)
 				{
+#if 0
 					printf(
 				"eth_ioctl: eth_get_stat returned SUSPEND\n");
+#endif
 					eth_fd->ef_ioctl_req= req;
 					assert(!(eth_fd->ef_flags &
 						EFF_IOCTL_IP));
 					eth_fd->ef_flags |= EFF_IOCTL_IP;
+#if 0
 printf("eth_ioctl: setting etp_getstat in port %d to %p\n",
 	eth_port-eth_port_table, acc);
+#endif
 					eth_port->etp_getstat= acc;
 					acc= NULL;
 					return NW_SUSPEND;
@@ -1049,7 +1055,9 @@ eth_port_t *eth_port;
 	eth_fd_t *eth_fd;
 	acc_t *acc;
 
+#if 0
 	printf("in eth_restart_ioctl\n");
+#endif
 
 	/* eth_restart_ioctl is called on too occasions: when a device
 	 * driver registers with inet and when a eth_get_stat call has
@@ -1069,12 +1077,16 @@ eth_port_t *eth_port;
 		if (eth_fd->ef_ioctl_req != NWIOGETHSTAT)
 			continue;
 
+#if 0
 printf("eth_restart_ioctl: etp_getstat in port %d is %p\n",
 	eth_port-eth_port_table, acc);
+#endif
 
 		if (acc != NULL)
 		{
+#if 0
 			printf("eth_restart_ioctl: completed getstat\n");
+#endif
 			acc->acc_linkC++;
 			r= (*eth_fd->ef_put_userdata)(eth_fd->ef_srfd, 0,
 				acc, TRUE);
@@ -1092,8 +1104,10 @@ printf("eth_restart_ioctl: etp_getstat in port %d is %p\n",
 
 	if (acc != NULL)
 	{
+#if 0
 printf("eth_restart_ioctl: clearing etp_getstat in port %d\n",
 	eth_port-eth_port_table);
+#endif
 		assert(acc == eth_port->etp_getstat);
 
 		bf_afree(acc);

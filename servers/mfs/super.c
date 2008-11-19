@@ -148,21 +148,13 @@ bit_t bit_returned;		/* number of bit to insert into the map */
 PUBLIC struct super_block *get_super(dev)
 dev_t dev;			/* device number whose super_block is sought */
 {
-/* Search the superblock table for this device.  It is supposed to be there. */
-
-  register struct super_block *sp;
-
   if (dev == NO_DEV)
   	panic(__FILE__,"request for super_block of NO_DEV", NO_NUM);
 
-  for (sp = &super_block[0]; sp < &super_block[NR_SUPERS]; sp++)
-	if (sp->s_dev == dev) return(sp);
-printf("MFS(%d)get_super: sp->s_dev: %d, dev: %d\n", SELF_E, sp->s_dev, dev);  
+  if(superblock.s_dev != dev)
+  	panic(__FILE__,"wrong superblock", (int) dev);
 
-  /* Search failed.  Something wrong. */
-  panic(__FILE__,"can't find superblock for device (in decimal)", (int) dev);
-
-  return(NIL_SUPER);		/* to keep the compiler and lint quiet */
+  return &superblock;
 }
 
 /*===========================================================================*
@@ -170,21 +162,24 @@ printf("MFS(%d)get_super: sp->s_dev: %d, dev: %d\n", SELF_E, sp->s_dev, dev);
  *===========================================================================*/
 PUBLIC int get_block_size(dev_t dev)
 {
-/* Search the superblock table for this device. */
-
-  register struct super_block *sp;
-
   if (dev == NO_DEV)
   	panic(__FILE__,"request for block size of NO_DEV", NO_NUM);
 
-  for (sp = &super_block[0]; sp < &super_block[NR_SUPERS]; sp++) {
-	if (sp->s_dev == dev) {
-		return(sp->s_block_size);
+  return fs_block_size;
+
+#if 0
+  if(superblock.s_dev == dev) {
+	if(superblock.s_block_size != fs_block_size) {
+		printf("mounted blocksize: %d  my blocksize: %d\n", 
+			superblock.s_block_size, fs_block_size);
 	}
+	ASSERT(superblock.s_block_size == fs_block_size);
+	return(superblock.s_block_size);
   }
 
-  /* no mounted filesystem? use this block size then. */
+  /* not the mounted filesystem? use this block size then. */
   return _MIN_BLOCK_SIZE;
+#endif
 }
 
 /*===========================================================================*
@@ -196,14 +191,13 @@ PUBLIC int mounted(rip)
 register struct inode *rip;
 {
 
-  register struct super_block *sp;
   register dev_t dev;
 
   dev = (dev_t) rip->i_zone[0];
   if (dev == root_dev) return(TRUE);
 
-  for (sp = &super_block[0]; sp < &super_block[NR_SUPERS]; sp++)
-	if (sp->s_dev == dev) return(TRUE);
+  if(superblock.s_dev == dev)
+	return TRUE;
 
   return(FALSE);
 }
@@ -218,7 +212,9 @@ register struct super_block *sp; /* pointer to a superblock */
   dev_t dev;
   int magic;
   int version, native, r;
-  static char sbbuf[_MIN_BLOCK_SIZE];
+  static char *sbbuf;
+
+  STATICINIT(sbbuf, _MIN_BLOCK_SIZE);
 
   dev = sp->s_dev;		/* save device (will be overwritten by copy) */
   if (dev == NO_DEV)

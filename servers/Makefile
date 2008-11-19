@@ -21,6 +21,7 @@ all install depend clean:
 	cd ./rs && $(MAKE) $@
 	cd ./ds && $(MAKE) $@
 	cd ./is && $(MAKE) $@
+	cd ./vm && $(MAKE) $@
 	cd ./init && $(MAKE) $@
 	cd ./inet && $(MAKE) $@
 
@@ -30,6 +31,6 @@ image:
 	cd ./mfs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 	cd ./rs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 	cd ./ds && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
+	cd ./vm && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 	cd ./init && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
-
 

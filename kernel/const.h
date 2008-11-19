@@ -6,6 +6,7 @@
 #include <minix/bitmap.h>
 
 #include "config.h"
+#include "debug.h"
 
 /* Map a process number to a privilege structure id. */
 #define s_nr_to_id(n)	(NR_TASKS + (n) + 1)
@@ -37,24 +38,15 @@
 	( MAP_CHUNK(map.chunk,bit) &= ~(1 << CHUNK_OFFSET(bit) )
 #define NR_SYS_CHUNKS	BITMAP_CHUNKS(NR_SYS_PROCS)
 
-#if DEBUG_LOCK_CHECK
-#define reallock(c, v)  { if(intr_disabled()) { kinfo.relocking++; } else { intr_disable(); } }
-#else
-#define reallock(c, v)  intr_disable()
-#endif
+#define reallock  do { int d; d = intr_disabled(); intr_disable(); locklevel++; if(d && locklevel == 1) { minix_panic("reallock while interrupts disabled first time", __LINE__); } } while(0)
 
-#define realunlock(c)   intr_enable()
+#define realunlock   do { if(!intr_disabled()) { minix_panic("realunlock while interrupts enabled", __LINE__); } if(locklevel < 1) { minix_panic("realunlock while locklevel below 1", __LINE__); } locklevel--; if(locklevel == 0) { intr_enable(); } } while(0)
 
-#if DEBUG_TIME_LOCKS
-#define lock(c, v)    do { reallock(c, v); locktimestart(c, v); } while(0)
-#define unlock(c)     do { locktimeend(c); realunlock(c); } while(0)
-#else
 /* Disable/ enable hardware interrupts. The parameters of lock() and unlock()
  * are used when debugging is enabled. See debug.h for more information.
  */
-#define lock(c, v)      reallock(c, v)
-#define unlock(c)       realunlock(c)
-#endif
+#define lock      reallock
+#define unlock    realunlock
 
 /* args to intr_init() */
 #define INTS_ORIG	0	/* restore interrupts */

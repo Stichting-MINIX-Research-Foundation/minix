@@ -17,14 +17,14 @@ CFLAGS = $(CPROFILE) $(CPPFLAGS)
 LDFLAGS = -i
 
 OBJ = 	main.o forkexit.o break.o exec.o time.o timers.o \
-	signal.o alloc.o utility.o table.o trace.o getset.o misc.o \
-	profile.o asynsend.o kputc.o
+	signal.o utility.o table.o trace.o getset.o misc.o \
+	profile.o kputc.o dma.o
 
 # build local binary
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsysutil  -lsys -ltimers
-	install -S 8k $@
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) -lsys -ltimers
+	install -S 32k $@
 
 # install with other servers
 install:	/usr/sbin/$(SERVER)

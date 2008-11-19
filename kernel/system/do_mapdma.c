@@ -31,14 +31,13 @@ register message *m_ptr;	/* pointer to request message */
 
 	proc = proc_addr(proc_p);
 
-	phys_base= umap_local(proc, D, base, size);
-	if (!phys_base)
-	{
-		kprintf("do_mapdma: umap_local failed\n");
+        phys_base= umap_virtual(proc, D, base, size);
+        if (!phys_base)
+        {
+                kprintf("do_mapdma: umap_virtual failed\n");
 		return EFAULT;
 	}
 
 	m_ptr->CP_DST_ADDR = phys_base;
 	return OK;
 }
-

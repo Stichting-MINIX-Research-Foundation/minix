@@ -25,26 +25,24 @@ register message *m_ptr;    /* pointer to request message */
  * about the location of their profiling table and the control structure
  * which is used to enable the kernel to have the tables cleared.
  */ 
-  int proc_nr, len;
+  int proc_nr;
   vir_bytes vir_dst;
   struct proc *rp;                          
 
   /* Store process name, control struct, table locations. */
-  isokendpt(m_ptr->m_source, &proc_nr);
+  if(!isokendpt(m_ptr->m_source, &proc_nr))
+	return EDEADSRCDST;
+
+  if(cprof_procs_no >= NR_SYS_PROCS)
+	return ENOSPC;
+
   rp = proc_addr(proc_nr);
 
   cprof_proc_info[cprof_procs_no].endpt = who_e;
   cprof_proc_info[cprof_procs_no].name = rp->p_name;
 
-  len = (phys_bytes) sizeof (void *);
-
-  vir_dst = (vir_bytes) m_ptr->PROF_CTL_PTR;
-  cprof_proc_info[cprof_procs_no].ctl =
-	  numap_local(proc_nr, vir_dst, len);
-
-  vir_dst = (vir_bytes) m_ptr->PROF_MEM_PTR;
-  cprof_proc_info[cprof_procs_no].buf =
-	  numap_local(proc_nr, vir_dst, len);
+  cprof_proc_info[cprof_procs_no].ctl_v = (vir_bytes) m_ptr->PROF_CTL_PTR;
+  cprof_proc_info[cprof_procs_no].buf_v = (vir_bytes) m_ptr->PROF_MEM_PTR;
 
   cprof_procs_no++;
 

@@ -19,11 +19,10 @@
 #include <minix/u64.h>
 #include "buf.h"
 #include "super.h"
+#include "inode.h"
 
 FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
 FORWARD _PROTOTYPE( int rw_block, (struct buf *, int) );
-
-#define ENABLE_CACHE2 0
 
 /*===========================================================================*
  *				get_block				     *
@@ -51,20 +50,24 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   int b;
   register struct buf *bp, *prev_ptr;
 
+  ASSERT(fs_block_size > 0);
+
   /* Search the hash chain for (dev, block). Do_read() can use 
    * get_block(NO_DEV ...) to get an unnamed block to fill with zeros when
    * someone wants to read from a hole in a file, in which case this search
    * is skipped
    */
   if (dev != NO_DEV) {
-	b = (int) block & HASH_MASK;
+	b = BUFHASH(block);
 	bp = buf_hash[b];
 	while (bp != NIL_BUF) {
 		if (bp->b_blocknr == block && bp->b_dev == dev) {
 			/* Block needed has been found. */
 			if (bp->b_count == 0) rm_lru(bp);
 			bp->b_count++;	/* record that block is in use */
-
+			ASSERT(bp->b_dev == dev);
+			ASSERT(bp->b_dev != NO_DEV);
+			ASSERT(bp->bp);
 			return(bp);
 		} else {
 			/* This block is not the one sought. */
@@ -78,7 +81,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   rm_lru(bp);
 
   /* Remove the block that was just taken from its hash chain. */
-  b = (int) bp->b_blocknr & HASH_MASK;
+  b = BUFHASH(bp->b_blocknr);
   prev_ptr = buf_hash[b];
   if (prev_ptr == bp) {
 	buf_hash[b] = bp->b_hash;
@@ -98,31 +101,42 @@ int only_search;		/* if NO_READ, don't read, else act normal */
    */
   if (bp->b_dev != NO_DEV) {
 	if (bp->b_dirt == DIRTY) flushall(bp->b_dev);
-#if ENABLE_CACHE2
-	put_block2(bp);
-#endif
   }
 
   /* Fill in block's parameters and add it to the hash chain where it goes. */
   bp->b_dev = dev;		/* fill in device number */
   bp->b_blocknr = block;	/* fill in block number */
   bp->b_count++;		/* record that block is being used */
-  b = (int) bp->b_blocknr & HASH_MASK;
+  b = BUFHASH(bp->b_blocknr);
   bp->b_hash = buf_hash[b];
+  if(bp->b_bytes < fs_block_size) {
+	static int n = 0;
+	phys_bytes ph;
+	if(bp->b_bytes > 0)
+		printf("MFS: WARNING: throwing away %d bytes!\n",
+			bp->b_bytes);
+	if(!(bp->bp = alloc_contig(fs_block_size, 0, &ph)))
+		panic(__FILE__,"couldn't allocate FS buffer", n);
+  	bp->b_bytes = fs_block_size;
+	n++;
+  }
+
   buf_hash[b] = bp;		/* add to hash list */
+
+  SANITYCHECK;
 
   /* Go get the requested block unless searching or prefetching. */
   if (dev != NO_DEV) {
-#if ENABLE_CACHE2
-	if (get_block2(bp, only_search)) /* in 2nd level cache */;
-	else
-#endif
 	if (only_search == PREFETCH) bp->b_dev = NO_DEV;
 	else
 	if (only_search == NORMAL) {
+	  	SANITYCHECK;
 		rw_block(bp, READING);
 	}
   }
+
+  ASSERT(bp->bp);
+
   return(bp);			/* return the newly acquired block */
 }
 
@@ -262,15 +276,14 @@ int rw_flag;			/* READING or WRITING */
   int r, op;
   u64_t pos;
   dev_t dev;
-  int block_size;
-
-  block_size = get_block_size(bp->b_dev);
 
   if ( (dev = bp->b_dev) != NO_DEV) {
-	  pos = mul64u(bp->b_blocknr, block_size);
+	  pos = mul64u(bp->b_blocknr, fs_block_size);
 	  op = (rw_flag == READING ? MFS_DEV_READ : MFS_DEV_WRITE);
-	  r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, block_size, 0);
-	  if (r != block_size) {
+	  SANITYCHECK;
+	  r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, fs_block_size, 0);
+	  SANITYCHECK;
+	  if (r != fs_block_size) {
 		  if (r >= 0) r = END_OF_FILE;
 		  if (r != END_OF_FILE)
 			printf("MFS(%d) I/O error on device %d/%d, block %ld\n",
@@ -281,6 +294,14 @@ int rw_flag;			/* READING or WRITING */
 
 		  /* Report read errors to interested parties. */
 		  if (rw_flag == READING) rdwt_err = r;
+	  }
+	  if(op == MFS_DEV_READ) {
+		int i;
+#if 0
+		printf("mfsread after contents: 0x%lx, ", bp->b_data);
+		for(i = 0; i < 10; i++) printf("%02lx ", (unsigned char) bp->b_data[i]);
+		printf("\n");
+#endif
 	  }
   }
 
@@ -301,10 +322,6 @@ dev_t device;			/* device whose blocks are to be purged */
 
   for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++)
 	if (bp->b_dev == device) bp->b_dev = NO_DEV;
-
-#if ENABLE_CACHE2
-  invalidate2(device);
-#endif
 }
 
 /*===========================================================================*
@@ -316,8 +333,10 @@ dev_t dev;			/* device to flush */
 /* Flush all dirty blocks for one device. */
 
   register struct buf *bp;
-  static struct buf *dirty[NR_BUFS];	/* static so it isn't on stack */
+  static struct buf **dirty;	/* static so it isn't on stack */
   int ndirty;
+
+  STATICINIT(dirty, NR_BUFS);
 
   for (bp = &buf[0], ndirty = 0; bp < &buf[NR_BUFS]; bp++)
 	if (bp->b_dirt == DIRTY && bp->b_dev == dev) dirty[ndirty++] = bp;
@@ -339,11 +358,10 @@ int rw_flag;			/* READING or WRITING */
   int gap;
   register int i;
   register iovec_t *iop;
-  static iovec_t iovec[NR_IOREQS];  /* static so it isn't on stack */
+  static iovec_t *iovec = NULL;
   int j, r;
-  int block_size;
 
-  block_size = get_block_size(dev);
+  STATICINIT(iovec, NR_IOREQS);
 
   /* (Shell) sort buffers on b_blocknr. */
   gap = 1;
@@ -371,11 +389,11 @@ int rw_flag;			/* READING or WRITING */
 		bp = bufq[j];
 		if (bp->b_blocknr != bufq[0]->b_blocknr + j) break;
 		iop->iov_addr = (vir_bytes) bp->b_data;
-		iop->iov_size = block_size;
+		iop->iov_size = fs_block_size;
 	}
 	r = block_dev_io(rw_flag == WRITING ? MFS_DEV_SCATTER : MFS_DEV_GATHER,
 		dev, SELF_E, iovec,
-		mul64u(bufq[0]->b_blocknr, block_size), j, 0);
+		mul64u(bufq[0]->b_blocknr, fs_block_size), j, 0);
 
 	/* Harvest the results.  Dev_io reports the first error it may have
 	 * encountered, but we only care if it's the first block that failed.
@@ -444,3 +462,58 @@ struct buf *bp;
   else
 	rear = prev_ptr;	/* this block was at rear of chain */
 }
+
+/*===========================================================================*
+ *				set_blocksize				     *
+ *===========================================================================*/
+PUBLIC void set_blocksize(int blocksize)
+{
+	struct buf *bp;
+	struct inode *rip;
+
+	ASSERT(blocksize > 0);
+
+        for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++)
+		if(bp->b_count != 0)
+			panic("MFS", "change blocksize with buffer in use",
+				NO_NUM);
+
+	for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++)
+		if (rip->i_count > 0)
+			panic("MFS", "change blocksize with inode in use",
+				NO_NUM);
+
+	fs_sync();
+
+	buf_pool();
+	fs_block_size = blocksize;
+}
+
+/*===========================================================================*
+ *                              buf_pool                                     *
+ *===========================================================================*/
+PUBLIC void buf_pool(void)
+{
+/* Initialize the buffer pool. */
+  register struct buf *bp;
+
+  bufs_in_use = 0;
+  front = &buf[0];
+  rear = &buf[NR_BUFS - 1];
+
+  for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++) {
+        bp->b_blocknr = NO_BLOCK;
+        bp->b_dev = NO_DEV;
+        bp->b_next = bp + 1;
+        bp->b_prev = bp - 1;
+        bp->bp = NULL;
+        bp->b_bytes = 0;
+  }
+  buf[0].b_prev = NIL_BUF;
+  buf[NR_BUFS - 1].b_next = NIL_BUF;
+
+  for (bp = &buf[0]; bp < &buf[NR_BUFS]; bp++) bp->b_hash = bp->b_next;
+  buf_hash[0] = front;
+
+}
+
