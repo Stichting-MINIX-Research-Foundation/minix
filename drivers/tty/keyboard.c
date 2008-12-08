@@ -371,8 +371,8 @@ message *m;
 			if (r != OK)
 				break;
 
-			ticks= bell.kb_duration.tv_usec * HZ / 1000000;
-			ticks += bell.kb_duration.tv_sec * HZ;
+			ticks= bell.kb_duration.tv_usec * system_hz / 1000000;
+			ticks += bell.kb_duration.tv_sec * system_hz;
 			if (!ticks)
 				ticks++;
 			beep_x(bell.kb_pitch, ticks);
@@ -669,7 +669,7 @@ PRIVATE void kbd_send()
 		 */
 		if ((r= getuptime(&now)) != OK)
 			panic("TTY","Keyboard couldn't get clock's uptime.", r);
-		tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+HZ, kbd_watchdog,
+		tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+system_hz, kbd_watchdog,
 			NULL);
 		if (tty_timers->tmr_exp_time != tty_next_timeout) {
 			tty_next_timeout = tty_timers->tmr_exp_time;
@@ -1269,7 +1269,7 @@ timer_t *tmrp;
 
 	if ((r= getuptime(&now)) != OK)
 		panic("TTY","Keyboard couldn't get clock's uptime.", r);
-	tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+HZ, kbd_watchdog,
+	tmrs_settimer(&tty_timers, &tmr_kbd_wd, now+system_hz, kbd_watchdog,
 		NULL);
 	if (tty_timers->tmr_exp_time != tty_next_timeout) {
 		tty_next_timeout = tty_timers->tmr_exp_time;

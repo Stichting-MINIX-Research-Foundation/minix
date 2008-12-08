@@ -138,6 +138,7 @@ PUBLIC int ccurrent;			/* currently active console */
 PUBLIC timer_t *tty_timers;		/* queue of TTY timers */
 PUBLIC clock_t tty_next_timeout;	/* time that the next alarm is due */
 PUBLIC struct machine machine;		/* kernel environment variables */
+PUBLIC u32_t system_hz;
 
 extern PUBLIC unsigned info_location;
 extern PUBLIC phys_bytes vid_size;     /* 0x2000 for color or 0x0800 for mono */
@@ -1537,6 +1538,8 @@ PRIVATE void tty_init()
   register tty_t *tp;
   int s;
 
+  system_hz = sys_hz();
+
   /* Initialize the terminal lines. */
   for (tp = FIRST_TTY,s=0; tp < END_TTY; tp++,s++) {
 
@@ -1565,6 +1568,7 @@ PRIVATE void tty_init()
 		tp->tty_minor = s - (NR_CONS+NR_RS_LINES) + TTYPX_MINOR;
   	}
   }
+
 }
 
 /*===========================================================================*
@@ -1621,7 +1625,7 @@ int enable;			/* set timer if true, otherwise unset */
   if ((s=getuptime(&now)) != OK)
  	panic("TTY","Couldn't get uptime from clock.", s);
   if (enable) {
-  	exp_time = now + tty_ptr->tty_termios.c_cc[VTIME] * (HZ/10);
+  	exp_time = now + tty_ptr->tty_termios.c_cc[VTIME] * (system_hz/10);
  	/* Set a new timer for enabling the TTY events flags. */
  	tmrs_settimer(&tty_timers, &tty_ptr->tty_tmr, 
  		exp_time, tty_timed_out, NULL);  

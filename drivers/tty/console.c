@@ -25,6 +25,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/sys_config.h>
+#include <minix/vm.h>
 #include "tty.h"
 
 /* Set this to 1 if you want console output duplicated on the first
@@ -141,10 +142,6 @@ FORWARD _PROTOTYPE( void disable_console, (void)			);
 FORWARD _PROTOTYPE( void reenable_console, (void)			);
 FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
 FORWARD _PROTOTYPE( int cons_ioctl, (tty_t *tp, int)			);
-
-#if DUP_CONS_TO_SER
-FORWARD _PROTOTYPE( void ser_putc, (char c)				);
-#endif
 
 #if 0
 FORWARD _PROTOTYPE( void get_6845, (int reg, unsigned *val)		);
@@ -826,47 +823,6 @@ PUBLIC void do_video(message *m)
 	    case DEV_IOCTL_S:
 		safe=1;
 		switch(m->TTY_REQUEST) {
-		  case MIOCMAP:
-		  case MIOCUNMAP: {
-#if 0
-			int r, do_map;
-			struct mapreq mapreq;
-
-			do_map= (m->REQUEST == MIOCMAP);	/* else unmap */
-
-			/* Get request structure */
-			if(safe) {
-	   		   r = sys_safecopyfrom(m->IO_ENDPT,
-				(vir_bytes)m->ADDRESS, 0, (vir_bytes) &mapreq,
-				sizeof(mapreq), D);
-			} else {
-			  r= sys_vircopy(m->IO_ENDPT, D,
-				(vir_bytes)m->ADDRESS,
-				SELF, D, (vir_bytes)&mapreq, sizeof(mapreq));
-			}
-			if (r != OK)
-			{
-				tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT,
-					r);
-				return;
-			}
-
-			/* In safe ioctl mode, the POSITION field contains
-			 * the endpt number of the original requestor.
-			 * IO_ENDPT is always FS.
-			 */
-
-			r= sys_vm_map(safe ? m->POSITION : m->IO_ENDPT,
-			  do_map, (phys_bytes)mapreq.base, mapreq.size,
-			  mapreq.offset);
-#else
-			r = ENOSYS;
-			printf("tty: %ld used old MIOCMAP interface\n",
-				safe ? m->POSITION : m->IO_ENDPT);
-#endif
-			tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
-			return;
-		   }
 		  case TIOCMAPMEM:
 		  case TIOCUNMAPMEM: {
 			int r, do_map;
@@ -876,17 +832,18 @@ PUBLIC void do_video(message *m)
 			do_map= (m->REQUEST == TIOCMAPMEM);	/* else unmap */
 
 			/* Get request structure */
-			if(safe) {
-	   		   r = sys_safecopyfrom(m->IO_ENDPT,
-				(vir_bytes)m->ADDRESS, 0, (vir_bytes) &mapreqvm,
-				sizeof(mapreqvm), D);
-			} else {
-			  r= sys_vircopy(m->IO_ENDPT, D,
-				(vir_bytes)m->ADDRESS,
-				SELF, D, (vir_bytes)&mapreqvm,sizeof(mapreqvm));
+			if(!safe) {
+				printf("tty: safecopy only\n");
+				return;
 			}
+
+	   		r = sys_safecopyfrom(m->IO_ENDPT,
+			  (vir_bytes)m->ADDRESS, 0, (vir_bytes) &mapreqvm,
+			  sizeof(mapreqvm), D);
+
 			if (r != OK)
 			{
+				printf("tty: sys_safecopyfrom failed\n");
 				tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT,
 					r);
 				return;
@@ -898,7 +855,17 @@ PUBLIC void do_video(message *m)
 			 */
 
 			if(do_map) {
+				mapreqvm.vaddr_ret = vm_map_phys(m->POSITION,
+				(void *) mapreqvm.phys_offset, mapreqvm.size);
+	   			if((r = sys_safecopyto(m->IO_ENDPT,
+				  (vir_bytes)m->ADDRESS, 0,
+				  (vir_bytes) &mapreqvm,
+				  sizeof(mapreqvm), D)) != OK) {
+				  printf("tty: sys_safecopyto failed\n");
+				}
 			} else {
+				r = vm_unmap_phys(m->POSITION, 
+					mapreqvm.vaddr, mapreqvm.size);
 			}
 			tty_reply(TASK_REPLY, m->m_source, m->IO_ENDPT, r);
 			return;
@@ -1267,10 +1234,12 @@ PUBLIC void toggle_scroll()
 PUBLIC void cons_stop()
 {
 /* Prepare for halt or reboot. */
+  select_console(0);
+#if 0
   cons_org0();
   softscroll = 1;
-  select_console(0);
   cons_table[0].c_attr = cons_table[0].c_blank = BLANK_COLOR;
+#endif
 }
 
 /*===========================================================================*
@@ -1417,26 +1386,3 @@ int try;
   return 0;
 }
 
-#if DUP_CONS_TO_SER
-#define COM1_BASE	0x3F8
-#define COM1_THR	(COM1_BASE + 0)
-#define		LSR_THRE	0x20
-#define COM1_LSR	(COM1_BASE + 5)
-
-PRIVATE void ser_putc(char c)
-{
-	unsigned long b;
-	int i;
-	int lsr, thr;
-
-	lsr= COM1_LSR;
-	thr= COM1_THR;
-	for (i= 0; i<10000; i++)
-	{
-		sys_inb(lsr, &b);
-		if (b & LSR_THRE)
-			break;
-	}
-	sys_outb(thr, c);
-}
-#endif
