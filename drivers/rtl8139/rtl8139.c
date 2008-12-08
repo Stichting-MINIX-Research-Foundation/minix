@@ -301,6 +301,7 @@ PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 
 static char *progname;
 extern int errno;
+u32_t system_hz;
 
 /*===========================================================================*
  *				main				     *
@@ -312,6 +313,8 @@ int main(int argc, char *argv[])
 	int i, r;
 	re_t *rep;
 	long v;
+
+	system_hz = sys_hz();
 
 	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
@@ -518,7 +521,7 @@ message *mp;
 
 		tmra_inittimer(&rl_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
-		sys_setalarm(HZ, 0);
+		sys_setalarm(system_hz, 0);
 	}
 
 	port = mp->DL_PORT;
@@ -773,12 +776,8 @@ re_t *rep;
 
 #define BUF_ALIGNMENT (64*1024)
 
-	if(!(mallocbuf = malloc(BUF_ALIGNMENT + tot_bufsize))) {
+	if(!(mallocbuf = alloc_contig(BUF_ALIGNMENT + tot_bufsize, 0, &buf))) {
 	    panic("RTL8139","Couldn't allocate kernel buffer",i);
-	}
-
-	if(OK != (i = sys_umap(SELF, D, (vir_bytes) mallocbuf, tot_bufsize, &buf))) {
-	    panic("RTL8139","Couldn't re-map malloced buffer",i);
 	}
 
 	/* click-align mallocced buffer. this is what we used to get
@@ -872,7 +871,7 @@ re_t *rep;
 	do {
 		if (!(rl_inb(port, RL_BMCR) & MII_CTRL_RST))
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
+	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
 	if (rl_inb(port, RL_BMCR) & MII_CTRL_RST)
 		panic("rtl8139","reset PHY failed to complete", NO_NUM);
 #endif
@@ -885,7 +884,7 @@ re_t *rep;
 	do {
 		if (!(rl_inb(port, RL_CR) & RL_CR_RST))
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
+	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
 	printf("rl_reset_hw: (after reset) port = 0x%x, RL_CR = 0x%x\n",
 		port, rl_inb(port, RL_CR));
 	if (rl_inb(port, RL_CR) & RL_CR_RST)
@@ -2225,7 +2224,7 @@ re_t *rep;
 	do {
 		if (!(rl_inb(port, RL_CR) & RL_CR_RE))
 			break;
-	} while (getuptime(&t1)==OK && (t1-t0) < HZ);
+	} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
 	if (rl_inb(port, RL_CR) & RL_CR_RE)
 		panic("rtl8139","cannot disable receiver", NO_NUM);
 
@@ -2627,7 +2626,7 @@ re_t *rep;
 			do {
 				if (!(rl_inb(port, RL_CR) & RL_CR_TE))
 					break;
-			} while (getuptime(&t1)==OK && (t1-t0) < HZ);
+			} while (getuptime(&t1)==OK && (t1-t0) < system_hz);
 			if (rl_inb(port, RL_CR) & RL_CR_TE)
 			{
 			  panic("rtl8139","cannot disable transmitter",
@@ -2802,7 +2801,7 @@ timer_t *tp;
 	int i;
 	re_t *rep;
 	/* Use a synchronous alarm instead of a watchdog timer. */
-	sys_setalarm(HZ, 0);
+	sys_setalarm(system_hz, 0);
 
 	for (i= 0, rep = &re_table[0]; i<RE_PORT_NR; i++, rep++)
 	{
