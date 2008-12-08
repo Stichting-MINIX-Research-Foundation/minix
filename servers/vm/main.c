@@ -15,11 +15,14 @@
 #include <minix/ipc.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/const.h>
 
 #include <errno.h>
 #include <string.h>
 #include <env.h>
 #include <stdio.h>
+
+#include <memory.h>
 
 #define _MAIN 1
 #include "glo.h"
@@ -33,9 +36,17 @@
 #include "../../kernel/config.h" 
 #include "../../kernel/proc.h"
 
+typedef u32_t mask_t;
+#define MINEPM 0
+#define MAXMASK (sizeof(mask_t)*8)
+#define ANYEPM (MINEPM+MAXMASK-1)
+#define MAXEPM (ANYEPM-1)
+#define EPM(e) ((1L) << ((e)-MINEPM))
+#define EPMOK(mask, ep) (((mask) & EPM(ANYEPM)) || ((ep) >= MINEPM && (ep) <= MAXEPM && (EPM(ep) & (mask))))
+
 /* Table of calls and a macro to test for being in range. */
 struct {
-	endpoint_t vmc_caller;		/* Process that does this, or ANY */
+	mask_t vmc_callers;		/* bitmap of endpoint numbers */
 	int (*vmc_func)(message *);	/* Call handles message. */
 	char *vmc_name;			/* Human-readable string. */
 } vm_calls[VM_NCALLS];
@@ -92,10 +103,6 @@ PUBLIC int main(void)
   	if ((r=receive(ANY, &msg)) != OK)
 		vm_panic("receive() error", r);
 
-	if(msg.m_source == LOG_PROC_NR ||
-		msg.m_source == TTY_PROC_NR)
-		continue;
-
 	SANITYCHECK(SCL_DETAIL);
 
 	if(msg.m_type & NOTIFY_MESSAGE) {
@@ -131,12 +138,10 @@ PUBLIC int main(void)
 	if((c=CALLNUMBER(msg.m_type)) < 0 || !vm_calls[c].vmc_func) {
 		printf("VM: out of range or missing callnr %d from %d\n",
 			msg.m_type, msg.m_source);
-	} else if(vm_calls[c].vmc_caller != ANY &&
-		vm_calls[c].vmc_caller != msg.m_source) {
-		printf("VM: restricted callnr %d (%s) from %d instead of %d\n",
-			c,
+	} else if(!EPMOK(vm_calls[c].vmc_callers, msg.m_source)) {
+		printf("VM: restricted call %s from %d instead of 0x%lx\n",
 			vm_calls[c].vmc_name, msg.m_source,
-			vm_calls[c].vmc_caller);
+			vm_calls[c].vmc_callers);
 	} else {
 	SANITYCHECK(SCL_FUNCTIONS);
 		result = vm_calls[c].vmc_func(&msg);
@@ -170,7 +175,6 @@ PRIVATE void vm_init(void)
 	struct memory mem_chunks[NR_MEMS];
 	struct boot_image image[NR_BOOT_PROCS];
 	struct boot_image *ip;
-	struct vmproc *vmp;
 
 	/* Get chunks of available memory. */
 	get_mem_chunks(mem_chunks);
@@ -189,19 +193,24 @@ PRIVATE void vm_init(void)
 	 * now and make valid slot entries for them.
 	 */
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
+		struct vmproc *vmp;
+
 		if(ip->proc_nr >= _NR_PROCS) { vm_panic("proc", ip->proc_nr); }
 		if(ip->proc_nr < 0 && ip->proc_nr != SYSTEM) continue;
+
+#define GETVMP(v, nr)						\
+		if(nr >= 0) {					\
+			vmp = &vmproc[ip->proc_nr];		\
+		} else if(nr == SYSTEM) {			\
+			vmp = &vmproc[VMP_SYSTEM];		\
+		} else {					\
+			vm_panic("init: crazy proc_nr", nr);	\
+		}
 
 		/* Initialize normal process table slot or special SYSTEM
 		 * table slot. Kernel memory is already reserved.
 		 */
-		if(ip->proc_nr >= 0) {
-			vmp = &vmproc[ip->proc_nr];
-		} else if(ip->proc_nr == SYSTEM) {
-			vmp = &vmproc[VMP_SYSTEM];
-		} else {
-			vm_panic("init: crazy proc_nr", ip->proc_nr);
-		}
+		GETVMP(vmp, ip->proc_nr);
 
 		/* reset fields as if exited */
 		clear_proc(vmp);
@@ -233,13 +242,67 @@ PRIVATE void vm_init(void)
 	/* Initialize tables to all physical memory. */
 	mem_init(mem_chunks);
 
+	/* Bits of code need to know where a process can
+	 * start in a pagetable.
+	 */
+        kernel_top_bytes = find_kernel_top();
+
+	/* Give these processes their own page table. */
+	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
+		int s;
+		struct vmproc *vmp;
+		vir_bytes old_stacktop, old_stack;
+
+		if(ip->proc_nr < 0) continue;
+
+		GETVMP(vmp, ip->proc_nr);
+
+		old_stack = 
+			vmp->vm_arch.vm_seg[S].mem_vir +
+			vmp->vm_arch.vm_seg[S].mem_len - 
+			vmp->vm_arch.vm_seg[D].mem_len;
+
+		if(!(ip->flags & PROC_FULLVM))
+			continue;
+
+        	if(pt_new(&vmp->vm_pt) != OK)
+			vm_panic("vm_init: no new pagetable", NO_NUM);
+#define BASICSTACK VM_PAGE_SIZE
+		old_stacktop = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
+				vmp->vm_arch.vm_seg[S].mem_len);
+		if(sys_vmctl(vmp->vm_endpoint, VMCTL_INCSP,
+			VM_STACKTOP - old_stacktop) != OK) {
+			vm_panic("VM: vmctl for new stack failed", NO_NUM);
+		}
+
+		FREE_MEM(vmp->vm_arch.vm_seg[D].mem_phys +
+			vmp->vm_arch.vm_seg[D].mem_len,
+			old_stack);
+
+		proc_new(vmp,
+			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
+			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len),
+			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_len),
+			BASICSTACK,
+			CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_vir +
+				vmp->vm_arch.vm_seg[S].mem_len -
+				vmp->vm_arch.vm_seg[D].mem_len) - BASICSTACK,
+			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
+			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
+				VM_STACKTOP);
+	}
+
 	/* Set up table of calls. */
 #define CALLMAP(code, func, thecaller) { int i;			      \
 	if((i=CALLNUMBER(code)) < 0) { vm_panic(#code " invalid", (code)); } \
-	if(vm_calls[i].vmc_func) { vm_panic("dup " #code , (code)); }  \
+	if(i >= VM_NCALLS) { vm_panic(#code " invalid", (code)); } \
 	vm_calls[i].vmc_func = (func); 				      \
 	vm_calls[i].vmc_name = #code; 				      \
-	vm_calls[i].vmc_caller = (thecaller);			      \
+	if(((thecaller) < MINEPM || (thecaller) > MAXEPM) 		\
+		&& (thecaller) != ANYEPM) {				\
+		vm_panic(#thecaller " invalid", (code));  		\
+	}								\
+	vm_calls[i].vmc_callers |= EPM(thecaller);		      \
 }
 
 	/* Set call table to 0. This invalidates all calls (clear
@@ -259,12 +322,17 @@ PRIVATE void vm_init(void)
 	CALLMAP(VM_GETDMA, do_getdma, PM_PROC_NR);
 	CALLMAP(VM_ALLOCMEM, do_allocmem, PM_PROC_NR);
 
-	/* Requests from tty device driver (/dev/video). */
+	/* Physical mapping requests.
+	 * tty (for /dev/video) does this.
+	 * memory (for /dev/mem) does this.
+	 */
 	CALLMAP(VM_MAP_PHYS, do_map_phys, TTY_PROC_NR);
 	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys, TTY_PROC_NR);
+	CALLMAP(VM_MAP_PHYS, do_map_phys, MEM_PROC_NR);
+	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys, MEM_PROC_NR);
 
 	/* Requests from userland (source unrestricted). */
-	CALLMAP(VM_MMAP, do_mmap, ANY);
+	CALLMAP(VM_MMAP, do_mmap, ANYEPM);
 
 	/* Requests (actually replies) from VFS (restricted to VFS only). */
 	CALLMAP(VM_VFS_REPLY_OPEN, do_vfs_reply, VFS_PROC_NR);
@@ -272,3 +340,9 @@ PRIVATE void vm_init(void)
 	CALLMAP(VM_VFS_REPLY_CLOSE, do_vfs_reply, VFS_PROC_NR);
 }
 
+void kputc(int c)
+{
+	if(c == '\n')
+		ser_putc('\r');
+	ser_putc(c);
+}

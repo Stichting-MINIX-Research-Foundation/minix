@@ -31,3 +31,6 @@
 
 /* Flags to pt_writemap(). */
 #define WMF_OVERWRITE	0x01	/* Caller knows map may overwrite. */
+
+/* Special value of 'what' to map_page_region meaning: unknown. */
+#define MAP_NONE	0xFFFFFFFE

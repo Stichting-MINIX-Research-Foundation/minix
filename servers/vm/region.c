@@ -32,8 +32,6 @@ FORWARD _PROTOTYPE(int map_new_physblock, (struct vmproc *vmp,
 FORWARD _PROTOTYPE(int map_copy_ph_block, (struct vmproc *vmp, struct vir_region *region, struct phys_region *ph));
 FORWARD _PROTOTYPE(struct vir_region *map_copy_region, (struct vir_region *));
 
-#if SANITYCHECKS
-
 FORWARD _PROTOTYPE(void map_printmap, (struct vmproc *vmp));
 
 PRIVATE char *map_name(struct vir_region *vr)
@@ -51,7 +49,6 @@ PRIVATE char *map_name(struct vir_region *vr)
 	return "NOTREACHED";
 }
 
-
 /*===========================================================================*
  *				map_printmap				     *
  *===========================================================================*/
@@ -59,20 +56,29 @@ PRIVATE void map_printmap(vmp)
 struct vmproc *vmp;
 {
 	struct vir_region *vr;
-	printf("%d:\n", vmp->vm_endpoint);
+	printf("memory regions in process %d:\n", vmp->vm_endpoint);
 	for(vr = vmp->vm_regions; vr; vr = vr->next) {
 		struct phys_region *ph;
-		printf("\t0x%08lx - 0x%08lx: %s  (0x%lx)\n",
-			vr->vaddr, vr->vaddr + vr->length, map_name(vr), vr);
+		int nph = 0;
+		printf("\t0x%lx - 0x%lx (len 0x%lx), proc 0x%lx-0x%lx: %s\n",
+			vr->vaddr, vr->vaddr + vr->length, vr->length,
+			arch_map2vir(vmp, vr->vaddr),
+			arch_map2vir(vmp, vr->vaddr + vr->length), map_name(vr));
+		printf("\t\tphysical: ");
 		for(ph = vr->first; ph; ph = ph->next) {
-			printf("0x%lx-0x%lx(%d) ",
+			printf("0x%lx-0x%lx (refs %d): phys 0x%lx ",
 				vr->vaddr + ph->ph->offset,
 				vr->vaddr + ph->ph->offset + ph->ph->length,
-				ph->ph->refcount);
+				ph->ph->refcount,
+				ph->ph->phys);
 		}
-		printf("\n");
+		printf(" (phregions %d)\n", nph);
 	}
 }
+
+
+#if SANITYCHECKS
+
 
 /*===========================================================================*
  *				map_sanitycheck			     *
@@ -199,6 +205,7 @@ int mapflags;
                 if(maxv <= minv) {
                         printf("map_page_region: minv 0x%lx and bytes 0x%lx\n",
                                 minv, length);
+			map_printmap(vmp);
                         return NULL;
                 }
         }
@@ -236,6 +243,7 @@ int mapflags;
 	if(!foundflag) {
 		printf("VM: map_page_region: no 0x%lx bytes found for %d between 0x%lx and 0x%lx\n",
 			length, vmp->vm_endpoint, minv, maxv);
+		map_printmap(vmp);
 		return NULL;
 	}
 
@@ -261,8 +269,9 @@ int mapflags;
 	newregion->flags = flags;
 	newregion->tag = VRT_NONE;
 
-	/* If this is a 'direct' mapping, try to actually map it. */
-	if(flags & VR_DIRECT) {
+	/* If we know what we're going to map to, map it right away. */
+	if(what != MAP_NONE) {
+		vm_assert(!(what % VM_PAGE_SIZE));
 		vm_assert(!(length % VM_PAGE_SIZE));
 		vm_assert(!(startv % VM_PAGE_SIZE));
 		vm_assert(!newregion->first);
@@ -422,7 +431,7 @@ struct phys_region *physhint;
 
 	/* Memory for new physical block. */
 	clicks = CLICKSPERPAGE * length / VM_PAGE_SIZE;
-	if(!what_mem) {
+	if(what_mem == MAP_NONE) {
 		if((mem_clicks = ALLOC_MEM(clicks, PAF_CLEAR)) == NO_MEM) {
 			SLABFREE(newpb);
 			SLABFREE(newphysr);
@@ -446,7 +455,7 @@ struct phys_region *physhint;
 	vm_assert(!(length % VM_PAGE_SIZE));
 	vm_assert(!(newpb->length % VM_PAGE_SIZE));
 	if(map_ph_writept(vmp, region, newpb, NULL, NULL) != OK) {
-		if(!what_mem)
+		if(what_mem == MAP_NONE)
 			FREE_MEM(mem_clicks, clicks);
 		SLABFREE(newpb);
 		SLABFREE(newphysr);
@@ -592,8 +601,8 @@ int write;
 				vmp->vm_endpoint);
 		}
 #endif
-		r = map_new_physblock(vmp, region, virpage, VM_PAGE_SIZE, 0,
-			region->first);
+		r = map_new_physblock(vmp, region, virpage, VM_PAGE_SIZE,
+			MAP_NONE, region->first);
 	}
 
 	if(r != OK)
@@ -625,7 +634,7 @@ int write;
 		int r;							\
 		SANITYCHECK(SCL_DETAIL);				\
 		if((r=map_new_physblock(vmp, region, start,		\
-			end-start, 0, r1 ? r1 : r2)) != OK) {		\
+			end-start, MAP_NONE, r1 ? r1 : r2)) != OK) {	\
 			SANITYCHECK(SCL_DETAIL);			\
 			return r;					\
 		}							\
@@ -826,7 +835,8 @@ PUBLIC struct vir_region *map_proc_kernel(struct vmproc *vmp)
 /*========================================================================*
  *				map_region_extend	     	  	*
  *========================================================================*/
-PUBLIC int map_region_extend(struct vir_region *vr, vir_bytes delta)
+PUBLIC int map_region_extend(struct vmproc *vmp, struct vir_region *vr,
+	vir_bytes delta)
 {
 	vir_bytes end;
 
@@ -848,6 +858,8 @@ PUBLIC int map_region_extend(struct vir_region *vr, vir_bytes delta)
 		return OK;
 	}
 
+	map_printmap(vmp);
+
 	return ENOMEM;
 }
 
@@ -860,7 +872,9 @@ PUBLIC int map_region_shrink(struct vir_region *vr, vir_bytes delta)
 	vm_assert(vr->flags & VR_ANON);
 	vm_assert(!(delta % VM_PAGE_SIZE));
 
+#if 0
 	printf("VM: ignoring region shrink\n");
+#endif
 
 	return OK;
 }

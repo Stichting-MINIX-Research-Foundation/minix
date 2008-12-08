@@ -69,8 +69,8 @@ PUBLIC int do_mmap(message *m)
 		if(len % VM_PAGE_SIZE)
 			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
-		if(!(vr = map_page_region(vmp, vmp->vm_stacktop,
-			VM_DATATOP, len, 0,
+		if(!(vr = map_page_region(vmp,
+			arch_vir2map(vmp, vmp->vm_stacktop), VM_DATATOP, len, MAP_NONE,
 			VR_ANON | VR_WRITABLE, mfflags))) {
 			return ENOMEM;
 		}
@@ -99,20 +99,17 @@ PUBLIC int do_map_phys(message *m)
 	if(target == SELF)
 		target = m->m_source;
 
-	if((r=vm_isokendpt(target, &n)) != OK) {
-		printf("do_map_phys: bogus target %d\n", target);
+	if((r=vm_isokendpt(target, &n)) != OK)
 		return EINVAL;
-	}
 
 	vmp = &vmproc[n];
 
 	if(!(vmp->vm_flags & VMF_HASPT))
 		return ENXIO;
 
-	if(!(vr = map_page_region(vmp, vmp->vm_stacktop, VM_DATATOP,
-		(vir_bytes) m->VMMP_LEN, (vir_bytes)m->VMMP_PHADDR,
+	if(!(vr = map_page_region(vmp, arch_vir2map(vmp, vmp->vm_stacktop),
+		VM_DATATOP, (vir_bytes) m->VMMP_LEN, (vir_bytes)m->VMMP_PHADDR,
 		VR_DIRECT | VR_NOPF | VR_WRITABLE, 0))) {
-		printf("VM:do_map_phys: map_page_region failed\n");
 		return ENOMEM;
 	}
 
@@ -135,25 +132,21 @@ PUBLIC int do_unmap_phys(message *m)
 	if(target == SELF)
 		target = m->m_source;
 
-	if((r=vm_isokendpt(target, &n)) != OK) {
-		printf("VM:do_unmap_phys: bogus target %d\n", target);
+	if((r=vm_isokendpt(target, &n)) != OK)
 		return EINVAL;
-	}
 
 	vmp = &vmproc[n];
 
-	if(!(region = map_lookup(vmp, (vir_bytes) m->VMUM_ADDR))) {
-		printf("VM:do_unmap_phys: map_lookup failed\n");
+	if(!(region = map_lookup(vmp,
+	  arch_vir2map(vmp, (vir_bytes) m->VMUM_ADDR)))) {
 		return EINVAL;
 	}
 
 	if(!(region->flags & VR_DIRECT)) {
-		printf("VM:do_unmap_phys: region not a DIRECT mapping\n");
 		return EINVAL;
 	}
 
 	if(map_unmap_region(vmp, region) != OK) {
-		printf("VM:do_unmap_phys: map_unmap_region failed\n");
 		return EINVAL;
 	}
 

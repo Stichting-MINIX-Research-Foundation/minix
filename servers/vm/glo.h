@@ -26,4 +26,4 @@ int verbosealloc;
 
 /* vm operation mode state and values */
 EXTERN long vm_paged;
-
+EXTERN phys_bytes kernel_top_bytes;

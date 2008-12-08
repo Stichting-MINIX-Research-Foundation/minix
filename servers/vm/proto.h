@@ -51,6 +51,10 @@ _PROTOTYPE( int do_fork, (message *msg)					);
 _PROTOTYPE( struct vmproc *find_share, (struct vmproc *vmp_ign, Ino_t ino,
                         Dev_t dev, time_t ctime)                        );
 _PROTOTYPE( int do_exec_newmem, (message *msg)				);
+_PROTOTYPE( int proc_new, (struct vmproc *vmp, phys_bytes start,
+	phys_bytes text, phys_bytes data, phys_bytes stack, phys_bytes gap,
+	phys_bytes text_here, phys_bytes data_here, vir_bytes stacktop));
+_PROTOTYPE( phys_bytes find_kernel_top, (void)				);
 
 /* break.c */
 _PROTOTYPE( int do_brk, (message *msg)					);
@@ -76,6 +80,7 @@ _PROTOTYPE(int do_unmap_phys, (message *msg)                            );
 /* pagefaults.c */
 _PROTOTYPE( void handle_pagefaults, (void)				);
 _PROTOTYPE( void handle_memory, (void)				);
+_PROTOTYPE( char *pf_errstr, (u32_t err));
 
 /* $(ARCH)/pagetable.c */
 _PROTOTYPE( void pt_init, (void)					);
@@ -112,7 +117,7 @@ _PROTOTYPE(struct vir_region * map_page_region,(struct vmproc *vmp, \
 	vir_bytes min, vir_bytes max, vir_bytes length, vir_bytes what, \
 	u32_t flags, int mapflags));
 _PROTOTYPE(struct vir_region * map_proc_kernel,(struct vmproc *dst));
-_PROTOTYPE(int map_region_extend,(struct vir_region *vr, vir_bytes delta));
+_PROTOTYPE(int map_region_extend,(struct vmproc *vmp, struct vir_region *vr, vir_bytes delta));
 _PROTOTYPE(int map_region_shrink,(struct vir_region *vr, vir_bytes delta));
 _PROTOTYPE(int map_unmap_region,(struct vmproc *vmp, struct vir_region *vr));
 _PROTOTYPE(int map_free_proc,(struct vmproc *vmp));

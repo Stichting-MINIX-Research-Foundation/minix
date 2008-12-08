@@ -30,7 +30,10 @@
 #include "util.h"
 #include "region.h"
 
-static char *pferr(int err)
+/*===========================================================================*
+ *				pf_errstr	     		     	*
+ *===========================================================================*/
+char *pf_errstr(u32_t err)
 {
 	static char buf[100];
 
@@ -67,8 +70,8 @@ PUBLIC void handle_pagefaults(void)
 		/* See if address is valid at all. */
 		if(!(region = map_lookup(vmp, addr))) {
 			vm_assert(PFERR_NOPAGE(err));
-			printf("VM: SIGSEGV %d bad addr 0x%lx error 0x%lx\n", 
-				ep, addr, err);
+			printf("VM: SIGSEGV %d bad addr 0x%lx %s\n", 
+				ep, arch_map2vir(vmp, addr), pf_errstr(err));
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 				vm_panic("sys_kill failed", s);
 			continue;
@@ -81,8 +84,8 @@ PUBLIC void handle_pagefaults(void)
 
 		/* If process was writing, see if it's writable. */
 		if(!(region->flags & VR_WRITABLE) && wr) {
-			printf("VM: SIGSEGV %d ro map 0x%lx error 0x%lx\n", 
-				ep, addr, err);
+			printf("VM: SIGSEGV %d ro map 0x%lx %s\n", 
+				ep, arch_map2vir(vmp, addr), pf_errstr(err));
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
 				vm_panic("sys_kill failed", s);
 			continue;

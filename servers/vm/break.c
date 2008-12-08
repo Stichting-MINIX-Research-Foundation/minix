@@ -127,7 +127,7 @@ vir_bytes sp;			/* new value of sp */
 	if(old_clicks < data_clicks) {
 		vir_bytes more;
 		more = (data_clicks - old_clicks) << CLICK_SHIFT;
-		if(map_region_extend(rmp->vm_heap, more) != OK) {
+		if(map_region_extend(rmp, rmp->vm_heap, more) != OK) {
 			printf("VM: brk: map_region_extend failed\n");
 			return ENOMEM;
 		}
