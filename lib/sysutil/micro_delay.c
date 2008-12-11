@@ -32,8 +32,7 @@ micro_delay_calibrate(void)
 	unsigned long t = 0;
 
 	/* Get HZ. */
-	if(sys_getinfo(GET_HZ, &Hz, sizeof(Hz), 0, 0) != OK)
-		Hz = HZ;
+	Hz = sys_hz();
 
 	/* Wait for clock to tick. */
 	while(!t || (t == times(&tms)))

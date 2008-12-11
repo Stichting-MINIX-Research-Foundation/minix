@@ -22,6 +22,7 @@ libsys_FILES=" \
 	taskcall.c \
 	read_tsc.s \
 	read_tsc_64.c \
+	ser_putc.c \
 	stacktrace.c \
 	sys_hz.c \
 	profile_extern.c \
