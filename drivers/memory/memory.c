@@ -19,6 +19,8 @@
 #include <sys/ioc_memory.h>
 #include <env.h>
 #include <minix/ds.h>
+#include <minix/vm.h>
+#include <sys/mman.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
@@ -69,11 +71,13 @@ PRIVATE struct driver m_dtab = {
   NULL
 };
 
+#if 0
 /* One page of temporary mapping area - enough to be able to page-align
  * one page.
  */
 static char pagedata_buf[2*I386_PAGE_SIZE];
 vir_bytes pagedata_aligned;
+#endif
 
 /* Buffer for the /dev/zero null byte feed. */
 #define ZERO_BUF_SIZE 			1024
@@ -201,6 +205,7 @@ int safe;			/* safe copies */
 	    u32_t pagestart, page_off;
 	    static u32_t pagestart_mapped;
 	    static int any_mapped = 0;
+	    static char *vaddr;
 	    int r;
 	    u32_t subcount;
 
@@ -217,13 +222,18 @@ int safe;			/* safe copies */
 	     * Don't have to map same page over and over.
 	     */
 	    if(!any_mapped || pagestart_mapped != pagestart) {
-#if 0
-	      if((r=sys_vm_map(SELF, 1, pagedata_aligned,
-		I386_PAGE_SIZE, pagestart)) != OK) {
-#else
-		if(1) {
-#endif
-		printf("memory: sys_vm_map failed: %d\n", r);
+	     if(any_mapped) {
+		if(vm_unmap_phys(SELF, vaddr, I386_PAGE_SIZE) != OK)
+      			panic("MEM","vm_unmap_phys failed",NO_NUM);
+		any_mapped = 0;
+	     }
+	     vaddr = vm_map_phys(SELF, (void *) pagestart, I386_PAGE_SIZE);
+	     if(vaddr == MAP_FAILED) 
+		r = ENOMEM;
+	     else
+		r = OK;
+	     if(r != OK) {
+		printf("memory: vm_map_phys failed\n");
 		return r;
 	     }
 	     any_mapped = 1;
@@ -237,10 +247,10 @@ int safe;			/* safe copies */
 
 	    if (opcode == DEV_GATHER_S) {			/* copy data */
 	           s=sys_safecopyto(proc_nr, user_vir,
-		       vir_offset, pagedata_aligned+page_off, subcount, D);
+		       vir_offset, (vir_bytes) vaddr+page_off, subcount, D);
 	    } else {
 	           s=sys_safecopyfrom(proc_nr, user_vir,
-		       vir_offset, pagedata_aligned+page_off, subcount, D);
+		       vir_offset, (vir_bytes) vaddr+page_off, subcount, D);
 	    }
 	    if(s != OK)
 		return s;
@@ -373,9 +383,11 @@ PRIVATE void m_init()
        dev_zero[i] = '\0';
   }
 
+#if 0
   /* Page-align page pointer. */
   pagedata_aligned = (u32_t) pagedata_buf + I386_PAGE_SIZE;
   pagedata_aligned -= pagedata_aligned % I386_PAGE_SIZE;
+#endif
 
   /* Set up memory range for /dev/mem. */
   m_geom[MEM_DEV].dv_size = cvul64(0xffffffff);

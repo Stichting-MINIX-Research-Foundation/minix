@@ -23,7 +23,9 @@ Created:	March 15, 1994 by Philip Homburg <philip@f-mnx.phicoh.com>
 
 #define N 100
 
-#define MILLIS_TO_TICKS(m)  (((m)*HZ/1000)+1)
+extern u32_t system_hz;
+
+#define MILLIS_TO_TICKS(m)  (((m)*system_hz/1000)+1)
 
 _PROTOTYPE( typedef int (*testf_t), (dpeth_t *dep, int pos, u8_t *pat)	);
 

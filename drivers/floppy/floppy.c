@@ -102,8 +102,8 @@
 #define MAX_SECTORS	  18	/* largest # sectors per track */
 #define DTL             0xFF	/* determines data length (sector size) */
 #define SPEC2           0x02	/* second parameter to SPECIFY */
-#define MOTOR_OFF      (3*HZ)	/* how long to wait before stopping motor */
-#define WAKEUP	       (2*HZ)	/* timeout on I/O, FDC won't quit. */
+#define MOTOR_OFF (3*system_hz)	/* how long to wait before stopping motor */
+#define WAKEUP	  (2*system_hz)	/* timeout on I/O, FDC won't quit. */
 
 /* Error codes */
 #define ERR_SEEK         (-1)	/* bad seek */
@@ -164,17 +164,17 @@ PRIVATE struct density {
 	u8_t	steps;		/* steps per cylinder (2 = double step) */
 	u8_t	test;		/* sector to try for density test */
 	u8_t	rate;		/* data rate (2=250, 1=300, 0=500 kbps) */
-	clock_t	start;	/* motor start (clock ticks) */
+	clock_t	start_ms;	/* motor start (milliseconds) */
 	u8_t	gap;		/* gap size */
 	u8_t	spec1;		/* first specify byte (SRT/HUT) */
 } fdensity[NT] = {
-	{  9, 40, 1, 4*9, 2, 4*HZ/8, 0x2A, 0xDF },	/*  360K / 360K  */
-	{ 15, 80, 1,  14, 0, 4*HZ/8, 0x1B, 0xDF },	/*  1.2M / 1.2M  */
-	{  9, 40, 2, 2*9, 2, 4*HZ/8, 0x2A, 0xDF },	/*  360K / 720K  */
-	{  9, 80, 1, 4*9, 2, 6*HZ/8, 0x2A, 0xDF },	/*  720K / 720K  */
-	{  9, 40, 2, 2*9, 1, 4*HZ/8, 0x23, 0xDF },	/*  360K / 1.2M  */
-	{  9, 80, 1, 4*9, 1, 4*HZ/8, 0x23, 0xDF },	/*  720K / 1.2M  */
-	{ 18, 80, 1,  17, 0, 6*HZ/8, 0x1B, 0xCF },	/* 1.44M / 1.44M */
+	{  9, 40, 1, 4*9, 2, 500, 0x2A, 0xDF },	/*  360K / 360K  */
+	{ 15, 80, 1,  14, 0, 500, 0x1B, 0xDF },	/*  1.2M / 1.2M  */
+	{  9, 40, 2, 2*9, 2, 500, 0x2A, 0xDF },	/*  360K / 720K  */
+	{  9, 80, 1, 4*9, 2, 750, 0x2A, 0xDF },	/*  720K / 720K  */
+	{  9, 40, 2, 2*9, 1, 500, 0x23, 0xDF },	/*  360K / 1.2M  */
+	{  9, 80, 1, 4*9, 1, 500, 0x23, 0xDF },	/*  720K / 1.2M  */
+	{ 18, 80, 1,  17, 0, 750, 0x1B, 0xCF },	/* 1.44M / 1.44M */
 };
 
 /* The following table is used with the test_sector array to recognize a
@@ -757,7 +757,7 @@ PRIVATE void start_motor()
   /* Set an alarm timer to force a timeout if the hardware does not interrupt
    * in time. Expect HARD_INT message, but check for SYN_ALARM timeout.
    */ 
-  f_set_timer(&f_tmr_timeout, f_dp->start, f_timeout);
+  f_set_timer(&f_tmr_timeout, f_dp->start_ms * system_hz / 1000, f_timeout);
   f_busy = BSY_IO;
   do {
   	receive(ANY, &mess); 
@@ -841,7 +841,7 @@ PRIVATE int seek()
 	/* Set a synchronous alarm to force a timeout if the hardware does
 	 * not interrupt. Expect HARD_INT, but check for SYN_ALARM timeout.
  	 */ 
- 	f_set_timer(&f_tmr_timeout, HZ/30, f_timeout);
+ 	f_set_timer(&f_tmr_timeout, system_hz/30, f_timeout);
 	f_busy = BSY_IO;
   	do {
   		receive(ANY, &mess); 

@@ -22,7 +22,9 @@
 
 #if ENABLE_3C503
 
-#define MILLIS_TO_TICKS(m)  (((m)*HZ/1000)+1)
+extern u32_t system_hz;
+
+#define MILLIS_TO_TICKS(m)  (((m)*system_hz/1000)+1)
 
 _PROTOTYPE(static void el2_init, (dpeth_t *dep));
 _PROTOTYPE(static void el2_stop, (dpeth_t *dep));

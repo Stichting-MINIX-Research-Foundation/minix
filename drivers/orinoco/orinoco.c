@@ -231,6 +231,8 @@ _PROTOTYPE (static void or_dump, (message *m));
 PRIVATE message m;
 PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 
+u32_t system_hz;
+
 static char *progname;
 extern int errno;
 
@@ -245,6 +247,8 @@ int main(int argc, char *argv[]) {
 	u32_t inet_proc_nr;
 	long v = 0;
 	t_or *orp;
+
+	system_hz = sys_hz();
 
 	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
@@ -440,7 +444,7 @@ static void or_reset() {
 	if (OK != (r = getuptime(&now)))
 		panic(__FILE__, "orinoco: getuptime() failed:", r);
 
-	if(now - last_reset < HZ * 10) {
+	if(now - last_reset < system_hz * 10) {
 		printf("Resetting card too often. Going to reset driver\n");
 		exit(1);
 	}
@@ -521,7 +525,7 @@ static void or_init (message * mp) {
 	
 		tmra_inittimer(&or_watchdog);
 		/* Use a synchronous alarm instead of a watchdog timer. */
-		sys_setalarm(HZ, 0);
+		sys_setalarm(system_hz, 0);
 	}	
 
 	port = mp->DL_PORT;
@@ -1287,7 +1291,7 @@ static void or_watchdog_f(timer_t *tp) {
 	t_or *orp;
 	
 	/* Use a synchronous alarm instead of a watchdog timer. */
-	sys_setalarm(HZ, 0);
+	sys_setalarm(system_hz, 0);
 
 	for (i= 0, orp = &or_table[0]; i<OR_PORT_NR; i++, orp++) {
 		if (orp->or_mode != OR_M_ENABLED)

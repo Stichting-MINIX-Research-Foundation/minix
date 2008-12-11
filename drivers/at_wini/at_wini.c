@@ -221,7 +221,7 @@ struct command {
 
 /* Some controllers don't interrupt, the clock will wake us up. */
 #define WAKEUP_SECS	32			/* drive may be out for 31 seconds max */
-#define WAKEUP_TICKS	(WAKEUP_SECS*HZ)
+#define WAKEUP_TICKS	(WAKEUP_SECS*system_hz)
 
 /* Miscellaneous. */
 #define MAX_DRIVES         8
@@ -254,8 +254,7 @@ struct command {
 /* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0,
-	disable_dma = 0, atapi_debug = 0, w_identify_wakeup_ticks = WAKEUP_TICKS,
-	wakeup_ticks = WAKEUP_TICKS;
+	disable_dma = 0, atapi_debug = 0, w_identify_wakeup_ticks, wakeup_ticks;
 
 int w_testing = 0, w_silent = 0;
 
@@ -432,7 +431,12 @@ PUBLIC int main(int argc, char *argv[])
 /* Install signal handlers. Ask PM to transform signal into message. */
   struct sigaction sa;
 
+  system_hz = sys_hz();
+
   init_buffer();
+
+  w_identify_wakeup_ticks = WAKEUP_TICKS;
+  wakeup_ticks = WAKEUP_TICKS;
 
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
@@ -470,7 +474,7 @@ PRIVATE void init_params()
   env_parse("ata_id_timeout", "d", WAKEUP_SECS, &wakeup_secs, 1, 60);
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
 
-  w_identify_wakeup_ticks = wakeup_secs * HZ;
+  w_identify_wakeup_ticks = wakeup_secs * system_hz;
 
   if(atapi_debug)
 	panic("at_wini", "atapi_debug", NO_NUM);
@@ -1144,8 +1148,8 @@ PRIVATE int w_io_test(void)
 	save_wakeup = wakeup_ticks;
 
 	if (!w_standard_timeouts) {
-		timeout_ticks = HZ * 4;
-		wakeup_ticks = HZ * 6;
+		timeout_ticks = system_hz * 4;
+		wakeup_ticks = system_hz * 6;
 		max_errors = 3;
 	}
 

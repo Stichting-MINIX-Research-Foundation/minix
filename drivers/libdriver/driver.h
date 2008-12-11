@@ -84,3 +84,5 @@ extern u8_t *tmp_buf;			/* the DMA buffer */
 extern u8_t tmp_buf[];			/* the DMA buffer */
 #endif
 extern phys_bytes tmp_phys;		/* phys address of DMA buffer */
+
+u32_t system_hz;

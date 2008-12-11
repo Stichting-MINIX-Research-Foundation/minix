@@ -67,6 +67,8 @@ struct driver *dp;	/* Device dependent entry points. */
   int r, proc_nr;
   message mess;
 
+  system_hz = sys_hz();
+
   /* Init MQ library. */
   mq_init();
 

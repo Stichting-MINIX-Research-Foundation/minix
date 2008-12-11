@@ -217,7 +217,7 @@ int safe;			/* use virtual addresses or grant id's? */
 	        do_printer_output();
 	        return;
             }
-            tickdelay(HZ/2);		/* wait before retry */
+            micro_delay(500000);		/* wait before retry */
         }
         /* If we reach this point, the printer was not online in time. */
         done_status = status;
@@ -342,7 +342,7 @@ PRIVATE void do_initialize()
 	printf("printer: sys_outb of %x failed\n", port_base+2);
 	panic(__FILE__, "do_initialize: sys_outb init failed", NO_NUM);
   }
-  tickdelay(HZ/20);		/* easily satisfies Centronics minimum */
+  micro_delay(1000000/20);	/* easily satisfies Centronics minimum */
   if(sys_outb(port_base + 2, PR_SELECT) != OK) {
 	printf("printer: sys_outb of %x failed\n", port_base+2);
 	panic(__FILE__, "do_initialize: sys_outb select failed", NO_NUM);

@@ -1269,6 +1269,7 @@ PRIVATE void complete_bridges()
  *===========================================================================*/
 PRIVATE void complete_bars()
 {
+#if 0
 	int i, j, r, bar_nr, reg;
 	u32_t memgap_low, memgap_high, iogap_low, iogap_high, io_high,
 		base, size, v32, diff1, diff2;
@@ -1485,6 +1486,7 @@ PRIVATE void complete_bars()
 			printf("should allocate resources for device %d\n", i);
 		}
 	}
+#endif
 }
 
 /*===========================================================================*

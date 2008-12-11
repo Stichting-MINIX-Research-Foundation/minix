@@ -220,6 +220,8 @@ static char *progname;
 
 extern int errno;
 
+u32_t system_hz;
+
 #define fxp_inb(port, offset)	(do_inb((port) + (offset)))
 #define fxp_inw(port, offset)	(do_inw((port) + (offset)))
 #define fxp_inl(port, offset)	(do_inl((port) + (offset)))
@@ -283,6 +285,8 @@ int main(int argc, char *argv[])
 	fxp_t *fp;
 	long v;
 	vir_bytes ft = sizeof(*fxp_table)*FXP_PORT_NR;
+
+	system_hz = sys_hz();
 
 	if (argc < 1)
 		panic("FXP", "A head which at this time has no name", NO_NUM);
@@ -381,7 +385,7 @@ message *mp;
 
 		tmra_inittimer(&fxp_watchdog);
 		tmr_arg(&fxp_watchdog)->ta_int= 0;
-		fxp_set_timer(&fxp_watchdog, HZ, fxp_watchdog_f);
+		fxp_set_timer(&fxp_watchdog, system_hz, fxp_watchdog_f);
 	}
 
 	port = mp->DL_PORT;
@@ -2282,7 +2286,7 @@ timer_t *tp;
 	fxp_t *fp;
 
 	tmr_arg(&fxp_watchdog)->ta_int= 0;
-	fxp_set_timer(&fxp_watchdog, HZ, fxp_watchdog_f);
+	fxp_set_timer(&fxp_watchdog, system_hz, fxp_watchdog_f);
 
 	for (i= 0, fp = &fxp_table[0]; i<FXP_PORT_NR; i++, fp++)
 	{

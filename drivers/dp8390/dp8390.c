@@ -72,6 +72,8 @@ static dpeth_t de_table[DE_PORT_NR];
 static u16_t eth_ign_proto;
 static char *progname;
 
+u32_t system_hz;
+
 /* Configuration */
 typedef struct dp_conf
 {
@@ -209,6 +211,8 @@ int main(int argc, char *argv[])
 	int i, irq, r, tasknr;
 	dpeth_t *dep;
 	long v;
+
+	system_hz = sys_hz();
 
 	if (argc < 1)
 	{

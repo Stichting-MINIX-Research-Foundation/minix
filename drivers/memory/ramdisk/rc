@@ -1,5 +1,10 @@
 #!/bin/sh
 set -e
+
+exec >/dev/log
+exec 2>/dev/log
+exec </dev/null
+
 /bin/service up /bin/pci -config /etc/drivers.conf
 /bin/service -c up /bin/floppy -config /etc/drivers.conf -dev /dev/fd0
 if [ X`/bin/sysenv bios_wini` = Xyes ]
