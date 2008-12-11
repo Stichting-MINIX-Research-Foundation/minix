@@ -74,11 +74,12 @@ int main(void)
   struct sigaction sa;
   struct stat stb;
 
-  if (fstat(0, &stb) < 0) {
-	/* Open standard input, output & error. */
-	(void) open("/dev/null", O_RDONLY);
-	(void) open("/dev/log", O_WRONLY);
-	dup(1);
+#define OPENFDS						\
+  if (fstat(0, &stb) < 0) {				\
+	/* Open standard input, output & error. */	\
+	(void) open("/dev/null", O_RDONLY);		\
+	(void) open("/dev/log", O_WRONLY);		\
+	dup(1);						\
   }
 
   sigemptyset(&sa.sa_mask);
@@ -122,6 +123,8 @@ int main(void)
 	report(2, "sh /etc/rc");
 	_exit(1);	/* impossible, we hope */
   }
+
+  OPENFDS;
 
   /* Clear /etc/utmp if it exists. */
   if ((fd = open(PATH_UTMP, O_WRONLY | O_TRUNC)) >= 0) close(fd);
