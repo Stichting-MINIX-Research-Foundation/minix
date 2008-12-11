@@ -117,7 +117,7 @@ struct proc {
 #define P_STOP		0x40	/* set when process is being traced */
 #define NO_PRIV		0x80	/* keep forked system process from running */
 #define NO_ENDPOINT    0x100	/* process cannot send or receive messages */
-#define VMINHIBIT      0x200	/* not scheduled until released by VM */
+#define VMINHIBIT      0x200	/* not scheduled until pagetable set by VM */
 #define PAGEFAULT      0x400	/* process has unhandled pagefault */
 #define VMREQUEST      0x800	/* originator of vm memory request */
 

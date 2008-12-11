@@ -67,15 +67,6 @@ struct priv {
 /* Guard word for task stacks. */
 #define STACK_GUARD	((reg_t) (sizeof(reg_t) == 2 ? 0xBEEF : 0xDEADBEEF))
 
-/* Bits for the system property flags. */
-#define PREEMPTIBLE	0x02	/* kernel tasks are not preemptible */
-#define BILLABLE	0x04	/* some processes are not billable */
-
-#define SYS_PROC	0x10	/* system processes have own priv structure */
-#define CHECK_IO_PORT	0x20	/* check if I/O request is allowed */
-#define CHECK_IRQ	0x40	/* check if IRQ can be used */
-#define CHECK_MEM	0x80	/* check if (VM) mem map request is allowed */
-
 /* Magic system structure table addresses. */
 #define BEG_PRIV_ADDR (&priv[0])
 #define END_PRIV_ADDR (&priv[NR_SYS_PROCS])

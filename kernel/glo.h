@@ -43,6 +43,7 @@ EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 EXTERN irq_hook_t irq_hooks[NR_IRQ_HOOKS];	/* hooks for general use */
 EXTERN int irq_actids[NR_IRQ_VECTORS];		/* IRQ ID bits active */
 EXTERN int irq_use;				/* map of all in-use irq's */
+EXTERN u32_t system_hz;				/* HZ value */
 
 EXTERN struct ipc_stats
 {
