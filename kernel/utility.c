@@ -15,6 +15,21 @@
 #include <minix/sys_config.h>
 
 /*===========================================================================*
+ *			panic                                        *
+ *===========================================================================*/
+PUBLIC void panic(what, mess,nr)
+char *what;
+char *mess;
+int nr;
+{
+/* This function is for when a library call wants to panic.
+ * The library call calls printf() and tries to exit a process,
+ * which isn't applicable in the kernel.
+ */
+	minix_panic(mess, nr);
+}
+
+/*===========================================================================*
  *			minix_panic                                        *
  *===========================================================================*/
 PUBLIC void minix_panic(mess,nr)
@@ -29,9 +44,10 @@ int nr;
 	if(nr != NO_NUM)
 		kprintf(" %d", nr);
 	kprintf("\n");
-	kprintf("kernel stacktrace: ");
-	util_stacktrace();
   }
+
+  kprintf("kernel stacktrace: ");
+  util_stacktrace();
 
   /* Abort MINIX. */
   minix_shutdown(NULL);
