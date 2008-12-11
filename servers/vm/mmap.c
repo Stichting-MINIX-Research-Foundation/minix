@@ -94,6 +94,7 @@ PUBLIC int do_map_phys(message *m)
 	struct vmproc *vmp;
 	endpoint_t target;
 	struct vir_region *vr;
+	vir_bytes len;
 
 	target = m->VMMP_EP;
 	if(target == SELF)
@@ -107,8 +108,12 @@ PUBLIC int do_map_phys(message *m)
 	if(!(vmp->vm_flags & VMF_HASPT))
 		return ENXIO;
 
+	len = m->VMMP_LEN;
+	if(len % VM_PAGE_SIZE)
+		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
+
 	if(!(vr = map_page_region(vmp, arch_vir2map(vmp, vmp->vm_stacktop),
-		VM_DATATOP, (vir_bytes) m->VMMP_LEN, (vir_bytes)m->VMMP_PHADDR,
+		VM_DATATOP, len, (vir_bytes)m->VMMP_PHADDR,
 		VR_DIRECT | VR_NOPF | VR_WRITABLE, 0))) {
 		return ENOMEM;
 	}

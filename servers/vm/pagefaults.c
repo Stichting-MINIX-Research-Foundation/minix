@@ -159,20 +159,13 @@ PUBLIC void handle_memory(void)
 		}
 
 		if(r != OK) {
-			printf("VM: SIGSEGV %d, memory range not available\n",
+			printf("VM: memory range 0x%lx-0x%lx not available in %d\n",
+				arch_map2vir(vmp, mem), arch_map2vir(vmp, mem+len),
 				vmp->vm_endpoint);
-			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				vm_panic("sys_kill failed", s);
 		}
 
 		if(sys_vmctl(who, VMCTL_MEMREQ_REPLY, r) != OK)
 			vm_panic("handle_memory: sys_vmctl failed", r);
-
-		if(r != OK) {
-			printf("VM: killing %d\n", vmp->vm_endpoint);
-			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
-				vm_panic("sys_kill failed", s);
-		}
 	}
 }
 

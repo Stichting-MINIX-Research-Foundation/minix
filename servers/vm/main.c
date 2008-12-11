@@ -340,9 +340,11 @@ PRIVATE void vm_init(void)
 	CALLMAP(VM_VFS_REPLY_CLOSE, do_vfs_reply, VFS_PROC_NR);
 }
 
+#if 0
 void kputc(int c)
 {
 	if(c == '\n')
 		ser_putc('\r');
 	ser_putc(c);
 }
+#endif
