@@ -10,6 +10,7 @@ _PROTOTYPE( ssize_t getsysinfo_up, (endpoint_t who, int what, size_t size,
 	void *where));
 
 #define SIU_LOADINFO	1	/* retrieve load info data */
+#define SIU_SYSTEMHZ	2	/* retrieve system clock frequency */
 
 /* Exported system parameters. */
 

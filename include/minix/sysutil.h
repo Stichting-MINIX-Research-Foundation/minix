@@ -57,6 +57,7 @@ _PROTOTYPE( void util_stacktrace_strcat, (char *));
 _PROTOTYPE( int micro_delay, (u32_t micros));
 _PROTOTYPE( u32_t micros_to_ticks, (u32_t micros));
 _PROTOTYPE( int asynsend, (endpoint_t ep, message *msg));
+_PROTOTYPE( void ser_putc, (char c));
 
 #define ASSERT(c) if(!(c)) { panic(__FILE__, "assert " #c " failed at line", __LINE__); }
 
