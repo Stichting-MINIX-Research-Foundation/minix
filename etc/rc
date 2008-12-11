@@ -1,5 +1,9 @@
 # /etc/rc - System startup script run by init before going multiuser.
 
+exec >/dev/log
+exec 2>/dev/log
+exec </dev/null
+
 umask 022
 TERM="${TERM-minix}"
 PATH=/usr/local/bin:/bin:/usr/bin:/usr/sbin
