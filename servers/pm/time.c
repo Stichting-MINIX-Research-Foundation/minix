@@ -29,8 +29,8 @@ PUBLIC int do_time()
   if ( (s=getuptime(&uptime)) != OK) 
   	panic(__FILE__,"do_time couldn't get uptime", s);
 
-  mp->mp_reply.reply_time = (time_t) (boottime + (uptime/HZ));
-  mp->mp_reply.reply_utime = (uptime%HZ)*1000000/HZ;
+  mp->mp_reply.reply_time = (time_t) (boottime + (uptime/system_hz));
+  mp->mp_reply.reply_utime = (uptime%system_hz)*1000000/system_hz;
   return(OK);
 }
 
@@ -51,7 +51,7 @@ PUBLIC int do_stime()
   }
   if ( (s=getuptime(&uptime)) != OK) 
       panic(__FILE__,"do_stime couldn't get uptime", s);
-  boottime = (long) m_in.stime - (uptime/HZ);
+  boottime = (long) m_in.stime - (uptime/system_hz);
 
   s= sys_stime(boottime);		/* Tell kernel about boottime */
   if (s != OK)

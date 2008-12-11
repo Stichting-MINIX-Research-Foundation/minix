@@ -72,9 +72,6 @@ PUBLIC int do_allocmem()
 	r = vm_allocmem(m_in.memsize, &retmembase);
 	if(r == OK)
 		mp->mp_reply.membase = retmembase;
-#if 0
-	printf("PM: do_allocmem: %d\n", r);
-#endif
 	return r;
 }
 
@@ -282,6 +279,10 @@ PUBLIC int do_getsysinfo_up()
         src_addr = (vir_bytes) &loadinfo;
         real_len = sizeof(struct loadinfo);
         break;
+  case SIU_SYSTEMHZ:
+        src_addr = (vir_bytes) &system_hz;
+        real_len = sizeof(system_hz);
+	break;
   default:
   	return(EINVAL);
   }

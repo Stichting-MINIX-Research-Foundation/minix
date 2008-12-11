@@ -64,27 +64,6 @@ PUBLIC int no_sys()
 }
 
 /*===========================================================================*
- *				panic					     *
- *===========================================================================*/
-PUBLIC void panic(who, mess, num)
-char *who;			/* who caused the panic */
-char *mess;			/* panic message string */
-int num;			/* number to go with it */
-{
-/* An unrecoverable error has occurred.  Panics are caused when an internal
- * inconsistency is detected, e.g., a programming error or illegal value of a
- * defined constant. The process manager decides to exit.
- */
-  printf("PM panic (%s): %s", who, mess);
-  if (num != NO_NUM) printf(": %d",num);
-  printf("\n");
-   
-  /* Exit PM. */
-  sys_exit(SELF);
-}
-
-
-/*===========================================================================*
  *				find_param				     *
  *===========================================================================*/
 PUBLIC char *find_param(name)

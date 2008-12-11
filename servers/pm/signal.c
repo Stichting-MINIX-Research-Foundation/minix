@@ -325,7 +325,7 @@ int sec;			/* how many seconds delay before the signal */
   	if ( (s=getuptime(&uptime)) != OK) 
   		panic(__FILE__,"set_alarm couldn't get uptime", s);
   	exptime = *tmr_exp_time(&mproc[proc_nr_n].mp_timer);
-  	remaining = (int) ((exptime - uptime + (HZ-1))/HZ);
+  	remaining = (int) ((exptime - uptime + (system_hz-1))/system_hz);
   	if (remaining < 0) remaining = 0;	
   } else {
   	remaining = 0; 
@@ -347,8 +347,8 @@ int sec;			/* how many seconds delay before the signal */
    * this be declared properly without combinatorial explosion of message
    * types?
    */
-  ticks = (clock_t) (HZ * (unsigned long) (unsigned) sec);
-  if ( (unsigned long) ticks / HZ != (unsigned) sec)
+  ticks = (clock_t) (system_hz * (unsigned long) (unsigned) sec);
+  if ( (unsigned long) ticks / system_hz != (unsigned) sec)
 	ticks = LONG_MAX;	/* eternity (really TMR_NEVER) */
 
   if (ticks != 0) {

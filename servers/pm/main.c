@@ -342,6 +342,8 @@ PRIVATE void pm_init()
 #endif  
 
  if(f > 0) printf("PM: failed to register %d processes with DS.\n", f);
+
+ system_hz = sys_hz();
 }
 
 /*===========================================================================*
