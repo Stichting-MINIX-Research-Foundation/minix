@@ -88,7 +88,7 @@ _PROTOTYPE( void inet_panic, (void) ) _NORETURN;
 		printf("warning at %s, %d: ", this_file, __LINE__), \
 		printf print_list, \
 		printf("\ninet stacktrace: "), \
-		stacktrace() \
+		util_stacktrace() \
 	)
 #else
 #define ip_warning(print_list)	((void) 0)
@@ -109,7 +109,11 @@ _PROTOTYPE( void inet_panic, (void) ) _NORETURN;
 extern int this_proc;
 extern char version[];
 
-void stacktrace ARGS(( void ));
+#ifndef HZ
+EXTERN u32_t system_hz;
+#define HZ system_hz
+#define HZ_DYNAMIC 1
+#endif
 
 #endif /* INET__INET_H */
 

@@ -14,7 +14,7 @@ LIBS =           -lsys
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 OBJ = 	buf.o clock.o inet.o inet_config.o \
-	mnx_eth.o mq.o qp.o sr.o stacktrace.o \
+	mnx_eth.o mq.o qp.o sr.o \
 	$g/udp.o $g/arp.o $g/eth.o $g/event.o \
 	$g/icmp.o $g/io.o $g/ip.o $g/ip_ioctl.o \
 	$g/ip_lib.o $g/ip_read.o $g/ip_write.o \

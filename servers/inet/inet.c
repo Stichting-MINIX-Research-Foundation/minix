@@ -87,6 +87,10 @@ int killer_inet= 0;
 extern int inet_buf_debug;
 #endif
 
+#if HZ_DYNAMIC
+u32_t system_hz;
+#endif
+
 _PROTOTYPE( void main, (void) );
 
 FORWARD _PROTOTYPE( void nw_conf, (void) );
@@ -108,6 +112,10 @@ PUBLIC void main()
 #if DEBUG
 	printf("Starting inet...\n");
 	printf("%s\n", version);
+#endif
+
+#if HZ_DYNAMIC
+	system_hz = sys_hz();
 #endif
 
 	/* Read configuration. */
@@ -315,7 +323,7 @@ int line;
 PUBLIC void inet_panic()
 {
 	printf("\ninet stacktrace: ");
-	stacktrace();
+	util_stacktrace();
 #ifdef __minix_vmd
 	sys_abort(RBT_PANIC);
 #else /* Minix 3 */
