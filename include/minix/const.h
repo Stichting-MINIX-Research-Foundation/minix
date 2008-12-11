@@ -11,7 +11,7 @@
 #define TRUE               1	/* used for turning integers into Booleans */
 #define FALSE              0	/* used for turning integers into Booleans */
 
-#define HZ	       600	/* clock freq (software settable on IBM-PC) */
+#define DEFAULT_HZ        60	/* clock freq (software settable on IBM-PC) */
 
 #define SUPER_USER (uid_t) 0	/* uid_t of superuser */
 
@@ -130,3 +130,14 @@
 #define NO_ENTRY                ((ino_t) 0)	/* absence of a dir entry */
 #define NO_ZONE                ((zone_t) 0)	/* absence of a zone number */
 #define NO_DEV                  ((dev_t) 0)	/* absence of a device numb */
+
+/* Bits for the system property flags in boot image processes. */
+#define PREEMPTIBLE     0x02    /* kernel tasks are not preemptible */
+#define BILLABLE        0x04    /* some processes are not billable */
+ 
+#define SYS_PROC        0x10    /* system processes have own priv structure */
+#define CHECK_IO_PORT   0x20    /* check if I/O request is allowed */
+#define CHECK_IRQ       0x40    /* check if IRQ can be used */
+#define CHECK_MEM       0x80    /* check if (VM) mem map request is allowed */
+#define PROC_FULLVM    0x100    /* VM sets and manages full pagetable */
+
