@@ -15,6 +15,7 @@ EXTERN Dev_t root_dev;		/* device number of the root device */
 EXTERN int ROOT_FS_E;           /* kernel endpoint of the root FS proc */
 EXTERN int last_login_fs_e;     /* endpoint of the FS proc that logged in
                                    before the corresponding mount request */
+EXTERN u32_t system_hz;		/* system clock frequency. */
 
 /* The parameters of the call are kept here. */
 EXTERN message m_in;		/* the input message itself */
