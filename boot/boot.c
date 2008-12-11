@@ -1088,9 +1088,6 @@ dev_t name2dev(char *name)
 	if (strcmp(n, "ram") == 0) {
 		dev= DEV_RAM;
 	} else
-	if (strcmp(n, "boot") == 0) {
-		dev= DEV_BOOT;
-	} else
 	if (n[0] == 'f' && n[1] == 'd' && numeric(n+2)) {
 		/* Floppy. */
 		tmpdev.device= a2l(n+2);
