@@ -316,8 +316,10 @@ PUBLIC int do_slink()
 	return r;
   }
 
+#if 0
   printf("vfs:do_slink: got dir inode %d on dev 0x%x, fs %d\n",
 	vp->v_inode_nr, vp->v_dev, vp->v_fs_e);
+#endif
 
   r= forbidden(vp, W_BIT|X_BIT, 0 /*!use_realuid*/);
   if (r != OK)
