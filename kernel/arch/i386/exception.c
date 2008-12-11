@@ -32,7 +32,7 @@ void pagefault(struct proc *pr, int trap_errno)
 		minix_panic("PAGEFAULT set", pr->p_endpoint);
 	RTS_LOCK_SET(pr, PAGEFAULT);
 
-	if(pr->p_endpoint <= INIT_PROC_NR) {
+	if(pr->p_endpoint <= INIT_PROC_NR && !(pr->p_misc_flags & MF_FULLVM)) {
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
@@ -174,7 +174,8 @@ PUBLIC void proc_stacktrace(struct proc *proc)
 
 	v_bp = proc->p_reg.fp;
 
-	kprintf("ep %d pc 0x%lx stack ", proc->p_endpoint, proc->p_reg.pc);
+	kprintf("%s / %d pc 0x%lx stack ",
+		proc->p_name, proc->p_endpoint, proc->p_reg.pc);
 
 	while(v_bp) {
 	        if(data_copy(proc->p_endpoint, v_bp,
