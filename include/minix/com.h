@@ -591,6 +591,7 @@
 #define VMCTL_I386_GETCR3	13
 #define VMCTL_MEMREQ_GET	14
 #define VMCTL_MEMREQ_REPLY	15
+#define VMCTL_INCSP		16
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
