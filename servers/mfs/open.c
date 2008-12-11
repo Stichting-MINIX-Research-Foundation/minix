@@ -573,8 +573,10 @@ PUBLIC int fs_slink_s()
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
   
+#if 0
   printf("mfs:fs_slink_s: creating link in dir inode %d dev 0x%x\n",
 	fs_m_in.REQ_INODE_NR, fs_dev);
+#endif
 
   /* Temporarily open the dir. */
   if ( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
