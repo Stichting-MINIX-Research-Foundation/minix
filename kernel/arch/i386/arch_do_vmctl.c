@@ -35,6 +35,10 @@ struct proc *p;
 		}
 		RTS_LOCK_UNSET(p, VMINHIBIT);
 		return OK;
+	case VMCTL_INCSP:
+		/* Increase process SP. */
+		p->p_reg.sp += m_ptr->SVMCTL_VALUE;
+		return OK;
         case VMCTL_GET_PAGEFAULT:
 	{
   		struct proc *rp;
