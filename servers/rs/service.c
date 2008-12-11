@@ -20,6 +20,7 @@
 #include <minix/ipc.h>
 #include <minix/rs.h>
 #include <minix/syslib.h>
+#include <minix/sysinfo.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <configfile.h>
@@ -235,8 +236,16 @@ PRIVATE int parse_arguments(int argc, char **argv)
               req_args = argv[i+1];
           }
           else if (strcmp(argv[i], ARG_PERIOD)==0) {
+		u32_t system_hz;
+		if(getsysinfo_up(PM_PROC_NR,
+			SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
+			system_hz = DEFAULT_HZ;
+			fprintf(stderr, "WARNING: reverting to default HZ %d\n",
+				system_hz);
+		} 
+
 	      req_period = strtol(argv[i+1], &hz, 10);
-	      if (strcmp(hz,"HZ")==0) req_period *= HZ;
+	      if (strcmp(hz,"HZ")==0) req_period *= system_hz;
 	      if (req_period < 1) {
                   print_usage(argv[ARG_NAME],
 			"period is at least be one tick");
