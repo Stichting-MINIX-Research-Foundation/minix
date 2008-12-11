@@ -316,6 +316,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       vmp->m_root_node = root_node;
       root_node->v_ref_count++;
       vmp->m_mounted_on = root_node;
+
       root_dev = dev;
       ROOT_FS_E = fs_e;
 
@@ -326,16 +327,18 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 
           if (tfp->fp_rd == NULL)
               panic("fs", "do_mount: null rootdir", i);
+          if (tfp->fp_wd == NULL)
+              panic("fs", "do_mount: null workdir", i);
+
           put_vnode(tfp->fp_rd);
           dup_vnode(root_node);
           tfp->fp_rd = root_node;
 
-          if (tfp->fp_wd == NULL)
-              panic("fs", "do_mount: null workdir", i);
           put_vnode(tfp->fp_wd);
           dup_vnode(root_node);
           tfp->fp_wd = root_node;
       }
+
 
       return(OK);
   }
@@ -421,6 +424,30 @@ Dev_t dev;
   count = 0;
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
       if (vp->v_ref_count > 0 && vp->v_dev == dev) {
+
+#if 1
+	int i;
+        	struct fproc *tfp;
+	  printf("unmount: vnode %d in use %d times\n",
+		vp->v_inode_nr, vp->v_ref_count);
+	      for (i= 0, tfp= fproc; i<NR_PROCS; i++, tfp++) {
+		int n;
+      	 	   if (tfp->fp_pid == PID_FREE)
+       		       continue;
+		if(tfp->fp_wd == vp)
+			printf("\tvnode %d: wd of pid %d\n",
+				vp->v_inode_nr, tfp->fp_pid);
+		if(tfp->fp_rd == vp)
+			printf("\tvnode %d: rd of pid %d\n",
+				vp->v_inode_nr, tfp->fp_pid);
+		for(n = 0; n < OPEN_MAX; n++) {
+			if(tfp->fp_filp[n] && tfp->fp_filp[n]->filp_vno == vp)
+				printf("\tvnode %d: fd %d of pid %d\n",
+					vp->v_inode_nr, n, tfp->fp_pid);
+		}
+	      }
+#endif
+
           count += vp->v_ref_count;
       }
   }
