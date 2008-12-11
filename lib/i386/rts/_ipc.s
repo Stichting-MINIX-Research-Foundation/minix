@@ -7,13 +7,10 @@ RECEIVE = 2
 SENDREC = 3 
 NOTIFY = 4
 SENDNB = 5
-SENDA = 16
 SYSVEC = 33			! trap to kernel 
 
 SRC_DST = 8			! source/ destination process 
-MSGTAB = 8			! message table
 MESSAGE = 12			! message pointer 
-TABCOUNT = 12			! number of entries in message table
 
 !*========================================================================*
 !                           IPC assembly routines			  *
@@ -79,14 +76,4 @@ __sendnb:
 	pop	ebp
 	ret
 
-__senda:
-	push	ebp
-	mov	ebp, esp
-	push	ebx
-	mov	eax, TABCOUNT(ebp)	! eax = count
-	mov	ebx, MSGTAB(ebp)	! ebx = table
-	mov	ecx, SENDA		! _senda(table, count)
-	int	SYSVEC			! trap to the kernel
-	pop	ebx
-	pop	ebp
-	ret
+
