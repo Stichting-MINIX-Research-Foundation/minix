@@ -80,6 +80,7 @@ typedef char *va_list;
 #define va_arg(ap, type)      \
   (*((type *)((va_list)((ap) = (void *)((va_list)(ap) + __vasz(type))) \
 						    - __vasz(type))))
+#define va_copy(ap2, ap) (ap2) = (ap)
 #define va_end(ap)
 
 #endif /* __GNUC__ */
