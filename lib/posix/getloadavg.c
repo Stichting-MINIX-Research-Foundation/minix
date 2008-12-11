@@ -9,14 +9,23 @@
 int getloadavg(double *loadavg, int nelem)
 {
   struct loadinfo loadinfo;
+  static u32_t system_hz = 0;
   int h, p, unfilled_ticks;
 #define PERIODS 3
   int minutes[3] = { 1, 5, 15 };
   size_t loadsize;
   ssize_t l;
+
   if(nelem < 1) {
 	errno = ENOSPC;
 	return -1;
+  }
+
+  if(system_hz == 0) {
+  	if((getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ,
+	  sizeof(system_hz), &system_hz)) < 0) {
+		system_hz = DEFAULT_HZ;
+	}
   }
 
   loadsize = sizeof(loadinfo);
@@ -28,7 +37,7 @@ int getloadavg(double *loadavg, int nelem)
 	nelem = PERIODS;
 
   /* How many ticks are missing from the newest-filled slot? */
-#define TICKSPERSLOT (_LOAD_UNIT_SECS * sys_hz())
+#define TICKSPERSLOT (_LOAD_UNIT_SECS * system_hz)
   unfilled_ticks = TICKSPERSLOT - (loadinfo.last_clock % TICKSPERSLOT);
 
   for(p = 0; p < nelem; p++) {
