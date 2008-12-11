@@ -26,11 +26,6 @@ register message *m_ptr;	/* pointer to request message */
 
   vm_init();
 
-  if(m_ptr->m_source != VM_PROC_NR) {
-	kprintf("do_vmctl: source %d, not VM\n", m_ptr->m_source);
-	return ENOSYS;
-  }
-
   if(!isokendpt(ep, &proc_nr)) {
 	kprintf("do_vmctl: unexpected endpoint %d from VM\n", ep);
 	return EINVAL;
@@ -96,6 +91,10 @@ kprintf("SYSTEM: request %d:0x%lx-0x%lx, wrflag %d, failed\n",
 			}
 		}
 #endif
+		return OK;
+	case VMCTL_STACKTRACE:
+		kprintf("vmctl stacktrace ");
+		proc_stacktrace(p);
 		return OK;
   }
 
