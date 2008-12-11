@@ -25,9 +25,6 @@
 #include "../../kernel/config.h"
 #include "../../kernel/type.h"
 
-#define MY_DS_NAME_BASE "dev:memory:ramdisk_base"
-#define MY_DS_NAME_SIZE "dev:memory:ramdisk_size"
-
 #include <sys/vm.h>
 #include <sys/vm_i386.h>
 
@@ -38,7 +35,7 @@
 #define NR_DEVS            7		/* number of minor devices */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
-PRIVATE int m_seg[NR_DEVS];  		/* segment index of each device */
+PRIVATE vir_bytes m_vaddrs[NR_DEVS];
 PRIVATE int m_device;			/* current device */
 PRIVATE struct kinfo kinfo;		/* kernel information */ 
 
@@ -70,14 +67,6 @@ PRIVATE struct driver m_dtab = {
   NULL,
   NULL
 };
-
-#if 0
-/* One page of temporary mapping area - enough to be able to page-align
- * one page.
- */
-static char pagedata_buf[2*I386_PAGE_SIZE];
-vir_bytes pagedata_aligned;
-#endif
 
 /* Buffer for the /dev/zero null byte feed. */
 #define ZERO_BUF_SIZE 			1024
@@ -139,14 +128,13 @@ unsigned nr_req;		/* length of request vector */
 int safe;			/* safe copies */
 {
 /* Read or write one the driver's minor devices. */
-  phys_bytes mem_phys;
-  int seg;
   unsigned count, left, chunk;
   vir_bytes user_vir, vir_offset = 0;
   struct device *dv;
   unsigned long dv_size;
   int s, r;
   off_t position;
+  vir_bytes dev_vaddr;
 
   if(!safe) {
 	printf("m_transfer: unsafe?\n");
@@ -161,6 +149,7 @@ int safe;			/* safe copies */
   /* Get minor device number and check for /dev/null. */
   dv = &m_geom[m_device];
   dv_size = cv64ul(dv->dv_size);
+  dev_vaddr = m_vaddrs[m_device];
 
   while (nr_req > 0) {
 
@@ -175,22 +164,22 @@ int safe;			/* safe copies */
 	    if (opcode == DEV_GATHER_S) return(OK);	/* always at EOF */
 	    break;
 
-	/* Virtual copying. For RAM disk, kernel memory and boot device. */
+	/* Virtual copying. For RAM disk, kernel memory and internal FS. */
 	case KMEM_DEV:
-		return EIO;
-		break;
 	case RAM_DEV:
-	case BOOT_DEV:
+	case IMGRD_DEV:
+  	    if(!dev_vaddr || dev_vaddr == (vir_bytes) MAP_FAILED) {
+		printf("MEM: dev %d not initialized\n", m_device);
+		return EIO;
+	    }
 	    if (position >= dv_size) return(OK); 	/* check for EOF */
 	    if (position + count > dv_size) count = dv_size - position;
-	    seg = m_seg[m_device];
-
-	    if (opcode == DEV_GATHER_S) {			/* copy actual data */
+	    if (opcode == DEV_GATHER_S) {	/* copy actual data */
 	        r=sys_safecopyto(proc_nr, user_vir, vir_offset,
-	  	  position, count, seg);
+	  	  dev_vaddr + position, count, D);
 	    } else {
 	        r=sys_safecopyfrom(proc_nr, user_vir, vir_offset,
-	  	  position, count, seg);
+	  	  dev_vaddr + position, count, D);
 	    }
 	    if(r != OK) {
               panic("MEM","I/O copy failed",r);
@@ -208,12 +197,13 @@ int safe;			/* safe copies */
 	    static char *vaddr;
 	    int r;
 	    u32_t subcount;
+  	    phys_bytes mem_phys;
 
 	    if (position >= dv_size)
 		return(OK); 	/* check for EOF */
 	    if (position + count > dv_size)
 		count = dv_size - position;
-	    mem_phys = cv64ul(dv->dv_base) + position;
+	    mem_phys = position;
 
 	    page_off = mem_phys % I386_PAGE_SIZE;
 	    pagestart = mem_phys - page_off; 
@@ -275,19 +265,6 @@ int safe;			/* safe copies */
 	    }
 	    break;
 
-	case IMGRD_DEV:
-	    if (position >= dv_size) return(OK); 	/* check for EOF */
-	    if (position + count > dv_size) count = dv_size - position;
-
-	    if (opcode == DEV_GATHER_S) {	/* copy actual data */
-	          s=sys_safecopyto(proc_nr, user_vir, vir_offset,
-	  	     (vir_bytes)&imgrd[position], count, D);
-	    } else {
-	          s=sys_safecopyfrom(proc_nr, user_vir, vir_offset,
-	  	     (vir_bytes)&imgrd[position], count, D);
-	    }
-	    break;
-
 	/* Unknown (illegal) minor device. */
 	default:
 	    return(EINVAL);
@@ -333,64 +310,37 @@ PRIVATE void m_init()
 {
   /* Initialize this task. All minor devices are initialized one by one. */
   u32_t ramdev_size;
-  u32_t ramdev_base;
   int i, s;
 
   if (OK != (s=sys_getkinfo(&kinfo))) {
       panic("MEM","Couldn't get kernel information.",s);
   }
 
-  /* Install remote segment for /dev/kmem memory. */
 #if 0
+  /* Map in kernel memory for /dev/kmem. */
   m_geom[KMEM_DEV].dv_base = cvul64(kinfo.kmem_base);
   m_geom[KMEM_DEV].dv_size = cvul64(kinfo.kmem_size);
-  if (OK != (s=sys_segctl(&m_seg[KMEM_DEV], (u16_t *) &s, (vir_bytes *) &s, 
-  		kinfo.kmem_base, kinfo.kmem_size))) {
-      panic("MEM","Couldn't install remote segment.",s);
+  if((m_vaddrs[KMEM_DEV] = vm_map_phys(SELF, (void *) kinfo.kmem_base,
+	kinfo.kmem_size)) == MAP_FAILED) {
+	printf("MEM: Couldn't map in /dev/kmem.");
   }
 #endif
-
-  /* Install remote segment for /dev/boot memory, if enabled. */
-  m_geom[BOOT_DEV].dv_base = cvul64(kinfo.bootdev_base);
-  m_geom[BOOT_DEV].dv_size = cvul64(kinfo.bootdev_size);
-  if (kinfo.bootdev_base > 0) {
-      if (OK != (s=sys_segctl(&m_seg[BOOT_DEV], (u16_t *) &s, (vir_bytes *) &s, 
-              kinfo.bootdev_base, kinfo.bootdev_size))) {
-          panic("MEM","Couldn't install remote segment.",s);
-      }
-  }
-
-  /* See if there are already RAM disk details at the Data Store server. */
-  if(ds_retrieve_u32(MY_DS_NAME_BASE, &ramdev_base) == OK &&
-     ds_retrieve_u32(MY_DS_NAME_SIZE, &ramdev_size) == OK) {
-  	printf("MEM retrieved size %u and base %u from DS, status %d\n",
-    		ramdev_size, ramdev_base, s);
-  	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, 
-		(vir_bytes *) &s, ramdev_base, ramdev_size))) {
-      		panic("MEM","Couldn't install remote segment.",s);
-  	}
-  	m_geom[RAM_DEV].dv_base = cvul64(ramdev_base);
- 	m_geom[RAM_DEV].dv_size = cvul64(ramdev_size);
-	printf("MEM stored retrieved details as new RAM disk\n");
-  }
 
   /* Ramdisk image built into the memory driver */
   m_geom[IMGRD_DEV].dv_base= cvul64(0);
   m_geom[IMGRD_DEV].dv_size= cvul64(imgrd_size);
+  m_vaddrs[IMGRD_DEV] = (vir_bytes) imgrd;
 
   /* Initialize /dev/zero. Simply write zeros into the buffer. */
   for (i=0; i<ZERO_BUF_SIZE; i++) {
        dev_zero[i] = '\0';
   }
 
-#if 0
-  /* Page-align page pointer. */
-  pagedata_aligned = (u32_t) pagedata_buf + I386_PAGE_SIZE;
-  pagedata_aligned -= pagedata_aligned % I386_PAGE_SIZE;
-#endif
-
   /* Set up memory range for /dev/mem. */
+  m_geom[MEM_DEV].dv_base = cvul64(0);
   m_geom[MEM_DEV].dv_size = cvul64(0xffffffff);
+
+  m_vaddrs[MEM_DEV] = (vir_bytes) MAP_FAILED; /* we are not mapping this in. */
 }
 
 /*===========================================================================*
@@ -417,7 +367,6 @@ int safe;
 	static int first_time= 1;
 
 	u32_t ramdev_size;
-	phys_bytes ramdev_base;
 	int s;
 
 	/* A ramdisk can be created only once, and only on RAM disk device. */
@@ -436,30 +385,11 @@ int safe;
 #endif
 
 	/* Try to allocate a piece of memory for the RAM disk. */
-        if (allocmem(ramdev_size, &ramdev_base) < 0) {
-            report("MEM", "warning, allocmem failed", errno);
+	if((m_vaddrs[RAM_DEV] = (vir_bytes) mmap(0, ramdev_size, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0)) == (vir_bytes) MAP_FAILED) {
+	    printf("MEM: failed to get memory for ramdisk\n");
             return(ENOMEM);
-        }
+        } 
 
-	/* Store the values we got in the data store so we can retrieve
-	 * them later on, in the unfortunate event of a crash.
-	 */
-	if(ds_publish_u32(MY_DS_NAME_BASE, ramdev_base) != OK ||
-	   ds_publish_u32(MY_DS_NAME_SIZE, ramdev_size) != OK) {
-      		panic("MEM","Couldn't store RAM disk details at DS.",s);
-	}
-
-#if DEBUG
-	printf("MEM stored size %u and base %u at DS, names %s and %s\n",
-	    ramdev_size, ramdev_base, MY_DS_NAME_BASE, MY_DS_NAME_SIZE);
-#endif
-
-  	if (OK != (s=sys_segctl(&m_seg[RAM_DEV], (u16_t *) &s, 
-		(vir_bytes *) &s, ramdev_base, ramdev_size))) {
-      		panic("MEM","Couldn't install remote segment.",s);
-  	}
-
-	dv->dv_base = cvul64(ramdev_base);
 	dv->dv_size = cvul64(ramdev_size);
 	first_time= 0;
 	break;
