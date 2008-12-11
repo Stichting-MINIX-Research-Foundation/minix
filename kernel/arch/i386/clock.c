@@ -14,7 +14,7 @@
 #define SQUARE_WAVE     0x36    /* ccaammmb, a = access, m = mode, b = BCD */
                                 /*   11x11, 11 = LSB then MSB, x11 = sq wave */
 #define TIMER_FREQ  1193182    /* clock frequency for timer in PC and AT */
-#define TIMER_COUNT (TIMER_FREQ/HZ) /* initial value for counter*/
+#define TIMER_COUNT (TIMER_FREQ/system_hz) /* initial value for counter*/
 
 /*===========================================================================*
  *				arch_init_clock				     *

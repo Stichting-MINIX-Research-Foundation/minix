@@ -26,7 +26,7 @@ register message *m_ptr;	/* pointer to request message */
  */
   size_t length;
   vir_bytes src_vir; 
-  int proc_nr, nr_e, nr, hz;
+  int proc_nr, nr_e, nr;
   struct proc *caller;
   phys_bytes ph;
 
@@ -50,9 +50,8 @@ register message *m_ptr;	/* pointer to request message */
         break;
     }
     case GET_HZ: {
-        length = sizeof(hz);
-        src_vir = (vir_bytes) &hz;
-	hz = HZ;
+        length = sizeof(system_hz);
+        src_vir = (vir_bytes) &system_hz;
         break;
     }
     case GET_IMAGE: {
@@ -99,7 +98,7 @@ register message *m_ptr;	/* pointer to request message */
     case GET_WHOAMI: {
 	int len;
 	/* GET_WHOAMI uses m3 and only uses the message contents for info. */
-	m_ptr->GIWHO_EP = who_e;
+	m_ptr->GIWHO_EP = caller->p_endpoint;
 	len = MIN(sizeof(m_ptr->GIWHO_NAME), sizeof(caller->p_name))-1;
 	strncpy(m_ptr->GIWHO_NAME, caller->p_name, len);
 	m_ptr->GIWHO_NAME[len] = '\0';

@@ -37,6 +37,8 @@ PUBLIC void main()
   reg_t ktsb;			/* kernel task stack base */
   struct exec e_hdr;		/* for a copy of an a.out header */
 
+  do_serial_debug=0;
+
   /* Clear the process table. Anounce each slot as empty and set up mappings 
    * for proc_addr() and proc_nr() macros. Do the same for the table with 
    * privilege structures for the system processes. 
@@ -153,6 +155,13 @@ PUBLIC void main()
 				rp->p_memmap[S].mem_len) << CLICK_SHIFT;
 		rp->p_reg.sp -= sizeof(reg_t);
 	}
+
+	/* If this process has its own page table, VM will set the
+	 * PT up and manage it. VM will signal the kernel when it has
+	 * done this; until then, don't let it run.
+	 */
+	if(priv(rp)->s_flags & PROC_FULLVM)
+		RTS_SET(rp, VMINHIBIT);
 	
 	/* Set ready. The HARDWARE task is never ready. */
 	if (rp->p_nr == HARDWARE) RTS_SET(rp, NO_PRIORITY);
@@ -210,7 +219,7 @@ int how;
    */
   kprintf("MINIX will now be shut down ...\n");
   tmr_arg(&shutdown_timer)->ta_int = how;
-  set_timer(&shutdown_timer, get_uptime() + 5*HZ, minix_shutdown);
+  set_timer(&shutdown_timer, get_uptime() + system_hz, minix_shutdown);
 }
 
 /*===========================================================================*

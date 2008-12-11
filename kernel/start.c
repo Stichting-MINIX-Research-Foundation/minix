@@ -65,6 +65,13 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   if (strcmp(value, "ega") == 0) machine.vdu_ega = TRUE;
   if (strcmp(value, "vga") == 0) machine.vdu_vga = machine.vdu_ega = TRUE;
 
+  /* Get clock tick frequency. */
+  value = get_value(params_buffer, "hz");
+  if(value)
+	system_hz = atoi(value);
+  if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
+	system_hz = DEFAULT_HZ;
+
   /* Return to assembler code to switch to protected mode (if 286), 
    * reload selectors and call main().
    */

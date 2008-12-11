@@ -280,7 +280,7 @@ PRIVATE void load_update(void)
 	 * be made of the load average over variable periods, in the
 	 * user library (see getloadavg(3)).
 	 */
-	slot = (realtime / HZ / _LOAD_UNIT_SECS) % _LOAD_HISTORY;
+	slot = (realtime / system_hz / _LOAD_UNIT_SECS) % _LOAD_HISTORY;
 	if(slot != kloadinfo.proc_last_slot) {
 		kloadinfo.proc_load_history[slot] = 0;
 		kloadinfo.proc_last_slot = slot;
