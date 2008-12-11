@@ -67,7 +67,7 @@ do
     esac
 
     case $dev in
-    ram|mem|kmem|null|boot|zero)
+    ram|mem|kmem|null|boot|zero|imgrd)
 	# Memory devices.
 	#
 	$e mknod ram b 1 0;	$e chmod 600 ram
@@ -76,7 +76,8 @@ do
 	$e mknod null c 1 3;	$e chmod 666 null
 	$e mknod boot b 1 4;	$e chmod 600 ram
 	$e mknod zero c 1 5;	$e chmod 644 zero
-	$e chgrp kmem ram mem kmem null boot zero
+	$e mknod imgrd b 1 6;	$e chmod 644 zero
+	$e chgrp kmem ram mem kmem null boot zero imgrd
 	;;
     fd[0-3])
 	# Floppy disk drive n.
