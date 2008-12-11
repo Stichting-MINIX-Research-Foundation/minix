@@ -878,6 +878,9 @@ void get_parameters(void)
 	b_setvar(E_SPECIAL|E_VAR|E_DEV, "rootdev", "ram");
 	b_setvar(E_SPECIAL|E_VAR|E_DEV, "ramimagedev", "bootdev");
 	b_setvar(E_SPECIAL|E_VAR, "ramsize", "0");
+#define STRINGIT2(x) #x
+#define STRINGIT1(x) STRINGIT2(x)
+	b_setvar(E_SPECIAL|E_VAR, "hz", STRINGIT1(DEFAULT_HZ));
 #if BIOS
 	processor = getprocessor();
 	if(processor == 1586) processor = 686;
