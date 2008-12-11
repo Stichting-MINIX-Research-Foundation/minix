@@ -315,8 +315,10 @@ int result;			/* result of the call (usually OK or error #) */
 /* Send a reply to a user process.  If the send fails, just ignore it. */
   int s;
 
+#if 0
   if (call_nr == SYMLINK)
 	printf("vfs:reply: replying %d for call %d\n", result, call_nr);
+#endif
 
   m_out.reply_type = result;
   s = sendnb(whom, &m_out);
@@ -396,6 +398,8 @@ PRIVATE void fs_init()
 		
   	} else  rfp->fp_endpoint = NONE;
   }
+
+  system_hz = sys_hz();
 }
 
 /*===========================================================================*

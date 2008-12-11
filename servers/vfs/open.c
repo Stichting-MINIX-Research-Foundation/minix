@@ -331,9 +331,11 @@ int *created;
 
 		if (r == EEXIST && excl)
 		{
+#if 0
 			printf(
 		"vfs:create_open: creating existing file with O_EXCL\n");
 			put_vnode(dir_vp);
+#endif
 			return r;
 		}
 

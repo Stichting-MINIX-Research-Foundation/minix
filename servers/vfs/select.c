@@ -469,12 +469,12 @@ PUBLIC int do_select(void)
 		 */
 #define USECPERSEC 1000000
 		while(timeout.tv_usec >= USECPERSEC) {
-			/* this is to avoid overflow with *HZ below */
+			/* this is to avoid overflow with *system_hz below */
 			timeout.tv_usec -= USECPERSEC;
 			timeout.tv_sec++;
 		}
-		ticks = timeout.tv_sec * HZ +
-			(timeout.tv_usec * HZ + USECPERSEC-1) / USECPERSEC;
+		ticks = timeout.tv_sec * system_hz +
+			(timeout.tv_usec * system_hz + USECPERSEC-1) / USECPERSEC;
 		selecttab[s].expiry = ticks;
 		fs_set_timer(&selecttab[s].timer, ticks, select_timeout_check, s);
 #if DEBUG_SELECT
