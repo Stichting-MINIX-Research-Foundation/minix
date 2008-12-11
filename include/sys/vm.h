@@ -2,6 +2,15 @@
 sys/vm.h
 */
 
+/* MIOCMAP */
+struct mapreq
+{
+	void *base;
+	size_t size;
+	off_t offset;
+	int readonly;
+};
+
 /* used in ioctl to tty for mapvm map and unmap request. */
 struct mapreqvm
 {
