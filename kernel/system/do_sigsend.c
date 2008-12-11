@@ -34,7 +34,7 @@ message *m_ptr;			/* pointer to request message */
   rp = proc_addr(proc);
 
   /* Get the sigmsg structure into our address space.  */
-  if((r=data_copy(PM_PROC_NR, (vir_bytes) m_ptr->SIG_CTXT_PTR,
+  if((r=data_copy(who_e, (vir_bytes) m_ptr->SIG_CTXT_PTR,
 	SYSTEM, (vir_bytes) &smsg, (phys_bytes) sizeof(struct sigmsg))) != OK)
 	return r;
 
@@ -73,17 +73,6 @@ message *m_ptr;			/* pointer to request message */
   if((r=data_copy(SYSTEM, (vir_bytes) &fr, m_ptr->SIG_ENDPT, (vir_bytes) frp, 
       (vir_bytes) sizeof(struct sigframe))) != OK)
       return r;
-
-
-#if ( _MINIX_CHIP == _CHIP_POWERPC )  /* stuff that can't be done in the assembler code. */  
-  /* When the signal handlers C code is called it will write this value
-   * into the signal frame (over the sf_retadr value).
-   */   
-  rp->p_reg.lr = smsg.sm_sigreturn;  
-  /* The first (and only) parameter for the user signal handler function.
-   */  
-  rp->p_reg.retreg = smsg.sm_signo;  /* note the retreg == first argument */
-#endif
 
   /* Reset user registers to execute the signal handler. */
   rp->p_reg.sp = (reg_t) frp;
