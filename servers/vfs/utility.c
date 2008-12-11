@@ -87,7 +87,7 @@ PUBLIC int no_sys()
 {
 /* Somebody has used an illegal system call number */
   printf("VFSno_sys: call %d from %d\n", call_nr, who_e);
-  return(SUSPEND);
+  return(ENOSYS);
 }
 
 /*===========================================================================*
@@ -143,6 +143,6 @@ PUBLIC time_t clock_time()
   if (r != OK)
 	panic(__FILE__,"clock_time err", r);
 
-  return( (time_t) (boottime + (uptime/HZ)));
+  return( (time_t) (boottime + (uptime/system_hz)));
 }
 
