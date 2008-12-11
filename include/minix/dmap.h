@@ -27,7 +27,6 @@ enum dev_style { STYLE_DEV, STYLE_NDEV, STYLE_TTY, STYLE_CLONE };
 
 /* Full device numbers that are special to the boot monitor and FS. */
 #  define DEV_RAM	      0x0100	/* device number of /dev/ram */
-#  define DEV_BOOT	      0x0104	/* device number of /dev/boot */
 #  define DEV_IMGRD	      0x0106	/* device number of /dev/imgrd */
 
 #define FLOPPY_MAJOR	           2	/* major device for floppy disks */
