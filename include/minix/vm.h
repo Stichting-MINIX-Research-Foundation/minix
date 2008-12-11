@@ -19,7 +19,7 @@ _PROTOTYPE( int vm_deldma, (endpoint_t req_e, endpoint_t proc_e,
                                 phys_bytes start, phys_bytes size)      );
 _PROTOTYPE( int vm_getdma, (endpoint_t req_e, endpoint_t *procp,
 				phys_bytes *basep, phys_bytes *sizep)   );
-_PROTOTYPE( void *vm_map_phys, (endpoint_t who, size_t len, void *physaddr));
+_PROTOTYPE( void *vm_map_phys, (endpoint_t who, void *physaddr, size_t len));
 _PROTOTYPE( int vm_unmap_phys, (endpoint_t who, void *vaddr, size_t len));
 
 _PROTOTYPE( int vm_allocmem, (phys_clicks memclicks, phys_clicks *retmembase));
