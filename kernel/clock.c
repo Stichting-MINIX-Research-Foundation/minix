@@ -107,8 +107,12 @@ message *m_ptr;				/* pointer to request message */
    */ 
   if (prev_ptr->p_ticks_left <= 0 && priv(prev_ptr)->s_flags & PREEMPTIBLE) {
       if(prev_ptr->p_rts_flags == 0) {	/* if it was runnable .. */
-	lock_dequeue(prev_ptr);		/* take it off the queues */
-      	lock_enqueue(prev_ptr);		/* and reinsert it again */ 
+      lock;
+      {
+	dequeue(prev_ptr);		/* take it off the queues */
+      	enqueue(prev_ptr);		/* and reinsert it again */ 
+      }
+      unlock;
       } else {
 	kprintf("CLOCK: %d not runnable; flags: %x\n",
 		prev_ptr->p_endpoint, prev_ptr->p_rts_flags);
