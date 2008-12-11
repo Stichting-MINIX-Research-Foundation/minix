@@ -54,6 +54,8 @@
  */
 
 #include <minix/config.h>
+#include <minix/com.h>
+#include <minix/sysinfo.h>
 #include <minix/endpoint.h>
 #include <limits.h>
 #include <timers.h>
@@ -295,6 +297,11 @@ char *argv[];
   char cpu[sizeof(clock_t) * 3 + 1 + 2];
   struct kinfo kinfo;
   int s;
+  u32_t system_hz;
+
+  if(getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
+	exit(1);
+  }
 
   (void) signal(SIGSEGV, disaster);	/* catch a common crash */
 
@@ -385,7 +392,7 @@ char *argv[];
 			sprintf(pid, "%d", buf.ps_pid);
 		}
 
-		ustime = (buf.ps_utime + buf.ps_stime) / HZ;
+		ustime = (buf.ps_utime + buf.ps_stime) / system_hz;
 		if (ustime < 60 * 60) {
 			sprintf(cpu, "%2lu:%02lu", ustime / 60, ustime % 60);
 		} else

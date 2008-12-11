@@ -23,6 +23,8 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include <net/gen/netdb.h>
 #include <net/gen/socket.h>
 #include <minix/queryparam.h>
+#include <minix/com.h>
+#include <minix/sysinfo.h>
 
 #include <inet/generic/buf.h>
 #include <inet/generic/clock.h>
@@ -31,6 +33,7 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include <inet/generic/tcp.h>
 #include <inet/generic/tcp_int.h>
 
+u32_t system_hz;
 char *prog_name;
 tcp_conn_t tcp_conn_table[TCP_CONN_NR];
 char values[2 * sizeof(tcp_conn_table) + 1];
@@ -49,6 +52,8 @@ int main(int argc, char*argv[])
 	clock_t now;
 	int fl;
 	int a_flag, n_flag, v_flag;
+
+	getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
 
 	(prog_name=strrchr(argv[0], '/')) ? prog_name++ : (prog_name=argv[0]);
 
@@ -219,7 +224,7 @@ void print_conn(int i, clock_t now)
 				if (tcp_conn->tc_senddis >= now)
 				{
 					printf("(time wait %ld s)",
-						(tcp_conn->tc_senddis-now)/HZ);
+					(tcp_conn->tc_senddis-now)/system_hz);
 				}
 				no_verbose= 1;
 				break;
@@ -263,9 +268,9 @@ void print_conn(int i, clock_t now)
 		tcp_conn->tc_max_mtu-IP_TCP_MIN_HDR_SIZE,
 		tcp_conn->tc_mtu,
 		(tcp_conn->tc_flags & TCF_PMTU) ? "" : " (no PMTU)",
-		rtt/(HZ+0.0),
-		artt/(HZ+0.0)/TCP_RTT_SCALE, TCP_DRTT_MULT,
-		drtt/(HZ+0.0)/TCP_RTT_SCALE);
+		rtt/(system_hz+0.0),
+		artt/(system_hz+0.0)/TCP_RTT_SCALE, TCP_DRTT_MULT,
+		drtt/(system_hz+0.0)/TCP_RTT_SCALE);
 	flags= tcp_conn->tc_flags;
 	printf("\tflags:");
 	if (!flags)
@@ -319,7 +324,7 @@ void print_conn(int i, clock_t now)
 	printf("\n");
 	printf("\ttimer: ref %d, time %f, active %d\n",
 		tcp_conn->tc_transmit_timer.tim_ref,
-		(0.0+tcp_conn->tc_transmit_timer.tim_time-now)/HZ,
+		(0.0+tcp_conn->tc_transmit_timer.tim_time-now)/system_hz,
 		tcp_conn->tc_transmit_timer.tim_active);
 }
 

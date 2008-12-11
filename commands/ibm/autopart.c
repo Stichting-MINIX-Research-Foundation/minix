@@ -29,6 +29,8 @@
 #include <minix/const.h>
 #include <minix/partition.h>
 #include <minix/u64.h>
+#include <minix/com.h>
+#include <minix/sysinfo.h>
 #include <ibm/partition.h>
 #include <termios.h>
 #include <stdarg.h>
@@ -1582,6 +1584,7 @@ void m_read(int ev, int *biosdrive)
 {
 	int i, mode, n, v;
 	struct part_entry *pe;
+	u32_t system_hz;
 
 	if (ev != 'r' || device >= 0) return;
 
@@ -1594,7 +1597,11 @@ void m_read(int ev, int *biosdrive)
 		return;
 	}
 
-	v = 2*HZ;
+	if(getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz) < 0) {
+		fprintf(stderr, "autopart: system hz not found\n");
+		exit(1);
+	}
+	v = 2*system_hz;
 	ioctl(device, DIOCTIMEOUT, &v);
 
 	memset(bootblock, 0, sizeof(bootblock));
