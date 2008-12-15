@@ -592,6 +592,7 @@
 #define VMCTL_MEMREQ_GET	14
 #define VMCTL_MEMREQ_REPLY	15
 #define VMCTL_INCSP		16
+#define VMCTL_STACKTRACE	17
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
