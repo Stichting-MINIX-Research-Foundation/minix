@@ -112,9 +112,6 @@ size_t n_ttyinfo;		/* Number of tty info slots */
 
 /* Number of tasks and processes and addresses of the main process tables. */
 int nr_tasks, nr_procs;		
-#if 0
-vir_bytes proc_addr, mproc_addr, fproc_addr;	
-#endif
 extern int errno;
 
 /* Process tables of the kernel, MM, and FS. */
@@ -217,7 +214,12 @@ Dev_t dev_nr;
 char *taskname(p_nr)
 int p_nr;
 {
-  return ps_proc[_ENDPOINT_P(p_nr) + nr_tasks].p_name;
+  int n;
+  n = _ENDPOINT_P(p_nr) + nr_tasks;
+  if(n < 0 || n >= nr_tasks + nr_procs) {
+	return "OUTOFRANGE";
+  }
+  return ps_proc[n].p_name;
 }
 
 /* Prrecv prints the RECV field for process with pstat buffer pointer bufp.
@@ -241,7 +243,7 @@ struct pstat *bufp;
 	else if (bufp->ps_mflags & WAITING)
 		blkstr = "wait";
 	else if (bufp->ps_mflags & SIGSUSPENDED)
-		blkstr = "ssusp";
+		blkstr = "sigsusp";
   } else if (bufp->ps_recv == FS_PROC_NR) {
 	if (-bufp->ps_ftask == XPIPE)
 		blkstr = "pipe";
@@ -325,14 +327,8 @@ char *argv[];
   if ((memfd = open(MEM_PATH, O_RDONLY)) == -1) err(MEM_PATH);
   if (gettynames() == -1) err("Can't get tty names");
 
-#if 0
-  getsysinfo(PM_PROC_NR, SI_PROC_ADDR, &mproc_addr);
-  getsysinfo(FS_PROC_NR, SI_PROC_ADDR, &fproc_addr);
-#endif
   getsysinfo(PM_PROC_NR, SI_KINFO, &kinfo);
-#if 0
-  proc_addr = kinfo.proc_addr;
-#endif
+
   nr_tasks = kinfo.nr_tasks;	
   nr_procs = kinfo.nr_procs;
 
@@ -343,36 +339,20 @@ char *argv[];
   if (ps_proc == NULL || ps_mproc == NULL || ps_fproc == NULL)
 	err("Out of memory");
 
-#if 0
-  /* Get kernel process table */
-  if (addrread(kmemfd, (phys_clicks) 0,
-		proc_addr, (char *) ps_proc,
-		(nr_tasks + nr_procs) * sizeof(ps_proc[0]))
-			!= (nr_tasks + nr_procs) * sizeof(ps_proc[0]))
-	err("Can't get kernel proc table from /dev/kmem");
-
-  /* Get mm/fs process tables */
-  if (addrread(memfd, ps_proc[nr_tasks + PM_PROC_NR].p_memmap[D].mem_phys,
-		mproc_addr, (char *) ps_mproc,
-		nr_procs * sizeof(ps_mproc[0]))
-			!= nr_procs * sizeof(ps_mproc[0]))
-	err("Can't get mm proc table from /dev/mem");
-  if (addrread(memfd, ps_proc[nr_tasks + FS_PROC_NR].p_memmap[D].mem_phys,
-		fproc_addr, (char *) ps_fproc,
-		nr_procs * sizeof(ps_fproc[0]))
-			!= nr_procs * sizeof(ps_fproc[0]))
-	err("Can't get fs proc table from /dev/mem");
-#else
 	if(getsysinfo(PM_PROC_NR, SI_KPROC_TAB, ps_proc) < 0) {
 		fprintf(stderr, "getsysinfo() for SI_KPROC_TAB failed.\n");
 		exit(1);
 	}
 
 	if(getsysinfo(PM_PROC_NR, SI_PROC_TAB, ps_mproc) < 0) {
-		fprintf(stderr, "getsysinfo() for SI_PROC_TAB failed.\n");
+		fprintf(stderr, "getsysinfo() for PM SI_PROC_TAB failed.\n");
 		exit(1);
 	}
-#endif
+
+	if(getsysinfo(VFS_PROC_NR, SI_PROC_TAB, ps_fproc) < 0) {
+		fprintf(stderr, "getsysinfo() for VFS SI_PROC_TAB failed.\n");
+		exit(1);
+	}
 
   /* We need to know where INIT hangs out. */
   for (i = FS_PROC_NR; i < nr_procs; i++) {
@@ -407,9 +387,13 @@ char *argv[];
 			       buf.ps_flags, buf.ps_state,
 			       buf.ps_euid, pid, buf.ps_ppid, 
 			       buf.ps_pgrp,
+#if 0
 			       off_to_k((buf.ps_tsize
 					 + buf.ps_stack - buf.ps_data
 					 + buf.ps_ssize)),
+#else
+				0,
+#endif
 			       (buf.ps_flags & RECEIVING ?
 				prrecv(&buf) :
 				""),
@@ -496,22 +480,21 @@ int endpoints;
 {
   int p_ki = p_nr + nr_tasks;	/* kernel proc index */
 
-  if (p_nr < -nr_tasks || p_nr >= nr_procs) return -1;
+  if (p_nr < -nr_tasks || p_nr >= nr_procs) {
+	fprintf(stderr, "pstat: %d out of range\n", p_nr);
+	return -1;
+  }
 
   if ((ps_proc[p_ki].p_rts_flags == SLOT_FREE)
-  				&& !(ps_mproc[p_nr].mp_flags & IN_USE))
+  				&& !(ps_mproc[p_nr].mp_flags & IN_USE)) {
 	return -1;
+  }
 
   bufp->ps_flags = ps_proc[p_ki].p_rts_flags;
 
   if (p_nr >= low_user) {
-#if 0
 	bufp->ps_dev = ps_fproc[p_nr].fp_tty;
 	bufp->ps_ftask = ps_fproc[p_nr].fp_task;
-#else
-	bufp->ps_dev = 0;
-	bufp->ps_ftask = 0;
-#endif
   } else {
 	bufp->ps_dev = 0;
 	bufp->ps_ftask = 0;
@@ -542,11 +525,9 @@ int endpoints;
 		bufp->ps_state = T_STATE;	/* stopped (traced) */
 	else if (ps_proc[p_ki].p_rts_flags == 0)
 		bufp->ps_state = R_STATE;	/* in run-queue */
-#if 0
 	else if (ps_mproc[p_nr].mp_flags & (WAITING | PAUSED | SIGSUSPENDED) ||
 		 ps_fproc[p_nr].fp_suspended == SUSPENDED)
 		bufp->ps_state = S_STATE;	/* sleeping */
-#endif
 	else
 		bufp->ps_state = W_STATE;	/* a short wait */
   } else {			/* tasks are simple */
