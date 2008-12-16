@@ -334,8 +334,8 @@ int *created;
 #if 0
 			printf(
 		"vfs:create_open: creating existing file with O_EXCL\n");
-			put_vnode(dir_vp);
 #endif
+			put_vnode(dir_vp);
 			return r;
 		}
 
