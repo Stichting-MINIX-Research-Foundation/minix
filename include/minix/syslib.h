@@ -54,7 +54,7 @@ _PROTOTYPE( int sys_vmctl_get_pagefault_i386, (endpoint_t *who, u32_t *cr2, u32_
 _PROTOTYPE( int sys_vmctl_get_cr3_i386, (endpoint_t who, u32_t *cr3)  );
 _PROTOTYPE( int sys_vmctl_get_memreq, (endpoint_t *who, vir_bytes *mem,
         vir_bytes *len, int *wrflag) );
-_PROTOTYPE( int sys_vmctl_stacktrace(endpoint_t who));
+_PROTOTYPE( int sys_vmctl_stacktrace, (endpoint_t who));
 
 
 
