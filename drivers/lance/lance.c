@@ -193,8 +193,10 @@ unsigned long vir2phys( unsigned long x )
 	int r;
 	unsigned long value;
 	
-	if ( (r=sys_umap( SELF, VM_D, x, 4, &value )) != OK )
+	if ( (r=sys_umap( SELF, VM_D, x, 4, &value )) != OK ) {
+		printf("lance: umap of 0x%lx failed\n",x );
 		panic( "lance", "sys_umap failed", r );
+	}
 	
 	return value;
 }
@@ -305,7 +307,8 @@ static int cur_tx_slot_nr = 0;      /* Tx-slot number */
 static char isstored[TX_RING_SIZE]; /* Tx-slot in-use */
 static char *progname;
 
-
+phys_bytes lance_buf_phys;
+ 
 /*===========================================================================*
  *                            lance_task                                     *
  *===========================================================================*/
@@ -493,6 +496,11 @@ message *mp;
   message reply_mess;
 
 pci_init();
+
+  if(!lance_buf && !(lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M, &lance_buf_phys))) {
+	panic( "lance", "alloc_contig failed", LANCE_BUF_SIZE);
+  }
+  printf("lance buf: v 0x%lx ph 0x%lx\n", lance_buf, lance_buf_phys);
 
   port = mp->DL_PORT;
   if (port < 0 || port >= EC_PORT_NR_MAX)
@@ -1679,15 +1687,12 @@ static void lance_init_card(ec)
 ether_card_t *ec;
 {
   int i;
-  Address l;
+  Address l = lance_buf;
   unsigned short ioaddr = ec->ec_port;
 
   /* ============= setup init_block(cf. lance_probe1) ================ */
   /* make sure data structure is 8-byte aligned and below 16MB (for DMA) */
-  assert(!lance_buf);
-  if(!(lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M, &l))) {
-	panic( "lance", "alloc_contig failed", LANCE_BUF_SIZE);
-  }
+
   lp = (struct lance_interface *)l;
   lp->init_block.mode = 0x3;      /* disable Rx and Tx */
   lp->init_block.filter[0] = lp->init_block.filter[1] = 0x0;
