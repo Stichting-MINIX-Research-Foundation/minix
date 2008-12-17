@@ -253,6 +253,7 @@ PUBLIC int do_select(void)
 	if (s >= MAXSELECTS)
 		return ENOSPC;
 
+	selecttab[s].deferred= FALSE;
 	selecttab[s].req_endpt = who_e;
 	selecttab[s].nfds = 0;
 	selecttab[s].nreadyfds = 0;
