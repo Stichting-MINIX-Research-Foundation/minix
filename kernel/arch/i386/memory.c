@@ -45,6 +45,7 @@ PUBLIC void vm_init(void)
 	u32_t entry;
 	unsigned pages;
 	struct proc* rp;
+	struct proc *sys = proc_addr(SYSTEM);
 
 	if (!vm_size)
 		minix_panic("i386_vm_init: no space for page tables", NO_NUM);
@@ -77,6 +78,12 @@ PUBLIC void vm_init(void)
 			I386_VM_PRESENT;
 		if (phys_mem >= vm_mem_high)
 			entry= 0;
+#if VM_KERN_NOPAGEZERO
+		if (phys_mem == (sys->p_memmap[T].mem_phys << CLICK_SHIFT) ||
+		    phys_mem == (sys->p_memmap[D].mem_phys << CLICK_SHIFT)) {
+			entry = 0;
+		}
+#endif
 		phys_put32(vm_pt_base + p*I386_VM_PT_ENT_SIZE, entry);
 	}
 
@@ -471,6 +478,7 @@ PUBLIC int vm_checkrange(struct proc *caller, struct proc *target,
 
 	vmassert(vm_running);
 
+
 	/* If caller has had a reply to this request, return it. */
 	if(RTS_ISSET(caller, VMREQUEST)) {
 		if(caller->p_vmrequest.who == target->p_endpoint) {
@@ -522,8 +530,9 @@ PUBLIC int vm_checkrange(struct proc *caller, struct proc *target,
 			target->p_name, target->p_endpoint, v, wrfl, flags, phys);
 		}
 
-		if(checkonly)
+		if(checkonly) {
 			return VMSUSPEND;
+		}
 
 		/* This range is not OK for this process. Set parameters
 		 * of the request and notify VM about the pending request.
@@ -544,7 +553,19 @@ PUBLIC int vm_checkrange(struct proc *caller, struct proc *target,
 		/* Connect caller on vmrequest wait queue. */
 		caller->p_vmrequest.nextrequestor = vmrequest;
 		vmrequest = caller;
-		soft_notify(VM_PROC_NR);
+		if(!caller->p_vmrequest.nextrequestor) {
+			int n = 0;
+			struct proc *vmr;
+			for(vmr = vmrequest; vmr; vmr = vmr->p_vmrequest.nextrequestor)
+				n++;
+			soft_notify(VM_PROC_NR);
+#if 0
+			kprintf("(%d) ", n);
+			kprintf("%d/%d ",
+				caller->p_endpoint, target->p_endpoint);
+			util_stacktrace();
+#endif
+		}
 
 #if 0
 		kprintf("SYSTEM: vm_checkrange: range bad for "

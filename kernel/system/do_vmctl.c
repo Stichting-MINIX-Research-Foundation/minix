@@ -11,6 +11,7 @@
 #include "../vm.h"
 #include "../debug.h"
 #include <minix/type.h>
+#include <minix/config.h>
 
 /*===========================================================================*
  *				do_vmctl				     *
@@ -92,6 +93,10 @@ kprintf("SYSTEM: request %d:0x%lx-0x%lx, wrflag %d, failed\n",
 		}
 #endif
 		return OK;
+#if VM_KERN_NOPAGEZERO
+	case VMCTL_NOPAGEZERO:
+		return OK;
+#endif
 	case VMCTL_STACKTRACE:
 		kprintf("vmctl stacktrace ");
 		proc_stacktrace(p);

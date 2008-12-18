@@ -95,4 +95,7 @@
 #define SPROFILE          1    /* statistical profiling */
 #define CPROFILE          0    /* call profiling */
 
+/* Compile kernel so that first page of code and data can be unmapped. */
+#define VM_KERN_NOPAGEZERO      1       
+
 #endif /* _CONFIG_H */

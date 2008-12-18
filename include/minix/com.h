@@ -593,6 +593,7 @@
 #define VMCTL_MEMREQ_REPLY	15
 #define VMCTL_INCSP		16
 #define VMCTL_STACKTRACE	17
+#define VMCTL_NOPAGEZERO	18
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
