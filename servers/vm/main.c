@@ -247,6 +247,23 @@ PRIVATE void vm_init(void)
 	 */
         kernel_top_bytes = find_kernel_top();
 
+	/* Can first kernel pages of code and data be (left) mapped out?
+	 * If so, change the SYSTEM process' memory map to reflect this
+	 * (future mappings of SYSTEM into other processes will not include
+	 * first pages), and free the first pages.
+	 */
+	if(vm_paged && sys_vmctl(SELF, VMCTL_NOPAGEZERO, 0) == OK) {
+	  	struct vmproc *vmp;
+		vmp = &vmproc[VMP_SYSTEM];
+		if(vmp->vm_arch.vm_seg[T].mem_len > 0) {
+#define DIFF CLICKSPERPAGE
+			vmp->vm_arch.vm_seg[T].mem_phys += DIFF;
+			vmp->vm_arch.vm_seg[T].mem_len -= DIFF;
+		}
+		vmp->vm_arch.vm_seg[D].mem_phys += DIFF;
+		vmp->vm_arch.vm_seg[D].mem_len -= DIFF;
+	}
+
 	/* Give these processes their own page table. */
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
 		int s;

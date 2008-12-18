@@ -20,8 +20,6 @@ u32_t data1[200];
 EXTERN long vm_sanitychecklevel;
 #endif
 
-int verbosealloc;
-
 #define VMP_SYSTEM	_NR_PROCS
 
 /* vm operation mode state and values */

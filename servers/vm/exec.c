@@ -361,7 +361,7 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	vmp->vm_offset = vstart;
 
 	/* page mapping flags for code */
-#define TEXTFLAGS (PTF_PRESENT | PTF_USER | PTF_WRITE)
+#define TEXTFLAGS (PTF_PRESENT | PTF_USER)
 	SANITYCHECK(SCL_DETAIL);
 	if(text_bytes > 0) {
 		if(!map_page_region(vmp, vstart, 0, text_bytes,

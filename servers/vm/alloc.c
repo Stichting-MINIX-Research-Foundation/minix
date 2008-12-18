@@ -426,9 +426,7 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 #define ALLOCRETURNCHECK			\
 	availbytes(&avail2, &chunks2);		\
 	vm_assert(avail1 - bytes == avail2);	\
-	vm_assert(chunks1 == chunks2 || chunks1-1 == chunks2);	\
-	if(verbosealloc)					\
-		printf("memory: 0x%lx bytes in %d chunks\n", avail2, chunks2);
+	vm_assert(chunks1 == chunks2 || chunks1-1 == chunks2);
 #else
 #define ALLOCRETURNCHECK
 #endif
@@ -493,11 +491,9 @@ PRIVATE PUBLIC void free_pages(phys_bytes pageno, int npages)
 
 #if SANITYCHECKS
 #define FREERETURNCHECK								\
-	availbytes(&avail2, &chunks2);						\
-	vm_assert(avail1 + origsize  == avail2);				\
-	vm_assert(chunks1 == chunks2 || chunks1+1 == chunks2 || chunks1-1 == chunks2);	\
-	if(verbosealloc)							\
-		printf("memory: 0x%lx bytes in %d chunks\n", avail2, chunks2);
+	availbytes(&avail2, &chunks2);					\
+	vm_assert(avail1 + origsize  == avail2);			\
+	vm_assert(chunks1 == chunks2 || chunks1+1 == chunks2 || chunks1-1 == chunks2);
 #else
 #define FREERETURNCHECK
 #endif
