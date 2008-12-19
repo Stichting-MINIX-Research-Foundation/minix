@@ -43,6 +43,8 @@
 
 ! sections
 
+#include <sys/vm_i386.h>
+
 .sect .text
 begtext:
 .sect .rom
@@ -216,7 +218,12 @@ csinit:
 	ltr	ax
 	push	0			! set flags to known good state
 	popf				! esp, clear nested task and int enable
+#if VM_KERN_NOPAGEZERO
+	jmp	laststep
 
+.align I386_PAGE_SIZE
+laststep:
+#endif
 	jmp	_main			! main()
 
 
@@ -564,6 +571,9 @@ _load_kernel_cr3:
 
 .sect .rom	! Before the string table please
 	.data2	0x526F		! this must be the first data entry (magic #)
+#if VM_KERN_NOPAGEZERO
+.align I386_PAGE_SIZE
+#endif
 
 .sect .bss
 k_stack:
