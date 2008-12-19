@@ -29,6 +29,7 @@
 
 static int block_size = 0;
 
+extern int serial_line;
 extern u16_t vid_port;         /* Video i/o port. */
 extern u32_t vid_mem_base;     /* Video memory base address. */
 extern u32_t vid_mem_size;     /* Video memory size. */
@@ -748,6 +749,14 @@ void bootminix(void)
 
 	if ((image= select_image(b_value("image"))) == nil) return;
 
+	if(serial_line >= 0) {
+		char linename[2];
+		linename[0] = serial_line + '0';
+		linename[1] = '\0';
+		b_setvar(E_VAR, SERVARNAME, linename);
+		printf("set %s to %s\n", SERVARNAME, linename);
+	}
+
 	exec_image(image);
 
 	switch (errno) {
@@ -763,6 +772,9 @@ void bootminix(void)
 		/* No error or error already reported. */;
 	}
 	free(image);
+
+	if(serial_line >= 0) 
+		b_unset(SERVARNAME);
 }
 
 /*

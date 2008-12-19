@@ -48,6 +48,8 @@ char version[]=		"2.20";
 #define arraylimit(a)		((a) + arraysize(a))
 #define between(a, c, z)	((unsigned) ((c) - (a)) <= ((z) - (a)))
 
+int serial_line = -1;
+
 u16_t vid_port;		/* Video i/o port. */
 u32_t vid_mem_base;	/* Video memory base address. */
 u32_t vid_mem_size;	/* Video memory size. */
@@ -1389,13 +1391,14 @@ void boot_device(char *devname)
 void ctty(char *line)
 {
 	if (line == nil) {
-		serial_init(-1);
-	} else
-	if (between('0', line[0], '3') && line[1] == 0) {
-		serial_init(line[0] - '0');
+		serial_line = -1;
+	} else if (between('0', line[0], '3') && line[1] == 0) {
+		serial_line = line[0] - '0';
 	} else {
 		printf("Bad serial line number: %s\n", line);
+		return;
 	}
+	serial_init(serial_line);
 }
 
 #else /* DOS */

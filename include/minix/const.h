@@ -131,6 +131,8 @@
 #define NO_ZONE                ((zone_t) 0)	/* absence of a zone number */
 #define NO_DEV                  ((dev_t) 0)	/* absence of a device numb */
 
+#define SERVARNAME		"cttyline"
+
 /* Bits for the system property flags in boot image processes. */
 #define PREEMPTIBLE     0x02    /* kernel tasks are not preemptible */
 #define BILLABLE        0x04    /* some processes are not billable */
