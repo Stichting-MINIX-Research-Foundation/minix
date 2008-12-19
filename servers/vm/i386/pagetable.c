@@ -206,7 +206,7 @@ PRIVATE void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 		FREE_MEM(ABS2CLICK(phys), pages);
 		if(pt_writemap(&vmp->vm_pt,
 			vir + CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
-			0, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
+			MAP_NONE, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
 				vm_panic("vm_freepages: pt_writemap failed",
 					NO_NUM);
 	} else {
@@ -378,11 +378,15 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 
 	pages = bytes / I386_PAGE_SIZE;
 
+	/* MAP_NONE means to clear the mapping. It doesn't matter
+	 * what's actually written into the PTE if I386_VM_PRESENT
+	 * isn't on, so we can just write MAP_NONE into it.
+	 */
 #if SANITYCHECKS
-	if(physaddr && !(flags & I386_VM_PRESENT)) {
+	if(physaddr != MAP_NONE && !(flags & I386_VM_PRESENT)) {
 		vm_panic("pt_writemap: writing dir with !P\n", NO_NUM);
 	}
-	if(!physaddr && flags) {
+	if(physaddr == MAP_NONE && flags) {
 		vm_panic("pt_writemap: writing 0 with flags\n", NO_NUM);
 	}
 #endif
@@ -901,7 +905,7 @@ PUBLIC int pt_copy(pt_t *src, pt_t *dst)
 
 #define PHYSMAGIC 0x7b9a0590
 
-#define PHYS_UNMAP if(OK != pt_writemap(&vmp->vm_pt, varmap_loc, 0, 	\
+#define PHYS_UNMAP if(OK != pt_writemap(&vmp->vm_pt, varmap_loc, MAP_NONE,\
 	I386_PAGE_SIZE, 0, WMF_OVERWRITE)) {				\
 		vm_panic("PHYS_UNMAP: pt_writemap failed", NO_NUM); }
 

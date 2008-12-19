@@ -932,7 +932,7 @@ PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *region)
 	SANITYCHECK(SCL_DETAIL);
 
 	if(pt_writemap(&vmp->vm_pt, r->vaddr,
-	  0, r->length, 0, WMF_OVERWRITE) != OK) {
+	  MAP_NONE, r->length, 0, WMF_OVERWRITE) != OK) {
 	    printf("VM: map_unmap_region: pt_writemap failed\n");
 	    return ENOMEM;
 	}
