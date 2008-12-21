@@ -315,8 +315,13 @@ long bit_map;			/* notification event set or flags */
 	phys_bytes lin;
 
 	/* Map to linear address. */
-	if((lin = umap_local(caller_ptr, D, (vir_bytes) m_ptr, msg_size)) == 0)
+	if(msg_size > 0 && 
+		(lin = umap_local(caller_ptr, D, (vir_bytes) m_ptr, msg_size)) == 0) {
+		kprintf("umap_local failed for %s / %d on 0x%lx size %d\n",
+			caller_ptr->p_name, caller_ptr->p_endpoint,
+			m_ptr, msg_size);
 		return EFAULT;
+	}
 
 	/* Check if message pages in calling process are mapped.
 	 * We don't have to check the recipient if this is a send,
@@ -327,13 +332,12 @@ long bit_map;			/* notification event set or flags */
 	 * and those pages may not be shared between processes.
 	 */
 
-	if(vm_running &&
+	if(vm_running && msg_size > 0 &&
 	 (r=vm_checkrange(caller_ptr, caller_ptr, lin, msg_size, 1, 0)) != OK) {
 		if(r != VMSUSPEND) {
 			kprintf("SYSTEM:sys_call:vm_checkrange: err %d\n", r);
 			return r;
 		}
-		minix_panic("vmsuspend", __LINE__);
 		
 		/* We can't go ahead with this call. Caller is suspended
 		 * and we have to save the state in its process struct.
@@ -344,8 +348,8 @@ long bit_map;			/* notification event set or flags */
 		caller_ptr->p_vmrequest.saved.sys_call.bit_map = bit_map;
 		caller_ptr->p_vmrequest.type = VMSTYPE_SYS_CALL;
 
-		kprintf("SYSTEM: %s:%d: suspending call 0x%lx on ipc buffer 0x%lx\n",
-			caller_ptr->p_name, caller_ptr->p_endpoint, call_nr, m_ptr);
+		kprintf("SYSTEM: %s:%d: suspending call 0x%lx on ipc buffer 0x%lx length 0x%lx\n",
+			caller_ptr->p_name, caller_ptr->p_endpoint, call_nr, m_ptr, msg_size);
 
 		/* vm_checkrange() will have suspended caller with VMREQUEST. */
 		return OK;
@@ -482,7 +486,6 @@ PUBLIC void sys_call_restart(caller)
 struct proc *caller;
 {
 	int r;
-	minix_panic("sys_call_restart", NO_NUM);
 	kprintf("restarting sys_call code 0x%lx, "
 		"m_ptr 0x%lx, srcdst %d, bitmap 0x%lx, but not really\n",
 		caller->p_vmrequest.saved.sys_call.call_nr,

@@ -465,8 +465,11 @@ register struct proc *rc;		/* slot of process to clean up */
   RTS_LOCK_SET(rc, NO_ENDPOINT);
   if (priv(rc)->s_flags & SYS_PROC)
   {
-	if (priv(rc)->s_asynsize)
-		kprintf("clear_endpoint: clearing s_asynsize\n");
+	if (priv(rc)->s_asynsize) {
+		kprintf("clear_endpoint: clearing s_asynsize of %s / %d\n",
+			rc->p_name, rc->p_endpoint);
+		proc_stacktrace(rc);
+	}
 	priv(rc)->s_asynsize= 0;
   }
 
