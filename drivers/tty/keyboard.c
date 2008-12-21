@@ -692,6 +692,7 @@ int scode;			/* scan code of key just struck or released */
  */
   int ch, make, escape;
   static int CAD_count = 0;
+  static int rebooting = 0;
 
   /* Check for CTRL-ALT-DEL, and if found, halt the computer. This would
    * be better done in keyboard() in case TTY is hung, except control and
@@ -704,8 +705,11 @@ int scode;			/* scan code of key just struck or released */
 		sys_abort(RBT_HALT);
 	}
 	sys_kill(INIT_PROC_NR, SIGABRT);
-	return -1;
+	rebooting = 1;
   }
+  
+   if(rebooting)
+  	return -1;
 
   /* High-order bit set on key release. */
   make = (scode & KEY_RELEASE) == 0;		/* true if pressed */
@@ -733,6 +737,7 @@ int scode;			/* scan code of key just struck or released */
 		alt_down = make;
 		break;
   	case CALOCK:		/* Caps lock - toggle on 0 -> 1 transition */
+  		if(escape) return -1;
 		if (caps_down < make) {
 			locks[ccurrent] ^= CAPS_LOCK;
 			set_leds();
@@ -740,6 +745,7 @@ int scode;			/* scan code of key just struck or released */
 		caps_down = make;
 		break;
   	case NLOCK:		/* Num lock */
+  		if(escape) return -1;
 		if (num_down < make) {
 			locks[ccurrent] ^= NUM_LOCK;
 			set_leds();
@@ -747,6 +753,7 @@ int scode;			/* scan code of key just struck or released */
 		num_down = make;
 		break;
   	case SLOCK:		/* Scroll lock */
+  		if(escape) return -1;
 		if (scroll_down < make) {
 			locks[ccurrent] ^= SCROLL_LOCK;
 			set_leds();
@@ -757,7 +764,16 @@ int scode;			/* scan code of key just struck or released */
 		esc = 1;		/* Next key is escaped */
 		return(-1);
   	default:		/* A normal key */
-		if (make) return(ch);
+  		if(escape) {
+  			printf("tty: ignoring escaped 0x%x\n", scode);
+  			return -1;
+  		}
+  		if(!ch) {
+  			printf("tty: ignoring unrecognized scancode 0x%x\n",
+  				scode);
+  			return -1;
+  		}
+		if(make) return(ch);
   }
 
   /* Key release, or a shift type key. */
@@ -1194,22 +1210,6 @@ PRIVATE int scan_keyboard(bp, isauxp)
 unsigned char *bp;
 int *isauxp;
 {
-#if 0	/* Is this old XT code? It doesn't match the PS/2 hardware */
-/* Fetch the character from the keyboard hardware and acknowledge it. */
-  pvb_pair_t byte_in[2], byte_out[2];
-  
-  byte_in[0].port = KEYBD;	/* get the scan code for the key struck */
-  byte_in[1].port = PORT_B;	/* strobe the keyboard to ack the char */
-  if(sys_vinb(byte_in, 2) != OK)	/* request actual input */
-	printf("scan_keyboard: sys_vinb failed\n");
-
-  pv_set(byte_out[0], PORT_B, byte_in[1].value | KBIT); /* strobe bit high */
-  pv_set(byte_out[1], PORT_B, byte_in[1].value);	/* then strobe low */
-  if(sys_voutb(byte_out, 2) != OK)	/* request actual output */
-	printf("scan_keyboard: sys_voutb failed\n");
-
-  return(byte_in[0].value);		/* return scan code */
-#else
   unsigned long b, sb;
 
   if(sys_inb(KB_STATUS, &sb) != OK)
@@ -1246,7 +1246,6 @@ int *isauxp;
 	kbd_send();
   }
   return 1;
-#endif
 }
 
 /*===========================================================================*
