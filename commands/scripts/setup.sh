@@ -501,35 +501,14 @@ fi
 echo "Creating /dev/$usr for /usr .."
 mkfs -B $blocksizebytes /dev/$usr || exit
 
-echo ""
-echo " --- Step 8: Wait for bad block detection ------------------------------"
-echo ""
-echo "Scanning disk for bad blocks.  Hit CTRL+C to stop the scan if you are"
-echo "sure that there can not be any bad blocks.  Otherwise just wait."
-
-trap ': nothing;echo' 2
-
-echo ""
-echo "Scanning /dev/$root for bad blocks:"
-readall -b /dev/$root | sh
-
 if [ "$nohome" = 0 ]
 then
-	echo ""
-	echo "Scanning /dev/$home for bad blocks:"
-	readall -b /dev/$home | sh
 	fshome="home=/dev/$home"
 else	fshome=""
 fi
 
 echo ""
-echo "Scanning /dev/$usr for bad blocks:"
-readall -b /dev/$usr | sh
-
-trap 2
-
-echo ""
-echo " --- Step 9: Wait for files to be copied -------------------------------"
+echo " --- Step 8: Wait for files to be copied -------------------------------"
 echo ""
 echo "This is the final step of the MINIX 3 setup.  All files will now be"
 echo "copied to your hard disk.  This may take a while."
