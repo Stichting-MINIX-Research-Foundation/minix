@@ -367,6 +367,9 @@ int tmpstart(filename)
 				}
 				nbytes++;
 			}
+			if(i >= MAXBLKS) {
+				FAIL("Too many blocks: %d.", i);
+			}
 			lnum[i - 1] = nlines;
 		}
 FoundEOF:
