@@ -73,9 +73,10 @@ struct util_timingdata {
         unsigned long lock_timings[TIMING_POINTS]; 
         unsigned long lock_timings_range[2];
         unsigned long binsize, resets, misses, measurements;
+	unsigned long starttimes[2];	/* nonzero if running */
 };
 
-typedef struct util_timingdata util_timingdata_t[TIMING_CATEGORIES];
+typedef struct util_timingdata util_timingdata_t;
 
 #endif /* _MINIX_SYSUTIL_H */
 
