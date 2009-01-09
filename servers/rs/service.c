@@ -691,6 +691,7 @@ struct
 	{ "READBIOS",		SYS_READBIOS },
 	{ "MAPDMA",		SYS_MAPDMA },
 	{ "VMCTL",		SYS_VMCTL },
+	{ "PROFBUF",		SYS_PROFBUF },
 	{ NULL,		0 }
 };
 
