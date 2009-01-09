@@ -88,8 +88,6 @@ _PROTOTYPE( void cons_seth, (int pos, int n)				);
 #define CHECK_RUNQUEUES check_runqueues_f(__FILE__, __LINE__)
 _PROTOTYPE( void check_runqueues_f, (char *file, int line) );
 #endif
-_PROTOTYPE( void timer_start, (int cat, char *name) );
-_PROTOTYPE( void timer_end, (int cat) );
 
 /* system/do_safecopy.c */
 _PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
