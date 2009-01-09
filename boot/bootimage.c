@@ -754,7 +754,6 @@ void bootminix(void)
 		linename[0] = serial_line + '0';
 		linename[1] = '\0';
 		b_setvar(E_VAR, SERVARNAME, linename);
-		printf("set %s to %s\n", SERVARNAME, linename);
 	}
 
 	exec_image(image);
