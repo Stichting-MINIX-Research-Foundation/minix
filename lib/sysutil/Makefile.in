@@ -25,6 +25,7 @@ libsys_FILES=" \
 	ser_putc.c \
 	stacktrace.c \
 	sys_hz.c \
+	timing.c \
 	profile_extern.c \
 	profile.c"
 
