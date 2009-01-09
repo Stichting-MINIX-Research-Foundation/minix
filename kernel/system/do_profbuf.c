@@ -11,8 +11,6 @@
 
 #include "../system.h"
 
-#if CPROFILE
-
 /*===========================================================================*
  *				do_profbuf				     *
  *===========================================================================*/
@@ -49,5 +47,4 @@ register message *m_ptr;    /* pointer to request message */
   return OK;
 }
 
-#endif /* CPROFILE */
 

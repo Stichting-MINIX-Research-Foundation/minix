@@ -14,8 +14,6 @@
 
 #include "../system.h"
 
-#if CPROFILE
-
 #include <string.h>
 
 /*===========================================================================*
@@ -146,6 +144,4 @@ register message *m_ptr;    /* pointer to request message */
 	return EINVAL;
   }
 }
-
-#endif /* CPROFILE */
 
