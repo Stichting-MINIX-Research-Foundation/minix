@@ -12,8 +12,6 @@
 
 #include <lib.h>
 
-#if CPROFILE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -283,6 +281,4 @@ PRIVATE void clear_tbl()
 	cprof_tbl[i].cycles._[U64_HI] = 0;
   }
 }
-
-#endif /* CPROFILE */
 

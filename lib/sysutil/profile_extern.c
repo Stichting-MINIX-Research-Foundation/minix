@@ -13,8 +13,6 @@
 
 #include <lib.h>
 
-#if CPROFILE
-
 #include <minix/profile.h>
 #include <minix/syslib.h>
 
@@ -43,6 +41,4 @@ void *tbl_ptr;
 {
   sys_profbuf(ctl_ptr, tbl_ptr);
 }
-
-#endif /* CPROFILE */
 

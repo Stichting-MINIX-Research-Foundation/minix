@@ -2,8 +2,6 @@
 
 #include <minix/config.h>
 
-#if CPROFILE
-
 /*===========================================================================*
  *                                sys_profbuf				     *
  *===========================================================================*/
@@ -18,6 +16,4 @@ void *mem_ptr;				/* pointer to profiling table */
 
   return(_taskcall(SYSTASK, SYS_PROFBUF, &m));
 }
-
-#endif
 

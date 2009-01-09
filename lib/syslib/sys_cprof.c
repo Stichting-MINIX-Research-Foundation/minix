@@ -1,7 +1,5 @@
 #include "syslib.h"
 
-#if CPROFILE
-
 /*===========================================================================*
  *                                sys_cprof				     *
  *===========================================================================*/
@@ -22,6 +20,4 @@ void *mem_ptr;				/* location of allocated memory */
 
   return(_taskcall(SYSTASK, SYS_CPROF, &m));
 }
-
-#endif
 
