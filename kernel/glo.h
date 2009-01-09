@@ -1,6 +1,8 @@
 #ifndef GLO_H
 #define GLO_H
 
+#include <minix/sysutil.h>
+
 /* Global variables used in the kernel. This file contains the declarations;
  * storage space for the variables is allocated in table.c, because EXTERN is
  * defined as extern unless the _TABLE definition is seen. We rely on the 
@@ -96,8 +98,8 @@ EXTERN int must_notify_vm;
 /* Verbose flags (debugging). */
 EXTERN int verbose_vm;
 
-/* Timing measurements. */
-EXTERN struct lock_timingdata timingdata[TIMING_CATEGORIES];
+/* Timing */
+EXTERN util_timingdata_t timingdata;
 
 /* Variables that are initialized elsewhere are just extern here. */
 extern struct boot_image image[]; 	/* system image processes */

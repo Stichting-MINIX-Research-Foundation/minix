@@ -25,12 +25,4 @@
 #define DEBUG_SCHED_CHECK		1
 #define DEBUG_TIME_LOCKS		1
 
-/* It's interesting to measure the time spent withing locked regions, because
- * this is the time that the system is deaf to interrupts.
- */
-
-#define TIMING_POINTS		20	/* timing resolution */
-#define TIMING_CATEGORIES	20
-#define TIMING_NAME		10
-
 #endif /* DEBUG_H */

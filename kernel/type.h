@@ -50,14 +50,4 @@ typedef struct irq_hook {
 
 typedef int (*irq_handler_t)(struct irq_hook *);
 
-/* Timing measurements. */
-struct lock_timingdata {
-        char names[TIMING_NAME];
-        unsigned long lock_timings[TIMING_POINTS];
-        unsigned long lock_timings_range[2];
-        unsigned long binsize, resets, misses, measurements;
-};
-EXTERN struct lock_timingdata timingdata[TIMING_CATEGORIES];
-
-
 #endif /* TYPE_H */

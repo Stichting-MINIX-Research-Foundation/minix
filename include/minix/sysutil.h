@@ -61,5 +61,21 @@ _PROTOTYPE( void ser_putc, (char c));
 
 #define ASSERT(c) if(!(c)) { panic(__FILE__, "assert " #c " failed at line", __LINE__); }
 
+/* timing library */
+#define TIMING_CATEGORIES       20
+
+#define TIMING_POINTS           20      /* timing resolution */
+#define TIMING_CATEGORIES       20
+#define TIMING_NAME             10
+
+struct util_timingdata {
+        char names[TIMING_NAME];
+        unsigned long lock_timings[TIMING_POINTS]; 
+        unsigned long lock_timings_range[2];
+        unsigned long binsize, resets, misses, measurements;
+};
+
+typedef struct util_timingdata util_timingdata_t[TIMING_CATEGORIES];
+
 #endif /* _MINIX_SYSUTIL_H */
 
