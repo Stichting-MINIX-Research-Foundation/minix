@@ -187,14 +187,7 @@ _PROTOTYPE( int do_sprofile, (message *m_ptr) );
 #endif
 
 _PROTOTYPE( int do_cprofile, (message *m_ptr) );
-#if ! CPROFILE
-#define do_cprofile do_unused
-#endif
-
 _PROTOTYPE( int do_profbuf, (message *m_ptr) );
-#if ! CPROFILE
-#define do_profbuf do_unused
-#endif
 
 _PROTOTYPE( int do_mapdma, (message *m_ptr) );
 

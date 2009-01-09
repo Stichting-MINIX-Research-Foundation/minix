@@ -37,8 +37,6 @@ PUBLIC void main()
   reg_t ktsb;			/* kernel task stack base */
   struct exec e_hdr;		/* for a copy of an a.out header */
 
-  do_serial_debug=0;
-
   /* Clear the process table. Anounce each slot as empty and set up mappings 
    * for proc_addr() and proc_nr() macros. Do the same for the table with 
    * privilege structures for the system processes. 
@@ -174,9 +172,7 @@ PUBLIC void main()
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
-#if CPROFILE
   cprof_procs_no = 0;  /* init nr of hash table slots used */
-#endif /* CPROFILE */
 
   vm_running = 0;
 

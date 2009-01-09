@@ -1,9 +1,7 @@
 #ifndef PROFILE_H
 #define PROFILE_H
 
-#if SPROFILE || CPROFILE
 #include <minix/profile.h>
-#endif
 
 #if SPROFILE	/* statistical profiling */
 
@@ -16,8 +14,6 @@ EXTERN endpoint_t sprof_ep;		/* user process */
 #endif /* SPROFILE */
 
 
-#if CPROFILE	/* call profiling */
-
 EXTERN int cprof_mem_size;		/* available user memory for data */
 EXTERN struct cprof_info_s cprof_info;	/* profiling info for user program */
 EXTERN int cprof_procs_no;		/* number of profiled processes */
@@ -29,8 +25,6 @@ EXTERN struct cprof_proc_info_s {	/* info about profiled process */
 	int slots_used;			/* table slots used */
 } cprof_proc_info_inst;
 EXTERN struct cprof_proc_info_s cprof_proc_info[NR_SYS_PROCS];	
-
-#endif /* CPROFILE */
 
 #endif /* PROFILE_H */
 

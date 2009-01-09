@@ -17,15 +17,11 @@
 
 #include <minix/config.h>
 
-#if SPROFILE || CPROFILE
-
 #include <minix/profile.h>
 #include <minix/portio.h>
 #include "kernel.h"
 #include "profile.h"
 #include "proc.h"
-
-#endif
 
 #if SPROFILE
 
@@ -126,8 +122,6 @@ irq_hook_t *hook;
 #endif /* SPROFILE */
 
 
-#if CPROFILE
-
 /* 
  * The following variables and functions are used by the procentry/
  * procentry syslib functions when linked with kernelspace processes.
@@ -176,6 +170,4 @@ void *tbl_ptr;
 
   cprof_procs_no++;
 }
-
-#endif /* CPROFILE */
 
