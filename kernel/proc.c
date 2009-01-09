@@ -87,7 +87,6 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 	endpoint_t e = proc_addr(s)->p_endpoint;	\
 	struct vir_addr src, dst;			\
 	int r;						\
-	timer_start(0, "copymess");			\
 	if((dstlin = umap_local((dp), D, (vir_bytes) dm, sizeof(message))) == 0){\
 		minix_panic("CopyMess: umap_local failed", __LINE__);	\
 	}						\
@@ -125,7 +124,6 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 			minix_panic("CopyMess: virtual_copy (2) failed", __LINE__); \
 		}					\
 	}	\
-	timer_end(0);	\
 } while(0)
 
 /*===========================================================================*
