@@ -71,7 +71,7 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
 	system_hz = atoi(value);
   if(!value || system_hz < 2 || system_hz > 50000)	/* sanity check */
 	system_hz = DEFAULT_HZ;
-  value = get_value(params_buffer, "cttyline");
+  value = get_value(params_buffer, SERVARNAME);
   if(value && atoi(value) == 0)
 	do_serial_debug=1;
 
