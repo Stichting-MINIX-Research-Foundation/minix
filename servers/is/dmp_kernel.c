@@ -4,6 +4,7 @@
 #include <timers.h>
 #include <ibm/interrupt.h>
 #include <minix/endpoint.h>
+#include <minix/sysutil.h>
 #include <minix/sys_config.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h"
@@ -36,7 +37,7 @@ PUBLIC struct boot_image image[NR_BOOT_PROCS];
  *===========================================================================*/
 PUBLIC void timing_dmp()
 {
-  static struct lock_timingdata timingdata[TIMING_CATEGORIES];
+  static struct util_timingdata timingdata[TIMING_CATEGORIES];
   int r, c, f, skipped = 0, printed = 0, maxlines = 23, x = 0;
   static int offsetlines = 0;
 
