@@ -146,9 +146,6 @@ PUBLIC void sys_task()
 	 */
 	memcpy(&caller_ptr->p_vmrequest.saved.reqmsg, &m, sizeof(m));
 	caller_ptr->p_vmrequest.type = VMSTYPE_SYS_MESSAGE;
-#if 0
-	kprintf("SYSTEM: suspending call from %d\n", m.m_source);
-#endif
       } else if (result != EDONTREPLY) {
 	/* Send a reply, unless inhibited by a handler function.
 	 * Use the kernel function lock_send() to prevent a system
@@ -446,9 +443,8 @@ register struct proc *rc;		/* slot of process to clean up */
   register struct proc **xpp;		/* iterate over caller queue */
   struct proc *np;
 
-  if(isemptyp(rc)) minix_panic("clear_proc: empty process", proc_nr(rc));
+  if(isemptyp(rc)) minix_panic("clear_proc: empty process", rc->p_endpoint);
 
-#if 1
   if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR) {
 	/* This test is great for debugging system processes dying,
 	 * but as this happens normally on reboot, not good permanent code.
@@ -459,7 +455,6 @@ register struct proc *rc;		/* slot of process to clean up */
 	util_stacktrace();
 	minix_panic("clear_proc: system process died", rc->p_endpoint);
   }
-#endif
 
   /* Make sure that the exiting process is no longer scheduled. */
   RTS_LOCK_SET(rc, NO_ENDPOINT);
@@ -485,8 +480,8 @@ register struct proc *rc;		/* slot of process to clean up */
           if (*xpp == rc) {			/* process is on the queue */
               *xpp = (*xpp)->p_q_link;		/* replace by next process */
 #if DEBUG_ENABLE_IPC_WARNINGS
-	      kprintf("Proc %d removed from queue at %d\n",
-	          proc_nr(rc), rc->p_sendto_e);
+	      kprintf("endpoint %d / %s removed from queue at %d\n",
+	          rc->p_endpoint, rc->p_name, rc->p_sendto_e);
 #endif
               break;				/* can only be queued once */
           }
@@ -512,8 +507,8 @@ register struct proc *rc;		/* slot of process to clean up */
           rp->p_reg.retreg = ESRCDIED;		/* report source died */
 	  RTS_LOCK_UNSET(rp, RECEIVING);	/* no longer receiving */
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("Proc %d (%s) receiving from dead src %d (%s)\n",
-		proc_nr(rp), rp->p_name, proc_nr(rc), rc->p_name);
+	  kprintf("endpoint %d / %s receiving from dead src ep %d / %s\n",
+		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);
 #endif
       } 
       if (RTS_ISSET(rp, SENDING) &&
@@ -521,8 +516,8 @@ register struct proc *rc;		/* slot of process to clean up */
           rp->p_reg.retreg = EDSTDIED;		/* report destination died */
 	  RTS_LOCK_UNSET(rp, SENDING);
 #if DEBUG_ENABLE_IPC_WARNINGS
-	  kprintf("Proc %d (%s) send to dying dst %d (%s)\n",
-		proc_nr(rp), rp->p_name, proc_nr(rc), rc->p_name);
+	  kprintf("endpoint %d / %s send to dying dst ep %d (%s)\n",
+		rp->p_endpoint, rp->p_name, rc->p_endpoint, rc->p_name);
 #endif
       } 
   }
@@ -615,10 +610,6 @@ PRIVATE struct proc *vmrestart_check(message *m)
 	switch(type) {
 		case VMSTYPE_SYS_MESSAGE:
 			memcpy(m, &restarting->p_vmrequest.saved.reqmsg, sizeof(*m));
-#if 0
-			kprintf("SYSTEM: restart sys_message type %d / %lx source %d\n",
-				m->m_type, m->m_type, m->m_source);
-#endif
 			if(m->m_source != restarting->p_endpoint)
 			   minix_panic("SYSTEM: vmrestart source doesn't match",
 				NO_NUM);
