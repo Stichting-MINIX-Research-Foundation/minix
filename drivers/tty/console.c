@@ -1033,9 +1033,9 @@ tty_t *tp;
 
 	memset(&boot_tty_info, 0, sizeof(boot_tty_info));
 	UPDATE_CURSOR(cons, cons->c_cur);
-	UPDATE_ORIGIN(cons, cons->c_org);
 	boot_tty_info.flags = BTIF_CONSCURSOR | BTIF_CONSORIGIN;
 	boot_tty_info.magic = TTYMAGIC;
+	UPDATE_ORIGIN(cons, cons->c_org);
   }
   select_console(0);
   cons_ioctl(tp, 0);
