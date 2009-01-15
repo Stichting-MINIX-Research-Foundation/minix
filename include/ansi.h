@@ -29,14 +29,15 @@
 #define _ANSI		31459	/* gcc conforms enough even in non-ANSI mode */
 #endif
 
+#define	_VOIDSTAR	void *
+#define	_VOID		void
+
 #ifdef _ANSI
 
 /* Keep everything for ANSI prototypes. */
 #define	_PROTOTYPE(function, params)	function params
 #define	_ARGS(params)			params
 
-#define	_VOIDSTAR	void *
-#define	_VOID		void
 #define	_CONST		const
 #define	_VOLATILE	volatile
 #define _SIZET		size_t
@@ -47,8 +48,6 @@
 #define	_PROTOTYPE(function, params)	function()
 #define	_ARGS(params)			()
 
-#define	_VOIDSTAR	void *
-#define	_VOID		void
 #define	_CONST
 #define	_VOLATILE
 #define _SIZET		int
