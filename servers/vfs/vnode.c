@@ -165,7 +165,7 @@ int line;
 	vp->v_file= file;
 	vp->v_line= line;
 }
-
+#endif
 
 /*===========================================================================*
  *				check_vrefs				     *
@@ -260,4 +260,3 @@ PUBLIC int check_vrefs()
 	}
 	return !bad;
 }
-#endif
