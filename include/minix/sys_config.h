@@ -70,6 +70,6 @@ error "_MINIX_MACHINE has incorrect value (0)"
 /* Kernel debug checks */
 #define DEBUG_LOCK_CHECK 1	/* Interrupt Lock/unlock sanity checking. */
 
-#define _KMESS_BUF_SIZE  30000
+#define _KMESS_BUF_SIZE  10000
 
 #endif /* _MINIX_SYS_CONFIG_H */
