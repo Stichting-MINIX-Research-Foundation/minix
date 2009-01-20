@@ -71,6 +71,8 @@ PUBLIC int do_mount()
 {
   endpoint_t fs_e; 
 
+  CHECK_VREFS;
+
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
 	
@@ -104,6 +106,8 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   struct vmnt *vmp, *vmp2;
   char *label;
   struct node_details res;
+
+  CHECK_VREFS;
   
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -339,6 +343,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
           tfp->fp_wd = root_node;
       }
 
+  	CHECK_VREFS;
 
       return(OK);
   }
@@ -372,6 +377,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       printf("VFSmount: moving opened block spec to new FS_e: %d...\n", fs_e);
       bspec->v_bfs_e = fs_e; 
   }
+  	CHECK_VREFS;
   return(OK);
 }
 
@@ -405,6 +411,8 @@ Dev_t dev;
   struct dmap *dp;
   int count, r;
   int fs_e;
+  
+  	CHECK_VREFS;
 
   /* Find vmnt */
   for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
@@ -504,6 +512,7 @@ Dev_t dev;
   vmp->m_dev = NO_DEV;
   vmp->m_fs_e = NONE;
   vmp->m_driver_e = NONE;
+  	CHECK_VREFS;
 
   return(OK);
 }

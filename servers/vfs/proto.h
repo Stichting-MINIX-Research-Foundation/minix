@@ -254,11 +254,10 @@ _PROTOTYPE( void vnode_clean_refs, (struct vnode *vp)                   );
 #if 0
 _PROTOTYPE( struct vnode *get_vnode, (int fs_e, int inode_nr)           );
 _PROTOTYPE( struct vnode *get_vnode_x, (int fs_e, int inode_nr)		);
-#endif
-#if 0
 _PROTOTYPE( void mark_vn, (struct vnode *vp, char *file, int line)	);
-_PROTOTYPE( int check_vrefs, (void)					);
 #endif
+#define CHECK_VREFS do { if(!check_vrefs()) panic("VFS", "check_vrefs failed", NO_NUM);} while(0)
+_PROTOTYPE( int check_vrefs, (void)			);
 
 /* write.c */
 _PROTOTYPE( int do_write, (void)					);
