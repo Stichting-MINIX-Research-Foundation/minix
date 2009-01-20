@@ -621,7 +621,7 @@ int flags;
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
 #if 1
-	    if (RTS_ISSET(*xpp, SLOT_FREE))
+	    if (RTS_ISSET(*xpp, SLOT_FREE) || RTS_ISSET(*xpp, NO_ENDPOINT))
 	    {
 		kprintf("%d: receive from %d; found dead %d (%s)?\n",
 			caller_ptr->p_endpoint, src_e, (*xpp)->p_endpoint,
@@ -689,11 +689,8 @@ int dst;				/* which process to notify */
   /* Check to see if target is blocked waiting for this message. A process 
    * can be both sending and receiving during a SENDREC system call.
    */
-  if ( (RTS_ISSET(dst_ptr, RECEIVING) && !RTS_ISSET(dst_ptr, SENDING)) &&
-      ! (dst_ptr->p_misc_flags & REPLY_PENDING) &&
-      (dst_ptr->p_getfrom_e == ANY || 
-      dst_ptr->p_getfrom_e == caller_ptr->p_endpoint)) {
-
+    if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint) &&
+      ! (dst_ptr->p_misc_flags & REPLY_PENDING)) {
       /* Destination is indeed waiting for a message. Assemble a notification 
        * message and deliver it. Copy from pseudo-source HARDWARE, since the
        * message is in the kernel's address space.
