@@ -132,7 +132,7 @@ do
 	esac
 done
 
-USRMB=150
+USRMB=550
 
 USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
 USRSECTS="`expr $USRMB \* 1024 \* 2`"
@@ -253,13 +253,13 @@ then	echo " * Indexing packages"
 	bintotal=0
 	( cd $PACKAGEDIR
 	  for p in *.tar.bz2
-	  do	echo $p >&2
+	  do	
 		p="`echo $p | sed 's/.tar.bz2//'`"
 		descr="../$p/.descr"
 		if [ -f "$descr" ]
 		then	echo "$p|`cat $descr`"
 		fi
-	  done >List
+	  done | tee List
 	)
 	for d in $PACKAGEDIR $PACKAGESOURCEDIR
 	do	echo Counting size of $d
