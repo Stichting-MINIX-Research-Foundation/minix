@@ -34,6 +34,7 @@
 #include "proc.h"
 #include <signal.h>
 #include <minix/com.h>
+#include <minix/portio.h>
 
 /* Function prototype for PRIVATE functions.
  */ 
