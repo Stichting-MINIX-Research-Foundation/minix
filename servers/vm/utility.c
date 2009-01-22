@@ -60,7 +60,7 @@ struct memory *mem_chunks;                      /* store mem chunks here */
 /* Initialize the free memory list from the 'memory' boot variable.  Translate
  * the byte offsets and sizes in this list to clicks, properly truncated.
  */
-  long base, size, limit;
+  phys_bytes base, size, limit;
   int i;
   struct memory *memp;
 
