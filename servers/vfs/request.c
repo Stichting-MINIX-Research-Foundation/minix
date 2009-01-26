@@ -1029,18 +1029,21 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
    * case of a dead driver */
   origm = *reqm;
   
+#if 0
   for (;;) {
+#endif
       /* Do the actual send, receive */
       if (OK != (r=sendrec(fs_e, reqm))) {
           printf("VFS:fs_sendrec:%s:%d: error sending message. FS_e: %d req_nr: %d err: %d\n", 
                   file, line, fs_e, reqm->m_type, r);
+	  return r;
       }
 
+#if 0
       if(r == OK) {
       	/* Sendrec was okay */
       	break;
       }
-
       /* Dead driver */
       if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
           old_driver_e = NONE;
@@ -1097,6 +1100,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
        printf("fs_sendrec: unhandled error %d sending to %d\n", r, fs_e);
        panic(__FILE__, "fs_sendrec: unhandled error", NO_NUM);
   }
+#endif
 
   /* Return message type */
   return reqm->m_type;
