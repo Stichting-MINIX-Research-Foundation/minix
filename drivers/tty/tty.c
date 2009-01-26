@@ -216,7 +216,7 @@ PUBLIC int main(void)
 		if (sigismember(&sigset, SIGKMESS)) do_new_kmess(&tty_mess);
 		continue;
 	}
-	case DIAGNOSTICS: 		/* a server wants to print some */
+	case DIAGNOSTICS_OLD: 		/* a server wants to print some */
 #if 0
 		if (tty_mess.m_source != LOG_PROC_NR)
 		{
@@ -225,8 +225,8 @@ PUBLIC int main(void)
 #endif
 		do_diagnostics(&tty_mess, 0);
 		continue;
-	case DIAGNOSTICS_S: 
-	case ASYN_DIAGNOSTICS: 
+	case DIAGNOSTICS_S_OLD: 
+	case ASYN_DIAGNOSTICS_OLD: 
 		do_diagnostics(&tty_mess, 1);
 		continue;
 	case GET_KMESS:

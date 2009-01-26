@@ -16,7 +16,7 @@ LDFLAGS = -i -L../libdriver_asyn
 LIBS = -ldriver  -lsys 
 LIB_DEP = ../libdriver_asyn/libdriver.a
 
-OBJ = log.o diag.o kputc.o
+OBJ = log.o diag.o
 
 # build local binary
 all build:	$(DRIVER)

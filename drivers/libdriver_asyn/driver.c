@@ -204,15 +204,6 @@ struct driver *dp;	/* Device dependent entry points. */
 			reply_mess.DEV_MINOR = mess.DEVICE;
 			reply_mess.DEV_SEL_OPS = r;	
 		}
-		else if (mess.m_type == DIAGNOSTICS_S)
-		{
-#if 0
-			if (device_caller == FS_PROC_NR)
-				printf("driver_task: sending DIAG_REPL to FS\n");
-#endif
-			reply_mess.m_type = DIAG_REPL;
-			reply_mess.REP_STATUS = r;	
-		}
 		else
 		{
 #if 0

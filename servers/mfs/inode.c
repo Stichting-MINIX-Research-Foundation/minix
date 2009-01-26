@@ -48,16 +48,20 @@ PUBLIC int fs_putnode()
           fs_m_in.REQ_INODE_INDEX < NR_INODES &&
           inode[fs_m_in.REQ_INODE_INDEX].i_num == fs_m_in.REQ_INODE_NR) {
       rip = &inode[fs_m_in.REQ_INODE_INDEX];
+      if(!rip) {
+	panic(__FILE__, "null rip", NO_NUM);
+      }
   }
   /* Otherwise find it */
   else { 
-      rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR);
+      if(!(rip = find_inode(fs_dev, fs_m_in.REQ_INODE_NR))) {
+      	printf("FSput_inode: inode #%d dev: %d not found, req_nr: %d\n", 
+       	     fs_m_in.REQ_INODE_NR, fs_dev, req_nr);
+      }
   }
 
   if (!rip)
   {
-      printf("FSput_inode: inode #%d dev: %d couldn't be put, req_nr: %d\n", 
-            fs_m_in.REQ_INODE_NR, fs_dev, req_nr);
 	panic(__FILE__, "fs_putnode failed", NO_NUM);
   }
 

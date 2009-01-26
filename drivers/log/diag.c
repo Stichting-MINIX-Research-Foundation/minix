@@ -134,7 +134,7 @@ PUBLIC int do_diagnostics(message *m, int safe)
   }
   log_append(diagbuf, i);
 
-  if(m->m_type == ASYN_DIAGNOSTICS) return EDONTREPLY;
+  if(m->m_type == ASYN_DIAGNOSTICS_OLD) return EDONTREPLY;
 
   return OK;
 }

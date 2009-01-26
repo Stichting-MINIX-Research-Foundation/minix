@@ -47,6 +47,7 @@ libsys_FILES=" \
 	sys_physcopy.c \
 	sys_readbios.c \
 	sys_safecopy.c \
+	sys_sysctl.c \
 	sys_vsafecopy.c \
 	sys_profbuf.c \
 	sys_sdevio.c \

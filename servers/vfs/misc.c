@@ -305,8 +305,11 @@ PUBLIC void pm_reboot()
 {
   /* Perform the FS side of the reboot call. */
   int i;
-  struct vnode vdummy;
   struct vmnt *vmp;
+
+  do_sync();
+
+  CHECK_VREFS;
 
   /* Do exit processing for all leftover processes and servers,
    * but don't actually exit them (if they were really gone, PM
@@ -314,17 +317,12 @@ PUBLIC void pm_reboot()
    */
   for (i = 0; i < NR_PROCS; i++)
 	if((m_in.endpt1 = fproc[i].fp_endpoint) != NONE)
-		free_proc(&fproc[i], 0);
+		free_proc(&fproc[i], FP_EXITING);
+  CHECK_VREFS;
 
   /* The root file system is mounted onto itself, which keeps it from being
    * unmounted.  Pull an inode out of thin air and put the root on it.
    */
-	
-  put_vnode(vmnt[0].m_mounted_on);
-  vmnt[0].m_mounted_on = &vdummy;
-  vmnt[0].m_root_node = &vdummy;
-  vdummy.v_fs_count = 0;	/* Is this right? */
-  vdummy.v_ref_count = 1;
 
   /* Unmount all filesystems.  File systems are mounted on other file systems,
    * so you have to pull off the loose bits repeatedly to get it all undone.
@@ -332,9 +330,18 @@ PUBLIC void pm_reboot()
   for (i= 0; i < NR_SUPERS; i++) {
 	/* Unmount at least one. */
 	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
-		if (vmp->m_dev != NO_DEV) (void) unmount(vmp->m_dev);
+		if (vmp->m_dev != NO_DEV) {
+			printf("VFS: pm_reboot: unmount 0x%x, FS %d\n",
+				vmp->m_dev, vmp->m_fs_e);
+  			CHECK_VREFS;
+			(void) unmount(vmp->m_dev);
+  			CHECK_VREFS;
+		}
 	}
   }
+
+  CHECK_VREFS;
+
 }
 
 /*===========================================================================*

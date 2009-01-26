@@ -1150,8 +1150,8 @@ int safe;
   }
   cons_putk(0);			/* always terminate, even with EFAULT */
 
-  if(m_ptr->m_type != ASYN_DIAGNOSTICS) {
-	  m_ptr->m_type = DIAG_REPL;
+  if(m_ptr->m_type != ASYN_DIAGNOSTICS_OLD) {
+	  m_ptr->m_type = DIAG_REPL_OLD;
 	  m_ptr->REP_STATUS = result;
 	  send(m_ptr->m_source, m_ptr);
   }

@@ -891,8 +891,6 @@ PUBLIC void dev_up(int maj)
 		printf(
 	"VFSdev_up: error sending new driver endpoint. FS_e: %d req_nr: %d\n", 
 			vmp->m_fs_e, REQ_NEW_DRIVER);
-	else
-		vmp->m_driver_e = new_driver_e;
   }
 
   /* Look for processes that are suspened in an OPEN call. Set SUSP_REOPEN

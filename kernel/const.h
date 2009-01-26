@@ -52,4 +52,7 @@
 #define INTS_ORIG	0	/* restore interrupts */
 #define INTS_MINIX	1	/* initialize interrupts for minix */
 
+/* for kputc() */
+#define END_OF_KMESS	0
+
 #endif /* CONST_H */

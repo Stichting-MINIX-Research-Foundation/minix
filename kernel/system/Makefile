@@ -43,6 +43,7 @@ OBJECTS	= \
 	$(SYSTEM)(do_privctl.o) \
 	$(SYSTEM)(do_segctl.o) \
 	$(SYSTEM)(do_safecopy.o) \
+	$(SYSTEM)(do_sysctl.o) \
 	$(SYSTEM)(do_getksig.o) \
 	$(SYSTEM)(do_endksig.o) \
 	$(SYSTEM)(do_kill.o) \
@@ -150,6 +151,9 @@ $(SYSTEM)(do_privctl.o):	do_privctl.c
 
 $(SYSTEM)(do_safecopy.o):	do_safecopy.c
 	$(CC) do_safecopy.c
+
+$(SYSTEM)(do_sysctl.o):	do_sysctl.c
+	$(CC) do_sysctl.c
 
 $(SYSTEM)(do_segctl.o):	do_segctl.c
 	$(CC) do_segctl.c

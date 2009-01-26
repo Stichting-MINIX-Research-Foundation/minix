@@ -19,6 +19,20 @@
 
 #include <minix/vfsif.h>
 
+/* Is vnode pointer reasonable? */
+#define SANEVP(v) ((((v) >= &vnode[0] && (v) < &vnode[NR_VNODES])))
+
+#define BADVP(v, f, l) printf("%s:%d: bad vp 0x%x\n", f, l, v)
+
+/* vp check that returns 0 for use in check_vrefs() */
+#define CHECKVN(v) if(!SANEVP(v)) {				\
+	BADVP(v, __FILE__, __LINE__);	\
+	return 0;	\
+}
+
+/* vp check that panics */
+#define ASSERTVP(v) if(!SANEVP(v)) { \
+	BADVP(v, __FILE__, __LINE__); panic("vfs", "bad vp", NO_NUM); }
 
 /*===========================================================================*
  *				get_free_vnode				     *
@@ -72,11 +86,7 @@ PUBLIC void dup_vnode(struct vnode *vp)
 /* dup_vnode() is called to increment the vnode and therefore the
  * referred inode's counter.
  */
-  if (vp == NIL_VNODE) {
-      printf("VFSdup_vnode NIL_VNODE\n");
-      return;
-  }
-
+  ASSERTVP(vp);
   vp->v_ref_count++;
 }
 
@@ -89,17 +99,7 @@ PUBLIC void put_vnode(struct vnode *vp)
 /* Decrease vnode's usage counter and decrease inode's usage counter in the 
  * corresponding FS process.
  */
-  if (vp == NIL_VNODE) {
-        /*printf("VFSput_vnode NIL_VNODE\n");*/
-        return;
-  }
-
-  if (vp < &vnode[0] || vp >= &vnode[NR_VNODES])
-  {
-	printf("put_vnode: &vnode[0] = %p, &vnode[NR_VNODES] = %p, vp = %p\n",
-		&vnode[0], &vnode[NR_VNODES], vp);
-	panic(__FILE__, "put_vnode: bad vnode pointer", NO_NUM);
-  }
+  ASSERTVP(vp);
 
   if (vp->v_ref_count > 1)
   {
@@ -167,6 +167,8 @@ int line;
 }
 #endif
 
+#define REFVP(v) { vp = (v); CHECKVN(v); vp->v_ref_check++; }
+
 /*===========================================================================*
  *				check_vrefs				     *
  *===========================================================================*/
@@ -187,16 +189,8 @@ PUBLIC int check_vrefs()
 	for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 		if (rfp->fp_pid == PID_FREE)
 			continue;
-		vp= rfp->fp_rd;
-		if (vp < &vnode[0] || vp >= &vnode[NR_VNODES])
-			panic(__FILE__, "check_vrefs: bad vnode", NO_NUM);
-		vp->v_ref_check++;
-                
-                vp= rfp->fp_wd;
-		if (vp < &vnode[0] || vp >= &vnode[NR_VNODES])
-			panic(__FILE__, "check_vrefs: bad vnode", NO_NUM);
-		vp->v_ref_check++;
-
+		REFVP(rfp->fp_rd);
+                REFVP(rfp->fp_wd);
   	}
 
 	/* Count references from filedescriptors */
@@ -204,10 +198,7 @@ PUBLIC int check_vrefs()
 	{
 		if (f->filp_count == 0)
 			continue;
-		vp= f->filp_vno;
-		if (vp < &vnode[0] || vp >= &vnode[NR_VNODES])
-			panic(__FILE__, "check_vrefs: bad vnode", NO_NUM);
-		vp->v_ref_check++;
+		REFVP(f->filp_vno);
 	}
 
 	/* Count references to mount points */
@@ -215,15 +206,9 @@ PUBLIC int check_vrefs()
 	{
 		if (vmp->m_dev == NO_DEV)
 			continue;
-		vp= vmp->m_mounted_on;
-		if (vp < &vnode[0] || vp >= &vnode[NR_VNODES])
-			panic(__FILE__, "check_vrefs: bad vnode", NO_NUM);
-		vp->v_ref_check++;
-
-		vp= vmp->m_root_node;
-		if (vp < &vnode[0] || vp >= &vnode[NR_VNODES])
-			panic(__FILE__, "check_vrefs: bad vnode", NO_NUM);
-		vp->v_ref_check++;
+		REFVP(vmp->m_root_node);
+		if(vmp->m_mounted_on)
+			REFVP(vmp->m_mounted_on);
 	}
 
 	/* Check references */

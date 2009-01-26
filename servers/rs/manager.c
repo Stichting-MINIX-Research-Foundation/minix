@@ -1024,10 +1024,6 @@ struct rproc *rp;
 	case 0:
 		execle(rp->r_script, rp->r_script, rp->r_label, reason,
 			incarnation_str, NULL, NULL);
-		{
-			extern int kputc_use_private_grants;
-			kputc_use_private_grants= 1;
-		}
 		printf("RS: run_script: execl '%s' failed: %s\n",
 			rp->r_script, strerror(errno));
 		exit(1);

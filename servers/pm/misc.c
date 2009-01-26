@@ -69,7 +69,7 @@ PUBLIC int do_allocmem()
 {
 	int r;
 	phys_bytes retmembase;
-	r = vm_allocmem(m_in.memsize, &retmembase);
+	r = vm_allocmem(m_in.memsize, (phys_clicks *) &retmembase);
 	if(r == OK)
 		mp->mp_reply.membase = retmembase;
 	return r;

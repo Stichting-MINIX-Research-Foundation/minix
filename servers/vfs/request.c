@@ -577,6 +577,7 @@ endpoint_t driver_e;
     /* Issue request */
     if ((r = sendrec(fs_e, &m)) != OK) {
         printf("VFSreq_newdriver: error sending message to %d: %d\n", fs_e, r);
+	util_stacktrace();
         return r;
     }
 
@@ -1019,11 +1020,8 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
   message origm, m;
   struct vmnt *vmp;
 
-  if (fs_e == PM_PROC_NR)
-  {
-	printf("from %s, %d\n", file, line);
-	panic(__FILE__, "talking to PM", NO_NUM);
-  }
+  if(fs_e <= 0 || fs_e == NONE)
+	panic(__FILE__, "talking to bogus endpoint", fs_e);
 
   /* Make a copy of the request so that we can load it back in
    * case of a dead driver */
@@ -1036,6 +1034,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
       if (OK != (r=sendrec(fs_e, reqm))) {
           printf("VFS:fs_sendrec:%s:%d: error sending message. FS_e: %d req_nr: %d err: %d\n", 
                   file, line, fs_e, reqm->m_type, r);
+	  util_stacktrace();
 	  return r;
       }
 
@@ -1050,7 +1049,9 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
           /* Find old driver by endpoint */
           for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; ++vmp) {
               if (vmp->m_fs_e == fs_e) {   /* found FS */
+#if 0
                   old_driver_e = vmp->m_driver_e;
+#endif
                   dmap_unmap_by_endpt(old_driver_e); /* unmap driver */
                   break;
               }

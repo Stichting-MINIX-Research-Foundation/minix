@@ -326,8 +326,9 @@
 
 #  define SYS_MAPDMA	(KERNEL_CALL + 42)	/* sys_mapdma() */
 #  define SYS_VMCTL	(KERNEL_CALL + 43)	/* sys_vmctl() */
+#  define SYS_SYSCTL	(KERNEL_CALL + 44)	/* sys_sysctl() */
 
-#define NR_SYS_CALLS	44	/* number of system calls */ 
+#define NR_SYS_CALLS	45	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -584,6 +585,13 @@
 #define SVMCTL_MRG_WRITE	m1_i2	/* MEMREQ_GET reply: writeflag */
 #define SVMCTL_MRG_EP		m1_i3	/* MEMREQ_GET reply: process */
 
+/* Codes and field names for SYS_SYSCTL. */
+#define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */
+#define SYSCTL_ARG1		m1_p1
+#define SYSCTL_ARG2		m1_i2
+#define SYSCTL_CODE_DIAG	1	/* Print diagnostics. */
+#define DIAG_BUFSIZE	(80*25)
+
 /* Values for SVMCTL_PARAM. */
 #define VMCTL_I386_SETCR3	10
 #define VMCTL_GET_PAGEFAULT	11
@@ -654,17 +662,17 @@
 #  define FKEY_FKEYS	      m2_l1	/* F1-F12 keys pressed */
 #  define FKEY_SFKEYS	      m2_l2	/* Shift-F1-F12 keys pressed */
 #define DIAG_BASE	0xa00
-#define DIAGNOSTICS 	(DIAG_BASE+1) 	/* output a string without FS in between */
-#define DIAGNOSTICS_S 	(DIAG_BASE+2) 	/* grant-based version of DIAGNOSTICS */
+#define DIAGNOSTICS_OLD 	(DIAG_BASE+1) 	/* output a string without FS in between */
+#define DIAGNOSTICS_S_OLD 	(DIAG_BASE+2) 	/* grant-based version of DIAGNOSTICS */
 #  define DIAG_PRINT_BUF_G    m1_p1
 #  define DIAG_BUF_COUNT      m1_i1
 #define GET_KMESS	(DIAG_BASE+3)	/* get kmess from TTY */
 #  define GETKM_PTR	      m1_p1
 #define GET_KMESS_S	(DIAG_BASE+4)	/* get kmess from TTY */
 #  define GETKM_GRANT	      m1_i1
-#define ASYN_DIAGNOSTICS (DIAG_BASE+5) 	/* grant-based, replyless DIAGNOSTICS */
+#define ASYN_DIAGNOSTICS_OLD (DIAG_BASE+5) 	/* grant-based, replyless DIAGNOSTICS */
 
-#define DIAG_REPL 	(DIAG_BASE+0x80+0) 	/* reply to DIAGNOSTICS(_S) */
+#define DIAG_REPL_OLD 	(DIAG_BASE+0x80+0) 	/* reply to DIAGNOSTICS(_S) */
 
 #define PM_BASE	0x900
 #define PM_GET_WORK	(PM_BASE + 1)	/* Get work from PM */

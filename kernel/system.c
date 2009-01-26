@@ -241,6 +241,7 @@ PRIVATE void initialize(void)
   /* System control. */
   map(SYS_ABORT, do_abort);		/* abort MINIX */
   map(SYS_GETINFO, do_getinfo); 	/* request system information */ 
+  map(SYS_SYSCTL, do_sysctl); 		/* misc system manipulation */ 
 
   /* Profiling. */
   map(SYS_SPROF, do_sprofile);         /* start/stop statistical profiling */

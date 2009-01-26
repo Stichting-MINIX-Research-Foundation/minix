@@ -397,12 +397,12 @@ int safe;
 	 * understand.
 	 */
 	switch(m_ptr->m_type) {
-	case DIAGNOSTICS: {
+	case DIAGNOSTICS_OLD: {
 		r = do_diagnostics(m_ptr, 0);
 		break;
 	}
-	case ASYN_DIAGNOSTICS:
-	case DIAGNOSTICS_S:
+	case ASYN_DIAGNOSTICS_OLD:
+	case DIAGNOSTICS_S_OLD:
 		r = do_diagnostics(m_ptr, 1);
 		break;
 	case DEV_STATUS: {

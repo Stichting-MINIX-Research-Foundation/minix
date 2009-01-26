@@ -692,6 +692,7 @@ struct
 	{ "MAPDMA",		SYS_MAPDMA },
 	{ "VMCTL",		SYS_VMCTL },
 	{ "PROFBUF",		SYS_PROFBUF },
+	{ "SYSCTL",		SYS_SYSCTL },
 	{ NULL,		0 }
 };
 

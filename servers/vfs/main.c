@@ -64,10 +64,6 @@ PUBLIC int main()
 	if (who_e == PM_PROC_NR && call_nr != PROC_EVENT)
 		printf("FS: strange, got message %d from PM\n", call_nr);
 
-#if 0
-	printf("VFS: got call %d from %d\n", call_nr, who_e);
-#endif
-
 	if (call_nr == DEV_REVIVE)
 	{
 		endpoint_t endpt;
@@ -103,11 +99,6 @@ PUBLIC int main()
 	if (call_nr == DEV_SEL_REPL2)
 	{
 		select_reply2();
-		continue;
-	}
-	if (call_nr == DIAG_REPL)
-	{
-		diag_repl();
 		continue;
 	}
 
@@ -477,16 +468,14 @@ PRIVATE void init_root()
   /* Fill in max file size and blocksize for the vmnt */
   vmp->m_fs_e = resX.fs_e;
   vmp->m_dev = root_dev;
-  vmp->m_driver_e = dp->dmap_driver;
   vmp->m_flags = 0;
   
   /* Root node is indeed on the partition */
   root_node->v_vmnt = vmp;
   root_node->v_dev = vmp->m_dev;
 
-  /* Root directory is mounted on itself */
-  vmp->m_mounted_on = root_node;
-  root_node->v_ref_count++;
+  /* Root directory is not mounted on a vnode. */
+  vmp->m_mounted_on = NULL;
   vmp->m_root_node = root_node;
 }
 

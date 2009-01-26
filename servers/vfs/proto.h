@@ -256,7 +256,9 @@ _PROTOTYPE( struct vnode *get_vnode, (int fs_e, int inode_nr)           );
 _PROTOTYPE( struct vnode *get_vnode_x, (int fs_e, int inode_nr)		);
 _PROTOTYPE( void mark_vn, (struct vnode *vp, char *file, int line)	);
 #endif
-#define CHECK_VREFS do { if(!check_vrefs()) panic("VFS", "check_vrefs failed", NO_NUM);} while(0)
+#define CHECK_VREFS do { if(!check_vrefs()) { \
+	printf("VFS:%s:%d: check_vrefs failed\n", __FILE__, __LINE__);	\
+	panic("VFS", "check_vrefs failed", NO_NUM);} } while(0)
 _PROTOTYPE( int check_vrefs, (void)			);
 
 /* write.c */

@@ -103,7 +103,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   dev_t dev;
   message m;
   struct vnode *vp, *root_node, *mounted_on, *bspec;
-  struct vmnt *vmp, *vmp2;
+  struct vmnt *vmp;
   char *label;
   struct node_details res;
 
@@ -168,8 +168,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   if (found) {
 	/* It is possible that we have an old root lying around that 
 	 * needs to be remounted. */
-	if (vmp->m_mounted_on != vmp->m_root_node ||
-		vmp->m_mounted_on == fproc[FS_PROC_NR].fp_rd) {
+	if (vmp->m_mounted_on || vmp->m_mounted_on == fproc[FS_PROC_NR].fp_rd) {
 		/* Normally, m_mounted_on refers to the mount point. For a
 		 * root filesystem, m_mounted_on is equal to the root vnode.
 		 * We assume that the root of FS is always the real root. If
@@ -179,6 +178,9 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 		 */
 		return EBUSY;   /* already mounted */
 	}
+
+	if(vmp->m_mounted_on)
+		panic("vfs", "root unexpectedly mounted somewhere", NO_NUM);
 
 	if (root_dev == vmp->m_dev)
 		panic("fs", "inconsistency remounting old root", NO_NUM);
@@ -227,7 +229,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	}
 
 	/* Nothing else can go wrong.  Perform the mount. */
-	put_vnode(vmp->m_mounted_on);
 	vmp->m_mounted_on = mounted_on;
 	vmp->m_flags = m_in.rd_only;
 	allow_newroot = 0;              /* The root is now fixed */
@@ -308,7 +309,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   vmp->m_fs_e = res.fs_e;
   vmp->m_dev = dev;
   vmp->m_flags = m_in.rd_only;
-  vmp->m_driver_e = dp->dmap_driver;
   
   /* Root node is indeed on the partition */
   root_node->v_vmnt = vmp;
@@ -318,8 +318,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       /* Superblock and root node already read. 
        * Nothing else can go wrong. Perform the mount. */
       vmp->m_root_node = root_node;
-      root_node->v_ref_count++;
-      vmp->m_mounted_on = root_node;
+      vmp->m_mounted_on = NULL;
 
       root_dev = dev;
       ROOT_FS_E = fs_e;
@@ -388,13 +387,17 @@ PUBLIC int do_umount()
 {
 /* Perform the umount(name) system call. */
   dev_t dev;
+  	CHECK_VREFS;
 
   /* Only the super-user may do UMOUNT. */
   if (!super_user) return(EPERM);
+  	CHECK_VREFS;
 
   /* If 'name' is not for a block special file, return error. */
   if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
+  	CHECK_VREFS;
   if ( (dev = name_to_dev()) == NO_DEV) return(err_code);
+  	CHECK_VREFS;
 
   return(unmount(dev));
 }
@@ -406,7 +409,7 @@ PUBLIC int do_umount()
 PUBLIC int unmount(dev)
 Dev_t dev;
 {
-  struct vnode *vp;
+  struct vnode *vp, *vi;
   struct vmnt *vmp_i = NULL, *vmp = NULL;
   struct dmap *dp;
   int count, r;
@@ -436,8 +439,8 @@ Dev_t dev;
 #if 1
 	int i;
         	struct fproc *tfp;
-	  printf("unmount: vnode %d in use %d times\n",
-		vp->v_inode_nr, vp->v_ref_count);
+	  printf("unmount: vnode 0x%x/%d in use %d times\n",
+		dev, vp->v_inode_nr, vp->v_ref_count);
 	      for (i= 0, tfp= fproc; i<NR_PROCS; i++, tfp++) {
 		int n;
       	 	   if (tfp->fp_pid == PID_FREE)
@@ -454,22 +457,57 @@ Dev_t dev;
 					vp->v_inode_nr, n, tfp->fp_pid);
 		}
 	      }
+
+  		for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
+      			if (vmp_i->m_dev != NO_DEV) {
+			  if(vmp_i->m_mounted_on == vp) {
+				printf("\tvnode %d: is a mount point\n",
+					vp->v_inode_nr);
+			  }
+			  if(vmp_i->m_root_node == vp) {
+				printf("\tvnode %d: is a root node\n",
+					vp->v_inode_nr);
+			  }
+			}
+		}
 #endif
 
           count += vp->v_ref_count;
       }
   }
+  	CHECK_VREFS;
 
   if (count > 1) {
       return(EBUSY);    /* can't umount a busy file system */
   }
 
+  	CHECK_VREFS;
+
   vnode_clean_refs(vmp->m_root_node);
+  	CHECK_VREFS;
+
+  if (vmp->m_mounted_on) {
+      put_vnode(vmp->m_mounted_on);
+      vmp->m_mounted_on->v_fs_count--;
+      vmp->m_mounted_on = NIL_VNODE;
+  }
+
+  put_vnode(vmp->m_root_node);
+  vmp->m_root_node->v_ref_count = 0;
+  vmp->m_root_node = NIL_VNODE;
 
   /* Request FS the unmount */
-  if(vmp->m_fs_e <= 0)
+  if(vmp->m_fs_e <= 0 || vmp->m_fs_e == NONE)
 	panic(__FILE__, "unmount: strange fs endpoint", vmp->m_fs_e);
-  if ((r = req_unmount(vmp->m_fs_e)) != OK) return r;
+  if ((r = req_unmount(vmp->m_fs_e)) != OK) {
+	/* Not recoverable. */
+	printf("VFS: ignoring unmount failure %d from %d\n", r, vmp->m_fs_e);
+  }
+
+  vmp->m_dev = NO_DEV;
+  vmp->m_fs_e = NONE;
+
+  	CHECK_VREFS;
 
   /* Is there a block special file that was handled by that partition? */
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
@@ -496,22 +534,6 @@ Dev_t dev;
       }
   }
 
-  /* Root device is mounted on itself */
-  if (vmp->m_root_node != vmp->m_mounted_on) {
-      put_vnode(vmp->m_mounted_on);
-      vmp->m_root_node->v_ref_count = 0;
-  }
-  else {
-      vmp->m_mounted_on->v_fs_count--;
-  }
-
-  fs_e = vmp->m_fs_e;
-
-  vmp->m_root_node = NIL_VNODE;
-  vmp->m_mounted_on = NIL_VNODE;
-  vmp->m_dev = NO_DEV;
-  vmp->m_fs_e = NONE;
-  vmp->m_driver_e = NONE;
   	CHECK_VREFS;
 
   return(OK);
