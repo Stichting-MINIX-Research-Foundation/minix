@@ -15,6 +15,27 @@
 
 #define LINES 22
 
+#define PRINTRTS(rp) { \
+	char *procname = "";	\
+	printf(" %s", p_rts_flags_str(rp->p_rts_flags));	\
+	if (rp->p_rts_flags & (SENDING|RECEIVING)) {		\
+		procname = proc_name(_ENDPOINT_P(rp->p_getfrom_e)); \
+	} \
+	printf(" %-7.7s", procname);	\
+}
+
+static int pagelines;
+
+#define PROCLOOP(rp, oldrp) \
+	pagelines = 0; \
+	for (rp = oldrp; rp < END_PROC_ADDR; rp++) { \
+	  oldrp = BEG_PROC_ADDR; \
+	  if (isemptyp(rp)) continue; \
+	  if (++pagelines > LINES) { oldrp = rp; printf("--more--\n"); break; }\
+	  if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  \
+	  else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp)); 	\
+	  else 				printf(" %2d  ", proc_nr(rp));
+
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
@@ -344,12 +365,7 @@ PUBLIC void privileges_dmp()
 
   printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -ipc_sr-- -system calls--\n");
 
-  for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
-	if (isemptyp(rp)) continue;
-	if (++n > LINES) break;
-	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
-	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
-	else 				printf(" %2d  ", proc_nr(rp));
+  PROCLOOP(rp, oldrp)
         r = -1;
         for (sp = &priv[0]; sp < &priv[NR_SYS_PROCS]; sp++) 
             if (sp->s_proc_nr == rp->p_nr) { r ++; break; }
@@ -374,58 +390,6 @@ PUBLIC void privileges_dmp()
 	printf("\n");
 
   }
-  if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
-  oldrp = rp;
-
-}
-
-/*===========================================================================*
- *				sendmask_dmp   				     *
- *===========================================================================*/
-PUBLIC void sendmask_dmp()
-{
-  register struct proc *rp;
-  static struct proc *oldrp = BEG_PROC_ADDR;
-  int r, i,j, n = 0;
-
-  /* First obtain a fresh copy of the current process table. */
-  if ((r = sys_getproctab(proc)) != OK) {
-      report("IS","warning: couldn't get copy of process table", r);
-      return;
-  }
-
-  printf("\n\n");
-  printf("Sendmask dump for process table. User processes (*) don't have [].");
-  printf("\n");
-  printf("The rows of bits indicate to which processes each process may send.");
-  printf("\n\n");
-
-#if DEAD_CODE
-  printf("              ");
-  for (j=proc_nr(BEG_PROC_ADDR); j< INIT_PROC_NR+1; j++) {
-     printf("%3d", j);
-  }
-  printf("  *\n");
-
-  for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
-        if (isemptyp(rp)) continue;
-        if (++n > LINES) break;
-
-    	printf("%8s ", rp->p_name);
-	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
-	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
-	else 				printf(" %2d  ", proc_nr(rp));
-
-    	for (j=proc_nr(BEG_PROC_ADDR); j<INIT_PROC_NR+2; j++) {
-    	    if (isallowed(rp->p_sendmask, j))	printf(" 1 ");
-    	    else 				printf(" 0 ");
-    	}
-        printf("\n");
-  }
-  if (rp == END_PROC_ADDR) { printf("\n"); rp = BEG_PROC_ADDR; }
-  else printf("--more--\r");
-  oldrp = rp;
-#endif
 }
 
 PRIVATE char *p_rts_flags_str(int flags)
@@ -464,32 +428,47 @@ PUBLIC void proctab_dmp()
 
   printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user----sys--rts flags\n");
 
-  for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
-	if (isemptyp(rp)) continue;
-	if (++n > LINES) break;
+  PROCLOOP(rp, oldrp)
 	text = rp->p_memmap[T].mem_phys;
 	data = rp->p_memmap[D].mem_phys;
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
-	if (proc_nr(rp) == IDLE) 	printf("(%2d) ", proc_nr(rp));  
-	else if (proc_nr(rp) < 0) 	printf("[%2d] ", proc_nr(rp));
-	else 				printf(" %2d  ", proc_nr(rp));
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu %s",
+	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 
-	       rp->p_user_time, rp->p_sys_time,
-	       p_rts_flags_str(rp->p_rts_flags));
-	if (rp->p_rts_flags & (SENDING|RECEIVING)) {
-		printf(" %-7.7s", proc_name(_ENDPOINT_P(rp->p_getfrom_e)));
-	} 
+	       rp->p_user_time, rp->p_sys_time);
+	PRINTRTS(rp);
 	printf("\n");
   }
-  if (rp == END_PROC_ADDR) rp = BEG_PROC_ADDR; else printf("--more--\r");
-  oldrp = rp;
 }
 #endif				/* (CHIP == INTEL) */
+
+/*===========================================================================*
+ *				procstack_dmp  				     *
+ *===========================================================================*/
+PUBLIC void procstack_dmp()
+{
+/* Proc table dump, with stack */
+
+  register struct proc *rp;
+  static struct proc *oldrp = BEG_PROC_ADDR;
+  int r, n = 0;
+
+  /* First obtain a fresh copy of the current process table. */
+  if ((r = sys_getproctab(proc)) != OK) {
+      report("IS","warning: couldn't get copy of process table", r);
+      return;
+  }
+
+  printf("\n-nr-rts flags--      --stack--\n");
+
+  PROCLOOP(rp, oldrp)
+	PRINTRTS(rp);
+	sys_sysctl_stacktrace(rp->p_endpoint);
+  }
+}
 
 /*===========================================================================*
  *				memmap_dmp    				     *
@@ -508,14 +487,11 @@ PUBLIC void memmap_dmp()
   }
 
   printf("\n-nr/name--- --pc--   --sp-- -text---- -data---- -stack--- -cr3-\n");
-  for (rp = oldrp; rp < END_PROC_ADDR; rp++) {
-	if (isemptyp(rp)) continue;
-	if (++n > LINES) break;
+  PROCLOOP(rp, oldrp)
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len)
 						- rp->p_memmap[D].mem_phys);
-	printf("%3d %-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8lx\n",
-	       proc_nr(rp),
+	printf("%-7.7s%7lx %8lx %4x %4x %4x %4x %5x %5x %8lx\n",
 	       rp->p_name,
 	       (unsigned long) rp->p_reg.pc,
 	       (unsigned long) rp->p_reg.sp,
@@ -524,9 +500,6 @@ PUBLIC void memmap_dmp()
 	       rp->p_memmap[S].mem_phys, rp->p_memmap[S].mem_len,
 	       rp->p_seg.p_cr3);
   }
-  if (rp == END_PROC_ADDR) rp = proc; 
-  else printf("--more--\r");
-  oldrp = rp;
 }
 
 /*===========================================================================*
@@ -535,12 +508,12 @@ PUBLIC void memmap_dmp()
 PRIVATE char *proc_name(proc_nr)
 int proc_nr;
 {
+  struct proc *p;
   if (proc_nr == ANY) return "ANY";
-  /*
-  if(proc_nr < 0 || proc_nr >= NR_TASKS+NR_PROCS) {
-	return "BAD";
-  }
-  */
-  return cproc_addr(proc_nr)->p_name;
+  if (proc_nr == NONE) return "NONE";	/* bogus */
+  if (proc_nr < -NR_TASKS || proc_nr >= NR_PROCS) return "BOGUS";
+  p = cproc_addr(proc_nr);
+  if (isemptyp(p)) return "EMPTY";	/* bogus */
+  return p->p_name;
 }
 

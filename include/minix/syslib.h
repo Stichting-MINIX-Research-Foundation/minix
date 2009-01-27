@@ -54,13 +54,13 @@ _PROTOTYPE( int sys_vmctl_get_pagefault_i386, (endpoint_t *who, u32_t *cr2, u32_
 _PROTOTYPE( int sys_vmctl_get_cr3_i386, (endpoint_t who, u32_t *cr3)  );
 _PROTOTYPE( int sys_vmctl_get_memreq, (endpoint_t *who, vir_bytes *mem,
         vir_bytes *len, int *wrflag) );
-_PROTOTYPE( int sys_vmctl_stacktrace, (endpoint_t who));
 
 
 
 _PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
 _PROTOTYPE( int sys_stime, (time_t boottime));
 _PROTOTYPE( int sys_sysctl, (int ctl, char *arg1, int arg2));
+_PROTOTYPE( int sys_sysctl_stacktrace, (endpoint_t who));
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_nr, buffer, count) \

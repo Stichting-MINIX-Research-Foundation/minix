@@ -9,9 +9,9 @@ _PROTOTYPE( void mapping_dmp, (void)	 				);
 
 /* dmp_kernel.c */
 _PROTOTYPE( void proctab_dmp, (void)					);
+_PROTOTYPE( void procstack_dmp, (void)					);
 _PROTOTYPE( void memmap_dmp, (void)					);
 _PROTOTYPE( void privileges_dmp, (void)					);
-_PROTOTYPE( void sendmask_dmp, (void)					);
 _PROTOTYPE( void image_dmp, (void)					);
 _PROTOTYPE( void irqtab_dmp, (void)					);
 _PROTOTYPE( void kmessages_dmp, (void)					);

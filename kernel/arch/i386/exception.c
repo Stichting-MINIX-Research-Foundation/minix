@@ -174,7 +174,7 @@ PUBLIC void proc_stacktrace(struct proc *proc)
 
 	v_bp = proc->p_reg.fp;
 
-	kprintf("%s / %d pc 0x%lx stack ",
+	kprintf("%8.8s %6d 0x%lx ",
 		proc->p_name, proc->p_endpoint, proc->p_reg.pc);
 
 	while(v_bp) {

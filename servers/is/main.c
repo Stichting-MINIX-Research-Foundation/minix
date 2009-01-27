@@ -91,10 +91,10 @@ PRIVATE void init_server(int argc, char **argv)
   if (sigaction(SIGTERM, &sigact, NULL) < 0) 
       report("IS","warning, sigaction() failed", errno);
 
-  /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F6. */
+  /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F10. */
   fkeys = sfkeys = 0;
   for (i=1; i<=12; i++) bit_set(fkeys, i);
-  for (i=1; i<= 8; i++) bit_set(sfkeys, i);
+  for (i=1; i<=10; i++) bit_set(sfkeys, i);
   if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
       report("IS", "warning, fkey_map failed:", s);
 }

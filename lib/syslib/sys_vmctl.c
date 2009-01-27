@@ -60,7 +60,3 @@ PUBLIC int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
   return r;
 }
 
-PUBLIC int sys_vmctl_stacktrace(endpoint_t who)
-{
-	return sys_vmctl(who, VMCTL_STACKTRACE, 0);
-}

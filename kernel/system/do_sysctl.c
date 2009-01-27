@@ -19,8 +19,8 @@ register message *m_ptr;	/* pointer to request message */
   phys_bytes ph;
   vir_bytes len, buf;
   static char mybuf[DIAG_BUFSIZE];
-  struct proc *caller;
-  int s, i;
+  struct proc *caller, *target;
+  int s, i, proc_nr;
 
   caller = proc_addr(who_p);
 
@@ -45,7 +45,11 @@ register message *m_ptr;	/* pointer to request message */
 		kputc(mybuf[i]);
 	kputc(END_OF_KMESS);
 	return OK;
-        break;
+    case SYSCTL_CODE_STACKTRACE:
+	if(!isokendpt(m_ptr->SYSCTL_ARG2, &proc_nr))
+		return EINVAL;
+	proc_stacktrace(proc_addr(proc_nr));
+	return OK;
     default:
 	kprintf("do_sysctl: invalid request %d\n", m_ptr->SYSCTL_CODE);
         return(EINVAL);

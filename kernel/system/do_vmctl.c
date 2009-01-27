@@ -97,10 +97,6 @@ kprintf("SYSTEM: request %d:0x%lx-0x%lx, wrflag %d, failed\n",
 	case VMCTL_NOPAGEZERO:
 		return OK;
 #endif
-	case VMCTL_STACKTRACE:
-		kprintf("vmctl stacktrace ");
-		proc_stacktrace(p);
-		return OK;
   }
 
   /* Try architecture-specific vmctls. */

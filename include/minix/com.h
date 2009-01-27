@@ -590,6 +590,7 @@
 #define SYSCTL_ARG1		m1_p1
 #define SYSCTL_ARG2		m1_i2
 #define SYSCTL_CODE_DIAG	1	/* Print diagnostics. */
+#define SYSCTL_CODE_STACKTRACE	2	/* Print process stack. */
 #define DIAG_BUFSIZE	(80*25)
 
 /* Values for SVMCTL_PARAM. */
@@ -600,7 +601,6 @@
 #define VMCTL_MEMREQ_GET	14
 #define VMCTL_MEMREQ_REPLY	15
 #define VMCTL_INCSP		16
-#define VMCTL_STACKTRACE	17
 #define VMCTL_NOPAGEZERO	18
 
 /*===========================================================================*
