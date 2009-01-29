@@ -156,6 +156,10 @@ PRIVATE void ser_debug(int c)
 PUBLIC void ser_dump_proc()
 {
 	struct proc *pp;
+	int u = 0;
+
+	/* Disable interrupts so that we get a consistent state. */
+	if(!intr_disabled()) { lock; u = 1; };
 
 	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
 	{
@@ -171,6 +175,8 @@ PUBLIC void ser_dump_proc()
 			pp->p_reg.pc);
 		proc_stacktrace(pp);
 	}
+
+	if(u) { unlock; }
 }
 
 PRIVATE void ser_dump_stats()
