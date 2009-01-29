@@ -445,9 +445,19 @@ tty_t *tp;			/* which TTY */
   int line;
   port_t this_8250;
   int irq;
+  char l[10];
 
   /* Associate RS232 and TTY structures. */
   line = tp - &tty_table[NR_CONS];
+
+  /* See if kernel debugging is enabled; if so, don't initialize this
+   * serial line, making tty not look at the irq and returning ENXIO
+   * for all requests on it from userland. (The kernel will use it.)
+   */
+  if(env_get_param(SERVARNAME, l, sizeof(l)-1) == OK && atoi(l) == line) {
+     return;
+  }
+
   rs = tp->tty_priv = &rs_lines[line];
   rs->tty = tp;
 
