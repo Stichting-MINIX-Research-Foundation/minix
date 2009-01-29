@@ -378,9 +378,6 @@ FORWARD _PROTOTYPE( int atapi_transfer, (int proc_nr, int opcode,
 		u64_t position, iovec_t *iov, unsigned nr_req, int safe));
 #endif
 
-#define panic(f,m,n) at_panic(__LINE__, (f), (m), (n))
-FORWARD _PROTOTYPE( void at_panic, (int line, char *h, char *msg, int n));
-
 #define sys_voutb(out, n) at_voutb(__LINE__, (out), (n))
 FORWARD _PROTOTYPE( int at_voutb, (int line, pvb_pair_t *, int n));
 #define sys_vinb(in, n) at_vinb(__LINE__, (in), (n))
@@ -2735,14 +2732,3 @@ PRIVATE int at_in(int line, u32_t port, u32_t *value,
         panic(w_name(), "sys_in failed", NO_NUM);
 }
 
-#undef panic
-PRIVATE void at_panic(line, h, msg, n)
-int line;
-char *h;
-char *msg;
-int n;
-{
-	printf("at_wini%d: panic at line %d: %s: %s %d\n",
-		w_instance, line, h, msg, n);
-	while(1);
-}
