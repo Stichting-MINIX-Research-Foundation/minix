@@ -455,13 +455,6 @@ message *m;
 
 
 /*===========================================================================*
- *				map_key0				     *
- *===========================================================================*/
-/* Map a scan code to an ASCII code ignoring modifiers. */
-#define map_key0(scode)	 \
-	((unsigned) keymap[(scode) * MAP_COLS])
-
-/*===========================================================================*
  *				map_key					     *
  *===========================================================================*/
 PRIVATE unsigned map_key(scode)
@@ -472,12 +465,10 @@ int scode;
   int caps, column, lk;
   u16_t *keyrow;
 
-  if (scode == SLASH_SCAN && esc) return '/';	/* don't map numeric slash */
-
   if(esc)
-	  keyrow = &keymap[scode * MAP_COLS];
-  else
 	  keyrow = &keymap_escaped[scode * MAP_COLS];
+  else
+	  keyrow = &keymap[scode * MAP_COLS];
 
   caps = shift;
   lk = locks[ccurrent];
@@ -771,12 +762,13 @@ int scode;			/* scan code of key just struck or released */
 		esc = 1;		/* Next key is escaped */
 		return(-1);
   	default:		/* A normal key */
-  		if(!ch) {
-  			printf("tty: ignoring unrecognized %s scancode 0x%x\n",
-  				esc ? "escaped" : "straight", scode);
-  			return -1;
-  		}
-		if(make) return(ch);
+		if(!make)
+			return -1;
+		if(ch)
+			return ch;
+  		printf("tty: ignoring unrecognized %s scancode 0x%x\n",
+  			escape ? "escaped" : "straight", scode);
+  		return -1;
   }
 
   /* Key release, or a shift type key. */
