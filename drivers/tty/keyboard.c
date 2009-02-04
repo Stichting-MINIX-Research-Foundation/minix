@@ -18,7 +18,14 @@
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include "tty.h"
+
+u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 #include "keymaps/us-std.src"
+};
+
+u16_t keymap_escaped[NR_SCAN_CODES * MAP_COLS] = {
+#include "keymaps/us-std-esc.src"
+};
 
 int irq_hook_id = -1;
 int aux_irq_hook_id = -1;
@@ -467,7 +474,10 @@ int scode;
 
   if (scode == SLASH_SCAN && esc) return '/';	/* don't map numeric slash */
 
-  keyrow = &keymap[scode * MAP_COLS];
+  if(esc)
+	  keyrow = &keymap[scode * MAP_COLS];
+  else
+	  keyrow = &keymap_escaped[scode * MAP_COLS];
 
   caps = shift;
   lk = locks[ccurrent];
@@ -737,7 +747,6 @@ int scode;			/* scan code of key just struck or released */
 		alt_down = make;
 		break;
   	case CALOCK:		/* Caps lock - toggle on 0 -> 1 transition */
-  		if(escape) return -1;
 		if (caps_down < make) {
 			locks[ccurrent] ^= CAPS_LOCK;
 			set_leds();
@@ -745,7 +754,6 @@ int scode;			/* scan code of key just struck or released */
 		caps_down = make;
 		break;
   	case NLOCK:		/* Num lock */
-  		if(escape) return -1;
 		if (num_down < make) {
 			locks[ccurrent] ^= NUM_LOCK;
 			set_leds();
@@ -753,7 +761,6 @@ int scode;			/* scan code of key just struck or released */
 		num_down = make;
 		break;
   	case SLOCK:		/* Scroll lock */
-  		if(escape) return -1;
 		if (scroll_down < make) {
 			locks[ccurrent] ^= SCROLL_LOCK;
 			set_leds();
@@ -764,13 +771,9 @@ int scode;			/* scan code of key just struck or released */
 		esc = 1;		/* Next key is escaped */
 		return(-1);
   	default:		/* A normal key */
-  		if(escape) {
-  			printf("tty: ignoring escaped 0x%x\n", scode);
-  			return -1;
-  		}
   		if(!ch) {
-  			printf("tty: ignoring unrecognized scancode 0x%x\n",
-  				scode);
+  			printf("tty: ignoring unrecognized %s scancode 0x%x\n",
+  				esc ? "escaped" : "straight", scode);
   			return -1;
   		}
 		if(make) return(ch);

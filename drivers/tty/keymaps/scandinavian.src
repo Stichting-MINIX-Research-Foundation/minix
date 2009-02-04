@@ -3,8 +3,6 @@
  * preliminary version, 8 Sept 1996  
  */
 
-u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
-
 /* scan-code		unsh	Shift	Alt	AltGr	Alt+Sh	Ctrl	*/
 /* ==================================================================== */
 /* 00 - none	*/	0,	0,	0,	0,	0,	0,	
@@ -135,4 +133,3 @@ u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 /*125 - ???	*/	0,	0,	0,	0,	0,	0,
 /*126 - ???	*/	0,	0,	0,	0,	0,	0,
 /*127 - ???	*/	0,	0,	0,	0,	0,	0
-};

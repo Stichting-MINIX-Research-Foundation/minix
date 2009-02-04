@@ -2,8 +2,6 @@
 /* Modified by Ernesto Del Prete in October 1997 */
 /* ernesto@cclix1.polito.it or s84508@cclix1.polito.it */
 
-u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
-
 /* scan-code		!Shift	Shift	Alt	AltGr	Alt+Sh	Ctrl	*/
 /* ==================================================================== */
 /* 00 - none	*/	0,	0,	0,	0,	0,	0,	
@@ -134,4 +132,3 @@ u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 /*125 - ???	*/	0,	0,	0,	0,	0,	0,
 /*126 - ???	*/	0,	0,	0,	0,	0,	0,
 /*127 - ???	*/	0,	0,	0,	0,	0,	0
-};

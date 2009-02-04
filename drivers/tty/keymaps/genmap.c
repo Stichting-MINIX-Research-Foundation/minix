@@ -8,7 +8,9 @@
 #include <string.h>
 #include <errno.h>
 
+u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 #include KEYSRC
+};
 
 u8_t comprmap[4 + NR_SCAN_CODES * MAP_COLS * 9/8 * 2 + 1];
 

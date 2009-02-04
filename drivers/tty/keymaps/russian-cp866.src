@@ -3,8 +3,6 @@
  * Modified by Roman V. Ignatov <ignatov@minix3.ru>
  * Charset: cp866
  */
- 
-u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 
 /* scan-code		!Shift	Shift	Alt1	Alt2	Alt+Sh	Ctrl	*/
 /* ==================================================================== */
@@ -136,4 +134,3 @@ u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 /*125 - ???	*/	0,	0,	0,	0,	0,	0,
 /*126 - ???	*/	0,	0,	0,	0,	0,	0,
 /*127 - ???	*/	0,	0,	0,	0,	0,	0
-};

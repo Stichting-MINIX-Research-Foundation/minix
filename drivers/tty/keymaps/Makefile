@@ -24,6 +24,7 @@ all:	\
 	spanish.map \
 	uk.map \
 	us-std.map \
+	us-std-esc.map \
 	us-swap.map \
 
 install:	\
@@ -42,6 +43,7 @@ install:	\
 	$(LK)/spanish.map \
 	$(LK)/uk.map \
 	$(LK)/us-std.map \
+	$(LK)/us-std-esc.map \
 	$(LK)/us-swap.map \
 
 clean:
@@ -90,6 +92,9 @@ $(LK)/uk.map:	uk.map
 	install -c $? $@
 
 $(LK)/us-std.map:	us-std.map
+	install -c $? $@
+
+$(LK)/us-std-esc.map:	us-std-esc.map
 	install -c $? $@
 
 $(LK)/us-swap.map:	us-swap.map
