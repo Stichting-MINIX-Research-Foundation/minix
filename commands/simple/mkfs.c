@@ -266,20 +266,12 @@ char *argv[];
 		if (blocks == 0) pexit("Can't open prototype file");
 	}
 	if (i == 0) {
-		int kb;
-		kb = blocks * (max(block_size,1024) / 1024);
-		/* The default for inodes is 2 blocks per kb, rounded up
-		 * to fill an inode block.  Above 20M, the average files are
-		 * sure to be larger because it is hard to fill up 20M with
-		 * tiny files, so reduce the default number of inodes.  This
-		 * default can always be overridden by using the '-i option.
-		 */
-		i = kb / 2;
-		if (kb >= 20000) i = kb / 3;
-		if (kb >= 40000) i = kb / 4;
-		if (kb >= 60000) i = kb / 5;
-		if (kb >= 80000) i = kb / 6;
-		if (kb >= 100000) i = kb / 7;
+		i = blocks / 2;
+		if (blocks >= 20000) i = blocks / 3;
+		if (blocks >= 40000) i = blocks / 4;
+		if (blocks >= 60000) i = blocks / 5;
+		if (blocks >= 80000) i = blocks / 6;
+		if (blocks >= 100000) i = blocks / 7;
 
 		/* round up to fill inode block */
 		i += inodes_per_block - 1;
@@ -392,6 +384,8 @@ char *device;
   struct partition entry;
   block_t d;
   struct stat st;
+  unsigned int rem;
+  u64_t resize;
 
   if ((fd = open(device, O_RDONLY)) == -1) {
 	if (errno != ENOENT)
@@ -410,6 +404,14 @@ char *device;
   }
   close(fd);
   d = div64u(entry.size, block_size);
+  rem = rem64u(entry.size, block_size);
+
+  resize = add64u(mul64u(d, block_size), rem);
+  if(cmp64(resize, entry.size) != 0) {
+	d = ULONG_MAX;
+	fprintf(stderr, "mkfs: truncating FS at %lu blocks\n", d);
+  }
+
   return d;
 }
 
