@@ -9,6 +9,8 @@
  *    m1_i2:	I_VAL_LEN2_E	(second length or process nr)	
  */
 
+#include <string.h>
+
 #include "../system.h"
 #include "../vm.h"
 
