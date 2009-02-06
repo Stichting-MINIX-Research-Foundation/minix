@@ -121,7 +121,7 @@ irq_hook_t *hook;
 
 #endif /* SPROFILE */
 
-
+#if CPROFILE
 /* 
  * The following variables and functions are used by the procentry/
  * procentry syslib functions when linked with kernelspace processes.
@@ -171,3 +171,4 @@ void *tbl_ptr;
   cprof_procs_no++;
 }
 
+#endif
