@@ -19,7 +19,7 @@ OBJ = 	init.o
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $(OBJ) -lsys
-	install -S 8k $@
+	install -S 64k $@
 
 # install with other servers
 install:	/usr/sbin/$(SERVER)
