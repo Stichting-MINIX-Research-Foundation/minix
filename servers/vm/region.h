@@ -29,6 +29,7 @@ struct vir_region {
 /* Mapping flags: */
 #define VR_WRITABLE	0x01	/* Process may write here. */
 #define VR_NOPF		0x02	/* May not generate page faults. */
+#define VR_PHYS64K	0x04	/* Physical memory must be 64k aligned. */
 
 /* Mapping type: */
 #define VR_ANON		0x10	/* Memory to be cleared and allocated */

@@ -432,7 +432,10 @@ struct phys_region *physhint;
 	/* Memory for new physical block. */
 	clicks = CLICKSPERPAGE * length / VM_PAGE_SIZE;
 	if(what_mem == MAP_NONE) {
-		if((mem_clicks = ALLOC_MEM(clicks, PAF_CLEAR)) == NO_MEM) {
+		u32_t af = PAF_CLEAR;
+		if(region->flags & VR_PHYS64K)
+			af |= PAF_ALIGN64K;
+		if((mem_clicks = ALLOC_MEM(clicks, af)) == NO_MEM) {
 			SLABFREE(newpb);
 			SLABFREE(newphysr);
 			return ENOMEM;
@@ -499,6 +502,7 @@ struct phys_region *ph;
 	int r;
 	phys_bytes newmem, newmem_cl, clicks;
 	struct phys_block *newpb;
+	u32_t af = 0;
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
@@ -514,7 +518,9 @@ struct phys_region *ph;
 
 	clicks = CLICKSPERPAGE * ph->ph->length / VM_PAGE_SIZE;
 	vm_assert(CLICK2ABS(clicks) == ph->ph->length);
-	if((newmem_cl = ALLOC_MEM(clicks, 0)) == NO_MEM) {
+	if(region->flags & VR_PHYS64K)
+		af |= PAF_ALIGN64K;
+	if((newmem_cl = ALLOC_MEM(clicks, af)) == NO_MEM) {
 		SLABFREE(newpb);
 		return ENOMEM;
 	}

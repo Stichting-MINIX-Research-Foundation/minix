@@ -4,6 +4,7 @@
 /* Memory flags to pt_allocmap() and alloc_mem(). */
 #define PAF_CLEAR	0x01	/* Clear physical memory. */
 #define PAF_CONTIG	0x02	/* Physically contiguous. */
+#define PAF_ALIGN64K	0x04	/* Aligned to 64k boundary. */
 
 /* special value for v in pt_allocmap */
 #define AM_AUTO         ((u32_t) -1)

@@ -206,17 +206,19 @@ PUBLIC phys_clicks alloc_mem_f(phys_clicks clicks, u32_t memflags)
  * needed for FORK or EXEC.
  */
   register struct hole *hp, *prev_ptr;
-  phys_clicks old_base;
+  phys_clicks old_base, mem = NO_MEM, align_clicks = 0;
   int s;
+
+  if(memflags & PAF_ALIGN64K) {
+  	align_clicks = (64 * 1024) / CLICK_SIZE;
+	clicks += align_clicks;
+  }
 
   if(vm_paged) {
 	vm_assert(CLICK_SIZE == VM_PAGE_SIZE);
-	return alloc_pages(clicks, memflags);
-  }
-
+	mem = alloc_pages(clicks, memflags);
+  } else {
 CHECKHOLES;
-
-  {
         prev_ptr = NIL_HOLE;
 	hp = hole_head;
 	while (hp != NIL_HOLE) {
@@ -239,15 +241,33 @@ CHECKHOLES;
 
 			/* Return the start address of the acquired block. */
 CHECKHOLES;
-			return(old_base);
+			mem = old_base;
+			break;
 		}
 
 		prev_ptr = hp;
 		hp = hp->h_next;
 	}
   }
+
+  if(mem == NO_MEM)
+  	return mem;
+
 CHECKHOLES;
-  return(NO_MEM);
+
+  if(align_clicks) {
+  	phys_clicks o;
+  	o = mem % align_clicks;
+  	if(o > 0) {
+  		phys_clicks e;
+  		e = align_clicks - o;
+	  	FREE_MEM(mem, e);
+	  	mem += e;
+	}
+  }
+CHECKHOLES;
+
+  return mem;
 }
 
 /*===========================================================================*

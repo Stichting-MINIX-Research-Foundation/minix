@@ -57,6 +57,7 @@ PUBLIC int do_mmap(message *m)
 	if(m->VMM_FD == -1 || (m->VMM_FLAGS & MAP_ANON)) {
 		int s;
 		vir_bytes v;
+		u32_t vrflags = VR_ANON | VR_WRITABLE;
 		size_t len = (vir_bytes) m->VMM_LEN;
 
 		if(m->VMM_FD != -1) {
@@ -65,13 +66,14 @@ PUBLIC int do_mmap(message *m)
 
 		if(m->VMM_FLAGS & MAP_CONTIG) mfflags |= MF_CONTIG;
 		if(m->VMM_FLAGS & MAP_PREALLOC) mfflags |= MF_PREALLOC;
+		if(m->VMM_FLAGS & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
 
 		if(len % VM_PAGE_SIZE)
 			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
 		if(!(vr = map_page_region(vmp,
 			arch_vir2map(vmp, vmp->vm_stacktop), VM_DATATOP, len, MAP_NONE,
-			VR_ANON | VR_WRITABLE, mfflags))) {
+			vrflags, mfflags))) {
 			return ENOMEM;
 		}
 	} else {

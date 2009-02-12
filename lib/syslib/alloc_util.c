@@ -29,6 +29,8 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 
 	if(flags & AC_LOWER16M)
 		mmapflags |= MAP_LOWER16M;
+	if(flags & AC_ALIGN64K)
+		mmapflags |= MAP_ALIGN64K;
 
 	/* First try to get memory with mmap. This is gauranteed
 	 * to be page-aligned, and we can tell VM it has to be
@@ -44,20 +46,22 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 	 * so we can page align it ourselves.
 	 */
 	if(buf == (vir_bytes) MAP_FAILED) {
+		u32_t align = 0;
 		if(errno != (_SIGN ENXIO)) {
 			return NULL;
 		}
-#define ALIGN 4096
-		if(flags & AC_ALIGN4K) {
-			if(len + ALIGN < len)
-				return NULL;
-			len += ALIGN;
-		}
+		if(flags & AC_ALIGN4K)
+			align = 4*1024;
+		if(flags & AC_ALIGN64K)
+			align = 64*1024;
+		if(len + align < len)
+			return NULL;
+		len += align;
 		if(!(buf = (vir_bytes) malloc(len))) {
 			return NULL;
 		}
-		if(flags & AC_ALIGN4K)
-			buf += ALIGN - (buf % ALIGN);
+		if(align)
+			buf += align - (buf % align);
 	}
 
 	/* Get physical address. */

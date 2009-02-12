@@ -84,6 +84,7 @@ _PROTOTYPE( int sys_sdevio, (int req, long port, endpoint_t proc_nr,
 _PROTOTYPE(void *alloc_contig, (size_t len, int flags, phys_bytes *phys));
 #define AC_ALIGN4K	0x01
 #define AC_LOWER16M	0x02
+#define AC_ALIGN64K	0x04
 
 /* Clock functionality: get system times or (un)schedule an alarm call. */
 _PROTOTYPE( int sys_times, (endpoint_t proc_nr, clock_t *user_time,
