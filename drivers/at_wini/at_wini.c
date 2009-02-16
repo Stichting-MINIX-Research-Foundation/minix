@@ -336,6 +336,7 @@ PRIVATE struct
 } raid_table[]=
 {
 	{ 0x1106,	0x3149	},	/* VIA VT6420 */
+	{ 0x1095,	0x3512	},
 	{ 0,		0	}	/* end of list */
 };
 
