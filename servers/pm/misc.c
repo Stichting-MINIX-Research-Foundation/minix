@@ -93,6 +93,7 @@ PUBLIC int do_freemem()
   {
 	printf("PM: unauthorized call of do_freemem by proc %d\n",
 		mp->mp_endpoint);
+	sys_sysctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
@@ -120,6 +121,7 @@ PUBLIC int do_procstat()
   {
 	printf("PM: unauthorized call of do_procstat by proc %d\n",
 		mp->mp_endpoint);
+	sys_sysctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
@@ -217,6 +219,7 @@ PUBLIC int do_getsysinfo()
   {
 	printf("PM: unauthorized call of do_getsysinfo by proc %d '%s'\n",
 		mp->mp_endpoint, mp->mp_name);
+	sys_sysctl_stacktrace(mp->mp_endpoint);
 	sig_proc(mp, SIGEMT);
 	return EPERM;
   }
@@ -313,6 +316,7 @@ PUBLIC int do_getprocnr()
   {
 	printf("PM: unauthorized call of do_procstat by proc %d\n",
 		mp->mp_endpoint);
+	sys_sysctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
@@ -373,6 +377,7 @@ PUBLIC int do_getpuid()
   {
 	printf("PM: unauthorized call of do_getpuid by proc %d\n",
 		mp->mp_endpoint);
+	sys_sysctl_stacktrace(mp->mp_endpoint);
 	return EPERM;
   }
 
