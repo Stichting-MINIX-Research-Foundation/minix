@@ -427,6 +427,7 @@ ino_t inodes;
   unsigned int i;
   int inodeblks;
   int initblks;
+  u32_t nb;
 
   zone_t initzones, nrzones, v1sq, v2sq;
   zone_t zo;
@@ -445,14 +446,28 @@ ino_t inodes;
 	sup->s_nzones = 0;	/* not used in V2 - 0 forces errors early */
 	sup->s_zones = zones;
   }
-  sup->s_imap_blocks = bitmapsize((bit_t) (1 + inodes), block_size);
-  sup->s_zmap_blocks = bitmapsize((bit_t) zones, block_size);
+  
+#define BIGGERBLOCKS "Please try a larger block size for an FS of this size.\n"
+  sup->s_imap_blocks = nb = bitmapsize((bit_t) (1 + inodes), block_size);
+  if(sup->s_imap_blocks != nb) {
+	fprintf(stderr, "mkfs: too many inode bitmap blocks.\n" BIGGERBLOCKS);
+	exit(1);
+  }
+  sup->s_zmap_blocks = nb = bitmapsize((bit_t) zones, block_size);
+  if(nb != sup->s_zmap_blocks) {
+	fprintf(stderr, "mkfs: too many block bitmap blocks.\n" BIGGERBLOCKS);
+	exit(1);
+  }
   inode_offset = sup->s_imap_blocks + sup->s_zmap_blocks + 2;
   inodeblks = (inodes + inodes_per_block - 1) / inodes_per_block;
   initblks = inode_offset + inodeblks;
   initzones = (initblks + (1 << zone_shift) - 1) >> zone_shift;
   nrzones = nrblocks >> zone_shift;
-  sup->s_firstdatazone = (initblks + (1 << zone_shift) - 1) >> zone_shift;
+  sup->s_firstdatazone = nb = (initblks + (1 << zone_shift) - 1) >> zone_shift;
+  if(nb != sup->s_firstdatazone) {
+	fprintf(stderr, "mkfs: too much bitmap and inode data.\n" BIGGERBLOCKS);
+	exit(1);
+  }
   zoff = sup->s_firstdatazone - 1;
   sup->s_log_zone_size = zone_shift;
   if (fs_version == 1) {
