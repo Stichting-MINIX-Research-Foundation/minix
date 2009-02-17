@@ -102,7 +102,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   struct dmap *dp;
   dev_t dev;
   message m;
-  struct vnode *vp, *root_node, *mounted_on, *bspec;
+  struct vnode *root_node, *mounted_on, *bspec;
   struct vmnt *vmp;
   char *label;
   struct node_details res;
@@ -194,9 +194,9 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &mounted_on);
 	if (r != OK) return r;
 
-	if (vp->v_ref_count != 1)
+	if (mounted_on->v_ref_count != 1)
 	{
-		put_vnode(vp);
+		put_vnode(mounted_on);
 		printf("vfs:mount_fs: mount point is busy\n");
 		return EBUSY;
 	}
