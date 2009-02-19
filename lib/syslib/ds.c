@@ -131,8 +131,10 @@ u32_t *value;
 
 	cpf_revoke(g_key);
 
-	/* Assign u32 value. */
-	*value = m.DS_VAL;
+	if(r == OK) {
+		/* Assign u32 value. */
+		*value = m.DS_VAL;
+	}
 
 	return r;
 }
