@@ -551,7 +551,10 @@ PRIVATE dev_t name_to_dev()
   struct vnode *vp;
   
   /* Request lookup */
-  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) return r;
+  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) {
+	printf("vfs: name_to_dev: lookup of '%s' failed\n", user_realpath);
+	return NO_DEV;
+  }
 
   if ((vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) {
   	err_code = ENOTBLK;
