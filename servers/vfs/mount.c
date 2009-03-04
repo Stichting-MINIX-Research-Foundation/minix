@@ -552,7 +552,7 @@ PRIVATE dev_t name_to_dev()
   
   /* Request lookup */
   if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) {
-	printf("vfs: name_to_dev: lookup of '%s' failed\n", user_realpath);
+	printf("vfs: name_to_dev: lookup of '%s' failed\n", user_fullpath);
 	return NO_DEV;
   }
 
