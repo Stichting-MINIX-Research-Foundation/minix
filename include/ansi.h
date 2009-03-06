@@ -54,6 +54,11 @@
 
 #endif /* _ANSI */
 
+#if defined(__GNUC__) && !defined(__STRICT_ANSI__) || __STDC_VERSION__ >= 199901
+#define __LONG_LONG_SUPPORTED 1
+#define __L64 1
+#endif
+
 /* This should be defined as restrict when a C99 compiler is used. */
 #define _RESTRICT
 

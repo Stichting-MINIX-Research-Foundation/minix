@@ -69,7 +69,12 @@ typedef char            i8_t;      /* 8 bit signed type */
 typedef short          i16_t;      /* 16 bit signed type */
 typedef long           i32_t;      /* 32 bit signed type */
 
+#ifdef __LONG_LONG_SUPPORTED
+typedef unsigned long long     u64_t; /* 64 bit type */
+typedef long long              i64_t; /* 64 bit signed type */
+#else
 typedef struct { u32_t _[2]; } u64_t;
+#endif
 
 /* The following types are needed because MINIX uses K&R style function
  * definitions (for maximum portability).  When a short, such as dev_t, is
