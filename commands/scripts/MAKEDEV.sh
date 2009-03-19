@@ -77,7 +77,10 @@ do
 	$e mknod boot b 1 4;	$e chmod 600 ram
 	$e mknod zero c 1 5;	$e chmod 644 zero
 	$e mknod imgrd b 1 6;	$e chmod 644 zero
-	$e chgrp kmem ram mem kmem null boot zero imgrd
+	for n in 0 1 2 3 4 5
+	do	$e mknod ram$n b 1 $((7+$n));	$e chmod 600 ram$n
+	done
+	$e chgrp kmem ram* mem kmem null boot zero imgrd
 	;;
     fd[0-3])
 	# Floppy disk drive n.

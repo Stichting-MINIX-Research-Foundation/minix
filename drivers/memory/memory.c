@@ -32,7 +32,12 @@
 
 #include "local.h"
 
-#define NR_DEVS            7		/* number of minor devices */
+/* ramdisks (/dev/ram*) */
+#define RAMDISKS     6
+
+#define RAM_DEV_LAST (RAM_DEV_FIRST+RAMDISKS-1)
+
+#define NR_DEVS            (7+RAMDISKS)	/* number of minor devices */
 
 PRIVATE struct device m_geom[NR_DEVS];  /* base and size of each device */
 PRIVATE vir_bytes m_vaddrs[NR_DEVS];
@@ -164,10 +169,15 @@ int safe;			/* safe copies */
 	    if (opcode == DEV_GATHER_S) return(OK);	/* always at EOF */
 	    break;
 
-	/* Virtual copying. For RAM disk, kernel memory and internal FS. */
+	/* Virtual copying. For RAM disks, kernel memory and internal FS. */
+	default:
 	case KMEM_DEV:
-	case RAM_DEV:
+	case RAM_DEV_OLD:
 	case IMGRD_DEV:
+	    /* Bogus number. */
+	    if(m_device < 0 || m_device >= NR_DEVS) {
+		    return(EINVAL);
+	    }
   	    if(!dev_vaddr || dev_vaddr == (vir_bytes) MAP_FAILED) {
 		printf("MEM: dev %d not initialized\n", m_device);
 		return EIO;
@@ -265,9 +275,6 @@ int safe;			/* safe copies */
 	    }
 	    break;
 
-	/* Unknown (illegal) minor device. */
-	default:
-	    return(EINVAL);
 	}
 
 	/* Book the number of bytes transferred. */
@@ -364,34 +371,47 @@ int safe;
   switch (m_ptr->REQUEST) {
     case MIOCRAMSIZE: {
 	/* Someone wants to create a new RAM disk with the given size. */
-	static int first_time= 1;
-
 	u32_t ramdev_size;
-	int s;
+	int s, dev;
+	void *mem;
 
 	/* A ramdisk can be created only once, and only on RAM disk device. */
-	if (!first_time) return(EPERM);
-	if (m_ptr->DEVICE != RAM_DEV) return(EINVAL);
-        if ((dv = m_prepare(m_ptr->DEVICE)) == NIL_DEV) return(ENXIO);
+	dev = m_ptr->DEVICE;
+	if(dev < 0 || dev >= NR_DEVS) {
+		printf("MEM: MIOCRAMSIZE: %d not a valid device\n", dev);
+	}
+	if((dev < RAM_DEV_FIRST || dev > RAM_DEV_LAST) && dev != RAM_DEV_OLD) {
+		printf("MEM: MIOCRAMSIZE: %d not a ramdisk\n", dev);
+	}
+        if ((dv = m_prepare(dev)) == NIL_DEV) return(ENXIO);
 
 	/* Get request structure */
 	   s= sys_safecopyfrom(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->IO_GRANT,
 		0, (vir_bytes)&ramdev_size, sizeof(ramdev_size), D);
 	if (s != OK)
 		return s;
+	if(m_vaddrs[dev] && !cmp64(dv->dv_size, cvul64(ramdev_size))) {
+		return(OK);
+	}
+	if(m_vaddrs[dev]) {
+		printf("MEM: MIOCRAMSIZE: %d already has a ramdisk\n", dev);
+		return(EPERM);
+	}
 
 #if DEBUG
-	printf("allocating ramdisk of size 0x%x\n", ramdev_size);
+	printf("MEM:%d: allocating ramdisk of size 0x%x\n", dev, ramdev_size);
 #endif
 
 	/* Try to allocate a piece of memory for the RAM disk. */
-	if((m_vaddrs[RAM_DEV] = (vir_bytes) mmap(0, ramdev_size, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0)) == (vir_bytes) MAP_FAILED) {
+	if((mem = mmap(0, ramdev_size, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0)) == MAP_FAILED) {
 	    printf("MEM: failed to get memory for ramdisk\n");
             return(ENOMEM);
         } 
 
+	m_vaddrs[dev] = (vir_bytes) mem;
+
 	dv->dv_size = cvul64(ramdev_size);
-	first_time= 0;
+
 	break;
     }
 

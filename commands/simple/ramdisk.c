@@ -11,17 +11,22 @@ main(int argc, char *argv[])
 {
 	int fd;
 	signed long size;
-	if((fd=open(_PATH_RAMDISK, O_RDONLY)) < 0) {
-		perror(_PATH_RAMDISK);
+	char *d;
+
+	if(argc < 2 || argc > 3) {
+		fprintf(stderr, "usage: %s <size in kB> [device]\n",
+			argv[0]);
 		return 1;
 	}
 
-	if(argc != 2) {
-		fprintf(stderr, "usage: %s <size in bytes>\n", argv[0]);
+	d = argc == 2 ? _PATH_RAMDISK : argv[2];
+	if((fd=open(d, O_RDONLY)) < 0) {
+		perror(d);
 		return 1;
 	}
 
-	size = atol(argv[1]);
+#define KFACTOR 1024
+	size = atol(argv[1])*KFACTOR;
 
 	if(size <= 0) {
 		fprintf(stderr, "size should be positive.\n");
@@ -32,6 +37,8 @@ main(int argc, char *argv[])
 		perror("MIOCRAMSIZE");
 		return 1;
 	}
+
+	fprintf(stderr, "size on %s set to %dkB\n", d, size/KFACTOR);
 
 	return 0;
 }

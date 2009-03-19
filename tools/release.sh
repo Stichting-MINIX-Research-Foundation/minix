@@ -5,6 +5,9 @@ set -e
 XBIN=usr/xbin
 SRC=src
 
+# size of /tmp during build
+TMPKB=32000
+
 PACKAGEDIR=/usr/bigports/Packages
 PACKAGESOURCEDIR=/usr/bigports/Sources
 secs=`expr 32 '*' 64`
@@ -12,7 +15,7 @@ export SHELL=/bin/sh
 
 make_hdimage()
 {
-	dd if=$TMPDISK of=usrimage bs=$BS count=$USRBLOCKS
+	dd if=$TMPDISK1 of=usrimage bs=$BS count=$USRBLOCKS
 
 	rootsize=`stat -size rootimage`
 	usrsize=`stat -size usrimage`
@@ -133,87 +136,36 @@ do
 done
 
 USRMB=550
-
-USRBLOCKS="`expr $USRMB \* 1024 \* 1024 / $BS`"
-USRSECTS="`expr $USRMB \* 1024 \* 2`"
+USRKB=$(($USRMB*1024))
+USRBLOCKS=$(($USRMB * 1024 * 1024 / $BS))
+USRSECTS=$(($USRMB * 1024 * 2))
 ROOTKB=4096
-ROOTSECTS="`expr $ROOTKB \* 2`"
-ROOTBLOCKS="`expr $ROOTKB \* 1024 / $BS`"
+ROOTSECTS=$(($ROOTKB * 2))
+ROOTBLOCKS=$(($ROOTKB * 1024 / $BS))
 
 if [ "$COPY" -ne 1 ]
 then
 	echo "Note: this script wants to do svn operations."
 fi
 
-TD1=.td1
-TD2=.td2
-TD3=.td3
+TMPDISK1=/dev/ram0
+TMPDISK2=/dev/ram1
+TMPDISK3=/dev/ram2
 
-
-if [ -f $TD1 ]
-then    TMPDISK="`cat $TD1`"
-	echo " * Warning: I'm going to overwrite $TMPDISK!"
-else
-        echo "Temporary (sub)partition to use to make the /usr FS image? "
-        echo "I need $USRMB MB. It will be mkfsed!"
-        echo -n "Device: /dev/"
-        read dev || exit 1
-        TMPDISK=/dev/$dev
-fi
-
-if [ -b $TMPDISK ]
-then :
-else	echo "$TMPDISK is not a block device.."
+if [ ! -b $TMPDISK1 -o ! -b $TMPDISK2 -o ! $TMPDISK3 ]
+then	echo "$TMPDISK1, $TMPDISK2 or $TMPDISK3 is not a block device.."
 	exit 1
 fi
 
-echo $TMPDISK >$TD1
+ramdisk $USRKB $TMPDISK1
+ramdisk $TMPKB $TMPDISK2
+ramdisk $ROOTKB $TMPDISK3
 
-if [ -f $TD2 ]
-then    TMPDISK2="`cat $TD2`"
-	echo " * Warning: I'm going to overwrite $TMPDISK2!"
-else
-        echo "Temporary (sub)partition to use for /tmp? "
-        echo "It will be mkfsed!"
-        echo -n "Device: /dev/"
-        read dev || exit 1
-        TMPDISK2=/dev/$dev
-fi
-
-if [ -b $TMPDISK2 ]
-then :
-else	echo "$TMPDISK2 is not a block device.."
-	exit 1
-fi
-
-echo $TMPDISK2 >$TD2
-
-if [ -f $TD3 ]
-then    TMPDISK3="`cat $TD3`"
-	echo " * Warning: I'm going to overwrite $TMPDISK3!"
-else
-        echo "It has to be at least $ROOTKB KB."
-        echo ""
-        echo "Temporary (sub)partition to use to make the root FS image? "
-        echo "It will be mkfsed!"
-        echo -n "Device: /dev/"
-        read dev || exit 1
-        TMPDISK3=/dev/$dev
-fi
-
-if [ -b $TMPDISK3 ]
-then :
-else	echo "$TMPDISK3 is not a block device.."
-	exit 1
-fi
-
-echo $TMPDISK3 >$TD3
-
-umount $TMPDISK || true
+umount $TMPDISK1 || true
 umount $TMPDISK2 || true
 umount $TMPDISK3 || true
 
-if [ $TMPDISK = $TMPDISK2  -o $TMPDISK = $TMPDISK3 -o $TMPDISK2 = $TMPDISK3 ]
+if [ $TMPDISK1 = $TMPDISK2  -o $TMPDISK1 = $TMPDISK3 -o $TMPDISK2 = $TMPDISK3 ]
 then
 	echo "Temporary devices can't be equal."
 	exit
@@ -223,17 +175,17 @@ echo " * Cleanup old files"
 rm -rf $RELEASEDIR $IMG $IMAGE $ROOTIMAGE $CDFILES image*
 mkdir -p $CDFILES || exit
 mkdir -p $RELEASEDIR
-mkfs -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
-mkfs $TMPDISK2 || exit
+mkfs -i 2000 -B $BS -b $ROOTBLOCKS $TMPDISK3 || exit
+mkfs -B 1024 -b $TMPKB  $TMPDISK2 || exit
 echo " * mounting $TMPDISK3 as $RELEASEDIR"
 mount $TMPDISK3 $RELEASEDIR || exit
 mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
-mkfs -B $BS -b $USRBLOCKS $TMPDISK || exit
-echo " * Mounting $TMPDISK as $RELEASEDIR/usr"
-mount $TMPDISK $RELEASEDIR/usr || exit
+mkfs -B $BS -b $USRBLOCKS $TMPDISK1 || exit
+echo " * Mounting $TMPDISK1 as $RELEASEDIR/usr"
+mount $TMPDISK1 $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
 mkdir -p $RELEASEDIR/usr/tmp
 mkdir -p $RELEASEDIR/$XBIN
@@ -347,18 +299,18 @@ fi
 echo $version_pretty, SVN revision $SVNREV, generated `date` >$RELEASEDIR/etc/version
 echo " * Counting files"
 extrakb=`du -s $RELEASEDIR/usr/install | awk '{ print $1 }'`
-expr `df $TMPDISK | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEDIR/.usrkb
+expr `df $TMPDISK1 | tail -1 | awk '{ print $4 }'` - $extrakb >$RELEASEDIR/.usrkb
 find $RELEASEDIR/usr | fgrep -v /install/ | wc -l >$RELEASEDIR/.usrfiles
 find $RELEASEDIR -xdev | wc -l >$RELEASEDIR/.rootfiles
 echo " * Zeroing remainder of temporary areas"
-df $TMPDISK
+df $TMPDISK1
 df $TMPDISK3
 cp /dev/zero $RELEASEDIR/usr/.x 2>/dev/null || true
 rm $RELEASEDIR/usr/.x
 cp /dev/zero $RELEASEDIR/.x 2>/dev/null || true
 rm $RELEASEDIR/.x
 
-umount $TMPDISK || exit
+umount $TMPDISK1 || exit
 umount $TMPDISK2 || exit
 umount $TMPDISK3 || exit
 
@@ -393,7 +345,7 @@ else
 		# number of sectors
 		isosects=`expr $isosects + $isopad`
 		( cat $IMG $ROOTIMAGE ;
-			dd if=$TMPDISK bs=$BS count=$USRBLOCKS ) >m
+			dd if=$TMPDISK1 bs=$BS count=$USRBLOCKS ) >m
 		mv m $IMG
 		# Make CD partition table
 		installboot -m $IMG /usr/mdec/masterboot
