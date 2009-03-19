@@ -135,7 +135,12 @@ do
 	esac
 done
 
-USRMB=550
+if [ ! "$USRMB" ]
+then	USRMB=550
+fi
+
+echo $USRMB MB
+
 USRKB=$(($USRMB*1024))
 USRBLOCKS=$(($USRMB * 1024 * 1024 / $BS))
 USRSECTS=$(($USRMB * 1024 * 2))
