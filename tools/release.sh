@@ -188,7 +188,7 @@ mkdir -m 755 $RELEASEDIR/usr
 mkdir -m 1777 $RELEASEDIR/tmp
 mount $TMPDISK2 $RELEASEDIR/tmp
 
-mkfs -B $BS -b $USRBLOCKS $TMPDISK1 || exit
+mkfs -B $BS -i 30000 -b $USRBLOCKS $TMPDISK1 || exit
 echo " * Mounting $TMPDISK1 as $RELEASEDIR/usr"
 mount $TMPDISK1 $RELEASEDIR/usr || exit
 mkdir -p $RELEASEDIR/tmp
