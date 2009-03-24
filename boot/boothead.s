@@ -640,7 +640,7 @@ _getch:
 	test	ax, ax
 	jnz	gotch
 getch:
-	hlt			! Play dead until interrupted (see pause())
+!	hlt			! Play dead until interrupted (see pause())
 	movb	ah, #0x01	! Keyboard status
 	int	0x16
 	jz	0f		! Nothing typed
@@ -741,7 +741,7 @@ nulch:	ret
 !	power, or tells an x86 emulator that nothing is happening right now.
 .define _pause
 _pause:
-	hlt
+!	hlt
 	ret
 
 ! void set_mode(unsigned mode);
