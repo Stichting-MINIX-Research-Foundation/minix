@@ -856,14 +856,7 @@ PRIVATE int kbc_read()
 			if(sys_inb(KEYBD, &byte) != OK)
 				printf("kbc_read: 2 sys_inb failed\n");
 			if (st & KB_AUX_BYTE)
-			{
-#if DEBUG
-				printf(
-		"keyboard`kbc_read: ignoring byte (0x%x) from aux device.\n",
-					byte);
-#endif
-				continue;
-			}
+				printf("kbc_read: aux byte 0x%x\n", byte);
 #if DEBUG
 			printf("keyboard`kbc_read: returning byte 0x%x\n",
 				byte);
