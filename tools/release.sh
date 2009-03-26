@@ -218,16 +218,6 @@ then	echo " * Indexing packages"
 		fi
 	  done | tee List
 	)
-	for d in $PACKAGEDIR $PACKAGESOURCEDIR
-	do	echo Counting size of $d
-		f=$d/SizeMB
-		if [ ! -f $f ]
-		then
-			b="`bzip2 -dc $d/*.bz2 | wc -c`"
-			echo "`expr 1 + $b / 1024 / 1024`" >$f
-		fi
-		echo "`cat $f` MB."
-	done
 	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
 	cp $PACKAGEDIR/* $RELEASEPACKAGE/
 	echo " * Transfering $PACKAGESOURCEDIR to $RELEASEPACKAGESOURCES"
