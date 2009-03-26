@@ -83,7 +83,6 @@ PUBLIC int fs_readsuper_s()
 
   /* Is it recognized as a Minix filesystem? */
   if (r != OK) {
-	printf("MFS: bad superblock\n");
 	superblock.s_dev = NO_DEV;
   	dev_close(driver_e, fs_dev);
 	return(r);

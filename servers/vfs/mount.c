@@ -290,7 +290,6 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   r = req_readsuper(fs_e, label, dev, m_in.rd_only, isroot, &res);
   if (r != OK) {
 	put_vnode(mounted_on);
-	printf("vfs:mount_fs: req_readsuper failed with %d\n", r);
 	return r;
   }
 
