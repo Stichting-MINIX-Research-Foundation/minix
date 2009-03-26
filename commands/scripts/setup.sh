@@ -141,9 +141,7 @@ echo "MINIX 3 currently supports the following Ethernet cards. Please choose: "
     echo "1. Intel Pro/100"
     echo "2. 3Com 501 or 3Com 509 based card"
     echo "3. Realtek 8139 based card (also emulated by KVM)"
-    echo "   Note: If you want to use this in KVM, set 'qemu_pci=1' in the boot monitor."
     echo "4. Realtek 8029 based card (also emulated by Qemu)"
-    echo "   Note: If you want to use this in Qemu, set 'qemu_pci=1' in the boot monitor."
     echo "5. NE2000, 3com 503 or WD based card (also emulated by Bochs)"
     echo "6. AMD LANCE (also emulated by VMWare and VirtualBox)"
     echo "7. Different Ethernet card (no networking)"
@@ -564,7 +562,7 @@ mount /dev/$usr /mnt >/dev/null || exit
 # Make bootable.
 installboot -d /dev/$root /usr/mdec/bootblock /boot/boot >/dev/null || exit
 
-edparams /dev/$root "rootdev=$root; ramimagedev=$root; minix(1,Start MINIX 3) { image=/boot/image_big; boot; }; smallminix(2,Start Small MINIX 3 (uses less memory)) { image=/boot/image_small; boot; }; newminix(3,Start Custom MINIX 3) { unset image; boot }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
+edparams /dev/$root "rootdev=$root; ramimagedev=$root; minix(1,Start MINIX 3) { image=/boot/image_big; boot; }; newminix(2,Start Custom MINIX 3) { unset image; boot }; main() { echo By default, MINIX 3 will automatically load in 3 seconds.; echo Press ESC to enter the monitor for special configuration.; trap 3000 boot; menu; }; save" || exit
 pfile="/mnt/src/tools/fdbootparams"
 echo "rootdev=$root; ramimagedev=$root; save" >$pfile
 # Save name of CD drive
