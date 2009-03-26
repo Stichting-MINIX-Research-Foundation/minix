@@ -635,15 +635,6 @@ ether_card_t *ec;
       return;
     }
 
-  /* Allocate a memory segment, programmed I/O should set the
-   * memory segment (linmem) to zero.
-   */
-  if (ec->ec_linmem != 0)
-    {
-    	assert( 0 );
-      	/*phys2seg(&ec->ec_memseg, &ec->ec_memoff, ec->ec_linmem);*/
-    }
-
 /* XXX */ if (ec->ec_linmem == 0) ec->ec_linmem= 0xFFFF0000;
 
   ec->flags = ECF_EMPTY;
@@ -670,6 +661,7 @@ ec_conf_t *ecp;
     break;
   case EP_ON:
   case EP_SET:
+  default:
     ec->mode= EC_ENABLED;      /* Might become disabled if 
 				* all probes fail */
     break;
