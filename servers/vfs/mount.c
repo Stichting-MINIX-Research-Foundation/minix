@@ -438,8 +438,10 @@ Dev_t dev;
 #if 1
 	int i;
         	struct fproc *tfp;
-	  printf("unmount: vnode 0x%x/%d in use %d times\n",
-		dev, vp->v_inode_nr, vp->v_ref_count);
+	  if(!(vp->v_inode_nr == 1 && vp->v_ref_count == 1)) {
+		  printf("unmount: vnode 0x%x/%d in use %d times\n",
+			dev, vp->v_inode_nr, vp->v_ref_count);
+	  }
 	      for (i= 0, tfp= fproc; i<NR_PROCS; i++, tfp++) {
 		int n;
       	 	   if (tfp->fp_pid == PID_FREE)
@@ -463,10 +465,12 @@ Dev_t dev;
 				printf("\tvnode %d: is a mount point\n",
 					vp->v_inode_nr);
 			  }
+#if 0
 			  if(vmp_i->m_root_node == vp) {
 				printf("\tvnode %d: is a root node\n",
 					vp->v_inode_nr);
 			  }
+#endif
 			}
 		}
 #endif

@@ -69,10 +69,7 @@ int rw_flag;			/* READING or WRITING */
   if (m_in.nbytes < 0)
   	return(EINVAL);
 
-  if ((f = get_filp(m_in.fd)) == NIL_FILP)
-  {
-  	printf("vfs:read_write: returning %d to endpoint %d\n",
-		err_code, who_e);
+  if ((f = get_filp(m_in.fd)) == NIL_FILP) {
   	return(err_code);
   }
   if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {

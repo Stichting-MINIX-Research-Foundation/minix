@@ -331,8 +331,6 @@ PUBLIC void pm_reboot()
 	/* Unmount at least one. */
 	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
 		if (vmp->m_dev != NO_DEV) {
-			printf("VFS: pm_reboot: unmount 0x%x, FS %d\n",
-				vmp->m_dev, vmp->m_fs_e);
   			CHECK_VREFS;
 			(void) unmount(vmp->m_dev);
   			CHECK_VREFS;
