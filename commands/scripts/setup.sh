@@ -172,7 +172,7 @@ do
            echo "Note: After installing, edit $LOCALRC to the right configuration."
            echo " chose option 4, the defaults for emulation by Bochs have been set."
 		;;
-        6) driver="lance"; driverargs="lance_arg='LANCE0=on'"; step2="ok"; ;;    
+        6) driver="lance"; step2="ok"; ;;    
         7) step2="ok"; ;;    
         *) warn "choose a number"
     esac
