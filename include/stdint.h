@@ -24,14 +24,18 @@
 typedef i8_t	int8_t;
 typedef i16_t	int16_t;
 typedef i32_t	int32_t;
-#if _WORD_SIZE > 2 && __L64
+#if defined(__LONG_LONG_SUPPORTED)
+typedef long long int64_t;
+#elif _WORD_SIZE > 2 && __L64
 typedef i64_t	int64_t;
 #endif
 
 typedef u8_t	uint8_t;
 typedef u16_t	uint16_t;
 typedef u32_t	uint32_t;
-#if _WORD_SIZE > 2 && __L64
+#if defined(__LONG_LONG_SUPPORTED)
+typedef unsigned long long uint64_t;
+#elif _WORD_SIZE > 2 && __L64
 typedef u64_t	uint64_t;
 #endif
 
