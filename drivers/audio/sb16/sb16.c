@@ -139,7 +139,7 @@ PUBLIC int drv_start(int channel, int DmaMode) {
 	dsp_set_speed(DspSpeed);
 
 	/* Put the speaker on */
-	if(DmaMode == DEV_WRITE) {
+	if(DmaMode == DEV_WRITE_S) {
 		dsp_command (DSP_CMD_SPKON); /* put speaker on */
 
 		/* Program DSP with dma mode */
@@ -291,7 +291,7 @@ PRIVATE void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 		pv_set(pvb[1], DMA8_CLEAR, 0x00);		       /* Clear flip flop */
 
 		/* set DMA mode */
-		pv_set(pvb[2], DMA8_MODE, (DmaMode == DEV_WRITE ? DMA8_AUTO_PLAY : DMA8_AUTO_REC)); 
+		pv_set(pvb[2], DMA8_MODE, (DmaMode == DEV_WRITE_S ? DMA8_AUTO_PLAY : DMA8_AUTO_REC)); 
 
 		pv_set(pvb[3], DMA8_ADDR, address >>  0);        /* Low_byte of address */
 		pv_set(pvb[4], DMA8_ADDR, address >>  8);        /* High byte of address */
@@ -309,7 +309,7 @@ PRIVATE void dsp_dma_setup(phys_bytes address, int count, int DmaMode) {
 		pv_set(pvb[1], DMA16_CLEAR, 0x00);                  /* Clear flip flop */
 
 		/* Set dma mode */
-		pv_set(pvb[2], DMA16_MODE, (DmaMode == DEV_WRITE ? DMA16_AUTO_PLAY : DMA16_AUTO_REC));        
+		pv_set(pvb[2], DMA16_MODE, (DmaMode == DEV_WRITE_S ? DMA16_AUTO_PLAY : DMA16_AUTO_REC));        
 
 		pv_set(pvb[3], DMA16_ADDR, (address >> 1) & 0xFF);  /* Low_byte of address */
 		pv_set(pvb[4], DMA16_ADDR, (address >> 9) & 0xFF);  /* High byte of address */
