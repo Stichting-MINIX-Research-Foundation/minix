@@ -71,6 +71,7 @@ struct vmproc *vmp;
 				vr->vaddr + ph->ph->offset + ph->ph->length,
 				ph->ph->refcount,
 				ph->ph->phys);
+			nph++;
 		}
 		printf(" (phregions %d)\n", nph);
 	}
