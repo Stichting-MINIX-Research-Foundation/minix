@@ -131,7 +131,7 @@ PUBLIC void main()
 			timerand= 0;
 		else
 		{
-			printf("unable to read random data from %s: %s\n",
+			printf("inet: unable to read random data from %s: %s\n",
 				RANDOM_DEV_NAME, r == -1 ? strerror(errno) :
 				r == 0 ? "EOF" : "not enough data");
 		}
@@ -139,12 +139,12 @@ PUBLIC void main()
 	}
 	else
 	{
-		printf("unable to open random device %s: %s\n",
+		printf("inet: unable to open random device %s: %s\n",
 			RANDOM_DEV_NAME, strerror(errno));
 	}
 	if (timerand)
 	{
-		printf("using current time for random-number seed\n");
+		printf("inet: using current time for random-number seed\n");
 #ifdef __minix_vmd
 		r= sysutime(UTIME_TIMEOFDAY, &tv);
 #else /* Minix 3 */
