@@ -352,13 +352,15 @@ int count;			/* max number of processes to release */
   }
 
   /* Search the proc table. */
-  for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) {
+  for (rp = &fproc[0]; rp < &fproc[NR_PROCS] && count > 0; rp++) {
 	if (rp->fp_pid != PID_FREE && rp->fp_suspended == SUSPENDED &&
 			rp->fp_revived == NOT_REVIVING &&
 			(rp->fp_fd & BYTE) == call_nr &&
 			rp->fp_filp[rp->fp_fd>>8]->filp_vno == vp) {
 		revive(rp->fp_endpoint, 0);
 		susp_count--;	/* keep track of who is suspended */
+		if(susp_count < 0)
+			panic("vfs", "susp_count now negative", susp_count);
 		if (--count == 0) return;
 	}
   }
