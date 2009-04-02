@@ -500,7 +500,6 @@ pci_init();
   if(!lance_buf && !(lance_buf = alloc_contig(LANCE_BUF_SIZE, AC_ALIGN4K|AC_LOWER16M, &lance_buf_phys))) {
 	panic( "lance", "alloc_contig failed", LANCE_BUF_SIZE);
   }
-  printf("lance buf: v 0x%lx ph 0x%lx\n", lance_buf, lance_buf_phys);
 
   port = mp->DL_PORT;
   if (port < 0 || port >= EC_PORT_NR_MAX)
