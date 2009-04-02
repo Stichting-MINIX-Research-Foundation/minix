@@ -49,22 +49,32 @@ register message *m_ptr;
 
 #define COPYTOPROC(seg, addr, myaddr, length) {		\
 	struct vir_addr fromaddr, toaddr;		\
+	int r;	\
 	fromaddr.proc_nr_e = SYSTEM;			\
 	toaddr.proc_nr_e = tr_proc_nr_e;		\
 	fromaddr.offset = (myaddr);			\
 	toaddr.offset = (addr);				\
 	fromaddr.segment = D;				\
 	toaddr.segment = (seg);				\
+	if((r=virtual_copy_vmcheck(&fromaddr, &toaddr, length)) != OK) { \
+		printf("Can't copy in sys_trace: %d\n", r);\
+		return r;\
+	}  \
 }
 
 #define COPYFROMPROC(seg, addr, myaddr, length) {	\
 	struct vir_addr fromaddr, toaddr;		\
+	int r;	\
 	fromaddr.proc_nr_e = tr_proc_nr_e;		\
 	toaddr.proc_nr_e = SYSTEM;			\
 	fromaddr.offset = (addr);			\
 	toaddr.offset = (myaddr);			\
 	fromaddr.segment = (seg);			\
 	toaddr.segment = D;				\
+	if((r=virtual_copy_vmcheck(&fromaddr, &toaddr, length)) != OK) { \
+		printf("Can't copy in sys_trace: %d\n", r);\
+		return r;\
+	}  \
 }
 
   if(!isokendpt(tr_proc_nr_e, &tr_proc_nr)) return(EINVAL);
@@ -80,14 +90,14 @@ register message *m_ptr;
 
   case T_GETINS:		/* return value from instruction space */
 	if (rp->p_memmap[T].mem_len != 0) {
-		COPYTOPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+		COPYFROMPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 		m_ptr->CTL_DATA = tr_data;
 		break;
 	}
 	/* Text space is actually data space - fall through. */
 
   case T_GETDATA:		/* return value from data space */
-	COPYTOPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	COPYFROMPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA= tr_data;
 	break;
 
@@ -100,14 +110,14 @@ register message *m_ptr;
 
   case T_SETINS:		/* set value in instruction space */
 	if (rp->p_memmap[T].mem_len != 0) {
-		COPYFROMPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+		COPYTOPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 		m_ptr->CTL_DATA = 0;
 		break;
 	}
 	/* Text space is actually data space - fall through. */
 
   case T_SETDATA:			/* set value in data space */
-	COPYFROMPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	COPYTOPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
 	m_ptr->CTL_DATA = 0;
 	break;
 
