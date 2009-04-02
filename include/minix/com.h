@@ -461,6 +461,7 @@
 #   define GET_PRIVID	  17	/* get ID of privilege structure */
 #   define GET_HZ	  18	/* get HZ value */
 #   define GET_WHOAMI	  19	/* get own name and endpoint */
+#   define GET_RANDOMNESS_BIN 20 /* get one randomness bin */
 #define I_ENDPT      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */

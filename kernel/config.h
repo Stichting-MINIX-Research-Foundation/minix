@@ -49,11 +49,6 @@
  */
 #define P_NAME_LEN	   8
 
-/* Buffer to gather randomness. This is used to generate a random stream by 
- * the MEMORY driver when reading from /dev/random. 
- */
-#define RANDOM_ELEMENTS   32
-
 /* This section contains defines for valuable system resources that are used
  * by device drivers. The number of elements of the vectors is determined by 
  * the maximum needed by any given driver. The number of interrupt hooks may

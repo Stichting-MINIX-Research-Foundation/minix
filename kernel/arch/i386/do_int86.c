@@ -36,7 +36,7 @@ register message *m_ptr;	/* pointer to request message */
    * not very random.
    */
   lock;
-  get_randomness(CLOCK_IRQ);
+  get_randomness(&krandom, CLOCK_IRQ);
   unlock;
 
   return(OK);

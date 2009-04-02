@@ -21,8 +21,8 @@ that data into a seed for a psuedo random number generator.
 				 * re-seed.
 				 */
 
-PRIVATE unsigned long deriv[RANDOM_SOURCES][N_DERIV];
-PRIVATE int pool_ind[RANDOM_SOURCES];
+PRIVATE unsigned long deriv[TOTAL_SOURCES][N_DERIV];
+PRIVATE int pool_ind[TOTAL_SOURCES];
 PRIVATE SHA256_CTX pool_ctx[NR_POOLS];
 PRIVATE unsigned samples= 0;
 PRIVATE int got_seeded= 0;
@@ -39,10 +39,10 @@ PUBLIC void random_init()
 {
 	int i, j;
 
-	assert(&deriv[RANDOM_SOURCES-1][N_DERIV-1] ==
-		&deriv[0][0] + RANDOM_SOURCES*N_DERIV -1);
+	assert(&deriv[TOTAL_SOURCES-1][N_DERIV-1] ==
+		&deriv[0][0] + TOTAL_SOURCES*N_DERIV -1);
 
-	for (i= 0; i<RANDOM_SOURCES; i++)
+	for (i= 0; i<TOTAL_SOURCES; i++)
 	{
 		for (j= 0; j<N_DERIV; j++)
 			deriv[i][j]= 0;
@@ -64,7 +64,7 @@ PUBLIC int random_isseeded()
 
 PUBLIC void random_update(source, buf, count)
 int source;
-unsigned short *buf;
+rand_t *buf;
 int count;
 {
 	int i;
@@ -72,7 +72,7 @@ int count;
 #if 0
 	printf("random_update: got %d samples for source %d\n", count, source);
 #endif
-	if (source < 0 || source >= RANDOM_SOURCES)
+	if (source < 0 || source >= TOTAL_SOURCES)
 		panic("memory", "random_update: bad source", source);
 	for (i= 0; i<count; i++)
 		add_sample(source, buf[i]);

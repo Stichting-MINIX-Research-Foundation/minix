@@ -178,6 +178,22 @@ struct kmessages {
   char km_buf[_KMESS_BUF_SIZE];          /* buffer for messages */
 };
 
+#include <ibm/interrupt.h>
+
+/* randomness struct: random sources after interrupts: */
+#define RANDOM_SOURCES			NR_IRQ_VECTORS
+#define RANDOM_ELEMENTS			64
+
+typedef unsigned short rand_t;
+
+struct k_randomness {
+  int random_elements, random_sources;
+  struct k_randomness_bin {
+        int r_next;                             /* next index to write */
+        int r_size;                             /* number of random elements */
+        rand_t r_buf[RANDOM_ELEMENTS]; /* buffer for random info */
+  } bin[RANDOM_SOURCES];
+};
 
 #endif /* _TYPE_H */
 

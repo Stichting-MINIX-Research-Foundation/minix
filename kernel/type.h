@@ -2,6 +2,7 @@
 #define TYPE_H
 
 #include <minix/com.h>
+#include <ibm/interrupt.h>
 
 typedef _PROTOTYPE( void task_t, (void) );
 
@@ -25,14 +26,6 @@ struct boot_image {
   int nr_k_calls;
   char proc_name[P_NAME_LEN];		/* name in process table */
   endpoint_t endpoint;			/* endpoint number when started */
-};
-
-struct randomness {
-  struct {
-	int r_next;				/* next index to write */
-	int r_size;				/* number of random elements */
-	unsigned short r_buf[RANDOM_ELEMENTS]; /* buffer for random info */
-  } bin[RANDOM_SOURCES];
 };
 
 typedef unsigned long irq_policy_t;	

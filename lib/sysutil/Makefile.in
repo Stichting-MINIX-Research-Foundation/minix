@@ -10,6 +10,7 @@ libsys_FILES=" \
 	kprintf.c \
 	kputc.c \
 	tickdelay.c \
+	get_randomness.c \
 	getuptime.c \
 	getuptime2.c \
 	env_get_prm.c \

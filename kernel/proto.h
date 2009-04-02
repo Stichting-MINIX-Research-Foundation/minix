@@ -58,7 +58,6 @@ _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void sys_task, (void)					);
-_PROTOTYPE( void get_randomness, (int source)				);
 #define numap_local(proc_nr, vir_addr, bytes) \
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
 _PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t,

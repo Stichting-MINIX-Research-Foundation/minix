@@ -31,6 +31,7 @@ register message *m_ptr;	/* pointer to request message */
   int proc_nr, nr_e, nr;
   struct proc *caller;
   phys_bytes ph;
+  int wipe_rnd_bin = -1;
 
   caller = proc_addr(who_p);
 
@@ -112,7 +113,7 @@ register message *m_ptr;	/* pointer to request message */
         break;
     }
     case GET_RANDOMNESS: {		
-        static struct randomness copy;		/* copy to keep counters */
+        static struct k_randomness copy;	/* copy to keep counters */
 	int i;
 
         copy = krandom;
@@ -120,8 +121,26 @@ register message *m_ptr;	/* pointer to request message */
   		krandom.bin[i].r_size = 0;	/* invalidate random data */
   		krandom.bin[i].r_next = 0;
 	}
-    	length = sizeof(struct randomness);
+    	length = sizeof(copy);
     	src_vir = (vir_bytes) &copy;
+    	break;
+    }
+    case GET_RANDOMNESS_BIN: {		
+	int i, bin = m_ptr->I_VAL_LEN2_E;
+
+	if(bin < 0 || bin >= RANDOM_SOURCES) {
+		kprintf("SYSTEM: GET_RANDOMNESS_BIN: %d out of range\n", bin);
+		return EINVAL;
+	}
+
+	if(krandom.bin[bin].r_size < RANDOM_ELEMENTS)
+		return ENOENT;
+
+    	length = sizeof(krandom.bin[bin]);
+    	src_vir = (vir_bytes) &krandom.bin[bin];
+
+	wipe_rnd_bin = bin;
+
     	break;
     }
     case GET_KMESSAGES: {
@@ -158,7 +177,12 @@ register message *m_ptr;	/* pointer to request message */
   if((ph=umap_local(caller, D, (vir_bytes) m_ptr->I_VAL_PTR,length)) == 0)
 	return EFAULT;
   CHECKRANGE_OR_SUSPEND(caller, ph, length, 1);
-  data_copy(SYSTEM, src_vir, who_e, (vir_bytes) m_ptr->I_VAL_PTR, length);
+  if(data_copy(SYSTEM, src_vir, who_e, (vir_bytes) m_ptr->I_VAL_PTR, length) == OK) {
+	if(wipe_rnd_bin >= 0 && wipe_rnd_bin < RANDOM_SOURCES) {
+		krandom.bin[wipe_rnd_bin].r_size = 0;
+		krandom.bin[wipe_rnd_bin].r_next = 0;
+	}
+  }
   return(OK);
 }
 

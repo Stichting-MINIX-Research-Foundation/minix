@@ -175,6 +175,8 @@ PUBLIC void main()
   cprof_procs_no = 0;  /* init nr of hash table slots used */
 
   vm_running = 0;
+  krandom.random_sources = RANDOM_SOURCES;
+  krandom.random_elements = RANDOM_ELEMENTS;
 
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 

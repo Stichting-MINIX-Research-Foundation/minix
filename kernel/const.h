@@ -25,9 +25,6 @@
 #define _SRC_	0
 #define _DST_	1
 
-/* Number of random sources */
-#define RANDOM_SOURCES	16
-
 #define get_sys_bit(map,bit) \
 	( MAP_CHUNK(map.chunk,bit) & (1 << CHUNK_OFFSET(bit) )
 #define get_sys_bits(map,bit) \

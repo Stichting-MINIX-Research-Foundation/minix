@@ -291,28 +291,6 @@ int proc_type;				/* system or user process flag */
 }
 
 /*===========================================================================*
- *				get_randomness				     *
- *===========================================================================*/
-PUBLIC void get_randomness(source)
-int source;
-{
-/* Use architecture-dependent high-resolution clock for
- * raw entropy gathering.
- */
-  int r_next;
-  unsigned long tsc_high, tsc_low;
-
-  source %= RANDOM_SOURCES;
-  r_next= krandom.bin[source].r_next;
-  read_tsc(&tsc_high, &tsc_low);
-  krandom.bin[source].r_buf[r_next] = tsc_low;
-  if (krandom.bin[source].r_size < RANDOM_ELEMENTS) {
-  	krandom.bin[source].r_size ++;
-  }
-  krandom.bin[source].r_next = (r_next + 1 ) % RANDOM_ELEMENTS;
-}
-
-/*===========================================================================*
  *				send_sig				     *
  *===========================================================================*/
 PUBLIC void send_sig(int proc_nr, int sig_nr)
