@@ -672,7 +672,7 @@ int safe;
 	   r = sys_vircopy( m_ptr->IO_ENDPT, D, (vir_bytes) m_ptr->ADDRESS,
 		SELF, D, (vir_bytes) &tp->tty_winsize, (vir_bytes) size);
 	}
-	sigchar(tp, SIGWINCH);
+	sigchar(tp, SIGWINCH, 0);
 	break;
 
 #if (MACHINE == IBM_PC)
@@ -1097,7 +1097,7 @@ int count;			/* number of input characters */
 					|| ch == tp->tty_termios.c_cc[VQUIT]) {
 			sig = SIGINT;
 			if (ch == tp->tty_termios.c_cc[VQUIT]) sig = SIGQUIT;
-			sigchar(tp, sig);
+			sigchar(tp, sig, 1);
 			(void) tty_echo(tp, ch);
 			continue;
 		}
@@ -1445,7 +1445,7 @@ tty_t *tp;
   }
 
   /* Setting the output speed to zero hangs up the phone. */
-  if (tp->tty_termios.c_ospeed == B0) sigchar(tp, SIGHUP);
+  if (tp->tty_termios.c_ospeed == B0) sigchar(tp, SIGHUP, 1);
 
   /* Set new line speed, character size, etc at the device level. */
   (*tp->tty_ioctl)(tp, 0);
@@ -1489,9 +1489,10 @@ int status;			/* reply code */
 /*===========================================================================*
  *				sigchar					     *
  *===========================================================================*/
-PUBLIC void sigchar(tp, sig)
+PUBLIC void sigchar(tp, sig, mayflush)
 register tty_t *tp;
 int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
+int mayflush;
 {
 /* Process a SIGINT, SIGQUIT or SIGKILL char from the keyboard or SIGHUP from
  * a tty close, "stty 0", or a real RS-232 hangup.  MM will send the signal to
@@ -1506,7 +1507,7 @@ int sig;			/* SIGINT, SIGQUIT, SIGKILL or SIGHUP */
       }
   }
 
-  if (!(tp->tty_termios.c_lflag & NOFLSH)) {
+  if (mayflush && !(tp->tty_termios.c_lflag & NOFLSH)) {
 	tp->tty_incount = tp->tty_eotct = 0;	/* kill earlier input */
 	tp->tty_intail = tp->tty_inhead;
 	(*tp->tty_ocancel)(tp, 0);			/* kill all output */

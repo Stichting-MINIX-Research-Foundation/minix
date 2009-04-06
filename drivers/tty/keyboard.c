@@ -609,9 +609,9 @@ int try;
 	    switch(ch) {
   		case CF1: show_key_mappings(); break; 
   		case CF3: toggle_scroll(); break; /* hardware <-> software */	
-  		case CF7: sigchar(&tty_table[CONSOLE], SIGQUIT); break;
-  		case CF8: sigchar(&tty_table[CONSOLE], SIGINT); break;
-  		case CF9: sigchar(&tty_table[CONSOLE], SIGKILL); break;
+  		case CF7: sigchar(&tty_table[CONSOLE], SIGQUIT, 1); break;
+  		case CF8: sigchar(&tty_table[CONSOLE], SIGINT, 1); break;
+  		case CF9: sigchar(&tty_table[CONSOLE], SIGKILL, 1); break;
   	    }
 	}
   }

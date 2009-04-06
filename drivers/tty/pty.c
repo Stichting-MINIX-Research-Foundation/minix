@@ -172,7 +172,7 @@ message *m_ptr;
 		pp->state = 0;
 	} else {
 		pp->state |= PTY_CLOSED;
-		sigchar(tp, SIGHUP);
+		sigchar(tp, SIGHUP, 1);
 	}
 	break;
 

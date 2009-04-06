@@ -148,7 +148,7 @@ extern struct kmessages kmess;
 /* Function prototypes for TTY driver. */
 /* tty.c */
 _PROTOTYPE( void handle_events, (struct tty *tp)			);
-_PROTOTYPE( void sigchar, (struct tty *tp, int sig)			);
+_PROTOTYPE( void sigchar, (struct tty *tp, int sig, int mayflush)	);
 _PROTOTYPE( void tty_task, (void)					);
 _PROTOTYPE( int in_process, (struct tty *tp, char *buf, int count)	);
 _PROTOTYPE( void out_process, (struct tty *tp, char *bstart, char *bpos,

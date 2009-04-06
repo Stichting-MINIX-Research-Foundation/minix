@@ -612,7 +612,7 @@ int try;
 	rs->ostate &= ~ODEVHUP;		/* save ostate, clear DEVHUP */
 	unlock();
 	if (ostate & ODEVHUP) {
-		sigchar(tp, SIGHUP);
+		sigchar(tp, SIGHUP, 1);
 		tp->tty_termios.c_ospeed = B0;	/* Disable further I/O. */
 		return 0;
 	}
