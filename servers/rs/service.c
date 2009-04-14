@@ -925,7 +925,8 @@ PRIVATE void do_config(char *label, char *filename)
 	}
 	if (cp == NULL)
 	{
-		fprintf(stderr, "driver '%s' not found\n", label);
+		fprintf(stderr, "service: driver '%s' not found in config\n",
+			label);
 		return;
 	}
 
