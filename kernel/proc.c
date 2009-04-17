@@ -201,6 +201,13 @@ long bit_map;			/* notification event set or flags */
   }
   else
   {
+	if(caller_ptr->p_endpoint == src_dst_e) {
+#if DEBUG_ENABLE_IPC_WARNINGS
+		kprintf("sys_call: trap %d by %d with self %d\n", 
+			call_nr, proc_nr(caller_ptr), src_dst_e);
+#endif
+		return EINVAL;
+	}
 	/* Require a valid source and/or destination process. */
 	if(!isokendpt(src_dst_e, &src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS

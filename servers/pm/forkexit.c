@@ -417,3 +417,13 @@ register struct mproc *rmp;	/* tells which process is exiting */
   rmp->mp_child_stime = 0;
   procs_in_use--;
 }
+
+PUBLIC void _exit(int code)
+{
+	sys_exit(SELF);
+}
+
+PUBLIC void __exit(int code)
+{
+	sys_exit(SELF);
+}

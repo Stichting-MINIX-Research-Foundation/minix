@@ -19,7 +19,7 @@
  * Of course the call still fails, but nothing is printed if these warnings
  * are disabled.
  */
-#define DEBUG_ENABLE_IPC_WARNINGS	0
+#define DEBUG_ENABLE_IPC_WARNINGS	1
 #define DEBUG_STACKTRACE		1
 #define DEBUG_VMASSERT			1
 #define DEBUG_SCHED_CHECK		1
