@@ -47,9 +47,9 @@ char *pf_errstr(u32_t err)
 }
 
 /*===========================================================================*
- *				handle_pagefaults	     		     *
+ *				do_pagefaults	     		     *
  *===========================================================================*/
-PUBLIC void handle_pagefaults(void)
+PUBLIC void do_pagefaults(void)
 {
 	endpoint_t ep;
 	u32_t addr, err;
@@ -62,7 +62,7 @@ PUBLIC void handle_pagefaults(void)
 		int p, wr = PFERR_WRITE(err);
 
 		if(vm_isokendpt(ep, &p) != OK)
-			vm_panic("handle_pagefaults: endpoint wrong", ep);
+			vm_panic("do_pagefaults: endpoint wrong", ep);
 
 		vmp = &vmproc[p];
 		vm_assert(vmp->vm_flags & VMF_INUSE);
@@ -97,7 +97,7 @@ PUBLIC void handle_pagefaults(void)
 		offset = addr - region->vaddr;
 
 		/* Access is allowed; handle it. */
-		if((r=map_pagefault(vmp, region, offset, wr)) != OK) {
+		if((r=map_pf(vmp, region, offset, wr)) != OK) {
 			printf("VM: pagefault: SIGSEGV %d pagefault not handled\n", ep);
 			sys_sysctl_stacktrace(vmp->vm_endpoint);
 			if((s=sys_kill(vmp->vm_endpoint, SIGSEGV)) != OK)
@@ -108,16 +108,16 @@ PUBLIC void handle_pagefaults(void)
 
 		/* Pagefault is handled, so now reactivate the process. */
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
-			vm_panic("handle_pagefaults: sys_vmctl failed", ep);
+			vm_panic("do_pagefaults: sys_vmctl failed", ep);
 	}
 
 	return;
 }
 
 /*===========================================================================*
- *				handle_memory	     		     *
+ *				do_memory	     		     *
  *===========================================================================*/
-PUBLIC void handle_memory(void)
+PUBLIC void do_memory(void)
 {
 	int r, s;
 	endpoint_t who;
@@ -132,7 +132,7 @@ PUBLIC void handle_memory(void)
 		vir_bytes o;
 
 		if(vm_isokendpt(who, &p) != OK)
-			vm_panic("handle_memory: endpoint wrong", who);
+			vm_panic("do_memory: endpoint wrong", who);
 		vmp = &vmproc[p];
 
 		/* Page-align memory and length. */
@@ -143,13 +143,13 @@ PUBLIC void handle_memory(void)
 		if(o > 0) len += VM_PAGE_SIZE - o;
 
 		if(!(region = map_lookup(vmp, mem))) {
-			printf("VM: handle_memory: memory doesn't exist\n");
+			printf("VM: do_memory: memory doesn't exist\n");
 			r = EFAULT;
 		} else if(mem + len > region->vaddr + region->length) {
 			vm_assert(region->vaddr <= mem);
-			vm_panic("handle_memory: not contained", NO_NUM);
+			vm_panic("do_memory: not contained", NO_NUM);
 		} else if(!(region->flags & VR_WRITABLE) && wrflag) {
-			printf("VM: handle_memory: write to unwritable map\n");
+			printf("VM: do_memory: write to unwritable map\n");
 			r = EFAULT;
 		} else {
 			vir_bytes offset;
@@ -168,7 +168,7 @@ PUBLIC void handle_memory(void)
 		}
 
 		if(sys_vmctl(who, VMCTL_MEMREQ_REPLY, r) != OK)
-			vm_panic("handle_memory: sys_vmctl failed", r);
+			vm_panic("do_memory: sys_vmctl failed", r);
 	}
 }
 

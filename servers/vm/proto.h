@@ -78,8 +78,8 @@ _PROTOTYPE(int do_map_phys, (message *msg)                              );
 _PROTOTYPE(int do_unmap_phys, (message *msg)                            );
 
 /* pagefaults.c */
-_PROTOTYPE( void handle_pagefaults, (void)				);
-_PROTOTYPE( void handle_memory, (void)				);
+_PROTOTYPE( void do_pagefaults, (void)				);
+_PROTOTYPE( void do_memory, (void)				);
 _PROTOTYPE( char *pf_errstr, (u32_t err));
 
 /* $(ARCH)/pagetable.c */
@@ -111,6 +111,17 @@ _PROTOTYPE(void slabfree,(void *mem, int bytes));
 _PROTOTYPE(void slabstats,(void));
 #define SLABALLOC(var) (var = slaballoc(sizeof(*var)))
 #define SLABFREE(ptr) slabfree(ptr, sizeof(*(ptr)))
+#if SANITYCHECKS
+_PROTOTYPE(int slabsane,(void *mem, int bytes));
+#define SLABSANE(ptr) { \
+	if(!slabsane(ptr, sizeof(*(ptr)))) { \
+		printf("VM:%s:%d: SLABSANE(%s)\n", __FILE__, __LINE__, #ptr); \
+		vm_panic("SLABSANE failed", NO_NUM);	\
+	} \
+}
+#else
+#define SLABSANE(ptr)
+#endif
 
 /* region.c */
 _PROTOTYPE(struct vir_region * map_page_region,(struct vmproc *vmp, \
@@ -123,7 +134,7 @@ _PROTOTYPE(int map_unmap_region,(struct vmproc *vmp, struct vir_region *vr));
 _PROTOTYPE(int map_free_proc,(struct vmproc *vmp));
 _PROTOTYPE(int map_proc_copy,(struct vmproc *dst, struct vmproc *src));
 _PROTOTYPE(struct vir_region *map_lookup,(struct vmproc *vmp, vir_bytes addr));
-_PROTOTYPE(int map_pagefault,(struct vmproc *vmp,
+_PROTOTYPE(int map_pf,(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, int write));
 _PROTOTYPE(int map_handle_memory,(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, vir_bytes len, int write));

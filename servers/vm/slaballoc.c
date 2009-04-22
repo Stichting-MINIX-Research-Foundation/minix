@@ -94,6 +94,8 @@ PRIVATE struct slabheader {
 	} *list_head[LIST_NUMBER];
 } slabs[SLABSIZES];
 
+FORWARD _PROTOTYPE( int objstats, (void *, int, struct slabheader **, struct slabdata **, int *)); 
+
 #define GETSLAB(b, s) {			\
 	int i;				\
 	vm_assert((b) >= MINSIZE);	\
@@ -206,6 +208,16 @@ PUBLIC void slab_sanitycheck(char *file, int line)
 	}
 }
 
+/*===========================================================================*
+ *				int slabsane				     *
+ *===========================================================================*/
+PUBLIC int slabsane(void *mem, int bytes)
+{
+	struct slabheader *s;
+	struct slabdata *f;
+	int i;
+	return (objstats(mem, bytes, &s, &f, &i) == OK);
+}
 #endif
 
 /*===========================================================================*
@@ -279,6 +291,12 @@ PUBLIC void *slaballoc(int bytes)
 #endif
 			SLABSANITYCHECK(SCL_FUNCTIONS);
 			firstused->sdh.freeguess = i+1;
+
+#if SANITYCHECKS
+			if(!slabsane(ret, bytes))
+				vm_panic("slaballoc: slabsane failed", NO_NUM);
+#endif
+
 			return ret;
 		}
 
@@ -291,6 +309,63 @@ PUBLIC void *slaballoc(int bytes)
 
 	/* Not reached. */
 	return NULL;
+}
+
+/*===========================================================================*
+ *				int objstats				     *
+ *===========================================================================*/
+PRIVATE int objstats(void *mem, int bytes,
+	struct slabheader **sp, struct slabdata **fp, int *ip)
+{
+#define OBJSTATSCHECK(cond) \
+	if(!(cond)) { \
+		printf("VM:objstats: %s failed for ptr 0x%p, %d bytes\n", \
+			#cond, mem, bytes); \
+		return EINVAL; \
+	}
+
+	struct slabheader *s;
+	struct slabdata *f;
+	int i;
+
+	OBJSTATSCHECK((char *) mem >= (char *) VM_PAGE_SIZE);
+
+#if SANITYCHECKS
+	if(*(u32_t *) mem == JUNK) {
+		util_stacktrace();
+		printf("VM: WARNING: JUNK seen in slab object\n");
+	}
+#endif
+
+	/* Retrieve entry in slabs[]. */
+	GETSLAB(bytes, s);
+
+	/* Round address down to VM_PAGE_SIZE boundary to get header. */
+	f = (struct slabdata *) ((char *) mem - (vir_bytes) mem % VM_PAGE_SIZE);
+
+#if SANITYCHECKS
+	OBJSTATSCHECK(f->sdh.magic == MAGIC);
+#endif
+	OBJSTATSCHECK(f->sdh.list == LIST_USED || f->sdh.list == LIST_FULL);
+
+	/* Make sure it's in range. */
+	OBJSTATSCHECK((char *) mem >= (char *) f->data);
+	OBJSTATSCHECK((char *) mem < (char *) f->data + sizeof(f->data));
+
+	/* Get position. */
+	i = (char *) mem - (char *) f->data;
+	OBJSTATSCHECK(!(i % bytes));
+	i = i / bytes;
+
+	/* Make sure it is marked as allocated. */
+	OBJSTATSCHECK(GETBIT(f, i));
+
+	/* return values */
+	*ip = i;
+	*fp = f;
+	*sp = s;
+
+	return OK;
 }
 
 /*===========================================================================*
@@ -309,27 +384,9 @@ PUBLIC void slabfree(void *mem, int bytes)
 		printf("VM: WARNING: likely double free, JUNK seen\n");
 	}
 #endif
-
-	/* Retrieve entry in slabs[]. */
-	GETSLAB(bytes, s);
-
-	/* Round address down to VM_PAGE_SIZE boundary to get header. */
-	f = (struct slabdata *) ((char *) mem - (vir_bytes) mem % VM_PAGE_SIZE);
-
-	vm_assert(f->sdh.magic == MAGIC);
-	vm_assert(f->sdh.list == LIST_USED || f->sdh.list == LIST_FULL);
-
-	/* Make sure it's in range. */
-	vm_assert((char *) mem >= (char *) f->data);
-	vm_assert((char *) mem < (char *) f->data + sizeof(f->data));
-
-	/* Get position. */
-	i = (char *) mem - (char *) f->data;
-	vm_assert(!(i % bytes));
-	i = i / bytes;
-
-	/* Make sure it _was_ allocated. */
-	vm_assert(GETBIT(f, i));
+	if(objstats(mem, bytes, &s, &f, &i) != OK) {
+		vm_panic("slabfree objstats failed", NO_NUM);
+	}
 
 	/* Free this data. */
 	CLEARBIT(f, i);

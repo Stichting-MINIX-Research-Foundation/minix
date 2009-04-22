@@ -15,6 +15,7 @@
 EXTERN struct vmproc vmproc[_NR_PROCS+1];
 
 #if SANITYCHECKS
+EXTERN int nocheck;
 u32_t data1[200];
 #define CHECKADDR 0
 EXTERN long vm_sanitychecklevel;

@@ -74,6 +74,7 @@ PUBLIC int main(void)
   int result, who_e;
 
 #if SANITYCHECKS
+  nocheck = 0;
   memcpy(data1, CHECKADDR, sizeof(data1));    
 #endif
 	SANITYCHECK(SCL_TOP);
@@ -111,7 +112,7 @@ PUBLIC int main(void)
 				/* Kernel wants to have memory ranges
 				 * verified.
 				 */
-				handle_memory();
+				do_memory();
 				break;
 			case PM_PROC_NR:
 				/* PM sends a notify() on shutdown, which
@@ -122,7 +123,7 @@ PUBLIC int main(void)
 				/* This indicates a page fault has happened,
 				 * which we have to handle.
 				 */
-				handle_pagefaults();
+				do_pagefaults();
 				break;
 			default:
 				/* No-one else should send us notifies. */

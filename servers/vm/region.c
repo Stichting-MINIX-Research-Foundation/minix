@@ -105,6 +105,11 @@ PUBLIC void map_sanitycheck(char *file, int line)
 		}						\
 	}
 
+#define MYSLABSANE(s) MYASSERT(slabsane(s, sizeof(*(s))))
+	/* Basic pointers check. */
+	ALLREGIONS(MYSLABSANE(vr),MYSLABSANE(pr); MYSLABSANE(pr->ph);MYSLABSANE(pr->parent));
+	ALLREGIONS(MYASSERT(vr->parent == vmp),MYASSERT(pr->parent == vr););
+
 	/* Do counting for consistency check. */
 	ALLREGIONS(;,pr->ph->seencount = 0;);
 	ALLREGIONS(;,pr->ph->seencount++;);
@@ -122,6 +127,25 @@ PUBLIC void map_sanitycheck(char *file, int line)
 				vr, pr->ph->offset,
 				pr->ph->offset + pr->ph->length,
 				pr->ph->refcount, pr->ph->seencount);
+		}
+		{
+			int n_others = 0;
+			struct phys_region *others;
+			if(pr->ph->refcount > 0) {
+				MYASSERT(pr->ph->firstregion);
+				if(pr->ph->refcount == 1) {
+					MYASSERT(pr->ph->firstregion == pr);
+				}
+			} else {
+				MYASSERT(!pr->ph->firstregion);
+			}
+			for(others = pr->ph->firstregion; others;
+				others = others->next_ph_list) {
+				MYSLABSANE(others);
+				MYASSERT(others->ph == pr->ph);
+				n_others++;
+			}
+			MYASSERT(pr->ph->refcount == n_others);
 		}
 		MYASSERT(pr->ph->refcount == pr->ph->seencount);
 		MYASSERT(!(pr->ph->offset % VM_PAGE_SIZE));
@@ -171,7 +195,7 @@ PUBLIC int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 }
 
 /*===========================================================================*
- *				map_region				     *
+ *				map_page_region				     *
  *===========================================================================*/
 PUBLIC struct vir_region *map_page_region(vmp, minv, maxv, length,
 	what, flags, mapflags)
@@ -269,6 +293,7 @@ int mapflags;
 	newregion->first = NULL;
 	newregion->flags = flags;
 	newregion->tag = VRT_NONE;
+	newregion->parent = vmp;
 
 	/* If we know what we're going to map to, map it right away. */
 	if(what != MAP_NONE) {
@@ -321,6 +346,76 @@ int mapflags;
 	return newregion;
 }
 
+/*===========================================================================*
+ *				pb_unreferenced				     *
+ *===========================================================================*/
+void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
+{
+	struct phys_block *pb;
+	int remap = 0;
+
+	SLABSANE(pr);
+	pb = pr->ph;
+	SLABSANE(pb);
+	vm_assert(pb->refcount > 0);
+	pb->refcount--;
+	vm_assert(pb->refcount >= 0);
+
+	SLABSANE(pb->firstregion);
+	if(pb->firstregion == pr) {
+		pb->firstregion = pr->next_ph_list;
+		if(pb->firstregion) {
+			SLABSANE(pb->firstregion);
+		}
+	} else {
+		struct phys_region *others;
+
+		for(others = pb->firstregion; others;
+			others = others->next_ph_list) {
+			SLABSANE(others);
+			vm_assert(others->ph == pb);
+			if(others->next_ph_list == pr) {
+				others->next_ph_list = pr->next_ph_list;
+				break;
+			}
+		}
+
+		vm_assert(others); /* Otherwise, wasn't on the list. */
+	}
+
+	if(pb->refcount == 0) {
+		vm_assert(!pb->firstregion);
+		if(region->flags & VR_ANON) {
+			FREE_MEM(ABS2CLICK(pb->phys),
+				ABS2CLICK(pb->length));
+		} else if(region->flags & VR_DIRECT) {
+			; /* No action required. */
+		} else {
+			vm_panic("strange phys flags", NO_NUM);
+		}
+		SLABFREE(pb);
+	} else {
+		SLABSANE(pb->firstregion);
+		/* If a writable piece of physical memory is now only
+		 * referenced once, map it writable right away instead of
+		 * waiting for a page fault.
+		 */
+		if(pb->refcount == 1 && (region->flags & VR_WRITABLE)) {
+			vm_assert(pb);
+			vm_assert(pb->firstregion);
+			vm_assert(!pb->firstregion->next_ph_list);
+			vm_assert(pb->firstregion->ph == pb);
+			vm_assert(pb->firstregion->ph == pb);
+			SLABSANE(pb);
+			SLABSANE(pb->firstregion);
+			SLABSANE(pb->firstregion->parent);
+			if(map_ph_writept(pb->firstregion->parent->parent,
+				pb->firstregion->parent, pb, NULL, NULL) != OK) {
+				vm_panic("pb_unreferenced: writept", NO_NUM);
+			}
+		}
+	}
+}
 
 /*===========================================================================*
  *				map_free				     *
@@ -329,22 +424,29 @@ PRIVATE int map_free(struct vir_region *region)
 {
 	struct phys_region *pr, *nextpr;
 
+#if SANITYCHECKS
+	for(pr = region->first; pr; pr = pr->next) {
+		struct phys_region *others;
+		struct phys_block *pb;
+
+		SLABSANE(pr);
+		pb = pr->ph;
+		SLABSANE(pb);
+		SLABSANE(pb->firstregion);
+
+		for(others = pb->firstregion; others;
+			others = others->next_ph_list) {
+			SLABSANE(others);
+			vm_assert(others->ph == pb);
+		}
+	}
+#endif
+
 	for(pr = region->first; pr; pr = nextpr) {
-		vm_assert(pr->ph->refcount > 0);
-		pr->ph->refcount--;
+		SANITYCHECK(SCL_DETAIL);
+		pb_unreferenced(region, pr);
 		nextpr = pr->next;
 		region->first = nextpr; /* For sanity checks. */
-		if(pr->ph->refcount == 0) {
-			if(region->flags & VR_ANON) {
-				FREE_MEM(ABS2CLICK(pr->ph->phys),
-					ABS2CLICK(pr->ph->length));
-			} else if(region->flags & VR_DIRECT) {
-				; /* No action required. */
-			} else {
-				vm_panic("strange phys flags", NO_NUM);
-			}
-			SLABFREE(pr->ph);
-		}
 		SLABFREE(pr);
 	}
 
@@ -365,8 +467,16 @@ struct vmproc *vmp;
 
 	for(r = vmp->vm_regions; r; r = nextr) {
 		nextr = r->next;
+		SANITYCHECK(SCL_DETAIL);
+#if SANITYCHECKS
+		nocheck++;
+#endif
 		map_free(r);
 		vmp->vm_regions = nextr;	/* For sanity checks. */
+#if SANITYCHECKS
+		nocheck--;
+#endif
+		SANITYCHECK(SCL_DETAIL);
 	}
 
 	vmp->vm_regions = NULL;
@@ -412,7 +522,7 @@ vir_bytes length;
 phys_bytes what_mem;
 struct phys_region *physhint;
 {
-	struct phys_region *physr, *newphysr;
+	struct phys_region *newphysr;
 	struct phys_block *newpb;
 	phys_bytes mem_clicks, clicks;
 	vir_bytes mem;
@@ -445,19 +555,25 @@ struct phys_region *physhint;
 	} else {
 		mem = what_mem;
 	}
+	SANITYCHECK(SCL_DETAIL);
 
 	/* New physical block. */
 	newpb->phys = mem;
 	newpb->refcount = 1;
 	newpb->offset = offset;
 	newpb->length = length;
+	newpb->firstregion = newphysr;
+	SLABSANE(newpb->firstregion);
 
 	/* New physical region. */
 	newphysr->ph = newpb;
+	newphysr->parent = region;
+	newphysr->next_ph_list = NULL;	/* No other references to this block. */
 
 	/* Update pagetable. */
 	vm_assert(!(length % VM_PAGE_SIZE));
 	vm_assert(!(newpb->length % VM_PAGE_SIZE));
+	SANITYCHECK(SCL_DETAIL);
 	if(map_ph_writept(vmp, region, newpb, NULL, NULL) != OK) {
 		if(what_mem == MAP_NONE)
 			FREE_MEM(mem_clicks, clicks);
@@ -474,6 +590,7 @@ struct phys_region *physhint;
 		newphysr->next = region->first;
 		region->first = newphysr;
 	} else {
+		struct phys_region *physr;
 		for(physr = physhint; physr; physr = physr->next) {
 			if(!physr->next || physr->next->ph->offset > offset) {
 				newphysr->next = physr->next;
@@ -510,7 +627,7 @@ struct phys_region *ph;
 	/* This is only to be done if there is more than one copy. */
 	vm_assert(ph->ph->refcount > 1);
 
-	/* Do actal copy on write; allocate new physblock. */
+	/* Do actual copy on write; allocate new physblock. */
 	if(!SLABALLOC(newpb)) {
 		printf("VM: map_copy_ph_block: couldn't allocate newpb\n");
 		SANITYCHECK(SCL_FUNCTIONS);
@@ -526,13 +643,18 @@ struct phys_region *ph;
 		return ENOMEM;
 	}
 	newmem = CLICK2ABS(newmem_cl);
+	vm_assert(ABS2CLICK(newmem) == newmem_cl);
 
-	ph->ph->refcount--;
+	pb_unreferenced(region, ph);
+	SLABSANE(ph);
+	SLABSANE(ph->ph);
 	vm_assert(ph->ph->refcount > 0);
 	newpb->length = ph->ph->length;
 	newpb->offset = ph->ph->offset;
 	newpb->refcount = 1;
 	newpb->phys = newmem;
+	newpb->firstregion = ph;
+	ph->next_ph_list = NULL;
 
 	/* Copy old memory to new memory. */
 	if((r=sys_abscopy(ph->ph->phys, newpb->phys, newpb->length)) != OK) {
@@ -564,9 +686,9 @@ struct phys_region *ph;
 }
 
 /*===========================================================================*
- *				map_pagefault			     *
+ *				map_pf			     *
  *===========================================================================*/
-PUBLIC int map_pagefault(vmp, region, offset, write)
+PUBLIC int map_pf(vmp, region, offset, write)
 struct vmproc *vmp;
 struct vir_region *region;
 vir_bytes offset;
@@ -613,7 +735,7 @@ int write;
 	}
 
 	if(r != OK)
-		printf("VM: map_pagefault: failed (%d)\n", r);
+		printf("VM: map_pf: failed (%d)\n", r);
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
@@ -717,6 +839,14 @@ static int countregions(struct vir_region *vr)
  *===========================================================================*/
 PRIVATE struct vir_region *map_copy_region(struct vir_region *vr)
 {
+	/* map_copy_region creates a complete copy of the vir_region
+	 * data structure, linking in the same phys_blocks directly,
+	 * but all in limbo, i.e., the caller has to link the vir_region
+	 * to a process. Therefore it doesn't increase the refcount in
+	 * the phys_block; the caller has to do this once it's linked.
+	 * The reason for this is to keep the sanity checks working
+	 * within this function.
+	 */
 	struct vir_region *newvr;
 	struct phys_region *ph, *prevph = NULL;
 #if SANITYCHECKS
@@ -739,6 +869,8 @@ PRIVATE struct vir_region *map_copy_region(struct vir_region *vr)
 		}
 		newph->next = NULL;
 		newph->ph = ph->ph;
+		newph->next_ph_list = NULL;
+		newph->parent = newvr;
 		if(prevph) prevph->next = newph;
 		else newvr->first = newph;
 		prevph = newph;
@@ -783,7 +915,7 @@ struct vmproc *src;
 	SANITYCHECK(SCL_FUNCTIONS);
 	for(vr = src->vm_regions; vr; vr = vr->next) {
 		struct vir_region *newvr;
-		struct phys_region *ph;
+		struct phys_region *orig_ph, *new_ph;
 	SANITYCHECK(SCL_DETAIL);
 		if(!(newvr = map_copy_region(vr))) {
 			map_free_proc(dst);
@@ -791,13 +923,36 @@ struct vmproc *src;
 			return ENOMEM;
 		}
 		SANITYCHECK(SCL_DETAIL);
+		newvr->parent = dst;
 		if(prevvr) { prevvr->next = newvr; }
 		else { dst->vm_regions = newvr; }
-		for(ph = vr->first; ph; ph = ph->next) {
-			vm_assert(ph->ph->refcount > 0);
-			ph->ph->refcount++;
-			vm_assert(ph->ph->refcount > 1);
+		new_ph = newvr->first;
+		for(orig_ph = vr->first; orig_ph; orig_ph = orig_ph->next) {
+			struct phys_block *pb;
+			/* Check two physregions both are nonnull,
+			 * are different, and match physblocks.
+			 */
+			vm_assert(orig_ph && new_ph);
+			vm_assert(orig_ph != new_ph);
+			pb = orig_ph->ph;
+			vm_assert(pb == new_ph->ph);
+
+			/* Link in new physregion. */
+			vm_assert(!new_ph->next_ph_list);
+			new_ph->next_ph_list = pb->firstregion;
+			pb->firstregion = new_ph;
+			SLABSANE(new_ph);
+			SLABSANE(new_ph->next_ph_list);
+
+			/* Increase phys block refcount */
+			vm_assert(pb->refcount > 0);
+			pb->refcount++;
+			vm_assert(pb->refcount > 1);
+
+			/* Get next new physregion */
+			new_ph = new_ph->next;
 		}
+		vm_assert(!new_ph);
 		SANITYCHECK(SCL_DETAIL);
 		prevvr = newvr;
 	SANITYCHECK(SCL_DETAIL);

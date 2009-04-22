@@ -13,7 +13,7 @@
         printf("VM:%s:%d: %s failed\n", file, line, #c); \
 	vm_panic("sanity check failed", NO_NUM); } } while(0)
 
-#define SANITYCHECK(l) if((l) <= vm_sanitychecklevel) {  \
+#define SANITYCHECK(l) if(!nocheck && ((l) <= vm_sanitychecklevel)) {  \
 		int failflag = 0; \
 		u32_t *origptr = CHECKADDR;\
 		int _sanep; \

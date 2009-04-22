@@ -10,11 +10,18 @@ struct phys_block {
 	vir_bytes		length;	/* no. of contiguous bytes */
 	phys_bytes		phys;	/* physical memory */
 	u8_t			refcount;	/* Refcount of these pages */
+
+	/* first in list of phys_regions that reference this block */
+	struct phys_region	*firstregion;	
 };
 
 struct phys_region {
 	struct phys_region	*next;	/* next contiguous block */
 	struct phys_block	*ph;
+	struct vir_region	*parent; /* Region that owns this phys_region. */
+
+	/* list of phys_regions that reference the same phys_block */
+	struct phys_region	*next_ph_list;	
 };
 
 struct vir_region {
@@ -24,6 +31,7 @@ struct vir_region {
 	struct	phys_region *first; /* phys regions in vir region */
 	u16_t		flags;
 	u32_t tag;		/* Opaque to mapping code. */
+	struct vmproc *parent;	/* Process that owns this vir_region. */
 };
 
 /* Mapping flags: */
@@ -38,6 +46,7 @@ struct vir_region {
 /* Tag values: */
 #define VRT_NONE	0xBEEF0000
 #define VRT_HEAP	0xBEEF0001
+#define VRT_CODE	0xBEEF0002
 
 /* map_page_region flags */
 #define MF_PREALLOC	0x01
