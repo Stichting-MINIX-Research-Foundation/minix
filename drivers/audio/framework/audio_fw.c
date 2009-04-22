@@ -984,8 +984,10 @@ int pci_func;
 	r= ds_retrieve_u32("amddev", &u32);
 	if (r != OK)
 	{
+#if 0
 		printf("tell_dev: ds_retrieve_u32 failed for 'amddev': %d\n",
 			r);
+#endif
 		return;
 	}
 
