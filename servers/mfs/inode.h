@@ -11,7 +11,7 @@
  * 2007-01-06: jfdsmit@gmail.com added i_zsearch
  */
 
-#include "queue.h"
+#include <sys/queue.h>
 
 EXTERN struct inode {
   mode_t i_mode;		/* file type, protection, etc. */
