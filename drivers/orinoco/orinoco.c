@@ -190,7 +190,6 @@ struct {
 #define BITRATE_TABLE_SIZE (sizeof(bitrate_table) / sizeof(bitrate_table[0]))
 
 
-_PROTOTYPE (static void sig_handler, (void));
 _PROTOTYPE (static void or_writev, (message * mp, int from_int, int vectored));
 _PROTOTYPE (static void or_readv, (message * mp, int from_int, int vectored));
 _PROTOTYPE (static void or_writev_s, (message * mp, int from_int));
@@ -268,7 +267,7 @@ int main(int argc, char *argv[]) {
 	else if (r != ESRCH)
 		printf("orinoco: ds_retrieve_u32 failed for 'inet': %d\n", r);
 
-	while (42) {
+	while (TRUE) {
 		if ((r = receive (ANY, &m)) != OK)
 			panic(__FILE__, "orinoco: receive failed", NO_NUM);
 
@@ -309,6 +308,13 @@ int main(int argc, char *argv[]) {
 		case SYN_ALARM:
 			or_watchdog_f(NULL);     
 			break;		 
+		case SYS_SIG:
+		{
+			sigset_t sigset = m.NOTIFY_ARG;
+			if ( sigismember( &sigset, SIGKSTOP ) )
+				orinoco_stop();
+		}
+			break;
 		case HARD_INT:
 			do_hard_int();
 			if (int_event_check)
@@ -318,30 +324,12 @@ int main(int argc, char *argv[]) {
 			or_dump(&m);	
 			break;
 		case PROC_EVENT:
-			sig_handler();
 			break;
 		default:
 			panic(__FILE__,"orinoco: illegal message:", m.m_type);
 		}
 	}
 }
-
-/*****************************************************************************
- *                    sig_handler                                            *
- *                                                                           *
- * Handles signals to the driver.                                            *
- *****************************************************************************/
-PRIVATE void sig_handler() {
-	sigset_t sigset;
-	int sig;
-	
-	if(getsigset(&sigset) != 0) return;
-	
-	if(sigismember(&sigset, SIGTERM)) {
-		orinoco_stop();
-	}
-}
-
 
 /*****************************************************************************
  *                    check_int_events                                       *
@@ -675,7 +663,7 @@ static int or_probe (t_or * orp) {
 		just_one = FALSE;
 	}
 
-	while (42) {
+	while (TRUE) {
 		/* loop through the pcitab to find a maching entry. The match
 		 * being between one of the values in pcitab and the 
 		 * information provided by the pci bus */
@@ -712,7 +700,7 @@ static int or_probe (t_or * orp) {
 	/* Get the name as advertised by pci */
 	dname = pci_dev_name (vid, did);
 	if (!dname)
-		dname = "unknow device";
+		dname = "unknown device";
 	printf ("%s: %s (%04x/%04x) at %s\n",
 		orp->or_name, dname, vid, did, pci_slot_name (devind));
 
@@ -1032,7 +1020,7 @@ static void or_writerids (hermes_t * hw, t_or * orp) {
 			setup_wepkey(orp, wepkey0);
 		break;
 		default:
-			printf("unvalid key provided. Has to be 13 chars\n");
+			printf("Invalid key provided. Has to be 13 chars\n");
 		break;
 	}
 }

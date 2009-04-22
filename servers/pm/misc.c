@@ -314,7 +314,7 @@ PUBLIC int do_getprocnr()
   /* This call should be moved to DS. */
   if (mp->mp_effuid != 0)
   {
-	printf("PM: unauthorized call of do_procstat by proc %d\n",
+	printf("PM: unauthorized call of do_getprocnr by proc %d\n",
 		mp->mp_endpoint);
 	sys_sysctl_stacktrace(mp->mp_endpoint);
 	return EPERM;

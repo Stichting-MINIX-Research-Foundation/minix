@@ -253,7 +253,6 @@ static void my_outl(U16_t port, U32_t value) {
 #define rl_outw(port, offset, value)	(my_outw((port) + (offset), (value)))
 #define rl_outl(port, offset, value)	(my_outl((port) + (offset), (value)))
 
-_PROTOTYPE( static void sig_handler, (void)				);
 _PROTOTYPE( static void rl_init, (message *mp)				);
 _PROTOTYPE( static void rl_pci_conf, (void)				);
 _PROTOTYPE( static int rl_probe, (re_t *rep)				);
@@ -376,6 +375,13 @@ int main(int argc, char *argv[])
 			 */
 			rl_watchdog_f(NULL);     
 			break;		 
+		case SYS_SIG:
+		{
+			sigset_t sigset = m.NOTIFY_ARG;
+			if ( sigismember( &sigset, SIGKSTOP ) )
+				rtl8139_stop();
+		}
+			break;
 		case HARD_INT:
 			do_hard_int();
 			if (int_event_check)
@@ -383,29 +389,11 @@ int main(int argc, char *argv[])
 			break ;
 		case FKEY_PRESSED: rtl8139_dump(&m);		break;
 		case PROC_EVENT:
-			sig_handler();
 			break;
 		default:
 			panic("rtl8139","illegal message", m.m_type);
 		}
 	}
-}
-
-/*===========================================================================*
- *				sig_handler                                  *
- *===========================================================================*/
-PRIVATE void sig_handler()
-{
-  sigset_t sigset;
-  int sig;
-
-  /* Try to obtain signal set from PM. */
-  if (getsigset(&sigset) != 0) return;
-
-  /* Check for known signals. */
-  if (sigismember(&sigset, SIGTERM)) {
-      rtl8139_stop();
-  }
 }
 
 /*===========================================================================*
