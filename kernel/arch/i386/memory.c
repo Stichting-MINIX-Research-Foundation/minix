@@ -149,10 +149,28 @@ PRIVATE void set_cr3()
 
 PRIVATE void vm_enable_paging(void)
 {
-	u32_t cr0;
+	u32_t cr0, cr4;
+
 
 	cr0= read_cr0();
+	cr4= read_cr4();
+
+	/* First clear PG and PGE flag, as PGE must be enabled after PG. */
+	write_cr0(cr0 & ~I386_CR0_PG);
+	write_cr4(cr4 & ~I386_CR4_PGE);
+
+	cr0= read_cr0();
+	cr4= read_cr4();
+
+	/* First enable paging, then enable global page flag. */
 	write_cr0(cr0 | I386_CR0_PG);
+	write_cr4(cr4 | I386_CR4_PGE);
+
+{
+	u32_t cr4v;
+	cr4v = read_cr4();
+	kprintf("cr4 = 0x%lx\n", cr4v);
+}
 }
 
 PUBLIC vir_bytes alloc_remote_segment(u32_t *selector,

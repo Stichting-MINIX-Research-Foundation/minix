@@ -26,12 +26,13 @@ typedef struct {
 #define PTF_WRITE	I386_VM_WRITE
 #define PTF_PRESENT	I386_VM_PRESENT
 #define PTF_USER	I386_VM_USER
+#define PTF_GLOBAL	I386_VM_GLOBAL
 #define PTF_MAPALLOC	I386_VM_PTAVAIL1 /* Page allocated by pt code. */
 
 /* For arch-specific PT routines to check if no bits outside
  * the regular flags are set.
  */
-#define PTF_ALLFLAGS	(PTF_WRITE|PTF_PRESENT|PTF_USER)
+#define PTF_ALLFLAGS	(PTF_WRITE|PTF_PRESENT|PTF_USER|PTF_GLOBAL)
 
 #endif
 

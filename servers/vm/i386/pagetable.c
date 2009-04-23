@@ -785,12 +785,12 @@ PUBLIC int pt_mapkernel(pt_t *pt)
 
         /* Map in text. flags: don't write, supervisor only */
         if((r=pt_writemap(pt, KERNEL_TEXT, KERNEL_TEXT, KERNEL_TEXT_LEN,
-		I386_VM_PRESENT, 0)) != OK)
+		I386_VM_PRESENT|I386_VM_GLOBAL, 0)) != OK)
 		return r;
  
         /* Map in data. flags: read-write, supervisor only */
         if((r=pt_writemap(pt, KERNEL_DATA, KERNEL_DATA, KERNEL_DATA_LEN,
-		I386_VM_PRESENT|I386_VM_WRITE, 0)) != OK)
+		I386_VM_PRESENT|I386_VM_WRITE|I386_VM_GLOBAL, 0)) != OK)
 		return r;
 
 	return OK;

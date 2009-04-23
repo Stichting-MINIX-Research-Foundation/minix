@@ -62,6 +62,8 @@ _PROTOTYPE( void reset, (void)                                          );
 _PROTOTYPE( void int86, (void)                     			);
 _PROTOTYPE( unsigned long read_cr0, (void)                              );
 _PROTOTYPE( void write_cr0, (unsigned long value)                       );
+_PROTOTYPE( unsigned long read_cr4, (void)                              );
+_PROTOTYPE( void write_cr4, (unsigned long value)                       );
 _PROTOTYPE( void write_cr3, (unsigned long value)                       );
 _PROTOTYPE( unsigned long read_cpu_flags, (void)                        );
 _PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)  );

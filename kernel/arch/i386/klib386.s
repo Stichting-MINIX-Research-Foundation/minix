@@ -38,6 +38,8 @@
 .define	_write_cr3	! write cr3
 .define _last_cr3
 .define	_write_cr0	! write a value in cr0
+.define	_read_cr4
+.define	_write_cr4
 
 .define	_kernel_cr3	
 
@@ -602,6 +604,31 @@ _write_cr0:
 	mov	eax, 8(ebp)
 	mov	cr0, eax
 	jmp	0f		! A jump is required for some flags
+0:
+	pop	ebp
+	ret
+
+!*===========================================================================*
+!*			      read_cr4					     *
+!*===========================================================================*
+! PUBLIC unsigned long read_cr4(void);
+_read_cr4:
+	push	ebp
+	mov	ebp, esp
+.data1	0x0f, 0x20, 0xe0 ! mov eax, cr4
+	pop	ebp
+	ret
+
+!*===========================================================================*
+!*			      write_cr4					     *
+!*===========================================================================*
+! PUBLIC void write_cr4(unsigned long value);
+_write_cr4:
+	push	ebp
+	mov	ebp, esp
+	mov	eax, 8(ebp)
+.data1	0x0f, 0x22, 0xe0 ! mov cr4, eax
+	jmp	0f
 0:
 	pop	ebp
 	ret
