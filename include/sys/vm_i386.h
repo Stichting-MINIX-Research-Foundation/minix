@@ -17,9 +17,12 @@ sys/vm_i386.h
 #define I386_VM_BIGPAGE	0x080	/* 4MB page */
 
 /* Page table specific flags. */
-#define I386_VM_DIRTY	0x040	/* Dirty */
-#define I386_VM_PTAVAIL1 0x080	/* Available for use. */
-#define I386_VM_PTAVAIL2 0x100	/* Available for use. */
+#define I386_VM_DIRTY    (1L<< 6)	/* Dirty */
+#define I386_VM_PS  	 (1L<< 7)	/* Page size. */
+#define I386_VM_GLOBAL   (1L<< 8)	/* Global. */
+#define I386_VM_PTAVAIL1 (1L<< 9)	/* Available for use. */
+#define I386_VM_PTAVAIL2 (1L<<10)	/* Available for use. */
+#define I386_VM_PTAVAIL3 (1L<<11)	/* Available for use. */
 
 #define I386_VM_PT_ENT_SIZE	4	/* Size of a page table entry */
 #define I386_VM_DIR_ENTRIES	1024	/* Number of entries in a page dir */
@@ -29,7 +32,18 @@ sys/vm_i386.h
 #define I386_VM_PT_ENTRIES	1024	/* Number of entries in a page table */
 #define I386_VM_PFA_SHIFT	22	/* Page frame address shift */
 
-#define I386_CR0_PG		0x80000000	/* Enable paging */		
+/* CR0 bits */
+#define I386_CR0_PG		0x80000000	/* Enable paging */
+
+/* some CR4 bits */
+#define I386_CR4_VME		0x00000001	/* Virtual 8086 */
+#define I386_CR4_PVI		0x00000002	/* Virtual ints */
+#define I386_CR4_TSD		0x00000004	/* RDTSC privileged */
+#define I386_CR4_DE		0x00000008	/* Debugging extensions */
+#define I386_CR4_PSE		0x00000010	/* Page size extensions */
+#define I386_CR4_PAE		0x00000020	/* Physical addr extens. */
+#define I386_CR4_MCE		0x00000040	/* Machine check enable */
+#define I386_CR4_PGE		0x00000080	/* Global page flag enable */
 
 /* i386 paging 'functions' */
 #define I386_VM_PTE(v)	(((v) >> I386_VM_PT_ENT_SHIFT) & I386_VM_PT_ENT_MASK)
