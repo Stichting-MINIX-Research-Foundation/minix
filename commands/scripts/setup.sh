@@ -216,7 +216,6 @@ do
 	echo ""
 
     echo "Now you need to create a MINIX 3 partition on your hard disk."
-    echo "It has to have $TOTALMB MB at the very least."
     echo "You can also select one that's already there."
     echo " "
     echo "If you have an existing installation, reinstalling will let you"
@@ -452,17 +451,16 @@ then
 echo " --- Step 7: Select a block size ---------------------------------------"
 	echo ""
 	
-	echo "The maximum (and default) file system block size is $blockdefault KB."
-	echo "For a small disk or small RAM you may want 1 or 2 KB blocks."
+	echo "The default file system block size is $blockdefault KB."
 	echo ""
 	
 	while [ -z "$blocksize" ]
 	do	
 		echo -n "Block size in kilobytes? [$blockdefault] "; read blocksize
 		test -z "$blocksize" && blocksize=$blockdefault
-		if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne $blockdefault ]
+		if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne 4 -a "$blocksize" -ne 8 ]
 		then	
-			warn "1, 2 or 4 please"
+			warn "1, 2, 4 or 8 please"
 			blocksize=""
 		fi
 	done
