@@ -67,12 +67,13 @@ PUBLIC int main(void)
       who_e = fs_m_in.m_source;
       if (who_e != FS_PROC_NR) {
           if (who_e == 0) {
-            /*
-               printf("MFS(%d): MSG from PM\n", SELF_E); 
-              error = 1;
-              fs_m_out.m_type = error; 
-              reply(who_e, &fs_m_out);
-            */
+		if(fs_m_in.m_type == PROC_EVENT) {
+			/* A signal from PM: this means we're getting killed.
+			 * Exit nicely.
+			 */
+			fs_sync();
+			exit(0);
+		}
           }
           continue;
       }
