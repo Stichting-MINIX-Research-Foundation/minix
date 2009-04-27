@@ -619,7 +619,6 @@ PUBLIC void do_exit(message *m_ptr)
 		  rp->r_flags = 0;			/* release slot */
               }
 	      else {
-		if(rs_verbose)
 		  printf("RS: unexpected exit. Restarting %s\n", rp->r_cmd);
                   /* Determine what to do. If this is the first unexpected 
 		   * exit, immediately restart this service. Otherwise use
