@@ -251,6 +251,8 @@ struct command {
 #define IDENTIFIED	0x10	/* w_identify done successfully */
 #define IGNORING	0x20	/* w_identify failed once */
 
+#define NO_DMA_VAR 	"ata_no_dma"
+
 /* Timeouts and max retries. */
 int timeout_ticks = DEF_TIMEOUT_TICKS, max_errors = MAX_ERRORS;
 long w_standard_timeouts = 0, w_pci_debug = 0, w_instance = 0,
@@ -468,7 +470,7 @@ PRIVATE void init_params()
   env_parse("ata_std_timeout", "d", 0, &w_standard_timeouts, 0, 1);
   env_parse("ata_pci_debug", "d", 0, &w_pci_debug, 0, 1);
   env_parse("ata_instance", "d", 0, &w_instance, 0, 8);
-  env_parse("ata_no_dma", "d", 0, &disable_dma, 0, 1);
+  env_parse(NO_DMA_VAR, "d", 0, &disable_dma, 0, 1);
   env_parse("ata_id_timeout", "d", WAKEUP_SECS, &wakeup_secs, 1, 60);
   env_parse("atapi_debug", "d", 0, &atapi_debug, 0, 1);
 
@@ -1393,30 +1395,33 @@ int safe;			/* iov contains addresses (0) or grants? */
 		r= sys_inb(wn->base_dma + DMA_STATUS, &v);
 		if (r != 0) panic("at_wini", "w_transfer: sys_inb failed", r);
 
+#define BAD_DMA_CONTINUE(msg) {						\
+	printf("at_wini%d: bad DMA: %s. Disabling DMA for drive %d.\n",	\
+		w_instance, msg, wn - wini);				\
+	printf("at_wini%d: workaround: set %s=1 in boot monitor.\n", \
+		w_instance, NO_DMA_VAR); \
+	wn->dma = 0;							\
+	continue;							\
+}
+
+
 #if 0
 		printf("dma_status: 0x%x\n", v);
 #endif
 		if (!(v & DMA_ST_INT))
 		{
 			/* DMA did not complete successfully */
-			if (v & DMA_ST_BM_ACTIVE)
-				panic(w_name(), "DMA did not complete", NO_NUM);
-			else if (v & DMA_ST_ERROR)
-			{
-				printf("at_wini: DMA error\n");
-				r= EIO;
-				break;
-			}
-			else
-			{
-#if 0
-				printf("DMA buffer too small\n");
-#endif
-				panic(w_name(), "DMA buffer too small", NO_NUM);
+			if (v & DMA_ST_BM_ACTIVE) {
+				BAD_DMA_CONTINUE("DMA did not complete");
+			} else if (v & DMA_ST_ERROR) {
+				BAD_DMA_CONTINUE("DMA error");
+			} else {
+				BAD_DMA_CONTINUE("DMA buffer too small");
 			}
 		}
-		else if (v & DMA_ST_BM_ACTIVE)
-			panic(w_name(), "DMA buffer too large", NO_NUM);
+		else if ((v & DMA_ST_BM_ACTIVE)) {
+			BAD_DMA_CONTINUE("DMA buffer too large");
+		}
 
 		dma_buf_offset= 0;
 		while (r == OK && nbytes > 0)
