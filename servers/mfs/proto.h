@@ -81,14 +81,12 @@ _PROTOTYPE( int lock_op, (struct filp *f, int req)			);
 _PROTOTYPE( void lock_revive, (void)					);
 
 /* main.c */
-_PROTOTYPE( int main, (void)						);
 _PROTOTYPE( void reply, (int who, message *m_out)			);
 
 /* misc.c */
 _PROTOTYPE( int do_dup, (void)						);
 _PROTOTYPE( int do_exit, (void)						);
 _PROTOTYPE( int do_fcntl, (void)					);
-_PROTOTYPE( int do_fork, (void)						);
 _PROTOTYPE( int do_exec, (void)						);
 _PROTOTYPE( int do_revive, (void)					);
 _PROTOTYPE( int do_set, (void)						);

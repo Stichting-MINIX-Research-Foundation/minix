@@ -1,5 +1,6 @@
 
 #include "inc.h"
+#include <assert.h>
 #include <minix/dmap.h>
 #include <minix/endpoint.h>
 
@@ -16,17 +17,15 @@ FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 
 FORWARD _PROTOTYPE(void cch_check, (void)				);
 
-
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
-PUBLIC int main(void)
+PUBLIC int main(int argc, char *argv[])
 {
 /* This is the main routine of this service. The main loop consists of 
  * three major activities: getting new work, processing the work, and
  * sending the reply. The loop never terminates, unless a panic occurs.
  */
-  int who_e;				        /* caller */
   int error, ind;
   message m;
 
@@ -40,43 +39,25 @@ PUBLIC int main(void)
       return -1;
   }
 
-#if 0
-  if (fs_m_in.m_type != REQ_READSUPER_O && fs_m_in.m_type != REQ_READSUPER_S) {
-      printf("MFS(%d): Invalid login reply\n", SELF_E);
-      return -1;
-  }
-  else {
-      if (fs_m_in.m_type == REQ_READSUPER_S)
-	      fs_m_out.m_type = fs_readsuper_s();
-      else
-	      fs_m_out.m_type = fs_readsuper_o();
-      reply(FS_PROC_NR, &fs_m_out);
-      if (fs_m_out.m_type != OK) return -1;
-  }
-#endif
-
-
-  for (;;) {
+  while(!unmountdone || !exitsignaled) {
+      endpoint_t src;
       /* Wait for request message. */
       get_work(&fs_m_in);
+      src = fs_m_in.m_source;
       error = OK;
 
       caller_uid = -1;	/* To trap errors */
       caller_gid = -1;
 
-      who_e = fs_m_in.m_source;
-      if (who_e != FS_PROC_NR) {
-          if (who_e == 0) {
-		if(fs_m_in.m_type == PROC_EVENT) {
-			/* A signal from PM: this means we're getting killed.
-			 * Exit nicely.
-			 */
-			fs_sync();
-			exit(0);
-		}
-          }
-          continue;
+      /* Exit request? */
+      if(src == PM_PROC_NR) {
+	exitsignaled = 1;
+	fs_sync();
+	continue;
       }
+
+      /* This must be a regular VFS request. */
+      assert(src == VFS_PROC_NR && !unmountdone);
 
       req_nr = fs_m_in.m_type;
 
@@ -98,23 +79,11 @@ PUBLIC int main(void)
       }
 
       fs_m_out.m_type = error; 
-      reply(who_e, &fs_m_out);
-      
-		
+      reply(src, &fs_m_out);
+
       if (error == OK && rdahed_inode != NIL_INODE) {
           read_ahead(); /* do block read ahead */
       }
-
-      /*
-       * VFS asks RS to bring down the FS... */
-      /*
-      if (req_nr == REQ_UNMOUNT || 
-              (req_nr == REQ_READSUPER && error != OK)) {
-          printf("MFS(%d) exit() cachehit: %d cachemiss: %d\n", SELF_E,
-			  inode_cache_hit, inode_cache_miss);
-          return 0;
-      }
-      */
   }
 }
 
@@ -148,9 +117,35 @@ PRIVATE void init_server(void)
 PRIVATE void get_work(m_in)
 message *m_in;				/* pointer to message */
 {
-    int s;				/* receive status */
-    if (OK != (s = receive(ANY, m_in))) 	/* wait for message */
-        panic("MFS","receive failed", s);
+    int srcok = 0;
+    endpoint_t src;
+    do {
+    	int s;				/* receive status */
+	if (OK != (s = receive(ANY, m_in))) 	/* wait for message */
+		panic("MFS","receive failed", s);
+	src = fs_m_in.m_source;
+
+	if (src != FS_PROC_NR) {
+		if(src == PM_PROC_NR) {
+			if(fs_m_in.m_type == PROC_EVENT)
+				srcok = 1; /* Normal exit request. */
+		    	else
+				printf("MFS: unexpected message from PM\n");
+		} else
+			printf("MFS: unexpected source %d\n", src);
+	} else if(src == FS_PROC_NR) {
+		if(unmountdone) {
+			printf("MFS: unmounted: unexpected message from FS\n");
+		} else {
+			/* Normal FS request. */
+			srcok = 1;
+		}
+	} else
+		printf("MFS: unexpected source %d\n", src);
+   } while(!srcok);
+
+   assert((src == FS_PROC_NR && !unmountdone) || 
+	(src == PM_PROC_NR && fs_m_in.m_type == PROC_EVENT));
 }
 
 

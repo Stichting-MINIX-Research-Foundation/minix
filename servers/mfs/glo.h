@@ -44,6 +44,8 @@ EXTERN dev_t fs_dev;    	/* The device that is handled by this FS proc.
 EXTERN char fs_dev_label[16];	/* Name of the device driver that is handled
 				 * by this FS proc.
 				 */
+EXTERN int unmountdone;
+EXTERN int exitsignaled;
 
 /* our block size. */
 EXTERN int fs_block_size;

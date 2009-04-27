@@ -294,8 +294,6 @@ PUBLIC int fs_unmount()
   count = 0;
   for (rip = &inode[0]; rip < &inode[NR_INODES]; rip++) {
 	if (rip->i_count > 0 && rip->i_dev == fs_dev) {
-/*printf("FSunmount DEV: %d inode: %d count: %d iaddr: %d\n", 
-		rip->i_dev, rip->i_num, rip->i_count, rip);*/	
 		count += rip->i_count;
 	}
   }
@@ -315,6 +313,7 @@ PUBLIC int fs_unmount()
   /* Finish off the unmount. */
   superblock.s_dev = NO_DEV;
   
+  unmountdone = TRUE;
 
   return OK;
 }
