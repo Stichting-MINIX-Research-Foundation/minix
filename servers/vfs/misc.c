@@ -298,6 +298,33 @@ PUBLIC int do_fsync()
   return(OK);
 }
 
+void unmount_all(void)
+{
+	int i;
+	int found = 0, worked = 0, remain = 0;
+  /* Unmount all filesystems.  File systems are mounted on other file systems,
+   * so you have to pull off the loose bits repeatedly to get it all undone.
+   */
+  for (i= 0; i < NR_SUPERS; i++) {
+  	struct vmnt *vmp;
+	/* Unmount at least one. */
+	worked = remain = 0;
+	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
+		if (vmp->m_dev != NO_DEV) {
+			found++;
+  			CHECK_VREFS;
+			if(unmount(vmp->m_dev) == OK)
+				worked++;
+			else
+				remain++;
+  			CHECK_VREFS;
+		}
+	}
+  }
+
+	  printf("VFS: worked: %d remain: %d\n", worked, remain);
+}
+
 /*===========================================================================*
  *				pm_reboot				     *
  *===========================================================================*/
@@ -305,7 +332,6 @@ PUBLIC void pm_reboot()
 {
   /* Perform the FS side of the reboot call. */
   int i;
-  struct vmnt *vmp;
 
   do_sync();
 
@@ -316,27 +342,17 @@ PUBLIC void pm_reboot()
    * will tell us about it).
    */
   for (i = 0; i < NR_PROCS; i++)
-	if((m_in.endpt1 = fproc[i].fp_endpoint) != NONE)
-		free_proc(&fproc[i], FP_EXITING);
+	if((m_in.endpt1 = fproc[i].fp_endpoint) != NONE) {
+		/* No FP_EXITING, just free the resources, otherwise
+		 * consistency check for fp_endpoint (set to NONE) will
+		 * fail if process wants to do something in the (short)
+		 * future.
+		 */
+		free_proc(&fproc[i], 0);
+	}
   CHECK_VREFS;
 
-  /* The root file system is mounted onto itself, which keeps it from being
-   * unmounted.  Pull an inode out of thin air and put the root on it.
-   */
-
-  /* Unmount all filesystems.  File systems are mounted on other file systems,
-   * so you have to pull off the loose bits repeatedly to get it all undone.
-   */
-  for (i= 0; i < NR_SUPERS; i++) {
-	/* Unmount at least one. */
-	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
-		if (vmp->m_dev != NO_DEV) {
-  			CHECK_VREFS;
-			(void) unmount(vmp->m_dev);
-  			CHECK_VREFS;
-		}
-	}
-  }
+  unmount_all();
 
   CHECK_VREFS;
 
@@ -378,6 +394,7 @@ int cpid;	/* Child process id */
   /* Increase the counters in the 'filp' table. */
   cp = &fproc[childno];
   fp = &fproc[parentno];
+
   for (i = 0; i < OPEN_MAX; i++)
 	if (cp->fp_filp[i] != NIL_FILP) cp->fp_filp[i]->filp_count++;
 
@@ -404,8 +421,8 @@ int cpid;	/* Child process id */
   cp->fp_execced = 0;
 
   /* Record the fact that both root and working dir have another user. */
-  dup_vnode(cp->fp_rd);
-  dup_vnode(cp->fp_wd);
+  if(cp->fp_rd) dup_vnode(cp->fp_rd);
+  if(cp->fp_wd) dup_vnode(cp->fp_wd);
 }
 
 /*===========================================================================*
@@ -421,6 +438,10 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
 
   fp = exiter;		/* get_filp() needs 'fp' */
 
+  if(fp->fp_endpoint == NONE) {
+	panic(__FILE__, "free_proc: already free", NO_NUM);
+  }
+
   if (fp->fp_suspended == SUSPENDED) {
 	task = -fp->fp_task;
 	if (task == XPIPE || task == XPOPEN) susp_count--;
@@ -432,12 +453,6 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   for (i = 0; i < OPEN_MAX; i++) {
 	(void) close_fd(fp, i);
   }
-
-  /* Release root and working directories. */
-  put_vnode(fp->fp_rd);
-  put_vnode(fp->fp_wd);
-  fp->fp_rd = NIL_VNODE;
-  fp->fp_wd = NIL_VNODE;
   
   /* Check if any process is SUSPENDed on this driver.
    * If a driver exits, unmap its entries in the dmap table.
@@ -445,6 +460,12 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
    * dmap table is used in the first step.)
    */
   unsuspend_by_endpt(fp->fp_endpoint);
+
+  /* Release root and working directories. */
+  if(fp->fp_rd) { put_vnode(fp->fp_rd); fp->fp_rd = NIL_VNODE; }
+  if(fp->fp_wd) { put_vnode(fp->fp_wd); fp->fp_wd = NIL_VNODE; }
+
+ CHECK_VREFS;
 
   /* The rest of these actions is only done when processes actually
    * exit.

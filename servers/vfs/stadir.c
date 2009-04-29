@@ -39,6 +39,12 @@ PUBLIC int do_fchdir()
   struct filp *rfilp;
   int r;
 
+  if(!fp->fp_wd || !fp->fp_rd) {
+	printf("VFS: do_fchdir: %d: no rd/wd\n",
+		fp->fp_endpoint);
+	return ENOENT;
+  }
+
   /* Is the file descriptor valid? */
   if ( (rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
 
@@ -67,11 +73,22 @@ PUBLIC int do_chdir()
   int r;
   register struct fproc *rfp;
 
+  if(!fp->fp_wd || !fp->fp_rd) {
+	printf("VFS: do_chdir: %d: no rd/wd\n",
+		fp->fp_endpoint);
+	return ENOENT;
+  }
+
   if (who_e == PM_PROC_NR) {
 	int slot;
 	if(isokendpt(m_in.endpt1, &slot) != OK)
 		return EINVAL;
 	rfp = &fproc[slot];
+
+	if(!rfp->fp_wd || !rfp->fp_rd) {
+		printf("VFS: do_chdir: %d: no other rd/wd\n", fp->fp_endpoint);
+		return ENOENT;
+	}
         
         put_vnode(fp->fp_rd);
         dup_vnode(fp->fp_rd = rfp->fp_rd);
@@ -106,6 +123,12 @@ PUBLIC int do_chroot()
   register int r;
 
   if (!super_user) return(EPERM);	/* only su may chroot() */
+
+  if(!fp->fp_wd || !fp->fp_rd) {
+	printf("VFS: do_chroot: %d: no rd/wd\n",
+		fp->fp_endpoint);
+	return ENOENT;
+  }
   
   r = change(&fp->fp_rd, m_in.name, m_in.name_length);
   return(r);

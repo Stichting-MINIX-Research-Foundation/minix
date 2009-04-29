@@ -251,6 +251,11 @@ int *created;
 	struct node_details res;
 	char lastc[PATH_MAX+1];
 
+	if(!fp->fp_rd || !fp->fp_wd) {
+		printf("VFS: %d: no rd/wd\n", fp->fp_endpoint);
+		return ENOENT;
+	}
+
 	start_vp = (user_fullpath[0] == '/' ? fp->fp_rd : fp->fp_wd);
 	dup_vnode(start_vp);
 

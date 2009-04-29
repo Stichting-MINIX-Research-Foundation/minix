@@ -109,6 +109,11 @@ struct vnode **vpp;
    */
   struct vnode *vp;
 
+  if(!fp->fp_rd || !fp->fp_wd) {
+	printf("VFS: lookup_vp %d: no rd/wd\n", fp->fp_endpoint);
+	return ENOENT;
+  }
+
   vp= (user_fullpath[0] == '/' ? fp->fp_rd : fp->fp_wd);
 
   return lookup_rel_vp(vp, flags, use_realuid, vpp);
@@ -207,6 +212,11 @@ struct vnode **vpp;
 	 */
 	struct vnode *vp;
 
+  if(!fp->fp_rd || !fp->fp_wd) {
+	printf("VFS: lookup_lastdir %d: no rd/wd\n", fp->fp_endpoint);
+	return ENOENT;
+  }
+
 	vp= (user_fullpath[0] == '/' ? fp->fp_rd : fp->fp_wd);
 	return lookup_lastdir_rel(vp, use_realuid, vpp);
 }
@@ -236,6 +246,11 @@ node_details_t *node;
   if (user_fullpath[0] == '\0') {
 	node->inode_nr = 0;
 	printf("vfs:lookup_rel: returning ENOENT\n");
+	return ENOENT;
+  }
+
+  if(!fp->fp_rd || !fp->fp_wd) {
+	printf("VFS: lookup_rel %d: no rd/wd\n", fp->fp_endpoint);
 	return ENOENT;
   }
 

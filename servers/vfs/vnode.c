@@ -189,8 +189,8 @@ PUBLIC int check_vrefs()
 	for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 		if (rfp->fp_pid == PID_FREE)
 			continue;
-		REFVP(rfp->fp_rd);
-                REFVP(rfp->fp_wd);
+		if(rfp->fp_rd) REFVP(rfp->fp_rd);
+                if(rfp->fp_wd) REFVP(rfp->fp_wd);
   	}
 
 	/* Count references from filedescriptors */

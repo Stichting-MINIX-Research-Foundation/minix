@@ -10,8 +10,8 @@ EXTERN struct fproc {
 
   mode_t fp_umask;		/* mask set by umask system call */
  
-  struct vnode *fp_wd;		/* working directory */
-  struct vnode *fp_rd;		/* root directory */
+  struct vnode *fp_wd;		/* working directory; NULL during reboot */
+  struct vnode *fp_rd;		/* root directory; NULL during reboot */
   
   struct filp *fp_filp[OPEN_MAX];/* the file descriptor table */
 

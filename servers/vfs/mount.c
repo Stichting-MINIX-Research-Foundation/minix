@@ -327,18 +327,14 @@ PRIVATE int mount_fs(endpoint_t fs_e)
           if (tfp->fp_pid == PID_FREE)
               continue;
 
-          if (tfp->fp_rd == NULL)
-              panic("fs", "do_mount: null rootdir", i);
-          if (tfp->fp_wd == NULL)
-              panic("fs", "do_mount: null workdir", i);
+#define MAKEROOT(what) { 		\
+		put_vnode(what);	\
+		dup_vnode(root_node);	\
+		what = root_node;	\
+	  }
 
-          put_vnode(tfp->fp_rd);
-          dup_vnode(root_node);
-          tfp->fp_rd = root_node;
-
-          put_vnode(tfp->fp_wd);
-          dup_vnode(root_node);
-          tfp->fp_wd = root_node;
+	  if(tfp->fp_rd) MAKEROOT(tfp->fp_rd);
+	  if(tfp->fp_wd) MAKEROOT(tfp->fp_wd);
       }
 
   	CHECK_VREFS;
@@ -435,13 +431,11 @@ Dev_t dev;
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
       if (vp->v_ref_count > 0 && vp->v_dev == dev) {
 
-#if 1
+#if 0
 	int i;
         	struct fproc *tfp;
-	  if(!(vp->v_inode_nr == 1 && vp->v_ref_count == 1)) {
 		  printf("unmount: vnode 0x%x/%d in use %d times\n",
 			dev, vp->v_inode_nr, vp->v_ref_count);
-	  }
 	      for (i= 0, tfp= fproc; i<NR_PROCS; i++, tfp++) {
 		int n;
       	 	   if (tfp->fp_pid == PID_FREE)
@@ -465,7 +459,7 @@ Dev_t dev;
 				printf("\tvnode %d: is a mount point\n",
 					vp->v_inode_nr);
 			  }
-#if 0
+#if 1
 			  if(vmp_i->m_root_node == vp) {
 				printf("\tvnode %d: is a root node\n",
 					vp->v_inode_nr);
