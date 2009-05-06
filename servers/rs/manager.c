@@ -555,10 +555,7 @@ PUBLIC void do_exit(message *m_ptr)
 		r= read(exec_pipe[0], &slot_nr, sizeof(slot_nr));
 		if (r == -1)
 		{
-			if (errno == -EAGAIN)	/* Negative error defines */
-				break;	/* No data */
-			panic("RS", "do_exit: read from exec pipe failed",
-				errno);
+			break;	/* No data */
 		}
 		if (r != sizeof(slot_nr))
 		{
@@ -619,7 +616,6 @@ PUBLIC void do_exit(message *m_ptr)
 		  rp->r_flags = 0;			/* release slot */
               }
 	      else {
-		  printf("RS: unexpected exit. Restarting %s\n", rp->r_cmd);
                   /* Determine what to do. If this is the first unexpected 
 		   * exit, immediately restart this service. Otherwise use
 		   * a binary exponetial backoff.
@@ -637,15 +633,21 @@ rp->r_restarts= 0;
 		  else
 			rp->r_flags |= RS_CRASHED;
 
-		  if (rp->r_script[0] != '\0')
+		  if (rp->r_script[0] != '\0') {
+			if(rs_verbose)
+				printf("RS: running restart script for %s\n",
+					rp->r_cmd);
 		      run_script(rp);
-		  else if (rp->r_restarts > 0) {
+		  } else if (rp->r_restarts > 0) {
+		      printf("RS: restarting %s, restarts %d\n",
+				rp->r_cmd, rp->r_backoff);
 		      rp->r_backoff = 1 << MIN(rp->r_restarts,(BACKOFF_BITS-2));
 		      rp->r_backoff = MIN(rp->r_backoff,MAX_BACKOFF); 
 		      if (rp->r_exec != NULL && rp->r_backoff > 1)
 			rp->r_backoff= 1;
 		  }
 		  else {
+		      printf("RS: restarting %s\n", rp->r_cmd);
 		      start_service(rp, 0, &ep);	/* direct restart */
 	  	      m_ptr->RS_ENDPOINT = ep;
 			/* Do this even if no I/O happens with the ioctl, in
