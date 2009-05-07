@@ -803,14 +803,18 @@ PUBLIC int fs_rename_s()
 				r = EINVAL;
 				break;
 			}
+#if 0
 printf("fs_rename_s: new_superdirp: %d on 0x%x\n",
 	new_superdirp->i_num, new_superdirp->i_dev);
+#endif
 
 			next_new_superdirp = advance_nocheck(&new_superdirp,
 				dot2);
 
+#if 0
 printf("fs_rename_s: next_new_superdirp: %d on 0x%x\n",
 	next_new_superdirp->i_num, next_new_superdirp->i_dev);
+#endif
 
 			put_inode(new_superdirp);
 			if (next_new_superdirp == new_superdirp) {
