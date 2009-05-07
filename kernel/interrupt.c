@@ -28,22 +28,27 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq, irq_handler_t handler)
 {
   int id;
   irq_hook_t **line;
+  unsigned long bitmap;
   
   if( irq < 0 || irq >= NR_IRQ_VECTORS )
 	minix_panic("invalid call to put_irq_handler", irq);
 
   line = &irq_handlers[irq];
-  id = 1;
-  
+
+  bitmap = 0;
   while ( *line != NULL ) {
 	if(hook == *line) return; /* extra initialization */
+	bitmap |= (*line)->id;	/* mark ids in use */
 	line = &(*line)->next;
-	id <<= 1;                 /* max 32 hooks for one line. */
   }
-  
-  if(id == 0)
-	minix_panic("Too many handlers for irq", irq);
 
+  /* find the lowest id not in use */
+  for (id = 1; id != 0; id <<= 1)
+  	if (!(bitmap & id)) break;
+
+  if(id == 0)
+  	minix_panic("Too many handlers for irq", irq);
+  
   hook->next = NULL;
   hook->handler = handler;
   hook->irq = irq;
@@ -81,6 +86,8 @@ PUBLIC void rm_irq_handler( irq_hook_t* hook ) {
 		(*line) = (*line)->next;      
 		if(!irq_handlers[irq])
 			irq_use &= ~(1 << irq);
+		if (irq_actids[irq] & id)
+			irq_actids[irq] &= ~id;
 		return;
     	}          
 	line = &(*line)->next;
