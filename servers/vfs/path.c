@@ -245,7 +245,9 @@ node_details_t *node;
   /* Empty (start) path? */
   if (user_fullpath[0] == '\0') {
 	node->inode_nr = 0;
+#if 0
 	printf("vfs:lookup_rel: returning ENOENT\n");
+#endif
 	return ENOENT;
   }
 

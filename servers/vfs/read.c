@@ -73,7 +73,9 @@ int rw_flag;			/* READING or WRITING */
   	return(err_code);
   }
   if (((f->filp_mode) & (rw_flag == READING ? R_BIT : W_BIT)) == 0) {
+#if 0
 	printf("vfs:read_write: returning error\n");
+#endif
       return(f->filp_mode == FILP_CLOSED ? EIO : EBADF);
   }
 

@@ -37,8 +37,10 @@ int flag;			/* M3 means path may be in message */
   int r;
 
   if (len > PATH_MAX) {
+#if 0
 	printf("VFS: fetch_name: len (%d) > %d\n", len, PATH_MAX);
 	util_stacktrace();
+#endif
 	err_code = ENAMETOOLONG;
 	return(EGENERIC);
   }
