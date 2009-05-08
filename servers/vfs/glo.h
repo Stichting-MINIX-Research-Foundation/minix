@@ -29,7 +29,6 @@ EXTERN short cum_path_processed;        /* number of characters processed */
 
 /* The following variables are used for returning results to the caller. */
 EXTERN int err_code;		/* temporary storage for error number */
-EXTERN int rdwt_err;		/* status of last disk i/o request */
 
 /* Data initialized elsewhere. */
 extern _PROTOTYPE (int (*call_vec[]), (void) ); /* sys call table */
