@@ -14,7 +14,7 @@
 #include <minix/swap.h>
 #include <sys/svrctl.h>
 #include <stdio.h>
-#include "../../servers/vfs/const.h"
+#include "../../servers/mfs/const.h"
 
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void list, (void));

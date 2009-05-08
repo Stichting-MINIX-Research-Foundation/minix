@@ -22,7 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../../servers/vfs/const.h"
+#include "../../servers/mfs/const.h"
 
 char pvd[CD_SECTOR];
 
