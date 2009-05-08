@@ -458,8 +458,11 @@ int suspend_reopen;		/* Just suspend the process */
 		(*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 		if (dev_mess.REP_STATUS == EINTR) dev_mess.REP_STATUS = EAGAIN;
 	} else {
-		/* Suspend user. */
-		suspend(dp->dmap_driver);
+		/* select() will do suspending itself. */
+		if(op != DEV_SELECT) {
+			/* Suspend user. */
+			suspend(dp->dmap_driver);
+		}
 		assert(!GRANT_VALID(fp->fp_grant));
 		fp->fp_grant = gid;	/* revoke this when unsuspended. */
 		fp->fp_ioproc = ioproc;
