@@ -240,8 +240,13 @@ int task;			/* who is proc waiting for? (PIPE = pipe) */
  * The SUSPEND pseudo error should be returned after calling suspend().
  */
 
+#if DO_SANITYCHECKS
   if (task == XPIPE)
 	panic(__FILE__, "suspend: called for XPIPE", NO_NUM);
+
+  if(fp->fp_suspended == SUSPENDED)
+	panic(__FILE__, "suspend: called for suspended process", NO_NUM);
+#endif
 
   if (task == XPOPEN) susp_count++;/* #procs susp'ed on pipe*/
   fp->fp_suspended = SUSPENDED;
@@ -277,6 +282,10 @@ size_t size;
  * but they are needed for pipes, and it is not worth making the distinction.)
  * The SUSPEND pseudo error should be returned after calling suspend().
  */
+#if DO_SANITYCHECKS
+  if(fp->fp_suspended == SUSPENDED)
+	panic(__FILE__, "pipe_suspend: called for suspended process", NO_NUM);
+#endif
 
   susp_count++;					/* #procs susp'ed on pipe*/
   fp->fp_suspended = SUSPENDED;
@@ -463,6 +472,7 @@ int proc_nr_e;
   struct filp *f;
   dev_t dev;
   message mess;
+  int wasreviving = 0;
 
   if(isokendpt(proc_nr_e, &proc_nr_p) != OK) {
 	printf("VFS: ignoring unpause for bogus endpoint %d\n", proc_nr_e);
@@ -478,7 +488,9 @@ int proc_nr_e;
   {
 	rfp->fp_revived = NOT_REVIVING;
 	reviving--;
+	wasreviving = 1;
   }
+
 
   switch (task) {
 	case XPIPE:		/* process trying to read or write a pipe */
@@ -540,6 +552,11 @@ int proc_nr_e;
   }
 
   rfp->fp_suspended = NOT_SUSPENDED;
+
+  if ((task == XPIPE || task == XPOPEN) && !wasreviving) {
+	susp_count--;
+  }
+
   reply(proc_nr_e, status);	/* signal interrupted call */
 }
 
@@ -587,6 +604,34 @@ PUBLIC int select_match_pipe(struct filp *f)
 	return 0;
 }
 
+#if DO_SANITYCHECKS
+/*===========================================================================*
+ *				check_pipe			     *
+ *===========================================================================*/
+PUBLIC int check_pipe(void)
+{
+	struct fproc *rfp;
+	int mycount = 0;
+        for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+                if (rfp->fp_pid == PID_FREE)
+                        continue;
+		if(rfp->fp_suspended != SUSPENDED &&
+			rfp->fp_suspended != NOT_SUSPENDED) {
+			printf("check_pipe: %d invalid suspended value 0x%x\n",
+				rfp->fp_endpoint, rfp->fp_suspended);
+			return 0;
+		}
+		if(rfp->fp_suspended == SUSPENDED && rfp->fp_revived != REVIVING && (-rfp->fp_task == XPIPE || -rfp->fp_task == XPOPEN)) {
+			mycount++;
+		}
+        }
 
+	if(mycount != susp_count) {
+		printf("check_pipe: mycount %d susp_count %d\n",
+			mycount, susp_count);
+		return 0;
+	}
 
-
+	return 1;
+}
+#endif

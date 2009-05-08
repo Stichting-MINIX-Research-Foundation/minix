@@ -38,5 +38,3 @@ EXTERN struct vnode {
 #define NO_SEEK            0	/* i_seek = NO_SEEK if last op was not SEEK */
 #define ISEEK              1	/* i_seek = ISEEK if last op was SEEK */
 
-
-#define SANITYCHECK do { if(!check_vrefs()) { printf("VFS:%s:%d: vref check failed\n", __FILE__, __LINE__); util_stacktrace(); } } while(0)

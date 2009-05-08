@@ -57,8 +57,11 @@ PUBLIC int main()
 
   fs_init();
 
+  SANITYCHECK;
+
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
+	SANITYCHECK;
 	get_work();		/* sets who and call_nr */
 
 	if (who_e == PM_PROC_NR && call_nr != PROC_EVENT)
@@ -121,14 +124,7 @@ PUBLIC int main()
 			/* Device notifies us of an event. */
 			dev_status(&m_in);
 		}
-#if 0
-		if (!check_vrefs())
-		{
-			printf("after call %d from %d/%d\n",
-				call_nr, who_p, who_e);
-			panic(__FILE__, "check_vrefs failed at line", __LINE__);
-		}
-#endif
+		SANITYCHECK;
 		continue;
 	}
 
@@ -142,6 +138,14 @@ PUBLIC int main()
 	/* Now it's safe to set and check fp. */
 	fp = &fproc[who_p];	/* pointer to proc table struct */
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
+
+#if DO_SANITYCHECKS
+	if(fp->fp_suspended != NOT_SUSPENDED) {
+		printf("VFS: requester %d call %d: not not suspended\n",
+			who_e, call_nr);
+		panic(__FILE__, "requester suspended", NO_NUM);
+	}
+#endif
 
 	/* Calls from VM. */
 	if(who_e == VM_PROC_NR) {
@@ -166,6 +170,8 @@ PUBLIC int main()
 		continue;
 	   }
 	}
+
+		SANITYCHECK;
 
 	  /* Other calls. */
 	  switch(call_nr)
@@ -196,21 +202,15 @@ PUBLIC int main()
 #if ENABLE_SYSCALL_STATS
 			calls_stats[call_nr]++;
 #endif
+			SANITYCHECK;
 			error = (*call_vec[call_nr])();
+			SANITYCHECK;
 		}
 
 		/* Copy the results back to the user and send reply. */
 		if (error != SUSPEND) { reply(who_e, error); }
 	}
-#if 0
-	if (!check_vrefs())
-	{
-		printf("after call %d from %d/%d\n", call_nr, who_p, who_e);
-		panic(__FILE__, "check_vrefs failed at line", __LINE__);
-	}
-#endif
-	
-	
+	SANITYCHECK;
   }
   return(OK);				/* shouldn't come here */
 }
@@ -352,6 +352,8 @@ PRIVATE void fs_init()
 	rfp->fp_effgid = (gid_t) SYS_GID;
 	rfp->fp_umask = ~0;
 	rfp->fp_grant = GRANT_INVALID;
+	rfp->fp_suspended = NOT_SUSPENDED;
+	rfp->fp_revived = NOT_REVIVING;
    
   } while (TRUE);			/* continue until process NONE */
   mess.m_type = OK;			/* tell PM that we succeeded */

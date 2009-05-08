@@ -169,6 +169,7 @@ int line;
 
 #define REFVP(v) { vp = (v); CHECKVN(v); vp->v_ref_check++; }
 
+#if DO_SANITYCHECKS
 /*===========================================================================*
  *				check_vrefs				     *
  *===========================================================================*/
@@ -245,3 +246,4 @@ PUBLIC int check_vrefs()
 	}
 	return !bad;
 }
+#endif

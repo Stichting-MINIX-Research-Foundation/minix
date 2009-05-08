@@ -138,6 +138,9 @@ _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
 _PROTOTYPE( void unsuspend_by_endpt, (int)				);
 _PROTOTYPE( void select_reply1, (void)					);
 _PROTOTYPE( void select_reply2, (void)					);
+#if DO_SANITYCHECKS
+_PROTOTYPE( int check_pipe, (void)					);
+#endif
 
 /* protect.c */
 _PROTOTYPE( int do_access, (void)					);
@@ -251,15 +254,9 @@ _PROTOTYPE( struct vnode *find_vnode, (int fs_e, int numb)              );
 _PROTOTYPE( void dup_vnode, (struct vnode *vp)                          );
 _PROTOTYPE( void put_vnode, (struct vnode *vp)                          );
 _PROTOTYPE( void vnode_clean_refs, (struct vnode *vp)                   );
-#if 0
-_PROTOTYPE( struct vnode *get_vnode, (int fs_e, int inode_nr)           );
-_PROTOTYPE( struct vnode *get_vnode_x, (int fs_e, int inode_nr)		);
-_PROTOTYPE( void mark_vn, (struct vnode *vp, char *file, int line)	);
-#endif
-#define CHECK_VREFS do { if(!check_vrefs()) { \
-	printf("VFS:%s:%d: check_vrefs failed\n", __FILE__, __LINE__);	\
-	panic("VFS", "check_vrefs failed", NO_NUM);} } while(0)
+#if DO_SANITYCHECKS
 _PROTOTYPE( int check_vrefs, (void)			);
+#endif
 
 /* write.c */
 _PROTOTYPE( int do_write, (void)					);

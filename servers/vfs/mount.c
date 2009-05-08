@@ -71,7 +71,7 @@ PUBLIC int do_mount()
 {
   endpoint_t fs_e; 
 
-  CHECK_VREFS;
+  SANITYCHECK;
 
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -107,7 +107,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   char *label;
   struct node_details res;
 
-  CHECK_VREFS;
+  SANITYCHECK;
   
   /* Only the super-user may do MOUNT. */
   if (!super_user) return(EPERM);
@@ -337,7 +337,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
 	  if(tfp->fp_wd) MAKEROOT(tfp->fp_wd);
       }
 
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
       return(OK);
   }
@@ -371,7 +371,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
       printf("VFSmount: moving opened block spec to new FS_e: %d...\n", fs_e);
       bspec->v_bfs_e = fs_e; 
   }
-  	CHECK_VREFS;
+  	SANITYCHECK;
   return(OK);
 }
 
@@ -382,17 +382,17 @@ PUBLIC int do_umount()
 {
 /* Perform the umount(name) system call. */
   dev_t dev;
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   /* Only the super-user may do UMOUNT. */
   if (!super_user) return(EPERM);
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   /* If 'name' is not for a block special file, return error. */
   if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-  	CHECK_VREFS;
+  	SANITYCHECK;
   if ( (dev = name_to_dev()) == NO_DEV) return(err_code);
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   return(unmount(dev));
 }
@@ -410,7 +410,7 @@ Dev_t dev;
   int count, r;
   int fs_e;
   
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   /* Find vmnt */
   for (vmp_i = &vmnt[0]; vmp_i < &vmnt[NR_MNTS]; ++vmp_i) {
@@ -472,16 +472,16 @@ Dev_t dev;
           count += vp->v_ref_count;
       }
   }
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   if (count > 1) {
       return(EBUSY);    /* can't umount a busy file system */
   }
 
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   vnode_clean_refs(vmp->m_root_node);
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   if (vmp->m_mounted_on) {
       put_vnode(vmp->m_mounted_on);
@@ -504,7 +504,7 @@ Dev_t dev;
   vmp->m_dev = NO_DEV;
   vmp->m_fs_e = NONE;
 
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   /* Is there a block special file that was handled by that partition? */
   for (vp = &vnode[0]; vp < &vnode[NR_VNODES]; vp++) {
@@ -531,7 +531,7 @@ Dev_t dev;
       }
   }
 
-  	CHECK_VREFS;
+  	SANITYCHECK;
 
   return(OK);
 }

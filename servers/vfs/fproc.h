@@ -25,8 +25,8 @@ EXTERN struct fproc {
   char *fp_buffer;		/* place to save buffer if rd/wr can't finish*/
   int  fp_nbytes;		/* place to save bytes if rd/wr can't finish */
   int  fp_cum_io_partial;	/* partial byte count if rd/wr can't finish */
-  char fp_suspended;		/* set to indicate process hanging */
-  char fp_revived;		/* set to indicate process being revived */
+  int fp_suspended;		/* set to indicate process hanging */
+  int fp_revived;		/* set to indicate process being revived */
   int fp_task;			/* which task is proc suspended on */
   
   endpoint_t fp_ioproc;		/* proc no. in suspended-on i/o message */
@@ -47,10 +47,12 @@ EXTERN struct fproc {
 				 */
 
 /* Field values. */
-#define NOT_SUSPENDED      0	/* process is not suspended on pipe or task */
-#define SUSPENDED          1	/* process is suspended on pipe or task */
-#define NOT_REVIVING       0	/* process is not being revived */
-#define REVIVING           1	/* process is being revived from suspension */
+/* fp_suspended is one of these. */
+#define NOT_SUSPENDED      0xC0FFEE	/* process is not suspended on pipe or task */
+#define SUSPENDED          0xDEAD	/* process is suspended on pipe or task */
+
+#define NOT_REVIVING       0xC0FFEEE	/* process is not being revived */
+#define REVIVING           0xDEEAD	/* process is being revived from suspension */
 #define PID_FREE	   0	/* process slot free */
 
 /* Check is process number is acceptable - includes system processes. */

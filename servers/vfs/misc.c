@@ -312,12 +312,12 @@ void unmount_all(void)
 	for (vmp = &vmnt[0]; vmp < &vmnt[NR_MNTS]; vmp++) {
 		if (vmp->m_dev != NO_DEV) {
 			found++;
-  			CHECK_VREFS;
+  			SANITYCHECK;
 			if(unmount(vmp->m_dev) == OK)
 				worked++;
 			else
 				remain++;
-  			CHECK_VREFS;
+  			SANITYCHECK;
 		}
 	}
   }
@@ -335,7 +335,7 @@ PUBLIC void pm_reboot()
 
   do_sync();
 
-  CHECK_VREFS;
+  SANITYCHECK;
 
   /* Do exit processing for all leftover processes and servers,
    * but don't actually exit them (if they were really gone, PM
@@ -350,11 +350,11 @@ PUBLIC void pm_reboot()
 		 */
 		free_proc(&fproc[i], 0);
 	}
-  CHECK_VREFS;
+  SANITYCHECK;
 
   unmount_all();
 
-  CHECK_VREFS;
+  SANITYCHECK;
 
 }
 
@@ -436,6 +436,8 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   register struct vnode *vp;
   dev_t dev;
 
+ SANITYCHECK;
+
   fp = exiter;		/* get_filp() needs 'fp' */
 
   if(fp->fp_endpoint == NONE) {
@@ -443,11 +445,13 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   }
 
   if (fp->fp_suspended == SUSPENDED) {
+ 	SANITYCHECK;
 	task = -fp->fp_task;
-	if (task == XPIPE || task == XPOPEN) susp_count--;
 	unpause(fp->fp_endpoint);
-	fp->fp_suspended = NOT_SUSPENDED;
+ 	SANITYCHECK;
   }
+
+ SANITYCHECK;
 
   /* Loop on file descriptors, closing any that are open. */
   for (i = 0; i < OPEN_MAX; i++) {
@@ -465,13 +469,13 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
   if(fp->fp_rd) { put_vnode(fp->fp_rd); fp->fp_rd = NIL_VNODE; }
   if(fp->fp_wd) { put_vnode(fp->fp_wd); fp->fp_wd = NIL_VNODE; }
 
- CHECK_VREFS;
-
   /* The rest of these actions is only done when processes actually
    * exit.
    */
-  if(!(flags & FP_EXITING))
+  if(!(flags & FP_EXITING)) {
+ 	SANITYCHECK;
 	return;
+  }
 
   /* Invalidate endpoint number for error and sanity checks. */
   fp->fp_endpoint = NONE;
@@ -504,6 +508,8 @@ PRIVATE void free_proc(struct fproc *exiter, int flags)
 
   /* Exit done. Mark slot as free. */
   fp->fp_pid = PID_FREE;
+
+  SANITYCHECK;
 }
 
 /*===========================================================================*
