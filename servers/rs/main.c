@@ -82,7 +82,8 @@ PUBLIC int main(void)
        * Handle the request and send a reply to the caller. 
        */
       else {
-	  if (call_nr < RS_RQ_BASE || call_nr >= RS_RQ_BASE+0x100)
+	  if (call_nr != GETSYSINFO && 
+	  	(call_nr < RS_RQ_BASE || call_nr >= RS_RQ_BASE+0x100))
 	  {
 		/* Ignore invalid requests. Do not try to reply. */
 		printf("RS: got invalid request %d from endpoint %d\n",
