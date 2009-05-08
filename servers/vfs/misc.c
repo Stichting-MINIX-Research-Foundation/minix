@@ -305,7 +305,7 @@ void unmount_all(void)
   /* Unmount all filesystems.  File systems are mounted on other file systems,
    * so you have to pull off the loose bits repeatedly to get it all undone.
    */
-  for (i= 0; i < NR_SUPERS; i++) {
+  for (i= 0; i < NR_MNTS; i++) {
   	struct vmnt *vmp;
 	/* Unmount at least one. */
 	worked = remain = 0;
