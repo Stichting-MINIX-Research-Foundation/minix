@@ -358,7 +358,8 @@ FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, u64_t position,
 FORWARD _PROTOTYPE( int com_out, (struct command *cmd) 			);
 FORWARD _PROTOTYPE( int com_out_ext, (struct command *cmd)		);
 FORWARD _PROTOTYPE( void setup_dma, (unsigned *sizep, int proc_nr,
-		iovec_t *iov, int do_write, int *do_copyoutp, int safe)	);
+			iovec_t *iov, size_t addr_offset, int do_write,
+			int *do_copyoutp, int safe)			);
 FORWARD _PROTOTYPE( void w_need_reset, (void) 				);
 FORWARD _PROTOTYPE( void ack_irqs, (unsigned int) 			);
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
@@ -1352,7 +1353,8 @@ int safe;			/* iov contains addresses (0) or grants? */
 
 	if (do_dma)
 	{
-		setup_dma(&nbytes, proc_nr, iov, do_write, &do_copyout, safe);
+		setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write,
+			&do_copyout, safe);
 #if 0
 		printf("nbytes = %d\n", nbytes);
 #endif
@@ -1453,6 +1455,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 			/* Book the bytes successfully transferred. */
 			nbytes -= n;
 			position= add64ul(position, n);
+			addr_offset += n;
 			if ((iov->iov_size -= n) == 0) {
 				iov++; nr_req--; addr_offset = 0;
 			}
@@ -1664,10 +1667,12 @@ struct command *cmd;		/* Command block */
 /*===========================================================================*
  *				setup_dma				     *
  *===========================================================================*/
-PRIVATE void setup_dma(sizep, proc_nr, iov, do_write, do_copyoutp, safe)
+PRIVATE void setup_dma(sizep, proc_nr, iov, addr_offset, do_write,
+	do_copyoutp, safe)
 unsigned *sizep;
 int proc_nr;
 iovec_t *iov;
+size_t addr_offset;
 int do_write;
 int *do_copyoutp;
 int safe;
@@ -1706,9 +1711,10 @@ int safe;
 		 r= sys_umap(proc_nr, VM_GRANT, iov[i].iov_addr, n,&user_phys);
 		if (r != 0)
 			panic("at_wini", "can't map user buffer (VM_GRANT)", r);
-		 user_phys += offset;
+		 user_phys += offset + addr_offset;
 		} else {
-		 r= sys_umap(proc_nr, VM_D, iov[i].iov_addr+offset, n, &user_phys);
+		 r= sys_umap(proc_nr, VM_D, iov[i].iov_addr+offset+addr_offset,
+			n, &user_phys);
 		if (r != 0)
 			panic("at_wini", "can't map user buffer (VM_D)", r);
 		}
@@ -1746,6 +1752,7 @@ int safe;
 		{
 			i++;
 			offset= 0;
+			addr_offset= 0;
 		}
 
 		size -= n;
@@ -1791,11 +1798,12 @@ int safe;
 			
 				if(safe) {
 				  r= sys_safecopyfrom(proc_nr, iov->iov_addr,
-					0, (vir_bytes)dma_buf+offset, n, D);
+					addr_offset, (vir_bytes)dma_buf+offset,
+					n, D);
 				} else {
-				  r= sys_vircopy(proc_nr, D, iov->iov_addr,
-					SELF, D, (vir_bytes)dma_buf+offset, 
-					n);
+				  r= sys_vircopy(proc_nr, D,
+					iov->iov_addr+addr_offset, SELF, D,
+					(vir_bytes)dma_buf+offset, n);
 				}
 				if (r != OK)
 				{
@@ -1804,6 +1812,7 @@ int safe;
 						r);
 				}
 				iov++;
+				addr_offset= 0;
 			}
 		}
 	
