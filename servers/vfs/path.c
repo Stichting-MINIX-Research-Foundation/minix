@@ -343,7 +343,7 @@ node_details_t *node;
 	dir_ino = dir_vp->v_inode_nr;
 	/* Is the process' root directory on the same partition?,
 	 * if so, set the chroot directory too. */
-	if (fp->fp_rd->v_dev == fp->fp_wd->v_dev)
+	if (dir_vp->v_dev == fp->fp_rd->v_dev)
 		root_ino = fp->fp_rd->v_inode_nr; 
 	else
 		root_ino = 0;
