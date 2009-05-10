@@ -11,7 +11,7 @@ char *key;		/* environment variable whose value is bogus */
   int s;
   if ((s=env_get_param(key, value, sizeof(value))) == 0) {
   	if (s != ESRCH)		/* only error allowed */
-  	printf("WARNING: get_mon_param() failed in env_panic(): %d\n", s);
+  	printf("WARNING: env_get_param() failed in env_panic(): %d\n", s);
   }
   printf("Bad environment setting: '%s = %s'\n", key, value);
   panic("","", NO_NUM);

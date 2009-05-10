@@ -44,7 +44,7 @@ int max_len;				/* maximum length of value */
 	if (argv[i][keylen] != '=')
 		continue;
 	key_value= argv[i]+keylen+1;
-	if (strlen(key_value)+1 > EP_BUF_SIZE)
+	if (strlen(key_value)+1 > max_len)
 	      return(E2BIG);
 	strcpy(value, key_value);
 	return OK;
@@ -65,11 +65,14 @@ int max_len;				/* maximum length of value */
   if ((key_value = find_key(mon_params, key)) == NULL)
 	return(ESRCH);
 
-  /* Value found, make the actual copy (as far as possible). */
-  strncpy(value, key_value, max_len);
-
-  /* See if it fits in the client's buffer. */
+  /* Value found, see if it fits in the client's buffer. Callers assume that
+   * their buffer is unchanged on error, so don't make a partial copy.
+   */
   if ((strlen(key_value)+1) > max_len) return(E2BIG);
+
+  /* Make the actual copy. */
+  strcpy(value, key_value);
+
   return(OK);
 }
 

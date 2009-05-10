@@ -19,11 +19,11 @@ char *prefix;		/* prefix to test for */
 
   if ((s = env_get_param(env, value, sizeof(value))) != 0) {
   	if (s != ESRCH)		/* only error allowed */
-  	printf("WARNING: get_mon_param() failed in env_prefix(): %d\n", s);	
+  	printf("WARNING: env_get_param() failed in env_prefix(): %d\n", s);
+  	return FALSE;
   }
   n = strlen(prefix);
-  return(value != NULL
-	&& strncmp(value, prefix, n) == 0
+  return(strncmp(value, prefix, n) == 0
 	&& strchr(punct, value[n]) != NULL);
 }
 
