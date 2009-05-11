@@ -188,9 +188,9 @@
 #define NREQS                    55
 
 
-#define EENTERMOUNT              -301 
-#define ELEAVEMOUNT              -302
-#define ESYMLINK                 -303
+#define EENTERMOUNT              (-301)
+#define ELEAVEMOUNT              (-302)
+#define ESYMLINK                 (-303)
 
 /* REQ_L_FLAGS */
 #define PATH_RET_SYMLINK	1	/* Return a symlink object (i.e.
