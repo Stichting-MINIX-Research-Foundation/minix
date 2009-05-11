@@ -15,7 +15,7 @@ CFLAGS = $(CPROFILE) $(CPPFLAGS)
 all build install:	$(SERVER)
 	#install $(SERVER)
 
-$(SERVER):	$(OBJ) $(ARCHOBJ)
+$(SERVER):	$(OBJ) phony
 	cd $(ARCH) && $(MAKE)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(ARCHOBJ)  -lsys  
 
@@ -27,6 +27,9 @@ clean:
 depend: 
 	cd $(ARCH) && $(MAKE) $@
 	mkdep "$(CC) -E $(CPPFLAGS)" *.c $(ARCH)/*.c > .depend
+
+phony:
+	@:
 
 # Include generated dependencies.
 include .depend
