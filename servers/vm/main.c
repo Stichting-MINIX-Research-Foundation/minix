@@ -298,7 +298,7 @@ PRIVATE void vm_init(void)
 			old_stack);
 
 		proc_new(vmp,
-			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys),
+			VM_PROCSTART,
 			CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_len),
 			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_len),
 			BASICSTACK,
@@ -356,6 +356,10 @@ PRIVATE void vm_init(void)
 	CALLMAP(VM_VFS_REPLY_OPEN, do_vfs_reply, VFS_PROC_NR);
 	CALLMAP(VM_VFS_REPLY_MMAP, do_vfs_reply, VFS_PROC_NR);
 	CALLMAP(VM_VFS_REPLY_CLOSE, do_vfs_reply, VFS_PROC_NR);
+
+	/* Sanity checks */
+	if(find_kernel_top() >= VM_PROCSTART)
+		vm_panic("kernel loaded too high", NO_NUM);
 }
 
 #if 0

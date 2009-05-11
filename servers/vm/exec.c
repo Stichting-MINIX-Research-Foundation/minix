@@ -221,7 +221,7 @@ SANITYCHECK(SCL_DETAIL);
 
 	SANITYCHECK(SCL_DETAIL);
 	proc_new(rmp,
-	 kernel_top_bytes,	/* where to start the process in the page table */
+	 VM_PROCSTART,	/* where to start the process in the page table */
 	 CLICK2ABS(text_clicks),/* how big is the text in bytes, page-aligned */
 	 CLICK2ABS(data_clicks),/* how big is data+bss, page-aligned */
 	 CLICK2ABS(stack_clicks),/* how big is stack, page-aligned */

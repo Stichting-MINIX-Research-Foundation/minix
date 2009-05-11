@@ -14,6 +14,9 @@
 #define SLAB_PAGESIZE	I386_PAGE_SIZE
 #define VM_PAGE_SIZE	I386_PAGE_SIZE
 
+/* Where do processes start in linear (i.e. page table) memory? */
+#define VM_PROCSTART	(I386_BIG_PAGE_SIZE*10)
+
 #define CLICKSPERPAGE (I386_PAGE_SIZE/CLICK_SIZE)
 
 /* Where is the kernel? */

@@ -85,11 +85,8 @@ _PROTOTYPE( char *pf_errstr, (u32_t err));
 /* $(ARCH)/pagetable.c */
 _PROTOTYPE( void pt_init, (void)					);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
-_PROTOTYPE( int pt_copy, (pt_t *src, pt_t *dst)				);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);
 _PROTOTYPE( void pt_freerange, (pt_t *pt, vir_bytes lo, vir_bytes hi)	);
-_PROTOTYPE( int pt_allocmap, (pt_t *pt, vir_bytes minv, vir_bytes maxv,
-	size_t bytes, u32_t pageflags, u32_t allocflags, vir_bytes *newv));
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
         size_t bytes, u32_t flags, u32_t writemapflags));
 _PROTOTYPE( int pt_bind, (pt_t *pt, struct vmproc *who)			);
