@@ -321,8 +321,6 @@ void unmount_all(void)
 		}
 	}
   }
-
-	  printf("VFS: worked: %d remain: %d\n", worked, remain);
 }
 
 /*===========================================================================*
