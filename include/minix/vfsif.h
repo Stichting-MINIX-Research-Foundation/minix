@@ -124,6 +124,10 @@
 
 /* For REQ_GETDENTS */
 #define RES_GDE_POS_CHANGE	 m2_l1
+#define RES_GDE_CUM_IO		 m2_i1
+
+/* For REQ_RDLINK */
+#define RES_RDL_LENGTH		 m6_l1
 
 /* Request numbers */
 #define REQ_GETNODE	(VFS_BASE + 1)	/* Should be removed */
@@ -145,7 +149,7 @@
 #define REQ_UNLINK_O	(VFS_BASE + 17)	/* Replaced with REQ_UNLINK_S */
 #define REQ_RMDIR_O	(VFS_BASE + 18)	/* Replaced with REQ_RMDIR_S */
 #define REQ_UTIME	(VFS_BASE + 19)
-#define REQ_RDLINK_S	(VFS_BASE + 20)
+#define REQ_RDLINK_SO	(VFS_BASE + 20) /* Replaced with REQ_RDLINK_S */
 #define REQ_FSTATFS	(VFS_BASE + 21)
 #define REQ_BREAD_S	(VFS_BASE + 22)
 #define REQ_BWRITE_S	(VFS_BASE + 23)
@@ -165,7 +169,7 @@
 #define REQ_NEW_DRIVER	(VFS_BASE + 37)
 #define REQ_BREAD_O	(VFS_BASE + 38)	/* Replaced with REQ_BREAD_S */
 #define REQ_BWRITE_O	(VFS_BASE + 39)	/* Replaced with REQ_BWRITE_S */
-#define REQ_GETDENTS	(VFS_BASE + 40)
+#define REQ_GETDENTS_O	(VFS_BASE + 40) /* Replaced with REQ_GETDENTS */
 #define REQ_FLUSH	(VFS_BASE + 41)
 #define REQ_READ_S	(VFS_BASE + 42)
 #define REQ_WRITE_S	(VFS_BASE + 43)
@@ -178,13 +182,15 @@
 #define REQ_MOUNTPOINT_S (VFS_BASE + 50)
 #define REQ_READSUPER_S	(VFS_BASE + 51)
 #define REQ_NEWNODE	(VFS_BASE + 52)
+#define REQ_RDLINK_S	(VFS_BASE + 53)
+#define REQ_GETDENTS	(VFS_BASE + 54)
 
-#define NREQS                    53
+#define NREQS                    55
 
 
-#define EENTERMOUNT              301 
-#define ELEAVEMOUNT              302
-#define ESYMLINK                 303
+#define EENTERMOUNT              -301 
+#define ELEAVEMOUNT              -302
+#define ESYMLINK                 -303
 
 /* REQ_L_FLAGS */
 #define PATH_RET_SYMLINK	1	/* Return a symlink object (i.e.

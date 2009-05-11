@@ -282,6 +282,25 @@ off_t *pos_change;
 	m.REQ_GDE_POS= pos;
 
 	r = fs_sendrec(fs_e, &m);
+
+	if (r != ENOSYS && r != EINVAL) {
+		*pos_change= m.RES_GDE_POS_CHANGE;
+
+		if (r == OK)
+			r = m.RES_GDE_CUM_IO;
+
+		return r;
+	}
+
+	/* Legacy support: try the old getdents */
+	m.m_type = REQ_GETDENTS_O;
+	m.REQ_GDE_INODE= inode_nr;
+	m.REQ_GDE_GRANT= gid;
+	m.REQ_GDE_SIZE= size;
+	m.REQ_GDE_POS= pos;
+
+	r = fs_sendrec(fs_e, &m);
+
 	*pos_change= m.RES_GDE_POS_CHANGE;
 	return r;
 }
@@ -631,6 +650,23 @@ size_t len;
     m.REQ_SLENGTH = len;
 
     /* Send/rec request */
+    r= fs_sendrec(fs_e, &m);
+
+    if (r != ENOSYS && r != EINVAL) {
+        cpf_revoke(gid);
+
+        if (r == OK)
+            r = m.RES_RDL_LENGTH;
+
+        return r;
+    }
+
+    /* Legacy support: try the old rdlink */
+    m.m_type = REQ_RDLINK_SO;
+    m.REQ_INODE_NR = inode_nr;
+    m.REQ_GRANT = gid;
+    m.REQ_SLENGTH = len;
+
     r= fs_sendrec(fs_e, &m);
 
     cpf_revoke(gid);
@@ -1026,10 +1062,18 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
   /* Make a copy of the request so that we can load it back in
    * case of a dead driver */
   origm = *reqm;
-  
-#if 0
+
+  /* In response to the request we sent, some file systems may send back their
+   * own VFS request, instead of a reply. VFS currently offers limited support
+   * for this. As long as the FS keeps sending requests, we process them and
+   * send back a reply. We break out of the loop as soon as the FS sends a
+   * reply to the original request.
+   *
+   * There is no form of locking or whatever on global data structures, so it
+   * is quite easy to mess things up; hence, 'limited' support. A future async
+   * VFS will solve this problem for good.
+   */
   for (;;) {
-#endif
       /* Do the actual send, receive */
       if (OK != (r=sendrec(fs_e, reqm))) {
           printf("VFS:fs_sendrec:%s:%d: error sending message. FS_e: %d req_nr: %d err: %d\n", 
@@ -1037,6 +1081,28 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
 	  util_stacktrace();
 	  return r;
       }
+
+      /* If the type field is 0 (OK) or negative (E*), this is a reply. If it
+       * contains a positive nonzero value, this is a request.
+       */
+      if (reqm->m_type <= 0)
+          break; /* Reply */
+
+      /* Legacy support: hacks for old nonzero nonnegative replies */
+      if (origm.m_type == REQ_GETDENTS_O || origm.m_type == REQ_RDLINK_SO)
+          break; /* Reply */
+
+      if (reqm->m_type == -EENTERMOUNT || reqm->m_type == -ELEAVEMOUNT ||
+        reqm->m_type == -ESYMLINK) {
+
+          reqm->m_type = -reqm->m_type;
+
+          break; /* Reply */
+      }
+
+      /* Request */
+      nested_fs_call(reqm);
+  }
 
 #if 0
       if(r == OK) {

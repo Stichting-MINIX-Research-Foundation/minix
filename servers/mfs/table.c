@@ -34,7 +34,7 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         fs_unlink_o,        /* 17  */       /* unlink() */
         fs_unlink_o,        /* 18  */       /* rmdir() */
         fs_utime,           /* 19  */
-        fs_rdlink_s,        /* 20  */
+        fs_rdlink_so,       /* 20  */
         fs_fstatfs,         /* 21  */
         fs_breadwrite_s,    /* 22  */
         fs_breadwrite_s,    /* 23  */
@@ -54,7 +54,7 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         fs_new_driver,      /* 37  */
         fs_breadwrite_o,    /* 38  */
         fs_breadwrite_o,    /* 39  */
-        fs_getdents,	    /* 40  */
+        fs_getdents_o,	    /* 40  */
         fs_flush,	    /* 41  */
         fs_readwrite_s,	    /* 42  */
         fs_readwrite_s,	    /* 43  */
@@ -67,5 +67,7 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
         fs_mountpoint_s,    /* 50  */
         fs_readsuper_s,	    /* 51  */
         fs_newnode,	    /* 52  */
+        fs_rdlink_s,	    /* 53  */
+        fs_getdents,	    /* 54  */
 };
 

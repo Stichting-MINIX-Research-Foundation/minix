@@ -56,6 +56,9 @@ _PROTOTYPE( struct filp *get_filp, (int fild)				);
 _PROTOTYPE( struct filp *get_filp2, (struct fproc *rfp, int fild)	);
 _PROTOTYPE( int inval_filp, (struct filp *)				);
 
+/* fscall.c */
+_PROTOTYPE( void nested_fs_call, (message *m)				);
+
 /* kputc.c */
 _PROTOTYPE( void diag_repl, (void)					);
 

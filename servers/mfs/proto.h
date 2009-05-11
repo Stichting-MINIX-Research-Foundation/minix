@@ -27,6 +27,7 @@ int fs_trunc(void);
 int fs_sync(void);
 int fs_stime(void);
 
+int fs_getdents_o(void);
 int fs_getdents(void);
 int fs_flush(void);
 
@@ -68,6 +69,7 @@ _PROTOTYPE( void wipe_inode, (struct inode *rip)			);
 int fs_link_o(void);
 int fs_link_s(void);
 int fs_rdlink_o(void);
+int fs_rdlink_so(void);
 int fs_rdlink_s(void);
 int fs_rename_o(void);
 int fs_rename_s(void);

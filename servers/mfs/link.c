@@ -397,10 +397,30 @@ PUBLIC int fs_rdlink_s()
 	(vir_bytes) bp->b_data, (vir_bytes) copylen, D);
 
 	put_block(bp, DIRECTORY_BLOCK);
-	if (r == OK) r = copylen;
+	if (r == OK)
+		fs_m_out.RES_RDL_LENGTH = copylen;
   }
 
   put_inode(rip);
+  return(r);
+}
+
+
+/*===========================================================================*
+ *                             fs_rdlink_so                                  *
+ *===========================================================================*/
+PUBLIC int fs_rdlink_so()
+{
+/* Legacy support: wrapper around new rdlink, returning the resulting number of
+ * bytes in the m_type field of the reply message instead.
+ */
+  int r;
+
+  r = fs_rdlink_s();
+
+  if (r == OK)
+	r = fs_m_out.RES_RDL_LENGTH;
+
   return(r);
 }
 

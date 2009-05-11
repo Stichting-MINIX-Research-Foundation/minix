@@ -1007,17 +1007,36 @@ printf("MFS(%d) get_inode by fs_getdents() failed\n", SELF_E);
 	userbuf_off += tmpbuf_off;
   }
 
-  r= ENOSYS;
-  fs_m_out.RES_GDE_POS_CHANGE= 0;	/* No change in case of an error */
   if (done && userbuf_off == 0)
 	r= EINVAL;		/* The user's buffer is too small */
   else
   {
-	r= userbuf_off;
+	fs_m_out.RES_GDE_CUM_IO= userbuf_off;
 	if (new_pos >= pos)
 		fs_m_out.RES_GDE_POS_CHANGE= new_pos-pos;
+	else
+		fs_m_out.RES_GDE_POS_CHANGE= 0;
+	r= OK;
   }
 
   put_inode(rip);		/* release the inode */
+  return(r);
+}
+
+/*===========================================================================*
+ *				fs_getdents_o				     *
+ *===========================================================================*/
+PUBLIC int fs_getdents_o(void)
+{
+/* Legacy support: wrapper around new getdents, returning the resulting number
+ * of bytes in the m_type field of the reply message instead.
+ */
+  int r;
+
+  r = fs_getdents();
+
+  if (r == OK)
+	r = fs_m_out.RES_GDE_CUM_IO;
+
   return(r);
 }
