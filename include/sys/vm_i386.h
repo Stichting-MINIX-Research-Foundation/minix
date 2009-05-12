@@ -2,7 +2,8 @@
 sys/vm_i386.h
 */
 
-#define I386_PAGE_SIZE	4096
+#define I386_PAGE_SIZE		4096
+#define I386_BIG_PAGE_SIZE	(I386_PAGE_SIZE*I386_VM_PT_ENTRIES)
 
 /* i386 paging constants */
 #define I386_VM_PRESENT	0x001	/* Page is present */
