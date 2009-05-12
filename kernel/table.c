@@ -48,7 +48,7 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 #define IDL_F 	(SYS_PROC | PREEMPTIBLE | BILLABLE)	/* idle task */
 #define TSK_F 	(SYS_PROC)				/* kernel tasks */
 #define SRV_F 	(SYS_PROC | PREEMPTIBLE)		/* system services */
-#define USR_F	(BILLABLE | PREEMPTIBLE)		/* user processes */
+#define USR_F	(BILLABLE | PREEMPTIBLE | PROC_FULLVM)	/* user processes */
 #define SVM_F	(SRV_F | PROC_FULLVM)			/* servers with VM */
 
 /* Define system call traps for the various process types. These call masks
@@ -117,13 +117,13 @@ PUBLIC struct boot_image image[] = {
 {CLOCK,clock_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"clock" },
 {SYSTEM, sys_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"system"},
 {HARDWARE,      0,TSK_F,  8, TASK_Q, HRD_S,     0,     0, no_c,"kernel"},
-{PM_PROC_NR,    0,SRV_F, 32,      4, 0,     SRV_T, SRV_M, c(pm_c),"pm"    },
-{FS_PROC_NR,    0,SRV_F, 32,      5, 0,     SRV_T, SRV_M, c(fs_c),"vfs"   },
-{RS_PROC_NR,    0,SRV_F,  4,      4, 0,     SRV_T, SYS_M, c(rs_c),"rs"    },
-{DS_PROC_NR,    0,SRV_F,  4,      4, 0,     SRV_T, SYS_M, c(ds_c),"ds"    },
-{TTY_PROC_NR,   0,SRV_F,  4,      1, 0,     SRV_T, SYS_M,c(tty_c),"tty"   },
+{PM_PROC_NR,    0,SVM_F, 32,      4, 0,     SRV_T, SRV_M, c(pm_c),"pm"    },
+{FS_PROC_NR,    0,SVM_F, 32,      5, 0,     SRV_T, SRV_M, c(fs_c),"vfs"   },
+{RS_PROC_NR,    0,SVM_F,  4,      4, 0,     SRV_T, SYS_M, c(rs_c),"rs"    },
+{DS_PROC_NR,    0,SVM_F,  4,      4, 0,     SRV_T, SYS_M, c(ds_c),"ds"    },
+{TTY_PROC_NR,   0,SVM_F,  4,      1, 0,     SRV_T, SYS_M,c(tty_c),"tty"   },
 {MEM_PROC_NR,   0,SVM_F,  4,      3, 0,     SRV_T, SYS_M,c(mem_c),"memory"},
-{LOG_PROC_NR,   0,SRV_F,  4,      2, 0,     SRV_T, SYS_M,c(drv_c),"log"   },
+{LOG_PROC_NR,   0,SVM_F,  4,      2, 0,     SRV_T, SYS_M,c(drv_c),"log"   },
 {MFS_PROC_NR,   0,SVM_F, 32,      5, 0,     SRV_T, SRV_M, c(fs_c),"mfs"   },
 {VM_PROC_NR,    0,SRV_F, 32,      2, 0,     SRV_T, SRV_M, c(vm_c),"vm"    },
 {INIT_PROC_NR,  0,USR_F,  8, USER_Q, 0,     USR_T, USR_M, no_c,"init"  },

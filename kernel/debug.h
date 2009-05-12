@@ -21,8 +21,10 @@
  */
 #define DEBUG_ENABLE_IPC_WARNINGS	1
 #define DEBUG_STACKTRACE		1
-#define DEBUG_VMASSERT			1
-#define DEBUG_SCHED_CHECK		1
 #define DEBUG_TIME_LOCKS		1
+
+/* Runtime sanity checking. */
+#define DEBUG_VMASSERT			0
+#define DEBUG_SCHED_CHECK		0
 
 #endif /* DEBUG_H */

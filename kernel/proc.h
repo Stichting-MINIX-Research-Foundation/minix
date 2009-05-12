@@ -104,6 +104,8 @@ struct proc {
 
 #if DEBUG_SCHED_CHECK
   int p_ready, p_found;
+#define PMAGIC 0xC0FFEE1
+  int p_magic;	/* check validity of proc pointers */
 #endif
 };
 

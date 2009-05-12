@@ -43,6 +43,9 @@ PUBLIC void main()
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
   	rp->p_rts_flags = SLOT_FREE;		/* initialize free slot */
+#if DEBUG_SCHED_CHECK
+	rp->p_magic = PMAGIC;
+#endif
 	rp->p_nr = i;				/* proc number from ptr */
 	rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
         (pproc_addr + NR_TASKS)[i] = rp;        /* proc ptr from number */
@@ -67,6 +70,7 @@ PUBLIC void main()
   for (i=0; i < NR_BOOT_PROCS; ++i) {
 	int ci;
 	bitchunk_t fv;
+
 	ip = &image[i];				/* process' attributes */
 	rp = proc_addr(ip->proc_nr);		/* get process pointer */
 	ip->endpoint = rp->p_endpoint;		/* ipc endpoint */
@@ -164,8 +168,6 @@ PUBLIC void main()
 	/* Set ready. The HARDWARE task is never ready. */
 	if (rp->p_nr == HARDWARE) RTS_SET(rp, NO_PRIORITY);
 	RTS_UNSET(rp, SLOT_FREE); /* remove SLOT_FREE and schedule */
-
-	/* Code and data segments must be allocated in protected mode. */
 	alloc_segments(rp);
   }
 

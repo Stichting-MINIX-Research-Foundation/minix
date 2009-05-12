@@ -36,8 +36,9 @@ void pagefault(struct proc *pr, int trap_errno)
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		kprintf("pagefault for process %d ('%s'), pc = 0x%x\n",
-			pr->p_endpoint, pr->p_name, pr->p_reg.pc);
+		kprintf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x\n",
+			pr->p_endpoint, pr->p_name, pr->p_reg.pc,
+			pagefault_cr2, trap_errno);
 		proc_stacktrace(pr);
   		minix_panic("page fault in system process", pr->p_endpoint);
 
@@ -78,6 +79,8 @@ u32_t old_eflags;
 {
 /* An exception or unexpected interrupt has occurred. */
 
+struct proc *t;
+
   struct ex_s {
 	char *msg;
 	int signum;
@@ -105,6 +108,13 @@ u32_t old_eflags;
   register struct ex_s *ep;
   struct proc *saved_proc;
 
+#if DEBUG_SCHED_CHECK
+  for (t = BEG_PROC_ADDR; t < END_PROC_ADDR; ++t) {
+	if(t->p_magic != PMAGIC)
+		kprintf("entry %d broken\n", t->p_nr);
+  }
+#endif
+
   /* Save proc_ptr, because it may be changed by debug statements. */
   saved_proc = proc_ptr;	
 
@@ -115,17 +125,17 @@ u32_t old_eflags;
 	return;
   }
 
+  if(vec_nr == PAGE_FAULT_VECTOR) {
+		pagefault(saved_proc, trap_errno);
+		return;
+  }
+
   /* If an exception occurs while running a process, the k_reenter variable 
    * will be zero. Exceptions in interrupt handlers or system traps will make 
    * k_reenter larger than zero.
    */
   if (k_reenter == 0 && ! iskernelp(saved_proc)) {
 	{
-		switch(vec_nr) {
-			case PAGE_FAULT_VECTOR:
-				pagefault(saved_proc, trap_errno);
-				return;
-		}
 
 		kprintf(
 "exception for process %d, endpoint %d ('%s'), pc = 0x%x:0x%x, sp = 0x%x:0x%x\n",

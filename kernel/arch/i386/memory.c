@@ -22,6 +22,8 @@ PUBLIC u32_t kernel_cr3;
 extern u32_t cswitch;
 u32_t last_cr3 = 0;
 
+#define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
+
 FORWARD _PROTOTYPE( void phys_put32, (phys_bytes addr, u32_t value)	);
 FORWARD _PROTOTYPE( u32_t phys_get32, (phys_bytes addr)			);
 FORWARD _PROTOTYPE( void vm_set_cr3, (u32_t value)			);
@@ -46,11 +48,12 @@ PUBLIC void vm_init(void)
 	unsigned pages;
 	struct proc* rp;
 	struct proc *sys = proc_addr(SYSTEM);
+	static int init_done = 0;
 
 	if (!vm_size)
 		minix_panic("i386_vm_init: no space for page tables", NO_NUM);
 
-	if(vm_running)
+	if(init_done)
 		return;
 
 	/* Align page directory */
@@ -97,14 +100,15 @@ PUBLIC void vm_init(void)
 		phys_put32(vm_dir_base + p*I386_VM_PT_ENT_SIZE, entry);
 	}
 
-	/* Set this cr3 in all currently running processes for
-	 * future context switches.
-	 */
-	for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
-		u32_t mycr3;
-		if(isemptyp(rp)) continue;
-		rp->p_seg.p_cr3 = vm_dir_base;
-	}
+
+       /* Set this cr3 in all currently running processes for
+        * future context switches.
+        */
+       for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
+               u32_t mycr3;
+               if(isemptyp(rp)) continue;
+               rp->p_seg.p_cr3 = vm_dir_base;
+       }
 
 	kernel_cr3 = vm_dir_base;
 
@@ -115,6 +119,7 @@ PUBLIC void vm_init(void)
 	level0(vm_enable_paging);
 
 	/* Don't do this init in the future. */
+	init_done = 1;
 	vm_running = 1;
 }
 
@@ -312,6 +317,11 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 	vmassert(physical);
 	vmassert(!(proc->p_rts_flags & SLOT_FREE));
 
+	if(!HASPT(proc)) {
+		*physical = virtual;
+		return OK;
+	}
+
 	/* Retrieve page directory entry. */
 	root = (u32_t *) proc->p_seg.p_cr3;
 	vmassert(!((u32_t) root % I386_PAGE_SIZE));
@@ -428,7 +438,9 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 
 	vmassert(targetproc);
 	vmassert(bytes > 0);
-	vmassert(vm_running);
+
+	if(!HASPT(targetproc))
+		return 1;
 
 	/* Start and end at page boundary to make logic simpler. */
 	po = vir_buf % I386_PAGE_SIZE;
@@ -488,8 +500,8 @@ PUBLIC int vm_checkrange(struct proc *caller, struct proc *target,
 	u32_t flags, po, v;
 	int r;
 
-	vmassert(vm_running);
-
+	if(!HASPT(target))
+		return OK;
 
 	/* If caller has had a reply to this request, return it. */
 	if(RTS_ISSET(caller, VMREQUEST)) {
@@ -760,8 +772,9 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   if(vmcheck && procs[_DST_])
 	CHECKRANGE_OR_SUSPEND(procs[_DST_], phys_addr[_DST_], bytes, 1);
 
+#define NOPT(p) (!(p) || !HASPT(p))
   /* Now copy bytes between physical addresseses. */
-  if(!vm_running || (procs[_SRC_] == NULL && procs[_DST_] == NULL)) {
+  if(NOPT(procs[_SRC_]) && NOPT(procs[_DST_])) {
 	/* Without vm, address ranges actually are physical. */
 	phys_copy(phys_addr[_SRC_], phys_addr[_DST_], (phys_bytes) bytes);
 	r = OK;
