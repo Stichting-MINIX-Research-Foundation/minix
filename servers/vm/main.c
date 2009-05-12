@@ -31,6 +31,8 @@
 #include "vm.h"
 #include "sanitycheck.h"
 
+extern int missing_spares;
+
 #include <archtypes.h>
 #include "../../kernel/const.h"
 #include "../../kernel/config.h" 
@@ -95,7 +97,9 @@ PUBLIC int main(void)
 	int r, c;
 
 	SANITYCHECK(SCL_TOP);
-	pt_cycle();	/* pagetable code wants to be called */
+	if(missing_spares > 0) {
+		pt_cycle();	/* pagetable code wants to be called */
+	}
 #if SANITYCHECKS
 	slabstats();
 #endif

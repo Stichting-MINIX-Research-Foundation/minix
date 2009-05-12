@@ -47,6 +47,7 @@ struct vmproc *vmp = &vmproc[VM_PROC_NR];
  * page table.
  */
 #define SPAREPAGES 5
+int missing_spares = SPAREPAGES;
 static struct {
 	void *page;
 	u32_t phys;
@@ -204,8 +205,7 @@ PRIVATE void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 		vm_assert(!(vir % I386_PAGE_SIZE)); 
 		vm_assert(!(phys % I386_PAGE_SIZE)); 
 		FREE_MEM(ABS2CLICK(phys), pages);
-		if(pt_writemap(&vmp->vm_pt,
-			vir + CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
+		if(pt_writemap(&vmp->vm_pt, arch_vir2map(vmp, vir),
 			MAP_NONE, pages*I386_PAGE_SIZE, 0, WMF_OVERWRITE) != OK)
 				vm_panic("vm_freepages: pt_writemap failed",
 					NO_NUM);
@@ -221,12 +221,15 @@ PRIVATE void vm_freepages(vir_bytes vir, vir_bytes phys, int pages, int reason)
 PRIVATE void *vm_getsparepage(u32_t *phys)
 {
 	int s;
+	vm_assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
 	for(s = 0; s < SPAREPAGES; s++) {
 		if(sparepages[s].page) {
 			void *sp;
 			sp = sparepages[s].page;
 			*phys = sparepages[s].phys;
 			sparepages[s].page = NULL;
+			missing_spares++;
+			vm_assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
 			return sp;
 		}
 	}
@@ -241,11 +244,14 @@ PRIVATE void *vm_checkspares(void)
 {
 	int s, n = 0;
 	static int total = 0, worst = 0;
-	for(s = 0; s < SPAREPAGES; s++)
+	vm_assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
+	for(s = 0; s < SPAREPAGES && missing_spares > 0; s++)
 	    if(!sparepages[s].page) {
 		n++;
 		sparepages[s].page = vm_allocpages(&sparepages[s].phys, 1,
 			VMP_SPARE);
+		missing_spares--;
+		vm_assert(missing_spares >= 0 && missing_spares <= SPAREPAGES);
 	}
 	if(worst < n) worst = n;
 	total += n;
@@ -293,7 +299,7 @@ PUBLIC void *vm_allocpages(phys_bytes *phys, int pages, int reason)
 	 * Where in our virtual address space can we put it?
 	 */
 	loc = findhole(pt, I386_PAGE_SIZE * pages,
-		CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys) + vmp->vm_stacktop,
+		arch_vir2map(vmp, vmp->vm_stacktop),
 		vmp->vm_arch.vm_data_top);
 	if(loc == NO_MEM) {
 		level--;
@@ -320,7 +326,7 @@ PUBLIC void *vm_allocpages(phys_bytes *phys, int pages, int reason)
 	level--;
 
 	/* Return user-space-ready pointer to it. */
-	return (void *) (loc - CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys));
+	return (void *) arch_map2vir(vmp, loc);
 }
 
 /*===========================================================================*
@@ -479,8 +485,7 @@ PUBLIC int pt_new(pt_t *pt)
 	}
 
 	/* Where to start looking for free virtual address space? */
-	pt->pt_virtop = VM_STACKTOP +
-		CLICK2ABS(vmproc[VMP_SYSTEM].vm_arch.vm_seg[D].mem_phys);
+	pt->pt_virtop = 0;
 
 	return OK;
 }
@@ -514,6 +519,8 @@ PUBLIC void pt_init(void)
                         I386_PAGE_SIZE, &sparepages[s].phys)) != OK)
                         vm_panic("pt_init: sys_umap failed", r);
         }
+
+	missing_spares = 0;
         
         /* Make new page table for ourselves, partly copied
          * from the current one.
@@ -594,8 +601,7 @@ PUBLIC void pt_init(void)
         /* Where our free virtual address space starts.
          * This is only a hint to the VM system.
          */
-        newpt->pt_virtop = (vmp->vm_arch.vm_seg[S].mem_vir +
-                vmp->vm_arch.vm_seg[S].mem_len) << CLICK_SHIFT;
+        newpt->pt_virtop = 0;
 
         /* Let other functions know VM now has a private page table. */
         vmp->vm_flags |= VMF_HASPT;
@@ -604,13 +610,12 @@ PUBLIC void pt_init(void)
          * can use to map in arbitrary physical pages.
          */
         varmap_loc = findhole(newpt, I386_PAGE_SIZE,
-                CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys) + vmp->vm_stacktop,
+                arch_vir2map(vmp, vmp->vm_stacktop),
                 vmp->vm_arch.vm_data_top);
         if(varmap_loc == NO_MEM) {
                 vm_panic("no virt addr for vm mappings", NO_NUM);
         }
-        varmap = (unsigned char *) (varmap_loc -
-                CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys));
+        varmap = (unsigned char *) arch_map2vir(vmp, varmap_loc);
 
         /* All OK. */
         return;
