@@ -99,7 +99,7 @@ PUBLIC vir_bytes arch_map2vir(struct vmproc *vmp, vir_bytes addr)
 {
 	vir_bytes bottom = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
 
-/*	vm_assert(bottom <= addr); */
+	vm_assert(bottom <= addr);
 
 	return addr - bottom;
 }
