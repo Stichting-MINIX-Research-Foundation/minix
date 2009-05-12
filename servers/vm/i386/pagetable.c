@@ -728,25 +728,40 @@ PUBLIC void pt_cycle(void)
 	vm_checkspares();
 }
 
+/* In sanity check mode, pages are mapped and unmapped explicitly, so
+ * unexpected double mappings (overwriting a page table entry) are caught.
+ * If not sanity checking, simply keep the page mapped in and overwrite
+ * the mapping entry; we need WMF_OVERWRITE for that in PHYS_MAP though.
+ */
+#if SANITYCHECKS
+#define MAPFLAGS	0
+#else
+#define MAPFLAGS	WMF_OVERWRITE
+#endif
+
 #define PHYS_MAP(a, o)							\
 {	int r;								\
+	u32_t wipeme = (u32_t) varmap;					\
 	vm_assert(varmap);						\
 	(o) = (a) % I386_PAGE_SIZE;					\
-	r = pt_writemap(&vmp->vm_pt, varmap_loc, (a) - (o), I386_PAGE_SIZE, \
-		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE, 0); 	\
+	r = pt_writemap(&vmp->vm_pt, (vir_bytes) varmap_loc, (a) - (o), I386_PAGE_SIZE, \
+		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE, MAPFLAGS); \
 	if(r != OK)							\
 		vm_panic("PHYS_MAP: pt_writemap failed", NO_NUM);	\
 	/* pt_bind() flushes TLB. */					\
-	pt_bind(&vmp->vm_pt, vmp);					\
+	pt_bind(&vmp->vm_pt, vmp); 					\
 }
 
 #define PHYSMAGIC 0x7b9a0590
 
+#if SANITYCHECKS
 #define PHYS_UNMAP if(OK != pt_writemap(&vmp->vm_pt, varmap_loc, MAP_NONE,\
 	I386_PAGE_SIZE, 0, WMF_OVERWRITE)) {				\
 		vm_panic("PHYS_UNMAP: pt_writemap failed", NO_NUM); }
+#endif
 
 #define PHYS_VAL(o) (* (phys_bytes *) (varmap + (o)))
+
 
 /*===========================================================================*
  *                              phys_writeaddr                               *
@@ -761,8 +776,8 @@ PUBLIC void phys_writeaddr(phys_bytes addr, phys_bytes v1, phys_bytes v2)
 	PHYS_VAL(offset + sizeof(phys_bytes)) = v2;
 #if SANITYCHECKS
 	PHYS_VAL(offset + 2*sizeof(phys_bytes)) = PHYSMAGIC;
-#endif
 	PHYS_UNMAP;
+#endif
 	SANITYCHECK(SCL_DETAIL);
 }
 
@@ -779,7 +794,7 @@ PUBLIC void phys_readaddr(phys_bytes addr, phys_bytes *v1, phys_bytes *v2)
 	*v2 = PHYS_VAL(offset + sizeof(phys_bytes));
 #if SANITYCHECKS
 	vm_assert(PHYS_VAL(offset + 2*sizeof(phys_bytes)) == PHYSMAGIC);
-#endif
 	PHYS_UNMAP;
+#endif
 	SANITYCHECK(SCL_DETAIL);
 }
