@@ -83,11 +83,10 @@ PRIVATE int req_type;
 PRIVATE int do_run= 0;		/* 'run' command instead of 'up' */
 PRIVATE char *req_label;
 PRIVATE char *req_path;
-PRIVATE char *req_args;
+PRIVATE char *req_args = "";
 PRIVATE int req_major;
 PRIVATE long req_period;
 PRIVATE char *req_script;
-PRIVATE char *req_label;
 PRIVATE char *req_ipc;
 PRIVATE char *req_config = PATH_CONFIG;
 PRIVATE int req_printep;
