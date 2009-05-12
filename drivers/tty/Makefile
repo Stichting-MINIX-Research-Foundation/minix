@@ -19,7 +19,7 @@ CFLAGS = $(CPPFLAGS)
 LDFLAGS = -i
 LIBS =  -lsys -ltimers
 
-OBJ = tty.o console.o vidcopy.o keyboard.o pty.o rs232.o 
+OBJ = tty.o console.o keyboard.o pty.o rs232.o 
 
 # build local binary 
 all build:	$(DRIVER)

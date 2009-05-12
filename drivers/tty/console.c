@@ -21,6 +21,7 @@
 #include <sys/ioctl.h>
 #include <sys/vm.h>
 #include <sys/video.h>
+#include <sys/mman.h>
 #include <minix/tty.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
@@ -37,9 +38,6 @@
 #define TIMER_FREQ  1193182L    /* clock frequency for timer in PC and AT */
 
 /* Global variables used by the console driver and assembly support. */
-PUBLIC int vid_index;		/* index of video segment in remote mem map */
-PUBLIC u16_t vid_seg;
-PUBLIC vir_bytes vid_off;	/* video ram is found at vid_seg:vid_off */
 PUBLIC phys_bytes vid_size;	/* 0x2000 for color or 0x0800 for mono */
 PUBLIC phys_bytes vid_base;
 PUBLIC unsigned vid_mask;	/* 0x1FFF for color or 0x07FF for mono */
@@ -56,12 +54,17 @@ PRIVATE unsigned scr_lines;	/* # lines on the screen */
 PRIVATE unsigned scr_size;	/* # characters on the screen */
 PUBLIC unsigned info_location;	/* location in video memory of struct */
 
+/* tells mem_vid_copy() to blank the screen */
+#define BLANK_MEM ((vir_bytes) 0) 
+
 PRIVATE int disabled_vc = -1;	/* Virtual console that was active when 
 				 * disable_console was called.
 				 */
 PRIVATE int disabled_sm;	/* Scroll mode to be restored when re-enabling
 				 * console
 				 */
+
+char *console_memory = NULL;
 
 /* boot_tty_info we use to communicate with the boot code. */
 struct boot_tty_info boot_tty_info;
@@ -90,7 +93,7 @@ typedef struct console {
 #define UPDATEBOOTINFO(ccons, infofield, value)	{		\
 	if(ccons->c_line == 0) {				\
 		boot_tty_info.infofield = value;		\
-		mem_vid_copy((u16_t *) &boot_tty_info,		\
+		mem_vid_copy((vir_bytes) &boot_tty_info,	\
 			info_location/2, sizeof(boot_tty_info)/2);	\
 	}							\
 }
@@ -142,6 +145,8 @@ FORWARD _PROTOTYPE( void disable_console, (void)			);
 FORWARD _PROTOTYPE( void reenable_console, (void)			);
 FORWARD _PROTOTYPE( int ga_program, (struct sequence *seq)		);
 FORWARD _PROTOTYPE( int cons_ioctl, (tty_t *tp, int)			);
+FORWARD _PROTOTYPE( void mem_vid_copy, (vir_bytes src, int dst, int count)	);
+FORWARD _PROTOTYPE( void vid_vid_copy, (int src, int dst, int count)	);
 
 #if 0
 FORWARD _PROTOTYPE( void get_6845, (int reg, unsigned *val)		);
@@ -403,7 +408,7 @@ register console_t *cons;	/* pointer to console struct */
 
   /* Have the characters in 'ramqueue' transferred to the screen. */
   if (cons->c_rwords > 0) {
-	mem_vid_copy(cons->c_ramqueue, cons->c_cur, cons->c_rwords);
+	mem_vid_copy((vir_bytes) cons->c_ramqueue, cons->c_cur, cons->c_rwords);
 	cons->c_rwords = 0;
 
 	/* TTY likes to know the current column and if echoing messed up. */
@@ -998,7 +1003,10 @@ tty_t *tp;
   	wrap = ! machine.vdu_ega;
 	info_location = vid_size - sizeof(struct boot_tty_info);
 
-  	s = sys_segctl(&vid_index, &vid_seg, &vid_off, vid_base, vid_size);
+	console_memory = vm_map_phys(SELF, (void *) vid_base, vid_size);
+
+	if(console_memory == MAP_FAILED) 
+  		panic("TTY","Console couldn't map video memory", NO_NUM);
 
   	vid_size >>= 1;		/* word count */
   	vid_mask = vid_size - 1;
@@ -1386,3 +1394,60 @@ int try;
   return 0;
 }
 
+#define LIMITINDEX(mask, start, size, ct) { 	\
+	int countlimit = size - start;		\
+	start &= mask;				\
+	if(ct > countlimit) ct = countlimit;	\
+}
+
+/*===========================================================================*
+ *				mem_vid_copy				     *
+ *===========================================================================*/
+PRIVATE void mem_vid_copy(vir_bytes src, int dst_index, int count)
+{
+	u16_t *src_mem = (u16_t *) src;
+	while(count > 0) {
+		int i, subcount = count;
+		u16_t *dst_mem;
+		LIMITINDEX(vid_mask, dst_index, vid_size, subcount);
+		dst_mem = (u16_t *) console_memory + dst_index;
+		if(!src)
+			for(i = 0; i < subcount; i++)
+				*dst_mem++ = blank_color;
+		else
+			for(i = 0; i < subcount; i++)
+				*dst_mem++ = *src_mem++;
+		count -= subcount;
+		dst_index += subcount;
+	}
+}
+
+/*===========================================================================*
+ *				vid_vid_copy				     *
+ *===========================================================================*/
+PRIVATE void vid_vid_copy(int src_index, int dst_index, int count)
+{
+	int backwards = 0;
+	if(src_index < dst_index)
+		backwards = 1;
+	while(count > 0) {
+		int i, subcount = count;
+		u16_t *dst_mem, *src_mem;
+		LIMITINDEX(vid_mask, src_index, vid_size, subcount);
+		LIMITINDEX(vid_mask, dst_index, vid_size, subcount);
+		src_mem = (u16_t *) console_memory + src_index;
+		dst_mem = (u16_t *) console_memory + dst_index;
+		if(backwards) {
+			src_mem += subcount - 1;
+			dst_mem += subcount - 1;
+			for(i = 0; i < subcount; i++)
+				*dst_mem-- = *src_mem--;
+		} else {
+			for(i = 0; i < subcount; i++)
+				*dst_mem++ = *src_mem++;
+		}
+		count -= subcount;
+		dst_index += subcount;
+		src_index += subcount;
+	}
+}

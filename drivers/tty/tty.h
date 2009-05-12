@@ -197,9 +197,5 @@ _PROTOTYPE( void pty_init, (struct tty *tp)				);
 _PROTOTYPE( void select_retry_pty, (struct tty *tp)			);
 _PROTOTYPE( int pty_status, (message *m_ptr)				);
 
-/* vidcopy.s */
-_PROTOTYPE( void vid_vid_copy, (unsigned src, unsigned dst, unsigned count));
-_PROTOTYPE( void mem_vid_copy, (u16_t *src, unsigned dst, unsigned count));
-
 #endif /* (CHIP == INTEL) */
 

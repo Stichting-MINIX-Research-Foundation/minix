@@ -11,7 +11,6 @@
 #define BLANK_COLOR   0x0700    /* determines cursor color on blank screen */
 #define SCROLL_UP          0    /* scroll forward */
 #define SCROLL_DOWN        1    /* scroll backward */
-#define BLANK_MEM ((u16_t *) 0) /* tells mem_vid_copy() to blank the screen */
 #define CONS_RAM_WORDS    80    /* video ram buffer size */
 #define MAX_ESC_PARMS      4    /* number of escape sequence params allowed */
 
