@@ -60,10 +60,9 @@ struct vmproc *vmp;
 	for(vr = vmp->vm_regions; vr; vr = vr->next) {
 		struct phys_region *ph;
 		int nph = 0;
-		printf("\t0x%lx - 0x%lx (len 0x%lx), proc 0x%lx-0x%lx: %s\n",
+		printf("\t0x%lx - 0x%lx (len 0x%lx), %s\n",
 			vr->vaddr, vr->vaddr + vr->length, vr->length,
-			arch_map2vir(vmp, vr->vaddr),
-			arch_map2vir(vmp, vr->vaddr + vr->length), map_name(vr));
+			vr->vaddr + vr->length, map_name(vr));
 		printf("\t\tphysical: ");
 		for(ph = vr->first; ph; ph = ph->next) {
 			printf("0x%lx-0x%lx (refs %d): phys 0x%lx ",
