@@ -55,6 +55,8 @@ register message *m_ptr;	/* pointer to request message */
   rpc->p_user_time = 0;		/* set all the accounting times to 0 */
   rpc->p_sys_time = 0;
 
+  rpc->p_reg.psw &= ~TRACEBIT;		/* clear trace bit */
+
   /* Parent and child have to share the quantum that the forked process had,
    * so that queued processes do not have to wait longer because of the fork.
    * If the time left is odd, the child gets an extra tick.
