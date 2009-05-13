@@ -12,8 +12,8 @@
 #include <minix/paths.h>
 #define OK	0
 
-#define MFSNAME "mfs"
-#define MFSPATH "/sbin/"
+#define FSPATH "/sbin/"
+#define FSDEFAULT "mfs"
 
 PRIVATE int rs_down(char *label)
 {
@@ -21,7 +21,7 @@ PRIVATE int rs_down(char *label)
 	message m;
 	if(strlen(_PATH_SERVICE)+strlen(label)+50 >= sizeof(cmd))
 		return -1;
-	sprintf(cmd, _PATH_SERVICE " down %s", label);
+	sprintf(cmd, _PATH_SERVICE " down '%s'", label);
 	return system(cmd);
 }
 
@@ -34,39 +34,68 @@ PRIVATE char *makelabel(_CONST char *special)
   dev = strrchr(special, '/');
   if(dev) dev++;
   else dev = special;
-  if(strlen(dev)+strlen(MFSNAME)+3 >= sizeof(label))
+  if(strchr(dev, '\'') != NULL) {
+  	errno = EINVAL;
+  	return NULL;
+  }
+  if(strlen(dev)+4 >= sizeof(label)) {
+  	errno = E2BIG;
 	return NULL;
-  sprintf(label, MFSNAME "_%s", dev);
+  }
+  sprintf(label, "fs_%s", dev);
   return label;
 }
 
-PUBLIC int mount(special, name, rwflag)
-char *name, *special;
+PUBLIC int mount(special, name, rwflag, type, args)
+char *name, *special, *type, *args;
 int rwflag;
 {
   int r;
   message m;
   struct rs_start rs_start;
+  struct stat statbuf;
   char *label;
+  char path[60];
   char cmd[200];
   FILE *pipe;
   int ep;
 
-  /* Make MFS process label for RS from special name. */
+  /* Default values. */
+  if (type == NULL) type = FSDEFAULT;
+  if (args == NULL) args = "";
+
+  /* Make FS process label for RS from special name. */
   if(!(label=makelabel(special))) {
+	return -1;
+  }
+
+  /* See if the given type is even remotely valid. */
+  if(strlen(FSPATH)+strlen(type) >= sizeof(path)) {
+	errno = E2BIG;
+	return -1;
+  }
+  strcpy(path, FSPATH);
+  strcat(path, type);
+  if(stat(path, &statbuf) != 0) {
+  	errno = EINVAL;
+  	return -1;
+  }
+
+  /* Sanity check on user input. */
+  if(strchr(args, '\'')) {
+  	errno = EINVAL;
+	return -1;
+  }
+
+  if(strlen(_PATH_SERVICE)+strlen(path)+strlen(label)+
+     strlen(_PATH_DRIVERS_CONF)+strlen(args)+50 >= sizeof(cmd)) {
 	errno = E2BIG;
 	return -1;
   }
 
-  if(strlen(_PATH_SERVICE)+strlen(MFSPATH)+strlen(MFSNAME)+
-     strlen(label)+50 >= sizeof(cmd)) {
-	errno = E2BIG;
-	return -1;
-  }
-
-  sprintf(cmd, _PATH_SERVICE " up " MFSPATH MFSNAME 
-	" -label \"%s\" -config " _PATH_DRIVERS_CONF " -printep yes",
-	label);
+  sprintf(cmd, _PATH_SERVICE " up %s -label '%s' -config " _PATH_DRIVERS_CONF
+	" -args '%s%s' -printep yes",
+	path, label, args[0] ? "-o " : "", args);
 
   if(!(pipe = popen(cmd, "r"))) {
 	fprintf(stderr, "mount: couldn't run %s\n", cmd);
@@ -108,7 +137,6 @@ _CONST char *name;
 
   /* Make MFS process label for RS from special name. */
   if(!(label=makelabel(name))) {
-	errno = E2BIG;
 	return -1;
   }
 

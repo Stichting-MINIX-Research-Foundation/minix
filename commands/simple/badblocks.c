@@ -294,7 +294,7 @@ char *argv[];
   }
 
   /* Mount device. This call may fail. */
-  mount(dev_name, dir_name, 0);
+  mount(dev_name, dir_name, 0, NULL, NULL);
   /* Succes. dev was mounted, try to umount */
 
   /* Umount device. Playing with the file system while other processes
@@ -309,7 +309,7 @@ char *argv[];
   strcat(file_name, "/");
   strcat(file_name, f_name);
 
-  if (mount(dev_name, dir_name, 0) == -1) {	/* this call should work */
+  if (mount(dev_name, dir_name, 0, NULL, NULL) == -1) {	/* this call should work */
 	fprintf(stderr, "Could not mount device anymore\n");
 	done(HARMLESS);
   }

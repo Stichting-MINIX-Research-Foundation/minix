@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include "../../servers/mfs/const.h"
 
+#define MINIX_FS_TYPE "mfs"
+
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void list, (void));
 _PROTOTYPE(void usage, (void));
@@ -29,12 +31,14 @@ int argc;
 char *argv[];
 {
   int i, ro, swap, n, v;
-  char **ap, *vs, *opt, *err;
+  char **ap, *vs, *opt, *err, *type, *args;
   char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
 
   if (argc == 1) list();	/* just list /etc/mtab */
   ro = 0;
   swap = 0;
+  type = NULL;
+  args = NULL;
   ap = argv+1;
   for (i = 1; i < argc; i++) {
 	if (argv[i][0] == '-') {
@@ -42,6 +46,12 @@ char *argv[];
 		while (*opt != 0) switch (*opt++) {
 		case 'r':	ro = 1;		break;
 		case 's':	swap = 1;	break;
+		case 't':	if (++i == argc) usage();
+				type = argv[i];
+				break;
+		case 'o':	if (++i == argc) usage();
+				args = argv[i];
+				break;
 		default:	usage();
 		}
 	} else {
@@ -60,7 +70,7 @@ char *argv[];
 	tell(" is swapspace\n");
   } else {
 	if (argc != 3) usage();
-	if (mount(argv[1], argv[2], ro) < 0) {
+	if (mount(argv[1], argv[2], ro, type, args) < 0) {
 		err = strerror(errno);
 		std_err("mount: Can't mount ");
 		std_err(argv[1]);
@@ -97,15 +107,24 @@ char *argv[];
   if (swap) {
 	vs = "swap";
   } else {
-	v = fsversion(argv[1], "mount");
-	if (v == 1)
-		vs = "1";
-	else if (v == 2)
-		vs = "2";
-	else if (v == 3)
-		vs = "3";
-	else
-		vs = "0";
+  	/* For MFS, use a version number. Otherwise, use the FS type name. */
+	if (type == NULL || !strcmp(type, MINIX_FS_TYPE)) {
+		v = fsversion(argv[1], "mount");
+		if (v == 1)
+			vs = "1";
+		else if (v == 2)
+			vs = "2";
+		else if (v == 3)
+			vs = "3";
+		else
+			vs = "0";
+	} else {
+		/* Keep the version field sufficiently short. */
+		if (strlen(type) < sizeof(version))
+			vs = type;
+		else
+			vs = "-";
+	}
   }
   n = put_mtab_entry(argv[1], swap ? "swap" : argv[2], vs, (ro ? "ro" : "rw") );
   if (n < 0) {
@@ -147,7 +166,8 @@ void list()
 
 void usage()
 {
-  std_err("Usage: mount [-r] special name\n       mount -s special\n");
+  std_err("Usage: mount [-r] [-t type] [-o options] special name\n"
+  	  "       mount -s special\n");
   exit(1);
 }
 

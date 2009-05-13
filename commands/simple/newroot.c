@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	dev= argv[1];
-	r= mount(dev, "/", 0 /* !ro */);
+	r= mount(dev, "/", 0 /* !ro */, NULL, NULL);
 	if (r != 0)
 	{
 		fprintf(stderr, "newroot: mount failed: %s\n", strerror(errno));

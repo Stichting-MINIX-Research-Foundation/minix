@@ -7,7 +7,7 @@ mount, umount \- mount or umount a file system
 #include <unistd.h>
 #include <sys/mount.h>
 
-int mount(char *\fIspecial\fP, char *\fIname\fP, int \fIflag\fP)
+int mount(char *\fIspecial\fP, char *\fIname\fP, int \fIflag\fP, char *\fItype\fP, char *\fIargs\fP)
 int umount(char *\fIname\fP)
 .fi
 .ft P
@@ -34,6 +34,13 @@ mounts a normal file or directory is used for
 which must be seen as the root of a virtual device.
 .I Flag
 is 0 for a read-write mount, 1 for read-only.
+.I Type
+is the type of the file system (e.g. "mfs"), used to pick a file system server.
+If this parameter is NULL, the default type is used.
+.I Args
+is a string with arguments passed to the file system server.
+Their interpretation is up to the server.
+This parameter may be NULL as well.
 .PP
 .B Umount()
 removes the connection between a device and a mount point,
