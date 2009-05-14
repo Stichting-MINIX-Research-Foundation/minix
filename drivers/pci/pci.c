@@ -95,9 +95,6 @@ PRIVATE struct pcidev
 
 PRIVATE int nr_pcidev= 0;
 
-/* Work around the limitations of the PCI emulation in QEMU 0.7.1 */
-PRIVATE int qemu_pci= 0;
-
 FORWARD _PROTOTYPE( void pci_intel_init, (void)				);
 FORWARD _PROTOTYPE( void probe_bus, (int busind)			);
 FORWARD _PROTOTYPE( int is_duplicate, (U8_t busnr, U8_t dev, U8_t func)	);
@@ -206,10 +203,6 @@ PUBLIC void pci_init()
 
 	if (!first_time)
 		return;
-
-	v= 0;
-	env_parse("qemu_pci", "d", 0, &v, 0, 1);
-	qemu_pci= v;
 
 	v= 0;
 	env_parse("pci_debug", "d", 0, &v, 0, 1);
@@ -777,22 +770,9 @@ printf("probe_bus(%d)\n", busind);
 
 			if (sts & (PSR_SSE|PSR_RMAS|PSR_RTAS))
 			{
-				if (qemu_pci)
-				{
-					printf(
-			"PCI: ignoring bad value 0x%x in sts for QEMU\n",
+				printf(
+					"PCI: ignoring bad value 0x%x in sts for QEMU\n",
 					sts & (PSR_SSE|PSR_RMAS|PSR_RTAS));
-				}
-				else
-				{
-					if (func == 0)
-						break;	/* Nothing here */
-
-					/* Scan all functions of a
-					 * multifunction device.
-					 */
-					continue;
-				}
 			}
 
 			dstr= pci_dev_name(vid, did);
