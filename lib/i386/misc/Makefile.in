@@ -5,6 +5,7 @@ CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
 LIBRARIES=libc
 
 libc_FILES=" \
+	_cpuid.s \
 	alloca.s \
 	get_bp.s \
 	getprocessor.s \
