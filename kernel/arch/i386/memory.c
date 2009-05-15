@@ -6,6 +6,7 @@
 #include <minix/type.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+#include <minix/cpufeature.h>
 #include <string.h>
 
 #include <sys/vm_i386.h>
@@ -155,7 +156,10 @@ PRIVATE void set_cr3()
 PRIVATE void vm_enable_paging(void)
 {
 	u32_t cr0, cr4;
+	int psok, pgeok;
 
+	psok = _cpufeature(_CPUF_I386_PSE);
+	pgeok = _cpufeature(_CPUF_I386_PGE);
 
 	cr0= read_cr0();
 	cr4= read_cr4();
@@ -169,7 +173,14 @@ PRIVATE void vm_enable_paging(void)
 
 	/* First enable paging, then enable global page flag. */
 	write_cr0(cr0 | I386_CR0_PG);
-	write_cr4(cr4 | I386_CR4_PGE);
+
+	/* May we enable these features? */
+	if(pgeok)
+		cr4 |= I386_CR4_PGE;
+	if(psok)
+		cr4 |= I386_CR4_PSE;
+
+	write_cr4(cr4);
 }
 
 PUBLIC vir_bytes alloc_remote_segment(u32_t *selector,

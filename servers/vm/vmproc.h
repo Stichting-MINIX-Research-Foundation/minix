@@ -37,6 +37,8 @@ struct vmproc {
 	callback_t vm_callback;	  /* function to call on vfs reply */
 	int vm_callback_type; /* expected message type */
 
+	int vm_slot;		/* process table slot */
+
 	union {
 		struct {
 			cp_grant_id_t gid;

@@ -58,3 +58,7 @@ sys/vm_i386.h
 				 */
 #define I386_VM_PFE_W	0x02	/* Caused by write (otherwise read) */
 #define I386_VM_PFE_U	0x04	/* CPU in user mode (otherwise supervisor) */
+
+/* CPUID flags */
+#define CPUID1_EDX_PSE (1L <<  3)	/* Page Size Extension */
+#define CPUID1_EDX_PGE (1L << 13)	/* Page Global (bit) Enable */

@@ -176,7 +176,7 @@ PUBLIC int main(void)
  *===========================================================================*/
 PRIVATE void vm_init(void)
 {
-	int s;
+	int s, i;
 	struct memory mem_chunks[NR_MEMS];
 	struct boot_image image[NR_BOOT_PROCS];
 	struct boot_image *ip;
@@ -193,6 +193,10 @@ PRIVATE void vm_init(void)
 
 	/* Set table to 0. This invalidates all slots (clear VMF_INUSE). */
 	memset(vmproc, 0, sizeof(vmproc));
+
+	for(i = 0; i < ELEMENTS(vmproc); i++) {
+		vmproc[i].vm_slot = i;
+	}
 
 	/* Walk through boot-time system processes that are alive
 	 * now and make valid slot entries for them.
