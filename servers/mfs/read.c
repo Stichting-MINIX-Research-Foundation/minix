@@ -1016,6 +1016,9 @@ printf("MFS(%d) get_inode by fs_getdents() failed\n", SELF_E);
 		fs_m_out.RES_GDE_POS_CHANGE= new_pos-pos;
 	else
 		fs_m_out.RES_GDE_POS_CHANGE= 0;
+
+	rip->i_update |= ATIME;
+	rip->i_dirt = DIRTY;
 	r= OK;
   }
 

@@ -59,6 +59,9 @@ PUBLIC int do_utime()
 	r = forbidden(vp, W_BIT, 0 /*!use_realuid*/);
   }
 
+  if (r == OK)
+  	r = read_only(vp);
+
   if (r != OK)
   {
 	put_vnode(vp);

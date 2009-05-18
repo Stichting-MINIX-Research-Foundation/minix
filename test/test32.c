@@ -281,7 +281,7 @@ void test32c()
 		alarm(20);
 		if (chdir("newdir") != 0) e(15);
 		Creat("/tmp/sema.11a");
-		while (stat("/tmp/sema.11a", &st1) == -1) sleep(1);
+		while (stat("/tmp/sema.11a", &st1) == 0) sleep(1);
 		exit(0);
 	    default:
 		wait(&stat_loc);
@@ -291,7 +291,7 @@ void test32c()
 	/* Child B. */
 	if (chdir("olddir") != 0) e(17);
 	Creat("/tmp/sema.11b");
-	while (stat("/tmp/sema.11b", &st1) == -1) sleep(1);
+	while (stat("/tmp/sema.11b", &st1) == 0) sleep(1);
 	exit(0);
       default:
 	/* Wait for child A. It will keep ``newdir'' bussy. */

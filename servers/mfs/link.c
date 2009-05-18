@@ -87,6 +87,7 @@ printf("MFS(%d) get_inode by fs_link() failed\n", SELF_E);
 	if ( (new_ip = advance_o(&ip, string)) == NIL_INODE) {
 		r = err_code;
 		if (r == ENOENT) r = OK;
+		else if (r == EENTERMOUNT || r == ELEAVEMOUNT) r = EEXIST;
 	} else {
 		put_inode(new_ip);
 		r = EEXIST;
@@ -169,6 +170,7 @@ printf("MFS(%d) get_inode by fs_link() failed\n", SELF_E);
 	if ( (new_ip = advance_nocheck(&ip, string)) == NIL_INODE) {
 		r = err_code;
 		if (r == ENOENT) r = OK;
+		else if (r == EENTERMOUNT || r == ELEAVEMOUNT) r = EEXIST;
 	} else {
 		put_inode(new_ip);
 		r = EEXIST;
@@ -385,13 +387,12 @@ PUBLIC int fs_rdlink_s()
 
   if (!S_ISLNK(rip->i_mode))
 	r = EACCES;
-  else if (copylen < rip->i_size) 
-	r = ERANGE;
   else if ((b = read_map(rip, (off_t) 0)) == NO_BLOCK)
 	r = EIO;
   else {
 	/* Passed all checks */
-	copylen = rip->i_size;
+	if (copylen > rip->i_size)
+		copylen = rip->i_size;
 	bp = get_block(rip->i_dev, b, NORMAL);
 	r = sys_safecopyto(FS_PROC_NR, fs_m_in.REQ_GRANT, 0, 
 	(vir_bytes) bp->b_data, (vir_bytes) copylen, D);
@@ -605,12 +606,22 @@ PUBLIC int fs_rename_o()
   if ( (old_dirp = get_inode(fs_dev, fs_m_in.REQ_OLD_DIR)) == NIL_INODE) 
         return(err_code);
 
-  if ( (old_ip = advance_o(&old_dirp, old_name)) == NIL_INODE) r = err_code;
+  if ( (old_ip = advance_o(&old_dirp, old_name)) == NIL_INODE) {
+	r = err_code;
+	if (r == EENTERMOUNT) r = EBUSY;	/* should this fail at all? */
+	else if (r == ELEAVEMOUNT) r = EINVAL;	/* rename on dot-dot */
+  }
 
   /* Get new dir inode */ 
   if ( (new_dirp = get_inode(fs_dev, fs_m_in.REQ_NEW_DIR)) == NIL_INODE) 
       r = err_code;
   new_ip = advance_o(&new_dirp, new_name);	/* not required to exist */
+
+  /* However, if the check failed because the file does exist, don't continue.
+   * Note that ELEAVEMOUNT is covered by the dot-dot check later.
+   */
+  if (new_ip == NIL_INODE && err_code == EENTERMOUNT)
+ 	r = EBUSY;
 
   if (old_ip != NIL_INODE)
 	odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY);  /* TRUE iff dir */
@@ -799,13 +810,22 @@ PUBLIC int fs_rename_s()
   if ( (old_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_OLD_DIR)) == NIL_INODE) 
         return(err_code);
 
-  if ( (old_ip = advance_nocheck(&old_dirp, old_name)) == NIL_INODE)
+  if ( (old_ip = advance_nocheck(&old_dirp, old_name)) == NIL_INODE) {
 	r = err_code;
+	if (r == EENTERMOUNT) r = EBUSY;	/* should this fail at all? */
+	else if (r == ELEAVEMOUNT) r = EINVAL;	/* rename on dot-dot */
+  }
 
   /* Get new dir inode */ 
   if ( (new_dirp = get_inode(fs_dev, fs_m_in.REQ_REN_NEW_DIR)) == NIL_INODE) 
       r = err_code;
   new_ip = advance_nocheck(&new_dirp, new_name); /* not required to exist */
+
+  /* However, if the check failed because the file does exist, don't continue.
+   * Note that ELEAVEMOUNT is covered by the dot-dot check later.
+   */
+  if (new_ip == NIL_INODE && err_code == EENTERMOUNT)
+ 	r = EBUSY;
 
   if (old_ip != NIL_INODE)
 	odir = ((old_ip->i_mode & I_TYPE) == I_DIRECTORY);  /* TRUE iff dir */

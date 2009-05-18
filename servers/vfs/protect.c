@@ -127,6 +127,10 @@ PUBLIC int do_chown()
 	if (gid != m_in.group)
 		r = EPERM;	/* only change to the current gid */
   }
+
+  if (r == OK)
+  	r = read_only(vp);
+
   if (r != OK) {
 	put_vnode(vp);
 	return r;

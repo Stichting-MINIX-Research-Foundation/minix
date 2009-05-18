@@ -246,7 +246,8 @@ PUBLIC int do_truncate()
   /* Request lookup */
   if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) return r;
   
-  r= truncate_vn(vp, m_in.m2_l1);
+  if ((r = forbidden(vp, W_BIT, 0 /*!use_realuid*/)) == OK)
+	  r = truncate_vn(vp, m_in.m2_l1);
 
   put_vnode(vp);
 
@@ -266,8 +267,8 @@ PUBLIC int do_ftruncate()
   
   if ( (rfilp = get_filp(m_in.m2_i1)) == NIL_FILP)
         return err_code;
-  if ( (r = forbidden(rfilp->filp_vno, W_BIT, 0 /*!use_realuid*/)) != OK)
-	return r;
+  if (!(rfilp->filp_mode & W_BIT))
+  	return EBADF;
   return truncate_vn(rfilp->filp_vno, m_in.m2_l1);
 }
 

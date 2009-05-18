@@ -432,7 +432,7 @@ int *symlinkp;
    * just look up the first (or only) component in path after skipping any
    * leading slashes. 
    */
-  int r;
+  int r, leaving_mount;
   struct inode *rip, *dir_ip;
   char *cp, *ncp;
   char string[NAME_MAX+1];
@@ -459,6 +459,12 @@ int *symlinkp;
 	put_inode(rip);
 	return ENOENT;
   }
+
+  /* If the given start inode is a mountpoint, we must be here because the file
+   * system mounted on top returned an ELEAVEMOUNT error. In this case, we must
+   * only accept ".." as the first path component.
+   */
+  leaving_mount = rip->i_mountpoint;
 
   /* Scan the path component by component. */
   while (TRUE) {
@@ -499,12 +505,19 @@ int *symlinkp;
 
 	/* Special code for '..'. A process is not allowed to leave a chrooted
 	 * environment. A lookup of '..' at the root of a mounted filesystem
-	 * has to return ELEAVEMOUNT.
+	 * has to return ELEAVEMOUNT. In both cases, the caller needs search
+	 * permission for the current inode, as it is used as directory.
 	 */
 	if (strcmp(string, "..") == 0)
 	{
 		if (rip->i_num == root_ino)
 		{
+			/* 'rip' is now accessed as directory */
+			if ((r = forbidden(rip, X_BIT)) != OK) {
+				put_inode(rip);
+				return r;
+			}
+
 			cp= ncp;
 			continue;	/* Just ignore the '..' at a process'
 					 * root.
@@ -512,27 +525,47 @@ int *symlinkp;
 		}
 		if (rip->i_num == ROOT_INODE && !rip->i_sp->s_is_root) {
 			/* Climbing up mountpoint */
+
+			/* 'rip' is now accessed as directory */
+			if ((r = forbidden(rip, X_BIT)) != OK) {
+				put_inode(rip);
+				return r;
+			}
+
 			put_inode(rip);
-			*res_inop= NULL;
 			*offsetp += cp-user_path;
 			return ELEAVEMOUNT;
 		}
 	}
 	else
 	{
-		/* Only check for a mount point if we are not looking for '..'.
-		 */
-		if (rip->i_mountpoint)
-		{
-			*res_inop= rip;
-			*offsetp += cp-user_path;
-			return EENTERMOUNT;
+		/* Check for misbehaving child file systems. */
+		if (leaving_mount) {
+        		printf("mfs:parse_path_s: first component after "
+        			"leaving mount is '%s'\n", string);
+
+			/* DO NOT pass back EENTERMOUNT. We supposedly got here
+			 * because the child file system treated the last path
+			 * component as "..". It is likely to do that again.
+			 */
+			put_inode(rip);
+			return EINVAL;
 		}
 	}
 
-	/* There is more path.  Keep parsing. */
+	/* Only check for a mount point if we are not coming from one. */
+	if (!leaving_mount && rip->i_mountpoint)
+	{
+		*res_inop= rip;
+		*offsetp += cp-user_path;
+		return EENTERMOUNT;
+	}
+
+	/* There is more path.  Keep parsing.
+	 * If we're leaving a mountpoint, skip directory permission checks.
+	 */
 	dir_ip = rip;
-	r = advance_s1(dir_ip, string, &rip);
+	r = advance_s1(dir_ip, leaving_mount ? dot2 : string, &rip);
 
 	if (r != OK)
 	{
@@ -540,6 +573,8 @@ int *symlinkp;
 		return r;
 	}
 	
+	leaving_mount = 0;
+
 	/* The call to advance() succeeded.  Fetch next component. */
 	if (S_ISLNK(rip->i_mode)) {
 
@@ -572,7 +607,6 @@ int *symlinkp;
 		{
                         put_inode(dir_ip);
                         put_inode(rip);
-			*res_inop= NULL;
 			*offsetp= 0;
                         return ESYMLINK;
 		}

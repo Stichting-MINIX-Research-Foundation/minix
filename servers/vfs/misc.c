@@ -219,8 +219,8 @@ PUBLIC int do_fcntl()
 		return EINVAL;
 	}
 
-	if ( (r = forbidden(f->filp_vno, W_BIT, 0 /*!use_realuid*/)) != OK)
-	  return r;
+	if (!(f->filp_mode & W_BIT))
+		return EBADF;
 
 	/* Copy flock data from userspace. */
 	if((r = sys_datacopy(who_e, (vir_bytes) m_in.name1, 
