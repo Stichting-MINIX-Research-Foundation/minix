@@ -384,6 +384,7 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 /* Write mapping into page table. Allocate a new page table if necessary. */
 /* Page directory and table entries for this virtual address. */
 	int p, pages, pde;
+	int finalpde;
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	vm_assert(!(bytes % I386_PAGE_SIZE));
@@ -406,13 +407,18 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 
 	PT_SANE(pt);
 
+	finalpde = I386_VM_PDE(v + I386_PAGE_SIZE * pages);
+
 	/* First make sure all the necessary page tables are allocated,
 	 * before we start writing in any of them, because it's a pain
 	 * to undo our work properly. Walk the range in page-directory-entry
 	 * sized leaps.
 	 */
-	for(pde = I386_VM_PDE(v); pde <= I386_VM_PDE(v + I386_PAGE_SIZE * pages); pde++) {
+	for(pde = I386_VM_PDE(v); pde <= finalpde; pde++) {
 		vm_assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
+		if(pt->pt_dir[pde] & I386_VM_BIGPAGE) {
+                        vm_panic("pt_writemap: BIGPAGE found", NO_NUM);
+		}
 		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
 			int r;
 			vm_assert(!pt->pt_dir[pde]);
@@ -494,6 +500,10 @@ PUBLIC int pt_new(pt_t *pt)
 	/* Where to start looking for free virtual address space? */
 	pt->pt_virtop = 0;
 
+        /* Map in kernel. */
+        if(pt_mapkernel(pt) != OK)
+                vm_panic("pt_new: pt_mapkernel failed", NO_NUM);
+
 	return OK;
 }
 
@@ -574,11 +584,11 @@ PUBLIC void pt_init(void)
         vmp->vm_arch.vm_seg[D].mem_phys += ABS2CLICK(moveup);
         vmp->vm_arch.vm_seg[S].mem_phys += ABS2CLICK(moveup);
        
+#if 0
         /* Map in kernel. */
         if(pt_mapkernel(newpt) != OK)
                 vm_panic("pt_init: pt_mapkernel failed", NO_NUM);
 
-#if 0
 	/* Allocate us a page table in which to remember page directory
 	 * pointers.
 	 */
@@ -705,32 +715,45 @@ PUBLIC void pt_free(pt_t *pt)
 PUBLIC int pt_mapkernel(pt_t *pt)
 {
 	int r;
-	static int pde = -1;
-	int global;
+	static int pde = -1, do_bigpage = 0;
+	u32_t global = 0;
+	static u32_t kern_phys;
+	static int printed = 0;
 
 	if(global_bit_ok) global = I386_VM_GLOBAL;
 
         /* Any i386 page table needs to map in the kernel address space. */
         vm_assert(vmproc[VMP_SYSTEM].vm_flags & VMF_INUSE);
 
-	if(pde == -1) {
+	if(pde == -1 && bigpage_ok) {
 		int pde1, pde2;
 		pde1 = I386_VM_PDE(KERNEL_TEXT);
 		pde2 = I386_VM_PDE(KERNEL_DATA+KERNEL_DATA_LEN);
-		vm_assert(pde1 == pde2);
-		pde = pde1;
-		vm_assert(pde >= 0);
+		if(pde1 != pde2) {
+			printf("VM: pt_mapkernel: kernel too big?");
+			bigpage_ok = 0;
+		} else {
+			kern_phys = KERNEL_TEXT & I386_VM_ADDR_MASK_4MB;
+			pde = pde1;
+			do_bigpage = 1;
+			vm_assert(pde >= 0);
+		}
 	}
 
-        /* Map in text. flags: don't write, supervisor only */
-        if((r=pt_writemap(pt, KERNEL_TEXT, KERNEL_TEXT, KERNEL_TEXT_LEN,
-		I386_VM_PRESENT|global, 0)) != OK)
-		return r;
+	if(do_bigpage) {
+		pt->pt_dir[pde] = kern_phys |
+			I386_VM_BIGPAGE|I386_VM_PRESENT|I386_VM_WRITE|global;
+	} else {
+        	/* Map in text. flags: don't write, supervisor only */
+        	if((r=pt_writemap(pt, KERNEL_TEXT, KERNEL_TEXT, KERNEL_TEXT_LEN,
+			I386_VM_PRESENT|global, 0)) != OK)
+			return r;
  
-        /* Map in data. flags: read-write, supervisor only */
-        if((r=pt_writemap(pt, KERNEL_DATA, KERNEL_DATA, KERNEL_DATA_LEN,
-		I386_VM_PRESENT|I386_VM_WRITE|global, 0)) != OK)
-		return r;
+        	/* Map in data. flags: read-write, supervisor only */
+        	if((r=pt_writemap(pt, KERNEL_DATA, KERNEL_DATA, KERNEL_DATA_LEN,
+			I386_VM_PRESENT|I386_VM_WRITE|global, 0)) != OK)
+			return r;
+	}
 
 	return OK;
 }

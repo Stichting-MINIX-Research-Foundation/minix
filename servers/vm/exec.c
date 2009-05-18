@@ -348,10 +348,12 @@ PUBLIC int proc_new(struct vmproc *vmp,
 	vm_assert(!(data_start % VM_PAGE_SIZE));
 	vm_assert((!text_start && !data_start) || (text_start && data_start));
 
+#if 0
 	if(!map_proc_kernel(vmp)) {
 		printf("VM: exec: map_proc_kernel failed\n");
 		return ENOMEM;
 	}
+#endif
 
 	/* Place text at start of process. */
 	vmp->vm_arch.vm_seg[T].mem_phys = ABS2CLICK(vstart);
