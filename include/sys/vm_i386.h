@@ -13,6 +13,7 @@ sys/vm_i386.h
 #define I386_VM_PCD	0x010	/* Cache disable */
 #define I386_VM_ACC	0x020	/* Accessed */
 #define I386_VM_ADDR_MASK 0xFFFFF000 /* physical address */
+#define I386_VM_ADDR_MASK_4MB 0xFFC00000 /* physical address */
 
 /* Page directory specific flags. */
 #define I386_VM_BIGPAGE	0x080	/* 4MB page */
