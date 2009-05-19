@@ -87,7 +87,7 @@ int rw_flag;			/* READING or WRITING */
 
   vp = f->filp_vno;
 
-  if (vp->v_pipe)
+  if (vp->v_pipe == I_PIPE)
   {
 	if (fp->fp_cum_io_partial != 0)
 	{
