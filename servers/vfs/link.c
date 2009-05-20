@@ -356,6 +356,13 @@ PUBLIC int do_rdlink()
   r = lookup_vp(PATH_RET_SYMLINK, 0 /*!use_realuid*/, &vp);
   if (r != OK) return r;
 
+  /* Make sure this is a symbolic link */
+  if ((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK) {
+	put_vnode(vp);
+
+  	return EINVAL;
+  }
+
   /* Issue request */
   r= req_rdlink(vp->v_fs_e, vp->v_inode_nr, who_e, (vir_bytes)m_in.name2,
 	copylen);
