@@ -108,6 +108,9 @@ struct mem_map *map_ptr;                        /* memory to remove */
   }
   if (memp >= &mem_chunks[NR_MEMS])
   {
+	printf("VM: looking for memory at 0x%x, length 0x%x\n",
+		CLICK2ABS(map_ptr[T].mem_phys),
+		CLICK2ABS(map_ptr[T].mem_len));
         vm_panic("reserve_proc_mem: can't find map in mem_chunks ",
                 map_ptr[T].mem_phys);
   }

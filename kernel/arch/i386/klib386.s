@@ -40,6 +40,8 @@
 .define	_write_cr0	! write a value in cr0
 .define	_read_cr4
 .define	_write_cr4
+.define _i386_invlpg_addr
+.define _i386_invlpg_level0
 
 .define	_kernel_cr3	
 
@@ -643,4 +645,16 @@ _write_cr3:
 	LOADCR3WITHEAX(0x22, 8(ebp))
 	pop     ebp
 	ret
+
+!*===========================================================================*
+!*				i386_invlpg				*
+!*===========================================================================*
+! PUBLIC void i386_invlpg(void);
+_i386_invlpg_level0:
+	push    ebp
+	invlpg	(_i386_invlpg_addr)
+	pop	ebp
+	ret
+
+
 

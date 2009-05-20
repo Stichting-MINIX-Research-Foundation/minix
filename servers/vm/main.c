@@ -177,6 +177,7 @@ PUBLIC int main(void)
 PRIVATE void vm_init(void)
 {
 	int s, i;
+	int click, clicksforgotten = 0;
 	struct memory mem_chunks[NR_MEMS];
 	struct boot_image image[NR_BOOT_PROCS];
 	struct boot_image *ip;
@@ -251,11 +252,7 @@ PRIVATE void vm_init(void)
 	/* Initialize tables to all physical memory. */
 	mem_init(mem_chunks);
 
-	/* Bits of code need to know where a process can
-	 * start in a pagetable.
-	 */
-        kernel_top_bytes = find_kernel_top();
-
+#if 0
 	/* Can first kernel pages of code and data be (left) mapped out?
 	 * If so, change the SYSTEM process' memory map to reflect this
 	 * (future mappings of SYSTEM into other processes will not include
@@ -272,6 +269,7 @@ PRIVATE void vm_init(void)
 		vmp->vm_arch.vm_seg[D].mem_phys += DIFF;
 		vmp->vm_arch.vm_seg[D].mem_len -= DIFF;
 	}
+#endif
 
 	/* Give these processes their own page table. */
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
@@ -317,6 +315,13 @@ PRIVATE void vm_init(void)
 			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
 				VM_STACKTOP);
 	}
+
+	/* Temporary hack; throw away all lower memory. */
+	while((click=ALLOC_MEM(1, 0)) <= ABS2CLICK(VM_PROCSTART)) {
+		clicksforgotten++;
+	}
+
+	printf("VM: HACK: clicks forgotten: %d last one: 0x%x\n", clicksforgotten, click);
 
 	/* Set up table of calls. */
 #define CALLMAP(code, func, thecaller) { int i;			      \
@@ -370,11 +375,3 @@ PRIVATE void vm_init(void)
 		vm_panic("kernel loaded too high", NO_NUM);
 }
 
-#if 0
-void kputc(int c)
-{
-	if(c == '\n')
-		ser_putc('\r');
-	ser_putc(c);
-}
-#endif

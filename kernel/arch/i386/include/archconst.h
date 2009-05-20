@@ -136,5 +136,6 @@
 #define IOPL_MASK 0x003000
 
 #define vir2phys(vir)   (kinfo.data_base + (vir_bytes) (vir))
+#define phys2vir(ph)   ((vir_bytes) (ph) - kinfo.data_base)
 
 #endif /* _I386_ACONST_H */

@@ -23,6 +23,13 @@ PUBLIC u32_t kernel_cr3;
 extern u32_t cswitch;
 u32_t last_cr3 = 0;
 
+u32_t *vm_pagedirs = NULL;
+
+u32_t i386_invlpg_addr = 0;
+
+#define WANT_FREEPDES 4
+PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES];
+
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
 FORWARD _PROTOTYPE( void phys_put32, (phys_bytes addr, u32_t value)	);
@@ -693,6 +700,92 @@ void vm_print(u32_t *root)
 	return;
 }
 
+void invlpg_range(u32_t lin, u32_t bytes)
+{
+	u32_t o;
+	o = lin % I386_PAGE_SIZE;
+	lin -= o;
+	bytes += o;
+	while(bytes >= I386_PAGE_SIZE) {
+		i386_invlpg_addr = lin;
+		level0(i386_invlpg_level0);
+		lin += I386_PAGE_SIZE;
+		bytes -= I386_PAGE_SIZE;
+	}
+}
+
+/*===========================================================================*
+ *				lin_lin_copy				     *
+ *===========================================================================*/
+int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, u8_t *vsrc,
+	struct proc *dstproc, vir_bytes dstlinaddr, u8_t *vdst,
+	vir_bytes bytes)
+{
+
+	if(nfreepdes < 2)
+		minix_panic("vm: not enough free PDE's", NO_NUM);
+
+	util_stacktrace();
+
+#define CREATEPDE(PROC, PTR, LINADDR, OFFSET, FREEPDE, VIRT) {	\
+	if(iskernelp(PROC)) {					\
+		PTR = VIRT;					\
+		OFFSET = 0;					\
+	} else {						\
+		u32_t *pdevalptr;				\
+		u32_t myphysaddr;				\
+		int pde_index;					\
+		pde_index = I386_VM_PDE(LINADDR);		\
+		pdevalptr = (u32_t *) ((u8_t *) vm_pagedirs +	\
+			I386_PAGE_SIZE * PROC->p_nr +		\
+			I386_VM_PT_ENT_SIZE * pde_index);	\
+		kprintf("pagedirs: 0x%x p_nr: %d linaddr: 0x%x pde: %d\n", \
+			vm_pagedirs, PROC->p_nr, LINADDR, pde_index);	\
+		kprintf("pde ptr: 0x%x\n", pdevalptr); 		\
+		kprintf("value: 0x%x\n", *pdevalptr); 		\
+		myphysaddr = kernel_cr3 + FREEPDE*I386_VM_PT_ENT_SIZE; \
+		phys_put32(myphysaddr, *pdevalptr);		\
+		PTR = (u8_t *) phys2vir(I386_BIG_PAGE_SIZE*FREEPDE);	\
+		kprintf("ptr: 0x%x\n", PTR); 		\
+		OFFSET = LINADDR & I386_VM_OFFSET_MASK_4MB;	\
+		kprintf("offset: 0x%lx & 0x%lx -> 0x%lx\n", LINADDR, \
+			I386_VM_OFFSET_MASK_4MB, OFFSET);	\
+		invlpg_range(LINADDR, bytes + I386_PAGE_SIZE);	\
+	}							\
+}
+
+	while(bytes > 0) {
+		u8_t *srcptr, *dstptr;
+		vir_bytes srcoffset, dstoffset, chunk, remain;
+
+		/* Set up 4MB ranges. */
+		CREATEPDE(srcproc, srcptr, srclinaddr, srcoffset, freepdes[0], vsrc);
+		CREATEPDE(dstproc, dstptr, dstlinaddr, dstoffset, freepdes[1], vdst);
+
+		remain = I386_BIG_PAGE_SIZE - MAX(srcoffset, dstoffset);
+		chunk = MIN(bytes, remain);
+
+		/* Copy pages. */
+		while(chunk > 0) {
+			kprintf("copy %d -> %d  %d/%d using 0x%lx+0x%lx -> 0x%lx+0x%lx\n",
+				srcproc->p_endpoint, dstproc->p_endpoint,
+				chunk, bytes, srcptr, srcoffset,
+				dstptr, dstoffset);
+			memcpy(dstptr + dstoffset, srcptr + srcoffset, chunk);
+			kprintf("done\n");
+		}
+
+		/* Update counter and addresses for next iteration, if any. */
+		bytes -= chunk;
+		srclinaddr += chunk;
+		dstlinaddr += chunk;
+		vsrc += chunk;
+		vdst += chunk;
+	}
+
+	return OK;
+}
+
 /*===========================================================================*
  *				virtual_copy_f				     *
  *===========================================================================*/
@@ -778,6 +871,17 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
       }
   }
 
+#if 0
+  /* Special case: vir to vir copy */
+  if(vm_pagedirs && procs[_SRC_] && procs[_DST_] &&
+	HASPT(procs[_SRC_]) && HASPT(procs[_DST_]) &&
+	src_addr->segment == D && src_addr->segment == D) {
+	lin_lin_copy(procs[_SRC_], phys_addr[_SRC_], (u8_t *) src_addr->offset,
+		procs[_DST_], phys_addr[_DST_], (u8_t *) dst_addr->offset,
+		bytes);
+  }
+#endif
+
   if(vmcheck && procs[_SRC_])
 	CHECKRANGE_OR_SUSPEND(procs[_SRC_], phys_addr[_SRC_], bytes, 0);
   if(vmcheck && procs[_DST_])
@@ -852,4 +956,21 @@ PUBLIC int arch_umap(struct proc *pr, vir_bytes offset, vir_bytes count,
 	return EINVAL;
 }
 
+void i386_updatepde(int pde, u32_t val)
+{
+	u32_t physaddr;
+	physaddr = kernel_cr3 + pde*I386_VM_PT_ENT_SIZE;
+	kprintf("kernel: i386_updatepde: cr3 0x%lx; phys addr 0x%lx; pde %d, val 0x%lx\n",
+		kernel_cr3, physaddr, pde, val);
+	kprintf("previous entry was: 0x%lx\n", phys_get32(physaddr));
+	phys_put32(physaddr, val);
+	kprintf("entry is now: 0x%lx\n", phys_get32(physaddr));
+}
 
+void i386_freepde(int pde)
+{
+	if(nfreepdes >= WANT_FREEPDES)
+		return;
+	freepdes[nfreepdes++] = pde;
+	printf("kernel: free pde: %d\n", pde);
+}

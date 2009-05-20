@@ -49,6 +49,8 @@ _PROTOTYPE( void vir_insb, (u16_t port, struct proc *proc, u32_t vir, size_t cou
 _PROTOTYPE( void vir_outsb, (u16_t port, struct proc *proc, u32_t vir, size_t count));
 _PROTOTYPE( void vir_insw, (u16_t port, struct proc *proc, u32_t vir, size_t count));
 _PROTOTYPE( void vir_outsw, (u16_t port, struct proc *proc, u32_t vir, size_t count));
+_PROTOTYPE( void i386_updatepde, (int pde, u32_t val));
+_PROTOTYPE( void i386_freepde, (int pde));
 
 
 /* exception.c */
@@ -70,7 +72,7 @@ _PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count) );
 _PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count) );
-_PROTOTYPE( void i386_invlpg, (U32_t addr) );
+_PROTOTYPE( void i386_invlpg_level0, (void) );
 
 /* protect.c */
 _PROTOTYPE( void prot_init, (void)                     			);
@@ -79,6 +81,7 @@ _PROTOTYPE( void init_codeseg, (struct segdesc_s *segdp, phys_bytes base,
 _PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
                 vir_bytes size, int privilege)                          );
 _PROTOTYPE( void enable_iop, (struct proc *pp)                          );
+_PROTOTYPE( int prot_set_kern_seg_limit, (vir_bytes limit)             );
 
 /* functions defined in architecture-independent kernel source. */
 #include "../../proto.h"

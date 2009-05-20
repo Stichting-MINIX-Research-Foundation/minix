@@ -603,6 +603,11 @@
 #define VMCTL_MEMREQ_REPLY	15
 #define VMCTL_INCSP		16
 #define VMCTL_NOPAGEZERO	18
+#define VMCTL_I386_KERNELLIMIT	19
+#define VMCTL_I386_PAGEDIRS	20
+#define VMCTL_I386_PDE		21
+#define VMCTL_I386_PDEVAL	22
+#define VMCTL_I386_FREEPDE	23
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *
