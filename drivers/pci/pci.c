@@ -33,8 +33,8 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <string.h>
 #include <minix/sysutil.h>
 
-#define NR_PCIBUS	10
-#define NR_PCIDEV	40
+#define NR_PCIBUS       40
+#define NR_PCIDEV       50
 
 #define PBT_INTEL_HOST	 1
 #define PBT_PCIBRIDGE	 2
@@ -1135,16 +1135,24 @@ int bar_nr;
 {
 	int reg, prefetch, type, dev_bar_nr;
 	u32_t bar, bar2;
+	u16_t cmd;
 
 	reg= PCI_BAR+4*bar_nr;
 
 	bar= pci_attr_r32_u(devind, reg);
 	if (bar & PCI_BAR_IO)
 	{
-		/* Size register */
+		/* Disable I/O access before probing for BAR's size */
+		cmd = pci_attr_r16(devind, PCI_CR);
+		pci_attr_w16(devind, PCI_CR, cmd & ~PCI_CR_IO_EN);
+
+		/* Probe BAR's size */
 		pci_attr_w32(devind, reg, 0xffffffff);
 		bar2= pci_attr_r32_u(devind, reg);
+
+		/* Restore original state */
 		pci_attr_w32(devind, reg, bar);
+		pci_attr_w16(devind, PCI_CR, cmd);
 
 		bar &= ~(u32_t)3;	/* Clear non-address bits */
 		bar2 &= ~(u32_t)3;
@@ -1168,10 +1176,17 @@ int bar_nr;
 	}
 	else
 	{
-		/* Size register */
+		/* Disable mem access before probing for BAR's size */
+		cmd = pci_attr_r16(devind, PCI_CR);
+		pci_attr_w16(devind, PCI_CR, cmd & ~PCI_CR_MEM_EN);
+
+		/* Probe BAR's size */
 		pci_attr_w32(devind, reg, 0xffffffff);
 		bar2= pci_attr_r32_u(devind, reg);
+
+		/* Restore original values */
 		pci_attr_w32(devind, reg, bar);
+		pci_attr_w16(devind, PCI_CR, cmd);
 
 		if (bar2 == 0)
 			return;	/* Reg. is not implemented */
@@ -2398,7 +2413,7 @@ u32_t value;
 #if 0
 	printf("pcii_wreg32(%d, %d, 0x%X, 0x%X): %d.%d.%d\n",
 		busind, devind, port, value,
-		pcibus[busind].pb_bus, pcidev[devind].pd_dev,
+		pcibus[busind].pb_busnr, pcidev[devind].pd_dev,
 		pcidev[devind].pd_func);
 #endif
 	PCII_WREG32_(pcibus[busind].pb_busnr, 
