@@ -1,8 +1,8 @@
 
-Welcome to MINIX 3.1.3.
+Welcome to MINIX 3.1.4.
 
-This is an interim release, not final release quality. It is intended as
-a prerelease for developers.
+This snapshot is an interim release, not final release quality. It is
+intended as a prerelease for developers.
 
 The system is now running and many commands work normally.  To use MINIX
 in a serious way, you need to install it to your hard disk, which you
@@ -16,7 +16,6 @@ to begin installing the many software packages available.  After you
 have installed the packages, type 'xdm' to start X Windows if you have
 installed it.
 
-It is strongly recommended that you print and read the 'setup.pdf' file
-on the CD-ROM before staring the installation. The file is also
-available at www.minix3.org/doc under the 'Installation' heading.
-
+Before you begin the installation process, it is strongly recommended
+that you print and carefully read the installation instructions
+available on the MINIX 3 website: http://www.minix3.org.
