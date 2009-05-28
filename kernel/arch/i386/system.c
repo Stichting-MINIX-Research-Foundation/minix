@@ -153,6 +153,60 @@ PRIVATE void ser_debug(int c)
 	do_serial_debug--;
 }
 
+PRIVATE void printslot(struct proc *pp)
+{
+	static int level = 0;
+	struct proc *depproc = NULL;
+	int dep = NONE;
+
+	if(level >= NR_PROCS) {
+		kprintf("loop??\n");
+		return;
+	}
+
+	level++;
+
+	kprintf("%*s %d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s ",
+		level, "",
+		proc_nr(pp), pp->p_name, pp->p_endpoint, 
+		pp->p_priority, pp->p_max_priority, pp->p_user_time,
+		pp->p_sys_time, pp->p_seg.p_cr3, rtsflagstr(pp->p_rts_flags));
+
+	if(pp->p_rts_flags & SENDING) {
+		dep = pp->p_sendto_e;
+		kprintf(" to: ");
+	} else if(pp->p_rts_flags & RECEIVING) {
+		dep = pp->p_getfrom_e;
+		kprintf(" from: ");
+	}
+
+	if(dep != NONE) {
+		if(dep == ANY) {
+			kprintf(" ANY\n");
+		} else {
+			int procno;
+			if(!isokendpt(dep, &procno)) {
+				kprintf(" ??? %d\n", dep);
+			} else {
+				depproc = proc_addr(procno);
+				if(depproc->p_rts_flags & SLOT_FREE) {
+					kprintf(" empty slot %d???\n", procno);
+					depproc = NULL;
+				} else {
+					kprintf(" %s\n", depproc->p_name);
+				}
+			}
+		}
+	} else {
+		kprintf("\n");
+	}
+	kprintf("%*s ", level, "");
+	proc_stacktrace(pp);
+	if(depproc)
+		printslot(depproc);
+	level--;
+}
+
 PUBLIC void ser_dump_proc()
 {
 	struct proc *pp;
@@ -165,15 +219,7 @@ PUBLIC void ser_dump_proc()
 	{
 		if (pp->p_rts_flags & SLOT_FREE)
 			continue;
-		kprintf(
-	"%d: 0x%02x %s e %d src %d dst %d prio %d/%d time %d/%d EIP 0x%x\n",
-			proc_nr(pp),
-			pp->p_rts_flags, pp->p_name,
-			pp->p_endpoint, pp->p_getfrom_e, pp->p_sendto_e,
-			pp->p_priority, pp->p_max_priority,
-			pp->p_user_time, pp->p_sys_time, 
-			pp->p_reg.pc);
-		proc_stacktrace(pp);
+		printslot(pp);
 	}
 
 	if(u) { unlock; }

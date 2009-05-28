@@ -77,6 +77,7 @@ PUBLIC int main(void)
 
 #if SANITYCHECKS
   nocheck = 0;
+  FIXME("VM SANITYCHECKS are on");
   memcpy(data1, CHECKADDR, sizeof(data1));    
 #endif
 	SANITYCHECK(SCL_TOP);
@@ -114,20 +115,15 @@ PUBLIC int main(void)
 		switch(msg.m_source) {
 			case SYSTEM:
 				/* Kernel wants to have memory ranges
-				 * verified.
+				 * verified, and/or pagefaults handled.
 				 */
 				do_memory();
+				do_pagefaults();
 				break;
 			case PM_PROC_NR:
 				/* PM sends a notify() on shutdown, which
 				 * is OK and we ignore.
 				 */
-				break;
-			case HARDWARE:
-				/* This indicates a page fault has happened,
-				 * which we have to handle.
-				 */
-				do_pagefaults();
 				break;
 			default:
 				/* No-one else should send us notifies. */
@@ -242,10 +238,6 @@ PRIVATE void vm_init(void)
 			vmp->vm_flags |= VMF_SEPARATE;
 	}
 
-
-	/* Let architecture-dependent VM initialization use some memory. */
-	arch_init_vm(mem_chunks);
-
 	/* Architecture-dependent initialization. */
 	pt_init();
 
@@ -315,13 +307,6 @@ PRIVATE void vm_init(void)
 			CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys),
 				VM_STACKTOP);
 	}
-
-	/* Temporary hack; throw away all lower memory. */
-	while((click=ALLOC_MEM(1, 0)) <= ABS2CLICK(VM_PROCSTART)) {
-		clicksforgotten++;
-	}
-
-	printf("VM: HACK: clicks forgotten: %d last one: 0x%x\n", clicksforgotten, click);
 
 	/* Set up table of calls. */
 #define CALLMAP(code, func, thecaller) { int i;			      \

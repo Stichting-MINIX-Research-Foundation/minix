@@ -34,7 +34,7 @@
 	for(vmp = vmproc; vmp <= &vmproc[_NR_PROCS]; vmp++) { \
 		if((vmp->vm_flags & (VMF_INUSE | VMF_HASPT)) == \
 			(VMF_INUSE | VMF_HASPT)) { \
-			pt_sanitycheck(&vmp->vm_pt, __FILE__, __LINE__); \
+			PT_SANE(&vmp->vm_pt); \
 		} \
 	} \
 	map_sanitycheck(__FILE__, __LINE__); \

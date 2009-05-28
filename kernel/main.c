@@ -17,6 +17,7 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include "proc.h"
+#include "debug.h"
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
@@ -185,6 +186,16 @@ PUBLIC void main()
    */
   bill_ptr = proc_addr(IDLE);		/* it has to point somewhere */
   announce();				/* print MINIX startup banner */
+/* Warnings for sanity checks that take time. These warnings are printed
+ * so it's a clear warning no full release should be done with them
+ * enabled.
+ */
+#if DEBUG_SCHED_CHECK
+  FIXME("DEBUG_SCHED_CHECK enabled");
+#endif
+#if DEBUG_VMASSERT
+  FIXME("DEBUG_VMASSERT enabled");
+#endif
   restart();
 }
 

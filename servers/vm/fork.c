@@ -13,6 +13,7 @@
 #include <minix/ipc.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/debug.h>
 
 #include <errno.h>
 #include <env.h>
@@ -31,6 +32,7 @@ PUBLIC int do_fork(message *msg)
 {
   int r, proc, s, childproc, fullvm;
   struct vmproc *vmp, *vmc;
+  pt_t origpt;
 
   SANITYCHECK(SCL_FUNCTIONS);
 
@@ -49,6 +51,7 @@ PUBLIC int do_fork(message *msg)
 
   vmp = &vmproc[proc];		/* parent */
   vmc = &vmproc[childproc];	/* child */
+  vm_assert(vmc->vm_slot == childproc);
 
   if(vmp->vm_flags & VMF_HAS_DMA) {
 	printf("VM: %d has DMA memory and may not fork\n", msg->VMF_ENDPOINT);
@@ -58,13 +61,19 @@ PUBLIC int do_fork(message *msg)
   fullvm = vmp->vm_flags & VMF_HASPT;
 
   /* The child is basically a copy of the parent. */
+  origpt = vmc->vm_pt;
   *vmc = *vmp;
+  vmc->vm_slot = childproc;
   vmc->vm_regions = NULL;
   vmc->vm_endpoint = NONE;	/* In case someone tries to use it. */
+  vmc->vm_pt = origpt;
+  vmc->vm_flags &= ~VMF_HASPT;
 
 #if VMSTATS
   vmc->vm_bytecopies = 0;
 #endif
+
+  SANITYCHECK(SCL_DETAIL);
 
   if(fullvm) {
 	SANITYCHECK(SCL_DETAIL);
@@ -73,6 +82,8 @@ PUBLIC int do_fork(message *msg)
 		printf("VM: fork: pt_new failed\n");
 		return ENOMEM;
 	}
+
+	vmc->vm_flags |= VMF_HASPT;
 
 	SANITYCHECK(SCL_DETAIL);
 
@@ -108,6 +119,7 @@ PUBLIC int do_fork(message *msg)
 	/* Create a copy of the parent's core image for the child. */
 	child_abs = (phys_bytes) child_base << CLICK_SHIFT;
 	parent_abs = (phys_bytes) vmp->vm_arch.vm_seg[D].mem_phys << CLICK_SHIFT;
+	FIXME("VM uses kernel for abscopy");
 	s = sys_abscopy(parent_abs, child_abs, prog_bytes);
 	if (s < 0) vm_panic("do_fork can't copy", s);
 

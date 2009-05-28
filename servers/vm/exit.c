@@ -55,6 +55,8 @@ PUBLIC int do_exit(message *msg)
 
 SANITYCHECK(SCL_FUNCTIONS);
 
+	printf("VM: %d exiting\n", msg->VME_ENDPOINT);
+
 	if(vm_isokendpt(msg->VME_ENDPOINT, &proc) != OK) {
 		printf("VM: bogus endpoint VM_EXIT %d\n", msg->VME_ENDPOINT);
 		return EINVAL;

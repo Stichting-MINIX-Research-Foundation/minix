@@ -121,8 +121,12 @@ PUBLIC void sys_task()
 
 	if (curr < limit+extra)
 	{
+#if 0
 		kprintf("SYSTEM: request %d from %d denied.\n",
 			call_nr, m.m_source);
+#else
+		FIXME("privileges bypassed");
+#endif
 	} else if (curr == limit+extra)
 	{
 		kprintf("sys_task: no debug output for a while\n");
@@ -220,7 +224,6 @@ PRIVATE void initialize(void)
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
-  map(SYS_VM_SETBUF, do_vm_setbuf); 	/* PM passes buffer for page tables */
   map(SYS_VMCTL, do_vmctl);		/* various VM process settings */
 
   /* Copying. */
@@ -424,7 +427,10 @@ register struct proc *rc;		/* slot of process to clean up */
 
   if(isemptyp(rc)) minix_panic("clear_proc: empty process", rc->p_endpoint);
 
-  if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR) {
+#if 0
+  if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR)
+#endif
+  {
 	/* This test is great for debugging system processes dying,
 	 * but as this happens normally on reboot, not good permanent code.
 	 */
@@ -432,7 +438,9 @@ register struct proc *rc;		/* slot of process to clean up */
 	proc_stacktrace(rc);
 	kprintf("kernel trace: ");
 	util_stacktrace();
+#if 0
 	minix_panic("clear_proc: system process died", rc->p_endpoint);
+#endif
   }
 
   /* Make sure that the exiting process is no longer scheduled. */
@@ -619,6 +627,8 @@ PRIVATE struct proc *vmrestart_check(message *m)
 			return NULL;
 		case VMSTYPE_MSGCOPY:
 			/* Do delayed message copy. */
+			printf("copying message into %d..\n", 
+				restarting->p_vmrequest.saved.msgcopy.dst->p_endpoint);
 			if((r=data_copy(SYSTEM,
 				(vir_bytes) &restarting->p_vmrequest.saved.msgcopy.msgbuf,
 				restarting->p_vmrequest.saved.msgcopy.dst->p_endpoint,
@@ -626,6 +636,7 @@ PRIVATE struct proc *vmrestart_check(message *m)
 				sizeof(message))) != OK) {
 	   			minix_panic("SYSTEM: delayed msgcopy failed", r);
 			}
+			printf("OK!\n");
 			RTS_LOCK_UNSET(restarting, VMREQUEST);
 
 			/* Handled; restart system loop. */

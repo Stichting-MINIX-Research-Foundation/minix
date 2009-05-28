@@ -311,7 +311,6 @@
 #  define SYS_GETINFO    (KERNEL_CALL + 26) 	/* sys_getinfo() */
 #  define SYS_ABORT      (KERNEL_CALL + 27)	/* sys_abort() */
 #  define SYS_IOPENABLE  (KERNEL_CALL + 28)	/* sys_enable_iop() */
-#  define SYS_VM_SETBUF  (KERNEL_CALL + 29)	/* sys_vm_setbuf() */
 #  define SYS_SAFECOPYFROM (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
 #  define SYS_SAFECOPYTO   (KERNEL_CALL + 32)	/* sys_safecopyto() */
 #  define SYS_VSAFECOPY  (KERNEL_CALL + 33)	/* sys_vsafecopy() */
@@ -605,9 +604,9 @@
 #define VMCTL_NOPAGEZERO	18
 #define VMCTL_I386_KERNELLIMIT	19
 #define VMCTL_I386_PAGEDIRS	20
-#define VMCTL_I386_PDE		21
-#define VMCTL_I386_PDEVAL	22
 #define VMCTL_I386_FREEPDE	23
+#define VMCTL_ENABLE_PAGING	24
+#define VMCTL_I386_INVLPG	25
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *

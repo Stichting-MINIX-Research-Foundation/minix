@@ -96,7 +96,8 @@ PRIVATE int
   drv_c[] = { DRV_C },
   tty_c[] = { DRV_C, SYS_PHYSCOPY, SYS_ABORT, SYS_IOPENABLE,
 		SYS_READBIOS },
-  mem_c[] = { DRV_C, SYS_PHYSCOPY, SYS_PHYSVCOPY, SYS_IOPENABLE };
+  mem_c[] = { DRV_C, SYS_PHYSCOPY, SYS_PHYSVCOPY, SYS_IOPENABLE },
+  usr_c[] = { SYS_SYSCTL };
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
@@ -126,7 +127,7 @@ PUBLIC struct boot_image image[] = {
 {LOG_PROC_NR,   0,SVM_F,  4,      2, 0,     SRV_T, SYS_M,c(drv_c),"log"   },
 {MFS_PROC_NR,   0,SVM_F, 32,      5, 0,     SRV_T, SRV_M, c(fs_c),"mfs"   },
 {VM_PROC_NR,    0,SRV_F, 32,      2, 0,     SRV_T, SRV_M, c(vm_c),"vm"    },
-{INIT_PROC_NR,  0,USR_F,  8, USER_Q, 0,     USR_T, USR_M, no_c,"init"  },
+{INIT_PROC_NR,  0,USR_F,  8, USER_Q, 0,     USR_T, USR_M, c(usr_c),"init"  },
 };
 
 /* Verify the size of the system image table at compile time. Also verify that 

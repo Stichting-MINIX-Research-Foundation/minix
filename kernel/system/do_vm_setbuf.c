@@ -8,6 +8,8 @@
  */
 #include "../system.h"
 
+#if 0
+
 #define VM_DEBUG 0		/* enable/ disable debug output */
 
 /*===========================================================================*
@@ -27,3 +29,5 @@ message *m_ptr;			/* pointer to request message */
 
 	return OK;
 }
+
+#endif

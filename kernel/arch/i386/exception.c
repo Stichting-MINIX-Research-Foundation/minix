@@ -11,10 +11,11 @@
 #include <minix/sysutil.h>
 #include "../../proc.h"
 
-extern int vm_copy_in_progress;
+extern int vm_copy_in_progress, catch_pagefaults;
 extern struct proc *vm_copy_from, *vm_copy_to;
 extern u32_t vm_copy_from_v, vm_copy_to_v;
 extern u32_t vm_copy_from_p, vm_copy_to_p, vm_copy_cr3;
+extern u32_t catchrange_lo, catchrange_hi;
 
 u32_t pagefault_cr2, pagefault_count = 0;
 
@@ -24,15 +25,33 @@ void pagefault(struct proc *pr, int trap_errno)
 	vir_bytes ph;
 	u32_t pte;
 
-	if(pagefault_count != 1)
-		minix_panic("recursive pagefault", pagefault_count);
+	vmassert(pagefault_count == 1);
 
-	/* Don't schedule this process until pagefault is handled. */
-	if(RTS_ISSET(pr, PAGEFAULT))
-		minix_panic("PAGEFAULT set", pr->p_endpoint);
-	RTS_LOCK_SET(pr, PAGEFAULT);
+	if((iskernelp(pr) || k_reenter) && catch_pagefaults
+		&& (pr->p_reg.pc > (vir_bytes) _memcpy_k &&
+		   pr->p_reg.pc < (vir_bytes) _memcpy_k_fault) &&
+		   pagefault_cr2 >= catchrange_lo &&
+		   pagefault_cr2 < catchrange_hi) {
+		kprintf("handling pagefault during copy\n");
+		pr->p_reg.pc = (vir_bytes) _memcpy_k_fault;
+		pr->p_reg.retreg = pagefault_cr2;
+		pagefault_count = 0;
+		return;
+	}
 
-	if(pr->p_endpoint <= INIT_PROC_NR && !(pr->p_misc_flags & MF_FULLVM)) {
+	proc_stacktrace(pr);
+
+	if(catch_pagefaults) {
+		printf("k_reenter: %d addr: 0x%lx range: 0x%lx-0x%lx\n",
+			k_reenter, pagefault_cr2, catchrange_lo, catchrange_hi);
+	}
+
+	/* System processes that don't have their own page table can't
+	 * have page faults. VM does have its own page table but also
+	 * can't have page faults (because VM has to handle them).
+	 */
+	if(k_reenter || (pr->p_endpoint <= INIT_PROC_NR &&
+	 !(pr->p_misc_flags & MF_FULLVM)) || pr->p_endpoint == VM_PROC_NR) {
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
@@ -45,6 +64,11 @@ void pagefault(struct proc *pr, int trap_errno)
 		return;
 	}
 
+	/* Don't schedule this process until pagefault is handled. */
+	vmassert(pr->p_seg.p_cr3 == read_cr3());
+	vmassert(!RTS_ISSET(pr, PAGEFAULT));
+	RTS_LOCK_SET(pr, PAGEFAULT);
+
 	/* Save pagefault details, suspend process,
 	 * add process to pagefault chain,
 	 * and tell VM there is a pagefault to be
@@ -54,7 +78,7 @@ void pagefault(struct proc *pr, int trap_errno)
 	pr->p_pagefault.pf_flags = trap_errno;
 	pr->p_nextpagefault = pagefaults;
 	pagefaults = pr;
-	lock_notify(HARDWARE, VM_PROC_NR);
+	soft_notify(VM_PROC_NR);
 
 	pagefault_count = 0;
 
@@ -184,17 +208,20 @@ PUBLIC void proc_stacktrace(struct proc *proc)
 
 	v_bp = proc->p_reg.fp;
 
-	kprintf("%8.8s %6d 0x%lx ",
+	kprintf("%-8.8s %6d 0x%lx ",
 		proc->p_name, proc->p_endpoint, proc->p_reg.pc);
 
 	while(v_bp) {
-	        if(data_copy(proc->p_endpoint, v_bp,
-			SYSTEM, (vir_bytes) &v_hbp, sizeof(v_hbp)) != OK) {
+
+#define PRCOPY(pr, pv, v, n) \
+  (iskernelp(pr) ? (memcpy(v, pv, n), OK) : \
+     data_copy(pr->p_endpoint, pv, SYSTEM, (vir_bytes) (v), n))
+
+	        if(PRCOPY(proc, v_bp, &v_hbp, sizeof(v_hbp)) != OK) {
 			kprintf("(v_bp 0x%lx ?)", v_bp);
 			break;
 		}
-		if(data_copy(proc->p_endpoint, v_bp + sizeof(v_pc),
-			SYSTEM, (vir_bytes) &v_pc, sizeof(v_pc)) != OK) {
+		if(PRCOPY(proc, v_bp + sizeof(v_pc), &v_pc, sizeof(v_pc)) != OK) {
 			kprintf("(v_pc 0x%lx ?)", v_pc);
 			break;
 		}

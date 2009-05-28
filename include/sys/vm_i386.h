@@ -36,6 +36,12 @@ sys/vm_i386.h
 #define I386_VM_PFA_SHIFT	22	/* Page frame address shift */
 
 /* CR0 bits */
+#define I386_CR0_PE		0x00000001	/* Protected mode  */
+#define I386_CR0_MP		0x00000002	/* Monitor Coprocessor  */
+#define I386_CR0_EM		0x00000004	/* Emulate  */
+#define I386_CR0_TS		0x00000008	/* Task Switched  */
+#define I386_CR0_ET		0x00000010	/* Extension Type  */
+#define I386_CR0_WP		0x00010000	/* Enable paging */
 #define I386_CR0_PG		0x80000000	/* Enable paging */
 
 /* some CR4 bits */

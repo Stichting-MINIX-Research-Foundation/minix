@@ -42,6 +42,8 @@ register message *m_ptr;	/* pointer to request message */
   /* No reply to EXEC call */
   RTS_LOCK_UNSET(rp, RECEIVING);
 
+  printf("kernel: exec %d now %s\n", rp->p_endpoint, rp->p_name);
+
   return(OK);
 }
 #endif /* USE_EXEC */

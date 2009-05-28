@@ -18,10 +18,8 @@ PUBLIC int do_memset(m_ptr)
 register message *m_ptr;
 {
 /* Handle sys_memset(). This writes a pattern into the specified memory. */
-  unsigned long p;
   unsigned char c = m_ptr->MEM_PATTERN;
-  p = c | (c << 8) | (c << 16) | (c << 24);
-  phys_memset((phys_bytes) m_ptr->MEM_PTR, p, (phys_bytes) m_ptr->MEM_COUNT);
+  vm_phys_memset((phys_bytes) m_ptr->MEM_PTR, c, (phys_bytes) m_ptr->MEM_COUNT);
   return(OK);
 }
 

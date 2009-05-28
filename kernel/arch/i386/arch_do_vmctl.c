@@ -12,7 +12,6 @@
 
 #include "proto.h"
 
-extern u32_t kernel_cr3;
 extern u32_t *vm_pagedirs;
 
 /*===========================================================================*
@@ -22,10 +21,6 @@ PUBLIC int arch_do_vmctl(m_ptr, p)
 register message *m_ptr;	/* pointer to request message */
 struct proc *p;
 {
-
-  static int vmpde = -1;
-  static u32_t pdeval = -1;
-
   switch(m_ptr->SVMCTL_PARAM) {
 	case VMCTL_I386_GETCR3:
 		/* Get process CR3. */
@@ -37,7 +32,7 @@ struct proc *p;
 			p->p_seg.p_cr3 = m_ptr->SVMCTL_VALUE;
 			p->p_misc_flags |= MF_FULLVM;
 		} else {
-			p->p_seg.p_cr3 = kernel_cr3;
+			p->p_seg.p_cr3 = 0;
 			p->p_misc_flags &= ~MF_FULLVM;
 		}
 		RTS_LOCK_UNSET(p, VMINHIBIT);
@@ -58,6 +53,8 @@ struct proc *p;
                 m_ptr->SVMCTL_PF_WHO = rp->p_endpoint;
                 m_ptr->SVMCTL_PF_I386_CR2 = rp->p_pagefault.pf_virtual;
 		m_ptr->SVMCTL_PF_I386_ERR = rp->p_pagefault.pf_flags;
+		printf("kernel: returning pagefault for %s / %d\n",
+			rp->p_name, rp->p_endpoint);
 		return OK;
 	}
 	case VMCTL_I386_KERNELLIMIT:
@@ -74,25 +71,14 @@ struct proc *p;
 		kprintf("kernel: pagedirs now 0x%lx\n", vm_pagedirs);
 		return OK;
 	}
-	case VMCTL_I386_PDE:
-	{
-		vmpde = m_ptr->SVMCTL_VALUE;
-		kprintf("kernel: HACK: vmpde %d\n", vmpde);
-		return OK;
-	}
-	case VMCTL_I386_PDEVAL:
-	{
-		pdeval = m_ptr->SVMCTL_VALUE;
-		kprintf("kernel: HACK: vmpde %d, set val 0x%x\n",
-			vmpde, pdeval);
-		i386_updatepde(vmpde, pdeval);
-		kprintf("kernel: HACK: vmpde %d, set val 0x%x done\n",
-			vmpde, pdeval);
-		return OK;
-	}
 	case VMCTL_I386_FREEPDE:
 	{
 		i386_freepde(m_ptr->SVMCTL_VALUE);
+		return OK;
+	}
+	case VMCTL_I386_INVLPG:
+	{
+		invlpg_range(m_ptr->SVMCTL_VALUE, 1);
 		return OK;
 	}
   }

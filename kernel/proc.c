@@ -82,19 +82,12 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 		break;							\
 	}
 
-#define CopyMess(s,sp,sm,dp,dm) do { 			\
-	vir_bytes dstlin;				\
-	endpoint_t e = proc_addr(s)->p_endpoint;	\
-	struct vir_addr src, dst;			\
-	int r;						\
-	if((dstlin = umap_local((dp), D, (vir_bytes) dm, sizeof(message))) == 0){\
-		minix_panic("CopyMess: umap_local failed", __LINE__);	\
-	}						\
-			\
-	if(vm_running &&	\
-	 (r=vm_checkrange((dp), (dp), dstlin, sizeof(message), 1, 0)) != OK) { \
-		if(r != VMSUSPEND) 			\
-		  minix_panic("CopyMess: vm_checkrange error", __LINE__); \
+#define RETRYCOPY(sp, dp, sm, dm)	{\
+		if(r != EFAULT_DST) { 			\
+			kprintf("error %d\n", r);	\
+		  minix_panic("CopyMess: copy error", __LINE__); \
+		 } \
+		vm_suspend(dp, dp);				\
 		(dp)->p_vmrequest.saved.msgcopy.dst = (dp);	\
 		(dp)->p_vmrequest.saved.msgcopy.dst_v = (vir_bytes) dm;	\
   		if(data_copy((sp)->p_endpoint,	\
@@ -105,25 +98,26 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 			}				\
 			(dp)->p_vmrequest.saved.msgcopy.msgbuf.m_source = e; \
 			(dp)->p_vmrequest.type = VMSTYPE_MSGCOPY; \
-	} else 	{					\
-		src.proc_nr_e = (sp)->p_endpoint;		\
-		dst.proc_nr_e = (dp)->p_endpoint;		\
-		src.segment = dst.segment = D;			\
-		src.offset = (vir_bytes) (sm);			\
-		dst.offset = (vir_bytes) (dm);			\
-		if(virtual_copy(&src, &dst, sizeof(message)) != OK) {	\
-			kprintf("copymess: copy %d:%lx to %d:%lx failed\n",\
-				(sp)->p_endpoint, (sm), (dp)->p_endpoint, dm);\
-			minix_panic("CopyMess: virtual_copy (1) failed", __LINE__); \
-		}		\
+	}
+
+#define CopyMess(s,sp,sm,dp,dm) do { 			\
+	endpoint_t e = proc_addr(s)->p_endpoint;	\
+	struct vir_addr src, dst;			\
+	int r;						\
+	src.proc_nr_e = (sp)->p_endpoint;		\
+	dst.proc_nr_e = (dp)->p_endpoint;		\
+	src.segment = dst.segment = D;			\
+	src.offset = (vir_bytes) (sm);			\
+	dst.offset = (vir_bytes) (dm);			\
+	if((r=virtual_copy(&src, &dst, sizeof(message))) != OK) { \
+		RETRYCOPY(sp, dp, sm, dm)				\
+	} else {						\
 		src.proc_nr_e = SYSTEM;				\
 		src.offset = (vir_bytes) &e;			\
-		if(virtual_copy(&src, &dst, sizeof(e)) != OK) {		\
-			kprintf("copymess: copy %d:%lx to %d:%lx\n",	\
-				(sp)->p_endpoint, (sm), (dp)->p_endpoint, dm);\
-			minix_panic("CopyMess: virtual_copy (2) failed", __LINE__); \
+		if((r=virtual_copy(&src, &dst, sizeof(e))) != OK) {	\
+			RETRYCOPY(sp, dp, sm, dm)				\
 		}					\
-	}	\
+	} 	\
 } while(0)
 
 /*===========================================================================*
@@ -1259,8 +1253,8 @@ PRIVATE void pick_proc()
       if ( (rp = rdy_head[q]) != NIL_PROC) {
           next_ptr = rp;			/* run process 'rp' next */
 #if 0
-	  if(rp->p_endpoint != 4 && rp->p_endpoint != 5 && rp->p_endpoint != IDLE && rp->p_endpoint != SYSTEM)
-	  	kprintf("[run %s]",  rp->p_name);
+	if(!iskernelp(rp))
+	  kprintf("[run %s/%d]",  rp->p_name, rp->p_endpoint);
 #endif
           if (priv(rp)->s_flags & BILLABLE)	 	
               bill_ptr = rp;			/* bill for system time */

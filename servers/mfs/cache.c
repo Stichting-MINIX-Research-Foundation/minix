@@ -17,12 +17,16 @@
 #include "fs.h"
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <string.h>
 #include "buf.h"
 #include "super.h"
 #include "inode.h"
 
 FORWARD _PROTOTYPE( void rm_lru, (struct buf *bp) );
 FORWARD _PROTOTYPE( int rw_block, (struct buf *, int) );
+
+char saved[100];
+char *savedptr;
 
 /*===========================================================================*
  *				get_block				     *
@@ -48,9 +52,18 @@ int only_search;		/* if NO_READ, don't read, else act normal */
  */
 
   int b;
-  register struct buf *bp, *prev_ptr;
+  static struct buf *bp, *prev_ptr;
+
+  savedptr = (vir_bytes) &b + sizeof(b);
+  memcpy(saved, savedptr, sizeof(saved));
+
+#define CHECK \
+  if(memcmp(saved, savedptr, sizeof(saved))) \
+	panic(__FILE__,"memory corruption", __LINE__); 
 
   ASSERT(fs_block_size > 0);
+
+  CHECK;
 
   /* Search the hash chain for (dev, block). Do_read() can use 
    * get_block(NO_DEV ...) to get an unnamed block to fill with zeros when
@@ -60,8 +73,11 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   if (dev != NO_DEV) {
 	b = BUFHASH(block);
 	bp = buf_hash[b];
+  CHECK;
 	while (bp != NIL_BUF) {
+  CHECK;
 		if (bp->b_blocknr == block && bp->b_dev == dev) {
+  CHECK;
 			/* Block needed has been found. */
 			if (bp->b_count == 0) rm_lru(bp);
 			bp->b_count++;	/* record that block is in use */
@@ -69,6 +85,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 			ASSERT(bp->b_dev == dev);
 			ASSERT(bp->b_dev != NO_DEV);
 			ASSERT(bp->bp);
+  CHECK;
 			return(bp);
 		} else {
 			/* This block is not the one sought. */
@@ -137,6 +154,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 
   ASSERT(bp->bp);
 
+  CHECK;
   return(bp);			/* return the newly acquired block */
 }
 

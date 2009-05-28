@@ -33,6 +33,10 @@ register message *m_ptr;	/* pointer to request message */
   struct priv *privp;
   struct io_range *iorp;
 
+  kprintf("kernel: no sdevio\n");
+  return EIO;
+
+#if 0
   /* Allow safe copies and accesses to SELF */
   if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
 	proc_nr_e != SELF)
@@ -141,6 +145,7 @@ register message *m_ptr;	/* pointer to request message */
       return(EINVAL);
   }
   return(OK);
+#endif
 }
 
 #endif /* USE_SDEVIO */

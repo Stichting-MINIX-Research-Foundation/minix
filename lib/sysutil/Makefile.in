@@ -6,6 +6,7 @@ LIBRARIES=libsys
 
 libsys_FILES=" \
 	asynsend.c \
+	kmalloc.c \
 	kprintf.c \
 	kputc.c \
 	tickdelay.c \

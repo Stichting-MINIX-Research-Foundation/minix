@@ -107,6 +107,7 @@ struct proc {
 #define PMAGIC 0xC0FFEE1
   int p_magic;	/* check validity of proc pointers */
 #endif
+  int verbose;
 };
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */

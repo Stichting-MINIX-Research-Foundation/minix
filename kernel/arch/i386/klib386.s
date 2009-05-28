@@ -21,10 +21,10 @@
 .define	__exit		! dummy for library routines
 .define	___exit		! dummy for library routines
 .define	___main		! dummy for GCC
-.define	_phys_insw	! transfer data from (disk controller) port to memory
-.define	_phys_insb	! likewise byte by byte
-.define	_phys_outsw	! transfer data from memory to (disk controller) port
-.define	_phys_outsb	! likewise byte by byte
+!.define	_phys_insw	! transfer data from (disk controller) port to memory
+!.define	_phys_insb	! likewise byte by byte
+!.define	_phys_outsw	! transfer data from memory to (disk controller) port
+!.define	_phys_outsb	! likewise byte by byte
 .define	_intr_unmask	! enable an irq at the 8259 controller
 .define	_intr_mask	! disable an irq
 .define	_phys_copy	! copy data from anywhere to anywhere in memory
@@ -36,14 +36,16 @@
 .define	_read_cpu_flags	! read the cpu flags
 .define	_read_cr0	! read cr0
 .define	_write_cr3	! write cr3
+.define	_getcr3val
 .define _last_cr3
 .define	_write_cr0	! write a value in cr0
 .define	_read_cr4
+.define	_thecr3
 .define	_write_cr4
 .define _i386_invlpg_addr
 .define _i386_invlpg_level0
-
-.define	_kernel_cr3	
+.define __memcpy_k
+.define __memcpy_k_fault
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -159,55 +161,6 @@ csinit:	mov	eax, DS_SELECTOR
 
 
 !*===========================================================================*
-!*				cp_mess					     *
-!*===========================================================================*
-! PUBLIC void cp_mess(int src, phys_clicks src_clicks, vir_bytes src_offset,
-!		      phys_clicks dst_clicks, vir_bytes dst_offset);
-! This routine makes a fast copy of a message from anywhere in the address
-! space to anywhere else.  It also copies the source address provided as a
-! parameter to the call into the first word of the destination message.
-!
-! Note that the message size, "Msize" is in DWORDS (not bytes) and must be set
-! correctly.  Changing the definition of message in the type file and not
-! changing it here will lead to total disaster.
-!
-!CM_ARGS	=	4 + 4 + 4 + 4 + 4	! 4 + 4 + 4 + 4 + 4
-!!		es  ds edi esi eip	proc scl sof dcl dof
-!
-!	.align	16
-!_cp_mess:
-!	cld
-!	push	esi
-!	push	edi
-!	push	ds
-!	push	es
-!
-!	mov	eax, FLAT_DS_SELECTOR
-!	mov	ds, ax
-!	mov	es, ax
-!
-!	mov	esi, CM_ARGS+4(esp)		! src clicks
-!	shl	esi, CLICK_SHIFT
-!	add	esi, CM_ARGS+4+4(esp)		! src offset
-!	mov	edi, CM_ARGS+4+4+4(esp)		! dst clicks
-!	shl	edi, CLICK_SHIFT
-!	add	edi, CM_ARGS+4+4+4+4(esp)	! dst offset
-!
-!	mov	eax, CM_ARGS(esp)	! process number of sender
-!	stos				! copy number of sender to dest message
-!	add	esi, 4			! do not copy first word
-!	mov	ecx, Msize - 1		! remember, first word does not count
-!	rep
-!	movs				! copy the message
-!
-!	pop	es
-!	pop	ds
-!	pop	edi
-!	pop	esi
-!	ret				! that is all folks!
-!
-
-!*===========================================================================*
 !*				exit					     *
 !*===========================================================================*
 ! PUBLIC void exit();
@@ -230,56 +183,52 @@ ___main:
 !*===========================================================================*
 ! PUBLIC void phys_insw(Port_t port, phys_bytes buf, size_t count);
 ! Input an array from an I/O port.  Absolute address version of insw().
-
-_phys_insw:
-	push	ebp
-	mov	ebp, esp
-	cld
-	push	edi
-	push	es
-
-	LOADKERNELCR3
-
-	mov	ecx, FLAT_DS_SELECTOR
-	mov	es, cx
-	mov	edx, 8(ebp)		! port to read from
-	mov	edi, 12(ebp)		! destination addr
-	mov	ecx, 16(ebp)		! byte count
-	shr	ecx, 1			! word count
-rep o16	ins				! input many words
-	pop	es
-	pop	edi
-	pop	ebp
-	ret
-
+!
+!_phys_insw:
+!	push	ebp
+!	mov	ebp, esp
+!	cld
+!	push	edi
+!	push	es
+!
+!	mov	ecx, FLAT_DS_SELECTOR
+!	mov	es, cx
+!	mov	edx, 8(ebp)		! port to read from
+!	mov	edi, 12(ebp)		! destination addr
+!	mov	ecx, 16(ebp)		! byte count
+!	shr	ecx, 1			! word count
+!rep o16	ins				! input many words
+!	pop	es
+!	pop	edi
+!	pop	ebp
+!	ret
+!
 
 !*===========================================================================*
 !*				phys_insb				     *
 !*===========================================================================*
 ! PUBLIC void phys_insb(Port_t port, phys_bytes buf, size_t count);
 ! Input an array from an I/O port.  Absolute address version of insb().
-
-_phys_insb:
-	push	ebp
-	mov	ebp, esp
-	cld
-	push	edi
-	push	es
-
-	LOADKERNELCR3
-
-	mov	ecx, FLAT_DS_SELECTOR
-	mov	es, cx
-	mov	edx, 8(ebp)		! port to read from
-	mov	edi, 12(ebp)		! destination addr
-	mov	ecx, 16(ebp)		! byte count
-!	shr	ecx, 1			! word count
-   rep	insb				! input many bytes
-	pop	es
-	pop	edi
-	pop	ebp
-	ret
-
+!
+!_phys_insb:
+!	push	ebp
+!	mov	ebp, esp
+!	cld
+!	push	edi
+!	push	es
+!
+!	mov	ecx, FLAT_DS_SELECTOR
+!	mov	es, cx
+!	mov	edx, 8(ebp)		! port to read from
+!	mov	edi, 12(ebp)		! destination addr
+!	mov	ecx, 16(ebp)		! byte count
+!!	shr	ecx, 1			! word count
+!   rep	insb				! input many bytes
+!	pop	es
+!	pop	edi
+!	pop	ebp
+!	ret
+!
 
 !*===========================================================================*
 !*				phys_outsw				     *
@@ -287,55 +236,51 @@ _phys_insb:
 ! PUBLIC void phys_outsw(Port_t port, phys_bytes buf, size_t count);
 ! Output an array to an I/O port.  Absolute address version of outsw().
 
-	.align	16
-_phys_outsw:
-	push	ebp
-	mov	ebp, esp
-	cld
-	push	esi
-	push	ds
-
-	LOADKERNELCR3
-
-	mov	ecx, FLAT_DS_SELECTOR
-	mov	ds, cx
-	mov	edx, 8(ebp)		! port to write to
-	mov	esi, 12(ebp)		! source addr
-	mov	ecx, 16(ebp)		! byte count
-	shr	ecx, 1			! word count
-rep o16	outs				! output many words
-	pop	ds
-	pop	esi
-	pop	ebp
-	ret
-
+!	.align	16
+!_phys_outsw:
+!	push	ebp
+!	mov	ebp, esp
+!	cld
+!	push	esi
+!	push	ds
+!
+!	mov	ecx, FLAT_DS_SELECTOR
+!	mov	ds, cx
+!	mov	edx, 8(ebp)		! port to write to
+!	mov	esi, 12(ebp)		! source addr
+!	mov	ecx, 16(ebp)		! byte count
+!	shr	ecx, 1			! word count
+!rep o16	outs				! output many words
+!	pop	ds
+!	pop	esi
+!	pop	ebp
+!	ret
+!
 
 !*===========================================================================*
 !*				phys_outsb				     *
 !*===========================================================================*
 ! PUBLIC void phys_outsb(Port_t port, phys_bytes buf, size_t count);
 ! Output an array to an I/O port.  Absolute address version of outsb().
-
-	.align	16
-_phys_outsb:
-	push	ebp
-	mov	ebp, esp
-	cld
-	push	esi
-	push	ds
-
-	LOADKERNELCR3
-
-	mov	ecx, FLAT_DS_SELECTOR
-	mov	ds, cx
-	mov	edx, 8(ebp)		! port to write to
-	mov	esi, 12(ebp)		! source addr
-	mov	ecx, 16(ebp)		! byte count
-   rep	outsb				! output many bytes
-	pop	ds
-	pop	esi
-	pop	ebp
-	ret
+!
+!	.align	16
+!_phys_outsb:
+!	push	ebp
+!	mov	ebp, esp
+!	cld
+!	push	esi
+!	push	ds
+!
+!	mov	ecx, FLAT_DS_SELECTOR
+!	mov	ds, cx
+!	mov	edx, 8(ebp)		! port to write to
+!	mov	esi, 12(ebp)		! source addr
+!	mov	ecx, 16(ebp)		! byte count
+!   rep	outsb				! output many bytes
+!	pop	ds
+!	pop	esi
+!	pop	ebp
+!	ret
 
 
 !*==========================================================================*
@@ -432,8 +377,6 @@ _phys_copy:
 	push	edi
 	push	es
 
-	LOADKERNELCR3
-
 	mov	eax, FLAT_DS_SELECTOR
 	mov	es, ax
 
@@ -479,8 +422,6 @@ _phys_memset:
 	push	ebx
 	push	ds
 
-	LOADKERNELCR3
-
 	mov	esi, 8(ebp)
 	mov	eax, 16(ebp)
 	mov	ebx, FLAT_DS_SELECTOR
@@ -494,7 +435,7 @@ fill_start:
 	jnz	fill_start
 	! Any remaining bytes?
 	mov	eax, 16(ebp)
-	and	eax, 3
+!	and	eax, 3
 remain_fill:
 	cmp	eax, 0
 	jz	fill_done
@@ -642,8 +583,18 @@ _write_cr4:
 _write_cr3:
 	push    ebp
 	mov     ebp, esp
-	LOADCR3WITHEAX(0x22, 8(ebp))
+	mov	eax, 8(ebp)
+	mov	cr3, eax
 	pop     ebp
+	ret
+
+!*===========================================================================*
+!*				getcr3val				*
+!*===========================================================================*
+! PUBLIC unsigned long getcr3val(void);
+_getcr3val:
+	mov	eax, cr3
+	mov	(_thecr3), eax
 	ret
 
 !*===========================================================================*
@@ -657,4 +608,47 @@ _i386_invlpg_level0:
 	ret
 
 
-
+!*===========================================================================*
+!*				_memcpy_k				     *
+!*===========================================================================*
+!	_memcpy_k()				Original Author: Kees J. Bot
+!								2 Jan 1994
+! void *_memcpy_k(void *s1, const void *s2, size_t n)
+!	Copy a chunk of memory that the kernel can use to trap pagefaults.
+.define __memcpy_k
+.define __memcpy_k_fault
+	.align	16
+__memcpy_k:
+	push	ebp
+	mov	ebp, esp
+	push	esi
+	push	edi
+	mov	edi, 8(ebp)	! String s1
+	mov	esi, 12(ebp)	! String s2
+	mov	ecx, 16(ebp)	! Length
+	cld			! Clear direction bit: upwards
+	cmp	ecx, 16
+	jb	upbyte		! Don't bother being smart with short arrays
+	mov	eax, esi
+	or	eax, edi
+	testb	al, 1
+	jnz	upbyte		! Bit 0 set, use byte copy
+	testb	al, 2
+	jnz	upword		! Bit 1 set, use word copy
+uplword:shrd	eax, ecx, 2	! Save low 2 bits of ecx in eax
+	shr	ecx, 2
+	rep
+	movs			! Copy longwords.
+	shld	ecx, eax, 2	! Restore excess count
+upword:	shr	ecx, 1
+	rep
+    o16	movs			! Copy words
+	adc	ecx, ecx	! One more byte?
+upbyte:	rep
+	movsb			! Copy bytes
+done:	mov	eax, 0
+__memcpy_k_fault:		! Kernel can send us here with pf cr2 in eax
+	pop	edi
+	pop	esi
+	pop	ebp
+	ret

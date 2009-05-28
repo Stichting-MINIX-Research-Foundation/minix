@@ -33,7 +33,7 @@ _PROTOTYPE( int sys_call, (int call_nr, int src_dst,
 					message *m_ptr, long bit_map)	);
 _PROTOTYPE( void sys_call_restart, (struct proc *caller)		);
 _PROTOTYPE( int lock_notify, (int src, int dst)				);
-_PROTOTYPE( int soft_notify, (int dst)					);
+_PROTOTYPE( int soft_notify, (int dst)				);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
 _PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
@@ -87,6 +87,7 @@ _PROTOTYPE( void cons_seth, (int pos, int n)				);
 #define CHECK_RUNQUEUES check_runqueues_f(__FILE__, __LINE__)
 _PROTOTYPE( void check_runqueues_f, (char *file, int line) );
 #endif
+_PROTOTYPE( char *rtsflagstr, (int flags) );
 
 /* system/do_safecopy.c */
 _PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
@@ -113,7 +114,7 @@ _PROTOTYPE( int data_copy, (endpoint_t from, vir_bytes from_addr,
 #define data_copy_to(d, p, v, n) data_copy(SYSTEM, (d), (p), (v), (n));
 #define data_copy_from(d, p, v, n) data_copy((p), (v), SYSTEM, (d), (n));
 _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
-_PROTOTYPE( void vm_init, (void)                       			);
+_PROTOTYPE( void vm_init, (struct proc *first)        			);
 _PROTOTYPE( void vm_map_range, (u32_t base, u32_t size, u32_t offset)   );
 _PROTOTYPE( int vm_copy, (vir_bytes src, struct proc *srcproc,
 	vir_bytes dst, struct proc *dstproc, phys_bytes bytes));
@@ -126,7 +127,7 @@ _PROTOTYPE( phys_bytes umap_remote, (struct proc* rp, int seg,
 _PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp, int seg,
         vir_bytes vir_addr, vir_bytes bytes)				);
 _PROTOTYPE( phys_bytes seg2phys, (U16_t)                                );
-_PROTOTYPE( void phys_memset, (phys_bytes source, unsigned long pattern,
+_PROTOTYPE( int vm_phys_memset, (phys_bytes source, u8_t pattern,
                 phys_bytes count)                                       );
 _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
         int, phys_bytes, vir_bytes, int));
@@ -160,5 +161,6 @@ _PROTOTYPE( int vm_checkrange, (struct proc *caller, struct proc *target,
 	vir_bytes start, vir_bytes length, int writeflag, int checkonly));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
+_PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target));
 
 #endif /* PROTO_H */

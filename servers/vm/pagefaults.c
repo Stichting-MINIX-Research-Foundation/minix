@@ -106,9 +106,13 @@ PUBLIC void do_pagefaults(void)
 		}
 
 
+		printf("VM: handling pagefault OK: %d addr 0x%lx %s\n", 
+			ep, arch_map2vir(vmp, addr), pf_errstr(err));
+
 		/* Pagefault is handled, so now reactivate the process. */
 		if((s=sys_vmctl(ep, VMCTL_CLEAR_PAGEFAULT, r)) != OK)
 			vm_panic("do_pagefaults: sys_vmctl failed", ep);
+
 	}
 
 	return;
@@ -134,6 +138,9 @@ PUBLIC void do_memory(void)
 		if(vm_isokendpt(who, &p) != OK)
 			vm_panic("do_memory: endpoint wrong", who);
 		vmp = &vmproc[p];
+
+		printf("VM: handling memory request: %d, 0x%lx-0x%lx, wr %d\n",
+			who, mem, mem+len, wrflag);
 
 		/* Page-align memory and length. */
 		o = mem % VM_PAGE_SIZE;
@@ -167,8 +174,12 @@ PUBLIC void do_memory(void)
 				vmp->vm_endpoint);
 		}
 
+
 		if(sys_vmctl(who, VMCTL_MEMREQ_REPLY, r) != OK)
 			vm_panic("do_memory: sys_vmctl failed", r);
+
+		printf("VM: handling memory request %d done OK\n",
+			who);
 	}
 }
 

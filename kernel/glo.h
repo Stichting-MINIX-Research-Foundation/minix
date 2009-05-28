@@ -89,11 +89,9 @@ EXTERN unsigned long cr3switch;
 EXTERN unsigned long cr3reload;
 
 /* VM */
-EXTERN phys_bytes vm_base;
-EXTERN phys_bytes vm_size;
-EXTERN phys_bytes vm_mem_high;
 EXTERN int vm_running;
 EXTERN int must_notify_vm;
+EXTERN struct proc *ptproc;
 
 /* Verbose flags (debugging). */
 EXTERN int verbose_vm;

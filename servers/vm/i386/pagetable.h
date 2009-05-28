@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <sys/vm_i386.h>
 
+#include "../vm.h"
+
 /* An i386 pagetable. */
 typedef struct {
 	/* Directory entries in VM addr space - root of page table.  */
@@ -34,5 +36,12 @@ typedef struct {
  */
 #define PTF_ALLFLAGS	(PTF_WRITE|PTF_PRESENT|PTF_USER|PTF_GLOBAL)
 
+#if SANITYCHECKS
+#define PT_SANE(p) { pt_sanitycheck((p), __FILE__, __LINE__); }
+#else
+#define PT_SANE(p)
 #endif
+
+#endif
+
 

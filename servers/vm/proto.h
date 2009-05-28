@@ -135,6 +135,7 @@ _PROTOTYPE(int map_pf,(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, int write));
 _PROTOTYPE(int map_handle_memory,(struct vmproc *vmp,
 	struct vir_region *region, vir_bytes offset, vir_bytes len, int write));
+_PROTOTYPE(void map_printmap, (struct vmproc *vmp));
 
 _PROTOTYPE(struct vir_region * map_region_lookup_tag, (struct vmproc *vmp, u32_t tag));
 _PROTOTYPE(void map_region_set_tag, (struct vir_region *vr, u32_t tag));

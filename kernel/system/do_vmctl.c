@@ -25,8 +25,6 @@ register message *m_ptr;	/* pointer to request message */
 
   if(ep == SELF) { ep = m_ptr->m_source; }
 
-  vm_init();
-
   if(!isokendpt(ep, &proc_nr)) {
 	kprintf("do_vmctl: unexpected endpoint %d from VM\n", ep);
 	return EINVAL;
@@ -44,6 +42,9 @@ register message *m_ptr;	/* pointer to request message */
 			return ESRCH;
 		if(!RTS_ISSET(rp, VMREQUEST))
 			minix_panic("do_vmctl: no VMREQUEST set", NO_NUM);
+
+		printf("kernel: vm request sent by: %s / %d about %d\n",
+			rp->p_name, rp->p_endpoint, rp->p_vmrequest.who);
 
 		/* Reply with request fields. */
 		m_ptr->SVMCTL_MRG_ADDR = (char *) rp->p_vmrequest.start;
@@ -73,6 +74,7 @@ register message *m_ptr;	/* pointer to request message */
 				rp->p_vmrequest.vmresult);
 
 		/* Put on restart chain. */
+		printf("kernel: vm reply received for %d\n", rp->p_endpoint);
 		rp->p_vmrequest.nextrestart = vmrestart;
 		vmrestart = rp;
 
@@ -93,10 +95,15 @@ kprintf("SYSTEM: request %d:0x%lx-0x%lx, wrflag %d, failed\n",
 		}
 #endif
 		return OK;
-#if VM_KERN_NOPAGEZERO
-	case VMCTL_NOPAGEZERO:
+	case VMCTL_ENABLE_PAGING:
+		if(vm_running) 
+			minix_panic("do_vmctl: paging already enabled", NO_NUM);
+		vm_init(p);
+		if(!vm_running)
+			minix_panic("do_vmctl: paging enabling failed", NO_NUM);
+		if(newmap(p, m_ptr->SVMCTL_VALUE) != OK)
+			minix_panic("do_vmctl: newmap failed", NO_NUM);
 		return OK;
-#endif
   }
 
   /* Try architecture-specific vmctls. */

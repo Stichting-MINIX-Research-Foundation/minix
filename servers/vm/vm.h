@@ -13,7 +13,7 @@
 #define ABS2CLICK(a) ((a) >> CLICK_SHIFT)
 
 /* Compile in asserts and custom sanity checks at all? */
-#define SANITYCHECKS	0
+#define SANITYCHECKS	1
 #define VMSTATS		1
 
 /* If so, this level: */

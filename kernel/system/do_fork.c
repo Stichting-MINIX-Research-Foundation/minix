@@ -88,6 +88,9 @@ register message *m_ptr;	/* pointer to request message */
   RTS_LOCK_UNSET(rpc, (SIGNALED | SIG_PENDING | P_STOP));
   sigemptyset(&rpc->p_pending);
 
+  printf("kernel: %d / %s forked into %d\n",
+	rpp->p_endpoint, rpp->p_name, rpc->p_endpoint);
+
   return r;
 }
 

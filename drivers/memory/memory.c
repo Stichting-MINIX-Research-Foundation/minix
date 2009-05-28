@@ -403,7 +403,8 @@ int safe;
 #endif
 
 	/* Try to allocate a piece of memory for the RAM disk. */
-	if((mem = mmap(0, ramdev_size, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0)) == MAP_FAILED) {
+	if((mem = mmap(0, ramdev_size, PROT_READ|PROT_WRITE,
+		MAP_PREALLOC|MAP_ANON, -1, 0)) == MAP_FAILED) {
 	    printf("MEM: failed to get memory for ramdisk\n");
             return(ENOMEM);
         } 

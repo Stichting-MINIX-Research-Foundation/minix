@@ -8,6 +8,7 @@
  */
 
 #include <ansi.h>
+#include <minix/debug.h>
 #include "config.h"
 
 /* Enable prints such as
@@ -25,6 +26,34 @@
 
 /* Runtime sanity checking. */
 #define DEBUG_VMASSERT			1
-#define DEBUG_SCHED_CHECK		0
+#define DEBUG_SCHED_CHECK		1
+
+#define NOREC_ENTER(varname) \
+	static int varname = 0;	\
+	int mustunlock = 0; \
+	if(!intr_disabled()) { lock; mustunlock = 1; } \
+	if(varname) {	\
+		minix_panic(#varname " recursive enter", __LINE__); \
+	} \
+	varname = 1;	\
+	FIXME(#varname " recursion check enabled");
+
+#define NOREC_RETURN(varname, v) do {	\
+	if(!varname)		\
+		minix_panic(#varname " flag off", __LINE__); \
+	if(!intr_disabled())	\
+		minix_panic(#varname " interrupts on", __LINE__); \
+	varname = 0;	\
+	if(mustunlock)	{ unlock;	} \
+	return v;	\
+	} while(0)
+
+
+#if DEBUG_VMASSERT
+#define vmassert(t) { \
+	if(!(t)) { minix_panic("vm: assert " #t " failed\n", __LINE__); } }
+#else
+#define vmassert(t) { }
+#endif
 
 #endif /* DEBUG_H */

@@ -97,9 +97,6 @@ struct kinfo {
   int nr_tasks;			/* number of kernel tasks */
   char release[6];		/* kernel release number */
   char version[6];		/* kernel version number */
-#if DEBUG_LOCK_CHECK
-  int relocking;		/* interrupt locking depth (should be 0) */
-#endif
 };
 
 /* Load data accounted every this no. of seconds. */

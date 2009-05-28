@@ -32,8 +32,6 @@ FORWARD _PROTOTYPE(int map_new_physblock, (struct vmproc *vmp,
 FORWARD _PROTOTYPE(int map_copy_ph_block, (struct vmproc *vmp, struct vir_region *region, struct phys_region *ph));
 FORWARD _PROTOTYPE(struct vir_region *map_copy_region, (struct vir_region *));
 
-FORWARD _PROTOTYPE(void map_printmap, (struct vmproc *vmp));
-
 PRIVATE char *map_name(struct vir_region *vr)
 {
 	int type = vr->flags & (VR_ANON|VR_DIRECT);
@@ -52,7 +50,7 @@ PRIVATE char *map_name(struct vir_region *vr)
 /*===========================================================================*
  *				map_printmap				     *
  *===========================================================================*/
-PRIVATE void map_printmap(vmp)
+PUBLIC void map_printmap(vmp)
 struct vmproc *vmp;
 {
 	struct vir_region *vr;
@@ -60,9 +58,10 @@ struct vmproc *vmp;
 	for(vr = vmp->vm_regions; vr; vr = vr->next) {
 		struct phys_region *ph;
 		int nph = 0;
+		printf("map_printmap: map_name: %s\n", map_name(vr));
 		printf("\t0x%lx - 0x%lx (len 0x%lx), %s\n",
 			vr->vaddr, vr->vaddr + vr->length, vr->length,
-			vr->vaddr + vr->length, map_name(vr));
+			map_name(vr));
 		printf("\t\tphysical: ");
 		for(ph = vr->first; ph; ph = ph->next) {
 			printf("0x%lx-0x%lx (refs %d): phys 0x%lx ",
@@ -912,6 +911,9 @@ struct vmproc *src;
 	dst->vm_regions = NULL;
 
 	SANITYCHECK(SCL_FUNCTIONS);
+
+	PT_SANE(&src->vm_pt);
+
 	for(vr = src->vm_regions; vr; vr = vr->next) {
 		struct vir_region *newvr;
 		struct phys_region *orig_ph, *new_ph;
@@ -958,8 +960,12 @@ struct vmproc *src;
 	}
 	SANITYCHECK(SCL_DETAIL);
 
+	PT_SANE(&src->vm_pt);
+
 	map_writept(src);
+	PT_SANE(&src->vm_pt);
 	map_writept(dst);
+	PT_SANE(&dst->vm_pt);
 
 	SANITYCHECK(SCL_FUNCTIONS);
 	return OK;

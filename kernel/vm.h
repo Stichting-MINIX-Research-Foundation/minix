@@ -10,10 +10,10 @@
 #define CHECKRANGE(pr, start, length, wr)   \
 	vm_checkrange(proc_addr(who_p), pr, start, length, wr, 1)
 
-/* Pseudo error code indicating a process request has to be
- * restarted after an OK from VM.
- */
+/* Pseudo error codes */
 #define VMSUSPEND       -996
+#define EFAULT_SRC	-995
+#define EFAULT_DST	-994
 
 #endif
 

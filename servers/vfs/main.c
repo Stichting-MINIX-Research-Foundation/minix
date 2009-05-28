@@ -26,6 +26,7 @@
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
+#include <minix/debug.h>
 #include "file.h"
 #include "fproc.h"
 #include "param.h"
@@ -58,6 +59,10 @@ PUBLIC int main()
   fs_init();
 
   SANITYCHECK;
+
+#if DO_SANITYCHECKS
+  FIXME("VFS: DO_SANITYCHECKS is on");
+#endif
 
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {

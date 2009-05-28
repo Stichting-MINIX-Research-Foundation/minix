@@ -103,3 +103,28 @@ check_runqueues_f(char *file, int line)
 }
 
 #endif /* DEBUG_SCHED_CHECK */
+
+PUBLIC char *
+rtsflagstr(int flags)
+{
+	static char str[100];
+	str[0] = '\0';
+
+#define FLAG(n) if(flags & n) { strcat(str, #n " "); }
+
+	FLAG(SLOT_FREE);
+	FLAG(NO_PRIORITY);
+	FLAG(SENDING);
+	FLAG(RECEIVING);
+	FLAG(SIGNALED);
+	FLAG(SIG_PENDING);
+	FLAG(P_STOP);
+	FLAG(NO_PRIV);
+	FLAG(NO_ENDPOINT);
+	FLAG(VMINHIBIT);
+	FLAG(PAGEFAULT);
+	FLAG(VMREQUEST);
+
+	return str;
+}
+
