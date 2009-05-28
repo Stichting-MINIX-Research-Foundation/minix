@@ -66,7 +66,6 @@ libsys_FILES=" \
 	sys_vinl.c \
 	sys_vinw.c \
 	sys_vircopy.c \
-	sys_vm_setbuf.c \
 	sys_vmctl.c \
 	sys_voutb.c \
 	sys_voutl.c \
