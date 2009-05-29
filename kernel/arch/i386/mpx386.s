@@ -76,6 +76,8 @@ begbss:
 .define	save
 .define	_pagefault_cr2
 .define _pagefault_count
+.define _old_eip_ptr
+.define _old_eax_ptr
 
 .define errexception
 .define exception1
@@ -524,10 +526,16 @@ errexception:
  sseg	pop	(ex_number)
  sseg	pop	(trap_errno)
 exception1:				! Common for all exceptions.
+ sseg	mov	(_old_eax_ptr), esp	! where will eax be saved?
+ sseg	sub	(_old_eax_ptr), PCREG-AXREG	! here
+
 	push	eax			! eax is scratch register
 
 	mov	eax, 0+4(esp)		! old eip
  sseg	mov	(old_eip), eax
+	mov	eax, esp
+	add	eax, 4
+ sseg	mov	(_old_eip_ptr), eax
 	movzx	eax, 4+4(esp)		! old cs
  sseg	mov	(old_cs), eax
 	mov	eax, 8+4(esp)		! old eflags

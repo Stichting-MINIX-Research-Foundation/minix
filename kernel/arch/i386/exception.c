@@ -18,32 +18,48 @@ extern u32_t vm_copy_from_p, vm_copy_to_p, vm_copy_cr3;
 extern u32_t catchrange_lo, catchrange_hi;
 
 u32_t pagefault_cr2, pagefault_count = 0;
+vir_bytes *old_eip_ptr = NULL, *old_eax_ptr = NULL;
 
-void pagefault(struct proc *pr, int trap_errno)
+void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
 {
 	int s;
 	vir_bytes ph;
 	u32_t pte;
+	int procok = 0, pcok = 0, rangeok = 0;
+
+	vmassert(old_eip_ptr);
+	vmassert(old_eax_ptr);
+
+	vmassert(*old_eip_ptr == old_eip);
+	vmassert(old_eip_ptr != &old_eip);
 
 	vmassert(pagefault_count == 1);
 
-	if((iskernelp(pr) || k_reenter) && catch_pagefaults
-		&& (pr->p_reg.pc > (vir_bytes) _memcpy_k &&
-		   pr->p_reg.pc < (vir_bytes) _memcpy_k_fault) &&
-		   pagefault_cr2 >= catchrange_lo &&
-		   pagefault_cr2 < catchrange_hi) {
-		kprintf("handling pagefault during copy\n");
-		pr->p_reg.pc = (vir_bytes) _memcpy_k_fault;
-		pr->p_reg.retreg = pagefault_cr2;
-		pagefault_count = 0;
-		return;
+	if(catch_pagefaults &&
+		(rangeok = (pagefault_cr2 >= catchrange_lo &&
+		   pagefault_cr2 < catchrange_hi))) {
+		vir_bytes test_eip;
+		test_eip = k_reenter ? old_eip : pr->p_reg.pc;
+		if((pcok = ((test_eip > (vir_bytes) _memcpy_k) &&
+		   (test_eip < (vir_bytes) _memcpy_k_fault)))) {
+			kprintf("handling pagefault during copy\n");
+			pagefault_count = 0;
+
+			*old_eip_ptr = _memcpy_k_fault;
+			*old_eax_ptr = pagefault_cr2;
+
+			return;
+		}
 	}
 
-	proc_stacktrace(pr);
+	kprintf("kernel stacktrace in pagefault: "); 
+	util_stacktrace();
 
 	if(catch_pagefaults) {
-		printf("k_reenter: %d addr: 0x%lx range: 0x%lx-0x%lx\n",
-			k_reenter, pagefault_cr2, catchrange_lo, catchrange_hi);
+		kprintf("procok: %d pcok: %d rangeok: %d\n",
+			procok, pcok, rangeok);
+		printf("k_reenter: %d addr: 0x%lx range: 0x%lx-0x%lx pc: 0x%lx\n",
+			k_reenter, pagefault_cr2, catchrange_lo, catchrange_hi, pr->p_reg.pc);
 	}
 
 	/* System processes that don't have their own page table can't
@@ -150,7 +166,7 @@ struct proc *t;
   }
 
   if(vec_nr == PAGE_FAULT_VECTOR) {
-		pagefault(saved_proc, trap_errno);
+		pagefault(old_eip, saved_proc, trap_errno);
 		return;
   }
 
@@ -214,7 +230,7 @@ PUBLIC void proc_stacktrace(struct proc *proc)
 	while(v_bp) {
 
 #define PRCOPY(pr, pv, v, n) \
-  (iskernelp(pr) ? (memcpy(v, pv, n), OK) : \
+  (iskernelp(pr) ? (memcpy((char *) v, (char *) pv, n), OK) : \
      data_copy(pr->p_endpoint, pv, SYSTEM, (vir_bytes) (v), n))
 
 	        if(PRCOPY(proc, v_bp, &v_hbp, sizeof(v_hbp)) != OK) {

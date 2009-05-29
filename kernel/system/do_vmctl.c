@@ -43,8 +43,11 @@ register message *m_ptr;	/* pointer to request message */
 		if(!RTS_ISSET(rp, VMREQUEST))
 			minix_panic("do_vmctl: no VMREQUEST set", NO_NUM);
 
-		printf("kernel: vm request sent by: %s / %d about %d\n",
-			rp->p_name, rp->p_endpoint, rp->p_vmrequest.who);
+		printf("kernel: vm request sent by: %s / %d about %d; 0x%lx-0x%lx, wr %d\n",
+			rp->p_name, rp->p_endpoint, rp->p_vmrequest.who,
+			rp->p_vmrequest.start,
+			rp->p_vmrequest.start + rp->p_vmrequest.length,
+			rp->p_vmrequest.writeflag);
 
 		/* Reply with request fields. */
 		m_ptr->SVMCTL_MRG_ADDR = (char *) rp->p_vmrequest.start;

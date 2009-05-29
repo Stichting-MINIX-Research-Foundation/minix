@@ -723,7 +723,6 @@ u32_t read_cr3(void)
 				kprintf("kernel: pde %d 0x%lx for proc %d\n", \
 					pde_index, pdeval, PROC->p_endpoint); \
 			}						\
-			if(copyverbose) { kprintf("installing pde val 0x%lx from pde index %d of proc %d into my pde\n", pdeval, pde_index, PROC->p_endpoint); }	\
 		} else {						\
 			pdeval = (LINADDR & I386_VM_ADDR_MASK_4MB) | 	\
 				I386_VM_BIGPAGE | I386_VM_PRESENT | 	\
@@ -745,7 +744,7 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, u8_t *vsrc,
 	int srcseg,
 	struct proc *dstproc, vir_bytes dstlinaddr, u8_t *vdst,
 	int dstseg,
-	vir_bytes bytes, int copyverbose)
+	vir_bytes bytes)
 {
 	u32_t addr;
 	int procslot;
@@ -779,8 +778,6 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, u8_t *vsrc,
 		u8_t *srcptr, *dstptr;
 		vir_bytes srcoffset, dstoffset;
 		vir_bytes chunk = bytes;
-
-		FIXME("copyverbose");
 
 		/* Set up 4MB ranges. */
 		CREATEPDE(srcproc, srcptr, srclinaddr, srcoffset,
@@ -850,7 +847,6 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 		vir_bytes chunk = bytes;
 		u8_t *ptr;
 		u32_t offset;
-		int copyverbose = 0;
 		CREATEPDE(((struct proc *) NULL), ptr, ph,
 			offset, freepdes[FREEPDE_MEMSET], 0, 0, chunk, bytes);
 		/* We can memset as many bytes as we have remaining,
@@ -957,20 +953,11 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   if(vm_running) {
 	int r;
 	struct proc *target, *caller;
-	int verbose = 0;
-
-		if(procs[_SRC_] && procs[_DST_] && 
-		  procs[_SRC_]->p_endpoint == PM_PROC_NR &&
-		  (procs[_DST_]->p_endpoint == INIT_PROC_NR ||
-		  procs[_DST_]->p_endpoint == 35549) &&
-		  bytes == sizeof(message)) {
-			verbose = 1;
-		}
 
 	if((r=lin_lin_copy(procs[_SRC_], phys_addr[_SRC_],
 		 (u8_t *) src_addr->offset, src_addr->segment,
 		procs[_DST_], phys_addr[_DST_], (u8_t *) dst_addr->offset,
-		dst_addr->segment, bytes, verbose)) != OK) {
+		dst_addr->segment, bytes)) != OK) {
 		if(r != EFAULT_SRC && r != EFAULT_DST)
 			minix_panic("lin_lin_copy failed", r);
 		if(!vmcheck) {
@@ -1000,17 +987,6 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 		vm_suspend(caller, target);
 
 	  	NOREC_RETURN(virtualcopy, VMSUSPEND);
-	}
-
-	if(verbose) {
-		static int count = 0;
-		message *m;
-		kprintf("lin_lin_copy: PM to %d: %d bytes copy OK\n",
-			procs[_DST_]->p_endpoint, bytes);
-		if(count++ < 10) {
-			vm_print(procs[_SRC_]->p_seg.p_cr3);
-			vm_print(procs[_DST_]->p_seg.p_cr3);
-		}
 	}
 
   	NOREC_RETURN(virtualcopy, OK);

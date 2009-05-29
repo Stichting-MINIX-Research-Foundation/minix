@@ -30,11 +30,13 @@
  *===========================================================================*/
 PUBLIC vir_bytes arch_map2vir(struct vmproc *vmp, vir_bytes addr)
 {
-	vir_bytes bottom = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
+	vir_bytes textstart = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
+	vir_bytes datastart = CLICK2ABS(vmp->vm_arch.vm_seg[D].mem_phys);
 
-	vm_assert(bottom <= addr);
+	/* Could be a text address. */
+	vm_assert(datastart <= addr || textstart <= addr);
 
-	return addr - bottom;
+	return addr - datastart;
 }
 
 /*===========================================================================*

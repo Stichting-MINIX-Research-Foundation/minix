@@ -87,17 +87,17 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 			kprintf("error %d\n", r);	\
 		  minix_panic("CopyMess: copy error", __LINE__); \
 		 } \
-		vm_suspend(dp, dp);				\
+		minix_panic("parameters unknown", NO_NUM);	\
 		(dp)->p_vmrequest.saved.msgcopy.dst = (dp);	\
 		(dp)->p_vmrequest.saved.msgcopy.dst_v = (vir_bytes) dm;	\
+		(dp)->p_vmrequest.saved.msgcopy.msgbuf.m_source = e; \
+		(dp)->p_vmrequest.type = VMSTYPE_MSGCOPY; \
   		if(data_copy((sp)->p_endpoint,	\
 			(vir_bytes) (sm), SYSTEM,	\
 			(vir_bytes) &(dp)->p_vmrequest.saved.msgcopy.msgbuf, \
 			sizeof(message)) != OK) {		\
 				minix_panic("CopyMess: data_copy failed", __LINE__);\
 			}				\
-			(dp)->p_vmrequest.saved.msgcopy.msgbuf.m_source = e; \
-			(dp)->p_vmrequest.type = VMSTYPE_MSGCOPY; \
 	}
 
 #define CopyMess(s,sp,sm,dp,dm) do { 			\
