@@ -704,11 +704,14 @@ u32_t read_cr3(void)
 phys_bytes arch_switch_copymsg(struct proc *rp, message *m, phys_bytes lin)
 {
 	phys_bytes r;
-	if(rp->p_seg.p_cr3) {
+	int u = 0;
+	if(!intr_disabled()) { lock; u = 1; }
+	if(rp->p_seg.p_cr3 && ptproc != rp) {
 		vm_set_cr3(rp->p_seg.p_cr3);
 		ptproc = rp;
 	}
 	r = phys_copy(vir2phys(m), lin, sizeof(message));
+	if(u) { unlock; }
 }
 
 /*===========================================================================*
