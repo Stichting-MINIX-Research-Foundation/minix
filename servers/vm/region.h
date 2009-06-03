@@ -6,7 +6,6 @@ struct phys_block {
 #if SANITYCHECKS
 	u32_t			seencount;
 #endif
-	vir_bytes		offset;	/* offset from start of vir region */
 	vir_bytes		length;	/* no. of contiguous bytes */
 	phys_bytes		phys;	/* physical memory */
 	u8_t			refcount;	/* Refcount of these pages */
@@ -19,6 +18,7 @@ struct phys_region {
 	struct phys_region	*next;	/* next contiguous block */
 	struct phys_block	*ph;
 	struct vir_region	*parent; /* Region that owns this phys_region. */
+	vir_bytes		offset;	/* offset from start of vir region */
 
 	/* list of phys_regions that reference the same phys_block */
 	struct phys_region	*next_ph_list;	

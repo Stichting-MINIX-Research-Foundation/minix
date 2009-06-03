@@ -65,8 +65,8 @@ struct vmproc *vmp;
 		printf("\t\tphysical: ");
 		for(ph = vr->first; ph; ph = ph->next) {
 			printf("0x%lx-0x%lx (refs %d): phys 0x%lx ",
-				vr->vaddr + ph->ph->offset,
-				vr->vaddr + ph->ph->offset + ph->ph->length,
+				vr->vaddr + ph->offset,
+				vr->vaddr + ph->offset + ph->ph->length,
 				ph->ph->refcount,
 				ph->ph->phys);
 			nph++;
@@ -122,8 +122,8 @@ PUBLIC void map_sanitycheck(char *file, int line)
 			map_printmap(vmp);
 			printf("ph in vr 0x%lx: 0x%lx-0x%lx  refcount %d "
 				"but seencount %lu\n", 
-				vr, pr->ph->offset,
-				pr->ph->offset + pr->ph->length,
+				vr, pr->offset,
+				pr->offset + pr->ph->length,
 				pr->ph->refcount, pr->ph->seencount);
 		}
 		{
@@ -146,7 +146,7 @@ PUBLIC void map_sanitycheck(char *file, int line)
 			MYASSERT(pr->ph->refcount == n_others);
 		}
 		MYASSERT(pr->ph->refcount == pr->ph->seencount);
-		MYASSERT(!(pr->ph->offset % VM_PAGE_SIZE));
+		MYASSERT(!(pr->offset % VM_PAGE_SIZE));
 		MYASSERT(!(pr->ph->length % VM_PAGE_SIZE)););
 }
 #endif
@@ -155,14 +155,15 @@ PUBLIC void map_sanitycheck(char *file, int line)
 /*=========================================================================*
  *				map_ph_writept				*
  *=========================================================================*/
-PUBLIC int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
-	struct phys_block *pb, int *ropages, int *rwpages)
+PRIVATE int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
+	struct phys_region *pr, int *ropages, int *rwpages)
 {
 	int rw;
+	struct phys_block *pb = pr->ph;
 
 	vm_assert(!(vr->vaddr % VM_PAGE_SIZE));
 	vm_assert(!(pb->length % VM_PAGE_SIZE));
-	vm_assert(!(pb->offset % VM_PAGE_SIZE));
+	vm_assert(!(pr->offset % VM_PAGE_SIZE));
 	vm_assert(pb->refcount > 0);
 
 	if((vr->flags & VR_WRITABLE)
@@ -182,7 +183,7 @@ PUBLIC int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 	}
 #endif
 
-	if(pt_writemap(&vmp->vm_pt, vr->vaddr + pb->offset,
+	if(pt_writemap(&vmp->vm_pt, vr->vaddr + pr->offset,
 	  pb->phys, pb->length, PTF_PRESENT | PTF_USER | rw,
 		WMF_OVERWRITE) != OK) {
 	    printf("VM: map_writept: pt_writemap failed\n");
@@ -307,7 +308,7 @@ int mapflags;
 		}
 		vm_assert(newregion->first);
 		vm_assert(!newregion->first->next);
-		if(map_ph_writept(vmp, newregion, newregion->first->ph, NULL, NULL) != OK) {
+		if(map_ph_writept(vmp, newregion, newregion->first, NULL, NULL) != OK) {
 			printf("VM: map_region_writept failed\n");
 			SLABFREE(newregion);
 			return NULL;
@@ -408,7 +409,8 @@ void pb_unreferenced(struct vir_region *region, struct phys_region *pr)
 			SLABSANE(pb->firstregion);
 			SLABSANE(pb->firstregion->parent);
 			if(map_ph_writept(pb->firstregion->parent->parent,
-				pb->firstregion->parent, pb, NULL, NULL) != OK) {
+				pb->firstregion->parent, pb->firstregion,
+				NULL, NULL) != OK) {
 				vm_panic("pb_unreferenced: writept", NO_NUM);
 			}
 		}
@@ -558,12 +560,12 @@ struct phys_region *physhint;
 	/* New physical block. */
 	newpb->phys = mem;
 	newpb->refcount = 1;
-	newpb->offset = offset;
 	newpb->length = length;
 	newpb->firstregion = newphysr;
 	SLABSANE(newpb->firstregion);
 
 	/* New physical region. */
+	newphysr->offset = offset;
 	newphysr->ph = newpb;
 	newphysr->parent = region;
 	newphysr->next_ph_list = NULL;	/* No other references to this block. */
@@ -572,7 +574,7 @@ struct phys_region *physhint;
 	vm_assert(!(length % VM_PAGE_SIZE));
 	vm_assert(!(newpb->length % VM_PAGE_SIZE));
 	SANITYCHECK(SCL_DETAIL);
-	if(map_ph_writept(vmp, region, newpb, NULL, NULL) != OK) {
+	if(map_ph_writept(vmp, region, newphysr, NULL, NULL) != OK) {
 		if(what_mem == MAP_NONE)
 			FREE_MEM(mem_clicks, clicks);
 		SLABFREE(newpb);
@@ -580,17 +582,17 @@ struct phys_region *physhint;
 		return ENOMEM;
 	}
 
-	if(!region->first || offset < region->first->ph->offset) {
+	if(!region->first || offset < region->first->offset) {
 		/* Special case: offset is before start. */
 		if(region->first) {
-			vm_assert(offset + length <= region->first->ph->offset);
+			vm_assert(offset + length <= region->first->offset);
 		}
 		newphysr->next = region->first;
 		region->first = newphysr;
 	} else {
 		struct phys_region *physr;
 		for(physr = physhint; physr; physr = physr->next) {
-			if(!physr->next || physr->next->ph->offset > offset) {
+			if(!physr->next || physr->next->offset > offset) {
 				newphysr->next = physr->next;
 				physr->next = newphysr;
 				break;
@@ -648,7 +650,6 @@ struct phys_region *ph;
 	SLABSANE(ph->ph);
 	vm_assert(ph->ph->refcount > 0);
 	newpb->length = ph->ph->length;
-	newpb->offset = ph->ph->offset;
 	newpb->refcount = 1;
 	newpb->phys = newmem;
 	newpb->firstregion = ph;
@@ -674,7 +675,7 @@ struct phys_region *ph;
 	/* Update pagetable with new address.
 	 * This will also make it writable.
 	 */
-	r = map_ph_writept(vmp, region, ph->ph, NULL, NULL);
+	r = map_ph_writept(vmp, region, ph, NULL, NULL);
 	if(r != OK)
 		vm_panic("map_copy_ph_block: map_ph_writept failed", r);
 
@@ -707,7 +708,7 @@ int write;
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	for(ph = region->first; ph; ph = ph->next)
-		if(ph->ph->offset <= offset && offset < ph->ph->offset + ph->ph->length)
+		if(ph->offset <= offset && offset < ph->offset + ph->ph->length)
 			break;
 
 	if(ph) {
@@ -717,7 +718,7 @@ int write;
 		vm_assert(ph->ph->refcount > 0);
 
 		if(ph->ph->refcount == 1)
-			r = map_ph_writept(vmp, region, ph->ph, NULL, NULL);
+			r = map_ph_writept(vmp, region, ph, NULL, NULL);
 		else {
 			r = map_copy_ph_block(vmp, region, ph);
 		}
@@ -756,8 +757,8 @@ int write;
 #define FREE_RANGE_HERE(er1, er2) {					\
 	struct phys_region *r1 = (er1), *r2 = (er2);			\
 	vir_bytes start = offset, end = offset + length;		\
-	if(r1) { start = MAX(start, r1->ph->offset + r1->ph->length); }	\
-	if(r2) { end   = MIN(end, r2->ph->offset); }			\
+	if(r1) { start = MAX(start, r1->offset + r1->ph->length); }	\
+	if(r2) { end   = MIN(end, r2->offset); }			\
 	if(start < end) {						\
 		int r;							\
 		SANITYCHECK(SCL_DETAIL);				\
@@ -797,7 +798,7 @@ int write;
 			SANITYCHECK(SCL_DETAIL);
 		  } else {
 			SANITYCHECK(SCL_DETAIL);
-			if((r=map_ph_writept(vmp, region, physr->ph, NULL, NULL)) != OK) {
+			if((r=map_ph_writept(vmp, region, physr, NULL, NULL)) != OK) {
 				printf("VM: map_ph_writept failed\n");
 				return r;
 			}
@@ -870,6 +871,7 @@ PRIVATE struct vir_region *map_copy_region(struct vir_region *vr)
 		newph->ph = ph->ph;
 		newph->next_ph_list = NULL;
 		newph->parent = newvr;
+		newph->offset = ph->offset;
 		if(prevph) prevph->next = newph;
 		else newvr->first = newph;
 		prevph = newph;
@@ -895,7 +897,7 @@ PUBLIC int map_writept(struct vmproc *vmp)
 
 	for(vr = vmp->vm_regions; vr; vr = vr->next)
 		for(ph = vr->first; ph; ph = ph->next) {
-			map_ph_writept(vmp, vr, ph->ph, &ropages, &rwpages);
+			map_ph_writept(vmp, vr, ph, &ropages, &rwpages);
 		}
 
 	return OK;
