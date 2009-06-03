@@ -10,12 +10,10 @@
 #include <string.h>
 #include <minix/sysutil.h>
 #include "../../proc.h"
+#include "../../proto.h"
 
 extern int vm_copy_in_progress, catch_pagefaults;
 extern struct proc *vm_copy_from, *vm_copy_to;
-extern u32_t vm_copy_from_v, vm_copy_to_v;
-extern u32_t vm_copy_from_p, vm_copy_to_p, vm_copy_cr3;
-extern u32_t catchrange_lo, catchrange_hi;
 
 u32_t pagefault_cr2, pagefault_count = 0;
 vir_bytes *old_eip_ptr = NULL, *old_eax_ptr = NULL;
@@ -26,6 +24,7 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
 	vir_bytes ph;
 	u32_t pte;
 	int procok = 0, pcok = 0, rangeok = 0;
+	int in_memcpy = 0, in_physcopy = 0;
 
 	vmassert(old_eip_ptr);
 	vmassert(old_eax_ptr);
@@ -35,31 +34,28 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
 
 	vmassert(pagefault_count == 1);
 
-	if(catch_pagefaults &&
-		(rangeok = (pagefault_cr2 >= catchrange_lo &&
-		   pagefault_cr2 < catchrange_hi))) {
+	if(catch_pagefaults) {
 		vir_bytes test_eip;
 		test_eip = k_reenter ? old_eip : pr->p_reg.pc;
-		if((pcok = ((test_eip > (vir_bytes) _memcpy_k) &&
-		   (test_eip < (vir_bytes) _memcpy_k_fault)))) {
-			kprintf("handling pagefault during copy\n");
+		in_memcpy = (test_eip > (vir_bytes) _memcpy_k) &&
+		   (test_eip < (vir_bytes) _memcpy_k_fault);
+		in_physcopy = (test_eip > (vir_bytes) phys_copy) &&
+		   (test_eip < (vir_bytes) phys_copy_fault);
+		if((pcok = in_memcpy || in_physcopy)) {
 			pagefault_count = 0;
 
-			*old_eip_ptr = _memcpy_k_fault;
+			if(in_memcpy) {
+				vmassert(!in_physcopy);
+				*old_eip_ptr = _memcpy_k_fault;
+			}
+			if(in_physcopy) {
+				vmassert(!in_memcpy);
+				*old_eip_ptr = phys_copy_fault;
+			}
 			*old_eax_ptr = pagefault_cr2;
 
 			return;
 		}
-	}
-
-	kprintf("kernel stacktrace in pagefault: "); 
-	util_stacktrace();
-
-	if(catch_pagefaults) {
-		kprintf("procok: %d pcok: %d rangeok: %d\n",
-			procok, pcok, rangeok);
-		printf("k_reenter: %d addr: 0x%lx range: 0x%lx-0x%lx pc: 0x%lx\n",
-			k_reenter, pagefault_cr2, catchrange_lo, catchrange_hi, pr->p_reg.pc);
 	}
 
 	/* System processes that don't have their own page table can't
@@ -94,15 +90,10 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
 	pr->p_pagefault.pf_flags = trap_errno;
 	pr->p_nextpagefault = pagefaults;
 	pagefaults = pr;
-	soft_notify(VM_PROC_NR);
+		
+	lock_notify(SYSTEM, VM_PROC_NR);
 
 	pagefault_count = 0;
-
-#if 0
-	kprintf("pagefault for process %d ('%s'), pc = 0x%x\n",
-			pr->p_endpoint, pr->p_name, pr->p_reg.pc);
-	proc_stacktrace(pr);
-#endif
 
 	return;
 }
@@ -147,13 +138,6 @@ struct proc *t;
   };
   register struct ex_s *ep;
   struct proc *saved_proc;
-
-#if DEBUG_SCHED_CHECK
-  for (t = BEG_PROC_ADDR; t < END_PROC_ADDR; ++t) {
-	if(t->p_magic != PMAGIC)
-		kprintf("entry %d broken\n", t->p_nr);
-  }
-#endif
 
   /* Save proc_ptr, because it may be changed by debug statements. */
   saved_proc = proc_ptr;	

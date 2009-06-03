@@ -99,7 +99,6 @@ int main(void)
 
   /* Execute the /etc/rc file. */
   if ((pid = fork()) != 0) {
-	printf("init: parent (%d)\n", getpid());
 	/* Parent just waits. */
 	while (wait(NULL) != pid) {
 		if (gotabrt) reboot(RBT_HALT);
@@ -112,7 +111,6 @@ int main(void)
 	static char *rc_command[] = { "sh", "/etc/rc", NULL, NULL, NULL };
 	char **rcp = rc_command + 2;
 
-	printf("init: child (%d)\n", getpid());
 	/* Get the boot options from the boot environment. */
 	sysgetenv.key = "bootopts";
 	sysgetenv.keylen = 8+1;
@@ -121,9 +119,7 @@ int main(void)
 	if (svrctl(MMGETPARAM, &sysgetenv) == 0) *rcp++ = bootopts;
 	*rcp = "start";
 
-	printf("init: %d: exec /etc/rc..\n", getpid());
 	execute(rc_command);
-	printf("init: %d: exec /etc/rc fail..\n", getpid());
 	report(2, "sh /etc/rc");
 	_exit(1);	/* impossible, we hope */
   }

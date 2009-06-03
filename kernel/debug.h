@@ -25,8 +25,8 @@
 #define DEBUG_TIME_LOCKS		1
 
 /* Runtime sanity checking. */
-#define DEBUG_VMASSERT			1
-#define DEBUG_SCHED_CHECK		1
+#define DEBUG_VMASSERT			0
+#define DEBUG_SCHED_CHECK		0
 
 #define NOREC_ENTER(varname) \
 	static int varname = 0;	\
@@ -48,9 +48,9 @@
 	return v;	\
 	} while(0)
 
-
 #if DEBUG_VMASSERT
 #define vmassert(t) { \
+	FIXME("vmassert on"); \
 	if(!(t)) { minix_panic("vm: assert " #t " failed\n", __LINE__); } }
 #else
 #define vmassert(t) { }

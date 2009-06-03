@@ -43,11 +43,13 @@ register message *m_ptr;	/* pointer to request message */
 		if(!RTS_ISSET(rp, VMREQUEST))
 			minix_panic("do_vmctl: no VMREQUEST set", NO_NUM);
 
+#if 0
 		printf("kernel: vm request sent by: %s / %d about %d; 0x%lx-0x%lx, wr %d\n",
 			rp->p_name, rp->p_endpoint, rp->p_vmrequest.who,
 			rp->p_vmrequest.start,
 			rp->p_vmrequest.start + rp->p_vmrequest.length,
 			rp->p_vmrequest.writeflag);
+#endif
 
 		/* Reply with request fields. */
 		m_ptr->SVMCTL_MRG_ADDR = (char *) rp->p_vmrequest.start;
@@ -77,7 +79,6 @@ register message *m_ptr;	/* pointer to request message */
 				rp->p_vmrequest.vmresult);
 
 		/* Put on restart chain. */
-		printf("kernel: vm reply received for %d\n", rp->p_endpoint);
 		rp->p_vmrequest.nextrestart = vmrestart;
 		vmrestart = rp;
 
@@ -94,7 +95,7 @@ kprintf("SYSTEM: request %d:0x%lx-0x%lx, wrflag %d, failed\n",
 	rp->p_vmrequest.writeflag); 
 	
 				minix_panic("SYSTEM: fail but VM said OK", NO_NUM);
-			}
+			} 
 		}
 #endif
 		return OK;

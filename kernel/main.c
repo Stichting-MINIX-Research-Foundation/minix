@@ -196,6 +196,9 @@ PUBLIC void main()
 #if DEBUG_VMASSERT
   FIXME("DEBUG_VMASSERT enabled");
 #endif
+#if DEBUG_PROC_CHECK
+  FIXME("PROC check enabled");
+#endif
   restart();
 }
 

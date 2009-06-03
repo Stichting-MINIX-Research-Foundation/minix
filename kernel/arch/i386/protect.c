@@ -340,40 +340,25 @@ PUBLIC int prot_set_kern_seg_limit(vir_bytes limit)
 	int orig_click;
 	int incr_clicks;
 
-	kprintf("prot_set_kern_seg_limit: limit 0x%lx\n", limit);
-
 	if(limit <= kinfo.data_base) {
 		kprintf("prot_set_kern_seg_limit: limit bogus\n");
 		return EINVAL;
 	}
-
-	kprintf("size: 0x%lx -> ", kinfo.data_size);
 
 	/* Do actual increase. */
 	orig_click = kinfo.data_size / CLICK_SIZE;
 	kinfo.data_size = limit - kinfo.data_base;
 	incr_clicks = kinfo.data_size / CLICK_SIZE - orig_click;
 
-	kprintf("0x%lx\n", kinfo.data_size);
-
-	kprintf("prot_set_kern_seg_limit: prot_init\n");
-
 	prot_init();
-
-	kprintf("prot_set_kern_seg_limit: prot_init done\n");
 
 	/* Increase kernel processes too. */
 	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
 		if (RTS_ISSET(rp, SLOT_FREE) || !iskernelp(rp))
 			continue;
-		kprintf("prot_set_kern_seg_limit: increase %d 0x%x ->\n",
-			rp->p_endpoint, rp->p_memmap[S].mem_len);
 		rp->p_memmap[S].mem_len += incr_clicks;
 		alloc_segments(rp);
-		kprintf("prot_set_kern_seg_limit: increase %d done -> 0x%x\n",
-			rp->p_endpoint, rp->p_memmap[S].mem_len);
 	}
-	kprintf("prot_set_kern_seg_limit: done\n");
 
 	return OK;
 }

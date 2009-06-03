@@ -718,8 +718,9 @@ int write;
 
 		if(ph->ph->refcount == 1)
 			r = map_ph_writept(vmp, region, ph->ph, NULL, NULL);
-		else
+		else {
 			r = map_copy_ph_block(vmp, region, ph);
+		}
 	} else {
 		/* Pagefault in non-existing block. Map in new block. */
 #if 0

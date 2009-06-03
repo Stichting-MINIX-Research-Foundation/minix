@@ -56,8 +56,9 @@ char *callnames[NR_SYS_CALLS];
     call_vec[(call_nr-KERNEL_CALL)] = (handler)  
 
 FORWARD _PROTOTYPE( void initialize, (void));
-FORWARD _PROTOTYPE( void softnotify_check, (void));
 FORWARD _PROTOTYPE( struct proc *vmrestart_check, (message *));
+
+u32_t cr3_test, cr3_reload, createpde, linlincopies, physzero;
 
 /*===========================================================================*
  *				sys_task				     *
@@ -75,26 +76,34 @@ PUBLIC void sys_task()
   /* Initialize the system task. */
   initialize();
 
+
   while (TRUE) {
       struct proc *restarting;
 
       restarting = vmrestart_check(&m);
-      softnotify_check();
-	if(softnotify)
-		minix_panic("softnotify non-NULL before receive (1)", NO_NUM);
 
       if(!restarting) {
         int r;
 	/* Get work. Block and wait until a request message arrives. */
-	if(softnotify)
-		minix_panic("softnotify non-NULL before receive (2)", NO_NUM);
 	if((r=receive(ANY, &m)) != OK)
 		minix_panic("receive() failed", r);
-	if(m.m_source == SYSTEM)
-		continue;
-	if(softnotify)
-		minix_panic("softnotify non-NULL after receive", NO_NUM);
       }
+
+#if 1
+      {
+	static int prevu;
+	int u;
+	u = get_uptime();
+	if(u/system_hz != prevu/system_hz) {
+		printf("cr3 tests: %5lu reloads: %5lu createpde: %5lu linlincopies: %5lu physzero: %5lu\n",
+			cr3_test, cr3_reload, createpde, linlincopies, physzero);
+		cr3_test = 1;
+		cr3_reload = 0;
+		createpde = linlincopies = physzero = 0;
+	}
+	prevu = u;
+      }
+#endif
 
       sys_call_code = (unsigned) m.m_type;
       call_nr = sys_call_code - KERNEL_CALL;	
@@ -310,7 +319,7 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
-  soft_notify(rp->p_endpoint); 
+  lock_notify(SYSTEM, rp->p_endpoint); 
 }
 
 /*===========================================================================*
@@ -429,7 +438,6 @@ register struct proc *rc;		/* slot of process to clean up */
 
 #if 0
   if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR)
-#endif
   {
 	/* This test is great for debugging system processes dying,
 	 * but as this happens normally on reboot, not good permanent code.
@@ -438,10 +446,9 @@ register struct proc *rc;		/* slot of process to clean up */
 	proc_stacktrace(rc);
 	kprintf("kernel trace: ");
 	util_stacktrace();
-#if 0
 	minix_panic("clear_proc: system process died", rc->p_endpoint);
-#endif
   }
+#endif
 
   /* Make sure that the exiting process is no longer scheduled. */
   RTS_LOCK_SET(rc, NO_ENDPOINT);
@@ -508,13 +515,6 @@ register struct proc *rc;		/* slot of process to clean up */
 #endif
       } 
   }
-
-  /* No pending soft notifies. */
-  for(np = softnotify; np; np = np->next_soft_notify) {
-    if(np == rc) {
-	minix_panic("dying proc was on next_soft_notify", np->p_endpoint);
-    }
-  }
 }
 
 /*===========================================================================*
@@ -547,28 +547,6 @@ int access;                     /* does grantee want to CPF_READ or _WRITE? */
         /* Do the mapping from virtual to physical. */
         return umap_virtual(proc_addr(proc_nr), D, v_offset, bytes);
 } 
-
-/*===========================================================================*
- *                              softnotify_check                            *
- *===========================================================================*/
-PRIVATE void softnotify_check(void)
-{  
-	struct proc *np, *nextnp;
-
-	if(!softnotify) 
-		return;
-
-	for(np = softnotify; np; np = nextnp) {
-		if(!np->p_softnotified)
-			minix_panic("softnotify but no p_softnotified", NO_NUM);
-		lock_notify(SYSTEM, np->p_endpoint);
-		nextnp = np->next_soft_notify;
-		np->next_soft_notify = NULL;
-		np->p_softnotified = 0;
-	}
-
-	softnotify = NULL;
-}
 
 /*===========================================================================*
  *                              vmrestart_check                            *
@@ -618,29 +596,6 @@ PRIVATE struct proc *vmrestart_check(message *m)
 				}
 			}
 			return restarting;
-		case VMSTYPE_SYS_CALL:
-			kprintf("SYSTEM: restart sys_call\n");
-			/* Restarting a kernel trap. */
-			sys_call_restart(restarting);
-
-			/* Handled; restart system loop. */
-			return NULL;
-		case VMSTYPE_MSGCOPY:
-			/* Do delayed message copy. */
-			printf("copying message into %d..\n", 
-				restarting->p_vmrequest.saved.msgcopy.dst->p_endpoint);
-			if((r=data_copy(SYSTEM,
-				(vir_bytes) &restarting->p_vmrequest.saved.msgcopy.msgbuf,
-				restarting->p_vmrequest.saved.msgcopy.dst->p_endpoint,
-				(vir_bytes) restarting->p_vmrequest.saved.msgcopy.dst_v,
-				sizeof(message))) != OK) {
-	   			minix_panic("SYSTEM: delayed msgcopy failed", r);
-			}
-			printf("OK!\n");
-			RTS_LOCK_UNSET(restarting, VMREQUEST);
-
-			/* Handled; restart system loop. */
-			return NULL;
 		default:
 	   		minix_panic("strange restart type", type);
 	}

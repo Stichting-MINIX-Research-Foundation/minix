@@ -33,7 +33,6 @@ _PROTOTYPE( int sys_call, (int call_nr, int src_dst,
 					message *m_ptr, long bit_map)	);
 _PROTOTYPE( void sys_call_restart, (struct proc *caller)		);
 _PROTOTYPE( int lock_notify, (int src, int dst)				);
-_PROTOTYPE( int soft_notify, (int dst)				);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
 _PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
@@ -88,6 +87,7 @@ _PROTOTYPE( void cons_seth, (int pos, int n)				);
 _PROTOTYPE( void check_runqueues_f, (char *file, int line) );
 #endif
 _PROTOTYPE( char *rtsflagstr, (int flags) );
+_PROTOTYPE( char *miscflagstr, (int flags) );
 
 /* system/do_safecopy.c */
 _PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
@@ -103,8 +103,9 @@ _PROTOTYPE( void stop_profile_clock, (void)				);
 #endif
 
 /* functions defined in architecture-dependent files. */
-_PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
+_PROTOTYPE( phys_bytes phys_copy, (phys_bytes source, phys_bytes dest,
                 phys_bytes count)                                       );
+_PROTOTYPE( void phys_copy_fault, (void));
 #define virtual_copy(src, dst, bytes) virtual_copy_f(src, dst, bytes, 0)
 #define virtual_copy_vmcheck(src, dst, bytes) virtual_copy_f(src, dst, bytes, 1)
 _PROTOTYPE( int virtual_copy_f, (struct vir_addr *src, struct vir_addr *dst, 
@@ -162,5 +163,7 @@ _PROTOTYPE( int vm_checkrange, (struct proc *caller, struct proc *target,
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
 _PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target));
+_PROTOTYPE( phys_bytes arch_switch_copymsg, (struct proc *rp, message *m,
+	phys_bytes lin));
 
 #endif /* PROTO_H */

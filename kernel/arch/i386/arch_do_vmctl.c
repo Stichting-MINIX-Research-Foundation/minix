@@ -53,22 +53,19 @@ struct proc *p;
                 m_ptr->SVMCTL_PF_WHO = rp->p_endpoint;
                 m_ptr->SVMCTL_PF_I386_CR2 = rp->p_pagefault.pf_virtual;
 		m_ptr->SVMCTL_PF_I386_ERR = rp->p_pagefault.pf_flags;
-		printf("kernel: returning pagefault for %s / %d\n",
-			rp->p_name, rp->p_endpoint);
 		return OK;
 	}
 	case VMCTL_I386_KERNELLIMIT:
 	{
+		int r;
 		/* VM wants kernel to increase its segment. */
-		kprintf("kernel: increase limit to 0x%x\n", 
-			m_ptr->SVMCTL_VALUE);
-		return prot_set_kern_seg_limit(m_ptr->SVMCTL_VALUE);
+		r = prot_set_kern_seg_limit(m_ptr->SVMCTL_VALUE);
+		return r;
 	}
 	case VMCTL_I386_PAGEDIRS:
 	{
 		int pde;
 		vm_pagedirs = (u32_t *) m_ptr->SVMCTL_VALUE;
-		kprintf("kernel: pagedirs now 0x%lx\n", vm_pagedirs);
 		return OK;
 	}
 	case VMCTL_I386_FREEPDE:
@@ -82,6 +79,8 @@ struct proc *p;
 		return OK;
 	}
   }
+
+
 
   kprintf("arch_do_vmctl: strange param %d\n", m_ptr->SVMCTL_PARAM);
   return EINVAL;

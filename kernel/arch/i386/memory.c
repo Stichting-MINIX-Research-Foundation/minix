@@ -23,22 +23,14 @@
 
 PRIVATE int psok = 0;
 
+extern u32_t createpde, linlincopies, physzero;
+
 #define PROCPDEPTR(pr, pi) ((u32_t *) ((u8_t *) vm_pagedirs +\
 				I386_PAGE_SIZE * pr->p_nr +	\
 				I386_VM_PT_ENT_SIZE * pi))
 
 /* Signal to exception handler that pagefaults can happen. */
 int catch_pagefaults = 0;
-u32_t catchrange_lo = 0;
-u32_t catchrange_hi = 0;
-
-#if 0
-/* VM functions and data. */
-PUBLIC u32_t kernel_cr3;
-#endif
-
-extern u32_t cswitch;
-u32_t last_cr3 = 0;
 
 u8_t *vm_pagedirs = NULL;
 
@@ -70,11 +62,6 @@ PUBLIC void vm_init(struct proc *newptproc)
 		ptproc->p_seg.p_cr3);
 	vmassert(newcr3);
 
-	kprintf("vm_init thinks cr3 0x%lx is loaded, proc %d, cr3 0x%lx, actual cr3 0x%lx\n",
-		last_cr3, ptproc->p_endpoint, ptproc->p_seg.p_cr3, read_cr3());
-
-	kprintf("vm_init: writing cr3 0x%lx\n", newcr3);
-
 	/* Set this cr3 now (not active until paging enabled). */
 	vm_set_cr3(newcr3);
 
@@ -92,15 +79,6 @@ PUBLIC void vm_init(struct proc *newptproc)
 
 	kprintf("vm_init done\n");
 }
-
-#if 0
-PRIVATE void phys_put32(addr, value)
-phys_bytes addr;
-u32_t value;
-{
-	phys_copy(vir2phys((vir_bytes)&value), addr, sizeof(value));
-}
-#endif
 
 PRIVATE u32_t phys_get32(addr)
 phys_bytes addr;
@@ -179,18 +157,12 @@ PRIVATE void vm_enable_paging(void)
 	cr0= read_cr0();
 	cr4= read_cr4();
 
-	kprintf("vm_enable_paging: cr0: %s cr4: %s; want to disable\n",
-		cr0_str(cr0), cr4_str(cr4));
-
 	/* First clear PG and PGE flag, as PGE must be enabled after PG. */
 	write_cr0(cr0 & ~I386_CR0_PG);
 	write_cr4(cr4 & ~(I386_CR4_PGE | I386_CR4_PSE));
 
 	cr0= read_cr0();
 	cr4= read_cr4();
-
-	kprintf("vm_enable_paging: cr0: %s cr4: %s after disabling\n",
-		cr0_str(cr0), cr4_str(cr4));
 
 	/* Our first page table contains 4MB entries. */
 	if(psok)
@@ -199,21 +171,15 @@ PRIVATE void vm_enable_paging(void)
 	write_cr4(cr4);
 
 	/* First enable paging, then enable global page flag. */
-	kprintf("vm_enable_paging: write PG\n");
 	cr0 |= I386_CR0_PG;
 	write_cr0(cr0 );
-	kprintf("vm_enable_paging: writing WP\n");
 	cr0 |= I386_CR0_WP;
 	write_cr0(cr0);
-	kprintf("vm_enable_paging: write WP done\n");
 
 	/* May we enable these features? */
 	if(pgeok)
 		cr4 |= I386_CR4_PGE;
 
-	kprintf("vm_enable_paging: write cr4 0x%lx\n", cr4);
-	write_cr4(cr4);
-	kprintf("vm_enable_paging: write cr4 0x%lx done\n", cr4);
 	write_cr4(cr4);
 }
 
@@ -510,9 +476,8 @@ PUBLIC int vm_suspend(struct proc *caller, struct proc *target)
 	/* Connect caller on vmrequest wait queue. */	
 	caller->p_vmrequest.nextrequestor = vmrequest;
 	vmrequest = caller;	
-	if(!caller->p_vmrequest.nextrequestor) {
-		soft_notify(VM_PROC_NR);		
-	}						
+	if(!caller->p_vmrequest.nextrequestor)
+		lock_notify(SYSTEM, VM_PROC_NR);		
 }
 
 /*===========================================================================*
@@ -670,11 +635,7 @@ void invlpg_range(u32_t lin, u32_t bytes)
 	limit = lin + bytes - 1;
 	o = lin % I386_PAGE_SIZE;
 	lin -= o;
-	limit += o;
-	limit &= I386_VM_PT_ENT_MASK;
-	FIXME("invlpg_range reloads cr3");
-	cr3 = read_cr3();
-	vm_set_cr3(cr3);
+	limit = (limit + o) & I386_VM_ADDR_MASK;
 	for(i386_invlpg_addr = lin; i386_invlpg_addr <= limit;
 	    i386_invlpg_addr += I386_PAGE_SIZE)
 		level0(i386_invlpg_level0);
@@ -700,10 +661,12 @@ u32_t read_cr3(void)
  * It needs FREEPDE (available and addressable PDE within kernel
  * address space), SEG (hardware segment), VIRT (in-datasegment
  * address if known).
- *
- * TODO: don't re-make a pde that's already there.
  */
 #define CREATEPDE(PROC, PTR, LINADDR, OFFSET, FREEPDE, VIRT, SEG, REMAIN, BYTES) { \
+	FIXME("CREATEPDE: check if invlpg is necessary");	\
+	if(PROC == ptproc) {					\
+		FIXME("CREATEPDE: use in-memory process");	\
+	}							\
 	if((PROC) && iskernelp(PROC) && SEG == D) {		\
 		PTR = VIRT;					\
 		OFFSET = 0;					\
@@ -713,16 +676,13 @@ u32_t read_cr3(void)
 		vmassert(psok);					\
 		pde_index = I386_VM_PDE(LINADDR);		\
 		vmassert(!iskernelp(PROC));			\
+		createpde++;					\
 		if(PROC) {					\
 			u32_t *pdeptr; \
 			vmassert(!iskernelp(PROC));		\
 			vmassert(HASPT(PROC));			\
 			pdeptr = PROCPDEPTR(PROC, pde_index);		\
 			pdeval = *pdeptr;	\
-			if(!(pdeval & I386_VM_PRESENT)) {		\
-				kprintf("kernel: pde %d 0x%lx for proc %d\n", \
-					pde_index, pdeval, PROC->p_endpoint); \
-			}						\
 		} else {						\
 			pdeval = (LINADDR & I386_VM_ADDR_MASK_4MB) | 	\
 				I386_VM_BIGPAGE | I386_VM_PRESENT | 	\
@@ -737,6 +697,20 @@ u32_t read_cr3(void)
 	}								\
 }
 
+
+/*===========================================================================*
+ *				arch_switch_copymsg			     *
+ *===========================================================================*/
+phys_bytes arch_switch_copymsg(struct proc *rp, message *m, phys_bytes lin)
+{
+	phys_bytes r;
+	if(rp->p_seg.p_cr3) {
+		vm_set_cr3(rp->p_seg.p_cr3);
+		ptproc = rp;
+	}
+	r = phys_copy(vir2phys(m), lin, sizeof(message));
+}
+
 /*===========================================================================*
  *				lin_lin_copy				     *
  *===========================================================================*/
@@ -748,8 +722,10 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, u8_t *vsrc,
 {
 	u32_t addr;
 	int procslot;
-	u32_t catchrange_dst;
+	u32_t catchrange_dst, catchrange_lo, catchrange_hi;
 	NOREC_ENTER(linlincopy);
+
+	linlincopies++;
 
 	if(srcproc && dstproc && iskernelp(srcproc) && iskernelp(dstproc)) {
 		memcpy(vdst, vsrc, bytes);
@@ -795,14 +771,10 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, u8_t *vsrc,
 		catch_pagefaults = 0;
 
 		if(addr) {
-			kprintf("kernel: lin_lin copy: returning EFAULT, addr 0x%lx\n",
-				addr);
 			if(addr >= catchrange_lo && addr < catchrange_dst) {
-				kprintf("src\n");
 				NOREC_RETURN(linlincopy, EFAULT_SRC);
 			}
 			if(addr >= catchrange_dst && addr < catchrange_hi) {
-				kprintf("dst\n");
 				NOREC_RETURN(linlincopy, EFAULT_DST);
 			}
 			minix_panic("lin_lin_copy fault out of range", NO_NUM);
@@ -831,6 +803,8 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 {
 	char *v;
 
+	physzero++;
+
 	if(!vm_running) {
 		u32_t p;
 		p = c | (c << 8) | (c << 16) | (c << 24);
@@ -856,6 +830,7 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 		bytes -= chunk;
 		ph += chunk;
 	}
+
 
 	return OK;
 }
@@ -966,8 +941,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 
 		caller = proc_addr(who_p);
 
-		printf("virtual_copy: suspending caller %d / %s\n",
-			caller->p_endpoint, caller->p_name);
+		vmassert(procs[_SRC_] && procs[_DST_]);
 
 		if(r == EFAULT_SRC) {
 			caller->p_vmrequest.start = phys_addr[_SRC_];
@@ -980,6 +954,12 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 		} else {
 			minix_panic("r strange", r);
 		}
+
+#if 0
+		printf("virtual_copy: suspending caller %d / %s, target %d / %s\n",
+			caller->p_endpoint, caller->p_name,
+			target->p_endpoint, target->p_name);
+#endif
 
 		caller->p_vmrequest.length = bytes;
 		caller->p_vmrequest.who = target->p_endpoint;
@@ -1068,5 +1048,4 @@ void i386_freepde(int pde)
 	if(nfreepdes >= WANT_FREEPDES)
 		return;
 	freepdes[nfreepdes++] = pde;
-	printf("kernel: free pde: %d\n", pde);
 }

@@ -452,13 +452,9 @@ PRIVATE void send_work()
 			rmp->mp_fs_call= PM_IDLE;
 
 			/* Wakeup the newly created process */
-			printf("PM: replying fork OK to child %d\n",
-				rmp->mp_endpoint);
 			setreply(rmp-mproc, OK);
 
 			/* Wakeup the parent */
-			printf("PM: replying fork %d to parent %d\n",
-				rmp->mp_pid, parent_mp->mp_endpoint);
 			setreply(parent_mp-mproc, rmp->mp_pid);
 			break;
 		}

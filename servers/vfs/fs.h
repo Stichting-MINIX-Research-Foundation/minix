@@ -5,7 +5,7 @@
 #define _MINIX             1	/* tell headers to include MINIX stuff */
 #define _SYSTEM            1	/* tell headers that this is the kernel */
 
-#define DO_SANITYCHECKS	   1
+#define DO_SANITYCHECKS	   0
 
 #if DO_SANITYCHECKS
 #define SANITYCHECK do { 			\

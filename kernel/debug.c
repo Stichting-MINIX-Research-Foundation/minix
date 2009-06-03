@@ -25,6 +25,8 @@ check_runqueues_f(char *file, int line)
 	minix_panic("check_runqueues called with interrupts enabled", NO_NUM);
   }
 
+  FIXME("check_runqueues being done");
+
 #define MYPANIC(msg) {		\
 	kprintf("check_runqueues:%s:%d: %s\n", file, line, msg); \
 	minix_panic("check_runqueues failed", NO_NUM);	\
@@ -124,6 +126,20 @@ rtsflagstr(int flags)
 	FLAG(VMINHIBIT);
 	FLAG(PAGEFAULT);
 	FLAG(VMREQUEST);
+
+	return str;
+}
+
+PUBLIC char *
+miscflagstr(int flags)
+{
+	static char str[100];
+	str[0] = '\0';
+
+	FLAG(MF_REPLY_PEND);
+	FLAG(MF_ASYNMSG);
+	FLAG(MF_FULLVM);
+	FLAG(MF_DELIVERMSG);
 
 	return str;
 }

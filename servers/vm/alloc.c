@@ -23,6 +23,7 @@
 #include <minix/const.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/debug.h>
 
 #include <sys/mman.h>
 
@@ -423,6 +424,8 @@ struct memory *chunks;		/* list of free memory chunks */
   }
 
   CHECKHOLES;
+
+  FIXME("below 16MB allocation not done");
 }
 
 /*===========================================================================*

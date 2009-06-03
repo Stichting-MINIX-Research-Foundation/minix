@@ -81,6 +81,8 @@ _PROTOTYPE(int do_unmap_phys, (message *msg)                            );
 _PROTOTYPE( void do_pagefaults, (void)				);
 _PROTOTYPE( void do_memory, (void)				);
 _PROTOTYPE( char *pf_errstr, (u32_t err));
+_PROTOTYPE( int handle_memory, (struct vmproc *vmp, vir_bytes mem,
+	vir_bytes len, int wrflag));
 
 /* $(ARCH)/pagetable.c */
 _PROTOTYPE( void pt_init, (void)					);

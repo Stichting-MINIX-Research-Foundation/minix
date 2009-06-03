@@ -525,6 +525,7 @@
 				 * and sys_fork
 				 */
 #define PR_FORK_FLAGS	m1_i3
+#define PR_FORK_MSGADDR m1_p1
 
 /* Field names for SYS_INT86 */
 #define INT86_REG86    m1_p1	/* pointer to registers */

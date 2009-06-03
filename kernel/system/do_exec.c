@@ -31,6 +31,15 @@ register message *m_ptr;	/* pointer to request message */
 
   rp = proc_addr(proc);
 
+  if(rp->p_misc_flags & MF_DELIVERMSG) {
+	printf("%s / %d has MF_DELIVERMSG on during exec - clearing.\n",
+		rp->p_name, rp->p_endpoint);
+#if 1
+	rp->p_misc_flags &= ~MF_DELIVERMSG;
+	rp->p_delivermsg_lin = 0;
+#endif
+  }
+
   /* Save command name for debugging, ps(1) output, etc. */
   if(data_copy(who_e, (vir_bytes) m_ptr->PR_NAME_PTR,
 	SYSTEM, (vir_bytes) rp->p_name, (phys_bytes) P_NAME_LEN - 1) != OK)
@@ -41,8 +50,6 @@ register message *m_ptr;	/* pointer to request message */
 
   /* No reply to EXEC call */
   RTS_LOCK_UNSET(rp, RECEIVING);
-
-  printf("kernel: exec %d now %s\n", rp->p_endpoint, rp->p_name);
 
   return(OK);
 }

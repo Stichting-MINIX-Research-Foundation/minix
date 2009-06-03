@@ -8,7 +8,6 @@
 #include <ibm/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
-#include "vm.h"
 #include "sconst.h"
 
 ! This file contains a number of assembly code utility routines needed by the
@@ -21,13 +20,14 @@
 .define	__exit		! dummy for library routines
 .define	___exit		! dummy for library routines
 .define	___main		! dummy for GCC
-!.define	_phys_insw	! transfer data from (disk controller) port to memory
-!.define	_phys_insb	! likewise byte by byte
-!.define	_phys_outsw	! transfer data from memory to (disk controller) port
-!.define	_phys_outsb	! likewise byte by byte
+.define	_phys_insw	! transfer data from (disk controller) port to memory
+.define	_phys_insb	! likewise byte by byte
+.define	_phys_outsw	! transfer data from memory to (disk controller) port
+.define	_phys_outsb	! likewise byte by byte
 .define	_intr_unmask	! enable an irq at the 8259 controller
 .define	_intr_mask	! disable an irq
 .define	_phys_copy	! copy data from anywhere to anywhere in memory
+.define	_phys_copy_fault! phys_copy pagefault
 .define	_phys_memset	! write pattern anywhere in memory
 .define	_mem_rdw	! copy one word from [segment:offset]
 .define	_reset		! reset the system
@@ -35,9 +35,7 @@
 .define	_level0		! call a function at level 0
 .define	_read_cpu_flags	! read the cpu flags
 .define	_read_cr0	! read cr0
-.define	_write_cr3	! write cr3
 .define	_getcr3val
-.define _last_cr3
 .define	_write_cr0	! write a value in cr0
 .define	_read_cr4
 .define	_thecr3
@@ -46,6 +44,7 @@
 .define _i386_invlpg_level0
 .define __memcpy_k
 .define __memcpy_k_fault
+.define	_catch_pagefaults
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -183,52 +182,52 @@ ___main:
 !*===========================================================================*
 ! PUBLIC void phys_insw(Port_t port, phys_bytes buf, size_t count);
 ! Input an array from an I/O port.  Absolute address version of insw().
-!
-!_phys_insw:
-!	push	ebp
-!	mov	ebp, esp
-!	cld
-!	push	edi
-!	push	es
-!
-!	mov	ecx, FLAT_DS_SELECTOR
-!	mov	es, cx
-!	mov	edx, 8(ebp)		! port to read from
-!	mov	edi, 12(ebp)		! destination addr
-!	mov	ecx, 16(ebp)		! byte count
-!	shr	ecx, 1			! word count
-!rep o16	ins				! input many words
-!	pop	es
-!	pop	edi
-!	pop	ebp
-!	ret
-!
+
+_phys_insw:
+	push	ebp
+	mov	ebp, esp
+	cld
+	push	edi
+	push	es
+
+	mov	ecx, FLAT_DS_SELECTOR
+	mov	es, cx
+	mov	edx, 8(ebp)		! port to read from
+	mov	edi, 12(ebp)		! destination addr
+	mov	ecx, 16(ebp)		! byte count
+	shr	ecx, 1			! word count
+rep o16	ins				! input many words
+	pop	es
+	pop	edi
+	pop	ebp
+	ret
+
 
 !*===========================================================================*
 !*				phys_insb				     *
 !*===========================================================================*
 ! PUBLIC void phys_insb(Port_t port, phys_bytes buf, size_t count);
 ! Input an array from an I/O port.  Absolute address version of insb().
-!
-!_phys_insb:
-!	push	ebp
-!	mov	ebp, esp
-!	cld
-!	push	edi
-!	push	es
-!
-!	mov	ecx, FLAT_DS_SELECTOR
-!	mov	es, cx
-!	mov	edx, 8(ebp)		! port to read from
-!	mov	edi, 12(ebp)		! destination addr
-!	mov	ecx, 16(ebp)		! byte count
-!!	shr	ecx, 1			! word count
-!   rep	insb				! input many bytes
-!	pop	es
-!	pop	edi
-!	pop	ebp
-!	ret
-!
+
+_phys_insb:
+	push	ebp
+	mov	ebp, esp
+	cld
+	push	edi
+	push	es
+
+	mov	ecx, FLAT_DS_SELECTOR
+	mov	es, cx
+	mov	edx, 8(ebp)		! port to read from
+	mov	edi, 12(ebp)		! destination addr
+	mov	ecx, 16(ebp)		! byte count
+!	shr	ecx, 1			! word count
+   rep	insb				! input many bytes
+	pop	es
+	pop	edi
+	pop	ebp
+	ret
+
 
 !*===========================================================================*
 !*				phys_outsw				     *
@@ -236,51 +235,51 @@ ___main:
 ! PUBLIC void phys_outsw(Port_t port, phys_bytes buf, size_t count);
 ! Output an array to an I/O port.  Absolute address version of outsw().
 
-!	.align	16
-!_phys_outsw:
-!	push	ebp
-!	mov	ebp, esp
-!	cld
-!	push	esi
-!	push	ds
-!
-!	mov	ecx, FLAT_DS_SELECTOR
-!	mov	ds, cx
-!	mov	edx, 8(ebp)		! port to write to
-!	mov	esi, 12(ebp)		! source addr
-!	mov	ecx, 16(ebp)		! byte count
-!	shr	ecx, 1			! word count
-!rep o16	outs				! output many words
-!	pop	ds
-!	pop	esi
-!	pop	ebp
-!	ret
-!
+	.align	16
+_phys_outsw:
+	push	ebp
+	mov	ebp, esp
+	cld
+	push	esi
+	push	ds
+
+	mov	ecx, FLAT_DS_SELECTOR
+	mov	ds, cx
+	mov	edx, 8(ebp)		! port to write to
+	mov	esi, 12(ebp)		! source addr
+	mov	ecx, 16(ebp)		! byte count
+	shr	ecx, 1			! word count
+rep o16	outs				! output many words
+	pop	ds
+	pop	esi
+	pop	ebp
+	ret
+
 
 !*===========================================================================*
 !*				phys_outsb				     *
 !*===========================================================================*
 ! PUBLIC void phys_outsb(Port_t port, phys_bytes buf, size_t count);
 ! Output an array to an I/O port.  Absolute address version of outsb().
-!
-!	.align	16
-!_phys_outsb:
-!	push	ebp
-!	mov	ebp, esp
-!	cld
-!	push	esi
-!	push	ds
-!
-!	mov	ecx, FLAT_DS_SELECTOR
-!	mov	ds, cx
-!	mov	edx, 8(ebp)		! port to write to
-!	mov	esi, 12(ebp)		! source addr
-!	mov	ecx, 16(ebp)		! byte count
-!   rep	outsb				! output many bytes
-!	pop	ds
-!	pop	esi
-!	pop	ebp
-!	ret
+
+	.align	16
+_phys_outsb:
+	push	ebp
+	mov	ebp, esp
+	cld
+	push	esi
+	push	ds
+
+	mov	ecx, FLAT_DS_SELECTOR
+	mov	ds, cx
+	mov	edx, 8(ebp)		! port to write to
+	mov	esi, 12(ebp)		! source addr
+	mov	ecx, 16(ebp)		! byte count
+   rep	outsb				! output many bytes
+	pop	ds
+	pop	esi
+	pop	ebp
+	ret
 
 
 !*==========================================================================*
@@ -363,7 +362,7 @@ dis_already:
 !*===========================================================================*
 !*				phys_copy				     *
 !*===========================================================================*
-! PUBLIC void phys_copy(phys_bytes source, phys_bytes destination,
+! PUBLIC phys_bytes phys_copy(phys_bytes source, phys_bytes destination,
 !			phys_bytes bytecount);
 ! Copy a block of physical memory.
 
@@ -383,6 +382,8 @@ _phys_copy:
 	mov	esi, PC_ARGS(esp)
 	mov	edi, PC_ARGS+4(esp)
 	mov	eax, PC_ARGS+4+4(esp)
+
+	mov	(_catch_pagefaults), 1
 
 	cmp	eax, 10			! avoid align overhead for small counts
 	jb	pc_small
@@ -405,6 +406,9 @@ pc_small:
 	pop	es
 	pop	edi
 	pop	esi
+	mov	eax, 0			! 0 means: no fault
+_phys_copy_fault:			! kernel can send us here
+	mov	(_catch_pagefaults), 0
 	ret
 
 !*===========================================================================*
@@ -576,17 +580,6 @@ _write_cr4:
 	pop	ebp
 	ret
 
-!*===========================================================================*
-!*				write_cr3				*
-!*===========================================================================*
-! PUBLIC void write_cr3(unsigned long value);
-_write_cr3:
-	push    ebp
-	mov     ebp, esp
-	mov	eax, 8(ebp)
-	mov	cr3, eax
-	pop     ebp
-	ret
 
 !*===========================================================================*
 !*				getcr3val				*
@@ -602,9 +595,8 @@ _getcr3val:
 !*===========================================================================*
 ! PUBLIC void i386_invlpg(void);
 _i386_invlpg_level0:
-	push    ebp
-	invlpg	(_i386_invlpg_addr)
-	pop	ebp
+	mov eax, (_i386_invlpg_addr)
+	invlpg	(eax)
 	ret
 
 

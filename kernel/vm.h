@@ -3,6 +3,7 @@
 #define _VM_H 1
 
 #define CHECKRANGE_OR_SUSPEND(pr, start, length, wr)  { int mr; \
+	FIXME("CHECKRANGE_OR_SUSPEND exists");	\
 	if(vm_running && (mr=vm_checkrange(proc_addr(who_p), pr, start, length, wr, 0)) != OK) { \
 		return mr;					 \
 	} }

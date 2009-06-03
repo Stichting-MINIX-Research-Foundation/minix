@@ -67,8 +67,7 @@ FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr));
 FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
 FORWARD _PROTOTYPE( void pick_proc, (void));
 
-#define BuildMess(m_ptr, src, dst_ptr) \
-	(m_ptr)->m_source = proc_addr(src)->p_endpoint;		\
+#define BuildNotifyMessage(m_ptr, src, dst_ptr) \
 	(m_ptr)->m_type = NOTIFY_FROM(src);				\
 	(m_ptr)->NOTIFY_TIMESTAMP = get_uptime();			\
 	switch (src) {							\
@@ -82,43 +81,41 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 		break;							\
 	}
 
-#define RETRYCOPY(sp, dp, sm, dm)	{\
-		if(r != EFAULT_DST) { 			\
-			kprintf("error %d\n", r);	\
-		  minix_panic("CopyMess: copy error", __LINE__); \
-		 } \
-		minix_panic("parameters unknown", NO_NUM);	\
-		(dp)->p_vmrequest.saved.msgcopy.dst = (dp);	\
-		(dp)->p_vmrequest.saved.msgcopy.dst_v = (vir_bytes) dm;	\
-		(dp)->p_vmrequest.saved.msgcopy.msgbuf.m_source = e; \
-		(dp)->p_vmrequest.type = VMSTYPE_MSGCOPY; \
-  		if(data_copy((sp)->p_endpoint,	\
-			(vir_bytes) (sm), SYSTEM,	\
-			(vir_bytes) &(dp)->p_vmrequest.saved.msgcopy.msgbuf, \
-			sizeof(message)) != OK) {		\
-				minix_panic("CopyMess: data_copy failed", __LINE__);\
-			}				\
+#define Deliver(rp)	do {	\
+		vmassert(rp->p_misc_flags & MF_DELIVERMSG);	\
+		vmassert(rp->p_delivermsg_lin);	\
+		if(arch_switch_copymsg(rp, &rp->p_delivermsg,	\
+			rp->p_delivermsg_lin)) {	\
+  			minix_panic("MF_DELIVERMSG copy failed", NO_NUM); \
+		}	\
+		rp->p_delivermsg.m_source = NONE;	\
+  		rp->p_delivermsg_lin = 0;	\
+		rp->p_misc_flags &= ~MF_DELIVERMSG;	\
+	} while(0)
+
+/*===========================================================================*
+ *				QueueMess				     * 
+ *===========================================================================*/
+PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
+{
+	/* Queue a message from the src process (in memory) to the dst
+	 * process (using dst process table entry). Do actual copy here;
+	 * it's an error if the copy fails.
+	 */
+	vmassert(!(dst->p_misc_flags & MF_DELIVERMSG));	
+	vmassert(dst->p_delivermsg_lin);
+	if(phys_copy(msg_lin, vir2phys(&dst->p_delivermsg),
+		sizeof(message))) {
+		return EFAULT;
+	}
+	dst->p_delivermsg.m_source = ep;
+	dst->p_misc_flags |= MF_DELIVERMSG;
+	if(iskernelp(dst) || ptproc == dst) {
+		Deliver(dst);
 	}
 
-#define CopyMess(s,sp,sm,dp,dm) do { 			\
-	endpoint_t e = proc_addr(s)->p_endpoint;	\
-	struct vir_addr src, dst;			\
-	int r;						\
-	src.proc_nr_e = (sp)->p_endpoint;		\
-	dst.proc_nr_e = (dp)->p_endpoint;		\
-	src.segment = dst.segment = D;			\
-	src.offset = (vir_bytes) (sm);			\
-	dst.offset = (vir_bytes) (dm);			\
-	if((r=virtual_copy(&src, &dst, sizeof(message))) != OK) { \
-		RETRYCOPY(sp, dp, sm, dm)				\
-	} else {						\
-		src.proc_nr_e = SYSTEM;				\
-		src.offset = (vir_bytes) &e;			\
-		if((r=virtual_copy(&src, &dst, sizeof(e))) != OK) {	\
-			RETRYCOPY(sp, dp, sm, dm)				\
-		}					\
-	} 	\
-} while(0)
+	return OK;
+}
 
 /*===========================================================================*
  *				sys_call				     * 
@@ -139,6 +136,15 @@ long bit_map;			/* notification event set or flags */
   int result;					/* the system call's result */
   int src_dst_p;				/* Process slot number */
   size_t msg_size;
+  phys_bytes linaddr = 0;
+
+#if DEBUG_SCHED_CHECK
+  if(caller_ptr->p_misc_flags & MF_DELIVERMSG) {
+	kprintf("sys_call: MF_DELIVERMSG on for %s / %d\n",
+		caller_ptr->p_name, caller_ptr->p_endpoint);
+	minix_panic("MF_DELIVERMSG on", NO_NUM);
+  }
+#endif
 
   if (caller_ptr->p_endpoint == ipc_stats_target)
 	ipc_stats.total= add64u(ipc_stats.total, 1);
@@ -157,7 +163,7 @@ long bit_map;			/* notification event set or flags */
   }
 #endif
 
-#if 1
+#if DEBUG_SCHED_CHECK
   if (RTS_ISSET(caller_ptr, SLOT_FREE))
   {
 	kprintf("called by the dead?!?\n");
@@ -239,7 +245,7 @@ long bit_map;			/* notification event set or flags */
 #if DEBUG_ENABLE_IPC_WARNINGS
 			kprintf(
 			"sys_call: ipc mask denied trap %d from %d to %d\n",
-				call_nr, proc_nr(caller_ptr), src_dst_p);
+				call_nr, caller_ptr->p_endpoint, src_dst_e);
 #endif
 			if (caller_ptr->p_endpoint == ipc_stats_target)
 				ipc_stats.dst_not_allowed++;
@@ -301,61 +307,6 @@ long bit_map;			/* notification event set or flags */
 	msg_size = sizeof(*m_ptr);
   }
 
-  /* If the call involves a message buffer, i.e., for SEND, SENDREC, 
-   * or RECEIVE, check the message pointer. This check allows a message to be 
-   * anywhere in data or stack or gap. It will have to be made more elaborate 
-   * for machines which don't have the gap mapped. 
-   *
-   * We use msg_size decided above.
-   */
-  if (call_nr == SEND || call_nr == SENDREC ||
-	call_nr == RECEIVE || call_nr == SENDA || call_nr == SENDNB) {
-	int r;
-	phys_bytes lin;
-
-	/* Map to linear address. */
-	if(msg_size > 0 && 
-		(lin = umap_local(caller_ptr, D, (vir_bytes) m_ptr, msg_size)) == 0) {
-		kprintf("umap_local failed for %s / %d on 0x%lx size %d\n",
-			caller_ptr->p_name, caller_ptr->p_endpoint,
-			m_ptr, msg_size);
-		return EFAULT;
-	}
-
-	/* Check if message pages in calling process are mapped.
-	 * We don't have to check the recipient if this is a send,
-	 * because this code will do that before its receive() starts.
-	 *
-	 * It is important the range is verified as _writable_, because
-	 * the kernel will want to write to the SENDA buffer in the future,
-	 * and those pages may not be shared between processes.
-	 */
-
-	if(vm_running && msg_size > 0 &&
-	 (r=vm_checkrange(caller_ptr, caller_ptr, lin, msg_size, 1, 0)) != OK) {
-		if(r != VMSUSPEND) {
-			kprintf("SYSTEM:sys_call:vm_checkrange: err %d\n", r);
-			return r;
-		}
-		
-		/* We can't go ahead with this call. Caller is suspended
-		 * and we have to save the state in its process struct.
-		 */
-		caller_ptr->p_vmrequest.saved.sys_call.call_nr = call_nr;
-		caller_ptr->p_vmrequest.saved.sys_call.m_ptr = m_ptr;
-		caller_ptr->p_vmrequest.saved.sys_call.src_dst_e = src_dst_e;
-		caller_ptr->p_vmrequest.saved.sys_call.bit_map = bit_map;
-		caller_ptr->p_vmrequest.type = VMSTYPE_SYS_CALL;
-
-		kprintf("SYSTEM: %s:%d: suspending call 0x%lx on ipc buffer 0x%lx length 0x%lx\n",
-			caller_ptr->p_name, caller_ptr->p_endpoint, call_nr, m_ptr, msg_size);
-
-		/* vm_checkrange() will have suspended caller with VMREQUEST. */
-		return OK;
-	}
-
-  } 
-
   /* Check for a possible deadlock for blocking SEND(REC) and RECEIVE. */
   if (call_nr == SEND || call_nr == SENDREC || call_nr == RECEIVE) {
       if (group_size = deadlock(call_nr, caller_ptr, src_dst_p)) {
@@ -380,7 +331,7 @@ long bit_map;			/* notification event set or flags */
   switch(call_nr) {
   case SENDREC:
 	/* A flag is set so that notifications cannot interrupt SENDREC. */
-	caller_ptr->p_misc_flags |= REPLY_PENDING;
+	caller_ptr->p_misc_flags |= MF_REPLY_PEND;
 	/* fall through */
   case SEND:			
 	result = mini_send(caller_ptr, src_dst_e, m_ptr, 0);
@@ -389,7 +340,7 @@ long bit_map;			/* notification event set or flags */
 	/* fall through for SENDREC */
   case RECEIVE:			
 	if (call_nr == RECEIVE)
-		caller_ptr->p_misc_flags &= ~REPLY_PENDING;
+		caller_ptr->p_misc_flags &= ~MF_REPLY_PEND;
 	result = mini_receive(caller_ptr, src_dst_e, m_ptr, 0);
 	break;
   case NOTIFY:
@@ -479,22 +430,6 @@ int src_dst;					/* src or dst process */
 }
 
 /*===========================================================================*
- *				sys_call_restart			     * 
- *===========================================================================*/
-PUBLIC void sys_call_restart(caller)
-struct proc *caller;
-{
-	int r;
-	kprintf("restarting sys_call code 0x%lx, "
-		"m_ptr 0x%lx, srcdst %d, bitmap 0x%lx, but not really\n",
-		caller->p_vmrequest.saved.sys_call.call_nr,
-		caller->p_vmrequest.saved.sys_call.m_ptr,
-		caller->p_vmrequest.saved.sys_call.src_dst_e,
-		caller->p_vmrequest.saved.sys_call.bit_map);
-	caller->p_reg.retreg = r;
-}
-
-/*===========================================================================*
  *				mini_send				     * 
  *===========================================================================*/
 PRIVATE int mini_send(caller_ptr, dst_e, m_ptr, flags)
@@ -510,7 +445,13 @@ int flags;
   register struct proc *dst_ptr;
   register struct proc **xpp;
   int dst_p;
+  phys_bytes linaddr;
+  int r;
 
+  if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) m_ptr,
+	sizeof(message)))) {
+	return EFAULT;
+  }
   dst_p = _ENDPOINT_P(dst_e);
   dst_ptr = proc_addr(dst_p);
 
@@ -526,8 +467,9 @@ int flags;
    */
   if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint)) {
 	/* Destination is indeed waiting for this message. */
-	CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
-		 dst_ptr->p_messbuf);
+	vmassert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
+	if((r=QueueMess(caller_ptr->p_endpoint, linaddr, dst_ptr)) != OK)
+		return r;
 	RTS_UNSET(dst_ptr, RECEIVING);
   } else {
 	if(flags & NON_BLOCKING) {
@@ -537,7 +479,9 @@ int flags;
 	}
 
 	/* Destination is not waiting.  Block and dequeue caller. */
-	caller_ptr->p_messbuf = m_ptr;
+	if(phys_copy(linaddr, vir2phys(&caller_ptr->p_sendmsg), sizeof(message))) {
+		return EFAULT;
+	}
 	RTS_SET(caller_ptr, SENDING);
 	caller_ptr->p_sendto_e = dst_e;
 
@@ -570,6 +514,17 @@ int flags;
   sys_map_t *map;
   bitchunk_t *chunk;
   int i, r, src_id, src_proc_nr, src_p;
+  phys_bytes linaddr;
+
+  vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
+
+  if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) m_ptr,
+	sizeof(message)))) {
+	return EFAULT;
+  }
+
+  /* This is where we want our message. */
+  caller_ptr->p_delivermsg_lin = linaddr;
 
   if(src_e == ANY) src_p = ANY;
   else
@@ -591,7 +546,7 @@ int flags;
   if (!RTS_ISSET(caller_ptr, SENDING)) {
 
     /* Check if there are pending notifications, except for SENDREC. */
-    if (! (caller_ptr->p_misc_flags & REPLY_PENDING)) {
+    if (! (caller_ptr->p_misc_flags & MF_REPLY_PEND)) {
 
         map = &priv(caller_ptr)->s_notify_pending;
         for (chunk=&map->chunk[0]; chunk<&map->chunk[NR_SYS_CHUNKS]; chunk++) {
@@ -611,8 +566,11 @@ int flags;
             *chunk &= ~(1 << i);			/* no longer pending */
 
             /* Found a suitable source, deliver the notification message. */
-	    BuildMess(&m, src_proc_nr, caller_ptr);	/* assemble message */
-            CopyMess(src_proc_nr, proc_addr(HARDWARE), &m, caller_ptr, m_ptr);
+	    BuildNotifyMessage(&m, src_proc_nr, caller_ptr);	/* assemble message */
+	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));	
+	    if((r=QueueMess(src_proc_nr, vir2phys(&m), caller_ptr)) != OK)  {
+		minix_panic("mini_receive: local QueueMess failed", NO_NUM);
+	    }
             return(OK);					/* report success */
         }
     }
@@ -621,7 +579,7 @@ int flags;
     xpp = &caller_ptr->p_caller_q;
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
-#if 1
+#if DEBUG_SCHED_CHECK
 	    if (RTS_ISSET(*xpp, SLOT_FREE) || RTS_ISSET(*xpp, NO_ENDPOINT))
 	    {
 		kprintf("%d: receive from %d; found dead %d (%s)?\n",
@@ -634,7 +592,10 @@ int flags;
 #endif
 
 	    /* Found acceptable message. Copy it and update status. */
-	    CopyMess((*xpp)->p_nr, *xpp, (*xpp)->p_messbuf, caller_ptr, m_ptr);
+	    FIXME("message copied twice here");
+  	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
+	    QueueMess((*xpp)->p_endpoint,
+		vir2phys(&(*xpp)->p_sendmsg), caller_ptr);
 	    RTS_UNSET(*xpp, SENDING);
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
@@ -653,7 +614,6 @@ int flags;
 	}
 	else
 	{
-		caller_ptr->p_messbuf = m_ptr;
 		r= try_async(caller_ptr);
 	}
 	if (r == OK)
@@ -666,7 +626,6 @@ int flags;
    */
   if ( ! (flags & NON_BLOCKING)) {
       caller_ptr->p_getfrom_e = src_e;		
-      caller_ptr->p_messbuf = m_ptr;
       RTS_SET(caller_ptr, RECEIVING);
       return(OK);
   } else {
@@ -686,19 +645,22 @@ int dst;				/* which process to notify */
   register struct proc *dst_ptr = proc_addr(dst);
   int src_id;				/* source id for late delivery */
   message m;				/* the notification message */
+  int r;
 
   /* Check to see if target is blocked waiting for this message. A process 
    * can be both sending and receiving during a SENDREC system call.
    */
     if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint) &&
-      ! (dst_ptr->p_misc_flags & REPLY_PENDING)) {
+      ! (dst_ptr->p_misc_flags & MF_REPLY_PEND)) {
       /* Destination is indeed waiting for a message. Assemble a notification 
        * message and deliver it. Copy from pseudo-source HARDWARE, since the
        * message is in the kernel's address space.
        */ 
-      BuildMess(&m, proc_nr(caller_ptr), dst_ptr);
-      CopyMess(proc_nr(caller_ptr), proc_addr(HARDWARE), &m, 
-          dst_ptr, dst_ptr->p_messbuf);
+      BuildNotifyMessage(&m, proc_nr(caller_ptr), dst_ptr);
+      vmassert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));
+      if((r=QueueMess(caller_ptr->p_endpoint, vir2phys(&m), dst_ptr)) != OK) {
+	minix_panic("mini_notify: local QueueMess failed", NO_NUM);
+      }
       RTS_UNSET(dst_ptr, RECEIVING);
       return(OK);
   } 
@@ -743,13 +705,19 @@ struct proc *caller_ptr;
 asynmsg_t *table;
 size_t size;
 {
-	int i, dst_p, done, do_notify;
+	int i, dst_p, done, do_notify, r;
 	unsigned flags;
 	struct proc *dst_ptr;
 	struct priv *privp;
 	message *m_ptr;
 	asynmsg_t tabent;
 	vir_bytes table_v = (vir_bytes) table;
+	vir_bytes linaddr;
+
+	if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) table,
+		size * sizeof(*table)))) {
+		return EFAULT;
+	}
 
 	privp= priv(caller_ptr);
 	if (!(privp->s_flags & SYS_PROC))
@@ -827,11 +795,6 @@ size_t size;
 			continue;
 		}
 
-#if 0
-		kprintf("mini_senda: entry[%d]: flags 0x%x dst %d/%d\n",
-			i, tabent.flags, tabent.dst, dst_p);
-#endif
-
 		dst_ptr = proc_addr(dst_p);
 
 		/* NO_ENDPOINT should be removed */
@@ -860,12 +823,13 @@ size_t size;
 			m_ptr= &table[i].msg;	/* Note: pointer in the
 						 * caller's address space.
 						 */
-			CopyMess(caller_ptr->p_nr, caller_ptr, m_ptr, dst_ptr,
-				dst_ptr->p_messbuf);
+			/* Copy message from sender. */
+			tabent.result= QueueMess(caller_ptr->p_endpoint,
+				linaddr + (vir_bytes) &table[i].msg -
+					(vir_bytes) table, dst_ptr);
+			if(tabent.result == OK)
+				RTS_UNSET(dst_ptr, RECEIVING);
 
-			RTS_UNSET(dst_ptr, RECEIVING);
-
-			tabent.result= OK;
 			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
 			A_INSERT(i, flags);
@@ -888,13 +852,6 @@ size_t size;
 	{
 		privp->s_asyntab= (vir_bytes)table;
 		privp->s_asynsize= size;
-#if 0
-		if(caller_ptr->p_endpoint > INIT_PROC_NR) {
-			kprintf("kernel: %s (%d) asynsend table at 0x%lx, %d\n", 
-				caller_ptr->p_name, caller_ptr->p_endpoint,
-				table, size);
-		}
-#endif
 	}
 	return OK;
 }
@@ -909,7 +866,7 @@ struct proc *caller_ptr;
 	int r;
 	struct priv *privp;
 	struct proc *src_ptr;
-
+	
 	/* Try all privilege structures */
 	for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; ++privp) 
 	{
@@ -917,11 +874,8 @@ struct proc *caller_ptr;
 			continue;
 		if (privp->s_asynsize == 0)
 			continue;
-#if 0
-		kprintf("try_async: found asyntable for proc %d\n",
-			privp->s_proc_nr);
-#endif
 		src_ptr= proc_addr(privp->s_proc_nr);
+	  	vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 		r= try_one(src_ptr, caller_ptr);
 		if (r == OK)
 			return r;
@@ -951,6 +905,7 @@ struct proc *dst_ptr;
 	asynmsg_t tabent;
 	vir_bytes table_v;
 	struct proc *caller_ptr;
+	int r;
 
 	privp= priv(src_ptr);
 	size= privp->s_asynsize;
@@ -1009,10 +964,11 @@ struct proc *dst_ptr;
 		m_ptr= &table_ptr[i].msg;	/* Note: pointer in the
 					 	 * caller's address space.
 					 	 */
-		CopyMess(src_ptr->p_nr, src_ptr, m_ptr, dst_ptr,
-			dst_ptr->p_messbuf);
+		A_RETRIEVE(i, msg);
+		r = QueueMess(src_ptr->p_endpoint, vir2phys(&tabent.msg),
+			dst_ptr);
 
-		tabent.result= OK;
+		tabent.result= r;
 		A_INSERT(i, result);
 		tabent.flags= flags | AMF_DONE;
 		A_INSERT(i, flags);
@@ -1058,43 +1014,6 @@ int dst_e;			/* (endpoint) who is to be notified */
       unlock;
   }
   return(result);
-}
-
-/*===========================================================================*
- *				soft_notify				     *
- *===========================================================================*/
-PUBLIC int soft_notify(dst_e)
-int dst_e;			/* (endpoint) who is to be notified */
-{
-	int dst, u = 0;
-	struct proc *dstp, *sys = proc_addr(SYSTEM);
-
-/* Delayed interface to notify() from SYSTEM that is safe/easy to call
- * from more places than notify().
- */
-	if(!intr_disabled()) { lock; u = 1; }
-
-	{
-		if(!isokendpt(dst_e, &dst))
-			minix_panic("soft_notify to dead ep", dst_e);
-
-		dstp = proc_addr(dst);
-
-		if(!dstp->p_softnotified) {
-			dstp->next_soft_notify = softnotify;
-			softnotify = dstp;
-			dstp->p_softnotified = 1;
-	
-			if (RTS_ISSET(sys, RECEIVING)) {
-				sys->p_messbuf->m_source = SYSTEM;
-				RTS_UNSET(sys, RECEIVING);
-			}
-		}
-	}
-
-	if(u) { unlock; }
-
-	return OK;
 }
 
 /*===========================================================================*
@@ -1251,6 +1170,13 @@ PRIVATE void pick_proc()
    */
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
       if ( (rp = rdy_head[q]) != NIL_PROC) {
+	  if(rp->p_misc_flags & MF_DELIVERMSG) {
+		/* Want to schedule process, but have to copy a message
+		 * first.
+		 */
+		FIXME("MF_DELIVERMSG no callback");
+		Deliver(rp);
+	  }
           next_ptr = rp;			/* run process 'rp' next */
 #if 0
 	if(!iskernelp(rp))
@@ -1296,9 +1222,6 @@ timer_t *tp;					/* watchdog timer pointer */
 	  unlock;
       }
   }
-#if DEBUG
-  kprintf("ticks_added: %d\n", ticks_added);
-#endif
 
   /* Now schedule a new watchdog timer to balance the queues again.  The 
    * period depends on the total amount of quantum ticks added.
@@ -1395,24 +1318,18 @@ int *p, fatalflag;
 	*p = _ENDPOINT_P(e);
 	if(!isokprocn(*p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-#if 0
 		kprintf("kernel:%s:%d: bad endpoint %d: proc %d out of range\n",
 		file, line, e, *p);
 #endif
-#endif
 	} else if(isemptyn(*p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-#if 0
 	kprintf("kernel:%s:%d: bad endpoint %d: proc %d empty\n", file, line, e, *p);
-#endif
 #endif
 	} else if(proc_addr(*p)->p_endpoint != e) {
 #if DEBUG_ENABLE_IPC_WARNINGS
-#if 0
 		kprintf("kernel:%s:%d: bad endpoint %d: proc %d has ept %d (generation %d vs. %d)\n", file, line,
 		e, *p, proc_addr(*p)->p_endpoint,
 		_ENDPOINT_G(e), _ENDPOINT_G(proc_addr(*p)->p_endpoint));
-#endif
 #endif
 	} else ok = 1;
 	if(!ok && fatalflag) {

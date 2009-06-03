@@ -35,7 +35,7 @@ _PROTOTYPE( int sys_enable_iop, (endpoint_t proc));
 _PROTOTYPE( int sys_exec, (endpoint_t proc, char *ptr,  
 				char *aout, vir_bytes initpc));
 _PROTOTYPE( int sys_fork, (endpoint_t parent, endpoint_t child, int *,
-	struct mem_map *ptr, u32_t vm));
+	struct mem_map *ptr, u32_t vm, vir_bytes *));
 _PROTOTYPE( int sys_newmap, (endpoint_t proc, struct mem_map *ptr));
 _PROTOTYPE( int sys_exit, (endpoint_t proc));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc, long addr, long *data_p));

@@ -166,11 +166,12 @@ PRIVATE void printslot(struct proc *pp)
 
 	level++;
 
-	kprintf("%*s %d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s ",
+	kprintf("%*s %d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s misc %s ",
 		level, "",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_max_priority, pp->p_user_time,
-		pp->p_sys_time, pp->p_seg.p_cr3, rtsflagstr(pp->p_rts_flags));
+		pp->p_sys_time, pp->p_seg.p_cr3,
+		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags));
 
 	if(pp->p_rts_flags & SENDING) {
 		dep = pp->p_sendto_e;

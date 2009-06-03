@@ -647,8 +647,6 @@ PUBLIC void pt_init(void)
 		1, VMP_PAGETABLE)))
                 vm_panic("no virt addr for vm mappings", NO_NUM);
 
-	printf("VM: pt made\n");
-
 	memset(page_directories, 0, I386_PAGE_SIZE);
        
         /* Increase our hardware data segment to create virtual address
@@ -684,8 +682,6 @@ PUBLIC void pt_init(void)
         }
         varmap = (unsigned char *) arch_map2vir(vmp, varmap_loc);
 
-	printf("VM: setting pagedir_pde\n");
-
 	/* Find a PDE below processes available for mapping in the
 	 * page directories (readonly).
 	 */
@@ -705,8 +701,6 @@ PUBLIC void pt_init(void)
 
 	kernlimit = free_pde*I386_BIG_PAGE_SIZE;
 
-	printf("VM: set limit to 0x%x\n", kernlimit);
-
 	/* Increase kernel segment to address this memory. */
 	if((r=sys_vmctl(SELF, VMCTL_I386_KERNELLIMIT, kernlimit)) != OK) {
                 vm_panic("VMCTL_I386_KERNELLIMIT failed", r);
@@ -714,8 +708,6 @@ PUBLIC void pt_init(void)
 
 	kpagedir = arch_map2vir(&vmproc[VMP_SYSTEM],
 		pagedir_pde*I386_BIG_PAGE_SIZE);
-	printf("VM: pagedir linear 0x%x, in kernel 0x%x\n",
-		pagedir_pde*I386_BIG_PAGE_SIZE, kpagedir);
 
 	/* Tell kernel how to get at the page directories. */
 	if((r=sys_vmctl(SELF, VMCTL_I386_PAGEDIRS, kpagedir)) != OK) {
@@ -723,19 +715,14 @@ PUBLIC void pt_init(void)
 	}
        
         /* Give our process the new, copied, private page table. */
-	printf("VM: pt_bind for VM\n");
 	pt_mapkernel(newpt);	/* didn't know about vm_dir pages earlier */
         pt_bind(newpt, vmp);
        
-	printf("VM: enable paging\n");
-
 	/* Now actually enable paging. */
 	if((r=sys_vmctl(SELF, VMCTL_ENABLE_PAGING,
 		vmp->vm_arch.vm_seg)) != OK) {
                 vm_panic("VMCTL_ENABLE_PAGING failed", r);
 	}
-
-	printf("VM: enable paging done\n");
 
         /* Back to reality - this is where the stack actually is. */
         vmp->vm_arch.vm_seg[S].mem_len -= extra_clicks;
@@ -746,8 +733,6 @@ PUBLIC void pt_init(void)
                         0, WMF_OVERWRITE) != OK)
                         vm_panic("pt_init: pt_writemap failed", NO_NUM);
         }
-
-	printf("VM: pt_init done\n");
 
         /* All OK. */
         return;
@@ -843,8 +828,6 @@ PUBLIC int pt_mapkernel(pt_t *pt)
 	if(pagedir_pde >= 0) {
 		/* Kernel also wants to know about all page directories. */
 		pt->pt_dir[pagedir_pde] = pagedir_pde_val;
-	} else {
-		printf("VM: pagedir pde not set\n");
 	}
 
 	return OK;

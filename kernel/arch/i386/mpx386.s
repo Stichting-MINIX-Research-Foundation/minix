@@ -60,7 +60,6 @@ begbss:
 #include <ibm/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
-#include "vm.h"
 #include "sconst.h"
 
 /* Selected 386 tss offsets. */
@@ -78,6 +77,9 @@ begbss:
 .define _pagefault_count
 .define _old_eip_ptr
 .define _old_eax_ptr
+.define _cr3_test
+.define _cr3_reload
+.define	_write_cr3	! write cr3
 
 .define errexception
 .define exception1
@@ -411,13 +413,15 @@ _restart:
 	mov	(_next_ptr), 0
 0:	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
 	lldt	P_LDT_SEL(esp)		! enable process' segment descriptors 
+	inc	(_cr3_test)
 	cmp	P_CR3(esp), 0		! process does not have its own PT
 	jz	noload	
 	mov 	eax, P_CR3(esp)
-	mov	ebx, cr3
-	cmp	eax, ebx
+	cmp	eax, (loadedcr3)
 	jz	noload
+	inc	(_cr3_reload)
 	mov	cr3, eax
+	mov	(loadedcr3), eax
 	mov	eax, (_proc_ptr)
 	mov	(_ptproc), eax
 noload:
@@ -553,6 +557,20 @@ exception1:				! Common for all exceptions.
 	add	esp, 5*4
 	ret
 
+
+!*===========================================================================*
+!*				write_cr3				*
+!*===========================================================================*
+! PUBLIC void write_cr3(unsigned long value);
+_write_cr3:
+	push    ebp
+	mov     ebp, esp
+	mov	eax, 8(ebp)
+	mov	cr3, eax
+	mov	(loadedcr3), eax
+	pop     ebp
+	ret
+
 !*===========================================================================*
 !*				level0_call				     *
 !*===========================================================================*
@@ -576,4 +594,5 @@ k_stktop:			! top of kernel stack
 	.comm	old_eip, 4
 	.comm	old_cs, 4
 	.comm	old_eflags, 4
+	.comm	loadedcr3, 4
 

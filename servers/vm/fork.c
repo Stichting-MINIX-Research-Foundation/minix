@@ -33,6 +33,7 @@ PUBLIC int do_fork(message *msg)
   int r, proc, s, childproc, fullvm;
   struct vmproc *vmp, *vmc;
   pt_t origpt;
+  vir_bytes msgaddr;
 
   SANITYCHECK(SCL_FUNCTIONS);
 
@@ -139,11 +140,15 @@ PUBLIC int do_fork(message *msg)
   /* Tell kernel about the (now successful) FORK. */
   if((r=sys_fork(vmp->vm_endpoint, childproc,
 	&vmc->vm_endpoint, vmc->vm_arch.vm_seg,
-	fullvm ? PFF_VMINHIBIT : 0)) != OK) {
+	fullvm ? PFF_VMINHIBIT : 0, &msgaddr)) != OK) {
         vm_panic("do_fork can't sys_fork", r);
   }
 
   if(fullvm) {
+	if(handle_memory(vmc, msgaddr, sizeof(message), 1) != OK)
+		vm_panic("can't make message writable (child)", NO_NUM);
+	if(handle_memory(vmp, msgaddr, sizeof(message), 1) != OK)
+		vm_panic("can't make message writable (parent)", NO_NUM);
 	if((r=pt_bind(&vmc->vm_pt, vmc)) != OK)
 		vm_panic("fork can't pt_bind", r);
   }

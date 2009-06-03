@@ -33,10 +33,6 @@ register message *m_ptr;	/* pointer to request message */
   struct priv *privp;
   struct io_range *iorp;
 
-  kprintf("kernel: no sdevio\n");
-  return EIO;
-
-#if 0
   /* Allow safe copies and accesses to SELF */
   if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
 	proc_nr_e != SELF)
@@ -85,6 +81,11 @@ register message *m_ptr;	/* pointer to request message */
 	 (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
          return(EFAULT);
   }
+     /* current process must be target for phys_* to be OK */
+     if(proc_addr(proc_nr) != ptproc) {
+	kprintf("do_sdevio: wrong process\n");
+	return EIO;
+     }
 
 	switch (io_type)
 	{
@@ -145,7 +146,6 @@ register message *m_ptr;	/* pointer to request message */
       return(EINVAL);
   }
   return(OK);
-#endif
 }
 
 #endif /* USE_SDEVIO */

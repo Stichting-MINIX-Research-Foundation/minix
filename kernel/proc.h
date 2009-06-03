@@ -36,7 +36,6 @@ struct proc {
   struct proc *p_nextready;	/* pointer to next ready process */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_q_link;	/* link to next proc wishing to send */
-  message *p_messbuf;		/* pointer to passed message buffer */
   int p_getfrom_e;		/* from whom does process want to receive? */
   int p_sendto_e;		/* to whom does process want to send? */
 
@@ -45,6 +44,10 @@ struct proc {
   char p_name[P_NAME_LEN];	/* name of the process, including \0 */
 
   endpoint_t p_endpoint;	/* endpoint number, generation-aware */
+
+  message p_sendmsg;		/* Message from this process if SENDING */
+  message p_delivermsg;		/* Message for this process if MF_DELIVERMSG */
+  vir_bytes p_delivermsg_lin;	/* Linear addr this proc wants message at */
 
   /* If handler functions detect a process wants to do something with
    * memory that isn't present, VM has to fix it. Until it has asked
@@ -58,27 +61,10 @@ struct proc {
 	struct proc	*nextrequestor;	/* next in vmrequest chain */
 #define VMSTYPE_SYS_NONE	0
 #define VMSTYPE_SYS_MESSAGE	1
-#define VMSTYPE_SYS_CALL	2
-#define VMSTYPE_MSGCOPY		3
 	int		type;		/* suspended operation */
 	union {
 		/* VMSTYPE_SYS_MESSAGE */
 		message		reqmsg;	/* suspended request message */
-
-		/* VMSTYPE_SYS_CALL */
-		struct {
-                	int call_nr;
-                	message *m_ptr;
-                	int src_dst_e;
-                	long bit_map;
-		} sys_call;
-
-		/* VMSTYPE_MSGCOPY */
-		struct {
-			struct proc	*dst;
-			vir_bytes	dst_v;
-			message		msgbuf;
-		} msgcopy;
 	} saved;
 
 	/* Parameters of request to VM */
@@ -107,7 +93,6 @@ struct proc {
 #define PMAGIC 0xC0FFEE1
   int p_magic;	/* check validity of proc pointers */
 #endif
-  int verbose;
 };
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
@@ -169,10 +154,10 @@ struct proc {
 	} while(0)
 
 /* Misc flags */
-#define REPLY_PENDING	0x01	/* reply to IPC_REQUEST is pending */
-#define MF_VM		0x08	/* process uses VM */
+#define MF_REPLY_PEND	0x01	/* reply to IPC_REQUEST is pending */
 #define MF_ASYNMSG	0x10	/* Asynchrous message pending */
 #define MF_FULLVM	0x20
+#define MF_DELIVERMSG	0x40	/* Copy message for him before running */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 
