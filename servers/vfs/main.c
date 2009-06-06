@@ -290,8 +290,11 @@ PRIVATE void get_work()
 	continue;
     }
     if(who_p >= 0 && fproc[who_p].fp_endpoint != who_e) {
-    	printf("FS: receive endpoint inconsistent (%d, %d, %d).\n",
-		who_e, fproc[who_p].fp_endpoint, who_e);
+	if(fproc[who_p].fp_endpoint == NONE) { 
+		printf("slot unknown even\n");
+	}
+    	printf("FS: receive endpoint inconsistent (source %d, who_p %d, stored ep %d, who_e %d).\n",
+		m_in.m_source, who_p, fproc[who_p].fp_endpoint, who_e);
 #if 0
 	panic(__FILE__, "FS: inconsistent endpoint ", NO_NUM);
 #endif

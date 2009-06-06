@@ -11,52 +11,66 @@
 #include <minix/sysutil.h>
 #include "../../proc.h"
 #include "../../proto.h"
+#include "../../vm.h"
 
 extern int vm_copy_in_progress, catch_pagefaults;
 extern struct proc *vm_copy_from, *vm_copy_to;
+extern u32_t npagefaults;
 
-u32_t pagefault_cr2, pagefault_count = 0;
-vir_bytes *old_eip_ptr = NULL, *old_eax_ptr = NULL;
+PUBLIC u32_t pagefault_count = 0;
 
-void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
+void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
+	u32_t *old_eipptr, u32_t *old_eaxptr, u32_t pagefaultcr2)
 {
 	int s;
 	vir_bytes ph;
 	u32_t pte;
 	int procok = 0, pcok = 0, rangeok = 0;
-	int in_memcpy = 0, in_physcopy = 0;
+	int in_physcopy = 0;
+	vir_bytes test_eip;
 
-	vmassert(old_eip_ptr);
-	vmassert(old_eax_ptr);
+	vmassert(old_eipptr);
+	vmassert(old_eaxptr);
 
-	vmassert(*old_eip_ptr == old_eip);
-	vmassert(old_eip_ptr != &old_eip);
+	vmassert(*old_eipptr == old_eip);
+	vmassert(old_eipptr != &old_eip);
 
 	vmassert(pagefault_count == 1);
 
-	if(catch_pagefaults) {
-		vir_bytes test_eip;
-		test_eip = k_reenter ? old_eip : pr->p_reg.pc;
-		in_memcpy = (test_eip > (vir_bytes) _memcpy_k) &&
-		   (test_eip < (vir_bytes) _memcpy_k_fault);
-		in_physcopy = (test_eip > (vir_bytes) phys_copy) &&
-		   (test_eip < (vir_bytes) phys_copy_fault);
-		if((pcok = in_memcpy || in_physcopy)) {
-			pagefault_count = 0;
+#if 0
+	printf("kernel: pagefault in pr %d, addr 0x%lx, his cr3 0x%lx, actual cr3 0x%lx\n",
+		pr->p_endpoint, pagefaultcr2, pr->p_seg.p_cr3, read_cr3());
+#endif
 
-			if(in_memcpy) {
-				vmassert(!in_physcopy);
-				*old_eip_ptr = _memcpy_k_fault;
-			}
-			if(in_physcopy) {
-				vmassert(!in_memcpy);
-				*old_eip_ptr = phys_copy_fault;
-			}
-			*old_eax_ptr = pagefault_cr2;
-
-			return;
-		}
+	if(pr->p_seg.p_cr3) {
+#if 0
+		vm_print(pr->p_seg.p_cr3);
+#endif
+		vmassert(pr->p_seg.p_cr3 == read_cr3());
+	} else {
+		vmassert(ptproc);
+		vmassert(ptproc->p_seg.p_cr3 == read_cr3());
 	}
+
+	test_eip = k_reenter ? old_eip : pr->p_reg.pc;
+
+	in_physcopy = (test_eip > (vir_bytes) phys_copy) &&
+	   (test_eip < (vir_bytes) phys_copy_fault);
+
+	if((k_reenter || iskernelp(pr)) &&
+		catch_pagefaults && in_physcopy) {
+#if 0
+		printf("pf caught! addr 0x%lx\n", pagefaultcr2);
+#endif
+		*old_eipptr = phys_copy_fault;
+		*old_eaxptr = pagefaultcr2;
+
+		pagefault_count = 0;
+
+		return;
+	}
+
+	npagefaults++;
 
 	/* System processes that don't have their own page table can't
 	 * have page faults. VM does have its own page table but also
@@ -67,9 +81,9 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		kprintf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x\n",
+		kprintf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x, k_reenter %d\n",
 			pr->p_endpoint, pr->p_name, pr->p_reg.pc,
-			pagefault_cr2, trap_errno);
+			pagefaultcr2, trap_errno, k_reenter);
 		proc_stacktrace(pr);
   		minix_panic("page fault in system process", pr->p_endpoint);
 
@@ -86,12 +100,12 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
 	 * and tell VM there is a pagefault to be
 	 * handled.
 	 */
-	pr->p_pagefault.pf_virtual = pagefault_cr2;
+	pr->p_pagefault.pf_virtual = pagefaultcr2;
 	pr->p_pagefault.pf_flags = trap_errno;
 	pr->p_nextpagefault = pagefaults;
 	pagefaults = pr;
 		
-	lock_notify(SYSTEM, VM_PROC_NR);
+	lock_notify(HARDWARE, VM_PROC_NR);
 
 	pagefault_count = 0;
 
@@ -101,12 +115,16 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno)
 /*===========================================================================*
  *				exception				     *
  *===========================================================================*/
-PUBLIC void exception(vec_nr, trap_errno, old_eip, old_cs, old_eflags)
+PUBLIC void exception(vec_nr, trap_errno, old_eip, old_cs, old_eflags,
+	old_eipptr, old_eaxptr, pagefaultcr2)
 unsigned vec_nr;
 u32_t trap_errno;
 u32_t old_eip;
 U16_t old_cs;
 u32_t old_eflags;
+u32_t *old_eipptr;
+u32_t *old_eaxptr;
+u32_t pagefaultcr2;
 {
 /* An exception or unexpected interrupt has occurred. */
 
@@ -141,6 +159,8 @@ struct proc *t;
 
   /* Save proc_ptr, because it may be changed by debug statements. */
   saved_proc = proc_ptr;	
+  
+  CHECK_RUNQUEUES;
 
   ep = &ex_data[vec_nr];
 
@@ -150,8 +170,9 @@ struct proc *t;
   }
 
   if(vec_nr == PAGE_FAULT_VECTOR) {
-		pagefault(old_eip, saved_proc, trap_errno);
-		return;
+	pagefault(old_eip, saved_proc, trap_errno,
+		old_eipptr, old_eaxptr, pagefaultcr2);
+	return;
   }
 
   /* If an exception occurs while running a process, the k_reenter variable 
@@ -222,7 +243,7 @@ PUBLIC void proc_stacktrace(struct proc *proc)
 			break;
 		}
 		if(PRCOPY(proc, v_bp + sizeof(v_pc), &v_pc, sizeof(v_pc)) != OK) {
-			kprintf("(v_pc 0x%lx ?)", v_pc);
+			kprintf("(v_pc 0x%lx ?)", v_bp + sizeof(v_pc));
 			break;
 		}
 		kprintf("0x%lx ", (unsigned long) v_pc);

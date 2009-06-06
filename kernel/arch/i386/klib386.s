@@ -383,8 +383,6 @@ _phys_copy:
 	mov	edi, PC_ARGS+4(esp)
 	mov	eax, PC_ARGS+4+4(esp)
 
-	mov	(_catch_pagefaults), 1
-
 	cmp	eax, 10			! avoid align overhead for small counts
 	jb	pc_small
 	mov	ecx, esi		! align source, hope target is too
@@ -403,12 +401,11 @@ pc_small:
 	rep
    eseg	movsb
 
+	mov	eax, 0			! 0 means: no fault
+_phys_copy_fault:			! kernel can send us here
 	pop	es
 	pop	edi
 	pop	esi
-	mov	eax, 0			! 0 means: no fault
-_phys_copy_fault:			! kernel can send us here
-	mov	(_catch_pagefaults), 0
 	ret
 
 !*===========================================================================*
@@ -439,7 +436,7 @@ fill_start:
 	jnz	fill_start
 	! Any remaining bytes?
 	mov	eax, 16(ebp)
-!	and	eax, 3
+	and	eax, 3
 remain_fill:
 	cmp	eax, 0
 	jz	fill_done

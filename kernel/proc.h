@@ -47,6 +47,7 @@ struct proc {
 
   message p_sendmsg;		/* Message from this process if SENDING */
   message p_delivermsg;		/* Message for this process if MF_DELIVERMSG */
+  vir_bytes p_delivermsg_vir;	/* Virtual addr this proc wants message at */
   vir_bytes p_delivermsg_lin;	/* Linear addr this proc wants message at */
 
   /* If handler functions detect a process wants to do something with
@@ -60,7 +61,8 @@ struct proc {
 	struct proc	*nextrestart;	/* next in vmrestart chain */
 	struct proc	*nextrequestor;	/* next in vmrequest chain */
 #define VMSTYPE_SYS_NONE	0
-#define VMSTYPE_SYS_MESSAGE	1
+#define VMSTYPE_KERNELCALL	1
+#define VMSTYPE_DELIVERMSG	2
 	int		type;		/* suspended operation */
 	union {
 		/* VMSTYPE_SYS_MESSAGE */
@@ -75,10 +77,9 @@ struct proc {
 	/* VM result when available */
 	int		vmresult;
 
-	/* Target gets this set. (But caller and target can be
-	 * the same, so we can't put this in the 'saved' union.)
-	*/
-	struct proc	*requestor;
+#if DEBUG_VMASSERT
+	char stacktrace[200];
+#endif
 
 	/* If the suspended operation is a sys_call, its details are
 	 * stored here.
@@ -96,18 +97,19 @@ struct proc {
 };
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
-#define SLOT_FREE	0x01	/* process slot is free */
-#define NO_PRIORITY     0x02	/* process has been stopped */
-#define SENDING		0x04	/* process blocked trying to send */
-#define RECEIVING	0x08	/* process blocked trying to receive */
-#define SIGNALED	0x10	/* set when new kernel signal arrives */
-#define SIG_PENDING	0x20	/* unready while signal being processed */
-#define P_STOP		0x40	/* set when process is being traced */
-#define NO_PRIV		0x80	/* keep forked system process from running */
-#define NO_ENDPOINT    0x100	/* process cannot send or receive messages */
-#define VMINHIBIT      0x200	/* not scheduled until pagetable set by VM */
-#define PAGEFAULT      0x400	/* process has unhandled pagefault */
-#define VMREQUEST      0x800	/* originator of vm memory request */
+#define SLOT_FREE	 0x01	/* process slot is free */
+#define NO_PRIORITY      0x02	/* process has been stopped */
+#define SENDING		 0x04	/* process blocked trying to send */
+#define RECEIVING	 0x08	/* process blocked trying to receive */
+#define SIGNALED	 0x10	/* set when new kernel signal arrives */
+#define SIG_PENDING	 0x20	/* unready while signal being processed */
+#define P_STOP		 0x40	/* set when process is being traced */
+#define NO_PRIV		 0x80	/* keep forked system process from running */
+#define NO_ENDPOINT     0x100	/* process cannot send or receive messages */
+#define VMINHIBIT       0x200	/* not scheduled until pagetable set by VM */
+#define PAGEFAULT       0x400	/* process has unhandled pagefault */
+#define VMREQUEST       0x800	/* originator of vm memory request */
+#define VMREQTARGET    0x1000	/* target of vm memory request */
 
 /* These runtime flags can be tested and manipulated by these macros. */
 
@@ -117,33 +119,43 @@ struct proc {
 /* Set flag and dequeue if the process was runnable. */
 #define RTS_SET(rp, f)							\
 	do {								\
+		vmassert(intr_disabled());				\
 		if(!(rp)->p_rts_flags) { dequeue(rp); }			\
 		(rp)->p_rts_flags |=  (f);				\
+		vmassert(intr_disabled());				\
 	} while(0)
 
 /* Clear flag and enqueue if the process was not runnable but is now. */
 #define RTS_UNSET(rp, f) 						\
 	do {								\
 		int rts;						\
-		rts = (rp)->p_rts_flags;					\
+		vmassert(intr_disabled());				\
+		rts = (rp)->p_rts_flags;				\
 		(rp)->p_rts_flags &= ~(f);				\
 		if(rts && !(rp)->p_rts_flags) { enqueue(rp); }		\
+		vmassert(intr_disabled());				\
 	} while(0)
 
 /* Set flag and dequeue if the process was runnable. */
 #define RTS_LOCK_SET(rp, f)						\
 	do {								\
-		if(!(rp)->p_rts_flags) { lock_dequeue(rp); }		\
+		int u = 0;						\
+		if(!intr_disabled()) { u = 1; lock; }			\
+		if(!(rp)->p_rts_flags) { dequeue(rp); }			\
 		(rp)->p_rts_flags |=  (f);				\
+		if(u) { unlock;	}					\
 	} while(0)
 
 /* Clear flag and enqueue if the process was not runnable but is now. */
 #define RTS_LOCK_UNSET(rp, f) 						\
 	do {								\
 		int rts;						\
-		rts = (rp)->p_rts_flags;					\
+		int u = 0;						\
+		if(!intr_disabled()) { u = 1; lock; }			\
+		rts = (rp)->p_rts_flags;				\
 		(rp)->p_rts_flags &= ~(f);				\
-		if(rts && !(rp)->p_rts_flags) { lock_enqueue(rp); }	\
+		if(rts && !(rp)->p_rts_flags) { enqueue(rp); }		\
+		if(u) { unlock;	}					\
 	} while(0)
 
 /* Set flags to this value. */

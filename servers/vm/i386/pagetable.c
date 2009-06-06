@@ -719,10 +719,8 @@ PUBLIC void pt_init(void)
         pt_bind(newpt, vmp);
        
 	/* Now actually enable paging. */
-	if((r=sys_vmctl(SELF, VMCTL_ENABLE_PAGING,
-		vmp->vm_arch.vm_seg)) != OK) {
-                vm_panic("VMCTL_ENABLE_PAGING failed", r);
-	}
+	if(sys_vmctl_enable_paging(vmp->vm_arch.vm_seg) != OK)
+        	vm_panic("pt_init: enable paging failed", NO_NUM);
 
         /* Back to reality - this is where the stack actually is. */
         vmp->vm_arch.vm_seg[S].mem_len -= extra_clicks;

@@ -61,22 +61,11 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 	if(!HASGRANTTABLE(granter_proc)) return EPERM;
 
 	if(priv(granter_proc)->s_grant_entries <= grant) {
-		static int curr= 0, limit= 100, extra= 20;
-
-		if (curr < limit+extra)
-		{
 			kprintf(
 			"verify_grant: grant verify failed in ep %d proc %d: "
 			"grant %d out of range for table size %d\n",
 				granter, proc_nr, grant,
 				priv(granter_proc)->s_grant_entries);
-		} else if (curr == limit+extra)
-		{
-			kprintf("verify_grant: no debug output for a while\n");
-		}
-		else if (curr == 2*limit-1)
-			limit *= 2;
-		curr++;
 		return(EPERM);
 	}
 
@@ -219,23 +208,9 @@ int access;			/* CPF_READ for a copy from granter to grantee, CPF_WRITE
 	/* Verify permission exists. */
 	if((r=verify_grant(granter, grantee, grantid, bytes, access,
 	    g_offset, &v_offset, &new_granter)) != OK) {
-		static int curr= 0, limit= 100, extra= 20;
-
-		if (curr < limit+extra)
-		{
-#if 0
 			kprintf(
 		"grant %d verify to copy %d->%d by %d failed: err %d\n",
 				grantid, *src, *dst, grantee, r);
-#endif
-		} else if (curr == limit+extra)
-		{
-			kprintf(
-			"do_safecopy`safecopy: no debug output for a while\n");
-		}
-		else if (curr == 2*limit-1)
-			limit *= 2;
-		curr++;
 		return r;
 	}
 

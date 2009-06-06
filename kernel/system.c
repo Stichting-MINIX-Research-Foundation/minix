@@ -58,7 +58,8 @@ char *callnames[NR_SYS_CALLS];
 FORWARD _PROTOTYPE( void initialize, (void));
 FORWARD _PROTOTYPE( struct proc *vmrestart_check, (message *));
 
-u32_t cr3_test, cr3_reload, createpde, linlincopies, physzero;
+u32_t cr3_test, cr3_reload, newpde, overwritepde,
+	linlincopies, physzero, invlpgs, npagefaults, vmreqs, vmcheckranges, straightpdes;
 
 /*===========================================================================*
  *				sys_task				     *
@@ -87,21 +88,32 @@ PUBLIC void sys_task()
 	/* Get work. Block and wait until a request message arrives. */
 	if((r=receive(ANY, &m)) != OK)
 		minix_panic("receive() failed", r);
-      }
+      } 
 
 #if 1
       {
 	static int prevu;
-	int u;
+	int u, dt;
 	u = get_uptime();
-	if(u/system_hz != prevu/system_hz) {
-		printf("cr3 tests: %5lu reloads: %5lu createpde: %5lu linlincopies: %5lu physzero: %5lu\n",
-			cr3_test, cr3_reload, createpde, linlincopies, physzero);
-		cr3_test = 1;
+	dt = u - prevu;
+	if(dt >= 5*system_hz) {
+#define PERSEC(n) ((n)*system_hz/dt)
+		printf("%6d cr3 tests: %5lu cr3: %5lu straightpdes: %5lu newpde: %5lu overwritepde %5lu linlincopies: %5lu physzero: %5lu invlpgs: %5lu pagefaults: %5lu vmreq: %5lu vmcheckranges: %5lu\n",
+			u/system_hz,
+			PERSEC(cr3_test), PERSEC(cr3_reload),
+			PERSEC(straightpdes), PERSEC(newpde),
+			PERSEC(overwritepde),
+			PERSEC(linlincopies), PERSEC(physzero),
+			PERSEC(invlpgs), PERSEC(npagefaults),
+			PERSEC(vmreqs), PERSEC(vmcheckranges));
 		cr3_reload = 0;
-		createpde = linlincopies = physzero = 0;
+		cr3_test = 0;
+		newpde = overwritepde = linlincopies =
+			physzero = invlpgs =  straightpdes = 0;
+		npagefaults = 0;
+		vmreqs = vmcheckranges = 0;
+		prevu = u;
 	}
-	prevu = u;
       }
 #endif
 
@@ -111,41 +123,13 @@ PUBLIC void sys_task()
       okendpt(who_e, &who_p);
       caller_ptr = proc_addr(who_p);
 
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		sys_stats.total= add64u(sys_stats.total, 1);
-
       /* See if the caller made a valid request and try to handle it. */
       if (call_nr < 0 || call_nr >= NR_SYS_CALLS) {	/* check call number */
-#if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("SYSTEM: illegal request %d from %d.\n",
 		call_nr,m.m_source);
-#endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		sys_stats.bad_req++;
 	  result = EBADREQUEST;			/* illegal message type */
       } 
       else if (!GET_BIT(priv(caller_ptr)->s_k_call_mask, call_nr)) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-	static int curr= 0, limit= 100, extra= 20;
-
-	if (curr < limit+extra)
-	{
-#if 0
-		kprintf("SYSTEM: request %d from %d denied.\n",
-			call_nr, m.m_source);
-#else
-		FIXME("privileges bypassed");
-#endif
-	} else if (curr == limit+extra)
-	{
-		kprintf("sys_task: no debug output for a while\n");
-	}
-	else if (curr == 2*limit-1)
-		limit *= 2;
-	curr++;
-#endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		sys_stats.not_allowed++;
 	  result = ECALLDENIED;			/* illegal message type */
       }
       else {
@@ -157,15 +141,18 @@ PUBLIC void sys_task()
 	 * until VM tells us it's allowed. VM has been notified
 	 * and we must wait for its reply to restart the call.
 	 */
+        vmassert(RTS_ISSET(caller_ptr, VMREQUEST));
+	vmassert(caller_ptr->p_vmrequest.type == VMSTYPE_KERNELCALL);
 	memcpy(&caller_ptr->p_vmrequest.saved.reqmsg, &m, sizeof(m));
-	caller_ptr->p_vmrequest.type = VMSTYPE_SYS_MESSAGE;
       } else if (result != EDONTREPLY) {
 	/* Send a reply, unless inhibited by a handler function.
 	 * Use the kernel function lock_send() to prevent a system
 	 * call trap.
 	 */
-		if(restarting)
-			RTS_LOCK_UNSET(restarting, VMREQUEST);
+		if(restarting) {
+        		vmassert(!RTS_ISSET(restarting, VMREQUEST));
+        		vmassert(!RTS_ISSET(restarting, VMREQTARGET));
+		}
 		m.m_type = result;		/* report status of call */
 		if(WILLRECEIVE(caller_ptr, SYSTEM)) {
 		  if (OK != (s=lock_send(m.m_source, &m))) {
@@ -561,23 +548,18 @@ PRIVATE struct proc *vmrestart_check(message *m)
 	if(!(restarting = vmrestart))
 		return NULL;
 
-	if(restarting->p_rts_flags & SLOT_FREE)
-	   minix_panic("SYSTEM: VMREQUEST set for empty process", NO_NUM);
+	vmassert(!RTS_ISSET(restarting, SLOT_FREE));
+	vmassert(RTS_ISSET(restarting, VMREQUEST));
 
 	type = restarting->p_vmrequest.type;
 	restarting->p_vmrequest.type = VMSTYPE_SYS_NONE;
 	vmrestart = restarting->p_vmrequest.nextrestart;
 
-	if(!RTS_ISSET(restarting, VMREQUEST))
-	   minix_panic("SYSTEM: VMREQUEST not set for process on vmrestart queue",
-		restarting->p_endpoint);
-
 	switch(type) {
-		case VMSTYPE_SYS_MESSAGE:
+		case VMSTYPE_KERNELCALL:
 			memcpy(m, &restarting->p_vmrequest.saved.reqmsg, sizeof(*m));
-			if(m->m_source != restarting->p_endpoint)
-			   minix_panic("SYSTEM: vmrestart source doesn't match",
-				NO_NUM);
+			restarting->p_vmrequest.saved.reqmsg.m_source = NONE;
+			vmassert(m->m_source == restarting->p_endpoint);
 			/* Original caller could've disappeared in the meantime. */
 		        if(!isokendpt(m->m_source, &who_p)) {
 				kprintf("SYSTEM: ignoring call %d from dead %d\n",

@@ -90,7 +90,7 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Calculate endpoint identifier, so caller knows what it is. */
   m_ptr->PR_ENDPT = rpc->p_endpoint;
-  m_ptr->PR_FORK_MSGADDR = (char *) rpp->p_delivermsg_lin;
+  m_ptr->PR_FORK_MSGADDR = (char *) rpp->p_delivermsg_vir;
 
   /* Install new map */
   r = newmap(rpc, map_ptr);

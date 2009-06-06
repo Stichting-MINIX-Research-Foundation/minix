@@ -52,11 +52,13 @@ _PROTOTYPE( void vir_outsw, (u16_t port, struct proc *proc, u32_t vir, size_t co
 _PROTOTYPE( void i386_updatepde, (int pde, u32_t val));
 _PROTOTYPE( void i386_freepde, (int pde));
 _PROTOTYPE( void getcr3val, (void));
+_PROTOTYPE( void switchedcr3, (void));
 
 
 /* exception.c */
 _PROTOTYPE( void exception, (unsigned vec_nr, u32_t trap_errno,
-	u32_t old_eip, U16_t old_cs, u32_t old_eflags)			);
+	u32_t old_eip, U16_t old_cs, u32_t old_eflags,
+	u32_t *old_eip_ptr, u32_t *old_eax_ptr, u32_t pagefaultcr2)	);
 
 /* klib386.s */
 _PROTOTYPE( void level0, (void (*func)(void))                           );

@@ -14,11 +14,11 @@
 
 #include "proto.h"
 #include "../../proc.h"
+#include "../../debug.h"
 
 #define CR0_EM	0x0004		/* set to enable trap on any FP instruction */
 
 FORWARD _PROTOTYPE( void ser_debug, (int c));
-FORWARD _PROTOTYPE( void ser_dump_stats, (void));
 
 PUBLIC void arch_shutdown(int how)
 {
@@ -139,39 +139,65 @@ PUBLIC void do_ser_debug()
 
 PRIVATE void ser_debug(int c)
 {
+	int u = 0;
+
 	do_serial_debug++;
-	kprintf("ser_debug: %d\n", c);
+	/* Disable interrupts so that we get a consistent state. */
+	if(!intr_disabled()) { lock; u = 1; };
+
 	switch(c)
 	{
 	case '1':
 		ser_dump_proc();
 		break;
 	case '2':
-		ser_dump_stats();
+		ser_dump_queues();
 		break;
+#define TOGGLECASE(ch, flag)				\
+	case ch: {					\
+		if(verboseflags & flag)	{		\
+			verboseflags &= ~flag;		\
+			printf("%s disabled\n", #flag);	\
+		} else {				\
+			verboseflags |= flag;		\
+			printf("%s enabled\n", #flag);	\
+		}					\
+		break;					\
+		}
+	TOGGLECASE('8', VF_SCHEDULING)
+	TOGGLECASE('9', VF_PICKPROC)
 	}
 	do_serial_debug--;
+	if(u) { unlock; }
 }
 
-PRIVATE void printslot(struct proc *pp)
+PRIVATE void printslot(struct proc *pp, int level)
 {
-	static int level = 0;
 	struct proc *depproc = NULL;
 	int dep = NONE;
+#define COL { int i; for(i = 0; i < level; i++) printf("> "); }
 
 	if(level >= NR_PROCS) {
 		kprintf("loop??\n");
 		return;
 	}
 
-	level++;
+	if(pp->p_ready && pp->p_rts_flags) {
+		printf("HUH? p_ready but rts flags!\n");
+	}
 
-	kprintf("%*s %d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s misc %s ",
-		level, "",
+	if(!pp->p_ready && !pp->p_rts_flags) {
+		printf("HUH? not p_ready but no rts flags!\n");
+	}
+
+	COL
+
+	kprintf("%d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s misc %s ready %d",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_max_priority, pp->p_user_time,
 		pp->p_sys_time, pp->p_seg.p_cr3,
-		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags));
+		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags),
+		pp->p_ready);
 
 	if(pp->p_rts_flags & SENDING) {
 		dep = pp->p_sendto_e;
@@ -201,65 +227,46 @@ PRIVATE void printslot(struct proc *pp)
 	} else {
 		kprintf("\n");
 	}
-	kprintf("%*s ", level, "");
+
+	COL
 	proc_stacktrace(pp);
+
+	if(pp->p_rts_flags & VMREQUEST) {
+		COL
+		printf("vmrequest set with: %s\n", pp->p_vmrequest.stacktrace);
+	}
+
 	if(depproc)
-		printslot(depproc);
-	level--;
+		printslot(depproc, level+1);
+}
+
+PUBLIC void ser_dump_queues()
+{
+	int q;
+	for(q = 0; q < NR_SCHED_QUEUES; q++) {
+		struct proc *p;
+		if(rdy_head[q])	
+			printf("%2d: ", q);
+		for(p = rdy_head[q]; p; p = p->p_nextready) {
+			printf("%s / %d  ", p->p_name, p->p_endpoint);
+		}
+		printf("\n");
+	}
+
 }
 
 PUBLIC void ser_dump_proc()
 {
 	struct proc *pp;
-	int u = 0;
 
-	/* Disable interrupts so that we get a consistent state. */
-	if(!intr_disabled()) { lock; u = 1; };
+	CHECK_RUNQUEUES;
 
 	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
 	{
 		if (pp->p_rts_flags & SLOT_FREE)
 			continue;
-		printslot(pp);
+		printslot(pp, 0);
 	}
-
-	if(u) { unlock; }
-}
-
-PRIVATE void ser_dump_stats()
-{
-	kprintf("ipc_stats:\n");
-	kprintf("deadproc: %d\n", ipc_stats.deadproc);
-	kprintf("bad_endpoint: %d\n", ipc_stats.bad_endpoint);
-	kprintf("dst_not_allowed: %d\n", ipc_stats.dst_not_allowed);
-	kprintf("bad_call: %d\n", ipc_stats.bad_call);
-	kprintf("call_not_allowed: %d\n", ipc_stats.call_not_allowed);
-	kprintf("bad_buffer: %d\n", ipc_stats.bad_buffer);
-	kprintf("deadlock: %d\n", ipc_stats.deadlock);
-	kprintf("not_ready: %d\n", ipc_stats.not_ready);
-	kprintf("src_died: %d\n", ipc_stats.src_died);
-	kprintf("dst_died: %d\n", ipc_stats.dst_died);
-	kprintf("no_priv: %d\n", ipc_stats.no_priv);
-	kprintf("bad_size: %d\n", ipc_stats.bad_size);
-	kprintf("bad_senda: %d\n", ipc_stats.bad_senda);
-	if (ex64hi(ipc_stats.total))
-	{
-		kprintf("total: %x:%08x\n", ex64hi(ipc_stats.total),
-			ex64lo(ipc_stats.total));
-	}
-	else
-		kprintf("total: %u\n", ex64lo(ipc_stats.total));
-
-	kprintf("sys_stats:\n");
-	kprintf("bad_req: %d\n", sys_stats.bad_req);
-	kprintf("not_allowed: %d\n", sys_stats.not_allowed);
-	if (ex64hi(sys_stats.total))
-	{
-		kprintf("total: %x:%08x\n", ex64hi(sys_stats.total),
-			ex64lo(sys_stats.total));
-	}
-	else
-		kprintf("total: %u\n", ex64lo(sys_stats.total));
 }
 
 #if SPROFILE

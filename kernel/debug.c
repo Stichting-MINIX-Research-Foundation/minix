@@ -96,7 +96,9 @@ check_runqueues_f(char *file, int line)
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	if(xp->p_magic != PMAGIC) 
 		MYPANIC("p_magic wrong in proc table");
-	if (! isemptyp(xp) && xp->p_ready && ! xp->p_found) {
+	if (isemptyp(xp))
+		continue;
+	if(xp->p_ready && ! xp->p_found) {
 		kprintf("sched error: ready proc %d not on queue\n", xp->p_nr);
 		MYPANIC("ready proc not on scheduling queue");
 		if (l++ > MAX_LOOP) { MYPANIC("loop in debug.c?"); }
@@ -126,6 +128,7 @@ rtsflagstr(int flags)
 	FLAG(VMINHIBIT);
 	FLAG(PAGEFAULT);
 	FLAG(VMREQUEST);
+	FLAG(VMREQTARGET);
 
 	return str;
 }

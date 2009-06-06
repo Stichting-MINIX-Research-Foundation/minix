@@ -585,6 +585,7 @@
 #define SVMCTL_MRG_LEN		m1_i1	/* MEMREQ_GET reply: length */
 #define SVMCTL_MRG_WRITE	m1_i2	/* MEMREQ_GET reply: writeflag */
 #define SVMCTL_MRG_EP		m1_i3	/* MEMREQ_GET reply: process */
+#define SVMCTL_MRG_REQUESTOR	m1_p2	/* MEMREQ_GET reply: requestor */
 
 /* Codes and field names for SYS_SYSCTL. */
 #define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */

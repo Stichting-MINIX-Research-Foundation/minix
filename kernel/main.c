@@ -159,6 +159,9 @@ PUBLIC void main()
 		rp->p_reg.sp -= sizeof(reg_t);
 	}
 
+	/* scheduling functions depend on proc_ptr pointing somewhere. */
+	if(!proc_ptr) proc_ptr = rp;
+
 	/* If this process has its own page table, VM will set the
 	 * PT up and manage it. VM will signal the kernel when it has
 	 * done this; until then, don't let it run.
@@ -184,7 +187,7 @@ PUBLIC void main()
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */
-  bill_ptr = proc_addr(IDLE);		/* it has to point somewhere */
+  bill_ptr = proc_addr(IDLE);	/* it has to point somewhere */
   announce();				/* print MINIX startup banner */
 /* Warnings for sanity checks that take time. These warnings are printed
  * so it's a clear warning no full release should be done with them

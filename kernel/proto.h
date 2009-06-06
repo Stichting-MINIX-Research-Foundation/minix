@@ -39,6 +39,7 @@ _PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (struct proc *rp)				);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);
+_PROTOTYPE( void schedcheck, (void)					);
 _PROTOTYPE( struct proc *endpoint_lookup, (endpoint_t ep)		);
 #if DEBUG_ENABLE_IPC_WARNINGS
 _PROTOTYPE( int isokendpt_f, (char *file, int line, endpoint_t e, int *p, int f));
@@ -162,7 +163,9 @@ _PROTOTYPE( int vm_checkrange, (struct proc *caller, struct proc *target,
 	vir_bytes start, vir_bytes length, int writeflag, int checkonly));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
-_PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target));
+_PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target,
+	phys_bytes lin, phys_bytes size, int wrflag, int type));
+_PROTOTYPE( int delivermsg, (struct proc *target));
 _PROTOTYPE( phys_bytes arch_switch_copymsg, (struct proc *rp, message *m,
 	phys_bytes lin));
 

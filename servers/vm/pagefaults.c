@@ -61,6 +61,11 @@ PUBLIC void do_pagefaults(void)
 		vir_bytes offset;
 		int p, wr = PFERR_WRITE(err);
 
+#if 0
+		printf("VM: pagefault: ep %d 0x%lx %s\n", 
+			ep, arch_map2vir(vmp, addr), pf_errstr(err));
+#endif
+
 		if(vm_isokendpt(ep, &p) != OK)
 			vm_panic("do_pagefaults: endpoint wrong", ep);
 
@@ -104,9 +109,11 @@ PUBLIC void do_pagefaults(void)
 				vm_panic("sys_kill failed", s);
 			continue;
 		}
-
-
 #if 0
+		printf("VM: map_pf done; ep %d 0x%lx %s\n", 
+			ep, arch_map2vir(vmp, addr), pf_errstr(err));
+
+
 		printf("VM: handling pagefault OK: %d addr 0x%lx %s\n", 
 			ep, arch_map2vir(vmp, addr), pf_errstr(err));
 #endif
@@ -126,12 +133,13 @@ PUBLIC void do_pagefaults(void)
 PUBLIC void do_memory(void)
 {
 	int r, s;
-	endpoint_t who;
+	endpoint_t who, requestor;
 	vir_bytes mem;
 	vir_bytes len;
 	int wrflag;
 
-	while((r=sys_vmctl_get_memreq(&who, &mem, &len, &wrflag)) == OK) {
+	while((r=sys_vmctl_get_memreq(&who, &mem, &len, &wrflag, &requestor))
+	  == OK) {
 		int p, r = OK;
 		struct vmproc *vmp;
 
@@ -141,7 +149,7 @@ PUBLIC void do_memory(void)
 
 		r = handle_memory(vmp, mem, len, wrflag);
 
-		if(sys_vmctl(who, VMCTL_MEMREQ_REPLY, r) != OK)
+		if(sys_vmctl(requestor, VMCTL_MEMREQ_REPLY, r) != OK)
 			vm_panic("do_memory: sys_vmctl failed", r);
 
 #if 0
@@ -170,6 +178,7 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 	if(o > 0) len += VM_PAGE_SIZE - o;
 
 	if(!(region = map_lookup(vmp, mem))) {
+		map_printmap(vmp);
 		printf("VM: do_memory: memory doesn't exist\n");
 		r = EFAULT;
 	} else if(mem + len > region->vaddr + region->length) {

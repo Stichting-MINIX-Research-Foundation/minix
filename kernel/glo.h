@@ -16,6 +16,7 @@
 #include <minix/config.h>
 #include <archtypes.h>
 #include "config.h"
+#include "debug.h"
 
 /* Variables relating to shutting down MINIX. */
 EXTERN char kernel_exception;		/* TRUE after system exceptions */
@@ -29,9 +30,9 @@ EXTERN struct k_randomness krandom;	/* gather kernel random information */
 EXTERN struct loadinfo kloadinfo;	/* status of load average */
 
 /* Process scheduling information and the kernel reentry count. */
-EXTERN struct proc *prev_ptr;	/* previously running process */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
 EXTERN struct proc *next_ptr;	/* next process to run after restart() */
+EXTERN struct proc *prev_ptr;	
 EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN struct proc *vmrestart;  /* first process on vmrestart queue */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
@@ -46,32 +47,6 @@ EXTERN int irq_actids[NR_IRQ_VECTORS];		/* IRQ ID bits active */
 EXTERN int irq_use;				/* map of all in-use irq's */
 EXTERN u32_t system_hz;				/* HZ value */
 
-EXTERN struct ipc_stats
-{
-	unsigned long deadproc;
-	unsigned long bad_endpoint;
-	unsigned long dst_not_allowed;
-	unsigned long bad_call;
-	unsigned long call_not_allowed;
-	unsigned long bad_buffer;
-	unsigned long deadlock;
-	unsigned long not_ready;
-	unsigned long src_died;
-	unsigned long dst_died;
-	unsigned long no_priv;
-	unsigned long bad_size;
-	unsigned long bad_senda;
-	u64_t total;
-} ipc_stats;
-extern endpoint_t ipc_stats_target;
-
-EXTERN struct system_stats
-{
-	unsigned long bad_req;
-	unsigned long not_allowed;
-	u64_t total;
-} sys_stats;
-
 /* Miscellaneous. */
 EXTERN reg_t mon_ss, mon_sp;		/* boot monitor stack */
 EXTERN int mon_return;			/* true if we can return to monitor */
@@ -84,16 +59,13 @@ EXTERN char params_buffer[512];		/* boot monitor parameters */
 EXTERN int minix_panicing;
 EXTERN int locklevel;
 
-EXTERN unsigned long cr3switch;
-EXTERN unsigned long cr3reload;
+#if DEBUG_TRACE
+EXTERN int verboseflags;
+#endif
 
 /* VM */
 EXTERN int vm_running;
-EXTERN int must_notify_vm;
 EXTERN struct proc *ptproc;
-
-/* Verbose flags (debugging). */
-EXTERN int verbose_vm;
 
 /* Timing */
 EXTERN util_timingdata_t timingdata[TIMING_CATEGORIES];

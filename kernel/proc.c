@@ -67,6 +67,9 @@ FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr));
 FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
 FORWARD _PROTOTYPE( void pick_proc, (void));
 
+#define PICK_ANY	1
+#define PICK_HIGHERONLY	2
+
 #define BuildNotifyMessage(m_ptr, src, dst_ptr) \
 	(m_ptr)->m_type = NOTIFY_FROM(src);				\
 	(m_ptr)->NOTIFY_TIMESTAMP = get_uptime();			\
@@ -81,40 +84,76 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 		break;							\
 	}
 
-#define Deliver(rp)	do {	\
-		vmassert(rp->p_misc_flags & MF_DELIVERMSG);	\
-		vmassert(rp->p_delivermsg_lin);	\
-		if(arch_switch_copymsg(rp, &rp->p_delivermsg,	\
-			rp->p_delivermsg_lin)) {	\
-  			minix_panic("MF_DELIVERMSG copy failed", NO_NUM); \
-		}	\
-		rp->p_delivermsg.m_source = NONE;	\
-  		rp->p_delivermsg_lin = 0;	\
-		rp->p_misc_flags &= ~MF_DELIVERMSG;	\
-	} while(0)
-
 /*===========================================================================*
  *				QueueMess				     * 
  *===========================================================================*/
 PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 {
+	int k;
+	NOREC_ENTER(queuemess);
 	/* Queue a message from the src process (in memory) to the dst
-	 * process (using dst process table entry). Do actual copy here;
-	 * it's an error if the copy fails.
+	 * process (using dst process table entry). Do actual copy to
+	 * kernel here; it's an error if the copy fails into kernel.
 	 */
 	vmassert(!(dst->p_misc_flags & MF_DELIVERMSG));	
 	vmassert(dst->p_delivermsg_lin);
+	vmassert(isokendpt(ep, &k));
+
 	if(phys_copy(msg_lin, vir2phys(&dst->p_delivermsg),
 		sizeof(message))) {
-		return EFAULT;
-	}
-	dst->p_delivermsg.m_source = ep;
-	dst->p_misc_flags |= MF_DELIVERMSG;
-	if(iskernelp(dst) || ptproc == dst) {
-		Deliver(dst);
+		NOREC_RETURN(queuemess, EFAULT);
 	}
 
-	return OK;
+	dst->p_delivermsg.m_source = ep;
+	dst->p_misc_flags |= MF_DELIVERMSG;
+
+#if 0
+	if(iskernelp(dst) || ptproc == dst) {
+		printf("instant delivery to %d\n", dst->p_endpoint);
+		delivermsg(dst);
+	} else {
+		printf("queued delivery to %d\n", dst->p_endpoint);
+	}
+#endif
+
+	NOREC_RETURN(queuemess, OK);
+}
+
+/*===========================================================================*
+ *				schedcheck				     * 
+ *===========================================================================*/
+PUBLIC void schedcheck(void)
+{
+	/* This function is called an instant before proc_ptr is
+	 * to be scheduled again.
+	 */
+  	NOREC_ENTER(schedch);
+	vmassert(intr_disabled());
+	if(next_ptr) {
+		proc_ptr = next_ptr;
+		next_ptr = NULL;
+	}
+	vmassert(proc_ptr);
+	vmassert(!proc_ptr->p_rts_flags);
+	while(proc_ptr->p_misc_flags & MF_DELIVERMSG) {
+		vmassert(!next_ptr);
+		vmassert(!proc_ptr->p_rts_flags);
+		TRACE(VF_SCHEDULING, printf("delivering to %s / %d\n",
+			proc_ptr->p_name, proc_ptr->p_endpoint););
+		if(delivermsg(proc_ptr) == VMSUSPEND) {
+			vmassert(next_ptr);
+			TRACE(VF_SCHEDULING, printf("suspending %s / %d\n",
+				proc_ptr->p_name, proc_ptr->p_endpoint););
+			vmassert(proc_ptr->p_rts_flags);
+			vmassert(next_ptr != proc_ptr);
+			proc_ptr = next_ptr;
+			vmassert(!proc_ptr->p_rts_flags);
+			next_ptr = NULL;
+		} 
+	}
+	TRACE(VF_SCHEDULING, printf("starting %s / %d\n",
+		proc_ptr->p_name, proc_ptr->p_endpoint););
+	NOREC_RETURN(schedch, );
 }
 
 /*===========================================================================*
@@ -146,9 +185,6 @@ long bit_map;			/* notification event set or flags */
   }
 #endif
 
-  if (caller_ptr->p_endpoint == ipc_stats_target)
-	ipc_stats.total= add64u(ipc_stats.total, 1);
-
 #if 0
   if(src_dst_e != 4 && src_dst_e != 5 &&
 	caller_ptr->p_endpoint != 4 && caller_ptr->p_endpoint != 5) {
@@ -167,8 +203,6 @@ long bit_map;			/* notification event set or flags */
   if (RTS_ISSET(caller_ptr, SLOT_FREE))
   {
 	kprintf("called by the dead?!?\n");
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.deadproc++;
 	return EINVAL;
   }
 #endif
@@ -193,8 +227,6 @@ long bit_map;			/* notification event set or flags */
 		kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
 			call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
-  		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.bad_endpoint++;
 		return EINVAL;
 	}
 	src_dst_p = src_dst_e;
@@ -214,8 +246,6 @@ long bit_map;			/* notification event set or flags */
 		kprintf("sys_call: trap %d by %d with bad endpoint %d\n", 
 			call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
-  		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.bad_endpoint++;
 		return EDEADSRCDST;
 	}
 
@@ -233,8 +263,6 @@ long bit_map;			/* notification event set or flags */
 				call_nr, proc_nr(caller_ptr),
 				caller_ptr->p_name, src_dst_p);
 #endif
-			if (caller_ptr->p_endpoint == ipc_stats_target)
-				ipc_stats.dst_not_allowed++;
 			return(ECALLDENIED);	/* call denied by ipc mask */
 		}
 	}
@@ -247,8 +275,6 @@ long bit_map;			/* notification event set or flags */
 			"sys_call: ipc mask denied trap %d from %d to %d\n",
 				call_nr, caller_ptr->p_endpoint, src_dst_e);
 #endif
-			if (caller_ptr->p_endpoint == ipc_stats_target)
-				ipc_stats.dst_not_allowed++;
 			return(ECALLDENIED);	/* call denied by ipc mask */
 		}
 	}
@@ -261,8 +287,6 @@ long bit_map;			/* notification event set or flags */
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_p);
 #endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.bad_call++;
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
@@ -275,8 +299,6 @@ long bit_map;			/* notification event set or flags */
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_p);
 #endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.call_not_allowed++;
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
@@ -285,8 +307,6 @@ long bit_map;			/* notification event set or flags */
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_e);
 #endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.call_not_allowed++;
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
@@ -314,8 +334,6 @@ long bit_map;			/* notification event set or flags */
           kprintf("sys_call: trap %d from %d to %d deadlocked, group size %d\n",
               call_nr, proc_nr(caller_ptr), src_dst_p, group_size);
 #endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.deadlock++;
         return(ELOCKED);
       }
   }
@@ -457,8 +475,6 @@ int flags;
 
   if (RTS_ISSET(dst_ptr, NO_ENDPOINT))
   {
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.dst_died++;
 	return EDSTDIED;
   }
 
@@ -473,8 +489,6 @@ int flags;
 	RTS_UNSET(dst_ptr, RECEIVING);
   } else {
 	if(flags & NON_BLOCKING) {
-		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.not_ready++;
 		return(ENOTREADY);
 	}
 
@@ -525,6 +539,7 @@ int flags;
 
   /* This is where we want our message. */
   caller_ptr->p_delivermsg_lin = linaddr;
+  caller_ptr->p_delivermsg_vir = m_ptr;
 
   if(src_e == ANY) src_p = ANY;
   else
@@ -532,8 +547,6 @@ int flags;
 	okendpt(src_e, &src_p);
 	if (RTS_ISSET(proc_addr(src_p), NO_ENDPOINT))
 	{
-		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.src_died++;
 		return ESRCDIED;
 	}
   }
@@ -550,6 +563,7 @@ int flags;
 
         map = &priv(caller_ptr)->s_notify_pending;
         for (chunk=&map->chunk[0]; chunk<&map->chunk[NR_SYS_CHUNKS]; chunk++) {
+		endpoint_t hisep;
 
             /* Find a pending notification from the requested source. */ 
             if (! *chunk) continue; 			/* no bits in chunk */
@@ -567,8 +581,10 @@ int flags;
 
             /* Found a suitable source, deliver the notification message. */
 	    BuildNotifyMessage(&m, src_proc_nr, caller_ptr);	/* assemble message */
+	    hisep = proc_addr(src_proc_nr)->p_endpoint;
 	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));	
-	    if((r=QueueMess(src_proc_nr, vir2phys(&m), caller_ptr)) != OK)  {
+	    vmassert(src_e == ANY || hisep == src_e);
+	    if((r=QueueMess(hisep, vir2phys(&m), caller_ptr)) != OK)  {
 		minix_panic("mini_receive: local QueueMess failed", NO_NUM);
 	    }
             return(OK);					/* report success */
@@ -585,8 +601,6 @@ int flags;
 		kprintf("%d: receive from %d; found dead %d (%s)?\n",
 			caller_ptr->p_endpoint, src_e, (*xpp)->p_endpoint,
 			(*xpp)->p_name);
-		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.deadproc++;
 		return EINVAL;
 	    }
 #endif
@@ -629,8 +643,6 @@ int flags;
       RTS_SET(caller_ptr, RECEIVING);
       return(OK);
   } else {
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		ipc_stats.not_ready++;
 	return(ENOTREADY);
   }
 }
@@ -724,8 +736,6 @@ size_t size;
 	{
 		kprintf(
 		"mini_senda: warning caller has no privilege structure\n");
-		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.no_priv++;
 		return EPERM;
 	}
 
@@ -747,8 +757,6 @@ size_t size;
 	 */
 	if (size > 16*(NR_TASKS + NR_PROCS))
 	{
-		if (caller_ptr->p_endpoint == ipc_stats_target)
-			ipc_stats.bad_size++;
 		return EDOM;
 	}
 	
@@ -770,8 +778,6 @@ size_t size;
 		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY) ||
 			!(flags & AMF_VALID))
 		{
-			if (caller_ptr->p_endpoint == ipc_stats_target)
-				ipc_stats.bad_senda++;
 			return EINVAL;
 		}
 
@@ -935,8 +941,6 @@ struct proc *dst_ptr;
 		{
 			kprintf("try_one: bad bits in table\n");
 			privp->s_asynsize= 0;
-			if (src_ptr->p_endpoint == ipc_stats_target)
-				ipc_stats.bad_senda++;
 			return EINVAL;
 		}
 
@@ -1030,14 +1034,18 @@ register struct proc *rp;	/* this process is now runnable */
   int q;	 				/* scheduling queue to use */
   int front;					/* add to front or back */
 
+  NOREC_ENTER(enqueuefunc);
+
 #if DEBUG_SCHED_CHECK
   if(!intr_disabled()) { minix_panic("enqueue with interrupts enabled", NO_NUM); }
-  CHECK_RUNQUEUES;
   if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
 #endif
 
   /* Determine where to insert to process. */
   sched(rp, &q, &front);
+
+  vmassert(q >= 0);
+  vmassert(q < IDLE_Q || rp->p_endpoint == IDLE);
 
   /* Now add the process to the queue. */
   if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
@@ -1054,19 +1062,30 @@ register struct proc *rp;	/* this process is now runnable */
       rp->p_nextready = NIL_PROC;		/* mark new end */
   }
 
-  /* Now select the next process to run, if there isn't a current
-   * process yet or current process isn't ready any more, or
-   * it's PREEMPTIBLE.
-   */
-  if(!proc_ptr || proc_ptr->p_rts_flags ||
-    (priv(proc_ptr)->s_flags & PREEMPTIBLE)) {
-     pick_proc();
-  }
-
 #if DEBUG_SCHED_CHECK
   rp->p_ready = 1;
   CHECK_RUNQUEUES;
 #endif
+
+  /* Now select the next process to run, if there isn't a current
+   * process yet or current process isn't ready any more, or
+   * it's PREEMPTIBLE.
+   */
+     FIXME("PREEMPTIBLE test?");
+	vmassert(proc_ptr);
+#if 0
+  if(!proc_ptr || proc_ptr->p_rts_flags) 
+#else
+  if((proc_ptr->p_priority > rp->p_priority) &&
+   (priv(proc_ptr)->s_flags & PREEMPTIBLE)) 
+#endif
+     pick_proc();
+
+#if DEBUG_SCHED_CHECK
+  CHECK_RUNQUEUES;
+#endif
+
+  NOREC_RETURN(enqueuefunc, );
 }
 
 /*===========================================================================*
@@ -1083,14 +1102,17 @@ register struct proc *rp;	/* this process is no longer runnable */
   register struct proc **xpp;			/* iterate over queue */
   register struct proc *prev_xp;
 
+  NOREC_ENTER(dequeuefunc);
+
+#if DEBUG_STACK_CHECK
   /* Side-effect for kernel: check if the task's stack still is ok? */
   if (iskernelp(rp)) { 				
 	if (*priv(rp)->s_stack_guard != STACK_GUARD)
 		minix_panic("stack overrun by task", proc_nr(rp));
   }
+#endif
 
 #if DEBUG_SCHED_CHECK
-  CHECK_RUNQUEUES;
   if(!intr_disabled()) { minix_panic("dequeue with interrupts enabled", NO_NUM); }
   if (! rp->p_ready) minix_panic("dequeue() already unready process", NO_NUM);
 #endif
@@ -1106,17 +1128,23 @@ register struct proc *rp;	/* this process is no longer runnable */
           *xpp = (*xpp)->p_nextready;		/* replace with next chain */
           if (rp == rdy_tail[q])		/* queue tail removed */
               rdy_tail[q] = prev_xp;		/* set new tail */
+
+#if DEBUG_SCHED_CHECK
+  		rp->p_ready = 0;
+		  CHECK_RUNQUEUES;
+#endif
           if (rp == proc_ptr || rp == next_ptr)	/* active process removed */
-              pick_proc();			/* pick new process to run */
+              pick_proc();		/* pick new process to run */
           break;
       }
       prev_xp = *xpp;				/* save previous in chain */
   }
 
 #if DEBUG_SCHED_CHECK
-  rp->p_ready = 0;
   CHECK_RUNQUEUES;
 #endif
+
+  NOREC_RETURN(dequeuefunc, );
 }
 
 /*===========================================================================*
@@ -1162,32 +1190,28 @@ PRIVATE void pick_proc()
  * clock task can tell who to bill for system time.
  */
   register struct proc *rp;			/* process to run */
-  int q;					/* iterate over queues */
+  int q;				/* iterate over queues */
+
+  NOREC_ENTER(pick);
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
    * The lowest queue contains IDLE, which is always ready.
    */
   for (q=0; q < NR_SCHED_QUEUES; q++) {	
-      if ( (rp = rdy_head[q]) != NIL_PROC) {
-	  if(rp->p_misc_flags & MF_DELIVERMSG) {
-		/* Want to schedule process, but have to copy a message
-		 * first.
-		 */
-		FIXME("MF_DELIVERMSG no callback");
-		Deliver(rp);
-	  }
-          next_ptr = rp;			/* run process 'rp' next */
-#if 0
-	if(!iskernelp(rp))
-	  kprintf("[run %s/%d]",  rp->p_name, rp->p_endpoint);
-#endif
-          if (priv(rp)->s_flags & BILLABLE)	 	
-              bill_ptr = rp;			/* bill for system time */
-          return;				 
-      }
+	int found = 0;
+	if(!(rp = rdy_head[q])) {
+		TRACE(VF_PICKPROC, printf("queue %d empty\n", q););
+		continue;
+	}
+	TRACE(VF_PICKPROC, printf("found %s / %d on queue %d\n", 
+		rp->p_name, rp->p_endpoint, q););
+	next_ptr = rp;			/* run process 'rp' next */
+	vmassert(!next_ptr->p_rts_flags);
+	if (priv(rp)->s_flags & BILLABLE)	 	
+		bill_ptr = rp;		/* bill for system time */
+	NOREC_RETURN(pick, );
   }
-  minix_panic("no ready process", NO_NUM);
 }
 
 /*===========================================================================*

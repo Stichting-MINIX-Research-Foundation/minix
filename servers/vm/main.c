@@ -118,6 +118,8 @@ PUBLIC int main(void)
 				 * verified, and/or pagefaults handled.
 				 */
 				do_memory();
+				break;
+			case HARDWARE:
 				do_pagefaults();
 				break;
 			case PM_PROC_NR:

@@ -145,9 +145,12 @@ PUBLIC int do_fork(message *msg)
   }
 
   if(fullvm) {
-	if(handle_memory(vmc, msgaddr, sizeof(message), 1) != OK)
+	vir_bytes vir;
+	vir = arch_vir2map(vmc, msgaddr);
+	if(handle_memory(vmc, vir, sizeof(message), 1) != OK)
 		vm_panic("can't make message writable (child)", NO_NUM);
-	if(handle_memory(vmp, msgaddr, sizeof(message), 1) != OK)
+	vir = arch_vir2map(vmp, msgaddr);
+	if(handle_memory(vmp, vir, sizeof(message), 1) != OK)
 		vm_panic("can't make message writable (parent)", NO_NUM);
 	if((r=pt_bind(&vmc->vm_pt, vmc)) != OK)
 		vm_panic("fork can't pt_bind", r);
