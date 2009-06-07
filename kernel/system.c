@@ -92,6 +92,7 @@ PUBLIC void sys_task()
 
 #if 1
       {
+	struct proc *stp;
 	static int prevu;
 	int u, dt;
 	u = get_uptime();
@@ -113,6 +114,18 @@ PUBLIC void sys_task()
 		npagefaults = 0;
 		vmreqs = 0;
 		prevu = u;
+#if DEBUG_TRACE
+	  	for (stp = BEG_PROC_ADDR; stp < END_PROC_ADDR; stp++) {
+			int ps = PERSEC(stp->p_schedules);
+      			if(isemptyp(stp))
+				continue;
+			if(ps > 10) {
+				printf("%s %d ", stp->p_name, ps);
+				stp->p_schedules = 0;
+			}
+		}
+		printf("\n");
+#endif
 	}
       }
 #endif

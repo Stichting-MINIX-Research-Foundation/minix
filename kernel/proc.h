@@ -94,6 +94,10 @@ struct proc {
 #define PMAGIC 0xC0FFEE1
   int p_magic;	/* check validity of proc pointers */
 #endif
+
+#if DEBUG_TRACE
+  int p_schedules;
+#endif
 };
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
@@ -161,8 +165,11 @@ struct proc {
 /* Set flags to this value. */
 #define RTS_LOCK_SETFLAGS(rp, f)					\
 	do {								\
-		if(!(rp)->p_rts_flags && (f)) { lock_dequeue(rp); }	\
-		(rp)->p_rts_flags = (f);					\
+		int u = 0;						\
+		if(!intr_disabled()) { u = 1; lock; }			\
+		if(!(rp)->p_rts_flags && (f)) { dequeue(rp); }		\
+		(rp)->p_rts_flags = (f);				\
+		if(u) { unlock;	}					\
 	} while(0)
 
 /* Misc flags */

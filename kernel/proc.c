@@ -8,8 +8,6 @@
  *
  *   lock_notify:     notify a process of a system event
  *   lock_send:	      send a message to a process
- *   lock_enqueue:    put a process on one of the scheduling queues 
- *   lock_dequeue:    remove a process from the scheduling queues
  *
  * Changes:
  *   Aug 19, 2005     rewrote scheduling code  (Jorrit N. Herder)
@@ -107,15 +105,6 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 	dst->p_delivermsg.m_source = ep;
 	dst->p_misc_flags |= MF_DELIVERMSG;
 
-#if 0
-	if(iskernelp(dst) || ptproc == dst) {
-		printf("instant delivery to %d\n", dst->p_endpoint);
-		delivermsg(dst);
-	} else {
-		printf("queued delivery to %d\n", dst->p_endpoint);
-	}
-#endif
-
 	NOREC_RETURN(queuemess, OK);
 }
 
@@ -153,6 +142,9 @@ PUBLIC void schedcheck(void)
 	}
 	TRACE(VF_SCHEDULING, printf("starting %s / %d\n",
 		proc_ptr->p_name, proc_ptr->p_endpoint););
+#if DEBUG_TRACE
+	proc_ptr->p_schedules++;
+#endif
 	NOREC_RETURN(schedch, );
 }
 
@@ -1267,37 +1259,6 @@ message *m_ptr;			/* pointer to message buffer */
   result = mini_send(proc_ptr, dst_e, m_ptr, 0);
   unlock;
   return(result);
-}
-
-/*===========================================================================*
- *				lock_enqueue				     *
- *===========================================================================*/
-PUBLIC void lock_enqueue(rp)
-struct proc *rp;		/* this process is now runnable */
-{
-/* Safe gateway to enqueue() for tasks. */
-  lock;
-  enqueue(rp);
-  unlock;
-}
-
-/*===========================================================================*
- *				lock_dequeue				     *
- *===========================================================================*/
-PUBLIC void lock_dequeue(rp)
-struct proc *rp;		/* this process is no longer runnable */
-{
-/* Safe gateway to dequeue() for tasks. */
-  if (k_reenter >= 0) {
-	/* We're in an exception or interrupt, so don't lock (and ... 
-	 * don't unlock).
-	 */
-	dequeue(rp);
-  } else {
-	lock;
-	dequeue(rp);
-	unlock;
-  }
 }
 
 /*===========================================================================*

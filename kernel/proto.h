@@ -34,8 +34,6 @@ _PROTOTYPE( int sys_call, (int call_nr, int src_dst,
 _PROTOTYPE( void sys_call_restart, (struct proc *caller)		);
 _PROTOTYPE( int lock_notify, (int src, int dst)				);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
-_PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
-_PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (struct proc *rp)				);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);
