@@ -59,7 +59,7 @@ FORWARD _PROTOTYPE( void initialize, (void));
 FORWARD _PROTOTYPE( struct proc *vmrestart_check, (message *));
 
 u32_t cr3_test, cr3_reload, newpde, overwritepde,
-	linlincopies, physzero, invlpgs, npagefaults, vmreqs, vmcheckranges, straightpdes;
+	linlincopies, physzero, invlpgs, npagefaults, vmreqs, straightpdes;
 
 /*===========================================================================*
  *				sys_task				     *
@@ -98,20 +98,20 @@ PUBLIC void sys_task()
 	dt = u - prevu;
 	if(dt >= 5*system_hz) {
 #define PERSEC(n) ((n)*system_hz/dt)
-		printf("%6d cr3 tests: %5lu cr3: %5lu straightpdes: %5lu newpde: %5lu overwritepde %5lu linlincopies: %5lu physzero: %5lu invlpgs: %5lu pagefaults: %5lu vmreq: %5lu vmcheckranges: %5lu\n",
+		printf("%6d cr3 tests: %5lu cr3: %5lu straightpdes: %5lu newpde: %5lu overwritepde %5lu linlincopies: %5lu physzero: %5lu invlpgs: %5lu pagefaults: %5lu vmreq: %5lu\n",
 			u/system_hz,
 			PERSEC(cr3_test), PERSEC(cr3_reload),
 			PERSEC(straightpdes), PERSEC(newpde),
 			PERSEC(overwritepde),
 			PERSEC(linlincopies), PERSEC(physzero),
 			PERSEC(invlpgs), PERSEC(npagefaults),
-			PERSEC(vmreqs), PERSEC(vmcheckranges));
+			PERSEC(vmreqs));
 		cr3_reload = 0;
 		cr3_test = 0;
 		newpde = overwritepde = linlincopies =
 			physzero = invlpgs =  straightpdes = 0;
 		npagefaults = 0;
-		vmreqs = vmcheckranges = 0;
+		vmreqs = 0;
 		prevu = u;
 	}
       }

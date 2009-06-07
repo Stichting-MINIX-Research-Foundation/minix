@@ -29,18 +29,13 @@ message *m_ptr;			/* pointer to request message */
   struct sigcontext sc, *scp;
   struct sigframe fr, *frp;
   int proc, r;
-  phys_bytes ph;
 
   if (!isokendpt(m_ptr->SIG_ENDPT, &proc)) return(EINVAL);
   if (iskerneln(proc)) return(EPERM);
   rp = proc_addr(proc);
 
-  ph = umap_local(proc_addr(who_p), D, (vir_bytes) m_ptr->SIG_CTXT_PTR, sizeof(struct sigmsg));
-  if(!ph) return EFAULT;
-  CHECKRANGE_OR_SUSPEND(proc_addr(who_p), ph, sizeof(struct sigmsg), 1);
-
   /* Get the sigmsg structure into our address space.  */
-  if((r=data_copy(who_e, (vir_bytes) m_ptr->SIG_CTXT_PTR,
+  if((r=data_copy_vmcheck(who_e, (vir_bytes) m_ptr->SIG_CTXT_PTR,
 	SYSTEM, (vir_bytes) &smsg, (phys_bytes) sizeof(struct sigmsg))) != OK)
 	return r;
 
@@ -59,12 +54,9 @@ message *m_ptr;			/* pointer to request message */
   sc.sc_flags = 0;	/* unused at this time */
   sc.sc_mask = smsg.sm_mask;
 
-  ph = umap_local(rp, D, (vir_bytes) scp, sizeof(struct sigcontext));
-  if(!ph) return EFAULT;
-  CHECKRANGE_OR_SUSPEND(rp, ph, sizeof(struct sigcontext), 1);
   /* Copy the sigcontext structure to the user's stack. */
-  if((r=data_copy(SYSTEM, (vir_bytes) &sc, m_ptr->SIG_ENDPT, (vir_bytes) scp,
-      (vir_bytes) sizeof(struct sigcontext))) != OK)
+  if((r=data_copy_vmcheck(SYSTEM, (vir_bytes) &sc, m_ptr->SIG_ENDPT,
+	(vir_bytes) scp, (vir_bytes) sizeof(struct sigcontext))) != OK)
       return r;
 
   /* Initialize the sigframe structure. */
@@ -78,11 +70,9 @@ message *m_ptr;			/* pointer to request message */
   fr.sf_signo = smsg.sm_signo;
   fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
 
-  ph = umap_local(rp, D, (vir_bytes) frp, sizeof(struct sigframe));
-  if(!ph) return EFAULT;
-  CHECKRANGE_OR_SUSPEND(rp, ph, sizeof(struct sigframe), 1);
   /* Copy the sigframe structure to the user's stack. */
-  if((r=data_copy(SYSTEM, (vir_bytes) &fr, m_ptr->SIG_ENDPT, (vir_bytes) frp, 
+  if((r=data_copy_vmcheck(SYSTEM, (vir_bytes) &fr,
+	m_ptr->SIG_ENDPT, (vir_bytes) frp, 
       (vir_bytes) sizeof(struct sigframe))) != OK)
       return r;
 

@@ -76,6 +76,7 @@ begbss:
 .define _pagefault_count
 .define _cr3_test
 .define _cr3_reload
+.define _reload_cr3
 .define	_write_cr3	! write cr3
 
 .define errexception
@@ -419,7 +420,7 @@ _restart:
 	mov	(loadedcr3), eax
 	mov	eax, (_proc_ptr)
 	mov	(_ptproc), eax
-!	mov	(_dirtypde), 0
+	mov	(_dirtypde), 0
 0:
 	lea	eax, P_STACKTOP(esp)	! arrange for next interrupt
 	mov	(_tss+TSS3_S_SP0), eax	! to save state in process table
@@ -566,13 +567,27 @@ _write_cr3:
 	mov     ebp, esp
 	mov	eax, 8(ebp)
 	inc	(_cr3_test)
-!	cmp	eax, (loadedcr3)
-!	jz	0f
+	cmp	eax, (loadedcr3)
+	jz	0f
 	inc	(_cr3_reload)
 	mov	cr3, eax
 	mov	(loadedcr3), eax
-!	mov	(_dirtypde), 0
+	mov	(_dirtypde), 0
 0:
+	pop     ebp
+	ret
+
+!*===========================================================================*
+!*				reload_cr3				*
+!*===========================================================================*
+! PUBLIC void reload_cr3(void);
+_reload_cr3:
+	push    ebp
+	mov     ebp, esp
+	inc	(_cr3_reload)
+	mov	(_dirtypde), 0
+	mov	eax, cr3
+	mov	cr3, eax
 	pop     ebp
 	ret
 

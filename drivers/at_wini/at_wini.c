@@ -493,7 +493,8 @@ PRIVATE void init_params()
 	dma_buf = mmap(0, ATA_DMA_BUF_SIZE, PROT_READ|PROT_WRITE,
 		MAP_PREALLOC | MAP_CONTIG | MAP_ANON, -1, 0);
 	prdt = mmap(0, PRDT_BYTES,
-		PROT_READ|PROT_WRITE, MAP_CONTIG | MAP_ANON, -1, 0);
+		PROT_READ|PROT_WRITE,
+		MAP_PREALLOC | MAP_CONTIG | MAP_ANON, -1, 0);
 	if(dma_buf == MAP_FAILED || prdt == MAP_FAILED) {
 		disable_dma = 1;
 		printf("at_wini%d: no dma\n", w_instance);

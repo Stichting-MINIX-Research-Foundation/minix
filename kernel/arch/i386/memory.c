@@ -23,7 +23,7 @@ PRIVATE int psok = 0;
 int verifyrange = 0;
 
 extern u32_t newpde, overwritepde, linlincopies,
-	physzero, invlpgs, vmcheckranges, straightpdes;
+	physzero, invlpgs, straightpdes;
 
 #define PROCPDEPTR(pr, pi) ((u32_t *) ((u8_t *) vm_pagedirs +\
 				I386_PAGE_SIZE * pr->p_nr +	\
@@ -36,7 +36,7 @@ u8_t *vm_pagedirs = NULL;
 
 u32_t i386_invlpg_addr = 0;
 
-#define WANT_FREEPDES 4
+#define WANT_FREEPDES 100
 #define NOPDE -1
 #define PDEMASK(n) (1L << (n))
 PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES], inusepde = NOPDE;
@@ -448,8 +448,6 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 	return 1;
 }
 
-int vm_checkrange_verbose = 0;
-
 extern u32_t vmreqs;
 
 /*===========================================================================*
@@ -529,81 +527,6 @@ int delivermsg(struct proc *rp)
 	}
 
 	NOREC_RETURN(deliver, r);
-}
-
-/*===========================================================================*
- *                              vm_checkrange                                *
- *===========================================================================*/
-PUBLIC int vm_checkrange(struct proc *caller, struct proc *target,
-	vir_bytes vir, vir_bytes bytes, int wrfl, int checkonly)
-{
-	u32_t flags, po, v;
-	int r;
-
-	NOREC_ENTER(vmcheckrange);
-
-	vmcheckranges++;
-
-	if(!HASPT(target))
-		NOREC_RETURN(vmcheckrange, OK);
-
-	/* If caller has had a reply to this request, return it. */
-	if(!verifyrange && RTS_ISSET(caller, VMREQUEST)) {
-		if(caller->p_vmrequest.who == target->p_endpoint) {
-			vmassert(caller->p_vmrequest.vmresult != VMSUSPEND);
-			RTS_LOCK_UNSET(caller, VMREQUEST);
-#if 1
-			kprintf("SYSTEM: vm_checkrange: returning vmresult %d\n",
-				caller->p_vmrequest.vmresult);
-#endif
-			NOREC_RETURN(vmcheckrange, caller->p_vmrequest.vmresult);
-		} else {
-#if 1
-			kprintf("SYSTEM: vm_checkrange: caller has a request for %d, "
-				"but our target is %d\n",
-				caller->p_vmrequest.who, target->p_endpoint);
-#endif
-		}
-	}
-
-	po = vir % I386_PAGE_SIZE;
-	if(po > 0) {
-		vir -= po;
-		bytes += po;
-	}
-
-	vmassert(target);
-	vmassert(bytes > 0);
-
-	for(v = vir; v < vir + bytes;  v+= I386_PAGE_SIZE) {
-		u32_t phys;
-		int r;
-
-		/* If page exists and it's writable if desired, we're OK
-		 * for this page.
-		 */
-		if((r=vm_lookup(target, v, &phys, &flags)) == OK &&
-			!(wrfl && !(flags & I386_VM_WRITE))) {
-			continue;
-		}
-
-		if(verifyrange) {
-			int wrok;
-			wrok = !(wrfl && !(flags & I386_VM_WRITE));
-			printf("checkrange failed; lookup: %d; write ok: %d\n",
-				r, wrok);
-		}
-
-		if(!checkonly) {
-			vmassert(k_reenter == -1);
-			vm_suspend(caller, target, vir, bytes, wrfl,
-				VMSTYPE_KERNELCALL);
-		}
-
-		NOREC_RETURN(vmcheckrange, VMSUSPEND);
-	}
-
-	NOREC_RETURN(vmcheckrange, OK);
 }
 
 char *flagstr(u32_t e, int dir)
@@ -692,16 +615,14 @@ void invlpg_range(u32_t lin, u32_t bytes)
 	o = lin % I386_PAGE_SIZE;
 	lin -= o;
 	limit = (limit + o) & I386_VM_ADDR_MASK;
-#if 0
+#if 1
 	for(i386_invlpg_addr = lin; i386_invlpg_addr <= limit;
 	    i386_invlpg_addr += I386_PAGE_SIZE) {
 		invlpgs++;
 		level0(i386_invlpg_level0);
 	}
 #else
-	vm_cr3= ptproc->p_seg.p_cr3;
-	vmassert(vm_cr3);
-	level0(set_cr3);
+	level0(reload_cr3);
 #endif
 }
 
@@ -726,15 +647,15 @@ u32_t read_cr3(void)
  * address space), SEG (hardware segment), VIRT (in-datasegment
  * address if known).
  */
-#define CREATEPDE(PROC, PTR, LINADDR, REMAIN, BYTES) { \
+#define CREATEPDE(PROC, PTR, LINADDR, REMAIN, BYTES, PDE) { \
 	int proc_pde_index;					\
 	FIXME("CREATEPDE: check if invlpg is necessary");	\
 	proc_pde_index = I386_VM_PDE(LINADDR);			\
+	PDE = NOPDE;						\
 	if((PROC) && (((PROC) == ptproc) || iskernelp(PROC))) {	\
 		PTR = LINADDR;					\
 		straightpdes++;					\
 	} else {						\
-		int use_pde = NOPDE;				\
 		int fp;						\
 		int mustinvl;					\
 		u32_t pdeval, *pdevalptr, mask;			\
@@ -756,33 +677,40 @@ u32_t read_cr3(void)
 			int k = freepdes[fp];				\
 			if(inusepde == k)				\
 				continue;				\
-			use_pde = k;					\
+			PDE = k;					\
 			mask = PDEMASK(k);				\
 			vmassert(mask);					\
 			if(dirtypde & mask)				\
 				continue;				\
 			break;						\
 		}							\
-		vmassert(use_pde != NOPDE);				\
+		vmassert(PDE != NOPDE);				\
 		vmassert(mask);						\
 		if(dirtypde & mask) {					\
 			mustinvl = 1;					\
 			overwritepde++;					\
 		} else {						\
 			mustinvl = 0;					\
-			dirtypde |= mask;				\
 			newpde++;					\
 		}							\
-		inusepde = use_pde;					\
-		*PROCPDEPTR(ptproc, use_pde) = pdeval;			\
+		inusepde = PDE;					\
+		*PROCPDEPTR(ptproc, PDE) = pdeval;			\
 		offset = LINADDR & I386_VM_OFFSET_MASK_4MB;		\
-		PTR = I386_BIG_PAGE_SIZE*use_pde + offset;		\
+		PTR = I386_BIG_PAGE_SIZE*PDE + offset;		\
 		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
-		if(1 || mustinvl) {					\
+		if(mustinvl) {						\
 			invlpg_range(PTR, REMAIN);			\
 		}							\
 	}								\
 }
+
+#define DONEPDE(PDE)	{				\
+	if(PDE != NOPDE) {				\
+		dirtypde |= PDEMASK(PDE);		\
+		*PROCPDEPTR(ptproc, PDE) = 0;		\
+	}						\
+}
+	
 
 
 /*===========================================================================*
@@ -813,11 +741,12 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	while(bytes > 0) {
 		phys_bytes srcptr, dstptr;
 		vir_bytes chunk = bytes;
+		int srcpde, dstpde;
 
 		/* Set up 4MB ranges. */
 		inusepde = NOPDE;
-		CREATEPDE(srcproc, srcptr, srclinaddr, chunk, bytes);
-		CREATEPDE(dstproc, dstptr, dstlinaddr, chunk, bytes);
+		CREATEPDE(srcproc, srcptr, srclinaddr, chunk, bytes, srcpde);
+		CREATEPDE(dstproc, dstptr, dstlinaddr, chunk, bytes, dstpde);
 
 		/* Copy pages. */
 		vmassert(intr_disabled());
@@ -827,6 +756,9 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 		vmassert(intr_disabled());
 		vmassert(catch_pagefaults);
 		catch_pagefaults = 0;
+
+		DONEPDE(srcpde);
+		DONEPDE(dstpde);
 
 		if(addr) {
 			if(addr >= srcptr && addr < (srcptr + chunk)) {
@@ -872,14 +804,16 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 	 * We can do this 4MB at a time.
 	 */
 	while(bytes > 0) {
+		int pde;
 		vir_bytes chunk = bytes;
 		phys_bytes ptr;
 		inusepde = NOPDE;
-		CREATEPDE(((struct proc *) NULL), ptr, ph, chunk, bytes);
+		CREATEPDE(((struct proc *) NULL), ptr, ph, chunk, bytes, pde);
 		/* We can memset as many bytes as we have remaining,
 		 * or as many as remain in the 4MB chunk we mapped in.
 		 */
 		phys_memset(ptr, p, chunk);
+		DONEPDE(pde);
 		bytes -= chunk;
 		ph += chunk;
 	}
@@ -1075,6 +1009,25 @@ PUBLIC int data_copy(
   dst.proc_nr_e = to_proc;
 
   return virtual_copy(&src, &dst, bytes);
+}
+
+/*===========================================================================*
+ *				data_copy_vmcheck			     *
+ *===========================================================================*/
+PUBLIC int data_copy_vmcheck(
+	endpoint_t from_proc, vir_bytes from_addr,
+	endpoint_t to_proc, vir_bytes to_addr,
+	size_t bytes)
+{
+  struct vir_addr src, dst;
+
+  src.segment = dst.segment = D;
+  src.offset = from_addr;
+  dst.offset = to_addr;
+  src.proc_nr_e = from_proc;
+  dst.proc_nr_e = to_proc;
+
+  return virtual_copy_vmcheck(&src, &dst, bytes);
 }
 
 /*===========================================================================*

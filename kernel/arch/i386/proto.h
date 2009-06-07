@@ -79,6 +79,7 @@ _PROTOTYPE( void i386_invlpg_level0, (void) );
 _PROTOTYPE( int _memcpy_k, (void *dst, void *src, size_t n) );
 _PROTOTYPE( int _memcpy_k_fault, (void) );
 _PROTOTYPE( u32_t read_cr3, (void) );
+_PROTOTYPE( void reload_cr3, (void) );
 
 /* protect.c */
 _PROTOTYPE( void prot_init, (void)                     			);

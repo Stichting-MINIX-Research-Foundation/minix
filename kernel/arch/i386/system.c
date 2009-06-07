@@ -153,6 +153,7 @@ PRIVATE void ser_debug(int c)
 	case '2':
 		ser_dump_queues();
 		break;
+#if DEBUG_TRACE
 #define TOGGLECASE(ch, flag)				\
 	case ch: {					\
 		if(verboseflags & flag)	{		\
@@ -166,6 +167,7 @@ PRIVATE void ser_debug(int c)
 		}
 	TOGGLECASE('8', VF_SCHEDULING)
 	TOGGLECASE('9', VF_PICKPROC)
+#endif
 	}
 	do_serial_debug--;
 	if(u) { unlock; }
@@ -182,22 +184,13 @@ PRIVATE void printslot(struct proc *pp, int level)
 		return;
 	}
 
-	if(pp->p_ready && pp->p_rts_flags) {
-		printf("HUH? p_ready but rts flags!\n");
-	}
-
-	if(!pp->p_ready && !pp->p_rts_flags) {
-		printf("HUH? not p_ready but no rts flags!\n");
-	}
-
 	COL
 
-	kprintf("%d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s misc %s ready %d",
+	kprintf("%d: %s %d prio %d/%d time %d/%d cr3 0x%lx rts %s misc %s",
 		proc_nr(pp), pp->p_name, pp->p_endpoint, 
 		pp->p_priority, pp->p_max_priority, pp->p_user_time,
 		pp->p_sys_time, pp->p_seg.p_cr3,
-		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags),
-		pp->p_ready);
+		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags));
 
 	if(pp->p_rts_flags & SENDING) {
 		dep = pp->p_sendto_e;
@@ -231,11 +224,6 @@ PRIVATE void printslot(struct proc *pp, int level)
 	COL
 	proc_stacktrace(pp);
 
-	if(pp->p_rts_flags & VMREQUEST) {
-		COL
-		printf("vmrequest set with: %s\n", pp->p_vmrequest.stacktrace);
-	}
-
 	if(depproc)
 		printslot(depproc, level+1);
 }
@@ -258,8 +246,6 @@ PUBLIC void ser_dump_queues()
 PUBLIC void ser_dump_proc()
 {
 	struct proc *pp;
-
-	CHECK_RUNQUEUES;
 
 	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
 	{

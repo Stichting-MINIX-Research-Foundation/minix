@@ -160,8 +160,6 @@ struct proc *t;
   /* Save proc_ptr, because it may be changed by debug statements. */
   saved_proc = proc_ptr;	
   
-  CHECK_RUNQUEUES;
-
   ep = &ex_data[vec_nr];
 
   if (vec_nr == 2) {		/* spurious NMI on some machines */

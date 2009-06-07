@@ -113,6 +113,8 @@ _PROTOTYPE( int virtual_copy_f, (struct vir_addr *src, struct vir_addr *dst,
 				vir_bytes bytes, int vmcheck)		);
 _PROTOTYPE( int data_copy, (endpoint_t from, vir_bytes from_addr,
 	endpoint_t to, vir_bytes to_addr, size_t bytes));
+_PROTOTYPE( int data_copy_vmcheck, (endpoint_t from, vir_bytes from_addr,
+	endpoint_t to, vir_bytes to_addr, size_t bytes));
 #define data_copy_to(d, p, v, n) data_copy(SYSTEM, (d), (p), (v), (n));
 #define data_copy_from(d, p, v, n) data_copy((p), (v), SYSTEM, (d), (n));
 _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );

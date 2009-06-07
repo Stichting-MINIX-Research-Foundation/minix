@@ -48,13 +48,11 @@ register message *m_ptr;	/* pointer to request message */
   case LOCAL_SEG:
       phys_addr = lin_addr = umap_local(targetpr, seg_index, offset, count); 
       if(!lin_addr) return EFAULT;
-      CHECKRANGE_OR_SUSPEND(targetpr, lin_addr, count, 1);
       naughty = 1;
       break;
   case REMOTE_SEG:
       phys_addr = lin_addr = umap_remote(targetpr, seg_index, offset, count); 
       if(!lin_addr) return EFAULT;
-      CHECKRANGE_OR_SUSPEND(targetpr, lin_addr, count, 1);
       naughty = 1;
       break;
   case GRANT_SEG:
@@ -93,7 +91,6 @@ register message *m_ptr;	/* pointer to request message */
 	kprintf("SYSTEM:do_umap: umap_local failed\n");
 	return EFAULT;
       }
-      CHECKRANGE_OR_SUSPEND(targetpr, lin_addr, count, 1);
       if(vm_lookup(targetpr, lin_addr, &phys_addr, NULL) != OK) {
 	kprintf("SYSTEM:do_umap: vm_lookup failed\n");
 	return EFAULT;
