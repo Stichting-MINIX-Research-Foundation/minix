@@ -37,7 +37,6 @@ PUBLIC u32_t dirtypde;
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
 FORWARD _PROTOTYPE( u32_t phys_get32, (vir_bytes v)			);
-FORWARD _PROTOTYPE( void vm_set_cr3, (struct proc *pr)			);
 FORWARD _PROTOTYPE( void set_cr3, (void)				);
 FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 
@@ -212,7 +211,7 @@ phys_bytes addr;
 
 PRIVATE u32_t vm_cr3;	/* temp arg to level0() func */
 
-PRIVATE void vm_set_cr3(struct proc *newptproc)
+PUBLIC void vm_set_cr3(struct proc *newptproc)
 {
 	int u = 0;
 	if(!intr_disabled()) { lock; u = 1; }

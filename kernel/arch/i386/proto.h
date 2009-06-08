@@ -53,6 +53,7 @@ _PROTOTYPE( void i386_updatepde, (int pde, u32_t val));
 _PROTOTYPE( void i386_freepde, (int pde));
 _PROTOTYPE( void getcr3val, (void));
 _PROTOTYPE( void switchedcr3, (void));
+_PROTOTYPE( void vm_set_cr3, (struct proc *));
 
 
 /* exception.c */

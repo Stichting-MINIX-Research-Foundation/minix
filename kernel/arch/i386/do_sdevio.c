@@ -32,6 +32,10 @@ register message *m_ptr;	/* pointer to request message */
   struct proc *rp;
   struct priv *privp;
   struct io_range *iorp;
+  int rem;
+  static char zero[4096];
+  vir_bytes addr;
+  struct proc *destproc;
 
   /* Allow safe copies and accesses to SELF */
   if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
@@ -63,12 +67,26 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Check for 'safe' variants. */
   if((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) == _DIO_SAFE) {
+     vir_bytes newoffset;
+     endpoint_t newep;
      /* Map grant address to physical address. */
-     if ((phys_buf = umap_verify_grant(proc_addr(proc_nr), who_e,
+     if(verify_grant(proc_nr_e, who_e, 
 	(vir_bytes) m_ptr->DIO_VEC_ADDR,
-	(vir_bytes) m_ptr->DIO_OFFSET, count,
-	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ)) == 0)
-         return(EPERM);
+	count,
+	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
+	(vir_bytes) m_ptr->DIO_OFFSET, 
+	&newoffset, &newep) != OK) {
+	printf("do_sdevio: verify_grant failed\n");
+	return EPERM;
+    }
+	if(!isokendpt(newep, &proc_nr))
+		return(EINVAL);
+     destproc = proc_addr(proc_nr);
+     if ((phys_buf = umap_local(destproc, D,
+	 (vir_bytes) newoffset, count)) == 0) {
+	printf("do_sdevio: umap_local failed\n");
+         return(EFAULT);
+     }
   } else {
      if(proc_nr != who_p)
      {
@@ -80,12 +98,24 @@ register message *m_ptr;	/* pointer to request message */
      if ((phys_buf = umap_local(proc_addr(proc_nr), D,
 	 (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
          return(EFAULT);
+     destproc = proc_addr(proc_nr);
   }
      /* current process must be target for phys_* to be OK */
-     if(proc_addr(proc_nr) != ptproc) {
-	kprintf("do_sdevio: wrong process\n");
-	return EIO;
-     }
+
+  vm_set_cr3(destproc);
+  rem = count;
+  addr = m_ptr->DIO_VEC_ADDR;
+  while(rem > 0) {
+	int r;
+	int chunk;
+	chunk = rem > sizeof(zero) ? sizeof(zero) : rem;
+	if((r=data_copy_vmcheck(SYSTEM, zero, destproc->p_endpoint, 
+		 addr, chunk)) != OK) {
+			return r;
+	}
+	addr += chunk;
+	rem -= chunk;
+  }
 
 	switch (io_type)
 	{
