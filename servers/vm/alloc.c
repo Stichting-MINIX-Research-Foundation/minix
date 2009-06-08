@@ -408,8 +408,6 @@ struct memory *chunks;		/* list of free memory chunks */
   }
 
   CHECKHOLES;
-
-  FIXME("below 16MB allocation not done");
 }
 
 /*===========================================================================*

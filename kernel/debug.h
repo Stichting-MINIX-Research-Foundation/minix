@@ -48,8 +48,7 @@
 	if(varname) {	\
 		minix_panic(#varname " recursive enter", __LINE__); \
 	} \
-	varname = 1;	\
-	FIXME(#varname " recursion check enabled");
+	varname = 1;
 
 #define NOREC_RETURN(varname, v) do {	\
 	if(!varname)		\

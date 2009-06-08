@@ -141,7 +141,6 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	int procslot;
 	NOREC_ENTER(linlincopy);
 
-	FIXME("lin_lin_copy requires big pages");
 	vmassert(vm_running);
 	vmassert(!catch_pagefaults);
 	vmassert(nfreepdes >= 3);

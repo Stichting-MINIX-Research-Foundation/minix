@@ -97,8 +97,6 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 	vmassert(!(dst->p_misc_flags & MF_DELIVERMSG));	
 	vmassert(dst->p_delivermsg_lin);
 	vmassert(isokendpt(ep, &k));
-	FIXME("copy messages directly if in memory");
-	FIXME("possibly also msgcopy specific function");
 
 	if(INMEMORY(dst)) {
 		PHYS_COPY_CATCH(msg_lin, dst->p_delivermsg_lin,
@@ -119,12 +117,6 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 
 	dst->p_delivermsg.m_source = ep;
 	dst->p_misc_flags |= MF_DELIVERMSG;
-
-#if 0
-	if(INMEMORY(dst)) {
-		delivermsg(dst);
-	}
-#endif
 
 	NOREC_RETURN(queuemess, OK);
 }
@@ -621,7 +613,6 @@ int flags;
 #endif
 
 	    /* Found acceptable message. Copy it and update status. */
-	    FIXME("message copied twice here");
   	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 	    QueueMess((*xpp)->p_endpoint,
 		vir2phys(&(*xpp)->p_sendmsg), caller_ptr);
@@ -743,6 +734,8 @@ size_t size;
 
 	if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) table,
 		size * sizeof(*table)))) {
+		printf("mini_senda: umap_local failed; 0x%lx len 0x%lx\n",
+			table, size * sizeof(*table));
 		return EFAULT;
 	}
 

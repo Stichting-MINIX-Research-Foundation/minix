@@ -32,12 +32,8 @@ register message *m_ptr;	/* pointer to request message */
   rp = proc_addr(proc);
 
   if(rp->p_misc_flags & MF_DELIVERMSG) {
-	printf("%s / %d has MF_DELIVERMSG on during exec - clearing.\n",
-		rp->p_name, rp->p_endpoint);
-#if 1
 	rp->p_misc_flags &= ~MF_DELIVERMSG;
 	rp->p_delivermsg_lin = 0;
-#endif
   }
 
   /* Save command name for debugging, ps(1) output, etc. */

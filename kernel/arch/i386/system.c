@@ -137,6 +137,21 @@ PUBLIC void do_ser_debug()
 	ser_debug(c);
 }
 
+PRIVATE void ser_dump_queues(void)
+{
+	int q;
+	for(q = 0; q < NR_SCHED_QUEUES; q++) {
+		struct proc *p;
+		if(rdy_head[q])	
+			printf("%2d: ", q);
+		for(p = rdy_head[q]; p; p = p->p_nextready) {
+			printf("%s / %d  ", p->p_name, p->p_endpoint);
+		}
+		printf("\n");
+	}
+
+}
+
 PRIVATE void ser_debug(int c)
 {
 	int u = 0;
@@ -228,20 +243,6 @@ PRIVATE void printslot(struct proc *pp, int level)
 		printslot(depproc, level+1);
 }
 
-PUBLIC void ser_dump_queues()
-{
-	int q;
-	for(q = 0; q < NR_SCHED_QUEUES; q++) {
-		struct proc *p;
-		if(rdy_head[q])	
-			printf("%2d: ", q);
-		for(p = rdy_head[q]; p; p = p->p_nextready) {
-			printf("%s / %d  ", p->p_name, p->p_endpoint);
-		}
-		printf("\n");
-	}
-
-}
 
 PUBLIC void ser_dump_proc()
 {

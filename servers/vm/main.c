@@ -262,14 +262,11 @@ PRIVATE void vm_init(void)
 			 * mapping. VM has its own pagetable,
 			 * don't check it.
 			 */
-			printf("VM: not giving %d its own pt\n",
-				vmp->vm_endpoint);
 			if(!(vmp->vm_flags & VMF_HASPT)) {
 				pt_check(vmp);
 			}
 			continue;
 		}
-		printf("VM: giving %d its own pt\n", vmp->vm_endpoint);
 
 		old_stack = 
 			vmp->vm_arch.vm_seg[S].mem_vir +

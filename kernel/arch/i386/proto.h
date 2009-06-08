@@ -80,6 +80,7 @@ _PROTOTYPE( int _memcpy_k, (void *dst, void *src, size_t n) );
 _PROTOTYPE( int _memcpy_k_fault, (void) );
 _PROTOTYPE( u32_t read_cr3, (void) );
 _PROTOTYPE( void reload_cr3, (void) );
+_PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes)	);
 
 /* protect.c */
 _PROTOTYPE( void prot_init, (void)                     			);
