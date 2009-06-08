@@ -99,6 +99,7 @@ message *m_ptr;				/* pointer to request message */
 /* Despite its name, this routine is not called on every clock tick. It
  * is called on those clock ticks when a lot of work needs to be done.
  */
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
   
   /* A process used up a full quantum. The interrupt handler stored this
    * process in 'prev_ptr'.  First make sure that the process is not on the 
@@ -120,12 +121,17 @@ message *m_ptr;				/* pointer to request message */
       }
   }
 
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
   /* Check if a clock timer expired and run its watchdog function. */
   if (next_timeout <= realtime) {
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
   	tmrs_exptimers(&clock_timers, realtime, NULL);  	
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
 	next_timeout = (clock_timers == NULL) ?
 		 TMR_NEVER : clock_timers->tmr_exp_time;	
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
   }
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
 
   return;
 }
@@ -188,6 +194,8 @@ irq_hook_t *hook;
 
   if(minix_panicing) return;
 
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
+
   /* Get number of ticks and update realtime. */
   ticks = lost_ticks + 1;
   lost_ticks = 0;
@@ -223,6 +231,7 @@ irq_hook_t *hook;
 
   if (do_serial_debug)
 	do_ser_debug();
+  vmassert(!vm_running || (read_cr3() == ptproc->p_seg.p_cr3));
 
   return(1);					/* reenable interrupts */
 }

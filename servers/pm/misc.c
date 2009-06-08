@@ -346,12 +346,9 @@ PUBLIC int do_getprocnr()
 		if (((rmp->mp_flags & (IN_USE | ZOMBIE)) == IN_USE) && 
 			strncmp(rmp->mp_name, search_key, key_len)==0) {
   			mp->mp_reply.endpt = rmp->mp_endpoint;
-  			printf("PM: name %s result: %d\n", search_key, 
-					rmp->mp_endpoint);
   			return(OK);
 		} 
 	}
-	printf("PM: name %s result: ESRCH\n", search_key);
   	return(ESRCH);			
   } else {			/* return own/parent process number */
 #if 0

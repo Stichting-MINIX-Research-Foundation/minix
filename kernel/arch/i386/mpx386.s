@@ -403,6 +403,7 @@ _restart:
 
 ! Restart the current process or the next process if it is set. 
 
+	cli
 	call	_schedcheck		! ask C function who we're running
 	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
 	lldt	P_LDT_SEL(esp)		! enable process' segment descriptors 

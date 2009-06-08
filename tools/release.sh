@@ -3,6 +3,7 @@
 set -e
 
 XBIN=usr/xbin
+BRANCHNAME=src.beng-working.r4327
 SRC=src
 
 # size of /tmp during build
@@ -136,7 +137,7 @@ do
 done
 
 if [ ! "$USRMB" ]
-then	USRMB=550
+then	USRMB=120
 fi
 
 echo $USRMB MB
@@ -232,10 +233,10 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
-	REPO=https://gforge.cs.vu.nl/svn/minix/trunk/$SRC
+	REPO=https://gforge.cs.vu.nl/svn/minix/branches/$BRANCHNAME
 	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
 	echo "Doing export of revision $REVISION from $REPO."
-	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO )
+	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO && mv $BRANCHNAME $SRC )
 	REVTAG=r$REVISION
 	echo "
 

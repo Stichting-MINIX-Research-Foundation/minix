@@ -142,7 +142,6 @@ int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr,
 	NOREC_ENTER(linlincopy);
 
 	vmassert(vm_running);
-	vmassert(!catch_pagefaults);
 	vmassert(nfreepdes >= 3);
 
 	vmassert(ptproc);
@@ -219,8 +218,11 @@ PRIVATE void vm_set_cr3(struct proc *newptproc)
 	if(!intr_disabled()) { lock; u = 1; }
 	vm_cr3= newptproc->p_seg.p_cr3;
 	if(vm_cr3) {
+		vmassert(intr_disabled());
 		level0(set_cr3);
+		vmassert(intr_disabled());
 		ptproc = newptproc;
+		vmassert(intr_disabled());
 	}
 	if(u) { unlock; }
 }
