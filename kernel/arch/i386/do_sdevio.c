@@ -24,6 +24,8 @@
 PUBLIC int do_sdevio(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
+  vir_bytes newoffset;
+  endpoint_t newep;
   int proc_nr, proc_nr_e = m_ptr->DIO_VEC_ENDPT;
   int count = m_ptr->DIO_VEC_SIZE;
   long port = m_ptr->DIO_PORT;
@@ -33,7 +35,6 @@ register message *m_ptr;	/* pointer to request message */
   struct priv *privp;
   struct io_range *iorp;
   int rem;
-  static char zero[4096];
   vir_bytes addr;
   struct proc *destproc;
 
@@ -67,8 +68,6 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Check for 'safe' variants. */
   if((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) == _DIO_SAFE) {
-     vir_bytes newoffset;
-     endpoint_t newep;
      /* Map grant address to physical address. */
      if(verify_grant(proc_nr_e, who_e, 
 	(vir_bytes) m_ptr->DIO_VEC_ADDR,
@@ -103,19 +102,6 @@ register message *m_ptr;	/* pointer to request message */
      /* current process must be target for phys_* to be OK */
 
   vm_set_cr3(destproc);
-  rem = count;
-  addr = m_ptr->DIO_VEC_ADDR;
-  while(rem > 0) {
-	int r;
-	int chunk;
-	chunk = rem > sizeof(zero) ? sizeof(zero) : rem;
-	if((r=data_copy_vmcheck(SYSTEM, zero, destproc->p_endpoint, 
-		 addr, chunk)) != OK) {
-			return r;
-	}
-	addr += chunk;
-	rem -= chunk;
-  }
 
 	switch (io_type)
 	{
