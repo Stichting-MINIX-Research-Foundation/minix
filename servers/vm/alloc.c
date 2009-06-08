@@ -410,6 +410,19 @@ struct memory *chunks;		/* list of free memory chunks */
   CHECKHOLES;
 }
 
+int countnodes(void)
+{
+	addr_iter iter;
+	int n = 0;
+	addr_start_iter_least(&addravl, &iter);
+	while(addr_get_iter(&iter)) {
+		n++;
+		addr_incr_iter(&iter);
+	}
+
+	return n;
+}
+
 /*===========================================================================*
  *				alloc_pages				     *
  *===========================================================================*/
@@ -480,15 +493,41 @@ PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
  *===========================================================================*/
 PRIVATE void free_pages(phys_bytes pageno, int npages)
 {
-	pagerange_t *pr;
+	pagerange_t *pr, *p;
+	addr_iter iter;
 
-	if(!SLABALLOC(pr))
-		vm_panic("alloc_pages: can't alloc", NO_NUM);
-	SLABSANE(pr);
-	vm_assert(npages > 0);
-	pr->addr = pageno;
-	pr->size = npages;
-	addr_insert(&addravl, pr);
+	vm_assert(!addr_search(&addravl, pageno, AVL_EQUAL));
+
+	/* try to merge with higher neighbour */
+	if((pr=addr_search(&addravl, pageno+npages, AVL_EQUAL))) {
+		SLABSANE(pr);
+		pr->addr -= npages;
+		pr->size += npages;
+	} else {
+		if(!SLABALLOC(pr))
+			vm_panic("alloc_pages: can't alloc", NO_NUM);
+		SLABSANE(pr);
+		vm_assert(npages > 0);
+		pr->addr = pageno;
+		pr->size = npages;
+		addr_insert(&addravl, pr);
+	}
+
+	addr_start_iter(&addravl, &iter, pr->addr, AVL_EQUAL);
+	p = addr_get_iter(&iter);
+	vm_assert(p);
+	vm_assert(p == pr);
+
+	addr_decr_iter(&iter);
+	if((p = addr_get_iter(&iter))) {
+		SLABSANE(p);
+		if(p->addr + p->size == pr->addr) {
+			p->size += pr->size;
+			addr_remove(&addravl, pr->addr);
+			SLABFREE(pr);
+		}
+	}
+
 }
 
 #define NR_DMA	16
