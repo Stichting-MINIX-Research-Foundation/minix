@@ -17,6 +17,6 @@ u64_t *newpos;
   m.m2_i2 = whence;
   if (_syscall(FS, LLSEEK, &m) < 0) return -1;
   if (newpos)
-	*newpos= make64(m.m2_l2, m.m2_l1);
+	*newpos= make64(m.m2_l1, m.m2_l2);
   return 0;
 }

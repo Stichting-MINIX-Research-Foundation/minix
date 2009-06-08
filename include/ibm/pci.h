@@ -9,6 +9,7 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #define PCI_DID		0x02	/* Device ID, 16-bit */
 #define PCI_CR		0x04	/* Command Register, 16-bit */
 #define		PCI_CR_MAST_EN	0x0004	/* Enable Busmaster Access */
+#define		PCI_CR_MEM_EN	0x0002	/* Enable Mem Cycles */
 #define		PCI_CR_IO_EN	0x0001	/* Enable I/O Cycles */
 #define PCI_SR		0x06	/* PCI status, 16-bit */
 #define		 PSR_SSE	0x4000	/* Signaled System Error */

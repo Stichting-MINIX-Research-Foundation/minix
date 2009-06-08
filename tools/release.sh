@@ -11,6 +11,10 @@ TMPKB=32000
 
 PACKAGEDIR=/usr/bigports/Packages
 PACKAGESOURCEDIR=/usr/bigports/Sources
+# List of packages included on installation media
+PACKAGELIST=packages.install
+# List of package source included on installation media
+PACKAGESOURCELIST=package_sources.install
 secs=`expr 32 '*' 64`
 export SHELL=/bin/sh
 
@@ -137,7 +141,7 @@ do
 done
 
 if [ ! "$USRMB" ]
-then	USRMB=120
+then	USRMB=550
 fi
 
 echo $USRMB MB
@@ -206,24 +210,37 @@ cp -rp /usr/lib $RELEASEDIR/usr
 cp -rp /bin/bigsh /bin/sh /bin/echo $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/flex $RELEASEDIR/usr/bin
 
-if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR -a $PACKAGES -ne 0 ]
+if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR -a -f $PACKAGELIST -a -f $PACKAGESOURCELIST -a $PACKAGES -ne 0 ]
 then	echo " * Indexing packages"
 	bintotal=0
-	( cd $PACKAGEDIR
-	  for p in *.tar.bz2
+	( for p in `cat $PACKAGELIST`
 	  do	
-		p="`echo $p | sed 's/.tar.bz2//'`"
-		descr="../$p/.descr"
+		descr="$PACKAGEDIR/../$p/.descr"
 		if [ -f "$descr" ]
 		then	echo "$p|`cat $descr`"
 		fi
-	  done | tee List
+	  done | tee $RELEASEPACKAGE/List
 	)
 	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
-	cp $PACKAGEDIR/* $RELEASEPACKAGE/
+        for p in `cat $PACKAGELIST`
+        do
+               if [ -f $PACKAGEDIR/$p.tar.bz2 ]
+               then
+		  cp $PACKAGEDIR/$p.tar.bz2 $RELEASEPACKAGE/
+               else
+                  echo "Can't copy $PACKAGEDIR/$p.tar.bz2. Missing."
+               fi
+        done
 	echo " * Transfering $PACKAGESOURCEDIR to $RELEASEPACKAGESOURCES"
-	cp $PACKAGESOURCEDIR/* $RELEASEPACKAGESOURCES/ || true
-
+        for p in `cat $PACKAGESOURCELIST`
+        do
+               if [ -f $PACKAGESOURCEDIR/$p.tar.bz2 ]
+               then
+	          cp $PACKAGESOURCEDIR/$p.tar.bz2 $RELEASEPACKAGESOURCES/
+               else
+                  echo "Can't copy $PACKAGESOURCEDIR/$p.tar.bz2. Missing."
+               fi
+        done
 fi
 
 # Make sure compilers and libraries are bin-owned

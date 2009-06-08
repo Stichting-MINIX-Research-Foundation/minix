@@ -2,7 +2,7 @@
 .SH NAME
 ls \- list the contents of a directory
 .SH SYNOPSIS
-\fBls\fP [\fB\-acdfghilpqrstu1ACDFLMRTX\fP] [\fIname\fP...]
+\fBls\fP [\fB\-acdfghilnpqrstu1ACDFLMRTX\fP] [\fIname\fP...]
 .SH DESCRIPTION
 For each file argument, list it.  For each directory argument, list its
 contents.  The current working directory is listed when no files are named.
@@ -30,7 +30,7 @@ and
 .PP
 Files whose names start with a dot are by default not listed.
 .PP
-Note that standard MINIX 3 doesn't have symbolic links or sockets and
+Note that standard MINIX 3 doesn't have sockets, and
 .B \-u
 and
 .B \-c
