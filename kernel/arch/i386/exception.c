@@ -44,7 +44,11 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 		vmassert(pr->p_seg.p_cr3 == read_cr3());
 	} else {
 		u32_t cr3;
-		lock;
+		int u = 0;
+		if(!intr_disabled()) {
+			lock;
+			u = 1;
+		}
 		cr3 = read_cr3();
 		vmassert(ptproc);
 		if(ptproc->p_seg.p_cr3 != cr3) {
@@ -58,7 +62,9 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 			vm_print(cr3);
 			vm_print(ptproc->p_seg.p_cr3);
 		}
-		unlock;
+		if(u) {
+			unlock;
+		}
 	}
 
 	test_eip = k_reenter ? old_eip : pr->p_reg.pc;

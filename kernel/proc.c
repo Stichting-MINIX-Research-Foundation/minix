@@ -732,13 +732,6 @@ size_t size;
 	vir_bytes table_v = (vir_bytes) table;
 	vir_bytes linaddr;
 
-	if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) table,
-		size * sizeof(*table)))) {
-		printf("mini_senda: umap_local failed; 0x%lx len 0x%lx\n",
-			table, size * sizeof(*table));
-		return EFAULT;
-	}
-
 	privp= priv(caller_ptr);
 	if (!(privp->s_flags & SYS_PROC))
 	{
@@ -755,6 +748,13 @@ size_t size;
 	{
 		/* Nothing to do, just return */
 		return OK;
+	}
+
+	if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) table,
+		size * sizeof(*table)))) {
+		printf("mini_senda: umap_local failed; 0x%lx len 0x%lx\n",
+			table, size * sizeof(*table));
+		return EFAULT;
 	}
 
 	/* Limit size to something reasonable. An arbitrary choice is 16
