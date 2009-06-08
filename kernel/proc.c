@@ -98,6 +98,7 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 	vmassert(dst->p_delivermsg_lin);
 	vmassert(isokendpt(ep, &k));
 
+#if 0
 	if(INMEMORY(dst)) {
 		PHYS_COPY_CATCH(msg_lin, dst->p_delivermsg_lin,
 			sizeof(message), addr);
@@ -109,6 +110,7 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 			}
 		}
 	}
+#endif
 
 	PHYS_COPY_CATCH(msg_lin, vir2phys(&dst->p_delivermsg), sizeof(message), addr);
 	if(addr) {
