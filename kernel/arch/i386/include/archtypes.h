@@ -68,5 +68,7 @@ struct pagefault
 	u32_t   pf_flags;       /* Pagefault flags on stack. */
 };
 
+#define INMEMORY(p) (!p->p_seg.p_cr3 || ptproc == p)
+
 #endif /* #ifndef _I386_TYPES_H */
 

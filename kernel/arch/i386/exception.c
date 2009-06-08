@@ -15,9 +15,6 @@
 
 extern int vm_copy_in_progress, catch_pagefaults;
 extern struct proc *vm_copy_from, *vm_copy_to;
-extern u32_t npagefaults;
-
-PUBLIC u32_t pagefault_count = 0;
 
 void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 	u32_t *old_eipptr, u32_t *old_eaxptr, u32_t pagefaultcr2)
@@ -35,8 +32,6 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 	vmassert(*old_eipptr == old_eip);
 	vmassert(old_eipptr != &old_eip);
 
-	vmassert(pagefault_count == 1);
-
 #if 0
 	printf("kernel: pagefault in pr %d, addr 0x%lx, his cr3 0x%lx, actual cr3 0x%lx\n",
 		pr->p_endpoint, pagefaultcr2, pr->p_seg.p_cr3, read_cr3());
@@ -48,8 +43,22 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 #endif
 		vmassert(pr->p_seg.p_cr3 == read_cr3());
 	} else {
+		u32_t cr3;
+		lock;
+		cr3 = read_cr3();
 		vmassert(ptproc);
-		vmassert(ptproc->p_seg.p_cr3 == read_cr3());
+		if(ptproc->p_seg.p_cr3 != cr3) {
+			util_stacktrace();
+			printf("cr3 wrong in pagefault; value 0x%lx, ptproc %s / %d, his cr3 0x%lx, pr %s / %d\n",
+				cr3,
+				ptproc->p_name, ptproc->p_endpoint,
+				ptproc->p_seg.p_cr3, 
+				pr->p_name, pr->p_endpoint);
+			ser_dump_proc();
+			vm_print(cr3);
+			vm_print(ptproc->p_seg.p_cr3);
+		}
+		unlock;
 	}
 
 	test_eip = k_reenter ? old_eip : pr->p_reg.pc;
@@ -65,12 +74,8 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 		*old_eipptr = phys_copy_fault;
 		*old_eaxptr = pagefaultcr2;
 
-		pagefault_count = 0;
-
 		return;
 	}
-
-	npagefaults++;
 
 	/* System processes that don't have their own page table can't
 	 * have page faults. VM does have its own page table but also
@@ -106,8 +111,6 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 	pagefaults = pr;
 		
 	lock_notify(HARDWARE, VM_PROC_NR);
-
-	pagefault_count = 0;
 
 	return;
 }

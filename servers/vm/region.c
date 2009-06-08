@@ -546,6 +546,8 @@ struct phys_region *physhint;
 		u32_t af = PAF_CLEAR;
 		if(region->flags & VR_PHYS64K)
 			af |= PAF_ALIGN64K;
+		if(region->flags & VR_LOWER16MB)
+			af |= PAF_LOWER16MB;
 		if((mem_clicks = ALLOC_MEM(clicks, af)) == NO_MEM) {
 			SLABFREE(newpb);
 			SLABFREE(newphysr);

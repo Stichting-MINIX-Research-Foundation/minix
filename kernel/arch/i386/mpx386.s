@@ -73,9 +73,6 @@ begbss:
 
 .define	_restart
 .define	save
-.define _pagefault_count
-.define _cr3_test
-.define _cr3_reload
 .define _reload_cr3
 .define	_write_cr3	! write cr3
 
@@ -409,13 +406,11 @@ _restart:
 	call	_schedcheck		! ask C function who we're running
 	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
 	lldt	P_LDT_SEL(esp)		! enable process' segment descriptors 
-	inc	(_cr3_test)
 	cmp	P_CR3(esp), 0		! process does not have its own PT
 	jz	0f	
 	mov 	eax, P_CR3(esp)
 	cmp	eax, (loadedcr3)
 	jz	0f
-	inc	(_cr3_reload)
 	mov	cr3, eax
 	mov	(loadedcr3), eax
 	mov	eax, (_proc_ptr)
@@ -498,7 +493,6 @@ _page_fault:
 	push	eax
 	mov	eax, cr2
 sseg	mov	(pagefaultcr2), eax
-sseg	inc	(_pagefault_count)
 	pop	eax
 	jmp	errexception
 
@@ -566,10 +560,8 @@ _write_cr3:
 	push    ebp
 	mov     ebp, esp
 	mov	eax, 8(ebp)
-	inc	(_cr3_test)
 	cmp	eax, (loadedcr3)
 	jz	0f
-	inc	(_cr3_reload)
 	mov	cr3, eax
 	mov	(loadedcr3), eax
 	mov	(_dirtypde), 0
@@ -584,7 +576,6 @@ _write_cr3:
 _reload_cr3:
 	push    ebp
 	mov     ebp, esp
-	inc	(_cr3_reload)
 	mov	(_dirtypde), 0
 	mov	eax, cr3
 	mov	cr3, eax

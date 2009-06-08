@@ -96,41 +96,6 @@ register message *m_ptr;	/* pointer to request message */
 		printf("type %d\n", p->p_vmrequest.type);
 #endif
 
-#if DEBUG_VMASSERT
-	{
-		vmassert(target->p_rts_flags);
-
-		/* Sanity check. */
-		if(p->p_vmrequest.vmresult == OK) {
-			int r;
-			vmassert(!verifyrange);
-			verifyrange = 1;
-			r = CHECKRANGE(target,
-				p->p_vmrequest.start,
-				p->p_vmrequest.length,
-				p->p_vmrequest.writeflag);
-			vmassert(verifyrange);
-			verifyrange = 0;
-
-			if(r != OK) {
-
-kprintf("SYSTEM: request by %d: on ep %d: 0x%lx-0x%lx, wrflag %d, stack %s, failed\n",
-	p->p_endpoint, target->p_endpoint,
-	p->p_vmrequest.start,  p->p_vmrequest.start + p->p_vmrequest.length,
-	p->p_vmrequest.writeflag,
-	p->p_vmrequest.stacktrace); 
-	
-				printf("printing pt of %d (0x%lx)\n",
-					vm_print(target->p_endpoint),
-					target->p_seg.p_cr3
-					);
-				vm_print(target->p_seg.p_cr3);
-				minix_panic("SYSTEM: fail but VM said OK", NO_NUM);
-			 }
-		}  
-	}
-#endif
-
 		vmassert(RTS_ISSET(target, VMREQTARGET));
 		RTS_LOCK_UNSET(target, VMREQTARGET);
 
@@ -163,10 +128,9 @@ kprintf("SYSTEM: request by %d: on ep %d: 0x%lx-0x%lx, wrflag %d, stack %s, fail
 			minix_panic("do_vmctl: paging enabling failed", NO_NUM);
 		vmassert(p->p_delivermsg_lin ==
 		  umap_local(p, D, p->p_delivermsg_vir, sizeof(message)));
-		if(newmap(p, m_ptr->SVMCTL_VALUE) != OK)
+		if(newmap(p, (struct mem_map *) m_ptr->SVMCTL_VALUE) != OK)
 			minix_panic("do_vmctl: newmap failed", NO_NUM);
-		p->p_delivermsg_lin =
-			umap_local(p, D, p->p_delivermsg_vir, sizeof(message));
+		FIXLINMSG(p);
 		vmassert(p->p_delivermsg_lin);
 		return OK;
   }

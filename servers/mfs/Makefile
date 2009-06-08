@@ -25,7 +25,6 @@ OBJ =	cache.o device.o link.o \
 all build:	$(SERVER)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S `expr $(NR_BUFS) \* $(BS) \* 2.2` $(SERVER)
 
 install: $(SERVER)
 	-mv $(DEST) $(DEST).prev

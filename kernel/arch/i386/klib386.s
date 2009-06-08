@@ -40,10 +40,6 @@
 .define	_read_cr4
 .define	_thecr3
 .define	_write_cr4
-.define _i386_invlpg_addr
-.define _i386_invlpg_level0
-.define __memcpy_k
-.define __memcpy_k_fault
 .define	_catch_pagefaults
 
 ! The routines only guarantee to preserve the registers the C compiler
@@ -587,57 +583,3 @@ _getcr3val:
 	mov	(_thecr3), eax
 	ret
 
-!*===========================================================================*
-!*				i386_invlpg				*
-!*===========================================================================*
-! PUBLIC void i386_invlpg(void);
-_i386_invlpg_level0:
-	mov eax, (_i386_invlpg_addr)
-	invlpg	(eax)
-	ret
-
-
-!*===========================================================================*
-!*				_memcpy_k				     *
-!*===========================================================================*
-!	_memcpy_k()				Original Author: Kees J. Bot
-!								2 Jan 1994
-! void *_memcpy_k(void *s1, const void *s2, size_t n)
-!	Copy a chunk of memory that the kernel can use to trap pagefaults.
-.define __memcpy_k
-.define __memcpy_k_fault
-	.align	16
-__memcpy_k:
-	push	ebp
-	mov	ebp, esp
-	push	esi
-	push	edi
-	mov	edi, 8(ebp)	! String s1
-	mov	esi, 12(ebp)	! String s2
-	mov	ecx, 16(ebp)	! Length
-	cld			! Clear direction bit: upwards
-	cmp	ecx, 16
-	jb	upbyte		! Don't bother being smart with short arrays
-	mov	eax, esi
-	or	eax, edi
-	testb	al, 1
-	jnz	upbyte		! Bit 0 set, use byte copy
-	testb	al, 2
-	jnz	upword		! Bit 1 set, use word copy
-uplword:shrd	eax, ecx, 2	! Save low 2 bits of ecx in eax
-	shr	ecx, 2
-	rep
-	movs			! Copy longwords.
-	shld	ecx, eax, 2	! Restore excess count
-upword:	shr	ecx, 1
-	rep
-    o16	movs			! Copy words
-	adc	ecx, ecx	! One more byte?
-upbyte:	rep
-	movsb			! Copy bytes
-done:	mov	eax, 0
-__memcpy_k_fault:		! Kernel can send us here with pf cr2 in eax
-	pop	edi
-	pop	esi
-	pop	ebp
-	ret

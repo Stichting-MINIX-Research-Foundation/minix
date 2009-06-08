@@ -305,7 +305,7 @@ message *m_ptr;				/* pointer to alarm message */
   random_update(RND_TIMING, &r, 1);
 
   /* Schedule new alarm for next m_random call. */
-  if (OK != (s=sys_setalarm(KRANDOM_PERIOD, 0)))
+  if (OK != (s=sys_setalarm(random_isseeded() ? KRANDOM_PERIOD : sys_hz(), 0)))
   	report("RANDOM", "sys_setalarm failed", s);
 }
 

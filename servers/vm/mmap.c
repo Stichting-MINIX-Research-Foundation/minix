@@ -47,10 +47,6 @@ PUBLIC int do_mmap(message *m)
 
 	vmp = &vmproc[n];
 
-	if(m->VMM_FLAGS & MAP_LOWER16M)
-		printf("VM: warning for %d: MAP_LOWER16M not implemented\n",
-			m->m_source);
-
 	if(!(vmp->vm_flags & VMF_HASPT))
 		return ENXIO;
 
@@ -66,14 +62,15 @@ PUBLIC int do_mmap(message *m)
 
 		if(m->VMM_FLAGS & MAP_CONTIG) mfflags |= MF_CONTIG;
 		if(m->VMM_FLAGS & MAP_PREALLOC) mfflags |= MF_PREALLOC;
+		if(m->VMM_FLAGS & MAP_LOWER16M) vrflags |= VR_LOWER16MB;
 		if(m->VMM_FLAGS & MAP_ALIGN64K) vrflags |= VR_PHYS64K;
 
 		if(len % VM_PAGE_SIZE)
 			len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
 		if(!(vr = map_page_region(vmp,
-			arch_vir2map(vmp, vmp->vm_stacktop), VM_DATATOP, len, MAP_NONE,
-			vrflags, mfflags))) {
+			arch_vir2map(vmp, vmp->vm_stacktop),
+			VM_DATATOP, len, MAP_NONE, vrflags, mfflags))) {
 			return ENOMEM;
 		}
 	} else {
@@ -83,6 +80,7 @@ PUBLIC int do_mmap(message *m)
 	/* Return mapping, as seen from process. */
 	vm_assert(vr);
 	m->VMM_RETADDR = arch_map2vir(vmp, vr->vaddr);
+
 
 	return OK;
 }

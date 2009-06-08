@@ -522,6 +522,7 @@ pci_init();
 	  }
 	  else
 	  {
+		printf("lance buf: 0x%lx\n", vir2phys(lance_buf));
 	  	report( "LANCE", "DMA denied because address out of range", NO_NUM );
 	  }
 	  

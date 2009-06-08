@@ -245,25 +245,7 @@ PRIVATE void vm_init(void)
 
 	/* Initialize tables to all physical memory. */
 	mem_init(mem_chunks);
-
-#if 0
-	/* Can first kernel pages of code and data be (left) mapped out?
-	 * If so, change the SYSTEM process' memory map to reflect this
-	 * (future mappings of SYSTEM into other processes will not include
-	 * first pages), and free the first pages.
-	 */
-	if(vm_paged && sys_vmctl(SELF, VMCTL_NOPAGEZERO, 0) == OK) {
-	  	struct vmproc *vmp;
-		vmp = &vmproc[VMP_SYSTEM];
-		if(vmp->vm_arch.vm_seg[T].mem_len > 0) {
-#define DIFF CLICKSPERPAGE
-			vmp->vm_arch.vm_seg[T].mem_phys += DIFF;
-			vmp->vm_arch.vm_seg[T].mem_len -= DIFF;
-		}
-		vmp->vm_arch.vm_seg[D].mem_phys += DIFF;
-		vmp->vm_arch.vm_seg[D].mem_len -= DIFF;
-	}
-#endif
+	meminit_done = 1;
 
 	/* Give these processes their own page table. */
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
@@ -275,13 +257,24 @@ PRIVATE void vm_init(void)
 
 		GETVMP(vmp, ip->proc_nr);
 
+		if(!(ip->flags & PROC_FULLVM)) {
+			/* See if this process fits in kernel
+			 * mapping. VM has its own pagetable,
+			 * don't check it.
+			 */
+			printf("VM: not giving %d its own pt\n",
+				vmp->vm_endpoint);
+			if(!(vmp->vm_flags & VMF_HASPT)) {
+				pt_check(vmp);
+			}
+			continue;
+		}
+		printf("VM: giving %d its own pt\n", vmp->vm_endpoint);
+
 		old_stack = 
 			vmp->vm_arch.vm_seg[S].mem_vir +
 			vmp->vm_arch.vm_seg[S].mem_len - 
 			vmp->vm_arch.vm_seg[D].mem_len;
-
-		if(!(ip->flags & PROC_FULLVM))
-			continue;
 
         	if(pt_new(&vmp->vm_pt) != OK)
 			vm_panic("vm_init: no new pagetable", NO_NUM);

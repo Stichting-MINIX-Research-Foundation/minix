@@ -86,6 +86,7 @@ _PROTOTYPE( int handle_memory, (struct vmproc *vmp, vir_bytes mem,
 
 /* $(ARCH)/pagetable.c */
 _PROTOTYPE( void pt_init, (void)					);
+_PROTOTYPE( void pt_check, (struct vmproc *vmp)				);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);
 _PROTOTYPE( void pt_freerange, (pt_t *pt, vir_bytes lo, vir_bytes hi)	);
@@ -95,8 +96,6 @@ _PROTOTYPE( int pt_bind, (pt_t *pt, struct vmproc *who)			);
 _PROTOTYPE( void *vm_allocpages, (phys_bytes *p, int pages, int cat));
 _PROTOTYPE( void pt_cycle, (void));
 _PROTOTYPE( int pt_mapkernel, (pt_t *pt));
-_PROTOTYPE( void phys_readaddr, (phys_bytes addr, phys_bytes *v1, phys_bytes *v2));
-_PROTOTYPE( void phys_writeaddr, (phys_bytes addr, phys_bytes v1, phys_bytes v2));
 #if SANITYCHECKS
 _PROTOTYPE( void pt_sanitycheck, (pt_t *pt, char *file, int line)	);
 #endif

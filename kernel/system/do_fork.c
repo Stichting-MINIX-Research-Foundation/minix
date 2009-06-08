@@ -7,6 +7,7 @@
  */
 
 #include "../system.h"
+#include "../vm.h"
 #include <signal.h>
 
 #include <minix/endpoint.h>
@@ -94,6 +95,7 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Install new map */
   r = newmap(rpc, map_ptr);
+  FIXLINMSG(rpc);
 
   /* Don't schedule process in VM mode until it has a new pagetable. */
   if(m_ptr->PR_FORK_FLAGS & PFF_VMINHIBIT) {

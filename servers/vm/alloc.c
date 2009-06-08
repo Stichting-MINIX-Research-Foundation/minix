@@ -37,9 +37,11 @@
 #include "proto.h"
 #include "util.h"
 #include "glo.h"
+#include "pagerange.h"
+#include "addravl.h"
 
-/* Initially, no free pages are known. */
-PRIVATE phys_bytes free_pages_head = NO_MEM;	/* Physical address in bytes. */
+/* AVL tree of free pages. */
+addr_avl addravl;
 
 /* Used for sanity check. */
 PRIVATE phys_bytes mem_low, mem_high;
@@ -100,26 +102,6 @@ FORWARD _PROTOTYPE( void holes_sanity_f, (char *fn, int line)		    );
 #define SET_PARAMS(p, bytes, next) { \
 	vm_assert_params((p), (bytes), (next)); \
 	phys_writeaddr((p), (bytes), (next));	\
-}
-
-
-void availbytes(vir_bytes *bytes, vir_bytes *chunks)
-{
-	phys_bytes p, nextp;
-	*bytes = 0;
-	*chunks = 0;
-	for(p = free_pages_head; p != NO_MEM; p = nextp) {
-		phys_bytes thissize, ret;
-		GET_PARAMS(p, thissize, nextp);
-		(*bytes) += thissize;
-		(*chunks)++;
-		if(nextp != NO_MEM)	{
-			vm_assert(nextp > p);
-			vm_assert(nextp > p + thissize);
-		}
-	}
-
-	return;
 }
 
 
@@ -411,6 +393,8 @@ struct memory *chunks;		/* list of free memory chunks */
   hole_head = NIL_HOLE;
   free_slots = &hole[0];
 
+  addr_init(&addravl);
+
   /* Use the chunks of physical memory to allocate holes. */
   for (i=NR_MEMS-1; i>=0; i--) {
   	if (chunks[i].size > 0) {
@@ -433,208 +417,81 @@ struct memory *chunks;		/* list of free memory chunks */
  *===========================================================================*/
 PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 {
-	phys_bytes bytes, p, nextp, prevp = NO_MEM;
-	phys_bytes prevsize = 0;
+	addr_iter iter;
+	pagerange_t *pr;
+	int incr;
+	phys_bytes boundary16 = 16 * 1024 * 1024 / VM_PAGE_SIZE;
+	phys_bytes mem;
 
-#if SANITYCHECKS
-	vir_bytes avail1, avail2, chunks1, chunks2;
-	availbytes(&avail1, &chunks1);
-#endif
-
-	vm_assert(pages > 0);
-	bytes = CLICK2ABS(pages);
-	vm_assert(ABS2CLICK(bytes) == pages);
-
-#if SANITYCHECKS
-#define ALLOCRETURNCHECK			\
-	availbytes(&avail2, &chunks2);		\
-	vm_assert(avail1 - bytes == avail2);	\
-	vm_assert(chunks1 == chunks2 || chunks1-1 == chunks2);
-#else
-#define ALLOCRETURNCHECK
-#endif
-
-
-	for(p = free_pages_head; p != NO_MEM; p = nextp) {
-		phys_bytes thissize, ret;
-		GET_PARAMS(p, thissize, nextp);
-		if(thissize >= bytes) {
-			/* We found a chunk that's big enough. */
-
-			ret = p + thissize - bytes;
-			thissize -= bytes;
-
-			if(thissize == 0) {
-				/* Special case: remove this link entirely. */
-				if(prevp == NO_MEM)
-					free_pages_head = nextp;
-				else {
-					vm_assert(prevsize > 0);
-					SET_PARAMS(prevp, prevsize, nextp);
-				}
-			} else {
-				/* Remove memory from this chunk. */
-				SET_PARAMS(p, thissize, nextp);
-			}
-
-			/* Clear memory if requested. */
-			if(memflags & PAF_CLEAR) {
-			  int s;
-			  if ((s= sys_memset(0, ret, bytes)) != OK)   {
-				vm_panic("alloc_pages: sys_memset failed", s);
-			  }
-			}
-
-			/* Check if returned range is actual good memory. */
-			vm_assert_range(ret, bytes);
-
-			ALLOCRETURNCHECK;
-
-			/* Return it in clicks. */
-			return ABS2CLICK(ret);
-		}
-		prevp = p;
-		prevsize = thissize;
+	if(memflags & PAF_LOWER16MB) {
+		addr_start_iter_least(&addravl, &iter);
+		incr = 1;
+	} else {
+		addr_start_iter_greatest(&addravl, &iter);
+		incr = 0;
 	}
-	return NO_MEM;
+
+	while((pr = addr_get_iter(&iter))) {
+		SLABSANE(pr);
+		if(pr->size >= pages) {
+			if(memflags & PAF_LOWER16MB) {
+				if(pr->addr + pages > boundary16)
+					return NO_MEM;
+			}
+
+			/* good block found! */
+			break;
+		}
+		if(incr)
+			addr_incr_iter(&iter);
+		else
+			addr_decr_iter(&iter);
+	}
+
+	if(!pr)
+		return NO_MEM;
+
+	SLABSANE(pr);
+
+	mem = pr->addr;
+
+	vm_assert(pr->size >= pages);
+	if(pr->size == pages) {
+		pagerange_t *prr;
+		prr = addr_remove(&addravl, pr->addr);
+		vm_assert(prr);
+		vm_assert(prr == pr);
+		SLABFREE(pr);
+	} else {
+		pr->addr += pages;
+		pr->size -= pages;
+	}
+
+	if(memflags & PAF_CLEAR) {
+		int s;
+		if ((s= sys_memset(0, CLICK_SIZE*mem,
+			VM_PAGE_SIZE*pages)) != OK) 
+			vm_panic("alloc_mem: sys_memset failed", s);
+	}
+
+	return mem;
 }
 
 /*===========================================================================*
  *				free_pages				     *
  *===========================================================================*/
-PRIVATE PUBLIC void free_pages(phys_bytes pageno, int npages)
+PRIVATE void free_pages(phys_bytes pageno, int npages)
 {
-	phys_bytes p, origsize,
-		size, nextaddr, thissize, prevp = NO_MEM, pageaddr;
+	pagerange_t *pr;
 
-#if SANITYCHECKS
-	vir_bytes avail1, avail2, chunks1, chunks2;
-	availbytes(&avail1, &chunks1);
-#endif
-
-#if SANITYCHECKS
-#define FREERETURNCHECK								\
-	availbytes(&avail2, &chunks2);					\
-	vm_assert(avail1 + origsize  == avail2);			\
-	vm_assert(chunks1 == chunks2 || chunks1+1 == chunks2 || chunks1-1 == chunks2);
-#else
-#define FREERETURNCHECK
-#endif
-
-	/* Basic sanity check. */
+	if(!SLABALLOC(pr))
+		vm_panic("alloc_pages: can't alloc", NO_NUM);
+	SLABSANE(pr);
 	vm_assert(npages > 0);
-	vm_assert(pageno != NO_MEM);	/* Page number must be reasonable. */
-
-	/* Convert page and pages to bytes. */
-	pageaddr = CLICK2ABS(pageno);
-	origsize = size = npages * VM_PAGE_SIZE;	/* Size in bytes. */
-	vm_assert(pageaddr != NO_MEM);
-	vm_assert(ABS2CLICK(pageaddr) == pageno);
-	vm_assert_range(pageaddr, size);
-
-	/* More sanity checks. */
-	vm_assert(ABS2CLICK(size) == npages);	/* Sanity. */
-	vm_assert(pageaddr + size > pageaddr);		/* Must not overflow. */
-
-	/* Special case: no free pages. */
-	if(free_pages_head == NO_MEM) {
-		free_pages_head = pageaddr;
-		SET_PARAMS(pageaddr, size, NO_MEM);
-		FREERETURNCHECK;
-		return;
-	}
-
-	/* Special case: the free block is before the current head. */
-	if(pageaddr < free_pages_head) {
-		phys_bytes newsize, newnext, headsize, headnext;
-		vm_assert(pageaddr + size <= free_pages_head);
-		GET_PARAMS(free_pages_head, headsize, headnext);
-		newsize = size;
-		if(pageaddr + size == free_pages_head) {
-			/* Special case: contiguous. */
-			newsize += headsize;
-			newnext = headnext;
-		} else {
-			newnext = free_pages_head;
-		}
-		SET_PARAMS(pageaddr, newsize, newnext);
-		free_pages_head = pageaddr;
-		FREERETURNCHECK;
-		return;
-	}
-
-	/* Find where to put the block in the free list. */
-	for(p = free_pages_head; p < pageaddr; p = nextaddr) {
-		GET_PARAMS(p, thissize, nextaddr);
-
-		if(nextaddr == NO_MEM) {
-			/* Special case: page is at the end of the list. */
-			if(p + thissize == pageaddr) {
-				/* Special case: contiguous. */
-				SET_PARAMS(p, thissize + size, NO_MEM);
-				FREERETURNCHECK;
-			} else {
-				SET_PARAMS(p, thissize, pageaddr);
-				SET_PARAMS(pageaddr, size, NO_MEM);
-				FREERETURNCHECK;
-			}
-			return;
-		}
-
-		prevp = p;
-	}
-
-	/* Normal case: insert page block between two others.
-	 * The first block starts at 'prevp' and is 'thissize'.
-	 * The second block starts at 'p' and is 'nextsize'.
-	 * The block that has to come in between starts at
-	 * 'pageaddr' and is size 'size'.
-	 */
-	vm_assert(p != NO_MEM);
-	vm_assert(prevp != NO_MEM);
-	vm_assert(prevp < p);
-	vm_assert(p == nextaddr);
-
-#if SANITYCHECKS
-  {
-	vir_bytes prevpsize, prevpnext;
-	GET_PARAMS(prevp, prevpsize, prevpnext);
-	vm_assert(prevpsize == thissize);
-	vm_assert(prevpnext == p);
-
-	availbytes(&avail2, &chunks2);
-	vm_assert(avail1 == avail2);
-  }
-#endif
-
-	if(prevp + thissize == pageaddr) {
-		/* Special case: first block is contiguous with freed one. */
-		phys_bytes newsize = thissize + size;
-		SET_PARAMS(prevp, newsize, p);
-		pageaddr = prevp;
-		size = newsize;
-	} else {
-		SET_PARAMS(prevp, thissize, pageaddr);
-	}
-
-	/* The block has been inserted (and possibly merged with the
-	 * first one). Check if it has to be merged with the second one.
-	 */
-
-	if(pageaddr + size == p) {
-		phys_bytes nextsize, nextnextaddr;
-		/* Special case: freed block is contiguous with next one. */
-		GET_PARAMS(p, nextsize, nextnextaddr);
-		SET_PARAMS(pageaddr, size+nextsize, nextnextaddr);
-		FREERETURNCHECK;
-	} else {
-		SET_PARAMS(pageaddr, size, p);
-		FREERETURNCHECK;
-	}
-
-	return;
+	pr->addr = pageno;
+	pr->size = npages;
+	addr_insert(&addravl, pr);
 }
-
 
 #define NR_DMA	16
 

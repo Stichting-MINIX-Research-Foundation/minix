@@ -528,7 +528,8 @@ doterminate:
 
   rmp->mp_sigstatus = (char) signo;
   if (sigismember(&core_sset, signo) && slot != FS_PROC_NR) {
-	printf("PM: signal %d for %d / %s\n", signo, rmp->mp_pid, rmp->mp_name);
+	printf("PM: signal %d for pid %d / %s\n",
+		signo, rmp->mp_pid, rmp->mp_name);
 	s= dump_core(rmp);
 	if (s == SUSPEND) {
 		return;

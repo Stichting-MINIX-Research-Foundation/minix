@@ -38,6 +38,7 @@
 #include <sys/sigcontext.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
+#include <minix/portio.h>
 #include <minix/u64.h>
 #include <sys/vm_i386.h>
 
@@ -57,9 +58,6 @@ char *callnames[NR_SYS_CALLS];
 
 FORWARD _PROTOTYPE( void initialize, (void));
 FORWARD _PROTOTYPE( struct proc *vmrestart_check, (message *));
-
-u32_t cr3_test, cr3_reload, newpde, overwritepde,
-	linlincopies, physzero, invlpgs, npagefaults, vmreqs, straightpdes;
 
 /*===========================================================================*
  *				sys_task				     *
@@ -89,46 +87,6 @@ PUBLIC void sys_task()
 	if((r=receive(ANY, &m)) != OK)
 		minix_panic("receive() failed", r);
       } 
-
-#if 1
-      {
-	struct proc *stp;
-	static int prevu;
-	int u, dt;
-	u = get_uptime();
-	dt = u - prevu;
-	if(dt >= 5*system_hz) {
-#define PERSEC(n) ((n)*system_hz/dt)
-		printf("%6d cr3 tests: %5lu cr3: %5lu straightpdes: %5lu newpde: %5lu overwritepde %5lu linlincopies: %5lu physzero: %5lu invlpgs: %5lu pagefaults: %5lu vmreq: %5lu\n",
-			u/system_hz,
-			PERSEC(cr3_test), PERSEC(cr3_reload),
-			PERSEC(straightpdes), PERSEC(newpde),
-			PERSEC(overwritepde),
-			PERSEC(linlincopies), PERSEC(physzero),
-			PERSEC(invlpgs), PERSEC(npagefaults),
-			PERSEC(vmreqs));
-		cr3_reload = 0;
-		cr3_test = 0;
-		newpde = overwritepde = linlincopies =
-			physzero = invlpgs =  straightpdes = 0;
-		npagefaults = 0;
-		vmreqs = 0;
-		prevu = u;
-#if DEBUG_TRACE
-	  	for (stp = BEG_PROC_ADDR; stp < END_PROC_ADDR; stp++) {
-			int ps = PERSEC(stp->p_schedules);
-      			if(isemptyp(stp))
-				continue;
-			if(ps > 10) {
-				printf("%s %d ", stp->p_name, ps);
-				stp->p_schedules = 0;
-			}
-		}
-		printf("\n");
-#endif
-	}
-      }
-#endif
 
       sys_call_code = (unsigned) m.m_type;
       call_nr = sys_call_code - KERNEL_CALL;	

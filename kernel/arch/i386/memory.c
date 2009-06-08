@@ -22,19 +22,11 @@ PRIVATE int psok = 0;
 
 int verifyrange = 0;
 
-extern u32_t newpde, overwritepde, linlincopies,
-	physzero, invlpgs, straightpdes;
-
 #define PROCPDEPTR(pr, pi) ((u32_t *) ((u8_t *) vm_pagedirs +\
 				I386_PAGE_SIZE * pr->p_nr +	\
 				I386_VM_PT_ENT_SIZE * pi))
 
-/* Signal to exception handler that pagefaults can happen. */
-int catch_pagefaults = 0;
-
 u8_t *vm_pagedirs = NULL;
-
-u32_t i386_invlpg_addr = 0;
 
 #define WANT_FREEPDES 100
 #define NOPDE -1
@@ -61,6 +53,145 @@ PUBLIC void vm_init(struct proc *newptproc)
 	vm_running = 1;
 
 }
+
+
+
+/* This macro sets up a mapping from within the kernel's address
+ * space to any other area of memory, either straight physical
+ * memory (PROC == NULL) or a process view of memory, in 4MB chunks.
+ * It recognizes PROC having kernel address space as a special case.
+ *
+ * It sets PTR to the pointer within kernel address space at the start
+ * of the 4MB chunk, and OFFSET to the offset within that chunk
+ * that corresponds to LINADDR.
+ *
+ * It needs FREEPDE (available and addressable PDE within kernel
+ * address space), SEG (hardware segment), VIRT (in-datasegment
+ * address if known).
+ */
+#define CREATEPDE(PROC, PTR, LINADDR, REMAIN, BYTES, PDE) { \
+	int proc_pde_index;					\
+	proc_pde_index = I386_VM_PDE(LINADDR);			\
+	PDE = NOPDE;						\
+	if((PROC) && (((PROC) == ptproc) || !HASPT(PROC))) {	\
+		PTR = LINADDR;					\
+	} else {						\
+		int fp;						\
+		int mustinvl;					\
+		u32_t pdeval, *pdevalptr, mask;			\
+		phys_bytes offset;				\
+		vmassert(psok);					\
+		if(PROC) {					\
+			u32_t *pdeptr; 				\
+			vmassert(!iskernelp(PROC));		\
+			vmassert(HASPT(PROC));			\
+			pdeptr = PROCPDEPTR(PROC, proc_pde_index);	\
+			pdeval = *pdeptr;			\
+		} else {					\
+			vmassert(!iskernelp(PROC));		\
+			pdeval = (LINADDR & I386_VM_ADDR_MASK_4MB) | 	\
+				I386_VM_BIGPAGE | I386_VM_PRESENT | 	\
+				I386_VM_WRITE | I386_VM_USER;		\
+		}							\
+		for(fp = 0; fp < nfreepdes; fp++) {			\
+			int k = freepdes[fp];				\
+			if(inusepde == k)				\
+				continue;				\
+			PDE = k;					\
+			mask = PDEMASK(k);				\
+			vmassert(mask);					\
+			if(dirtypde & mask)				\
+				continue;				\
+			break;						\
+		}							\
+		vmassert(PDE != NOPDE);				\
+		vmassert(mask);						\
+		if(dirtypde & mask) {					\
+			mustinvl = 1;					\
+		} else {						\
+			mustinvl = 0;					\
+		}							\
+		inusepde = PDE;					\
+		*PROCPDEPTR(ptproc, PDE) = pdeval;			\
+		offset = LINADDR & I386_VM_OFFSET_MASK_4MB;		\
+		PTR = I386_BIG_PAGE_SIZE*PDE + offset;		\
+		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
+		if(mustinvl) {						\
+			level0(reload_cr3);				\
+		}							\
+	}								\
+}
+
+#define DONEPDE(PDE)	{				\
+	if(PDE != NOPDE) {				\
+		dirtypde |= PDEMASK(PDE);		\
+		*PROCPDEPTR(ptproc, PDE) = 0;		\
+	}						\
+}
+	
+
+
+/*===========================================================================*
+ *				lin_lin_copy				     *
+ *===========================================================================*/
+int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
+	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
+{
+	u32_t addr;
+	int procslot;
+	NOREC_ENTER(linlincopy);
+
+	FIXME("lin_lin_copy requires big pages");
+	vmassert(vm_running);
+	vmassert(!catch_pagefaults);
+	vmassert(nfreepdes >= 3);
+
+	vmassert(ptproc);
+	vmassert(proc_ptr);
+	vmassert(read_cr3() == ptproc->p_seg.p_cr3);
+
+	procslot = ptproc->p_nr;
+
+	vmassert(procslot >= 0 && procslot < I386_VM_DIR_ENTRIES);
+
+	while(bytes > 0) {
+		phys_bytes srcptr, dstptr;
+		vir_bytes chunk = bytes;
+		int srcpde, dstpde;
+
+		/* Set up 4MB ranges. */
+		inusepde = NOPDE;
+		CREATEPDE(srcproc, srcptr, srclinaddr, chunk, bytes, srcpde);
+		CREATEPDE(dstproc, dstptr, dstlinaddr, chunk, bytes, dstpde);
+
+		/* Copy pages. */
+		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
+
+		DONEPDE(srcpde);
+		DONEPDE(dstpde);
+
+		if(addr) {
+			if(addr >= srcptr && addr < (srcptr + chunk)) {
+				NOREC_RETURN(linlincopy, EFAULT_SRC);
+			}
+			if(addr >= dstptr && addr < (dstptr + chunk)) {
+				NOREC_RETURN(linlincopy, EFAULT_DST);
+			}
+			minix_panic("lin_lin_copy fault out of range", NO_NUM);
+
+			/* Not reached. */
+			NOREC_RETURN(linlincopy, EFAULT);
+		}
+
+		/* Update counter and addresses for next iteration, if any. */
+		bytes -= chunk;
+		srclinaddr += chunk;
+		dstlinaddr += chunk;
+	}
+
+	NOREC_RETURN(linlincopy, OK);
+}
+
 
 PRIVATE u32_t phys_get32(addr)
 phys_bytes addr;
@@ -448,8 +579,6 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 	return 1;
 }
 
-extern u32_t vmreqs;
-
 /*===========================================================================*
  *                              vm_suspend                                *
  *===========================================================================*/
@@ -472,8 +601,6 @@ PUBLIC int vm_suspend(struct proc *caller, struct proc *target,
 	util_stacktrace_strcat(caller->p_vmrequest.stacktrace);
 #endif
 
-	vmreqs++;
-			
 	caller->p_vmrequest.writeflag = 1;
 	caller->p_vmrequest.start = linaddr;
 	caller->p_vmrequest.length = len;
@@ -499,18 +626,21 @@ int delivermsg(struct proc *rp)
 	vmassert(rp->p_delivermsg.m_source != NONE);
 
 	vmassert(rp->p_delivermsg_lin);
-	vmassert(rp->p_delivermsg_lin ==
+#if DEBUG_VMASSERT
+	if(rp->p_delivermsg_lin !=
+		umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message))) {
+		printf("vir: 0x%lx lin was: 0x%lx umap now: 0x%lx\n",
+		rp->p_delivermsg_vir, rp->p_delivermsg_lin,
 		umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message)));
+		minix_panic("that's wrong", NO_NUM);
+	}
+
+#endif
 
 	vm_set_cr3(rp);
 
-	vmassert(intr_disabled());
-	vmassert(!catch_pagefaults);
-	catch_pagefaults = 1;
-	addr = phys_copy(vir2phys(&rp->p_delivermsg),
-		rp->p_delivermsg_lin, sizeof(message));
-	vmassert(catch_pagefaults);
-	catch_pagefaults = 0;
+	PHYS_COPY_CATCH(vir2phys(&rp->p_delivermsg),
+		rp->p_delivermsg_lin, sizeof(message), addr);
 
 	if(addr) {
 		printf("phys_copy failed - addr 0x%lx\n", addr);
@@ -600,32 +730,6 @@ void vm_print(u32_t *root)
 	return;
 }
 
-/*===========================================================================*
- *				invlpg_range				     *
- *===========================================================================*/
-void invlpg_range(u32_t lin, u32_t bytes)
-{
-/* Remove a range of translated addresses from the TLB. 
- * Addresses are in linear, i.e., post-segment, pre-pagetable
- * form. Parameters are byte values, any offset and any multiple.
- */
-	u32_t cr3;
-	u32_t o, limit, addr;
-	limit = lin + bytes - 1;
-	o = lin % I386_PAGE_SIZE;
-	lin -= o;
-	limit = (limit + o) & I386_VM_ADDR_MASK;
-#if 1
-	for(i386_invlpg_addr = lin; i386_invlpg_addr <= limit;
-	    i386_invlpg_addr += I386_PAGE_SIZE) {
-		invlpgs++;
-		level0(i386_invlpg_level0);
-	}
-#else
-	level0(reload_cr3);
-#endif
-}
-
 u32_t thecr3;
 
 u32_t read_cr3(void)
@@ -634,153 +738,6 @@ u32_t read_cr3(void)
 	return thecr3;
 }
 
-/* This macro sets up a mapping from within the kernel's address
- * space to any other area of memory, either straight physical
- * memory (PROC == NULL) or a process view of memory, in 4MB chunks.
- * It recognizes PROC having kernel address space as a special case.
- *
- * It sets PTR to the pointer within kernel address space at the start
- * of the 4MB chunk, and OFFSET to the offset within that chunk
- * that corresponds to LINADDR.
- *
- * It needs FREEPDE (available and addressable PDE within kernel
- * address space), SEG (hardware segment), VIRT (in-datasegment
- * address if known).
- */
-#define CREATEPDE(PROC, PTR, LINADDR, REMAIN, BYTES, PDE) { \
-	int proc_pde_index;					\
-	FIXME("CREATEPDE: check if invlpg is necessary");	\
-	proc_pde_index = I386_VM_PDE(LINADDR);			\
-	PDE = NOPDE;						\
-	if((PROC) && (((PROC) == ptproc) || iskernelp(PROC))) {	\
-		PTR = LINADDR;					\
-		straightpdes++;					\
-	} else {						\
-		int fp;						\
-		int mustinvl;					\
-		u32_t pdeval, *pdevalptr, mask;			\
-		phys_bytes offset;				\
-		vmassert(psok);					\
-		if(PROC) {					\
-			u32_t *pdeptr; 				\
-			vmassert(!iskernelp(PROC));		\
-			vmassert(HASPT(PROC));			\
-			pdeptr = PROCPDEPTR(PROC, proc_pde_index);	\
-			pdeval = *pdeptr;			\
-		} else {					\
-			vmassert(!iskernelp(PROC));		\
-			pdeval = (LINADDR & I386_VM_ADDR_MASK_4MB) | 	\
-				I386_VM_BIGPAGE | I386_VM_PRESENT | 	\
-				I386_VM_WRITE | I386_VM_USER;		\
-		}							\
-		for(fp = 0; fp < nfreepdes; fp++) {			\
-			int k = freepdes[fp];				\
-			if(inusepde == k)				\
-				continue;				\
-			PDE = k;					\
-			mask = PDEMASK(k);				\
-			vmassert(mask);					\
-			if(dirtypde & mask)				\
-				continue;				\
-			break;						\
-		}							\
-		vmassert(PDE != NOPDE);				\
-		vmassert(mask);						\
-		if(dirtypde & mask) {					\
-			mustinvl = 1;					\
-			overwritepde++;					\
-		} else {						\
-			mustinvl = 0;					\
-			newpde++;					\
-		}							\
-		inusepde = PDE;					\
-		*PROCPDEPTR(ptproc, PDE) = pdeval;			\
-		offset = LINADDR & I386_VM_OFFSET_MASK_4MB;		\
-		PTR = I386_BIG_PAGE_SIZE*PDE + offset;		\
-		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
-		if(mustinvl) {						\
-			invlpg_range(PTR, REMAIN);			\
-		}							\
-	}								\
-}
-
-#define DONEPDE(PDE)	{				\
-	if(PDE != NOPDE) {				\
-		dirtypde |= PDEMASK(PDE);		\
-		*PROCPDEPTR(ptproc, PDE) = 0;		\
-	}						\
-}
-	
-
-
-/*===========================================================================*
- *				lin_lin_copy				     *
- *===========================================================================*/
-int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
-	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
-{
-	u32_t addr;
-	int procslot;
-	NOREC_ENTER(linlincopy);
-
-	linlincopies++;
-
-	FIXME("lin_lin_copy requires big pages");
-	vmassert(vm_running);
-	vmassert(!catch_pagefaults);
-	vmassert(nfreepdes >= 3);
-
-	vmassert(ptproc);
-	vmassert(proc_ptr);
-	vmassert(read_cr3() == ptproc->p_seg.p_cr3);
-
-	procslot = ptproc->p_nr;
-
-	vmassert(procslot >= 0 && procslot < I386_VM_DIR_ENTRIES);
-
-	while(bytes > 0) {
-		phys_bytes srcptr, dstptr;
-		vir_bytes chunk = bytes;
-		int srcpde, dstpde;
-
-		/* Set up 4MB ranges. */
-		inusepde = NOPDE;
-		CREATEPDE(srcproc, srcptr, srclinaddr, chunk, bytes, srcpde);
-		CREATEPDE(dstproc, dstptr, dstlinaddr, chunk, bytes, dstpde);
-
-		/* Copy pages. */
-		vmassert(intr_disabled());
-		vmassert(!catch_pagefaults);
-		catch_pagefaults = 1;
-		addr=phys_copy(srcptr, dstptr, chunk);
-		vmassert(intr_disabled());
-		vmassert(catch_pagefaults);
-		catch_pagefaults = 0;
-
-		DONEPDE(srcpde);
-		DONEPDE(dstpde);
-
-		if(addr) {
-			if(addr >= srcptr && addr < (srcptr + chunk)) {
-				NOREC_RETURN(linlincopy, EFAULT_SRC);
-			}
-			if(addr >= dstptr && addr < (dstptr + chunk)) {
-				NOREC_RETURN(linlincopy, EFAULT_DST);
-			}
-			minix_panic("lin_lin_copy fault out of range", NO_NUM);
-
-			/* Not reached. */
-			NOREC_RETURN(linlincopy, EFAULT);
-		}
-
-		/* Update counter and addresses for next iteration, if any. */
-		bytes -= chunk;
-		srclinaddr += chunk;
-		dstlinaddr += chunk;
-	}
-
-	NOREC_RETURN(linlincopy, OK);
-}
 
 /*===========================================================================*
  *				lin_memset				     *
@@ -790,8 +747,6 @@ int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
 	char *v;
 	u32_t p;
 	p = c | (c << 8) | (c << 16) | (c << 24);
-
-	physzero++;
 
 	if(!vm_running) {
 		phys_memset(ph, p, bytes);

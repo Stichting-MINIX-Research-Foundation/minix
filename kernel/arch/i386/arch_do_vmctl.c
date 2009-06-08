@@ -73,11 +73,6 @@ struct proc *p;
 		i386_freepde(m_ptr->SVMCTL_VALUE);
 		return OK;
 	}
-	case VMCTL_I386_INVLPG:
-	{
-		invlpg_range(m_ptr->SVMCTL_VALUE, 1);
-		return OK;
-	}
   }
 
 

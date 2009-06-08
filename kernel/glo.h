@@ -65,6 +65,7 @@ EXTERN int verboseflags;
 
 /* VM */
 EXTERN int vm_running;
+EXTERN int catch_pagefaults;
 EXTERN struct proc *ptproc;
 
 /* Timing */

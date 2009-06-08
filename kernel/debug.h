@@ -25,9 +25,9 @@
 #define DEBUG_TIME_LOCKS		1
 
 /* Runtime sanity checking. */
-#define DEBUG_VMASSERT			0
-#define DEBUG_SCHED_CHECK		0
-#define DEBUG_STACK_CHECK		0
+#define DEBUG_VMASSERT			1
+#define DEBUG_SCHED_CHECK		1
+#define DEBUG_STACK_CHECK		1
 #define DEBUG_TRACE			1
 
 #if DEBUG_TRACE

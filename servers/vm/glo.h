@@ -25,3 +25,5 @@ EXTERN long vm_sanitychecklevel;
 
 /* vm operation mode state and values */
 EXTERN long vm_paged;
+
+EXTERN int meminit_done;

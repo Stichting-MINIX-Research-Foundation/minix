@@ -52,7 +52,6 @@ PRIVATE unsigned font_lines;	/* font lines per character */
 PRIVATE unsigned scr_width;	/* # characters on a line */
 PRIVATE unsigned scr_lines;	/* # lines on the screen */
 PRIVATE unsigned scr_size;	/* # characters on the screen */
-PUBLIC unsigned info_location;	/* location in video memory of struct */
 
 /* tells mem_vid_copy() to blank the screen */
 #define BLANK_MEM ((vir_bytes) 0) 
@@ -65,9 +64,6 @@ PRIVATE int disabled_sm;	/* Scroll mode to be restored when re-enabling
 				 */
 
 char *console_memory = NULL;
-
-/* boot_tty_info we use to communicate with the boot code. */
-struct boot_tty_info boot_tty_info;
 
 /* Per console data. */
 typedef struct console {
@@ -90,24 +86,14 @@ typedef struct console {
   int c_line;			/* line no */
 } console_t;
 
-#define UPDATEBOOTINFO(ccons, infofield, value)	{		\
-	if(ccons->c_line == 0) {				\
-		boot_tty_info.infofield = value;		\
-		mem_vid_copy((vir_bytes) &boot_tty_info,	\
-			info_location/2, sizeof(boot_tty_info)/2);	\
-	}							\
-}
-
 #define UPDATE_CURSOR(ccons, cursor) {				\
 	ccons->c_cur = cursor;					\
-	UPDATEBOOTINFO(ccons, conscursor, ccons->c_cur);	\
 	if(curcons && ccons == curcons)				\
 		set_6845(CURSOR, ccons->c_cur);			\
 }
 
 #define UPDATE_ORIGIN(ccons, origin) {				\
 	ccons->c_org = origin;					\
-	UPDATEBOOTINFO(ccons, consorigin, ccons->c_org);	\
   	if (curcons && ccons == curcons) 			\
 		set_6845(VID_ORG, ccons->c_org);		\
 }
@@ -1001,12 +987,14 @@ tty_t *tp;
   	}
   	if (machine.vdu_ega) vid_size = EGA_SIZE;
   	wrap = ! machine.vdu_ega;
-	info_location = vid_size - sizeof(struct boot_tty_info);
 
 	console_memory = vm_map_phys(SELF, (void *) vid_base, vid_size);
 
 	if(console_memory == MAP_FAILED) 
   		panic("TTY","Console couldn't map video memory", NO_NUM);
+
+	printf("TTY: vm_map_phys of 0x%lx OK, result 0x%lx", 
+		vid_base, console_memory);
 
   	vid_size >>= 1;		/* word count */
   	vid_mask = vid_size - 1;
@@ -1015,7 +1003,7 @@ tty_t *tp;
   	scr_size = scr_lines * scr_width;
 
   	/* There can be as many consoles as video memory allows. */
-  	nr_cons = (vid_size - sizeof(struct boot_tty_info)/2) / scr_size;
+  	nr_cons = vid_size / scr_size;
 
   	if (nr_cons > NR_CONS) nr_cons = NR_CONS;
   	if (nr_cons > 1) wrap = 0;
@@ -1038,12 +1026,6 @@ tty_t *tp;
 	scroll_screen(cons, SCROLL_UP);
 	cons->c_row = scr_lines - 1;
 	cons->c_column = 0;
-
-	memset(&boot_tty_info, 0, sizeof(boot_tty_info));
-	UPDATE_CURSOR(cons, cons->c_cur);
-	boot_tty_info.flags = BTIF_CONSCURSOR | BTIF_CONSORIGIN;
-	boot_tty_info.magic = TTYMAGIC;
-	UPDATE_ORIGIN(cons, cons->c_org);
   }
   select_console(0);
   cons_ioctl(tp, 0);

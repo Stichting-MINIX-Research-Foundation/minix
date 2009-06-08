@@ -4,7 +4,7 @@ SERVER = vm
 include /etc/make.conf
 
 OBJ = main.o alloc.o utility.o exec.o exit.o fork.o break.o \
-	signal.o vfs.o mmap.o slaballoc.o region.o pagefaults.o
+	signal.o vfs.o mmap.o slaballoc.o region.o pagefaults.o addravl.o 
 ARCHOBJ =  $(ARCH)/vm.o $(ARCH)/pagetable.o $(ARCH)/arch_pagefaults.o $(ARCH)/util.o 
 
 CPPFLAGS=-I../../kernel/arch/$(ARCH)/include -I$(ARCH)

@@ -34,12 +34,6 @@
 
 #include "memory.h"
 
-/* Location in our virtual address space where we can map in 
- * any physical page we want.
-*/
-PRIVATE unsigned char *varmap = NULL;	/* Our address space. */
-PRIVATE u32_t varmap_loc;		/* Our page table. */
-
 /* PDE used to map in kernel, kernel physical address. */
 PRIVATE int kernel_pde = -1, pagedir_pde = -1;
 PRIVATE u32_t kern_pde_val = 0, global_bit = 0, pagedir_pde_val;
@@ -307,7 +301,7 @@ PUBLIC void *vm_allocpages(phys_bytes *phys, int pages, int reason)
 	vm_assert(level >= 1);
 	vm_assert(level <= 2);
 
-	if(level > 1 || !(vmp->vm_flags & VMF_HASPT)) {
+	if(level > 1 || !(vmp->vm_flags & VMF_HASPT) || !meminit_done) {
 		int r;
 		void *s;
 		vm_assert(pages == 1);
@@ -430,6 +424,8 @@ PUBLIC int pt_writemap(pt_t *pt, vir_bytes v, phys_bytes physaddr,
 	for(pde = I386_VM_PDE(v); pde <= finalpde; pde++) {
 		vm_assert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
 		if(pt->pt_dir[pde] & I386_VM_BIGPAGE) {
+			printf("pt_writemap: trying to write 0x%lx into 0x%lx\n",
+				physaddr, v);
                         vm_panic("pt_writemap: BIGPAGE found", NO_NUM);
 		}
 		if(!(pt->pt_dir[pde] & I386_VM_PRESENT)) {
@@ -618,19 +614,19 @@ PUBLIC void pt_init(void)
          */     
         if(pt_new(newpt) != OK)
                 vm_panic("pt_init: pt_new failed", NO_NUM); 
+
+	/* Old position mapped in? */
+	pt_check(vmp);
                 
         /* Set up mappings for VM process. */
         for(v = lo; v < hi; v += I386_PAGE_SIZE)  {
                 phys_bytes addr;
                 u32_t flags; 
         
-                /* We have to write the old and new position in the PT,
+                /* We have to write the new position in the PT,
                  * so we can move our segments.
                  */ 
                 if(pt_writemap(newpt, v+moveup, v, I386_PAGE_SIZE,
-                        I386_VM_PRESENT|I386_VM_WRITE|I386_VM_USER, 0) != OK)
-                        vm_panic("pt_init: pt_writemap failed", NO_NUM);
-                if(pt_writemap(newpt, v, v, I386_PAGE_SIZE,
                         I386_VM_PRESENT|I386_VM_WRITE|I386_VM_USER, 0) != OK)
                         vm_panic("pt_init: pt_writemap failed", NO_NUM);
         }
@@ -670,17 +666,6 @@ PUBLIC void pt_init(void)
 
         /* Let other functions know VM now has a private page table. */
         vmp->vm_flags |= VMF_HASPT;
-
-        /* Reserve a page in our virtual address space that we
-         * can use to map in arbitrary physical pages.
-         */
-        varmap_loc = findhole(newpt, I386_PAGE_SIZE,
-                arch_vir2map(vmp, vmp->vm_stacktop),
-                vmp->vm_arch.vm_data_top);
-        if(varmap_loc == NO_MEM) {
-                vm_panic("no virt addr for vm mappings", NO_NUM);
-        }
-        varmap = (unsigned char *) arch_map2vir(vmp, varmap_loc);
 
 	/* Find a PDE below processes available for mapping in the
 	 * page directories (readonly).
@@ -725,13 +710,6 @@ PUBLIC void pt_init(void)
         /* Back to reality - this is where the stack actually is. */
         vmp->vm_arch.vm_seg[S].mem_len -= extra_clicks;
        
-        /* Wipe old mappings from VM. */
-        for(v = lo; v < hi; v += I386_PAGE_SIZE)  {
-                if(pt_writemap(newpt, v, MAP_NONE, I386_PAGE_SIZE,
-                        0, WMF_OVERWRITE) != OK)
-                        vm_panic("pt_init: pt_writemap failed", NO_NUM);
-        }
-
         /* All OK. */
         return;
 }
@@ -742,7 +720,7 @@ PUBLIC void pt_init(void)
  *===========================================================================*/
 PUBLIC int pt_bind(pt_t *pt, struct vmproc *who)
 {
-	int slot;
+	int slot, ispt;
 	u32_t phys;
 
 	/* Basic sanity checks. */
@@ -765,7 +743,6 @@ PUBLIC int pt_bind(pt_t *pt, struct vmproc *who)
 #if 0
 	printf("VM: slot %d has pde val 0x%lx\n", slot, page_directories[slot]);
 #endif
-
 	/* Tell kernel about new page table root. */
 	return sys_vmctl(who->vm_endpoint, VMCTL_I386_SETCR3,
 		pt ? pt->pt_dir_phys : 0);
@@ -832,6 +809,21 @@ PUBLIC int pt_mapkernel(pt_t *pt)
 }
 
 /*===========================================================================*
+ *                              pt_check                                *
+ *===========================================================================*/
+PUBLIC void pt_check(struct vmproc *vmp)
+{
+	phys_bytes hi;
+        hi = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_phys +
+                vmp->vm_arch.vm_seg[S].mem_len);
+	if(hi >= (kernel_pde+1) * I386_BIG_PAGE_SIZE) {
+		printf("VM: %d doesn't fit in kernel range\n",
+			vmp->vm_endpoint, hi);
+		vm_panic("boot time processes too big", NO_NUM);
+	}
+}
+
+/*===========================================================================*
  *				pt_cycle		     		     *
  *===========================================================================*/
 PUBLIC void pt_cycle(void)
@@ -839,84 +831,3 @@ PUBLIC void pt_cycle(void)
 	vm_checkspares();
 }
 
-/* In sanity check mode, pages are mapped and unmapped explicitly, so
- * unexpected double mappings (overwriting a page table entry) are caught.
- * If not sanity checking, simply keep the page mapped in and overwrite
- * the mapping entry; we need WMF_OVERWRITE for that in PHYS_MAP though.
- */
-#if SANITYCHECKS
-#define MAPFLAGS	0
-#else
-#define MAPFLAGS	WMF_OVERWRITE
-#endif
-
-static u32_t ismapped = MAP_NONE;
-
-#define PHYS_MAP(a, o)							\
-{	int r;								\
-	u32_t wantmapped;						\
-	vm_assert(varmap);						\
-	(o) = (a) % I386_PAGE_SIZE;					\
-	wantmapped = (a) - (o);						\
-	if(wantmapped != ismapped || ismapped == MAP_NONE) {		\
-		r = pt_writemap(&vmp->vm_pt, (vir_bytes) varmap_loc, 	\
-			wantmapped, I386_PAGE_SIZE, 			\
-			I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE, \
-				MAPFLAGS); 				\
-		if(r != OK)						\
-			vm_panic("PHYS_MAP: pt_writemap", NO_NUM);	\
-		ismapped = wantmapped;					\
-		/* Invalidate TLB for this page. */			\
-		if((r=sys_vmctl(SELF, VMCTL_I386_INVLPG, varmap_loc)) != OK) { \
-			vm_panic("VM: vmctl failed", r);	\
-		}	\
-	}								\
-}
-
-#define PHYSMAGIC 0x7b9a0590
-
-#if SANITYCHECKS
-#define PHYS_UNMAP if(OK != pt_writemap(&vmp->vm_pt, varmap_loc, MAP_NONE,\
-	I386_PAGE_SIZE, 0, WMF_OVERWRITE)) {				\
-		vm_panic("PHYS_UNMAP: pt_writemap failed", NO_NUM); }	\
-	ismapped = MAP_NONE;
-#endif
-
-#define PHYS_VAL(o) (* (phys_bytes *) (varmap + (o)))
-
-
-/*===========================================================================*
- *                              phys_writeaddr                               *
- *===========================================================================*/
-PUBLIC void phys_writeaddr(phys_bytes addr, phys_bytes v1, phys_bytes v2)
-{
-	phys_bytes offset;
-
-	SANITYCHECK(SCL_DETAIL);
-	PHYS_MAP(addr, offset);
-	PHYS_VAL(offset) = v1;
-	PHYS_VAL(offset + sizeof(phys_bytes)) = v2;
-#if SANITYCHECKS
-	PHYS_VAL(offset + 2*sizeof(phys_bytes)) = PHYSMAGIC;
-	PHYS_UNMAP;
-#endif
-	SANITYCHECK(SCL_DETAIL);
-}
-
-/*===========================================================================*
- *                              phys_readaddr                                *
- *===========================================================================*/
-PUBLIC void phys_readaddr(phys_bytes addr, phys_bytes *v1, phys_bytes *v2)
-{
-	phys_bytes offset;
-
-	SANITYCHECK(SCL_DETAIL);
-	PHYS_MAP(addr, offset);
-	*v1 = PHYS_VAL(offset);
-	*v2 = PHYS_VAL(offset + sizeof(phys_bytes));
-#if SANITYCHECKS
-	vm_assert(PHYS_VAL(offset + 2*sizeof(phys_bytes)) == PHYSMAGIC);
-	PHYS_UNMAP;
-#endif
-	SANITYCHECK(SCL_DETAIL);
-}

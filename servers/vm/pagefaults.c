@@ -72,6 +72,10 @@ PUBLIC void do_pagefaults(void)
 		vmp = &vmproc[p];
 		vm_assert(vmp->vm_flags & VMF_INUSE);
 
+#if 0
+		map_printmap(vmp);
+#endif
+
 		/* See if address is valid at all. */
 		if(!(region = map_lookup(vmp, addr))) {
 			vm_assert(PFERR_NOPAGE(err));

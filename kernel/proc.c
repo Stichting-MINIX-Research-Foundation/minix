@@ -88,6 +88,7 @@ FORWARD _PROTOTYPE( void pick_proc, (void));
 PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 {
 	int k;
+	phys_bytes addr;
 	NOREC_ENTER(queuemess);
 	/* Queue a message from the src process (in memory) to the dst
 	 * process (using dst process table entry). Do actual copy to
@@ -96,14 +97,34 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 	vmassert(!(dst->p_misc_flags & MF_DELIVERMSG));	
 	vmassert(dst->p_delivermsg_lin);
 	vmassert(isokendpt(ep, &k));
+	FIXME("copy messages directly if in memory");
+	FIXME("possibly also msgcopy specific function");
 
-	if(phys_copy(msg_lin, vir2phys(&dst->p_delivermsg),
-		sizeof(message))) {
+	if(INMEMORY(dst)) {
+		PHYS_COPY_CATCH(msg_lin, dst->p_delivermsg_lin,
+			sizeof(message), addr);
+		if(!addr) {
+			PHYS_COPY_CATCH(vir2phys(&ep), dst->p_delivermsg_lin,
+				sizeof(ep), addr);
+			if(!addr) {
+				NOREC_RETURN(queuemess, OK);
+			}
+		}
+	}
+
+	PHYS_COPY_CATCH(msg_lin, vir2phys(&dst->p_delivermsg), sizeof(message), addr);
+	if(addr) {
 		NOREC_RETURN(queuemess, EFAULT);
 	}
 
 	dst->p_delivermsg.m_source = ep;
 	dst->p_misc_flags |= MF_DELIVERMSG;
+
+#if 0
+	if(INMEMORY(dst)) {
+		delivermsg(dst);
+	}
+#endif
 
 	NOREC_RETURN(queuemess, OK);
 }
@@ -456,6 +477,7 @@ int flags;
   register struct proc **xpp;
   int dst_p;
   phys_bytes linaddr;
+  vir_bytes addr;
   int r;
 
   if(!(linaddr = umap_local(caller_ptr, D, (vir_bytes) m_ptr,
@@ -485,9 +507,10 @@ int flags;
 	}
 
 	/* Destination is not waiting.  Block and dequeue caller. */
-	if(phys_copy(linaddr, vir2phys(&caller_ptr->p_sendmsg), sizeof(message))) {
-		return EFAULT;
-	}
+	PHYS_COPY_CATCH(linaddr, vir2phys(&caller_ptr->p_sendmsg),
+		sizeof(message), addr);
+
+	if(addr) { return EFAULT; }
 	RTS_SET(caller_ptr, SENDING);
 	caller_ptr->p_sendto_e = dst_e;
 
@@ -531,7 +554,7 @@ int flags;
 
   /* This is where we want our message. */
   caller_ptr->p_delivermsg_lin = linaddr;
-  caller_ptr->p_delivermsg_vir = m_ptr;
+  caller_ptr->p_delivermsg_vir = (vir_bytes) m_ptr;
 
   if(src_e == ANY) src_p = ANY;
   else
@@ -1063,7 +1086,6 @@ register struct proc *rp;	/* this process is now runnable */
    * process yet or current process isn't ready any more, or
    * it's PREEMPTIBLE.
    */
-     FIXME("PREEMPTIBLE test?");
 	vmassert(proc_ptr);
 #if 0
   if(!proc_ptr || proc_ptr->p_rts_flags) 
