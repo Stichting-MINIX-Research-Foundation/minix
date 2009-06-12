@@ -45,6 +45,7 @@ usr:	\
 	/usr/bin/floppysetup \
 	/usr/bin/packit \
 	/usr/bin/packman \
+	/usr/bin/poweroff \
 	/usr/bin/spell \
 	/usr/bin/srccrc \
 	/usr/bin/svclog \
@@ -148,6 +149,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/packman:	packman.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/poweroff:	poweroff.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/spell:	spell.sh
