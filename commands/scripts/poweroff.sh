@@ -10,4 +10,6 @@ fi
 
 PATH=/usr/bin:$PATH
 
+trap "" 15
+
 shutdown -x off
