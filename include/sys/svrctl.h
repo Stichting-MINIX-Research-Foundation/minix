@@ -23,7 +23,6 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 
 /* FS controls. */
 #define FSSIGNON	_IOW('F',  2, struct fssignon)
-#define FSDEVMAP	_IORW('F', 5, struct fsdevmap)
 #define FSDEVUNMAP	_IOW('F',  6, struct fsdevunmap)
 
 /* Kernel controls. */
