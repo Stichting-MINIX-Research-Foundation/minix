@@ -51,12 +51,6 @@ KERNEL		=$(SYSTEM)/kernel
 PTRACE		=$(INCLUDE)/sys/ptrace.h
 
 
-# Header files from pm (used by core.c) 
-#
-MMFILES=	$(SYSTEM)/servers/pm/const.h \
-		$(SYSTEM)/servers/pm/type.h \
-		$(SYSTEM)/servers/pm/mproc.h
-
 # Header files from system and kernel in "mdb.h" 
 #
 SYSFILES=	$(INCLUDE)/minix/config.h \

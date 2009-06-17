@@ -4,8 +4,6 @@
  * reads information from 'core' file
  * Partly derived from 'adb' by D. Dugger.
  */
-#include <pm/const.h>
-
 #include "mdb.h"
 
 #include <signal.h>
@@ -15,9 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/ptrace.h>
-
-#include <pm/type.h>
-#include <pm/mproc.h>
 
 #include <kernel/arch/i386/include/archtypes.h>
 #include <kernel/const.h>
@@ -249,16 +244,14 @@ PRIVATE unsigned long c_status()
 PRIVATE void read_info(fp)
 struct file *fp;
 {
-  struct mproc mm_info;
-  struct mproc *rmp;
+  struct mem_map seg[NR_LOCAL_SEGS];
   int r;
   int i;
 
-  rmp = &mm_info;
   lseek(fp->fid, 0L, 0L);
 
   /* First read memory map of all segments. */
-  if (read(fp->fid, (char *) rmp->mp_seg, (int) SIZE_MP_SEG) < 0) {
+  if (read(fp->fid, (char *) seg, (int) SIZE_MP_SEG) < 0) {
 	close(fp->fid);
 	Printf("mdb: cannot read core header\n");
 	fp->fid = -1;
@@ -278,20 +271,20 @@ struct file *fp;
 
   /* copy info */ 	
   for (i = T; i <= S; i++)
-	cnt[i] = (long) rmp->mp_seg[i].mem_len << CLICK_SHIFT;
+	cnt[i] = (long) seg[i].mem_len << CLICK_SHIFT;
 
   /* This needs to be set for map_addr() below */
   if(coreonly && cnt[T] != 0) is_separate = TRUE;
 
-  st_addr = (long) rmp->mp_seg[T].mem_vir << CLICK_SHIFT;
-  et_addr = st_addr + ((long) rmp->mp_seg[T].mem_len << CLICK_SHIFT);
+  st_addr = (long) seg[T].mem_vir << CLICK_SHIFT;
+  et_addr = st_addr + ((long) seg[T].mem_len << CLICK_SHIFT);
 
-  sd_addr = (long) rmp->mp_seg[D].mem_vir << CLICK_SHIFT;
+  sd_addr = (long) seg[D].mem_vir << CLICK_SHIFT;
   end_addr = ed_addr = 
-	sd_addr + ((long) rmp->mp_seg[D].mem_len << CLICK_SHIFT);
+	sd_addr + ((long) seg[D].mem_len << CLICK_SHIFT);
 
-  sk_addr = (long) rmp->mp_seg[S].mem_vir << CLICK_SHIFT;
-  sk_size = (long) rmp->mp_seg[S].mem_len << CLICK_SHIFT;
+  sk_addr = (long) seg[S].mem_vir << CLICK_SHIFT;
+  sk_size = (long) seg[S].mem_len << CLICK_SHIFT;
 
   setmap(fp);
 }
