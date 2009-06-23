@@ -572,11 +572,12 @@ bios="`echo $primary | sed -e 's/d./dX/g' -e 's/c.//g'`"
 if [ ! "$auto" = "r" ]
 then	if mount /dev/$home /home 2>/dev/null
 	then	for u in bin ast
-		do	if mkdir ~$u
-			then	echo " * Creating home directory for $u in ~$u"
-				cpdir /usr/ast ~$u
-				chown -R $u:operator ~$u
-			else	echo " * Couldn't create ~$u"
+		do	h=`eval echo "~$u"`
+			if mkdir $h
+			then	echo " * Creating home directory for $u in $h"
+				cpdir /usr/ast $h
+				chown -R $u:operator $h
+			else	echo " * Couldn't create $h"
 			fi
 		done
 		umount /dev/$home
