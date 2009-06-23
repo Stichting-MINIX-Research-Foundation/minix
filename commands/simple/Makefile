@@ -108,6 +108,7 @@ ALL	= \
 	isoread \
 	join \
 	kill \
+	last \
 	leave \
 	life \
 	loadramdisk \
@@ -989,6 +990,8 @@ install:	\
 	/usr/bin/join \
 	/usr/bin/kill \
 	/usr/bin/leave \
+	/usr/bin/last \
+	/usr/bin/uptime \
 	/usr/bin/life \
 	/usr/bin/loadramdisk \
 	/usr/bin/login \
