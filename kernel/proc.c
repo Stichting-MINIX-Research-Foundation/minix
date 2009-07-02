@@ -178,8 +178,7 @@ long bit_map;			/* notification event set or flags */
    * addition to a real endpoint). The other calls (SEND, SENDREC,
    * and NOTIFY) require an endpoint to corresponds to a process. In addition,
    * it is necessary to check whether a process is allowed to send to a given
-   * destination. For SENDREC we check s_ipc_sendrec, and for SEND,
-   * and NOTIFY we check s_ipc_to.
+   * destination.
    */
   if (call_nr == SENDA)
   {
@@ -201,13 +200,6 @@ long bit_map;			/* notification event set or flags */
   }
   else
   {
-	if(caller_ptr->p_endpoint == src_dst_e) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-		kprintf("sys_call: trap %d by %d with self %d\n", 
-			call_nr, proc_nr(caller_ptr), src_dst_e);
-#endif
-		return EINVAL;
-	}
 	/* Require a valid source and/or destination process. */
 	if(!isokendpt(src_dst_e, &src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
@@ -219,29 +211,13 @@ long bit_map;			/* notification event set or flags */
 		return EDEADSRCDST;
 	}
 
-	/* If the call is to send to a process, i.e., for SEND,
+	/* If the call is to send to a process, i.e., for SEND, SENDNB,
 	 * SENDREC or NOTIFY, verify that the caller is allowed to send to
 	 * the given destination. 
 	 */
-	if (call_nr == SENDREC)
+	if (call_nr != RECEIVE)
 	{
-		if (! get_sys_bit(priv(caller_ptr)->s_ipc_sendrec,
-			nr_to_id(src_dst_p))) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-			kprintf(
-	"sys_call: ipc sendrec mask denied trap %d from %d ('%s') to %d\n",
-				call_nr, proc_nr(caller_ptr),
-				caller_ptr->p_name, src_dst_p);
-#endif
-			if (caller_ptr->p_endpoint == ipc_stats_target)
-				ipc_stats.dst_not_allowed++;
-			return(ECALLDENIED);	/* call denied by ipc mask */
-		}
-	}
-	else if (call_nr == SEND || call_nr == SENDNB || call_nr == NOTIFY)
-	{
-		if (! get_sys_bit(priv(caller_ptr)->s_ipc_to,
-			nr_to_id(src_dst_p))) {
+		if (!may_send_to(caller_ptr, src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
 			kprintf(
 			"sys_call: ipc mask denied trap %d from %d to %d\n",
@@ -823,7 +799,26 @@ size_t size;
 		if (!isokendpt(tabent.dst, &dst_p))
 		{
 			/* Bad destination, report the error */
+  			if (caller_ptr->p_endpoint == ipc_stats_target)
+				ipc_stats.bad_endpoint++;
+
 			tabent.result= EDEADSRCDST;
+			A_INSERT(i, result);
+			tabent.flags= flags | AMF_DONE;
+			A_INSERT(i, flags);
+
+			if (flags & AMF_NOTIFY)
+				do_notify= 1;
+			continue;
+		}
+
+		if (!may_send_to(caller_ptr, dst_p))
+		{
+			/* Send denied by IPC mask */
+			if (caller_ptr->p_endpoint == ipc_stats_target)
+				ipc_stats.dst_not_allowed++;
+
+			tabent.result= ECALLDENIED;
 			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
 			A_INSERT(i, flags);
@@ -843,6 +838,9 @@ size_t size;
 		/* NO_ENDPOINT should be removed */
 		if (dst_ptr->p_rts_flags & NO_ENDPOINT)
 		{
+			if (caller_ptr->p_endpoint == ipc_stats_target)
+				ipc_stats.dst_died++;
+
 			tabent.result= EDSTDIED;
 			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
@@ -928,6 +926,8 @@ struct proc *caller_ptr;
 			privp->s_proc_nr);
 #endif
 		src_ptr= proc_addr(privp->s_proc_nr);
+		if (!may_send_to(src_ptr, proc_nr(caller_ptr)))
+			continue;
 		r= try_one(src_ptr, caller_ptr);
 		if (r == OK)
 			return r;

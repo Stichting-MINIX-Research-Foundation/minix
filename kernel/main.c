@@ -83,6 +83,10 @@ PUBLIC void main()
 	priv(rp)->s_flags = ip->flags;			/* process flags */
 	priv(rp)->s_trap_mask = ip->trap_mask;		/* allowed traps */
 
+	/* Warn about violations of the boot image table order consistency. */
+	if (priv_id(rp) != s_nr_to_id(ip->proc_nr))
+		kprintf("Warning: boot image table has wrong process order\n");
+
 	/* Initialize call mask bitmap from unordered set.
 	 * A single SYS_ALL_CALLS is a special case - it
 	 * means all calls are allowed.
@@ -99,12 +103,9 @@ PUBLIC void main()
 			SET_BIT(priv(rp)->s_k_call_mask,
 				ip->k_calls[ci]-KERNEL_CALL);
 
-	priv(rp)->s_ipc_to.chunk[0] = ip->ipc_to;	/* restrict targets */
-
-	for (j=0; j<BITMAP_CHUNKS(NR_SYS_PROCS); j++) {
-		rp->p_priv->s_ipc_sendrec.chunk[j] = ~0L;
-	}
-	unset_sys_bit(rp->p_priv->s_ipc_sendrec, USER_PRIV_ID);
+	for (j = 0; j < NR_SYS_PROCS && j < BITCHUNK_BITS; j++)
+		if (ip->ipc_to & (1 << j))
+			set_sendto_bit(rp, j);	/* restrict targets */
 
 	if (iskerneln(proc_nr(rp))) {		/* part of the kernel? */ 
 		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */

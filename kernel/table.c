@@ -60,18 +60,15 @@ PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 
 /* Send masks determine to whom processes can send messages or notifications. 
  * The values here are used for the processes in the boot image. We rely on 
- * the initialization code in main() to match the s_nr_to_id() mapping for the
- * processes in the boot image, so that the send mask that is defined here 
- * can be directly copied onto map[0] of the actual send mask. Privilege
- * structure 0 is shared by user processes. 
+ * the boot image table itself to match the order of the process numbers, so
+ * that the send mask that is defined here can be interpreted properly.
+ * Privilege structure 0 is shared by user processes. 
  */
 #define s(n)	(1 << (s_nr_to_id(n)))
-#define NUL_M   0
 #define SRV_M	(~0)
 #define SYS_M	(~0)
-#define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR) | s(SYSTEM) | \
-	s(VM_PROC_NR))
-#define DRV_M (USR_M | s(SYSTEM) | s(CLOCK) | s(DS_PROC_NR) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
+#define USR_M (s(PM_PROC_NR) | s(FS_PROC_NR) | s(RS_PROC_NR) | s(VM_PROC_NR))
+#define DRV_M (USR_M | s(SYSTEM) | s(DS_PROC_NR) | s(LOG_PROC_NR) | s(TTY_PROC_NR))
 
 /* Define kernel calls that processes are allowed to make. This is not looking
  * very nice, but we need to define the access rights on a per call basis. 
@@ -100,7 +97,8 @@ PRIVATE int
 
 /* The system image table lists all programs that are part of the boot image. 
  * The order of the entries here MUST agree with the order of the programs
- * in the boot image and all kernel tasks must come first.
+ * in the boot image and all kernel tasks must come first. Furthermore, the
+ * order of the entries MUST agree with their process numbers. See above.
  *
  * Each entry provides the process number, flags, quantum size, scheduling
  * queue, allowed traps, ipc mask, and a name for the process table. The 
@@ -120,10 +118,10 @@ PUBLIC struct boot_image image[] = {
 {PM_PROC_NR,    0,SVM_F, 32,      4, 0,     SRV_T, SRV_M, c(pm_c),"pm"    },
 {FS_PROC_NR,    0,SVM_F, 32,      5, 0,     SRV_T, SRV_M, c(fs_c),"vfs"   },
 {RS_PROC_NR,    0,SVM_F,  4,      4, 0,     SRV_T, SYS_M, c(rs_c),"rs"    },
-{DS_PROC_NR,    0,SVM_F,  4,      4, 0,     SRV_T, SYS_M, c(ds_c),"ds"    },
-{TTY_PROC_NR,   0,SVM_F,  4,      1, 0,     SRV_T, SYS_M,c(tty_c),"tty"   },
 {MEM_PROC_NR,   0,SVM_F,  4,      3, 0,     SRV_T, SYS_M,c(mem_c),"memory"},
 {LOG_PROC_NR,   0,SVM_F,  4,      2, 0,     SRV_T, SYS_M,c(drv_c),"log"   },
+{TTY_PROC_NR,   0,SVM_F,  4,      1, 0,     SRV_T, SYS_M,c(tty_c),"tty"   },
+{DS_PROC_NR,    0,SVM_F,  4,      4, 0,     SRV_T, SYS_M, c(ds_c),"ds"    },
 {MFS_PROC_NR,   0,SVM_F, 32,      5, 0,     SRV_T, SRV_M, c(fs_c),"mfs"   },
 {VM_PROC_NR,    0,SRV_F, 32,      2, 0,     SRV_T, SRV_M, c(vm_c),"vm"    },
 {INIT_PROC_NR,  0,USR_F,  8, USER_Q, 0,     USR_T, USR_M, no_c,"init"  },

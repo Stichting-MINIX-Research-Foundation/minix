@@ -70,24 +70,14 @@ message *m_ptr;			/* pointer to request message */
 
 	/* Now update the process' privileges as requested. */
 	rp->p_priv->s_trap_mask = FILLED_MASK;
-	for (i=0; i<BITMAP_CHUNKS(NR_SYS_PROCS); i++) {
-		rp->p_priv->s_ipc_to.chunk[i] = FILLED_MASK;
-	}
-	unset_sys_bit(rp->p_priv->s_ipc_to, USER_PRIV_ID);
 
-	/* All process that this process can send to must be able to reply. 
-	 * Therefore, their send masks should be updated as well. 
-	 */
-	for (i=0; i<NR_SYS_PROCS; i++) {
-	    if (get_sys_bit(rp->p_priv->s_ipc_to, i)) {
-		  set_sys_bit(priv_addr(i)->s_ipc_to, priv_id(rp));
-	    }
+	/* Set a default send mask. */
+	for (i=0; i < NR_SYS_PROCS; i++) {
+		if (i != USER_PRIV_ID)
+			set_sendto_bit(rp, i);
+		else
+			unset_sendto_bit(rp, i);
 	}
-
-	for (i=0; i<BITMAP_CHUNKS(NR_SYS_PROCS); i++) {
-		rp->p_priv->s_ipc_sendrec.chunk[i] = FILLED_MASK;
-	}
-	unset_sys_bit(rp->p_priv->s_ipc_sendrec, USER_PRIV_ID);
 
 	/* No I/O resources, no memory resources, no IRQs, no grant table */
 	priv(rp)->s_nr_io_range= 0;
@@ -142,10 +132,14 @@ message *m_ptr;			/* pointer to request message */
 
 		memcpy(priv(rp)->s_k_call_mask, priv.s_k_call_mask,
 			sizeof(priv(rp)->s_k_call_mask));
-		memcpy(&priv(rp)->s_ipc_to, &priv.s_ipc_to,
-			sizeof(priv(rp)->s_ipc_to));
-		memcpy(&priv(rp)->s_ipc_sendrec, &priv.s_ipc_sendrec,
-			sizeof(priv(rp)->s_ipc_sendrec));
+
+		/* Set a custom send mask. */
+		for (i=0; i < NR_SYS_PROCS; i++) {
+			if (get_sys_bit(priv.s_ipc_to, i))
+				set_sendto_bit(rp, i);
+			else
+				unset_sendto_bit(rp, i);
+		}
 	}
 
 	/* Done. Privileges have been set. Allow process to run again. */

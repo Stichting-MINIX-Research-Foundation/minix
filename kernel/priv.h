@@ -36,9 +36,7 @@ struct priv {
 				 */
 
   short s_trap_mask;		/* allowed system call traps */
-  sys_map_t s_ipc_from;		/* allowed callers to receive from */
   sys_map_t s_ipc_to;		/* allowed destination processes */
-  sys_map_t s_ipc_sendrec;	/* allowed sendrec processes */
 
   /* allowed kernel calls */
 #define CALL_MASK_SIZE BITMAP_CHUNKS(NR_SYS_CALLS)
@@ -77,6 +75,8 @@ struct priv {
 
 #define id_to_nr(id)	priv_addr(id)->s_proc_nr
 #define nr_to_id(nr)    priv(proc_addr(nr))->s_id
+
+#define may_send_to(rp, nr) (get_sys_bit(priv(rp)->s_ipc_to, nr_to_id(nr)))
 
 /* The system structures table and pointers to individual table slots. The 
  * pointers allow faster access because now a process entry can be found by 

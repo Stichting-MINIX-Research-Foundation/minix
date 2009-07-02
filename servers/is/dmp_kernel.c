@@ -363,7 +363,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -ipc_sr-- -system calls--\n");
+  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -system calls--\n");
 
   PROCLOOP(rp, oldrp)
         r = -1;
@@ -378,9 +378,6 @@ PUBLIC void privileges_dmp()
 		sp->s_grant_entries);
         for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
 	    printf(" %04x", get_sys_bits(sp->s_ipc_to, i));
-       	}
-        for (i=0; i < NR_SYS_PROCS; i += BITCHUNK_BITS) {
-	    printf(" %04x", get_sys_bits(sp->s_ipc_sendrec, i));
        	}
 
 	printf(" ");

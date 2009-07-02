@@ -55,6 +55,8 @@ _PROTOTYPE( void cstart, (U16_t cs, U16_t ds, U16_t mds,
 
 /* system.c */
 _PROTOTYPE( int get_priv, (register struct proc *rc, int proc_type)	);
+_PROTOTYPE( void set_sendto_bit, (struct proc *rc, int id)		);
+_PROTOTYPE( void unset_sendto_bit, (struct proc *rc, int id)		);
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void sys_task, (void)					);

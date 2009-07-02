@@ -12,6 +12,8 @@
  * In addition to the main sys_task() entry point, which starts the main loop,
  * there are several other minor entry points:
  *   get_priv:		assign privilege structure to user or system process
+ *   set_sendto_bit:	allow a process to send messages to a new target
+ *   unset_sendto_bit:	disallow a process from sending messages to a target
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via PM
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
@@ -288,6 +290,46 @@ int proc_type;				/* system or user process flag */
       /* s_flags of this shared structure are to be once at system startup. */
   }
   return(OK);
+}
+
+/*===========================================================================*
+ *				set_sendto_bit				     *
+ *===========================================================================*/
+PUBLIC void set_sendto_bit(struct proc *rp, int id)
+{
+/* Allow a process to send messages to the process(es) associated with the
+ * system privilege structure with the given ID. 
+ */
+  struct proc *rrp;			/* receiver process */
+
+  /* Disallow the process from sending to a system privilege structure with no
+   * associated process, and disallow the process from sending to itself.
+   */
+  if (id_to_nr(id) == NONE || priv_id(rp) == id)
+	return;
+
+  set_sys_bit(priv(rp)->s_ipc_to, id);
+
+  /* The process that this process can now send to, must be able to reply.
+   * Therefore, its send mask should be updated as well.
+   */
+  rrp = proc_addr(id_to_nr(id));
+  if (!iskernelp(rrp))
+	set_sys_bit(priv(rrp)->s_ipc_to, priv_id(rp));
+}
+
+/*===========================================================================*
+ *				unset_sendto_bit			     *
+ *===========================================================================*/
+PUBLIC void unset_sendto_bit(struct proc *rp, int id)
+{
+/* Prevent a process from sending to another process. Retain the send mask
+ * symmetry by also unsetting the bit for the other direction.
+ */
+
+  unset_sys_bit(priv(rp)->s_ipc_to, id);
+
+  unset_sys_bit(priv_addr(id)->s_ipc_to, priv_id(rp));
 }
 
 /*===========================================================================*

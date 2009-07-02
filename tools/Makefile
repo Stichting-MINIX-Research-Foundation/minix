@@ -10,10 +10,10 @@ PROGRAMS=	../kernel/kernel \
 	../servers/pm/pm \
 	../servers/vfs/vfs \
 	../servers/rs/rs \
-	../servers/ds/ds \
-	../drivers/tty/tty \
 	../drivers/memory/memory \
 	../drivers/log/log \
+	../drivers/tty/tty \
+	../servers/ds/ds \
 	../servers/mfs/mfs \
 	../servers/vm/vm \
 	../servers/init/init

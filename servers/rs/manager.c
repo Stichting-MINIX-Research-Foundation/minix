@@ -30,6 +30,12 @@ FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
 FORWARD _PROTOTYPE( int fork_nb, (void) );
 FORWARD _PROTOTYPE( int read_exec, (struct rproc *rp) );
 FORWARD _PROTOTYPE( void run_script, (struct rproc *rp) );
+FORWARD _PROTOTYPE( char *get_next_label, (char *ptr, char *label,
+	char *caller_label) );
+FORWARD _PROTOTYPE( void add_forward_ipc, (struct rproc *rp,
+	struct priv *privp) );
+FORWARD _PROTOTYPE( void add_backward_ipc, (struct rproc *rp,
+	struct priv *privp) );
 FORWARD _PROTOTYPE( void init_privs, (struct rproc *rp, struct priv *privp) );
 FORWARD _PROTOTYPE( void init_pci, (struct rproc *rp, int endpoint) );
 
@@ -1044,6 +1050,176 @@ struct rproc *rp;
 
 
 /*===========================================================================*
+ *				get_next_label				     *
+ *===========================================================================*/
+PRIVATE char *get_next_label(ptr, label, caller_label)
+char *ptr;
+char *label;
+char *caller_label;
+{
+	/* Get the next label from the list of (IPC) labels.
+	 */
+	char *p, *q;
+	size_t len;
+
+	for (p= ptr; p[0] != '\0'; p= q)
+	{
+		/* Skip leading space */
+		while (p[0] != '\0' && isspace((unsigned char)p[0]))
+			p++;
+
+		/* Find start of next word */
+		q= p;
+		while (q[0] != '\0' && !isspace((unsigned char)q[0]))
+			q++;
+		if (q == p)
+			continue;
+		len= q-p;
+		if (len > MAX_LABEL_LEN)
+		{
+			printf(
+	"rs:get_next_label: bad ipc list entry '.*s' for %s: too long\n",
+				len, p, caller_label);
+			continue;
+		}
+		memcpy(label, p, len);
+		label[len]= '\0';
+
+		return q; /* found another */
+	}
+
+	return NULL; /* done */
+}
+
+/*===========================================================================*
+ *				add_forward_ipc				     *
+ *===========================================================================*/
+PRIVATE void add_forward_ipc(rp, privp)
+struct rproc *rp;
+struct priv *privp;
+{
+	/* Add IPC send permissions to a process based on that process's IPC
+	 * list.
+	 */
+	char label[MAX_LABEL_LEN+1], *p;
+	struct rproc *tmp_rp;
+	endpoint_t proc_nr_e;
+	int slot_nr, priv_id;
+
+	p = rp->r_ipc_list;
+
+	while ((p = get_next_label(p, label, rp->r_label)) != NULL) {
+
+		if (strcmp(label, "SYSTEM") == 0)
+			proc_nr_e= SYSTEM;
+		else if (strcmp(label, "USER") == 0)
+			proc_nr_e= INIT_PROC_NR; /* all user procs */
+		else if (strcmp(label, "PM") == 0)
+			proc_nr_e= PM_PROC_NR;
+		else if (strcmp(label, "VFS") == 0)
+			proc_nr_e= FS_PROC_NR;
+		else if (strcmp(label, "RS") == 0)
+			proc_nr_e= RS_PROC_NR;
+		else if (strcmp(label, "LOG") == 0)
+			proc_nr_e= LOG_PROC_NR;
+		else if (strcmp(label, "TTY") == 0)
+			proc_nr_e= TTY_PROC_NR;
+		else if (strcmp(label, "DS") == 0)
+			proc_nr_e= DS_PROC_NR;
+		else if (strcmp(label, "VM") == 0)
+			proc_nr_e= VM_PROC_NR;
+		else
+		{
+			/* Try to find process */
+			for (slot_nr = 0; slot_nr < NR_SYS_PROCS;
+				slot_nr++)
+			{
+				tmp_rp = &rproc[slot_nr];
+				if (!(tmp_rp->r_flags & RS_IN_USE))
+					continue;
+				if (strcmp(tmp_rp->r_label, label) == 0)
+					break;
+			}
+			if (slot_nr >= NR_SYS_PROCS)
+			{
+				printf(
+				"add_forward_ipc: unable to find '%s'\n",
+					label);
+				continue;
+			}
+			proc_nr_e= tmp_rp->r_proc_nr_e;
+		}
+
+		priv_id= sys_getprivid(proc_nr_e);
+		if (priv_id < 0)
+		{
+			printf(
+		"add_forward_ipc: unable to get priv_id for '%s': %d\n",
+				label, priv_id);
+			continue;
+		}
+		set_sys_bit(privp->s_ipc_to, priv_id);
+	}
+}
+
+
+/*===========================================================================*
+ *				add_backward_ipc			     *
+ *===========================================================================*/
+PRIVATE void add_backward_ipc(rp, privp)
+struct rproc *rp;
+struct priv *privp;
+{
+	/* Add IPC send permissions to a process based on other processes' IPC
+	 * lists. This is enough to allow each such two processes to talk to
+	 * each other, as the kernel guarantees send mask symmetry. We need to
+	 * add these permissions now because the current process may not yet
+	 * have existed at the time that the other process was initialized.
+	 */
+	char label[MAX_LABEL_LEN+1], *p;
+	struct rproc *rrp;
+	int priv_id, found;
+
+	for (rrp=BEG_RPROC_ADDR; rrp<END_RPROC_ADDR; rrp++) {
+		if (!(rrp->r_flags & RS_IN_USE))
+			continue;
+
+		/* If an IPC target list was provided for the process being
+		 * checked here, make sure that the label of the new process
+		 * is in that process's list.
+		 */
+		if (rrp->r_ipc_list[0]) {
+			found = 0;
+
+			p = rrp->r_ipc_list;
+
+			while ((p = get_next_label(p, label, rp->r_label)) !=
+									NULL) {
+				if (!strcmp(rp->r_label, label)) {
+					found = 1;
+					break;
+				}
+			}
+
+			if (!found)
+				continue;
+		}
+
+		priv_id= sys_getprivid(rrp->r_proc_nr_e);
+		if (priv_id < 0)
+		{
+			printf(
+		"add_backward_ipc: unable to get priv_id for '%s': %d\n",
+				label, priv_id);
+			continue;
+		}
+
+		set_sys_bit(privp->s_ipc_to, priv_id);
+	}
+}
+
+
+/*===========================================================================*
  *				init_privs				     *
  *===========================================================================*/
 PRIVATE void init_privs(rp, privp)
@@ -1051,13 +1227,8 @@ struct rproc *rp;
 struct priv *privp;
 {
 	int i, src_bits_per_word, dst_bits_per_word, src_word, dst_word,
-		src_bit, call_nr, chunk, bit, priv_id, slot_nr;
-	endpoint_t proc_nr_e;
-	size_t len;
+		src_bit, call_nr;
 	unsigned long mask;
-	char *p, *q;
-	struct rproc *tmp_rp;
-	char label[MAX_LABEL_LEN+1];
 
 	/* Clear s_k_call_mask */
 	memset(privp->s_k_call_mask, '\0', sizeof(privp->s_k_call_mask));
@@ -1088,98 +1259,21 @@ struct priv *privp;
 		}
 	}
 
-	/* Clear s_ipc_to and s_ipc_sendrec */
+	/* Clear s_ipc_to */
 	memset(&privp->s_ipc_to, '\0', sizeof(privp->s_ipc_to));
-	memset(&privp->s_ipc_sendrec, '\0', sizeof(privp->s_ipc_sendrec));
 
 	if (strlen(rp->r_ipc_list) != 0)
 	{
-		for (p= rp->r_ipc_list; p[0] != '\0'; p= q)
-		{
-			/* Skip leading space */
-			while (p[0] != '\0' && isspace((unsigned char)p[0]))
-				p++;
+		add_forward_ipc(rp, privp);
+		add_backward_ipc(rp, privp);
 
-			/* Find start of next word */
-			q= p;
-			while (q[0] != '\0' && !isspace((unsigned char)q[0]))
-				q++;
-			if (q == p)
-				continue;
-			len= q-p;
-			if (len+1 > sizeof(label))
-			{
-				printf(
-		"rs:init_privs: bad ipc list entry '.*s' for %s: too long\n",
-					len, p, rp->r_label);
-				continue;
-			}
-			memcpy(label, p, len);
-			label[len]= '\0';
-
-			if (strcmp(label, "SYSTEM") == 0)
-				proc_nr_e= SYSTEM;
-			else if (strcmp(label, "PM") == 0)
-				proc_nr_e= PM_PROC_NR;
-			else if (strcmp(label, "VFS") == 0)
-				proc_nr_e= FS_PROC_NR;
-			else if (strcmp(label, "RS") == 0)
-				proc_nr_e= RS_PROC_NR;
-			else if (strcmp(label, "LOG") == 0)
-				proc_nr_e= LOG_PROC_NR;
-			else if (strcmp(label, "TTY") == 0)
-				proc_nr_e= TTY_PROC_NR;
-			else if (strcmp(label, "DS") == 0)
-				proc_nr_e= DS_PROC_NR;
-			else
-			{
-				/* Try to find process */
-				for (slot_nr = 0; slot_nr < NR_SYS_PROCS;
-					slot_nr++)
-				{
-					tmp_rp = &rproc[slot_nr];
-					if (!(tmp_rp->r_flags & RS_IN_USE))
-						continue;
-					if (strcmp(tmp_rp->r_label, label) == 0)
-						break;
-				}
-				if (slot_nr >= NR_SYS_PROCS)
-				{
-					printf(
-					"init_privs: unable to find '%s'\n",
-						label);
-					continue;
-				}
-				proc_nr_e= tmp_rp->r_proc_nr_e;
-			}
-
-			priv_id= sys_getprivid(proc_nr_e);
-			if (priv_id < 0)
-			{
-				printf(
-			"init_privs: unable to get priv_id for '%s': %d\n",
-					label, priv_id);
-				continue;
-			}
-			chunk= (priv_id / (sizeof(bitchunk_t)*8));
-			bit= (priv_id % (sizeof(bitchunk_t)*8));
-			privp->s_ipc_to.chunk[chunk] |= (1 << bit);
-			privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
-		}
 	}
 	else
 	{
-		for (i= 0; i<sizeof(privp->s_ipc_to)*8; i++)
+		for (i= 0; i<NR_SYS_PROCS; i++)
 		{
-			chunk= (i / (sizeof(bitchunk_t)*8));
-			bit= (i % (sizeof(bitchunk_t)*8));
-			privp->s_ipc_to.chunk[chunk] |= (1 << bit);
-		}
-		for (i= 0; i<sizeof(privp->s_ipc_sendrec)*8; i++)
-		{
-			chunk= (i / (sizeof(bitchunk_t)*8));
-			bit= (i % (sizeof(bitchunk_t)*8));
-			privp->s_ipc_sendrec.chunk[chunk] |= (1 << bit);
+			if (i != USER_PRIV_ID)
+				set_sys_bit(privp->s_ipc_to, i);
 		}
 	}
 }

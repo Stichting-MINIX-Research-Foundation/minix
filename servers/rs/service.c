@@ -134,7 +134,6 @@ PRIVATE int parse_arguments(int argc, char **argv)
   int req_nr;
   int c, i;
   int c_flag;
-  int i_flag=0;
 
   c_flag= 0;
   while (c= getopt(argc, argv, "ci?"), c != -1)
@@ -148,7 +147,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
 		c_flag= 1;
 		break;
 	case 'i':
-		i_flag= 1;
+		/* Legacy - remove later */
+		fputs("WARNING: obsolete -i flag passed to service(8)\n",
+			stderr);
 		break;
 	default:
 		fprintf(stderr, "%s: getopt failed: %c\n",
@@ -186,11 +187,9 @@ PRIVATE int parse_arguments(int argc, char **argv)
 
 	req_nr= RS_START;
 
-      rs_start.rss_flags= 0;
+      rs_start.rss_flags= RF_IPC_VALID;
       if (c_flag)
 	rs_start.rss_flags |= RF_COPY;
-      if (i_flag)
-	rs_start.rss_flags |= RF_IPC_VALID;
 
       if (do_run)
       {
