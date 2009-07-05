@@ -226,8 +226,8 @@ int for_trace;
    * such as copying to/ from the exiting process, before it is gone.
    */
   sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
-  if(vm_willexit(proc_nr_e) != OK) {
-	panic(__FILE__, "pm_exit: vm_willexit failed", proc_nr_e);
+  if((r=vm_willexit(proc_nr_e)) != OK) {
+	panic(__FILE__, "pm_exit: vm_willexit failed", r);
   }
 
   if (proc_nr_e == INIT_PROC_NR)

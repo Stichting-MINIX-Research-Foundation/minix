@@ -260,7 +260,7 @@ sigset_t sig_map;
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
 	printf("PM: handle_ksig: %d?? zombie / not in use\n", proc_nr_e);
 	return;
-}
+  }
   proc_id = rmp->mp_pid;
   mp = &mproc[0];			/* pretend signals are from PM */
   mp->mp_procgrp = rmp->mp_procgrp;	/* get process group right */
@@ -517,13 +517,6 @@ doterminate:
   /* Signal should not or cannot be caught.  Take default action. */
   if (sigismember(&ign_sset, signo)) {
 	return;
-}
-
-  /* This process will exit, with or without dumping core. 
-   * Announce this fact to VM.
-   */
-  if((s=vm_willexit(rmp->mp_endpoint)) != OK) {
-	panic(__FILE__,"sig_proc: vm_willexit failed", s);
   }
 
   rmp->mp_sigstatus = (char) signo;
@@ -745,6 +738,9 @@ register struct mproc *rmp;	/* whose core is to be dumped */
    * such as copying to/ from the exiting process, before it is gone.
    */
   sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
+  if((r=vm_willexit(proc_nr_e)) != OK) {
+	panic(__FILE__,"dump_core: vm_willexit failed", r);
+  }
 
   if(proc_nr_e != FS_PROC_NR)		/* if it is not FS that is exiting.. */
   {

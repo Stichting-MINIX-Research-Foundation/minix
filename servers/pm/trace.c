@@ -87,12 +87,29 @@ PUBLIC int do_trace()
 	return(OK);
   }
 
-  if ((child=find_proc(m_in.pid))==NIL_MPROC || !(child->mp_flags & STOPPED)) {
-	return(ESRCH);
-  }
   /* all the other calls are made by the parent fork of the debugger to 
    * control execution of the child
    */
+  if ((child=find_proc(m_in.pid))==NIL_MPROC || child->mp_parent != who_p)
+	return(ESRCH);
+
+  if (m_in.request == T_STOP) {
+	if ((r = sys_trace(T_STOP, child->mp_endpoint, 0L, (long *) 0)) != OK)
+		return(r);
+
+	child->mp_flags |= STOPPED;
+	child->mp_sigstatus = 0;
+
+	mp->mp_reply.reply_trace = 0;
+	return(OK);
+  }
+
+  /* for calls other than T_STOP, the child must be stopped and the parent
+   * must have waited for it
+   */
+  if (!(child->mp_flags & STOPPED) || child->mp_sigstatus > 0)
+	return(ESRCH);
+
   switch (m_in.request) {
   case T_EXIT:		/* exit */
 	pm_exit(child, (int) m_in.data, TRUE /*for_trace*/);
@@ -127,7 +144,10 @@ pid_t lpid;
   register struct mproc *rmp;
 
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
-	if (rmp->mp_flags & IN_USE && rmp->mp_pid == lpid) return(rmp);
+	if ((rmp->mp_flags & (IN_USE | ZOMBIE)) == IN_USE &&
+		rmp->mp_pid == lpid) {
+		return(rmp);
+	}
   return(NIL_MPROC);
 }
 
@@ -143,7 +163,7 @@ int signo;
   register struct mproc *rpmp = mproc + rmp->mp_parent;
   int r;
 
-  r= sys_trace(-1, rmp->mp_endpoint, 0L, (long *) 0);
+  r= sys_trace(T_STOP, rmp->mp_endpoint, 0L, (long *) 0);
   if (r != OK) panic("pm", "sys_trace failed", r);
  
   rmp->mp_flags |= STOPPED;
