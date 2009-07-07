@@ -49,11 +49,6 @@ message *m_ptr;			/* pointer to request message */
 
   /* Copy the registers to the sigcontext structure. */
   memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(struct sigregs));
-#ifdef POWERPC
-  memcpy(&sc.sc_regs, (char *) &rp->p_reg, struct(stackframe_s));
-#else
-  memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(struct sigregs));
-#endif
 
   /* Finish the sigcontext initialization. */
   sc.sc_flags = 0;	/* unused at this time */

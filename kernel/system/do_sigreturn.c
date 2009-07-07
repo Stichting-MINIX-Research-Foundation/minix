@@ -53,11 +53,8 @@ message *m_ptr;			/* pointer to request message */
 #endif
 
   /* Restore the registers. */
-#if _MINIX_CHIP == _CHIP_POWERPC
-  memcpy(&rp->p_reg, &sc.sc_regs, sizeof(struct stackframe_s));
-#else
   memcpy(&rp->p_reg, &sc.sc_regs, sizeof(struct sigregs));
-#endif
+
   return(OK);
 }
 #endif /* USE_SIGRETURN */
