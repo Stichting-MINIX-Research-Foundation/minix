@@ -162,7 +162,7 @@ int result;
 
 			/* Use SIGILL signal that something went wrong */
 			rmp->mp_sigstatus = SIGILL;
-			pm_exit(rmp, 0, FALSE /*!for_trace*/);
+			exit_proc(rmp, 0, PM_EXIT);
 			return;
 		}
 		setreply(rmp-mproc, result);

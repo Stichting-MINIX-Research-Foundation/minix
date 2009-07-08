@@ -596,34 +596,7 @@ message *m_ptr;
 		/* Call is finished */
 		rmp->mp_fs_call= PM_IDLE;
 
-		if (!(rmp->mp_flags & PRIV_PROC))
-		{
-			/* destroy the (user) process */
-			if((r=sys_exit(proc_e)) != OK)
-			{
-				panic(__FILE__,
-					"PM_EXIT_REPLY: sys_exit failed", r);
-			}
-		}
-
-		/* Release the memory occupied by the child. */
-		if((s=vm_exit(rmp->mp_endpoint)) != OK) {
-			panic(__FILE__, "vm_exit() failed", s);
-		}
-
-		if (m_ptr->m_type == PM_EXIT_REPLY_TR &&
-			rmp->mp_parent != INIT_PROC_NR)
-		{
-			/* Wake up the parent */
-			mproc[rmp->mp_parent].mp_reply.reply_trace = 0;
-			setreply(rmp->mp_parent, OK);
-		}
-
-		/* Clean up if the parent has collected the exit
-		 * status
-		 */
-		if (rmp->mp_flags & TOLD_PARENT)
-			real_cleanup(rmp);
+		exit_restart(rmp, m_ptr->m_type);
 
 		break;
 
@@ -675,10 +648,6 @@ message *m_ptr;
 
 	case PM_CORE_REPLY:
 	{
-		int parent_waiting, right_child;
-		pid_t pidarg;
-		struct mproc *p_mp;
-
 		proc_e= m_ptr->PM_CORE_PROC;
 		if (pm_isokendpt(proc_e, &proc_n) != OK)
 		{
@@ -694,43 +663,7 @@ message *m_ptr;
 		/* Call is finished */
 		rmp->mp_fs_call= PM_IDLE;
 
-		p_mp = &mproc[rmp->mp_parent];		/* process' parent */
-		pidarg = p_mp->mp_wpid;		/* who's being waited for? */
-		parent_waiting = p_mp->mp_flags & WAITING;
-		right_child =		/* child meets one of the 3 tests? */
-			(pidarg == -1 || pidarg == rmp->mp_pid ||
-			-pidarg == rmp->mp_procgrp);
-
-		if (parent_waiting && right_child) {
-			tell_parent(rmp);		/* tell parent */
-		} else {
-			/* parent not waiting, zombify child */
-			rmp->mp_flags &= (IN_USE|PRIV_PROC|HAS_DMA);
-			rmp->mp_flags |= ZOMBIE;
-			/* send parent a "child died" signal */
-			sig_proc(p_mp, SIGCHLD);
-		}
-
-		if (!(rmp->mp_flags & PRIV_PROC))
-		{
-			/* destroy the (user) process */
-			if((r=sys_exit(proc_e)) != OK)
-			{
-				panic(__FILE__,
-					"PM_CORE_REPLY: sys_exit failed", r);
-			}
-		}
-
-		/* Release the memory occupied by the child. */
-		if((s=vm_exit(rmp->mp_endpoint)) != OK) {
-			panic(__FILE__, "vm_exit() failed", s);
-		}
-
-		/* Clean up if the parent has collected the exit
-		 * status
-		 */
-		if (rmp->mp_flags & TOLD_PARENT)
-			real_cleanup(rmp);
+		exit_restart(rmp, m_ptr->m_type);
 
 		break;
 	}

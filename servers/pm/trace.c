@@ -112,7 +112,7 @@ PUBLIC int do_trace()
 
   switch (m_in.request) {
   case T_EXIT:		/* exit */
-	pm_exit(child, (int) m_in.data, TRUE /*for_trace*/);
+	exit_proc(child, (int) m_in.data, PM_EXIT_TR);
 	/* Do not reply to the caller until FS has processed the exit
 	 * request.
 	 */

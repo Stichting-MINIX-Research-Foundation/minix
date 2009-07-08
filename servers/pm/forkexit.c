@@ -7,11 +7,12 @@
  * exits first, it continues to occupy a slot until the parent does a WAIT.
  *
  * The entry points into this file are:
- *   do_fork:	 perform the FORK system call
- *   do_pm_exit: perform the EXIT system call (by calling pm_exit())
- *   pm_exit:	 actually do the exiting
- *   do_wait:	 perform the WAITPID or WAIT system call
- *   tell_parent: tell parent about the death of a child
+ *   do_fork:		perform the FORK system call
+ *   do_fork_nb:	special nonblocking version of FORK, for RS
+ *   do_exit:		perform the EXIT system call (by calling exit_proc())
+ *   exit_proc:		actually do the exiting, and tell FS about it
+ *   exit_restart:	continue exiting a process after FS has replied
+ *   do_waitpid:	perform the WAITPID or WAIT system call
  */
 
 #include "pm.h"
@@ -26,7 +27,9 @@
 
 #define LAST_FEW            2	/* last few slots reserved for superuser */
 
-FORWARD _PROTOTYPE (void cleanup, (register struct mproc *child) );
+FORWARD _PROTOTYPE (void zombify, (struct mproc *rmp) );
+FORWARD _PROTOTYPE (void tell_parent, (struct mproc *child) );
+FORWARD _PROTOTYPE (void cleanup, (register struct mproc *rmp) );
 
 /*===========================================================================*
  *				do_fork					     *
@@ -173,34 +176,44 @@ PUBLIC int do_fork_nb()
 }
 
 /*===========================================================================*
- *				do_pm_exit				     *
+ *				do_exit					     *
  *===========================================================================*/
-PUBLIC int do_pm_exit()
+PUBLIC int do_exit()
 {
-/* Perform the exit(status) system call. The real work is done by pm_exit(),
+/* Perform the exit(status) system call. The real work is done by exit_proc(),
  * which is also called when a process is killed by a signal.
  */
-  pm_exit(mp, m_in.status, FALSE /*!for_trace*/);
+  exit_proc(mp, m_in.status, PM_EXIT);
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
 
 /*===========================================================================*
- *				pm_exit					     *
+ *				exit_proc				     *
  *===========================================================================*/
-PUBLIC void pm_exit(rmp, exit_status, for_trace)
+PUBLIC void exit_proc(rmp, exit_status, exit_type)
 register struct mproc *rmp;	/* pointer to the process to be terminated */
 int exit_status;		/* the process' exit status (for parent) */
-int for_trace;
+int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
 {
 /* A process is done.  Release most of the process' possessions.  If its
  * parent is waiting, release the rest, else keep the process slot and
  * become a zombie.
  */
   register int proc_nr, proc_nr_e;
-  int parent_waiting, right_child, r;
-  pid_t pidarg, procgrp;
+  int parent_waiting, r;
+  pid_t procgrp;
   struct mproc *p_mp;
   clock_t user_time, sys_time;
+
+  /* Do not create core files for set uid execution */
+  if (exit_type == PM_DUMPCORE && rmp->mp_realuid != rmp->mp_effuid)
+	exit_type = PM_EXIT;
+
+  /* System processes are destroyed before informing FS, meaning that FS can
+   * not get their CPU state, so we can't generate a coredump for them either.
+   */
+  if (exit_type == PM_DUMPCORE && (rmp->mp_flags & PRIV_PROC))
+	exit_type = PM_EXIT;
 
   proc_nr = (int) (rmp - mproc);	/* get process slot number */
   proc_nr_e = rmp->mp_endpoint;
@@ -213,7 +226,7 @@ int for_trace;
 
   /* Do accounting: fetch usage times and accumulate at parent. */
   if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL)) != OK)
-  	panic(__FILE__,"pm_exit: sys_times failed", r);
+  	panic(__FILE__,"exit_proc: sys_times failed", r);
 
   p_mp = &mproc[rmp->mp_parent];			/* process' parent */
   p_mp->mp_child_utime += user_time + rmp->mp_child_utime; /* add user time */
@@ -227,7 +240,7 @@ int for_trace;
    */
   sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
   if((r=vm_willexit(proc_nr_e)) != OK) {
-	panic(__FILE__, "pm_exit: vm_willexit failed", r);
+	panic(__FILE__, "exit_proc: vm_willexit failed", r);
   }
 
   if (proc_nr_e == INIT_PROC_NR)
@@ -240,16 +253,16 @@ int for_trace;
   {
 	/* Tell FS about the exiting process. */
 	if (rmp->mp_fs_call != PM_IDLE)
-		panic(__FILE__, "pm_exit: not idle", rmp->mp_fs_call);
-	rmp->mp_fs_call= (for_trace ? PM_EXIT_TR : PM_EXIT);
+		panic(__FILE__, "exit_proc: not idle", rmp->mp_fs_call);
+	rmp->mp_fs_call= exit_type;
 	r= notify(FS_PROC_NR);
-	if (r != OK) panic(__FILE__, "pm_exit: unable to notify FS", r);
+	if (r != OK) panic(__FILE__, "exit_proc: unable to notify FS", r);
 
 	if (rmp->mp_flags & PRIV_PROC)
 	{
 		/* destroy system processes without waiting for FS */
 		if((r= sys_exit(rmp->mp_endpoint)) != OK)
-			panic(__FILE__, "pm_exit: sys_exit failed", r);
+			panic(__FILE__, "exit_proc: sys_exit failed", r);
 	}
   }
   else
@@ -264,18 +277,12 @@ int for_trace;
   /* Keep the process around until FS is finished with it. */
   
   rmp->mp_exitstatus = (char) exit_status;
-  pidarg = p_mp->mp_wpid;		/* who's being waited for? */
-  parent_waiting = p_mp->mp_flags & WAITING;
-  right_child =				/* child meets one of the 3 tests? */
-	(pidarg == -1 || pidarg == rmp->mp_pid || -pidarg == rmp->mp_procgrp);
 
-  if (parent_waiting && right_child) {
-	tell_parent(rmp);		/* tell parent */
-  } else {
-	rmp->mp_flags &= (IN_USE|PRIV_PROC|HAS_DMA);
-	rmp->mp_flags |= ZOMBIE;	/* parent not waiting, zombify child */
-	sig_proc(p_mp, SIGCHLD);	/* send parent a "child died" signal */
-  }
+  /* For normal exits, try to notify the parent as soon as possible.
+   * For core dumps, notify the parent only once the core dump has been made.
+   */
+  if (exit_type != PM_DUMPCORE)
+	zombify(rmp);
 
   /* If the process has children, disinherit them.  INIT is the new parent. */
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
@@ -284,15 +291,57 @@ int for_trace;
 		rmp->mp_parent = INIT_PROC_NR;
 		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
 		if (parent_waiting && (rmp->mp_flags & ZOMBIE) &&
-			!(rmp->mp_flags & TOLD_PARENT) &&
-			rmp->mp_fs_call != PM_EXIT) {
-			cleanup(rmp);
+			!(rmp->mp_flags & TOLD_PARENT)) {
+			tell_parent(rmp);
+
+			if (rmp->mp_fs_call == PM_IDLE)
+				cleanup(rmp);
 		}
 	}
   }
 
   /* Send a hangup to the process' process group if it was a session leader. */
   if (procgrp != 0) check_sig(-procgrp, SIGHUP);
+}
+
+/*===========================================================================*
+ *				exit_restart				     *
+ *===========================================================================*/
+PUBLIC void exit_restart(rmp, reply_type)
+struct mproc *rmp;		/* pointer to the process being terminated */
+int reply_type;			/* one of PM_EXIT_REPLY(_TR), PM_CORE_REPLY */
+{
+/* FS replied to our exit or coredump request. Perform the second half of the
+ * exit code.
+ */
+  int r;
+
+  /* For core dumps, now is the right time to try to contact the parent. */
+  if (reply_type == PM_CORE_REPLY)
+	zombify(rmp);
+
+  if (!(rmp->mp_flags & PRIV_PROC))
+  {
+	/* destroy the (user) process */
+	if((r=sys_exit(rmp->mp_endpoint)) != OK)
+		panic(__FILE__, "exit_restart: sys_exit failed", r);
+  }
+
+  /* Release the memory occupied by the child. */
+  if((r=vm_exit(rmp->mp_endpoint)) != OK) {
+  	panic(__FILE__, "exit_restart: vm_exit failed", r);
+  }
+
+  if (reply_type == PM_EXIT_REPLY_TR && rmp->mp_parent != INIT_PROC_NR)
+  {
+	/* Wake up the parent, completing the ptrace(T_EXIT) call */
+	mproc[rmp->mp_parent].mp_reply.reply_trace = 0;
+	setreply(rmp->mp_parent, OK);
+  }
+
+  /* Clean up if the parent has collected the exit status */
+  if (rmp->mp_flags & TOLD_PARENT)
+	cleanup(rmp);
 }
 
 /*===========================================================================*
@@ -305,7 +354,7 @@ PUBLIC int do_waitpid()
  * really wait. 
  * A process calling WAIT never gets a reply in the usual way at the end
  * of the main loop (unless WNOHANG is set or no qualifying child exists).
- * If a child has already exited, the routine cleanup() sends the reply
+ * If a child has already exited, the routine tell_parent() sends the reply
  * to awaken the caller.
  * Both WAIT and WAITPID are handled by this code.
  */
@@ -335,7 +384,7 @@ PUBLIC int do_waitpid()
 			/* This child meets the pid test and has exited. */
 			tell_parent(rp); /* this child has already exited */
 			if (rp->mp_fs_call == PM_IDLE)
-				real_cleanup(rp);
+				cleanup(rp);
 			return(SUSPEND);
 		}
 		if ((rp->mp_flags & STOPPED) && rp->mp_sigstatus) {
@@ -363,27 +412,40 @@ PUBLIC int do_waitpid()
 }
 
 /*===========================================================================*
- *				cleanup					     *
+ *				zombify					     *
  *===========================================================================*/
-PRIVATE void cleanup(child)
-register struct mproc *child;	/* tells which process is exiting */
+PRIVATE void zombify(rmp)
+struct mproc *rmp;
 {
-/* Finish off the exit of a process.  The process has exited or been killed
- * by a signal, and its parent is waiting.
+/* Zombify a process. If the parent is waiting, notify it immediately.
+ * Otherwise, send a SIGCHLD signal to the parent.
  */
+  struct mproc *p_mp;
+  int parent_waiting, right_child;
+  pid_t pidarg;
 
-  if (child->mp_fs_call != PM_IDLE)
-	panic(__FILE__, "cleanup: not idle", child->mp_fs_call);
+  if (rmp->mp_flags & ZOMBIE)
+	panic(__FILE__, "zombify: process was already a zombie", NO_NUM);
 
-  tell_parent(child);
-  real_cleanup(child);
+  rmp->mp_flags &= (IN_USE|PRIV_PROC|HAS_DMA);
+  rmp->mp_flags |= ZOMBIE;
 
+  p_mp = &mproc[rmp->mp_parent];
+  pidarg = p_mp->mp_wpid;		/* who's being waited for? */
+  parent_waiting = p_mp->mp_flags & WAITING;
+  right_child =				/* child meets one of the 3 tests? */
+	(pidarg == -1 || pidarg == rmp->mp_pid || -pidarg == rmp->mp_procgrp);
+
+  if (parent_waiting && right_child)
+	tell_parent(rmp);		/* tell parent */
+  else
+	sig_proc(p_mp, SIGCHLD);	/* send parent a "child died" signal */
 }
 
 /*===========================================================================*
  *				tell_parent				     *
  *===========================================================================*/
-PUBLIC void tell_parent(child)
+PRIVATE void tell_parent(child)
 register struct mproc *child;	/* tells which process is exiting */
 {
   int exitstatus, mp_parent;
@@ -405,9 +467,9 @@ register struct mproc *child;	/* tells which process is exiting */
 }
 
 /*===========================================================================*
- *				real_cleanup				     *
+ *				cleanup					     *
  *===========================================================================*/
-PUBLIC void real_cleanup(rmp)
+PRIVATE void cleanup(rmp)
 register struct mproc *rmp;	/* tells which process is exiting */
 {
   /* Release the process table entry and reinitialize some field. */

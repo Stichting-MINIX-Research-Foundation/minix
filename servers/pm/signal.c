@@ -34,7 +34,6 @@
 #include "mproc.h"
 #include "param.h"
 
-FORWARD _PROTOTYPE( int dump_core, (struct mproc *rmp)			);
 FORWARD _PROTOTYPE( void unpause, (int pro, int for_trace)		);
 FORWARD _PROTOTYPE( void handle_ksig, (int proc_nr, sigset_t sig_map)	);
 FORWARD _PROTOTYPE( void cause_sigalrm, (struct timer *tp)		);
@@ -422,6 +421,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   int s;
   int slot;
   int sigflags;
+  int exit_type;
 
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
@@ -520,16 +520,13 @@ doterminate:
   }
 
   rmp->mp_sigstatus = (char) signo;
+  exit_type = PM_EXIT;
   if (sigismember(&core_sset, signo) && slot != FS_PROC_NR) {
-	printf("PM: signal %d for %d / %s\n", signo, rmp->mp_pid, rmp->mp_name);
-	s= dump_core(rmp);
-	if (s == SUSPEND) {
-		return;
-	}
-
-	/* Not dumping core, just call exit */
+	printf("PM: coredump signal %d for %d / %s\n", signo, rmp->mp_pid,
+		rmp->mp_name);
+	exit_type = PM_DUMPCORE;
   }
-  pm_exit(rmp, 0, FALSE /*!for_trace*/);	/* terminate process */
+  exit_proc(rmp, 0, exit_type);		/* terminate process */
 }
 
 /*===========================================================================*
@@ -668,125 +665,4 @@ int for_trace;			/* for tracing */
   }
   r= notify(FS_PROC_NR);
   if (r != OK) panic("pm", "unpause: unable to notify FS", r);
-}
-
-/*===========================================================================*
- *				dump_core				     *
- *===========================================================================*/
-PRIVATE int dump_core(rmp)
-register struct mproc *rmp;	/* whose core is to be dumped */
-{
-/* Make a core dump on the file "core", if possible. */
-
-  int r, proc_nr, proc_nr_e, parent_waiting;
-  pid_t procgrp;
-#if 0
-  vir_bytes current_sp;
-#endif
-  struct mproc *p_mp;
-  clock_t user_time, sys_time;
-
-  printf("dumpcore for %d / %s\n", rmp->mp_pid, rmp->mp_name);
-
-  /* Do not create core files for set uid execution */
-  if (rmp->mp_realuid != rmp->mp_effuid) return OK;
-
-  /* Make sure the stack segment is up to date.
-   * We don't want adjust() to fail unless current_sp is preposterous,
-   * but it might fail due to safety checking.  Also, we don't really want 
-   * the adjust() for sending a signal to fail due to safety checking.  
-   * Maybe make SAFETY_BYTES a parameter.
-   */
-#if 0
-  if ((r= get_stack_ptr(rmp->mp_endpoint, &current_sp)) != OK)
-	panic(__FILE__,"couldn't get new stack pointer (for core)", r);
-  adjust(rmp, rmp->mp_seg[D].mem_len, current_sp);
-#endif
-
-  /* Tell FS about the exiting process. */
-  if (rmp->mp_fs_call != PM_IDLE)
-	panic(__FILE__, "dump_core: not idle", rmp->mp_fs_call);
-  rmp->mp_fs_call= PM_DUMPCORE;
-  r= notify(FS_PROC_NR);
-  if (r != OK) panic(__FILE__, "dump_core: unable to notify FS", r);
-
-  /* Also perform most of the normal exit processing. Informing the parent
-   * has to wait until we know whether the coredump was successful or not.
-   */
-
-  proc_nr = (int) (rmp - mproc);	/* get process slot number */
-  proc_nr_e = rmp->mp_endpoint;
-
-  /* Remember a session leader's process group. */
-  procgrp = (rmp->mp_pid == mp->mp_procgrp) ? mp->mp_procgrp : 0;
-
-  /* If the exited process has a timer pending, kill it. */
-  if (rmp->mp_flags & ALARM_ON) set_alarm(proc_nr_e, (unsigned) 0);
-
-  /* Do accounting: fetch usage times and accumulate at parent. */
-  if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL)) != OK)
-  	panic(__FILE__,"dump_core: sys_times failed", r);
-
-  p_mp = &mproc[rmp->mp_parent];			/* process' parent */
-  p_mp->mp_child_utime += user_time + rmp->mp_child_utime; /* add user time */
-  p_mp->mp_child_stime += sys_time + rmp->mp_child_stime; /* add system time */
-
-  /* Tell the kernel the process is no longer runnable to prevent it from 
-   * being scheduled in between the following steps. Then tell FS that it 
-   * the process has exited and finally, clean up the process at the kernel.
-   * This order is important so that FS can tell drivers to cancel requests
-   * such as copying to/ from the exiting process, before it is gone.
-   */
-  sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
-  if((r=vm_willexit(proc_nr_e)) != OK) {
-	panic(__FILE__,"dump_core: vm_willexit failed", r);
-  }
-
-  if(proc_nr_e != FS_PROC_NR)		/* if it is not FS that is exiting.. */
-  {
-	if (rmp->mp_flags & PRIV_PROC)
-	{
-		/* destroy system processes without waiting for FS */
-		if((r= sys_exit(rmp->mp_endpoint)) != OK)
-			panic(__FILE__, "dump_core: sys_exit failed", r);
-
-		/* Just send a SIGCHLD. Dealing with waidpid is too complicated
-		 * here.
-		 */
-		p_mp = &mproc[rmp->mp_parent];		/* process' parent */
-		sig_proc(p_mp, SIGCHLD);
-
-		/* Zombify to avoid calling sys_endksig */
-		rmp->mp_flags |= ZOMBIE;
-	}
-  }
-  else
-  {
-	printf("PM: FS died\n");
-	return SUSPEND;
-  }
-
-  /* Pending reply messages for the dead process cannot be delivered. */
-  rmp->mp_flags &= ~REPLY;
-
-  /* Keep the process around until FS is finished with it. */
-  
-  /* If the process has children, disinherit them.  INIT is the new parent. */
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if (rmp->mp_flags & IN_USE && rmp->mp_parent == proc_nr) {
-		/* 'rmp' now points to a child to be disinherited. */
-		rmp->mp_parent = INIT_PROC_NR;
-		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
-		if (parent_waiting && (rmp->mp_flags & ZOMBIE))
-		{
-			tell_parent(rmp);
-			real_cleanup(rmp);
-		}
-	}
-  }
-
-  /* Send a hangup to the process' process group if it was a session leader. */
-  if (procgrp != 0) check_sig(-procgrp, SIGHUP);
-
-  return SUSPEND;
 }

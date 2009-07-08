@@ -33,12 +33,11 @@ _PROTOTYPE( void exec_restart, (struct mproc *rmp, int result)		);
 /* forkexit.c */
 _PROTOTYPE( int do_fork, (void)						);
 _PROTOTYPE( int do_fork_nb, (void)					);
-_PROTOTYPE( int do_pm_exit, (void)					);
+_PROTOTYPE( int do_exit, (void)						);
 _PROTOTYPE( int do_waitpid, (void)					);
-_PROTOTYPE( void pm_exit, (struct mproc *rmp, int exit_status,
-	int for_trace)							);
-_PROTOTYPE (void tell_parent, (struct mproc *child)			);
-_PROTOTYPE( void real_cleanup, (struct mproc *rmp)			);
+_PROTOTYPE( void exit_proc, (struct mproc *rmp, int exit_status,
+	int exit_type)							);
+_PROTOTYPE( void exit_restart, (struct mproc *rmp, int reply_type)	);
 
 /* getset.c */
 _PROTOTYPE( int do_getset, (void)					);

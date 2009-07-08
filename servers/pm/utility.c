@@ -3,11 +3,9 @@
  * The entry points are:
  *   find_param:	look up a boot monitor parameter
  *   get_free_pid:	get a free process or group id
- *   allowed:		see if an access is permitted
  *   no_sys:		called for invalid system call numbers
- *   panic:		PM has run aground of a fatal error 
- *   get_stack_ptr:	get stack pointer of given process	
  *   proc_from_pid:	return process pointer from pid number
+ *   pm_isokendpt:	check the validity of an endpoint
  */
 
 #include "pm.h"
