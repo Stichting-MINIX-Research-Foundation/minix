@@ -21,7 +21,6 @@ PUBLIC int do_adddma()
 	endpoint_t req_proc_e, target_proc_e;
 	int proc_n, r;
 	phys_bytes base, size;
-	struct mproc *rmp;
 
 	if (mp->mp_effuid != SUPER_USER)
 		return EPERM;
@@ -42,8 +41,6 @@ PUBLIC int do_adddma()
 		printf("pm:do_adddma: endpoint %d not found\n", target_proc_e);
 		return EINVAL;
 	}
-	rmp= &mproc[proc_n];
-	rmp->mp_flags |= HAS_DMA;
 
 	return OK;
 }

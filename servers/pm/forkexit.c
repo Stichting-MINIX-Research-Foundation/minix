@@ -427,7 +427,7 @@ struct mproc *rmp;
   if (rmp->mp_flags & ZOMBIE)
 	panic(__FILE__, "zombify: process was already a zombie", NO_NUM);
 
-  rmp->mp_flags &= (IN_USE|PRIV_PROC|HAS_DMA);
+  rmp->mp_flags &= (IN_USE|PRIV_PROC);
   rmp->mp_flags |= ZOMBIE;
 
   p_mp = &mproc[rmp->mp_parent];
