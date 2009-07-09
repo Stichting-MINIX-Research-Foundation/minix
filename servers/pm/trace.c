@@ -144,7 +144,7 @@ pid_t lpid;
   register struct mproc *rmp;
 
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
-	if ((rmp->mp_flags & (IN_USE | ZOMBIE)) == IN_USE &&
+	if ((rmp->mp_flags & (IN_USE | EXITING)) == IN_USE &&
 		rmp->mp_pid == lpid) {
 		return(rmp);
 	}

@@ -148,9 +148,9 @@ PUBLIC int main()
 		/* In the meantime, the process may have been killed by a
 		 * signal (e.g. if a lethal pending signal was unblocked)
 		 * without the PM realizing it. If the slot is no longer in
-		 * use or just a zombie, don't try to reply.
+		 * use or the process is exiting, don't try to reply.
 		 */
-		if ((rmp->mp_flags & (REPLY | IN_USE | ZOMBIE)) ==
+		if ((rmp->mp_flags & (REPLY | IN_USE | EXITING)) ==
 		   (REPLY | IN_USE)) {
 			s=sendnb(rmp->mp_endpoint, &rmp->mp_reply);
 			if (s != OK) {
@@ -365,7 +365,7 @@ void checkme(char *str, int line)
 	int boned = 0;
 	int proc_nr;
 	for (proc_nr=0, trmp=mproc; proc_nr < NR_PROCS; proc_nr++, trmp++) {
-		if ((trmp->mp_flags & (REPLY | IN_USE | ZOMBIE)) ==
+		if ((trmp->mp_flags & (REPLY | IN_USE | EXITING)) ==
 		   (REPLY | IN_USE)) {
 			int tp;
   			if(pm_isokendpt(trmp->mp_endpoint, &tp) != OK) {

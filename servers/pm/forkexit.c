@@ -271,6 +271,11 @@ int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
 	return;
   }
 
+  /* The process is now officially exiting. The ZOMBIE flag is not enough, as
+   * it is not set here for core dumps - introducing potential race conditions.
+   */
+  rmp->mp_flags |= EXITING;
+
   /* Pending reply messages for the dead process cannot be delivered. */
   rmp->mp_flags &= ~REPLY;
 
@@ -290,8 +295,7 @@ int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
 		/* 'rmp' now points to a child to be disinherited. */
 		rmp->mp_parent = INIT_PROC_NR;
 		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
-		if (parent_waiting && (rmp->mp_flags & ZOMBIE) &&
-			!(rmp->mp_flags & TOLD_PARENT)) {
+		if (parent_waiting && (rmp->mp_flags & ZOMBIE)) {
 			tell_parent(rmp);
 
 			if (rmp->mp_fs_call == PM_IDLE)
@@ -427,7 +431,7 @@ struct mproc *rmp;
   if (rmp->mp_flags & ZOMBIE)
 	panic(__FILE__, "zombify: process was already a zombie", NO_NUM);
 
-  rmp->mp_flags &= (IN_USE|PRIV_PROC);
+  rmp->mp_flags &= (IN_USE|PRIV_PROC|EXITING);
   rmp->mp_flags |= ZOMBIE;
 
   p_mp = &mproc[rmp->mp_parent];
@@ -454,6 +458,8 @@ register struct mproc *child;	/* tells which process is exiting */
   mp_parent= child->mp_parent;
   if (mp_parent <= 0)
 	panic(__FILE__, "tell_parent: bad value in mp_parent", mp_parent);
+  if(!(child->mp_flags & ZOMBIE))
+  	panic(__FILE__, "tell_parent: child not a zombie", NO_NUM);
   if(child->mp_flags & TOLD_PARENT)
 	panic(__FILE__, "tell_parent: telling parent again", NO_NUM);
   parent = &mproc[mp_parent];
@@ -463,6 +469,7 @@ register struct mproc *child;	/* tells which process is exiting */
   parent->mp_reply.reply_res2 = exitstatus;
   setreply(child->mp_parent, child->mp_pid);
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
+  child->mp_flags &= ~ZOMBIE;		/* child no longer a zombie */
   child->mp_flags |= TOLD_PARENT;	/* avoid informing parent twice */
 }
 

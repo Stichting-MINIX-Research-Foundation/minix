@@ -230,7 +230,7 @@ PUBLIC int ksig_pending()
 	/* If the process still exists to the kernel after the signal
 	 * has been handled ...
 	 */
-        if ((mproc[proc_nr_p].mp_flags & (IN_USE | ZOMBIE)) == IN_USE)
+        if ((mproc[proc_nr_p].mp_flags & (IN_USE | EXITING)) == IN_USE)
 	{
 	   if((r=sys_endksig(proc_nr_e)) != OK)	/* ... tell kernel it's done */
   		panic(__FILE__,"sys_endksig failed", r);
@@ -256,8 +256,8 @@ sigset_t sig_map;
 	return;
   }
   rmp = &mproc[proc_nr];
-  if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
-	printf("PM: handle_ksig: %d?? zombie / not in use\n", proc_nr_e);
+  if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
+	printf("PM: handle_ksig: %d?? exiting / not in use\n", proc_nr_e);
 	return;
   }
   proc_id = rmp->mp_pid;
@@ -379,7 +379,7 @@ struct timer *tp;
 
   rmp = &mproc[proc_nr_n];
 
-  if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) return;
+  if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) return;
   if ((rmp->mp_flags & ALARM_ON) == 0) return;
   rmp->mp_flags &= ~ALARM_ON;
   check_sig(rmp->mp_pid, SIGALRM);
@@ -424,9 +424,8 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   int exit_type;
 
   slot = (int) (rmp - mproc);
-  if ((rmp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) {
-	printf("PM: signal %d sent to %s process %d\n",
-		signo, (rmp->mp_flags & ZOMBIE) ? "zombie" : "dead", slot);
+  if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
+	printf("PM: signal %d sent to exiting process %d\n", signo, slot);
 	panic(__FILE__,"", NO_NUM);
   }
   if (rmp->mp_fs_call != PM_IDLE || rmp->mp_fs_call2 != PM_IDLE)
@@ -551,13 +550,12 @@ int signo;			/* signal to send to process (0 to _NSIG) */
   if (proc_id == INIT_PID && signo == SIGKILL) return(EINVAL);
 
   /* Search the proc table for processes to signal.  
-   * (See forkexit.c aboutpid magic.)
+   * (See forkexit.c about pid magic.)
    */
   count = 0;
   error_code = ESRCH;
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 	if (!(rmp->mp_flags & IN_USE)) continue;
-	if ((rmp->mp_flags & ZOMBIE) && signo != 0) continue;
 
 	/* Check for selection. */
 	if (proc_id > 0 && proc_id != rmp->mp_pid) continue;
@@ -580,7 +578,7 @@ int signo;			/* signal to send to process (0 to _NSIG) */
 	}
 
 	count++;
-	if (signo == 0) continue;
+	if (signo == 0 || (rmp->mp_flags & EXITING)) continue;
 
 	/* 'sig_proc' will handle the disposition of the signal.  The
 	 * signal may be caught, blocked, ignored, or cause process
@@ -592,7 +590,7 @@ int signo;			/* signal to send to process (0 to _NSIG) */
   }
 
   /* If the calling process has killed itself, don't reply. */
-  if ((mp->mp_flags & (IN_USE | ZOMBIE)) != IN_USE) return(SUSPEND);
+  if ((mp->mp_flags & (IN_USE | EXITING)) != IN_USE) return(SUSPEND);
   return(count > 0 ? OK : error_code);
 }
 
