@@ -499,7 +499,7 @@ void test25c()
 	if ((fd1 = open("fifo", O_WRONLY)) != 3) e(57);
 	if (write(fd1, "I did see Elvis.\n", 18) != 18) e(58);
 
-	/* Keep open till second reader is opened. */
+	/* Keep open till third reader is opened. */
 	while (stat("/tmp/sema.25", &st) != 0) sleep(1);
 	if (close(fd1) != 0) e(59);
 	exit(0);
@@ -509,12 +509,12 @@ void test25c()
 	if (strncmp(buf, "I ", 2) != 0) e(62);
 	if (close(fd1) != 0) e(63);
 	if ((fd1 = open("fifo", O_RDONLY)) != 3) e(64);
-
-	/* Signal second reader is open. */
-	Creat("/tmp/sema.25");
 	if (read(fd1, buf, 4) != 4) e(65);
 	if (strncmp(buf, "did ", 4) != 0) e(66);
 	if ((fd2 = open("fifo", O_RDONLY)) != 4) e(67);
+
+	/* Signal third reader is open. */
+	Creat("/tmp/sema.25");
 	if (read(fd2, buf, BUF_SIZE) != 12) e(68);
 	if (strncmp(buf, "see Elvis.\n", 12) != 0) e(69);
 	if (close(fd2) != 0) e(70);
