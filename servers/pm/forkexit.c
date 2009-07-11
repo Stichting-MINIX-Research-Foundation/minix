@@ -260,7 +260,10 @@ int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
 
 	if (rmp->mp_flags & PRIV_PROC)
 	{
-		/* destroy system processes without waiting for FS */
+		/* Destroy system processes without waiting for FS. This is
+		 * needed because the system process might be a block device
+		 * driver that FS is blocked waiting on.
+		 */
 		if((r= sys_exit(rmp->mp_endpoint)) != OK)
 			panic(__FILE__, "exit_proc: sys_exit failed", r);
 	}
