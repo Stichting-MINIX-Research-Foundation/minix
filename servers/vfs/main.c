@@ -533,12 +533,10 @@ PRIVATE void service_pm()
 			break;
 
 		case PM_EXIT:
-		case PM_EXIT_TR:
 			pm_exit(m.PM_EXIT_PROC);
 
 			/* Reply dummy status to PM for synchronization */
-			m.m_type= (call == PM_EXIT_TR ? PM_EXIT_REPLY_TR :
-				PM_EXIT_REPLY);
+			m.m_type= PM_EXIT_REPLY;
 			/* Keep m.PM_EXIT_PROC */
 
 			r= send(PM_PROC_NR, &m);

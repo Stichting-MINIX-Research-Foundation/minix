@@ -112,7 +112,14 @@ PUBLIC int do_trace()
 
   switch (m_in.request) {
   case T_EXIT:		/* exit */
-	exit_proc(child, (int) m_in.data, PM_EXIT_TR);
+	child->mp_flags |= TRACE_EXIT;
+
+	/* Defer the exit if the traced process has an FS call pending. */
+	if (child->mp_fs_call != PM_IDLE || child->mp_fs_call2 != PM_IDLE)
+		child->mp_exitstatus = (int) m_in.data;	/* save for later */
+	else
+		exit_proc(child, (int) m_in.data, FALSE /*dump_core*/);
+
 	/* Do not reply to the caller until FS has processed the exit
 	 * request.
 	 */

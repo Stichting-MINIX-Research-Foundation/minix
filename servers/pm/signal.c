@@ -421,7 +421,6 @@ int signo;			/* signal to send to process (1 to _NSIG) */
   int s;
   int slot;
   int sigflags;
-  int exit_type;
 
   slot = (int) (rmp - mproc);
   if ((rmp->mp_flags & (IN_USE | EXITING)) != IN_USE) {
@@ -518,14 +517,16 @@ doterminate:
 	return;
   }
 
+  /* Terminate process */
   rmp->mp_sigstatus = (char) signo;
-  exit_type = PM_EXIT;
   if (sigismember(&core_sset, signo) && slot != FS_PROC_NR) {
 	printf("PM: coredump signal %d for %d / %s\n", signo, rmp->mp_pid,
 		rmp->mp_name);
-	exit_type = PM_DUMPCORE;
+	exit_proc(rmp, 0, TRUE /*dump_core*/);
   }
-  exit_proc(rmp, 0, exit_type);		/* terminate process */
+  else {
+  	exit_proc(rmp, 0, FALSE /*dump_core*/);
+  }
 }
 
 /*===========================================================================*

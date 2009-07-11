@@ -44,6 +44,7 @@ FORWARD _PROTOTYPE( void pm_init, (void)				);
 FORWARD _PROTOTYPE( int get_nice_value, (int queue)			);
 FORWARD _PROTOTYPE( void send_work, (void)				);
 FORWARD _PROTOTYPE( void handle_fs_reply, (message *m_ptr)		);
+FORWARD _PROTOTYPE( void restart_sigs, (struct mproc *rmp)		);
 
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
@@ -91,7 +92,6 @@ PUBLIC int main()
 	case PM_REBOOT_REPLY:
 	case PM_EXEC_REPLY:
 	case PM_CORE_REPLY:
-	case PM_EXIT_REPLY_TR:
 		if (who_e == FS_PROC_NR)
 		{
 			handle_fs_reply(&m_in);
@@ -379,9 +379,9 @@ void checkme(char *str, int line)
 	}
 }
 
-/*=========================================================================*
- *				send_work				   *
- *=========================================================================*/
+/*===========================================================================*
+ *				send_work				     *
+ *===========================================================================*/
 PRIVATE void send_work()
 {
 	int r, call;
@@ -460,7 +460,6 @@ PRIVATE void send_work()
 		}
 
 		case PM_EXIT:
-		case PM_EXIT_TR:
 			m.m_type= call;
 			m.PM_EXIT_PROC= rmp->mp_endpoint;
 
@@ -552,18 +551,7 @@ PRIVATE void send_work()
 	}
 	if (m.m_type != PM_IDLE)
 	{
-		if (rmp->mp_fs_call == PM_IDLE &&
-			rmp->mp_fs_call2 == PM_IDLE &&
-			(rmp->mp_flags & PM_SIG_PENDING))
-		{
-			rmp->mp_flags &= ~PM_SIG_PENDING;
-			check_pending(rmp);
-			if (!(rmp->mp_flags & PM_SIG_PENDING))
-			{
-				/* Allow the process to be scheduled */
-				sys_nice(rmp->mp_endpoint, rmp->mp_nice);
-			}
-		}
+		restart_sigs(rmp);
 	}
 	else if (report_reboot)
 	{
@@ -574,6 +562,9 @@ PRIVATE void send_work()
 	if (r != OK) panic("pm", "send_work: send failed", r);
 }
 
+/*===========================================================================*
+ *				handle_fs_reply				     *
+ *===========================================================================*/
 PRIVATE void handle_fs_reply(m_ptr)
 message *m_ptr;
 {
@@ -583,7 +574,6 @@ message *m_ptr;
 	switch(m_ptr->m_type)
 	{
 	case PM_EXIT_REPLY:
-	case PM_EXIT_REPLY_TR:
 		proc_e= m_ptr->PM_EXIT_PROC;
 		if (pm_isokendpt(proc_e, &proc_n) != OK)
 		{
@@ -596,7 +586,7 @@ message *m_ptr;
 		/* Call is finished */
 		rmp->mp_fs_call= PM_IDLE;
 
-		exit_restart(rmp, m_ptr->m_type);
+		exit_restart(rmp, FALSE /*dump_core*/);
 
 		break;
 
@@ -630,20 +620,8 @@ message *m_ptr;
 
 		exec_restart(rmp, m_ptr->PM_EXEC_STATUS);
 
-		if (rmp->mp_flags & PM_SIG_PENDING)
-		{
-			printf("handle_fs_reply: restarting signals\n");
-			rmp->mp_flags &= ~PM_SIG_PENDING;
-			check_pending(rmp);
-			if (!(rmp->mp_flags & PM_SIG_PENDING))
-			{
-				printf("handle_fs_reply: calling sys_nice\n");
-				/* Allow the process to be scheduled */
-				sys_nice(rmp->mp_endpoint, rmp->mp_nice);
-			}
-			else
-				printf("handle_fs_reply: more signals\n");
-		}
+		restart_sigs(rmp);
+
 		break;
 
 	case PM_CORE_REPLY:
@@ -663,7 +641,7 @@ message *m_ptr;
 		/* Call is finished */
 		rmp->mp_fs_call= PM_IDLE;
 
-		exit_restart(rmp, m_ptr->m_type);
+		exit_restart(rmp, TRUE /*dump_core*/);
 
 		break;
 	}
@@ -675,3 +653,25 @@ message *m_ptr;
 
 }
 
+/*===========================================================================*
+ *				restart_sigs				     *
+ *===========================================================================*/
+PRIVATE void restart_sigs(rmp)
+struct mproc *rmp;
+{
+
+	if (rmp->mp_fs_call != PM_IDLE || rmp->mp_fs_call2 != PM_IDLE)
+		return;
+
+	if (rmp->mp_flags & TRACE_EXIT) {
+		exit_proc(rmp, rmp->mp_exitstatus, FALSE /*dump_core*/);
+	}
+	else if (rmp->mp_flags & PM_SIG_PENDING) {
+		rmp->mp_flags &= ~PM_SIG_PENDING;
+		check_pending(rmp);
+		if (!(rmp->mp_flags & PM_SIG_PENDING)) {
+			/* Allow the process to be scheduled */
+			sys_nice(rmp->mp_endpoint, rmp->mp_nice);
+		}
+	}
+}

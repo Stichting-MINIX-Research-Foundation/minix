@@ -77,6 +77,7 @@ EXTERN struct mproc {
 #define PARTIAL_EXEC   0x8000	/* Process got a new map but no content */
 #define TOLD_PARENT   0x10000	/* Parent wait() completed, ZOMBIE off */
 #define EXITING       0x20000	/* set by EXIT, process is now exiting */
+#define TRACE_EXIT    0x40000	/* tracer is forcing this process to exit */
 
 #define NIL_MPROC ((struct mproc *) 0)
 

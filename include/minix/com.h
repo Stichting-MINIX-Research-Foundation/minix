@@ -711,9 +711,6 @@
 #define		PM_CORE_PROC		m1_i1
 #define		PM_CORE_SEGPTR		m1_p1
 #define PM_UNPAUSE_TR	(PM_BASE + 15)	/* interrupted process (for tracing) */
-#define PM_EXIT_TR	(PM_BASE + 16)	/* Tell FS about the exiting process
-					 * (for tracing)
-					 */
 
 /* Replies */
 #define PM_EXIT_REPLY	(PM_BASE + 20)	/* Reply from FS */
@@ -724,7 +721,6 @@
 #define PM_CORE_REPLY	(PM_BASE + 23)	/* Reply from FS */
 		/* PM_CORE_PROC m1_i1 */
 #define		PM_CORE_STATUS m1_i2	/* OK or failure */
-#define PM_EXIT_REPLY_TR (PM_BASE + 24)	/* Reply from FS */
 
 /* Parameters for the EXEC_NEWMEM call */
 #define EXC_NM_PROC	m1_i1		/* process that needs new map */

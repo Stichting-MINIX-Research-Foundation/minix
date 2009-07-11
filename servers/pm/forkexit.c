@@ -183,17 +183,17 @@ PUBLIC int do_exit()
 /* Perform the exit(status) system call. The real work is done by exit_proc(),
  * which is also called when a process is killed by a signal.
  */
-  exit_proc(mp, m_in.status, PM_EXIT);
+  exit_proc(mp, m_in.status, FALSE /*dump_core*/);
   return(SUSPEND);		/* can't communicate from beyond the grave */
 }
 
 /*===========================================================================*
  *				exit_proc				     *
  *===========================================================================*/
-PUBLIC void exit_proc(rmp, exit_status, exit_type)
+PUBLIC void exit_proc(rmp, exit_status, dump_core)
 register struct mproc *rmp;	/* pointer to the process to be terminated */
 int exit_status;		/* the process' exit status (for parent) */
-int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
+int dump_core;			/* flag indicating whether to dump core */
 {
 /* A process is done.  Release most of the process' possessions.  If its
  * parent is waiting, release the rest, else keep the process slot and
@@ -206,14 +206,14 @@ int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
   clock_t user_time, sys_time;
 
   /* Do not create core files for set uid execution */
-  if (exit_type == PM_DUMPCORE && rmp->mp_realuid != rmp->mp_effuid)
-	exit_type = PM_EXIT;
+  if (dump_core && rmp->mp_realuid != rmp->mp_effuid)
+	dump_core = FALSE;
 
   /* System processes are destroyed before informing FS, meaning that FS can
    * not get their CPU state, so we can't generate a coredump for them either.
    */
-  if (exit_type == PM_DUMPCORE && (rmp->mp_flags & PRIV_PROC))
-	exit_type = PM_EXIT;
+  if (dump_core && (rmp->mp_flags & PRIV_PROC))
+	dump_core = FALSE;
 
   proc_nr = (int) (rmp - mproc);	/* get process slot number */
   proc_nr_e = rmp->mp_endpoint;
@@ -254,7 +254,7 @@ int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
 	/* Tell FS about the exiting process. */
 	if (rmp->mp_fs_call != PM_IDLE)
 		panic(__FILE__, "exit_proc: not idle", rmp->mp_fs_call);
-	rmp->mp_fs_call= exit_type;
+	rmp->mp_fs_call= dump_core ? PM_DUMPCORE : PM_EXIT;
 	r= notify(FS_PROC_NR);
 	if (r != OK) panic(__FILE__, "exit_proc: unable to notify FS", r);
 
@@ -289,7 +289,7 @@ int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
   /* For normal exits, try to notify the parent as soon as possible.
    * For core dumps, notify the parent only once the core dump has been made.
    */
-  if (exit_type != PM_DUMPCORE)
+  if (!dump_core)
 	zombify(rmp);
 
   /* If the process has children, disinherit them.  INIT is the new parent. */
@@ -314,9 +314,9 @@ int exit_type;			/* one of PM_EXIT, PM_EXIT_TR, PM_DUMPCORE */
 /*===========================================================================*
  *				exit_restart				     *
  *===========================================================================*/
-PUBLIC void exit_restart(rmp, reply_type)
+PUBLIC void exit_restart(rmp, dump_core)
 struct mproc *rmp;		/* pointer to the process being terminated */
-int reply_type;			/* one of PM_EXIT_REPLY(_TR), PM_CORE_REPLY */
+int dump_core;			/* flag indicating whether to dump core */
 {
 /* FS replied to our exit or coredump request. Perform the second half of the
  * exit code.
@@ -324,7 +324,7 @@ int reply_type;			/* one of PM_EXIT_REPLY(_TR), PM_CORE_REPLY */
   int r;
 
   /* For core dumps, now is the right time to try to contact the parent. */
-  if (reply_type == PM_CORE_REPLY)
+  if (dump_core)
 	zombify(rmp);
 
   if (!(rmp->mp_flags & PRIV_PROC))
@@ -339,7 +339,7 @@ int reply_type;			/* one of PM_EXIT_REPLY(_TR), PM_CORE_REPLY */
   	panic(__FILE__, "exit_restart: vm_exit failed", r);
   }
 
-  if (reply_type == PM_EXIT_REPLY_TR && rmp->mp_parent != INIT_PROC_NR)
+  if ((rmp->mp_flags & TRACE_EXIT) && rmp->mp_parent != INIT_PROC_NR)
   {
 	/* Wake up the parent, completing the ptrace(T_EXIT) call */
 	mproc[rmp->mp_parent].mp_reply.reply_trace = 0;
@@ -434,7 +434,7 @@ struct mproc *rmp;
   if (rmp->mp_flags & ZOMBIE)
 	panic(__FILE__, "zombify: process was already a zombie", NO_NUM);
 
-  rmp->mp_flags &= (IN_USE|PRIV_PROC|EXITING);
+  rmp->mp_flags &= (IN_USE|PRIV_PROC|EXITING|TRACE_EXIT);
   rmp->mp_flags |= ZOMBIE;
 
   p_mp = &mproc[rmp->mp_parent];

@@ -36,8 +36,8 @@ _PROTOTYPE( int do_fork_nb, (void)					);
 _PROTOTYPE( int do_exit, (void)						);
 _PROTOTYPE( int do_waitpid, (void)					);
 _PROTOTYPE( void exit_proc, (struct mproc *rmp, int exit_status,
-	int exit_type)							);
-_PROTOTYPE( void exit_restart, (struct mproc *rmp, int reply_type)	);
+	int dump_core)							);
+_PROTOTYPE( void exit_restart, (struct mproc *rmp, int dump_core)	);
 
 /* getset.c */
 _PROTOTYPE( int do_getset, (void)					);
