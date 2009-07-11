@@ -770,11 +770,12 @@ char string[NAME_MAX];		/* component name to look for */
 
   dirp = *pdirp;
 
-  /* If 'string' is empty, yield same inode straight away. */
-  if (string[0] == '\0') { return(get_inode(dirp->i_dev, (int) dirp->i_num)); }
-
   /* Check for NIL_INODE. */
   if (dirp == NIL_INODE) { return(NIL_INODE); }
+
+  /* If 'string' is empty, yield same inode straight away. */
+  /* This code won't trigger anymore with the current VFS path lookup logic. */
+  if (string[0] == '\0') { return(get_inode(dirp->i_dev, (int) dirp->i_num)); }
 
   /* If 'string' is not present in the directory, signal error. */
   if ( (r = search_dir_nocheck(dirp, string, &numb, LOOK_UP)) != OK) {
@@ -866,11 +867,11 @@ char string[NAME_MAX];		/* component name to look for */
 
   dirp = *pdirp;
 
-  /* If 'string' is empty, yield same inode straight away. */
-  if (string[0] == '\0') { return(get_inode(dirp->i_dev, (int) dirp->i_num)); }
-
   /* Check for NIL_INODE. */
   if (dirp == NIL_INODE) { return(NIL_INODE); }
+
+  /* If 'string' is empty, yield same inode straight away. */
+  if (string[0] == '\0') { return(get_inode(dirp->i_dev, (int) dirp->i_num)); }
 
   /* If 'string' is not present in the directory, signal error. */
   if ( (r = search_dir(dirp, string, &numb, LOOK_UP)) != OK) {

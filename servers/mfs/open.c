@@ -498,17 +498,17 @@ PUBLIC int fs_slink_o()
   caller_uid = fs_m_in.REQ_UID;
   caller_gid = fs_m_in.REQ_GID;
   
-  /* Temporarily open the dir. */
-  if ( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
-        return(EINVAL);
-  }
-  
   /* Copy the link name's last component */
   len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
   r = sys_datacopy(FS_PROC_NR, (vir_bytes) fs_m_in.REQ_PATH,
           SELF, (vir_bytes) string, (phys_bytes) len);
   if (r != OK) return r;
   MFS_NUL(string, len, sizeof(string));
+  
+  /* Temporarily open the dir. */
+  if ( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
+        return(EINVAL);
+  }
   
   /* Create the inode for the symlink. */
   sip = new_node_o(ldirp, string, (mode_t) (I_SYMBOLIC_LINK | RWX_MODES),
@@ -578,17 +578,17 @@ PUBLIC int fs_slink_s()
 	fs_m_in.REQ_INODE_NR, fs_dev);
 #endif
 
-  /* Temporarily open the dir. */
-  if ( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
-        return(EINVAL);
-  }
-  
   /* Copy the link name's last component */
   len = MFS_MIN(fs_m_in.REQ_PATH_LEN, sizeof(string));
   r = sys_safecopyfrom(FS_PROC_NR, fs_m_in.REQ_GRANT, 0,
             (vir_bytes) string, (phys_bytes) len, D);
   if (r != OK) return r;
   MFS_NUL(string, len, sizeof(string));
+  
+  /* Temporarily open the dir. */
+  if ( (ldirp = get_inode(fs_dev, fs_m_in.REQ_INODE_NR)) == NIL_INODE) {
+        return(EINVAL);
+  }
   
   /* Create the inode for the symlink. */
   sip = new_node_s(ldirp, string, (mode_t) (I_SYMBOLIC_LINK | RWX_MODES),
