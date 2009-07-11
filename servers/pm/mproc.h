@@ -40,12 +40,8 @@ EXTERN struct mproc {
 				 */
   struct timer mp_timer;	/* watchdog timer for alarm(2) */
 
-  /* Backwards compatibility for signals. */
-  sighandler_t mp_func;		/* all sigs vectored to a single user fcn */
-
   unsigned mp_flags;		/* flag bits */
   vir_bytes mp_procargs;        /* ptr to proc's initial stack arguments */
-  struct mproc *mp_swapq;	/* queue of procs waiting to be swapped in */
   message mp_reply;		/* reply message to be sent to one */
 
   /* Communication with FS */
