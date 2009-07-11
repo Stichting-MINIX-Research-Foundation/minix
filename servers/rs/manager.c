@@ -533,7 +533,7 @@ PUBLIC void do_exit(message *m_ptr)
      printf("RS: got SIGCHLD signal, doing wait to get exited child.\n");
 
   /* See which child exited and what the exit status is. This is done in a
-   * loop because multiple childs may have exited, all reported by one 
+   * loop because multiple children may have exited, all reported by one 
    * SIGCHLD signal. The WNOHANG options is used to prevent blocking if, 
    * somehow, no exited child can be found. 
    */
