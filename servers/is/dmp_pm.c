@@ -29,7 +29,10 @@ PRIVATE char *flags_str(int flags)
 	str[5] = (flags & STOPPED)  ? 'S' : '-';
 	str[6] = (flags & SIGSUSPENDED)  ? 'U' : '-';
 	str[7] = (flags & REPLY)  ? 'R' : '-';
-	str[11] = (flags & PRIV_PROC)  ? 'P' : '-';
+	str[8] = (flags & PRIV_PROC)  ? 'p' : '-';
+	str[9] = (flags & PM_SIG_PENDING) ? 's' : '-';
+	str[10] = (flags & PARTIAL_EXEC) ? 'x' : '-';
+	str[11] = (flags & EXITING) ? 'E' : '-';
 	str[12] = '\0';
 
 	return str;
