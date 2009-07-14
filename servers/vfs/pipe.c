@@ -574,6 +574,12 @@ PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
 			r |= SEL_RD;
 		if (err < 0 && err != SUSPEND)
 			r |= SEL_ERR;
+		if(err == SUSPEND && f->filp_mode & W_BIT) {
+                        /* A "meaningless" read select, therefore ready
+                           for reading and no error set. */
+			r |= SEL_RD; 
+			r &= ~SEL_ERR;
+                }
 	}
 	if ((*ops & (SEL_WR|SEL_ERR))) {
 		if ((err = Xpipe_check(f->filp_vno, WRITING, 0,
@@ -581,6 +587,12 @@ PUBLIC int select_request_pipe(struct filp *f, int *ops, int block)
 			r |= SEL_WR;
 		if (err < 0 && err != SUSPEND)
 			r |= SEL_ERR;
+		if(err == SUSPEND && f->filp_mode & R_BIT) {
+                        /* A "meaningless" write select, therefore ready
+                           for reading and no error set. */
+			r |= SEL_WR; 
+			r &= ~SEL_ERR;
+                }
 	}
 
 	/* Some options we collected might not be requested. */
