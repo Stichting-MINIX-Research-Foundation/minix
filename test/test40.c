@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   }
 
   if(errorct == 0) {
-    printf("Ok\n");
+    printf("ok\n");
     exit(0);
   } else {
     printf("%d error(s)\n", errorct);
