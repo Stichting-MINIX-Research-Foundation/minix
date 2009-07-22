@@ -302,11 +302,6 @@ PUBLIC int fs_unmount()
       return(EBUSY);	/* can't umount a busy file system */
   }
 
-  /* Put the root inode */
-  rip = get_inode(fs_dev, ROOT_INODE);
-  put_inode(rip);
-  put_inode(rip);
-
   /* Sync the disk, and invalidate cache. */
   (void) fs_sync();		/* force any cached blocks out of memory */
 

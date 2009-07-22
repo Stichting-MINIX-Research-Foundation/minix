@@ -30,7 +30,6 @@ FORWARD _PROTOTYPE( void old_icopy, (struct inode *rip, d1_inode *dip,
 						int direction, int norm));
 FORWARD _PROTOTYPE( void new_icopy, (struct inode *rip, d2_inode *dip,
 						int direction, int norm));
-FORWARD _PROTOTYPE( void put_inode2, (struct inode *rip, int count));
 
 
 /*===========================================================================*
@@ -79,7 +78,9 @@ PUBLIC int fs_putnode()
 	return EINVAL;
   }
 
-  put_inode2(rip, count);
+  rip->i_count -= count - 1;
+  put_inode(rip);
+
   return OK;
 }
 
@@ -262,6 +263,9 @@ register struct inode *rip;	/* pointer to inode to be released */
 
   if (rip == NIL_INODE) return;	/* checking here is easier than in caller */
 
+  if (rip->i_count < 1)
+	panic(__FILE__, "put_inode: i_count already below 1", rip->i_count);
+
   if (--rip->i_count == 0) {	/* i_count == 0 means no one is using it now */
 	if (rip->i_nlinks == 0) {
 		/* i_nlinks == 0 means free the inode. */
@@ -272,52 +276,6 @@ register struct inode *rip;	/* pointer to inode to be released */
 	} 
         else {
 		if (rip->i_pipe == I_PIPE) truncate_inode(rip, 0);
-	}
-        rip->i_mountpoint = FALSE;
-	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
-
-	if (rip->i_nlinks == 0) {
-		/* free, put at the front of the LRU list */
-		unhash_inode(rip);
-		rip->i_num = 0;
-		TAILQ_INSERT_HEAD(&unused_inodes, rip, i_unused);
-	}
-	else {
-		/* unused, put at the back of the LRU (cache it) */
-		TAILQ_INSERT_TAIL(&unused_inodes, rip, i_unused);
-	}
-  }
-}
-
-
-/*===========================================================================*
- *				put_inode2				     *
- *===========================================================================*/
-PRIVATE void put_inode2(rip, count)
-register struct inode *rip;	/* pointer to inode to be released */
-int count;
-{
-/* The caller is no longer using this inode.  If no one else is using it either
- * write it back to the disk immediately.  If it has no links, truncate it and
- * return it to the pool of available inodes.
- */
-
-  if (rip == NIL_INODE) return;	/* checking here is easier than in caller */
-
-  if (rip->i_count < count)
-	panic(__FILE__, "put_inode2: bad value for count", count);
-  rip->i_count -= count;
-  if (rip->i_count == 0) {	/* i_count == 0 means no one is using it now */
-	if (rip->i_nlinks == 0) {
-		/* i_nlinks == 0 means free the inode. */
-		truncate_inode(rip, 0);	/* return all the disk blocks */
-		rip->i_mode = I_NOT_ALLOC;	/* clear I_TYPE field */
-		rip->i_dirt = DIRTY;
-		free_inode(rip->i_dev, rip->i_num);
-	} 
-        else {
-		if (rip->i_pipe == I_PIPE)
-			truncate_inode(rip, 0);
 	}
         rip->i_mountpoint = FALSE;
 	if (rip->i_dirt == DIRTY) rw_inode(rip, WRITING);
