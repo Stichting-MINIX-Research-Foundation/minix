@@ -171,13 +171,10 @@ _PROTOTYPE( int mknod, (const char *_name, _mnx_Mode_t _mode, Dev_t _addr)	);
 _PROTOTYPE( int mknod4, (const char *_name, _mnx_Mode_t _mode, Dev_t _addr,
 	    long _size)							);
 _PROTOTYPE( char *mktemp, (char *_template)				);
-_PROTOTYPE( int mount, (char *_spec, char *_name, int _flag,
-						char *type, char *args)	);
 _PROTOTYPE( long ptrace, (int _req, pid_t _pid, long _addr, long _data)	);
 _PROTOTYPE( char *sbrk, (int _incr)					);
 _PROTOTYPE( int sync, (void)						);
 _PROTOTYPE( int fsync, (int fd)						);
-_PROTOTYPE( int umount, (const char *_name)				);
 _PROTOTYPE( int reboot, (int _how, ...)					);
 _PROTOTYPE( int gethostname, (char *_hostname, size_t _len)		);
 _PROTOTYPE( int getdomainname, (char *_domain, size_t _len)		);

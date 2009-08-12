@@ -25,6 +25,7 @@
 #include <minix/type.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/mount.h>
 #include <dirent.h>
 #include <stdlib.h>
 

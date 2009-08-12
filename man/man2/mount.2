@@ -4,10 +4,9 @@ mount, umount \- mount or umount a file system
 .SH SYNOPSIS
 .ft B
 .nf
-#include <unistd.h>
 #include <sys/mount.h>
 
-int mount(char *\fIspecial\fP, char *\fIname\fP, int \fIflag\fP, char *\fItype\fP, char *\fIargs\fP)
+int mount(char *\fIspecial\fP, char *\fIname\fP, int \fImountflags\fP, char *\fItype\fP, char *\fIargs\fP)
 int umount(char *\fIname\fP)
 .fi
 .ft P
