@@ -19,9 +19,6 @@
 #include <minix/syslib.h>
 #include <minix/u64.h>
 
-#define U64_LO 0
-#define U64_HI 1
-
 PRIVATE char cpath[CPROF_CPATH_MAX_LEN];	/* current call path string */
 PRIVATE int cpath_len;				/* current call path len */
 PRIVATE struct cprof_tbl_s *cprof_slot;		/* slot of current function */
@@ -64,7 +61,7 @@ char *name;
   if (cprof_locked) return; else cprof_locked = 1;
 
   /* Read CPU cycle count into local variable. */
-  read_tsc(&start._[U64_HI], &start._[U64_LO]);
+  read_tsc(&start.hi, &start.lo);
 
   /* Run init code once after system boot. */
   if (init == 0) {
@@ -108,8 +105,8 @@ char *name;
   }
 
   /* Save initial cycle count on stack. */
-  cprof_stk[cprof_stk_top].start_1._[U64_HI] = start._[U64_HI];
-  cprof_stk[cprof_stk_top].start_1._[U64_LO] = start._[U64_LO];
+  cprof_stk[cprof_stk_top].start_1.hi = start.hi;
+  cprof_stk[cprof_stk_top].start_1.lo = start.lo;
 
   /* Check available call path len. */
   if (cpath_len + strlen(name) + 1 > CPROF_CPATH_MAX_LEN) {
@@ -170,8 +167,8 @@ char *name;
   cprof_stk[cprof_stk_top].slot = cprof_slot;
 
   /* Again save CPU cycle count on stack. */
-  read_tsc(&cprof_stk[cprof_stk_top].start_2._[U64_HI],
-		&cprof_stk[cprof_stk_top].start_2._[U64_LO]);
+  read_tsc(&cprof_stk[cprof_stk_top].start_2.hi,
+		&cprof_stk[cprof_stk_top].start_2.lo);
   cprof_locked = 0;
 }
 
@@ -185,7 +182,7 @@ char *name;
   if (cprof_locked) return; else cprof_locked = 1;
 
   /* First thing: read CPU cycle count into local variable. */
-  read_tsc(&stop._[U64_HI], &stop._[U64_LO]);
+  read_tsc(&stop.hi, &stop.lo);
 
   /* Only continue if sane. */
   if (control.err) return;
@@ -204,8 +201,8 @@ char *name;
 		sub64(spent, cprof_stk[cprof_stk_top].spent_deeper));
 
   /* Clear spent_deeper for call level we're leaving. */
-  cprof_stk[cprof_stk_top].spent_deeper._[U64_LO] = 0;
-  cprof_stk[cprof_stk_top].spent_deeper._[U64_HI] = 0;
+  cprof_stk[cprof_stk_top].spent_deeper.lo = 0;
+  cprof_stk[cprof_stk_top].spent_deeper.hi = 0;
 
   /* Adjust call path string and stack. */
   cpath_len = cprof_stk[cprof_stk_top].cpath_len;
@@ -221,7 +218,7 @@ char *name;
    */
 
   /* Read CPU cycle count. */
-  read_tsc(&stop._[U64_HI], &stop._[U64_LO]);
+  read_tsc(&stop.hi, &stop.lo);
 
   /* Calculate "big" difference. */
   spent = sub64(stop, cprof_stk[cprof_stk_top].start_1);
@@ -249,12 +246,12 @@ PRIVATE void cprof_init() {
   for (i=0; i<CPROF_STACK_SIZE; i++) {
 	cprof_stk[i].cpath_len = 0;
 	cprof_stk[i].slot = 0;
-	cprof_stk[i].start_1._[U64_LO] = 0;
-	cprof_stk[i].start_1._[U64_HI] = 0;
-	cprof_stk[i].start_2._[U64_LO] = 0;
-	cprof_stk[i].start_2._[U64_HI] = 0;
-	cprof_stk[i].spent_deeper._[U64_LO] = 0;
-	cprof_stk[i].spent_deeper._[U64_HI] = 0;
+	cprof_stk[i].start_1.lo = 0;
+	cprof_stk[i].start_1.hi = 0;
+	cprof_stk[i].start_2.lo = 0;
+	cprof_stk[i].start_2.hi = 0;
+	cprof_stk[i].spent_deeper.lo = 0;
+	cprof_stk[i].spent_deeper.hi = 0;
   }
 }
 
@@ -277,8 +274,8 @@ PRIVATE void clear_tbl()
 	memset(cprof_tbl[i].cpath, '\0', CPROF_CPATH_MAX_LEN);
 	cprof_tbl[i].next = 0;
 	cprof_tbl[i].calls = 0;
-	cprof_tbl[i].cycles._[U64_LO] = 0;
-	cprof_tbl[i].cycles._[U64_HI] = 0;
+	cprof_tbl[i].cycles.lo = 0;
+	cprof_tbl[i].cycles.hi = 0;
   }
 }
 
