@@ -54,7 +54,6 @@ libc_FILES=" \
 	_mkdir.c \
 	_mkfifo.c \
 	_mknod.c \
-	_mount.c \
 	_mmap.c \
 	_open.c \
 	_opendir.c \
