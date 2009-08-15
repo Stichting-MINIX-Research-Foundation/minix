@@ -265,7 +265,7 @@ stat()
   case DELETE:
 	lex();
 	u = getvar(text, hashtab, ARR);
-	if (Getc() != '[')
+	if (!isarrayindex())
 		synerr("'[' expected");
 	p = doarray(u);
 	p->n_type = DELETE;
@@ -842,7 +842,7 @@ g1:
 	lex();
 	break;
   case IDENT: case ARG:
-	if ((c = Getc()) == '[') {	/* array */
+  	if (isarrayindex()) {		/* array */
 		/* 940403 */
 		if (sym == ARG) {
 			u = (CELL *)emalloc(sizeof(CELL));
@@ -855,7 +855,6 @@ g1:
 		}
 	}
 	else {
-		Ungetc(c);
 		if (sym == ARG) {
 			u = mkcell(POS, NULL, (double)sym1);
 			p = node1(ARG, u);

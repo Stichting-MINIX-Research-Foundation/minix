@@ -291,11 +291,32 @@ scanreg()
   return REGEXP;
 }
 
-static int c0;
+isarrayindex()
+{
+  int c, c2;
+
+next:
+  while ((c = Getc()) == ' ' || c == '\t')
+	;
+  if (c == '\\') {
+	if ((c2 = Getc()) == '\n') {
+		lineno++;
+		goto next;
+	}
+	Ungetc(c2);
+  }
+  if (c != '[') Ungetc(c);
+
+  return (c == '[');
+}
+
+#define UNGET_DEPTH 2
+static int unget[UNGET_DEPTH], unget_depth;
 
 Ungetc(c)
 {
-  c0 = c;
+  if (unget_depth == UNGET_DEPTH) error("unget buffer overflow");
+  unget[unget_depth++] = c;
 
   if (linep > line) {
 	if (--linep < line)
@@ -308,9 +329,8 @@ Getc()
   register int c;
   char *s, *t;
 
-  if (c0) {
-	c = c0; c0 = 0;
-  }	
+  if (unget_depth > 0)
+	c = unget[--unget_depth];
   else if (srcprg)
 	c = *srcprg ? *srcprg++ : EOF;
   else
