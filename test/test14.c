@@ -29,9 +29,7 @@ int main()
   chdir("DIR_14");
 
   pid = getpid();
-  name[6] = (pid & 037) + 33;
-  name[7] = ((pid * pid) & 037) + 33;
-  name[8] = 0;
+  sprintf(&name[6], "%x", pid);
 
   for (i = 0; i < TRIALS; i++) {
 	if ( (fd0 = creat(name, 0777)) < 0) e(1);
