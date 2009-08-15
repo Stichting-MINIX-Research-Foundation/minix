@@ -548,6 +548,8 @@ int sig;
 	case SIGTTIN:	return "ttin";		/* 21 */
 	case SIGTTOU:	return "ttou";		/* 22 */
 	case SIGWINCH:	return "winch";		/* 23 */
+	case SIGVTALRM:	return "vtalrm";	/* 24 */
+	case SIGPROF:	return "prof";		/* 25 */
 #ifdef __minix_vmd
 	case SIGFPEMU:	return "fpemu";		/* 30 */
 #endif

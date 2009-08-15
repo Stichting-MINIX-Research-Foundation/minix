@@ -11,6 +11,7 @@ struct memory;
 _PROTOTYPE( int do_alarm, (void)					);
 _PROTOTYPE( int do_itimer, (void)					);
 _PROTOTYPE( void set_alarm, (struct mproc *rmp, clock_t ticks)		);
+_PROTOTYPE( void check_vtimer, (int proc_nr, int sig)			);
 
 /* break.c */
 _PROTOTYPE( int do_brk, (void)						);

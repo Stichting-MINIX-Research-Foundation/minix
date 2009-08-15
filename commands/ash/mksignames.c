@@ -131,8 +131,8 @@ struct sig sigtab[] = {
 #ifdef SIGXFSZ
 	SIGXFSZ, "XFSZ", NULL,
 #endif
-#ifdef SIGVTALARM
-	SIGVTALARM, "VTALARM", "Virtual alarm",
+#ifdef SIGVTALRM
+	SIGVTALRM, "VTALARM", "Virtual alarm",
 #endif
 #ifdef SIGPROF
 	SIGPROF, "PROF", "Profiling alarm",

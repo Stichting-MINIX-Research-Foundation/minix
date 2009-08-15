@@ -86,10 +86,14 @@ _PROTOTYPE(void *alloc_contig, (size_t len, int flags, phys_bytes *phys));
 #define AC_LOWER16M	0x02
 #define AC_ALIGN64K	0x04
 
-/* Clock functionality: get system times or (un)schedule an alarm call. */
+/* Clock functionality: get system times, (un)schedule an alarm call, or
+ * retrieve/set a process-virtual timer.
+ */
 _PROTOTYPE( int sys_times, (endpoint_t proc_nr, clock_t *user_time,
 	clock_t *sys_time, clock_t *uptime));
 _PROTOTYPE(int sys_setalarm, (clock_t exp_time, int abs_time));
+_PROTOTYPE( int sys_vtimer, (endpoint_t proc_nr, int which, clock_t *newval,
+	clock_t *oldval));
 
 /* Shorthands for sys_irqctl() system call. */
 #define sys_irqdisable(hook_id) \

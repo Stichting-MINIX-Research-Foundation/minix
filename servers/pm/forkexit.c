@@ -41,7 +41,7 @@ PUBLIC int do_fork()
   register struct mproc *rmc;	/* pointer to child */
   pid_t new_pid;
   static int next_child;
-  int n = 0, r, s;
+  int i, n = 0, r, s;
   endpoint_t child_ep;
 
  /* If tables might fill up during FORK, don't even start since recovery half
@@ -86,7 +86,8 @@ PUBLIC int do_fork()
   rmc->mp_exitstatus = 0;
   rmc->mp_sigstatus = 0;
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
-  rmc->mp_interval = 0;			/* reset interval timer */
+  for (i = 0; i < NR_ITIMERS; i++)
+	rmc->mp_interval[i] = 0;	/* reset timer intervals */
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
@@ -115,7 +116,7 @@ PUBLIC int do_fork_nb()
   int s;
   pid_t new_pid;
   static int next_child;
-  int n = 0, r;
+  int i, n = 0, r;
   endpoint_t child_ep;
 
   /* Only system processes are allowed to use fork_nb */
@@ -159,6 +160,8 @@ PUBLIC int do_fork_nb()
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
+  for (i = 0; i < NR_ITIMERS; i++)
+	rmc->mp_interval[i] = 0;	/* reset timer intervals */
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();

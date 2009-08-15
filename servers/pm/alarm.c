@@ -6,6 +6,7 @@
  *   do_itimer: perform the ITIMER system call
  *   do_alarm: perform the ALARM system call
  *   set_alarm: tell the timer interface to start or stop a process timer
+ *   check_vtimer: check if one of the virtual timers needs to be restarted
  */
 
 #include "pm.h"
@@ -22,6 +23,8 @@ FORWARD _PROTOTYPE( clock_t ticks_from_timeval, (struct timeval *tv) 	);
 FORWARD _PROTOTYPE( void timeval_from_ticks, (struct timeval *tv,
 			clock_t ticks)					);
 FORWARD _PROTOTYPE( int is_sane_timeval, (struct timeval *tv)		);
+FORWARD _PROTOTYPE( void getset_vtimer, (struct mproc *mp, int nwhich,
+		struct itimerval *value, struct itimerval *ovalue)	);
 FORWARD _PROTOTYPE( void get_realtimer, (struct mproc *mp,
 					 struct itimerval *value)	);
 FORWARD _PROTOTYPE( void set_realtimer, (struct mproc *mp,
@@ -98,7 +101,7 @@ PUBLIC int do_itimer()
   int r;
 
   /* Make sure 'which' is one of the defined timers. */
-  if (m_in.which_timer < ITIMER_REAL || m_in.which_timer > ITIMER_PROF)
+  if (m_in.which_timer < 0 || m_in.which_timer >= NR_ITIMERS)
   	return(EINVAL);
 
   /* Determine whether to set and/or return the given timer value, based on
@@ -134,8 +137,11 @@ PUBLIC int do_itimer()
 
   	case ITIMER_VIRTUAL :
   	case ITIMER_PROF :
-  		/* Not implemented. */
-  		r = ENOSYS;
+  		getset_vtimer(mp, m_in.which_timer,
+  				(setval) ? &value : NULL,
+  				(getval) ? &ovalue : NULL);
+
+  		r = OK;
   		break;
   }
 
@@ -173,6 +179,97 @@ PUBLIC int do_alarm()
 }
 
 /*===========================================================================*
+ *				getset_vtimer				     * 
+ *===========================================================================*/
+PRIVATE void getset_vtimer(rmp, which, value, ovalue)
+struct mproc *rmp;
+int which;
+struct itimerval *value;
+struct itimerval *ovalue;
+{
+  clock_t newticks, *nptr;		/* the new timer value, in ticks */
+  clock_t oldticks, *optr;		/* the old ticks value, in ticks */
+  int r, num;
+
+  /* The default is to provide sys_vtimer with two null pointers, i.e. to do
+   * nothing at all.
+   */
+  optr = nptr = NULL;
+
+  /* If the old timer value is to be retrieved, have 'optr' point to the
+   * location where the old value is to be stored, and copy the interval.
+   */
+  if (ovalue != NULL) {
+  	optr = &oldticks;
+
+  	timeval_from_ticks(&ovalue->it_interval, rmp->mp_interval[which]);
+  }
+
+  /* If a new timer value is to be set, store the new timer value and have
+   * 'nptr' point to it. Also, store the new interval.
+   */
+  if (value != NULL) {
+  	newticks = ticks_from_timeval(&value->it_value);
+  	nptr = &newticks;
+
+  	/* If no timer is set, the interval must be zero. */
+  	if (newticks <= 0)
+  		rmp->mp_interval[which] = 0;
+	else 
+		rmp->mp_interval[which] =
+			ticks_from_timeval(&value->it_interval);
+  }
+
+  /* Find out which kernel timer number to use. */
+  switch (which) {
+  case ITIMER_VIRTUAL: num = VT_VIRTUAL; break;
+  case ITIMER_PROF:    num = VT_PROF;    break;
+  default:             panic(__FILE__, "invalid vtimer type", which);
+  }
+
+  /* Make the kernel call. If requested, also retrieve and store
+   * the old timer value.
+   */
+  if ((r = sys_vtimer(rmp->mp_endpoint, num, nptr, optr)) != OK)
+  	panic(__FILE__, "sys_vtimer failed", r);
+
+  if (ovalue != NULL) {
+  	/* If the alarm expired already, we should take into account the
+  	 * interval. Return zero only if the interval is zero as well.
+  	 */
+  	if (oldticks <= 0) oldticks = rmp->mp_interval[which];
+
+	timeval_from_ticks(&ovalue->it_value, oldticks);
+  }
+}
+
+/*===========================================================================*
+ *				check_vtimer				     * 
+ *===========================================================================*/
+PUBLIC void check_vtimer(proc_nr, sig)
+int proc_nr;
+int sig;
+{
+  register struct mproc *rmp;
+  int which, num;
+
+  rmp = &mproc[proc_nr];
+
+  /* Translate back the given signal to a timer type and kernel number. */
+  switch (sig) {
+  case SIGVTALRM: which = ITIMER_VIRTUAL; num = VT_VIRTUAL; break;
+  case SIGPROF:   which = ITIMER_PROF;    num = VT_PROF;    break;
+  default: panic(__FILE__, "invalid vtimer signal", sig);
+  }
+
+  /* If a repetition interval was set for this virtual timer, tell the
+   * kernel to set a new timeout for the virtual timer.
+   */
+  if (rmp->mp_interval[which] > 0)
+  	sys_vtimer(rmp->mp_endpoint, num, &rmp->mp_interval[which], NULL);
+}
+
+/*===========================================================================*
  *				get_realtimer				     * 
  *===========================================================================*/
 PRIVATE void get_realtimer(rmp, value)
@@ -195,7 +292,7 @@ struct itimerval *value;
   	/* If the alarm expired already, we should take into account the
   	 * interval. Return zero only if the interval is zero as well.
   	 */
-  	if (remaining <= 0) remaining = rmp->mp_interval;
+  	if (remaining <= 0) remaining = rmp->mp_interval[ITIMER_REAL];
   } else {
   	remaining = 0;
   }
@@ -204,7 +301,7 @@ struct itimerval *value;
   timeval_from_ticks(&value->it_value, remaining);
 
   /* Similarly convert and store the interval of the timer. */
-  timeval_from_ticks(&value->it_interval, rmp->mp_interval);
+  timeval_from_ticks(&value->it_interval, rmp->mp_interval[ITIMER_REAL]);
 }
 
 /*===========================================================================*
@@ -226,7 +323,7 @@ struct itimerval *value;
 
   /* Apply these values. */
   set_alarm(rmp, ticks);
-  rmp->mp_interval = interval;
+  rmp->mp_interval[ITIMER_REAL] = interval;
 }
 
 /*===========================================================================*
@@ -270,8 +367,8 @@ struct timer *tp;
    * The set_alarm call will be calling pm_set_timer from within this callback
    * from the pm_expire_timers function. This is safe, but we must not use the
    * "tp" structure below this point anymore. */
-  if (rmp->mp_interval > 0)
-	set_alarm(rmp, rmp->mp_interval);
+  if (rmp->mp_interval[ITIMER_REAL] > 0)
+	set_alarm(rmp, rmp->mp_interval[ITIMER_REAL]);
   else rmp->mp_flags &= ~ALARM_ON;
 
   check_sig(rmp->mp_pid, SIGALRM);

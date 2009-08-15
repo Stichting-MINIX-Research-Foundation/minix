@@ -44,6 +44,8 @@ typedef unsigned long sigset_t;
 #define SIGEMT		  16	/* EMT instruction */
 #define SIGCHLD           17	/* child process terminated or stopped */
 #define SIGWINCH    	  21	/* window size has changed */
+#define SIGVTALRM         24	/* virtual alarm */
+#define SIGPROF           25	/* profiler alarm */
 
 /* POSIX requires the following signals to be defined, even if they are
  * not supported.  Here are the definitions, but they are not supported.
@@ -54,7 +56,7 @@ typedef unsigned long sigset_t;
 #define SIGTTIN           22	/* background process wants to read */
 #define SIGTTOU           23	/* background process wants to write */
 
-#define _NSIG             24	/* highest signal number plus one */
+#define _NSIG             26	/* highest signal number plus one */
 
 #ifdef _MINIX
 #define SIGIOT             SIGABRT /* for people who speak PDP-11 */

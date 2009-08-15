@@ -57,6 +57,10 @@ register message *m_ptr;	/* pointer to request message */
 
   rpc->p_reg.psw &= ~TRACEBIT;		/* clear trace bit */
 
+  rpc->p_misc_flags &= ~(VIRT_TIMER | PROF_TIMER);
+  rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
+  rpc->p_prof_left = 0;
+
   /* Parent and child have to share the quantum that the forked process had,
    * so that queued processes do not have to wait longer because of the fork.
    * If the time left is odd, the child gets an extra tick.

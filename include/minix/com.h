@@ -328,7 +328,9 @@
 #  define SYS_VMCTL	(KERNEL_CALL + 43)	/* sys_vmctl() */
 #  define SYS_SYSCTL	(KERNEL_CALL + 44)	/* sys_sysctl() */
 
-#define NR_SYS_CALLS	45	/* number of system calls */ 
+#  define SYS_VTIMER     (KERNEL_CALL + 45)	/* sys_vtimer() */
+
+#define NR_SYS_CALLS	46	/* number of system calls */ 
 
 /* Pseudo call for use in kernel/table.c. */
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
@@ -603,6 +605,14 @@
 #define VMCTL_MEMREQ_REPLY	15
 #define VMCTL_INCSP		16
 #define VMCTL_NOPAGEZERO	18
+
+/* Field names for SYS_VTIMER. */
+#define VT_WHICH	m2_i1	/* which timer to set/retrieve */
+#  define VT_VIRTUAL        1	/* the ITIMER_VIRTUAL timer */
+#  define VT_PROF           2	/* the ITIMER_PROF timer */
+#define VT_SET		m2_i2	/* 1 for setting a timer, 0 retrieval only */
+#define VT_VALUE	m2_l1	/* new/previous value of the timer */
+#define VT_ENDPT	m2_l2	/* process to set/retrieve the timer for */
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *

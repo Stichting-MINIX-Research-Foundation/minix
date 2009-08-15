@@ -33,6 +33,9 @@ struct proc {
   clock_t p_user_time;		/* user time in ticks */
   clock_t p_sys_time;		/* sys time in ticks */
 
+  clock_t p_virt_left;		/* number of ticks left on virtual timer */
+  clock_t p_prof_left;		/* number of ticks left on profile timer */
+
   struct proc *p_nextready;	/* pointer to next ready process */
   struct proc *p_caller_q;	/* head of list of procs wishing to send */
   struct proc *p_q_link;	/* link to next proc wishing to send */
@@ -169,6 +172,8 @@ struct proc {
 
 /* Misc flags */
 #define REPLY_PENDING	0x01	/* reply to IPC_REQUEST is pending */
+#define VIRT_TIMER	0x02	/* process-virtual timer is running */
+#define PROF_TIMER	0x04	/* process-virtual profile timer is running */
 #define MF_VM		0x08	/* process uses VM */
 #define MF_ASYNMSG	0x10	/* Asynchrous message pending */
 #define MF_FULLVM	0x20

@@ -96,6 +96,8 @@ PUBLIC void clock_task()
 PRIVATE void do_clocktick(m_ptr)
 message *m_ptr;				/* pointer to request message */
 {
+  register struct proc *bill_copy = bill_ptr;
+
 /* Despite its name, this routine is not called on every clock tick. It
  * is called on those clock ticks when a lot of work needs to be done.
  */
@@ -119,6 +121,18 @@ message *m_ptr;				/* pointer to request message */
 		prev_ptr->p_endpoint, prev_ptr->p_rts_flags);
       }
   }
+
+  /* Check if a process-virtual timer expired. Check prev_ptr, but also
+   * bill_ptr - one process's user time is another's system time, and the
+   * profile timer decreases for both! Do this before the queue operations
+   * below, which may alter bill_ptr. Note the use a copy of bill_ptr, because
+   * bill_ptr may have been changed above, and this code can't be put higher
+   * up because otherwise cause_sig() may dequeue prev_ptr before we do.
+   */
+  vtimer_check(prev_ptr);
+
+  if (prev_ptr != bill_copy)
+	vtimer_check(bill_copy);
 
   /* Check if a clock timer expired and run its watchdog function. */
   if (next_timeout <= realtime) {
@@ -180,11 +194,13 @@ irq_hook_t *hook;
  * 	realtime:
  * 		The current uptime is incremented with all outstanding ticks.
  *	proc_ptr, bill_ptr:
- *		These are used for accounting.  It does not matter if proc.c
- *		is changing them, provided they are always valid pointers,
- *		since at worst the previous process would be billed.
+ *		These are used for accounting and virtual timers. It does not
+ *		matter if proc.c is changing them, provided they are always
+ * 		valid pointers, since at worst the previous process would be
+ *		billed.
  */
   register unsigned ticks;
+  register int expired;
 
   if(minix_panicing) return;
 
@@ -208,6 +224,20 @@ irq_hook_t *hook;
       bill_ptr->p_ticks_left -= ticks;
   }
 
+  /* Decrement virtual timers, if applicable. We decrement both the virtual
+   * and the profile timer of the current process, and if the current process
+   * is not billable, the timer of the billed process as well.
+   * If any of the timers expire, do_clocktick() will send out signals.
+   */
+  expired = 0;
+  if ((proc_ptr->p_misc_flags & VIRT_TIMER) &&
+	(proc_ptr->p_virt_left -= ticks) <= 0) expired = 1;
+  if ((proc_ptr->p_misc_flags & PROF_TIMER) &&
+	(proc_ptr->p_prof_left -= ticks) <= 0) expired = 1;
+  if (! (priv(proc_ptr)->s_flags & BILLABLE) &&
+  	(bill_ptr->p_misc_flags & PROF_TIMER) &&
+  	(bill_ptr->p_prof_left -= ticks) <= 0) expired = 1;
+
 #if 0
   /* Update load average. */
   load_update();
@@ -216,7 +246,7 @@ irq_hook_t *hook;
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
-  if ((next_timeout <= realtime) || (proc_ptr->p_ticks_left <= 0)) {
+  if ((next_timeout <= realtime) || (proc_ptr->p_ticks_left <= 0) || expired) {
       prev_ptr = proc_ptr;			/* store running process */
       lock_notify(HARDWARE, CLOCK);		/* send notification */
   } 

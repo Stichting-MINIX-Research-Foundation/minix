@@ -7,6 +7,8 @@
 #include <timers.h>
 #include <signal.h>
 
+#include "const.h"
+
 EXTERN struct mproc {
   char mp_exitstatus;		/* storage for status when process exits */
   char mp_sigstatus;		/* storage for signal # for killed procs */
@@ -39,7 +41,7 @@ EXTERN struct mproc {
 				 * PM_UNPAUSE request is delivered.
 				 */
   struct timer mp_timer;	/* watchdog timer for alarm(2), setitimer(2) */
-  clock_t mp_interval;		/* repetition interval for setitimer(2) */
+  clock_t mp_interval[NR_ITIMERS];	/* setitimer(2) repetition intervals */
 
   unsigned mp_flags;		/* flag bits */
   vir_bytes mp_procargs;        /* ptr to proc's initial stack arguments */

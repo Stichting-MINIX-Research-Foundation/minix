@@ -32,10 +32,14 @@ A timer that is decremented in realtime. When it expires, a
 signal is delivered to the process.
 .TP
 .B ITIMER_VIRTUAL
-Not supported on Minix.
+A timer that is decremented in process user time. When it expires, a
+.BR SIGVTALRM
+signal is delivered to the process.
 .TP
 .B ITIMER_PROF
-Not supported on Minix.
+A timer that is decremented in process user+system time. When it expires, a
+.BR SIGPROF
+signal is delivered to the process.
 .PP
 The specified timer will first expire after the time specified in the 'it_value' field of the itimerval structure. Similarly, upon retrieval the 'it_value' field will contain the time after which the timer will expire.
 .PP
@@ -58,9 +62,6 @@ Either \fIwhich\fP is not one of the ITIMER_* constants above, or one of the tim
 .TP
 .B EFAULT
 Bad \fIvalue\fP or \fIovalue\fP address. 
-.TP
-.B ENOSYS
-The value of \fIwhich\fP is not ITIMER_REAL.
 .SH SEE ALSO
 .BR alarm (2)
 .SH AUTHOR

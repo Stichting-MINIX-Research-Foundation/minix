@@ -41,6 +41,8 @@ struct signames {
 #ifdef SIGWINCH
 	{ "WINCH",	SIGWINCH	},
 #endif
+	{ "VTALRM",	SIGVTALRM	},
+	{ "PROF",	SIGPROF		},
 	{ NULL,		0		}
 };
 
