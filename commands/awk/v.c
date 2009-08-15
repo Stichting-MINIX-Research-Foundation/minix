@@ -36,6 +36,7 @@ extern prmflg;
 SYMBOL *hashtab[HASHSIZE];
 SYMBOL *funtab[HASHSIZE];
 SYMBOL *argtab[HASHSIZE];
+SYMBOL *envtab[HASHSIZE];
 
 char *strsave(), *emalloc(), *strchr();
 CELL *lookup(), *install(), *_install(), *mkcell(), *mktmp(), *getvar();
@@ -86,11 +87,11 @@ setvar(s) char *s;
   }
 }
 
-initarg(arg0, argc, argv) char *arg0, **argv;
+initarg(arg0, argc, argv, envp) char *arg0, **argv, **envp;
 {
   CELL *u;
   register int i;
-  register char str[4];
+  register char str[4], *p;
 
   ARGC = &install("ARGC", VAR|NUM, (char *)NULL, (double)argc+1, hashtab)->c_fval;
   u = install("ARGV", ARR, (char *)NULL, 0.0, hashtab);
@@ -102,6 +103,19 @@ initarg(arg0, argc, argv) char *arg0, **argv;
 		install(str, VAR|STR|NUM, argv[i], atof(argv[i]), argtab);
 	else
 		install(str, VAR|STR, argv[i], 0.0, argtab);
+  }
+
+  u = install("ENVIRON", ARR, (char *)NULL, 0.0, hashtab);
+  u->c_sval = (char *) envtab;
+  for (i = 0; envp[i] && *envp[i]; i++) {
+  	if ((p = strchr(envp[i], '=')) != NULL) {
+  		*p = 0;
+  		if (isnum(p+1))
+  			install(envp[i], VAR|STR|NUM, p+1, atof(p+1), envtab);
+  		else
+  			install(envp[i], VAR|STR, p+1, 0.0, envtab);
+  		*p = '=';
+  	}
   }
 }
 

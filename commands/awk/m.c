@@ -36,7 +36,7 @@ char *cmd;
 int iflg;	/* interactive mode */
 #endif
 
-main(argc, argv) char **argv;
+main(argc, argv, envp) char **argv, *envp;
 {
   char *s, *strpbrk(), *strchr();
   void onint();
@@ -98,7 +98,7 @@ main(argc, argv) char **argv;
 	xargc--;
   }
 
-  initarg(cmd, xargc, xargv);
+  initarg(cmd, xargc, xargv, envp);
   if (xargc == 0) {
 	ifp = stdin; *FILENAME = "-";
   }
