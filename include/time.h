@@ -72,4 +72,14 @@ _PROTOTYPE( int stime, (time_t *_top)					);
 
 extern long timezone;
 
+#ifdef _POSIX_SOURCE
+struct timespec
+{
+	time_t tv_sec;
+	long tv_nsec;
+};
+
+int nanosleep(const struct timespec *rqtp, struct timespec *rmtp);
+#endif
+
 #endif /* _TIME_H */

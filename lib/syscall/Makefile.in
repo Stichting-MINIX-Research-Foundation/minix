@@ -70,6 +70,7 @@ libc_FILES=" \
 	mknod.s \
 	mmap.s \
 	mount.s \
+	nanosleep.s \
 	open.s \
 	opendir.s \
 	pathconf.s \
