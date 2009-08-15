@@ -53,6 +53,7 @@
 #define CHROOT		  61 
 #define SETSID		  62
 #define GETPGRP		  63
+#define ITIMER		  64
 
 /* Posix signal handling. */
 #define SIGACTION	  71

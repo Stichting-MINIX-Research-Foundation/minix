@@ -45,6 +45,7 @@ libc_FILES=" \
 	geteuid.s \
 	getgid.s \
 	getgroups.s \
+	getitimer.s \
 	getnpid.s \
 	getnprocnr.s \
 	getpgrp.s \
@@ -86,6 +87,7 @@ libc_FILES=" \
 	select.s \
 	seekdir.s \
 	setgid.s \
+	setitimer.s \
 	setsid.s \
 	setuid.s \
 	sigaction.s \

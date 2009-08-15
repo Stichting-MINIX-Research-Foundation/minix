@@ -1,0 +1,67 @@
+.TH GETITIMER 2  "April 14, 2006"
+.UC 4
+.SH NAME
+getitimer, setitimer \- get and set value of interval timer
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/time.h>
+
+int getitimer(int \fIwhich\fP, struct itimerval *\fIvalue\fP)
+.in +5
+.ti -5
+int setitimer(int \fIwhich\fP, const struct itimerval *\fIvalue\fP, struct itimerval *\fIovalue\fP);
+.in -5
+.ft R
+.fi
+.SH DESCRIPTION
+.B Getitimer
+retrieves the current value of the given interval timer, in \fIvalue\fP.
+.PP
+.B Setitimer
+sets a new value for the given interval timer, as given in \fIvalue\fP, and, if \fIovalue\fP is not set to 
+.BR NULL , 
+stores the old value for the interval timer in \fIovalue\fP.
+.PP
+For both functions, the \fIwhich\fP parameter indicates which of the interval timers they work on; \fIwhich\fP can have one of the following values:
+.PP
+.TP 15
+.B ITIMER_REAL
+A timer that is decremented in realtime. When it expires, a
+.BR SIGARLM
+signal is delivered to the process.
+.TP
+.B ITIMER_VIRTUAL
+Not supported on Minix.
+.TP
+.B ITIMER_PROF
+Not supported on Minix.
+.PP
+The specified timer will first expire after the time specified in the 'it_value' field of the itimerval structure. Similarly, upon retrieval the 'it_value' field will contain the time after which the timer will expire.
+.PP
+If 'it_value' is zero, then the timer is disabled, and the 'it_interval' field is ignored and (upon retrieval) set to zero. Otherwise, 'it_interval' contains the repetition interval after which the timer will repeatedly expire, starting from the moment that the timer expires for the first time according to the 'it_value' value. If 'it_interval' is set to zero, no repetition will occur.
+.PP
+The maximum supported timeout value that
+.B setitimer 
+accepts, depends on the clock tick rate of the operating system.
+.PP
+These functions share their real-time timer with
+.BR alarm (2).
+Therefore, use of both types of functions in one program yields undefined results.
+.SH RETURN VALUES
+Upon successful completion, these functions return 0. Otherwise, a value of -1 is returned and \fIerrno\fP is set to indicate the error.
+.SH ERRORS
+The functions will fail if any of the following occur:
+.TP 15
+.B EINVAL
+Either \fIwhich\fP is not one of the ITIMER_* constants above, or one of the timeval structures in \fIvalue\fP contains a bad or too large value.
+.TP
+.B EFAULT
+Bad \fIvalue\fP or \fIovalue\fP address. 
+.TP
+.B ENOSYS
+The value of \fIwhich\fP is not ITIMER_REAL.
+.SH SEE ALSO
+.BR alarm (2)
+.SH AUTHOR
+David van Moolenbroek <dcvmoole@cs.vu.nl>

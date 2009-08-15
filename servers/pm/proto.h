@@ -7,6 +7,11 @@ struct memory;
 
 #include <timers.h>
 
+/* alarm.c */
+_PROTOTYPE( int do_alarm, (void)					);
+_PROTOTYPE( int do_itimer, (void)					);
+_PROTOTYPE( void set_alarm, (struct mproc *rmp, clock_t ticks)		);
+
 /* break.c */
 _PROTOTYPE( int do_brk, (void)						);
 
@@ -73,11 +78,9 @@ _PROTOTYPE( int do_sprofile, (void)                                    );
 _PROTOTYPE( int do_cprofile, (void)                                    );
 
 /* signal.c */
-_PROTOTYPE( int do_alarm, (void)					);
 _PROTOTYPE( int do_kill, (void)						);
 _PROTOTYPE( int ksig_pending, (void)					);
 _PROTOTYPE( int do_pause, (void)					);
-_PROTOTYPE( int set_alarm, (int proc_nr, int sec)			);
 _PROTOTYPE( int check_sig, (pid_t proc_id, int signo)			);
 _PROTOTYPE( void sig_proc, (struct mproc *rmp, int sig_nr)		);
 _PROTOTYPE( int do_sigaction, (void)					);

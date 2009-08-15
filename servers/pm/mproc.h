@@ -38,7 +38,8 @@ EXTERN struct mproc {
   struct sigmsg mp_sigmsg;	/* Save the details of the signal until the
 				 * PM_UNPAUSE request is delivered.
 				 */
-  struct timer mp_timer;	/* watchdog timer for alarm(2) */
+  struct timer mp_timer;	/* watchdog timer for alarm(2), setitimer(2) */
+  clock_t mp_interval;		/* repetition interval for setitimer(2) */
 
   unsigned mp_flags;		/* flag bits */
   vir_bytes mp_procargs;        /* ptr to proc's initial stack arguments */

@@ -10,3 +10,5 @@
 
 #define DUMPED          0200	/* bit set in status when core dumped */
 
+#define MAX_SECS (((1<<(sizeof(clock_t)*8-1))-1)/system_hz)
+				/* max.secs for setitimer() ((2^31-1)/HZ) */

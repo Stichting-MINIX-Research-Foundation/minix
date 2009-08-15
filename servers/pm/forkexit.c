@@ -86,6 +86,7 @@ PUBLIC int do_fork()
   rmc->mp_exitstatus = 0;
   rmc->mp_sigstatus = 0;
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
+  rmc->mp_interval = 0;			/* reset interval timer */
 
   /* Find a free pid for the child and put it in the table. */
   new_pid = get_free_pid();
@@ -222,7 +223,7 @@ int dump_core;			/* flag indicating whether to dump core */
   procgrp = (rmp->mp_pid == mp->mp_procgrp) ? mp->mp_procgrp : 0;
 
   /* If the exited process has a timer pending, kill it. */
-  if (rmp->mp_flags & ALARM_ON) set_alarm(proc_nr_e, (unsigned) 0);
+  if (rmp->mp_flags & ALARM_ON) set_alarm(rmp, (clock_t) 0);
 
   /* Do accounting: fetch usage times and accumulate at parent. */
   if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL)) != OK)

@@ -20,6 +20,7 @@
 #include <minix/com.h>
 
 PRIVATE timer_t *pm_timers = NULL;
+PRIVATE int pm_expiring = 0;
 
 /*===========================================================================*
  *				pm_set_timer				     *
@@ -37,7 +38,7 @@ PUBLIC void pm_set_timer(timer_t *tp, int ticks, tmr_func_t watchdog, int arg)
 	prev_time = tmrs_settimer(&pm_timers,tp,now+ticks,watchdog,&next_time);
 
 	/* Reschedule our synchronous alarm if necessary. */
-	if (! prev_time || prev_time > next_time) {
+	if (pm_expiring == 0 && (! prev_time || prev_time > next_time)) {
 		if (sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM set timer couldn't set alarm.", NO_NUM);
 	}
@@ -52,8 +53,15 @@ PUBLIC void pm_expire_timers(clock_t now)
 {
 	clock_t next_time;
 
-	/* Check for expired timers and possibly reschedule an alarm. */
+	/* Check for expired timers. Use a global variable to indicate that
+	 * watchdog functions are called, so that sys_setalarm() isn't called
+	 * more often than necessary when pm_set_timer or pm_cancel_timer are
+	 * called from these watchdog functions. */
+	pm_expiring = 1;
 	tmrs_exptimers(&pm_timers, now, &next_time);
+	pm_expiring = 0;
+
+	/* Reschedule an alarm if necessary. */
 	if (next_time > 0) {
 		if (sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set alarm.", NO_NUM);
@@ -72,7 +80,7 @@ PUBLIC void pm_cancel_timer(timer_t *tp)
      * the next timer, or cancel the alarm altogether if the last timer has 
      * been cancelled (next_time will be 0 then).
 	 */
-	if (prev_time < next_time || ! next_time) {
+	if (pm_expiring == 0 && (prev_time < next_time || ! next_time)) {
 		if (sys_setalarm(next_time, 1) != OK)
 			panic(__FILE__, "PM expire timer couldn't set alarm.", NO_NUM);
 	}

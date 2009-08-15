@@ -40,6 +40,7 @@ libc_FILES=" \
 	_geteuid.c \
 	_getgid.c \
 	_getgroups.c \
+	_getitimer.c \
 	_getpgrp.c \
 	_getpid.c \
 	_getppid.c \
@@ -69,6 +70,7 @@ libc_FILES=" \
 	_rmdir.c \
 	_select.c \
 	_setgid.c \
+	_setitimer.c \
 	_setsid.c \
 	_setuid.c \
 	_sigaction.c \

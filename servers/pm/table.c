@@ -78,8 +78,7 @@ _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 61 = chroot	*/
 	do_getset,	/* 62 = setsid	*/
 	do_getset,	/* 63 = getpgrp	*/
-
-	no_sys,		/* 64 = unused  */
+	do_itimer,	/* 64 = itimer  */
 	no_sys,		/* 65 = unused	*/
 	no_sys, 	/* 66 = unused  */
 	no_sys,		/* 67 = unused	*/
