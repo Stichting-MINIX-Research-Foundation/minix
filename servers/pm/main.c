@@ -231,7 +231,7 @@ PRIVATE void pm_init()
   static struct boot_image image[NR_BOOT_PROCS];
   register struct boot_image *ip;
   static char core_sigs[] = { SIGQUIT, SIGILL, SIGTRAP, SIGABRT,
-			SIGEMT, SIGFPE, SIGUSR1, SIGSEGV, SIGUSR2 };
+				SIGEMT, SIGFPE, SIGBUS, SIGSEGV };
   static char ign_sigs[] = { SIGCHLD, SIGWINCH, SIGCONT };
   static char mess_sigs[] = { SIGTERM, SIGHUP, SIGABRT, SIGQUIT };
   register struct mproc *rmp;
