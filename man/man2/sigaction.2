@@ -127,29 +127,31 @@ MINIX 3 knows about the following signals:
 .ta +11n +7n +8n
 signal	num	notes	description
 .SP
-SIGHUP	1	k	Hangup
+SIGHUP	1	km	Hangup
 SIGINT	2	k	Interrupt (usually DEL or CTRL\-C)
-SIGQUIT	3	kc	Quit (usually CTRL\-\e)
+SIGQUIT	3	kcm	Quit (usually CTRL\-\e)
 SIGILL	4	kc	Illegal instruction
-SIGTRAP	5	xkc	Trace trap
-SIGABRT	6	kc	Abort program
-SIGFPE	8	k	Floating point exception
+SIGTRAP	5	kc	Trace trap
+SIGABRT	6	kcm	Abort program
+SIGBUS	7	kc	Bus error
+SIGFPE	8	kc	Floating point exception
 SIGKILL	9	k	Kill
 SIGUSR1	10	k	User defined signal #1
 SIGSEGV	11	kc	Segmentation fault
 SIGUSR2	12	k	User defined signal #2
 SIGPIPE	13	k	Write to a pipe with no reader
 SIGALRM	14	k	Alarm clock
-SIGTERM	15	k	Terminate (default for kill(1))
-SIGCHLD	17	pvi	Child process terminated
-SIGCONT	18	p	Continue if stopped
+SIGTERM	15	km	Terminate (default for kill(1))
+SIGEMT	16	xkc	Emulator trap
+SIGCHLD	17	pi	Child process terminated
+SIGCONT	18	pi	Continue if stopped
 SIGSTOP	19	ps	Stop signal
 SIGTSTP	20	ps	Interactive stop signal
-SIGTTIN	21	ps	Background read
-SIGTTOU	22	ps	Background write
-SIGWINCH	23	xvi	Window size change
-SIGVTALRM	24	xk	Virtual alarm clock
-SIGPROF	25	xk	Profiler alarm clock
+SIGWINCH	21	xi	Window size change
+SIGTTIN	22	ps	Background read
+SIGTTOU	23	ps	Background write
+SIGVTALRM	24	k	Virtual alarm clock
+SIGPROF	25	k	Profiler alarm clock
 .ft R
 .fi
 .PP
@@ -165,8 +167,8 @@ The signal causes a core dump.
 .B i
 The signal is ignored if not caught.
 .TP
-.B v
-Only Minix-vmd implements this signal.
+.B m
+The signal is converted to a message for system processes.
 .TP
 .B x
 MINIX 3 extension, not defined by \s-2POSIX\s+2.
