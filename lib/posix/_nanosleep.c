@@ -1,9 +1,10 @@
-/* nanosleep() - Sleep for a number of nanoseconds. Author: Erik van der Kouwe
- *								  25 July 2009
+/*	nanosleep() - Sleep for a number of seconds.	Author: Erik van der Kouwe
+ *								25 July 2009
  */
 
 #include <lib.h>
 #define nanosleep _nanosleep
+#include <signal.h>
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
@@ -21,6 +22,15 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {
 	struct timeval timeout, timestart = { 0, 0 }, timeend;
 	int errno_select, r;
+
+	/* check parameters */
+	if (!rqtp)
+		return EFAULT;
+
+	if (rqtp->tv_sec < 0 || 
+		rqtp->tv_nsec < 0 ||
+		rqtp->tv_nsec >= NSEC_PER_SEC)
+		return EINVAL;
 
 	/* keep track of start time if needed */
 	if (rmtp)
@@ -50,8 +60,7 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 
 	/* compute remaining time */
 	rmtp->tv_sec = rqtp->tv_sec - (timeend.tv_sec - timestart.tv_sec);
-	rmtp->tv_nsec = rqtp->tv_nsec -
-		(timeend.tv_usec - timestart.tv_usec) * NSEC_PER_USEC;
+	rmtp->tv_nsec = rqtp->tv_nsec - (timeend.tv_usec - timestart.tv_usec) * NSEC_PER_USEC;
 
 	/* bring remaining time into canonical form */
 	while (rmtp->tv_nsec < 0)
@@ -75,3 +84,4 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 
 	return r;
 }
+
