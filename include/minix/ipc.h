@@ -151,15 +151,4 @@ _PROTOTYPE( int send, (endpoint_t dest, message *m_ptr)			);
 _PROTOTYPE( int sendnb, (endpoint_t dest, message *m_ptr)		);
 _PROTOTYPE( int senda, (asynmsg_t *table, size_t count)			);
 
-#define ipc_request	_ipc_request
-#define ipc_reply	_ipc_reply
-#define ipc_notify	_ipc_notify
-#define ipc_select	_ipc_select
-
-_PROTOTYPE( int ipc_request, (int dst, message *m_ptr)			);
-_PROTOTYPE( int ipc_reply, (int dst, message *m_ptr)			);
-_PROTOTYPE( int ipc_notify, (int dst, long event_set)			);
-_PROTOTYPE( int ipc_receive, (int src, long events, message *m_ptr)	);
-
-
 #endif /* _IPC_H */
