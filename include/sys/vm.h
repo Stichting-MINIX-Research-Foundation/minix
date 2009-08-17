@@ -1,3 +1,6 @@
+#ifndef __SYS_VM_H__
+#define __SYS_VM_H__
+
 /*
 sys/vm.h
 */
@@ -23,3 +26,4 @@ struct mapreqvm
 	void	*vaddr_ret;	
 };
 
+#endif /* __SYS_VM_H__ */

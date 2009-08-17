@@ -1,3 +1,5 @@
+#ifndef __SYS_VM_386_H__
+#define __SYS_VM_386_H__
 /*
 sys/vm_i386.h
 */
@@ -63,3 +65,5 @@ sys/vm_i386.h
 /* CPUID flags */
 #define CPUID1_EDX_PSE (1L <<  3)	/* Page Size Extension */
 #define CPUID1_EDX_PGE (1L << 13)	/* Page Global (bit) Enable */
+
+#endif /* __SYS_VM_386_H__ */
