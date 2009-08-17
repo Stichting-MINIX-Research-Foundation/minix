@@ -6,6 +6,7 @@ pci_init1.c
 #include "syslib.h"
 #include <string.h>
 #include <unistd.h>
+#include <minix/ds.h>
 #include <minix/sysutil.h>
 
 int pci_procnr= ANY;

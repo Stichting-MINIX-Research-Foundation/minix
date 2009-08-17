@@ -1,6 +1,7 @@
 #define _SYSTEM 1
 #include <lib.h>
 #include <sys/mman.h>
+#include <minix/syslib.h>
 #include <minix/vm.h>
 #include <stdarg.h>
 #include <string.h>
