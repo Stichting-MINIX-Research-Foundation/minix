@@ -2,7 +2,7 @@
 
 /* $Header$ */
 
-extern int yylex();
+extern int yylex(void);
 
 int main( argc, argv )
 int argc;

@@ -353,7 +353,7 @@ int exit_status;
 
 	{
 	int tblsiz;
-	int unlink();
+	int unlink(const char *);
 
 	if ( skelfile != NULL )
 		{
