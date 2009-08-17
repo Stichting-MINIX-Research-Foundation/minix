@@ -6,6 +6,9 @@ Created:	Jan 19, 1993 by Philip Homburg
 Copyright 1995 Philip Homburg
 */
 
+#include <stdio.h>
+#include <string.h>
+
 typedef unsigned int reg_t;
 
 #define FUNC_STACKTRACE(statement) 				\

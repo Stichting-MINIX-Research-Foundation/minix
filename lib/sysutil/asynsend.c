@@ -10,6 +10,7 @@
 #include <minix/type.h>
 
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
