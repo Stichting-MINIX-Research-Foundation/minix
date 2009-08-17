@@ -162,6 +162,7 @@ EXTERN environment *env;	/* Lists the environment. */
 
 char *b_value(char *name);	/* Get/set the value of a variable. */
 int b_setvar(int flags, char *name, char *value);
+void b_unset(char *name);
 
 void parse_code(char *code);	/* Parse boot monitor commands. */
 
