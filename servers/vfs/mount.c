@@ -102,7 +102,7 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   struct dmap *dp;
   dev_t dev;
   message m;
-  struct vnode *root_node, *mounted_on, *bspec;
+  struct vnode *root_node, *mounted_on = NULL, *bspec;
   struct vmnt *vmp;
   char *label;
   struct node_details res;
@@ -289,7 +289,8 @@ PRIVATE int mount_fs(endpoint_t fs_e)
   /* Issue request */
   r = req_readsuper(fs_e, label, dev, m_in.rd_only, isroot, &res);
   if (r != OK) {
-	put_vnode(mounted_on);
+	if (mounted_on)
+		put_vnode(mounted_on);
 	return r;
   }
 
