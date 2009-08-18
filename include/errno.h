@@ -81,10 +81,10 @@ extern int errno;		  /* place where the error numbers go */
 #define EOUTOFBUFS    (_SIGN 51)  /* not enough buffers left */
 #define EBADIOCTL     (_SIGN 52)  /* illegal ioctl for device */
 #define EBADMODE      (_SIGN 53)  /* badmode in ioctl */
-#define EWOULDBLOCK   (_SIGN 54)
+#define EWOULDBLOCK   (_SIGN 54)  /* call would block on nonblocking socket */
 #define EBADDEST      (_SIGN 55)  /* not a valid destination address */
 #define EDSTNOTRCH    (_SIGN 56)  /* destination not reachable */
-#define EISCONN	      (_SIGN 57)  /* all ready connected */
+#define EISCONN	      (_SIGN 57)  /* already connected */
 #define EADDRINUSE    (_SIGN 58)  /* address in use */
 #define ECONNREFUSED  (_SIGN 59)  /* connection refused */
 #define ECONNRESET    (_SIGN 60)  /* connection reset */
