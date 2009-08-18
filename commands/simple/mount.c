@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/mount.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <minix/config.h>
 #include <minix/const.h>
@@ -31,12 +31,12 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  int i, ro, swap, n, v;
+  int i, swap, n, v, mountflags;
   char **ap, *vs, *opt, *err, *type, *args;
   char special[PATH_MAX+1], mounted_on[PATH_MAX+1], version[10], rw_flag[10];
 
   if (argc == 1) list();	/* just list /etc/mtab */
-  ro = 0;
+  mountflags = 0;
   swap = 0;
   type = NULL;
   args = NULL;
@@ -45,11 +45,12 @@ char *argv[];
 	if (argv[i][0] == '-') {
 		opt = argv[i]+1;
 		while (*opt != 0) switch (*opt++) {
-		case 'r':	ro = 1;		break;
-		case 's':	swap = 1;	break;
+		case 'r':	mountflags |= MS_RDONLY;	break;
+		case 's':	swap = 1;			break;
 		case 't':	if (++i == argc) usage();
 				type = argv[i];
 				break;
+		case 'i':	mountflags |= MS_REUSE;		break;                
 		case 'o':	if (++i == argc) usage();
 				args = argv[i];
 				break;
@@ -62,7 +63,7 @@ char *argv[];
   *ap = NULL;
   argc = (ap - argv);
 
-  if (ro && swap) usage();
+  if (mountflags & MS_RDONLY && swap) usage();
 
   if (swap) {
 	if (argc != 2) usage();
@@ -71,7 +72,7 @@ char *argv[];
 	tell(" is swapspace\n");
   } else {
 	if (argc != 3) usage();
-	if (mount(argv[1], argv[2], ro, type, args) < 0) {
+	if (mount(argv[1], argv[2], mountflags, type, args) < 0) {
 		err = strerror(errno);
 		std_err("mount: Can't mount ");
 		std_err(argv[1]);
@@ -85,7 +86,7 @@ char *argv[];
 	/* The mount has completed successfully. Tell the user. */
 	tell(argv[1]);
 	tell(" is read-");
-	tell(ro ? "only" : "write");
+	tell(mountflags & MS_RDONLY ? "only" : "write");
 	tell(" mounted on ");
 	tell(argv[2]);
 	tell("\n");
@@ -127,7 +128,8 @@ char *argv[];
 			vs = "-";
 	}
   }
-  n = put_mtab_entry(argv[1], swap ? "swap" : argv[2], vs, (ro ? "ro" : "rw") );
+  n = put_mtab_entry(argv[1], swap ? "swap" : argv[2], vs,
+		     (mountflags & MS_RDONLY ? "ro" : "rw") );
   if (n < 0) {
 	std_err("mount: /etc/mtab has grown too large\n");
 	exit(1);

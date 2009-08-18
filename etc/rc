@@ -73,6 +73,12 @@ start)
     # Any swapspace on a device?
     test "$swap" : '/dev/' && mount -s $swap
 
+    # Use MFS binary only from kernel image?
+    if [ "`sysenv bin_img`" = 1 ]
+    then
+        bin_img="-i "
+    fi
+
     # Are we booting from CD?
     bootcd="`/bin/sysenv bootcd`"
 
@@ -89,6 +95,7 @@ start)
     		echo "Setting /usr on cd is $usr"
     fi
  
+
     # Mount the /usr partition unless this is a single floppy Minix.
     if [ ! -d /usr/bin ]
     then
@@ -101,7 +108,8 @@ start)
 		echo "usr=/dev/$usr" >/tmp/usr'
 	    . /tmp/usr
 	fi
-	mount $usr_roflag $usr /usr || {
+
+	mount $bin_img $usr_roflag $usr /usr || {
 	    echo "\
 Please try to mount something else as /usr, then hit CTRL-D to continue startup.
 Mount $usr /usr failed -- Single user."
@@ -129,11 +137,11 @@ Mount $usr /usr failed -- Single user."
 	then	echo "fsck /home - $home"
 		intr fsck -r $home
 	fi
-	mount $usr /usr
+	mount $bin_img $usr /usr
     fi
 
     if [ ! -z "$home" ]
-    then mount $home /home || echo "WARNING: couldn't mount $home on /home"
+    then mount $bin_img $home /home || echo "WARNING: couldn't mount $home on /home"
     fi
 
     # This file is necessary for above 'shutdown -C' check.

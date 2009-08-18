@@ -66,6 +66,12 @@ int mountflags;
   if (args == NULL) args = "";
   reuse = 0;
 
+  /* Check mount flags */
+  if(mountflags & MS_REUSE) {
+    reuse = 1;
+    mountflags &= ~MS_REUSE; /* Temporary: turn off to not confuse VFS */
+  }
+
   /* Make FS process label for RS from special name. */
   if(!(label=makelabel(special))) {
 	return -1;
@@ -78,6 +84,7 @@ int mountflags;
   }
   strcpy(path, FSPATH);
   strcat(path, type);
+  
   if(stat(path, &statbuf) != 0) {
   	errno = EINVAL;
   	return -1;
@@ -95,19 +102,17 @@ int mountflags;
 	return -1;
   }
 
-  if(mountflags & MS_REUSE) {
-    reuse = 1;
-    mountflags &= ~MS_REUSE; /* Temporary: turn off to not confuse VFS */
-  }
 
-  sprintf(cmd, _PATH_SERVICE " up %s -label '%s' -config " _PATH_DRIVERS_CONF
+
+  sprintf(cmd, _PATH_SERVICE " %sup %s -label '%s' -config " _PATH_DRIVERS_CONF
 	" -args '%s%s' -printep yes",
-	path, label, args[0] ? "-o " : "", args);
+	  reuse ? "-r ": "", path, label, args[0] ? "-o " : "", args);
 
   if(!(pipe = popen(cmd, "r"))) {
 	fprintf(stderr, "mount: couldn't run %s\n", cmd);
 	return -1;
   }
+  
   if(fscanf(pipe, "%d", &ep) != 1 || ep <= 0) {
 	fprintf(stderr, "mount: couldn't parse endpoint from %s\n", cmd);
 	errno = EINVAL;

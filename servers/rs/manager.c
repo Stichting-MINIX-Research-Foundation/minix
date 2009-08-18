@@ -29,6 +29,8 @@ FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags,
 FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
 FORWARD _PROTOTYPE( int fork_nb, (void) );
 FORWARD _PROTOTYPE( int read_exec, (struct rproc *rp) );
+FORWARD _PROTOTYPE( int copy_exec, (struct rproc *rp_src,
+	struct rproc *rp_dst) );
 FORWARD _PROTOTYPE( void run_script, (struct rproc *rp) );
 FORWARD _PROTOTYPE( char *get_next_label, (char *ptr, char *label,
 	char *caller_label) );
@@ -65,8 +67,6 @@ int flags;					/* extra flags, if any */
   int len;					/* length of string */
   int r;
   endpoint_t ep;				/* new endpoint no. */
-
-printf("RS: in do_up\n");
 
   /* See if there is a free entry in the table with system processes. */
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
@@ -122,6 +122,7 @@ printf("RS: in do_up\n");
   rp->r_nice= 0;
 
   rp->r_exec= NULL;
+
   if (do_copy)
   {
 	s= read_exec(rp);
@@ -283,9 +284,32 @@ message *m_ptr;					/* request message pointer */
 	rp->r_ipc_list[0]= '\0';
 
   rp->r_exec= NULL;
-  if (rs_start.rss_flags & RF_COPY)
-  {
-	s= read_exec(rp);
+  if (rs_start.rss_flags & RF_COPY) {
+	int exst_cpy;
+	struct rproc *rp2;
+	exst_cpy = 0;
+	
+	if(rs_start.rss_flags & RF_REUSE) {
+		char *cmd = rp->r_cmd;
+                int i;
+                
+                for(i = 0; i < NR_SYS_PROCS; i++) {
+                	rp2 = &rproc[i];
+                        if(strcmp(rp->r_cmd, rp2->r_cmd) == 0 &&
+                           rp2->r_exec != NULL) {
+                                /* We have found the same binary that's
+                                 * already been copied */
+                                 exst_cpy = 1;
+                                 break;
+                        }
+                }
+         }                
+
+	if(!exst_cpy)
+		s = read_exec(rp);
+	else
+		s = copy_exec(rp, rp2); 
+
 	if (s != OK)
 		return s;
   }
@@ -405,9 +429,9 @@ PUBLIC int do_down(message *m_ptr)
       if (rp->r_flags & RS_IN_USE && strcmp(rp->r_label, label) == 0) {
 	if(rs_verbose)
 	  printf("RS: stopping '%s' (%d)\n", label, rp->r_pid);
-	  stop_service(rp,RS_EXITING);
-	  if (rp->r_pid == -1)
-	  {
+	stop_service(rp,RS_EXITING);
+	if (rp->r_pid == -1)
+	{
 		/* Process is already gone */
 		rp->r_flags = 0;			/* release slot */
 		if (rp->r_exec)
@@ -418,12 +442,12 @@ PUBLIC int do_down(message *m_ptr)
 		proc = _ENDPOINT_P(rp->r_proc_nr_e);
 		rproc_ptr[proc] = NULL;
 	  	return(OK);
-	  }
+	}
 
-	  /* Late reply - send a reply when process dies. */
-	  rp->r_flags |= RS_LATEREPLY;
-	  rp->r_caller = m_ptr->m_source;
-	  return EDONTREPLY;
+	/* Late reply - send a reply when process dies. */
+	rp->r_flags |= RS_LATEREPLY;
+	rp->r_caller = m_ptr->m_source;
+	return EDONTREPLY;
       }
   }
   if(rs_verbose) printf("RS: do_down: '%s' not found\n", label);
@@ -762,8 +786,7 @@ endpoint_t *endpoint;
   message m;
 
   use_copy= (rp->r_exec != NULL);
-
-
+  
   /* Now fork and branch for parent and child process (and check for error). */
   if (use_copy) {
   if(rs_verbose) printf("RS: fork_nb..\n");
@@ -940,6 +963,23 @@ PRIVATE pid_t fork_nb()
   return(_syscall(PM_PROC_NR, FORK_NB, &m));
 }
 
+PRIVATE int copy_exec(rp_dst, rp_src)
+struct rproc *rp_dst, *rp_src;
+{
+	/* Copy binary from rp_src to rp_dst. */
+	rp_dst->r_exec_len = rp_src->r_exec_len;
+	rp_dst->r_exec = malloc(rp_dst->r_exec_len);
+	if(rp_dst->r_exec == NULL)
+	        return ENOMEM;
+
+	memcpy(rp_dst->r_exec, rp_src->r_exec, rp_dst->r_exec_len);
+	if(rp_dst->r_exec_len != 0 && rp_dst->r_exec != NULL)
+	        return OK;
+	        
+        rp_dst->r_exec = NULL;
+        return EIO;
+}
+
 PRIVATE int read_exec(rp)
 struct rproc *rp;
 {
@@ -947,9 +987,10 @@ struct rproc *rp;
 	char *e_name;
 	struct stat sb;
 
+
 	e_name= rp->r_argv[0];
 	r= stat(e_name, &sb);
-	if (r != 0)
+	if (r != 0) 
 		return -errno;
 
 	fd= open(e_name, O_RDONLY);

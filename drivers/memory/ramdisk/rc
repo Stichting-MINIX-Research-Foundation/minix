@@ -20,6 +20,11 @@ rootdev=`sysenv rootdev` || echo 'No rootdev?'
 rootdevname=`/bin/dev2name "$rootdev"` ||
 	{ echo 'No device name for root device'; exit 1; }
 
+if [ "`sysenv bin_img`" = 1 ]
+then
+    bin_img="-i "
+fi
+
 if sysenv cdproberoot >/dev/null
 then
 	echo 
@@ -40,5 +45,5 @@ then
 	loadramdisk "$ramimagename"
 fi
 echo "Root device name is $rootdevname"
-/bin/newroot "$rootdevname"
+/bin/newroot $bin_img"$rootdevname"
 exec /bin/sh /etc/rc "$@"

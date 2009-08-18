@@ -133,10 +133,11 @@ PRIVATE int parse_arguments(int argc, char **argv)
   char *hz;
   int req_nr;
   int c, i;
-  int c_flag;
+  int c_flag, r_flag;
 
-  c_flag= 0;
-  while (c= getopt(argc, argv, "ci?"), c != -1)
+  c_flag = 0;
+  r_flag = 0;
+  while (c= getopt(argc, argv, "rci?"), c != -1)
   {
 	switch(c)
 	{
@@ -144,7 +145,11 @@ PRIVATE int parse_arguments(int argc, char **argv)
 		print_usage(argv[ARG_NAME], "wrong number of arguments");
 		exit(EINVAL);
 	case 'c':
-		c_flag= 1;
+		c_flag = 1;
+		break;
+	case 'r':
+	        c_flag = 1; /* -r implies -c */
+		r_flag = 1;
 		break;
 	case 'i':
 		/* Legacy - remove later */
@@ -184,13 +189,15 @@ PRIVATE int parse_arguments(int argc, char **argv)
   }
 
   if (req_nr == RS_UP) {
-
-	req_nr= RS_START;
+      req_nr= RS_START;
 
       rs_start.rss_flags= RF_IPC_VALID;
       if (c_flag)
 	rs_start.rss_flags |= RF_COPY;
 
+      if(r_flag)
+        rs_start.rss_flags |= RF_REUSE;
+        
       if (do_run)
       {
 	/* Set default recovery script for RUN */
@@ -198,8 +205,10 @@ PRIVATE int parse_arguments(int argc, char **argv)
 	req_nr = RS_START;
       }
 
+#if 0
       if (req_nr == RS_UP && c_flag)
 	req_nr= RS_UP_COPY;
+#endif	
 
       /* Verify argument count. */ 
       if (argc - 1 < optind+ARG_PATH) {

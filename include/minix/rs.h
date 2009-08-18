@@ -41,6 +41,7 @@ struct rs_start
 				 * to restart the driver without accessing FS
 				 */
 #define RF_IPC_VALID	0x02	/* rss_ipc and rss_ipclen are valid */
+#define RF_REUSE	0x04	/* Try to reuse previously copied binary */
 
 #define RSP_LABEL_SIZE	16
 #define RSP_NR_DEVICE	16
