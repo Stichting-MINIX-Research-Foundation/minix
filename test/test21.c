@@ -48,6 +48,7 @@ char *argv[];
 
   sync();
   if (geteuid() == 0 || getuid() == 0) {
+	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", "/usr/src/test/test21", NULL);
 	printf("Test 21 cannot run as root; test aborted\n");
 	exit(1);
   }

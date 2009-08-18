@@ -122,6 +122,7 @@ int main()
   int n;
 
   if (geteuid() == 0 || getuid() == 0) {
+	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", "/usr/src/test/test18", NULL);
 	printf("Test 18 cannot run as root; test aborted\n");
 	exit(1);
   }
