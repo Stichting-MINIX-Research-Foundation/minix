@@ -19,7 +19,7 @@ extern	_trp();
 #define M_DMINEXP DBL_MIN_EXP
 #endif
 #undef HUGE
-#define HUGE	1e1000
+#define HUGE	HUGE_VAL
 
 static double
 Ldexp(fl,exp)
