@@ -11,12 +11,16 @@
 #include <netinet/in.h>
 
 #include <net/gen/in.h>
+#include <net/gen/tcp.h>
+#include <net/gen/tcp_io.h>
 #include <net/gen/udp.h>
 #include <net/gen/udp_hdr.h>
 #include <net/gen/udp_io.h>
 
 #define DEBUG 0
 
+static ssize_t _tcp_sendto(int socket, const void *message, size_t length,
+	int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 static ssize_t _udp_sendto(int socket, const void *message, size_t length,
 	int flags, const struct sockaddr *dest_addr, socklen_t dest_len,
 	nwio_udpopt_t *udpoptp);
@@ -25,7 +29,17 @@ ssize_t sendto(int socket, const void *message, size_t length, int flags,
 	const struct sockaddr *dest_addr, socklen_t dest_len)
 {
 	int r;
+	nwio_tcpopt_t tcpopt;
 	nwio_udpopt_t udpopt;
+
+	r= ioctl(socket, NWIOGTCPOPT, &tcpopt);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	{
+		if (r == -1)
+			return r;
+		return _tcp_sendto(socket, message, length, flags,
+			dest_addr, dest_len);
+	}
 
 	r= ioctl(socket, NWIOGUDPOPT, &udpopt);
 	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
@@ -41,6 +55,23 @@ ssize_t sendto(int socket, const void *message, size_t length, int flags,
 #endif
 	errno= ENOSYS;
 	return -1;
+}
+
+static ssize_t _tcp_sendto(int socket, const void *message, size_t length,
+	int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
+{
+
+	if (flags != 0) {
+#if DEBUG
+		fprintf(stderr, "sendto(tcp): flags not implemented\n");
+#endif
+		errno= ENOSYS;
+		return -1;
+	}
+
+	/* Silently ignore destination, if given. */
+
+	return write(socket, message, length);
 }
 
 static ssize_t _udp_sendto(int socket, const void *message, size_t length,

@@ -11,12 +11,17 @@
 #include <netinet/in.h>
 
 #include <net/gen/in.h>
+#include <net/gen/tcp.h>
+#include <net/gen/tcp_io.h>
 #include <net/gen/udp.h>
 #include <net/gen/udp_hdr.h>
 #include <net/gen/udp_io.h>
 
 #define DEBUG 0
 
+static ssize_t _tcp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
+	int flags, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len, nwio_tcpconf_t *tcpconfp);
 static ssize_t _udp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	int flags, struct sockaddr *_RESTRICT address,
 	socklen_t *_RESTRICT address_len, nwio_udpopt_t *udpoptp);
@@ -26,11 +31,21 @@ ssize_t recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	socklen_t *_RESTRICT address_len)
 {
 	int r;
+	nwio_tcpconf_t tcpconf;
 	nwio_udpopt_t udpopt;
 
 #if DEBUG
 	fprintf(stderr, "recvfrom: for fd %d\n", socket);
 #endif
+
+	r= ioctl(socket, NWIOGTCPCONF, &tcpconf);
+	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
+	{
+		if (r == -1)
+			return r;
+		return _tcp_recvfrom(socket, buffer, length, flags,
+			address, address_len, &tcpconf);
+	}
 
 	r= ioctl(socket, NWIOGUDPOPT, &udpopt);
 	if (r != -1 || (errno != ENOTTY && errno != EBADIOCTL))
@@ -47,6 +62,40 @@ ssize_t recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 	errno= ENOSYS;
 	assert(0);
 	return -1;
+}
+
+static ssize_t _tcp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
+	int flags, struct sockaddr *_RESTRICT address,
+	socklen_t *_RESTRICT address_len, nwio_tcpconf_t *tcpconfp)
+{
+	int r;
+	size_t len;
+	struct sockaddr_in sin;
+
+	if (flags != 0)
+	{
+#if DEBUG
+		fprintf(stderr, "recvfrom(tcp): flags not implemented\n");
+#endif
+		errno= ENOSYS;
+		return -1;
+	}
+
+	r = read(socket, buffer, length);
+
+	if (r >= 0 && address != NULL)
+	{
+		sin.sin_family= AF_INET;
+		sin.sin_addr.s_addr= tcpconfp->nwtc_remaddr;
+		sin.sin_port= tcpconfp->nwtc_remport;
+		len= *address_len;
+		if (len > sizeof(sin))
+			len= sizeof(sin);
+		memcpy(address, &sin, len);
+		*address_len= sizeof(sin);
+	}	
+
+	return r;
 }
 
 static ssize_t _udp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
