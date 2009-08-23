@@ -514,7 +514,7 @@ int opt_p = 0;
    		argc++;
    	} else
    		*pass = '\0';
-	s = ftpget(host, port, user, path, path, 'i');
+	s = ftpget(host, port, user, pass, path, 'i');
 	return(s);
    }
    if(strcmp(prog, "httpget") == 0) {
