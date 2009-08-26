@@ -98,6 +98,7 @@ PRIVATE struct pcitab pcitab_fxp[]=
 {
 	{ 0x8086, 0x1229, 0 },		/* Intel 82557, etc. */
 	{ 0x8086, 0x2449, 0 },		/* Intel 82801BA/BAM/CA/CAM */
+	{ 0x8086, 0x103d, 0 },		/* Intel 82801DB */
 
 	{ 0x0000, 0x0000, 0 }
 };
@@ -210,6 +211,7 @@ fxp_t;
 #define FT_82557	0x1
 #define FT_82558A	0x2
 #define FT_82559	0x4
+#define FT_82801	0x8
 
 static fxp_t *fxp_table;
 phys_bytes fxp_table_phys;
@@ -634,6 +636,9 @@ fxp_t *fp;
 	case FXP_REV_82551_2:	str= "82551(2)"; 		/* 0x10 */
 				fp->fxp_type= FT_82559;
 				break;
+	case FXP_REV_82801DB:	str= "82801DB"; 		/* 0x81 */
+				fp->fxp_type= FT_82801;
+				break;
 	}
 
 #if VERBOSE
@@ -739,6 +744,7 @@ fxp_t *fp;
 		break;
 	case FT_82558A:
 	case FT_82559:
+	case FT_82801:
 		if (mwi)
 			fp->fxp_conf_bytes[3] |= CCB3_MWIE;
 		if (ext_stat1)
@@ -758,6 +764,13 @@ fxp_t *fp;
 		}
 
 		fp->fxp_conf_bytes[18] |= CCB18_LROK;
+
+		if (fp->fxp_type == FT_82801)
+		{
+			fp->fxp_conf_bytes[6] = 0xba; /* ctrl 1 */
+			fp->fxp_conf_bytes[15] = 0x48; /* promiscuous */
+			fp->fxp_conf_bytes[21] = 0x05; /* mc_all */
+		}
 		break;
 	default:
 		panic("FXP","fxp_conf_hw: bad device type", fp->fxp_type);

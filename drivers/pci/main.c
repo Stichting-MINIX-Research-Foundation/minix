@@ -350,7 +350,7 @@ message *mp;
 		return;
 	}
 	acl[i].inuse= 1;
-	if(debug)
+	if(debug > 1)
 	  printf("PCI: do_acl: setting ACL for %d ('%s') at entry %d\n",
 		acl[i].acl.rsp_endpoint, acl[i].acl.rsp_label,
 		i);
