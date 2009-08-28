@@ -94,6 +94,7 @@ PUBLIC void arch_get_aout_headers(int i, struct exec *h)
 PUBLIC void system_init(void)
 {
 	prot_init();
+	idt_init();
 
 #if 0
 	/* Set CR0_EM until we get FP context switching */

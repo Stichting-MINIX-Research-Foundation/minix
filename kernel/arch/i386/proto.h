@@ -80,6 +80,18 @@ _PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
                 vir_bytes size, int privilege)                          );
 _PROTOTYPE( void enable_iop, (struct proc *pp)                          );
 
+/* prototype of an interrupt vector table entry */
+struct gate_table_s {
+	_PROTOTYPE( void (*gate), (void) );
+	unsigned char vec_nr;
+	unsigned char privilege;
+};
+
+EXTERN struct gate_table_s gate_table_pic[];
+
+/* copies an array of vectors to the IDT. The last vector must be zero filled */
+_PROTOTYPE(void idt_copy_vectors, (struct gate_table_s * first));
+
 /* functions defined in architecture-independent kernel source. */
 #include "../../proto.h"
 

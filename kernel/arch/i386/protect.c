@@ -134,41 +134,7 @@ PUBLIC void init_codeseg(register struct segdesc_s *segdp, phys_bytes base,
 		/* CONFORMING = 0, ACCESSED = 0 */
 }
 
-/*===========================================================================*
- *				prot_init				     *
- *===========================================================================*/
-PUBLIC void prot_init(void)
-{
-/* Set up tables for protected mode.
- * All GDT slots are allocated at compile time.
- */
-  struct gate_table_s *gtp;
-  struct desctableptr_s *dtp;
-  unsigned ldt_index;
-  register struct proc *rp;
-
-  static struct gate_table_s {
-	_PROTOTYPE( void (*gate), (void) );
-	unsigned char vec_nr;
-	unsigned char privilege;
-  }
-  gate_table[] = {
-	{ divide_error, DIVIDE_VECTOR, INTR_PRIVILEGE },
-	{ single_step_exception, DEBUG_VECTOR, INTR_PRIVILEGE },
-	{ nmi, NMI_VECTOR, INTR_PRIVILEGE },
-	{ breakpoint_exception, BREAKPOINT_VECTOR, USER_PRIVILEGE },
-	{ overflow, OVERFLOW_VECTOR, USER_PRIVILEGE },
-	{ bounds_check, BOUNDS_VECTOR, INTR_PRIVILEGE },
-	{ inval_opcode, INVAL_OP_VECTOR, INTR_PRIVILEGE },
-	{ copr_not_available, COPROC_NOT_VECTOR, INTR_PRIVILEGE },
-	{ double_fault, DOUBLE_FAULT_VECTOR, INTR_PRIVILEGE },
-	{ copr_seg_overrun, COPROC_SEG_VECTOR, INTR_PRIVILEGE },
-	{ inval_tss, INVAL_TSS_VECTOR, INTR_PRIVILEGE },
-	{ segment_not_present, SEG_NOT_VECTOR, INTR_PRIVILEGE },
-	{ stack_exception, STACK_FAULT_VECTOR, INTR_PRIVILEGE },
-	{ general_protection, PROTECTION_VECTOR, INTR_PRIVILEGE },
-	{ page_fault, PAGE_FAULT_VECTOR, INTR_PRIVILEGE },
-	{ copr_error, COPROC_ERR_VECTOR, INTR_PRIVILEGE },
+PUBLIC struct gate_table_s gate_table_pic[] = {
 	{ hwint00, VECTOR( 0), INTR_PRIVILEGE },
 	{ hwint01, VECTOR( 1), INTR_PRIVILEGE },
 	{ hwint02, VECTOR( 2), INTR_PRIVILEGE },
@@ -185,9 +151,21 @@ PUBLIC void prot_init(void)
 	{ hwint13, VECTOR(13), INTR_PRIVILEGE },
 	{ hwint14, VECTOR(14), INTR_PRIVILEGE },
 	{ hwint15, VECTOR(15), INTR_PRIVILEGE },
-	{ s_call, SYS386_VECTOR, USER_PRIVILEGE },	/* 386 system call */
-	{ level0_call, LEVEL0_VECTOR, TASK_PRIVILEGE },
-  };
+	{ NULL, 0, 0}
+};
+
+/*===========================================================================*
+ *				prot_init				     *
+ *===========================================================================*/
+PUBLIC void prot_init(void)
+{
+/* Set up tables for protected mode.
+ * All GDT slots are allocated at compile time.
+ */
+  struct gate_table_s *gtp;
+  struct desctableptr_s *dtp;
+  unsigned ldt_index;
+  register struct proc *rp;
 
   /* Build gdt and idt pointers in GDT where the BIOS expects them. */
   dtp= (struct desctableptr_s *) &gdt[GDT_INDEX];
@@ -232,17 +210,48 @@ PUBLIC void prot_init(void)
   init_dataseg(&gdt[TSS_INDEX], vir2phys(&tss), sizeof(tss), INTR_PRIVILEGE);
   gdt[TSS_INDEX].access = PRESENT | (INTR_PRIVILEGE << DPL_SHIFT) | TSS_TYPE;
 
-  /* Build descriptors for interrupt gates in IDT. */
-  for (gtp = &gate_table[0];
-       gtp < &gate_table[sizeof gate_table / sizeof gate_table[0]]; ++gtp) {
-	int_gate(gtp->vec_nr, (vir_bytes) gtp->gate,
-		 PRESENT | INT_GATE_TYPE | (gtp->privilege << DPL_SHIFT));
-  }
-
   /* Complete building of main TSS. */
   tss.iobase = sizeof tss;	/* empty i/o permissions map */
 }
 
+PUBLIC void idt_copy_vectors(struct gate_table_s * first)
+{
+	struct gate_table_s *gtp;
+	for (gtp = first; gtp->gate; gtp++) {
+		int_gate(gtp->vec_nr, (vir_bytes) gtp->gate,
+				PRESENT | INT_GATE_TYPE |
+				(gtp->privilege << DPL_SHIFT));
+	}
+}
+
+/* Build descriptors for interrupt gates in IDT. */
+PUBLIC void idt_init(void)
+{
+	struct gate_table_s gate_table[] = {
+		{ divide_error, DIVIDE_VECTOR, INTR_PRIVILEGE },
+		{ single_step_exception, DEBUG_VECTOR, INTR_PRIVILEGE },
+		{ nmi, NMI_VECTOR, INTR_PRIVILEGE },
+		{ breakpoint_exception, BREAKPOINT_VECTOR, USER_PRIVILEGE },
+		{ overflow, OVERFLOW_VECTOR, USER_PRIVILEGE },
+		{ bounds_check, BOUNDS_VECTOR, INTR_PRIVILEGE },
+		{ inval_opcode, INVAL_OP_VECTOR, INTR_PRIVILEGE },
+		{ copr_not_available, COPROC_NOT_VECTOR, INTR_PRIVILEGE },
+		{ double_fault, DOUBLE_FAULT_VECTOR, INTR_PRIVILEGE },
+		{ copr_seg_overrun, COPROC_SEG_VECTOR, INTR_PRIVILEGE },
+		{ inval_tss, INVAL_TSS_VECTOR, INTR_PRIVILEGE },
+		{ segment_not_present, SEG_NOT_VECTOR, INTR_PRIVILEGE },
+		{ stack_exception, STACK_FAULT_VECTOR, INTR_PRIVILEGE },
+		{ general_protection, PROTECTION_VECTOR, INTR_PRIVILEGE },
+		{ page_fault, PAGE_FAULT_VECTOR, INTR_PRIVILEGE },
+		{ copr_error, COPROC_ERR_VECTOR, INTR_PRIVILEGE },
+		{ s_call, SYS386_VECTOR, USER_PRIVILEGE },/* 386 system call */
+		{ level0_call, LEVEL0_VECTOR, TASK_PRIVILEGE },
+		{ NULL, 0, 0}
+	};
+
+	idt_copy_vectors(gate_table);
+	idt_copy_vectors(gate_table_pic);
+}
 
 
 /*===========================================================================*
