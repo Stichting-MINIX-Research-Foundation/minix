@@ -164,16 +164,13 @@ struct proc *t;
 	kprintf("\n%s\n", ep->msg);
   kprintf("k_reenter = %d ", k_reenter);
 
+  kprintf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, cs= 0x%x, eflags= 0x%x\n",
+	vec_nr, trap_errno, old_eip, old_cs, old_eflags);
   /* TODO should we enable this only when compiled for some debug mode? */
   if (saved_proc) {
 	  kprintf("process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);
 	  kprintf("pc = %u:0x%x\n", (unsigned) saved_proc->p_reg.cs,
 			  (unsigned) saved_proc->p_reg.pc);
-	  kprintf("vec_nr= %d, trap_errno= 0x%lx, eip= 0x%lx, "
-			  "cs= 0x%x, eflags= 0x%lx\n",
-			  vec_nr, (unsigned long)trap_errno,
-			  (unsigned long)old_eip, old_cs,
-			  (unsigned long)old_eflags);
 	  proc_stacktrace(saved_proc);
 
 	  minix_panic("exception in a kernel task", saved_proc->p_endpoint);
