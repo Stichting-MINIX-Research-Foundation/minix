@@ -34,7 +34,7 @@ int flag;			/* M3 means path may be in message */
  * If it is not, go copy it from user space.
  */
   register char *rpu, *rpm;
-  int r;
+  int r, count;
 
   if (len > PATH_MAX) {
 #if 0
@@ -61,7 +61,8 @@ int flag;			/* M3 means path may be in message */
 	/* Just copy the path from the message to 'user_fullpath'. */
 	rpu = &user_fullpath[0];
 	rpm = m_in.pathname;		/* contained in input message */
-	do { *rpu++ = *rpm++; } while (--len);
+	count = len;
+	do { *rpu++ = *rpm++; } while (--count);
 	r = OK;
   } else {
 	/* String is not contained in the message.  Get it from user space. */
