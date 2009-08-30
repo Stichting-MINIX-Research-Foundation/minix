@@ -142,7 +142,7 @@ _PROTOTYPE( int intr_disabled, (void)					);
 _PROTOTYPE( int intr_unmask, (irq_hook_t* hook)                     );
 _PROTOTYPE( int intr_mask, (irq_hook_t* hook)                    );
 _PROTOTYPE( void idle_task, (void)                                     );
-_PROTOTYPE( void system_init, (void)                                     );
+_PROTOTYPE( void arch_init, (void)                                     );
 _PROTOTYPE( void ser_putc, (char)						);
 _PROTOTYPE( void arch_shutdown, (int)					);
 _PROTOTYPE( void arch_get_aout_headers, (int i, struct exec *h)		);

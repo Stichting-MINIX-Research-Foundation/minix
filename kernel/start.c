@@ -29,8 +29,8 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   kinfo.data_base = seg2phys(ds);
   kinfo.data_size = (phys_bytes) &end;		/* size of data segment */
 
-  /* Architecture-dependent initialization. */
-  system_init();
+  /* protection initialization */
+  prot_init();
 
   /* Copy the boot parameters to the local buffer. */
   arch_get_params(params_buffer, sizeof(params_buffer));
