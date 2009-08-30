@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <minix/minlib.h>
+#include <minix/sysinfo.h>
 #include <stdio.h>
 
 /* -DNEW prints time to 0.01 sec. */
@@ -108,16 +109,19 @@ register clock_t t;
 /* Print the time 't' in hours: minutes: seconds.  't' is in ticks. */
 
   int hours, minutes, seconds, hundredths, i;
+  u32_t system_hz;
+
+  getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
 
   digit_seen = 0;
   for (i = 0; i < 8; i++) a[i] = ' ';
-  hours = (int) (t / ((clock_t) 3600 * CLOCKS_PER_SEC));
-  t -= (clock_t) hours * 3600 * CLOCKS_PER_SEC;
-  minutes = (int) (t / ((clock_t) 60 * CLOCKS_PER_SEC));
-  t -= (clock_t) minutes * 60 * CLOCKS_PER_SEC;
-  seconds = (int) (t / CLOCKS_PER_SEC);
-  t -= (clock_t) seconds * CLOCKS_PER_SEC;
-  hundredths = (int) (t * 100 / CLOCKS_PER_SEC);
+  hours = (int) (t / ((clock_t) 3600 * system_hz));
+  t -= (clock_t) hours * 3600 * system_hz;
+  minutes = (int) (t / ((clock_t) 60 * system_hz));
+  t -= (clock_t) minutes * 60 * system_hz;
+  seconds = (int) (t / system_hz);
+  t -= (clock_t) seconds * system_hz;
+  hundredths = (int) (t * 100 / system_hz);
 
   if (hours) {
 	twin(hours, &a[0]);
