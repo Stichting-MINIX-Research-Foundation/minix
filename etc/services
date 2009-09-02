@@ -92,3 +92,5 @@ rsync		873/udp
 eklogin		2105/tcp			# Kerberos encrypted rlogin
 svn		3690/tcp			# Subversion
 svn		3690/udp			# Subversion
+postgresql	5432/tcp			# PostgreSQL Database
+postgresql	5432/udp			# PostgreSQL Database
