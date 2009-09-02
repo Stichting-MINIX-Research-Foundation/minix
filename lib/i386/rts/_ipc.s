@@ -57,7 +57,7 @@ __notify:
 	push	ebp
 	mov	ebp, esp
 	push	ebx
-	mov	eax, SRC_DST(ebp)	! ebx = destination 
+	mov	eax, SRC_DST(ebp)	! eax = destination 
 	mov	ecx, NOTIFY		! _notify(srcdst)
 	int	SYSVEC			! trap to the kernel
 	pop	ebx
