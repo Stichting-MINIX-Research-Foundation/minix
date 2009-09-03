@@ -40,6 +40,7 @@ usr:	\
 	/usr/bin/mkdist \
 	/bin/readclock \
 	/bin/setup \
+	/bin/netconf \
 	/usr/bin/binsizes \
 	/usr/bin/rotate \
 	/usr/bin/floppysetup \
@@ -140,6 +141,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /bin/setup:	setup.sh
+	install -m 755 -c -o bin $? $@
+
+/bin/netconf:	netconf.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/binsizes:	binsizes.sh

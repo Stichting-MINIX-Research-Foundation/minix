@@ -2066,7 +2066,7 @@ select_region(void)
 void printstep(int step, char *str)
 {
 	int n;
-	n = printf("\n --- Substep 4.%d: %s ---", step, str);
+	n = printf("\n --- Substep 3.%d: %s ---", step, str);
 	while(n++ < 73) printf("-");
 	printf("\n");
 }

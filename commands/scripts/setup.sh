@@ -130,59 +130,11 @@ done
 # end Step 1
 
 # begin Step 2
-echo ""
-echo " --- Step 2: Select your Ethernet chip ---------------------------------"
-echo ""
-
-# Ask user about networking
-echo "MINIX 3 currently supports the following Ethernet cards. Please choose: "
-    echo ""
-    echo "0. No Ethernet card (no networking)"
-    echo "1. Intel Pro/100"
-    echo "2. 3Com 501 or 3Com 509 based card"
-    echo "3. Realtek 8139 based card (also emulated by KVM)"
-    echo "4. Realtek 8029 based card (also emulated by Qemu)"
-    echo "5. NE2000, 3com 503 or WD based card (also emulated by Bochs)"
-    echo "6. AMD LANCE (also emulated by VMWare and VirtualBox)"
-    echo "7. Different Ethernet card (no networking)"
-    echo ""
-    echo "You can always change your mind after the setup."
-    echo ""
-step2=""
-while [ "$step2" != ok ]
-do
-    eth=""
-    echo -n "Ethernet card? [0] "; read eth
-    test -z $eth && eth=0
-    driver=""
-    driverargs=""
-    case "$eth" in
-        0) step2="ok"; ;;    
-	1) step2="ok";	driver=fxp;      ;;
-	2) step2="ok";	driver=dpeth;    driverargs="#dpeth_arg='DPETH0=port:irq:memory'";
-	   echo ""
-           echo "Note: After installing, edit $LOCALRC to the right configuration."
-		;;
-	3) step2="ok";	driver=rtl8139;  ;;
-	4) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	5) step2="ok";	driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
-	   echo ""
-           echo "Note: After installing, edit $LOCALRC to the right configuration."
-           echo " chose option 4, the defaults for emulation by Bochs have been set."
-		;;
-        6) driver="lance"; step2="ok"; ;;    
-        7) step2="ok"; ;;    
-        *) warn "choose a number"
-    esac
-done
-# end Step 2
-
-# begin Step 3
-#step3=""
-#while [ "$step3" != ok ]
+#step2=""
+#while [ "$step2" != ok ]
 #do
 #	echo ""
-#	echo " --- Step 3: Select minimal or full distribution -----------------------"
+#	echo " --- Step 2: Select minimal or full distribution -----------------------"
 #	echo ""
 #	echo "You can install MINIX as (M)inimal or (F)ull. (M)inimal"
 #	echo "includes only the binary system and basic system sources."
@@ -195,24 +147,24 @@ done
 #	echo -n "Basic (M)inimal or (F)ull install? [F] "
 #	read conf
 #	case "$conf" in
-#	"") 	step3="ok"; nobigsource="" ;;
-#	[Ff]*)	step3="ok"; nobigsource="" ;;
-#	[Mm]*)	step3="ok"; nobigsource="1"; TOTALMB=$NOSRCMB; USRFILES=$NOSRCUSRFILES ;;
+#	"") 	step2="ok"; nobigsource="" ;;
+#	[Ff]*)	step2="ok"; nobigsource="" ;;
+#	[Mm]*)	step2="ok"; nobigsource="1"; TOTALMB=$NOSRCMB; USRFILES=$NOSRCUSRFILES ;;
 #	esac
 #done
-# end Step 3
+# end Step 2
 
 echo ""
-echo " --- Step 3: Selecting full distribution -------------------------------"
+echo " --- Step 2: Selecting full distribution -------------------------------"
 echo ""
 nobigsource=""
 
-# begin Step 4
-step4=""
-while [ "$step4" != ok ]
+# begin Step 3
+step3=""
+while [ "$step3" != ok ]
 do
 	echo ""
-	echo " --- Step 4: Create or select a partition for MINIX 3 -------------------"
+	echo " --- Step 3: Create or select a partition for MINIX 3 -------------------"
 	echo ""
 
     echo "Now you need to create a MINIX 3 partition on your hard disk."
@@ -282,7 +234,7 @@ Please finish the name of the primary partition you have created:
 		do
 			echo -n "Are you sure you want to continue? Please enter 'yes' or 'no': "
 			read confirmation
-			if [ "$confirmation" = yes ]; then step4=ok; fi
+			if [ "$confirmation" = yes ]; then step3=ok; fi
 		done
 		biosdrivename="Actual BIOS device name unknown, due to expert mode."
 	else
@@ -311,23 +263,23 @@ Please finish the name of the primary partition you have created:
 			# them messy.
 			atnormalize
 
-			if [ -n "$primary" ]; then step4=ok; fi
+			if [ -n "$primary" ]; then step3=ok; fi
 		fi
 	fi
 
 	if [ ! -b "/dev/$primary" ]
-	then	echo Doing step 4 again.
-		step4=""
+	then	echo Doing step 3 again.
+		step3=""
 	else
 		devsize="`devsize /dev/$primary`"
 
 		if [ "$devsize" -lt 1 ]
 		then	echo "/dev/$primary is a 0-sized device."
-			step4=""
+			step3=""
 		fi
 	fi
-done	# while step4 != ok
-# end Step 4
+done	# while step3 != ok
+# end Step 3
 
 root=${primary}s0
 home=${primary}s1
@@ -359,7 +311,7 @@ while [ "$confirm" = "" ]
 do
 	auto=""
 	echo ""
-echo " --- Step 5: Reinstall choice ------------------------------------------"
+echo " --- Step 4: Reinstall choice ------------------------------------------"
 	if mount -r /dev/$home $TMPMP >/dev/null 2>&1
 	then	umount /dev/$home >/dev/null 2>&1
 		echo ""
@@ -391,7 +343,7 @@ homesize=""
 if [ ! "$auto" = r ]
 then	
 echo ""
-echo " --- Step 6: Select the size of /home ----------------------------------"
+echo " --- Step 5: Select the size of /home ----------------------------------"
 	while [ -z "$homesize" ]
 	do
 
@@ -448,7 +400,7 @@ blockdefault=4
 if [ ! "$auto" = "r" ]
 then
 	echo ""
-echo " --- Step 7: Select a block size ---------------------------------------"
+echo " --- Step 6: Select a block size ---------------------------------------"
 	echo ""
 	
 	echo "The default file system block size is $blockdefault KB."
@@ -505,10 +457,9 @@ else	fshome=""
 fi
 
 echo ""
-echo " --- Step 8: Wait for files to be copied -------------------------------"
+echo " --- Step 7: Wait for files to be copied -------------------------------"
 echo ""
-echo "This is the final step of the MINIX 3 setup.  All files will now be"
-echo "copied to your hard disk.  This may take a while."
+echo "All files will now be copied to your hard disk. This may take a while."
 echo ""
 
 mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
@@ -521,10 +472,6 @@ mount /dev/$usr /mnt >/dev/null || exit		# Mount the intended /usr.
  done
 ) | progressbar "$USRFILES" || exit	# Copy the usr floppy.
 
-if [ -n "$driver" ]
-then	echo "$driverargs" >$MYLOCALRC
-fi
-
 umount /dev/$usr >/dev/null || exit		# Unmount the intended /usr.
 mount /dev/$root /mnt >/dev/null || exit
 
@@ -535,10 +482,6 @@ cp /mnt/etc/motd.install /mnt/etc/motd
 # Fix /var/log
 rm /mnt/var/log
 ln -s /usr/log /mnt/var/log
-
-if [ -n "$driver" ]
-then	echo "eth0 $driver 0 { default; };" >/mnt/etc/inet.conf
-fi
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
@@ -554,7 +497,7 @@ $fshome"
 					# National keyboard map.
 test -n "$keymap" && cp -p "/usr/lib/keymaps/$keymap.map" /mnt/etc/keymap
 
-umount /dev/$root >/dev/null || exit	# Unmount the new root.
+umount /dev/$root >/dev/null || exit 	# Unmount the new root.
 mount /dev/$usr /mnt >/dev/null || exit
 
 # Make bootable.
@@ -586,6 +529,21 @@ fi
 
 echo "Saving random data.."
 dd if=/dev/random of=/mnt/adm/random.dat bs=1024 count=1
+
+umount /dev/$usr >/dev/null || exit
+
+# Networking.
+echo ""
+echo " --- Step 8: Select your Ethernet chip ---------------------------------"
+echo ""
+
+mount /dev/$root /mnt >/dev/null || exit
+mount /dev/$usr /mnt/usr >/dev/null || exit
+
+/bin/netconf -p /mnt || echo FAILED TO CONFIGURE NETWORK
+
+umount /dev/$usr && echo Unmounted $usr
+umount /dev/$root && echo Unmounted $root
 
 echo "
 Please type 'shutdown' to exit MINIX 3 and enter the boot monitor. At
