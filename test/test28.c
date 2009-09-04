@@ -234,12 +234,14 @@ void test28b()
   if (unlink("foo/empty") != 0) e(34);	/* rm empty */
 
   /* See what happens if foo is linked. */
+#if 0
   if (superuser) {
 	if (link("foo", "footoo") != 0) e(35);	/* foo still */
 	if (rmdir("footoo") != 0) e(36);	/* exist */
 	if (chdir("footoo") != -1) e(37);	/* footoo */
 	if (errno != ENOENT) e(38);	/* is gone */
   }
+#endif
 #ifdef _MINIX
   /* Some implementations might allow users to link directories. */
   if (!superuser) {
