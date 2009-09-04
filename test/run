@@ -23,7 +23,6 @@ do total=`expr $total + 1`
    CMD=./test$i
    if [ $USER = root -a \( $i = 11 -o $i = 33 \) ]
    then
-      chmod u+s $CMD > /dev/null
       CMD=su\ -\ ast\ -c\ `pwd`/$CMD
    fi
 
