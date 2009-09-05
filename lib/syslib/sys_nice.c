@@ -7,7 +7,7 @@ PUBLIC int sys_nice(int proc, int prio)
 {
   message m;
 
-  m.m1_i1 = proc;
-  m.m1_i2 = prio;
+  m.PR_ENDPT = proc;
+  m.PR_PRIORITY = prio;
   return(_taskcall(SYSTASK, SYS_NICE, &m));
 }
