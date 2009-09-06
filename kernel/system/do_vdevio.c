@@ -3,7 +3,6 @@
  *
  * The parameters for this kernel call are:
  *    m2_i3:	DIO_REQUEST	(request input or output)	
- *    m2_i1:	DIO_TYPE	(flag indicating byte, word, or long)
  *    m2_p1:	DIO_VEC_ADDR	(pointer to port/ value pairs)	
  *    m2_i2:	DIO_VEC_SIZE	(number of ports to read or write) 
  */
