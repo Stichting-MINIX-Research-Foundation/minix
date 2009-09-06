@@ -402,7 +402,6 @@
 #  define IRQ_BYTE      0x100	/* byte values */      
 #  define IRQ_WORD      0x200	/* word values */
 #  define IRQ_LONG      0x400	/* long values */
-#define IRQ_ENDPT	m5_i2   /* endpoint number, SELF, NONE */
 #define IRQ_HOOK_ID	m5_l3   /* id of irq hook at kernel */
 
 /* Field names for SYS_SEGCTL. */
