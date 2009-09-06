@@ -602,7 +602,7 @@ PRIVATE void msg_sig_stop(void)
 			error("Msg SIG_STOP Couldn't get IRQ");
 		}
 		/* remove the policy */
-		if (sys_irqrmpolicy(irq, &irq_hook_id) != OK) {
+		if (sys_irqrmpolicy(&irq_hook_id) != OK) {
 			error("%s: Could not disable IRQ\n",drv.DriverName);
 		}
 	}
