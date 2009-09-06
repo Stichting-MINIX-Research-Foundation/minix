@@ -493,7 +493,6 @@
 /* Field names for SYS_TRACE, SYS_PRIVCTL. */
 #define CTL_ENDPT    m2_i1	/* process number of the caller */
 #define CTL_REQUEST    m2_i2	/* server control request */
-#define CTL_MM_PRIV    m2_i3	/* privilege as seen by PM */
 #define CTL_ARG_PTR    m2_p1	/* pointer to argument */
 #define CTL_ADDRESS    m2_l1	/* address at traced process' space */
 #define CTL_DATA       m2_l2	/* data field for tracing */

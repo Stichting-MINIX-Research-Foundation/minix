@@ -2,7 +2,9 @@
  *   m_type:	SYS_PRIVCTL
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_ENDPT 	(process number of caller)	
+ *    m2_i1:	CTL_ENDPT 	(process endpoint of target)
+ *    m2_i2:	CTL_REQUEST	(privilege control request)
+ *    m2_p1:	CTL_ARG_PTR	(pointer to request data)
  */
 
 #include "../system.h"
@@ -32,6 +34,7 @@ message *m_ptr;			/* pointer to request message */
   struct io_range io_range;
   struct mem_range mem_range;
   struct priv priv;
+  int irq;
 
   /* Check whether caller is allowed to make this call. Privileged proceses 
    * can only update the privileges of processes that are inhibited from 
@@ -40,8 +43,8 @@ message *m_ptr;			/* pointer to request message */
    */
   caller_ptr = proc_addr(who_p);
   if (! (priv(caller_ptr)->s_flags & SYS_PROC)) return(EPERM); 
-  if(m_ptr->PR_ENDPT == SELF) proc_nr = who_p;
-  else if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return(EINVAL);
+  if(m_ptr->CTL_ENDPT == SELF) proc_nr = who_p;
+  else if(!isokendpt(m_ptr->CTL_ENDPT, &proc_nr)) return(EINVAL);
   rp = proc_addr(proc_nr);
 
   switch(m_ptr->CTL_REQUEST)
@@ -216,12 +219,14 @@ message *m_ptr;			/* pointer to request message */
 	if (!(priv(rp)->s_flags & SYS_PROC))
 		return EPERM;
 
+	data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+		SYSTEM, (vir_bytes) &irq, sizeof(irq));
 	priv(rp)->s_flags |= CHECK_IRQ;	/* Check IRQs */
 
 	i= priv(rp)->s_nr_irq;
 	if (i >= NR_IRQ)
 		return ENOMEM;
-	priv(rp)->s_irq_tab[i]= m_ptr->CTL_MM_PRIV;
+	priv(rp)->s_irq_tab[i]= irq;
 	priv(rp)->s_nr_irq++;
 
 	return OK;

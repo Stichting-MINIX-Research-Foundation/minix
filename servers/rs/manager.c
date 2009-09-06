@@ -855,7 +855,7 @@ endpoint_t *endpoint;
   /* Set the privilege structure for the child process to let is run.
    * This should succeed: we tested number in use above.
    */
-  if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_INIT, 0, privp)) < 0) {
+  if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_INIT, privp)) < 0) {
       report("RS","sys_privctl call failed", s);	/* to let child run */
       rp->r_flags |= RS_EXITING;			/* expect exit */
       if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
@@ -1080,7 +1080,7 @@ struct rproc *rp;
 		 * run.
 		 */
 		proc_nr_e = getnprocnr(pid);
-		r= sys_privctl(proc_nr_e, SYS_PRIV_USER, 0, NULL);
+		r= sys_privctl(proc_nr_e, SYS_PRIV_USER, NULL);
 		if (r < 0)
 			printf("RS: run_script: sys_privctl call failed: %d\n", r);
 
