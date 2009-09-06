@@ -5,7 +5,7 @@
  *   do_procstat: request process status  (Jorrit N. Herder)
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
  *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
- *   do_getpuid: get the uid/euid of a process given it's endpoint
+ *   do_getpuid: get the uid/euid of a process given its endpoint
  *   do_allocmem: allocate a chunk of memory  (Jorrit N. Herder)
  *   do_freemem: deallocate a chunk of memory  (Jorrit N. Herder)
  *   do_getsetpriority: get/set process priority
