@@ -54,7 +54,7 @@ PUBLIC int do_exec()
 	mp->mp_fs_call= PM_EXEC;
 	r= notify(FS_PROC_NR);
 	if (r != OK)
-		panic(__FILE__, "do_getset: unable to notify FS", r);
+		panic(__FILE__, "do_exec: unable to notify FS", r);
 
 	/* Do not reply */
 	return SUSPEND;

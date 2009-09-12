@@ -159,6 +159,8 @@ PUBLIC int do_fork_nb()
   rmc->mp_flags &= (IN_USE|PRIV_PROC);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
+  rmc->mp_exitstatus = 0;
+  rmc->mp_sigstatus = 0;
   rmc->mp_endpoint = child_ep;		/* passed back by VM */
   for (i = 0; i < NR_ITIMERS; i++)
 	rmc->mp_interval[i] = 0;	/* reset timer intervals */
