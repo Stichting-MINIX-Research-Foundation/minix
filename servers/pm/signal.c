@@ -82,6 +82,7 @@ PUBLIC int do_sigaction()
   }
   mp->mp_sigact[m_in.sig_nr].sa_handler = svec.sa_handler;
   sigdelset(&svec.sa_mask, SIGKILL);
+  sigdelset(&svec.sa_mask, SIGSTOP);
   mp->mp_sigact[m_in.sig_nr].sa_mask = svec.sa_mask;
   mp->mp_sigact[m_in.sig_nr].sa_flags = svec.sa_flags;
   mp->mp_sigreturn = (vir_bytes) m_in.sig_ret;
@@ -160,6 +161,7 @@ PUBLIC int do_sigsuspend()
   mp->mp_sigmask2 = mp->mp_sigmask;	/* save the old mask */
   mp->mp_sigmask = (sigset_t) m_in.sig_set;
   sigdelset(&mp->mp_sigmask, SIGKILL);
+  sigdelset(&mp->mp_sigmask, SIGSTOP);
   mp->mp_flags |= SIGSUSPENDED;
   check_pending(mp);
   return(SUSPEND);
@@ -178,6 +180,7 @@ PUBLIC int do_sigreturn()
 
   mp->mp_sigmask = (sigset_t) m_in.sig_set;
   sigdelset(&mp->mp_sigmask, SIGKILL);
+  sigdelset(&mp->mp_sigmask, SIGSTOP);
 
   r = sys_sigreturn(who_e, (struct sigmsg *) m_in.sig_context);
   check_pending(mp);
