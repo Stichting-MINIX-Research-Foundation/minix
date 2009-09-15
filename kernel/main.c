@@ -51,7 +51,6 @@ PUBLIC void main()
 #endif
 	rp->p_nr = i;				/* proc number from ptr */
 	rp->p_endpoint = _ENDPOINT(0, rp->p_nr); /* generation no. 0 */
-        (pproc_addr + NR_TASKS)[i] = rp;        /* proc ptr from number */
   }
   for (sp = BEG_PRIV_ADDR, i = 0; sp < END_PRIV_ADDR; ++sp, ++i) {
 	sp->s_proc_nr = NONE;			/* initialize as free */

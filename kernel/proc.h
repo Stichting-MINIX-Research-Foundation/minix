@@ -215,7 +215,6 @@ struct proc {
  * with sizeof(struct proc) to determine the address. 
  */
 EXTERN struct proc proc[NR_TASKS + NR_PROCS];	/* process table */
-EXTERN struct proc *pproc_addr[NR_TASKS + NR_PROCS];
 EXTERN struct proc *rdy_head[NR_SCHED_QUEUES]; /* ptrs to ready list headers */
 EXTERN struct proc *rdy_tail[NR_SCHED_QUEUES]; /* ptrs to ready list tails */
 
