@@ -22,26 +22,33 @@
 #define SS_INDEX             5	/* kernel SS (386: monitor SS at startup) */
 #define CS_INDEX             6	/* kernel CS */
 #define MON_CS_INDEX         7	/* temp for BIOS (386: monitor CS at startup) */
-#define TSS_INDEX            8	/* kernel TSS */
-#define DS_286_INDEX         9	/* scratch 16-bit source segment */
-#define ES_286_INDEX        10	/* scratch 16-bit destination segment */
-#define A_INDEX             11	/* 64K memory segment at A0000 */
-#define B_INDEX             12	/* 64K memory segment at B0000 */
-#define C_INDEX             13	/* 64K memory segment at C0000 */
-#define D_INDEX             14	/* 64K memory segment at D0000 */
-#define FIRST_LDT_INDEX     15	/* rest of descriptors are LDT's */
+#define DS_286_INDEX         8	/* scratch 16-bit source segment */
+#define ES_286_INDEX         9	/* scratch 16-bit destination segment */
+#define TSS_INDEX           10	/* kernel TSS */
+#define FIRST_LDT_INDEX     11	/* rest of descriptors are LDT's */
 
-#define GDT_SELECTOR      0x08	/* (GDT_INDEX * DESC_SIZE) bad for asld */
-#define IDT_SELECTOR      0x10	/* (IDT_INDEX * DESC_SIZE) */
-#define DS_SELECTOR       0x18	/* (DS_INDEX * DESC_SIZE) */
-#define ES_SELECTOR       0x20	/* (ES_INDEX * DESC_SIZE) */
-#define FLAT_DS_SELECTOR  0x21	/* less privileged ES */
-#define SS_SELECTOR       0x28	/* (SS_INDEX * DESC_SIZE) */
-#define CS_SELECTOR       0x30	/* (CS_INDEX * DESC_SIZE) */
-#define MON_CS_SELECTOR   0x38	/* (MON_CS_INDEX * DESC_SIZE) */
-#define TSS_SELECTOR      0x40	/* (TSS_INDEX * DESC_SIZE) */
-#define DS_286_SELECTOR   0x49	/* (DS_286_INDEX*DESC_SIZE+TASK_PRIVILEGE) */
-#define ES_286_SELECTOR   0x51	/* (ES_286_INDEX*DESC_SIZE+TASK_PRIVILEGE) */
+/* Descriptor structure offsets. */
+#define DESC_BASE            2	/* to base_low */
+#define DESC_BASE_MIDDLE     4	/* to base_middle */
+#define DESC_ACCESS          5	/* to access byte */
+#define DESC_SIZE            8	/* sizeof (struct segdesc_s) */
+
+/*
+ * WARNING no () around the macros, be careful. This is because of ACK assembler
+ * and will be fixed after switching to GAS
+ */
+#define GDT_SELECTOR		GDT_INDEX * DESC_SIZE
+#define IDT_SELECTOR		IDT_INDEX * DESC_SIZE
+#define DS_SELECTOR		DS_INDEX * DESC_SIZE
+#define ES_SELECTOR		ES_INDEX * DESC_SIZE
+/* flat DS is less privileged ES */
+#define FLAT_DS_SELECTOR	ES_SELECTOR | TASK_PRIVILEGE
+#define SS_SELECTOR		SS_INDEX * DESC_SIZE
+#define CS_SELECTOR		CS_INDEX * DESC_SIZE
+#define MON_CS_SELECTOR		MON_CS_INDEX * DESC_SIZE
+#define TSS_SELECTOR		TSS_INDEX * DESC_SIZE
+#define DS_286_SELECTOR		DS_286_INDEX*DESC_SIZE | TASK_PRIVILEGE
+#define ES_286_SELECTOR		ES_286_INDEX*DESC_SIZE | TASK_PRIVILEGE
 
 /* Privileges. */
 #define INTR_PRIVILEGE       0	/* kernel and interrupt handlers */
@@ -64,12 +71,6 @@
 /* Selector bits. */
 #define TI                0x04	/* table indicator */
 #define RPL               0x03	/* requester privilege level */
-
-/* Descriptor structure offsets. */
-#define DESC_BASE            2	/* to base_low */
-#define DESC_BASE_MIDDLE     4	/* to base_middle */
-#define DESC_ACCESS          5	/* to access byte */
-#define DESC_SIZE            8	/* sizeof (struct segdesc_s) */
 
 /* Base and limit sizes and shifts. */
 #define BASE_MIDDLE_SHIFT   16	/* shift for base --> base_middle */
