@@ -26,11 +26,11 @@ message *m_ptr;			/* pointer to request message */
  */
   struct sigcontext sc;
   register struct proc *rp;
-  int proc, r;
+  int proc_nr, r;
 
-  if (! isokendpt(m_ptr->SIG_ENDPT, &proc)) return(EINVAL);
-  if (iskerneln(proc)) return(EPERM);
-  rp = proc_addr(proc);
+  if (! isokendpt(m_ptr->SIG_ENDPT, &proc_nr)) return(EINVAL);
+  if (iskerneln(proc_nr)) return(EPERM);
+  rp = proc_addr(proc_nr);
 
   /* Copy in the sigcontext structure. */
   if((r=data_copy(m_ptr->SIG_ENDPT, (vir_bytes) m_ptr->SIG_CTXT_PTR,

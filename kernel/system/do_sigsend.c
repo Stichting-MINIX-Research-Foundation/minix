@@ -28,12 +28,12 @@ message *m_ptr;			/* pointer to request message */
   register struct proc *rp;
   struct sigcontext sc, *scp;
   struct sigframe fr, *frp;
-  int proc, r;
+  int proc_nr, r;
   phys_bytes ph;
 
-  if (!isokendpt(m_ptr->SIG_ENDPT, &proc)) return(EINVAL);
-  if (iskerneln(proc)) return(EPERM);
-  rp = proc_addr(proc);
+  if (!isokendpt(m_ptr->SIG_ENDPT, &proc_nr)) return(EINVAL);
+  if (iskerneln(proc_nr)) return(EPERM);
+  rp = proc_addr(proc_nr);
 
   ph = umap_local(proc_addr(who_p), D, (vir_bytes) m_ptr->SIG_CTXT_PTR, sizeof(struct sigmsg));
   if(!ph) return EFAULT;

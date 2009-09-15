@@ -137,7 +137,7 @@ irq_hook_t *hook;
  * interrupts are transformed into messages to a driver. The IRQ line will be
  * reenabled if the policy says so.
  */
-  int proc;
+  int proc_nr;
 
   /* As a side-effect, the interrupt handler gathers random information by 
    * timestamping the interrupt events. This is used for /dev/random.
@@ -148,14 +148,14 @@ irq_hook_t *hook;
    * If it's dead, this should never happen, as processes that die 
    * automatically get their interrupt hooks unhooked.
    */
-  if(!isokendpt(hook->proc_nr_e, &proc))
+  if(!isokendpt(hook->proc_nr_e, &proc_nr))
      minix_panic("invalid interrupt handler", hook->proc_nr_e);
 
   /* Add a bit for this interrupt to the process' pending interrupts. When 
    * sending the notification message, this bit map will be magically set
    * as an argument. 
    */
-  priv(proc_addr(proc))->s_int_pending |= (1 << hook->notify_id);
+  priv(proc_addr(proc_nr))->s_int_pending |= (1 << hook->notify_id);
 
   /* Build notification message and return. */
   lock_notify(HARDWARE, hook->proc_nr_e);

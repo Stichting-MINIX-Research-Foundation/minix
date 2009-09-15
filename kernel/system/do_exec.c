@@ -24,12 +24,12 @@ register message *m_ptr;	/* pointer to request message */
   register struct proc *rp;
   phys_bytes phys_name;
   char *np;
-  int proc;
+  int proc_nr;
 
-  if(!isokendpt(m_ptr->PR_ENDPT, &proc))
+  if(!isokendpt(m_ptr->PR_ENDPT, &proc_nr))
 	return EINVAL;
 
-  rp = proc_addr(proc);
+  rp = proc_addr(proc_nr);
 
   /* Save command name for debugging, ps(1) output, etc. */
   if(data_copy(who_e, (vir_bytes) m_ptr->PR_NAME_PTR,

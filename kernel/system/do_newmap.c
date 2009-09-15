@@ -20,12 +20,12 @@ message *m_ptr;			/* pointer to request message */
   register struct proc *rp;	/* process whose map is to be loaded */
   struct mem_map *map_ptr;	/* virtual address of map inside caller */
   phys_bytes src_phys;		/* physical address of map at the */
-  int proc;
+  int proc_nr;
 
   map_ptr = (struct mem_map *) m_ptr->PR_MEM_PTR;
-  if (! isokendpt(m_ptr->PR_ENDPT, &proc)) return(EINVAL);
-  if (iskerneln(proc)) return(EPERM);
-  rp = proc_addr(proc);
+  if (! isokendpt(m_ptr->PR_ENDPT, &proc_nr)) return(EINVAL);
+  if (iskerneln(proc_nr)) return(EPERM);
+  rp = proc_addr(proc_nr);
 
   return newmap(rp, map_ptr);
 }

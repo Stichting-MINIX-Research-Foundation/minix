@@ -22,15 +22,15 @@ message *m_ptr;			/* pointer to request message */
  * signal it got with SYS_GETKSIG.
  */
   register struct proc *rp;
-  int proc;
+  int proc_nr;
 
   /* Get process pointer and verify that it had signals pending. If the 
    * process is already dead its flags will be reset. 
    */
-  if(!isokendpt(m_ptr->SIG_ENDPT, &proc))
+  if(!isokendpt(m_ptr->SIG_ENDPT, &proc_nr))
 	return EINVAL;
 
-  rp = proc_addr(proc);
+  rp = proc_addr(proc_nr);
   if (!RTS_ISSET(rp, SIG_PENDING)) return(EINVAL);
 
   /* PM has finished one kernel signal. Perhaps process is ready now? */

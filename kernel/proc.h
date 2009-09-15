@@ -198,7 +198,7 @@ struct proc {
 #define NIL_PROC          ((struct proc *) 0)		
 #define NIL_SYS_PROC      ((struct proc *) 1)		
 #define cproc_addr(n)     (&(proc + NR_TASKS)[(n)])
-#define proc_addr(n)      (pproc_addr + NR_TASKS)[(n)]
+#define proc_addr(n)      (&(proc[NR_TASKS + (n)]))
 #define proc_nr(p) 	  ((p)->p_nr)
 
 #define isokprocn(n)      ((unsigned) ((n) + NR_TASKS) < NR_PROCS + NR_TASKS)
