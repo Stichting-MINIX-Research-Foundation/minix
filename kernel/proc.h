@@ -204,9 +204,9 @@ struct proc {
 #define isokprocn(n)      ((unsigned) ((n) + NR_TASKS) < NR_PROCS + NR_TASKS)
 #define isemptyn(n)       isemptyp(proc_addr(n)) 
 #define isemptyp(p)       ((p)->p_rts_flags == SLOT_FREE)
-#define iskernelp(p)	  iskerneln((p)->p_nr)
+#define iskernelp(p)	  ((p) < BEG_USER_ADDR)
 #define iskerneln(n)	  ((n) < 0)
-#define isuserp(p)        isusern((p)->p_nr)
+#define isuserp(p)        isusern((p) >= BEG_USER_ADDR)
 #define isusern(n)        ((n) >= 0)
 
 /* The process table and pointers to process table slots. The pointers allow
