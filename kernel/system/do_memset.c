@@ -4,7 +4,7 @@
  * The parameters for this kernel call are:
  *    m2_p1:	MEM_PTR		(virtual address)	
  *    m2_l1:	MEM_COUNT	(returns physical address)	
- *    m2_l2:	MEM_PATTERN	(size of datastructure) 	
+ *    m2_l2:	MEM_PATTERN	(pattern byte to be written) 	
  */
 
 #include "../system.h"

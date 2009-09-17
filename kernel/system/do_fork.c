@@ -2,8 +2,10 @@
  *   m_type:	SYS_FORK
  *
  * The parameters for this kernel call are:
- *    m1_i1:	PR_SLOT	 (child's process table slot)	
- *    m1_i2:	PR_ENDPT (parent, process that forked)	
+ *    m1_i1:	PR_ENDPT	(parent, process that forked)
+ *    m1_i2:	PR_SLOT		(child's process table slot)
+ *    m1_p1:	PR_MEM_PTR	(new memory map for the child)
+ *    m1_i3:	PR_FORK_FLAGS	(fork flags)
  */
 
 #include "../system.h"
