@@ -219,7 +219,7 @@ void test32b()
 		rename("old", "new");
 		exit(0);
 	    default:
-		while (stat("old", &st) != 0)
+		while (stat("old", &st) == 0)
 			if (stat("new", &st) != 0) e(18);
 		wait(&stat_loc);
 		if (stat_loc != 0) e(19);	/* Alarm? */
