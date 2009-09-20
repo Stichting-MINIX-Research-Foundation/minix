@@ -76,7 +76,6 @@ void test31a()
   System("rm -rf ../DIR_31/*");
 
   /* Check if the file status information is updated correctly */
-  System("rm -rf fifo");
   cnt = 0;
   Stat(".", &dirst);
   time(&time1);
@@ -84,6 +83,7 @@ void test31a()
 	;
 
   do {
+  	unlink("fifo");
 	time(&time1);
 	if (mkfifo("fifo", 0644) != 0) e(1);
 	Stat("fifo", &st);
