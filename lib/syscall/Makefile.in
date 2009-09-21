@@ -47,6 +47,8 @@ libc_FILES=" \
 	getgroups.s \
 	getitimer.s \
 	getnpid.s \
+	getnuid.s \
+	getngid.s \
 	getnprocnr.s \
 	getpgrp.s \
 	getpid.s \
@@ -69,6 +71,12 @@ libc_FILES=" \
 	mkfifo.s \
 	mknod.s \
 	mmap.s \
+	vm_getphys.s \
+	vm_getrefcount.s \
+	vm_remap.s \
+	vm_unmap.s \
+	vm_set_priv.s \
+	vm_query_exit.s \
 	mount.s \
 	nanosleep.s \
 	open.s \

@@ -3,8 +3,7 @@
 .sect .text; .sect .rom; .sect .data; .sect .bss
 .sect .text
 
-! int _cpuid(u32_t eax, u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx);
-! 0 for OK, nonzero for unsupported
+! void _cpuid(u32_t eax, u32_t *eax, u32_t *ebx, u32_t *ecx, u32_t *edx);
 
 .define	__cpuid
 

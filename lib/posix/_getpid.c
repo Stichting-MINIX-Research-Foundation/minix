@@ -6,5 +6,5 @@ PUBLIC pid_t getpid()
 {
   message m;
 
-  return(_syscall(MM, GETPID, &m));
+  return(_syscall(MM, MINIX_GETPID, &m));
 }
