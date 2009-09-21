@@ -219,7 +219,9 @@ void read_conf(void)
 	{ static int first= 1; 
 		if (!first) ip_panic(( "read_conf: called a second time" ));
 		first= 0;
+#if 0
 		*(u8_t *)0 = 0xcc;	/* INT 3 */
+#endif
 	}
 
 
