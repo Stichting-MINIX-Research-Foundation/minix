@@ -34,7 +34,7 @@ EXTERN struct super_block {
 
   /* The block size in bytes. Minimum MIN_BLOCK SIZE. SECTOR_SIZE
    * multiple. If V1 or V2 filesystem, this should be
-   * initialised to STATIC_BLOCK_SIZE. Maximum MAX_BLOCK_SIZE.
+   * initialised to STATIC_BLOCK_SIZE.
    */
   short s_pad2;			/* try to avoid compiler-dependent padding */
   unsigned short s_block_size;	/* block size in bytes. */

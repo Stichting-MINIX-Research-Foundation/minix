@@ -285,12 +285,6 @@ register struct super_block *sp; /* pointer to a superblock */
   if (sp->s_block_size < _MIN_BLOCK_SIZE) {
   	return EINVAL;
   }
-  if (sp->s_block_size > _MAX_BLOCK_SIZE) {
-  	printf("Filesystem block size is %d kB; maximum filesystem\n"
- 	"block size is %d kB. This limit can be increased by recompiling.\n",
-  	sp->s_block_size/1024, _MAX_BLOCK_SIZE/1024);
-  	return EINVAL;
-  }
   if ((sp->s_block_size % 512) != 0) {
   	return EINVAL;
   }

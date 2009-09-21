@@ -17,6 +17,7 @@
 #include "fs.h"
 #include <minix/com.h>
 #include <minix/u64.h>
+#include <string.h>
 #include "buf.h"
 #include "super.h"
 #include "inode.h"
@@ -48,7 +49,7 @@ int only_search;		/* if NO_READ, don't read, else act normal */
  */
 
   int b;
-  register struct buf *bp, *prev_ptr;
+  static struct buf *bp, *prev_ptr;
 
   ASSERT(fs_block_size > 0);
 
@@ -79,6 +80,29 @@ int only_search;		/* if NO_READ, don't read, else act normal */
 
   /* Desired block is not on available chain.  Take oldest block ('front'). */
   if ((bp = front) == NIL_BUF) panic(__FILE__,"all buffers in use", NR_BUFS);
+
+  if(bp->b_bytes < fs_block_size) {
+	phys_bytes ph;
+	ASSERT(!bp->bp);
+	ASSERT(bp->b_bytes == 0);
+	if(!(bp->bp = alloc_contig(fs_block_size, 0, &ph))) {
+		printf("MFS: couldn't allocate a new block.\n");
+		for(bp = front;
+			bp && bp->b_bytes < fs_block_size; bp = bp->b_next)
+			;
+		if(!bp) {
+			panic("MFS", "no buffer available", NO_NUM);
+		}
+	} else {
+  		bp->b_bytes = fs_block_size;
+	}
+  }
+
+  ASSERT(bp);
+  ASSERT(bp->bp);
+  ASSERT(bp->b_bytes == fs_block_size);
+  ASSERT(bp->b_count == 0);
+
   rm_lru(bp);
 
   /* Remove the block that was just taken from its hash chain. */
@@ -110,27 +134,14 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   bp->b_count++;		/* record that block is being used */
   b = BUFHASH(bp->b_blocknr);
   bp->b_hash = buf_hash[b];
-  if(bp->b_bytes < fs_block_size) {
-	static int n = 0;
-	phys_bytes ph;
-	ASSERT(!bp->bp);
-	ASSERT(bp->b_bytes == 0);
-	if(!(bp->bp = alloc_contig(fs_block_size, 0, &ph)))
-		panic(__FILE__,"couldn't allocate FS buffer", n);
-  	bp->b_bytes = fs_block_size;
-	n++;
-  }
 
   buf_hash[b] = bp;		/* add to hash list */
-
-  SANITYCHECK;
 
   /* Go get the requested block unless searching or prefetching. */
   if (dev != NO_DEV) {
 	if (only_search == PREFETCH) bp->b_dev = NO_DEV;
 	else
 	if (only_search == NORMAL) {
-	  	SANITYCHECK;
 		rw_block(bp, READING);
 	}
   }
@@ -280,9 +291,7 @@ int rw_flag;			/* READING or WRITING */
   if ( (dev = bp->b_dev) != NO_DEV) {
 	  pos = mul64u(bp->b_blocknr, fs_block_size);
 	  op = (rw_flag == READING ? MFS_DEV_READ : MFS_DEV_WRITE);
-	  SANITYCHECK;
 	  r = block_dev_io(op, dev, SELF_E, bp->b_data, pos, fs_block_size, 0);
-	  SANITYCHECK;
 	  if (r != fs_block_size) {
 		  if (r >= 0) r = END_OF_FILE;
 		  if (r != END_OF_FILE)
