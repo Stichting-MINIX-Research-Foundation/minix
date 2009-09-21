@@ -44,8 +44,6 @@
 
 #define PHYS_SEG      0x0400	/* flag indicating entire physical memory */
 
-#define GRANT_SEG     0x0800	/* flag indicating grant for umap */
-
 #define LOCAL_VM_SEG  0x1000	/* same as LOCAL_SEG, but with vm lookup */
 #define VM_D		(LOCAL_VM_SEG | D)
 #define VM_T		(LOCAL_VM_SEG | T)

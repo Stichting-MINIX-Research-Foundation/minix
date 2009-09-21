@@ -66,7 +66,7 @@ typedef struct {
 } iovec_s_t;
 
 /* PM passes the address of a structure of this type to KERNEL when
- * sys_sendsig() is invoked as part of the signal catching mechanism.
+ * sys_sigsend() is invoked as part of the signal catching mechanism.
  * The structure contain all the information that KERNEL needs to build
  * the signal stack.
  */
@@ -97,9 +97,6 @@ struct kinfo {
   int nr_tasks;			/* number of kernel tasks */
   char release[6];		/* kernel release number */
   char version[6];		/* kernel version number */
-#if DEBUG_LOCK_CHECK
-  int relocking;		/* interrupt locking depth (should be 0) */
-#endif
 };
 
 /* Load data accounted every this no. of seconds. */
@@ -178,6 +175,7 @@ struct kmessages {
   char km_buf[_KMESS_BUF_SIZE];          /* buffer for messages */
 };
 
+#include <minix/config.h>
 #include <ibm/interrupt.h>
 
 /* randomness struct: random sources after interrupts: */

@@ -13,6 +13,7 @@ netinet/in.h
 /* Open Group Base Specifications Issue 6 (not complete) */
 #define    INADDR_ANY              (uint32_t)0x00000000
 #define    INADDR_BROADCAST        (uint32_t)0xFFFFFFFF
+#define    INADDR_LOOPBACK         (uint32_t)0x7F000001
 
 #define    IN_LOOPBACKNET          127
 

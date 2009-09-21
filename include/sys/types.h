@@ -43,6 +43,11 @@ typedef long clock_t;		   /* unit for system accounting */
 typedef unsigned long sigset_t;
 #endif
 
+#ifndef _KEY_T
+#define _KEY_T
+typedef long key_t;
+#endif
+
 /* Open Group Base Specifications Issue 6 (not complete) */
 typedef long useconds_t;	/* Time in microseconds */
 

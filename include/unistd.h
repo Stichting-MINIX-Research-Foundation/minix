@@ -121,6 +121,8 @@ _PROTOTYPE( char *getlogin, (void)					);
 _PROTOTYPE( pid_t getpgrp, (void)					);
 _PROTOTYPE( pid_t getpid, (void)					);
 _PROTOTYPE( pid_t getnpid, (int proc_nr)				);
+_PROTOTYPE( uid_t getnuid, (int proc_nr)				);
+_PROTOTYPE( gid_t getngid, (int proc_nr)				);
 _PROTOTYPE( pid_t getppid, (void)					);
 _PROTOTYPE( uid_t getuid, (void)					);
 _PROTOTYPE( int isatty, (int _fd)					);

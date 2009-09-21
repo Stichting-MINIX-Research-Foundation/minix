@@ -89,6 +89,7 @@
 #define	LOG_CONS	0x02	/* log on the console if errors in sending */
 #define	LOG_ODELAY	0x04	/* delay open until first syslog() (default) */
 #define	LOG_NDELAY	0x08	/* don't delay open */
+#define	LOG_NOWAIT	0x10	/* don't wait for console forks: DEPRECATED */
 #define	LOG_PERROR	0x20	/* log to stderr as well */
 
 void closelog(void);

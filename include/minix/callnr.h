@@ -19,7 +19,7 @@
 #define BRK		  17
 #define STAT		  18 
 #define LSEEK		  19
-#define GETPID		  20
+#define MINIX_GETPID	  20
 #define MOUNT		  21 
 #define UMOUNT		  22 
 #define SETUID		  23

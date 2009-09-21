@@ -75,6 +75,7 @@ extern int errno;		  /* place where the error numbers go */
 #define ENOTEMPTY     (_SIGN 39)  /* directory not empty */
 #define ELOOP         (_SIGN 40)  /* too many levels of symlinks detected */
 #define ERESTART      (_SIGN 41)  /* driver restarted */
+#define EIDRM         (_SIGN 43)  /* Identifier removed */
 
 /* The following errors relate to networking. */
 #define EPACKSIZE     (_SIGN 50)  /* invalid packet size for some protocol */

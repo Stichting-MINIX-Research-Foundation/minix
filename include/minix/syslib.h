@@ -35,7 +35,7 @@ _PROTOTYPE( int sys_enable_iop, (endpoint_t proc));
 _PROTOTYPE( int sys_exec, (endpoint_t proc, char *ptr,  
 				char *aout, vir_bytes initpc));
 _PROTOTYPE( int sys_fork, (endpoint_t parent, endpoint_t child, int *,
-	struct mem_map *ptr, u32_t vm));
+	struct mem_map *ptr, u32_t vm, vir_bytes *));
 _PROTOTYPE( int sys_newmap, (endpoint_t proc, struct mem_map *ptr));
 _PROTOTYPE( int sys_exit, (endpoint_t proc));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc, long addr, long *data_p));
@@ -53,9 +53,8 @@ _PROTOTYPE( int sys_vmctl, (endpoint_t who, int param, u32_t value));
 _PROTOTYPE( int sys_vmctl_get_pagefault_i386, (endpoint_t *who, u32_t *cr2, u32_t *err));
 _PROTOTYPE( int sys_vmctl_get_cr3_i386, (endpoint_t who, u32_t *cr3)  );
 _PROTOTYPE( int sys_vmctl_get_memreq, (endpoint_t *who, vir_bytes *mem,
-        vir_bytes *len, int *wrflag) );
-
-
+        vir_bytes *len, int *wrflag, endpoint_t *) );
+_PROTOTYPE( int sys_vmctl_enable_paging, (struct mem_map *));
 
 _PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
 _PROTOTYPE( int sys_stime, (time_t boottime));
@@ -85,6 +84,7 @@ _PROTOTYPE(void *alloc_contig, (size_t len, int flags, phys_bytes *phys));
 #define AC_ALIGN4K	0x01
 #define AC_LOWER16M	0x02
 #define AC_ALIGN64K	0x04
+#define AC_LOWER1M	0x08
 
 /* Clock functionality: get system times, (un)schedule an alarm call, or
  * retrieve/set a process-virtual timer.
@@ -167,8 +167,6 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getmonparams(v,vl)	sys_getinfo(GET_MONPARAMS, v,vl, 0,0)
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
-#define sys_getbiosbuffer(virp, sizep) \
-	sys_getinfo(GET_BIOSBUFFER, virp, sizeof(*virp), sizep, sizeof(*sizep))
 #define sys_getprivid(nr)	sys_getinfo(GET_PRIVID, 0, 0,0, nr)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *val_ptr2, int val_len2)		);

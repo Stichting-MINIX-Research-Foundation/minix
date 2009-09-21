@@ -310,7 +310,6 @@
 #  define SYS_GETINFO    (KERNEL_CALL + 26) 	/* sys_getinfo() */
 #  define SYS_ABORT      (KERNEL_CALL + 27)	/* sys_abort() */
 #  define SYS_IOPENABLE  (KERNEL_CALL + 28)	/* sys_enable_iop() */
-#  define SYS_VM_SETBUF  (KERNEL_CALL + 29)	/* sys_vm_setbuf() */
 #  define SYS_SAFECOPYFROM (KERNEL_CALL + 31)	/* sys_safecopyfrom() */
 #  define SYS_SAFECOPYTO   (KERNEL_CALL + 32)	/* sys_safecopyto() */
 #  define SYS_VSAFECOPY  (KERNEL_CALL + 33)	/* sys_vsafecopy() */
@@ -525,6 +524,7 @@
 				 * and sys_fork
 				 */
 #define PR_FORK_FLAGS	m1_i3
+#define PR_FORK_MSGADDR m1_p1
 
 /* Field names for SYS_INT86 */
 #define INT86_REG86    m1_p1	/* pointer to registers */
@@ -584,6 +584,7 @@
 #define SVMCTL_MRG_LEN		m1_i1	/* MEMREQ_GET reply: length */
 #define SVMCTL_MRG_WRITE	m1_i2	/* MEMREQ_GET reply: writeflag */
 #define SVMCTL_MRG_EP		m1_i3	/* MEMREQ_GET reply: process */
+#define SVMCTL_MRG_REQUESTOR	m1_p2	/* MEMREQ_GET reply: requestor */
 
 /* Codes and field names for SYS_SYSCTL. */
 #define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */
@@ -602,6 +603,12 @@
 #define VMCTL_MEMREQ_REPLY	15
 #define VMCTL_INCSP		16
 #define VMCTL_NOPAGEZERO	18
+#define VMCTL_I386_KERNELLIMIT	19
+#define VMCTL_I386_PAGEDIRS	20
+#define VMCTL_I386_FREEPDE	23
+#define VMCTL_ENABLE_PAGING	24
+#define VMCTL_I386_INVLPG	25
+#define VMCTL_FLUSHTLB		26
 
 /* Field names for SYS_VTIMER. */
 #define VT_WHICH	m2_i1	/* which timer to set/retrieve */
@@ -629,6 +636,7 @@
 						 * arguments are passed in 
 						 * a struct rs_start
 						 */
+#define RS_LOOKUP	(DS_RQ_BASE + 8)	/* lookup server name */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */
@@ -636,6 +644,9 @@
 #  define RS_DEV_MAJOR          m1_i3           /* major device number */
 
 #  define RS_ENDPOINT		m1_i1		/* endpoint number in reply */
+
+#  define RS_NAME		m1_p1		/* name */
+#  define RS_NAME_LEN		m1_i1		/* namelen */
 
 /*===========================================================================*
  *                Messages for the Data Store Server			     *
@@ -767,6 +778,16 @@
 #	define VMVC_FD			m1_i1
 #	define VMVC_ENDPOINT		m1_i2
 
+/* PM field names */
+/* BRK */
+#define PMBRK_ADDR				m1_p1
+
+/* TRACE */
+#define PMTRACE_ADDR				m2_l1
+
+#define PM_ENDPT				m1_i1
+#define PM_PENDPT				m1_i2
+
 /*===========================================================================*
  *                Messages for VM server				     *
  *===========================================================================*/
@@ -847,13 +868,15 @@
 #	define VMUP_EP			m1_i1
 #	define VMUP_VADDR		m1_p1
 
-#define VM_UNMAP		(VM_RQ_BASE+17)
+#define VM_MUNMAP		(VM_RQ_BASE+17)
 #	define VMUM_ADDR		m1_p1
 #	define VMUM_LEN			m1_i1
 
 #define VM_ALLOCMEM		(VM_RQ_BASE+18)
 #	define VMAM_BYTES		m1_p1
 #	define VMAM_MEMBASE		m1_i1
+
+#define VM_MUNMAP_TEXT		(VM_RQ_BASE+19)
 
 /* Calls from VFS. */
 #	define VMV_ENDPOINT		m1_i1	/* for all VM_VFS_REPLY_* */
@@ -862,7 +885,89 @@
 #define VM_VFS_REPLY_MMAP	(VM_RQ_BASE+31)
 #define VM_VFS_REPLY_CLOSE	(VM_RQ_BASE+32)
 
+#define VM_REMAP		(VM_RQ_BASE+33)
+#	define VMRE_D			m1_i1
+#	define VMRE_S			m1_i2
+#	define VMRE_DA			m1_p1
+#	define VMRE_SA			m1_p2
+#	define VMRE_RETA		m1_p3
+#	define VMRE_SIZE		m1_i3
+
+#define VM_SHM_UNMAP		(VM_RQ_BASE+34)
+#	define VMUN_ENDPT		m2_i1
+#	define VMUN_ADDR		m2_l1
+
+#define VM_GETPHYS		(VM_RQ_BASE+35)
+#	define VMPHYS_ENDPT		m2_i1
+#	define VMPHYS_ADDR		m2_l1
+#	define VMPHYS_RETA		m2_l2
+
+#define VM_GETREF		(VM_RQ_BASE+36)
+#	define VMREFCNT_ENDPT		m2_i1
+#	define VMREFCNT_ADDR		m2_l1
+#	define VMREFCNT_RETC		m2_i2
+
+#define VM_RS_SET_PRIV		(VM_RQ_BASE+37)
+#	define VM_RS_NR			m2_i1
+#	define VM_RS_BUF		m2_l1
+
+#define VM_QUERY_EXIT		(VM_RQ_BASE+38)
+#	define VM_QUERY_RET_PT	m2_i1
+#	define VM_QUERY_IS_MORE	m2_i2
+
+#define VM_NOTIFY_SIG		(VM_RQ_BASE+39)
+#	define VM_NOTIFY_SIG_ENDPOINT	m1_i1
+#	define VM_NOTIFY_SIG_IPC	m1_i2
+
+#define VM_CTL			(VM_RQ_BASE+40)
+#define VCTL_WHAT			m1_i1
+#define VCTL_PARAM			m1_i2
+
+/* VCTL_PARAMs */
+#define VCTLP_STATS_MEM			1
+#define VCTLP_STATS_EP			2
+
 /* Total. */
-#define VM_NCALLS				33
+#define VM_NCALLS				41
+
+/*===========================================================================*
+ *                Messages for IPC server				     *
+ *===========================================================================*/
+#define IPC_BASE	0xD00
+
+/* Shared Memory */
+#define IPC_SHMGET	(IPC_BASE+1)
+#	define SHMGET_KEY	m2_l1
+#	define SHMGET_SIZE	m2_l2
+#	define SHMGET_FLAG	m2_i1
+#	define SHMGET_RETID	m2_i2
+#define IPC_SHMAT	(IPC_BASE+2)
+#	define SHMAT_ID		m2_i1
+#	define SHMAT_ADDR	m2_l1
+#	define SHMAT_FLAG	m2_i2
+#	define SHMAT_RETADDR	m2_l2
+#define IPC_SHMDT	(IPC_BASE+3)
+#	define SHMDT_ADDR	m2_l1
+#define IPC_SHMCTL	(IPC_BASE+4)
+#	define SHMCTL_ID	m2_i1
+#	define SHMCTL_CMD	m2_i2
+#	define SHMCTL_BUF	m2_l1
+#	define SHMCTL_RET	m2_i3
+
+/* Semaphore */
+#define IPC_SEMGET	(IPC_BASE+5)
+#	define SEMGET_KEY	m2_l1
+#	define SEMGET_NR	m2_i1
+#	define SEMGET_FLAG	m2_i2
+#	define SEMGET_RETID	m2_i3
+#define IPC_SEMCTL	(IPC_BASE+6)
+#	define SEMCTL_ID	m2_i1
+#	define SEMCTL_NUM	m2_i2
+#	define SEMCTL_CMD	m2_i3
+#	define SEMCTL_OPT	m2_l1
+#define IPC_SEMOP	(IPC_BASE+7)
+#	define SEMOP_ID		m2_i1
+#	define SEMOP_OPS	m2_l1
+#	define SEMOP_SIZE	m2_i2
 
 #endif /* _MINIX_COM_H */ 
