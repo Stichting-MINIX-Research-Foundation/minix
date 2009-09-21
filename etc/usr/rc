@@ -102,6 +102,7 @@ start)
     done
     up inet -script /etc/rs.inet
     up printer -dev /dev/lp -period 10HZ
+    up ipc
     echo .
 
     # Network initialization.
