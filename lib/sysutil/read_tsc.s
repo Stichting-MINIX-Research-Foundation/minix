@@ -25,3 +25,25 @@ _read_tsc:
 	pop edx
 	ret
 
+!*===========================================================================*
+! PUBLIC void read_host_time_ns(unsigned long *high, unsigned long *low);
+! access real time in ns from host in vmware.
+.align 16
+_read_host_time_ns:
+	push edx
+	push eax
+	push ecx
+	mov ecx, 0x10001
+.data1 0x0f		! this is the RDPMC instruction 
+.data1 0x33		! it places the result in EDX:EAX
+	push ebp
+	mov ebp, 20(esp)
+	mov (ebp), edx
+	mov ebp, 24(esp)
+	mov (ebp), eax
+	pop ebp
+	pop ecx
+	pop eax
+	pop edx
+	ret
+
