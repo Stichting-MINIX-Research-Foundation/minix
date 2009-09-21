@@ -6,6 +6,7 @@ _PROTOTYPE( int  main, (int argc, char **argv)				);
 /* dmp.c */
 _PROTOTYPE( int do_fkey_pressed, (message *m) 				);
 _PROTOTYPE( void mapping_dmp, (void)	 				);
+_PROTOTYPE( void vm_dmp, (void)	 				);
 
 /* dmp_kernel.c */
 _PROTOTYPE( void proctab_dmp, (void)					);

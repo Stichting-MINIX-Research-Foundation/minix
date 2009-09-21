@@ -8,6 +8,7 @@
  */
 
 #include "inc.h"
+#include <minix/vm.h>
 
 struct hook_entry {
 	int key;
@@ -21,7 +22,7 @@ struct hook_entry {
 	{ F5,	monparams_dmp, "Boot monitor parameters" },
 	{ F6,	irqtab_dmp, "IRQ hooks and policies" },
 	{ F7,	kmessages_dmp, "Kernel messages" },
-	{ F9,	sched_dmp, "Scheduling queues" },
+	{ F8,	vm_dmp, "VM status" },
 	{ F10,	kenv_dmp, "Kernel parameters" },
 	{ F11,	timing_dmp, "Timing details (if enabled)" },
 	{ SF1,	mproc_dmp, "Process manager process table" },
@@ -100,3 +101,11 @@ PUBLIC void mapping_dmp(void)
   printf("\n");
 }
 
+/*===========================================================================*
+ *				vm_dmp				     *
+ *===========================================================================*/
+PUBLIC void vm_dmp(void)
+{
+	vm_ctl(VCTLP_STATS_MEM, 0);
+
+}

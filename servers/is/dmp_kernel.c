@@ -224,54 +224,6 @@ PUBLIC void image_dmp()
   printf("\n");
 }
 
-/*===========================================================================*
- *				sched_dmp    				     *
- *===========================================================================*/
-PUBLIC void sched_dmp()
-{
-  struct proc *rdy_head[NR_SCHED_QUEUES];
-  struct kinfo kinfo;
-  register struct proc *rp;
-  vir_bytes ptr_diff;
-  int r;
-
-  /* First obtain a scheduling information. */
-  if ((r = sys_getschedinfo(proc, rdy_head)) != OK) {
-      report("IS","warning: couldn't get copy of process table", r);
-      return;
-  }
-  /* Then obtain kernel addresses to correct pointer information. */
-  if ((r = sys_getkinfo(&kinfo)) != OK) {
-      report("IS","warning: couldn't get kernel addresses", r);
-      return;
-  }
-
-  /* Update all pointers. Nasty pointer algorithmic ... */
-  ptr_diff = (vir_bytes) proc - (vir_bytes) kinfo.proc_addr;
-  for (r=0;r<NR_SCHED_QUEUES; r++)
-      if (rdy_head[r] != NIL_PROC)
-          rdy_head[r] = 
-              (struct proc *)((vir_bytes) rdy_head[r] + ptr_diff);
-  for (rp=BEG_PROC_ADDR; rp < END_PROC_ADDR; rp++)
-      if (rp->p_nextready != NIL_PROC)
-          rp->p_nextready =
-               (struct proc *)((vir_bytes) rp->p_nextready + ptr_diff);
-
-  /* Now show scheduling queues. */
-  printf("Dumping scheduling queues.\n");
-
-  for (r=0;r<NR_SCHED_QUEUES; r++) {
-      rp = rdy_head[r];
-      if (!rp) continue;
-      printf("%2d: ", r);
-      while (rp != NIL_PROC) {
-          printf("%3d ", rp->p_nr);
-          rp = rp->p_nextready;
-      }
-      printf("\n");
-  }
-  printf("\n");
-}
 
 /*===========================================================================*
  *				kenv_dmp				     *
@@ -311,9 +263,6 @@ PUBLIC void kenv_dmp()
     printf("- nr_tasks:     %3u\n", kinfo.nr_tasks); 
     printf("- release:      %.6s\n", kinfo.release); 
     printf("- version:      %.6s\n", kinfo.version); 
-#if DEBUG_LOCK_CHECK
-    printf("- relocking:    %d\n", kinfo.relocking); 
-#endif
     printf("\n");
 }
 
@@ -363,7 +312,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -system calls--\n");
+  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -ipc_sr-- -system calls--\n");
 
   PROCLOOP(rp, oldrp)
         r = -1;
