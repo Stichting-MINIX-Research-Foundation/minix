@@ -29,6 +29,8 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 
 	if(flags & AC_LOWER16M)
 		mmapflags |= MAP_LOWER16M;
+	if(flags & AC_LOWER1M)
+		mmapflags |= MAP_LOWER1M;
 	if(flags & AC_ALIGN64K)
 		mmapflags |= MAP_ALIGN64K;
 

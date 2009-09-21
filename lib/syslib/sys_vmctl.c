@@ -43,7 +43,7 @@ PUBLIC int sys_vmctl_get_cr3_i386(endpoint_t who, u32_t *cr3)
 }
 
 PUBLIC int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
-	vir_bytes *len, int *wrflag)
+	vir_bytes *len, int *wrflag, endpoint_t *requestor)
 {
   message m;
   int r;
@@ -56,7 +56,16 @@ PUBLIC int sys_vmctl_get_memreq(endpoint_t *who, vir_bytes *mem,
 	*mem = (vir_bytes) m.SVMCTL_MRG_ADDR;
 	*len = m.SVMCTL_MRG_LEN;
 	*wrflag = m.SVMCTL_MRG_WRITE;
+	*requestor = (endpoint_t) m.SVMCTL_MRG_REQUESTOR;
   }
   return r;
 }
 
+PUBLIC int sys_vmctl_enable_paging(struct mem_map *map)
+{
+	message m;
+	m.SVMCTL_WHO = SELF;
+	m.SVMCTL_PARAM = VMCTL_ENABLE_PAGING;
+	m.SVMCTL_VALUE = (int) map;
+	return _taskcall(SYSTASK, SYS_VMCTL, &m);
+}

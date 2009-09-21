@@ -66,7 +66,6 @@ libsys_FILES=" \
 	sys_vinl.c \
 	sys_vinw.c \
 	sys_vircopy.c \
-	sys_vm_setbuf.c \
 	sys_vmctl.c \
 	sys_voutb.c \
 	sys_voutl.c \
@@ -76,8 +75,10 @@ libsys_FILES=" \
 	ds.c	\
 	vm_allocmem.c \
 	vm_brk.c \
+	vm_ctl.c \
 	vm_exec_newmem.c \
 	vm_exit.c \
+	vm_notify_sig.c \
 	vm_fork.c \
 	vm_map_phys.c \
 	vm_umap.c \
