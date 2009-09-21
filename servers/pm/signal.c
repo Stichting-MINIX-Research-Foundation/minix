@@ -306,6 +306,28 @@ PUBLIC int do_pause()
   return(SUSPEND);
 }
 
+PRIVATE vm_notify_sig_wrapper(endpoint_t ep)
+{
+	/* get IPC's endpoint,
+	 * the reason that we directly get the endpoint
+	 * instead of from DS server is that otherwise
+	 * it will cause deadlock between PM, VM and DS.
+	 */
+	struct mproc *rmp;
+	endpoint_t ipc_ep = 0;
+
+	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+		if (!(rmp->mp_flags & IN_USE))
+			continue;
+		if (!strcmp(rmp->mp_name, "ipc")) {
+			ipc_ep = rmp->mp_endpoint;
+			vm_notify_sig(ep, ipc_ep);
+
+			return;
+		}
+	}
+}
+
 /*===========================================================================*
  *				sig_proc				     *
  *===========================================================================*/
@@ -411,6 +433,7 @@ int signo;			/* signal to send to process (1 to _NSIG) */
 	 * ready.
 	 */
 	unpause(slot, FALSE /*!for_trace*/);
+	vm_notify_sig_wrapper(rmp->mp_endpoint);
 	return;
   }
   else if (sigismember(&rmp->mp_sig2mess, signo)) {

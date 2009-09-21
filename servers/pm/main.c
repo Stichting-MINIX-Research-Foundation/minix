@@ -19,6 +19,7 @@
 #include <minix/minlib.h>
 #include <minix/type.h>
 #include <minix/vm.h>
+#include <minix/crtso.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -208,6 +209,8 @@ int result;			/* result of call (usually OK or error #) */
   rmp->mp_flags |= REPLY;	/* reply pending */
 }
 
+extern int unmap_ok;
+
 /*===========================================================================*
  *				pm_init					     *
  *===========================================================================*/
@@ -340,6 +343,17 @@ PRIVATE void pm_init()
  if(f > 0) printf("PM: failed to register %d processes with DS.\n", f);
 
  system_hz = sys_hz();
+
+ /* Map out our own text and data. This is normally done in crtso.o
+  * but PM is an exception - we don't get to talk to VM so early on.
+  * That's why we override munmap() and munmap_text() in utility.c.
+  *
+  * _minix_unmapzero() is the same code in crtso.o that normally does
+  * it on startup. It's best that it's there as crtso.o knows exactly
+  * what the ranges are of the filler data.
+  */
+  unmap_ok = 1;
+  _minix_unmapzero();
 }
 
 /*===========================================================================*

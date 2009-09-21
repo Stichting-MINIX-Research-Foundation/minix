@@ -248,6 +248,7 @@ int dump_core;			/* flag indicating whether to dump core */
   if((r=vm_willexit(proc_nr_e)) != OK) {
 	panic(__FILE__, "exit_proc: vm_willexit failed", r);
   }
+  vm_notify_sig_wrapper(rmp->mp_endpoint);
 
   if (proc_nr_e == INIT_PROC_NR)
   {
@@ -276,8 +277,7 @@ int dump_core;			/* flag indicating whether to dump core */
   }
   else
   {
-	printf("PM: FS died\n");
-	return;
+	panic(__FILE__, "pm_exit: FS died", r);
   }
 
   /* The process is now officially exiting. The ZOMBIE flag is not enough, as

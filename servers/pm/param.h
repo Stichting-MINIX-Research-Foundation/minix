@@ -1,13 +1,10 @@
 /* The following names are synonyms for the variables in the input message. */
-#define addr            m1_p1
 #define exec_name	m1_p1
 #define exec_len	m1_i1
 #define func		m6_f1
 #define grp_id		m1_i1
 #define namelen		m1_i2
 #define pid		m1_i1
-#define endpt		m1_i1
-#define pendpt		m1_i2
 #define seconds		m1_i1
 #define which_timer	m1_i1
 #define new_val		m1_p1
@@ -18,7 +15,6 @@
 #define status		m1_i1
 #define usr_id		m1_i1
 #define request		m2_i2
-#define taddr		m2_l1
 #define data		m2_l2
 #define sig_nr		m1_i2
 #define sig_nsa		m1_p1

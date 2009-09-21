@@ -28,6 +28,12 @@
 #include "../../kernel/type.h"
 #include "../../kernel/proc.h"
 
+#define munmap _munmap
+#define munmap_text _munmap_text
+#include <sys/mman.h>
+#undef munmap
+#undef munmap_text
+
 /*===========================================================================*
  *				get_free_pid				     *
  *===========================================================================*/
@@ -111,3 +117,21 @@ PUBLIC int pm_isokendpt(int endpoint, int *proc)
 	return OK;
 }
 
+int unmap_ok = 0;
+
+PUBLIC int munmap(void *addrstart, vir_bytes len)
+{
+	if(!unmap_ok) 
+		return ENOSYS;
+
+	return _munmap(addrstart, len);
+}
+
+PUBLIC int munmap_text(void *addrstart, vir_bytes len)
+{
+	if(!unmap_ok)
+		return ENOSYS;
+
+	return _munmap_text(addrstart, len);
+
+}

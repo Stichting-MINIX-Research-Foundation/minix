@@ -325,7 +325,7 @@ PUBLIC int do_getprocnr()
   if (m_in.pid >= 0) {			/* lookup process by pid */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 		if ((rmp->mp_flags & IN_USE) && (rmp->mp_pid==m_in.pid)) {
-  			mp->mp_reply.endpt = rmp->mp_endpoint;
+  			mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
 #if 0
   			printf("PM: pid result: %d\n", rmp->mp_endpoint);
 #endif
@@ -335,27 +335,24 @@ PUBLIC int do_getprocnr()
   	return(ESRCH);			
   } else if (m_in.namelen > 0) {	/* lookup process by name */
   	key_len = MIN(m_in.namelen, PROC_NAME_LEN);
- 	if (OK != (s=sys_datacopy(who_e, (vir_bytes) m_in.addr, 
+ 	if (OK != (s=sys_datacopy(who_e, (vir_bytes) m_in.PMBRK_ADDR, 
  			SELF, (vir_bytes) search_key, key_len))) 
  		return(s);
  	search_key[key_len] = '\0';	/* terminate for safety */
   	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 		if (((rmp->mp_flags & (IN_USE | EXITING)) == IN_USE) && 
 			strncmp(rmp->mp_name, search_key, key_len)==0) {
-  			mp->mp_reply.endpt = rmp->mp_endpoint;
-  			printf("PM: name %s result: %d\n", search_key, 
-					rmp->mp_endpoint);
+  			mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
   			return(OK);
 		} 
 	}
-	printf("PM: name %s result: ESRCH\n", search_key);
   	return(ESRCH);			
   } else {			/* return own/parent process number */
 #if 0
-	printf("PM: endpt result: %d\n", mp->mp_reply.endpt);
+	printf("PM: endpt result: %d\n", mp->mp_reply.PM_ENDPT);
 #endif
-  	mp->mp_reply.endpt = who_e;
-	mp->mp_reply.pendpt = mproc[mp->mp_parent].mp_endpoint;
+  	mp->mp_reply.PM_ENDPT = who_e;
+	mp->mp_reply.PM_PENDPT = mproc[mp->mp_parent].mp_endpoint;
   }
 
   return(OK);
@@ -378,7 +375,7 @@ PUBLIC int do_getpuid()
 	return EPERM;
   }
 
-  ep= m_in.endpt;
+  ep= m_in.PM_ENDPT;
 
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
 	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
