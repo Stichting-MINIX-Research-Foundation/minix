@@ -24,6 +24,7 @@ all install depend clean:
 	cd ./vm && $(MAKE) $@
 	cd ./init && $(MAKE) $@
 	cd ./inet && $(MAKE) $@
+	cd ./ipc && $(MAKE) $@
 
 image:
 	cd ./pm && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
