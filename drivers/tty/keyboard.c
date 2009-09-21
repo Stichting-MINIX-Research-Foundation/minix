@@ -766,8 +766,22 @@ int scode;			/* scan code of key just struck or released */
 			return -1;
 		if(ch)
 			return ch;
-  		printf("tty: ignoring unrecognized %s scancode 0x%x\n",
-  			escape ? "escaped" : "straight", scode);
+		{
+			static char seen[2][NR_SCAN_CODES];
+			int notseen = 0, ei;
+			ei = escape ? 1 : 0;
+			if(scode >= 0 && scode < NR_SCAN_CODES) {
+				notseen = !seen[ei][scode];
+				seen[ei][scode] = 1;
+			} else {
+				printf("tty: scode %d makes no sense\n", scode);
+			}
+			if(notseen) {
+		  		printf("tty: ignoring unrecognized %s "
+					"scancode 0x%x\n",
+  				escape ? "escaped" : "straight", scode);
+			}
+		}
   		return -1;
   }
 

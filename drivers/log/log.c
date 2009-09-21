@@ -229,11 +229,7 @@ subread(struct logdevice *log, int count, int proc_nr,
 	   if((r=sys_safecopyto(proc_nr, user_vir, offset,
 		(vir_bytes)buf, count, D)) != OK)
 		return r;
-	} else {
-          if((r=sys_vircopy(SELF,D,(int)buf,
-		proc_nr, safe ? GRANT_SEG : D, user_vir + offset, count)) != OK)
-        	return r;
-	}
+	} 
 
   	LOGINC(log->log_read, count);
         log->log_size -= count;

@@ -284,6 +284,9 @@ PRIVATE struct driver f_dtab = {
   NULL
 };
 
+static char *floppy_buf;
+static phys_bytes floppy_buf_phys;
+
 /*===========================================================================*
  *				floppy_task				     *
  *===========================================================================*/
@@ -294,7 +297,9 @@ PUBLIC void main()
   struct floppy *fp;
   int s;
 
-  init_buffer();
+  if(!(floppy_buf = alloc_contig(2*DMA_BUF_SIZE,
+	AC_LOWER16M | AC_ALIGN4K, &floppy_buf_phys)))
+  	panic("FLOPPY", "couldn't allocate dma buffer", NO_NUM);
 
   f_next_timeout = TMR_NEVER;
   tmr_inittimer(&f_tmr_timeout);
@@ -604,13 +609,13 @@ int safe;
 			/* Copy the user bytes to the DMA buffer. */
 			if(safe) {
 		   	   s=sys_safecopyfrom(proc_nr, *ug, *up,
-				(vir_bytes) tmp_buf,
+				(vir_bytes) floppy_buf,
 			  	 (phys_bytes) SECTOR_SIZE, D);
 			   if(s != OK)
 				panic("FLOPPY", "sys_safecopyfrom failed", s);
 			} else {
 			   assert(proc_nr == SELF);
-			   memcpy(tmp_buf, (void *) (*ug + *up), SECTOR_SIZE);
+			   memcpy(floppy_buf, (void *) (*ug + *up), SECTOR_SIZE);
 			}
 		}
 
@@ -630,13 +635,13 @@ int safe;
 			/* Copy the DMA buffer to user space. */
 			if(safe) {
 		   	   s=sys_safecopyto(proc_nr, *ug, *up,
-				(vir_bytes) tmp_buf,
+				(vir_bytes) floppy_buf,
 			  	 (phys_bytes) SECTOR_SIZE, D);
 			if(s != OK)
 				panic("FLOPPY", "sys_safecopyto failed", s);
 			} else {
 			   assert(proc_nr == SELF);
-			   memcpy((void *) (*ug + *up), tmp_buf, SECTOR_SIZE);
+			   memcpy((void *) (*ug + *up), floppy_buf, SECTOR_SIZE);
 			}
 		}
 
@@ -702,7 +707,7 @@ int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
   int s;
 
   /* First check the DMA memory address not to exceed maximum. */
-  if (tmp_phys != (tmp_phys & DMA_ADDR_MASK)) {
+  if (floppy_buf_phys != (floppy_buf_phys & DMA_ADDR_MASK)) {
 	report("FLOPPY", "DMA denied because address out of range", NO_NUM);
 	return(EIO);
   }
@@ -713,9 +718,9 @@ int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
   pv_set(byte_out[0], DMA_INIT, DMA_RESET_VAL);	/* reset the dma controller */
   pv_set(byte_out[1], DMA_FLIPFLOP, 0);		/* write anything to reset it */
   pv_set(byte_out[2], DMA_MODE, opcode == DEV_SCATTER_S ? DMA_WRITE : DMA_READ);
-  pv_set(byte_out[3], DMA_ADDR, (unsigned) (tmp_phys >>  0) & 0xff);
-  pv_set(byte_out[4], DMA_ADDR, (unsigned) (tmp_phys >>  8) & 0xff);
-  pv_set(byte_out[5], DMA_TOP,  (unsigned) (tmp_phys >> 16) & 0xff);
+  pv_set(byte_out[3], DMA_ADDR, (unsigned) (floppy_buf_phys >>  0) & 0xff);
+  pv_set(byte_out[4], DMA_ADDR, (unsigned) (floppy_buf_phys >>  8) & 0xff);
+  pv_set(byte_out[5], DMA_TOP,  (unsigned) (floppy_buf_phys >> 16) & 0xff);
   pv_set(byte_out[6], DMA_COUNT, (((SECTOR_SIZE - 1) >> 0)) & 0xff);
   pv_set(byte_out[7], DMA_COUNT, (SECTOR_SIZE - 1) >> 8);
   pv_set(byte_out[8], DMA_INIT, 2);		/* some sort of enable */
@@ -1316,7 +1321,7 @@ int density;
 
   (void) f_prepare(device);
   position = (off_t) f_dp->test << SECTOR_SHIFT;
-  iovec1.iov_addr = (vir_bytes) tmp_buf;
+  iovec1.iov_addr = (vir_bytes) floppy_buf;
   iovec1.iov_size = SECTOR_SIZE;
   result = f_transfer(SELF, DEV_GATHER_S, cvul64(position), &iovec1, 1, 0);
 
