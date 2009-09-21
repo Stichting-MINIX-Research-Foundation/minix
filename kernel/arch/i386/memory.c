@@ -1,4 +1,5 @@
 
+
 #include "../../kernel.h"
 #include "../../proc.h"
 #include "../../vm.h"
@@ -15,137 +16,246 @@
 
 #include "proto.h"
 #include "../../proto.h"
+#include "../../proto.h"
 #include "../../debug.h"
 
-/* VM functions and data. */
-PRIVATE u32_t vm_cr3;
-PUBLIC u32_t kernel_cr3;
-extern u32_t cswitch;
-u32_t last_cr3 = 0;
+#include "sha1.h"
+
+PRIVATE int psok = 0;
+
+#define PROCPDEPTR(pr, pi) ((u32_t *) ((u8_t *) vm_pagedirs +\
+				I386_PAGE_SIZE * pr->p_nr +	\
+				I386_VM_PT_ENT_SIZE * pi))
+
+u8_t *vm_pagedirs = NULL;
+
+#define NOPDE -1
+#define PDEMASK(n) (1L << (n))
+PUBLIC u32_t dirtypde;
+#define WANT_FREEPDES (sizeof(dirtypde)*8-5)
+PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES], inusepde = NOPDE;
 
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
-FORWARD _PROTOTYPE( void phys_put32, (phys_bytes addr, u32_t value)	);
-FORWARD _PROTOTYPE( u32_t phys_get32, (phys_bytes addr)			);
-FORWARD _PROTOTYPE( void vm_set_cr3, (u32_t value)			);
+FORWARD _PROTOTYPE( u32_t phys_get32, (vir_bytes v)			);
 FORWARD _PROTOTYPE( void set_cr3, (void)				);
 FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 
-#if DEBUG_VMASSERT
-#define vmassert(t) { \
-	if(!(t)) { minix_panic("vm: assert " #t " failed\n", __LINE__); } }
-#else
-#define vmassert(t) { }
-#endif
-
+	
 /* *** Internal VM Functions *** */
 
-PUBLIC void vm_init(void)
+PUBLIC void vm_init(struct proc *newptproc)
 {
-	int o;
-	phys_bytes p, pt_size;
-	phys_bytes vm_dir_base, vm_pt_base, phys_mem;
-	u32_t entry;
-	unsigned pages;
-	struct proc* rp;
-	struct proc *sys = proc_addr(SYSTEM);
-	static int init_done = 0;
-
-	if (!vm_size)
-		minix_panic("i386_vm_init: no space for page tables", NO_NUM);
-
-	if(init_done)
-		return;
-
-	/* Align page directory */
-	o= (vm_base % I386_PAGE_SIZE);
-	if (o != 0)
-		o= I386_PAGE_SIZE-o;
-	vm_dir_base= vm_base+o;
-
-	/* Page tables start after the page directory */
-	vm_pt_base= vm_dir_base+I386_PAGE_SIZE;
-
-	pt_size= (vm_base+vm_size)-vm_pt_base;
-	pt_size -= (pt_size % I386_PAGE_SIZE);
-
-	/* Compute the number of pages based on vm_mem_high */
-	pages= (vm_mem_high-1)/I386_PAGE_SIZE + 1;
-
-	if (pages * I386_VM_PT_ENT_SIZE > pt_size)
-		minix_panic("i386_vm_init: page table too small", NO_NUM);
-
-	for (p= 0; p*I386_VM_PT_ENT_SIZE < pt_size; p++)
-	{
-		phys_mem= p*I386_PAGE_SIZE;
-		entry= phys_mem | I386_VM_USER | I386_VM_WRITE |
-			I386_VM_PRESENT;
-		if (phys_mem >= vm_mem_high)
-			entry= 0;
-#if VM_KERN_NOPAGEZERO
-		if (phys_mem == (sys->p_memmap[T].mem_phys << CLICK_SHIFT) ||
-		    phys_mem == (sys->p_memmap[D].mem_phys << CLICK_SHIFT)) {
-			entry = 0;
-		}
-#endif
-		phys_put32(vm_pt_base + p*I386_VM_PT_ENT_SIZE, entry);
-	}
-
-	for (p= 0; p < I386_VM_DIR_ENTRIES; p++)
-	{
-		phys_mem= vm_pt_base + p*I386_PAGE_SIZE;
-		entry= phys_mem | I386_VM_USER | I386_VM_WRITE |
-			I386_VM_PRESENT;
-		if (phys_mem >= vm_pt_base + pt_size)
-			entry= 0;
-		phys_put32(vm_dir_base + p*I386_VM_PT_ENT_SIZE, entry);
-	}
-
-
-       /* Set this cr3 in all currently running processes for
-        * future context switches.
-        */
-       for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
-               u32_t mycr3;
-               if(isemptyp(rp)) continue;
-               rp->p_seg.p_cr3 = vm_dir_base;
-       }
-
-	kernel_cr3 = vm_dir_base;
-
-	/* Set this cr3 now (not active until paging enabled). */
-	vm_set_cr3(vm_dir_base);
-
-	/* Actually enable paging (activating cr3 load above). */
+	int i;
+	if(vm_running)
+		minix_panic("vm_init: vm_running", NO_NUM);
+	vm_set_cr3(newptproc);
 	level0(vm_enable_paging);
-
-	/* Don't do this init in the future. */
-	init_done = 1;
 	vm_running = 1;
+
 }
 
-PRIVATE void phys_put32(addr, value)
-phys_bytes addr;
-u32_t value;
-{
-	phys_copy(vir2phys((vir_bytes)&value), addr, sizeof(value));
+
+#define TYPEDIRECT	0
+#define TYPEPROCMAP	1
+#define TYPEPHYS	2
+
+/* This macro sets up a mapping from within the kernel's address
+ * space to any other area of memory, either straight physical
+ * memory (PROC == NULL) or a process view of memory, in 4MB chunks.
+ * It recognizes PROC having kernel address space as a special case.
+ *
+ * It sets PTR to the pointer within kernel address space at the start
+ * of the 4MB chunk, and OFFSET to the offset within that chunk
+ * that corresponds to LINADDR.
+ *
+ * It needs FREEPDE (available and addressable PDE within kernel
+ * address space), SEG (hardware segment), VIRT (in-datasegment
+ * address if known).
+ */
+#define CREATEPDE(PROC, PTR, LINADDR, REMAIN, BYTES, PDE, TYPE) { \
+	u32_t *pdeptr = NULL; 				\
+	int proc_pde_index;					\
+	proc_pde_index = I386_VM_PDE(LINADDR);			\
+	PDE = NOPDE;						\
+	if((PROC) && (((PROC) == ptproc) || !HASPT(PROC))) {	\
+		PTR = LINADDR;					\
+		TYPE = TYPEDIRECT;				\
+	} else {						\
+		int fp;						\
+		int mustinvl;					\
+		u32_t pdeval, *pdevalptr, mask;			\
+		phys_bytes offset;				\
+		vmassert(psok);					\
+		if(PROC) {					\
+			TYPE = TYPEPROCMAP;				\
+			vmassert(!iskernelp(PROC));		\
+			vmassert(HASPT(PROC));			\
+			pdeptr = PROCPDEPTR(PROC, proc_pde_index);	\
+			pdeval = *pdeptr;			\
+		} else {					\
+			TYPE = TYPEPHYS;				\
+			pdeval = (LINADDR & I386_VM_ADDR_MASK_4MB) | 	\
+				I386_VM_BIGPAGE | I386_VM_PRESENT | 	\
+				I386_VM_WRITE | I386_VM_USER;		\
+		}							\
+		for(fp = 0; fp < nfreepdes; fp++) {			\
+			int k = freepdes[fp];				\
+			if(inusepde == k)				\
+				continue;				\
+			*PROCPDEPTR(ptproc, k) = 0;			\
+			PDE = k;					\
+			vmassert(k >= 0);				\
+			vmassert(k < sizeof(dirtypde)*8);		\
+			mask = PDEMASK(PDE);				\
+			if(dirtypde & mask)				\
+				continue;				\
+			break;						\
+		}							\
+		vmassert(PDE != NOPDE);					\
+		vmassert(mask);						\
+		if(dirtypde & mask) {					\
+			mustinvl = 1;					\
+		} else {						\
+			mustinvl = 0;					\
+		}							\
+		inusepde = PDE;						\
+		*PROCPDEPTR(ptproc, PDE) = pdeval;			\
+		offset = LINADDR & I386_VM_OFFSET_MASK_4MB;		\
+		PTR = I386_BIG_PAGE_SIZE*PDE + offset;			\
+		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
+		if(mustinvl) {	\
+			level0(reload_cr3); 			\
+		}		\
+	}								\
 }
+
+#define DONEPDE(PDE)	{				\
+	if(PDE != NOPDE) {				\
+		vmassert(PDE > 0);			\
+		vmassert(PDE < sizeof(dirtypde)*8);	\
+		dirtypde |= PDEMASK(PDE);		\
+	}						\
+}
+
+#define WIPEPDE(PDE)	{				\
+	if(PDE != NOPDE) {				\
+		vmassert(PDE > 0);			\
+		vmassert(PDE < sizeof(dirtypde)*8);	\
+		*PROCPDEPTR(ptproc, PDE) = 0;		\
+	}						\
+}
+
+/*===========================================================================*
+ *				lin_lin_copy				     *
+ *===========================================================================*/
+int lin_lin_copy(struct proc *srcproc, vir_bytes srclinaddr, 
+	struct proc *dstproc, vir_bytes dstlinaddr, vir_bytes bytes)
+{
+	u32_t addr;
+	int o1, o2;
+	int procslot;
+	int firstloop = 1;
+
+	NOREC_ENTER(linlincopy);
+
+	vmassert(vm_running);
+	vmassert(nfreepdes >= 3);
+
+	vmassert(ptproc);
+	vmassert(proc_ptr);
+	vmassert(read_cr3() == ptproc->p_seg.p_cr3);
+
+	procslot = ptproc->p_nr;
+
+	vmassert(procslot >= 0 && procslot < I386_VM_DIR_ENTRIES);
+
+	while(bytes > 0) {
+		phys_bytes srcptr, dstptr;
+		vir_bytes chunk = bytes;
+		int srcpde, dstpde;
+		int srctype, dsttype;
+
+		/* Set up 4MB ranges. */
+		inusepde = NOPDE;
+		CREATEPDE(srcproc, srcptr, srclinaddr, chunk, bytes, srcpde, srctype);
+		CREATEPDE(dstproc, dstptr, dstlinaddr, chunk, bytes, dstpde, dsttype);
+
+		/* Copy pages. */
+		PHYS_COPY_CATCH(srcptr, dstptr, chunk, addr);
+
+		DONEPDE(srcpde);
+		DONEPDE(dstpde);
+
+		if(addr) {
+			/* If addr is nonzero, a page fault was caught. */
+
+			if(addr >= srcptr && addr < (srcptr + chunk)) {
+				WIPEPDE(srcpde);
+				WIPEPDE(dstpde);
+				NOREC_RETURN(linlincopy, EFAULT_SRC);
+			}
+			if(addr >= dstptr && addr < (dstptr + chunk)) {
+				WIPEPDE(srcpde);
+				WIPEPDE(dstpde);
+				NOREC_RETURN(linlincopy, EFAULT_DST);
+			}
+
+			minix_panic("lin_lin_copy fault out of range", NO_NUM);
+
+			/* Not reached. */
+			NOREC_RETURN(linlincopy, EFAULT);
+		}
+
+		WIPEPDE(srcpde);
+		WIPEPDE(dstpde);
+
+		/* Update counter and addresses for next iteration, if any. */
+		bytes -= chunk;
+		srclinaddr += chunk;
+		dstlinaddr += chunk;
+
+		firstloop = 0;
+	}
+
+	NOREC_RETURN(linlincopy, OK);
+}
+
 
 PRIVATE u32_t phys_get32(addr)
 phys_bytes addr;
 {
-	u32_t value;
+	u32_t v;
+	int r;
 
-	phys_copy(addr, vir2phys((vir_bytes)&value), sizeof(value));
+	if(!vm_running) {
+		phys_copy(addr, vir2phys(&v), sizeof(v));
+		return v;
+	}
 
-	return value;
+	if((r=lin_lin_copy(NULL, addr, 
+		proc_addr(SYSTEM), vir2phys(&v), sizeof(v))) != OK) {
+		minix_panic("lin_lin_copy for phys_get32 failed", r);
+	}
+
+	return v;
 }
 
-PRIVATE void vm_set_cr3(value)
-u32_t value;
+PRIVATE u32_t vm_cr3;	/* temp arg to level0() func */
+
+PUBLIC void vm_set_cr3(struct proc *newptproc)
 {
-	vm_cr3= value;
-	level0(set_cr3);
+	int u = 0;
+	if(!intr_disabled()) { lock; u = 1; }
+	vm_cr3= newptproc->p_seg.p_cr3;
+	if(vm_cr3) {
+		vmassert(intr_disabled());
+		level0(set_cr3);
+		vmassert(intr_disabled());
+		ptproc = newptproc;
+		vmassert(intr_disabled());
+	}
+	if(u) { unlock; }
 }
 
 PRIVATE void set_cr3()
@@ -153,10 +263,42 @@ PRIVATE void set_cr3()
 	write_cr3(vm_cr3);
 }
 
+char *cr0_str(u32_t e)
+{
+	static char str[80];
+	strcpy(str, "");
+#define FLAG(v) do { if(e & (v)) { strcat(str, #v " "); e &= ~v; } } while(0)
+	FLAG(I386_CR0_PE);
+	FLAG(I386_CR0_MP);
+	FLAG(I386_CR0_EM);
+	FLAG(I386_CR0_TS);
+	FLAG(I386_CR0_ET);
+	FLAG(I386_CR0_PG);
+	FLAG(I386_CR0_WP);
+	if(e) { strcat(str, " (++)"); }
+	return str;
+}
+
+char *cr4_str(u32_t e)
+{
+	static char str[80];
+	strcpy(str, "");
+	FLAG(I386_CR4_VME);
+	FLAG(I386_CR4_PVI);
+	FLAG(I386_CR4_TSD);
+	FLAG(I386_CR4_DE);
+	FLAG(I386_CR4_PSE);
+	FLAG(I386_CR4_PAE);
+	FLAG(I386_CR4_MCE);
+	FLAG(I386_CR4_PGE);
+	if(e) { strcat(str, " (++)"); }
+	return str;
+}
+
 PRIVATE void vm_enable_paging(void)
 {
 	u32_t cr0, cr4;
-	int psok, pgeok;
+	int pgeok;
 
 	psok = _cpufeature(_CPUF_I386_PSE);
 	pgeok = _cpufeature(_CPUF_I386_PGE);
@@ -166,19 +308,26 @@ PRIVATE void vm_enable_paging(void)
 
 	/* First clear PG and PGE flag, as PGE must be enabled after PG. */
 	write_cr0(cr0 & ~I386_CR0_PG);
-	write_cr4(cr4 & ~I386_CR4_PGE);
+	write_cr4(cr4 & ~(I386_CR4_PGE | I386_CR4_PSE));
 
 	cr0= read_cr0();
 	cr4= read_cr4();
 
+	/* Our first page table contains 4MB entries. */
+	if(psok)
+		cr4 |= I386_CR4_PSE;
+
+	write_cr4(cr4);
+
 	/* First enable paging, then enable global page flag. */
-	write_cr0(cr0 | I386_CR0_PG);
+	cr0 |= I386_CR0_PG;
+	write_cr0(cr0 );
+	cr0 |= I386_CR0_WP;
+	write_cr0(cr0);
 
 	/* May we enable these features? */
 	if(pgeok)
 		cr4 |= I386_CR4_PGE;
-	if(psok)
-		cr4 |= I386_CR4_PSE;
 
 	write_cr4(cr4);
 }
@@ -315,6 +464,7 @@ vir_bytes bytes;                /* # of bytes to be copied */
 	return phys;
 }
 
+
 /*===========================================================================*
  *                              vm_lookup                                    *
  *===========================================================================*/
@@ -323,6 +473,7 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 	u32_t *root, *pt;
 	int pde, pte;
 	u32_t pde_v, pte_v;
+	NOREC_ENTER(vmlookup);
 
 	vmassert(proc);
 	vmassert(physical);
@@ -330,7 +481,7 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 
 	if(!HASPT(proc)) {
 		*physical = virtual;
-		return OK;
+		NOREC_RETURN(vmlookup, OK);
 	}
 
 	/* Retrieve page directory entry. */
@@ -339,39 +490,35 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 	pde = I386_VM_PDE(virtual);
 	vmassert(pde >= 0 && pde < I386_VM_DIR_ENTRIES);
 	pde_v = phys_get32((u32_t) (root + pde));
+
 	if(!(pde_v & I386_VM_PRESENT)) {
-#if 0
-		kprintf("vm_lookup: %d:%s:0x%lx: cr3 0x%lx: pde %d not present\n",
-			proc->p_endpoint, proc->p_name, virtual, root, pde);
-		kprintf("kernel stack: ");
-		util_stacktrace();
-#endif
-		return EFAULT;
+		NOREC_RETURN(vmlookup, EFAULT);
 	}
 
-	/* Retrieve page table entry. */
-	pt = (u32_t *) I386_VM_PFA(pde_v);
-	vmassert(!((u32_t) pt % I386_PAGE_SIZE));
-	pte = I386_VM_PTE(virtual);
-	vmassert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
-	pte_v = phys_get32((u32_t) (pt + pte));
-	if(!(pte_v & I386_VM_PRESENT)) {
-#if 0
-		kprintf("vm_lookup: %d:%s:0x%lx: cr3 %lx: pde %d: pte %d not present\n",
-			proc->p_endpoint, proc->p_name, virtual, root, pde, pte);
-		kprintf("kernel stack: ");
-		util_stacktrace();
-#endif
-		return EFAULT;
+	/* We don't expect to ever see this. */
+	if(pde_v & I386_VM_BIGPAGE) {
+		*physical = pde_v & I386_VM_ADDR_MASK_4MB;
+		if(ptent) *ptent = pde_v;
+		*physical += virtual & I386_VM_OFFSET_MASK_4MB;
+	} else {
+		/* Retrieve page table entry. */
+		pt = (u32_t *) I386_VM_PFA(pde_v);
+		vmassert(!((u32_t) pt % I386_PAGE_SIZE));
+		pte = I386_VM_PTE(virtual);
+		vmassert(pte >= 0 && pte < I386_VM_PT_ENTRIES);
+		pte_v = phys_get32((u32_t) (pt + pte));
+		if(!(pte_v & I386_VM_PRESENT)) {
+			NOREC_RETURN(vmlookup, EFAULT);
+		}
+
+		if(ptent) *ptent = pte_v;
+
+		/* Actual address now known; retrieve it and add page offset. */
+		*physical = I386_VM_PFA(pte_v);
+		*physical += virtual % I386_PAGE_SIZE;
 	}
 
-	if(ptent) *ptent = pte_v;
-
-	/* Actual address now known; retrieve it and add page offset. */
-	*physical = I386_VM_PFA(pte_v);
-	*physical += virtual % I386_PAGE_SIZE;
-
-	return OK;
+	NOREC_RETURN(vmlookup, OK);
 }
 
 /* From virtual address v in process p,
@@ -389,54 +536,6 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 			util_stacktrace();			\
 			return r;				\
 		} } }
-
-/*===========================================================================*
- *                              vm_copy                                      *
- *===========================================================================*/
-int vm_copy(vir_bytes src, struct proc *srcproc,
-	 vir_bytes dst, struct proc *dstproc, phys_bytes bytes)
-{
-#define WRAPS(v) (ULONG_MAX - (v) <= bytes)
-
-	if(WRAPS(src) || WRAPS(dst))
-		minix_panic("vm_copy: linear address wraps", NO_NUM);
-
-	while(bytes > 0) {
-		u32_t n, flags;
-		phys_bytes p_src, p_dst;
-#define PAGEREMAIN(v) (I386_PAGE_SIZE - ((v) % I386_PAGE_SIZE))
-
-		/* We can copy this number of bytes without
-		 * crossing a page boundary, but don't copy more
-		 * than asked.
-		 */
-		n = MIN(PAGEREMAIN(src), PAGEREMAIN(dst));
-		n = MIN(n, bytes);
-		vmassert(n > 0);
-		vmassert(n <= I386_PAGE_SIZE);
-
-		/* Convert both virtual addresses to physical and do
-		 * copy.
-		 */
-		LOOKUP(p_src, srcproc, src, NULL);
-		LOOKUP(p_dst, dstproc, dst, &flags);
-		if(!(flags & I386_VM_WRITE)) {
-			kprintf("vm_copy: copying to nonwritable page\n");
-			kprintf("kernel stack: ");
-			util_stacktrace();
-			return EFAULT;
-		}
-		phys_copy(p_src, p_dst, n);
-
-		/* Book number of bytes copied. */
-		vmassert(bytes >= n);
-		bytes -= n;
-		src += n;
-		dst += n;
-	}
-
-	return OK;
-}
 
 /*===========================================================================*
  *                              vm_contiguous                                *
@@ -493,155 +592,99 @@ PUBLIC int vm_contiguous(struct proc *targetproc, u32_t vir_buf, size_t bytes)
 		boundaries++;
 	}
 
-	if(verbose_vm)
-		kprintf("vm_contiguous: yes (%d boundaries tested)\n",
-			boundaries);
-
 	return 1;
 }
 
-int vm_checkrange_verbose = 0;
+/*===========================================================================*
+ *                              vm_suspend                                *
+ *===========================================================================*/
+PUBLIC int vm_suspend(struct proc *caller, struct proc *target,
+	vir_bytes linaddr, vir_bytes len, int wrflag, int type)
+{
+	/* This range is not OK for this process. Set parameters  
+	 * of the request and notify VM about the pending request. 
+	 */								
+	vmassert(!RTS_ISSET(caller, VMREQUEST));
+	vmassert(!RTS_ISSET(target, VMREQUEST));
+
+	RTS_LOCK_SET(caller, VMREQUEST);
+
+#if DEBUG_VMASSERT
+	caller->p_vmrequest.stacktrace[0] = '\0';
+	util_stacktrace_strcat(caller->p_vmrequest.stacktrace);
+#endif
+
+	caller->p_vmrequest.writeflag = 1;
+	caller->p_vmrequest.start = linaddr;
+	caller->p_vmrequest.length = len;
+	caller->p_vmrequest.who = target->p_endpoint;
+	caller->p_vmrequest.type = type;
+							
+	/* Connect caller on vmrequest wait queue. */	
+	if(!(caller->p_vmrequest.nextrequestor = vmrequest))
+		mini_notify(proc_addr(SYSTEM), VM_PROC_NR);
+	vmrequest = caller;
+}
 
 /*===========================================================================*
- *                              vm_checkrange                                *
+ *                              delivermsg                                *
  *===========================================================================*/
-PUBLIC int vm_checkrange(struct proc *caller, struct proc *target,
-	vir_bytes vir, vir_bytes bytes, int wrfl, int checkonly)
+int delivermsg(struct proc *rp)
 {
-	u32_t flags, po, v;
+	phys_bytes addr;  
 	int r;
+	NOREC_ENTER(deliver);
 
-	if(!HASPT(target))
-		return OK;
+	vmassert(rp->p_misc_flags & MF_DELIVERMSG);
+	vmassert(rp->p_delivermsg.m_source != NONE);
 
-	/* If caller has had a reply to this request, return it. */
-	if(RTS_ISSET(caller, VMREQUEST)) {
-		if(caller->p_vmrequest.who == target->p_endpoint) {
-			if(caller->p_vmrequest.vmresult == VMSUSPEND)
-				minix_panic("check sees VMSUSPEND?", NO_NUM);
-			RTS_LOCK_UNSET(caller, VMREQUEST);
-#if 0
-			kprintf("SYSTEM: vm_checkrange: returning vmresult %d\n",
-				caller->p_vmrequest.vmresult);
-#endif
-			return caller->p_vmrequest.vmresult;
-		} else {
-#if 0
-			kprintf("SYSTEM: vm_checkrange: caller has a request for %d, "
-				"but our target is %d\n",
-				caller->p_vmrequest.who, target->p_endpoint);
-#endif
-		}
+	vmassert(rp->p_delivermsg_lin);
+#if DEBUG_VMASSERT
+	if(rp->p_delivermsg_lin !=
+		umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message))) {
+		printf("vir: 0x%lx lin was: 0x%lx umap now: 0x%lx\n",
+		rp->p_delivermsg_vir, rp->p_delivermsg_lin,
+		umap_local(rp, D, rp->p_delivermsg_vir, sizeof(message)));
+		minix_panic("that's wrong", NO_NUM);
 	}
 
-	po = vir % I386_PAGE_SIZE;
-	if(po > 0) {
-		vir -= po;
-		bytes += po;
+#endif
+
+	vm_set_cr3(rp);
+
+	PHYS_COPY_CATCH(vir2phys(&rp->p_delivermsg),
+		rp->p_delivermsg_lin, sizeof(message), addr);
+
+	if(addr) {
+		vm_suspend(rp, rp, rp->p_delivermsg_lin, sizeof(message), 1,
+			VMSTYPE_DELIVERMSG);
+		r = VMSUSPEND;
+	} else {
+#if DEBUG_VMASSERT
+		rp->p_delivermsg.m_source = NONE;
+		rp->p_delivermsg_lin = 0;
+#endif
+		rp->p_misc_flags &= ~MF_DELIVERMSG;
+		r = OK;
 	}
 
-	vmassert(target);
-	vmassert(bytes > 0);
-
-	for(v = vir; v < vir + bytes;  v+= I386_PAGE_SIZE) {
-		u32_t phys;
-
-		/* If page exists and it's writable if desired, we're OK
-		 * for this page.
-		 */
-		if(vm_lookup(target, v, &phys, &flags) == OK &&
-			!(wrfl && !(flags & I386_VM_WRITE))) {
-			if(vm_checkrange_verbose) {
-#if 0
-				kprintf("SYSTEM: checkrange:%s:%d: 0x%lx: write 0x%lx, flags 0x%lx, phys 0x%lx, OK\n",
-				target->p_name, target->p_endpoint, v, wrfl, flags, phys);
-#endif
-			}
-			continue;
-		}
-
-		if(vm_checkrange_verbose) {
-			kprintf("SYSTEM: checkrange:%s:%d: 0x%lx: write 0x%lx, flags 0x%lx, phys 0x%lx, NOT OK\n",
-			target->p_name, target->p_endpoint, v, wrfl, flags, phys);
-		}
-
-		if(checkonly) {
-			return VMSUSPEND;
-		}
-
-		/* This range is not OK for this process. Set parameters
-		 * of the request and notify VM about the pending request.
-		 */
-		if(RTS_ISSET(caller, VMREQUEST))
-			minix_panic("VMREQUEST already set", caller->p_endpoint);
-		RTS_LOCK_SET(caller, VMREQUEST);
-
-		/* Set parameters in caller. */
-		caller->p_vmrequest.writeflag = wrfl;
-		caller->p_vmrequest.start = vir;
-		caller->p_vmrequest.length = bytes;
-		caller->p_vmrequest.who = target->p_endpoint;
-
-		/* Set caller in target. */
-		target->p_vmrequest.requestor = caller;
-
-		/* Connect caller on vmrequest wait queue. */
-		caller->p_vmrequest.nextrequestor = vmrequest;
-		vmrequest = caller;
-		if(!caller->p_vmrequest.nextrequestor) {
-			int n = 0;
-			struct proc *vmr;
-			for(vmr = vmrequest; vmr; vmr = vmr->p_vmrequest.nextrequestor)
-				n++;
-			soft_notify(VM_PROC_NR);
-#if 0
-			kprintf("(%d) ", n);
-			kprintf("%d/%d ",
-				caller->p_endpoint, target->p_endpoint);
-			util_stacktrace();
-#endif
-		}
-
-#if 0
-		kprintf("SYSTEM: vm_checkrange: range bad for "
-			"target %s:0x%lx-0x%lx, caller %s\n",
-				target->p_name, vir, vir+bytes, caller->p_name);
-
-		kprintf("vm_checkrange kernel trace: ");
-		util_stacktrace();
-		kprintf("target trace: ");
-		proc_stacktrace(target);
-#endif
-
-		if(target->p_endpoint == VM_PROC_NR) {
-			kprintf("caller trace: ");
-			proc_stacktrace(caller);
-			kprintf("target trace: ");
-			proc_stacktrace(target);
-			minix_panic("VM ranges should be OK", NO_NUM);
-		}
-
-		return VMSUSPEND;
-	}
-
-	return OK;
+	NOREC_RETURN(deliver, r);
 }
 
 char *flagstr(u32_t e, int dir)
 {
 	static char str[80];
 	strcpy(str, "");
-#define FLAG(v) do { if(e & (v)) { strcat(str, #v " "); } } while(0)
 	FLAG(I386_VM_PRESENT);
 	FLAG(I386_VM_WRITE);
 	FLAG(I386_VM_USER);
 	FLAG(I386_VM_PWT);
 	FLAG(I386_VM_PCD);
+	FLAG(I386_VM_GLOBAL);
 	if(dir)
 		FLAG(I386_VM_BIGPAGE);	/* Page directory entry only */
 	else
 		FLAG(I386_VM_DIRTY);	/* Page table entry only */
-
 	return str;
 }
 
@@ -658,8 +701,9 @@ void vm_pt_print(u32_t *pagetable, u32_t v)
 		if(!(pte_v & I386_VM_PRESENT))
 			continue;
 		pfa = I386_VM_PFA(pte_v);
-		kprintf("%4d:%08lx:%08lx ",
-			pte, v + I386_PAGE_SIZE*pte, pfa);
+		kprintf("%4d:%08lx:%08lx %2s ",
+			pte, v + I386_PAGE_SIZE*pte, pfa,
+			(pte_v & I386_VM_WRITE) ? "rw":"RO");
 		col++;
 		if(col == 3) { kprintf("\n"); col = 0; }
 	}
@@ -668,29 +712,83 @@ void vm_pt_print(u32_t *pagetable, u32_t v)
 	return;
 }
 
-/*===========================================================================*
- *                              vm_print                                     *
- *===========================================================================*/
 void vm_print(u32_t *root)
 {
 	int pde;
 
 	vmassert(!((u32_t) root % I386_PAGE_SIZE));
 
-	for(pde = 0; pde < I386_VM_DIR_ENTRIES; pde++) {
+	printf("page table 0x%lx:\n", root);
+
+	for(pde = 10; pde < I386_VM_DIR_ENTRIES; pde++) {
 		u32_t pde_v;
 		u32_t *pte_a;
 		pde_v = phys_get32((u32_t) (root + pde));
 		if(!(pde_v & I386_VM_PRESENT))
 			continue;
-		pte_a = (u32_t *) I386_VM_PFA(pde_v);
-		kprintf("%4d: pt %08lx %s\n",
-			pde, pte_a, flagstr(pde_v, 1));
-		vm_pt_print(pte_a, pde * I386_VM_PT_ENTRIES * I386_PAGE_SIZE);
+		if(pde_v & I386_VM_BIGPAGE) {
+			kprintf("%4d: 0x%lx, flags %s\n",
+				pde, I386_VM_PFA(pde_v), flagstr(pde_v, 1));
+		} else {
+			pte_a = (u32_t *) I386_VM_PFA(pde_v);
+			kprintf("%4d: pt %08lx %s\n",
+				pde, pte_a, flagstr(pde_v, 1));
+			vm_pt_print(pte_a, pde * I386_VM_PT_ENTRIES * I386_PAGE_SIZE);
+			kprintf("\n");
+		}
 	}
 
 
 	return;
+}
+
+u32_t thecr3;
+
+u32_t read_cr3(void)
+{
+	level0(getcr3val);
+	return thecr3;
+}
+
+
+/*===========================================================================*
+ *				lin_memset				     *
+ *===========================================================================*/
+int vm_phys_memset(phys_bytes ph, u8_t c, phys_bytes bytes)
+{
+	char *v;
+	u32_t p;
+	NOREC_ENTER(physmemset);
+
+	p = c | (c << 8) | (c << 16) | (c << 24);
+
+	if(!vm_running) {
+		phys_memset(ph, p, bytes);
+		NOREC_RETURN(physmemset, OK);
+	}
+
+	vmassert(nfreepdes >= 3);
+
+	/* With VM, we have to map in the physical memory. 
+	 * We can do this 4MB at a time.
+	 */
+	while(bytes > 0) {
+		int pde, t;
+		vir_bytes chunk = bytes;
+		phys_bytes ptr;
+		inusepde = NOPDE;
+		CREATEPDE(((struct proc *) NULL), ptr, ph, chunk, bytes, pde, t);
+		/* We can memset as many bytes as we have remaining,
+		 * or as many as remain in the 4MB chunk we mapped in.
+		 */
+		phys_memset(ptr, p, chunk);
+		DONEPDE(pde);
+		bytes -= chunk;
+		ph += chunk;
+	}
+
+
+	NOREC_RETURN(physmemset, OK);
 }
 
 /*===========================================================================*
@@ -710,6 +808,7 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
   int seg_index;
   int i, r;
   struct proc *procs[2];
+  NOREC_ENTER(virtualcopy);
 
   /* Check copy count. */
   if (bytes <= 0) return(EDOM);
@@ -735,7 +834,9 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
       switch(type) {
       case LOCAL_SEG:
       case LOCAL_VM_SEG:
-	  if(!p) return EDEADSRCDST;
+	  if(!p) {
+		NOREC_RETURN(virtualcopy, EDEADSRCDST);
+	  }
           seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
 	  if(type == LOCAL_SEG)
 	          phys_addr[i] = umap_local(p, seg_index, vir_addr[i]->offset,
@@ -751,7 +852,9 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 	  }
           break;
       case REMOTE_SEG:
-	  if(!p) return EDEADSRCDST;
+	  if(!p) {
+		NOREC_RETURN(virtualcopy, EDEADSRCDST);
+	  }
           seg_index = vir_addr[i]->segment & SEGMENT_INDEX;
           phys_addr[i] = umap_remote(p, seg_index, vir_addr[i]->offset, bytes);
           break;
@@ -763,43 +866,96 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
       case PHYS_SEG:
           phys_addr[i] = vir_addr[i]->offset;
           break;
-      case GRANT_SEG:
-	  phys_addr[i] = umap_grant(p, vir_addr[i]->offset, bytes);
-	  break;
       default:
 	  kprintf("virtual_copy: strange type 0x%x\n", type);
-          return(EINVAL);
+	  NOREC_RETURN(virtualcopy, EINVAL);
       }
 
       /* Check if mapping succeeded. */
       if (phys_addr[i] <= 0 && vir_addr[i]->segment != PHYS_SEG)  {
       kprintf("virtual_copy EFAULT\n");
-          return(EFAULT);
+	  NOREC_RETURN(virtualcopy, EFAULT);
       }
   }
 
-  if(vmcheck && procs[_SRC_])
-	CHECKRANGE_OR_SUSPEND(procs[_SRC_], phys_addr[_SRC_], bytes, 0);
-  if(vmcheck && procs[_DST_])
-	CHECKRANGE_OR_SUSPEND(procs[_DST_], phys_addr[_DST_], bytes, 1);
+  if(vm_running) {
+	int r;
+	struct proc *caller;
 
-#define NOPT(p) (!(p) || !HASPT(p))
-  /* Now copy bytes between physical addresseses. */
-  if(NOPT(procs[_SRC_]) && NOPT(procs[_DST_])) {
-	/* Without vm, address ranges actually are physical. */
-	phys_copy(phys_addr[_SRC_], phys_addr[_DST_], (phys_bytes) bytes);
-	r = OK;
-  } else {
-	/* With vm, addresses need further interpretation. */
-	r = vm_copy(phys_addr[_SRC_], procs[_SRC_], 
-		phys_addr[_DST_], procs[_DST_], (phys_bytes) bytes);
-	if(r != OK) {
-		kprintf("vm_copy: %lx to %lx failed\n",
-			phys_addr[_SRC_],phys_addr[_DST_]);
+	caller = proc_addr(who_p);
+
+	if(RTS_ISSET(caller, VMREQUEST)) {
+		struct proc *target;
+		int pn;
+		vmassert(caller->p_vmrequest.vmresult != VMSUSPEND);
+		RTS_LOCK_UNSET(caller, VMREQUEST);
+		if(caller->p_vmrequest.vmresult != OK) {
+			printf("virtual_copy: returning VM error %d\n",
+				caller->p_vmrequest.vmresult);
+	  		NOREC_RETURN(virtualcopy, caller->p_vmrequest.vmresult);
+		}
 	}
+
+	if((r=lin_lin_copy(procs[_SRC_], phys_addr[_SRC_],
+		procs[_DST_], phys_addr[_DST_], bytes)) != OK) {
+		struct proc *target;
+		int wr;
+		phys_bytes lin;
+		if(r != EFAULT_SRC && r != EFAULT_DST)
+			minix_panic("lin_lin_copy failed", r);
+		if(!vmcheck) {
+	  		NOREC_RETURN(virtualcopy, r);
+		}
+
+		vmassert(procs[_SRC_] && procs[_DST_]);
+
+		if(r == EFAULT_SRC) {
+			lin = phys_addr[_SRC_];
+			target = procs[_SRC_];
+			wr = 0;
+		} else if(r == EFAULT_DST) {
+			lin = phys_addr[_DST_];
+			target = procs[_DST_];
+			wr = 1;
+		} else {
+			minix_panic("r strange", r);
+		}
+
+#if 0
+		printf("virtual_copy: suspending caller %d / %s, target %d / %s\n",
+			caller->p_endpoint, caller->p_name,
+			target->p_endpoint, target->p_name);
+#endif
+
+		vmassert(k_reenter == -1);
+		vmassert(proc_ptr->p_endpoint == SYSTEM);
+		vm_suspend(caller, target, lin, bytes, wr, VMSTYPE_KERNELCALL);
+
+	  	NOREC_RETURN(virtualcopy, VMSUSPEND);
+	}
+
+  	NOREC_RETURN(virtualcopy, OK);
   }
 
-  return(r);
+  vmassert(!vm_running);
+
+  /* can't copy to/from process with PT without VM */
+#define NOPT(p) (!(p) || !HASPT(p))
+  if(!NOPT(procs[_SRC_])) {
+	kprintf("ignoring page table src: %s / %d at 0x%lx\n",
+		procs[_SRC_]->p_name, procs[_SRC_]->p_endpoint, procs[_SRC_]->p_seg.p_cr3);
+}
+  if(!NOPT(procs[_DST_])) {
+	kprintf("ignoring page table dst: %s / %d at 0x%lx\n",
+		procs[_DST_]->p_name, procs[_DST_]->p_endpoint,
+		procs[_DST_]->p_seg.p_cr3);
+  }
+
+  /* Now copy bytes between physical addresseses. */
+  if(phys_copy(phys_addr[_SRC_], phys_addr[_DST_], (phys_bytes) bytes))
+  	NOREC_RETURN(virtualcopy, EFAULT);
+ 
+  NOREC_RETURN(virtualcopy, OK);
 }
 
 /*===========================================================================*
@@ -819,6 +975,25 @@ PUBLIC int data_copy(
   dst.proc_nr_e = to_proc;
 
   return virtual_copy(&src, &dst, bytes);
+}
+
+/*===========================================================================*
+ *				data_copy_vmcheck			     *
+ *===========================================================================*/
+PUBLIC int data_copy_vmcheck(
+	endpoint_t from_proc, vir_bytes from_addr,
+	endpoint_t to_proc, vir_bytes to_addr,
+	size_t bytes)
+{
+  struct vir_addr src, dst;
+
+  src.segment = dst.segment = D;
+  src.offset = from_addr;
+  dst.offset = to_addr;
+  src.proc_nr_e = from_proc;
+  dst.proc_nr_e = to_proc;
+
+  return virtual_copy_vmcheck(&src, &dst, bytes);
 }
 
 /*===========================================================================*
@@ -852,4 +1027,10 @@ PUBLIC int arch_umap(struct proc *pr, vir_bytes offset, vir_bytes count,
 	return EINVAL;
 }
 
-
+/* VM reports page directory slot we're allowed to use freely. */
+void i386_freepde(int pde)
+{
+	if(nfreepdes >= WANT_FREEPDES)
+		return;
+	freepdes[nfreepdes++] = pde;
+}

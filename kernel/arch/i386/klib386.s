@@ -8,7 +8,6 @@
 #include <ibm/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
-#include "vm.h"
 #include "sconst.h"
 
 ! This file contains a number of assembly code utility routines needed by the
@@ -28,6 +27,7 @@
 .define	_intr_unmask	! enable an irq at the 8259 controller
 .define	_intr_mask	! disable an irq
 .define	_phys_copy	! copy data from anywhere to anywhere in memory
+.define	_phys_copy_fault! phys_copy pagefault
 .define	_phys_memset	! write pattern anywhere in memory
 .define	_mem_rdw	! copy one word from [segment:offset]
 .define	_reset		! reset the system
@@ -35,13 +35,12 @@
 .define	_level0		! call a function at level 0
 .define	_read_cpu_flags	! read the cpu flags
 .define	_read_cr0	! read cr0
-.define	_write_cr3	! write cr3
-.define _last_cr3
+.define	_getcr3val
 .define	_write_cr0	! write a value in cr0
 .define	_read_cr4
+.define	_thecr3
 .define	_write_cr4
-
-.define	_kernel_cr3	
+.define	_catch_pagefaults
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -157,55 +156,6 @@ csinit:	mov	eax, DS_SELECTOR
 
 
 !*===========================================================================*
-!*				cp_mess					     *
-!*===========================================================================*
-! PUBLIC void cp_mess(int src, phys_clicks src_clicks, vir_bytes src_offset,
-!		      phys_clicks dst_clicks, vir_bytes dst_offset);
-! This routine makes a fast copy of a message from anywhere in the address
-! space to anywhere else.  It also copies the source address provided as a
-! parameter to the call into the first word of the destination message.
-!
-! Note that the message size, "Msize" is in DWORDS (not bytes) and must be set
-! correctly.  Changing the definition of message in the type file and not
-! changing it here will lead to total disaster.
-!
-!CM_ARGS	=	4 + 4 + 4 + 4 + 4	! 4 + 4 + 4 + 4 + 4
-!!		es  ds edi esi eip	proc scl sof dcl dof
-!
-!	.align	16
-!_cp_mess:
-!	cld
-!	push	esi
-!	push	edi
-!	push	ds
-!	push	es
-!
-!	mov	eax, FLAT_DS_SELECTOR
-!	mov	ds, ax
-!	mov	es, ax
-!
-!	mov	esi, CM_ARGS+4(esp)		! src clicks
-!	shl	esi, CLICK_SHIFT
-!	add	esi, CM_ARGS+4+4(esp)		! src offset
-!	mov	edi, CM_ARGS+4+4+4(esp)		! dst clicks
-!	shl	edi, CLICK_SHIFT
-!	add	edi, CM_ARGS+4+4+4+4(esp)	! dst offset
-!
-!	mov	eax, CM_ARGS(esp)	! process number of sender
-!	stos				! copy number of sender to dest message
-!	add	esi, 4			! do not copy first word
-!	mov	ecx, Msize - 1		! remember, first word does not count
-!	rep
-!	movs				! copy the message
-!
-!	pop	es
-!	pop	ds
-!	pop	edi
-!	pop	esi
-!	ret				! that is all folks!
-!
-
-!*===========================================================================*
 !*				exit					     *
 !*===========================================================================*
 ! PUBLIC void exit();
@@ -236,8 +186,6 @@ _phys_insw:
 	push	edi
 	push	es
 
-	LOADKERNELCR3
-
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	es, cx
 	mov	edx, 8(ebp)		! port to read from
@@ -263,8 +211,6 @@ _phys_insb:
 	cld
 	push	edi
 	push	es
-
-	LOADKERNELCR3
 
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	es, cx
@@ -293,8 +239,6 @@ _phys_outsw:
 	push	esi
 	push	ds
 
-	LOADKERNELCR3
-
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	ds, cx
 	mov	edx, 8(ebp)		! port to write to
@@ -321,8 +265,6 @@ _phys_outsb:
 	cld
 	push	esi
 	push	ds
-
-	LOADKERNELCR3
 
 	mov	ecx, FLAT_DS_SELECTOR
 	mov	ds, cx
@@ -416,7 +358,7 @@ dis_already:
 !*===========================================================================*
 !*				phys_copy				     *
 !*===========================================================================*
-! PUBLIC void phys_copy(phys_bytes source, phys_bytes destination,
+! PUBLIC phys_bytes phys_copy(phys_bytes source, phys_bytes destination,
 !			phys_bytes bytecount);
 ! Copy a block of physical memory.
 
@@ -429,8 +371,6 @@ _phys_copy:
 	push	esi
 	push	edi
 	push	es
-
-	LOADKERNELCR3
 
 	mov	eax, FLAT_DS_SELECTOR
 	mov	es, ax
@@ -457,6 +397,8 @@ pc_small:
 	rep
    eseg	movsb
 
+	mov	eax, 0			! 0 means: no fault
+_phys_copy_fault:			! kernel can send us here
 	pop	es
 	pop	edi
 	pop	esi
@@ -476,8 +418,6 @@ _phys_memset:
 	push	esi
 	push	ebx
 	push	ds
-
-	LOADKERNELCR3
 
 	mov	esi, 8(ebp)
 	mov	eax, 16(ebp)
@@ -633,14 +573,13 @@ _write_cr4:
 	pop	ebp
 	ret
 
+
 !*===========================================================================*
-!*				write_cr3				*
+!*				getcr3val				*
 !*===========================================================================*
-! PUBLIC void write_cr3(unsigned long value);
-_write_cr3:
-	push    ebp
-	mov     ebp, esp
-	LOADCR3WITHEAX(0x22, 8(ebp))
-	pop     ebp
+! PUBLIC unsigned long getcr3val(void);
+_getcr3val:
+	mov	eax, cr3
+	mov	(_thecr3), eax
 	ret
 

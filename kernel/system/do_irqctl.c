@@ -139,10 +139,16 @@ irq_hook_t *hook;
  */
   int proc_nr;
 
+  vmassert(intr_disabled());
+
   /* As a side-effect, the interrupt handler gathers random information by 
    * timestamping the interrupt events. This is used for /dev/random.
    */
+#if 0
   get_randomness(&krandom, hook->irq);
+#else
+  FIXME("get_randomness disabled");
+#endif
 
   /* Check if the handler is still alive.
    * If it's dead, this should never happen, as processes that die 
@@ -158,7 +164,8 @@ irq_hook_t *hook;
   priv(proc_addr(proc_nr))->s_int_pending |= (1 << hook->notify_id);
 
   /* Build notification message and return. */
-  lock_notify(HARDWARE, hook->proc_nr_e);
+  vmassert(intr_disabled());
+  mini_notify(proc_addr(HARDWARE), hook->proc_nr_e);
   return(hook->policy & IRQ_REENABLE);
 }
 

@@ -9,6 +9,7 @@
  */
 
 #include "../system.h"
+#include "../vm.h"
 #include <signal.h>
 
 #include <minix/endpoint.h>
@@ -33,9 +34,24 @@ register message *m_ptr;	/* pointer to request message */
 
   if(!isokendpt(m_ptr->PR_ENDPT, &p_proc))
 	return EINVAL;
+
   rpp = proc_addr(p_proc);
   rpc = proc_addr(m_ptr->PR_SLOT);
   if (isemptyp(rpp) || ! isemptyp(rpc)) return(EINVAL);
+
+  vmassert(!(rpp->p_misc_flags & MF_DELIVERMSG));
+
+  /* needs to be receiving so we know where the message buffer is */
+  if(!RTS_ISSET(rpp, RECEIVING)) {
+	printf("kernel: fork not done synchronously?\n");
+	return EINVAL;
+  }
+
+  /* memory becomes readonly */
+  if (priv(rpp)->s_asynsize > 0) {
+	printf("kernel: process with waiting asynsend table can't fork\n");
+	return EINVAL;
+  }
 
   map_ptr= (struct mem_map *) m_ptr->PR_MEM_PTR;
 
@@ -59,7 +75,7 @@ register message *m_ptr;	/* pointer to request message */
 
   rpc->p_reg.psw &= ~TRACEBIT;		/* clear trace bit */
 
-  rpc->p_misc_flags &= ~(VIRT_TIMER | PROF_TIMER);
+  rpc->p_misc_flags &= ~(MF_VIRT_TIMER | MF_PROF_TIMER);
   rpc->p_virt_left = 0;		/* disable, clear the process-virtual timers */
   rpc->p_prof_left = 0;
 
@@ -81,9 +97,11 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Calculate endpoint identifier, so caller knows what it is. */
   m_ptr->PR_ENDPT = rpc->p_endpoint;
+  m_ptr->PR_FORK_MSGADDR = (char *) rpp->p_delivermsg_vir;
 
   /* Install new map */
   r = newmap(rpc, map_ptr);
+  FIXLINMSG(rpc);
 
   /* Don't schedule process in VM mode until it has a new pagetable. */
   if(m_ptr->PR_FORK_FLAGS & PFF_VMINHIBIT) {

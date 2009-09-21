@@ -46,10 +46,10 @@ message *m_ptr;			/* pointer to request message */
    * VT_VIRTUAL and VT_PROF multiple times below.
    */
   if (m_ptr->VT_WHICH == VT_VIRTUAL) {
-      pt_flag = VIRT_TIMER;
+      pt_flag = MF_VIRT_TIMER;
       pt_left = &rp->p_virt_left;
   } else { /* VT_PROF */
-      pt_flag = PROF_TIMER;
+      pt_flag = MF_PROF_TIMER;
       pt_left = &rp->p_prof_left;
   }
 
@@ -101,15 +101,15 @@ struct proc *rp;			/* pointer to the process */
    */
 
   /* Check if the virtual timer expired. If so, send a SIGVTALRM signal. */
-  if ((rp->p_misc_flags & VIRT_TIMER) && rp->p_virt_left <= 0) {
-      rp->p_misc_flags &= ~VIRT_TIMER;
+  if ((rp->p_misc_flags & MF_VIRT_TIMER) && rp->p_virt_left <= 0) {
+      rp->p_misc_flags &= ~MF_VIRT_TIMER;
       rp->p_virt_left = 0;
       cause_sig(rp->p_nr, SIGVTALRM);
   }
 
   /* Check if the profile timer expired. If so, send a SIGPROF signal. */
-  if ((rp->p_misc_flags & PROF_TIMER) && rp->p_prof_left <= 0) {
-      rp->p_misc_flags &= ~PROF_TIMER;
+  if ((rp->p_misc_flags & MF_PROF_TIMER) && rp->p_prof_left <= 0) {
+      rp->p_misc_flags &= ~MF_PROF_TIMER;
       rp->p_prof_left = 0;
       cause_sig(rp->p_nr, SIGPROF);
   }

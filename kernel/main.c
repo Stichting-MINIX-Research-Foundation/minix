@@ -17,6 +17,7 @@
 #include <minix/com.h>
 #include <minix/endpoint.h>
 #include "proc.h"
+#include "debug.h"
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
@@ -161,6 +162,9 @@ PUBLIC void main()
 		rp->p_reg.sp -= sizeof(reg_t);
 	}
 
+	/* scheduling functions depend on proc_ptr pointing somewhere. */
+	if(!proc_ptr) proc_ptr = rp;
+
 	/* If this process has its own page table, VM will set the
 	 * PT up and manage it. VM will signal the kernel when it has
 	 * done this; until then, don't let it run.
@@ -186,8 +190,21 @@ PUBLIC void main()
   /* MINIX is now ready. All boot image processes are on the ready queue.
    * Return to the assembly code to start running the current process. 
    */
-  bill_ptr = proc_addr(IDLE);		/* it has to point somewhere */
+  bill_ptr = proc_addr(IDLE);	/* it has to point somewhere */
   announce();				/* print MINIX startup banner */
+/* Warnings for sanity checks that take time. These warnings are printed
+ * so it's a clear warning no full release should be done with them
+ * enabled.
+ */
+#if DEBUG_SCHED_CHECK
+  FIXME("DEBUG_SCHED_CHECK enabled");
+#endif
+#if DEBUG_VMASSERT
+  FIXME("DEBUG_VMASSERT enabled");
+#endif
+#if DEBUG_PROC_CHECK
+  FIXME("PROC check enabled");
+#endif
   restart();
 }
 
@@ -204,6 +221,8 @@ PRIVATE void announce(void)
       "Copyright 2009, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
   kprintf("MINIX is open source software, see http://www.minix3.org\n");
+
+  FIXME("pm, vfs, etc own page table");
 }
 
 /*===========================================================================*

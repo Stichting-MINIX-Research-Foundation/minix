@@ -60,7 +60,6 @@ begbss:
 #include <ibm/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
-#include "vm.h"
 #include "sconst.h"
 
 /* Selected 386 tss offsets. */
@@ -74,9 +73,8 @@ begbss:
 
 .define	_restart
 .define	save
-.define	_kernel_cr3
-.define	_pagefault_cr2
-.define _pagefault_count
+.define _reload_cr3
+.define	_write_cr3	! write cr3
 
 .define errexception
 .define exception1
@@ -101,6 +99,8 @@ begbss:
 .define	_params_size
 .define _params_offset
 .define _mon_ds
+.define _schedcheck
+.define _dirtypde
 
 .define	_hwint00	! handlers for hardware interrupts
 .define	_hwint01
@@ -218,12 +218,6 @@ csinit:
 	ltr	ax
 	push	0			! set flags to known good state
 	popf				! esp, clear nested task and int enable
-#if VM_KERN_NOPAGEZERO
-	jmp	laststep
-
-.align I386_PAGE_SIZE
-laststep:
-#endif
 	jmp	_main			! main()
 
 
@@ -239,7 +233,6 @@ laststep:
 #define hwint_master(irq)	\
 	call	save			/* save interrupted process state */;\
 	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
-	LOADCR3WITHEAX(irq, (_kernel_cr3))	/* switch to kernel page table	  */;\
 	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
@@ -291,7 +284,6 @@ _hwint07:		! Interrupt routine for irq 7 (printer)
 #define hwint_slave(irq)	\
 	call	save			/* save interrupted process state */;\
 	push	(_irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
-	LOADCR3WITHEAX(irq, (_kernel_cr3))	/* switch to kernel page table	  */;\
 	call	_intr_handle		/* intr_handle(irq_handlers[irq]) */;\
 	pop	ecx							    ;\
 	cmp	(_irq_actids+4*irq), 0	/* interrupt still active?	  */;\
@@ -398,11 +390,9 @@ _p_s_call:
 	push	eax		! source / destination
 	push	ecx		! call number (ipc primitive to use)
 
-!	LOADCR3WITHEAX(0x20, (_kernel_cr3))
-
 	call	_sys_call	! sys_call(call_nr, src_dst, m_ptr, bit_map)
 				! caller is now explicitly in proc_ptr
-	mov	AXREG(esi), eax	! sys_call MUST PRESERVE si
+	mov	AXREG(esi), eax
 
 ! Fall into code to restart proc/task running.
 
@@ -413,14 +403,21 @@ _restart:
 
 ! Restart the current process or the next process if it is set. 
 
-	cmp	(_next_ptr), 0		! see if another process is scheduled
-	jz	0f
-	mov 	eax, (_next_ptr)
-	mov	(_proc_ptr), eax	! schedule new process 
-	mov	(_next_ptr), 0
-0:	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
+	cli
+	call	_schedcheck		! ask C function who we're running
+	mov	esp, (_proc_ptr)	! will assume P_STACKBASE == 0
 	lldt	P_LDT_SEL(esp)		! enable process' segment descriptors 
-	LOADCR3WITHEAX(0x21, P_CR3(esp))	! switch to process page table
+	cmp	P_CR3(esp), 0		! process does not have its own PT
+	jz	0f	
+	mov 	eax, P_CR3(esp)
+	cmp	eax, (loadedcr3)
+	jz	0f
+	mov	cr3, eax
+	mov	(loadedcr3), eax
+	mov	eax, (_proc_ptr)
+	mov	(_ptproc), eax
+	mov	(_dirtypde), 0
+0:
 	lea	eax, P_STACKTOP(esp)	! arrange for next interrupt
 	mov	(_tss+TSS3_S_SP0), eax	! to save state in process table
 restart1:
@@ -496,8 +493,7 @@ _page_fault:
 	push	PAGE_FAULT_VECTOR
 	push	eax
 	mov	eax, cr2
-sseg	mov	(_pagefault_cr2), eax
-sseg	inc	(_pagefault_count)
+sseg	mov	(pagefaultcr2), eax
 	pop	eax
 	jmp	errexception
 
@@ -526,19 +522,26 @@ errexception:
  sseg	pop	(ex_number)
  sseg	pop	(trap_errno)
 exception1:				! Common for all exceptions.
+ sseg	mov	(old_eax_ptr), esp	! where will eax be saved?
+ sseg	sub	(old_eax_ptr), PCREG-AXREG	! here
+
 	push	eax			! eax is scratch register
 
 	mov	eax, 0+4(esp)		! old eip
  sseg	mov	(old_eip), eax
+	mov	eax, esp
+	add	eax, 4
+ sseg	mov	(old_eip_ptr), eax
 	movzx	eax, 4+4(esp)		! old cs
  sseg	mov	(old_cs), eax
 	mov	eax, 8+4(esp)		! old eflags
  sseg	mov	(old_eflags), eax
 
-	LOADCR3WITHEAX(0x24, (_kernel_cr3))
-
 	pop	eax
 	call	save
+	push	(pagefaultcr2)
+	push	(old_eax_ptr)
+	push	(old_eip_ptr)
 	push	(old_eflags)
 	push	(old_cs)
 	push	(old_eip)
@@ -546,7 +549,38 @@ exception1:				! Common for all exceptions.
 	push	(ex_number)
 	call	_exception		! (ex_number, trap_errno, old_eip,
 					!	old_cs, old_eflags)
-	add	esp, 5*4
+	add	esp, 8*4
+	ret
+
+
+!*===========================================================================*
+!*				write_cr3				*
+!*===========================================================================*
+! PUBLIC void write_cr3(unsigned long value);
+_write_cr3:
+	push    ebp
+	mov     ebp, esp
+	mov	eax, 8(ebp)
+	cmp	eax, (loadedcr3)
+	jz	0f
+	mov	cr3, eax
+	mov	(loadedcr3), eax
+	mov	(_dirtypde), 0
+0:
+	pop     ebp
+	ret
+
+!*===========================================================================*
+!*				reload_cr3				*
+!*===========================================================================*
+! PUBLIC void reload_cr3(void);
+_reload_cr3:
+	push    ebp
+	mov     ebp, esp
+	mov	(_dirtypde), 0
+	mov	eax, cr3
+	mov	cr3, eax
+	pop     ebp
 	ret
 
 !*===========================================================================*
@@ -557,23 +591,11 @@ _level0_call:
 	jmp	(_level0_func)
 
 !*===========================================================================*
-!*				load_kernel_cr3				     *
-!*===========================================================================*
-.align 16
-_load_kernel_cr3:
- 	mov	eax, (_kernel_cr3)
- 	mov	cr3, eax
-	ret
-
-!*===========================================================================*
 !*				data					     *
 !*===========================================================================*
 
 .sect .rom	! Before the string table please
 	.data2	0x526F		! this must be the first data entry (magic #)
-#if VM_KERN_NOPAGEZERO
-.align I386_PAGE_SIZE
-#endif
 
 .sect .bss
 k_stack:
@@ -581,7 +603,11 @@ k_stack:
 k_stktop:			! top of kernel stack
 	.comm	ex_number, 4
 	.comm	trap_errno, 4
+	.comm	old_eip_ptr, 4
+	.comm	old_eax_ptr, 4
 	.comm	old_eip, 4
 	.comm	old_cs, 4
 	.comm	old_eflags, 4
+	.comm	pagefaultcr2, 4
+	.comm	loadedcr3, 4
 

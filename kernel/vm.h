@@ -2,18 +2,19 @@
 #ifndef _VM_H
 #define _VM_H 1
 
-#define CHECKRANGE_OR_SUSPEND(pr, start, length, wr)  { int mr; \
-	if(vm_running && (mr=vm_checkrange(proc_addr(who_p), pr, start, length, wr, 0)) != OK) { \
-		return mr;					 \
-	} }
-
-#define CHECKRANGE(pr, start, length, wr)   \
-	vm_checkrange(proc_addr(who_p), pr, start, length, wr, 1)
-
-/* Pseudo error code indicating a process request has to be
- * restarted after an OK from VM.
- */
+/* Pseudo error codes */
 #define VMSUSPEND       -996
+#define EFAULT_SRC	-995
+#define EFAULT_DST	-994
+
+#define FIXLINMSG(prp) { prp->p_delivermsg_lin = umap_local(prp, D, prp->p_delivermsg_vir, sizeof(message)); }
+
+#define PHYS_COPY_CATCH(src, dst, size, a) {	\
+	vmassert(intr_disabled());		\
+	catch_pagefaults++;			\
+	a = phys_copy(src, dst, size);		\
+	catch_pagefaults--;			\
+	}
 
 #endif
 

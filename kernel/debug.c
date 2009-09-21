@@ -25,6 +25,8 @@ check_runqueues_f(char *file, int line)
 	minix_panic("check_runqueues called with interrupts enabled", NO_NUM);
   }
 
+  FIXME("check_runqueues being done");
+
 #define MYPANIC(msg) {		\
 	kprintf("check_runqueues:%s:%d: %s\n", file, line, msg); \
 	minix_panic("check_runqueues failed", NO_NUM);	\
@@ -94,7 +96,9 @@ check_runqueues_f(char *file, int line)
   for (xp = BEG_PROC_ADDR; xp < END_PROC_ADDR; ++xp) {
 	if(xp->p_magic != PMAGIC) 
 		MYPANIC("p_magic wrong in proc table");
-	if (! isemptyp(xp) && xp->p_ready && ! xp->p_found) {
+	if (isemptyp(xp))
+		continue;
+	if(xp->p_ready && ! xp->p_found) {
 		kprintf("sched error: ready proc %d not on queue\n", xp->p_nr);
 		MYPANIC("ready proc not on scheduling queue");
 		if (l++ > MAX_LOOP) { MYPANIC("loop in debug.c?"); }
@@ -103,3 +107,43 @@ check_runqueues_f(char *file, int line)
 }
 
 #endif /* DEBUG_SCHED_CHECK */
+
+PUBLIC char *
+rtsflagstr(int flags)
+{
+	static char str[100];
+	str[0] = '\0';
+
+#define FLAG(n) if(flags & n) { strcat(str, #n " "); }
+
+	FLAG(SLOT_FREE);
+	FLAG(NO_PRIORITY);
+	FLAG(SENDING);
+	FLAG(RECEIVING);
+	FLAG(SIGNALED);
+	FLAG(SIG_PENDING);
+	FLAG(P_STOP);
+	FLAG(NO_PRIV);
+	FLAG(NO_ENDPOINT);
+	FLAG(VMINHIBIT);
+	FLAG(PAGEFAULT);
+	FLAG(VMREQUEST);
+	FLAG(VMREQTARGET);
+
+	return str;
+}
+
+PUBLIC char *
+miscflagstr(int flags)
+{
+	static char str[100];
+	str[0] = '\0';
+
+	FLAG(MF_REPLY_PEND);
+	FLAG(MF_ASYNMSG);
+	FLAG(MF_FULLVM);
+	FLAG(MF_DELIVERMSG);
+
+	return str;
+}
+

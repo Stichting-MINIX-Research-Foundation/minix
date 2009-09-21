@@ -230,25 +230,23 @@ irq_hook_t *hook;
    * If any of the timers expire, do_clocktick() will send out signals.
    */
   expired = 0;
-  if ((proc_ptr->p_misc_flags & VIRT_TIMER) &&
+  if ((proc_ptr->p_misc_flags & MF_VIRT_TIMER) &&
 	(proc_ptr->p_virt_left -= ticks) <= 0) expired = 1;
-  if ((proc_ptr->p_misc_flags & PROF_TIMER) &&
+  if ((proc_ptr->p_misc_flags & MF_PROF_TIMER) &&
 	(proc_ptr->p_prof_left -= ticks) <= 0) expired = 1;
   if (! (priv(proc_ptr)->s_flags & BILLABLE) &&
-  	(bill_ptr->p_misc_flags & PROF_TIMER) &&
+  	(bill_ptr->p_misc_flags & MF_PROF_TIMER) &&
   	(bill_ptr->p_prof_left -= ticks) <= 0) expired = 1;
 
-#if 0
   /* Update load average. */
   load_update();
-#endif
   
   /* Check if do_clocktick() must be called. Done for alarms and scheduling.
    * Some processes, such as the kernel tasks, cannot be preempted. 
    */ 
   if ((next_timeout <= realtime) || (proc_ptr->p_ticks_left <= 0) || expired) {
       prev_ptr = proc_ptr;			/* store running process */
-      lock_notify(HARDWARE, CLOCK);		/* send notification */
+      mini_notify(proc_addr(HARDWARE), CLOCK);		/* send notification */
   } 
 
   if (do_serial_debug)

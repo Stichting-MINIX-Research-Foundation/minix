@@ -16,7 +16,6 @@
 PUBLIC int do_sysctl(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
-  phys_bytes ph;
   vir_bytes len, buf;
   static char mybuf[DIAG_BUFSIZE];
   struct proc *caller, *target;
@@ -33,10 +32,7 @@ register message *m_ptr;	/* pointer to request message */
 			caller->p_endpoint, len);
 		return EINVAL;
 	}
-	if((ph=umap_local(caller, D, buf, len)) == 0)
-		return EFAULT;
-	CHECKRANGE_OR_SUSPEND(caller, ph, len, 1);
-	if((s=data_copy(who_e, buf, SYSTEM, (vir_bytes) mybuf, len)) != OK) {
+	if((s=data_copy_vmcheck(who_e, buf, SYSTEM, (vir_bytes) mybuf, len)) != OK) {
 		kprintf("do_sysctl: diag for %d: len %d: copy failed: %d\n",
 			caller->p_endpoint, len, s);
 		return s;

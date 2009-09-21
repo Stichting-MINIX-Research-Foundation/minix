@@ -33,13 +33,12 @@ _PROTOTYPE( int sys_call, (int call_nr, int src_dst,
 					message *m_ptr, long bit_map)	);
 _PROTOTYPE( void sys_call_restart, (struct proc *caller)		);
 _PROTOTYPE( int lock_notify, (int src, int dst)				);
-_PROTOTYPE( int soft_notify, (int dst)					);
+_PROTOTYPE( int mini_notify, (struct proc *src, endpoint_t dst)		);
 _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
-_PROTOTYPE( void lock_enqueue, (struct proc *rp)			);
-_PROTOTYPE( void lock_dequeue, (struct proc *rp)			);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (struct proc *rp)				);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);
+_PROTOTYPE( void schedcheck, (void)					);
 _PROTOTYPE( struct proc *endpoint_lookup, (endpoint_t ep)		);
 #if DEBUG_ENABLE_IPC_WARNINGS
 _PROTOTYPE( int isokendpt_f, (char *file, int line, endpoint_t e, int *p, int f));
@@ -91,6 +90,8 @@ _PROTOTYPE( void cons_seth, (int pos, int n)				);
 #define CHECK_RUNQUEUES check_runqueues_f(__FILE__, __LINE__)
 _PROTOTYPE( void check_runqueues_f, (char *file, int line) );
 #endif
+_PROTOTYPE( char *rtsflagstr, (int flags) );
+_PROTOTYPE( char *miscflagstr, (int flags) );
 
 /* system/do_safecopy.c */
 _PROTOTYPE( int verify_grant, (endpoint_t, endpoint_t, cp_grant_id_t, vir_bytes,
@@ -106,18 +107,21 @@ _PROTOTYPE( void stop_profile_clock, (void)				);
 #endif
 
 /* functions defined in architecture-dependent files. */
-_PROTOTYPE( void phys_copy, (phys_bytes source, phys_bytes dest,
+_PROTOTYPE( phys_bytes phys_copy, (phys_bytes source, phys_bytes dest,
                 phys_bytes count)                                       );
+_PROTOTYPE( void phys_copy_fault, (void));
 #define virtual_copy(src, dst, bytes) virtual_copy_f(src, dst, bytes, 0)
 #define virtual_copy_vmcheck(src, dst, bytes) virtual_copy_f(src, dst, bytes, 1)
 _PROTOTYPE( int virtual_copy_f, (struct vir_addr *src, struct vir_addr *dst, 
 				vir_bytes bytes, int vmcheck)		);
 _PROTOTYPE( int data_copy, (endpoint_t from, vir_bytes from_addr,
 	endpoint_t to, vir_bytes to_addr, size_t bytes));
+_PROTOTYPE( int data_copy_vmcheck, (endpoint_t from, vir_bytes from_addr,
+	endpoint_t to, vir_bytes to_addr, size_t bytes));
 #define data_copy_to(d, p, v, n) data_copy(SYSTEM, (d), (p), (v), (n));
 #define data_copy_from(d, p, v, n) data_copy((p), (v), SYSTEM, (d), (n));
 _PROTOTYPE( void alloc_segments, (struct proc *rp)                      );
-_PROTOTYPE( void vm_init, (void)                       			);
+_PROTOTYPE( void vm_init, (struct proc *first)        			);
 _PROTOTYPE( void vm_map_range, (u32_t base, u32_t size, u32_t offset)   );
 _PROTOTYPE( int vm_copy, (vir_bytes src, struct proc *srcproc,
 	vir_bytes dst, struct proc *dstproc, phys_bytes bytes));
@@ -130,7 +134,7 @@ _PROTOTYPE( phys_bytes umap_remote, (struct proc* rp, int seg,
 _PROTOTYPE( phys_bytes umap_virtual, (struct proc* rp, int seg,
         vir_bytes vir_addr, vir_bytes bytes)				);
 _PROTOTYPE( phys_bytes seg2phys, (U16_t)                                );
-_PROTOTYPE( void phys_memset, (phys_bytes source, unsigned long pattern,
+_PROTOTYPE( int vm_phys_memset, (phys_bytes source, u8_t pattern,
                 phys_bytes count)                                       );
 _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
         int, phys_bytes, vir_bytes, int));
@@ -164,5 +168,10 @@ _PROTOTYPE( int vm_checkrange, (struct proc *caller, struct proc *target,
 	vir_bytes start, vir_bytes length, int writeflag, int checkonly));
 _PROTOTYPE( void proc_stacktrace, (struct proc *proc)	         );
 _PROTOTYPE( int vm_lookup, (struct proc *proc, vir_bytes virtual, vir_bytes *result, u32_t *ptent));
+_PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target,
+	phys_bytes lin, phys_bytes size, int wrflag, int type));
+_PROTOTYPE( int delivermsg, (struct proc *target));
+_PROTOTYPE( phys_bytes arch_switch_copymsg, (struct proc *rp, message *m,
+	phys_bytes lin));
 
 #endif /* PROTO_H */

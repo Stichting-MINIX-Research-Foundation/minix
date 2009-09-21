@@ -167,6 +167,11 @@ PUBLIC void prot_init(void)
   unsigned ldt_index;
   register struct proc *rp;
 
+  /* Click-round kernel. */
+  if(kinfo.data_base % CLICK_SIZE)
+	minix_panic("kinfo.data_base not aligned", NO_NUM);
+  kinfo.data_size = ((kinfo.data_size+CLICK_SIZE-1)/CLICK_SIZE) * CLICK_SIZE;
+
   /* Build gdt and idt pointers in GDT where the BIOS expects them. */
   dtp= (struct desctableptr_s *) &gdt[GDT_INDEX];
   * (u16_t *) dtp->limit = (sizeof gdt) - 1;
@@ -334,3 +339,118 @@ PUBLIC void alloc_segments(register struct proc *rp)
       rp->p_reg.ds = (DS_LDT_INDEX*DESC_SIZE) | TI | privilege;
 }
 
+/*===========================================================================*
+ *				printseg			     *
+ *===========================================================================*/
+PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
+{
+	u32_t base, limit, index, dpl;
+	struct segdesc_s *desc;
+
+	if(banner) { kprintf("%s", banner); }
+
+	index = selector >> 3;
+
+	kprintf("RPL %d, ind %d of ",
+		(selector & RPL_MASK), index);
+
+	if(selector & TI) {
+		kprintf("LDT");
+		if(index < 0 || index >= LDT_SIZE) {
+			kprintf("invalid index in ldt\n");
+			return;
+		}
+		desc = &pr->p_seg.p_ldt[index];
+	} else {
+		kprintf("GDT");
+		if(index < 0 || index >= GDT_SIZE) {
+			kprintf("invalid index in gdt\n");
+			return;
+		}
+		desc = &gdt[index];
+	}
+
+	limit = desc->limit_low |
+		(((u32_t) desc->granularity & LIMIT_HIGH) << GRANULARITY_SHIFT);
+
+	if(desc->granularity & GRANULAR) {
+		limit = (limit << PAGE_GRAN_SHIFT) + 0xfff;
+	}
+
+	base = desc->base_low | 
+		((u32_t) desc->base_middle << BASE_MIDDLE_SHIFT) |
+		((u32_t) desc->base_high << BASE_HIGH_SHIFT);
+
+	kprintf(" -> base 0x%08lx size 0x%08lx ", base, limit+1);
+
+	if(iscs) {
+		if(!(desc->granularity & BIG))
+			kprintf("16bit ");
+	} else {
+		if(!(desc->granularity & BIG)) 
+			kprintf("not big ");
+	}
+
+	if(desc->granularity & 0x20) {	/* reserved */
+		minix_panic("granularity reserved field set", NO_NUM);
+	}
+
+	if(!(desc->access & PRESENT))
+		kprintf("notpresent ");
+
+	if(!(desc->access & SEGMENT))
+		kprintf("system ");
+
+	if(desc->access & EXECUTABLE) {
+		kprintf("   exec ");
+		if(desc->access & CONFORMING) kprintf("conforming ");
+		if(!(desc->access & READABLE)) kprintf("non-readable ");
+	} else {
+		kprintf("nonexec ");
+		if(desc->access & EXPAND_DOWN) kprintf("non-expand-down ");
+		if(!(desc->access & WRITEABLE)) kprintf("non-writable ");
+	}
+
+	if(!(desc->access & ACCESSED)) {
+		kprintf("nonacc ");
+	}
+
+	dpl = ((u32_t) desc->access & DPL) >> DPL_SHIFT;
+
+	kprintf("DPL %d\n", dpl);
+
+	return;
+}
+
+/*===========================================================================*
+ *				prot_set_kern_seg_limit			     *
+ *===========================================================================*/
+PUBLIC int prot_set_kern_seg_limit(vir_bytes limit)
+{
+	struct proc *rp;
+	vir_bytes prev;
+	int orig_click;
+	int incr_clicks;
+
+	if(limit <= kinfo.data_base) {
+		kprintf("prot_set_kern_seg_limit: limit bogus\n");
+		return EINVAL;
+	}
+
+	/* Do actual increase. */
+	orig_click = kinfo.data_size / CLICK_SIZE;
+	kinfo.data_size = limit - kinfo.data_base;
+	incr_clicks = kinfo.data_size / CLICK_SIZE - orig_click;
+
+	prot_init();
+
+	/* Increase kernel processes too. */
+	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
+		if (RTS_ISSET(rp, SLOT_FREE) || !iskernelp(rp))
+			continue;
+		rp->p_memmap[S].mem_len += incr_clicks;
+		alloc_segments(rp);
+	}
+
+	return OK;
+}

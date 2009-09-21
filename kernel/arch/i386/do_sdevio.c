@@ -24,6 +24,8 @@
 PUBLIC int do_sdevio(m_ptr)
 register message *m_ptr;	/* pointer to request message */
 {
+  vir_bytes newoffset;
+  endpoint_t newep;
   int proc_nr, proc_nr_e = m_ptr->DIO_VEC_ENDPT;
   int count = m_ptr->DIO_VEC_SIZE;
   long port = m_ptr->DIO_PORT;
@@ -32,6 +34,9 @@ register message *m_ptr;	/* pointer to request message */
   struct proc *rp;
   struct priv *privp;
   struct io_range *iorp;
+  int rem;
+  vir_bytes addr;
+  struct proc *destproc;
 
   /* Allow safe copies and accesses to SELF */
   if ((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) != _DIO_SAFE &&
@@ -64,11 +69,23 @@ register message *m_ptr;	/* pointer to request message */
   /* Check for 'safe' variants. */
   if((m_ptr->DIO_REQUEST & _DIO_SAFEMASK) == _DIO_SAFE) {
      /* Map grant address to physical address. */
-     if ((phys_buf = umap_verify_grant(proc_addr(proc_nr), who_e,
+     if(verify_grant(proc_nr_e, who_e, 
 	(vir_bytes) m_ptr->DIO_VEC_ADDR,
-	(vir_bytes) m_ptr->DIO_OFFSET, count,
-	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ)) == 0)
-         return(EPERM);
+	count,
+	req_dir == _DIO_INPUT ? CPF_WRITE : CPF_READ,
+	(vir_bytes) m_ptr->DIO_OFFSET, 
+	&newoffset, &newep) != OK) {
+	printf("do_sdevio: verify_grant failed\n");
+	return EPERM;
+    }
+	if(!isokendpt(newep, &proc_nr))
+		return(EINVAL);
+     destproc = proc_addr(proc_nr);
+     if ((phys_buf = umap_local(destproc, D,
+	 (vir_bytes) newoffset, count)) == 0) {
+	printf("do_sdevio: umap_local failed\n");
+         return(EFAULT);
+     }
   } else {
      if(proc_nr != who_p)
      {
@@ -77,10 +94,14 @@ register message *m_ptr;	/* pointer to request message */
 	return EPERM;
      }
      /* Get and check physical address. */
-     if ((phys_buf = umap_virtual(proc_addr(proc_nr), D,
+     if ((phys_buf = umap_local(proc_addr(proc_nr), D,
 	 (vir_bytes) m_ptr->DIO_VEC_ADDR, count)) == 0)
          return(EFAULT);
+     destproc = proc_addr(proc_nr);
   }
+     /* current process must be target for phys_* to be OK */
+
+  vm_set_cr3(destproc);
 
 	switch (io_type)
 	{

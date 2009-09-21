@@ -54,6 +54,7 @@
 #define INTR_PRIVILEGE       0	/* kernel and interrupt handlers */
 #define TASK_PRIVILEGE       1	/* kernel tasks */
 #define USER_PRIVILEGE       3	/* servers and user processes */
+#define RPL_MASK             0x03	/* bits in selector RPL */
 
 /* 286 hardware constants. */
 
@@ -137,5 +138,6 @@
 #define IOPL_MASK 0x003000
 
 #define vir2phys(vir)   (kinfo.data_base + (vir_bytes) (vir))
+#define phys2vir(ph)   ((vir_bytes) (ph) - kinfo.data_base)
 
 #endif /* _I386_ACONST_H */

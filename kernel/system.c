@@ -40,6 +40,7 @@
 #include <sys/sigcontext.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
+#include <minix/portio.h>
 #include <minix/u64.h>
 #include <sys/vm_i386.h>
 
@@ -58,7 +59,6 @@ char *callnames[NR_SYS_CALLS];
     call_vec[(call_nr-KERNEL_CALL)] = (handler)  
 
 FORWARD _PROTOTYPE( void initialize, (void));
-FORWARD _PROTOTYPE( void softnotify_check, (void));
 FORWARD _PROTOTYPE( struct proc *vmrestart_check, (message *));
 
 /*===========================================================================*
@@ -77,26 +77,18 @@ PUBLIC void sys_task()
   /* Initialize the system task. */
   initialize();
 
+
   while (TRUE) {
       struct proc *restarting;
 
       restarting = vmrestart_check(&m);
-      softnotify_check();
-	if(softnotify)
-		minix_panic("softnotify non-NULL before receive (1)", NO_NUM);
 
       if(!restarting) {
         int r;
 	/* Get work. Block and wait until a request message arrives. */
-	if(softnotify)
-		minix_panic("softnotify non-NULL before receive (2)", NO_NUM);
 	if((r=receive(ANY, &m)) != OK)
 		minix_panic("receive() failed", r);
-	if(m.m_source == SYSTEM)
-		continue;
-	if(softnotify)
-		minix_panic("softnotify non-NULL after receive", NO_NUM);
-      }
+      } 
 
       sys_call_code = (unsigned) m.m_type;
       call_nr = sys_call_code - KERNEL_CALL;	
@@ -104,37 +96,13 @@ PUBLIC void sys_task()
       okendpt(who_e, &who_p);
       caller_ptr = proc_addr(who_p);
 
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		sys_stats.total= add64u(sys_stats.total, 1);
-
       /* See if the caller made a valid request and try to handle it. */
       if (call_nr < 0 || call_nr >= NR_SYS_CALLS) {	/* check call number */
-#if DEBUG_ENABLE_IPC_WARNINGS
 	  kprintf("SYSTEM: illegal request %d from %d.\n",
 		call_nr,m.m_source);
-#endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		sys_stats.bad_req++;
 	  result = EBADREQUEST;			/* illegal message type */
       } 
       else if (!GET_BIT(priv(caller_ptr)->s_k_call_mask, call_nr)) {
-#if DEBUG_ENABLE_IPC_WARNINGS
-	static int curr= 0, limit= 100, extra= 20;
-
-	if (curr < limit+extra)
-	{
-		kprintf("SYSTEM: request %d from %d denied.\n",
-			call_nr, m.m_source);
-	} else if (curr == limit+extra)
-	{
-		kprintf("sys_task: no debug output for a while\n");
-	}
-	else if (curr == 2*limit-1)
-		limit *= 2;
-	curr++;
-#endif
-	if (caller_ptr->p_endpoint == ipc_stats_target)
-		sys_stats.not_allowed++;
 	  result = ECALLDENIED;			/* illegal message type */
       }
       else {
@@ -146,15 +114,20 @@ PUBLIC void sys_task()
 	 * until VM tells us it's allowed. VM has been notified
 	 * and we must wait for its reply to restart the call.
 	 */
+        vmassert(RTS_ISSET(caller_ptr, VMREQUEST));
+	vmassert(caller_ptr->p_vmrequest.type == VMSTYPE_KERNELCALL);
 	memcpy(&caller_ptr->p_vmrequest.saved.reqmsg, &m, sizeof(m));
-	caller_ptr->p_vmrequest.type = VMSTYPE_SYS_MESSAGE;
       } else if (result != EDONTREPLY) {
 	/* Send a reply, unless inhibited by a handler function.
 	 * Use the kernel function lock_send() to prevent a system
 	 * call trap.
 	 */
-		if(restarting)
-			RTS_LOCK_UNSET(restarting, VMREQUEST);
+		if(restarting) {
+        		vmassert(!RTS_ISSET(restarting, VMREQUEST));
+#if 0
+        		vmassert(!RTS_ISSET(restarting, VMREQTARGET));
+#endif
+		}
 		m.m_type = result;		/* report status of call */
 		if(WILLRECEIVE(caller_ptr, SYSTEM)) {
 		  if (OK != (s=lock_send(m.m_source, &m))) {
@@ -222,7 +195,6 @@ PRIVATE void initialize(void)
   map(SYS_NEWMAP, do_newmap);		/* set up a process memory map */
   map(SYS_SEGCTL, do_segctl);		/* add segment and get selector */
   map(SYS_MEMSET, do_memset);		/* write char to memory area */
-  map(SYS_VM_SETBUF, do_vm_setbuf); 	/* PM passes buffer for page tables */
   map(SYS_VMCTL, do_vmctl);		/* various VM process settings */
 
   /* Copying. */
@@ -350,7 +322,11 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
 
   rp = proc_addr(proc_nr);
   sigaddset(&priv(rp)->s_sig_pending, sig_nr);
-  soft_notify(rp->p_endpoint); 
+  if(!intr_disabled()) {
+	  lock_notify(SYSTEM, rp->p_endpoint); 
+  } else {
+	  mini_notify(proc_addr(SYSTEM), rp->p_endpoint); 
+  }
 }
 
 /*===========================================================================*
@@ -467,7 +443,9 @@ register struct proc *rc;		/* slot of process to clean up */
 
   if(isemptyp(rc)) minix_panic("clear_proc: empty process", rc->p_endpoint);
 
-  if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR) {
+  if(rc->p_endpoint == PM_PROC_NR || rc->p_endpoint == VFS_PROC_NR ||
+	rc->p_endpoint == VM_PROC_NR)
+  {
 	/* This test is great for debugging system processes dying,
 	 * but as this happens normally on reboot, not good permanent code.
 	 */
@@ -543,13 +521,6 @@ register struct proc *rc;		/* slot of process to clean up */
 #endif
       } 
   }
-
-  /* No pending soft notifies. */
-  for(np = softnotify; np; np = np->next_soft_notify) {
-    if(np == rc) {
-	minix_panic("dying proc was on next_soft_notify", np->p_endpoint);
-    }
-  }
 }
 
 /*===========================================================================*
@@ -584,28 +555,6 @@ int access;                     /* does grantee want to CPF_READ or _WRITE? */
 } 
 
 /*===========================================================================*
- *                              softnotify_check                            *
- *===========================================================================*/
-PRIVATE void softnotify_check(void)
-{  
-	struct proc *np, *nextnp;
-
-	if(!softnotify) 
-		return;
-
-	for(np = softnotify; np; np = nextnp) {
-		if(!np->p_softnotified)
-			minix_panic("softnotify but no p_softnotified", NO_NUM);
-		lock_notify(SYSTEM, np->p_endpoint);
-		nextnp = np->next_soft_notify;
-		np->next_soft_notify = NULL;
-		np->p_softnotified = 0;
-	}
-
-	softnotify = NULL;
-}
-
-/*===========================================================================*
  *                              vmrestart_check                            *
  *===========================================================================*/
 PRIVATE struct proc *vmrestart_check(message *m)
@@ -618,23 +567,18 @@ PRIVATE struct proc *vmrestart_check(message *m)
 	if(!(restarting = vmrestart))
 		return NULL;
 
-	if(restarting->p_rts_flags & SLOT_FREE)
-	   minix_panic("SYSTEM: VMREQUEST set for empty process", NO_NUM);
+	vmassert(!RTS_ISSET(restarting, SLOT_FREE));
+	vmassert(RTS_ISSET(restarting, VMREQUEST));
 
 	type = restarting->p_vmrequest.type;
 	restarting->p_vmrequest.type = VMSTYPE_SYS_NONE;
 	vmrestart = restarting->p_vmrequest.nextrestart;
 
-	if(!RTS_ISSET(restarting, VMREQUEST))
-	   minix_panic("SYSTEM: VMREQUEST not set for process on vmrestart queue",
-		restarting->p_endpoint);
-
 	switch(type) {
-		case VMSTYPE_SYS_MESSAGE:
+		case VMSTYPE_KERNELCALL:
 			memcpy(m, &restarting->p_vmrequest.saved.reqmsg, sizeof(*m));
-			if(m->m_source != restarting->p_endpoint)
-			   minix_panic("SYSTEM: vmrestart source doesn't match",
-				NO_NUM);
+			restarting->p_vmrequest.saved.reqmsg.m_source = NONE;
+			vmassert(m->m_source == restarting->p_endpoint);
 			/* Original caller could've disappeared in the meantime. */
 		        if(!isokendpt(m->m_source, &who_p)) {
 				kprintf("SYSTEM: ignoring call %d from dead %d\n",
@@ -653,26 +597,6 @@ PRIVATE struct proc *vmrestart_check(message *m)
 				}
 			}
 			return restarting;
-		case VMSTYPE_SYS_CALL:
-			kprintf("SYSTEM: restart sys_call\n");
-			/* Restarting a kernel trap. */
-			sys_call_restart(restarting);
-
-			/* Handled; restart system loop. */
-			return NULL;
-		case VMSTYPE_MSGCOPY:
-			/* Do delayed message copy. */
-			if((r=data_copy(SYSTEM,
-				(vir_bytes) &restarting->p_vmrequest.saved.msgcopy.msgbuf,
-				restarting->p_vmrequest.saved.msgcopy.dst->p_endpoint,
-				(vir_bytes) restarting->p_vmrequest.saved.msgcopy.dst_v,
-				sizeof(message))) != OK) {
-	   			minix_panic("SYSTEM: delayed msgcopy failed", r);
-			}
-			RTS_LOCK_UNSET(restarting, VMREQUEST);
-
-			/* Handled; restart system loop. */
-			return NULL;
 		default:
 	   		minix_panic("strange restart type", type);
 	}

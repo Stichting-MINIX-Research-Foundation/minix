@@ -31,6 +31,11 @@ register message *m_ptr;	/* pointer to request message */
 
   rp = proc_addr(proc_nr);
 
+  if(rp->p_misc_flags & MF_DELIVERMSG) {
+	rp->p_misc_flags &= ~MF_DELIVERMSG;
+	rp->p_delivermsg_lin = 0;
+  }
+
   /* Save command name for debugging, ps(1) output, etc. */
   if(data_copy(who_e, (vir_bytes) m_ptr->PR_NAME_PTR,
 	SYSTEM, (vir_bytes) rp->p_name, (phys_bytes) P_NAME_LEN - 1) != OK)

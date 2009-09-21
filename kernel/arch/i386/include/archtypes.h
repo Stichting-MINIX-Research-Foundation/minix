@@ -56,7 +56,7 @@ struct segdesc_s {		/* segment descriptor for protected mode */
 typedef struct segframe {
 	reg_t p_ldt_sel;    /* selector in gdt with ldt base and limit */
 	reg_t	p_cr3;		/* page table root */
-	struct segdesc_s p_ldt[2+NR_REMOTE_SEGS]; /* CS, DS and remote */
+	struct segdesc_s p_ldt[LDT_SIZE]; /* CS, DS and remote */
 } segframe_t;
 
 /* Page fault event. Stored in process table. Only valid if PAGEFAULT
@@ -67,6 +67,8 @@ struct pagefault
 	u32_t   pf_virtual;     /* Address causing fault (CR2). */
 	u32_t   pf_flags;       /* Pagefault flags on stack. */
 };
+
+#define INMEMORY(p) (!p->p_seg.p_cr3 || ptproc == p)
 
 #endif /* #ifndef _I386_TYPES_H */
 
