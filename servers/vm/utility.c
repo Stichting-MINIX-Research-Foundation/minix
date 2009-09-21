@@ -18,10 +18,12 @@
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/type.h>
+#include <minix/bitmap.h>
 #include <string.h>
 #include <errno.h>
 #include <env.h>
 #include <unistd.h>
+#include <memory.h>
 
 #include "proto.h"
 #include "glo.h"
@@ -119,8 +121,8 @@ struct mem_map *map_ptr;                        /* memory to remove */
 PUBLIC int vm_isokendpt(endpoint_t endpoint, int *proc)
 {
         *proc = _ENDPOINT_P(endpoint);
-        if(*proc < -NR_TASKS || *proc >= NR_PROCS)
-                return EINVAL;
+        if(*proc < 0 || *proc >= NR_PROCS)
+        	vm_panic("crazy slot number", *proc); 
         if(*proc >= 0 && endpoint != vmproc[*proc].vm_endpoint)
                 return EDEADSRCDST;
         if(*proc >= 0 && !(vmproc[*proc].vm_flags & VMF_INUSE))
@@ -161,5 +163,30 @@ char *brk_addr;
 		vm_panic("VM: brk() on myself failed\n", NO_NUM);
         _brksize = brk_addr;
         return 0;
+}
+
+/*===========================================================================*
+ *                              do_ctl                                        *
+ *===========================================================================*/
+PUBLIC int do_ctl(message *m)
+{
+	int pages, nodes;
+	int pr;
+	struct vmproc *vmp;
+
+	switch(m->VCTL_WHAT) {
+		case VCTLP_STATS_MEM:
+			printmemstats();
+			break;
+		case VCTLP_STATS_EP:
+			if(vm_isokendpt(m->VCTL_PARAM, &pr) != OK)
+				return EINVAL;
+			printregionstats(&vmproc[pr]);
+			break;
+		default:
+			return EINVAL;
+	}
+
+	return OK;
 }
 

@@ -13,6 +13,7 @@
 #include <minix/ipc.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/bitmap.h>
 #include <sys/sigcontext.h>
 
 #include <errno.h>

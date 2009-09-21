@@ -23,6 +23,8 @@
 #include <minix/const.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/debug.h>
+#include <minix/bitmap.h>
 
 #include <sys/mman.h>
 
@@ -36,9 +38,12 @@
 #include "proto.h"
 #include "util.h"
 #include "glo.h"
+#include "pagerange.h"
+#include "addravl.h"
+#include "sanitycheck.h"
 
-/* Initially, no free pages are known. */
-PRIVATE phys_bytes free_pages_head = NO_MEM;	/* Physical address in bytes. */
+/* AVL tree of free pages. */
+addr_avl addravl;
 
 /* Used for sanity check. */
 PRIVATE phys_bytes mem_low, mem_high;
@@ -53,6 +58,8 @@ struct hole {
 	int freelist;
 	int holelist;
 };
+
+static int startpages;
 
 #define NIL_HOLE (struct hole *) 0
 
@@ -71,6 +78,11 @@ FORWARD _PROTOTYPE( phys_bytes alloc_pages, (int pages, int flags)	    );
 #if SANITYCHECKS
 FORWARD _PROTOTYPE( void holes_sanity_f, (char *fn, int line)		    );
 #define CHECKHOLES holes_sanity_f(__FILE__, __LINE__)
+
+#define MAXPAGES (1024*1024*1024/VM_PAGE_SIZE) /* 1GB of memory */
+#define CHUNKS BITMAP_CHUNKS(MAXPAGES)
+PRIVATE bitchunk_t pagemap[CHUNKS];
+
 #else
 #define CHECKHOLES 
 #endif
@@ -99,26 +111,6 @@ FORWARD _PROTOTYPE( void holes_sanity_f, (char *fn, int line)		    );
 #define SET_PARAMS(p, bytes, next) { \
 	vm_assert_params((p), (bytes), (next)); \
 	phys_writeaddr((p), (bytes), (next));	\
-}
-
-
-void availbytes(vir_bytes *bytes, vir_bytes *chunks)
-{
-	phys_bytes p, nextp;
-	*bytes = 0;
-	*chunks = 0;
-	for(p = free_pages_head; p != NO_MEM; p = nextp) {
-		phys_bytes thissize, ret;
-		GET_PARAMS(p, thissize, nextp);
-		(*bytes) += thissize;
-		(*chunks)++;
-		if(nextp != NO_MEM)	{
-			vm_assert(nextp > p);
-			vm_assert(nextp > p + thissize);
-		}
-	}
-
-	return;
 }
 
 
@@ -400,6 +392,7 @@ struct memory *chunks;		/* list of free memory chunks */
  */
   int i, first = 0;
   register struct hole *hp;
+  int nodes, largest;
 
   /* Put all holes on the free list. */
   for (hp = &hole[0]; hp < &hole[_NR_HOLES]; hp++) {
@@ -409,6 +402,8 @@ struct memory *chunks;		/* list of free memory chunks */
   hole[_NR_HOLES-1].h_next = NIL_HOLE;
   hole_head = NIL_HOLE;
   free_slots = &hole[0];
+
+  addr_init(&addravl);
 
   /* Use the chunks of physical memory to allocate holes. */
   for (i=NR_MEMS-1; i>=0; i--) {
@@ -422,7 +417,51 @@ struct memory *chunks;		/* list of free memory chunks */
 	}
   }
 
+  memstats(&nodes, &startpages, &largest);
+
+  printf("VM: %d nodes, %d pages, largest chunk %d\n",
+	nodes, startpages, largest);
+
   CHECKHOLES;
+}
+
+#if SANITYCHECKS
+PRIVATE void sanitycheck(void)
+{
+	pagerange_t *p, *prevp = NULL;
+	addr_iter iter;
+	addr_start_iter_least(&addravl, &iter);
+	while((p=addr_get_iter(&iter))) {
+		SLABSANE(p);
+		vm_assert(p->size > 0);
+		if(prevp) {
+			vm_assert(prevp->addr < p->addr);
+			vm_assert(prevp->addr + p->addr < p->addr);
+		}
+		addr_incr_iter(&iter);
+	}
+}
+#endif
+
+PUBLIC void memstats(int *nodes, int *pages, int *largest)
+{
+	pagerange_t *p, *prevp = NULL;
+	addr_iter iter;
+	addr_start_iter_least(&addravl, &iter);
+	*nodes = 0;
+	*pages = 0;
+	*largest = 0;
+#if SANITYCHECKS
+	sanitycheck();
+#endif
+	while((p=addr_get_iter(&iter))) {
+		SLABSANE(p);
+		(*nodes)++;
+		(*pages)+= p->size;
+		if(p->size > *largest)
+			*largest = p->size;
+		addr_incr_iter(&iter);
+	}
 }
 
 /*===========================================================================*
@@ -430,208 +469,173 @@ struct memory *chunks;		/* list of free memory chunks */
  *===========================================================================*/
 PRIVATE PUBLIC phys_bytes alloc_pages(int pages, int memflags)
 {
-	phys_bytes bytes, p, nextp, prevp = NO_MEM;
-	phys_bytes prevsize = 0;
-
+	addr_iter iter;
+	pagerange_t *pr;
+	int incr;
+	phys_bytes boundary16 = 16 * 1024 * 1024 / VM_PAGE_SIZE;
+	phys_bytes boundary1  =  1 * 1024 * 1024 / VM_PAGE_SIZE;
+	phys_bytes mem;
 #if SANITYCHECKS
-	vir_bytes avail1, avail2, chunks1, chunks2;
-	availbytes(&avail1, &chunks1);
+	int firstnodes, firstpages, wantnodes, wantpages;
+	int finalnodes, finalpages;
+	int largest;
+
+	memstats(&firstnodes, &firstpages, &largest);
+	sanitycheck();
+	wantnodes = firstnodes;
+	wantpages = firstpages - pages;
 #endif
 
-	vm_assert(pages > 0);
-	bytes = CLICK2ABS(pages);
-	vm_assert(ABS2CLICK(bytes) == pages);
-
-#if SANITYCHECKS
-#define ALLOCRETURNCHECK			\
-	availbytes(&avail2, &chunks2);		\
-	vm_assert(avail1 - bytes == avail2);	\
-	vm_assert(chunks1 == chunks2 || chunks1-1 == chunks2);
-#else
-#define ALLOCRETURNCHECK
-#endif
-
-
-	for(p = free_pages_head; p != NO_MEM; p = nextp) {
-		phys_bytes thissize, ret;
-		GET_PARAMS(p, thissize, nextp);
-		if(thissize >= bytes) {
-			/* We found a chunk that's big enough. */
-
-			ret = p + thissize - bytes;
-			thissize -= bytes;
-
-			if(thissize == 0) {
-				/* Special case: remove this link entirely. */
-				if(prevp == NO_MEM)
-					free_pages_head = nextp;
-				else {
-					vm_assert(prevsize > 0);
-					SET_PARAMS(prevp, prevsize, nextp);
-				}
-			} else {
-				/* Remove memory from this chunk. */
-				SET_PARAMS(p, thissize, nextp);
-			}
-
-			/* Clear memory if requested. */
-			if(memflags & PAF_CLEAR) {
-			  int s;
-			  if ((s= sys_memset(0, ret, bytes)) != OK)   {
-				vm_panic("alloc_pages: sys_memset failed", s);
-			  }
-			}
-
-			/* Check if returned range is actual good memory. */
-			vm_assert_range(ret, bytes);
-
-			ALLOCRETURNCHECK;
-
-			/* Return it in clicks. */
-			return ABS2CLICK(ret);
-		}
-		prevp = p;
-		prevsize = thissize;
+	if(memflags & (PAF_LOWER16MB|PAF_LOWER1MB)) {
+		addr_start_iter_least(&addravl, &iter);
+		incr = 1;
+	} else {
+		addr_start_iter_greatest(&addravl, &iter);
+		incr = 0;
 	}
-	return NO_MEM;
+
+	while((pr = addr_get_iter(&iter))) {
+		SLABSANE(pr);
+		if(pr->size >= pages) {
+			if(memflags & PAF_LOWER16MB) {
+				if(pr->addr + pages > boundary16)
+					return NO_MEM;
+			}
+
+			if(memflags & PAF_LOWER1MB) {
+				if(pr->addr + pages > boundary1)
+					return NO_MEM;
+			}
+
+			/* good block found! */
+			break;
+		}
+		if(incr)
+			addr_incr_iter(&iter);
+		else
+			addr_decr_iter(&iter);
+	}
+
+	if(!pr) {
+		printf("VM: alloc_pages: alloc failed of %d pages\n", pages);
+		util_stacktrace();
+		printmemstats();
+#if SANITYCHECKS
+		if(largest >= pages) {
+			vm_panic("no memory but largest was enough", NO_NUM);
+		}
+#endif
+		return NO_MEM;
+	}
+
+	SLABSANE(pr);
+
+	/* Allocated chunk is off the end. */
+	mem = pr->addr + pr->size - pages;
+
+	vm_assert(pr->size >= pages);
+	if(pr->size == pages) {
+		pagerange_t *prr;
+		prr = addr_remove(&addravl, pr->addr);
+		vm_assert(prr);
+		vm_assert(prr == pr);
+		SLABFREE(pr);
+#if SANITYCHECKS
+		wantnodes--;
+#endif
+	} else {
+		USE(pr, pr->size -= pages;);
+	}
+
+	if(memflags & PAF_CLEAR) {
+		int s;
+		if ((s= sys_memset(0, CLICK_SIZE*mem,
+			VM_PAGE_SIZE*pages)) != OK) 
+			vm_panic("alloc_mem: sys_memset failed", s);
+	}
+
+#if SANITYCHECKS
+	memstats(&finalnodes, &finalpages, &largest);
+	sanitycheck();
+
+	vm_assert(finalnodes == wantnodes);
+	vm_assert(finalpages == wantpages);
+#endif
+
+	return mem;
 }
 
 /*===========================================================================*
  *				free_pages				     *
  *===========================================================================*/
-PRIVATE PUBLIC void free_pages(phys_bytes pageno, int npages)
+PRIVATE void free_pages(phys_bytes pageno, int npages)
 {
-	phys_bytes p, origsize,
-		size, nextaddr, thissize, prevp = NO_MEM, pageaddr;
-
+	pagerange_t *pr, *p;
+	addr_iter iter;
 #if SANITYCHECKS
-	vir_bytes avail1, avail2, chunks1, chunks2;
-	availbytes(&avail1, &chunks1);
+	int firstnodes, firstpages, wantnodes, wantpages;
+	int finalnodes, finalpages, largest;
+
+	memstats(&firstnodes, &firstpages, &largest);
+	sanitycheck();
+
+	wantnodes = firstnodes;
+	wantpages = firstpages + npages;
 #endif
 
-#if SANITYCHECKS
-#define FREERETURNCHECK								\
-	availbytes(&avail2, &chunks2);					\
-	vm_assert(avail1 + origsize  == avail2);			\
-	vm_assert(chunks1 == chunks2 || chunks1+1 == chunks2 || chunks1-1 == chunks2);
-#else
-#define FREERETURNCHECK
-#endif
+	vm_assert(!addr_search(&addravl, pageno, AVL_EQUAL));
 
-	/* Basic sanity check. */
-	vm_assert(npages > 0);
-	vm_assert(pageno != NO_MEM);	/* Page number must be reasonable. */
-
-	/* Convert page and pages to bytes. */
-	pageaddr = CLICK2ABS(pageno);
-	origsize = size = npages * VM_PAGE_SIZE;	/* Size in bytes. */
-	vm_assert(pageaddr != NO_MEM);
-	vm_assert(ABS2CLICK(pageaddr) == pageno);
-	vm_assert_range(pageaddr, size);
-
-	/* More sanity checks. */
-	vm_assert(ABS2CLICK(size) == npages);	/* Sanity. */
-	vm_assert(pageaddr + size > pageaddr);		/* Must not overflow. */
-
-	/* Special case: no free pages. */
-	if(free_pages_head == NO_MEM) {
-		free_pages_head = pageaddr;
-		SET_PARAMS(pageaddr, size, NO_MEM);
-		FREERETURNCHECK;
-		return;
-	}
-
-	/* Special case: the free block is before the current head. */
-	if(pageaddr < free_pages_head) {
-		phys_bytes newsize, newnext, headsize, headnext;
-		vm_assert(pageaddr + size <= free_pages_head);
-		GET_PARAMS(free_pages_head, headsize, headnext);
-		newsize = size;
-		if(pageaddr + size == free_pages_head) {
-			/* Special case: contiguous. */
-			newsize += headsize;
-			newnext = headnext;
-		} else {
-			newnext = free_pages_head;
-		}
-		SET_PARAMS(pageaddr, newsize, newnext);
-		free_pages_head = pageaddr;
-		FREERETURNCHECK;
-		return;
-	}
-
-	/* Find where to put the block in the free list. */
-	for(p = free_pages_head; p < pageaddr; p = nextaddr) {
-		GET_PARAMS(p, thissize, nextaddr);
-
-		if(nextaddr == NO_MEM) {
-			/* Special case: page is at the end of the list. */
-			if(p + thissize == pageaddr) {
-				/* Special case: contiguous. */
-				SET_PARAMS(p, thissize + size, NO_MEM);
-				FREERETURNCHECK;
-			} else {
-				SET_PARAMS(p, thissize, pageaddr);
-				SET_PARAMS(pageaddr, size, NO_MEM);
-				FREERETURNCHECK;
-			}
-			return;
-		}
-
-		prevp = p;
-	}
-
-	/* Normal case: insert page block between two others.
-	 * The first block starts at 'prevp' and is 'thissize'.
-	 * The second block starts at 'p' and is 'nextsize'.
-	 * The block that has to come in between starts at
-	 * 'pageaddr' and is size 'size'.
-	 */
-	vm_assert(p != NO_MEM);
-	vm_assert(prevp != NO_MEM);
-	vm_assert(prevp < p);
-	vm_assert(p == nextaddr);
-
-#if SANITYCHECKS
-  {
-	vir_bytes prevpsize, prevpnext;
-	GET_PARAMS(prevp, prevpsize, prevpnext);
-	vm_assert(prevpsize == thissize);
-	vm_assert(prevpnext == p);
-
-	availbytes(&avail2, &chunks2);
-	vm_assert(avail1 == avail2);
-  }
-#endif
-
-	if(prevp + thissize == pageaddr) {
-		/* Special case: first block is contiguous with freed one. */
-		phys_bytes newsize = thissize + size;
-		SET_PARAMS(prevp, newsize, p);
-		pageaddr = prevp;
-		size = newsize;
+	/* try to merge with higher neighbour */
+	if((pr=addr_search(&addravl, pageno+npages, AVL_EQUAL))) {
+		USE(pr, pr->addr -= npages;
+			pr->size += npages;);
 	} else {
-		SET_PARAMS(prevp, thissize, pageaddr);
+		if(!SLABALLOC(pr))
+			vm_panic("alloc_pages: can't alloc", NO_NUM);
+#if SANITYCHECKS
+		memstats(&firstnodes, &firstpages, &largest);
+
+		wantnodes = firstnodes;
+		wantpages = firstpages + npages;
+
+		sanitycheck();
+#endif
+		vm_assert(npages > 0);
+		USE(pr, pr->addr = pageno;
+			 pr->size = npages;);
+		addr_insert(&addravl, pr);
+#if SANITYCHECKS
+		wantnodes++;
+#endif
 	}
 
-	/* The block has been inserted (and possibly merged with the
-	 * first one). Check if it has to be merged with the second one.
-	 */
+	addr_start_iter(&addravl, &iter, pr->addr, AVL_EQUAL);
+	p = addr_get_iter(&iter);
+	vm_assert(p);
+	vm_assert(p == pr);
 
-	if(pageaddr + size == p) {
-		phys_bytes nextsize, nextnextaddr;
-		/* Special case: freed block is contiguous with next one. */
-		GET_PARAMS(p, nextsize, nextnextaddr);
-		SET_PARAMS(pageaddr, size+nextsize, nextnextaddr);
-		FREERETURNCHECK;
-	} else {
-		SET_PARAMS(pageaddr, size, p);
-		FREERETURNCHECK;
+	addr_decr_iter(&iter);
+	if((p = addr_get_iter(&iter))) {
+		SLABSANE(p);
+		if(p->addr + p->size == pr->addr) {
+			USE(p, p->size += pr->size;);
+			addr_remove(&addravl, pr->addr);
+			SLABFREE(pr);
+#if SANITYCHECKS
+			wantnodes--;
+#endif
+		}
 	}
 
-	return;
+
+#if SANITYCHECKS
+	memstats(&finalnodes, &finalpages,  &largest);
+	sanitycheck();
+
+	vm_assert(finalnodes == wantnodes);
+	vm_assert(finalpages == wantpages);
+#endif
 }
-
 
 #define NR_DMA	16
 
@@ -850,3 +854,65 @@ PUBLIC int do_allocmem(message *m)
 	return OK;
 }
 
+/*===========================================================================*
+ *				do_allocmem				     *
+ *===========================================================================*/
+void printmemstats(void)
+{
+	int nodes, pages, largest;
+        memstats(&nodes, &pages, &largest);
+        printf("%d blocks, %d pages (%ukB) free, largest %d pages (%ukB)\n",
+                nodes, pages, (u32_t) pages * (VM_PAGE_SIZE/1024),
+		largest, (u32_t) largest * (VM_PAGE_SIZE/1024));
+}
+
+
+#if SANITYCHECKS
+
+/*===========================================================================*
+ *				usedpages_reset				     *
+ *===========================================================================*/
+void usedpages_reset(void)
+{
+	memset(pagemap, 0, sizeof(pagemap));
+}
+
+/*===========================================================================*
+ *				usedpages_add				     *
+ *===========================================================================*/
+int usedpages_add_f(phys_bytes addr, phys_bytes len, char *file, int line)
+{
+	pagerange_t *pr;
+	u32_t pagestart, pages;
+
+	if(!incheck)
+		return OK;
+
+	vm_assert(!(addr % VM_PAGE_SIZE));
+	vm_assert(!(len % VM_PAGE_SIZE));
+	vm_assert(len > 0);
+	vm_assert_range(addr, len);
+
+	pagestart = addr / VM_PAGE_SIZE;
+	pages = len / VM_PAGE_SIZE;
+
+	while(pages > 0) {
+		phys_bytes thisaddr;
+		vm_assert(pagestart > 0);
+		vm_assert(pagestart < MAXPAGES);
+		thisaddr = pagestart * VM_PAGE_SIZE;
+		if(GET_BIT(pagemap, pagestart)) {
+			int i;
+			printf("%s:%d: usedpages_add: addr 0x%lx reused.\n",
+				file, line, thisaddr);
+			return EFAULT;
+		}
+		SET_BIT(pagemap, pagestart);
+		pages--;
+		pagestart++;
+	}
+
+	return OK;
+}
+
+#endif

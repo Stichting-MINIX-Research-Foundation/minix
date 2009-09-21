@@ -1,5 +1,12 @@
 
 #include <archtypes.h>
+#include <minix/config.h>
+#include <minix/const.h>
+#include <minix/type.h>
+#include <minix/com.h>
+#include <minix/ipc.h>
+#include <minix/safecopies.h>
+#include <timers.h>
 
 struct vm_arch {
 	struct mem_map	vm_seg[NR_LOCAL_SEGS];	/* text, data, stack */

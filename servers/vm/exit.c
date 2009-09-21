@@ -13,6 +13,7 @@
 #include <minix/ipc.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/bitmap.h>
 
 #include <errno.h>
 #include <env.h>
@@ -24,8 +25,10 @@
 
 PUBLIC void free_proc(struct vmproc *vmp)
 {
-	vmp->vm_flags &= ~VMF_HASPT;
-	pt_free(&vmp->vm_pt);
+	if(vmp->vm_flags & VMF_HASPT) {
+		vmp->vm_flags &= ~VMF_HASPT;
+		pt_free(&vmp->vm_pt);
+	}
 	map_free_proc(vmp);
 	vmp->vm_regions = NULL;
 #if VMSTATS

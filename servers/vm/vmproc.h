@@ -4,6 +4,7 @@
 
 #include <pagetable.h>
 #include <arch_vmproc.h>
+#include <minix/bitmap.h>
 
 #include "vm.h"
 
@@ -30,6 +31,9 @@ struct vmproc {
 
 	/* Heap for brk() to extend. */
 	struct vir_region *vm_heap;
+
+#define VM_CALL_PRIV_MASK_SIZE BITMAP_CHUNKS(VM_NCALLS)
+	bitchunk_t vm_call_priv_mask[VM_CALL_PRIV_MASK_SIZE];
 
 	/* State for requests pending to be done to vfs on behalf of
 	 * this process.

@@ -12,17 +12,19 @@
 #define EXTERN
 #endif
 
-EXTERN struct vmproc vmproc[_NR_PROCS+1];
+#define VMP_SYSTEM	_NR_PROCS
+#define VMP_EXECTMP	_NR_PROCS+1
+#define VMP_NR		_NR_PROCS+2
+
+EXTERN struct vmproc vmproc[VMP_NR];
 
 #if SANITYCHECKS
 EXTERN int nocheck;
-u32_t data1[200];
-#define CHECKADDR 0
+EXTERN int incheck;
 EXTERN long vm_sanitychecklevel;
 #endif
 
-#define VMP_SYSTEM	_NR_PROCS
-
 /* vm operation mode state and values */
 EXTERN long vm_paged;
-EXTERN phys_bytes kernel_top_bytes;
+
+EXTERN int meminit_done;

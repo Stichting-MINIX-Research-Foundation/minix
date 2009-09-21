@@ -8,15 +8,15 @@
 #define ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
 #if SANITYCHECKS
-#define vm_assert(cond) do {				\
+#define vm_assert(cond) {				\
 	if(vm_sanitychecklevel > 0 && !(cond)) {	\
 		printf("VM:%s:%d: assert failed: %s\n",	\
 			__FILE__, __LINE__, #cond);	\
 		panic("VM", "assert failed", NO_NUM);	\
 	}						\
-	} while(0)
+	}
 #else
-#define vm_assert(cond)
+#define vm_assert(cond)	;
 #endif
 
 #define vm_panic(str, n) { char _pline[100]; \

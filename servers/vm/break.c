@@ -28,6 +28,7 @@
 #include <minix/ipc.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/bitmap.h>
 
 #include <errno.h>
 #include <env.h>

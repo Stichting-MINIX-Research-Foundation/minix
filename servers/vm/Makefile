@@ -4,7 +4,8 @@ SERVER = vm
 include /etc/make.conf
 
 OBJ = main.o alloc.o utility.o exec.o exit.o fork.o break.o \
-	signal.o vfs.o mmap.o slaballoc.o region.o pagefaults.o
+	signal.o vfs.o mmap.o slaballoc.o region.o pagefaults.o addravl.o \
+	physravl.o rs.o queryexit.o
 ARCHOBJ =  $(ARCH)/vm.o $(ARCH)/pagetable.o $(ARCH)/arch_pagefaults.o $(ARCH)/util.o 
 
 CPPFLAGS=-I../../kernel/arch/$(ARCH)/include -I$(ARCH)
@@ -13,7 +14,7 @@ CFLAGS = $(CPROFILE) $(CPPFLAGS)
 # build local binary
 
 all build install:	$(SERVER)
-	#install $(SERVER)
+	install -S 100k $(SERVER)
 
 $(SERVER):	$(OBJ) phony
 	cd $(ARCH) && $(MAKE)

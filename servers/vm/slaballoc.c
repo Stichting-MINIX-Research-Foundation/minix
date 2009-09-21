@@ -13,6 +13,8 @@
 #include <minix/ipc.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/bitmap.h>
+#include <minix/debug.h>
 
 #include <errno.h>
 #include <string.h>
@@ -27,7 +29,7 @@
 
 #define SLABSIZES 60
 
-#define ITEMSPERPAGE(s, bytes) (DATABYTES / (bytes))
+#define ITEMSPERPAGE(bytes) (DATABYTES / (bytes))
 
 #define ELBITS		(sizeof(element_t)*8)
 #define BITPAT(b)	(1UL << ((b) %  ELBITS))
@@ -37,9 +39,37 @@
 #define OFF(f, b) vm_assert(!GETBIT(f, b))
 #define ON(f, b)  vm_assert(GETBIT(f, b))
 
+#if SANITYCHECKS
+#define SLABDATAWRITABLE(data, wr) do {			\
+	vm_assert(data->sdh.writable == WRITABLE_NONE);	\
+	vm_assert(wr != WRITABLE_NONE);			\
+	vm_pagelock(data, 0);				\
+	data->sdh.writable = wr;			\
+} while(0)
+
+#define SLABDATAUNWRITABLE(data) do {			\
+	vm_assert(data->sdh.writable != WRITABLE_NONE);	\
+	data->sdh.writable = WRITABLE_NONE;		\
+	vm_pagelock(data, 1);				\
+} while(0)
+
+#define SLABDATAUSE(data, code) do {			\
+	SLABDATAWRITABLE(data, WRITABLE_HEADER);	\
+	code						\
+	SLABDATAUNWRITABLE(data);			\
+} while(0)
+
+#else
+
+#define SLABDATAWRITABLE(data, wr)
+#define SLABDATAUNWRITABLE(data)
+#define SLABDATAUSE(data, code) do { code } while(0)
+
+#endif
+
 #define GETBIT(f, b)	  (BITEL(f,b) &   BITPAT(b))
-#define SETBIT(f, b)   {OFF(f,b); (BITEL(f,b)|= BITPAT(b)); (f)->sdh.nused++; }
-#define CLEARBIT(f, b) {ON(f, b); (BITEL(f,b)&=~BITPAT(b)); (f)->sdh.nused--; (f)->sdh.freeguess = (b); }
+#define SETBIT(f, b)   {OFF(f,b); SLABDATAUSE(f, BITEL(f,b)|= BITPAT(b); (f)->sdh.nused++;); }
+#define CLEARBIT(f, b) {ON(f, b); SLABDATAUSE(f, BITEL(f,b)&=~BITPAT(b); (f)->sdh.nused--; (f)->sdh.freeguess = (b);); }
 
 #define MINSIZE 8
 #define MAXSIZE (SLABSIZES-1+MINSIZE)
@@ -56,28 +86,32 @@ typedef element_t elements_t[USEELEMENTS];
  * inconsistent state during a slaballoc() / slabfree(). So only do
  * our own sanity checks here, with SLABSANITYCHECK.
  */
-#if SANITYCHECKS
-#define SLABSANITYCHECK(l) if((l) <= vm_sanitychecklevel) { \
-	slab_sanitycheck(__FILE__, __LINE__); }
-#else
-#define SLABSANITYCHECK(l)
-#endif
+
+
+/* Special writable values. */
+#define WRITABLE_NONE	-2
+#define WRITABLE_HEADER	-1
 
 struct sdh {
+#if SANITYCHECKS
+	u32_t magic1;
+#endif
 	u8_t list;
 	u16_t nused;	/* Number of data items used in this slab. */
-#if SANITYCHECKS
-	u32_t magic;
-#endif
 	int freeguess;
 	struct slabdata *next, *prev;
 	elements_t usebits;
 	phys_bytes phys;
+#if SANITYCHECKS
+	int writable;	/* data item number or WRITABLE_* */
+	u32_t magic2;
+#endif
 };
 
 #define DATABYTES	(VM_PAGE_SIZE-sizeof(struct sdh))
 
-#define MAGIC 0x1f5b842f
+#define MAGIC1 0x1f5b842f
+#define MAGIC2 0x8bb5a420
 #define JUNK  0xdeadbeef
 #define NOJUNK 0xc0ffee
 
@@ -107,6 +141,7 @@ FORWARD _PROTOTYPE( int objstats, (void *, int, struct slabheader **, struct sla
 
 #define LH(sl, l) (sl)->list_head[l]
 
+/* move head of list l1 to list of l2 in slabheader sl. */
 #define MOVEHEAD(sl, l1, l2) {		\
 	struct slabdata *t;		\
 	vm_assert(LH(sl,l1));		\
@@ -114,28 +149,35 @@ FORWARD _PROTOTYPE( int objstats, (void *, int, struct slabheader **, struct sla
 	ADDHEAD(t, sl, l2);		\
 }
 
+/* remove head of list 'list' in sl, assign it unlinked to 'to'. */
 #define REMOVEHEAD(sl, list, to) {	\
-	(to) = LH(sl, list);		\
-	vm_assert(to);			\
-	LH(sl, list) = (to)->sdh.next;	\
-	if(LH(sl, list)) LH(sl, list) = NULL; \
-	vm_assert((to)->sdh.magic == MAGIC);\
-	vm_assert(!(to)->sdh.prev);		\
+	struct slabdata *dat;		\
+	dat = (to) = LH(sl, list);	\
+	vm_assert(dat);			\
+	LH(sl, list) = dat->sdh.next;	\
+	UNLINKNODE(dat);		\
 }
 
+/* move slabdata nw to slabheader sl under list number l. */
 #define ADDHEAD(nw, sl, l) {			\
-	vm_assert((nw)->sdh.magic == MAGIC);	\
-	(nw)->sdh.next = LH(sl, l);			\
-	(nw)->sdh.prev = NULL;			\
-	(nw)->sdh.list = l;				\
+	SLABDATAUSE(nw,				\
+		(nw)->sdh.next = LH(sl, l);	\
+		(nw)->sdh.prev = NULL;		\
+		(nw)->sdh.list = l;);		\
 	LH(sl, l) = (nw);			\
-	if((nw)->sdh.next) (nw)->sdh.next->sdh.prev = (nw);	\
+	if((nw)->sdh.next) {			\
+		SLABDATAUSE((nw)->sdh.next, \
+			(nw)->sdh.next->sdh.prev = (nw););	\
+	} \
 }
 
-#define UNLINKNODE(n)	{				\
-	if((f)->sdh.prev) (f)->sdh.prev->sdh.next = (f)->sdh.next;	\
-	if((f)->sdh.next) (f)->sdh.next->sdh.prev = (f)->sdh.prev;	\
-	}
+#define UNLINKNODE(node)	{				\
+	struct slabdata *next, *prev;				\
+	prev = (node)->sdh.prev;				\
+	next = (node)->sdh.next;				\
+	if(prev) { SLABDATAUSE(prev, prev->sdh.next = next;); }	\
+	if(next) { SLABDATAUSE(next, next->sdh.prev = prev;); }	\
+}
 
 struct slabdata *newslabdata(int list)
 {
@@ -151,11 +193,17 @@ struct slabdata *newslabdata(int list)
 
 	n->sdh.phys = p;
 #if SANITYCHECKS
-	n->sdh.magic = MAGIC;
+	n->sdh.magic1 = MAGIC1;
+	n->sdh.magic2 = MAGIC2;
 #endif
 	n->sdh.nused = 0;
 	n->sdh.freeguess = 0;
 	n->sdh.list = list;
+
+#if SANITYCHECKS
+	n->sdh.writable = WRITABLE_HEADER;
+	SLABDATAUNWRITABLE(n);
+#endif
 
 	return n;
 }
@@ -173,15 +221,17 @@ PRIVATE int checklist(char *file, int line,
 
 	while(n) {
 		int count = 0, i;
+		MYASSERT(n->sdh.magic1 == MAGIC1);
+		MYASSERT(n->sdh.magic2 == MAGIC2);
 		MYASSERT(n->sdh.list == l);
-		MYASSERT(n->sdh.magic == MAGIC);
+		MYASSERT(usedpages_add(n->sdh.phys, VM_PAGE_SIZE) == OK);
 		if(n->sdh.prev)
 			MYASSERT(n->sdh.prev->sdh.next == n);
 		else
 			MYASSERT(s->list_head[l] == n);
 		if(n->sdh.next) MYASSERT(n->sdh.next->sdh.prev == n);
 		for(i = 0; i < USEELEMENTS*8; i++)
-			if(i >= ITEMSPERPAGE(s, bytes))
+			if(i >= ITEMSPERPAGE(bytes))
 				MYASSERT(!GETBIT(n, i));
 			else
 				if(GETBIT(n,i))
@@ -211,21 +261,25 @@ PUBLIC void slab_sanitycheck(char *file, int line)
 /*===========================================================================*
  *				int slabsane				     *
  *===========================================================================*/
-PUBLIC int slabsane(void *mem, int bytes)
+PUBLIC int slabsane_f(char *file, int line, void *mem, int bytes)
 {
 	struct slabheader *s;
 	struct slabdata *f;
 	int i;
+
 	return (objstats(mem, bytes, &s, &f, &i) == OK);
 }
 #endif
+
+static int nojunkwarning = 0;
 
 /*===========================================================================*
  *				void *slaballoc				     *
  *===========================================================================*/
 PUBLIC void *slaballoc(int bytes)
 {
-	int i, n = 0;
+	int i;
+	int count = 0;
 	struct slabheader *s;
 	struct slabdata *firstused;
 
@@ -242,10 +296,10 @@ PUBLIC void *slaballoc(int bytes)
 		/* Make sure there is something on the freelist. */
 	SLABSANITYCHECK(SCL_DETAIL);
 		if(!LH(s, LIST_FREE)) {
-			struct slabdata *n = newslabdata(LIST_FREE);
+			struct slabdata *nd = newslabdata(LIST_FREE);
 	SLABSANITYCHECK(SCL_DETAIL);
-			if(!n) return NULL;
-			ADDHEAD(n, s, LIST_FREE);
+			if(!nd) return NULL;
+			ADDHEAD(nd, s, LIST_FREE);
 	SLABSANITYCHECK(SCL_DETAIL);
 		}
 
@@ -260,18 +314,21 @@ PUBLIC void *slaballoc(int bytes)
 	vm_assert(s);
 	firstused = LH(s, LIST_USED);
 	vm_assert(firstused);
-	vm_assert(firstused->sdh.magic == MAGIC);
+	vm_assert(firstused->sdh.magic1 == MAGIC1);
+	vm_assert(firstused->sdh.magic2 == MAGIC2);
+	vm_assert(firstused->sdh.nused < ITEMSPERPAGE(bytes));
 
-	for(i = firstused->sdh.freeguess; n < ITEMSPERPAGE(s, bytes); n++, i++) {
+	for(i = firstused->sdh.freeguess;
+		count < ITEMSPERPAGE(bytes); count++, i++) {
 	SLABSANITYCHECK(SCL_DETAIL);
-		i = i % ITEMSPERPAGE(s, bytes);
+		i = i % ITEMSPERPAGE(bytes);
 
 		if(!GETBIT(firstused, i)) {
 			struct slabdata *f;
 			char *ret;
 			SETBIT(firstused, i);
 	SLABSANITYCHECK(SCL_DETAIL);
-			if(firstused->sdh.nused == ITEMSPERPAGE(s, bytes)) {
+			if(firstused->sdh.nused == ITEMSPERPAGE(bytes)) {
 	SLABSANITYCHECK(SCL_DETAIL);
 				MOVEHEAD(s, LIST_USED, LIST_FULL);
 	SLABSANITYCHECK(SCL_DETAIL);
@@ -280,20 +337,21 @@ PUBLIC void *slaballoc(int bytes)
 			ret = ((char *) firstused->data) + i*bytes;
 
 #if SANITYCHECKS
-			f = (struct slabdata *) ((char *) ret - (vir_bytes) ret % VM_PAGE_SIZE);
-			if(f->sdh.magic != MAGIC) {
-				printf("slaballoc bogus pointer 0x%lx, "
-					"rounded 0x%lx, bad magic 0x%lx\n",
-					ret, f, f->sdh.magic);
-				vm_panic("slaballoc check failed", NO_NUM);
-			}
+			nojunkwarning++;
+			slabunlock(ret, bytes);
+			nojunkwarning--;
+			vm_assert(!nojunkwarning);
 			*(u32_t *) ret = NOJUNK;
+			slablock(ret, bytes);
 #endif
 			SLABSANITYCHECK(SCL_FUNCTIONS);
-			firstused->sdh.freeguess = i+1;
+			SLABDATAUSE(firstused, firstused->sdh.freeguess = i+1;);
 
 #if SANITYCHECKS
-			if(!slabsane(ret, bytes))
+	if(bytes >= SLABSIZES+MINSIZE) {
+		printf("slaballoc: odd, bytes %d?\n", bytes);
+	}
+			if(!slabsane_f(__FILE__, __LINE__, ret, bytes))
 				vm_panic("slaballoc: slabsane failed", NO_NUM);
 #endif
 
@@ -317,12 +375,16 @@ PUBLIC void *slaballoc(int bytes)
 PRIVATE int objstats(void *mem, int bytes,
 	struct slabheader **sp, struct slabdata **fp, int *ip)
 {
+#if SANITYCHECKS
 #define OBJSTATSCHECK(cond) \
 	if(!(cond)) { \
-		printf("VM:objstats: %s failed for ptr 0x%p, %d bytes\n", \
+		printf("VM: objstats: %s failed for ptr 0x%p, %d bytes\n", \
 			#cond, mem, bytes); \
 		return EINVAL; \
 	}
+#else
+#define OBJSTATSCHECK(cond)
+#endif
 
 	struct slabheader *s;
 	struct slabdata *f;
@@ -331,21 +393,19 @@ PRIVATE int objstats(void *mem, int bytes,
 	OBJSTATSCHECK((char *) mem >= (char *) VM_PAGE_SIZE);
 
 #if SANITYCHECKS
-	if(*(u32_t *) mem == JUNK) {
+	if(*(u32_t *) mem == JUNK && !nojunkwarning) {
 		util_stacktrace();
 		printf("VM: WARNING: JUNK seen in slab object\n");
 	}
 #endif
-
 	/* Retrieve entry in slabs[]. */
 	GETSLAB(bytes, s);
 
 	/* Round address down to VM_PAGE_SIZE boundary to get header. */
 	f = (struct slabdata *) ((char *) mem - (vir_bytes) mem % VM_PAGE_SIZE);
 
-#if SANITYCHECKS
-	OBJSTATSCHECK(f->sdh.magic == MAGIC);
-#endif
+	OBJSTATSCHECK(f->sdh.magic1 == MAGIC1);
+	OBJSTATSCHECK(f->sdh.magic2 == MAGIC2);
 	OBJSTATSCHECK(f->sdh.list == LIST_USED || f->sdh.list == LIST_FULL);
 
 	/* Make sure it's in range. */
@@ -379,21 +439,25 @@ PUBLIC void slabfree(void *mem, int bytes)
 
 	SLABSANITYCHECK(SCL_FUNCTIONS);
 
-#if SANITYCHECKS
-	if(*(u32_t *) mem == JUNK) {
-		printf("VM: WARNING: likely double free, JUNK seen\n");
-	}
-#endif
 	if(objstats(mem, bytes, &s, &f, &i) != OK) {
 		vm_panic("slabfree objstats failed", NO_NUM);
 	}
 
+#if SANITYCHECKS
+	if(*(u32_t *) mem == JUNK) {
+		printf("VM: WARNING: likely double free, JUNK seen\n");
+	}
+
+	slabunlock(mem, bytes);
+	*(u32_t *) mem = JUNK;
+	nojunkwarning++;
+	slablock(mem, bytes);
+	nojunkwarning--;
+	vm_assert(!nojunkwarning);
+#endif
+
 	/* Free this data. */
 	CLEARBIT(f, i);
-
-#if SANITYCHECKS
-	*(u32_t *) mem = JUNK;
-#endif
 
 	/* Check if this slab changes lists. */
 	if(f->sdh.nused == 0) {
@@ -404,7 +468,7 @@ PUBLIC void slabfree(void *mem, int bytes)
 			LH(s, LIST_USED) = f->sdh.next;
 		ADDHEAD(f, s, LIST_FREE);
 		SLABSANITYCHECK(SCL_DETAIL);
-	} else if(f->sdh.nused == ITEMSPERPAGE(s, bytes)-1) {
+	} else if(f->sdh.nused == ITEMSPERPAGE(bytes)-1) {
 		/* Now become USED; must've been FULL */
 		vm_assert(f->sdh.list == LIST_FULL);
 		UNLINKNODE(f);
@@ -418,6 +482,42 @@ PUBLIC void slabfree(void *mem, int bytes)
 	}
 
 	SLABSANITYCHECK(SCL_FUNCTIONS);
+
+	return;
+}
+
+/*===========================================================================*
+ *				void *slablock				     *
+ *===========================================================================*/
+PUBLIC void slablock(void *mem, int bytes)
+{
+	int i;
+	struct slabheader *s;
+	struct slabdata *f;
+
+	if(objstats(mem, bytes, &s, &f, &i) != OK)
+		vm_panic("slablock objstats failed", NO_NUM);
+
+	SLABDATAUNWRITABLE(f);
+
+	FIXME("verify new contents");
+
+	return;
+}
+
+/*===========================================================================*
+ *				void *slabunlock			     *
+ *===========================================================================*/
+PUBLIC void slabunlock(void *mem, int bytes)
+{
+	int i;
+	struct slabheader *s;
+	struct slabdata *f;
+
+	if(objstats(mem, bytes, &s, &f, &i) != OK)
+		vm_panic("slablock objstats failed", NO_NUM);
+
+	SLABDATAWRITABLE(f, i);
 
 	return;
 }

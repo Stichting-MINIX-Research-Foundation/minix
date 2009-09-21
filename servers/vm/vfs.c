@@ -16,6 +16,7 @@
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/safecopies.h>
+#include <minix/bitmap.h>
 
 #include <errno.h>
 #include <string.h>
