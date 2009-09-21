@@ -6,6 +6,7 @@ CFLAGS="-D_MINIX -D_POSIX_SOURCE -D__USG -I$Z"
 
 LIBRARIES=libc
 libc_FILES="
+	ftime.c
 	asctime.c
 	localtime.c
 	strftime.c
