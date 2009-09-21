@@ -49,6 +49,8 @@ all-ack: makefiles
 	cd util && $(MAKE) $@
 	mkdir -p obj-ack//./sysutil
 	cd sysutil && $(MAKE) $@
+	mkdir -p obj-ack//./sysvipc
+	cd sysvipc && $(MAKE) $@
 	mkdir -p obj-ack//./timers
 	cd timers && $(MAKE) $@
 	mkdir -p obj-ack//./i386
@@ -91,6 +93,8 @@ all-gnu: makefiles
 	cd util && $(MAKE) $@
 	mkdir -p obj-gnu/./sysutil
 	cd sysutil && $(MAKE) $@
+	mkdir -p obj-gnu/./sysvipc
+	cd sysvipc && $(MAKE) $@
 	mkdir -p obj-gnu/./timers
 	cd timers && $(MAKE) $@
 	mkdir -p obj-gnu/./i386
@@ -117,6 +121,7 @@ clean depend depend-ack depend-gnu:: makefiles
 	cd syslib && $(MAKE) $@
 	cd util && $(MAKE) $@
 	cd sysutil && $(MAKE) $@
+	cd sysvipc && $(MAKE) $@
 	cd timers && $(MAKE) $@
 	cd i386 && $(MAKE) $@
 	cd ack && $(MAKE) $@
@@ -138,6 +143,7 @@ makefiles: syscall/Makefile
 makefiles: syslib/Makefile
 makefiles: util/Makefile
 makefiles: sysutil/Makefile
+makefiles: sysvipc/Makefile
 makefiles: timers/Makefile
 makefiles: i386/Makefile
 makefiles: ack/Makefile
@@ -175,6 +181,8 @@ util/Makefile: util/Makefile.in
 	cd util && sh ../generate.sh ./util ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 sysutil/Makefile: sysutil/Makefile.in
 	cd sysutil && sh ../generate.sh ./sysutil ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
+sysvipc/Makefile: sysvipc/Makefile.in
+	cd sysvipc && sh ../generate.sh ./sysvipc ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 timers/Makefile: timers/Makefile.in
 	cd timers && sh ../generate.sh ./timers ../obj-ack/ ../obj-gnu && $(MAKE) makefiles
 i386/Makefile: i386/Makefile.in

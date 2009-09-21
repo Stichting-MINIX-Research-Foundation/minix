@@ -1,0 +1,10 @@
+# Makefile for lib/posix.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libc
+
+libc_FILES="ftok.c sem.c shm.c"
+
+TYPE=both
+
