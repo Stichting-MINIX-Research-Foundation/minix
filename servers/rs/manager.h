@@ -18,6 +18,7 @@
 #define MAX_IPC_LIST	    256		/* Max size of list for IPC target
 					 * process names
 					 */
+#define MAX_VM_LIST	    256
 
 /* Definition of the system process table. This table only has entries for
  * the servers and drivers, and thus is not directly indexed by slot number.
@@ -61,6 +62,8 @@ extern struct rproc {
 
   u32_t r_call_mask[MAX_NR_SYSTEM];
   char r_ipc_list[MAX_IPC_LIST];
+#define R_VM_CALL_SIZE BITMAP_CHUNKS(VM_NCALLS)
+  bitchunk_t r_vm[R_VM_CALL_SIZE];
 } rproc[NR_SYS_PROCS];
 
 /* Mapping for fast access to the system process table. */ 

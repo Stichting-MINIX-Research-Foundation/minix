@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <limits.h>
 #include <minix/config.h>
 #include <minix/com.h>
 #include <minix/const.h>
@@ -21,6 +22,7 @@
 #include <minix/rs.h>
 #include <minix/syslib.h>
 #include <minix/sysinfo.h>
+#include <minix/bitmap.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <configfile.h>
@@ -332,6 +334,7 @@ PRIVATE void fatal(char *fmt, ...)
 #define KW_CLASS	"class"
 #define KW_SYSTEM	"system"
 #define KW_IPC		"ipc"
+#define KW_VM		"vm"
 
 FORWARD void do_driver(config_t *cpe, config_t *config);
 
@@ -700,6 +703,7 @@ struct
 	{ "VMCTL",		SYS_VMCTL },
 	{ "PROFBUF",		SYS_PROFBUF },
 	{ "SYSCTL",		SYS_SYSCTL },
+	{ "INT86",		SYS_INT86 },
 	{ NULL,		0 }
 };
 
@@ -750,6 +754,48 @@ PRIVATE void do_ipc(config_t *cpe)
 	if (req_ipc)
 		fatal("do_ipc: req_ipc is set");
 	req_ipc= list;
+}
+
+struct
+{
+	char *label;
+	int call_nr;
+} vm_table[] =
+{
+	{ "REMAP",		VM_REMAP },
+	{ "UNREMAP",		VM_SHM_UNMAP },
+	{ "GETPHYS",		VM_GETPHYS },
+	{ "GETREFCNT",		VM_GETREF },
+	{ "QUERYEXIT",		VM_QUERY_EXIT },
+	{ "CTL",		VM_CTL },
+	{ NULL,			0 },
+};
+
+PRIVATE void do_vm(config_t *cpe)
+{
+	int i;
+
+	for (; cpe; cpe = cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_vm: unexpected sublist at %s:%d",
+			      cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_vm: unexpected string at %s:%d",
+			      cpe->file, cpe->line);
+		}
+
+		for (i = 0; vm_table[i].label != NULL; i++)
+			if (!strcmp(cpe->word, vm_table[i].label))
+				break;
+		if (vm_table[i].label == NULL)
+			fatal("do_vm: unknown call '%s' at %s:%d",
+				cpe->word, cpe->file, cpe->line);
+		SET_BIT(rs_start.rss_vm, vm_table[i].call_nr - VM_RQ_BASE);
+	}
 }
 
 PRIVATE void do_system(config_t *cpe)
@@ -881,6 +927,11 @@ PRIVATE void do_driver(config_t *cpe, config_t *config)
 		if (strcmp(cpe->word, KW_IPC) == 0)
 		{
 			do_ipc(cpe->next);
+			continue;
+		}
+		if (strcmp(cpe->word, KW_VM) == 0)
+		{
+			do_vm(cpe->next);
 			continue;
 		}
 

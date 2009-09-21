@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/vm.h>
 #include <minix/dmap.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
@@ -398,7 +399,17 @@ message *m_ptr;					/* request message pointer */
   rp->r_set_resources= 1;			/* new style, enforece
 						 * I/O resources
 						 */
-  
+  if (sizeof(rp->r_vm) == sizeof(rs_start.rss_vm) &&
+      sizeof(rp->r_vm[0]) == sizeof(rs_start.rss_vm[0]))
+  {
+	  memcpy(rp->r_vm, rs_start.rss_vm, sizeof(rp->r_vm));
+  }
+  else
+  {
+	  printf("RS: do_start: internal inconsistency: bad size of r_vm\n");
+	  memset(rp->r_vm, '\0', sizeof(rp->r_vm));
+  }
+
   /* All information was gathered. Now try to start the system service. */
   r = start_service(rp, 0, &ep);
   m_ptr->RS_ENDPOINT = ep;
@@ -639,7 +650,8 @@ PUBLIC void do_exit(message *m_ptr)
 			run_script(rp);
 		      else {
 		        start_service(rp, 0, &ep); /* direct restart */
-	  		m_ptr->RS_ENDPOINT = ep;
+			if(m_ptr)
+		  		m_ptr->RS_ENDPOINT = ep;
 		      }
 	      }
               else if (rp->r_flags & RS_EXECFAILED) {
@@ -679,7 +691,8 @@ rp->r_restarts= 0;
 		  else {
 		      printf("RS: restarting %s\n", rp->r_cmd);
 		      start_service(rp, 0, &ep);	/* direct restart */
-	  	      m_ptr->RS_ENDPOINT = ep;
+		      if(m_ptr)
+		  	      m_ptr->RS_ENDPOINT = ep;
 			/* Do this even if no I/O happens with the ioctl, in
 			 * order to disambiguate requests with DEV_IOCTL_S.
 			 */
@@ -783,7 +796,9 @@ endpoint_t *endpoint;
   char *file_only;
   int s, use_copy, slot_nr;
   struct priv *privp;
+  bitchunk_t *vm_mask;
   message m;
+  char * null_env = NULL;
 
   use_copy= (rp->r_exec != NULL);
   
@@ -813,9 +828,9 @@ endpoint_t *endpoint;
       cpf_reload();			/* Tell kernel about grant table  */
       if (!use_copy)
       {
-	execve(rp->r_argv[0], rp->r_argv, NULL);	/* POSIX execute */
+	execve(rp->r_argv[0], rp->r_argv, &null_env);	/* POSIX execute */
 	file_only = strrchr(rp->r_argv[0], '/') + 1;
-	execve(file_only, rp->r_argv, NULL);		/* POSIX execute */
+	execve(file_only, rp->r_argv, &null_env);		/* POSIX execute */
       }
       printf("RS: exec failed for %s: %d\n", rp->r_argv[0], errno);
       slot_nr= rp-rproc;
@@ -843,6 +858,7 @@ endpoint_t *endpoint;
   }
 
   privp= NULL;
+  vm_mask = NULL;
   if (rp->r_set_resources)
   {
 	init_privs(rp, &rp->r_priv);
@@ -850,6 +866,8 @@ endpoint_t *endpoint;
 
 	/* Inform the PCI server about the driver */
 	init_pci(rp, child_proc_nr_e);
+
+	vm_mask = &rp->r_vm[0];
   }
 
   /* Set the privilege structure for the child process to let is run.
@@ -861,6 +879,14 @@ endpoint_t *endpoint;
       if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
       else report("RS", "didn't kill pid", child_pid);
       return(s);					/* return error */
+  }
+
+  if ((s = vm_set_priv(child_proc_nr_e, vm_mask)) < 0) {
+	  report("RS", "vm_set_priv call failed", s);
+	  rp->r_flags |= RS_EXITING;
+	  if (child_pid > 0) kill(child_pid, SIGKILL);
+	  else report("RS", "didn't kill pid", child_pid);
+	  return (s);
   }
 
   s= ds_publish_u32(rp->r_label, child_proc_nr_e);
@@ -1034,6 +1060,7 @@ struct rproc *rp;
 	pid_t pid;
 	char *reason;
 	char incarnation_str[20];	/* Enough for a counter? */
+	char *envp[1] = { NULL };
 
 	if (rp->r_flags & RS_EXITING)
 		reason= "exit";
@@ -1071,7 +1098,7 @@ struct rproc *rp;
 		break;
 	case 0:
 		execle(rp->r_script, rp->r_script, rp->r_label, reason,
-			incarnation_str, NULL, NULL);
+			incarnation_str, NULL, envp);
 		printf("RS: run_script: execl '%s' failed: %s\n",
 			rp->r_script, strerror(errno));
 		exit(1);
