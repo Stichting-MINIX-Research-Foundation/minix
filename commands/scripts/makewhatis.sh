@@ -29,6 +29,7 @@ cd $1 || exit
 
 			sed -e 's/	/ /g
 				s/"NAME"/NAME/g
+				s/^\.Sh/\.SH/g
 				/^\.SH NAME/,/^\.SH /!d
 				/^\.SH /d
 				s/\\f.//g

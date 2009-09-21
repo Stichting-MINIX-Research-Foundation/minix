@@ -266,12 +266,9 @@ char *argv[];
 		if (blocks == 0) pexit("Can't open prototype file");
 	}
 	if (i == 0) {
-		i = blocks / 2;
-		if (blocks >= 20000) i = blocks / 3;
-		if (blocks >= 40000) i = blocks / 4;
-		if (blocks >= 60000) i = blocks / 5;
-		if (blocks >= 80000) i = blocks / 6;
-		if (blocks >= 100000) i = blocks / 7;
+		u32_t kb = div64u(mul64u(blocks, block_size), 1024);
+		i = kb / 2;
+		if (kb >= 100000) i = kb / 4;
 
 		/* round up to fill inode block */
 		i += inodes_per_block - 1;

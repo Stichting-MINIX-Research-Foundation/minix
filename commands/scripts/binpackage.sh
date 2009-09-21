@@ -60,7 +60,7 @@ fi
 
 echo " * Building package"
 echo "Minix package $dir built `date`." >$INFO
-( echo $INFO ; if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(src|tmp|log|adm|run)|/home|/etc/utmp|/var/(run|log))" ) | pax -w -d | bzip2 >$tarbz
+( echo $INFO ; if [ -f $PI ]; then echo $PI; fi; find / -cnewer $packagestart | egrep -v "^($srcdir|/(dev|tmp)|/usr/(src|tmp|log|adm|run)|/home|/etc/utmp|/var/(run|log|spool))" ) | pax -w -d | bzip2 >$tarbz
 rm -f $packagestart $findlist $tarcmd
 binsizes normal
 mv $tarbz $pdir

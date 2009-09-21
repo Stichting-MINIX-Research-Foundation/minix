@@ -104,6 +104,8 @@ ALL	= \
 	in.rshd \
 	installx \
 	intr \
+	ipcs \
+	ipcrm \
 	irdpd \
 	isoread \
 	join \
@@ -468,6 +470,14 @@ installx:	install.c	# Note: avoided confict with 'install' rule.
 
 intr:	intr.c
 	$(CCLD) -o $@ intr.c
+	@install -S 4kw $@
+
+ipcs:	ipcs.c
+	$(CCLD) -o $@ ipcs.c
+	@install -S 4kw $@
+
+ipcrm:	ipcrm.c
+	$(CCLD) -o $@ ipcrm.c
 	@install -S 4kw $@
 
 irdpd:	irdpd.c
@@ -983,6 +993,8 @@ install:	\
 	/bin/install \
 	/usr/bin/install \
 	/usr/bin/intr \
+	/usr/bin/ipcs \
+	/usr/bin/ipcrm \
 	/usr/bin/irdpd \
 	/usr/bin/isoread \
 		/usr/bin/isodir \
@@ -1336,6 +1348,12 @@ install:	\
 	install -cs -o root -m 4755 $< $@
 
 /usr/bin/intr:	intr
+	install -cs -o bin $< $@
+
+/usr/bin/ipcs:	ipcs
+	install -cs -o bin $< $@
+
+/usr/bin/ipcrm:	ipcrm
 	install -cs -o bin $< $@
 
 /usr/bin/irdpd:	irdpd

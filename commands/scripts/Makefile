@@ -42,6 +42,7 @@ usr:	\
 	/bin/setup \
 	/bin/netconf \
 	/usr/bin/binsizes \
+	/usr/bin/datasizes \
 	/usr/bin/rotate \
 	/usr/bin/floppysetup \
 	/usr/bin/packit \
@@ -147,6 +148,9 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/binsizes:	binsizes.sh
+	install -m 755 -c -o bin $? $@
+
+/usr/bin/datasizes:	datasizes.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/packit:	packit.sh

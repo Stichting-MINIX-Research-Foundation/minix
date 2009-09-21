@@ -521,7 +521,7 @@ void gnu_emit_instruction(asm86_t *a)
 
 		assert(a->args->operator == 'W' && isanumber(a->args->name));
 		n= strtoul(a->args->name, nil, 0);
-		for (s= 0; s <= 4 && (1 << s) < n; s++) {}
+		for (s= 0; s <= 16 && (1 << s) < n; s++) {}
 		gnu_printf(".align\t%u", s);
 	} else
 	if ((p= opcode2name(a->opcode)) != nil) {

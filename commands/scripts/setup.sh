@@ -436,7 +436,7 @@ installboot -m /dev/$primary /usr/mdec/masterboot >/dev/null || exit
 partition /dev/$primary 1 81:${ROOTSECTS}* 81:$homesize 81:0+ > /dev/null || exit
 
 echo "Creating /dev/$root for / .."
-mkfs -B $blocksizebytes /dev/$root || exit
+mkfs /dev/$root || exit
 
 if [ "$nohome" = 0 ]
 then
