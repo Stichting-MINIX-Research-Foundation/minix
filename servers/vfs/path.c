@@ -241,7 +241,7 @@ node_details_t *node;
   struct vnode *dir_vp;
   struct vmnt *vmp;
   struct lookup_res res;
-  
+
   /* Empty (start) path? */
   if (user_fullpath[0] == '\0') {
 	node->inode_nr = 0;
@@ -308,10 +308,18 @@ node_details_t *node;
 		dir_vp = 0;
 		/* Start node is now the mounted partition's root node */
 		for (vmp = &vmnt[0]; vmp != &vmnt[NR_MNTS]; ++vmp) {
-			if (vmp->m_mounted_on->v_inode_nr == res.inode_nr &&
-				vmp->m_mounted_on->v_fs_e == res.fs_e) {
+			if (vmp->m_dev != NO_DEV) {
+				if(vmp->m_mounted_on &&
+					vmp->m_mounted_on->v_inode_nr ==
+					res.inode_nr &&
+					vmp->m_mounted_on->v_fs_e == res.fs_e) {
 				dir_vp = vmp->m_root_node;
+				if(!dir_vp) {
+					panic(__FILE__,
+						"vfs: root_node NULL", NO_NUM);
+				}
 				break;
+			   }
 			}
 		}
 		if (!dir_vp) {

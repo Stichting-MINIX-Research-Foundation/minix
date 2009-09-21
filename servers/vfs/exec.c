@@ -104,8 +104,6 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
     /* Fetch the stack from the user before destroying the old core image. */
     if (frame_len > ARG_MAX)
     {
-        printf("pm_exec: bad frame_len\n");
-printf("return at %s, %d\n", __FILE__, __LINE__);
         return(ENOMEM);	/* stack too big */
     }
     r = sys_datacopy(proc_e, (vir_bytes) frame,
@@ -210,7 +208,7 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
             progname, new_uid, new_gid, &stack_top, &load_text, &allow_setuid);
     if (r != OK)
     {
-        printf("pm_exec: exec_newmap failed: %d\n", r);
+        printf("VFS: pm_exec: exec_newmem failed: %d\n", r);
         put_vnode(vp);
         return r;
     }
@@ -223,7 +221,7 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
             proc_e, (vir_bytes) vsp, (phys_bytes)frame_len);
     if (r != OK) {
 	printf("vfs: datacopy returns %d trying to copy to %p\n", r, vsp);
-	panic(__FILE__,"pm_exec stack copy err on", proc_e);
+	return r;
     }
 
     off = hdrlen;
@@ -591,7 +589,11 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
   char buf[1024];
 
   /* Make sure that the file is big enough */
-  if (vp->v_size < off+seg_bytes) return EIO;
+  if (vp->v_size < off+seg_bytes) {
+	printf("VFS: read_seg: file isn't big enough (size %ld, need %ld)\n",
+		vp->v_size, off+seg_bytes);
+	return EIO;
+  }
 
   if (seg != D)
   {
@@ -612,7 +614,10 @@ printf("read_seg for user %d, seg %d: buf 0x%x, size %d, pos %d\n",
 		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index,
 			cvul64(off+o), READING, FS_PROC_NR, buf, n, &new_pos,
 			&cum_io_incr);
-		if (r != OK) return r;
+		if (r != OK) {
+			printf("VFS: read_seg: req_readwrite failed (text)\n");
+			return r;
+		}
 
 		if (cum_io_incr != n)
 		{
@@ -623,8 +628,10 @@ printf("read_seg for user %d, seg %d: buf 0x%x, size %d, pos %d\n",
 
 		r= sys_vircopy(FS_PROC_NR, D, (vir_bytes)buf, proc_e, seg, o,
 			n);
-		if (r != OK)
+		if (r != OK) {
+			printf("VFS: read_seg: copy failed (text)\n");
 			return r;
+		}
 
 		o += n;
 	}
@@ -639,7 +646,10 @@ printf("read_seg for user %d, seg %d: buf 0x%x, size %d, pos %d\n",
   /* Issue request */
   r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, cvul64(off),
 	READING, proc_e, 0, seg_bytes, &new_pos, &cum_io_incr);
-  if (r != OK) return r;
+  if (r != OK) {
+	printf("VFS: read_seg: req_readwrite failed (data)\n");
+	return r;
+  }
   
   if (r == OK && cum_io_incr != seg_bytes)
       printf("VFSread_seg segment has not been read properly by exec() \n");

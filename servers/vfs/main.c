@@ -26,6 +26,7 @@
 #include <minix/const.h>
 #include <minix/endpoint.h>
 #include <minix/safecopies.h>
+#include <minix/debug.h>
 #include "file.h"
 #include "fproc.h"
 #include "param.h"
@@ -58,6 +59,10 @@ PUBLIC int main()
   fs_init();
 
   SANITYCHECK;
+
+#if DO_SANITYCHECKS
+  FIXME("VFS: DO_SANITYCHECKS is on");
+#endif
 
   /* This is the main loop that gets work, processes it, and sends replies. */
   while (TRUE) {
@@ -285,9 +290,14 @@ PRIVATE void get_work()
 	continue;
     }
     if(who_p >= 0 && fproc[who_p].fp_endpoint != who_e) {
-    	printf("FS: receive endpoint inconsistent (%d, %d, %d).\n",
-		who_e, fproc[who_p].fp_endpoint, who_e);
+	if(fproc[who_p].fp_endpoint == NONE) { 
+		printf("slot unknown even\n");
+	}
+    	printf("FS: receive endpoint inconsistent (source %d, who_p %d, stored ep %d, who_e %d).\n",
+		m_in.m_source, who_p, fproc[who_p].fp_endpoint, who_e);
+#if 0
 	panic(__FILE__, "FS: inconsistent endpoint ", NO_NUM);
+#endif
 	continue;
     }
     call_nr = m_in.m_type;

@@ -126,7 +126,11 @@ mode_t *new_modep;
     m.REQ_INODE_NR = inode_nr;
     m.REQ_UID = fp->fp_effuid;
     m.REQ_GID = fp->fp_effgid;
+    if (newuid == -1)
+        newuid = fp->fp_effuid;
     m.REQ_NEW_UID = newuid;
+    if (newgid == -1)
+        newgid = fp->fp_effgid;
     m.REQ_NEW_GID = newgid;
 
     /* Send/rec request */
