@@ -95,7 +95,8 @@ int main(int ac, char **av)
 	      }
 
 	  }
-	fclose(fp);
+	if(fp) 
+		fclose(fp);
 
 	sem_id_arr = (int*)malloc(sizeof(int)*MAXIDS);
 
