@@ -14,6 +14,8 @@ libc_FILES=" \
 	_getdents.c \
 	_getdma.c \
 	_getnpid.c \
+	_getnuid.c \
+	_getngid.c \
 	_getnprocnr.c \
 	_getpprocnr.c \
 	_getprocnr.c \
@@ -29,6 +31,8 @@ libc_FILES=" \
 	_svrctl.c \
 	_sysuname.c \
 	_vm_dmacalls.c \
+	_vm_set_priv.c \
+	_vm_query_exit.c \
 	asynchio.c \
 	basename.c \
 	bcmp.c \
@@ -62,6 +66,7 @@ libc_FILES=" \
 	lrand.c \
 	lsearch.c \
 	memccpy.c \
+	minix_rs.c \
 	mstats.c \
 	mtab.c \
 	nlist.c \

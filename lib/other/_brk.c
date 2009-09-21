@@ -20,7 +20,7 @@ char *addr;
   message m;
 
   if (addr != _brksize) {
-	m.m1_p1 = addr;
+	m.PMBRK_ADDR = addr;
 	if (_syscall(MM, BRK, &m) < 0) return(-1);
 	_brksize = m.m2_p1;
   }
