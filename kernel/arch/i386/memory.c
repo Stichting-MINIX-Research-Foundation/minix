@@ -19,8 +19,6 @@
 #include "../../proto.h"
 #include "../../debug.h"
 
-#include "sha1.h"
-
 PRIVATE int psok = 0;
 
 #define PROCPDEPTR(pr, pi) ((u32_t *) ((u8_t *) vm_pagedirs +\
