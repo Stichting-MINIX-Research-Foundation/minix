@@ -14,6 +14,7 @@
 #include <minix/dmap.h>
 #include <minix/ds.h>
 #include <minix/endpoint.h>
+#include <minix/vm.h>
 #include <minix/rs.h>
 #include <lib.h>
 
@@ -1420,3 +1421,42 @@ int endpoint;
 		return;
 	}
 }
+
+/*===========================================================================*
+ *				do_lookup				     *
+ *===========================================================================*/
+PUBLIC int do_lookup(m_ptr)
+message *m_ptr;
+{
+	static char namebuf[100];
+	int len, r;
+	struct rproc *rrp;
+
+	len = m_ptr->RS_NAME_LEN;
+
+	if(len < 2 || len >= sizeof(namebuf)) {
+		printf("RS: len too weird (%d)\n", len);
+		return EINVAL;
+	}
+
+	if((r=sys_vircopy(m_ptr->m_source, D, (vir_bytes) m_ptr->RS_NAME,
+		SELF, D, (vir_bytes) namebuf, len)) != OK) {
+		printf("RS: name copy failed\n");
+		return r;
+
+	}
+
+	namebuf[len] = '\0';
+
+	for (rrp=BEG_RPROC_ADDR; rrp<END_RPROC_ADDR; rrp++) {
+		if (!(rrp->r_flags & RS_IN_USE))
+			continue;
+		if (!strcmp(rrp->r_label, namebuf)) {
+			m_ptr->RS_ENDPOINT = rrp->r_proc_nr_e;
+			return OK;
+		}
+	}
+
+	return ESRCH;
+}
+

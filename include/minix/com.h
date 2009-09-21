@@ -636,7 +636,7 @@
 						 * arguments are passed in 
 						 * a struct rs_start
 						 */
-#define RS_LOOKUP	(DS_RQ_BASE + 8)	/* lookup server name */
+#define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */

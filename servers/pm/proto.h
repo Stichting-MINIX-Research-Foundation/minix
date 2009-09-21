@@ -90,6 +90,8 @@ _PROTOTYPE( int do_sigprocmask, (void)					);
 _PROTOTYPE( int do_sigreturn, (void)					);
 _PROTOTYPE( int do_sigsuspend, (void)					);
 _PROTOTYPE( void check_pending, (struct mproc *rmp)			);
+_PROTOTYPE( int, vm_notify_sig_wrapper(endpoint_t ep)			); 
+
 
 /* time.c */
 _PROTOTYPE( int do_stime, (void)					);

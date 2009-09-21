@@ -14,6 +14,7 @@ _PROTOTYPE( int do_down, (message *m));
 _PROTOTYPE( int do_refresh, (message *m));
 _PROTOTYPE( int do_rescue, (message *m));
 _PROTOTYPE( int do_restart, (message *m));
+_PROTOTYPE( int do_lookup, (message *m));
 _PROTOTYPE( int do_shutdown, (message *m));
 _PROTOTYPE( void do_period, (message *m));
 _PROTOTYPE( void do_exit, (message *m));

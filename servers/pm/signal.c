@@ -306,7 +306,7 @@ PUBLIC int do_pause()
   return(SUSPEND);
 }
 
-PRIVATE vm_notify_sig_wrapper(endpoint_t ep)
+PUBLIC vm_notify_sig_wrapper(endpoint_t ep)
 {
 	/* get IPC's endpoint,
 	 * the reason that we directly get the endpoint
