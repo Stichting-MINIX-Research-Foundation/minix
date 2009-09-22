@@ -10,6 +10,7 @@
 
 #include "inc.h"
 #include "../mfs/const.h"
+#include "../vfs/const.h"
 #include "../vfs/fproc.h"
 #include "../vfs/dmap.h"
 #include <minix/dmap.h>
@@ -34,14 +35,18 @@ PUBLIC void fproc_dmp()
   	fp = &fproc[i];
   	if (fp->fp_pid <= 0) continue;
   	if (++n > 22) break;
-  	printf("%3d  %4d  %2d/%d  0x%05x %2d (%d)  %2d (%d)  %3d   %3d %3d %4d\n",
+  	printf("%3d  %4d  %2d/%d  0x%05x %2d (%d)  %2d (%d)  %3d   %3d %3d ",
   		i, fp->fp_pid, 
   		((fp->fp_tty>>MAJOR)&BYTE), ((fp->fp_tty>>MINOR)&BYTE), 
   		fp->fp_umask,
   		fp->fp_realuid, fp->fp_effuid, fp->fp_realgid, fp->fp_effgid,
   		fp->fp_sesldr,
-  		fp->fp_suspended, fp->fp_revived, fp->fp_task
+  		fp->fp_blocked_on, fp->fp_revived
   	);
+	if (fp->fp_blocked_on == FP_BLOCKED_ON_OTHER)
+		printf("%4d\n", fp->fp_task);
+	else
+		printf(" nil\n");
   }
   if (i >= NR_PROCS) i = 0;
   else printf("--more--\r");

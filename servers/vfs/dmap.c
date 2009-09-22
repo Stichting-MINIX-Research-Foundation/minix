@@ -382,7 +382,7 @@ PUBLIC void build_dmap()
 /*===========================================================================*
  *				dmap_driver_match	 		     *
  *===========================================================================*/ 
-PUBLIC int dmap_driver_match(int proc, int major)
+PUBLIC int dmap_driver_match(endpoint_t proc, int major)
 {
 	if (major < 0 || major >= NR_DEVICES) return(0);
 	if(dmap[major].dmap_driver != NONE && dmap[major].dmap_driver == proc)

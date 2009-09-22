@@ -230,8 +230,7 @@ int notouch;			/* check only */
 /*===========================================================================*
  *				suspend					     *
  *===========================================================================*/
-PUBLIC void suspend(task)
-int task;			/* who is proc waiting for? (PIPE = pipe) */
+PUBLIC void suspend(int why)
 {
 /* Take measures to suspend the processing of the present system call.
  * Store the parameters to be used upon resuming in the process table.
@@ -241,30 +240,41 @@ int task;			/* who is proc waiting for? (PIPE = pipe) */
  */
 
 #if DO_SANITYCHECKS
-  if (task == XPIPE)
-	panic(__FILE__, "suspend: called for XPIPE", NO_NUM);
+  if (why == FP_BLOCKED_ON_PIPE)
+	panic(__FILE__, "suspend: called for FP_BLOCKED_ON_PIPE", NO_NUM);
 
-  if(fp->fp_suspended == SUSPENDED)
+  if(fp_is_blocked(fp))
 	panic(__FILE__, "suspend: called for suspended process", NO_NUM);
+  
+  if(why == FP_BLOCKED_ON_NONE)
+	panic(__FILE__, "suspend: called for FP_BLOCKED_ON_NONE", NO_NUM);
 #endif
 
-  if (task == XPOPEN) susp_count++;/* #procs susp'ed on pipe*/
-  fp->fp_suspended = SUSPENDED;
+  if (why == FP_BLOCKED_ON_POPEN)
+	  /* #procs susp'ed on pipe*/
+	  susp_count++;
+
+  fp->fp_blocked_on = why;
   assert(fp->fp_grant == GRANT_INVALID || !GRANT_VALID(fp->fp_grant));
   fp->fp_fd = m_in.fd << 8 | call_nr;
-  if(task == NONE)
-	panic(__FILE__,"suspend on NONE",NO_NUM);
-  fp->fp_task = -task;
   fp->fp_flags &= ~SUSP_REOPEN;			/* Clear this flag. The caller
 						 * can set it when needed.
 						 */
-  if (task == XLOCK) {
+  if (why == FP_BLOCKED_ON_LOCK) {
 	fp->fp_buffer = (char *) m_in.name1;	/* third arg to fcntl() */
 	fp->fp_nbytes = m_in.request;		/* second arg to fcntl() */
   } else {
 	fp->fp_buffer = m_in.buffer;		/* for reads and writes */
 	fp->fp_nbytes = m_in.nbytes;
   }
+}
+
+PUBLIC void wait_for(endpoint_t who)
+{
+	if(who == NONE || who == ANY)
+		panic(__FILE__,"suspend on NONE or ANY",NO_NUM);
+	suspend(FP_BLOCKED_ON_OTHER);
+	fp->fp_task = who;
 }
 
 /*===========================================================================*
@@ -283,15 +293,14 @@ size_t size;
  * The SUSPEND pseudo error should be returned after calling suspend().
  */
 #if DO_SANITYCHECKS
-  if(fp->fp_suspended == SUSPENDED)
+  if(fp_is_blocked(fp))
 	panic(__FILE__, "pipe_suspend: called for suspended process", NO_NUM);
 #endif
 
   susp_count++;					/* #procs susp'ed on pipe*/
-  fp->fp_suspended = SUSPENDED;
+  fp->fp_blocked_on = FP_BLOCKED_ON_PIPE;
   assert(!GRANT_VALID(fp->fp_grant));
   fp->fp_fd = (fd_nr << 8) | ((rw_flag == READING) ? READ : WRITE);
-  fp->fp_task = -XPIPE;
   fp->fp_buffer = buf;		
   fp->fp_nbytes = size;
 }
@@ -299,7 +308,7 @@ size_t size;
 /*===========================================================================*
  *				unsuspend_by_endpt			     *
  *===========================================================================*/
-PUBLIC void unsuspend_by_endpt(int proc_e)
+PUBLIC void unsuspend_by_endpt(endpoint_t proc_e)
 {
   struct fproc *rp;
   int client = 0;
@@ -309,7 +318,7 @@ PUBLIC void unsuspend_by_endpt(int proc_e)
    */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++, client++)
 	if(rp->fp_pid != PID_FREE &&
-	   rp->fp_suspended == SUSPENDED && rp->fp_task == -proc_e) {
+	   rp->fp_blocked_on == FP_BLOCKED_ON_OTHER && rp->fp_task == proc_e) {
 		revive(rp->fp_endpoint, EAGAIN);
 	}
 
@@ -362,7 +371,7 @@ int count;			/* max number of processes to release */
 
   /* Search the proc table. */
   for (rp = &fproc[0]; rp < &fproc[NR_PROCS] && count > 0; rp++) {
-	if (rp->fp_pid != PID_FREE && rp->fp_suspended == SUSPENDED &&
+	if (rp->fp_pid != PID_FREE && fp_is_blocked(rp) &&
 			rp->fp_revived == NOT_REVIVING &&
 			(rp->fp_fd & BYTE) == call_nr &&
 			rp->fp_filp[rp->fp_fd>>8]->filp_vno == vp) {
@@ -386,7 +395,7 @@ int returned;			/* if hanging on task, how many bytes read */
  * is the way it is eventually released.
  */
   register struct fproc *rfp;
-  register int task;
+  int blocked_on;
   int fd_nr, proc_nr;
   struct filp *fil_ptr;
 
@@ -394,22 +403,23 @@ int returned;			/* if hanging on task, how many bytes read */
 	return;
 
   rfp = &fproc[proc_nr];
-  if (rfp->fp_suspended == NOT_SUSPENDED || rfp->fp_revived == REVIVING)return;
+  if (!fp_is_blocked(rfp) || rfp->fp_revived == REVIVING)
+	  return;
 
   /* The 'reviving' flag only applies to pipes.  Processes waiting for TTY get
    * a message right away.  The revival process is different for TTY and pipes.
    * For select and TTY revival, the work is already done, for pipes it is not:
    *  the proc must be restarted so it can try again.
    */
-  task = -rfp->fp_task;
-  if (task == XPIPE || task == XLOCK) {
+  blocked_on = rfp->fp_blocked_on;
+  if (blocked_on == FP_BLOCKED_ON_PIPE || blocked_on == FP_BLOCKED_ON_LOCK) {
 	/* Revive a process suspended on a pipe or lock. */
 	rfp->fp_revived = REVIVING;
 	reviving++;		/* process was waiting on pipe or lock */
   }
-  else if (task == XDOPEN)
+  else if (blocked_on == FP_BLOCKED_ON_DOPEN)
   {
-	rfp->fp_suspended = NOT_SUSPENDED;
+	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	fd_nr= rfp->fp_fd>>8;
 	if (returned < 0)
 	{
@@ -430,10 +440,11 @@ int returned;			/* if hanging on task, how many bytes read */
 		reply(proc_nr_e, fd_nr);
   }
   else {
-	rfp->fp_suspended = NOT_SUSPENDED;
-	if (task == XPOPEN) /* process blocked in open or create */
+	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
+	if (blocked_on == FP_BLOCKED_ON_POPEN)
+		/* process blocked in open or create */
 		reply(proc_nr_e, rfp->fp_fd>>8);
-	else if (task == XSELECT) {
+	else if (blocked_on == FP_BLOCKED_ON_SELECT) {
 		reply(proc_nr_e, returned);
 	}
 	else {
@@ -468,7 +479,7 @@ int proc_nr_e;
  */
 
   register struct fproc *rfp;
-  int proc_nr_p, task, fild, status = EINTR;
+  int proc_nr_p, blocked_on, fild, status = EINTR;
   struct filp *f;
   dev_t dev;
   message mess;
@@ -480,9 +491,9 @@ int proc_nr_e;
   }
 
   rfp = &fproc[proc_nr_p];
-  if (rfp->fp_suspended == NOT_SUSPENDED)
+  if (!fp_is_blocked(rfp))
 	return;
-  task = -rfp->fp_task;
+  blocked_on = rfp->fp_blocked_on;
 
   if (rfp->fp_revived == REVIVING)
   {
@@ -492,25 +503,25 @@ int proc_nr_e;
   }
 
 
-  switch (task) {
-	case XPIPE:		/* process trying to read or write a pipe */
+  switch (blocked_on) {
+	case FP_BLOCKED_ON_PIPE:/* process trying to read or write a pipe */
 		break;
 
-	case XLOCK:		/* process trying to set a lock with FCNTL */
+	case FP_BLOCKED_ON_LOCK:/* process trying to set a lock with FCNTL */
 		break;
 
-	case XSELECT:		/* process blocking on select() */
+	case FP_BLOCKED_ON_SELECT:/* process blocking on select() */
 		select_forget(proc_nr_e);
 		break;
 
-	case XPOPEN:		/* process trying to open a fifo */
+	case FP_BLOCKED_ON_POPEN:		/* process trying to open a fifo */
 		break;
 
-	case XDOPEN:		/* process trying to open a device */
+	case FP_BLOCKED_ON_DOPEN:/* process trying to open a device */
 		/* Don't cancel OPEN. Just wait until the open completes. */
 		return;	
 
-	default:		/* process trying to do device I/O (e.g. tty)*/
+	case FP_BLOCKED_ON_OTHER:		/* process trying to do device I/O (e.g. tty)*/
 		if (rfp->fp_flags & SUSP_REOPEN)
 		{
 			/* Process is suspended while waiting for a reopen.
@@ -534,7 +545,7 @@ int proc_nr_e;
 		mess.COUNT = (rfp->fp_fd & BYTE) == READ ? R_BIT : W_BIT;
 		mess.m_type = CANCEL;
 		fp = rfp;	/* hack - ctty_io uses fp */
-		(*dmap[(dev >> MAJOR) & BYTE].dmap_io)(task, &mess);
+		(*dmap[(dev >> MAJOR) & BYTE].dmap_io)(rfp->fp_task, &mess);
 		status = mess.REP_STATUS;
 		if (status == SUSPEND)
 			return;		/* Process will be revived at a
@@ -549,11 +560,16 @@ int proc_nr_e;
 			} 
 			rfp->fp_grant = GRANT_INVALID;
 		}
+		break;
+	default :
+		panic(__FILE__,"FS: unknown value", blocked_on);
   }
 
-  rfp->fp_suspended = NOT_SUSPENDED;
+  rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 
-  if ((task == XPIPE || task == XPOPEN) && !wasreviving) {
+  if ((blocked_on == FP_BLOCKED_ON_PIPE ||
+			blocked_on == FP_BLOCKED_ON_POPEN) &&
+		  	!wasreviving) {
 	susp_count--;
   }
 
@@ -627,13 +643,9 @@ PUBLIC int check_pipe(void)
         for (rfp=&fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
                 if (rfp->fp_pid == PID_FREE)
                         continue;
-		if(rfp->fp_suspended != SUSPENDED &&
-			rfp->fp_suspended != NOT_SUSPENDED) {
-			printf("check_pipe: %d invalid suspended value 0x%x\n",
-				rfp->fp_endpoint, rfp->fp_suspended);
-			return 0;
-		}
-		if(rfp->fp_suspended == SUSPENDED && rfp->fp_revived != REVIVING && (-rfp->fp_task == XPIPE || -rfp->fp_task == XPOPEN)) {
+		if(rfp->fp_revived != REVIVING &&
+				(rfp->fp_blocked_on == FP_BLOCKED_ON_PIPE ||
+				 rfp->fp_blocked_on == FP_BLOCKED_ON_POPEN)) {
 			mycount++;
 		}
         }

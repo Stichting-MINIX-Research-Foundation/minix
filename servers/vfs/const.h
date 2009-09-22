@@ -10,11 +10,17 @@
 #define SYS_UID  ((uid_t) 0)	/* uid_t for processes MM and INIT */
 #define SYS_GID  ((gid_t) 0)	/* gid_t for processes MM and INIT */
 
-#define XPIPE   (-NR_TASKS-1)	/* used in fp_task when susp'd on pipe */
-#define XLOCK   (-NR_TASKS-2)	/* used in fp_task when susp'd on lock */
-#define XPOPEN  (-NR_TASKS-3)	/* used in fp_task when susp'd on pipe open */
-#define XSELECT (-NR_TASKS-4)	/* used in fp_task when susp'd on select */
-#define XDOPEN  (-NR_TASKS-5)	/* used in fp_task when susp'd on device open */
+#define FP_BLOCKED_ON_NONE	0 /* not blocked */
+#define FP_BLOCKED_ON_PIPE	1 /* susp'd on pipe */
+#define FP_BLOCKED_ON_LOCK	2 /* susp'd on lock */
+#define FP_BLOCKED_ON_POPEN	3 /* susp'd on pipe open */
+#define FP_BLOCKED_ON_SELECT	4 /* susp'd on select */
+#define FP_BLOCKED_ON_DOPEN	5 /* susp'd on device open */
+#define FP_BLOCKED_ON_OTHER	6 /* blocked on other process, check 
+				     fp_task to find out */
+
+/* test if the process is blocked on something */
+#define fp_is_blocked(fp)	((fp)->fp_blocked_on != FP_BLOCKED_ON_NONE)
 
 #define DUP_MASK        0100	/* mask to distinguish dup2 from dup */
 

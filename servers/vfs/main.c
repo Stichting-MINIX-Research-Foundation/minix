@@ -48,7 +48,7 @@ FORWARD _PROTOTYPE( void service_pm, (void)				);
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
-PUBLIC int main()
+PUBLIC int main(void)
 {
 /* This is the main program of the file system.  The main loop consists of
  * three major activities: getting new work, processing the work, and sending
@@ -145,8 +145,8 @@ PUBLIC int main()
 	super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
 #if DO_SANITYCHECKS
-	if(fp->fp_suspended != NOT_SUSPENDED) {
-		printf("VFS: requester %d call %d: not not suspended\n",
+	if(fp_is_blocked(fp)) {
+		printf("VFS: requester %d call %d: suspended\n",
 			who_e, call_nr);
 		panic(__FILE__, "requester suspended", NO_NUM);
 	}
@@ -246,7 +246,8 @@ PRIVATE void get_work()
 			m_in.fd = (rp->fp_fd >>8) & BYTE;
 			m_in.buffer = rp->fp_buffer;
 			m_in.nbytes = rp->fp_nbytes;
-			rp->fp_suspended = NOT_SUSPENDED; /*no longer hanging*/
+			/*no longer hanging*/
+			rp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 			rp->fp_revived = NOT_REVIVING;
 			reviving--;
 			/* This should be a pipe I/O, not a device I/O.
@@ -254,7 +255,7 @@ PRIVATE void get_work()
 			 */
 			assert(!GRANT_VALID(rp->fp_grant));
 
-			if (rp->fp_task == -XPIPE)
+			if (rp->fp_blocked_on == FP_BLOCKED_ON_PIPE)
 			{
 				fp= rp;
 				fd_nr= (rp->fp_fd >> 8);
@@ -282,7 +283,11 @@ PRIVATE void get_work()
     who_e = m_in.m_source;
     who_p = _ENDPOINT_P(who_e);
 
-    if(who_p < -NR_TASKS || who_p >= NR_PROCS)
+    /* 
+     * negative who_p is never used to access the fproc array. Negative numbers
+     * (kernel tasks) are treated in a special way
+     */
+    if(who_p >= (int)(sizeof(fproc) / sizeof(struct fproc)))
      	panic(__FILE__,"receive process out of range", who_p);
     if(who_p >= 0 && fproc[who_p].fp_endpoint == NONE) {
     	printf("FS: ignoring request from %d, endpointless slot %d (%d)\n",
@@ -362,7 +367,7 @@ PRIVATE void fs_init()
 	rfp->fp_effgid = (gid_t) SYS_GID;
 	rfp->fp_umask = ~0;
 	rfp->fp_grant = GRANT_INVALID;
-	rfp->fp_suspended = NOT_SUSPENDED;
+	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	rfp->fp_revived = NOT_REVIVING;
    
   } while (TRUE);			/* continue until process NONE */
@@ -497,7 +502,6 @@ PRIVATE void init_root()
 PRIVATE void service_pm()
 {
 	int r, call;
-        struct vmnt *vmp;
 	message m;
 
 	/* Ask PM for work until there is nothing left to do */

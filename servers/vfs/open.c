@@ -144,7 +144,7 @@ PRIVATE int common_open(register int oflags, mode_t omode)
           /* Invoke the driver for special processing. */
           r = dev_open(vp->v_sdev, who_e, bits | (oflags & ~O_ACCMODE));
 	  if (r == SUSPEND)
-		suspend(XDOPEN);	/* suspend caller */
+		suspend(FP_BLOCKED_ON_DOPEN);	/* suspend caller */
           break;
 
       case I_BLOCK_SPECIAL:
@@ -507,7 +507,7 @@ PRIVATE int pipe_open(register struct vnode *vp, register mode_t bits,
 	if (oflags & O_NONBLOCK) {
 		if (bits & W_BIT) return(ENXIO);
 	} else {
-		suspend(XPOPEN);	/* suspend caller */
+		suspend(FP_BLOCKED_ON_POPEN);	/* suspend caller */
 		return(SUSPEND);
 	}
   } else if (susp_count > 0) {/* revive blocked processes */

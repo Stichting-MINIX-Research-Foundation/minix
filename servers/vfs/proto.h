@@ -40,7 +40,7 @@ _PROTOTYPE( int do_mapdriver, (void)					);
 _PROTOTYPE( void build_dmap, (void)					);
 _PROTOTYPE( int map_driver, (int major, int proc_nr, int dev_style,
 	int force)							);
-_PROTOTYPE( int dmap_driver_match, (int proc, int major)		);
+_PROTOTYPE( int dmap_driver_match, (endpoint_t proc, int major)		);
 _PROTOTYPE( void dmap_unmap_by_endpt, (int proc_nr)			);
 _PROTOTYPE( void dmap_endpt_up, (int proc_nr)				);
 
@@ -138,7 +138,7 @@ _PROTOTYPE( void pipe_suspend, (int rw_flag, int fd_nr, char *buf,
 _PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
 _PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
 _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
-_PROTOTYPE( void unsuspend_by_endpt, (int)				);
+_PROTOTYPE( void unsuspend_by_endpt, (endpoint_t)			);
 _PROTOTYPE( void select_reply1, (void)					);
 _PROTOTYPE( void select_reply2, (void)					);
 #if DO_SANITYCHECKS
@@ -270,7 +270,7 @@ _PROTOTYPE( int select_callback, (struct filp *, int ops)		);
 _PROTOTYPE( void select_forget, (int fproc)				);
 _PROTOTYPE( void select_timeout_check, (timer_t *)			);
 _PROTOTYPE( void init_select, (void)					);
-_PROTOTYPE( void select_unsuspend_by_endpt, (int proc)			);
+_PROTOTYPE( void select_unsuspend_by_endpt, (endpoint_t proc)		);
 _PROTOTYPE( int select_notified, (int major, int minor, int ops)	);
 
 /* timers.c */

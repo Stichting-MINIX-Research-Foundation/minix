@@ -127,8 +127,8 @@ endpoint_t suspended_ep(endpoint_t driver, cp_grant_id_t g)
     for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
         if(rfp->fp_pid == PID_FREE)
             continue;
-        if(rfp->fp_suspended == SUSPENDED &&
-                rfp->fp_task == -driver && rfp->fp_grant == g) {
+        if(rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER &&
+                rfp->fp_task == driver && rfp->fp_grant == g) {
             return rfp->fp_endpoint;
         }
     }
@@ -384,7 +384,7 @@ int suspend_reopen;		/* Just suspend the process */
 	/* Suspend user. */
 	fp->fp_grant = GRANT_INVALID;
 	fp->fp_ioproc = NONE;
-	suspend(dp->dmap_driver);
+	wait_for(dp->dmap_driver);
 	fp->fp_flags |= SUSP_REOPEN;
 	return(SUSPEND);
   }
@@ -402,7 +402,7 @@ int suspend_reopen;		/* Just suspend the process */
   /* Convert DEV_* to DEV_*_S variants. */
   buf_used = buf;
   safe = safe_io_conversion(dp->dmap_driver, &gid,
-    &op, gids, NR_IOREQS, &dev_mess.IO_ENDPT, &buf_used,
+    &op, gids, NR_IOREQS, (endpoint_t*) &dev_mess.IO_ENDPT, &buf_used,
     &vec_grants, bytes, &pos_lo);
 
   if(buf != buf_used)
@@ -461,7 +461,7 @@ int suspend_reopen;		/* Just suspend the process */
 		/* select() will do suspending itself. */
 		if(op != DEV_SELECT) {
 			/* Suspend user. */
-			suspend(dp->dmap_driver);
+			wait_for(dp->dmap_driver);
 		}
 		assert(!GRANT_VALID(fp->fp_grant));
 		fp->fp_grant = gid;	/* revoke this when unsuspended. */
@@ -902,10 +902,10 @@ PUBLIC void dev_up(int maj)
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	if(rfp->fp_pid == PID_FREE)
 		continue;
-	if(rfp->fp_suspended != SUSPENDED || rfp->fp_task != -XDOPEN)
+	if(rfp->fp_blocked_on != FP_BLOCKED_ON_DOPEN)
 		continue;
 
-	printf("dev_up: found process in XDOPEN, fd %d\n",
+	printf("dev_up: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
 		rfp->fp_fd >> 8);
 	fd_nr= (rfp->fp_fd >> 8);
 	fp= rfp->fp_filp[fd_nr];
@@ -1000,12 +1000,12 @@ int maj;
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	if(rfp->fp_pid == PID_FREE)
 	    continue;
-	if(rfp->fp_suspended == SUSPENDED &&
-		rfp->fp_task == -driver_e &&
+	if(rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER &&
+		rfp->fp_task == driver_e &&
 		(rfp->fp_flags & SUSP_REOPEN))
 	{
 		rfp->fp_flags &= ~SUSP_REOPEN;
-		rfp->fp_suspended = NOT_SUSPENDED;
+		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 		reply(rfp->fp_endpoint, ERESTART);
 	}
   }
@@ -1014,14 +1014,11 @@ int maj;
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
 	if (rfp->fp_pid == PID_FREE)
 		continue;
-	if (rfp->fp_suspended != SUSPENDED ||
-		rfp->fp_task != -XDOPEN ||
+	if (rfp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
 		!(rfp->fp_flags & SUSP_REOPEN))
-	{
 		continue;
-	}
 
-	printf("restart_reopen: found process in XDOPEN, fd %d\n",
+	printf("restart_reopen: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
 		rfp->fp_fd >> 8);
 	fd_nr= (rfp->fp_fd >> 8);
 	fp= rfp->fp_filp[fd_nr];
@@ -1029,7 +1026,7 @@ int maj;
 	if (!fp)
 	{
 		/* Open failed, and automatic reopen was not requested */
-		rfp->fp_suspended = NOT_SUSPENDED;
+		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
 		reply(rfp->fp_endpoint, EIO);
 		continue;
@@ -1040,7 +1037,7 @@ int maj;
 	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
 	if (((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
 
-	rfp->fp_suspended = NOT_SUSPENDED;
+	rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 	reply(rfp->fp_endpoint, fd_nr);
   }
 }
