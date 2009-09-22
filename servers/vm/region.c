@@ -499,7 +499,9 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 					return r;
 			}
 			vm_assert(pr->ph->refcount == 1);
-			FREE_MEM(ABS2CLICK(pr->ph->phys), ABS2CLICK(sublen));
+			if(!(region->flags & VR_DIRECT)) {
+				FREE_MEM(ABS2CLICK(pr->ph->phys), ABS2CLICK(sublen));
+			}
 			USE(pr, pr->offset += sublen;);
 			USE(pr->ph,
 				pr->ph->phys += sublen;
@@ -1214,8 +1216,8 @@ PUBLIC int map_unmap_region(struct vmproc *vmp, struct vir_region *region,
 		return EINVAL;
 	}
 
-	if(!(r->flags & VR_ANON)) {
-		printf("VM: only unmap anonymous memory\n");
+	if(!(r->flags & (VR_ANON|VR_DIRECT))) {
+		printf("VM: only unmap anonymous or direct memory\n");
 		return EINVAL;
 	}
 
