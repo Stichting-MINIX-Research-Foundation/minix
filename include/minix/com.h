@@ -62,6 +62,8 @@
  * offset are used for the per-process notification bit maps. 
  */
 #define NOTIFY_MESSAGE		  0x1000
+/* FIXME will be is_notify(a)		((a) == NOTIFY_MESSAGE) */
+#define is_notify(a)		((a) & NOTIFY_MESSAGE)
 #define NOTIFY_FROM(p_nr)	 (NOTIFY_MESSAGE | ((p_nr) + NR_TASKS)) 
 #  define PROC_EVENT	NOTIFY_FROM(PM_PROC_NR) /* process status change */
 #  define SYN_ALARM	NOTIFY_FROM(CLOCK) 	/* synchronous alarm */

@@ -111,13 +111,13 @@ PUBLIC int main(void)
 	}
 
  	/* Check for special control messages first. */
-        if ((call_nr & NOTIFY_MESSAGE)) {
-		if (call_nr == PROC_EVENT && who_e == PM_PROC_NR)
+        if (is_notify(call_nr)) {
+		if (who_p == PM_PROC_NR)
 		{
 			/* PM tries to get FS to do something */
 			service_pm();
 		}
-		else if (call_nr == SYN_ALARM && who_e == CLOCK)
+		else if (who_p == CLOCK)
 		{
 			/* Alarm timer expired. Used only for select().
 			 * Check it.
