@@ -166,13 +166,13 @@ then	echo "$TMPDISK1, $TMPDISK2 or $TMPDISK3 is not a block device.."
 	exit 1
 fi
 
-ramdisk $USRKB $TMPDISK1
-ramdisk $TMPKB $TMPDISK2
-ramdisk $ROOTKB $TMPDISK3
-
 umount $TMPDISK1 || true
 umount $TMPDISK2 || true
 umount $TMPDISK3 || true
+
+ramdisk $USRKB $TMPDISK1
+ramdisk $TMPKB $TMPDISK2
+ramdisk $ROOTKB $TMPDISK3
 
 if [ $TMPDISK1 = $TMPDISK2  -o $TMPDISK1 = $TMPDISK3 -o $TMPDISK2 = $TMPDISK3 ]
 then
