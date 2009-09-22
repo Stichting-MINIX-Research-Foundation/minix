@@ -9,8 +9,10 @@
 #define ANY		0x7ace	/* used to indicate 'any process' */
 #define NONE 		0x6ace  /* used to indicate 'no process at all' */
 #define SELF		0x8ace 	/* used to indicate 'own process' */
-#define _MAX_MAGIC_PROC (SELF)	/* used by <minix/endpoint.h> 
-				   to determine generation size */
+/* check if the magic process numbers are valid process table slot numbers */
+#if (ANY < NR_PROCS)
+#error "Magic process number in the process table range"
+#endif
 
 /*===========================================================================*
  *            	Process numbers of processes in the system image	     *

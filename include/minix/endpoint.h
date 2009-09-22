@@ -15,12 +15,14 @@
  * the generation size is big enough to start the next generation
  * above the highest magic number.
  */
-#define _ENDPOINT_GENERATION_SIZE (NR_TASKS+_MAX_MAGIC_PROC+1)
-#define _ENDPOINT_MAX_GENERATION  (INT_MAX/_ENDPOINT_GENERATION_SIZE-1)
+#define _ENDPOINT_GENERATION_BITS	16
+#define _ENDPOINT_PNUM_BITS		16
+#define _ENDPOINT_MAX_GENERATION	((1 << _ENDPOINT_GENERATION_BITS)-1)
+#define _ENDPOINT_MAX_PNUM		((1 << _ENDPOINT_PNUM_BITS) - 1)
 
 /* Generation + Process slot number <-> endpoint. */
-#define _ENDPOINT(g, p) ((g) * _ENDPOINT_GENERATION_SIZE + (p))
-#define _ENDPOINT_G(e) (((e)+NR_TASKS) / _ENDPOINT_GENERATION_SIZE)
-#define _ENDPOINT_P(e) ((((e)+NR_TASKS) % _ENDPOINT_GENERATION_SIZE) - NR_TASKS)
+#define _ENDPOINT(g, p)	((endpoint_t)(((g) << _ENDPOINT_PNUM_BITS) | (p)))
+#define _ENDPOINT_G(e) 	((u16_t)((e) >> _ENDPOINT_PNUM_BITS))
+#define _ENDPOINT_P(e) 	((i16_t)((e) & _ENDPOINT_MAX_PNUM))
 
 #endif
