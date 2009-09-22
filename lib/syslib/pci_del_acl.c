@@ -12,8 +12,8 @@ pci_del_acl.c
 /*===========================================================================*
  *				pci_del_acl				     *
  *===========================================================================*/
-PUBLIC int pci_del_acl(proc_nr)
-endpoint_t proc_nr;
+PUBLIC int pci_del_acl(proc_ep)
+endpoint_t proc_ep;
 {
 	int r;
 	message m;
@@ -33,7 +33,7 @@ endpoint_t proc_nr;
 
 
 	m.m_type= BUSC_PCI_DEL_ACL;
-	m.m1_i1= proc_nr;
+	m.m1_i1= proc_ep;
 
 	r= sendrec(pci_procnr, &m);
 	if (r != 0)

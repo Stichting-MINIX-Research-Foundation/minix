@@ -183,7 +183,7 @@ _PROTOTYPE( int getdomainname, (char *_domain, size_t _len)		);
 _PROTOTYPE( int ttyslot, (void)						);
 _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
-_PROTOTYPE( int getsysinfo, (int who, int what, void *where)		);
+_PROTOTYPE( int getsysinfo, (endpoint_t who, int what, void *where)		);
 _PROTOTYPE( int getsigset, (sigset_t *sigset)				);
 _PROTOTYPE( int getprocnr, (void)					);
 _PROTOTYPE( int getnprocnr, (pid_t pid)					);

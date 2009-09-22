@@ -9,7 +9,7 @@ PUBLIC int sys_sprof(action, size, freq, endpt, ctl_ptr, mem_ptr)
 int action; 				/* start/stop profiling */
 int size;				/* available profiling memory */
 int freq;				/* sample frequency */
-int endpt;				/* caller endpoint */
+endpoint_t endpt;			/* caller endpoint */
 void *ctl_ptr;				/* location of info struct */
 void *mem_ptr;				/* location of profiling memory */
 {

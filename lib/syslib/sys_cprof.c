@@ -6,7 +6,7 @@
 PUBLIC int sys_cprof(action, size, endpt, ctl_ptr, mem_ptr)
 int action; 				/* get/reset profiling tables */
 int size;				/* size of allocated memory */
-int endpt;				/* caller endpoint */
+endpoint_t endpt;				/* caller endpoint */
 void *ctl_ptr;				/* location of info struct */
 void *mem_ptr;				/* location of allocated memory */
 {

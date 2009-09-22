@@ -28,26 +28,26 @@ struct rs_pci;
 /*==========================================================================* 
  * Minix system library. 						    *
  *==========================================================================*/ 
-_PROTOTYPE( int _taskcall, (int who, int syscallnr, message *msgptr));
+_PROTOTYPE( int _taskcall, (endpoint_t who, int syscallnr, message *msgptr));
 
 _PROTOTYPE( int sys_abort, (int how, ...));
-_PROTOTYPE( int sys_enable_iop, (endpoint_t proc));
-_PROTOTYPE( int sys_exec, (endpoint_t proc, char *ptr,  
+_PROTOTYPE( int sys_enable_iop, (endpoint_t proc_ep));
+_PROTOTYPE( int sys_exec, (endpoint_t proc_ep, char *ptr,  
 				char *aout, vir_bytes initpc));
 _PROTOTYPE( int sys_fork, (endpoint_t parent, endpoint_t child, int *,
 	struct mem_map *ptr, u32_t vm, vir_bytes *));
-_PROTOTYPE( int sys_newmap, (endpoint_t proc, struct mem_map *ptr));
-_PROTOTYPE( int sys_exit, (endpoint_t proc));
-_PROTOTYPE( int sys_trace, (int req, endpoint_t proc, long addr, long *data_p));
+_PROTOTYPE( int sys_newmap, (endpoint_t proc_ep, struct mem_map *ptr));
+_PROTOTYPE( int sys_exit, (endpoint_t proc_ep));
+_PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p));
 
-_PROTOTYPE( int sys_privctl, (endpoint_t proc, int req, void *p));
+_PROTOTYPE( int sys_privctl, (endpoint_t proc_ep, int req, int i, void *p));
 _PROTOTYPE( int sys_setgrant, (cp_grant_t *grants, int ngrants));
-_PROTOTYPE( int sys_nice, (endpoint_t proc, int priority));
+_PROTOTYPE( int sys_nice, (endpoint_t proc_ep, int priority));
 
 _PROTOTYPE( int sys_int86, (struct reg86u *reg86p));
 _PROTOTYPE( int sys_vm_setbuf, (phys_bytes base, phys_bytes size,
 							phys_bytes high));
-_PROTOTYPE( int sys_vm_map, (endpoint_t proc_nr, int do_map,
+_PROTOTYPE( int sys_vm_map, (endpoint_t proc_ep, int do_map,
 	phys_bytes base, phys_bytes size, phys_bytes offset));
 _PROTOTYPE( int sys_vmctl, (endpoint_t who, int param, u32_t value));
 _PROTOTYPE( int sys_vmctl_get_pagefault_i386, (endpoint_t *who, u32_t *cr2, u32_t *err));
@@ -62,14 +62,14 @@ _PROTOTYPE( int sys_sysctl, (int ctl, char *arg1, int arg2));
 _PROTOTYPE( int sys_sysctl_stacktrace, (endpoint_t who));
 
 /* Shorthands for sys_sdevio() system call. */
-#define sys_insb(port, proc_nr, buffer, count) \
-  sys_sdevio(DIO_INPUT_BYTE, port, proc_nr, buffer, count, 0)
-#define sys_insw(port, proc_nr, buffer, count) \
-  sys_sdevio(DIO_INPUT_WORD, port, proc_nr, buffer, count, 0)
-#define sys_outsb(port, proc_nr, buffer, count) \
-  sys_sdevio(DIO_OUTPUT_BYTE, port, proc_nr, buffer, count, 0)
-#define sys_outsw(port, proc_nr, buffer, count) \
-  sys_sdevio(DIO_OUTPUT_WORD, port, proc_nr, buffer, count, 0)
+#define sys_insb(port, proc_ep, buffer, count) \
+  sys_sdevio(DIO_INPUT_BYTE, port, proc_ep, buffer, count, 0)
+#define sys_insw(port, proc_ep, buffer, count) \
+  sys_sdevio(DIO_INPUT_WORD, port, proc_ep, buffer, count, 0)
+#define sys_outsb(port, proc_ep, buffer, count) \
+  sys_sdevio(DIO_OUTPUT_BYTE, port, proc_ep, buffer, count, 0)
+#define sys_outsw(port, proc_ep, buffer, count) \
+  sys_sdevio(DIO_OUTPUT_WORD, port, proc_ep, buffer, count, 0)
 #define sys_safe_insb(port, ept, grant, offset, count) \
   sys_sdevio(DIO_SAFE_INPUT_BYTE, port, ept, (void*)grant, count, offset)
 #define sys_safe_outsb(port, ept, grant, offset, count) \
@@ -78,7 +78,7 @@ _PROTOTYPE( int sys_sysctl_stacktrace, (endpoint_t who));
   sys_sdevio(DIO_SAFE_INPUT_WORD, port, ept, (void*)grant, count, offset)
 #define sys_safe_outsw(port, ept, grant, offset, count) \
   sys_sdevio(DIO_SAFE_OUTPUT_WORD, port, ept, (void*)grant, count, offset)
-_PROTOTYPE( int sys_sdevio, (int req, long port, endpoint_t proc_nr,
+_PROTOTYPE( int sys_sdevio, (int req, long port, endpoint_t proc_ep,
 	void *buffer, int count, vir_bytes offset));
 _PROTOTYPE(void *alloc_contig, (size_t len, int flags, phys_bytes *phys));
 #define AC_ALIGN4K	0x01
@@ -89,7 +89,7 @@ _PROTOTYPE(void *alloc_contig, (size_t len, int flags, phys_bytes *phys));
 /* Clock functionality: get system times, (un)schedule an alarm call, or
  * retrieve/set a process-virtual timer.
  */
-_PROTOTYPE( int sys_times, (endpoint_t proc_nr, clock_t *user_time,
+_PROTOTYPE( int sys_times, (endpoint_t proc_ep, clock_t *user_time,
 	clock_t *sys_time, clock_t *uptime));
 _PROTOTYPE(int sys_setalarm, (clock_t exp_time, int abs_time));
 _PROTOTYPE( int sys_vtimer, (endpoint_t proc_nr, int which, clock_t *newval,
@@ -144,9 +144,9 @@ _PROTOTYPE(int sys_virvcopy, (phys_cp_req *vec_ptr,int vec_size,int *nr_ok));
 _PROTOTYPE(int sys_physvcopy, (phys_cp_req *vec_ptr,int vec_size,int *nr_ok));
 #endif
 
-_PROTOTYPE(int sys_umap, (endpoint_t proc_nr, int seg, vir_bytes vir_addr,
+_PROTOTYPE(int sys_umap, (endpoint_t proc_ep, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr));
-_PROTOTYPE(int sys_umap_data_fb, (endpoint_t proc_nr, vir_bytes vir_addr,
+_PROTOTYPE(int sys_umap_data_fb, (endpoint_t proc_ep, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr));
 _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 	phys_bytes phys, vir_bytes size));
@@ -173,11 +173,11 @@ _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 _PROTOTYPE(int sys_whoami, (endpoint_t *ep, char *name, int namelen));
 
 /* Signal control. */
-_PROTOTYPE(int sys_kill, (endpoint_t proc, int sig) );
-_PROTOTYPE(int sys_sigsend, (endpoint_t proc_nr, struct sigmsg *sig_ctxt) ); 
-_PROTOTYPE(int sys_sigreturn, (endpoint_t proc_nr, struct sigmsg *sig_ctxt) );
-_PROTOTYPE(int sys_getksig, (endpoint_t *k_proc_nr, sigset_t *k_sig_map) ); 
-_PROTOTYPE(int sys_endksig, (endpoint_t proc_nr) );
+_PROTOTYPE(int sys_kill, (endpoint_t proc_ep, int sig) );
+_PROTOTYPE(int sys_sigsend, (endpoint_t proc_ep, struct sigmsg *sig_ctxt) ); 
+_PROTOTYPE(int sys_sigreturn, (endpoint_t proc_ep, struct sigmsg *sig_ctxt) );
+_PROTOTYPE(int sys_getksig, (endpoint_t *proc_ep, sigset_t *k_sig_map) ); 
+_PROTOTYPE(int sys_endksig, (endpoint_t proc_ep) );
 
 /* NOTE: two different approaches were used to distinguish the device I/O
  * types 'byte', 'word', 'long': the latter uses #define and results in a
@@ -222,12 +222,12 @@ _PROTOTYPE( void pci_attr_w32, (int devind, int port, u32_t value)	);
 _PROTOTYPE( char *pci_dev_name, (U16_t vid, U16_t did)			);
 _PROTOTYPE( char *pci_slot_name, (int devind)				);
 _PROTOTYPE( int pci_set_acl, (struct rs_pci *rs_pci)			);
-_PROTOTYPE( int pci_del_acl, (endpoint_t proc_nr)			);
+_PROTOTYPE( int pci_del_acl, (endpoint_t proc_ep)			);
 
 /* Profiling. */
-_PROTOTYPE( int sys_sprof, (int action, int size, int freq, int endpt,
-                                       void *ctl_ptr, void *mem_ptr)   );
-_PROTOTYPE( int sys_cprof, (int action, int size, int endpt,
+_PROTOTYPE( int sys_sprof, (int action, int size, int freq,
+		endpoint_t endpt, void *ctl_ptr, void *mem_ptr)   );
+_PROTOTYPE( int sys_cprof, (int action, int size, endpoint_t endpt,
                                        void *ctl_ptr, void *mem_ptr)   );
 _PROTOTYPE( int sys_profbuf, (void *ctl_ptr, void *mem_ptr)            );
 
