@@ -155,7 +155,7 @@ PRIVATE u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
 	vm_assert((vmin % I386_PAGE_SIZE) == 0);
 	vm_assert((vmax % I386_PAGE_SIZE) == 0);
 
-#if SANITYCHECKS
+#if 1
 	curv = ((u32_t) random()) % ((vmax - vmin)/I386_PAGE_SIZE);
 	curv *= I386_PAGE_SIZE;
 	curv += vmin;
@@ -389,22 +389,12 @@ PRIVATE int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 	vm_assert(!(pt->pt_dir[pde] & I386_VM_PRESENT));
 	vm_assert(!pt->pt_pt[pde]);
 
-#if SANITYCHECKS
-	printf("1");
-#endif
-
 	/* Get storage for the page table. */
         if(!(pt->pt_pt[pde] = vm_allocpage(&pt_phys, VMP_PAGETABLE)))
 		return ENOMEM;
-#if SANITYCHECKS
-	printf("2");
-#endif
 
 	for(i = 0; i < I386_VM_PT_ENTRIES; i++)
 		pt->pt_pt[pde][i] = 0;	/* Empty entry. */
-#if SANITYCHECKS
-	printf("3");
-#endif
 
 	/* Make page directory entry.
 	 * The PDE is always 'present,' 'writable,' and 'user accessible,'
@@ -412,10 +402,6 @@ PRIVATE int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 	 */
 	pt->pt_dir[pde] = (pt_phys & I386_VM_ADDR_MASK) | flags
 		| I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
-#if SANITYCHECKS
-	printf("4");
-#endif
-	vm_assert(flags & I386_VM_PRESENT);
 
 	return OK;
 }
