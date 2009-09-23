@@ -449,11 +449,9 @@ register struct proc *rc;		/* slot of process to clean up */
 	/* This test is great for debugging system processes dying,
 	 * but as this happens normally on reboot, not good permanent code.
 	 */
-	kprintf("process %s / %d died; stack: ", rc->p_name, rc->p_endpoint);
+	kprintf("died: ");
 	proc_stacktrace(rc);
-	kprintf("kernel trace: ");
-	util_stacktrace();
-	minix_panic("clear_proc: system process died", rc->p_endpoint);
+	minix_panic("system process died", rc->p_endpoint);
   }
 
   /* Make sure that the exiting process is no longer scheduled. */

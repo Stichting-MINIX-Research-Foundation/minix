@@ -46,8 +46,7 @@ if (!minix_panicing++) {
 	kprintf("\n");
   }
 
-  kprintf("proc_ptr %s / %d\n", proc_ptr->p_name, proc_ptr->p_endpoint);
-  kprintf("kernel stacktrace: ");
+  kprintf("kernel: ");
   util_stacktrace();
 }
 
