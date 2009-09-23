@@ -256,7 +256,6 @@ PUBLIC void idt_init(void)
 
 	idt_copy_vectors(gate_table);
 	idt_copy_vectors(gate_table_pic);
-	idt_reload();
 }
 
 
