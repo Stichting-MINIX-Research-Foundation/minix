@@ -40,7 +40,7 @@ _PROTOTYPE( int sys_newmap, (endpoint_t proc_ep, struct mem_map *ptr));
 _PROTOTYPE( int sys_exit, (endpoint_t proc_ep));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p));
 
-_PROTOTYPE( int sys_privctl, (endpoint_t proc_ep, int req, int i, void *p));
+_PROTOTYPE( int sys_privctl, (endpoint_t proc_ep, int req, void *p));
 _PROTOTYPE( int sys_setgrant, (cp_grant_t *grants, int ngrants));
 _PROTOTYPE( int sys_nice, (endpoint_t proc_ep, int priority));
 

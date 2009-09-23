@@ -1,6 +1,6 @@
 #include "syslib.h"
 
-int sys_privctl(endpoint_t proc_ep, int request, int i, void *p)
+int sys_privctl(endpoint_t proc_ep, int request, void *p)
 {
   message m;
 

@@ -245,6 +245,7 @@ struct pstat *bufp;
 	else if (bufp->ps_mflags & SIGSUSPENDED)
 		blkstr = "sigsusp";
   } else if (bufp->ps_recv == FS_PROC_NR) {
+#if 0 /* these flags no longer exist, should find this out another way */
 	if (-bufp->ps_ftask == XPIPE)
 		blkstr = "pipe";
 	else if (-bufp->ps_ftask == XPOPEN)
@@ -255,7 +256,9 @@ struct pstat *bufp;
 		blkstr = "flock";
 	else if(-bufp->ps_ftask == XSELECT)
 		blkstr = "select";
-	else if(-bufp->ps_ftask >= 0)
+	else 
+#endif	
+	if(-bufp->ps_ftask >= 0)
 		blkstr = taskname(-bufp->ps_ftask);
 	else
 		blkstr = "??";
@@ -526,7 +529,11 @@ int endpoints;
 	else if (ps_proc[p_ki].p_rts_flags == 0)
 		bufp->ps_state = R_STATE;	/* in run-queue */
 	else if (ps_mproc[p_nr].mp_flags & (WAITING | PAUSED | SIGSUSPENDED) ||
-		 ps_fproc[p_nr].fp_suspended == SUSPENDED)
+#if 0 /* this field and this flag no longer exist, get this info elsewhere */
+		ps_fproc[p_nr].fp_suspended == SUSPENDED)
+#else
+		0)
+#endif
 		bufp->ps_state = S_STATE;	/* sleeping */
 	else
 		bufp->ps_state = W_STATE;	/* a short wait */
