@@ -103,7 +103,7 @@ _PROTOTYPE( void pt_freerange, (pt_t *pt, vir_bytes lo, vir_bytes hi)	);
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
         size_t bytes, u32_t flags, u32_t writemapflags));
 _PROTOTYPE( int pt_bind, (pt_t *pt, struct vmproc *who)			);
-_PROTOTYPE( void *vm_allocpages, (phys_bytes *p, int pages, int cat));
+_PROTOTYPE( void *vm_allocpage, (phys_bytes *p, int cat));
 _PROTOTYPE( void pt_cycle, (void));
 _PROTOTYPE( int pt_mapkernel, (pt_t *pt));
 _PROTOTYPE( void vm_pagelock, (void *vir, int lockflag) 		);

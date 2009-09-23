@@ -186,8 +186,10 @@ struct slabdata *newslabdata(int list)
 
 	vm_assert(sizeof(*n) == VM_PAGE_SIZE);
 
-	if(!(n = vm_allocpages(&p, 1, VMP_SLAB)))
+	if(!(n = vm_allocpage(&p, VMP_SLAB))) {
+		printf("newslabdata: vm_allocpage failed\n");
 		return NULL;
+	}
 	memset(n->sdh.usebits, 0, sizeof(n->sdh.usebits));
 	pages++;
 

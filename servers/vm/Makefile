@@ -14,7 +14,6 @@ CFLAGS = $(CPROFILE) $(CPPFLAGS)
 # build local binary
 
 all build install:	$(SERVER)
-	install -S 100k $(SERVER)
 
 $(SERVER):	$(OBJ) phony
 	cd $(ARCH) && $(MAKE)

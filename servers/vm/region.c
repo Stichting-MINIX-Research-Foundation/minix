@@ -96,6 +96,27 @@ struct vmproc *vmp;
 
 
 /*===========================================================================*
+ *				map_sanitycheck_pt			     *
+ *===========================================================================*/
+PRIVATE int map_sanitycheck_pt(struct vmproc *vmp,
+	struct vir_region *vr, struct phys_region *pr)
+{
+	struct phys_block *pb = pr->ph;
+	int rw;
+
+	if(!(vmp->vm_flags & VMF_HASPT))
+		return OK;
+
+	if(WRITABLE(vr, pb))
+		rw = PTF_WRITE;
+	else
+		rw = 0;
+
+	return pt_writemap(&vmp->vm_pt, vr->vaddr + pr->offset,
+	  pb->phys, pb->length, PTF_PRESENT | PTF_USER | rw, WMF_VERIFY);
+}
+
+/*===========================================================================*
  *				map_sanitycheck			     *
  *===========================================================================*/
 PUBLIC void map_sanitycheck(char *file, int line)
@@ -172,7 +193,7 @@ PUBLIC void map_sanitycheck(char *file, int line)
 		MYASSERT(pr->ph->refcount == pr->ph->seencount);
 		MYASSERT(!(pr->offset % VM_PAGE_SIZE));
 		MYASSERT(!(pr->ph->length % VM_PAGE_SIZE)););
-
+	ALLREGIONS(,MYASSERT(map_sanitycheck_pt(vmp, vr, pr) == OK));
 }
 #endif
 
@@ -492,6 +513,8 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 			vm_assert(len < pr->offset + pr->ph->length);
 			vm_assert(pr->ph->refcount > 0);
 			sublen = len - pr->offset;
+			vm_assert(!(sublen % VM_PAGE_SIZE));
+			vm_assert(sublen < pr->ph->length);
 			if(pr->ph->refcount > 1) {
 				int r;
 				r = map_copy_ph_block(vmp, region, pr);
@@ -506,6 +529,9 @@ PRIVATE int map_subfree(struct vmproc *vmp,
 			USE(pr->ph,
 				pr->ph->phys += sublen;
 				pr->ph->length -= sublen;);
+			vm_assert(!(pr->offset % VM_PAGE_SIZE));
+			vm_assert(!(pr->ph->phys % VM_PAGE_SIZE));
+			vm_assert(!(pr->ph->length % VM_PAGE_SIZE));
 		}
 	}
 

@@ -39,6 +39,7 @@
 #define WMF_OVERWRITE		0x01	/* Caller knows map may overwrite. */
 #define WMF_WRITEFLAGSONLY	0x02	/* Copy physaddr and update flags. */
 #define WMF_FREE		0x04	/* Free pages overwritten. */
+#define WMF_VERIFY		0x08	/* Check pagetable contents. */
 
 #define MAP_NONE	0xFFFFFFFE
 
