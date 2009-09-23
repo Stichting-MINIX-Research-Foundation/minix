@@ -317,6 +317,7 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 		I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE, 0)) != OK) {
 		FREE_MEM(newpage, CLICKSPERPAGE);
 		printf("vm_allocpage writemap failed\n", ret);
+		level--;
 		return NULL;
 	}
 
