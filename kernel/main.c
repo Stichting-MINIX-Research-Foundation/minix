@@ -206,7 +206,6 @@ PUBLIC void main()
   FIXME("PROC check enabled");
 #endif
   restart();
-  NOT_REACHABLE();
 }
 
 /*===========================================================================*
