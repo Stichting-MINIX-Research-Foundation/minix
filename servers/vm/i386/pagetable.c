@@ -144,15 +144,10 @@ PRIVATE u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
 /* Find a space in the virtual address space of pageteble 'pt',
  * between page-aligned BYTE offsets vmin and vmax, to fit
  * a page in. Return byte offset.
- *
- * As a simple way to speed up the search a bit, we start searching
- * after the location we found the previous hole, if that's in range.
- * If that's not in range (or if that doesn't work), search the entire
- * range (as well). try_restart controls whether we have to restart
- * the search if it fails. (Just once of course.)
  */
 	u32_t freefound = 0, curv;
 	int pde = 0, try_restart;
+	static u32_t lastv = 0;
 
 	/* Input sanity check. */
 	vm_assert(vmin + I386_PAGE_SIZE >= vmin);
@@ -160,9 +155,15 @@ PRIVATE u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
 	vm_assert((vmin % I386_PAGE_SIZE) == 0);
 	vm_assert((vmax % I386_PAGE_SIZE) == 0);
 
+#if SANITYCHECKS
 	curv = ((u32_t) random()) % ((vmax - vmin)/I386_PAGE_SIZE);
 	curv *= I386_PAGE_SIZE;
 	curv += vmin;
+#else
+	curv = lastv;
+	if(curv < vmin || curv >= vmax)
+		curv = vmin;
+#endif
 	try_restart = 1;
 
 	/* Start looking for a free page starting at vmin. */
@@ -177,6 +178,7 @@ PRIVATE u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
 
 		if(!(pt->pt_dir[pde] & I386_VM_PRESENT) ||
 		   !(pt->pt_pt[pde][pte] & I386_VM_PRESENT)) {
+			lastv = curv;
 			return curv;
 		}
 
@@ -250,6 +252,8 @@ PRIVATE void *vm_checkspares(void)
 			missing_spares--;
 			vm_assert(missing_spares >= 0);
 			vm_assert(missing_spares <= SPAREPAGES);
+		} else {
+			printf("VM: warning: couldn't get new spare page\n");
 		}
 	}
 	if(worst < n) worst = n;
@@ -285,6 +289,7 @@ PUBLIC void *vm_allocpage(phys_bytes *phys, int reason)
 		s=vm_getsparepage(phys);
 		level--;
 		if(!s) {
+			util_stacktrace();
 			printf("VM: warning: out of spare pages\n");
 		}
 		return s;
@@ -384,12 +389,22 @@ PRIVATE int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 	vm_assert(!(pt->pt_dir[pde] & I386_VM_PRESENT));
 	vm_assert(!pt->pt_pt[pde]);
 
+#if SANITYCHECKS
+	printf("1");
+#endif
+
 	/* Get storage for the page table. */
         if(!(pt->pt_pt[pde] = vm_allocpage(&pt_phys, VMP_PAGETABLE)))
 		return ENOMEM;
+#if SANITYCHECKS
+	printf("2");
+#endif
 
 	for(i = 0; i < I386_VM_PT_ENTRIES; i++)
 		pt->pt_pt[pde][i] = 0;	/* Empty entry. */
+#if SANITYCHECKS
+	printf("3");
+#endif
 
 	/* Make page directory entry.
 	 * The PDE is always 'present,' 'writable,' and 'user accessible,'
@@ -397,6 +412,9 @@ PRIVATE int pt_ptalloc(pt_t *pt, int pde, u32_t flags)
 	 */
 	pt->pt_dir[pde] = (pt_phys & I386_VM_ADDR_MASK) | flags
 		| I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
+#if SANITYCHECKS
+	printf("4");
+#endif
 	vm_assert(flags & I386_VM_PRESENT);
 
 	return OK;
