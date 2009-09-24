@@ -238,6 +238,7 @@ PRIVATE void get_work()
 	/* Revive a suspended process. */
 	for (rp = &fproc[0]; rp < &fproc[NR_PROCS]; rp++) 
 		if (rp->fp_pid != PID_FREE && rp->fp_revived == REVIVING) {
+			int blocked_on = rp->fp_blocked_on;
 			found_one= TRUE;
 			who_p = (int)(rp - fproc);
 			who_e = rp->fp_endpoint;
@@ -255,7 +256,7 @@ PRIVATE void get_work()
 			 */
 			assert(!GRANT_VALID(rp->fp_grant));
 
-			if (rp->fp_blocked_on == FP_BLOCKED_ON_PIPE)
+			if (blocked_on == FP_BLOCKED_ON_PIPE)
 			{
 				fp= rp;
 				fd_nr= (rp->fp_fd >> 8);
