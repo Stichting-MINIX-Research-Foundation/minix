@@ -151,7 +151,8 @@ struct pstat {			/* structure filled by pstat() */
   int ps_pgrp;			/* process group id */
   int ps_flags;			/* kernel flags */
   int ps_mflags;		/* mm flags */
-  int ps_ftask;			/* (possibly pseudo) fs suspend task */
+  int ps_ftask;			/* fs suspend task */
+  int ps_blocked_on;		/* what is the process blocked on */
   char ps_state;		/* process state */
   vir_bytes ps_tsize;		/* text size (in bytes) */
   vir_bytes ps_dsize;		/* data size (in bytes) */
@@ -245,23 +246,29 @@ struct pstat *bufp;
 	else if (bufp->ps_mflags & SIGSUSPENDED)
 		blkstr = "sigsusp";
   } else if (bufp->ps_recv == FS_PROC_NR) {
-#if 0 /* these flags no longer exist, should find this out another way */
-	if (-bufp->ps_ftask == XPIPE)
-		blkstr = "pipe";
-	else if (-bufp->ps_ftask == XPOPEN)
-		blkstr = "popen";
-	else if (-bufp->ps_ftask == XDOPEN)
-		blkstr = "dopen";
-	else if (-bufp->ps_ftask == XLOCK)
-		blkstr = "flock";
-	else if(-bufp->ps_ftask == XSELECT)
-		blkstr = "select";
-	else 
-#endif	
-	if(-bufp->ps_ftask >= 0)
-		blkstr = taskname(-bufp->ps_ftask);
-	else
-		blkstr = "??";
+	  switch(bufp->ps_blocked_on) {
+		  case FP_BLOCKED_ON_PIPE:
+			  blkstr = "pipe";
+			  break;
+		  case FP_BLOCKED_ON_POPEN:
+			  blkstr = "popen";
+			  break;
+		  case FP_BLOCKED_ON_DOPEN:
+			  blkstr = "dopen";
+			  break;
+		  case FP_BLOCKED_ON_LOCK:
+			  blkstr = "flock";
+			  break;
+		  case FP_BLOCKED_ON_SELECT:
+			  blkstr = "select";
+			  break;
+		  case FP_BLOCKED_ON_OTHER:
+			  blkstr = taskname(bufp->ps_ftask);
+			  break;
+		  case FP_BLOCKED_ON_NONE:
+			  blkstr = "??";
+			  break;
+	  }
   }
   (void) sprintf(recvstr, "(%s) %s", blkstr, task);
   return recvstr;
@@ -498,9 +505,11 @@ int endpoints;
   if (p_nr >= low_user) {
 	bufp->ps_dev = ps_fproc[p_nr].fp_tty;
 	bufp->ps_ftask = ps_fproc[p_nr].fp_task;
+	bufp->ps_blocked_on = ps_fproc[p_nr].fp_blocked_on;
   } else {
 	bufp->ps_dev = 0;
 	bufp->ps_ftask = 0;
+	bufp->ps_blocked_on = FP_BLOCKED_ON_NONE;
   }
 
   if (p_nr >= 0) {
@@ -529,11 +538,7 @@ int endpoints;
 	else if (ps_proc[p_ki].p_rts_flags == 0)
 		bufp->ps_state = R_STATE;	/* in run-queue */
 	else if (ps_mproc[p_nr].mp_flags & (WAITING | PAUSED | SIGSUSPENDED) ||
-#if 0 /* this field and this flag no longer exist, get this info elsewhere */
-		ps_fproc[p_nr].fp_suspended == SUSPENDED)
-#else
-		0)
-#endif
+			fp_is_blocked(&ps_fproc[p_nr]))
 		bufp->ps_state = S_STATE;	/* sleeping */
 	else
 		bufp->ps_state = W_STATE;	/* a short wait */
