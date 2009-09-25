@@ -46,6 +46,7 @@ message *m_ptr;			/* pointer to request message */
   sc.sc_cs = rp->p_reg.cs;
   sc.sc_ds = rp->p_reg.ds;
   sc.sc_es = rp->p_reg.es;
+  sc.sc_ss = rp->p_reg.ss;
 #if _WORD_SIZE == 4
   sc.sc_fs = rp->p_reg.fs;
   sc.sc_gs = rp->p_reg.gs;
