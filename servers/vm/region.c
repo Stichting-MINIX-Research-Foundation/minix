@@ -876,7 +876,7 @@ int write;
 	vm_assert(!(length % VM_PAGE_SIZE));
 	vm_assert(!write || (region->flags & VR_WRITABLE));
 
-	physr_start_iter(region->phys, &iter, offset, AVL_LESS_EQUAL);
+	physr_start_iter(region->phys, &iter, offset, AVL_GREATER_EQUAL);
 	physr = physr_get_iter(&iter);
 
 	if(!physr || offset < physr->offset) {
