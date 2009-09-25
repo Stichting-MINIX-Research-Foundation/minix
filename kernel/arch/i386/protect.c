@@ -340,6 +340,49 @@ PUBLIC void alloc_segments(register struct proc *rp)
 }
 
 /*===========================================================================*
+ *				check_segments				     *
+ *===========================================================================*/
+PUBLIC void check_segments(char *File, int line)
+{
+  int checked = 0;
+int fail = 0;
+struct proc *rp;
+for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
+
+  int privilege;
+  int cs, ds;
+
+		if (RTS_ISSET(rp, SLOT_FREE))
+			continue;
+
+      if( (iskernelp(rp)))
+	privilege = TASK_PRIVILEGE;
+      else
+	privilege = USER_PRIVILEGE;
+
+	cs = (CS_LDT_INDEX*DESC_SIZE) | TI | privilege;
+	ds = (DS_LDT_INDEX*DESC_SIZE) | TI | privilege;
+
+#define CHECK(s1, s2) if(s1 != s2) {		\
+	printf("%s:%d: " #s1 " != " #s2 " for ep %d\n", \
+		File, line, rp->p_endpoint); fail++; } checked++;
+
+	CHECK(rp->p_reg.cs, cs);
+	CHECK(rp->p_reg.gs, ds);
+	CHECK(rp->p_reg.fs, ds);
+	CHECK(rp->p_reg.ss, ds);
+	if(rp->p_endpoint != -2) {
+		CHECK(rp->p_reg.es, ds);
+	}
+	CHECK(rp->p_reg.ds, ds);
+     }
+     if(fail) {
+     	printf("%d/%d checks failed\n", fail, checked);
+     	minix_panic("wrong", fail);
+     }
+}
+
+/*===========================================================================*
  *				printseg			     *
  *===========================================================================*/
 PUBLIC void printseg(char *banner, int iscs, struct proc *pr, u32_t selector)
