@@ -417,11 +417,6 @@ struct memory *chunks;		/* list of free memory chunks */
 	}
   }
 
-  memstats(&nodes, &startpages, &largest);
-
-  printf("VM: %d nodes, %d pages, largest chunk %d\n",
-	nodes, startpages, largest);
-
   CHECKHOLES;
 }
 
