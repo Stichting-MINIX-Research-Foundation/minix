@@ -317,9 +317,6 @@ PUBLIC int do_munmap(message *m)
 	if(!(vmp->vm_flags & VMF_HASPT))
 		return ENXIO;
 
-	/* Temporarily disable munmap() to mask memory problem. */
-	return OK;
-        
 	if(m->m_type == VM_MUNMAP) {
 	        addr = (vir_bytes) arch_vir2map(vmp, (vir_bytes) m->VMUM_ADDR);
 	} else if(m->m_type == VM_MUNMAP_TEXT) {
