@@ -221,8 +221,6 @@ PRIVATE void announce(void)
       "Copyright 2009, Vrije Universiteit, Amsterdam, The Netherlands\n",
       OS_RELEASE, OS_VERSION);
   kprintf("MINIX is open source software, see http://www.minix3.org\n");
-
-  FIXME("pm, vfs, etc own page table");
 }
 
 /*===========================================================================*
