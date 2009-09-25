@@ -144,11 +144,7 @@ irq_hook_t *hook;
   /* As a side-effect, the interrupt handler gathers random information by 
    * timestamping the interrupt events. This is used for /dev/random.
    */
-#if 0
   get_randomness(&krandom, hook->irq);
-#else
-  FIXME("get_randomness disabled");
-#endif
 
   /* Check if the handler is still alive.
    * If it's dead, this should never happen, as processes that die 
