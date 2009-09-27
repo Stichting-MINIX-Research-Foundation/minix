@@ -59,6 +59,24 @@ PRIVATE char *map_name(struct vir_region *vr)
 	return "NOTREACHED";
 }
 
+PUBLIC void map_printregion(struct vmproc *vmp, struct vir_region *vr)
+{
+	physr_iter iter;
+	struct phys_region *ph;
+	printf("map_printmap: map_name: %s\n", map_name(vr));
+	printf("\t%s (len 0x%lx), %s\n",
+		arch_map2str(vmp, vr->vaddr), vr->length,
+		map_name(vr));
+	printf("\t\tphysblocks:\n");
+	physr_start_iter_least(vr->phys, &iter);
+	while((ph = physr_get_iter(&iter))) {
+		printf("\t\t@ %s (refs %d): phys 0x%lx len 0x%lx\n",
+			arch_map2str(vmp, vr->vaddr + ph->offset),
+			ph->ph->refcount, ph->ph->phys, ph->ph->length);
+		physr_incr_iter(&iter);
+	}
+}
+
 /*===========================================================================*
  *				map_printmap				     *
  *===========================================================================*/
@@ -66,28 +84,10 @@ PUBLIC void map_printmap(vmp)
 struct vmproc *vmp;
 {
 	struct vir_region *vr;
-	physr_iter iter;
 
 	printf("memory regions in process %d:\n", vmp->vm_endpoint);
 	for(vr = vmp->vm_regions; vr; vr = vr->next) {
-		struct phys_region *ph;
-		int nph = 0;
-		printf("map_printmap: map_name: %s\n", map_name(vr));
-		printf("\t0x%lx - 0x%lx (len 0x%lx), %s\n",
-			vr->vaddr, vr->vaddr + vr->length, vr->length,
-			map_name(vr));
-		printf("\t\tphysical: ");
-		physr_start_iter_least(vr->phys, &iter);
-		while((ph = physr_get_iter(&iter))) {
-			printf("0x%lx-0x%lx (refs %d): phys 0x%lx ",
-				vr->vaddr + ph->offset,
-				vr->vaddr + ph->offset + ph->ph->length,
-				ph->ph->refcount,
-				ph->ph->phys);
-			nph++;
-			physr_incr_iter(&iter);
-		}
-		printf(" (phregions %d)\n", nph);
+		map_printregion(vmp, vr);
 	}
 }
 
@@ -219,10 +219,17 @@ PRIVATE int map_ph_writept(struct vmproc *vmp, struct vir_region *vr,
 
 	if(pt_writemap(&vmp->vm_pt, vr->vaddr + pr->offset,
 	  pb->phys, pb->length, PTF_PRESENT | PTF_USER | rw,
-		WMF_OVERWRITE) != OK) {
+#if SANITYCHECKS
+	  	!pr->written ? 0 :
+#endif
+	  	WMF_OVERWRITE) != OK) {
 	    printf("VM: map_writept: pt_writemap failed\n");
 	    return ENOMEM;
 	}
+
+#if SANITYCHECKS
+	USE(pr, pr->written = 1;);
+#endif
 
 	return OK;
 }
@@ -674,6 +681,9 @@ phys_bytes what_mem;
 	newphysr->ph = newpb;
 	newphysr->parent = region;
 	newphysr->next_ph_list = NULL;	/* No other references to this block. */);
+#if SANITYCHECKS
+	USE(newphysr, newphysr->written = 0;);
+#endif
 
 	/* Update pagetable. */
 	vm_assert(!(length % VM_PAGE_SIZE));
@@ -709,15 +719,12 @@ struct phys_region *ph;
 	struct phys_block *newpb;
 	u32_t af = 0;
 
-	SANITYCHECK(SCL_FUNCTIONS);
-
 	/* This is only to be done if there is more than one copy. */
 	vm_assert(ph->ph->refcount > 1);
 
 	/* Do actual copy on write; allocate new physblock. */
 	if(!SLABALLOC(newpb)) {
 		printf("VM: map_copy_ph_block: couldn't allocate newpb\n");
-		SANITYCHECK(SCL_FUNCTIONS);
 		return ENOMEM;
 	}
 
@@ -752,7 +759,6 @@ USE(newpb,
 	/* Copy old memory to new memory. */
 	if((r=sys_abscopy(ph->ph->phys, newpb->phys, newpb->length)) != OK) {
 		printf("VM: map_copy_ph_block: sys_abscopy failed\n");
-		SANITYCHECK(SCL_FUNCTIONS);
 		return r;
 	}
 
@@ -763,17 +769,12 @@ USE(newpb,
 	/* Reference new block. */
 	USE(ph, ph->ph = newpb;);
 
-	/* Check reference counts. */
-	SANITYCHECK(SCL_DETAIL);
-
 	/* Update pagetable with new address.
 	 * This will also make it writable.
 	 */
 	r = map_ph_writept(vmp, region, ph);
 	if(r != OK)
 		vm_panic("map_copy_ph_block: map_ph_writept failed", r);
-
-	SANITYCHECK(SCL_FUNCTIONS);
 
 	return OK;
 }
@@ -827,10 +828,18 @@ int write;
 		}
 	}
 
-	if(r != OK)
-		printf("VM: map_pf: failed (%d)\n", r);
-
 	SANITYCHECK(SCL_FUNCTIONS);
+
+	if(r != OK) {
+		printf("VM: map_pf: failed (%d)\n", r);
+		return r;
+	}
+
+#if SANITYCHECKS
+	if(OK != pt_checkrange(&vmp->vm_pt, region->vaddr+offset, VM_PAGE_SIZE, write)) {
+		vm_panic("map_pf: pt_checkrange failed", r);
+	}
+#endif	
 
 	return r;
 }
@@ -868,6 +877,7 @@ int write;
 		changes++;						\
 	} }
 
+
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	vm_assert(region->flags & VR_ANON);
@@ -876,19 +886,33 @@ int write;
 	vm_assert(!(length % VM_PAGE_SIZE));
 	vm_assert(!write || (region->flags & VR_WRITABLE));
 
-	physr_start_iter(region->phys, &iter, offset, AVL_GREATER_EQUAL);
+	physr_start_iter(region->phys, &iter, offset, AVL_LESS_EQUAL);
 	physr = physr_get_iter(&iter);
 
-	if(!physr || offset < physr->offset) {
-		physr_iter previter;
-		struct phys_region *prevphysr;
-		previter = iter;
-		physr_decr_iter(&iter);
-		prevphysr = physr_get_iter(&iter);
+	if(!physr) {
+		physr_start_iter(region->phys, &iter, offset, AVL_GREATER_EQUAL);
+		physr = physr_get_iter(&iter);
+	}
 
-		FREE_RANGE_HERE(prevphysr, physr);
+#define RESET_ITER(it, where, what) {	\
+	physr_start_iter(region->phys, &it, where, AVL_EQUAL);	\
+	what = physr_get_iter(&it); \
+	if(!what)  vm_panic("thing missing", NO_NUM); \
+}
 
-		iter = previter;
+	FREE_RANGE_HERE(NULL, physr);
+
+	if(physr) {
+		RESET_ITER(iter, physr->offset, physr);
+		if(physr->offset + physr->ph->length <= offset) {
+			physr_incr_iter(&iter);
+			physr = physr_get_iter(&iter);
+
+			if(physr) {
+				FREE_RANGE_HERE(NULL, physr);
+				RESET_ITER(iter, physr->offset, physr);
+			}
+		}
 	}
 
 	while(physr) {
@@ -926,6 +950,7 @@ int write;
 	 	if(nextphysr) {
 			if(nextphysr->offset >= offset + length)
 				break;
+			RESET_ITER(iter, nextphysr->offset, nextphysr);
 		}
 		physr = nextphysr;
 	}
@@ -933,6 +958,15 @@ int write;
 	SANITYCHECK(SCL_FUNCTIONS);
 
 	vm_assert(changes > 0);
+
+#if SANITYCHECKS
+	if(OK != pt_checkrange(&vmp->vm_pt, region->vaddr+offset, length, write)) {
+		printf("handle mem %s-", arch_map2str(vmp, region->vaddr+offset));
+		printf("%s failed\n", arch_map2str(vmp, region->vaddr+offset+length));
+		map_printregion(vmp, region);
+		vm_panic("checkrange failed", NO_NUM);
+	}
+#endif
 
 	return OK;
 }
@@ -988,8 +1022,6 @@ PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region
 	);
 	physr_init(newvr->phys);
 
-	SANITYCHECK(SCL_FUNCTIONS);
-
 	physr_start_iter_least(vr->phys, &iter);
 	while((ph = physr_get_iter(&iter))) {
 		struct phys_region *newph;
@@ -1002,15 +1034,15 @@ PRIVATE struct vir_region *map_copy_region(struct vmproc *vmp, struct vir_region
 		newph->next_ph_list = NULL;
 		newph->parent = newvr;
 		newph->offset = ph->offset;);
+#if SANITYCHECKS
+		USE(newph, newph->written = 0;);
+#endif
 		physr_insert(newvr->phys, newph);
-		SANITYCHECK(SCL_DETAIL);
 		vm_assert(countregions(vr) == cr);
 		physr_incr_iter(&iter);
 	}
 
 	vm_assert(countregions(vr) == countregions(newvr));
-
-	SANITYCHECK(SCL_FUNCTIONS);
 
 	return newvr;
 }
@@ -1057,13 +1089,10 @@ struct vmproc *src;
 		physr_iter iter_orig, iter_new;
 		struct vir_region *newvr;
 		struct phys_region *orig_ph, *new_ph;
-	SANITYCHECK(SCL_DETAIL);
 		if(!(newvr = map_copy_region(dst, vr))) {
 			map_free_proc(dst);
-	SANITYCHECK(SCL_FUNCTIONS);
 			return ENOMEM;
 		}
-		SANITYCHECK(SCL_DETAIL);
 		USE(newvr, newvr->parent = dst;);
 		if(prevvr) { USE(prevvr, prevvr->next = newvr;); }
 		else { dst->vm_regions = newvr; }
@@ -1096,18 +1125,11 @@ struct vmproc *src;
 			physr_incr_iter(&iter_new);
 		}
 		vm_assert(!physr_get_iter(&iter_new));
-		SANITYCHECK(SCL_DETAIL);
 		prevvr = newvr;
-	SANITYCHECK(SCL_DETAIL);
 	}
-	SANITYCHECK(SCL_DETAIL);
-
-	PT_SANE(&src->vm_pt);
 
 	map_writept(src);
-	PT_SANE(&src->vm_pt);
 	map_writept(dst);
-	PT_SANE(&dst->vm_pt);
 
 	SANITYCHECK(SCL_FUNCTIONS);
 	return OK;
