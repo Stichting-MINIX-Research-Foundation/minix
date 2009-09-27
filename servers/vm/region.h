@@ -32,6 +32,9 @@ typedef struct phys_region {
 	struct phys_block	*ph;
 	struct vir_region	*parent; /* parent vir_region. */
 	vir_bytes		offset;	/* offset from start of vir region */
+#if SANITYCHECKS
+	int			written;	/* written to pagetable */
+#endif
 
 	/* list of phys_regions that reference the same phys_block */
 	struct phys_region	*next_ph_list;	
