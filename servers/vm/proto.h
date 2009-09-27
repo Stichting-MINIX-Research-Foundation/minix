@@ -102,6 +102,7 @@ _PROTOTYPE( void pt_free, (pt_t *pt)					);
 _PROTOTYPE( void pt_freerange, (pt_t *pt, vir_bytes lo, vir_bytes hi)	);
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
         size_t bytes, u32_t flags, u32_t writemapflags));
+_PROTOTYPE( int pt_checkrange, (pt_t *pt, vir_bytes v,  size_t bytes, int write));
 _PROTOTYPE( int pt_bind, (pt_t *pt, struct vmproc *who)			);
 _PROTOTYPE( void *vm_allocpage, (phys_bytes *p, int cat));
 _PROTOTYPE( void pt_cycle, (void));
@@ -163,8 +164,10 @@ _PROTOTYPE(void map_sanitycheck,(char *file, int line));
 /* $(ARCH)/vm.c */
 _PROTOTYPE( void arch_init_vm, (struct memory mem_chunks[NR_MEMS]));
 _PROTOTYPE( vir_bytes, arch_map2vir(struct vmproc *vmp, vir_bytes addr));
+_PROTOTYPE( char *, arch_map2str(struct vmproc *vmp, vir_bytes addr));
 _PROTOTYPE( vir_bytes, arch_vir2map(struct vmproc *vmp, vir_bytes addr));
 _PROTOTYPE( vir_bytes, arch_vir2map_text(struct vmproc *vmp, vir_bytes addr));
+_PROTOTYPE( vir_bytes, arch_addrok(struct vmproc *vmp, vir_bytes addr));
 
 /* rs.c */
 _PROTOTYPE(int do_rs_set_priv, (message *m));
