@@ -112,7 +112,7 @@ PUBLIC void do_pagefaults(void)
 			continue;
 		}
 
-		vm_assert(addr > region->vaddr);
+		vm_assert(addr >= region->vaddr);
 		offset = addr - region->vaddr;
 
 		/* Access is allowed; handle it. */
