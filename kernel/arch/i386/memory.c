@@ -122,9 +122,10 @@ PUBLIC void vm_init(struct proc *newptproc)
 		offset = LINADDR & I386_VM_OFFSET_MASK_4MB;		\
 		PTR = I386_BIG_PAGE_SIZE*PDE + offset;			\
 		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
-		if(mustinvl) {	\
-			level0(reload_cr3); 			\
-		}		\
+		if(1 || mustinvl) {					\
+			FIXME("unconditional reload");			\
+			level0(reload_cr3); 				\
+		}							\
 	}								\
 }
 
