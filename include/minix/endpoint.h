@@ -5,6 +5,7 @@
 #include <minix/sys_config.h>
 #include <minix/com.h>
 #include <limits.h>
+#include <minix/type.h>
 
 /* The point of the padding in 'generation size' is to 
  * allow for certain bogus endpoint numbers such as NONE, ANY, etc.
