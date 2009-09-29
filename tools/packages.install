@@ -5,15 +5,11 @@ PopTart-0.9.7
 X11R6.8.2
 Xaw3d-1.5
 ackpack
-antiword-0.35
 apache-1.3.37
 apr-0.9.12
 apr-util-0.9.12
 ascii-3.8
 atk-1.9.0
-audio-1.0.0
-autoconf-2.59
-autoconf-2.60
 automake-1.9
 avra-0.7
 bash-3.0
@@ -37,8 +33,8 @@ flex-2.5.4
 fltk-1.1.7
 fltk-2.0.0-5220
 gawk-3.1.4
-gcc-4.1.1-libs
 gcc-4.1.1
+gcc-4.1.1-libs
 gettext-0.14
 ghostscript-8.54-gpl
 ghostscript-fonts-std-8.11
@@ -88,6 +84,7 @@ pine-4.64
 pkg-config-0.20
 psutils
 python-2.4.3
+qemu-0.10.5
 rcs-5.7
 readline-5.1
 rman-3.2
