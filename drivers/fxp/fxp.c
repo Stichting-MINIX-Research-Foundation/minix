@@ -60,6 +60,7 @@
 #include <net/gen/eth_io.h>
 #include <ibm/pci.h>
 #include <minix/ds.h>
+#include <minix/endpoint.h>
 
 #include <timers.h>
 
@@ -277,6 +278,29 @@ _PROTOTYPE( static void do_outl, (port_t port, u32_t v)			);
 _PROTOTYPE( static void tell_dev, (vir_bytes start, size_t size,
 				int pci_bus, int pci_dev, int pci_func)	);
 
+PRIVATE void handle_hw_intr(void)
+{
+	int i, r;
+	fxp_t *fp;
+
+	for (i= 0, fp= &fxp_table[0]; i<FXP_PORT_NR; i++, fp++)	{
+		if (fp->fxp_mode != FM_ENABLED)
+			return;
+		fxp_handler(fp);
+
+		r= sys_irqenable(&fp->fxp_hook);
+		if (r != OK) {
+			panic("FXP", "unable enable interrupts", r);
+		}
+
+		if (!fp->fxp_got_int)
+			return;
+		fp->fxp_got_int= 0;
+		assert(fp->fxp_flags & FF_ENABLED);
+		fxp_check_ints(fp);
+	}
+}
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
@@ -285,7 +309,6 @@ int main(int argc, char *argv[])
 	message m;
 	int i, r;
 	u32_t tasknr;
-	fxp_t *fp;
 	long v;
 	vir_bytes ft = sizeof(*fxp_table)*FXP_PORT_NR;
 
@@ -322,9 +345,33 @@ int main(int argc, char *argv[])
 		if ((r= receive(ANY, &m)) != OK)
 			panic("FXP","receive failed", r);
 
+		if (is_notify(m.m_type)) {
+			switch (_ENDPOINT_P(m.m_source)) {
+				case RS_PROC_NR:
+					notify(m.m_source);
+					break;
+				case HARDWARE:
+					handle_hw_intr();
+					break;
+				case SYSTEM:
+					if (sigismember((sigset_t *)&m.NOTIFY_ARG, SIGKSTOP))
+						fxp_stop();
+					break;
+				case PM_PROC_NR:
+					break;
+				case CLOCK:
+					fxp_expire_timers();
+					break;
+				default:
+					panic("FXP"," illegal notify from", m.m_source);
+			}
+
+			/* get new message */
+			continue;
+		}
+
 		switch (m.m_type)
 		{
-		case DEV_PING:  notify(m.m_source);		continue;
 		case DL_WRITEV:	fxp_writev(&m, FALSE, TRUE);	break;
 		case DL_WRITE:	fxp_writev(&m, FALSE, FALSE);	break;
 		case DL_WRITEV_S: fxp_writev_s(&m, FALSE);	break;
@@ -335,34 +382,6 @@ int main(int argc, char *argv[])
 		case DL_GETSTAT: fxp_getstat(&m);		break;
 		case DL_GETSTAT_S: fxp_getstat_s(&m);		break;
 		case DL_GETNAME: fxp_getname(&m); 		break;
-		case HARD_INT:
-			for (i= 0, fp= &fxp_table[0]; i<FXP_PORT_NR; i++, fp++)
-			{
-				if (fp->fxp_mode != FM_ENABLED)
-					continue;
-				fxp_handler(fp);
-
-				r= sys_irqenable(&fp->fxp_hook);
-				if (r != OK)
-				{
-					panic("FXP",
-						"unable enable interrupts", r);
-				}
-
-				if (!fp->fxp_got_int)
-					continue;
-				fp->fxp_got_int= 0;
-				assert(fp->fxp_flags & FF_ENABLED);
-				fxp_check_ints(fp);
-			}
-			break;
-		case SYS_SIG:	{
-			sigset_t sigset = m.NOTIFY_ARG;
-			if (sigismember(&sigset, SIGKSTOP)) fxp_stop();
-			break;
-		}
-		case PROC_EVENT: break;
-		case SYN_ALARM:	fxp_expire_timers();		break;
 		default:
 			panic("FXP"," illegal message", m.m_type);
 		}

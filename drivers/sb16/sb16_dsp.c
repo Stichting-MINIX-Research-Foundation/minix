@@ -24,6 +24,7 @@
  *  May 20 1995			Author: Michel R. Prevenier 
  */
 
+#include <minix/endpoint.h>
 #include "sb16.h"
 
 
@@ -97,6 +98,21 @@ PUBLIC void main()
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
 
+		if (is_notify(mess.m_type)) {
+			switch (_ENDPOINT_P(mess.m_source)) {
+				case HARDWARE:
+					dsp_hardware_msg();
+					continue; /* don't reply */
+				case SYSTEM:
+					continue; /* don't reply */
+				default:
+					r = EINVAL;
+			}
+
+			/* dont with this message */
+			goto send_reply;
+		}
+
 		/* Now carry out the work. */
 		switch(mess.m_type) {
 			case DEV_OPEN:		r = dsp_open();	break;
@@ -111,11 +127,10 @@ PUBLIC void main()
 #endif
 			
 			case DEV_STATUS:	dsp_status(&mess); continue; /* don't reply */
-			case HARD_INT:		dsp_hardware_msg(); continue; /* don't reply */
-			case SYS_SIG:		continue; /* don't reply */
 			default:			r = EINVAL;
 		}
 
+send_reply:
 		/* Finally, prepare and send the reply message. */
 		reply(TASK_REPLY, caller, proc_nr, r);
 	}

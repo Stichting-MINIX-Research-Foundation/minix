@@ -21,6 +21,7 @@ Driver for the AMD Device Exclusion Vector (DEV)
 #include <minix/ipc.h>
 #include <minix/syslib.h>
 #include <minix/sysutil.h>
+#include <minix/endpoint.h>
 #include <ibm/pci.h>
 
 /* Offsets from capability pointer */
@@ -78,13 +79,13 @@ int main(void)
 		r= receive(ANY, &m);
 		if (r != OK)
 			panic(__FILE__, "receive failed", r);
-		switch(m.m_type)
-		{
-		case PROC_EVENT:
-			do_pm_notify(&m);
-			continue;
-
-		case IOMMU_MAP:
+		if (is_notify(m.m_type)) {
+			if (_ENDPOINT_P(m.m_source) == PM_PROC_NR) {
+				do_pm_notify(&m);
+				continue;
+			}
+		}
+		else if (m.m_type == IOMMU_MAP) {
 			r= do_add4pci(&m);
 			m.m_type= r;
 			send(m.m_source, &m);

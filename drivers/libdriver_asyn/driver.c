@@ -1,6 +1,7 @@
 /* This file contains device independent device driver interface.
  *
  * Changes:
+ *   Sep 25, 2009   removed all macros depending on NOTIFY_FROM() (T. Hruby)
  *   Jul 25, 2005   added SYS_SIG type for signals  (Jorrit N. Herder)
  *   Sep 15, 2004   added SYN_ALARM type for timeouts  (Jorrit N. Herder)
  *   Jul 23, 2004   removed kernel dependencies  (Jorrit N. Herder)
@@ -41,6 +42,7 @@
 #include "../drivers.h"
 #include <sys/ioc_disk.h>
 #include <minix/mq.h>
+#include <minix/endpoint.h>
 #include "driver.h"
 
 /* Claim space for variables. */
@@ -91,19 +93,6 @@ struct driver *dp;	/* Device dependent entry points. */
 	device_caller = mess.m_source;
 	proc_nr = mess.IO_ENDPT;
 
-#if 0
-	if (mess.m_type != SYN_ALARM && mess.m_type != DEV_PING &&
-		mess.m_type != 4105 /* notify from TTY */ &&
-		mess.m_type != DEV_SELECT &&
-		mess.m_type != DEV_READ_S &&
-		mess.m_type != DIAGNOSTICS_S &&
-		mess.m_type != CANCEL)
-	{
-		printf("libdriver_asyn`driver_task: msg %d / 0x%x from %d\n",
-			mess.m_type, mess.m_type, mess.m_source);
-	}
-#endif
-
 	if (mess.m_type == DEV_SELECT)
 	{
 		static int first= 1;
@@ -119,6 +108,36 @@ struct driver *dp;	/* Device dependent entry points. */
 	}
 
 	/* Now carry out the work. */
+	if (is_notify(mess.m_type)) {
+		switch (_ENDPOINT_P(mess.m_source)) {
+			case HARDWARE:
+				/* leftover interrupt or expired timer. */
+				if(dp->dr_hw_int) {
+					(*dp->dr_hw_int)(dp, &mess);
+				}
+				break;
+			case PM_PROC_NR:
+			case SYSTEM:
+				(*dp->dr_signal)(dp, &mess);
+				break;
+			case CLOCK:
+				(*dp->dr_alarm)(dp, &mess);	
+				break;
+			case RS_PROC_NR:
+				notify(mess.m_source);
+				break;
+			default:		
+				if(dp->dr_other)
+					r = (*dp->dr_other)(dp, &mess, 0);
+				else	
+					r = EINVAL;
+				goto send_reply;
+		}
+
+		/* done, get a new message */
+		continue;
+	}
+
 	switch(mess.m_type) {
 	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;	
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
@@ -141,18 +160,6 @@ struct driver *dp;	/* Device dependent entry points. */
 	case DEV_GATHER_S: 
 	case DEV_SCATTER_S: 	r = do_vrdwt(dp, &mess, 1); break;
 
-	case HARD_INT:		/* leftover interrupt or expired timer. */
-				if(dp->dr_hw_int) {
-					(*dp->dr_hw_int)(dp, &mess);
-				}
-				continue;
-	case PROC_EVENT:
-	case SYS_SIG:		(*dp->dr_signal)(dp, &mess);
-				continue;	/* don't reply */
-	case SYN_ALARM:		(*dp->dr_alarm)(dp, &mess);	
-				continue;	/* don't reply */
-	case DEV_PING:		notify(mess.m_source);
-				continue;
 	default:		
 		if(dp->dr_other)
 			r = (*dp->dr_other)(dp, &mess, 0);
@@ -161,6 +168,7 @@ struct driver *dp;	/* Device dependent entry points. */
 		break;
 	}
 
+send_reply:
 	/* Clean up leftover state. */
 	(*dp->dr_cleanup)();
 

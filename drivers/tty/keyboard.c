@@ -1176,7 +1176,6 @@ int scode;			/* scan code for a function key */
 
   /* See if an observer is registered and send it a message. */
   if (proc_nr != NONE) { 
-      m.NOTIFY_TYPE = FKEY_PRESSED;
       notify(proc_nr);
   }
   return(TRUE);

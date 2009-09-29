@@ -51,6 +51,7 @@ from DL_ETH:
 #include <unistd.h>
 #include <sys/svrctl.h>
 #include <minix/ds.h>
+#include <minix/endpoint.h>
 
 #include "mq.h"
 #include "qp.h"
@@ -253,22 +254,25 @@ PUBLIC void main()
 			mq_free(mq);
 		}
 #else /* Minix 3 */
-		else if (m_type == SYN_ALARM)
+		else if (is_notify(m_type))
 		{
-			clck_tick(&mq->mq_mess);
-			mq_free(mq);
-		} 
-		else if (m_type == PROC_EVENT)
-		{
-			/* signaled */ 
-			/* probably SIGTERM */
-			mq_free(mq);
-		} 
-		else if (m_type & NOTIFY_MESSAGE)
-		{
-			/* A driver is (re)started. */
-			eth_check_drivers(&mq->mq_mess);
-			mq_free(mq);
+			if (_ENDPOINT_P(source) == CLOCK)
+			{
+				clck_tick(&mq->mq_mess);
+				mq_free(mq);
+			} 
+			else if (_ENDPOINT_P(source) == PM_PROC_NR)
+			{
+				/* signaled */ 
+				/* probably SIGTERM */
+				mq_free(mq);
+			} 
+			else
+			{
+				/* A driver is (re)started. */
+				eth_check_drivers(&mq->mq_mess);
+				mq_free(mq);
+			}
 		}
 #endif
 		else if (m_type == DL_CONF_REPLY || m_type == DL_TASK_REPLY ||

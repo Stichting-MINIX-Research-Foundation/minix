@@ -18,8 +18,9 @@
  *
  * The valid messages and their parameters are:
  *
- *   HARD_INT:       output has been completed or input has arrived
- *   SYS_SIG:      e.g., MINIX wants to shutdown; run code to cleanly stop
+ *   notify from HARDWARE:       output has been completed or input has arrived
+ *   notify from SYSTEM  :      e.g., MINIX wants to shutdown; run code to 
+ *   				cleanly stop
  *   DEV_READ:       a process wants to read from a terminal
  *   DEV_WRITE:      a process wants to write on a terminal
  *   DEV_IOCTL:      a process wants to change a terminal's parameters
@@ -64,6 +65,7 @@
 #include <minix/sys_config.h>
 #include <minix/tty.h>
 #include <minix/keymap.h>
+#include <minix/endpoint.h>
 #include "tty.h"
 
 #include <sys/time.h>
@@ -190,32 +192,50 @@ PUBLIC int main(void)
 	 * request and should be handled separately. These extra functions
 	 * do not operate on a device, in constrast to the driver requests. 
 	 */
-	switch (tty_mess.m_type) { 
-	case SYN_ALARM: 		/* fall through */
-		expire_timers();	/* run watchdogs of expired timers */
-		continue;		/* contine to check for events */
-	case DEV_PING:
-		notify(tty_mess.m_source);
-		continue;
-	case HARD_INT: {		/* hardware interrupt notification */
-		if (tty_mess.NOTIFY_ARG & kbd_irq_set)
-			kbd_interrupt(&tty_mess);/* fetch chars from keyboard */
+
+	if (is_notify(tty_mess.m_type)) {
+		switch (_ENDPOINT_P(tty_mess.m_source)) {
+			case CLOCK:
+				/* run watchdogs of expired timers */
+				expire_timers();
+				break;
+			case RS_PROC_NR:
+				notify(tty_mess.m_source);
+				break;
+			case HARDWARE: 
+				/* hardware interrupt notification */
+				
+				/* fetch chars from keyboard */
+				if (tty_mess.NOTIFY_ARG & kbd_irq_set)
+					kbd_interrupt(&tty_mess);
 #if NR_RS_LINES > 0
-		if (tty_mess.NOTIFY_ARG & rs_irq_set)
-			rs_interrupt(&tty_mess);/* serial I/O */
+				/* serial I/O */
+				if (tty_mess.NOTIFY_ARG & rs_irq_set)
+					rs_interrupt(&tty_mess);
 #endif
-		expire_timers();	/* run watchdogs of expired timers */
-		continue;		/* contine to check for events */
-	}
-	case PROC_EVENT: {
-		cons_stop();		/* switch to primary console */
+				/* run watchdogs of expired timers */
+				expire_timers();
+				break;
+			case PM_PROC_NR:
+				/* switch to primary console */
+				cons_stop();
+				break;
+			case SYSTEM:
+				/* system signal */
+				if (sigismember((sigset_t*)&tty_mess.NOTIFY_ARG,
+								SIGKMESS))
+					do_new_kmess(&tty_mess);
+				break;
+			default:
+				/* do nothing */
+				break;
+		}
+
+		/* done, get new message */
 		continue;
 	}
-	case SYS_SIG: {			/* system signal */
-		sigset_t sigset = (sigset_t) tty_mess.NOTIFY_ARG;
-		if (sigismember(&sigset, SIGKMESS)) do_new_kmess(&tty_mess);
-		continue;
-	}
+
+	switch (tty_mess.m_type) { 
 	case DIAGNOSTICS_OLD: 		/* a server wants to print some */
 #if 0
 		if (tty_mess.m_source != LOG_PROC_NR)

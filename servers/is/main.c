@@ -8,6 +8,7 @@
  */
 
 #include "inc.h"
+#include <minix/endpoint.h>
 
 /* Allocate space for the global variables. */
 message m_in;		/* the input message itself */
@@ -42,25 +43,28 @@ PUBLIC int main(int argc, char **argv)
       /* Wait for incoming message, sets 'callnr' and 'who'. */
       get_work();
 
-      switch (callnr) {
-      case SYS_SIG:
-	  printf("got SYS_SIG message\n");
-	  sigset = m_in.NOTIFY_ARG;
-	  for ( result=0; result< _NSIG; result++) {
-	      if (sigismember(&sigset, result))
-		  printf("signal %d found\n", result);
-	  }
-	  continue;
-      case PROC_EVENT:
-          result = EDONTREPLY;
-      	  break;
-      case FKEY_PRESSED:
-          result = do_fkey_pressed(&m_in);
-          break;
-      case DEV_PING:
-	  notify(m_in.m_source);
-	  continue;
-      default: 
+      if (is_notify(callnr)) {
+	      switch (_ENDPOINT_P(who_e)) {
+		      case SYSTEM:
+			      printf("got message from SYSTEM\n");
+			      sigset = m_in.NOTIFY_ARG;
+			      for ( result=0; result< _NSIG; result++) {
+				      if (sigismember(&sigset, result))
+					      printf("signal %d found\n", result);
+			      }
+			      continue;
+		      case PM_PROC_NR:
+			      result = EDONTREPLY;
+			      break;
+		      case TTY_PROC_NR:
+			      result = do_fkey_pressed(&m_in);
+			      break;
+		      case RS_PROC_NR:
+			      notify(m_in.m_source);
+			      continue;
+	      }
+      }
+      else {
           printf("IS: warning, got illegal request %d from %d\n",
           	callnr, m_in.m_source);
           result = EDONTREPLY;

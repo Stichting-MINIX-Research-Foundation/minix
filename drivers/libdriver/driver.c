@@ -41,6 +41,7 @@
 #include "../drivers.h"
 #include <sys/ioc_disk.h>
 #include <minix/mq.h>
+#include <minix/endpoint.h>
 #include "driver.h"
 
 /* Claim space for variables. */
@@ -94,6 +95,35 @@ struct driver *dp;	/* Device dependent entry points. */
 	proc_nr = mess.IO_ENDPT;
 
 	/* Now carry out the work. */
+	if (is_notify(mess.m_type)) {
+		switch (_ENDPOINT_P(mess.m_source)) {
+			case HARDWARE:
+				/* leftover interrupt or expired timer. */
+				if(dp->dr_hw_int) {
+					(*dp->dr_hw_int)(dp, &mess);
+				}
+				break;
+			case PM_PROC_NR:
+			case SYSTEM:
+				(*dp->dr_signal)(dp, &mess);
+				break;
+			case CLOCK:
+				(*dp->dr_alarm)(dp, &mess);	
+				break;
+			case RS_PROC_NR:
+				notify(mess.m_source);
+				break;
+			default:		
+				if(dp->dr_other)
+					r = (*dp->dr_other)(dp, &mess, 0);
+				else	
+					r = EINVAL;
+				goto send_reply;
+		}
+
+		/* done, get a new message */
+		continue;
+	}
 	switch(mess.m_type) {
 	case DEV_OPEN:		r = (*dp->dr_open)(dp, &mess);	break;	
 	case DEV_CLOSE:		r = (*dp->dr_close)(dp, &mess);	break;
@@ -116,18 +146,6 @@ struct driver *dp;	/* Device dependent entry points. */
 	case DEV_GATHER_S: 
 	case DEV_SCATTER_S: 	r = do_vrdwt(dp, &mess, 1); break;
 
-	case HARD_INT:		/* leftover interrupt or expired timer. */
-				if(dp->dr_hw_int) {
-					(*dp->dr_hw_int)(dp, &mess);
-				}
-				continue;
-	case PROC_EVENT:
-	case SYS_SIG:		(*dp->dr_signal)(dp, &mess);
-				continue;	/* don't reply */
-	case SYN_ALARM:		(*dp->dr_alarm)(dp, &mess);	
-				continue;	/* don't reply */
-	case DEV_PING:		notify(mess.m_source);
-				continue;
 	default:		
 		if(dp->dr_other)
 			r = (*dp->dr_other)(dp, &mess, 0);
@@ -136,6 +154,7 @@ struct driver *dp;	/* Device dependent entry points. */
 		break;
 	}
 
+send_reply:
 	/* Clean up leftover state. */
 	(*dp->dr_cleanup)();
 

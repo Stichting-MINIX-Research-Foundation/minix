@@ -28,6 +28,7 @@
 #include <ibm/diskparm.h>
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
+#include <minix/endpoint.h>
 
 /* I/O Ports used by floppy disk task. */
 #define DOR            0x3F2	/* motor drive control bits */
@@ -760,16 +761,25 @@ PRIVATE void start_motor()
   if (running) return;			/* motor was already running */
 
   /* Set an alarm timer to force a timeout if the hardware does not interrupt
-   * in time. Expect HARD_INT message, but check for SYN_ALARM timeout.
+   * in time. Expect an interrupt, but check for a timeout.
    */ 
   f_set_timer(&f_tmr_timeout, f_dp->start_ms * system_hz / 1000, f_timeout);
   f_busy = BSY_IO;
   do {
   	receive(ANY, &mess); 
-  	if (mess.m_type == SYN_ALARM) { 
-  		f_expire_tmrs(NULL, NULL);
-	} else if(mess.m_type == DEV_PING) {
-		notify(mess.m_source);
+
+	if (is_notify(mess.m_type)) {
+		switch (_ENDPOINT_P(mess.m_source)) {
+			case CLOCK:
+				f_expire_tmrs(NULL, NULL);
+				break;
+			case RS_PROC_NR:
+				notify(mess.m_source);
+				break;
+			default :
+				f_busy = BSY_IDLE;
+				break;
+		}
   	} else {
   		f_busy = BSY_IDLE;
   	}
@@ -844,16 +854,25 @@ PRIVATE int seek()
   /* Give head time to settle on a format, no retrying here! */
   if (f_device & FORMAT_DEV_BIT) {
 	/* Set a synchronous alarm to force a timeout if the hardware does
-	 * not interrupt. Expect HARD_INT, but check for SYN_ALARM timeout.
+	 * not interrupt.
  	 */ 
  	f_set_timer(&f_tmr_timeout, system_hz/30, f_timeout);
 	f_busy = BSY_IO;
   	do {
   		receive(ANY, &mess); 
-  		if (mess.m_type == SYN_ALARM) { 
-  			f_expire_tmrs(NULL, NULL);
-		} else if(mess.m_type == DEV_PING) {
-			notify(mess.m_source);
+	
+		if (is_notify(mess.m_type)) {
+			switch (_ENDPOINT_P(mess.m_source)) {
+				case CLOCK:
+					f_expire_tmrs(NULL, NULL);
+					break;
+				case RS_PROC_NR:
+					notify(mess.m_source);
+					break;
+				default :
+					f_busy = BSY_IDLE;
+					break;
+			}
   		} else {
   			f_busy = BSY_IDLE;
   		}
@@ -998,7 +1017,7 @@ int len;		/* command length */
 /* Output a command to the controller. */
 
   /* Set a synchronous alarm to force a timeout if the hardware does
-   * not interrupt. Expect HARD_INT, but check for SYN_ALARM timeout.
+   * not interrupt.
    * Note that the actual check is done by the code that issued the
    * fdc_command() call.
    */ 
@@ -1118,17 +1137,24 @@ PRIVATE void f_reset()
   if ((s=sys_voutb(byte_out, 2)) != OK)
   	panic("FLOPPY", "Sys_voutb in f_reset() failed", s); 
 
-  /* A synchronous alarm timer was set in fdc_command. Expect a HARD_INT
-   * message to collect the reset interrupt, but be prepared to handle the 
-   * SYN_ALARM message on a timeout.
+  /* A synchronous alarm timer was set in fdc_command. Expect an interrupt,
+   * but be prepared to handle a timeout.
    */
   do {
   	receive(ANY, &mess); 
-  	if (mess.m_type == SYN_ALARM) { 
-  		f_expire_tmrs(NULL, NULL);
-	} else if(mess.m_type == DEV_PING) {
-		notify(mess.m_source);
-  	} else {			/* expect HARD_INT */
+	if (is_notify(mess.m_type)) {
+		switch (_ENDPOINT_P(mess.m_source)) {
+			case CLOCK:
+				f_expire_tmrs(NULL, NULL);
+				break;
+			case RS_PROC_NR:
+				notify(mess.m_source);
+				break;
+			default :
+				f_busy = BSY_IDLE;
+				break;
+		}
+  	} else {			/* expect hw interrupt */
   		f_busy = BSY_IDLE;
   	}
   } while (f_busy == BSY_IO);
@@ -1165,16 +1191,21 @@ PRIVATE int f_intr_wait()
  */
   message mess;
 
-  /* We expect a HARD_INT message from the interrupt handler, but if there is
-   * a timeout, a SYN_ALARM notification is received instead. If a timeout 
-   * occurs, report an error.
-   */
+  /* We expect an interrupt, but if a timeout, occurs, report an error. */
   do {
   	receive(ANY, &mess); 
-  	if (mess.m_type == SYN_ALARM) {
-  		f_expire_tmrs(NULL, NULL);
-	} else if(mess.m_type == DEV_PING) {
-		notify(mess.m_source);
+	if (is_notify(mess.m_type)) {
+		switch (_ENDPOINT_P(mess.m_source)) {
+			case CLOCK:
+				f_expire_tmrs(NULL, NULL);
+				break;
+			case RS_PROC_NR:
+				notify(mess.m_source);
+				break;
+			default :
+				f_busy = BSY_IDLE;
+				break;
+		}
   	} else { 
   		f_busy = BSY_IDLE;
   	}

@@ -19,6 +19,7 @@
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <minix/type.h>
+#include <minix/endpoint.h>
 #include <sys/ioc_disk.h>
 #include <ibm/pci.h>
 #include <sys/mman.h>
@@ -1586,11 +1587,10 @@ struct command *cmd;		/* Command block */
 	return(ERR);
   }
 
-  /* Schedule a wakeup call, some controllers are flaky. This is done with
-   * a synchronous alarm. If a timeout occurs a SYN_ALARM message is sent
-   * from HARDWARE, so that w_intr_wait() can call w_timeout() in case the
-   * controller was not able to execute the command. Leftover timeouts are
-   * simply ignored by the main loop. 
+  /* Schedule a wakeup call, some controllers are flaky. This is done with a
+   * synchronous alarm. If a timeout occurs a notify from CLOCK is sent, so that
+   * w_intr_wait() can call w_timeout() in case the controller was not able to
+   * execute the command. Leftover timeouts are simply ignored by the main loop. 
    */
   sys_setalarm(wakeup_ticks, 0);
 
@@ -1639,11 +1639,10 @@ struct command *cmd;		/* Command block */
 	return(ERR);
   }
 
-  /* Schedule a wakeup call, some controllers are flaky. This is done with
-   * a synchronous alarm. If a timeout occurs a SYN_ALARM message is sent
-   * from HARDWARE, so that w_intr_wait() can call w_timeout() in case the
-   * controller was not able to execute the command. Leftover timeouts are
-   * simply ignored by the main loop. 
+  /* Schedule a wakeup call, some controllers are flaky. This is done with a
+   * synchronous alarm. If a timeout occurs a notify from CLOCK is sent, so that
+   * w_intr_wait() can call w_timeout() in case the controller was not able to
+   * execute the command. Leftover timeouts are simply ignored by the main loop. 
    */
   sys_setalarm(wakeup_ticks, 0);
 
@@ -2057,26 +2056,38 @@ PRIVATE void w_intr_wait()
 		int rr;
 		if((rr=receive(ANY, &m)) != OK)
 			panic("at_wini", "receive(ANY) failed", rr);
-		switch(m.m_type) {
-		  case SYN_ALARM:
-			/* Timeout. */
-			w_timeout();	      /* a.o. set w_status */
-			break;
-		  case HARD_INT:
-			/* Interrupt. */
-			r= sys_inb(w_wn->base_cmd + REG_STATUS, &w_status);
-			if (r != 0)
-				panic("at_wini", "sys_inb failed", r);
-			w_wn->w_status= w_status;
-			ack_irqs(m.NOTIFY_ARG);
-			break;
-		  case DEV_PING:
-			/* RS monitor ping. */
-			notify(m.m_source);
-			break;
-		  default:
-			/* unhandled message.
-			 * queue it and handle it in the libdriver loop.
+		if (is_notify(m.m_type)) {
+			switch (_ENDPOINT_P(m.m_source)) {
+				case CLOCK:
+					/* Timeout. */
+					w_timeout(); /* a.o. set w_status */
+					break;
+				case HARDWARE:
+					/* Interrupt. */
+					r= sys_inb(w_wn->base_cmd +
+							REG_STATUS, &w_status);
+					if (r != 0)
+						panic("at_wini",
+							"sys_inb failed", r);
+					w_wn->w_status= w_status;
+					ack_irqs(m.NOTIFY_ARG);
+					break;
+				case RS_PROC_NR:
+					/* RS monitor ping. */
+					notify(m.m_source);
+					break;
+				default:
+					/* 
+					 * unhandled message.  queue it and
+					 * handle it in the libdriver loop.
+					 */
+					mq_queue(&m);
+			}
+		}
+		else {
+			/* 
+			 * unhandled message.  queue it and handle it in the
+			 * libdriver loop.
 			 */
 			mq_queue(&m);
 		}

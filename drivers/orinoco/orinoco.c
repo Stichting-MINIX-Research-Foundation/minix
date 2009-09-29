@@ -64,6 +64,7 @@
 #include 	<sys/ioc_memory.h>
 #include	<ibm/pci.h>
 #include 	<minix/ds.h>
+#include	<minix/endpoint.h>
 #include	"../../kernel/const.h"
 #include	"../../kernel/config.h"
 #include	"../../kernel/type.h"
@@ -225,7 +226,7 @@ _PROTOTYPE (static int or_handler, (t_or *orp));
 _PROTOTYPE (static void or_dump, (message *m));
 
 /* The message used in the main loop is made global, so that rl_watchdog_f()
- * can change its message type to fake a HARD_INT message.
+ * can change its message type to fake an interrupt message.
  */
 PRIVATE message m;
 PRIVATE int int_event_check;		/* set to TRUE if events arrived */
@@ -271,10 +272,40 @@ int main(int argc, char *argv[]) {
 		if ((r = receive (ANY, &m)) != OK)
 			panic(__FILE__, "orinoco: receive failed", NO_NUM);
 
+		if (is_notify(m.m_type)) {
+			switch (_ENDPOINT_P(m.m_source)) {
+				case RS_PROC_NR: 
+					notify(m.m_source);	
+					break;
+				case CLOCK:
+					or_watchdog_f(NULL);     
+					break;		 
+				case SYSTEM:
+					if (sigismember((sigset_t*)&m.NOTIFY_ARG,
+								SIGKSTOP))
+						orinoco_stop();
+					break;
+				case HARDWARE:
+					do_hard_int();
+					if (int_event_check)
+						check_int_events();
+					break ;
+				case TTY_PROC_NR: 
+					or_dump(&m);	
+					break;
+				case PM_PROC_NR:
+					break;
+				default:
+					panic(__FILE__,
+						"orinoco: illegal notify from:",
+						m.m_source);
+			}
+
+			/* done, get new message */
+			continue;
+		}
+
 		switch (m.m_type) {
-		case DEV_PING: 
-			notify(m.m_source);	
-			break;
 		case DL_WRITEV:
 			or_writev (&m, FALSE, TRUE);
 			break;
@@ -305,26 +336,6 @@ int main(int argc, char *argv[]) {
 		case DL_GETNAME: 
 			or_getname(&m);
 			break;
-		case SYN_ALARM:
-			or_watchdog_f(NULL);     
-			break;		 
-		case SYS_SIG:
-		{
-			sigset_t sigset = m.NOTIFY_ARG;
-			if ( sigismember( &sigset, SIGKSTOP ) )
-				orinoco_stop();
-		}
-			break;
-		case HARD_INT:
-			do_hard_int();
-			if (int_event_check)
-				check_int_events();
-			break ;
-		case FKEY_PRESSED: 
-			or_dump(&m);	
-			break;
-		case PROC_EVENT:
-			break;
 		default:
 			panic(__FILE__,"orinoco: illegal message:", m.m_type);
 		}
@@ -341,8 +352,8 @@ static void check_int_events(void) {
 	int i;
 	t_or *orp;
 
-	/* the HARD_INT message doesn't contain information about the port, try
-         * to find it */
+	/* the interrupt message doesn't contain information about the port, try
+	 * to find it */
 	for (orp = or_table;
 		 orp < or_table + OR_PORT_NR; orp++) {
 		if (orp->or_mode != OR_M_ENABLED)

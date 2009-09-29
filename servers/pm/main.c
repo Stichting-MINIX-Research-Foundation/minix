@@ -67,19 +67,29 @@ PUBLIC int main()
 	get_work();		/* wait for an PM system call */
 
 	/* Check for system notifications first. Special cases. */
+	if (is_notify(call_nr)) {
+		switch(who_p) {
+			case CLOCK:
+				pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
+				result = SUSPEND;	/* don't reply */
+				break;
+			case SYSTEM:			/* signals pending */
+				sigset = m_in.NOTIFY_ARG;
+				if (sigismember(&sigset, SIGKSIG))  {
+					(void) ksig_pending();
+				} 
+				result = SUSPEND;	/* don't reply */
+				break;
+			default :
+				result = ENOSYS;
+		}
+
+		/* done, send reply and continue */
+		goto send_reply;
+	}
+
 	switch(call_nr)
 	{
-	case SYN_ALARM:
-		pm_expire_timers(m_in.NOTIFY_TIMESTAMP);
-		result = SUSPEND;		/* don't reply */
-		break;
-	case SYS_SIG:				/* signals pending */
-		sigset = m_in.NOTIFY_ARG;
-		if (sigismember(&sigset, SIGKSIG))  {
-			(void) ksig_pending();
-		} 
-		result = SUSPEND;		/* don't reply */
-		break;
 	case PM_GET_WORK:
 		if (who_e == FS_PROC_NR)
 		{
@@ -139,6 +149,7 @@ PUBLIC int main()
 		break;
 	}
 
+send_reply:
 	/* Send the results back to the user to indicate completion. */
 	if (result != SUSPEND) setreply(who_p, result);
 

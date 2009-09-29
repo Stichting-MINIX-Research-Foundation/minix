@@ -49,6 +49,7 @@
 #include <assert.h>
 
 #include <minix/syslib.h>
+#include <minix/endpoint.h>
 #include <ibm/pci.h>
 #include <minix/ds.h>
 
@@ -318,11 +319,46 @@ void main( int argc, char **argv )
          if (ec->ec_irq != 0)
             sys_irqdisable(&ec->ec_hook);
       }
+
+      if (is_notify(m.m_type)) {
+	      switch(_ENDPOINT_P(m.m_source)) {
+		      case RS_PROC_NR:
+			      notify(m.m_source);
+			      break;
+		      case TTY_PROC_NR:
+			      lance_dump();
+			      break;
+		      case SYSTEM:
+			      if (sigismember((sigset_t*)&m.NOTIFY_ARG, SIGKSTOP))
+				      lance_stop();
+			      break;
+		      case HARDWARE:
+			      for (i=0;i<EC_PORT_NR_MAX;++i)
+			      {
+				      ec= &ec_table[i];
+				      if (ec->mode != EC_ENABLED)
+					      continue;
+
+				      irq=ec->ec_irq;
+				      {
+					      ec->ec_int_pending = 0;
+					      ec_check_ints(ec);
+					      do_int(ec);
+				      }
+			      }
+			      break;
+		      case PM_PROC_NR:
+			      break;
+		      default:
+			      panic( "lance", "illegal notify source", m.m_source);
+	      }
+
+	      /* get next message */
+	      continue;
+      }
+  
       switch (m.m_type)
       {
-      case DEV_PING:
-         notify(m.m_source);
-         continue;
       case DL_WRITEV_S:
          do_vwrite_s(&m, FALSE);
          break;
@@ -340,32 +376,6 @@ void main( int argc, char **argv )
          break;
       case DL_GETNAME:
          do_getname(&m);
-         break;
-      case FKEY_PRESSED:
-         lance_dump();
-         break;
-      case SYS_SIG:
-      {
-         sigset_t set = m.NOTIFY_ARG;
-         if ( sigismember( &set, SIGKSTOP ) )
-            lance_stop();
-      }
-      break;
-      case HARD_INT:
-         for (i=0;i<EC_PORT_NR_MAX;++i)
-         {
-            ec= &ec_table[i];
-            if (ec->mode != EC_ENABLED)
-               continue;
-            {
-               ec->ec_int_pending = 0;
-               ec_check_ints(ec);
-               do_int(ec);
-            }
-         }
-         break;
-      case PROC_EVENT:
-         /* ignore event */
          break;
       default:
          panic( "lance", "illegal message", m.m_type);

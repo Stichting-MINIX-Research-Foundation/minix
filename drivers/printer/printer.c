@@ -32,6 +32,7 @@
  * Note: since only 1 printer is supported, minor dev is not used at present.
  */
 
+#include <minix/endpoint.h>
 #include "../drivers.h"
 
 /* Control bits (in port_base + 2).  "+" means positive logic and "-" means
@@ -133,6 +134,27 @@ PUBLIC void main(void)
   
   while (TRUE) {
 	receive(ANY, &pr_mess);
+
+	if (is_notify(pr_mess.m_type)) {
+		switch (_ENDPOINT_P(pr_mess.m_source)) {
+			case HARDWARE:
+				do_printer_output();
+				break;
+			case SYSTEM:
+				do_signal(&pr_mess);
+				break;
+			case RS_PROC_NR:
+				notify(pr_mess.m_source);
+				break;
+			case PM_PROC_NR:
+				break;
+			default:
+				reply(TASK_REPLY, pr_mess.m_source,
+						pr_mess.IO_ENDPT, EINVAL);
+		}
+		continue;
+	}
+
 	switch(pr_mess.m_type) {
 	    case DEV_OPEN:
                  do_initialize();		/* initialize */
@@ -143,10 +165,6 @@ PUBLIC void main(void)
 	    case DEV_WRITE_S:	do_write(&pr_mess, 1);	break;
 	    case DEV_STATUS:	do_status(&pr_mess);	break;
 	    case CANCEL:	do_cancel(&pr_mess);	break;
-	    case HARD_INT:	do_printer_output();	break;
-	    case SYS_SIG:	do_signal(&pr_mess); 	break;
-	    case DEV_PING:  	notify(pr_mess.m_source);	break;
-	    case PROC_EVENT:	break;
 	    default:
 		reply(TASK_REPLY, pr_mess.m_source, pr_mess.IO_ENDPT, EINVAL);
 	}
@@ -385,10 +403,10 @@ PRIVATE void prepare_output()
  *===========================================================================*/
 PRIVATE void do_printer_output()
 {
-/* This function does the actual output to the printer. This is called on
- * a HARD_INT message sent from the generic interrupt handler that 'forwards'
- * interrupts to this driver. The generic handler did not reenable the 
- * printer IRQ yet! 
+/* This function does the actual output to the printer. This is called on an
+ * interrupt message sent from the generic interrupt handler that 'forwards'
+ * interrupts to this driver. The generic handler did not reenable the printer
+ * IRQ yet! 
  */
 
   unsigned long status;

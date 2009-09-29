@@ -64,12 +64,12 @@ PUBLIC int main(void)
       /* Notification messages are control messages and do not need a reply.
        * These include heartbeat messages and system notifications.
        */
-      if (m.m_type & NOTIFY_MESSAGE) {
-          switch (call_nr) {
-          case SYN_ALARM:
+      if (is_notify(m.m_type)) {
+          switch (who_p) {
+          case CLOCK:
 	      do_period(&m);			/* check drivers status */
 	      continue;				
-          case PROC_EVENT:
+          case PM_PROC_NR:
 	      sig_handler();
               continue;				
 	  default:				/* heartbeat notification */
