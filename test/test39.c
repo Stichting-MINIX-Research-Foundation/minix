@@ -10,8 +10,9 @@ int main(int argc, char *argv[])
 	printf("Test 39 ");
 
 	for(g = 0; g <= _ENDPOINT_MAX_GENERATION; g++) {
-		for(p = -NR_TASKS; p < _NR_PROCS; p++) {
-			int e, mg, mp;
+		for(p = -MAX_NR_TASKS; p < _NR_PROCS; p++) {
+			endpoint_t e;
+			int mg, mp;
 			e = _ENDPOINT(g, p);
 			mg = _ENDPOINT_G(e);
 			mp = _ENDPOINT_P(e);

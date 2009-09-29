@@ -9,10 +9,8 @@
 #define ANY		0x7ace	/* used to indicate 'any process' */
 #define NONE 		0x6ace  /* used to indicate 'no process at all' */
 #define SELF		0x8ace 	/* used to indicate 'own process' */
-/* check if the magic process numbers are valid process table slot numbers */
-#if (ANY < NR_PROCS)
-#error "Magic process number in the process table range"
-#endif
+#define _MAX_MAGIC_PROC (SELF)	/* used by <minix/endpoint.h> 
+				   to determine generation size */
 
 /*===========================================================================*
  *            	Process numbers of processes in the system image	     *
@@ -33,6 +31,7 @@
 #define HARDWARE     KERNEL	/* for hardware interrupt handlers */
 
 /* Number of tasks. Note that NR_PROCS is defined in <minix/config.h>. */
+#define MAX_NR_TASKS	1023
 #define NR_TASKS	  4 
 
 /* User-space processes, that is, device drivers, servers, and INIT. */
