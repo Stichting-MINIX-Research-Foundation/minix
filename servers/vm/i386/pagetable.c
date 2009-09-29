@@ -155,7 +155,7 @@ PRIVATE u32_t findhole(pt_t *pt, u32_t vmin, u32_t vmax)
 	vm_assert((vmin % I386_PAGE_SIZE) == 0);
 	vm_assert((vmax % I386_PAGE_SIZE) == 0);
 
-#if 1
+#if SANITYCHECKS
 	curv = ((u32_t) random()) % ((vmax - vmin)/I386_PAGE_SIZE);
 	curv *= I386_PAGE_SIZE;
 	curv += vmin;
