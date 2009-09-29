@@ -265,7 +265,6 @@ fi
 
 # Are we running from CD?
 if [ -f "$USRKBFILE" ] ; then
-    echo "Running from CD"
     cd="yes" # We are running from CD
 fi
 
