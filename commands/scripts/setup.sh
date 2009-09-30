@@ -10,7 +10,7 @@
 
 LOCALRC=/usr/etc/rc.local
 MYLOCALRC=/mnt/etc/rc.local
-ROOTMB=16
+ROOTMB=64
 ROOTSECTS="`expr $ROOTMB '*' 1024 '*' 2`"
 USRKBFILE=/.usrkb
 if [ ! -f "$USRKBFILE" ]
