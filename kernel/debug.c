@@ -117,7 +117,7 @@ rtsflagstr(int flags)
 #define FLAG(n) if(flags & n) { strcat(str, #n " "); }
 
 	FLAG(SLOT_FREE);
-	FLAG(NO_PRIORITY);
+	FLAG(PROC_STOP);
 	FLAG(SENDING);
 	FLAG(RECEIVING);
 	FLAG(SIGNALED);

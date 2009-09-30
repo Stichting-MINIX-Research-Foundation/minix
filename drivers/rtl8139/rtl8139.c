@@ -369,11 +369,6 @@ int main(int argc, char *argv[])
 					 */
 					rl_watchdog_f(NULL);     
 					break;		 
-				case SYSTEM:
-					if (sigismember((sigset_t*)&m.NOTIFY_ARG,
-								SIGKSTOP))
-						rtl8139_stop();
-					break;
 				case HARDWARE:
 					do_hard_int();
 					if (int_event_check)
@@ -383,7 +378,16 @@ int main(int argc, char *argv[])
 					rtl8139_dump(&m);
 					break;
 				case PM_PROC_NR:
+				{
+					sigset_t set;
+
+					if (getsigset(&set) != 0) break;
+
+					if (sigismember(&set, SIGTERM))
+						rtl8139_stop();
+
 					break;
+				}
 				default:
 					panic("rtl8139","illegal notify from",
 								m.m_source);

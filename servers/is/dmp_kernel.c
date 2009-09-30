@@ -341,7 +341,7 @@ PUBLIC void privileges_dmp()
 PRIVATE char *p_rts_flags_str(int flags)
 {
 	static char str[10];
-	str[0] = (flags & NO_PRIORITY) ? 's' : '-';
+	str[0] = (flags & PROC_STOP) ? 's' : '-';
 	str[1] = (flags & SENDING)  ? 'S' : '-';
 	str[2] = (flags & RECEIVING)    ? 'R' : '-';
 	str[3] = (flags & SIGNALED)    ? 'I' : '-';

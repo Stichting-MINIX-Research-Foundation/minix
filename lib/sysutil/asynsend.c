@@ -22,9 +22,10 @@
 PRIVATE asynmsg_t msgtable[ASYN_NR];
 PRIVATE int first_slot= 0, next_slot= 0;
 
-PUBLIC int asynsend(dst, mp)
+PUBLIC int asynsend3(dst, mp, fl)
 endpoint_t dst;
 message *mp;
+int fl;
 {
 	int r, src_ind, dst_ind;
 	unsigned flags;
@@ -115,9 +116,10 @@ message *mp;
 			panic(__FILE__, "asynsend: msgtable full", NO_NUM);
 	}
 
+	fl |= AMF_VALID;
 	msgtable[next_slot].dst= dst;
 	msgtable[next_slot].msg= *mp;
-	msgtable[next_slot].flags= AMF_VALID;	/* Has to be last. The kernel 
+	msgtable[next_slot].flags= fl;		/* Has to be last. The kernel 
 					 	 * scans this table while we
 						 * are sleeping.
 					 	 */

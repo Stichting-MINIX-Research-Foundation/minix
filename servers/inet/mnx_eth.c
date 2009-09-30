@@ -34,10 +34,6 @@ FORWARD _PROTOTYPE( eth_port_t *find_port, (message *m) );
 FORWARD _PROTOTYPE( void eth_restart, (eth_port_t *eth_port, int tasknr) );
 FORWARD _PROTOTYPE( void send_getstat, (eth_port_t *eth_port) );
 
-#if 0
-FORWARD _PROTOTYPE( int asynsend, (endpoint_t dst, message *mp) );
-#endif
-
 PUBLIC void osdep_eth_init()
 {
 	int i, j, r, rport;
@@ -1012,57 +1008,6 @@ eth_port_t *eth_port;
 	if (r != OK)
 		ip_panic(( "eth_get_stat: asynsend failed: %d", r));
 }
-
-#if 0
-PRIVATE asynmsg_t *msgtable= NULL;
-PRIVATE size_t msgtable_n= 0;
-
-PRIVATE int asynsend(dst, mp)
-endpoint_t dst;
-message *mp;
-{
-	int i;
-	unsigned flags;
-
-	if (msgtable == NULL)
-	{
-		printf("asynsend: allocating msg table\n");
-		msgtable_n= 5;
-		msgtable= malloc(msgtable_n * sizeof(msgtable[0]));
-		for (i= 0; i<msgtable_n; i++)
-			msgtable[i].flags= AMF_EMPTY;
-	}
-
-	/* Find slot in table */
-	for (i= 0; i<msgtable_n; i++)
-	{
-		flags= msgtable[i].flags;
-		if ((flags & (AMF_VALID|AMF_DONE)) == (AMF_VALID|AMF_DONE))
-		{
-			if (msgtable[i].result != OK)
-			{
-				printf(
-			"asynsend: found completed entry %d with error %d\n",
-					i, msgtable[i].result);
-			}
-			break;
-		}
-		if (flags == AMF_EMPTY)
-			break;
-	}
-	if (i >= msgtable_n)
-		ip_panic(( "asynsend: should resize table" ));
-	msgtable[i].dst= dst;
-	msgtable[i].msg= *mp;
-	msgtable[i].flags= AMF_VALID;	/* Has to be last. The kernel 
-					 * scans this table while we are
-					 * sleeping.
-					 */
-
-	/* Tell the kernel to rescan the table */
-	return senda(msgtable, msgtable_n);
-}
-#endif
 
 /*
  * $PchId: mnx_eth.c,v 1.16 2005/06/28 14:24:37 philip Exp $

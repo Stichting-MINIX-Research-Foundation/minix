@@ -897,6 +897,19 @@ endpoint_t *endpoint;
 	printf("RS: start_service: ds_publish_u32 done: %s -> %d\n", 
   		rp->r_label, child_proc_nr_e);
 
+  /* The purpose of non-blocking forks is to avoid involving VFS in the forking
+   * process, because VFS may be blocked on a sendrec() to a MFS that is
+   * waiting for a endpoint update for a dead driver. We have just published
+   * that update, but VFS may still be blocked. As a result, VFS may not yet
+   * have received PM's fork message. Hence, if we call mapdriver5()
+   * immediately, VFS may not know about the process and thus refuse to add the
+   * driver entry. The following temporary hack works around this by forcing
+   * blocking communication from PM to VFS. Once VFS has been made non-blocking
+   * towards MFS instances, this hack and the entire fork_nb() call can go.
+   */
+  if (use_copy)
+	setuid(0);
+
   if (rp->r_dev_nr > 0) {				/* set driver map */
       if ((s=mapdriver5(rp->r_label, strlen(rp->r_label),
 	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {

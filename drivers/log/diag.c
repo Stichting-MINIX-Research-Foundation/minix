@@ -18,8 +18,8 @@
 /*==========================================================================*
  *				do_new_kmess				    *
  *==========================================================================*/
-PUBLIC int do_new_kmess(m)
-message *m;					/* notification message */
+PUBLIC int do_new_kmess(from)
+endpoint_t from;				/* who sent this message? */
 {
 /* Notification for a new kernel message. */
   static struct kmessages kmess;		/* entire kmess structure */
@@ -31,7 +31,7 @@ message *m;					/* notification message */
   static int kernel_prev_next = 0;
   static int tty_prev_next = 0;
 
-  if (m->m_source == TTY_PROC_NR)
+  if (from == TTY_PROC_NR)
   {
 	cp_grant_id_t gid;
 	message mess;

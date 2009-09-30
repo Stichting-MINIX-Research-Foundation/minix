@@ -544,10 +544,12 @@ static void do_watchdog(void *message)
 
 PRIVATE void handle_system_signal(message *m)
 {
-	sigset_t sigset = m->NOTIFY_ARG;
+	sigset_t set;
 	int port;
 
-	if (sigismember(&sigset, SIGKSTOP)) {	/* Shut down */
+	if (getsigset(&set) != 0) return;
+
+	if (sigismember(&set, SIGTERM)) {	/* Shut down */
 		for (port = 0; port < DE_PORT_NR; port += 1) {
 			if (de_table[port].de_mode == DEM_ENABLED) {
 				m->m_type = DL_STOP;
@@ -624,9 +626,6 @@ PUBLIC int main(int argc, char **argv)
 				/* Status request from RS */
 				notify(m.m_source);
 				break;
-			case SYSTEM:
-				handle_system_signal(&m);
-				break;
 			case HARDWARE:
 				/* Interrupt from device */
 				handle_hw_intr();
@@ -636,6 +635,7 @@ PUBLIC int main(int argc, char **argv)
 				do_dump(&m);
 				break;
 			case PM_PROC_NR:
+				handle_system_signal(&m);
 				break;
 			default:	
 				/* Invalid message type */

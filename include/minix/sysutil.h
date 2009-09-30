@@ -56,10 +56,11 @@ _PROTOTYPE( void util_nstrcat, (char *str, unsigned long n) );
 _PROTOTYPE( void util_stacktrace_strcat, (char *));
 _PROTOTYPE( int micro_delay, (u32_t micros));
 _PROTOTYPE( u32_t micros_to_ticks, (u32_t micros));
-_PROTOTYPE( int asynsend, (endpoint_t ep, message *msg));
 _PROTOTYPE( void ser_putc, (char c));
 _PROTOTYPE( void get_randomness, (struct k_randomness *, int));
 
+#define asynsend(ep, msg) asynsend3(ep, msg, 0)
+_PROTOTYPE( int asynsend3, (endpoint_t ep, message *msg, int flags));
 
 #define ASSERT(c) if(!(c)) { panic(__FILE__, "assert " #c " failed at line", __LINE__); }
 

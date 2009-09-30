@@ -281,16 +281,19 @@ int main(int argc, char *argv[])
 				case HARDWARE:
 					r = handle_hw_intr();
 					break;
-				case SYSTEM:
-					if (sigismember((sigset_t*)
-							&m.NOTIFY_ARG,
-							SIGKSTOP))
+				case PM_PROC_NR:
+				{
+					sigset_t set;
+
+					if (getsigset(&set) != 0) break;
+
+					if (sigismember(&set, SIGTERM))
 						dp8390_stop();
+
 					break;
+				}
 				case CLOCK:
 					printf("dp8390: notify from CLOCK\n");
-					break;
-				case PM_PROC_NR:
 					break;
 				default:
 					panic("", "dp8390: illegal notify from",

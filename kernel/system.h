@@ -69,6 +69,11 @@ _PROTOTYPE( int do_nice, (message *m_ptr) );
 #define do_nice do_unused
 #endif
 
+_PROTOTYPE( int do_runctl, (message *m_ptr) );
+#if ! USE_RUNCTL
+#define do_runctl do_unused
+#endif
+
 _PROTOTYPE( int do_copy, (message *m_ptr) );	
 #define do_vircopy 	do_copy
 #if ! (USE_VIRCOPY || USE_PHYSCOPY)

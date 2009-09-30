@@ -31,7 +31,7 @@ struct logdevice {
 };
 
 /* Function prototypes. */
-_PROTOTYPE( int do_new_kmess, (message *m)				);
+_PROTOTYPE( int do_new_kmess, (endpoint_t from)				);
 _PROTOTYPE( int do_diagnostics, (message *m, int safe)			);
 _PROTOTYPE( void log_append, (char *buf, int len)				);
 

@@ -117,13 +117,6 @@ PUBLIC int do_procstat()
    */
   
   /* This call should be removed, or made more general. */
-  if (mp->mp_effuid != 0)
-  {
-	printf("PM: unauthorized call of do_procstat by proc %d\n",
-		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
 
   if (m_in.stat_nr == SELF) {
       mp->mp_reply.sig_set = mp->mp_sigpending;
@@ -323,14 +316,12 @@ PUBLIC int do_getprocnr()
 #endif
 
   if (m_in.pid >= 0) {			/* lookup process by pid */
-  	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if ((rmp->mp_flags & IN_USE) && (rmp->mp_pid==m_in.pid)) {
-  			mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
+	if ((rmp = find_proc(m_in.pid)) != NIL_MPROC) {
+		mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
 #if 0
-  			printf("PM: pid result: %d\n", rmp->mp_endpoint);
+		printf("PM: pid result: %d\n", rmp->mp_endpoint);
 #endif
-  			return(OK);
-		} 
+		return(OK);
 	}
   	return(ESRCH);			
   } else if (m_in.namelen > 0) {	/* lookup process by name */
@@ -393,6 +384,7 @@ PUBLIC int do_getpuid()
  *===========================================================================*/
 PUBLIC int do_reboot()
 {
+  message m;
   int r;
 
   /* Check permission to abort the system. */
@@ -419,12 +411,13 @@ PUBLIC int do_reboot()
    */
 
   check_sig(-1, SIGKILL); 		/* kill all users except init */
-  sys_nice(INIT_PROC_NR, PRIO_STOP);	/* stop init, but keep it around */
+  sys_stop(INIT_PROC_NR);		/* stop init, but keep it around */
 
-  report_reboot= 1;
-  r= notify(FS_PROC_NR);
-  if (r != OK) panic("pm", "do_reboot: unable to notify FS", r);
-  
+  /* Tell FS to reboot */
+  m.m_type = PM_REBOOT;
+
+  tell_fs(&mproc[FS_PROC_NR], &m);
+
   return(SUSPEND);			/* don't reply to caller */
 }
 
@@ -433,8 +426,7 @@ PUBLIC int do_reboot()
  *===========================================================================*/
 PUBLIC int do_getsetpriority()
 {
-	int arg_which, arg_who, arg_pri;
-	int rmp_nr;
+	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
 
 	arg_which = m_in.m1_i1;
@@ -448,12 +440,10 @@ PUBLIC int do_getsetpriority()
 		return(EINVAL);
 
 	if (arg_who == 0)
-		rmp_nr = who_p;
+		rmp = mp;
 	else
-		if ((rmp_nr = proc_from_pid(arg_who)) < 0)
+		if ((rmp = find_proc(arg_who)) == NIL_MPROC)
 			return(ESRCH);
-
-	rmp = &mproc[rmp_nr];
 
 	if (mp->mp_effuid != SUPER_USER &&
 	   mp->mp_effuid != rmp->mp_effuid && mp->mp_effuid != rmp->mp_realuid)
@@ -468,9 +458,12 @@ PUBLIC int do_getsetpriority()
 	if (rmp->mp_nice > arg_pri && mp->mp_effuid != SUPER_USER)
 		return(EACCES);
 	
-	/* We're SET, and it's allowed. Do it and tell kernel. */
+	/* We're SET, and it's allowed. */
+	if ((r = sys_nice(rmp->mp_endpoint, arg_pri)) != OK)
+		return(r);
+
 	rmp->mp_nice = arg_pri;
-	return sys_nice(rmp->mp_endpoint, arg_pri);
+	return(OK);
 }
 
 /*===========================================================================*

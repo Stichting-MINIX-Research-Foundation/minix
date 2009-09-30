@@ -34,6 +34,7 @@ register message *m_ptr;
  * T_RESUME	resume execution
  * T_EXIT	exit
  * T_STEP	set trace bit
+ * T_SYSCALL	trace system call
  *
  * The T_OK and T_EXIT commands are handled completely by the process manager,
  * all others come here.
@@ -81,11 +82,12 @@ register message *m_ptr;
   if (iskerneln(tr_proc_nr)) return(EPERM);
 
   rp = proc_addr(tr_proc_nr);
-  if (isemptyp(rp)) return(EIO);
+  if (isemptyp(rp)) return(EINVAL);
   switch (tr_request) {
   case T_STOP:			/* stop process */
 	RTS_LOCK_SET(rp, P_STOP);
 	rp->p_reg.psw &= ~TRACEBIT;	/* clear trace bit */
+	rp->p_misc_flags &= ~MF_SC_TRACE;	/* clear syscall trace flag */
 	return(OK);
 
   case T_GETINS:		/* return value from instruction space */
@@ -102,10 +104,22 @@ register message *m_ptr;
 	break;
 
   case T_GETUSER:		/* return value from process table */
-	if ((tr_addr & (sizeof(long) - 1)) != 0 ||
-	    tr_addr > sizeof(struct proc) - sizeof(long))
-		return(EIO);
-	m_ptr->CTL_DATA = *(long *) ((char *) rp + (int) tr_addr);
+	if ((tr_addr & (sizeof(long) - 1)) != 0) return(EIO);
+
+	if (tr_addr <= sizeof(struct proc) - sizeof(long)) {
+		m_ptr->CTL_DATA = *(long *) ((char *) rp + (int) tr_addr);
+		break;
+	}
+
+	/* The process's proc struct is followed by its priv struct.
+	 * The alignment here should be unnecessary, but better safe..
+	 */
+	i = sizeof(long) - 1;
+	tr_addr -= (sizeof(struct proc) + i) & ~i;
+
+	if (tr_addr > sizeof(struct priv) - sizeof(long)) return(EIO);
+
+	m_ptr->CTL_DATA = *(long *) ((char *) rp->p_priv + (int) tr_addr);
 	break;
 
   case T_SETINS:		/* set value in instruction space */
@@ -160,6 +174,12 @@ register message *m_ptr;
 	m_ptr->CTL_DATA = 0;
 	break;
 
+  case T_SYSCALL:		/* trace system call */
+	rp->p_misc_flags |= MF_SC_TRACE;
+	RTS_LOCK_UNSET(rp, P_STOP);
+	m_ptr->CTL_DATA = 0;
+	break;
+
   case T_READB_INS:		/* get value from instruction space */
 	COPYFROMPROC(rp->p_memmap[T].mem_len > 0 ? T : D, tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->CTL_DATA = ub;
@@ -171,7 +191,7 @@ register message *m_ptr;
 	break;
 
   default:
-	return(EIO);
+	return(EINVAL);
   }
   return(OK);
 }

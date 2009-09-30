@@ -13,6 +13,7 @@
  *   exit_proc:		actually do the exiting, and tell FS about it
  *   exit_restart:	continue exiting a process after FS has replied
  *   do_waitpid:	perform the WAITPID or WAIT system call
+ *   wait_test:		check whether a parent is waiting for a child
  */
 
 #include "pm.h"
@@ -20,6 +21,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/vm.h>
+#include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <signal.h>
 #include "mproc.h"
@@ -28,7 +30,11 @@
 #define LAST_FEW            2	/* last few slots reserved for superuser */
 
 FORWARD _PROTOTYPE (void zombify, (struct mproc *rmp) );
+FORWARD _PROTOTYPE (void check_parent, (struct mproc *child,
+	int try_cleanup) );
 FORWARD _PROTOTYPE (void tell_parent, (struct mproc *child) );
+FORWARD _PROTOTYPE (void tell_tracer, (struct mproc *child) );
+FORWARD _PROTOTYPE (void tracer_died, (struct mproc *child) );
 FORWARD _PROTOTYPE (void cleanup, (register struct mproc *rmp) );
 
 /*===========================================================================*
@@ -43,6 +49,7 @@ PUBLIC int do_fork()
   static int next_child;
   int i, n = 0, r, s;
   endpoint_t child_ep;
+  message m;
 
  /* If tables might fill up during FORK, don't even start since recovery half
   * way through is such a nuisance.
@@ -79,8 +86,13 @@ PUBLIC int do_fork()
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
   rmc->mp_parent = who_p;			/* record child's parent */
+  if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
+	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
+	rmc->mp_trace_flags = 0;
+	sigemptyset(&rmc->mp_sigtrace);
+  }
   /* inherit only these flags */
-  rmc->mp_flags &= (IN_USE|PRIV_PROC);
+  rmc->mp_flags &= (IN_USE|PRIV_PROC|DELAY_CALL);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
   rmc->mp_exitstatus = 0;
@@ -93,11 +105,16 @@ PUBLIC int do_fork()
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
-  if (rmc->mp_fs_call != PM_IDLE)
-	panic("pm", "do_fork: not idle", rmc->mp_fs_call);
-  rmc->mp_fs_call= PM_FORK;
-  r= notify(FS_PROC_NR);
-  if (r != OK) panic("pm", "do_fork: unable to notify FS", r);
+  m.m_type = PM_FORK;
+  m.PM_PROC = rmc->mp_endpoint;
+  m.PM_PPROC = rmp->mp_endpoint;
+  m.PM_CPID = rmc->mp_pid;
+
+  tell_fs(rmc, &m);
+
+  /* Tell the tracer, if any, about the new child */
+  if (rmc->mp_tracer != NO_TRACER)
+	sig_proc(rmc, SIGSTOP, TRUE /*trace*/);
 
   /* Do not reply until FS is ready to process the fork
   * request
@@ -118,6 +135,7 @@ PUBLIC int do_fork_nb()
   static int next_child;
   int i, n = 0, r;
   endpoint_t child_ep;
+  message m;
 
   /* Only system processes are allowed to use fork_nb */
   if (!(mp->mp_flags & PRIV_PROC))
@@ -155,8 +173,13 @@ PUBLIC int do_fork_nb()
   procs_in_use++;
   *rmc = *rmp;			/* copy parent's process slot to child's */
   rmc->mp_parent = who_p;			/* record child's parent */
+  if (!(rmc->mp_trace_flags & TO_TRACEFORK)) {
+	rmc->mp_tracer = NO_TRACER;		/* no tracer attached */
+	rmc->mp_trace_flags = 0;
+	sigemptyset(&rmc->mp_sigtrace);
+  }
   /* inherit only these flags */
-  rmc->mp_flags &= (IN_USE|PRIV_PROC);
+  rmc->mp_flags &= (IN_USE|PRIV_PROC|DELAY_CALL);
   rmc->mp_child_utime = 0;		/* reset administration */
   rmc->mp_child_stime = 0;		/* reset administration */
   rmc->mp_exitstatus = 0;
@@ -169,11 +192,16 @@ PUBLIC int do_fork_nb()
   new_pid = get_free_pid();
   rmc->mp_pid = new_pid;	/* assign pid to child */
 
-  if (rmc->mp_fs_call != PM_IDLE)
-	panic("pm", "do_fork: not idle", rmc->mp_fs_call);
-  rmc->mp_fs_call= PM_FORK_NB;
-  r= notify(FS_PROC_NR);
-  if (r != OK) panic("pm", "do_fork: unable to notify FS", r);
+  m.m_type = PM_FORK_NB;
+  m.PM_PROC = rmc->mp_endpoint;
+  m.PM_PPROC = rmp->mp_endpoint;
+  m.PM_CPID = rmc->mp_pid;
+
+  tell_fs(rmc, &m);
+
+  /* Tell the tracer, if any, about the new child */
+  if (rmc->mp_tracer != NO_TRACER)
+	sig_proc(rmc, SIGSTOP, TRUE /*trace*/);
 
   /* Wakeup the newly created process */
   setreply(rmc-mproc, OK);
@@ -210,6 +238,7 @@ int dump_core;			/* flag indicating whether to dump core */
   pid_t procgrp;
   struct mproc *p_mp;
   clock_t user_time, sys_time;
+  message m;
 
   /* Do not create core files for set uid execution */
   if (dump_core && rmp->mp_realuid != rmp->mp_effuid)
@@ -244,7 +273,7 @@ int dump_core;			/* flag indicating whether to dump core */
    * This order is important so that FS can tell drivers to cancel requests
    * such as copying to/ from the exiting process, before it is gone.
    */
-  sys_nice(proc_nr_e, PRIO_STOP);	/* stop the process */
+  sys_stop(proc_nr_e);		/* stop the process */
   if((r=vm_willexit(proc_nr_e)) != OK) {
 	panic(__FILE__, "exit_proc: vm_willexit failed", r);
   }
@@ -255,38 +284,33 @@ int dump_core;			/* flag indicating whether to dump core */
 	printf("PM: INIT died\n");
 	return;
   }
-  else
-  if(proc_nr_e != FS_PROC_NR)		/* if it is not FS that is exiting.. */
+  if (proc_nr_e == FS_PROC_NR)
   {
-	/* Tell FS about the exiting process. */
-	if (rmp->mp_fs_call != PM_IDLE)
-		panic(__FILE__, "exit_proc: not idle", rmp->mp_fs_call);
-	rmp->mp_fs_call= dump_core ? PM_DUMPCORE : PM_EXIT;
-	r= notify(FS_PROC_NR);
-	if (r != OK) panic(__FILE__, "exit_proc: unable to notify FS", r);
-
-	if (rmp->mp_flags & PRIV_PROC)
-	{
-		/* Destroy system processes without waiting for FS. This is
-		 * needed because the system process might be a block device
-		 * driver that FS is blocked waiting on.
-		 */
-		if((r= sys_exit(rmp->mp_endpoint)) != OK)
-			panic(__FILE__, "exit_proc: sys_exit failed", r);
-	}
-  }
-  else
-  {
-	panic(__FILE__, "pm_exit: FS died", r);
+	panic(__FILE__, "exit_proc: FS died", r);
   }
 
-  /* The process is now officially exiting. The ZOMBIE flag is not enough, as
-   * it is not set here for core dumps - introducing potential race conditions.
+
+  /* Tell FS about the exiting process. */
+  m.m_type = dump_core ? PM_DUMPCORE : PM_EXIT;
+  m.PM_PROC = rmp->mp_endpoint;
+
+  tell_fs(rmp, &m);
+
+  if (rmp->mp_flags & PRIV_PROC)
+  {
+	/* Destroy system processes without waiting for FS. This is
+	 * needed because the system process might be a block device
+	 * driver that FS is blocked waiting on.
+	 */
+	if((r= sys_exit(rmp->mp_endpoint)) != OK)
+		panic(__FILE__, "exit_proc: sys_exit failed", r);
+  }
+
+  /* Clean up most of the flags describing the process's state before the exit,
+   * and mark it as exiting.
    */
+  rmp->mp_flags &= (IN_USE|FS_CALL|PRIV_PROC|TRACE_EXIT);
   rmp->mp_flags |= EXITING;
-
-  /* Pending reply messages for the dead process cannot be delivered. */
-  rmp->mp_flags &= ~REPLY;
 
   /* Keep the process around until FS is finished with it. */
   
@@ -300,16 +324,18 @@ int dump_core;			/* flag indicating whether to dump core */
 
   /* If the process has children, disinherit them.  INIT is the new parent. */
   for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if (rmp->mp_flags & IN_USE && rmp->mp_parent == proc_nr) {
+	if (!(rmp->mp_flags & IN_USE)) continue;
+	if (rmp->mp_tracer == proc_nr) {
+		/* This child's tracer died. Do something sensible. */
+		tracer_died(rmp);
+	}
+	if (rmp->mp_parent == proc_nr) {
 		/* 'rmp' now points to a child to be disinherited. */
 		rmp->mp_parent = INIT_PROC_NR;
-		parent_waiting = mproc[INIT_PROC_NR].mp_flags & WAITING;
-		if (parent_waiting && (rmp->mp_flags & ZOMBIE)) {
-			tell_parent(rmp);
 
-			if (rmp->mp_fs_call == PM_IDLE)
-				cleanup(rmp);
-		}
+		/* Notify new parent. */
+		if (rmp->mp_flags & ZOMBIE)
+			check_parent(rmp, TRUE /*try_cleanup*/);
 	}
   }
 
@@ -345,11 +371,11 @@ int dump_core;			/* flag indicating whether to dump core */
   	panic(__FILE__, "exit_restart: vm_exit failed", r);
   }
 
-  if ((rmp->mp_flags & TRACE_EXIT) && rmp->mp_parent != INIT_PROC_NR)
+  if (rmp->mp_flags & TRACE_EXIT)
   {
-	/* Wake up the parent, completing the ptrace(T_EXIT) call */
-	mproc[rmp->mp_parent].mp_reply.reply_trace = 0;
-	setreply(rmp->mp_parent, OK);
+	/* Wake up the tracer, completing the ptrace(T_EXIT) call */
+	mproc[rmp->mp_tracer].mp_reply.reply_trace = 0;
+	setreply(rmp->mp_tracer, OK);
   }
 
   /* Clean up if the parent has collected the exit status */
@@ -372,7 +398,7 @@ PUBLIC int do_waitpid()
  * Both WAIT and WAITPID are handled by this code.
  */
   register struct mproc *rp;
-  int pidarg, options, children;
+  int i, pidarg, options, children;
 
   /* Set internal variables, depending on whether this is WAIT or WAITPID. */
   pidarg  = (call_nr == WAIT ? -1 : m_in.pid);	   /* 1st param of waitpid */
@@ -386,25 +412,46 @@ PUBLIC int do_waitpid()
    */
   children = 0;
   for (rp = &mproc[0]; rp < &mproc[NR_PROCS]; rp++) {
-	if ( (rp->mp_flags & IN_USE) && rp->mp_parent == who_p) {
-		/* The value of pidarg determines which children qualify. */
-		if (pidarg  > 0 && pidarg != rp->mp_pid) continue;
-		if (pidarg < -1 && -pidarg != rp->mp_procgrp) continue;
-		if (rp->mp_flags & TOLD_PARENT) continue; /* post-ZOMBIE  */
+	if ((rp->mp_flags & (IN_USE | TOLD_PARENT)) != IN_USE) continue;
+	if (rp->mp_parent != who_p && rp->mp_tracer != who_p) continue;
+	if (rp->mp_parent != who_p && (rp->mp_flags & ZOMBIE)) continue;
 
-		children++;		/* this child is acceptable */
+	/* The value of pidarg determines which children qualify. */
+	if (pidarg  > 0 && pidarg != rp->mp_pid) continue;
+	if (pidarg < -1 && -pidarg != rp->mp_procgrp) continue;
+
+	children++;			/* this child is acceptable */
+
+	if (rp->mp_tracer == who_p) {
+		if (rp->mp_flags & TRACE_ZOMBIE) {
+			/* Traced child meets the pid test and has exited. */
+			tell_tracer(rp);
+			check_parent(rp, TRUE /*try_cleanup*/);
+			return(SUSPEND);
+		}
+		if (rp->mp_flags & STOPPED) {
+			/* This child meets the pid test and is being traced.
+			 * Deliver a signal to the tracer, if any.
+			 */
+			for (i = 1; i < _NSIG; i++) {
+				if (sigismember(&rp->mp_sigtrace, i)) {
+					sigdelset(&rp->mp_sigtrace, i);
+
+					mp->mp_reply.reply_res2 =
+						0177 | (i << 8);
+					return(rp->mp_pid);
+				}
+			}
+		}
+	}
+
+	if (rp->mp_parent == who_p) {
 		if (rp->mp_flags & ZOMBIE) {
 			/* This child meets the pid test and has exited. */
 			tell_parent(rp); /* this child has already exited */
-			if (rp->mp_fs_call == PM_IDLE)
+			if (!(rp->mp_flags & FS_CALL))
 				cleanup(rp);
 			return(SUSPEND);
-		}
-		if ((rp->mp_flags & STOPPED) && rp->mp_sigstatus) {
-			/* This child meets the pid test and is being traced.*/
-			mp->mp_reply.reply_res2 = 0177|(rp->mp_sigstatus << 8);
-			rp->mp_sigstatus = 0;
-			return(rp->mp_pid);
 		}
 	}
   }
@@ -425,34 +472,99 @@ PUBLIC int do_waitpid()
 }
 
 /*===========================================================================*
+ *				wait_test				     *
+ *===========================================================================*/
+PUBLIC int wait_test(rmp, child)
+struct mproc *rmp;			/* process that may be waiting */
+struct mproc *child;			/* process that may be waited for */
+{
+/* See if a parent or tracer process is waiting for a child process.
+ * A tracer is considered to be a pseudo-parent.
+ */
+  int parent_waiting, right_child;
+  pid_t pidarg;
+
+  pidarg = rmp->mp_wpid;		/* who's being waited for? */
+  parent_waiting = rmp->mp_flags & WAITING;
+  right_child =				/* child meets one of the 3 tests? */
+  	(pidarg == -1 || pidarg == child->mp_pid ||
+  	 -pidarg == child->mp_procgrp);
+
+  return (parent_waiting && right_child);
+}
+
+/*===========================================================================*
  *				zombify					     *
  *===========================================================================*/
 PRIVATE void zombify(rmp)
 struct mproc *rmp;
 {
-/* Zombify a process. If the parent is waiting, notify it immediately.
- * Otherwise, send a SIGCHLD signal to the parent.
+/* Zombify a process. First check if the exiting process is traced by a process
+ * other than its parent; if so, the tracer must be notified about the exit
+ * first. Once that is done, the real parent may be notified about the exit of
+ * its child.
  */
-  struct mproc *p_mp;
-  int parent_waiting, right_child;
-  pid_t pidarg;
+  struct mproc *t_mp;
 
-  if (rmp->mp_flags & ZOMBIE)
+  if (rmp->mp_flags & (TRACE_ZOMBIE | ZOMBIE))
 	panic(__FILE__, "zombify: process was already a zombie", NO_NUM);
 
-  rmp->mp_flags &= (IN_USE|PRIV_PROC|EXITING|TRACE_EXIT);
-  rmp->mp_flags |= ZOMBIE;
+  /* See if we have to notify a tracer process first. */
+  if (rmp->mp_tracer != NO_TRACER && rmp->mp_tracer != rmp->mp_parent) {
+	rmp->mp_flags |= TRACE_ZOMBIE;
 
-  p_mp = &mproc[rmp->mp_parent];
-  pidarg = p_mp->mp_wpid;		/* who's being waited for? */
-  parent_waiting = p_mp->mp_flags & WAITING;
-  right_child =				/* child meets one of the 3 tests? */
-	(pidarg == -1 || pidarg == rmp->mp_pid || -pidarg == rmp->mp_procgrp);
+	t_mp = &mproc[rmp->mp_tracer];
 
-  if (parent_waiting && right_child)
-	tell_parent(rmp);		/* tell parent */
-  else
-	sig_proc(p_mp, SIGCHLD);	/* send parent a "child died" signal */
+	/* Do not bother sending SIGCHLD signals to tracers. */
+	if (!wait_test(t_mp, rmp))
+		return;
+
+	tell_tracer(rmp);
+  }
+  else {
+	rmp->mp_flags |= ZOMBIE;
+  }
+
+  /* No tracer, or tracer is parent, or tracer has now been notified. */
+  check_parent(rmp, FALSE /*try_cleanup*/);
+}
+
+/*===========================================================================*
+ *				check_parent				     *
+ *===========================================================================*/
+PRIVATE void check_parent(child, try_cleanup)
+struct mproc *child;			/* tells which process is exiting */
+int try_cleanup;			/* clean up the child when done? */
+{
+/* We would like to inform the parent of an exiting child about the child's
+ * death. If the parent is waiting for the child, tell it immediately;
+ * otherwise, send it a SIGCHLD signal.
+ *
+ * Note that we may call this function twice on a single child; first with
+ * its original parent, later (if the parent died) with INIT as its parent.
+ */
+  struct mproc *p_mp;
+
+  p_mp = &mproc[child->mp_parent];
+
+  if (p_mp->mp_flags & EXITING) {
+	/* This may trigger if the child of a dead parent dies. The child will
+	 * be assigned to INIT and rechecked shortly after. Do nothing.
+	 */
+  }
+  else if (wait_test(p_mp, child)) {
+	tell_parent(child);
+
+	/* The 'try_cleanup' flag merely saves us from having to be really
+	 * careful with statement ordering in exit_proc() and exit_restart().
+	 */
+	if (try_cleanup && !(child->mp_flags & FS_CALL))
+		cleanup(child);
+  }
+  else {
+	/* Parent is not waiting. */
+	sig_proc(p_mp, SIGCHLD, TRUE /*trace*/);
+  }
 }
 
 /*===========================================================================*
@@ -480,6 +592,64 @@ register struct mproc *child;	/* tells which process is exiting */
   parent->mp_flags &= ~WAITING;		/* parent no longer waiting */
   child->mp_flags &= ~ZOMBIE;		/* child no longer a zombie */
   child->mp_flags |= TOLD_PARENT;	/* avoid informing parent twice */
+}
+
+/*===========================================================================*
+ *				tell_tracer				     *
+ *===========================================================================*/
+PRIVATE void tell_tracer(child)
+struct mproc *child;			/* tells which process is exiting */
+{
+  int exitstatus, mp_tracer;
+  struct mproc *tracer;
+
+  mp_tracer = child->mp_tracer;
+  if (mp_tracer <= 0)
+	panic(__FILE__, "tell_tracer: bad value in mp_tracer", mp_tracer);
+  if(!(child->mp_flags & TRACE_ZOMBIE))
+  	panic(__FILE__, "tell_tracer: child not a zombie", NO_NUM);
+  tracer = &mproc[mp_tracer];
+
+  exitstatus = (child->mp_exitstatus << 8) | (child->mp_sigstatus & 0377);
+  tracer->mp_reply.reply_res2 = exitstatus;
+  setreply(child->mp_tracer, child->mp_pid);
+  tracer->mp_flags &= ~WAITING;		/* tracer no longer waiting */
+  child->mp_flags &= ~TRACE_ZOMBIE;	/* child no longer zombie to tracer */
+  child->mp_flags |= ZOMBIE;		/* child is now zombie to parent */
+}
+
+/*===========================================================================*
+ *				tracer_died				     *
+ *===========================================================================*/
+PRIVATE void tracer_died(child)
+struct mproc *child;			/* process being traced */
+{
+/* The process that was tracing the given child, has died for some reason.
+ * This is really the tracer's fault, but we can't let INIT deal with this.
+ */
+
+  child->mp_tracer = NO_TRACER;
+  child->mp_flags &= ~TRACE_EXIT;
+
+  /* If the tracer died while the child was running or stopped, we have no
+   * idea what state the child is in. Avoid a trainwreck, by killing the child.
+   * Note that this may cause cascading exits.
+   */
+  if (!(child->mp_flags & EXITING)) {
+	sig_proc(child, SIGKILL, TRUE /*trace*/);
+
+	return;
+  }
+
+  /* If the tracer died while the child was telling it about its own death,
+   * forget about the tracer and notify the real parent instead.
+   */
+  if (child->mp_flags & TRACE_ZOMBIE) {
+	child->mp_flags &= ~TRACE_ZOMBIE;
+	child->mp_flags |= ZOMBIE;
+
+	check_parent(child, TRUE /*try_cleanup*/);
+  }
 }
 
 /*===========================================================================*

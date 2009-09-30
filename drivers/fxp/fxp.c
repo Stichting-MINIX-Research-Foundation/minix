@@ -353,12 +353,17 @@ int main(int argc, char *argv[])
 				case HARDWARE:
 					handle_hw_intr();
 					break;
-				case SYSTEM:
-					if (sigismember((sigset_t *)&m.NOTIFY_ARG, SIGKSTOP))
-						fxp_stop();
-					break;
 				case PM_PROC_NR:
+				{
+					sigset_t set;
+
+					if (getsigset(&set) != 0) break;
+
+					if (sigismember(&set, SIGTERM))
+						fxp_stop();
+
 					break;
+				}
 				case CLOCK:
 					fxp_expire_timers();
 					break;
@@ -2639,7 +2644,7 @@ static void fxp_stop()
 			printf("%s: resetting device\n", fp->fxp_name);
 		fxp_outl(port, CSR_PORT, CP_CMD_SOFT_RESET);
 	}
-	sys_exit(0);
+	exit(0);
 }
 
 /*===========================================================================*

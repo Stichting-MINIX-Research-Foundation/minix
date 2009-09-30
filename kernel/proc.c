@@ -59,7 +59,8 @@ FORWARD _PROTOTYPE( int mini_senda, (struct proc *caller_ptr,
 FORWARD _PROTOTYPE( int deadlock, (int function,
 		register struct proc *caller, int src_dst));
 FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
-FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr));
+FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr,
+		int *postponed));
 FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
 FORWARD _PROTOTYPE( void pick_proc, (void));
 
@@ -137,21 +138,76 @@ PUBLIC void schedcheck(void)
 	}
 	vmassert(proc_ptr);
 	vmassert(!proc_ptr->p_rts_flags);
-	while(proc_ptr->p_misc_flags & MF_DELIVERMSG) {
+	while (proc_ptr->p_misc_flags &
+		(MF_DELIVERMSG | MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
+
 		vmassert(!next_ptr);
 		vmassert(!proc_ptr->p_rts_flags);
-		TRACE(VF_SCHEDULING, printf("delivering to %s / %d\n",
-			proc_ptr->p_name, proc_ptr->p_endpoint););
-		if(delivermsg(proc_ptr) == VMSUSPEND) {
-			vmassert(next_ptr);
-			TRACE(VF_SCHEDULING, printf("suspending %s / %d\n",
+		if (proc_ptr->p_misc_flags & MF_DELIVERMSG) {
+			TRACE(VF_SCHEDULING, printf("delivering to %s / %d\n",
 				proc_ptr->p_name, proc_ptr->p_endpoint););
-			vmassert(proc_ptr->p_rts_flags);
-			vmassert(next_ptr != proc_ptr);
+			if(delivermsg(proc_ptr) == VMSUSPEND) {
+				vmassert(next_ptr);
+				TRACE(VF_SCHEDULING,
+					printf("suspending %s / %d\n",
+					proc_ptr->p_name,
+					proc_ptr->p_endpoint););
+				vmassert(proc_ptr->p_rts_flags);
+				vmassert(next_ptr != proc_ptr);
+			}
+		}
+		else if (proc_ptr->p_misc_flags & MF_SC_DEFER) {
+			/* Perform the system call that we deferred earlier. */
+
+#if DEBUG_SCHED_CHECK
+			if (proc_ptr->p_misc_flags & MF_SC_ACTIVE)
+				minix_panic("MF_SC_ACTIVE and MF_SC_DEFER set",
+					NO_NUM);
+#endif
+
+			arch_do_syscall(proc_ptr);
+
+			/* If the process is stopped for signal delivery, and
+			 * not blocked sending a message after the system call,
+			 * inform PM.
+			 */
+			if ((proc_ptr->p_misc_flags & MF_SIG_DELAY) &&
+					!RTS_ISSET(proc_ptr, SENDING))
+				sig_delay_done(proc_ptr);
+		}
+		else if (proc_ptr->p_misc_flags & MF_SC_TRACE) {
+			/* Trigger a system call leave event if this was a
+			 * system call. We must do this after processing the
+			 * other flags above, both for tracing correctness and
+			 * to be able to use 'break'.
+			 */
+			if (!(proc_ptr->p_misc_flags & MF_SC_ACTIVE))
+				break;
+
+			proc_ptr->p_misc_flags &=
+				~(MF_SC_TRACE | MF_SC_ACTIVE);
+
+			/* Signal the "leave system call" event.
+			 * Block the process.
+			 */
+			cause_sig(proc_nr(proc_ptr), SIGTRAP);
+		}
+		else if (proc_ptr->p_misc_flags & MF_SC_ACTIVE) {
+			/* If MF_SC_ACTIVE was set, remove it now:
+			 * we're leaving the system call.
+			 */
+			proc_ptr->p_misc_flags &= ~MF_SC_ACTIVE;
+
+			break;
+		}
+
+		/* If proc_ptr is now descheduled,
+		 * continue with another process.
+		 */
+		if (next_ptr) {
 			proc_ptr = next_ptr;
-			vmassert(!proc_ptr->p_rts_flags);
 			next_ptr = NULL;
-		} 
+		}
 	}
 	TRACE(VF_SCHEDULING, printf("starting %s / %d\n",
 		proc_ptr->p_name, proc_ptr->p_endpoint););
@@ -180,6 +236,37 @@ long bit_map;			/* notification event set or flags */
   int result;					/* the system call's result */
   int src_dst_p;				/* Process slot number */
   size_t msg_size;
+
+  /* If this process is subject to system call tracing, handle that first. */
+  if (caller_ptr->p_misc_flags & (MF_SC_TRACE | MF_SC_DEFER)) {
+	/* Are we tracing this process, and is it the first sys_call entry? */
+	if ((caller_ptr->p_misc_flags & (MF_SC_TRACE | MF_SC_DEFER)) ==
+							MF_SC_TRACE) {
+		/* We must notify the tracer before processing the actual
+		 * system call. If we don't, the tracer could not obtain the
+		 * input message. Postpone the entire system call.
+		 */
+		caller_ptr->p_misc_flags &= ~MF_SC_TRACE;
+		caller_ptr->p_misc_flags |= MF_SC_DEFER;
+
+		/* Signal the "enter system call" event. Block the process. */
+		cause_sig(proc_nr(caller_ptr), SIGTRAP);
+
+		/* Preserve the return register's value. */
+		return caller_ptr->p_reg.retreg;
+	}
+
+	/* If the MF_SC_DEFER flag is set, the syscall is now being resumed. */
+	caller_ptr->p_misc_flags &= ~MF_SC_DEFER;
+
+#if DEBUG_SCHED_CHECK
+	if (caller_ptr->p_misc_flags & MF_SC_ACTIVE)
+		minix_panic("MF_SC_ACTIVE already set", NO_NUM);
+#endif
+
+	/* Set a flag to allow reliable tracing of leaving the system call. */
+	caller_ptr->p_misc_flags |= MF_SC_ACTIVE;
+  }
 
 #if DEBUG_SCHED_CHECK
   if(caller_ptr->p_misc_flags & MF_DELIVERMSG) {
@@ -593,6 +680,8 @@ int flags;
   	    vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
 	    QueueMess((*xpp)->p_endpoint,
 		vir2phys(&(*xpp)->p_sendmsg), caller_ptr);
+	    if ((*xpp)->p_misc_flags & MF_SIG_DELAY)
+		sig_delay_done(*xpp);
 	    RTS_UNSET(*xpp, SENDING);
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
@@ -603,16 +692,10 @@ int flags;
     if (caller_ptr->p_misc_flags & MF_ASYNMSG)
     {
 	if (src_e != ANY)
-	{
-#if 0
-		kprintf("mini_receive: should try async from %d\n", src_e);
-#endif
-		r= EAGAIN;
-	}
+		r= try_one(proc_addr(src_p), caller_ptr, NULL);
 	else
-	{
 		r= try_async(caller_ptr);
-	}
+
 	if (r == OK)
 		return OK;	/* Got a message */
     }
@@ -772,7 +855,7 @@ size_t size;
 			continue;
 
 		/* Check for reserved bits in the flags field */
-		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY) ||
+		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY) ||
 			!(flags & AMF_VALID))
 		{
 			return EINVAL;
@@ -831,14 +914,13 @@ size_t size;
 			continue;
 		}
 
-		/* Check if 'dst' is blocked waiting for this message. The
-		 * destination's SENDING flag may be set when its SENDREC call
-		 * blocked while sending. 
+		/* Check if 'dst' is blocked waiting for this message.
+		 * If AMF_NOREPLY is set, do not satisfy the receiving part of
+		 * a SENDREC.
 		 */
-		if ( (dst_ptr->p_rts_flags & (RECEIVING | SENDING)) ==
-			RECEIVING &&
-			(dst_ptr->p_getfrom_e == ANY ||
-			dst_ptr->p_getfrom_e == caller_ptr->p_endpoint))
+		if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint) &&
+			(!(flags & AMF_NOREPLY) ||
+			!(dst_ptr->p_misc_flags & MF_REPLY_PEND)))
 		{
 			/* Destination is indeed waiting for this message. */
 			m_ptr= &table[i].msg;	/* Note: pointer in the
@@ -887,25 +969,25 @@ struct proc *caller_ptr;
 	int r;
 	struct priv *privp;
 	struct proc *src_ptr;
-	
+	int postponed = FALSE;
+
 	/* Try all privilege structures */
 	for (privp = BEG_PRIV_ADDR; privp < END_PRIV_ADDR; ++privp) 
 	{
-		if (privp->s_proc_nr == NONE || privp->s_id == USER_PRIV_ID)
+		if (privp->s_proc_nr == NONE)
 			continue;
-		if (privp->s_asynsize == 0)
-			continue;
+
 		src_ptr= proc_addr(privp->s_proc_nr);
-		if (!may_send_to(src_ptr, proc_nr(caller_ptr)))
-			continue;
+
 	  	vmassert(!(caller_ptr->p_misc_flags & MF_DELIVERMSG));
-		r= try_one(src_ptr, caller_ptr);
+		r= try_one(src_ptr, caller_ptr, &postponed);
 		if (r == OK)
 			return r;
 	}
 
-	/* Nothing found, clear MF_ASYNMSG */
-	caller_ptr->p_misc_flags &= ~MF_ASYNMSG;
+	/* Nothing found, clear MF_ASYNMSG unless messages were postponed */
+	if (postponed == FALSE)
+		caller_ptr->p_misc_flags &= ~MF_ASYNMSG;
 
 	return ESRCH;
 }
@@ -914,9 +996,10 @@ struct proc *caller_ptr;
 /*===========================================================================*
  *				try_one					     *
  *===========================================================================*/
-PRIVATE int try_one(src_ptr, dst_ptr)
+PRIVATE int try_one(src_ptr, dst_ptr, postponed)
 struct proc *src_ptr;
 struct proc *dst_ptr;
+int *postponed;
 {
 	int i, do_notify, done;
 	unsigned flags;
@@ -931,6 +1014,12 @@ struct proc *dst_ptr;
 	int r;
 
 	privp= priv(src_ptr);
+
+	/* Basic validity checks */
+	if (privp->s_id == USER_PRIV_ID) return EAGAIN;
+	if (privp->s_asynsize == 0) return EAGAIN;
+	if (!may_send_to(src_ptr, proc_nr(dst_ptr))) return EAGAIN;
+
 	size= privp->s_asynsize;
 	table_v = privp->s_asyntab;
 	caller_ptr = src_ptr;
@@ -953,7 +1042,7 @@ struct proc *dst_ptr;
 		}
 
 		/* Check for reserved bits in the flags field */
-		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY) ||
+		if (flags & ~(AMF_VALID|AMF_DONE|AMF_NOTIFY|AMF_NOREPLY) ||
 			!(flags & AMF_VALID))
 		{
 			kprintf("try_one: bad bits in table\n");
@@ -977,6 +1066,19 @@ struct proc *dst_ptr;
 
 		if (tabent.dst != dst_e)
 		{
+			continue;
+		}
+
+		/* If AMF_NOREPLY is set, do not satisfy the receiving part of
+		 * a SENDREC. Do not unset MF_ASYNMSG later because of this,
+		 * though: this message is still to be delivered later.
+		 */
+		if ((flags & AMF_NOREPLY) &&
+			(dst_ptr->p_misc_flags & MF_REPLY_PEND))
+		{
+			if (postponed != NULL)
+				*postponed = TRUE;
+
 			continue;
 		}
 

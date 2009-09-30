@@ -263,7 +263,7 @@ FORWARD _PROTOTYPE( void f_reset, (void) 				);
 FORWARD _PROTOTYPE( int f_intr_wait, (void) 				);
 FORWARD _PROTOTYPE( int read_id, (void) 				);
 FORWARD _PROTOTYPE( int f_do_open, (struct driver *dp, message *m_ptr) 	);
-FORWARD _PROTOTYPE( void floppy_stop, (struct driver *dp, message *m_ptr));
+FORWARD _PROTOTYPE( void floppy_stop, (struct driver *dp, sigset_t *set));
 FORWARD _PROTOTYPE( int test_read, (int density)	 		);
 FORWARD _PROTOTYPE( void f_geometry, (struct partition *entry)		);
 
@@ -805,12 +805,11 @@ timer_t *tp;
 /*===========================================================================*
  *				floppy_stop				     *
  *===========================================================================*/
-PRIVATE void floppy_stop(struct driver *dp, message *m_ptr)
+PRIVATE void floppy_stop(struct driver *dp, sigset_t *set)
 {
 /* Stop all activity and cleanly exit with the system. */
   int s;
-  sigset_t sigset = m_ptr->NOTIFY_ARG;
-  if (sigismember(&sigset, SIGTERM) || sigismember(&sigset, SIGKSTOP)) {
+  if (sigismember(set, SIGTERM)) {
       if ((s=sys_outb(DOR, ENABLE_INT)) != OK)
 		panic("FLOPPY","Sys_outb in floppy_stop() failed", s);
       exit(0);	

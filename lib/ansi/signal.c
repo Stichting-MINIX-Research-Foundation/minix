@@ -2,7 +2,7 @@
 
 #include <lib.h>
 #define sigaction	_sigaction
-#define sigemptyset	_sigemptyset
+#define _SYSTEM 1
 #include <signal.h>
 
 PUBLIC sighandler_t signal(sig, disp)

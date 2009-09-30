@@ -106,7 +106,7 @@ struct proc {
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
 #define SLOT_FREE	 0x01	/* process slot is free */
-#define NO_PRIORITY      0x02	/* process has been stopped */
+#define PROC_STOP	 0x02	/* process has been stopped */
 #define SENDING		 0x04	/* process blocked trying to send */
 #define RECEIVING	 0x08	/* process blocked trying to receive */
 #define SIGNALED	 0x10	/* set when new kernel signal arrives */
@@ -118,6 +118,7 @@ struct proc {
 #define PAGEFAULT       0x400	/* process has unhandled pagefault */
 #define VMREQUEST       0x800	/* originator of vm memory request */
 #define VMREQTARGET    0x1000	/* target of vm memory request */
+#define SYS_LOCK       0x2000	/* temporary process lock flag for systask */
 
 /* These runtime flags can be tested and manipulated by these macros. */
 
@@ -177,12 +178,16 @@ struct proc {
 	} while(0)
 
 /* Misc flags */
-#define MF_REPLY_PEND	0x01	/* reply to IPC_REQUEST is pending */
-#define MF_VIRT_TIMER	0x02	/* process-virtual timer is running */
-#define MF_PROF_TIMER	0x04	/* process-virtual profile timer is running */
-#define MF_ASYNMSG	0x10	/* Asynchrous message pending */
-#define MF_FULLVM	0x20
-#define MF_DELIVERMSG	0x40	/* Copy message for him before running */
+#define MF_REPLY_PEND	0x001	/* reply to IPC_REQUEST is pending */
+#define MF_VIRT_TIMER	0x002	/* process-virtual timer is running */
+#define MF_PROF_TIMER	0x004	/* process-virtual profile timer is running */
+#define MF_ASYNMSG	0x010	/* Asynchrous message pending */
+#define MF_FULLVM	0x020
+#define MF_DELIVERMSG	0x040	/* Copy message for him before running */
+#define MF_SIG_DELAY	0x080	/* Send signal when no longer sending */
+#define MF_SC_ACTIVE	0x100	/* Syscall tracing: in a system call now */
+#define MF_SC_DEFER	0x200	/* Syscall tracing: deferred system call */
+#define MF_SC_TRACE	0x400	/* Syscall tracing: trigger syscall events */
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 

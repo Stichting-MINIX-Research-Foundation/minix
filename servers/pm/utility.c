@@ -1,11 +1,12 @@
 /* This file contains some utility routines for PM.
  *
  * The entry points are:
- *   find_param:	look up a boot monitor parameter
  *   get_free_pid:	get a free process or group id
  *   no_sys:		called for invalid system call numbers
- *   proc_from_pid:	return process pointer from pid number
+ *   find_param:	look up a boot monitor parameter
+ *   find_proc:		return process pointer from pid number
  *   pm_isokendpt:	check the validity of an endpoint
+ *   tell_fs:		send a request to FS on behalf of a process
  */
 
 #include "pm.h"
@@ -88,18 +89,18 @@ const char *name;
 }
 
 /*===========================================================================*
- *				proc_from_pid				     *
+ *				find_proc  				     *
  *===========================================================================*/
-PUBLIC int proc_from_pid(mp_pid)
-pid_t mp_pid;
+PUBLIC struct mproc *find_proc(lpid)
+pid_t lpid;
 {
-	int rmp;
+  register struct mproc *rmp;
 
-	for (rmp = 0; rmp < NR_PROCS; rmp++)
-		if (mproc[rmp].mp_pid == mp_pid)
-			return rmp;
+  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++)
+	if ((rmp->mp_flags & IN_USE) && rmp->mp_pid == lpid)
+		return(rmp);
 
-	return -1;
+  return(NIL_MPROC);
 }
 
 /*===========================================================================*
@@ -115,6 +116,27 @@ PUBLIC int pm_isokendpt(int endpoint, int *proc)
 	if(*proc >= 0 && !(mproc[*proc].mp_flags & IN_USE))
 		return EDEADSRCDST;
 	return OK;
+}
+
+/*===========================================================================*
+ *				tell_fs				 	     *
+ *===========================================================================*/
+PUBLIC void tell_fs(rmp, m_ptr)
+struct mproc *rmp;
+message *m_ptr;
+{
+/* Send a request to VFS, without blocking.
+ */
+  int r;
+
+  if (rmp->mp_flags & FS_CALL)
+	panic(__FILE__, "tell_fs: not idle", m_ptr->m_type);
+
+  r = asynsend3(FS_PROC_NR, m_ptr, AMF_NOREPLY);
+  if (r != OK)
+  	panic(__FILE__, "unable to send to FS", r);
+
+  rmp->mp_flags |= FS_CALL;
 }
 
 int unmap_ok = 0;

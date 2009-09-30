@@ -353,3 +353,23 @@ PUBLIC int arch_set_params(char *params, int size)
 	return OK;
 }
 
+PUBLIC void arch_do_syscall(struct proc *proc)
+{
+/* Perform a previously postponed system call.
+ */
+  int call_nr, src_dst_e;
+  message *m_ptr;
+  long bit_map;
+
+  /* Get the system call parameters from their respective registers. */
+  call_nr = proc->p_reg.cx;
+  src_dst_e = proc->p_reg.retreg;
+  m_ptr = (message *) proc->p_reg.bx;
+  bit_map = proc->p_reg.dx;
+
+  /* sys_call() expects the given process's memory to be accessible. */
+  vm_set_cr3(proc);
+
+  /* Make the system call, for real this time. */
+  proc->p_reg.retreg = sys_call(call_nr, src_dst_e, m_ptr, bit_map);
+}

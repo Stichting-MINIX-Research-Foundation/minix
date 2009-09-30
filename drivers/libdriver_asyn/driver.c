@@ -53,8 +53,6 @@ FORWARD _PROTOTYPE( void init_buffer, (void) );
 FORWARD _PROTOTYPE( int do_rdwt, (struct driver *dr, message *mp, int safe) );
 FORWARD _PROTOTYPE( int do_vrdwt, (struct driver *dr, message *mp, int safe) );
 
-_PROTOTYPE( int asynsend, (endpoint_t dst, message *mp));
-
 int device_caller;
 PRIVATE mq_t *queue_head = NULL;
 
@@ -68,6 +66,7 @@ struct driver *dp;	/* Device dependent entry points. */
 
   int r, proc_nr;
   message mess, reply_mess;
+  sigset_t set;
 
   /* Init MQ library. */
   mq_init();
@@ -117,8 +116,12 @@ struct driver *dp;	/* Device dependent entry points. */
 				}
 				break;
 			case PM_PROC_NR:
+				if (getsigset(&set) != 0) break;
+				(*dp->dr_signal)(dp, &set);
+				break;
 			case SYSTEM:
-				(*dp->dr_signal)(dp, &mess);
+				set = mess.NOTIFY_ARG;
+				(*dp->dr_signal)(dp, &set);
 				break;
 			case CLOCK:
 				(*dp->dr_alarm)(dp, &mess);	
@@ -409,9 +412,9 @@ int safe;
 /*============================================================================*
  *				nop_signal			  	      *
  *============================================================================*/
-PUBLIC void nop_signal(dp, mp)
+PUBLIC void nop_signal(dp, set)
 struct driver *dp;
-message *mp;
+sigset_t *set;
 {
 /* Default action for signal is to ignore. */
 }

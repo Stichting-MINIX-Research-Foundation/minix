@@ -7,7 +7,7 @@
 #include <minix/endpoint.h>
 
 _PROTOTYPE( int vm_exit, (endpoint_t ep));
-_PROTOTYPE( int vm_fork, (endpoint_t ep, int slotno, int *child_ep));
+_PROTOTYPE( int vm_fork, (endpoint_t ep, int slotno, endpoint_t *child_ep));
 _PROTOTYPE( int vm_brk, (endpoint_t ep, char *newaddr));
 _PROTOTYPE( int vm_exec_newmem, (endpoint_t ep, struct exec_newmem *args,
 	int args_bytes, char **ret_stack_top, int *ret_flags));

@@ -90,7 +90,7 @@ PRIVATE int revive_pending;	/* set to true if revive is pending */
 PRIVATE int revive_status;	/* revive status */
 PRIVATE int done_status;	/* status of last output completion */
 PRIVATE int oleft;		/* bytes of output left in obuf */
-PRIVATE char obuf[128];		/* output buffer */
+PRIVATE unsigned char obuf[128];	/* output buffer */
 PRIVATE unsigned char *optr;		/* ptr to next char in obuf to print */
 PRIVATE int orig_count;		/* original byte count */
 PRIVATE int port_base;		/* I/O port for printer */
@@ -113,7 +113,7 @@ FORWARD _PROTOTYPE( void prepare_output, (void) );
 FORWARD _PROTOTYPE( void do_initialize, (void) );
 FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
 FORWARD _PROTOTYPE( void do_printer_output, (void) );
-FORWARD _PROTOTYPE( void do_signal, (message *m_ptr) );
+FORWARD _PROTOTYPE( void do_signal, (void) );
 
 
 /*===========================================================================*
@@ -140,13 +140,11 @@ PUBLIC void main(void)
 			case HARDWARE:
 				do_printer_output();
 				break;
-			case SYSTEM:
-				do_signal(&pr_mess);
-				break;
 			case RS_PROC_NR:
 				notify(pr_mess.m_source);
 				break;
 			case PM_PROC_NR:
+				do_signal();
 				break;
 			default:
 				reply(TASK_REPLY, pr_mess.m_source,
@@ -175,11 +173,11 @@ PUBLIC void main(void)
 /*===========================================================================*
  *				 do_signal	                             *
  *===========================================================================*/
-PRIVATE void do_signal(m_ptr)
-message *m_ptr;					/* signal message */
+PRIVATE void do_signal()
 {
-  int sig;
-  sigset_t sigset = m_ptr->NOTIFY_ARG;
+  sigset_t sigset;
+
+  if (getsigset(&sigset) != 0) return;
   
   /* Expect a SIGTERM signal when this server must shutdown. */
   if (sigismember(&sigset, SIGTERM)) {

@@ -67,6 +67,7 @@ struct driver *dp;	/* Device dependent entry points. */
 
   int r, proc_nr;
   message mess;
+  sigset_t set;
 
   system_hz = sys_hz();
 
@@ -104,8 +105,12 @@ struct driver *dp;	/* Device dependent entry points. */
 				}
 				break;
 			case PM_PROC_NR:
+				if (getsigset(&set) != 0) break;
+				(*dp->dr_signal)(dp, &set);
+				break;
 			case SYSTEM:
-				(*dp->dr_signal)(dp, &mess);
+				set = mess.NOTIFY_ARG;
+				(*dp->dr_signal)(dp, &set);
 				break;
 			case CLOCK:
 				(*dp->dr_alarm)(dp, &mess);	
@@ -349,9 +354,9 @@ int safe;
 /*============================================================================*
  *				nop_signal			  	      *
  *============================================================================*/
-PUBLIC void nop_signal(dp, mp)
+PUBLIC void nop_signal(dp, set)
 struct driver *dp;
-message *mp;
+sigset_t *set;
 {
 /* Default action for signal is to ignore. */
 }

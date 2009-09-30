@@ -166,6 +166,7 @@ struct proc *t;
    * k_reenter larger than zero.
    */
   if (k_reenter == 0 && ! iskernelp(saved_proc)) {
+#if 0
 	{
 
   		kprintf(
@@ -181,6 +182,7 @@ struct proc *t;
 		proc_stacktrace(saved_proc);
 	}
 
+#endif
 	cause_sig(proc_nr(saved_proc), ep->signum);
 	return;
   }

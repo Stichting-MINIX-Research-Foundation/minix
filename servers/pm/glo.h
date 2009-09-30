@@ -27,8 +27,5 @@ EXTERN time_t boottime;		/* time when the system was booted (for
 				 * reporting to FS)
 				 */
 EXTERN u32_t system_hz;		/* System clock frequency. */
-EXTERN int report_reboot;	/* During reboot to report to FS that we are 
-				 * rebooting.
-				 */
 EXTERN int abort_flag;
 EXTERN char monitor_code[256];		

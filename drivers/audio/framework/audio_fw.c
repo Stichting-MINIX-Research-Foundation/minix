@@ -44,6 +44,7 @@
 
 #include "audio_fw.h"
 #include <sys/vm.h>
+#include <minix/endpoint.h>
 #include <minix/ds.h>
 #include <sys/vm_i386.h>
 
@@ -92,14 +93,29 @@ PUBLIC void main(void)
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
 
-		if (caller == RS_PROC_NR && mess.m_type == DEV_PING)
-		{
-			/* Got ping from RS. Just notify RS */
-			notify(RS_PROC_NR);
+		/* Now carry out the work. First check for notifications. */
+		if (is_notify(mess.m_type)) {
+			switch (_ENDPOINT_P(mess.m_source)) {
+				case HARDWARE:
+					msg_hardware();
+					break;
+				case PM_PROC_NR:
+					msg_sig_stop();
+					break;
+				case RS_PROC_NR:
+					/* Got ping from RS. Just notify RS */
+					notify(RS_PROC_NR);
+					break;
+				default:
+					dprint("%s: %d uncaught notify!\n",
+						drv.DriverName, mess.m_type);
+			}
+
+			/* get next message */
 			continue;
 		}
 
-		/* Now carry out the work. */
+		/* Normal messages. */
 		switch(mess.m_type) {
 			case DEV_OPEN:
 				/* open the special file ( = parameter) */
@@ -149,10 +165,6 @@ PUBLIC void main(void)
 				repl_mess.REP_STATUS = r;
 				send(caller, &repl_mess);
 				continue;
-			case HARD_INT:
-				msg_hardware();continue;  /* don't reply */
-			case SYS_SIG:		  
-				msg_sig_stop(); continue; /* don't reply */
 			default:          
 				dprint("%s: %d uncaught msg!\n",
 					drv.DriverName, mess.m_type);
@@ -883,14 +895,14 @@ PRIVATE int init_buffers(sub_dev_t *sub_dev_ptr)
 {
 #if (CHIP == INTEL)
 	char *base;
-	size_t size, off;
+	size_t size;
 	unsigned left;
 	u32_t i;
 	phys_bytes ph;
 
 	/* allocate dma buffer space */
 	size= sub_dev_ptr->DmaSize + 64 * 1024;
-	off = base= alloc_contig(size, AC_ALIGN4K, &ph);
+	base= alloc_contig(size, AC_ALIGN4K, &ph);
 	if (!base) {
 		error("%s: failed to allocate dma buffer for channel %d\n", 
 				drv.DriverName,i);

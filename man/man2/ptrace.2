@@ -1,10 +1,4 @@
-.\" Copyright (c) 1980 Regents of the University of California.
-.\" All rights reserved.  The Berkeley software License Agreement
-.\" specifies the terms and conditions for redistribution.
-.\"
-.\"	@(#)ptrace.2	6.4 (Berkeley) 5/23/86
-.\"
-.TH PTRACE 2 "May 23, 1986"
+.TH PTRACE 2 "September 27, 2009"
 .UC 4
 .SH NAME
 ptrace \- process trace
@@ -12,220 +6,179 @@ ptrace \- process trace
 .nf
 .ft B
 #include <sys/types.h>
-#include <sys/signal.h>
 #include <sys/ptrace.h>
 
-int ptrace(int \fIrequest\fP, pid_t \fIpid\fP, long \fIaddr\fP, long \fIdata\fP)
+long ptrace(int \fIreq\fP, pid_t \fIpid\fP, long \fIaddr\fP, long \fIdata\fP)
 .ft R
 .fi
 .SH DESCRIPTION
-.ft B
-Note: This manual page has no relation to MINIX 3.  Someone who knows ptrace()
-has to check, or rewrite, this page.  (kjb)
-.ft R
+The \fBptrace\fP call provides a primitive means to trace (debug) another
+process. A process can submit itself to tracing using a \fBT_OK\fP ptrace
+request, or can be attached to by a tracer using a \fBT_ATTACH\fP request.
+From that point on, whenever a signal is sent to the traced process,
+the process will be stopped. Its tracer will be told about the signal
+causing the stop, via
+.BR wait (2).
+The tracer can then inspect the traced process, and choose how to continue the
+process's execution and whether to pass on the signal to it.
 .PP
-.B Ptrace
-provides a means by which a parent process
-may control the execution of a child process,
-and examine and change its core image.
-Its primary use is for the implementation of breakpoint debugging.
-There are four arguments whose interpretation
-depends on a
-.I request
-argument.
-Generally,
-.I pid
-is the process ID of the traced process,
-which must be a child (no more distant descendant)
-of the tracing process.
-A process being traced
-behaves normally until it encounters some signal
-whether internally generated
-like \*(lqillegal instruction\*(rq or externally
-generated like \*(lqinterrupt\*(rq.
-See
-.BR sigaction (2)
-for the list.
-Then the traced process enters a stopped state
-and its parent is notified via
-.BR  wait (2).
-When the child is in the stopped state,
-its core image can be examined and modified
-using
-.BR ptrace .
-If desired, another
-.B ptrace
-request can then cause the child either to terminate
-or to continue, possibly ignoring the signal.
+In the current model, the tracer will be notified of the signal before any
+checks on ignore or block masks are made. A \fBSIGKILL\fP signal cannot be
+intercepted by the tracer, and will always kill the traced process.
 .PP
-The value of the
-.I request
-argument determines the precise
-action of the call:
-.TP 4
-PT_TRACE_ME
-This request is the only one used by the child process;
-it declares that the process is to be traced by its parent.
-All the other arguments are ignored.
-Peculiar results will ensue
-if the parent does not expect to trace the child.
-.TP 4
-PT_READ_I, PT_READ_D
-The
-word in the child process's address space
-at
-.I addr
-is returned.
-If I and D space are separated (e.g. historically
-on a pdp-11), request PT_READ_I indicates I space,
-PT_READ_D D space.
-.I Addr
-must be even on some machines.
-The child must be stopped.
-The input
-.I data
-is ignored.
-.TP 4
-PT_READ_U
-The word
-of the system's per-process data area corresponding to
-.I addr
-is returned.
-.I Addr
-must be even on some machines and less than 512.
-This space contains the registers and other information about
-the process;
-its layout corresponds to the
-.I user
-structure in the system.
-.TP 4
-PT_WRITE_I, PT_WRITE_D
-The
-given
-.I data
-is written at the word in the process's address space corresponding to
-.I addr,
-which must be even on some machines.
-No useful value is returned.
-If I and D space are separated, request PT_WRITE_I indicates I space, 
-PT_WRITE_D D space.
-Attempts to write in pure procedure
-fail if another process is executing the same file.
-.TP 4
-PT_WRITE_U
-The process's system data is written,
-as it is read with request PT_READ_U.
-Only a few locations can be written in this way:
-the general registers,
-the floating point status and registers,
-and certain bits of the processor status word.
-.TP 4
-PT_CONTINUE
-The
-.I data
-argument is taken as a signal number
-and the child's execution continues
-at location
-.I addr
-as if it had incurred that signal.
-Normally the signal number will be
-either 0 to indicate that the signal that caused the stop
-should be ignored,
-or that value fetched out of the
-process's image indicating which signal caused
-the stop.
-If
-.I addr
-is (int *)1 then execution continues from where it stopped.
-.TP 4
-PT_KILL
-The traced process terminates.
-.TP 4
-PT_STEP
-Execution continues as in request PT_CONTINUE;
-however, as soon as possible after execution of at least one instruction,
-execution stops again.
-The signal number from the stop is
-SIGTRAP.
-(On the VAX-11 the T-bit is used and just one instruction
-is executed.)
-This is part of the mechanism for implementing breakpoints.
+When the traced process performs a successful
+.BR execve (2)
+call, it will be stopped and a \fBSIGTRAP\fP will be generated for it.
+Set-uid and set-gid bits on the new executable are ignored.
 .PP
-As indicated,
-these calls
-(except for request PT_TRACE_ME)
-can be used only when the subject process has stopped.
-The
-.B wait
-call is used to determine
-when a process stops;
-in such a case the \*(lqtermination\*(rq status
-returned by
-.B wait
-has the value 0177 to indicate stoppage rather
-than genuine termination.
+The \fIreq\fP parameter specifies the process trace request. The interpretation
+of the remaining parameters depends on the given request. For all requests
+except \fBT_OK\fP, the \fIpid\fP parameter specifies process ID of the target
+process. For all requests except \fBT_OK\fP and \fBT_ATTACH\fP, the process
+must be stopped. The following requests are supported:
+.TP 2
+.B T_OK
+Set the caller's parent to be its tracer. All other arguments are ignored.
+This request is typically made by the child fork of a debugger,
+before performing an
+.BR execve (2)
+call.
+.TP
+.B T_GETINS, T_GETDATA
+Retrieve a value from the given process's instruction and data area,
+respectively, at the address given in \fIaddr\fP.
+.TP
+.B T_SETINS, T_SETDATA
+Set the value from the given process's instruction and data area, respectively,
+at the address given in \fIaddr\fP, to the value given in \fIdata\fP.
+.TP
+.B T_GETUSER
+Retrieve the value at the zero-based offset given in \fIaddr\fP from the
+process's \fBstruct proc\fP kernel structure, followed by, aligned on
+\fBlong\fP size boundary, its \fBstruct priv\fP kernel structure.
+.TP
+.B T_SETUSER
+Set some of the given process's registers at the beginning of its
+\fBstruct proc\fP kernel structure. The value in \fIdata\fP will be written to
+the zero-based offset given in \fIaddr\fP from the process's \fBstruct proc\fP
+kernel structure.
+.TP
+.B T_RESUME
+Resume execution of the process. A nonzero \fIdata\fP argument will be
+interpreted as a signal to pass to the process.
+.TP
+.B T_STEP
+Single-step an instruction. A nonzero \fIdata\fP argument will be interpreted
+as a signal to pass to the process.
+.TP
+.B T_SYSCALL
+Resume execution with system call tracing. When the traced process makes a
+system call, a \fBSIGTRAP\fP signal will be generated. A subsequent
+\fBT_SYSCALL\fP request will then cause a \fBSIGTRAP\fP signal to be generated
+when the process leaves the system call. A nonzero \fIdata\fP argument will be
+interpreted as a signal to pass to the process.
+.TP
+.B T_EXIT
+Terminate the traced process, with the exit code given in the \fIdata\fP
+argument. This call will return once the process has exited.
+.TP
+.B T_ATTACH
+Attach to the given process. The process will be stopped with a \fBSIGSTOP\fP
+signal.
+.TP
+.B T_DETACH
+Detach from the given process. Any signals still pending for the tracer are
+passed on directly to the process. A nonzero \fIdata\fP argument will be
+interpreted as an additional signal to pass to the process.
+.TP
+.B T_SETOPT
+Set the given process's trace options to the bit combination of flags given
+in the \fIdata\fP argument.
 .PP
-To forestall possible fraud,
-.B ptrace
-inhibits the set-user-id and set-group-id facilities
-on subsequent
-.BR  execve (2)
-calls.
-If a traced process calls
-.BR execve ,
-it will stop before executing the first instruction of the new image
-showing signal SIGTRAP.
+The following option flags are currently supported for \fBT_SETOPT\fP:
+.TP 2
+.B TO_TRACEFORK
+When the traced process performs a
+.BR fork (2),
+automatically attach to the new child as well.
+The child will be stopped with a \fBSIGSTOP\fP signal right after forking.
+.TP
+.B TO_ALTEXEC
+Send \fBSIGSTOP\fP instead of \fBSIGTRAP\fP upon a successful
+.BR execve (2).
+This allows the tracer to disambiguate between this case and other traps.
 .PP
-On a VAX-11, \*(lqword\*(rq also means a 32-bit integer,
-but the \*(lqeven\*(rq
-restriction does not apply.
-.SH "RETURN VALUE
-A 0 value is returned if the call succeeds.  If the call fails
-then a \-1 is returned and the global variable \fIerrno\fP is
-set to indicate the error.
-.SH "ERRORS
-.TP 15
-[EIO]
-The request code is invalid.
-.TP 15
-[ESRCH]
-The specified process does not exist.
-.TP 15
-[EIO]
-The given signal number is invalid.
-.TP 15
-[EIO]
-The specified address is out of bounds.
-.TP 15
-[EPERM]
-The specified process cannot be traced.
+All addresses specified for the \fBT_GET\fP* and \fBT_SET\fP* requests must be
+aligned on \fBlong\fP boundary. Similarly, only \fBlong\fP sized values can be
+retrieved and set at a time.
+.SH "RETURN VALUE"
+All but the \fBT_GET\fP* requests return 0 upon successful completion.
+Otherwise, a value of -1 is returned and \fIerrno\fP is set to indicate the
+error.
+.PP
+The \fBT_GET\fP* requests return the resulting data. Here, -1 is a legitimate
+return value. To distinguish between this and an error, clear \fIerrno\fP
+before the \fBptrace\fP call, and check whether it is zero afterwards.
+.SH ERRORS
+The functions will fail if any of the following errors occur:
+.TP 10
+.B EINVAL
+Invalid request or signal given.
+.TP 10
+.B ESRCH
+The given process is not found, exiting, or not traced by the caller.
+.TP 10
+.B EBUSY
+The given process is not stopped, or already being traced.
+.TP 10
+.B EIO
+The given address is out of range or not properly aligned.
+.TP 10
+.B EPERM
+Attaching is denied, because the caller equals the given process,
+or the caller is not root and does not match the given process's
+user or group ID, or the caller is not root and the given process
+is a system process, or the caller is a system process,
+or the given process may not be traced at all.
+.TP
+.SH LIMITATIONS
+Signals are not ordered. Attaching to a process guarantees that a \fBSIGSTOP\fP
+will arrive at the tracer, but it is not guaranteed that this will be the first
+signal to arrive. The same goes for automatically attached children of the
+traced process. Similarly, if the tracer wants to detach from a running
+process, it will typically send a \fBSIGSTOP\fP using
+.BR kill (2)
+to the process to stop it, but there is no guarantee that this will be the
+first signal to arrive.
+.PP
+Signals not caused by the process itself (e.g. those caused by
+.BR kill (2))
+will arrive at the tracer while the process is in stopped state, but this does
+not imply that the process is in a stable state at that point. The process may
+still have a system call pending, and this means that registers and memory of
+the process may change almost arbitrarily after the tracer has been told about
+the arrival of the current signal. Implementers of debuggers are advised to
+make minimal assumptions about the conditions of the process when an unexpected
+signal arrives.
+.PP
+It is not possible to use \fBT_SYSCALL\fP to get a trap upon leaving of a
+system call, if \fBT_SYSCALL\fP was not used to get a trap upon entering that
+system call. This is in fact helpful: after attaching to a process, the first
+\fBT_SYSCALL\fP call will always cause a trap after entering the next system
+call. As the only exception, \fBT_SYSCALL\fP on a
+.BR fork (2)
+call of a process with \fBTO_TRACEFORK\fP set, will result in two traps upon
+leaving: one for the parent, and one for the child. The child's \fBSIGSTOP\fP
+signal will always come before the \fBSIGTRAP\fP from its leaving the system
+call.
+.PP
+There is no way to reliably distinguish between real signals and signals
+generated for the tracer.
+.PP
+For system stability reasons, the PM and VM servers cannot be traced.
 .SH "SEE ALSO"
 .BR wait (2),
-.BR sigaction (2),
-.BR mdb (1).
-.SH BUGS
-.B Ptrace
-is unique and arcane; it should be replaced with a special file that
-can be opened and read and written.  The control functions could then
-be implemented with
-.BR ioctl (2)
-calls on this file.  This would be simpler to understand and have much
-higher performance.
-.PP
-The request PT_TRACE_ME call should be able to specify
-signals that are to be treated normally and not cause a stop.
-In this way, for example,
-programs with simulated floating point (which
-use \*(lqillegal instruction\*(rq signals at a very high rate)
-could be efficiently debugged.
-.PP
-The error indication, \-1, is a legitimate function value;
-.BR errno ,
-(see
-.BR intro (2)),
-can be used to disambiguate.
-.PP
-It should be possible to stop a process on occurrence of a system
-call;
-in this way a completely controlled environment could
-be provided.
+.BR kill (2),
+.BR mdb (1)
+.SH AUTHOR
+Manual page written by David van Moolenbroek <dcvmoole@cs.vu.nl>

@@ -280,11 +280,6 @@ int main(int argc, char *argv[]) {
 				case CLOCK:
 					or_watchdog_f(NULL);     
 					break;		 
-				case SYSTEM:
-					if (sigismember((sigset_t*)&m.NOTIFY_ARG,
-								SIGKSTOP))
-						orinoco_stop();
-					break;
 				case HARDWARE:
 					do_hard_int();
 					if (int_event_check)
@@ -294,7 +289,16 @@ int main(int argc, char *argv[]) {
 					or_dump(&m);	
 					break;
 				case PM_PROC_NR:
+				{
+					sigset_t set;
+
+					if (getsigset(&set) != 0) break;
+
+					if (sigismember(&set, SIGTERM))
+						orinoco_stop();
+
 					break;
+				}
 				default:
 					panic(__FILE__,
 						"orinoco: illegal notify from:",
@@ -424,7 +428,7 @@ static void orinoco_stop () {
 			continue;
 		/* TODO: send a signal to the card to shut it down */
 	}
-	sys_exit(0);
+	exit(0);
 }
 
 /*****************************************************************************

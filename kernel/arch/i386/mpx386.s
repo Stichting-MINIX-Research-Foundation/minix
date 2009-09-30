@@ -367,10 +367,8 @@ set_restart1:
 _s_call:
 _p_s_call:
 	cld			! set direction flag to a known value
-	sub	esp, 6*4	! skip RETADR, eax, ecx, edx, ebx, est
-	push	ebp		! stack already points into proc table
-	push	esi
-	push	edi
+	sub	esp, 4		! skip RETADR
+	pushad			! save "general" registers
     o16	push	ds
     o16	push	es
     o16	push	fs

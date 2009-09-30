@@ -27,32 +27,25 @@ PUBLIC int do_nice(message *m_ptr)
   pri = m_ptr->PR_PRIORITY;
   rp = proc_addr(proc_nr);
 
-  if (pri == PRIO_STOP) {
-      /* Take process off the scheduling queues. */
-      RTS_LOCK_SET(rp, NO_PRIORITY);
-      return(OK);
-  }
-  else if (pri >= PRIO_MIN && pri <= PRIO_MAX) {
+  /* The value passed in is currently between PRIO_MIN and PRIO_MAX. 
+   * We have to scale this between MIN_USER_Q and MAX_USER_Q to match 
+   * the kernel's scheduling queues.
+   */
+  if (pri < PRIO_MIN || pri > PRIO_MAX) return(EINVAL);
 
-      /* The value passed in is currently between PRIO_MIN and PRIO_MAX. 
-       * We have to scale this between MIN_USER_Q and MAX_USER_Q to match 
-       * the kernel's scheduling queues.
-       */
-      new_q = MAX_USER_Q + (pri-PRIO_MIN) * (MIN_USER_Q-MAX_USER_Q+1) / 
-          (PRIO_MAX-PRIO_MIN+1);
-      if (new_q < MAX_USER_Q) new_q = MAX_USER_Q;	/* shouldn't happen */
-      if (new_q > MIN_USER_Q) new_q = MIN_USER_Q;	/* shouldn't happen */
+  new_q = MAX_USER_Q + (pri-PRIO_MIN) * (MIN_USER_Q-MAX_USER_Q+1) / 
+      (PRIO_MAX-PRIO_MIN+1);
+  if (new_q < MAX_USER_Q) new_q = MAX_USER_Q;	/* shouldn't happen */
+  if (new_q > MIN_USER_Q) new_q = MIN_USER_Q;	/* shouldn't happen */
 
-      /* Make sure the process is not running while changing its priority. 
-       * Put the process back in its new queue if it is runnable.
-       */
-      RTS_LOCK_SET(rp, NO_PRIORITY);
-      rp->p_max_priority = rp->p_priority = new_q;
-      RTS_LOCK_UNSET(rp, NO_PRIORITY);
+  /* Make sure the process is not running while changing its priority. 
+   * Put the process back in its new queue if it is runnable.
+   */
+  RTS_LOCK_SET(rp, SYS_LOCK);
+  rp->p_max_priority = rp->p_priority = new_q;
+  RTS_LOCK_UNSET(rp, SYS_LOCK);
 
-      return(OK);
-  }
-  return(EINVAL);
+  return(OK);
 }
 
 #endif /* USE_NICE */

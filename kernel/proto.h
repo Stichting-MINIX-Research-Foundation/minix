@@ -58,6 +58,7 @@ _PROTOTYPE( void set_sendto_bit, (struct proc *rc, int id)		);
 _PROTOTYPE( void unset_sendto_bit, (struct proc *rc, int id)		);
 _PROTOTYPE( void send_sig, (int proc_nr, int sig_nr)			);
 _PROTOTYPE( void cause_sig, (int proc_nr, int sig_nr)			);
+_PROTOTYPE( void sig_delay_done, (struct proc *rp)			);
 _PROTOTYPE( void sys_task, (void)					);
 #define numap_local(proc_nr, vir_addr, bytes) \
 	umap_local(proc_addr(proc_nr), D, (vir_addr), (bytes))
@@ -173,5 +174,6 @@ _PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target,
 _PROTOTYPE( int delivermsg, (struct proc *target));
 _PROTOTYPE( phys_bytes arch_switch_copymsg, (struct proc *rp, message *m,
 	phys_bytes lin));
+_PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
 
 #endif /* PROTO_H */

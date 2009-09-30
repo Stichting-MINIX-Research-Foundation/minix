@@ -328,10 +328,6 @@ void main( int argc, char **argv )
 		      case TTY_PROC_NR:
 			      lance_dump();
 			      break;
-		      case SYSTEM:
-			      if (sigismember((sigset_t*)&m.NOTIFY_ARG, SIGKSTOP))
-				      lance_stop();
-			      break;
 		      case HARDWARE:
 			      for (i=0;i<EC_PORT_NR_MAX;++i)
 			      {
@@ -348,7 +344,16 @@ void main( int argc, char **argv )
 			      }
 			      break;
 		      case PM_PROC_NR:
+		      {
+			      sigset_t set;
+
+			      if (getsigset(&set) != 0) break;
+
+			      if (sigismember(&set, SIGTERM))
+				      lance_stop();
+
 			      break;
+		      }
 		      default:
 			      panic( "lance", "illegal notify source", m.m_source);
 	      }
@@ -469,7 +474,7 @@ static void lance_stop()
    printf("LANCE driver stopped.\n");
 #endif
 
-   sys_exit( 0 );
+   exit( 0 );
 }
 
 

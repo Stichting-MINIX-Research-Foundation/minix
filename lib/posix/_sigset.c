@@ -1,12 +1,7 @@
 #include <lib.h>
-/* XXX - these have to be hidden because signal() uses them and signal() is
- * ANSI and not POSIX.  It would be surely be better to use macros for the
- * library and system uses, and perhaps macros as well as functions for the
- * POSIX user interface.  The macros would not need underlines.  It may be
- * inconvenient to match the exact semantics of the current functions
- * because the interface is bloated by reporting errors.  For library and
- * system uses, the signal number is mostly already known to be valid
- * before the sigset-changing routines are called.
+/* System processes use simpler macros with no range error checking (defined in
+ * signal.h). The ANSI signal() implementation now also uses the macro
+ * versions, which makes hiding of the functions here a historical remains.
  */
 #define sigaddset	_sigaddset
 #define sigdelset	_sigdelset

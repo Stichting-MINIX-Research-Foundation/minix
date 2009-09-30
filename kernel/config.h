@@ -43,6 +43,7 @@
 #define USE_PHYSCOPY  	   1 	/* copy using physical addressing */
 #define USE_PHYSVCOPY  	   1	/* vector with physical copy requests */
 #define USE_MEMSET  	   1	/* write char to a given memory area */
+#define USE_RUNCTL         1	/* control stop flags of a process */
 
 /* Length of program names stored in the process table. This is only used
  * for the debugging dumps that can be generated with the IS server. The PM

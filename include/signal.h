@@ -66,7 +66,7 @@ typedef unsigned long sigset_t;
  */
 #define SIGKMESS   	  29	/* new kernel message */
 #define SIGKSIG    	  30	/* kernel signal pending */
-#define SIGKSTOP    	  31	/* kernel shutting down */
+#define SIGKREADY	  31	/* ready for signal delivery */
 
 #endif
 
@@ -113,15 +113,29 @@ _PROTOTYPE( int kill, (pid_t _pid, int _sig)				);
 _PROTOTYPE( int killpg, (pid_t _pgrp, int _sig)				);
 _PROTOTYPE( int sigaction,
     (int _sig, const struct sigaction *_act, struct sigaction *_oact)	);
+_PROTOTYPE( int sigpending, (sigset_t *_set)				);
+_PROTOTYPE( int sigprocmask,
+	    (int _how, const sigset_t *_set, sigset_t *_oset)		);
+_PROTOTYPE( int sigsuspend, (const sigset_t *_sigmask)			);
+
+/* For the sigset functions, only use the library version with error
+ * checking from user programs. System programs need to be able to use
+ * nonstanard signals.
+ */
+#ifndef _SYSTEM
 _PROTOTYPE( int sigaddset, (sigset_t *_set, int _sig)			);
 _PROTOTYPE( int sigdelset, (sigset_t *_set, int _sig)			);
 _PROTOTYPE( int sigemptyset, (sigset_t *_set)				);
 _PROTOTYPE( int sigfillset, (sigset_t *_set)				);
 _PROTOTYPE( int sigismember, (const sigset_t *_set, int _sig)		);
-_PROTOTYPE( int sigpending, (sigset_t *_set)				);
-_PROTOTYPE( int sigprocmask,
-	    (int _how, const sigset_t *_set, sigset_t *_oset)		);
-_PROTOTYPE( int sigsuspend, (const sigset_t *_sigmask)			);
+#else
+#define sigaddset(set, sig)	((int) ((*(set) |= (1 << (sig))) && 0))
+#define sigdelset(set, sig)	((int) ((*(set) &= ~(1 << (sig))) && 0))
+#define sigemptyset(set)	((int) (*(set) = 0))
+#define sigfillset(set)		((int) ((*(set) = ~0) && 0))
+#define sigismember(set, sig)	((*(set) & (1 << (sig))) ? 1 : 0)
+#endif
+
 #endif
 
 #endif /* _SIGNAL_H */

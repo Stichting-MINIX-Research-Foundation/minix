@@ -16,6 +16,7 @@
  *   unset_sendto_bit:	disallow a process from sending messages to a target
  *   send_sig:		send a signal directly to a system process
  *   cause_sig:		take action to cause a signal to occur via PM
+ *   sig_delay_done:	tell PM that a process is not sending
  *   umap_bios:		map virtual address in BIOS_SEG to physical 
  *   get_randomness:	accumulate randomness in a buffer
  *   clear_endpoint:	remove a process' ability to send and receive messages
@@ -178,6 +179,7 @@ PRIVATE void initialize(void)
   map(SYS_PRIVCTL, do_privctl);		/* system privileges control */
   map(SYS_TRACE, do_trace);		/* request a trace operation */
   map(SYS_SETGRANT, do_setgrant);	/* get/set own parameters */
+  map(SYS_RUNCTL, do_runctl);		/* set/clear stop flag of a process */
 
   /* Signal handling. */
   map(SYS_KILL, do_kill); 		/* cause a process to be signaled */
@@ -363,6 +365,22 @@ int sig_nr;			/* signal to be sent, 1 to _NSIG */
           send_sig(PM_PROC_NR, SIGKSIG);
       }
   }
+}
+
+/*===========================================================================*
+ *				sig_delay_done				     *
+ *===========================================================================*/
+PUBLIC void sig_delay_done(rp)
+struct proc *rp;
+{
+/* A process is now known not to send any direct messages.
+ * Tell PM by sending a signal to the process.
+ * Used for actual signal delivery.
+ */
+
+  rp->p_misc_flags &= ~MF_SIG_DELAY;
+
+  cause_sig(proc_nr(rp), SIGKREADY);
 }
 
 #if _MINIX_CHIP == _CHIP_INTEL
