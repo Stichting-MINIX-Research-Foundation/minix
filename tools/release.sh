@@ -2,6 +2,8 @@
 
 set -e
 
+PATH=$PATH:/usr/local/bin
+
 XBIN=usr/xbin
 SRC=src
 
@@ -16,6 +18,9 @@ PACKAGELIST=packages.install
 PACKAGESOURCELIST=package_sources.install
 secs=`expr 32 '*' 64`
 export SHELL=/bin/sh
+
+# SVN trunk repo
+TRUNK=https://gforge.cs.vu.nl/svn/minix/trunk
 
 make_hdimage()
 {
@@ -45,6 +50,22 @@ make_hdimage()
 	} > hdimage
 	partition -m hdimage 81:`expr $primsects + $padsects`*
 	installboot -m hdimage /usr/mdec/masterboot
+}
+
+retrieve()
+{
+	dir=$1
+	list=`pwd`/$2
+	url=http://www.minix3.org/$3
+BIGPORTS=bigports
+	(	
+		cd $dir || exit 1
+		echo  " * Updating $dir
+   from $url
+   with $list"
+   		files=`awk <$list '{ print "'$url'/" $1 ".tar.bz2" }'`
+		wget -c $url/List $files || true
+	)
 }
 
 hdemu_root_changes()
@@ -140,7 +161,15 @@ do
 done
 
 if [ ! "$USRMB" ]
-then	USRMB=550
+then	USRMB=570
+fi
+
+if [ $PACKAGES -ne 0 ]
+then	mkdir -p $PACKAGEDIR || true
+	mkdir -p $PACKAGESOURCEDIR || true
+	rm -f $PACKAGEDIR/List
+	retrieve $PACKAGEDIR $PACKAGELIST packages/`uname -p`/`uname -r`.`uname -v`
+	retrieve $PACKAGESOURCEDIR $PACKAGESOURCELIST software
 fi
 
 echo $USRMB MB
@@ -210,26 +239,18 @@ cp -rp /bin/bigsh /bin/sh /bin/echo $RELEASEDIR/bin
 cp -rp /usr/bin/make /usr/bin/install /usr/bin/yacc /usr/bin/flex $RELEASEDIR/usr/bin
 
 if [ -d $PACKAGEDIR -a -d $PACKAGESOURCEDIR -a -f $PACKAGELIST -a -f $PACKAGESOURCELIST -a $PACKAGES -ne 0 ]
-then	echo " * Indexing packages"
-	bintotal=0
-	( for p in `cat $PACKAGELIST`
-	  do	
-		descr="$PACKAGEDIR/../$p/.descr"
-		if [ -f "$descr" ]
-		then	echo "$p|`cat $descr`"
-		fi
-	  done | tee $RELEASEPACKAGE/List
-	)
-	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
+then	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
+	: >$RELEASEPACKAGE/List
         for p in `cat $PACKAGELIST`
-        do
-               if [ -f $PACKAGEDIR/$p.tar.bz2 ]
+        do	if [ -f $PACKAGEDIR/$p.tar.bz2 ]
                then
 		  cp $PACKAGEDIR/$p.tar.bz2 $RELEASEPACKAGE/
+		  grep $p $PACKAGEDIR/List >>$RELEASEPACKAGE/List || echo "$p not found in List"
                else
                   echo "Can't copy $PACKAGEDIR/$p.tar.bz2. Missing."
                fi
         done
+	
 	echo " * Transfering $PACKAGESOURCEDIR to $RELEASEPACKAGESOURCES"
         for p in `cat $PACKAGESOURCELIST`
         do
@@ -249,7 +270,7 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
-	REPO=https://gforge.cs.vu.nl/svn/minix/trunk/$SRC
+	REPO=$TRUNK/$SRC
 	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
 	echo "Doing export of revision $REVISION from $REPO."
 	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO )
