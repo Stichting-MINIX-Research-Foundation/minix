@@ -123,7 +123,6 @@ PUBLIC void vm_init(struct proc *newptproc)
 		PTR = I386_BIG_PAGE_SIZE*PDE + offset;			\
 		REMAIN = MIN(REMAIN, I386_BIG_PAGE_SIZE - offset); 	\
 		if(1 || mustinvl) {					\
-			FIXME("unconditional reload");			\
 			level0(reload_cr3); 				\
 		}							\
 	}								\
