@@ -238,7 +238,6 @@ printf("return at %s, %d\n", __FILE__, __LINE__);
 
     if (r != OK)
     {
-printf("return at %s, %d\n", __FILE__, __LINE__);
 	return r;
     }
 
@@ -590,8 +589,6 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
 
   /* Make sure that the file is big enough */
   if (vp->v_size < off+seg_bytes) {
-	printf("VFS: read_seg: file isn't big enough (size %ld, need %ld)\n",
-		vp->v_size, off+seg_bytes);
 	return EIO;
   }
 
