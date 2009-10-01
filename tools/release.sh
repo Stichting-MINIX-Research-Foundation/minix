@@ -161,7 +161,7 @@ do
 done
 
 if [ ! "$USRMB" ]
-then	USRMB=570
+then	USRMB=600
 fi
 
 if [ $PACKAGES -ne 0 ]
