@@ -29,20 +29,6 @@ PUBLIC int main(void) {
       return -1;
   }
 
-#if 0
-  if (fs_m_in.m_type != REQ_READSUPER_O && fs_m_in.m_type != REQ_READSUPER_S) {
-      printf("ISO9660FS(%d): Invalid login reply\n", SELF_E);
-      return -1;
-  } else {
-      if (fs_m_in.m_type == REQ_READSUPER_S)
-	      fs_m_out.m_type = fs_readsuper_s();
-      else
-	      fs_m_out.m_type = fs_readsuper();
-      reply(FS_PROC_NR, &fs_m_out);
-      if (fs_m_out.m_type != OK) return -1;
-  }
-#endif
-
   for (;;) {
 
     /* Wait for request message. */
@@ -69,8 +55,6 @@ PUBLIC int main(void) {
       ind= req_nr-VFS_BASE;
 
       if (ind < 0 || ind >= NREQS) {
-	  printf("iso9660fs: bad request %d\n", req_nr); 
-	  printf("ind = %d\n", ind);
           error = EINVAL; 
       }
       else
@@ -79,7 +63,6 @@ PUBLIC int main(void) {
 
       fs_m_out.m_type = error; 
       reply(who_e, &fs_m_out); 	/* returns the response to VFS */
-		
   }
 }
 

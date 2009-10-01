@@ -269,7 +269,6 @@ PUBLIC int fs_getdents(void) {
       dir_tmp = get_free_dir_record();
       create_dir_record(dir_tmp,bp->b_data + block_pos,
 			block*block_size + block_pos);
-
       if (dir_tmp->length == 0) { /* EOF. I exit and return 0s */
 	block_pos = block_size;
 	done = TRUE;
@@ -316,7 +315,6 @@ PUBLIC int fs_getdents(void) {
 	if (tmpbuf_offset + reclen > GETDENTS_BUFSIZ) {
 	  r= sys_safecopyto(FS_PROC_NR, gid, userbuf_off, 
 			    (vir_bytes)getdents_buf, tmpbuf_offset, D);
-	  
 	  if (r != OK)
 	    panic(__FILE__,"fs_getdents: sys_safecopyto failed\n",r);
 	  
@@ -348,7 +346,6 @@ PUBLIC int fs_getdents(void) {
 
     block++;			/* read the next one */
   }
-
   if (tmpbuf_offset != 0) {
     r= sys_safecopyto(FS_PROC_NR, gid, userbuf_off,
 		      (vir_bytes)getdents_buf, tmpbuf_offset, D);
@@ -361,11 +358,28 @@ PUBLIC int fs_getdents(void) {
   r= ENOSYS;
   fs_m_out.RES_GDE_POS_CHANGE= 0;	/* No change in case of an error */
 
-  r= userbuf_off;
+  /*  r= userbuf_off;*/
+  fs_m_out.RES_GDE_CUM_IO = userbuf_off;
   if (cur_pos >= pos)
     fs_m_out.RES_GDE_POS_CHANGE= cur_pos-pos;
+  else
+    fs_m_out.RES_GDE_POS_CHANGE= 0;
 
   release_dir_record(dir);		/* release the inode */
+  r= OK;
+  return(r);
+}
+
+/*===========================================================================*
+ *                           fs_getdents_s                                   *
+ *===========================================================================*/
+PUBLIC int fs_getdents_o(void)
+{
+  int r;
+  r = fs_getdents();
+
+  if(r == OK)
+    r = fs_m_out.RES_GDE_CUM_IO;
 
   return(r);
 }

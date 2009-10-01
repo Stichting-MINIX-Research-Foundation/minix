@@ -11,6 +11,7 @@ int fs_sync(void);
 int lookup(void);
 int fs_access(void);
 int fs_getdents(void);
+int fs_getdents_o(void);
 
 /* main.c */
 _PROTOTYPE( int main, (void)						);

@@ -48,7 +48,7 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
   fs_new_driver,		/* 37 */
   fs_bread,			/* 38 */
   no_sys,			/* 39 */
-  fs_getdents,			/* 40 */
+  fs_getdents_o,		/* 40 */
   no_sys,			/* 41: not_used */
   fs_read_s,			/* 42 */
   no_sys,			/* 43: not used */
@@ -61,4 +61,6 @@ PUBLIC _PROTOTYPE (int (*fs_call_vec[]), (void) ) = {
   fs_mountpoint_s,		/* 50 */
   fs_readsuper_s,		/* 51 */
   no_sys,			/* 52: not used */
+  no_sys,			/* 53 */
+  fs_getdents,			/* 54 */
 };

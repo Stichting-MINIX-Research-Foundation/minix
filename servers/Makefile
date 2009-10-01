@@ -18,6 +18,7 @@ all install depend clean:
 	cd ./pm && $(MAKE) $@
 	cd ./vfs && $(MAKE) $@
 	cd ./mfs && $(MAKE) $@
+	cd ./iso9660fs && $(MAKE) $@
 	cd ./rs && $(MAKE) $@
 	cd ./ds && $(MAKE) $@
 	cd ./is && $(MAKE) $@
