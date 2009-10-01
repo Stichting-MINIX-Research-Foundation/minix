@@ -1224,9 +1224,9 @@ struct priv *privp;
 			}
 			if (slot_nr >= NR_SYS_PROCS)
 			{
-				printf(
-				"add_forward_ipc: unable to find '%s'\n",
-					label);
+				if (rs_verbose)
+					printf(
+			"add_forward_ipc: unable to find '%s'\n", label);
 				continue;
 			}
 			proc_nr_e= tmp_rp->r_proc_nr_e;
