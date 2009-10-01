@@ -30,6 +30,7 @@
 755 root    operator /usr/lib/i86
 755 root    operator /usr/lib/keymaps
 755 root    operator /usr/lib/m2
+755 bin     operator /usr/lib/oss
 755 root    operator /usr/sbin
 775 bin     operator /usr/local
 775 bin     operator /usr/local/bin
