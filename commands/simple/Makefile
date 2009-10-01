@@ -193,7 +193,6 @@ ALL	= \
 	top \
 	tr \
 	truncate \
-	treecmp \
 	tsort \
 	ttt \
 	tty \
@@ -827,10 +826,6 @@ tsort:	tsort.c
 	$(CCLD) -o $@ $<
 	@install -S 4kw $@
 
-treecmp:	treecmp.c
-	$(CCLD) -o $@ $<
-	@install -S 4kw $@
-
 truncate:	truncate.c
 	$(CCLD) -o $@ $<
 	@install -S 4kw $@
@@ -1091,7 +1086,6 @@ install:	\
 	/usr/bin/top \
 	/usr/bin/touch \
 	/usr/bin/tr \
-	/usr/bin/treecmp \
 	/usr/bin/truncate \
 	/usr/bin/tsort \
 	/usr/bin/ttt \
@@ -1639,9 +1633,6 @@ install:	\
 	install -cs -o bin $< $@
 
 /usr/bin/tr:	tr
-	install -cs -o bin $< $@
-
-/usr/bin/treecmp:	treecmp
 	install -cs -o bin $< $@
 
 /usr/bin/truncate:	truncate
