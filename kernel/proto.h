@@ -22,7 +22,6 @@ _PROTOTYPE( void ser_dump_proc, (void)					);
 _PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void minix_shutdown, (struct timer *tp)			);
-_PROTOTYPE( void idle_task, (void)					);
 
 /* utility.c */
 _PROTOTYPE( int kprintf, (const char *fmt, ...)				);
@@ -152,7 +151,6 @@ _PROTOTYPE( void ser_putc, (char)						);
 _PROTOTYPE( void arch_shutdown, (int)					);
 _PROTOTYPE( void arch_get_aout_headers, (int i, struct exec *h)		);
 _PROTOTYPE( void restart, (void)                                        );
-_PROTOTYPE( void idle_task, (void)                                     );
 _PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)    );
 _PROTOTYPE( int arch_init_profile_clock, (u32_t freq)			);
 _PROTOTYPE( void arch_stop_profile_clock, (void)			);
