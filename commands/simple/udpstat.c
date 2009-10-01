@@ -56,6 +56,7 @@ int main(int argc, char*argv[])
 	clock_t now;
 	int fl;
 	int a_flag, n_flag;
+	struct tms tmsbuf;
 
 	(prog_name=strrchr(argv[0], '/')) ? prog_name++ : (prog_name=argv[0]);
 
@@ -221,7 +222,7 @@ int main(int argc, char*argv[])
 	}
 	now= uptime.tv_sec * HZ + (uptime.tv_usec*HZ/1000000);
 #else	/* Minix 3 */
-	now= times(NULL);
+	now= times(&tmsbuf);
 #endif
 
 	for (i= 0; i<UDP_FD_NR; i++)

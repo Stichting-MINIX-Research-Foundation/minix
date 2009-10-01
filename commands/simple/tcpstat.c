@@ -52,6 +52,7 @@ int main(int argc, char*argv[])
 	clock_t now;
 	int fl;
 	int a_flag, n_flag, v_flag;
+	struct tms tmsbuf;
 
 	getsysinfo_up(PM_PROC_NR, SIU_SYSTEMHZ, sizeof(system_hz), &system_hz);
 
@@ -130,7 +131,7 @@ int main(int argc, char*argv[])
 	}
 	now= uptime.tv_sec * HZ + (uptime.tv_usec*HZ/1000000);
 #else	/* Minix 3 */
-	now= times(NULL);
+	now= times(&tmsbuf);
 #endif
 
 	for (i= 0; i<TCP_CONN_NR; i++)
