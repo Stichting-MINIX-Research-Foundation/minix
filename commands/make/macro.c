@@ -47,6 +47,41 @@ char *name;
 }
 
 
+struct macro *addmacro(name, val)
+char *name;
+char *val;
+{
+  register struct macro *rp;
+  register char         *cp;
+  int len_old_value;
+
+
+		/*  Replace macro definition if it exists  */
+  for (rp = macrohead; rp; rp = rp->m_next)
+	if (strcmp(name, rp->m_name) == 0) {
+		if(rp->m_flag & M_OVERRIDE) return rp;	/* mustn't change */
+		break;
+		}
+
+	if (!rp)		/*  If not defined, allocate space for new  */
+	{
+			fatal("Cannot add to a non-existing macro",(char *)0,0);
+	}
+
+	len_old_value = strlen(rp->m_val);
+	if ((cp = (char *) malloc(len_old_value+1+strlen(val)+1)) == (char *)0)
+		fatal("No memory for macro",(char *)0,0);
+	strcpy(cp, rp->m_val);		/*  Copy in old value  */
+	cp[len_old_value] = ' ';
+	strcpy(cp+len_old_value+1, val);		/*  Copy in new value  */
+	free(rp->m_val);
+	rp->m_val = cp;
+
+  return rp;
+}
+
+
+
 struct macro *setmacro(name, val)
 char *name;
 char *val;

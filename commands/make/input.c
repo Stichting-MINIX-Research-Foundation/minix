@@ -308,6 +308,36 @@ FILE *fd;
 	while (isspace(*p))  p++;	/*  Find first target  */
 
 
+	while (((q = strchr(p, '+')) != (char *)0) &&
+	    (q[1] == '=') && (p != q) && (q[-1] == '\\'))	/*  Find value */
+	{
+		a = q - 1;	/*  Del \ chr; move rest back  */
+		p = q;
+		while(*a++ = *q++)
+			;
+	}
+
+	if (q != (char *)0 && q[1] == '=') {
+
+		*q++ = '\0';		/*  Separate name and val  */
+		*q++ = '\0';		/*  Separate name and val  */
+		while (isspace(*q))
+			q++;
+		if (p = strrchr(q, '\n'))
+			*p = '\0';
+
+		p = str1;
+		if ((a = gettok(&p)) == (char *)0)
+			error("No macro name",(char *)0);
+
+		addmacro(a, q);
+
+		if (getline(&str1s, fd))
+			return;
+		continue;
+	}
+
+
 	while (((q = strchr(p, '=')) != (char *)0) &&
 	    (p != q) && (q[-1] == '\\'))	/*  Find value */
 	{

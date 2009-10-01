@@ -277,6 +277,7 @@ _PROTOTYPE(void input, (FILE *fd ));
 _PROTOTYPE(struct macro *getmp, (char *name ));
 _PROTOTYPE(char *getmacro, (char *name ));
 _PROTOTYPE(struct macro *setmacro, (char *name, char *val ));
+_PROTOTYPE(struct macro *addmacro, (char *name, char *val ));
 _PROTOTYPE(void setDFmacro, (char *name, char *val ));
 _PROTOTYPE(void doexp, (struct str *to, char *from ));
 _PROTOTYPE(void expand, (struct str *strs ));
