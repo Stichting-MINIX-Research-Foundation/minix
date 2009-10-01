@@ -6,4 +6,5 @@ build: all
 all install depend clean:
 	cd ./es1370 && $(MAKE) $@
 	cd ./es1371 && $(MAKE) $@
+	cd ./oss && $(MAKE) $@
 
