@@ -1,0 +1,39 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_ich - Intel ICH/SiS7012/Nvidia/AMD audio device driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Intel ICH, nVidia Nforce, AMD and SiS 7012 
+devices.
+
+.SH OPTIONS
+
+.IP \(bu 3
+intelpci_rate_tuning=<NNN> (default is 240)
+Some Compaq Deskpro models (EN and EX at least) and certain Dell models 
+play and record audio at a higher speed than what is expected. If you have 
+an Intel815 motherboard with an AD1885 you can try setting the parameter 
+to 240, 280 or 330 and see which works for your system. The way to figure 
+out the the right intelpci_rate_tuning value is using the osstest application. 
+It reports a sample rate drift value ("Sample rate drift" or "srate drift"). 
+Use the following formula (round the result to the nearest integer): 
+
+<intelpci_rate_tuning = (240*(drift+100))/100>
+
+.IP \(bu 3
+intelpci_force_mmio=<0|1> (default is 0=Disable)
+This option can be used to force the ICH4/ICH5 and ICH6 controllers to 
+run in memory mapped mode to free up I/O address space.
+
+.IP \(bu 3
+ich_jacksense=<0|1> (default is 0)
+Force use of jacksensing on some AD198x mixers.
+
+.SH FILES
+/usr/lib/oss/conf/oss_ich.conf  Device configuration file.
+
+
+.SH AUTHOR
+4Front Technologies
+

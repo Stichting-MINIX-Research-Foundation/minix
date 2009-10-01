@@ -1,0 +1,27 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_geode - National Semiconductor Geode audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for National Semiconductor Geode/CS5530/CS5536 audio 
+controllers.
+
+Geode device characteristics:
+       o 8/16 bit playback/record
+       o mono/stereo playback/recording
+       o 8KHz to 48Khz sample rate.
+
+.SH NOTES
+Some old Geode CPUs are not able to handle heavy computational loads.
+If your audio streams are use a lot of CPU, you can start getting garbled audio
+since the OSS Sample Rate Convertor is CPU intensive. Setting vmix0-src to
+OFF will allow you to play audio but only at a fixed rate set via vmixctl
+(Default: 48Khz).
+
+.SH FILES
+/usr/lib/oss/conf/oss_geode.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

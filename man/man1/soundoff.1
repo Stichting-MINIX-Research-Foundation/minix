@@ -1,0 +1,38 @@
+." Automatically generated text
+.TH 1 "August 31, 2006" "OSS" "OSS System Administration Commands"
+.SH NAME
+soundoff - Stop Open Sound System
+
+.SH DESCRIPTION
+
+The soundoff command can be used to stop Open Sound System and to unload the
+kernel modules related with it.
+
+There are no command line arguments. Only the super user (root) can use this
+command.
+
+Open Sound System can be loaded by executing the soundon command.
+
+.SH SAVING THE MIXER AND CONTROL PANEL SETTINGS AUTOMATICALLY
+
+By default soundoff will save the current mixer and control panel settings
+automatically each time soundoff is executed. The saved settings will be 
+restored automatically when soundon is executed next time.
+
+This automatic save feature can be disabled by editing /usr/lib/oss/etc/userdefs
+and by changing the line containing "autosave_mixer yes" to
+"autosave_mixer no". After this the mixer settings will only be saved when
+the savemixer command is executed (by super user).
+
+.SH FILES
+/usr/lib/oss/etc/userdefs
+/usr/sbin/soundoff
+/usr/lib/oss/etc/installed_drivers.
+
+.SH SEE ALSO
+soundon(1)
+ossdetect(1)
+ossdevlinks(1)
+
+.SH AUTHOR
+4Front Technologies

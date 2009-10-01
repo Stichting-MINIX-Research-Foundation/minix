@@ -1,0 +1,99 @@
+." Automatically generated text
+.TH 8 "August 31, 2006" "OSS" "System Administration Commands"
+.SH NAME
+vmixctl - Open Sound System utility to control the vmix subsystem.
+
+.SH SYNOPSIS
+o	vmixctl attach [attach_options...] audiodev [inputdev]
+o	vmixctl detach [attach_options...] audiodev
+o	vmixctl rate audiodev samplerate
+
+.SH DESCRIPTION
+The vmixctl program can be used to attach or detach the virtual mixer subsystem
+(vmix) to/from audio devices. In addition it can be used to control vmix 
+related parameters such as the sampling rate to be used with the device.
+
+By default most OSS drivers will attach virtual mixer to the primary audio device
+of the sound card (or motherboard audio chip) when the device is attached.
+However possible secondary audio devices (engines) will not have vmix
+attached by default. In additional professional audio devices will be
+attached without vmix because mixing may cause some unwanted distortion
+to the signal.
+
+.SH ATTACHING VMIX TO AN AUDIO DEVICE
+There are two forms of vmixctl attach command:
+
+o	vmixctl attach audiodev
+This alternative is to be used with devices that support only output or
+have a single audio device file that supports full duplex.
+o	vmixctl attach audiodev inputdev
+The second form is to be used with devices that have separate output and
+input device files. The "audiodev" parameter defines the output device and 
+the "inputdev" parameter is the device file to be used for input direction.
+Note that both device files must belong to the same "physical" sound card.
+In some cases it might be possible to use one sound card for playback and
+another for recording. However this configuration is not supported and the
+result may not be functional.
+
+To find out the right device file names (audiodev and inputdev) you can use
+the "ossinfo -a" command.
+
+.SH  ATTACH OPTIONS
+o	-r	Disable recording functionality. By default vmix will suppor
+		recording if the master device(s) support it.
+o	-p	Do not preallocate client engines. By default vmix will
+		preallocate first 4 (out of 8) client engines when attaching
+		to the device. The remaining engines will be allocated 
+		on-demand if there are more concurrent applications that
+		use the device.
+o	-V	Make client devices visible (have private device nodes under /dev).
+o	-c <n>	Preallocate <n> client engines instead of 4. However -p
+		option makes this option ineffective.
+
+.SH  EXAMPLES
+o	vmixctl attach /dev/oss/oss_envy240/pcm0
+o	vmixctl attach /dev/oss/oss_envy240/pcm0 /dev/oss/oss_envy240/pcmin0
+
+.SH SETTING THE SAMPLING RATE USED BY VMIX
+The virtual mixer subsystem will set the physical audio devce(s) to use
+fixed sampling rate that is 48000 Hz by default. It is possible to use
+"vmixctl rate audiodev" to switch vmix to use some different rate with this
+device (pair). You should use "ossinfo -a -v2" to verify that the sampling rate
+is actually supported by the device. Otherwise the actual device may enforce
+vmix to use the nearest supported rate (or some default rate).
+
+The "audiodev" parameter is the device file name (see ossinfo -a) that is
+used for playback. The input device name doesn't need to be specified.
+
+Note that some professional audio devices may be locked to external sampling
+rate or some fixed rate (defined in ossmix/ossxmis). In such case the rate is
+not changeable by vmixctl.
+
+.SH  EXAMPLE
+o	vmixctl rate /dev/oss/oss_envy240/pcm0
+
+.SH DETACHING VMIX FROM AN AUDIO DEVICE
+It is possible to detach vmix from an audio device if it causes problems
+with applications by using "vmix detach audiodev". 
+
+It is not possible to detach and (re)attach vmix to the same device more
+than few times. Use the vmix-enable setting in the control panel
+(ossxmix or ossmix) to disable/re-enable vmix if you need to do it
+repeatedly. Use vmix detach only if you need to attach virtual mixer using
+different parameters.
+
+.SH  EXAMPLE
+o	vmix detach /dev/oss/oss_envy240/pcm0
+
+.SH POSSIBLE BUGS
+o	The control panel elements related with vmix are not removed from the
+	mixer API when vmix is detached. This may be somehow confusing.
+
+.SH SEE ALSO
+soundoff(1), soundon(1), ossmix(1), ossxmix(1)
+
+.SH FILES
+/usr/sbin/vmixct
+
+.SH AUTHOR
+4Front Technologies

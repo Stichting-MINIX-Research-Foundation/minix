@@ -1,0 +1,84 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+osscore - Open Sound Sytem core audio framework.
+
+.SH DESCRIPTION
+Open Sound System core audio support psudo driver. This driver implements the core Open Sound System API for audio, midi, mixer and synth functions. This driver also implements the OS driver interface as well as device configuration and setup. 
+More information on programming on the OSS API is avaialable at:
+http://manuals.opensound.com/
+
+.SH OPTIONS
+.IP \(bu 3
+ac97_recselect	When set to 1 this option enables independent
+		recording source selection for the left and the right channel
+		on AC97 devices. In this way it's possible to record audio
+		streams so that (for example) the left channel signal comes
+		from the microphone and
+		the right channel signal from line-in. However when this
+		option is enabled it's only possible to select the recording
+		source by using a fully OSS 4.0 compatible mixer program such
+		as ossxmix.
+		Default: 0 - recording source is common to both channels.
+.IP \(bu 3
+ac97_amplifier	When set to 1 this option enables the speaker power
+		amplifier feature of AC97 codec (if available).
+		Some boards have this inverted, so this feature can be
+		disabled by setting this option to 0.
+		Affects all AC97 based audio devices in the system.
+		Default: -1=autodetect correct setting.
+.IP \(bu 3
+cooked_enable		By default OSS will let applications to use sampling
+		rates and formats that are not supported by the hardware.
+		Instead OSS performs the necessary format conversions in
+		software. Applications that don't tolerate this kind of
+		conversions usually disable them by using features of the OSS
+		API (SNDCTL_DSP_COOKEDMODE). If this option is set to 0 then
+		the format conversions will be disabled for all applications
+		and devices unless the application explicitly enables them.
+		Default: 1 - conversions are enabled.
+		This option should not be changed without very strong reasons.
+.IP \(bu 3
+detect_trace 	Internal debugging (do not change). Default: 0
+.IP \(bu 3
+dma_buffsize	By default OSS will allocate audio DMA buffers with some
+		system dependent default size (usually 64k but sometimes
+		smaller). It is possible to change this default allocation by
+		setting this option. Value of 0 means that the default size
+		will be used. Value between 16 and 128 (kilobytes) can be used
+		if the default size is not suitable for some reason.
+		Default: 0 - system dependent buffsize.
+		This option mustn't be changed unless it's absolutely necessary.
+.IP \(bu 3
+max_intrate	Set the maximum number of interrupts per second.
+		Default: 100 interrupts per second which equals to about
+		10 msec minimum latencies.
+.IP \(bu 3
+vmix_disabled		The virtual mixer subsystem can be disabled by setting
+		this configuration option to 1.
+		Default: 0 - virtual mixer is enabled.
+.IP \(bu 3
+vmix_loopdevs		Optionally the virtual mixer subsystem can create
+		special loopback audio devices that can be used to record the
+		output mix sent to the device. This option tells how many
+		loopback devices will be created (0, 1 or 2). If there are
+		multiple audio devices in the system the all of them will have
+		the same number of loopback devices.
+		Default: 0 - no loopback devices are created.
+		This setting should be left to 0 unless there are specific
+		reasons to enable the loopback devices.
+.IP \(bu 3
+vmix_no_autoattach	By default (0) the low level
+		drivers for most sound cards will automatically
+		attach virtual mixer (vmix) to the primary audio devices of the cards.
+		In some situations it may be necessary to attach virtual mixer using 
+		nonstandard parameters. If vmix_no_autoattach is set to 1 then user
+		can use vmixctl attach command to attach virtual mixer manually to
+		the device(s).
+		Default: 0 - Automatically attach virtual mixer.
+
+.SH FILES
+/usr/lib/oss/conf/osscore.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies

@@ -1,0 +1,33 @@
+." Automatically generated text
+.TH 1 "August 31, 2006" "OSS" "User Commands"
+.SH NAME
+ossinfo - Open Sound System information/status program
+
+.SH SYNOPSIS
+ossinfo [-Aaeghmpx] [-v #]
+
+.SH DESCRIPTION
+The ossinfo program displays OSS device information.
+
+.SH OPTIONS
+-v#		Verbose output. Number indicates level of verobisity (0-9).
+-p		Display only physical audio/midi devices
+-g		Display ALL audio/midi/mixer devices (physical and virtual)
+-a		Display audio device files
+-A		Display audio device files (for applications using O_EXCL)
+-e		Display all audio engines
+-m		Display only the MIDI devices
+-x		Display only the mixer devices
+-h		Display help.
+
+.SH FILES
+/usr/bin/ossinfo
+
+.SH SEE ALSO
+ossdevlinks(1), ossmix(1), ossxmix(1)
+The Getting information about devices section of the OSS Programmer's Guide
+(device_discovery(2)) gives instructions for getting device information
+in applications.
+
+.SH AUTHOR
+4Front Technologies

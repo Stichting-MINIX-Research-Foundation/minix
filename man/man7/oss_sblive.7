@@ -1,0 +1,245 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_sblive - Creative Labs Sound Blaster Live/Audigy family driver.
+
+.SH DESCRIPTION
+ Open Sound System driver for Creative Labs Sound Blaster Live!, Audigy, 
+ Audigy2, Audigy2-Value and sound cards.
+
+ The sblive driver supports:
+
+ o 8-48Khz Playback/Recording
+ o 8 or 16 bits
+ o SPDIF digital output and Input
+ o Multi channel 5.1 (Live!) and 7.1 (Audigy) output.
+
+ AC3 passthrough is only supported on Audigy series of the soundcards.
+
+.SH OTHER SIMILAR CARDS
+There are several Sound Blaster cards that are also called as Live or
+Audigy. However these cards are based on entirely different hardware design
+and they are not compatible with this driver.
+
+.IP \(bu 3
+Sound Blaster Live 5.1 card is used in some Dell machines but it's
+ driven by the emu10k1x driver.
+.IP \(bu 3
+Sound Blaster AudigyLS and Live 7.1 models are driven by the audigyls
+ driver of OSS.
+
+.SH  SBLIVE COMBO SPDIF AND AUDIO JACKS
+Most models of Live! and Audigy cards have an orange combo jack that is
+used both for the analog center/LFE output and for digital DIN (S/PDIF)
+output. The output mode is selected by a driver configuration option
+(seel below) which should be set to proper value depending on the actual
+speaker configuration.
+
+.IP \(bu 3
+Noisy analog center/LFE output. The orange combo jack at the rear plate
+ of the Live/Audigy card is shared between the digital DIN and the analog
+ center/LFE outputs. In digital DIN mode (default) you will hear very noisy
+ output from the speakers connected to this output jack. If you have analog
+ center/LFE (subwoofer) speakers connected then you need to turn off the
+ sblive_digital_din (or audigy_digital_din) option. 
+
+.IP \(bu 3
+There is a new configuration option to enable/disable the "digital DIN"
+ output. By default the digital DIN interface is enabled which disables the
+ center/LFE analog output (uses the same combo jack). By setting the
+ sblive_digital_din (or audigy_digital_din) option to 0 you can enable the
+ analog C/LFE output feature. When digital DIN is disabled you can still get
+ S/PDIF (or AC3) output from the digital (optical/coax) outputs of the
+ optional livedrive unit.
+
+.SH  SBLIVE MIXER
+SB Live cards have actually two mixer chips. In OSS both of them are 
+controlled together. However only limited set of features can be controlled
+using ordinary mixer programs (such as the mixer applet included in OSS).
+Majority of features can only be accessed using the ossmix and ossxmix
+programs included in OSS.
+
+The AC97 mixer is used to control volumes of the back bracket inputs (mic and
+line in) and the _analog_ CD input connector on the soundcard. The 'mic' 
+volume controls the level of the rear bracket microphone input sent directly 
+to the front (only front) speakers. The 'line' and 'cd' controls do the same
+for the back bracket line in connector and the on board analog CD input
+connector. It's usually recommended to set these volumes to 0.
+
+Another function of the AC97 mixer is selecting the signal that is passed to
+the master mixer (for example for recording). One of the 'mic', 'line' or
+'cd' signals can be routed to the master mixer by selecting that device as
+the recording source in the AC97 mixer. The 'rec' volume control slider can 
+be used to adjust the signal strength. The 'igain' control doesn't usually
+have any effect but some hardware revisions may use it for controlling the 
+microphone recording level.
+
+
+.SH  SBLIVE MASTER MIXER
+Other mixer functions are handled by the DSP engine of the EMU 10k1 chip.
+Most input signals (including all digital signals and LiveDrive inputs).
+
+There are only two master mixer settings that can be controlled using all
+mixer programs. The 'vol' setting is the master output volume that affects
+both the front and rear speakers and the headphone output (digital output
+volumes are not affected). The 'pcm' setting controls volumes of all PCM
+playback channels (/dev/dsp#).
+
+In addition to volume sliders most inputs have a stereo VU meter pair
+(only in ossxmix) that can be used to monitor the input and to adjust the
+input levels properly.
+
+The master mixer consists of several sections that are:
+
+.IP \(bu 3
+Primary section: This section has two settings. The "spkmode" setting
+ selects how front/rear speakers are used for PCM playback (outputs from
+ programs using /dev/dsp#). The possible settings are FRONT, REAR and 
+ FRONT+REAR. The default is FRONT+REAR. Change this setting if you like to
+ get PCM playback only from front or rear speakers. The "autoreset" flag is
+ used to control the "/dev" section.
+
+.IP \(bu 3
+"/dev" section: This section controls the volumes of each /dev/dsp# device 
+ file supported by the device (there are 8 of them at this moment). These 
+ volumes will return back to maximum every time the device is opened. However
+ this can be disabled by setting the 'autoreset' option to OFF. The ossxmix 
+ program has special ability to show the application using the particular 
+ /dev/dsp device (for layout reasons only the first 4 characters of the 
+ program name are shown).
+
+.IP \(bu 3
+The equalizer section: This section controls the graphic equalizer for
+ front speakers only.
+
+.IP \(bu 3
+The front rear, and record sections: These three identical sections control 
+ the levels of external inputs and PCM playback (/dev/dsp# devices) to be 
+ sent to the front/rear speakers and to the recording device.
+ The CD Analog audio will only be heard from the FRONT speakers.
+
+.SH  SBLIVE RECORDING
+Before recording anything you need to set the volumes in the recording
+section properly. To enable recording from the AC97 connected inputs
+(mic, line in and analog CD) use the AC97 mixer to select the desired input
+and then tune the input level using the rec (and igain) setting.
+
+Finally set the 'ac97' slider in the record section of the master mixer so
+that the recording level is suitable.
+
+The OSS drivers permit recording any application that's currently playing.
+
+To record audio that's playing on any of the SB Live channels:
+
+.IP \(bu 3
+Turn down the AC97 control in the "record" section. This prevents any audio
+ being fed to the soundcard from MIC/Line-in/CD-in from getting mixed with
+ the audio produced by the application that's currently playing.
+
+.IP \(bu 3
+Type ossrecord -s<sampling rate> -b<bits/sample> -c<channels> test.wav
+
+.IP \(bu 3
+To stop recording press <Ctrl-c> and then you can play back the test.wav
+ file using ossplay command.
+
+
+ RECORDING ISSUES:
+In most cases noise is caused by the microphone input or some other
+(unused) input. Use the ossxmix program to turn off all unused inputs and
+finally save the current mixer settings (see below).
+
+Hint: Look at the VU meter panels of ossxmix. It's usually very easy to
+locate the noise source by looking which input has some signal coming from
+it.
+
+WARNING! If you turn off some of the signals in recording section or the
+AC97 mixer section this affects all subsequent recordings. Remember
+to raise the volume prior doing any recording. After that decrease
+the volumes again if necessary.
+
+
+.SH  SBLIVE HARDWARE MIXING
+You can use /dev/oss/oss_sblive0/ pcm0-pcm7 to play multiple audio programs
+using the hardware mixing.
+Simply specify the device name with the application. A simple test is
+to do the following:
+  ossplay -d/dev/oss/oss_sblive0/pcm0 <file1.wav> &
+  ossplay -d/dev/oss/oss_sblive0/pcm1 <file2.wav> &
+  ossplay -d/dev/oss/oss_sblive0/pcm2 <file3.wav> &
+
+You should hear all three wav files playing simultaneously.
+
+NOTE: Some apps may desire the old /dev/dspN names. e.g. /dev/dsp0 - /dev/dsp7.
+
+NOTE: You can increase the number of output devices from the standard 8 devices
+to 32 device. For this, run soundconf, select Set configuration options and 
+look for the entry "sblive_device", now type any number between 1 and 32
+for the number of channels you wish. You can also do this manually by editing 
+oss_sblive.conf and inserting sblive_devices=XX entry, 
+ e.g.: sblive_devices=27 
+
+.SH  CDROM CONNNECTIONS
+There are two alternative ways to connect audio signal from a CD-ROM drive tor
+the SB Live soundcard. You can use a (three wire) analog cable or a (2 wire)
+digital cable. OSS now supports both of these choices. Note that there are
+separate mixer settings for both of these connections.
+
+The analog CD-ROM wire is connected to the AC97 code chip and this method
+works in most cases. To route the analog CD -input to the (front) speakers
+you need to raise the volume of the 'cd' control in mixer. However if you
+like to hear the analog CD input both from the front and rears speakers you
+need to do this in slightly different way (please read the description of
+the mixer above).
+
+The digital connection works only with CD-ROM drives that has support for it.
+Note that some CD-ROM drives having this digital output connector use a
+different signal level than the one required by SB Live. This means that the
+digital connection doesn't work with all CD-ROM drives (no sound). If you
+have problems with the digital connection you should use the analog one.
+When using the the digital CD input you may need to adjust the 'digcd' 
+volumes using ossxmix (or ossmix).
+
+It should be noted that SB Live works internally at 48 kHz. This means that 
+all S/PDIF input signals are automatically sample rate converted to 48 kHz. 
+If you record from a 44.1 kHz (CD-ROM) and save the result to a 44.1 kHz 
+file the signal will be sample rate converted twice. First from the 44.1 kHz
+input to internal 48 kHz and then back to 44.1 kHz. While the sample rate
+converter of SB Live is very precise this will cause some change. This should
+not be any problem when doing audio recordings but it may cause unwanted 
+results when transferring digital data (such as AC3/DTS) using the S/PDIF 
+the interface.
+
+.SH CONFIGURATION OPTIONS
+.IP \(bu 3
+sblive_digital_din=<0|1> - This option is to enable/disable the "digital DIN"
+ output of SB Live. By default the digital DIN interface is disabled which
+ enables the center/LFE analog output (uses the same combo jack). By
+ setting the sblive_digital_din option to 0 you can enable the analog 
+ Center/LFE output feature. When digital DIN is disabled you can still
+ get S/PDIF (or AC3) output from the digital (optical/coax) outputs of the
+ optional livedrive unit. Default: 0=analog output.
+
+.IP \(bu 3
+audigy_digital_din=<0|1> - same as "sblive_digital_din" option except for
+ the Audigy soundcards. Default: 1=digital output.
+
+.IP \(bu 3
+sblive_devices=<1..32> - Number of audio devices to be configured.
+
+
+.SH LIMITATION
+.IP \(bu 3
+SB Live! devices will not work in Sparc systems due to PCI addressing
+ limitations. Only Audigy/Audigy2 models work under Sparc.
+.IP \(bu 3
+EMU Wavetable MIDI synthesizer is not supported
+.IP \(bu 3
+AC3 passthrough only supported on Audigy/Audigy but not on SB Live! devices.
+
+.SH FILES
+/usr/lib/oss/conf/oss_sblive.conf Device configuration file
+
+.SH AUTHOR
+ 4Front Technologies
+

@@ -1,0 +1,72 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_digi96 - RME Digi96 professional audio driver.
+
+.SH DESCRIPTION
+Audio driver for the RME Digi96 family of profressional audio controllers.
+- Only 16 and 24/32 bit audio formats are supported.
+- All Digi96 family members support 32kHz, 44.1kHz, 48kHz, 64kHz, 88.2kHz and
+96kHz. sampling rates.
+
+
+.SH MIXER PANEL
+
+Note! For recording you need to set digi96.sync to INTERNAL and the values
+     of digi96.mode and digi96.input to match your studio setup. Otherwise
+     recordings will fail with I/O error.
+
+There are several settings that can be changed using the ossmix program
+shipped with OSS. Note that some features don't work with all Digi96
+family members. For example ADAT mode is not supported by the base
+model.
+
+.IP \(bu 3
+digi96.mode <SPDIF|AESEBU|ADAT>:
+This setting controls the output mode which can be S/PDIF (consumer),
+AES/EBU (professional) or ADAT. The input mode is detected automatically.
+If ADAT input is detected the output mode will be switched to ADAT
+automatically (this doesn't work in the other direction).
+
+.IP \(bu 3
+digi96.sync <EXTERNAL|INTERNAL>:
+This setting tells if the playback sampling rate is based on the internal
+oscillator or the sample rate detected in the input port. See also the
+definition of the digi96.worldclk setting.
+
+.IP \(bu 3
+digi96.input <OPTICAL|COAXIAL|INTERNAL|XLR>: Selects the active input.
+
+.IP \(bu 3
+digi96.sel <BYPASS|NORMAL>: 
+When set to BYPASS the input signal will be routed directly to the
+output (also sets digi96.sync automatically to EXTERNAL). In this mode
+audio data written to /dev/dsp will be muted.
+
+.IP \(bu 3
+digi96.worldclk ON|OFF:
+Setting this control to ON will enable the optional worldclock input as
+the sample rate source (overrides the digi96.sync setting).
+
+.IP \(bu 3
+digi96.emph ON|OFF:
+Enables/disables the de-emphasis option on the analog (monitor) output
+connector.
+
+.IP \(bu 3
+digi96.data <AUDIO|AC3>:
+Specifies if the output signal is audio or AC3 data (sets the non-audio
+bit in the channel status data).
+
+
+.SH OPTIONS
+None
+
+.SH FILES
+/usr/lib/oss/conf/oss_digi96.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+
+
+

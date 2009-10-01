@@ -1,0 +1,103 @@
+." Automatically generated text
+.TH 1 "August 31, 2006" "OSS" "User Commands"
+.SH NAME
+ossrecord - Open Sound System recording program.
+
+.SH USAGE
+ossrecord [options] filename
+
+.SH DESCRIPTION
+The ossrecord program records audio in Microsoft RIFF (wav) format. It
+will record from any input that's currently set as the recording source
+by the ossxmix/ossmix mixer programs. With the -l option, you also get
+a level meter that will display VU levels in a character mode.
+
+The filename parameter is name of the (.wav) file to be produced. Output can be
+sent to stdout by giving - as the file name.
+
+.SH OPTIONS
+-s<rate> 	Select the recording rate for raw PCM audio (eg -s48000).
+-c<channels> 	Select the number of channels 1=mono 2=stereo, 4, 6, 8, etc. 
+-d<devname>  	Select <devname> as the device (eg -d/dev/dsp2).
+-f<fmt>		Select the output sample format (eg -fS32_LE or -fMU_LAW)
+-f?		Prints the list of supported format names.
+-F<cnt>		Select the container format (eg WAV or AU). Default is WAV.
+-F?		Prints the list of supported container formats.
+-R		Open audio device in raw mode to disable virtual mixing and
+		sample rate/format conversions. Can be used when recording
+		from a digital source (S/PDIF input).
+-v		Verbose output.
+-l		Display level meters (character based).
+-i<recsrc|?> 	Select the recording source or display available recording 
+		sources if '?' is supplied.
+		e.g. ossrecord -i? may display:
+			        vol
+       			line (currently selected)
+       			mic
+       			cd
+       			aux1
+       			phone
+       			mono
+       			video
+-m<nfiles> 	Repeat the recording operation <nfiles> times. The filename
+		argument must have %d (or %02d) somewhere in the file to
+		guarantee unique filenames. If no %d is given then subsequent
+		recordings will overwrite the previous one(s). This option is
+		useful only with loopback audio devices or if the -t option
+		is used.
+-r<command> 	This option launches the <command> in background after 
+		recording the file has completed. The name of the recorded file
+		will be given as the (only) command line argument. When the -m 
+		option is used the script will run in parallel while recording
+		the next file. See the COMMAND SCRIPT section (below) for more
+		info.
+-g<gain>	Amplify recorded samples by percentage given as argument.
+		100 (default) means normal signal level, 200 means double level.
+		Only supported in 16 and 32 bit modes.
+-t<maxsecs>	Do not record more than <maxsecs> seconds in a single recording
+		operation.
+-L<level>	Set the recording level to <level>.
+-O		Allow overwriting of file when recording.
+-h		Display usage instructions.
+
+.SH COMMAND SCRIPT
+		The -r command line argument makes it possible to execute a
+		script or program after recording of the wave file is finished.
+		Below is a simple scell script that does MP3 encoding using
+		lame.
+
+#!/bin/sh
+
+WAVENAME=$1
+
+MP3NAME=$1.mp3
+
+lame -m s -h --preset studio $WAVENAME $MP3NAME
+
+exit 0
+
+Another example script for ossrecord is a simple CGI script for live MP3
+streaming (from /dev/dsp).
+
+#!/bin/sh
+
+echo Content-Type: audio/mp3
+
+echo
+
+ossrecord -S -b16 -s48 - | lame -m j - -
+
+exit 0
+
+.SH NOTES
+The ossrecord executable is the same as the ossplay executable.
+Behaviour is decided by the name used to invoke the program.
+
+.SH SEE ALSO
+ossplay(1), ossmix(1), ossxmix(1)
+
+.SH FILES
+/usr/bin/ossrecord
+
+.SH AUTHOR
+4Front Technologies

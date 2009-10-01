@@ -1,0 +1,30 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_trident - SiS7018, 4Dwave, ALIM5451 audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Trident 4DWave DX/NX, SiS7018 and ALI5451 audio
+controllers.
+
+Trident device characteristics:
+       o 8/16 bit playback/record
+       o mono/stereo playback/recording
+       o 8KHz to 48Khz sample rate.
+	o Upto 8 hardware channels to mixing audio streams
+
+.SH OPTIONS
+trident_mpu_ioaddr=<xxx> 
+Set the MPU I/O address. Refer to the driver.conf file for valid addresses.
+
+.SH LIMITATIONS
+.IP \(bu 3
+Due to PCI addressing limitations any add-on cards based on these chips
+will not work under Sparc. The only exception is the ALI5451 chip that is
+used on the main boards on many Sparc based systems.
+
+.SH FILES
+/usr/lib/oss/conf/oss_trident.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies

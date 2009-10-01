@@ -1,0 +1,133 @@
+." Automatically generated text
+.TH 1 "August 31, 2006" "OSS" "User Commands"
+.SH NAME
+ossmix - Open Sound System command-line mixer program.
+
+.SH SYNOPSIS
+ossmix [-d <dev#>] [-chqD] [control name] [value]
+
+.SH DESCRIPTION
+ossmix is a simple command-line mixer utility that is used to display the mixer
+settings of physical and virtual audio devices. OSS version 4 has an extended
+mixer API which supports some device specific features that may not available
+using other mixer applications. 
+
+.SH OPTIOMS
+-D		Display device information.
+-c		Dump mixer settings for all mixers.
+-h		Display usage information.
+-q		Quiet mode.
+-v[1|2]		Verbose mode. -v2 prints more detailed infoamation than -v1.
+ctrl# value	Change value of a mixer control.
+<no arg>	Display current/possible settings.
+
+.SH USAGE
+ossmix without any arguments displays the current settings of the
+default mixer device (usually the motherboard sound chip). This
+printout can also be used to find out the supported control names and
+their possible values. Currently all controls accept an ON/OFF value, a
+mono value (0 to 100) or a stereo value (left:right where both channel
+volumes can be between 0 and 100). The value can also be expressed in a
+relative form (e.g. +1 to add 1 to the previous volume).
+The following is a sample printout produced by ossmix:
+
+	Selected mixer 0/Creative AudioPCI
+	Known controls are:
+	vol <both/leftvol>[:<rightvol>] (currently 50:50)
+	pcm <both/leftvol>[:<rightvol>] (currently 50:50)
+	speaker <monovol> (currently 21)
+	line <both/leftvol>[:<rightvol>] (currently 32:32)
+	line.rec ON|OFF (currently OFF)
+	mic <monovol> (currently 16)
+	mic.rec ON|OFF (currently ON)
+	cd <both/leftvol>[:<rightvol>] (currently 100:100)
+	cd.rec ON|OFF (currently OFF)
+	pcm2 <both/leftvol>[:<rightvol>] (currently 75:75)
+	line1 <both/leftvol>[:<rightvol>] (currently 32:32)
+	line1.rec ON|OFF (currently OFF)
+	line2 <monovol> (currently 32)
+	line2.rec ON|OFF (currently OFF)
+	line3 <monovol> (currently 0)
+	line3.rec ON|OFF (currently OFF)
+	mic.micboost ON|OFF (currently ON)
+	mic.micbias ON|OFF (currently ON)
+	mute.pcmmute ON|OFF (currently OFF)
+	mute.pcm2mute ON|OFF (currently OFF)
+	mute.micmute ON|OFF (currently OFF)
+	mute.cdmute ON|OFF (currently OFF)
+	mute.linemute ON|OFF (currently OFF)
+	mute.line1mute ON|OFF (currently OFF)
+	mute.line2mute ON|OFF (currently OFF)
+	mute.line3mute ON|OFF (currently OFF)
+
+.SH SELECTING MIXER DEVICE
+It's possible to select the mixer device by using the -d<mixernumber>
+command line argument. This argument (when used) should be the first one
+on the command line. By default the mixer number 0 will be accessed.
+To find the available mixer devices, type ossinfo -x and look
+under the Mixers heading for available mixer devices. 
+
+.SH CHANGING MIXER SETTINGS
+Changing the values is done just like with the original "mixer" applet.
+For example:
+
+	ossmix pcm 50:60
+
+The above sets the pcm control (audio playback volume) so that the left
+channel volume is 50 and the right channel volume is 60. With just
+"ossmix pcm 50" the both channel volumes will be set to 50.
+
+In addition to the old mixer there are now some (usually ON/OFF) settings.
+These settings are device specific and don't work with all soundcards.
+The easiest way to find them out is to start ossmix without command line
+arguments (other than -d#).
+
+Some control names contain a dot ("."). This dot is required when changing
+the value. For example: "ossmix -d0 mic.micboost ON".
+
+."USING OSSMIX WITH A MIDI CONTROLLED MIXER
+."The ossmix program has capability to listen MIDI main volume controller
+."messages from a MIDI port. You can assign a ossmix control to each MIDI
+."channel. After receiving a channel main volume change message ossmix will then
+."change the mixer level of the volume control assigned to the channel. In this
+."mode ossmix will not exit (you need to kill it manually).
+."
+."This mode is very useful if you need to make several rapid mixer changes
+."simultaneously.
+."
+."To use this mode you need to give the MIDI device file and a list of the
+."volume sliders on command line. For example:
+."
+."    ossmix -d1 -m/dev/midi00 vol mic pcm line gain.out1/2 gain.in3/4
+."
+."After that the MIDI channels will be assigned in the following way:
+."
+."    Ch 0 = "vol"
+."    Ch 1 = "mic"
+."    Ch 2 = "pcm"
+."    Ch 3 = "line"
+."    Ch 4 = "gain.out1/2"
+."    Ch 5 = "gain.in3/4"
+."
+."Other MIDI channels (6 to 15) will be ignored.
+."
+."Only mono and stereo slider type controls can be assigned to MIDI channels.
+."Both stereo channels will be set to the same volume (there is no balance 
+."support).
+."
+."After starting ossmix you should move the sliders on the external fader box
+."so that ossmix can figure out their current settings.
+."
+."At this moment only MIDI fader boxes that send only main volume change messages
+."are supported (any other MIDI data will make ossmix to behave incorrectly).
+."For example the FM3 MIDI Mixer (AKA "FaderBaby") by JLCooper is compatible
+."with ossmix.
+."
+.SH FILES
+/usr/bin/ossmix
+
+.SH SEE ALSO
+ossdevlinks(1), ossxmix(1), savemixer(1)
+
+.SH AUTHOR
+4Front Technologies

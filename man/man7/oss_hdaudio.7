@@ -1,0 +1,81 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_hdaudio - Intel High Definition Audio (AZALIA) 
+
+.SH DESCRIPTION
+ Open Sound System driver for Intels high definition audio known as 
+ "Azalia". This driver supports Intel 915/925 chipsets with the
+ Realtek ALC880 and CMedia 9880 8 channel codecs.
+
+ The HDA driver supports:
+
+ o 8-96Khz Playback/Recording
+ o 8 or 16 or 32 bits
+ o 2, 4, 6 or 8 channel audio.
+ o SPDIF digital output and Input
+ o AC3 passthrough 
+
+.SH  HDAUDIO MIXER
+ The Intel HDA mixer is a new type of mixer that doesn't have
+ the normal volume controls found on AC97 or legacy SB devices.
+ The HDA mixer presents a concept of Jacks and you can configure
+ any jack to be either an output or an input jack.
+
+ Some motherboards may not correctly initialize the jacks according
+ to their color and functionality but in general here's the 
+ configuration that should generally be followed:
+
+	o Orange = Center/LFE	o Blue = Line-in
+	o Black = Rear		o Green = Front
+	o Grey = Side		o Pink = Mic
+
+Some Azalia codecs support front panel connectors and so if you see
+fp-green and fp-pink connectors, then these are for front panel
+speaker and mic/line-in Jacks.
+
+There is a function selector for most of the analog audio jacks (for example
+connector.pink.mode). This selector is used to control if the jack is used
+as an input (microphone or line in) or output (front, rear, side, speaker,
+etc).
+
+.SH KNOWN PROBLEMS
+In general Azalia based systems (laptops/motherboards) would require a custom
+driver to work properly. Due to enormous number of different systems it is not
+possible to develop such custom drivers for all systems. A generic driver is 
+used for systems that don't have dedicated drivers.
+
+Unfortunately the mixer and control panel interface (see ossmix(1)) 
+for "generic" systems is very cryptic and difficult to
+understand. To solve problems with volumes or signal routing you need to
+start ossxmix(1) and change the controls one at time until you get the desired
+effect.
+
+.SH OPTIONS
+.IP \(bu 3
+hdaudio_jacksense	enables jack sensing mode when the hdaudio driver is
+			loaded. In this mode all I/O pin's that are not
+			in use will be disabled as well as the mixer controls
+			that are related with them. In this way the
+			mixer/control panel will become more intuitive.
+			However OSS will need to be restarted with soundoff;
+			soundon every time new inputs or outputs are attached
+			to the audio jacks. Default : 0.
+
+			NOTE! hdaudio_jacksense=1 works only in some systems.
+			Many laptops and motherboards don't support jack
+			sensing.
+
+.IP \(bu 3
+hdaudio_noskip	Disable skipping unconnected jack. All mixer controls
+			will be shown, even for disabled I/O pins.
+			Can get values 0-7. 1-7 is a bitmask, where every bit
+			masks a different check. Bit 3 (= value 4) overrides
+			jacksense check too.
+			Default: 0 - unconnected jacks are skipped.
+.SH FILES
+ /usr/lib/oss/conf/oss_hdaudio.conf Device configuration file
+
+.SH AUTHOR
+ 4Front Technologies
+

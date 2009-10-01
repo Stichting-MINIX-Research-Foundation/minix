@@ -1,0 +1,27 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_cs461x - Cirrus Logic CS461x/CS4280 audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Crystal Semiconductor (Cirrus Logic) CS4280 and
+461x, audio controllers.
+
+CS4280 device characteristics:
+       o 8/16 bit playback/record
+       o mono/stereo playback/recording
+       o 8KHz to 48Khz sample rate.
+
+.SH OPTIONS
+.IP \(bu 3
+cs461x_clk_run_fix=0|1 (feature not used anylonger)
+Certain IBM Thinkpads required the CLK_RUN bit flipped in order to wake up
+the audio device. 
+
+
+.SH FILES
+/usr/lib/oss/conf/oss_cs461x.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

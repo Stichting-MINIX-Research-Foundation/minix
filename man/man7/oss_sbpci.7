@@ -1,0 +1,43 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_sbpci - Creative Labs ES1371 audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Creative Labs ES1371/ES1373/5880, Ectiva 1938 
+audio controllers.
+
+APCI97 device characteristics:
+       o 8/16 bit playback/record
+       o mono/stereo playback/recording
+       o 8KHz to 48Khz sample rate
+
+APCI97 MIXER EXTENSIONS
+
+Dual Dac mode: This feature turns the APCI97 into two output devices with
+the output going to front and rear speakers independantly (however volume
+control is global).
+
+Speaker Mode: This feature allows you to either have the audio coming out
+the front speakers or you can have audio duplicated on rear speakers. This
+mode is disabled when Dual Dac mode is enabled.
+
+SPDIF: This button enables or disables SPDIF output.
+
+.SH OPTIONS
+.IP \(bu 3
+apci97_latency=<NNN> 
+Certain models of the ES1371 sound devices will sound distorted playing stereo
+audio and setting the PCI latency fixes the problem
+
+.IP \(bu 3
+apci_spdif=0|1
+Certain models like the SB 4.1D/SB PCI128D have SPDIF output jacks and 
+this setting enables the output device.
+
+.SH FILES
+/usr/lib/oss/conf/oss_sbpci.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

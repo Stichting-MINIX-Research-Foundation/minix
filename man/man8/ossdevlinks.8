@@ -1,0 +1,38 @@
+." Automatically generated text
+.TH 8 "August 31, 2006" "OSS" "System Administration Commands"
+.SH NAME
+ossinfo - Open Sound System legacy device management utility.
+
+.SH DESCRIPTION
+The ossdevlinks utility creates and manages old style (legacy) device files
+for OSS audio, MIDI and mixer devices.
+
+In previous versioms OSS used "flat" device numbering for the device files
+(for example /dev/dsp0 to /dev/dspN). OSS version 4.0 and later uses different
+naming scheme. The ossdevlinks utility is used to manage the legacy device
+names as symbolic links to the new style devices.
+
+.SH OPTIONS
+Normally ossdevlinks is used without command line arguments. However
+there are few command line options.
+
+-v		Verbose output
+-r		Reset the legacy device numbering (do not use).
+
+The -r option will invalidate audio device selections in the setup files
+of various applications. This is considered highly undesirable. Applications
+using wrong audio devices may cause serious security and privacy problems.
+For this reason the -r option should never be used unless there are no other
+ways to recover from serious audio/sound related problems. After that users
+should review the audio settings of all the audio applications they are using.
+.SH                 
+
+.SH FILES
+/usr/sbin/ossdevlinks
+/usr/lib/oss/etc/legacy_devices
+/dev/dspN
+/dev/midiNN
+/dev/mixerN
+
+.SH AUTHOR
+4Front Technologies

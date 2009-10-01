@@ -1,0 +1,33 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_envy24ht - VIA Envy24HT/PT audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Envy24HT, Envy24HT-S, Envy24PT based sound
+cards.
+
+Envy24HT device characteristics:
+       o 8/16 bit playback/record
+       o mono/stereo/4ch/5.1ch/7.1ch playback
+	o mono/sterero recording 
+       o 8KHz to 192Khz sample rate.
+
+.SH OPTIONS
+o envy24ht_model = -1|0|1
+Select the Model number if the card isn't autodetected
+Values: 0 = Envy24ht 1=Envy24PT/HT-s compatible -1=Autodetect Default: -1
+
+o envy24ht_fake_mixer = 0|1
+Some old applications may refuse to run if they don't find some legacy mixer
+controls the envy24ht chip doesn't support. A "fake" legacy mixer can be
+enabled to make such applications to run. However these fake legacy controls
+will be permanently bound to full level.
+Values: 0 = Disabled 1 = Enabled. Default: 0.
+
+.SH FILES
+/usr/lib/oss/conf/oss_envy24ht.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

@@ -1,0 +1,63 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_cmpci - CMedia CMI8738/8768 audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for CMedia Electronics CMI8738/8768 audio
+
+CMI87xx device characteristics:
+       o 8/16 bit playback/record
+       o mono/stereo/4ch/5.1ch playback
+       o 8KHz to 48Khz sample rate.
+
+.SH  MIXER PANEL
+The CMedia chip provides some unique features that are set up
+by the Mixer chip. Running ossxmix will display the CMI8738 mixer
+panel.
+
+Most of the sliders and buttons are self evident. However there
+are some options that need explaining:
+
+Dual Dac: Enabling this button sets the CMPCI device as two
+separate output devices with /dev/dsp1 audio going to the front and
+/dev/dsp0 going to the rear outputs. Separate audio streams can
+be send to the device simultaneously.
+
+Speaker Mode: The audio can be sent just to the front speakers or
+it can be sent simultaneously to all speakers in the "Spread" mode.
+
+AC3 passthrough only works on Models 037 and higher. This is because of
+a hardware bug in the earlier models so check the model number
+(ossinfo -a).
+
+SPDIF:
+
+.IP \(bu 3
+Enable will enable SPDIF output.
+
+.IP \(bu 3
+Rec will allow you to record from the SPDIF device. Note that when
+you have SPDIF recording enabled, you cannot play 4/6 channel audio.
+
+.IP \(bu 3
+Polarity - certain models require you to flip the bit otherwise you
+ get distorted audio.
+
+.IP \(bu 3
+IMon - monitor input via SPDIF in.
+
+.IP \(bu 3
+Optical - sets the SPDIF to Optical (TOSLINK) or RCA Jacks interface.
+
+
+
+.SH OPTIONS
+None
+
+.SH FILES
+/usr/lib/oss/conf/oss_cmpci.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

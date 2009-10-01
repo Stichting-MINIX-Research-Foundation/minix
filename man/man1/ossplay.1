@@ -1,0 +1,55 @@
+." Automatically generated text
+.TH 1 "August 31, 2006" "OSS" "User Commands"
+.SH NAME
+ossplay - Open Sound System playback program.
+
+.SH SYNOPSIS
+ossplay [-FRhlvq] [-S secs ] [ -c channels ] [ -d devname ]
+       [ -f fmtname | ? ] [ -g gain ] [ -o playtarget | ? ]
+       [ -s rate ] filename | - ...
+
+.SH DESCRIPTION
+ossplay plays raw PCM, Microsoft RIFF (.wav), Sun ULaw (.au), Mac AIFF (.aif)
+and other types of audio files. By default the application will try to
+determine the audio file's format and play audio based on the stored
+inforation about sample format, number of channels and sampling rate.
+
+.SH OPTIONS
+-v		Verbose output. Multiple invocations increase the level
+		of verbosity.
+-q		Quiet (no information printed).
+-l		Loop playback indefinately.
+-d<devname> 	Select <devname> as the device (eg -d/dev/dsp2).
+-s<rate> 	Select the playback rate for raw PCM audio (eg -s48000).
+-c<channels 	Select the number of channels 1=mono 2=stereo, 4, 6, 8, etc.
+-f<fmtname> 	Select the input format (eg -fU8 or -fS16_BE).
+-f?		Prints the list of supported format names.
+-o<playtarget> 	Selects the play target name if the device supports multiple
+		play targets (such as front, rear, side). 
+-o? 		Prints the list of available play targets.
+-g<gain>	Amplify all played samples by percentage given as argument. 
+		100 (default) means normal signal level, 200 means double level.
+-F		Treat all input as raw PCM data.
+-R		Disable redirection to virtual mixer engines and sample
+		rate/format conversions. Should not be used unless absolutely
+		necessary.
+-S<secs>	Start playing at <secs> seconds from start of file.
+		The argument can contain a fractional part (e.g. -S1.2)
+-h		Display usage information.
+
+.SH INTERRUPT
+Sending a SIGQUIT (Ctrl-\\ in most terminals) will make ossplay stop playing
+the currently played file and skip to the next file.
+
+.SH NOTES
+The ossplay executable is the same as the ossrecord executable.
+Behaviour is decided by the name used to invoke the program.
+
+.SH SEE ALSO
+ossrecord(1), ossmix(1), ossxmix(1)
+
+.SH FILES
+/usr/bin/ossplay
+
+.SH AUTHOR
+4Front Technologies

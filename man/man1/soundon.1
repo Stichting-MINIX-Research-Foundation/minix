@@ -1,0 +1,28 @@
+." Automatically generated text
+.TH 1 "August 31, 2006" "OSS" "OSS System Administration Commands"
+.SH NAME
+soundon - Start Open Sound System
+
+.SH DESCRIPTION
+
+The soundon command is used to load the OSS core module (osscore) and the
+low level drivers for the sound devices detected in ths system (by ossdetect).
+The list of low level sound device drivers to load is located in
+/usr/lib/oss/etc/installed_drivers which is maintained by the ossdetect command.
+
+There are no command line arguments. Only the super user (root) can use this
+command.
+
+Open Sound System can be unloaded by executing the soundoff command.
+
+.SH FILES
+/usr/sbin/soundon
+/usr/lib/oss/etc/installed_drivers.
+
+.SH SEE ALSO
+soundoff(1)
+ossdetect(1)
+ossdevlinks(1)
+
+.SH AUTHOR
+4Front Technologies

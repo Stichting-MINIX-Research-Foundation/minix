@@ -1,0 +1,92 @@
+." Automatically generated text
+.TH 1 "August 31, 2006" "OSS" "User Commands"
+.SH NAME
+osstest - Open Sound System audio self test applet.
+
+.SH DESCRIPTION
+The osstest applet is a simple test application that can be used to test 
+functionality of the sound hardware installed in the system.
+
+osstest performs a playback test for each installed audio device. If there
+are any "machine detectable" problems they will be reported. You will first
+hear an audio sample played on the left speaker, then the right speaker and
+finally in stereo on both speakers.
+
+It's user's responsibility to listen if the test sound is audible. If no
+sound output can be heard the possible reason is one of the following:
+
+1. An error was reported by osstest. In this case there will usually not be
+any sound output. The error needs to be fixed before running osstest
+again.
+2. There is no headphones or speakers connected. Or the connection is not
+made correctly.
+3. The mixer volume level is set to a too low value. By default it should
+be OK. The mixer level can be adjusted using the mixer, ossmix and ossxmix
+utilities distributed with OSS.
+4. Some notebooks have nonstandard volume control and/or speaker selection
+hardware that is not supported by OSS. It's very likely that OSS doesn't
+support such vendor specific additions.
+
+If no errors were reported and the test sound was audible it means that
+OSS and your sound hardware is functioning correctly. If you still encounter
+problems with some sound applications the reason is almost certainly in
+the application. Check it's configuration or try to use another equivivalent
+application. 
+
+If you are having problems with JDS, KDE and/or Gnome system sounds, you need
+to make sure that OSS gets started before the GUI environment. Refer to your
+operating system's startup procedures.
+
+.SH  SAMPLE RATE DRIFT
+
+The osstest utility measures a sample rate drift value after playing
+back the test sound. Ideally it should be 0% but in practice there
+will be an error of few percents. 0% means that the 48000 Hz test file
+was played exactly at 48000 Hz sampling rate.
+
+The sample rate measurement is based on the system timer which has limited
+precision. It's likely that less than 1% differenc between the nominal and 
+the measured sampling rates are actually caused by an error in the measurement.
+For this reason the drift reported by osstest should not be used as any kind of
+quality measurement. However if the drift is very large it means that there is
+something wrong in the system. The oscillator chip used with the sound chip is
+broken or the system clock is running at a wrong speed.
+
+.SH  USING OSSTEST MANUALLY
+
+The osstest utility is located in the /usr/bin directory. It can be run 
+manually to test functionality of OSS and your sound hardware. When invoked 
+without any command line parameters osstest performs the default test on all 
+devices. However it will skip some of the devices base on the following rules.
+
+.IP \(bu 3
+It is possible to test just one of the available audio devices by giving
+its number on command line (for example osstest 1). Use the device index
+numbers reported by "ossinfo -a".
+.IP \(bu 3
+Use the -l command line option to loop the test infinitely.
+.IP \(bu 3
+Virtual mixer devices will not be tested. Use the -V command line option to
+force test of virtual devices.
+.IP \(bu 3
+The actual (physical) audio devices will be tested directly (bypassing
+virtual mixer). If you want to test playback through vmix then use the
+-V option.
+.IP \(bu 3
+Multiple device files related with the same physical device will not
+be tested. Only the first one gets tested while the remaining ones will be
+skipped. At this moment there is no way to force osstest to test this kind of
+devices.
+.IP \(bu 3
+Only stereo devices will be tested. Future versions of osstest will be
+able to test mono and multi channel devices too. Also osstest requires that
+the device supports the 16 bit signed format and 48kHz sampling rate.
+
+.SH FILES
+/usr/bin/osstest
+
+.SH SEE ALSO
+savemixer(1)
+
+.SH AUTHOR
+4Front Technologies

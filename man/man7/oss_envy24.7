@@ -1,0 +1,358 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_envy24 - ICE Envy24 audio device driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Envy24 based audio cards such as the
+M-Audio Delta Series, Terratec EWS88 Series, Hoontech DSP24.
+
+ENVY24 device characteristics:
+
+.IP \(bu 3
+8/16 bit playback/record
+.IP \(bu 3
+mono/stereo/4ch/5.1ch/7.1ch playback
+.IP \(bu 3
+mono/sterero recording 
+.IP \(bu 3
+8KHz to 192Khz sample rate.
+
+ENVY24 AUDIO DEVICES
+
+	Audio devices:
+	0: M Audio Delta 1010 out1/2
+	1: M Audio Delta 1010 out3/4
+	2: M Audio Delta 1010 out5/6
+	3: M Audio Delta 1010 out7/8
+	4: M Audio Delta 1010 S/PDIF out
+	5: M Audio Delta 1010 in1/2
+	6: M Audio Delta 1010 in3/4
+	7: M Audio Delta 1010 in5/6
+	8: M Audio Delta 1010 in7/8
+	9: M Audio Delta 1010 S/PDIF in
+	10: M Audio Delta 1010 input from mon. mixer
+	11: M Audio Delta 1010 (all outputs)
+	12: M Audio Delta 1010 (all inputs)
+
+	Synth devices:
+
+	Midi devices:
+	0: M Audio Delta 1010
+
+	Timers:
+	0: System clock
+
+	Mixers:
+	0: M Audio Delta 1010
+
+
+The actual /dev/dsp# numbers may be different on your system. Check the right
+ones by looking at the output procuced by "ossinfo -a" command. With the
+above configuration you can use /dev/dsp0 to /dev/dsp4 for playback of stereo
+streams. If you play mono files the signal will be output only from the left
+channel. /dev/dsp0 to /dev/dsp3 are connected to the analog outputs while
+/dev/dsp4 is the S/PDIF output. 
+
+The /dev/dsp5 to /dev/dsp10 device files can be used for recording. /dev/dsp5
+to /dev/dsp8 are the analog inputs. /dev/dsp11 and /dev/dsp12 are raw 
+input/output device files. They will be described in detail in the "Raw I/O
+devices" section below.
+
+It's also possible to make OSS to create individual device files for every
+channel this creates twice as many device files than the default setting. To
+do this just append envy24_skipdevs=1 to the oss_envy24.conf file. This is useful
+only if you are working on mono rather than stereo signals. However please
+note that setting envy24_skipdevs=1 does _NOT_ lock the device files to one 
+channel mode, the application can still set them to stereo or multi channel 
+mode if it likes.
+
+It is possible to set all device files to mono only mode by setting 
+envy24_skipdevs=1 and envy24_force_mono=1. However this mode disables stereo 
+and multi channel usage for all devices so in general it should not be used.
+.SH  
+By default the driver will create output devices before the input ones. By 
+setting envy24_swapdevs=1 in oss_envy24.conf you can ask OSS to create the device
+files in opposite order i.e. input device files before the output ones. This
+may be useful when using RealProducer.
+
+As a workaround to a bug in RealProducer you also need to create some dummy
+mixer devices by defining envy24_realencoder_hack=1 in oss_envy24.conf. Without
+these extra mixer devices RealProducer will not be able to access other than 
+the first input device.
+
+
+.SH  DEVICE MANAGEMENT
+
+By default OSS creates a large number of device files for each envy24 card. 
+This may be a problem when multiple cards need to be used in the same system. 
+Adding the envy24_devmask option to oss_envy24.conf should help
+in most cases because it removes the devices that are actually not needed in 
+the system.
+
+The envy24_devmask number is the SUM of the following values:
+
+	1: Create primary (analog/ADAT/TDIF) outputs.
+	2: Create primary (analog/ADAT/TDIF) inputs.
+	4: Create S/PDIF outputs.
+	8: Create S/PDIF inputs.
+	16: Create monitor input device.
+	32: Create the raw input and output devices.
+
+For example envy24_devmask=12 (4+8) creates only the S/PDIF devices.
+To enable all possible (current or future) device files set envy24_devmask
+to 65535 (default).
+
+If possible make your application to open the right device file 
+(/dev/dsp0 to /dev/dsp10) explicitly. It's also possible to use the 
+default devicefile (/dev/dsp) since OSS now supports automatic device
+allocation (it opens the first available input or output devicefile 
+depending on the open mode).
+
+The channel allocation mechanism between device files is very flexible.
+Even there is a device file for every stereo pair (or a mono channel) 
+it's possible to use any of the device file to access multiple channels.
+For example an application can open /dev/dsp0 and set the number of 
+channels to 10. In this way the application can play all 10 channels 
+(or any number between 1 and 10) simultaneously (the samples will be 
+interleaved).
+
+There is simple automatic syncstart feature when using multiple 
+applications at the same time. Playback will not start before all 
+currently open devices files have started the playback operation. 
+The same mechanism works for recording (recording and playback 
+operations are fully independent).
+
+The Envy24 driver supports 8, 16 and 24/32 bit sample formats.
+
+
+.SH  SAMPLING RATE
+
+Envy24 based cards are multi channel devices and all the channels share the
+same sampling rate. For this reason the sampling rate is normally locked to the
+value selected using ossmix. However OSS supports some other methods for
+changing the sampling rate. There are four ways to change the sampling rate.
+
+ BASIC METHOD:
+
+Since all input and output channels of Envy24 work at the same sampling rate
+it's not possible for the applications to select the rate themselves. Instead
+the sampling rate is always locked to the currently selected rate. This rate
+selection can be changed using the ossmix program shipped with OSS.
+
+For example:
+
+	ossmix envy24.rate 48000
+
+sets the sampling rate to 48000 Hz (default). The possible alternatives are 
+- 8000
+- 9600
+- 11025
+- 12000
+- 16000
+- 22050
+- 24000
+- 32000
+- 44100
+- 48000
+- 88200 
+- 96000
+
+When using S/PDIF inputs/outputs only the sampling rates 32000, 44100, 48000, 88200 or 96000 should be used.
+
+.SH   EXTERNAL SYNC
+It's possible to lock the sampling rate to the S/PDIF or world clock inputs
+by setting the envy24.sync setting in ossmix to SPDIF or WCLOCK. However
+the envy24.rate setting should be set manually to match the rate being used
+(there is no autodetection for that).
+
+.SH   NONLOCKED METHOD
+It's also possible to turn the envy24.ratelock setting to OFF using ossmix.
+After that the first application that opens the device can change the sampling
+rate. However great care should be taken that this application gets the
+recording/playback process fully started before any of the other
+applications open their devices. Otherwise all devices will be locked to 8Khz.
+Also keep in mind that subsequent applications will be forced to use the
+sampling rate set by the first one.
+
+.SH   SOFTWARE SRC
+OSS contains a very high quality software based sample rate converter.
+It can be enabled by setting envy24.src to ON using ossmix.
+
+After that OSS can do on-fly sample rate conversions between the actual
+"hardware" sampling rate and the sampling rates used by the applications. In
+this way every application may use different sampling rate. However there are
+some drawbacks in this method:
+
+.IP \(bu 3
+The hardware rate needs to be 44100, 48000 or 96000 Hz.
+.IP \(bu 3
+The software SRC algorithm consumes some CPU time (1% to 20% per audio 
+channel depending on the CPU speed and sampling rates). For this reason this 
+method may be useless in multi channel use with anything else but the fastest
+high end CPUs.
+.IP \(bu 3
+Only mono and stereo (1 or 2 channel) streams are supported.
+.IP \(bu 3
+The SRC algorithm does cause minor artifacts to the sound (SNR is around 60 dB).
+
+
+.SH  RAW IO DEVICES
+
+These device files provide an alternative way to access Envy24 based devices.
+With these devices it's possible to bypass the dual buffering required by the 
+"normal" input-output device files described above. This means that also the 
+mmap() feature is available and that the latencies caused by dual buffering 
+are gone. So these device files work much like "ordinary" soundcards. However
+due to multi channel professional nature of the Envy24 chip there are some very
+fundamental differences. This means that these device files can only be used 
+with applications that are aware of them.
+
+The differences from normal audio device files are:
+
+1. The sample format will always be 32 bit msb aligned (AFMT_S32_LE). Trying to
+use any other sample format will cause unexpected results.
+2. Number of channels is fixed and cannot be changed. The output device has 
+always 10 channels (0 to 7 are analog outputs and 8 to 9 are the digital 
+outputs). This assignment will be used even with cards that don't support 
+digital (or analog) outputs at all. If the actual hardware being used has 
+less channels the unused ones will be discarded (however they will be fed to 
+the on board monitor mixer).
+
+The input device is fixed to 12 channels. Channels 0 to 7 are analog inputs.
+Channels 8 to 9 are digital inputs. Channels 10 and 11 are for the result 
+signal from the on board monitor mixer.
+
+
+.SH  DIGITAL MONITOR MIXER
+
+All Envy24 based cards have a built in monitor mixer. It can be used to mix 
+allinput and output signals together. The result can be recorded from the 
+"input from mon mixer" device (device 10 in the /dev/sndstat example above).
+The monitor mix signal can also be routed to any of the outputs (including 
+S/PDIF and the "consumer" AC97 output of Terratec EWS88MT/D and any other card
+that support s it).
+
+The settings in the gain.* group of ossmix are used to change the levels of all
+inputs and outputs in the digital monitor mixer. The possible values are 
+between 0 (minimum) and 144 (maximum).
+
+OSS permits using all 10 possible output channels of the monitor mixer even 
+with cards that have less physical outputs. These "virtual" outputs are only 
+sent to the monitor mixer and their signal is only present in the monitor mixer
+output. To enable these "virtual" channels set the envy24_virtualout parameter 
+to 1 in oss_envy24.conf. This option has no effect with Delta1010, EWS88MT and
+other cards that have 10 "real" outputs.
+
+
+.SH  SYNC SOURCE
+
+On cards with S/PDIF and/or World Clock inputs it's possible to select the
+sync source using
+
+       ossmix envy24.sync
+
+The possible choices are:
+
+.IP \(bu 3
+INTERNAL: Use the internal sampling rate as defined by envy24.rate
+.IP \(bu 3
+SPDIF: Use the S/PDIF input as the clock source. The envy24.rate setting 
+must be set manually to match the actual input sampling rate.
+.IP \(bu 3
+WCLOCK: Like SPDIF but uses the world clock input signal (Delta 1010 only).
+
+
+.SH  OUTPUT ROUTINGS
+
+Output routing of output ports can be changed by changing the route.* settings
+using ossmix. The possible choices are:
+
+.IP \(bu 3
+DMA: Playback from the associated /dev/dsp# device.
+.IP \(bu 3
+MONITOR: Output of the digital mixer (only out1/2 and S/PDIF).
+.IP \(bu 3
+IN1/2 to IN9/10 or IN1 to IN10: Loopback from the analog inputs
+.IP \(bu 3
+SPDIFL or SPDIFR or SPDIF: Loopback from the S/PDIF input.
+
+
+.SH  PEAK METERS
+
+Envy24 based cards have peak meters for the input and output ports of the
+digital monitor mixer. ossmix can show these values under the peak.* group
+(these settings are read only). The values are between 0 (minimum) and 255
+(maximum). At this moment the only applications that supports these peak meters
+are ossmix and ossxmix.
+
+
+.SH  AUDIO LATENCY
+
+IDE disk and CD-ROM drives may cause some interrupt latency problems which
+may cause dropouts in recording/playback with Envy24 based cards. For this
+reason ensure that DMA is turned on for the disk drive.
+
+Another method to solve the dropout problems is making the fragment size used
+by the driver longer. This can be done by adding envy24_nfrags=N to the
+oss_envy24.conf file. By default N is 16. Values 2, 4 or 8 make the fragments
+longer which should cure the dropout problems. However this may cause
+latency problems with some applications. Values 32 and 64 decrease the
+latencies but may cause dropouts with IDE.
+
+
+.SH OPTIONS
+
+.IP \(bu 3
+envy24_skipdevs: It's also possible to make OSS to create individual device 
+files for every channel. This creates twice as many device files than the 
+default setting.  
+Values: 1, 0 Default: 0
+
+.IP \(bu 3
+envy24_swapdevs: By default the driver will create output devices before the
+input ones. You can force the input devices to be configured before output 
+devices.
+Values: 1, 0 Default: 0
+
+.IP \(bu 3
+envy24_realencoder_hack: RealProducer wants to see a mixer device in 
+/dev/mixer. This option allows you to define a dummy /dev/mixer mixer device.
+Envy24 Mixer device doesn't provide any consumer level soundcard compatibility
+so this dummy mixer fools RealProducer into thinking it's running on a consumer
+soundcard like SB Pro or SBLive.
+Values: 1, 0 Default: 0
+
+.IP \(bu 3
+envy24_gain_sliders: With some devices it's possible to change the gain 
+controllers to be continuous sliders instead of just enumerated ones.
+Values: 1, 0 Default: 0
+
+.IP \(bu 3
+envy24_nfrags: To solve the dropout problems make the fragment size used by
+the driver longer. By default is 16. Values 2, 4 or 8 make the fragments longer
+which should cure the dropout problems. However this may cause latency problems
+with some applications. Values 32 and 64 decrease the latencies but may cause
+dropouts with IDE drives.
+Values: 2-64 Default: 16
+
+.IP \(bu 3
+envy24_virtualout: OSS permits using all 10 possible output channels of the
+monitor mixer even with cards that have less physical outputs. These "virtual"
+outputs are only sent to the monitor mixer and their signal is only present in
+the monitor mixer output. This has no effect for Delta1010 or Terratec EWS88MT.
+Values: 1, 0 Default: 0
+
+.IP \(bu 3
+envy24_force_mono: It is possible to set all device files to mono only mode
+by setting envy24_skipdevs=1 and envy24_force_mono=1. However this mode 
+disables stereo and multi channel usage for all devices so in general it should
+not be used.
+Values: 1, 0 Default: 0
+
+.SH FILES
+/usr/lib/oss/conf/oss_envy24.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

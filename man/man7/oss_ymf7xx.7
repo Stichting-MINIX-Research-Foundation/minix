@@ -1,0 +1,38 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_ymf7xx - Yamaha DS-XG audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Yamaha DS-XG YMF724/740/744/754 audio controllers.
+
+ymf7xx device characteristics:
+       o 8/16 bit playback/record
+       o mono/stereo/4 channel playback
+	o mono/stereo recording
+       o 8KHz to 48Khz sample rate.
+
+.SH  MIXER
+The Yamaha DSXG models 744 and 754 supports SPDIF and AC3 multichannel output
+and the Mixer extentions will allow you to enable/disable SPDIF output.
+
+.SH CONFIG OPTIONS
+.IP \(bu 3
+yamaha_mpu_ioaddr=<xxx>
+MPU I/O address. Refer to the device conf file (see below) for legal values.
+
+.IP \(bu 3
+yamaha_mpu_irq=<xx>
+MPU IRQ. Refer to device conf file (see below) for legal values
+
+.IP \(bu 3
+yamaha_fm_ioaddr=<xxx>
+Yamaha FM SYnthesizer IO address. Refer to driver conf file (see below) for
+possible values.
+
+.SH FILES
+/usr/lib/oss/conf/oss_ymf7xx.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

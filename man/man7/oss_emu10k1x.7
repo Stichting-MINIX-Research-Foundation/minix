@@ -1,0 +1,30 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_emu10k1x - Creative Labs P16x (EMU10K1X) driver.
+
+.SH DESCRIPTION
+Open Sound System driver for Creative Labs SBLive 5.1 Dell OEM version
+soundcards. The device has a chipset called the EMU10K1X and is not the same
+as the SBLive EMU10K1/EMU10K2 audio processors found in the SBLive! and Audigy
+soundcards.
+
+EMU10K1X device characteristics:
+       o 8/16/24 bit playback/record
+       o mono/stereo/4/5.1 playback
+       o 8KHz to 192Khz sample rate.
+
+.SH OPTIONS
+.IP \(bu 3
+emu10k1x_spdif_enable=<0|1>
+The EMU10K1X has a versa-jack (orange) that can be set as SPDIF output
+or the Side-Surround left/right speakers in a 5.1 setup.
+When set as SPDIF, you can get play PCM/AC3 audio to a Dolby(R) capable 
+receiver.
+
+.SH FILES
+/usr/lib/oss/conf/oss_emu10k1x.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

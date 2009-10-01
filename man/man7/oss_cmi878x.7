@@ -1,0 +1,60 @@
+." Automatically generated text
+.TH 7 "August 31, 2006" "OSS" "OSS Devices"
+.SH NAME
+oss_cmi878x - CMedia CMI8788 audio driver.
+
+.SH DESCRIPTION
+Open Sound System driver for CMedia Electronics CMI8788 audio
+
+CMI87xx device characteristics:
+       o 8/16/24/32 bit playback/record
+       o mono/stereo/4ch/5.1/7.1 playback
+       o 8KHz to 192Khz sample rate.
+
+The CMedia 8788 device provides 3 types of devices. The first devices is
+a Multichannel full duplex device. The second device provides Front Panel
+audio access and the SPDIF device provide SPDIF (Digital) audio I/O.
+
+.SH  MIXER PANEL
+The CMedia chip provides some unique features that are set up
+by the Mixer chip. There are 3 mixer devices presented to the user.
+
+Main Mixer Panel (/dev/mixer0)
+
+.IP \(bu 3
+Master Mixer panel is for controlling output volumes for each of the 8
+channels. 
+
+.IP \(bu 3
+Monitor buttons will allow you to monitor the input from the Rear Panel 
+inputs, Front Panel Inputs and SPDIF IN.
+
+.IP \(bu 3
+Speaker-Spread function duplicates the front channel output on all 8
+speakers. 
+
+.IP \(bu 3
+SPDIF Loopback simply takes SPDIF Input and Plays it out the SPDIF Output.
+panel.
+
+
+AC97 Input Mixer Panel (/dev/mixer1)
+This mixer panel is used to switch between the various inputs like line-in,
+mic, cd. When the Rear Panel Monitor button is check marked in the Main
+mixer panel, the IGAIN slider in this panel controls the level of the input
+that can be hear on the speakers.
+
+
+AC97 Front Panel Mixer (/dev/mixer2)
+This mixer controls the front panel ac97 device. It can be used to control
+all the volumes and inputs as well as SPDIF output on the front panel device.
+
+.SH OPTIONS
+None
+
+.SH FILES
+/usr/lib/oss/conf/oss_cmi878x.conf Device configuration file
+
+.SH AUTHOR
+4Front Technologies
+

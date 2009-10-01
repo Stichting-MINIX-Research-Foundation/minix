@@ -1,0 +1,39 @@
+." Automatically generated text
+.TH 8 "August 31, 2006" "OSS" "System Administration Commands"
+.SH NAME
+savemixer - Open Sound System program for saving and restoring mixer settings.
+
+.SH SYNOPSIS
+savemixer [-LVv] [-f <fname>]
+
+.SH DESCRIPTION
+The savemixer program saves mixer settings. It can also load saved mixer
+settings back into the mixer.
+
+Running this program without any parameters will save the current mixer
+settings into /etc/oss/mixer.save or $OSSLIBDIR/etc/mixer.save file.
+OSSLIBDIR is decided by reading /etc/oss.conf, and defaults to /usr/lib/oss.
+
+.SH AUTOMATIC SAVE
+By default the soundoff command will automatically run savemixer to save
+the active mixer settings. See the manual page for soundoff(1) if you
+like to turn this feature off.
+
+.SH OPTIONS
+-f<fname>	Use <fname> as setting file.
+-L 		Loads saved mixer and device map information from mixer.save.
+-V 		Version information.
+-v 		Verbose output.
+
+.SH SEE ALSO
+soundoff(1), soundon(1), ossdetect(1), ossdevlinks(1), ossmix(1), ossxmix(1)
+
+.SH FILES
+/etc/oss.conf
+/usr/sbin/savemixer
+/usr/lib/oss/etc/mixer.save
+/usr/lib/oss/etc/dspdevs.map
+/usr/lib/oss/etc/applist.conf
+
+.SH AUTHOR
+4Front Technologies
