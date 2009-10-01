@@ -89,6 +89,7 @@ rcs-5.7
 readline-5.1
 rman-3.2
 rsync-2.6.7
+postgresql-8.4.0
 screen-4.0.2
 sed-3.02
 shhmsg-1.4.1
