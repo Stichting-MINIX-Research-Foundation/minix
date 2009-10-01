@@ -298,14 +298,14 @@ sigset_t sig_map;
 	check_sig(id, i);
   }
 
-  /* If SIGKREADY is set, an earlier sys_stop() failed because the process was
+  /* If SIGNDELAY is set, an earlier sys_stop() failed because the process was
    * still sending, and the kernel hereby tells us that the process is now done
    * with that. We can now try to resume what we planned to do in the first
    * place: set up a signal handler. However, the process's message may have
    * been a call to PM, in which case the process may have changed any of its
    * signal settings. The process may also have forked, exited etcetera.
    */
-  if (sigismember(&sig_map, SIGKREADY) && (rmp->mp_flags & DELAY_CALL)) {
+  if (sigismember(&sig_map, SIGNDELAY) && (rmp->mp_flags & DELAY_CALL)) {
 	rmp->mp_flags &= ~DELAY_CALL;
 
 	if (rmp->mp_flags & (FS_CALL | PM_SIG_PENDING))
@@ -377,7 +377,7 @@ int trace;			/* pass signal to tracer first? */
 	sigaddset(&rmp->mp_sigpending, signo);
 
 	if (!(rmp->mp_flags & PM_SIG_PENDING)) {
-		/* This stop request must never result in EBUSY here! */
+		/* No delay calls: FS_CALL implies the process called us. */
 		if ((r = sys_stop(rmp->mp_endpoint)) != OK)
 			panic(__FILE__, "sys_stop failed", r);
 
@@ -555,6 +555,7 @@ struct mproc *rmp;
 {
 /* FS has replied to a request from us; do signal-related work.
  */
+  int r;
 
   if (rmp->mp_flags & (FS_CALL | EXITING)) return;
 
@@ -575,7 +576,8 @@ struct mproc *rmp;
 	if (!(rmp->mp_flags & FS_CALL)) {
 		rmp->mp_flags &= ~(PM_SIG_PENDING | UNPAUSED);
 
-		sys_resume(rmp->mp_endpoint);
+		if ((r = sys_resume(rmp->mp_endpoint)) != OK)
+			panic(__FILE__, "sys_resume failed", r);
 	}
   }
 }
@@ -601,9 +603,7 @@ struct mproc *rmp;		/* which process */
 
   /* Check to see if process is hanging on a PAUSE, WAIT or SIGSUSPEND call. */
   if (rmp->mp_flags & (PAUSED | WAITING | SIGSUSPENDED)) {
-	/* Stop process from running.
-	 * This stop request must never result in EBUSY here!
-	 */
+	/* Stop process from running. No delay calls: it called us. */
 	if ((r = sys_stop(rmp->mp_endpoint)) != OK)
 		panic(__FILE__, "sys_stop failed", r);
 
@@ -616,10 +616,10 @@ struct mproc *rmp;		/* which process */
   /* Not paused in PM. Let FS try to unpause the process. */
   if (!(rmp->mp_flags & PM_SIG_PENDING)) {
 	/* Stop process from running. */
-	r = sys_stop(rmp->mp_endpoint);
+	r = sys_delay_stop(rmp->mp_endpoint);
 
 	/* If the process is still busy sending a message, the kernel will give
-	 * us EBUSY now and send a SIGKREADY to the process as soon as sending
+	 * us EBUSY now and send a SIGNDELAY to the process as soon as sending
 	 * is done.
 	 */
 	if (r == EBUSY) {
@@ -703,7 +703,8 @@ int signo;			/* signal to send to process (1 to _NSIG-1) */
   if ((rmp->mp_flags & (PM_SIG_PENDING | UNPAUSED)) == UNPAUSED) {
 	rmp->mp_flags &= ~UNPAUSED;
 
-	sys_resume(rmp->mp_endpoint);
+	if ((r = sys_resume(rmp->mp_endpoint)) != OK)
+		panic(__FILE__, "sys_resume failed", r);
   }
 
   return(TRUE);

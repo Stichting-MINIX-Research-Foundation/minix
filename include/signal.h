@@ -66,7 +66,7 @@ typedef unsigned long sigset_t;
  */
 #define SIGKMESS   	  29	/* new kernel message */
 #define SIGKSIG    	  30	/* kernel signal pending */
-#define SIGKREADY	  31	/* ready for signal delivery */
+#define SIGNDELAY	  31	/* end of delay for signal delivery */
 
 #endif
 

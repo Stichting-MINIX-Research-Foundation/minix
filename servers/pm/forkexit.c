@@ -273,7 +273,9 @@ int dump_core;			/* flag indicating whether to dump core */
    * This order is important so that FS can tell drivers to cancel requests
    * such as copying to/ from the exiting process, before it is gone.
    */
-  sys_stop(proc_nr_e);		/* stop the process */
+  if ((r = sys_stop(proc_nr_e)) != OK)		/* stop the process */
+  	panic(__FILE__, "sys_stop failed", r);
+
   if((r=vm_willexit(proc_nr_e)) != OK) {
 	panic(__FILE__, "exit_proc: vm_willexit failed", r);
   }

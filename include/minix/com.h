@@ -639,8 +639,10 @@
 /* Field names for SYS_RUNCTL. */
 #define RC_ENDPT	m1_i1	/* which process to stop or resume */
 #define RC_ACTION	m1_i2	/* set or clear stop flag */
-#  define RC_STOP           0	/* stop the process, unless delaying */
+#  define RC_STOP           0	/* stop the process */
 #  define RC_RESUME         1	/* clear the stop flag */
+#define RC_FLAGS	m1_i3	/* request flags */
+#  define RC_DELAY          1	/* delay stop if process is sending */
 
 /*===========================================================================*
  *                Messages for the Reincarnation Server 		     *

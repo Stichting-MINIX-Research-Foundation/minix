@@ -41,9 +41,10 @@ _PROTOTYPE( int sys_exit, (endpoint_t proc_ep));
 _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p));
 
 /* Shorthands for sys_runctl() system call. */
-#define sys_stop(proc_ep) sys_runctl(proc_ep, RC_STOP)
-#define sys_resume(proc_ep) sys_runctl(proc_ep, RC_RESUME)
-_PROTOTYPE( int sys_runctl, (endpoint_t proc_ep, int action));
+#define sys_stop(proc_ep) sys_runctl(proc_ep, RC_STOP, 0)
+#define sys_delay_stop(proc_ep) sys_runctl(proc_ep, RC_STOP, RC_DELAY)
+#define sys_resume(proc_ep) sys_runctl(proc_ep, RC_RESUME, 0)
+_PROTOTYPE( int sys_runctl, (endpoint_t proc_ep, int action, int flags));
 
 _PROTOTYPE( int sys_privctl, (endpoint_t proc_ep, int req, void *p));
 _PROTOTYPE( int sys_setgrant, (cp_grant_t *grants, int ngrants));

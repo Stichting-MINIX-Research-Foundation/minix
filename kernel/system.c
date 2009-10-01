@@ -374,13 +374,13 @@ PUBLIC void sig_delay_done(rp)
 struct proc *rp;
 {
 /* A process is now known not to send any direct messages.
- * Tell PM by sending a signal to the process.
+ * Tell PM that the stop delay has ended, by sending a signal to the process.
  * Used for actual signal delivery.
  */
 
   rp->p_misc_flags &= ~MF_SIG_DELAY;
 
-  cause_sig(proc_nr(rp), SIGKREADY);
+  cause_sig(proc_nr(rp), SIGNDELAY);
 }
 
 #if _MINIX_CHIP == _CHIP_INTEL
