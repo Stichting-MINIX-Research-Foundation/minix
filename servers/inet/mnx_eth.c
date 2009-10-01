@@ -115,8 +115,10 @@ PUBLIC void osdep_eth_init()
 			 * started after INET. So we always end up here. And
 			 * the findproc can be removed.
 			 */
+#if 0
 			printf("eth%d: unable to find task %s: %d\n",
 				i, ecp->ec_task, r);
+#endif
 			tasknr= ANY;
 		}
 
@@ -242,7 +244,9 @@ acc_t *pack;
 	eth_issue_send(eth_port);
 }
 
+#if 0
 PRIVATE int notification_count;
+#endif
 
 PUBLIC void eth_rec(m)
 message *m;
@@ -256,9 +260,11 @@ message *m;
 	if (m_type == DL_NAME_REPLY)
 	{
 		drivername= m->m3_ca1;
+#if 0
 		printf("eth_rec: got name: %s\n", drivername);
 
 		notification_count= 0;
+#endif
 
 		/* Re-init ethernet interfaces */
 		for (i= 0, ecp= eth_conf, loc_port= eth_port_table;
@@ -490,12 +496,14 @@ message *m;
 	int i, r, tasknr;
 
 	tasknr= m->m_source;
+#if 0
 	if (notification_count < 100)
 	{
 		notification_count++;
 		printf("eth_check_drivers: got a notification #%d from %d\n",
 			notification_count, tasknr);
 	}
+#endif
 		
 	m->m_type= DL_GETNAME;
 	r= asynsend(tasknr, m);
@@ -901,9 +909,11 @@ int tasknr;
 	cp_grant_id_t gid;
 	message mess;
 
-	printf("eth_restart: restarting eth%d, task %d, port %d\n",
-		eth_port-eth_port_table, tasknr,
-		eth_port->etp_osdep.etp_port);
+	if (eth_port->etp_osdep.etp_state != OEPS_INIT) {
+		printf("eth_restart: restarting eth%d, task %d, port %d\n",
+			eth_port-eth_port_table, tasknr,
+			eth_port->etp_osdep.etp_port);
+	}
 
 	if (eth_port->etp_osdep.etp_task == tasknr)
 	{
@@ -915,11 +925,13 @@ int tasknr;
 
 	switch(eth_port->etp_osdep.etp_state)
 	{
+	case OEPS_INIT:
 	case OEPS_CONF_SENT:
 	case OEPS_RECV_SENT:
 	case OEPS_SEND_SENT:
 		/* We can safely ignore the pending CONF, RECV, and SEND
-		 * requests.
+		 * requests. If this is the first time that we see this
+		 * driver at all, that's fine too.
 		 */
 		eth_port->etp_osdep.etp_state= OEPS_IDLE;
 		break;
