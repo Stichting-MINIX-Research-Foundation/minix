@@ -1072,7 +1072,7 @@ int get_system_type(int fd)
 	unsigned char bootsector[512];
 
 	errno= 0;
-	old_pos= lseek(fd, SEEK_SET, 0);
+	old_pos= lseek(fd, 0, SEEK_SET);
 	if (old_pos == -1 && errno != 0)
 	{
 		fprintf(stderr, "bootimage file is not seekable: %s\n",
@@ -1106,6 +1106,6 @@ int get_system_type(int fd)
 		exit(1);
 	}
 
-	lseek(fd, SEEK_SET, old_pos);
+	lseek(fd, old_pos, SEEK_SET);
 	return type;
 }
