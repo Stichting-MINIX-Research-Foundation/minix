@@ -1,3 +1,29 @@
+/* This file defines constants for use in message communication (mostly)
+ * between system processes.
+ *
+ * A number of protocol message request and response types are defined. For
+ * debugging purposes, each protocol is assigned its own unique number range.
+ * The following such message type ranges have been allocated:
+ *
+ *        1 -   0xFF	POSIX requests (see callnr.h)
+ *    0x200 -  0x2FF	Data link layer requests and responses
+ *    0x300 -  0x3FF	Bus controller requests and responses
+ *    0x400 -  0x4FF	Block and character device requests
+ *    0x500 -  0x5FF	Block and character device responses
+ *    0x600 -  0x6FF	Kernel calls to SYSTEM task
+ *    0x700 -  0x7FF	Reincarnation Server (RS) requests
+ *    0x800 -  0x8FF	Data Store (DS) requests
+ *    0x900 -  0x9FF	Requests from PM to VFS, and responses
+ *   (0xA00 -  0xAFF	old TTY and LOG requests, being phased out)
+ *    0xA00 -  0xAFF	Requests from VFS to file systems (see vfsif.h)
+ *    0xB00 -  0xBFF	Requests from VM to VFS
+ *    0xC00 -  0xCFF	Virtual Memory (VM) requests
+ *    0xD00 -  0xDFF	IPC server requests
+ *   0x1000 - 0x10FF	Notify messages
+ *
+ * Zero and negative values are widely used for OK and error responses.
+ */
+
 #ifndef _MINIX_COM_H
 #define _MINIX_COM_H 
 
@@ -215,8 +241,8 @@
 #define NW_CANCEL	CANCEL
 
 /* Base type for data link layer requests and responses. */
-#define DL_RQ_BASE	0x800		
-#define DL_RS_BASE	0x900		
+#define DL_RQ_BASE	0x200		
+#define DL_RS_BASE	0x280		
 
 /* Message types for data link layer requests. */
 #define DL_WRITE	(DL_RQ_BASE + 3)
@@ -472,8 +498,6 @@
 #define T_BOOTTIME	m4_l3	/* Boottime in seconds (also for SYS_STIME) */
 #define T_BOOT_TICKS	m4_l5	/* number of clock ticks since boot time */
 
-
-
 /* vm_map */
 #define VM_MAP_ENDPT		m4_l1
 #define VM_MAP_MAPUNMAP		m4_l2
@@ -697,31 +721,32 @@
  *                Messages used between PM and VFS			     *
  *===========================================================================*/
 
-#define PM_BASE	0xE00
+#define PM_RQ_BASE	0x900
+#define PM_RS_BASE	0x980
 
 /* Requests from PM to VFS */
-#define PM_SETUID	(PM_BASE + 1)	/* Tell FS about the new user IDs */
-#define PM_SETGID	(PM_BASE + 2)	/* Tell FS about the new group IDs */
-#define PM_SETSID	(PM_BASE + 3)	/* Tell FS about the session leader */
-#define PM_EXIT		(PM_BASE + 4)	/* Tell FS about the exiting process */
-#define PM_DUMPCORE	(PM_BASE + 5)	/* Ask FS to generate a core dump */
-#define PM_EXEC		(PM_BASE + 6)	/* Forward exec call to FS */
-#define PM_FORK		(PM_BASE + 7)	/* Tell FS about the new process */
-#define PM_FORK_NB	(PM_BASE + 8)	/* Tell FS about the fork_nb call */
-#define PM_UNPAUSE	(PM_BASE + 9)	/* interrupted process */
-#define PM_REBOOT	(PM_BASE + 10)	/* Tell FS that we about to reboot */
+#define PM_SETUID	(PM_RQ_BASE + 1)	/* Set new user ID */
+#define PM_SETGID	(PM_RQ_BASE + 2)	/* Set group ID */
+#define PM_SETSID	(PM_RQ_BASE + 3)	/* Set session leader */
+#define PM_EXIT		(PM_RQ_BASE + 4)	/* Process exits */
+#define PM_DUMPCORE	(PM_RQ_BASE + 5)	/* Process is to dump core */
+#define PM_EXEC		(PM_RQ_BASE + 6)	/* Forwarded exec call */
+#define PM_FORK		(PM_RQ_BASE + 7)	/* Newly forked process */
+#define PM_FORK_NB	(PM_RQ_BASE + 8)	/* Non-blocking fork */
+#define PM_UNPAUSE	(PM_RQ_BASE + 9)	/* Interrupt process call */
+#define PM_REBOOT	(PM_RQ_BASE + 10)	/* System reboot */
 
 /* Replies from VFS to PM */
-#define PM_SETUID_REPLY	(PM_BASE + 21)
-#define PM_SETGID_REPLY	(PM_BASE + 22)
-#define PM_SETSID_REPLY	(PM_BASE + 23)
-#define PM_EXIT_REPLY	(PM_BASE + 24)
-#define PM_CORE_REPLY	(PM_BASE + 25)
-#define PM_EXEC_REPLY	(PM_BASE + 26)
-#define PM_FORK_REPLY	(PM_BASE + 27)
-#define PM_FORK_NB_REPLY	(PM_BASE + 28)
-#define PM_UNPAUSE_REPLY	(PM_BASE + 29)
-#define PM_REBOOT_REPLY	(PM_BASE + 30)
+#define PM_SETUID_REPLY	(PM_RS_BASE + 21)
+#define PM_SETGID_REPLY	(PM_RS_BASE + 22)
+#define PM_SETSID_REPLY	(PM_RS_BASE + 23)
+#define PM_EXIT_REPLY	(PM_RS_BASE + 24)
+#define PM_CORE_REPLY	(PM_RS_BASE + 25)
+#define PM_EXEC_REPLY	(PM_RS_BASE + 26)
+#define PM_FORK_REPLY	(PM_RS_BASE + 27)
+#define PM_FORK_NB_REPLY	(PM_RS_BASE + 28)
+#define PM_UNPAUSE_REPLY	(PM_RS_BASE + 29)
+#define PM_REBOOT_REPLY	(PM_RS_BASE + 30)
 
 /* Standard parameters for all requests and replies, except PM_REBOOT */
 #  define PM_PROC		m1_i1	/* process */
@@ -766,9 +791,17 @@
 #define EXC_RS_PROC	m1_i1		/* process that needs to be restarted */
 #define EXC_RS_RESULT	m1_i2		/* result of the exec */
 
+/*===========================================================================*
+ *                Messages used from VFS to file servers		     *
+ *===========================================================================*/
+
 #define VFS_BASE	0xA00		/* Requests sent by VFS to filesystem
 					 * implementations. See <minix/vfsif.h>
 					 */
+
+/*===========================================================================*
+ *                Messages used from VM to VFS				     *
+ *===========================================================================*/
 
 /* Requests sent by VM to VFS, done on behalf of a user process. */
 #define VM_VFS_BASE	0xB00		
