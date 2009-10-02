@@ -18,8 +18,8 @@ int main(int argc, char *argv[])
 {
   struct passwd *pwd;
   struct group *grp;
-  uid_t ruid, euid;
-  gid_t rgid, egid;
+  uid_t ruid, euid, uid;
+  gid_t rgid, egid, gid;
 #if __minix_vmd
   uid_t suid;
   gid_t sgid;
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 #endif
   int g;
   int isug;
-  int c, uopt = 0;
+  int c, uopt = 0, gopt = 0, nopt = 0, ropt = 0;
 
 #if __minix_vmd
   get6id(&ruid, &euid, &suid, &rgid, &egid, &sgid);
@@ -52,10 +52,19 @@ int main(int argc, char *argv[])
   ngroups = getgroups(NGROUPS_MAX, groups);
 #endif
 
-  while((c = getopt(argc, argv, "u")) != EOF) {
+  while((c = getopt(argc, argv, "ugnr")) != EOF) {
 	switch(c) {
 		case 'u':
 			uopt = 1;
+			break;
+		case 'g':
+			gopt = 1;
+			break;
+		case 'n':
+			nopt = 1;
+			break;
+		case 'r':
+			ropt = 1;
 			break;
 		default:
 			fprintf(stderr, "%s: unrecognized option\n", argv[0]);
@@ -63,8 +72,30 @@ int main(int argc, char *argv[])
 	}
   }
 
+  if(uopt && gopt) {
+	fprintf(stderr, "%s: cannot combine -u and -g\n", argv[0]);
+	return 1;
+  }
+
+  if((nopt || ropt) && !uopt && !gopt) {
+	fprintf(stderr, "%s: cannot use -n or -r without -u or -g\n", argv[0]);
+	return 1;
+  }
+
   if(uopt) {
-	printf("%d\n", euid);
+	uid = ropt ? ruid : euid;
+	if (!nopt || (pwd = getpwuid(uid)) == NULL)
+		printf("%u\n", uid);
+	else
+		printf("%s\n", pwd->pw_name);
+	return 0;
+  }
+  if(gopt) {	
+	gid = ropt ? rgid : egid;
+	if (!nopt || (grp = getgrgid(gid)) == NULL)
+		printf("%u\n", gid);
+	else
+		printf("%s\n", grp->gr_name);
 	return 0;
   }
 

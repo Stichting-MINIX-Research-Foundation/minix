@@ -3,6 +3,7 @@
 id \- print the uid and gid
 .SH SYNOPSIS
 \fBid\fR
+.RB [ \-ugnr ]
 .br
 .de FL
 .TP
@@ -22,7 +23,11 @@ id \- print the uid and gid
 If the effective uid and gid are different from the real ones, all of them
 are printed.
 .PP
-Under Minix-vmd the supplementary group IDs are also printed.
+If the \fB\-u\fP or \fB\-g\fP option is specified, then \fBid\fP will print
+the effective uid or guid number, respectively, on a single line. Combined
+with either of those options, the \fB\-n\fP option prints the name instead of
+the number, and the \fB\-r\fP option prints the real instead of the effective
+uid or gid.
 .SH "SEE ALSO"
 .BR getuid (2),
 .BR getgid (2),
