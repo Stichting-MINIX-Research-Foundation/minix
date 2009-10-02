@@ -12,7 +12,7 @@ h = $i/minix
 CC =	exec cc
 CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE) -DNR_BUFS=$(NR_BUFS)
 LDFLAGS = -i
-LIBS = -lsysutil  -lsys -ltimers
+LIBS = -lsys -ltimers
 
 OBJ =	main.o table.o mount.o super.o inode.o device.o \
 	utility.o misc.o path.o read.o stadir.o cache.o \
