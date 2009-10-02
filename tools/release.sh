@@ -245,7 +245,7 @@ then	echo " * Transfering $PACKAGEDIR to $RELEASEPACKAGE"
         do	if [ -f $PACKAGEDIR/$p.tar.bz2 ]
                then
 		  cp $PACKAGEDIR/$p.tar.bz2 $RELEASEPACKAGE/
-		  grep $p '^$PACKAGEDIR/List\|' >>$RELEASEPACKAGE/List || echo "$p not found in List"
+		  grep "^$p|" $PACKAGEDIR/List >>$RELEASEPACKAGE/List || echo "$p not found in List"
                else
                   echo "Can't copy $PACKAGEDIR/$p.tar.bz2. Missing."
                fi
