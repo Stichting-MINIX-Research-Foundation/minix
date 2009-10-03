@@ -20,6 +20,11 @@
 
 FORWARD _PROTOTYPE( void ser_debug, (int c));
 
+PUBLIC void arch_monitor(void)
+{
+	level0(monitor);
+}
+
 PUBLIC void arch_shutdown(int how)
 {
 	/* Mask all interrupts, including the clock. */
@@ -68,7 +73,7 @@ PUBLIC void arch_shutdown(int how)
 
 			arch_set_params(mybuffer, strlen(mybuffer)+1);
 		}
-		level0(monitor);
+		arch_monitor();
 	} else {
 		/* Reset the system by forcing a processor shutdown. First stop
 		 * the BIOS memory test by setting a soft reset flag.

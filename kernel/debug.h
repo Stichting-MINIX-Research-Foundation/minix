@@ -45,6 +45,9 @@
 	static int varname = 0;	\
 	int mustunlock = 0; \
 	if(!intr_disabled()) { lock; mustunlock = 1; } \
+	if(magictest != MAGICTEST) {	\
+		minix_panic(#varname " magictest failed", __LINE__); \
+	}	\
 	if(varname) {	\
 		minix_panic(#varname " recursive enter", __LINE__); \
 	} \

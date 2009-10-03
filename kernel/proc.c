@@ -1327,6 +1327,7 @@ PRIVATE void pick_proc()
 		bill_ptr = rp;		/* bill for system time */
 	NOREC_RETURN(pick, );
   }
+  minix_panic("no runnable processes", NO_NUM);
 }
 
 /*===========================================================================*

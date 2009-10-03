@@ -149,6 +149,7 @@ _PROTOTYPE( void idle_task, (void)                                     );
 _PROTOTYPE( void arch_init, (void)                                     );
 _PROTOTYPE( void ser_putc, (char)						);
 _PROTOTYPE( void arch_shutdown, (int)					);
+_PROTOTYPE( void arch_monitor, (void)					);
 _PROTOTYPE( void arch_get_aout_headers, (int i, struct exec *h)		);
 _PROTOTYPE( void restart, (void)                                        );
 _PROTOTYPE( void read_tsc, (unsigned long *high, unsigned long *low)    );

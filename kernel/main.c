@@ -40,6 +40,9 @@ PUBLIC void main()
 
    /* Architecture-dependent initialization. */
    arch_init();
+
+   /* Global value to test segment sanity. */
+   magictest = MAGICTEST;
  
   /* Clear the process table. Anounce each slot as empty and set up mappings 
    * for proc_addr() and proc_nr() macros. Do the same for the table with 
