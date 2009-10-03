@@ -70,6 +70,10 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 			pr->p_endpoint, pr->p_name, pr->p_reg.pc,
 			pagefaultcr2, trap_errno, k_reenter);
 		proc_stacktrace(pr);
+		if(pr->p_endpoint != SYSTEM) {
+			proc_stacktrace(proc_addr(SYSTEM));
+		}
+		kprintf("pc of pagefault: 0x%lx\n", test_eip);
   		minix_panic("page fault in system process", pr->p_endpoint);
 
 		return;
