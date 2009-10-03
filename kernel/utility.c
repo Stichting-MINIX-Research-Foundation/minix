@@ -48,6 +48,12 @@ if (minix_panicing++) {
 	kprintf("\n");
   }
 
+  printseg("cs: ", 1, NULL, read_cs());
+  printseg("ds: ", 0, NULL, read_ds());
+  if(read_ds() != read_ss()) {
+	  printseg("ss: ", 0, NULL, read_ss());
+  }
+
   kprintf("kernel: ");
   util_stacktrace();
 

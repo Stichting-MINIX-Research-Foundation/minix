@@ -41,6 +41,9 @@
 .define	_thecr3
 .define	_write_cr4
 .define	_catch_pagefaults
+.define	_read_ds
+.define	_read_cs
+.define	_read_ss
 
 ! The routines only guarantee to preserve the registers the C compiler
 ! expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and
@@ -573,6 +576,20 @@ _write_cr4:
 	pop	ebp
 	ret
 
+_read_ds:
+	mov	eax, 0
+	mov	ax, ds
+	ret
+
+_read_cs:
+	mov	eax, 0
+	mov	ax, cs
+	ret
+
+_read_ss:
+	mov	eax, 0
+	mov	ax, ss
+	ret
 
 !*===========================================================================*
 !*				getcr3val				*

@@ -41,24 +41,38 @@
 #define TRACE(code, statement)
 #endif
 
+#define ENTERED		0xBA5E1514
+#define NOTENTERED	0x1415BEE1
+
 #define NOREC_ENTER(varname) \
-	static int varname = 0;	\
+	static int varname = NOTENTERED;	\
 	int mustunlock = 0; \
 	if(!intr_disabled()) { lock; mustunlock = 1; } \
+	if(varname != ENTERED && varname != NOTENTERED) { \
+		printf("magictest: 0x%lx local: 0x%lx\n", magictest, varname);\
+		minix_panic(#varname " bogus value on enter", varname); \
+	}	\
 	if(magictest != MAGICTEST) {	\
+		printf("magictest: 0x%lx local: 0x%lx\n", magictest, varname);\
 		minix_panic(#varname " magictest failed", __LINE__); \
 	}	\
-	if(varname) {	\
+	if(varname == ENTERED) {	\
 		minix_panic(#varname " recursive enter", __LINE__); \
 	} \
-	varname = 1;
+	varname = ENTERED;
 
 #define NOREC_RETURN(varname, v) do {	\
-	if(!varname)		\
-		minix_panic(#varname " flag off", __LINE__); \
 	if(!intr_disabled())	\
 		minix_panic(#varname " interrupts on", __LINE__); \
-	varname = 0;	\
+	if(magictest != MAGICTEST) {	\
+		printf("magictest: 0x%lx local: 0x%lx\n", magictest, varname);\
+		minix_panic(#varname " magictest failed", __LINE__); \
+	}	\
+	if(varname != ENTERED && varname != NOTENTERED) { \
+		printf("magictest: 0x%lx local: 0x%lx\n", magictest, varname);\
+		minix_panic(#varname " bogus value on return", varname); \
+	}	\
+	varname = NOTENTERED;	\
 	if(mustunlock)	{ unlock;	} \
 	return v;	\
 	} while(0)
