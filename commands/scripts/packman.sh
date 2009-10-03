@@ -20,6 +20,20 @@ if [ ! "$PAGER" ]
 then	PAGER=more
 fi
 
+if [ "$1" = -y ]
+then	YESMODE=1
+	PAGER=cat
+fi
+
+myread()
+{
+	if [ "$YESMODE" ]
+	then	echo "all"
+	else	read ans
+		echo $ans
+	fi
+}
+
 # can we execute bunzip2?
 if bunzip2 --help 2>&1 | grep usage >/dev/null
 then    BUNZIP2=bunzip2 
@@ -72,7 +86,7 @@ rm -f $TMPDIR/.*	# Remove any remaining .postinstall script or .list*
 netpackages=""
 if ( : </dev/tcp ) 2>/dev/null
 then	echo -n "Update package list from network? (Y/n) "
-	read y
+	y=`myread`
 	if [ "$y" != n -a "$y" != N ]
 	then	echo "Fetching package list from $LISTURL."
 		urlget $LISTURL >$TMPF && mv $TMPF $LISTFILE || echo "Update not successful."
@@ -93,7 +107,7 @@ fi
 # Is there more than one package type?
 if [ -n "$netpackages" -a -n "$cdpackages"  ]
 then	echo -n "Would you like to install from (C)D or (N)etwork? [C] "
-	read whichsrc
+	whichsrc=`myread`
 	if [ "$whichsrc" = N -o "$whichsrc" = n ]
 	then	unset cdpackages
 	else	unset netpackages
@@ -112,7 +126,7 @@ do	cd $TMPDIR
 	echo "Showing you a list of packages using $PAGER. Press q when"
 	echo "you want to leave the list."
 	echo -n "Press RETURN to continue.."
-	read xyzzy
+	xyzzy=`myread`
 	echo "Package list:"
 	(	echo "No.|Package|Description"
 		(
@@ -128,7 +142,7 @@ do	cd $TMPDIR
 	awk -F'|' <$TMPF '{ printf "%3s %-15s %s\n", $1, $2, $3 }' | $PAGER
 	echo "Format examples: '3', '3,6', '3-9', '3-9,11-15', 'all'"
 	echo -n "Package(s) to install (RETURN or q to exit)? "
-	read packnolist
+	packnolist=`myread`
 	if [ "$packnolist" = "" -o "$packnolist" = "q" ]
 	then	exit 0
 	fi
@@ -138,7 +152,7 @@ do	cd $TMPDIR
 	IFS=','
 	set $packnolist
 	echo -n "Get source(s) too? (y/N) "
-	read getsources
+	getsources=`myread`
    for packrange in $packnolist
    do
 	# Get a-b range.
@@ -168,7 +182,7 @@ do	cd $TMPDIR
 
 	echo ""
 
-	if [ -f $file ]
+	if [ -f $file -a ! "$YESMODE" ]
 	then	echo "Skipping $file - it's already in $TMPDIR."
 		echo "Remove that file if you want to re-retrieve and install this package."
 	else
