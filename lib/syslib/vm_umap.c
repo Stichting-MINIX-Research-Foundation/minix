@@ -12,10 +12,10 @@ PUBLIC int vm_umap(int seg, vir_bytes offset, vir_bytes len, phys_bytes *addr)
     int result;
 
     m.VMU_SEG = seg;
-    m.VMU_OFFSET = offset;
-    m.VMU_LENGTH = len;
+    m.VMU_OFFSET = (char *) offset;
+    m.VMU_LENGTH = (char *) len;
     result = _taskcall(VM_PROC_NR, VM_UMAP, &m);
-    *addr = m.VMU_RETADDR;
+    *addr = (phys_bytes) m.VMU_RETADDR;
 
     return result;
 }
