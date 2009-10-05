@@ -1,5 +1,7 @@
 #define __USE_MISC
 
+#include <minix/vm.h>
+
 #include "inc.h"
 
 struct waiting {
