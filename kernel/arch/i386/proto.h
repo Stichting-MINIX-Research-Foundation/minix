@@ -84,6 +84,7 @@ _PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes)	);
 
 /* protect.c */
 _PROTOTYPE( void prot_init, (void)                     			);
+_PROTOTYPE( void idt_init, (void)                     			);
 _PROTOTYPE( void init_codeseg, (struct segdesc_s *segdp, phys_bytes base,
                 vir_bytes size, int privilege)                          );
 _PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
@@ -91,6 +92,9 @@ _PROTOTYPE( void init_dataseg, (struct segdesc_s *segdp, phys_bytes base,
 _PROTOTYPE( void enable_iop, (struct proc *pp)                          );
 _PROTOTYPE( int prot_set_kern_seg_limit, (vir_bytes limit)             );
 _PROTOTYPE( void printseg, (char *banner, int iscs, struct proc *pr, u32_t selector)             );
+_PROTOTYPE( u32_t, read_cs(void));
+_PROTOTYPE( u32_t, read_ds(void));
+_PROTOTYPE( u32_t, read_ss(void));
 
 /* prototype of an interrupt vector table entry */
 struct gate_table_s {

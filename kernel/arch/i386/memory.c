@@ -37,6 +37,7 @@ PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES], inusepde = NOPDE;
 
 FORWARD _PROTOTYPE( u32_t phys_get32, (vir_bytes v)			);
 FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
+FORWARD _PROTOTYPE( void set_cr3, (void)			);
 
 	
 /* *** Internal VM Functions *** */

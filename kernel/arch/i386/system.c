@@ -30,6 +30,17 @@ PUBLIC void arch_shutdown(int how)
 	/* Mask all interrupts, including the clock. */
 	outb( INT_CTLMASK, ~0);
 
+	if(minix_panicing) {
+		/* We're panicing? Then retrieve and decode currently
+		 * loaded segment selectors.
+		 */
+		printseg("cs: ", 1, proc_ptr, read_cs());
+		printseg("ds: ", 0, proc_ptr, read_ds());
+		if(read_ds() != read_ss()) {
+			printseg("ss: ", 0, NULL, read_ss());
+		}
+	}
+
 	if(how != RBT_RESET) {
 		/* return to boot monitor */
 

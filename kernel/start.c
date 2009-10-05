@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <archconst.h>
+#include <proto.h>
 
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 /*===========================================================================*

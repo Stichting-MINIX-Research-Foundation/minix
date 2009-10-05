@@ -13,7 +13,7 @@
 typedef unsigned int vir_clicks; 	/*  virtual addr/length in clicks */
 typedef unsigned long phys_bytes;	/* physical addr/length in bytes */
 typedef unsigned int phys_clicks;	/* physical addr/length in clicks */
-typedef u32_t endpoint_t;			/* process identifier */
+typedef int endpoint_t;			/* process identifier */
 
 #if (_MINIX_CHIP == _CHIP_INTEL)
 typedef long unsigned int vir_bytes;	/* virtual addresses/lengths in bytes */

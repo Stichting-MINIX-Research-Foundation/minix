@@ -13,7 +13,7 @@ a = arch/$(ARCH)
 CC =	exec cc
 CPP =	$l/cpp
 LD =	$(CC) -.o
-CPPFLAGS=-I$i -I$a/include
+CPPFLAGS=-I$i -I$a/include -I$a
 CFLAGS=$(CPROFILE) $(CPPFLAGS) $(EXTRA_OPTS)
 LDFLAGS=-i 
 
