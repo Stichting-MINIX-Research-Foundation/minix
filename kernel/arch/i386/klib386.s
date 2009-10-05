@@ -489,11 +489,11 @@ idt_zero:	.data4	0, 0
 _idle_task:
 ! This task is called when the system has nothing else to do.  The HLT
 ! instruction puts the processor in a state where it draws minimum power.
-	push	halt
+	push	_halt
 	call	_level0		! level0(halt)
 	pop	eax
 	jmp	_idle_task
-halt:
+_halt:
 	sti
 	hlt
 	cli
@@ -508,8 +508,13 @@ halt:
 !
 _level0:
 	mov	eax, 4(esp)
-	mov	(_level0_func), eax
+	cmpb	(_k_reenter), -1
+	jne	direct
 	int	LEVEL0_VECTOR
+	ret
+
+direct:
+	call	eax
 	ret
 
 

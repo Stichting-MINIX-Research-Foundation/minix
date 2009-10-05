@@ -76,7 +76,6 @@ _PROTOTYPE( void phys_insb, (U16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_insw, (U16_t port, phys_bytes buf, size_t count)  );
 _PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count) );
 _PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count) );
-_PROTOTYPE( void i386_invlpg_level0, (void) );
 _PROTOTYPE( int _memcpy_k, (void *dst, void *src, size_t n) );
 _PROTOTYPE( int _memcpy_k_fault, (void) );
 _PROTOTYPE( u32_t read_cr3, (void) );

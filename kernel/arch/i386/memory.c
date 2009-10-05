@@ -36,7 +36,6 @@ PRIVATE int nfreepdes = 0, freepdes[WANT_FREEPDES], inusepde = NOPDE;
 #define HASPT(procptr) ((procptr)->p_seg.p_cr3 != 0)
 
 FORWARD _PROTOTYPE( u32_t phys_get32, (vir_bytes v)			);
-FORWARD _PROTOTYPE( void set_cr3, (void)				);
 FORWARD _PROTOTYPE( void vm_enable_paging, (void)			);
 
 	
@@ -241,24 +240,21 @@ phys_bytes addr;
 
 PRIVATE u32_t vm_cr3;	/* temp arg to level0() func */
 
+PRIVATE void set_cr3()
+{
+	write_cr3(vm_cr3);
+}
+
 PUBLIC void vm_set_cr3(struct proc *newptproc)
 {
 	int u = 0;
 	if(!intr_disabled()) { lock; u = 1; }
 	vm_cr3= newptproc->p_seg.p_cr3;
 	if(vm_cr3) {
-		vmassert(intr_disabled());
 		level0(set_cr3);
-		vmassert(intr_disabled());
 		ptproc = newptproc;
-		vmassert(intr_disabled());
 	}
 	if(u) { unlock; }
-}
-
-PRIVATE void set_cr3()
-{
-	write_cr3(vm_cr3);
 }
 
 char *cr0_str(u32_t e)

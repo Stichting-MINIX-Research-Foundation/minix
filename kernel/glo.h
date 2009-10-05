@@ -78,6 +78,4 @@ extern struct boot_image image[]; 	/* system image processes */
 extern char *t_stack[];			/* task stack space */
 extern struct segdesc_s gdt[];		/* global descriptor table */
 
-EXTERN _PROTOTYPE( void (*level0_func), (void) );
-
 #endif /* GLO_H */

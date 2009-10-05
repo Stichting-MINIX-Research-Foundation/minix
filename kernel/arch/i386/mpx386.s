@@ -585,8 +585,12 @@ _reload_cr3:
 !*				level0_call				     *
 !*===========================================================================*
 _level0_call:
+! which level0 function to call was passed here by putting it in eax, so
+! we get that from the saved state.
 	call	save
-	jmp	(_level0_func)
+	mov	eax, (_proc_ptr)
+	mov	eax, AXREG(eax)
+	jmp	eax
 
 !*===========================================================================*
 !*				data					     *
