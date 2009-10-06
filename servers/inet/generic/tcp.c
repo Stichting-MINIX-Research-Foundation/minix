@@ -1588,6 +1588,9 @@ tcp_hdr_t *tcp_hdr;
 		 * there are empty connections as well.
 		 */
 		listen_conn= new_conn_for_queue(listen_conn->tc_fd);
+
+		if (listen_conn)
+			return listen_conn;
 	}
 	
 	if (!best_conn && !listen_conn)
