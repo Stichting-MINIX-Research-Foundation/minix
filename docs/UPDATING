@@ -38,3 +38,6 @@
 	mkfs needs more memory to make an image; chmem it or do
 	# touch mkfs.c ; make /usr/bin/mkfs
 	in /usr/src/commands/simple.
+20091006 (r5422):
+	OSS requires an improved make to be compiled; run "make install"
+	in /usr/src/commands/make before running "make world".
