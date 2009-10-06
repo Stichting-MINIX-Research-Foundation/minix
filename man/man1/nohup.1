@@ -1,0 +1,19 @@
+.TH NOHUP 1
+.SH NAME
+nohup \- ignore hangup signal
+.SH SYNOPSIS
+\fBnohup\fP \fIutility\fP [\fIargument\fP...]
+.SH DESCRIPTION
+The
+.B nohup
+utility runs \fIutility\fP while ignoring the SIGHUP signal. This 
+allows the process to continue running after the current terminal
+exits, for example when logging off a telnet session. 
+
+Unless output is explicitly redirected when invoking nohup, output is 
+appended to a file named nohup.out. This file is created in the current
+directory or, if this is not possible, in $HOME. If the standard error 
+stream is not explicitly redirected, it is sent to the standard output.
+.SH AUTHOR
+This manual page and the utility were written by Erik van der Kouwe 
+<vdkouwe@cs.vu.nl>.

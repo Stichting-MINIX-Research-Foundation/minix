@@ -133,6 +133,7 @@ ALL	= \
 	mt \
 	nm \
 	newroot \
+	nohup \
 	nonamed \
 	nice \
 	od \
@@ -591,6 +592,10 @@ nice:	nice.c
 	$(CCLD) -o $@ $<
 	@install -S 8kw $@
 
+nohup:	nohup.c
+	$(CCLD) -o $@ $<
+	@install -S 4kw $@
+
 nonamed:	nonamed.c
 	$(CCLD) -o $@ $<
 	@install -S 8kw $@
@@ -1022,6 +1027,7 @@ install:	\
 	/usr/bin/newroot \
 	/usr/bin/nm \
 	/usr/bin/nice \
+	/usr/bin/nohup \
 	/usr/bin/nonamed \
 	/usr/bin/od \
 	/usr/bin/passwd \
@@ -1441,6 +1447,9 @@ install:	\
 	install -cs -o bin $< $@
 
 /usr/bin/nice:	nice
+	install -cs -o bin $< $@
+
+/usr/bin/nohup:	nohup
 	install -cs -o bin $< $@
 
 /usr/bin/nonamed:	nonamed
