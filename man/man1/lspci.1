@@ -1,0 +1,15 @@
+.TH LSPCI 1
+.SH NAME
+lspci \- print table of PCI devices
+.SH SYNOPSIS
+\fBlspci\fP
+.SH DESCRIPTION
+The
+.B lspci 
+utility prints a list of devices detected on the PCI bus to the standard output. 
+Each row specifies the vendor ID, device ID and device name according to the 
+MINIX PCI table. The vendor ID and device ID are printed in hexadecimal. 
+Wherever the name is missing, MINIX does not recognize the PCI device.
+.SH AUTHOR
+This manual page and the utility were written by Erik van der Kouwe 
+<vdkouwe@cs.vu.nl>.

@@ -33,9 +33,6 @@ Created:	Jan 2000 by Philip Homburg <philip@cs.vu.nl>
 #include <string.h>
 #include <minix/sysutil.h>
 
-#define NR_PCIBUS       40
-#define NR_PCIDEV       50
-
 #define PBT_INTEL_HOST	 1
 #define PBT_PCIBRIDGE	 2
 #define PBT_CARDBUS	 3

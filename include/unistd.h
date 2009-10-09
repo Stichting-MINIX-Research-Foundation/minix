@@ -48,6 +48,7 @@
 #define SI_LOADINFO	   6	/* get copy of load average structure */
 #define SI_KPROC_TAB	   7	/* copy of kernel process table */
 #define SI_CALL_STATS	   8	/* system call statistics */
+#define SI_PCI_INFO	   9	/* get kernel info via PM */
 
 /* NULL must be defined in <unistd.h> according to POSIX Sec. 2.7.1. */
 #define NULL    ((void *)0)

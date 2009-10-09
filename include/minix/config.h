@@ -95,4 +95,8 @@
 #define SPROFILE          1    /* statistical profiling */
 #define CPROFILE          0    /* call profiling */
 
+/* PCI configuration parameters */
+#define NR_PCIBUS 40
+#define NR_PCIDEV 50
+
 #endif /* _CONFIG_H */

@@ -119,6 +119,7 @@ ALL	= \
 	lp \
 	lpd \
 	ls \
+	lspci \
 	mail \
 	man \
 	mesg \
@@ -531,6 +532,10 @@ lpd:	lpd.c
 ls:	ls.c
 	$(CCLD) -o $@ $<
 	@install -S 20kw $@
+
+lspci:	lspci.c
+	$(CCLD) -o $@ $<
+	@install -S 4kw $@
 
 mail:	mail.c
 	$(CCLD) -o $@ $<
@@ -1012,6 +1017,7 @@ install:	\
 	/usr/bin/lpd \
 	/usr/bin/ls \
 	/bin/ls \
+	/usr/bin/lspci \
 	/usr/bin/mail \
 	/usr/bin/man \
 	/usr/bin/mesg \
@@ -1402,6 +1408,9 @@ install:	\
 	install -cs -o bin $< $@
 
 /bin/ls:	ls
+	install -cs -o bin $< $@
+
+/usr/bin/lspci:	lspci
 	install -cs -o bin $< $@
 
 /usr/bin/mail:	mail
