@@ -73,16 +73,36 @@ EOF
     exit 1
 }
 
+card()
+{
+	card_number=$1
+	card_name=$2
+	card_avail=0
+	shift 2
+	while [ $# -gt 0 ]
+	do 
+		lspci | grep > /dev/null "^$1" && card_avail=1
+		shift
+	done
+	if [ $card_avail -gt 0 ]
+	then 
+		echo $card_number.\ \*\ $card_name
+		eth_default=$card_number
+	else
+		echo $card_number.\ \ \ $card_name
+	fi
+}
+
 cards()
 {
-    echo "0. No Ethernet card (no networking)"
-    echo "1. Intel Pro/100"
-    echo "2. 3Com 501 or 3Com 509 based card"
-    echo "3. Realtek 8139 based card (also emulated by KVM)"
-    echo "4. Realtek 8029 based card (also emulated by Qemu)"
-    echo "5. NE2000, 3com 503 or WD based card (also emulated by Bochs)"
-    echo "6. AMD LANCE (also emulated by VMWare and VirtualBox)"
-    echo "7. Different Ethernet card (no networking)"
+    card 0 "No Ethernet card (no networking)"
+    card 1 "Intel Pro/100" "8086:103D" "8086:1064" "8086:1229" "8086:2449"
+    card 2 "3Com 501 or 3Com 509 based card"
+    card 3 "Realtek 8139 based card (also emulated by KVM)" "10EC:8139"
+    card 4 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
+    card 5 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
+    card 6 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
+    card 7 "Different Ethernet card (no networking)"
 }
 
 warn()
@@ -92,15 +112,18 @@ warn()
 
 do_step1()
 {
+    eth_default=0
+    
     # Ask user about networking
-    echo "MINIX 3 currently supports the following Ethernet cards. Please choose: "
+    echo "MINIX 3 currently supports the following Ethernet cards. PCI cards detected"
+    echo "by MINIX are marked with *. Please choose: "
     echo ""
     cards
     echo ""
 
     while [ "$step1" != ok ]; do
-      echo -n "Ethernet card? [0] "; read eth
-      test -z $eth && eth=0
+      echo -n "Ethernet card? [$eth_default] "; read eth
+      test -z $eth && eth=$eth_default
 
       drv_params $eth
       test -n "$driver" && step1="ok"
