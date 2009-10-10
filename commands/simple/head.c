@@ -16,15 +16,25 @@ int argc;
 char *argv[];
 {
   FILE *f;
-  int n, k, nfiles;
+  int legacy, n, k, nfiles;
   char *ptr;
 
-  /* Check for flag.  Only flag is -n, to say how many lines to print. */
+  /* Check for flags.  One can only specify how many lines to print. */
   k = 1;
-  ptr = argv[1];
   n = DEFAULT;
-  if (argc > 1 && *ptr++ == '-') {
-	k++;
+  legacy = 0;
+  for (k = 1; k < argc && argv[k][0] == '-'; k++) {
+	ptr = &argv[k][1];
+	if (ptr[0] == 'n' && ptr[1] == 0) {
+		k++;
+		if (k >= argc) usage();
+		ptr = argv[k];
+	}
+	else if (ptr[0] == '-' && ptr[1] == 0) {
+		k++;
+		break;	
+	}
+	else if (++legacy > 1) usage();
 	n = atoi(ptr);
 	if (n <= 0) usage();
   }
@@ -73,6 +83,6 @@ FILE *f;
 
 void usage()
 {
-  fprintf(stderr, "Usage: head [-n] [file ...]\n");
+  fprintf(stderr, "Usage: head [-lines | -n lines] [file ...]\n");
   exit(1);
 }

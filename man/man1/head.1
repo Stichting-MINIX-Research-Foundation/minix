@@ -2,7 +2,7 @@
 .SH NAME
 head \- print the first few lines of a file
 .SH SYNOPSIS
-\fBhead\fR [\fB\-\fIn\fR]\fR [\fIfile\fR] ...\fR
+\fBhead\fR [\fB\-\fIn\fR | \fB\-n\fR \fIn\fR]\fR [\fIfile\fR] ...\fR
 .br
 .de FL
 .TP
@@ -15,9 +15,10 @@ head \- print the first few lines of a file
 # \\$2
 ..
 .SH OPTIONS
-.FL "\-\fIn\fR" "How many lines to print"
+.FL "\-n \fIn\fR" "How many lines to print"
+.FL "\-\fIn\fR" "How many lines to print (backwards-compatible)"
 .SH EXAMPLES
-.EX "head \-6" "Print first 6 lines of \fIstdin\fR"
+.EX "head \-n 6" "Print first 6 lines of \fIstdin\fR"
 .EX "head \-1 file1 file2" "Print first line of two files"
 .SH DESCRIPTION
 .PP
