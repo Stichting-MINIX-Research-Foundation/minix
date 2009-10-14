@@ -8,7 +8,7 @@ Interface to the reincarnation server
 
 #define RSS_NR_IRQ		16
 #define RSS_NR_IO		16
-#define RSS_NR_PCI_ID		16
+#define RSS_NR_PCI_ID		20
 #define RSS_NR_PCI_CLASS	 4
 #define RSS_NR_SYSTEM		 2
 

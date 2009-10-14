@@ -98,7 +98,11 @@ cards()
     card 0 "No Ethernet card (no networking)"
     card 1 "Intel Pro/100" "8086:103D" "8086:1064" "8086:1229" "8086:2449"
     card 2 "3Com 501 or 3Com 509 based card"
-    card 3 "Realtek 8139 based card (also emulated by KVM)" "10EC:8139"
+    card 3 "Realtek 8139 based card (also emulated by KVM)"            \
+           "10EC:8139" "02AC:1012" "1065:8139" "1113:1211" "1186:1300" \
+           "1186:1340" "11DB:1234" "1259:A117" "1259:A11E" "126C:1211" \
+           "13D1:AB06" "1432:9130" "14EA:AB06" "14EA:AB07" "1500:1360" \
+           "1743:8139" "4033:1360"
     card 4 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
     card 5 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
     card 6 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"

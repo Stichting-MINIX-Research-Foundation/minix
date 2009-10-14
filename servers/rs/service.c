@@ -23,6 +23,7 @@
 #include <minix/syslib.h>
 #include <minix/sysinfo.h>
 #include <minix/bitmap.h>
+#include <minix/paths.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <configfile.h>
@@ -46,7 +47,7 @@ PRIVATE char *known_requests[] = {
 
 #define RUN_CMD		"run"
 #define RUN_SCRIPT	"/etc/rs.single"	/* Default script for 'run' */
-#define PATH_CONFIG	"/etc/drivers.conf"	/* Default config file */
+#define PATH_CONFIG	_PATH_DRIVERS_CONF	/* Default config file */
 
 /* Define names for arguments provided to this utility. The first few 
  * arguments are required and have a known index. Thereafter, some optional
