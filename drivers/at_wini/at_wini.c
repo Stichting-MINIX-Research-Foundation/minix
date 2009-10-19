@@ -275,8 +275,8 @@ PRIVATE struct wini {		/* main drive struct, one entry per drive */
   unsigned base_cmd;		/* command base register */
   unsigned base_ctl;		/* control base register */
   unsigned base_dma;		/* dma base register */
+  int dma_intseen;
   unsigned irq;			/* interrupt request line */
-  unsigned irq_mask;		/* 1 << irq */
   unsigned irq_need_ack;	/* irq needs to be acknowledged */
   int irq_hook_id;		/* id of irq hook at the kernel */
   int lba48;			/* supports lba48 */
@@ -585,7 +585,6 @@ PRIVATE void init_drive(struct wini *w, int base_cmd, int base_ctl,
 	   printf("at_wini%d: drive %d: base_cmd 0x%x, base_ctl 0x%x, base_dma 0x%x\n",
 		w_instance, w-wini, w->base_cmd, w->base_ctl, w->base_dma);
 	w->irq = irq;
-	w->irq_mask = 1 << irq;
 	w->irq_need_ack = ack;
 	w->irq_hook_id = hook;
 	w->ldhpref = ldh_init(drive);
@@ -1299,6 +1298,32 @@ PRIVATE int do_transfer(struct wini *wn, unsigned int precomp,
 	return com_out(&cmd);
 }
 
+
+void stop_dma(struct wini *wn)
+{
+	int r;
+
+	/* Stop bus master operation */
+	r= sys_outb(wn->base_dma + DMA_COMMAND, 0);
+	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
+}
+
+void start_dma(struct wini *wn, int do_write)
+{
+	u32_t v;
+	int r;
+
+	/* Assume disk reads. Start DMA */
+	v= DMA_CMD_START;
+	if (!do_write)
+	{
+		/* Disk reads generate PCI write cycles. */
+		v |= DMA_CMD_WRITE;	
+	}
+	r= sys_outb(wn->base_dma + DMA_COMMAND, v);
+	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
+}
+
 /*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
@@ -1353,6 +1378,8 @@ int safe;			/* iov contains addresses (0) or grants? */
 	/* First check to see if a reinitialization is needed. */
 	if (!(wn->state & INITIALIZED) && w_specify() != OK) return(EIO);
 
+	stop_dma(wn);
+
 	if (do_dma)
 	{
 		setup_dma(&nbytes, proc_nr, iov, addr_offset, do_write,
@@ -1365,6 +1392,8 @@ int safe;			/* iov contains addresses (0) or grants? */
 	/* Tell the controller to transfer nbytes bytes. */
 	r = do_transfer(wn, wn->precomp, (nbytes >> SECTOR_SHIFT),
 		block, opcode, do_dma);
+
+	start_dma(wn, do_write);
 
 	if (opcode == DEV_SCATTER_S) {
 		/* The specs call for a 400 ns wait after issuing the command.
@@ -1381,6 +1410,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 		 * copy out.
 		 */
 
+		wn->dma_intseen = 0;
 		if ((r = at_intr_wait()) != OK) 
 		{
 			/* Don't retry if sector marked bad or too many
@@ -1394,10 +1424,18 @@ int safe;			/* iov contains addresses (0) or grants? */
 		}
 
 		/* Wait for DMA_ST_INT to get set */
-		w_waitfor_dma(DMA_ST_INT, DMA_ST_INT);
+		if(!wn->dma_intseen) {
+			if(w_waitfor_dma(DMA_ST_INT, DMA_ST_INT))
+				wn->dma_intseen = 1;
+		}
 
 		r= sys_inb(wn->base_dma + DMA_STATUS, &v);
 		if (r != 0) panic("at_wini", "w_transfer: sys_inb failed", r);
+#if 0
+  		if (sys_outb(wn->base_dma + DMA_STATUS, v) != OK) {
+			panic(w_name(), "couldn't ack irq on (out dma)\n", NO_NUM);
+  		}
+#endif
 
 #define BAD_DMA_CONTINUE(msg) {						\
 	printf("at_wini%d: bad DMA: %s. Disabling DMA for drive %d.\n",	\
@@ -1412,8 +1450,7 @@ int safe;			/* iov contains addresses (0) or grants? */
 #if 0
 		printf("dma_status: 0x%x\n", v);
 #endif
-		if (!(v & DMA_ST_INT))
-		{
+		if (!wn->dma_intseen) {
 			/* DMA did not complete successfully */
 			if (v & DMA_ST_BM_ACTIVE) {
 				BAD_DMA_CONTINUE("DMA did not complete");
@@ -1426,6 +1463,8 @@ int safe;			/* iov contains addresses (0) or grants? */
 		else if ((v & DMA_ST_BM_ACTIVE)) {
 			BAD_DMA_CONTINUE("DMA buffer too large");
 		}
+
+		stop_dma(wn);
 
 		dma_buf_offset= 0;
 		while (r == OK && nbytes > 0)
@@ -1870,10 +1909,6 @@ int safe;
 #endif
 	}
 
-	/* Stop bus master operation */
-	r= sys_outb(wn->base_dma + DMA_COMMAND, 0);
-	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
-
 	/* Verify that the bus master is not active */
 	r= sys_inb(wn->base_dma + DMA_STATUS, &v);
 	if (r != 0) panic("at_wini", "setup_dma: sys_inb failed", r);
@@ -1888,22 +1923,6 @@ int safe;
 	/* Clear interrupt and error flags */
 	r= sys_outb(wn->base_dma + DMA_STATUS, DMA_ST_INT | DMA_ST_ERROR);
 	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
-
-	/* Assume disk reads. Start DMA */
-	v= DMA_CMD_START;
-	if (!do_write)
-	{
-		/* Disk reads generate PCI write cycles. */
-		v |= DMA_CMD_WRITE;	
-	}
-	r= sys_outb(wn->base_dma + DMA_COMMAND, v);
-	if (r != 0) panic("at_wini", "setup_dma: sys_outb failed", r);
-
-#if 0
-	r= sys_inb(wn->base_dma + DMA_STATUS, &v);
-	if (r != 0) panic("at_wini", "setup_dma: sys_inb failed", r);
-	printf("dma status: 0x%x\n", v);
-#endif
 }
 
 
@@ -2575,9 +2594,9 @@ PRIVATE void ack_irqs(unsigned int irqs)
   unsigned int drive;
   unsigned long w_status;
 
-  for (drive = 0; drive < MAX_DRIVES && irqs; drive++) {
+  for (drive = 0; drive < MAX_DRIVES; drive++) {
   	if (!(wini[drive].state & IGNORING) && wini[drive].irq_need_ack &&
-		(wini[drive].irq_mask & irqs)) {
+		((1L << wini[drive].irq) & irqs)) {
 		if (sys_inb((wini[drive].base_cmd + REG_STATUS),
 			&w_status) != OK)
 		{
@@ -2585,9 +2604,16 @@ PRIVATE void ack_irqs(unsigned int irqs)
 				drive);
 		}
 		wini[drive].w_status= w_status;
+  		sys_inb(wini[drive].base_dma + DMA_STATUS, &w_status);
+  		if(w_status & DMA_ST_INT) {
+	  		sys_outb(wini[drive].base_dma + DMA_STATUS, DMA_ST_INT);
+	  		wini[drive].dma_intseen = 1;
+  		}
+  		if(w_status & DMA_ST_ERROR) {
+			printf("at_wini: DMA error\n");
+		}
 	 	if (sys_irqenable(&wini[drive].irq_hook_id) != OK)
 		  	printf("couldn't re-enable drive %d\n", drive);
-		irqs &= ~wini[drive].irq_mask;
 	}
   }
 }
