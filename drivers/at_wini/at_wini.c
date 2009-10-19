@@ -880,10 +880,6 @@ check_dma(struct wini *wn)
 	u32_t dma_base;
 	int id_dma, ultra_dma;
 	u16_t w;
-	int driveno, drive1;
-
-	driveno = wn - wini;
-	drive1 = driveno % 2;
 
 	wn->dma= 0;
 
