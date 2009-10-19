@@ -270,16 +270,22 @@ chmod -R u+w $RELEASEDIR/usr/lib
 if [ "$COPY" -ne 1 ]
 then
 	echo " * Doing new svn export"
-	REPO=$TRUNK/$SRC
+	TOOLSREPO="`svn info | grep '^URL: ' | awk '{ print $2 }'`"
+	REPO="`echo $TOOLSREPO | sed 's/.tools$//'`"
+	BRANCHNAME="`echo $REPO | awk -F/ '{ print $NF }'`"
 	REVISION="`svn info $USERNAME $SVNREV $REPO | grep '^Revision: ' | awk '{ print $2 }'`"
 	echo "Doing export of revision $REVISION from $REPO."
-	( cd $RELEASEDIR/usr && svn $USERNAME export -r$REVISION $REPO )
-	REVTAG=r$REVISION
+	( cd $RELEASEDIR/usr && svn -q $USERNAME export -r$REVISION $REPO $SRC )
+	if [ $BRANCHNAME = src ]
+	then	REVTAG=r$REVISION
+	else	REVTAG=branch-$BRANCHNAME-r$REVISION
+	fi
+	
 	echo "
 
 /* Added by release script  */
 #ifndef _SVN_REVISION
-#define _SVN_REVISION \"$REVISION\"
+#define _SVN_REVISION \"$REVTAG\"
 #endif" >>$RELEASEDIR/usr/src/include/minix/sys_config.h
 
 else
