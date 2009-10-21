@@ -12,7 +12,7 @@
 #define MAX_NR_ARGS	      4		/* maximum number of arguments */
 #define MAX_RESCUE_DIR_LEN   64		/* maximum rescue dir length */
 
-#define MAX_NR_PCI_ID	      4		/* maximum number of PCI device IDs */
+#define MAX_NR_PCI_ID	     32		/* maximum number of PCI device IDs */
 #define MAX_NR_PCI_CLASS      4		/* maximum number of PCI class IDs */
 #define MAX_NR_SYSTEM	      2		/* should match RSS_NR_SYSTEM */
 #define MAX_IPC_LIST	    256		/* Max size of list for IPC target

@@ -8,7 +8,7 @@ Interface to the reincarnation server
 
 #define RSS_NR_IRQ		16
 #define RSS_NR_IO		16
-#define RSS_NR_PCI_ID		20
+#define RSS_NR_PCI_ID		32
 #define RSS_NR_PCI_CLASS	 4
 #define RSS_NR_SYSTEM		 2
 
@@ -48,7 +48,7 @@ struct rs_start
 #define RF_REUSE	0x04	/* Try to reuse previously copied binary */
 
 #define RSP_LABEL_SIZE	16
-#define RSP_NR_DEVICE	16
+#define RSP_NR_DEVICE	32
 #define RSP_NR_CLASS	 4
 
 /* ACL information for access to PCI devices */
