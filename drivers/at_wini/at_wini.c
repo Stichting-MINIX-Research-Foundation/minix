@@ -2648,9 +2648,6 @@ PRIVATE void ack_irqs(unsigned int irqs)
 	  		sys_outb(wini[drive].base_dma + DMA_STATUS, DMA_ST_INT);
 	  		wini[drive].dma_intseen = 1;
   		}
-  		if(w_status & DMA_ST_ERROR) {
-			printf("at_wini: DMA error\n");
-		}
 	 	if (sys_irqenable(&wini[drive].irq_hook_id) != OK)
 		  	printf("couldn't re-enable drive %d\n", drive);
 	}
