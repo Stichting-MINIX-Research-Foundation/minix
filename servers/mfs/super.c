@@ -311,10 +311,12 @@ register struct super_block *sp; /* pointer to a superblock */
   /* Make a few basic checks to see if super block looks reasonable. */
   if (sp->s_imap_blocks < 1 || sp->s_zmap_blocks < 1
 				|| sp->s_ninodes < 1 || sp->s_zones < 1
+				|| sp->s_firstdatazone <= 4
+				|| sp->s_firstdatazone >= sp->s_zones
 				|| (unsigned) sp->s_log_zone_size > 4) {
   	printf("not enough imap or zone map blocks, \n");
-  	printf("or not enough inodes, or not enough zones, "
-  		"or zone size too large\n");
+  	printf("or not enough inodes, or not enough zones, \n"
+  		"or invalid first data zone, or zone size too large\n");
 	return(EINVAL);
   }
   sp->s_dev = dev;		/* restore device number */

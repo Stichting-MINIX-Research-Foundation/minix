@@ -37,6 +37,7 @@ int
 main(argc,argv) register char ** argv; {
 
 	register char ** av;
+	char *empty_envp[] = { (char *) 0 };
 
 	if (! isatty(1)) {
 		no_tty = 1;
@@ -58,7 +59,7 @@ main(argc,argv) register char ** argv; {
 	}
 	if (no_tty) {
 		*--av = "cat";
-		execve("/bin/cat", av, (char *) 0);
+		execve("/bin/cat", av, &empty_envp);
 	}
 	else	processfiles(argc-(av-argv), av);
 	(VOID) quit();

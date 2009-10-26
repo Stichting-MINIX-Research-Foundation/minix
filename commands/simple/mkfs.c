@@ -2,10 +2,12 @@
 
 /*	Authors: Andy Tanenbaum, Paul Ogilvie, Frans Meulenbroeks, Bruce Evans
  *
- * This program can make both version 1 and version 2 file systems, as follows:
- *	mkfs /dev/fd0 1200	# Version 2 (default)
+ * This program can make version 1, 2 and 3 file systems, as follows:
+ *	mkfs /dev/fd0 1200	# Version 3 (default)
  *	mkfs -1 /dev/fd0 360	# Version 1
  *
+ * Note that the version 1 and 2 file systems produced by this program are not
+ * compatible with the original version 1 and 2 file system layout.
  */
 
 #include <sys/types.h>
@@ -184,6 +186,8 @@ char *argv[];
 	    case 'B':	block_size = atoi(optarg);	break;
 	    default:	usage();
 	}
+
+  if (argc == optind) usage();
 
   if(fs_version == 3) {
   	if(!block_size) block_size = _MAX_BLOCK_SIZE; /* V3 default block size */
@@ -428,8 +432,7 @@ ino_t inodes;
   int inodeblks;
   int initblks;
   u32_t nb;
-
-  zone_t initzones, nrzones, v1sq, v2sq;
+  zone_t v1sq, v2sq;
   zone_t zo;
   struct super_block *sup;
   char *buf, *cp;
@@ -442,6 +445,7 @@ ino_t inodes;
   sup->s_ninodes = inodes;
   if (fs_version == 1) {
 	sup->s_nzones = zones;
+	if (sup->s_nzones != zones) pexit("too many zones");
   } else {
 	sup->s_nzones = 0;	/* not used in V2 - 0 forces errors early */
 	sup->s_zones = zones;
@@ -461,9 +465,8 @@ ino_t inodes;
   inode_offset = sup->s_imap_blocks + sup->s_zmap_blocks + 2;
   inodeblks = (inodes + inodes_per_block - 1) / inodes_per_block;
   initblks = inode_offset + inodeblks;
-  initzones = (initblks + (1 << zone_shift) - 1) >> zone_shift;
-  nrzones = nrblocks >> zone_shift;
   sup->s_firstdatazone = nb = (initblks + (1 << zone_shift) - 1) >> zone_shift;
+  if(nb >= zones) pexit("bit maps too large");
   if(nb != sup->s_firstdatazone) {
 	fprintf(stderr, "mkfs: too much bitmap and inode data.\n" BIGGERBLOCKS);
 	exit(1);

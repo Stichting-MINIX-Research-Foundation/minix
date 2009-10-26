@@ -40,9 +40,7 @@
 #include "../../servers/mfs/super.h"
 
 _PROTOTYPE(int main, (int argc, char **argv));
-_PROTOTYPE(void rw_super, (int flag));
 _PROTOTYPE(void get_super, (void));
-_PROTOTYPE(void put_super, (void));
 _PROTOTYPE(void rw_inode, (struct stat * stat_ptr, int rw_mode));
 _PROTOTYPE(void get_inode, (struct stat * stat_ptr));
 _PROTOTYPE(void put_inode, (struct stat * stat_ptr));
@@ -99,20 +97,6 @@ _PROTOTYPE(void done, (int nr));
 #define V_SMALLER   V1_NR_DZONES
 #endif
 
-#if 0
-struct super_block {
-  ino_t s_ninodes;		/* # usable inodes on the minor device */
-  zone1_t s_nzones;		/* total device size, including bit maps etc */
-  short s_imap_blocks;		/* # of blocks used by inode bit map */
-  short s_zmap_blocks;		/* # of blocks used by zone bit map */
-  zone1_t s_firstdatazone;	/* number of first data zone */
-  short s_log_zone_size;	/* log2 of blocks/zone */
-  off_t s_max_size;		/* maximum file size on this device */
-  short s_magic;		/* magic number to recognize super-blocks */
-  short s_pad;			/* try to avoid compiler-dependent padding */
-  zone_t s_zones;		/* number of zones (replaces s_nzones in V2) */
-} super_block;
-#endif
 
  /* ====== globals ======= */
 
@@ -142,30 +126,19 @@ d2_inode *ip2;
 
  /* ====== super block routines ======= */
 
-void rw_super(flag)
-int flag;
-{				/* read or write a superblock */
-  int rwd;
-
-  lseek(fd, 0L, SEEK_SET);	/* rewind */
-  lseek(fd, (long) BLOCK_SIZE, SEEK_SET);	/* seek */
-
-  if (flag == READ)
-	rwd = read(fd, (char *) sp, SUPER_SIZE);
-  else
-	rwd = write(fd, (char *) sp, SUPER_SIZE);
-  if (rwd != SUPER_SIZE) {	/* ok ? */
-	printf("Bad %s in get_super() (should be %u is %d)\n",
-	       flag == READ ? "read" : "write",
-	       (unsigned) SUPER_SIZE, rwd);
-	done(DIR_CREATED);
-  }
-}
-
 void get_super()
  /* Get super_block. global pointer sp is used */
 {
-  rw_super(READ);
+  int rd;
+
+  lseek(fd, (long) BLOCK_SIZE, SEEK_SET);	/* seek */
+
+  rd = read(fd, (char *) sp, SUPER_SIZE);
+  if (rd != SUPER_SIZE) {	/* ok ? */
+	printf("Bad read in get_super() (should be %u is %d)\n",
+	       (unsigned) SUPER_SIZE, rd);
+	done(DIR_CREATED);
+  }
 
   if (sp->s_magic == SUPER_MAGIC) {
 	/* This is a V1 file system. */
@@ -183,11 +156,6 @@ void get_super()
   }
 }
 
-
-void put_super()
-{
-  rw_super(WRITE);
-}
 
  /* ========== inode routines =========== */
 
@@ -209,7 +177,6 @@ int rw_mode;
   offset = (block_t) ((i_num - 1) % inodes_per_block);
   offset *= (block_t) (inode_size);	/* and this offset */
 
-  lseek(fd, (off_t) 0, SEEK_SET);	/* rewind */
   lseek(fd, (off_t) (blk + offset), SEEK_SET);	/* seek */
 
   /* Pointer is at the inode */
@@ -449,7 +416,6 @@ int nr_blocks;
   }
 
   put_inode(&stat_buf);		/* save the inode on disk */
-  put_super();			/* bit_maps too */
 }
 
 
@@ -520,7 +486,6 @@ block_t num;
   blk_offset += (block_t) (words * SIZE_OF_INT);	/* offset */
 
 
-  lseek(fd, (off_t) 0, SEEK_SET);	/* rewind */
   lseek(fd, (off_t) blk_offset, SEEK_SET);	/* set pointer at word */
 
   rd = read(fd, (char *) &tst_word, SIZE_OF_INT);
@@ -560,7 +525,6 @@ zone_t num;
   blk_offset += (long) (words * SIZE_OF_INT);
 
 
-  lseek(fd, (off_t) 0, SEEK_SET);	/* rewind */
   lseek(fd, (off_t) blk_offset, SEEK_SET);
 
   rwd = read(fd, (char *) &tst_word, SIZE_OF_INT);
@@ -570,7 +534,6 @@ zone_t num;
   }
   bit = offset % INT_BITS;
   if (((tst_word >> bit) & 01) == 0) {	/* free */
-	lseek(fd, 0L, SEEK_SET);/* rewind */
 	lseek(fd, (off_t) blk_offset, SEEK_SET);
 	tst_word |= (1 << bit);	/* not free anymore */
 	rwd = write(fd, (char *) &tst_word, SIZE_OF_INT);

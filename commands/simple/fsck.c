@@ -116,9 +116,7 @@ static struct super_block sb;
 #define ZONE_SIZE	((int) ztob(block_size))
 #define NLEVEL		(NR_ZONE_NUMS - NR_DZONE_NUM + 1)
 
-/* Byte address of a zone/of an inode */
-#define cinoblock(i)	(((i - 1)*INODE_SIZE) / block_size + BLK_ILIST)
-#define cinooff(i)	(((i - 1)*INODE_SIZE) % block_size)
+/* Byte address of a zone */
 #define INDCHUNK	((int) (CINDIR * ZONE_NUM_SIZE))
 #define DIRCHUNK	((int) (CDIRECT * DIR_ENTRY_SIZE))
 
@@ -629,16 +627,12 @@ void chksuper()
 
 int inoblock(int inn)
 {
-	int a;
-	a = cinoblock(inn);
-	return a;
+	return div64u(mul64u(inn - 1, INODE_SIZE), block_size) + BLK_ILIST;
 }
 
 int inooff(int inn)
 {
-	int a;
-	a = cinooff(inn);
-	return a;
+	return rem64u(mul64u(inn - 1, INODE_SIZE), block_size);
 }
 
 /* Make a listing of the inodes given by `clist'.  If `repair' is set, ask
