@@ -63,7 +63,7 @@
 .B \\$1
 ..
 .SH NAME
-ash, sh, ., break, case, cd, command, continue, eval, exec, exit, export, for, getopts, hash, if, jobs, local, read, readonly, return, set, setvar, shift, trap, umask, unset, wait, while \- a shell
+ash, sh, bigsh, ., break, case, cd, command, continue, eval, exec, exit, export, for, getopts, hash, if, jobs, local, read, readonly, return, set, setvar, shift, trap, umask, unset, wait, while \- a shell
 .SH SYNOPSIS
 .B ash
 [
@@ -164,6 +164,13 @@ procedure if neither the
 nor the
 .B -c
 options are set.)
+.PP
+In older versions of MINIX that did not have virtual memory, it was
+important for executables to have enough memory assigned to them. The
+.B bigsh
+binary was provided for shells that need much memory. This command is
+retained for backward compatibility and need not be used on MINIX 3.1.4
+and later.
 .h "Control Structures"
 A
 .I list

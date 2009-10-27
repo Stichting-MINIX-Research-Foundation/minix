@@ -1,0 +1,24 @@
+.TH DEV2NAME 1
+.SH NAME
+dev2name \- obtain device name given its number
+.SH SYNOPSIS
+\fBdev2name\fR \fIdeviceno\fR
+.br
+\fBdev2name\fR \fImajor\fR \fIminor\fR
+.br
+.de FL
+.TP
+\\fB\\$1\\fR
+\\$2
+..
+.SH OPTIONS
+.FL "\fImajor\fR" "Major device number for which to obtain device name"
+.FL "\fIminor\fR" "Minor device number for which to obtain device name"
+.FL "\fIdeviceno\fR" "Full device number for which to obtain device name (specifies the minor device number in the low-order byte and the major device number in the remainder)"
+.SH DESCRIPTION
+.PP
+This utility locates a file in \fB/dev\fR that represents the device with the specified major/minor device number and prints its name to the standard output. The exit code is zero if such a device is found and non-zero if no such device was found.
+.SH "SEE ALSO"
+.BR mknod (1),
+.BR DESCRIBE (1),
+.BR MAKEDEV (1).
