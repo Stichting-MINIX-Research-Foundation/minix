@@ -159,6 +159,6 @@ message *m_ptr;				/* message buffer */
     int s;
     s = send(who_e, m_ptr);    /* send the message */
     if (OK != s)
-        panic("DS", "unable to send reply!", s);
+        printf("DS: unable to send reply to %d: %d\n", who_e, s);
 }
 
