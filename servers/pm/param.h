@@ -23,11 +23,7 @@
 #define stat_nr		m2_i1
 #define sig_set		m2_l1
 #define sig_how		m2_i1
-#define sig_flags	m2_i2
 #define sig_context	m2_p1
-#ifdef _SIGMESSAGE
-#define sig_msg		m1_i1
-#endif
 #define info_what	m1_i1
 #define info_where	m1_p1
 #define reboot_flag	m1_i1
@@ -57,9 +53,4 @@
 #define reply_t3 	m4_l3
 #define reply_t4 	m4_l4
 #define reply_t5 	m4_l5
-
-/* The following names are used to inform the FS about certain events. */
-#define tell_fs_arg1    m1_i1
-#define tell_fs_arg2    m1_i2
-#define tell_fs_arg3    m1_i3
 
