@@ -10,9 +10,6 @@
 #include "mproc.h"
 #include "param.h"
 
-/* Miscellaneous */
-char core_name[] = "core";	/* file name where core images are produced */
-
 _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/*  0 = unused	*/
 	do_exit,	/*  1 = exit	*/
