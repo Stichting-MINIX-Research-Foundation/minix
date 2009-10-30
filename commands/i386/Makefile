@@ -28,3 +28,4 @@ clean::
 
 all install clean::
 	cd asmconv && $(MAKE) $@
+	cd gas2ack && $(MAKE) $@
