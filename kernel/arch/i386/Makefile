@@ -23,18 +23,18 @@ OBJS=	arch_do_vmctl.o \
 	system.o
 
 CPPFLAGS=-Iinclude
-CFLAGS=$(CPPFLAGS) -Wall
+CFLAGS=$(CPPFLAGS) -Wall $(CPROFILE)
 
 build: $(HEAD) $(ARCHAR)
 
 $(ARCHAR): $(OBJS)
-	aal cr $@ *.o
+	aal cr $@ $(OBJS)
 
 depend: 
-	mkdep "$(CC) -E $(CPPFLAGS)" *.c *.s > .depend
+	mkdep "$(CC) -E $(CPPFLAGS)" *.c *.S > .depend
 
 clean:
-	rm -f *.a *.o *~
+	rm -f *.a *.o *~ *.tmp *.s
 
 # How to build it
 $(ARCHAR)(exception.o): exception.c
@@ -70,11 +70,15 @@ $(ARCHAR)(do_sdevio.o): do_sdevio.c
 $(ARCHAR)(clock.o): clock.c
 	$(CC) $(CFLAGS) -c $<
 
-$(ARCHAR)(klib386.o): klib386.s
-	$(CC) $(CFLAGS) -c $<
+klib386.o: klib386.S
+	$(CC) $(CFLAGS)  -E -D__ASSEMBLY__ -o $@.tmp $<
+	gas2ack $@.tmp $@.s
+	$(CC) $(CFLAGS) -c -o $@ $@.s
 
-.s.o:
-	$(CC) $(CFLAGS) -c -o $@ $<
+mpx386.o: mpx386.S
+	$(CC) $(CFLAGS) -E -D__ASSEMBLY__ -o $@.tmp $<
+	gas2ack $@.tmp $@.s
+	$(CC) $(CFLAGS) -c -o $@ $@.s
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<
