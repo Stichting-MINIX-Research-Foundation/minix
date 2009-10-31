@@ -97,7 +97,7 @@
 #if 0
 #define FREEMEM		106	/* to PM, not used, not implemented */
 #endif
-#define GETPUID		107	/* to PM: get the uid of a process (endpoint) */
+#define GETEPINFO	107	/* to PM: get pid/uid/gid of an endpoint */
 #define ADDDMA		108	/* to PM: inform PM about a region of memory
 				 * that is used for bus-master DMA
 				 */

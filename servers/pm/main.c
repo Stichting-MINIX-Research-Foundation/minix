@@ -128,8 +128,8 @@ PUBLIC int main()
 	case GETPROCNR:
 		result= do_getprocnr();
 		break;
-	case GETPUID:
-		result= do_getpuid();
+	case GETEPINFO:
+		result= do_getepinfo();
 		break;
 	default:
 		/* Else, if the system call number is valid, perform the

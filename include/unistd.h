@@ -121,9 +121,6 @@ _PROTOTYPE( int getgroups, (int _gidsetsize, gid_t _grouplist[])	);
 _PROTOTYPE( char *getlogin, (void)					);
 _PROTOTYPE( pid_t getpgrp, (void)					);
 _PROTOTYPE( pid_t getpid, (void)					);
-_PROTOTYPE( pid_t getnpid, (int proc_nr)				);
-_PROTOTYPE( uid_t getnuid, (int proc_nr)				);
-_PROTOTYPE( gid_t getngid, (int proc_nr)				);
 _PROTOTYPE( pid_t getppid, (void)					);
 _PROTOTYPE( uid_t getuid, (void)					);
 _PROTOTYPE( int isatty, (int _fd)					);
@@ -201,13 +198,16 @@ _PROTOTYPE( int devctl, (int ctl_req, int driver, int device, int style,
 	int force)							);
 _PROTOTYPE( int mapdriver5, (char *label, size_t len, int major,
 	int style, int force)						);
-_PROTOTYPE( uid_t getpeuid, (endpoint_t ep)				);
 _PROTOTYPE(int adddma, (endpoint_t proc_e,
 				phys_bytes start, phys_bytes size)	);
 _PROTOTYPE(int deldma, (endpoint_t proc_e,
 				phys_bytes start, phys_bytes size)	);
 _PROTOTYPE(int getdma, (endpoint_t *procp, phys_bytes *basep, 
 						phys_bytes *sizep)	);
+
+_PROTOTYPE( pid_t getnpid, (endpoint_t proc_ep)				);
+_PROTOTYPE( uid_t getnuid, (endpoint_t proc_ep)				);
+_PROTOTYPE( gid_t getngid, (endpoint_t proc_ep)				);
 
 /* For compatibility with other Unix systems */
 _PROTOTYPE( int getpagesize, (void)					);

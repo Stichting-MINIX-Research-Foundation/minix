@@ -27,22 +27,16 @@ PUBLIC int do_get()
 	case GETUID:
 		r = rmp->mp_realuid;
 		rmp->mp_reply.reply_res2 = rmp->mp_effuid;
-		if (pm_isokendpt(m_in.PM_ENDPT, &proc) == OK && proc >= 0)
-			rmp->mp_reply.reply_res3 = mproc[proc].mp_effuid;
 		break;
 
 	case GETGID:
 		r = rmp->mp_realgid;
 		rmp->mp_reply.reply_res2 = rmp->mp_effgid;
-		if (pm_isokendpt(m_in.PM_ENDPT, &proc) == OK && proc >= 0)
-			rmp->mp_reply.reply_res3 = mproc[proc].mp_effgid;
 		break;
 
 	case MINIX_GETPID:
 		r = mproc[who_p].mp_pid;
 		rmp->mp_reply.reply_res2 = mproc[rmp->mp_parent].mp_pid;
-		if(pm_isokendpt(m_in.PM_ENDPT, &proc) == OK && proc >= 0)
-			rmp->mp_reply.reply_res3 = mproc[proc].mp_pid;
 		break;
 
 	case GETPGRP:

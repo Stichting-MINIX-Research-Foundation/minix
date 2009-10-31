@@ -54,7 +54,6 @@ libc_FILES=" \
 	getlogin.c \
 	getpagesize.c \
 	getpass.c \
-	getpeuid.c \
 	getpwent.c \
 	getttyent.c \
 	getw.c \

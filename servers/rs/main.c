@@ -92,7 +92,7 @@ PUBLIC int main(void)
 	  }
 
 	  /* Only root can make calls to rs. unless it's RS_LOOKUP. */
-	  euid= getpeuid(m.m_source);
+	  euid= getnuid(m.m_source);
 	  if (euid != 0 && call_nr != RS_LOOKUP)
 	  {
 		printf("RS: got unauthorized request %d from endpoint %d\n",
