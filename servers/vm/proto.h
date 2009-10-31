@@ -99,7 +99,6 @@ _PROTOTYPE( void pt_init, (void)					);
 _PROTOTYPE( void pt_check, (struct vmproc *vmp)				);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);
-_PROTOTYPE( void pt_freerange, (pt_t *pt, vir_bytes lo, vir_bytes hi)	);
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
         size_t bytes, u32_t flags, u32_t writemapflags));
 _PROTOTYPE( int pt_checkrange, (pt_t *pt, vir_bytes v,  size_t bytes, int write));
@@ -162,7 +161,6 @@ _PROTOTYPE(void map_sanitycheck,(char *file, int line));
 #endif
 
 /* $(ARCH)/vm.c */
-_PROTOTYPE( void arch_init_vm, (struct memory mem_chunks[NR_MEMS]));
 _PROTOTYPE( vir_bytes, arch_map2vir(struct vmproc *vmp, vir_bytes addr));
 _PROTOTYPE( char *, arch_map2str(struct vmproc *vmp, vir_bytes addr));
 _PROTOTYPE( vir_bytes, arch_vir2map(struct vmproc *vmp, vir_bytes addr));

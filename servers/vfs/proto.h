@@ -59,9 +59,6 @@ _PROTOTYPE( int inval_filp, (struct filp *)				);
 /* fscall.c */
 _PROTOTYPE( void nested_fs_call, (message *m)				);
 
-/* kputc.c */
-_PROTOTYPE( void diag_repl, (void)					);
-
 /* link.c */
 _PROTOTYPE( int do_link, (void)						);
 _PROTOTYPE( int do_unlink, (void)					);
@@ -136,7 +133,6 @@ _PROTOTYPE( void suspend, (int task)					);
 _PROTOTYPE( void pipe_suspend, (int rw_flag, int fd_nr, char *buf,
 							size_t size)	);
 _PROTOTYPE( int select_request_pipe, (struct filp *f, int *ops, int bl)	);
-_PROTOTYPE( int select_cancel_pipe, (struct filp *f)			);
 _PROTOTYPE( int select_match_pipe, (struct filp *f)			);
 _PROTOTYPE( void unsuspend_by_endpt, (endpoint_t)			);
 _PROTOTYPE( void select_reply1, (void)					);

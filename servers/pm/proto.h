@@ -81,7 +81,6 @@ _PROTOTYPE( void vm_notify_sig_wrapper, (endpoint_t ep)			);
 _PROTOTYPE( int do_stime, (void)					);
 _PROTOTYPE( int do_time, (void)						);
 _PROTOTYPE( int do_times, (void)					);
-_PROTOTYPE( int do_gettimeofday, (void)					);
 
 /* timers.c */
 _PROTOTYPE( void pm_set_timer, (timer_t *tp, int delta, 

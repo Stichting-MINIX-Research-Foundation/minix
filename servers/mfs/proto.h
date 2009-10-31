@@ -78,33 +78,14 @@ int fs_unlink_s(void);
 _PROTOTYPE( int truncate_inode, (struct inode *rip, off_t len)		);
 _PROTOTYPE( int freesp_inode, (struct inode *rip, off_t st, off_t end)	);
 
-/* lock.c */
-_PROTOTYPE( int lock_op, (struct filp *f, int req)			);
-_PROTOTYPE( void lock_revive, (void)					);
-
 /* main.c */
 _PROTOTYPE( void reply, (int who, message *m_out)			);
-
-/* misc.c */
-_PROTOTYPE( int do_dup, (void)						);
-_PROTOTYPE( int do_exit, (void)						);
-_PROTOTYPE( int do_fcntl, (void)					);
-_PROTOTYPE( int do_exec, (void)						);
-_PROTOTYPE( int do_revive, (void)					);
-_PROTOTYPE( int do_set, (void)						);
-_PROTOTYPE( int do_sync, (void)						);
-_PROTOTYPE( int do_fsync, (void)					);
-_PROTOTYPE( int do_reboot, (void)					);
-_PROTOTYPE( int do_svrctl, (void)					);
-_PROTOTYPE( int do_getsysinfo, (void)					);
 
 /* mount.c */
 int fs_mountpoint_o(void);
 int fs_mountpoint_s(void);
 int fs_readsuper_o(void);
 int fs_readsuper_s(void);
-_PROTOTYPE( int do_mount, (void)					);
-_PROTOTYPE( int do_umount, (void)					);
 _PROTOTYPE( int unmount, (Dev_t dev)					);
 
 /* open.c */
@@ -117,13 +98,6 @@ int fs_mknod_s(void);
 int fs_slink_o(void);
 int fs_slink_s(void);
 int fs_newnode(void);
-_PROTOTYPE( int do_close, (void)					);
-_PROTOTYPE( int do_creat, (void)					);
-_PROTOTYPE( int do_lseek, (void)					);
-_PROTOTYPE( int do_mknod, (void)					);
-_PROTOTYPE( int do_mkdir, (void)					);
-_PROTOTYPE( int do_open, (void)						);
-_PROTOTYPE( int do_slink, (void)                                       );
 
 /* path.c */
 int lookup_o(void);
@@ -144,10 +118,6 @@ _PROTOTYPE( struct inode *parse_path_o, (char *path,
 
 /* protect.c */
 int fs_access_o(void);
-_PROTOTYPE( int do_access, (void)					);
-_PROTOTYPE( int do_chmod, (void)					);
-_PROTOTYPE( int do_chown, (void)					);
-_PROTOTYPE( int do_umask, (void)					);
 _PROTOTYPE( int forbidden, (struct inode *rip, mode_t access_desired)	);
 _PROTOTYPE( int read_only, (struct inode *ip)				);
 
@@ -156,23 +126,12 @@ int fs_breadwrite_o(void);
 int fs_breadwrite_s(void);
 int fs_readwrite_o(void);
 int fs_readwrite_s(void);
-_PROTOTYPE( int do_read, (void)						);
 _PROTOTYPE( struct buf *rahead, (struct inode *rip, block_t baseblock,
 			u64_t position, unsigned bytes_ahead)		);
 _PROTOTYPE( void read_ahead, (void)					);
 _PROTOTYPE( block_t read_map, (struct inode *rip, off_t pos)		);
 _PROTOTYPE( int read_write, (int rw_flag)				);
 _PROTOTYPE( zone_t rd_indir, (struct buf *bp, int index)		);
-
-/* stadir.c */
-_PROTOTYPE( int do_chdir, (void)					);
-_PROTOTYPE( int do_fchdir, (void)					);
-_PROTOTYPE( int do_chroot, (void)					);
-_PROTOTYPE( int do_fstat, (void)					);
-_PROTOTYPE( int do_stat, (void)						);
-_PROTOTYPE( int do_fstatfs, (void)					);
-_PROTOTYPE( int do_rdlink, (void)                                      );
-_PROTOTYPE( int do_lstat, (void)                                       );
 
 /* super.c */
 _PROTOTYPE( bit_t alloc_bit, (struct super_block *sp, int map, bit_t origin));
@@ -183,25 +142,16 @@ _PROTOTYPE( int mounted, (struct inode *rip)				);
 _PROTOTYPE( int read_super, (struct super_block *sp)			);
 _PROTOTYPE( int get_block_size, (dev_t dev)				);
 
-/* time.c */
-_PROTOTYPE( int do_stime, (void)					);
-_PROTOTYPE( int do_utime, (void)					);
-
 /* utility.c */
 _PROTOTYPE( time_t clock_time, (void)					);
 _PROTOTYPE( unsigned conv2, (int norm, int w)				);
 _PROTOTYPE( long conv4, (int norm, long x)				);
-_PROTOTYPE( int fetch_name, (char *path, int len, int flag)		);
 _PROTOTYPE( int no_sys, (void)						);
-_PROTOTYPE( int isokendpt_f, (char *f, int l, int e, int *p, int ft));
 _PROTOTYPE( void mfs_nul_f, (char *file, int line, char *str, int len, int maxlen));
 _PROTOTYPE( int mfs_min_f, (char *file, int line, int len1, int len2)	);
 _PROTOTYPE( void sanitycheck, (char *file, int line)	);
 
 #define SANITYCHECK sanitycheck(__FILE__, __LINE__)
-
-#define okendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 1)
-#define isokendpt(e, p) isokendpt_f(__FILE__, __LINE__, (e), (p), 0)
 
 /* write.c */
 _PROTOTYPE( void clear_zone, (struct inode *rip, off_t pos, int flag)	);
