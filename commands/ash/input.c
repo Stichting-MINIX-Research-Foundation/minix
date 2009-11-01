@@ -47,6 +47,7 @@ __FBSDID("$FreeBSD: src/bin/sh/input.c,v 1.22 2004/04/06 20:06:51 markm Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 /*
  * This file implements the input routines used by the parser.
@@ -430,10 +431,21 @@ setinputfile(char *fname, int push)
 {
 	int fd;
 	int fd2;
+	struct stat statbuf;
+	int saved_errno;
 
 	INTOFF;
 	if ((fd = open(fname, O_RDONLY)) < 0)
 		error("Can't open %s: %s", fname, strerror(errno));
+	if (fstat(fd, &statbuf) < 0) {
+		saved_errno = errno;
+		close(fd);
+		error("Can't stat %s: %s", fname, strerror(saved_errno));
+	}
+	if (!S_ISREG(statbuf.st_mode)) {
+		close(fd);
+		error("Can't open %s: %s", fname, strerror(ENOEXEC));
+	}
 	if (fd < 10) {
 		fd2 = fcntl(fd, F_DUPFD, 10);
 		close(fd);
