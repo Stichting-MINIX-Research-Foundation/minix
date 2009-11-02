@@ -64,7 +64,6 @@ _PROTOTYPE( phys_bytes umap_grant, (struct proc *, cp_grant_id_t,
 	vir_bytes));
 _PROTOTYPE( void clear_endpoint, (struct proc *rc)			);
 _PROTOTYPE( phys_bytes umap_bios, (vir_bytes vir_addr, vir_bytes bytes));
-_PROTOTYPE( phys_bytes umap_verify_grant, (struct proc *rp, endpoint_t grantee,  cp_grant_id_t grant, vir_bytes offset, vir_bytes bytes, int access));
 
 /* system/do_newmap.c */
 _PROTOTYPE( int newmap, (struct proc *rp, struct mem_map *map_ptr)	);

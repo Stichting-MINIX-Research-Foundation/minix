@@ -540,37 +540,6 @@ register struct proc *rc;		/* slot of process to clean up */
 }
 
 /*===========================================================================*
- *                              umap_verify_grant                            *
- *===========================================================================*/
-PUBLIC phys_bytes umap_verify_grant(rp, grantee, grant, offset, bytes, access)
-struct proc *rp;                /* pointer to proc table entry for process */
-endpoint_t grantee;             /* who wants to do this */ 
-cp_grant_id_t grant;            /* grant no. */
-vir_bytes offset;               /* offset into grant */
-vir_bytes bytes;                /* size */
-int access;                     /* does grantee want to CPF_READ or _WRITE? */
-{  
-        int proc_nr;
-        vir_bytes v_offset;
-        endpoint_t granter;
-    
-        /* See if the grant in that process is sensible, and
-         * find out the virtual address and (optionally) new
-         * process for that address. 
-         *
-         * Then convert that process to a slot number.
-         */
-        if(verify_grant(rp->p_endpoint, grantee, grant, bytes, access, offset, 
-                &v_offset, &granter) != OK
-           || !isokendpt(granter, &proc_nr)) {
-                return 0;
-        }
-  
-        /* Do the mapping from virtual to physical. */
-        return umap_virtual(proc_addr(proc_nr), D, v_offset, bytes);
-} 
-
-/*===========================================================================*
  *                              vmrestart_check                            *
  *===========================================================================*/
 PRIVATE struct proc *vmrestart_check(message *m)

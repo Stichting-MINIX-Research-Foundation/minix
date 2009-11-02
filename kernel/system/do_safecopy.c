@@ -20,6 +20,8 @@
 #include "../system.h"
 #include "../vm.h"
 
+#define MAX_INDIRECT_DEPTH 5	/* up to how many indirect grants to follow? */
+
 #define MEM_TOP 0xFFFFFFFFUL
 
 FORWARD _PROTOTYPE(int safecopy, (endpoint_t, endpoint_t, cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
@@ -43,51 +45,87 @@ endpoint_t *e_granter;		/* new granter (magic grants) */
 	static cp_grant_t g;
 	static int proc_nr;
 	static struct proc *granter_proc;
-	int r;
+	int r, depth = 0;
 
-	/* Get granter process slot (if valid), and check range of
-	 * grant id.
-	 */
-	if(!isokendpt(granter, &proc_nr) || !GRANT_VALID(grant)) {
-		kprintf("grant verify failed: invalid granter or grant\n");
-		return(EINVAL);
-	}
-	granter_proc = proc_addr(proc_nr);
-
-	/* If there is no priv. structure, or no grant table in the
-	 * priv. structure, or the grant table in the priv. structure
-	 * is too small for the grant, return EPERM.
-	 */
-	if(!HASGRANTTABLE(granter_proc)) return EPERM;
-
-	if(priv(granter_proc)->s_grant_entries <= grant) {
+	do {
+		/* Get granter process slot (if valid), and check range of
+		 * grant id.
+		 */
+		if(!isokendpt(granter, &proc_nr) || !GRANT_VALID(grant)) {
 			kprintf(
-			"verify_grant: grant verify failed in ep %d proc %d: "
-			"grant %d out of range for table size %d\n",
-				granter, proc_nr, grant,
-				priv(granter_proc)->s_grant_entries);
-		return(EPERM);
-	}
+			"grant verify failed: invalid granter or grant\n");
+			return(EINVAL);
+		}
+		granter_proc = proc_addr(proc_nr);
 
-	/* Copy the grant entry corresponding to this id to see what it
-	 * looks like. If it fails, hide the fact that granter has
-	 * (presumably) set an invalid grant table entry by returning
-	 * EPERM, just like with an invalid grant id.
-	 */
-	if((r=data_copy(granter,
-		priv(granter_proc)->s_grant_table + sizeof(g)*grant,
-		SYSTEM, (vir_bytes) &g, sizeof(g))) != OK) {
-		kprintf("verify_grant: grant verify: data_copy failed\n");
-		return EPERM;
-	}
+		/* If there is no priv. structure, or no grant table in the
+		 * priv. structure, or the grant table in the priv. structure
+		 * is too small for the grant, return EPERM.
+		 */
+		if(!HASGRANTTABLE(granter_proc)) return EPERM;
 
-	/* Check validity. */
-	if((g.cp_flags & (CPF_USED | CPF_VALID)) != (CPF_USED | CPF_VALID)) {
-		kprintf(
-		"verify_grant: grant failed: invalid (%d flags 0x%lx)\n",
-			grant, g.cp_flags);
-		return EPERM;
-	}
+		if(priv(granter_proc)->s_grant_entries <= grant) {
+				kprintf(
+				"verify_grant: grant verify failed in ep %d "
+				"proc %d: grant %d out of range "
+				"for table size %d\n",
+					granter, proc_nr, grant,
+					priv(granter_proc)->s_grant_entries);
+			return(EPERM);
+		}
+
+		/* Copy the grant entry corresponding to this id to see what it
+		 * looks like. If it fails, hide the fact that granter has
+		 * (presumably) set an invalid grant table entry by returning
+		 * EPERM, just like with an invalid grant id.
+		 */
+		if((r=data_copy(granter,
+			priv(granter_proc)->s_grant_table + sizeof(g)*grant,
+			SYSTEM, (vir_bytes) &g, sizeof(g))) != OK) {
+			kprintf(
+			"verify_grant: grant verify: data_copy failed\n");
+			return EPERM;
+		}
+
+		/* Check validity. */
+		if((g.cp_flags & (CPF_USED | CPF_VALID)) !=
+			(CPF_USED | CPF_VALID)) {
+			kprintf(
+			"verify_grant: grant failed: invalid (%d flags 0x%lx)\n",
+				grant, g.cp_flags);
+			return EPERM;
+		}
+
+		/* The given grant may be an indirect grant, that is, a grant
+		 * that provides permission to use a grant given to the
+		 * granter (i.e., for which it is the grantee). This can lead
+		 * to a chain of indirect grants which must be followed back.
+		 */
+		if((g.cp_flags & CPF_INDIRECT)) {
+			/* Stop after a few iterations. There may be a loop. */
+			if (depth == MAX_INDIRECT_DEPTH) {
+				kprintf(
+					"verify grant: indirect grant verify "
+					"failed: exceeded maximum depth\n");
+				return ELOOP;
+			}
+			depth++;
+
+			/* Verify actual grantee. */
+			if(g.cp_u.cp_indirect.cp_who_to != grantee &&
+				grantee != ANY) {
+				kprintf(
+					"verify_grant: indirect grant verify "
+					"failed: bad grantee\n");
+				return EPERM;
+			}
+
+			/* Start over with new granter, grant, and grantee. */
+			grantee = granter;
+			granter = g.cp_u.cp_indirect.cp_who_from;
+			grant = g.cp_u.cp_indirect.cp_grant;
+		}
+	} while(g.cp_flags & CPF_INDIRECT);
 
 	/* Check access of grant. */
 	if(((g.cp_flags & access) != access)) {
