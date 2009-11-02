@@ -18,9 +18,10 @@
 #define PRINTRTS(rp) { \
 	char *procname = "";	\
 	printf(" %s", p_rts_flags_str(rp->p_rts_flags));	\
-	if (rp->p_rts_flags & (SENDING|RECEIVING)) {		\
+	if (rp->p_rts_flags & SENDING)				\
+		procname = proc_name(_ENDPOINT_P(rp->p_sendto_e)); \
+	else if (rp->p_rts_flags & RECEIVING)			\
 		procname = proc_name(_ENDPOINT_P(rp->p_getfrom_e)); \
-	} \
 	printf(" %-7.7s", procname);	\
 }
 
@@ -312,7 +313,7 @@ PUBLIC void privileges_dmp()
       return;
   }
 
-  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -ipc_sr-- -system calls--\n");
+  printf("\n--nr-id-name---- -flags- -traps- grants -ipc_to-- -system calls--\n");
 
   PROCLOOP(rp, oldrp)
         r = -1;
@@ -372,7 +373,7 @@ PUBLIC void proctab_dmp()
       return;
   }
 
-  printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user----sys--rts flags\n");
+  printf("\n-nr-----gen---endpoint-name--- -prior-quant- -user----sys-rtsflags-from/to-\n");
 
   PROCLOOP(rp, oldrp)
 	text = rp->p_memmap[T].mem_phys;
@@ -380,7 +381,7 @@ PUBLIC void proctab_dmp()
 	size = rp->p_memmap[T].mem_len
 		+ ((rp->p_memmap[S].mem_phys + rp->p_memmap[S].mem_len) - data);
 	printf(" %5d %10d ", _ENDPOINT_G(rp->p_endpoint), rp->p_endpoint);
-	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu",
+	printf("%-8.8s %02u/%02u %02d/%02u %6lu %6lu ",
 	       rp->p_name,
 	       rp->p_priority, rp->p_max_priority,
 	       rp->p_ticks_left, rp->p_quantum_size, 

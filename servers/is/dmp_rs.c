@@ -28,7 +28,7 @@ PUBLIC void rproc_dmp()
   getsysinfo(RS_PROC_NR, SI_PROC_TAB, rproc);
 
   printf("Reincarnation Server (RS) system process table dump\n");
-  printf("-----proc---pid-flag--dev- -T---checked----alive-starts-backoff-label command-\n");
+  printf("-endpoint-flag--dev- -T---checked----alive-starts-backoff-label command-\n");
   for (i=prev_i; i<NR_SYS_PROCS; i++) {
   	rp = &rproc[i];
   	if (! rp->r_flags & RS_IN_USE) continue;

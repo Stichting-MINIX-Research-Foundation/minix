@@ -14,10 +14,15 @@
 #include <termios.h>
 #include <signal.h>
 #include <unistd.h>
+#include <archtypes.h>
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/keymap.h>
 #include "tty.h"
+#include "../../kernel/const.h"
+#include "../../kernel/config.h"
+#include "../../kernel/type.h"
+#include "../../kernel/proc.h"
 
 u16_t keymap[NR_SCAN_CODES * MAP_COLS] = {
 #include "keymaps/us-std.src"
@@ -1186,17 +1191,33 @@ int scode;			/* scan code for a function key */
  *===========================================================================*/
 PRIVATE void show_key_mappings()
 {
-    int i;
+    int i,s;
+    struct proc proc;
+
     printf("\n");
     printf("System information.   Known function key mappings to request debug dumps:\n");
     printf("-------------------------------------------------------------------------\n");
     for (i=0; i<12; i++) {
 
       printf(" %sF%d: ", i+1<10? " ":"", i+1);
-      printf("%-14.14s", "<none>");
+      if (fkey_obs[i].proc_nr != NONE) {
+          if ((s = sys_getproc(&proc, fkey_obs[i].proc_nr))!=OK)
+              printf("%-14.14s", "<unknown>");
+          else
+              printf("%-14.14s", proc.p_name);
+      } else {
+          printf("%-14.14s", "<none>");
+      }
 
       printf("    %sShift-F%d: ", i+1<10? " ":"", i+1);
-      printf("%-14.14s", "<none>");
+      if (sfkey_obs[i].proc_nr != NONE) {
+          if ((s = sys_getproc(&proc, sfkey_obs[i].proc_nr))!=OK)
+              printf("%-14.14s", "<unknown>");
+          else
+              printf("%-14.14s", proc.p_name);
+      } else {
+          printf("%-14.14s", "<none>");
+      }
       printf("\n");
     }
     printf("\n");

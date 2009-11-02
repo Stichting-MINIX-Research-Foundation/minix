@@ -1,12 +1,13 @@
 /* Function prototypes. */
 
 /* main.c */
-_PROTOTYPE( int  main, (int argc, char **argv)				);
+_PROTOTYPE( int main, (int argc, char **argv)				);
 
 /* dmp.c */
+_PROTOTYPE( void map_unmap_fkeys, (int map)				);
 _PROTOTYPE( int do_fkey_pressed, (message *m) 				);
 _PROTOTYPE( void mapping_dmp, (void)	 				);
-_PROTOTYPE( void vm_dmp, (void)	 				);
+_PROTOTYPE( void vm_dmp, (void)	 					);
 
 /* dmp_kernel.c */
 _PROTOTYPE( void proctab_dmp, (void)					);

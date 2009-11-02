@@ -4,7 +4,8 @@
  * corresponding dump procedure is called.  
  *
  * The entry points into this file are
- *   handle_fkey:	handle a function key pressed notification
+ *   map_unmap_fkeys:	register or unregister function key maps with TTY
+ *   do_fkey_pressed:	handle a function key pressed notification
  */
 
 #include "inc.h"
@@ -39,6 +40,31 @@ struct hook_entry {
  * onto a specific dump and provides a description for it.
  */
 #define NHOOKS (sizeof(hooks)/sizeof(hooks[0]))
+
+/*===========================================================================*
+ *				map_unmap_keys				     *
+ *===========================================================================*/
+PUBLIC void map_unmap_fkeys(map)
+int map;
+{
+  int fkeys, sfkeys;
+  int h, s;
+
+  fkeys = sfkeys = 0;
+
+  for (h = 0; h < NHOOKS; h++) {
+      if (hooks[h].key >= F1 && hooks[h].key <= F12) 
+          bit_set(fkeys, hooks[h].key - F1 + 1);
+      else if (hooks[h].key >= SF1 && hooks[h].key <= SF12)
+          bit_set(sfkeys, hooks[h].key - SF1 + 1);
+  }
+
+  if (map) s = fkey_map(&fkeys, &sfkeys);
+  else s = fkey_unmap(&fkeys, &sfkeys);
+
+  if (s != OK)
+	report("IS", "warning, fkey_ctl failed:", s);
+}
 
 /*===========================================================================*
  *				handle_fkey				     *

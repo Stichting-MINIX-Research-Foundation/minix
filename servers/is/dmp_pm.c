@@ -82,15 +82,15 @@ PUBLIC void sigaction_dmp()
   getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc);
   getuptime(&uptime);
 
-  printf("-process- -nr- --ignore- --catch- --block- -tomess-- -pending-- -alarm---\n");
+  printf("-process- -nr- --ignore- --catch- --block- -tomess- -pending- -alarm---\n");
   for (i=prev_i; i<NR_PROCS; i++) {
   	mp = &mproc[i];
   	if (mp->mp_pid == 0 && i != PM_PROC_NR) continue;
   	if (++n > 22) break;
   	printf("%8.8s  %3d  ", mp->mp_name, i);
-  	printf(" 0x%06x 0x%06x 0x%06x 0x%06x   ", 
+  	printf(" %08x %08x %08x %08x  ", 
   		mp->mp_ignore, mp->mp_catch, mp->mp_sigmask, mp->mp_sig2mess); 
-  	printf("0x%06x  ", mp->mp_sigpending);
+  	printf("%08x  ", mp->mp_sigpending);
   	if (mp->mp_flags & ALARM_ON) printf("%8u", mp->mp_timer.tmr_exp_time-uptime);
   	else printf("       -");
   	printf("\n");

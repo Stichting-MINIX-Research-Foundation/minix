@@ -20,6 +20,7 @@ extern int errno;	/* error number set by system library */
 
 /* Declare some local functions. */
 FORWARD _PROTOTYPE(void init_server, (int argc, char **argv)		);
+FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (void)				);
 FORWARD _PROTOTYPE(void reply, (int whom, int result)			);
 
@@ -54,8 +55,8 @@ PUBLIC int main(int argc, char **argv)
 			      }
 			      continue;
 		      case PM_PROC_NR:
-			      result = EDONTREPLY;
-			      break;
+		              sig_handler();
+			      continue;
 		      case TTY_PROC_NR:
 			      result = do_fkey_pressed(&m_in);
 			      break;
@@ -84,8 +85,6 @@ PUBLIC int main(int argc, char **argv)
 PRIVATE void init_server(int argc, char **argv)
 {
 /* Initialize the information service. */
-  int fkeys, sfkeys;
-  int i, s;
   struct sigaction sigact;
 
   /* Install signal handler. Ask PM to transform signal into message. */
@@ -95,12 +94,27 @@ PRIVATE void init_server(int argc, char **argv)
   if (sigaction(SIGTERM, &sigact, NULL) < 0) 
       report("IS","warning, sigaction() failed", errno);
 
-  /* Set key mappings. IS takes all of F1-F12 and Shift+F1-F10. */
-  fkeys = sfkeys = 0;
-  for (i=1; i<=12; i++) bit_set(fkeys, i);
-  for (i=1; i<=10; i++) bit_set(sfkeys, i);
-  if ((s=fkey_map(&fkeys, &sfkeys)) != OK)
-      report("IS", "warning, fkey_map failed:", s);
+  /* Set key mappings. */
+  map_unmap_fkeys(TRUE /*map*/);
+}
+
+/*===========================================================================*
+ *				sig_handler                                  *
+ *===========================================================================*/
+PRIVATE void sig_handler()
+{
+  sigset_t sigset;
+
+  /* Try to obtain signal set from PM. */
+  if (getsigset(&sigset) != 0) return;
+
+  /* Only check for termination signal. */
+  if (!sigismember(&sigset, SIGTERM)) return;
+
+  /* Shutting down. Unset key mappings, and quit. */
+  map_unmap_fkeys(FALSE /*map*/);
+
+  exit(0);
 }
 
 /*===========================================================================*

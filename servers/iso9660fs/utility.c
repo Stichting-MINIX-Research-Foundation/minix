@@ -33,5 +33,5 @@ int num;			/* number to go with it */
 
   printf("FS panic (%s): %s ", who, mess);
   if (num != NO_NUM) printf("%d",num);
-  sys_exit(SELF);
+  exit(1);
 }
