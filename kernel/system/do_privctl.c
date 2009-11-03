@@ -27,7 +27,6 @@ message *m_ptr;			/* pointer to request message */
  */
   register struct proc *caller_ptr;
   register struct proc *rp;
-  register struct priv *sp;
   int proc_nr;
   int priv_id;
   int i, r;
@@ -198,16 +197,14 @@ message *m_ptr;			/* pointer to request message */
 	if((r=data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
 		SYSTEM, (vir_bytes) &mem_range, sizeof(mem_range))) != OK)
 		return r;
-	priv(rp)->s_flags |= CHECK_MEM;	/* Check I/O accesses */
+	priv(rp)->s_flags |= CHECK_MEM;	/* Check memory mappings */
 	i= priv(rp)->s_nr_mem_range;
 	if (i >= NR_MEM_RANGE)
 		return ENOMEM;
 
-#if 0
 	priv(rp)->s_mem_tab[i].mr_base= mem_range.mr_base;
 	priv(rp)->s_mem_tab[i].mr_limit= mem_range.mr_limit;
 	priv(rp)->s_nr_mem_range++;
-#endif
 
 	return OK;
 
@@ -230,6 +227,28 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_nr_irq++;
 
 	return OK;
+  case SYS_PRIV_QUERY_MEM:
+  {
+	phys_bytes addr, limit;
+  	struct priv *sp;
+	/* See if a certain process is allowed to map in certain physical
+	 * memory.
+	 */
+	addr = (phys_bytes) m_ptr->CTL_PHYSSTART;
+	limit = addr + (phys_bytes) m_ptr->CTL_PHYSLEN - 1;
+	if(limit < addr)
+		return EPERM;
+	if(!(sp = priv(rp)))
+		return EPERM;
+	if (!(sp->s_flags & SYS_PROC))
+		return EPERM;
+	for(i = 0; i < sp->s_nr_mem_range; i++) {
+		if(addr >= sp->s_mem_tab[i].mr_base &&
+		   limit <= sp->s_mem_tab[i].mr_limit)
+			return OK;
+	}
+	return EPERM;
+  }
   default:
 	kprintf("do_privctl: bad request %d\n", m_ptr->CTL_REQUEST);
 	return EINVAL;

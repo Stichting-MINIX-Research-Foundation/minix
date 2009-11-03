@@ -47,6 +47,8 @@ _PROTOTYPE( int sys_trace, (int req, endpoint_t proc_ep, long addr, long *data_p
 _PROTOTYPE( int sys_runctl, (endpoint_t proc_ep, int action, int flags));
 
 _PROTOTYPE( int sys_privctl, (endpoint_t proc_ep, int req, void *p));
+_PROTOTYPE( int sys_privquery_mem, (endpoint_t proc_ep,
+	phys_bytes physstart, phys_bytes physlen));
 _PROTOTYPE( int sys_setgrant, (cp_grant_t *grants, int ngrants));
 _PROTOTYPE( int sys_nice, (endpoint_t proc_ep, int priority));
 

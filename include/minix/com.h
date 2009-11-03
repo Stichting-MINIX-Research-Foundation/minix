@@ -362,6 +362,7 @@
 #define SYS_PRIV_USER		5	/* Make a process an oridinary user 
 					 * process.
 					 */
+#define SYS_PRIV_QUERY_MEM	6	/* Verify memory privilege. */
 
 /* Subfunctions for SYS_SETGRANT */
 #define SYS_PARAM_SET_GRANT	1	/* Set address and size of grant table */
@@ -511,6 +512,10 @@
 #define CTL_ARG_PTR    m2_p1	/* pointer to argument */
 #define CTL_ADDRESS    m2_l1	/* address at traced process' space */
 #define CTL_DATA       m2_l2	/* data field for tracing */
+
+/* SYS_PRIVCTL with CTL_REQUEST == SYS_PRIV_QUERY_MEM */
+#define CTL_PHYSSTART  m2_l1	/* physical memory start in bytes*/
+#define CTL_PHYSLEN    m2_l2	/* length in bytes */
 
 /* Field names for SYS_SETGRANT */
 #define SG_ADDR		m2_p1	/* address */

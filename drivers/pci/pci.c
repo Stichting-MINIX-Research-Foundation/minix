@@ -358,11 +358,6 @@ endpoint_t proc;
 			mr.mr_limit= mr.mr_base +
 				pcidev[devind].pd_bar[i].pb_size-1;
 
-			if(debug) {
-			   printf(
-	"pci_reserve3: for proc %d, should add memory range [0x%x..0x%x]\n",
-				proc, mr.mr_base, mr.mr_limit);
-			}
 			r= sys_privctl(proc, SYS_PRIV_ADD_MEM, &mr);
 			if (r != OK)
 			{

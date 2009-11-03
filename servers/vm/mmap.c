@@ -89,6 +89,34 @@ PUBLIC int do_mmap(message *m)
 }
 
 /*===========================================================================*
+ *				map_perm_check		     		     *
+ *===========================================================================*/
+PUBLIC int map_perm_check(endpoint_t caller, endpoint_t target,
+	phys_bytes physaddr, phys_bytes len)
+{
+	int r;
+
+	/* TTY and memory are allowed to do anything.
+	 * They have to be special cases as they have to be able to do
+	 * anything; TTY even on behalf of anyone for the TIOCMAPMEM
+	 * ioctl. MEM just for itself.
+	 */
+	if(caller == TTY_PROC_NR)
+		return OK;
+	if(caller != target)
+		return EPERM;
+	if(caller == MEM_PROC_NR)
+		return OK;
+
+	/* Anyone else needs explicit permission from the kernel (ultimately
+	 * set by PCI).
+	 */
+	r = sys_privquery_mem(caller, physaddr, len);
+
+	return r;
+}
+
+/*===========================================================================*
  *				do_map_phys		     		     *
  *===========================================================================*/
 PUBLIC int do_map_phys(message *m)
@@ -98,25 +126,38 @@ PUBLIC int do_map_phys(message *m)
 	endpoint_t target;
 	struct vir_region *vr;
 	vir_bytes len;
+	phys_bytes startaddr;
 
 	target = m->VMMP_EP;
+	len = m->VMMP_LEN;
+
 	if(target == SELF)
 		target = m->m_source;
 
 	if((r=vm_isokendpt(target, &n)) != OK)
 		return EINVAL;
 
+	startaddr = (vir_bytes)m->VMMP_PHADDR;
+
+	/* First check permission, then round range down/up. Caller can't
+	 * help it if we can't map in lower than page granularity.
+	 */
+	if(map_perm_check(m->m_source, target, startaddr, len) != OK) {
+		printf("VM: unauthorized mapping of 0x%lx by %d\n",
+			startaddr, m->m_source);
+		return EPERM;
+	}
+
 	vmp = &vmproc[n];
 
 	if(!(vmp->vm_flags & VMF_HASPT))
 		return ENXIO;
 
-	len = m->VMMP_LEN;
 	if(len % VM_PAGE_SIZE)
 		len += VM_PAGE_SIZE - (len % VM_PAGE_SIZE);
 
 	if(!(vr = map_page_region(vmp, arch_vir2map(vmp, vmp->vm_stacktop),
-		VM_DATATOP, len, (vir_bytes)m->VMMP_PHADDR,
+		VM_DATATOP, len, startaddr,
 		VR_DIRECT | VR_NOPF | VR_WRITABLE, 0))) {
 		return ENOMEM;
 	}

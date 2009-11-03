@@ -51,6 +51,7 @@ PUBLIC int do_rs_set_priv(message *m)
 		if (r != OK)
 			return r;
 	}
+
 	return OK;
 }
 

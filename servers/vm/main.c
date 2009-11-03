@@ -44,10 +44,10 @@ typedef u32_t mask_t;
 #define MINEPM 0
 #define MAXMASK (sizeof(mask_t)*8)
 #define ANYEPM (MINEPM+MAXMASK-1)
-#define MAXEPM (ANYEPM-1)
+#define NEEDACL (MINEPM+MAXMASK-2)
+#define MAXEPM (NEEDACL-1)
 #define EPM(e) ((1L) << ((e)-MINEPM))
 #define EPMOK(mask, ep) (((mask) & EPM(ANYEPM)) || ((ep) >= MINEPM && (ep) <= MAXEPM && (EPM(ep) & (mask))))
-#define EPMANYOK(mask, ep) ((mask) & EPM(ANYEPM))
 
 /* Table of calls and a macro to test for being in range. */
 struct {
@@ -65,10 +65,8 @@ struct {
 			((c) - VM_RQ_BASE) : -1)
 
 FORWARD _PROTOTYPE(void vm_init, (void));
+FORWARD _PROTOTYPE(int vm_acl_ok, (endpoint_t caller, int call));
 
-#if SANITYCHECKS
-extern int kputc_use_private_grants;
-#endif
 
 /*===========================================================================*
  *				main					     *
@@ -131,35 +129,14 @@ PUBLIC int main(void)
 		continue;
 	}
 	who_e = msg.m_source;
-	c = msg.m_type - VM_RQ_BASE;
+	c = CALLNUMBER(msg.m_type);
 	result = ENOSYS; /* Out of range or restricted calls return this. */
-	if((c=CALLNUMBER(msg.m_type)) < 0 || !vm_calls[c].vmc_func) {
+	if(c < 0 || !vm_calls[c].vmc_func) {
 		printf("VM: out of range or missing callnr %d from %d\n",
-			msg.m_type, msg.m_source);
-	} else if(!EPMOK(vm_calls[c].vmc_callers, msg.m_source)) {
-		printf("VM: restricted call %s from %d instead of 0x%lx\n",
-			vm_calls[c].vmc_name, msg.m_source,
-			vm_calls[c].vmc_callers);
-	} else if (EPMANYOK(vm_calls[c].vmc_callers, who_e) &&
-		   c != VM_MMAP-VM_RQ_BASE &&
-		   c != VM_MUNMAP_TEXT-VM_RQ_BASE &&
-		   c != VM_MUNMAP-VM_RQ_BASE) {
-		/* check VM acl, we care ANYEPM only,
-		 * and omit other hard-coded permission checks.
-		 */
-		int n;
-
-		if ((r = vm_isokendpt(who_e, &n)) != OK)
-			vm_panic("VM: from strange source.", who_e);
-
-		if (!GET_BIT(vmproc[n].vm_call_priv_mask, c))
-			printf("VM: restricted call %s from %d\n",
-			       vm_calls[c].vmc_name, who_e);
-		else {
-	SANITYCHECK(SCL_FUNCTIONS);
-			result = vm_calls[c].vmc_func(&msg);
-	SANITYCHECK(SCL_FUNCTIONS);
-		}
+			msg.m_type, who_e);
+	} else if (vm_acl_ok(who_e, c) != OK) {
+		printf("VM: unauthorized %s by %d\n",
+			vm_calls[c].vmc_name, who_e);
 	} else {
 	SANITYCHECK(SCL_FUNCTIONS);
 		result = vm_calls[c].vmc_func(&msg);
@@ -326,7 +303,8 @@ PRIVATE void vm_init(void)
 	vm_calls[i].vmc_func = (func); 				      \
 	vm_calls[i].vmc_name = #code; 				      \
 	if(((thecaller) < MINEPM || (thecaller) > MAXEPM) 		\
-		&& (thecaller) != ANYEPM) {				\
+		&& (thecaller) != ANYEPM				\
+		&& (thecaller) != NEEDACL ) {				\
 		vm_panic(#thecaller " invalid", (code));  		\
 	}								\
 	vm_calls[i].vmc_callers |= EPM(thecaller);		      \
@@ -350,35 +328,23 @@ PRIVATE void vm_init(void)
 	CALLMAP(VM_ALLOCMEM, do_allocmem, PM_PROC_NR);
 	CALLMAP(VM_NOTIFY_SIG, do_notify_sig, PM_PROC_NR);
 
-	/* Physical mapping requests.
-	 * tty (for /dev/video) does this.
-	 * memory (for /dev/mem) does this.
-	 */
-	CALLMAP(VM_MAP_PHYS, do_map_phys, TTY_PROC_NR);
-	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys, TTY_PROC_NR);
-	CALLMAP(VM_MAP_PHYS, do_map_phys, MEM_PROC_NR);
-	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys, MEM_PROC_NR);
+	/* Requests from RS */
+	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv, RS_PROC_NR);
 
 	/* Requests from userland (source unrestricted). */
 	CALLMAP(VM_MMAP, do_mmap, ANYEPM);
 	CALLMAP(VM_MUNMAP, do_munmap, ANYEPM);
 	CALLMAP(VM_MUNMAP_TEXT, do_munmap, ANYEPM);
-	CALLMAP(VM_REMAP, do_remap, ANYEPM);
-	CALLMAP(VM_GETPHYS, do_get_phys, ANYEPM);
-	CALLMAP(VM_SHM_UNMAP, do_shared_unmap, ANYEPM);
-	CALLMAP(VM_GETREF, do_get_refcount, ANYEPM);
-	CALLMAP(VM_CTL, do_ctl, ANYEPM);
+	CALLMAP(VM_MAP_PHYS, do_map_phys, ANYEPM); /* Does its own checking. */
+	CALLMAP(VM_UNMAP_PHYS, do_unmap_phys, ANYEPM);
 
-	/* Request only from IPC server */
-	CALLMAP(VM_QUERY_EXIT, do_query_exit, ANYEPM);
-
-	/* Requests (actually replies) from VFS (restricted to VFS only). */
-	CALLMAP(VM_VFS_REPLY_OPEN, do_vfs_reply, VFS_PROC_NR);
-	CALLMAP(VM_VFS_REPLY_MMAP, do_vfs_reply, VFS_PROC_NR);
-	CALLMAP(VM_VFS_REPLY_CLOSE, do_vfs_reply, VFS_PROC_NR);
-
-	/* Requests from RS */
-	CALLMAP(VM_RS_SET_PRIV, do_rs_set_priv, RS_PROC_NR);
+	/* Requests from userland (anyone can call but need an ACL bit). */
+	CALLMAP(VM_REMAP, do_remap, NEEDACL);
+	CALLMAP(VM_GETPHYS, do_get_phys, NEEDACL);
+	CALLMAP(VM_SHM_UNMAP, do_shared_unmap, NEEDACL);
+	CALLMAP(VM_GETREF, do_get_refcount, NEEDACL);
+	CALLMAP(VM_CTL, do_ctl, NEEDACL);
+	CALLMAP(VM_QUERY_EXIT, do_query_exit, NEEDACL);
 
 	/* Sanity checks */
 	if(find_kernel_top() >= VM_PROCSTART)
@@ -392,3 +358,30 @@ PRIVATE void vm_init(void)
 	_minix_unmapzero();
 }
 
+/*===========================================================================*
+ *				vm_acl_ok				     *
+ *===========================================================================*/
+PRIVATE int vm_acl_ok(endpoint_t caller, int call)
+{
+	int n, r;
+
+	/* Some calls are always allowed by some, or all, processes. */
+	if(EPMOK(vm_calls[call].vmc_callers, caller)) {
+		return OK;
+	}
+
+	if ((r = vm_isokendpt(caller, &n)) != OK)
+		vm_panic("VM: from strange source.", caller);
+
+	/* Other calls need an ACL bit. */
+	if (!(vm_calls[call].vmc_callers & EPM(NEEDACL))) {
+		return EPERM;
+	}
+	if (!GET_BIT(vmproc[n].vm_call_priv_mask, call)) {
+		printf("VM: no ACL for %s for %d\n",
+			vm_calls[call].vmc_name, caller);
+		return EPERM;
+	}
+
+	return OK;
+}
