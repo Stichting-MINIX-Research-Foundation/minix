@@ -24,8 +24,6 @@
 .globl	phys_insb	/* likewise byte by byte */
 .globl	phys_outsw	/* transfer data from memory to (disk controller) port */
 .globl	phys_outsb	/* likewise byte by byte */
-.globl	intr_unmask	/* enable an irq at the 8259 controller */
-.globl	intr_mask	/* disable an irq */
 .globl	phys_copy	/* copy data from anywhere to anywhere in memory */
 .globl	phys_copy_fault	/* phys_copy pagefault */
 .globl	phys_memset	/* write pattern anywhere in memory */
@@ -291,90 +289,6 @@ phys_outsb:
 	pop	%ds
 	pop	%esi
 	pop	%ebp
-	ret
-
-
-/*==========================================================================*/
-/*				intr_unmask				    */
-/*==========================================================================*/
-/*
- * PUBLIC void intr_unmask(irq_hook_t *hook) 
- * Enable an interrupt request line by clearing an 8259 bit. 
- * Equivalent C code for hook->irq < 8: 
- *   if ((irq_actids[hook->irq] &= ~hook->id) == 0) 
- *	outb(INT_CTLMASK, inb(INT_CTLMASK) & ~(1 << irq)); 
- */
-
-.balign	16
-intr_unmask:
-	push	%ebp
-	mov	%esp, %ebp
-	pushf
-	cli
-	mov	8(%ebp), %eax	/* hook */
-	mov	8(%eax), %ecx	/* irq */
-	mov	12(%eax), %eax	/* id bit */
-	not	%eax
-	and	%eax, irq_actids(,%ecx)	/* clear this id bit */
-	jne	en_done	/* still masked by other handlers? */
-	movb	$~1, %ah
-	rolb	%cl, %ah	/* ah = ~(1 << (irq % 8)) */
-	mov	$INT_CTLMASK, %edx	/* enable irq < 8 at the master 8259 */
-	cmpb	$8, %cl
-	jb	0f
-	mov	$INT2_CTLMASK, %edx	/* enable irq >= 8 at the slave 8259 */
-0:
-	inb	%dx
-	andb	%ah, %al
-	outb	%dx	/* clear bit at the 8259 */
-en_done:
-	popf
-	leave
-	ret
-
-
-/*==========================================================================*/
-/*				intr_mask				    */
-/*==========================================================================*/
-/*
- * PUBLIC int intr_mask(irq_hook_t *hook) 
- * Disable an interrupt request line by setting an 8259 bit. 
- * Equivalent C code for irq < 8: 
- *   irq_actids[hook->irq] |= hook->id; 
- *   outb(INT_CTLMASK, inb(INT_CTLMASK) | (1 << irq)); 
- * Returns true iff the interrupt was not already disabled. 
- */
-
-.balign	16
-intr_mask:
-	push	%ebp
-	mov	%esp, %ebp
-	pushf
-	cli
-	mov	8(%ebp), %eax	/* hook */
-	mov	8(%eax), %ecx	/* irq */
-	mov	12(%eax), %eax	/* id bit */
-	or	%eax, irq_actids(,%ecx)	/* set this id bit */
-	movb	$1, %ah
-	rolb	%cl, %ah	/* ah = (1 << (irq % 8)) */
-	mov	$INT_CTLMASK, %edx	/* disable irq < 8 at the master 8259 */
-	cmpb	$8, %cl
-	jb	0f
-	mov	$INT2_CTLMASK, %edx	/* disable irq >= 8 at the slave 8259 */
-0:
-	inb	%dx
-	testb	%ah, %al
-	jne	dis_already	/* already disabled? */
-	orb	%ah, %al
-	outb	%dx	/* set bit at the 8259 */
-	mov	$1, %eax	/* disabled by this function */
-	popf
-	leave
-	ret
-dis_already:
-	xor	%eax, %eax	/* already disabled */
-	popf
-	leave
 	ret
 
 

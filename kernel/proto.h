@@ -72,7 +72,6 @@ _PROTOTYPE( int newmap, (struct proc *rp, struct mem_map *map_ptr)	);
 _PROTOTYPE( void vtimer_check, (struct proc *rp)			);
 
 /* interrupt.c */
-_PROTOTYPE( void intr_handle,     (irq_hook_t *hook)		          );
 _PROTOTYPE( void put_irq_handler, (irq_hook_t *hook, int irq,
 						 irq_handler_t handler)  );
 _PROTOTYPE( void rm_irq_handler, (irq_hook_t *hook)                      );
@@ -138,8 +137,6 @@ _PROTOTYPE( clock_t read_clock, (void)					);
 _PROTOTYPE( void clock_stop, (void)    					);
 _PROTOTYPE( int intr_init, (int)					);
 _PROTOTYPE( int intr_disabled, (void)					);
-_PROTOTYPE( int intr_unmask, (irq_hook_t* hook)                     );
-_PROTOTYPE( int intr_mask, (irq_hook_t* hook)                    );
 _PROTOTYPE( void idle_task, (void)                                     );
 _PROTOTYPE( void arch_init, (void)                                     );
 _PROTOTYPE( void ser_putc, (char)						);

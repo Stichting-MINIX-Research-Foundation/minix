@@ -77,3 +77,16 @@ PUBLIC int intr_disabled(void)
 		return 1;
 	return 0;
 }
+
+PUBLIC void irq_8259_unmask(int irq)
+{
+	unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
+
+	outb(ctl_mask, inb(ctl_mask) & ~(1 << (irq & 0x7)));
+}
+
+PUBLIC void irq_8259_mask(int irq)
+{
+	unsigned ctl_mask = irq < 8 ? INT_CTLMASK : INT2_CTLMASK;
+	outb(ctl_mask, inb(ctl_mask) | (1 << (irq & 0x7)));
+}

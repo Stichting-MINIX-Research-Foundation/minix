@@ -6,7 +6,7 @@
  *  
  *   put_irq_handler: register an interrupt handler.
  *   rm_irq_handler:  deregister an interrupt handler.
- *   intr_handle:     handle a hardware interrupt.
+ *   irq_handle:     handle a hardware interrupt.
  *                    called by the system dependent part when an
  *                    external interrupt occures.                     
  *   enable_irq:      enable hook for IRQ.
@@ -17,6 +17,8 @@
 #include "proc.h"
 #include <minix/com.h>
 #include <archconst.h>
+
+#include "arch/i386/hw_intr.h"
 
 /* number of lists of IRQ hooks, one list per supported line. */
 PUBLIC irq_hook_t* irq_handlers[NR_IRQ_VECTORS] = {0};
@@ -29,7 +31,7 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq, irq_handler_t handler)
   int id;
   irq_hook_t **line;
   unsigned long bitmap;
-  
+
   if( irq < 0 || irq >= NR_IRQ_VECTORS )
 	minix_panic("invalid call to put_irq_handler", irq);
 
@@ -60,7 +62,9 @@ PUBLIC void put_irq_handler( irq_hook_t* hook, int irq, irq_handler_t handler)
    *
    * Internal this activates the line or source of the given interrupt.
    */
-  intr_unmask(hook);  
+  if((irq_actids[hook->irq] &= ~hook->id) == 0) {
+	  hw_intr_unmask(hook->irq);
+  }
 }
 
 /*===========================================================================*
@@ -76,7 +80,8 @@ PUBLIC void rm_irq_handler( irq_hook_t* hook ) {
 	minix_panic("invalid call to rm_irq_handler", irq);
 
   /* disable the irq.  */
-  intr_mask(hook);
+  irq_actids[hook->irq] |= hook->id;
+  hw_intr_mask(hook->irq);
     
   /* remove the hook.  */
   line = &irq_handlers[irq];
@@ -96,21 +101,27 @@ PUBLIC void rm_irq_handler( irq_hook_t* hook ) {
 }
 
 /*===========================================================================*
- *				intr_handle				     *
+ *				irq_handle				     *
  *===========================================================================*/
-PUBLIC void intr_handle(irq_hook_t *hook)
-{
-/* Call the interrupt handlers for an interrupt with the given hook list.
- * The assembly part of the handler has already masked the IRQ, reenabled the
- * controller(s) and enabled interrupts.
+/*
+ * The function first disables interrupt is need be and restores the state at
+ * the end. Before returning, it unmasks the IRQ if and only if all active ID
+ * bits are cleared, and restart a process.
  */
+PUBLIC void irq_handle(int irq)
+{
+  irq_hook_t * hook;
+
+  /* here we need not to get this IRQ until all the handlers had a say */
+  hw_intr_mask(irq);
+  hook = irq_handlers[irq];
 
   /* Call list of handlers for an IRQ. */
   while( hook != NULL ) {
     /* For each handler in the list, mark it active by setting its ID bit,
      * call the function, and unmark it if the function returns true.
      */
-    irq_actids[hook->irq] |= hook->id;
+    irq_actids[irq] |= hook->id;
     
     /* Call the hooked function. */
     if( (*hook->handler)(hook) )
@@ -119,10 +130,10 @@ PUBLIC void intr_handle(irq_hook_t *hook)
     /* Next hooked function. */
     hook = hook->next;
   }
-  
-  /* The assembly code will now disable interrupts, unmask the IRQ if and only
-   * if all active ID bits are cleared, and restart a process.
-   */
+
+  /* reenable the IRQ only if there is no active handler */
+  if (irq_actids[irq] == 0)
+	  hw_intr_unmask(irq);
 }
 
 /* Enable/Disable a interrupt line.  */
@@ -130,8 +141,7 @@ PUBLIC void enable_irq(hook)
 irq_hook_t* hook;
 {
   if((irq_actids[hook->irq] &= ~hook->id) == 0) {
-    intr_unmask(hook);
-    return; 
+    hw_intr_unmask(hook->irq);
   }
 }
 
@@ -142,7 +152,7 @@ irq_hook_t* hook;
   if(irq_actids[hook->irq] & hook->id)  /* already disabled */
     return 0;
   irq_actids[hook->irq] |= hook->id;
-  intr_mask(hook);   
+  hw_intr_mask(hook->irq);
   return TRUE;
 }
 

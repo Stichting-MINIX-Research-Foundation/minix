@@ -248,15 +248,10 @@ csinit:
 /* Note this is a macro, it just looks like a subroutine. */
 #define hwint_master(irq)	\
 	call	save			/* save interrupted process state */;\
-	push	(irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
-	call	intr_handle		/* intr_handle(irq_handlers[irq]) */;\
+	push	$irq							    ;\
+	call	irq_handle		/* irq_handle(irq) 		  */;\
 	pop	%ecx							    ;\
-	cmp	$0, (irq_actids+4*irq)	/* interrupt still active?	  */;\
-	jz	0f							    ;\
-	inb	$INT_CTLMASK		/* get current mask */		    ;\
-	orb	$(1<<irq), %al		/* mask irq */			    ;\
-	outb	$INT_CTLMASK		/* disable the irq		  */;\
-0:	movb	$END_OF_INT, %al						    ;\
+	movb	$END_OF_INT, %al						    ;\
 	outb	$INT_CTL			/* reenable master 8259		  */;\
 	ret				/* restart (another) process      */
 
@@ -307,15 +302,10 @@ hwint07:
 /* Note this is a macro, it just looks like a subroutine. */
 #define hwint_slave(irq)	\
 	call	save			/* save interrupted process state */;\
-	push	(irq_handlers+4*irq)	/* irq_handlers[irq]		  */;\
-	call	intr_handle		/* intr_handle(irq_handlers[irq]) */;\
+	push	$irq							    ;\
+	call	irq_handle		/* irq_handle(irq) 		  */;\
 	pop	%ecx							    ;\
-	cmp	$0, (irq_actids+4*irq)	/* interrupt still active?	  */;\
-	jz	0f							    ;\
-	inb	$INT2_CTLMASK						    ;\
-	orb	$(1<<(irq-8)), %al					    ;\
-	outb	$INT2_CTLMASK		/* disable the irq		  */;\
-0:	movb	$END_OF_INT, %al						    ;\
+	movb	$END_OF_INT, %al						    ;\
 	outb	$INT_CTL			/* reenable master 8259		  */;\
 	outb	$INT2_CTL		/* reenable slave 8259		  */;\
 	ret				/* restart (another) process      */
