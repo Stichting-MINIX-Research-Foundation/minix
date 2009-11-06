@@ -18,6 +18,7 @@
 #include <minix/endpoint.h>
 #include "proc.h"
 #include "debug.h"
+#include "clock.h"
 
 /* Prototype declarations for PRIVATE functions. */
 FORWARD _PROTOTYPE( void announce, (void));	
@@ -195,6 +196,16 @@ PUBLIC void main()
    */
   bill_ptr = proc_addr(IDLE);	/* it has to point somewhere */
   announce();				/* print MINIX startup banner */
+
+  /*
+   * enable timer interrupts and clock task on the boot CPU
+   */
+  if (boot_cpu_init_timer(system_hz)) {
+	  minix_panic("FATAL : failed to initialize timer interrupts, "
+			  "cannot continue without any clock source!",
+			  NO_NUM);
+  }
+
 /* Warnings for sanity checks that take time. These warnings are printed
  * so it's a clear warning no full release should be done with them
  * enabled.
@@ -208,6 +219,7 @@ PUBLIC void main()
 #if DEBUG_PROC_CHECK
   FIXME("PROC check enabled");
 #endif
+
   restart();
 }
 
@@ -257,7 +269,7 @@ timer_t *tp;
  * monitor), RBT_MONITOR (execute given code), RBT_RESET (hard reset). 
  */
   intr_init(INTS_ORIG);
-  clock_stop();
+  arch_stop_local_timer();
   arch_shutdown(tp ? tmr_arg(tp)->ta_int : RBT_PANIC);
 }
 

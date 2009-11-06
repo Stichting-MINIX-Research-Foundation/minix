@@ -32,7 +32,6 @@ EXTERN struct loadinfo kloadinfo;	/* status of load average */
 /* Process scheduling information and the kernel reentry count. */
 EXTERN struct proc *proc_ptr;	/* pointer to currently running process */
 EXTERN struct proc *next_ptr;	/* next process to run after restart() */
-EXTERN struct proc *prev_ptr;	
 EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN struct proc *vmrestart;  /* first process on vmrestart queue */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */

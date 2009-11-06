@@ -1190,9 +1190,8 @@ register struct proc *rp;	/* this process is now runnable */
    * process yet or current process isn't ready any more, or
    * it's PREEMPTIBLE.
    */
-	vmassert(proc_ptr);
-  if((proc_ptr->p_priority > rp->p_priority) &&
-   (priv(proc_ptr)->s_flags & PREEMPTIBLE)) 
+  if(!proc_ptr || (proc_ptr->p_priority > rp->p_priority) ||
+		  (priv(proc_ptr)->s_flags & PREEMPTIBLE))
      pick_proc();
 
 #if DEBUG_SCHED_CHECK

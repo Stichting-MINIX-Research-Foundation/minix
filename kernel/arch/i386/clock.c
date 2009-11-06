@@ -6,6 +6,8 @@
 
 #include "../../kernel.h"
 
+#include "../../clock.h"
+
 #define CLOCK_ACK_BIT   0x80    /* PS/2 clock interrupt acknowledge bit */
 
 /* Clock parameters. */
@@ -14,28 +16,30 @@
 #define SQUARE_WAVE     0x36    /* ccaammmb, a = access, m = mode, b = BCD */
                                 /*   11x11, 11 = LSB then MSB, x11 = sq wave */
 #define TIMER_FREQ  1193182    /* clock frequency for timer in PC and AT */
-#define TIMER_COUNT (TIMER_FREQ/system_hz) /* initial value for counter*/
+#define TIMER_COUNT(freq) (TIMER_FREQ/(freq)) /* initial value for counter*/
+
+PRIVATE irq_hook_t pic_timer_hook;		/* interrupt handler hook */
 
 /*===========================================================================*
- *				arch_init_clock				     *
+ *				init_8235A_timer			     *
  *===========================================================================*/
-PUBLIC int arch_init_clock(void)
+PUBLIC int init_8253A_timer(unsigned freq)
 {
 	/* Initialize channel 0 of the 8253A timer to, e.g., 60 Hz,
 	 * and register the CLOCK task's interrupt handler to be run
 	 * on every clock tick.
 	 */
 	outb(TIMER_MODE, SQUARE_WAVE);  /* run continuously */
-	outb(TIMER0, (TIMER_COUNT & 0xff)); /* timer low byte */
-	outb(TIMER0, TIMER_COUNT >> 8); /* timer high byte */ 
+	outb(TIMER0, (TIMER_COUNT(freq) & 0xff)); /* timer low byte */
+	outb(TIMER0, TIMER_COUNT(freq) >> 8); /* timer high byte */
 
 	return OK;
 }
 
 /*===========================================================================*
- *				clock_stop				     *
+ *				stop_8235A_timer			     *
  *===========================================================================*/
-PUBLIC void clock_stop(void)
+PUBLIC void stop_8253A_timer(void)
 {
 	/* Reset the clock to the BIOS rate. (For rebooting.) */
 	outb(TIMER_MODE, 0x36);
@@ -44,9 +48,9 @@ PUBLIC void clock_stop(void)
 }
 
 /*===========================================================================*
- *				read_clock				     *
+ *				read_8235A_timer			     *
  *===========================================================================*/
-PUBLIC clock_t read_clock(void)
+PUBLIC clock_t read_8253A_timer(void)
 {
 	/* Read the counter of channel 0 of the 8253A timer.  This counter
 	 * counts down at a rate of TIMER_FREQ and restarts at
@@ -63,3 +67,26 @@ PUBLIC clock_t read_clock(void)
 	return count;
 }
 
+PUBLIC int arch_init_local_timer(unsigned freq)
+{
+	init_8253A_timer(freq);
+
+	return 0;
+}
+
+PUBLIC void arch_stop_local_timer(void)
+{
+	stop_8253A_timer();
+}
+
+PUBLIC int arch_register_local_timer_handler(irq_handler_t handler)
+{
+	/* Using PIC, Initialize the CLOCK's interrupt hook. */
+	pic_timer_hook.proc_nr_e = NONE;
+
+	put_irq_handler(&pic_timer_hook, CLOCK_IRQ, handler);
+	put_irq_handler(&pic_timer_hook, CLOCK_IRQ,
+			(irq_handler_t)bsp_timer_int_handler);
+
+	return 0;
+}
