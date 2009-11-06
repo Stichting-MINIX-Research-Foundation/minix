@@ -3,7 +3,7 @@
 #define _MMAN_H
 
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 
 /* prot argument for mmap() */

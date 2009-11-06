@@ -3,7 +3,7 @@
 #define _MINIX_SAFECOPIES_H 1
 
 #include <minix/sys_config.h>
-#include <sys/types.h>
+#include <minix/types.h>
 #include <stdint.h>
 
 typedef int32_t cp_grant_id_t;

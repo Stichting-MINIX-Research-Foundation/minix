@@ -6,7 +6,7 @@
 #endif
 
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 
 /* Type definitions. */

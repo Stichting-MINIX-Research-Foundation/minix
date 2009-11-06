@@ -8,7 +8,7 @@
 #define _M_IOCTL_H
 
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 
 #if _EM_WSIZE >= 4

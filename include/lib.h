@@ -11,7 +11,7 @@
 
 /* The following are so basic, all the lib files get them automatically. */
 #include <minix/config.h>	/* must be first */
-#include <sys/types.h>
+#include <minix/types.h>
 #include <limits.h>
 #include <errno.h>
 #include <ansi.h>

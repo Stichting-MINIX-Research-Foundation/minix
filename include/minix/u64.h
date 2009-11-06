@@ -6,7 +6,7 @@
 #define _MINIX__U64_H
 
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 
 u64_t add64(u64_t i, u64_t j);

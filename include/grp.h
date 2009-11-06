@@ -4,7 +4,7 @@
 #define _GRP_H
 
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 
 struct	group { 

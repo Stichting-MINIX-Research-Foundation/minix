@@ -11,7 +11,7 @@
 #define _STDINT_H
 
 #ifndef _MINIX__TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 #include <minix/sys_config.h>
 

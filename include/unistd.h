@@ -4,7 +4,7 @@
 #define _UNISTD_H
 
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 
 /* Values used by access().  POSIX Table 2-8. */

@@ -6,7 +6,7 @@
 #endif
 
 #include <sys/time.h>
-#include <sys/types.h>
+#include <minix/types.h>
 #include <limits.h>
 #include <string.h>
 

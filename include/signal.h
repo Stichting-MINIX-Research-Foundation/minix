@@ -11,7 +11,7 @@
 #endif
 #ifdef _POSIX_SOURCE
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 #endif
 

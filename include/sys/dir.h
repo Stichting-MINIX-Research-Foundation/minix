@@ -1,19 +1,11 @@
-/* The <dir.h> header gives the layout of a directory. */
+/*
+ * this files resolves conflicts between the file of the host system and
+ * the minix specific one. This file is included directly only on Minix
+ * and it is an error to do so on any other system
+ */
 
-#ifndef _DIR_H
-#define _DIR_H
-
-#include <sys/types.h>
-
-#define	DIRBLKSIZ	512	/* size of directory block */
-
-#ifndef DIRSIZ
-#define DIRSIZ	60
+#if !defined(_MINIX) && !defined(__minix) && !defined(__ACK__)
+#error "Including Minix specific file in program targeted for other system"
+#else
+#include <minix/dir.h>
 #endif
-
-struct direct {
-  ino_t d_ino;
-  char d_name[DIRSIZ];
-};
-
-#endif /* _DIR_H */

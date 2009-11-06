@@ -3,7 +3,7 @@
 #ifndef _MINIX_VM_H
 #define _MINIX_VM_H
 
-#include <sys/types.h>
+#include <minix/types.h>
 #include <minix/endpoint.h>
 
 _PROTOTYPE( int vm_exit, (endpoint_t ep));

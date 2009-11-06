@@ -31,7 +31,7 @@ struct {
 #endif /* SPROFILE */
 
 
-#include <sys/types.h>
+#include <minix/types.h>
 
 #  define PROF_GET         2    /* get call profiling tables */
 #  define PROF_RESET       3    /* reset call profiling tables */

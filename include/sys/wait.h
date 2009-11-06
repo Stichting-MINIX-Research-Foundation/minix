@@ -17,7 +17,7 @@
 #define _WAIT_H
 
 #ifndef _TYPES_H
-#include <sys/types.h>
+#include <minix/types.h>
 #endif
 
 #define _LOW(v)		( (v) & 0377)

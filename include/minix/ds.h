@@ -3,7 +3,7 @@
 #ifndef _MINIX_DS_H
 #define _MINIX_DS_H
 
-#include <sys/types.h>
+#include <minix/types.h>
 
 /* DS Flag values. */
 #define DS_IN_USE       0x0001	/* Internal use only. */
