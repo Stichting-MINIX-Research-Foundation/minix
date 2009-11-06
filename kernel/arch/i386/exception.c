@@ -16,21 +16,21 @@
 extern int vm_copy_in_progress, catch_pagefaults;
 extern struct proc *vm_copy_from, *vm_copy_to;
 
-void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
-	u32_t *old_eipptr, u32_t *old_eaxptr, u32_t pagefaultcr2)
+void pagefault( struct proc *pr,
+		struct exception_frame * frame,
+		int is_nested)
 {
 	int s;
 	vir_bytes ph;
 	u32_t pte;
 	int procok = 0, pcok = 0, rangeok = 0;
 	int in_physcopy = 0;
-	vir_bytes test_eip;
 
-	vmassert(old_eipptr);
-	vmassert(old_eaxptr);
+	reg_t pagefaultcr2;
 
-	vmassert(*old_eipptr == old_eip);
-	vmassert(old_eipptr != &old_eip);
+	vmassert(frame);
+
+	pagefaultcr2 = read_cr2();
 
 #if 0
 	printf("kernel: pagefault in pr %d, addr 0x%lx, his cr3 0x%lx, actual cr3 0x%lx\n",
@@ -41,18 +41,21 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 		vmassert(pr->p_seg.p_cr3 == read_cr3());
 	}
 
-	test_eip = k_reenter ? old_eip : pr->p_reg.pc;
+	in_physcopy = (frame->eip > (vir_bytes) phys_copy) &&
+	   (frame->eip < (vir_bytes) phys_copy_fault);
 
-	in_physcopy = (test_eip > (vir_bytes) phys_copy) &&
-	   (test_eip < (vir_bytes) phys_copy_fault);
-
-	if((k_reenter || iskernelp(pr)) &&
+	if((is_nested || iskernelp(pr)) &&
 		catch_pagefaults && in_physcopy) {
 #if 0
 		printf("pf caught! addr 0x%lx\n", pagefaultcr2);
 #endif
-		*old_eipptr = (u32_t) phys_copy_fault;
-		*old_eaxptr = pagefaultcr2;
+		if (is_nested) {
+			frame->eip = (reg_t) phys_copy_fault_in_kernel;
+		}
+		else {
+			pr->p_reg.pc = (reg_t) phys_copy_fault;
+			pr->p_reg.retreg = pagefaultcr2;
+		}
 
 		return;
 	}
@@ -61,19 +64,19 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 	 * have page faults. VM does have its own page table but also
 	 * can't have page faults (because VM has to handle them).
 	 */
-	if(k_reenter || (pr->p_endpoint <= INIT_PROC_NR &&
+	if(is_nested || (pr->p_endpoint <= INIT_PROC_NR &&
 	 !(pr->p_misc_flags & MF_FULLVM)) || pr->p_endpoint == VM_PROC_NR) {
 		/* Page fault we can't / don't want to
 		 * handle.
 		 */
-		kprintf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x, k_reenter %d\n",
+		kprintf("pagefault for process %d ('%s'), pc = 0x%x, addr = 0x%x, flags = 0x%x, is_nested %d\n",
 			pr->p_endpoint, pr->p_name, pr->p_reg.pc,
-			pagefaultcr2, trap_errno, k_reenter);
+			pagefaultcr2, frame->errcode, is_nested);
 		proc_stacktrace(pr);
 		if(pr->p_endpoint != SYSTEM) {
 			proc_stacktrace(proc_addr(SYSTEM));
 		}
-		kprintf("pc of pagefault: 0x%lx\n", test_eip);
+		kprintf("pc of pagefault: 0x%lx\n", frame->eip);
   		minix_panic("page fault in system process", pr->p_endpoint);
 
 		return;
@@ -90,7 +93,7 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 	 * handled.
 	 */
 	pr->p_pagefault.pf_virtual = pagefaultcr2;
-	pr->p_pagefault.pf_flags = trap_errno;
+	pr->p_pagefault.pf_flags = frame->errcode;
 	pr->p_nextpagefault = pagefaults;
 	pagefaults = pr;
 		
@@ -102,16 +105,7 @@ void pagefault(vir_bytes old_eip, struct proc *pr, int trap_errno,
 /*===========================================================================*
  *				exception				     *
  *===========================================================================*/
-PUBLIC void exception(vec_nr, trap_errno, old_eip, old_cs, old_eflags,
-	old_eipptr, old_eaxptr, pagefaultcr2)
-unsigned vec_nr;
-u32_t trap_errno;
-u32_t old_eip;
-U16_t old_cs;
-u32_t old_eflags;
-u32_t *old_eipptr;
-u32_t *old_eaxptr;
-u32_t pagefaultcr2;
+PUBLIC void exception_handler(int is_nested, struct exception_frame * frame)
 {
 /* An exception or unexpected interrupt has occurred. */
 
@@ -144,41 +138,35 @@ struct proc *t;
   register struct ex_s *ep;
   struct proc *saved_proc;
 
-  if(k_reenter > 2) {
-	/* This can't end well. */
-	minix_panic("exception: k_reenter too high", k_reenter);
-  }
-
   /* Save proc_ptr, because it may be changed by debug statements. */
   saved_proc = proc_ptr;	
   
-  ep = &ex_data[vec_nr];
+  ep = &ex_data[frame->vector];
 
-  if (vec_nr == 2) {		/* spurious NMI on some machines */
+  if (frame->vector == 2) {		/* spurious NMI on some machines */
 	kprintf("got spurious NMI\n");
 	return;
   }
 
-  if(vec_nr == PAGE_FAULT_VECTOR) {
-	pagefault(old_eip, saved_proc, trap_errno,
-		old_eipptr, old_eaxptr, pagefaultcr2);
+  if(frame->vector == PAGE_FAULT_VECTOR) {
+	pagefault(saved_proc, frame, is_nested);
 	return;
   }
 
-  /* If an exception occurs while running a process, the k_reenter variable 
-   * will be zero. Exceptions in interrupt handlers or system traps will make 
-   * k_reenter larger than zero.
+  /* If an exception occurs while running a process, the is_nested variable
+   * will be zero. Exceptions in interrupt handlers or system traps will make
+   * is_nested non-zero.
    */
-  if (k_reenter == 0 && ! iskernelp(saved_proc)) {
+  if (is_nested == 0 && ! iskernelp(saved_proc)) {
 #if 0
 	{
 
   		kprintf(
   "vec_nr= %d, trap_errno= 0x%lx, eip= 0x%lx, cs= 0x%x, eflags= 0x%lx\n",
-			vec_nr, (unsigned long)trap_errno,
-			(unsigned long)old_eip, old_cs,
-			(unsigned long)old_eflags);
-		printseg("cs: ", 1, saved_proc, old_cs);
+			frame->vector, (unsigned long)frame->errcode,
+			(unsigned long)frame->eip, frame->cs,
+			(unsigned long)frame->eflags);
+		printseg("cs: ", 1, saved_proc, frame->cs);
 		printseg("ds: ", 0, saved_proc, saved_proc->p_reg.ds);
 		if(saved_proc->p_reg.ds != saved_proc->p_reg.ss) {
 			printseg("ss: ", 0, saved_proc, saved_proc->p_reg.ss);
@@ -193,13 +181,13 @@ struct proc *t;
 
   /* Exception in system code. This is not supposed to happen. */
   if (ep->msg == NIL_PTR || machine.processor < ep->minprocessor)
-	kprintf("\nIntel-reserved exception %d\n", vec_nr);
+	kprintf("\nIntel-reserved exception %d\n", frame->vector);
   else
 	kprintf("\n%s\n", ep->msg);
-  kprintf("k_reenter = %d ", k_reenter);
+  kprintf("is_nested = %d ", is_nested);
 
   kprintf("vec_nr= %d, trap_errno= 0x%x, eip= 0x%x, cs= 0x%x, eflags= 0x%x\n",
-	vec_nr, trap_errno, old_eip, old_cs, old_eflags);
+	frame->vector, frame->errcode, frame->eip, frame->cs, frame->eflags);
   /* TODO should we enable this only when compiled for some debug mode? */
   if (saved_proc) {
 	  kprintf("scheduled was: process %d (%s), ", proc_nr(saved_proc), saved_proc->p_name);

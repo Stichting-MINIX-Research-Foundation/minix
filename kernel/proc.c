@@ -125,7 +125,7 @@ PRIVATE int QueueMess(endpoint_t ep, vir_bytes msg_lin, struct proc *dst)
 /*===========================================================================*
  *				schedcheck				     * 
  *===========================================================================*/
-PUBLIC void schedcheck(void)
+PUBLIC struct proc * schedcheck(void)
 {
 	/* This function is called an instant before proc_ptr is
 	 * to be scheduled again.
@@ -214,7 +214,10 @@ PUBLIC void schedcheck(void)
 #if DEBUG_TRACE
 	proc_ptr->p_schedules++;
 #endif
-	NOREC_RETURN(schedch, );
+
+	proc_ptr = arch_finish_schedcheck();
+
+	NOREC_RETURN(schedch, proc_ptr);
 }
 
 /*===========================================================================*

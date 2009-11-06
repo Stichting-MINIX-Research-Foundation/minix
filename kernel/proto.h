@@ -36,7 +36,8 @@ _PROTOTYPE( int lock_send, (int dst, message *m_ptr)			);
 _PROTOTYPE( void enqueue, (struct proc *rp)				);
 _PROTOTYPE( void dequeue, (struct proc *rp)				);
 _PROTOTYPE( void balance_queues, (struct timer *tp)			);
-_PROTOTYPE( void schedcheck, (void)					);
+_PROTOTYPE( struct proc * schedcheck, (void)				);
+_PROTOTYPE( struct proc * arch_finish_schedcheck, (void)		);
 _PROTOTYPE( struct proc *endpoint_lookup, (endpoint_t ep)		);
 #if DEBUG_ENABLE_IPC_WARNINGS
 _PROTOTYPE( int isokendpt_f, (char *file, int line, endpoint_t e, int *p, int f));
@@ -105,6 +106,7 @@ _PROTOTYPE( void stop_profile_clock, (void)				);
 _PROTOTYPE( phys_bytes phys_copy, (phys_bytes source, phys_bytes dest,
                 phys_bytes count)                                       );
 _PROTOTYPE( void phys_copy_fault, (void));
+_PROTOTYPE( void phys_copy_fault_in_kernel, (void));
 #define virtual_copy(src, dst, bytes) virtual_copy_f(src, dst, bytes, 0)
 #define virtual_copy_vmcheck(src, dst, bytes) virtual_copy_f(src, dst, bytes, 1)
 _PROTOTYPE( int virtual_copy_f, (struct vir_addr *src, struct vir_addr *dst, 

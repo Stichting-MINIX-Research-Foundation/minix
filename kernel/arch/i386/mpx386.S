@@ -1,4 +1,4 @@
-/* 
+/*
  * This file, mpx386.s, is included by mpx.s when Minix is compiled for  
  * 32-bit Intel CPUs. The alternative mpx88.s is compiled for 16-bit CPUs. 
  *
@@ -82,13 +82,8 @@ begbss:
  */
 
 .globl	restart
-.globl	save
 .globl reload_cr3
 .globl write_cr3
-
-.globl	errexception
-.globl	exception1
-.globl	exception
 
 .globl	divide_error
 .globl	single_step_exception
@@ -129,8 +124,6 @@ begbss:
 .globl	hwint14
 .globl	hwint15
 
-.globl	s_call
-.globl	p_s_call
 .globl	level0_call
 
 /* Exported variables. */
@@ -200,7 +193,7 @@ copygdt:
 	mov	%ax, %fs
 	mov	%ax, %gs
 	mov	%ax, %ss
-	mov	$k_stktop, %esp	/* set sp to point to the top of kernel stack */
+	mov	$k_boot_stktop, %esp	/* set sp to point to the top of kernel stack */
 
 /* Save boot parameters into these global variables for i386 code */
 	movl	%edx, params_size
@@ -242,18 +235,33 @@ csinit:
 /*		interrupt handlers for 386 32-bit protected mode	     */
 /*===========================================================================*/
 
+#define PIC_IRQ_HANDLER(irq)	\
+	push	$irq							    	;\
+	call	irq_handle		/* intr_handle(irq_handlers[irq]) */	;\
+	add	$4, %esp						    	;
+
 /*===========================================================================*/
 /*				hwint00 - 07				     */
 /*===========================================================================*/
 /* Note this is a macro, it just looks like a subroutine. */
-#define hwint_master(irq)	\
-	call	save			/* save interrupted process state */;\
-	push	$irq							    ;\
-	call	irq_handle		/* irq_handle(irq) 		  */;\
-	pop	%ecx							    ;\
-	movb	$END_OF_INT, %al						    ;\
-	outb	$INT_CTL			/* reenable master 8259		  */;\
-	ret				/* restart (another) process      */
+
+#define hwint_master(irq) \
+	TEST_INT_IN_KERNEL(4, 0f)					;\
+									\
+	SAVE_PROCESS_CTX(0)						;\
+	movl	$0, %ebp	/* for stack trace */			;\
+	PIC_IRQ_HANDLER(irq)						;\
+	movb	$END_OF_INT, %al					;\
+	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
+	jmp	restart							;\
+									\
+0:									\
+	pusha								;\
+	PIC_IRQ_HANDLER(irq)						;\
+	movb	$END_OF_INT, %al					;\
+	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
+	popa								;\
+	iret								;
 
 /* Each of these entry points is an expansion of the hwint_master macro */
 .balign	16
@@ -301,14 +309,24 @@ hwint07:
 /*===========================================================================*/
 /* Note this is a macro, it just looks like a subroutine. */
 #define hwint_slave(irq)	\
-	call	save			/* save interrupted process state */;\
-	push	$irq							    ;\
-	call	irq_handle		/* irq_handle(irq) 		  */;\
-	pop	%ecx							    ;\
-	movb	$END_OF_INT, %al						    ;\
-	outb	$INT_CTL			/* reenable master 8259		  */;\
-	outb	$INT2_CTL		/* reenable slave 8259		  */;\
-	ret				/* restart (another) process      */
+	TEST_INT_IN_KERNEL(4, 0f)					;\
+									\
+	SAVE_PROCESS_CTX(0)						;\
+	movl	$0, %ebp	/* for stack trace */			;\
+	PIC_IRQ_HANDLER(irq)						;\
+	movb	$END_OF_INT, %al					;\
+	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
+	outb	$INT2_CTL	/* reenable slave 8259		  */	;\
+	jmp	restart							;\
+									\
+0:									\
+	pusha								;\
+	PIC_IRQ_HANDLER(irq)						;\
+	movb	$END_OF_INT, %al					;\
+	outb	$INT_CTL	/* reenable interrupts in master pic */	;\
+	outb	$INT2_CTL	/* reenable slave 8259		  */	;\
+	popa								;\
+	iret								;
 
 /* Each of these entry points is an expansion of the hwint_slave macro */
 .balign	16
@@ -351,229 +369,185 @@ hwint15:
 /* Interrupt routine for irq 15 */
 	hwint_slave(15)
 
-/*===========================================================================*/
-/*				save					     */
-/*===========================================================================*/
 /*
- * Save for protected mode. 
- * This is much simpler than for 8086 mode, because the stack already points 
- * into the process table, or has already been switched to the kernel stack. 
+ * syscall is only from a process to kernel
  */
+.align 16
+.globl syscall_entry
+syscall_entry:
 
-.balign	16
-save:
-	cld	/* set direction flag to a known value */
-	pushal	/* save "general" registers */
-	pushw	%ds	/* save ds */
-	pushw	%es	/* save es */
-	pushw	%fs	/* save fs */
-	pushw	%gs	/* save gs */
-	mov	%ss, %dx	/* ss is kernel data segment */
-	mov	%dx, %ds	/* load rest of kernel segments */
-	mov	%dx, %es	/* kernel does not use fs, gs */
-	mov	%esp, %eax	/* prepare to return */
-	incb	k_reenter	/* from -1 if not reentering */
-	jne	set_restart1	/* stack is already kernel stack */
-	mov	$k_stktop, %esp
-	push	$restart	/* build return address for int handler */
-	xor	%ebp, %ebp	/* for stacktrace */
-	jmp	*RETADR-P_STACKBASE(%eax)
+	SAVE_PROCESS_CTX(0)
 
-.balign	4
-set_restart1:
-	push	$restart1
-	jmp	*RETADR-P_STACKBASE(%eax)
+	/* save the pointer to the current process */
+	push	%ebp
 
-/*===========================================================================*/
-/*				_s_call					     */
-/*===========================================================================*/
-.balign	16
-s_call:
-p_s_call:
-	cld	/* set direction flag to a known value */
-	sub	$4, %esp	/* skip RETADR */
-	pusha			/* save "general" registers */
-	pushw	%ds
-	pushw	%es
-	pushw	%fs
-	pushw	%gs
+	/*
+	 * pass the syscall arguments from userspace to the handler.
+	 * SAVE_PROCESS_CTX() does not clobber these registers, they are still
+	 * set as the userspace have set them
+	 */
+	push	%edx
+	push	%ebx
+	push	%eax
+	push	%ecx
 
-	mov	%ss, %si	/* ss is kernel data segment */
-	mov	%si, %ds	/* load rest of kernel segments */
-	mov	%si, %es	/* kernel does not use fs, gs */
-	incb	k_reenter	/* increment kernel entry count */
-	mov	%esp, %esi	/* assumes P_STACKBASE == 0 */
-	mov	$k_stktop, %esp
-	xor	%ebp, %ebp	/* for stacktrace */
-/* end of inline save */
-/* now set up parameters for sys_call() */
-	push	%edx	/* event set or flags bit map  */
-	push	%ebx	/* pointer to user message */
-	push	%eax	/* source / destination */
-	push	%ecx	/* call number (ipc primitive to use) */
+	/* for stack trace */
+	movl	$0, %ebp
 
-	call	sys_call	/* sys_call(call_nr, src_dst, m_ptr, bit_map) */
-/* caller is now explicitly in proc_ptr */
-	mov	%eax, AXREG(%esi)
+	call	sys_call
 
-/* Fall into code to restart proc/task running. */
+	/* restore the current process pointer and save the return value */
+	add	$4 * 4, %esp
+	pop	%esi
+	mov     %eax, AXREG(%esi)
+
+	jmp	restart
+
+
+.align 16
+/*
+ * called by the exception interrupt vectors. If the exception does not push
+ * errorcode, we assume that the vector handler pushed 0 instead. Next pushed
+ * thing is the vector number. From this point on we can continue as if every
+ * exception pushes an error code
+ */
+exception_entry:
+	/*
+	 * check if it is a nested trap by comparing the saved code segment
+	 * descriptor with the kernel CS first
+	 */
+	TEST_INT_IN_KERNEL(12, exception_entry_nested)
+
+exception_entry_from_user:
+
+	cld
+
+	SAVE_PROCESS_CTX(8)
+
+	/* for stack trace clear %ebp */
+	movl	$0, %ebp
+
+	/*
+	 * push a pointer to the interrupt state pushed by the cpu and the
+	 * vector number pushed by the vector handler just before calling
+	 * exception_entry and call the exception handler.
+	 */
+	push	%esp
+	push	$0	/* it's not a nested exception */
+	call 	exception_handler
+
+	jmp	restart
+
+exception_entry_nested:
+
+	pusha
+	mov	%esp, %eax
+	add	$(8 * 4), %eax
+	push	%eax
+	pushl	$1			/* it's a nested exception */
+	call	exception_handler
+	add	$8, %esp
+	popa
+
+	/* clear the error code and the exception number */
+	add	$8, %esp
+	/* resume execution at the point of exception */
+	iret
 
 /*===========================================================================*/
 /*				restart					     */
 /*===========================================================================*/
 restart:
-
-/* Restart the current process or the next process if it is set.  */
-
-	cli
 	call	schedcheck
-	movl	proc_ptr, %esp	/* will assume P_STACKBASE == 0 */
+
+	/* %eax is set by schedcheck() to the process to run */
+	mov	%eax, %esp	/* will assume P_STACKBASE == 0 */
+
 	lldt	P_LDT_SEL(%esp)	/* enable process' segment descriptors  */
 	cmpl	$0, P_CR3(%esp)
 	jz	0f
+
+	/*
+	 * test if the cr3 is loaded with the current value to avoid unnecessary
+	 * TLB flushes
+	 */
 	mov	P_CR3(%esp), %eax
-	cmpl	loadedcr3, %eax
+	mov	%cr3, %ecx
+	cmp	%ecx, %eax
 	jz	0f
 	mov	%eax, %cr3
-	mov	%eax, loadedcr3
-	mov	proc_ptr, %eax
-	mov	%eax, ptproc
+	mov	%esp, ptproc
 	movl	$0, dirtypde
 0:
-	lea	P_STACKTOP(%esp), %eax	/* arrange for next interrupt */
-	movl	%eax, tss+TSS3_S_SP0	/* to save state in process table */
-restart1:
-	decb	k_reenter
+
 	popw	%gs
 	popw	%fs
 	popw	%es
 	popw	%ds
 	popal
-	add	$4, %esp	/* skip return adr */
+	add	$4, %esp	/* skip return adr FIXME unused value */
 	iret	/* continue process */
 
 /*===========================================================================*/
 /*				exception handlers			     */
 /*===========================================================================*/
+
+#define EXCEPTION_ERR_CODE(vector)	\
+	push	$vector			;\
+	jmp	exception_entry
+
+#define EXCEPTION_NO_ERR_CODE(vector)	\
+	pushl	$0		;\
+	EXCEPTION_ERR_CODE(vector)
+
 divide_error:
-	push	$DIVIDE_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(DIVIDE_VECTOR)
 
 single_step_exception:
-	push	$DEBUG_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(DEBUG_VECTOR)
 
 nmi:
-	push	$NMI_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(NMI_VECTOR)
 
 breakpoint_exception:
-	push	$BREAKPOINT_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(BREAKPOINT_VECTOR)
 
 overflow:
-	push	$OVERFLOW_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(OVERFLOW_VECTOR)
 
 bounds_check:
-	push	$BOUNDS_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(BOUNDS_VECTOR)
 
 inval_opcode:
-	push	$INVAL_OP_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(INVAL_OP_VECTOR)
 
 copr_not_available:
-	push	$COPROC_NOT_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(COPROC_NOT_VECTOR)
 
 double_fault:
-	push	$DOUBLE_FAULT_VECTOR
-	jmp	errexception
+	EXCEPTION_ERR_CODE(DOUBLE_FAULT_VECTOR)
 
 copr_seg_overrun:
-	push	$COPROC_SEG_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(COPROC_SEG_VECTOR)
 
 inval_tss:
-	push	$INVAL_TSS_VECTOR
-	jmp	errexception
+	EXCEPTION_ERR_CODE(INVAL_TSS_VECTOR)
 
 segment_not_present:
-	push	$SEG_NOT_VECTOR
-	jmp	errexception
+	EXCEPTION_ERR_CODE(SEG_NOT_VECTOR)
 
 stack_exception:
-	push	$STACK_FAULT_VECTOR
-	jmp	errexception
+	EXCEPTION_ERR_CODE(STACK_FAULT_VECTOR)
 
 general_protection:
-	push	$PROTECTION_VECTOR
-	jmp	errexception
+	EXCEPTION_ERR_CODE(PROTECTION_VECTOR)
 
 page_fault:
-	push	$PAGE_FAULT_VECTOR
-	push	%eax
-	mov	%cr2, %eax
-	movl	%eax, %ss:pagefaultcr2
-	pop	%eax
-	jmp	errexception
+	EXCEPTION_ERR_CODE(PAGE_FAULT_VECTOR)
 
 copr_error:
-	push	$COPROC_ERR_VECTOR
-	jmp	handle_exception
+	EXCEPTION_NO_ERR_CODE(COPROC_ERR_VECTOR)
 
-/*===========================================================================*/
-/*				handle_exception				     */
-/*===========================================================================*/
-/* This is called for all exceptions which do not push an error code. */
-
-.balign	16
-handle_exception:
-	movl	$0, %ss:trap_errno	/* clear trap_errno */
-	pop	%ss:ex_number
-	jmp	exception1
-
-/*===========================================================================*/
-/*				errexception				     */
-/*===========================================================================*/
-/* This is called for all exceptions which push an error code. */
-
-.balign	16
-errexception:
-	pop	%ss:ex_number
-	pop	%ss:trap_errno
-exception1:
-/* Common for all exceptions. */
-	movl	%esp, %ss:old_eax_ptr		/* where will eax be saved */
-	subl	$PCREG-AXREG, %ss:old_eax_ptr	/* here */
-
-	push	%eax	/* eax is scratch register */
-
-	mov	0+4(%esp), %eax	/* old eip */
-	movl	%eax, %ss:old_eip
-	mov	%esp, %eax
-	add	$4, %eax
-	mov	%eax, %ss:old_eip_ptr
-	movzwl	4+4(%esp), %eax	/* old cs */
-	movl	%eax, %ss:old_cs
-	mov	8+4(%esp), %eax	/* old eflags */
-	movl	%eax, %ss:old_eflags
-
-	pop	%eax
-	call	save
-	push	pagefaultcr2
-	push	old_eax_ptr
-	push	old_eip_ptr
-	push	old_eflags
-	push	old_cs
-	push	old_eip
-	push	trap_errno
-	push	ex_number
-	call	exception	/* (ex_number, trap_errno, old_eip, */
-				/* old_cs, old_eflags) */
-	add	$8*4, %esp
-	ret
 
 /*===========================================================================*/
 /*				write_cr3				     */
@@ -583,10 +557,10 @@ write_cr3:
 	push    %ebp
 	mov     %esp, %ebp
 	mov	8(%ebp), %eax
-	cmpl	loadedcr3, %eax
+	mov	%cr3, %ecx
+	cmp	%ecx, %eax
 	jz	0f
 	mov	%eax, %cr3
-	mov	%eax, loadedcr3
 	movl	$0, dirtypde
 0:
 	pop     %ebp
@@ -597,13 +571,17 @@ write_cr3:
 /*===========================================================================*/
 level0_call:
 /*
- * which level0 function to call was passed here by putting it in eax, so
- * we get that from the saved state.
+ * which level0 function to call was passed here by putting it in %eax
  */
-	call	save
-	movl	proc_ptr, %eax
-	movl	AXREG(%eax), %eax
-	jmp	*%eax
+	SAVE_PROCESS_CTX(0)
+	/* for stack trace */
+	movl	$0, %ebp
+	/*
+	 * the function to call is in %eax, set in userspace. SAVE_PROCESS_CTX()
+	 * does not clobber this register so we can use it straightaway
+	 */
+	call	*%eax
+	jmp	restart
 
 
 /*===========================================================================*/
@@ -631,16 +609,11 @@ reload_cr3:
 .short	0x526F	/* this must be the first data entry (magic #) */
 
 .bss
-k_stack:
-.space	K_STACK_BYTES	/* kernel stack */
-k_stktop:
-/* top of kernel stack */
-.lcomm	ex_number, 4
-.lcomm	trap_errno, 4
-.lcomm  old_eip_ptr, 4
-.lcomm  old_eax_ptr, 4
-.lcomm	old_eip, 4
-.lcomm	old_cs, 4
-.lcomm	old_eflags, 4
-.lcomm  pagefaultcr2, 4
-.lcomm  loadedcr3, 4
+/*
+ * this stack is used temporarily for booting only. We switch to a proper kernel
+ * stack after the first trap to kernel
+ */
+.globl k_boot_stktop
+k_boot_stack:
+.space	4096		/* kernel stack */ /* FIXME use macro here */
+k_boot_stktop:		/* top of kernel stack */

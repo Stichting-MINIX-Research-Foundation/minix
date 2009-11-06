@@ -26,6 +26,7 @@
 .globl	phys_outsb	/* likewise byte by byte */
 .globl	phys_copy	/* copy data from anywhere to anywhere in memory */
 .globl	phys_copy_fault	/* phys_copy pagefault */
+.globl	phys_copy_fault_in_kernel /* phys_copy pagefault in kernel */
 .globl	phys_memset	/* write pattern anywhere in memory */
 .globl	mem_rdw	/* copy one word from [segment:offset] */
 .globl	reset	/* reset the system */
@@ -33,6 +34,7 @@
 .globl	level0	/* call a function at level 0 */
 .globl	read_cpu_flags	/* read the cpu flags */
 .globl	read_cr0	/* read cr0 */
+.globl	read_cr2	/* read cr2 */
 .globl	getcr3val
 .globl	write_cr0	/* write a value in cr0 */
 .globl	read_cr4
@@ -343,6 +345,13 @@ phys_copy_fault:			/* kernel can send us here */
 	pop	%esi
 	ret
 
+phys_copy_fault_in_kernel:			/* kernel can send us here */
+	pop	%es
+	pop	%edi
+	pop	%esi
+	mov	%cr2, %eax
+	ret
+
 /*===========================================================================*/
 /*				phys_memset				     */
 /*===========================================================================*/
@@ -436,7 +445,7 @@ idle_task:
  */
 	push	$halt
 	call	level0	/* level0(halt) */
-	pop	%eax
+	add	$4, %esp
 	jmp	idle_task
 halt:
 	sti
@@ -453,18 +462,23 @@ halt:
  * things that are only possible at the most privileged CPU level. 
  */ 
 level0:
-	mov	4(%esp), %eax
-	cmpb	$-1, k_reenter
+	/* check whether we are already running in kernel, the kernel cs
+	 * selector has 3 lower bits zeroed */
+	mov	%cs, %ax
+	cmpw	$CS_SELECTOR, %ax
 	jne	0f
-	int	$LEVEL0_VECTOR
-	ret
 
-0:
+	/* call the function directly as if it was a normal function call */
+	mov	4(%esp), %eax
 	call	*%eax
 	ret
 
 
-
+	/* if not runnig in the kernel yet, trap to kernel */
+0:
+	mov	4(%esp), %eax
+	int	$LEVEL0_VECTOR
+	ret
 
 /*===========================================================================*/
 /*			      read_flags					     */
@@ -519,6 +533,14 @@ write_cr0:
 	jmp	0f	/* A jump is required for some flags */
 0:
 	pop	%ebp
+	ret
+
+/*===========================================================================*/
+/*			      read_cr2					     */
+/*===========================================================================*/
+/* PUBLIC reg_t read_cr2(void); */
+read_cr2:
+	mov	%cr2, %eax
 	ret
 
 /*===========================================================================*/

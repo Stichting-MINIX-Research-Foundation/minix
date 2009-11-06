@@ -922,7 +922,6 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 			target->p_endpoint, target->p_name);
 #endif
 
-		vmassert(k_reenter == -1);
 		vmassert(proc_ptr->p_endpoint == SYSTEM);
 		vm_suspend(caller, target, lin, bytes, wr, VMSTYPE_KERNELCALL);
 

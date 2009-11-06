@@ -25,37 +25,6 @@ struct gatedesc_s {
   u16_t offset_high;
 };
 
-struct tss_s {
-  reg_t backlink;
-  reg_t sp0;                    /* stack pointer to use during interrupt */
-  reg_t ss0;                    /*   "   segment  "  "    "        "     */
-  reg_t sp1;
-  reg_t ss1;
-  reg_t sp2;
-  reg_t ss2;
-  reg_t cr3;
-  reg_t ip;
-  reg_t flags;
-  reg_t ax;
-  reg_t cx;
-  reg_t dx;
-  reg_t bx;
-  reg_t sp;
-  reg_t bp;
-  reg_t si;
-  reg_t di;
-  reg_t es;
-  reg_t cs;
-  reg_t ss;
-  reg_t ds;
-  reg_t fs;
-  reg_t gs;
-  reg_t ldt;
-  u16_t trap;
-  u16_t iobase;
-/* u8_t iomap[0]; */
-};
-
 PUBLIC struct segdesc_s gdt[GDT_SIZE];		/* used in klib.s and mpx.s */
 PRIVATE struct gatedesc_s idt[IDT_SIZE];	/* zero-init so none present */
 PUBLIC struct tss_s tss;			/* zero init */
@@ -204,13 +173,7 @@ PUBLIC void prot_init(void)
 	rp->p_seg.p_ldt_sel = ldt_index * DESC_SIZE;
   }
 
-  /* Build main TSS.
-   * This is used only to record the stack pointer to be used after an
-   * interrupt.
-   * The pointer is set up so that an interrupt automatically saves the
-   * current process's registers ip:cs:f:sp:ss in the correct slots in the
-   * process table.
-   */
+  /* Build main TSS */
   tss.ss0 = DS_SELECTOR;
   init_dataseg(&gdt[TSS_INDEX], vir2phys(&tss), sizeof(tss), INTR_PRIVILEGE);
   gdt[TSS_INDEX].access = PRESENT | (INTR_PRIVILEGE << DPL_SHIFT) | TSS_TYPE;
@@ -249,7 +212,7 @@ PUBLIC void idt_init(void)
 		{ general_protection, PROTECTION_VECTOR, INTR_PRIVILEGE },
 		{ page_fault, PAGE_FAULT_VECTOR, INTR_PRIVILEGE },
 		{ copr_error, COPROC_ERR_VECTOR, INTR_PRIVILEGE },
-		{ s_call, SYS386_VECTOR, USER_PRIVILEGE },/* 386 system call */
+		{ syscall_entry, SYS386_VECTOR, USER_PRIVILEGE },/* 386 system call */
 		{ level0_call, LEVEL0_VECTOR, TASK_PRIVILEGE },
 		{ NULL, 0, 0}
 	};

@@ -36,7 +36,6 @@ EXTERN struct proc *bill_ptr;	/* process to bill for clock ticks */
 EXTERN struct proc *vmrestart;  /* first process on vmrestart queue */
 EXTERN struct proc *vmrequest;  /* first process on vmrequest queue */
 EXTERN struct proc *pagefaults; /* first process on pagefault queue */
-EXTERN char k_reenter;		/* kernel reentry count (entry count less 1) */
 EXTERN unsigned lost_ticks;	/* clock ticks counted outside clock task */
 
 

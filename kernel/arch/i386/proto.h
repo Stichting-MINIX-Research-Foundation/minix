@@ -20,7 +20,6 @@ _PROTOTYPE( void hwint13, (void) );
 _PROTOTYPE( void hwint14, (void) );
 _PROTOTYPE( void hwint15, (void) );
 
-
 /* Exception handlers (real or protected mode), in numerical order. */
 void _PROTOTYPE( int00, (void) ), _PROTOTYPE( divide_error, (void) );
 void _PROTOTYPE( int01, (void) ), _PROTOTYPE( single_step_exception, (void) );
@@ -41,7 +40,7 @@ void                              _PROTOTYPE( copr_error, (void) );
 
 /* Software interrupt handlers, in numerical order. */
 _PROTOTYPE( void trp, (void) );
-_PROTOTYPE( void s_call, (void) ), _PROTOTYPE( p_s_call, (void) ); 
+_PROTOTYPE( void syscall_entry, (void) );
 _PROTOTYPE( void level0_call, (void) );
 
 /* memory.c */
@@ -51,16 +50,25 @@ _PROTOTYPE( void vm_set_cr3, (struct proc *));
 
 
 /* exception.c */
-_PROTOTYPE( void exception, (unsigned vec_nr, u32_t trap_errno,
-	u32_t old_eip, U16_t old_cs, u32_t old_eflags,
-	u32_t *old_eip_ptr, u32_t *old_eax_ptr, u32_t pagefaultcr2)	);
+struct exception_frame {
+	reg_t	vector;		/* which interrupt vector was triggered */
+	reg_t	errcode;	/* zero if no exception does not push err code */
+	reg_t	eip;
+	reg_t	cs;
+	reg_t	eflags;
+	reg_t	esp;		/* undefined if trap is nested */
+	reg_t	ss;		/* undefined if trap is nested */
+};
+
+_PROTOTYPE( void exception, (struct exception_frame * frame));
 
 /* klib386.s */
 _PROTOTYPE( void level0, (void (*func)(void))                           );
 _PROTOTYPE( void monitor, (void)                                        );
 _PROTOTYPE( void reset, (void)                                          );
 _PROTOTYPE( void int86, (void)                     			);
-_PROTOTYPE( unsigned long read_cr0, (void)                              );
+_PROTOTYPE( reg_t read_cr0, (void)					);
+_PROTOTYPE( reg_t read_cr2, (void)					);
 _PROTOTYPE( void write_cr0, (unsigned long value)                       );
 _PROTOTYPE( unsigned long read_cr4, (void)                              );
 _PROTOTYPE( void write_cr4, (unsigned long value)                       );
@@ -75,6 +83,39 @@ _PROTOTYPE( void reload_cr3, (void) );
 _PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes)	);
 
 /* protect.c */
+struct tss_s {
+  reg_t backlink;
+  reg_t sp0;                    /* stack pointer to use during interrupt */
+  reg_t ss0;                    /*   "   segment  "  "    "        "     */
+  reg_t sp1;
+  reg_t ss1;
+  reg_t sp2;
+  reg_t ss2;
+  reg_t cr3;
+  reg_t ip;
+  reg_t flags;
+  reg_t ax;
+  reg_t cx;
+  reg_t dx;
+  reg_t bx;
+  reg_t sp;
+  reg_t bp;
+  reg_t si;
+  reg_t di;
+  reg_t es;
+  reg_t cs;
+  reg_t ss;
+  reg_t ds;
+  reg_t fs;
+  reg_t gs;
+  reg_t ldt;
+  u16_t trap;
+  u16_t iobase;
+/* u8_t iomap[0]; */
+};
+
+EXTERN struct tss_s tss;
+
 _PROTOTYPE( void prot_init, (void)                     			);
 _PROTOTYPE( void idt_init, (void)                     			);
 _PROTOTYPE( void init_codeseg, (struct segdesc_s *segdp, phys_bytes base,
@@ -99,6 +140,10 @@ EXTERN struct gate_table_s gate_table_pic[];
 
 /* copies an array of vectors to the IDT. The last vector must be zero filled */
 _PROTOTYPE(void idt_copy_vectors, (struct gate_table_s * first));
+
+EXTERN void * k_boot_stktop;
+_PROTOTYPE(void tss_init, (struct tss_s * tss, void * kernel_stack, unsigned cpu));
+
 
 /* functions defined in architecture-independent kernel source. */
 #include "../../proto.h"

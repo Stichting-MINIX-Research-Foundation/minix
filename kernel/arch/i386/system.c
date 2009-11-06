@@ -107,9 +107,27 @@ PUBLIC void arch_get_aout_headers(int i, struct exec *h)
 	phys_copy(aout + i * A_MINHDR, vir2phys(h), (phys_bytes) A_MINHDR);
 }
 
+PUBLIC void tss_init(struct tss_s * tss, void * kernel_stack, unsigned cpu)
+{
+	/*
+	 * make space for process pointer and cpu id and point to the first
+	 * usable word
+	 */
+	tss->sp0 = ((unsigned) kernel_stack) - 2 * sizeof(void *);
+	tss->ss0 = DS_SELECTOR;
+
+	/*
+	 * set the cpu id at the top of the stack so we know on which cpu is
+	 * this stak in use when we trap to kernel
+	 */
+	*((reg_t *)(tss->sp0 + 1 * sizeof(reg_t))) = cpu;
+}
+
 PUBLIC void arch_init(void)
 {
 	idt_init();
+
+	tss_init(&tss, &k_boot_stktop, 0);
 
 #if 0
 	/* Set CR0_EM until we get FP context switching */
@@ -388,4 +406,13 @@ PUBLIC void arch_do_syscall(struct proc *proc)
 
   /* Make the system call, for real this time. */
   proc->p_reg.retreg = sys_call(call_nr, src_dst_e, m_ptr, bit_map);
+}
+
+PUBLIC struct proc * arch_finish_schedcheck(void)
+{
+	char * stk;
+	stk = (char *)tss.sp0;
+	/* set pointer to the process to run on the stack */
+	*((reg_t *)stk) = (reg_t) proc_ptr;
+	return proc_ptr;
 }
