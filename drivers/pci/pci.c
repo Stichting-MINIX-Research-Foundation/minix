@@ -1254,9 +1254,8 @@ PRIVATE void complete_bridges()
 /*===========================================================================*
  *				complete_bars				     *
  *===========================================================================*/
-PRIVATE void complete_bars()
+PRIVATE void complete_bars(void)
 {
-#if 0 
 	int i, j, r, bar_nr, reg;
 	u32_t memgap_low, memgap_high, iogap_low, iogap_high, io_high,
 		base, size, v32, diff1, diff2;
@@ -1273,24 +1272,20 @@ PRIVATE void complete_bars()
 	while (*cp != '\0')
 	{
 		base= strtoul(cp, &next, 16);
-		if (next == cp || *next != ':')
-		{
-			printf("PCI: bad memory environment string '%s'\n",
-				memstr);
-			panic(NULL, NULL, NO_NUM);
-		}
+		if (!(*next) || next == cp || *next != ':')
+			goto bad_mem_string;
 		cp= next+1;
 		size= strtoul(cp, &next, 16);
 		if (next == cp || (*next != ',' && *next != '\0'))
-		{
-			printf("PCI: bad memory environment string '%s'\n",
-				memstr);
-			panic(NULL, NULL, NO_NUM);
-		}
-		cp= next+1;
-
+		if (!*next)
+			goto bad_mem_string;
 		if (base+size > memgap_low)
 			memgap_low= base+size;
+
+		if (*next)
+			cp= next+1;
+		else
+			break;
 	}
 
 	memgap_high= 0xfe000000;	/* Leave space for the CPU (APIC) */
@@ -1473,7 +1468,11 @@ PRIVATE void complete_bars()
 			printf("should allocate resources for device %d\n", i);
 		}
 	}
-#endif
+	return;
+
+bad_mem_string:
+	printf("PCI: bad memory environment string '%s'\n", memstr);
+	panic(NULL, NULL, NO_NUM);
 }
 
 /*===========================================================================*
