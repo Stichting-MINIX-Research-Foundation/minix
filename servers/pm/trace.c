@@ -175,7 +175,6 @@ PUBLIC int do_trace()
 	/* Resume the child as if nothing ever happened. */ 
 	child->mp_flags &= ~STOPPED;
 	child->mp_trace_flags = 0;
-	req = T_RESUME;
 
 	check_pending(child);
 

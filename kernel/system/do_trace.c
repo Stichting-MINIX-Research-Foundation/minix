@@ -163,6 +163,10 @@ register message *m_ptr;
 	m_ptr->CTL_DATA = 0;
 	break;
 
+  case T_DETACH:		/* detach tracer */
+	rp->p_misc_flags &= ~MF_SC_ACTIVE;
+
+	/* fall through */
   case T_RESUME:		/* resume execution */
 	RTS_LOCK_UNSET(rp, P_STOP);
 	m_ptr->CTL_DATA = 0;

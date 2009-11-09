@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <sys/select.h>
 #include <sys/ptrace.h>
 
 #define ITERATIONS 3
@@ -56,6 +57,8 @@ _PROTOTYPE(void test_syscall_child, (void));
 _PROTOTYPE(void test_syscall, (void));
 _PROTOTYPE(void test_tracefork_child, (void));
 _PROTOTYPE(void test_tracefork, (void));
+_PROTOTYPE(void test_reattach_child, (void));
+_PROTOTYPE(void test_reattach, (void));
 _PROTOTYPE(void altexec, (int setflag, int *traps, int *stop));
 _PROTOTYPE(void test_altexec, (void));
 _PROTOTYPE(void test_noaltexec, (void));
@@ -120,6 +123,7 @@ int a;
   if (m & 0020000) test_tracefork();
   if (m & 0040000) test_altexec();
   if (m & 0100000) test_noaltexec();
+  if (m & 0200000) test_reattach();
 }
 
 pid_t traced_fork(c)
@@ -1320,6 +1324,90 @@ void test_noaltexec()
   if (traps < 4) e(12);
   if (traps % 2) e(13);
   if (stop >= 0) e(14);
+}
+
+void test_reattach_child()
+{
+  struct timeval tv;
+
+  if (READ() != 0) e(100);
+
+  tv.tv_sec = 2;
+  tv.tv_usec = 0;
+  if (select(0, NULL, NULL, NULL, &tv) != 0) e(101);
+
+  exit(42);
+}
+
+void test_reattach()
+{
+  pid_t pid;
+  int r, status, count;
+
+  subtest = 17;
+
+  pid = traced_fork(test_reattach_child);
+
+  if (kill(pid, SIGSTOP) != 0) e(1);
+
+  if (waitpid(pid, &status, 0) != pid) e(2);
+  if (!_WIFSTOPPED(status)) e(3);
+  if (WSTOPSIG(status) != SIGSTOP) e(4);
+
+  WRITE(0);
+
+  signal(SIGALRM, dummy_handler);
+  alarm(1);
+
+  /* Start tracing system calls. We don't know how many there will be until
+   * we reach the child's select(), so we have to interrupt ourselves.
+   */
+  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(5);
+
+  for (count = 0; (r = waitpid(pid, &status, 0)) == pid; count++) {
+	if (!_WIFSTOPPED(status)) e(6);
+	if (WSTOPSIG(status) != SIGTRAP) e(7);
+
+	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(8);
+  }
+
+  if (r != -1 || errno != EINTR) e(9);
+
+  /* We always start with syscall enter event; the last event we should have
+   * seen before the alarm was entering the select() call.
+   */
+  if (!(count % 2)) e(10);
+
+  /* Detach, and immediately attach again. */
+  detach_running(pid);
+
+  if (ptrace(T_ATTACH, pid, 0, 0) != 0) e(11);
+
+  if (waitpid(pid, &status, 0) != pid) e(12);
+  if (!_WIFSTOPPED(status)) e(13);
+  if (WSTOPSIG(status) != SIGSTOP) e(14);
+
+  if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(15);
+
+  if (waitpid(pid, &status, 0) != pid) e(16);
+
+  for (count = 0; _WIFSTOPPED(status); count++) {
+	if (WSTOPSIG(status) != SIGTRAP) e(17);
+
+	if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(18);
+
+	if (waitpid(pid, &status, 0) != pid) e(19);
+  }
+
+  if (!_WIFEXITED(status)) e(20);
+  if ((r = WEXITSTATUS(status)) != 42) e(r);
+
+  /* We must not have seen the select()'s syscall leave event, and the last
+   * event will be the syscall enter for the exec().
+   */
+  if (!(count % 2)) e(21);
+
+  traced_wait();
 }
 
 void e(n)
