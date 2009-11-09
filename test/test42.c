@@ -76,7 +76,7 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-  int i, m = 0xFFFF, n = 0xF;
+  int i, m = 0xFFFFFF, n = 0xF;
 
   if (strcmp(argv[0], "DO CHECK") == 0) {
 	exit(42);
