@@ -10,7 +10,7 @@ main.c
 
 #include "pci.h"
 
-#define NR_DRIVERS	16
+#define NR_DRIVERS	NR_SYS_PROCS
 
 PRIVATE struct acl
 {
