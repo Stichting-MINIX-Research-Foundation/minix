@@ -62,7 +62,8 @@ FORWARD _PROTOTYPE( int try_async, (struct proc *caller_ptr));
 FORWARD _PROTOTYPE( int try_one, (struct proc *src_ptr, struct proc *dst_ptr,
 		int *postponed));
 FORWARD _PROTOTYPE( void sched, (struct proc *rp, int *queue, int *front));
-FORWARD _PROTOTYPE( void pick_proc, (void));
+FORWARD _PROTOTYPE( struct proc * pick_proc, (void));
+FORWARD _PROTOTYPE( void enqueue_head, (struct proc *rp));
 
 #define PICK_ANY	1
 #define PICK_HIGHERONLY	2
@@ -132,28 +133,47 @@ PUBLIC struct proc * schedcheck(void)
 	 */
   	NOREC_ENTER(schedch);
 	vmassert(intr_disabled());
-	if(next_ptr) {
-		proc_ptr = next_ptr;
-		next_ptr = NULL;
+
+	/*
+	 * if the current process is still runnable check the misc flags and let
+	 * it run unless it becomes not runnable in the meantime
+	 */
+	if (proc_is_runnable(proc_ptr))
+		goto check_misc_flags;
+
+	/*
+	 * if a process becomes not runnable while handling the misc flags, we
+	 * need to pick a new one here and start from scratch. Also if the
+	 * current process wasn' runnable, we pick a new one here
+	 */
+not_runnable_pick_new:
+	if (proc_is_preempted(proc_ptr)) {
+		proc_ptr->p_rts_flags &= ~PREEMPTED;
+		if (proc_is_runnable(proc_ptr))
+			enqueue_head(proc_ptr);
 	}
+	/* this enqueues the process again */
+	if (proc_no_quantum(proc_ptr))
+		RTS_UNSET(proc_ptr, NO_QUANTUM);
+	proc_ptr = pick_proc();
+
+check_misc_flags:
+
 	vmassert(proc_ptr);
-	vmassert(!proc_ptr->p_rts_flags);
+	vmassert(proc_is_runnable(proc_ptr));
 	while (proc_ptr->p_misc_flags &
 		(MF_DELIVERMSG | MF_SC_DEFER | MF_SC_TRACE | MF_SC_ACTIVE)) {
 
-		vmassert(!next_ptr);
-		vmassert(!proc_ptr->p_rts_flags);
+		vmassert(proc_is_runnable(proc_ptr));
 		if (proc_ptr->p_misc_flags & MF_DELIVERMSG) {
 			TRACE(VF_SCHEDULING, printf("delivering to %s / %d\n",
 				proc_ptr->p_name, proc_ptr->p_endpoint););
 			if(delivermsg(proc_ptr) == VMSUSPEND) {
-				vmassert(next_ptr);
 				TRACE(VF_SCHEDULING,
 					printf("suspending %s / %d\n",
 					proc_ptr->p_name,
 					proc_ptr->p_endpoint););
-				vmassert(proc_ptr->p_rts_flags);
-				vmassert(next_ptr != proc_ptr);
+				vmassert(!proc_is_runnable(proc_ptr));
 			}
 		}
 		else if (proc_ptr->p_misc_flags & MF_SC_DEFER) {
@@ -201,13 +221,12 @@ PUBLIC struct proc * schedcheck(void)
 			break;
 		}
 
-		/* If proc_ptr is now descheduled,
-		 * continue with another process.
+		/*
+		 * the selected process might not be runnable anymore. We have
+		 * to checkit and schedule another one
 		 */
-		if (next_ptr) {
-			proc_ptr = next_ptr;
-			next_ptr = NULL;
-		}
+		if (!proc_is_runnable(proc_ptr))
+			goto not_runnable_pick_new;
 	}
 	TRACE(VF_SCHEDULING, printf("starting %s / %d\n",
 		proc_ptr->p_name, proc_ptr->p_endpoint););
@@ -1189,19 +1208,65 @@ register struct proc *rp;	/* this process is now runnable */
   CHECK_RUNQUEUES;
 #endif
 
-  /* Now select the next process to run, if there isn't a current
-   * process yet or current process isn't ready any more, or
-   * it's PREEMPTIBLE.
+  /*
+   * enqueueing a process with a higher priority than the current one, it gets
+   * preempted. The current process must be preemptible. Testing the priority
+   * also makes sure that a process does not preempt itself
    */
-  if(!proc_ptr || (proc_ptr->p_priority > rp->p_priority) ||
+  vmassert(proc_ptr);
+  if ((proc_ptr->p_priority > rp->p_priority) &&
 		  (priv(proc_ptr)->s_flags & PREEMPTIBLE))
-     pick_proc();
+     RTS_SET(proc_ptr, PREEMPTED); /* calls dequeue() */
 
 #if DEBUG_SCHED_CHECK
   CHECK_RUNQUEUES;
 #endif
 
   NOREC_RETURN(enqueuefunc, );
+}
+
+/*===========================================================================*
+ *				enqueue_head				     *
+ *===========================================================================*/
+/*
+ * put a process at the front of its run queue. It comes handy when a process is
+ * preempted and removed from run queue to not to have a currently not-runnable
+ * process on a run queue. We have to put this process back at the fron to be
+ * fair
+ */
+PRIVATE void enqueue_head(struct proc *rp)
+{
+  int q;	 				/* scheduling queue to use */
+
+#if DEBUG_SCHED_CHECK
+  if(!intr_disabled()) { minix_panic("enqueue with interrupts enabled", NO_NUM); }
+  if (rp->p_ready) minix_panic("enqueue already ready process", NO_NUM);
+#endif
+
+  /*
+   * the process was runnable without its quantum expired when dequeued. A
+   * process with no time left should vahe been handled else and differently
+   */
+  vmassert(rp->p_ticks_left);
+
+  vmassert(q >= 0);
+  vmassert(q < IDLE_Q || rp->p_endpoint == IDLE);
+
+  q = rp->p_priority;
+
+  /* Now add the process to the queue. */
+  if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
+      rdy_head[q] = rdy_tail[q] = rp; 		/* create a new queue */
+      rp->p_nextready = NIL_PROC;		/* mark new end */
+  }
+  else						/* add to head of queue */
+      rp->p_nextready = rdy_head[q];		/* chain head of queue */
+      rdy_head[q] = rp;				/* set new queue head */
+
+#if DEBUG_SCHED_CHECK
+  rp->p_ready = 1;
+  CHECK_RUNQUEUES;
+#endif
 }
 
 /*===========================================================================*
@@ -1249,8 +1314,6 @@ register struct proc *rp;	/* this process is no longer runnable */
   		rp->p_ready = 0;
 		  CHECK_RUNQUEUES;
 #endif
-          if (rp == proc_ptr || rp == next_ptr)	/* active process removed */
-              pick_proc();		/* pick new process to run */
           break;
       }
       prev_xp = *xpp;				/* save previous in chain */
@@ -1299,16 +1362,14 @@ int *front;					/* return: front or back */
 /*===========================================================================*
  *				pick_proc				     * 
  *===========================================================================*/
-PRIVATE void pick_proc()
+PRIVATE struct proc * pick_proc(void)
 {
-/* Decide who to run now.  A new process is selected by setting 'next_ptr'.
+/* Decide who to run now.  A new process is selected an returned.
  * When a billable process is selected, record it in 'bill_ptr', so that the 
  * clock task can tell who to bill for system time.
  */
   register struct proc *rp;			/* process to run */
   int q;				/* iterate over queues */
-
-  NOREC_ENTER(pick);
 
   /* Check each of the scheduling queues for ready processes. The number of
    * queues is defined in proc.h, and priorities are set in the task table.
@@ -1322,14 +1383,13 @@ PRIVATE void pick_proc()
 	}
 	TRACE(VF_PICKPROC, printf("found %s / %d on queue %d\n", 
 		rp->p_name, rp->p_endpoint, q););
-	next_ptr = rp;			/* run process 'rp' next */
-	vmassert(proc_ptr != next_ptr);
-	vmassert(!next_ptr->p_rts_flags);
+	vmassert(!proc_is_runnable(rp));
 	if (priv(rp)->s_flags & BILLABLE)	 	
 		bill_ptr = rp;		/* bill for system time */
-	NOREC_RETURN(pick, );
+	return rp;
   }
   minix_panic("no runnable processes", NO_NUM);
+  return NULL;
 }
 
 /*===========================================================================*
@@ -1354,10 +1414,10 @@ timer_t *tp;					/* watchdog timer pointer */
   for (rp=BEG_PROC_ADDR; rp<END_PROC_ADDR; rp++) {
       if (! isemptyp(rp)) {				/* check slot use */
 	  if (rp->p_priority > rp->p_max_priority) {	/* update priority? */
-	      if (rp->p_rts_flags == 0) dequeue(rp);	/* take off queue */
+	      if (proc_is_runnable(rp)) dequeue(rp);	/* take off queue */
 	      ticks_added += rp->p_quantum_size;	/* do accounting */
 	      rp->p_priority -= 1;			/* raise priority */
-	      if (rp->p_rts_flags == 0) enqueue(rp);	/* put on queue */
+	      if (proc_is_runnable(rp)) enqueue(rp);	/* put on queue */
 	  }
 	  else {
 	      ticks_added += rp->p_quantum_size - rp->p_ticks_left;

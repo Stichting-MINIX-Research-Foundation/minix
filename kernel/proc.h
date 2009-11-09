@@ -119,6 +119,24 @@ struct proc {
 #define VMREQUEST       0x800	/* originator of vm memory request */
 #define VMREQTARGET    0x1000	/* target of vm memory request */
 #define SYS_LOCK       0x2000	/* temporary process lock flag for systask */
+#define PREEMPTED      0x4000	/* this process was preempted by a higher
+				   priority process and we should pick a new one
+				   to run. Processes with this flag should be
+				   returned to the front of their current
+				   priority queue if they are still runnable
+				   before we pick a new one
+				 */
+#define NO_QUANTUM     0x8000	/* process ran out of its quantum and we should
+				   pick a new one. Process was dequeued and
+				   should be enqueued at the end of some run
+				   queue again */
+
+/* A process is runnable iff p_rts_flags == 0. */
+#define rts_f_is_runnable(flg)	((flg) == 0)
+#define proc_is_runnable(p)	(rts_f_is_runnable((p)->p_rts_flags))
+
+#define proc_is_preempted(p)	((p)->p_rts_flags & PREEMPTED)
+#define proc_no_quantum(p)	((p)->p_rts_flags & NO_QUANTUM)
 
 /* These runtime flags can be tested and manipulated by these macros. */
 
@@ -129,7 +147,7 @@ struct proc {
 #define RTS_SET(rp, f)							\
 	do {								\
 		vmassert(intr_disabled());				\
-		if(!(rp)->p_rts_flags) { dequeue(rp); }			\
+		if(proc_is_runnable(rp)) { dequeue(rp); }		\
 		(rp)->p_rts_flags |=  (f);				\
 		vmassert(intr_disabled());				\
 	} while(0)
@@ -141,7 +159,9 @@ struct proc {
 		vmassert(intr_disabled());				\
 		rts = (rp)->p_rts_flags;				\
 		(rp)->p_rts_flags &= ~(f);				\
-		if(rts && !(rp)->p_rts_flags) { enqueue(rp); }		\
+		if(!rts_f_is_runnable(rts) && proc_is_runnable(rp)) {	\
+			enqueue(rp);					\
+		}							\
 		vmassert(intr_disabled());				\
 	} while(0)
 
@@ -150,7 +170,7 @@ struct proc {
 	do {								\
 		int u = 0;						\
 		if(!intr_disabled()) { u = 1; lock; }			\
-		if(!(rp)->p_rts_flags) { dequeue(rp); }			\
+		if(proc_is_runnable(rp)) { dequeue(rp); }		\
 		(rp)->p_rts_flags |=  (f);				\
 		if(u) { unlock;	}					\
 	} while(0)
@@ -163,7 +183,9 @@ struct proc {
 		if(!intr_disabled()) { u = 1; lock; }			\
 		rts = (rp)->p_rts_flags;				\
 		(rp)->p_rts_flags &= ~(f);				\
-		if(rts && !(rp)->p_rts_flags) { enqueue(rp); }		\
+		if(!rts_f_is_runnable(rts) && proc_is_runnable(rp)) {	\
+			enqueue(rp);					\
+		}							\
 		if(u) { unlock;	}					\
 	} while(0)
 
@@ -172,7 +194,7 @@ struct proc {
 	do {								\
 		int u = 0;						\
 		if(!intr_disabled()) { u = 1; lock; }			\
-		if(!(rp)->p_rts_flags && (f)) { dequeue(rp); }		\
+		if(proc_is_runnable(rp) && (f)) { dequeue(rp); }		\
 		(rp)->p_rts_flags = (f);				\
 		if(u) { unlock;	}					\
 	} while(0)

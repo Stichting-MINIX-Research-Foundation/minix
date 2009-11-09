@@ -278,11 +278,8 @@ PUBLIC int ap_timer_int_handler(void)
 	/* check if the process is still runnable after checking the vtimer */
 	if (p->p_rts_flags == 0 && p->p_ticks_left <= 0 &&
 			priv(p)->s_flags & PREEMPTIBLE) {
-		proc_ptr = NULL; /* no process is scheduled for dequeue and
-				    enqueue */
-		dequeue(p);	/* take it off the queues */
-		enqueue(p);	/* and reinsert it again */
-		proc_ptr = p; /* restore some consitent state */
+		/* this dequeues the process */
+		RTS_SET(p, NO_QUANTUM);
 	}
 
 	return 1;

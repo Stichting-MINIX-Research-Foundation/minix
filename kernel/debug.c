@@ -129,6 +129,8 @@ rtsflagstr(int flags)
 	FLAG(PAGEFAULT);
 	FLAG(VMREQUEST);
 	FLAG(VMREQTARGET);
+	FLAG(PREEMPTED);
+	FLAG(NO_QUANTUM);
 
 	return str;
 }

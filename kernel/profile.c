@@ -90,7 +90,7 @@ irq_hook_t *hook;
 	sprof_info.idle_samples++;
   } else
   /* Runnable system process? */
-  if (priv(proc_ptr)->s_flags & SYS_PROC && !proc_ptr->p_rts_flags) {
+  if (priv(proc_ptr)->s_flags & SYS_PROC && proc_is_runnable(proc_ptr)) {
 	/* Note: k_reenter is always 0 here. */
 
 	/* Store sample (process name and program counter). */
