@@ -1,9 +1,6 @@
 
 Welcome to MINIX 3.1.5.
 
-This snapshot is an interim release, not final release quality. It is
-intended as a prerelease for developers.
-
 The system is now running and many commands work normally.  To use MINIX
 in a serious way, you need to install it to your hard disk, which you
 can do by typing 'setup' while logged in as root.  Then just follow the
