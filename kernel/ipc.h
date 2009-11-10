@@ -18,7 +18,7 @@
 #define SENDA		   16	/* asynchronous send */
 
 #define WILLRECEIVE(target, source_ep) \
-  ((RTS_ISSET(target, RECEIVING) && !RTS_ISSET(target, SENDING)) &&	\
+  ((RTS_ISSET(target, RTS_RECEIVING) && !RTS_ISSET(target, RTS_SENDING)) &&	\
     (target->p_getfrom_e == ANY || target->p_getfrom_e == source_ep))
 
 

@@ -62,7 +62,7 @@ check_runqueues_f(char *file, int line)
 	if(xp->p_magic != PMAGIC) {
   		MYPANIC("magic wrong in xp");
 	}
-	if (RTS_ISSET(xp, SLOT_FREE)) {
+	if (RTS_ISSET(xp, RTS_SLOT_FREE)) {
 		kprintf("scheduling error: dead proc q %d %d\n",
 			q, xp->p_endpoint);
   		MYPANIC("dead proc on run queue");
@@ -116,21 +116,21 @@ rtsflagstr(int flags)
 
 #define FLAG(n) if(flags & n) { strcat(str, #n " "); }
 
-	FLAG(SLOT_FREE);
-	FLAG(PROC_STOP);
-	FLAG(SENDING);
-	FLAG(RECEIVING);
-	FLAG(SIGNALED);
-	FLAG(SIG_PENDING);
-	FLAG(P_STOP);
-	FLAG(NO_PRIV);
-	FLAG(NO_ENDPOINT);
-	FLAG(VMINHIBIT);
-	FLAG(PAGEFAULT);
-	FLAG(VMREQUEST);
-	FLAG(VMREQTARGET);
-	FLAG(PREEMPTED);
-	FLAG(NO_QUANTUM);
+	FLAG(RTS_SLOT_FREE);
+	FLAG(RTS_PROC_STOP);
+	FLAG(RTS_SENDING);
+	FLAG(RTS_RECEIVING);
+	FLAG(RTS_SIGNALED);
+	FLAG(RTS_SIG_PENDING);
+	FLAG(RTS_P_STOP);
+	FLAG(RTS_NO_PRIV);
+	FLAG(RTS_NO_ENDPOINT);
+	FLAG(RTS_VMINHIBIT);
+	FLAG(RTS_PAGEFAULT);
+	FLAG(RTS_VMREQUEST);
+	FLAG(RTS_VMREQTARGET);
+	FLAG(RTS_PREEMPTED);
+	FLAG(RTS_NO_QUANTUM);
 
 	return str;
 }

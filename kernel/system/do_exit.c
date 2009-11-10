@@ -67,7 +67,7 @@ register struct proc *rc;		/* slot of process to clean up */
   /* Make sure that the exiting process is no longer scheduled,
    * and mark slot as FREE.
    */
-  RTS_LOCK_SETFLAGS(rc, SLOT_FREE);
+  RTS_LOCK_SETFLAGS(rc, RTS_SLOT_FREE);
 
   /* Check the table with IRQ hooks to see if hooks should be released. */
   for (i=0; i < NR_IRQ_HOOKS; i++) {

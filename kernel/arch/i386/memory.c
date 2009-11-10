@@ -472,7 +472,7 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 
 	vmassert(proc);
 	vmassert(physical);
-	vmassert(!(proc->p_rts_flags & SLOT_FREE));
+	vmassert(!(proc->p_rts_flags & RTS_SLOT_FREE));
 
 	if(!HASPT(proc)) {
 		*physical = virtual;
@@ -599,10 +599,10 @@ PUBLIC int vm_suspend(struct proc *caller, struct proc *target,
 	/* This range is not OK for this process. Set parameters  
 	 * of the request and notify VM about the pending request. 
 	 */								
-	vmassert(!RTS_ISSET(caller, VMREQUEST));
-	vmassert(!RTS_ISSET(target, VMREQUEST));
+	vmassert(!RTS_ISSET(caller, RTS_VMREQUEST));
+	vmassert(!RTS_ISSET(target, RTS_VMREQUEST));
 
-	RTS_LOCK_SET(caller, VMREQUEST);
+	RTS_LOCK_SET(caller, RTS_VMREQUEST);
 
 #if DEBUG_VMASSERT
 	caller->p_vmrequest.stacktrace[0] = '\0';
@@ -879,11 +879,11 @@ int vmcheck;			/* if nonzero, can return VMSUSPEND */
 
 	caller = proc_addr(who_p);
 
-	if(RTS_ISSET(caller, VMREQUEST)) {
+	if(RTS_ISSET(caller, RTS_VMREQUEST)) {
 		struct proc *target;
 		int pn;
 		vmassert(caller->p_vmrequest.vmresult != VMSUSPEND);
-		RTS_LOCK_UNSET(caller, VMREQUEST);
+		RTS_LOCK_UNSET(caller, RTS_VMREQUEST);
 		if(caller->p_vmrequest.vmresult != OK) {
 			printf("virtual_copy: returning VM error %d\n",
 				caller->p_vmrequest.vmresult);

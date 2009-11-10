@@ -42,7 +42,7 @@ register message *m_ptr;	/* pointer to request message */
   vmassert(!(rpp->p_misc_flags & MF_DELIVERMSG));
 
   /* needs to be receiving so we know where the message buffer is */
-  if(!RTS_ISSET(rpp, RECEIVING)) {
+  if(!RTS_ISSET(rpp, RTS_RECEIVING)) {
 	printf("kernel: fork not done synchronously?\n");
 	return EINVAL;
   }
@@ -91,7 +91,7 @@ register message *m_ptr;	/* pointer to request message */
    */
   if (priv(rpp)->s_flags & SYS_PROC) {
       rpc->p_priv = priv_addr(USER_PRIV_ID);
-      rpc->p_rts_flags |= NO_PRIV;
+      rpc->p_rts_flags |= RTS_NO_PRIV;
   }
 
   /* Calculate endpoint identifier, so caller knows what it is. */
@@ -104,11 +104,13 @@ register message *m_ptr;	/* pointer to request message */
 
   /* Don't schedule process in VM mode until it has a new pagetable. */
   if(m_ptr->PR_FORK_FLAGS & PFF_VMINHIBIT) {
-  	RTS_LOCK_SET(rpc, VMINHIBIT);
+  	RTS_LOCK_SET(rpc, RTS_VMINHIBIT);
   }
 
-  /* Only one in group should have SIGNALED, child doesn't inherit tracing. */
-  RTS_LOCK_UNSET(rpc, (SIGNALED | SIG_PENDING | P_STOP));
+  /* 
+   * Only one in group should have RTS_SIGNALED, child doesn't inherit tracing.
+   */
+  RTS_LOCK_UNSET(rpc, (RTS_SIGNALED | RTS_SIG_PENDING | RTS_P_STOP));
   sigemptyset(&rpc->p_pending);
 
   return r;

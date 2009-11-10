@@ -279,7 +279,7 @@ PUBLIC int ap_timer_int_handler(void)
 	if (p->p_rts_flags == 0 && p->p_ticks_left <= 0 &&
 			priv(p)->s_flags & PREEMPTIBLE) {
 		/* this dequeues the process */
-		RTS_SET(p, NO_QUANTUM);
+		RTS_SET(p, RTS_NO_QUANTUM);
 	}
 
 	return 1;

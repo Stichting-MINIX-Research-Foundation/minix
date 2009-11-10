@@ -35,7 +35,7 @@ struct proc *p;
 			p->p_seg.p_cr3 = 0;
 			p->p_misc_flags &= ~MF_FULLVM;
 		}
-		RTS_LOCK_UNSET(p, VMINHIBIT);
+		RTS_LOCK_UNSET(p, RTS_VMINHIBIT);
 		return OK;
 	case VMCTL_INCSP:
 		/* Increase process SP. */
@@ -47,7 +47,7 @@ struct proc *p;
 		if(!(rp=pagefaults))
 			return ESRCH;
 		pagefaults = rp->p_nextpagefault;
-		if(!RTS_ISSET(rp, PAGEFAULT))
+		if(!RTS_ISSET(rp, RTS_PAGEFAULT))
 			minix_panic("non-PAGEFAULT process on pagefault chain",
 				rp->p_endpoint);
                 m_ptr->SVMCTL_PF_WHO = rp->p_endpoint;

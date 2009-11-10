@@ -191,7 +191,7 @@ PRIVATE void ser_dump_segs(void)
 	struct proc *pp;
 	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
 	{
-		if (pp->p_rts_flags & SLOT_FREE)
+		if (pp->p_rts_flags & RTS_SLOT_FREE)
 			continue;
 		kprintf("%d: %s ep %d\n", proc_nr(pp), pp->p_name, pp->p_endpoint);
 		printseg("cs: ", 1, pp, pp->p_reg.cs);
@@ -260,10 +260,10 @@ PRIVATE void printslot(struct proc *pp, int level)
 		pp->p_sys_time, pp->p_seg.p_cr3,
 		rtsflagstr(pp->p_rts_flags), miscflagstr(pp->p_misc_flags));
 
-	if(pp->p_rts_flags & SENDING) {
+	if(pp->p_rts_flags & RTS_SENDING) {
 		dep = pp->p_sendto_e;
 		kprintf(" to: ");
-	} else if(pp->p_rts_flags & RECEIVING) {
+	} else if(pp->p_rts_flags & RTS_RECEIVING) {
 		dep = pp->p_getfrom_e;
 		kprintf(" from: ");
 	}
@@ -277,7 +277,7 @@ PRIVATE void printslot(struct proc *pp, int level)
 				kprintf(" ??? %d\n", dep);
 			} else {
 				depproc = proc_addr(procno);
-				if(depproc->p_rts_flags & SLOT_FREE) {
+				if(depproc->p_rts_flags & RTS_SLOT_FREE) {
 					kprintf(" empty slot %d???\n", procno);
 					depproc = NULL;
 				} else {
@@ -304,7 +304,7 @@ PUBLIC void ser_dump_proc()
 
 	for (pp= BEG_PROC_ADDR; pp < END_PROC_ADDR; pp++)
 	{
-		if (pp->p_rts_flags & SLOT_FREE)
+		if (pp->p_rts_flags & RTS_SLOT_FREE)
 			continue;
 		printslot(pp, 0);
 	}

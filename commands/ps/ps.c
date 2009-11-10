@@ -404,7 +404,7 @@ char *argv[];
 #else
 				0,
 #endif
-			       (buf.ps_flags & RECEIVING ?
+			       (buf.ps_flags & RTS_RECEIVING ?
 				prrecv(&buf) :
 				""),
 			       tname((Dev_t) buf.ps_dev),
@@ -495,7 +495,7 @@ int endpoints;
 	return -1;
   }
 
-  if ((ps_proc[p_ki].p_rts_flags == SLOT_FREE)
+  if ((ps_proc[p_ki].p_rts_flags == RTS_SLOT_FREE)
   				&& !(ps_mproc[p_nr].mp_flags & IN_USE)) {
 	return -1;
   }

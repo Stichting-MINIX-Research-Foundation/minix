@@ -31,11 +31,11 @@ message *m_ptr;			/* pointer to request message */
 	return EINVAL;
 
   rp = proc_addr(proc_nr);
-  if (!RTS_ISSET(rp, SIG_PENDING)) return(EINVAL);
+  if (!RTS_ISSET(rp, RTS_SIG_PENDING)) return(EINVAL);
 
   /* PM has finished one kernel signal. Perhaps process is ready now? */
-  if (!RTS_ISSET(rp, SIGNALED)) 		/* new signal arrived */
-	RTS_LOCK_UNSET(rp, SIG_PENDING);	/* remove pending flag */
+  if (!RTS_ISSET(rp, RTS_SIGNALED)) 		/* new signal arrived */
+	RTS_LOCK_UNSET(rp, RTS_SIG_PENDING);	/* remove pending flag */
   return(OK);
 }
 

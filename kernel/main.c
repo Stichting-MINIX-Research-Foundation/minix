@@ -50,7 +50,7 @@ PUBLIC void main()
    * privilege structures for the system processes. 
    */
   for (rp = BEG_PROC_ADDR, i = -NR_TASKS; rp < END_PROC_ADDR; ++rp, ++i) {
-  	rp->p_rts_flags = SLOT_FREE;		/* initialize free slot */
+  	rp->p_rts_flags = RTS_SLOT_FREE;		/* initialize free slot */
 #if DEBUG_SCHED_CHECK
 	rp->p_magic = PMAGIC;
 #endif
@@ -174,11 +174,11 @@ PUBLIC void main()
 	 * done this; until then, don't let it run.
 	 */
 	if(priv(rp)->s_flags & PROC_FULLVM)
-		RTS_SET(rp, VMINHIBIT);
+		RTS_SET(rp, RTS_VMINHIBIT);
 	
 	/* Set ready. The HARDWARE task is never ready. */
-	if (rp->p_nr == HARDWARE) RTS_SET(rp, PROC_STOP);
-	RTS_UNSET(rp, SLOT_FREE); /* remove SLOT_FREE and schedule */
+	if (rp->p_nr == HARDWARE) RTS_SET(rp, RTS_PROC_STOP);
+	RTS_UNSET(rp, RTS_SLOT_FREE); /* remove RTS_SLOT_FREE and schedule */
 	alloc_segments(rp);
   }
 

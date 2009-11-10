@@ -45,7 +45,7 @@ register message *m_ptr;	/* pointer to request message */
   arch_pre_exec(rp, (u32_t) m_ptr->PR_IP_PTR, (u32_t) m_ptr->PR_STACK_PTR);
 
   /* No reply to EXEC call */
-  RTS_LOCK_UNSET(rp, RECEIVING);
+  RTS_LOCK_UNSET(rp, RTS_RECEIVING);
 
   return(OK);
 }

@@ -41,9 +41,9 @@ PUBLIC int do_nice(message *m_ptr)
   /* Make sure the process is not running while changing its priority. 
    * Put the process back in its new queue if it is runnable.
    */
-  RTS_LOCK_SET(rp, SYS_LOCK);
+  RTS_LOCK_SET(rp, RTS_SYS_LOCK);
   rp->p_max_priority = rp->p_priority = new_q;
-  RTS_LOCK_UNSET(rp, SYS_LOCK);
+  RTS_LOCK_UNSET(rp, RTS_SYS_LOCK);
 
   return(OK);
 }

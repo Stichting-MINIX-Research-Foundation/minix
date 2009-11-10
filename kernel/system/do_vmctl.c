@@ -34,13 +34,13 @@ register message *m_ptr;	/* pointer to request message */
 
   switch(m_ptr->SVMCTL_PARAM) {
 	case VMCTL_CLEAR_PAGEFAULT:
-		RTS_LOCK_UNSET(p, PAGEFAULT);
+		RTS_LOCK_UNSET(p, RTS_PAGEFAULT);
 		return OK;
 	case VMCTL_MEMREQ_GET:
 		/* Send VM the information about the memory request.  */
 		if(!(rp = vmrequest))
 			return ESRCH;
-		vmassert(RTS_ISSET(rp, VMREQUEST));
+		vmassert(RTS_ISSET(rp, RTS_VMREQUEST));
 
 #if 0
 		printf("kernel: vm request sent by: %s / %d about %d; 0x%lx-0x%lx, wr %d, stack: %s ",
@@ -55,9 +55,9 @@ register message *m_ptr;	/* pointer to request message */
   		okendpt(rp->p_vmrequest.who, &proc_nr);
 		target = proc_addr(proc_nr);
 #if 0
-		if(!RTS_ISSET(target, VMREQTARGET)) {
+		if(!RTS_ISSET(target, RTS_VMREQTARGET)) {
 			printf("set stack: %s\n", rp->p_vmrequest.stacktrace);
-			minix_panic("VMREQTARGET not set for target",
+			minix_panic("RTS_VMREQTARGET not set for target",
 				NO_NUM);
 		}
 #endif
@@ -76,7 +76,7 @@ register message *m_ptr;	/* pointer to request message */
 
 		return OK;
 	case VMCTL_MEMREQ_REPLY:
-		vmassert(RTS_ISSET(p, VMREQUEST));
+		vmassert(RTS_ISSET(p, RTS_VMREQUEST));
 		vmassert(p->p_vmrequest.vmresult == VMSUSPEND);
   		okendpt(p->p_vmrequest.who, &proc_nr);
 		target = proc_addr(proc_nr);
@@ -95,8 +95,8 @@ register message *m_ptr;	/* pointer to request message */
 			p->p_vmrequest.writeflag, p->p_vmrequest.stacktrace);
 		printf("type %d\n", p->p_vmrequest.type);
 
-		vmassert(RTS_ISSET(target, VMREQTARGET));
-		RTS_LOCK_UNSET(target, VMREQTARGET);
+		vmassert(RTS_ISSET(target, RTS_VMREQTARGET));
+		RTS_LOCK_UNSET(target, RTS_VMREQTARGET);
 #endif
 
 		if(p->p_vmrequest.type == VMSTYPE_KERNELCALL) {
@@ -106,8 +106,8 @@ register message *m_ptr;	/* pointer to request message */
 		} else if(p->p_vmrequest.type == VMSTYPE_DELIVERMSG) {
 			vmassert(p->p_misc_flags & MF_DELIVERMSG);
 			vmassert(p == target);
-			vmassert(RTS_ISSET(p, VMREQUEST));
-			RTS_LOCK_UNSET(p, VMREQUEST);
+			vmassert(RTS_ISSET(p, RTS_VMREQUEST));
+			RTS_LOCK_UNSET(p, RTS_VMREQUEST);
 		} else {
 #if DEBUG_VMASSERT
 			printf("suspended with stack: %s\n",

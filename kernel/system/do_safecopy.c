@@ -27,7 +27,7 @@
 FORWARD _PROTOTYPE(int safecopy, (endpoint_t, endpoint_t, cp_grant_id_t, int, int, size_t, vir_bytes, vir_bytes, int));
 
 #define HASGRANTTABLE(gr) \
-	(!RTS_ISSET(gr, NO_PRIV) && priv(gr) && priv(gr)->s_grant_table > 0)
+	(!RTS_ISSET(gr, RTS_NO_PRIV) && priv(gr) && priv(gr)->s_grant_table > 0)
 
 /*===========================================================================*
  *				verify_grant				     *

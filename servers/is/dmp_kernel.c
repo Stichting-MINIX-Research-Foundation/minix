@@ -18,9 +18,9 @@
 #define PRINTRTS(rp) { \
 	char *procname = "";	\
 	printf(" %s", p_rts_flags_str(rp->p_rts_flags));	\
-	if (rp->p_rts_flags & SENDING)				\
+	if (rp->p_rts_flags & RTS_SENDING)				\
 		procname = proc_name(_ENDPOINT_P(rp->p_sendto_e)); \
-	else if (rp->p_rts_flags & RECEIVING)			\
+	else if (rp->p_rts_flags & RTS_RECEIVING)			\
 		procname = proc_name(_ENDPOINT_P(rp->p_getfrom_e)); \
 	printf(" %-7.7s", procname);	\
 }
@@ -319,7 +319,7 @@ PUBLIC void privileges_dmp()
         r = -1;
         for (sp = &priv[0]; sp < &priv[NR_SYS_PROCS]; sp++) 
             if (sp->s_proc_nr == rp->p_nr) { r ++; break; }
-        if (r == -1 && ! (rp->p_rts_flags & SLOT_FREE)) {
+        if (r == -1 && ! (rp->p_rts_flags & RTS_SLOT_FREE)) {
 	    sp = &priv[USER_PRIV_ID];
         }
 	printf("(%02u) %-7.7s %s   %s %7d",
@@ -342,13 +342,13 @@ PUBLIC void privileges_dmp()
 PRIVATE char *p_rts_flags_str(int flags)
 {
 	static char str[10];
-	str[0] = (flags & PROC_STOP) ? 's' : '-';
-	str[1] = (flags & SENDING)  ? 'S' : '-';
-	str[2] = (flags & RECEIVING)    ? 'R' : '-';
-	str[3] = (flags & SIGNALED)    ? 'I' : '-';
-	str[4] = (flags & SIG_PENDING)    ? 'P' : '-';
-	str[5] = (flags & P_STOP)    ? 'T' : '-';
-	str[6] = (flags & NO_PRIV) ? 'p' : '-';
+	str[0] = (flags & RTS_PROC_STOP) ? 's' : '-';
+	str[1] = (flags & RTS_SENDING)  ? 'S' : '-';
+	str[2] = (flags & RTS_RECEIVING)    ? 'R' : '-';
+	str[3] = (flags & RTS_SIGNALED)    ? 'I' : '-';
+	str[4] = (flags & RTS_SIG_PENDING)    ? 'P' : '-';
+	str[5] = (flags & RTS_P_STOP)    ? 'T' : '-';
+	str[6] = (flags & RTS_NO_PRIV) ? 'p' : '-';
 	str[7] = '\0';
 
 	return str;

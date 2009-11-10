@@ -105,28 +105,28 @@ struct proc {
 };
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
-#define SLOT_FREE	 0x01	/* process slot is free */
-#define PROC_STOP	 0x02	/* process has been stopped */
-#define SENDING		 0x04	/* process blocked trying to send */
-#define RECEIVING	 0x08	/* process blocked trying to receive */
-#define SIGNALED	 0x10	/* set when new kernel signal arrives */
-#define SIG_PENDING	 0x20	/* unready while signal being processed */
-#define P_STOP		 0x40	/* set when process is being traced */
-#define NO_PRIV		 0x80	/* keep forked system process from running */
-#define NO_ENDPOINT     0x100	/* process cannot send or receive messages */
-#define VMINHIBIT       0x200	/* not scheduled until pagetable set by VM */
-#define PAGEFAULT       0x400	/* process has unhandled pagefault */
-#define VMREQUEST       0x800	/* originator of vm memory request */
-#define VMREQTARGET    0x1000	/* target of vm memory request */
-#define SYS_LOCK       0x2000	/* temporary process lock flag for systask */
-#define PREEMPTED      0x4000	/* this process was preempted by a higher
+#define RTS_SLOT_FREE	0x01	/* process slot is free */
+#define RTS_PROC_STOP	0x02	/* process has been stopped */
+#define RTS_SENDING	0x04	/* process blocked trying to send */
+#define RTS_RECEIVING	0x08	/* process blocked trying to receive */
+#define RTS_SIGNALED	0x10	/* set when new kernel signal arrives */
+#define RTS_SIG_PENDING	0x20	/* unready while signal being processed */
+#define RTS_P_STOP	0x40	/* set when process is being traced */
+#define RTS_NO_PRIV	0x80	/* keep forked system process from running */
+#define RTS_NO_ENDPOINT	0x100	/* process cannot send or receive messages */
+#define RTS_VMINHIBIT	0x200	/* not scheduled until pagetable set by VM */
+#define RTS_PAGEFAULT	0x400	/* process has unhandled pagefault */
+#define RTS_VMREQUEST	0x800	/* originator of vm memory request */
+#define RTS_VMREQTARGET	0x1000	/* target of vm memory request */
+#define RTS_SYS_LOCK	0x2000	/* temporary process lock flag for systask */
+#define RTS_PREEMPTED	0x4000	/* this process was preempted by a higher
 				   priority process and we should pick a new one
 				   to run. Processes with this flag should be
 				   returned to the front of their current
 				   priority queue if they are still runnable
 				   before we pick a new one
 				 */
-#define NO_QUANTUM     0x8000	/* process ran out of its quantum and we should
+#define RTS_NO_QUANTUM	0x8000	/* process ran out of its quantum and we should
 				   pick a new one. Process was dequeued and
 				   should be enqueued at the end of some run
 				   queue again */
@@ -135,8 +135,8 @@ struct proc {
 #define rts_f_is_runnable(flg)	((flg) == 0)
 #define proc_is_runnable(p)	(rts_f_is_runnable((p)->p_rts_flags))
 
-#define proc_is_preempted(p)	((p)->p_rts_flags & PREEMPTED)
-#define proc_no_quantum(p)	((p)->p_rts_flags & NO_QUANTUM)
+#define proc_is_preempted(p)	((p)->p_rts_flags & RTS_PREEMPTED)
+#define proc_no_quantum(p)	((p)->p_rts_flags & RTS_NO_QUANTUM)
 
 /* These runtime flags can be tested and manipulated by these macros. */
 
@@ -236,7 +236,7 @@ struct proc {
 
 #define isokprocn(n)      ((unsigned) ((n) + NR_TASKS) < NR_PROCS + NR_TASKS)
 #define isemptyn(n)       isemptyp(proc_addr(n)) 
-#define isemptyp(p)       ((p)->p_rts_flags == SLOT_FREE)
+#define isemptyp(p)       ((p)->p_rts_flags == RTS_SLOT_FREE)
 #define iskernelp(p)	  ((p) < BEG_USER_ADDR)
 #define iskerneln(n)	  ((n) < 0)
 #define isuserp(p)        isusern((p) >= BEG_USER_ADDR)

@@ -17,10 +17,10 @@
  *===========================================================================*/
 PUBLIC int do_runctl(message *m_ptr)
 {
-/* Control a process's PROC_STOP flag. Used for process management.
+/* Control a process's RTS_PROC_STOP flag. Used for process management.
  * If the process is queued sending a message or stopped for system call
  * tracing, and the RC_DELAY request flag is given, set MF_SIG_DELAY instead
- * of PROC_STOP, and send a SIGNDELAY signal later when the process is done
+ * of RTS_PROC_STOP, and send a SIGNDELAY signal later when the process is done
  * sending (ending the delay). Used by PM for safe signal delivery.
  */
   int proc_nr, action, flags, delayed;
@@ -41,14 +41,14 @@ PUBLIC int do_runctl(message *m_ptr)
    * should not also install signal handlers *and* expect POSIX compliance.
    */
   if (action == RC_STOP && (flags & RC_DELAY)) {
-	RTS_LOCK_SET(rp, SYS_LOCK);
+	RTS_LOCK_SET(rp, RTS_SYS_LOCK);
 
-	if (RTS_ISSET(rp, SENDING) || (rp->p_misc_flags & MF_SC_DEFER))
+	if (RTS_ISSET(rp, RTS_SENDING) || (rp->p_misc_flags & MF_SC_DEFER))
 		rp->p_misc_flags |= MF_SIG_DELAY;
 
 	delayed = (rp->p_misc_flags & MF_SIG_DELAY);
 
-	RTS_LOCK_UNSET(rp, SYS_LOCK);
+	RTS_LOCK_UNSET(rp, RTS_SYS_LOCK);
 
 	if (delayed) return(EBUSY);
   }
@@ -56,10 +56,10 @@ PUBLIC int do_runctl(message *m_ptr)
   /* Either set or clear the stop flag. */
   switch (action) {
   case RC_STOP:
-	RTS_LOCK_SET(rp, PROC_STOP);
+	RTS_LOCK_SET(rp, RTS_PROC_STOP);
 	break;
   case RC_RESUME:
-	RTS_LOCK_UNSET(rp, PROC_STOP);
+	RTS_LOCK_UNSET(rp, RTS_PROC_STOP);
 	break;
   default:
 	return(EINVAL);

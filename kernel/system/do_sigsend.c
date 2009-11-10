@@ -75,7 +75,7 @@ message *m_ptr;			/* pointer to request message */
   rp->p_reg.sp = (reg_t) frp;
   rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
 
-  if(!RTS_ISSET(rp, PROC_STOP)) {
+  if(!RTS_ISSET(rp, RTS_PROC_STOP)) {
 	struct proc *caller;
 	caller = proc_addr(who_p);
 	kprintf("system: warning: sigsend a running process\n");

@@ -148,13 +148,13 @@ PUBLIC struct proc * schedcheck(void)
 	 */
 not_runnable_pick_new:
 	if (proc_is_preempted(proc_ptr)) {
-		proc_ptr->p_rts_flags &= ~PREEMPTED;
+		proc_ptr->p_rts_flags &= ~RTS_PREEMPTED;
 		if (proc_is_runnable(proc_ptr))
 			enqueue_head(proc_ptr);
 	}
 	/* this enqueues the process again */
 	if (proc_no_quantum(proc_ptr))
-		RTS_UNSET(proc_ptr, NO_QUANTUM);
+		RTS_UNSET(proc_ptr, RTS_NO_QUANTUM);
 	proc_ptr = pick_proc();
 
 check_misc_flags:
@@ -192,7 +192,7 @@ check_misc_flags:
 			 * inform PM.
 			 */
 			if ((proc_ptr->p_misc_flags & MF_SIG_DELAY) &&
-					!RTS_ISSET(proc_ptr, SENDING))
+					!RTS_ISSET(proc_ptr, RTS_SENDING))
 				sig_delay_done(proc_ptr);
 		}
 		else if (proc_ptr->p_misc_flags & MF_SC_TRACE) {
@@ -313,7 +313,7 @@ long bit_map;			/* notification event set or flags */
 #endif
 
 #if DEBUG_SCHED_CHECK
-  if (RTS_ISSET(caller_ptr, SLOT_FREE))
+  if (RTS_ISSET(caller_ptr, RTS_SLOT_FREE))
   {
 	kprintf("called by the dead?!?\n");
 	return EINVAL;
@@ -502,10 +502,10 @@ int src_dst;					/* src or dst process */
       /* Check whether the last process in the chain has a dependency. If it 
        * has not, the cycle cannot be closed and we are done.
        */
-      if (RTS_ISSET(xp, RECEIVING)) {	/* xp has dependency */
+      if (RTS_ISSET(xp, RTS_RECEIVING)) {	/* xp has dependency */
 	  if(xp->p_getfrom_e == ANY) src_dst = ANY;
 	  else okendpt(xp->p_getfrom_e, &src_dst);
-      } else if (RTS_ISSET(xp, SENDING)) {	/* xp has dependency */
+      } else if (RTS_ISSET(xp, RTS_SENDING)) {	/* xp has dependency */
 	  okendpt(xp->p_sendto_e, &src_dst);
       } else {
 	  return(0);				/* not a deadlock */
@@ -518,7 +518,7 @@ int src_dst;					/* src or dst process */
       if (src_dst == proc_nr(cp)) {		/* possible deadlock */
 	  if (group_size == 2) {		/* caller and src_dst */
 	      /* The function number is magically converted to flags. */
-	      if ((xp->p_rts_flags ^ (function << 2)) & SENDING) { 
+	      if ((xp->p_rts_flags ^ (function << 2)) & RTS_SENDING) { 
 	          return(0);			/* not a deadlock */
 	      }
 	  }
@@ -565,20 +565,20 @@ int flags;
   dst_p = _ENDPOINT_P(dst_e);
   dst_ptr = proc_addr(dst_p);
 
-  if (RTS_ISSET(dst_ptr, NO_ENDPOINT))
+  if (RTS_ISSET(dst_ptr, RTS_NO_ENDPOINT))
   {
 	return EDSTDIED;
   }
 
   /* Check if 'dst' is blocked waiting for this message. The destination's 
-   * SENDING flag may be set when its SENDREC call blocked while sending.  
+   * RTS_SENDING flag may be set when its SENDREC call blocked while sending.  
    */
   if (WILLRECEIVE(dst_ptr, caller_ptr->p_endpoint)) {
 	/* Destination is indeed waiting for this message. */
 	vmassert(!(dst_ptr->p_misc_flags & MF_DELIVERMSG));	
 	if((r=QueueMess(caller_ptr->p_endpoint, linaddr, dst_ptr)) != OK)
 		return r;
-	RTS_UNSET(dst_ptr, RECEIVING);
+	RTS_UNSET(dst_ptr, RTS_RECEIVING);
   } else {
 	if(flags & NON_BLOCKING) {
 		return(ENOTREADY);
@@ -589,7 +589,7 @@ int flags;
 		sizeof(message), addr);
 
 	if(addr) { return EFAULT; }
-	RTS_SET(caller_ptr, SENDING);
+	RTS_SET(caller_ptr, RTS_SENDING);
 	caller_ptr->p_sendto_e = dst_e;
 
 	/* Process is now blocked.  Put in on the destination's queue. */
@@ -638,18 +638,18 @@ int flags;
   else
   {
 	okendpt(src_e, &src_p);
-	if (RTS_ISSET(proc_addr(src_p), NO_ENDPOINT))
+	if (RTS_ISSET(proc_addr(src_p), RTS_NO_ENDPOINT))
 	{
 		return ESRCDIED;
 	}
   }
 
 
-  /* Check to see if a message from desired source is already available.
-   * The caller's SENDING flag may be set if SENDREC couldn't send. If it is
+  /* Check to see if a message from desired source is already available.  The
+   * caller's RTS_SENDING flag may be set if SENDREC couldn't send. If it is
    * set, the process should be blocked.
    */
-  if (!RTS_ISSET(caller_ptr, SENDING)) {
+  if (!RTS_ISSET(caller_ptr, RTS_SENDING)) {
 
     /* Check if there are pending notifications, except for SENDREC. */
     if (! (caller_ptr->p_misc_flags & MF_REPLY_PEND)) {
@@ -689,7 +689,7 @@ int flags;
     while (*xpp != NIL_PROC) {
         if (src_e == ANY || src_p == proc_nr(*xpp)) {
 #if DEBUG_SCHED_CHECK
-	    if (RTS_ISSET(*xpp, SLOT_FREE) || RTS_ISSET(*xpp, NO_ENDPOINT))
+	    if (RTS_ISSET(*xpp, RTS_SLOT_FREE) || RTS_ISSET(*xpp, RTS_NO_ENDPOINT))
 	    {
 		kprintf("%d: receive from %d; found dead %d (%s)?\n",
 			caller_ptr->p_endpoint, src_e, (*xpp)->p_endpoint,
@@ -704,7 +704,7 @@ int flags;
 		vir2phys(&(*xpp)->p_sendmsg), caller_ptr);
 	    if ((*xpp)->p_misc_flags & MF_SIG_DELAY)
 		sig_delay_done(*xpp);
-	    RTS_UNSET(*xpp, SENDING);
+	    RTS_UNSET(*xpp, RTS_SENDING);
             *xpp = (*xpp)->p_q_link;		/* remove from queue */
             return(OK);				/* report success */
 	}
@@ -728,7 +728,7 @@ int flags;
    */
   if ( ! (flags & NON_BLOCKING)) {
       caller_ptr->p_getfrom_e = src_e;		
-      RTS_SET(caller_ptr, RECEIVING);
+      RTS_SET(caller_ptr, RTS_RECEIVING);
       return(OK);
   } else {
 	return(ENOTREADY);
@@ -773,7 +773,7 @@ endpoint_t dst_e;			/* which process to notify */
       if((r=QueueMess(caller_ptr->p_endpoint, vir2phys(&m), dst_ptr)) != OK) {
 	minix_panic("mini_notify: local QueueMess failed", NO_NUM);
       }
-      RTS_UNSET(dst_ptr, RECEIVING);
+      RTS_UNSET(dst_ptr, RTS_RECEIVING);
       return(OK);
   } 
 
@@ -923,8 +923,8 @@ size_t size;
 
 		dst_ptr = proc_addr(dst_p);
 
-		/* NO_ENDPOINT should be removed */
-		if (dst_ptr->p_rts_flags & NO_ENDPOINT)
+		/* RTS_NO_ENDPOINT should be removed */
+		if (dst_ptr->p_rts_flags & RTS_NO_ENDPOINT)
 		{
 			tabent.result= EDSTDIED;
 			A_INSERT(i, result);
@@ -953,7 +953,7 @@ size_t size;
 				linaddr + (vir_bytes) &table[i].msg -
 					(vir_bytes) table, dst_ptr);
 			if(tabent.result == OK)
-				RTS_UNSET(dst_ptr, RECEIVING);
+				RTS_UNSET(dst_ptr, RTS_RECEIVING);
 
 			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
@@ -1216,7 +1216,7 @@ register struct proc *rp;	/* this process is now runnable */
   vmassert(proc_ptr);
   if ((proc_ptr->p_priority > rp->p_priority) &&
 		  (priv(proc_ptr)->s_flags & PREEMPTIBLE))
-     RTS_SET(proc_ptr, PREEMPTED); /* calls dequeue() */
+     RTS_SET(proc_ptr, RTS_PREEMPTED); /* calls dequeue() */
 
 #if DEBUG_SCHED_CHECK
   CHECK_RUNQUEUES;
