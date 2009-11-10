@@ -1,6 +1,8 @@
 #ifndef PROC_H
 #define PROC_H
 
+#ifndef __ASSEMBLY__
+
 /* Here is the declaration of the process table.  It contains all process
  * data, including registers, flags, scheduling priority, memory map, 
  * accounting, message passing (IPC) information, and so on. 
@@ -103,6 +105,8 @@ struct proc {
   int p_schedules;
 #endif
 };
+
+#endif /* __ASSEMBLY__ */
 
 /* Bits for the runtime flags. A process is runnable iff p_rts_flags == 0. */
 #define RTS_SLOT_FREE	0x01	/* process slot is free */
@@ -242,6 +246,8 @@ struct proc {
 #define isuserp(p)        isusern((p) >= BEG_USER_ADDR)
 #define isusern(n)        ((n) >= 0)
 
+#ifndef __ASSEMBLY__
+
 /* The process table and pointers to process table slots. The pointers allow
  * faster access because now a process entry can be found by indexing the
  * pproc_addr array, while accessing an element i requires a multiplication
@@ -250,5 +256,7 @@ struct proc {
 EXTERN struct proc proc[NR_TASKS + NR_PROCS];	/* process table */
 EXTERN struct proc *rdy_head[NR_SCHED_QUEUES]; /* ptrs to ready list headers */
 EXTERN struct proc *rdy_tail[NR_SCHED_QUEUES]; /* ptrs to ready list tails */
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* PROC_H */
