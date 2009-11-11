@@ -22,6 +22,7 @@ register message *m_ptr;	/* pointer to request message */
   int proc_nr, i;
   endpoint_t ep = m_ptr->SVMCTL_WHO;
   struct proc *p, *rp, *target;
+  int err;
 
   if(ep == SELF) { ep = m_ptr->m_source; }
 
@@ -119,6 +120,11 @@ register message *m_ptr;	/* pointer to request message */
 
 		return OK;
 	case VMCTL_ENABLE_PAGING:
+		/*
+		 * system task must not get preempted while switching to paging,
+		 * interrupt handling is not safe
+		 */
+		lock;
 		if(vm_running) 
 			minix_panic("do_vmctl: paging already enabled", NO_NUM);
 		vm_init(p);
@@ -126,11 +132,29 @@ register message *m_ptr;	/* pointer to request message */
 			minix_panic("do_vmctl: paging enabling failed", NO_NUM);
 		vmassert(p->p_delivermsg_lin ==
 		  umap_local(p, D, p->p_delivermsg_vir, sizeof(message)));
+		if ((err = arch_enable_paging()) != OK) {
+			unlock;
+			return err;
+		}
 		if(newmap(p, (struct mem_map *) m_ptr->SVMCTL_VALUE) != OK)
 			minix_panic("do_vmctl: newmap failed", NO_NUM);
 		FIXLINMSG(p);
 		vmassert(p->p_delivermsg_lin);
+		unlock;
 		return OK;
+	case VMCTL_KERN_PHYSMAP:
+	{
+		int i = m_ptr->SVMCTL_VALUE;
+		return arch_phys_map(i,
+			(phys_bytes *) &m_ptr->SVMCTL_MAP_PHYS_ADDR,
+			(phys_bytes *) &m_ptr->SVMCTL_MAP_PHYS_LEN,
+			&m_ptr->SVMCTL_MAP_FLAGS);
+	}
+	case VMCTL_KERN_MAP_REPLY:
+	{
+		return arch_phys_map_reply(m_ptr->SVMCTL_VALUE,
+			(vir_bytes) m_ptr->SVMCTL_MAP_VIR_ADDR);
+	}
   }
 
   /* Try architecture-specific vmctls. */

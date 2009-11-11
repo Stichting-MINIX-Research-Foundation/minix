@@ -161,5 +161,9 @@ _PROTOTYPE( int vm_suspend, (struct proc *caller, struct proc *target,
 	phys_bytes lin, phys_bytes size, int wrflag, int type));
 _PROTOTYPE( int delivermsg, (struct proc *target));
 _PROTOTYPE( void arch_do_syscall, (struct proc *proc)			);
+_PROTOTYPE( int arch_phys_map, (int index, phys_bytes *addr,
+	phys_bytes *len, int *flags));
+_PROTOTYPE( int arch_phys_map_reply, (int index, vir_bytes addr));
+_PROTOTYPE( int arch_enable_paging, (void));
 
 #endif /* PROTO_H */

@@ -715,7 +715,7 @@ void vm_print(u32_t *root)
 
 	printf("page table 0x%lx:\n", root);
 
-	for(pde = 10; pde < I386_VM_DIR_ENTRIES; pde++) {
+	for(pde = 0; pde < I386_VM_DIR_ENTRIES; pde++) {
 		u32_t pde_v;
 		u32_t *pte_a;
 		pde_v = phys_get32((u32_t) (root + pde));
@@ -1027,4 +1027,20 @@ void i386_freepde(int pde)
 	if(nfreepdes >= WANT_FREEPDES)
 		return;
 	freepdes[nfreepdes++] = pde;
+}
+
+PUBLIC arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int *flags)
+{
+	/* we don't want anything */
+	return EINVAL;
+}
+
+PUBLIC arch_phys_map_reply(int index, vir_bytes addr)
+{
+	return OK;
+}
+
+PUBLIC int arch_enable_paging(void)
+{
+	return OK;
 }

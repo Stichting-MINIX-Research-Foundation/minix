@@ -608,6 +608,14 @@
 #define SVMCTL_MRG_WRITE	m1_i2	/* MEMREQ_GET reply: writeflag */
 #define SVMCTL_MRG_EP		m1_i3	/* MEMREQ_GET reply: process */
 #define SVMCTL_MRG_REQUESTOR	m1_p2	/* MEMREQ_GET reply: requestor */
+#define SVMCTL_MAP_VIR_ADDR	m1_p1
+
+/* Reply message for VMCTL_KERN_PHYSMAP */
+#define SVMCTL_MAP_FLAGS	m2_i1	/* VMMF_* */
+#define SVMCTL_MAP_PHYS_ADDR	m2_l1
+#define SVMCTL_MAP_PHYS_LEN	m2_l2
+
+#define VMMF_UNCACHED		(1L << 0)
 
 /* Codes and field names for SYS_SYSCTL. */
 #define SYSCTL_CODE		m1_i1	/* SYSCTL_CODE_* below */
@@ -632,6 +640,8 @@
 #define VMCTL_ENABLE_PAGING	24
 #define VMCTL_I386_INVLPG	25
 #define VMCTL_FLUSHTLB		26
+#define VMCTL_KERN_PHYSMAP	27
+#define VMCTL_KERN_MAP_REPLY	28
 
 /* Field names for SYS_VTIMER. */
 #define VT_WHICH	m2_i1	/* which timer to set/retrieve */

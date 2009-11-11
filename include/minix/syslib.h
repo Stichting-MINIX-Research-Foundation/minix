@@ -68,6 +68,9 @@ _PROTOTYPE( int sys_readbios, (phys_bytes address, void *buf, size_t size));
 _PROTOTYPE( int sys_stime, (time_t boottime));
 _PROTOTYPE( int sys_sysctl, (int ctl, char *arg1, int arg2));
 _PROTOTYPE( int sys_sysctl_stacktrace, (endpoint_t who));
+_PROTOTYPE( int sys_vmctl_get_mapping, (int index, phys_bytes *addr,
+	phys_bytes *len, int *flags));
+_PROTOTYPE( int sys_vmctl_reply_mapping, (int index, vir_bytes addr));
 
 /* Shorthands for sys_sdevio() system call. */
 #define sys_insb(port, proc_ep, buffer, count) \

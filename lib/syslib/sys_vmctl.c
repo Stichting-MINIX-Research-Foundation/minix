@@ -69,3 +69,38 @@ PUBLIC int sys_vmctl_enable_paging(struct mem_map *map)
 	m.SVMCTL_VALUE = (int) map;
 	return _taskcall(SYSTASK, SYS_VMCTL, &m);
 }
+
+PUBLIC int sys_vmctl_get_mapping(int index,
+	phys_bytes *addr, phys_bytes *len, int *flags)
+{
+	int r;
+	message m;
+
+	m.SVMCTL_WHO = SELF;
+	m.SVMCTL_PARAM = VMCTL_KERN_PHYSMAP;
+	m.SVMCTL_VALUE = (int) index;
+
+	r = _taskcall(SYSTASK, SYS_VMCTL, &m);
+
+	if(r != OK)
+		return r;
+
+	*addr = m.SVMCTL_MAP_PHYS_ADDR;
+	*len = m.SVMCTL_MAP_PHYS_LEN;
+	*flags = m.SVMCTL_MAP_FLAGS;
+
+	return OK;
+}
+
+PUBLIC int sys_vmctl_reply_mapping(int index, vir_bytes addr)
+{
+	int r;
+	message m;
+
+	m.SVMCTL_WHO = SELF;
+	m.SVMCTL_PARAM = VMCTL_KERN_MAP_REPLY;
+	m.SVMCTL_VALUE = index;
+	m.SVMCTL_MAP_VIR_ADDR = (char *) addr;
+
+	return _taskcall(SYSTASK, SYS_VMCTL, &m);
+}
