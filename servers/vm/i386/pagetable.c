@@ -60,6 +60,15 @@ PRIVATE struct {
 	u32_t phys;
 } sparepages[SPAREPAGES];
 
+#define MAX_KERNMAPPINGS 10
+PRIVATE struct {
+	phys_bytes	phys_addr;	/* Physical addr. */
+	phys_bytes	len;		/* Length in bytes. */
+	vir_bytes	lin_addr;	/* Offset in page table. */
+	int		flags;
+} kern_mappings[MAX_KERNMAPPINGS];
+int kernmappings = 0;
+
 /* Clicks must be pages, as
  *  - they must be page aligned to map them
  *  - they must be a multiple of the page size
@@ -758,6 +767,44 @@ PUBLIC void pt_init(void)
         /* Let other functions know VM now has a private page table. */
         vmp->vm_flags |= VMF_HASPT;
 
+	/* Now reserve another pde for kernel's own mappings. */
+	{
+		int kernmap_pde;
+		phys_bytes addr, len;
+		int flags, index;
+		u32_t offset = 0;
+
+		kernmap_pde = free_pde++;
+		offset = kernmap_pde * I386_BIG_PAGE_SIZE;
+
+		while(sys_vmctl_get_mapping(index, &addr, &len,
+			&flags) == OK)  {
+			vir_bytes vir;
+			if(index >= MAX_KERNMAPPINGS)
+                		vm_panic("VM: too many kernel mappings", index);
+			kern_mappings[index].phys_addr = addr;
+			kern_mappings[index].len = len;
+			kern_mappings[index].flags = flags;
+			kern_mappings[index].lin_addr = offset;
+			kern_mappings[index].flags =
+				I386_VM_PRESENT | I386_VM_USER | I386_VM_WRITE;
+			if(flags & VMMF_UNCACHED)
+				kern_mappings[index].flags |=
+					I386_VM_PWT | I386_VM_PCD;
+			if(addr % I386_PAGE_SIZE)
+                		vm_panic("VM: addr unaligned", addr);
+			if(len % I386_PAGE_SIZE)
+                		vm_panic("VM: len unaligned", len);
+			vir = arch_map2vir(&vmproc[VMP_SYSTEM], offset);
+			printf("vir: 0x%lx\n", vir);
+			if(sys_vmctl_reply_mapping(index, vir) != OK)
+                		vm_panic("VM: reply failed", NO_NUM);
+			offset += len;
+			index++;
+			kernmappings++;
+		}
+	}
+
 	/* Find a PDE below processes available for mapping in the
 	 * page directories (readonly).
 	 */
@@ -859,7 +906,7 @@ PUBLIC void pt_free(pt_t *pt)
  *===========================================================================*/
 PUBLIC int pt_mapkernel(pt_t *pt)
 {
-	int r;
+	int r, i;
 	static int printed = 0;
 
         /* Any i386 page table needs to map in the kernel address space. */
@@ -887,6 +934,16 @@ PUBLIC int pt_mapkernel(pt_t *pt)
 	if(pagedir_pde >= 0) {
 		/* Kernel also wants to know about all page directories. */
 		pt->pt_dir[pagedir_pde] = pagedir_pde_val;
+	}
+
+	for(i = 0; i < kernmappings; i++) {
+		if(pt_writemap(pt,
+			kern_mappings[i].lin_addr,
+			kern_mappings[i].phys_addr,
+			kern_mappings[i].len,
+			kern_mappings[i].flags, 0) != OK) {
+			vm_panic("pt_mapkernel: pt_writemap failed", NO_NUM);
+		}
 	}
 
 	return OK;
