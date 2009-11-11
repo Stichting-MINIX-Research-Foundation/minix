@@ -8,7 +8,7 @@
 /* This routine is used in doprnt.c as well as in tmpfile.c and tmpnam.c. */
 
 char *
-_i_compute(unsigned long val, int base, char *s, int nrdigits)
+_i_compute(printval_u_t val, int base, char *s, int nrdigits)
 {
 	int c;
 

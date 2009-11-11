@@ -42,12 +42,12 @@ gnum(register const char *f, int *ip, va_list *app)
 static char *
 o_print(va_list *ap, int flags, char *s, char c, int precision, int is_signed)
 {
-	long signed_val;
-	unsigned long unsigned_val;
+	printval_s_t signed_val;
+	printval_u_t unsigned_val;
 	char *old_s = s;
 	int base;
 
-	switch (flags & (FL_SHORT | FL_LONG)) {
+	switch (flags & (FL_SHORT | FL_LONG | FL_LONGLONG)) {
 	case FL_SHORT:
 		if (is_signed) {
 			signed_val = (short) va_arg(*ap, int);
@@ -62,6 +62,15 @@ o_print(va_list *ap, int flags, char *s, char c, int precision, int is_signed)
 			unsigned_val = va_arg(*ap, unsigned long);
 		}
 		break;
+#if defined(__LONG_LONG_SUPPORTED)
+	case FL_LONG | FL_LONGLONG:
+		if (is_signed) {
+			signed_val = va_arg(*ap, long long);
+		} else {
+			unsigned_val = va_arg(*ap, unsigned long long);
+		}
+		break;
+#endif
 	default:
 		if (is_signed) {
 			signed_val = va_arg(*ap, int);
@@ -171,11 +180,27 @@ _doprnt(register const char *fmt, va_list ap, FILE *stream)
 
 		s = s1 = buf;
 
-		switch (*fmt) {
-		case 'h':	flags |= FL_SHORT; fmt++; break;
-		case 'l':	flags |= FL_LONG; fmt++; break;
-		case 'L':	flags |= FL_LONGDOUBLE; fmt++; break;
-		}
+		flags &= ~FL_NOMORE;
+		do {
+			switch (*fmt) {
+			case 'h':
+				flags |= FL_SHORT;
+				break;
+			case 'l':	
+				if(flags & FL_LONG)
+					flags |= FL_LONGLONG;
+				else
+					flags |= FL_LONG;
+				break;
+			case 'L':
+				flags |= FL_LONGDOUBLE;
+				break;
+			default:
+				flags |= FL_NOMORE;
+				continue;
+			}
+			fmt++;
+		} while(!(flags & FL_NOMORE));
 
 		switch (c = *fmt++) {
 		default:
