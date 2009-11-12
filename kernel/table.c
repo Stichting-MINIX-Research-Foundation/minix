@@ -120,7 +120,7 @@ PRIVATE int
 
 PUBLIC struct boot_image image[] = {
 /* process nr, pc,flags, qs,  queue, stack, traps, ipcto, call,  name */ 
-{IDLE,       NULL,IDL_F,  0, IDLE_Q, IDL_S,     0,     0, no_c,"idle"  },
+{IDLE,       NULL,IDL_F,  0,      0, IDL_S,     0,     0, no_c,"idle"  },
 {CLOCK,clock_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"clock" },
 {SYSTEM, sys_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"system"},
 {HARDWARE,      0,TSK_F,  8, TASK_Q, HRD_S,     0,     0, no_c,"kernel"},

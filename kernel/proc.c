@@ -1198,7 +1198,6 @@ register struct proc *rp;	/* this process is now runnable */
   sched(rp, &q, &front);
 
   vmassert(q >= 0);
-  vmassert(q < IDLE_Q || rp->p_endpoint == IDLE);
 
   /* Now add the process to the queue. */
   if (rdy_head[q] == NIL_PROC) {		/* add to empty queue */
@@ -1262,7 +1261,6 @@ PRIVATE void enqueue_head(struct proc *rp)
   vmassert(rp->p_ticks_left);
 
   vmassert(q >= 0);
-  vmassert(q < IDLE_Q || rp->p_endpoint == IDLE);
 
   q = rp->p_priority;
 
@@ -1358,7 +1356,7 @@ int *front;					/* return: front or back */
    */
   if (! time_left) {				/* quantum consumed ? */
       rp->p_ticks_left = rp->p_quantum_size; 	/* give new quantum */
-      if (rp->p_priority < (IDLE_Q-1)) {  	 
+      if (rp->p_priority < (NR_SCHED_QUEUES-1)) {
           rp->p_priority += 1;			/* lower priority */
       }
   }
