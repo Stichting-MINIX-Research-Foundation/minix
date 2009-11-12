@@ -249,6 +249,7 @@ static mnemonic_t mnemtab[] = {
 	{ RCR,		"rcr%"		},
 	{ RET,		"ret"		},
 	{ RETF,		"retf"		},
+	{ RDMSR,	"rdmsr"		},
 	{ ROL,		"rol%"		},
 	{ ROR,		"ror%"		},
 	{ SAHF,		"sahf"		},
@@ -291,6 +292,7 @@ static mnemonic_t mnemtab[] = {
 	{ VERW,		"verw"		},
 	{ WAIT,		"wait"		},
 	{ WBINVD,	"wbinvd"	},
+	{ WRMSR,	"wrmsr"		},
 	{ XADD,		"xadd"		},
 	{ XCHG,		"xchg%"		},
 	{ XLAT,		"xlat"		},
@@ -604,6 +606,14 @@ void ack_emit_instruction(asm86_t *a)
 				ack_printf(".data1  0x0f, 0x22, 0xe0\n");
 				return;
 			}
+		}
+		if (a->opcode == RDMSR) {
+			ack_printf(".data1 0x0f, 0x32\n");
+			return;
+		}
+		if (a->opcode == WRMSR) {
+			ack_printf(".data1 0x0f, 0x30\n");
+			return;
 		}
 		/* we are translating from GNU */
 		if (a->args && a->args->operator == ','

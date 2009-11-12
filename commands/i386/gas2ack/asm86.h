@@ -152,6 +152,7 @@ typedef enum opcode {	/* 80486 opcodes, from the i486 reference manual.
 	PUSHF,
 	RCL,	RCR,	ROL,	ROR,
 	RET,	RETF,			/* RETF added */
+	RDMSR,
 	SAHF,
 	SAL,	SAR,	SHL,	SHR,
 	SBB,
@@ -173,6 +174,7 @@ typedef enum opcode {	/* 80486 opcodes, from the i486 reference manual.
 	VERR,	VERW,
 	WAIT,
 	WBINVD,
+	WRMSR,
 	XADD,
 	XCHG,
 	XLAT,
