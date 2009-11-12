@@ -472,7 +472,7 @@ PUBLIC int vm_lookup(struct proc *proc, vir_bytes virtual, vir_bytes *physical, 
 
 	vmassert(proc);
 	vmassert(physical);
-	vmassert(!(proc->p_rts_flags & RTS_SLOT_FREE));
+	vmassert(!isemptyp(proc));
 
 	if(!HASPT(proc)) {
 		*physical = virtual;

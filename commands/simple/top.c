@@ -86,10 +86,10 @@ int print_proc_summary(struct proc *proc)
 	for(p = 0; p < PROCS; p++) {
 		if(p - NR_TASKS == IDLE)
 			continue;
-		if(proc[p].p_rts_flags & RTS_SLOT_FREE)
+		if(isemptyp(&proc[p]))
 			continue;
 		alive++;
-		if(proc[p].p_rts_flags & ~RTS_SLOT_FREE)
+		if(!proc_is_runnable(&proc[p]))
 			sleeping++;
 		else
 			running++;
@@ -128,7 +128,7 @@ void print_procs(int maxlines,
 	if(dt < 1) return;
 
 	for(p = nprocs = 0; p < PROCS; p++) {
-		if(proc2[p].p_rts_flags & RTS_SLOT_FREE)
+		if(isemptyp(&proc2[p]))
 			continue;
 		tick_procs[nprocs].p = proc2 + p;
 		if(proc1[p].p_endpoint == proc2[p].p_endpoint) {

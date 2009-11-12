@@ -319,7 +319,7 @@ PUBLIC void privileges_dmp()
         r = -1;
         for (sp = &priv[0]; sp < &priv[NR_SYS_PROCS]; sp++) 
             if (sp->s_proc_nr == rp->p_nr) { r ++; break; }
-        if (r == -1 && ! (rp->p_rts_flags & RTS_SLOT_FREE)) {
+        if (r == -1 && !isemptyp(rp)) {
 	    sp = &priv[USER_PRIV_ID];
         }
 	printf("(%02u) %-7.7s %s   %s %7d",

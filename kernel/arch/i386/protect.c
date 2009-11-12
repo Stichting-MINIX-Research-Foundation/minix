@@ -315,7 +315,7 @@ for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
   int privilege;
   int cs, ds;
 
-		if (RTS_ISSET(rp, RTS_SLOT_FREE))
+		if (isemptyp(rp))
 			continue;
 
       if( (iskernelp(rp)))
@@ -456,7 +456,7 @@ PUBLIC int prot_set_kern_seg_limit(vir_bytes limit)
 
 	/* Increase kernel processes too. */
 	for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
-		if (RTS_ISSET(rp, RTS_SLOT_FREE) || !iskernelp(rp))
+		if (isemptyp(rp) || !iskernelp(rp))
 			continue;
 		rp->p_memmap[S].mem_len += incr_clicks;
 		alloc_segments(rp);

@@ -81,7 +81,7 @@ int dumpcore(endpoint_t proc_e)
 
 	for(proc_s = 0; proc_s < SLOTS; proc_s++)
 		if(proc[proc_s].p_endpoint == proc_e &&
-			!(proc[proc_s].p_rts_flags & RTS_SLOT_FREE))
+			!isemptyp(&proc[proc_s]))
 			break;
 
 	if(proc_s >= SLOTS) {
@@ -94,7 +94,7 @@ int dumpcore(endpoint_t proc_e)
 		return 1;
 	}
 
-	if(proc[proc_s].p_rts_flags & RTS_SLOT_FREE) {
+	if(isemptyp(&proc[proc_s])) {
 		printf( "slot %d is no process (internal error).\n",
 			proc_s);
 		return 1;

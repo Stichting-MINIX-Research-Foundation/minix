@@ -495,7 +495,7 @@ int endpoints;
 	return -1;
   }
 
-  if ((ps_proc[p_ki].p_rts_flags == RTS_SLOT_FREE)
+  if (isemptyp(&ps_proc[p_ki])
   				&& !(ps_mproc[p_nr].mp_flags & IN_USE)) {
 	return -1;
   }
