@@ -136,7 +136,7 @@ _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
         int, phys_bytes, vir_bytes, int));
 _PROTOTYPE( int intr_init, (int)					);
 _PROTOTYPE( int intr_disabled, (void)					);
-_PROTOTYPE( void idle_task, (void)                                     );
+_PROTOTYPE( void halt_cpu, (void)                                	);
 _PROTOTYPE( void arch_init, (void)                                     );
 _PROTOTYPE( void ser_putc, (char)						);
 _PROTOTYPE( void arch_shutdown, (int)					);

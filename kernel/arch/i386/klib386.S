@@ -30,7 +30,7 @@
 .globl	phys_memset	/* write pattern anywhere in memory */
 .globl	mem_rdw	/* copy one word from [segment:offset] */
 .globl	reset	/* reset the system */
-.globl	idle_task	/* task executed when there is no work */
+.globl	halt_cpu/* halts the current cpu when idle */
 .globl	level0	/* call a function at level 0 */
 .globl	read_cpu_flags	/* read the cpu flags */
 .globl	read_cr0	/* read cr0 */
@@ -436,18 +436,14 @@ idt_zero:
 
 
 /*===========================================================================*/
-/*				idle_task				     */
+/*			      	halt_cpu				     */
 /*===========================================================================*/
-idle_task:
 /*
- * This task is called when the system has nothing else to do.  The HLT 
- * instruction puts the processor in a state where it draws minimum power. 
+ * PUBLIC void halt_cpu(void);
+ * reanables interrupts and puts the cpu in the halts state. Once an interrupt
+ * is handled the execution resumes by disabling interrupts and continues
  */
-	push	$halt
-	call	level0	/* level0(halt) */
-	add	$4, %esp
-	jmp	idle_task
-halt:
+halt_cpu:
 	sti
 	hlt
 	cli
@@ -481,7 +477,7 @@ level0:
 	ret
 
 /*===========================================================================*/
-/*			      read_flags					     */
+/*			      read_flags				     */
 /*===========================================================================*/
 /*
  * PUBLIC unsigned long read_cpu_flags(void);

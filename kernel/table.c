@@ -45,7 +45,14 @@
 PUBLIC char *t_stack[TOT_STACK_SPACE / sizeof(char *)];
 	
 /* Define flags for the various process types. */
-#define IDL_F 	(SYS_PROC | PREEMPTIBLE | BILLABLE)	/* idle task */
+#define IDL_F 	(SYS_PROC | BILLABLE)	/* idle task is not preemptible as we
+					 * don't want it to interfere with the
+					 * timer tick interrupt handler code.
+					 * Unlike other processes idle task is
+					 * handled in a special way and is
+					 * preempted always if timer tick occurs
+					 * and there is another runnable process
+					 */
 #define TSK_F 	(SYS_PROC)				/* kernel tasks */
 #define SRV_F 	(SYS_PROC | PREEMPTIBLE)		/* system services */
 #define VM_F 	(SYS_PROC)				/* vm  */
@@ -113,7 +120,7 @@ PRIVATE int
 
 PUBLIC struct boot_image image[] = {
 /* process nr, pc,flags, qs,  queue, stack, traps, ipcto, call,  name */ 
-{IDLE,  idle_task,IDL_F,  8, IDLE_Q, IDL_S,     0,     0, no_c,"idle"  },
+{IDLE,       NULL,IDL_F,  0, IDLE_Q, IDL_S,     0,     0, no_c,"idle"  },
 {CLOCK,clock_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"clock" },
 {SYSTEM, sys_task,TSK_F,  8, TASK_Q, TSK_S, TSK_T,     0, no_c,"system"},
 {HARDWARE,      0,TSK_F,  8, TASK_Q, HRD_S,     0,     0, no_c,"kernel"},

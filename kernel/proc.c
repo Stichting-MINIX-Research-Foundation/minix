@@ -155,7 +155,19 @@ not_runnable_pick_new:
 	/* this enqueues the process again */
 	if (proc_no_quantum(proc_ptr))
 		RTS_UNSET(proc_ptr, RTS_NO_QUANTUM);
-	proc_ptr = pick_proc();
+
+	/*
+	 * if we have no process to run, set IDLE as the current process for
+	 * time accounting and put the cpu in and idle state. After the next
+	 * timer interrupt the execution resumes here and we can pick another
+	 * process. If there is still nothing runnable we "schedule" IDLE again
+	 */
+	while (!(proc_ptr = pick_proc())) {
+		proc_ptr = proc_addr(IDLE);
+		if (priv(proc_ptr)->s_flags & BILLABLE)
+			bill_ptr = proc_ptr;
+		halt_cpu();
+	}
 
 check_misc_flags:
 
@@ -1388,7 +1400,6 @@ PRIVATE struct proc * pick_proc(void)
 		bill_ptr = rp;		/* bill for system time */
 	return rp;
   }
-  minix_panic("no runnable processes", NO_NUM);
   return NULL;
 }
 
