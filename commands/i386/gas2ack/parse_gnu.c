@@ -21,7 +21,6 @@ typedef struct mnemonic {	/* GNU as86 mnemonics translation table. */
 } mnemonic_t;
 
 static mnemonic_t mnemtab[] = {			/* This array is sorted. */
-	{ ".align",	DOT_ALIGN,	PSEUDO },
 	{ ".ascii",	DOT_ASCII,	PSEUDO },
 	{ ".asciz",	DOT_ASCIZ,	PSEUDO },
 	{ ".assert",	DOT_ASSERT,	PSEUDO },
@@ -435,42 +434,6 @@ static void zap(void)
 		skip_token(1);
 }
 
-/* same as in ACK */
-static int zap_unknown(asm86_t *a)
-/* An error, zap the rest of the line. */
-{
-	token_t *t;
-#define MAX_ASTR	4096
-	char astr[MAX_ASTR];
-	unsigned astr_len = 0;
-
-	astr[astr_len++] = '\t';
-	while ((t= get_token(0))->type != T_EOF && t->symbol != ';' 
-			&& t->type != T_COMMENT) {
-		switch(t->type) {
-			case T_CHAR: 
-				astr[astr_len++] = t->symbol;
-				break;
-			case T_WORD:
-			case T_STRING:
-				strncpy(astr + astr_len, t->name, t->len);
-				astr_len += t->len;
-				break;
-
-		}
-		skip_token(1);
-	}
-	astr[astr_len++] = '\0';
-	
-	a->raw_string = malloc(astr_len);
-	if (!a->raw_string)
-		return -1;
-
-	strcpy(a->raw_string, astr);
-
-	return 0;
-}
-
 static mnemonic_t *search_mnem(char *name)
 /* Binary search for a mnemonic.  (That's why the table is sorted.) */
 {
@@ -507,6 +470,7 @@ try_long:
 		goto try_long;
 	}
 
+	printf("not found '%s'\n", name);
 	return nil;
 }
 
@@ -810,14 +774,9 @@ static asm86_t *gnu_get_statement(void)
 
 	/* Read a machine instruction or pseudo op. */
 	if ((m= search_mnem(t->name)) == nil) {
-		/* we assume that unknown stuff is part of unresolved macro */
-		a->opcode = UNKNOWN;
-		if (zap_unknown(a)) {
-			parse_err(1, t, "unknown instruction '%s'\n", t->name);
-			del_asm86(a);
-			return nil;
-		}
-		return a;
+		parse_err(1, t, "unknown instruction '%s'\n", t->name);
+		del_asm86(a);
+		return nil;
 	}
 	a->opcode= m->opcode;
 	a->optype= m->optype;
