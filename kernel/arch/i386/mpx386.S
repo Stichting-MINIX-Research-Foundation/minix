@@ -372,7 +372,7 @@ hwint15:
 /*
  * syscall is only from a process to kernel
  */
-.align 16
+.balign 16
 .globl syscall_entry
 syscall_entry:
 
@@ -404,7 +404,7 @@ syscall_entry:
 	jmp	restart
 
 
-.align 16
+.balign 16
 /*
  * called by the exception interrupt vectors. If the exception does not push
  * errorcode, we assume that the vector handler pushed 0 instead. Next pushed
