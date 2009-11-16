@@ -1,6 +1,11 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
+/* APIC is turned on by default */
+#define CONFIG_APIC
+/* boot verbose */
+#define CONFIG_BOOT_VERBOSE
+
 /* This is the master header for the kernel.  It includes some other files
  * and defines the principal constants.
  */

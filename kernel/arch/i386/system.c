@@ -16,6 +16,10 @@
 #include "../../proc.h"
 #include "../../debug.h"
 
+#ifdef CONFIG_APIC
+#include "apic.h"
+#endif
+
 #define CR0_EM	0x0004		/* set to enable trap on any FP instruction */
 
 FORWARD _PROTOTYPE( void ser_debug, (int c));
@@ -24,6 +28,8 @@ PUBLIC void arch_monitor(void)
 {
 	level0(monitor);
 }
+
+PUBLIC int cpu_has_tsc;
 
 PUBLIC void arch_shutdown(int how)
 {
@@ -125,14 +131,34 @@ PUBLIC void tss_init(struct tss_s * tss, void * kernel_stack, unsigned cpu)
 
 PUBLIC void arch_init(void)
 {
+#ifdef CONFIG_APIC
+	/*
+	 * this is setting kernel segments to cover most of the phys memory. The
+	 * value is high enough to reach local APIC nad IOAPICs before paging is
+	 * turned on.
+	 */
+	prot_set_kern_seg_limit(0xfff00000);
+	reload_ds();
+#endif
+
 	idt_init();
 
 	tss_init(&tss, &k_boot_stktop, 0);
+
+#if defined(CONFIG_APIC) && !defined(CONFIG_SMP)
+	if (config_no_apic) {
+		BOOT_VERBOSE(kprintf("APIC disabled, using legacy PIC\n"));
+	}
+	else if (!apic_single_cpu_init()) {
+		BOOT_VERBOSE(kprintf("APIC not present, using legacy PIC\n"));
+	}
+#endif
 
 #if 0
 	/* Set CR0_EM until we get FP context switching */
 	write_cr0(read_cr0() | CR0_EM);
 #endif
+
 }
 
 #define COM1_BASE       0x3F8

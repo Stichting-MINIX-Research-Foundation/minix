@@ -128,7 +128,6 @@
 	mov	%esi, %ss:BPREG(%ebp)			;\
 							\
 	RESTORE_KERNEL_SEGS				;\
-	SAVE_TRAP_CTX(displ, %ebp, %esi)		;\
-							;
+	SAVE_TRAP_CTX(displ, %ebp, %esi)		;
 
 #endif /* __SCONST_H__ */

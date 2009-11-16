@@ -19,7 +19,6 @@ _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 _PROTOTYPE( void ser_dump_proc, (void)					);
 
 /* main.c */
-_PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void minix_shutdown, (struct timer *tp)			);
 
@@ -134,7 +133,7 @@ _PROTOTYPE( int vm_phys_memset, (phys_bytes source, u8_t pattern,
                 phys_bytes count)                                       );
 _PROTOTYPE( vir_bytes alloc_remote_segment, (u32_t *, segframe_t *,
         int, phys_bytes, vir_bytes, int));
-_PROTOTYPE( int intr_init, (int)					);
+_PROTOTYPE( int intr_init, (int, int)					);
 _PROTOTYPE( int intr_disabled, (void)					);
 _PROTOTYPE( void halt_cpu, (void)                                	);
 _PROTOTYPE( void arch_init, (void)                                     );

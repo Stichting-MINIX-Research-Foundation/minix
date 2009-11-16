@@ -12,7 +12,7 @@
 /* Table sizes. */
 #define GDT_SIZE (FIRST_LDT_INDEX + NR_TASKS + NR_PROCS) 
 					/* spec. and LDT's */
-#define IDT_SIZE (IRQ8_VECTOR + 8)	/* only up to the highest vector */
+#define IDT_SIZE 256	/* the table is set to it's maximal size */
 
 /* Fixed global descriptors.  1 to 7 are prescribed by the BIOS. */
 #define GDT_INDEX            1	/* GDT descriptor */
@@ -100,6 +100,10 @@
 #define INT_286_GATE         6	/* interrupt gate, used for all vectors */
 #define TRAP_286_GATE        7	/* not used */
 
+#define INT_GATE_TYPE	(INT_286_GATE | DESC_386_BIT)
+#define TSS_TYPE	(AVL_286_TSS  | DESC_386_BIT)
+
+
 /* Extra 386 hardware constants. */
 
 /* Exception vector numbers. */
@@ -139,5 +143,15 @@
 
 #define vir2phys(vir)   (kinfo.data_base + (vir_bytes) (vir))
 #define phys2vir(ph)   ((vir_bytes) (ph) - kinfo.data_base)
+
+#define INTEL_CPUID_GEN_EBX	0x756e6547 /* ASCII value of "Genu" */
+#define INTEL_CPUID_GEN_EDX	0x49656e69 /* ASCII value of "ineI" */
+#define INTEL_CPUID_GEN_ECX	0x6c65746e /* ASCII value of "ntel" */
+
+#define AMD_CPUID_GEN_EBX	0x68747541 /* ASCII value of "Auth" */
+#define AMD_CPUID_GEN_EDX	0x69746e65 /* ASCII value of "enti" */
+#define AMD_CPUID_GEN_ECX	0x444d4163 /* ASCII value of "cAMD" */
+
+
 
 #endif /* _I386_ACONST_H */

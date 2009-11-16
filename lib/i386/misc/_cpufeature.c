@@ -27,6 +27,10 @@ int _cpufeature(int cpufeature)
 			return cpuid_feature_edx & CPUID1_EDX_PSE;
 		case _CPUF_I386_PGE:
 			return cpuid_feature_edx & CPUID1_EDX_PGE;
+		case _CPUF_I386_APIC_ON_CHIP:
+			return cpuid_feature_edx & CPUID1_EDX_APIC_ON_CHIP;
+		case _CPUF_I386_TSC:
+			return cpuid_feature_edx & CPUID1_EDX_TSC;
 	}
 
 	return 0;

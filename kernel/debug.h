@@ -75,4 +75,15 @@
 	for(;;);							\
 } while(0)
 
+#define NOT_IMPLEMENTED do {	\
+		kprintf("NOT_IMPLEMENTED at %s:%d\n", __FILE__, __LINE__); \
+		minix_panic("NOT_IMPLEMENTED", NO_NUM); \
+} while(0)
+
+#ifdef CONFIG_BOOT_VERBOSE
+#define BOOT_VERBOSE(x)	x
+#else
+#define BOOT_VERBOSE(x)
+#endif
+
 #endif /* DEBUG_H */

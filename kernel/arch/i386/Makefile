@@ -20,7 +20,9 @@ OBJS=	arch_do_vmctl.o \
 	memory.o \
 	mpx386.o \
 	protect.o \
-	system.o
+	system.o \
+	apic.o \
+	apic_asm.o
 
 CPPFLAGS=-Iinclude
 CFLAGS=$(CPPFLAGS) -Wall $(CPROFILE)
@@ -76,6 +78,11 @@ klib386.o: klib386.S
 	$(CC) $(CFLAGS) -c -o $@ $@.s
 
 mpx386.o: mpx386.S
+	$(CC) $(CFLAGS) -E -D__ASSEMBLY__ -o $@.tmp $<
+	gas2ack $@.tmp $@.s
+	$(CC) $(CFLAGS) -c -o $@ $@.s
+
+apic_asm.o: apic_asm.S
 	$(CC) $(CFLAGS) -E -D__ASSEMBLY__ -o $@.tmp $<
 	gas2ack $@.tmp $@.s
 	$(CC) $(CFLAGS) -c -o $@ $@.s

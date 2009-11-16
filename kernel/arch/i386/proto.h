@@ -80,7 +80,10 @@ _PROTOTYPE( void phys_outsb, (U16_t port, phys_bytes buf, size_t count) );
 _PROTOTYPE( void phys_outsw, (U16_t port, phys_bytes buf, size_t count) );
 _PROTOTYPE( u32_t read_cr3, (void) );
 _PROTOTYPE( void reload_cr3, (void) );
-_PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes)	);
+_PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes));
+_PROTOTYPE( void reload_ds, (void)					);
+_PROTOTYPE( void ia32_msr_read, (u32_t reg, u32_t * hi, u32_t * lo)	);
+_PROTOTYPE( void ia32_msr_write, (u32_t reg, u32_t hi, u32_t lo)	);
 
 /* protect.c */
 struct tss_s {
@@ -140,10 +143,14 @@ EXTERN struct gate_table_s gate_table_pic[];
 
 /* copies an array of vectors to the IDT. The last vector must be zero filled */
 _PROTOTYPE(void idt_copy_vectors, (struct gate_table_s * first));
+_PROTOTYPE(void idt_reload, (void));
 
 EXTERN void * k_boot_stktop;
 _PROTOTYPE(void tss_init, (struct tss_s * tss, void * kernel_stack, unsigned cpu));
 
+_PROTOTYPE( void int_gate, (unsigned vec_nr, vir_bytes offset,
+		unsigned dpl_type) );
+_PROTOTYPE(void i8259_disable, (void));
 
 /* functions defined in architecture-independent kernel source. */
 #include "../../proto.h"

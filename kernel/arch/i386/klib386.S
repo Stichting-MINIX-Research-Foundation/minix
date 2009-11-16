@@ -45,6 +45,7 @@
 .globl	read_ds
 .globl  read_cs
 .globl	read_ss
+.globl	idt_reload	/* reload idt when returning to monitor. */
 
 /*
  * The routines only guarantee to preserve the registers the C compiler 
@@ -144,15 +145,44 @@ csinit:
 	mov	%ax, %ss
 	xchgl	mon_sp, %esp	/* unswitch stacks */
 	lidt	gdt+IDT_SELECTOR	/* reload interrupt descriptor table */
-	andb	$~0x02, gdt+TSS_SELECTOR+DESC_ACCESS	/* clear TSS busy bit */
-	mov	$TSS_SELECTOR, %eax
-	ltr	%ax	/* set TSS register */
+
+#ifdef CONFIG_APIC
+	cmpl	$0x0, lapic_addr
+	jne	3f
+	mov	$0, %ebx
+	jmp	4f
+
+3:
+	mov	$FLAT_DS_SELECTOR, %ebx
+	mov	%bx, %fs
+	movl	lapic_addr, %eax
+	add	$0x20, %eax
+	.byte 0x64; mov	(%eax), %ebx
+	and	$0xFF000000, %ebx
+	shr	$24, %ebx
+	movzb	%bl, %ebx
+
+4:
+	add	$apicid2cpuid, %ebx
+	movzb	(%ebx), %eax
+	shl	$3, %eax
+	mov	%eax, %ebx
+	add	$TSS_SELECTOR, %eax
+	addl	gdt+DESC_ACCESS, %eax
+	and	$~0x02, %eax
+	ltr	%bx	/* set TSS register */
+
+	mov	$DS_SELECTOR, %eax
+	mov	%ax, %fs
+
+#endif /* CONFIG_APIC */
 
 	pop	%eax
 	outb	$INT_CTLMASK	/* restore interrupt masks */
 	movb	%ah, %al
 	outb	$INT2_CTLMASK
 
+6:
 	addl	%ecx, lost_ticks	/* record lost clock ticks */
 
 	popf	/* restore flags */
@@ -487,7 +517,7 @@ level0:
 read_cpu_flags:
 	pushf
 	mov	(%esp), %eax
-	popf
+	add	$4, %esp
 	ret
 
 read_ds:
@@ -572,3 +602,62 @@ getcr3val:
 	mov	%eax, thecr3
 	ret
 
+/*
+ * Read the Model Specific Register (MSR) of IA32 architecture
+ *
+ * void ia32_msr_read(u32_t reg, u32_t * hi, u32_t * lo)
+ */
+.globl ia32_msr_read
+ia32_msr_read:
+	push	%ebp
+	mov	%esp, %ebp
+
+	mov	8(%ebp), %ecx
+	rdmsr
+	mov	12(%ebp), %ecx
+	mov	%edx, (%ecx)
+	mov	16(%ebp), %ecx
+	mov	%eax, (%ecx)
+
+	pop	%ebp
+	ret
+
+/*
+ * Write the Model Specific Register (MSR) of IA32 architecture
+ *
+ * void ia32_msr_write(u32_t reg, u32_t hi, u32_t lo)
+ */
+.globl ia32_msr_write
+ia32_msr_write:
+	push	%ebp
+	mov	%esp, %ebp
+
+	mov	12(%ebp), %edx
+	mov	16(%ebp), %eax
+	mov	8(%ebp), %ecx
+	wrmsr
+
+	pop	%ebp
+	ret
+
+/*===========================================================================*/
+/*			      idt_reload				     */
+/*===========================================================================*/
+/*  PUBLIC void idt_reload (void); */
+.balign	16
+idt_reload:
+	lidt	gdt+IDT_SELECTOR	/*  reload interrupt descriptor table */
+	ret
+
+/*
+ * void reload_segment_regs(void)
+ */
+
+#define RELOAD_SEG_REG(reg)	\
+	mov	reg, %ax	;\
+	mov	%ax, reg	;
+
+.globl reload_ds
+reload_ds:
+	RELOAD_SEG_REG(%ds)
+	ret

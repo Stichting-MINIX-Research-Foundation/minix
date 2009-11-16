@@ -8,6 +8,10 @@
 
 #include "../../clock.h"
 
+#ifdef CONFIG_APIC
+#include "apic.h"
+#endif
+
 #define CLOCK_ACK_BIT   0x80    /* PS/2 clock interrupt acknowledge bit */
 
 /* Clock parameters. */
@@ -69,24 +73,49 @@ PUBLIC clock_t read_8253A_timer(void)
 
 PUBLIC int arch_init_local_timer(unsigned freq)
 {
-	init_8253A_timer(freq);
+#ifdef CONFIG_APIC
+	/* if we know the address, lapic is enabled and we should use it */
+	if (lapic_addr) {
+		lapic_set_timer_periodic(freq);
+	} else
+	{
+		BOOT_VERBOSE(kprintf("Initiating legacy i8253 timer\n"));
+#else
+	{
+#endif
+		init_8253A_timer(freq);
+	}
 
 	return 0;
 }
 
 PUBLIC void arch_stop_local_timer(void)
 {
-	stop_8253A_timer();
+#ifdef CONFIG_APIC
+	if (lapic_addr) {
+		lapic_stop_timer();
+	} else
+#endif
+	{
+		stop_8253A_timer();
+	}
 }
 
 PUBLIC int arch_register_local_timer_handler(irq_handler_t handler)
 {
-	/* Using PIC, Initialize the CLOCK's interrupt hook. */
-	pic_timer_hook.proc_nr_e = NONE;
+#ifdef CONFIG_APIC
+	if (lapic_addr) {
+		/* Using APIC, it is configured in apic_idt_init() */
+		BOOT_VERBOSE(kprintf("Using LAPIC timer as tick source\n"));
+	} else
+#endif
+	{
+		/* Using PIC, Initialize the CLOCK's interrupt hook. */
+		pic_timer_hook.proc_nr_e = NONE;
+		pic_timer_hook.irq = CLOCK_IRQ;
 
-	put_irq_handler(&pic_timer_hook, CLOCK_IRQ, handler);
-	put_irq_handler(&pic_timer_hook, CLOCK_IRQ,
-			(irq_handler_t)bsp_timer_int_handler);
+		put_irq_handler(&pic_timer_hook, CLOCK_IRQ, handler);
+	}
 
 	return 0;
 }

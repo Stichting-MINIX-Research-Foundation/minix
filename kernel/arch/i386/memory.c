@@ -19,6 +19,10 @@
 #include "../../proto.h"
 #include "../../debug.h"
 
+#ifdef CONFIG_APIC
+#include "apic.h"
+#endif
+
 PRIVATE int psok = 0;
 
 #define PROCPDEPTR(pr, pi) ((u32_t *) ((u8_t *) vm_pagedirs +\
@@ -52,7 +56,6 @@ PUBLIC void vm_init(struct proc *newptproc)
 	vm_running = 1;
 
 }
-
 
 #define TYPEDIRECT	0
 #define TYPEPROCMAP	1
@@ -1031,16 +1034,40 @@ void i386_freepde(int pde)
 
 PUBLIC arch_phys_map(int index, phys_bytes *addr, phys_bytes *len, int *flags)
 {
+#ifdef CONFIG_APIC
+	/* map the local APIC if enabled */
+	if (index == 0 && lapic_addr) {
+		*addr = vir2phys(lapic_addr);
+		*len = 4 << 10 /* 4kB */;
+		*flags = VMMF_UNCACHED;
+		return OK;
+	}
+	return EINVAL;
+#else
 	/* we don't want anything */
 	return EINVAL;
+#endif
 }
 
 PUBLIC arch_phys_map_reply(int index, vir_bytes addr)
 {
+#ifdef CONFIG_APIC
+	/* if local APIC is enabled */
+	if (index == 0 && lapic_addr) {
+		lapic_addr_vaddr = addr;
+	}
+#endif
 	return OK;
 }
 
 PUBLIC int arch_enable_paging(void)
 {
+#ifdef CONFIG_APIC
+	/* if local APIC is enabled */
+	if (lapic_addr) {
+		lapic_addr = lapic_addr_vaddr;
+		lapic_eoi_addr = LAPIC_EOI;
+	}
+#endif
 	return OK;
 }

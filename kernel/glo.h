@@ -62,6 +62,10 @@ EXTERN u32_t magictest;			/* global magic number */
 EXTERN int verboseflags;
 #endif
 
+#ifdef CONFIG_APIC
+EXTERN int config_no_apic; /* optionaly turn off apic */
+#endif
+
 /* VM */
 EXTERN int vm_running;
 EXTERN int catch_pagefaults;

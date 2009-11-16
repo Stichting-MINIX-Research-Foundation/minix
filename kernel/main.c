@@ -39,9 +39,6 @@ PUBLIC void main()
   reg_t ktsb;			/* kernel task stack base */
   struct exec e_hdr;		/* for a copy of an a.out header */
 
-   /* Architecture-dependent initialization. */
-   arch_init();
-
    /* Global value to test segment sanity. */
    magictest = MAGICTEST;
  
@@ -184,6 +181,9 @@ PUBLIC void main()
 	alloc_segments(rp);
   }
 
+  /* Architecture-dependent initialization. */
+  arch_init();
+
 #if SPROFILE
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
@@ -270,8 +270,8 @@ timer_t *tp;
  * down MINIX. How to shutdown is in the argument: RBT_HALT (return to the
  * monitor), RBT_MONITOR (execute given code), RBT_RESET (hard reset). 
  */
-  intr_init(INTS_ORIG);
   arch_stop_local_timer();
+  intr_init(INTS_ORIG, 0);
   arch_shutdown(tp ? tmr_arg(tp)->ta_int : RBT_PANIC);
 }
 

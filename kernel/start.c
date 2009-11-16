@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <archconst.h>
-#include <proto.h>
+#include "proto.h"
 
 FORWARD _PROTOTYPE( char *get_value, (_CONST char *params, _CONST char *key));
 /*===========================================================================*
@@ -76,11 +76,19 @@ U16_t parmoff, parmsize;	/* boot parameters offset and length */
   if(value && atoi(value) == 0)
 	do_serial_debug=1;
 
+#ifdef CONFIG_APIC
+  value = get_value(params_buffer, "no_apic");
+  if(value)
+	config_no_apic = atoi(value);
+  else
+	config_no_apic = 0;
+#endif
+
   /* Return to assembler code to switch to protected mode (if 286), 
    * reload selectors and call main().
    */
 
-  intr_init(INTS_MINIX);
+  intr_init(INTS_MINIX, 0);
 }
 
 /*===========================================================================*
