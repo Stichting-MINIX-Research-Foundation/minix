@@ -129,6 +129,7 @@ typedef enum opcode {	/* 80486 opcodes, from the i486 reference manual.
 	LOOP,	LOOPE,	LOOPNE,
 	LSL,
 	LTR,
+	MFENCE,
 	MOV,
 	MOVS,
 	MOVSX,
@@ -142,6 +143,7 @@ typedef enum opcode {	/* 80486 opcodes, from the i486 reference manual.
 	OR,
 	OUT,
 	OUTS,
+	PAUSE,
 	POP,
 	POPA,
 	POPAD,
@@ -151,8 +153,10 @@ typedef enum opcode {	/* 80486 opcodes, from the i486 reference manual.
 	PUSHAD,
 	PUSHF,
 	RCL,	RCR,	ROL,	ROR,
-	RET,	RETF,			/* RETF added */
 	RDMSR,
+	RDPMC,
+	RDTSC,
+	RET,	RETF,			/* RETF added */
 	SAHF,
 	SAL,	SAR,	SHL,	SHR,
 	SBB,

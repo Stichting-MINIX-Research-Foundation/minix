@@ -224,6 +224,7 @@ static mnemonic_t mnemtab[] = {
 	{ LSL,		"lsl"		},
 	{ LSS,		"lss"		},
 	{ LTR,		"ltr"		},
+	{ MFENCE,	".data1 0x0f, 0xae, 0x0f"},
 	{ MOV,		"mov%"		},
 	{ MOVS,		"movs%"		},
 	{ MOVSX,	"movsx"		},
@@ -237,6 +238,7 @@ static mnemonic_t mnemtab[] = {
 	{ OR,		"or%"		},
 	{ OUT,		"out%"		},
 	{ OUTS,		"outs%"		},
+	{ PAUSE,	".data1 0xf3, 0x90"},
 	{ POP,		"pop"		},
 	{ POPA,		"popa"		},
 	{ POPAD,	"popad"		},
@@ -249,7 +251,9 @@ static mnemonic_t mnemtab[] = {
 	{ RCR,		"rcr%"		},
 	{ RET,		"ret"		},
 	{ RETF,		"retf"		},
-	{ RDMSR,	"rdmsr"		},
+	{ RDMSR,	".data1 0x0f, 0x32"},
+	{ RDPMC,	".data1 0x0f, 0x33"},
+	{ RDTSC,	".data1 0x0f, 0x31"},
 	{ ROL,		"rol%"		},
 	{ ROR,		"ror%"		},
 	{ SAHF,		"sahf"		},
@@ -292,7 +296,7 @@ static mnemonic_t mnemtab[] = {
 	{ VERW,		"verw"		},
 	{ WAIT,		"wait"		},
 	{ WBINVD,	"wbinvd"	},
-	{ WRMSR,	"wrmsr"		},
+	{ WRMSR,	".data1 0x0f, 0x30"},
 	{ XADD,		"xadd"		},
 	{ XCHG,		"xchg%"		},
 	{ XLAT,		"xlat"		},
@@ -606,14 +610,6 @@ void ack_emit_instruction(asm86_t *a)
 				ack_printf(".data1  0x0f, 0x22, 0xe0\n");
 				return;
 			}
-		}
-		if (a->opcode == RDMSR) {
-			ack_printf(".data1 0x0f, 0x32\n");
-			return;
-		}
-		if (a->opcode == WRMSR) {
-			ack_printf(".data1 0x0f, 0x30\n");
-			return;
 		}
 		/* we are translating from GNU */
 		if (a->args && a->args->operator == ','
