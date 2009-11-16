@@ -291,7 +291,6 @@ int dump_core;			/* flag indicating whether to dump core */
 	panic(__FILE__, "exit_proc: FS died", r);
   }
 
-
   /* Tell FS about the exiting process. */
   m.m_type = dump_core ? PM_DUMPCORE : PM_EXIT;
   m.PM_PROC = rmp->mp_endpoint;
