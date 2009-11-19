@@ -110,7 +110,7 @@ static int _udp_connect(int socket, const struct sockaddr *address,
 	if (address == NULL)
 	{
 		/* Unset remote address */
-		udpopt.nwuo_flags= NWUO_RP_ANY | NWUO_RA_ANY;
+		udpopt.nwuo_flags= NWUO_RP_ANY | NWUO_RA_ANY | NWUO_RWDATALL;
 
 		r= ioctl(socket, NWIOSUDPOPT, &udpopt);
 		return r;
@@ -127,7 +127,7 @@ static int _udp_connect(int socket, const struct sockaddr *address,
 		errno= EINVAL;
 		return -1;
 	}
-	udpopt.nwuo_flags= NWUO_RP_SET | NWUO_RA_SET;
+	udpopt.nwuo_flags= NWUO_RP_SET | NWUO_RA_SET | NWUO_RWDATONLY;
 	if ((udpoptp->nwuo_flags & NWUO_LOCPORT_MASK) == NWUO_LP_ANY)
 		udpopt.nwuo_flags |= NWUO_LP_SEL;
 	udpopt.nwuo_remaddr= sinp->sin_addr.s_addr;

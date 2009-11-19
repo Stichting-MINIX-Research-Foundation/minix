@@ -120,12 +120,36 @@ static ssize_t _udp_recvfrom(int socket, void *_RESTRICT buffer, size_t length,
 
 	if (udpoptp->nwuo_flags & NWUO_RWDATONLY)
 	{
+		if (address != NULL &&
+			(udpoptp->nwuo_flags & (NWUO_RA_SET | NWUO_RP_SET)) !=
+			(NWUO_RA_SET | NWUO_RP_SET))
+		{
+
 #if DEBUG
-		fprintf(stderr,
-			"recvfrom(udp): NWUO_RWDATONLY not implemented\n");
+			fprintf(stderr,
+			"recvfrom(udp): RWDATONLY on unconnected socket\n");
 #endif
-		errno= ENOSYS;
-		return -1;
+			errno= ENOTCONN;
+			return -1;
+		}
+
+		r= read(socket, buffer, length);
+		if (r == -1)
+			return r;
+
+		if (address != NULL)
+		{
+			sin.sin_family= AF_INET;
+			sin.sin_addr.s_addr= udpoptp->nwuo_remaddr;
+			sin.sin_port= udpoptp->nwuo_remport;
+			len= *address_len;
+			if (len > sizeof(sin))
+				len= sizeof(sin);
+			memcpy(address, &sin, len);
+			*address_len= sizeof(sin);
+		}
+
+		return r;
 	}
 
 	buflen= sizeof(*io_hdrp) + length;
