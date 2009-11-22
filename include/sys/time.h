@@ -39,4 +39,6 @@ int getitimer(int which, struct itimerval *value);
 int setitimer(int which, const struct itimerval *_RESTRICT value,
 		struct itimerval *_RESTRICT ovalue);
 
+#include <sys/select.h>
+
 #endif /* _SYS__TIME_H */
