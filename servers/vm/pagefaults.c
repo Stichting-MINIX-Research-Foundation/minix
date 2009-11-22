@@ -218,4 +218,6 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 			arch_map2vir(vmp, mem), arch_map2vir(vmp, mem+len),
 			vmp->vm_endpoint);
 	}
+
+	return r;
 }
