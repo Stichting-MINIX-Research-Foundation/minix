@@ -22,9 +22,6 @@ extern _PROTOTYPE (int (*call_vec[]), (void) );	/* system call handlers */
 EXTERN sigset_t core_sset;	/* which signals cause core images */
 EXTERN sigset_t ign_sset;	/* which signals are by default ignored */
 
-EXTERN time_t boottime;		/* time when the system was booted (for
-				 * reporting to FS)
-				 */
 EXTERN u32_t system_hz;		/* System clock frequency. */
 EXTERN int abort_flag;
 EXTERN char monitor_code[256];		

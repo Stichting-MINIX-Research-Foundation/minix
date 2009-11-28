@@ -689,6 +689,7 @@ struct
 	{ "UMAP",		SYS_UMAP },
 	{ "VIRCOPY",		SYS_VIRCOPY },
 	{ "IRQCTL",		SYS_IRQCTL },
+	{ "INT86",		SYS_INT86 },
 	{ "DEVIO",		SYS_DEVIO },
 	{ "SDEVIO",		SYS_SDEVIO },
 	{ "VDEVIO",		SYS_VDEVIO },
@@ -700,11 +701,11 @@ struct
 	{ "VSAFECOPY",		SYS_VSAFECOPY },
 	{ "SETGRANT",		SYS_SETGRANT },
 	{ "READBIOS",		SYS_READBIOS },
+	{ "PROFBUF",		SYS_PROFBUF },
+	{ "STIME",		SYS_STIME },
 	{ "MAPDMA",		SYS_MAPDMA },
 	{ "VMCTL",		SYS_VMCTL },
-	{ "PROFBUF",		SYS_PROFBUF },
 	{ "SYSCTL",		SYS_SYSCTL },
-	{ "INT86",		SYS_INT86 },
 	{ NULL,		0 }
 };
 
