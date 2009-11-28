@@ -52,7 +52,7 @@ const char *_sys_errlist[] = {
 	"Too many levels of symbolic links",	/* ELOOP */
 	"Driver restarted",		/* ERESTART */
 	unknown,			/* 42 */
-	unknown,			/* 43 */
+	"Identifier removed",		/* EIDRM */
 	unknown,			/* 44 */
 	unknown,			/* 45 */
 	unknown,			/* 46 */
@@ -60,12 +60,12 @@ const char *_sys_errlist[] = {
 	unknown,			/* 48 */
 	unknown,			/* 49 */
 	"Invalid packet size",		/* EPACKSIZE */
-	"Not enough buffers left",	/* EOUTOFBUFS */
+	"Not enough buffers left",	/* ENOBUFS */
 	"Illegal ioctl for device",	/* EBADIOCTL */
 	"Bad mode for ioctl",		/* EBADMODE */
 	"Would block",			/* EWOULDBLOCK */
-	"Bad destination address",	/* EBADDEST */
-	"Destination not reachable",	/* EDSTNOTRCH */
+	"Network unreachable",		/* ENETUNREACH */
+	"Host unreachable",		/* EHOSTUNREACH */
 	"Already connected",		/* EISCONN */
 	"Address in use",		/* EADDRINUSE */
 	"Connection refused",		/* ECONNREFUSED */
@@ -86,6 +86,7 @@ const char *_sys_errlist[] = {
 	"Socket operation on non-socket", /* ENOTSOCK */
 	"Protocol not available",	/* ENOPROTOOPT */
 	"Operation not supported",	/* EOPNOTSUPP */
+	"Network is down",		/* ENETDOWN */
 };
 
 const int _sys_nerr = sizeof(_sys_errlist) / sizeof(_sys_errlist[0]);

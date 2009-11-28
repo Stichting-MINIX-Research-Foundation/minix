@@ -32,7 +32,7 @@ variable \fBerrno\fP, which is not cleared
 on successful calls.
 Thus \fBerrno\fP should be tested only after an error has occurred.
 .PP
-The following is a complete list of the errors and their
+The following is a list of the errors and their
 names as given in
 .RI < sys/errno.h >:
 .en 0 OK "Error 0
@@ -228,16 +228,16 @@ system.
 A directory with entries other than \*(lq.\*(rq and \*(lq..\*(rq
 was supplied to a remove directory or rename call.
 .en 40 ELOOP "Too many symbolic links"
-A path name lookup involved more than SYMLOOP symbolic links.  SYMLOOP
-equals 8 as distributed.
-(Minix-vmd)
+A path name lookup involved too many symbolic links.
+.en 41 ERESTART "Device driver restarted
+.en 43 EIDRM "Identifier removed
 .en 50 EPACKSIZE "Invalid packet size
-.en 51 EOUTOFBUFS "Not enough buffers left
+.en 51 ENOBUFS "Not enough buffers left
 .en 52 EBADIOCTL "Illegal ioctl for device
 .en 53 EBADMODE "Bad mode in ioctl
 .en 54 EWOULDBLOCK "Would block
-.en 55 EBADDEST "Bad destination address
-.en 56 EDSTNOTRCH "Destination not reachable
+.en 55 ENETUNREACH "Network unreachable
+.en 56 EHOSTUNREACH "Host unreachable
 .en 57 EISCONN "Already connected
 .en 58 EADDRINUSE "Address in use
 .en 59 ECONNREFUSED "Connection refused
@@ -248,8 +248,17 @@ equals 8 as distributed.
 .en 64 ENOTCONN "No connection
 .en 65 ESHUTDOWN "Already shutdown
 .en 66 ENOCONN "No such connection
-.en 67 EINPROGRESS "Operation now in progress
-.en 68 EALREADY "Operation already in progress
+.en 67 EAFNOSUPPORT "Address family not supported
+.en 68 EPROTONOSUPPORT "Protocol not supported by AF
+.en 69 EPROTOTYPE "Protocol wrong type for socket
+.en 70 EINPROGRESS "Operation now in progress
+.en 71 EADDRNOTAVAIL "Can't assign requested address
+.en 72 EALREADY "Operation already in progress
+.en 73 EMSGSIZE "Message too long
+.en 74 ENOTSOCK "Socket operation on non-socket
+.en 75 ENOPROTOOPT "Protocol not available
+.en 76 EOPNOTSUPP "Operation not supported
+.en 77 ENETDOWN "Network is down
 .ig
 .en XXX EDQUOT "Disc quota exceeded"
 A 

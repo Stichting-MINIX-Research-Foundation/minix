@@ -392,12 +392,14 @@ assert (count == sizeof(struct nwio_ipopt));
 			result= (int)offset;
 			if (result<0)
 			{
-				if (result == EDSTNOTRCH)
+				if (result == EHOSTUNREACH ||
+					result == ENETUNREACH ||
+					result == ENETDOWN)
 				{
 					if (tcp_port->tp_snd_head)
 					{
 						tcp_notreach(tcp_port->
-							tp_snd_head);
+							tp_snd_head, result);
 					}
 				}
 				else
@@ -2414,7 +2416,7 @@ int priority;
 			{
 				continue;
 			}
-			tcp_close_connection (tcp_conn, EOUTOFBUFS);
+			tcp_close_connection (tcp_conn, ENOBUFS);
 		}
 	}
 
@@ -2434,7 +2436,7 @@ int priority;
 			{
 				continue;
 			}
-			tcp_close_connection (tcp_conn, EOUTOFBUFS);
+			tcp_close_connection (tcp_conn, ENOBUFS);
 		}
 	}
 }
@@ -2470,8 +2472,9 @@ PRIVATE void tcp_bufcheck()
 }
 #endif
 
-PUBLIC void tcp_notreach(tcp_conn)
+PUBLIC void tcp_notreach(tcp_conn, error)
 tcp_conn_t *tcp_conn;
+int error;
 {
 	int new_ttl;
 
@@ -2479,7 +2482,7 @@ tcp_conn_t *tcp_conn;
 	if (new_ttl == IP_MAX_TTL)
 	{
 		if (tcp_conn->tc_state == TCS_SYN_SENT)
-			tcp_close_connection(tcp_conn, EDSTNOTRCH);
+			tcp_close_connection(tcp_conn, error);
 		return;
 	}
 	else if (new_ttl < TCP_DEF_TTL_NEXT)

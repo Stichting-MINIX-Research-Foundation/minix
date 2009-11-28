@@ -195,7 +195,7 @@ ipaddr_t *nexthop;
 
 	oroute= oroute_find_ent(port_nr, dest);
 	if (!oroute || oroute->ort_dist > ttl)
-		return EDSTNOTRCH;
+		return ENETUNREACH;
 	if (msgsize && oroute->ort_mtu && 
 		oroute->ort_mtu < msgsize)
 	{

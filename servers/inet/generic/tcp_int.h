@@ -243,7 +243,7 @@ int tcp_su4listen ARGS(( tcp_fd_t *tcp_fd, tcp_conn_t *tcp_conn,
 void tcp_reply_ioctl ARGS(( tcp_fd_t *tcp_fd, int reply ));
 void tcp_reply_write ARGS(( tcp_fd_t *tcp_fd, size_t reply ));
 void tcp_reply_read ARGS(( tcp_fd_t *tcp_fd, size_t reply ));
-void tcp_notreach ARGS(( tcp_conn_t *tcp_conn ));
+void tcp_notreach ARGS(( tcp_conn_t *tcp_conn, int error ));
 void tcp_mtu_exceeded ARGS(( tcp_conn_t *tcp_conn ));
 void tcp_mtu_incr ARGS(( tcp_conn_t *tcp_conn ));
 

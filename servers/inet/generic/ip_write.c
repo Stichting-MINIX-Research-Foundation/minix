@@ -78,11 +78,9 @@ size_t data_len;
 
 	if (!(ip_fd->if_port->ip_flags & IPF_IPADDRSET))
 	{
-		/* Interface is down. What kind of error do we want? For
-		 * the moment, we return OK.
-		 */
+		/* Interface is down. */
 		bf_afree(data);
-		return NW_OK;
+		return ENETDOWN;
 	}
 
 	data_len= bf_bufsize(data);
@@ -198,17 +196,17 @@ size_t data_len;
 	else if ((hostrep_dst & 0xe0000000l) == 0xe0000000l)
 		;	/* OK, Multicast */
 	else if ((hostrep_dst & 0xf0000000l) == 0xf0000000l)
-		r= EBADDEST;	/* Bad class */
+		r= EAFNOSUPPORT;	/* Bad class */
 	else if ((dstaddr ^ my_ipaddr) & netmask)
 		;	/* OK, remote destination */
 	else if (!(dstaddr & ~netmask) &&
 		(ip_port->ip_flags & IPF_SUBNET_BCAST))
 	{
-		r= EBADDEST;	/* Zero host part */
+		r= EAFNOSUPPORT;	/* Zero host part */
 	}
 	if (r<0)
 	{
-		DIFBLOCK(1, r == EBADDEST,
+		DIFBLOCK(1, r == EAFNOSUPPORT,
 			printf("bad destination: ");
 			writeIpAddr(ip_hdr->ih_dst);
 			printf("\n"));

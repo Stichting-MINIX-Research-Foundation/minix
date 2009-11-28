@@ -822,7 +822,7 @@ ev_arg_t ev_arg;
 				r= next_port->ip_dev_send(next_port,
 					iroute->irt_gateway,
 					pack, IP_LT_NORMAL);
-				if (r == EDSTNOTRCH)
+				if (r == EHOSTUNREACH)
 				{
 					printf("ip[%d]: gw ",
 						ip_port-ip_port_table);
@@ -894,7 +894,7 @@ ev_arg_t ev_arg;
 			/* Just send the packet to it's destination */
 			pack->acc_linkC++; /* Extra ref for ICMP */
 			r= next_port->ip_dev_send(next_port, dest, pack, type);
-			if (r == EDSTNOTRCH)
+			if (r == EHOSTUNREACH)
 			{
 				DBLOCK(1, printf("ip[%d]: next hop ",
 					ip_port-ip_port_table);

@@ -1414,11 +1414,11 @@ variable if the
 .BR write ,
 or
 .B ioctl
-call returns -1.  The TCP/IP error codes defined in <errno.h> are:
+call returns -1.  The TCP/IP error codes defined in <errno.h> are, among others:
 .IP EPACKSIZE 5c
 This indicates an attempt to read or write with a buffer that is too
 large or too small.
-.IP EOUTOFBUFS
+.IP ENOBUFS
 The TCP/IP server has insufficient memory to execute the request.
 .IP EBADIOCTL
 This indicates an attempt to execute a command the particular server
@@ -1429,10 +1429,10 @@ on an ETH channel.
 .IP EBADMODE
 The request is refused because the channel is not fully configured, in the
 wrong state or the parameters are invalid.
-.IP EBADDEST
-This indicates an illegal destination address for a packet.
-.IP EDSTNORCH
-The destination is not reachable.
+.IP ENETUNREACH
+The destination network is not reachable.
+.IP EHOSTUNREACH
+The destination host is not reachable.
 .IP EISCONN
 The channel is already connected so a second request is refused.
 .IP EADDRINUSE

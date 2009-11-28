@@ -299,7 +299,7 @@ ioreq_t req;
 		{
 			/* Interface is down, no changes allowed */
 			return (*ip_fd->if_put_userdata)(ip_fd->if_srfd,
-				EINVAL, NULL, TRUE);
+				ENETDOWN, NULL, TRUE);
 		}
 
 		data= bf_packIffLess (data, sizeof(nwio_route_t) );
@@ -375,7 +375,7 @@ ioreq_t req;
 		{
 			/* Interface is down, no changes allowed */
 			return (*ip_fd->if_put_userdata)(ip_fd->if_srfd,
-				EINVAL, NULL, TRUE);
+				ENETDOWN, NULL, TRUE);
 		}
 
 		data= bf_packIffLess (data, sizeof(nwio_route_t) );
