@@ -11,7 +11,7 @@ sighandler_t disp;		/* signal handler, or SIG_DFL, or SIG_IGN */
 {
   struct sigaction sa, osa;
 
-  if (sig <= 0 || sig > _NSIG || sig == SIGKILL) {
+  if (sig <= 0 || sig >= _NSIG || sig == SIGKILL) {
 	errno = EINVAL;
 	return(SIG_ERR);
   }

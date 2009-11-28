@@ -336,7 +336,7 @@ PUBLIC void send_sig(int proc_nr, int sig_nr)
  *===========================================================================*/
 PUBLIC void cause_sig(proc_nr, sig_nr)
 int proc_nr;			/* process to be signalled */
-int sig_nr;			/* signal to be sent, 1 to _NSIG */
+int sig_nr;			/* signal to be sent */
 {
 /* A system process wants to send a signal to a process.  Examples are:
  *  - HARDWARE wanting to cause a SIGSEGV after a CPU exception

@@ -445,7 +445,7 @@ char *argv[];
 
 	/* Reset signals to default values. */
 	sa.sa_handler = SIG_DFL;
-	for (n = 1; n <= _NSIG; ++n) sigaction(n, &sa, NULL);
+	for (n = 1; n < _NSIG; ++n) sigaction(n, &sa, NULL);
 
 	/* Execute the user's shell. */
 	execve(sh, argx, env);

@@ -2,6 +2,8 @@
 /* System processes use simpler macros with no range error checking (defined in
  * signal.h). The ANSI signal() implementation now also uses the macro
  * versions, which makes hiding of the functions here a historical remains.
+ *
+ * _NSIG is supposed to be the highest signal number plus one.
  */
 #define sigaddset	_sigaddset
 #define sigdelset	_sigdelset
@@ -13,10 +15,10 @@
 /* Low bit of signal masks. */
 #define SIGBIT_0	((sigset_t) 1)
 
-/* Mask of valid signals (0 - _NSIG). */
-#define SIGMASK		(((SIGBIT_0 << _NSIG) << 1) - 1)
+/* Mask of valid signals (0 - (_NSIG-1)). */
+#define SIGMASK		((SIGBIT_0 << _NSIG) - 1)
 
-#define sigisvalid(signo) ((unsigned) (signo) <= _NSIG)
+#define sigisvalid(signo) ((unsigned) (signo) < _NSIG)
 
 PUBLIC int sigaddset(set, signo)
 sigset_t *set;

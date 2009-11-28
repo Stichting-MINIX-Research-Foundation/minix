@@ -238,10 +238,8 @@ void test37b()
   if (sigdelset(&s_nokill, SIGKILL) != 0) e(8);
   s_nokill_stop = s_nokill;
   if (sigdelset(&s_nokill_stop, SIGSTOP) != 0) e(8);
-#ifndef _MINIX /* XXX - should unsupported signals be <= _NSIG? */
-  if (SIGSTOP > _NSIG) e(666);
-  if (SIGSTOP <= _NSIG && sigdelset(&s_nokill, SIGSTOP) != 0) e(888);
-#endif /* _MINIX */
+  if (SIGSTOP >= _NSIG) e(666);
+  if (SIGSTOP < _NSIG && sigdelset(&s_nokill, SIGSTOP) != 0) e(888);
 
   /* Now get most of the signals into default state.  Don't change SIGINT
   * or SIGQUIT, so this program can be killed.  SIGKILL is also special.
@@ -427,7 +425,7 @@ void test37c()
   if (signal(SIGINT, catch1) != SIG_DFL) e(11);
 
   /* Verify that SIG_ERR is correctly generated. */
-  if (signal(_NSIG + 1, catch1) != SIG_ERR) e(12);
+  if (signal(_NSIG, catch1) != SIG_ERR) e(12);
   if (signal(0, catch1) != SIG_ERR) e(13);
   if (signal(-1, SIG_DFL) != SIG_ERR) e(14);
 
@@ -987,8 +985,8 @@ void clearsigstate()
   sigset_t sigset_var;
 
   /* Clear the signal state. */
-  for (i = 1; i <= _NSIG; i++) signal(i, SIG_IGN);
-  for (i = 1; i <= _NSIG; i++) signal(i, SIG_DFL);
+  for (i = 1; i < _NSIG; i++) signal(i, SIG_IGN);
+  for (i = 1; i < _NSIG; i++) signal(i, SIG_DFL);
   sigfillset(&sigset_var);
   sigprocmask(SIG_UNBLOCK, &sigset_var, (sigset_t *)NULL);
 }

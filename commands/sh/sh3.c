@@ -854,7 +854,7 @@ register struct op *t;
 	register int  resetsig;
 
 	if (t->words[1] == NULL) {
-		for (i=0; i<=_NSIG; i++)
+		for (i=0; i<_NSIG; i++)
 			if (trap[i]) {
 				prn(i);
 				prs(": ");
@@ -894,7 +894,7 @@ char *s;
 {
 	register int n;
 
-	if ((n = getn(s)) < 0 || n > _NSIG) {
+	if ((n = getn(s)) < 0 || n >= _NSIG) {
 		err("trap: bad signal number");
 		n = 0;
 	}

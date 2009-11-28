@@ -69,7 +69,7 @@ char **argv;
 	}
 	if (sig < 0) {						/* numeric? */
 		ul = strtoul(argv[1] + 1, &end, 10);
-		if (end == argv[1] + 1 || *end != 0 || ul > _NSIG) usage();
+		if (end == argv[1] + 1 || *end != 0 || ul >= _NSIG) usage();
 		sig = ul;
 	}
 	argv++;
