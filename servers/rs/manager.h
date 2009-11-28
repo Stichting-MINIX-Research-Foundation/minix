@@ -85,7 +85,6 @@ int exec_pipe[2];
 #define RS_CRASHED 	0x040	/* driver crashed */
 #define RS_LATEREPLY	0x080	/* no reply sent to RS_DOWN caller yet */
 #define RS_SIGNALED 	0x100	/* driver crashed */
-#define RS_EXECFAILED 	0x200	/* exec failed */
 
 /* Constants determining RS period and binary exponential backoff. */
 #define RS_DELTA_T       60			/* check every T ticks */

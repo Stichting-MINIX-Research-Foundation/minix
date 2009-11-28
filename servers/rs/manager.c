@@ -497,7 +497,7 @@ PUBLIC int do_restart(message *m_ptr)
 			rp->r_pid);
 		return EBUSY;
 	  }
-	  rp->r_flags &= ~(RS_EXITING|RS_REFRESHING|RS_NOPINGREPLY);
+	  rp->r_flags &= ~(RS_REFRESHING|RS_NOPINGREPLY);
 	  r = start_service(rp, 0, &ep);	
 	  if (r != OK) printf("do_restart: start_service failed: %d\n", r);
 	  m_ptr->RS_ENDPOINT = ep;
@@ -611,7 +611,7 @@ PUBLIC void do_exit(message *m_ptr)
 				slot_nr);
 		}
 		rp= &rproc[slot_nr];
-		rp->r_flags |= RS_EXECFAILED;
+		rp->r_flags |= RS_EXITING;
 	}
 
       /* Search the system process table to see who exited. 
@@ -642,8 +642,6 @@ PUBLIC void do_exit(message *m_ptr)
 			free(rp->r_exec);
 			rp->r_exec= NULL;
 		  }
-		  rproc_ptr[proc] = NULL;
-
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
 		      rp->r_restarts = -1;		/* reset counter */
@@ -655,13 +653,10 @@ PUBLIC void do_exit(message *m_ptr)
 		  		m_ptr->RS_ENDPOINT = ep;
 		      }
 	      }
-              else if (rp->r_flags & RS_EXECFAILED) {
-		  rp->r_flags = 0;			/* release slot */
-              }
 	      else {
                   /* Determine what to do. If this is the first unexpected 
 		   * exit, immediately restart this service. Otherwise use
-		   * a binary exponetial backoff.
+		   * a binary exponential backoff.
 		   */
 #if 0
 rp->r_restarts= 0;
@@ -842,20 +837,50 @@ endpoint_t *endpoint;
 
   default:						/* parent process */
 #if 0
-  if(rs_verbose) printf("RS: parent forked, pid %d..\n", child_pid);
+      if(rs_verbose) printf("RS: parent forked, pid %d..\n", child_pid);
 #endif
       child_proc_nr_e = getnprocnr(child_pid);		/* get child slot */ 
 #if 0
-  if(rs_verbose) printf("RS: forked into %d..\n", child_proc_nr_e);
+      if(rs_verbose) printf("RS: forked into %d..\n", child_proc_nr_e);
 #endif
       break;						/* continue below */
   }
 
+  /* Regardless of any following failures, there is now a child process.
+   * Update the system process table that is maintained by the RS server.
+   */
+  child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
+  rp->r_flags = RS_IN_USE | flags;		/* mark slot in use */
+  rp->r_restarts += 1;				/* raise nr of restarts */
+  rp->r_proc_nr_e = child_proc_nr_e;		/* set child details */
+  rp->r_pid = child_pid;
+  rp->r_check_tm = 0;				/* not checked yet */
+  getuptime(&rp->r_alive_tm); 			/* currently alive */
+  rp->r_stop_tm = 0;				/* not exiting yet */
+  rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
+
+  /* If any of the calls below fail, the RS_EXITING flag is set. This implies
+   * that the process will be removed from RS's process table once it has
+   * terminated. The assumption is that it is not useful to try to restart the
+   * process later in these failure cases.
+   */
+
   if (use_copy)
   {
 	extern char **environ;
-	dev_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
+
+	/* Copy the executable image into the child process. If this call
+	 * fails, the child process may or may not be killed already. If it is
+	 * not killed, it's blocked because of NO_PRIV. Kill it now either way.
+	 */
+	s = dev_execve(child_proc_nr_e, rp->r_exec, rp->r_exec_len, rp->r_argv,
 		environ);
+	if (s != OK) {
+		report("RS", "dev_execve call failed", s);
+		kill(child_pid, SIGKILL);
+		rp->r_flags |= RS_EXITING;	/* don't try again */
+		return(s);
+	}
   }
 
   privp= NULL;
@@ -871,29 +896,30 @@ endpoint_t *endpoint;
 	vm_mask = &rp->r_vm[0];
   }
 
-  /* Set the privilege structure for the child process to let is run.
-   * This should succeed: we tested number in use above.
+  /* Tell VM about allowed calls, before actually letting the process run. */
+  if ((s = vm_set_priv(child_proc_nr_e, vm_mask)) < 0) {
+	report("RS", "vm_set_priv call failed", s);
+	kill(child_pid, SIGKILL);
+	rp->r_flags |= RS_EXITING;
+	return (s);
+  }
+
+  /* Set the privilege structure for the child process.
+   * That will also cause the child process to start running.
+   * This call should succeed: we tested number in use above.
    */
   if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_INIT, privp)) < 0) {
       report("RS","sys_privctl call failed", s);	/* to let child run */
+      kill(child_pid, SIGKILL);				/* kill driver */
       rp->r_flags |= RS_EXITING;			/* expect exit */
-      if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
-      else report("RS", "didn't kill pid", child_pid);
       return(s);					/* return error */
   }
 
-  if ((s = vm_set_priv(child_proc_nr_e, vm_mask)) < 0) {
-	  report("RS", "vm_set_priv call failed", s);
-	  rp->r_flags |= RS_EXITING;
-	  if (child_pid > 0) kill(child_pid, SIGKILL);
-	  else report("RS", "didn't kill pid", child_pid);
-	  return (s);
-  }
-
+  /* The child is now running. Publish its endpoint in DS. */
   s= ds_publish_u32(rp->r_label, child_proc_nr_e);
   if (s != OK)
 	printf("RS: start_service: ds_publish_u32 failed: %d\n", s);
- else if(rs_verbose)
+  else if(rs_verbose)
 	printf("RS: start_service: ds_publish_u32 done: %s -> %d\n", 
   		rp->r_label, child_proc_nr_e);
 
@@ -915,9 +941,8 @@ endpoint_t *endpoint;
 	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {
           report("RS", "couldn't map driver (continuing)", errno);
 #if 0
+	  kill(child_pid, SIGKILL);			/* kill driver */
           rp->r_flags |= RS_EXITING;			/* expect exit */
-	  if(child_pid > 0) kill(child_pid, SIGKILL);	/* kill driver */
-	  else report("RS", "didn't kill pid", child_pid);
 	  return(s);					/* return error */
 #endif
       }
@@ -928,21 +953,10 @@ endpoint_t *endpoint;
           rp->r_cmd, rp->r_dev_nr, child_pid,
 	  child_proc_nr_e, child_proc_nr_n);
 
-  /* The system service now has been successfully started. Update the rest
-   * of the system process table that is maintain by the RS server. The only 
-   * thing that can go wrong now, is that execution fails at the child. If 
-   * that's the case, the child will exit. 
+  /* The system service now has been successfully started. The only thing
+   * that can go wrong now, is that execution fails at the child. If that's
+   * the case, the child will exit. 
    */
-  child_proc_nr_n = _ENDPOINT_P(child_proc_nr_e);
-  rp->r_flags = RS_IN_USE | flags;		/* mark slot in use */
-  rp->r_restarts += 1;				/* raise nr of restarts */
-  rp->r_proc_nr_e = child_proc_nr_e;		/* set child details */
-  rp->r_pid = child_pid;
-  rp->r_check_tm = 0;				/* not check yet */
-  getuptime(&rp->r_alive_tm); 			/* currently alive */
-  rp->r_stop_tm = 0;				/* not exiting yet */
-  rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
-
   if(endpoint) *endpoint = child_proc_nr_e;	/* send back child endpoint */
 
   return(OK);
@@ -1076,9 +1090,7 @@ struct rproc *rp;
 	char incarnation_str[20];	/* Enough for a counter? */
 	char *envp[1] = { NULL };
 
-	if (rp->r_flags & RS_EXITING)
-		reason= "exit";
-	else if (rp->r_flags & RS_REFRESHING)
+	if (rp->r_flags & RS_REFRESHING)
 		reason= "restart";
 	else if (rp->r_flags & RS_NOPINGREPLY)
 		reason= "no-heartbeat";
