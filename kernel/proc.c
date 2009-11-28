@@ -405,7 +405,10 @@ long bit_map;			/* notification event set or flags */
 	return(ETRAPDENIED);		/* trap denied by mask or kernel */
   }
 
-  if ((iskerneln(src_dst_p) && call_nr != SENDREC && call_nr != RECEIVE)) {
+  /* SENDA has no src_dst value here, so this check is in mini_senda() as well.
+   */
+  if (call_nr != SENDREC && call_nr != RECEIVE && call_nr != SENDA &&
+	iskerneln(src_dst_p)) {
 #if DEBUG_ENABLE_IPC_WARNINGS
       kprintf("sys_call: trap %d not allowed, caller %d, src_dst %d\n", 
           call_nr, proc_nr(caller_ptr), src_dst_e);
@@ -906,6 +909,19 @@ size_t size;
 		{
 			/* Bad destination, report the error */
 			tabent.result= EDEADSRCDST;
+			A_INSERT(i, result);
+			tabent.flags= flags | AMF_DONE;
+			A_INSERT(i, flags);
+
+			if (flags & AMF_NOTIFY)
+				do_notify= 1;
+			continue;
+		}
+
+		if (iskerneln(dst_p))
+		{
+			/* Asynchronous sends to the kernel are not allowed */
+			tabent.result= ECALLDENIED;
 			A_INSERT(i, result);
 			tabent.flags= flags | AMF_DONE;
 			A_INSERT(i, flags);
