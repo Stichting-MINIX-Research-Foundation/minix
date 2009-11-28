@@ -124,6 +124,7 @@ PUBLIC void osdep_eth_init()
 
  		eth_port->etp_osdep.etp_port= ecp->ec_port;
 		eth_port->etp_osdep.etp_task= tasknr;
+		eth_port->etp_osdep.etp_recvconf= 0;
 		eth_port->etp_osdep.etp_send_ev= 0;
 		ev_init(&eth_port->etp_osdep.etp_recvev);
 
@@ -554,7 +555,7 @@ eth_port_t *eth_port;
 u32_t flags;
 {
 	int r;
-	unsigned dl_flags;
+	unsigned dl_flags, mask;
 	message mess, repl_mess;
 
 	assert(!eth_port->etp_vlan);
@@ -574,6 +575,13 @@ u32_t flags;
 		"eth_set_rec_conf: setting OEPF_NEED_CONF, state = %d\n",
 			eth_port->etp_osdep.etp_state);
 		eth_port->etp_osdep.etp_flags |= OEPF_NEED_CONF;
+		return;
+	}
+
+	mask = NWEO_EN_BROAD | NWEO_EN_MULTI | NWEO_EN_PROMISC;
+	if ((eth_port->etp_osdep.etp_recvconf & mask) == (flags & mask))
+	{
+		/* No change for the driver, so don't send an update */
 		return;
 	}
 

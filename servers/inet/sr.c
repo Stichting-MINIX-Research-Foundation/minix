@@ -95,9 +95,9 @@ FORWARD _PROTOTYPE ( void sr_status, (message *m) );
 #endif
 FORWARD _PROTOTYPE ( void sr_reply_, (mq_t *m, int reply, int is_revive) );
 FORWARD _PROTOTYPE ( sr_fd_t *sr_getchannel, (int minor));
-FORWARD _PROTOTYPE ( acc_t *sr_get_userdata, (int fd, vir_bytes offset,
-					vir_bytes count, int for_ioctl) );
-FORWARD _PROTOTYPE ( int sr_put_userdata, (int fd, vir_bytes offset,
+FORWARD _PROTOTYPE ( acc_t *sr_get_userdata, (int fd, size_t offset,
+					size_t count, int for_ioctl) );
+FORWARD _PROTOTYPE ( int sr_put_userdata, (int fd, size_t offset,
 						acc_t *data, int for_ioctl) );
 #ifdef __minix_vmd 
 #define sr_select_res 0
@@ -876,8 +876,8 @@ int is_revive;
 
 PRIVATE acc_t *sr_get_userdata (fd, offset, count, for_ioctl)
 int fd;
-vir_bytes offset;
-vir_bytes count;
+size_t offset;
+size_t count;
 int for_ioctl;
 {
 	sr_fd_t *loc_fd;
@@ -966,7 +966,7 @@ assert (loc_fd->srf_flags & ip_flag);
 
 PRIVATE int sr_put_userdata (fd, offset, data, for_ioctl)
 int fd;
-vir_bytes offset;
+size_t offset;
 acc_t *data;
 int for_ioctl;
 {

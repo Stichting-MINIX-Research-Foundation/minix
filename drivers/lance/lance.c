@@ -487,7 +487,6 @@ message *mp;
    int port;
    ether_card_t *ec;
    message reply_mess;
-   static int first_time = 1;
 
    pci_init();
 
@@ -562,11 +561,8 @@ message *mp;
       ec->flags |= ECF_BROAD;
 
    ec->client = mp->m_source;
-   if (first_time)
-   {
-      first_time = 0;
-      ec_reinit(ec);
-   }
+
+   ec_reinit(ec);
 
    reply_mess.m_type = DL_CONF_REPLY;
    reply_mess.m3_i1 = mp->DL_PORT;
