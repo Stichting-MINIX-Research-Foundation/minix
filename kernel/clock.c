@@ -184,7 +184,7 @@ struct timer *tp;		/* pointer to timer structure */
 PRIVATE void load_update(void)
 {
 	u16_t slot;
-	int enqueued = -1, q;	/* -1: special compensation for IDLE. */
+	int enqueued = 0, q;
 	struct proc *p;
 
 	/* Load average data is stored as a list of numbers in a circular
