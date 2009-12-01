@@ -56,6 +56,14 @@ register struct proc *rc;		/* slot of process to clean up */
   /* Don't clear if already cleared. */
   if(isemptyp(rc)) return;
 
+  /* Check the table with IRQ hooks to see if hooks should be released. */
+  for (i=0; i < NR_IRQ_HOOKS; i++) {
+      int proc;
+      if (rc->p_endpoint == irq_hooks[i].proc_nr_e) {
+        rm_irq_handler(&irq_hooks[i]);	/* remove interrupt handler */
+        irq_hooks[i].proc_nr_e = NONE;	/* mark hook as free */
+      } 
+  }
 
   /* Remove the process' ability to send and receive messages */
   clear_endpoint(rc);
@@ -68,15 +76,6 @@ register struct proc *rc;		/* slot of process to clean up */
    * and mark slot as FREE.
    */
   RTS_LOCK_SETFLAGS(rc, RTS_SLOT_FREE);
-
-  /* Check the table with IRQ hooks to see if hooks should be released. */
-  for (i=0; i < NR_IRQ_HOOKS; i++) {
-      int proc;
-      if (rc->p_endpoint == irq_hooks[i].proc_nr_e) {
-        rm_irq_handler(&irq_hooks[i]);	/* remove interrupt handler */
-        irq_hooks[i].proc_nr_e = NONE;	/* mark hook as free */
-      } 
-  }
 
   /* Release the process table slot. If this is a system process, also
    * release its privilege structure.  Further cleanup is not needed at
