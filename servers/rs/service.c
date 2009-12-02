@@ -336,6 +336,7 @@ PRIVATE void fatal(char *fmt, ...)
 #define KW_SYSTEM	"system"
 #define KW_IPC		"ipc"
 #define KW_VM		"vm"
+#define KW_CONTROL	"control"
 
 FORWARD void do_driver(config_t *cpe, config_t *config);
 
@@ -370,27 +371,27 @@ PRIVATE void do_class(config_t *cpe, config_t *config)
 		{
 			if (!(cp->flags & CFG_SUBLIST))
 			{
-				fatal("do_class: expected list at %s:%d\n",
+				fatal("do_class: expected list at %s:%d",
 					cp->file, cp->line);
 			}
 			cp1= cp->list;
 			if ((cp1->flags & CFG_STRING) ||
 				(cp1->flags & CFG_SUBLIST))
 			{
-				fatal("do_class: expected word at %s:%d\n",
+				fatal("do_class: expected word at %s:%d",
 					cp1->file, cp1->line);
 			}
 
 			/* At this place we expect the word 'driver' */
 			if (strcmp(cp1->word, KW_DRIVER) != 0)
-				fatal("do_class: exected word '%S' at %s:%d\n",
+				fatal("do_class: exected word '%S' at %s:%d",
 					KW_DRIVER, cp1->file, cp1->line);
 
 			cp1= cp1->next;
 			if ((cp1->flags & CFG_STRING) ||
 				(cp1->flags & CFG_SUBLIST))
 			{
-				fatal("do_class: expected word at %s:%d\n",
+				fatal("do_class: expected word at %s:%d",
 					cp1->file, cp1->line);
 			}
 
@@ -401,7 +402,7 @@ PRIVATE void do_class(config_t *cpe, config_t *config)
 		if (cp == NULL)
 		{
 			fatal(
-			"do_class: no entry found for class '%s' at %s:%d\n",
+			"do_class: no entry found for class '%s' at %s:%d",
 				cpe->word, cpe->file, cpe->line);
 		}
 		do_driver(cp1->next, config);
@@ -838,7 +839,7 @@ PRIVATE void do_system(config_t *cpe)
 		if (call_nr < KERNEL_CALL)
 		{
 			fatal(
-		"do_system: bad call number %d in system tab for '%s'\n",
+		"do_system: bad call number %d in system tab for '%s'",
 				call_nr, system_tab[i].label);
 		}
 		call_nr -= KERNEL_CALL;
@@ -849,10 +850,40 @@ PRIVATE void do_system(config_t *cpe)
 		if (word >= RSS_NR_SYSTEM)
 		{
 			fatal(
-			"do_system: RSS_NR_SYSTEM is too small (%d needed)\n",
+			"do_system: RSS_NR_SYSTEM is too small (%d needed)",
 				word+1);
 		}
 		rs_start.rss_system[word] |= mask;
+	}
+}
+
+PRIVATE void do_control(config_t *cpe)
+{
+	int nr_control = 0;
+
+	/* Process a list of 'control' labels. */
+	for (; cpe; cpe= cpe->next)
+	{
+		if (cpe->flags & CFG_SUBLIST)
+		{
+			fatal("do_control: unexpected sublist at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (cpe->flags & CFG_STRING)
+		{
+			fatal("do_control: unexpected string at %s:%d",
+				cpe->file, cpe->line);
+		}
+		if (nr_control >= RSS_NR_CONTROL)
+		{
+			fatal(
+			"do_control: RSS_NR_CONTROL is too small (%d needed)",
+				nr_control+1);
+		}
+
+		rs_start.rss_control[nr_control].l_addr = cpe->word;
+		rs_start.rss_control[nr_control].l_len = strlen(cpe->word);
+		rs_start.rss_nr_control = ++nr_control;
 	}
 }
 
@@ -865,13 +896,13 @@ PRIVATE void do_driver(config_t *cpe, config_t *config)
 	 */
 	if (!(cpe->flags & CFG_SUBLIST))
 	{
-		fatal("do_driver: expected list at %s:%d\n",
+		fatal("do_driver: expected list at %s:%d",
 			cpe->file, cpe->line);
 	}
 	if (cpe->next != NULL)
 	{
 		cpe= cpe->next;
-		fatal("do_driver: expected end of list at %s:%d\n",
+		fatal("do_driver: expected end of list at %s:%d",
 			cpe->file, cpe->line);
 	}
 	cpe= cpe->list;
@@ -881,13 +912,13 @@ PRIVATE void do_driver(config_t *cpe, config_t *config)
 	{
 		if (!(cp->flags & CFG_SUBLIST))
 		{
-			fatal("do_driver: expected list at %s:%d\n",
+			fatal("do_driver: expected list at %s:%d",
 				cp->file, cp->line);
 		}
 		cpe= cp->list;
 		if ((cpe->flags & CFG_STRING) || (cpe->flags & CFG_SUBLIST))
 		{
-			fatal("do_driver: expected word at %s:%d\n",
+			fatal("do_driver: expected word at %s:%d",
 				cpe->file, cpe->line);
 		}
 
@@ -936,7 +967,11 @@ PRIVATE void do_driver(config_t *cpe, config_t *config)
 			do_vm(cpe->next);
 			continue;
 		}
-
+		if (strcmp(cpe->word, KW_CONTROL) == 0)
+		{
+			do_control(cpe->next);
+			continue;
+		}
 	}
 }
 
@@ -957,25 +992,25 @@ PRIVATE void do_config(char *label, char *filename)
 	{
 		if (!(cp->flags & CFG_SUBLIST))
 		{
-			fatal("do_config: expected list at %s:%d\n",
+			fatal("do_config: expected list at %s:%d",
 				cp->file, cp->line);
 		}
 		cpe= cp->list;
 		if ((cpe->flags & CFG_STRING) || (cpe->flags & CFG_SUBLIST))
 		{
-			fatal("do_config: expected word at %s:%d\n",
+			fatal("do_config: expected word at %s:%d",
 				cpe->file, cpe->line);
 		}
 
 		/* At this place we expect the word 'driver' */
 		if (strcmp(cpe->word, KW_DRIVER) != 0)
-			fatal("do_config: exected word '%S' at %s:%d\n",
+			fatal("do_config: exected word '%S' at %s:%d",
 				KW_DRIVER, cpe->file, cpe->line);
 
 		cpe= cpe->next;
 		if ((cpe->flags & CFG_STRING) || (cpe->flags & CFG_SUBLIST))
 		{
-			fatal("do_config: expected word at %s:%d\n",
+			fatal("do_config: expected word at %s:%d",
 				cpe->file, cpe->line);
 		}
 
@@ -987,7 +1022,7 @@ PRIVATE void do_config(char *label, char *filename)
 	{
 		fprintf(stderr, "service: driver '%s' not found in config\n",
 			label);
-		return;
+		exit(1);
 	}
 
 	cpe= cpe->next;
@@ -1052,11 +1087,11 @@ PUBLIC int main(int argc, char **argv)
       rs_start.rss_period= req_period;
       rs_start.rss_script= req_script;
       if(req_label) {
-      	rs_start.rss_label = req_label;
-      	rs_start.rss_labellen = strlen(req_label);
+        rs_start.rss_label.l_addr = req_label;
+        rs_start.rss_label.l_len = strlen(req_label);
       } else {
-        rs_start.rss_label = progname;
-        rs_start.rss_labellen = strlen(progname);
+        rs_start.rss_label.l_addr = progname;
+        rs_start.rss_label.l_len = strlen(progname);
       }
       if (req_script)
 	      rs_start.rss_scriptlen= strlen(req_script);

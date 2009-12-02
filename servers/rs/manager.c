@@ -1,5 +1,6 @@
 /*
  * Changes:
+ *   Mar 02, 2009:	Extended isolation policies  (Jorrit N. Herder)
  *   Jul 22, 2005:	Created  (Jorrit N. Herder)
  */
 
@@ -15,7 +16,6 @@
 #include <minix/ds.h>
 #include <minix/endpoint.h>
 #include <minix/vm.h>
-#include <minix/rs.h>
 #include <lib.h>
 
 #include <timers.h>				/* For priv.h */
@@ -26,6 +26,11 @@ struct rproc rproc[NR_SYS_PROCS];		/* system process table */
 struct rproc *rproc_ptr[NR_PROCS];		/* mapping for fast access */
 
 /* Prototypes for internal functions that do the hard work. */
+FORWARD _PROTOTYPE( int caller_is_root, (endpoint_t endpoint) );
+FORWARD _PROTOTYPE( int caller_can_control, (endpoint_t endpoint,
+	char *label) );
+FORWARD _PROTOTYPE( int copy_label, (endpoint_t src_e,
+	struct rss_label *src_label, char *dst_label, size_t dst_len) );
 FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags,
 	endpoint_t *ep) );
 FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
@@ -48,7 +53,95 @@ PRIVATE int shutting_down = FALSE;
 extern int rs_verbose;
 
 /*===========================================================================*
- *					do_up				     *
+ *				caller_is_root				     *
+ *===========================================================================*/
+PRIVATE int caller_is_root(endpoint)
+endpoint_t endpoint;				/* caller endpoint */
+{
+  uid_t euid;
+
+  /* Check if caller has root user ID. */
+  euid = getnuid(endpoint);
+  if (rs_verbose && euid != 0)
+  {
+	printf("RS: got unauthorized request from endpoint %d\n", endpoint);
+  }
+  
+  return euid == 0;
+}
+
+/*===========================================================================*
+ *				caller_can_control			     *
+ *===========================================================================*/
+PRIVATE int caller_can_control(endpoint, label)
+endpoint_t endpoint;
+char *label;
+{
+  int control_allowed = 0;
+  register struct rproc *rp;
+  int c;
+  char *progname;
+
+  /* Find name of binary for given label. */
+  for (rp = BEG_RPROC_ADDR; rp < END_RPROC_ADDR; rp++) {
+	if (strcmp(rp->r_label, label) == 0) {
+		break;
+	}
+  }
+  if (rp == END_RPROC_ADDR) return 0;
+  progname = strrchr(rp->r_argv[0], '/');
+  if (progname != NULL)
+	progname++;
+  else
+	progname = rp->r_argv[0];
+
+  /* Check if label is listed in caller's isolation policy. */
+  for (rp = BEG_RPROC_ADDR; rp < END_RPROC_ADDR; rp++) {
+	if (rp->r_proc_nr_e == endpoint) {
+		break;
+	}
+  }
+  if (rp == END_RPROC_ADDR) return 0;
+  if (rp->r_nr_control > 0) {
+	for (c = 0; c < rp->r_nr_control; c++) {
+		if (strcmp(rp->r_control[c], progname) == 0)
+			control_allowed = 1;
+	}
+  }
+
+  if (rs_verbose) {
+	printf("RS: allowing %u control over %s via policy: %s\n",
+		endpoint, label, control_allowed ? "yes" : "no");
+  }
+  return control_allowed;
+}
+
+/*===========================================================================*
+ *				copy_label				     *
+ *===========================================================================*/
+PRIVATE int copy_label(src_e, src_label, dst_label, dst_len)
+endpoint_t src_e;
+struct rss_label *src_label;
+char *dst_label;
+size_t dst_len;
+{
+  int s, len;
+
+  len = MIN(dst_len-1, src_label->l_len);
+
+  s = sys_datacopy(src_e, (vir_bytes) src_label->l_addr,
+	SELF, (vir_bytes) dst_label, len);
+  if (s != OK) return s;
+
+  dst_label[len] = 0;
+
+  if (rs_verbose)
+	printf("RS: do_start: using label (custom) '%s'\n", dst_label);
+  return OK;
+}
+
+/*===========================================================================*
+ *				do_up					     *
  *===========================================================================*/
 PUBLIC int do_up(m_ptr, do_copy, flags)
 message *m_ptr;					/* request message pointer */
@@ -69,6 +162,9 @@ int flags;					/* extra flags, if any */
   int len;					/* length of string */
   int r;
   endpoint_t ep;				/* new endpoint no. */
+
+  /* This call requires special privileges. */
+  if (!caller_is_root(m_ptr->m_source)) return(EPERM);
 
   /* See if there is a free entry in the table with system processes. */
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
@@ -148,7 +244,7 @@ int flags;					/* extra flags, if any */
 
 
 /*===========================================================================*
- *					do_start			     *
+ *				do_start				     *
  *===========================================================================*/
 PUBLIC int do_start(m_ptr)
 message *m_ptr;					/* request message pointer */
@@ -169,10 +265,8 @@ message *m_ptr;					/* request message pointer */
   struct rproc *tmp_rp;
   struct rs_start rs_start;
 
-  /* Get the request structure */
-  s= sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
-  	SELF, (vir_bytes) &rs_start, sizeof(rs_start));
-  if (s != OK) return(s);
+  /* This call requires special privileges. */
+  if (!caller_is_root(m_ptr->m_source)) return(EPERM);
 
   /* See if there is a free entry in the table with system processes. */
   for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
@@ -185,6 +279,11 @@ message *m_ptr;					/* request message pointer */
 	printf("rs`do_start: driver table full\n");
 	return ENOMEM;
   }
+
+  /* Ok, there is space. Get the request structure. */
+  s= sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
+  	SELF, (vir_bytes) &rs_start, sizeof(rs_start));
+  if (s != OK) return(s);
 
   /* Obtain command name and parameters. This is a space-separated string
    * that looks like "/sbin/service arg1 arg2 ...". Arguments are optional.
@@ -215,15 +314,12 @@ message *m_ptr;					/* request message pointer */
   rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
   rp->r_argc = arg_count;
 
-  if(rs_start.rss_label) {
-	int len;
+  if(rs_start.rss_label.l_len > 0) {
 	/* RS_START caller has supplied a custom label for this driver. */
-	len = MIN(sizeof(rp->r_label)-1, rs_start.rss_labellen);
-        s=sys_datacopy(m_ptr->m_source, (vir_bytes) rs_start.rss_label,
-        	SELF, (vir_bytes) rp->r_label, len);
+	int s = copy_label(m_ptr->m_source, &rs_start.rss_label,
+		rp->r_label, sizeof(rp->r_label));
 	if(s != OK)
 		return s;
-	rp->r_label[len] = '\0';
         if(rs_verbose)
 	  printf("RS: do_start: using label (custom) '%s'\n", rp->r_label);
   } else {
@@ -241,6 +337,29 @@ message *m_ptr;					/* request message pointer */
         if(rs_verbose)
           printf("RS: do_start: using label (from binary %s) '%s'\n",
 		rp->r_argv[0], rp->r_label);
+  }
+
+  if(rs_start.rss_nr_control > 0) {
+	int i, s;
+	if (rs_start.rss_nr_control > RSS_NR_CONTROL)
+	{
+		printf("RS: do_start: too many control labels\n");
+		return EINVAL;
+	}
+	for (i=0; i<rs_start.rss_nr_control; i++) {
+		s = copy_label(m_ptr->m_source, &rs_start.rss_control[i],
+			rp->r_control[i], sizeof(rp->r_control[i]));
+		if(s != OK)
+			return s;
+	}
+	rp->r_nr_control = rs_start.rss_nr_control;
+
+	if (rs_verbose) {
+		printf("RS: do_start: control labels:");
+		for (i=0; i<rp->r_nr_control; i++)
+			printf(" %s", rp->r_control[i]);
+		printf("\n");
+	}
   }
 
   /* Check for duplicates */
@@ -349,7 +468,7 @@ message *m_ptr;					/* request message pointer */
 #endif
   }
 
-  if (rs_start.rss_nr_pci_id > MAX_NR_PCI_ID)
+  if (rs_start.rss_nr_pci_id > RSS_NR_PCI_ID)
   {
 	printf("RS: do_start: too many PCI device IDs\n");
 	return EINVAL;
@@ -363,7 +482,7 @@ message *m_ptr;					/* request message pointer */
 	   printf("RS: do_start: PCI %04x/%04x\n",
 		rp->r_pci_id[i].vid, rp->r_pci_id[i].did);
   }
-  if (rs_start.rss_nr_pci_class > MAX_NR_PCI_CLASS)
+  if (rs_start.rss_nr_pci_class > RSS_NR_PCI_CLASS)
   {
 	printf("RS: do_start: too many PCI class IDs\n");
 	return EINVAL;
@@ -428,6 +547,9 @@ PUBLIC int do_down(message *m_ptr)
   int s, proc;
   char label[MAX_LABEL_LEN];
 
+  /* This call requires special privileges. */
+  if (!caller_is_root(m_ptr->m_source)) return(EPERM);
+
   len= m_ptr->RS_CMD_LEN;
   if (len >= sizeof(label))
 	return EINVAL;		/* Too long */
@@ -487,6 +609,12 @@ PUBLIC int do_restart(message *m_ptr)
   if (s != OK) return(s);
   label[len]= '\0';
 
+  /* This call requires special privileges. */
+  if (! (caller_can_control(m_ptr->m_source, label) ||
+		caller_is_root(m_ptr->m_source))) {
+	return(EPERM);
+  }
+
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
       if ((rp->r_flags & RS_IN_USE) && strcmp(rp->r_label, label) == 0) {
 	  if(rs_verbose) printf("RS: restarting '%s' (%d)\n", label, rp->r_pid);
@@ -530,6 +658,12 @@ PUBLIC int do_refresh(message *m_ptr)
   if (s != OK) return(s);
   label[len]= '\0';
 
+  /* This call requires special privileges. */
+  if (! (caller_can_control(m_ptr->m_source, label) ||
+		caller_is_root(m_ptr->m_source))) {
+	return(EPERM);
+  }
+
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
       if (rp->r_flags & RS_IN_USE && strcmp(rp->r_label, label) == 0) {
 #if VERBOSE
@@ -550,6 +684,9 @@ PUBLIC int do_refresh(message *m_ptr)
  *===========================================================================*/
 PUBLIC int do_shutdown(message *m_ptr)
 {
+  /* This call requires special privileges. */
+  if (m_ptr != NULL && !caller_is_root(m_ptr->m_source)) return(EPERM);
+
   /* Set flag so that RS server knows services shouldn't be restarted. */
   shutting_down = TRUE;
   return(OK);
@@ -814,7 +951,7 @@ endpoint_t *endpoint;
 
   case 0:						/* child process */
       /* Try to execute the binary that has an absolute path. If this fails, 
-       * e.g., because the root file system cannot be read, try to strip of
+       * e.g., because the root file system cannot be read, try to strip off
        * the path, and see if the command is in RS' current working dir.
        */
       nice(rp->r_nice);		/* Nice before setuid, to allow negative
@@ -826,7 +963,7 @@ endpoint_t *endpoint;
       {
 	execve(rp->r_argv[0], rp->r_argv, &null_env);	/* POSIX execute */
 	file_only = strrchr(rp->r_argv[0], '/') + 1;
-	execve(file_only, rp->r_argv, &null_env);		/* POSIX execute */
+	execve(file_only, rp->r_argv, &null_env);	/* POSIX execute */
       }
       printf("RS: exec failed for %s: %d\n", rp->r_argv[0], errno);
       slot_nr= rp-rproc;
@@ -857,6 +994,7 @@ endpoint_t *endpoint;
   rp->r_check_tm = 0;				/* not checked yet */
   getuptime(&rp->r_alive_tm); 			/* currently alive */
   rp->r_stop_tm = 0;				/* not exiting yet */
+  rp->r_backoff = 0;				/* not to be restarted */
   rproc_ptr[child_proc_nr_n] = rp;		/* mapping for fast access */
 
   /* If any of the calls below fail, the RS_EXITING flag is set. This implies
@@ -993,6 +1131,9 @@ message *m_ptr;
   int dst_proc;
   size_t len;
   int s;
+
+  /* This call requires special privileges. */
+  if (!caller_is_root(m_ptr->m_source)) return(EPERM);
 
   switch(m_ptr->m1_i1) {
   case SI_PROC_TAB:
@@ -1329,7 +1470,7 @@ struct priv *privp;
 
 	src_bits_per_word= 8*sizeof(rp->r_call_mask[0]);
 	dst_bits_per_word= 8*sizeof(privp->s_k_call_mask[0]);
-	for (src_word= 0; src_word < MAX_NR_SYSTEM; src_word++)
+	for (src_word= 0; src_word < RSS_NR_SYSTEM; src_word++)
 	{
 		for (src_bit= 0; src_bit < src_bits_per_word; src_bit++)
 		{

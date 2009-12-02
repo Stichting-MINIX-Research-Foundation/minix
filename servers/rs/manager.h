@@ -12,9 +12,6 @@
 #define MAX_NR_ARGS	      4		/* maximum number of arguments */
 #define MAX_RESCUE_DIR_LEN   64		/* maximum rescue dir length */
 
-#define MAX_NR_PCI_ID	     32		/* maximum number of PCI device IDs */
-#define MAX_NR_PCI_CLASS      4		/* maximum number of PCI class IDs */
-#define MAX_NR_SYSTEM	      2		/* should match RSS_NR_SYSTEM */
 #define MAX_IPC_LIST	    256		/* Max size of list for IPC target
 					 * process names
 					 */
@@ -56,14 +53,15 @@ extern struct rproc {
   uid_t r_uid;
   int r_nice;
   int r_nr_pci_id;		/* Number of PCI devices IDs */
-  struct { u16_t vid; u16_t did; } r_pci_id[MAX_NR_PCI_ID];
+  struct { u16_t vid; u16_t did; } r_pci_id[RSS_NR_PCI_ID];
   int r_nr_pci_class;		/* Number of PCI class IDs */
-  struct { u32_t class; u32_t mask; } r_pci_class[MAX_NR_PCI_CLASS];
+  struct { u32_t class; u32_t mask; } r_pci_class[RSS_NR_PCI_CLASS];
 
-  u32_t r_call_mask[MAX_NR_SYSTEM];
+  u32_t r_call_mask[RSS_NR_SYSTEM];
   char r_ipc_list[MAX_IPC_LIST];
-#define R_VM_CALL_SIZE BITMAP_CHUNKS(VM_NCALLS)
-  bitchunk_t r_vm[R_VM_CALL_SIZE];
+  bitchunk_t r_vm[RSS_VM_CALL_SIZE];
+  int r_nr_control;
+  char r_control[RSS_NR_CONTROL][MAX_LABEL_LEN];
 } rproc[NR_SYS_PROCS];
 
 /* Mapping for fast access to the system process table. */ 

@@ -9,6 +9,7 @@
 
 #include "inc.h"
 #include <timers.h>
+#include <minix/rs.h>
 #include "../../kernel/priv.h"
 #include "../rs/manager.h"
 

@@ -25,6 +25,7 @@
 #include <minix/sysutil.h>
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
+#include <minix/rs.h>
 
 #include <archtypes.h>
 #include <timers.h>				/* For priv.h */
