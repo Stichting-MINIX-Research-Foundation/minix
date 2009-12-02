@@ -69,12 +69,12 @@ _PROTOTYPE(int main, (void) );
 FORWARD _PROTOTYPE( struct device *w_prepare, (int device) );
 FORWARD _PROTOTYPE( char *w_name, (void) );
 FORWARD _PROTOTYPE( int w_transfer, (int proc_nr, int opcode, u64_t position,
-				iovec_t *iov, unsigned nr_req, int safe) );
+				iovec_t *iov, unsigned nr_req) );
 FORWARD _PROTOTYPE( int w_do_open, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( int w_do_close, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void w_init, (void) );
 FORWARD _PROTOTYPE( void w_geometry, (struct partition *entry));
-FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr, int)    );
+FORWARD _PROTOTYPE( int w_other, (struct driver *dp, message *m_ptr) );
 
 /* Entry points to this driver. */
 PRIVATE struct driver w_dtab = {
@@ -106,7 +106,7 @@ PUBLIC int main()
   remap_first= v;
 
 /* Set special disk parameters then call the generic main loop. */
-  driver_task(&w_dtab);
+  driver_task(&w_dtab, DRIVER_STD);
   return(OK);
 }
 
@@ -150,13 +150,12 @@ PRIVATE char *w_name()
 /*===========================================================================*
  *				w_transfer				     *
  *===========================================================================*/
-PRIVATE int w_transfer(proc_nr, opcode, pos64, iov, nr_req, safe)
+PRIVATE int w_transfer(proc_nr, opcode, pos64, iov, nr_req)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER or DEV_SCATTER */
 u64_t pos64;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
-int safe;			/* use safecopies? */
 {
   struct wini *wn = w_wn;
   iovec_t *iop, *iov_end = iov + nr_req;
@@ -222,7 +221,7 @@ int safe;			/* use safecopies? */
 			if (count + chunk > nbytes) chunk = nbytes - count;
 			assert(chunk <= rem_buf_size);
 
-			if(safe) {
+			if(proc_nr != SELF) {
 			   	r=sys_safecopyfrom(proc_nr,
 					(cp_grant_id_t) iop->iov_addr,
 		       			0, (vir_bytes) (bios_buf_v+count),
@@ -230,9 +229,6 @@ int safe;			/* use safecopies? */
 				if (r != OK)
 					panic(ME, "copy failed", r);
 			} else {
-				if(proc_nr != SELF) {
-					panic(ME, "unsafe outside self", r);
-				}
 				memcpy(bios_buf_v+count,
 					(char *) iop->iov_addr, chunk);
 			}
@@ -291,15 +287,14 @@ int safe;			/* use safecopies? */
 			if (count + chunk > nbytes) chunk = nbytes - count;
 			assert(chunk <= rem_buf_size);
 
-			if(safe) {
+			if(proc_nr != SELF) {
 			   	r=sys_safecopyto(proc_nr, iop->iov_addr, 
-				       	0, (vir_bytes) (bios_buf_v+count), chunk, D);
+				       	0, (vir_bytes) (bios_buf_v+count),
+				       	chunk, D);
 
 				if (r != OK)
 					panic(ME, "sys_vircopy failed", r);
 			} else {
-				if (proc_nr != SELF)
-					panic(ME, "unsafe without self", NO_NUM);
 				memcpy((char *) iop->iov_addr,
 					bios_buf_v+count, chunk);
 			}
@@ -493,10 +488,9 @@ struct partition *entry;
 /*============================================================================*
  *				w_other				      *
  *============================================================================*/
-PRIVATE int w_other(dr, m, safe)
+PRIVATE int w_other(dr, m)
 struct driver *dr;
 message *m;
-int safe;
 {
         int r, timeout, prev;
 
@@ -507,13 +501,8 @@ int safe;
                 int count;
                 if (w_prepare(m->DEVICE) == NIL_DEV) return ENXIO;
                 count = w_wn->open_ct;
-		if(safe) {
-		   r=sys_safecopyto(m->IO_ENDPT, (vir_bytes)m->ADDRESS,
+	        r=sys_safecopyto(m->IO_ENDPT, (vir_bytes)m->IO_GRANT,
 		       0, (vir_bytes)&count, sizeof(count), D);
-		} else {
-                   r=sys_datacopy(SELF, (vir_bytes)&count,
-                        m->IO_ENDPT, (vir_bytes)m->ADDRESS, sizeof(count));
-		}
 
 		if(r != OK)
                         return r;

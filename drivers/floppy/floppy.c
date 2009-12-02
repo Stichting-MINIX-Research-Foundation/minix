@@ -240,6 +240,7 @@ PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
 PRIVATE timer_t f_tmr_timeout;		/* timer for various timeouts */
 PRIVATE timer_t *f_timers;		/* queue of floppy timers */
 PRIVATE clock_t f_next_timeout; 	/* the next timeout time */
+PRIVATE u32_t system_hz;		/* system clock frequency */
 FORWARD _PROTOTYPE( void f_expire_tmrs, (struct driver *dp, message *m_ptr) );
 FORWARD _PROTOTYPE( void f_set_timer, (timer_t *tp, clock_t delta,
 						 tmr_func_t watchdog) 	);
@@ -250,7 +251,7 @@ FORWARD _PROTOTYPE( struct device *f_prepare, (int device) 		);
 FORWARD _PROTOTYPE( char *f_name, (void) 				);
 FORWARD _PROTOTYPE( void f_cleanup, (void) 				);
 FORWARD _PROTOTYPE( int f_transfer, (int proc_nr, int opcode, u64_t position,
-					iovec_t *iov, unsigned nr_req, int) 	);
+					iovec_t *iov, unsigned nr_req) 	);
 FORWARD _PROTOTYPE( int dma_setup, (int opcode) 			);
 FORWARD _PROTOTYPE( void start_motor, (void) 				);
 FORWARD _PROTOTYPE( int seek, (void) 					);
@@ -298,6 +299,8 @@ PUBLIC void main()
   struct floppy *fp;
   int s;
 
+  system_hz = sys_hz();
+
   if(!(floppy_buf = alloc_contig(2*DMA_BUF_SIZE,
 	AC_LOWER16M | AC_ALIGN4K, &floppy_buf_phys)))
   	panic("FLOPPY", "couldn't allocate dma buffer", NO_NUM);
@@ -324,7 +327,7 @@ PUBLIC void main()
   /* Ignore signals */
   signal(SIGHUP, SIG_IGN);
 
-  driver_task(&f_dtab);
+  driver_task(&f_dtab, DRIVER_STD);
 }
 
 /*===========================================================================*
@@ -442,13 +445,12 @@ PRIVATE void f_cleanup()
 /*===========================================================================*
  *				f_transfer				     *
  *===========================================================================*/
-PRIVATE int f_transfer(proc_nr, opcode, pos64, iov, nr_req, safe)
+PRIVATE int f_transfer(proc_nr, opcode, pos64, iov, nr_req)
 int proc_nr;			/* process doing the request */
 int opcode;			/* DEV_GATHER_S or DEV_SCATTER_S */
 u64_t pos64;			/* offset on device to read or write */
 iovec_t *iov;			/* pointer to read or write request vector */
 unsigned nr_req;		/* length of request vector */
-int safe;
 {
 #define NO_OFFSET -1
   struct floppy *fp = f_fp;
@@ -466,12 +468,6 @@ int safe;
   if (ex64hi(pos64) != 0)
 	return OK;	/* Way beyond EOF */
   position= cv64ul(pos64);
-
-  /* internally, floppy uses f_transfer without grant id, with safe set to
-   * 0. This is OK, as long as proc_nr is SELF.
-   */
-  if(!safe && proc_nr != SELF)
-	panic("FLOPPY", "f_transfer: not safe and proc_nr not SELF", proc_nr);
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
@@ -501,14 +497,13 @@ int safe;
 		if (iov->iov_size < SECTOR_SIZE + sizeof(fmt_param))
 			return(EINVAL);
 
-		if(safe) {
+		if(proc_nr != SELF) {
 		   s=sys_safecopyfrom(proc_nr, iov->iov_addr,
 			SECTOR_SIZE + iov_offset, (vir_bytes) &fmt_param,
 			(phys_bytes) sizeof(fmt_param), D);
 		   if(s != OK)
 			panic("FLOPPY", "sys_safecopyfrom failed", s);
 		} else {
-			assert(proc_nr == SELF);
 			memcpy(&fmt_param, (void *) (iov->iov_addr +
 				SECTOR_SIZE + iov_offset),
 				(phys_bytes) sizeof(fmt_param));
@@ -608,14 +603,13 @@ int safe;
 
 		if (r == OK && opcode == DEV_SCATTER_S) {
 			/* Copy the user bytes to the DMA buffer. */
-			if(safe) {
+			if(proc_nr != SELF) {
 		   	   s=sys_safecopyfrom(proc_nr, *ug, *up,
 				(vir_bytes) floppy_buf,
 			  	 (phys_bytes) SECTOR_SIZE, D);
 			   if(s != OK)
 				panic("FLOPPY", "sys_safecopyfrom failed", s);
 			} else {
-			   assert(proc_nr == SELF);
 			   memcpy(floppy_buf, (void *) (*ug + *up), SECTOR_SIZE);
 			}
 		}
@@ -634,14 +628,13 @@ int safe;
 
 		if (r == OK && opcode == DEV_GATHER_S) {
 			/* Copy the DMA buffer to user space. */
-			if(safe) {
+			if(proc_nr != SELF) {
 		   	   s=sys_safecopyto(proc_nr, *ug, *up,
 				(vir_bytes) floppy_buf,
 			  	 (phys_bytes) SECTOR_SIZE, D);
 			if(s != OK)
 				panic("FLOPPY", "sys_safecopyto failed", s);
 			} else {
-			   assert(proc_nr == SELF);
 			   memcpy((void *) (*ug + *up), floppy_buf, SECTOR_SIZE);
 			}
 		}
@@ -1353,7 +1346,7 @@ int density;
   position = (off_t) f_dp->test << SECTOR_SHIFT;
   iovec1.iov_addr = (vir_bytes) floppy_buf;
   iovec1.iov_size = SECTOR_SIZE;
-  result = f_transfer(SELF, DEV_GATHER_S, cvul64(position), &iovec1, 1, 0);
+  result = f_transfer(SELF, DEV_GATHER_S, cvul64(position), &iovec1, 1);
 
   if (iovec1.iov_size != 0) return(EIO);
 

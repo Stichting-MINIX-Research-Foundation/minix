@@ -12,9 +12,9 @@ d = ..
 MAKE = exec make
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
-LDFLAGS = -i -L../libdriver_asyn
+LDFLAGS = -i -L../libdriver
 LIBS = -ldriver  -lsys 
-LIB_DEP = ../libdriver_asyn/libdriver.a
+LIB_DEP = ../libdriver/libdriver.a
 
 OBJ = log.o diag.o
 
