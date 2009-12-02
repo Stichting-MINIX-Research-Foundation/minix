@@ -28,6 +28,7 @@ all install depend clean:
 	cd ./dpeth && $(MAKE) $@
 	cd ./log && $(MAKE) $@
 	cd ./bios_wini && $(MAKE) $@
+	cd ./filter && $(MAKE) $@
 	cd ./random && $(MAKE) $@
 	cd ./readclock && $(MAKE) $@
 	cd ./dp8390 && $(MAKE) $@
