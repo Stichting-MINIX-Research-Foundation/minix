@@ -51,6 +51,7 @@ _PROTOTYPE( int getuptime2, (clock_t *ticks, time_t *boottime));
 _PROTOTYPE( int tickdelay, (clock_t ticks));
 _PROTOTYPE( int micro_delay_calibrate, (void));
 _PROTOTYPE( u32_t sys_hz, (void));
+_PROTOTYPE( double getidle, (void));
 _PROTOTYPE( void util_stacktrace, (void));
 _PROTOTYPE( void util_nstrcat, (char *str, unsigned long n) );
 _PROTOTYPE( void util_stacktrace_strcat, (char *));
@@ -80,6 +81,10 @@ struct util_timingdata {
 };
 
 typedef struct util_timingdata util_timingdata_t;
+
+/* read_tsc() and friends. */
+_PROTOTYPE( void read_tsc_64, (u64_t *t)				);
+_PROTOTYPE( void read_tsc, (u32_t *hi, u32_t *lo)			);
 
 #endif /* _MINIX_SYSUTIL_H */
 

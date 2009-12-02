@@ -5,6 +5,8 @@
 #define CONFIG_APIC
 /* boot verbose */
 #define CONFIG_BOOT_VERBOSE
+/* measure cumulative idle timestamp counter ticks */
+#undef CONFIG_IDLE_TSC
 
 /* This is the master header for the kernel.  It includes some other files
  * and defines the principal constants.
@@ -20,6 +22,7 @@
 #include <minix/const.h>	/* MINIX specific constants */
 #include <minix/type.h>		/* MINIX specific types, e.g. message */
 #include <minix/ipc.h>		/* MINIX run-time system */
+#include <minix/sysutil.h>	/* MINIX utility library functions */
 #include <timers.h>		/* watchdog timer management */
 #include <errno.h>		/* return codes and error numbers */
 

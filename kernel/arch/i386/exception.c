@@ -8,7 +8,6 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <minix/sysutil.h>
 #include "../../proc.h"
 #include "../../proto.h"
 #include "../../vm.h"

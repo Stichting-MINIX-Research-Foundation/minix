@@ -118,6 +118,8 @@ PUBLIC int bsp_timer_int_handler(void)
 {
 	unsigned ticks;
 
+	IDLE_STOP;
+
 	if(minix_panicing)
 		return 0;
 
@@ -227,6 +229,8 @@ PUBLIC int ap_timer_int_handler(void)
 	unsigned ticks = 1;
 	int expired = 0;
 	struct proc * p, * billp;
+
+	IDLE_STOP;
 
 	/* Update user and system accounting times. Charge the current process
 	 * for user time. If the current process is not billable, that is, if a

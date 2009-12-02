@@ -112,6 +112,8 @@ PUBLIC void irq_handle(int irq)
 {
   irq_hook_t * hook;
 
+  IDLE_STOP;
+
   /* here we need not to get this IRQ until all the handlers had a say */
   hw_intr_mask(irq);
   hook = irq_handlers[irq];

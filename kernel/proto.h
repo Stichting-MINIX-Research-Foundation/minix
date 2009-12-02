@@ -19,6 +19,7 @@ _PROTOTYPE( void reset_timer, (struct timer *tp)			);
 _PROTOTYPE( void ser_dump_proc, (void)					);
 
 /* main.c */
+_PROTOTYPE( void main, (void)						);
 _PROTOTYPE( void prepare_shutdown, (int how)				);
 _PROTOTYPE( void minix_shutdown, (struct timer *tp)			);
 
@@ -102,6 +103,7 @@ _PROTOTYPE( void stop_profile_clock, (void)				);
 #endif
 
 /* functions defined in architecture-dependent files. */
+_PROTOTYPE( void prot_init, (void)                     			);
 _PROTOTYPE( phys_bytes phys_copy, (phys_bytes source, phys_bytes dest,
                 phys_bytes count)                                       );
 _PROTOTYPE( void phys_copy_fault, (void));

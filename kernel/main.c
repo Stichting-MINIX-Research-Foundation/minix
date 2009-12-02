@@ -16,6 +16,7 @@
 #include <minix/callnr.h>
 #include <minix/com.h>
 #include <minix/endpoint.h>
+#include <minix/u64.h>
 #include "proc.h"
 #include "debug.h"
 #include "clock.h"
@@ -188,6 +189,10 @@ PUBLIC void main()
   sprofiling = 0;      /* we're not profiling until instructed to */
 #endif /* SPROFILE */
   cprof_procs_no = 0;  /* init nr of hash table slots used */
+
+#ifdef CONFIG_IDLE_TSC
+  idle_tsc = cvu64(0);
+#endif
 
   vm_running = 0;
   krandom.random_sources = RANDOM_SOURCES;

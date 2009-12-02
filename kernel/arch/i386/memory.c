@@ -6,7 +6,6 @@
 
 #include <minix/type.h>
 #include <minix/syslib.h>
-#include <minix/sysutil.h>
 #include <minix/cpufeature.h>
 #include <string.h>
 

@@ -179,6 +179,7 @@ _PROTOTYPE(int sys_segctl, (int *index, u16_t *seg, vir_bytes *off,
 #define sys_getschedinfo(v1,v2)	sys_getinfo(GET_SCHEDINFO, v1,0, v2,0)
 #define sys_getlocktimings(dst)	sys_getinfo(GET_LOCKTIMING, dst, 0,0,0)
 #define sys_getprivid(nr)	sys_getinfo(GET_PRIVID, 0, 0,0, nr)
+#define sys_getidletsc(dst)	sys_getinfo(GET_IDLETSC, dst, 0,0,0)
 _PROTOTYPE(int sys_getinfo, (int request, void *val_ptr, int val_len,
 				 void *val_ptr2, int val_len2)		);
 _PROTOTYPE(int sys_whoami, (endpoint_t *ep, char *name, int namelen));
@@ -241,10 +242,6 @@ _PROTOTYPE( int sys_sprof, (int action, int size, int freq,
 _PROTOTYPE( int sys_cprof, (int action, int size, endpoint_t endpt,
                                        void *ctl_ptr, void *mem_ptr)   );
 _PROTOTYPE( int sys_profbuf, (void *ctl_ptr, void *mem_ptr)            );
-
-/* read_tsc() and friends. */
-_PROTOTYPE( void read_tsc_64, (u64_t *t)				);
-_PROTOTYPE( void read_tsc, (u32_t *hi, u32_t *lo)			);
 
 #endif /* _SYSLIB_H */
 

@@ -1,8 +1,6 @@
 #ifndef GLO_H
 #define GLO_H
 
-#include <minix/sysutil.h>
-
 /* Global variables used in the kernel. This file contains the declarations;
  * storage space for the variables is allocated in table.c, because EXTERN is
  * defined as extern unless the _TABLE definition is seen. We rely on the 
@@ -64,6 +62,12 @@ EXTERN int verboseflags;
 
 #ifdef CONFIG_APIC
 EXTERN int config_no_apic; /* optionaly turn off apic */
+#endif
+
+#ifdef CONFIG_IDLE_TSC
+EXTERN u64_t idle_tsc;
+EXTERN u64_t idle_stop;
+EXTERN int idle_active;
 #endif
 
 /* VM */

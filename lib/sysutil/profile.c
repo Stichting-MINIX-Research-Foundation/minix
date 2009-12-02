@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <minix/profile.h>
-#include <minix/syslib.h>
+#include <minix/sysutil.h>
 #include <minix/u64.h>
 
 PRIVATE char cpath[CPROF_CPATH_MAX_LEN];	/* current call path string */
@@ -61,7 +61,7 @@ char *name;
   if (cprof_locked) return; else cprof_locked = 1;
 
   /* Read CPU cycle count into local variable. */
-  read_tsc(&start.hi, &start.lo);
+  read_tsc_64(&start);
 
   /* Run init code once after system boot. */
   if (init == 0) {
@@ -105,8 +105,7 @@ char *name;
   }
 
   /* Save initial cycle count on stack. */
-  cprof_stk[cprof_stk_top].start_1.hi = start.hi;
-  cprof_stk[cprof_stk_top].start_1.lo = start.lo;
+  cprof_stk[cprof_stk_top].start_1 = start;
 
   /* Check available call path len. */
   if (cpath_len + strlen(name) + 1 > CPROF_CPATH_MAX_LEN) {
@@ -167,8 +166,7 @@ char *name;
   cprof_stk[cprof_stk_top].slot = cprof_slot;
 
   /* Again save CPU cycle count on stack. */
-  read_tsc(&cprof_stk[cprof_stk_top].start_2.hi,
-		&cprof_stk[cprof_stk_top].start_2.lo);
+  read_tsc_64(&cprof_stk[cprof_stk_top].start_2);
   cprof_locked = 0;
 }
 
@@ -201,8 +199,7 @@ char *name;
 		sub64(spent, cprof_stk[cprof_stk_top].spent_deeper));
 
   /* Clear spent_deeper for call level we're leaving. */
-  cprof_stk[cprof_stk_top].spent_deeper.lo = 0;
-  cprof_stk[cprof_stk_top].spent_deeper.hi = 0;
+  cprof_stk[cprof_stk_top].spent_deeper = cvu64(0);
 
   /* Adjust call path string and stack. */
   cpath_len = cprof_stk[cprof_stk_top].cpath_len;
@@ -246,12 +243,9 @@ PRIVATE void cprof_init() {
   for (i=0; i<CPROF_STACK_SIZE; i++) {
 	cprof_stk[i].cpath_len = 0;
 	cprof_stk[i].slot = 0;
-	cprof_stk[i].start_1.lo = 0;
-	cprof_stk[i].start_1.hi = 0;
-	cprof_stk[i].start_2.lo = 0;
-	cprof_stk[i].start_2.hi = 0;
-	cprof_stk[i].spent_deeper.lo = 0;
-	cprof_stk[i].spent_deeper.hi = 0;
+	cprof_stk[i].start_1 = cvu64(0);
+	cprof_stk[i].start_2 = cvu64(0);
+	cprof_stk[i].spent_deeper = cvu64(0);
   }
 }
 

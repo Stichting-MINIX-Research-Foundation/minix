@@ -119,7 +119,6 @@ struct tss_s {
 
 EXTERN struct tss_s tss;
 
-_PROTOTYPE( void prot_init, (void)                     			);
 _PROTOTYPE( void idt_init, (void)                     			);
 _PROTOTYPE( void init_codeseg, (struct segdesc_s *segdp, phys_bytes base,
                 vir_bytes size, int privilege)                          );

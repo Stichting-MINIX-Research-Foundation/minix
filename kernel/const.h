@@ -45,6 +45,12 @@
 #define lock      reallock
 #define unlock    realunlock
 
+#ifdef CONFIG_IDLE_TSC
+#define IDLE_STOP if(idle_active) { read_tsc_64(&idle_stop); idle_active = 0; }
+#else
+#define IDLE_STOP
+#endif
+
 /* args to intr_init() */
 #define INTS_ORIG	0	/* restore interrupts */
 #define INTS_MINIX	1	/* initialize interrupts for minix */

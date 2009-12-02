@@ -9,7 +9,6 @@
 #include <ibm/bios.h>
 #include <minix/portio.h>
 #include <minix/u64.h>
-#include <minix/sysutil.h>
 #include <a.out.h>
 
 #include "proto.h"

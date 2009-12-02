@@ -11,7 +11,6 @@
 #include <signal.h>
 #include <string.h>
 
-#include <minix/sysutil.h>
 #include <minix/sys_config.h>
 
 /*===========================================================================*

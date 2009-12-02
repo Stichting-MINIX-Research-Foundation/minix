@@ -141,18 +141,26 @@ register message *m_ptr;	/* pointer to request message */
     break;
     }
 #endif
-
     case GET_IRQACTIDS: {
         length = sizeof(irq_actids);
         src_vir = (vir_bytes) irq_actids;
         break;
     }
-
-    case GET_PRIVID:
+    case GET_PRIVID: {
 	if (!isokendpt(m_ptr->I_VAL_LEN2_E, &proc_nr)) 
 		return EINVAL;
 	return proc_addr(proc_nr)->p_priv->s_id;
-
+    }
+    case GET_IDLETSC: {
+#ifdef CONFIG_IDLE_TSC
+        length = sizeof(idle_tsc);
+        src_vir = (vir_bytes) &idle_tsc;
+        break;
+#else
+        kprintf("do_getinfo: kernel not compiled with CONFIG_IDLE_TSC\n");
+        return(EINVAL);
+#endif
+    }
     default:
 	kprintf("do_getinfo: invalid request %d\n", m_ptr->I_REQUEST);
         return(EINVAL);

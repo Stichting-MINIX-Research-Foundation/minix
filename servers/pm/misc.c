@@ -274,17 +274,25 @@ PUBLIC int do_getsysinfo_up()
   vir_bytes src_addr, dst_addr;
   struct loadinfo loadinfo;
   size_t len, real_len;
+  u64_t idle_tsc;
   int s;
 
   switch(m_in.SIU_WHAT) {
   case SIU_LOADINFO:			/* loadinfo is obtained via PM */
-        sys_getloadinfo(&loadinfo);
+        if ((s = sys_getloadinfo(&loadinfo)) != OK)
+        	return s;
         src_addr = (vir_bytes) &loadinfo;
         real_len = sizeof(struct loadinfo);
         break;
   case SIU_SYSTEMHZ:
         src_addr = (vir_bytes) &system_hz;
         real_len = sizeof(system_hz);
+	break;
+  case SIU_IDLETSC:
+	if ((s = sys_getidletsc(&idle_tsc)) != OK)
+		return s;
+	src_addr = (vir_bytes) &idle_tsc;
+	real_len = sizeof(idle_tsc);
 	break;
   default:
   	return(EINVAL);
