@@ -23,6 +23,7 @@ all install depend clean:
 	cd ./floppy && $(MAKE) $@
 	cd ./printer && $(MAKE) $@
 	cd ./rtl8139 && $(MAKE) $@
+	cd ./rtl8169 && $(MAKE) $@
 	cd ./orinoco && $(MAKE) $@
 	cd ./fxp && $(MAKE) $@
 	cd ./dpeth && $(MAKE) $@
