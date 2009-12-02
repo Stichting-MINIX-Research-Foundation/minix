@@ -68,6 +68,7 @@ begbss:
 #include <ibm/interrupt.h>
 #include <archconst.h>
 #include "../../const.h"
+#include "../../proc.h"
 #include "sconst.h"
 
 /* Selected 386 tss offsets. */
@@ -101,11 +102,15 @@ begbss:
 .globl	general_protection
 .globl	page_fault
 .globl	copr_error
+.globl  alignment_check
+.globl  machine_check
+.globl  simd_exception
 .globl	params_size
 .globl	params_offset
 .globl	mon_ds
 .globl  schedcheck
 .globl  dirtypde
+.globl  lazy_fpu
 
 .globl	hwint00	/* handlers for hardware interrupts */
 .globl	hwint01
@@ -522,7 +527,33 @@ inval_opcode:
 	EXCEPTION_NO_ERR_CODE(INVAL_OP_VECTOR)
 
 copr_not_available:
-	EXCEPTION_NO_ERR_CODE(COPROC_NOT_VECTOR)
+	TEST_INT_IN_KERNEL(4, copr_not_available_in_kernel)
+	clts
+	cld				/* set direction flag to a known value */
+	SAVE_PROCESS_CTX_NON_LAZY(0)
+	lea	P_MISC_FLAGS(%ebp), %ebx
+	movw	(%ebx), %cx
+	and	$MF_FPU_INITIALIZED, %cx
+	jnz	0f			/* jump if FPU is already initialized */
+	orw	$MF_FPU_INITIALIZED, (%ebx)
+	fninit
+	jmp	copr_return
+0:					/* load FPU context for current process */
+	mov	%ss:FP_SAVE_AREA_P(%ebp), %eax
+	cmp	$0, osfxsr_feature
+	jz	fp_l_no_fxsr		/* FXSR is not avaible. */
+	fxrstor	(%eax)
+	jmp	copr_return
+fp_l_no_fxsr:
+	frstor	(%eax)
+copr_return:
+	orw	$MF_USED_FPU, (%ebx)	/* fpu was used during last execution */
+	jmp	restart
+
+copr_not_available_in_kernel:
+	movl	$NO_NUM, 4(%esp)
+	movl	$0, (%esp)
+	call	minix_panic
 
 double_fault:
 	EXCEPTION_ERR_CODE(DOUBLE_FAULT_VECTOR)
@@ -548,6 +579,56 @@ page_fault:
 copr_error:
 	EXCEPTION_NO_ERR_CODE(COPROC_ERR_VECTOR)
 
+alignment_check:
+	EXCEPTION_NO_ERR_CODE(ALIGNMENT_CHECK_VECTOR)
+
+machine_check:
+	EXCEPTION_NO_ERR_CODE(MACHINE_CHECK_VECTOR)
+
+simd_exception:
+	EXCEPTION_NO_ERR_CODE(SIMD_EXCEPTION_VECTOR)
+
+/*===========================================================================*/
+/*                              lazy_fpu                                     */
+/*===========================================================================*/
+/* void lazy_fpu(struct proc *pptr)
+ * It's called, when we are on kernel stack.
+ * Actualy lazy code is just few lines, which check MF_USED_FPU,
+ * another part is save_init_fpu().
+ */
+lazy_fpu:
+	push	%ebp
+	mov	%esp, %ebp
+	push	%eax
+	push	%ebx
+	push	%ecx
+	cmp	$0, fpu_presence		/* Do we have FPU? */
+	jz	no_fpu_available
+	mov	8(%ebp), %eax			/* Get pptr */
+	lea	P_MISC_FLAGS(%eax), %ebx
+	movw	(%ebx), %cx
+	and	$MF_USED_FPU, %cx
+	jz	0f				/* Don't save FPU */
+	mov	%ss:FP_SAVE_AREA_P(%eax), %eax
+	cmp	$0, osfxsr_feature
+	jz	fp_s_no_fxsr			/* FXSR is not avaible. */
+	fxsave	(%eax)
+	fninit
+	jmp	fp_saved
+fp_s_no_fxsr:
+	fnsave	(%eax)
+	fwait	/* required for compatibility with processors prior pentium */
+fp_saved:
+	andw	$~MF_USED_FPU, (%ebx)
+0:	mov	%cr0, %eax
+	or	$0x00000008, %eax		/* Set TS flag */
+	mov	%eax, %cr0
+no_fpu_available:
+	pop	%ecx
+	pop	%ebx
+	pop	%eax
+	pop	%ebp
+	ret
 
 /*===========================================================================*/
 /*				write_cr3				     */

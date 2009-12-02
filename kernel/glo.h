@@ -53,6 +53,8 @@ EXTERN time_t boottime;
 EXTERN char params_buffer[512];		/* boot monitor parameters */
 EXTERN int minix_panicing;
 EXTERN int locklevel;
+EXTERN char fpu_presence;
+EXTERN char osfxsr_feature;             /* FXSAVE/FXRSTOR instructions support (SSEx) */
 #define MAGICTEST 0xC0FFEE23
 EXTERN u32_t magictest;			/* global magic number */
 

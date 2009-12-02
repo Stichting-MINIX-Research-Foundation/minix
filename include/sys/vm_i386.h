@@ -70,9 +70,17 @@ sys/vm_i386.h
 #define I386_VM_PFE_U	0x04	/* CPU in user mode (otherwise supervisor) */
 
 /* CPUID flags */
+#define CPUID1_EDX_FPU		(1L)		/* FPU presence */
 #define CPUID1_EDX_PSE 		(1L <<  3)	/* Page Size Extension */
 #define CPUID1_EDX_PGE 		(1L << 13)	/* Page Global (bit) Enable */
 #define CPUID1_EDX_APIC_ON_CHIP (1L << 9)	/* APIC is present on the chip */
 #define CPUID1_EDX_TSC		(1L << 4)	/* Timestamp counter present */
+#define CPUID1_EDX_FXSR		(1L << 24)
+#define CPUID1_EDX_SSE		(1L << 25)
+#define CPUID1_EDX_SSE2		(1L << 26)
+#define CPUID1_ECX_SSE3		(1L)
+#define CPUID1_ECX_SSSE3	(1L << 9)
+#define CPUID1_ECX_SSE4_1	(1L << 19)
+#define CPUID1_ECX_SSE4_2	(1L << 20)
 
 #endif /* __SYS_VM_386_H__ */

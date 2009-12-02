@@ -27,9 +27,11 @@
 	SPREG = PSWREG+W
 	SSREG = SPREG+W
 	P_STACKTOP = SSREG+W
-	P_LDT_SEL = P_STACKTOP
+	FP_SAVE_AREA_P = P_STACKTOP
+	P_LDT_SEL = FP_SAVE_AREA_P + 532
 	P_CR3 = P_LDT_SEL+W
 	P_LDT = P_CR3+W
+	P_MISC_FLAGS = P_LDT + 50
 	Msize = 9	/* size of a message in 32-bit words*/
 
 
@@ -115,7 +117,7 @@
  * displ is the stack displacement. In case of an exception, there are two extra
  * value on the stack - error code and the exception number
  */
-#define SAVE_PROCESS_CTX(displ) \
+#define SAVE_PROCESS_CTX_NON_LAZY(displ) \
 	push	%ebp					;\
 							;\
 	movl	(CURR_PROC_PTR + 4 + displ)(%esp), %ebp	;\
@@ -129,5 +131,11 @@
 							\
 	RESTORE_KERNEL_SEGS				;\
 	SAVE_TRAP_CTX(displ, %ebp, %esi)		;
+
+#define SAVE_PROCESS_CTX(displ)				\
+	SAVE_PROCESS_CTX_NON_LAZY(displ)			;\
+	push	%ebp					;\
+	call	lazy_fpu					;\
+	add	$4, %esp					;
 
 #endif /* __SCONST_H__ */

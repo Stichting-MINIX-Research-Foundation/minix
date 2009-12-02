@@ -18,6 +18,7 @@
 
 struct proc {
   struct stackframe_s p_reg;	/* process' registers saved in stack frame */
+  struct fpu_state_s fpu_state; /* process' fpu_regs saved lazily */
   struct segframe p_seg;	/* segment descriptors */
   proc_nr_t p_nr;		/* number of this process (for fast access) */
   struct priv *p_priv;		/* system privileges structure */
@@ -214,6 +215,9 @@ struct proc {
 #define MF_SC_ACTIVE	0x100	/* Syscall tracing: in a system call now */
 #define MF_SC_DEFER	0x200	/* Syscall tracing: deferred system call */
 #define MF_SC_TRACE	0x400	/* Syscall tracing: trigger syscall events */
+#define MF_USED_FPU	0x800   /* process used fpu during last execution run */
+#define MF_FPU_INITIALIZED	0x1000  /* process already used math, so fpu
+					 * regs are significant (initialized)*/
 
 /* Scheduling priorities for p_priority. Values must start at zero (highest
  * priority) and increment.  Priorities of the processes in the boot image 

@@ -47,6 +47,10 @@
 .globl	read_ss
 .globl	idt_reload	/* reload idt when returning to monitor. */
 
+.globl	fninit			/* non-waiting FPU initialization */
+.globl	fnstsw			/* store status word (non-waiting) */
+.globl	fnstcw			/* store control word (non-waiting) */
+
 /*
  * The routines only guarantee to preserve the registers the C compiler 
  * expects to be preserved (ebx, esi, edi, ebp, esp, segment registers, and 
@@ -535,6 +539,25 @@ read_ss:
 	mov	%ss, %ax
 	ret
 
+
+/*===========================================================================*/
+/*                            fpu_routines                                   */
+/*===========================================================================*/
+fninit:
+	fninit
+	ret
+
+fnstsw:
+	xor     %eax, %eax
+	fnstsw	%ax
+	ret
+
+fnstcw:
+	push    %eax
+	mov     8(%esp), %eax
+	fnstcw	(%eax)
+	pop     %eax
+	ret
 
 /*===========================================================================*/
 /*			      read_cr0					     */

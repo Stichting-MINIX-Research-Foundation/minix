@@ -102,6 +102,17 @@ struct sigaction {
 #define SIG_UNBLOCK        1	/* for unblocking signals */
 #define SIG_SETMASK        2	/* for setting the signal mask */
 #define SIG_INQUIRE        4	/* for internal use only */
+
+/* codes for SIGFPE */
+#define FPE_INTOVF      1      /* integer divide by zero */
+#define FPE_INTDIV      2      /* integer overflow */
+#define FPE_FLTDIV      3      /* floating-point divide by zero */
+#define FPE_FLTOVF      4      /* floating-point overflow */
+#define FPE_FLTUND      5      /* floating-point underflow */
+#define FPE_FLTRES      6      /* floating-point inexact result */
+#define FPE_FLTINV      7      /* floating-point invalid operation */
+#define FPE_FLTSUB      8      /* subscript out of range */
+
 #endif	/* _POSIX_SOURCE */
 
 /* POSIX and ANSI function prototypes. */

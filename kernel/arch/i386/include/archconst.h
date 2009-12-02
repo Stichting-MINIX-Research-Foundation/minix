@@ -109,6 +109,9 @@
 /* Exception vector numbers. */
 #define PAGE_FAULT_VECTOR   14
 #define COPROC_ERR_VECTOR   16	/* coprocessor error */
+#define ALIGNMENT_CHECK_VECTOR	17
+#define MACHINE_CHECK_VECTOR	18
+#define SIMD_EXCEPTION_VECTOR	19     /* SIMD Floating-Point Exception (#XM) */
 
 /* Descriptor structure offsets. */
 #define DESC_GRANULARITY     6	/* to granularity byte */
@@ -152,6 +155,7 @@
 #define AMD_CPUID_GEN_EDX	0x69746e65 /* ASCII value of "enti" */
 #define AMD_CPUID_GEN_ECX	0x444d4163 /* ASCII value of "cAMD" */
 
-
+/* fpu context should be saved in 16-byte aligned memory */
+#define FPUALIGN		16
 
 #endif /* _I386_ACONST_H */

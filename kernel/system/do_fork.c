@@ -25,6 +25,7 @@ register message *m_ptr;	/* pointer to request message */
 /* Handle sys_fork().  PR_ENDPT has forked.  The child is PR_SLOT. */
 #if (_MINIX_CHIP == _CHIP_INTEL)
   reg_t old_ldt_sel;
+  void *old_fpu_save_area_p;
 #endif
   register struct proc *rpc;		/* child process pointer */
   struct proc *rpp;			/* parent process pointer */
@@ -59,10 +60,16 @@ register message *m_ptr;	/* pointer to request message */
   gen = _ENDPOINT_G(rpc->p_endpoint);
 #if (_MINIX_CHIP == _CHIP_INTEL)
   old_ldt_sel = rpc->p_seg.p_ldt_sel;	/* backup local descriptors */
+  old_fpu_save_area_p = rpc->fpu_state.fpu_save_area_p;
 #endif
   *rpc = *rpp;				/* copy 'proc' struct */
 #if (_MINIX_CHIP == _CHIP_INTEL)
   rpc->p_seg.p_ldt_sel = old_ldt_sel;	/* restore descriptors */
+  rpc->fpu_state.fpu_save_area_p = old_fpu_save_area_p;
+  if(rpp->p_misc_flags & MF_FPU_INITIALIZED)
+	memcpy(rpc->fpu_state.fpu_save_area_p,
+	       rpp->fpu_state.fpu_save_area_p,
+	       FPU_XFP_SIZE);
 #endif
   if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
 	gen = 1;			/* generation number wraparound */

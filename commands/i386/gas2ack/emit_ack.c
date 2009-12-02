@@ -138,7 +138,11 @@ static mnemonic_t mnemtab[] = {
 	{ FMULD,	"fmuld"		},
 	{ FMULP,	"fmulp"		},
 	{ FMULS,	"fmuls"		},
+	{ FNINIT,	"fninit"	},
 	{ FNOP,		"fnop"		},
+	{ FNSAVE,	"fnsave"	},
+	{ FNSTCW,	"fnstcw"	},
+	{ FNSTSW,	"fnstsw"	},
 	{ FPATAN,	"fpatan"	},
 	{ FPREM,	"fprem"		},
 	{ FPREM1,	"fprem1"	},
@@ -146,6 +150,9 @@ static mnemonic_t mnemtab[] = {
 	{ FRNDINT,	"frndint"	},
 	{ FRSTOR,	"frstor"	},
 	{ FSAVE,	"fsave"		},
+	{ FWAIT,	"fwait"		},
+	{ FXRSTOR,	"fxrstor"	},
+	{ FXSAVE,	"fxsave"	},
 	{ FSCALE,	"fscale"	},
 	{ FSIN,		"fsin"		},
 	{ FSINCOS,	"fsincos"	},
@@ -610,6 +617,53 @@ void ack_emit_instruction(asm86_t *a)
 				ack_printf(".data1  0x0f, 0x22, 0xe0\n");
 				return;
 			}
+		}
+		if (a->opcode == RDMSR) {
+			ack_printf(".data1 0x0f, 0x32\n");
+			return;
+		}
+		if (a->opcode == WRMSR) {
+			ack_printf(".data1 0x0f, 0x30\n");
+		}
+		/* unsupported fninit */
+		if (a->opcode == FNINIT) {
+			ack_printf(".data1 0xDB, 0xE3\n"); /* FNINIT */
+			return;
+		}
+		/* unsupported fnsave */
+		if (a->opcode == FNSAVE) {
+			ack_printf(".data1 0xDD, 0x30\n"); /* FNSAVE [eax] */
+			return;
+		}
+		/* unsupported fnstcw */
+		if (a->opcode == FNSTCW) {
+			ack_printf(".data1 0xD9, 0x38\n"); /* FNSTCW [eax] */
+			return;
+		}
+		/* unsupported fnstsw */
+		if (a->opcode == FNSTSW) {
+			ack_printf(".data1 0xDF, 0xD0\n"); /* FNSTSW [eax] */
+			return;
+		}
+		/* unsupported frstor */
+		if (a->opcode == FRSTOR) {
+			ack_printf(".data1 0xDD, 0x20\n"); /* FRSTOR [eax] */
+			return;
+		}
+		/* unsupported fwait */
+		if (a->opcode == FWAIT) {
+			ack_printf(".data1 0x9B\n"); /* FWAIT */
+			return;
+		}
+		/* unsupported fxrstor */
+		if (a->opcode == FXRSTOR) {
+			ack_printf(".data1 0x0F, 0xAE, 0x08\n"); /* FXRSTOR [eax] */
+			return;
+		}
+		/* unsupported fxsave */
+		if (a->opcode == FXSAVE) {
+			ack_printf(".data1 0x0F, 0xAE, 0x00\n"); /* FXSAVE [eax] */
+			return;
 		}
 		/* we are translating from GNU */
 		if (a->args && a->args->operator == ','

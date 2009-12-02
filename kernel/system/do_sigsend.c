@@ -29,6 +29,9 @@ message *m_ptr;			/* pointer to request message */
   struct sigcontext sc, *scp;
   struct sigframe fr, *frp;
   int proc_nr, r;
+  #if (_MINIX_CHIP == _CHIP_INTEL)
+    unsigned short int fp_error;
+  #endif
 
   if (!isokendpt(m_ptr->SIG_ENDPT, &proc_nr)) return(EINVAL);
   if (iskerneln(proc_nr)) return(EPERM);
@@ -43,11 +46,15 @@ message *m_ptr;			/* pointer to request message */
   scp = (struct sigcontext *) smsg.sm_stkptr - 1;
 
   /* Copy the registers to the sigcontext structure. */
-  memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(struct sigregs));
+  memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(sigregs));
+  #if (_MINIX_CHIP == _CHIP_INTEL)
+    if(rp->p_misc_flags & MF_FPU_INITIALIZED)
+	    memcpy(&sc.fpu_state, rp->fpu_state.fpu_save_area_p, FPU_XFP_SIZE);
+  #endif
 
   /* Finish the sigcontext initialization. */
-  sc.sc_flags = 0;	/* unused at this time */
   sc.sc_mask = smsg.sm_mask;
+  sc.sc_flags = 0 | rp->p_misc_flags & MF_FPU_INITIALIZED;
 
   /* Copy the sigcontext structure to the user's stack. */
   if((r=data_copy_vmcheck(SYSTEM, (vir_bytes) &sc, m_ptr->SIG_ENDPT,
@@ -61,7 +68,40 @@ message *m_ptr;			/* pointer to request message */
   fr.sf_fp = rp->p_reg.fp;
   rp->p_reg.fp = (reg_t) &frp->sf_fp;
   fr.sf_scp = scp;
-  fr.sf_code = 0;	/* XXX - should be used for type of FP exception */
+
+  #if (_MINIX_CHIP == _CHIP_INTEL)
+    if (osfxsr_feature == 1) {
+	fp_error = sc.fpu_state.xfp_regs.fp_status &
+			~sc.fpu_state.xfp_regs.fp_control;
+    } else {
+        fp_error = sc.fpu_state.fpu_regs.fp_status &
+			~sc.fpu_state.fpu_regs.fp_control;
+    }
+
+    if (fp_error & 0x001) {      /* Invalid op */
+      /*
+       * swd & 0x240 == 0x040: Stack Underflow
+       * swd & 0x240 == 0x240: Stack Overflow
+       * User must clear the SF bit (0x40) if set
+       */
+	fr.sf_code = FPE_FLTINV;
+    } else if (fp_error & 0x004) {
+	fr.sf_code = FPE_FLTDIV; /* Divide by Zero */
+    } else if (fp_error & 0x008) {
+        fr.sf_code = FPE_FLTOVF; /* Overflow */
+    } else if (fp_error & 0x012) {
+        fr.sf_code = FPE_FLTUND; /* Denormal, Underflow */
+    } else if (fp_error & 0x020) {
+        fr.sf_code = FPE_FLTRES; /* Precision */
+    } else {
+        fr.sf_code = 0;  /* XXX - probably should be used for FPE_INTOVF or
+			  * FPE_INTDIV */
+    }
+
+#else
+  fr.sf_code = 0;
+#endif
+
   fr.sf_signo = smsg.sm_signo;
   fr.sf_retadr = (void (*)()) smsg.sm_sigreturn;
 
@@ -74,6 +114,9 @@ message *m_ptr;			/* pointer to request message */
   /* Reset user registers to execute the signal handler. */
   rp->p_reg.sp = (reg_t) frp;
   rp->p_reg.pc = (reg_t) smsg.sm_sighandler;
+
+  /* Signal handler should get clean FPU. */
+  rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
 
   if(!RTS_ISSET(rp, RTS_PROC_STOP)) {
 	struct proc *caller;

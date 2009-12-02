@@ -4,38 +4,8 @@
 
 #include <minix/sys_config.h>
 #include "archconst.h"
-
-typedef unsigned reg_t;         /* machine register */
-typedef reg_t segdesc_t;
-
-/* The stack frame layout is determined by the software, but for efficiency
- * it is laid out so the assembly code to use it is as simple as possible.
- * 80286 protected mode and all real modes use the same frame, built with
- * 16-bit registers.  Real mode lacks an automatic stack switch, so little
- * is lost by using the 286 frame for it.  The 386 frame differs only in
- * having 32-bit registers and more segment registers.  The same names are
- * used for the larger registers to avoid differences in the code.
- */
-struct stackframe_s {           /* proc_ptr points here */
-  u16_t gs;                     /* last item pushed by save */
-  u16_t fs;                     /*  ^ */
-  u16_t es;                     /*  | */
-  u16_t ds;                     /*  | */
-  reg_t di;			/* di through cx are not accessed in C */
-  reg_t si;			/* order is to match pusha/popa */
-  reg_t fp;			/* bp */
-  reg_t st;			/* hole for another copy of sp */
-  reg_t bx;                     /*  | */
-  reg_t dx;                     /*  | */
-  reg_t cx;                     /*  | */
-  reg_t retreg;			/* ax and above are all pushed by save */
-  reg_t retadr;			/* return address for assembly code save() */
-  reg_t pc;			/*  ^  last item pushed by interrupt */
-  reg_t cs;                     /*  | */
-  reg_t psw;                    /*  | */
-  reg_t sp;                     /*  | */
-  reg_t ss;                     /* these are pushed by CPU during interrupt */
-};
+#include <sys/stackframe.h>
+#include <sys/fpu.h>
 
 struct segdesc_s {		/* segment descriptor for protected mode */
   u16_t limit_low;
@@ -66,6 +36,17 @@ struct pagefault
 {
 	u32_t   pf_virtual;     /* Address causing fault (CR2). */
 	u32_t   pf_flags;       /* Pagefault flags on stack. */
+};
+
+
+/* fpu_state_s is used in kernel proc table.
+ * Any changes in this structure requires changes in sconst.h,
+ * since this structure is used in proc structure. */
+struct fpu_state_s {
+	union fpu_state_u *fpu_save_area_p; /* 16-aligned fpu_save_area */
+	/* fpu_image includes 512 bytes of image itself and
+	 * additional 15 bytes required for manual 16-byte alignment. */
+	char fpu_image[527];
 };
 
 #define INMEMORY(p) (!p->p_seg.p_cr3 || ptproc == p)

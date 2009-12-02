@@ -47,6 +47,9 @@ register message *m_ptr;	/* pointer to request message */
   /* No reply to EXEC call */
   RTS_LOCK_UNSET(rp, RTS_RECEIVING);
 
+  /* Mark fpu_regs contents as not significant, so fpu
+   * will be initialized, when it's used next time. */
+  rp->p_misc_flags &= ~MF_FPU_INITIALIZED;
   return(OK);
 }
 #endif /* USE_EXEC */

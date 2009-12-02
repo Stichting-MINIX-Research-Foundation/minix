@@ -37,6 +37,9 @@ void                              _PROTOTYPE( stack_exception, (void) );
 void                              _PROTOTYPE( general_protection, (void) );
 void                              _PROTOTYPE( page_fault, (void) );
 void                              _PROTOTYPE( copr_error, (void) );
+void                              _PROTOTYPE( alignment_check, (void) );
+void                              _PROTOTYPE( machine_check, (void) );
+void                              _PROTOTYPE( simd_exception, (void) );
 
 /* Software interrupt handlers, in numerical order. */
 _PROTOTYPE( void trp, (void) );
@@ -84,6 +87,9 @@ _PROTOTYPE( void phys_memset, (phys_bytes ph, u32_t c, phys_bytes bytes));
 _PROTOTYPE( void reload_ds, (void)					);
 _PROTOTYPE( void ia32_msr_read, (u32_t reg, u32_t * hi, u32_t * lo)	);
 _PROTOTYPE( void ia32_msr_write, (u32_t reg, u32_t hi, u32_t lo)	);
+_PROTOTYPE( void fninit, (void));
+_PROTOTYPE( unsigned short fnstsw, (void));
+_PROTOTYPE( void fnstcw, (unsigned short* cw));
 
 /* protect.c */
 struct tss_s {

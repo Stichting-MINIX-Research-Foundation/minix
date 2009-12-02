@@ -133,6 +133,9 @@ struct proc *t;
 	{ "Page fault", SIGSEGV, 386 },		/* not close */
 	{ NIL_PTR, SIGILL, 0 },			/* probably software trap */
 	{ "Coprocessor error", SIGFPE, 386 },
+	{ "Alignment check", SIGBUS, 386 },
+	{ "Machine check", SIGBUS, 386 },
+	{ "SIMD exception", SIGFPE, 386 },
   };
   register struct ex_s *ep;
   struct proc *saved_proc;
