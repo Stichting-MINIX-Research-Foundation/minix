@@ -58,7 +58,8 @@ message *m_ptr;			/* pointer to request message */
 #if (_MINIX_CHIP == _CHIP_INTEL)
   if(sc.sc_flags & MF_FPU_INITIALIZED)
   {
-	memcpy(rp->fpu_state.fpu_save_area_p, &sc.fpu_state, FPU_XFP_SIZE);
+	memcpy(rp->p_fpu_state.fpu_save_area_p, &sc.sc_fpu_state,
+		FPU_XFP_SIZE);
 	rp->p_misc_flags |=  MF_FPU_INITIALIZED; /* Restore math usage flag. */
   }
 #endif

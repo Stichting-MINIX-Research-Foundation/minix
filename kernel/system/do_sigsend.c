@@ -49,7 +49,8 @@ message *m_ptr;			/* pointer to request message */
   memcpy(&sc.sc_regs, (char *) &rp->p_reg, sizeof(sigregs));
   #if (_MINIX_CHIP == _CHIP_INTEL)
     if(rp->p_misc_flags & MF_FPU_INITIALIZED)
-	    memcpy(&sc.fpu_state, rp->fpu_state.fpu_save_area_p, FPU_XFP_SIZE);
+	    memcpy(&sc.sc_fpu_state, rp->p_fpu_state.fpu_save_area_p,
+	   	 FPU_XFP_SIZE);
   #endif
 
   /* Finish the sigcontext initialization. */
@@ -71,11 +72,11 @@ message *m_ptr;			/* pointer to request message */
 
   #if (_MINIX_CHIP == _CHIP_INTEL)
     if (osfxsr_feature == 1) {
-	fp_error = sc.fpu_state.xfp_regs.fp_status &
-			~sc.fpu_state.xfp_regs.fp_control;
+	fp_error = sc.sc_fpu_state.xfp_regs.fp_status &
+			~sc.sc_fpu_state.xfp_regs.fp_control;
     } else {
-        fp_error = sc.fpu_state.fpu_regs.fp_status &
-			~sc.fpu_state.fpu_regs.fp_control;
+        fp_error = sc.sc_fpu_state.fpu_regs.fp_status &
+			~sc.sc_fpu_state.fpu_regs.fp_control;
     }
 
     if (fp_error & 0x001) {      /* Invalid op */

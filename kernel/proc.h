@@ -18,7 +18,7 @@
 
 struct proc {
   struct stackframe_s p_reg;	/* process' registers saved in stack frame */
-  struct fpu_state_s fpu_state; /* process' fpu_regs saved lazily */
+  struct fpu_state_s p_fpu_state;	/* process' fpu_regs saved lazily */
   struct segframe p_seg;	/* segment descriptors */
   proc_nr_t p_nr;		/* number of this process (for fast access) */
   struct priv *p_priv;		/* system privileges structure */

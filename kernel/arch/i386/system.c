@@ -159,17 +159,19 @@ PUBLIC void arch_init(void)
 			osfxsr_feature = 1;
 
 			for (rp = BEG_PROC_ADDR; rp < END_PROC_ADDR; ++rp) {
-				/* FXSR requires 16-byte alignment of memory image,
-				 * but unfortunately some old tools (probably linker)
-				 * ignores ".balign 16" applied to our memory image.
+				/* FXSR requires 16-byte alignment of memory
+				 * image, but unfortunately some old tools
+				 * (probably linker) ignores ".balign 16"
+				 * applied to our memory image.
 				 * Thus we have to do manual alignment.
 				 */
-				aligned_fp_area = (phys_bytes) &rp->fpu_state.fpu_image;
+				aligned_fp_area =
+					(phys_bytes) &rp->p_fpu_state.fpu_image;
 				if(aligned_fp_area % FPUALIGN) {
 				    aligned_fp_area += FPUALIGN -
 						   (aligned_fp_area % FPUALIGN);
 				}
-				rp->fpu_state.fpu_save_area_p =
+				rp->p_fpu_state.fpu_save_area_p =
 						    (void *) aligned_fp_area;
 			}
 		} else {

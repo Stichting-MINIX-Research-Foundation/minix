@@ -42,11 +42,13 @@ struct sigframe {		/* stack frame created for signalled process */
 #endif /* _MINIX_CHIP == _CHIP_INTEL */
 
 struct sigcontext {
-  int sc_flags;			/* sigstack state to restore (including MF_FPU_INITIALIZED) */
+  int sc_flags;			/* sigstack state to restore (including
+				 * MF_FPU_INITIALIZED)
+				 */
   long sc_mask;			/* signal mask to restore */
   sigregs sc_regs;              /* register set to restore */
 #if (_MINIX_CHIP == _CHIP_INTEL)
-  union fpu_state_u fpu_state;
+  union fpu_state_u sc_fpu_state;
 #endif
 };
 

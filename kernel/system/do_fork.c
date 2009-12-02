@@ -11,6 +11,7 @@
 #include "../system.h"
 #include "../vm.h"
 #include <signal.h>
+#include <string.h>
 
 #include <minix/endpoint.h>
 
@@ -60,15 +61,15 @@ register message *m_ptr;	/* pointer to request message */
   gen = _ENDPOINT_G(rpc->p_endpoint);
 #if (_MINIX_CHIP == _CHIP_INTEL)
   old_ldt_sel = rpc->p_seg.p_ldt_sel;	/* backup local descriptors */
-  old_fpu_save_area_p = rpc->fpu_state.fpu_save_area_p;
+  old_fpu_save_area_p = rpc->p_fpu_state.fpu_save_area_p;
 #endif
   *rpc = *rpp;				/* copy 'proc' struct */
 #if (_MINIX_CHIP == _CHIP_INTEL)
   rpc->p_seg.p_ldt_sel = old_ldt_sel;	/* restore descriptors */
-  rpc->fpu_state.fpu_save_area_p = old_fpu_save_area_p;
+  rpc->p_fpu_state.fpu_save_area_p = old_fpu_save_area_p;
   if(rpp->p_misc_flags & MF_FPU_INITIALIZED)
-	memcpy(rpc->fpu_state.fpu_save_area_p,
-	       rpp->fpu_state.fpu_save_area_p,
+	memcpy(rpc->p_fpu_state.fpu_save_area_p,
+	       rpp->p_fpu_state.fpu_save_area_p,
 	       FPU_XFP_SIZE);
 #endif
   if(++gen >= _ENDPOINT_MAX_GENERATION)	/* increase generation */
