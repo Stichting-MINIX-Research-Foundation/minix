@@ -395,6 +395,8 @@ else
 	homemb="current size"
 fi
 
+minblocksize=1
+maxblocksize=64
 blockdefault=4
 
 if [ ! "$auto" = "r" ]
@@ -403,16 +405,16 @@ then
 echo " --- Step 6: Select a block size ---------------------------------------"
 	echo ""
 	
-	echo "The default file system block size is $blockdefault KB."
+	echo "The default file system block size is $blockdefault kB."
 	echo ""
 	
 	while [ -z "$blocksize" ]
 	do	
 		echo -n "Block size in kilobytes? [$blockdefault] "; read blocksize
 		test -z "$blocksize" && blocksize=$blockdefault
-		if [ "$blocksize" -ne 1 -a "$blocksize" -ne 2 -a "$blocksize" -ne 4 -a "$blocksize" -ne 8 ]
+		if [ "$blocksize" -lt $minblocksize -o "$blocksize" -gt $maxblocksize ]
 		then	
-			warn "1, 2, 4 or 8 please"
+			warn "At least $minblocksize kB and at most $maxblocksize kB please."
 			blocksize=""
 		fi
 	done
