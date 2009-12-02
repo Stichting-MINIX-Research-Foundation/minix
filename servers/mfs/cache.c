@@ -82,10 +82,9 @@ int only_search;		/* if NO_READ, don't read, else act normal */
   if ((bp = front) == NIL_BUF) panic(__FILE__,"all buffers in use", NR_BUFS);
 
   if(bp->b_bytes < fs_block_size) {
-	phys_bytes ph;
 	ASSERT(!bp->bp);
 	ASSERT(bp->b_bytes == 0);
-	if(!(bp->bp = alloc_contig(fs_block_size, 0, &ph))) {
+	if(!(bp->bp = alloc_contig(fs_block_size, 0, NULL))) {
 		printf("MFS: couldn't allocate a new block.\n");
 		for(bp = front;
 			bp && bp->b_bytes < fs_block_size; bp = bp->b_next)

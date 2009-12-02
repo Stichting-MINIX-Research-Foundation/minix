@@ -66,8 +66,8 @@ void *alloc_contig(size_t len, int flags, phys_bytes *phys)
 			buf += align - (buf % align);
 	}
 
-	/* Get physical address. */
-        if(sys_umap_data_fb(SELF, buf, len, phys) != OK)
+	/* Get physical address, if requested. */
+        if(phys != NULL && sys_umap_data_fb(SELF, buf, len, phys) != OK)
 		panic("alloc_contig.c", "sys_umap_data_fb failed", NO_NUM);
 
 	return (void *) buf;
