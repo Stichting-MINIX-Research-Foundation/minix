@@ -796,7 +796,6 @@ PUBLIC void pt_init(void)
 			if(len % I386_PAGE_SIZE)
                 		vm_panic("VM: len unaligned", len);
 			vir = arch_map2vir(&vmproc[VMP_SYSTEM], offset);
-			printf("vir: 0x%lx\n", vir);
 			if(sys_vmctl_reply_mapping(index, vir) != OK)
                 		vm_panic("VM: reply failed", NO_NUM);
 			offset += len;
