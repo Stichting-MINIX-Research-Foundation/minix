@@ -95,7 +95,9 @@ static int _tcp_getsockopt(int socket, int level, int option_name,
 	}
 	if (level == SOL_SOCKET && option_name == SO_RCVBUF)
 	{
-		i = 32 * 1024;	/* Receive buffer in the current implementation */
+		i = 32 * 1024;	/* Receive buffer in the current 
+		              	 * implementation 
+				 */
 		getsockopt_copy(&i, sizeof(i), option_value, option_len);
 		return 0;
 	}
