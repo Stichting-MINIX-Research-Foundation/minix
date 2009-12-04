@@ -69,6 +69,8 @@ _PROTOTYPE( int mkstemp, (char *_fmt)					);
 _PROTOTYPE( char *initstate, (unsigned _seed, char *_state,
 							size_t _size)	);
 _PROTOTYPE( long random, (void)						);
+_PROTOTYPE( char *realpath, (const char *file_name, 
+                                                 char *resolved_name)   );
 _PROTOTYPE( char *setstate, (const char *state)				);
 _PROTOTYPE( void srandom, (unsigned seed)				);
 _PROTOTYPE( int putenv, (char *string)					);

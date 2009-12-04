@@ -75,6 +75,7 @@ libc_FILES=" \
 	putenv.c \
 	putw.c \
 	random.c \
+	realpath.c \
 	rindex.c \
 	setenv.c \
 	setgroups.c \

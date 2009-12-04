@@ -1,0 +1,20 @@
+.TH REALPATH 3  "December 3, 2009"
+.UC 4
+.SH NAME
+realpath \- resolve a pathname
+.SH SYNOPSIS
+.nf
+.ft B
+#include <stdlib.h>
+
+char *realpath(const char *\fIfile_name\fP, char *\fIresolved_name\fP);
+.fi
+.SH DESCRIPTION
+realpath finds an absolute path to \fIfile_name\fP which does not
+contain . and .. components or symbolic links. The absolute path is stored
+in \fIresolved_name\fP, which is expected to provide storage for at least
+MAX_PATH bytes.
+.SH "RETURN VALUE
+If the function succeeds, a pointer to \fIresolved_name\fP is returned.
+If the function fails, NULL is returned and errno is set to indicate the
+cause of the failure.
