@@ -19,6 +19,8 @@ static int _tcp_getsockopt(int socket, int level, int option_name,
 	void *_RESTRICT option_value, socklen_t *_RESTRICT option_len);
 static int _udp_getsockopt(int socket, int level, int option_name,
 	void *_RESTRICT option_value, socklen_t *_RESTRICT option_len);
+static void getsockopt_copy(void *return_value, size_t return_len,
+	void *_RESTRICT option_value, socklen_t *_RESTRICT option_len);
 
 int getsockopt(int socket, int level, int option_name,
         void *_RESTRICT option_value, socklen_t *_RESTRICT option_len)
@@ -58,6 +60,19 @@ int getsockopt(int socket, int level, int option_name,
 	return -1;
 }
 
+static void getsockopt_copy(void *return_value, size_t return_len,
+	void *_RESTRICT option_value, socklen_t *_RESTRICT option_len)
+{
+	/* copy as much data as possible */
+	if (*option_len < return_len)
+		memcpy(option_value, return_value, *option_len);
+	else
+		memcpy(option_value, return_value, return_len);
+
+	/* return length */
+	*option_len = return_len;
+}
+
 static int _tcp_getsockopt(int socket, int level, int option_name,
 	void *_RESTRICT option_value, socklen_t *_RESTRICT option_len)
 {
@@ -65,56 +80,41 @@ static int _tcp_getsockopt(int socket, int level, int option_name,
 
 	if (level == SOL_SOCKET && option_name == SO_KEEPALIVE)
 	{
-		i= 1;	/* Keepalive is always on */
-		if (*option_len < sizeof(i))
-			memcpy(option_value, &i, *option_len);
-		else
-			memcpy(option_value, &i, sizeof(i));
-		*option_len= sizeof(i);
+		i = 1;	/* Keepalive is always on */
+		getsockopt_copy(&i, sizeof(i), option_value, option_len);
 		return 0;
 	}
 	if (level == SOL_SOCKET && option_name == SO_ERROR)
 	{
-		r= ioctl(socket, NWIOTCPGERROR, &err);
+		r = ioctl(socket, NWIOTCPGERROR, &err);
 		if (r != 0)
 			return r;
-		if (*option_len < sizeof(err))
-			memcpy(option_value, &err, *option_len);
-		else
-			memcpy(option_value, &err, sizeof(err));
-		*option_len= sizeof(err);
+
+		getsockopt_copy(&err, sizeof(err), option_value, option_len);
 		return 0;
 	}
 	if (level == SOL_SOCKET && option_name == SO_RCVBUF)
 	{
-		i= 32*1024;	/* Receive buffer in the current
-				 * implementation
-				 */
-		if (*option_len < sizeof(i))
-			memcpy(option_value, &i, *option_len);
-		else
-			memcpy(option_value, &i, sizeof(i));
-		*option_len= sizeof(i);
+		i = 32 * 1024;	/* Receive buffer in the current implementation */
+		getsockopt_copy(&i, sizeof(i), option_value, option_len);
 		return 0;
 	}
 	if (level == SOL_SOCKET && option_name == SO_SNDBUF)
 	{
-		i= 32*1024;	/* Send buffer in the current implementation */
-		if (*option_len < sizeof(i))
-			memcpy(option_value, &i, *option_len);
-		else
-			memcpy(option_value, &i, sizeof(i));
-		*option_len= sizeof(i);
+		i = 32 * 1024;	/* Send buffer in the current implementation */
+		getsockopt_copy(&i, sizeof(i), option_value, option_len);
+		return 0;
+	}
+	if (level == SOL_SOCKET && option_name == SO_TYPE)
+	{
+		i = SOCK_STREAM;	/* this is a TCP socket */
+		getsockopt_copy(&i, sizeof(i), option_value, option_len);
 		return 0;
 	}
 	if (level == IPPROTO_TCP && option_name == TCP_NODELAY)
 	{
-		i= 0;	/* nodelay is always off */
-		if (*option_len < sizeof(i))
-			memcpy(option_value, &i, *option_len);
-		else
-			memcpy(option_value, &i, sizeof(i));
-		*option_len= sizeof(i);
+		i = 0;	/* nodelay is always off */
+		getsockopt_copy(&i, sizeof(i), option_value, option_len);
 		return 0;
 	}
 #if DEBUG
@@ -131,6 +131,12 @@ static int _udp_getsockopt(int socket, int level, int option_name,
 {
 	int i;
 
+	if (level == SOL_SOCKET && option_name == SO_TYPE)
+	{
+		i = SOCK_DGRAM;	/* this is a TCP socket */
+		getsockopt_copy(&i, sizeof(i), option_value, option_len);
+		return 0;
+	}
 #if DEBUG
 	fprintf(stderr, "_udp_getsocketopt: level %d, name %d\n",
 		level, option_name);

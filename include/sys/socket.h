@@ -24,6 +24,7 @@ sys/socket.h
 #define SO_DEBUG	0x0001
 #define SO_REUSEADDR	0x0004
 #define SO_KEEPALIVE	0x0008
+#define SO_TYPE	0x0010	/* get socket type, SOCK_STREAM or SOCK_DGRAM */
 
 #define SO_SNDBUF	0x1001	/* send buffer size */
 #define SO_RCVBUF	0x1002	/* receive buffer size */
