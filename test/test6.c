@@ -28,11 +28,13 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
+  char buffer[PATH_MAX + 1];
   int i, m = 0xFFFF;
 
   sync();
   if (geteuid() == 0 || getuid() == 0) {
-	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", "/usr/src/test/test6", NULL);
+	realpath(argv[0], buffer);
+  	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", buffer, NULL);
 	printf("Test  6 cannot run as root; test aborted\n");
 	exit(1);
   }

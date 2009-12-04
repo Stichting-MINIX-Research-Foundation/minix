@@ -78,7 +78,7 @@ char *file[20] = {"f0", "f1", "f2", "f3", "f4", "f5", "f6",
 
 /* "test.c", created by Rene Montsma and Menno Wilcke */
 
-_PROTOTYPE(int main, (void));
+_PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void test, (void));
 _PROTOTYPE(void test01, (void));
 _PROTOTYPE(void test02, (void));
@@ -117,12 +117,14 @@ _PROTOTYPE(void quit, (void));
 /*****************************************************************************
  *                              TEST                                         *
  ****************************************************************************/
-int main()
+int main(int argc, char **argv)
 {
+  char buffer[PATH_MAX + 1];
   int n;
 
   if (geteuid() == 0 || getuid() == 0) {
-	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", "/usr/src/test/test18", NULL);
+	realpath(argv[0], buffer);
+  	execl("/usr/bin/su", "/usr/bin/su", "-", "ast", "-c", buffer, NULL);
 	printf("Test 18 cannot run as root; test aborted\n");
 	exit(1);
   }
