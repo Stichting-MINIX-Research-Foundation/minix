@@ -1,0 +1,16 @@
+.TH GETDTABLESIZE 3  "December 4, 2009"
+.UC 4
+.SH NAME
+getdtablesize \- query maximum number of open files
+.SH SYNOPSIS
+.nf
+.ft B
+#include <unistd.h>
+
+int getdtablesize(void);
+.fi
+.SH DESCRIPTION
+getdtablesize returns the number of files that may be open at the same time
+in a process.
+.SH "RETURN VALUE
+The number of files that may be open at the same time in a process is returned.

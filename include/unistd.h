@@ -216,4 +216,8 @@ _PROTOTYPE( int initgroups, (const char *name, gid_t basegid)		);
 
 #endif
 
+#ifdef _POSIX_SOURCE
+_PROTOTYPE( int getdtablesize, (void)                                   );
+#endif
+
 #endif /* _UNISTD_H */

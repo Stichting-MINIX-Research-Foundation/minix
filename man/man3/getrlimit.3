@@ -1,0 +1,23 @@
+.TH GETRLIMIT 3  "December 4, 2009"
+.UC 4
+.SH NAME
+getrlimit \- query resource consumption limits
+.SH SYNOPSIS
+.nf
+.ft B
+#include <sys/resource.h>
+
+int getrlimit(int \fIresource\fP, struct rlimit *\fIrlp\fP);
+.fi
+.SH DESCRIPTION
+getrlimit queries the current resource limit regarding the specified
+\fIresource\fP. This can be one of the following: RLIMIT_CORE, RLIMIT_CPU,
+RLIMIT_DATA, RLIMIT_FSIZE, RLIMIT_NOFILE, RLIMIT_STACK or RLIMIT_AS.
+The soft limit is specified in \fIrlp\fP\->rlim_cur and the hard limit in
+\fIrlp\fP\->rlim_max. On MINIX, these are currently always the same.
+A value of RLIM_INFINITY specifies that no limit is enforced, although
+architectural limits may still apply.
+.SH "RETURN VALUE
+If the function succeeds, 0 is returned.
+If the function fails, -1 is returned and errno is set to indicate the
+cause of the failure.

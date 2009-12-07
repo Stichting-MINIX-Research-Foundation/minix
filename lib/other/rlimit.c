@@ -1,0 +1,55 @@
+/*	getdtablesize, getrlimit              Author: Erik van der Kouwe
+ *      query resource consumtion limits      4 December 2009
+ *
+ * Based on these specifications:
+ * http://www.opengroup.org/onlinepubs/007908775/xsh/getdtablesize.html 
+ * http://www.opengroup.org/onlinepubs/007908775/xsh/getrlimit.html 
+ */
+ 
+#include <errno.h>
+#include <limits.h>
+#include <sys/resource.h>
+#include <unistd.h>
+
+int getdtablesize(void)
+{
+	return OPEN_MAX;
+}
+
+int getrlimit(int resource, struct rlimit *rlp)
+{
+	rlim_t limit;
+	
+	switch (resource)
+	{
+		case RLIMIT_CORE:
+			/* no core currently produced */
+			limit = 0;
+			break;
+
+		case RLIMIT_CPU:
+		case RLIMIT_DATA:
+		case RLIMIT_FSIZE:
+		case RLIMIT_STACK:
+		case RLIMIT_AS:
+			/* no limit enforced (however architectural limits 
+			 * may apply) 
+			 */	
+			limit = RLIM_INFINITY;
+			break;
+
+		case RLIMIT_NOFILE:
+			limit = OPEN_MAX;
+			break;
+
+		default:
+			errno = EINVAL;
+			return -1;
+	}		
+
+	/* return limit */
+	rlp->rlim_cur = limit;
+	rlp->rlim_max = limit;
+	return 0;
+}
+

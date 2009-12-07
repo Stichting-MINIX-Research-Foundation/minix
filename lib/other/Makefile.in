@@ -77,6 +77,7 @@ libc_FILES=" \
 	random.c \
 	realpath.c \
 	rindex.c \
+	rlimit.c \
 	setenv.c \
 	setgroups.c \
 	settimeofday.c \
