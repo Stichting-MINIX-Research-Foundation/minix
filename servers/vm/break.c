@@ -123,8 +123,7 @@ vir_bytes sp;			/* new value of sp */
           rmp->vm_arch.vm_seg[S].mem_vir) ? ENOMEM : OK;
 
   if(r == OK && (rmp->vm_flags & VMF_HASPT) &&
-     rmp->vm_endpoint != VM_PROC_NR) {
-	vm_assert(rmp->vm_heap);
+     rmp->vm_endpoint != VM_PROC_NR && rmp->vm_heap) {
 	if(old_clicks < data_clicks) {
 		vir_bytes more;
 		more = (data_clicks - old_clicks) << CLICK_SHIFT;

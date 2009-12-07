@@ -95,9 +95,10 @@ _PROTOTYPE( int handle_memory, (struct vmproc *vmp, vir_bytes mem,
 	vir_bytes len, int wrflag));
 
 /* $(ARCH)/pagetable.c */
-_PROTOTYPE( void pt_init, (void)					);
+_PROTOTYPE( void pt_init, (phys_bytes limit)				);
 _PROTOTYPE( void pt_check, (struct vmproc *vmp)				);
 _PROTOTYPE( int pt_new, (pt_t *pt)					);
+_PROTOTYPE( int pt_identity, (pt_t *pt)					);
 _PROTOTYPE( void pt_free, (pt_t *pt)					);
 _PROTOTYPE( int pt_writemap, (pt_t *pt, vir_bytes v, phys_bytes physaddr, 
         size_t bytes, u32_t flags, u32_t writemapflags));

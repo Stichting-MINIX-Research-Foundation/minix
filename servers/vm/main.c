@@ -173,6 +173,7 @@ PRIVATE void vm_init(void)
 	struct memory mem_chunks[NR_MEMS];
 	struct boot_image image[NR_BOOT_PROCS];
 	struct boot_image *ip;
+	phys_bytes limit = 0;
 
 	/* Get chunks of available memory. */
 	get_mem_chunks(mem_chunks);
@@ -195,6 +196,7 @@ PRIVATE void vm_init(void)
 	 * now and make valid slot entries for them.
 	 */
 	for (ip = &image[0]; ip < &image[NR_BOOT_PROCS]; ip++) {
+		phys_bytes proclimit;
 		struct vmproc *vmp;
 
 		if(ip->proc_nr >= _NR_PROCS) { vm_panic("proc", ip->proc_nr); }
@@ -224,6 +226,13 @@ PRIVATE void vm_init(void)
 		/* Remove this memory from the free list. */
 		reserve_proc_mem(mem_chunks, vmp->vm_arch.vm_seg);
 
+		/* Set memory limit. */
+		proclimit = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_phys +
+			vmp->vm_arch.vm_seg[S].mem_len) - 1;
+
+		if(proclimit > limit)
+			limit = proclimit;
+
 		vmp->vm_flags = VMF_INUSE;
 		vmp->vm_endpoint = ip->endpoint;
 		vmp->vm_stacktop =
@@ -235,7 +244,7 @@ PRIVATE void vm_init(void)
 	}
 
 	/* Architecture-dependent initialization. */
-	pt_init();
+	pt_init(limit);
 
 	/* Initialize tables to all physical memory. */
 	mem_init(mem_chunks);
@@ -251,16 +260,8 @@ PRIVATE void vm_init(void)
 
 		GETVMP(vmp, ip->proc_nr);
 
-		if(!(ip->flags & PROC_FULLVM)) {
-			/* See if this process fits in kernel
-			 * mapping. VM has its own pagetable,
-			 * don't check it.
-			 */
-			if(!(vmp->vm_flags & VMF_HASPT)) {
-				pt_check(vmp);
-			}
-			continue;
-		}
+               if(!(ip->flags & PROC_FULLVM))
+                       continue;
 
 		old_stack = 
 			vmp->vm_arch.vm_seg[S].mem_vir +
