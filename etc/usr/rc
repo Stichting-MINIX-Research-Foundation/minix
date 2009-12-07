@@ -91,7 +91,7 @@ start)
     fi
 
     # start only network drivers that are in use
-    for driver in lance rtl8139 rtl8169 fxp dpeth dp8390 orinoco
+    for driver in lance rtl8139 rtl8169 fxp e1000 dpeth dp8390 orinoco
     do
         if grep " $driver " /etc/inet.conf > /dev/null  2>&1
         then 

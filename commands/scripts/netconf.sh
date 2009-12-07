@@ -103,10 +103,14 @@ cards()
            "1186:1340" "11DB:1234" "1259:A117" "1259:A11E" "126C:1211" \
            "13D1:AB06" "1432:9130" "14EA:AB06" "14EA:AB07" "1500:1360" \
            "1743:8139" "4033:1360"
-    card 4 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
-    card 5 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
-    card 6 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
-    card 7 "Different Ethernet card (no networking)"
+    card 4 "Realtek 8169 based card"	\
+           "10EC:8129" "10EC:8167" "10EC:8169" "1186:4300" "1259:C107" \
+           "1385:8169" "16EC:0116" "1737:1032"
+    card 5 "Realtek 8029 based card (also emulated by Qemu)" "10EC:8029"
+    card 6 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
+    card 7 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
+    card 8 "Intel PRO/1000 Gigabit" "8086:100E" "8086:107C" "8086:10CD"
+    card 9 "Different Ethernet card (no networking)"
 }
 
 warn()
@@ -143,15 +147,17 @@ drv_params()
 	   test "$v" = 1 && echo ""
            test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
 		;;
+	4) driver=rtl8169;  ;;
 	3) driver=rtl8139;  ;;
-	4) driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
-	5) driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
+	5) driver=dp8390;   driverargs="dp8390_arg='DPETH0=pci'";	;;
+	6) driver=dp8390;   driverargs="dp8390_arg='DPETH0=240:9'"; 
 	   test "$v" = 1 && echo ""
            test "$v" = 1 && echo "Note: After installing, edit $LOCALRC to the right configuration."
            test "$v" = 1 && echo " chose option 4, the defaults for emulation by Bochs have been set."
 		;;
-        6) driver="lance"; ;;    
-        7) driver="psip0"; ;;    
+        7) driver="lance"; ;;    
+	8) driver="e1000"; ;;
+        9) driver="psip0"; ;;    
         *) warn "choose a number"
       esac
 }
