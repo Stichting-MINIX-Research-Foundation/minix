@@ -549,12 +549,16 @@ fninit:
 
 fnstsw:
 	xor     %eax, %eax
+
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	fnstsw	%ax
 	ret
 
 fnstcw:
 	push    %eax
 	mov     8(%esp), %eax
+
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	fnstcw	(%eax)
 	pop     %eax
 	ret
@@ -599,6 +603,8 @@ read_cr2:
 read_cr4:
 	push	%ebp
 	mov	%esp, %ebp
+
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	mov	%cr4, %eax
 	pop	%ebp
 	ret
@@ -611,6 +617,8 @@ write_cr4:
 	push	%ebp
 	mov	%esp, %ebp
 	mov	8(%ebp), %eax
+
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	mov	%eax, %cr4
 	jmp	0f
 0:

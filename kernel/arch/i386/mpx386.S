@@ -542,9 +542,12 @@ copr_not_available:
 	mov	%ss:FP_SAVE_AREA_P(%ebp), %eax
 	cmp	$0, osfxsr_feature
 	jz	fp_l_no_fxsr		/* FXSR is not avaible. */
+
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	fxrstor	(%eax)
 	jmp	copr_return
 fp_l_no_fxsr:
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	frstor	(%eax)
 copr_return:
 	orw	$MF_USED_FPU, (%ebx)	/* fpu was used during last execution */
@@ -612,10 +615,13 @@ lazy_fpu:
 	mov	%ss:FP_SAVE_AREA_P(%eax), %eax
 	cmp	$0, osfxsr_feature
 	jz	fp_s_no_fxsr			/* FXSR is not avaible. */
+	
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	fxsave	(%eax)
 	fninit
 	jmp	fp_saved
 fp_s_no_fxsr:
+	/* DO NOT CHANGE THE OPERAND!!! gas2ack does not handle it yet */
 	fnsave	(%eax)
 	fwait	/* required for compatibility with processors prior pentium */
 fp_saved:
