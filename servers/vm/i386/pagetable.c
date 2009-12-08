@@ -711,9 +711,6 @@ PUBLIC void pt_init(phys_bytes usedlimit)
 	/* We have to make mappings up till here. */
 	free_pde = id_map_high_pde+1;
 
-	printf("map high pde: %d for limit: 0x%lx\n",
-		id_map_high_pde, usedlimit);
-
         /* Initial (current) range of our virtual address space. */
         lo = CLICK2ABS(vmp->vm_arch.vm_seg[T].mem_phys);
         hi = CLICK2ABS(vmp->vm_arch.vm_seg[S].mem_phys +

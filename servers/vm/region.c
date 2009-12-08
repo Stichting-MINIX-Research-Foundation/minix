@@ -898,6 +898,7 @@ int write;
 	physr_start_iter(region->phys, &it, where, AVL_EQUAL);	\
 	what = physr_get_iter(&it); \
 	if(!what)  vm_panic("thing missing", NO_NUM); \
+	if(what->offset != where) vm_panic("thing wrong", NO_NUM);	\
 }
 
 	FREE_RANGE_HERE(NULL, physr);
@@ -908,8 +909,8 @@ int write;
 			physr_incr_iter(&iter);
 			physr = physr_get_iter(&iter);
 
+			FREE_RANGE_HERE(NULL, physr);
 			if(physr) {
-				FREE_RANGE_HERE(NULL, physr);
 				RESET_ITER(iter, physr->offset, physr);
 			}
 		}
@@ -957,7 +958,11 @@ int write;
 
 	SANITYCHECK(SCL_FUNCTIONS);
 
-	vm_assert(changes > 0);
+	if(changes < 1) {
+		printf("region start at 0x%lx offset 0x%lx len 0x%lx write %d\n", 
+			region->vaddr, offset, length, write);
+		vm_panic("no changes in map_handle_memory", NO_NUM);
+	}
 
 #if SANITYCHECKS
 	if(OK != pt_checkrange(&vmp->vm_pt, region->vaddr+offset, length, write)) {
