@@ -13,7 +13,7 @@ badones=			# list of tests that failed
 
 # Print test welcome message
 clr
-echo "Running POSIX compliance test suite. There are 45 tests in total."
+echo "Running POSIX compliance test suite. There are 48 tests in total."
 echo " "
 
 # Run all the tests, keeping track of who failed.
