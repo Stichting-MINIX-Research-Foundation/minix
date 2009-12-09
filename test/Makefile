@@ -1,19 +1,22 @@
 # Makefile for the tests.
 
 CC =	exec cc
+GCC =   /usr/gnu/bin/gcc
 CFLAGS= -O -D_MINIX -D_POSIX_SOURCE
+CFLAGS-GCC= $(CFLAGS) -Wall
 
 OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	test10        test12 test13 test14 test15 test16 test17 test18 test19 \
 	       test21 test22 test23        test25 test26 test27 test28 test29 \
 	test30 test31 test32        test34 test35 test36 test37 test38 \
 	test39 t10a t11a t11b test40 t40a t40b t40c t40d t40e t40f test41 \
-	test42 test44
+	test42 test44 test45
 
 BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43
+GCCOBJ=  test45-gcc
 
-all:	$(OBJ) $(BIGOBJ) $(ROOTOBJ)
+all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(ROOTOBJ)
 	chmod 755 *.sh run
 
 $(OBJ):
@@ -22,6 +25,9 @@ $(OBJ):
 $(BIGOBJ):
 	$(CC) $(CFLAGS) -o $@ $@.c
 
+$(GCCOBJ):
+	[ ! -x $(GCC) ] || $(GCC) $(CFLAGS-GCC) -o $@ $<
+
 $(ROOTOBJ):
 	$(CC) $(CFLAGS) $@.c
 	@install -c -o root -m 4755 a.out $@
@@ -29,7 +35,7 @@ $(ROOTOBJ):
 
 clean:	
 	cd select && make clean
-	-rm -rf *.o *.s *.bak test? test?? t10a t11a t11b \
+	-rm -rf *.o *.s *.bak test? test?? test??-gcc t10a t11a t11b \
 		t40a t40b t40c t40d t40e t40f t43 DIR*
 
 test1:	test1.c
@@ -85,3 +91,6 @@ test41: test41.c
 test42: test42.c
 test43: test43.c
 test44: test44.c
+test45: test45.c test45.h
+test45-gcc: test45.c test45.h
+

@@ -86,6 +86,7 @@ libc_FILES=" \
 	strlcat.c \
 	strlcpy.c \
 	strtok_r.c \
+	strtoll.c \
 	swab.c \
 	sys_eniop.c \
 	syscall.c \

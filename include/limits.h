@@ -38,6 +38,19 @@
 #define LONG_MAX  2147483647L	/* maximum value of a long */
 #define ULONG_MAX 0xFFFFFFFFL	/* maximum value of an unsigned long */
 
+/*Definitions about long longs (64 bits, may not be supported). */
+#ifdef __LONG_LONG_SUPPORTED
+#define LLONG_MIN  (-0x7FFFFFFFFFFFFFFFLL-1)	/* minimum value of a 
+						 * long long 
+						 */
+#define LLONG_MAX  0x7FFFFFFFFFFFFFFFLL		/* maximum value of a 
+						 * long long 
+						 */
+#define ULLONG_MAX 0xFFFFFFFFFFFFFFFFULL	/* maximum value of an
+						 * unsigned long long
+						 */
+#endif
+
 #include <minix/dir.h>
 
 /* Minimum sizes required by the POSIX P1003.1 standard (Table 2-3). */

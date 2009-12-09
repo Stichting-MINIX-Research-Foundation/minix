@@ -77,6 +77,14 @@ _PROTOTYPE( int putenv, (char *string)					);
 _PROTOTYPE( int setenv, (const char *envname, const char *envval,
 							int overwrite)	);
 _PROTOTYPE( int unsetenv, (const char *name)				);
+
+#ifdef __LONG_LONG_SUPPORTED
+_PROTOTYPE( long long strtoll, (const char *_nptr, char **_endptr,
+                                                            int _base)	);
+_PROTOTYPE( unsigned long long strtoull, (const char *_nptr, 
+                                            char **_endptr, int _base)	);
+#endif
+
 #endif
 
 #ifdef _MINIX
