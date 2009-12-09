@@ -8,7 +8,7 @@ OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	       test21 test22 test23        test25 test26 test27 test28 test29 \
 	test30 test31 test32        test34 test35 test36 test37 test38 \
 	test39 t10a t11a t11b test40 t40a t40b t40c t40d t40e t40f test41 \
-	test42
+	test42 test44
 
 BIGOBJ=  test20 test24
 ROOTOBJ= test11 test33 test43
@@ -30,7 +30,7 @@ $(ROOTOBJ):
 clean:	
 	cd select && make clean
 	-rm -rf *.o *.s *.bak test? test?? t10a t11a t11b \
-		t40a t40b t40c t40d t40e t40f DIR*
+		t40a t40b t40c t40d t40e t40f t43 DIR*
 
 test1:	test1.c
 test2:	test2.c

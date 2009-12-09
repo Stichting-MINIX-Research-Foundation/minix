@@ -205,8 +205,9 @@ static void check_realpath_recurse(const char *path, int depth)
 	if (closedir(dir) < 0) ERR;
 }
 
-#define PATH_DEPTH 3
-#define L(x) "/t43_link_" #x ".tmp"
+#define PATH_DEPTH 4
+#define PATH_BASE "/t43"
+#define L(x) PATH_BASE "/link_" #x ".tmp"
 
 static char basepath[PATH_MAX + 1];
 
@@ -237,15 +238,54 @@ static char *addbasepath(char *buffer, const char *path)
 	return buffer;
 }
 
-static void cleanup(int silent)
+static void cleanup(const char *path)
 {
-	char buffer[PATH_MAX + 1];
+	DIR *dir;
+	struct dirent *dirent;
+	char pathsub[PATH_MAX + 1];
+	struct stat statbuf;
+	
+	/* determine file type, avoid following links */
+	if (lstat(path, &statbuf) < 0)
+	{
+		if (errno != ENOENT) ERR;
+		return;
+	}
 
-	if (unlink(addbasepath(buffer, L(1))) < 0 && !silent) ERR;
-	if (unlink(addbasepath(buffer, L(2))) < 0 && !silent) ERR;
-	if (unlink(addbasepath(buffer, L(3))) < 0 && !silent) ERR;
-	if (unlink(addbasepath(buffer, L(4))) < 0 && !silent) ERR;
-	if (unlink(addbasepath(buffer, L(5))) < 0 && !silent) ERR;
+	/* only recursively process directories (NOT symlinks!) */
+	if ((statbuf.st_mode & S_IFMT) != S_IFDIR)
+	{
+		if (unlink(path) < 0) ERR;
+		return;	
+	}
+
+	/* loop through subdirectories (excluding . and ..) */
+	if (!(dir = opendir(path))) 
+	{
+		ERR;
+		return;
+	}
+	while (dirent = readdir(dir))
+	{
+		/* ignore current and parent directories */
+		if (strcmp(dirent->d_name, ".") == 0 || 
+			strcmp(dirent->d_name, "..") == 0)
+			continue;
+			
+		/* build path */
+		if (!pathncat(pathsub, sizeof(pathsub), path, dirent->d_name))
+		{
+			ERR;
+			continue;
+		}
+
+		/* delete path */
+		cleanup(pathsub);
+	}
+	if (closedir(dir) < 0) ERR;
+
+	/* remove the (now empty) directory itself */
+	if (rmdir(path) < 0) ERR;
 }
 
 int main(int argc, char **argv)
@@ -257,9 +297,10 @@ int main(int argc, char **argv)
 	fflush(stdout);
 	executable = argv[0];
 	getcwd(basepath, sizeof(basepath));
-	cleanup(1);
+	cleanup(addbasepath(buffer1, PATH_BASE));
 
 	/* prepare some symlinks to make it more difficult */
+	if (mkdir(addbasepath(buffer1, PATH_BASE), S_IRWXU) < 0) ERR;
 	if (symlink("/",      addbasepath(buffer1, L(1))) < 0) ERR;
 	if (symlink(basepath, addbasepath(buffer1, L(2))) < 0) ERR;
 
@@ -275,7 +316,7 @@ int main(int argc, char **argv)
 	check_realpath_step_by_step(addbasepath(buffer1, L(5)), ELOOP);
 
 	/* delete the symlinks */
-	cleanup(0);
+	cleanup(addbasepath(buffer1, PATH_BASE));
 
 	/* done */
 	quit();
