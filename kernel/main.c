@@ -73,7 +73,8 @@ PUBLIC void main()
   ktsb = (reg_t) t_stack;
 
   for (i=0; i < NR_BOOT_PROCS; ++i) {
-	int ci;
+	int schedulable_proc, proc_nr;
+	int ipc_to_m, kcalls;
 	bitchunk_t fv;
 
 	ip = &image[i];				/* process' attributes */
@@ -84,35 +85,57 @@ PUBLIC void main()
 	rp->p_quantum_size = ip->quantum;	/* quantum size in ticks */
 	rp->p_ticks_left = ip->quantum;		/* current credit */
 	strncpy(rp->p_name, ip->proc_name, P_NAME_LEN); /* set process name */
-	(void) get_priv(rp, (ip->flags & SYS_PROC));    /* assign structure */
-	priv(rp)->s_flags = ip->flags;			/* process flags */
-	priv(rp)->s_trap_mask = ip->trap_mask;		/* allowed traps */
 
-	/* Warn about violations of the boot image table order consistency. */
-	if (priv_id(rp) != s_nr_to_id(ip->proc_nr) && (ip->flags & SYS_PROC))
-		kprintf("Warning: boot image table has wrong process order\n");
-
-	/* Initialize call mask bitmap from unordered set.
-	 * A single SYS_ALL_CALLS is a special case - it
-	 * means all calls are allowed.
+	/* See if this process is immediately schedulable.
+	 * In that case, set its privileges now and allow it to run.
+	 * Only kernel tasks and the root system process get to run immediately.
+	 * All the other system processes are inhibited from running by the
+	 * RTS_NO_PRIV flag. They can only be scheduled once the root system
+	 * process has set their privileges.
 	 */
-	if(ip->nr_k_calls == 1 && ip->k_calls[0] == SYS_ALL_CALLS)
-		fv = ~0;		/* fill call mask */
-	else
-		fv = 0;			/* clear call mask */
+	proc_nr = proc_nr(rp);
+	schedulable_proc = (iskerneln(proc_nr) || isrootsysn(proc_nr));
+	if(schedulable_proc) {
+	    /* Assign privilege structure. Force a static privilege id. */
+            (void) get_priv(rp, static_priv_id(proc_nr));
 
-	for(ci = 0; ci < CALL_MASK_SIZE; ci++) 	/* fill or clear call mask */
-		priv(rp)->s_k_call_mask[ci] = fv;
-	if(!fv)			/* not all full? enter calls bit by bit */
-		for(ci = 0; ci < ip->nr_k_calls; ci++)
-			SET_BIT(priv(rp)->s_k_call_mask,
-				ip->k_calls[ci]-KERNEL_CALL);
+            /* Priviliges for kernel tasks. */
+            if(iskerneln(proc_nr)) {
+                /* Privilege flags. */
+                priv(rp)->s_flags = (proc_nr == IDLE ? IDL_F : TSK_F);
+                /* Allowed traps. */
+                priv(rp)->s_trap_mask = (proc_nr == CLOCK 
+                    || proc_nr == SYSTEM  ? CSK_T : TSK_T);
+                ipc_to_m = TSK_M;                  /* allowed targets */
+                kcalls = TSK_KC;                   /* allowed kernel calls */
+            }
+            /* Priviliges for the root system process. */
+            else if(isrootsysn(proc_nr)) {
+                priv(rp)->s_flags= RSYS_F;         /* privilege flags */
+                priv(rp)->s_trap_mask= RSYS_T;     /* allowed traps */
+                ipc_to_m = RSYS_M;                 /* allowed targets */
+                kcalls = RSYS_KC;                  /* allowed kernel calls */
+            }
 
-	for (j = 0; j < NR_SYS_PROCS && j < BITCHUNK_BITS; j++)
-		if (ip->ipc_to & (1 << j))
-			set_sendto_bit(rp, j);	/* restrict targets */
+            /* Fill in target mask. */
+            for (j=0; j < NR_SYS_PROCS; j++) {
+                if (ipc_to_m & (1 << j))
+                    set_sendto_bit(rp, j);
+                else
+                    unset_sendto_bit(rp, j);
+	    }
 
-	if (iskerneln(proc_nr(rp))) {		/* part of the kernel? */ 
+            /* Fill in kernel call mask. */
+            for(j = 0; j < CALL_MASK_SIZE; j++) {
+                priv(rp)->s_k_call_mask[j] = (kcalls == NO_C ? 0 : (~0));
+            }
+	}
+	else {
+	    /* Don't let the process run for now. */
+            RTS_SET(rp, RTS_NO_PRIV);
+	}
+
+	if (iskerneln(proc_nr)) {		/* part of the kernel? */ 
 		if (ip->stksize > 0) {		/* HARDWARE stack size is 0 */
 			rp->p_priv->s_stack_guard = (reg_t *) ktsb;
 			*rp->p_priv->s_stack_guard = STACK_GUARD;
@@ -121,7 +144,7 @@ PUBLIC void main()
 		rp->p_reg.sp = ktsb;	/* this task's initial stack ptr */
 		hdrindex = 0;		/* all use the first a.out header */
 	} else {
-		hdrindex = 1 + i-NR_TASKS;	/* servers, drivers, INIT */
+		hdrindex = 1 + i-NR_TASKS;	/* system/user processes */
 	}
 
 	/* Architecture-specific way to find out aout header of this
@@ -153,12 +176,12 @@ PUBLIC void main()
 	 * access I/O; this is not allowed to less-privileged processes 
 	 */
 	rp->p_reg.pc = (reg_t) ip->initial_pc;
-	rp->p_reg.psw = (iskernelp(rp)) ? INIT_TASK_PSW : INIT_PSW;
+	rp->p_reg.psw = (iskerneln(proc_nr)) ? INIT_TASK_PSW : INIT_PSW;
 
 	/* Initialize the server stack pointer. Take it down one word
 	 * to give crtso.s something to use as "argc".
 	 */
-	if (isusern(proc_nr(rp))) {		/* user-space process? */ 
+	if (isusern(proc_nr)) {		/* user-space process? */ 
 		rp->p_reg.sp = (rp->p_memmap[S].mem_vir +
 				rp->p_memmap[S].mem_len) << CLICK_SHIFT;
 		rp->p_reg.sp -= sizeof(reg_t);
@@ -171,9 +194,9 @@ PUBLIC void main()
 	 * PT up and manage it. VM will signal the kernel when it has
 	 * done this; until then, don't let it run.
 	 */
-	if(priv(rp)->s_flags & PROC_FULLVM)
+	if(ip->flags & PROC_FULLVM)
 		RTS_SET(rp, RTS_VMINHIBIT);
-	
+
 	/* Set ready. The HARDWARE task is never ready. */
 	if (rp->p_nr == HARDWARE) RTS_SET(rp, RTS_PROC_STOP);
 	/* IDLE task is never put on a run queue as it is never ready to run */

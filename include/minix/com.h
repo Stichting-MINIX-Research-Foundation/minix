@@ -73,6 +73,10 @@
 #define VM_PROC_NR        8     /* memory server */
 #define INIT_PROC_NR	  9    	/* init -- goes multiuser */
 
+/* Root system process and root user process. */
+#define ROOT_SYS_PROC_NR  RS_PROC_NR
+#define ROOT_USR_PROC_NR  INIT_PROC_NR
+
 /* Number of processes contained in the system image. */
 #define NR_BOOT_PROCS 	(NR_TASKS + INIT_PROC_NR + 1)
 
@@ -354,15 +358,15 @@
 #define SYS_ALL_CALLS (NR_SYS_CALLS)
 
 /* Subfunctions for SYS_PRIVCTL */
-#define SYS_PRIV_INIT		1	/* Initialize a privilege structure */
-#define SYS_PRIV_ADD_IO		2	/* Add I/O range (struct io_range) */
-#define SYS_PRIV_ADD_MEM	3	/* Add memory range (struct mem_range)
+#define SYS_PRIV_ALLOW		1	/* Allow process to run */
+#define SYS_PRIV_DISALLOW	2	/* Disallow process to run */
+#define SYS_PRIV_SET_SYS	3	/* Set a system privilege structure */
+#define SYS_PRIV_SET_USER	4	/* Set a user privilege structure */
+#define SYS_PRIV_ADD_IO 	5	/* Add I/O range (struct io_range) */
+#define SYS_PRIV_ADD_MEM	6	/* Add memory range (struct mem_range)
 					 */
-#define SYS_PRIV_ADD_IRQ	4	/* Add IRQ */
-#define SYS_PRIV_USER		5	/* Make a process an oridinary user 
-					 * process.
-					 */
-#define SYS_PRIV_QUERY_MEM	6	/* Verify memory privilege. */
+#define SYS_PRIV_ADD_IRQ	7	/* Add IRQ */
+#define SYS_PRIV_QUERY_MEM	8	/* Verify memory privilege. */
 
 /* Subfunctions for SYS_SETGRANT */
 #define SYS_PARAM_SET_GRANT	1	/* Set address and size of grant table */
@@ -478,11 +482,12 @@
 #   define GET_BIOSBUFFER 14	/* get a buffer for BIOS calls */
 #   define GET_LOADINFO   15	/* get load average information */
 #   define GET_IRQACTIDS  16	/* get the IRQ masks */
-#   define GET_PRIVID	  17	/* get ID of privilege structure */
+#   define GET_PRIV	  17	/* get privilege structure */
 #   define GET_HZ	  18	/* get HZ value */
 #   define GET_WHOAMI	  19	/* get own name and endpoint */
 #   define GET_RANDOMNESS_BIN 20 /* get one randomness bin */
 #   define GET_IDLETSC	  21	/* get cumulative idle time stamp counter */
+#   define GET_AOUTHEADER     22 /* get a.out headers from the boot image */
 #define I_ENDPT      m7_i4	/* calling process */
 #define I_VAL_PTR      m7_p1	/* virtual address at caller */ 
 #define I_VAL_LEN      m7_i1	/* max length of value */

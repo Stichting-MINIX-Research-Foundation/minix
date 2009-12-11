@@ -22,6 +22,7 @@
  *   clear_endpoint:	remove a process' ability to send and receive messages
  *
  * Changes:
+*    Nov 22, 2009   get_priv supports static priv ids (Cristiano Giuffrida)
  *   Aug 04, 2005   check if system call is allowed  (Jorrit N. Herder)
  *   Jul 20, 2005   send signal to services with message  (Jorrit N. Herder) 
  *   Jan 15, 2005   new, generalized virtual copy function  (Jorrit N. Herder)
@@ -238,32 +239,36 @@ PRIVATE void initialize(void)
 /*===========================================================================*
  *				get_priv				     *
  *===========================================================================*/
-PUBLIC int get_priv(rc, proc_type)
+PUBLIC int get_priv(rc, priv_id)
 register struct proc *rc;		/* new (child) process pointer */
-int proc_type;				/* system or user process flag */
+int priv_id;				/* privilege id */
 {
-/* Get a privilege structure. All user processes share the same privilege 
- * structure. System processes get their own privilege structure. 
+/* Allocate a new privilege structure for a system process. Privilege ids
+ * can be assigned either statically or dynamically.
  */
-  register struct priv *sp;			/* privilege structure */
+  register struct priv *sp;                 /* privilege structure */
 
-  if (proc_type == SYS_PROC) {			/* find a new slot */
-      for (sp = BEG_PRIV_ADDR; sp < END_PRIV_ADDR; ++sp) 
-          if (sp->s_proc_nr == NONE && sp->s_id != USER_PRIV_ID) break;	
-      if (sp >= END_PRIV_ADDR) return(ENOSPC);
-      rc->p_priv = sp;				/* assign new slot */
-      rc->p_priv->s_proc_nr = proc_nr(rc);	/* set association */
-      rc->p_priv->s_flags = SYS_PROC;		/* mark as privileged */
-
-      /* Clear some fields */
-      sp->s_asyntab= -1;	
-      sp->s_asynsize= 0;
-  } else {
-      rc->p_priv = &priv[USER_PRIV_ID];		/* use shared slot */
-      rc->p_priv->s_proc_nr = INIT_PROC_NR;	/* set association */
-
-      /* s_flags of this shared structure are to be once at system startup. */
+  if(priv_id == NULL_PRIV_ID) {             /* allocate slot dynamically */
+      for (sp = BEG_DYN_PRIV_ADDR; sp < END_DYN_PRIV_ADDR; ++sp) 
+          if (sp->s_proc_nr == NONE) break;	
+      if (sp >= END_DYN_PRIV_ADDR) return(ENOSPC);
   }
+  else {                                    /* allocate slot from id */
+      if(!is_static_priv_id(priv_id)) {
+          return EINVAL;                    /* invalid static priv id */
+      }
+      if(priv[priv_id].s_proc_nr != NONE) {
+          return EBUSY;                     /* slot already in use */
+      }
+      sp = &priv[priv_id];
+  }
+  rc->p_priv = sp;			    /* assign new slot */
+  rc->p_priv->s_proc_nr = proc_nr(rc);	    /* set association */
+  
+  /* Clear some fields */
+  sp->s_asyntab= -1;
+  sp->s_asynsize= 0;
+
   return(OK);
 }
 
@@ -275,22 +280,24 @@ PUBLIC void set_sendto_bit(struct proc *rp, int id)
 /* Allow a process to send messages to the process(es) associated with the
  * system privilege structure with the given ID. 
  */
-  struct proc *rrp;			/* receiver process */
 
-  /* Disallow the process from sending to a system privilege structure with no
+  /* Disallow the process from sending to a process privilege structure with no
    * associated process, and disallow the process from sending to itself.
    */
-  if (id_to_nr(id) == NONE || priv_id(rp) == id)
+  if (id_to_nr(id) == NONE || priv_id(rp) == id) {
+	unset_sys_bit(priv(rp)->s_ipc_to, id);
 	return;
+  }
 
   set_sys_bit(priv(rp)->s_ipc_to, id);
 
-  /* The process that this process can now send to, must be able to reply.
-   * Therefore, its send mask should be updated as well.
+  /* The process that this process can now send to, must be able to reply (or
+   * vice versa). Therefore, its send mask should be updated as well. Ignore
+   * receivers that don't support traps other than RECEIVE, they can't reply
+   * or send messages anyway.
    */
-  rrp = proc_addr(id_to_nr(id));
-  if (!iskernelp(rrp))
-	set_sys_bit(priv(rrp)->s_ipc_to, priv_id(rp));
+  if (priv_addr(id)->s_trap_mask & ~((1 << RECEIVE)))
+      set_sys_bit(priv_addr(id)->s_ipc_to, priv_id(rp));
 }
 
 /*===========================================================================*

@@ -84,6 +84,7 @@
 #include "../../kernel/proc.h"
 
 #include "../../servers/pm/mproc.h"
+#include "../../servers/pm/const.h"
 #include "../../servers/vfs/fproc.h"
 #include "../../servers/vfs/const.h"
 #include "../../servers/mfs/const.h"
@@ -518,12 +519,18 @@ int endpoints;
 	if(endpoints) bufp->ps_pid = ps_proc[p_ki].p_endpoint;
 	else bufp->ps_pid = ps_mproc[p_nr].mp_pid;
 	bufp->ps_ppid = ps_mproc[ps_mproc[p_nr].mp_parent].mp_pid;
+	/* Assume no parent when the parent and the child share the same pid.
+	 * This is what PM currently assumes.
+	 */
+	if(bufp->ps_ppid == bufp->ps_pid) {
+	    bufp->ps_ppid = NO_PID;
+	}
 	bufp->ps_pgrp = ps_mproc[p_nr].mp_procgrp;
 	bufp->ps_mflags = ps_mproc[p_nr].mp_flags;
   } else {
 	if(endpoints) bufp->ps_pid = ps_proc[p_ki].p_endpoint;
-	else bufp->ps_pid = 0;
-	bufp->ps_ppid = 0;
+	else bufp->ps_pid = NO_PID;
+	bufp->ps_ppid = NO_PID;
 	bufp->ps_ruid = bufp->ps_euid = 0;
 	bufp->ps_pgrp = 0;
 	bufp->ps_mflags = 0;

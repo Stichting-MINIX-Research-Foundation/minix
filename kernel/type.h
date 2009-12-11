@@ -20,10 +20,6 @@ struct boot_image {
   unsigned char quantum;		/* quantum (tick count) */
   int priority;				/* scheduling priority */
   int stksize;				/* stack size for tasks */
-  short trap_mask;			/* allowed system call traps */
-  bitchunk_t ipc_to;			/* send mask protection */
-  int *k_calls;				/* kern. call protection */
-  int nr_k_calls;
   char proc_name[P_NAME_LEN];		/* name in process table */
   endpoint_t endpoint;			/* endpoint number when started */
 };

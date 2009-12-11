@@ -132,12 +132,14 @@
 #define SERVARNAME		"cttyline"
 
 /* Bits for the system property flags in boot image processes. */
+#define PROC_FULLVM    0x100    /* VM sets and manages full pagetable */
+
+/* Bits for s_flags in the privilege structure. */
 #define PREEMPTIBLE     0x02    /* kernel tasks are not preemptible */
 #define BILLABLE        0x04    /* some processes are not billable */
+#define DYN_PRIV_ID     0x08    /* privilege id assigned dynamically */
  
 #define SYS_PROC        0x10    /* system processes have own priv structure */
 #define CHECK_IO_PORT   0x20    /* check if I/O request is allowed */
 #define CHECK_IRQ       0x40    /* check if IRQ can be used */
 #define CHECK_MEM       0x80    /* check if (VM) mem map request is allowed */
-#define PROC_FULLVM    0x100    /* VM sets and manages full pagetable */
-

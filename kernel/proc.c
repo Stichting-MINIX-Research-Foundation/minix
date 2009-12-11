@@ -824,7 +824,7 @@ endpoint_t dst_e;			/* which process to notify */
   } 
 
   /* Destination is not ready to receive the notification. Add it to the 
-   * bit map with pending notifications. Note the indirectness: the system id 
+   * bit map with pending notifications. Note the indirectness: the privilege id
    * instead of the process number is used in the pending bit map.
    */ 
   src_id = priv(caller_ptr)->s_id;

@@ -9,7 +9,8 @@
  * between common and privileged process fields and is very space efficient. 
  *
  * Changes:
- *   Jul 01, 2005	Created.  (Jorrit N. Herder)	
+ *   Nov 22, 2009  rewrite of privilege management (Cristiano Giuffrida)
+ *   Jul 01, 2005  Created.  (Jorrit N. Herder)	
  */
 #include <minix/com.h>
 #include "const.h"
@@ -65,9 +66,18 @@ struct priv {
 /* Guard word for task stacks. */
 #define STACK_GUARD	((reg_t) (sizeof(reg_t) == 2 ? 0xBEEF : 0xDEADBEEF))
 
+/* Static privilege id definitions. */
+#define NR_STATIC_PRIV_IDS         NR_BOOT_PROCS
+#define is_static_priv_id(id)	   (id >= 0 && id < NR_STATIC_PRIV_IDS)
+#define static_priv_id(n)          (NR_TASKS + (n))
+
 /* Magic system structure table addresses. */
-#define BEG_PRIV_ADDR (&priv[0])
-#define END_PRIV_ADDR (&priv[NR_SYS_PROCS])
+#define BEG_PRIV_ADDR              (&priv[0])
+#define END_PRIV_ADDR              (&priv[NR_SYS_PROCS])
+#define BEG_STATIC_PRIV_ADDR       BEG_PRIV_ADDR
+#define END_STATIC_PRIV_ADDR       (BEG_STATIC_PRIV_ADDR + NR_STATIC_PRIV_IDS)
+#define BEG_DYN_PRIV_ADDR          END_STATIC_PRIV_ADDR
+#define END_DYN_PRIV_ADDR          END_PRIV_ADDR
 
 #define priv_addr(i)      (ppriv_addr)[(i)]
 #define priv_id(rp)	  ((rp)->p_priv->s_id)
@@ -78,6 +88,10 @@ struct priv {
 
 #define may_send_to(rp, nr) (get_sys_bit(priv(rp)->s_ipc_to, nr_to_id(nr)))
 
+/* Privilege management shorthands. */
+#define spi_to(n)          (1 << (static_priv_id(n)))
+#define unset_usr_to(m)    ((m) & ~(1 << USER_PRIV_ID))
+
 /* The system structures table and pointers to individual table slots. The 
  * pointers allow faster access because now a process entry can be found by 
  * indexing the psys_addr array, while accessing an element i requires a 
@@ -86,10 +100,14 @@ struct priv {
 EXTERN struct priv priv[NR_SYS_PROCS];		/* system properties table */
 EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
 
-/* Unprivileged user processes all share the same privilege structure.
+/* Unprivileged user processes all share the privilege structure of the
+ * root user process.
  * This id must be fixed because it is used to check send mask entries.
  */
-#define USER_PRIV_ID	0
+#define USER_PRIV_ID	static_priv_id(ROOT_USR_PROC_NR)
+/* Specifies a null privilege id.
+ */
+#define NULL_PRIV_ID	-1
 
 /* Make sure the system can boot. The following sanity check verifies that
  * the system privileges table is large enough for the number of processes
@@ -98,5 +116,38 @@ EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
 #if (NR_BOOT_PROCS > NR_SYS_PROCS)
 #error NR_SYS_PROCS must be larger than NR_BOOT_PROCS
 #endif
+
+/*
+ * Privileges masks used by the kernel.
+ */
+#define IDL_F     (SYS_PROC | BILLABLE) /* idle task is not preemptible as we
+                                         * don't want it to interfere with the
+                                         * timer tick interrupt handler code.
+                                         * Unlike other processes idle task is
+                                         * handled in a special way and is
+                                         * preempted always if timer tick occurs
+                                         * and there is another runnable process
+                                         */
+#define TSK_F     (SYS_PROC)                            /* other kernel tasks */
+#define RSYS_F    (SYS_PROC | PREEMPTIBLE)              /* root system proc */
+#define DEF_SYS_F (RSYS_F | DYN_PRIV_ID)                /* default sys proc */
+
+/* allowed traps */
+#define CSK_T     (1 << RECEIVE)                        /* clock and system */
+#define TSK_T     0                                     /* other kernel tasks */
+#define RSYS_T    (~0)                                  /* root system proc */
+#define DEF_SYS_T RSYS_T                                /* default sys proc */
+
+/* allowed targets */
+#define TSK_M     0                                     /* all kernel tasks */
+#define RSYS_M    (~0)                                  /* root system proc */
+#define DEF_SYS_M unset_usr_to(RSYS_M)                  /* default sys proc */
+
+/* allowed kernel calls */
+#define NO_C 0              /* no calls allowed */
+#define ALL_C 1             /* all calls allowed */
+#define TSK_KC     NO_C                                 /* all kernel tasks */
+#define RSYS_KC    ALL_C                                /* root system proc */
+#define DEF_SYS_KC RSYS_KC                              /* default sys proc */
 
 #endif /* PRIV_H */

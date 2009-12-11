@@ -260,7 +260,7 @@ int dump_core;			/* flag indicating whether to dump core */
   if (rmp->mp_flags & ALARM_ON) set_alarm(rmp, (clock_t) 0);
 
   /* Do accounting: fetch usage times and accumulate at parent. */
-  if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL)) != OK)
+  if((r=sys_times(proc_nr_e, &user_time, &sys_time, NULL, NULL)) != OK)
   	panic(__FILE__,"exit_proc: sys_times failed", r);
 
   p_mp = &mproc[rmp->mp_parent];			/* process' parent */

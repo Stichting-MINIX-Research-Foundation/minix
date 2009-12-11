@@ -5,7 +5,7 @@
 				 * a 'short' instead of pid_t.)
 				 */
 
-#define PM_PID	           0	/* PM's process id number */
+#define NO_PID	           0	/* pid value indicating no process */
 #define INIT_PID	   1	/* INIT's process id number */
 
 #define NO_TRACER	   0	/* process is not being traced */

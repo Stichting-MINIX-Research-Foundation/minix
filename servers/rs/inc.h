@@ -7,8 +7,6 @@
 #define _SYSTEM            1    /* get OK and negative error codes */
 #define _MINIX             1	/* tell headers to include MINIX stuff */
 
-#define VERBOSE		   0	/* display diagnostics */
-
 #include <ansi.h>
 #include <sys/types.h>
 #include <limits.h>
@@ -26,10 +24,13 @@
 #include <minix/keymap.h>
 #include <minix/bitmap.h>
 #include <minix/rs.h>
+#include <minix/dmap.h>
+#include <minix/endpoint.h>
 
 #include <archtypes.h>
 #include <timers.h>				/* For priv.h */
 #include "../../kernel/priv.h"
+#include "../../kernel/ipc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,5 +39,7 @@
 #include <signal.h>
 
 #include "proto.h"
-#include "manager.h"
+#include "const.h"
+#include "type.h"
+#include "glo.h"
 

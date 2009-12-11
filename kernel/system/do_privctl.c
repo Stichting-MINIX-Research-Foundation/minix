@@ -14,8 +14,6 @@
 
 #if USE_PRIVCTL
 
-#define FILLED_MASK	(~0)
-
 /*===========================================================================*
  *				do_privctl				     *
  *===========================================================================*/
@@ -29,6 +27,7 @@ message *m_ptr;			/* pointer to request message */
   register struct proc *rp;
   int proc_nr;
   int priv_id;
+  int ipc_to_m, kcalls;
   int i, r;
   struct io_range io_range;
   struct mem_range mem_range;
@@ -48,16 +47,49 @@ message *m_ptr;			/* pointer to request message */
 
   switch(m_ptr->CTL_REQUEST)
   {
-  case SYS_PRIV_INIT:
+  case SYS_PRIV_ALLOW:
+	/* Allow process to run. Make sure its privilege structure has already
+	 * been set.
+	 */
+	if (!RTS_ISSET(rp, RTS_NO_PRIV) || priv(rp)->s_proc_nr == NONE) {
+		return(EPERM);
+	}
+	RTS_LOCK_UNSET(rp, RTS_NO_PRIV);
+	return(OK);
+
+  case SYS_PRIV_DISALLOW:
+	/* Disallow process from running. */
+	if (RTS_ISSET(rp, RTS_NO_PRIV)) return(EPERM);
+	RTS_LOCK_SET(rp, RTS_NO_PRIV);
+	return(OK);
+
+  case SYS_PRIV_SET_SYS:
+	/* Set a privilege structure of a blocked system process. */
 	if (! RTS_ISSET(rp, RTS_NO_PRIV)) return(EPERM);
+
+	/* Check whether a static or dynamic privilege id must be allocated. */
+	priv_id = NULL_PRIV_ID;
+	if (m_ptr->CTL_ARG_PTR)
+	{
+		/* Copy privilege structure from caller */
+		if((r=data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
+			SYSTEM, (vir_bytes) &priv, sizeof(priv))) != OK)
+			return r;
+
+		/* See if the caller wants to assign a static privilege id. */
+		if(!(priv.s_flags & DYN_PRIV_ID)) {
+			priv_id = priv.s_id;
+		}
+	}
 
 	/* Make sure this process has its own privileges structure. This may
 	 * fail, since there are only a limited number of system processes.
-	 * Then copy the privileges from the caller and restore some defaults.
+	 * Then copy privileges from the caller and restore some defaults.
 	 */
-	if ((i=get_priv(rp, SYS_PROC)) != OK)
+	if ((i=get_priv(rp, priv_id)) != OK)
 	{
-		kprintf("do_privctl: out of priv structures\n");
+		kprintf("do_privctl: unable to allocate priv_id %d: %d\n",
+			priv_id, i);
 		return(i);
 	}
 	priv_id = priv(rp)->s_id;		/* backup privilege id */
@@ -70,88 +102,109 @@ message *m_ptr;			/* pointer to request message */
 	priv(rp)->s_int_pending = 0;			/* - interrupts */
 	sigemptyset(&priv(rp)->s_sig_pending);		/* - signals */
 
-	/* Now update the process' privileges as requested. */
-	rp->p_priv->s_trap_mask = FILLED_MASK;
-
-	/* Set a default send mask. */
-	for (i=0; i < NR_SYS_PROCS; i++) {
-		if (i != USER_PRIV_ID)
-			set_sendto_bit(rp, i);
-		else
-			unset_sendto_bit(rp, i);
+	/* Set defaults for privilege bitmaps. */
+	priv(rp)->s_flags= DEF_SYS_F;           /* privilege flags */
+	priv(rp)->s_trap_mask= DEF_SYS_T;       /* allowed traps */
+	ipc_to_m = DEF_SYS_M;                   /* allowed targets */
+	kcalls = DEF_SYS_KC;                    /* allowed kernel calls */
+	for(i = 0; i < CALL_MASK_SIZE; i++) {
+		priv(rp)->s_k_call_mask[i] = (kcalls == NO_C ? 0 : (~0));
 	}
 
-	/* No I/O resources, no memory resources, no IRQs, no grant table */
+	/* Set defaults for resources: no I/O resources, no memory resources,
+	 * no IRQs, no grant table
+	 */
 	priv(rp)->s_nr_io_range= 0;
 	priv(rp)->s_nr_mem_range= 0;
 	priv(rp)->s_nr_irq= 0;
 	priv(rp)->s_grant_table= 0;
 	priv(rp)->s_grant_entries= 0;
 
+	/* Override defaults if the caller has supplied a privilege structure. */
 	if (m_ptr->CTL_ARG_PTR)
 	{
-		/* Copy privilege structure from caller */
-		if((r=data_copy(who_e, (vir_bytes) m_ptr->CTL_ARG_PTR,
-			SYSTEM, (vir_bytes) &priv, sizeof(priv))) != OK)
-			return r;
-
-		/* Copy the call mask */
-		for (i= 0; i<CALL_MASK_SIZE; i++)
-			priv(rp)->s_k_call_mask[i]= priv.s_k_call_mask[i];
+		/* Copy s_flags. */
+		priv(rp)->s_flags = priv.s_flags;
 
 		/* Copy IRQs */
-		if (priv.s_nr_irq < 0 || priv.s_nr_irq > NR_IRQ)
-			return EINVAL;
-		priv(rp)->s_nr_irq= priv.s_nr_irq;
-		for (i= 0; i<priv.s_nr_irq; i++)
-		{
-			priv(rp)->s_irq_tab[i]= priv.s_irq_tab[i];
+		if(priv.s_flags & CHECK_IRQ) {
+			if (priv.s_nr_irq < 0 || priv.s_nr_irq > NR_IRQ)
+				return EINVAL;
+			priv(rp)->s_nr_irq= priv.s_nr_irq;
+			for (i= 0; i<priv.s_nr_irq; i++)
+			{
+				priv(rp)->s_irq_tab[i]= priv.s_irq_tab[i];
 #if 0
-			kprintf("do_privctl: adding IRQ %d for %d\n",
-				priv(rp)->s_irq_tab[i], rp->p_endpoint);
+				kprintf("do_privctl: adding IRQ %d for %d\n",
+					priv(rp)->s_irq_tab[i], rp->p_endpoint);
 #endif
+			}
 		}
-
-		priv(rp)->s_flags |= CHECK_IRQ;	/* Check requests for IRQs */
 
 		/* Copy I/O ranges */
-		if (priv.s_nr_io_range < 0 || priv.s_nr_io_range > NR_IO_RANGE)
-			return EINVAL;
-		priv(rp)->s_nr_io_range= priv.s_nr_io_range;
-		for (i= 0; i<priv.s_nr_io_range; i++)
-		{
-			priv(rp)->s_io_tab[i]= priv.s_io_tab[i];
+		if(priv.s_flags & CHECK_IO_PORT) {
+			if (priv.s_nr_io_range < 0 || priv.s_nr_io_range > NR_IO_RANGE)
+				return EINVAL;
+			priv(rp)->s_nr_io_range= priv.s_nr_io_range;
+			for (i= 0; i<priv.s_nr_io_range; i++)
+			{
+				priv(rp)->s_io_tab[i]= priv.s_io_tab[i];
 #if 0
-			kprintf("do_privctl: adding I/O range [%x..%x] for %d\n",
-				priv(rp)->s_io_tab[i].ior_base,
-				priv(rp)->s_io_tab[i].ior_limit,
-				rp->p_endpoint);
+				kprintf("do_privctl: adding I/O range [%x..%x] for %d\n",
+					priv(rp)->s_io_tab[i].ior_base,
+					priv(rp)->s_io_tab[i].ior_limit,
+					rp->p_endpoint);
 #endif
+			}
 		}
 
-		/* Check requests for IRQs */
-		priv(rp)->s_flags |= CHECK_IO_PORT;
+		/* Copy memory ranges */
+		if(priv.s_flags & CHECK_MEM) {
+			if (priv.s_nr_mem_range < 0 || priv.s_nr_mem_range > NR_MEM_RANGE)
+				return EINVAL;
+			priv(rp)->s_nr_mem_range= priv.s_nr_mem_range;
+			for (i= 0; i<priv.s_nr_mem_range; i++)
+			{
+				priv(rp)->s_mem_tab[i]= priv.s_mem_tab[i];
+#if 0
+				kprintf("do_privctl: adding mem range [%x..%x] for %d\n",
+					priv(rp)->s_mem_tab[i].mr_base,
+					priv(rp)->s_mem_tab[i].mr_limit,
+					rp->p_endpoint);
+#endif
+			}
+		}
 
+		/* Copy trap mask. */
+		priv(rp)->s_trap_mask = priv.s_trap_mask;
+
+		/* Copy target mask. */
+		memcpy(&ipc_to_m, &priv.s_ipc_to, sizeof(ipc_to_m));
+
+		/* Copy kernel call mask. */
 		memcpy(priv(rp)->s_k_call_mask, priv.s_k_call_mask,
 			sizeof(priv(rp)->s_k_call_mask));
-
-		/* Set a custom send mask. */
-		for (i=0; i < NR_SYS_PROCS; i++) {
-			if (get_sys_bit(priv.s_ipc_to, i))
-				set_sendto_bit(rp, i);
-			else
-				unset_sendto_bit(rp, i);
-		}
 	}
 
-	/* Done. Privileges have been set. Allow process to run again. */
-	RTS_LOCK_UNSET(rp, RTS_NO_PRIV);
+	/* Fill in target mask. */
+	for (i=0; i < NR_SYS_PROCS; i++) {
+		if (ipc_to_m & (1 << i))
+			set_sendto_bit(rp, i);
+		else
+			unset_sendto_bit(rp, i);
+	}
+
 	return(OK);
-  case SYS_PRIV_USER:
-	/* Make this process an ordinary user process. */
+
+  case SYS_PRIV_SET_USER:
+	/* Set a privilege structure of a blocked user process. */
 	if (!RTS_ISSET(rp, RTS_NO_PRIV)) return(EPERM);
-	if ((i=get_priv(rp, 0)) != OK) return(i);
-	RTS_LOCK_UNSET(rp, RTS_NO_PRIV);
+
+	/* Link the process to the privilege structure of the root user
+	 * process all the user processes share.
+	 */
+	priv(rp) = priv_addr(USER_PRIV_ID);
+
 	return(OK);
 
   case SYS_PRIV_ADD_IO:

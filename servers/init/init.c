@@ -69,6 +69,7 @@ int main(void)
   int fd;			/* generally useful */
   int linenr;			/* loop variable */
   int check;			/* check if a new process must be spawned */
+  int sn;			/* signal number */
   struct slotent *slotp;	/* slots[] pointer */
   struct ttyent *ttyp;		/* ttytab entry */
   struct sigaction sa;
@@ -84,6 +85,12 @@ int main(void)
 
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
+
+  /* Default: Ignore every signal (except those that follow). */
+  sa.sa_handler = SIG_IGN;
+  for (sn = 1; sn < _NSIG; sn++) {
+      sigaction(sn, &sa, NULL);
+  }
 
   /* Hangup: Reexamine /etc/ttytab for newly enabled terminal lines. */
   sa.sa_handler = onhup;
