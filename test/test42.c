@@ -855,8 +855,11 @@ void test_attach()
   if (errno != EPERM) e(4);
 
   /* Attaching to PM is not allowed. */
+#if 0
+  /* FIXME: disabled until we can reliably determine PM's pid */
   if (ptrace(T_ATTACH, 0, 0, 0) != -1) e(5);
   if (errno != EPERM) e(6);
+#endif
 
   pid = traced_fork(test_attach_child);
 
