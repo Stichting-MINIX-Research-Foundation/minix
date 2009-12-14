@@ -70,6 +70,7 @@ main(argc, argv, envp) char **argv, *envp;
 			else {
 				argc--; s = *++argv;
 			}
+			if (s == NULL) usage();
 			pfp = efopen(s, "r");
 			s += strlen(s) - 1;
 			break;
@@ -92,6 +93,8 @@ main(argc, argv, envp) char **argv, *envp;
 	xargc--; xargv++;
   }
 */
+
+  if (pfp == NULL && srcprg == NULL) usage();
 
   while (*xargv != NULL && strchr(*xargv, '=') != NULL) {
 	setvar(*xargv++);
@@ -138,4 +141,13 @@ onint(i)
 {
   closeall();
   exit(0x80 | i);
+}
+
+void
+usage()
+{
+  fprintf(stderr,
+	"usage: %s [options] [-f <rulefile> | <rules>] [inputfiles]\n", cmd);
+  closeall();
+  exit(1);
 }
