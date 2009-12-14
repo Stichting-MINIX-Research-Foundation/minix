@@ -122,13 +122,13 @@ void r_stat(Ino_t inum, struct stat *stp)
 
 	/* Fetch the block */
 	blockbuf = (union fsdata_u *) scratch;
-	readblock(block, blockbuf, block_size);
+	readblock(block, (char *) blockbuf, block_size);
 
 	if (super.s_magic == SUPER_V2 || super.s_magic == SUPER_V3) {
 		d2_inode *dip;
 		int i;
 
-		dip= &blockbuf->b__v2_ino[ino_offset];
+		dip= &blockbuf->b__v2_ino[(unsigned int) ino_offset];
 
 		curfil.i_mode= dip->d2_mode;
 		curfil.i_nlinks= dip->d2_nlinks;
@@ -144,7 +144,7 @@ void r_stat(Ino_t inum, struct stat *stp)
 		d1_inode *dip;
 		int i;
 
-		dip= &blockbuf->b__v1_ino[ino_offset];
+		dip= &blockbuf->b__v1_ino[(unsigned int) ino_offset];
 
 		curfil.i_mode= dip->d1_mode;
 		curfil.i_nlinks= dip->d1_nlinks;

@@ -636,7 +636,7 @@ static void starttcap(term)
  * This function is called once during initialization, and thereafter it is
  * called whenever the SIGWINCH signal is sent to this process.
  */
-int getsize(signo)
+void getsize(signo)
 	int	signo;
 {
 	int	lines;
@@ -719,8 +719,6 @@ int getsize(signo)
 		*o_columns = COLS;
 	}
 #endif
-
-	return 0;
 }
 
 

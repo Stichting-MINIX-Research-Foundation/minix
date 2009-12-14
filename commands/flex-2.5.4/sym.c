@@ -40,8 +40,6 @@ struct hash_entry *ndtbl[NAME_TABLE_HASH_SIZE];
 struct hash_entry *sctbl[START_COND_HASH_SIZE];
 struct hash_entry *ccltab[CCL_HASH_SIZE];
 
-struct hash_entry *findsym();
-
 
 /* addsym - add symbol and definitions to symbol table
  *
@@ -105,7 +103,6 @@ int cclnum;
 	/* We don't bother checking the return status because we are not
 	 * called unless the symbol is new.
 	 */
-	Char *copy_unsigned_string();
 
 	(void) addsym( (char *) copy_unsigned_string( ccltxt ),
 			(char *) 0, cclnum,
@@ -179,8 +176,6 @@ void ndinstal( name, definition )
 char name[];
 Char definition[];
 	{
-	char *copy_string();
-	Char *copy_unsigned_string();
 
 	if ( addsym( copy_string( name ),
 			(char *) copy_unsigned_string( definition ), 0,
@@ -227,7 +222,6 @@ void scinstal( str, xcluflg )
 char str[];
 int xcluflg;
 	{
-	char *copy_string();
 
 	/* Generate start condition definition, for use in BEGIN et al. */
 	action_define( str, lastsc );

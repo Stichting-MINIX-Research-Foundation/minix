@@ -43,6 +43,7 @@ static char flex_version[] = FLEX_VERSION;
 
 /* declare functions that have forward references */
 
+int main PROTO((int, char**));
 void flexinit PROTO((int, char**));
 void readin PROTO((void));
 void set_up_initial_allocations PROTO((void));

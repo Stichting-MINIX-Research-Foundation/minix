@@ -2,7 +2,11 @@
 
 /* $Header$ */
 
+#include "flexdef.h"
+
 extern int yylex(void);
+
+int main PROTO((int, char**));
 
 int main( argc, argv )
 int argc;

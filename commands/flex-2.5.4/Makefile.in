@@ -14,7 +14,7 @@
 # For MS-DOS, add "-DMS_DOS" to DEFS.  See the directory MISC/MSDOS for
 # additional info.
 
-CFLAGS = @CFLAGS@
+CFLAGS = @CFLAGS@ -D_POSIX_SOURCE=1
 CPPFLAGS = @CPPFLAGS@
 DEFS = @DEFS@
 LDFLAGS = @LDFLAGS@

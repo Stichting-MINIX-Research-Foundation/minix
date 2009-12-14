@@ -98,7 +98,7 @@ LEXOPT		[aceknopr]
 
 	int doing_codeblock = false;
 	int i;
-	Char nmdef[MAXLINE], myesc();
+	Char nmdef[MAXLINE];
 
 
 <INITIAL>{
@@ -434,7 +434,6 @@ LEXOPT		[aceknopr]
 
 	"{"{NAME}"}"	{
 			register Char *nmdefptr;
-			Char *ndlookup();
 
 			strcpy( nmstr, yytext + 1 );
 			nmstr[yyleng - 2] = '\0';  /* chop trailing brace */
