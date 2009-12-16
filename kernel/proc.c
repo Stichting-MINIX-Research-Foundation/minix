@@ -297,7 +297,6 @@ long bit_map;			/* notification event set or flags */
  */
   register struct proc *caller_ptr = proc_ptr;	/* get pointer to caller */
   int mask_entry;				/* bit to check in send mask */
-  int group_size;				/* used for deadlock check */
   int result;					/* the system call's result */
   int src_dst_p;				/* Process slot number */
   size_t msg_size;
@@ -464,17 +463,6 @@ long bit_map;			/* notification event set or flags */
 	msg_size = sizeof(*m_ptr);
   }
 
-  /* Check for a possible deadlock for blocking SEND(REC) and RECEIVE. */
-  if (call_nr == SEND || call_nr == SENDREC || call_nr == RECEIVE) {
-      if (group_size = deadlock(call_nr, caller_ptr, src_dst_p)) {
-#if 0
-          kprintf("sys_call: trap %d from %d to %d deadlocked, group size %d\n",
-              call_nr, proc_nr(caller_ptr), src_dst_p, group_size);
-#endif
-        return(ELOCKED);
-      }
-  }
-
   /* Now check if the call is known and try to perform the request. The only
    * system calls that exist in MINIX are sending and receiving messages.
    *   - SENDREC: combines SEND and RECEIVE in a single system call
@@ -630,6 +618,11 @@ int flags;
 		return(ENOTREADY);
 	}
 
+	/* Check for a possible deadlock before actually blocking. */
+	if (deadlock(SEND, caller_ptr, dst_p)) {
+		return(ELOCKED);
+	}
+
 	/* Destination is not waiting.  Block and dequeue caller. */
 	PHYS_COPY_CATCH(linaddr, vir2phys(&caller_ptr->p_sendmsg),
 		sizeof(message), addr);
@@ -773,6 +766,11 @@ int flags;
    * Block the process trying to receive, unless the flags tell otherwise.
    */
   if ( ! (flags & NON_BLOCKING)) {
+      /* Check for a possible deadlock before actually blocking. */
+      if (deadlock(RECEIVE, caller_ptr, src_p)) {
+          return(ELOCKED);
+      }
+
       caller_ptr->p_getfrom_e = src_e;		
       RTS_SET(caller_ptr, RTS_RECEIVING);
       return(OK);
