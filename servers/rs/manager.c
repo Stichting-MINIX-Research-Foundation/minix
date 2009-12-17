@@ -128,120 +128,14 @@ size_t dst_len;
   dst_label[len] = 0;
 
   if (rs_verbose)
-	printf("RS: do_start: using label (custom) '%s'\n", dst_label);
+	printf("RS: copy_label: using label (custom) '%s'\n", dst_label);
   return OK;
 }
 
 /*===========================================================================*
- *				do_up					     *
+ *				   do_up				     *
  *===========================================================================*/
-PUBLIC int do_up(m_ptr, do_copy, flags)
-message *m_ptr;					/* request message pointer */
-int do_copy;					/* keep copy in memory */
-int flags;					/* extra flags, if any */
-{
-/* A request was made to start a new system service. Dismember the request 
- * message and gather all information needed to start the service. Starting
- * is done by a helper routine.
- */
-  register struct rproc *rp;			/* system process table */
-  int slot_nr;					/* local table entry */
-  int arg_count;				/* number of arguments */
-  char *cmd_ptr;				/* parse command string */
-  char *label;					/* unique name of command */
-  enum dev_style dev_style;			/* device style */
-  int s;					/* status variable */
-  int len;					/* length of string */
-  int r;
-  endpoint_t ep;				/* new endpoint no. */
-
-  /* This call requires special privileges. */
-  if (!caller_is_root(m_ptr->m_source)) return(EPERM);
-
-  /* See if there is a free entry in the table with system processes. */
-  for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
-      rp = &rproc[slot_nr];			/* get pointer to slot */
-      if (! rp->r_flags & RS_IN_USE) 		/* check if available */
-	  break;
-  }
-
-  /* Obtain command name and parameters. This is a space-separated string
-   * that looks like "/sbin/service arg1 arg2 ...". Arguments are optional.
-   */
-  if (m_ptr->RS_CMD_LEN > MAX_COMMAND_LEN) return(E2BIG);
-  if (OK!=(s=sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
-  	SELF, (vir_bytes) rp->r_cmd, m_ptr->RS_CMD_LEN))) return(s);
-  rp->r_cmd[m_ptr->RS_CMD_LEN] = '\0';		/* ensure it is terminated */
-  if (rp->r_cmd[0] != '/') return(EINVAL);	/* insist on absolute path */
-
-  rp->r_script[0]= '\0';
-
-  /* Build argument vector to be passed to execute call. The format of the
-   * arguments vector is: path, arguments, NULL. 
-   */
-  arg_count = 0;				/* initialize arg count */
-  rp->r_argv[arg_count++] = rp->r_cmd;		/* start with path */
-  cmd_ptr = rp->r_cmd;				/* do some parsing */ 
-  while(*cmd_ptr != '\0') {			/* stop at end of string */
-      if (*cmd_ptr == ' ') {			/* next argument */
-          *cmd_ptr = '\0';			/* terminate previous */
-	  while (*++cmd_ptr == ' ') ; 		/* skip spaces */
-	  if (*cmd_ptr == '\0') break;		/* no arg following */
-	  if (arg_count>MAX_NR_ARGS+1) break;	/* arg vector full */
-          rp->r_argv[arg_count++] = cmd_ptr;	/* add to arg vector */
-      }
-      cmd_ptr ++;				/* continue parsing */
-  }
-  rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
-  rp->r_argc = arg_count;
-
-  /* Default label for the driver */
-  label= strrchr(rp->r_argv[0], '/');
-  if (label)
-	label++;
-  else
-	label= rp->r_argv[0];
-  len= strlen(label);
-  if (len > MAX_LABEL_LEN-1)
-	len= MAX_LABEL_LEN-1;	/* truncate name */
-  memcpy(rp->r_label, label, len);
-  rp->r_label[len]= '\0';
-  if(rs_verbose) printf("RS: do_up: using label '%s'\n", rp->r_label);
-
-  rp->r_uid= 0;
-  rp->r_nice= 0;
-
-  rp->r_sys_flags = DSRV_SF;
-  rp->r_exec= NULL;
-
-  if (do_copy)
-  {
-	s= read_exec(rp);
-	if (s != OK)
-		return s;
-
-	rp->r_sys_flags |= SF_USE_COPY;
-  }
-
-  /* Initialize some fields. */
-  rp->r_period = m_ptr->RS_PERIOD;
-  rp->r_dev_nr = m_ptr->RS_DEV_MAJOR;
-  rp->r_dev_style = STYLE_DEV; 
-  rp->r_restarts = -1; 				/* will be incremented */
-  rp->r_set_resources= 0;			/* old style */
-  
-  /* All information was gathered. Now try to start the system service. */
-
-  r = start_service(rp, flags, &ep);
-  m_ptr->RS_ENDPOINT = ep;
-  return r;
-}
-
-
-/*===========================================================================*
- *				do_start				     *
- *===========================================================================*/
-PUBLIC int do_start(m_ptr)
+PUBLIC int do_up(m_ptr)
 message *m_ptr;					/* request message pointer */
 {
 /* A request was made to start a new system service. 
@@ -271,7 +165,7 @@ message *m_ptr;					/* request message pointer */
   }
   if (slot_nr >= NR_SYS_PROCS)
   {
-	printf("rs`do_start: driver table full\n");
+      printf("RS: do_up: system process table full\n");
 	return ENOMEM;
   }
 
@@ -310,15 +204,15 @@ message *m_ptr;					/* request message pointer */
   rp->r_argc = arg_count;
 
   if(rs_start.rss_label.l_len > 0) {
-	/* RS_START caller has supplied a custom label for this driver. */
+	/* RS_UP caller has supplied a custom label for this service. */
 	int s = copy_label(m_ptr->m_source, &rs_start.rss_label,
 		rp->r_label, sizeof(rp->r_label));
 	if(s != OK)
 		return s;
         if(rs_verbose)
-	  printf("RS: do_start: using label (custom) '%s'\n", rp->r_label);
+	  printf("RS: do_up: using label (custom) '%s'\n", rp->r_label);
   } else {
-	/* Default label for the driver. */
+	/* Default label for the service. */
 	label= strrchr(rp->r_argv[0], '/');
 	if (label)
 		label++;
@@ -330,7 +224,7 @@ message *m_ptr;					/* request message pointer */
   	memcpy(rp->r_label, label, len);
   	rp->r_label[len]= '\0';
         if(rs_verbose)
-          printf("RS: do_start: using label (from binary %s) '%s'\n",
+          printf("RS: do_up: using label (from binary %s) '%s'\n",
 		rp->r_argv[0], rp->r_label);
   }
 
@@ -338,7 +232,7 @@ message *m_ptr;					/* request message pointer */
 	int i, s;
 	if (rs_start.rss_nr_control > RSS_NR_CONTROL)
 	{
-		printf("RS: do_start: too many control labels\n");
+		printf("RS: do_up: too many control labels\n");
 		return EINVAL;
 	}
 	for (i=0; i<rs_start.rss_nr_control; i++) {
@@ -350,7 +244,7 @@ message *m_ptr;					/* request message pointer */
 	rp->r_nr_control = rs_start.rss_nr_control;
 
 	if (rs_verbose) {
-		printf("RS: do_start: control labels:");
+		printf("RS: do_up: control labels:");
 		for (i=0; i<rp->r_nr_control; i++)
 			printf(" %s", rp->r_control[i]);
 		printf("\n");
@@ -443,7 +337,7 @@ message *m_ptr;					/* request message pointer */
   /* Copy granted resources */
   if (rs_start.rss_nr_irq > NR_IRQ)
   {
-	printf("RS: do_start: too many IRQs requested\n");
+	printf("RS: do_up: too many IRQs requested\n");
 	return EINVAL;
   }
   rp->r_priv.s_nr_irq= rs_start.rss_nr_irq;
@@ -451,12 +345,12 @@ message *m_ptr;					/* request message pointer */
   {
 	rp->r_priv.s_irq_tab[i]= rs_start.rss_irq[i];
 	if(rs_verbose)
-		printf("RS: do_start: IRQ %d\n", rp->r_priv.s_irq_tab[i]);
+		printf("RS: do_up: IRQ %d\n", rp->r_priv.s_irq_tab[i]);
   }
 
   if (rs_start.rss_nr_io > NR_IO_RANGE)
   {
-	printf("RS: do_start: too many I/O ranges requested\n");
+	printf("RS: do_up: too many I/O ranges requested\n");
 	return EINVAL;
   }
   rp->r_priv.s_nr_io_range= rs_start.rss_nr_io;
@@ -466,14 +360,14 @@ message *m_ptr;					/* request message pointer */
 	rp->r_priv.s_io_tab[i].ior_limit=
 		rs_start.rss_io[i].base+rs_start.rss_io[i].len-1;
 	if(rs_verbose)
-	   printf("RS: do_start: I/O [%x..%x]\n",
+	   printf("RS: do_up: I/O [%x..%x]\n",
 		rp->r_priv.s_io_tab[i].ior_base,
 		rp->r_priv.s_io_tab[i].ior_limit);
   }
 
   if (rs_start.rss_nr_pci_id > RSS_NR_PCI_ID)
   {
-	printf("RS: do_start: too many PCI device IDs\n");
+	printf("RS: do_up: too many PCI device IDs\n");
 	return EINVAL;
   }
   rp->r_nr_pci_id= rs_start.rss_nr_pci_id;
@@ -482,12 +376,12 @@ message *m_ptr;					/* request message pointer */
 	rp->r_pci_id[i].vid= rs_start.rss_pci_id[i].vid;
 	rp->r_pci_id[i].did= rs_start.rss_pci_id[i].did;
 	if(rs_verbose)
-	   printf("RS: do_start: PCI %04x/%04x\n",
+	   printf("RS: do_up: PCI %04x/%04x\n",
 		rp->r_pci_id[i].vid, rp->r_pci_id[i].did);
   }
   if (rs_start.rss_nr_pci_class > RSS_NR_PCI_CLASS)
   {
-	printf("RS: do_start: too many PCI class IDs\n");
+	printf("RS: do_up: too many PCI class IDs\n");
 	return EINVAL;
   }
   rp->r_nr_pci_class= rs_start.rss_nr_pci_class;
@@ -496,7 +390,7 @@ message *m_ptr;					/* request message pointer */
 	rp->r_pci_class[i].class= rs_start.rss_pci_class[i].class;
 	rp->r_pci_class[i].mask= rs_start.rss_pci_class[i].mask;
 	if(rs_verbose)
-	    printf("RS: do_start: PCI class %06x mask %06x\n",
+	    printf("RS: do_up: PCI class %06x mask %06x\n",
 		rp->r_pci_class[i].class, rp->r_pci_class[i].mask);
   }
 
@@ -510,7 +404,7 @@ message *m_ptr;					/* request message pointer */
   else
   {
 	printf(
-	"RS: do_start: internal inconsistency: bad size of r_call_mask\n");
+	"RS: do_up: internal inconsistency: bad size of r_call_mask\n");
 	memset(rp->r_call_mask, '\0', sizeof(rp->r_call_mask));
   }
 
@@ -519,9 +413,8 @@ message *m_ptr;					/* request message pointer */
   rp->r_dev_nr = rs_start.rss_major;
   rp->r_dev_style = STYLE_DEV; 
   rp->r_restarts = -1; 				/* will be incremented */
-  rp->r_set_resources= 1;			/* new style, enforce
-						 * I/O resources
-						 */
+  rp->r_set_resources= 1;			/* set resources */
+
   if (sizeof(rp->r_vm) == sizeof(rs_start.rss_vm) &&
       sizeof(rp->r_vm[0]) == sizeof(rs_start.rss_vm[0]))
   {
@@ -529,7 +422,7 @@ message *m_ptr;					/* request message pointer */
   }
   else
   {
-	  printf("RS: do_start: internal inconsistency: bad size of r_vm\n");
+	  printf("RS: do_up: internal inconsistency: bad size of r_vm\n");
 	  memset(rp->r_vm, '\0', sizeof(rp->r_vm));
   }
 
@@ -767,7 +660,10 @@ PUBLIC void do_exit(message *m_ptr)
               rproc_ptr[proc] = NULL;		/* invalidate */
 	      rp->r_pid= -1;
 
-	      pci_del_acl(rp->r_proc_nr_e);	/* Ignore errors */
+	      /* If PCI properties are set, inform the PCI driver. */
+              if(rp->r_nr_pci_id || rp->r_nr_pci_class) {
+                  pci_del_acl(rp->r_proc_nr_e);
+              }
 
               if ((rp->r_flags & RS_EXITING) || shutting_down) {
 		  /* No reply sent to RS_DOWN yet. */
@@ -883,7 +779,7 @@ message *m_ptr;
 	  else if (rp->r_period > 0) {
 
 	      /* Check if an answer to a status request is still pending. If 
-	       * the driver didn't respond within time, kill it to simulate 
+	       * the service didn't respond within time, kill it to simulate 
 	       * a crash. The failure will be detected and the service will 
 	       * be restarted automatically.
 	       */
@@ -935,7 +831,6 @@ endpoint_t *endpoint;
   pid_t child_pid;				/* child's process id */
   char *file_only;
   int s, use_copy, slot_nr;
-  struct priv *privp;
   bitchunk_t *vm_mask;
   message m;
   char * null_env = NULL;
@@ -1035,36 +930,25 @@ endpoint_t *endpoint;
 	}
   }
 
-  privp= NULL;
-  vm_mask = NULL;
+  /* Set resources when asked to. */
   if (rp->r_set_resources)
   {
+	/* Initialize privilege structure. */
 	init_privs(rp, &rp->r_priv);
-	privp= &rp->r_priv;
 
-	/* Inform the PCI server about the driver */
-	init_pci(rp, child_proc_nr_e);
-
+	/* Tell VM about allowed calls. */
 	vm_mask = &rp->r_vm[0];
+	if ((s = vm_set_priv(child_proc_nr_e, vm_mask)) < 0) {
+	    report("RS", "vm_set_priv call failed", s);
+	    kill(child_pid, SIGKILL);
+	    rp->r_flags |= RS_EXITING;
+	    return (s);
+	}
   }
 
-  /* Tell VM about allowed calls, before actually letting the process run. */
-  if ((s = vm_set_priv(child_proc_nr_e, vm_mask)) < 0) {
-	report("RS", "vm_set_priv call failed", s);
-	kill(child_pid, SIGKILL);
-	rp->r_flags |= RS_EXITING;
-	return (s);
-  }
-
-  /* Set the privilege structure for the child process.
-   * That will also cause the child process to start running.
-   * This call should succeed: we tested number in use above.
-   */
-  if ((s = set_privs(child_proc_nr_e, privp, SYS_PRIV_SET_SYS)) != OK) {
-      report("RS","set_privs failed", s);
-      kill(child_pid, SIGKILL);				/* kill driver */
-      rp->r_flags |= RS_EXITING;			/* expect exit */
-      return(s);					/* return error */
+  /* If PCI properties are set, inform the PCI driver about the new service. */
+  if(rp->r_nr_pci_id || rp->r_nr_pci_class) {
+      init_pci(rp, child_proc_nr_e);
   }
 
   /* The purpose of non-blocking forks is to avoid involving VFS in the forking
@@ -1089,12 +973,18 @@ endpoint_t *endpoint;
       if ((s=mapdriver5(rp->r_label, strlen(rp->r_label),
 	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {
           report("RS", "couldn't map driver (continuing)", errno);
-#if 0
-	  kill(child_pid, SIGKILL);			/* kill driver */
-          rp->r_flags |= RS_EXITING;			/* expect exit */
-	  return(s);					/* return error */
-#endif
       }
+  }
+
+  /* Set the privilege structure for the child process.
+   * That will also cause the child process to start running.
+   * This call should succeed: we tested number in use above.
+   */
+  if ((s = set_privs(child_proc_nr_e, &rp->r_priv, SYS_PRIV_SET_SYS)) != OK) {
+      report("RS","set_privs failed", s);
+      kill(child_pid, SIGKILL);				/* kill the service */
+      rp->r_flags |= RS_EXITING;			/* expect exit */
+      return(s);					/* return error */
   }
 
   if(rs_verbose)
@@ -1555,7 +1445,7 @@ PRIVATE void init_pci(rp, endpoint)
 struct rproc *rp;
 int endpoint;
 {
-	/* Tell the PCI driver about the new driver */
+	/* Inform the PCI driver about the new service. */
 	size_t len;
 	int i, r;
 	struct rs_pci rs_pci;

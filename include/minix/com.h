@@ -64,7 +64,7 @@
 #define PM_PROC_NR	  0	/* process manager */
 #define FS_PROC_NR 	  1	/* file system */
 #define VFS_PROC_NR 	  FS_PROC_NR /* FS has been renamed to VFS. */
-#define RS_PROC_NR 	  2  	/* memory driver (RAM disk, null, etc.) */
+#define RS_PROC_NR 	  2  	/* reincarnation server */
 #define MEM_PROC_NR 	  3  	/* memory driver (RAM disk, null, etc.) */
 #define LOG_PROC_NR	  4	/* log device driver */
 #define TTY_PROC_NR	  5	/* terminal (TTY) driver */
@@ -675,14 +675,8 @@
 #define RS_DOWN		(RS_RQ_BASE + 1)	/* stop system service */
 #define RS_REFRESH	(RS_RQ_BASE + 2)	/* refresh system service */
 #define RS_RESTART	(RS_RQ_BASE + 3)	/* restart system service */
-#define RS_SHUTDOWN	(RS_RQ_BASE + 5)	/* alert about shutdown */
-#define RS_UP_COPY	(RS_RQ_BASE + 6)	/* start system service and
-						 * keep the binary in memory
-						 */
-#define RS_START	(RS_RQ_BASE + 7)	/* start a driver/service
-						 * arguments are passed in 
-						 * a struct rs_start
-						 */
+#define RS_SHUTDOWN	(RS_RQ_BASE + 4)	/* alert about shutdown */
+
 #define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */

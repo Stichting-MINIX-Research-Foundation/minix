@@ -86,7 +86,7 @@ PUBLIC int main(void)
       if (is_notify(m.m_type)) {
           switch (who_p) {
           case CLOCK:
-	      do_period(&m);			/* check drivers status */
+	      do_period(&m);			/* check services status */
 	      continue;				
           case PM_PROC_NR:
 	      sig_handler();
@@ -116,9 +116,7 @@ PUBLIC int main(void)
 
           /* Handler functions are responsible for permission checking. */
           switch(call_nr) {
-          case RS_UP: 		result = do_up(&m, FALSE, 0); break;
-          case RS_UP_COPY:	result = do_up(&m, TRUE, 0); break;
-	  case RS_START:	result = do_start(&m);		break;
+	  case RS_UP:		result = do_up(&m);		break;
           case RS_DOWN: 	result = do_down(&m); 		break;
           case RS_REFRESH: 	result = do_refresh(&m); 	break;
           case RS_RESTART: 	result = do_restart(&m); 	break;
@@ -455,6 +453,32 @@ PRIVATE void init_server(void)
       rp->r_dev_nr = boot_image_dev->dev_nr;          /* major device number */
       rp->r_dev_style = boot_image_dev->dev_style;    /* device style */
       rp->r_period = boot_image_dev->period;          /* heartbeat period */
+
+      /* Get label. */
+      strcpy(rp->r_label, ip->proc_name);
+
+      /* Get command settings. */
+      rp->r_cmd[0]= '\0';
+      rp->r_argv[0] = rp->r_cmd;
+      rp->r_argv[1] = NULL;
+      rp->r_argc = 1;
+      rp->r_script[0]= '\0';
+
+      /* Get some settings from the boot image table. */
+      rp->r_nice = ip->priority;
+      rp->r_proc_nr_e = ip->endpoint;
+
+      /* Set some defaults. */
+      rp->r_uid = 0;                           /* root */
+      rp->r_check_tm = 0;                      /* not checked yet */
+      getuptime(&rp->r_alive_tm);              /* currently alive */
+      rp->r_stop_tm = 0;                       /* not exiting yet */
+      rp->r_restarts = 0;                      /* no restarts so far */
+      rp->r_set_resources = 0;                 /* don't set resources */
+
+      /* Mark as in use. */
+      rp->r_flags = RS_IN_USE;
+      rproc_ptr[_ENDPOINT_P(rp->r_proc_nr_e)]= rp;
   }
 
   /* - Step 2: allow every system service in the boot image to run.
@@ -477,9 +501,9 @@ PRIVATE void init_server(void)
       }
   }
 
-  /* - Step 3: all the system services in the boot image are now running. Use
-   * the boot image table from the kernel and PM process table to complete
-   * the initialization of the system process table.
+  /* - Step 3: all the system services in the boot image are now running.
+   * Complete the initialization of the system process table in collaboration
+   * with other system processes.
    */
   if ((s = getsysinfo(PM_PROC_NR, SI_PROC_TAB, mproc)) != OK) {
       panic("RS", "unable to get copy of PM process table", s);
@@ -492,24 +516,8 @@ PRIVATE void init_server(void)
           continue;
       }
 
-      /* Lookup the corresponding entry in the boot image table. */
-      boot_image_info_lookup(boot_image_priv->endpoint, image,
-          &ip, NULL, NULL, NULL);
+      /* Lookup the corresponding slot in the system process table. */
       rp = &rproc[boot_image_priv - boot_image_priv_table];
-
-      /* Get label. */
-      strcpy(rp->r_label, ip->proc_name);
-
-      /* Get command settings. */
-      rp->r_cmd[0]= '\0';
-      rp->r_argv[0] = rp->r_cmd;
-      rp->r_argv[1] = NULL;
-      rp->r_argc = 1;
-      rp->r_script[0]= '\0';
-
-      /* Get settings from the boot image table. */
-      rp->r_nice = ip->priority;
-      rp->r_proc_nr_e = ip->endpoint;
 
       /* Get pid from PM process table. */
       rp->r_pid = NO_PID;
@@ -523,19 +531,10 @@ PRIVATE void init_server(void)
           panic("RS", "unable to get pid", NO_NUM);
       }
 
-      /* Set some defaults. */
-      rp->r_uid = 0;                           /* root */
-      rp->r_check_tm = 0;                      /* not checked yet */
-      getuptime(&rp->r_alive_tm);              /* currently alive */
-      rp->r_stop_tm = 0;                       /* not exiting yet */
-      rp->r_restarts = 0;                      /* no restarts so far */
-      rp->r_set_resources = 0;                 /* no resources */
-
-      /* Mark as in use. */
-      rp->r_flags = RS_IN_USE;
-      rproc_ptr[_ENDPOINT_P(rp->r_proc_nr_e)]= rp;
-
-      /* Publish the new system service. */
+      /* Publish the new system service.
+       * XXX FIXME. Possible race condition. We should publish labels before
+       * allowing other processes to run.
+       */
       s = publish_service(rp);
       if (s != OK) {
           panic("RS", "unable to publish boot system service", s);

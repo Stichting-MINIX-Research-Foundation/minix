@@ -18,6 +18,6 @@
 
 #define _PATH_BSHELL	"/bin/sh"
 #define _PATH_SERVICE	"/bin/service"
-#define _PATH_DRIVERS_CONF	"/etc/drivers.conf"
+#define _PATH_SYSTEM_CONF	"/etc/system.conf"
 
 #endif

@@ -11,8 +11,7 @@ _PROTOTYPE( int dev_execve, (int proc_e,
 _PROTOTYPE( int main, (void));
 
 /* manager.c */
-_PROTOTYPE( int do_up, (message *m, int do_copy, int flags));
-_PROTOTYPE( int do_start, (message *m));
+_PROTOTYPE( int do_up, (message *m));
 _PROTOTYPE( int do_down, (message *m));
 _PROTOTYPE( int do_refresh, (message *m));
 _PROTOTYPE( int do_restart, (message *m));

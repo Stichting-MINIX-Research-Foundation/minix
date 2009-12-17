@@ -2,7 +2,7 @@
 
 PROGRAMS=at_wini bios_wini cdprobe dev2name floppy loadramdisk newroot \
 	pci sh service sysenv mfs
-EXTRA=drivers.conf passwd
+EXTRA=system.conf passwd
 
 MAKEDEV=/usr/bin/MAKEDEV
 
@@ -97,7 +97,7 @@ mfs: ../../../servers/mfs/mfs
 ../../../servers/mfs/mfs: 
 	cd ../../../servers/mfs && make
 
-drivers.conf: ../../../etc/drivers.conf
+system.conf: ../../../etc/system.conf
 	install -s ../../../etc/$@ $@
 
 passwd: ../../../etc/passwd

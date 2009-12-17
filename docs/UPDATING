@@ -1,4 +1,6 @@
-
+20091212:
+        /etc/drivers.conf has been renamed to /etc/system.conf.
+        user "service" has been added to password file /etc/passwd.
 20060818:
 	You need flex in your $PATH, which has become part of the base
 	system. This needs bigger binaries.

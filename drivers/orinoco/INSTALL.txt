@@ -10,7 +10,7 @@ This script will patch, compile and install 2 code files in Minix:
 	/usr/src/commands/dhcpd/devices.c
 	(see the docs directory for more information)
 Furthermore, the script will patch 1 configuration file:
-	/etc/drivers.conf
+	/etc/system.conf
 	(adding an entry for 'orinoco')
 and 1 script file:
 	/usr/etc/rc

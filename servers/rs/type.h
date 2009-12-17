@@ -50,7 +50,7 @@ struct rproc {
   char *r_exec;			/* Executable image */ 
   size_t r_exec_len;		/* Length of image */
 
-  char r_label[MAX_LABEL_LEN];	/* unique name of this driver */
+  char r_label[MAX_LABEL_LEN];	/* unique name of this service */
   char r_cmd[MAX_COMMAND_LEN];	/* raw command plus arguments */
   char r_script[MAX_SCRIPT_LEN]; /* name of the restart script executable */
   char *r_argv[MAX_NR_ARGS+2];  /* parsed arguments vector */
