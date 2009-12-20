@@ -6,125 +6,87 @@
 #include "buf.h"
 #include <minix/vfsif.h>
 
-/*===========================================================================*
- *				fs_getnode				     *
- *===========================================================================*/
-PUBLIC int fs_getnode()
-{
-/* Increase the inode's counter specified in the request message
- */
-  struct dir_record *dir;
-
-  /* Get the dir record by the id */
-  dir = get_dir_record(fs_m_in.REQ_INODE_NR);
-  if (dir == NULL)
-    return EINVAL;
-
-  /* Transfer back the inode's details */
-  fs_m_out.m_source = fs_dev;
-  fs_m_out.RES_INODE_NR = fs_m_in.REQ_INODE_NR;
-  fs_m_out.RES_MODE = dir->d_mode;
-  fs_m_out.RES_FILE_SIZE = dir->d_file_size;
-  fs_m_out.RES_DEV = (Dev_t)fs_dev;
-  fs_m_out.RES_UID = 0;
-  fs_m_out.RES_GID = 0;
-
-  return OK;
-}
 
 /*===========================================================================*
  *				fs_putnode				     *
  *===========================================================================*/
 PUBLIC int fs_putnode()
 {
-/* Find the inode specified by the request message and decrease its counter.
- */
+/* Find the inode specified by the request message and decrease its counter. */
   int count;
-  struct dir_record *dir = (void *)0;
+  struct dir_record *dir = NULL;
 
-/*   if (fs_m_in.REQ_INODE_INDEX >= 0 &&  */
-/*       fs_m_in.REQ_INODE_INDEX <= NR_DIR_RECORDS && */
-/*       ID_DIR_RECORD((dir_records + fs_m_in.REQ_INODE_INDEX)) == fs_m_in.REQ_INODE_NR) { */
-/*     dir = &dir_records[fs_m_in.REQ_INODE_INDEX]; */
-/*     /\* In this case the dir record by the dir record table *\/ */
-/*   } else { */
   dir = get_dir_record(fs_m_in.REQ_INODE_NR);
-  /* Get dir record increased the counter. We must decrease it releasing 
-   * it */
   release_dir_record(dir);
   
-  if (dir == (void *)0) {
-    panic(__FILE__, "fs_putnode failed", NO_NUM);
-  }
-  
-  count= fs_m_in.REQ_COUNT;	/* I will check that the values of the count
-				 * are the same */
+  count = fs_m_in.REQ_COUNT;
 
-  if (count <= 0) {
-    printf("put_inode: bad value for count: %d\n", count);
-    panic(__FILE__, "fs_putnode failed", NO_NUM);
-    return EINVAL;
-  }
+  if (count <= 0) return(EINVAL);
+  
   if (count > dir->d_count) {
-    printf("put_inode: count too high: %d > %d\n", count, dir->d_count);
-     panic(__FILE__, "fs_putnode failed", NO_NUM);
-     return EINVAL;
+     printf("put_inode: count too high: %d > %d\n", count, dir->d_count);
+     return(EINVAL);
   }
 
   if (dir->d_count > 1)
-    dir->d_count = dir->d_count - count + 1;	/* If the dir record should be released this
-						   operation will bring the counter to 1.
-						   The next function will further decreases it
-						   releasing it completely. */
+	dir->d_count = dir->d_count - count + 1;/*Keep at least one reference*/
 
-  release_dir_record(dir);	/* I finally release it */
+  release_dir_record(dir); /* Actual inode release, might be last reference */
 
-  return OK;
+  return(OK);
 }
 
-/* Release a dir record (decrement the counter) */
+
+/*===========================================================================*
+ *				release_dir_record			     *
+ *===========================================================================*/
 PUBLIC int release_dir_record(dir)
-     register struct dir_record *dir;
+struct dir_record *dir;
 {
+/* Release a dir record (decrement the counter) */
   if (dir == NULL)
-    return EINVAL;
+	return(EINVAL);
 
   if (--dir->d_count == 0) {    
-    if (dir->ext_attr != NULL)
-      dir->ext_attr->count = 0;
-    dir->ext_attr = NULL;
-    dir->d_mountpoint = FALSE;
-    /* This if checks we remove the good dir record and not another one
-     * associated to the same id.*/
-/*     if (dir->id != NULL && dir->id->h_dir_record == dir) */
-/*       dir->id->h_dir_record = NULL; */
+	if (dir->ext_attr != NULL)
+		dir->ext_attr->count = 0;
+	dir->ext_attr = NULL;
+	dir->d_mountpoint = FALSE;
 
-    dir->d_prior = NULL;
-    if (dir->d_next != NULL)
-      release_dir_record(dir);
-    dir->d_next = NULL;
+	dir->d_prior = NULL;
+	if (dir->d_next != NULL)
+		release_dir_record(dir);
+	dir->d_next = NULL;
   }
-return OK;
+  return(OK);
 }
 
-/* Get a free dir record */
+
+/*===========================================================================*
+ *				get_free_dir_record			     *
+ *===========================================================================*/
 PUBLIC struct dir_record *get_free_dir_record(void)
 {
+/* Get a free dir record */
   struct dir_record *dir;
 
-  for(dir = dir_records;dir<&dir_records[NR_ATTR_RECS]; dir++) {
-    if (dir->d_count == 0) {	/* The record is free */
-      dir->d_count = 1;		/* Set count to 1 */
-      dir->ext_attr = NULL;
-      return dir;
-    }
+  for(dir = dir_records; dir < &dir_records[NR_ATTR_RECS]; dir++) {
+	if (dir->d_count == 0) {	/* The record is free */
+		dir->d_count = 1;		/* Set count to 1 */
+		dir->ext_attr = NULL;
+		return(dir);
+	}
   }
-  return NULL;
+
+  return(NULL);
 }
 
-/* This function is a wrapper. It calls dir_record_by_id */
+
+/*===========================================================================*
+ *				get_dir_record				     *
+ *===========================================================================*/
 PUBLIC struct dir_record *get_dir_record(id_dir_record)
-     ino_t id_dir_record;
+ino_t id_dir_record;
 {
   struct dir_record *dir = NULL;
   u32_t address;
@@ -132,43 +94,51 @@ PUBLIC struct dir_record *get_dir_record(id_dir_record)
 
   /* Search through the cache if the inode is still present */
   for(i = 0; i < NR_DIR_RECORDS && dir == NULL; ++i) {
-    if (dir_records[i].d_ino_nr == id_dir_record  && dir_records[i].d_count > 0) {
-      dir = dir_records + i;
-      dir->d_count++;
-    }
+	if (dir_records[i].d_ino_nr == id_dir_record
+					 && dir_records[i].d_count > 0) {
+		dir = dir_records + i;
+		dir->d_count++;
+	}
   }
 
   if (dir == NULL) {
-    address = (u32_t)id_dir_record;
-    dir = load_dir_record_from_disk(address);
+	address = (u32_t)id_dir_record;
+	dir = load_dir_record_from_disk(address);
   }
 
-  if (dir == NULL)
-    return NULL;
-  else
-    return dir;
+  if (dir == NULL) return(NULL);
+  
+  return(dir);
 }
 
-/* Get a free extended attribute structure in a similar way than the dir 
- * record */
+
+/*===========================================================================*
+ *				get_free_ext_attr				     *
+ *===========================================================================*/
 PUBLIC struct ext_attr_rec *get_free_ext_attr(void) {
+/* Get a free extended attribute structure */
   struct ext_attr_rec *dir;
-  for(dir = ext_attr_recs;dir<&ext_attr_recs[NR_ATTR_RECS]; dir++) {
-    if (dir->count == 0) {	/* The record is free */
-      dir->count = 1;
-      return dir;
-    }
+  for(dir = ext_attr_recs; dir < &ext_attr_recs[NR_ATTR_RECS]; dir++) {
+	if (dir->count == 0) {	/* The record is free */
+		dir->count = 1;
+		return(dir);
+	}
   }
-  return NULL;
+  
+  return(NULL);
 }
 
-/* Fill an extent structure from the data read on the device */
+
+/*===========================================================================*
+ *				create_ext_attr				     *
+ *===========================================================================*/
 PUBLIC int create_ext_attr(struct ext_attr_rec *ext,char *buffer)
 {
-  if (ext == NULL) return EINVAL;
+/* Fill an extent structure from the data read on the device */
+  if (ext == NULL) return(EINVAL);
 
   /* In input we have a stream of bytes that are physically read from the
-   * device. This stream of data is copied in the data structure. */
+   * device. This stream of data is copied to the data structure. */
   memcpy(&ext->own_id,buffer,sizeof(u32_t));
   memcpy(&ext->group_id,buffer + 4,sizeof(u32_t));
   memcpy(&ext->permissions,buffer + 8,sizeof(u16_t));
@@ -184,21 +154,25 @@ PUBLIC int create_ext_attr(struct ext_attr_rec *ext,char *buffer)
   memcpy(&ext->ext_attr_rec_ver,buffer + 180,sizeof(u8_t));
   memcpy(&ext->len_esc_seq,buffer + 181,sizeof(u8_t));
 
-  return OK;
+  return(OK);
 }
 
+
+/*===========================================================================*
+ *				create_ext_attr				     *
+ *===========================================================================*/
+PUBLIC int create_dir_record(dir,buffer,address)
+struct dir_record *dir;
+char *buffer;
+u32_t address;
+{
 /* Fills a dir record structure from the data read on the device */
 /* If the flag assign id is active it will return the id associated;
  * otherwise it will return OK. */
-PUBLIC int create_dir_record(dir,buffer,address)
-     struct dir_record *dir;
-     char *buffer;
-     u32_t address;
-{
   short size;
 
   size = buffer[0];
-  if (dir == NULL) return EINVAL;
+  if (dir == NULL) return(EINVAL);
   
   /* The data structure dir record is filled with the stream of data
    * that is read. */
@@ -219,11 +193,11 @@ PUBLIC int create_dir_record(dir,buffer,address)
 
   /* set memory attrs */
   if ((dir->file_flags & D_TYPE) == D_DIRECTORY)
-    dir->d_mode = I_DIRECTORY;
+	dir->d_mode = I_DIRECTORY;
   else
-    dir->d_mode = I_REGULAR;
+	dir->d_mode = I_REGULAR;
 
-  /* I set the rights to read only ones. Equals for all the users */
+  /* Set permission to read only. Equal for all users. */
   dir->d_mode |= R_BIT | X_BIT;
   dir->d_mode |= R_BIT << 3 | X_BIT << 3;
   dir->d_mode |= R_BIT << 6 | X_BIT << 6;
@@ -235,20 +209,21 @@ PUBLIC int create_dir_record(dir,buffer,address)
 
   /* Set physical address of the dir record */
   dir->d_phy_addr = address;
-  dir->d_ino_nr = (ino_t)address; /* u32_t e ino_t are the same datatype so
+  dir->d_ino_nr = (ino_t) address; /* u32_t e ino_t are the same datatype so
 				   * the cast is safe */
-/*   if (assign_id == ASSIGN_ID) { */
-/*     assign_id_to_dir_record(dir); */
-/*     return ID_DIR_RECORD(dir->id); */
-/*   } else */
-  return OK;
+  return(OK);
 }
 
+
+/*===========================================================================*
+ *			load_dir_record_from_disk			     *
+ *===========================================================================*/
+PUBLIC struct dir_record *load_dir_record_from_disk(address)
+u32_t address;
+{
 /* This function load a particular dir record from a specific address
  * on the device */
-PUBLIC struct dir_record *load_dir_record_from_disk(address)
-     u32_t address;
-{
+ 
   int block_nr, offset, block_size, new_pos;
   struct buf *bp;
   struct dir_record *dir, *dir_next, *dir_parent, *dir_tmp;
@@ -262,57 +237,60 @@ PUBLIC struct dir_record *load_dir_record_from_disk(address)
 
   bp = get_block(block_nr);	/* Read the block from the device */
   if (bp == NIL_BUF)
-    return NULL;
+	return(NULL);
 
   dir = get_free_dir_record();	/* Get a free record */
   if (dir == NULL)
-    return NULL;
+	return(NULL);
 
-  /* Fullfill the dir record with the data read from the device */
+  /* Fill the dir record with the data read from the device */
   create_dir_record(dir,bp->b_data + offset, address);
 
-  /* In case the file is composed of more file sections I load also the next in the structure */
+  /* In case the file is composed of more file sections, load also the
+   * next section into the structure */
   new_pos = offset + dir->length;
   dir_parent = dir;
   new_address = address + dir->length;
   while (new_pos < block_size) {
-    dir_next = get_free_dir_record();
-    create_dir_record(dir_next, bp->b_data + new_pos, new_address);
-    if (dir_next->length > 0) {
-      strncpy(name,dir_next->file_id,dir_next->length_file_id);
-      name[dir_next->length_file_id] = '\0';
-      strncpy(old_name,dir_parent->file_id,dir_parent->length_file_id);
-      old_name[dir_parent->length_file_id] = '\0';
+	dir_next = get_free_dir_record();
+	create_dir_record(dir_next, bp->b_data + new_pos, new_address);
+
+	if (dir_next->length > 0) {
+		strncpy(name,dir_next->file_id,dir_next->length_file_id);
+		name[dir_next->length_file_id] = '\0';
+		strncpy(old_name, dir_parent->file_id,
+			dir_parent->length_file_id);
+		old_name[dir_parent->length_file_id] = '\0';
       
-      if (strcmp(name,old_name) == 0) {
-	dir_parent->d_next = dir_next;
-	dir_next->d_prior = dir_parent;
+		if (strcmp(name, old_name) == 0) {
+			dir_parent->d_next = dir_next;
+			dir_next->d_prior = dir_parent;
 
-	/* Link the dir records */
-	dir_tmp = dir_next;
-	size = dir_tmp->data_length_l;
+			/* Link the dir records */
+			dir_tmp = dir_next;
+			size = dir_tmp->data_length_l;
 
-	/* Update the file size */
-	while (dir_tmp->d_prior != NULL) {
-	  dir_tmp = dir_tmp->d_prior;
-	  size += dir_tmp->data_length_l;
-	  dir_tmp->d_file_size = size;
+			/* Update the file size */
+			while (dir_tmp->d_prior != NULL) {
+				dir_tmp = dir_tmp->d_prior;
+				size += dir_tmp->data_length_l;
+				dir_tmp->d_file_size = size;
+			}
+
+			new_pos += dir_parent->length;
+			new_address += dir_next->length;
+			dir_parent = dir_next;
+		} else {			/* This is another inode. */
+			release_dir_record(dir_next);
+			new_pos = block_size;
+		}      
+	} else {				/* record not valid */
+		release_dir_record(dir_next);
+		new_pos = block_size;		/* Exit from the while */
 	}
-
-	new_pos += dir_parent->length;
-	new_address += dir_next->length;
-	dir_parent = dir_next;
-      } else {			/* This is another inode. */
-	release_dir_record(dir_next);
-	new_pos = block_size;
-      }
-    } else {			/* record not valid */
-      release_dir_record(dir_next);
-      new_pos = block_size;	/* Exit from the while */
-    }
-
   }
 
   put_block(bp);		/* Release the block read. */
-  return dir;
+  return(dir);
 }
+

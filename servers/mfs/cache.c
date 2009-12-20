@@ -303,14 +303,6 @@ int rw_flag;			/* READING or WRITING */
 		  /* Report read errors to interested parties. */
 		  if (rw_flag == READING) rdwt_err = r;
 	  }
-	  if(op == MFS_DEV_READ) {
-		int i;
-#if 0
-		printf("mfsread after contents: 0x%lx, ", bp->b_data);
-		for(i = 0; i < 10; i++) printf("%02lx ", (unsigned char) bp->b_data[i]);
-		printf("\n");
-#endif
-	  }
   }
 
   bp->b_dirt = CLEAN;

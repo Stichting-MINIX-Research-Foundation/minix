@@ -108,10 +108,11 @@
 #define I_BLOCK_SPECIAL 0060000	/* block special file */
 #define I_DIRECTORY     0040000	/* file is a directory */
 #define I_CHAR_SPECIAL  0020000	/* character special file */
-#define I_NAMED_PIPE	0010000 /* named pipe (FIFO) */
+#define I_NAMED_PIPE    0010000	/* named pipe (FIFO) */
 #define I_SET_UID_BIT   0004000	/* set effective uid_t on exec */
 #define I_SET_GID_BIT   0002000	/* set effective gid_t on exec */
-#define ALL_MODES       0006777	/* all bits for user, group and others */
+#define I_SET_STCKY_BIT 0001000	/* sticky bit */ 
+#define ALL_MODES       0007777	/* all bits for user, group and others */
 #define RWX_MODES       0000777	/* mode bits for RWX only */
 #define R_BIT           0000004	/* Rwx protection bit */
 #define W_BIT           0000002	/* rWx protection bit */

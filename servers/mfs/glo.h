@@ -4,6 +4,8 @@
 #define EXTERN
 #endif
 
+#include <minix/vfsif.h>
+
 EXTERN off_t rdahedpos;		/* position to read ahead */
 EXTERN struct inode *rdahed_inode;	/* pointer to inode to read ahead */
 
@@ -21,6 +23,7 @@ extern _PROTOTYPE (int (*fs_call_vec[]), (void) ); /* fs call table */
 EXTERN message fs_m_in;
 EXTERN message fs_m_out;
 EXTERN int FS_STATE;
+EXTERN vfs_ucred_t credentials;
 
 EXTERN uid_t caller_uid;
 EXTERN gid_t caller_gid;

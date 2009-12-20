@@ -59,6 +59,7 @@ libc_FILES=" \
 	getw.c \
 	hypot.c \
 	index.c \
+	initgroups.c \
 	itoa.c \
 	loadname.c \
 	lock.c \

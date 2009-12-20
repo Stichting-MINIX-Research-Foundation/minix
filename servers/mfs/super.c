@@ -142,6 +142,7 @@ bit_t bit_returned;		/* number of bit to insert into the map */
   put_block(bp, MAP_BLOCK);
 }
 
+
 /*===========================================================================*
  *				get_super				     *
  *===========================================================================*/
@@ -154,8 +155,9 @@ dev_t dev;			/* device number whose super_block is sought */
   if(superblock.s_dev != dev)
   	panic(__FILE__,"wrong superblock", (int) dev);
 
-  return &superblock;
+  return(&superblock);
 }
+
 
 /*===========================================================================*
  *				get_block_size				     *
@@ -165,43 +167,11 @@ PUBLIC int get_block_size(dev_t dev)
   if (dev == NO_DEV)
   	panic(__FILE__,"request for block size of NO_DEV", NO_NUM);
 
-  return fs_block_size;
+  return(fs_block_size);
 
-#if 0
-  if(superblock.s_dev == dev) {
-	if(superblock.s_block_size != fs_block_size) {
-		printf("mounted blocksize: %d  my blocksize: %d\n", 
-			superblock.s_block_size, fs_block_size);
-	}
-	ASSERT(superblock.s_block_size == fs_block_size);
-	return(superblock.s_block_size);
-  }
-
-  /* not the mounted filesystem? use this block size then. */
-  return _MIN_BLOCK_SIZE;
-#endif
 }
 
-/*===========================================================================*
- *				mounted					     *
- *===========================================================================*/
-/* Report on whether the given inode is on a mounted (or ROOT) file system. */
-/*
-PUBLIC int mounted(rip)
-register struct inode *rip;
-{
 
-  register dev_t dev;
-
-  dev = (dev_t) rip->i_zone[0];
-  if (dev == root_dev) return(TRUE);
-
-  if(superblock.s_dev == dev)
-	return TRUE;
-
-  return(FALSE);
-}
-*/
 /*===========================================================================*
  *				read_super				     *
  *===========================================================================*/
@@ -222,9 +192,9 @@ register struct super_block *sp; /* pointer to a superblock */
   
   r = block_dev_io(MFS_DEV_READ, dev, SELF_E,
   	sbbuf, cvu64(SUPER_BLOCK_BYTES), _MIN_BLOCK_SIZE, 0);
-  if (r != _MIN_BLOCK_SIZE) {
-  	return EINVAL;
-  }
+  if (r != _MIN_BLOCK_SIZE) 
+  	return(EINVAL);
+  
   memcpy(sp, sbbuf, sizeof(*sp));
   sp->s_dev = NO_DEV;		/* restore later */
   magic = sp->s_magic;		/* determines file system type */
@@ -282,26 +252,23 @@ register struct super_block *sp; /* pointer to a superblock */
 	sp->s_nindirs = V2_INDIRECTS(sp->s_block_size);
   }
 
-  if (sp->s_block_size < _MIN_BLOCK_SIZE) {
-  	return EINVAL;
-  }
-  if ((sp->s_block_size % 512) != 0) {
-  	return EINVAL;
-  }
-  if (SUPER_SIZE > sp->s_block_size) {
-  	return EINVAL;
-  }
+  if (sp->s_block_size < _MIN_BLOCK_SIZE) 
+  	return(EINVAL);
+  
+  if ((sp->s_block_size % 512) != 0) 
+  	return(EINVAL);
+  
+  if (SUPER_SIZE > sp->s_block_size) 
+  	return(EINVAL);
+  
   if ((sp->s_block_size % V2_INODE_SIZE) != 0 ||
      (sp->s_block_size % V1_INODE_SIZE) != 0) {
-  	return EINVAL;
+  	return(EINVAL);
   }
 
   /* Limit s_max_size to LONG_MAX */
-  if ((unsigned long)sp->s_max_size > LONG_MAX)
-  {
-	printf("read_super: reducing s_max_size to LONG_MAX\n");
-	sp->s_max_size= LONG_MAX;
-  }
+  if ((unsigned long)sp->s_max_size > LONG_MAX) 
+	sp->s_max_size = LONG_MAX;
 
   sp->s_isearch = 0;		/* inode searches initially start at 0 */
   sp->s_zsearch = 0;		/* zone searches initially start at 0 */
@@ -322,3 +289,4 @@ register struct super_block *sp; /* pointer to a superblock */
   sp->s_dev = dev;		/* restore device number */
   return(OK);
 }
+

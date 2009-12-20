@@ -16,6 +16,7 @@ PROGRAMS=	../kernel/kernel \
 	../servers/ds/ds \
 	../servers/mfs/mfs \
 	../servers/vm/vm \
+	../servers/pfs/pfs \
 	../servers/init/init
 
 usage:	

@@ -54,6 +54,8 @@
 #define SETSID		  62
 #define GETPGRP		  63
 #define ITIMER		  64
+#define GETGROUPS	  65
+#define SETGROUPS	  66
 
 /* Posix signal handling. */
 #define SIGACTION	  71

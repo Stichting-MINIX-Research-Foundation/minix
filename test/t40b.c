@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
   if(end-start != TIME - TIME) {
     snprintf(errorbuf,sizeof(errorbuf),"time spent blocking is not %d, but %ld",
 	     TIME - TIME, (long int) (end-start));
-    e(8, "time spent blocking is not %d, but %ld");
+    e(8, errorbuf);
   }
 
   /* Wait for read to become ready on O_WRONLY. This should fail immediately. */

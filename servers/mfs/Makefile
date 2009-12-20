@@ -1,4 +1,4 @@
-# Makefile for File System (FS)
+# Makefile for Minix File System (MFS)
 SERVER = mfs
 DEST=/sbin/$(SERVER)
 NR_BUFS=1024
@@ -14,10 +14,10 @@ h = $i/minix
 CC =	exec cc
 CFLAGS = -I$i $(EXTRA_OPTS) $(CPROFILE) -DNR_BUFS=$(NR_BUFS)
 LDFLAGS = -i
-LIBS =  -lsys -ltimers
+LIBS =  -lsys 
 
 OBJ =	cache.o device.o link.o \
-	mount.o misc.o open.o pipe.o protect.o read.o \
+	mount.o misc.o open.o protect.o read.o \
 	stadir.o table.o time.o utility.o \
 	write.o inode.o main.o path.o super.o
 

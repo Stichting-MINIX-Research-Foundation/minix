@@ -11,11 +11,9 @@
 #include <sys/select.h>
 #include <minix/u64.h>
 #include <assert.h>
-
 #include "fs.h"
 #include "file.h"
 #include "fproc.h"
-
 #include "vnode.h"
 
 /*===========================================================================*
@@ -64,6 +62,7 @@ PUBLIC int get_fd(int start, mode_t bits, int *k, struct filp **fpt)
   return(ENFILE);
 }
 
+
 /*===========================================================================*
  *				get_filp				     *
  *===========================================================================*/
@@ -74,6 +73,7 @@ int fild;			/* file descriptor */
 
   return get_filp2(fp, fild);
 }
+
 
 /*===========================================================================*
  *				get_filp2				     *
@@ -86,15 +86,13 @@ int fild;			/* file descriptor */
 
   err_code = EBADF;
   if (fild < 0 || fild >= OPEN_MAX ) return(NIL_FILP);
-  if (rfp->fp_filp[fild] == NIL_FILP && FD_ISSET(fild, &rfp->fp_filp_inuse))
-  {
-	printf("get_filp2: setting err_code to EIO for proc %d fd %d\n",
-		rfp->fp_endpoint, fild);
+  if (rfp->fp_filp[fild] == NIL_FILP && FD_ISSET(fild, &rfp->fp_filp_inuse)) 
 	err_code = EIO;	/* The filedes is not there, but is not closed either.
 			 */
-  }
+  
   return(rfp->fp_filp[fild]);	/* may also be NIL_FILP */
 }
+
 
 /*===========================================================================*
  *				find_filp				     *
@@ -121,20 +119,23 @@ PUBLIC struct filp *find_filp(register struct vnode *vp, mode_t bits)
 }
 
 /*===========================================================================*
- *				inval_filp				     *
+ *				invalidate				     *
  *===========================================================================*/
-PUBLIC int inval_filp(struct filp *fp)
+PUBLIC int invalidate(struct filp *fp)
 {
-    int f, fd, n = 0;
-    for(f = 0; f < NR_PROCS; f++) {
-        if(fproc[f].fp_pid == PID_FREE) continue;
-        for(fd = 0; fd < OPEN_MAX; fd++) {
-            if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == fp) {
-                fproc[f].fp_filp[fd] = NIL_FILP;
-                n++;
-            }
-        }
-    }
+/* Invalidate filp. fp_filp_inuse is not cleared, so filp can't be reused
+   until it is closed first. */
 
-    return n;
+  int f, fd, n = 0;
+  for(f = 0; f < NR_PROCS; f++) {
+	if(fproc[f].fp_pid == PID_FREE) continue;
+	for(fd = 0; fd < OPEN_MAX; fd++) {
+		if(fproc[f].fp_filp[fd] && fproc[f].fp_filp[fd] == fp) {
+			fproc[f].fp_filp[fd] = NIL_FILP;
+			n++;
+		}
+	}
+  }
+
+  return(n);	/* Report back how often this filp has been invalidated. */
 }

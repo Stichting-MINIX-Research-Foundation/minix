@@ -1,4 +1,3 @@
-
 #include "fs.h"
 #include <fcntl.h>
 #include <assert.h>
@@ -27,31 +26,6 @@ FORWARD _PROTOTYPE( int gen_opcl, (endpoint_t driver_e, int op,
 				Dev_t dev, int proc_e, int flags)	);
 FORWARD _PROTOTYPE( int gen_io, (int task_nr, message *mess_ptr)	);
 
-/*===========================================================================*
- *				fs_clone_opcl   			     *
- *===========================================================================*/
-PUBLIC int fs_clone_opcl(void)
-{
- /* A new minor device number has been returned.
-  * Create a temporary device file to hold it. 
-  */
-  struct inode *ip;
-  dev_t dev; 
-
-  dev = fs_m_in.REQ_DEV;   /* Device number */
-
-  ip = alloc_inode(fs_dev, ALL_MODES | I_CHAR_SPECIAL);
-
-  if (ip == NIL_INODE) return err_code;
-
-  ip->i_zone[0] = dev;
-
-  fs_m_out.m_source = ip->i_dev;
-  fs_m_out.RES_INODE_NR = ip->i_num;
-  fs_m_out.RES_MODE = ip->i_mode;
-  return OK;
-}
-
 
 /*===========================================================================*
  *				fs_new_driver   			     *
@@ -60,8 +34,8 @@ PUBLIC int fs_new_driver(void)
 {
  /* New driver endpoint for this device */
   driver_endpoints[(fs_m_in.REQ_DEV >> MAJOR) & BYTE].driver_e =
-      fs_m_in.REQ_DRIVER_E;
-  return OK;
+	  fs_m_in.REQ_DRIVER_E;
+  return(OK);
 }
 
 
@@ -80,81 +54,77 @@ void **buf;
 int *vec_grants;
 vir_bytes bytes;
 {
-	int access = 0, size;
-	int j;
-	iovec_t *v;
-	static iovec_t *new_iovec;
+  int access = 0, size;
+  int j;
+  iovec_t *v;
+  static iovec_t *new_iovec;
 
-	STATICINIT(new_iovec, NR_IOREQS);
+  STATICINIT(new_iovec, NR_IOREQS);
+  
+  /* Number of grants allocated in vector I/O. */
+  *vec_grants = 0;
 
-	/* Number of grants allocated in vector I/O. */
-	*vec_grants = 0;
+  /* Driver can handle it - change request to a safe one. */
+  
+  *gid = GRANT_INVALID;
+  
+  switch(*op) {
+	case MFS_DEV_READ:
+	case MFS_DEV_WRITE:
+	  /* Change to safe op. */
+	  *op = *op == MFS_DEV_READ ? DEV_READ_S : DEV_WRITE_S;
+	  
+	  if((*gid=cpf_grant_direct(driver, (vir_bytes) *buf, bytes,
+				    *op == DEV_READ_S?CPF_WRITE:CPF_READ))<0) {
+		panic(__FILE__,"cpf_grant_magic of buffer failed\n", NO_NUM);
+	  }
 
-	/* Driver can handle it - change request to a safe one. */
+	  break;
+	case MFS_DEV_GATHER:
+	case MFS_DEV_SCATTER:
+	  /* Change to safe op. */
+	  *op = *op == MFS_DEV_GATHER ? DEV_GATHER_S : DEV_SCATTER_S;
 
-	*gid = GRANT_INVALID;
+	  /* Grant access to my new i/o vector. */
+	  if((*gid = cpf_grant_direct(driver, (vir_bytes) new_iovec,
+				      bytes * sizeof(iovec_t),
+				      CPF_READ | CPF_WRITE)) < 0) {
+		panic(__FILE__, "cpf_grant_direct of vector failed", NO_NUM);
+	  }
+	  v = (iovec_t *) *buf;
+	  /* Grant access to i/o buffers. */
+	  for(j = 0; j < bytes; j++) {
+		if(j >= NR_IOREQS) 
+			panic(__FILE__, "vec too big", bytes);
+		new_iovec[j].iov_addr = gids[j] =
+		  cpf_grant_direct(driver, (vir_bytes) v[j].iov_addr,
+				   v[j].iov_size,
+				   *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
+		if(!GRANT_VALID(gids[j])) {
+			panic(__FILE__, "mfs: grant to iovec buf failed",
+			      NO_NUM);
+		}
+		new_iovec[j].iov_size = v[j].iov_size;
+		(*vec_grants)++;
+	  }
 
-	switch(*op) {
-		case MFS_DEV_READ:
-		case MFS_DEV_WRITE:
-			/* Change to safe op. */
-			*op = *op == MFS_DEV_READ ? DEV_READ_S : DEV_WRITE_S;
+	  /* Set user's vector to the new one. */
+	  *buf = new_iovec;
+	  break;
+  }
 
-			if((*gid=cpf_grant_direct(driver, (vir_bytes) *buf, 
-				bytes, *op == DEV_READ_S ? CPF_WRITE : 
-				CPF_READ)) < 0) {
-				panic(__FILE__,
-				 "cpf_grant_magic of buffer failed\n", NO_NUM);
-			}
+  /* If we have converted to a safe operation, I/O
+   * endpoint becomes FS if it wasn't already.
+   */
+  if(GRANT_VALID(*gid)) {
+	*io_ept = SELF_E;
+	return 1;
+  }
 
-			break;
-		case MFS_DEV_GATHER:
-		case MFS_DEV_SCATTER:
-			/* Change to safe op. */
-			*op = *op == MFS_DEV_GATHER ?
-				DEV_GATHER_S : DEV_SCATTER_S;
-
-			/* Grant access to my new i/o vector. */
-			if((*gid = cpf_grant_direct(driver,
-			  (vir_bytes) new_iovec, bytes * sizeof(iovec_t),
-			  CPF_READ | CPF_WRITE)) < 0) {
-				panic(__FILE__,
-				"cpf_grant_direct of vector failed", NO_NUM);
-			}
-			v = (iovec_t *) *buf;
-			/* Grant access to i/o buffers. */
-			for(j = 0; j < bytes; j++) {
-			   if(j >= NR_IOREQS) 
-				panic(__FILE__, "vec too big", bytes);
-			   new_iovec[j].iov_addr = gids[j] =
-			     cpf_grant_direct(driver, (vir_bytes)
-			     v[j].iov_addr, v[j].iov_size,
-			     *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
-			   if(!GRANT_VALID(gids[j])) {
-				panic(__FILE__, "mfs: grant to iovec buf failed",
-				 NO_NUM);
-			   }
-			   new_iovec[j].iov_size = v[j].iov_size;
-			   (*vec_grants)++;
-			}
-
-			/* Set user's vector to the new one. */
-			*buf = new_iovec;
-			break;
-	}
-
-	/* If we have converted to a safe operation, I/O
-	 * endpoint becomes FS if it wasn't already.
-	 */
-	if(GRANT_VALID(*gid)) {
-		*io_ept = SELF_E;
-		return 1;
-	}
-
-	/* Not converted to a safe operation (because there is no
-	 * copying involved in this operation).
-	 */
-	return 0;
+  /* Not converted to a safe operation (because there is no
+   * copying involved in this operation).
+   */
+  return 0;
 }
 
 /*===========================================================================*
@@ -166,14 +136,14 @@ cp_grant_id_t *gids;
 int gids_size;
 {
 /* Free resources (specifically, grants) allocated by safe_io_conversion(). */
-	int j;
+  int j;
 
-  	cpf_revoke(gid);
+  cpf_revoke(gid);
 
-	for(j = 0; j < gids_size; j++)
-		cpf_revoke(gids[j]);
+  for(j = 0; j < gids_size; j++)
+	cpf_revoke(gids[j]);
 
-	return;
+  return;
 }
 
 /*===========================================================================*
@@ -208,7 +178,7 @@ int flags;			/* special flags, like O_NONBLOCK */
   /* See if driver is roughly valid. */
   if (driver_e == NONE) {
       printf("MFS(%d) block_dev_io: no driver for dev %x\n", SELF_E, dev);
-      return EDSTDIED;
+      return(EDSTDIED);
   }
   
   /* The io vector copying relies on this I/O being for FS itself. */
@@ -381,9 +351,9 @@ message *mess_ptr;		/* pointer to message for task */
 			mess_ptr->m_type,
 			proc_e,
 			mess_ptr->REP_ENDPT);
-		return EIO;
+		return(EIO);
 	}
 
-  return OK;
+  return(OK);
 }
 

@@ -25,7 +25,6 @@ _PROTOTYPE(void test2d, (void));
 _PROTOTYPE(void test2e, (void));
 _PROTOTYPE(void test2f, (void));
 _PROTOTYPE(void test2g, (void));
-_PROTOTYPE(void test2h, (void));
 _PROTOTYPE(void sigpip, (int s));
 _PROTOTYPE(void quit, (void));
 _PROTOTYPE(void e, (int n));
@@ -55,7 +54,6 @@ char *argv[];
 	if (m & 0020) test2e();
 	if (m & 0040) test2f();
 	if (m & 0100) test2g();
-	if (m & 0200) test2h();
   }
   subtest = 100;
   if (cumsig != ITERATIONS) e(101);
@@ -355,19 +353,6 @@ void test2g()
   if (tmsbuf.tms_stime < 0) e(9);
   if (tmsbuf.tms_cutime < 0) e(10);
   if (tmsbuf.tms_cstime < 0) e(11);
-}
-
-void test2h()
-{
-/* Test getgroups(). */
-
-  gid_t g[10];
-
-  subtest = 8;
-  errno = -8000;
-  if (getgroups(10, g) != 0) e(1);
-  if (getgroups(1, g) != 0) e(2);
-  if (getgroups(0, g) != 0) e(3);
 }
 
 void sigpip(s)

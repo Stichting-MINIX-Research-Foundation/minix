@@ -18,13 +18,12 @@
 #include "param.h"
 #include <dirent.h>
 #include <assert.h>
-
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
 
 /*===========================================================================*
- *				do_vm_mmap		     		*
+ *				do_vm_mmap				     *
  *===========================================================================*/
 PUBLIC int do_vm_mmap()
 {

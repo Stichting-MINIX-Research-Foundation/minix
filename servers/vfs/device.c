@@ -27,7 +27,6 @@
 #include <minix/u64.h>
 #include "file.h"
 #include "fproc.h"
-
 #include <minix/vfsif.h>
 #include "vnode.h"
 #include "vmnt.h"
@@ -35,11 +34,12 @@
 
 #define ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
-FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t,
-  cp_grant_id_t *, int *, cp_grant_id_t *, int, endpoint_t *,
-  void **, int *, vir_bytes, u32_t *));
+FORWARD _PROTOTYPE( int safe_io_conversion, (endpoint_t, cp_grant_id_t *,
+					     int *, cp_grant_id_t *, int,
+					     endpoint_t *, void **, int *,
+					     vir_bytes, u32_t *)	);
 FORWARD _PROTOTYPE( void safe_io_cleanup, (cp_grant_id_t, cp_grant_id_t *,
-	int));
+					   int)				);
 FORWARD _PROTOTYPE( void restart_reopen, (int maj)			);
 
 extern int dmap_size;
@@ -64,8 +64,7 @@ int flags;			/* mode bits and flags */
   major = (dev >> MAJOR) & BYTE;
   if (major >= NR_DEVICES) major = 0;
   dp = &dmap[major];
-  if (dp->dmap_driver == NONE) 
-	return ENXIO;
+  if (dp->dmap_driver == NONE) return(ENXIO);
   r = (*dp->dmap_opcl)(DEV_OPEN, dev, proc, flags);
   return(r);
 }
@@ -89,11 +88,10 @@ int flags;			/* mode bits and flags */
   major = (dev >> MAJOR) & BYTE;
   if (major >= NR_DEVICES) major = 0;
   dp = &dmap[major];
-  if (dp->dmap_driver == NONE) 
-	return ENXIO;
+  if (dp->dmap_driver == NONE) return(ENXIO);
   r = (*dp->dmap_opcl)(DEV_REOPEN, dev, filp_no, flags);
   if (r == OK) panic(__FILE__,"OK on reopen from", dp->dmap_driver);
-  if (r == SUSPEND) r= OK;
+  if (r == SUSPEND) r = OK;
   return(r);
 }
 
@@ -108,12 +106,11 @@ int filp_no;
   int r;
 
   /* See if driver is roughly valid. */
-  if (dmap[(dev >> MAJOR)].dmap_driver == NONE) {
-	return ENXIO;
-  }
-  r= (*dmap[(dev >> MAJOR) & BYTE].dmap_opcl)(DEV_CLOSE, dev, filp_no, 0);
-  return r;
+  if (dmap[(dev >> MAJOR)].dmap_driver == NONE) return(ENXIO);
+  r = (*dmap[(dev >> MAJOR) & BYTE].dmap_opcl)(DEV_CLOSE, dev, filp_no, 0);
+  return(r);
 }
+
 
 /*===========================================================================*
  *				suspended_ep				     *
@@ -123,40 +120,34 @@ endpoint_t suspended_ep(endpoint_t driver, cp_grant_id_t g)
 /* A process is suspended on a driver for which FS issued
  * a grant. Find out which process it was.
  */
-    struct fproc *rfp;
-    for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-        if(rfp->fp_pid == PID_FREE)
-            continue;
+  struct fproc *rfp;
+  for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
+	if(rfp->fp_pid == PID_FREE) continue;
         if(rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER &&
-                rfp->fp_task == driver && rfp->fp_grant == g) {
-            return rfp->fp_endpoint;
-        }
+	   rfp->fp_task == driver && rfp->fp_grant == g)
+		return rfp->fp_endpoint;
     }
 
-    return NONE;
+    return(NONE);
 }
+
 
 /*===========================================================================*
  *				dev_status				     *
  *===========================================================================*/
 PUBLIC void dev_status(message *m)
 {
-	message st;
-	int d, get_more = 1;
-	endpoint_t endpt;
+  message st;
+  int d, get_more = 1;
+  endpoint_t endpt;
 
-	for(d = 0; d < NR_DEVICES; d++)
-		if (dmap[d].dmap_driver != NONE &&
-		    dmap[d].dmap_driver == m->m_source)
-			break;
+  for(d = 0; d < NR_DEVICES; d++)
+	if (dmap[d].dmap_driver != NONE && dmap[d].dmap_driver == m->m_source)
+		break;
 
-	if (d >= NR_DEVICES)
-		return;
-
-	if (dmap[d].dmap_async_driver)
-	{
-		printf(
-		"dev_status: not doing dev_status for async driver %d\n",
+	if (d >= NR_DEVICES) return;
+	if (dmap[d].dmap_async_driver) {
+		printf("dev_status: not doing dev_status for async driver %d\n",
 			m->m_source);
 		return;
 	}
@@ -164,7 +155,7 @@ PUBLIC void dev_status(message *m)
 	do {
 		int r;
 		st.m_type = DEV_STATUS;
-		if ((r=sendrec(m->m_source, &st)) != OK) {
+		if ((r = sendrec(m->m_source, &st)) != OK) {
 			printf("DEV_STATUS failed to %d: %d\n", m->m_source, r);
 			if (r == EDEADSRCDST) return;
 			if (r == EDSTDIED) return;
@@ -179,10 +170,9 @@ PUBLIC void dev_status(message *m)
 					endpt = suspended_ep(m->m_source,
 						st.REP_IO_GRANT);
 					if(endpt == NONE) {
-						printf("FS: proc with "
-					"grant %d from %d not found (revive)\n",
-					st.REP_IO_GRANT,
-					st.m_source);
+						printf("FS: proc with grant %d"
+						" from %d not found (revive)\n",
+						st.REP_IO_GRANT, st.m_source);
 						continue;
 					}
 				}
@@ -205,6 +195,7 @@ PUBLIC void dev_status(message *m)
 	return;
 }
 
+
 /*===========================================================================*
  *				safe_io_conversion			     *
  *===========================================================================*/
@@ -221,106 +212,97 @@ int *vec_grants;
 vir_bytes bytes;
 u32_t *pos_lo;
 {
-	int access = 0, size;
-	int j;
-	iovec_t *v;
-	static iovec_t new_iovec[NR_IOREQS];
+  int access = 0, size, j;
+  iovec_t *v;
+  static iovec_t new_iovec[NR_IOREQS];
 
-	/* Number of grants allocated in vector I/O. */
-	*vec_grants = 0;
+  /* Number of grants allocated in vector I/O. */
+  *vec_grants = 0;
 
-	/* Driver can handle it - change request to a safe one. */
+  /* Driver can handle it - change request to a safe one. */
+  *gid = GRANT_INVALID;
 
-	*gid = GRANT_INVALID;
+  switch(*op) {
+	case VFS_DEV_READ:
+	case VFS_DEV_WRITE:
+	   /* Change to safe op. */
+	   *op = *op == VFS_DEV_READ ? DEV_READ_S : DEV_WRITE_S;
 
-	switch(*op) {
-		case VFS_DEV_READ:
-		case VFS_DEV_WRITE:
-			/* Change to safe op. */
-			*op = *op == VFS_DEV_READ ? DEV_READ_S : DEV_WRITE_S;
+	   *gid = cpf_grant_magic(driver, *io_ept, (vir_bytes) *buf, bytes,
+	   			  *op == DEV_READ_S ? CPF_WRITE : CPF_READ);
+	   if (*gid < 0)
+		panic(__FILE__, "cpf_grant_magic of buffer failed\n", NO_NUM);
+	   break;
+	case VFS_DEV_GATHER:
+	case VFS_DEV_SCATTER:
+	   /* Change to safe op. */
+	   *op = *op == VFS_DEV_GATHER ? DEV_GATHER_S : DEV_SCATTER_S;
 
-			if((*gid=cpf_grant_magic(driver, *io_ept,
-			  (vir_bytes) *buf, bytes,
-			  *op == DEV_READ_S ? CPF_WRITE : CPF_READ)) < 0) {
-				panic(__FILE__,
-				 "cpf_grant_magic of buffer failed\n", NO_NUM);
-			}
+	   /* Grant access to my new i/o vector. */
+	   *gid = cpf_grant_direct(driver, (vir_bytes) new_iovec,
+				  bytes * sizeof(iovec_t), CPF_READ|CPF_WRITE);
+	   if (*gid < 0) 
+		panic(__FILE__, "cpf_grant_direct of vector failed", NO_NUM);
+			
+	   v = (iovec_t *) *buf;
+	   /* Grant access to i/o buffers. */
+	   for(j = 0; j < bytes; j++) {
+		if(j >= NR_IOREQS) panic(__FILE__, "vec too big", bytes);
 
-			break;
-		case VFS_DEV_GATHER:
-		case VFS_DEV_SCATTER:
-			/* Change to safe op. */
-			*op = *op == VFS_DEV_GATHER ?
-				DEV_GATHER_S : DEV_SCATTER_S;
+		new_iovec[j].iov_addr = 
+		gids[j] = 
+		cpf_grant_direct(driver, (vir_bytes) v[j].iov_addr, v[j].iov_size,
+				 *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
 
-			/* Grant access to my new i/o vector. */
-			if((*gid = cpf_grant_direct(driver,
-			  (vir_bytes) new_iovec, bytes * sizeof(iovec_t),
-			  CPF_READ | CPF_WRITE)) < 0) {
-				panic(__FILE__,
-				"cpf_grant_direct of vector failed", NO_NUM);
-			}
-			v = (iovec_t *) *buf;
-			/* Grant access to i/o buffers. */
-			for(j = 0; j < bytes; j++) {
-			   if(j >= NR_IOREQS) 
-				panic(__FILE__, "vec too big", bytes);
-			   new_iovec[j].iov_addr = gids[j] =
-			     cpf_grant_direct(driver, (vir_bytes)
-			     v[j].iov_addr, v[j].iov_size,
-			     *op == DEV_GATHER_S ? CPF_WRITE : CPF_READ);
-			   if(!GRANT_VALID(gids[j])) {
-				panic(__FILE__, "grant to iovec buf failed",
-				 NO_NUM);
-			   }
-			   new_iovec[j].iov_size = v[j].iov_size;
-			   (*vec_grants)++;
-			}
+		if(!GRANT_VALID(gids[j])) 
+			panic(__FILE__, "grant to iovec buf failed", NO_NUM);
+			   
+		new_iovec[j].iov_size = v[j].iov_size;
+		(*vec_grants)++;
+	   }
 
-			/* Set user's vector to the new one. */
-			*buf = new_iovec;
-			break;
-		case VFS_DEV_IOCTL:
-			*pos_lo = *io_ept; /* Old endpoint in POSITION field. */
-			*op = DEV_IOCTL_S;
-			if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
-			if(_MINIX_IOCTL_IOW(m_in.REQUEST)) access |= CPF_READ;
-			if(_MINIX_IOCTL_BIG(m_in.REQUEST))
-				size = _MINIX_IOCTL_SIZE_BIG(m_in.REQUEST);
-			else
-				size = _MINIX_IOCTL_SIZE(m_in.REQUEST);
+	   /* Set user's vector to the new one. */
+	   *buf = new_iovec;
+	   break;
+	case VFS_DEV_IOCTL:
+	   *pos_lo = *io_ept; /* Old endpoint in POSITION field. */
+	   *op = DEV_IOCTL_S;
+	   if(_MINIX_IOCTL_IOR(m_in.REQUEST)) access |= CPF_WRITE;
+	   if(_MINIX_IOCTL_IOW(m_in.REQUEST)) access |= CPF_READ;
+	   if(_MINIX_IOCTL_BIG(m_in.REQUEST))
+		size = _MINIX_IOCTL_SIZE_BIG(m_in.REQUEST);
+	   else
+		size = _MINIX_IOCTL_SIZE(m_in.REQUEST);
 
 
-			/* Do this even if no I/O happens with the ioctl, in
-			 * order to disambiguate requests with DEV_IOCTL_S.
-			 */
-			if((*gid=cpf_grant_magic(driver, *io_ept,
-				(vir_bytes) *buf, size, access)) < 0) {
-				panic(__FILE__,
-				"cpf_grant_magic failed (ioctl)\n",
-				NO_NUM);
-			}
-			break;
-		case VFS_DEV_SELECT:
-			*op = DEV_SELECT;
-			break;
-		default:
-			panic(__FILE__,"safe_io_conversion: unknown operation",
-				*op);
-	}
+	   /* Do this even if no I/O happens with the ioctl, in
+ 	    * order to disambiguate requests with DEV_IOCTL_S.
+	    */
+	   *gid = cpf_grant_magic(driver, *io_ept, (vir_bytes) *buf, size,
+	   			  access);
+	   if (*gid < 0) 
+		panic(__FILE__, "cpf_grant_magic failed (ioctl)\n", NO_NUM);
+			
+	   break;
+	case VFS_DEV_SELECT:
+	   *op = DEV_SELECT;
+	   break;
+	default:
+	   panic(__FILE__,"safe_io_conversion: unknown operation", *op);
+  }
 
-	/* If we have converted to a safe operation, I/O
-	 * endpoint becomes FS if it wasn't already.
-	 */
-	if(GRANT_VALID(*gid)) {
-		*io_ept = FS_PROC_NR;
-		return 1;
-	}
+  /* If we have converted to a safe operation, I/O
+   * endpoint becomes FS if it wasn't already.
+   */
+  if(GRANT_VALID(*gid)) {
+	*io_ept = FS_PROC_NR;
+	return 1;
+   }
 
-	/* Not converted to a safe operation (because there is no
-	 * copying involved in this operation).
-	 */
-	return 0;
+   /* Not converted to a safe operation (because there is no
+    * copying involved in this operation).
+    */
+  return 0;
 }
 
 /*===========================================================================*
@@ -332,14 +314,11 @@ cp_grant_id_t *gids;
 int gids_size;
 {
 /* Free resources (specifically, grants) allocated by safe_io_conversion(). */
-	int j;
+  int j;
 
-  	cpf_revoke(gid);
-
-	for(j = 0; j < gids_size; j++)
-		cpf_revoke(gids[j]);
-
-	return;
+  cpf_revoke(gid);
+  for(j = 0; j < gids_size; j++)
+	cpf_revoke(gids[j]);
 }
 
 
@@ -376,11 +355,10 @@ int suspend_reopen;		/* Just suspend the process */
   /* See if driver is roughly valid. */
   if (dp->dmap_driver == NONE) {
 	printf("FS: dev_io: no driver for dev %x\n", dev);
-	return ENXIO;
+	return(ENXIO);
   }
 
-  if (suspend_reopen)
-  {
+  if (suspend_reopen) {
 	/* Suspend user. */
 	fp->fp_grant = GRANT_INVALID;
 	fp->fp_ioproc = NONE;
@@ -390,9 +368,8 @@ int suspend_reopen;		/* Just suspend the process */
   }
 
   if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
-	printf("FS: dev_io: old driver for dev %x (%d)\n",
-		dev, dp->dmap_driver);
-	return ENXIO;
+	printf("FS: dev_io: old driver for dev %x (%d)\n",dev,dp->dmap_driver);
+	return(ENXIO);
   }
 
   /* By default, these are right. */
@@ -401,9 +378,9 @@ int suspend_reopen;		/* Just suspend the process */
 
   /* Convert DEV_* to DEV_*_S variants. */
   buf_used = buf;
-  safe = safe_io_conversion(dp->dmap_driver, &gid,
-    &op, gids, NR_IOREQS, (endpoint_t*) &dev_mess.IO_ENDPT, &buf_used,
-    &vec_grants, bytes, &pos_lo);
+  safe = safe_io_conversion(dp->dmap_driver, &gid, &op, gids, NR_IOREQS,
+  			    (endpoint_t*) &dev_mess.IO_ENDPT, &buf_used,
+			    &vec_grants, bytes, &pos_lo);
 
   if(buf != buf_used)
 	panic(__FILE__,"dev_io: safe_io_conversion changed buffer", NO_NUM);
@@ -430,17 +407,15 @@ int suspend_reopen;		/* Just suspend the process */
   	/* Driver has vanished. */
 	printf("Driver gone?\n");
 	if(safe) safe_io_cleanup(gid, gids, vec_grants);
-	return EIO;
+	return(EIO);
   }
 
   /* Task has completed.  See if call completed. */
   if (dev_mess.REP_STATUS == SUSPEND) {
-	if(vec_grants > 0) {
-		panic(__FILE__,"SUSPEND on vectored i/o", NO_NUM);
-	}
+	if(vec_grants > 0) panic(__FILE__,"SUSPEND on vectored i/o", NO_NUM);
+	
 	/* fp is uninitialized at init time. */
-	if(!fp)
-		panic(__FILE__,"SUSPEND on NULL fp", NO_NUM);
+	if(!fp) panic(__FILE__,"SUSPEND on NULL fp", NO_NUM);
 
 	if ((flags & O_NONBLOCK) && !dp->dmap_async_driver) {
 		/* Not supposed to block. */
@@ -452,8 +427,8 @@ int suspend_reopen;		/* Just suspend the process */
 		 * logic. Mode is expected in the COUNT field.
 		 */
 		dev_mess.COUNT = 0;
-		if(call_nr == READ) 		dev_mess.COUNT = R_BIT;
-		else if(call_nr == WRITE)	dev_mess.COUNT = W_BIT;
+		if (call_nr == READ) 		dev_mess.COUNT = R_BIT;
+		else if (call_nr == WRITE)	dev_mess.COUNT = W_BIT;
 		dev_mess.DEVICE = (dev >> MINOR) & BYTE;
 		(*dp->dmap_io)(dp->dmap_driver, &dev_mess);
 		if (dev_mess.REP_STATUS == EINTR) dev_mess.REP_STATUS = EAGAIN;
@@ -518,12 +493,12 @@ int flags;			/* mode bits and flags */
 
   if (dp->dmap_driver == NONE) {
 	printf("FS: gen_opcl: no driver for dev %x\n", dev);
-	return ENXIO;
+	return(ENXIO);
   }
 
   /* Call the task. */
   r= (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-  if (r != OK) return r;
+  if (r != OK) return(r);
 
   return(dev_mess.REP_STATUS);
 }
@@ -565,6 +540,7 @@ int flags;			/* mode bits and flags */
   return(r);
 }
 
+
 /*===========================================================================*
  *				ctty_opcl				     *
  *===========================================================================*/
@@ -580,6 +556,7 @@ int flags;			/* mode bits and flags */
  
   return(fp->fp_tty == 0 ? ENXIO : OK);
 }
+
 
 /*===========================================================================*
  *				pm_setsid				     *
@@ -600,6 +577,7 @@ int proc_e;
   rfp->fp_tty = 0;
 }
 
+
 /*===========================================================================*
  *				do_ioctl				     *
  *===========================================================================*/
@@ -612,16 +590,17 @@ PUBLIC int do_ioctl()
   register struct vnode *vp;
   dev_t dev;
 
-  if ( (f = get_filp(m_in.ls_fd)) == NIL_FILP) return(err_code);
+  if ((f = get_filp(m_in.ls_fd)) == NIL_FILP) return(err_code);
   vp = f->filp_vno;		/* get vnode pointer */
-  if ( (vp->v_mode & I_TYPE) != I_CHAR_SPECIAL
-	&& (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) return(ENOTTY);
+  if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL &&
+      (vp->v_mode & I_TYPE) != I_BLOCK_SPECIAL) return(ENOTTY);
   suspend_reopen= (f->filp_state != FS_NORMAL);
   dev = (dev_t) vp->v_sdev;
 
-  return (dev_io(VFS_DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0), 
-  	m_in.REQUEST, f->filp_flags, suspend_reopen));
+  return dev_io(VFS_DEV_IOCTL, dev, who_e, m_in.ADDRESS, cvu64(0),
+		m_in.REQUEST, f->filp_flags, suspend_reopen);
 }
+
 
 /*===========================================================================*
  *				gen_io					     *
@@ -636,39 +615,34 @@ message *mess_ptr;		/* pointer to message for task */
 
   int r, proc_e;
 
-  if(task_nr == SYSTEM) {
-	printf("VFS: sending %d to SYSTEM\n", mess_ptr->m_type);
-  }
+  if(task_nr == SYSTEM) printf("VFS: sending %d to SYSTEM\n", mess_ptr->m_type);
 
   proc_e = mess_ptr->IO_ENDPT;
-
   r = sendrec(task_nr, mess_ptr);
-	if (r != OK) {
-		if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
-			printf("fs: dead driver %d\n", task_nr);
-			dmap_unmap_by_endpt(task_nr);
-			return r;
-		}
-		if (r == ELOCKED) {
-			printf("fs: ELOCKED talking to %d\n", task_nr);
-			return r;
-		}
-		panic(__FILE__,"call_task: can't send/receive", r);
+  if (r != OK) {
+	if (r == EDEADSRCDST || r == EDSTDIED || r == ESRCDIED) {
+		printf("fs: dead driver %d\n", task_nr);
+		dmap_unmap_by_endpt(task_nr);
+		return(r);
 	}
-
-  	/* Did the process we did the sendrec() for get a result? */
-  	if (mess_ptr->REP_ENDPT != proc_e) {
-		printf(
-		"fs: strange device reply from %d, type = %d, proc = %d (not %d) (2) ignored\n",
-			mess_ptr->m_source,
-			mess_ptr->m_type,
-			proc_e,
-			mess_ptr->REP_ENDPT);
-		return EIO;
+	if (r == ELOCKED) {
+		printf("fs: ELOCKED talking to %d\n", task_nr);
+		return(r);
 	}
+	panic(__FILE__,"call_task: can't send/receive", r);
+  }
 
-  return OK;
+  /* Did the process we did the sendrec() for get a result? */
+  if (mess_ptr->REP_ENDPT != proc_e) {
+	printf("fs: strange device reply from %d, type = %d, proc = %d "
+	       "(not %d) (2) ignored\n", mess_ptr->m_source, mess_ptr->m_type,
+	       proc_e, mess_ptr->REP_ENDPT);
+	return(EIO);
+  }
+
+  return(OK);
 }
+
 
 /*===========================================================================*
  *				asyn_io					     *
@@ -685,14 +659,14 @@ message *mess_ptr;		/* pointer to message for task */
 
   proc_e = mess_ptr->IO_ENDPT;
 
-  r= asynsend(task_nr, mess_ptr);
-  if (r != OK)
-	panic(__FILE__, "asyn_io: asynsend failed", r);
+  r = asynsend(task_nr, mess_ptr);
+  if (r != OK) panic(__FILE__, "asyn_io: asynsend failed", r);
 
   /* Fake a SUSPEND */
-  mess_ptr->REP_STATUS= SUSPEND;
-  return OK;
+  mess_ptr->REP_STATUS = SUSPEND;
+  return(OK);
 }
+
 
 /*===========================================================================*
  *				ctty_io					     *
@@ -716,20 +690,19 @@ message *mess_ptr;		/* pointer to message for task */
 	dp = &dmap[(fp->fp_tty >> MAJOR) & BYTE];
 	mess_ptr->DEVICE = (fp->fp_tty >> MINOR) & BYTE;
 
-  if (dp->dmap_driver == NONE) {
-	printf("FS: ctty_io: no driver for dev\n");
-	return EIO;
-  }
+	if (dp->dmap_driver == NONE) {
+		printf("FS: ctty_io: no driver for dev\n");
+		return(EIO);
+	}
 
 	if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
-		printf("FS: ctty_io: old driver %d\n",
-			dp->dmap_driver);
-		return EIO;
+		printf("FS: ctty_io: old driver %d\n", dp->dmap_driver);
+		return(EIO);
 	}
 
 	(*dp->dmap_io)(dp->dmap_driver, mess_ptr);
   }
-  return OK;
+  return(OK);
 }
 
 
@@ -753,10 +726,9 @@ PUBLIC int no_dev_io(int proc, message *m)
 {
 /* Called when doing i/o on a nonexistent device. */
   printf("VFS: I/O on unmapped device number\n");
-  return EIO;
+  return(EIO);
 }
 
-  
 
 /*===========================================================================*
  *				clone_opcl				     *
@@ -787,20 +759,19 @@ int flags;			/* mode bits and flags */
 
 
   if (dp->dmap_driver == NONE) {
-	printf("vfs:clone_opcl: no driver for dev %x\n", dev);
-	return ENXIO;
+	printf("VFS clone_opcl: no driver for dev %x\n", dev);
+	return(ENXIO);
   }
 
   if(isokendpt(dp->dmap_driver, &dummyproc) != OK) {
-  	printf("vfs:clone_opcl: bad driver endpoint for dev %x (%d)\n",
-  		dev, dp->dmap_driver);
-  	return ENXIO;
+  	printf("VFS clone_opcl: bad driver endpoint for dev %x (%d)\n", dev,
+	       dp->dmap_driver);
+  	return(ENXIO);
   }
 
   /* Call the task. */
-  r= (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
-  if (r != OK)
-	return r;
+  r = (*dp->dmap_io)(dp->dmap_driver, &dev_mess);
+  if (r != OK) return(r);
 
   if (op == DEV_OPEN && dev_mess.REP_STATUS >= 0) {
 	if (dev_mess.REP_STATUS != minor) {
@@ -814,8 +785,7 @@ int flags;			/* mode bits and flags */
                  */
 		
                 /* Device number of the new device. */
-		dev = (dev & ~(BYTE << MINOR)) |
-			(dev_mess.REP_STATUS << MINOR);
+		dev = (dev & ~(BYTE << MINOR)) | (dev_mess.REP_STATUS << MINOR);
 
                 /* Issue request */
                 r = req_newnode(ROOT_FS_E, fp->fp_effuid, fp->fp_effgid,
@@ -829,19 +799,15 @@ int flags;			/* mode bits and flags */
                 vp = fp->fp_filp[m_in.fd]->filp_vno;
 		
                 put_vnode(vp);
-		if ((vp = get_free_vnode(__FILE__, __LINE__)) == NIL_VNODE) {
-			printf(
-			"vfs:clone_opcl: failed to get a free vnode..\n");
+		if ((vp = get_free_vnode()) == NIL_VNODE) 
 			vp = fp->fp_filp[m_in.fd]->filp_vno;
-		}
 		
                 vp->v_fs_e = res.fs_e;
                 if ((vmp = find_vmnt(vp->v_fs_e)) == NIL_VMNT) 
-                    printf("vfs:clone_opcl: no vmnt found\n");
+			printf("VFS clone_opcl: no vmnt found\n");
 
                 vp->v_vmnt = vmp;
                 vp->v_dev = vmp->m_dev;
-                
 		vp->v_fs_e = res.fs_e;
                 vp->v_inode_nr = res.inode_nr;
                 vp->v_mode = res.fmode; 
@@ -891,25 +857,22 @@ PUBLIC void dev_up(int maj)
 
 	/* Send new driver endpoint */
 	if (OK != req_newdriver(vmp->m_fs_e, vmp->m_dev, new_driver_e))
-		printf(
-	"VFSdev_up: error sending new driver endpoint. FS_e: %d req_nr: %d\n", 
-			vmp->m_fs_e, REQ_NEW_DRIVER);
+		printf("VFSdev_up: error sending new driver endpoint."
+		       " FS_e: %d req_nr: %d\n", vmp->m_fs_e, REQ_NEW_DRIVER);
   }
 
   /* Look for processes that are suspened in an OPEN call. Set SUSP_REOPEN
    * to indicate that this process was suspended before the call to dev_up.
    */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if(rfp->fp_pid == PID_FREE)
-		continue;
-	if(rfp->fp_blocked_on != FP_BLOCKED_ON_DOPEN)
-		continue;
+	if(rfp->fp_pid == PID_FREE) continue;
+	if(rfp->fp_blocked_on != FP_BLOCKED_ON_DOPEN) continue;
 
 	printf("dev_up: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
 		rfp->fp_fd >> 8);
-	fd_nr= (rfp->fp_fd >> 8);
-	fp= rfp->fp_filp[fd_nr];
-	vp= fp->filp_vno;
+	fd_nr = (rfp->fp_fd >> 8);
+	fp = rfp->fp_filp[fd_nr];
+	vp = fp->filp_vno;
 	if (!vp) panic(__FILE__, "restart_reopen: no vp", NO_NUM);
 	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
 	if (((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
@@ -926,14 +889,15 @@ PUBLIC void dev_up(int maj)
 	if(((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
 	if(!(vp->v_mode & (I_BLOCK_SPECIAL|I_CHAR_SPECIAL))) continue;
 
-	fp->filp_state= FS_NEEDS_REOPEN;
-	needs_reopen= TRUE;
+	fp->filp_state = FS_NEEDS_REOPEN;
+	needs_reopen = TRUE;
   }
 
   if (needs_reopen)
 	restart_reopen(maj);
 
 }
+
 
 /*===========================================================================*
  *				restart_reopen				     *
@@ -952,19 +916,12 @@ int maj;
 	if (fp->filp_state != FS_NEEDS_REOPEN) continue;
 	if (((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
 	if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) continue;
+	minor = ((vp->v_sdev >> MINOR) & BYTE);
 	
-	if (!(fp->filp_flags & O_REOPEN))
-	{
+	if (!(fp->filp_flags & O_REOPEN)) {
 		/* File descriptor is to be closed when driver restarts. */
-
-		/* The function inval_filp will set the fp_filp[]s of
-		 * processes holding that fp to NULL, but _not_ clear
-		 * fp_filp_inuse, so that fd can't be recycled until
-		 * it's close()d.
-		 */
-		n = inval_filp(fp);
-		if (n != fp->filp_count)
-		{
+		n = invalidate(fp);
+		if (n != fp->filp_count) {
 			printf("VFS: warning: invalidate/count "
 				"discrepancy (%d, %d)\n", n, fp->filp_count);
 		}
@@ -972,20 +929,12 @@ int maj;
 		continue;
 	}
 
-	minor = ((vp->v_sdev >> MINOR) & BYTE);
-
 	r = dev_reopen(vp->v_sdev, fp-filp, vp->v_mode & (R_BIT|W_BIT));
-	if (r == OK)
-		return;
+	if (r == OK) return;
 
-	/* This function will set the fp_filp[]s of processes
-	 * holding that fp to NULL, but _not_ clear
-	 * fp_filp_inuse, so that fd can't be recycled until
-	 * it's close()d.
-	 */
-	n = inval_filp(fp);
-	if (n != fp->filp_count)
-	{
+	/* Device could not be reopened. Invalidate all filps on that device.*/
+	n = invalidate(fp);
+	if (n != fp->filp_count) {
 		printf("VFS: warning: invalidate/count "
 			"discrepancy (%d, %d)\n", n, fp->filp_count);
 	}
@@ -998,12 +947,9 @@ int maj;
   driver_e= dmap[maj].dmap_driver;
 
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if(rfp->fp_pid == PID_FREE)
-	    continue;
+	if(rfp->fp_pid == PID_FREE) continue;
 	if(rfp->fp_blocked_on == FP_BLOCKED_ON_OTHER &&
-		rfp->fp_task == driver_e &&
-		(rfp->fp_flags & SUSP_REOPEN))
-	{
+	   rfp->fp_task == driver_e && (rfp->fp_flags & SUSP_REOPEN)) {
 		rfp->fp_flags &= ~SUSP_REOPEN;
 		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 		reply(rfp->fp_endpoint, ERESTART);
@@ -1012,19 +958,16 @@ int maj;
 
   /* Look for processes that are suspened in an OPEN call */
   for (rfp = &fproc[0]; rfp < &fproc[NR_PROCS]; rfp++) {
-	if (rfp->fp_pid == PID_FREE)
-		continue;
+	if (rfp->fp_pid == PID_FREE) continue;
 	if (rfp->fp_blocked_on == FP_BLOCKED_ON_DOPEN ||
-		!(rfp->fp_flags & SUSP_REOPEN))
-		continue;
+	    !(rfp->fp_flags & SUSP_REOPEN)) continue;
 
 	printf("restart_reopen: found process in FP_BLOCKED_ON_DOPEN, fd %d\n",
 		rfp->fp_fd >> 8);
-	fd_nr= (rfp->fp_fd >> 8);
-	fp= rfp->fp_filp[fd_nr];
+	fd_nr = (rfp->fp_fd >> 8);
+	fp = rfp->fp_filp[fd_nr];
 
-	if (!fp)
-	{
+	if (!fp) {
 		/* Open failed, and automatic reopen was not requested */
 		rfp->fp_blocked_on = FP_BLOCKED_ON_NONE;
 		FD_CLR(fd_nr, &rfp->fp_filp_inuse);
@@ -1032,7 +975,7 @@ int maj;
 		continue;
 	}
 
-	vp= fp->filp_vno;
+	vp = fp->filp_vno;
 	if (!vp) panic(__FILE__, "restart_reopen: no vp", NO_NUM);
 	if ((vp->v_mode &  I_TYPE) != I_CHAR_SPECIAL) continue;
 	if (((vp->v_sdev >> MAJOR) & BYTE) != maj) continue;
@@ -1042,81 +985,71 @@ int maj;
   }
 }
 
+
 /*===========================================================================*
  *				reopen_reply				     *
  *===========================================================================*/
 PUBLIC void reopen_reply()
 {
-	endpoint_t driver_e;
-	int filp_no, status, maj;
-	struct filp *fp;
-	struct vnode *vp;
-	struct dmap *dp;
+  endpoint_t driver_e;
+  int filp_no, status, maj;
+  struct filp *fp;
+  struct vnode *vp;
+  struct dmap *dp;
 
-	driver_e= m_in.m_source;
-	filp_no= m_in.REP_ENDPT;
-	status= m_in.REP_STATUS;
+  driver_e = m_in.m_source;
+  filp_no = m_in.REP_ENDPT;
+  status = m_in.REP_STATUS;
 
-	if (filp_no < 0 || filp_no >= NR_FILPS)
-	{
-		printf("reopen_reply: bad filp number %d from driver %d\n",
-			filp_no, driver_e);
-		return;
-	}
-	fp= &filp[filp_no];
-	if (fp->filp_count < 1)
-	{
-		printf(
-		"reopen_reply: filp number %d not inuse (from driver %d)\n",
-			filp_no, driver_e);
-		return;
-	}
+  if (filp_no < 0 || filp_no >= NR_FILPS) {
+	printf("reopen_reply: bad filp number %d from driver %d\n", filp_no,
+	       driver_e);
+	return;
+  }
 
-	vp= fp->filp_vno;
-	if (!vp)
-	{
-		printf(
-		"reopen_reply: no vnode for filp number %d (from driver %d)\n",
-			filp_no, driver_e);
-		return;
-	}
+  fp = &filp[filp_no];
+  if (fp->filp_count < 1) {
+	printf("reopen_reply: filp number %d not inuse (from driver %d)\n",
+	       filp_no, driver_e);
+	return;
+  }
 
-	if (fp->filp_state != FS_NEEDS_REOPEN)
-	{
-		printf(
-	"reopen_reply: bad state %d for filp number %d (from driver %d)\n",
-			fp->filp_state, filp_no, driver_e);
-		return;
-	}
+  vp = fp->filp_vno;
+  if (!vp) {
+	printf("reopen_reply: no vnode for filp number %d (from driver %d)\n",
+		filp_no, driver_e);
+	return;
+  }
 
-	if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL)
-	{
-		printf(
-	"reopen_reply: bad mode 0%o for filp number %d (from driver %d)\n",
-			vp->v_mode, filp_no, driver_e);
-		return;
-	}
+  if (fp->filp_state != FS_NEEDS_REOPEN) {
+	printf("reopen_reply: bad state %d for filp number %d" 
+	       " (from driver %d)\n", fp->filp_state, filp_no, driver_e);
+	return;
+  }
 
-	maj= ((vp->v_sdev >> MAJOR) & BYTE);
-	dp = &dmap[maj];
-	if (dp->dmap_driver != driver_e) 
-	{
-		printf("reopen_reply: bad major %d for filp number %d "
-			"(from driver %d, current driver is %d)\n",
-			maj, filp_no, driver_e, dp->dmap_driver);
-		return;
-	}
+  if ((vp->v_mode & I_TYPE) != I_CHAR_SPECIAL) {
+	printf("reopen_reply: bad mode 0%o for filp number %d"
+	       " (from driver %d)\n", vp->v_mode, filp_no, driver_e);
+	return;
+  }
 
-	if (status == OK)
-	{
-		fp->filp_state= FS_NORMAL;
-	}
-	else
-	{
-		printf("reopen_reply: should handle error status\n");
-		return;
-	}
-	restart_reopen(maj);
+  maj = ((vp->v_sdev >> MAJOR) & BYTE);
+  dp = &dmap[maj];
+  if (dp->dmap_driver != driver_e) {
+	printf("reopen_reply: bad major %d for filp number %d "
+		"(from driver %d, current driver is %d)\n", maj, filp_no,
+		driver_e, dp->dmap_driver);
+	return;
+  }
+
+  if (status == OK) {
+	fp->filp_state= FS_NORMAL;
+  } else {
+	printf("reopen_reply: should handle error status\n");
+	return;
+  }
+
+  restart_reopen(maj);
 }
 
 #if 0

@@ -434,9 +434,7 @@ char *argv[];
 	chmod(tty_name, 0620);
 
 	/* Change id. */
-#if __minix_vmd
 	initgroups(pwd->pw_name, pwd->pw_gid);
-#endif
 	setgid(pwd->pw_gid);
 	setuid(pwd->pw_uid);
 

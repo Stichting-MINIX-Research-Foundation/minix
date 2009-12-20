@@ -13,7 +13,7 @@ OBJ=	test1  test2  test3  test4  test5  test6  test7  test8  test9  \
 	test42 test44 test45
 
 BIGOBJ=  test20 test24
-ROOTOBJ= test11 test33 test43
+ROOTOBJ= test11 test33 test43 test46
 GCCOBJ=  test45-gcc
 
 all:	$(OBJ) $(BIGOBJ) $(GCCOBJ) $(ROOTOBJ)
@@ -93,4 +93,5 @@ test43: test43.c
 test44: test44.c
 test45: test45.c test45.h
 test45-gcc: test45.c test45.h
+test46: test46.c
 

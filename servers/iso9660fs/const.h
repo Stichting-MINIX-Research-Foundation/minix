@@ -1,6 +1,5 @@
-/* In this file are declared all the constant used by the server. */
 
-#define WRITE_LOG(TEXT) printf("iso9660fs: " TEXT "\n");
+#define GETDENTS_BUFSIZ	257
 
 #define ISO9660_STANDARD_ID "CD001" /* Standard code for ISO9660 filesystems */
 
@@ -11,7 +10,7 @@
 /* #define NR_ID_INODES 1024 */	/* The ISO9660 doesn't save the inode numbers.
 				 * There is a table that assign to every inode
 				 * a particular id. This number defines the 
-				 * maximum number of ids the finesystem can 
+				 * maximum number of ids the filesystem can 
 				 * handle */
 
 #define NO_ADDRESS -1		/* Error constants */
@@ -64,3 +63,7 @@
 #define END_OF_FILE   (-104)	/* eof detected */
 
 #define	offsetof(type, field)	((size_t)(&((type *)0)->field))
+
+/* Miscellaneous constants */
+#define SYS_UID  ((uid_t) 0)	/* uid_t for processes MM and INIT */
+#define SYS_GID  ((gid_t) 0)	/* gid_t for processes MM and INIT */

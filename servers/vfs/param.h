@@ -13,6 +13,7 @@
 #define c_mode        m1_i3
 #define c_name        m1_p1
 #define name	      m3_p1
+#define flength       m2_l1
 #define name1	      m1_p1
 #define name2	      m1_p2
 #define	name_length   m3_i1
@@ -23,6 +24,8 @@
 #define pathname      m3_ca1
 #define pid	      m1_i3
 #define ENDPT	      m1_i1
+#define offset_lo     m2_l1
+#define offset_high   m2_l2
 #define ctl_req       m4_l1
 #define driver_nr     m4_l2
 #define dev_nr	      m4_l3
@@ -32,6 +35,7 @@
 #define request       m1_i2
 #define sig	      m1_i2
 #define endpt1	      m1_i1
+#define fs_endpt      m1_p3
 #define tp	      m2_l1
 #define utime_actime  m2_l1
 #define utime_modtime m2_l2

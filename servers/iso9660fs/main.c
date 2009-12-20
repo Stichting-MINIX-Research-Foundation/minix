@@ -25,44 +25,43 @@ PUBLIC int main(void) {
   fs_m_in.m_type = FS_READY;
   
   if (send(FS_PROC_NR, &fs_m_in) != OK) {
-      printf("ISO9660FS(%d): Error sending login to VFS\n", SELF_E);
+      printf("ISOFS (%d): Error sending login to VFS\n", SELF_E);
       return -1;
   }
 
   for (;;) {
 
-    /* Wait for request message. */
-    get_work(&fs_m_in);
-    error = OK;
+	/* Wait for request message. */
+	get_work(&fs_m_in);
+	error = OK;
 
-      caller_uid = -1;	/* To trap errors */
-      caller_gid = -1;
+	caller_uid = -1;	/* To trap errors */
+	caller_gid = -1;
 
-      who_e = fs_m_in.m_source;	/* source of the request */
+	who_e = fs_m_in.m_source;	/* source of the request */
 
-      if (who_e != FS_PROC_NR) { /* If the message is not for us just 
-				  * continue */
-	continue;
-      }
+	if (who_e != FS_PROC_NR) { /* If the message is not for us just 
+				    * continue */
+		continue;
+	}
 
-      req_nr = fs_m_in.m_type;
+	req_nr = fs_m_in.m_type;
 
-      if (req_nr < VFS_BASE) {
-      	fs_m_in.m_type += VFS_BASE;
-      	req_nr = fs_m_in.m_type;
-      }
+	if (req_nr < VFS_BASE) {
+		fs_m_in.m_type += VFS_BASE;
+		req_nr = fs_m_in.m_type;
+	}
 
-      ind= req_nr-VFS_BASE;
+	ind = req_nr-VFS_BASE;
 
-      if (ind < 0 || ind >= NREQS) {
-          error = EINVAL; 
-      }
-      else
-	error = (*fs_call_vec[ind])(); /* Process the request calling
-					   * the appropriate function. */
+	if (ind < 0 || ind >= NREQS) {
+		error = EINVAL; 
+	} else
+		error = (*fs_call_vec[ind])(); /* Process the request calling
+						* the appropriate function. */
 
-      fs_m_out.m_type = error; 
-      reply(who_e, &fs_m_out); 	/* returns the response to VFS */
+	fs_m_out.m_type = error; 
+	reply(who_e, &fs_m_out); 	/* returns the response to VFS */
   }
 }
 
@@ -90,7 +89,7 @@ message *m_in;				/* pointer to message */
 {
   int s;				/* receive status */
   if (OK != (s = receive(ANY, m_in))) 	/* wait for message */
-    panic("I9660FS","receive failed", s);
+    panic("ISOFS","receive failed", s);
 }
 
 /*===========================================================================*
@@ -101,5 +100,5 @@ int who;
 message *m_out;                       	/* report result */
 {
   if (OK != send(who, m_out))    /* send the message */
-    printf("I9660FS(%d) was unable to send reply\n", SELF_E);
+    printf("ISOFS(%d) was unable to send reply\n", SELF_E);
 }

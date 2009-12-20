@@ -1,14 +1,12 @@
-
 /* This file is the counterpart of "read.c".  It contains the code for writing
  * insofar as this is not contained in read_write().
  *
  * The entry points into this file are
- *   do_write:     call read_write to perform the WRITE system call
+ *   write_map:    write a new zone into an inode
  *   clear_zone:   erase a zone in the middle of a file
  *   new_block:    acquire a new block
+ *   zero_block:   overwrite a block with zeroes
  *
- * Updates:
- * 2007-06-01:	jfdsmit@gmail.com added i_zsearch optimalization
  */
 
 #include "fs.h"
@@ -181,6 +179,7 @@ int op;				/* special actions */
   return(OK);
 }
 
+
 /*===========================================================================*
  *				wr_indir				     *
  *===========================================================================*/
@@ -205,6 +204,7 @@ zone_t zone;			/* zone to write */
 	bp->b_v2_ind[index] = (zone_t)  conv4(sp->s_native, (long) zone);
 }
 
+
 /*===========================================================================*
  *				empty_indir				     *
  *===========================================================================*/
@@ -215,19 +215,20 @@ struct super_block *sb;		/* superblock of device block resides on */
 /* Return nonzero if the indirect block pointed to by bp contains
  * only NO_ZONE entries.
  */
-	int i;
-	if(sb->s_version == V1) {
-		for(i = 0; i < V1_INDIRECTS; i++)
-			if(bp->b_v1_ind[i] != NO_ZONE)
-				return 0;
-	} else {
-		for(i = 0; i < V2_INDIRECTS(sb->s_block_size); i++)
-			if(bp->b_v2_ind[i] != NO_ZONE)
-				return 0;
-	}
+  int i;
+  if(sb->s_version == V1) {
+	for(i = 0; i < V1_INDIRECTS; i++)
+		if(bp->b_v1_ind[i] != NO_ZONE)
+			return(0);
+  } else {
+	for(i = 0; i < V2_INDIRECTS(sb->s_block_size); i++)
+		if(bp->b_v2_ind[i] != NO_ZONE)
+			return(0);
+  }
 
-	return 1;
+  return(1);
 }
+
 
 /*===========================================================================*
  *				clear_zone				     *
@@ -268,6 +269,7 @@ int flag;			/* 0 if called by read_write, 1 by new_block */
 	put_block(bp, FULL_DATA_BLOCK);
   }
 }
+
 
 /*===========================================================================*
  *				new_block				     *
@@ -322,6 +324,7 @@ off_t position;			/* file pointer */
   zero_block(bp);
   return(bp);
 }
+
 
 /*===========================================================================*
  *				zero_block				     *

@@ -7,6 +7,7 @@
 #include "pm.h"
 #include <minix/callnr.h>
 #include <minix/endpoint.h>
+#include <limits.h>
 #include <minix/com.h>
 #include <signal.h>
 #include "mproc.h"
@@ -22,8 +23,32 @@ PUBLIC int do_get()
 
   register struct mproc *rmp = mp;
   int r, proc;
+  int ngroups;
 
   switch(call_nr) {
+  	case GETGROUPS:
+  		ngroups = m_in.grp_no;
+  		if (ngroups > NGROUPS_MAX || ngroups < 0)
+  			return(EINVAL);
+
+  		if (ngroups == 0) {
+  			r = rmp->mp_ngroups;
+  			break;
+  		}
+
+		if (ngroups < rmp->mp_ngroups) 
+			/* Asking for less groups than available */
+			return(EINVAL);
+	
+
+  		r = sys_datacopy(SELF, (vir_bytes) rmp->mp_sgroups, who_e,
+  			(vir_bytes) m_in.groupsp, ngroups * sizeof(gid_t));
+
+  		if (r != OK) 
+  			return(r);
+  		
+  		r = rmp->mp_ngroups;
+  		break;
 	case GETUID:
 		r = rmp->mp_realuid;
 		rmp->mp_reply.reply_res2 = rmp->mp_effuid;
@@ -60,7 +85,8 @@ PUBLIC int do_set()
  */
   register struct mproc *rmp = mp;
   message m;
-  int r;
+  int r, i;
+  int ngroups;
 
   switch(call_nr) {
 	case SETUID:
@@ -92,7 +118,34 @@ PUBLIC int do_set()
 		m.PM_RID = rmp->mp_realgid;
 
 		break;
+	case SETGROUPS:
+		if (rmp->mp_effuid != SUPER_USER)
+			return(EPERM);
 
+		ngroups = m_in.grp_no;
+
+		if (ngroups > NGROUPS_MAX || ngroups < 0) 
+			return(EINVAL);
+
+		if (m_in.groupsp == NULL) 
+			return(EFAULT);
+
+		r = sys_datacopy(who_e, (vir_bytes) m_in.groupsp, SELF,
+			     (vir_bytes) rmp->mp_sgroups,
+			     ngroups * sizeof(gid_t));
+		if (r != OK) 
+			return(r);
+
+		for (i = ngroups; i < NGROUPS_MAX; i++)
+			rmp->mp_sgroups[i] = 0;
+		rmp->mp_ngroups = ngroups;
+
+		m.m_type = PM_SETGROUPS;
+		m.PM_PROC = rmp->mp_endpoint;
+		m.PM_GROUP_NO = rmp->mp_ngroups;
+		m.PM_GROUP_ADDR = rmp->mp_sgroups;
+
+		break;
 	case SETSID:
 		if (rmp->mp_procgrp == rmp->mp_pid) return(EPERM);
 		rmp->mp_procgrp = rmp->mp_pid;

@@ -20,7 +20,7 @@ PUBLIC int fs_access()
   
   /* Temporarily open the file. */
   if ( (rip = get_dir_record(fs_m_in.REQ_INODE_NR)) == NULL) {
-    printf("I9660FS(%d) get_dir_record by fs_access() failed\n", SELF_E);
+    printf("ISOFS(%d) get_dir_record by fs_access() failed\n", SELF_E);
     return(EINVAL);
   }
 

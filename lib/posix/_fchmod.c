@@ -8,7 +8,7 @@ _mnx_Mode_t mode;
 {
   message m;
 
-  m.m3_i1 = fd;
-  m.m3_i2 = mode;
+  m.m1_i1 = fd;
+  m.m1_i2 = mode;
   return(_syscall(FS, FCHMOD, &m));
 }

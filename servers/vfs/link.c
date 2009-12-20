@@ -9,9 +9,6 @@
  *   do_truncate:     perform the TRUNCATE system call
  *   do_ftruncate:    perform the FTRUNCATE system call
  *   do_rdlink:       perform the RDLNK system call
- *
- * Changes for VFS:
- *   Jul 2006 (Balazs Gerofi)
  */
 
 #include "fs.h"
@@ -23,7 +20,6 @@
 #include "file.h"
 #include "fproc.h"
 #include "param.h"
-
 #include <minix/vfsif.h>
 #include "vnode.h"
 
@@ -33,64 +29,38 @@
 PUBLIC int do_link()
 {
 /* Perform the link(name1, name2) system call. */
-  int r;
+  int r = OK;
   endpoint_t linked_fs_e, link_lastdir_fs_e;
-  struct vnode *vp_o, *vp_d;
+  struct vnode *vp, *vp_d;
 
-  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) 
-        return(err_code);
-        
-  /* Request lookup */
-  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp_o)) != OK) return r;
-
-  linked_fs_e = vp_o->v_fs_e;
+  /* See if 'name1' (file to be linked to) exists. */ 
+  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
 
   /* Does the final directory of 'name2' exist? */
-  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) {
-	put_vnode(vp_o);
-	return(err_code);
+  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK) 
+	r = err_code;
+  else if ((vp_d = last_dir()) == NIL_VNODE)
+	r = err_code; 
+  if (r != OK) {
+	  put_vnode(vp);
+	  return(r);
   }
-
-  /* Request lookup */
-  if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp_d)) != OK)
-  {
-	put_vnode(vp_o);
-	return r;
-  }
-
-  link_lastdir_fs_e = vp_d->v_fs_e;
 
   /* Check for links across devices. */
-  if (linked_fs_e != link_lastdir_fs_e) 
-  {
-	put_vnode(vp_o);
-	put_vnode(vp_d);
-        return EXDEV;
-  }
+  if(vp->v_fs_e != vp_d->v_fs_e)
+  	r = EXDEV;
+  else 
+	r = forbidden(vp_d, W_BIT | X_BIT);
 
-  /* Make sure that the object is a directory */
-  if ((vp_d->v_mode & I_TYPE) != I_DIRECTORY)
-  {
-	put_vnode(vp_o);
-	put_vnode(vp_d);
-	return ENOTDIR;
-  }
+  if (r == OK)
+	r = req_link(vp->v_fs_e, vp_d->v_inode_nr, user_fullpath,
+		     vp->v_inode_nr);
 
-  r= forbidden(vp_d, W_BIT|X_BIT, 0 /*!use_realuid*/);
-  if (r != OK)
-  {
-	put_vnode(vp_o);
-	put_vnode(vp_d);
-        return r;
-  }
-  
-  /* Issue request */
-  r= req_link(linked_fs_e, vp_d->v_inode_nr, user_fullpath, vp_o->v_inode_nr);
-  put_vnode(vp_o);
+  put_vnode(vp);
   put_vnode(vp_d);
-  return r;
+  return(r);
 }
-
 
 
 /*===========================================================================*
@@ -103,42 +73,49 @@ PUBLIC int do_unlink()
  * may be used by the superuser to do dangerous things; rmdir() may not.
  */
   register struct fproc *rfp;
-  struct vnode *vp;
+  struct vnode *vldirp, *vp;
   int r;
   
-  if (fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
-
-  r= lookup_lastdir(0 /*!use_realuid*/, &vp);
-  if (r != OK)
-	return r;
+  /* Get the last directory in the path. */
+  if(fetch_name(m_in.name, m_in.name_length, M3) != OK) return(err_code);
+  if ((vldirp = last_dir()) == NIL_VNODE) return(err_code);
 
   /* Make sure that the object is a directory */
-  if ((vp->v_mode & I_TYPE) != I_DIRECTORY)
-  {
-	put_vnode(vp);
-	return ENOTDIR;
+  if((vldirp->v_mode & I_TYPE) != I_DIRECTORY) {
+	  put_vnode(vldirp);
+	  return(ENOTDIR);
   }
 
   /* The caller must have both search and execute permission */
-  r= forbidden(vp, X_BIT|W_BIT, 0 /*!use_realuid*/);
-  if (r != OK)
-  {
-	put_vnode(vp);
-	return r;
+  if ((r = forbidden(vldirp, X_BIT | W_BIT)) != OK) {
+	put_vnode(vldirp);
+	return(r);
   }
   
-  /* If a directory file has to be removed the following conditions have to met:
-   *	- The directory must not be the root of a mounted file system
-   *	- The directory must not be anybody's root/working directory
-   */
+  /* Also, if the sticky bit is set, only the owner of the file or a privileged
+     user is allowed to unlink */
+  if (vldirp->v_mode & S_ISVTX == S_ISVTX) {
+	/* Look up inode of file to unlink to retrieve owner */
+	vp = advance(vldirp, PATH_RET_SYMLINK);
+	if (vp != NIL_VNODE) {
+		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) 
+			r = EPERM;
+		put_vnode(vp);
+	} else
+		r = err_code;
+	if (r != OK) {
+		put_vnode(vldirp);
+		return(r);
+	}
+  }
   
-  /* Issue request */
-  r= ((call_nr == UNLINK) ? req_unlink : req_rmdir)(vp->v_fs_e,
-	vp->v_inode_nr, user_fullpath);
-
-  put_vnode(vp);
-
-  return r;
+  if(call_nr == UNLINK) 
+	  r = req_unlink(vldirp->v_fs_e, vldirp->v_inode_nr, user_fullpath);
+  else 
+	  r = req_rmdir(vldirp->v_fs_e, vldirp->v_inode_nr, user_fullpath);
+  
+  put_vnode(vldirp);
+  return(r);
 }
 
 
@@ -148,81 +125,62 @@ PUBLIC int do_unlink()
 PUBLIC int do_rename()
 {
 /* Perform the rename(name1, name2) system call. */
-  int r;
-  int old_dir_inode;
-  int old_fs_e;
-  int new_dir_inode;
-  int new_fs_e;
+  int r = OK, r1;
   size_t len;
-  struct vnode *vp_od, *vp_nd;
+  struct vnode *old_dirp, *new_dirp, *vp;
   char old_name[PATH_MAX+1];
   
   /* See if 'name1' (existing file) exists.  Get dir and file inodes. */
-  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  
-  /* Request lookup */
-  if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp_od)) != OK) return r;
+  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+  if ((old_dirp = last_dir()) == NIL_VNODE) return(err_code);
 
-  r= forbidden(vp_od, W_BIT|X_BIT, 0 /*!use_realuid*/);
-  if (r != OK)
-  {
-	put_vnode(vp_od);
-	return r;
+  /* If the sticky bit is set, only the owner of the file or a privileged
+     user is allowed to rename */
+  if(old_dirp->v_mode & S_ISVTX == S_ISVTX) {
+	/* Look up inode of file to unlink to retrieve owner */
+	vp = advance(old_dirp, PATH_RET_SYMLINK);
+	if (vp != NIL_VNODE) {
+		if(vp->v_uid != fp->fp_effuid && fp->fp_effuid != SU_UID) 
+			r = EPERM;
+		put_vnode(vp);
+	} else
+		r = err_code;
+	if (r != OK) {	
+		put_vnode(old_dirp);
+		return(r);
+	}
   }
   
-  /* Remeber FS endpoint */
-  old_fs_e = vp_od->v_fs_e;
-
   /* Save the last component of the old name */
-  len= strlen(user_fullpath);
-  if (len >= sizeof(old_name))
-  {
-	put_vnode(vp_od);
-	return ENAMETOOLONG;
+  if(strlen(user_fullpath) >= sizeof(old_name)) {
+	put_vnode(old_dirp);
+	return(ENAMETOOLONG);
   }
-  memcpy(old_name, user_fullpath, len+1);
-
+  strcpy(old_name, user_fullpath);
+  
   /* See if 'name2' (new name) exists.  Get dir inode */
-  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK)
-  {
-	put_vnode(vp_od);
-	return err_code;
-  }
-  
-  /* Request lookup */
-  r = lookup_lastdir(0 /*!use_realuid*/, &vp_nd);
-  if (r != OK)
-  {
-	put_vnode(vp_od);
-	return r;
+  if(fetch_name(m_in.name2, m_in.name2_length, M1) != OK) 
+	r = err_code;
+  else if ((new_dirp = last_dir()) == NIL_VNODE)
+	r = err_code; 
+  if (r != OK) {
+  	put_vnode(old_dirp);
+  	return r;
   }
 
-  r= forbidden(vp_nd, W_BIT|X_BIT, 0 /*!use_realuid*/);
-  if (r != OK)
-  {
-	put_vnode(vp_od);
-	put_vnode(vp_nd);
-	return r;
-  }
-  
-  
-  /* Remeber FS endpoint */
-  new_fs_e = vp_nd->v_fs_e;
-  
   /* Both parent directories must be on the same device. */
-  if (old_fs_e != new_fs_e)
-  {
-	put_vnode(vp_od);
-	put_vnode(vp_nd);
-	return EXDEV;
-  }
+  if(old_dirp->v_fs_e != new_dirp->v_fs_e) r = EXDEV; 
 
-  /* Issue request */
-  r= req_rename(old_fs_e, vp_od->v_inode_nr, old_name, vp_nd->v_inode_nr,
-	user_fullpath);
-  put_vnode(vp_od);
-  put_vnode(vp_nd);
-  return r;
+  /* Parent dirs must be writable, searchable and on a writable device */
+  if ((r1 = forbidden(old_dirp, W_BIT|X_BIT)) != OK ||
+      (r1 = forbidden(new_dirp, W_BIT|X_BIT)) != OK) r = r1;
+  
+  if(r == OK)
+	  r = req_rename(old_dirp->v_fs_e, old_dirp->v_inode_nr, old_name,
+  			 new_dirp->v_inode_nr, user_fullpath);
+  put_vnode(old_dirp);
+  put_vnode(new_dirp);
+  return(r);
 }
   
 
@@ -231,7 +189,7 @@ PUBLIC int do_rename()
  *===========================================================================*/
 PUBLIC int do_truncate()
 {
-/* truncate_inode() does the actual work of do_truncate() and do_ftruncate().
+/* truncate_vnode() does the actual work of do_truncate() and do_ftruncate().
  * do_truncate() and do_ftruncate() have to get hold of the inode, either
  * by name or fd, do checks on it, and call truncate_inode() to do the
  * work.
@@ -239,21 +197,17 @@ PUBLIC int do_truncate()
   struct vnode *vp;
   int r;
 
-  printf("in do_truncate\n");
+  /* Temporarily open file */
+  if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1) != OK) return(err_code);
+  if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
   
-  if (fetch_name(m_in.m2_p1, m_in.m2_i1, M1) != OK) return err_code;
+  /* Ask FS to truncate the file */
+  if ((r = forbidden(vp, W_BIT)) == OK)
+  	r = truncate_vnode(vp, m_in.flength);
   
-  /* Request lookup */
-  if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK) return r;
-  
-  if ((r = forbidden(vp, W_BIT, 0 /*!use_realuid*/)) == OK)
-	  r = truncate_vn(vp, m_in.m2_l1);
-
   put_vnode(vp);
-
-  return r;
+  return(r);
 }
-
 
 
 /*===========================================================================*
@@ -261,38 +215,35 @@ PUBLIC int do_truncate()
  *===========================================================================*/
 PUBLIC int do_ftruncate()
 {
-/* As with do_truncate(), truncate_inode() does the actual work. */
+/* As with do_truncate(), truncate_vnode() does the actual work. */
   int r;
   struct filp *rfilp;
   
-  if ( (rfilp = get_filp(m_in.m2_i1)) == NIL_FILP)
-        return err_code;
-  if (!(rfilp->filp_mode & W_BIT))
-  	return EBADF;
-  return truncate_vn(rfilp->filp_vno, m_in.m2_l1);
+  /* File is already opened; get a vnode pointer from filp */
+  if ((rfilp = get_filp(m_in.m2_i1)) == NIL_FILP) return(err_code);
+  if (!(rfilp->filp_mode & W_BIT)) return(EBADF);
+  return truncate_vnode(rfilp->filp_vno, m_in.m2_l1);
 }
 
 
 /*===========================================================================*
- *				truncate_vn				     *
+ *				truncate_vnode				     *
  *===========================================================================*/
-PUBLIC int truncate_vn(vp, newsize)
+PUBLIC int truncate_vnode(vp, newsize)
 struct vnode *vp;
 off_t newsize;
 {
-  int r;
+  int r, file_type;
 
-  if ( (vp->v_mode & I_TYPE) != I_REGULAR &&
-	(vp->v_mode & I_TYPE) != I_NAMED_PIPE) {
-	return EINVAL;
-  }
+  file_type = vp->v_mode & I_TYPE;
+  if (file_type != I_REGULAR && file_type != I_NAMED_PIPE) return(EINVAL);
         
-  /* Issue request */
-  if ((r = req_ftrunc(vp->v_fs_e, vp->v_inode_nr, newsize, 0)) != OK) return r;
-	  
-  vp->v_size = newsize;
-  return OK;
+  if ((r = req_ftrunc(vp->v_fs_e, vp->v_inode_nr, newsize, 0)) == OK)
+	vp->v_size = newsize;
+
+  return(r);
 }
+
 
 /*===========================================================================*
  *                             do_slink					     *
@@ -300,77 +251,52 @@ off_t newsize;
 PUBLIC int do_slink()
 {
 /* Perform the symlink(name1, name2) system call. */
-  int r;
+  int r, linklen;
   struct vnode *vp;
   char string[NAME_MAX];       /* last component of the new dir's path name */
 
-  if (fetch_name(m_in.name2, m_in.name2_length, M1) != OK)
-       return(err_code);
+  if(m_in.name1_length <= 1) return(ENOENT);
+  if(m_in.name1_length >= SYMLINK_MAX) return(ENAMETOOLONG);
+  
+  /* Get dir inode of 'name2' */
+  if(fetch_name(m_in.name2, m_in.name2_length, M1) != OK) return(err_code);
+  if ((vp = last_dir()) == NIL_VNODE) return(err_code);
 
-  if (m_in.name1_length <= 1 || m_in.name1_length >= _MIN_BLOCK_SIZE)
-       return(ENAMETOOLONG);
-
-  /* Request lookup */
-  if ((r = lookup_lastdir(0 /*!use_realuid*/, &vp)) != OK)
-  {
-	printf("vfs:do_slink: lookup_lastdir failed with %d\n", r);
-	return r;
+  if ((r = forbidden(vp, W_BIT|X_BIT)) == OK) {
+	r = req_slink(vp->v_fs_e, vp->v_inode_nr, user_fullpath, who_e,
+		      m_in.name1, m_in.name1_length - 1, fp->fp_effuid,
+		      fp->fp_effgid);
   }
-
-#if 0
-  printf("vfs:do_slink: got dir inode %d on dev 0x%x, fs %d\n",
-	vp->v_inode_nr, vp->v_dev, vp->v_fs_e);
-#endif
-
-  r= forbidden(vp, W_BIT|X_BIT, 0 /*!use_realuid*/);
-  if (r != OK)
-  {
-	put_vnode(vp);
-        return r;
-  }
-
-  /* Issue request */
-  r= req_slink(vp->v_fs_e, vp->v_inode_nr, user_fullpath, who_e, m_in.name1, 
-	m_in.name1_length - 1, fp->fp_effuid, fp->fp_effgid);
 
   put_vnode(vp);
-
-  return r;
+  return(r);
 }
+
 
 /*===========================================================================*
  *                             do_rdlink                                    *
  *===========================================================================*/
 PUBLIC int do_rdlink()
 {
-/* Perform the readlink(name, buf) system call. */
+/* Perform the readlink(name, buf, bufsize) system call. */
   int r, copylen;
   struct vnode *vp;
   
-  copylen = m_in.m1_i2;
-  if(copylen < 0) return EINVAL;
+  copylen = m_in.nbytes;
+  if(copylen < 0) return(EINVAL);
 
-  if (fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
-  
-  /* Request lookup */
-  r = lookup_vp(PATH_RET_SYMLINK, 0 /*!use_realuid*/, &vp);
-  if (r != OK) return r;
+  /* Temporarily open the file containing the symbolic link */
+  if(fetch_name(m_in.name1, m_in.name1_length, M1) != OK) return(err_code);
+  if ((vp = eat_path(PATH_RET_SYMLINK)) == NIL_VNODE) return(err_code);
 
   /* Make sure this is a symbolic link */
-  if ((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK) {
-	put_vnode(vp);
-
-  	return EINVAL;
-  }
-
-  /* Issue request */
-  r= req_rdlink(vp->v_fs_e, vp->v_inode_nr, who_e, (vir_bytes)m_in.name2,
-	copylen);
+  if((vp->v_mode & I_TYPE) != I_SYMBOLIC_LINK) 
+	r = EINVAL;
+  else
+	r = req_rdlink(vp->v_fs_e, vp->v_inode_nr, who_e, m_in.name2, copylen);
 
   put_vnode(vp);
-
-  return r;
+  return(r);
 }
-
 
 

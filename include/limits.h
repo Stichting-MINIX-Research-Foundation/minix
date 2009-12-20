@@ -61,7 +61,7 @@
 #define _POSIX_MAX_CANON   255	/* size of the canonical input queue */
 #define _POSIX_MAX_INPUT   255	/* you can type 255 chars ahead */
 #define _POSIX_NAME_MAX DIRSIZ	/* max. file name length */
-#define _POSIX_NGROUPS_MAX   0	/* supplementary group IDs are optional */
+#define _POSIX_NGROUPS_MAX   8	/* max. number of supplemental groups */
 #define _POSIX_OPEN_MAX     16	/* a process may have 16 files open */
 #define _POSIX_PATH_MAX    255	/* a pathname may contain 255 chars */
 #define _POSIX_PIPE_BUF    512	/* pipes writes of 512 bytes must be atomic */
@@ -72,12 +72,13 @@
 				 * traversed in the resolution of a pathname
 				 * in the absence of a loop.
 				 */
+#define _POSIX_SYMLINK_MAX 255	/* The number of bytes in a symbolic link */
 
 /* Values actually implemented by MINIX (Tables 2-4, 2-5, 2-6, and 2-7). */
 /* Some of these old names had better be defined when not POSIX. */
 #define _NO_LIMIT          100	/* arbitrary number; limit not enforced */
 
-#define NGROUPS_MAX          0	/* supplemental group IDs not available */
+#define NGROUPS_MAX          8	/* max. number of supplemental groups */
 #if _EM_WSIZE > 2
 #define ARG_MAX          262144 /* # bytes of args + environ for exec() */
 #else
@@ -98,6 +99,7 @@
 #define STREAM_MAX          20	/* must be the same as FOPEN_MAX in stdio.h */
 #define TZNAME_MAX           3	/* maximum bytes in a time zone name is 3 */
 #define SSIZE_MAX        32767	/* max defined byte count for read() */
+#define SYMLINK_MAX       1024 	/* # bytes in a symbolic link */ 
 #define SYMLOOP_MAX	    16	/* maximum number of symbolic links that can
 				 * be reliably traversed in the resolution of
 				 * a pathname in the absence of a loop.

@@ -5,6 +5,7 @@
 #define V2_NR_TZONES      10	/* total # zone numbers in a V2 inode */
 
 #define NR_INODES        256	/* # slots in "in core" inode table */
+#define GETDENTS_BUFSIZ  257
 
 #define INODE_HASH_LOG2   7     /* 2 based logarithm of the inode hash size */
 #define INODE_HASH_SIZE   ((unsigned long)1<<INODE_HASH_LOG2)
@@ -47,6 +48,9 @@
 /* write_map() args */
 #define WMAP_FREE	(1 << 0)
 
+#define IGN_PERM	0
+#define CHK_PERM	1
+
 #define PATH_TRANSPARENT 000   /* parse_path stops at final object */
 #define PATH_PENULTIMATE 001   /* parse_path stops at last but one name */
 #define PATH_OPAQUE      002   /* parse_path stops at final name */
@@ -76,7 +80,6 @@
 #define DIR_ENTRY_SIZE       usizeof (struct direct)  /* # bytes/dir entry   */
 #define NR_DIR_ENTRIES(b)   ((b)/DIR_ENTRY_SIZE)  /* # dir entries/blk   */
 #define SUPER_SIZE      usizeof (struct super_block)  /* super_block size    */
-#define PIPE_SIZE(b)          (V1_NR_DZONES*(b))  /* pipe size in bytes  */
 
 #define FS_BITMAP_CHUNKS(b) ((b)/usizeof (bitchunk_t))/* # map chunks/blk   */
 #define FS_BITCHUNK_BITS		(usizeof(bitchunk_t) * CHAR_BIT)

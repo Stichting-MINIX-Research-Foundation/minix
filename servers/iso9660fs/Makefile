@@ -15,8 +15,7 @@ LDFLAGS = -i
 LIBS = -lsys -ltimers
 
 OBJ =	main.o table.o mount.o super.o inode.o device.o \
-	utility.o misc.o path.o read.o stadir.o cache.o \
-	protect.o
+	utility.o misc.o path.o read.o stadir.o cache.o 
 
 # build local binary 
 all build:	$(SERVER)

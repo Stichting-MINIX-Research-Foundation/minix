@@ -31,11 +31,9 @@ char *argv[];
   char *p;
   int super;
   int loginshell;
-#if __minix_vmd
   gid_t groups[NGROUPS_MAX];
   int ngroups;
   int g;
-#endif
 
   smallenv = 0;
   loginshell = 0;
@@ -76,10 +74,8 @@ char *argv[];
   }
   super = 0;
   if (getgid() == 0) super = 1;
-#if __minix_vmd
   ngroups = getgroups(NGROUPS_MAX, groups);
   for (g = 0; g < ngroups; g++) if (groups[g] == 0) super = 1;
-#endif
 
   if (!super && strcmp(pwd->pw_passwd, crypt("", pwd->pw_passwd)) != 0) {
 #if __minix_vmd
@@ -103,9 +99,7 @@ char *argv[];
 #endif
   }
 
-#if __minix_vmd
   initgroups(pwd->pw_name, pwd->pw_gid);
-#endif
   setgid(pwd->pw_gid);
   setuid(pwd->pw_uid);
   if (loginshell) {

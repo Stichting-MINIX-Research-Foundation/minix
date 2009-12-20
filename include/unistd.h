@@ -118,6 +118,7 @@ _PROTOTYPE( gid_t getegid, (void)					);
 _PROTOTYPE( uid_t geteuid, (void)					);
 _PROTOTYPE( gid_t getgid, (void)					);
 _PROTOTYPE( int getgroups, (int _gidsetsize, gid_t _grouplist[])	);
+_PROTOTYPE( int setgroups, (int _ngroups, gid_t const *grps)		);
 _PROTOTYPE( char *getlogin, (void)					);
 _PROTOTYPE( pid_t getpgrp, (void)					);
 _PROTOTYPE( pid_t getpid, (void)					);

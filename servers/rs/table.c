@@ -44,6 +44,7 @@ PUBLIC struct boot_image_priv boot_image_priv_table[] = {
   { MEM_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  mem_kc    },
   { LOG_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  drv_kc    },
   { MFS_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  fs_kc     },
+  { PFS_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  fs_kc     },
   { INIT_PROC_NR,     RUSR_F, RUSR_T, RUSR_M, rusr_kc   },
   { NULL_BOOT_NR,     0,      0,      0,      no_kc     } /* null entry */
 };
@@ -53,6 +54,7 @@ PUBLIC struct boot_image_sys boot_image_sys_table[] = {
   /*endpoint,         sys flags                         */
   { LOG_PROC_NR,      SRVC_SF                           },
   { MFS_PROC_NR,      SRVC_SF                           },
+  { PFS_PROC_NR,      SRVC_SF                           },
   { DEFAULT_BOOT_NR,  SRV_SF                            } /* default entry */
 };
 

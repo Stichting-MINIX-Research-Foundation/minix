@@ -96,6 +96,7 @@ libc_FILES=" \
 	select.s \
 	seekdir.s \
 	setgid.s \
+	setgroups.s \
 	setitimer.s \
 	setsid.s \
 	setuid.s \

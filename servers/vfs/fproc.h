@@ -23,6 +23,8 @@ EXTERN struct fproc {
   uid_t fp_effuid;		/* effective user id */
   gid_t fp_realgid;		/* real group id */
   gid_t fp_effgid;		/* effective group id */
+  int fp_ngroups;		/* number of supplemental groups */
+  gid_t fp_sgroups[NGROUPS_MAX];/* supplemental groups */
   dev_t fp_tty;			/* major/minor of controlling tty */
   int fp_fd;			/* place to save fd if rd/wr can't finish */
   char *fp_buffer;		/* place to save buffer if rd/wr can't finish*/

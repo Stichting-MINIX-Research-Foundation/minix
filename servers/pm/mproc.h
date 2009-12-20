@@ -4,6 +4,7 @@
  * systems have tables that are also indexed by process, with the contents
  * of corresponding slots referring to the same process in all three.
  */
+#include <limits.h>
 #include <timers.h>
 #include <signal.h>
 
@@ -29,6 +30,10 @@ EXTERN struct mproc {
   uid_t mp_effuid;		/* process' effective uid */
   gid_t mp_realgid;		/* process' real gid */
   gid_t mp_effgid;		/* process' effective gid */
+
+  /* Supplemental groups. */
+  int mp_ngroups;		/* number of supplemental groups */
+  gid_t mp_sgroups[NGROUPS_MAX];/* process' supplemental groups */
 
   /* Signal handling information. */
   sigset_t mp_ignore;		/* 1 means ignore the signal, 0 means don't */

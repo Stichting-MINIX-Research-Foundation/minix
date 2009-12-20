@@ -10,7 +10,6 @@
 #include "file.h"
 #include "fproc.h"
 #include "lock.h"
-
 #include "vnode.h"
 #include "vmnt.h"
 
@@ -62,7 +61,7 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 43 = times	*/
 	no_sys,		/* 44 = (prof)	*/
 	do_slink,	/* 45 = symlink	*/
-	no_sys,		/* 46 = (setgid) */
+	no_sys,		/* 46 = (setgid)*/
 	no_sys,		/* 47 = getgid	*/
 	no_sys,		/* 48 = (signal)*/
 	do_rdlink,	/* 49 = readlink*/
@@ -75,18 +74,18 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 56 = (mpx)	*/
 	do_fslogin,	/* 57 = FS proc login */
 	no_sys,		/* 58 = unused	*/
-	no_sys,		/* 59 = (execve) */
+	no_sys,		/* 59 = (execve)*/
 	do_umask,	/* 60 = umask	*/
 	do_chroot,	/* 61 = chroot	*/
-	no_sys,		/* 62 = (setsid) */
-	no_sys,		/* 63 = (getpgrp) */
-	no_sys,		/* 64 = (itimer) */
+	no_sys,		/* 62 = (setsid)*/
+	no_sys,		/* 63 = (getpgrp)*/
+	no_sys,		/* 64 = (itimer)*/
 	no_sys,		/* 65 = unused	*/
 	no_sys, 	/* 66 = unused  */
 	no_sys,		/* 67 = unused	*/
 	no_sys,		/* 68 = unused	*/
-	no_sys,		/* 69 = unused */
-	no_sys,		/* 70 = unused */
+	no_sys,		/* 69 = unused  */
+	no_sys,		/* 70 = unused  */
 	no_sys,		/* 71 = (sigaction) */
 	no_sys,		/* 72 = (sigsuspend) */
 	no_sys,		/* 73 = (sigpending) */

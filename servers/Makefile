@@ -18,6 +18,7 @@ all install depend clean:
 	cd ./pm && $(MAKE) $@
 	cd ./vfs && $(MAKE) $@
 	cd ./mfs && $(MAKE) $@
+	cd ./pfs && $(MAKE) $@
 	cd ./iso9660fs && $(MAKE) $@
 	cd ./rs && $(MAKE) $@
 	cd ./ds && $(MAKE) $@
@@ -30,6 +31,7 @@ all install depend clean:
 image:
 	cd ./pm && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 	cd ./vfs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
+	cd ./pfs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 	cd ./mfs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 	cd ./rs && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build
 	cd ./ds && $(MAKE) EXTRA_OPTS=$(EXTRA_OPTS) build

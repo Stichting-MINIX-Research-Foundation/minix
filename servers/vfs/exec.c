@@ -12,9 +12,6 @@
  *
  * The entry points into this file are:
  *   pm_exec:	 perform the EXEC system call
- *
- * Changes for VFS:
- *   Aug 2006 (Balazs Gerofi)
  */
 
 #include "fs.h"
@@ -29,7 +26,6 @@
 #include <dirent.h>
 #include "fproc.h"
 #include "param.h"
-
 #include "vnode.h"
 #include "vmnt.h"
 #include <minix/vfsif.h>
@@ -71,192 +67,138 @@ vir_bytes frame_len;
  * complete stack image, including pointers, args, environ, etc.  The stack
  * is copied to a buffer inside FS, and then to the new core image.
  */
-    int r, sep_id, round, proc_s, hdrlen, load_text, allow_setuid;
-    vir_bytes text_bytes, data_bytes, bss_bytes, pc;
-    phys_bytes tot_bytes;		/* total space for program, including gap */
-    vir_bytes stack_top, vsp;
-    off_t off;
-    uid_t new_uid;
-    gid_t new_gid;
-    struct fproc *rfp;
-    struct vnode *vp;
-    time_t v_ctime;
-    char *cp;
-    struct stat sb;
-    char progname[PROC_NAME_LEN];
-    static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
+  int r, r1, sep_id, round, proc_s, hdrlen, load_text, allow_setuid;
+  vir_bytes text_bytes, data_bytes, bss_bytes, pc;
+  phys_bytes tot_bytes;		/* total space for program, including gap */
+  vir_bytes stack_top, vsp;
+  off_t off;
+  uid_t new_uid;
+  gid_t new_gid;
+  struct fproc *rfp;
+  struct vnode *vp;
+  time_t v_ctime;
+  char *cp;
+  struct stat sb;
+  char progname[PROC_NAME_LEN];
+  static char mbuf[ARG_MAX];	/* buffer for stack and zeroes */
 
-    okendpt(proc_e, &proc_s);
-    rfp= fp= &fproc[proc_s];
-    who_e= proc_e;
-    who_p= proc_s;
-    super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
+  okendpt(proc_e, &proc_s);
+  rfp = fp = &fproc[proc_s];
+  who_e = proc_e;
+  who_p = proc_s;
+  super_user = (fp->fp_effuid == SU_UID ? TRUE : FALSE);   /* su? */
 
-    /* Get the exec file name. */
-    r= fetch_name(path, path_len, 0);
-    if (r != OK)
-    {
-        printf("pm_exec: fetch_name failed\n");
-printf("return at %s, %d\n", __FILE__, __LINE__);
-        return(r);	/* file name not in user data segment */
-    }
+  /* Get the exec file name. */
+  if ((r = fetch_name(path, path_len, 0)) != OK) return(r);
 
-    /* Fetch the stack from the user before destroying the old core image. */
-    if (frame_len > ARG_MAX)
-    {
-        return(ENOMEM);	/* stack too big */
-    }
-    r = sys_datacopy(proc_e, (vir_bytes) frame,
-            SELF, (vir_bytes) mbuf, (phys_bytes)frame_len);
-    /* can't fetch stack (e.g. bad virtual addr) */
-    if (r != OK)
-    {
+  /* Fetch the stack from the user before destroying the old core image. */
+  if (frame_len > ARG_MAX) return(ENOMEM);	/* stack too big */
+  r = sys_datacopy(proc_e, (vir_bytes) frame, SELF, (vir_bytes) mbuf,
+  		   (phys_bytes) frame_len);
+  if (r != OK) { /* can't fetch stack (e.g. bad virtual addr) */
         printf("pm_exec: sys_datacopy failed\n");
-printf("return at %s, %d\n", __FILE__, __LINE__);
         return(r);	
-    }
+  }
 
-    /* The default is the keep the original user and group IDs */
-    new_uid= rfp->fp_effuid;
-    new_gid= rfp->fp_effgid;
+  /* The default is to keep the original user and group IDs */
+  new_uid = rfp->fp_effuid;
+  new_gid = rfp->fp_effgid;
 
-    for (round= 0; round < 2; round++)
-        /* round = 0 (first attempt), or 1 (interpreted script) */
-    {
-#if 0
-	printf("vfs:pm_exec: round %d, name '%s'\n", round, user_fullpath);
-#endif
+  for (round= 0; round < 2; round++) {
+	/* round = 0 (first attempt), or 1 (interpreted script) */
 
-        /* Save the name of the program */
-        (cp= strrchr(user_fullpath, '/')) ? cp++ : (cp= user_fullpath);
+	/* Save the name of the program */
+	(cp= strrchr(user_fullpath, '/')) ? cp++ : (cp= user_fullpath);
 
-        strncpy(progname, cp, PROC_NAME_LEN-1);
-        progname[PROC_NAME_LEN-1] = '\0';
+	strncpy(progname, cp, PROC_NAME_LEN-1);
+	progname[PROC_NAME_LEN-1] = '\0';
 
-        /* Request lookup */
-        if ((r = lookup_vp(0 /*flags*/, 0 /*!use_realuid*/, &vp)) != OK)
-		return r;
-        
-        if ((vp->v_mode & I_TYPE) != I_REGULAR) {
+	/* Open executable */
+	if ((vp = eat_path(PATH_NOFLAGS)) == NIL_VNODE) return(err_code);
+
+	if ((vp->v_mode & I_TYPE) != I_REGULAR) 
+		r = ENOEXEC;
+	else if ((r1 = forbidden(vp, X_BIT)) != OK)
+		r = r1;
+	else
+		r = req_stat(vp->v_fs_e, vp->v_inode_nr, FS_PROC_NR,
+			     (char *) &sb, 0);
+	if (r != OK) {
 	    put_vnode(vp);
-            return ENOEXEC;
-        }
-
-	/* Check access. */
-	if ((r = forbidden(vp, X_BIT, 0 /*!use_realuid*/)) != OK)
-	{
-	    put_vnode(vp);
-	    return r;
+	    return(r);
 	}
 
-	/* Get ctime */
-	r= req_stat(vp->v_fs_e, vp->v_inode_nr, FS_PROC_NR, (char *)&sb, 0);
-	if (r != OK)
-	{
-	    put_vnode(vp);
-	    return r;
-	}
         v_ctime = sb.st_ctime;
-        
-#if 0
-	printf("vfs:pm_exec: round %d, mode 0%o, uid %d, gid %d\n",
-		round, vp->v_mode, vp->v_uid, vp->v_gid);
-#endif
-        if (round == 0)
-        {
+        if (round == 0) {
             /* Deal with setuid/setgid executables */
-            if (vp->v_mode & I_SET_UID_BIT)
-                new_uid = vp->v_uid;
-            if (vp->v_mode & I_SET_GID_BIT)
-                new_gid = vp->v_gid;
+            if (vp->v_mode & I_SET_UID_BIT) new_uid = vp->v_uid;
+            if (vp->v_mode & I_SET_GID_BIT) new_gid = vp->v_gid;
         }
 
         /* Read the file header and extract the segment sizes. */
-        r = read_header(vp, &sep_id, &text_bytes, &data_bytes, &bss_bytes, 
-                &tot_bytes, &pc, &hdrlen);
-        if (r != ESCRIPT || round != 0)
-            break;
+	r = read_header(vp, &sep_id, &text_bytes, &data_bytes, &bss_bytes, 
+			&tot_bytes, &pc, &hdrlen);
+	if (r != ESCRIPT || round != 0)
+		break;
 
-        /* Get fresh copy of the file name. */
-        r= fetch_name(path, path_len, 0);
-        if (r != OK)
-        {
-            printf("pm_exec: 2nd fetch_name failed\n");
-            put_vnode(vp);
-            return(r);	/* strange */
-        }
-        r= patch_stack(vp, mbuf, &frame_len);
-        put_vnode(vp);
-        if (r != OK)
-        {
-            printf("pm_exec: patch stack\n");
-printf("return at %s, %d\n", __FILE__, __LINE__);
-            return r;
-        }
-    }
+	/* Get fresh copy of the file name. */
+	if ((r = fetch_name(path, path_len, 0)) != OK) 
+		printf("VFS pm_exec: 2nd fetch_name failed\n");
+	else if ((r = patch_stack(vp, mbuf, &frame_len)) != OK) 
+		printf("VFS pm_exec: patch_stack failed\n");
+	put_vnode(vp);
+	if (r != OK) return(r);
+  }
 
-    if (r != OK)
-    {
-        printf("pm_exec: returning ENOEXEC, r = %d\n", r);
-	printf("pm_exec: progname = '%s'\n", progname);
-        put_vnode(vp);
-        return ENOEXEC;
-    }
+  if (r != OK) {
+	put_vnode(vp);
+	return(ENOEXEC);
+  }
 
-    r= exec_newmem(proc_e, text_bytes, data_bytes, bss_bytes, tot_bytes,
-            frame_len, sep_id, vp->v_dev, vp->v_inode_nr, v_ctime, 
-            progname, new_uid, new_gid, &stack_top, &load_text, &allow_setuid);
-    if (r != OK)
-    {
+  r = exec_newmem(proc_e, text_bytes, data_bytes, bss_bytes, tot_bytes,
+		  frame_len, sep_id, vp->v_dev, vp->v_inode_nr, v_ctime, 
+		  progname, new_uid, new_gid, &stack_top, &load_text,
+		  &allow_setuid);
+  if (r != OK) {
         printf("VFS: pm_exec: exec_newmem failed: %d\n", r);
         put_vnode(vp);
-        return r;
-    }
+        return(r);
+  }
 
-    /* Patch up stack and copy it from FS to new core image. */
-    vsp = stack_top;
-    vsp -= frame_len;
-    patch_ptr(mbuf, vsp);
-    r = sys_datacopy(SELF, (vir_bytes) mbuf,
-            proc_e, (vir_bytes) vsp, (phys_bytes)frame_len);
-    if (r != OK) {
-	printf("vfs: datacopy returns %d trying to copy to %p\n", r, vsp);
-	return r;
-    }
+  /* Patch up stack and copy it from FS to new core image. */
+  vsp = stack_top;
+  vsp -= frame_len;
+  patch_ptr(mbuf, vsp);
+  if ((r = sys_datacopy(SELF, (vir_bytes) mbuf, proc_e, (vir_bytes) vsp,
+		   (phys_bytes)frame_len)) != OK) {
+	printf("VFS: datacopy failed (%d) trying to copy to %p\n", r, vsp);
+	return(r);
+  }
 
-    off = hdrlen;
+  off = hdrlen;
 
-    /* Read in text and data segments. */
-    if (load_text) {
-        r= read_seg(vp, off, proc_e, T, text_bytes);
-    }
-    off += text_bytes;
-    if (r == OK)
-        r= read_seg(vp, off, proc_e, D, data_bytes);
+  /* Read in text and data segments. */
+  if (load_text) r = read_seg(vp, off, proc_e, T, text_bytes);
+  off += text_bytes;
+  if (r == OK) r = read_seg(vp, off, proc_e, D, data_bytes);
+  put_vnode(vp);
+  if (r != OK) return(r);
+  clo_exec(rfp);
 
-    put_vnode(vp);
+  if (allow_setuid) {
+	rfp->fp_effuid = new_uid;
+	rfp->fp_effgid = new_gid;
+  }
 
-    if (r != OK)
-    {
-	return r;
-    }
+  /* This child has now exec()ced. */
+  rfp->fp_execced = 1;
 
-    clo_exec(rfp);
+  /* Check if this is a driver that can now be useful. */
+  dmap_endpt_up(rfp->fp_endpoint);
 
-    if (allow_setuid)
-    {
-        rfp->fp_effuid= new_uid;
-        rfp->fp_effgid= new_gid;
-    }
-
-    /* This child has now exec()ced. */
-    rfp->fp_execced = 1;
-
-    /* Check if this is a driver that can now be useful. */
-    dmap_endpt_up(rfp->fp_endpoint);
-
-    return OK;
+  return(OK);
 }
+
 
 /*===========================================================================*
  *				exec_newmem				     *
@@ -281,41 +223,34 @@ vir_bytes *stack_topp;
 int *load_textp;
 int *allow_setuidp;
 {
-	int r;
-	struct exec_newmem e;
-	message m;
+  int r;
+  struct exec_newmem e;
+  message m;
 
-	e.text_bytes= text_bytes;
-	e.data_bytes= data_bytes;
-	e.bss_bytes= bss_bytes;
-	e.tot_bytes= tot_bytes;
-	e.args_bytes= frame_len;
-	e.sep_id= sep_id;
-	e.st_dev= st_dev;
-	e.st_ino= st_ino;
-	e.st_ctime= st_ctime;
-	e.new_uid= new_uid;
-	e.new_gid= new_gid;
-	strncpy(e.progname, progname, sizeof(e.progname)-1);
-	e.progname[sizeof(e.progname)-1]= '\0';
+  e.text_bytes = text_bytes;
+  e.data_bytes = data_bytes;
+  e.bss_bytes  = bss_bytes;
+  e.tot_bytes  = tot_bytes;
+  e.args_bytes = frame_len;
+  e.sep_id     = sep_id;
+  e.st_dev     = st_dev;
+  e.st_ino     = st_ino;
+  e.st_ctime   = st_ctime;
+  e.new_uid    = new_uid;
+  e.new_gid    = new_gid;
+  strncpy(e.progname, progname, sizeof(e.progname)-1);
+  e.progname[sizeof(e.progname)-1] = '\0';
 
-	m.m_type= EXEC_NEWMEM;
-	m.EXC_NM_PROC= proc_e;
-	m.EXC_NM_PTR= (char *)&e;
-	r= sendrec(PM_PROC_NR, &m);
-	if (r != OK)
-		return r;
-#if 0
-	printf("exec_newmem: r = %d, m_type = %d\n", r, m.m_type);
-#endif
-	*stack_topp= m.m1_i1;
-	*load_textp= !!(m.m1_i2 & EXC_NM_RF_LOAD_TEXT);
-	*allow_setuidp= !!(m.m1_i2 & EXC_NM_RF_ALLOW_SETUID);
-#if 0
-	printf("exec_newmem: stack_top = 0x%x\n", *stack_topp);
-	printf("exec_newmem: load_text = %d\n", *load_textp);
-#endif
-	return m.m_type;
+  m.m_type = EXEC_NEWMEM;
+  m.EXC_NM_PROC = proc_e;
+  m.EXC_NM_PTR = (char *)&e;
+  if ((r = sendrec(PM_PROC_NR, &m)) != OK) return(r);
+
+  *stack_topp = m.m1_i1;
+  *load_textp = !!(m.m1_i2 & EXC_NM_RF_LOAD_TEXT);
+  *allow_setuidp = !!(m.m1_i2 & EXC_NM_RF_ALLOW_SETUID);
+
+  return(m.m_type);
 }
 
 
@@ -337,7 +272,7 @@ int *hdrlenp;
   off_t pos;
   int r;
   u64_t new_pos;
-  unsigned int cum_io_incr;
+  unsigned int cum_io;
   struct exec hdr;		/* a.out header is read in here */
 
   /* Read the header and check the magic number.  The standard MINIX header 
@@ -370,14 +305,13 @@ int *hdrlenp;
   pos= 0;	/* Read from the start of the file */
 
   /* Issue request */
-  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, 
-	cvul64(pos), READING, FS_PROC_NR, (char*)&hdr, sizeof(hdr), &new_pos,
-	&cum_io_incr);
+  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
+  		    FS_PROC_NR, (char*)&hdr, sizeof(hdr), &new_pos, &cum_io);
   if (r != OK) return r;
 
   /* Interpreted script? */
   if (((char*)&hdr)[0] == '#' && ((char*)&hdr)[1] == '!' && vp->v_size >= 2)
-	return ESCRIPT;
+	return(ESCRIPT);
 
   if (vp->v_size < A_MINHDR) return(ENOEXEC);
 
@@ -411,6 +345,7 @@ int *hdrlenp;
   return(OK);
 }
 
+
 /*===========================================================================*
  *				patch_stack				     *
  *===========================================================================*/
@@ -428,7 +363,7 @@ vir_bytes *stk_bytes;		/* size of initial stack */
   off_t pos;
   char *sp, *interp = NULL;
   u64_t new_pos;
-  unsigned int cum_io_incr;
+  unsigned int cum_io;
   char buf[_MAX_BLOCK_SIZE];
 
   /* Make user_fullpath the new argv[0]. */
@@ -437,9 +372,9 @@ vir_bytes *stk_bytes;		/* size of initial stack */
   pos = 0;	/* Read from the start of the file */
 
   /* Issue request */
-  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, cvul64(pos),
-	READING, FS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io_incr);
-  if (r != OK) return r;
+  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(pos), READING,
+  		    FS_PROC_NR, buf, _MAX_BLOCK_SIZE, &new_pos, &cum_io);
+  if (r != OK) return(r);
   
   n = vp->v_size;
   if (n > _MAX_BLOCK_SIZE)
@@ -534,6 +469,7 @@ int replace;
   return(TRUE);
 }
 
+
 /*===========================================================================*
  *				patch_ptr				     *
  *===========================================================================*/
@@ -566,6 +502,7 @@ vir_bytes base;			/* virtual address of stack base inside user */
   }
 }
 
+
 /*===========================================================================*
  *				read_seg				     *
  *===========================================================================*/
@@ -584,74 +521,53 @@ phys_bytes seg_bytes;		/* how much is to be transferred? */
   int r;
   unsigned n, o;
   u64_t new_pos;
-  unsigned int cum_io_incr;
+  unsigned int cum_io;
   char buf[1024];
 
   /* Make sure that the file is big enough */
-  if (vp->v_size < off+seg_bytes) {
-	return EIO;
-  }
+  if (vp->v_size < off+seg_bytes) return(EIO);
 
-  if (seg != D)
-  {
+  if (seg != D) {
 	/* We have to use a copy loop until safecopies support segments */
-	o= 0;
-	while (o < seg_bytes)
-	{
-		n= seg_bytes-o;
+	o = 0;
+	while (o < seg_bytes) {
+		n = seg_bytes - o;
 		if (n > sizeof(buf))
-			n= sizeof(buf);
+			n = sizeof(buf);
 
-#if 0
-printf("read_seg for user %d, seg %d: buf 0x%x, size %d, pos %d\n",
-	proc_e, seg, buf, n, off+o);
-#endif
-
-		/* Issue request */
-		r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index,
-			cvul64(off+o), READING, FS_PROC_NR, buf, n, &new_pos,
-			&cum_io_incr);
-		if (r != OK) {
+		if ((r = req_readwrite(vp->v_fs_e,vp->v_inode_nr,cvul64(off+o), READING, FS_PROC_NR, buf,
+				       n, &new_pos, &cum_io)) != OK) {
 			printf("VFS: read_seg: req_readwrite failed (text)\n");
-			return r;
+			return(r);
 		}
 
-		if (cum_io_incr != n)
-		{
+		if (cum_io != n) {
 			printf(
 		"VFSread_seg segment has not been read properly by exec() \n");
-			return EIO;
+			return(EIO);
 		}
 
-		r= sys_vircopy(FS_PROC_NR, D, (vir_bytes)buf, proc_e, seg, o,
-			n);
-		if (r != OK) {
+		if ((r = sys_vircopy(FS_PROC_NR, D, (vir_bytes)buf, proc_e,
+				     seg, o, n)) != OK) {
 			printf("VFS: read_seg: copy failed (text)\n");
-			return r;
+			return(r);
 		}
 
 		o += n;
 	}
-	return OK;
+	return(OK);
   }
   
-#if 0
-printf("read_seg for user %d, seg %d: buf 0x%x, size %d, pos %d\n",
-	proc_e, seg, 0, seg_bytes, off);
-#endif
-
-  /* Issue request */
-  r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, vp->v_index, cvul64(off),
-	READING, proc_e, 0, seg_bytes, &new_pos, &cum_io_incr);
-  if (r != OK) {
+  if ((r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, cvul64(off), READING,
+  			 proc_e, 0, seg_bytes, &new_pos, &cum_io)) != OK) {
 	printf("VFS: read_seg: req_readwrite failed (data)\n");
-	return r;
+	return(r);
   }
   
-  if (r == OK && cum_io_incr != seg_bytes)
-      printf("VFSread_seg segment has not been read properly by exec() \n");
+  if (r == OK && cum_io != seg_bytes)
+	printf("VFSread_seg segment has not been read properly by exec()\n");
 
-  return r; 
+  return(r); 
 }
 
 
@@ -665,11 +581,9 @@ struct fproc *rfp;
  */
   int i;
 
-    /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
-    for (i = 0; i < OPEN_MAX; i++)
-	  if ( FD_ISSET(i, &rfp->fp_cloexec_set))
+  /* Check the file desriptors one by one for presence of FD_CLOEXEC. */
+  for (i = 0; i < OPEN_MAX; i++)
+	if ( FD_ISSET(i, &rfp->fp_cloexec_set))
 		(void) close_fd(rfp, i);
 }
-
-
 

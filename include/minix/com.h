@@ -71,7 +71,8 @@
 #define DS_PROC_NR	  6    	/* data store server */
 #define MFS_PROC_NR       7     /* minix root filesystem */
 #define VM_PROC_NR        8     /* memory server */
-#define INIT_PROC_NR	  9    	/* init -- goes multiuser */
+#define PFS_PROC_NR       9     /* pipe filesystem */
+#define INIT_PROC_NR	  10   	/* init -- goes multiuser */
 
 /* Root system process and root user process. */
 #define ROOT_SYS_PROC_NR  RS_PROC_NR
@@ -752,6 +753,7 @@
 #define PM_FORK_NB	(PM_RQ_BASE + 8)	/* Non-blocking fork */
 #define PM_UNPAUSE	(PM_RQ_BASE + 9)	/* Interrupt process call */
 #define PM_REBOOT	(PM_RQ_BASE + 10)	/* System reboot */
+#define PM_SETGROUPS	(PM_RQ_BASE + 11)	/* Tell VFS about setgroups */
 
 /* Replies from VFS to PM */
 #define PM_SETUID_REPLY	(PM_RS_BASE + 21)
@@ -764,6 +766,7 @@
 #define PM_FORK_NB_REPLY	(PM_RS_BASE + 28)
 #define PM_UNPAUSE_REPLY	(PM_RS_BASE + 29)
 #define PM_REBOOT_REPLY	(PM_RS_BASE + 30)
+#define PM_SETGROUPS_REPLY	(PM_RS_BASE + 31)
 
 /* Standard parameters for all requests and replies, except PM_REBOOT */
 #  define PM_PROC		m1_i1	/* process */
@@ -771,6 +774,11 @@
 /* Additional parameters for PM_SETUID and PM_SETGID */
 #  define PM_EID		m1_i2	/* effective user/group id */
 #  define PM_RID		m1_i3	/* real user/group id */
+
+/* Additional parameter for PM_SETGROUPS */
+#define PM_GROUP_NO		m1_i2	/* number of groups */
+#define PM_GROUP_ADDR		m1_p1	/* struct holding group data */
+
 
 /* Additional parameters for PM_EXEC */
 #  define PM_PATH		m1_p1	/* executable */
