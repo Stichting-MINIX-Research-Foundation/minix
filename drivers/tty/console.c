@@ -103,6 +103,8 @@ PRIVATE int nr_cons= 1;		/* actual number of consoles */
 PRIVATE console_t cons_table[NR_CONS];
 PRIVATE console_t *curcons = NULL;	/* currently visible */
 
+PRIVATE int shutting_down = FALSE;	/* don't allow console switches */
+
 /* Color if using a color controller. */
 #define color	(vid_port == C_6845)
 
@@ -1228,12 +1230,11 @@ PUBLIC void toggle_scroll()
 PUBLIC void cons_stop()
 {
 /* Prepare for halt or reboot. */
-  select_console(0);
-#if 0
   cons_org0();
   softscroll = 1;
+  select_console(0);
   cons_table[0].c_attr = cons_table[0].c_blank = BLANK_COLOR;
-#endif
+  shutting_down = TRUE;
 }
 
 /*===========================================================================*
@@ -1297,6 +1298,8 @@ PRIVATE void reenable_console()
 PUBLIC void select_console(int cons_line)
 {
 /* Set the current console to console number 'cons_line'. */
+
+  if (shutting_down) return;
 
   if (cons_line < 0 || cons_line >= nr_cons) return;
 

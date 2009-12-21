@@ -102,6 +102,7 @@ unsigned long rs_irq_set = 0;
 
 struct kmessages kmess;
 
+FORWARD _PROTOTYPE( void got_signal, (void)				);
 FORWARD _PROTOTYPE( void tty_timed_out, (timer_t *tp)			);
 FORWARD _PROTOTYPE( void expire_timers, (void)				);
 FORWARD _PROTOTYPE( void settimer, (tty_t *tty_ptr, int enable)		);
@@ -219,8 +220,8 @@ PUBLIC int main(void)
 				expire_timers();
 				break;
 			case PM_PROC_NR:
-				/* switch to primary console */
-				cons_stop();
+				/* signal */
+				got_signal();
 				break;
 			case SYSTEM:
 				/* system signal */
@@ -341,6 +342,24 @@ PRIVATE void sef_local_startup()
 
   /* Let SEF perform startup. */
   sef_startup();
+}
+
+/*===========================================================================*
+ *				got_signal				     *
+ *===========================================================================*/
+PRIVATE void got_signal()
+{
+/* PM notified us that we have received a signal. If it is a SIGTERM, assume
+ * that the system is shutting down.
+ */
+  sigset_t set;
+
+  if (getsigset(&set) != 0) return;
+
+  if (!sigismember(&set, SIGTERM)) return;
+
+  /* switch to primary console */
+  cons_stop();
 }
 
 /*===========================================================================*
