@@ -270,12 +270,9 @@ char *argv[];
 		if (blocks == 0) pexit("Can't open prototype file");
 	}
 	if (i == 0) {
-		i = blocks / 2;
-		if (blocks >= 20000) i = blocks / 3;
-		if (blocks >= 40000) i = blocks / 4;
-		if (blocks >= 60000) i = blocks / 5;
-		if (blocks >= 80000) i = blocks / 6;
-		if (blocks >= 100000) i = blocks / 7;
+		u32_t kb = div64u(mul64u(blocks, block_size), 1024);
+		i = kb / 2;
+		if (kb >= 100000) i = kb / 4;
 
 		/* round up to fill inode block */
 		i += inodes_per_block - 1;
@@ -462,15 +459,21 @@ ino_t inodes;
 	fprintf(stderr, "mkfs: too many block bitmap blocks.\n" BIGGERBLOCKS);
 	exit(1);
   }
-  inode_offset = sup->s_imap_blocks + sup->s_zmap_blocks + 2;
+  inode_offset = START_BLOCK + sup->s_imap_blocks + sup->s_zmap_blocks;
   inodeblks = (inodes + inodes_per_block - 1) / inodes_per_block;
   initblks = inode_offset + inodeblks;
-  sup->s_firstdatazone = nb = (initblks + (1 << zone_shift) - 1) >> zone_shift;
+  sup->s_firstdatazone_old = nb =
+	(initblks + (1 << zone_shift) - 1) >> zone_shift;
   if(nb >= zones) pexit("bit maps too large");
-  if(nb != sup->s_firstdatazone) {
-	fprintf(stderr, "mkfs: too much bitmap and inode data.\n" BIGGERBLOCKS);
-	exit(1);
+  if(nb != sup->s_firstdatazone_old) {
+	/* The field is too small to store the value. Fortunately, the value
+	 * can be computed from other fields. We set the on-disk field to zero
+	 * to indicate that it must not be used. Eventually, we can always set
+	 * the on-disk field to zero, and stop using it.
+	 */
+	sup->s_firstdatazone_old = 0;
   }
+  sup->s_firstdatazone = nb;
   zoff = sup->s_firstdatazone - 1;
   sup->s_log_zone_size = zone_shift;
   if (fs_version == 1) {
@@ -508,7 +511,7 @@ ino_t inodes;
   }
 
   /* Clear maps and inodes. */
-  for (i = 2; i < initblks; i++) put_block((block_t) i, zero);
+  for (i = START_BLOCK; i < initblks; i++) put_block((block_t) i, zero);
 
   next_zone = sup->s_firstdatazone;
   next_inode = 1;

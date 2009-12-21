@@ -183,6 +183,7 @@ register struct super_block *sp; /* pointer to a superblock */
   int magic;
   int version, native, r;
   static char *sbbuf;
+  block_t offset;
 
   STATICINIT(sbbuf, _MIN_BLOCK_SIZE);
 
@@ -215,14 +216,14 @@ register struct super_block *sp; /* pointer to a superblock */
 
   /* If the super block has the wrong byte order, swap the fields; the magic
    * number doesn't need conversion. */
-  sp->s_ninodes =       conv4(native, sp->s_ninodes);
-  sp->s_nzones =        conv2(native, (int) sp->s_nzones);
-  sp->s_imap_blocks =   conv2(native, (int) sp->s_imap_blocks);
-  sp->s_zmap_blocks =   conv2(native, (int) sp->s_zmap_blocks);
-  sp->s_firstdatazone = conv2(native, (int) sp->s_firstdatazone);
-  sp->s_log_zone_size = conv2(native, (int) sp->s_log_zone_size);
-  sp->s_max_size =      conv4(native, sp->s_max_size);
-  sp->s_zones =         conv4(native, sp->s_zones);
+  sp->s_ninodes =           conv4(native, sp->s_ninodes);
+  sp->s_nzones =            conv2(native, (int) sp->s_nzones);
+  sp->s_imap_blocks =       conv2(native, (int) sp->s_imap_blocks);
+  sp->s_zmap_blocks =       conv2(native, (int) sp->s_zmap_blocks);
+  sp->s_firstdatazone_old = conv2(native, (int) sp->s_firstdatazone_old);
+  sp->s_log_zone_size =     conv2(native, (int) sp->s_log_zone_size);
+  sp->s_max_size =          conv4(native, sp->s_max_size);
+  sp->s_zones =             conv4(native, sp->s_zones);
 
   /* In V1, the device size was kept in a short, s_nzones, which limited
    * devices to 32K zones.  For V2, it was decided to keep the size as a
@@ -250,6 +251,21 @@ register struct super_block *sp; /* pointer to a superblock */
 	sp->s_inodes_per_block = V2_INODES_PER_BLOCK(sp->s_block_size);
 	sp->s_ndzones = V2_NR_DZONES;
 	sp->s_nindirs = V2_INDIRECTS(sp->s_block_size);
+  }
+
+  /* For even larger disks, a similar problem occurs with s_firstdatazone.
+   * If the on-disk field contains zero, we assume that the value was too
+   * large to fit, and compute it on the fly.
+   */
+  if (sp->s_firstdatazone_old == 0) {
+	offset = START_BLOCK + sp->s_imap_blocks + sp->s_zmap_blocks;
+	offset += (sp->s_ninodes + sp->s_inodes_per_block - 1) /
+		sp->s_inodes_per_block;
+
+	sp->s_firstdatazone = (offset + (1 << sp->s_log_zone_size) - 1) >>
+		sp->s_log_zone_size;
+  } else {
+	sp->s_firstdatazone = sp->s_firstdatazone_old;
   }
 
   if (sp->s_block_size < _MIN_BLOCK_SIZE) 

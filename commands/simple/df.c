@@ -271,7 +271,7 @@ int df(const struct mtab *mt)
 {
   int fd;
   bit_t i_count, z_count;
-  block_t totblocks, busyblocks;
+  block_t totblocks, busyblocks, offset;
   int n, block_size;
   struct v12_super_block super, *sp;
 
@@ -300,7 +300,7 @@ int df(const struct mtab *mt)
   }
 
   if(sp->s_magic != SUPER_V3) block_size = _STATIC_BLOCK_SIZE;
-  else block_size = super.s_block_size;
+  else block_size = sp->s_block_size;
 
   if(block_size < _MIN_BLOCK_SIZE) {
 	fprintf(stderr, "df: %s: funny block size (%d)\n",
@@ -309,7 +309,24 @@ int df(const struct mtab *mt)
 	return(1);
   }
 
-  if (sp->s_magic == SUPER_V1) sp->s_zones= sp->s_nzones;
+  if (sp->s_magic == SUPER_V1) {
+	sp->s_zones = sp->s_nzones;
+	sp->s_inodes_per_block = V1_INODES_PER_BLOCK;
+  } else {
+	sp->s_inodes_per_block = V2_INODES_PER_BLOCK(block_size);
+  }
+
+  /* If the s_firstdatazone_old field is zero, we have to compute the value. */
+  if (sp->s_firstdatazone_old == 0) {
+	offset = START_BLOCK + sp->s_imap_blocks + sp->s_zmap_blocks;
+	offset += (sp->s_ninodes + sp->s_inodes_per_block - 1) /
+		sp->s_inodes_per_block;
+
+	sp->s_firstdatazone = (offset + (1 << sp->s_log_zone_size) - 1) >>
+		sp->s_log_zone_size;
+  } else {
+	sp->s_firstdatazone = sp->s_firstdatazone_old;
+  }
 
   lseek(fd, (off_t) block_size * 2L, SEEK_SET);	/* skip rest of super block */
 

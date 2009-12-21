@@ -170,7 +170,7 @@ int rw_mode;
 
   i_num = stat_ptr->st_ino;
 
-  blk = (block_t) (2 + sp->s_imap_blocks + sp->s_zmap_blocks);
+  blk = (block_t) (START_BLOCK + sp->s_imap_blocks + sp->s_zmap_blocks);
   blk += (block_t) ((i_num - 1) / inodes_per_block);
   blk *= (block_t) (BLOCK_SIZE);/* this block */
 
@@ -334,6 +334,14 @@ char *argv[];
 	inode_size = V2_INODE_SIZE;
   }
 
+  /* If the s_firstdatazone_old field is zero, we have to compute the value. */
+  if (sp->s_firstdatazone_old == 0)
+	sp->s_firstdatazone =
+		START_BLOCK + sp->s_imap_blocks + sp->s_zmap_blocks +
+		(sp->s_ninodes + inodes_per_block - 1) / inodes_per_block;
+  else
+	sp->s_firstdatazone = sp->s_firstdatazone_old;
+
   get_inode(&stat_buf);
 
   for (finished = 0; !finished;) {
@@ -481,7 +489,7 @@ block_t num;
   offset = z_num - (blk << BIT_MAP_SHIFT);	/* offset */
   words = z_num / INT_BITS;	/* which word */
 
-  blk_offset = (block_t) (2 + sp->s_imap_blocks);	/* zone map */
+  blk_offset = (block_t) (START_BLOCK + sp->s_imap_blocks);	/* zone map */
   blk_offset *= (block_t) BLOCK_SIZE;	/* of course in block */
   blk_offset += (block_t) (words * SIZE_OF_INT);	/* offset */
 
@@ -520,7 +528,7 @@ zone_t num;
   offset = z_num - (blk << BIT_MAP_SHIFT);	/* offset in block */
   words = z_num / INT_BITS;	/* which word */
 
-  blk_offset = (long) (2 + sp->s_imap_blocks);
+  blk_offset = (long) (START_BLOCK + sp->s_imap_blocks);
   blk_offset *= (long) BLOCK_SIZE;
   blk_offset += (long) (words * SIZE_OF_INT);
 

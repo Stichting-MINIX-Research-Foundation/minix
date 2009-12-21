@@ -528,8 +528,8 @@ void lsuper()
 	if (input(buf, 80)) sb.s_imap_blocks = atol(buf);
 	printf("zmap_blocks   = %u", sb.s_zmap_blocks);
 	if (input(buf, 80)) sb.s_zmap_blocks = atol(buf);
-	printf("firstdatazone = %u", sb.s_firstdatazone);
-	if (input(buf, 80)) sb.s_firstdatazone = atol(buf);
+	printf("firstdatazone = %u", sb.s_firstdatazone_old);
+	if (input(buf, 80)) sb.s_firstdatazone_old = atol(buf);
 	printf("log_zone_size = %u", sb.s_log_zone_size);
 	if (input(buf, 80)) sb.s_log_zone_size = atol(buf);
 	printf("maxsize       = %ld", sb.s_max_size);
@@ -569,12 +569,12 @@ void getsuper()
   if (sb.s_zones <= 0) fatal("no zones");
   if (sb.s_imap_blocks <= 0) fatal("no imap");
   if (sb.s_zmap_blocks <= 0) fatal("no zmap");
-  if (sb.s_firstdatazone <= 4) fatal("first data zone too small");
+  if (sb.s_firstdatazone != 0 && sb.s_firstdatazone <= 4)
+	fatal("first data zone too small");
   if (sb.s_log_zone_size < 0) fatal("zone size < block size");
   if (sb.s_max_size <= 0) {
-	printf("max file size %ld ", sb.s_max_size);
+	printf("warning: invalid max file size %ld\n", sb.s_max_size);
   	sb.s_max_size = LONG_MAX;
-	printf("set to %ld\n", sb.s_max_size);
   }
 }
 
@@ -602,17 +602,22 @@ void chksuper()
 	pr("warning: expected %d zmap_block%s", n, "", "s");
 	printf(" instead of %d\n", sb.s_zmap_blocks);
   }
-  if (sb.s_firstdatazone >= sb.s_zones)
-	fatal("first data zone too large");
   if (sb.s_log_zone_size >= 8 * sizeof(block_nr))
 	fatal("log_zone_size too large");
   if (sb.s_log_zone_size > 8) printf("warning: large log_zone_size (%d)\n",
 	       sb.s_log_zone_size);
-  n = (BLK_ILIST + N_ILIST + SCALE - 1) >> sb.s_log_zone_size;
-  if (sb.s_firstdatazone < n) fatal("first data zone too small");
-  if (sb.s_firstdatazone != n) {
-	printf("warning: expected first data zone to be %d ", n);
-	printf("instead of %u\n", sb.s_firstdatazone);
+  sb.s_firstdatazone = (BLK_ILIST + N_ILIST + SCALE - 1) >> sb.s_log_zone_size;
+  if (sb.s_firstdatazone_old != 0) {
+	if (sb.s_firstdatazone_old >= sb.s_zones)
+		fatal("first data zone too large");
+	if (sb.s_firstdatazone_old < sb.s_firstdatazone)
+		fatal("first data zone too small");
+	if (sb.s_firstdatazone_old != sb.s_firstdatazone) {
+		printf("warning: expected first data zone to be %u ",
+			sb.s_firstdatazone);
+		printf("instead of %u\n", sb.s_firstdatazone_old);
+		sb.s_firstdatazone = sb.s_firstdatazone_old;
+	}
   }
   maxsize = MAX_FILE_POS;
   if (((maxsize - 1) >> sb.s_log_zone_size) / block_size >= MAX_ZONES)
@@ -627,12 +632,12 @@ void chksuper()
 
 int inoblock(int inn)
 {
-	return div64u(mul64u(inn - 1, INODE_SIZE), block_size) + BLK_ILIST;
+  return div64u(mul64u(inn - 1, INODE_SIZE), block_size) + BLK_ILIST;
 }
 
 int inooff(int inn)
 {
-	return rem64u(mul64u(inn - 1, INODE_SIZE), block_size);
+  return rem64u(mul64u(inn - 1, INODE_SIZE), block_size);
 }
 
 /* Make a listing of the inodes given by `clist'.  If `repair' is set, ask

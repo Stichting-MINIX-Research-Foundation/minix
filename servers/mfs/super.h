@@ -23,7 +23,7 @@ EXTERN struct super_block {
   zone1_t  s_nzones;		/* total device size, including bit maps etc */
   short s_imap_blocks;		/* # of blocks used by inode bit map */
   short s_zmap_blocks;		/* # of blocks used by zone bit map */
-  zone1_t s_firstdatazone;	/* number of first data zone */
+  zone1_t s_firstdatazone_old;	/* number of first data zone (small) */
   short s_log_zone_size;	/* log2 of blocks/zone */
   short s_pad;			/* try to avoid compiler-dependent padding */
   off_t s_max_size;		/* maximum file size on this device */
@@ -45,6 +45,7 @@ EXTERN struct super_block {
   /*struct inode *s_isup;*/	/* inode for root dir of mounted file sys */
   /*struct inode *s_imount;*/   /* inode mounted on */
   unsigned s_inodes_per_block;	/* precalculated from magic number */
+  zone_t s_firstdatazone;	/* number of first data zone (big) */
   dev_t s_dev;			/* whose super block is this? */
   int s_rd_only;		/* set to 1 iff file sys mounted read only */
   int s_native;			/* set to 1 iff not byte swapped file system */
