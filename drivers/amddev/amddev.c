@@ -63,10 +63,16 @@ static void del_range(u32_t busaddr, u32_t size);
 static int do_pm_notify(message *m);
 static void report_exceptions(void);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 int main(void)
 {
 	int r;
 	message m;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	printf("amddev: starting\n");
 
@@ -76,9 +82,9 @@ int main(void)
 	{
 		report_exceptions();
 
-		r= receive(ANY, &m);
+		r= sef_receive(ANY, &m);
 		if (r != OK)
-			panic(__FILE__, "receive failed", r);
+			panic(__FILE__, "sef_receive failed", r);
 		if (is_notify(m.m_type)) {
 			if (_ENDPOINT_P(m.m_source) == PM_PROC_NR) {
 				do_pm_notify(&m);
@@ -93,6 +99,19 @@ int main(void)
 		}
 		printf("amddev: got message from %d\n", m.m_source);
 	}
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 static int init()

@@ -27,7 +27,7 @@ $(UTIL):	$(UTIL_OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(UTIL_OBJ) $(UTIL_LIBS)
 $(SERVER):	$(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
-	install -S 350k $@
+	install -S 450k $@
 
 # install with other servers
 install:	/bin/$(UTIL) /usr/sbin/$(SERVER)

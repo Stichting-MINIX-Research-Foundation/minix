@@ -44,6 +44,9 @@ PRIVATE char *boot_image_buffer;
 /* Flag set when memory unmapping can be done. */
 EXTERN int unmap_ok;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
@@ -58,6 +61,9 @@ PUBLIC int main(void)
   int result;                 			/* result to return */
   sigset_t sigset;				/* system signal set */
   int s;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   /* Initialize the server, then go to work. */
   init_server();	
@@ -74,9 +80,10 @@ PUBLIC int main(void)
 
       call_nr = m.m_type;
 
-      /* Now determine what to do.  Three types of requests are expected: 
+      /* Now determine what to do.  Four types of requests are expected:
        * - Heartbeat messages (notifications from registered system services)
        * - System notifications (POSIX signals or synchronous alarm)
+       * - Ready to update messages (reply messages from registered services)
        * - User requests (control messages to manage system services)
        */
 
@@ -87,10 +94,9 @@ PUBLIC int main(void)
           switch (who_p) {
           case CLOCK:
 	      do_period(&m);			/* check services status */
-	      continue;				
-          case PM_PROC_NR:
-	      sig_handler();
-              continue;				
+	      continue;
+          case PM_PROC_NR:                      /* signal or PM heartbeat */
+	      sig_handler();				
 	  default:				/* heartbeat notification */
 	      if (rproc_ptr[who_p] != NULL) {	/* mark heartbeat time */ 
 		  rproc_ptr[who_p]->r_alive_tm = m.NOTIFY_TIMESTAMP;
@@ -101,7 +107,21 @@ PUBLIC int main(void)
 	  }
       }
 
-      /* If this is not a notification message, it is a normal request. 
+      /* See if this is a ready to update message.
+       * If the message was expected, update the originating process
+       */
+      else if(call_nr == RS_LU_PREPARE) {
+	  result = do_upd_ready(&m);
+	  
+	  /* Send reply only if something went wrong. */
+          if (result != OK) {
+	      m.m_type = result;
+              reply(who_e, &m);
+          }
+      }
+      
+      /* If this is neither a ready to update message nor a notification
+       * message, it is a normal request.
        * Handle the request and send a reply to the caller. 
        */
       else {
@@ -121,6 +141,7 @@ PUBLIC int main(void)
           case RS_REFRESH: 	result = do_refresh(&m); 	break;
           case RS_RESTART: 	result = do_restart(&m); 	break;
           case RS_SHUTDOWN: 	result = do_shutdown(&m); 	break;
+          case RS_UPDATE: 	result = do_update(&m); 	break;
           case GETSYSINFO: 	result = do_getsysinfo(&m); 	break;
 	  case RS_LOOKUP:	result = do_lookup(&m);		break;
           default: 
@@ -136,6 +157,17 @@ PUBLIC int main(void)
           }
       }
   }
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*
@@ -322,6 +354,9 @@ PRIVATE void init_server(void)
   /* See if we run in verbose mode. */
   env_parse("rs_verbose", "d", 0, &rs_verbose, 0, 1);
 
+  /* Initialize the global update descriptor. */
+  rupdate.flags = 0;
+
   /* Get a copy of the boot image table. */
   if ((s = sys_getimage(image)) != OK) {
       panic("RS", "unable to get copy of boot image table", s);
@@ -495,7 +530,7 @@ PRIVATE void init_server(void)
       boot_image_info_lookup(boot_image_priv->endpoint, image,
           &ip, NULL, NULL, NULL);
 
-      /* Allow the process to run. */
+      /* Allow the service to run. */
       if ((s = sys_privctl(ip->endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
           panic("RS", "unable to initialize privileges", s);
       }
@@ -618,8 +653,8 @@ PRIVATE void get_work(m_in)
 message *m_in;				/* pointer to message */
 {
     int s;				/* receive status */
-    if (OK != (s=receive(ANY, m_in))) 	/* wait for message */
-        panic("RS","receive failed", s);
+    if (OK != (s=sef_receive(ANY, m_in))) 	/* wait for message */
+        panic("RS", "sef_receive failed", s);
 }
 
 /*===========================================================================*

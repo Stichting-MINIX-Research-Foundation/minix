@@ -40,6 +40,8 @@ PRIVATE int mixer_avail = 0;	/* Mixer exists? */
 
 #define dprint (void)
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 
 /*===========================================================================*
  *				main
@@ -48,11 +50,14 @@ PUBLIC void main() {
 message mess;
 	int err, caller, proc_nr;
 
+	/* SEF local startup. */
+	sef_local_startup();
+
 	/* Here is the main loop of the mixer task. It waits for a message, carries
 	* it out, and sends a reply.
 	*/
 	while (TRUE) {
-		receive(ANY, &mess);
+		sef_receive(ANY, &mess);
 
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
@@ -88,6 +93,18 @@ message mess;
 	}
 }
 
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
 
 /*=========================================================================*
  *				mixer_open				   	

@@ -17,11 +17,11 @@ LIBS = -lsys
 # build local binary
 all:	es1370
 
-es1370:	es1370.o ak4531.o audio_fw.o pci_helper.o
-	$(CC) -o $@ $(LDFLAGS) es1370.o ak4531.o audio_fw.o pci_helper.o $(LIBS)
+es1370:	es1370.o ak4531.o audio_fw.o liveupdate.o pci_helper.o
+	$(CC) -o $@ $(LDFLAGS) es1370.o ak4531.o audio_fw.o liveupdate.o pci_helper.o $(LIBS)
 
-audio_fw.o: ../framework/audio_fw.c ../framework/audio_fw.h
-	$(CC) -c ../framework/audio_fw.c
+audio_fw.o liveupdate.o: ../framework/audio_fw.c ../framework/liveupdate.c ../framework/audio_fw.h
+	$(CC) -c ../framework/audio_fw.c ../framework/liveupdate.c
 	
 install: /usr/sbin/es1370
 /usr/sbin/es1370:	es1370

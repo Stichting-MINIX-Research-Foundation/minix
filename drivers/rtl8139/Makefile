@@ -16,7 +16,7 @@ CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
 LIBS = -lsys   -ltimers 
 
-OBJ = rtl8139.o 
+OBJ = rtl8139.o liveupdate.o
 
 # build local binary
 all build:	$(DRIVER)

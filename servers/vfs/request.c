@@ -1097,7 +1097,7 @@ PRIVATE int fs_sendrec_f(char *file, int line, endpoint_t fs_e, message *reqm)
           for (;;) {
               new_driver_e = 0;
               printf("VFSdead_driver: waiting for new driver\n");
-              r = receive(RS_PROC_NR, &m);
+              r = sef_receive(RS_PROC_NR, &m);
               if (r != OK) {
                   panic(__FILE__, "VFSdead_driver: unable to receive from RS", 
 				  r);

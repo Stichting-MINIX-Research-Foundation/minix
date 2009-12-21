@@ -1,5 +1,6 @@
 /*
  * Changes:
+ *   Nov 22, 2009:	added basic live update support  (Cristiano Giuffrida)
  *   Mar 02, 2009:	Extended isolation policies  (Jorrit N. Herder)
  *   Jul 22, 2005:	Created  (Jorrit N. Herder)
  */
@@ -38,9 +39,9 @@ FORWARD _PROTOTYPE( void add_forward_ipc, (struct rproc *rp,
 FORWARD _PROTOTYPE( void add_backward_ipc, (struct rproc *rp,
 	struct priv *privp) );
 FORWARD _PROTOTYPE( void init_privs, (struct rproc *rp, struct priv *privp) );
-FORWARD _PROTOTYPE( int set_privs, (endpoint_t endpoint, struct priv *privp,
-    int req) );
 FORWARD _PROTOTYPE( void init_pci, (struct rproc *rp, int endpoint) );
+FORWARD _PROTOTYPE( void update_period, (message *m_ptr) );
+FORWARD _PROTOTYPE( void end_update, (clock_t now) );
 
 PRIVATE int shutting_down = FALSE;
 
@@ -591,6 +592,190 @@ PUBLIC int do_shutdown(message *m_ptr)
 }
 
 /*===========================================================================*
+ *				do_update				     *
+ *===========================================================================*/
+PUBLIC int do_update(message *m_ptr)
+{
+  register struct rproc *rp;
+  size_t len;
+  int s;
+  char label[MAX_LABEL_LEN];
+  int lu_state;
+  int prepare_maxtime;
+
+  /* Retrieve label. */
+  len= m_ptr->RS_CMD_LEN;
+  if (len >= sizeof(label))
+      return EINVAL;		/* Too long */
+  s= sys_datacopy(m_ptr->m_source, (vir_bytes) m_ptr->RS_CMD_ADDR, 
+      SELF, (vir_bytes) label, len);
+  if (s != OK) return(s);
+  label[len]= '\0';
+
+  /* Retrieve live update state. */
+  lu_state = m_ptr->RS_LU_STATE;
+  if(lu_state == SEF_LU_STATE_NULL) {
+      return(EINVAL);
+  }
+
+  /* Retrieve prepare max time. */
+  prepare_maxtime = m_ptr->RS_LU_PREPARE_MAXTIME;
+  if(prepare_maxtime) {
+      if(prepare_maxtime < 0 || prepare_maxtime > RS_MAX_PREPARE_MAXTIME) {
+          return(EINVAL);
+      }
+  }
+  else {
+      prepare_maxtime = RS_DEFAULT_PREPARE_MAXTIME;
+  }
+
+  /* Make sure we are not already updating. */
+  if(rupdate.flags & RS_UPDATING) {
+      if(rs_verbose) {
+	  printf("RS: do_update: an update is already in progress");
+      }
+      return(EBUSY);
+  }
+
+  /* Try to start the update process. */
+  for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
+      if (rp->r_flags & RS_IN_USE && strcmp(rp->r_label, label) == 0) {
+          if(rs_verbose) {
+	      printf("RS: updating %s (%d)\n", rp->r_label, rp->r_pid);
+	  }
+	  
+	  rp->r_flags |= RS_UPDATING;
+	  rupdate.flags |= RS_UPDATING;
+	  getuptime(&rupdate.prepare_tm);
+          rupdate.prepare_maxtime = prepare_maxtime;
+	  rupdate.rp = rp;
+	  
+	  m_ptr->m_type = RS_LU_PREPARE;
+	  asynsend(rp->r_proc_nr_e, m_ptr);  /* request to prepare for update */
+	  
+	  return(OK);
+      }
+  }
+  if(rs_verbose) {
+      printf("RS: do_update: '%s' not found\n", label);
+  }
+
+  return(ESRCH);
+}
+
+/*===========================================================================*
+ *				do_upd_ready				     *
+ *===========================================================================*/
+PUBLIC int do_upd_ready(message *m_ptr)
+{
+  register struct rproc *rp;
+  int who_p;
+  clock_t now = m_ptr->NOTIFY_TIMESTAMP;
+  int result;
+
+  who_p = _ENDPOINT_P(m_ptr->m_source);
+  rp = rproc_ptr[who_p];
+  result = m_ptr->RS_LU_RESULT;
+
+  /* Make sure the originating process was requested to prepare for update. */
+  if(! (rp->r_flags & RS_UPDATING) ) {
+      if(rs_verbose) {
+          printf("RS: do_upd_ready: got unexpected update ready msg from %d\n",
+              m_ptr->m_source);
+      }
+      return(EINVAL);
+  }
+
+  /* Check if something went wrong and the process failed to prepare
+   * for the update. In that case, end the update process.
+   */
+  if(result != OK) {
+      end_update(now);
+      switch(result) {
+          case EACCES:
+              printf("RS: update failed: %s\n",
+                  "process does not support live update");
+          break;
+
+          case EINVAL:
+              printf("RS: update failed: %s\n",
+                  "process does not support the required state");
+          break;
+
+          case EBUSY:
+              printf("RS: update failed: %s\n",
+                  "process is not able to prepare for the update now");
+          break;
+
+          case EGENERIC:
+              printf("RS: update failed: %s\n",
+                  "a generic error occurred while preparing for the update");
+          break;
+
+          default:
+              printf("RS: update failed: %s (%d)\n",
+                  "an unknown error occurred while preparing for the update\n",
+                  result);
+          break;
+      }
+
+      return ENOTREADY;
+  }
+
+  /* Kill the process now and mark it for refresh, the new version will
+   * be automatically restarted.
+   */
+  rp->r_flags &= ~RS_EXITING;
+  rp->r_flags |= RS_REFRESHING;
+  kill(rp->r_pid, SIGKILL);
+
+  return(OK);
+}
+
+/*===========================================================================*
+ *				update_period				     *
+ *===========================================================================*/
+PRIVATE void update_period(message *m_ptr)
+{
+  clock_t now = m_ptr->NOTIFY_TIMESTAMP;
+  short has_update_timed_out;
+  message m;
+
+  /* See if a timeout has occurred. */
+  has_update_timed_out = (now - rupdate.prepare_tm > rupdate.prepare_maxtime);
+
+  /* If an update timed out, end the update process and notify the service. */
+  if(has_update_timed_out) {
+      end_update(now);
+      printf("RS: update failed: maximum prepare time reached\n");
+
+      /* Prepare cancel request. */
+      m.m_type = RS_LU_PREPARE;
+      m.RS_LU_STATE = SEF_LU_STATE_NULL;
+      asynsend(rupdate.rp->r_proc_nr_e, &m);
+  }
+}
+
+/*===========================================================================*
+ *				end_update				     *
+ *===========================================================================*/
+PRIVATE void end_update(clock_t now)
+{
+  /* End the update process and mark the affected service as no longer under
+   * update. Eventual late ready to update message (if any) will simply be
+   * ignored and the service can continue executing.
+   * Also, if the service has a period, update the alive and check timestamps
+   * of the service to force a status request in the next period.
+   */
+  rupdate.flags &= ~RS_UPDATING;
+  rupdate.rp->r_flags &= ~RS_UPDATING;
+  if(rupdate.rp->r_period > 0 ) {
+      rupdate.rp->r_alive_tm = now;
+      rupdate.rp->r_check_tm = now - rupdate.rp->r_period - 1;
+  }
+}
+
+/*===========================================================================*
  *				do_exit					     *
  *===========================================================================*/
 PUBLIC void do_exit(message *m_ptr)
@@ -599,6 +784,7 @@ PUBLIC void do_exit(message *m_ptr)
   pid_t exit_pid;
   int exit_status, r, slot_nr;
   endpoint_t ep;
+  clock_t now = m_ptr->NOTIFY_TIMESTAMP;
 
   if(rs_verbose)
      printf("RS: got SIGCHLD signal, doing wait to get exited child.\n");
@@ -682,6 +868,9 @@ PUBLIC void do_exit(message *m_ptr)
 		  }
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
+		      short is_updating = rp->r_flags & RS_UPDATING;
+
+		      /* Refresh */
 		      rp->r_restarts = -1;		/* reset counter */
 		      if (rp->r_script[0] != '\0')
 			run_script(rp);
@@ -689,6 +878,12 @@ PUBLIC void do_exit(message *m_ptr)
 		        start_service(rp, 0, &ep); /* direct restart */
 			if(m_ptr)
 		  		m_ptr->RS_ENDPOINT = ep;
+		      }
+
+		      /* If updating, end the update process. */
+		      if(is_updating) {
+                          end_update(now);
+                          printf("RS: update succeeded\n");
 		      }
 	      }
 	      else {
@@ -749,9 +944,16 @@ message *m_ptr;
   int s;
   endpoint_t ep;
 
-  /* Search system services table. Only check slots that are in use. */
+  /* If an update is in progress, check its status. */
+  if(rupdate.flags & RS_UPDATING) {
+      update_period(m_ptr);
+  }
+
+  /* Search system services table. Only check slots that are in use and not
+   * updating.
+   */
   for (rp=BEG_RPROC_ADDR; rp<END_RPROC_ADDR; rp++) {
-      if (rp->r_flags & RS_IN_USE) {
+      if ((rp->r_flags & RS_IN_USE) && !(rp->r_flags & RS_UPDATING)) {
 
           /* If the service is to be revived (because it repeatedly exited, 
 	   * and was not directly restarted), the binary backoff field is  
@@ -946,6 +1148,15 @@ endpoint_t *endpoint;
 	}
   }
 
+  /* Set and synch the privilege structure for the new service. */
+  if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_SET_SYS, &rp->r_priv)) != OK
+      || (s = sys_getpriv(&rp->r_priv, child_proc_nr_e)) != OK) {
+      report("RS","unable to set privileges", s);
+      kill(child_pid, SIGKILL);				/* kill the service */
+      rp->r_flags |= RS_EXITING;			/* expect exit */
+      return(s);					/* return error */
+  }
+
   /* If PCI properties are set, inform the PCI driver about the new service. */
   if(rp->r_nr_pci_id || rp->r_nr_pci_class) {
       init_pci(rp, child_proc_nr_e);
@@ -969,22 +1180,27 @@ endpoint_t *endpoint;
   if (s != OK) {
 	printf("RS: warning: publish_service failed: %d\n", s);
   }
+
+  /* Allow the service to run.
+   * XXX FIXME: we should let the service run only after publishing information
+   * about the new system service, but this is not currently possible due to
+   * the blocking nature of mapdriver() that expects the service to be running.
+   * The current solution is not race-free. This hack can go once service
+   * publishing is made fully asynchronous in RS.
+   */
+  if ((s = sys_privctl(child_proc_nr_e, SYS_PRIV_ALLOW, NULL)) != OK) {
+      report("RS","unable to allow the service to run", s);
+      kill(child_pid, SIGKILL);				/* kill the service */
+      rp->r_flags |= RS_EXITING;			/* expect exit */
+      return(s);					/* return error */
+  }
+
+  /* Map the new service. */
   if (rp->r_dev_nr > 0) {				/* set driver map */
       if ((s=mapdriver5(rp->r_label, strlen(rp->r_label),
 	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {
           report("RS", "couldn't map driver (continuing)", errno);
       }
-  }
-
-  /* Set the privilege structure for the child process.
-   * That will also cause the child process to start running.
-   * This call should succeed: we tested number in use above.
-   */
-  if ((s = set_privs(child_proc_nr_e, &rp->r_priv, SYS_PRIV_SET_SYS)) != OK) {
-      report("RS","set_privs failed", s);
-      kill(child_pid, SIGKILL);				/* kill the service */
-      rp->r_flags |= RS_EXITING;			/* expect exit */
-      return(s);					/* return error */
   }
 
   if(rs_verbose)
@@ -1171,12 +1387,15 @@ struct rproc *rp;
 			rp->r_script, strerror(errno));
 		exit(1);
 	default:
-		/* Set the privilege structure for the child process and let it
-		 * run.
-		 */
+		/* Set the privilege structure for the child process. */
 		proc_nr_e = getnprocnr(pid);
-		if ((r= set_privs(proc_nr_e, NULL, SYS_PRIV_SET_USER)) != OK) {
-			printf("RS: run_script: set_privs call failed: %d\n",r);
+		if ((r = sys_privctl(proc_nr_e, SYS_PRIV_SET_USER, NULL))
+			!= OK) {
+			printf("RS: run_script: can't set privileges: %d\n",r);
+		}
+		/* Allow the process to run. */
+		if ((r = sys_privctl(proc_nr_e, SYS_PRIV_ALLOW, NULL)) != OK) {
+			printf("RS: run_script: process can't run: %d\n",r);
 		}
 		/* Do not wait for the child */
 		break;
@@ -1406,36 +1625,6 @@ struct priv *privp;
 				set_sys_bit(privp->s_ipc_to, i);
 		}
 	}
-}
-
-/*===========================================================================*
- *				set_privs				     *
- *===========================================================================*/
-PRIVATE int set_privs(endpoint, privp, req)
-endpoint_t endpoint;
-struct priv *privp;
-int req;
-{
-  int r;
-
-  /* Set the privilege structure. */
-  if ((r = sys_privctl(endpoint, req, privp)) != OK) {
-      return r;
-  }
-
-  /* Synch the privilege structure with the kernel for system services. */
-  if(req == SYS_PRIV_SET_SYS) {
-      if ((r = sys_getpriv(privp, endpoint)) != OK) {
-          return r;
-      }
-  }
-
-  /* Allow the process to run. */
-  if ((r = sys_privctl(endpoint, SYS_PRIV_ALLOW, NULL)) != OK) {
-      return r;
-  }
-
-  return(OK);
 }
 
 /*===========================================================================*

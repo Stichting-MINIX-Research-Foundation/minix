@@ -25,6 +25,9 @@ FORWARD _PROTOTYPE(void sig_handler, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_ptr)			);
 FORWARD _PROTOTYPE(void reply, (int whom, message *m_ptr)		);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
@@ -37,6 +40,9 @@ PUBLIC int main(int argc, char **argv)
   message m;
   int result;                 
   sigset_t sigset;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   /* Initialize the server, then go to work. */
   init_server(argc, argv);
@@ -94,6 +100,17 @@ send_reply:
 }
 
 /*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
  *				 init_server                                 *
  *===========================================================================*/
 PRIVATE void init_server(int argc, char **argv)
@@ -142,7 +159,7 @@ PRIVATE void get_work(m_ptr)
 message *m_ptr;				/* message buffer */
 {
     int status = 0;
-    status = receive(ANY, m_ptr);   /* this blocks until message arrives */
+    status = sef_receive(ANY, m_ptr);   /* this blocks until message arrives */
     if (OK != status)
         panic("DS","failed to receive message!", status);
     who_e = m_ptr->m_source;        /* message arrived! set sender */

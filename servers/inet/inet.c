@@ -97,6 +97,9 @@ _PROTOTYPE( void main, (void) );
 FORWARD _PROTOTYPE( void nw_conf, (void) );
 FORWARD _PROTOTYPE( void nw_init, (void) );
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 PUBLIC void main()
 {
 	mq_t *mq;
@@ -109,6 +112,9 @@ PUBLIC void main()
 #endif
 	u8_t randbits[32];
 	struct timeval tv;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 #if DEBUG
 	printf("Starting inet...\n");
@@ -235,7 +241,7 @@ PUBLIC void main()
 		if (!mq)
 			ip_panic(("out of messages"));
 
-		r= receive (ANY, &mq->mq_mess);
+		r= sef_receive(ANY, &mq->mq_mess);
 		if (r<0)
 		{
 			ip_panic(("unable to receive: %d", r));
@@ -289,6 +295,17 @@ PUBLIC void main()
 		}
 	}
 	ip_panic(("task is not allowed to terminate"));
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 PRIVATE void nw_conf()

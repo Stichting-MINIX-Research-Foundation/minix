@@ -75,4 +75,12 @@ struct rproc {
   char r_control[RSS_NR_CONTROL][MAX_LABEL_LEN];
 };
 
+/* Definition of the global update descriptor. */
+struct rupdate {
+  int flags;               /* flags to keep track of the status of the update */
+  clock_t prepare_tm;      /* timestamp of when the update was scheduled */
+  clock_t prepare_maxtime; /* max time to wait for the process to be ready */
+  struct rproc *rp;        /* the process under update */
+};
+
 #endif /* RS_TYPE_H */

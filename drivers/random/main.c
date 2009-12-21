@@ -54,14 +54,33 @@ PRIVATE struct driver r_dtab = {
 #define RANDOM_BUF_SIZE 		1024
 PRIVATE char random_buf[RANDOM_BUF_SIZE];
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
 PUBLIC int main(void)
 {
+  /* SEF local startup. */
+  sef_local_startup();
+
   r_init();				/* initialize the memory driver */
   driver_task(&r_dtab, DRIVER_ASYN);	/* start driver's main loop */
   return(OK);
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*

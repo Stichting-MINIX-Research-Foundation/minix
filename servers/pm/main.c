@@ -48,6 +48,9 @@ FORWARD _PROTOTYPE( void handle_fs_reply, (void)			);
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
@@ -57,6 +60,9 @@ PUBLIC int main()
   int result, s, proc_nr;
   struct mproc *rmp;
   sigset_t sigset;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   pm_init();			/* initialize process manager tables */
 
@@ -177,13 +183,24 @@ send_reply:
 }
 
 /*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
 PRIVATE void get_work()
 {
 /* Wait for the next message and extract useful information from it. */
-  if (receive(ANY, &m_in) != OK)
-	panic(__FILE__,"PM receive error", NO_NUM);
+  if (sef_receive(ANY, &m_in) != OK)
+	panic(__FILE__,"PM sef_receive error", NO_NUM);
   who_e = m_in.m_source;	/* who sent the message */
   if(pm_isokendpt(who_e, &who_p) != OK)
 	panic(__FILE__, "PM got message from invalid endpoint", who_e);

@@ -56,7 +56,7 @@ PRIVATE char *s_flags_str(int flags)
 	str[1] = (flags & RS_EXITING)       ? 'E' : '-';
 	str[2] = (flags & RS_REFRESHING)    ? 'R' : '-';
 	str[3] = (flags & RS_NOPINGREPLY)   ? 'N' : '-';
-	str[4] = '-';
+	str[4] = (flags & RS_UPDATING)      ? 'u' : '-';
 	str[5] = '\0';
 
 	return(str);

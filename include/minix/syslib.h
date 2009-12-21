@@ -18,6 +18,7 @@
 #endif
 
 #include <minix/safecopies.h>
+#include <minix/sef.h>
 
 /* Forward declaration */
 struct reg86u;

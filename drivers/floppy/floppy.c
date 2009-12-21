@@ -29,6 +29,7 @@
 #include <minix/sysutil.h>
 #include <minix/syslib.h>
 #include <minix/endpoint.h>
+#include <stdio.h>
 
 /* I/O Ports used by floppy disk task. */
 #define DOR            0x3F2	/* motor drive control bits */
@@ -219,15 +220,15 @@ PRIVATE struct floppy {		/* main drive struct, one entry per drive */
 } floppy[NR_DRIVES];
 
 PRIVATE int irq_hook_id;	/* id of irq hook at the kernel */
-PRIVATE int motor_status;	/* bitmap of current motor status */
+PUBLIC int motor_status;	/* bitmap of current motor status */
 PRIVATE int need_reset;		/* set to 1 when controller must be reset */
-PRIVATE unsigned f_drive;	/* selected drive */
+PUBLIC unsigned f_drive;	/* selected drive */
 PRIVATE unsigned f_device;	/* selected minor device */
 PRIVATE struct floppy *f_fp;	/* current drive */
 PRIVATE struct density *f_dp;	/* current density parameters */
 PRIVATE struct density *prev_dp;/* previous density parameters */
 PRIVATE unsigned f_sectors;	/* equal to f_dp->secpt (needed a lot) */
-PRIVATE u16_t f_busy;		/* BSY_IDLE, BSY_IO, BSY_WAKEN */
+PUBLIC u16_t f_busy;		/* BSY_IDLE, BSY_IO, BSY_WAKEN */
 PRIVATE struct device *f_dv;	/* device's base and size */
 PRIVATE struct disk_parameter_s fmt_param; /* parameters for format */
 PRIVATE u8_t f_results[MAX_RESULTS];/* the controller can give lots of output */
@@ -289,16 +290,25 @@ PRIVATE struct driver f_dtab = {
 static char *floppy_buf;
 static phys_bytes floppy_buf_phys;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
+EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+PUBLIC int last_transfer_opcode;
+
 /*===========================================================================*
  *				floppy_task				     *
  *===========================================================================*/
 PUBLIC void main()
 {
-/* Initialize the floppy structure and the timers. */
-
   struct floppy *fp;
   int s;
 
+  /* SEF local startup. */
+  sef_local_startup();
+
+  /* Initialize the floppy structure and the timers. */
   system_hz = sys_hz();
 
   if(!(floppy_buf = alloc_contig(2*DMA_BUF_SIZE,
@@ -328,6 +338,20 @@ PUBLIC void main()
   signal(SIGHUP, SIG_IGN);
 
   driver_task(&f_dtab, DRIVER_STD);
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
+  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*
@@ -468,6 +492,9 @@ unsigned nr_req;		/* length of request vector */
   if (ex64hi(pos64) != 0)
 	return OK;	/* Way beyond EOF */
   position= cv64ul(pos64);
+
+  /* Record the opcode of the last transfer performed. */
+  last_transfer_opcode = opcode;
 
   /* Check disk address. */
   if ((position & SECTOR_MASK) != 0) return(EINVAL);
@@ -759,15 +786,12 @@ PRIVATE void start_motor()
   f_set_timer(&f_tmr_timeout, f_dp->start_ms * system_hz / 1000, f_timeout);
   f_busy = BSY_IO;
   do {
-  	receive(ANY, &mess); 
+  	sef_receive(ANY, &mess); 
 
 	if (is_notify(mess.m_type)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
 				f_expire_tmrs(NULL, NULL);
-				break;
-			case RS_PROC_NR:
-				notify(mess.m_source);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -851,15 +875,12 @@ PRIVATE int seek()
  	f_set_timer(&f_tmr_timeout, system_hz/30, f_timeout);
 	f_busy = BSY_IO;
   	do {
-  		receive(ANY, &mess); 
+  		sef_receive(ANY, &mess); 
 	
 		if (is_notify(mess.m_type)) {
 			switch (_ENDPOINT_P(mess.m_source)) {
 				case CLOCK:
 					f_expire_tmrs(NULL, NULL);
-					break;
-				case RS_PROC_NR:
-					notify(mess.m_source);
 					break;
 				default :
 					f_busy = BSY_IDLE;
@@ -1133,14 +1154,11 @@ PRIVATE void f_reset()
    * but be prepared to handle a timeout.
    */
   do {
-  	receive(ANY, &mess); 
+  	sef_receive(ANY, &mess); 
 	if (is_notify(mess.m_type)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
 				f_expire_tmrs(NULL, NULL);
-				break;
-			case RS_PROC_NR:
-				notify(mess.m_source);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -1185,14 +1203,11 @@ PRIVATE int f_intr_wait()
 
   /* We expect an interrupt, but if a timeout, occurs, report an error. */
   do {
-  	receive(ANY, &mess); 
+  	sef_receive(ANY, &mess); 
 	if (is_notify(mess.m_type)) {
 		switch (_ENDPOINT_P(mess.m_source)) {
 			case CLOCK:
 				f_expire_tmrs(NULL, NULL);
-				break;
-			case RS_PROC_NR:
-				notify(mess.m_source);
 				break;
 			default :
 				f_busy = BSY_IDLE;
@@ -1364,4 +1379,5 @@ struct partition *entry;
   entry->heads = NR_HEADS;
   entry->sectors = f_sectors;
 }
+
 

@@ -236,6 +236,9 @@ u32_t system_hz;
 static char *progname;
 extern int errno;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*****************************************************************************
  *            main                                                           *
  *                                                                           *
@@ -247,6 +250,9 @@ int main(int argc, char *argv[]) {
 	u32_t inet_proc_nr;
 	long v = 0;
 	t_or *orp;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	system_hz = sys_hz();
 
@@ -269,14 +275,11 @@ int main(int argc, char *argv[]) {
 		printf("orinoco: ds_retrieve_u32 failed for 'inet': %d\n", r);
 
 	while (TRUE) {
-		if ((r = receive (ANY, &m)) != OK)
-			panic(__FILE__, "orinoco: receive failed", NO_NUM);
+		if ((r = sef_receive (ANY, &m)) != OK)
+			panic(__FILE__, "orinoco: sef_receive failed", NO_NUM);
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
-				case RS_PROC_NR: 
-					notify(m.m_source);	
-					break;
 				case CLOCK:
 					or_watchdog_f(NULL);     
 					break;		 
@@ -344,6 +347,17 @@ int main(int argc, char *argv[]) {
 			panic(__FILE__,"orinoco: illegal message:", m.m_type);
 		}
 	}
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*****************************************************************************

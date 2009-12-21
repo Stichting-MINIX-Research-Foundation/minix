@@ -15,7 +15,7 @@ LIBS 	= -lsys
 
 PROGRAM_NAME 	= es1371
 INSTALL_BIN		= /usr/sbin/$(PROGRAM_NAME)
-OBJ				= es1371.o AC97.o audio_fw.o pci_helper.o wait.o sample_rate_converter.o
+OBJ				= es1371.o AC97.o audio_fw.o liveupdate.o pci_helper.o wait.o sample_rate_converter.o
 
 
 
@@ -27,8 +27,8 @@ $(PROGRAM_NAME): $(OBJ)
 	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
 
 
-audio_fw.o: ../framework/audio_fw.c ../framework/audio_fw.h
-	$(CC) -c ../framework/audio_fw.c
+audio_fw.o liveupdate.o: ../framework/audio_fw.c ../framework/liveupdate.c ../framework/audio_fw.h
+	$(CC) -c ../framework/audio_fw.c ../framework/liveupdate.c
 	
 
 %.o: %.c

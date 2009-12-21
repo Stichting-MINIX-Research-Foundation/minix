@@ -16,7 +16,7 @@ CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i -L../libdriver
 LIBS = -ldriver -lsys  -ltimers
 
-OBJ = floppy.o 
+OBJ = floppy.o liveupdate.o
 
 # build local binary
 all build:	$(DRIVER)

@@ -26,6 +26,7 @@
 #define RS_CRASHED      0x040    /* service crashed */
 #define RS_LATEREPLY    0x080    /* no reply sent to RS_DOWN caller yet */
 #define RS_SIGNALED     0x100    /* service crashed */
+#define RS_UPDATING     0x200    /* set when update must be done */
 
 /* Sys flag values. */
 #define SF_CORE_PROC    0x001    /* set for core system processes
@@ -46,6 +47,10 @@
 #define BEG_RPROC_ADDR  (&rproc[0])
 #define END_RPROC_ADDR  (&rproc[NR_SYS_PROCS])
 #define NIL_RPROC ((struct mproc *) 0)
+
+/* Constants for live update. */
+#define RS_DEFAULT_PREPARE_MAXTIME 2*RS_DELTA_T   /* default prepare max time */
+#define RS_MAX_PREPARE_MAXTIME     20*RS_DELTA_T  /* max prepare max time */
 
 
 /* Definitions for boot info tables. */

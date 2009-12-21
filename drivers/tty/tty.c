@@ -146,6 +146,8 @@ extern PUBLIC unsigned info_location;
 extern PUBLIC phys_bytes vid_size;     /* 0x2000 for color or 0x0800 for mono */
 extern PUBLIC phys_bytes vid_base;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 
 /*===========================================================================*
  *				tty_task				     *
@@ -158,6 +160,9 @@ PUBLIC int main(void)
   unsigned line;
   int r, s;
   register tty_t *tp;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   /* Get kernel environment (protected_mode, pc_at and ega are needed). */ 
   if (OK != (s=sys_getmachine(&machine))) {
@@ -179,9 +184,9 @@ PUBLIC int main(void)
 	}
 
 	/* Get a request message. */
-	r= receive(ANY, &tty_mess);
+	r= sef_receive(ANY, &tty_mess);
 	if (r != 0)
-		panic("TTY", "receive failed with %d", r);
+		panic("TTY", "sef_receive failed with %d", r);
 
 	/* First handle all kernel notification types that the TTY supports. 
 	 *  - An alarm went off, expire all timers and handle the events. 
@@ -198,9 +203,6 @@ PUBLIC int main(void)
 			case CLOCK:
 				/* run watchdogs of expired timers */
 				expire_timers();
-				break;
-			case RS_PROC_NR:
-				notify(tty_mess.m_source);
 				break;
 			case HARDWARE: 
 				/* hardware interrupt notification */
@@ -328,6 +330,17 @@ PUBLIC int main(void)
   }
 
   return 0;
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*

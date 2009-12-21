@@ -67,6 +67,8 @@ struct {
 FORWARD _PROTOTYPE(void vm_init, (void));
 FORWARD _PROTOTYPE(int vm_acl_ok, (endpoint_t caller, int call));
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 
 /*===========================================================================*
  *				main					     *
@@ -75,6 +77,9 @@ PUBLIC int main(void)
 {
   message msg;
   int result, who_e;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
 #if SANITYCHECKS
   incheck = nocheck = 0;
@@ -99,8 +104,8 @@ PUBLIC int main(void)
 	}
 	SANITYCHECK(SCL_DETAIL);
 
-  	if ((r=receive(ANY, &msg)) != OK)
-		vm_panic("receive() error", r);
+  	if ((r=sef_receive(ANY, &msg)) != OK)
+		vm_panic("sef_receive() error", r);
 
 	SANITYCHECK(SCL_DETAIL);
 
@@ -159,6 +164,17 @@ PUBLIC int main(void)
 	SANITYCHECK(SCL_DETAIL);
   }
   return(OK);
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 extern int unmap_ok;

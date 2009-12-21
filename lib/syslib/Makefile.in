@@ -27,6 +27,9 @@ libsys_FILES=" \
 	pci_set_acl.c \
 	pci_slot_name.c \
 	safecopies.c \
+	sef.c \
+	sef_liveupdate.c \
+	sef_ping.c \
 	sys_abort.c \
 	sys_cprof.c \
 	sys_endsig.c \

@@ -17,8 +17,8 @@ LIBS = -lsys
 
 # build local binary
 all build:	sb16_dsp sb16_mixer
-sb16_dsp:	sb16.o sb16_dsp.o
-	$(CC) -o $@ $(LDFLAGS) sb16.o sb16_dsp.o $(LIBS)
+sb16_dsp:	sb16.o sb16_dsp.o sb16_dsp_liveupdate.o
+	$(CC) -o $@ $(LDFLAGS) sb16.o sb16_dsp.o sb16_dsp_liveupdate.o $(LIBS)
 sb16_mixer:	sb16.o sb16_mixer.o
 	$(CC) -o $@ $(LDFLAGS) sb16.o sb16_mixer.o $(LIBS)
 

@@ -355,9 +355,6 @@
 
 #define NR_SYS_CALLS	47	/* number of system calls */ 
 
-/* Pseudo call for use in kernel/table.c. */
-#define SYS_ALL_CALLS (NR_SYS_CALLS)
-
 /* Subfunctions for SYS_PRIVCTL */
 #define SYS_PRIV_ALLOW		1	/* Allow process to run */
 #define SYS_PRIV_DISALLOW	2	/* Disallow process to run */
@@ -677,8 +674,11 @@
 #define RS_REFRESH	(RS_RQ_BASE + 2)	/* refresh system service */
 #define RS_RESTART	(RS_RQ_BASE + 3)	/* restart system service */
 #define RS_SHUTDOWN	(RS_RQ_BASE + 4)	/* alert about shutdown */
+#define RS_UPDATE	(RS_RQ_BASE + 5)	/* update system service */
 
 #define RS_LOOKUP	(RS_RQ_BASE + 8)	/* lookup server name */
+
+#define RS_LU_PREPARE	(RS_RQ_BASE + 21)	/* prepare to update message */
 
 #  define RS_CMD_ADDR		m1_p1		/* command string */
 #  define RS_CMD_LEN		m1_i1		/* length of command */
@@ -689,6 +689,10 @@
 
 #  define RS_NAME		m1_p1		/* name */
 #  define RS_NAME_LEN		m1_i1		/* namelen */
+
+#  define RS_LU_RESULT          m1_i1           /* live update result */
+#  define RS_LU_STATE           m1_i2           /* state required to update */
+#  define RS_LU_PREPARE_MAXTIME m1_i3           /* the max time to prepare */
 
 /*===========================================================================*
  *                Messages for the Data Store Server			     *

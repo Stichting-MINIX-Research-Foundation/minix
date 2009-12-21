@@ -83,6 +83,9 @@ PRIVATE char dev_zero[ZERO_BUF_SIZE];
 #define click_to_round_k(n) \
 	((unsigned) ((((unsigned long) (n) << CLICK_SHIFT) + 512) / 1024))
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
@@ -90,6 +93,9 @@ PUBLIC int main(void)
 {
 /* Main program. Initialize the memory driver and start the main loop. */
   struct sigaction sa;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
@@ -99,6 +105,19 @@ PUBLIC int main(void)
   m_init();
   driver_task(&m_dtab, DRIVER_STD);
   return(OK);
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*
@@ -469,3 +488,4 @@ struct partition *entry;
   entry->heads = 64;
   entry->sectors = 32;
 }
+

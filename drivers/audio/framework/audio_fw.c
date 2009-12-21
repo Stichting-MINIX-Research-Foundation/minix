@@ -77,11 +77,20 @@ PRIVATE int irq_hook_id = 0;	/* id of irq hook at the kernel */
 PRIVATE int irq_hook_set = FALSE;
 PRIVATE device_available = 0;/*todo*/
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
+EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+PUBLIC int is_status_msg_expected = FALSE;
 
 PUBLIC void main(void) 
 {	
 	int r, caller, proc_nr, chan;
 	message mess, repl_mess;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	drv_init();
 
@@ -89,7 +98,7 @@ PUBLIC void main(void)
 	   carries it out, and sends a reply. */
 
 	while(1) {
-		receive(ANY, &mess);
+		sef_receive(ANY, &mess);
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
 
@@ -101,10 +110,6 @@ PUBLIC void main(void)
 					break;
 				case PM_PROC_NR:
 					msg_sig_stop();
-					break;
-				case RS_PROC_NR:
-					/* Got ping from RS. Just notify RS */
-					notify(RS_PROC_NR);
 					break;
 				default:
 					dprint("%s: %d uncaught notify!\n",
@@ -175,6 +180,19 @@ PUBLIC void main(void)
 	}
 }
 
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
+  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
 
 PRIVATE int init_driver(void) {
 	u32_t i; char irq;
@@ -589,6 +607,7 @@ PRIVATE void msg_status(message *m_ptr)
 			sub_dev[i].ReadyToRevive = FALSE;
 			sub_dev[i].RevivePending = 0;
 
+			is_status_msg_expected = TRUE;
 			return; /* stop after one mess, 
 					   file system will get back for other processes */
 		}
@@ -596,6 +615,7 @@ PRIVATE void msg_status(message *m_ptr)
 	m_ptr->m_type = DEV_NO_STATUS;
 	m_ptr->REP_STATUS = 0;
 	send(m_ptr->m_source, m_ptr);			/* send DEV_NO_STATUS message */
+	is_status_msg_expected = FALSE;
 }
 
 

@@ -2,7 +2,8 @@
  * reincarnation server that does the actual work. 
  *
  * Changes:
- *   Jul 22, 2005:	Created  (Jorrit N. Herder)
+ *   Nov 22, 2009: added basic live update support  (Cristiano Giuffrida)
+ *   Jul 22, 2005: Created  (Jorrit N. Herder)
  */
 
 #include <stdarg.h>
@@ -36,6 +37,7 @@ PRIVATE char *known_requests[] = {
   "refresh", 
   "restart",
   "shutdown", 
+  "update",
   "catch for illegal requests"
 };
 #define ILLEGAL_REQUEST  sizeof(known_requests)/sizeof(char *)
@@ -57,6 +59,8 @@ PRIVATE char *known_requests[] = {
 #define ARG_REQUEST	0		/* request to perform */
 #define ARG_PATH	1		/* rescue dir or system service */
 #define ARG_LABEL	1		/* name of system service */
+#define ARG_LU_STATE		2	/* the state required to update */
+#define ARG_PREPARE_MAXTIME	3	/* max time to prepare for the update */
 
 #define MIN_ARG_COUNT	1		/* require an action */
 
@@ -92,6 +96,8 @@ PRIVATE char *req_ipc;
 PRIVATE char *req_config = PATH_CONFIG;
 PRIVATE int req_printep;
 PRIVATE int class_recurs;	/* Nesting level of class statements */
+PRIVATE int req_lu_state;
+PRIVATE int req_prepare_maxtime;
 
 /* Buffer to build "/command arg1 arg2 ..." string to pass to RS server. */
 PRIVATE char command[4096];	
@@ -111,6 +117,7 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "    %s down label\n", app_name);
   fprintf(stderr, "    %s refresh label\n", app_name);
   fprintf(stderr, "    %s restart label\n", app_name);
+  fprintf(stderr, "    %s update label state maxtime\n", app_name);
   fprintf(stderr, "    %s rescue <dir>\n", app_name);
   fprintf(stderr, "    %s shutdown\n", app_name);
   fprintf(stderr, "\n");
@@ -131,7 +138,7 @@ PRIVATE void failure(int num)
 PRIVATE int parse_arguments(int argc, char **argv)
 {
   struct stat stat_buf;
-  char *hz;
+  char *hz, *buff;
   int req_nr;
   int c, i;
   int c_flag, r_flag;
@@ -293,6 +300,43 @@ PRIVATE int parse_arguments(int argc, char **argv)
   } 
   else if (req_nr == RS_SHUTDOWN) {
         /* no extra arguments required */
+  }
+  else if (req_nr == RS_UPDATE) {
+      /* Check for mandatory arguments */ 
+      if (argc - 1 < optind+ARG_LU_STATE) {
+          print_usage(argv[ARG_NAME],
+              "action requires at least a label and a live update state");
+          exit(EINVAL);
+      }
+      
+      /* Label. */
+      req_label= argv[optind+ARG_LABEL];
+      
+      /* Live update state. */
+      errno=0;
+      req_lu_state=strtol(argv[optind+ARG_LU_STATE], &buff, 10);
+      if(errno || strcmp(buff, "")) {
+          print_usage(argv[ARG_NAME],
+              "action requires a correct live update state");
+          exit(EINVAL);
+      }
+      if(req_lu_state == SEF_LU_STATE_NULL) {
+          print_usage(argv[ARG_NAME],
+              "action requires a non-null live update state.");
+          exit(EINVAL);
+      }
+      
+      /* Prepare max time. */
+      req_prepare_maxtime=0;
+      if (argc - 1 >= optind+ARG_PREPARE_MAXTIME) {
+          req_prepare_maxtime=strtol(argv[optind+ARG_PREPARE_MAXTIME],
+              &buff, 10);
+          if(errno || strcmp(buff, "") || req_prepare_maxtime<0) {
+              print_usage(argv[ARG_NAME],
+                "action requires a correct max time to prepare for the update");
+              exit(EINVAL);
+          }
+      }
   }
 
   /* Return the request number if no error were found. */
@@ -1112,6 +1156,14 @@ PUBLIC int main(int argc, char **argv)
           failure(-s);
       break;
   case RS_SHUTDOWN:
+      if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
+          failure(-s);
+      break;
+  case RS_UPDATE:
+      m.RS_CMD_ADDR = req_label;
+      m.RS_CMD_LEN = strlen(req_label);
+      m.RS_LU_STATE = req_lu_state;
+      m.RS_LU_PREPARE_MAXTIME = req_prepare_maxtime;
       if (OK != (s=_taskcall(RS_PROC_NR, request, &m))) 
           failure(-s);
       break;

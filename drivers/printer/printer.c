@@ -100,7 +100,7 @@ PRIVATE int user_left;		/* bytes of output left in user buf */
 PRIVATE vir_bytes user_vir_g;	/* start of user buf (address or grant) */
 PRIVATE vir_bytes user_vir_d;	/* offset in user buf */
 PRIVATE int user_safe;		/* address or grant? */
-PRIVATE int writing;		/* nonzero while write is in progress */
+PUBLIC int writing;		/* nonzero while write is in progress */
 PRIVATE int irq_hook_id;	/* id of irq hook at kernel */
 
 extern int errno;		/* error number */
@@ -115,6 +115,12 @@ FORWARD _PROTOTYPE( void reply, (int code,int replyee,int proc,int status));
 FORWARD _PROTOTYPE( void do_printer_output, (void) );
 FORWARD _PROTOTYPE( void do_signal, (void) );
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
+EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+PUBLIC int is_status_msg_expected = FALSE;
 
 /*===========================================================================*
  *				printer_task				     *
@@ -126,6 +132,9 @@ PUBLIC void main(void)
   struct sigaction sa;
   int s;
 
+  /* SEF local startup. */
+  sef_local_startup();
+
   /* Install signal handlers. Ask PM to transform signal into message. */
   sa.sa_handler = SIG_MESS;
   sigemptyset(&sa.sa_mask);
@@ -133,15 +142,12 @@ PUBLIC void main(void)
   if (sigaction(SIGTERM,&sa,NULL)<0) panic("PRN","sigaction failed", errno);
   
   while (TRUE) {
-	receive(ANY, &pr_mess);
+	sef_receive(ANY, &pr_mess);
 
 	if (is_notify(pr_mess.m_type)) {
 		switch (_ENDPOINT_P(pr_mess.m_source)) {
 			case HARDWARE:
 				do_printer_output();
-				break;
-			case RS_PROC_NR:
-				notify(pr_mess.m_source);
 				break;
 			case PM_PROC_NR:
 				do_signal();
@@ -169,6 +175,19 @@ PUBLIC void main(void)
   }
 }
 
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
+  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
 
 /*===========================================================================*
  *				 do_signal	                             *
@@ -275,6 +294,7 @@ PRIVATE void output_done()
     else {				/* done! report back to FS */
 	status = orig_count;
     }
+    is_status_msg_expected = TRUE;
     revive_pending = TRUE;
     revive_status = status;
     notify(caller);
@@ -296,6 +316,8 @@ register message *m_ptr;	/* pointer to the newly arrived message */
 	revive_pending = FALSE;			/* unmark event */
   } else {
 	m_ptr->m_type = DEV_NO_STATUS;
+	
+	is_status_msg_expected = FALSE;
   }
   send(m_ptr->m_source, m_ptr);			/* send the message */
 }

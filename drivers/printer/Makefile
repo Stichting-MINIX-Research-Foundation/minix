@@ -13,9 +13,9 @@ d = ..
 CC =	exec cc
 CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i
-LIBS =  -lsys   -lsys
+LIBS =  -lsys
 
-OBJ = printer.o
+OBJ = printer.o liveupdate.o
 
 # build local binary
 all build:	$(DRIVER)

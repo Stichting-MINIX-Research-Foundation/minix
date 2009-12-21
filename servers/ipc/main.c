@@ -23,9 +23,15 @@ struct {
 
 int verbose = 0;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 PUBLIC int main(int argc, char *argv[])
 {
 	message m;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	SELF_E = getprocnr();
 
@@ -36,8 +42,8 @@ PUBLIC int main(int argc, char *argv[])
 		int r;
 		int i;
 
-		if ((r = receive(ANY, &m)) != OK)
-			printf("IPC receive error %d.\n", r);
+		if ((r = sef_receive(ANY, &m)) != OK)
+			printf("sef_receive failed %d.\n", r);
 		who_e = m.m_source;
 		call_type = m.m_type;
 
@@ -98,5 +104,16 @@ PUBLIC int main(int argc, char *argv[])
 
 	/* no way to get here */
 	return -1;
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 

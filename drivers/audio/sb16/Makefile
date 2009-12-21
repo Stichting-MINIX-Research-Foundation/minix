@@ -18,11 +18,11 @@ LIBS = -lsys
 # build local binary
 all build:	sb16	
 
-sb16:	sb16.o mixer.o audio_fw.o
-	$(CC) -o $@ $(LDFLAGS) sb16.o mixer.o audio_fw.o $(LIBS)
+sb16:	sb16.o mixer.o audio_fw.o liveupdate.o
+	$(CC) -o $@ $(LDFLAGS) sb16.o mixer.o audio_fw.o liveupdate.o $(LIBS)
 
-audio_fw.o:	../framework/audio_fw.c ../framework/audio_fw.h
-	$(CC) -c ../framework/audio_fw.c
+audio_fw.o liveupdate.o: ../framework/audio_fw.c ../framework/liveupdate.c ../framework/audio_fw.h
+	$(CC) -c ../framework/audio_fw.c ../framework/liveupdate.c
 
 # install with other drivers
 install:	/usr/sbin/sb16

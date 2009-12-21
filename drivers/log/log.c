@@ -54,12 +54,23 @@ PRIVATE struct driver log_dtab = {
 
 extern int device_caller;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
+EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+
 /*===========================================================================*
  *				   main 				     *
  *===========================================================================*/
 PUBLIC int main(void)
 {
   int i;
+
+  /* SEF local startup. */
+  sef_local_startup();
+
+  /* Initialize log devices. */
   for(i = 0; i < NR_DEVS; i++) {
   	log_geom[i].dv_size = cvul64(LOG_SIZE);
  	log_geom[i].dv_base = cvul64((long)logdevices[i].log_buffer);
@@ -76,7 +87,21 @@ PUBLIC int main(void)
 }
 
 /*===========================================================================*
- *				 log_name					     *
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
+  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
+ *				 log_name				     *
  *===========================================================================*/
 PRIVATE char *log_name()
 {
@@ -462,3 +487,4 @@ message *m_ptr;
 
   return(ready_ops);
 }
+

@@ -44,6 +44,8 @@ FORWARD _PROTOTYPE( void get_work, (void)				);
 FORWARD _PROTOTYPE( void init_root, (void)				);
 FORWARD _PROTOTYPE( void service_pm, (void)				);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 
 /*===========================================================================*
  *				main					     *
@@ -55,6 +57,9 @@ PUBLIC int main(void)
  * the reply.  This loop never terminates as long as the file system runs.
  */
   int error;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   fs_init();
 
@@ -224,6 +229,17 @@ PUBLIC int main(void)
 }
 
 /*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
  *				get_work				     *
  *===========================================================================*/
 PRIVATE void get_work()
@@ -282,8 +298,8 @@ PRIVATE void get_work()
   for(;;) {
     int r;
     /* Normal case.  No one to revive. */
-    if ((r=receive(ANY, &m_in)) != OK)
-	panic(__FILE__,"fs receive error", r);
+    if ((r=sef_receive(ANY, &m_in)) != OK)
+	panic(__FILE__,"fs sef_receive error", r);
     who_e = m_in.m_source;
     who_p = _ENDPOINT_P(who_e);
 
@@ -358,7 +374,7 @@ PRIVATE void fs_init()
    * Then, stop and synchronize with the PM.
    */
   do {
-  	if (OK != (s=receive(PM_PROC_NR, &mess)))
+  	if (OK != (s=sef_receive(PM_PROC_NR, &mess)))
   		panic(__FILE__,"FS couldn't receive from PM", s);
   	if (NONE == mess.PR_ENDPT) break; 
 
@@ -434,7 +450,7 @@ PRIVATE void init_root()
   /* Wait FS login message */
   if (last_login_fs_e != ROOT_FS_E) {
 	  /* Wait FS login message */
-	  if (receive(ROOT_FS_E, &m) != OK) {
+	  if (sef_receive(ROOT_FS_E, &m) != OK) {
 		  printf("VFS: Error receiving login request from FS_e %d\n", 
 				  ROOT_FS_E);
 		  panic(__FILE__, "Error receiving login request from root filesystem\n", ROOT_FS_E);

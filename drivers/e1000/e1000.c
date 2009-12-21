@@ -62,6 +62,9 @@ _PROTOTYPE( PRIVATE int eeprom_ich_cycle, (e1000_t *e, u32_t timeout)   );
 _PROTOTYPE( PRIVATE void reply, (e1000_t *e, int err, int may_block)	);
 _PROTOTYPE( PRIVATE void mess_reply, (message *req, message *reply)	);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
@@ -72,6 +75,9 @@ int main(int argc, char *argv[])
     u32_t tasknr;
     e1000_t *e;
     long v;
+
+    /* SEF local startup. */
+    sef_local_startup();
 
     /* Verify command-line arguments. */
     if (argc < 1)
@@ -104,18 +110,14 @@ int main(int argc, char *argv[])
      */
     while (TRUE)
     {
-	if ((r= receive(ANY, &m)) != OK)
+	if ((r= sef_receive(ANY, &m)) != OK)
 	{
-	    panic("e1000", "receive failed", r);
+	    panic("e1000", "sef_receive failed", r);
 	}
 	if (is_notify(m.m_type))
 	{
 	    switch (_ENDPOINT_P(m.m_source))
 	    {
-                case RS_PROC_NR:
-                    notify(m.m_source);
-                    break;
-		
                 case HARDWARE:
 		    e1000_interrupt(&m);
 		    break;
@@ -141,6 +143,17 @@ int main(int argc, char *argv[])
 		panic("e1000", "illegal message", m.m_type);
 	}
     }
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*

@@ -59,10 +59,16 @@ FORWARD _PROTOTYPE( u8_t read_exca, (struct port *pp, int socket, int reg) );
 FORWARD _PROTOTYPE( void do_outb, (port_t port, u8_t value)		);
 FORWARD _PROTOTYPE( u8_t do_inb, (port_t port)				);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 int main(int argc, char *argv[])
 {
 	int c, r;
 	message m;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	(progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
@@ -84,13 +90,26 @@ int main(int argc, char *argv[])
 
 	for (;;)
 	{
-		r= receive(ANY, &m);
+		r= sef_receive(ANY, &m);
 		if (r != OK)
-			panic("ti1225", "receive failed", r);
+			panic("ti1225", "sef_receive failed", r);
 		printf("ti1225: got message %u from %d\n",
 			m.m_type, m.m_source);
 	}
 	return 0;
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 PRIVATE void init()

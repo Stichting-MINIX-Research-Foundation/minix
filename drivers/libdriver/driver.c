@@ -145,8 +145,8 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 	} else {
 		int s;
 		/* Wait for a request to read or write a disk block. */
-		if ((s=receive(ANY, &mess)) != OK)
-        		panic((*dp->dr_name)(),"receive() failed", s);
+		if ((s=sef_receive(ANY, &mess)) != OK)
+        		panic((*dp->dr_name)(),"sef_receive() failed", s);
 	}
 
 	device_caller = mess.m_source;
@@ -171,9 +171,6 @@ int type;		/* Driver type (DRIVER_STD or DRIVER_ASYN) */
 				break;
 			case CLOCK:
 				(*dp->dr_alarm)(dp, &mess);	
-				break;
-			case RS_PROC_NR:
-				notify(mess.m_source);
 				break;
 			default:		
 				if(dp->dr_other)

@@ -77,6 +77,13 @@ PRIVATE int reviveProcNr;
 
 #define dprint (void)
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+EXTERN _PROTOTYPE( void sef_cb_lu_prepare, (int state) );
+EXTERN _PROTOTYPE( int sef_cb_lu_state_isvalid, (int state) );
+EXTERN _PROTOTYPE( void sef_cb_lu_state_dump, (int state) );
+PUBLIC int is_processing = FALSE;
+PUBLIC int is_status_msg_expected = FALSE;
 
 /*===========================================================================*
  *				main
@@ -86,6 +93,9 @@ PUBLIC void main()
 	int r, caller, proc_nr, s;
 	message mess;
 
+	/* SEF local startup. */
+	sef_local_startup();
+
 	dprint("sb16_dsp.c: main()\n");
 
 	/* Get a DMA buffer. */
@@ -93,7 +103,7 @@ PUBLIC void main()
 
 	while(TRUE) {
 		/* Wait for an incoming message */
-		receive(ANY, &mess);
+		sef_receive(ANY, &mess);
 
 		caller = mess.m_source;
 		proc_nr = mess.IO_ENDPT;
@@ -137,6 +147,19 @@ send_reply:
 
 }
 
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid);
+  sef_setcb_lu_state_dump(sef_cb_lu_state_dump);
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
 
 /*===========================================================================*
  *				dsp_open
@@ -242,6 +265,7 @@ message *m_ptr;
 	}
 	
 	reply(TASK_REPLY, m_ptr->m_source, m_ptr->IO_ENDPT, SUSPEND);
+	is_processing = TRUE;
 
 	if(DmaBusy < 0) { /* Dma tranfer not yet started */
 
@@ -269,7 +293,7 @@ message *m_ptr;
 	} else { /* Dma buffer is full, filling second buffer */ 
 
 		while(BufReadNext == BufFillNext) { /* Second buffer also full, wait for space to become available */ 
-			receive(HARDWARE, &mess);
+			sef_receive(HARDWARE, &mess);
 			dsp_hardware_msg();
 		}
 		sys_datacopy(m_ptr->IO_ENDPT, (vir_bytes)m_ptr->ADDRESS, SELF, (vir_bytes)Buffer + BufFillNext * DspFragmentSize, (phys_bytes)DspFragmentSize);
@@ -278,6 +302,7 @@ message *m_ptr;
 
 	} 
 	
+	is_status_msg_expected = TRUE;
 	revivePending = 1;
 	reviveStatus = DspFragmentSize;
 	reviveProcNr = m_ptr->IO_ENDPT;
@@ -338,8 +363,11 @@ message *m_ptr;	/* pointer to the newly arrived message */
 		m_ptr->REP_STATUS = reviveStatus;
 
 		revivePending = 0;					/* unmark event */
+		is_processing = FALSE;
 	} else {
 		m_ptr->m_type = DEV_NO_STATUS;
+
+		is_status_msg_expected = FALSE;
 	}
 
 	send(m_ptr->m_source, m_ptr);			/* send the message */

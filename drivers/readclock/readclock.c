@@ -49,6 +49,7 @@
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
+#include <minix/const.h>
 #include <minix/type.h>
 #include <minix/syslib.h>
 #include <minix/com.h>
@@ -87,6 +88,9 @@ int bcd_to_dec(int n);
 int dec_to_bcd(int n);
 void usage(void);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 int main(int argc, char **argv)
 {
   struct tm time1;
@@ -97,6 +101,9 @@ int main(int argc, char **argv)
   int i, s;
   unsigned char mach_id, cmos_state;
   struct sysgetenv sysgetenv;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   if((s=sys_readbios(MACH_ID_ADDR, &mach_id, sizeof(mach_id))) != OK) {
 	printf("readclock: sys_readbios failed: %d.\n", s);
@@ -210,6 +217,15 @@ int main(int argc, char **argv)
 	}
   }
   exit(0);
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 void errmsg(char *s)

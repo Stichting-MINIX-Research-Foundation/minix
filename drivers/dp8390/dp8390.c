@@ -232,6 +232,9 @@ PRIVATE int handle_hw_intr(void)
 	return r;
 }
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				dpeth_task				     *
  *===========================================================================*/
@@ -241,6 +244,9 @@ int main(int argc, char *argv[])
 	int i, r, tasknr;
 	dpeth_t *dep;
 	long v;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	system_hz = sys_hz();
 
@@ -270,14 +276,11 @@ int main(int argc, char *argv[])
 
 	while (TRUE)
 	{
-		if ((r= receive(ANY, &m)) != OK)
-			panic("", "dp8390: receive failed", r);
+		if ((r= sef_receive(ANY, &m)) != OK)
+			panic("", "dp8390: sef_receive failed", r);
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
-				case RS_PROC_NR:
-					notify(m.m_source);
-					break;
 				case HARDWARE:
 					r = handle_hw_intr();
 					break;
@@ -321,6 +324,17 @@ int main(int argc, char *argv[])
 			panic("", "dp8390: illegal message", m.m_type);
 		}
 	}
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 #if 0

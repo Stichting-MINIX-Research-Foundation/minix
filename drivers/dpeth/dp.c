@@ -86,7 +86,7 @@ static dp_conf_t dp_conf[DE_PORT_NR] = {
 
 static char CopyErrMsg[] = "unable to read/write user data";
 static char PortErrMsg[] = "illegal port";
-static char RecvErrMsg[] = "receive failed";
+static char RecvErrMsg[] = "sef_receive failed";
 static char SendErrMsg[] = "send failed";
 static char SizeErrMsg[] = "illegal packet size";
 static char TypeErrMsg[] = "illegal message type";
@@ -577,6 +577,9 @@ PRIVATE void handle_hw_intr(void)
 	}
 }
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*
 **  Name:	int dpeth_task(void)
 **  Function:	Main entry for dp task
@@ -586,6 +589,9 @@ PUBLIC int main(int argc, char **argv)
   message m;
   dpeth_t *dep;
   int rc, fkeys, sfkeys, tasknr;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   (progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
@@ -612,7 +618,7 @@ PUBLIC int main(int argc, char **argv)
 	notify(tasknr);
 
   while (TRUE) {
-	if ((rc = receive(ANY, &m)) != OK) panic(dep->de_name, RecvErrMsg, rc);
+	if ((rc = sef_receive(ANY, &m)) != OK) panic(dep->de_name, RecvErrMsg, rc);
 
 	DEBUG(printf("eth: got message %d, ", m.m_type));
 
@@ -621,10 +627,6 @@ PUBLIC int main(int argc, char **argv)
 			case CLOCK:
 				/* to be defined */
 				do_watchdog(&m);
-				break;
-			case RS_PROC_NR:	
-				/* Status request from RS */
-				notify(m.m_source);
 				break;
 			case HARDWARE:
 				/* Interrupt from device */
@@ -671,6 +673,17 @@ PUBLIC int main(int argc, char **argv)
 	}
   }
   return OK;			/* Never reached, but keeps compiler happy */
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /** dp.c **/

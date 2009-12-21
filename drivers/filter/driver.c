@@ -583,9 +583,9 @@ static int flt_receive(message *mess, int which)
 	int r;
 
 	for (;;) {
-		r = receive(ANY, mess);
+		r = sef_receive(ANY, mess);
 		if(r != OK)
-			panic(__FILE__, "receive returned error", r);
+			panic(__FILE__, "sef_receive returned error", r);
 
 		if(mess->m_source == CLOCK && is_notify(mess->m_type)) {
 			if (mess->NOTIFY_TIMESTAMP < flt_alarm(-1)) {

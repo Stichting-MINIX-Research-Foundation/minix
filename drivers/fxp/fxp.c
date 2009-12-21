@@ -301,6 +301,9 @@ PRIVATE void handle_hw_intr(void)
 	}
 }
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
@@ -311,6 +314,9 @@ int main(int argc, char *argv[])
 	u32_t tasknr;
 	long v;
 	vir_bytes ft = sizeof(*fxp_table)*FXP_PORT_NR;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	system_hz = sys_hz();
 
@@ -342,14 +348,11 @@ int main(int argc, char *argv[])
 
 	while (TRUE)
 	{
-		if ((r= receive(ANY, &m)) != OK)
-			panic("FXP","receive failed", r);
+		if ((r= sef_receive(ANY, &m)) != OK)
+			panic("FXP","sef_receive failed", r);
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
-				case RS_PROC_NR:
-					notify(m.m_source);
-					break;
 				case HARDWARE:
 					handle_hw_intr();
 					break;
@@ -391,6 +394,17 @@ int main(int argc, char *argv[])
 			panic("FXP"," illegal message", m.m_type);
 		}
 	}
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*

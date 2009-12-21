@@ -16,7 +16,7 @@ LDFLAGS = -i -L../libdriver
 LIBS = -ldriver  -lsys 
 LIB_DEP = ../libdriver/libdriver.a
 
-OBJ = log.o diag.o
+OBJ = log.o diag.o liveupdate.o
 
 # build local binary
 all build:	$(DRIVER)

@@ -376,6 +376,9 @@ static void got_signal(void)
 	exit(0);
 }
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
@@ -383,6 +386,9 @@ int main(int argc, char *argv[])
 {
 	message m_out;
 	int r;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	r = parse_arguments(argc, argv);
 	if(r != OK) {
@@ -399,8 +405,8 @@ int main(int argc, char *argv[])
 
 	for (;;) {
 		/* Wait for request. */
-		if(receive(ANY, &m_in) != OK) {
-			panic(__FILE__, "receive failed", NO_NUM);
+		if(sef_receive(ANY, &m_in) != OK) {
+			panic(__FILE__, "sef_receive failed", NO_NUM);
 		}
 
 #if DEBUG2
@@ -444,3 +450,15 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+

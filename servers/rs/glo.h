@@ -37,6 +37,11 @@ EXTERN struct rproc *rproc_ptr[NR_PROCS];       /* mapping for fast access */
  */
 EXTERN int exec_pipe[2];
 
+/* Global update descriptor. This descriptor holds data when a live update
+ * is in progress.
+ */
+EXTERN struct rupdate rupdate;
+
 /* Enable/disable verbose output. */
 EXTERN long rs_verbose;
 

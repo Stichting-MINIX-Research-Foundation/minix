@@ -14,6 +14,8 @@ FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 FORWARD _PROTOTYPE(void cch_check, (void)				);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
 
 /*===========================================================================*
  *				main                                         *
@@ -26,6 +28,9 @@ PUBLIC int main(int argc, char *argv[])
  */
   int error, ind;
   message m;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   /* Initialize the server, then go to work. */
   init_server();	
@@ -85,6 +90,17 @@ PUBLIC int main(int argc, char *argv[])
 
 
 /*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
  *				init_server                                  *
  *===========================================================================*/
 PRIVATE void init_server(void)
@@ -119,8 +135,8 @@ message *m_in;				/* pointer to message */
   endpoint_t src;
 
   do {
-	if ((r = receive(ANY, m_in)) != OK) 	/* wait for message */
-		panic("MFS","receive failed", r);
+	if ((r = sef_receive(ANY, m_in)) != OK) 	/* wait for message */
+		panic("MFS","sef_receive failed", r);
 	src = fs_m_in.m_source;
 
 	if (src != FS_PROC_NR) {

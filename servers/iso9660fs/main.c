@@ -12,6 +12,9 @@
 FORWARD _PROTOTYPE(void init_server, (void)				);
 FORWARD _PROTOTYPE(void get_work, (message *m_in)			);
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main                                         *
  *===========================================================================*/
@@ -19,9 +22,12 @@ PUBLIC int main(void) {
   int who_e, ind, error;
   message m;
 
+  /* SEF local startup. */
+  sef_local_startup();
+
   /* Initialize the server, then go to work. */
   init_server();
-  
+
   fs_m_in.m_type = FS_READY;
   
   if (send(FS_PROC_NR, &fs_m_in) != OK) {
@@ -66,6 +72,17 @@ PUBLIC int main(void) {
 }
 
 /*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
+}
+
+/*===========================================================================*
  *				init_server                                  *
  *===========================================================================*/
 PRIVATE void init_server(void)
@@ -87,9 +104,9 @@ PRIVATE void init_server(void)
 PRIVATE void get_work(m_in)
 message *m_in;				/* pointer to message */
 {
-  int s;				/* receive status */
-  if (OK != (s = receive(ANY, m_in))) 	/* wait for message */
-    panic("ISOFS","receive failed", s);
+  int s;					/* receive status */
+  if (OK != (s = sef_receive(ANY, m_in))) 	/* wait for message */
+    panic("ISOFS","sef_receive failed", s);
 }
 
 /*===========================================================================*

@@ -94,12 +94,18 @@ PRIVATE struct driver w_dtab = {
   NULL			/* leftover hardware interrupts */
 };
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				bios_winchester_task			     *
  *===========================================================================*/
 PUBLIC int main()
 {
   long v;
+
+  /* SEF local startup. */
+  sef_local_startup();
 
   v= 0;
   env_parse("bios_remap_first", "d", 0, &v, 0, 1);
@@ -108,6 +114,19 @@ PUBLIC int main()
 /* Set special disk parameters then call the generic main loop. */
   driver_task(&w_dtab, DRIVER_STD);
   return(OK);
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*
@@ -511,4 +530,5 @@ message *m;
 
         return EINVAL;
 }
+
 

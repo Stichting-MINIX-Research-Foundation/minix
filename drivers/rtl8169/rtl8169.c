@@ -284,6 +284,9 @@ PRIVATE int int_event_check;		/* set to TRUE if events arrived */
 static char *progname;
 u32_t system_hz;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *				main					     *
  *===========================================================================*/
@@ -293,6 +296,9 @@ int main(int argc, char *argv[])
 	int r;
 	re_t *rep;
 	long v;
+
+	/* SEF local startup. */
+	sef_local_startup();
 
 	system_hz = sys_hz();
 
@@ -321,14 +327,11 @@ int main(int argc, char *argv[])
 		printf("rtl8169: ds_retrieve_u32 failed for 'inet': %d\n", r);
 #endif
 	while (TRUE) {
-		if ((r = receive(ANY, &m)) != OK)
-			panic("rtl8169", "receive failed", r);
+		if ((r = sef_receive(ANY, &m)) != OK)
+			panic("rtl8169", "sef_receive failed", r);
 
 		if (is_notify(m.m_type)) {
 			switch (_ENDPOINT_P(m.m_source)) {
-			case RS_PROC_NR:
-				notify(m.m_source);
-				break;
 			case CLOCK:
 				/*
 				 * Under MINIX, synchronous alarms are used
@@ -381,6 +384,17 @@ int main(int argc, char *argv[])
 			panic("rtl8169", "illegal message", m.m_type);
 		}
 	}
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 static void mdio_write(U16_t port, int regaddr, int value)
@@ -1254,8 +1268,8 @@ void transmittest(re_t *rep)
 		do {
 			message m;
 			int r;
-			if ((r = receive(ANY, &m)) != OK)
-				panic("rtl8169", "receive failed", r);
+			if ((r = sef_receive(ANY, &m)) != OK)
+				panic("rtl8169", "sef_receive failed", r);
 		} while(m.m_source != HARDWARE);
 		assert(!(rep->re_flags & REF_SEND_AVAIL));
 		rep->re_flags |= REF_SEND_AVAIL;

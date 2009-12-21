@@ -18,6 +18,8 @@ _PROTOTYPE( int do_restart, (message *m));
 _PROTOTYPE( int do_lookup, (message *m));
 _PROTOTYPE( int do_shutdown, (message *m));
 _PROTOTYPE( void do_period, (message *m));
+_PROTOTYPE( int do_update, (message *m));
+_PROTOTYPE( int do_upd_ready, (message *m));
 _PROTOTYPE( void do_exit, (message *m));
 _PROTOTYPE( int do_getsysinfo, (message *m));
 

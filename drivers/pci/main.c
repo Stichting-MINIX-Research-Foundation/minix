@@ -41,19 +41,25 @@ FORWARD _PROTOTYPE( struct rs_pci *find_acl, (int endpoint)		);
 
 extern int debug;
 
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 int main(void)
 {
 	int i, r;
 	message m;
 
+	/* SEF local startup. */
+	sef_local_startup();
+
 	pci_init();
 
 	for(;;)
 	{
-		r= receive(ANY, &m);
+		r= sef_receive(ANY, &m);
 		if (r < 0)
 		{
-			printf("PCI: receive from ANY failed: %d\n", r);
+			printf("PCI: sef_receive from ANY failed: %d\n", r);
 			break;
 		}
 
@@ -99,6 +105,19 @@ int main(void)
 	}
 
 	return 0;
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* Register live update callbacks. */
+  sef_setcb_lu_prepare(sef_cb_lu_prepare_always_ready);
+  sef_setcb_lu_state_isvalid(sef_cb_lu_state_isvalid_standard);
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 PRIVATE void do_init(mp)

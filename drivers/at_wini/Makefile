@@ -17,7 +17,7 @@ CFLAGS = -I$i $(CPROFILE)
 LDFLAGS = -i -L../libdriver
 LIBS = -ldriver -lsys -ltimers 
 
-OBJ = at_wini.o 
+OBJ = at_wini.o liveupdate.o
 
 
 # build local binary

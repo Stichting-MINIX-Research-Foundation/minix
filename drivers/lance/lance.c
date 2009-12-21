@@ -264,7 +264,10 @@ static char isstored[TX_RING_SIZE]; /* Tx-slot in-use */
 static char *progname;
 
 phys_bytes lance_buf_phys;
- 
+
+/* SEF functions and variables. */
+FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+
 /*===========================================================================*
  *                              main                                         *
  *===========================================================================*/
@@ -278,6 +281,9 @@ void main( int argc, char **argv )
 #if LANCE_FKEY
    int fkeys, sfkeys;
 #endif
+
+   /* SEF local startup. */
+   sef_local_startup();
 
    (progname=strrchr(argv[0],'/')) ? progname++ : (progname=argv[0]);
 
@@ -310,9 +316,9 @@ void main( int argc, char **argv )
             sys_irqenable(&ec->ec_hook);
       }
 
-      if ((r= receive(ANY, &m)) != OK)
-         panic( "lance", "receive failed", r);
-
+      if ((r= sef_receive(ANY, &m)) != OK)
+        panic( "lance", "sef_receive failed", r);
+        
       for (i=0;i<EC_PORT_NR_MAX;++i)
       {
          ec= &ec_table[i];
@@ -322,9 +328,6 @@ void main( int argc, char **argv )
 
       if (is_notify(m.m_type)) {
 	      switch(_ENDPOINT_P(m.m_source)) {
-		      case RS_PROC_NR:
-			      notify(m.m_source);
-			      break;
 		      case TTY_PROC_NR:
 			      lance_dump();
 			      break;
@@ -386,6 +389,17 @@ void main( int argc, char **argv )
          panic( "lance", "illegal message", m.m_type);
       }
    }
+}
+
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+PRIVATE void sef_local_startup()
+{
+  /* No live update support for now. */
+
+  /* Let SEF perform startup. */
+  sef_startup();
 }
 
 /*===========================================================================*

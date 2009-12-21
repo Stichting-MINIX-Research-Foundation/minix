@@ -5,7 +5,6 @@
 #include <sys/ioc_sound.h>
 #include <minix/sound.h>
 
-
 #define SB_TIMEOUT		32000   /* timeout count */
 
 /* IRQ, base address and DMA channels */
