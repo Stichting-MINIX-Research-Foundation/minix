@@ -46,7 +46,7 @@ PUBLIC int main(int argc, char *argv[])
 	ind = req_nr - VFS_BASE;
 
 	if (ind < 0 || ind >= NREQS) {
-		printf("mfs: bad request %d\n", req_nr); 
+		printf("pfs: bad request %d\n", req_nr); 
 		printf("ind = %d\n", ind);
 		error = EINVAL; 
 	} else {
