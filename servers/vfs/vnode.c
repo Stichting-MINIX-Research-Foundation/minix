@@ -136,7 +136,7 @@ PUBLIC void put_vnode(struct vnode *vp)
   vp->v_sdev = NO_DEV;
   vp->v_mapfs_e = 0;
   vp->v_mapinode_nr = 0;
-  vp->v_fs_count = 0;
+  vp->v_mapfs_count = 0;
 }
 
 

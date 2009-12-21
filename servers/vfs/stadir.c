@@ -37,6 +37,7 @@ PUBLIC int do_fchdir()
 
   /* Is the file descriptor valid? */
   if ((rfilp = get_filp(m_in.fd)) == NIL_FILP) return(err_code);
+  dup_vnode(rfilp->filp_vno);	/* Change into expects a reference. */
   return change_into(&fp->fp_wd, rfilp->filp_vno);
 }
 
