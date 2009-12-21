@@ -21,6 +21,7 @@
 #define SECTOR_SIZE	512
 
 enum {
+  ST_NIL,		/* Zero checksums */
   ST_XOR,		/* XOR-based checksums */
   ST_CRC,		/* CRC32-based checksums */
   ST_MD5		/* MD5-based checksums */
@@ -53,8 +54,8 @@ enum {
 #define DRIVER_MAIN	0
 #define DRIVER_BACKUP	1
 
-/* Requests for more than this many bytes need to go through malloc(). */
-#define BUF_SIZE	(128 * 1024)
+/* Requests for more than this many bytes will be allocated dynamically. */
+#define BUF_SIZE	(256 * 1024)
 #define SBUF_SIZE	(BUF_SIZE * 2)
 
 #define LABEL_SIZE	32
@@ -72,6 +73,7 @@ extern int NR_SUM_SEC;
 extern int NR_RETRIES;
 extern int NR_RESTARTS;
 extern int DRIVER_TIMEOUT;
+extern int CHUNK_SIZE;
 
 extern char MAIN_LABEL[LABEL_SIZE];
 extern char BACKUP_LABEL[LABEL_SIZE];

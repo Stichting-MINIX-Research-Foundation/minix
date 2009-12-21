@@ -22,12 +22,14 @@ int BAD_SUM_ERROR = 1;	/* bad checksums are considered a driver error */
 int USE_SUM_LAYOUT = 0;	/* use checksumming layout on disk */
 int NR_SUM_SEC = 8;	/* number of checksums per checksum sector */
 
-int SUM_TYPE = 0;	/* use XOR, CRC or MD5 */
+int SUM_TYPE = ST_CRC;	/* use NIL, XOR, CRC, or MD5 */
 int SUM_SIZE = 0;	/* size of the stored checksum */
 
 int NR_RETRIES = 3;	/* number of times the request will be retried (N) */
 int NR_RESTARTS = 3;	/* number of times a driver will be restarted (M) */
 int DRIVER_TIMEOUT = 5;	/* timeout in seconds to declare a driver dead (T) */
+
+int CHUNK_SIZE = 0;	/* driver requests will be vectorized at this size */
 
 char MAIN_LABEL[LABEL_SIZE] = "";		/* main disk driver label */
 char BACKUP_LABEL[LABEL_SIZE] = "";		/* backup disk driver label */
@@ -46,6 +48,7 @@ struct optset optset_table[] = {
   { "nosum",	OPT_BOOL,	&USE_CHECKSUM,		0		},
   { "mirror",	OPT_BOOL,	&USE_MIRROR,		1		},
   { "nomirror",	OPT_BOOL,	&USE_MIRROR,		0		},
+  { "nil",	OPT_BOOL,	&SUM_TYPE,		ST_NIL		},
   { "xor",	OPT_BOOL,	&SUM_TYPE,		ST_XOR		},
   { "crc",	OPT_BOOL,	&SUM_TYPE,		ST_CRC		},
   { "md5",	OPT_BOOL,	&SUM_TYPE,		ST_MD5		},
@@ -57,6 +60,7 @@ struct optset optset_table[] = {
   { "M",	OPT_INT,	&NR_RESTARTS,		10		},
   { "timeout",	OPT_INT,	&DRIVER_TIMEOUT,	10		},
   { "T",	OPT_INT,	&DRIVER_TIMEOUT,	10		},
+  { "chunk",	OPT_INT,	&CHUNK_SIZE,		10		},
   { NULL								}
 };
 
@@ -298,6 +302,9 @@ static int parse_arguments(int argc, char *argv[])
 
 	/* Determine the checksum size for the chosen checksum type. */
 	switch (SUM_TYPE) {
+	case ST_NIL:
+		SUM_SIZE = 4;	/* for the sector number */
+		break;
 	case ST_XOR:
 		SUM_SIZE = 16;	/* compatibility */
 		break;
@@ -327,6 +334,7 @@ static int parse_arguments(int argc, char *argv[])
 		printf("  SUM_TYPE :       ");
 
 		switch (SUM_TYPE) {
+		case ST_NIL: printf("nil"); break;
 		case ST_XOR: printf("xor"); break;
 		case ST_CRC: printf("crc"); break;
 		case ST_MD5: printf("md5"); break;
@@ -376,8 +384,16 @@ static void got_signal(void)
 	exit(0);
 }
 
-/* SEF functions and variables. */
-FORWARD _PROTOTYPE( void sef_local_startup, (void) );
+/*===========================================================================*
+ *			       sef_local_startup			     *
+ *===========================================================================*/
+static void sef_local_startup(void)
+{
+	/* No live update support for now. */
+
+	/* Let SEF perform startup. */
+	sef_startup();
+}
 
 /*===========================================================================*
  *				main					     *
@@ -396,7 +412,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if ((buf_array = alloc_contig(BUF_SIZE, 0, NULL)) == NULL)
+	if ((buf_array = flt_malloc(BUF_SIZE, NULL, 0)) == NULL)
 		panic(__FILE__, "no memory available", NO_NUM);
 
 	sum_init();
@@ -450,15 +466,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-
-/*===========================================================================*
- *			       sef_local_startup			     *
- *===========================================================================*/
-PRIVATE void sef_local_startup()
-{
-  /* No live update support for now. */
-
-  /* Let SEF perform startup. */
-  sef_startup();
-}
-

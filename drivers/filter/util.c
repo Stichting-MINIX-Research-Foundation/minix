@@ -20,8 +20,9 @@ char *flt_malloc(size_t size, char *sbuf, size_t ssize)
 	if (size <= ssize)
 		return sbuf;
 
-	p = alloc_contig(size, 0, NULL);
-	if (p == NULL)
+	p = mmap(NULL, size, PROT_READ | PROT_WRITE,
+		MAP_PREALLOC | MAP_CONTIG | MAP_ANON, -1, 0);
+	if (p == MAP_FAILED)
 		panic(__FILE__, "out of memory", size);
 
 	return p;

@@ -794,47 +794,117 @@ static int paired_sendrec(message *m1, message *m2, int both)
 }
 
 /*===========================================================================*
+ *				single_grant				     *
+ *===========================================================================*/
+static int single_grant(endpoint_t endpt, vir_bytes buf, int access,
+	cp_grant_id_t *gid, iovec_s_t vector[NR_IOREQS], size_t *sizep)
+{
+	/* Create grants for a vectored request to a single driver.
+	 */
+	cp_grant_id_t grant;
+	size_t size, chunk;
+	int count;
+
+	size = *sizep;
+
+	/* Split up the request into chunks, if requested. This makes no
+	 * difference at all, except that this works around a weird performance
+	 * bug with large DMA PRDs on some machines.
+	 */
+	if (CHUNK_SIZE > 0) chunk = CHUNK_SIZE;
+	else chunk = size;
+
+	/* Fill in the vector, creating a grant for each item. */
+	for (count = 0; size > 0 && count < NR_IOREQS; count++) {
+		/* The last chunk will contain all the remaining data. */
+		if (chunk > size || count == NR_IOREQS - 1)
+			chunk = size;
+
+		grant = cpf_grant_direct(endpt, buf, chunk, access);
+		if (!GRANT_VALID(grant))
+			panic(__FILE__, "invalid grant", grant);
+
+		vector[count].iov_grant = grant;
+		vector[count].iov_size = chunk;
+
+		buf += chunk;
+		size -= chunk;
+	}
+
+	/* Then create a grant for the vector itself. */
+	*gid = cpf_grant_direct(endpt, (vir_bytes) vector,
+		sizeof(vector[0]) * count, CPF_READ | CPF_WRITE);
+
+	if (!GRANT_VALID(*gid))
+		panic(__FILE__, "invalid grant", *gid);
+
+	return count;
+}
+
+/*===========================================================================*
  *				paired_grant				     *
  *===========================================================================*/
-static void paired_grant(char *buf1, char *buf2, size_t size, int request,
-	cp_grant_id_t *gids, int both)
+static int paired_grant(char *buf1, char *buf2, int request,
+	cp_grant_id_t *gids, iovec_s_t vectors[2][NR_IOREQS], size_t *sizes,
+	int both)
 {
-	/* Create memory grants. If USE_MIRROR, grant to both drivers,
-	 * otherwise only to the main one.
+	/* Create memory grants, either to one or to both drivers.
 	 */
 	cp_grant_id_t gid;
-	int access;
+	int count, access;
 
+	count = 0;
 	access = (request == FLT_WRITE) ? CPF_READ : CPF_WRITE;
 
 	if(driver[DRIVER_MAIN].endpt > 0) {
-		gid = cpf_grant_direct(driver[DRIVER_MAIN].endpt,
-			(vir_bytes) buf1, size, access);
-		if(!GRANT_VALID(gid))
-			panic(__FILE__, "invalid grant", gid);
-		gids[0] = gid;
+		count = single_grant(driver[DRIVER_MAIN].endpt,
+			(vir_bytes) buf1, access, &gids[0], vectors[0],
+			&sizes[0]);
 	}
 
 	if (both) {
 		if(driver[DRIVER_BACKUP].endpt > 0) {
-			gid = cpf_grant_direct(driver[DRIVER_BACKUP].endpt,
-				(vir_bytes) buf2, size, access);
-			if(!GRANT_VALID(gid))
-				panic(__FILE__, "invalid grant", gid);
-			gids[1] = gid;
+			count = single_grant(driver[DRIVER_BACKUP].endpt,
+				(vir_bytes) buf2, access, &gids[1],
+				vectors[1], &sizes[1]);
 		}
 	}
 }
 
 /*===========================================================================*
+ *				single_revoke				     *
+ *===========================================================================*/
+void single_revoke(cp_grant_id_t gid, iovec_s_t vector[NR_IOREQS],
+	size_t *sizep, int count)
+{
+	/* Revoke all grants associated with a request to a single driver.
+	 * Modify the given size to reflect the actual I/O performed.
+	 */
+	int i;
+
+	/* Revoke the grants for all the elements of the vector. */
+	for (i = 0; i < count; i++) {
+		cpf_revoke(vector[i].iov_grant);
+		*sizep -= vector[i].iov_size;
+	}
+
+	/* Then revoke the grant for the vector itself. */
+	cpf_revoke(gid);
+}
+
+/*===========================================================================*
  *				paired_revoke				     *
  *===========================================================================*/
-static void paired_revoke(cp_grant_id_t gid1, cp_grant_id_t gid2, int both)
+static void paired_revoke(cp_grant_id_t *gids, iovec_s_t vectors[2][NR_IOREQS],
+	size_t *sizes, int count, int both)
 {
-	cpf_revoke(gid1);
+	/* Revoke grants to drivers for a single request.
+	 */
+
+	single_revoke(gids[0], vectors[0], &sizes[0], count);
 
 	if (both)
-		cpf_revoke(gid2);
+		single_revoke(gids[1], vectors[1], &sizes[1], count);
 }
 
 /*===========================================================================*
@@ -842,30 +912,35 @@ static void paired_revoke(cp_grant_id_t gid1, cp_grant_id_t gid2, int both)
  *===========================================================================*/
 int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 {
+	iovec_s_t vectors[2][NR_IOREQS];
 	message m1, m2;
 	cp_grant_id_t gids[2];
-	int r, both;
+	size_t sizes[2];
+	int r, both, count;
 
 	gids[0] = gids[1] = GRANT_INVALID;
+	sizes[0] = sizes[1] = *sizep;
 
 	/* Send two requests only if mirroring is enabled and the given request
 	 * is either FLT_READ2 or FLT_WRITE.
 	 */
 	both = (USE_MIRROR && request != FLT_READ);
 
-	m1.m_type = (request == FLT_WRITE) ? DEV_WRITE_S : DEV_READ_S;
-	m1.COUNT = *sizep;
+	count = paired_grant(bufa, bufb, request, gids, vectors, sizes, both);
+
+	m1.m_type = (request == FLT_WRITE) ? DEV_SCATTER_S : DEV_GATHER_S;
+	m1.COUNT = count;
 	m1.POSITION = ex64lo(pos);
 	m1.HIGHPOS = ex64hi(pos);
+
 	m2 = m1;
 
-	paired_grant(bufa, bufb, *sizep, request, gids, both);
 	m1.IO_GRANT = (char *) gids[0];
 	m2.IO_GRANT = (char *) gids[1];
 
 	r = paired_sendrec(&m1, &m2, both);
 
-	paired_revoke(gids[0], gids[1], both);
+	paired_revoke(gids, vectors, sizes, count, both);
 
 	if(r != OK) {
 #if DEBUG
@@ -875,7 +950,7 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 		return r;
 	}
 
-	if (m1.m_type != TASK_REPLY || m1.REP_STATUS < 0) {
+	if (m1.m_type != TASK_REPLY || m1.REP_STATUS != OK) {
 		printf("Filter: unexpected/invalid reply from main driver: "
 			"(%x, %d)\n", m1.m_type, m1.REP_STATUS);
 
@@ -883,26 +958,23 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 			(m1.m_type == TASK_REPLY) ? m1.REP_STATUS : EFAULT);
 	}
 
-	if (m1.REP_STATUS != *sizep) {
-		printf("Filter: truncated reply %u to I/O request of size "
-			"0x%x at 0x%s; size 0x%s\n",
-			m1.REP_STATUS, *sizep,
-			print64(pos), print64(disk_size));
+	if (sizes[0] != *sizep) {
+		printf("Filter: truncated reply from main driver\n");
 
 		/* If the driver returned a value *larger* than we requested,
 		 * OR if we did NOT exceed the disk size, then we should
 		 * report the driver for acting strangely!
 		 */
-		if (m1.REP_STATUS > *sizep ||
-		  cmp64(add64u(pos, *sizep), disk_size) < 0)
+		if (sizes[0] < 0 || sizes[0] > *sizep ||
+			cmp64(add64u(pos, sizes[0]), disk_size) < 0)
 			return bad_driver(DRIVER_MAIN, BD_PROTO, EFAULT);
 
 		/* Return the actual size. */
-		*sizep = m1.REP_STATUS;
+		*sizep = sizes[0];
 	}
 
 	if (both) {
-		if (m2.m_type != TASK_REPLY || m2.REP_STATUS < 0) {
+		if (m2.m_type != TASK_REPLY || m2.REP_STATUS != OK) {
 			printf("Filter: unexpected/invalid reply from "
 				"backup driver (%x, %d)\n",
 				m2.m_type, m2.REP_STATUS);
@@ -911,18 +983,18 @@ int read_write(u64_t pos, char *bufa, char *bufb, size_t *sizep, int request)
 				m2.m_type == TASK_REPLY ? m2.REP_STATUS :
 				EFAULT);
 		}
-		if (m2.REP_STATUS != *sizep) {
+		if (sizes[1] != *sizep) {
 			printf("Filter: truncated reply from backup driver\n");
 
 			/* As above */
-			if (m2.REP_STATUS > *sizep ||
-				cmp64(add64u(pos, *sizep), disk_size) < 0)
+			if (sizes[1] < 0 || sizes[1] > *sizep ||
+				cmp64(add64u(pos, sizes[1]), disk_size) < 0)
 				return bad_driver(DRIVER_BACKUP, BD_PROTO,
 					EFAULT);
 
 			/* Return the actual size. */
-			if (*sizep >= m2.REP_STATUS)
-				*sizep = m2.REP_STATUS;
+			if (*sizep >= sizes[1])
+				*sizep = sizes[1];
 		}
 	}
 

@@ -21,14 +21,14 @@ static char *rb1_array;			/* write readback buffer for disk 1 */
  *===========================================================================*/
 void sum_init(void)
 {
-  /* Initialize buffers. */
+	/* Initialize buffers. */
 
-  ext_array = alloc_contig(SBUF_SIZE, 0, NULL);
-  rb0_array = alloc_contig(SBUF_SIZE, 0, NULL);
-  rb1_array = alloc_contig(SBUF_SIZE, 0, NULL);
+	ext_array = flt_malloc(SBUF_SIZE, NULL, 0);
+	rb0_array = flt_malloc(SBUF_SIZE, NULL, 0);
+	rb1_array = flt_malloc(SBUF_SIZE, NULL, 0);
 
-  if (ext_array == NULL || rb0_array == NULL || rb1_array == NULL)
-	panic(__FILE__, "no memory available", NO_NUM);
+	if (ext_array == NULL || rb0_array == NULL || rb1_array == NULL)
+		panic(__FILE__, "no memory available", NO_NUM);
 }
 
 /*===========================================================================*
@@ -44,6 +44,14 @@ static void calc_sum(unsigned sector, char *data, char *sum)
 	struct MD5Context ctx;
 
 	switch(SUM_TYPE) {
+	case ST_NIL:
+		/* No checksum at all */
+
+		q = (unsigned long *) sum;
+		*q = sector;
+
+		break;
+
 	case ST_XOR:
 		/* Basic XOR checksum */
 		p = (unsigned long *) data;
