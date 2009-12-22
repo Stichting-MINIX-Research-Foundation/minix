@@ -51,7 +51,10 @@ start)
     # National keyboard?
     test -f /etc/keymap && loadkeys /etc/keymap
 
-    up is -period 5HZ
+    if [ "`sysenv debug_fkeys`" != 0 ]
+    then
+        up is -period 5HZ
+    fi
     echo .
 
     # Set timezone.

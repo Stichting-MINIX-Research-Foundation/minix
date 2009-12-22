@@ -12524,7 +12524,7 @@ osexec|Osborne executive:\
 	:kb=^H:kd=^J:kl=^H:kr=^L:ku=^K:le=^H:nd=^L:nl=^J:se=\Ek:\
 	:so=\Ej:st=\E1:ue=\Em:up=^K:us=\El:
 
-#### Console types for obsolete UNIX clones
+#### Console types for obsolete and not-so-obsolete UNIX clones
 #
 # Coherent, Minix, Venix, and several lesser-known kin were OSs for 8088
 # machines that tried to emulate the UNIX look'n'feel.  Coherent and Venix
@@ -12538,19 +12538,21 @@ osexec|Osborne executive:\
 # even as single processes under SunOS and the Macintosh OS.
 #
 
-# This is the entry provided with minix 1.7.4, with bogus :ri: removed.
-minix|minix console (v1.7):\
-	:am:xn:\
+# This is the entry provided with MINIX 3.1.6.
+minix|minix console:\
+	:am:xn:bs:\
 	:co#80:it#8:li#25:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:al=\E[L:bl=^G:cd=\E[0J:\
 	:ce=\E[K:cl=\E[H\E[0J:cm=\E[%i%d;%dH:cr=^M:dc=\E[P:\
-	:dl=\E[M:do=\E[B:ei=:ho=\E[H:ic=\E[@:im=:is=\E[0m:k0=\E[Y:\
-	:k1=\E[V:k2=\E[U:k3=\E[T:k4=\E[S:k5=\E[G:kb=^H:kd=\E[B:\
-	:kh=\E[H:kl=\E[D:kr=\E[C:ku=\E[A:l0=End:l1=PgUp:l2=PgDn:\
-	:l3=Num +:l4=Num -:l5=Num 5:le=^H:mb=\E[5m:md=\E[1m:\
-	:me=\E[0m:mr=\E[7m:nd=\E[C:nw=^M^J:se=\E[0m:sf=^J:so=\E[7m:\
-	:sr=\EM:ta=^I:ue=\E[0m:up=\E[A:us=\E[4m:
+	:dl=\E[M:do=\E[B:ho=\E[H:ic=\E[@:is=\E[0m:k1=\E[11~:\
+	:k2=\E[12~:k3=\E[13~:k4=\E[14~:k5=\E[15~:k6=\E[17~:\
+	:k7=\E[18~:k8=\E[19~:k9=\E[20~:k;=\E[21~:kD=\177:\
+	:kI=\E[@:kN=\E[U:kP=\E[V:kb=^H:kd=\E[B:kh=\E[H:kl=\E[D:\
+	:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[0m:\
+	:mr=\E[7m:nd=\E[C:nw=^M^J:se=\E[0m:sf=^J:so=\E[7m:\
+	:sr=\EM:ta=^I:ue=\E[0m:up=\E[A:us=\E[4m:@7=\E[Y:\
+	:Co#8:pa#64:AB=\E[4%dm:AF=\E[3%dm:
 # Corrected Jan 14, 1997 by Vincent Broman <broman@nosc.mil>
 minix-old|minix console (v1.5):\
 	:xo:\
