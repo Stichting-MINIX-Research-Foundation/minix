@@ -49,8 +49,8 @@
 #include <time.h>
 #include <errno.h>
 #include <signal.h>
-#include <minix/const.h>
 #include <minix/type.h>
+#include <minix/const.h>
 #include <minix/syslib.h>
 #include <minix/com.h>
 #include <minix/portio.h>
