@@ -45,9 +45,6 @@ CD CONTENTS:
 This CD contains:
 
    - README.TXT      This file
-   - BOOTFLOP.IMG    If you cannot boot from CD-ROMs, insert the CD-ROM
-                     anyway, then copy this floppy image raw to a floppy
-                     using RawWrite (ask Google) and boot from the floppy
 
 There are also many invisible files used for installing MINIX 3.
 

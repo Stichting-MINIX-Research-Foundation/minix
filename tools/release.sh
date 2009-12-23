@@ -356,8 +356,9 @@ umount $TMPDISK3 || exit
 
 (cd ../boot && make)
 dd if=$TMPDISK3 of=$ROOTIMAGE bs=$BS count=$ROOTBLOCKS
-sh mkboot cdfdboot $TMPDISK3
-cp $IMAGE $CDFILES/bootflop.img
+sh mkboot cdfdboot $TMPDISK3 $ROOTKB
+# image no longer fits on a floppy
+#cp $IMAGE $CDFILES/bootflop.img
 cp release/cd/* $CDFILES || true
 echo "This is Minix version $version_pretty prepared `date`." >$CDFILES/VERSION.TXT
 
