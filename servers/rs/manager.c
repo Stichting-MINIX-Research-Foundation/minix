@@ -29,8 +29,9 @@ FORWARD _PROTOTYPE( int start_service, (struct rproc *rp, int flags,
 FORWARD _PROTOTYPE( int stop_service, (struct rproc *rp,int how) );
 FORWARD _PROTOTYPE( int fork_nb, (void) );
 FORWARD _PROTOTYPE( int read_exec, (struct rproc *rp) );
-FORWARD _PROTOTYPE( int copy_exec, (struct rproc *rp_src,
+FORWARD _PROTOTYPE( int share_exec, (struct rproc *rp_src,
 	struct rproc *rp_dst) );
+FORWARD _PROTOTYPE( void free_slot, (struct rproc *rp) );
 FORWARD _PROTOTYPE( void run_script, (struct rproc *rp) );
 FORWARD _PROTOTYPE( char *get_next_label, (char *ptr, char *label,
 	char *caller_label) );
@@ -128,8 +129,6 @@ size_t dst_len;
 
   dst_label[len] = 0;
 
-  if (rs_verbose)
-	printf("RS: copy_label: using label (custom) '%s'\n", dst_label);
   return OK;
 }
 
@@ -203,6 +202,21 @@ message *m_ptr;					/* request message pointer */
   }
   rp->r_argv[arg_count] = NULL;			/* end with NULL pointer */
   rp->r_argc = arg_count;
+  
+  /* Process name for the service. */
+  cmd_ptr = strrchr(rp->r_argv[0], '/');
+  if (cmd_ptr)
+  	cmd_ptr++;
+  else
+  	cmd_ptr= rp->r_argv[0];
+  len= strlen(cmd_ptr);
+  if (len > P_NAME_LEN-1)
+  	len= P_NAME_LEN-1;	/* truncate name */
+  memcpy(rp->r_proc_name, cmd_ptr, len);
+  rp->r_proc_name[len]= '\0';
+  if(rs_verbose)
+      printf("RS: do_up: using proc_name (from binary %s) '%s'\n",
+          rp->r_argv[0], rp->r_proc_name);
 
   if(rs_start.rss_label.l_len > 0) {
 	/* RS_UP caller has supplied a custom label for this service. */
@@ -214,19 +228,15 @@ message *m_ptr;					/* request message pointer */
 	  printf("RS: do_up: using label (custom) '%s'\n", rp->r_label);
   } else {
 	/* Default label for the service. */
-	label= strrchr(rp->r_argv[0], '/');
-	if (label)
-		label++;
-	else
-		label= rp->r_argv[0];
+	label = rp->r_proc_name;
   	len= strlen(label);
   	if (len > MAX_LABEL_LEN-1)
 		len= MAX_LABEL_LEN-1;	/* truncate name */
   	memcpy(rp->r_label, label, len);
   	rp->r_label[len]= '\0';
         if(rs_verbose)
-          printf("RS: do_up: using label (from binary %s) '%s'\n",
-		rp->r_argv[0], rp->r_label);
+          printf("RS: do_up: using label (from proc_name) '%s'\n",
+		rp->r_label);
   }
 
   if(rs_start.rss_nr_control > 0) {
@@ -302,12 +312,11 @@ message *m_ptr;					/* request message pointer */
 	exst_cpy = 0;
 	
 	if(rs_start.rss_flags & RF_REUSE) {
-		char *cmd = rp->r_cmd;
                 int i;
-                
+
                 for(i = 0; i < NR_SYS_PROCS; i++) {
                 	rp2 = &rproc[i];
-                        if(strcmp(rp->r_cmd, rp2->r_cmd) == 0 &&
+                        if(strcmp(rp->r_proc_name, rp2->r_proc_name) == 0 &&
                            (rp2->r_sys_flags & SF_USE_COPY)) {
                                 /* We have found the same binary that's
                                  * already been copied */
@@ -320,7 +329,7 @@ message *m_ptr;					/* request message pointer */
 	if(!exst_cpy)
 		s = read_exec(rp);
 	else
-		s = copy_exec(rp, rp2); 
+		s = share_exec(rp, rp2);
 
 	if (s != OK)
 		return s;
@@ -463,15 +472,8 @@ PUBLIC int do_down(message *m_ptr)
 	stop_service(rp,RS_EXITING);
 	if (rp->r_pid == -1)
 	{
-		/* Process is already gone */
-		rp->r_flags = 0;			/* release slot */
-		if (rp->r_exec)
-		{
-			free(rp->r_exec);
-			rp->r_exec= NULL;
-		}
-		proc = _ENDPOINT_P(rp->r_proc_nr_e);
-		rproc_ptr[proc] = NULL;
+		/* Process is already gone, release slot. */
+		free_slot(rp);
 	  	return(OK);
 	}
 
@@ -860,12 +862,7 @@ PUBLIC void do_exit(message *m_ptr)
 		  }
 
 		  /* Release slot. */
-		  rp->r_flags = 0;
-		  if (rp->r_exec)
-		  {
-			free(rp->r_exec);
-			rp->r_exec= NULL;
-		  }
+		  free_slot(rp);
 	      }
 	      else if(rp->r_flags & RS_REFRESHING) {
 		      short is_updating = rp->r_flags & RS_UPDATING;
@@ -1268,6 +1265,9 @@ message *m_ptr;
   return(OK);
 }
 
+/*===========================================================================*
+ *				 fork_nb				     *
+ *===========================================================================*/
 PRIVATE pid_t fork_nb()
 {
   message m;
@@ -1275,65 +1275,109 @@ PRIVATE pid_t fork_nb()
   return(_syscall(PM_PROC_NR, FORK_NB, &m));
 }
 
-PRIVATE int copy_exec(rp_dst, rp_src)
+/*===========================================================================*
+ *				share_exec				     *
+ *===========================================================================*/
+PRIVATE int share_exec(rp_dst, rp_src)
 struct rproc *rp_dst, *rp_src;
 {
-	/* Copy binary from rp_src to rp_dst. */
-	rp_dst->r_exec_len = rp_src->r_exec_len;
-	rp_dst->r_exec = malloc(rp_dst->r_exec_len);
-	if(rp_dst->r_exec == NULL)
-	        return ENOMEM;
+  if(rs_verbose) {
+      printf("RS: share_exec: sharing exec image from %s to %s\n",
+          rp_src->r_label, rp_dst->r_label);
+  }
 
-	memcpy(rp_dst->r_exec, rp_src->r_exec, rp_dst->r_exec_len);
-	if(rp_dst->r_exec_len != 0 && rp_dst->r_exec != NULL)
-	        return OK;
-	        
-        rp_dst->r_exec = NULL;
-        return EIO;
+  /* Share exec image from rp_src to rp_dst. */
+  rp_dst->r_exec_len = rp_src->r_exec_len;
+  rp_dst->r_exec = rp_src->r_exec;
+
+  return OK;
 }
 
+/*===========================================================================*
+ *				read_exec				     *
+ *===========================================================================*/
 PRIVATE int read_exec(rp)
 struct rproc *rp;
 {
-	int e, r, fd;
-	char *e_name;
-	struct stat sb;
+  int e, r, fd;
+  char *e_name;
+  struct stat sb;
 
+  e_name= rp->r_argv[0];
+  if(rs_verbose) {
+      printf("RS: read_exec: copying exec image from: %s\n", e_name);
+  }
 
-	e_name= rp->r_argv[0];
-	r= stat(e_name, &sb);
-	if (r != 0) 
-		return -errno;
+  r= stat(e_name, &sb);
+  if (r != 0) 
+      return -errno;
 
-	fd= open(e_name, O_RDONLY);
-	if (fd == -1)
-		return -errno;
+  fd= open(e_name, O_RDONLY);
+  if (fd == -1)
+      return -errno;
 
-	rp->r_exec_len= sb.st_size;
-	rp->r_exec= malloc(rp->r_exec_len);
-	if (rp->r_exec == NULL)
-	{
-		printf("RS: read_exec: unable to allocate %d bytes\n",
-			rp->r_exec_len);
-		close(fd);
-		return ENOMEM;
-	}
+  rp->r_exec_len= sb.st_size;
+  rp->r_exec= malloc(rp->r_exec_len);
+  if (rp->r_exec == NULL)
+  {
+      printf("RS: read_exec: unable to allocate %d bytes\n",
+          rp->r_exec_len);
+      close(fd);
+      return ENOMEM;
+  }
 
-	r= read(fd, rp->r_exec, rp->r_exec_len);
-	e= errno;
-	close(fd);
-	if (r == rp->r_exec_len)
-		return OK;
+  r= read(fd, rp->r_exec, rp->r_exec_len);
+  e= errno;
+  close(fd);
+  if (r == rp->r_exec_len)
+      return OK;
 
-	printf("RS: read_exec: read failed %d, errno %d\n", r, e);
+  printf("RS: read_exec: read failed %d, errno %d\n", r, e);
 
-	free(rp->r_exec);
-	rp->r_exec= NULL;
+  free(rp->r_exec);
+  rp->r_exec= NULL;
 
-	if (r >= 0)
-		return EIO;
-	else
-		return -e;
+  if (r >= 0)
+      return EIO;
+  else
+      return -e;
+}
+
+/*===========================================================================*
+ *				free_slot				     *
+ *===========================================================================*/
+PRIVATE void free_slot(rp)
+struct rproc *rp;
+{
+  int slot_nr, has_shared_exec;
+  struct rproc *other_rp;
+
+  /* Free memory if necessary. */
+  if(rp->r_sys_flags & SF_USE_COPY) {
+      /* Search for some other slot sharing the same exec image. */
+      has_shared_exec = FALSE;
+      for (slot_nr = 0; slot_nr < NR_SYS_PROCS; slot_nr++) {
+          other_rp = &rproc[slot_nr];		/* get pointer to slot */
+          if (other_rp->r_flags & RS_IN_USE && other_rp != rp
+              && other_rp->r_exec == rp->r_exec) {  /* found! */
+              has_shared_exec = TRUE;
+          }
+      }
+
+      /* If nobody uses our copy of the exec image, we can get rid of it. */
+      if(!has_shared_exec) {
+          if(rs_verbose) {
+              printf("RS: free_slot: free exec image from %s\n", rp->r_label);
+          }
+          free(rp->r_exec);
+          rp->r_exec = NULL;
+          rp->r_exec_len = 0;
+      }
+  }
+
+  /* Mark slot as no longer in use.. */
+  rp->r_flags = 0;
+  rproc_ptr[_ENDPOINT_P(rp->r_proc_nr_e)] = NULL;
 }
 
 /*===========================================================================*

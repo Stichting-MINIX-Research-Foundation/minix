@@ -6,6 +6,7 @@
 /* Definition of an entry of the boot image priv table. */
 struct boot_image_priv {
   endpoint_t endpoint;         /* process endpoint number */
+  char label[MAX_LABEL_LEN];   /* label to assign to this service */
 
   int flags;                   /* privilege flags */
   short trap_mask;             /* allowed system call traps */
@@ -50,7 +51,8 @@ struct rproc {
   char *r_exec;			/* Executable image */ 
   size_t r_exec_len;		/* Length of image */
 
-  char r_label[MAX_LABEL_LEN];	/* unique name of this service */
+  char r_label[MAX_LABEL_LEN];	/* label of this service */
+  char r_proc_name[P_NAME_LEN];	/* process name of this service */
   char r_cmd[MAX_COMMAND_LEN];	/* raw command plus arguments */
   char r_script[MAX_SCRIPT_LEN]; /* name of the restart script executable */
   char *r_argv[MAX_NR_ARGS+2];  /* parsed arguments vector */

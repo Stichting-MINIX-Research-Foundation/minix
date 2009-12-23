@@ -453,6 +453,9 @@ PRIVATE void init_server(void)
        * service by using vm_set_priv(). We need a more uniform privilege
        * management scheme in VM for this change.
        */
+      /* Get label. */
+      strcpy(rp->r_label, boot_image_priv->label);
+
       /* Force a static privilege id for system services in the boot image. */
       rp->r_priv.s_id = static_priv_id(_ENDPOINT_P(boot_image_priv->endpoint));
 
@@ -489,8 +492,8 @@ PRIVATE void init_server(void)
       rp->r_dev_style = boot_image_dev->dev_style;    /* device style */
       rp->r_period = boot_image_dev->period;          /* heartbeat period */
 
-      /* Get label. */
-      strcpy(rp->r_label, ip->proc_name);
+      /* Get process name. */
+      strcpy(rp->r_proc_name, ip->proc_name);
 
       /* Get command settings. */
       rp->r_cmd[0]= '\0';

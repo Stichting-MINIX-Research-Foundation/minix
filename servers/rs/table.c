@@ -35,23 +35,23 @@ PRIVATE int
 
 /* Definition of the boot image priv table. */
 PUBLIC struct boot_image_priv boot_image_priv_table[] = {
-  /*endpoint,    priv flags,  traps,  ipcto,  kcalls    */
-  { VM_PROC_NR,       VM_F,   SRV_T,  SRV_M,  vm_kc     },
-  { PM_PROC_NR,       SRV_F,  SRV_T,  SRV_M,  pm_kc     },
-  { FS_PROC_NR,       SRV_F,  SRV_T,  SRV_M,  fs_kc     },
-  { DS_PROC_NR,       SRV_F,  SRV_T,  SRV_M,  ds_kc     },
-  { TTY_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  tty_kc    },
-  { MEM_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  mem_kc    },
-  { LOG_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  drv_kc    },
-  { MFS_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  fs_kc     },
-  { PFS_PROC_NR,      SRV_F,  SRV_T,  SRV_M,  fs_kc     },
-  { INIT_PROC_NR,     RUSR_F, RUSR_T, RUSR_M, rusr_kc   },
-  { NULL_BOOT_NR,     0,      0,      0,      no_kc     } /* null entry */
+  /*endpoint,     label,      flags,  traps,  ipcto,  kcalls  */
+  { VM_PROC_NR,   "vm",       VM_F,   SRV_T,  SRV_M,  vm_kc   },
+  { PM_PROC_NR,   "pm",       SRV_F,  SRV_T,  SRV_M,  pm_kc   },
+  { FS_PROC_NR,   "vfs",      SRV_F,  SRV_T,  SRV_M,  fs_kc   },
+  { DS_PROC_NR,   "ds",       SRV_F,  SRV_T,  SRV_M,  ds_kc   },
+  { TTY_PROC_NR,  "tty",      SRV_F,  SRV_T,  SRV_M,  tty_kc  },
+  { MEM_PROC_NR,  "memory",   SRV_F,  SRV_T,  SRV_M,  mem_kc  },
+  { LOG_PROC_NR,  "log",      SRV_F,  SRV_T,  SRV_M,  drv_kc  },
+  { MFS_PROC_NR,  "fs_imgrd", SRV_F,  SRV_T,  SRV_M,  fs_kc   },
+  { PFS_PROC_NR,  "pfs",      SRV_F,  SRV_T,  SRV_M,  fs_kc   },
+  { INIT_PROC_NR, "init",     RUSR_F, RUSR_T, RUSR_M, rusr_kc },
+  { NULL_BOOT_NR, "",         0,      0,      0,      no_kc   } /* null entry */
 };
 
 /* Definition of the boot image sys table. */
 PUBLIC struct boot_image_sys boot_image_sys_table[] = {
-  /*endpoint,         sys flags                         */
+  /*endpoint,         flags                             */
   { LOG_PROC_NR,      SRVC_SF                           },
   { MFS_PROC_NR,      SRVC_SF                           },
   { PFS_PROC_NR,      SRVC_SF                           },
