@@ -54,8 +54,7 @@ char *argv[];
 
 	if (argc<2 || argc>3)
 	{
-		fprintf(stderr, "Usage: %s hostname [-l length] [-t timeout]\n",
-			argv[0]);
+		fprintf(stderr, "Usage: %s hostname [length]\n", argv[0]);
 		exit(1);
 	}
 	hostent= gethostbyname(argv[1]);
