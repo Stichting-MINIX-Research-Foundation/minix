@@ -166,10 +166,10 @@ int op;				/* special actions */
   }
 
   /* If the single indirect block isn't there (or was just freed),
-   * see if we have to keep the double indirect block.
+   * see if we have to keep the double indirect block, if any.
    */
-  if(z1 == NO_ZONE && !single && empty_indir(bp_dindir, rip->i_sp) &&
-     z2 != NO_ZONE) {
+  if(z1 == NO_ZONE && !single && z2 != NO_ZONE &&
+     empty_indir(bp_dindir, rip->i_sp)) {
 	free_zone(rip->i_dev, z2);
 	rip->i_zone[zones+1] = NO_ZONE;
   }
