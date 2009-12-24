@@ -1,0 +1,17 @@
+# Makefile for lib/i386/math.
+
+CFLAGS="-O -D_MINIX -D_POSIX_SOURCE"
+
+LIBRARIES=libc
+
+libc_FILES="           \
+	arch_compare.c \
+	arch_round.c   \
+	fpu_cw.s       \
+	fpu_sw.s       \
+	fpu_round.s    \
+	fegetround.c   \
+	feholdexcept.c \
+	fesetround.c"
+
+TYPE=both

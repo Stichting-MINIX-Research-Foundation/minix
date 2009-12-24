@@ -1,0 +1,28 @@
+.TH FEHOLDEXCEPT 3  "December 22, 2009"
+.UC 4
+.SH NAME
+feholdexcept \- disable floating point exceptions
+.SH SYNOPSIS
+.nf
+.ft B
+#include <fenv.h>
+
+int feholdexcept(fenv_t *\fIenvp\fP);
+.fi
+.SH DESCRIPTION
+The feholdexcept function disables floating point exceptions. The floating
+point environment prior to disabling exceptions is stored in the struct 
+pointed to by \fIenvp\fP. 
+.SH "RETURN VALUE"
+On x86, this function never fails and the return value is always 0. A portable
+program should, however, consider the possibility that this function may fail
+and will return -1 to indicate this.
+.SH "KNOWN ISSUES"
+POSIX requires the function to clear exception flags. However, as none of the
+other functions dealing with FPU flags and FPU state have been implemented this
+has no effect on MINIX. A full implementation may need to store more FPU state
+as there is no instruction to change the status word independent of the rest
+of the FPU state. Do not depend on the fields of fenv_t as they may change even
+on future versions of MINIX/x86.
+
+

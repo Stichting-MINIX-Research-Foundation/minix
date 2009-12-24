@@ -14,7 +14,7 @@ ldexp(double fl, int exp)
 	int sign = 1;
 	int currexp;
 
-	if (__IsNan(fl)) {
+	if (isnan(fl)) {
 		errno = EDOM;
 		return fl;
 	}

@@ -1,0 +1,25 @@
+.TH FPCLASSIFY 3  "December 18, 2009"
+.UC 4
+.SH NAME
+fpclassify, isfinite, isinf, isnan, isnormal, signbit \- classify floating point numbers
+.SH SYNOPSIS
+.nf
+.ft B
+#include <math.h>
+
+int fpclassify(double \fIx\fP):
+int isfinite(double \fIx\fP);
+int isinf(double \fIx\fP);
+int isnan(double \fIx\fP);
+int isnormal(double \fIx\fP);
+int signbit(double \fIx\fP);
+.fi
+.SH DESCRIPTION
+These functions provide information about the specified floating point number 
+\fIx\fP. fpclassify returns one of the values FP_INFINITE, FP_NAN, FP_NORMAL,
+FP_SUBNORMAL and FP_ZERO depending on the type of number provided. The isinf,
+isinf, isnan and isnormal test for specific number classes, returning a 
+non-zero value is and only if the specified number belongs to the class 
+specified by the function name. The signbit function returns a non-zero value
+if and only if the sign bit is set, which for non-NaN values (including zero)
+means that the number is negative.

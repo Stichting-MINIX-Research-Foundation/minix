@@ -160,6 +160,7 @@ static mnemonic_t mnemtab[] = {			/* This array is sorted. */
 	{ "fstcw",	FSTCW,		WORD },
 	{ "fstd",	FSTD,		WORD },
 	{ "fstenv",	FSTENV,		WORD },
+	{ "fstp",	FSTP,		WORD },
 	{ "fstpd",	FSTPD,		WORD },
 	{ "fstps",	FSTPS,		WORD },
 	{ "fstpx",	FSTPX,		WORD },

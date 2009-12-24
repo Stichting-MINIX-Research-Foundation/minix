@@ -151,6 +151,7 @@ static mnemonic_t mnemtab[] = {
 	{ FSTCW,	"fnstcw"	},
 	{ FSTD,		"fstl"		},
 	{ FSTENV,	"fnstenv"	},
+	{ FSTP,		"fstp"		},
 	{ FSTPD,	"fstpl"		},
 	{ FSTPS,	"fstps"		},
 	{ FSTPX,	"fstpt"		},

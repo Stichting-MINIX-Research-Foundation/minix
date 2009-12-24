@@ -9,6 +9,7 @@ libc_FILES=" \
 	atan.c \
 	atan2.c \
 	ceil.c \
+	compare.c \
 	exp.c \
 	fabs.c \
 	floor.c \

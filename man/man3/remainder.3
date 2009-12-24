@@ -1,0 +1,20 @@
+.TH REMAINDER 3  "December 18, 2009"
+.UC 4
+.SH NAME
+remainder \- floating point remainder after division
+.SH SYNOPSIS
+.nf
+.ft B
+#include <math.h>
+
+double remainder(double \fIx\fP, double \fIy\fP);
+.fi
+.SH DESCRIPTION
+This function returns the remainder of a division of \fIx\fP by \fIy\fP. More
+formally, it computes which integer \fIn\fP is closest to the fraction 
+\fIx\fP/\fIy\fP and returns \fIx\fP - \fIn\fP*\fIy\fP. An even value for 
+\fIn\fP is preferred over an odd one if both are equally far away (that is, 
+banker's rounding is applied). If \fIx\fP is infinite or \fIy\fP is zero, 
+a NaN value is returned.
+.SH "RETURN VALUE"
+The function returns the remainder of a division of \fIx\fP by \fIy\fP.

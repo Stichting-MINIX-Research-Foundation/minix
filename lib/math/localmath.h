@@ -3,6 +3,8 @@
  */
 /* $Header$ */
 
+#define __IsNan isnan
+
 /* some constants (Hart & Cheney) */
 #define	M_PI		3.14159265358979323846264338327950288
 #define	M_2PI		6.28318530717958647692528676655900576

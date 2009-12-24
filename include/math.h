@@ -7,11 +7,13 @@
 #include <ansi.h>
 #endif
 
-#define HUGE_VAL	(__huge_val())		/* may be infinity */
+#define INFINITY	(__infinity())
+#define NAN		(__qnan())
+#define HUGE_VAL	INFINITY
 
 /* Function Prototypes. */
-_PROTOTYPE( double __huge_val,	(void)					);
-_PROTOTYPE( int __IsNan,	(double _x)				);
+_PROTOTYPE( double __infinity,	(void)					);
+_PROTOTYPE( double __qnan,	(void)					);
 
 _PROTOTYPE( double acos,  (double _x)					);
 _PROTOTYPE( double asin,  (double _x)					);
@@ -40,6 +42,28 @@ _PROTOTYPE( double hypot, (double _x, double _y)			);
 
 #ifdef _POSIX_SOURCE	/* STD-C? */
 #include <mathconst.h>
+
+#define FP_INFINITE  1
+#define FP_NAN       2
+#define FP_NORMAL    3
+#define FP_SUBNORMAL 4
+#define FP_ZERO      5
+
+_PROTOTYPE( int fpclassify,     (double x)				);
+_PROTOTYPE( int isfinite,       (double x)				);
+_PROTOTYPE( int isinf,          (double x)				);
+_PROTOTYPE( int isnan,          (double x)				);
+_PROTOTYPE( int isnormal,       (double x)				);
+_PROTOTYPE( int signbit,        (double x)				);
+_PROTOTYPE( int isgreater,      (double x, double y)	);
+_PROTOTYPE( int isgreaterequal, (double x, double y)	);
+_PROTOTYPE( int isless,         (double x, double y)	);
+_PROTOTYPE( int islessequal,    (double x, double y)	);
+_PROTOTYPE( int islessgreater,  (double x, double y)	);
+_PROTOTYPE( int isunordered,    (double x, double y)	);
+_PROTOTYPE( double nearbyint,   (double x)				);
+_PROTOTYPE( double remainder,   (double x, double y)	);
+_PROTOTYPE( double trunc,       (double x)				);
 #endif
 
 #endif /* _MATH_H */

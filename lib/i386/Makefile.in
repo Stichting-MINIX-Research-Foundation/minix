@@ -2,6 +2,7 @@
 
 SUBDIRS="\
 	int64 \
+	math \
 	misc \
 	rts \
 	string"
