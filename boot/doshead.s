@@ -1277,6 +1277,17 @@ _int15:
 	pop	si		! Restore
 	ret
 
+! void scan_keyboard(void)
+!	Read keyboard character. Needs to be done in case one is waiting.
+.define _scan_keyboard
+_scan_keyboard:
+	movb	ah, 1		! Check keyboard
+	int	0x16
+	jz	no_key
+	movb	ah, 0		! Empty it
+	int	0x16
+no_key:	ret
+
 .sect	.rom
 	.align	4
 c60:	.data2	60		! Constants for MUL and DIV
