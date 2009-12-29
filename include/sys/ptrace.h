@@ -21,6 +21,8 @@
 #define T_ATTACH	11	/* attach to a running process */
 #define T_DETACH	12	/* detach from a traced process */
 #define T_SETOPT	13	/* set trace options */
+#define T_GETRANGE	14	/* get range of values */
+#define T_SETRANGE	15	/* set range of values */
 
 #define T_READB_INS	100	/* Read a byte from the text segment of an
 				 * untraced process (only for root)
@@ -32,6 +34,18 @@
 /* Trace options. */
 #define TO_TRACEFORK	0x1	/* automatically attach to forked children */
 #define TO_ALTEXEC	0x2	/* send SIGSTOP on successful exec() */
+
+/* Trace spaces. */
+#define TS_INS		0	/* text space */
+#define TS_DATA		1	/* data space */
+
+/* Trance range structure. */
+struct ptrace_range {
+  int pr_space;			/* space in traced process */
+  long pr_addr;			/* address in traced process */
+  void *pr_ptr;			/* buffer in caller process */
+  size_t pr_size;		/* size of range, in bytes */
+};
 
 /* Function Prototypes. */
 #ifndef _ANSI_H

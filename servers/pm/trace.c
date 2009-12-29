@@ -18,6 +18,8 @@
  * T_ATTACH	attach to an existing process
  * T_DETACH	detach from a traced process
  * T_SETOPT	set trace options
+ * T_GETRANGE	get range of values
+ * T_SETRANGE	set range of values
  * 
  * The T_OK, T_ATTACH, T_EXIT, and T_SETOPT commands are handled here, and the
  * T_RESUME, T_STEP, T_SYSCALL, and T_DETACH commands are partially handled
@@ -38,7 +40,8 @@
 PUBLIC int do_trace()
 {
   register struct mproc *child;
-  int i, r, req;
+  struct ptrace_range pr;
+  int i, r, seg, req;
 
   req = m_in.request;
 
@@ -151,6 +154,30 @@ PUBLIC int do_trace()
 
   case T_SETOPT:	/* set trace options */
 	child->mp_trace_flags = m_in.data;
+
+	mp->mp_reply.reply_trace = 0;
+	return(OK);
+
+  case T_GETRANGE:
+  case T_SETRANGE:	/* get/set range of values */
+	r = sys_datacopy(who_e, (vir_bytes) m_in.PMTRACE_ADDR,
+			SELF, (vir_bytes) &pr, (phys_bytes) sizeof(pr));
+	if (r != OK) return(r);
+
+	if (pr.pr_space != TS_INS && pr.pr_space != TS_DATA) return(EINVAL);
+	if (pr.pr_size == 0 || pr.pr_size > LONG_MAX) return(EINVAL);
+
+	seg = (pr.pr_space == TS_INS) ? T : D;
+	if (req == T_GETRANGE)
+		r = sys_vircopy(child->mp_endpoint, seg, (vir_bytes) pr.pr_addr,
+			who_e, D, (vir_bytes) pr.pr_ptr,
+			(phys_bytes) pr.pr_size);
+	else
+		r = sys_vircopy(who_e, D, (vir_bytes) pr.pr_ptr,
+			child->mp_endpoint, seg, (vir_bytes) pr.pr_addr,
+			(phys_bytes) pr.pr_size);
+
+	if (r != OK) return(r);
 
 	mp->mp_reply.reply_trace = 0;
 	return(OK);

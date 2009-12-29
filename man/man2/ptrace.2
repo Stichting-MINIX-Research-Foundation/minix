@@ -94,6 +94,16 @@ interpreted as an additional signal to pass to the process.
 .B T_SETOPT
 Set the given process's trace options to the bit combination of flags given
 in the \fIdata\fP argument.
+.TP
+.B T_GETRANGE
+Get a range of values from the address space of the traced process. The
+\fIaddr\fP argument must be a pointer to a fully initialized
+\fBstruct ptrace_range\fP structure.
+.TP
+.B T_SETRANGE
+Set a range of values in the address space of the traced process. The
+\fIaddr\fP argument must be a pointer to a fully initialized
+\fBstruct ptrace_range\fP structure.
 .PP
 The following option flags are currently supported for \fBT_SETOPT\fP:
 .TP 2
@@ -108,22 +118,56 @@ Send \fBSIGSTOP\fP instead of \fBSIGTRAP\fP upon a successful
 .BR execve (2).
 This allows the tracer to disambiguate between this case and other traps.
 .PP
-All addresses specified for the \fBT_GET\fP* and \fBT_SET\fP* requests must be
+The \fBT_GETRANGE\fP and \fBT_SETRANGE\fP calls use the following structure:
+.PP
+.RS
+.nf
+.ft B
+.ta +4n +8n
+struct ptrace_range {
+	int	pr_space;
+	long	pr_addr;
+	size_t	pr_size;
+	void	*pr_ptr;
+};
+.RE
+.PP
+The \fBpr_space\fP field specifies the address space from which to retrieve
+or set the values. It must be set to either of the following values:
+.PP
+.TP 10
+.B TS_INS
+Text space.
+.TP
+.B TS_DATA
+Data space.
+.PP
+The \fBpr_addr\fP field specifies the start address of the target area in the
+traced process. The \fBpr_size\fP field specifies the number of bytes to
+retrieve or set, and must be between 1 and LONG_MAX. The \fBpr_ptr\fP field
+must point to a buffer in the calling process that is used to store the
+retrieved values (for \fBT_GETRANGE\fP) or contains the values to set (for
+\fBT_SETRANGE\fP).
+.PP
+All addresses specified for the \fBT_GETINS\fP, \fBT_GETDATA\fP,
+\fBT_GETUSER\fP requests and their \fBT_SET\fP* counterparts must be
 aligned on \fBlong\fP boundary. Similarly, only \fBlong\fP sized values can be
 retrieved and set at a time.
 .SH "RETURN VALUE"
-All but the \fBT_GET\fP* requests return 0 upon successful completion.
+All but the \fBT_GETINS\fP, \fBT_GETDATA\fP, \fBT_GETUSER\fP requests return 0
+upon successful completion.
 Otherwise, a value of -1 is returned and \fIerrno\fP is set to indicate the
 error.
 .PP
-The \fBT_GET\fP* requests return the resulting data. Here, -1 is a legitimate
-return value. To distinguish between this and an error, clear \fIerrno\fP
+The \fBT_GETINS\fP, \fBT_GETDATA\fP, \fBT_GETUSER\fP requests return the
+resulting data. Here, -1 is a legitimate return value.
+To distinguish between this and an error, clear \fIerrno\fP
 before the \fBptrace\fP call, and check whether it is zero afterwards.
 .SH ERRORS
 The functions will fail if any of the following errors occur:
 .TP 10
 .B EINVAL
-Invalid request or signal given.
+Invalid request, signal, space, or length given.
 .TP 10
 .B ESRCH
 The given process is not found, exiting, or not traced by the caller.
@@ -131,8 +175,8 @@ The given process is not found, exiting, or not traced by the caller.
 .B EBUSY
 The given process is not stopped, or already being traced.
 .TP 10
-.B EIO
-The given address is out of range or not properly aligned.
+.B EFAULT
+The given address is invalid, inaccessible, or not properly aligned.
 .TP 10
 .B EPERM
 Attaching is denied, because the caller equals the given process,

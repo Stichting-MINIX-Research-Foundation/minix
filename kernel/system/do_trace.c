@@ -16,8 +16,6 @@
 /*==========================================================================*
  *				do_trace				    *
  *==========================================================================*/
-#define TR_VLSIZE	((vir_bytes) sizeof(long))
-
 PUBLIC int do_trace(m_ptr)
 register message *m_ptr;
 {
@@ -28,16 +26,22 @@ register message *m_ptr;
  * T_GETINS	return value from instruction space
  * T_GETDATA	return value from data space
  * T_GETUSER	return value from user process table
- * T_SETINS	set value from instruction space
- * T_SETDATA	set value from data space
+ * T_SETINS	set value in instruction space
+ * T_SETDATA	set value in data space
  * T_SETUSER	set value in user process table
  * T_RESUME	resume execution
  * T_EXIT	exit
  * T_STEP	set trace bit
  * T_SYSCALL	trace system call
+ * T_ATTACH	attach to an existing process
+ * T_DETACH	detach from a traced process
+ * T_SETOPT	set trace options
+ * T_GETRANGE	get range of values
+ * T_SETRANGE	set range of values
  *
- * The T_OK and T_EXIT commands are handled completely by the process manager,
- * all others come here.
+ * The T_OK, T_ATTACH, T_EXIT, and T_SETOPT commands are handled completely by
+ * the process manager. T_GETRANGE and T_SETRANGE use sys_vircopy(). All others
+ * come here.
  */
 
   register struct proc *rp;
@@ -91,12 +95,9 @@ register message *m_ptr;
 	return(OK);
 
   case T_GETINS:		/* return value from instruction space */
-	if (rp->p_memmap[T].mem_len != 0) {
-		COPYFROMPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
-		m_ptr->CTL_DATA = tr_data;
-		break;
-	}
-	/* Text space is actually data space - fall through. */
+	COPYFROMPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	m_ptr->CTL_DATA = tr_data;
+	break;
 
   case T_GETDATA:		/* return value from data space */
 	COPYFROMPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
@@ -104,7 +105,7 @@ register message *m_ptr;
 	break;
 
   case T_GETUSER:		/* return value from process table */
-	if ((tr_addr & (sizeof(long) - 1)) != 0) return(EIO);
+	if ((tr_addr & (sizeof(long) - 1)) != 0) return(EFAULT);
 
 	if (tr_addr <= sizeof(struct proc) - sizeof(long)) {
 		m_ptr->CTL_DATA = *(long *) ((char *) rp + (int) tr_addr);
@@ -117,18 +118,15 @@ register message *m_ptr;
 	i = sizeof(long) - 1;
 	tr_addr -= (sizeof(struct proc) + i) & ~i;
 
-	if (tr_addr > sizeof(struct priv) - sizeof(long)) return(EIO);
+	if (tr_addr > sizeof(struct priv) - sizeof(long)) return(EFAULT);
 
 	m_ptr->CTL_DATA = *(long *) ((char *) rp->p_priv + (int) tr_addr);
 	break;
 
   case T_SETINS:		/* set value in instruction space */
-	if (rp->p_memmap[T].mem_len != 0) {
-		COPYTOPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
-		m_ptr->CTL_DATA = 0;
-		break;
-	}
-	/* Text space is actually data space - fall through. */
+	COPYTOPROC(T, tr_addr, (vir_bytes) &tr_data, sizeof(long));
+	m_ptr->CTL_DATA = 0;
+	break;
 
   case T_SETDATA:			/* set value in data space */
 	COPYTOPROC(D, tr_addr, (vir_bytes) &tr_data, sizeof(long));
@@ -138,7 +136,7 @@ register message *m_ptr;
   case T_SETUSER:			/* set value in process table */
 	if ((tr_addr & (sizeof(reg_t) - 1)) != 0 ||
 	     tr_addr > sizeof(struct stackframe_s) - sizeof(reg_t))
-		return(EIO);
+		return(EFAULT);
 	i = (int) tr_addr;
 #if (_MINIX_CHIP == _CHIP_INTEL)
 	/* Altering segment registers might crash the kernel when it
@@ -153,7 +151,7 @@ register message *m_ptr;
 	    i == (int) &((struct proc *) 0)->p_reg.fs ||
 #endif
 	    i == (int) &((struct proc *) 0)->p_reg.ss)
-		return(EIO);
+		return(EFAULT);
 #endif
 	if (i == (int) &((struct proc *) 0)->p_reg.psw)
 		/* only selected bits are changeable */
@@ -185,12 +183,13 @@ register message *m_ptr;
 	break;
 
   case T_READB_INS:		/* get value from instruction space */
-	COPYFROMPROC(rp->p_memmap[T].mem_len > 0 ? T : D, tr_addr, (vir_bytes) &ub, 1);
+	COPYFROMPROC(T, tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->CTL_DATA = ub;
 	break;
 
   case T_WRITEB_INS:		/* set value in instruction space */
-	COPYTOPROC(rp->p_memmap[T].mem_len > 0 ? T : D,tr_addr, (vir_bytes) &tr_data, 1);
+	ub = (unsigned char) (tr_data & 0xff);
+	COPYTOPROC(T, tr_addr, (vir_bytes) &ub, 1);
 	m_ptr->CTL_DATA = 0;
 	break;
 
