@@ -1,18 +1,14 @@
+/* dumpcore - create core file of running process */
 
 #include <fcntl.h>
-#include <assert.h>
 #include <unistd.h>	
 #include <minix/config.h>
 #include <minix/type.h>
-#include <minix/callnr.h>
-#include <minix/safecopies.h>
-#include <minix/endpoint.h>
-#include <minix/com.h>
-#include <minix/syslib.h>
+#include <minix/ipc.h>
 #include <minix/const.h>
 #include <sys/ptrace.h>
-#include <sys/svrctl.h>
-#include <dirent.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <timers.h>
 #include <errno.h>
 #include <stdio.h>
@@ -20,33 +16,82 @@
 #include <stdlib.h>
 
 #include "../../kernel/arch/i386/include/archtypes.h"
-#include "../../kernel/const.h"
-#include "../../kernel/type.h"
-#include "../../kernel/config.h"
-#include "../../kernel/debug.h"
 #include "../../kernel/proc.h"
-#include "../../kernel/ipc.h"
 
-#define SLOTS (NR_TASKS + NR_PROCS)
-struct proc proc[SLOTS];
+#define CLICK_WORDS (CLICK_SIZE / sizeof(unsigned long))
 
-
-int write_seg(int fd, off_t off, endpoint_t proc_e, int seg,
-	off_t seg_off, phys_bytes seg_bytes)
+int adjust_stack(pid_t pid, struct mem_map *seg)
 {
-  int r, block_size, fl;
-  off_t n, o, b_off;
-  block_t b;
-  struct buf *bp;
-  ssize_t w;
-  static char buf[1024];
+  static unsigned long buf[CLICK_WORDS];
+  struct ptrace_range pr;
+  size_t off, top, bottom;
+  int i;
 
-  for (o= seg_off; o < seg_off+seg_bytes; o += sizeof(buf))
+  /* FIXME: kernel/VM strangeness */
+  seg->mem_vir -= seg->mem_len - 1;
+
+  /* Scan the stack, top to bottom, to find the lowest accessible region.
+   * In practice that will be at 64MB, so we also scan for the lowest non-zero
+   * region in order to keep the core file size managable.
+   * Portability note: this code assumes that the stack grows down.
+   */
+  top = seg->mem_vir + seg->mem_len;
+
+  pr.pr_space = TS_DATA;
+  pr.pr_addr = (top - 1) << CLICK_SHIFT;
+  pr.pr_size = sizeof(buf);
+  pr.pr_ptr = buf;
+
+  for (off = top - 1; off >= seg->mem_vir; off--) {
+	if (ptrace(T_GETRANGE, pid, (long) &pr, 0)) {
+		if (errno == EFAULT)
+			break;
+
+		perror("ptrace(T_GETRANGE)");
+		return 1;
+	}
+
+	for (i = 0; i < CLICK_WORDS; i += sizeof(buf[0]))
+		if (buf[i] != 0)
+			bottom = off;
+
+	pr.pr_addr -= sizeof(buf);
+  }
+
+  /* Add one extra zero page as margin. */
+  if (bottom > off && bottom > seg->mem_vir)
+	bottom--;
+
+  seg->mem_len -= bottom - seg->mem_vir;
+  seg->mem_vir = bottom;
+
+  return 0;
+}
+
+int write_seg(int fd, pid_t pid, int seg, off_t seg_off, phys_bytes seg_bytes)
+{
+  int r;
+  off_t off;
+  ssize_t w;
+  static char buf[CLICK_SIZE];
+  struct ptrace_range pr;
+
+  pr.pr_space = (seg == T) ? TS_INS : TS_DATA;
+  pr.pr_addr = seg_off;
+  pr.pr_size = sizeof(buf);
+  pr.pr_ptr = buf;
+
+  for ( ; pr.pr_addr < seg_off + seg_bytes; pr.pr_addr += sizeof(buf))
   {
 	/* Copy a chunk from user space to the block buffer. */
-	if(sys_vircopy(proc_e, seg, (phys_bytes) o,
-	SELF, D, (vir_bytes) buf, (phys_bytes) sizeof(buf)) != OK) {
-		printf("write_seg: sys_vircopy failed\n");
+	if (ptrace(T_GETRANGE, pid, (long) &pr, 0)) {
+		/* Create holes for inaccessible areas. */
+		if (errno == EFAULT) {
+			lseek(fd, sizeof(buf), SEEK_CUR);
+			continue;
+		}
+
+		perror("ptrace(T_GETRANGE)");
 		return 1;
 	}
 
@@ -57,111 +102,135 @@ int write_seg(int fd, off_t off, endpoint_t proc_e, int seg,
 	}
   }
 
-  return OK;
+  return 0;
 }
 
-
-int dumpcore(endpoint_t proc_e)
+int dumpcore(pid_t pid)
 {
-	int r, seg, exists, fd;
-	mode_t omode;
+	int r, seg, fd;
 	vir_bytes len;
 	off_t off, seg_off;
-	long trace_off, trace_data;
+	long data;
 	struct mem_map segs[NR_LOCAL_SEGS];
 	struct proc procentry;
-	int proc_s;
 	ssize_t w;
-	char core_name[200];
+	char core_name[PATH_MAX];
 
-	if(sys_getproctab(proc) != OK) {
-		printf( "Couldn't get proc tab.\n");
+	/* Get the process table entry for this process. */
+	len = sizeof(struct proc) / sizeof(long);
+	for (off = 0; off < len; off++)
+	{
+		errno = 0;
+		data = ptrace(T_GETUSER, pid, off * sizeof(long), 0);
+		if  (data == -1 && errno != 0) 
+		{
+			perror("ptrace(T_GETUSER)");
+			return 1;
+		}
+
+		((long *) &procentry)[off] = data;
+	}
+
+	memcpy(segs, procentry.p_memmap, sizeof(segs));
+
+	/* Correct and reduce the stack segment. */
+	r = adjust_stack(pid, &segs[S]);
+	if (r != 0)
+		goto error;
+
+	/* Create a core file with a temporary, unique name. */
+	sprintf(core_name, "core.%d", pid);
+
+	if((fd = open(core_name, O_CREAT|O_EXCL|O_WRONLY, 0600)) < 0) {
+		fprintf(stderr, "couldn't open %s (%s)\n", core_name,
+			strerror(errno));
 		return 1;
 	}
 
-	for(proc_s = 0; proc_s < SLOTS; proc_s++)
-		if(proc[proc_s].p_endpoint == proc_e &&
-			!isemptyp(&proc[proc_s]))
-			break;
-
-	if(proc_s >= SLOTS) {
-		printf( "endpoint %d not found.\n", proc_e);
-		return 1;
-	}
-
-	if(proc_s < 0 || proc_s >= SLOTS) {
-		printf( "Slot out of range (internal error).\n");
-		return 1;
-	}
-
-	if(isemptyp(&proc[proc_s])) {
-		printf( "slot %d is no process (internal error).\n",
-			proc_s);
-		return 1;
-	}
-
-	sprintf(core_name, "/tmp/core.%d", proc_e);
-
-	if((fd = open(core_name,
-		O_CREAT|O_WRONLY|O_EXCL|O_NONBLOCK, 0600)) < 0) {
-		printf("couldn't open %s (%s)\n",
-			core_name, strerror(errno));
-		return 1;
-	}
-
-	proc[proc_s].p_name[P_NAME_LEN-1] = '\0';
-
-	memcpy(segs, proc[proc_s].p_memmap, sizeof(segs));
-
-	off= 0;
+	/* Write out the process's segments. */
 	if((w=write(fd, segs, sizeof(segs))) != sizeof(segs)) {
 		if(w < 0) printf("write error: %s\n", strerror(errno));
 		printf( "segs write failed: %d/%d\n", w, sizeof(segs));
-		return 1;
+		goto error;
 	}
-	off += sizeof(segs);
 
 	/* Write out the whole kernel process table entry to get the regs. */
-	for (trace_off= 0;; trace_off += sizeof(long))
-	{
-		r= sys_trace(T_GETUSER, proc_e, trace_off, &trace_data);
-		if  (r != OK) 
-		{
-			break;
-		}
-		r= write(fd, &trace_data, sizeof(trace_data));
-		if (r != sizeof(trace_data)) {
-			printf( "trace_data write failed\n");
-			return 1;
-		}
-		off += sizeof(trace_data);
+	if((w=write(fd, &procentry, sizeof(procentry))) != sizeof(procentry)) {
+		if(w < 0) printf("write error: %s\n", strerror(errno));
+		printf( "proc write failed: %d/%d\n", w, sizeof(procentry));
+		goto error;
 	}
 
 	/* Loop through segments and write the segments themselves out. */
 	for (seg = 0; seg < NR_LOCAL_SEGS; seg++) {
 		len= segs[seg].mem_len << CLICK_SHIFT;
 		seg_off= segs[seg].mem_vir << CLICK_SHIFT;
-		r= write_seg(fd, off, proc_e, seg, seg_off, len);
-		if (r != OK)
-		{
-			printf( "write failed\n");
-			return 1;
-		}
-		off += len;
+		r= write_seg(fd, pid, seg, seg_off, len);
+		if (r != 0)
+			goto error;
+	}
+
+	/* Give the core file its final name. */ 
+	if (rename(core_name, "core")) {
+		perror("rename");
+		goto error;
 	}
 
 	close(fd);
 
 	return 0;
-}
 
-main(int argc, char *argv[])
-{
-	if(argc != 2) {
-		printf("usage: %s <endpoint>\n", argv[0]);
-		return 1;
-	}
-	dumpcore(atoi(argv[1]));
+error:
+	close(fd);
+
+	unlink(core_name);
+
 	return 1;
 }
 
+int main(int argc, char *argv[])
+{
+	pid_t pid;
+	int r, status;
+
+	if(argc != 2) {
+		printf("usage: %s <pid>\n", argv[0]);
+		return 1;
+	}
+
+	pid = atoi(argv[1]);
+
+	if (ptrace(T_ATTACH, pid, 0, 0) != 0) {
+		perror("ptrace(T_ATTACH)");
+		return 1;
+	}
+
+	if (waitpid(pid, &status, 0) != pid) {
+		perror("waitpid");
+		return 1;
+	}
+
+	while (WIFSTOPPED(status) && WSTOPSIG(status) != SIGSTOP) {
+		/* whatever happens here is fine */
+		ptrace(T_RESUME, pid, 0, WSTOPSIG(status));
+
+		if (waitpid(pid, &status, 0) != pid) {
+			perror("waitpid");
+			return 1;
+		}
+	}
+
+	if (!WIFSTOPPED(status)) {
+		fprintf(stderr, "process died while attaching\n");
+		return 1;
+	}
+
+	r = dumpcore(pid);
+
+	if (ptrace(T_DETACH, pid, 0, 0)) {
+		fprintf(stderr, "warning, detaching failed (%s)\n",
+			strerror(errno));
+	}
+
+	return r;
+}

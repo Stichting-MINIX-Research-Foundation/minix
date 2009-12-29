@@ -363,7 +363,7 @@ du:	du.c
 	@install -S 256kw $@
 
 dumpcore:	dumpcore.c
-	$(CCLD) -D_SYSTEM=1 -o $@ $< -lsys
+	$(CCLD) -o $@ $<
 	@install -S 32k $@
 
 ed:	ed.c

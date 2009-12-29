@@ -2,7 +2,7 @@
 .SH NAME
 dumpcore \- generate core file of running process
 .SH SYNOPSIS
-service run /usr/bin/dumpcore -args \fIendpoint\fR
+dumpcore \fIpid\fR
 .br
 .de FL
 .TP
@@ -15,12 +15,15 @@ service run /usr/bin/dumpcore -args \fIendpoint\fR
 # \\$2
 ..
 .SH DESCRIPTION
-\fIDumpcore\fR executes the same code that FS executes in order to
-generate a core dump of a currently running process, identified by
-endpoint number. Obtain an endpoint number by using the F1 debug
-dump, or ps with -E option.
+The \fBdumpcore\fR utility generates a core file for a running process, based
+on that process's process ID (\fIpid\fP). The resulting core file will be
+stored under the name "core" in the current working directory. Any previous
+file with that name will be overwritten.
+.PP
+The resulting core file can be used with for example
+.BR mdb (1).
 .SH BUGS
-\fIDumpcore\fR has duplicate code with FS, and has to be started with
-the service command.
+The process of generating the core file is currently very rudimentary, and
+the generated core file does not contain for example memory mapped areas.
 .SH "SEE ALSO"
-.BR ps (1).
+.BR mdb (1).
