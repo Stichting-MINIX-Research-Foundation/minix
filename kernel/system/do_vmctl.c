@@ -83,12 +83,11 @@ register message *m_ptr;	/* pointer to request message */
 		target = proc_addr(proc_nr);
 		p->p_vmrequest.vmresult = m_ptr->SVMCTL_VALUE;
 		vmassert(p->p_vmrequest.vmresult != VMSUSPEND);
+#if DEBUG_VMASSERT
 		if(p->p_vmrequest.vmresult != OK)
 			kprintf("SYSTEM: VM replied %d to mem request\n",
 				p->p_vmrequest.vmresult);
 
-
-#if 0
 		printf("memreq reply: vm request sent by: %s / %d about %d; 0x%lx-0x%lx, wr %d, stack: %s ",
 			p->p_name, p->p_endpoint, p->p_vmrequest.who,
 			p->p_vmrequest.start,

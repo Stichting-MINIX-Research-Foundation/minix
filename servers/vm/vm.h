@@ -18,6 +18,9 @@
 #define SANITYCHECKS	0
 #define VMSTATS		0
 
+/* How noisy are we supposed to be? */
+#define VERBOSE		0
+
 /* Minimum stack region size - 64MB. */
 #define MINSTACKREGION	(64*1024*1024)
 

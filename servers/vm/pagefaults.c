@@ -169,11 +169,15 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 	while(len > 0) {
 		int r;
 		if(!(region = map_lookup(vmp, mem))) {
+#if VERBOSE
 			map_printmap(vmp);
 			printf("VM: do_memory: memory doesn't exist\n");
+#endif
 			r = EFAULT;
 		} else if(!(region->flags & VR_WRITABLE) && wrflag) {
+#if VERBOSE
 			printf("VM: do_memory: write to unwritable map\n");
+#endif
 			r = EFAULT;
 		} else {
 			vir_bytes offset, sublen;
@@ -193,9 +197,11 @@ int handle_memory(struct vmproc *vmp, vir_bytes mem, vir_bytes len, int wrflag)
 		}
 	
 		if(r != OK) {
+#if VERBOSE
 			printf("VM: memory range 0x%lx-0x%lx not available in %d\n",
 				arch_map2vir(vmp, mem), arch_map2vir(vmp, mem+len),
 				vmp->vm_endpoint);
+#endif
 			return r;
 		}
 	}
