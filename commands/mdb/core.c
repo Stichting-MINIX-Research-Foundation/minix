@@ -31,9 +31,9 @@ PRIVATE struct file {
   int fid;
   char *name;
   long cblock;
-  long tmap[3];
-  long dmap[3];
-  long smap[3];
+  unsigned long tmap[3];
+  unsigned long dmap[3];
+  unsigned long smap[3];
   char buf[BSIZE + BSIZE];
 } Core_File, *core_file;
 
@@ -94,7 +94,7 @@ long h = (long) h_size;
 	end_addr = fp->e2;
 
 	fp->b1 = 0;
-	fp->e1 = -1;
+	fp->e1 = 0;
 	fp->f1 = 0;
   }
 #endif
@@ -305,7 +305,7 @@ char *filename;
   }
 
   core_file->b1 = core_file->b2 = core_file->b3 = 0;
-  core_file->e1 = core_file->e2 = core_file->e3 = -1;
+  core_file->e1 = core_file->e2 = core_file->e3 = 0;
   core_file->f1 = core_file->f2 = core_file->f3 = 0;
   core_file->cblock = -1;
 
@@ -334,7 +334,7 @@ char *filename;
   }
 
   core_file->b1 = core_file->b2 = core_file->b3 = 0;
-  core_file->e1 = core_file->e2 = core_file->e3 = -1;
+  core_file->e1 = core_file->e2 = core_file->e3 = 0;
   core_file->f1 = core_file->f2 = core_file->f3 = 0;
   core_file->cblock = -1;
 

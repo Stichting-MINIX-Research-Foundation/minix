@@ -12,40 +12,114 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#if	GNU_SUPPORT
-#include <gnu/a.out.h>
-#endif
+#include <fcntl.h>
+#include <minix/a.out.h>
 #include "proto.h"
 
-#if	GNU_SUPPORT
-_PROTOTYPE( PUBLIC unsigned int gnu_load, (char *filename, struct nlist **start) );
-#endif
+#define NN_UNDF 0
+#define NN_ABS 2
+#define NN_TEXT 4
+#define NN_DATA 6
+#define NN_BSS 8
+#define NN_FN 15
+#define NN_EXT 1
+#define NN_TYPE 036
+
+struct newnlist {
+	union {
+		char *n_name;
+		struct newnlist *n_next;
+		long n_strx;
+	} n_un;
+	unsigned char n_type;
+	char n_other;
+	short n_desc;
+	unsigned long n_value;
+};
 
 struct symtab_s
 {
-	struct nlist *start;
-	struct nlist *end;
+	struct newnlist *start;
+	struct newnlist *end;
 	unsigned int nsym;
 };
 
 PRIVATE struct symtab_s symtab;
 
-FORWARD _PROTOTYPE( void gnu_sort , (struct nlist *array , struct nlist *top ));
-FORWARD _PROTOTYPE( int gnu_symeq , (char *t , struct nlist *sp ));
-FORWARD _PROTOTYPE( int gnu_symprefix , (char *t , struct nlist *sp ));
-FORWARD _PROTOTYPE( struct nlist *gnu_sname, (char *name, int is_text, int allflag) );
-FORWARD _PROTOTYPE( struct nlist *gnu_sval, (off_t value, int where) );
-FORWARD _PROTOTYPE( void gnu_sym, (struct nlist *sp, off_t off) );
+FORWARD _PROTOTYPE( void gnu_sort , (struct newnlist *array ,
+	struct newnlist *top ));
+FORWARD _PROTOTYPE( int gnu_symeq , (char *t , struct newnlist *sp ));
+FORWARD _PROTOTYPE( int gnu_symprefix , (char *t , struct newnlist *sp ));
+FORWARD _PROTOTYPE( struct newnlist *gnu_sname, (char *name, int is_text,
+	int allflag) );
+FORWARD _PROTOTYPE( struct newnlist *gnu_sval, (off_t value, int where) );
+FORWARD _PROTOTYPE( void gnu_sym, (struct newnlist *sp, off_t off) );
+
 
 PUBLIC void gnu_init( filename )
 char *filename;
 {
+        struct exec header;
+	unsigned int string_size;
+        char *names;
+        struct newnlist *p;
+	int fd;
 	register struct symtab_s *tp;
 
 	tp = &symtab;
-		
-	tp->nsym = gnu_load(filename, &tp->start);
+	if ( (fd = open( filename, O_RDONLY)) < 0 ||
+	     read( fd, (char *) &header, sizeof header ) != sizeof header )
+	{
+                do_error( "gnu_load - reading header" );
+                if ( fd >= 0) close( fd );
+		return;
+        }
+
+	if ( (string_size = lseek( fd, 0, SEEK_END ) ) == -1 )
+	{
+		do_error( "gnu_load - determining file size" );
+		close( fd );
+		return;
+	}
+
+	string_size -= A_SYMPOS( header );
+
+        if ( (int) header.a_syms < 0 || 
+		(unsigned) header.a_syms != header.a_syms ||
+             (tp->start = (struct newnlist *) malloc( string_size ))
+                                == (struct newnlist *) NULL &&
+             header.a_syms != 0 )
+        {
+		do_error( "gnu_load - allocating memory" );
+                close( fd );
+                return;
+        }
+
+        if ( lseek( fd, A_SYMPOS( header ), SEEK_SET ) != A_SYMPOS( header ) )
+        {
+                do_error( "gnu_load - reading header" );
+                close( fd );
+		return;
+        }
+
+        if ( read( fd, (char *) tp->start, string_size ) < 0 )
+        {
+                do_error( "gnu_load - reading symbols" );
+                close( fd );
+                return;
+        }
+        close( fd );
+
+        tp->nsym = (unsigned int) header.a_syms / sizeof (struct newnlist);
 	tp->end = tp->start + tp->nsym;
+
+        names = (char *) tp->start + header.a_syms;
+	
+        for ( p = tp->start; p < tp->end; p++) 
+                if(p->n_un.n_strx)
+                        p->n_un.n_name = names + p->n_un.n_strx;
+                else
+                        p->n_un.n_name = "";
 
 	/* sort on value only, name search not used much and storage a problem */
 	Printf("Sorting %d GNU symbols ....", tp->nsym );
@@ -54,12 +128,11 @@ char *filename;
 }
 
 
-
 PUBLIC long gnu_symbolvalue( name, is_text )
 char *name;
 int is_text;
 {
-  register struct nlist *sp;
+  register struct newnlist *sp;
   sp = gnu_sname(name,is_text,0);
   if (sp != NULL)  
 	return sp->n_value;
@@ -68,7 +141,7 @@ int is_text;
 }
 
 
-PRIVATE struct nlist *gnu_sname( name, is_text, allflag )
+PRIVATE struct newnlist *gnu_sname( name, is_text, allflag )
 char *name;
 int is_text;
 int allflag;
@@ -77,7 +150,7 @@ int allflag;
 	unsigned char sclass;
 	int schar;
 	char *send;
-	register struct nlist *sp;
+	register struct newnlist *sp;
 	register struct symtab_s *tp;
 
 	tp = &symtab;
@@ -95,15 +168,15 @@ int allflag;
 					outbyte( *s );
 				for ( ; s <= send; ++s )
 					outspace();
-				switch( sp->n_type & N_TYPE )
+				switch( sp->n_type & NN_TYPE )
 				{
-					case N_ABS: schar = 'a'; break;
-					case N_TEXT: schar = 't'; break;
-					case N_DATA: schar = 'd'; break;
-					case N_BSS: schar = 'b'; break;
+					case NN_ABS: schar = 'a'; break;
+					case NN_TEXT: schar = 't'; break;
+					case NN_DATA: schar = 'd'; break;
+					case NN_BSS: schar = 'b'; break;
 					default: schar = '?'; break;
 				}
-				if ( (sp->n_type & N_EXT) && schar != '?' )
+				if ( (sp->n_type & NN_EXT) && schar != '?' )
 					schar += 'A' - 'a';
 				outbyte( schar );
 				outspace();
@@ -117,9 +190,10 @@ int allflag;
 		/* find symbol by dumb linear search */
 		for ( sp = tp->start; sp < tp->end; ++sp )
 		{
-			sclass = sp->n_type & N_TYPE;
-			if ( (is_text && sclass == N_TEXT ||
-			      !is_text && (sclass == N_DATA || sclass == N_BSS)) &&
+			sclass = sp->n_type & NN_TYPE;
+			if ( (is_text && sclass == NN_TEXT ||
+			      !is_text && (sclass == NN_DATA ||
+			                   sclass == NN_BSS)) &&
 					 gnu_symeq( name, sp ) )
 				return sp;
 		}
@@ -127,7 +201,7 @@ int allflag;
 	return NULL;
 }
 
-PRIVATE struct nlist *gnu_sval( value, where )
+PRIVATE struct newnlist *gnu_sval( value, where )
 off_t value;
 int where;
 {
@@ -135,7 +209,7 @@ int where;
 	int middle;
 	int right;
 	unsigned char sclass;
-	register struct nlist *sp;
+	register struct newnlist *sp;
 	register struct symtab_s *tp;
 
 	tp = &symtab;
@@ -154,10 +228,11 @@ int where;
 		/* otherwise tp->start + right may wrap around to > tp->start !! */
 		for ( sp = tp->start + right; sp >= tp->start; --sp )
 		{
-			if ( !(sp->n_type & N_EXT) ) continue; 
-			sclass = sp->n_type & N_TYPE;
-			if ( (where == CSEG && sclass == N_TEXT ||
-						where != CSEG && (sclass == N_DATA || sclass == N_BSS)) )
+			if ( !(sp->n_type & NN_EXT) ) continue; 
+			sclass = sp->n_type & NN_TYPE;
+			if ( (where == CSEG && sclass == NN_TEXT) ||
+						(where != CSEG &&
+				(sclass == NN_DATA || sclass == NN_BSS)) )
 			return sp;
 		}
 	return NULL;
@@ -165,7 +240,7 @@ int where;
 
 
 PRIVATE void gnu_sym( sp, off )
-struct nlist *sp;
+struct newnlist *sp;
 off_t off;
 {
 	register char *s;
@@ -183,15 +258,15 @@ off_t off;
 /* shell sort symbols on value */
 
 PRIVATE void gnu_sort( array, top )
-struct nlist *array;
-struct nlist *top;
+struct newnlist *array;
+struct newnlist *top;
 {
 	int gap;
 	int i;
 	int j;
-	register struct nlist *left;
-	register struct nlist *right;
-	struct nlist swaptemp;
+	register struct newnlist *left;
+	register struct newnlist *right;
+	struct newnlist swaptemp;
 	int size;
 
 	size = top - array;
@@ -220,7 +295,7 @@ PUBLIC void gnu_symbolic( value, separator )
 off_t value;
 int separator;
 {
-	register struct nlist *sp;
+	register struct newnlist *sp;
 	long off;
 
 	if (value < st_addr || value > end_addr) {
@@ -254,14 +329,14 @@ int separator;
 
 PRIVATE int gnu_symeq( t, sp )
 register char *t;
-struct nlist *sp;
+struct newnlist *sp;
 {
 	return strncmp( t, sp->n_un.n_name, strlen(t) ) == 0;
 }
 
 PRIVATE int gnu_symprefix( t, sp )
 register char *t;
-struct nlist *sp;
+struct newnlist *sp;
 {
 	register char *s;
 	char *send;
@@ -282,7 +357,7 @@ PUBLIC void gnu_listsym( tchar )
 char tchar;
 {
 	register struct symtab_s *tp;
-	register struct nlist *sp;
+	register struct newnlist *sp;
 	char *s;
 	char *send;
 	char schar;
@@ -291,16 +366,16 @@ char tchar;
 	tp = &symtab;
     	for ( sp = tp->start; sp < tp->end; ++sp )
 	{
-	     switch( sp->n_type & N_TYPE )
+	     switch( sp->n_type & NN_TYPE )
 	     {
-			case N_ABS:	schar = 'a'; break;
-			case N_TEXT:	schar = 't'; break;
-			case N_DATA:	schar = 'd'; break;
-			case N_BSS:	schar = 'b'; break;
+			case NN_ABS:	schar = 'a'; break;
+			case NN_TEXT:	schar = 't'; break;
+			case NN_DATA:	schar = 'd'; break;
+			case NN_BSS:	schar = 'b'; break;
 			default: 	schar = '?'; break;
 	     }
 
-	     if ( (sp->n_type & N_EXT) && schar != '?' )
+	     if ( (sp->n_type & NN_EXT) && schar != '?' )
 		schar += 'A' - 'a';
 
 	     /* check for selection */	
@@ -321,7 +396,7 @@ char tchar;
 PUBLIC int gnu_text_symbol(value)
 off_t value;
 {
-struct nlist *sp;
+    struct newnlist *sp;
 
     if ((sp = gnu_sval(value, CSEG)) != NULL && sp->n_value == value)
     {
@@ -336,7 +411,7 @@ PUBLIC int gnu_finds_data(off,data_seg)
 off_t off;
 int data_seg;
 {
-struct nlist *sp;
+	struct newnlist *sp;
 
 	if ((sp = gnu_sval(off, data_seg)) != NULL)
    	{
@@ -350,7 +425,7 @@ struct nlist *sp;
 PUBLIC int gnu_finds_pc(pc)
 off_t pc;
 {
-struct nlist *sp;
+	struct newnlist *sp;
 
 	if ((sp = gnu_sval(pc, CSEG)) != NULL)
     	{

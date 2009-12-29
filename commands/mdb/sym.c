@@ -11,12 +11,6 @@
 #include <a.out.h>
 #include "proto.h"
 
-#if	GNU_SUPPORT
-#define ZMAGIC 0413
-#define NMAGIC 0410
-#define QMAGIC 0314
-#endif
-
 struct symtab_s
 {
 	struct nlist *start;
@@ -113,20 +107,6 @@ long magic;
 
   /* Check MAGIC number */
   if (hdr->a_magic[0] != A_MAGIC0 || hdr->a_magic[1] != A_MAGIC1) {
-#if	GNU_SUPPORT
-	memcpy(&magic, hdr, sizeof(long));
-	/* Clear bits */
-	magic &= 0xFFFF;
-
-	if ( magic == ZMAGIC || magic == QMAGIC ) {
-	    is_separate = FALSE;
-	    return GNU_SYMBOLS;
-	}
-	if ( magic == NMAGIC ) {
-	    is_separate = TRUE;
-	    return GNU_SYMBOLS;
-	}
-#endif
 	Printf("mdb: invalid magic number in exec header - %02x %02x\n",
 	hdr->a_magic[0], 
 	hdr->a_magic[1]);
@@ -155,10 +135,16 @@ long magic;
   if (hdr->a_flags & A_SEP)
   	is_separate = TRUE;
 #endif 
+
+#if	GNU_SUPPORT
+  if (hdr->a_flags & A_NSYM)
+	return GNU_SYMBOLS;
+#endif
+	
 /* 
  * A_EXEC is not being set by current cc 
  * It was set in Minix 1.5.0
- */ 
+ */
 #if 0 
   /* Check flags - separate I & D or not */
   if (hdr->a_flags & A_EXEC)

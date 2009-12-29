@@ -689,7 +689,7 @@ PRIVATE void command()
       case 'X':		/* print instruction - X n [, n] */
 	lj = strtol(cmd, &cmd, 0);
 	lk = 0;
-	if (*cmd != '\0') 
+	if (*cmd != '\n') 
 		lk = strtol(++cmd, &cmd, 0);
 	if (curpid > 0)
 		dasm(exp + lk, lj ? lj : 1, 1);

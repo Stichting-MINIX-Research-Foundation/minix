@@ -25,8 +25,8 @@ SYSTEM	=$(USR)/src
 # 
 # i)   For GNU_EXEC Support, uncomment:
 #
-#FOR_GNU		=gnu_sym.o gnu_load.o
-#DEF_GNU		=-DGNU_SUPPORT
+FOR_GNU		=gnu_sym.o
+DEF_GNU		=-DGNU_SUPPORT
 # 
 # ii)  For tracing of syscalls, uncomment:
 #
@@ -101,11 +101,7 @@ syscalls.o:	syscalls.c mdb.h $(SYSFILES) proto.h
 decode.o:	decode.c mdb.h $(INCLUDE)/minix/callnr.h $(SYSFILES) proto.h
 ioctl.o:	ioctl.c mdb.h  $(SYSFILES) proto.h
 
-gnu_sym.o:	gnu_sym.c mdb.h $(INCLUDE)/gnu/a.out.h $(SYSFILES) proto.h
-gnu_load.o:	gnu_load.c $(INCLUDE)/gnu/a.out.h $(SYSFILES) proto.h
-
-$(INCLUDE)/gnu/a.out.h:	a.out.h
-		install -c -o bin a.out.h $(INCLUDE)/gnu
+gnu_sym.o:	gnu_sym.c mdb.h $(SYSFILES) proto.h
 
 
 #
@@ -115,9 +111,9 @@ $(INCLUDE)/gnu/a.out.h:	a.out.h
 install:	mdb 
 		install -cs -o bin mdb /usr/bin
 
-install_man:	mdb.1 ptrace.2
+install_man:	mdb.1
 		install -c -o bin mdb.1 /usr/man/man1
-		install -c -o bin ptrace.2 /usr/man/man2
+
 clean:
 		rm -f *.o mdb
 
