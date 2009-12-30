@@ -110,7 +110,8 @@ cards()
     card 6 "NE2000, 3com 503 or WD based card (also emulated by Bochs)"
     card 7 "AMD LANCE (also emulated by VMWare and VirtualBox)" "1022:2000"
     card 8 "Intel PRO/1000 Gigabit" "8086:100E" "8086:107C" "8086:10CD"
-    card 9 "Different Ethernet card (no networking)"
+    card 9 "Attansic/Atheros L2 FastEthernet" "1969:2048"
+    card 10 "Different Ethernet card (no networking)"
 }
 
 warn()
@@ -157,7 +158,8 @@ drv_params()
 		;;
         7) driver="lance"; ;;    
 	8) driver="e1000"; ;;
-        9) driver="psip0"; ;;    
+        9) driver="atl2";   ;;
+        10) driver="psip0"; ;;    
         *) warn "choose a number"
       esac
 }

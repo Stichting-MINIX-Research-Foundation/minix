@@ -27,6 +27,7 @@ all install depend clean:
 	cd ./orinoco && $(MAKE) $@
 	cd ./fxp && $(MAKE) $@
 	cd ./dpeth && $(MAKE) $@
+	cd ./atl2 && $(MAKE) $@
 	cd ./log && $(MAKE) $@
 	cd ./bios_wini && $(MAKE) $@
 	cd ./filter && $(MAKE) $@
