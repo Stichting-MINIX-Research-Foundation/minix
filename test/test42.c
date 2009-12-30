@@ -1,5 +1,6 @@
 /* Tests for MINIX3 ptrace(2) - by D.C. van Moolenbroek */
 #define _POSIX_SOURCE 1
+#include <setjmp.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,8 +18,12 @@
 #define _WIFSIGNALED(s) (!WIFSTOPPED(s) && WIFSIGNALED(s) && !WIFEXITED(s))
 #define _WIFEXITED(s) (!WIFSTOPPED(s) && !WIFSIGNALED(s) && WIFEXITED(s))
 
+#define timed_test(func) (timed_test_func(#func, func));
+
 _PROTOTYPE(int main, (int argc, char **argv));
 _PROTOTYPE(void test, (int m, int a));
+_PROTOTYPE(void timed_test_func, (const char *s, void (* func)(void)));
+_PROTOTYPE(void timed_test_timeout, (int signum));
 _PROTOTYPE(pid_t traced_fork, (_PROTOTYPE(void (*c), (void))));
 _PROTOTYPE(pid_t traced_pfork, (_PROTOTYPE(void (*c), (void))));
 _PROTOTYPE(void WRITE, (int value));
@@ -107,23 +112,51 @@ int a;
 {
   attach = a;
 
-  if (m & 0000001) test_wait();
-  if (m & 0000002) test_exec();
-  if (m & 0000004) test_step();
-  if (m & 0000010) test_sig();
-  if (m & 0000020) test_exit();
-  if (m & 0000040) test_term();
-  if (m & 0000100) test_catch();
-  if (m & 0000200) test_kill();
-  if (m & 0000400) test_attach();
-  if (m & 0001000) test_detach();
-  if (m & 0002000) test_death();
-  if (m & 0004000) test_zdeath();
-  if (m & 0010000) test_syscall();
-  if (m & 0020000) test_tracefork();
-  if (m & 0040000) test_altexec();
-  if (m & 0100000) test_noaltexec();
-  if (m & 0200000) test_reattach();
+  if (m & 0000001) timed_test(test_wait);
+  if (m & 0000002) timed_test(test_exec);
+  if (m & 0000004) timed_test(test_step);
+  if (m & 0000010) timed_test(test_sig);
+  if (m & 0000020) timed_test(test_exit);
+  if (m & 0000040) timed_test(test_term);
+  if (m & 0000100) timed_test(test_catch);
+  if (m & 0000200) timed_test(test_kill);
+  if (m & 0000400) timed_test(test_attach);
+  if (m & 0001000) timed_test(test_detach);
+  if (m & 0002000) timed_test(test_death);
+  if (m & 0004000) timed_test(test_zdeath);
+  if (m & 0010000) timed_test(test_syscall);
+  if (m & 0020000) timed_test(test_tracefork);
+  if (m & 0040000) timed_test(test_altexec);
+  if (m & 0100000) timed_test(test_noaltexec);
+  if (m & 0200000) test_reattach(); /* not timed, catches SIGALRM */
+}
+  
+static jmp_buf timed_test_context;
+
+void timed_test_timeout(int signum)
+{
+  longjmp(timed_test_context, -1);
+  e(700);
+  quit();
+  exit(-1);
+}
+
+void timed_test_func(const char *s, void (* func)(void))
+{
+  if (setjmp(timed_test_context) == 0)
+  {
+    /* the function gets 60 seconds to complete */
+    if (signal(SIGALRM, timed_test_timeout) == SIG_ERR) { e(701); return; }
+    alarm(60);
+    func();
+    alarm(0);
+  }
+  else
+  {
+    /* report timeout as error */
+    printf("timeout in %s\n", s);
+    e(702);
+  }
 }
 
 pid_t traced_fork(c)
