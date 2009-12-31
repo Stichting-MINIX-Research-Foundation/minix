@@ -53,7 +53,7 @@ const char *_sys_errlist[] = {
 	"Driver restarted",		/* ERESTART */
 	unknown,			/* 42 */
 	"Identifier removed",		/* EIDRM */
-	unknown,			/* 44 */
+	"Illegal byte sequence",	/* EILSEQ */
 	unknown,			/* 45 */
 	unknown,			/* 46 */
 	unknown,			/* 47 */
