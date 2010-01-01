@@ -4,10 +4,10 @@
  * The parameters for this kernel call are:
  *    m5_c1:	CP_SRC_SPACE		source virtual segment
  *    m5_l1:	CP_SRC_ADDR		source offset within segment
- *    m5_i1:	CP_SRC_PROC_NR		source process number
+ *    m5_i1:	CP_SRC_ENDPT		source process number
  *    m5_c2:	CP_DST_SPACE		destination virtual segment
  *    m5_l2:	CP_DST_ADDR		destination offset within segment
- *    m5_i2:	CP_DST_PROC_NR		destination process number
+ *    m5_i2:	CP_DST_ENDPT		destination process number
  *    m5_l3:	CP_NR_BYTES		number of bytes to copy
  */
 
