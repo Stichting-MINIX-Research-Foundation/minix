@@ -125,7 +125,7 @@ struct proc *t;
 	{ "Invalid opcode", SIGILL, 186 },
 	{ "Coprocessor not available", SIGFPE, 186 },
 	{ "Double fault", SIGBUS, 286 },
-	{ "Copressor segment overrun", SIGSEGV, 286 },
+	{ "Coprocessor segment overrun", SIGSEGV, 286 },
 	{ "Invalid TSS", SIGSEGV, 286 },
 	{ "Segment not present", SIGSEGV, 286 },
 	{ "Stack exception", SIGSEGV, 286 },	/* STACK_FAULT already used */
