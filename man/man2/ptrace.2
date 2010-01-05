@@ -117,6 +117,15 @@ The child will be stopped with a \fBSIGSTOP\fP signal right after forking.
 Send \fBSIGSTOP\fP instead of \fBSIGTRAP\fP upon a successful
 .BR execve (2).
 This allows the tracer to disambiguate between this case and other traps.
+.TP
+.B TO_NOEXEC
+Do not send any signal upon a successful
+.BR execve (2).
+.PP
+The default set of trace options when tracing is initiated with \fBT_OK\fP is
+\fB0\fP.
+The default set of trace options after attaching with \fBT_ATTACH\fP is
+\fBTO_NOEXEC\fP.
 .PP
 The \fBT_GETRANGE\fP and \fBT_SETRANGE\fP calls use the following structure:
 .PP

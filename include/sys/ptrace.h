@@ -34,6 +34,7 @@
 /* Trace options. */
 #define TO_TRACEFORK	0x1	/* automatically attach to forked children */
 #define TO_ALTEXEC	0x2	/* send SIGSTOP on successful exec() */
+#define TO_NOEXEC	0x4	/* do not send signal on successful exec() */
 
 /* Trace spaces. */
 #define TS_INS		0	/* text space */

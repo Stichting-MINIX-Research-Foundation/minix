@@ -181,7 +181,8 @@ int result;
 	/* Cause a signal if this process is traced.
 	 * Do this before making the process runnable again!
 	 */
-	if (rmp->mp_tracer != NO_TRACER)  {
+	if (rmp->mp_tracer != NO_TRACER && !(rmp->mp_trace_flags & TO_NOEXEC))
+	{
 		sn = (rmp->mp_trace_flags & TO_ALTEXEC) ? SIGSTOP : SIGTRAP;
 
 		check_sig(rmp->mp_pid, sn);

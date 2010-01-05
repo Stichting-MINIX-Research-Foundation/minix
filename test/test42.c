@@ -62,11 +62,13 @@ _PROTOTYPE(void test_syscall_child, (void));
 _PROTOTYPE(void test_syscall, (void));
 _PROTOTYPE(void test_tracefork_child, (void));
 _PROTOTYPE(void test_tracefork, (void));
+_PROTOTYPE(void sigexec, (int setflag, int opt, int *traps, int *stop));
+_PROTOTYPE(void test_trapexec, (void));
+_PROTOTYPE(void test_altexec, (void));
+_PROTOTYPE(void test_noexec, (void));
+_PROTOTYPE(void test_defexec, (void));
 _PROTOTYPE(void test_reattach_child, (void));
 _PROTOTYPE(void test_reattach, (void));
-_PROTOTYPE(void altexec, (int setflag, int *traps, int *stop));
-_PROTOTYPE(void test_altexec, (void));
-_PROTOTYPE(void test_noaltexec, (void));
 _PROTOTYPE(void e, (int n));
 _PROTOTYPE(void quit, (void));
 
@@ -112,23 +114,25 @@ int a;
 {
   attach = a;
 
-  if (m & 0000001) timed_test(test_wait);
-  if (m & 0000002) timed_test(test_exec);
-  if (m & 0000004) timed_test(test_step);
-  if (m & 0000010) timed_test(test_sig);
-  if (m & 0000020) timed_test(test_exit);
-  if (m & 0000040) timed_test(test_term);
-  if (m & 0000100) timed_test(test_catch);
-  if (m & 0000200) timed_test(test_kill);
-  if (m & 0000400) timed_test(test_attach);
-  if (m & 0001000) timed_test(test_detach);
-  if (m & 0002000) timed_test(test_death);
-  if (m & 0004000) timed_test(test_zdeath);
-  if (m & 0010000) timed_test(test_syscall);
-  if (m & 0020000) timed_test(test_tracefork);
-  if (m & 0040000) timed_test(test_altexec);
-  if (m & 0100000) timed_test(test_noaltexec);
-  if (m & 0200000) test_reattach(); /* not timed, catches SIGALRM */
+  if (m & 00000001) timed_test(test_wait);
+  if (m & 00000002) timed_test(test_exec);
+  if (m & 00000004) timed_test(test_step);
+  if (m & 00000010) timed_test(test_sig);
+  if (m & 00000020) timed_test(test_exit);
+  if (m & 00000040) timed_test(test_term);
+  if (m & 00000100) timed_test(test_catch);
+  if (m & 00000200) timed_test(test_kill);
+  if (m & 00000400) timed_test(test_attach);
+  if (m & 00001000) timed_test(test_detach);
+  if (m & 00002000) timed_test(test_death);
+  if (m & 00004000) timed_test(test_zdeath);
+  if (m & 00010000) timed_test(test_syscall);
+  if (m & 00020000) timed_test(test_tracefork);
+  if (m & 00040000) timed_test(test_trapexec);
+  if (m & 00100000) timed_test(test_altexec);
+  if (m & 00200000) timed_test(test_noexec);
+  if (m & 00400000) timed_test(test_defexec);
+  if (m & 01000000) test_reattach(); /* not timed, catches SIGALRM */
 }
   
 static jmp_buf timed_test_context;
@@ -494,6 +498,9 @@ void test_exec()
   pid_t pid;
   int r, status;
 
+  /* This test covers the T_OK case. */
+  if (attach != 0) return;
+
   subtest = 2;
 
   pid = traced_fork(test_exec_child);
@@ -696,6 +703,7 @@ void test_exit()
 
 void test_term_child()
 {
+  signal(SIGUSR1, SIG_DFL);
   signal(SIGUSR2, dummy_handler);
 
   WRITE(0);
@@ -1274,8 +1282,9 @@ void test_tracefork()
   traced_wait();
 }
 
-void altexec(setflag, traps, stop)
+void sigexec(setflag, opt, traps, stop)
 int setflag;
+int opt;
 int *traps;
 int *stop;
 {
@@ -1290,7 +1299,7 @@ int *stop;
   if (!_WIFSTOPPED(status)) e(3);
   if (WSTOPSIG(status) != SIGSTOP) e(4);
 
-  if (setflag && ptrace(T_SETOPT, pid, 0, TO_ALTEXEC) != 0) e(5);
+  if (setflag && ptrace(T_SETOPT, pid, 0, opt) != 0) e(5);
 
   WRITE(0);
 
@@ -1326,13 +1335,31 @@ int *stop;
   traced_wait();
 }
 
-void test_altexec()
+void test_trapexec()
 {
   int traps, stop;
 
   subtest = 15;
 
-  altexec(1, &traps, &stop);
+  sigexec(1, 0, &traps, &stop);
+
+  /* The exec does not cause a SIGSTOP. This gives us an even number of traps;
+   * as above, but plus the exec()'s extra SIGTRAP. This trap is
+   * indistinguishable from a syscall trap, especially when considering failed
+   * exec() calls and immediately following signal handler invocations.
+   */
+  if (traps < 4) e(12);
+  if (traps % 2) e(13);
+  if (stop >= 0) e(14);
+}
+
+void test_altexec()
+{
+  int traps, stop;
+
+  subtest = 16;
+
+  sigexec(1, TO_ALTEXEC, &traps, &stop);
 
   /* The exec causes a SIGSTOP. This gives us an odd number of traps: a pair
    * for each system call, plus one for the final exit(). The stop must have
@@ -1344,22 +1371,43 @@ void test_altexec()
   if (!(stop % 2)) e(15);
 }
 
-void test_noaltexec()
+void test_noexec()
 {
   int traps, stop;
 
-  subtest = 16;
+  subtest = 17;
 
-  altexec(0, &traps, &stop);
+  sigexec(1, TO_NOEXEC, &traps, &stop);
 
-  /* The exec does not cause a SIGSTOP. This gives us an even number of traps;
-   * as above, but plus the exec()'s extra SIGTRAP. This trap is
-   * indistinguishable from a syscall trap, especially when considering failed
-   * exec() calls and immediately following signal handler invocations.
-   */
-  if (traps < 4) e(12);
-  if (traps % 2) e(13);
+  /* The exec causes no signal at all. As above, but without the SIGSTOPs. */
+  if (traps < 3) e(12);
+  if (!(traps % 2)) e(13);
   if (stop >= 0) e(14);
+}
+
+void test_defexec()
+{
+  int traps, stop;
+
+  /* We want to test the default of T_OK (0) and T_ATTACH (TO_NOEXEC). */
+  if (attach != 0 && attach != 1) return;
+
+  subtest = 18;
+
+  /* Do not set any options this time. */
+  sigexec(0, 0, &traps, &stop);
+
+  /* See above. */
+  if (attach == 0) {
+	if (traps < 4) e(12);
+	if (traps % 2) e(13);
+	if (stop >= 0) e(14);
+  }
+  else {
+	if (traps < 3) e(15);
+	if (!(traps % 2)) e(16);
+	if (stop >= 0) e(17);
+  }
 }
 
 void test_reattach_child()
@@ -1380,7 +1428,7 @@ void test_reattach()
   pid_t pid;
   int r, status, count;
 
-  subtest = 17;
+  subtest = 19;
 
   pid = traced_fork(test_reattach_child);
 
@@ -1397,6 +1445,9 @@ void test_reattach()
 
   /* Start tracing system calls. We don't know how many there will be until
    * we reach the child's select(), so we have to interrupt ourselves.
+   * The hard assumption here is that the child is able to enter the select()
+   * within a second, despite being traced. If this is not the case, the test
+   * may hang or fail, and the child may die from a SIGTRAP.
    */
   if (ptrace(T_SYSCALL, pid, 0, 0) != 0) e(5);
 
@@ -1439,7 +1490,7 @@ void test_reattach()
   if ((r = WEXITSTATUS(status)) != 42) e(r);
 
   /* We must not have seen the select()'s syscall leave event, and the last
-   * event will be the syscall enter for the exec().
+   * event will be the syscall enter for the exit().
    */
   if (!(count % 2)) e(21);
 
