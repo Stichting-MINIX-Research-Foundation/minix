@@ -60,13 +60,13 @@ dosboot:	doshead.o dosboot.o bootimage.o rawfs86.o
 		doshead.o dosboot.o bootimage.o rawfs86.o $(LIBS)
 
 boot.com:	dosboot
-	./a.out2com dosboot boot.com
+	exec sh a.out2com dosboot boot.com
 
 mkfile:	mkfhead.s mkfile.c
 	$(LD) -.o -mi86 -com -o $@ mkfhead.s mkfile.c $(LIBS)
 
 mkfile.com:	mkfile
-	./a.out2com mkfile mkfile.com
+	exec sh a.out2com mkfile mkfile.com
 
 installboot:	installboot.o rawfs.o
 	$(CC) $(STRIP) -o installboot installboot.o rawfs.o
