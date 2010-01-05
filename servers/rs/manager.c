@@ -1183,7 +1183,7 @@ endpoint_t *endpoint;
    * process, because VFS may be blocked on a sendrec() to a MFS that is
    * waiting for a endpoint update for a dead driver. We have just published
    * that update, but VFS may still be blocked. As a result, VFS may not yet
-   * have received PM's fork message. Hence, if we call mapdriver5()
+   * have received PM's fork message. Hence, if we call mapdriver()
    * immediately, VFS may not know about the process and thus refuse to add the
    * driver entry. The following temporary hack works around this by forcing
    * blocking communication from PM to VFS. Once VFS has been made non-blocking
@@ -1194,7 +1194,7 @@ endpoint_t *endpoint;
 
   /* Map the new service. */
   if (rp->r_dev_nr > 0) {				/* set driver map */
-      if ((s=mapdriver5(rp->r_label, strlen(rp->r_label),
+      if ((s=mapdriver(rp->r_label,
 	      rp->r_dev_nr, rp->r_dev_style, !!use_copy /* force */)) < 0) {
           report("RS", "couldn't map driver (continuing)", errno);
       }

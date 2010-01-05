@@ -189,11 +189,6 @@ PUBLIC int main(void)
 	  /* Other calls. */
 	  switch(call_nr)
 	  {
-	      case DEVCTL:
-		error= do_devctl();
-		if (error != SUSPEND) reply(who_e, error);
-		break;
-
 	      case MAPDRIVER:
 		error= do_mapdriver();
 		if (error != SUSPEND) reply(who_e, error);
@@ -376,11 +371,15 @@ PRIVATE void fs_init()
   do {
   	if (OK != (s=sef_receive(PM_PROC_NR, &mess)))
   		panic(__FILE__,"FS couldn't receive from PM", s);
-  	if (NONE == mess.PR_ENDPT) break; 
 
-	rfp = &fproc[mess.PR_SLOT];
-	rfp->fp_pid = mess.PR_PID;
-	rfp->fp_endpoint = mess.PR_ENDPT;
+	if (mess.m_type != PM_INIT)
+		panic(__FILE__, "unexpected message from PM", mess.m_type);
+
+  	if (NONE == mess.PM_PROC) break; 
+
+	rfp = &fproc[mess.PM_SLOT];
+	rfp->fp_pid = mess.PM_PID;
+	rfp->fp_endpoint = mess.PM_PROC;
 	rfp->fp_realuid = (uid_t) SYS_UID;
 	rfp->fp_effuid = (uid_t) SYS_UID;
 	rfp->fp_realgid = (gid_t) SYS_GID;

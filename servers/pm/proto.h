@@ -23,7 +23,7 @@ _PROTOTYPE( int do_getdma, (void)					);
 
 /* exec.c */
 _PROTOTYPE( int do_exec, (void)						);
-_PROTOTYPE( int exec_newmem, (void)					);
+_PROTOTYPE( int do_exec_newmem, (void)					);
 _PROTOTYPE( int do_execrestart, (void)					);
 _PROTOTYPE( void exec_restart, (struct mproc *rmp, int result)		);
 
@@ -54,8 +54,6 @@ _PROTOTYPE( int do_getsysinfo_up, (void)					);
 _PROTOTYPE( int do_getprocnr, (void)					);
 _PROTOTYPE( int do_getepinfo, (void)					);
 _PROTOTYPE( int do_svrctl, (void)					);
-_PROTOTYPE( int do_allocmem, (void)					);
-_PROTOTYPE( int do_freemem, (void)					);
 _PROTOTYPE( int do_getsetpriority, (void)				);
 
 /* profile.c */

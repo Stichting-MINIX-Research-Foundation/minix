@@ -22,7 +22,7 @@ LIBS =  -ldriver -lsys
 IMGRD=imgrd_s.o
 #IMGRD=imgrd.c
 
-OBJ = memory.o allocmem.o $(IMGRD)
+OBJ = memory.o $(IMGRD)
 
 # build local binary
 all build:	$(DRIVER)

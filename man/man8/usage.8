@@ -69,14 +69,15 @@ is an IBM PC/XT with 640 kb memory.  MINIX-386 can more or less run in 2
 MB memory.  See sections 16 and 17 on "low memory" issues.
 .SS "3. MINIX INSTALLATION BACKGROUND"
 The objective of the installation is to create a partition on your disk
-and to put MINIX into it.  MINIX really requires at least two partitions
-however, so the single "primary" partition is split into two or three
-subpartitions.
+and to put MINIX into it.  MINIX really requires three partitions
+however, so the single "primary" partition is split into three subpartitions.
 The
 .B s0
 subpartition will contain the root file system, the
 .B s1
-subpartition may optionally contain swapspace, and the
+subpartition will contain the
+.B /home
+file system, and the
 .B s2
 subpartition will contain the
 .B /usr
@@ -121,15 +122,15 @@ free space the disk will look like this:
 /dev/c0d0p0	Windows C: drive
 /dev/c0d0p1	MINIX primary partition
 /dev/c0d0p1s0	MINIX root partition
-/dev/c0d0p1s1	MINIX swap partition (optional)
+/dev/c0d0p1s1	MINIX /home partition
 /dev/c0d0p1s2	MINIX /usr partition
 .in -8n
 .fi
 .PP
 /dev/c0d0 is the sum of a partition table, /dev/c0d0p0 and /dev/c0d0p1.
-Likewise is /dev/c0d0p1 the sum of a subpartition table, /dev/c0d0p1s0 and
-/dev/c0d0p1s2.  Read the "DEVICES" sections for more information on MINIX
-devices.
+Likewise is /dev/c0d0p1 the sum of a subpartition table, /dev/c0d0p1s0,
+/dev/c0d0p1s1, and /dev/c0d0p1s2.
+Read the "DEVICES" sections for more information on MINIX devices.
 .SS "4. INSTALLATION"
 .ig \" Only relevant when on CD-ROM.
 If you have not already copied MINIX to floppy disks, please read
@@ -217,17 +218,12 @@ The script then wants to know the name of the partition you've created.  The
 partition name is probably still visible on the screen.  Combined with the
 drive name you have to type c0d0p1, c0d2p0 or something.
 .PP
-The next question is the amount of swapspace you want to give MINIX.  There
-will be a suggested value based on the amount of memory your system has.
-If you have more then enough memory then don't bother with swap.  MINIX
-doesn't handle it very well yet, or ever, only memory starved systems need it
-so that
-.B "make world"
-can run.
+The next question is the size of the /home partition that you want.  There
+will be a suggested value based on the amount of disk space available.
 .PP
 The new partition table is reloaded into the disk driver, and the
-new MINIX partition is carved up into two or three subpartitions, a 1440 kb
-root, maybe some amount of swap, and the rest for /usr.
+new MINIX partition is carved up into two or three subpartitions, a
+root, the chosen amount for /home, and the rest for /usr.
 .PP
 After making /usr, it is immediately put to use to replace the installation
 /usr file system so that you can remove the \s-2USR\s+2 diskette and insert
@@ -251,14 +247,14 @@ Run
 .B part
 to make partitions to load the system into.  The best thing to do is to make
 one large primary partition of type "MINIX" and to carve this partition up
-into three subpartitions for root, swap and /usr.  The assumption is that you
+into three subpartitions for root, /home, and /usr.  The assumption is that you
 will use the second partition on the first hard disk,
 .BR /dev/c0d0p1 ,
 and that
 .B c0d0p1s0
 is the root subpartition,
 .B c0d0p1s1
-is swap and
+is /home, and
 .B c0d0p1s2
 is /usr.  If you want to use the first partition on
 the second hard disk for instance, then substitute c0d1p0 and c0d1p0s[012] for
@@ -283,11 +279,8 @@ make it larger if you want to, but it is advisable never to let the contents
 outgrow a floppy.  (The \s-2ROOT\s+2 diskette is a copy of a root file
 system, and will be used to fill your root subpartition.)
 .PP
-The second subpartition is for swapspace.  You can use it to enlarge the
-amount of total memory (real + swap) if your system has less than 2M
-(16-bit mode) or 4M (32-bit mode).  Note that only one MINIX swap partition
-is needed on your system, so if you have another MINIX partition then you can
-use its swap partition instead.
+The second subpartition is for the /home subpartition.  You may choose to store
+your personal files there.
 .PP
 Use the rest of the partition for
 .BR s2 ,
@@ -295,12 +288,6 @@ the /usr subpartition.
 .PP
 When you are done check that /dev/c0d0p1s0 is active (the * after the partition
 number) so you can boot from it later.
-.PP
-If your disk has bad blocks then don't put the root or swap subpartition
-on top of them.  Make sure the inode tables in the other partitions don't
-have bad blocks either.  You can put the subpartitions out of order on the
-disk if that helps.  Subpartition tables, unlike the main partition
-table, are not sorted by the driver.
 .PP
 After making the partitions you do not have to reboot.  The disk driver
 reloads the partition tables on the next access if the disk is not in use.
@@ -316,11 +303,9 @@ if it told you that it was creating a new partition table, but
 .PP
 will put it there for sure.
 .PP
-Let's start by initializing the swap partition first, if you allocated one.
-We may need it already, so mount it.
+Next make a file system for on-disk /home.  Leave it empty for now.
 .PP
-.XB "mkswap\0/dev/c0d0p1s1"
-.XB "mount\0\-s\0/dev/c0d0p1s1"
+.XB "mkfs\0/dev/c0d0p1s1"
 .PP
 Next make a file system for on-disk /usr and copy the floppy /usr on to it.
 .PP
@@ -361,7 +346,7 @@ to name the devices MINIX has been installed on.  In our example it
 should look like this:
 .PP
 .XB "root=/dev/c0d0p1s0"
-.XB "swap=/dev/c0d0p1s1"
+.XB "home=/dev/c0d0p1s1"
 .XB "usr=/dev/c0d0p1s2"
 .PP
 Unmount the new root:

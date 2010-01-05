@@ -46,21 +46,11 @@ int rw_flag;			/* READING or WRITING */
   off_t bytes_left;
   u64_t position, res_pos, new_pos;
   unsigned int off, cum_io, cum_io_incr, res_cum_io;
-  int op, oflags, r, chunk, usr, block_spec, char_spec;
+  int op, oflags, r, chunk, block_spec, char_spec;
   int regular;
   mode_t mode_word;
   phys_bytes p;
   struct dmap *dp;
-
-  /* PM loads segments by putting funny things in other bits of the
-   * message, indicated by a high bit in fd. */
-  if (who_e == PM_PROC_NR && (m_in.fd & _PM_SEG_FLAG)) {
-	panic(__FILE__,
-	"read_write: special read/write calls by PM no longer supported",
-		NO_NUM);
-  } else {
-	usr = who_e;		/* normal case */
-  }
 
   /* If the file descriptor is valid, get the vnode, size and mode. */
   if (m_in.nbytes < 0) return(EINVAL);
@@ -82,7 +72,7 @@ int rw_flag;			/* READING or WRITING */
 		panic(__FILE__, "read_write: fp_cum_io_partial not clear",
 		      NO_NUM);
 	}
-	return rw_pipe(rw_flag, usr, m_in.fd, f, m_in.buffer, m_in.nbytes);
+	return rw_pipe(rw_flag, who_e, m_in.fd, f, m_in.buffer, m_in.nbytes);
   }
 
   op = (rw_flag == READING ? VFS_DEV_READ : VFS_DEV_WRITE);
@@ -109,7 +99,7 @@ int rw_flag;			/* READING or WRITING */
 	suspend_reopen = (f->filp_state != FS_NORMAL);
 	dev = (dev_t) vp->v_sdev;
 
-	r = dev_io(op, dev, usr, m_in.buffer, position, m_in.nbytes, oflags,
+	r = dev_io(op, dev, who_e, m_in.buffer, position, m_in.nbytes, oflags,
 		   suspend_reopen);
 	if (r >= 0) {
 		cum_io = r;
@@ -117,8 +107,8 @@ int rw_flag;			/* READING or WRITING */
 		r = OK;
 	}
   } else if (block_spec) {		/* Block special files. */
-	r = req_breadwrite(vp->v_bfs_e, usr, vp->v_sdev, position, m_in.nbytes,
-			   m_in.buffer, rw_flag, &res_pos, &res_cum_io);
+	r = req_breadwrite(vp->v_bfs_e, who_e, vp->v_sdev, position,
+		m_in.nbytes, m_in.buffer, rw_flag, &res_pos, &res_cum_io);
 	position = res_pos;
 	cum_io += res_cum_io;
   } else {				/* Regular files */
@@ -128,7 +118,7 @@ int rw_flag;			/* READING or WRITING */
 	}
 
 	/* Issue request */
-	r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position, rw_flag, usr,
+	r = req_readwrite(vp->v_fs_e, vp->v_inode_nr, position, rw_flag, who_e,
 			  m_in.buffer, m_in.nbytes, &new_pos, &cum_io_incr);
 
 	if (r >= 0) {

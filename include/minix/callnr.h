@@ -95,10 +95,7 @@
 #define EXEC_RESTART	102	/* to PM: final part of exec for RS */
 #define PROCSTAT	103	/* to PM */
 #define GETPROCNR	104	/* to PM */
-#define ALLOCMEM	105	/* to PM */
-#if 0
-#define FREEMEM		106	/* to PM, not used, not implemented */
-#endif
+
 #define GETEPINFO	107	/* to PM: get pid/uid/gid of an endpoint */
 #define ADDDMA		108	/* to PM: inform PM about a region of memory
 				 * that is used for bus-master DMA
@@ -111,7 +108,6 @@
 				 * any longer
 				 */
 
-#define DEVCTL		120	/* to FS, map or unmap a device */
 #define TASK_REPLY	121	/* to FS: reply code from drivers, not 
 				 * really a standalone call.
 				 */

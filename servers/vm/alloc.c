@@ -828,29 +828,7 @@ PUBLIC void release_dma(struct vmproc *vmp)
 }
 
 /*===========================================================================*
- *				do_allocmem				     *
- *===========================================================================*/
-PUBLIC int do_allocmem(message *m)
-{
-	phys_clicks mem, clicks;
-
-	clicks = 1 + ((vir_bytes)m->VMAM_BYTES / CLICK_SIZE);
-
-	if((mem=ALLOC_MEM(clicks, PAF_CLEAR)) == NO_MEM) {
-		return ENOMEM;
-	}
-
-	m->VMAM_MEMBASE = CLICK2ABS(mem);
-
-#if 0
-	printf("VM: do_allocmem: 0x%lx clicks OK at 0x%lx\n", m->VMAM_CLICKS, mem);
-#endif
-
-	return OK;
-}
-
-/*===========================================================================*
- *				do_allocmem				     *
+ *				printmemstats				     *
  *===========================================================================*/
 void printmemstats(void)
 {

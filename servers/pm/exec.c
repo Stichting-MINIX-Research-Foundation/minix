@@ -12,7 +12,7 @@
  *
  * The entry points into this file are:
  *   do_exec:	 perform the EXEC system call
- *   exec_newmem: allocate new memory map for a process that tries to exec
+ *   do_exec_newmem: allocate new memory map for a process that tries to exec
  *   do_execrestart: finish the special exec call for RS
  *   exec_restart: finish a regular exec call
  *   find_share: find a process whose text segment can be shared
@@ -58,9 +58,9 @@ PUBLIC int do_exec()
 
 
 /*===========================================================================*
- *				exec_newmem				     *
+ *				do_exec_newmem				     *
  *===========================================================================*/
-PUBLIC int exec_newmem()
+PUBLIC int do_exec_newmem()
 {
 	int proc_e, proc_n, allow_setuid;
 	char *ptr;
@@ -75,7 +75,7 @@ PUBLIC int exec_newmem()
 	proc_e= m_in.EXC_NM_PROC;
 	if (pm_isokendpt(proc_e, &proc_n) != OK)
 	{
-		panic(__FILE__, "exec_newmem: got bad endpoint",
+		panic(__FILE__, "do_exec_newmem: got bad endpoint",
 			proc_e);
 	}
 	rmp= &mproc[proc_n];
@@ -83,7 +83,7 @@ PUBLIC int exec_newmem()
 	r= sys_datacopy(who_e, (vir_bytes)ptr,
 		SELF, (vir_bytes)&args, sizeof(args));
 	if (r != OK)
-		panic(__FILE__, "exec_newmem: sys_datacopy failed", r);
+		panic(__FILE__, "do_exec_newmem: sys_datacopy failed", r);
 
 	if((r=vm_exec_newmem(proc_e, &args, sizeof(args), &stack_top, &flags)) == OK) {
 		allow_setuid= 0;                /* Do not allow setuid execution */  

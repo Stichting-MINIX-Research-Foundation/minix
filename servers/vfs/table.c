@@ -115,17 +115,18 @@ PUBLIC _PROTOTYPE (int (*call_vec[]), (void) ) = {
 	no_sys,		/* 97 = getsysinfo_up */
 	no_sys,		/* 98 = (sprofile) */
 	no_sys,		/* 99 = (cprofile) */
-	no_sys,		/* 100 = unused */
-	no_sys,		/* 101 = unused */
-	no_sys,		/* 102 = unused */
-	no_sys,		/* 103 = unused */
-	no_sys,		/* 104 = unused */
+	/* THE MINIX3 ABI ENDS HERE */
+	no_sys,		/* 100 = (exec_newmem) */
+	no_sys,		/* 101 = (fork_nb) */
+	no_sys,		/* 102 = (exec_restart) */
+	no_sys,		/* 103 = (procstat) */
+	no_sys,		/* 104 = (getprocnr) */
 	no_sys,		/* 105 = unused */
 	no_sys,		/* 106 = unused */
-	no_sys,		/* 107 = unused */
+	no_sys,		/* 107 = (getepinfo) */
 	no_sys,		/* 108 = (adddma) */
-	no_sys,		/* 109 = unused */
-	no_sys,		/* 110 = unused */
+	no_sys,		/* 109 = (deldma) */
+	no_sys,		/* 110 = (getdma) */
 };
 /* This should not fail with "array size is negative": */
 extern int dummy[sizeof(call_vec) == NCALLS * sizeof(call_vec[0]) ? 1 : -1];

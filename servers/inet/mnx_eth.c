@@ -99,16 +99,12 @@ PUBLIC void osdep_eth_init()
 		}
 		eth_port->etp_osdep.etp_rd_vec_grant= gid;
 
-#ifdef __minix_vmd
-		r= sys_findproc(ecp->ec_task, &tasknr, 0);
-#else /* Minix 3 */
 		r= ds_retrieve_u32(ecp->ec_task, &tasknr);
 		if (r != OK && r != ESRCH)
 		{
 			printf("inet: ds_retrieve_u32 failed for '%s': %d\n",
 				ecp->ec_task, r);
 		}
-#endif 
 		if (r != OK)
 		{
 			/* Eventually, we expect ethernet drivers to be

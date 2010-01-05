@@ -182,23 +182,14 @@ _PROTOTYPE( int getdomainname, (char *_domain, size_t _len)		);
 _PROTOTYPE( int ttyslot, (void)						);
 _PROTOTYPE( int fttyslot, (int _fd)					);
 _PROTOTYPE( char *crypt, (const char *_key, const char *_salt)		);
-_PROTOTYPE( int getsysinfo, (endpoint_t who, int what, void *where)		);
+_PROTOTYPE( int getsysinfo, (endpoint_t who, int what, void *where)	);
 _PROTOTYPE( int getsigset, (sigset_t *sigset)				);
 _PROTOTYPE( int getprocnr, (void)					);
 _PROTOTYPE( int getnprocnr, (pid_t pid)					);
 _PROTOTYPE( int getpprocnr, (void)					);
 _PROTOTYPE( int _pm_findproc, (char *proc_name, int *proc_nr)		);
-_PROTOTYPE( int allocmem, (phys_bytes size, phys_bytes *base)		);
-_PROTOTYPE( int freemem, (phys_bytes size, phys_bytes base)		);
-#define DEV_MAP 1
-#define DEV_UNMAP 2
-#define mapdriver(driver, device, style, force) \
-	devctl(DEV_MAP, driver, device, style, force)
-#define unmapdriver(device) devctl(DEV_UNMAP, 0, device, 0)
-_PROTOTYPE( int devctl, (int ctl_req, int driver, int device, int style, 
-	int force)							);
-_PROTOTYPE( int mapdriver5, (char *label, size_t len, int major,
-	int style, int force)						);
+_PROTOTYPE( int mapdriver, (char *label, int major, int style,
+							int force)	);
 _PROTOTYPE(int adddma, (endpoint_t proc_e,
 				phys_bytes start, phys_bytes size)	);
 _PROTOTYPE(int deldma, (endpoint_t proc_e,

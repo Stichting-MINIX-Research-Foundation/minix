@@ -47,37 +47,8 @@ PUBLIC int do_fchdir()
  *===========================================================================*/
 PUBLIC int do_chdir()
 {
-/* Change directory.  This function is  also called by MM to simulate a chdir
- * in order to do EXEC, etc.  It also changes the root directory, the uids and
- * gids, and the umask. 
- */
-  int r;
-  register struct fproc *rfp;
+/* Perform the chdir(name) system call. */
 
-  if (who_e == PM_PROC_NR) {
-	int slot;
-	if(isokendpt(m_in.endpt1, &slot) != OK) return(EINVAL);
-	rfp = &fproc[slot];
-
-        put_vnode(fp->fp_rd);
-        dup_vnode(fp->fp_rd = rfp->fp_rd);
-        put_vnode(fp->fp_wd);
-        dup_vnode(fp->fp_wd = rfp->fp_wd);
-        
-	/* MM uses access() to check permissions.  To make this work, pretend
-	 * that the user's real ids are the same as the user's effective ids.
-	 * FS calls other than access() do not use the real ids, so are not
-	 * affected.
-	 */
-	fp->fp_realuid =
-	fp->fp_effuid = rfp->fp_effuid;
-	fp->fp_realgid =
-	fp->fp_effgid = rfp->fp_effgid;
-	fp->fp_umask = rfp->fp_umask;
-	return(OK);
-  }
-
-  /* Perform the chdir(name) system call. */
   return change(&fp->fp_wd, m_in.name, m_in.name_length);
 }
 

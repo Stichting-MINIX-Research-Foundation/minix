@@ -19,7 +19,6 @@ _PROTOTYPE( phys_clicks alloc_mem_f, (phys_clicks clicks, u32_t flags)	);
 _PROTOTYPE( int do_adddma, (message *msg)                              );
 _PROTOTYPE( int do_deldma, (message *msg)                              );
 _PROTOTYPE( int do_getdma, (message *msg)                              );
-_PROTOTYPE( int do_allocmem, (message *msg)                              );
 _PROTOTYPE( void release_dma, (struct vmproc *vmp)       		);
 _PROTOTYPE( void memstats, (int *nodes, int *pages, int *largest)	);
 _PROTOTYPE( void printmemstats, (void)			       		);

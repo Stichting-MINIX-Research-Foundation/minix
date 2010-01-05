@@ -13,7 +13,6 @@
  *   Jul 09, 2005   updated SYS_KILL to signal services  (Jorrit N. Herder) 
  *   Jun 21, 2005   created SYS_NICE for nice(2) kernel call  (Ben J. Gras)
  *   Jun 21, 2005   created SYS_MEMSET to speed up exec(2)  (Ben J. Gras)
- *   Apr 12, 2005   updated SYS_VCOPY for virtual_copy()  (Jorrit N. Herder)
  *   Jan 20, 2005   updated SYS_COPY for virtual_copy()  (Jorrit N. Herder)
  *   Oct 24, 2004   created SYS_GETKSIG to support PM  (Jorrit N. Herder) 
  *   Oct 10, 2004   created handler for unused calls  (Jorrit N. Herder) 
@@ -78,12 +77,6 @@ _PROTOTYPE( int do_copy, (message *m_ptr) );
 #define do_vircopy 	do_copy
 #if ! (USE_VIRCOPY || USE_PHYSCOPY)
 #define do_copy do_unused
-#endif
-
-_PROTOTYPE( int do_vcopy, (message *m_ptr) );		
-#define do_virvcopy 	do_vcopy
-#if ! (USE_VIRVCOPY || USE_PHYSVCOPY)
-#define do_vcopy do_unused
 #endif
 
 _PROTOTYPE( int do_umap, (message *m_ptr) );

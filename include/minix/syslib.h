@@ -149,13 +149,6 @@ _PROTOTYPE(int sys_vsafecopy, (struct vscp_vec *copyvec, int elements));
 _PROTOTYPE(int sys_memset, (unsigned long pattern, 
 		phys_bytes base, phys_bytes bytes));
 
-
-/* Vectored virtual / physical copy calls. */
-#if DEAD_CODE		/* library part not yet implemented */
-_PROTOTYPE(int sys_virvcopy, (phys_cp_req *vec_ptr,int vec_size,int *nr_ok));
-_PROTOTYPE(int sys_physvcopy, (phys_cp_req *vec_ptr,int vec_size,int *nr_ok));
-#endif
-
 _PROTOTYPE(int sys_umap, (endpoint_t proc_ep, int seg, vir_bytes vir_addr,
 	 vir_bytes bytes, phys_bytes *phys_addr));
 _PROTOTYPE(int sys_umap_data_fb, (endpoint_t proc_ep, vir_bytes vir_addr,

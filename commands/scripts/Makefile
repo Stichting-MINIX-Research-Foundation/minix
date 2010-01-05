@@ -44,7 +44,6 @@ usr:	\
 	/usr/bin/binsizes \
 	/usr/bin/datasizes \
 	/usr/bin/rotate \
-	/usr/bin/floppysetup \
 	/usr/bin/packit \
 	/usr/bin/packman \
 	/usr/bin/poweroff \
@@ -130,9 +129,6 @@ clean:
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/mkdist:	mkdist.sh
-	install -m 755 -c -o bin $? $@
-
-/usr/bin/floppysetup:	floppysetup.sh
 	install -m 755 -c -o bin $? $@
 
 /usr/bin/rotate:	rotate.sh

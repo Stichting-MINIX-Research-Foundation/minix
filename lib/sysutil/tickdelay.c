@@ -18,7 +18,6 @@ long ticks;				/* number of ticks to wait */
 
     if (ticks <= 0) return OK;		/* check for robustness */
 
-    m.ALRM_ENDPT = SELF;		/* SELF means this process nr */
     m.ALRM_EXP_TIME = ticks;		/* request message after ticks */
     m.ALRM_ABS_TIME = 0;		/* ticks are relative to now */
     s = _taskcall(SYSTASK, SYS_SETALARM, &m);

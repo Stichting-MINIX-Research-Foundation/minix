@@ -128,7 +128,6 @@ ALL	= \
 	mkfs \
 	mknod \
 	mkproto \
-	mkswap \
 	modem \
 	mount \
 	mt \
@@ -568,10 +567,6 @@ mknod:	mknod.c
 mkproto:	mkproto.c
 	$(CCLD) -o $@ $<
 	@install -S 20kw $@
-
-mkswap:	mkswap.c
-	$(CCLD) -I$(SYS) -o $@ $<
-	@install -S 4kw $@
 
 modem:	modem.c
 	$(CCLD) -o $@ $<
@@ -1026,7 +1021,6 @@ install:	\
 	/usr/bin/mkfs \
 	/usr/bin/mknod \
 	/usr/bin/mkproto \
-	/usr/bin/mkswap \
 	/usr/bin/modem \
 	/usr/bin/mount \
 	/usr/bin/mt \
@@ -1435,9 +1429,6 @@ install:	\
 	install -cs -o bin $< $@
 
 /usr/bin/mkproto:	mkproto
-	install -cs -o bin $< $@
-
-/usr/bin/mkswap:	mkswap
 	install -cs -o bin $< $@
 
 /usr/bin/modem:	modem

@@ -39,9 +39,7 @@
 #define USE_NICE 	   1	/* change scheduling priority */
 #define USE_UMAP       	   1	/* map virtual to physical address */
 #define USE_VIRCOPY   	   1	/* copy using virtual addressing */ 
-#define USE_VIRVCOPY  	   1	/* vector with virtual copy requests */
 #define USE_PHYSCOPY  	   1 	/* copy using physical addressing */
-#define USE_PHYSVCOPY  	   1	/* vector with physical copy requests */
 #define USE_MEMSET  	   1	/* write char to a given memory area */
 #define USE_RUNCTL         1	/* control stop flags of a process */
 
@@ -58,7 +56,6 @@
  */
 #define NR_IRQ_HOOKS	  16		/* number of interrupt hooks */
 #define VDEVIO_BUF_SIZE   64		/* max elements per VDEVIO request */
-#define VCOPY_VEC_SIZE    16		/* max elements per VCOPY request */
 
 /* How many bytes for the kernel stack. Space allocated in mpx.s. */
 #define K_STACK_BYTES   1024	

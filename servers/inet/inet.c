@@ -77,10 +77,6 @@ THIS_FILE
 
 int this_proc;		/* Process number of this server. */
 
-#ifdef __minix_vmd
-static int synal_tasknr= ANY;
-#endif
-
 /* Killing Solaris */
 int killer_inet= 0;
 
@@ -107,9 +103,6 @@ PUBLIC void main()
 	int source, m_type, timerand, fd;
 	u32_t tasknr;
 	struct fssignon device;
-#ifdef __minix_vmd
-	struct systaskinfo info;
-#endif
 	u8_t randbits[32];
 	struct timeval tv;
 
@@ -152,11 +145,7 @@ PUBLIC void main()
 	if (timerand)
 	{
 		printf("inet: using current time for random-number seed\n");
-#ifdef __minix_vmd
-		r= sysutime(UTIME_TIMEOFDAY, &tv);
-#else /* Minix 3 */
 		r= gettimeofday(&tv, NULL);
-#endif
 		if (r == -1)
 		{
 			printf("sysutime failed: %s\n", strerror(errno));
@@ -166,19 +155,11 @@ PUBLIC void main()
 	}
 	init_rand256(randbits);
 
-#ifdef __minix_vmd
-	if (svrctl(SYSSIGNON, (void *) &info) == -1) pause();
-
-	/* Our new identity as a server. */
-	this_proc = info.proc_nr;
-#else /* Minix 3 */
-
 	/* Our new identity as a server. */
 	r= ds_retrieve_u32("inet", &tasknr);
 	if (r != OK)
 		ip_panic(("inet: ds_retrieve_u32 failed for 'inet': %d", r));
 	this_proc= tasknr;
-#endif
 
 	/* Register the device group. */
 	device.dev= ip_dev;
@@ -204,12 +185,6 @@ PUBLIC void main()
 		ip_warning(( "killer inet active" ));
 		killer_inet= 1;
 	}
-
-#ifdef __minix_vmd
-	r= sys_findproc(SYN_AL_NAME, &synal_tasknr, 0);
-	if (r != OK)
-		ip_panic(( "unable to find synchronous alarm task: %d\n", r ));
-#endif
 
 	nw_init();
 	while (TRUE)
@@ -253,13 +228,6 @@ PUBLIC void main()
 		{
 			sr_rec(mq);
 		}
-#ifdef __minix_vmd
-		else if (source == synal_tasknr)
-		{
-			clck_tick (&mq->mq_mess);
-			mq_free(mq);
-		}
-#else /* Minix 3 */
 		else if (is_notify(m_type))
 		{
 			if (_ENDPOINT_P(source) == CLOCK)
@@ -280,7 +248,6 @@ PUBLIC void main()
 				mq_free(mq);
 			}
 		}
-#endif
 		else if (m_type == DL_CONF_REPLY || m_type == DL_TASK_REPLY ||
 			m_type == DL_NAME_REPLY || m_type == DL_STAT_REPLY)
 		{
@@ -345,11 +312,7 @@ PUBLIC void inet_panic()
 {
 	printf("\ninet stacktrace: ");
 	util_stacktrace();
-#ifdef __minix_vmd
-	sys_abort(RBT_PANIC);
-#else /* Minix 3 */
 	(panic)("INET","aborted due to a panic",NO_NUM);
-#endif
 	for(;;);
 }
 

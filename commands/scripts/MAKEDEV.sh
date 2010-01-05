@@ -23,7 +23,7 @@ case $#:$1 in
 	ttypa ttypb ttypc ttypd ttype ttypf \
 	ttyq0 ttyq1 ttyq2 ttyq3 ttyq4 ttyq5 ttyq6 ttyq7 ttyq8 ttyq9 \
 	ttyqa ttyqb ttyqc ttyqd ttyqe ttyqf \
-	eth klog random rescue filter
+	eth klog random filter
     ;;
 0:|1:-\?)
     cat >&2 <<EOF
@@ -47,7 +47,6 @@ Where key is one of the following:
   random                  # Make /dev/random, /dev/urandom
   kbd                     # Make /dev/kbd
   kbdaux                  # Make /dev/kbdaux
-  rescue                  # Make /dev/rescue
   filter                  # Make /dev/filter
   video                   # Make /dev/video
   std			  # All standard devices
@@ -249,11 +248,6 @@ do
 	$e mknod random c 16 0;	$e chmod 644 random
 	$e mknod urandom c 16 0; $e chmod 644 urandom
 	$e chgrp operator random urandom
-	;;
-    rescue)
-    	# rescue device
-    	$e mknod rescue b 9 0
-	$e chmod 644 rescue
 	;;
     klog)
     	# logging device.

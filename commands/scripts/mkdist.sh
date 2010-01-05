@@ -68,7 +68,6 @@ bin/mined
 bin/mkdir
 bin/mkfs
 bin/mknod
-bin/mkswap
 bin/mv
 bin/od
 bin/part

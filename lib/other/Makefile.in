@@ -10,7 +10,6 @@ libc_FILES=" \
 	_brk.c \
 	_cprofile.c \
 	_deldma.c \
-	_devctl.c \
 	_getdents.c \
 	_getdma.c \
 	_getnpid.c \
@@ -22,7 +21,7 @@ libc_FILES=" \
 	_getsigset.c \
 	_getsysinfo.c \
 	_lseek64.c \
-	_mapdriver5.c \
+	_mapdriver.c \
 	_mount.c \
 	_reboot.c \
 	_sbrk.c \

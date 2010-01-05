@@ -15,7 +15,7 @@ PUBLIC int sys_safecopyfrom(endpoint_t src_e,
   message copy_mess;
 
   copy_mess.SCP_FROM_TO = src_e;
-  copy_mess.SCP_INFO = SCP_MAKEINFO(my_seg);
+  copy_mess.SCP_SEG = my_seg;
   copy_mess.SCP_GID = gr_id;
   copy_mess.SCP_OFFSET = (long) offset;
   copy_mess.SCP_ADDRESS = (char *) address;
@@ -37,7 +37,7 @@ PUBLIC int sys_safecopyto(endpoint_t dst_e,
   message copy_mess;
 
   copy_mess.SCP_FROM_TO = dst_e;
-  copy_mess.SCP_INFO = SCP_MAKEINFO(my_seg);
+  copy_mess.SCP_SEG = my_seg;
   copy_mess.SCP_GID = gr_id;
   copy_mess.SCP_OFFSET = (long) offset;
   copy_mess.SCP_ADDRESS = (char *) address;

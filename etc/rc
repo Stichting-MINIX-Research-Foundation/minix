@@ -73,9 +73,6 @@ start)
     # /etc/fstab lists the root, tmp and usr devices.
     . /etc/fstab
 
-    # Any swapspace on a device?
-    test "$swap" : '/dev/' && mount -s $swap
-
     # Use MFS binary only from kernel image?
     if [ "`sysenv bin_img`" = 1 ]
     then
@@ -157,10 +154,6 @@ Mount $usr /usr failed -- Single user."
 	intr sh
     fi
 
-    # Any swapspace on a file?
-    test -n "$swap" -a ! "$swap" : '/dev/' && mount -s $swap
-
-
     case "`printroot -r`":$bootcd in
     /dev/ram:)
 	# Remove boot-only things to make space,
@@ -182,7 +175,6 @@ esac
 # Further initialization.
 test -f /usr/etc/rc && sh /usr/etc/rc $action
 test -f /usr/local/etc/rc && sh /usr/local/etc/rc $action
-#test -f /etc/rc.rescue && sh /etc/rc.rescue $action
 
 # Any messages?
 test "$action" = start -a -f /etc/issue && cat /etc/issue

@@ -117,27 +117,6 @@ PUBLIC int main()
 		else
 			result= ENOSYS;
 		break;
-	case ALLOCMEM:
-		result= do_allocmem();
-		break;
-	case FORK_NB:
-		result= do_fork_nb();
-		break;
-	case EXEC_NEWMEM:
-		result= exec_newmem();
-		break;
-	case EXEC_RESTART:
-		result= do_execrestart();
-		break;
-	case PROCSTAT:
-		result= do_procstat();
-		break;
-	case GETPROCNR:
-		result= do_getprocnr();
-		break;
-	case GETEPINFO:
-		result= do_getepinfo();
-		break;
 	default:
 		/* Else, if the system call number is valid, perform the
 		 * call.
@@ -338,9 +317,10 @@ PRIVATE void pm_init()
 		rmp->mp_endpoint = ip->endpoint;
 
 		/* Tell FS about this system process. */
-		mess.PR_SLOT = ip->proc_nr;
-		mess.PR_PID = rmp->mp_pid;
-		mess.PR_ENDPT = rmp->mp_endpoint;
+		mess.m_type = PM_INIT;
+		mess.PM_SLOT = ip->proc_nr;
+		mess.PM_PID = rmp->mp_pid;
+		mess.PM_PROC = rmp->mp_endpoint;
   		if (OK != (s=send(FS_PROC_NR, &mess)))
 			panic(__FILE__,"can't sync up with FS", s);
   	}

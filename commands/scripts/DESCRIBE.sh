@@ -12,6 +12,7 @@ esac
 
 ls -l$flag $* | \
 sed	-e '/^total/d' \
+	-e '/^l/d' \
 	-e '/^[^bc]/s/.* /BAD BAD /' \
 	-e '/^[bc]/s/.* \([0-9][0-9]*\), *\([0-9][0-9]*\).* /\1 \2 /' \
 | {
@@ -41,6 +42,16 @@ do
     1,2)	des="kernel memory" dev=kmem
 	;;
     1,3)	des="null device, data sink" dev=null
+	;;
+    1,4)	des="boot device loaded from boot image" dev=boot
+	;;
+    1,5)	des="null byte stream generator" dev=zero
+	;;
+    1,6)	des="boot image RAM disk" dev=imgrd
+	;;
+    1,[789]|1,1[012])
+		ramdisk=`expr $minor - 7`
+		des="RAM disk $ramdisk" dev=ram$ramdisk
 	;;
     2,*)	drive=`expr $minor % 4`
 	case `expr $minor - $drive` in
@@ -113,6 +124,12 @@ do
 	line=`expr $minor - 16`
 	des="serial line $line" dev=tty0$line
 	;;
+    4,125)	des="video output" dev=video
+	;;
+    4,126)	des="auxiliary input" dev=kbdaux
+	;;
+    4,127)	des="keyboard input" dev=kbd
+	;;
     4,12[89]|4,1[3-8]?|4,19[01])
 	p=`expr \\( $minor - 128 \\) / 16 | tr '0123' 'pqrs'`
 	n=`expr $minor % 16`
@@ -133,18 +150,20 @@ do
 	d=`expr $minor % 8`
 	n=`expr $minor / 8`
 	case $d in
-	0)  case $name in
+	0)  des="IP stat" dev=ipstat
+	    ;;
+	1)  case $name in
 	    psip*)
 		des="Pseudo IP #$n" dev=psip
 		;;
 	    *)  des="raw ethernet #$n" dev=eth
 	    esac
 	    ;;
-	1)  des="raw IP #$n" dev=ip
+	2)  des="raw IP #$n" dev=ip
 	    ;;
-	2)  des="TCP/IP #$n" dev=tcp
+	3)  des="TCP/IP #$n" dev=tcp
 	    ;;
-	3)  des="UDP #$n" dev=udp
+	4)  des="UDP #$n" dev=udp
 	esac
 	case $d in
 	[0123])
@@ -156,11 +175,20 @@ do
 	    fi
 	esac
 	;;
+    11,0)
+	des="block filter" dev=filter
+	;;
     13,0)
 	des="audio" dev=audio
 	;;
     14,0)
 	des="audio mixer" dev=mixer
+	;;
+    15,0)
+	des="kernel log" dev=klog
+	;;
+    16,0)
+	des="pseudo random number generator" dev=urandom
 	;;
     BAD,BAD)
 	des= dev=

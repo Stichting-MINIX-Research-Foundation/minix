@@ -17,14 +17,6 @@ Copyright 1995 Philip Homburg
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __minix_vmd
-
-#include <minix/ansi.h>
-#include <minix/cfg_public.h>
-#include <minix/type.h>
-
-#else /* Assume at least Minix 3.x */
-
 #include <unistd.h>
 #include <sys/ioc_file.h>
 #include <sys/time.h>
@@ -34,8 +26,6 @@ Copyright 1995 Philip Homburg
 #define _NORETURN	/* Should be non empty for GCC */
 
 typedef int ioreq_t;
-
-#endif
 
 #include <minix/const.h>
 #include <minix/com.h>

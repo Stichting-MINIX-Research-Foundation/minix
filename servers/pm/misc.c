@@ -6,8 +6,6 @@
  *   do_getsysinfo: request copy of PM data structure  (Jorrit N. Herder)
  *   do_getprocnr: lookup process slot number  (Jorrit N. Herder)
  *   do_getepinfo: get the pid/uid/gid of a process given its endpoint
- *   do_allocmem: allocate a chunk of memory  (Jorrit N. Herder)
- *   do_freemem: deallocate a chunk of memory  (Jorrit N. Herder)
  *   do_getsetpriority: get/set process priority
  *   do_svrctl: process manager control
  */
@@ -63,49 +61,7 @@ PRIVATE char *uts_tbl[] = {
 PUBLIC unsigned long calls_stats[NCALLS];
 #endif
 
-FORWARD _PROTOTYPE( int getpciinfo, (struct pciinfo *pciinfo)				);
-
-/*===========================================================================*
- *				do_allocmem				     *
- *===========================================================================*/
-PUBLIC int do_allocmem()
-{
-	int r;
-	phys_bytes retmembase;
-	r = vm_allocmem(m_in.memsize, (phys_clicks *) &retmembase);
-	if(r == OK)
-		mp->mp_reply.membase = retmembase;
-	return r;
-}
-
-/*===========================================================================*
- *				do_freemem				     *
- *===========================================================================*/
-PUBLIC int do_freemem()
-{
-#if 1
-	return ENOSYS;
-#else
-  vir_clicks mem_clicks;
-  phys_clicks mem_base;
-
-  /* This call is dangerous. Even memory belonging to other processes can
-   * be freed.
-   */
-  if (mp->mp_effuid != 0)
-  {
-	printf("PM: unauthorized call of do_freemem by proc %d\n",
-		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
-
-  mem_clicks = (m_in.memsize + CLICK_SIZE -1 ) >> CLICK_SHIFT;
-  mem_base = (m_in.membase + CLICK_SIZE -1 ) >> CLICK_SHIFT;
-  free_mem(mem_base, mem_clicks);
-  return(OK);
-#endif
-}
+FORWARD _PROTOTYPE( int getpciinfo, (struct pciinfo *pciinfo)		);
 
 /*===========================================================================*
  *				do_procstat				     *

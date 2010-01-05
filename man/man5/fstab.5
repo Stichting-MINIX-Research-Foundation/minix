@@ -17,9 +17,11 @@ and
 .B /etc/fstab
 is not read by
 .B mount
-as it should be.  It is instead a simple shell script listing the two or
-three devices that MINIX 3 needs to operate:  The device names of the root
-file system, the swap file system (optional), and the file system for
+as it should be.  It is instead a simple shell script listing the 
+three devices that MINIX 3 needs to operate:  the device names of the root
+file system, the file system for
+.BR /home ,
+and the file system for
 .BR /usr .
 .PP
 .B /etc/mtab
@@ -55,8 +57,8 @@ Either
 .BR 1 ,
 .BR 2 ,
 or
-.BR swap ,
-indicating a V1 or a V2 file system, or swap space.
+.BR 3 ,
+indicating a V1, a V2, or a V3 file system.
 .RE
 .sp
 .B options

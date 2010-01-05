@@ -342,7 +342,6 @@ PRIVATE void vm_init(void)
 	CALLMAP(VM_ADDDMA, do_adddma, PM_PROC_NR);
 	CALLMAP(VM_DELDMA, do_deldma, PM_PROC_NR);
 	CALLMAP(VM_GETDMA, do_getdma, PM_PROC_NR);
-	CALLMAP(VM_ALLOCMEM, do_allocmem, PM_PROC_NR);
 	CALLMAP(VM_NOTIFY_SIG, do_notify_sig, PM_PROC_NR);
 
 	/* Requests from RS */

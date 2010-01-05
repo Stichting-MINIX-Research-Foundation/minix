@@ -14,48 +14,18 @@ Created:	Feb 15, 1994 by Philip Homburg <philip@cs.vu.nl>
 /* Server control commands have the same encoding as the commands for ioctls. */
 #include <minix/ioctl.h>
 
-/* MM controls. */
-#define MMSIGNON	_IO ('M',  4)
-#define MMSWAPON	_IOW('M',  5, struct mmswapon)
-#define MMSWAPOFF	_IO ('M',  6)
+/* PM controls. */
 #define MMGETPARAM	_IOW('M',  5, struct sysgetenv)
 #define MMSETPARAM	_IOR('M',  7, struct sysgetenv)
 
 /* FS controls. */
 #define FSSIGNON	_IOW('F',  2, struct fssignon)
-#define FSDEVUNMAP	_IOW('F',  6, struct fsdevunmap)
-
-/* Kernel controls. */
-#define SYSSENDMASK	_IO ('S',  4)
-#define SYSSIGNON	_IOR('S',  2, struct systaskinfo)
-#define SYSGETENV	_IOW('S',  1, struct sysgetenv)
-
-struct mmswapon {
-	u32_t		offset;		/* Starting offset within file. */
-	u32_t		size;		/* Size of swap area. */
-	char		file[128];	/* Name of swap file/device. */
-};
-
-struct svrqueryparam {
-	char		*param;		/* Names of parameters to query. */
-	size_t		psize;		/* Length of param[]. */
-	char		*value;		/* To return values. */
-	size_t		vsize;
-};
 
 /* A proper system call must be created later. */
 #include <minix/dmap.h>
 struct fssignon {
 	dev_t		dev;		/* Device to manage. */
 	enum dev_style	style;		/* Management style. */
-};
-
-struct fsdevunmap {
-	dev_t		dev;		/* Device to unmap. */
-};
-
-struct systaskinfo {
-	int		proc_nr;	/* Process number of caller. */
 };
 
 struct sysgetenv {

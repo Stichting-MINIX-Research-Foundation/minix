@@ -77,7 +77,6 @@ libsys_FILES=" \
 	sys_vtimer.c \
 	taskcall.c \
 	ds.c	\
-	vm_allocmem.c \
 	vm_brk.c \
 	vm_ctl.c \
 	vm_exec_newmem.c \

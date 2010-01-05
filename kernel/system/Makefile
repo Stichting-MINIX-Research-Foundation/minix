@@ -38,7 +38,6 @@ OBJECTS	= \
 	$(SYSTEM)(do_devio.o) \
 	$(SYSTEM)(do_vdevio.o) \
 	$(SYSTEM)(do_copy.o) \
-	$(SYSTEM)(do_vcopy.o) \
 	$(SYSTEM)(do_umap.o) \
 	$(SYSTEM)(do_memset.o) \
 	$(SYSTEM)(do_setgrant.o) \
@@ -119,9 +118,6 @@ $(SYSTEM)(do_vdevio.o):	do_vdevio.c
 
 $(SYSTEM)(do_copy.o):	do_copy.c
 	$(CC) do_copy.c
-
-$(SYSTEM)(do_vcopy.o):	do_vcopy.c
-	$(CC) do_vcopy.c
 
 $(SYSTEM)(do_umap.o):	do_umap.c
 	$(CC) do_umap.c

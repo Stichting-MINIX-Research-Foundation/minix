@@ -151,21 +151,6 @@ int main(int argc, char **argv)
   }
   if (Wflag) wflag = 1;		/* -W implies -w */
 
-#if 0
-  /* The hardware clock may run in a different time zone, likely GMT or
-   * winter time.  Select that time zone.
-   */
-  strcpy(clocktz, "TZ=");
-  sysgetenv.key = "TZ";
-  sysgetenv.keylen = 2+1;
-  sysgetenv.val = clocktz+3;
-  sysgetenv.vallen = sizeof(clocktz)-3;
-  if (svrctl(SYSGETENV, &sysgetenv) == 0) {
-	putenv(clocktz);
-	tzset();
-  }
-#endif
-
   /* Read the CMOS real time clock. */
   for (i = 0; i < 10; i++) {
 	get_time(&time1);

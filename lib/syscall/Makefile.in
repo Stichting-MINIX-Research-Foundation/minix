@@ -22,7 +22,6 @@ libc_FILES=" \
 	cprofile.s \
 	creat.s \
 	deldma.s \
-	devctl.s \
 	dup.s \
 	dup2.s \
 	execl.s \
@@ -66,7 +65,7 @@ libc_FILES=" \
 	lseek.s \
 	lseek64.s \
 	lstat.s \
-	mapdriver5.s \
+	mapdriver.s \
 	mkdir.s \
 	mkfifo.s \
 	mknod.s \

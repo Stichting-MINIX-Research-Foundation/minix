@@ -487,8 +487,6 @@ ln -s /usr/log /mnt/var/log
 
 # CD remnants that aren't for the installed system
 rm /mnt/etc/issue /mnt/CD /mnt/.* 2>/dev/null
-					# Change /etc/fstab. (No swap.)
-					# ${swap:+swap=/dev/$swap}
 echo >/mnt/etc/fstab "\
 # Poor man's File System Table.
 

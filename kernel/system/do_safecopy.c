@@ -3,7 +3,7 @@
  *
  * The parameters for this kernel call are:
  *    	SCP_FROM_TO	other endpoint
- *    	SCP_INFO	encoded: caller's own src/dst segment
+ *    	SCP_SEG		segment in own address space
  *    	SCP_GID		grant id
  *    	SCP_OFFSET	offset within granted space
  *	SCP_ADDRESS	address in own address space
@@ -288,15 +288,13 @@ register message *m_ptr;	/* pointer to request message */
 {
 	static int access, src_seg, dst_seg;
 
-	/* Set src and dst parameters.
-	 * The caller's seg is encoded in the SCP_INFO field.
-	 */
+	/* Set src and dst parameters. */
 	if(sys_call_code == SYS_SAFECOPYFROM) {
 		src_seg = D;
-		dst_seg = SCP_INFO2SEG(m_ptr->SCP_INFO);
+		dst_seg = m_ptr->SCP_SEG;
 		access = CPF_READ;
 	} else if(sys_call_code == SYS_SAFECOPYTO) {
-		src_seg = SCP_INFO2SEG(m_ptr->SCP_INFO);
+		src_seg = m_ptr->SCP_SEG;
 		dst_seg = D;
 		access = CPF_WRITE;
 	} else minix_panic("Impossible system call nr. ", sys_call_code);

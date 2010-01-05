@@ -8,8 +8,8 @@
  *   do_sync:	  perform the SYNC system call
  *   do_fsync:	  perform the FSYNC system call
  *   do_reboot:	  sync disks and prepare for shutdown
- *   do_fork:	  adjust the tables after MM has performed a FORK system call
- *   do_exec:	  handle files with FD_CLOEXEC on after MM has done an EXEC
+ *   do_fork:	  adjust the tables after PM has performed a FORK system call
+ *   do_exec:	  handle files with FD_CLOEXEC on after PM has done an EXEC
  *   do_exit:	  a process has exited; note that in the tables
  *   do_set:	  set uid or gid for some process
  *   do_revive:	  revive a process that was waiting for something (e.g. TTY)
@@ -342,7 +342,7 @@ int cpid;	/* Child process id */
 /* Perform those aspects of the fork() system call that relate to files.
  * In particular, let the child inherit its parent's file descriptors.
  * The parent and child parameters tell who forked off whom. The file
- * system uses the same slot numbers as the kernel.  Only MM makes this call.
+ * system uses the same slot numbers as the kernel.  Only PM makes this call.
  */
 
   register struct fproc *cp;
@@ -583,7 +583,7 @@ PUBLIC int do_svrctl()
 
 	/* Try to update device mapping. */
 	major = (device.dev >> MAJOR) & BYTE;
-	r=map_driver(major, who_e, device.style, 0 /* !force */);
+	r=map_driver(NULL, major, who_e, device.style, 0 /* !force */);
 	if (r == OK)
 	{
 		/* If a driver has completed its exec(), it can be announced
@@ -602,18 +602,6 @@ PUBLIC int do_svrctl()
 		}
 	}
 
-	return(r);
-  }
-  case FSDEVUNMAP: {
-	struct fsdevunmap fdu;
-	int r, major;
-	/* Try to copy request structure to FS. */
-	if ((r = sys_datacopy(who_e, (vir_bytes) m_in.svrctl_argp,
-		FS_PROC_NR, (vir_bytes) &fdu,
-		(phys_bytes) sizeof(fdu))) != OK) 
-	    return(r);
-	major = (fdu.dev >> MAJOR) & BYTE;
-	r=map_driver(major, NONE, 0, 0);
 	return(r);
   }
   default:

@@ -6,6 +6,7 @@
  *     /dev/null	- null device (data sink)
  *     /dev/boot	- boot device loaded from boot image 
  *     /dev/zero	- null byte stream generator
+ *     /dev/imgrd	- boot image RAM disk
  *
  *  Changes:
  *	Apr 29, 2005	added null byte generator  (Jorrit N. Herder)

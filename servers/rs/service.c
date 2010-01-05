@@ -57,7 +57,7 @@ PRIVATE char *known_requests[] = {
 
 /* The following are relative to optind */
 #define ARG_REQUEST	0		/* request to perform */
-#define ARG_PATH	1		/* rescue dir or system service */
+#define ARG_PATH	1		/* system service */
 #define ARG_LABEL	1		/* name of system service */
 #define ARG_LU_STATE		2	/* the state required to update */
 #define ARG_PREPARE_MAXTIME	3	/* max time to prepare for the update */
@@ -118,7 +118,6 @@ PRIVATE void print_usage(char *app_name, char *problem)
   fprintf(stderr, "    %s refresh label\n", app_name);
   fprintf(stderr, "    %s restart label\n", app_name);
   fprintf(stderr, "    %s update label state maxtime\n", app_name);
-  fprintf(stderr, "    %s rescue <dir>\n", app_name);
   fprintf(stderr, "    %s shutdown\n", app_name);
   fprintf(stderr, "\n");
 }

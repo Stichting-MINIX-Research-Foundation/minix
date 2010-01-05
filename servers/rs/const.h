@@ -10,7 +10,6 @@
                                          */
 #define MAX_SCRIPT_LEN      256         /* maximum restart script name length */
 #define MAX_NR_ARGS           4         /* maximum number of arguments */
-#define MAX_RESCUE_DIR_LEN   64         /* maximum rescue dir length */
 
 #define MAX_IPC_LIST        256         /* Max size of list for IPC target
                                          * process names

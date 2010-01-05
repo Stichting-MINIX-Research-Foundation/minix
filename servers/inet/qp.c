@@ -10,11 +10,7 @@ Created:	June 1995 by Philip Homburg <philip@f-mnx.phicoh.com>
 #include "generic/assert.h"
 
 #include <sys/svrctl.h>
-#ifdef __minix_vmd
-#include <minix/queryparam.h>
-#else /* Minix 3 */
 #include <minix3/queryparam.h>
-#endif
 
 #include "generic/buf.h"
 #include "generic/clock.h"

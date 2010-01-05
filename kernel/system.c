@@ -204,8 +204,6 @@ PRIVATE void initialize(void)
   map(SYS_UMAP, do_umap);		/* map virtual to physical address */
   map(SYS_VIRCOPY, do_vircopy); 	/* use pure virtual addressing */
   map(SYS_PHYSCOPY, do_copy);	 	/* use physical addressing */
-  map(SYS_VIRVCOPY, do_virvcopy);	/* vector with copy requests */
-  map(SYS_PHYSVCOPY, do_vcopy);		/* vector with copy requests */
   map(SYS_SAFECOPYFROM, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_SAFECOPYTO, do_safecopy);	/* copy with pre-granted permission */
   map(SYS_VSAFECOPY, do_vsafecopy);	/* vectored safecopy */
