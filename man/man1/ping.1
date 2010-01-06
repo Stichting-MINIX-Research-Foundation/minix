@@ -1,0 +1,27 @@
+.TH PING 1
+.SH NAME
+ping \- send ICMP ECHO_REQUEST packets to network hosts 
+.SH SYNOPSIS
+.B /usr/bin/ping hostname [length]
+.de EX
+.TP 20
+\\fB\$1\\fR
+# \\$2
+..
+.SH EXAMPLES
+.EX "ping 192.168.1.1" "Ping host 192.168.1.1"
+.EX "ping www.minix3.org 500" "Ping www.minix3.org with 500 byte IP packets"
+.SH DESCRIPTION
+.PP
+Sends ICMP ECHO_REQUEST packets to the specified host and waits for a ECHO_REPLY.
+Optionally, the length (size) of the IP packet can be specified.  The default is
+30 bytes.  (Note, the 14 byte Ethernet header will make this a 44 byte packet.)
+.SH OPTIONS
+.IP length 
+Size (in bytes) of the transmitted ICMP packet.  The default length of the IP
+packet is 30 bytes.  (Adding the ethernet header will result in a 44 byte 
+packet being transmitted.)
+.SH "SEE ALSO"
+ifconfig(8)
+.SH AUTHOR
+Leith Brandeland <lb.minix@gmail.com>
