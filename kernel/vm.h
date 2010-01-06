@@ -3,9 +3,9 @@
 #define _VM_H 1
 
 /* Pseudo error codes */
-#define VMSUSPEND       -996
-#define EFAULT_SRC	-995
-#define EFAULT_DST	-994
+#define VMSUSPEND       (-996)
+#define EFAULT_SRC	(-995)
+#define EFAULT_DST	(-994)
 
 #define FIXLINMSG(prp) { prp->p_delivermsg_lin = umap_local(prp, D, prp->p_delivermsg_vir, sizeof(message)); }
 

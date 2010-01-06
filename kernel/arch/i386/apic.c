@@ -98,7 +98,7 @@
 
 /*
  * to make APIC work if SMP is not configured, we need to set the maximal number
- * fo CPUS to 1, cpuid to return 0 and the current cpu is always BSP
+ * of CPUS to 1, cpuid to return 0 and the current cpu is always BSP
  */
 #define CONFIG_MAX_CPUS 1
 #define cpu_is_bsp(x) 1
@@ -483,7 +483,7 @@ PRIVATE struct gate_table_s gate_table_common[] = {
 };
 
 #ifdef CONFIG_APIC_DEBUG
-PRIVATE lapic_set_dummy_handlers(void)
+PRIVATE void lapic_set_dummy_handlers(void)
 {
 	char * handler;
 	int vect = 32;

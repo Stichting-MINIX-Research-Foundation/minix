@@ -30,7 +30,7 @@ PRIVATE int psok = 0;
 
 u8_t *vm_pagedirs = NULL;
 
-#define NOPDE -1
+#define NOPDE (-1)
 #define PDEMASK(n) (1L << (n))
 PUBLIC u32_t dirtypde;
 #define WANT_FREEPDES (sizeof(dirtypde)*8-5)

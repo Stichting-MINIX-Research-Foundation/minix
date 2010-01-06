@@ -107,7 +107,7 @@ EXTERN struct priv *ppriv_addr[NR_SYS_PROCS];	/* direct slot pointers */
 #define USER_PRIV_ID	static_priv_id(ROOT_USR_PROC_NR)
 /* Specifies a null privilege id.
  */
-#define NULL_PRIV_ID	-1
+#define NULL_PRIV_ID	(-1)
 
 /* Make sure the system can boot. The following sanity check verifies that
  * the system privileges table is large enough for the number of processes
