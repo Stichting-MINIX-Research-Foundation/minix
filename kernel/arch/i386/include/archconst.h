@@ -145,7 +145,7 @@
 #define IOPL_MASK 0x003000
 
 #define vir2phys(vir)   ((phys_bytes)((kinfo.data_base + (vir_bytes) (vir))))
-#define phys2vir(ph)   (((vir_bytes)(((vir_bytes) (ph) - kinfo.data_base)))
+#define phys2vir(ph)   ((vir_bytes)((vir_bytes) (ph) - kinfo.data_base))
 
 #define INTEL_CPUID_GEN_EBX	0x756e6547 /* ASCII value of "Genu" */
 #define INTEL_CPUID_GEN_EDX	0x49656e69 /* ASCII value of "ineI" */
