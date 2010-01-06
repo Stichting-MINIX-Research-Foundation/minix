@@ -86,11 +86,12 @@ card()
 	done
 	if [ $card_avail -gt 0 ]
 	then 
-		echo $card_number.\ \*\ $card_name
+		card_mark="*"
 		eth_default=$card_number
 	else
-		echo $card_number.\ \ \ $card_name
+		card_mark=" "
 	fi
+	printf "%2d. %s %s\n" "$card_number" "$card_mark" "$card_name"
 }
 
 cards()
