@@ -91,7 +91,8 @@ static char *process_path_component(const char *component,
 	if (S_ISLNK(stat_buffer.st_mode))
 	{
 		/* resolve symbolic link */
-		readlink_buffer_length = readlink(resolved_name, readlink_buffer, 
+		readlink_buffer_length = readlink(resolved_name, 
+			readlink_buffer, 
 			sizeof(readlink_buffer) - 1);
 		if (readlink_buffer_length < 0)
 			return NULL;
@@ -100,7 +101,8 @@ static char *process_path_component(const char *component,
 		
 		/* recurse to resolve path in link */
 		remove_last_path_component(resolved_name);
-		if (!realpath_recurse(readlink_buffer, resolved_name, max_depth - 1))
+		if (!realpath_recurse(readlink_buffer, resolved_name, 
+			max_depth - 1))
 			return NULL;
 
 		/* stat symlink target */

@@ -71,22 +71,56 @@ static char *remove_last_path_component(char *path)
 	return path;
 }
 
+static int check_path_components(const char *path)
+{
+	char buffer[PATH_MAX + 1], *bufferpos;
+	struct stat statbuf;
+
+	assert(strlen(path) < sizeof(buffer));
+
+	bufferpos = buffer;
+	while (*path)
+	{
+		/* copy next path segment */
+		do 
+		{
+			*(bufferpos++) = *(path++);
+		} while (*path && *path != '/');
+		*bufferpos = 0;
+
+		/* 
+		 * is this a valid path segment? if not, return errno.
+		 * one exception: the last path component need not exist
+		 */
+		if (stat(buffer, &statbuf) < 0 &&
+			(*path || errno != ENOENT))
+			return errno;
+	}
+
+	return 0;
+}
+
 static void check_realpath(const char *path, int expected_errno)
 {
 	char buffer[PATH_MAX + 1], *resolved_path;
+	int expected_errno2;
 	struct stat statbuf[2];
 
 	assert(path);
+
+	/* any errors in the path that realpath should report? */
+	expected_errno2 = check_path_components(path);
 	
 	/* run realpath */
 	subtest = path;
+	errno = 0;
 	resolved_path = realpath(path, buffer);
 
 	/* do we get errors when expected? */
-	if (expected_errno)
+	if (expected_errno || expected_errno2)
 	{
-		if (errno != expected_errno) ERR;
 		if (resolved_path) ERR;
+		if (errno != expected_errno && errno != expected_errno2) ERR;
 		subtest = NULL;
 		return;
 	}
@@ -100,11 +134,17 @@ static void check_realpath(const char *path, int expected_errno)
 	}
 	errno = 0;
 
-	/* do the paths point to the same file? */
-	if (stat(path,          &statbuf[0]) < 0) { ERR; return; }
-	if (stat(resolved_path, &statbuf[1]) < 0) { ERR; return; }
-	if (statbuf[0].st_dev != statbuf[1].st_dev) ERR;
-	if (statbuf[0].st_ino != statbuf[1].st_ino) ERR;
+	/* do the paths point to the same file? (only check if exists) */
+	if (stat(path,          &statbuf[0]) < 0) 
+	{
+		if (errno != ENOENT) { ERR; return; }
+	}
+	else
+	{
+		if (stat(resolved_path, &statbuf[1]) < 0) { ERR; return; }
+		if (statbuf[0].st_dev != statbuf[1].st_dev) ERR;
+		if (statbuf[0].st_ino != statbuf[1].st_ino) ERR;
+	}
 
 	/* is the path absolute? */
 	if (resolved_path[0] != '/') ERR;
@@ -186,7 +226,7 @@ static void check_realpath_recurse(const char *path, int depth)
 	/* loop through subdirectories (including . and ..) */
 	if (!(dir = opendir(path))) 
 	{
-		if (errno != ENOTDIR)
+		if (errno != ENOENT && errno != ENOTDIR)
 			ERR;
 		return;
 	}
