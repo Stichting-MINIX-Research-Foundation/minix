@@ -22,6 +22,7 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {
 	struct timeval timeout, timestart = { 0, 0 }, timeend;
 	int errno_select, r;
+	struct timespec rqt;
 
 	/* check parameters */
 	if (!rqtp)
@@ -32,6 +33,9 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 		rqtp->tv_nsec >= NSEC_PER_SEC)
 		return EINVAL;
 
+	/* store *rqtp to make sure it is not overwritten */
+	rqt = *rqtp;
+	
 	/* keep track of start time if needed */
 	if (rmtp)
 	{
@@ -42,8 +46,8 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	}
 
 	/* use select to wait */
-	timeout.tv_sec = rqtp->tv_sec;
-	timeout.tv_usec = (rqtp->tv_nsec + NSEC_PER_USEC - 1) / NSEC_PER_USEC;
+	timeout.tv_sec = rqt.tv_sec;
+	timeout.tv_usec = (rqt.tv_nsec + NSEC_PER_USEC - 1) / NSEC_PER_USEC;
 	r = select(0, NULL, NULL, NULL, &timeout);
 
 	/* return remaining time only if requested */
@@ -59,8 +63,8 @@ int nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	errno = errno_select;
 
 	/* compute remaining time */
-	rmtp->tv_sec = rqtp->tv_sec - (timeend.tv_sec - timestart.tv_sec);
-	rmtp->tv_nsec = rqtp->tv_nsec - (timeend.tv_usec - timestart.tv_usec) * NSEC_PER_USEC;
+	rmtp->tv_sec = rqt.tv_sec - (timeend.tv_sec - timestart.tv_sec);
+	rmtp->tv_nsec = rqt.tv_nsec - (timeend.tv_usec - timestart.tv_usec) * NSEC_PER_USEC;
 
 	/* bring remaining time into canonical form */
 	while (rmtp->tv_nsec < 0)
