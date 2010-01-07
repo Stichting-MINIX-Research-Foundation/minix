@@ -63,6 +63,24 @@ static int _tcp_setsockopt(int socket, int level, int option_name,
 {
 	int i;
 
+	if (level == SOL_SOCKET && option_name == SO_REUSEADDR)
+	{
+		if (option_len != sizeof(i))
+		{
+			errno= EINVAL;
+			return -1;
+		}
+		i= *(int *)option_value;
+		if (!i)
+		{
+			/* At the moment there is no way to turn off 
+			 * reusing addresses.
+			 */
+			errno= ENOSYS;
+			return -1;
+		}
+		return 0;
+	}
 	if (level == SOL_SOCKET && option_name == SO_KEEPALIVE)
 	{
 		if (option_len != sizeof(i))

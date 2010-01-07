@@ -78,6 +78,12 @@ static int _tcp_getsockopt(int socket, int level, int option_name,
 {
 	int i, r, err;
 
+	if (level == SOL_SOCKET && option_name == SO_REUSEADDR)
+	{
+		i = 1;	/* Binds to TIME_WAIT sockets never cause errors */
+		getsockopt_copy(&i, sizeof(i), option_value, option_len);
+		return 0;
+	}
 	if (level == SOL_SOCKET && option_name == SO_KEEPALIVE)
 	{
 		i = 1;	/* Keepalive is always on */
