@@ -24,6 +24,7 @@ _PROTOTYPE( double cos,   (double _x)					);
 _PROTOTYPE( double cosh,  (double _x)					);
 _PROTOTYPE( double exp,   (double _x)					);
 _PROTOTYPE( double fabs,  (double _x)					);
+_PROTOTYPE( double fabsf, (float _x)					);
 _PROTOTYPE( double floor, (double _x)					);
 _PROTOTYPE( double fmod,  (double _x, double _y)			);
 _PROTOTYPE( double frexp, (double _x, int *_exp)			);
